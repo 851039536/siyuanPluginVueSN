@@ -346,9 +346,27 @@ export async function getFile(path: string): Promise<any> {
   };
   let url = "/api/file/getFile";
   try {
-    let file = await fetchSyncPost(url, data);
-    return file;
+    // 不使用 fetchSyncPost，因为它会尝试解析JSON
+    // 直接使用 fetch 获取二进制数据
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data)
+    });
+
+    if (!response.ok) {
+      console.error('getFile HTTP error:', { path, status: response.status, statusText: response.statusText });
+      return null;
+    }
+
+    // 直接返回 Blob
+    const blob = await response.blob();
+    console.log('getFile success:', { path, size: blob.size, type: blob.type });
+    return blob;
   } catch (error_msg) {
+    console.error('getFile API error:', { path, error: error_msg });
     return null;
   }
 }

@@ -8,6 +8,13 @@
       @save="onSaveSettings"
       @cancel="onCancelSettings"
     />
+
+    <!-- 图片压缩器 -->
+    <ImageViewer
+      :visible="showImageViewer"
+      :i18n="(plugin.i18n as any).imageCompressor || {}"
+      @close="onCloseImageViewer"
+    />
   </div>
 </template>
 
@@ -15,12 +22,14 @@
 import { usePlugin } from '@/main'
 import { onMounted, ref, watchEffect } from 'vue'
 import SettingPanel from '@/components/SettingPanel.vue'
+import ImageViewer from '@/features/imageCompressor/ImageViewer.vue'
 import { showMessage } from 'siyuan'
 import type { PluginSettings } from '@/config/settings'
 import type PluginSample from '@/index'
 
 const plugin = usePlugin() as PluginSample
 const showSettings = ref(false)
+const showImageViewer = ref(false)
 const pluginSettings = ref<PluginSettings>(plugin.settings)
 
 console.log('plugin is ', plugin)
@@ -45,6 +54,16 @@ const onSaveSettings = async (settings: PluginSettings) => {
 
 const onCancelSettings = () => {
   showSettings.value = false
+}
+
+// 打开图片压缩器
+const openImageCompressor = () => {
+  showImageViewer.value = true
+}
+
+// 关闭图片压缩器
+const onCloseImageViewer = () => {
+  showImageViewer.value = false
 }
 
 
@@ -87,6 +106,9 @@ onMounted(() => {
 onMounted(() => {
   window._sy_plugin_sample = {}
   window._sy_plugin_sample.openSetting = openSetting
+
+  // 监听打开图片压缩器事件
+  window.addEventListener('openImageCompressor', openImageCompressor)
 })
 </script>
 

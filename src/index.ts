@@ -5,7 +5,7 @@ import {
 import "@/index.scss";
 import PluginInfoString from '@/../plugin.json'
 import { destroy, init } from '@/main'
-import { registerPageLock, registerTableOfContents } from '@/features'
+import { registerPageLock, registerTableOfContents, registerImageCompressor } from '@/features'
 import { loadSettings, saveSettings, type PluginSettings } from '@/config/settings'
 
 let PluginInfo = {
@@ -86,6 +86,10 @@ export default class PluginSample extends Plugin {
     if (this.settings.enableTableOfContents) {
       console.log('注册目录插件功能')
       registerTableOfContents(this)
+    }
+    if (this.settings.enableImageCompressor) {
+      console.log('注册图片压缩功能')
+      registerImageCompressor(this)
     }
   }
 

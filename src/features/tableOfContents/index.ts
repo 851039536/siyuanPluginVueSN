@@ -261,12 +261,16 @@ async function insertIndex(plugin: Plugin) {
     }
 
     // 生成索引内容
-    let indexContent = ''
+    let indexContent = '---\n\n'
 
-    for (const subDoc of subDocs) {
+    for (let i = 0; i < subDocs.length; i++) {
+      const subDoc = subDocs[i]
       const docName = subDoc.content.replace(/<[^>]*>/g, '')
-      indexContent += `- [${docName}](siyuan://blocks/${subDoc.id})\n`
+      const index = String(i + 1).padStart(2, '0')
+      indexContent += `${index}. **[${docName}](siyuan://blocks/${subDoc.id})**\n`
     }
+
+    indexContent += '\n---'
 
     await insertContent(plugin, indexContent, 'index')
   } catch (error) {
@@ -312,13 +316,14 @@ async function insertSubDocsRef(plugin: Plugin) {
     }
 
     // 生成引用内容
-    let refContent = ''
+    let refContent = '> 📑 **子文档列表**\n>\n'
 
-    for (const subDoc of subDocs) {
+    for (let i = 0; i < subDocs.length; i++) {
+      const subDoc = subDocs[i]
       // 使用引用块语法 ((id "锚文本"))
       const docName = subDoc.content.replace(/<[^>]*>/g, '')
-      refContent += `- ((${subDoc.id} "${docName}"))
-`
+      const bullet = i === subDocs.length - 1 ? '└' : '├'
+      refContent += `> ${bullet} ((${subDoc.id} "${docName}"))\n`
     }
 
     await insertContent(plugin, refContent, 'subdocs-ref')
@@ -367,10 +372,13 @@ async function insertSubDocsWithOutline(plugin: Plugin) {
     // 生成内容
     let content = ''
 
-    for (const subDoc of subDocs) {
+    for (let i = 0; i < subDocs.length; i++) {
+      const subDoc = subDocs[i]
       const docName = subDoc.content.replace(/<[^>]*>/g, '')
-      // 使用引用块语法替代超链接
-      content += `## ((${subDoc.id} "${docName}"))\n\n`
+      const isLast = i === subDocs.length - 1
+
+      // 使用引用块语法替代超链接，添加序号和图标
+      content += `## 📄 ${i + 1}. ((${subDoc.id} "${docName}"))\n\n`
 
       // 获取子文档的大纲(标题)
       const headings = await api.sql(`
@@ -385,10 +393,16 @@ async function insertSubDocsWithOutline(plugin: Plugin) {
           const level = parseInt(heading.subtype.replace('h', ''))
           const indent = '  '.repeat(level - 1)
           const headingContent = heading.content.replace(/<[^>]*>/g, '')
+          const icon = level === 1 ? '▸' : level === 2 ? '•' : '◦'
           // 标题也使用引用块语法
-          content += `${indent}- ((${heading.id} "${headingContent}"))\n`
+          content += `${indent}${icon} ((${heading.id} "${headingContent}"))\n`
         }
         content += '\n'
+      }
+
+      // 在非最后一项后添加分隔线
+      if (!isLast) {
+        content += '---\n\n'
       }
     }
 

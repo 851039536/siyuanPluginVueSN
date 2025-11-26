@@ -396,11 +396,6 @@ async function insertSubDocsWithOutline(plugin: Plugin) {
         }
         content += '\n'
       }
-
-      // 在非最后一项后添加分隔线
-      if (!isLast) {
-        content += '---\n\n'
-      }
     }
 
     await insertContent(plugin, content, 'subdocs-outline')

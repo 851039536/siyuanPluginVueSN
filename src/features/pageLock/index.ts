@@ -594,8 +594,8 @@ function injectButtonStyles() {
 
     .page-lock-button-container {
       position: absolute;
-      top: 8px;
-      right: 8px;
+      bottom: 8px;
+      left: 8px;
       z-index: 1000;
       display: inline-flex;
       align-items: center;

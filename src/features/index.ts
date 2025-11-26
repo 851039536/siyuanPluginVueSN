@@ -3,3 +3,4 @@
  */
 export { registerWordCountMenu } from './wordCount'
 export { registerPageLock } from './pageLock'
+export { registerTableOfContents } from './tableOfContents'

@@ -5,7 +5,7 @@ import {
 import "@/index.scss";
 import PluginInfoString from '@/../plugin.json'
 import { destroy, init } from '@/main'
-import { registerWordCountMenu, registerPageLock } from '@/features'
+import { registerWordCountMenu, registerPageLock, registerTableOfContents } from '@/features'
 
 let PluginInfo = {
   version: '',
@@ -75,5 +75,7 @@ export default class PluginSample extends Plugin {
     registerWordCountMenu(this)
     // 注册页面锁定功能
     registerPageLock(this)
+    // 注册目录插件功能
+    registerTableOfContents(this)
   }
 }

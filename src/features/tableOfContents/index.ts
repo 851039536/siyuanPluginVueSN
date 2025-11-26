@@ -261,16 +261,14 @@ async function insertIndex(plugin: Plugin) {
     }
 
     // 生成索引内容
-    let indexContent = '---\n\n'
+    let indexContent = '## 📑 子文档索引\n\n'
 
     for (let i = 0; i < subDocs.length; i++) {
       const subDoc = subDocs[i]
       const docName = subDoc.content.replace(/<[^>]*>/g, '')
       const index = String(i + 1).padStart(2, '0')
-      indexContent += `${index}. **[${docName}](siyuan://blocks/${subDoc.id})**\n`
+      indexContent += `${index}. [${docName}](siyuan://blocks/${subDoc.id})\n`
     }
-
-    indexContent += '\n---'
 
     await insertContent(plugin, indexContent, 'index')
   } catch (error) {
@@ -316,14 +314,14 @@ async function insertSubDocsRef(plugin: Plugin) {
     }
 
     // 生成引用内容
-    let refContent = '> 📑 **子文档列表**\n>\n'
+    let refContent = '## 🔗 子文档引用\n\n'
 
     for (let i = 0; i < subDocs.length; i++) {
       const subDoc = subDocs[i]
       // 使用引用块语法 ((id "锚文本"))
       const docName = subDoc.content.replace(/<[^>]*>/g, '')
-      const bullet = i === subDocs.length - 1 ? '└' : '├'
-      refContent += `> ${bullet} ((${subDoc.id} "${docName}"))\n`
+      const index = String(i + 1).padStart(2, '0')
+      refContent += `${index}. ((${subDoc.id} "${docName}"))\n`
     }
 
     await insertContent(plugin, refContent, 'subdocs-ref')
@@ -370,15 +368,15 @@ async function insertSubDocsWithOutline(plugin: Plugin) {
     }
 
     // 生成内容
-    let content = ''
+    let content = '## 📋 子文档大纲\n\n'
 
     for (let i = 0; i < subDocs.length; i++) {
       const subDoc = subDocs[i]
       const docName = subDoc.content.replace(/<[^>]*>/g, '')
       const isLast = i === subDocs.length - 1
 
-      // 使用引用块语法替代超链接，添加序号和图标
-      content += `## 📄 ${i + 1}. ((${subDoc.id} "${docName}"))\n\n`
+      // 使用引用块语法，添加图标美化
+      content += `### 📄 ((${subDoc.id} "${docName}"))\n\n`
 
       // 获取子文档的大纲(标题)
       const headings = await api.sql(`
@@ -393,9 +391,8 @@ async function insertSubDocsWithOutline(plugin: Plugin) {
           const level = parseInt(heading.subtype.replace('h', ''))
           const indent = '  '.repeat(level - 1)
           const headingContent = heading.content.replace(/<[^>]*>/g, '')
-          const icon = level === 1 ? '▸' : level === 2 ? '•' : '◦'
-          // 标题也使用引用块语法
-          content += `${indent}${icon} ((${heading.id} "${headingContent}"))\n`
+          // 标题使用引用块语法，保持原有的列表符号
+          content += `${indent}- ((${heading.id} "${headingContent}"))\n`
         }
         content += '\n'
       }

@@ -134,7 +134,6 @@ export default class PluginSample extends Plugin {
 
 示例功能模块：
 
-- wordCount: 字数统计功能
 - pageLock: 页面加密锁定功能
 - tableOfContents: 文档目录功能
 
@@ -145,7 +144,6 @@ export default class PluginSample extends Plugin {
 ```typescript
 export interface PluginSettings {
   enablePageLock: boolean       // 是否启用页面锁定
-  enableWordCount: boolean      // 是否启用字数统计
   enableTableOfContents: boolean // 是否启用目录功能
 }
 ```

@@ -5,7 +5,7 @@ import {
 import "@/index.scss";
 import PluginInfoString from '@/../plugin.json'
 import { destroy, init } from '@/main'
-import { registerWordCountMenu, registerPageLock, registerTableOfContents } from '@/features'
+import { registerPageLock, registerTableOfContents } from '@/features'
 import { loadSettings, saveSettings, type PluginSettings } from '@/config/settings'
 
 let PluginInfo = {
@@ -79,10 +79,6 @@ export default class PluginSample extends Plugin {
    */
   private registerFeatures() {
     // 根据配置注册功能模块
-    if (this.settings.enableWordCount) {
-      console.log('注册字数统计功能')
-      registerWordCountMenu(this)
-    }
     if (this.settings.enablePageLock) {
       console.log('注册页面锁定功能')
       registerPageLock(this)

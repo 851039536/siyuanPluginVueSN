@@ -8,7 +8,6 @@ import { Plugin } from 'siyuan'
  */
 export interface PluginSettings {
   enablePageLock: boolean       // 是否启用页面锁定功能
-  enableWordCount: boolean       // 是否启用字数统计功能
   enableTableOfContents: boolean // 是否启用目录插件功能
 }
 
@@ -17,7 +16,6 @@ export interface PluginSettings {
  */
 export const DEFAULT_SETTINGS: PluginSettings = {
   enablePageLock: true,
-  enableWordCount: true,
   enableTableOfContents: true,
 }
 

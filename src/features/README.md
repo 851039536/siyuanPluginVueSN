@@ -7,35 +7,17 @@
 ```
 features/
 ├── index.ts              # 功能模块统一导出
-├── wordCount/           # 字数统计功能
-│   └── index.ts         # 字数统计实现
 ├── pageLock/            # 页面锁定功能
 │   ├── index.ts         # 页面锁定主逻辑
 │   ├── storage.ts       # 数据存储管理
 │   ├── crypto.ts        # 密码加密工具
 │   └── LockDialog.vue   # 锁定/解锁弹窗组件
+├── tableOfContents/     # 目录功能
+│   └── index.ts         # 目录功能实现
 └── README.md            # 说明文档
 ```
 
 ## 模块说明
-
-### wordCount (字数统计)
-
-**功能描述**: 在编辑器右键菜单中添加字数统计功能
-
-**主要函数**:
-- `registerWordCountMenu(plugin)` - 注册右键菜单项
-- `countWords(plugin, protyle)` - 执行字数统计
-- `calculateWordCount(content)` - 计算字数
-- `formatWordCountMessage(plugin, stats)` - 格式化输出消息
-
-**使用方式**:
-```typescript
-import { registerWordCountMenu } from '@/features'
-
-// 在插件加载时注册
-registerWordCountMenu(this)
-```
 
 ### pageLock (页面锁定)
 
@@ -86,9 +68,9 @@ export { registerNewFeature } from './newFeature'
 
 // src/index.ts
 private registerFeatures() {
-  registerWordCountMenu(this)
-  registerPageLock(this)     // 添加新功能
-  registerNewFeature(this)   // 添加更多功能
+  registerPageLock(this)
+  registerTableOfContents(this)
+  registerNewFeature(this)   // 添加新功能
 }
 ```
 

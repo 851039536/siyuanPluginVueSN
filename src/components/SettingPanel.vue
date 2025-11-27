@@ -68,6 +68,21 @@
         </div>
         <div class="b3-label__text">{{ i18n.enableDocNavigationDesc }}</div>
       </div>
+
+      <div class="setting-item b3-label">
+        <div class="fn__flex">
+          <span class="fn__flex-1">
+            {{ i18n.enableShortcuts || '快捷键面板' }}
+          </span>
+          <span class="fn__space"></span>
+          <input
+            type="checkbox"
+            class="b3-switch fn__flex-center"
+            v-model="localSettings.enableShortcuts"
+          />
+        </div>
+        <div class="b3-label__text">{{ i18n.enableShortcutsDesc || '在右侧边栏显示快捷键面板' }}</div>
+      </div>
     </div>
 
     <div class="fn__hr"></div>

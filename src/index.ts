@@ -5,7 +5,7 @@ import {
 import "@/index.scss";
 import PluginInfoString from '@/../plugin.json'
 import { destroy, init } from '@/main'
-import { registerPageLock, registerTableOfContents, registerImageCompressor, registerDocNavigation } from '@/features'
+import { registerPageLock, registerTableOfContents, registerImageCompressor, registerDocNavigation, registerShortcut } from '@/features'
 import { loadSettings, saveSettings, type PluginSettings } from '@/config/settings'
 
 let PluginInfo = {
@@ -61,7 +61,7 @@ export default class PluginSample extends Plugin {
     console.log('插件配置已加载:', this.settings)
 
     // 注册功能模块
-    this.registerFeatures()
+    await this.registerFeatures()
 
     init(this)
   }
@@ -77,7 +77,7 @@ export default class PluginSample extends Plugin {
   /**
    * 注册所有功能模块
    */
-  private registerFeatures() {
+  private async registerFeatures() {
     // 根据配置注册功能模块
     if (this.settings.enablePageLock) {
       console.log('注册页面锁定功能')
@@ -94,6 +94,10 @@ export default class PluginSample extends Plugin {
     if (this.settings.enableDocNavigation) {
       console.log('注册文档层级导航功能')
       registerDocNavigation(this)
+    }
+    if (this.settings.enableShortcuts) {
+      console.log('注册快捷键模块')
+      await registerShortcut(this)
     }
   }
 

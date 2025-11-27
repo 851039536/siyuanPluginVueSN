@@ -12,6 +12,8 @@ export interface PluginSettings {
   enableImageCompressor: boolean // 是否启用图片压缩功能
   enableDocNavigation: boolean   // 是否启用文档层级导航功能
   enableShortcuts: boolean       // 是否启用快捷键面板功能
+  enableWordQuery: boolean       // 是否启用单词查询功能
+  wordQueryApiKey: string        // 单词查询API密钥
 }
 
 /**
@@ -23,6 +25,8 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enableImageCompressor: true,
   enableDocNavigation: true,
   enableShortcuts: true,
+  enableWordQuery: true,
+  wordQueryApiKey: 'sk-fae27cc50015409fb2524b0970d3f0b0',
 }
 
 /**

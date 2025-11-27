@@ -128,7 +128,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { showMessage } from 'siyuan'
 import type { PluginSettings } from '@/config/settings'
 import { DEFAULT_SETTINGS } from '@/config/settings'
@@ -151,11 +151,21 @@ const localSettings = ref<PluginSettings>({ ...props.settings })
 
 // 保存设置
 const onSave = () => {
+  // 清理定时器
+  const overlay = document.querySelector('.settings-overlay') as HTMLElement
+  if (overlay && (overlay as any)._focusTimer) {
+    clearInterval((overlay as any)._focusTimer)
+  }
   emit('save', localSettings.value)
 }
 
 // 取消
 const onCancel = () => {
+  // 清理定时器
+  const overlay = document.querySelector('.settings-overlay') as HTMLElement
+  if (overlay && (overlay as any)._focusTimer) {
+    clearInterval((overlay as any)._focusTimer)
+  }
   emit('cancel')
 }
 
@@ -168,6 +178,38 @@ const onReset = () => {
 onMounted(() => {
   // 确保本地配置与传入的配置同步
   localSettings.value = { ...props.settings }
+  
+  // 确保设置面板在最上层
+  const overlay = document.querySelector('.settings-overlay') as HTMLElement
+  if (overlay) {
+    // 使用更高的z-index确保在集市之上
+    overlay.style.zIndex = '30000'
+    
+    // 添加事件监听，确保焦点始终在设置面板上
+    const focusTimer = setInterval(() => {
+      if (document.activeElement && document.activeElement !== document.body) {
+        const activeElement = document.activeElement as HTMLElement
+        // 如果当前焦点元素不在设置面板内，强制焦点回到设置面板
+        if (!activeElement.closest('.settings-panel')) {
+          const firstInput = overlay.querySelector('input') as HTMLInputElement
+          if (firstInput) {
+            firstInput.focus()
+          }
+        }
+      }
+    }, 200)
+    
+    // 存储定时器ID以便清理
+    ;(overlay as any)._focusTimer = focusTimer
+  }
+})
+
+onBeforeUnmount(() => {
+  // 清理定时器
+  const overlay = document.querySelector('.settings-overlay') as HTMLElement
+  if (overlay && (overlay as any)._focusTimer) {
+    clearInterval((overlay as any)._focusTimer)
+  }
 })
 </script>
 
@@ -182,15 +224,15 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10001;
+  z-index: 20000;
   pointer-events: auto;
 }
 
 .settings-panel {
-  padding: 6px 12px;
+  padding: 4px 10px;
   max-width: 520px;
   width: 90%;
-  max-height: 85vh;
+  max-height: 90vh;
   overflow-y: auto;
   background: #ffffff;
   border-radius: 8px;
@@ -201,11 +243,11 @@ onMounted(() => {
 }
 
 .settings-header {
-  margin-bottom: 8px;
+  margin-bottom: 2px;
 }
 
 .settings-title {
-  margin: 0 0 4px 0;
+  margin: 0 0 1px 0;
   font-size: 16px;
   font-weight: 600;
   color: #1a1a1a;
@@ -215,15 +257,15 @@ onMounted(() => {
   margin: 0;
   font-size: 12px;
   color: #666666;
-  line-height: 1.3;
+  line-height: 1.2;
 }
 
 .settings-content {
-  padding: 8px 0;
+  padding: 2px 0;
 }
 
 .setting-item {
-  margin-bottom: 12px;
+  margin-bottom: 5px;
 
   .fn__flex-1 {
     font-size: 13px;
@@ -234,8 +276,8 @@ onMounted(() => {
   .b3-label__text {
     font-size: 11px;
     color: #666666;
-    line-height: 1.4;
-    margin-top: 1px;
+    line-height: 1.2;
+    margin-top: 0;
   }
 
   &:last-child {
@@ -246,7 +288,7 @@ onMounted(() => {
 .settings-footer {
   display: flex;
   align-items: center;
-  padding: 8px 0 4px;
+  padding: 4px 0 1px;
   gap: 6px;
 }
 
@@ -254,13 +296,13 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 6px 8px;
-  margin-top: 6px;
+  padding: 2px 4px;
+  margin-top: 2px;
   background: #f5f5f5;
   border-radius: 4px;
   font-size: 11px;
   color: #666666;
-  line-height: 1.4;
+  line-height: 1.2;
 
   .icon {
     width: 12px;

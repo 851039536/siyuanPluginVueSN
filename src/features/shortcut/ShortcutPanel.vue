@@ -48,14 +48,23 @@
               {{ key.trim() }}
             </span>
           </div>
-          <button
-            v-if="shortcut.category === 'custom'"
-            class="delete-btn"
-            :title="i18n.delete || '删除'"
-            @click="deleteShortcut(shortcut.id)"
-          >
-            <svg class="shortcut-icon"><use xlink:href="#iconTrash"></use></svg>
-          </button>
+          <div class="shortcut-actions">
+            <button
+              class="action-btn copy-btn"
+              :title="i18n.copy || '复制'"
+              @click="copyShortcutInfo(shortcut)"
+            >
+              <svg class="shortcut-icon"><use xlink:href="#iconCopy"></use></svg>
+            </button>
+            <button
+              v-if="shortcut.category === 'custom'"
+              class="action-btn delete-btn"
+              :title="i18n.delete || '删除'"
+              @click="deleteShortcut(shortcut.id)"
+            >
+              <svg class="shortcut-icon"><use xlink:href="#iconTrash"></use></svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -224,6 +233,26 @@ async function deleteShortcut(id: string) {
   if (confirm(props.i18n.confirmDelete || '确认删除此快捷键？')) {
     await manager.removeShortcut(id)
   }
+}
+
+// 复制快捷键信息
+function copyShortcutInfo(shortcut: ShortcutInfo) {
+  const text = `${shortcut.name}: ${shortcut.keys}`
+  navigator.clipboard.writeText(text).then(() => {
+    // 显示复制成功提示
+    showCopyTip()
+  }).catch(err => {
+    console.error('复制失败:', err)
+  })
+}
+
+// 显示复制成功提示
+let copyTipTimer: any
+const showCopyTip = () => {
+  clearTimeout(copyTipTimer)
+  // 这里可以集成思源笔记的 showMessage 或其他提示方案
+  // 为了保持组件独立，这里仅通过 console 记录
+  console.log('快捷键信息已复制')
 }
 </script>
 
@@ -402,23 +431,50 @@ async function deleteShortcut(id: string) {
   white-space: nowrap;
 }
 
-.delete-btn {
-  padding: 3px 5px;
+.shortcut-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.action-btn {
+  padding: 4px 6px;
   background: transparent;
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 2px;
+  border-radius: 3px;
   color: var(--b3-theme-on-surface-variant);
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 0;
+}
+
+.action-btn:hover {
+  background: var(--b3-theme-surface-lighter);
+  color: var(--b3-theme-primary);
+  border-color: var(--b3-theme-primary);
+}
+
+.copy-btn {
+  color: var(--b3-theme-on-surface-variant);
+}
+
+.copy-btn:active {
+  background: var(--b3-theme-primary);
+  color: white;
+  border-color: var(--b3-theme-primary);
+}
+
+.delete-btn {
+  color: #ff6b6b;
 }
 
 .delete-btn:hover {
-  background: #ff4444;
+  background: #ff6b6b;
   color: white;
-  border-color: #ff4444;
+  border-color: #ff6b6b;
 }
 
 /* 对话框样式 */

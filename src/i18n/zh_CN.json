@@ -111,5 +111,7 @@
   "enterGroup": "输入分组名称",
   "fillRequired": "请填写必填项",
   "confirmDelete": "确认删除此快捷键？",
-  "delete": "删除"
+  "delete": "删除",
+  "copy": "复制",
+  "copiedSuccess": "已复制到剪贴板"
 }

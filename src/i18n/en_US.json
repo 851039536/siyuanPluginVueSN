@@ -111,5 +111,7 @@
   "enterGroup": "Enter group name",
   "fillRequired": "Please fill in required fields",
   "confirmDelete": "Confirm delete this shortcut?",
-  "delete": "Delete"
+  "delete": "Delete",
+  "copy": "Copy",
+  "copiedSuccess": "Copied to clipboard"
 }

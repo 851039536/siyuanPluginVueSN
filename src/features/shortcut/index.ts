@@ -1,6 +1,7 @@
 /**
  * 快捷键模块
  * 功能：在右侧边栏显示思源笔记和插件的快捷键信息
+ * 侧边栏图标：iconKeymap（快捷键图标）
  */
 import { Plugin } from 'siyuan'
 import { createApp, h } from 'vue'
@@ -267,7 +268,7 @@ function addShortcutDock(plugin: Plugin, manager: ShortcutManager) {
     config: {
       position: 'RightTop',
       size: { width: 300, height: 0 },
-      icon: 'iconHelp',
+      icon: 'iconKeymap',
       title: plugin.i18n.shortcuts || '快捷键',
       show: false,
     },

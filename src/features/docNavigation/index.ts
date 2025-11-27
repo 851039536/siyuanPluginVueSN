@@ -41,66 +41,55 @@ function escapeSqlString(str: string): string {
 }
 
 /**
- * 获取父文档信息
+ * 一次性查询父文档和子文档（性能优化）
  */
-async function getParentDoc(currentDoc: Block): Promise<Block | null> {
+async function getDocHierarchy(currentDoc: Block): Promise<{ parent: Block | null; children: Block[] }> {
   try {
     if (!currentDoc.hpath || !currentDoc.box) {
-      return null
+      return { parent: null, children: [] }
     }
 
-    // 从 hpath 中提取父路径
+    // 提取父路径
     const hpathParts = currentDoc.hpath.split('/')
-    if (hpathParts.length <= 2) {
-      // 已经是根文档，没有父文档
-      return null
-    }
+    const hasParent = hpathParts.length > 2
+    const parentHpath = hasParent ? hpathParts.slice(0, -1).join('/') : ''
 
-    // 移除最后一部分（当前文档名）
-    hpathParts.pop()
-    const parentHpath = hpathParts.join('/')
-
-    // 通过 hpath 查询父文档
-    const parentDocs = await api.sql(`
-      SELECT id, content, hpath
+    // 使用 UNION 一次性查询父文档和子文档
+    const query = `
+      SELECT id, content, hpath, 'parent' as doc_type
       FROM blocks
       WHERE box = '${escapeSqlString(currentDoc.box)}'
       AND type = 'd'
-      AND hpath = '${escapeSqlString(parentHpath)}'
-      LIMIT 1
-    `)
+      ${hasParent ? `AND hpath = '${escapeSqlString(parentHpath)}'` : 'AND 1=0'}
 
-    return parentDocs && parentDocs.length > 0 ? parentDocs[0] : null
-  } catch (error) {
-    console.error('获取父文档失败:', error)
-    return null
-  }
-}
+      UNION ALL
 
-/**
- * 获取子文档列表
- */
-async function getChildDocs(currentDoc: Block): Promise<Block[]> {
-  try {
-    if (!currentDoc.hpath || !currentDoc.box) {
-      return []
-    }
-
-    // 使用 hpath 查询直接子文档
-    const childDocs = await api.sql(`
-      SELECT id, content, hpath
+      SELECT id, content, hpath, 'child' as doc_type
       FROM blocks
       WHERE box = '${escapeSqlString(currentDoc.box)}'
       AND type = 'd'
       AND hpath LIKE '${escapeSqlString(currentDoc.hpath)}/%'
       AND hpath NOT LIKE '${escapeSqlString(currentDoc.hpath)}/%/%'
       ORDER BY hpath ASC
-    `)
+    `
 
-    return childDocs || []
+    const results = await api.sql(query)
+
+    let parent: Block | null = null
+    const children: Block[] = []
+
+    results?.forEach(doc => {
+      if (doc.doc_type === 'parent') {
+        parent = doc
+      } else {
+        children.push(doc)
+      }
+    })
+
+    return { parent, children }
   } catch (error) {
-    console.error('获取子文档失败:', error)
-    return []
+    console.error('获取文档层级失败:', error)
+    return { parent: null, children: [] }
   }
 }
 
@@ -165,11 +154,8 @@ async function updateDocNavigation(plugin: Plugin, protyle: any) {
       return
     }
 
-    // 获取父文档
-    const parentDoc = await getParentDoc(currentDoc)
-
-    // 获取子文档列表
-    const childDocs = await getChildDocs(currentDoc)
+    // 获取文档层级信息（一次性查询，性能优化）
+    const { parent: parentDoc, children: childDocs } = await getDocHierarchy(currentDoc)
 
     // 如果既没有父文档也没有子文档，不显示导航
     if (!parentDoc && childDocs.length === 0) {
@@ -206,22 +192,24 @@ async function updateDocNavigation(plugin: Plugin, protyle: any) {
       `
 
       // 显示前5个
-      childDocs.slice(0, 5).forEach((childDoc, index) => {
+      const displayCount = 5
+      childDocs.slice(0, displayCount).forEach((childDoc) => {
         const docName = childDoc.content.replace(/<[^>]*>/g, '')
-        navHTML += `<a class="doc-nav-link" data-doc-id="${childDoc.id}">${docName}</a>`
+        navHTML += `<a class="doc-nav-link" data-doc-id="${childDoc.id}" title="${docName}">${docName}</a>`
       })
 
       // 如果有更多文档，显示展开按钮
-      if (childDocs.length > 5) {
-        navHTML += `<button class="doc-nav-expand" title="展开所有下级文档">
+      if (childDocs.length > displayCount) {
+        const hiddenCount = childDocs.length - displayCount
+        navHTML += `<button class="doc-nav-expand" title="展开 ${hiddenCount} 个文档">
           <svg class="expand-icon"><use xlink:href="#iconExpand"></use></svg>
-          ...
+          +${hiddenCount}
         </button>`
 
         // 隐藏的文档（默认不显示，展开后在同一行换行显示）
-        childDocs.slice(5).forEach((childDoc) => {
+        childDocs.slice(displayCount).forEach((childDoc) => {
           const docName = childDoc.content.replace(/<[^>]*>/g, '')
-          navHTML += `<a class="doc-nav-link doc-nav-link-hidden" data-doc-id="${childDoc.id}">${docName}</a>`
+          navHTML += `<a class="doc-nav-link doc-nav-link-hidden" data-doc-id="${childDoc.id}" title="${docName}">${docName}</a>`
         })
       }
 
@@ -259,13 +247,14 @@ async function updateDocNavigation(plugin: Plugin, protyle: any) {
           // 折叠
           childrenList?.setAttribute('data-expanded', 'false')
           hiddenLinks.forEach(link => link.classList.remove('show'))
-          expandBtn.innerHTML = `<svg class="expand-icon"><use xlink:href="#iconExpand"></use></svg>...`
-          expandBtn.setAttribute('title', '展开所有下级文档')
+          const hiddenCount = hiddenLinks.length
+          expandBtn.innerHTML = `<svg class="expand-icon"><use xlink:href="#iconExpand"></use></svg>+${hiddenCount}`
+          expandBtn.setAttribute('title', `展开 ${hiddenCount} 个文档`)
         } else {
           // 展开
           childrenList?.setAttribute('data-expanded', 'true')
           hiddenLinks.forEach(link => link.classList.add('show'))
-          expandBtn.innerHTML = `<svg class="expand-icon"><use xlink:href="#iconContract"></use></svg>`
+          expandBtn.innerHTML = `<svg class="expand-icon"><use xlink:href="#iconContract"></use></svg>收起`
           expandBtn.setAttribute('title', '收起')
         }
       })
@@ -313,7 +302,7 @@ function injectNavigationStyles() {
   style.id = styleId
   style.textContent = `
     .doc-navigation-container {
-      margin: 8px 0 16px 0;
+      margin: 6px 0 12px 0;
       padding: 0;
       display: flex;
       justify-content: center;
@@ -323,63 +312,73 @@ function injectNavigationStyles() {
       display: flex;
       flex-direction: row;
       align-items: center;
-      gap: 16px;
-      padding: 10px 16px;
+      gap: 12px;
+      padding: 8px 14px;
       background: transparent;
       border: 1px solid var(--b3-theme-surface-lighter);
       border-radius: 8px;
       font-size: 13px;
       line-height: 1.5;
       max-width: 95%;
-      transition: all 0.2s ease;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       flex-wrap: wrap;
     }
 
     .doc-navigation:hover {
       border-color: var(--b3-theme-primary-lighter);
       background: var(--b3-theme-surface);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     }
 
     .doc-nav-parent,
     .doc-nav-children {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       flex-wrap: wrap;
       min-width: 0;
     }
 
     .doc-nav-icon {
-      width: 14px;
-      height: 14px;
+      width: 13px;
+      height: 13px;
       flex-shrink: 0;
       color: var(--b3-theme-on-surface);
-      opacity: 0.7;
+      opacity: 0.65;
+      transition: opacity 0.2s;
+    }
+
+    .doc-nav-parent:hover .doc-nav-icon,
+    .doc-nav-children:hover .doc-nav-icon {
+      opacity: 0.9;
     }
 
     .doc-nav-label {
       color: var(--b3-theme-on-surface);
       font-weight: 600;
       flex-shrink: 0;
-      font-size: 12px;
+      font-size: 11.5px;
       white-space: nowrap;
-      opacity: 0.8;
+      opacity: 0.75;
     }
 
     .doc-nav-link {
       color: var(--b3-theme-primary);
       text-decoration: none;
       cursor: pointer;
-      transition: all 0.15s ease;
-      padding: 3px 8px;
-      border-radius: 6px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      padding: 2px 7px;
+      border-radius: 5px;
       white-space: nowrap;
-      font-size: 12px;
+      font-size: 11.5px;
       font-weight: 500;
       background: transparent;
       border: 1px solid var(--b3-theme-surface-lighter);
       display: inline-flex;
       align-items: center;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .doc-nav-link:hover {
@@ -388,12 +387,17 @@ function injectNavigationStyles() {
       border-color: var(--b3-theme-primary);
       text-decoration: none;
       transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .doc-nav-link:active {
+      transform: translateY(0);
     }
 
     .doc-nav-children-list {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       flex-wrap: wrap;
       overflow: visible;
       min-width: 0;
@@ -402,32 +406,48 @@ function injectNavigationStyles() {
 
     .doc-nav-link-hidden {
       display: none;
+      animation: fadeIn 0.3s ease;
     }
 
     .doc-nav-link-hidden.show {
       display: inline-flex;
     }
 
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
     .doc-nav-expand {
       background: transparent;
       color: var(--b3-theme-primary);
-      border: 1px solid var(--b3-theme-primary);
-      border-radius: 6px;
-      padding: 4px 10px;
+      border: 1px dashed var(--b3-theme-primary);
+      border-radius: 5px;
+      padding: 2px 8px;
       cursor: pointer;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
-      transition: all 0.2s ease;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 3px;
       flex-shrink: 0;
+      opacity: 0.85;
     }
 
     .doc-nav-expand:hover {
       background: var(--b3-theme-primary);
       color: var(--b3-theme-surface);
+      border-style: solid;
+      opacity: 1;
       transform: scale(1.05) translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
     .doc-nav-expand:active {
@@ -435,8 +455,13 @@ function injectNavigationStyles() {
     }
 
     .doc-nav-expand .expand-icon {
-      width: 12px;
-      height: 12px;
+      width: 11px;
+      height: 11px;
+      transition: transform 0.2s;
+    }
+
+    .doc-navigation-container[data-expanded="true"] .expand-icon {
+      transform: rotate(180deg);
     }
   `
 

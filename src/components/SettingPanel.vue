@@ -53,6 +53,21 @@
         </div>
         <div class="b3-label__text">{{ i18n.enableImageCompressorDesc }}</div>
       </div>
+
+      <div class="setting-item b3-label">
+        <div class="fn__flex">
+          <span class="fn__flex-1">
+            {{ i18n.enableDocNavigation }}
+          </span>
+          <span class="fn__space"></span>
+          <input
+            type="checkbox"
+            class="b3-switch fn__flex-center"
+            v-model="localSettings.enableDocNavigation"
+          />
+        </div>
+        <div class="b3-label__text">{{ i18n.enableDocNavigationDesc }}</div>
+      </div>
     </div>
 
     <div class="fn__hr"></div>

@@ -4,3 +4,4 @@
 export { registerPageLock } from './pageLock'
 export { registerTableOfContents } from './tableOfContents'
 export { registerImageCompressor } from './imageCompressor'
+export { registerDocNavigation } from './docNavigation'

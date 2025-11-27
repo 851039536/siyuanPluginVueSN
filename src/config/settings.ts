@@ -10,6 +10,7 @@ export interface PluginSettings {
   enablePageLock: boolean       // 是否启用页面锁定功能
   enableTableOfContents: boolean // 是否启用目录插件功能
   enableImageCompressor: boolean // 是否启用图片压缩功能
+  enableDocNavigation: boolean   // 是否启用文档层级导航功能
 }
 
 /**
@@ -19,6 +20,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enablePageLock: true,
   enableTableOfContents: true,
   enableImageCompressor: true,
+  enableDocNavigation: true,
 }
 
 /**

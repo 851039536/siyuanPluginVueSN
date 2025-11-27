@@ -5,7 +5,7 @@ import {
 import "@/index.scss";
 import PluginInfoString from '@/../plugin.json'
 import { destroy, init } from '@/main'
-import { registerPageLock, registerTableOfContents, registerImageCompressor } from '@/features'
+import { registerPageLock, registerTableOfContents, registerImageCompressor, registerDocNavigation } from '@/features'
 import { loadSettings, saveSettings, type PluginSettings } from '@/config/settings'
 
 let PluginInfo = {
@@ -90,6 +90,10 @@ export default class PluginSample extends Plugin {
     if (this.settings.enableImageCompressor) {
       console.log('注册图片压缩功能')
       registerImageCompressor(this)
+    }
+    if (this.settings.enableDocNavigation) {
+      console.log('注册文档层级导航功能')
+      registerDocNavigation(this)
     }
   }
 

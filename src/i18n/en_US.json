@@ -87,5 +87,7 @@
     "totalSaved": "Total Saved"
   },
   "enableImageCompressor": "Enable Image Compressor",
-  "enableImageCompressorDesc": "Scan and compress images in assets directory to save storage space"
+  "enableImageCompressorDesc": "Scan and compress images in assets directory to save storage space",
+  "enableDocNavigation": "Enable Document Navigation",
+  "enableDocNavigationDesc": "Auto display navigation links to parent and child documents below title"
 }

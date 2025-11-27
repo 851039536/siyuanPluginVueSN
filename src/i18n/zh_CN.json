@@ -87,5 +87,7 @@
     "totalSaved": "总共节省"
   },
   "enableImageCompressor": "启用图片压缩功能",
-  "enableImageCompressorDesc": "扫描并压缩 assets 目录下的图片,节省存储空间"
+  "enableImageCompressorDesc": "扫描并压缩 assets 目录下的图片,节省存储空间",
+  "enableDocNavigation": "启用文档层级导航",
+  "enableDocNavigationDesc": "在文档标题下方自动显示父子文档的导航链接"
 }

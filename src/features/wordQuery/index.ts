@@ -117,7 +117,7 @@ export class WordQuery {
    * 检测是否为中文
    */
   private isChinese(text: string): boolean {
-    return /[\u4e00-\u9fa5]+/.test(text);
+    return /^[\u4e00-\u9fa5\s]+$/.test(text);
   }
 
   /**

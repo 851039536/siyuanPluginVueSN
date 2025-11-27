@@ -7,7 +7,7 @@
           v-model="searchWord"
           type="text"
           class="query-input"
-          :placeholder="i18n.enterWordPlaceholder || '输入单词或词语查询...'"
+          :placeholder="i18n.enterWordPlaceholder || '输入单词或词语，2秒后自动查询...'"
           @keyup.enter="handleQuery"
         />
         <button class="query-btn" @click="handleQuery" :disabled="isLoading">
@@ -123,7 +123,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { showMessage } from 'siyuan';
 
 // Props
@@ -144,6 +144,7 @@ const showCopyOptions = ref(false);
 const showApiKeySettings = ref(false);
 const apiKey = ref('');
 const apiKeyVisible = ref(false);
+const autoQueryTimer = ref<NodeJS.Timeout | null>(null);
 
 // 格式化查询结果
 const formattedResult = computed(() => {
@@ -153,13 +154,60 @@ const formattedResult = computed(() => {
   let html = queryResult.value;
   
   // 转换标题 #### 为 h4
-  html = html.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
+  html = html.replace(/^#### (.+)$/gm, '<h4 class="result-title">$1</h4>');
+  
+  // 转换换行为段落
+  html = html.replace(/\n/g, '<br>');
+  
+  // 为每个字段创建单独的区块，并添加特定样式类
+  html = html.replace(/<br>(单词|词语)：/g, '</div><div class="result-section word-section"><span class="result-label">$1：</span>');
+  html = html.replace(/<br>(拼音|音标)：/g, '</div><div class="result-section phonetic-section"><span class="result-label">$1：</span>');
+  html = html.replace(/<br>(英文)：/g, '</div><div class="result-section english-section"><span class="result-label">$1：</span>');
+  html = html.replace(/<br>(释义)：/g, '</div><div class="result-section meaning-section"><span class="result-label">$1：</span>');
+  html = html.replace(/<br>(谐音)：/g, '</div><div class="result-section pronunciation-section"><span class="result-label">$1：</span>');
+  html = html.replace(/<br>(发音)：/g, '</div><div class="result-section tip-section"><span class="result-label">$1：</span>');
+  html = html.replace(/<br>(例句)：/g, '</div><div class="result-section example-section"><span class="result-label">$1：</span>');
+  
+  // 为第一个字段添加开始div
+  const firstMatch = html.match(/^(单词|词语|拼音|音标|英文|释义|谐音|发音|例句)：/);
+  if (firstMatch) {
+    const fieldType = firstMatch[1];
+    let sectionClass = 'result-section';
+    
+    switch(fieldType) {
+      case '单词':
+      case '词语':
+        sectionClass = 'result-section word-section';
+        break;
+      case '拼音':
+      case '音标':
+        sectionClass = 'result-section phonetic-section';
+        break;
+      case '英文':
+        sectionClass = 'result-section english-section';
+        break;
+      case '释义':
+        sectionClass = 'result-section meaning-section';
+        break;
+      case '谐音':
+        sectionClass = 'result-section pronunciation-section';
+        break;
+      case '发音':
+        sectionClass = 'result-section tip-section';
+        break;
+      case '例句':
+        sectionClass = 'result-section example-section';
+        break;
+    }
+    
+    html = html.replace(/^(单词|词语|拼音|音标|英文|释义|谐音|发音|例句)：/, `<div class="${sectionClass}"><span class="result-label">$1：</span>`);
+  }
+  
+  // 为整个内容添加包装
+  html = '<div class="result-wrapper">' + html + '</div>';
   
   // 转换加粗 **text** 为 <strong>text</strong>
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  
-  // 转换换行
-  html = html.replace(/\n/g, '<br>');
   
   return html;
 });
@@ -226,6 +274,23 @@ const handleQuery = async () => {
     errorMessage.value = (error as Error).message || props.i18n.unknownError || '未知错误';
   } finally {
     isLoading.value = false;
+  }
+};
+
+// 自动查询函数
+const setupAutoQuery = () => {
+  // 清除之前的定时器
+  if (autoQueryTimer.value) {
+    clearTimeout(autoQueryTimer.value);
+    autoQueryTimer.value = null;
+  }
+  
+  const word = searchWord.value.trim();
+  if (word && /^[a-zA-Z\s-\u4e00-\u9fa5]+$/.test(word)) {
+    // 设置2秒后自动查询
+    autoQueryTimer.value = setTimeout(() => {
+      handleQuery();
+    }, 2000);
   }
 };
 
@@ -340,6 +405,11 @@ const handleClickOutside = (event: Event) => {
   }
 };
 
+// 监听搜索词变化，自动设置定时器
+watch(searchWord, () => {
+  setupAutoQuery();
+});
+
 onMounted(() => {
   document.addEventListener('keydown', handleKeyDown);
   document.addEventListener('click', handleClickOutside);
@@ -350,6 +420,10 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeyDown);
   document.removeEventListener('click', handleClickOutside);
+  // 清除定时器
+  if (autoQueryTimer.value) {
+    clearTimeout(autoQueryTimer.value);
+  }
 });
 </script>
 
@@ -440,13 +514,13 @@ onUnmounted(() => {
 }
 
 .loading-spinner-large {
-  width: 24px;
-  height: 24px;
-  border: 2px solid var(--b3-theme-surface-light);
-  border-top: 2px solid var(--b3-theme-primary);
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--b3-theme-surface-light);
+  border-top: 3px solid var(--b3-theme-primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .query-error {
@@ -463,24 +537,56 @@ onUnmounted(() => {
   flex-direction: column;
   height: 100%;
   min-height: 0; /* 允许内容区域在flex容器中正确收缩 */
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .result-content {
   flex: 1;
   overflow-y: auto;
   margin-bottom: 16px;
-  padding: 12px;
+  padding: 16px;
   background: var(--b3-theme-surface-lighter);
-  border-radius: 4px;
+  border-radius: 8px;
   min-height: 100px; /* 设置最小内容高度 */
   word-wrap: break-word; /* 长单词自动换行 */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--b3-theme-surface-light);
 }
 
-.result-content h4 {
-  margin: 0 0 8px 0;
+.result-title {
+  margin: 0 0 16px 0;
   color: var(--b3-theme-primary);
-  font-size: 1.2em;
+  font-size: 1.4em;
+  font-weight: 600;
+  text-align: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--b3-theme-surface);
   word-wrap: break-word; /* 标题也可以换行 */
+}
+
+.result-label {
+  display: inline-block;
+  font-weight: 600;
+  color: var(--b3-theme-primary);
+  margin-right: 6px;
+  min-width: 60px;
+}
+
+.result-content br {
+  display: block;
+  margin-bottom: 8px;
+  content: "";
 }
 
 .result-actions {
@@ -594,6 +700,90 @@ onUnmounted(() => {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* 查询结果内容分组样式 */
+.result-wrapper {
+  padding: 8px 0;
+}
+
+.result-section {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  background: var(--b3-theme-background);
+  border-radius: 6px;
+  border-left: 4px solid var(--b3-theme-primary);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
+  line-height: 1.5;
+  font-size: 0.95em;
+}
+
+.result-section:hover {
+  transform: translateX(3px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
+}
+
+.result-section:last-child {
+  margin-bottom: 0;
+}
+
+.result-section strong {
+  color: var(--b3-theme-on-background);
+  font-weight: 500;
+}
+
+/* 不同内容类型的样式 */
+.word-section {
+  border-left-color: var(--b3-theme-primary);
+}
+
+.phonetic-section {
+  border-left-color: #2196F3;
+}
+
+.phonetic-section .result-label {
+  color: #2196F3;
+}
+
+.english-section {
+  border-left-color: #4CAF50;
+}
+
+.english-section .result-label {
+  color: #4CAF50;
+}
+
+.meaning-section {
+  border-left-color: #FF9800;
+}
+
+.meaning-section .result-label {
+  color: #FF9800;
+}
+
+.pronunciation-section {
+  border-left-color: #9C27B0;
+}
+
+.pronunciation-section .result-label {
+  color: #9C27B0;
+}
+
+.tip-section {
+  border-left-color: #00BCD4;
+}
+
+.tip-section .result-label {
+  color: #00BCD4;
+}
+
+.example-section {
+  border-left-color: #795548;
+}
+
+.example-section .result-label {
+  color: #795548;
 }
 
 /* API密钥设置相关样式 */

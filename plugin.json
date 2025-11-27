@@ -1,8 +1,8 @@
 {
   "name": "siyuan-plugin-vite-vue-sn",
-  "author": "wetoria",
+  "author": "sn",
   "url": "https://github.com/Wetoria/siyuan-plugin-vite-vue-sn",
-  "version": "0.0.1",
+  "version": "1.0.1",
   "minAppVersion": "2.10.14",
   "disabledInPublish": true,
   "backends": [
@@ -12,14 +12,14 @@
     "all"
   ],
   "displayName": {
-    "default": "siyuan-plugin-vite-vue-sn",
+    "default": "SN思源插件合集",
     "en_US": "siyuan-plugin-vite-vue-sn",
-    "zh_CN": "siyuan-plugin-vite-vue-sn"
+    "zh_CN": "SN思源插件合集"
   },
   "description": {
-    "default": "siyuan-plugin-vite-vue-sn",
+    "default": "SN思源插件合集",
     "en_US": "siyuan-plugin-vite-vue-sn",
-    "zh_CN": "siyuan-plugin-vite-vue-sn"
+    "zh_CN": "目录插件,图片压缩,层级导航,单词查询..."
   },
   "readme": {
     "default": "README.md",

@@ -1,7 +1,7 @@
 {
   "name": "siyuan-plugin-vite-vue-sn",
   "author": "sn",
-  "url": "https://github.com/Wetoria/siyuan-plugin-vite-vue-sn",
+  "url": "",
   "version": "1.0.1",
   "minAppVersion": "2.10.14",
   "disabledInPublish": true,

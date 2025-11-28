@@ -7,10 +7,9 @@
           <span class="section-icon">🔄</span>
           <h4>{{ i18n.pageActions || '页面操作' }}</h4>
         </div>
-
         <div class="action-grid">
           <!-- 刷新页面按钮 -->
-          <button @click="refreshPage" class="action-btn refresh-btn">
+          <button @click="refreshPage" class="action-btn refresh-btn" :disabled="isLoading">
             <div class="btn-icon">🔃</div>
             <div class="btn-content">
               <span class="btn-title">{{ i18n.refreshPage || '刷新页面' }}</span>
@@ -18,31 +17,115 @@
             </div>
             <div class="btn-arrow">→</div>
           </button>
+
+          <!-- 打开工作区按钮 -->
+          <button @click="openWorkspace" class="action-btn workspace-btn" :disabled="isLoading">
+            <div class="btn-icon">📁</div>
+            <div class="btn-content">
+              <span class="btn-title">{{ i18n.openWorkspace || '打开工作区' }}</span>
+              <span class="btn-desc">{{ i18n.openWorkspaceDesc || '打开笔记本文件夹' }}</span>
+            </div>
+            <div class="btn-arrow">→</div>
+          </button>
+
+          <!-- 关闭所有页签按钮 -->
+          <button @click="closeAllTabs" class="action-btn close-tabs-btn" :disabled="isLoading">
+            <div class="btn-icon">✕</div>
+            <div class="btn-content">
+              <span class="btn-title">{{ i18n.closeAllTabs || '关闭所有页签' }}</span>
+              <span class="btn-desc">{{ i18n.closeAllTabsDesc || '关闭除文件树外的所有页签' }}</span>
+            </div>
+            <div class="btn-arrow">→</div>
+          </button>
         </div>
       </div>
+
+      <!-- 系统信息区域 -->
+      <div class="info-section" v-if="systemInfo">
+        <div class="section-header">
+          <span class="section-icon">ℹ️</span>
+          <h4>{{ i18n.systemInfo || '系统信息' }}</h4>
+        </div>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">{{ i18n.version || '版本' }}</span>
+            <span class="info-value">{{ systemInfo.version }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">{{ i18n.platform || '平台' }}</span>
+            <span class="info-value">{{ systemInfo.platform }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">{{ i18n.currentTime || '当前时间' }}</span>
+            <span class="info-value">{{ systemInfo.currentTime }}</span>
+          </div>
+        </div>
       </div>
     </div>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { showMessage } from 'siyuan'
+import { ref, onMounted } from 'vue'
+import * as api from '@/api'
 
 interface Props {
   i18n?: any
+}
+
+interface SystemInfo {
+  version: string
+  platform: string
+  currentTime: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   i18n: () => ({})
 })
 
-// 刷新页面
-function refreshPage() {
-  performRefresh()
+const isLoading = ref(false)
+const systemInfo = ref<SystemInfo | null>(null)
+
+// 初始化系统信息
+onMounted(async () => {
+  await loadSystemInfo()
+})
+
+// 加载系统信息
+async function loadSystemInfo() {
+  try {
+    const version = await api.version()
+    const currentTime = await api.currentTime()
+    const platform = getPlatformInfo()
+
+    systemInfo.value = {
+      version: version || 'Unknown',
+      platform: platform,
+      currentTime: new Date(currentTime).toLocaleString()
+    }
+  } catch (error) {
+    console.error('Failed to load system info:', error)
+  }
 }
 
-// 执行刷新
-async function performRefresh() {
+// 获取平台信息
+function getPlatformInfo(): string {
+  const ua = navigator.userAgent
+  if (ua.includes('Windows')) return 'Windows'
+  if (ua.includes('Mac')) return 'macOS'
+  if (ua.includes('Linux')) return 'Linux'
+  if (ua.includes('Android')) return 'Android'
+  if (ua.includes('iPhone') || ua.includes('iPad')) return 'iOS'
+  return 'Unknown'
+}
+
+// 刷新页面
+async function refreshPage() {
+  if (isLoading.value) return
+
   try {
+    isLoading.value = true
     showMessage(props.i18n.refreshing || '正在刷新页面...', 2000, 'info')
 
     // 保存当前设置到localStorage
@@ -60,13 +143,58 @@ async function performRefresh() {
     }, 1000)
   } catch (error) {
     console.error('刷新失败:', error)
-    throw error
+    showMessage(props.i18n.refreshFailed || '刷新失败', 3000, 'error')
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// 打开工作区
+async function openWorkspace() {
+  if (isLoading.value) return
+
+  try {
+    isLoading.value = true
+    const event = new CustomEvent('openWorkspace')
+    window.dispatchEvent(event)
+    showMessage(props.i18n.workspaceOpened || '工作区已打开', 2000, 'info')
+  } catch (error) {
+    console.error('打开工作区失败:', error)
+    showMessage(props.i18n.openWorkspaceFailed || '打开工作区失败', 3000, 'error')
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// 关闭所有页签
+async function closeAllTabs() {
+  if (isLoading.value) return
+
+  try {
+    isLoading.value = true
+    showMessage(props.i18n.closingTabs || '正在关闭页签...', 2000, 'info')
+
+    // 触发思源的关闭事件
+    const event = new CustomEvent('closeAllTabs')
+    window.dispatchEvent(event)
+
+    setTimeout(() => {
+      showMessage(props.i18n.allTabsClosed || '所有页签已关闭', 2000, 'info')
+    }, 500)
+  } catch (error) {
+    console.error('关闭页签失败:', error)
+    showMessage(props.i18n.closeTabsFailed || '关闭页签失败', 3000, 'error')
+  } finally {
+    isLoading.value = false
   }
 }
 
 // 暴露方法给父组件
 defineExpose({
   refreshPage,
+  openWorkspace,
+  closeAllTabs,
+  loadSystemInfo
 })
 </script>
 
@@ -86,8 +214,9 @@ defineExpose({
   max-width: 100%;
 }
 
-/* 操作区域 */
-.action-section {
+/* 区域容器 */
+.action-section,
+.info-section {
   border: 2px solid var(--b3-theme-outline);
   border-radius: 12px;
   overflow: hidden;
@@ -96,7 +225,8 @@ defineExpose({
   transition: all 0.3s ease;
 }
 
-.action-section:hover {
+.action-section:hover,
+.info-section:hover {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   transform: translateY(-1px);
 }
@@ -131,6 +261,37 @@ defineExpose({
   padding: 16px;
 }
 
+/* 信息网格 */
+.info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background: var(--b3-theme-surface-variant);
+  border-radius: 8px;
+  border-left: 3px solid var(--b3-theme-primary);
+}
+
+.info-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--b3-theme-on-surface-variant);
+}
+
+.info-value {
+  font-size: 13px;
+  color: var(--b3-theme-on-surface);
+  font-weight: 500;
+  font-family: 'Courier New', monospace;
+}
+
 /* 操作按钮样式 */
 .action-btn {
   display: flex;
@@ -144,18 +305,24 @@ defineExpose({
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  font-family: inherit;
 }
 
-.action-btn:hover {
+.action-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
   border-color: var(--b3-theme-primary);
   background: linear-gradient(135deg, var(--b3-theme-surface-variant), var(--b3-theme-surface));
 }
 
-.action-btn:active {
+.action-btn:active:not(:disabled) {
   transform: translateY(0);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* 按钮箭头 */
@@ -173,24 +340,20 @@ defineExpose({
 }
 
 /* 不同类型的按钮样式 */
-.refresh-btn:hover {
+.refresh-btn:hover:not(:disabled) {
   background: linear-gradient(135deg, var(--b3-theme-primary-container), var(--b3-theme-secondary-container));
 }
 
-.cache-btn:hover {
+.workspace-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+}
+
+.close-tabs-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+}
+
+.cache-btn:hover:not(:disabled) {
   background: linear-gradient(135deg, var(--b3-theme-error-container), var(--b3-theme-error));
-}
-
-.update-btn:hover {
-  background: linear-gradient(135deg, var(--b3-theme-success-container), var(--b3-theme-success));
-}
-
-.export-btn:hover {
-  background: linear-gradient(135deg, var(--b3-theme-info-container), var(--b3-theme-info));
-}
-
-.import-btn:hover {
-  background: linear-gradient(135deg, var(--b3-theme-warning-container), var(--b3-theme-warning));
 }
 
 /* 按钮图标 */
@@ -243,11 +406,11 @@ defineExpose({
 }
 
 /* 按钮悬停时的文字效果 */
-.action-btn:hover .btn-title {
+.action-btn:hover:not(:disabled) .btn-title {
   color: var(--b3-theme-on-primary);
 }
 
-.action-btn:hover .btn-desc {
+.action-btn:hover:not(:disabled) .btn-desc {
   color: var(--b3-theme-on-primary);
   opacity: 0.9;
 }

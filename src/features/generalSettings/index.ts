@@ -247,6 +247,133 @@ export function registerGeneralSettings(plugin: Plugin) {
   // 保存实例到插件对象中，以便在其他地方使用
   (plugin as any).__generalSettings = settings;
 
+  // 监听打开工作区事件
+  window.addEventListener('openWorkspace', async () => {
+    try {
+      // 获取工作区路径 - 多种策略获取
+      let workspacePath = null
+
+      // 策略1: 从siyuan全局配置获取
+      if ((window as any).siyuan?.config?.system?.workspaceDir) {
+        workspacePath = (window as any).siyuan.config.system.workspaceDir
+      }
+      // 策略2: 从dataDir推导
+      else if ((window as any).siyuan?.config?.dataDir) {
+        const dataDir = (window as any).siyuan.config.dataDir
+        // 思源的dataDir通常是 /workspace/data，上级目录是工作区
+        workspacePath = dataDir.substring(0, dataDir.lastIndexOf('/')) || dataDir.substring(0, dataDir.lastIndexOf('\\'))
+      }
+      // 策略3: 从localStorage获取
+      if (!workspacePath) {
+        workspacePath = localStorage.getItem('siyuan_workspace_path')
+      }
+
+      if (workspacePath) {
+        // 使用 Electron API 打开文件夹（真实环境）
+        let successfullyOpened = false
+        if ((window as any).require) {
+          try {
+            const { shell } = (window as any).require('electron')
+            const result = await shell.openPath(workspacePath)
+            successfullyOpened = !result // shell.openPath返回空字符串表示成功
+            console.log('使用Electron打开工作区，结果:', result || '成功')
+          } catch (electronError) {
+            console.warn('Electron API 不可用或失败:', electronError)
+          }
+        } else {
+          console.log('非Electron环境')
+        }
+
+        // 显示成功消息
+        showMessage(plugin.i18n.workspaceOpened || '工作区已打开', 2000, 'info')
+        console.log('工作区打开命令已执行，路径:', workspacePath)
+      } else {
+        showMessage(plugin.i18n.openWorkspaceFailed || '打开工作区失败', 3000, 'error')
+        console.error('无法获取工作区路径')
+      }
+    } catch (error) {
+      console.error('打开工作区失败:', error)
+      showMessage(plugin.i18n.openWorkspaceFailed || '打开工作区失败', 3000, 'error')
+    }
+  })
+
+  // 监听关闭所有页签事件
+  window.addEventListener('closeAllTabs', () => {
+    try {
+      // Try multiple selectors to find tabs
+      const selectors = [
+        '[role="tab"]',  // Method 1: WAI-ARIA role
+        '[data-type][data-id]',  // Method 2: data attributes
+        '.layout-tab-bar .item',  // Method 3: CSS class
+        '.item[data-id]'  // Method 4: combined selector
+      ]
+
+      let tabs: NodeListOf<Element> | Element[] = []
+      for (const selector of selectors) {
+        const result = document.querySelectorAll(selector)
+        if (result.length > 0) {
+          tabs = result
+          console.log(`Found tabs using selector: ${selector}, count: ${tabs.length}`)
+          break
+        }
+      }
+
+      // If no tabs found
+      if (tabs.length === 0) {
+        console.warn('No tab elements found')
+      }
+
+      let closedCount = 0
+      const tabArray = Array.from(tabs)
+
+      // Close tabs from back to front to avoid index issues
+      for (let i = tabArray.length - 1; i >= 0; i--) {
+        const tab = tabArray[i] as any
+
+        // Skip readonly tabs
+        if (tab.getAttribute('data-type') === 'readonly' ||
+            tab.getAttribute('role') === 'readonly' ||
+            tab.classList?.contains('item--readonly')) {
+          continue
+        }
+
+        // Method 1: Find and click close button
+        const closeBtn = tab.querySelector('[class*="close"]') ||
+                        tab.querySelector('[data-action="close"]') ||
+                        tab.querySelector('.item__close')
+
+        if (closeBtn) {
+          try {
+            (closeBtn as HTMLElement).click()
+            closedCount++
+          } catch (clickErr) {
+            console.warn('Failed to click close button:', clickErr)
+          }
+        } else {
+          // Method 2: Send Ctrl+W keyboard shortcut
+          try {
+            document.activeElement?.dispatchEvent(new KeyboardEvent('keydown', {
+              key: 'w',
+              code: 'KeyW',
+              ctrlKey: true,
+              bubbles: true,
+              cancelable: true
+            }))
+            closedCount++
+          } catch (keyErr) {
+            console.warn('Failed to send Ctrl+W shortcut:', keyErr)
+          }
+        }
+      }
+
+      showMessage(plugin.i18n.allTabsClosed || '所有页签已关闭', 2000, 'info')
+      console.log(`Closed ${closedCount} tabs, total: ${tabs.length}`, closedCount === 0 ? '(might not have found tabs or tabs cannot be closed)' : '')
+    } catch (error) {
+      console.error('Failed to close tabs:', error)
+      showMessage(plugin.i18n.closeTabsFailed || '关闭页签失败', 3000, 'error')
+    }
+  })
+
   console.log('通用设置模块已注册');
   return settings;
 }

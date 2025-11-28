@@ -13,7 +13,18 @@ export interface PluginSettings {
   enableDocNavigation: boolean   // 是否启用文档层级导航功能
   enableShortcuts: boolean       // 是否启用快捷键面板功能
   enableWordQuery: boolean       // 是否启用单词查询功能
+  enableGeneralSettings: boolean // 是否启用通用设置功能
   wordQueryApiKey: string        // 单词查询API密钥
+}
+
+/**
+ * 字体设置接口
+ */
+export interface FontSettings {
+  fontFamily: string    // 字体族
+  fontSize: number      // 字体大小
+  fontWeight: string    // 字体粗细
+  lineHeight: number    // 行高
 }
 
 /**
@@ -26,7 +37,18 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enableDocNavigation: true,
   enableShortcuts: true,
   enableWordQuery: true,
+  enableGeneralSettings: true,
   wordQueryApiKey: 'sk-fae27cc50015409fb2524b0970d3f0b0',
+}
+
+/**
+ * 默认字体设置
+ */
+export const DEFAULT_FONT_SETTINGS: FontSettings = {
+  fontFamily: '',
+  fontSize: 14,
+  fontWeight: 'normal',
+  lineHeight: 1.6
 }
 
 /**
@@ -61,6 +83,50 @@ export async function saveSettings(plugin: Plugin, settings: PluginSettings): Pr
     return true
   } catch (error) {
     console.error('保存配置失败:', error)
+    return false
+  }
+}
+
+/**
+ * 加载字体设置
+ */
+export function loadFontSettings(): FontSettings {
+  try {
+    const saved = localStorage.getItem('general-font-settings')
+    if (saved) {
+      const parsed = JSON.parse(saved)
+      return { ...DEFAULT_FONT_SETTINGS, ...parsed }
+    }
+  } catch (error) {
+    console.error('加载字体设置失败:', error)
+  }
+  return { ...DEFAULT_FONT_SETTINGS }
+}
+
+/**
+ * 保存字体设置
+ */
+export function saveFontSettings(settings: FontSettings): boolean {
+  try {
+    localStorage.setItem('general-font-settings', JSON.stringify(settings))
+    console.log('字体设置已保存:', settings)
+    return true
+  } catch (error) {
+    console.error('保存字体设置失败:', error)
+    return false
+  }
+}
+
+/**
+ * 重置字体设置
+ */
+export function resetFontSettings(): boolean {
+  try {
+    localStorage.removeItem('general-font-settings')
+    console.log('字体设置已重置')
+    return true
+  } catch (error) {
+    console.error('重置字体设置失败:', error)
     return false
   }
 }

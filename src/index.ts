@@ -5,7 +5,7 @@ import {
 import "@/index.scss";
 import PluginInfoString from '@/../plugin.json'
 import { destroy, init } from '@/main'
-import { registerPageLock, registerTableOfContents, registerImageCompressor, registerDocNavigation, registerShortcut, registerWordQuery } from '@/features'
+import { registerPageLock, registerTableOfContents, registerImageCompressor, registerDocNavigation, registerShortcut, registerWordQuery, registerGeneralSettings } from '@/features'
 import { loadSettings, saveSettings, type PluginSettings } from '@/config/settings'
 
 let PluginInfo = {
@@ -102,6 +102,10 @@ export default class PluginSample extends Plugin {
     if (this.settings.enableWordQuery) {
       console.log('注册单词查询功能')
       registerWordQuery(this)
+    }
+    if (this.settings.enableGeneralSettings) {
+      console.log('注册通用设置功能')
+      registerGeneralSettings(this)
     }
   }
 

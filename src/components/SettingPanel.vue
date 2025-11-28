@@ -99,6 +99,21 @@
         <div class="b3-label__text">{{ i18n.enableWordQueryDesc || '在右侧边栏查询单词释义、音标、谐音等信息' }}</div>
       </div>
 
+      <div class="setting-item b3-label">
+        <div class="fn__flex">
+          <span class="fn__flex-1">
+            {{ i18n.enableGeneralSettings || '通用设置' }}
+          </span>
+          <span class="fn__space"></span>
+          <input
+            type="checkbox"
+            class="b3-switch fn__flex-center"
+            v-model="localSettings.enableGeneralSettings"
+          />
+        </div>
+        <div class="b3-label__text">{{ i18n.enableGeneralSettingsDesc || '在右侧边栏提供字体设置等通用配置功能' }}</div>
+      </div>
+
 
     </div>
 

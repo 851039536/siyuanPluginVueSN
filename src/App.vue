@@ -1,14 +1,5 @@
 <template>
   <div class="plugin-app-main">
-    <!-- 设置面板 -->
-    <SettingPanel
-      v-if="showSettings"
-      :settings="pluginSettings"
-      :i18n="plugin.i18n"
-      @save="onSaveSettings"
-      @cancel="onCancelSettings"
-    />
-
     <!-- 图片压缩器 -->
     <ImageViewer
       :visible="showImageViewer"
@@ -30,43 +21,16 @@
 <script setup lang="ts">
 import { usePlugin } from '@/main'
 import { onMounted, ref, watchEffect } from 'vue'
-import SettingPanel from '@/components/SettingPanel.vue'
 import ImageViewer from '@/features/imageCompressor/ImageViewer.vue'
 import QRCodeDialog from '@/features/qrCode/QRCodeDialog.vue'
-import { showMessage } from 'siyuan'
-import type { PluginSettings } from '@/config/settings'
 import type PluginSample from '@/index'
 
 const plugin = usePlugin() as PluginSample
-const showSettings = ref(false)
 const showImageViewer = ref(false)
 const showQRCodeDialog = ref(false)
 const qrcodeContent = ref('')
-const pluginSettings = ref<PluginSettings>(plugin.settings)
 
 console.log('plugin is ', plugin)
-
-const openSetting = () => {
-  showSettings.value = true
-  // 同步最新配置
-  pluginSettings.value = { ...plugin.settings }
-}
-
-const onSaveSettings = async (settings: PluginSettings) => {
-  const success = await plugin.updateSettings(settings)
-  if (success) {
-    showMessage(plugin.i18n.saveSettingsSuccess || '配置保存成功,请重启插件生效', 3000, 'info')
-    showSettings.value = false
-    // 更新本地配置副本
-    pluginSettings.value = { ...settings }
-  } else {
-    showMessage(plugin.i18n.saveSettingsFailed || '配置保存失败', 3000, 'error')
-  }
-}
-
-const onCancelSettings = () => {
-  showSettings.value = false
-}
 
 // 打开图片压缩器
 const openImageCompressor = () => {
@@ -132,7 +96,6 @@ onMounted(() => {
 
 onMounted(() => {
   window._sy_plugin_sample = {}
-  window._sy_plugin_sample.openSetting = openSetting
   window._sy_plugin_sample.openQRCodeDialog = openQRCodeDialog
 
   // 监听打开二维码对话框事件

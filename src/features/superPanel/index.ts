@@ -71,11 +71,14 @@ function openSuperPanel(plugin: Plugin) {
     onClose: () => {
       closeSuperPanel()
     },
-    onOpenSettings: () => {
-      plugin.openSetting()
-    },
     onAction: (action: string) => {
       handleFeatureAction(plugin, action)
+    },
+    onToggleFeature: async (featureId: string, enabled: boolean) => {
+      await handleFeatureToggle(plugin, featureId, enabled)
+    },
+    onRefresh: async () => {
+      await handleRefresh(plugin)
     }
   })
 
@@ -97,30 +100,97 @@ function closeSuperPanel() {
 
 
 /**
+ * 处理刷新
+ */
+async function handleRefresh(plugin: Plugin) {
+  try {
+    showMessage((plugin.i18n as any).superPanel?.refreshing || '正在刷新...', 1000, 'info')
+
+    // 先关闭面板
+    if (vueApp && panelContainer) {
+      vueApp.unmount()
+      panelContainer.remove()
+      vueApp = null
+      panelContainer = null
+    }
+
+    // 使用 setTimeout 确保 DOM 完全清理后再重新打开
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    openSuperPanel(plugin)
+    showMessage((plugin.i18n as any).superPanel?.refreshSuccess || '已刷新', 1500, 'info')
+  } catch (error) {
+    console.error('刷新失败:', error)
+    showMessage('刷新失败', 2000, 'error')
+  }
+}
+
+/**
+ * 处理功能开关切换
+ */
+async function handleFeatureToggle(plugin: Plugin, featureId: string, enabled: boolean) {
+  const pluginSample = plugin as any
+  const settingsMap: Record<string, keyof typeof pluginSample.settings> = {
+    'tableOfContents': 'enableTableOfContents',
+    'imageCompressor': 'enableImageCompressor',
+    'docNavigation': 'enableDocNavigation',
+    'pageLock': 'enablePageLock',
+    'wordQuery': 'enableWordQuery',
+    'generalSettings': 'enableGeneralSettings',
+    'qrCode': 'enableQRCode',
+    'unitConverter': 'enableUnitConverter',
+    'shortcuts': 'enableShortcuts',
+    'diskBrowser': 'enableDiskBrowser'
+  }
+
+  const settingKey = settingsMap[featureId]
+  if (settingKey) {
+    const newSettings = {
+      ...pluginSample.settings,
+      [settingKey]: enabled
+    }
+
+    const success = await pluginSample.updateSettings(newSettings)
+    if (success) {
+      showMessage(
+        enabled
+          ? (plugin.i18n as any).featureEnabled || '功能已启用，请重启插件生效'
+          : (plugin.i18n as any).featureDisabled || '功能已禁用，请重启插件生效',
+        3000,
+        'info'
+      )
+      // 不关闭面板，让用户可以继续操作
+    } else {
+      showMessage((plugin.i18n as any).saveFailed || '保存失败', 3000, 'error')
+    }
+  }
+}
+
+/**
  * 处理功能操作
  */
 function handleFeatureAction(_plugin: Plugin, action: string) {
   switch (action) {
     case 'insertIndex':
       // 触发插入索引命令
-      window.dispatchEvent(new CustomEvent('executeCommand', { 
-        detail: { command: 'insertIndex' } 
+      window.dispatchEvent(new CustomEvent('executeCommand', {
+        detail: { command: 'insertIndex' }
       }))
       closeSuperPanel()
       break
 
     case 'insertOutline':
       // 触发插入大纲命令
-      window.dispatchEvent(new CustomEvent('executeCommand', { 
-        detail: { command: 'insertSubDocsWithOutline' } 
+      window.dispatchEvent(new CustomEvent('executeCommand', {
+        detail: { command: 'insertSubDocsWithOutline' }
       }))
       closeSuperPanel()
       break
 
     case 'insertRef':
       // 触发插入引用命令
-      window.dispatchEvent(new CustomEvent('executeCommand', { 
-        detail: { command: 'insertSubDocsRef' } 
+      window.dispatchEvent(new CustomEvent('executeCommand', {
+        detail: { command: 'insertSubDocsRef' }
       }))
       closeSuperPanel()
       break

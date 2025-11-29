@@ -1,6 +1,6 @@
 <template>
-  <div 
-    class="feature-card" 
+  <div
+    class="feature-card"
     :class="{ 'enabled': feature.enabled, 'disabled': !feature.enabled }"
     @click="handleCardClick"
   >
@@ -13,8 +13,13 @@
         <div class="feature-title">{{ feature.title }}</div>
         <div class="feature-desc">{{ feature.desc }}</div>
       </div>
-      <div class="feature-status" :class="{ 'enabled': feature.enabled, 'disabled': !feature.enabled }">
-        {{ feature.enabled ? (i18n.enabled || '已启用') : (i18n.disabled || '已禁用') }}
+      <div class="feature-toggle">
+        <input
+          type="checkbox"
+          class="b3-switch fn__flex-center"
+          :checked="feature.enabled"
+          @click.stop="handleToggle"
+        />
       </div>
     </div>
 
@@ -45,6 +50,7 @@ interface Props {
 
 interface Emits {
   (e: 'action', action: string): void
+  (e: 'toggle', featureId: string, enabled: boolean): void
 }
 
 const props = defineProps<Props>()
@@ -52,8 +58,12 @@ const emit = defineEmits<Emits>()
 
 const handleCardClick = () => {
   if (!props.feature.enabled) {
-    showMessage(props.i18n.featureDisabled || '该功能未启用，请在设置中开启', 2000, 'info')
+    showMessage(props.i18n.featureDisabled || '该功能未启用', 2000, 'info')
   }
+}
+
+const handleToggle = () => {
+  emit('toggle', props.feature.id, !props.feature.enabled)
 }
 
 const handleAction = (actionKey: string) => {
@@ -118,22 +128,11 @@ const handleAction = (actionKey: string) => {
   line-height: 1.4;
 }
 
-.feature-status {
-  font-size: 11px;
-  padding: 3px 8px;
-  border-radius: 12px;
-  font-weight: 500;
+.feature-toggle {
   flex-shrink: 0;
-
-  &.enabled {
-    background: var(--b3-theme-primary-lightest);
-    color: var(--b3-theme-primary);
-  }
-
-  &.disabled {
-    background: var(--b3-theme-surface-lighter);
-    color: var(--b3-theme-on-surface);
-  }
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .feature-actions {

@@ -70,10 +70,6 @@ export default class PluginSample extends Plugin {
     destroy()
   }
 
-  openSetting() {
-    window._sy_plugin_sample.openSetting()
-  }
-
   /**
    * 注册所有功能模块
    */

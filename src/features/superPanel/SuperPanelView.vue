@@ -17,9 +17,21 @@
           <IconWrapper name="superPanel" :size="20" />
           <span>{{ i18n.title || '超级面板' }}</span>
         </div>
-        <button class="super-panel-close" :title="i18n.close || '关闭'" @click="handleClose">
-          <IconWrapper name="close" :size="16" />
-        </button>
+        <div class="header-actions">
+          <button
+            class="super-panel-refresh"
+            :title="i18n.refresh || '刷新'"
+            :disabled="isRefreshing"
+            @click="handleRefresh"
+          >
+            <svg class="refresh-icon" :class="{ spinning: isRefreshing }" viewBox="0 0 24 24" width="16" height="16">
+              <path fill="currentColor" d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+            </svg>
+          </button>
+          <button class="super-panel-close" :title="i18n.close || '关闭'" @click="handleClose">
+            <IconWrapper name="close" :size="16" />
+          </button>
+        </div>
       </div>
 
       <!-- 内容区 -->
@@ -30,22 +42,15 @@
           :feature="feature"
           :i18n="i18n"
           @action="handleFeatureAction"
+          @toggle="handleFeatureToggle"
         />
-      </div>
-
-      <!-- 底部 -->
-      <div class="super-panel-footer">
-        <button class="super-panel-settings-btn" @click="handleOpenSettings">
-          <IconWrapper name="settings" :size="16" />
-          <span>{{ i18n.settings || '插件设置' }}</span>
-        </button>
       </div>
     </div>
   </Transition>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import IconWrapper from '@/components/IconWrapper.vue'
 import FeatureCard from './components/FeatureCard.vue'
 import type { Feature } from './types'
@@ -58,12 +63,16 @@ interface Props {
 
 interface Emits {
   (e: 'close'): void
-  (e: 'openSettings'): void
   (e: 'action', action: string): void
+  (e: 'toggleFeature', featureId: string, enabled: boolean): void
+  (e: 'refresh'): Promise<void>
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+
+// 刷新加载状态
+const isRefreshing = ref(false)
 
 // 功能列表配置
 const features = computed<Feature[]>(() => [
@@ -159,13 +168,25 @@ const handleClose = () => {
   emit('close')
 }
 
-const handleOpenSettings = () => {
-  emit('openSettings')
-  emit('close')
+const handleRefresh = async () => {
+  if (isRefreshing.value) return
+
+  isRefreshing.value = true
+  try {
+    await emit('refresh')
+  } finally {
+    // 注意:由于刷新会关闭并重新创建组件,这里的 finally 可能不会执行
+    // 但为了安全起见,仍然保留
+    isRefreshing.value = false
+  }
 }
 
 const handleFeatureAction = (action: string) => {
   emit('action', action)
+}
+
+const handleFeatureToggle = (featureId: string, enabled: boolean) => {
+  emit('toggleFeature', featureId, enabled)
 }
 </script>
 
@@ -237,6 +258,13 @@ const handleFeatureAction = (action: string) => {
   color: var(--b3-theme-on-background);
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.super-panel-refresh,
 .super-panel-close {
   width: 32px;
   height: 32px;
@@ -248,10 +276,52 @@ const handleFeatureAction = (action: string) => {
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
+  color: var(--b3-theme-on-surface);
 
   &:hover {
-    background: var(--b3-theme-error-lighter);
+    background: var(--b3-theme-surface-lighter);
   }
+}
+
+.super-panel-refresh:hover:not(:disabled) {
+  .refresh-icon:not(.spinning) {
+    animation: rotate 0.6s ease-in-out;
+  }
+}
+
+.super-panel-refresh:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.super-panel-close:hover {
+  background: var(--b3-theme-error-lighter);
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.refresh-icon {
+  display: block;
+}
+
+.refresh-icon.spinning {
+  animation: spin 1s linear infinite;
 }
 
 /* 面板内容 */
@@ -280,36 +350,6 @@ const handleFeatureAction = (action: string) => {
     &:hover {
       background: var(--b3-theme-on-surface);
     }
-  }
-}
-
-/* 面板底部 */
-.super-panel-footer {
-  padding: 16px 20px;
-  border-top: 1px solid var(--b3-theme-surface-lighter);
-  background: var(--b3-theme-surface);
-}
-
-.super-panel-settings-btn {
-  width: 100%;
-  padding: 12px;
-  background: var(--b3-theme-primary);
-  color: var(--b3-theme-surface);
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: all 0.2s;
-
-  &:hover {
-    background: var(--b3-theme-primary-light);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   }
 }
 </style>

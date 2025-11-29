@@ -289,6 +289,14 @@ const features = computed<Feature[]>(() => [
     desc: props.i18n.diskBrowserDesc || '浏览本地磁盘和文件夹',
     enabled: props.settings.enableDiskBrowser,
     actions: []
+  },
+  {
+    id: 'codeImageGenerator',
+    iconKey: 'codeImageGenerator',
+    title: props.i18n.codeImageGenerator || '代码图片生成',
+    desc: props.i18n.enableCodeImageGeneratorDesc || '生成代码截图，支持GitHub、Mac、卡通风格',
+    enabled: props.settings.enableCodeImageGenerator,
+    actions: []
   }
 ])
 

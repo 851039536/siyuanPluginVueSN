@@ -90,6 +90,12 @@ export const FEATURE_ICONS = {
   diskBrowser: {
     icon: 'mdi:harddisk',
     color: '#f97316'
+  },
+
+  // 代码图片生成器
+  codeImageGenerator: {
+    icon: 'mdi:code-braces-box',
+    color: '#22c55e'
   }
 } as const
 

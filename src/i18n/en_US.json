@@ -294,5 +294,17 @@
   "expired": "Expired",
   "cacheExpiredTooltip": "Cache expired, click refresh button to get latest data",
   "cacheValidTooltip": "Cache valid time remaining",
-  "refreshing": "Refreshing..."
+  "refreshing": "Refreshing...",
+  "backToRoot": "Back to root",
+  "back": "Back",
+  "items": "items",
+  "openInExplorer": "Open in Explorer",
+  "copyPath": "Copy path",
+  "browse": "Browse",
+  "open": "Open",
+  "emptyFolder": "This folder is empty",
+  "pathCopied": "Path copied",
+  "today": "Today",
+  "yesterday": "Yesterday",
+  "daysAgo": "days ago"
 }

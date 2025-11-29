@@ -51,48 +51,112 @@
 
     <!-- 文件夹列表区域 -->
     <div class="folder-list" v-if="expandedDisk">
+      <!-- 面包屑导航 -->
+      <div class="breadcrumb-nav" v-if="currentPath">
+        <button class="breadcrumb-item" @click="navigateToRoot()" :title="i18n.backToRoot || '返回根目录'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          {{ expandedDisk }}
+        </button>
+        <span v-for="(segment, index) in pathSegments" :key="index" class="breadcrumb-segment">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <button class="breadcrumb-item" @click="navigateToPath(index)" :title="segment">
+            {{ segment }}
+          </button>
+        </span>
+      </div>
+
       <div class="folder-list-header">
-        <span>{{ expandedDisk }}</span>
+        <div class="header-left">
+          <button v-if="currentPath" class="back-btn" @click="navigateBack" :title="i18n.back || '返回上级'">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <span>{{ getCurrentDisplayPath() }}</span>
+        </div>
         <div class="folder-header-actions">
-          <span v-if="getFolderCacheInfo(expandedDisk)" class="cache-info-small" :class="{ expired: isFolderCacheExpired(expandedDisk) }" :title="getFolderCacheTooltip(expandedDisk)">
-            {{ getFolderCacheStatus(expandedDisk) }}
+          <span class="item-count" v-if="folders.length > 0">
+            {{ folders.length }} {{ i18n.items || '项' }}
           </span>
-          <button class="refresh-folder-btn" @click.stop="refreshFolder(expandedDisk)" :disabled="loadingFolders" :title="i18n.refresh || '刷新'">
+          <span v-if="getFolderCacheInfo(currentPath || expandedDisk)" class="cache-info-small" :class="{ expired: isFolderCacheExpired(currentPath || expandedDisk) }" :title="getFolderCacheTooltip(currentPath || expandedDisk)">
+            {{ getFolderCacheStatus(currentPath || expandedDisk) }}
+          </span>
+          <button class="refresh-folder-btn" @click.stop="refreshCurrentFolder()" :disabled="loadingFolders" :title="i18n.refresh || '刷新'">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21C9.73633 21 7.66145 20.1182 6.09277 18.6475" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
               <path d="M3 8V12H7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </button>
-          <button class="open-disk-btn" @click="openPath(expandedDisk)" :title="i18n.openFolder || '打开文件夹'">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <polyline points="15 3 21 3 21 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <line x1="10" y1="14" x2="21" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            {{ i18n.openFolder || '打开' }}
-          </button>
-        </div>
-      </div>
-      <div class="folder-items" v-if="!loadingFolders">
-        <div
-          v-for="folder in folders"
-          :key="folder.path"
-          class="folder-item"
-          @dblclick="openPath(folder.path)"
-        >
-          <div class="folder-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M3 7V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V9C21 7.89543 20.1046 7 19 7H13L11 5H5C3.89543 5 3 5.89543 3 7Z" stroke="currentColor" stroke-width="2"/>
-            </svg>
-          </div>
-          <div class="folder-name" :title="folder.name">{{ folder.name }}</div>
-          <button class="folder-open-btn" @click.stop="openPath(folder.path)" :title="i18n.openFolder || '打开'">
+          <button class="open-disk-btn" @click="openPath(currentPath || expandedDisk)" :title="i18n.openInExplorer || '在资源管理器中打开'">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               <polyline points="15 3 21 3 21 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               <line x1="10" y1="14" x2="21" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </button>
+          <button class="copy-path-btn" @click="copyPathToClipboard(currentPath || expandedDisk)" :title="i18n.copyPath || '复制路径'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="folder-items" v-if="!loadingFolders">
+        <div
+          v-for="item in folders"
+          :key="item.path"
+          class="folder-item"
+          :class="{ 'is-file': item.isFile }"
+          @click="handleItemClick(item)"
+          @dblclick="handleItemDoubleClick(item)"
+        >
+          <div class="folder-icon">
+            <svg v-if="!item.isFile" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 7V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V9C21 7.89543 20.1046 7 19 7H13L11 5H5C3.89543 5 3 5.89543 3 7Z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="13 2 13 9 20 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="folder-info">
+            <div class="folder-name" :title="item.name">{{ item.name }}</div>
+            <div class="folder-meta" v-if="item.size !== undefined || item.modifiedTime">
+              <span v-if="item.isFile && item.size !== undefined" class="file-size">{{ formatSize(item.size) }}</span>
+              <span v-if="item.modifiedTime" class="modified-time">{{ formatDate(item.modifiedTime) }}</span>
+            </div>
+          </div>
+          <div class="folder-actions">
+            <button v-if="!item.isFile" class="folder-action-btn" @click.stop="navigateIntoFolder(item)" :title="i18n.browse || '浏览'">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button class="folder-action-btn" @click.stop="openPath(item.path)" :title="i18n.open || '打开'">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <polyline points="15 3 21 3 21 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <line x1="10" y1="14" x2="21" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button class="folder-action-btn" @click.stop="copyPathToClipboard(item.path)" :title="i18n.copyPath || '复制路径'">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div v-if="folders.length === 0" class="empty-state">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 7V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V9C21 7.89543 20.1046 7 19 7H13L11 5H5C3.89543 5 3 5.89543 3 7Z" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          <p>{{ i18n.emptyFolder || '此文件夹为空' }}</p>
         </div>
       </div>
       <div class="loading-state" v-else>
@@ -118,6 +182,9 @@ interface DiskInfo {
 interface FolderInfo {
   name: string
   path: string
+  isFile?: boolean
+  size?: number
+  modifiedTime?: string
 }
 
 interface CacheData<T> {
@@ -136,6 +203,8 @@ const expandedDisk = ref<string>('')
 const folders = ref<FolderInfo[]>([])
 const loading = ref(false)
 const loadingFolders = ref(false)
+const currentPath = ref<string>('')
+const pathSegments = ref<string[]>([])
 
 // 缓存管理
 const CACHE_EXPIRY_TIME = 60 * 60 * 1000 // 1小时缓存失效时间
@@ -236,14 +305,17 @@ function getDefaultDisks(): DiskInfo[] {
  * 切换磁盘选择和展开
  */
 async function toggleDisk(disk: DiskInfo) {
-  // 点击卡片直接展开
   if (expandedDisk.value === disk.drive) {
     expandedDisk.value = ''
     selectedDisk.value = ''
     folders.value = []
+    currentPath.value = ''
+    pathSegments.value = []
   } else {
     expandedDisk.value = disk.drive
     selectedDisk.value = disk.drive
+    currentPath.value = ''
+    pathSegments.value = []
     await loadFolders(disk.drive)
   }
 }
@@ -340,6 +412,17 @@ function refreshFolder(drive: string) {
 }
 
 /**
+ * 刷新当前文件夹
+ */
+function refreshCurrentFolder() {
+  const pathToRefresh = currentPath.value || expandedDisk.value
+  if (pathToRefresh) {
+    loadFoldersFromPath(pathToRefresh, true)
+    showMessage(props.i18n.refreshing || '正在刷新...', 2000, 'info')
+  }
+}
+
+/**
  * 更新缓存信息显示
  */
 function updateCacheInfo() {
@@ -423,6 +506,242 @@ function getFolderCacheTooltip(drive: string): string {
     return props.i18n.cacheExpiredTooltip || '缓存已过期，点击刷新按钮获取最新数据'
   }
   return props.i18n.cacheValidTooltip || `缓存有效期剩余 ${getFolderCacheInfo(drive)}`
+}
+
+/**
+ * 从指定路径加载文件夹和文件（带缓存）
+ */
+async function loadFoldersFromPath(path: string, forceRefresh = false) {
+  const cachedFolders = folderCacheMap.value.get(path)
+  if (!forceRefresh && cachedFolders && isCacheValid(cachedFolders)) {
+    folders.value = cachedFolders.data
+    return
+  }
+
+  loadingFolders.value = true
+  folders.value = []
+
+  try {
+    if (window.require) {
+      const { exec } = window.require('child_process')
+      const util = window.require('util')
+      const execPromise = util.promisify(exec)
+
+      // 获取文件夹和文件信息
+      const command = `powershell -NoProfile -ExecutionPolicy Bypass -Command "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-ChildItem -Path '${path}' -ErrorAction SilentlyContinue | Where-Object { -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) } | Select-Object Name, @{Name='IsFile';Expression={-not $_.PSIsContainer}}, Length, LastWriteTime | ConvertTo-Json -Compress"`
+      const { stdout } = await execPromise(command, { encoding: 'utf8' })
+
+      const itemList: FolderInfo[] = []
+      try {
+        const itemData = JSON.parse(stdout)
+        const itemArray = Array.isArray(itemData) ? itemData : [itemData]
+
+        for (const item of itemArray) {
+          if (item && item.Name) {
+            const itemName = String(item.Name).trim()
+            const itemPath = path.endsWith('\\') || path.endsWith(':') ? `${path}\\${itemName}` : `${path}\\${itemName}`
+
+            itemList.push({
+              name: itemName,
+              path: itemPath.replace(/\\\\/g, '\\'),
+              isFile: item.IsFile || false,
+              size: item.Length ? parseInt(item.Length) : undefined,
+              modifiedTime: item.LastWriteTime || undefined
+            })
+          }
+        }
+
+        // 按照文件夹在前，文件在后排序
+        itemList.sort((a, b) => {
+          if (a.isFile === b.isFile) {
+            return a.name.localeCompare(b.name, 'zh-CN')
+          }
+          return a.isFile ? 1 : -1
+        })
+      } catch (e) {
+        // 如果没有项目或解析失败，返回空列表
+      }
+
+      folders.value = itemList
+      folderCacheMap.value.set(path, {
+        data: itemList,
+        timestamp: Date.now()
+      })
+    }
+  } catch (error) {
+    console.error('加载文件夹失败:', error)
+    showMessage(props.i18n.loadFoldersFailed || '加载文件夹失败', 3000, 'error')
+  } finally {
+    loadingFolders.value = false
+  }
+}
+
+/**
+ * 处理项目单击
+ */
+function handleItemClick(item: FolderInfo) {
+  // 单击选中，不执行操作
+}
+
+/**
+ * 处理项目双击
+ */
+function handleItemDoubleClick(item: FolderInfo) {
+  if (item.isFile) {
+    // 双击文件则打开
+    openPath(item.path)
+  } else {
+    // 双击文件夹则进入
+    navigateIntoFolder(item)
+  }
+}
+
+/**
+ * 进入文件夹
+ */
+async function navigateIntoFolder(item: FolderInfo) {
+  currentPath.value = item.path
+  updatePathSegments()
+  await loadFoldersFromPath(item.path)
+}
+
+/**
+ * 返回上级目录
+ */
+async function navigateBack() {
+  if (!currentPath.value) return
+
+  const lastSlash = currentPath.value.lastIndexOf('\\')
+  if (lastSlash > 0) {
+    const parentPath = currentPath.value.substring(0, lastSlash)
+    // 如果是盘符根目录
+    if (parentPath.endsWith(':')) {
+      currentPath.value = ''
+      pathSegments.value = []
+      await loadFolders(expandedDisk.value)
+    } else {
+      currentPath.value = parentPath
+      updatePathSegments()
+      await loadFoldersFromPath(parentPath)
+    }
+  } else {
+    // 返回根目录
+    navigateToRoot()
+  }
+}
+
+/**
+ * 返回根目录
+ */
+async function navigateToRoot() {
+  currentPath.value = ''
+  pathSegments.value = []
+  await loadFolders(expandedDisk.value)
+}
+
+/**
+ * 导航到指定路径段
+ */
+async function navigateToPath(segmentIndex: number) {
+  const segments = pathSegments.value.slice(0, segmentIndex + 1)
+  const newPath = `${expandedDisk.value}\\${segments.join('\\')}`
+  currentPath.value = newPath
+  updatePathSegments()
+  await loadFoldersFromPath(newPath)
+}
+
+/**
+ * 更新路径段
+ */
+function updatePathSegments() {
+  if (!currentPath.value || currentPath.value === expandedDisk.value) {
+    pathSegments.value = []
+    return
+  }
+
+  const pathWithoutDrive = currentPath.value.replace(expandedDisk.value + '\\', '')
+  pathSegments.value = pathWithoutDrive.split('\\').filter(s => s)
+}
+
+/**
+ * 获取当前显示路径
+ */
+function getCurrentDisplayPath(): string {
+  if (!currentPath.value) {
+    return expandedDisk.value
+  }
+  const segments = pathSegments.value
+  if (segments.length === 0) {
+    return expandedDisk.value
+  }
+  return segments[segments.length - 1]
+}
+
+/**
+ * 复制路径到剪贴板
+ */
+function copyPathToClipboard(path: string) {
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(path).then(() => {
+        showMessage(props.i18n.pathCopied || '路径已复制', 2000, 'info')
+      }).catch(err => {
+        console.error('复制失败:', err)
+        fallbackCopyToClipboard(path)
+      })
+    } else {
+      fallbackCopyToClipboard(path)
+    }
+  } catch (error) {
+    console.error('复制路径失败:', error)
+    showMessage(props.i18n.copyFailed || '复制失败', 2000, 'error')
+  }
+}
+
+/**
+ * 后备复制方法
+ */
+function fallbackCopyToClipboard(text: string) {
+  const textarea = document.createElement('textarea')
+  textarea.value = text
+  textarea.style.position = 'fixed'
+  textarea.style.opacity = '0'
+  document.body.appendChild(textarea)
+  textarea.select()
+  try {
+    document.execCommand('copy')
+    showMessage(props.i18n.pathCopied || '路径已复制', 2000, 'info')
+  } catch (err) {
+    showMessage(props.i18n.copyFailed || '复制失败', 2000, 'error')
+  }
+  document.body.removeChild(textarea)
+}
+
+/**
+ * 格式化日期
+ */
+function formatDate(dateString: string): string {
+  try {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diff = now.getTime() - date.getTime()
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+
+    if (days === 0) {
+      return props.i18n.today || '今天'
+    } else if (days === 1) {
+      return props.i18n.yesterday || '昨天'
+    } else if (days < 7) {
+      return `${days} ${props.i18n.daysAgo || '天前'}`
+    } else {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
+  } catch (e) {
+    return dateString
+  }
 }
 
 /**
@@ -672,6 +991,57 @@ onUnmounted(() => {
   border-top: 1px solid var(--b3-theme-surface-lighter);
 }
 
+// 面包屑导航
+.breadcrumb-nav {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: var(--b3-theme-surface);
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  overflow-x: auto;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--b3-theme-surface-lighter);
+    border-radius: 2px;
+  }
+}
+
+.breadcrumb-segment {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--b3-theme-on-surface-light);
+}
+
+.breadcrumb-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+    color: var(--b3-theme-primary);
+  }
+
+  svg {
+    flex-shrink: 0;
+  }
+}
+
 .folder-list-header {
   display: flex;
   align-items: center;
@@ -681,11 +1051,51 @@ onUnmounted(() => {
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
   flex-shrink: 0;
 
-  span {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--b3-theme-on-background);
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+
+    span {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--b3-theme-on-background);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+    color: var(--b3-theme-primary);
+  }
+}
+
+.item-count {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--b3-theme-surface-lighter);
+  color: var(--b3-theme-on-surface-light);
+  white-space: nowrap;
 }
 
 .folder-header-actions {
@@ -721,21 +1131,43 @@ onUnmounted(() => {
   }
 }
 
+.copy-path-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+    color: var(--b3-theme-primary);
+  }
+}
+
 .open-disk-btn {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
   padding: 4px 8px;
+  height: 28px;
   border: none;
   border-radius: 4px;
-  background: var(--b3-theme-primary);
-  color: white;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
   font-size: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover {
-    background: var(--b3-theme-primary-light);
+    background: var(--b3-theme-surface-lighter);
+    color: var(--b3-theme-primary);
   }
 }
 
@@ -749,7 +1181,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 12px;
+  padding: 10px 12px;
   margin-bottom: 4px;
   border-radius: 6px;
   background: var(--b3-theme-surface);
@@ -760,8 +1192,14 @@ onUnmounted(() => {
     background: var(--b3-theme-surface-lighter);
     transform: translateX(2px);
 
-    .folder-open-btn {
+    .folder-actions {
       opacity: 1;
+    }
+  }
+
+  &.is-file {
+    .folder-icon {
+      color: var(--b3-theme-on-surface-light);
     }
   }
 }
@@ -773,8 +1211,15 @@ onUnmounted(() => {
   color: var(--b3-theme-primary);
 }
 
-.folder-name {
+.folder-info {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.folder-name {
   font-size: 13px;
   color: var(--b3-theme-on-background);
   white-space: nowrap;
@@ -782,8 +1227,32 @@ onUnmounted(() => {
   text-overflow: ellipsis;
 }
 
-.folder-open-btn {
+.folder-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--b3-theme-on-surface-light);
+}
+
+.file-size {
+  font-weight: 500;
+}
+
+.modified-time {
+  opacity: 0.8;
+}
+
+.folder-actions {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.folder-action-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -791,15 +1260,35 @@ onUnmounted(() => {
   height: 28px;
   border: none;
   border-radius: 4px;
-  background: var(--b3-theme-primary);
-  color: white;
+  background: var(--b3-theme-surface-lighter);
+  color: var(--b3-theme-on-surface);
   cursor: pointer;
-  opacity: 0;
   transition: all 0.2s ease;
 
   &:hover {
-    background: var(--b3-theme-primary-light);
+    background: var(--b3-theme-primary);
+    color: white;
     transform: scale(1.1);
+  }
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: var(--b3-theme-on-surface-light);
+
+  svg {
+    opacity: 0.3;
+    margin-bottom: 16px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+    opacity: 0.7;
   }
 }
 

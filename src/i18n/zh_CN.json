@@ -299,5 +299,17 @@
   "expired": "已过期",
   "cacheExpiredTooltip": "缓存已过期，点击刷新按钮获取最新数据",
   "cacheValidTooltip": "缓存有效期剩余",
-  "refreshing": "正在刷新..."
+  "refreshing": "正在刷新...",
+  "backToRoot": "返回根目录",
+  "back": "返回上级",
+  "items": "项",
+  "openInExplorer": "在资源管理器中打开",
+  "copyPath": "复制路径",
+  "browse": "浏览",
+  "open": "打开",
+  "emptyFolder": "此文件夹为空",
+  "pathCopied": "路径已复制",
+  "today": "今天",
+  "yesterday": "昨天",
+  "daysAgo": "天前"
 }

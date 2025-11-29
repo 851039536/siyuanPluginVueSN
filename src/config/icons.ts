@@ -15,14 +15,14 @@ export interface IconConfig {
 /**
  * 功能图标配置
  * 使用 Iconify 图标库，支持多种图标集
- * 
+ *
  * 常用图标集：
  * - mdi: Material Design Icons
  * - carbon: IBM Carbon Design System
  * - lucide: Lucide Icons
  * - tabler: Tabler Icons
  * - heroicons: Heroicons
- * 
+ *
  * 浏览图标：https://icon-sets.iconify.design/
  */
 export const FEATURE_ICONS = {
@@ -31,53 +31,59 @@ export const FEATURE_ICONS = {
     icon: 'mdi:view-dashboard',
     color: '#3b82f6'
   },
-  
+
   // 目录索引
   tableOfContents: {
     icon: 'mdi:format-list-bulleted-square',
     color: '#10b981'
   },
-  
+
   // 图片压缩
   imageCompressor: {
     icon: 'mdi:image-size-select-actual',
     color: '#f59e0b'
   },
-  
+
   // 文档导航
   docNavigation: {
     icon: 'mdi:file-tree',
     color: '#8b5cf6'
   },
-  
+
   // 页面锁定
   pageLock: {
     icon: 'mdi:lock',
     color: '#ef4444'
   },
-  
+
   // 单词查询
   wordQuery: {
     icon: 'mdi:book-alphabet',
     color: '#06b6d4'
   },
-  
+
   // 二维码生成
   qrCode: {
     icon: 'mdi:qrcode',
     color: '#6366f1'
   },
-  
+
   // 单位转换
   unitConverter: {
     icon: 'mdi:calculator',
     color: '#ec4899'
   },
-  
+
   // 快捷键面板
   shortcuts: {
     icon: 'mdi:keyboard',
     color: '#14b8a6'
+  },
+
+  // 本地磁盘浏览器
+  diskBrowser: {
+    icon: 'mdi:harddisk',
+    color: '#f97316'
   }
 } as const
 
@@ -110,7 +116,7 @@ export const COMMON_ICONS = {
   refresh: {
     icon: 'mdi:refresh',
   },
-  
+
   // 状态类
   success: {
     icon: 'mdi:check-circle',
@@ -128,7 +134,7 @@ export const COMMON_ICONS = {
     icon: 'mdi:information',
     color: '#3b82f6'
   },
-  
+
   // 导航类
   menu: {
     icon: 'mdi:menu',
@@ -145,7 +151,7 @@ export const COMMON_ICONS = {
   down: {
     icon: 'mdi:arrow-down',
   },
-  
+
   // 文件类
   file: {
     icon: 'mdi:file-document',
@@ -156,7 +162,7 @@ export const COMMON_ICONS = {
   image: {
     icon: 'mdi:image',
   },
-  
+
   // 其他
   search: {
     icon: 'mdi:magnify',

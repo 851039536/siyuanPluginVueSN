@@ -270,7 +270,29 @@
     "unitConverter": "Unit Converter",
     "unitConverterDesc": "Quickly convert various units",
     "shortcuts": "Shortcut Panel",
-    "shortcutsDesc": "View and manage shortcuts"
+    "shortcutsDesc": "View and manage shortcuts",
+    "diskBrowser": "Local Disk",
+    "diskBrowserDesc": "Browse local disks and folders"
   },
-  "toggleSuperPanel": "Toggle Super Panel"
+  "toggleSuperPanel": "Toggle Super Panel",
+  "diskBrowser": "Local Disk",
+  "diskBrowserTitle": "Local Disk Browser",
+  "diskBrowserDesc": "Browse local disks in the right sidebar and open folders",
+  "enableDiskBrowser": "Enable Disk Browser",
+  "enableDiskBrowserDesc": "Display local disk list in the right sidebar for quick folder access",
+  "openFolder": "Open Folder",
+  "loadDisksFailed": "Failed to load disk list",
+  "diskOpened": "Disk opened",
+  "openDiskNotSupported": "Current environment does not support opening folders",
+  "openDiskFailed": "Failed to open disk",
+  "loadFoldersFailed": "Failed to load folders",
+  "opened": "Opened",
+  "loading": "Loading...",
+  "cacheExpired": "Cache expired",
+  "minutesRemaining": "min",
+  "min": "m",
+  "expired": "Expired",
+  "cacheExpiredTooltip": "Cache expired, click refresh button to get latest data",
+  "cacheValidTooltip": "Cache valid time remaining",
+  "refreshing": "Refreshing..."
 }

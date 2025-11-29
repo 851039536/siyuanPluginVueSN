@@ -5,7 +5,7 @@ import {
 import "@/index.scss";
 import PluginInfoString from '@/../plugin.json'
 import { destroy, init } from '@/main'
-import { registerPageLock, registerTableOfContents, registerImageCompressor, registerDocNavigation, registerShortcut, registerWordQuery, registerGeneralSettings, registerQRCode, registerUnitConverter, registerSuperPanel } from '@/features'
+import { registerPageLock, registerTableOfContents, registerImageCompressor, registerDocNavigation, registerShortcut, registerWordQuery, registerGeneralSettings, registerQRCode, registerUnitConverter, registerSuperPanel, registerDiskBrowser } from '@/features'
 import { loadSettings, saveSettings, type PluginSettings } from '@/config/settings'
 
 let PluginInfo = {
@@ -118,6 +118,10 @@ export default class PluginSample extends Plugin {
     if (this.settings.enableUnitConverter) {
       console.log('注册单位转换功能')
       registerUnitConverter(this)
+    }
+    if (this.settings.enableDiskBrowser) {
+      console.log('注册本地磁盘浏览器功能')
+      registerDiskBrowser(this)
     }
   }
 

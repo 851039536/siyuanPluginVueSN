@@ -1,8 +1,8 @@
 <template>
   <!-- 遮罩层 -->
   <Transition name="overlay">
-    <div 
-      v-if="visible" 
+    <div
+      v-if="visible"
       class="super-panel-overlay"
       @click="handleClose"
     />
@@ -135,6 +135,14 @@ const features = computed<Feature[]>(() => [
     title: props.i18n.shortcuts || '快捷键面板',
     desc: props.i18n.shortcutsDesc || '查看和管理快捷键',
     enabled: props.settings.enableShortcuts,
+    actions: []
+  },
+  {
+    id: 'diskBrowser',
+    iconKey: 'diskBrowser',
+    title: props.i18n.diskBrowser || '本地磁盘',
+    desc: props.i18n.diskBrowserDesc || '浏览本地磁盘和文件夹',
+    enabled: props.settings.enableDiskBrowser,
     actions: []
   }
 ])

@@ -9,6 +9,7 @@
     <div class="fn__hr"></div>
 
     <div class="settings-content">
+      <div class="settings-scroll">
       <div class="setting-item b3-label">
         <div class="fn__flex">
           <span class="fn__flex-1">
@@ -144,7 +145,21 @@
         <div class="b3-label__text">{{ i18n.unitConverterDesc || '在右侧边栏提供长度、面积、体积、质量、功率、时间、速度、数据存储、进制、ASCII等转换功能' }}</div>
       </div>
 
-
+      <div class="setting-item b3-label">
+        <div class="fn__flex">
+          <span class="fn__flex-1">
+            {{ i18n.enableDiskBrowser || '本地磁盘浏览器' }}
+          </span>
+          <span class="fn__space"></span>
+          <input
+            type="checkbox"
+            class="b3-switch fn__flex-center"
+            v-model="localSettings.enableDiskBrowser"
+          />
+        </div>
+        <div class="b3-label__text">{{ i18n.enableDiskBrowserDesc || '在右侧边栏显示本地磁盘列表，可快速打开文件夹' }}</div>
+      </div>
+      </div>
     </div>
 
     <div class="fn__hr"></div>
@@ -274,55 +289,96 @@ onBeforeUnmount(() => {
 }
 
 .settings-panel {
-  padding: 4px 10px;
-  max-width: 520px;
+  padding: 12px 16px;
+  max-width: 580px;
   width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
+  max-height: 85vh;
   background: #ffffff;
   border-radius: 8px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
   pointer-events: auto;
   color: #333333;
   font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .settings-header {
-  margin-bottom: 2px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
 }
 
 .settings-title {
-  margin: 0 0 1px 0;
-  font-size: 16px;
+  margin: 0 0 4px 0;
+  font-size: 18px;
   font-weight: 600;
   color: #1a1a1a;
 }
 
 .settings-desc {
   margin: 0;
-  font-size: 12px;
+  font-size: 13px;
   color: #666666;
-  line-height: 1.2;
+  line-height: 1.4;
 }
 
 .settings-content {
-  padding: 2px 0;
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.settings-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 4px;
+  margin: 0 -4px;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+
+    &:hover {
+      background: #a8a8a8;
+    }
+  }
 }
 
 .setting-item {
-  margin-bottom: 5px;
+  margin-bottom: 12px;
+  padding: 10px;
+  background: #fafafa;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #f5f5f5;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
 
   .fn__flex-1 {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
     color: #1a1a1a;
   }
 
   .b3-label__text {
-    font-size: 11px;
+    font-size: 12px;
     color: #666666;
-    line-height: 1.2;
-    margin-top: 0;
+    line-height: 1.5;
+    margin-top: 4px;
   }
 
   &:last-child {
@@ -333,27 +389,38 @@ onBeforeUnmount(() => {
 .settings-footer {
   display: flex;
   align-items: center;
-  padding: 4px 0 1px;
-  gap: 6px;
+  padding: 12px 0 8px;
+  gap: 8px;
+  flex-shrink: 0;
+  border-top: 1px solid #e8e8e8;
+  margin-top: 12px;
 }
 
 .settings-notice {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 2px 4px;
-  margin-top: 2px;
-  background: #f5f5f5;
+  gap: 6px;
+  padding: 8px 10px;
+  margin-top: 8px;
+  background: #e6f7ff;
+  border: 1px solid #91d5ff;
   border-radius: 4px;
-  font-size: 11px;
-  color: #666666;
-  line-height: 1.2;
+  font-size: 12px;
+  color: #0050b3;
+  line-height: 1.5;
+  flex-shrink: 0;
 
   .icon {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     flex-shrink: 0;
     color: #1890ff;
   }
+}
+
+.fn__hr {
+  margin: 8px 0;
+  border: none;
+  border-top: 1px solid #e8e8e8;
 }
 </style>

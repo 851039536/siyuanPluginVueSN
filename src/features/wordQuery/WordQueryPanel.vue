@@ -26,15 +26,34 @@
       </div>
     </div>
     
-    <!-- API密钥设置区域 -->
+    <!-- API配置设置区域 -->
     <div class="api-key-settings" v-if="showApiKeySettings">
       <div class="api-key-header">
-        <span>{{ i18n.apiKeySettings || 'API密钥设置' }}</span>
+        <span>{{ i18n.apiKeySettings || 'API配置设置' }}</span>
         <button class="close-btn" @click="toggleApiKeySettings">
           <svg class="close-icon"><use xlink:href="#iconClose"></use></svg>
         </button>
       </div>
       <div class="api-key-content">
+        <!-- API供应商选择 -->
+        <div class="input-group">
+          <label>{{ i18n.apiProvider || 'API供应商' }}</label>
+          <div class="provider-select-wrapper">
+            <select
+              v-model="apiProvider"
+              class="provider-select"
+              @change="onProviderChange"
+            >
+              <option value="" disabled>{{ i18n.apiProviderPlaceholder || '选择API供应商' }}</option>
+              <option value="tongyi">{{ i18n.tongyiQianwen || '通义千问' }}</option>
+              <option value="openai">{{ i18n.openAI || 'OpenAI' }}</option>
+              <option value="deepseek">{{ i18n.deepSeek || 'DeepSeek' }}</option>
+              <option value="custom">{{ i18n.customApi || '自定义API' }}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- API密钥输入 -->
         <div class="input-group">
           <label>{{ i18n.wordQueryApiKey || 'API密钥' }}</label>
           <div class="api-input-wrapper">
@@ -42,7 +61,7 @@
               v-model="apiKey"
               :type="apiKeyVisible ? 'text' : 'password'"
               class="api-key-input"
-              :placeholder="i18n.wordQueryApiKeyPlaceholder || '请输入通义千问API密钥'"
+              :placeholder="getApiKeyPlaceholder()"
               @input="saveApiKey"
             />
             <button class="toggle-visibility" @click="toggleApiKeyVisibility">
@@ -55,7 +74,24 @@
             </button>
           </div>
           <div class="api-key-desc">
-            {{ i18n.wordQueryApiKeyDesc || '通义千问API密钥，用于单词查询功能' }}
+            {{ getApiKeyDescription() }}
+          </div>
+        </div>
+
+        <!-- 自定义API端点（仅在选择自定义API时显示） -->
+        <div class="input-group" v-if="apiProvider === 'custom'">
+          <label>API端点</label>
+          <div class="api-input-wrapper">
+            <input
+              v-model="customApiEndpoint"
+              type="text"
+              class="api-key-input"
+              placeholder="请输入自定义API端点URL"
+              @input="saveCustomApiEndpoint"
+            />
+          </div>
+          <div class="api-key-desc">
+            自定义API端点URL，用于连接自定义API服务
           </div>
         </div>
       </div>
@@ -131,6 +167,7 @@ interface Props {
   i18n: any;
   onQuery: (word: string) => Promise<string>;
   onApiKeyChange?: (apiKey: string) => void;
+  onProviderChange?: (provider: string) => void;
 }
 
 const props = defineProps<Props>();
@@ -144,6 +181,8 @@ const showCopyOptions = ref(false);
 const showApiKeySettings = ref(false);
 const apiKey = ref('');
 const apiKeyVisible = ref(false);
+const apiProvider = ref('tongyi');
+const customApiEndpoint = ref('');
 const autoQueryTimer = ref<NodeJS.Timeout | null>(null);
 
 // 格式化查询结果
@@ -253,8 +292,8 @@ const handleQuery = async () => {
     return;
   }
   
-  // 验证是否为有效的单词或词语（中英文）
-  if (!/^[a-zA-Z\s-\u4e00-\u9fa5]+$/.test(word)) {
+  // 验证是否为有效的单词或词语（中英文、数字、符号、标点）
+  if (!/^[a-zA-Z0-9\s\-.,;:!?'"()（）【】《》《""''\u4e00-\u9fa5\u3000-\u303F\uFF00-\uFFEF]+$/.test(word)) {
     errorMessage.value = props.i18n.enterValidWord || '请输入有效的单词或词语';
     return;
   }
@@ -286,7 +325,7 @@ const setupAutoQuery = () => {
   }
   
   const word = searchWord.value.trim();
-  if (word && /^[a-zA-Z\s-\u4e00-\u9fa5]+$/.test(word)) {
+  if (word && /^[a-zA-Z0-9\s\-.,;:!?'"()（）【】《》《""''\u4e00-\u9fa5\u3000-\u303F\uFF00-\uFFEF]+$/.test(word)) {
     // 设置2秒后自动查询
     autoQueryTimer.value = setTimeout(() => {
       handleQuery();
@@ -318,7 +357,8 @@ const toggleApiKeyVisibility = () => {
 const saveApiKey = async () => {
   if (apiKey.value) {
     try {
-      localStorage.setItem('word-query-api-key', apiKey.value);
+      const providerKey = `word-query-api-key-${apiProvider.value}`;
+      localStorage.setItem(providerKey, apiKey.value);
       // 通知父组件API密钥已更新
       if (props.onApiKeyChange) {
         props.onApiKeyChange(apiKey.value);
@@ -329,19 +369,97 @@ const saveApiKey = async () => {
   }
 };
 
+// 获取API密钥占位符
+const getApiKeyPlaceholder = () => {
+  const placeholders: Record<string, string> = {
+    tongyi: props.i18n.tongyiQianwenPlaceholder || '请输入通义千问API密钥',
+    openai: props.i18n.openAIPlaceholder || '请输入OpenAI API密钥',
+    deepseek: props.i18n.deepSeekPlaceholder || '请输入DeepSeek API密钥',
+    custom: props.i18n.customApiPlaceholder || '请输入自定义API密钥'
+  };
+  return placeholders[apiProvider.value] || '请输入API密钥';
+};
+
+// 获取API密钥描述
+const getApiKeyDescription = () => {
+  const descriptions: Record<string, string> = {
+    tongyi: `${props.i18n.tongyiQianwen || '通义千问'} API密钥，用于单词查询功能`,
+    openai: `${props.i18n.openAI || 'OpenAI'} API密钥，用于单词查询功能`,
+    deepseek: `${props.i18n.deepSeek || 'DeepSeek'} API密钥，用于单词查询功能`,
+    custom: `${props.i18n.customApi || '自定义API'} 密钥，用于单词查询功能`
+  };
+  return descriptions[apiProvider.value] || 'API密钥，用于单词查询功能';
+};
+
+// 供应商变更处理
+const onProviderChange = () => {
+  saveApiProvider();
+  // 清空当前API密钥，让用户重新输入
+  apiKey.value = '';
+  // 通知父组件供应商已变更
+  if (props.onProviderChange) {
+    props.onProviderChange(apiProvider.value);
+  }
+};
+
+// 保存API供应商到本地存储
+const saveApiProvider = async () => {
+  try {
+    localStorage.setItem('word-query-api-provider', apiProvider.value);
+  } catch (error) {
+    console.error('Failed to save API provider:', error);
+  }
+};
+
+// 加载API供应商
+const loadApiProvider = () => {
+  try {
+    const savedProvider = localStorage.getItem('word-query-api-provider');
+    if (savedProvider) {
+      apiProvider.value = savedProvider;
+    }
+  } catch (error) {
+    console.error('Failed to load API provider:', error);
+  }
+};
+
+// 保存自定义API端点
+const saveCustomApiEndpoint = async () => {
+  try {
+    localStorage.setItem('word-query-custom-endpoint', customApiEndpoint.value);
+  } catch (error) {
+    console.error('Failed to save custom API endpoint:', error);
+  }
+};
+
+// 加载自定义API端点
+const loadCustomApiEndpoint = () => {
+  try {
+    const savedEndpoint = localStorage.getItem('word-query-custom-endpoint');
+    if (savedEndpoint) {
+      customApiEndpoint.value = savedEndpoint;
+    }
+  } catch (error) {
+    console.error('Failed to load custom API endpoint:', error);
+  }
+};
+
 // 从本地存储加载API密钥
 const loadApiKey = () => {
   try {
-    const savedKey = localStorage.getItem('word-query-api-key');
+    const providerKey = `word-query-api-key-${apiProvider.value}`;
+    const savedKey = localStorage.getItem(providerKey);
     if (savedKey) {
       apiKey.value = savedKey;
-    } else {
-      // 如果没有保存的密钥，使用默认值
+    } else if (apiProvider.value === 'tongyi') {
+      // 通义千问的默认密钥
       apiKey.value = 'sk-fae27cc50015409fb2524b0970d3f0b0';
     }
   } catch (error) {
     console.error('Failed to load API key:', error);
-    apiKey.value = 'sk-fae27cc50015409fb2524b0970d3f0b0';
+    if (apiProvider.value === 'tongyi') {
+      apiKey.value = 'sk-fae27cc50015409fb2524b0970d3f0b0';
+    }
   }
 };
 
@@ -413,7 +531,9 @@ watch(searchWord, () => {
 onMounted(() => {
   document.addEventListener('keydown', handleKeyDown);
   document.addEventListener('click', handleClickOutside);
-  // 初始化时加载API密钥
+  // 初始化时加载API配置
+  loadApiProvider();
+  loadCustomApiEndpoint();
   loadApiKey();
 });
 
@@ -432,76 +552,108 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-height: 200px; /* 设置最小高度 */
-  max-height: 100vh; /* 最大高度不超过视口高度 */
+  min-height: 200px;
+  max-height: 100vh;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  overflow: hidden;
 }
 
 .query-header {
   padding: 12px;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
-  flex-shrink: 0; /* 防止头部被压缩 */
+  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background: var(--b3-theme-surface);
 }
 
 .input-wrapper {
   display: flex;
   gap: 8px;
+  flex: 1;
+  margin-right: 8px;
 }
 
 .query-input {
   flex: 1;
   padding: 8px 12px;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 4px;
+  border: 2px solid var(--b3-theme-surface-light);
+  border-radius: 8px;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
   outline: none;
-  transition: border-color 0.2s;
-  min-width: 0; /* 允许输入框收缩 */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 0;
+  font-size: 13px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.query-input:hover {
+  border-color: var(--b3-theme-primary-lighter);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .query-input:focus {
   border-color: var(--b3-theme-primary);
+  box-shadow: 0 0 0 3px rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.15);
+  transform: translateY(-1px);
+}
+
+.query-input::placeholder {
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
 }
 
 .query-btn {
   padding: 8px 12px;
-  background: var(--b3-theme-primary);
+  background: linear-gradient(135deg, var(--b3-theme-primary), var(--b3-theme-primary-lighter));
   color: var(--b3-theme-on-primary);
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.2s;
-  flex-shrink: 0; /* 防止按钮被压缩 */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  font-weight: 500;
+  font-size: 12px;
+  box-shadow: 0 2px 8px rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.3);
 }
 
-.query-btn:hover {
-  background: var(--b3-theme-primary-lighter);
+.query-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.4);
+}
+
+.query-btn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .query-btn:disabled {
   background: var(--b3-theme-surface-light);
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .query-icon {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
 }
 
 .query-content {
   flex: 1;
-  padding: 16px;
+  padding: 12px;
   overflow-y: auto;
-  max-height: calc(100% - 60px); /* 减去头部高度，确保内容区域不会超出容器 */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
 }
 
 .query-loading {
@@ -554,14 +706,16 @@ onUnmounted(() => {
 .result-content {
   flex: 1;
   overflow-y: auto;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   padding: 16px;
-  background: var(--b3-theme-surface-lighter);
-  border-radius: 8px;
-  min-height: 100px; /* 设置最小内容高度 */
-  word-wrap: break-word; /* 长单词自动换行 */
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  background: linear-gradient(135deg, var(--b3-theme-surface-lighter), var(--b3-theme-surface));
+  border-radius: 12px;
+  min-height: 100px;
+  max-height: 300px;
+  word-wrap: break-word;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border: 1px solid var(--b3-theme-surface-light);
+  backdrop-filter: blur(10px);
 }
 
 .result-title {
@@ -592,38 +746,71 @@ onUnmounted(() => {
 .result-actions {
   display: flex;
   gap: 8px;
-  flex-wrap: wrap; /* 允许按钮换行 */
-  flex-shrink: 0; /* 防止操作栏被压缩 */
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  padding-top: 2px;
 }
 
 .action-btn {
-  padding: 8px 12px;
-  background: var(--b3-theme-surface-light);
+  padding: 6px 12px;
+  background: linear-gradient(135deg, var(--b3-theme-surface), var(--b3-theme-surface-light));
   color: var(--b3-theme-on-surface);
-  border: none;
-  border-radius: 4px;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 6px;
-  transition: background-color 0.2s;
-  min-width: 0; /* 允许按钮在小屏幕上收缩 */
-  white-space: nowrap; /* 防止按钮文字换行 */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 0;
+  white-space: nowrap;
+  font-weight: 500;
+  font-size: 11px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
 .action-btn:hover {
-  background: var(--b3-theme-surface);
+  background: linear-gradient(135deg, var(--b3-theme-surface-light), var(--b3-theme-primary-lighter));
+  border-color: var(--b3-theme-primary-lighter);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.action-btn:active {
+  transform: translateY(0);
+}
+
+.copy-btn {
+  background: linear-gradient(135deg, #4CAF50, #66BB6A);
+  color: white;
+  border-color: #4CAF50;
+}
+
+.copy-btn:hover {
+  background: linear-gradient(135deg, #66BB6A, #81C784);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.clear-btn {
+  background: linear-gradient(135deg, #f44336, #ef5350);
+  color: white;
+  border-color: #f44336;
+}
+
+.clear-btn:hover {
+  background: linear-gradient(135deg, #ef5350, #e57373);
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
 }
 
 .action-icon {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
 }
 
 .dropdown-icon {
-  width: 12px;
-  height: 12px;
-  transition: transform 0.2s;
+  width: 14px;
+  height: 14px;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .dropdown.active .dropdown-icon {
@@ -638,38 +825,45 @@ onUnmounted(() => {
   position: absolute;
   bottom: 100%;
   left: 0;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  z-index: 10;
-  min-width: 120px; /* 设置最小宽度 */
-  max-width: 200px; /* 设置最大宽度 */
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  min-width: 140px;
+  max-width: 200px;
+  padding: 6px;
+  backdrop-filter: blur(10px);
 }
 
 .dropdown-item {
   display: block;
   width: 100%;
-  padding: 8px 12px;
+  padding: 10px 12px;
   text-align: left;
   background: none;
   border: none;
   color: var(--b3-theme-on-surface);
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 400;
 }
 
 .dropdown-item:hover {
-  background: var(--b3-theme-surface-light);
+  background: var(--b3-theme-primary-lighter);
+  color: var(--b3-theme-on-primary);
+  transform: translateX(2px);
 }
 
 .dropdown-item:first-child {
-  border-radius: 4px 4px 0 0;
+  border-radius: 8px 8px 8px 8px;
 }
 
 .dropdown-item:last-child {
-  border-radius: 0 0 4px 4px;
+  border-radius: 8px 8px 8px 8px;
 }
 
 .query-empty {
@@ -680,19 +874,26 @@ onUnmounted(() => {
   height: 100%;
   color: var(--b3-theme-on-surface);
   text-align: center;
+  padding: 40px 20px;
 }
 
 .empty-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
-  opacity: 0.6;
+  font-size: 64px;
+  margin-bottom: 24px;
+  opacity: 0.4;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
 }
 
 .loading-spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top: 2px solid white;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid white;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -704,24 +905,42 @@ onUnmounted(() => {
 
 /* 查询结果内容分组样式 */
 .result-wrapper {
-  padding: 8px 0;
+  padding: 12px 0;
 }
 
 .result-section {
-  margin-bottom: 14px;
-  padding: 10px 12px;
+  margin-bottom: 18px;
+  padding: 16px 20px;
   background: var(--b3-theme-background);
-  border-radius: 6px;
-  border-left: 4px solid var(--b3-theme-primary);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-  transition: transform 0.2s, box-shadow 0.2s;
-  line-height: 1.5;
-  font-size: 0.95em;
+  border-radius: 12px;
+  border-left: 5px solid var(--b3-theme-primary);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  line-height: 1.6;
+  font-size: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+.result-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--b3-theme-primary-lighter), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .result-section:hover {
-  transform: translateX(3px);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
+  transform: translateX(4px) translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.result-section:hover::before {
+  opacity: 1;
 }
 
 .result-section:last-child {
@@ -730,16 +949,18 @@ onUnmounted(() => {
 
 .result-section strong {
   color: var(--b3-theme-on-background);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* 不同内容类型的样式 */
 .word-section {
   border-left-color: var(--b3-theme-primary);
+  background: linear-gradient(135deg, var(--b3-theme-background), rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.05));
 }
 
 .phonetic-section {
   border-left-color: #2196F3;
+  background: linear-gradient(135deg, var(--b3-theme-background), rgba(33, 150, 243, 0.05));
 }
 
 .phonetic-section .result-label {
@@ -748,6 +969,7 @@ onUnmounted(() => {
 
 .english-section {
   border-left-color: #4CAF50;
+  background: linear-gradient(135deg, var(--b3-theme-background), rgba(76, 175, 80, 0.05));
 }
 
 .english-section .result-label {
@@ -756,6 +978,7 @@ onUnmounted(() => {
 
 .meaning-section {
   border-left-color: #FF9800;
+  background: linear-gradient(135deg, var(--b3-theme-background), rgba(255, 152, 0, 0.05));
 }
 
 .meaning-section .result-label {
@@ -764,6 +987,7 @@ onUnmounted(() => {
 
 .pronunciation-section {
   border-left-color: #9C27B0;
+  background: linear-gradient(135deg, var(--b3-theme-background), rgba(156, 39, 176, 0.05));
 }
 
 .pronunciation-section .result-label {
@@ -772,6 +996,7 @@ onUnmounted(() => {
 
 .tip-section {
   border-left-color: #00BCD4;
+  background: linear-gradient(135deg, var(--b3-theme-background), rgba(0, 188, 212, 0.05));
 }
 
 .tip-section .result-label {
@@ -780,142 +1005,239 @@ onUnmounted(() => {
 
 .example-section {
   border-left-color: #795548;
+  background: linear-gradient(135deg, var(--b3-theme-background), rgba(121, 85, 72, 0.05));
 }
 
 .example-section .result-label {
   color: #795548;
 }
 
-/* API密钥设置相关样式 */
+/* API配置设置相关样式 */
 .settings-btn {
-  padding: 6px;
+  padding: 8px;
   background: transparent;
   border: none;
   color: var(--b3-theme-on-surface);
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
   flex-shrink: 0;
 }
 
 .settings-btn:hover {
   background: var(--b3-theme-surface-light);
+  transform: scale(1.05);
 }
 
 .settings-icon {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
 }
 
 .api-key-settings {
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
   background: var(--b3-theme-surface-lighter);
+  animation: slideDown 0.3s ease-out;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .api-key-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
-  font-weight: 500;
+  padding: 12px 16px;
+  font-weight: 600;
   color: var(--b3-theme-on-surface);
+  background: var(--b3-theme-surface);
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
 }
 
 .close-btn {
-  padding: 4px;
+  padding: 6px;
   background: transparent;
   border: none;
   color: var(--b3-theme-on-surface);
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
 }
 
 .close-btn:hover {
-  background: var(--b3-theme-surface);
+  background: var(--b3-theme-primary);
+  color: var(--b3-theme-on-primary);
+  transform: rotate(90deg);
 }
 
 .close-icon {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
 }
 
 .api-key-content {
-  padding: 0 12px 12px;
+  padding: 12px;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .input-group {
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  width: 100%;
+}
+
+.input-group:last-child {
+  margin-bottom: 0;
 }
 
 .input-group label {
   display: block;
   margin-bottom: 6px;
   font-size: 0.9em;
+  font-weight: 500;
   color: var(--b3-theme-on-surface);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.provider-select-wrapper {
+  position: relative;
+}
+
+.provider-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid var(--b3-theme-surface-light);
+  border-radius: 8px;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  outline: none;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667' d='M6 9L2 5h8z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+.provider-select:hover {
+  border-color: var(--b3-theme-primary);
+}
+
+.provider-select:focus {
+  border-color: var(--b3-theme-primary);
+  box-shadow: 0 0 0 3px rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.1);
 }
 
 .api-input-wrapper {
+  position: relative;
   display: flex;
   align-items: center;
 }
 
 .api-key-input {
   flex: 1;
-  padding: 6px 10px;
-  border: 1px solid var(--b3-theme-surface-light);
-  border-radius: 4px 0 0 4px;
+  padding: 8px 10px;
+  border: 2px solid var(--b3-theme-surface-light);
+  border-radius: 6px 0 0 6px;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
   outline: none;
-  font-family: monospace;
-  font-size: 0.85em;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+  font-size: 0.8em;
+  transition: all 0.2s ease;
+  min-width: 0;
+}
+
+.api-key-input:hover {
+  border-color: var(--b3-theme-primary);
 }
 
 .api-key-input:focus {
   border-color: var(--b3-theme-primary);
+  box-shadow: 0 0 0 3px rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.1);
 }
 
 .toggle-visibility {
-  padding: 6px 8px;
+  padding: 8px 10px;
   background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-light);
+  border: 2px solid var(--b3-theme-surface-light);
   border-left: none;
-  border-radius: 0 4px 4px 0;
+  border-radius: 0 6px 6px 0;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .toggle-visibility:hover {
-  background: var(--b3-theme-surface-light);
+  background: var(--b3-theme-primary);
+  border-color: var(--b3-theme-primary);
+  color: var(--b3-theme-on-primary);
 }
 
 .visibility-icon {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   color: var(--b3-theme-on-surface);
+  transition: transform 0.2s ease;
+}
+
+.toggle-visibility:hover .visibility-icon {
+  transform: scale(1.1);
 }
 
 .api-key-desc {
   margin-top: 6px;
   font-size: 0.8em;
   color: var(--b3-theme-on-surface);
-  opacity: 0.8;
+  opacity: 0.75;
+  line-height: 1.3;
+  padding-left: 2px;
+  word-break: break-word;
 }
 
 /* 响应式设计 */
 @media (max-width: 400px) {
   .query-header {
     padding: 8px;
+    gap: 6px;
+  }
+  
+  .input-wrapper {
+    gap: 6px;
+    margin-right: 6px;
+  }
+  
+  .query-input {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+  
+  .query-btn {
+    padding: 6px 8px;
+    font-size: 11px;
   }
   
   .api-key-header {
@@ -923,51 +1245,88 @@ onUnmounted(() => {
   }
   
   .api-key-content {
-    padding: 0 10px 10px;
+    padding: 8px 10px 10px;
   }
   
   .api-key-input {
-    font-size: 0.8em;
+    font-size: 0.75em;
+    padding: 6px 8px;
+  }
+  
+  .toggle-visibility {
+    padding: 6px 8px;
   }
   
   .query-content {
+    padding: 8px;
+  }
+  
+  .result-content {
     padding: 12px;
+    margin-bottom: 8px;
+  }
+  
+  .result-actions {
+    gap: 4px;
+  }
+  
+  .action-btn {
+    padding: 4px 8px;
+    font-size: 10px;
+    gap: 4px;
+  }
+  
+  .dropdown-menu {
+    min-width: 80px;
+    max-width: 120px;
+  }
+  
+  .dropdown-item {
+    padding: 6px 8px;
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 320px) {
+  .query-header {
+    padding: 6px;
+  }
+  
+  .query-input {
+    padding: 4px 6px;
+    font-size: 11px;
+  }
+  
+  .query-btn {
+    padding: 4px 6px;
+    font-size: 10px;
   }
   
   .result-content {
     padding: 8px;
-    margin-bottom: 12px;
-  }
-  
-  .result-actions {
-    gap: 6px;
   }
   
   .action-btn {
-    padding: 6px 10px;
-    font-size: 0.9em;
-  }
-  
-  .dropdown-menu {
-    min-width: 100px;
-    max-width: 150px;
+    padding: 3px 6px;
+    font-size: 9px;
   }
 }
 
 @media (max-height: 500px) {
   .empty-icon {
-    font-size: 36px;
-    margin-bottom: 12px;
+    font-size: 32px;
+    margin-bottom: 8px;
   }
   
   .loading-spinner-large {
-    width: 20px;
-    height: 20px;
-    margin-bottom: 10px;
+    width: 16px;
+    height: 16px;
+    margin-bottom: 8px;
   }
   
   .result-content {
     padding: 8px;
+    margin-bottom: 6px;
   }
   
   .api-key-header {
@@ -975,15 +1334,20 @@ onUnmounted(() => {
   }
   
   .api-key-content {
-    padding: 0 8px 8px;
+    padding: 6px 8px 6px;
   }
   
   .api-key-input {
-    padding: 4px 8px;
+    padding: 4px 6px;
+    font-size: 0.7em;
   }
   
   .toggle-visibility {
     padding: 4px 6px;
+  }
+  
+  .input-group {
+    margin-bottom: 8px;
   }
 }
 </style>

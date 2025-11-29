@@ -12,45 +12,82 @@ import WordQueryPanel from './WordQueryPanel.vue';
  */
 export class WordQuery {
   private plugin: Plugin;
-  private apiUrl: string = 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation';
-  private currentApiKey: string = '';
+  private currentProvider: string = 'tongyi';
+  private customApiEndpoint: string = '';
 
   constructor(plugin: Plugin) {
     this.plugin = plugin;
-    // 初始化时获取API密钥
-    this.currentApiKey = this.getApiKey();
+    // 初始化时获取API配置
+    this.currentProvider = this.getApiProvider();
+    this.customApiEndpoint = this.getCustomApiEndpoint();
   }
 
   /**
    * 获取API Key
    */
   private getApiKey(): string {
-    // 如果已经有缓存的API密钥，直接返回
-    if (this.currentApiKey) {
-      return this.currentApiKey;
-    }
-
-    // 尝试从本地存储中获取API Key
+    // 尝试从本地存储中获取对应供应商的API Key
     try {
-      const savedKey = localStorage.getItem('word-query-api-key');
+      const providerKey = `word-query-api-key-${this.currentProvider}`;
+      const savedKey = localStorage.getItem(providerKey);
       if (savedKey) {
-        this.currentApiKey = savedKey;
         return savedKey;
       }
     } catch (error) {
       console.error('Failed to get API key from localStorage:', error);
     }
 
-    // 如果没有设置，使用默认值
-    this.currentApiKey = 'sk-fae27cc50015409fb2524b0970d3f0b0';
-    return this.currentApiKey;
+    // 如果是通义千问且没有设置密钥，使用默认值
+    if (this.currentProvider === 'tongyi') {
+      return 'sk-fae27cc50015409fb2524b0970d3f0b0';
+    }
+
+    return '';
+  }
+
+  /**
+   * 获取API供应商
+   */
+  private getApiProvider(): string {
+    try {
+      const savedProvider = localStorage.getItem('word-query-api-provider');
+      if (savedProvider) {
+        return savedProvider;
+      }
+    } catch (error) {
+      console.error('Failed to get API provider from localStorage:', error);
+    }
+    return 'tongyi';
+  }
+
+  /**
+   * 获取自定义API端点
+   */
+  private getCustomApiEndpoint(): string {
+    try {
+      const savedEndpoint = localStorage.getItem('word-query-custom-endpoint');
+      if (savedEndpoint) {
+        return savedEndpoint;
+      }
+    } catch (error) {
+      console.error('Failed to get custom API endpoint from localStorage:', error);
+    }
+    return '';
+  }
+
+  /**
+   * 设置API供应商
+   */
+  public setApiProvider(provider: string) {
+    this.currentProvider = provider;
+    this.customApiEndpoint = this.getCustomApiEndpoint(); // 重新获取自定义端点
   }
 
   /**
    * 设置API Key
    */
-  public setApiKey(apiKey: string) {
-    this.currentApiKey = apiKey;
+  public setApiKey(_apiKey: string) {
+    // API密钥现在按供应商分别存储，这个方法主要用于通知更新
   }
 
   /**
@@ -91,6 +128,9 @@ export class WordQuery {
               },
               onApiKeyChange: (apiKey: string) => {
                 self.setApiKey(apiKey);
+              },
+              onProviderChange: (provider: string) => {
+                self.setApiProvider(provider);
               }
             });
           }
@@ -117,7 +157,7 @@ export class WordQuery {
    * 检测是否为中文
    */
   private isChinese(text: string): boolean {
-    return /^[\u4e00-\u9fa5\s]+$/.test(text);
+    return /^[\u4e00-\u9fa5\u3000-\u303F\uFF00-\uFFEF\s\-.,;:!?'"()（）【】《》《""''']+$/.test(text);
   }
 
   /**
@@ -135,7 +175,7 @@ export class WordQuery {
     try {
       // 根据输入类型构建不同的提示词
       const prompt = this.buildPrompt(word);
-      const response = await this.callTongyiAPI(prompt);
+      const response = await this.callAPI(prompt);
 
       if (response) {
         showMessage('✓ 查询完成', 2000, 'info');
@@ -206,7 +246,63 @@ export class WordQuery {
 - 提供常用例句
 - 只输出格式化内容，不要有其他说明文字`;
     } else {
-      return `请为词语 "${word}" 生成详细信息，如果是英文，请提供中文释义；如果是中文，请提供英文翻译。
+      // 对于混合输入或其他情况，尝试智能判断
+      const hasChinese = /[\u4e00-\u9fa5]/.test(word);
+      const hasEnglish = /[a-zA-Z]/.test(word);
+      
+      if (hasChinese && !hasEnglish) {
+        // 主要为中文，按中文处理
+        return `请为中文词语 "${word}" 生成详细信息，要求：
+
+1. 提供英文翻译
+2. 使用英式标准发音
+3. 谐音使用带声调的拼音标注
+4. 严格按照以下格式输出：
+
+#### ${word}
+
+词语：${word}
+拼音：[标准拼音]
+英文：[英文翻译]
+释义：[中文释义]
+谐音：[英文谐音，便于记忆，如:桑普(sǎmpǔ)]
+发音：[发音要点说明]
+例句：[中文例句及英文翻译]
+
+注意事项：
+- 英文翻译要准确自然
+- 谐音要贴近实际英文发音，便于记忆
+- 拼音必须带声调
+- 发音说明要包含音节、重音、元音特点等
+- 提供常用例句
+- 只输出格式化内容，不要有其他说明文字`;
+      } else if (hasEnglish && !hasChinese) {
+        // 主要为英文，按英文处理
+        return `请为英文单词 "${word}" 生成详细信息，要求：
+
+1. 使用英式标准发音
+2. 谐音使用带声调的拼音标注
+3. 严格按照以下格式输出：
+
+#### ${word}
+
+单词：${word}
+音标：[英式音标]
+释义：[中文释义]
+谐音：[中文谐音(使用英式自然发音,带拼音标注),如:西斯腾(xī sī téng)]
+发音：[发音要点说明]
+例句：[英文例句及中文翻译]
+
+注意事项：
+- 音标必须是英式音标
+- 谐音要贴近实际发音，便于记忆
+- 拼音必须带声调
+- 发音说明要包含音节、重音、元音特点等
+- 提供常用例句
+- 只输出格式化内容，不要有其他说明文字`;
+      } else {
+        // 混合内容，智能判断主语言
+        return `请为词语 "${word}" 生成详细信息，分析该词语的语言类型，如果是英文，请提供中文释义；如果是中文，请提供英文翻译。
 
 1. 使用英式标准发音（如果是英文）
 2. 谐音使用带声调的拼音标注
@@ -222,15 +318,36 @@ export class WordQuery {
 例句：[例句及翻译]
 
 注意事项：
+- 智能判断主要语言类型
 - 只输出格式化内容，不要有其他说明文字`;
+      }
     }
   }
 
   /**
-   * 调用通义API
+   * 调用API
+   */
+  private async callAPI(prompt: string): Promise<string> {
+    switch (this.currentProvider) {
+      case 'tongyi':
+        return await this.callTongyiAPI(prompt);
+      case 'openai':
+        return await this.callOpenAIAPI(prompt);
+      case 'deepseek':
+        return await this.callDeepSeekAPI(prompt);
+      case 'custom':
+        return await this.callCustomAPI(prompt);
+      default:
+        throw new Error(`不支持的API供应商: ${this.currentProvider}`);
+    }
+  }
+
+  /**
+   * 调用通义千问API
    */
   private async callTongyiAPI(prompt: string): Promise<string> {
     const apiKey = this.getApiKey();
+    const apiUrl = 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation';
     const requestBody = {
       model: 'qwen-plus',
       input: {
@@ -252,7 +369,7 @@ export class WordQuery {
       }
     };
 
-    const response = await fetch(this.apiUrl, {
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -281,6 +398,154 @@ export class WordQuery {
       return data.content;
     } else {
       throw new Error(`API返回数据格式错误，响应结构: ${JSON.stringify(Object.keys(data))}`);
+    }
+  }
+
+  /**
+   * 调用OpenAI API
+   */
+  private async callOpenAIAPI(prompt: string): Promise<string> {
+    const apiKey = this.getApiKey();
+    const apiUrl = 'https://api.openai.com/v1/chat/completions';
+    const requestBody = {
+      model: 'gpt-3.5-turbo',
+      messages: [
+        {
+          role: 'system',
+          content: '你是一个专业的多语言教学助手，擅长提供单词的详细释义、音标、谐音和例句。'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 800
+    };
+
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`OpenAI API请求失败: ${response.status} ${errorText}`);
+    }
+
+    const data = await response.json();
+    
+    if (data.choices && data.choices.length > 0) {
+      return data.choices[0].message.content;
+    } else {
+      throw new Error('OpenAI API返回数据格式错误');
+    }
+  }
+
+  /**
+   * 调用DeepSeek API
+   */
+  private async callDeepSeekAPI(prompt: string): Promise<string> {
+    const apiKey = this.getApiKey();
+    const apiUrl = 'https://api.deepseek.com/v1/chat/completions';
+    const requestBody = {
+      model: 'deepseek-chat',
+      messages: [
+        {
+          role: 'system',
+          content: '你是一个专业的多语言教学助手，擅长提供单词的详细释义、音标、谐音和例句。'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 800
+    };
+
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`DeepSeek API请求失败: ${response.status} ${errorText}`);
+    }
+
+    const data = await response.json();
+    
+    if (data.choices && data.choices.length > 0) {
+      return data.choices[0].message.content;
+    } else {
+      throw new Error('DeepSeek API返回数据格式错误');
+    }
+  }
+
+  /**
+   * 调用自定义API
+   */
+  private async callCustomAPI(prompt: string): Promise<string> {
+    const apiKey = this.getApiKey();
+    const apiUrl = this.customApiEndpoint;
+    
+    if (!apiUrl) {
+      throw new Error('自定义API端点未设置');
+    }
+
+    // 尝试使用通用的OpenAI兼容格式
+    const requestBody = {
+      model: 'default',
+      messages: [
+        {
+          role: 'system',
+          content: '你是一个专业的多语言教学助手，擅长提供单词的详细释义、音标、谐音和例句。'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 800
+    };
+
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`自定义API请求失败: ${response.status} ${errorText}`);
+    }
+
+    const data = await response.json();
+    
+    // 尝试多种响应格式
+    if (data.choices && data.choices.length > 0) {
+      return data.choices[0].message.content;
+    } else if (data.output && data.output.text) {
+      return data.output.text;
+    } else if (data.text) {
+      return data.text;
+    } else if (data.content) {
+      return data.content;
+    } else {
+      throw new Error('自定义API返回数据格式错误');
     }
   }
 

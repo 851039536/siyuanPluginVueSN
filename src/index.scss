@@ -119,3 +119,345 @@ html.siyuan-compact-mode {
     padding: 4px 8px;
   }
 }
+
+/* ========== 代码块美化样式 ========== */
+
+/* GitHub 风格代码块 - 深色主题适配 */
+body.codeblock-style-github {
+  .protyle-wysiwyg .code-block,
+  .b3-typography .code-block,
+  .protyle-wysiwyg [data-node-id][data-type="NodeCodeBlock"],
+  .b3-typography [data-node-id][data-type="NodeCodeBlock"] {
+    border: 1px solid var(--b3-theme-outline);
+    border-radius: 8px;
+    background: var(--b3-theme-surface);
+    overflow: hidden;
+    margin: 12px 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .protyle-action {
+      background: linear-gradient(to bottom, var(--b3-theme-surface-variant), var(--b3-theme-surface));
+      border-bottom: 1px solid var(--b3-theme-outline);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 36px;
+      position: relative;
+      
+      .protyle-action__language {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 12px;
+        color: var(--b3-theme-on-surface-variant);
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+      
+      .protyle-icon {
+        margin-left: auto;
+        color: var(--b3-theme-on-surface-variant);
+        opacity: 0.7;
+        transition: opacity 0.2s ease;
+        
+        &:hover {
+          opacity: 1;
+        }
+      }
+    }
+
+    .hljs {
+      background: var(--b3-theme-surface) !important;
+      padding: var(--codeblock-padding, 14px) 14px;
+      padding-top: 12px;
+      font-family: 'Fira Code', 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
+      font-size: var(--codeblock-font-size, 13px);
+      line-height: 1.6;
+      color: var(--b3-theme-on-surface);
+      counter-reset: line;
+      
+      /* 添加行号 */
+      .li::before {
+        counter-increment: line;
+        content: counter(line);
+        display: inline-block;
+        width: 2em;
+        margin-right: 1em;
+        text-align: right;
+        color: var(--b3-theme-on-surface-variant);
+        opacity: 0.4;
+        user-select: none;
+      }
+    }
+  }
+}
+
+/* Mac 风格代码块 - 深色主题适配 */
+body.codeblock-style-mac {
+  .protyle-wysiwyg .code-block,
+  .b3-typography .code-block,
+  .protyle-wysiwyg [data-node-id][data-type="NodeCodeBlock"],
+  .b3-typography [data-node-id][data-type="NodeCodeBlock"] {
+    border: 1px solid var(--b3-theme-outline);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.25);
+    margin: 12px 0;
+    transition: all 0.2s ease;
+
+    &:hover {
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .protyle-action {
+      background: linear-gradient(to bottom, var(--b3-theme-surface-variant), var(--b3-theme-surface));
+      border-bottom: 1px solid var(--b3-theme-outline);
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+      min-height: 36px;
+
+      &::before {
+        content: '';
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #ff5f56;
+        border: 1px solid #e0443e;
+        box-shadow: 
+          18px 0 0 0 #ffbd2e,
+          18px 0 0 1px #dea123,
+          36px 0 0 0 #27c93f,
+          36px 0 0 1px #1aab29;
+        transition: all 0.2s ease;
+      }
+
+      &:hover::before {
+        filter: brightness(1.1);
+      }
+
+      .protyle-action__language {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 12px;
+        color: var(--b3-theme-on-surface-variant);
+        font-weight: 600;
+        letter-spacing: 0.5px;
+      }
+      
+      .protyle-icon {
+        margin-left: auto;
+        color: var(--b3-theme-on-surface-variant);
+        opacity: 0.7;
+        transition: opacity 0.2s ease;
+        
+        &:hover {
+          opacity: 1;
+        }
+      }
+    }
+
+    .hljs {
+      background: var(--b3-theme-surface) !important;
+      padding: var(--codeblock-padding, 14px) 14px;
+      padding-top: 12px;
+      font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+      font-size: var(--codeblock-font-size, 13px);
+      line-height: 1.6;
+      color: var(--b3-theme-on-surface);
+      
+      /* macOS 风格的滚动条 */
+      &::-webkit-scrollbar {
+        height: 8px;
+      }
+      
+      &::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      
+      &::-webkit-scrollbar-thumb {
+        background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.2);
+        border-radius: 4px;
+        
+        &:hover {
+          background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.3);
+        }
+      }
+    }
+  }
+}
+
+/* 默认风格代码块 - 保持思源原有样式但添加微妙增强 */
+body.codeblock-style-default {
+  .protyle-wysiwyg .code-block,
+  .b3-typography .code-block,
+  .protyle-wysiwyg [data-node-id][data-type="NodeCodeBlock"],
+  .b3-typography [data-node-id][data-type="NodeCodeBlock"] {
+    /* 使用思源默认样式，添加微妙的过渡效果 */
+    transition: all 0.2s ease;
+    
+    &:hover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .hljs {
+      font-family: 'Fira Code', 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
+      line-height: 1.6;
+    }
+  }
+}
+
+/* 卡通风格代码块 */
+body.codeblock-style-cartoon {
+  .protyle-wysiwyg .code-block,
+  .b3-typography .code-block,
+  .protyle-wysiwyg [data-node-id][data-type="NodeCodeBlock"],
+  .b3-typography [data-node-id][data-type="NodeCodeBlock"] {
+    border: 2px solid;
+    border-image: linear-gradient(135deg, #ff6b9d, #feca57, #48dbfb, #1dd1a1) 1;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 3px 12px rgba(255, 107, 157, 0.25);
+    margin: 12px 0;
+    transition: all 0.3s ease;
+    animation: cartoonGlow 3s ease-in-out infinite;
+
+    &:hover {
+      box-shadow: 0 6px 24px rgba(255, 107, 157, 0.4);
+      transform: translateY(-2px) scale(1.01);
+    }
+
+    .protyle-action {
+      background: linear-gradient(135deg, 
+        rgba(255, 107, 157, 0.08),
+        rgba(254, 202, 87, 0.08),
+        rgba(72, 219, 251, 0.08),
+        rgba(29, 209, 161, 0.08)
+      );
+      border-bottom: 1px dashed var(--b3-theme-outline);
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 36px;
+      position: relative;
+
+      &::before {
+        content: '✨';
+        font-size: 12px;
+        animation: sparkleRotate 3s linear infinite;
+      }
+
+      .protyle-action__language {
+        flex: 1;
+        text-align: center;
+        font-size: 12px;
+        font-weight: 600;
+        background: linear-gradient(135deg, #ff6b9d, #feca57, #48dbfb, #1dd1a1);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: 0.5px;
+      }
+      
+      .protyle-icon {
+        color: var(--b3-theme-on-surface-variant);
+        opacity: 0.7;
+        transition: all 0.2s ease;
+        
+        &:hover {
+          opacity: 1;
+          transform: scale(1.1) rotate(5deg);
+        }
+      }
+    }
+
+    .hljs {
+      background: var(--b3-theme-surface) !important;
+      padding: var(--codeblock-padding, 14px) 12px;
+      padding-top: 12px;
+      font-family: 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive, monospace;
+      font-size: var(--codeblock-font-size, 13px);
+      line-height: 1.6;
+      color: var(--b3-theme-on-surface);
+      position: relative;
+      
+      &::after {
+        content: '🎨';
+        position: absolute;
+        bottom: 6px;
+        right: 6px;
+        font-size: 16px;
+        opacity: 0.15;
+        animation: float 3s ease-in-out infinite;
+      }
+    }
+  }
+}
+
+@keyframes cartoonGlow {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.05);
+  }
+}
+
+@keyframes sparkleRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+}
+
+/* 通用代码块增强 - 适用于所有风格 */
+body[class*="codeblock-style-"] {
+  .protyle-wysiwyg .code-block,
+  .b3-typography .code-block,
+  .protyle-wysiwyg [data-node-id][data-type="NodeCodeBlock"],
+  .b3-typography [data-node-id][data-type="NodeCodeBlock"] {
+    
+    /* 代码块内的选中效果 */
+    .hljs ::selection {
+      background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.3);
+    }
+    
+    /* 代码块复制按钮优化 */
+    .protyle-action__copy {
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    
+    &:hover .protyle-action__copy {
+      opacity: 1;
+    }
+    
+    /* 代码块语言标签样式优化 */
+    .protyle-action__language {
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1);
+      transition: all 0.2s ease;
+      
+      &:hover {
+        background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.2);
+      }
+    }
+  }
+}

@@ -23,6 +23,7 @@ export class GeneralSettings {
   public init() {
     this.addDock();
     this.applySavedSettings(); // 应用已保存的设置
+    this.applyCodeBlockStyle(); // 应用代码块样式
     console.log('通用设置模块已初始化');
   }
 
@@ -75,6 +76,8 @@ export class GeneralSettings {
     // 根据模块类型处理不同的设置
     if (settings.moduleId === 'font') {
       this.applyGlobalFontStyles(settings.settings);
+    } else if (settings.moduleId === 'codeblock') {
+      this.applyCodeBlockStyleFromSettings(settings.settings);
     }
     // 未来可以添加更多模块的处理逻辑
     // else if (settings.moduleId === 'appearance') {
@@ -175,6 +178,37 @@ export class GeneralSettings {
   public applySavedSettings() {
     const settings = this.getCurrentFontSettings();
     this.applyGlobalFontStyles(settings);
+  }
+
+  /**
+   * 应用代码块样式
+   */
+  public applyCodeBlockStyle() {
+    try {
+      const saved = localStorage.getItem('general-codeblock-settings');
+      if (saved) {
+        const settings = JSON.parse(saved);
+        this.applyCodeBlockStyleFromSettings(settings);
+      }
+    } catch (error) {
+      console.error('应用代码块样式失败:', error);
+    }
+  }
+
+  /**
+   * 从设置对象应用代码块样式
+   */
+  private applyCodeBlockStyleFromSettings(settings: any) {
+    try {
+      const style = settings.style || 'default';
+      // 移除旧的样式类
+      document.body.classList.remove('codeblock-style-default', 'codeblock-style-github', 'codeblock-style-mac');
+      // 添加新的样式类
+      document.body.classList.add(`codeblock-style-${style}`);
+      console.log(`代码块样式已应用: ${style}`);
+    } catch (error) {
+      console.error('应用代码块样式失败:', error);
+    }
   }
 
   /**

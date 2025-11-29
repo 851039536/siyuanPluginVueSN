@@ -33,6 +33,7 @@ import { ref, computed } from 'vue'
 import FontSettings from './components/FontSettings.vue'
 import GeneralActions from './components/GeneralActions.vue'
 import PasswordSettings from './components/PasswordSettings.vue'
+import CodeBlockSettings from './components/CodeBlockSettings.vue'
 
 interface Props {
   i18n?: any
@@ -54,34 +55,26 @@ const modules = ref([
     order: 1
   },
   {
+    id: 'codeblock',
+    name: props.i18n.codeBlockSettings || '代码块美化',
+    icon: '💻',
+    component: CodeBlockSettings,
+    order: 2
+  },
+  {
     id: 'password',
     name: props.i18n.passwordSetting || '密码设置',
-    icon: '�',
+    icon: '🔒',
     component: PasswordSettings,
-    order: 2
+    order: 3
   },
   {
     id: 'actions',
     name: props.i18n.generalActions || '通用操作',
     icon: '🚀',
     component: GeneralActions,
-    order: 3
+    order: 4
   },
-  // {
-  //   id: 'appearance',
-  //   name: props.i18n.appearanceSettings || '外观设置',
-  //   icon: '🎨',
-  //   component: AppearanceSettings,
-  //   order: 4
-  // },
-  // 未来可以轻松添加更多模块
-  // {
-  //   id: 'behavior',
-  //   name: '行为设置',
-  //   icon: '⚙️',
-  //   component: BehaviorSettings,
-  //   order: 5
-  // }
 ])
 
 const activeModule = ref('font')

@@ -1,0 +1,137 @@
+/**
+ * 超级面板 - 统一功能入口
+ * 在右侧边栏提供所有功能的快捷访问
+ */
+import { Plugin, showMessage } from 'siyuan'
+import { createApp, type App as VueApp } from 'vue'
+import SuperPanelView from './SuperPanelView.vue'
+import { replaceTopBarIcon } from '@/utils/iconHelper'
+import { FEATURE_ICONS } from '@/config/icons'
+
+let vueApp: VueApp | null = null
+let panelContainer: HTMLElement | null = null
+
+/**
+ * 注册超级面板功能
+ */
+export function registerSuperPanel(plugin: Plugin) {
+  console.log('注册超级面板功能')
+
+  // 添加右侧边栏图标
+  const topBarElement = plugin.addTopBar({
+    icon: 'iconMenu',
+    title: (plugin.i18n as any).superPanel?.title || '超级面板',
+    position: 'right',
+    callback: () => {
+      toggleSuperPanel(plugin)
+    }
+  })
+
+  // 替换为 Iconify 图标
+  const superPanelIcon = FEATURE_ICONS.superPanel
+  replaceTopBarIcon(topBarElement, superPanelIcon.icon, superPanelIcon.color)
+
+  // 添加快捷键
+  plugin.addCommand({
+    langKey: 'toggleSuperPanel',
+    hotkey: '⌃⌥P',
+    callback: () => {
+      toggleSuperPanel(plugin)
+    }
+  })
+}
+
+/**
+ * 切换超级面板显示/隐藏
+ */
+function toggleSuperPanel(plugin: Plugin) {
+  if (vueApp && panelContainer) {
+    // 如果面板已存在，关闭它
+    closeSuperPanel()
+  } else {
+    // 创建并显示面板
+    openSuperPanel(plugin)
+  }
+}
+
+/**
+ * 打开超级面板
+ */
+function openSuperPanel(plugin: Plugin) {
+  // 创建容器
+  panelContainer = document.createElement('div')
+  panelContainer.id = 'super-panel-vue-container'
+  document.body.appendChild(panelContainer)
+
+  // 创建 Vue 应用
+  vueApp = createApp(SuperPanelView, {
+    visible: true,
+    settings: (plugin as any).settings,
+    i18n: (plugin.i18n as any).superPanel || {},
+    onClose: () => {
+      closeSuperPanel()
+    },
+    onOpenSettings: () => {
+      plugin.openSetting()
+    },
+    onAction: (action: string) => {
+      handleFeatureAction(plugin, action)
+    }
+  })
+
+  vueApp.mount(panelContainer)
+}
+
+/**
+ * 关闭超级面板
+ */
+function closeSuperPanel() {
+  if (vueApp && panelContainer) {
+    vueApp.unmount()
+    panelContainer.remove()
+    vueApp = null
+    panelContainer = null
+  }
+}
+
+
+
+/**
+ * 处理功能操作
+ */
+function handleFeatureAction(_plugin: Plugin, action: string) {
+  switch (action) {
+    case 'insertIndex':
+      // 触发插入索引命令
+      window.dispatchEvent(new CustomEvent('executeCommand', { 
+        detail: { command: 'insertIndex' } 
+      }))
+      closeSuperPanel()
+      break
+
+    case 'insertOutline':
+      // 触发插入大纲命令
+      window.dispatchEvent(new CustomEvent('executeCommand', { 
+        detail: { command: 'insertSubDocsWithOutline' } 
+      }))
+      closeSuperPanel()
+      break
+
+    case 'insertRef':
+      // 触发插入引用命令
+      window.dispatchEvent(new CustomEvent('executeCommand', { 
+        detail: { command: 'insertSubDocsRef' } 
+      }))
+      closeSuperPanel()
+      break
+
+    case 'openCompressor':
+      // 触发打开图片压缩器
+      window.dispatchEvent(new CustomEvent('openImageCompressor'))
+      closeSuperPanel()
+      break
+
+    default:
+      showMessage('功能开发中...', 2000, 'info')
+  }
+}

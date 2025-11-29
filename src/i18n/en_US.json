@@ -226,5 +226,30 @@
   "qrcodeDownloaded": "QR code downloaded",
   "qrcodeDownloadFailed": "Download failed",
   "qrcodeGenerateFailed": "Failed to generate QR code",
-  "close": "Close"
+  "close": "Close",
+  "superPanel": {
+    "title": "Super Panel",
+    "close": "Close",
+    "settings": "Plugin Settings",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "featureDisabled": "This feature is not enabled, please enable it in settings",
+    "tableOfContents": "Table of Contents",
+    "tableOfContentsDesc": "Quickly generate document TOC and outline",
+    "imageCompressor": "Image Compressor",
+    "imageCompressorDesc": "Batch compress images in documents",
+    "docNavigation": "Document Navigation",
+    "docNavigationDesc": "Display parent-child document navigation links",
+    "pageLock": "Page Lock",
+    "pageLockDesc": "Lock page to prevent accidental editing",
+    "wordQuery": "Word Query",
+    "wordQueryDesc": "Quickly query word definitions",
+    "qrCode": "QR Code Generator",
+    "qrCodeDesc": "Generate QR codes from text or links",
+    "unitConverter": "Unit Converter",
+    "unitConverterDesc": "Quickly convert various units",
+    "shortcuts": "Shortcut Panel",
+    "shortcutsDesc": "View and manage shortcuts"
+  },
+  "toggleSuperPanel": "Toggle Super Panel"
 }

@@ -231,5 +231,30 @@
   "qrcodeDownloaded": "二维码已下载",
   "qrcodeDownloadFailed": "下载失败",
   "qrcodeGenerateFailed": "生成二维码失败",
-  "close": "关闭"
+  "close": "关闭",
+  "superPanel": {
+    "title": "超级面板",
+    "close": "关闭",
+    "settings": "插件设置",
+    "enabled": "已启用",
+    "disabled": "已禁用",
+    "featureDisabled": "该功能未启用，请在设置中开启",
+    "tableOfContents": "目录索引",
+    "tableOfContentsDesc": "快速生成文档目录和大纲",
+    "imageCompressor": "图片压缩",
+    "imageCompressorDesc": "批量压缩文档中的图片",
+    "docNavigation": "文档导航",
+    "docNavigationDesc": "显示父子文档导航链接",
+    "pageLock": "页面锁定",
+    "pageLockDesc": "锁定页面防止误编辑",
+    "wordQuery": "单词查询",
+    "wordQueryDesc": "快速查询单词释义",
+    "qrCode": "二维码生成",
+    "qrCodeDesc": "生成文本或链接的二维码",
+    "unitConverter": "单位转换",
+    "unitConverterDesc": "快速转换各种单位",
+    "shortcuts": "快捷键面板",
+    "shortcutsDesc": "查看和管理快捷键"
+  },
+  "toggleSuperPanel": "切换超级面板"
 }

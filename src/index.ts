@@ -5,7 +5,7 @@ import {
 import "@/index.scss";
 import PluginInfoString from '@/../plugin.json'
 import { destroy, init } from '@/main'
-import { registerPageLock, registerTableOfContents, registerImageCompressor, registerDocNavigation, registerShortcut, registerWordQuery, registerGeneralSettings, registerQRCode, registerUnitConverter } from '@/features'
+import { registerPageLock, registerTableOfContents, registerImageCompressor, registerDocNavigation, registerShortcut, registerWordQuery, registerGeneralSettings, registerQRCode, registerUnitConverter, registerSuperPanel } from '@/features'
 import { loadSettings, saveSettings, type PluginSettings } from '@/config/settings'
 
 let PluginInfo = {
@@ -78,6 +78,10 @@ export default class PluginSample extends Plugin {
    * 注册所有功能模块
    */
   private async registerFeatures() {
+    // 注册超级面板（统一入口，始终启用）
+    console.log('注册超级面板')
+    registerSuperPanel(this)
+
     // 根据配置注册功能模块
     if (this.settings.enablePageLock) {
       console.log('注册页面锁定功能')

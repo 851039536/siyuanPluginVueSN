@@ -114,6 +114,14 @@ const features = computed<Feature[]>(() => [
     actions: []
   },
   {
+    id: 'generalSettings',
+    iconKey: 'generalSettings',
+    title: props.i18n.generalSettings || '通用设置',
+    desc: props.i18n.generalSettingsDesc || '字体、标题、代码块等通用配置',
+    enabled: props.settings.enableGeneralSettings,
+    actions: []
+  },
+  {
     id: 'qrCode',
     iconKey: 'qrCode',
     title: props.i18n.qrCode || '二维码生成',

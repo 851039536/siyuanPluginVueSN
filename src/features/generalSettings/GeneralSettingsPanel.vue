@@ -24,6 +24,15 @@
         <CodeBlockSettings :i18n="i18n" @change="handleCodeBlockChange" />
       </div>
 
+      <!-- 标题配置区域 -->
+      <div class="setting-section">
+        <div class="section-title">
+          <span class="section-icon">📝</span>
+          <span>{{ i18n.headingSettings || '标题配置' }}</span>
+        </div>
+        <HeadingSettings :i18n="i18n" @change="handleHeadingChange" />
+      </div>
+
       <!-- 密码设置区域 -->
       <div class="setting-section">
         <div class="section-title">
@@ -51,6 +60,7 @@ import FontSettings from './components/FontSettings.vue'
 import GeneralActions from './components/GeneralActions.vue'
 import PasswordSettings from './components/PasswordSettings.vue'
 import CodeBlockSettings from './components/CodeBlockSettings.vue'
+import HeadingSettings from './components/HeadingSettings.vue'
 
 interface Props {
   i18n?: any
@@ -86,11 +96,20 @@ function handleActionsChange(settings: any) {
   })
 }
 
+function handleHeadingChange(settings: any) {
+  console.log('标题设置已更改:', settings)
+  props.onSettingsChange?.({
+    moduleId: 'heading',
+    settings
+  })
+}
+
 // 暴露方法给父组件
 defineExpose({
   handleFontChange,
   handleCodeBlockChange,
-  handleActionsChange
+  handleActionsChange,
+  handleHeadingChange
 })
 </script>
 

@@ -62,6 +62,12 @@ export const FEATURE_ICONS = {
     color: '#06b6d4'
   },
 
+  // 通用设置
+  generalSettings: {
+    icon: 'mdi:tune',
+    color: '#a855f7'
+  },
+
   // 二维码生成
   qrCode: {
     icon: 'mdi:qrcode',

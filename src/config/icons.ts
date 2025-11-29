@@ -122,6 +122,14 @@ export const COMMON_ICONS = {
   refresh: {
     icon: 'mdi:refresh',
   },
+  // 收藏类
+  star: {
+    icon: 'mdi:star',
+    color: '#fbbf24'
+  },
+  starOutline: {
+    icon: 'mdi:star-outline',
+  },
 
   // 状态类
   success: {

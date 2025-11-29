@@ -17,15 +17,24 @@
           <div class="loading-spinner" v-else></div>
         </button>
       </div>
-      
+
       <!-- API密钥设置按钮 -->
       <div class="api-key-toggle">
-        <button class="settings-btn" @click="toggleApiKeySettings">
-          <svg class="settings-icon"><use xlink:href="#iconSettings"></use></svg>
+        <button class="settings-btn" @click="toggleHistory" :title="i18n.history || '历史记录'">
+          <svg class="settings-icon"><use xlink:href="#iconHistory"></use></svg>
+        </button>
+        <button class="settings-btn" @click="toggleFavorites" :title="i18n.favorites || '我的收藏'">
+          <IconWrapper name="star" :size="18" />
+        </button>
+        <button class="settings-btn" @click="toggleAdvancedOptions" :title="i18n.advancedOptions || '高级选项'">
+          <IconWrapper name="generalSettings" :size="18" />
+        </button>
+        <button class="settings-btn" @click="toggleApiKeySettings" :title="i18n.apiKeySettings || 'API配置'">
+          <IconWrapper name="settings" :size="18" />
         </button>
       </div>
     </div>
-    
+
     <!-- API配置设置区域 -->
     <div class="api-key-settings" v-if="showApiKeySettings">
       <div class="api-key-header">
@@ -97,6 +106,109 @@
       </div>
     </div>
 
+    <!-- 历史记录面板 -->
+    <div class="history-panel" v-if="showHistory">
+      <div class="panel-header">
+        <span>🕒 {{ i18n.queryHistory || '查询历史' }} ({{ queryHistory.length }})</span>
+        <div class="panel-actions">
+          <button class="btn-clear" @click="clearHistory" v-if="queryHistory.length > 0">清除</button>
+          <button class="close-btn" @click="toggleHistory">
+            <svg class="close-icon"><use xlink:href="#iconClose"></use></svg>
+          </button>
+        </div>
+      </div>
+      <div class="panel-content">
+        <div v-if="queryHistory.length === 0" class="empty-state">
+          <p>📑 {{ i18n.noHistory || '暂无查询历史' }}</p>
+        </div>
+        <div v-else class="history-list">
+          <div
+            v-for="item in queryHistory"
+            :key="item.timestamp"
+            class="history-item"
+            @click="queryFromHistory(item)"
+          >
+            <div class="item-word">{{ item.word }}</div>
+            <div class="item-time">{{ formatTime(item.timestamp) }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 收藏面板 -->
+    <div class="favorites-panel" v-if="showFavorites">
+      <div class="panel-header">
+        <span>⭐ {{ i18n.myFavorites || '我的收藏' }} ({{ favorites.length }})</span>
+        <div class="panel-actions">
+          <button class="btn-clear" @click="clearFavorites" v-if="favorites.length > 0">清除</button>
+          <button class="close-btn" @click="toggleFavorites">
+            <svg class="close-icon"><use xlink:href="#iconClose"></use></svg>
+          </button>
+        </div>
+      </div>
+      <div class="panel-content">
+        <div v-if="favorites.length === 0" class="empty-state">
+          <p>📚 {{ i18n.noFavorites || '暂无收藏单词' }}</p>
+        </div>
+        <div v-else class="favorites-list">
+          <div
+            v-for="item in favorites"
+            :key="item.timestamp"
+            class="favorite-item"
+          >
+            <div class="item-content" @click="queryFromFavorite(item)">
+              <div class="item-word">{{ item.word }}</div>
+              <div class="item-time">{{ formatTime(item.timestamp) }}</div>
+            </div>
+            <button class="btn-remove" @click="removeFavorite(item.word)">
+              <svg class="remove-icon"><use xlink:href="#iconTrashcan"></use></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 高级选项面板 -->
+    <div class="advanced-panel" v-if="showAdvancedOptions">
+      <div class="panel-header">
+        <span>⚙️ {{ i18n.advancedOptions || '高级选项' }}</span>
+        <button class="close-btn" @click="toggleAdvancedOptions">
+          <svg class="close-icon"><use xlink:href="#iconClose"></use></svg>
+        </button>
+      </div>
+      <div class="panel-content advanced-content">
+        <div class="option-group">
+          <label class="option-label">
+            <span>🔊 {{ i18n.pronunciation || '发音设置' }}</span>
+          </label>
+          <div class="option-row">
+            <label class="radio-label">
+              <input type="radio" value="uk" v-model="pronunciationType" />
+              <span>🇬🇧 {{ i18n.britishPronunciation || '英式发音' }}</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" value="us" v-model="pronunciationType" />
+              <span>🇺🇸 {{ i18n.americanPronunciation || '美式发音' }}</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="option-group">
+          <label class="checkbox-label">
+            <input type="checkbox" v-model="autoPlayPronunciation" />
+            <span>🎵 {{ i18n.autoPlayPronunciation || '查询后自动播放发音' }}</span>
+          </label>
+        </div>
+
+        <div class="option-group">
+          <label class="checkbox-label">
+            <input type="checkbox" v-model="showRelatedWords" />
+            <span>🔗 {{ i18n.showRelatedWords || '显示相关词推荐' }}</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
     <!-- 查询结果 -->
     <div class="query-content">
       <!-- 加载状态 -->
@@ -142,6 +254,25 @@
               </button>
             </div>
           </div>
+
+          <!-- 收藏按钮 -->
+          <button class="action-btn favorite-btn" @click="toggleFavorite" :class="{ favorited: currentWordFavorited }">
+            <IconWrapper :name="currentWordFavorited ? 'star' : 'starOutline'" :size="16" class="action-icon" />
+            {{ currentWordFavorited ? (i18n.unfavorite || '取消收藏') : (i18n.favorite || '收藏') }}
+          </button>
+
+          <!-- 播放发音按钮 -->
+          <button class="action-btn play-btn" @click="playPronunciation(searchWord)">
+            <svg class="action-icon"><use xlink:href="#iconPlay"></use></svg>
+            {{ i18n.play || '播放' }}
+          </button>
+
+          <!-- 导出按钮 -->
+          <button class="action-btn export-btn" @click="exportToSiyuan">
+            <svg class="action-icon"><use xlink:href="#iconUpload"></use></svg>
+            {{ i18n.export || '导出' }}
+          </button>
+
           <button class="action-btn clear-btn" @click="clearResult">
             <svg class="action-icon"><use xlink:href="#iconTrashcan"></use></svg>
             {{ i18n.clear || '清除' }}
@@ -161,6 +292,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { showMessage } from 'siyuan';
+import IconWrapper from '@/components/IconWrapper.vue';
 
 // Props
 interface Props {
@@ -171,6 +303,21 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+// 历史记录接口
+interface HistoryItem {
+  word: string;
+  result: string;
+  timestamp: number;
+}
+
+// 收藏项接口
+interface FavoriteItem {
+  word: string;
+  result: string;
+  timestamp: number;
+  note?: string;
+}
 
 // 状态
 const searchWord = ref('');
@@ -185,19 +332,31 @@ const apiProvider = ref('tongyi');
 const customApiEndpoint = ref('');
 const autoQueryTimer = ref<NodeJS.Timeout | null>(null);
 
+// 新增功能状态
+const showHistory = ref(false);
+const showFavorites = ref(false);
+const showAdvancedOptions = ref(false);
+const queryHistory = ref<HistoryItem[]>([]);
+const favorites = ref<FavoriteItem[]>([]);
+const currentWordFavorited = ref(false);
+const pronunciationType = ref<'uk' | 'us'>('uk'); // 英式/美式发音
+const autoPlayPronunciation = ref(false); // 自动播放发音
+const showRelatedWords = ref(true); // 显示相关词
+const maxHistoryItems = ref(50); // 历史记录最大条数
+
 // 格式化查询结果
 const formattedResult = computed(() => {
   if (!queryResult.value) return '';
-  
+
   // 简单的 Markdown 格式转换
   let html = queryResult.value;
-  
+
   // 转换标题 #### 为 h4
   html = html.replace(/^#### (.+)$/gm, '<h4 class="result-title">$1</h4>');
-  
+
   // 转换换行为段落
   html = html.replace(/\n/g, '<br>');
-  
+
   // 为每个字段创建单独的区块，并添加特定样式类
   html = html.replace(/<br>(单词|词语)：/g, '</div><div class="result-section word-section"><span class="result-label">$1：</span>');
   html = html.replace(/<br>(拼音|音标)：/g, '</div><div class="result-section phonetic-section"><span class="result-label">$1：</span>');
@@ -206,13 +365,13 @@ const formattedResult = computed(() => {
   html = html.replace(/<br>(谐音)：/g, '</div><div class="result-section pronunciation-section"><span class="result-label">$1：</span>');
   html = html.replace(/<br>(发音)：/g, '</div><div class="result-section tip-section"><span class="result-label">$1：</span>');
   html = html.replace(/<br>(例句)：/g, '</div><div class="result-section example-section"><span class="result-label">$1：</span>');
-  
+
   // 为第一个字段添加开始div
   const firstMatch = html.match(/^(单词|词语|拼音|音标|英文|释义|谐音|发音|例句)：/);
   if (firstMatch) {
     const fieldType = firstMatch[1];
     let sectionClass = 'result-section';
-    
+
     switch(fieldType) {
       case '单词':
       case '词语':
@@ -238,49 +397,49 @@ const formattedResult = computed(() => {
         sectionClass = 'result-section example-section';
         break;
     }
-    
+
     html = html.replace(/^(单词|词语|拼音|音标|英文|释义|谐音|发音|例句)：/, `<div class="${sectionClass}"><span class="result-label">$1：</span>`);
   }
-  
+
   // 为整个内容添加包装
   html = '<div class="result-wrapper">' + html + '</div>';
-  
+
   // 转换加粗 **text** 为 <strong>text</strong>
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  
+
   return html;
 });
 
 // 提取查询结果中的各个部分
 const extractContentParts = computed(() => {
   if (!queryResult.value) return {};
-  
+
   const content = queryResult.value;
   const parts: any = {};
-  
+
   // 提取音标或拼音
   const phoneticMatch = content.match(/音标：[^\n]+/) || content.match(/拼音：[^\n]+/);
   if (phoneticMatch) parts.phonetic = phoneticMatch[0].replace(/(音标|拼音)：/, '').trim();
-  
+
   // 提取释义
   const meaningMatch = content.match(/释义：[^\n]+/);
   if (meaningMatch) parts.meaning = meaningMatch[0].replace('释义：', '').trim();
-  
+
   // 提取英文翻译（仅中文查询时有）
   const englishMatch = content.match(/英文：[^\n]+/);
   if (englishMatch) parts.english = englishMatch[0].replace('英文：', '').trim();
-  
+
   // 提取谐音
   const pronunciationMatch = content.match(/谐音：[^\n]+/);
   if (pronunciationMatch) parts.pronunciation = pronunciationMatch[0].replace('谐音：', '').trim();
-  
+
   // 提取例句
   const exampleMatch = content.match(/例句：[\s\S]+/);
   if (exampleMatch) parts.example = exampleMatch[0].replace('例句：', '').trim();
-  
+
   // 提取全部内容
   parts.all = content;
-  
+
   return parts;
 });
 
@@ -291,22 +450,30 @@ const handleQuery = async () => {
     errorMessage.value = props.i18n.enterWordPlease || '请输入单词';
     return;
   }
-  
+
   // 验证是否为有效的单词或词语（中英文、数字、符号、标点）
   if (!/^[a-zA-Z0-9\s\-.,;:!?'"()（）【】《》《""''\u4e00-\u9fa5\u3000-\u303F\uFF00-\uFFEF]+$/.test(word)) {
     errorMessage.value = props.i18n.enterValidWord || '请输入有效的单词或词语';
     return;
   }
-  
+
   isLoading.value = true;
   errorMessage.value = '';
-  
+
   try {
     const result = await props.onQuery(word);
     if (result) {
       queryResult.value = result;
+      // 添加到历史记录
+      addToHistory(word, result);
+      // 检查是否已收藏
+      checkIfFavorited(word);
+      // 自动播放发音
+      if (autoPlayPronunciation.value) {
+        playPronunciation(word);
+      }
     } else {
-      errorMessage.value = props.i18n.queryFailed || '查询失败，请重试';
+      errorMessage.value = props.i18n.queryFailed || '查询失败,请重试';
     }
   } catch (error) {
     console.error('Query error:', error);
@@ -316,6 +483,241 @@ const handleQuery = async () => {
   }
 };
 
+// 添加到历史记录
+const addToHistory = (word: string, result: string) => {
+  const newItem: HistoryItem = {
+    word,
+    result,
+    timestamp: Date.now()
+  };
+
+  // 移除重复项
+  queryHistory.value = queryHistory.value.filter(item => item.word !== word);
+  // 添加到开头
+  queryHistory.value.unshift(newItem);
+  // 限制数量
+  if (queryHistory.value.length > maxHistoryItems.value) {
+    queryHistory.value = queryHistory.value.slice(0, maxHistoryItems.value);
+  }
+  // 保存到本地存储
+  saveHistory();
+};
+
+// 保存历史记录
+const saveHistory = () => {
+  try {
+    localStorage.setItem('word-query-history', JSON.stringify(queryHistory.value));
+  } catch (error) {
+    console.error('Failed to save history:', error);
+  }
+};
+
+// 加载历史记录
+const loadHistory = () => {
+  try {
+    const saved = localStorage.getItem('word-query-history');
+    if (saved) {
+      queryHistory.value = JSON.parse(saved);
+    }
+  } catch (error) {
+    console.error('Failed to load history:', error);
+  }
+};
+
+// 清除历史记录
+const clearHistory = () => {
+  queryHistory.value = [];
+  saveHistory();
+  showMessage('历史记录已清除', 2000, 'info');
+};
+
+// 从历史记录查询
+const queryFromHistory = (item: HistoryItem) => {
+  searchWord.value = item.word;
+  queryResult.value = item.result;
+  checkIfFavorited(item.word);
+  showHistory.value = false;
+};
+
+// 切换历史记录显示
+const toggleHistory = () => {
+  showHistory.value = !showHistory.value;
+  if (showHistory.value) {
+    showFavorites.value = false;
+    showAdvancedOptions.value = false;
+  }
+};
+
+// 检查是否已收藏
+const checkIfFavorited = (word: string) => {
+  currentWordFavorited.value = favorites.value.some(item => item.word === word);
+};
+
+// 切换收藏
+const toggleFavorite = () => {
+  const word = searchWord.value.trim();
+  if (!word || !queryResult.value) return;
+
+  if (currentWordFavorited.value) {
+    // 取消收藏
+    favorites.value = favorites.value.filter(item => item.word !== word);
+    currentWordFavorited.value = false;
+    showMessage('已取消收藏', 2000, 'info');
+  } else {
+    // 添加收藏
+    const newItem: FavoriteItem = {
+      word,
+      result: queryResult.value,
+      timestamp: Date.now()
+    };
+    favorites.value.unshift(newItem);
+    currentWordFavorited.value = true;
+    showMessage('已添加到收藏', 2000, 'info');
+  }
+  saveFavorites();
+};
+
+// 保存收藏
+const saveFavorites = () => {
+  try {
+    localStorage.setItem('word-query-favorites', JSON.stringify(favorites.value));
+  } catch (error) {
+    console.error('Failed to save favorites:', error);
+  }
+};
+
+// 加载收藏
+const loadFavorites = () => {
+  try {
+    const saved = localStorage.getItem('word-query-favorites');
+    if (saved) {
+      favorites.value = JSON.parse(saved);
+    }
+  } catch (error) {
+    console.error('Failed to load favorites:', error);
+  }
+};
+
+// 清除收藏
+const clearFavorites = () => {
+  favorites.value = [];
+  saveFavorites();
+  showMessage('收藏已清除', 2000, 'info');
+};
+
+// 从收藏查询
+const queryFromFavorite = (item: FavoriteItem) => {
+  searchWord.value = item.word;
+  queryResult.value = item.result;
+  currentWordFavorited.value = true;
+  showFavorites.value = false;
+};
+
+// 删除收藏项
+const removeFavorite = (word: string) => {
+  favorites.value = favorites.value.filter(item => item.word !== word);
+  saveFavorites();
+  if (searchWord.value === word) {
+    currentWordFavorited.value = false;
+  }
+};
+
+// 切换收藏显示
+const toggleFavorites = () => {
+  showFavorites.value = !showFavorites.value;
+  if (showFavorites.value) {
+    showHistory.value = false;
+    showAdvancedOptions.value = false;
+  }
+};
+
+// 切换高级选项
+const toggleAdvancedOptions = () => {
+  showAdvancedOptions.value = !showAdvancedOptions.value;
+  if (showAdvancedOptions.value) {
+    showHistory.value = false;
+    showFavorites.value = false;
+  }
+};
+
+// 播放发音
+const playPronunciation = (word: string) => {
+  try {
+    const utterance = new SpeechSynthesisUtterance(word);
+    utterance.lang = pronunciationType.value === 'uk' ? 'en-GB' : 'en-US';
+    utterance.rate = 0.8; // 语速
+    speechSynthesis.speak(utterance);
+  } catch (error) {
+    console.error('Failed to play pronunciation:', error);
+  }
+};
+
+// 导出到思源笔记
+const exportToSiyuan = async () => {
+  if (!queryResult.value) {
+    showMessage('没有可导出的内容', 2000, 'error');
+    return;
+  }
+
+  try {
+    const word = searchWord.value.trim();
+    const content = `## ${word}\n\n${queryResult.value}`;
+
+    // 复制到剪贴板
+    await navigator.clipboard.writeText(content);
+    showMessage('已复制到剪贴板，可直接粘贴到文档', 3000, 'info');
+  } catch (error) {
+    console.error('Export failed:', error);
+    showMessage('导出失败', 2000, 'error');
+  }
+};
+
+// 保存高级选项
+const saveAdvancedOptions = () => {
+  try {
+    localStorage.setItem('word-query-pronunciation-type', pronunciationType.value);
+    localStorage.setItem('word-query-auto-play', JSON.stringify(autoPlayPronunciation.value));
+    localStorage.setItem('word-query-show-related', JSON.stringify(showRelatedWords.value));
+  } catch (error) {
+    console.error('Failed to save advanced options:', error);
+  }
+};
+
+// 加载高级选项
+const loadAdvancedOptions = () => {
+  try {
+    const savedType = localStorage.getItem('word-query-pronunciation-type');
+    if (savedType) {
+      pronunciationType.value = savedType as 'uk' | 'us';
+    }
+    const savedAutoPlay = localStorage.getItem('word-query-auto-play');
+    if (savedAutoPlay) {
+      autoPlayPronunciation.value = JSON.parse(savedAutoPlay);
+    }
+    const savedShowRelated = localStorage.getItem('word-query-show-related');
+    if (savedShowRelated) {
+      showRelatedWords.value = JSON.parse(savedShowRelated);
+    }
+  } catch (error) {
+    console.error('Failed to load advanced options:', error);
+  }
+};
+
+// 格式化时间
+const formatTime = (timestamp: number) => {
+  const now = Date.now();
+  const diff = now - timestamp;
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+
+  if (minutes < 1) return '刚刚';
+  if (minutes < 60) return `${minutes}分钟前`;
+  if (hours < 24) return `${hours}小时前`;
+  if (days < 7) return `${days}天前`;
+  return new Date(timestamp).toLocaleDateString();
+};
+
 // 自动查询函数
 const setupAutoQuery = () => {
   // 清除之前的定时器
@@ -323,7 +725,7 @@ const setupAutoQuery = () => {
     clearTimeout(autoQueryTimer.value);
     autoQueryTimer.value = null;
   }
-  
+
   const word = searchWord.value.trim();
   if (word && /^[a-zA-Z0-9\s\-.,;:!?'"()（）【】《》《""''\u4e00-\u9fa5\u3000-\u303F\uFF00-\uFFEF]+$/.test(word)) {
     // 设置2秒后自动查询
@@ -466,18 +868,18 @@ const loadApiKey = () => {
 // 复制结果
 const copyResult = async (type: string = 'all') => {
   let textToCopy = '';
-  
+
   if (type === 'all') {
     textToCopy = extractContentParts.value.all || queryResult.value;
   } else {
     textToCopy = extractContentParts.value[type] || '';
-    
+
     if (!textToCopy) {
       showMessage('没有找到要复制的内容', 2000, 'error');
       return;
     }
   }
-  
+
   try {
     await navigator.clipboard.writeText(textToCopy);
     const typeText = {
@@ -528,6 +930,11 @@ watch(searchWord, () => {
   setupAutoQuery();
 });
 
+// 监听高级选项变化
+watch([pronunciationType, autoPlayPronunciation, showRelatedWords], () => {
+  saveAdvancedOptions();
+});
+
 onMounted(() => {
   document.addEventListener('keydown', handleKeyDown);
   document.addEventListener('click', handleClickOutside);
@@ -535,6 +942,11 @@ onMounted(() => {
   loadApiProvider();
   loadCustomApiEndpoint();
   loadApiKey();
+  // 加载历史记录和收藏
+  loadHistory();
+  loadFavorites();
+  // 加载高级选项
+  loadAdvancedOptions();
 });
 
 onUnmounted(() => {
@@ -1224,63 +1636,63 @@ onUnmounted(() => {
     padding: 8px;
     gap: 6px;
   }
-  
+
   .input-wrapper {
     gap: 6px;
     margin-right: 6px;
   }
-  
+
   .query-input {
     padding: 6px 8px;
     font-size: 12px;
   }
-  
+
   .query-btn {
     padding: 6px 8px;
     font-size: 11px;
   }
-  
+
   .api-key-header {
     padding: 6px 10px;
   }
-  
+
   .api-key-content {
     padding: 8px 10px 10px;
   }
-  
+
   .api-key-input {
     font-size: 0.75em;
     padding: 6px 8px;
   }
-  
+
   .toggle-visibility {
     padding: 6px 8px;
   }
-  
+
   .query-content {
     padding: 8px;
   }
-  
+
   .result-content {
     padding: 12px;
     margin-bottom: 8px;
   }
-  
+
   .result-actions {
     gap: 4px;
   }
-  
+
   .action-btn {
     padding: 4px 8px;
     font-size: 10px;
     gap: 4px;
   }
-  
+
   .dropdown-menu {
     min-width: 80px;
     max-width: 120px;
   }
-  
+
   .dropdown-item {
     padding: 6px 8px;
     font-size: 10px;
@@ -1291,21 +1703,21 @@ onUnmounted(() => {
   .query-header {
     padding: 6px;
   }
-  
+
   .query-input {
     padding: 4px 6px;
     font-size: 11px;
   }
-  
+
   .query-btn {
     padding: 4px 6px;
     font-size: 10px;
   }
-  
+
   .result-content {
     padding: 8px;
   }
-  
+
   .action-btn {
     padding: 3px 6px;
     font-size: 9px;
@@ -1317,37 +1729,313 @@ onUnmounted(() => {
     font-size: 32px;
     margin-bottom: 8px;
   }
-  
+
   .loading-spinner-large {
     width: 16px;
     height: 16px;
     margin-bottom: 8px;
   }
-  
+
   .result-content {
     padding: 8px;
     margin-bottom: 6px;
   }
-  
+
   .api-key-header {
     padding: 4px 8px;
   }
-  
+
   .api-key-content {
     padding: 6px 8px 6px;
   }
-  
+
   .api-key-input {
     padding: 4px 6px;
     font-size: 0.7em;
   }
-  
+
   .toggle-visibility {
     padding: 4px 6px;
   }
-  
+
   .input-group {
     margin-bottom: 8px;
   }
+}
+
+/* 新增功能样式 */
+
+/* 面板通用样式 */
+.history-panel,
+.favorites-panel,
+.advanced-panel {
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  background: var(--b3-theme-surface-lighter);
+  animation: slideDown 0.3s ease-out;
+  max-width: 100%;
+  overflow: hidden;
+  max-height: 300px;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--b3-theme-on-surface);
+  background: var(--b3-theme-surface);
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+}
+
+.panel-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-clear {
+  padding: 4px 10px;
+  background: var(--b3-theme-error);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  transition: all 0.2s ease;
+}
+
+.btn-clear:hover {
+  opacity: 0.8;
+  transform: translateY(-1px);
+}
+
+.panel-content {
+  padding: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
+  font-size: 13px;
+}
+
+/* 历史记录样式 */
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--b3-theme-surface);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid var(--b3-theme-surface-light);
+}
+
+.history-item:hover {
+  background: var(--b3-theme-primary-lighter);
+  transform: translateX(4px);
+  border-color: var(--b3-theme-primary);
+}
+
+.item-word {
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--b3-theme-on-surface);
+}
+
+.item-time {
+  font-size: 11px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
+}
+
+/* 收藏样式 */
+.favorites-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.favorite-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--b3-theme-surface);
+  border-radius: 6px;
+  border: 1px solid var(--b3-theme-surface-light);
+  transition: all 0.2s ease;
+}
+
+.favorite-item:hover {
+  border-color: var(--b3-theme-primary);
+}
+
+.item-content {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.item-content:hover .item-word {
+  color: var(--b3-theme-primary);
+}
+
+.btn-remove {
+  padding: 4px 8px;
+  background: transparent;
+  border: none;
+  color: var(--b3-theme-error);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  margin-left: 8px;
+}
+
+.btn-remove:hover {
+  background: var(--b3-theme-error);
+  color: white;
+}
+
+.remove-icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* 高级选项样式 */
+.advanced-content {
+  padding: 12px;
+}
+
+.option-group {
+  margin-bottom: 16px;
+}
+
+.option-group:last-child {
+  margin-bottom: 0;
+}
+
+.option-label {
+  display: block;
+  font-weight: 500;
+  font-size: 13px;
+  margin-bottom: 8px;
+  color: var(--b3-theme-on-surface);
+}
+
+.option-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.radio-label,
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.radio-label:hover,
+.checkbox-label:hover {
+  background: var(--b3-theme-surface-light);
+}
+
+.radio-label input[type="radio"],
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* 操作按钮样式优化 */
+.favorite-btn {
+  background: linear-gradient(135deg, #FFC107, #FFD54F);
+  color: #5D4037;
+  border-color: #FFC107;
+}
+
+.favorite-btn:hover {
+  background: linear-gradient(135deg, #FFD54F, #FFE082);
+  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+}
+
+.favorite-btn.favorited {
+  background: linear-gradient(135deg, #FF9800, #FFB74D);
+  color: white;
+}
+
+.play-btn {
+  background: linear-gradient(135deg, #2196F3, #64B5F6);
+  color: white;
+  border-color: #2196F3;
+}
+
+.play-btn:hover {
+  background: linear-gradient(135deg, #64B5F6, #90CAF9);
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+}
+
+.export-btn {
+  background: linear-gradient(135deg, #9C27B0, #BA68C8);
+  color: white;
+  border-color: #9C27B0;
+}
+
+.export-btn:hover {
+  background: linear-gradient(135deg, #BA68C8, #CE93D8);
+  box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+}
+
+/* 工具栏按钮布局 */
+.api-key-toggle {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.settings-btn {
+  padding: 8px;
+  background: transparent;
+  border: none;
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.settings-btn:hover {
+  background: var(--b3-theme-surface-light);
+  transform: scale(1.05);
+}
+
+.settings-icon {
+  width: 18px;
+  height: 18px;
 }
 </style>

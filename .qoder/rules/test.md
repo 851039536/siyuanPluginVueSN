@@ -32,6 +32,7 @@ trigger: manual
 - 代码风格: 遵循一致的代码风格（如使用Prettier和ESLint进行代码格式化和规范检查）。
 - 性能优化：优化代码的性能，减少资源占用，提升加载速度，确保项目的高效运行。
 - 新功能必须在SuperPanelView.vue超级面板有功能开关
+- 大模型 api 配置统一入口
 
 ### 问题解决
 
@@ -57,3 +58,4 @@ trigger: manual
 - TypeScript 官方文档: [TypeScript Documentation](https://www.typescriptlang.org/docs/)
 - Vite 官方文档: [Vite Documentation](https://vitejs.dev/)
 - Sass 官方文档: [Sass Documentation](https://sass-lang.com/documentation)
+- 图标 @iconify/vue   

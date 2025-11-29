@@ -17,6 +17,7 @@
     "build": "vite build"
   },
   "dependencies": {
+    "@iconify/vue": "^5.0.0",
     "browser-image-compression": "^2.0.2",
     "qrcode": "^1.5.4",
     "vue": "^3.3.8"

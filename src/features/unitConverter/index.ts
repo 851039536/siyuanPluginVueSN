@@ -13,7 +13,7 @@ export const registerUnitConverter = (plugin: PluginSample) => {
   plugin.addDock({
     config: {
       position: 'RightTop',
-      size: { width: 400, height: 0 },
+      size: { width: 360, height: 0 },
       icon: 'iconList',
       title: plugin.i18n.unitConverter || '单位转换',
       show: false,

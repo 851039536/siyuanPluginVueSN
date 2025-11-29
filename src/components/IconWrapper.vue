@@ -1,6 +1,6 @@
 <template>
-  <Icon 
-    :icon="iconConfig.icon" 
+  <Icon
+    :icon="iconConfig.icon"
     :style="iconStyle"
     :class="className"
   />
@@ -30,20 +30,20 @@ const iconConfig = computed(() => getIconConfig(props.name))
 // 计算图标样式
 const iconStyle = computed(() => {
   const style: Record<string, string> = {}
-  
+
   // 尺寸
   if (props.size) {
     const size = typeof props.size === 'number' ? `${props.size}px` : props.size
     style.width = size
     style.height = size
   }
-  
+
   // 颜色（优先使用 props，其次使用配置）
   const color = props.color || iconConfig.value.color
   if (color) {
     style.color = color
   }
-  
+
   return style
 })
 </script>

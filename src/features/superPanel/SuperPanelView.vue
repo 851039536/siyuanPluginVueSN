@@ -193,7 +193,7 @@ const handleFeatureAction = (action: string) => {
   position: fixed;
   top: 0;
   right: 0;
-  width: 400px;
+  width: 360px;
   height: 100vh;
   background: var(--b3-theme-background);
   box-shadow: -2px 0 12px rgba(0, 0, 0, 0.15);

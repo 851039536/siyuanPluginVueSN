@@ -267,7 +267,7 @@ function addShortcutDock(plugin: Plugin, manager: ShortcutManager) {
   plugin.addDock({
     config: {
       position: 'RightTop',
-      size: { width: 300, height: 0 },
+      size: { width: 360, height: 0 },
       icon: 'iconKeymap',
       title: plugin.i18n.shortcuts || '快捷键',
       show: false,

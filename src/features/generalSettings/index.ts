@@ -34,7 +34,7 @@ export class GeneralSettings {
     this.plugin.addDock({
       config: {
         position: 'RightTop',
-        size: { width: 320, height: 0 }, // 减小宽度以适应紧凑设计
+        size: { width: 360, height: 0 }, // 统一右侧边栏宽度
         icon: 'iconSettings',
         title: this.plugin.i18n.generalSettings || '通用设置',
         show: false,

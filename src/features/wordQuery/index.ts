@@ -29,7 +29,7 @@ export class WordQuery {
     if (this.currentApiKey) {
       return this.currentApiKey;
     }
-    
+
     // 尝试从本地存储中获取API Key
     try {
       const savedKey = localStorage.getItem('word-query-api-key');
@@ -40,12 +40,12 @@ export class WordQuery {
     } catch (error) {
       console.error('Failed to get API key from localStorage:', error);
     }
-    
+
     // 如果没有设置，使用默认值
     this.currentApiKey = 'sk-fae27cc50015409fb2524b0970d3f0b0';
     return this.currentApiKey;
   }
-  
+
   /**
    * 设置API Key
    */
@@ -69,7 +69,7 @@ export class WordQuery {
     this.plugin.addDock({
       config: {
         position: 'RightTop',
-        size: { width: 320, height: 0 },
+        size: { width: 360, height: 0 },
         icon: 'iconLanguage', // 使用语言图标
         title: this.plugin.i18n.wordQuery || '单词查询',
         show: false,
@@ -136,7 +136,7 @@ export class WordQuery {
       // 根据输入类型构建不同的提示词
       const prompt = this.buildPrompt(word);
       const response = await this.callTongyiAPI(prompt);
-      
+
       if (response) {
         showMessage('✓ 查询完成', 2000, 'info');
         return response;
@@ -267,7 +267,7 @@ export class WordQuery {
     }
 
     const data = await response.json();
-    
+
     // 尝试多种可能的响应格式
     if (data.output && data.output.text) {
       return data.output.text;
@@ -298,10 +298,10 @@ export class WordQuery {
 export function registerWordQuery(plugin: Plugin) {
   const query = new WordQuery(plugin);
   query.init();
-  
+
   // 保存实例到插件对象中，以便在其他地方使用
   (plugin as any).__wordQuery = query;
-  
+
   console.log('单词查询模块已注册');
   return query;
 }

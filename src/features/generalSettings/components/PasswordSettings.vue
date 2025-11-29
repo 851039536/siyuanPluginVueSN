@@ -7,7 +7,7 @@
           <span class="section-icon">🔐</span>
           <h4>{{ i18n.passwordSetting || '密码设置' }}</h4>
         </div>
-        
+
         <div class="password-content">
           <!-- 密码状态显示 -->
           <div class="password-status">
@@ -84,7 +84,7 @@ function openPasswordDialog() {
 
 onMounted(() => {
   checkPassword()
-  
+
   // 监听密码更新事件
   window.addEventListener('password-updated', () => {
     checkPassword()
@@ -100,8 +100,6 @@ defineExpose({
 <style scoped>
 .password-settings {
   padding: 16px;
-  height: 100%;
-  overflow-y: auto;
   box-sizing: border-box;
   background: var(--b3-theme-background);
 }

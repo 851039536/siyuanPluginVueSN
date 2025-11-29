@@ -204,8 +204,6 @@ defineExpose({
 <style scoped>
 .general-actions {
   padding: 16px;
-  height: 100%;
-  overflow-y: auto;
   box-sizing: border-box;
   background: var(--b3-theme-background);
 }

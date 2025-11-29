@@ -8,14 +8,14 @@
             <span class="label-icon">🎨</span>
             {{ i18n.codeBlockStyle || '代码块风格' }}
           </label>
-          
+
           <!-- 风格卡片选择器 -->
           <div class="style-cards">
-            <div 
-              v-for="style in ['default', 'github', 'mac', 'cartoon']" 
+            <div
+              v-for="style in (['default', 'github', 'mac', 'cartoon'] as const)"
               :key="style"
               :class="['style-card', { active: settings.style === style }]"
-              @click="settings.style = style"
+              @click="settings.style = style as 'default' | 'github' | 'mac' | 'cartoon'"
             >
               <div class="style-card-icon">
                 <span v-if="style === 'default'">📄</span>
@@ -36,7 +36,7 @@
           <span class="label-icon">⚙️</span>
           <span>{{ i18n.advancedSettings || '高级设置' }}</span>
         </div>
-        
+
         <!-- 字体大小 -->
         <div class="setting-item">
           <label class="setting-label">
@@ -103,12 +103,12 @@
                 </div>
                 <div class="mac-title">JavaScript</div>
               </div>
-              
+
               <!-- GitHub 风格头部 -->
               <div v-if="settings.style === 'github'" class="github-header">
                 <span class="github-lang">JavaScript</span>
               </div>
-              
+
               <!-- 卡通风格头部 -->
               <div v-if="settings.style === 'cartoon'" class="cartoon-header">
                 <div class="cartoon-decoration">
@@ -119,7 +119,7 @@
                 </div>
                 <div class="cartoon-title">✨ JavaScript ✨</div>
               </div>
-              
+
               <!-- 代码内容 - 所有风格共用 -->
               <div class="code-content">
                 <div class="code-line">
@@ -159,18 +159,6 @@
             </div>
           </div>
         </transition>
-      </div>
-
-      <!-- 操作按钮 -->
-      <div class="action-buttons">
-        <button @click="save" class="save-btn">
-          <span class="btn-icon">💾</span>
-          {{ i18n.save || '保存' }}
-        </button>
-        <button @click="reset" class="reset-btn">
-          <span class="btn-icon">🔄</span>
-          {{ i18n.reset || '重置' }}
-        </button>
       </div>
     </div>
   </div>
@@ -215,10 +203,16 @@ const DEFAULT_SETTINGS: CodeBlockSettings = {
   padding: 14
 }
 
-// 监听设置变化
+// 监听设置变化，自动保存
 watch(settings, (newSettings) => {
   emit('change', newSettings)
   applyCodeBlockStyle(newSettings.style)
+  // 自动保存到 localStorage
+  try {
+    localStorage.setItem('general-codeblock-settings', JSON.stringify(newSettings))
+  } catch (error) {
+    console.error('自动保存失败:', error)
+  }
 }, { deep: true })
 
 function togglePreview() {
@@ -240,7 +234,7 @@ function applyCodeBlockStyle(style: string) {
   document.body.classList.remove('codeblock-style-default', 'codeblock-style-github', 'codeblock-style-mac', 'codeblock-style-cartoon')
   // 添加新的样式类
   document.body.classList.add(`codeblock-style-${style}`)
-  
+
   // 应用字体大小和间距
   applyCodeBlockCustomization()
 }
@@ -249,27 +243,6 @@ function applyCodeBlockCustomization() {
   const root = document.documentElement
   root.style.setProperty('--codeblock-font-size', `${settings.value.fontSize}px`)
   root.style.setProperty('--codeblock-padding', `${settings.value.padding}px`)
-}
-
-function save() {
-  try {
-    localStorage.setItem('general-codeblock-settings', JSON.stringify(settings.value))
-    applyCodeBlockStyle(settings.value.style)
-    showMessage(props.i18n.settingsSaved || '已保存', 3000, 'info')
-  } catch (error) {
-    showMessage(props.i18n.saveFailed || '保存失败', 3000, 'error')
-  }
-}
-
-function reset() {
-  settings.value = { ...DEFAULT_SETTINGS }
-  try {
-    localStorage.removeItem('general-codeblock-settings')
-    applyCodeBlockStyle(DEFAULT_SETTINGS.style)
-    showMessage(props.i18n.settingsReset || '已重置', 3000, 'info')
-  } catch (error) {
-    console.error('重置失败:', error)
-  }
 }
 
 // 加载保存的设置
@@ -296,8 +269,6 @@ onMounted(() => {
 // 暴露方法
 defineExpose({
   loadSettings,
-  save,
-  reset,
   settings
 })
 </script>
@@ -305,8 +276,6 @@ defineExpose({
 <style scoped>
 .codeblock-settings {
   padding: 16px;
-  height: 100%;
-  overflow-y: auto;
   box-sizing: border-box;
 }
 
@@ -365,7 +334,7 @@ defineExpose({
   align-items: center;
   gap: 8px;
   overflow: hidden;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -374,25 +343,25 @@ defineExpose({
     opacity: 0;
     transition: opacity 0.3s ease;
   }
-  
+
   &:hover {
     transform: translateY(-4px);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     border-color: var(--b3-theme-primary);
-    
+
     &::before {
       opacity: 0.05;
     }
   }
-  
+
   &.active {
     border-color: var(--b3-theme-primary);
     border-width: 3px;
-    background: linear-gradient(135deg, 
+    background: linear-gradient(135deg,
       rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1),
       rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.05)
     );
-    
+
     &::before {
       opacity: 0.1;
     }
@@ -616,7 +585,7 @@ defineExpose({
   overflow: hidden;
   margin-bottom: 12px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
@@ -670,7 +639,7 @@ defineExpose({
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   position: relative;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -713,7 +682,7 @@ defineExpose({
   transition: all 0.2s ease;
   cursor: pointer;
   position: relative;
-  
+
   &::after {
     content: '';
     position: absolute;
@@ -722,10 +691,10 @@ defineExpose({
     opacity: 0;
     transition: opacity 0.2s ease;
   }
-  
+
   &:hover {
     transform: scale(1.1);
-    
+
     &::after {
       opacity: 1;
     }
@@ -735,7 +704,7 @@ defineExpose({
 .mac-btn.close {
   background: #ff5f56;
   border: 1px solid #e0443e;
-  
+
   &:hover::after {
     background: radial-gradient(circle, rgba(255, 95, 86, 0.3) 0%, transparent 70%);
   }
@@ -744,7 +713,7 @@ defineExpose({
 .mac-btn.minimize {
   background: #ffbd2e;
   border: 1px solid #dea123;
-  
+
   &:hover::after {
     background: radial-gradient(circle, rgba(255, 189, 46, 0.3) 0%, transparent 70%);
   }
@@ -753,7 +722,7 @@ defineExpose({
 .mac-btn.maximize {
   background: #27c93f;
   border: 1px solid #1aab29;
-  
+
   &:hover::after {
     background: radial-gradient(circle, rgba(39, 201, 63, 0.3) 0%, transparent 70%);
   }
@@ -773,7 +742,7 @@ defineExpose({
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   position: relative;
-  
+
   &::after {
     content: '';
     position: absolute;
@@ -796,7 +765,7 @@ defineExpose({
 
 .cartoon-header {
   padding: 8px 12px;
-  background: linear-gradient(135deg, 
+  background: linear-gradient(135deg,
     rgba(255, 107, 157, 0.08),
     rgba(254, 202, 87, 0.08),
     rgba(72, 219, 251, 0.08),
@@ -823,7 +792,7 @@ defineExpose({
   display: inline-block;
   animation: cartoonBounce 2s ease-in-out infinite;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
-  
+
   &:nth-child(1) { animation-delay: 0s; }
   &:nth-child(2) { animation-delay: 0.2s; }
   &:nth-child(3) { animation-delay: 0.4s; }
@@ -853,7 +822,7 @@ defineExpose({
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   position: relative;
-  
+
   &::before {
     content: '✨';
     position: absolute;
@@ -965,40 +934,40 @@ defineExpose({
   .keyword {
     color: #c678dd;
   }
-  
+
   .function {
     color: #61afef;
   }
-  
+
   .variable {
     color: #e06c75;
   }
-  
+
   .string {
     color: #98c379;
   }
-  
+
   .number,
   .boolean {
     color: #d19a66;
   }
-  
+
   .operator {
     color: #56b6c2;
   }
-  
+
   .punctuation {
     color: #abb2bf;
   }
-  
+
   .parameter {
     color: #e5c07b;
   }
-  
+
   .method {
     color: #61afef;
   }
-  
+
   .comment {
     color: #5c6370;
   }
@@ -1020,61 +989,6 @@ defineExpose({
   border: 1px solid var(--b3-theme-outline);
 }
 
-/* 操作按钮 */
-.action-buttons {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.save-btn,
-.reset-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 12px 20px;
-  border: none;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.save-btn {
-  background: linear-gradient(135deg, var(--b3-theme-primary), var(--b3-theme-primary-container));
-  color: var(--b3-theme-on-primary);
-}
-
-.save-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.save-btn:active {
-  transform: translateY(0);
-}
-
-.reset-btn {
-  background: linear-gradient(135deg, var(--b3-theme-surface-variant), var(--b3-theme-outline));
-  color: var(--b3-theme-on-surface-variant);
-}
-
-.reset-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-.reset-btn:active {
-  transform: translateY(0);
-}
-
-.btn-icon {
-  font-size: 14px;
-}
-
 /* 响应式设计 */
 @media (max-width: 600px) {
   .style-cards {
@@ -1091,39 +1005,34 @@ defineExpose({
     grid-template-columns: 1fr;
     gap: 8px;
   }
-  
+
   .advanced-settings {
     padding: 12px;
     gap: 12px;
   }
-  
+
   .style-card {
     flex-direction: row;
     padding: 12px;
-    
+
     .style-card-icon {
       font-size: 24px;
     }
-    
+
     .style-card-name {
       flex: 1;
       text-align: left;
     }
   }
 
-  .action-buttons {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-
   .settings-container {
     gap: 16px;
   }
-  
+
   .code-line {
     font-size: 11px;
   }
-  
+
   .line-number {
     min-width: 24px;
     padding-right: 8px;
@@ -1134,7 +1043,7 @@ defineExpose({
   .style-card-icon {
     font-size: 20px !important;
   }
-  
+
   .style-card-name {
     font-size: 11px;
   }

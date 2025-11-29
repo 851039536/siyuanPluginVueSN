@@ -301,8 +301,6 @@ defineExpose({
 <style scoped>
 .font-settings {
   padding: 16px;
-  height: 100%;
-  overflow-y: auto;
   box-sizing: border-box;
 }
 

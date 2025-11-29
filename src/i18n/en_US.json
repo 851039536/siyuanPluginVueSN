@@ -150,6 +150,7 @@
   "copyExample": "Copy Example",
   "unknownError": "Unknown error",
   "generalSettings": "General Settings",
+  "commonSettings": "Common Settings",
   "enableGeneralSettings": "Enable General Settings",
   "enableGeneralSettingsDesc": "Provide font settings and other general configuration features in the right sidebar",
   "qrcodeFeature": "QR Code Generator",

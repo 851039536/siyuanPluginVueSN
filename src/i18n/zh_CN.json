@@ -150,6 +150,7 @@
   "copyExample": "复制例句",
   "unknownError": "未知错误",
   "generalSettings": "通用设置",
+  "commonSettings": "常用设置",
   "enableGeneralSettings": "启用通用设置功能",
   "enableGeneralSettingsDesc": "在右侧边栏提供字体设置等通用配置功能",
   "qrcodeGenerate": "二维码生成",

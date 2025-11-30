@@ -96,6 +96,12 @@ export const FEATURE_ICONS = {
   codeImageGenerator: {
     icon: 'mdi:code-braces-box',
     color: '#22c55e'
+  },
+
+  // AI信息生成
+  aiContentGenerator: {
+    icon: 'mdi:robot',
+    color: '#9333ea'
   }
 } as const
 

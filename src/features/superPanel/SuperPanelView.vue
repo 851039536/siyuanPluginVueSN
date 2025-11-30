@@ -297,6 +297,14 @@ const features = computed<Feature[]>(() => [
     desc: props.i18n.enableCodeImageGeneratorDesc || '生成代码截图，支持GitHub、Mac、卡通风格',
     enabled: props.settings.enableCodeImageGenerator,
     actions: []
+  },
+  {
+    id: 'aiContentGenerator',
+    iconKey: 'aiContentGenerator',
+    title: props.i18n.aiContentGenerator || 'AI信息生成',
+    desc: props.i18n.aiContentGeneratorDesc || '使用AI生成Markdown格式内容，支持自定义对话和上下文',
+    enabled: props.settings.enableAIContentGenerator,
+    actions: []
   }
 ])
 

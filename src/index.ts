@@ -5,7 +5,7 @@ import {
 import "@/index.scss";
 import PluginInfoString from '@/../plugin.json'
 import { destroy, init } from '@/main'
-import { registerPageLock, registerTableOfContents, registerImageCompressor, registerDocNavigation, registerShortcut, registerWordQuery, registerGeneralSettings, registerQRCode, registerUnitConverter, registerSuperPanel, registerDiskBrowser, registerCodeImageGenerator } from '@/features'
+import { registerPageLock, registerTableOfContents, registerImageCompressor, registerDocNavigation, registerShortcut, registerWordQuery, registerGeneralSettings, registerQRCode, registerUnitConverter, registerSuperPanel, registerDiskBrowser, registerCodeImageGenerator, registerAIContentGenerator } from '@/features'
 import { loadSettings, saveSettings, type PluginSettings } from '@/config/settings'
 
 let PluginInfo = {
@@ -122,6 +122,10 @@ export default class PluginSample extends Plugin {
     if (this.settings.enableCodeImageGenerator) {
       console.log('注册代码图片生成器功能')
       registerCodeImageGenerator(this)
+    }
+    if (this.settings.enableAIContentGenerator) {
+      console.log('注册AI信息生成功能')
+      registerAIContentGenerator(this)
     }
   }
 

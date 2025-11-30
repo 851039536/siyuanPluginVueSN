@@ -6,6 +6,17 @@
         <span>🤖 {{ i18n.aiContentGenerator || 'AI信息生成' }}</span>
       </div>
       <div class="header-actions">
+        <!-- Edit模式切换按钮 -->
+        <button
+          class="btn-icon"
+          @click="toggleEditMode"
+          :class="{ 'active': editMode }"
+          :title="i18n.editMode || '编辑模式'"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24">
+            <use xlink:href="#iconEdit"></use>
+          </svg>
+        </button>
         <button class="btn-icon" @click="toggleSettings" :title="i18n.conversationSettings || '对话设置'">
           <svg width="18" height="18" viewBox="0 0 24 24">
             <use xlink:href="#iconSettings"></use>
@@ -189,8 +200,80 @@
         </div>
       </div>
 
+      <!-- Edit模式：目标文档选择 -->
+      <div v-if="editMode" class="edit-doc-selector">
+        <div class="selector-label">
+          <svg width="14" height="14">
+            <use xlink:href="#iconFile"></use>
+          </svg>
+          <span>{{ i18n.targetDocument || '目标文档' }}:</span>
+        </div>
+        <button class="btn-select-doc" @click="selectTargetDocument">
+          <span v-if="!editTargetDoc">{{ i18n.selectDocument || '选择要编辑的文档' }}</span>
+          <span v-else class="selected-doc-name">📄 {{ editTargetDoc.title }}</span>
+          <svg width="14" height="14">
+            <use xlink:href="#iconSelect"></use>
+          </svg>
+        </button>
+        <button v-if="editTargetDoc" class="btn-clear-doc" @click="clearTargetDocument" :title="i18n.clear || '清除'">
+          <svg width="12" height="12">
+            <use xlink:href="#iconClose"></use>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Edit模式：AI智能编辑工具栏 -->
+      <div v-if="editMode && editTargetDoc" class="ai-edit-toolbar">
+        <div class="toolbar-label">
+          <svg width="14" height="14">
+            <use xlink:href="#iconSparkles"></use>
+          </svg>
+          <span>{{ i18n.aiEditTools || 'AI智能编辑' }}:</span>
+        </div>
+        <div class="toolbar-actions">
+          <button class="btn-ai-action" @click="aiEditAction('polish')" :disabled="isGenerating" :title="i18n.aiPolish || 'AI润色'">
+            <svg width="14" height="14"><use xlink:href="#iconPaint"></use></svg>
+            {{ i18n.polish || '润色' }}
+          </button>
+          <button class="btn-ai-action" @click="aiEditAction('expand')" :disabled="isGenerating" :title="i18n.aiExpand || '扩写内容'">
+            <svg width="14" height="14"><use xlink:href="#iconExpand"></use></svg>
+            {{ i18n.expand || '扩写' }}
+          </button>
+          <button class="btn-ai-action" @click="aiEditAction('condense')" :disabled="isGenerating" :title="i18n.aiCondense || '精简内容'">
+            <svg width="14" height="14"><use xlink:href="#iconShrink"></use></svg>
+            {{ i18n.condense || '精简' }}
+          </button>
+          <button class="btn-ai-action" @click="aiEditAction('fix')" :disabled="isGenerating" :title="i18n.aiFix || '修正错误'">
+            <svg width="14" height="14"><use xlink:href="#iconCheck"></use></svg>
+            {{ i18n.fix || '纠错' }}
+          </button>
+          <button class="btn-ai-action btn-analyze" @click="analyzeDocument" :disabled="isGenerating || isAnalyzing" :title="i18n.aiAnalyze || 'AI分析建议'">
+            <div v-if="isAnalyzing" class="loading-spinner-tiny"></div>
+            <svg v-else width="14" height="14"><use xlink:href="#iconLightbulb"></use></svg>
+            {{ i18n.analyze || '智能分析' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- AI分析建议面板 -->
+      <div v-if="editMode && aiSuggestions" class="ai-suggestions-panel">
+        <div class="suggestions-header">
+          <svg width="16" height="16"><use xlink:href="#iconLightbulb"></use></svg>
+          <span>{{ i18n.aiSuggestions || 'AI优化建议' }}</span>
+          <button class="btn-close-suggestions" @click="aiSuggestions = null">
+            <svg width="12" height="12"><use xlink:href="#iconClose"></use></svg>
+          </button>
+        </div>
+        <div class="suggestions-content">
+          <p class="suggestion-text">{{ aiSuggestions }}</p>
+          <button class="btn-apply-suggestions" @click="applySuggestions" :disabled="isGenerating">
+            {{ i18n.applySuggestions || '应用建议优化' }}
+          </button>
+        </div>
+      </div>
+
       <!-- 引用当前文档按钮（需求1：添加取消按钮） -->
-      <div class="reference-doc-wrapper">
+      <div v-if="!editMode" class="reference-doc-wrapper">
         <button
           class="btn-reference-doc"
           @click="insertCurrentDocReference"
@@ -255,8 +338,60 @@
       <!-- 生成结果 -->
       <div v-else-if="displayedContent || generatedContent" class="result-container">
         <div class="result-header">
-          <span class="result-title">📝 {{ i18n.generatedContent || '生成内容' }}</span>
+          <span class="result-title">📝 {{ editMode ? (i18n.editContent || '编辑内容') : (i18n.generatedContent || '生成内容') }}</span>
           <div class="result-actions">
+            <!-- Edit模式专用按钮 -->
+            <template v-if="editMode">
+              <button
+                v-if="!showDiff"
+                class="btn-action"
+                @click="toggleDiffView"
+                :disabled="!editTargetDoc || !hasContentChanged"
+                :title="i18n.viewDiff || '查看差异'"
+              >
+                <svg width="16" height="16">
+                  <use xlink:href="#iconDiff"></use>
+                </svg>
+                {{ i18n.viewDiff || '查看差异' }}
+              </button>
+              <button
+                v-if="showDiff"
+                class="btn-action"
+                @click="toggleDiffView"
+                :title="i18n.hideDeffi || '隐藏差异'"
+              >
+                <svg width="16" height="16">
+                  <use xlink:href="#iconEye"></use>
+                </svg>
+                {{ i18n.hideDiff || '隐藏差异' }}
+              </button>
+              <button
+                class="btn-action btn-apply"
+                @click="applyEdit"
+                :disabled="!editTargetDoc || !hasContentChanged || isApplying"
+                :title="i18n.applyEdit || '应用编辑'"
+              >
+                <div v-if="isApplying" class="loading-spinner-small"></div>
+                <svg v-else width="16" height="16">
+                  <use xlink:href="#iconCheck"></use>
+                </svg>
+                {{ i18n.applyEdit || '应用' }}
+              </button>
+              <button
+                v-if="lastEditHistory"
+                class="btn-action btn-undo"
+                @click="undoEdit"
+                :disabled="isUndoing"
+                :title="i18n.undoEdit || '撤回编辑'"
+              >
+                <div v-if="isUndoing" class="loading-spinner-small"></div>
+                <svg v-else width="16" height="16">
+                  <use xlink:href="#iconUndo"></use>
+                </svg>
+                {{ i18n.undo || '撤回' }}
+              </button>
+            </template>
+            <!-- 通用按钮 -->
             <button class="btn-action" @click="copyContent" :title="i18n.copyMarkdown || '复制Markdown'">
               <svg width="16" height="16">
                 <use xlink:href="#iconCopy"></use>
@@ -273,8 +408,33 @@
           </div>
         </div>
         <div class="result-content">
-          <!-- 需求6：移除原始Markdown显示，使渲染内容可自由复制 -->
-          <div class="markdown-preview selectable-content" v-html="renderedDisplayedMarkdown"></div>
+          <!-- Edit模式：显示差异对比或可编辑内容 -->
+          <div v-if="editMode && showDiff" class="diff-view">
+            <div class="diff-section">
+              <div class="diff-label">{{ i18n.originalContent || '原始内容' }}</div>
+              <div class="markdown-preview" v-html="renderedOriginalContent"></div>
+            </div>
+            <div class="diff-divider"></div>
+            <div class="diff-section">
+              <div class="diff-label">{{ i18n.newContent || '新内容' }}</div>
+              <div class="markdown-preview" v-html="renderedDisplayedMarkdown"></div>
+            </div>
+          </div>
+          <!-- Edit模式：可编辑的Markdown编辑器 -->
+          <div v-else-if="editMode" class="edit-view">
+            <textarea
+              v-model="generatedContent"
+              class="edit-textarea"
+              :placeholder="i18n.editPlaceholder || '在此编辑Markdown内容...'"
+              @input="onContentEdit"
+            ></textarea>
+            <div class="edit-preview">
+              <div class="preview-label">{{ i18n.preview || '预览' }}</div>
+              <div class="markdown-preview selectable-content" v-html="renderedDisplayedMarkdown"></div>
+            </div>
+          </div>
+          <!-- 普通模式：只读预览 -->
+          <div v-else class="markdown-preview selectable-content" v-html="renderedDisplayedMarkdown"></div>
         </div>
       </div>
 
@@ -340,6 +500,29 @@ const showRaw = ref(false);
 const showSettings = ref(false);
 const showContextSettings = ref(false);
 
+// Edit模式状态
+const editMode = ref(false);
+const editTargetDoc = ref<{ id: string; title: string; content: string } | null>(null);
+const originalContent = ref(''); // 文档原始内容
+const showDiff = ref(false);
+const hasContentChanged = ref(false);
+const isApplying = ref(false);
+const isUndoing = ref(false);
+
+// AI智能编辑状态
+const isAnalyzing = ref(false);
+const aiSuggestions = ref<string | null>(null);
+
+// 编辑历史（用于撤回/重做）
+interface EditHistory {
+  docId: string;
+  docTitle: string;
+  originalContent: string;
+  timestamp: number;
+}
+const lastEditHistory = ref<EditHistory | null>(null);
+const editHistoryStack = ref<EditHistory[]>([]); // 完整编辑历史栈
+
 // 对话设置
 const systemPrompt = ref('你是一个专业的内容创作助手，擅长生成结构清晰、格式规范的Markdown文档。请确保输出内容使用标准的Markdown语法。');
 const temperature = ref(0.7);
@@ -399,6 +582,23 @@ const renderedDisplayedMarkdown = computed(() => {
   }
 });
 
+// 渲染原始内容（用于差异对比）
+const renderedOriginalContent = computed(() => {
+  if (!originalContent.value) return '';
+  try {
+    marked.setOptions({
+      breaks: true,
+      gfm: true,
+    });
+    let content = originalContent.value;
+    content = content.replace(/^(#{1,6})\s+\*\*(.+?)\*\*\s*$/gm, '$1 $2');
+    return marked.parse(content) as string;
+  } catch (error) {
+    console.error('Markdown渲染失败:', error);
+    return `<pre>${originalContent.value}</pre>`;
+  }
+});
+
 // 监听渲染内容变化，应用代码高亮（修复问题3）
 watch(renderedDisplayedMarkdown, async () => {
   await nextTick();
@@ -414,6 +614,30 @@ watch(renderedDisplayedMarkdown, async () => {
 // 切换设置面板
 const toggleSettings = () => {
   showSettings.value = !showSettings.value;
+};
+
+// 切换Edit模式
+const toggleEditMode = () => {
+  editMode.value = !editMode.value;
+  if (!editMode.value) {
+    // 退出Edit模式时清理状态
+    clearEditState();
+  }
+  showMessage(
+    editMode.value
+      ? (props.i18n.editModeEnabled || '✓ 已启用编辑模式')
+      : (props.i18n.editModeDisabled || '✓ 已关闭编辑模式'),
+    1500,
+    'info'
+  );
+};
+
+// 清理Edit模式状态
+const clearEditState = () => {
+  editTargetDoc.value = null;
+  originalContent.value = '';
+  showDiff.value = false;
+  hasContentChanged.value = false;
 };
 
 // 打字机效果（修复问题2：不再需要，流式输出会实时更新）
@@ -517,6 +741,293 @@ const clearContent = () => {
   errorMessage.value = '';
   showRaw.value = false;
   stopTypewriter();
+  hasContentChanged.value = false;
+  showDiff.value = false;
+};
+
+// 选择目标文档
+const selectTargetDocument = async () => {
+  try {
+    // 获取当前光标所在的块ID
+    const currentBlockId = getCurrentBlockId();
+    if (!currentBlockId) {
+      // 备用方案：使用激活窗口的文档
+      const protyle = document.querySelector('.layout__wnd--active .protyle:not(.fn__none)');
+      const docId = protyle?.querySelector('.protyle-background')?.getAttribute('data-node-id');
+
+      if (!docId) {
+        showMessage('无法获取当前文档，请将光标放在文档中', 3000, 'error');
+        return;
+      }
+
+      await loadTargetDocument(docId);
+      return;
+    }
+
+    // 通过块ID获取文档ID
+    const docId = await getDocIdByBlockId(currentBlockId);
+    if (!docId) {
+      showMessage('无法获取当前文档信息', 3000, 'error');
+      return;
+    }
+
+    await loadTargetDocument(docId);
+  } catch (error) {
+    console.error('选择文档失败:', error);
+    showMessage('选择文档失败: ' + (error as Error).message, 3000, 'error');
+  }
+};
+
+// 加载目标文档
+const loadTargetDocument = async (docId: string) => {
+  try {
+    // 获取文档块信息
+    const docBlock = await api.getBlockByID(docId);
+    if (!docBlock) {
+      showMessage('无法获取文档信息', 3000, 'error');
+      return;
+    }
+
+    // 获取文档的Markdown内容
+    const docContent = await api.exportMdContent(docId);
+    if (!docContent || !docContent.content) {
+      showMessage('无法获取文档内容', 3000, 'error');
+      return;
+    }
+
+    // 保存文档信息
+    editTargetDoc.value = {
+      id: docId,
+      title: docBlock.content || '未命名文档',
+      content: docContent.content
+    };
+
+    // 保存原始内容用于对比
+    originalContent.value = docContent.content;
+
+    // 将文档内容加载到生成内容区域
+    generatedContent.value = docContent.content;
+    displayedContent.value = docContent.content;
+    hasContentChanged.value = false;
+
+    showMessage(`✓ 已选择文档: ${editTargetDoc.value.title}`, 2000, 'info');
+  } catch (error) {
+    console.error('加载文档失败:', error);
+    showMessage('加载文档失败: ' + (error as Error).message, 3000, 'error');
+  }
+};
+
+// 清除目标文档
+const clearTargetDocument = () => {
+  clearEditState();
+  clearContent();
+  showMessage('✓ 已清除目标文档', 1500, 'info');
+};
+
+// 内容编辑监听
+const onContentEdit = () => {
+  displayedContent.value = generatedContent.value;
+  hasContentChanged.value = generatedContent.value !== originalContent.value;
+};
+
+// 切换差异视图
+const toggleDiffView = () => {
+  showDiff.value = !showDiff.value;
+};
+
+// 应用编辑
+const applyEdit = async () => {
+  if (!editTargetDoc.value || !hasContentChanged.value) return;
+
+  isApplying.value = true;
+  try {
+    // 保存编辑历史（用于撤回）
+    lastEditHistory.value = {
+      docId: editTargetDoc.value.id,
+      docTitle: editTargetDoc.value.title,
+      originalContent: originalContent.value,
+      timestamp: Date.now()
+    };
+
+    // 使用updateBlock API更新文档内容
+    await api.updateBlock('markdown', generatedContent.value, editTargetDoc.value.id);
+
+    showMessage(`✓ 已更新文档: ${editTargetDoc.value.title}`, 2000, 'info');
+
+    // 更新原始内容为当前内容
+    originalContent.value = generatedContent.value;
+    editTargetDoc.value.content = generatedContent.value;
+    hasContentChanged.value = false;
+    showDiff.value = false;
+  } catch (error) {
+    console.error('应用编辑失败:', error);
+    showMessage('应用编辑失败: ' + (error as Error).message, 3000, 'error');
+  } finally {
+    isApplying.value = false;
+  }
+};
+
+// 撤回编辑
+const undoEdit = async () => {
+  if (!lastEditHistory.value) return;
+
+  isUndoing.value = true;
+  try {
+    // 恢复原始内容
+    await api.updateBlock('markdown', lastEditHistory.value.originalContent, lastEditHistory.value.docId);
+
+    showMessage(`✓ 已撤回对文档的编辑: ${lastEditHistory.value.docTitle}`, 2000, 'info');
+
+    // 如果当前编辑的是同一个文档，更新界面
+    if (editTargetDoc.value && editTargetDoc.value.id === lastEditHistory.value.docId) {
+      generatedContent.value = lastEditHistory.value.originalContent;
+      displayedContent.value = lastEditHistory.value.originalContent;
+      originalContent.value = lastEditHistory.value.originalContent;
+      editTargetDoc.value.content = lastEditHistory.value.originalContent;
+      hasContentChanged.value = false;
+      showDiff.value = false;
+    }
+
+    // 清除历史记录
+    lastEditHistory.value = null;
+  } catch (error) {
+    console.error('撤回编辑失败:', error);
+    showMessage('撤回编辑失败: ' + (error as Error).message, 3000, 'error');
+  } finally {
+    isUndoing.value = false;
+  }
+};
+
+/**
+ * AI智能编辑功能
+ */
+const aiEditAction = async (action: 'polish' | 'expand' | 'condense' | 'fix') => {
+  if (!editTargetDoc.value) {
+    showMessage('请先选择要编辑的文档', 2000, 'info');
+    return;
+  }
+
+  const actionPrompts = {
+    polish: '请对以下文档进行润色优化，保持原有结构，提升语言质量和可读性，使表达更加专业、流畅。保持Markdown格式，直接输出优化后的完整文档内容：',
+    expand: '请对以下文档进行扩写，增加更详细的说明、例子和补充信息，使内容更加丰富和全面。保持Markdown格式，直接输出扩写后的完整文档内容：',
+    condense: '请对以下文档进行精简，去除冗余内容，保留核心要点，使表达更加简洁有力。保持Markdown格式，直接输出精简后的完整文档内容：',
+    fix: '请对以下文档进行错误检查和修正，包括拼写错误、语法错误、逻辑错误等。保持Markdown格式，直接输出修正后的完整文档内容：'
+  };
+
+  isGenerating.value = true;
+  generatedContent.value = '';
+  displayedContent.value = '';
+  errorMessage.value = '';
+  aiSuggestions.value = null; // 清除之前的建议
+
+  try {
+    const options: GenerateOptions = {
+      userInput: `${actionPrompts[action]}\n\n${editTargetDoc.value.content}`,
+      systemPrompt: '你是一个专业的文档编辑助手，擅长优化Markdown文档。请直接输出优化后的完整文档，不要添加任何解释性文字。',
+      temperature: 0.3, // 降低创造性，提高准确性
+      maxTokens: maxTokens.value,
+      onChunk: (chunk: string) => {
+        displayedContent.value += chunk;
+        generatedContent.value += chunk;
+      }
+    };
+
+    await props.onGenerate(options);
+
+    // 编辑完成后自动标记为已更改
+    hasContentChanged.value = true;
+    showMessage('✓ AI编辑完成', 2000, 'info');
+  } catch (error) {
+    console.error('AI编辑失败:', error);
+    errorMessage.value = (error as Error).message || 'AI编辑失败';
+    showMessage('AI编辑失败: ' + errorMessage.value, 3000, 'error');
+  } finally {
+    isGenerating.value = false;
+  }
+};
+
+/**
+ * AI文档分析和建议
+ */
+const analyzeDocument = async () => {
+  if (!editTargetDoc.value) {
+    showMessage('请先选择要分析的文档', 2000, 'info');
+    return;
+  }
+
+  isAnalyzing.value = true;
+  try {
+    const options: GenerateOptions = {
+      userInput: `请分析以下文档，提供具体的优化建议，包括但不限于：
+1. 结构优化建议
+2. 内容完善建议
+3. 语言表达改进点
+4. 逻辑性和连贯性建议
+
+请用简洁的语言给出分析报告和可执行的建议。\n\n文档内容：\n${editTargetDoc.value.content}`,
+      systemPrompt: '你是一个专业的文档分析专家，擅长发现文档中的问题并提供建设性的优化意见。',
+      temperature: 0.5,
+      maxTokens: 1500,
+      onChunk: (chunk: string) => {
+        if (!aiSuggestions.value) {
+          aiSuggestions.value = chunk;
+        } else {
+          aiSuggestions.value += chunk;
+        }
+      }
+    };
+
+    await props.onGenerate(options);
+    showMessage('✓ 分析完成', 2000, 'info');
+  } catch (error) {
+    console.error('文档分析失败:', error);
+    showMessage('文档分析失败: ' + (error as Error).message, 3000, 'error');
+  } finally {
+    isAnalyzing.value = false;
+  }
+};
+
+/**
+ * 应用AI建议进行优化
+ */
+const applySuggestions = async () => {
+  if (!editTargetDoc.value || !aiSuggestions.value) return;
+
+  isGenerating.value = true;
+  generatedContent.value = '';
+  displayedContent.value = '';
+  errorMessage.value = '';
+
+  try {
+    const options: GenerateOptions = {
+      userInput: `请根据以下分析建议，对文档进行优化。直接输出优化后的完整文档内容，保持Markdown格式。
+
+分析建议：
+${aiSuggestions.value}
+
+原文档：
+${editTargetDoc.value.content}`,
+      systemPrompt: '你是一个专业的文档编辑助手。请根据建议优化文档，直接输出结果，不要添加解释。',
+      temperature: 0.3,
+      maxTokens: maxTokens.value,
+      onChunk: (chunk: string) => {
+        displayedContent.value += chunk;
+        generatedContent.value += chunk;
+      }
+    };
+
+    await props.onGenerate(options);
+
+    hasContentChanged.value = true;
+    aiSuggestions.value = null; // 应用后清除建议
+    showMessage('✓ 已应用优化建议', 2000, 'info');
+  } catch (error) {
+    console.error('应用建议失败:', error);
+    errorMessage.value = (error as Error).message || '应用建议失败';
+    showMessage('应用建议失败: ' + errorMessage.value, 3000, 'error');
+  } finally {
+    isGenerating.value = false;
+  }
 };
 
 // 保存当前提示词配置
@@ -839,6 +1350,11 @@ loadSettings();
   &:hover {
     background: var(--b3-theme-surface-lighter);
   }
+
+  &.active {
+    background: var(--b3-theme-primary-lighter);
+    color: var(--b3-theme-primary);
+  }
 }
 
 .settings-panel,
@@ -979,6 +1495,77 @@ loadSettings();
 .input-section {
   padding: 12px 16px;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
+}
+
+// Edit模式：目标文档选择器
+.edit-doc-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  background: var(--b3-theme-surface);
+  border: 2px solid var(--b3-theme-primary-light);
+  border-radius: 8px;
+  animation: slideIn 0.3s ease-out;
+
+  .selector-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--b3-theme-on-surface);
+    white-space: nowrap;
+
+    svg {
+      color: var(--b3-theme-primary);
+    }
+  }
+
+  .btn-select-doc {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--b3-theme-background);
+    border: 2px solid var(--b3-theme-surface-light);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--b3-theme-on-surface);
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      border-color: var(--b3-theme-primary);
+      background: var(--b3-theme-surface-lighter);
+    }
+
+    .selected-doc-name {
+      color: var(--b3-theme-primary);
+      font-weight: 600;
+    }
+  }
+
+  .btn-clear-doc {
+    flex-shrink: 0;
+    padding: 6px;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.6;
+    transition: all 0.2s;
+
+    &:hover {
+      background: var(--b3-theme-error-lighter);
+      color: var(--b3-theme-error);
+      opacity: 1;
+      transform: rotate(90deg);
+    }
+  }
 }
 
 // 当前提示词显示样式（修复问题1）
@@ -1529,8 +2116,34 @@ loadSettings();
   color: var(--b3-theme-on-surface);
   transition: all 0.2s;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: var(--b3-theme-surface-light);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &.btn-apply {
+    background: var(--b3-theme-primary);
+    color: var(--b3-theme-on-primary);
+    border-color: var(--b3-theme-primary);
+
+    &:hover:not(:disabled) {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+  }
+
+  &.btn-undo {
+    background: var(--b3-theme-warning-lighter);
+    color: var(--b3-theme-warning);
+    border-color: var(--b3-theme-warning-light);
+
+    &:hover:not(:disabled) {
+      background: var(--b3-theme-warning-light);
+    }
   }
 
   &.btn-clear:hover {
@@ -1539,10 +2152,109 @@ loadSettings();
   }
 }
 
+.loading-spinner-small {
+  width: 14px;
+  height: 14px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
 .result-content {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+// Edit模式：差异对比视图
+.diff-view {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 16px;
+  padding: 16px;
+  background: var(--b3-theme-surface);
+  border-radius: 8px;
+  border: 1px solid var(--b3-theme-surface-lighter);
+
+  .diff-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .diff-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--b3-theme-on-surface);
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--b3-theme-primary-lighter);
+    }
+
+    .markdown-preview {
+      max-height: 500px;
+      overflow-y: auto;
+    }
+  }
+
+  .diff-divider {
+    width: 2px;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      var(--b3-theme-surface-lighter),
+      transparent
+    );
+  }
+}
+
+// Edit模式：可编辑视图
+.edit-view {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 16px;
+  background: var(--b3-theme-surface);
+  border-radius: 8px;
+  border: 1px solid var(--b3-theme-surface-lighter);
+
+  .edit-textarea {
+    padding: 12px;
+    border: 2px solid var(--b3-theme-surface-light);
+    border-radius: 8px;
+    background: var(--b3-theme-background);
+    color: var(--b3-theme-on-background);
+    font-size: 13px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    line-height: 1.6;
+    resize: vertical;
+    min-height: 400px;
+    outline: none;
+    transition: all 0.2s;
+
+    &:focus {
+      border-color: var(--b3-theme-primary);
+      box-shadow: 0 0 0 3px rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.1);
+    }
+  }
+
+  .edit-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .preview-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--b3-theme-on-surface);
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--b3-theme-primary-lighter);
+    }
+
+    .markdown-preview {
+      max-height: 500px;
+      overflow-y: auto;
+    }
+  }
 }
 
 .markdown-preview {
@@ -1786,5 +2498,172 @@ loadSettings();
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
+}
+
+// AI智能编辑工具栏样式
+.ai-edit-toolbar {
+  padding: 12px 16px;
+  background: linear-gradient(135deg, var(--b3-theme-primary-lightest) 0%, var(--b3-theme-surface-lighter) 100%);
+  border-bottom: 1px solid var(--b3-theme-surface-light);
+  animation: slideDown 0.3s ease-out;
+
+  .toolbar-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--b3-theme-primary);
+    margin-bottom: 10px;
+
+    svg {
+      flex-shrink: 0;
+    }
+  }
+
+  .toolbar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .btn-ai-action {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    background: var(--b3-theme-background);
+    border: 1px solid var(--b3-theme-surface-light);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--b3-theme-on-background);
+    transition: all 0.2s;
+    white-space: nowrap;
+
+    svg {
+      flex-shrink: 0;
+    }
+
+    &:hover:not(:disabled) {
+      background: var(--b3-theme-primary);
+      color: var(--b3-theme-on-primary);
+      border-color: var(--b3-theme-primary);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.3);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    &.btn-analyze {
+      background: linear-gradient(135deg, var(--b3-theme-primary-lighter) 0%, var(--b3-theme-primary) 100%);
+      color: var(--b3-theme-on-primary);
+      border-color: var(--b3-theme-primary);
+      font-weight: 600;
+
+      &:hover:not(:disabled) {
+        background: linear-gradient(135deg, var(--b3-theme-primary) 0%, var(--b3-theme-primary-dark) 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.4);
+      }
+    }
+  }
+}
+
+// AI分析建议面板样式
+.ai-suggestions-panel {
+  margin: 12px 16px;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--b3-theme-surface) 0%, var(--b3-theme-surface-lighter) 100%);
+  border: 2px solid var(--b3-theme-primary-lighter);
+  border-radius: 12px;
+  animation: slideDown 0.3s ease-out;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+  .suggestions-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--b3-theme-primary-lighter);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--b3-theme-primary);
+
+    svg {
+      flex-shrink: 0;
+    }
+
+    span {
+      flex: 1;
+    }
+
+    .btn-close-suggestions {
+      padding: 4px;
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      color: var(--b3-theme-on-surface);
+      transition: all 0.2s;
+
+      &:hover {
+        background: var(--b3-theme-error-lighter);
+        color: var(--b3-theme-error);
+      }
+    }
+  }
+
+  .suggestions-content {
+    .suggestion-text {
+      padding: 12px;
+      background: var(--b3-theme-background);
+      border-left: 4px solid var(--b3-theme-primary);
+      border-radius: 6px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--b3-theme-on-background);
+      margin-bottom: 12px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .btn-apply-suggestions {
+      width: 100%;
+      padding: 10px 16px;
+      background: linear-gradient(135deg, var(--b3-theme-primary) 0%, var(--b3-theme-primary-dark) 100%);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--b3-theme-on-primary);
+      transition: all 0.2s;
+
+      &:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.4);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
+
+// 加载动画 - tiny尺寸
+.loading-spinner-tiny {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--b3-theme-surface-lighter);
+  border-top-color: var(--b3-theme-on-primary);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
 }
 </style>

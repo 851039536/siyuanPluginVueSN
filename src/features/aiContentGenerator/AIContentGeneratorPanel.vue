@@ -63,18 +63,29 @@
               class="number-input"
             />
           </div>
+          <!-- 需求5：上下文消息数量配置 -->
+          <div class="setting-item">
+            <label>{{ i18n.contextMessageLimit || '上下文消息数量' }} ({{ contextMessageLimit }})</label>
+            <input
+              type="range"
+              v-model.number="contextMessageLimit"
+              min="1"
+              max="10"
+              step="1"
+              class="slider"
+            />
+            <div class="slider-hint">
+              <span>{{ i18n.minimal || '最少' }} (1)</span>
+              <span>{{ i18n.maximum || '最多' }} (10)</span>
+            </div>
+          </div>
           <div class="setting-item">
             <label class="checkbox-label">
               <input type="checkbox" v-model="enableMarkdown" />
               <span>{{ i18n.forceMarkdown || '强制Markdown格式输出' }}</span>
             </label>
           </div>
-          <div class="setting-item">
-            <label class="checkbox-label">
-              <input type="checkbox" v-model="enableTypewriter" />
-              <span>{{ i18n.enableTypewriter || '启用打字机效果' }}</span>
-            </label>
-          </div>
+          <!-- 打字机效果已默认启用,不再提供可选项 -->
 
           <!-- 保存提示词配置 -->
           <div class="setting-item save-prompt-section">
@@ -178,6 +189,28 @@
         </div>
       </div>
 
+      <!-- 引用当前文档按钮（需求1：添加取消按钮） -->
+      <div class="reference-doc-wrapper">
+        <button
+          class="btn-reference-doc"
+          @click="insertCurrentDocReference"
+          :title="i18n.referenceCurrentDoc || '引用当前文档内容'"
+        >
+          <svg width="16" height="16">
+            <use xlink:href="#iconAt"></use>
+          </svg>
+          <span>{{ i18n.referenceCurrentDoc || '@当前文档' }}</span>
+        </button>
+        <span v-if="referencedDocTitle" class="referenced-doc-title">
+          📄 {{ referencedDocTitle }}
+          <button class="btn-cancel-reference" @click="cancelDocReference" :title="i18n.cancel || '取消'">
+            <svg width="12" height="12">
+              <use xlink:href="#iconClose"></use>
+            </svg>
+          </button>
+        </span>
+      </div>
+
       <div class="input-wrapper">
         <textarea
           v-model="userInput"
@@ -230,12 +263,7 @@
               </svg>
               {{ i18n.copy || '复制' }}
             </button>
-            <button class="btn-action" @click="insertToDoc" :title="i18n.insertToDoc || '插入到文档'">
-              <svg width="16" height="16">
-                <use xlink:href="#iconUpload"></use>
-              </svg>
-              {{ i18n.insert || '插入' }}
-            </button>
+            <!-- 需求4：删除插入按钮 -->
             <button class="btn-action btn-clear" @click="clearContent">
               <svg width="16" height="16">
                 <use xlink:href="#iconTrashcan"></use>
@@ -245,18 +273,8 @@
           </div>
         </div>
         <div class="result-content">
-          <div class="markdown-preview" v-html="renderedDisplayedMarkdown"></div>
-          <div class="raw-markdown">
-            <div class="raw-header">
-              <span>{{ i18n.rawMarkdown || '原始Markdown' }}</span>
-              <button class="btn-toggle" @click="showRaw = !showRaw">
-                <svg width="14" height="14">
-                  <use :xlink:href="showRaw ? '#iconUp' : '#iconDown'"></use>
-                </svg>
-              </button>
-            </div>
-            <pre v-if="showRaw" class="raw-content"><code>{{ generatedContent }}</code></pre>
-          </div>
+          <!-- 需求6：移除原始Markdown显示，使渲染内容可自由复制 -->
+          <div class="markdown-preview selectable-content" v-html="renderedDisplayedMarkdown"></div>
         </div>
       </div>
 
@@ -294,6 +312,7 @@ import { showMessage } from 'siyuan';
 import { marked } from 'marked';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/github-dark.css';
+import * as api from '@/api';
 
 // Props
 interface Props {
@@ -328,6 +347,9 @@ const maxTokens = ref(2000);
 const enableMarkdown = ref(true);
 const enableTypewriter = ref(true);
 
+// 需求5：新增上下文消息数量配置
+const contextMessageLimit = ref(1);
+
 // 上下文配置已删除
 const displayedContent = ref(''); // 用于打字机效果显示的内容
 let typewriterTimer: number | null = null;
@@ -346,6 +368,13 @@ const savedPrompts = ref<SavedPrompt[]>([]);
 const showPromptSelector = ref(false);
 const newPromptName = ref('');
 const currentPromptName = ref(''); // 当前选中的提示词名称
+
+// 需求3：持久化当前提示词选择
+const CURRENT_PROMPT_STORAGE_KEY = 'ai-content-generator-current-prompt';
+
+// 引用当前文档
+const referencedDocTitle = ref('');
+const referencedDocContent = ref('');
 
 // 渲染Markdown (使用marked库进行标准渲染，支持代码高亮)
 const renderedDisplayedMarkdown = computed(() => {
@@ -398,7 +427,7 @@ const stopTypewriter = () => {
   // 流式输出时不需要清理
 };
 
-// 生成内容（修复问题2：使用流式输出实现打字机效果）
+// 生成内容（修复问题1：默认启用打字机效果，修复问题2：添加当前文档上下文）
 const handleGenerate = async () => {
   if (!userInput.value.trim()) {
     showMessage(props.i18n.enterInput || '请输入内容', 2000, 'info');
@@ -417,28 +446,36 @@ const handleGenerate = async () => {
       finalSystemPrompt += '\n\n**重要**: 请严格使用Markdown格式输出，包括标题(#)、列表(- 或 1.)、代码块(```)、粗体(**) 等标准语法。';
     }
 
+    // 添加当前文档上下文（如果有）
+    let contextInfo = '';
+    if (referencedDocContent.value) {
+      contextInfo = `
+
+**当前文档信息**：
+文档标题：${referencedDocTitle.value}
+文档内容：
+${referencedDocContent.value}
+
+请基于以上文档内容回答用户问题。`;
+    }
+
     const options: GenerateOptions = {
       userInput: userInput.value,
       systemPrompt: finalSystemPrompt,
       temperature: temperature.value,
       maxTokens: maxTokens.value,
-      // 如果启用打字机效果，传入流式回调（修复问题2）
-      onChunk: enableTypewriter.value ? (chunk: string) => {
+      context: contextInfo || undefined,
+      // 默认启用打字机效果，传入流式回调（修复问题1）
+      onChunk: (chunk: string) => {
         displayedContent.value += chunk;
         generatedContent.value += chunk;
-      } : undefined
+      }
     };
 
     const result = await props.onGenerate(options);
 
     if (result) {
-      // 如果没有启用打字机效果，直接显示完整结果
-      if (!enableTypewriter.value) {
-        generatedContent.value = result;
-        displayedContent.value = result;
-      }
-      // 否则流式输出已经在onChunk中更新了
-
+      // 流式输出已经在onChunk中更新了
       showMessage('✓ 生成成功', 2000, 'info');
     } else {
       errorMessage.value = props.i18n.generateFailed || '生成失败，请重试';
@@ -452,31 +489,25 @@ const handleGenerate = async () => {
   }
 };
 
-// 复制内容
+// 复制内容（需求2：修复Markdown格式复制）
 const copyContent = async () => {
   if (!generatedContent.value) return;
 
   try {
+    // 使用原始Markdown内容，确保格式正确
     await navigator.clipboard.writeText(generatedContent.value);
-    showMessage('✓ 已复制到剪贴板', 2000, 'info');
+    showMessage('✓ 已复制Markdown到剪贴板', 2000, 'info');
   } catch (error) {
     console.error('复制失败:', error);
     showMessage('复制失败', 2000, 'error');
   }
 };
 
-// 插入到文档
-const insertToDoc = async () => {
-  if (!generatedContent.value) return;
-
-  try {
-    // TODO: 实现插入到当前文档的功能
-    await copyContent();
-    showMessage('内容已复制，请在文档中粘贴', 3000, 'info');
-  } catch (error) {
-    console.error('插入失败:', error);
-    showMessage('插入失败', 2000, 'error');
-  }
+// 需求1：取消文档引用
+const cancelDocReference = () => {
+  referencedDocTitle.value = '';
+  referencedDocContent.value = '';
+  showMessage('✓ 已取消文档引用', 1500, 'info');
 };
 
 // 清除内容
@@ -510,13 +541,132 @@ const saveCurrentPrompt = () => {
   showMessage(`✓ 已保存配置: ${promptConfig.name}`, 2000, 'info');
 };
 
-// 清除当前提示词选择（修复问题1）
+// 清除当前提示词选择（需求3：同时清除localStorage）
 const clearCurrentPrompt = () => {
   currentPromptName.value = '';
+  localStorage.removeItem(CURRENT_PROMPT_STORAGE_KEY);
   showMessage('✓ 已清除提示词选择', 1500, 'info');
 };
 
-// 加载提示词配置（修复问题1：不跳转到设置面板）
+/**
+ * 获取当前光标所在的块ID
+ */
+function getCurrentBlockId(): string | null {
+  // 方法1: 获取当前选中的块
+  const selectedBlock = document.querySelector('.protyle-wysiwyg--select');
+  if (selectedBlock) {
+    return selectedBlock.getAttribute('data-node-id');
+  }
+
+  // 方法2: 获取光标所在的块（聚焦的块）
+  const focusedBlock = document.querySelector('.protyle-wysiwyg [data-node-id].protyle-wysiwyg--focus');
+  if (focusedBlock) {
+    return focusedBlock.getAttribute('data-node-id');
+  }
+
+  // 方法3: 通过 window.getSelection() 精确获取光标位置
+  const selection = window.getSelection();
+  if (selection && selection.rangeCount > 0) {
+    const range = selection.getRangeAt(0);
+    let node: Node | null = range.startContainer;
+
+    // 向上查找直到找到带有 data-node-id 和 data-type 的元素
+    while (node) {
+      if (node instanceof Element) {
+        const nodeId = node.getAttribute('data-node-id');
+        const dataType = node.getAttribute('data-type');
+
+        // 必须同时有 data-node-id 和 data-type 才是有效的块
+        if (nodeId && dataType) {
+          return nodeId;
+        }
+      }
+      node = node.parentNode;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * 通过块ID获取其所属的文档ID
+ */
+async function getDocIdByBlockId(blockId: string): Promise<string | null> {
+  try {
+    const block = await api.getBlockByID(blockId);
+    return block?.root_id || null;
+  } catch (error) {
+    console.error('获取文档ID失败:', error);
+    return null;
+  }
+}
+
+/**
+ * 插入当前文档引用（修复问题2）
+ */
+const insertCurrentDocReference = async () => {
+  try {
+    // 1. 获取当前光标所在的块ID
+    const currentBlockId = getCurrentBlockId();
+    if (!currentBlockId) {
+      // 备用方案：使用激活窗口的文档
+      const protyle = document.querySelector('.layout__wnd--active .protyle:not(.fn__none)');
+      const docId = protyle?.querySelector('.protyle-background')?.getAttribute('data-node-id');
+
+      if (!docId) {
+        showMessage('无法获取当前文档，请将光标放在文档中', 3000, 'error');
+        return;
+      }
+
+      await loadDocumentContent(docId);
+      return;
+    }
+
+    // 2. 通过块ID获取文档ID
+    const docId = await getDocIdByBlockId(currentBlockId);
+    if (!docId) {
+      showMessage('无法获取当前文档信息', 3000, 'error');
+      return;
+    }
+
+    await loadDocumentContent(docId);
+  } catch (error) {
+    console.error('引用文档失败:', error);
+    showMessage('引用文档失败: ' + (error as Error).message, 3000, 'error');
+  }
+};
+
+/**
+ * 加载文档内容
+ */
+async function loadDocumentContent(docId: string) {
+  try {
+    // 3. 获取文档块信息
+    const docBlock = await api.getBlockByID(docId);
+    if (!docBlock) {
+      showMessage('无法获取文档信息', 3000, 'error');
+      return;
+    }
+
+    // 4. 获取文档的Markdown内容
+    const docContent = await api.exportMdContent(docId);
+    if (!docContent || !docContent.content) {
+      showMessage('无法获取文档内容', 3000, 'error');
+      return;
+    }
+
+    // 5. 保存引用的文档信息
+    referencedDocTitle.value = docBlock.content || '未命名文档';
+    referencedDocContent.value = docContent.content;
+
+    showMessage(`✓ 已引用文档: ${referencedDocTitle.value}`, 2000, 'info');
+  } catch (error) {
+    console.error('加载文档内容失败:', error);
+    throw error;
+  }
+}
+
+// 加载提示词配置（需求3：持久化保存）
 const loadPrompt = (index: number) => {
   const prompt = savedPrompts.value[index];
   if (!prompt) return;
@@ -530,9 +680,10 @@ const loadPrompt = (index: number) => {
   // 设置当前选中的提示词名称
   currentPromptName.value = prompt.name;
 
+  // 需求3：保存到localStorage
+  localStorage.setItem(CURRENT_PROMPT_STORAGE_KEY, prompt.name);
+
   showPromptSelector.value = false;
-  // 不再自动打开设置面板（修复问题1）
-  // showSettings.value = true;
   showMessage(`✓ 已加载配置: ${prompt.name}`, 2000, 'info');
 };
 
@@ -564,12 +715,22 @@ const savePromptsToStorage = () => {
   }
 };
 
-// 从localStorage加载
+// 从localStorage加载（需求3：同时加载当前提示词选择）
 const loadPromptsFromStorage = () => {
   try {
     const stored = localStorage.getItem('ai-content-generator-prompts');
     if (stored) {
       savedPrompts.value = JSON.parse(stored);
+    }
+
+    // 需求3：加载保存的当前提示词
+    const currentPrompt = localStorage.getItem(CURRENT_PROMPT_STORAGE_KEY);
+    if (currentPrompt) {
+      const promptIndex = savedPrompts.value.findIndex(p => p.name === currentPrompt);
+      if (promptIndex !== -1) {
+        // 自动加载保存的提示词配置
+        loadPrompt(promptIndex);
+      }
     }
   } catch (error) {
     console.error('加载提示词配置失败:', error);
@@ -593,7 +754,7 @@ const useTemplate = (templateType: string) => {
   userInput.value = templates[templateType] || '';
 };
 
-// 保存设置到本地存储
+// 保存设置到本地存储（需求5：包含contextMessageLimit）
 const saveSettings = () => {
   try {
     localStorage.setItem('ai-content-generator-settings', JSON.stringify({
@@ -601,14 +762,15 @@ const saveSettings = () => {
       temperature: temperature.value,
       maxTokens: maxTokens.value,
       enableMarkdown: enableMarkdown.value,
-      enableTypewriter: enableTypewriter.value
+      enableTypewriter: enableTypewriter.value,
+      contextMessageLimit: contextMessageLimit.value
     }));
   } catch (error) {
     console.error('保存设置失败:', error);
   }
 };
 
-// 加载设置
+// 加载设置（需求5：包含contextMessageLimit）
 const loadSettings = () => {
   try {
     const saved = localStorage.getItem('ai-content-generator-settings');
@@ -619,14 +781,15 @@ const loadSettings = () => {
       maxTokens.value = settings.maxTokens || maxTokens.value;
       enableMarkdown.value = settings.enableMarkdown ?? enableMarkdown.value;
       enableTypewriter.value = settings.enableTypewriter ?? enableTypewriter.value;
+      contextMessageLimit.value = settings.contextMessageLimit ?? contextMessageLimit.value;
     }
   } catch (error) {
     console.error('加载设置失败:', error);
   }
 };
 
-// 监听设置变化
-watch([systemPrompt, temperature, maxTokens, enableMarkdown, enableTypewriter], () => {
+// 监听设置变化（需求5：包含contextMessageLimit）
+watch([systemPrompt, temperature, maxTokens, enableMarkdown, enableTypewriter, contextMessageLimit], () => {
   saveSettings();
 });
 
@@ -886,6 +1049,81 @@ loadSettings();
 .prompt-selector-wrapper {
   position: relative;
   margin-bottom: 12px;
+}
+
+// 引用当前文档按钮样式（修复问题2）
+.reference-doc-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-reference-doc {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, var(--b3-theme-primary-lighter), var(--b3-theme-primary-lightest));
+  border: 1px solid var(--b3-theme-primary-light);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--b3-theme-primary);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: linear-gradient(135deg, var(--b3-theme-primary-light), var(--b3-theme-primary-lighter));
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  svg {
+    flex-shrink: 0;
+  }
+}
+
+.referenced-doc-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--b3-theme-on-surface);
+  background: var(--b3-theme-surface);
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  animation: slideIn 0.3s ease-out;
+
+  // 需求1：取消按钮样式
+  .btn-cancel-reference {
+    flex-shrink: 0;
+    padding: 2px;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.6;
+    transition: all 0.2s;
+
+    &:hover {
+      background: var(--b3-theme-error-lighter);
+      color: var(--b3-theme-error);
+      opacity: 1;
+      transform: rotate(90deg);
+    }
+  }
 }
 
 .btn-prompt-selector {
@@ -1314,6 +1552,13 @@ loadSettings();
   border: 1px solid var(--b3-theme-surface-lighter);
   line-height: 1.6;
   overflow-wrap: break-word;
+
+  // 需求6：使内容可自由选择和复制
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  cursor: text;
 
   // 标题样式 - 使用标准Markdown间距（修复问题4）
   :deep(h1), :deep(h2), :deep(h3), :deep(h4), :deep(h5), :deep(h6) {

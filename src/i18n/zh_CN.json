@@ -467,5 +467,9 @@
   "promptNamePlaceholder": "输入配置名称...",
   "enterPromptName": "请输入配置名称",
   "confirmDelete": "确定删除配置",
-  "currentPrompt": "当前提示词"
+  "currentPrompt": "当前提示词",
+  "referenceCurrentDoc": "引用当前文档内容",
+  "contextMessageLimit": "上下文消息数量",
+  "minimal": "最少",
+  "maximum": "最多"
 }

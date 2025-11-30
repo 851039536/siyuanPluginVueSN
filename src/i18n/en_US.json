@@ -457,5 +457,9 @@
   "promptNamePlaceholder": "Enter config name...",
   "enterPromptName": "Please enter config name",
   "confirmDelete": "Confirm delete config",
-  "currentPrompt": "Current Prompt"
+  "currentPrompt": "Current Prompt",
+  "referenceCurrentDoc": "Reference Current Document",
+  "contextMessageLimit": "Context Message Limit",
+  "minimal": "Minimal",
+  "maximum": "Maximum"
 }

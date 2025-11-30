@@ -488,5 +488,8 @@
   "aiFix": "Fix Errors: Check and correct spelling, grammar errors",
   "aiAnalyze": "AI Analysis: Intelligently analyze document and provide optimization suggestions",
   "aiSuggestions": "AI Optimization Suggestions",
-  "applySuggestions": "Apply Suggestions"
+  "applySuggestions": "Apply Suggestions",
+  "documentTitle": "Document Title",
+  "editModeHint": "Use AI editing tools to intelligently optimize the document",
+  "inputPlaceholderWithDoc": "Enter question or generate summary directly..."
 }

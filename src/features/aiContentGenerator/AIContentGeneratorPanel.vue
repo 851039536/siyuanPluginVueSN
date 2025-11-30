@@ -272,7 +272,7 @@
         </div>
       </div>
 
-      <!-- 引用当前文档按钮（需求1：添加取消按钮） -->
+      <!-- 引用当前文档按钮（仅普通模式显示） -->
       <div v-if="!editMode" class="reference-doc-wrapper">
         <button
           class="btn-reference-doc"
@@ -294,18 +294,19 @@
         </span>
       </div>
 
-      <div class="input-wrapper">
+      <!-- 输入框和生成按钮（仅普通模式显示） -->
+      <div v-if="!editMode" class="input-wrapper">
         <textarea
           v-model="userInput"
           class="user-input"
-          :placeholder="i18n.inputPlaceholder || '输入您的问题或需求...'"
+          :placeholder="referencedDocContent ? (i18n.inputPlaceholderWithDoc || '输入问题或直接生成总结...') : (i18n.inputPlaceholder || '输入您的问题或需求...')"
           rows="3"
           @keydown.ctrl.enter="handleGenerate"
         ></textarea>
         <button
           class="btn-generate"
           @click="handleGenerate"
-          :disabled="isGenerating || !userInput.trim()"
+          :disabled="isGenerating || (!userInput.trim() && !referencedDocContent)"
         >
           <div v-if="isGenerating" class="loading-spinner"></div>
           <svg v-else width="18" height="18">
@@ -313,6 +314,20 @@
           </svg>
           <span>{{ isGenerating ? (i18n.generating || '生成中...') : (i18n.generate || '生成') }}</span>
         </button>
+      </div>
+
+      <!-- 编辑模式提示信息 -->
+      <div v-if="editMode && editTargetDoc" class="edit-mode-info">
+        <div class="doc-meta-info">
+          <div class="meta-item">
+            <svg width="14" height="14"><use xlink:href="#iconFile"></use></svg>
+            <span>{{ i18n.documentTitle || '文档标题' }}: <strong>{{ editTargetDoc.title }}</strong></span>
+          </div>
+          <div class="meta-item">
+            <svg width="14" height="14"><use xlink:href="#iconClock"></use></svg>
+            <span>{{ i18n.editModeHint || '使用AI编辑工具对文档进行智能优化' }}</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -411,13 +426,21 @@
           <!-- Edit模式：显示差异对比或可编辑内容 -->
           <div v-if="editMode && showDiff" class="diff-view">
             <div class="diff-section">
-              <div class="diff-label">{{ i18n.originalContent || '原始内容' }}</div>
-              <div class="markdown-preview" v-html="renderedOriginalContent"></div>
+              <div class="diff-label">
+                <svg width="14" height="14"><use xlink:href="#iconFile"></use></svg>
+                {{ i18n.originalContent || '原始内容' }}
+              </div>
+              <div class="diff-content original-content" v-html="diffHighlightedOriginal"></div>
             </div>
-            <div class="diff-divider"></div>
+            <div class="diff-divider">
+              <svg width="20" height="20"><use xlink:href="#iconArrowRight"></use></svg>
+            </div>
             <div class="diff-section">
-              <div class="diff-label">{{ i18n.newContent || '新内容' }}</div>
-              <div class="markdown-preview" v-html="renderedDisplayedMarkdown"></div>
+              <div class="diff-label">
+                <svg width="14" height="14"><use xlink:href="#iconEdit"></use></svg>
+                {{ i18n.newContent || '新内容' }}
+              </div>
+              <div class="diff-content new-content" v-html="diffHighlightedNew"></div>
             </div>
           </div>
           <!-- Edit模式：可编辑的Markdown编辑器 -->
@@ -559,17 +582,53 @@ const CURRENT_PROMPT_STORAGE_KEY = 'ai-content-generator-current-prompt';
 const referencedDocTitle = ref('');
 const referencedDocContent = ref('');
 
+/**
+ * 移除Markdown内容中的Frontmatter（YAML元数据）
+ * @param content 原始内容
+ * @returns 移除frontmatter后的内容
+ */
+const removeFrontmatter = (content: string): string => {
+  // 匹配开头的 --- ... --- 格式的YAML frontmatter
+  const frontmatterRegex = /^---\s*\n[\s\S]*?\n---\s*\n/;
+  return content.replace(frontmatterRegex, '').trim();
+};
+
+/**
+ * 提取Frontmatter信息用于显示
+ * @param content 原始内容
+ * @returns frontmatter对象或null
+ */
+const extractFrontmatter = (content: string): { title?: string; date?: string; lastmod?: string } | null => {
+  const frontmatterRegex = /^---\s*\n([\s\S]*?)\n---\s*\n/;
+  const match = content.match(frontmatterRegex);
+  if (!match) return null;
+
+  const yamlContent = match[1];
+  const metadata: any = {};
+
+  // 简单解析YAML（仅支持key: value格式）
+  yamlContent.split('\n').forEach(line => {
+    const parts = line.split(':');
+    if (parts.length >= 2) {
+      const key = parts[0].trim();
+      const value = parts.slice(1).join(':').trim();
+      metadata[key] = value;
+    }
+  });
+
+  return metadata;
+};
+
 // 渲染Markdown (使用marked库进行标准渲染，支持代码高亮)
 const renderedDisplayedMarkdown = computed(() => {
   if (!displayedContent.value) return '';
   try {
-    // 配置marked选项（修复问题3：添加代码高亮）
+    // 配置marked选项
     marked.setOptions({
       breaks: true,  // 支持GFM换行
       gfm: true,     // 启用GitHub风格的Markdown
     });
 
-    // 使用marked渲染，但需要清理标题中的粗体标记
     let content = displayedContent.value;
 
     // 移除标题中的粗体标记
@@ -611,6 +670,156 @@ watch(renderedDisplayedMarkdown, async () => {
   });
 });
 
+/**
+ * 生成带语法高亮的差异对比HTML
+ */
+const diffHighlightedOriginal = computed(() => {
+  if (!originalContent.value || !generatedContent.value) return '';
+
+  const original = removeFrontmatter(originalContent.value);
+  const generated = removeFrontmatter(generatedContent.value);
+
+  const originalLines = original.split('\n');
+  const generatedLines = generated.split('\n');
+
+  let html = '<div class="diff-lines diff-markdown">';
+  const maxLines = Math.max(originalLines.length, generatedLines.length);
+
+  for (let i = 0; i < maxLines; i++) {
+    const originalLine = originalLines[i] || '';
+    const generatedLine = generatedLines[i] || '';
+
+    let lineClass = 'diff-line';
+    if (i >= originalLines.length) {
+      lineClass += ' diff-line-empty';
+    } else if (originalLine !== generatedLine) {
+      lineClass += ' diff-line-removed';
+    }
+
+    // 使用原始文本进行简单高亮（Markdown语法）
+    const highlightedLine = highlightMarkdownLine(originalLine);
+    html += `<div class="${lineClass}"><span class="diff-line-number">${i + 1}</span><span class="diff-line-content">${highlightedLine}</span></div>`;
+  }
+
+  html += '</div>';
+  return html;
+});
+
+const diffHighlightedNew = computed(() => {
+  if (!originalContent.value || !generatedContent.value) return '';
+
+  const original = removeFrontmatter(originalContent.value);
+  const generated = removeFrontmatter(generatedContent.value);
+
+  const originalLines = original.split('\n');
+  const generatedLines = generated.split('\n');
+
+  let html = '<div class="diff-lines diff-markdown">';
+  const maxLines = Math.max(originalLines.length, generatedLines.length);
+
+  for (let i = 0; i < maxLines; i++) {
+    const originalLine = originalLines[i] || '';
+    const generatedLine = generatedLines[i] || '';
+
+    let lineClass = 'diff-line';
+    if (i >= generatedLines.length) {
+      lineClass += ' diff-line-empty';
+    } else if (originalLine !== generatedLine) {
+      lineClass += ' diff-line-added';
+    }
+
+    const highlightedLine = highlightMarkdownLine(generatedLine);
+    html += `<div class="${lineClass}"><span class="diff-line-number">${i + 1}</span><span class="diff-line-content">${highlightedLine}</span></div>`;
+  }
+
+  html += '</div>';
+  return html;
+});
+
+/**
+ * 对单行Markdown进行语法高亮
+ */
+const highlightMarkdownLine = (line: string): string => {
+  if (!line.trim()) return line;
+
+  // 代码块开始/结束
+  if (line.trim().startsWith('```')) {
+    return `<span class="md-code-fence">${escapeHtml(line)}</span>`;
+  }
+
+  // 标题
+  if (/^#{1,6}\s/.test(line)) {
+    const match = line.match(/^(#{1,6})(\s+)(.+)$/);
+    if (match) {
+      return `<span class="md-heading md-h${match[1].length}"><span class="md-heading-marker">${escapeHtml(match[1])}</span>${escapeHtml(match[2])}<span class="md-heading-text">${escapeHtml(match[3])}</span></span>`;
+    }
+  }
+
+  // 列表
+  if (/^\s*[-*+]\s/.test(line)) {
+    const match = line.match(/^(\s*)([-*+])(\s+)(.*)$/);
+    if (match) {
+      return `${escapeHtml(match[1])}<span class="md-list-marker">${escapeHtml(match[2])}</span>${escapeHtml(match[3])}<span class="md-list-text">${highlightInlineMarkdown(match[4])}</span>`;
+    }
+  }
+
+  // 有序列表
+  if (/^\s*\d+\.\s/.test(line)) {
+    const match = line.match(/^(\s*)(\d+\.)(\s+)(.*)$/);
+    if (match) {
+      return `${escapeHtml(match[1])}<span class="md-list-marker">${escapeHtml(match[2])}</span>${escapeHtml(match[3])}<span class="md-list-text">${highlightInlineMarkdown(match[4])}</span>`;
+    }
+  }
+
+  // 引用
+  if (/^>\s/.test(line)) {
+    const match = line.match(/^(>+)(\s*)(.*)$/);
+    if (match) {
+      return `<span class="md-blockquote"><span class="md-blockquote-marker">${escapeHtml(match[1])}</span>${escapeHtml(match[2])}<span class="md-blockquote-text">${highlightInlineMarkdown(match[3])}</span></span>`;
+    }
+  }
+
+  // 普通文本
+  return highlightInlineMarkdown(line);
+};
+
+/**
+ * 高亮行内Markdown语法（粗体、斜体、代码、链接等）
+ */
+const highlightInlineMarkdown = (text: string): string => {
+  let result = escapeHtml(text);
+
+  // 行内代码 `code`
+  result = result.replace(/`([^`]+)`/g, '<span class="md-code"><span class="md-code-marker">`</span>$1<span class="md-code-marker">`</span></span>');
+
+  // 粗体 **bold** 或 __bold__
+  result = result.replace(/\*\*([^*]+)\*\*/g, '<span class="md-bold"><span class="md-marker">**</span>$1<span class="md-marker">**</span></span>');
+  result = result.replace(/__([^_]+)__/g, '<span class="md-bold"><span class="md-marker">__</span>$1<span class="md-marker">__</span></span>');
+
+  // 斜体 *italic* 或 _italic_
+  result = result.replace(/\*([^*]+)\*/g, '<span class="md-italic"><span class="md-marker">*</span>$1<span class="md-marker">*</span></span>');
+  result = result.replace(/_([^_]+)_/g, '<span class="md-italic"><span class="md-marker">_</span>$1<span class="md-marker">_</span></span>');
+
+  // 链接 [text](url)
+  result = result.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<span class="md-link"><span class="md-marker">[</span>$1<span class="md-marker">](</span><span class="md-url">$2</span><span class="md-marker">)</span></span>');
+
+  return result;
+};
+
+/**
+ * HTML转义工具函数
+ */
+const escapeHtml = (text: string): string => {
+  const map: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return text.replace(/[&<>"']/g, m => map[m]);
+};
+
 // 切换设置面板
 const toggleSettings = () => {
   showSettings.value = !showSettings.value;
@@ -651,10 +860,11 @@ const stopTypewriter = () => {
   // 流式输出时不需要清理
 };
 
-// 生成内容（修复问题1：默认启用打字机效果，修复问题2：添加当前文档上下文）
+// 生成内容
 const handleGenerate = async () => {
-  if (!userInput.value.trim()) {
-    showMessage(props.i18n.enterInput || '请输入内容', 2000, 'info');
+  // 如果既没有输入也没有引用文档，提示用户
+  if (!userInput.value.trim() && !referencedDocContent.value) {
+    showMessage(props.i18n.enterInput || '请输入内容或引用文档', 2000, 'info');
     return;
   }
 
@@ -683,13 +893,19 @@ ${referencedDocContent.value}
 请基于以上文档内容回答用户问题。`;
     }
 
+    // 如果只引用了文档没有输入问题，使用默认的总结提示
+    let finalUserInput = userInput.value;
+    if (!userInput.value.trim() && referencedDocContent.value) {
+      finalUserInput = '请对上述文档进行全面的总结和分析，包括主要内容、核心要点和关键信息。';
+    }
+
     const options: GenerateOptions = {
-      userInput: userInput.value,
+      userInput: finalUserInput,
       systemPrompt: finalSystemPrompt,
       temperature: temperature.value,
       maxTokens: maxTokens.value,
       context: contextInfo || undefined,
-      // 默认启用打字机效果，传入流式回调（修复问题1）
+      // 默认启用打字机效果，传入流式回调
       onChunk: (chunk: string) => {
         displayedContent.value += chunk;
         generatedContent.value += chunk;
@@ -795,19 +1011,22 @@ const loadTargetDocument = async (docId: string) => {
       return;
     }
 
-    // 保存文档信息
+    // 移除frontmatter，获取纯净的Markdown内容
+    const cleanContent = removeFrontmatter(docContent.content);
+
+    // 保存文档信息（使用清理后的内容）
     editTargetDoc.value = {
       id: docId,
       title: docBlock.content || '未命名文档',
-      content: docContent.content
+      content: cleanContent
     };
 
-    // 保存原始内容用于对比
-    originalContent.value = docContent.content;
+    // 保存原始内容用于对比（使用清理后的内容）
+    originalContent.value = cleanContent;
 
-    // 将文档内容加载到生成内容区域
-    generatedContent.value = docContent.content;
-    displayedContent.value = docContent.content;
+    // 将文档内容加载到生成内容区域（使用清理后的内容）
+    generatedContent.value = cleanContent;
+    displayedContent.value = cleanContent;
     hasContentChanged.value = false;
 
     showMessage(`✓ 已选择文档: ${editTargetDoc.value.title}`, 2000, 'info');
@@ -1568,6 +1787,40 @@ loadSettings();
   }
 }
 
+// 编辑模式提示信息
+.edit-mode-info {
+  margin-bottom: 12px;
+  padding: 12px;
+  background: linear-gradient(135deg, var(--b3-theme-primary-lightest), var(--b3-theme-surface-lighter));
+  border: 1px solid var(--b3-theme-primary-light);
+  border-radius: 8px;
+  animation: slideIn 0.3s ease-out;
+
+  .doc-meta-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--b3-theme-on-surface);
+
+    svg {
+      color: var(--b3-theme-primary);
+      flex-shrink: 0;
+    }
+
+    strong {
+      color: var(--b3-theme-primary);
+      font-weight: 600;
+    }
+  }
+}
+
 // 当前提示词显示样式（修复问题1）
 .current-prompt-display {
   display: flex;
@@ -2181,29 +2434,220 @@ loadSettings();
     display: flex;
     flex-direction: column;
     gap: 8px;
+    min-width: 0; // 防止内容溢出
 
     .diff-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
       font-size: 12px;
       font-weight: 600;
       color: var(--b3-theme-on-surface);
-      padding-bottom: 8px;
-      border-bottom: 2px solid var(--b3-theme-primary-lighter);
+      padding: 8px 12px;
+      background: var(--b3-theme-surface-lighter);
+      border-radius: 6px;
+      border-left: 3px solid var(--b3-theme-primary);
     }
 
-    .markdown-preview {
+    .diff-content {
       max-height: 500px;
       overflow-y: auto;
+      background: var(--b3-theme-background);
+      border: 1px solid var(--b3-theme-surface-light);
+      border-radius: 6px;
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-size: 12px;
+      line-height: 1.6;
     }
   }
 
   .diff-divider {
-    width: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
     background: linear-gradient(
       to bottom,
       transparent,
       var(--b3-theme-surface-lighter),
       transparent
     );
+    color: var(--b3-theme-primary);
+    opacity: 0.6;
+  }
+}
+
+// Diff高亮样式
+.diff-lines {
+  .diff-line {
+    display: flex;
+    align-items: stretch;
+    min-height: 20px;
+    transition: background 0.2s;
+
+    &:hover {
+      background: var(--b3-theme-surface-lighter);
+    }
+
+    .diff-line-number {
+      display: inline-block;
+      width: 50px;
+      padding: 2px 8px;
+      text-align: right;
+      color: var(--b3-theme-on-surface-light);
+      background: var(--b3-theme-surface);
+      border-right: 1px solid var(--b3-theme-surface-light);
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    .diff-line-content {
+      flex: 1;
+      padding: 2px 8px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+
+    // 删除的行（原始内容）
+    &.diff-line-removed {
+      background: rgba(248, 81, 73, 0.15);
+
+      .diff-line-number {
+        background: rgba(248, 81, 73, 0.25);
+        color: #d73a49;
+        font-weight: 600;
+      }
+
+      .diff-line-content {
+        color: #d73a49;
+      }
+    }
+
+    // 新增的行（新内容）
+    &.diff-line-added {
+      background: rgba(40, 167, 69, 0.15);
+
+      .diff-line-number {
+        background: rgba(40, 167, 69, 0.25);
+        color: #28a745;
+        font-weight: 600;
+      }
+
+      .diff-line-content {
+        color: #28a745;
+      }
+    }
+
+    // 空行（在对方不存在）
+    &.diff-line-empty {
+      background: var(--b3-theme-surface);
+      opacity: 0.5;
+
+      .diff-line-content {
+        color: var(--b3-theme-on-surface-light);
+        font-style: italic;
+      }
+    }
+  }
+
+  // Markdown语法高亮样式
+  &.diff-markdown {
+    .diff-line-content {
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+
+      // 标题
+      .md-heading {
+        font-weight: 700;
+
+        &.md-h1 { font-size: 1.5em; }
+        &.md-h2 { font-size: 1.3em; }
+        &.md-h3 { font-size: 1.15em; }
+
+        .md-heading-marker {
+          color: #6366f1;
+          opacity: 0.7;
+          font-weight: normal;
+        }
+
+        .md-heading-text {
+          color: inherit;
+        }
+      }
+
+      // 列表标记
+      .md-list-marker {
+        color: #f59e0b;
+        font-weight: 600;
+      }
+
+      // 引用
+      .md-blockquote {
+        .md-blockquote-marker {
+          color: #6b7280;
+          font-weight: 600;
+        }
+
+        .md-blockquote-text {
+          color: #6b7280;
+          font-style: italic;
+        }
+      }
+
+      // 代码块围栏
+      .md-code-fence {
+        color: #10b981;
+        font-weight: 600;
+      }
+
+      // 行内代码
+      .md-code {
+        background: rgba(139, 92, 246, 0.1);
+        color: #8b5cf6;
+        padding: 2px 4px;
+        border-radius: 3px;
+        font-size: 0.9em;
+
+        .md-code-marker {
+          opacity: 0.5;
+        }
+      }
+
+      // 粗体
+      .md-bold {
+        font-weight: 700;
+        color: inherit;
+
+        .md-marker {
+          opacity: 0.5;
+          font-weight: normal;
+        }
+      }
+
+      // 斜体
+      .md-italic {
+        font-style: italic;
+        color: inherit;
+
+        .md-marker {
+          opacity: 0.5;
+        }
+      }
+
+      // 链接
+      .md-link {
+        color: #3b82f6;
+
+        .md-marker {
+          opacity: 0.5;
+        }
+
+        .md-url {
+          color: #06b6d4;
+          text-decoration: underline;
+        }
+      }
+    }
   }
 }
 

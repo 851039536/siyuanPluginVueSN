@@ -82,6 +82,50 @@
             </div>
           </div>
         </div>
+
+        <!-- 代码块折叠设置 -->
+        <div class="setting-item">
+          <label class="setting-label">
+            <span class="label-icon">📦</span>
+            {{ i18n.codeBlockCollapse || '代码块折叠' }}
+          </label>
+          <div class="toggle-container">
+            <label class="toggle-switch">
+              <input
+                type="checkbox"
+                v-model="settings.enableCollapse"
+                class="toggle-input"
+              />
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-description">
+              {{ settings.enableCollapse ? (i18n.collapseEnabled || '已启用') : (i18n.collapseDisabled || '已禁用') }}
+            </span>
+          </div>
+        </div>
+
+        <!-- 折叠高度设置 -->
+        <div v-if="settings.enableCollapse" class="setting-item">
+          <label class="setting-label">
+            <span class="label-icon">📏</span>
+            {{ i18n.collapseHeight || '折叠高度' }}
+            <span class="setting-value">{{ settings.collapseHeight }}px</span>
+          </label>
+          <div class="slider-container">
+            <input
+              v-model.number="settings.collapseHeight"
+              type="range"
+              min="200"
+              max="800"
+              step="50"
+              class="range-slider"
+            />
+            <div class="slider-labels">
+              <span>200px</span>
+              <span>800px</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- 预览区域 -->
@@ -121,7 +165,7 @@
               </div>
 
               <!-- 代码内容 - 所有风格共用 -->
-              <div class="code-content">
+              <div class="code-content" :style="{ maxHeight: settings.enableCollapse ? settings.collapseHeight + 'px' : 'none', overflow: settings.enableCollapse ? 'hidden' : 'auto' }">
                 <div class="code-line">
                   <span class="line-number">1</span>
                   <span class="code-text">
@@ -149,9 +193,57 @@
                 <div class="code-line">
                   <span class="line-number">5</span>
                   <span class="code-text">
+                    <span class="indent">  </span><span class="keyword">return</span> <span class="boolean">false</span><span class="punctuation">;</span>
+                  </span>
+                </div>
+                <div class="code-line">
+                  <span class="line-number">6</span>
+                  <span class="code-text">
+                    <span class="indent">  </span><span class="keyword">return</span> <span class="boolean">null</span><span class="punctuation">;</span>
+                  </span>
+                </div>
+                <div class="code-line">
+                  <span class="line-number">7</span>
+                  <span class="code-text">
+                    <span class="indent">  </span><span class="keyword">return</span> <span class="boolean">undefined</span><span class="punctuation">;</span>
+                  </span>
+                </div>
+                <div class="code-line">
+                  <span class="line-number">8</span>
+                  <span class="code-text">
+                    <span class="indent">  </span><span class="keyword">return</span> <span class="string">""</span><span class="punctuation">;</span>
+                  </span>
+                </div>
+                <div class="code-line">
+                  <span class="line-number">9</span>
+                  <span class="code-text">
+                    <span class="indent">  </span><span class="keyword">return</span> <span class="number">0</span><span class="punctuation">;</span>
+                  </span>
+                </div>
+                <div class="code-line">
+                  <span class="line-number">10</span>
+                  <span class="code-text">
+                    <span class="indent">  </span><span class="keyword">return</span> <span class="punctuation">[]</span><span class="punctuation">;</span>
+                  </span>
+                </div>
+                <div class="code-line">
+                  <span class="line-number">11</span>
+                  <span class="code-text">
+                    <span class="indent">  </span><span class="keyword">return</span> <span class="punctuation">{}</span><span class="punctuation">;</span>
+                  </span>
+                </div>
+                <div class="code-line">
+                  <span class="line-number">12</span>
+                  <span class="code-text">
                     <span class="punctuation">}</span>
                   </span>
                 </div>
+              </div>
+
+              <!-- 折叠预览指示器 -->
+              <div v-if="settings.enableCollapse" class="collapse-preview-indicator">
+                <span class="collapse-text">{{ i18n.collapsePreview || '折叠预览' }}</span>
+                <span class="collapse-height">{{ settings.collapseHeight }}px</span>
               </div>
             </div>
             <div class="preview-info">
@@ -172,6 +264,8 @@ interface CodeBlockSettings {
   style: 'default' | 'github' | 'mac' | 'cartoon'
   fontSize: number
   padding: number
+  enableCollapse: boolean
+  collapseHeight: number
 }
 
 interface Props {
@@ -188,7 +282,9 @@ const props = withDefaults(defineProps<Props>(), {
   initialSettings: () => ({
     style: 'default',
     fontSize: 13,
-    padding: 14
+    padding: 14,
+    enableCollapse: true,
+    collapseHeight: 400
   })
 })
 
@@ -200,13 +296,16 @@ const showPreview = ref(true)
 const DEFAULT_SETTINGS: CodeBlockSettings = {
   style: 'default',
   fontSize: 13,
-  padding: 14
+  padding: 14,
+  enableCollapse: true,
+  collapseHeight: 400
 }
 
 // 监听设置变化，自动保存
 watch(settings, (newSettings) => {
   emit('change', newSettings)
   applyCodeBlockStyle(newSettings.style)
+  applyCodeBlockCollapse(newSettings.enableCollapse, newSettings.collapseHeight)
   // 自动保存到 localStorage
   try {
     localStorage.setItem('general-codeblock-settings', JSON.stringify(newSettings))
@@ -245,6 +344,289 @@ function applyCodeBlockCustomization() {
   root.style.setProperty('--codeblock-padding', `${settings.value.padding}px`)
 }
 
+function applyCodeBlockCollapse(enable: boolean, height: number) {
+  // 移除现有的折叠样式和功能
+  const existingStyle = document.getElementById('codeblock-collapse-style')
+  if (existingStyle) {
+    existingStyle.remove()
+  }
+  
+  const existingScript = document.getElementById('codeblock-collapse-script')
+  if (existingScript) {
+    existingScript.remove()
+  }
+
+  if (!enable) {
+    return
+  }
+
+  // 添加折叠样式 - GitHub 风格
+  const style = document.createElement('style')
+  style.id = 'codeblock-collapse-style'
+  style.innerHTML = `
+    /* GitHub 风格折叠按钮 */
+    .code-block .code-expand-wrapper {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      background: linear-gradient(to bottom, 
+        transparent 0%, 
+        rgba(var(--b3-theme-background-rgb, 255, 255, 255), 0.7) 30%,
+        rgba(var(--b3-theme-background-rgb, 255, 255, 255), 0.95) 70%,
+        rgba(var(--b3-theme-background-rgb, 255, 255, 255), 1) 100%
+      );
+    }
+    
+    .code-block .code-expand-btn {
+      pointer-events: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      background: var(--b3-theme-surface);
+      border: 1px solid rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.15);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--b3-theme-on-surface);
+      transition: all 0.15s ease;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      line-height: 1.5;
+    }
+    
+    .code-block .code-expand-btn:hover {
+      background: var(--b3-theme-surface-variant);
+      border-color: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.25);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .code-block .code-expand-btn:active {
+      background: var(--b3-theme-outline);
+      transform: scale(0.98);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+    
+    .code-block .code-expand-icon {
+      width: 14px;
+      height: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .code-block .code-expand-icon svg {
+      width: 100%;
+      height: 100%;
+      fill: currentColor;
+    }
+    
+    /* 折叠状态下的代码块高度限制 */
+    div:not(#preview) > .protyle-wysiwyg .code-block .hljs {
+      max-height: ${height}px;
+    }
+    
+    /* 深色主题适配 */
+    [data-theme-mode="dark"] .code-block .code-expand-wrapper {
+      background: linear-gradient(to bottom, 
+        transparent 0%, 
+        rgba(var(--b3-theme-background-rgb, 31, 31, 31), 0.7) 30%,
+        rgba(var(--b3-theme-background-rgb, 31, 31, 31), 0.95) 70%,
+        rgba(var(--b3-theme-background-rgb, 31, 31, 31), 1) 100%
+      );
+    }
+    
+    /* 移动端适配 */
+    @media (max-width: 768px) {
+      .code-block .code-expand-btn {
+        padding: 8px 20px;
+        font-size: 13px;
+      }
+      
+      .code-block .code-expand-wrapper {
+        height: 100px;
+      }
+    }
+  `
+  document.head.appendChild(style)
+
+  // 添加折叠功能脚本
+  const script = document.createElement('script')
+  script.id = 'codeblock-collapse-script'
+  script.innerHTML = `
+    (function() {
+      const codeMaxHeight = ${height};
+      let running = false;
+
+      function isMobile() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      }
+
+      function addCodeExtends(codeBlocks) {
+        if(codeBlocks.length === 0) return;
+        if(running) return; 
+        running = true;
+        setTimeout(() => {running = false;}, 300);
+        codeBlocks.forEach(async codeBlock => {
+          if(isCursorInCodeBlock(codeBlock)) {
+            const hljs = codeBlock.querySelector('.hljs');
+            if(hljs) hljs.style.maxHeight = '100%';
+            return;
+          }
+          if(codeBlock.querySelector('.code-expand-wrapper')) return;
+          const hljs = await whenElementExist(() => codeBlock.querySelector('.hljs'));
+          if(hljs && hljs.scrollHeight > codeMaxHeight) {
+            const expandWrapper = document.createElement('div');
+            expandWrapper.className = 'code-expand-wrapper protyle-custom';
+            const expandText = document.documentElement.lang === 'zh_CN' ? '展开代码' : 'Expand Code';
+            expandWrapper.innerHTML = \`
+              <button class="code-expand-btn">
+                <span class="code-expand-icon">
+                  <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12.78 6.22a.75.75 0 010 1.06l-4.25 4.25a.75.75 0 01-1.06 0L3.22 7.28a.75.75 0 011.06-1.06L8 9.94l3.72-3.72a.75.75 0 011.06 0z"/>
+                  </svg>
+                </span>
+                <span>\${expandText}</span>
+              </button>
+            \`;
+            codeBlock.appendChild(expandWrapper);
+            hljs.style.maxHeight = codeMaxHeight + 'px';
+            
+            expandWrapper.querySelector('.code-expand-btn').onclick = () => {
+              // 添加展开动画
+              expandWrapper.style.transition = 'opacity 0.2s ease';
+              expandWrapper.style.opacity = '0';
+              expandWrapper.style.pointerEvents = 'none';
+              
+              // 平滑展开代码块
+              hljs.style.transition = 'max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+              hljs.style.maxHeight = hljs.scrollHeight + 'px';
+              
+              setTimeout(() => {
+                hljs.style.maxHeight = '100%';
+                expandWrapper.remove();
+              }, 400);
+            };
+          }
+        });
+      }
+
+      function isCursorInCodeBlock(codeBlock) {
+        if(!codeBlock) return false;
+        let cursorEl = getCursorElement();
+        if(!cursorEl) return false;
+        cursorEl = cursorEl.closest('.code-block');
+        if(!cursorEl) return false;
+        return cursorEl === codeBlock;
+      }
+
+      function getCursorElement() {
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+          const range = selection.getRangeAt(0);
+          const startContainer = range.startContainer;
+          const cursorElement = startContainer.nodeType === Node.TEXT_NODE
+              ? startContainer.parentElement
+              : startContainer;
+          return cursorElement;
+        }
+        return null;
+      }
+
+      function whenElementExist(selector) {
+        return new Promise(resolve => {
+          const checkForElement = () => {
+            let element = null;
+            if (typeof selector === 'function') {
+              element = selector();
+            } else {
+              element = document.querySelector(selector);
+            }
+            if (element) {
+              resolve(element);
+            } else {
+              requestAnimationFrame(checkForElement);
+            }
+          };
+          checkForElement();
+        });
+      }
+
+      function observeProtyleAddition(el, callback) {
+        const config = { attributes: false, childList: true, subtree: true };
+        const observer = new MutationObserver((mutationsList, observer) => {
+          mutationsList.forEach(mutation => {
+            if (mutation.type === 'childList') {
+              const protyles = Array.from(mutation.addedNodes).filter(node =>
+                node.nodeType === Node.ELEMENT_NODE &&
+                (node.classList.contains('protyle') || node.classList.contains('protyle-content'))
+              );
+              if (protyles.length > 0) {
+                callback(protyles);
+              }
+            }
+          });
+        });
+        observer.observe(el, config);
+        return () => {
+          observer.disconnect();
+        };
+      }
+
+      // 初始化代码块折叠功能
+      function initCodeBlockCollapse() {
+        whenElementExist('body').then(async el => {
+          let protyle;
+          await whenElementExist(() => {
+            protyle = el.querySelector('.protyle');
+            return protyle && protyle?.dataset?.loading === 'finished';
+          });
+          addCodeExtends(protyle.querySelectorAll('.code-block'));
+
+          let scrollContainer = isMobile() ? window : protyle.querySelector(".protyle-content");
+          let debounceTimer;
+          scrollContainer.addEventListener('scroll', () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+              addCodeExtends(protyle.querySelectorAll('.code-block'));
+            }, 100);
+          });
+
+          observeProtyleAddition(el, protyles => {
+            protyles.forEach(async protyle => {
+              if(!protyle.classList.contains('protyle')) {
+                protyle = protyle.closest('.protyle');
+              }
+              addCodeExtends(protyle.querySelectorAll('.code-block'));
+              let scrollContainer = isMobile() ? window : protyle.querySelector(".protyle-content");
+              scrollContainer.addEventListener('scroll', () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                  addCodeExtends(protyle.querySelectorAll('.code-block'));
+                }, 100);
+              });
+            });
+          });
+        });
+      }
+
+      // 如果页面已加载，立即初始化
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initCodeBlockCollapse);
+      } else {
+        initCodeBlockCollapse();
+      }
+    })();
+  `
+  document.head.appendChild(script)
+}
+
 // 加载保存的设置
 function loadSettings() {
   try {
@@ -264,6 +646,7 @@ onMounted(() => {
   loadSettings()
   // 确保在页面加载时应用保存的样式
   applyCodeBlockStyle(settings.value.style)
+  applyCodeBlockCollapse(settings.value.enableCollapse, settings.value.collapseHeight)
 })
 
 // 暴露方法
@@ -971,6 +1354,98 @@ defineExpose({
   .comment {
     color: #5c6370;
   }
+}
+
+/* 折叠设置样式 */
+.toggle-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.toggle-input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background-color: var(--b3-theme-surface-variant);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 24px;
+  cursor: pointer;
+  border: 2px solid var(--b3-theme-outline);
+}
+
+.toggle-slider::before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background-color: var(--b3-theme-on-surface-variant);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-input:checked + .toggle-slider {
+  background-color: var(--b3-theme-primary);
+  border-color: var(--b3-theme-primary);
+}
+
+.toggle-input:checked + .toggle-slider::before {
+  transform: translateX(24px);
+  background-color: var(--b3-theme-on-primary);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.toggle-description {
+  font-size: 12px;
+  color: var(--b3-theme-on-surface-variant);
+  font-weight: 500;
+  padding: 2px 8px;
+  background: var(--b3-theme-surface-variant);
+  border-radius: 8px;
+  border: 1px solid var(--b3-theme-outline);
+}
+
+/* 折叠预览指示器 */
+.collapse-preview-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px;
+  background: linear-gradient(to bottom, transparent, rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.05));
+  border-top: 1px dashed var(--b3-theme-outline);
+  font-size: 11px;
+  color: var(--b3-theme-on-surface-variant);
+}
+
+.collapse-text {
+  font-weight: 500;
+}
+
+.collapse-height {
+  padding: 2px 6px;
+  background: var(--b3-theme-primary);
+  color: var(--b3-theme-on-primary);
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 10px;
 }
 
 .preview-info {

@@ -518,5 +518,8 @@
   "applySuggestions": "应用建议优化",
   "documentTitle": "文档标题",
   "editModeHint": "使用AI编辑工具对文档进行智能优化",
+  "insertToDocument": "插入到当前文档",
+  "confirmInsertToDocument": "确定要将生成的内容插入到当前文档吗？这将覆盖文档的现有内容。",
+  "undoInsert": "撤回插入",
   "inputPlaceholderWithDoc": "输入问题或直接生成总结..."
 }

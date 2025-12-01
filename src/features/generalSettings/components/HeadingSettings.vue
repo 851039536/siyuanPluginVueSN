@@ -176,8 +176,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { showMessage } from 'siyuan'
+import { ref, watch, onMounted } from 'vue'
 
 interface HeadingColors {
   h1: string
@@ -190,6 +189,7 @@ interface HeadingColors {
 
 interface Props {
   i18n?: any
+  plugin?: any
   initialSettings?: HeadingColors
 }
 
@@ -199,6 +199,7 @@ interface Emits {
 
 const props = withDefaults(defineProps<Props>(), {
   i18n: () => ({}),
+  plugin: null,
   initialSettings: () => ({
     h1: '#F39A94',
     h2: '#F8D694',
@@ -356,8 +357,8 @@ function applyToDocument() {
     }
   ` : ''
 
-  // 文档标题颜色样式
-  const titleColorCss = titleCenterAlign.value ? `
+  // 文档标题颜色样式（独立于居中设置）
+  const titleColorCss = titleColor.value ? `
     .protyle-title__input {
       color: ${titleColor.value} !important;
     }
@@ -369,7 +370,7 @@ function applyToDocument() {
     document.head.appendChild(style)
   }
 
-  console.log('CSS已应用到文档,层级显示样式:', levelDisplayStyle.value, '标题居中:', titleCenterAlign.value)
+  console.log('CSS已应用到文档,层级显示样式:', levelDisplayStyle.value, '标题居中:', titleCenterAlign.value, '标题颜色:', titleColor.value)
 }
 
 // 生成层级显示 CSS
@@ -444,42 +445,80 @@ function togglePreview() {
 }
 
 // 自动保存设置
-function autoSave() {
+async function autoSave() {
+  if (!props.plugin) {
+    console.warn('插件实例不可用，无法保存设置')
+    return
+  }
+  
   try {
-    localStorage.setItem('general-heading-settings', JSON.stringify({
+    const settingsToSave = {
       style: selectedStyle.value,
       colors: headingColors.value,
       levelDisplay: levelDisplayStyle.value,
       customMarkers: customLevelMarkers.value,
       titleCenterAlign: titleCenterAlign.value,
       titleColor: titleColor.value
-    }))
+    }
+    
+    // 使用插件的数据存储 API
+    const { saveHeadingSettings } = await import('@/config/settings')
+    const success = await saveHeadingSettings(props.plugin, settingsToSave)
+    
+    if (success) {
+      console.log('设置已保存到数据库:', settingsToSave)
+    } else {
+      console.error('保存设置失败')
+    }
   } catch (error) {
     console.error('保存失败:', error)
   }
 }
 
 // 加载保存的设置
-function loadSettings() {
+async function loadSettings() {
+  if (!props.plugin) {
+    console.warn('插件实例不可用，使用默认设置')
+    return
+  }
+  
   try {
-    const saved = localStorage.getItem('general-heading-settings')
-    if (saved) {
-      const parsed = JSON.parse(saved)
-      selectedStyle.value = parsed.style || 'default'
-      headingColors.value = { ...styles.default, ...parsed.colors }
-      levelDisplayStyle.value = parsed.levelDisplay || 'none'
-      customLevelMarkers.value = parsed.customMarkers || ['1', '2', '3', '4', '5', '6']
-      titleCenterAlign.value = parsed.titleCenterAlign || false
-      titleColor.value = parsed.titleColor || defaultTitleColor
-      applyToDocument()
-    }
+    console.log('尝试从数据库加载设置...')
+    
+    // 使用插件的数据存储 API
+    const { loadHeadingSettings } = await import('@/config/settings')
+    const settings = await loadHeadingSettings(props.plugin)
+    
+    console.log('从数据库加载的设置:', settings)
+    
+    selectedStyle.value = settings.style || 'default'
+    headingColors.value = { ...styles.default, ...settings.colors }
+    levelDisplayStyle.value = settings.levelDisplay || 'none'
+    customLevelMarkers.value = settings.customMarkers || ['1', '2', '3', '4', '5', '6']
+    titleCenterAlign.value = settings.titleCenterAlign ?? false
+    titleColor.value = settings.titleColor || defaultTitleColor
+    
+    console.log('已加载设置:', {
+      style: selectedStyle.value,
+      levelDisplay: levelDisplayStyle.value,
+      titleCenterAlign: titleCenterAlign.value,
+      titleColor: titleColor.value
+    })
   } catch (error) {
     console.error('加载设置失败:', error)
   }
 }
 
-// 初始化
-loadSettings()
+// 初始化 - 在组件挂载后执行
+onMounted(() => {
+  console.log('HeadingSettings 组件已挂载，开始加载设置')
+  loadSettings()
+  // 确保样式立即应用
+  setTimeout(() => {
+    applyToDocument()
+    console.log('HeadingSettings 样式已应用')
+  }, 100)
+})
 
 // 监听设置变化，自动保存
 watch(headingColors, (newColors) => {

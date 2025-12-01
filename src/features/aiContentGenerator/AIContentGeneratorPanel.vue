@@ -411,7 +411,7 @@
                 {{ i18n.applyEdit || '应用' }}
               </button>
               <button
-                v-if="lastEditHistory"
+                v-if="lastEditHistory && editMode"
                 class="btn-action btn-undo"
                 @click="undoEdit"
                 :disabled="isUndoing"
@@ -424,14 +424,41 @@
                 {{ i18n.undo || '撤回' }}
               </button>
             </template>
+            <!-- 普通模式：撤回插入按钮 -->
+            <button
+              v-if="!editMode && lastEditHistory"
+              class="btn-action btn-undo"
+              @click="undoEdit"
+              :disabled="isUndoing"
+              :title="i18n.undoInsert || '撤回插入'"
+            >
+              <div v-if="isUndoing" class="loading-spinner-small"></div>
+              <svg v-else width="16" height="16">
+                <use xlink:href="#iconUndo"></use>
+              </svg>
+              {{ i18n.undo || '撤回' }}
+            </button>
             <!-- 通用按钮 -->
+            <!-- 普通模式：插入到当前文档按钮 -->
+            <button
+              v-if="!editMode"
+              class="btn-action btn-insert"
+              @click="insertToCurrentDocument"
+              :disabled="isInserting"
+              :title="i18n.insertToDocument || '插入到当前文档'"
+            >
+              <div v-if="isInserting" class="loading-spinner-small"></div>
+              <svg v-else width="16" height="16">
+                <use xlink:href="#iconDownload"></use>
+              </svg>
+              {{ i18n.insertToDoc || '插入' }}
+            </button>
             <button class="btn-action" @click="copyContent" :title="i18n.copyMarkdown || '复制Markdown'">
               <svg width="16" height="16">
                 <use xlink:href="#iconCopy"></use>
               </svg>
               {{ i18n.copy || '复制' }}
             </button>
-            <!-- 需求4：删除插入按钮 -->
             <button class="btn-action btn-clear" @click="clearContent">
               <svg width="16" height="16">
                 <use xlink:href="#iconTrashcan"></use>
@@ -565,6 +592,9 @@ interface EditHistory {
 }
 const lastEditHistory = ref<EditHistory | null>(null);
 const editHistoryStack = ref<EditHistory[]>([]); // 完整编辑历史栈
+
+// 普通模式：插入到当前文档状态
+const isInserting = ref(false);
 
 // 对话设置
 const systemPrompt = ref('你是一个专业的内容创作助手，擅长生成结构清晰、格式规范的Markdown文档。请确保输出内容使用标准的Markdown语法。');
@@ -981,17 +1011,144 @@ ${cleanDocContent}`;
   }
 };
 
+/**
+ * 转换 Markdown 为思源兼容格式
+ * 思源笔记对某些 Markdown 语法有特殊要求
+ * 
+ * 注意：思源笔记在使用 markdown 模式时会解析 Markdown 语法
+ * 但某些格式（如粗体）可能在某些情况下显示不正确
+ */
+const convertToSiyuanMarkdown = (content: string): string => {
+  let converted = content;
+  
+  // 1. 确保标题前后有空行
+  converted = converted.replace(/([^\n])\n(#{1,6}\s)/g, '$1\n\n$2');
+  converted = converted.replace(/(#{1,6}\s[^\n]+)\n([^\n#])/g, '$1\n\n$2');
+  
+  // 2. 处理粗体格式
+  // 思源笔记在使用 markdown 模式时，粗体标记可能被解析但不显示效果
+  // 临时解决方案：移除粗体标记，保留文本内容
+  // TODO: 找到更好的方法让思源正确显示粗体
+  converted = converted.replace(/\*\*([^*]+?)\*\*/g, '$1'); // 移除粗体标记
+  converted = converted.replace(/__([^_]+?)__/g, '$1'); // 移除另一种粗体标记
+  
+  // 3. 处理斜体格式（同样可能有显示问题，暂时保留）
+  // converted = converted.replace(/\*([^*]+?)\*/g, '$1'); // 如需移除斜体，取消注释
+  
+  // 4. 确保代码块前后有空行
+  converted = converted.replace(/([^\n])\n```/g, '$1\n\n```');
+  converted = converted.replace(/```\n([^\n])/g, '```\n\n$1');
+  
+  // 5. 确保列表前后有空行
+  converted = converted.replace(/([^\n])\n([-*+]\s)/g, '$1\n\n$2');
+  converted = converted.replace(/([^\n])\n(\d+\.\s)/g, '$1\n\n$2');
+  
+  // 6. 清理多余的连续空行（最多保留两个换行符）
+  converted = converted.replace(/\n{3,}/g, '\n\n');
+  
+  return converted;
+};
+
 // 复制内容（需求2：修复Markdown格式复制）
 const copyContent = async () => {
   if (!generatedContent.value) return;
 
   try {
-    // 使用原始Markdown内容，确保格式正确
-    await navigator.clipboard.writeText(generatedContent.value);
+    // 转换为思源兼容的 Markdown 格式
+    const siyuanContent = convertToSiyuanMarkdown(generatedContent.value);
+    await navigator.clipboard.writeText(siyuanContent);
     showMessage('✓ 已复制Markdown到剪贴板', 2000, 'info');
   } catch (error) {
     console.error('复制失败:', error);
     showMessage('复制失败', 2000, 'error');
+  }
+};
+
+/**
+ * 插入到当前文档（普通模式）
+ */
+const insertToCurrentDocument = async () => {
+  if (!generatedContent.value) {
+    showMessage('没有可插入的内容', 2000, 'info');
+    return;
+  }
+
+  // 确认对话框
+  const confirmMessage = props.i18n.confirmInsertToDocument || 
+    '确定要将生成的内容插入到当前文档吗？这将覆盖文档的现有内容。';
+  
+  if (!confirm(confirmMessage)) {
+    return;
+  }
+
+  isInserting.value = true;
+  try {
+    // 1. 获取当前光标所在的块ID
+    const currentBlockId = getCurrentBlockId();
+    if (!currentBlockId) {
+      // 备用方案：使用激活窗口的文档
+      const protyle = document.querySelector('.layout__wnd--active .protyle:not(.fn__none)');
+      const docId = protyle?.querySelector('.protyle-background')?.getAttribute('data-node-id');
+
+      if (!docId) {
+        showMessage('无法获取当前文档，请将光标放在文档中', 3000, 'error');
+        return;
+      }
+
+      await insertContentToDocument(docId);
+      return;
+    }
+
+    // 2. 通过块ID获取文档ID
+    const docId = await getDocIdByBlockId(currentBlockId);
+    if (!docId) {
+      showMessage('无法获取当前文档信息', 3000, 'error');
+      return;
+    }
+
+    await insertContentToDocument(docId);
+  } catch (error) {
+    console.error('插入文档失败:', error);
+    showMessage('插入文档失败: ' + (error as Error).message, 3000, 'error');
+  } finally {
+    isInserting.value = false;
+  }
+};
+
+/**
+ * 将内容插入到指定文档
+ */
+const insertContentToDocument = async (docId: string) => {
+  try {
+    // 获取文档信息（用于显示和历史记录）
+    const docBlock = await api.getBlockByID(docId);
+    if (!docBlock) {
+      showMessage('无法获取文档信息', 3000, 'error');
+      return;
+    }
+
+    // 获取原始内容（用于撤回）
+    const docContent = await api.exportMdContent(docId);
+    const originalContent = docContent?.content || '';
+
+    // 保存到编辑历史（用于撤回）
+    lastEditHistory.value = {
+      docId: docId,
+      docTitle: docBlock.content || '未命名文档',
+      originalContent: removeFrontmatter(originalContent),
+      timestamp: Date.now()
+    };
+
+    // 转换为思源兼容的 Markdown 格式
+    const siyuanContent = convertToSiyuanMarkdown(generatedContent.value);
+
+    // 使用updateBlock API更新文档内容
+    await api.updateBlock('markdown', siyuanContent, docId);
+
+    showMessage(`✓ 已插入到文档: ${docBlock.content || '未命名文档'}`, 2000, 'info');
+  } catch (error) {
+    console.error('插入内容失败:', error);
+    throw error;
   }
 };
 
@@ -1120,8 +1277,11 @@ const applyEdit = async () => {
       timestamp: Date.now()
     };
 
+    // 转换为思源兼容的 Markdown 格式
+    const siyuanContent = convertToSiyuanMarkdown(generatedContent.value);
+
     // 使用updateBlock API更新文档内容
-    await api.updateBlock('markdown', generatedContent.value, editTargetDoc.value.id);
+    await api.updateBlock('markdown', siyuanContent, editTargetDoc.value.id);
 
     showMessage(`✓ 已更新文档: ${editTargetDoc.value.title}`, 2000, 'info');
 
@@ -2538,6 +2698,18 @@ loadSettings();
 
     &:hover:not(:disabled) {
       opacity: 0.9;
+      transform: translateY(-1px);
+    }
+  }
+
+  &.btn-insert {
+    background: var(--b3-theme-success-lighter);
+    color: var(--b3-theme-success);
+    border-color: var(--b3-theme-success-light);
+    font-weight: 600;
+
+    &:hover:not(:disabled) {
+      background: var(--b3-theme-success-light);
       transform: translateY(-1px);
     }
   }

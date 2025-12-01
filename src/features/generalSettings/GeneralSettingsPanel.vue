@@ -31,7 +31,7 @@
 
         <!-- 标题配置 -->
         <div v-show="activeCategory === 'heading'" class="content-section">
-          <HeadingSettings :i18n="i18n" @change="handleHeadingChange" />
+          <HeadingSettings :i18n="i18n" :plugin="plugin" @change="handleHeadingChange" />
         </div>
 
         <!-- 密码设置 -->
@@ -64,11 +64,13 @@ import ListSettings from './components/ListSettings.vue'
 
 interface Props {
   i18n?: any
+  plugin?: any
   onSettingsChange?: (settings: any) => void
 }
 
 const props = withDefaults(defineProps<Props>(), {
   i18n: () => ({}),
+  plugin: null,
   onSettingsChange: () => {}
 })
 

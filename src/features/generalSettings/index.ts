@@ -20,11 +20,12 @@ export class GeneralSettings {
   /**
    * 初始化通用设置功能
    */
-  public init() {
+  public async init() {
     this.addDock();
     this.applySavedSettings(); // 应用已保存的设置
     this.applyCodeBlockStyle(); // 应用代码块样式
     this.applyListStyle(); // 应用列表样式
+    await this.applyHeadingStyle(); // 应用标题样式
     console.log('通用设置模块已初始化');
   }
 
@@ -52,6 +53,7 @@ export class GeneralSettings {
           setup() {
             return () => h(GeneralSettingsPanel, {
               i18n: self.plugin.i18n,
+              plugin: self.plugin,
               onSettingsChange: (settings: any) => {
                 self.handleSettingsChange(settings);
               }
@@ -211,6 +213,129 @@ export class GeneralSettings {
     } catch (error) {
       console.error('应用列表样式失败:', error);
     }
+  }
+
+  /**
+   * 应用标题样式
+   */
+  public async applyHeadingStyle() {
+    try {
+      // 从插件数据库加载设置
+      const { loadHeadingSettings } = await import('@/config/settings');
+      const settings = await loadHeadingSettings(this.plugin);
+      this.applyHeadingStyles(settings);
+      console.log('标题样式已从数据库加载并应用:', settings);
+    } catch (error) {
+      console.error('应用标题样式失败:', error);
+    }
+  }
+
+  /**
+   * 从设置对象应用标题样式
+   */
+  private applyHeadingStyles(settings: any) {
+    try {
+      const style = document.getElementById('heading-colors-style') || document.createElement('style');
+      style.id = 'heading-colors-style';
+
+      console.log('应用标题样式，设置内容:', {
+        titleCenterAlign: settings.titleCenterAlign,
+        titleColor: settings.titleColor,
+        levelDisplay: settings.levelDisplay,
+        hasColors: !!settings.colors
+      });
+
+      // 颜色样式
+      const colors = settings.colors || {};
+      const colorCss = Object.entries(colors)
+        .map(([level, color]) => {
+          return `
+            .protyle-wysiwyg [data-node-id].${level},
+            .protyle-wysiwyg .${level},
+            .b3-typography .${level} {
+              color: ${color} !important;
+            }
+          `;
+        })
+        .join('\n');
+
+      // 层级显示样式
+      let levelCss = '';
+      if (settings.levelDisplay && settings.levelDisplay !== 'none') {
+        levelCss = this.generateLevelDisplayCss(settings.levelDisplay, settings.customMarkers || []);
+        console.log('应用层级显示样式:', settings.levelDisplay);
+      }
+
+      // 标题居中样式（仅文档标题）
+      const centerAlignCss = settings.titleCenterAlign ? `
+        .protyle-title__input {
+          text-align: center !important;
+        }
+      ` : '';
+      if (settings.titleCenterAlign) {
+        console.log('应用标题居中样式');
+      }
+
+      // 文档标题颜色样式（独立于居中设置）
+      const titleColorCss = settings.titleColor ? `
+        .protyle-title__input {
+          color: ${settings.titleColor} !important;
+        }
+      ` : '';
+      if (settings.titleColor) {
+        console.log('应用标题颜色:', settings.titleColor);
+      }
+
+      style.textContent = colorCss + '\n' + levelCss + '\n' + centerAlignCss + '\n' + titleColorCss;
+
+      if (!style.parentElement) {
+        document.head.appendChild(style);
+      }
+
+      console.log('标题样式已应用到文档');
+    } catch (error) {
+      console.error('应用标题样式失败:', error);
+    }
+  }
+
+  /**
+   * 生成层级显示 CSS
+   */
+  private generateLevelDisplayCss(style: string, customMarkers: string[]): string {
+    const levelMappings: Record<string, string[]> = {
+      number: ['1', '2', '3', '4', '5', '6'],
+      roman: ['I', 'II', 'III', 'IV', 'V', 'VI'],
+      chinese: ['一', '二', '三', '四', '五', '六'],
+      chineseUpper: ['壹', '贰', '叁', '肆', '伍', '陆'],
+      dots: ['•', '••', '•••', '••••', '•••••', '••••••'],
+      emoji: ['😀', '😁', '😂', '🤣', '😊', '😎'],
+      star: ['⭐', '⭐⭐', '⭐⭐⭐', '⭐⭐⭐⭐', '⭐⭐⭐⭐⭐', '⭐⭐⭐⭐⭐⭐'],
+      arrow: ['→', '→→', '→→→', '→→→→', '→→→→→', '→→→→→→'],
+      tag: ['H1', 'H2', 'H3', 'H4', 'H5', 'H6'],
+      bracket: ['[1]', '[2]', '[3]', '[4]', '[5]', '[6]'],
+      custom: customMarkers
+    };
+
+    const levels = levelMappings[style] || levelMappings.number;
+
+    return levels.map((label, index) => {
+      const level = index + 1;
+      const tagStyles = style === 'tag'
+        ? 'background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.15); padding: 2px 6px; border-radius: 4px; font-weight: 600; opacity: 0.7;'
+        : '';
+
+      return `
+        .protyle-wysiwyg div[data-subtype="h${level}"][data-node-id]:not([type]) > div[contenteditable]:first-child::after,
+        .protyle-wysiwyg div[data-subtype="h${level}"][data-node-id] > div.h${level}[contenteditable]::after {
+          content: "  ${label}";
+          font-size: 0.7em;
+          opacity: 0.4;
+          margin-left: 6px;
+          vertical-align: middle;
+          ${tagStyles}
+        }
+      `;
+    }).join('\n');
   }
 
   /**

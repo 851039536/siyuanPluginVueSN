@@ -268,3 +268,97 @@ function removeExistingListStyles(): void {
     console.log('已移除现有的列表样式')
   }
 }
+
+/**
+ * 标题设置接口
+ */
+export interface HeadingSettings {
+  style: string
+  colors: {
+    h1: string
+    h2: string
+    h3: string
+    h4: string
+    h5: string
+    h6: string
+  }
+  levelDisplay: string
+  customMarkers: string[]
+  titleCenterAlign: boolean
+  titleColor: string
+}
+
+/**
+ * 默认标题设置
+ */
+export const DEFAULT_HEADING_SETTINGS: HeadingSettings = {
+  style: 'default',
+  colors: {
+    h1: '#F39A94',
+    h2: '#F8D694',
+    h3: '#B1DCB9',
+    h4: '#AAD2FC',
+    h5: '#AC9DC0',
+    h6: '#D7D7D7'
+  },
+  levelDisplay: 'none',
+  customMarkers: ['1', '2', '3', '4', '5', '6'],
+  titleCenterAlign: false,
+  titleColor: '#2C3E50'
+}
+
+/**
+ * 配置存储键
+ */
+const HEADING_SETTINGS_KEY = 'heading-settings'
+
+/**
+ * 加载标题设置
+ */
+export async function loadHeadingSettings(plugin: Plugin): Promise<HeadingSettings> {
+  try {
+    const data = await plugin.loadData(HEADING_SETTINGS_KEY)
+    if (!data) {
+      console.log('没有找到保存的标题设置，使用默认值')
+      return { ...DEFAULT_HEADING_SETTINGS }
+    }
+    console.log('从数据库加载标题设置:', data)
+    // 合并默认配置和已保存的配置
+    return { 
+      ...DEFAULT_HEADING_SETTINGS, 
+      ...data,
+      colors: { ...DEFAULT_HEADING_SETTINGS.colors, ...data.colors }
+    }
+  } catch (error) {
+    console.error('加载标题设置失败:', error)
+    return { ...DEFAULT_HEADING_SETTINGS }
+  }
+}
+
+/**
+ * 保存标题设置
+ */
+export async function saveHeadingSettings(plugin: Plugin, settings: HeadingSettings): Promise<boolean> {
+  try {
+    await plugin.saveData(HEADING_SETTINGS_KEY, settings)
+    console.log('标题设置已保存到数据库:', settings)
+    return true
+  } catch (error) {
+    console.error('保存标题设置失败:', error)
+    return false
+  }
+}
+
+/**
+ * 重置标题设置
+ */
+export async function resetHeadingSettings(plugin: Plugin): Promise<boolean> {
+  try {
+    await plugin.saveData(HEADING_SETTINGS_KEY, DEFAULT_HEADING_SETTINGS)
+    console.log('标题设置已重置')
+    return true
+  } catch (error) {
+    console.error('重置标题设置失败:', error)
+    return false
+  }
+}

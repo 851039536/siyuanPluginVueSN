@@ -509,5 +509,8 @@
   "applySuggestions": "Apply Suggestions",
   "documentTitle": "Document Title",
   "editModeHint": "Use AI editing tools to intelligently optimize the document",
-  "inputPlaceholderWithDoc": "Enter question or generate summary directly..."
+  "inputPlaceholderWithDoc": "Enter question or generate summary directly...",
+  "insertToDocument": "Insert to Current Document",
+  "confirmInsertToDocument": "Are you sure you want to insert the generated content into the current document? This will overwrite the existing content.",
+  "undoInsert": "Undo Insert"
 }

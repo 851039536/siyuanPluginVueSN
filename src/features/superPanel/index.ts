@@ -80,7 +80,7 @@ function openSuperPanel(plugin: Plugin) {
     onRefresh: async () => {
       await handleRefresh(plugin)
     },
-    onUpdateAiSettings: async (aiSettings: { provider: string; apiKey: string; customEndpoint: string }) => {
+    onUpdateAiSettings: async (aiSettings: { provider: string; model: string; apiKey: string; customEndpoint: string }) => {
       await handleUpdateAiSettings(plugin, aiSettings)
     }
   })
@@ -216,13 +216,14 @@ function handleFeatureAction(_plugin: Plugin, action: string) {
  */
 async function handleUpdateAiSettings(
   plugin: Plugin,
-  aiSettings: { provider: string; apiKey: string; customEndpoint: string }
+  aiSettings: { provider: string; model: string; apiKey: string; customEndpoint: string }
 ) {
   const pluginSample = plugin as any
 
   const newSettings = {
     ...pluginSample.settings,
     aiApiProvider: aiSettings.provider,
+    aiModel: aiSettings.model,
     aiApiKey: aiSettings.apiKey,
     aiCustomEndpoint: aiSettings.customEndpoint
   }
@@ -231,10 +232,10 @@ async function handleUpdateAiSettings(
   if (success) {
     // 通知相关功能模块更新配置
     if (pluginSample.__wordQuery) {
-      pluginSample.__wordQuery.updateApiConfig(aiSettings.provider, aiSettings.apiKey, aiSettings.customEndpoint)
+      pluginSample.__wordQuery.updateApiConfig(aiSettings.provider, aiSettings.model, aiSettings.apiKey, aiSettings.customEndpoint)
     }
     if (pluginSample.__aiContentGenerator) {
-      pluginSample.__aiContentGenerator.updateApiConfig(aiSettings.provider, aiSettings.apiKey, aiSettings.customEndpoint)
+      pluginSample.__aiContentGenerator.updateApiConfig(aiSettings.provider, aiSettings.model, aiSettings.apiKey, aiSettings.customEndpoint)
     }
   } else {
     showMessage((plugin.i18n as any).saveFailed || '保存失败', 3000, 'error')

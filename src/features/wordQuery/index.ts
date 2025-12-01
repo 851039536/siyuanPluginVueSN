@@ -13,6 +13,7 @@ import WordQueryPanel from './WordQueryPanel.vue';
 export class WordQuery {
   private plugin: Plugin;
   private currentProvider: string = 'tongyi';
+  private currentModel: string = 'qwen-plus';
   private apiKey: string = '';
   private customApiEndpoint: string = '';
 
@@ -21,6 +22,7 @@ export class WordQuery {
     // 从插件配置中初始化API配置
     const settings = (plugin as any).settings;
     this.currentProvider = settings.aiApiProvider || 'tongyi';
+    this.currentModel = settings.aiModel || 'qwen-plus';
     this.apiKey = settings.aiApiKey || 'sk-fae27cc50015409fb2524b0970d3f0b0';
     this.customApiEndpoint = settings.aiCustomEndpoint || '';
   }
@@ -28,11 +30,12 @@ export class WordQuery {
   /**
    * 更新API配置（由超级面板调用）
    */
-  public updateApiConfig(provider: string, apiKey: string, customEndpoint: string) {
+  public updateApiConfig(provider: string, model: string, apiKey: string, customEndpoint: string) {
     this.currentProvider = provider;
+    this.currentModel = model;
     this.apiKey = apiKey;
     this.customApiEndpoint = customEndpoint;
-    console.log('Word Query API配置已更新:', { provider, customEndpoint });
+    console.log('Word Query API配置已更新:', { provider, model, customEndpoint });
   }
 
   /**
@@ -304,7 +307,7 @@ export class WordQuery {
     const apiKey = this.getApiKey();
     const apiUrl = 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation';
     const requestBody = {
-      model: 'qwen-plus',
+      model: this.currentModel || 'qwen-plus',
       input: {
         messages: [
           {
@@ -363,7 +366,7 @@ export class WordQuery {
     const apiKey = this.getApiKey();
     const apiUrl = 'https://api.openai.com/v1/chat/completions';
     const requestBody = {
-      model: 'gpt-3.5-turbo',
+      model: this.currentModel || 'gpt-3.5-turbo',
       messages: [
         {
           role: 'system',
@@ -408,7 +411,7 @@ export class WordQuery {
     const apiKey = this.getApiKey();
     const apiUrl = 'https://api.deepseek.com/v1/chat/completions';
     const requestBody = {
-      model: 'deepseek-chat',
+      model: this.currentModel || 'deepseek-chat',
       messages: [
         {
           role: 'system',
@@ -459,7 +462,7 @@ export class WordQuery {
 
     // 尝试使用通用的OpenAI兼容格式
     const requestBody = {
-      model: 'default',
+      model: this.currentModel || 'default',
       messages: [
         {
           role: 'system',

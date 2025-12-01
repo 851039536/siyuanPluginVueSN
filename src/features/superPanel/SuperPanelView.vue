@@ -61,6 +61,37 @@
             </select>
           </div>
 
+          <!-- 模型选择 -->
+          <div class="setting-group" v-if="localAiProvider !== 'custom'">
+            <label class="setting-label">{{ i18n.aiModel || '模型' }}</label>
+            <select v-model="localAiModel" class="setting-select" @change="handleModelChange">
+              <optgroup v-if="getAvailableModels().common.length > 0" :label="i18n.commonModels || '常用模型'">
+                <option v-for="model in getAvailableModels().common" :key="model.value" :value="model.value">
+                  {{ model.label }}
+                </option>
+              </optgroup>
+              <optgroup v-if="getAvailableModels().all.length > 0" :label="i18n.allModels || '全部模型'">
+                <option v-for="model in getAvailableModels().all" :key="model.value" :value="model.value">
+                  {{ model.label }}
+                </option>
+              </optgroup>
+              <option value="custom">{{ i18n.customModel || '自定义模型' }}</option>
+            </select>
+          </div>
+
+          <!-- 自定义模型名称 -->
+          <div class="setting-group" v-if="localAiModel === 'custom' && localAiProvider !== 'custom'">
+            <label class="setting-label">{{ i18n.customModelName || '自定义模型名称' }}</label>
+            <input
+              v-model="localAiCustomModel"
+              type="text"
+              class="setting-input"
+              :placeholder="i18n.customModelPlaceholder || '输入模型名称，如: gpt-4'"
+              @input="handleCustomModelChange"
+            />
+            <div class="setting-desc">{{ i18n.customModelDesc || '输入API支持的模型名称' }}</div>
+          </div>
+
           <!-- API密钥输入 -->
           <div class="setting-group">
             <label class="setting-label">{{ i18n.apiKey || 'API密钥' }}</label>
@@ -127,7 +158,7 @@ interface Emits {
   (e: 'action', action: string): void
   (e: 'toggleFeature', featureId: string, enabled: boolean): void
   (e: 'refresh'): Promise<void>
-  (e: 'updateAiSettings', settings: { provider: string; apiKey: string; customEndpoint: string }): Promise<void>
+  (e: 'updateAiSettings', settings: { provider: string; model: string; apiKey: string; customEndpoint: string }): Promise<void>
 }
 
 const props = defineProps<Props>()
@@ -140,12 +171,56 @@ const isRefreshing = ref(false)
 const showAiSettings = ref(false)
 const apiKeyVisible = ref(false)
 const localAiProvider = ref(props.settings.aiApiProvider || 'tongyi')
+const localAiModel = ref(props.settings.aiModel || 'qwen-plus')
+const localAiCustomModel = ref(props.settings.aiCustomModel || '')
 const localAiApiKey = ref(props.settings.aiApiKey || '')
 const localAiCustomEndpoint = ref(props.settings.aiCustomEndpoint || '')
 
 // 切换AI配置面板
 const toggleAiSettings = () => {
   showAiSettings.value = !showAiSettings.value
+}
+
+// 获取可用模型列表
+const getAvailableModels = () => {
+  const modelsByProvider: Record<string, { common: Array<{value: string, label: string}>, all: Array<{value: string, label: string}> }> = {
+    tongyi: {
+      common: [
+        { value: 'qwen-plus', label: 'Qwen Plus (推荐)' },
+        { value: 'qwen-turbo', label: 'Qwen Turbo (快速)' },
+        { value: 'qwen-max', label: 'Qwen Max (最强)' }
+      ],
+      all: [
+        { value: 'qwen-long', label: 'Qwen Long (长文本)' },
+        { value: 'qwen-vl-plus', label: 'Qwen VL Plus (视觉)' },
+        { value: 'qwen-vl-max', label: 'Qwen VL Max (视觉最强)' }
+      ]
+    },
+    openai: {
+      common: [
+        { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo (推荐)' },
+        { value: 'gpt-4', label: 'GPT-4' },
+        { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' }
+      ],
+      all: [
+        { value: 'gpt-4o', label: 'GPT-4o' },
+        { value: 'gpt-4o-mini', label: 'GPT-4o Mini' }
+      ]
+    },
+    deepseek: {
+      common: [
+        { value: 'deepseek-chat', label: 'DeepSeek Chat (推荐)' },
+        { value: 'deepseek-coder', label: 'DeepSeek Coder (代码)' }
+      ],
+      all: []
+    },
+    custom: {
+      common: [],
+      all: []
+    }
+  }
+
+  return modelsByProvider[localAiProvider.value] || { common: [], all: [] }
 }
 
 // 获取API密钥占位符
@@ -172,8 +247,26 @@ const getApiKeyDescription = () => {
 
 // 处理供应商变更
 const handleProviderChange = async () => {
+  // 切换供应商时，自动选择该供应商的默认模型
+  const defaultModels: Record<string, string> = {
+    tongyi: 'qwen-plus',
+    openai: 'gpt-3.5-turbo',
+    deepseek: 'deepseek-chat',
+    custom: ''
+  }
+  localAiModel.value = defaultModels[localAiProvider.value] || ''
   await saveAiSettings()
   showMessage('供应商已更新', 2000, 'info')
+}
+
+// 处理模型变更
+const handleModelChange = async () => {
+  await saveAiSettings()
+}
+
+// 处理自定义模型变更
+const handleCustomModelChange = async () => {
+  await saveAiSettings()
 }
 
 // 处理API密钥变更
@@ -190,6 +283,7 @@ const handleEndpointChange = async () => {
 const saveAiSettings = async () => {
   await emit('updateAiSettings', {
     provider: localAiProvider.value,
+    model: localAiModel.value === 'custom' ? localAiCustomModel.value : localAiModel.value,
     apiKey: localAiApiKey.value,
     customEndpoint: localAiCustomEndpoint.value
   })
@@ -198,6 +292,8 @@ const saveAiSettings = async () => {
 // 监听settings变化，同步本地状态
 watch(() => props.settings, (newSettings) => {
   localAiProvider.value = newSettings.aiApiProvider || 'tongyi'
+  localAiModel.value = newSettings.aiModel || 'qwen-plus'
+  localAiCustomModel.value = newSettings.aiCustomModel || ''
   localAiApiKey.value = newSettings.aiApiKey || ''
   localAiCustomEndpoint.value = newSettings.aiCustomEndpoint || ''
 }, { deep: true })

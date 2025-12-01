@@ -915,7 +915,11 @@ ${referencedDocContent.value}
     const result = await props.onGenerate(options);
 
     if (result) {
-      // 流式输出已经在onChunk中更新了
+      // 如果流式输出没有更新内容（某些API可能不支持流式），使用返回的完整结果
+      if (!generatedContent.value && result) {
+        generatedContent.value = result;
+        displayedContent.value = result;
+      }
       showMessage('✓ 生成成功', 2000, 'info');
     } else {
       errorMessage.value = props.i18n.generateFailed || '生成失败，请重试';

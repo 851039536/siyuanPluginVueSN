@@ -25,6 +25,7 @@ export interface GenerateOptions {
 export class AIContentGenerator {
   private plugin: Plugin;
   private currentProvider: string = 'tongyi';
+  private currentModel: string = 'qwen-plus';
   private apiKey: string = '';
   private customApiEndpoint: string = '';
 
@@ -33,6 +34,7 @@ export class AIContentGenerator {
     // 从插件配置中初始化API配置
     const settings = (plugin as any).settings;
     this.currentProvider = settings.aiApiProvider || 'tongyi';
+    this.currentModel = settings.aiModel || 'qwen-plus';
     this.apiKey = settings.aiApiKey || '';
     this.customApiEndpoint = settings.aiCustomEndpoint || '';
   }
@@ -40,11 +42,12 @@ export class AIContentGenerator {
   /**
    * 更新API配置（由超级面板调用）
    */
-  public updateApiConfig(provider: string, apiKey: string, customEndpoint: string) {
+  public updateApiConfig(provider: string, model: string, apiKey: string, customEndpoint: string) {
     this.currentProvider = provider;
+    this.currentModel = model;
     this.apiKey = apiKey;
     this.customApiEndpoint = customEndpoint;
-    console.log('AI Content Generator API配置已更新:', { provider, customEndpoint });
+    console.log('AI Content Generator API配置已更新:', { provider, model, customEndpoint });
   }
 
   /**
@@ -189,7 +192,7 @@ ${options.userInput}`;
     const fullPrompt = this.buildFullPrompt(options);
 
     const requestBody = {
-      model: 'qwen-plus',
+      model: this.currentModel || 'qwen-plus',
       input: {
         messages: [
           {
@@ -343,8 +346,8 @@ ${options.userInput}`;
     const apiUrl = 'https://api.openai.com/v1/chat/completions';
     const fullPrompt = this.buildFullPrompt(options);
 
-    const requestBody = {
-      model: 'gpt-3.5-turbo',
+    const requestBody: any = {
+      model: this.currentModel || 'gpt-3.5-turbo',
       messages: [
         {
           role: 'system',
@@ -358,6 +361,12 @@ ${options.userInput}`;
       temperature: options.temperature,
       max_tokens: options.maxTokens
     };
+
+    // 如果有onChunk回调，使用流式输出
+    if (options.onChunk) {
+      requestBody.stream = true;
+      return await this.callOpenAIStreamAPI(apiUrl, apiKey, requestBody, options.onChunk);
+    }
 
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -383,6 +392,73 @@ ${options.userInput}`;
   }
 
   /**
+   * 调用OpenAI流式API
+   */
+  private async callOpenAIStreamAPI(
+    apiUrl: string,
+    apiKey: string,
+    requestBody: any,
+    onChunk: (chunk: string) => void
+  ): Promise<string> {
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`OpenAI流式API请求失败: ${response.status} ${errorText}`);
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new Error('无法读取响应流');
+    }
+
+    const decoder = new TextDecoder('utf-8');
+    let fullContent = '';
+    let buffer = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.trim() || !line.startsWith('data:')) continue;
+
+          const data = line.slice(5).trim();
+          if (data === '[DONE]') continue;
+
+          try {
+            const json = JSON.parse(data);
+            const content = json.choices?.[0]?.delta?.content;
+
+            if (content) {
+              onChunk(content);
+              fullContent += content;
+            }
+          } catch (e) {
+            console.error('解析OpenAI SSE数据失败:', e);
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+
+    return fullContent;
+  }
+
+  /**
    * 调用DeepSeek API
    */
   private async callDeepSeekAPI(options: GenerateOptions): Promise<string> {
@@ -394,8 +470,8 @@ ${options.userInput}`;
     const apiUrl = 'https://api.deepseek.com/v1/chat/completions';
     const fullPrompt = this.buildFullPrompt(options);
 
-    const requestBody = {
-      model: 'deepseek-chat',
+    const requestBody: any = {
+      model: this.currentModel || 'deepseek-chat',
       messages: [
         {
           role: 'system',
@@ -409,6 +485,12 @@ ${options.userInput}`;
       temperature: options.temperature,
       max_tokens: options.maxTokens
     };
+
+    // 如果有onChunk回调，使用流式输出
+    if (options.onChunk) {
+      requestBody.stream = true;
+      return await this.callDeepSeekStreamAPI(apiUrl, apiKey, requestBody, options.onChunk);
+    }
 
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -434,6 +516,73 @@ ${options.userInput}`;
   }
 
   /**
+   * 调用DeepSeek流式API
+   */
+  private async callDeepSeekStreamAPI(
+    apiUrl: string,
+    apiKey: string,
+    requestBody: any,
+    onChunk: (chunk: string) => void
+  ): Promise<string> {
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`DeepSeek流式API请求失败: ${response.status} ${errorText}`);
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new Error('无法读取响应流');
+    }
+
+    const decoder = new TextDecoder('utf-8');
+    let fullContent = '';
+    let buffer = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.trim() || !line.startsWith('data:')) continue;
+
+          const data = line.slice(5).trim();
+          if (data === '[DONE]') continue;
+
+          try {
+            const json = JSON.parse(data);
+            const content = json.choices?.[0]?.delta?.content;
+
+            if (content) {
+              onChunk(content);
+              fullContent += content;
+            }
+          } catch (e) {
+            console.error('解析DeepSeek SSE数据失败:', e);
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+
+    return fullContent;
+  }
+
+  /**
    * 调用自定义API
    */
   private async callCustomAPI(options: GenerateOptions): Promise<string> {
@@ -447,8 +596,8 @@ ${options.userInput}`;
     const fullPrompt = this.buildFullPrompt(options);
 
     // 使用通用的OpenAI兼容格式
-    const requestBody = {
-      model: 'default',
+    const requestBody: any = {
+      model: this.currentModel || 'default',
       messages: [
         {
           role: 'system',
@@ -462,6 +611,12 @@ ${options.userInput}`;
       temperature: options.temperature,
       max_tokens: options.maxTokens
     };
+
+    // 如果有onChunk回调，尝试使用流式输出（假设自定义API兼容OpenAI格式）
+    if (options.onChunk) {
+      requestBody.stream = true;
+      return await this.callCustomStreamAPI(apiUrl, apiKey, requestBody, options.onChunk);
+    }
 
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -491,6 +646,74 @@ ${options.userInput}`;
     } else {
       throw new Error('自定义API返回数据格式错误');
     }
+  }
+
+  /**
+   * 调用自定义流式API（假设兼容OpenAI格式）
+   */
+  private async callCustomStreamAPI(
+    apiUrl: string,
+    apiKey: string,
+    requestBody: any,
+    onChunk: (chunk: string) => void
+  ): Promise<string> {
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`自定义流式API请求失败: ${response.status} ${errorText}`);
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new Error('无法读取响应流');
+    }
+
+    const decoder = new TextDecoder('utf-8');
+    let fullContent = '';
+    let buffer = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.trim() || !line.startsWith('data:')) continue;
+
+          const data = line.slice(5).trim();
+          if (data === '[DONE]') continue;
+
+          try {
+            const json = JSON.parse(data);
+            // 尝试多种格式
+            const content = json.choices?.[0]?.delta?.content || json.output?.text || json.text;
+
+            if (content) {
+              onChunk(content);
+              fullContent += content;
+            }
+          } catch (e) {
+            console.error('解析自定义API SSE数据失败:', e);
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+
+    return fullContent;
   }
 
   /**

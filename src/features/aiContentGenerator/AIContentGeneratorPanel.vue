@@ -918,22 +918,23 @@ const handleGenerate = async () => {
     // 添加当前文档上下文（如果有）
     let contextInfo = '';
     if (referencedDocContent.value) {
-      contextInfo = `
-
-**当前文档信息**：
-文档标题：${referencedDocTitle.value}
-文档内容：
-${referencedDocContent.value}
-
-请基于以上文档内容回答用户问题。`;
-      console.log('已添加文档上下文，标题:', referencedDocTitle.value, '内容长度:', referencedDocContent.value.length);
+      // 移除文档内容中的 frontmatter
+      const cleanDocContent = removeFrontmatter(referencedDocContent.value);
+      
+      contextInfo = `【参考文档】
+标题：${referencedDocTitle.value}
+内容：
+${cleanDocContent}`;
+      console.log('已添加文档上下文，标题:', referencedDocTitle.value, '内容长度:', cleanDocContent.length);
     }
 
     // 如果只引用了文档没有输入问题，使用默认的总结提示
     let finalUserInput = userInput.value;
     if (!userInput.value.trim() && referencedDocContent.value) {
-      finalUserInput = '请对上述文档进行全面的总结和分析，包括主要内容、核心要点和关键信息。';
-      console.log('使用默认总结提示');
+      // 当没有用户输入时，将系统提示词的要求融入到用户消息中
+      // 这样可以确保 AI 遵循系统提示词中的格式要求
+      finalUserInput = '请严格按照系统提示词中定义的文档结构和格式要求，对上述文档内容进行专业的技术文档撰写。如果文档内容不完整或只有标题，请基于标题主题，撰写一份完整、专业的技术说明文档。';
+      console.log('使用增强的默认提示（融合系统提示词要求）');
     } else {
       console.log('用户输入:', finalUserInput.substring(0, 100));
     }

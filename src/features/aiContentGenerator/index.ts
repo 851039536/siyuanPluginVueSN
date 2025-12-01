@@ -160,10 +160,11 @@ export class AIContentGenerator {
 
     // 如果有上下文，添加到提示词中
     if (options.context) {
-      fullPrompt = `上下文信息:
-${options.context}
+      fullPrompt = `${options.context}
 
-用户问题:
+---
+
+用户要求:
 ${options.userInput}`;
       console.log('构建完整提示词，包含上下文，长度:', fullPrompt.length);
     } else {

@@ -453,6 +453,8 @@
   "generating": "Generating...",
   "aiThinking": "AI is thinking...",
   "retry": "Retry",
+  "stop": "Stop",
+  "stopGeneration": "Stop Generation",
   "generatedContent": "Generated Content",
   "copyMarkdown": "Copy Markdown",
   "insert": "Insert",

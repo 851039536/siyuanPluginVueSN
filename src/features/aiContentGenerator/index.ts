@@ -16,6 +16,7 @@ export interface GenerateOptions {
   temperature: number;
   maxTokens: number;
   context?: string;
+  signal?: AbortSignal;
   onChunk?: (chunk: string) => void; // 流式输出回调（修复问题2：支持打字机效果）
 }
 
@@ -123,10 +124,18 @@ export class AIContentGenerator {
       return '';
     }
 
+    console.log('开始生成内容，配置:', {
+      provider: this.currentProvider,
+      model: this.currentModel,
+      hasOnChunk: !!options.onChunk
+    });
+
     showMessage('🤖 AI正在生成内容...', 2000, 'info');
 
     try {
       const response = await this.callAPI(options);
+
+      console.log('生成完成，响应长度:', response?.length || 0);
 
       if (response) {
         showMessage('✓ 生成完成', 2000, 'info');
@@ -156,6 +165,9 @@ ${options.context}
 
 用户问题:
 ${options.userInput}`;
+      console.log('构建完整提示词，包含上下文，长度:', fullPrompt.length);
+    } else {
+      console.log('构建提示词，无上下文，长度:', fullPrompt.length);
     }
 
     return fullPrompt;
@@ -215,7 +227,7 @@ ${options.userInput}`;
 
     // 如果有onChunk回调，使用流式输出（修复问题2）
     if (options.onChunk) {
-      return await this.callTongyiStreamAPI(apiUrl, apiKey, requestBody, options.onChunk);
+      return await this.callTongyiStreamAPI(apiUrl, apiKey, requestBody, options.onChunk, options.signal);
     }
 
     // 否则使用普通请求
@@ -225,7 +237,8 @@ ${options.userInput}`;
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       },
-      body: JSON.stringify(requestBody)
+      body: JSON.stringify(requestBody),
+      signal: options.signal
     });
 
     if (!response.ok) {
@@ -254,7 +267,8 @@ ${options.userInput}`;
     apiUrl: string,
     apiKey: string,
     requestBody: any,
-    onChunk: (chunk: string) => void
+    onChunk: (chunk: string) => void,
+    signal?: AbortSignal
   ): Promise<string> {
     // 添加SSE参数
     const sseRequestBody = {
@@ -273,7 +287,8 @@ ${options.userInput}`;
         'Authorization': `Bearer ${apiKey}`,
         'X-DashScope-SSE': 'enable' // 启用SSE
       },
-      body: JSON.stringify(sseRequestBody)
+      body: JSON.stringify(sseRequestBody),
+      signal
     });
 
     if (!response.ok) {
@@ -319,6 +334,7 @@ ${options.userInput}`;
             if (content) {
               // 因为启用了incremental_output=true，每次返回的就是增量内容
               // 直接调用onChunk，不需要计算差值（修复问题2）
+              console.log('通义千问流式输出:', content);
               onChunk(content);
               fullContent += content;
             }
@@ -365,7 +381,7 @@ ${options.userInput}`;
     // 如果有onChunk回调，使用流式输出
     if (options.onChunk) {
       requestBody.stream = true;
-      return await this.callOpenAIStreamAPI(apiUrl, apiKey, requestBody, options.onChunk);
+      return await this.callOpenAIStreamAPI(apiUrl, apiKey, requestBody, options.onChunk, options.signal);
     }
 
     const response = await fetch(apiUrl, {
@@ -374,7 +390,8 @@ ${options.userInput}`;
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       },
-      body: JSON.stringify(requestBody)
+      body: JSON.stringify(requestBody),
+      signal: options.signal
     });
 
     if (!response.ok) {
@@ -398,7 +415,8 @@ ${options.userInput}`;
     apiUrl: string,
     apiKey: string,
     requestBody: any,
-    onChunk: (chunk: string) => void
+    onChunk: (chunk: string) => void,
+    signal?: AbortSignal
   ): Promise<string> {
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -406,7 +424,8 @@ ${options.userInput}`;
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       },
-      body: JSON.stringify(requestBody)
+      body: JSON.stringify(requestBody),
+      signal
     });
 
     if (!response.ok) {
@@ -489,7 +508,7 @@ ${options.userInput}`;
     // 如果有onChunk回调，使用流式输出
     if (options.onChunk) {
       requestBody.stream = true;
-      return await this.callDeepSeekStreamAPI(apiUrl, apiKey, requestBody, options.onChunk);
+      return await this.callDeepSeekStreamAPI(apiUrl, apiKey, requestBody, options.onChunk, options.signal);
     }
 
     const response = await fetch(apiUrl, {
@@ -498,7 +517,8 @@ ${options.userInput}`;
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       },
-      body: JSON.stringify(requestBody)
+      body: JSON.stringify(requestBody),
+      signal: options.signal
     });
 
     if (!response.ok) {
@@ -522,21 +542,28 @@ ${options.userInput}`;
     apiUrl: string,
     apiKey: string,
     requestBody: any,
-    onChunk: (chunk: string) => void
+    onChunk: (chunk: string) => void,
+    signal?: AbortSignal
   ): Promise<string> {
+    console.log('DeepSeek流式API请求开始');
+    
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       },
-      body: JSON.stringify(requestBody)
+      body: JSON.stringify(requestBody),
+      signal
     });
 
     if (!response.ok) {
       const errorText = await response.text();
+      console.error('DeepSeek API错误:', response.status, errorText);
       throw new Error(`DeepSeek流式API请求失败: ${response.status} ${errorText}`);
     }
+
+    console.log('DeepSeek响应状态:', response.status);
 
     const reader = response.body?.getReader();
     if (!reader) {
@@ -546,32 +573,46 @@ ${options.userInput}`;
     const decoder = new TextDecoder('utf-8');
     let fullContent = '';
     let buffer = '';
+    let chunkCount = 0;
 
     try {
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {
+          console.log('DeepSeek流式读取完成，总块数:', chunkCount);
+          break;
+        }
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
 
         for (const line of lines) {
-          if (!line.trim() || !line.startsWith('data:')) continue;
-
-          const data = line.slice(5).trim();
-          if (data === '[DONE]') continue;
+          if (!line.trim()) continue;
+          
+          // DeepSeek可能不使用data:前缀，尝试直接解析
+          let dataStr = line;
+          if (line.startsWith('data:')) {
+            dataStr = line.slice(5).trim();
+          }
+          
+          if (dataStr === '[DONE]') {
+            console.log('DeepSeek发送完成信号');
+            continue;
+          }
 
           try {
-            const json = JSON.parse(data);
+            const json = JSON.parse(dataStr);
             const content = json.choices?.[0]?.delta?.content;
 
             if (content) {
+              chunkCount++;
+              console.log(`DeepSeek流式输出块${chunkCount}:`, content.substring(0, 50));
               onChunk(content);
               fullContent += content;
             }
           } catch (e) {
-            console.error('解析DeepSeek SSE数据失败:', e);
+            console.warn('解析DeepSeek SSE数据失败:', e, 'line:', line.substring(0, 100));
           }
         }
       }
@@ -579,6 +620,7 @@ ${options.userInput}`;
       reader.releaseLock();
     }
 
+    console.log('DeepSeek流式输出完成，总长度:', fullContent.length);
     return fullContent;
   }
 
@@ -615,7 +657,7 @@ ${options.userInput}`;
     // 如果有onChunk回调，尝试使用流式输出（假设自定义API兼容OpenAI格式）
     if (options.onChunk) {
       requestBody.stream = true;
-      return await this.callCustomStreamAPI(apiUrl, apiKey, requestBody, options.onChunk);
+      return await this.callCustomStreamAPI(apiUrl, apiKey, requestBody, options.onChunk, options.signal);
     }
 
     const response = await fetch(apiUrl, {
@@ -624,7 +666,8 @@ ${options.userInput}`;
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       },
-      body: JSON.stringify(requestBody)
+      body: JSON.stringify(requestBody),
+      signal: options.signal
     });
 
     if (!response.ok) {
@@ -655,7 +698,8 @@ ${options.userInput}`;
     apiUrl: string,
     apiKey: string,
     requestBody: any,
-    onChunk: (chunk: string) => void
+    onChunk: (chunk: string) => void,
+    signal?: AbortSignal
   ): Promise<string> {
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -663,7 +707,8 @@ ${options.userInput}`;
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       },
-      body: JSON.stringify(requestBody)
+      body: JSON.stringify(requestBody),
+      signal
     });
 
     if (!response.ok) {

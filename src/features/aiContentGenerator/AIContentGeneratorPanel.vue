@@ -302,17 +302,29 @@
           :placeholder="referencedDocContent ? (i18n.inputPlaceholderWithDoc || '输入问题或直接生成总结...') : (i18n.inputPlaceholder || '输入您的问题或需求...')"
           rows="3"
           @keydown.ctrl.enter="handleGenerate"
+          :disabled="isGenerating"
         ></textarea>
         <button
+          v-if="!isGenerating"
           class="btn-generate"
           @click="handleGenerate"
-          :disabled="isGenerating || (!userInput.trim() && !referencedDocContent)"
+          :disabled="!userInput.trim() && !referencedDocContent"
         >
-          <div v-if="isGenerating" class="loading-spinner"></div>
-          <svg v-else width="18" height="18">
+          <svg width="18" height="18">
             <use xlink:href="#iconSend"></use>
           </svg>
-          <span>{{ isGenerating ? (i18n.generating || '生成中...') : (i18n.generate || '生成') }}</span>
+          <span>{{ i18n.generate || '生成' }}</span>
+        </button>
+        <button
+          v-else
+          class="btn-stop"
+          @click="handleStop"
+          :title="i18n.stopGeneration || '停止生成'"
+        >
+          <svg width="18" height="18">
+            <use xlink:href="#iconClose"></use>
+          </svg>
+          <span>{{ i18n.stop || '停止' }}</span>
         </button>
       </div>
 
@@ -333,14 +345,14 @@
 
     <!-- 输出区域 -->
     <div class="output-section">
-      <!-- 加载状态 -->
-      <div v-if="isGenerating" class="loading-state">
+      <!-- 加载状态（仅在没有内容时显示） -->
+      <div v-if="isGenerating && !displayedContent && !generatedContent" class="loading-state">
         <div class="loading-spinner-large"></div>
         <p>{{ i18n.aiThinking || 'AI正在思考...' }}</p>
       </div>
 
       <!-- 错误提示 -->
-      <div v-else-if="errorMessage" class="error-state">
+      <div v-else-if="errorMessage && !displayedContent && !generatedContent" class="error-state">
         <svg width="48" height="48" class="error-icon">
           <use xlink:href="#iconCloseRound"></use>
         </svg>
@@ -350,10 +362,16 @@
         </button>
       </div>
 
-      <!-- 生成结果 -->
+      <!-- 生成结果（流式输出时也显示） -->
       <div v-else-if="displayedContent || generatedContent" class="result-container">
         <div class="result-header">
-          <span class="result-title">📝 {{ editMode ? (i18n.editContent || '编辑内容') : (i18n.generatedContent || '生成内容') }}</span>
+          <span class="result-title">
+            📝 {{ editMode ? (i18n.editContent || '编辑内容') : (i18n.generatedContent || '生成内容') }}
+            <span v-if="isGenerating" class="generating-indicator">
+              <span class="dot-flashing"></span>
+              {{ i18n.generating || '生成中' }}
+            </span>
+          </span>
           <div class="result-actions">
             <!-- Edit模式专用按钮 -->
             <template v-if="editMode">
@@ -509,6 +527,7 @@ interface GenerateOptions {
   temperature: number;
   maxTokens: number;
   context?: string;
+  signal?: AbortSignal;
   onChunk?: (chunk: string) => void; // 流式输出回调（修复问题2）
 }
 
@@ -522,6 +541,7 @@ const errorMessage = ref('');
 const showRaw = ref(false);
 const showSettings = ref(false);
 const showContextSettings = ref(false);
+const abortController = ref<AbortController | null>(null);
 
 // Edit模式状态
 const editMode = ref(false);
@@ -860,6 +880,16 @@ const stopTypewriter = () => {
   // 流式输出时不需要清理
 };
 
+// 停止生成
+const handleStop = () => {
+  if (abortController.value) {
+    abortController.value.abort();
+    abortController.value = null;
+    isGenerating.value = false;
+    showMessage('✓ 已停止生成', 2000, 'info');
+  }
+};
+
 // 生成内容
 const handleGenerate = async () => {
   // 如果既没有输入也没有引用文档，提示用户
@@ -867,6 +897,9 @@ const handleGenerate = async () => {
     showMessage(props.i18n.enterInput || '请输入内容或引用文档', 2000, 'info');
     return;
   }
+
+  // 创建新的 AbortController
+  abortController.value = new AbortController();
 
   isGenerating.value = true;
   errorMessage.value = '';
@@ -876,6 +909,8 @@ const handleGenerate = async () => {
 
   try {
     let finalSystemPrompt = systemPrompt.value;
+    console.log('系统提示词:', finalSystemPrompt.substring(0, 100) + '...');
+    
     if (enableMarkdown.value) {
       finalSystemPrompt += '\n\n**重要**: 请严格使用Markdown格式输出，包括标题(#)、列表(- 或 1.)、代码块(```)、粗体(**) 等标准语法。';
     }
@@ -891,12 +926,16 @@ const handleGenerate = async () => {
 ${referencedDocContent.value}
 
 请基于以上文档内容回答用户问题。`;
+      console.log('已添加文档上下文，标题:', referencedDocTitle.value, '内容长度:', referencedDocContent.value.length);
     }
 
     // 如果只引用了文档没有输入问题，使用默认的总结提示
     let finalUserInput = userInput.value;
     if (!userInput.value.trim() && referencedDocContent.value) {
       finalUserInput = '请对上述文档进行全面的总结和分析，包括主要内容、核心要点和关键信息。';
+      console.log('使用默认总结提示');
+    } else {
+      console.log('用户输入:', finalUserInput.substring(0, 100));
     }
 
     const options: GenerateOptions = {
@@ -905,8 +944,10 @@ ${referencedDocContent.value}
       temperature: temperature.value,
       maxTokens: maxTokens.value,
       context: contextInfo || undefined,
+      signal: abortController.value?.signal,
       // 默认启用打字机效果，传入流式回调
       onChunk: (chunk: string) => {
+        console.log('收到流式数据块:', chunk);
         displayedContent.value += chunk;
         generatedContent.value += chunk;
       }
@@ -925,11 +966,17 @@ ${referencedDocContent.value}
       errorMessage.value = props.i18n.generateFailed || '生成失败，请重试';
     }
   } catch (error) {
+    // 如果是用户主动取消，不显示错误
+    if ((error as Error).name === 'AbortError') {
+      console.log('用户取消了生成');
+      return;
+    }
     console.error('生成内容失败:', error);
     errorMessage.value = (error as Error).message || '生成失败';
     showMessage('生成失败: ' + errorMessage.value, 3000, 'error');
   } finally {
     isGenerating.value = false;
+    abortController.value = null;
   }
 };
 
@@ -1392,6 +1439,12 @@ async function loadDocumentContent(docId: string) {
     // 5. 保存引用的文档信息
     referencedDocTitle.value = docBlock.content || '未命名文档';
     referencedDocContent.value = docContent.content;
+
+    console.log('文档引用成功:', {
+      title: referencedDocTitle.value,
+      contentLength: referencedDocContent.value.length,
+      contentPreview: referencedDocContent.value.substring(0, 200)
+    });
 
     showMessage(`✓ 已引用文档: ${referencedDocTitle.value}`, 2000, 'info');
   } catch (error) {
@@ -2260,6 +2313,33 @@ loadSettings();
   }
 }
 
+.btn-stop {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
 .output-section {
   flex: 1;
   overflow-y: auto;
@@ -2353,6 +2433,74 @@ loadSettings();
   font-size: 13px;
   font-weight: 600;
   color: var(--b3-theme-on-surface);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.generating-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--b3-theme-primary);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.dot-flashing {
+  position: relative;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--b3-theme-primary);
+  animation: dot-flashing 1s infinite linear alternate;
+}
+
+.dot-flashing::before,
+.dot-flashing::after {
+  content: '';
+  display: inline-block;
+  position: absolute;
+  top: 0;
+}
+
+.dot-flashing::before {
+  left: -10px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--b3-theme-primary);
+  animation: dot-flashing 1s infinite alternate;
+  animation-delay: 0s;
+}
+
+.dot-flashing::after {
+  left: 10px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--b3-theme-primary);
+  animation: dot-flashing 1s infinite alternate;
+  animation-delay: 1s;
+}
+
+@keyframes dot-flashing {
+  0% {
+    opacity: 0.2;
+  }
+  50%, 100% {
+    opacity: 1;
+  }
 }
 
 .result-actions {

@@ -24,6 +24,7 @@ export class GeneralSettings {
     this.addDock();
     this.applySavedSettings(); // 应用已保存的设置
     this.applyCodeBlockStyle(); // 应用代码块样式
+    this.applyListStyle(); // 应用列表样式
     console.log('通用设置模块已初始化');
   }
 
@@ -78,6 +79,8 @@ export class GeneralSettings {
       this.applyGlobalFontStyles(settings.settings);
     } else if (settings.moduleId === 'codeblock') {
       this.applyCodeBlockStyleFromSettings(settings.settings);
+    } else if (settings.moduleId === 'list') {
+      this.applyListStyles(settings.settings);
     }
     // 未来可以添加更多模块的处理逻辑
     // else if (settings.moduleId === 'appearance') {
@@ -192,6 +195,75 @@ export class GeneralSettings {
       }
     } catch (error) {
       console.error('应用代码块样式失败:', error);
+    }
+  }
+
+  /**
+   * 应用列表样式
+   */
+  public applyListStyle() {
+    try {
+      const saved = localStorage.getItem('general-list-settings');
+      if (saved) {
+        const settings = JSON.parse(saved);
+        this.applyListStyles(settings);
+      }
+    } catch (error) {
+      console.error('应用列表样式失败:', error);
+    }
+  }
+
+  /**
+   * 从设置对象应用列表样式
+   */
+  private applyListStyles(settings: any) {
+    try {
+      // 保存设置到localStorage
+      localStorage.setItem('general-list-settings', JSON.stringify(settings));
+
+      // 应用CSS样式
+      if (settings.css) {
+        this.applyListCSS(settings.css);
+      } else {
+        // 如果没有CSS，移除现有样式
+        this.removeExistingListStyles();
+      }
+
+      console.log('列表样式已应用:', settings);
+    } catch (error) {
+      console.error('应用列表样式失败:', error);
+    }
+  }
+
+  /**
+   * 应用列表CSS到页面
+   */
+  private applyListCSS(css: string) {
+    if (!css) {
+      this.removeExistingListStyles();
+      return;
+    }
+
+    // 移除现有的样式
+    this.removeExistingListStyles();
+
+    // 创建新的样式元素
+    const styleElement = document.createElement('style');
+    styleElement.id = 'custom-list-styles';
+    styleElement.textContent = css;
+    document.head.appendChild(styleElement);
+
+    console.log('列表样式已应用到页面');
+  }
+
+  /**
+   * 移除现有的列表样式
+   */
+  private removeExistingListStyles() {
+    const existingStyle = document.getElementById('custom-list-styles');
+    if (existingStyle) {
+      existingStyle.remove();
+      console.log('已移除现有的列表样式');
     }
   }
 

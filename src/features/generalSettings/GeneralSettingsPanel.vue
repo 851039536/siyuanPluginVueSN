@@ -39,6 +39,11 @@
           <PasswordSettings :i18n="i18n" />
         </div>
 
+        <!-- 列表设置 -->
+        <div v-show="activeCategory === 'list'" class="content-section">
+          <ListSettings :i18n="i18n" @change="handleListChange" />
+        </div>
+
         <!-- 通用操作 -->
         <div v-show="activeCategory === 'actions'" class="content-section">
           <GeneralActions :i18n="i18n" @change="handleActionsChange" />
@@ -55,6 +60,7 @@ import GeneralActions from './components/GeneralActions.vue'
 import PasswordSettings from './components/PasswordSettings.vue'
 import CodeBlockSettings from './components/CodeBlockSettings.vue'
 import HeadingSettings from './components/HeadingSettings.vue'
+import ListSettings from './components/ListSettings.vue'
 
 interface Props {
   i18n?: any
@@ -82,6 +88,10 @@ const categories = computed(() => [
   {
     id: 'heading',
     label: props.i18n.headingSettings || '标题配置'
+  },
+  {
+    id: 'list',
+    label: props.i18n.listSettings || '列表设置'
   },
   {
     id: 'password',
@@ -125,12 +135,21 @@ function handleHeadingChange(settings: any) {
   })
 }
 
+function handleListChange(settings: any) {
+  console.log('列表设置已更改:', settings)
+  props.onSettingsChange?.({
+    moduleId: 'list',
+    settings
+  })
+}
+
 // 暴露方法给父组件
 defineExpose({
   handleFontChange,
   handleCodeBlockChange,
   handleActionsChange,
-  handleHeadingChange
+  handleHeadingChange,
+  handleListChange
 })
 </script>
 

@@ -38,6 +38,27 @@ export interface FontSettings {
 }
 
 /**
+ * 列表设置接口
+ */
+export interface ListSettings {
+  enableCustomUnorderedList: boolean  // 是否启用自定义无序列表样式
+  enableCustomOrderedList: boolean     // 是否启用自定义有序列表样式
+  firstLevelSymbol: string             // 一级列表符号
+  secondLevelSymbol: string            // 二级列表符号
+  thirdLevelSymbol: string             // 三级列表符号
+  customFirstLevelSymbol: string       // 自定义一级符号
+  customSecondLevelSymbol: string      // 自定义二级符号
+  customThirdLevelSymbol: string       // 自定义三级符号
+  symbolSize: number                   // 符号大小(em)
+  symbolMarginLeft: number             // 符号左边距(px)
+  numberFormat: string                 // 有序列表编号格式
+  applyToListBlocks: boolean           // 应用于列表块
+  applyToEmbedBlocks: boolean          // 应用于嵌入块
+  applyToFloatWindows: boolean         // 应用于浮窗
+  css?: string                         // 生成的CSS样式
+}
+
+/**
  * 默认配置
  */
 export const DEFAULT_SETTINGS: PluginSettings = {
@@ -69,6 +90,26 @@ export const DEFAULT_FONT_SETTINGS: FontSettings = {
   fontSize: 14,
   fontWeight: 'normal',
   lineHeight: 1.6
+}
+
+/**
+ * 默认列表设置
+ */
+export const DEFAULT_LIST_SETTINGS: ListSettings = {
+  enableCustomUnorderedList: false,
+  enableCustomOrderedList: false,
+  firstLevelSymbol: '▪',
+  secondLevelSymbol: '•',
+  thirdLevelSymbol: '◦',
+  customFirstLevelSymbol: '',
+  customSecondLevelSymbol: '',
+  customThirdLevelSymbol: '',
+  symbolSize: 1.5,
+  symbolMarginLeft: 13,
+  numberFormat: 'decimal',
+  applyToListBlocks: true,
+  applyToEmbedBlocks: true,
+  applyToFloatWindows: true
 }
 
 /**
@@ -148,5 +189,82 @@ export function resetFontSettings(): boolean {
   } catch (error) {
     console.error('重置字体设置失败:', error)
     return false
+  }
+}
+
+/**
+ * 加载列表设置
+ */
+export function loadListSettings(): ListSettings {
+  try {
+    const saved = localStorage.getItem('general-list-settings')
+    if (saved) {
+      const parsed = JSON.parse(saved)
+      return { ...DEFAULT_LIST_SETTINGS, ...parsed }
+    }
+  } catch (error) {
+    console.error('加载列表设置失败:', error)
+  }
+  return { ...DEFAULT_LIST_SETTINGS }
+}
+
+/**
+ * 保存列表设置
+ */
+export function saveListSettings(settings: ListSettings): boolean {
+  try {
+    localStorage.setItem('general-list-settings', JSON.stringify(settings))
+    console.log('列表设置已保存:', settings)
+    return true
+  } catch (error) {
+    console.error('保存列表设置失败:', error)
+    return false
+  }
+}
+
+/**
+ * 重置列表设置
+ */
+export function resetListSettings(): boolean {
+  try {
+    localStorage.removeItem('general-list-settings')
+    console.log('列表设置已重置')
+    return true
+  } catch (error) {
+    console.error('重置列表设置失败:', error)
+    return false
+  }
+}
+
+/**
+ * 应用列表样式CSS到页面
+ */
+export function applyListStyles(css: string): void {
+  if (!css) {
+    // 移除现有的列表样式
+    removeExistingListStyles()
+    return
+  }
+
+  // 移除现有的样式
+  removeExistingListStyles()
+
+  // 创建新的样式元素
+  const styleElement = document.createElement('style')
+  styleElement.id = 'custom-list-styles'
+  styleElement.textContent = css
+  document.head.appendChild(styleElement)
+
+  console.log('列表样式已应用到页面')
+}
+
+/**
+ * 移除现有的列表样式
+ */
+function removeExistingListStyles(): void {
+  const existingStyle = document.getElementById('custom-list-styles')
+  if (existingStyle) {
+    existingStyle.remove()
+    console.log('已移除现有的列表样式')
   }
 }

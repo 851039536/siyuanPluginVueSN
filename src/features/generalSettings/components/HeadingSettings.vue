@@ -70,6 +70,37 @@
         </div>
       </div>
 
+      <!-- 文档标题颜色设置 -->
+      <div v-if="titleCenterAlign" class="setting-row">
+        <div class="setting-item">
+          <label class="setting-label">
+            <span class="label-icon">🎨</span>
+            {{ i18n.titleColor || '文档标题颜色' }}
+          </label>
+          <div class="title-color-input-group">
+            <input
+              v-model="titleColor"
+              type="color"
+              class="title-color-picker"
+              @change="onTitleColorChange"
+            />
+            <input
+              v-model="titleColor"
+              type="text"
+              class="title-color-text"
+              @change="onTitleColorChange"
+            />
+            <button 
+              v-if="titleColor !== defaultTitleColor"
+              class="reset-color-btn"
+              @click="resetTitleColor"
+            >
+              {{ i18n.resetColor || '重置' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- 自定义层级标记设置 -->
       <div v-if="levelDisplayStyle === 'custom'" class="setting-row">
         <div class="setting-item">
@@ -186,6 +217,8 @@ const headingColors = ref<HeadingColors>({ ...props.initialSettings })
 const levelDisplayStyle = ref('none')
 const customLevelMarkers = ref<string[]>(['1', '2', '3', '4', '5', '6'])
 const titleCenterAlign = ref(false)
+const titleColor = ref('#2C3E50')
+const defaultTitleColor = '#2C3E50'
 
 // 预设风格
 const styles: Record<string, HeadingColors> = {
@@ -323,7 +356,14 @@ function applyToDocument() {
     }
   ` : ''
 
-  style.textContent = colorCss + '\n' + levelCss + '\n' + centerAlignCss
+  // 文档标题颜色样式
+  const titleColorCss = titleCenterAlign.value ? `
+    .protyle-title__input {
+      color: ${titleColor.value} !important;
+    }
+  ` : ''
+
+  style.textContent = colorCss + '\n' + levelCss + '\n' + centerAlignCss + '\n' + titleColorCss
 
   if (!style.parentElement) {
     document.head.appendChild(style)
@@ -384,6 +424,21 @@ function applyTitleCenterAlign() {
   autoSave()
 }
 
+// 标题颜色变化处理
+function onTitleColorChange() {
+  console.log('标题颜色变化:', titleColor.value)
+  applyToDocument()
+  autoSave()
+}
+
+// 重置标题颜色
+function resetTitleColor() {
+  titleColor.value = defaultTitleColor
+  console.log('标题颜色重置为默认值:', defaultTitleColor)
+  applyToDocument()
+  autoSave()
+}
+
 function togglePreview() {
   showPreview.value = !showPreview.value
 }
@@ -396,7 +451,8 @@ function autoSave() {
       colors: headingColors.value,
       levelDisplay: levelDisplayStyle.value,
       customMarkers: customLevelMarkers.value,
-      titleCenterAlign: titleCenterAlign.value
+      titleCenterAlign: titleCenterAlign.value,
+      titleColor: titleColor.value
     }))
   } catch (error) {
     console.error('保存失败:', error)
@@ -414,6 +470,7 @@ function loadSettings() {
       levelDisplayStyle.value = parsed.levelDisplay || 'none'
       customLevelMarkers.value = parsed.customMarkers || ['1', '2', '3', '4', '5', '6']
       titleCenterAlign.value = parsed.titleCenterAlign || false
+      titleColor.value = parsed.titleColor || defaultTitleColor
       applyToDocument()
     }
   } catch (error) {
@@ -446,6 +503,15 @@ watch(levelDisplayStyle, (newValue, oldValue) => {
 watch(titleCenterAlign, (newValue, oldValue) => {
   console.log('titleCenterAlign 变化:', oldValue, '->', newValue)
   applyToDocument()
+  autoSave()
+})
+
+// 监听标题颜色变化,自动保存并应用
+watch(titleColor, (newValue, oldValue) => {
+  console.log('titleColor 变化:', oldValue, '->', newValue)
+  if (titleCenterAlign.value) {
+    applyToDocument()
+  }
   autoSave()
 })
 
@@ -820,6 +886,66 @@ defineExpose({
   font-size: 13px;
   color: var(--b3-theme-on-surface);
   user-select: none;
+}
+
+/* 文档标题颜色设置样式 */
+.title-color-input-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.title-color-picker {
+  width: 48px;
+  height: 36px;
+  border: 2px solid var(--b3-theme-outline);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+}
+
+.title-color-picker:hover {
+  border-color: var(--b3-theme-primary);
+}
+
+.title-color-text {
+  flex: 1;
+  min-width: 100px;
+  padding: 6px 10px;
+  border: 2px solid var(--b3-theme-outline);
+  border-radius: 6px;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  font-size: 12px;
+  font-family: monospace;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+}
+
+.title-color-text:focus {
+  outline: none;
+  border-color: var(--b3-theme-primary);
+  box-shadow: 0 0 0 3px rgba(var(--b3-theme-primary-rgb), 0.1);
+}
+
+.reset-color-btn {
+  padding: 6px 12px;
+  border: 2px solid var(--b3-theme-outline);
+  border-radius: 6px;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.reset-color-btn:hover {
+  border-color: var(--b3-theme-primary);
+  background: var(--b3-theme-primary);
+  color: var(--b3-theme-on-primary);
 }
 
 

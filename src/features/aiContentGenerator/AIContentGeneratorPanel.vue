@@ -376,32 +376,9 @@
             <!-- Edit模式专用按钮 -->
             <template v-if="editMode">
               <button
-                v-if="!showDiff"
-                class="btn-action"
-                @click="toggleDiffView"
-                :disabled="!editTargetDoc || !hasContentChanged"
-                :title="i18n.viewDiff || '查看差异'"
-              >
-                <svg width="16" height="16">
-                  <use xlink:href="#iconDiff"></use>
-                </svg>
-                {{ i18n.viewDiff || '查看差异' }}
-              </button>
-              <button
-                v-if="showDiff"
-                class="btn-action"
-                @click="toggleDiffView"
-                :title="i18n.hideDeffi || '隐藏差异'"
-              >
-                <svg width="16" height="16">
-                  <use xlink:href="#iconEye"></use>
-                </svg>
-                {{ i18n.hideDiff || '隐藏差异' }}
-              </button>
-              <button
                 class="btn-action btn-apply"
                 @click="applyEdit"
-                :disabled="!editTargetDoc || !hasContentChanged || isApplying"
+                :disabled="!editTargetDoc || isApplying"
                 :title="i18n.applyEdit || '应用编辑'"
               >
                 <div v-if="isApplying" class="loading-spinner-small"></div>
@@ -468,41 +445,8 @@
           </div>
         </div>
         <div class="result-content">
-          <!-- Edit模式：显示差异对比或可编辑内容 -->
-          <div v-if="editMode && showDiff" class="diff-view">
-            <div class="diff-section">
-              <div class="diff-label">
-                <svg width="14" height="14"><use xlink:href="#iconFile"></use></svg>
-                {{ i18n.originalContent || '原始内容' }}
-              </div>
-              <div class="diff-content original-content" v-html="diffHighlightedOriginal"></div>
-            </div>
-            <div class="diff-divider">
-              <svg width="20" height="20"><use xlink:href="#iconArrowRight"></use></svg>
-            </div>
-            <div class="diff-section">
-              <div class="diff-label">
-                <svg width="14" height="14"><use xlink:href="#iconEdit"></use></svg>
-                {{ i18n.newContent || '新内容' }}
-              </div>
-              <div class="diff-content new-content" v-html="diffHighlightedNew"></div>
-            </div>
-          </div>
-          <!-- Edit模式：可编辑的Markdown编辑器 -->
-          <div v-else-if="editMode" class="edit-view">
-            <textarea
-              v-model="generatedContent"
-              class="edit-textarea"
-              :placeholder="i18n.editPlaceholder || '在此编辑Markdown内容...'"
-              @input="onContentEdit"
-            ></textarea>
-            <div class="edit-preview">
-              <div class="preview-label">{{ i18n.preview || '预览' }}</div>
-              <div class="markdown-preview selectable-content" v-html="renderedDisplayedMarkdown"></div>
-            </div>
-          </div>
-          <!-- 普通模式：只读预览 -->
-          <div v-else class="markdown-preview selectable-content" v-html="renderedDisplayedMarkdown"></div>
+          <!-- 统一预览界面 -->
+          <div class="markdown-preview selectable-content" v-html="renderedDisplayedMarkdown"></div>
         </div>
       </div>
 
@@ -580,7 +524,6 @@ const abortController = ref<AbortController | null>(null);
 const editMode = ref(false);
 const editTargetDoc = ref<{ id: string; title: string; content: string } | null>(null);
 const originalContent = ref(''); // 文档原始内容
-const showDiff = ref(false);
 const hasContentChanged = ref(false);
 const isApplying = ref(false);
 const isUndoing = ref(false);
@@ -685,142 +628,6 @@ watch(renderedDisplayedMarkdown, async () => {
 });
 
 /**
- * 生成带语法高亮的差异对比HTML
- */
-const diffHighlightedOriginal = computed(() => {
-  if (!originalContent.value || !generatedContent.value) return '';
-
-  const original = removeFrontmatter(originalContent.value);
-  const generated = removeFrontmatter(generatedContent.value);
-
-  const originalLines = original.split('\n');
-  const generatedLines = generated.split('\n');
-
-  let html = '<div class="diff-lines diff-markdown">';
-  const maxLines = Math.max(originalLines.length, generatedLines.length);
-
-  for (let i = 0; i < maxLines; i++) {
-    const originalLine = originalLines[i] || '';
-    const generatedLine = generatedLines[i] || '';
-
-    let lineClass = 'diff-line';
-    if (i >= originalLines.length) {
-      lineClass += ' diff-line-empty';
-    } else if (originalLine !== generatedLine) {
-      lineClass += ' diff-line-removed';
-    }
-
-    // 使用原始文本进行简单高亮（Markdown语法）
-    const highlightedLine = highlightMarkdownLine(originalLine);
-    html += `<div class="${lineClass}"><span class="diff-line-number">${i + 1}</span><span class="diff-line-content">${highlightedLine}</span></div>`;
-  }
-
-  html += '</div>';
-  return html;
-});
-
-const diffHighlightedNew = computed(() => {
-  if (!originalContent.value || !generatedContent.value) return '';
-
-  const original = removeFrontmatter(originalContent.value);
-  const generated = removeFrontmatter(generatedContent.value);
-
-  const originalLines = original.split('\n');
-  const generatedLines = generated.split('\n');
-
-  let html = '<div class="diff-lines diff-markdown">';
-  const maxLines = Math.max(originalLines.length, generatedLines.length);
-
-  for (let i = 0; i < maxLines; i++) {
-    const originalLine = originalLines[i] || '';
-    const generatedLine = generatedLines[i] || '';
-
-    let lineClass = 'diff-line';
-    if (i >= generatedLines.length) {
-      lineClass += ' diff-line-empty';
-    } else if (originalLine !== generatedLine) {
-      lineClass += ' diff-line-added';
-    }
-
-    const highlightedLine = highlightMarkdownLine(generatedLine);
-    html += `<div class="${lineClass}"><span class="diff-line-number">${i + 1}</span><span class="diff-line-content">${highlightedLine}</span></div>`;
-  }
-
-  html += '</div>';
-  return html;
-});
-
-/**
- * 对单行Markdown进行语法高亮
- */
-const highlightMarkdownLine = (line: string): string => {
-  if (!line.trim()) return line;
-
-  // 代码块开始/结束
-  if (line.trim().startsWith('```')) {
-    return `<span class="md-code-fence">${escapeHtml(line)}</span>`;
-  }
-
-  // 标题
-  if (/^#{1,6}\s/.test(line)) {
-    const match = line.match(/^(#{1,6})(\s+)(.+)$/);
-    if (match) {
-      return `<span class="md-heading md-h${match[1].length}"><span class="md-heading-marker">${escapeHtml(match[1])}</span>${escapeHtml(match[2])}<span class="md-heading-text">${escapeHtml(match[3])}</span></span>`;
-    }
-  }
-
-  // 列表
-  if (/^\s*[-*+]\s/.test(line)) {
-    const match = line.match(/^(\s*)([-*+])(\s+)(.*)$/);
-    if (match) {
-      return `${escapeHtml(match[1])}<span class="md-list-marker">${escapeHtml(match[2])}</span>${escapeHtml(match[3])}<span class="md-list-text">${highlightInlineMarkdown(match[4])}</span>`;
-    }
-  }
-
-  // 有序列表
-  if (/^\s*\d+\.\s/.test(line)) {
-    const match = line.match(/^(\s*)(\d+\.)(\s+)(.*)$/);
-    if (match) {
-      return `${escapeHtml(match[1])}<span class="md-list-marker">${escapeHtml(match[2])}</span>${escapeHtml(match[3])}<span class="md-list-text">${highlightInlineMarkdown(match[4])}</span>`;
-    }
-  }
-
-  // 引用
-  if (/^>\s/.test(line)) {
-    const match = line.match(/^(>+)(\s*)(.*)$/);
-    if (match) {
-      return `<span class="md-blockquote"><span class="md-blockquote-marker">${escapeHtml(match[1])}</span>${escapeHtml(match[2])}<span class="md-blockquote-text">${highlightInlineMarkdown(match[3])}</span></span>`;
-    }
-  }
-
-  // 普通文本
-  return highlightInlineMarkdown(line);
-};
-
-/**
- * 高亮行内Markdown语法（粗体、斜体、代码、链接等）
- */
-const highlightInlineMarkdown = (text: string): string => {
-  let result = escapeHtml(text);
-
-  // 行内代码 `code`
-  result = result.replace(/`([^`]+)`/g, '<span class="md-code"><span class="md-code-marker">`</span>$1<span class="md-code-marker">`</span></span>');
-
-  // 粗体 **bold** 或 __bold__
-  result = result.replace(/\*\*([^*]+)\*\*/g, '<span class="md-bold"><span class="md-marker">**</span>$1<span class="md-marker">**</span></span>');
-  result = result.replace(/__([^_]+)__/g, '<span class="md-bold"><span class="md-marker">__</span>$1<span class="md-marker">__</span></span>');
-
-  // 斜体 *italic* 或 _italic_
-  result = result.replace(/\*([^*]+)\*/g, '<span class="md-italic"><span class="md-marker">*</span>$1<span class="md-marker">*</span></span>');
-  result = result.replace(/_([^_]+)_/g, '<span class="md-italic"><span class="md-marker">_</span>$1<span class="md-marker">_</span></span>');
-
-  // 链接 [text](url)
-  result = result.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<span class="md-link"><span class="md-marker">[</span>$1<span class="md-marker">](</span><span class="md-url">$2</span><span class="md-marker">)</span></span>');
-
-  return result;
-};
-
-/**
  * HTML转义工具函数
  */
 const escapeHtml = (text: string): string => {
@@ -859,8 +666,6 @@ const toggleEditMode = () => {
 const clearEditState = () => {
   editTargetDoc.value = null;
   originalContent.value = '';
-  showDiff.value = false;
-  hasContentChanged.value = false;
 };
 
 
@@ -1126,8 +931,6 @@ const clearContent = () => {
   errorMessage.value = '';
   showRaw.value = false;
   stopTypewriter();
-  hasContentChanged.value = false;
-  showDiff.value = false;
 };
 
 // 选择目标文档
@@ -1196,7 +999,6 @@ const loadTargetDocument = async (docId: string) => {
     // 将文档内容加载到生成内容区域（使用清理后的内容）
     generatedContent.value = cleanContent;
     displayedContent.value = cleanContent;
-    hasContentChanged.value = false;
 
     showMessage(`✓ 已选择文档: ${editTargetDoc.value.title}`, 2000, 'info');
   } catch (error) {
@@ -1212,20 +1014,13 @@ const clearTargetDocument = () => {
   showMessage('✓ 已清除目标文档', 1500, 'info');
 };
 
-// 内容编辑监听
-const onContentEdit = () => {
-  displayedContent.value = generatedContent.value;
-  hasContentChanged.value = generatedContent.value !== originalContent.value;
-};
 
-// 切换差异视图
-const toggleDiffView = () => {
-  showDiff.value = !showDiff.value;
-};
+
+
 
 // 应用编辑
 const applyEdit = async () => {
-  if (!editTargetDoc.value || !hasContentChanged.value) return;
+  if (!editTargetDoc.value) return;
 
   isApplying.value = true;
   try {
@@ -1248,8 +1043,6 @@ const applyEdit = async () => {
     // 更新原始内容为当前内容
     originalContent.value = generatedContent.value;
     editTargetDoc.value.content = generatedContent.value;
-    hasContentChanged.value = false;
-    showDiff.value = false;
   } catch (error) {
     console.error('应用编辑失败:', error);
     showMessage('应用编辑失败: ' + (error as Error).message, 3000, 'error');
@@ -1275,8 +1068,6 @@ const undoEdit = async () => {
       displayedContent.value = lastEditHistory.value.originalContent;
       originalContent.value = lastEditHistory.value.originalContent;
       editTargetDoc.value.content = lastEditHistory.value.originalContent;
-      hasContentChanged.value = false;
-      showDiff.value = false;
     }
 
     // 清除历史记录
@@ -1325,8 +1116,6 @@ const aiEditAction = async (action: 'polish' | 'expand' | 'condense' | 'fix') =>
 
     await props.onGenerate(options);
 
-    // 编辑完成后自动标记为已更改
-    hasContentChanged.value = true;
     showMessage('✓ AI编辑完成', 2000, 'info');
   } catch (error) {
     console.error('AI编辑失败:', error);

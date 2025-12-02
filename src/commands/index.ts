@@ -4,17 +4,18 @@ import { DateTime } from './DateTime';
 let dateTimeInstance: DateTime | null = null;
 
 /**
- * 注册日期时间插入功能
+ * 初始化所有斜杠命令
  */
-export function registerDateTime(plugin: Plugin) {
+export function initCommands(plugin: Plugin) {
+  // 初始化日期时间插入命令
   dateTimeInstance = new DateTime(plugin);
   dateTimeInstance.init();
 }
 
 /**
- * 销毁日期时间插入功能
+ * 销毁所有斜杠命令
  */
-export function destroyDateTime() {
+export function destroyCommands() {
   if (dateTimeInstance) {
     dateTimeInstance.destroy();
     dateTimeInstance = null;

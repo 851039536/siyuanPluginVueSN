@@ -27,7 +27,7 @@ export class DateTime {
     // 注册完整日期时间命令 /xz
     this.plugin.protyleSlash.push({
       filter: ['xz', '现在', 'xianzai'],
-      html: '当前日期时间 (如: 2024-11-24 18:59:41)',
+      html: '插入当前时间 （2024-11-24 18:59:41）',
       id: 'insertDateTime_xz',
       callback: (protyle) => {
         this.insertDateTime(protyle);

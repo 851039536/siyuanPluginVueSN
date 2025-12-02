@@ -1,0 +1,37 @@
+# 斜杠命令模块
+
+这个模块包含所有的斜杠命令功能，独立于 features 功能模块。
+
+## 模块说明
+
+斜杠命令是思源笔记编辑器中的快捷输入功能，用户在编辑器中输入 `/` 后可以触发各种命令。
+
+## 当前包含的命令
+
+### 日期时间插入 (DateTime)
+
+提供快捷的日期、时间插入命令：
+
+- **完整日期时间**: `/xz`, `/now`, `/现在`, `/xianzai`, `/datetime`
+- **仅时间**: `/sj`, `/time`, `/时间`, `/shijian`
+- **仅日期**: `/rq`, `/date`, `/jt`, `/today`, `/日期`, `/riqi`, `/今天`, `/jintian`
+
+## 使用方法
+
+在主入口文件中调用：
+
+```typescript
+import { initCommands, destroyCommands } from '@/commands';
+
+// 初始化
+initCommands(plugin);
+
+// 销毁
+destroyCommands();
+```
+
+## 添加新命令
+
+1. 在 `src/commands/` 目录下创建新的命令类
+2. 在 `index.ts` 中导入并初始化
+3. 使用 `plugin.protyleSlash.push()` 注册命令

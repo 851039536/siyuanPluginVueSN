@@ -3,96 +3,46 @@
  * 使用通义大模型API生成英语单词的谐音记忆
  */
 import { Plugin, showMessage } from 'siyuan';
-import { createApp, h } from 'vue';
-// @ts-ignore
-import PronunciationPanel from './PronunciationPanel.vue';
 
 /**
  * 谐音翻译类
  */
 export class Pronunciation {
   private plugin: Plugin;
-  private currentProvider: string = 'tongyi';
-  private currentModel: string = 'qwen-plus';
-  private apiKey: string = '';
-  private customApiEndpoint: string = '';
 
   constructor(plugin: Plugin) {
     this.plugin = plugin;
-    // 从插件配置中初始化API配置
-    const settings = (plugin as any).settings;
-    this.currentProvider = settings.aiApiProvider || 'tongyi';
-    this.currentModel = settings.aiModel || 'qwen-plus';
-    this.apiKey = settings.aiApiKey || 'sk-fae27cc50015409fb2524b0970d3f0b0';
-    this.customApiEndpoint = settings.aiCustomEndpoint || '';
   }
 
   /**
    * 更新API配置（由超级面板调用）
+   * 注意：此方法仅用于接口一致性，实际配置直接从 plugin.settings 读取
    */
-  public updateApiConfig(provider: string, model: string, apiKey: string, customEndpoint: string) {
-    this.currentProvider = provider;
-    this.currentModel = model;
-    this.apiKey = apiKey;
-    this.customApiEndpoint = customEndpoint;
-    console.log('Pronunciation API配置已更新:', { provider, model, customEndpoint });
+  public updateApiConfig(_provider: string, _model: string, _apiKey: string, _customEndpoint: string) {
+    // 配置已通过 plugin.settings 更新，无需额外处理
+    console.log('Pronunciation API配置已更新');
   }
 
   /**
-   * 获取API Key
+   * 获取当前API配置
    */
-  private getApiKey(): string {
-    return this.apiKey || 'sk-fae27cc50015409fb2524b0970d3f0b0';
+  private getApiConfig() {
+    const settings = (this.plugin as any).settings;
+    return {
+      provider: settings.aiApiProvider || 'tongyi',
+      model: settings.aiModel || 'qwen-plus',
+      apiKey: settings.aiApiKey || '',
+      customEndpoint: settings.aiCustomEndpoint || ''
+    };
   }
 
   /**
    * 初始化谐音翻译功能
    */
   public init() {
-    this.addDock();
     this.registerContextMenu();
     this.registerCommands();
     console.log('谐音翻译模块已初始化');
-  }
-
-  /**
-   * 添加谐音翻译 Dock 到右侧边栏
-   */
-  private addDock() {
-    const self = this;
-    this.plugin.addDock({
-      config: {
-        position: 'RightTop',
-        size: { width: 360, height: 0 },
-        icon: 'iconVolumeUp',
-        title: this.plugin.i18n.pronunciation || '谐音翻译',
-        show: false,
-      },
-      data: {},
-      type: 'pronunciation-dock',
-      init: (dock: any) => {
-        const container = document.createElement('div');
-        container.style.height = '100%';
-        container.style.overflow = 'hidden';
-
-        const app = createApp({
-          setup() {
-            return () => h(PronunciationPanel, {
-              i18n: self.plugin.i18n,
-              onGenerate: async (word: string) => {
-                return await self.generatePronunciation(word);
-              }
-            });
-          }
-        });
-
-        app.mount(container);
-        dock.element?.appendChild(container);
-
-        dock.__app = app;
-        dock.__container = container;
-      },
-    });
   }
 
   /**
@@ -211,29 +161,34 @@ export class Pronunciation {
    * 调用API
    */
   private async callAPI(prompt: string): Promise<string> {
-    switch (this.currentProvider) {
+    const config = this.getApiConfig();
+    
+    switch (config.provider) {
       case 'tongyi':
-        return await this.callTongyiAPI(prompt);
+        return await this.callTongyiAPI(prompt, config);
       case 'openai':
-        return await this.callOpenAIAPI(prompt);
+        return await this.callOpenAIAPI(prompt, config);
       case 'deepseek':
-        return await this.callDeepSeekAPI(prompt);
+        return await this.callDeepSeekAPI(prompt, config);
       case 'custom':
-        return await this.callCustomAPI(prompt);
+        return await this.callCustomAPI(prompt, config);
       default:
-        throw new Error(`不支持的API供应商: ${this.currentProvider}`);
+        throw new Error(`不支持的API供应商: ${config.provider}`);
     }
   }
 
   /**
    * 调用通义千问API
    */
-  private async callTongyiAPI(prompt: string): Promise<string> {
-    const apiKey = this.getApiKey();
+  private async callTongyiAPI(prompt: string, config: any): Promise<string> {
+    if (!config.apiKey) {
+      throw new Error('请先在超级面板中配置API密钥');
+    }
+
     const apiUrl = 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation';
     
     const requestBody = {
-      model: this.currentModel || 'qwen-plus',
+      model: config.model || 'qwen-plus',
       input: {
         messages: [
           {
@@ -257,7 +212,7 @@ export class Pronunciation {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        'Authorization': `Bearer ${config.apiKey}`
       },
       body: JSON.stringify(requestBody)
     });
@@ -287,12 +242,15 @@ export class Pronunciation {
   /**
    * 调用OpenAI API
    */
-  private async callOpenAIAPI(prompt: string): Promise<string> {
-    const apiKey = this.getApiKey();
+  private async callOpenAIAPI(prompt: string, config: any): Promise<string> {
+    if (!config.apiKey) {
+      throw new Error('请先在超级面板中配置API密钥');
+    }
+
     const apiUrl = 'https://api.openai.com/v1/chat/completions';
     
     const requestBody = {
-      model: this.currentModel || 'gpt-3.5-turbo',
+      model: config.model || 'gpt-3.5-turbo',
       messages: [
         {
           role: 'system',
@@ -311,7 +269,7 @@ export class Pronunciation {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        'Authorization': `Bearer ${config.apiKey}`
       },
       body: JSON.stringify(requestBody)
     });
@@ -333,12 +291,15 @@ export class Pronunciation {
   /**
    * 调用DeepSeek API
    */
-  private async callDeepSeekAPI(prompt: string): Promise<string> {
-    const apiKey = this.getApiKey();
+  private async callDeepSeekAPI(prompt: string, config: any): Promise<string> {
+    if (!config.apiKey) {
+      throw new Error('请先在超级面板中配置API密钥');
+    }
+
     const apiUrl = 'https://api.deepseek.com/v1/chat/completions';
     
     const requestBody = {
-      model: this.currentModel || 'deepseek-chat',
+      model: config.model || 'deepseek-chat',
       messages: [
         {
           role: 'system',
@@ -357,7 +318,7 @@ export class Pronunciation {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        'Authorization': `Bearer ${config.apiKey}`
       },
       body: JSON.stringify(requestBody)
     });
@@ -379,16 +340,17 @@ export class Pronunciation {
   /**
    * 调用自定义API
    */
-  private async callCustomAPI(prompt: string): Promise<string> {
-    const apiKey = this.getApiKey();
-    const apiUrl = this.customApiEndpoint;
+  private async callCustomAPI(prompt: string, config: any): Promise<string> {
+    if (!config.apiKey) {
+      throw new Error('请先在超级面板中配置API密钥');
+    }
 
-    if (!apiUrl) {
-      throw new Error('自定义API端点未设置');
+    if (!config.customEndpoint) {
+      throw new Error('请先在超级面板中配置自定义API端点');
     }
 
     const requestBody = {
-      model: this.currentModel || 'default',
+      model: config.model || 'default',
       messages: [
         {
           role: 'system',
@@ -403,11 +365,11 @@ export class Pronunciation {
       max_tokens: 800
     };
 
-    const response = await fetch(apiUrl, {
+    const response = await fetch(config.customEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        'Authorization': `Bearer ${config.apiKey}`
       },
       body: JSON.stringify(requestBody)
     });

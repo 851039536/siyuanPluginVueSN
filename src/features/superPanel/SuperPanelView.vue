@@ -410,14 +410,6 @@ const features = computed<Feature[]>(() => [
     desc: props.i18n.enableStatisticsDesc || '显示笔记数据统计和分析',
     enabled: props.settings.enableStatistics,
     actions: []
-  },
-  {
-    id: 'pronunciation',
-    iconKey: 'pronunciation',
-    title: props.i18n.pronunciation || '谐音翻译',
-    desc: props.i18n.pronunciationDesc || '生成英文单词的谐音记忆',
-    enabled: props.settings.enablePronunciation,
-    actions: []
   }
 ])
 

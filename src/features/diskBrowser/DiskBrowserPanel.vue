@@ -568,8 +568,8 @@ async function loadFolders(drive: string, forceRefresh = false) {
 
   try {
     if (window.require) {
-      // 使用 PowerShell 解决编码问题
-      const command = `powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -Path '${drive}\\' -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -notmatch '^[.]' } | Select-Object -ExpandProperty Name | ForEach-Object { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Write-Output $_ }"`
+      // 使用 PowerShell 解决编码问题，过滤隐藏属性的文件夹
+      const command = `powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -Path '${drive}\\' -Directory -ErrorAction SilentlyContinue | Where-Object { -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) } | Select-Object -ExpandProperty Name | ForEach-Object { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Write-Output $_ }"`
       const { stdout } = await retryExec(command, 1, 5000, '获取文件夹列表')
 
       const folderList: FolderInfo[] = []
@@ -747,7 +747,7 @@ async function loadFoldersFromPath(path: string, forceRefresh = false) {
       const util = window.require('util')
       const execPromise = util.promisify(exec)
 
-      // 获取文件夹和文件信息
+      // 获取文件夹和文件信息，过滤隐藏属性的文件
       const command = `powershell -NoProfile -ExecutionPolicy Bypass -Command "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-ChildItem -Path '${path}' -ErrorAction SilentlyContinue | Where-Object { -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) } | Select-Object Name, @{Name='IsFile';Expression={-not $_.PSIsContainer}}, Length, LastWriteTime | ConvertTo-Json -Compress"`
       const { stdout } = await execPromise(command, { encoding: 'utf8' })
 

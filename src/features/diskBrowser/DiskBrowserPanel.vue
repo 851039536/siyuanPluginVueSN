@@ -132,6 +132,15 @@
             </div>
           </div>
           <div class="folder-actions">
+            <button v-if="!item.isFile" class="folder-action-btn favorite-btn"
+                      @click.stop="toggleFavorite(item.path)"
+                      :class="{ 'is-favorite': isFavorite(item.path) }"
+                      :title="isFavorite(item.path) ? (i18n.removeFavorite || '取消收藏') : (i18n.addFavorite || '添加收藏')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path v-if="!isFavorite(item.path)" d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path v-else d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
             <button v-if="!item.isFile" class="folder-action-btn" @click.stop="navigateIntoFolder(item)" :title="i18n.browse || '浏览'">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -185,6 +194,7 @@ interface FolderInfo {
   isFile?: boolean
   size?: number
   modifiedTime?: string
+  isFavorite?: boolean
 }
 
 interface CacheData<T> {
@@ -205,14 +215,203 @@ const loading = ref(false)
 const loadingFolders = ref(false)
 const currentPath = ref<string>('')
 const pathSegments = ref<string[]>([])
+const favoriteFolders = ref<string[]>([]) // 收藏的文件夹路径
 
 // 缓存管理
-const CACHE_EXPIRY_TIME = 60 * 60 * 1000 // 1小时缓存失效时间
+let CACHE_EXPIRY_TIME = 60 * 60 * 1000 // 1小时缓存失效时间，将根据网络环境动态调整
 const diskCache = ref<CacheData<DiskInfo[]> | null>(null)
 const folderCacheMap = ref<Map<string, CacheData<FolderInfo[]>>>(new Map())
 const cacheInfo = ref<string>('')
 const isCacheExpired = ref(false)
 let cacheUpdateTimer: number | null = null
+
+// 防抖机制
+let isExecutingCommand = false
+let lastExecutionTime = 0
+const DEBOUNCE_DELAY = 500 // 500ms 防抖延迟
+
+// 状态管理
+let currentOperationId = 0
+const operationMap = new Map<number, string>() // operationId -> operationType
+
+/**
+ * 网络环境检测
+ */
+function isNetworkSlow(): boolean {
+  if (typeof navigator !== 'undefined' && (navigator as any).connection) {
+    const connection = (navigator as any).connection
+    return connection.effectiveType === 'slow-2g' ||
+           connection.effectiveType === '2g' ||
+           connection.effectiveType === '3g'
+  }
+  return false
+}
+
+/**
+ * 动态调整缓存时间
+ */
+function updateCacheTime() {
+  if (isNetworkSlow()) {
+    CACHE_EXPIRY_TIME = 10 * 60 * 1000 // 网络慢时缓存10分钟
+  } else {
+    CACHE_EXPIRY_TIME = 60 * 60 * 1000 // 网络正常时缓存1小时
+  }
+}
+
+/**
+ * 异步超时执行器
+ */
+async function execWithTimeout(command: string, timeout: number = 3000): Promise<{ stdout: string; stderr: string }> {
+  if (!window.require) {
+    throw new Error('当前环境不支持执行命令')
+  }
+
+  const { exec } = window.require('child_process')
+  const util = window.require('util')
+  const execPromise = util.promisify(exec)
+
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(() => reject(new Error('执行超时')), timeout)
+  })
+
+  return Promise.race([execPromise(command), timeoutPromise])
+}
+
+/**
+ * 获取操作ID
+ */
+function getOperationId(): number {
+  return ++currentOperationId
+}
+
+/**
+ * 设置操作状态
+ */
+function setOperationStatus(operationId: number, type: string) {
+  operationMap.set(operationId, type)
+}
+
+/**
+ * 清理操作状态
+ */
+function clearOperationStatus(operationId: number) {
+  operationMap.delete(operationId)
+}
+
+/**
+ * 检查操作状态
+ */
+function getOperationStatus(operationId: number): string | undefined {
+  return operationMap.get(operationId)
+}
+
+/**
+ * 切换文件夹收藏状态
+ */
+function toggleFavorite(folderPath: string) {
+  const index = favoriteFolders.value.indexOf(folderPath)
+  if (index > -1) {
+    favoriteFolders.value.splice(index, 1)
+    showMessage(props.i18n.favoriteRemoved || '已取消收藏', 2000, 'info')
+  } else {
+    favoriteFolders.value.push(folderPath)
+    showMessage(props.i18n.favoriteAdded || '已添加收藏', 2000, 'success')
+  }
+  saveFavorites()
+}
+
+/**
+ * 检查文件夹是否已收藏
+ */
+function isFavorite(folderPath: string): boolean {
+  return favoriteFolders.value.includes(folderPath)
+}
+
+/**
+ * 保存收藏夹到本地存储
+ */
+function saveFavorites() {
+  try {
+    localStorage.setItem('disk-browser-favorites', JSON.stringify(favoriteFolders.value))
+  } catch (error) {
+    console.error('保存收藏夹失败:', error)
+  }
+}
+
+/**
+ * 从本地存储加载收藏夹
+ */
+function loadFavorites() {
+  try {
+    const saved = localStorage.getItem('disk-browser-favorites')
+    if (saved) {
+      favoriteFolders.value = JSON.parse(saved)
+    }
+  } catch (error) {
+    console.error('加载收藏夹失败:', error)
+    favoriteFolders.value = []
+  }
+}
+
+/**
+ * 带重试机制的执行器（带防抖和操作管理）
+ */
+async function retryExec(command: string, retries: number = 2, timeout: number = 3000, operationType: string = 'unknown'): Promise<{ stdout: string; stderr: string }> {
+  const operationId = getOperationId()
+  setOperationStatus(operationId, operationType)
+
+  try {
+    // 防抖检查
+    const now = Date.now()
+    if (isExecutingCommand || (now - lastExecutionTime < DEBOUNCE_DELAY)) {
+      // 如果正在执行或距离上次执行太近，等待
+      while (isExecutingCommand) {
+        await new Promise(resolve => setTimeout(resolve, 100))
+      }
+
+      // 再次检查时间间隔
+      const waitTime = DEBOUNCE_DELAY - (Date.now() - lastExecutionTime)
+      if (waitTime > 0) {
+        await new Promise(resolve => setTimeout(resolve, waitTime))
+      }
+    }
+
+    // 检查操作是否仍然有效
+    if (getOperationStatus(operationId) !== operationType) {
+      throw new Error('操作已被取消')
+    }
+
+    isExecutingCommand = true
+    lastExecutionTime = Date.now()
+
+    let lastError: Error | null = null
+
+    for (let i = 0; i <= retries; i++) {
+      // 检查操作是否仍然有效
+      if (getOperationStatus(operationId) !== operationType) {
+        throw new Error('操作已被取消')
+      }
+
+      try {
+        const result = await execWithTimeout(command, timeout)
+        return result
+      } catch (error) {
+        lastError = error as Error
+        if (i === retries) {
+          throw new Error(`${operationType}失败，重试${retries}次后仍失败: ${lastError.message}`)
+        }
+        // 指数退避重试
+        const delay = Math.min(1000 * Math.pow(2, i), 3000)
+        await new Promise(resolve => setTimeout(resolve, delay))
+      }
+    }
+
+    throw lastError || new Error('未知错误')
+  } finally {
+    isExecutingCommand = false
+    clearOperationStatus(operationId)
+  }
+}
 
 /**
  * 检查缓存是否过期
@@ -224,9 +423,12 @@ function isCacheValid(cacheData: CacheData<any> | null | undefined): boolean {
 }
 
 /**
- * 获取磁盘列表（带缓存）
+ * 获取磁盘列表（带缓存和优化）
  */
 async function fetchDisks(forceRefresh = false) {
+  // 更新缓存时间策略
+  updateCacheTime()
+
   // 如果有有效缓存且不强制刷新，使用缓存
   if (!forceRefresh && diskCache.value && isCacheValid(diskCache.value)) {
     disks.value = diskCache.value.data
@@ -238,14 +440,10 @@ async function fetchDisks(forceRefresh = false) {
   try {
     // Windows 平台获取磁盘列表
     if (window.require) {
-      const { exec } = window.require('child_process')
-      const util = window.require('util')
-      const execPromise = util.promisify(exec)
-
       try {
         // 使用 PowerShell 获取磁盘信息，避免乱码
         const command = `powershell -NoProfile -ExecutionPolicy Bypass -Command "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-WmiObject Win32_LogicalDisk | Select-Object DeviceID, VolumeName, Size, FreeSpace | ConvertTo-Json -Compress"`
-        const { stdout } = await execPromise(command, { encoding: 'utf8' })
+        const { stdout } = await retryExec(command, 2, 3000, '获取磁盘列表')
 
         const diskData = JSON.parse(stdout)
         const diskArray = Array.isArray(diskData) ? diskData : [diskData]
@@ -321,9 +519,12 @@ async function toggleDisk(disk: DiskInfo) {
 }
 
 /**
- * 加载文件夹列表（带缓存）
+ * 加载文件夹列表（带缓存和优化）
  */
 async function loadFolders(drive: string, forceRefresh = false) {
+  // 更新缓存时间策略
+  updateCacheTime()
+
   // 如果有有效缓存且不强制刷新，使用缓存
   const cachedFolders = folderCacheMap.value.get(drive)
   if (!forceRefresh && cachedFolders && isCacheValid(cachedFolders)) {
@@ -336,30 +537,24 @@ async function loadFolders(drive: string, forceRefresh = false) {
 
   try {
     if (window.require) {
-      const { exec } = window.require('child_process')
-      const util = window.require('util')
-      const execPromise = util.promisify(exec)
-
-      // 使用 PowerShell 获取文件夹列表，排除隐藏文件夹
-      const command = `powershell -NoProfile -ExecutionPolicy Bypass -Command "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-ChildItem -Path '${drive}\\' -Directory -ErrorAction SilentlyContinue | Where-Object { -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) } | Select-Object Name | ConvertTo-Json -Compress"`
-      const { stdout } = await execPromise(command, { encoding: 'utf8' })
+      // 使用 PowerShell 解决编码问题
+      const command = `powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -Path '${drive}\\' -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -notmatch '^[.]' } | Select-Object -ExpandProperty Name | ForEach-Object { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Write-Output $_ }"`
+      const { stdout } = await retryExec(command, 1, 5000, '获取文件夹列表')
 
       const folderList: FolderInfo[] = []
-      try {
-        const folderData = JSON.parse(stdout)
-        const folderArray = Array.isArray(folderData) ? folderData : [folderData]
 
-        for (const folder of folderArray) {
-          if (folder && folder.Name) {
-            const folderName = String(folder.Name).trim()
+      // 处理 cmd 命令输出
+      if (stdout && stdout.trim()) {
+        const lines = stdout.trim().split('\n')
+        for (const line of lines) {
+          const folderName = line.trim()
+          if (folderName && folderName !== '.' && folderName !== '..') {
             folderList.push({
               name: folderName,
               path: `${drive}\\${folderName}`
             })
           }
         }
-      } catch (e) {
-        // 如果没有文件夹或解析失败，返回空列表
       }
 
       folders.value = folderList
@@ -756,6 +951,7 @@ function formatSize(bytes: number): string {
 }
 
 onMounted(() => {
+  loadFavorites()
   fetchDisks()
   // 每分钟更新一次缓存状态
   cacheUpdateTimer = window.setInterval(() => {
@@ -861,16 +1057,20 @@ onUnmounted(() => {
   }
 }
 
-// 横向磁盘列表
+// 横向磁盘列表 - 优化为两行显示
 .disk-list-horizontal {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   padding: 12px;
-  overflow-x: auto;
-  overflow-y: hidden;
+  max-height: 180px; // 限制最大高度，确保最多两行
+  overflow-y: auto;
+  overflow-x: hidden;
   flex-shrink: 0;
+  align-content: flex-start;
 
   &::-webkit-scrollbar {
+    width: 6px;
     height: 6px;
   }
 
@@ -878,13 +1078,18 @@ onUnmounted(() => {
     background: var(--b3-theme-surface-lighter);
     border-radius: 3px;
   }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
 }
 
 .disk-card {
   display: flex;
   flex-direction: column;
+  width: calc(25% - 6px); // 每行4个，减去gap
   min-width: 120px;
-  max-width: 140px;
+  max-width: 180px;
   padding: 10px;
   border-radius: 8px;
   background: var(--b3-theme-surface);
@@ -949,6 +1154,7 @@ onUnmounted(() => {
   text-overflow: ellipsis;
   margin-bottom: 6px;
   padding: 0 4px;
+  height: 14px; // 固定高度，确保布局一致
 }
 
 .expand-indicator {
@@ -1269,6 +1475,25 @@ onUnmounted(() => {
     background: var(--b3-theme-primary);
     color: white;
     transform: scale(1.1);
+  }
+
+  &.favorite-btn {
+    &.is-favorite {
+      background: var(--b3-theme-primary);
+      color: white;
+
+      &:hover {
+        background: var(--b3-theme-error);
+        color: white;
+      }
+    }
+
+    &:not(.is-favorite) {
+      &:hover {
+        background: var(--b3-theme-primary);
+        color: white;
+      }
+    }
   }
 }
 

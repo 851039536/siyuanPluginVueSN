@@ -6,7 +6,6 @@
       :i18n="(plugin.i18n as any).imageCompressor || {}"
       @close="onCloseImageViewer"
     />
-
     <!-- 二维码对话框 -->
     <QRCodeDialog
       :visible="showQRCodeDialog"

@@ -16,7 +16,7 @@ export function registerDiskBrowser(plugin: Plugin) {
   plugin.addDock({
     config: {
       position: 'RightTop',
-      size: { width: 360, height: 0 },
+      size: { width: 380, height: 0 }, // 增加宽度以适应两行布局
       icon: 'iconFiles',
       title: plugin.i18n.diskBrowser || '本地磁盘',
       show: false,

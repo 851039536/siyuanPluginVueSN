@@ -1,5 +1,6 @@
 import { Plugin } from 'siyuan';
 import { showMessage } from 'siyuan';
+import { encryptVideo, decryptVideo, isEncryptedVideo, getEncryptedFileName } from './crypto';
 
 export function registerVideo(plugin: Plugin) {
   console.log('视频功能模块初始化');
@@ -43,7 +44,7 @@ export async function getVideoStoragePath(): Promise<string> {
 /**
  * 视频文件扩展名
  */
-const VIDEO_EXTENSIONS = ['.mp4', '.webm', '.ogg', '.avi', '.mov', '.wmv', '.flv', '.mkv', '.m4v'];
+const VIDEO_EXTENSIONS = ['.mp4', '.webm', '.ogg', '.avi', '.mov', '.wmv', '.flv', '.mkv', '.m4v', '.sn', '.sn2'];
 
 /**
  * 判断是否为视频文件
@@ -173,6 +174,7 @@ export async function getVideoCategories(plugin: Plugin): Promise<string[]> {
 
 /**
  * 获取视频文件的 Blob URL（用于播放）
+ * 加密视频自动解密
  */
 export async function getVideoUrl(videoPath: string): Promise<string> {
   try {
@@ -188,6 +190,15 @@ export async function getVideoUrl(videoPath: string): Promise<string> {
     
     if (response.ok) {
       const blob = await response.blob();
+      
+      // 检查是否为加密视频，自动解密
+      if (isEncryptedVideo(videoPath)) {
+        const encryptedData = new Uint8Array(await blob.arrayBuffer())
+        const decryptedData = await decryptVideo(encryptedData)
+        const decryptedBlob = new Blob([decryptedData.buffer as ArrayBuffer], { type: 'video/mp4' })
+        return URL.createObjectURL(decryptedBlob)
+      }
+      
       // 创建 Blob URL 用于视频播放
       return URL.createObjectURL(blob);
     } else {
@@ -196,6 +207,220 @@ export async function getVideoUrl(videoPath: string): Promise<string> {
     }
   } catch (error) {
     console.error('获取视频URL失败:', videoPath, error);
-    return '';
+    throw error;
   }
+}
+
+/**
+ * 加密单个视频文件
+ * @param videoPath 视频文件路径
+ * @param doubleCompress 是否使用双重压缩
+ * @returns 加密后的文件路径
+ */
+export async function encryptVideoFile(
+  videoPath: string,
+  doubleCompress: boolean = false
+): Promise<string> {
+  try {
+    // 读取原始视频文件
+    const response = await fetch('/api/file/getFile', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        path: videoPath
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error('读取视频文件失败')
+    }
+    
+    const blob = await response.blob()
+    const videoData = new Uint8Array(await blob.arrayBuffer())
+    
+    // 加密视频（仅压缩）
+    const encryptedData = await encryptVideo(videoData, doubleCompress)
+    
+    // 生成加密文件路径
+    const encryptedPath = getEncryptedFileName(videoPath, doubleCompress)
+    
+    // 保存加密文件
+    const formData = new FormData()
+    formData.append('path', encryptedPath)
+    formData.append('file', new Blob([encryptedData.buffer as ArrayBuffer]))
+    
+    const uploadResponse = await fetch('/api/file/putFile', {
+      method: 'POST',
+      body: formData
+    })
+    
+    if (!uploadResponse.ok) {
+      throw new Error('保存加密文件失败')
+    }
+    
+    // 删除原始文件
+    await deleteVideoFile(videoPath)
+    
+    return encryptedPath
+  } catch (error) {
+    console.error('加密视频文件失败:', error)
+    throw error
+  }
+}
+
+/**
+ * 删除视频文件
+ */
+async function deleteVideoFile(videoPath: string): Promise<void> {
+  try {
+    const response = await fetch('/api/file/removeFile', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        path: videoPath
+      })
+    })
+    
+    if (!response.ok) {
+      console.warn('删除原始文件失败:', videoPath)
+    }
+  } catch (error) {
+    console.error('删除文件异常:', error)
+  }
+}
+
+/**
+ * 批量加密所有未加密的视频
+ * @param doubleCompress 是否使用双重压缩
+ * @param onProgress 进度回调
+ */
+export async function encryptAllVideos(
+  plugin: Plugin,
+  doubleCompress: boolean = false,
+  onProgress?: (current: number, total: number, fileName: string) => void
+): Promise<{ success: number, failed: number, errors: string[] }> {
+  const videos = await getVideoList(plugin)
+  const unencryptedVideos = videos.filter(v => !isEncryptedVideo(v.name))
+  
+  const result = {
+    success: 0,
+    failed: 0,
+    errors: [] as string[]
+  }
+  
+  for (let i = 0; i < unencryptedVideos.length; i++) {
+    const video = unencryptedVideos[i]
+    
+    try {
+      if (onProgress) {
+        onProgress(i + 1, unencryptedVideos.length, video.name)
+      }
+      
+      await encryptVideoFile(video.path, doubleCompress)
+      result.success++
+    } catch (error) {
+      result.failed++
+      result.errors.push(`${video.name}: ${(error as Error).message}`)
+      console.error('加密失败:', video.name, error)
+    }
+  }
+  
+  return result
+}
+
+/**
+ * 解密单个视频文件
+ * @param videoPath 加密视频文件路径
+ * @returns 解密后的文件路径
+ */
+export async function decryptVideoFile(videoPath: string): Promise<string> {
+  try {
+    // 读取加密视频文件
+    const response = await fetch('/api/file/getFile', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        path: videoPath
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error('读取加密文件失败')
+    }
+    
+    const blob = await response.blob()
+    const encryptedData = new Uint8Array(await blob.arrayBuffer())
+    
+    // 解密视频
+    const decryptedData = await decryptVideo(encryptedData)
+    
+    // 生成解密文件路径（去除 .sn 或 .sn2 后缀）
+    const { getOriginalFileName } = await import('./crypto')
+    const decryptedPath = getOriginalFileName(videoPath)
+    
+    // 保存解密文件
+    const formData = new FormData()
+    formData.append('path', decryptedPath)
+    formData.append('file', new Blob([decryptedData.buffer as ArrayBuffer]))
+    
+    const uploadResponse = await fetch('/api/file/putFile', {
+      method: 'POST',
+      body: formData
+    })
+    
+    if (!uploadResponse.ok) {
+      throw new Error('保存解密文件失败')
+    }
+    
+    // 删除加密文件
+    await deleteVideoFile(videoPath)
+    
+    return decryptedPath
+  } catch (error) {
+    console.error('解密视频文件失败:', error)
+    throw error
+  }
+}
+
+/**
+ * 批量解密所有加密的视频
+ * @param onProgress 进度回调
+ */
+export async function decryptAllVideos(
+  plugin: Plugin,
+  onProgress?: (current: number, total: number, fileName: string) => void
+): Promise<{ success: number, failed: number, errors: string[] }> {
+  const videos = await getVideoList(plugin)
+  const encryptedVideos = videos.filter(v => isEncryptedVideo(v.name))
+  
+  const result = {
+    success: 0,
+    failed: 0,
+    errors: [] as string[]
+  }
+  
+  for (let i = 0; i < encryptedVideos.length; i++) {
+    const video = encryptedVideos[i]
+    
+    try {
+      if (onProgress) {
+        onProgress(i + 1, encryptedVideos.length, video.name)
+      }
+      
+      await decryptVideoFile(video.path)
+      result.success++
+    } catch (error) {
+      result.failed++
+      result.errors.push(`${video.name}: ${(error as Error).message}`)
+      console.error('解密失败:', video.name, error)
+    }
+  }
+  
+  return result
 }

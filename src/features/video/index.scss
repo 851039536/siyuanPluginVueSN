@@ -88,6 +88,12 @@
     .toolbar-spacer {
       flex: 1;
     }
+    
+    .toolbar-hint {
+      font-size: 12px;
+      color: var(--b3-theme-on-surface-light);
+      font-style: italic;
+    }
   }
   
   .video-content {
@@ -212,8 +218,13 @@
       }
       
       p {
-        margin: 0;
+        margin: 4px 0;
         font-size: 14px;
+      }
+      
+      .empty-hint {
+        font-size: 12px;
+        opacity: 0.7;
       }
     }
   }
@@ -283,65 +294,24 @@
   }
 }
 
-// 上传区域
-.upload-area {
-  border: 2px dashed var(--b3-border-color);
-  border-radius: var(--b3-border-radius);
-  padding: 40px 20px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    border-color: var(--b3-theme-primary);
-    background: var(--b3-theme-primary-lightest);
-  }
-  
-  .upload-icon {
-    width: 48px;
-    height: 48px;
-    color: var(--b3-theme-primary);
-    margin: 0 auto 16px;
-  }
-  
-  .upload-text {
-    font-size: 14px;
-    color: var(--b3-theme-on-surface);
-    
-    .upload-hint {
-      font-size: 12px;
-      color: var(--b3-theme-on-surface-light);
-      margin-top: 8px;
-    }
-  }
-}
 
-.upload-category {
-  margin-top: 20px;
-  
-  label {
-    display: block;
-    margin-bottom: 8px;
-    font-size: 13px;
-    color: var(--b3-theme-on-surface);
-  }
-  
-  .b3-select {
-    width: 100%;
-  }
-}
 
 // 视频播放器
 .video-player-container {
-  .video-player {
-    width: 100%;
-    max-height: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  
+  .video-js {
+    width: 800px !important;
+    height: 450px !important;
     border-radius: var(--b3-border-radius);
-    background: #000;
+    overflow: hidden;
   }
   
   .video-details {
     margin-top: 16px;
+    width: 100%;
     
     h4 {
       margin: 0 0 8px 0;
@@ -368,44 +338,18 @@
   }
 }
 
-// 分类设置
-.category-settings {
-  .category-list {
-    margin-bottom: 16px;
-    max-height: 300px;
-    overflow-y: auto;
-    
-    .category-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
-      
-      .b3-text-field {
-        flex: 1;
-      }
-      
-      .btn .icon {
-        width: 14px;
-        height: 14px;
-      }
-    }
-  }
-  
-  .category-add {
-    display: flex;
-    gap: 8px;
-    
-    .b3-text-field {
-      flex: 1;
-    }
-    
-    .btn .icon {
-      width: 14px;
-      height: 14px;
+// 响应式调整播放器大小
+@media (max-width: 900px) {
+  .video-player-container {
+    .video-js {
+      width: 100% !important;
+      height: auto !important;
+      aspect-ratio: 16 / 9;
     }
   }
 }
+
+
 
 // 响应式调整
 @media (max-width: 768px) {

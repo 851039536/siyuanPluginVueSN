@@ -18,13 +18,9 @@
       
       <!-- 工具栏 -->
       <div class="video-toolbar">
-        <button class="btn btn-primary" @click="openUploadDialog">
-          <svg class="icon"><use xlink:href="#iconUpload"></use></svg>
-          上传视频
-        </button>
-        <button class="btn" @click="refreshList">
+        <button class="btn btn-primary" @click="refreshList">
           <svg class="icon"><use xlink:href="#iconRefresh"></use></svg>
-          刷新
+          刷新列表
         </button>
         <button class="btn" @click="openVideoFolder">
           <svg class="icon"><use xlink:href="#iconFolder"></use></svg>
@@ -42,10 +38,7 @@
         
         <div class="toolbar-spacer"></div>
         
-        <button class="btn btn-text" @click="openCategorySettings">
-          <svg class="icon"><use xlink:href="#iconSettings"></use></svg>
-          管理分类
-        </button>
+        <span class="toolbar-hint">自动扫描 data/video 目录及子文件夹</span>
       </div>
       
       <!-- 视频列表 -->
@@ -73,9 +66,6 @@
                   <button class="icon-btn" @click.stop="playVideo(video)" title="播放">
                     <svg class="icon"><use xlink:href="#iconPlay"></use></svg>
                   </button>
-                  <button class="icon-btn" @click.stop="deleteVideo(video)" title="删除">
-                    <svg class="icon"><use xlink:href="#iconTrashcan"></use></svg>
-                  </button>
                 </div>
               </div>
             </div>
@@ -85,42 +75,7 @@
         <div class="empty-state" v-else>
           <svg class="empty-icon"><use xlink:href="#iconVideo"></use></svg>
           <p>暂无视频</p>
-        </div>
-      </div>
-    </div>
-  </div>
-  
-  <!-- 上传对话框 -->
-  <div class="dialog-overlay" v-if="uploadDialogVisible" @click="uploadDialogVisible = false">
-    <div class="dialog" @click.stop>
-      <div class="dialog-header">
-        <h3>上传视频</h3>
-        <button class="icon-btn" @click="uploadDialogVisible = false">
-          <svg class="icon"><use xlink:href="#iconClose"></use></svg>
-        </button>
-      </div>
-      <div class="dialog-body">
-        <div class="upload-area" @click="triggerFileInput" @drop.prevent="handleDrop" @dragover.prevent>
-          <input 
-            ref="fileInput" 
-            type="file" 
-            accept="video/*" 
-            style="display: none" 
-            @change="handleFileSelect"
-          />
-          <svg class="upload-icon"><use xlink:href="#iconUpload"></use></svg>
-          <div class="upload-text">
-            <div>点击或拖拽视频文件到此区域</div>
-            <div class="upload-hint">支持 MP4、WebM、OGG 等格式，最大 100MB</div>
-          </div>
-        </div>
-        
-        <div class="upload-category" v-if="categories.length > 0">
-          <label>选择分类（可选）:</label>
-          <select v-model="uploadCategory" class="b3-select">
-            <option value="">默认分类</option>
-            <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-          </select>
+          <p class="empty-hint">请将视频文件放入 data/video 目录</p>
         </div>
       </div>
     </div>
@@ -139,9 +94,7 @@
         <div class="video-player-container">
           <video 
             ref="videoPlayer" 
-            controls 
-            :src="currentVideoUrl" 
-            class="video-player"
+            class="video-js vjs-default-skin vjs-big-play-centered"
           >
             您的浏览器不支持视频播放
           </video>
@@ -150,7 +103,7 @@
             <div class="video-meta">
               <span class="video-category">{{ currentVideo?.category }}</span>
               <span>{{ formatFileSize(currentVideo?.size) }}</span>
-              <span>{{ formatDate(currentVideo?.uploadTime) }}</span>
+              <span>{{ formatDate(currentVideo?.modTime) }}</span>
             </div>
           </div>
         </div>
@@ -158,59 +111,26 @@
     </div>
   </div>
   
-  <!-- 分类设置对话框 -->
-  <div class="dialog-overlay" v-if="categoryDialogVisible" @click="categoryDialogVisible = false">
-    <div class="dialog" @click.stop>
-      <div class="dialog-header">
-        <h3>管理视频分类</h3>
-        <button class="icon-btn" @click="categoryDialogVisible = false">
-          <svg class="icon"><use xlink:href="#iconClose"></use></svg>
-        </button>
-      </div>
-      <div class="dialog-body">
-        <div class="category-settings">
-          <div class="category-list">
-            <div 
-              v-for="(_cat, index) in categories" 
-              :key="index" 
-              class="category-item"
-            >
-              <input v-model="categories[index]" class="b3-text-field" placeholder="分类名称" />
-              <button class="btn btn-text" @click="removeCategory(index)">
-                <svg class="icon"><use xlink:href="#iconTrashcan"></use></svg>
-              </button>
-            </div>
-          </div>
-          
-          <div class="category-add">
-            <input 
-              v-model="newCategory" 
-              class="b3-text-field" 
-              placeholder="新分类名称" 
-              @keyup.enter="addCategory"
-            />
-            <button class="btn btn-primary" @click="addCategory">添加</button>
-          </div>
-        </div>
-      </div>
-      <div class="dialog-footer">
-        <button class="btn" @click="categoryDialogVisible = false">取消</button>
-        <button class="btn btn-primary" @click="saveCategories">保存</button>
-      </div>
-    </div>
-  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch, onBeforeUnmount } from 'vue'
 import { showMessage } from 'siyuan'
-import { getVideoCategories, saveVideoCategories, uploadVideoFile, getVideoList } from './index'
+import videojs from 'video.js'
+import type Player from 'video.js/dist/types/player'
+import 'video.js/dist/video-js.css'
+import { 
+  getVideoCategories, 
+  getVideoList,
+  getVideoUrl,
+  getVideoStoragePath
+} from './index'
 import { usePlugin } from '@/main'
 
 const plugin = usePlugin()
 
 // Props
-defineProps<{
+const props = defineProps<{
   visible: boolean
 }>()
 
@@ -223,15 +143,12 @@ const emit = defineEmits<{
 const videos = ref<any[]>([])
 const categories = ref<string[]>([])
 const selectedCategory = ref('')
-const uploadDialogVisible = ref(false)
 const playerVisible = ref(false)
-const categoryDialogVisible = ref(false)
 const currentVideo = ref<any>(null)
 const currentVideoUrl = ref('')
-const uploadCategory = ref('')
-const newCategory = ref('')
-const fileInput = ref<HTMLInputElement>()
+const storagePath = ref('data/video')
 const videoPlayer = ref<HTMLVideoElement>()
+let player: Player | null = null
 
 // 计算属性
 const filteredVideos = computed(() => {
@@ -239,10 +156,26 @@ const filteredVideos = computed(() => {
   return videos.value.filter(video => video.category === selectedCategory.value)
 })
 
+// 监听 visible 变化，自动刷新列表
+watch(() => props.visible, async (newVal) => {
+  if (newVal) {
+    await loadVideos()
+    await loadCategories()
+  }
+})
+
 // 生命周期
 onMounted(async () => {
-  await loadCategories()
+  storagePath.value = await getVideoStoragePath()
   await loadVideos()
+  await loadCategories()
+})
+
+onBeforeUnmount(() => {
+  if (player) {
+    player.dispose()
+    player = null
+  }
 })
 
 // 方法
@@ -251,36 +184,30 @@ function onClose() {
 }
 
 async function loadCategories() {
-  categories.value = await getVideoCategories()
+  categories.value = await getVideoCategories(plugin)
 }
 
 async function loadVideos() {
   videos.value = await getVideoList(plugin)
+  console.log('已加载视频列表:', videos.value.length, '个')
 }
 
-function openUploadDialog() {
-  uploadDialogVisible.value = true
-  uploadCategory.value = ''
-}
-
-function refreshList() {
-  loadVideos()
-  showMessage('视频列表已刷新', 2000, 'info')
+async function refreshList() {
+  showMessage('正在扫描视频文件...', 0, 'info')
+  await loadVideos()
+  await loadCategories()
+  showMessage(`扫描完成，找到 ${videos.value.length} 个视频`, 2000, 'info')
 }
 
 async function openVideoFolder() {
-  // 打开视频文件夹
-  // 根据实际测试，视频文件存储在 workspace/data/video
-  const relativePath = 'data/video'
-  
-  showMessage(`视频文件夹: ${relativePath}`, 3000, 'info')
+  showMessage(`视频文件夹: ${storagePath.value}`, 3000, 'info')
   
   // 如果是桌面端，尝试打开文件夹
   if (window.require) {
     try {
       const { shell } = window.require('electron')
       
-      // 尝试通过思源API获取工作空间路径
+      // 获取工作空间路径
       const response = await fetch('/api/system/getConf', {
         method: 'POST'
       })
@@ -290,7 +217,7 @@ async function openVideoFolder() {
         const workspacePath = data?.data?.conf?.system?.workspaceDir
         
         if (workspacePath) {
-          const fullPath = `${workspacePath}/${relativePath}`
+          const fullPath = `${workspacePath}/${storagePath.value}`
           const result = await shell.openPath(fullPath)
           
           if (result) {
@@ -312,82 +239,77 @@ async function openVideoFolder() {
   }
 }
 
-function openCategorySettings() {
-  categoryDialogVisible.value = true
-}
-
-function triggerFileInput() {
-  fileInput.value?.click()
-}
-
-function handleFileSelect(event: Event) {
-  const target = event.target as HTMLInputElement
-  const file = target.files?.[0]
-  if (file) {
-    handleFileUpload(file)
+async function playVideo(video: any) {
+  currentVideo.value = video
+  currentVideoUrl.value = await getVideoUrl(video.path)
+  
+  if (currentVideoUrl.value) {
+    console.log('播放视频:', video.name)
+    playerVisible.value = true
+    
+    // 等待 DOM 更新后初始化 video.js
+    await new Promise(resolve => setTimeout(resolve, 100))
+    initVideoPlayer()
+  } else {
+    showMessage('视频加载失败', 3000, 'error')
   }
 }
 
-function handleDrop(event: DragEvent) {
-  const file = event.dataTransfer?.files[0]
-  if (file) {
-    handleFileUpload(file)
-  }
-}
-
-async function handleFileUpload(file: File) {
-  const isVideo = file.type.startsWith('video/')
-  const isLt100M = file.size / 1024 / 1024 < 100
-
-  if (!isVideo) {
-    showMessage('只能上传视频文件！', 3000, 'error')
-    return
-  }
-  if (!isLt100M) {
-    showMessage('视频大小不能超过 100MB！', 3000, 'error')
-    return
+function initVideoPlayer() {
+  if (!videoPlayer.value) return
+  
+  // 销毁旧的播放器实例
+  if (player) {
+    player.dispose()
+    player = null
   }
   
-  try {
-    const result = await uploadVideoFile(plugin, file, uploadCategory.value || undefined)
-    
-    if (result.success) {
-      showMessage('视频上传成功！', 2000, 'info')
-      await loadVideos()
-      uploadDialogVisible.value = false
-    } else {
-      showMessage(`上传失败: ${result.error}`, 3000, 'error')
+  // 初始化 video.js 播放器
+  player = videojs(videoPlayer.value, {
+    controls: true,
+    autoplay: false,
+    preload: 'auto',
+    fluid: false,
+    width: 800,
+    height: 450,
+    playbackRates: [0.5, 1, 1.5, 2],
+    controlBar: {
+      children: [
+        'playToggle',
+        'volumePanel',
+        'currentTimeDisplay',
+        'timeDivider',
+        'durationDisplay',
+        'progressControl',
+        'playbackRateMenuButton',
+        'pictureInPictureToggle',
+        'fullscreenToggle'
+      ]
     }
-  } catch (error) {
-    console.error('上传出错:', error)
-    showMessage('上传过程中出现错误', 3000, 'error')
-  }
-}
-
-function playVideo(video: any) {
-  currentVideo.value = video
-  // 生成视频URL（这里需要根据实际存储方式调整）
-  currentVideoUrl.value = `siyuan://${video.path}`
-  playerVisible.value = true
+  })
+  
+  // 设置视频源
+  player.src({
+    src: currentVideoUrl.value,
+    type: 'video/mp4'
+  })
 }
 
 function closePlayer() {
-  if (videoPlayer.value) {
-    videoPlayer.value.pause()
+  // 销毁播放器
+  if (player) {
+    player.dispose()
+    player = null
   }
+  
+  // 释放 Blob URL 以避免内存泄漏
+  if (currentVideoUrl.value && currentVideoUrl.value.startsWith('blob:')) {
+    URL.revokeObjectURL(currentVideoUrl.value)
+  }
+  
   currentVideo.value = null
   currentVideoUrl.value = ''
   playerVisible.value = false
-}
-
-async function deleteVideo(video: any) {
-  if (!confirm(`确定要删除视频 "${video.name}" 吗？此操作不可恢复。`)) {
-    return
-  }
-  
-  // TODO: 实现删除视频文件的逻辑
-  showMessage('视频已删除', 2000, 'info')
-  await loadVideos()
 }
 
 function formatFileSize(bytes?: number) {
@@ -404,31 +326,11 @@ function formatFileSize(bytes?: number) {
   return `${size.toFixed(1)} ${units[unitIndex]}`
 }
 
-function formatDate(dateString?: string) {
-  if (!dateString) return ''
-  return new Date(dateString).toLocaleDateString()
+function formatDate(timestamp?: number) {
+  if (!timestamp) return ''
+  return new Date(timestamp).toLocaleDateString()
 }
 
-function addCategory() {
-  if (newCategory.value.trim()) {
-    categories.value.push(newCategory.value.trim())
-    newCategory.value = ''
-  }
-}
-
-function removeCategory(index: number) {
-  categories.value.splice(index, 1)
-}
-
-async function saveCategories() {
-  try {
-    await saveVideoCategories(categories.value)
-    showMessage('分类设置已保存', 2000, 'info')
-    categoryDialogVisible.value = false
-  } catch (error) {
-    showMessage('保存失败', 3000, 'error')
-  }
-}
 </script>
 
 <style scoped lang="scss">

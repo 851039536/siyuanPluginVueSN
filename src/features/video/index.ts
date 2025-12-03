@@ -34,112 +34,168 @@ export function openVideoManager(_plugin: Plugin) {
 }
 
 /**
- * 获取视频分类选项
+ * 获取视频存储目录路径（默认为 data/video）
  */
-export async function getVideoCategories(): Promise<string[]> {
-  // 从 localStorage 读取，如果没有则返回默认值
-  try {
-    const saved = localStorage.getItem('video-categories')
-    if (saved) {
-      return JSON.parse(saved)
-    }
-  } catch (error) {
-    console.error('读取视频分类失败:', error)
-  }
-  return ['默认分类', '教程', '演示', '其他']
+export async function getVideoStoragePath(): Promise<string> {
+  return 'data/video';
 }
 
 /**
- * 保存视频分类选项
+ * 视频文件扩展名
  */
-export async function saveVideoCategories(categories: string[]): Promise<void> {
-  try {
-    localStorage.setItem('video-categories', JSON.stringify(categories))
-  } catch (error) {
-    console.error('保存视频分类失败:', error)
-    throw error
-  }
+const VIDEO_EXTENSIONS = ['.mp4', '.webm', '.ogg', '.avi', '.mov', '.wmv', '.flv', '.mkv', '.m4v'];
+
+/**
+ * 判断是否为视频文件
+ */
+function isVideoFile(fileName: string): boolean {
+  const lowerName = fileName.toLowerCase();
+  return VIDEO_EXTENSIONS.some(ext => lowerName.endsWith(ext));
 }
 
 /**
- * 上传视频文件到data/video目录
+ * 获取文件大小
  */
-export async function uploadVideoFile(
-  plugin: Plugin,
-  file: File,
-  category?: string
-): Promise<{ success: boolean; path?: string; error?: string }> {
+async function getFileSize(filePath: string): Promise<number> {
   try {
-    // 生成文件名
-    const timestamp = Date.now();
-    const fileName = `${timestamp}_${file.name.replace(/[^\w\d.-]/g, '_')}`;
-    const filePath = `video/${fileName}`;
-    
-    // 读取文件内容
-    const reader = new FileReader();
-    return new Promise((resolve) => {
-      reader.onload = async (e) => {
-        try {
-          const content = e.target?.result as ArrayBuffer;
-          // 保存文件到插件数据目录
-          // 注意：plugin.saveData 只接受 2 个参数
-          await plugin.saveData(filePath, content);
-          
-          // 保存视频元数据
-          const metadata = {
-            name: file.name,
-            path: filePath,
-            category: category || '默认分类',
-            size: file.size,
-            type: file.type,
-            uploadTime: new Date().toISOString()
-          };
-          
-          const metadataPath = 'video/metadata.json';
-          let metadataList = [];
-          try {
-            const existing = await plugin.loadData(metadataPath);
-            if (existing) {
-              metadataList = JSON.parse(existing);
-            }
-          } catch (e) {
-            // 文件不存在或解析失败，创建新列表
-          }
-          
-          metadataList.push(metadata);
-          await plugin.saveData(metadataPath, JSON.stringify(metadataList, null, 2));
-          
-          resolve({ success: true, path: filePath });
-        } catch (error) {
-          console.error('视频上传失败:', error);
-          resolve({ success: false, error: '文件保存失败' });
-        }
-      };
-      
-      reader.onerror = () => {
-        resolve({ success: false, error: '文件读取失败' });
-      };
-      
-      reader.readAsArrayBuffer(file);
+    const response = await fetch('/api/file/getFile', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        path: filePath
+      })
     });
+    
+    if (response.ok) {
+      const blob = await response.blob();
+      return blob.size;
+    } else {
+      console.warn('获取文件大小失败:', filePath, response.status);
+    }
   } catch (error) {
-    console.error('视频上传失败:', error);
-    return { success: false, error: '上传过程出错' };
+    console.error('获取文件大小异常:', filePath, error);
+  }
+  return 0;
+}
+
+/**
+ * 递归扫描目录获取所有视频文件
+ */
+async function scanVideoDirectory(basePath: string, currentPath: string = ''): Promise<any[]> {
+  const videos: any[] = [];
+  const fullPath = currentPath ? `${basePath}/${currentPath}` : basePath;
+  
+  try {
+    // 读取目录内容
+    const response = await fetch('/api/file/readDir', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        path: fullPath
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (result.code !== 0 || !result.data) {
+      console.log('目录不存在或为空:', fullPath);
+      return videos;
+    }
+    
+    // 遍历目录内容
+    for (const item of result.data) {
+      const itemPath = currentPath ? `${currentPath}/${item.name}` : item.name;
+      const itemFullPath = `${basePath}/${itemPath}`;
+      
+      if (item.isDir) {
+        // 递归扫描子目录
+        const subVideos = await scanVideoDirectory(basePath, itemPath);
+        videos.push(...subVideos);
+      } else if (isVideoFile(item.name)) {
+        // 获取文件大小
+        const size = await getFileSize(itemFullPath);
+        
+        // 添加视频文件
+        const category = currentPath || '根目录';
+        videos.push({
+          name: item.name,
+          path: itemFullPath,
+          category: category,
+          size: size,
+          modTime: item.updated * 1000 || Date.now() // updated 是秒级时间戳，转换为毫秒
+        });
+      }
+    }
+  } catch (error) {
+    console.error('扫描目录失败:', fullPath, error);
+  }
+  
+  return videos;
+}
+
+/**
+ * 获取视频列表（自动扫描 data/video 目录）
+ */
+export async function getVideoList(_plugin: Plugin): Promise<any[]> {
+  try {
+    const storagePath = await getVideoStoragePath();
+    console.log('开始扫描视频目录:', storagePath);
+    
+    const videos = await scanVideoDirectory(storagePath);
+    console.log('扫描完成，找到', videos.length, '个视频文件');
+    
+    return videos;
+  } catch (error) {
+    console.error('获取视频列表失败:', error);
+    return [];
   }
 }
 
 /**
- * 获取视频列表
+ * 获取所有分类（从扫描结果中提取）
  */
-export async function getVideoList(plugin: Plugin): Promise<any[]> {
-  try {
-    const metadataPath = 'video/metadata.json';
-    const metadata = await plugin.loadData(metadataPath);
-    if (metadata) {
-      return JSON.parse(metadata);
+export async function getVideoCategories(plugin: Plugin): Promise<string[]> {
+  const videos = await getVideoList(plugin);
+  const categories = new Set<string>();
+  
+  videos.forEach(video => {
+    if (video.category) {
+      categories.add(video.category);
     }
-    return [];
+  });
+  
+  return Array.from(categories).sort();
+}
+
+/**
+ * 获取视频文件的 Blob URL（用于播放）
+ */
+export async function getVideoUrl(videoPath: string): Promise<string> {
+  try {
+    const response = await fetch('/api/file/getFile', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        path: videoPath
+      })
+    });
+    
+    if (response.ok) {
+      const blob = await response.blob();
+      // 创建 Blob URL 用于视频播放
+      return URL.createObjectURL(blob);
+    } else {
+      console.error('获取视频文件失败:', videoPath, response.status);
+      return '';
+    }
   } catch (error) {
-    return [];
+    console.error('获取视频URL失败:', videoPath, error);
+    return '';
   }
 }

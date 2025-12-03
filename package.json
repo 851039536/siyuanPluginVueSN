@@ -18,11 +18,13 @@
   },
   "dependencies": {
     "@iconify/vue": "^5.0.0",
+    "@types/video.js": "^7.3.58",
     "browser-image-compression": "^2.0.2",
     "highlight.js": "^11.9.0",
     "html2canvas": "^1.4.1",
     "marked": "^17.0.1",
     "qrcode": "^1.5.4",
+    "video.js": "^8.23.4",
     "vue": "^3.3.8"
   },
   "devDependencies": {

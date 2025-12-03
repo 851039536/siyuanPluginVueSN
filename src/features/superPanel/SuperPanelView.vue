@@ -418,6 +418,16 @@ const features = computed<Feature[]>(() => [
     desc: props.i18n.enableEncryptionDesc || '使用 AES-256-GCM 算法对选中文本进行加密和解密',
     enabled: props.settings.enableEncryption,
     actions: []
+  },
+  {
+    id: 'video',
+    iconKey: 'video',
+    title: props.i18n.videoManager || '视频管理器',
+    desc: props.i18n.videoManagerDesc || '管理和播放文档中的视频文件',
+    enabled: props.settings.enableVideo,
+    actions: [
+      { key: 'openVideoManager', label: '打开管理器', hotkey: 'Ctrl+Alt+V' }
+    ]
   }
 ])
 

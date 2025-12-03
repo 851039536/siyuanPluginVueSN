@@ -22,6 +22,8 @@ export interface PluginSettings {
   enableStatistics: boolean      // 是否启用数据统计功能
   enablePronunciation: boolean   // 是否启用谐音翻译功能
   enableEncryption: boolean      // 是否启用内容加密功能
+  enableVideo: boolean           // 是否启用视频管理器功能
+  videoCategories?: string[]     // 视频分类列表
   wordQueryApiKey: string        // 单词查询API密钥（已废弃，使用aiApiProvider和aiApiKey）
   compactMode: boolean           // 是否启用全局紧洛模式
   // 统一的大模型API配置
@@ -80,6 +82,8 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enableStatistics: true,
   enablePronunciation: true,
   enableEncryption: true,
+  enableVideo: true,
+  videoCategories: ['默认分类', '教程', '演示', '其他'],
   wordQueryApiKey: 'sk-fae27cc50015409fb2524b0970d3f0b0',
   compactMode: true,
   // 统一的大模型API配置默认值

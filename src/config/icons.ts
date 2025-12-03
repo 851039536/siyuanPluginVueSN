@@ -120,6 +120,12 @@ export const FEATURE_ICONS = {
   encryption: {
     icon: 'mdi:lock',
     color: '#dc2626'
+  },
+
+  // 视频管理器
+  video: {
+    icon: 'mdi:video',
+    color: '#e11d48'
   }
 } as const
 

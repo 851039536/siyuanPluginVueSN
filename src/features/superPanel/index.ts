@@ -147,7 +147,9 @@ async function handleFeatureToggle(plugin: Plugin, featureId: string, enabled: b
     'codeImageGenerator': 'enableCodeImageGenerator',
     'aiContentGenerator': 'enableAIContentGenerator',
     'statistics': 'enableStatistics',
-    'pronunciation': 'enablePronunciation'
+    'pronunciation': 'enablePronunciation',
+    'encryption': 'enableEncryption',
+    'video': 'enableVideo'
   }
 
   const settingKey = settingsMap[featureId]
@@ -205,6 +207,12 @@ function handleFeatureAction(_plugin: Plugin, action: string) {
     case 'openCompressor':
       // 触发打开图片压缩器
       window.dispatchEvent(new CustomEvent('openImageCompressor'))
+      closeSuperPanel()
+      break
+
+    case 'openVideoManager':
+      // 触发打开视频管理器
+      window.dispatchEvent(new CustomEvent('openVideoManager'))
       closeSuperPanel()
       break
 

@@ -15,6 +15,12 @@
       @update:visible="onQRCodeDialogVisibleChange"
       @close="onCloseQRCodeDialog"
     />
+
+    <!-- 视频管理器 -->
+    <VideoManager
+      :visible="showVideoManager"
+      @close="onCloseVideoManager"
+    />
   </div>
 </template>
 
@@ -23,11 +29,13 @@ import { usePlugin } from '@/main'
 import { onMounted, ref, watchEffect } from 'vue'
 import ImageViewer from '@/features/imageCompressor/ImageViewer.vue'
 import QRCodeDialog from '@/features/qrCode/QRCodeDialog.vue'
+import VideoManager from '@/features/video/VideoManager.vue'
 import type PluginSample from '@/index'
 
 const plugin = usePlugin() as PluginSample
 const showImageViewer = ref(false)
 const showQRCodeDialog = ref(false)
+const showVideoManager = ref(false)
 const qrcodeContent = ref('')
 
 console.log('plugin is ', plugin)
@@ -49,6 +57,15 @@ const onQRCodeDialogVisibleChange = (visible: boolean) => {
 
 const onCloseQRCodeDialog = () => {
   showQRCodeDialog.value = false
+}
+
+// 视频管理器控制
+const openVideoManager = () => {
+  showVideoManager.value = true
+}
+
+const onCloseVideoManager = () => {
+  showVideoManager.value = false
 }
 
 // 公开方法，纲projuct可以通过事件打开二维码对话框
@@ -109,6 +126,9 @@ onMounted(() => {
 
   // 监听打开图片压缩器事件
   window.addEventListener('openImageCompressor', openImageCompressor)
+
+  // 监听打开视频管理器事件
+  window.addEventListener('openVideoManager', openVideoManager)
 })
 </script>
 

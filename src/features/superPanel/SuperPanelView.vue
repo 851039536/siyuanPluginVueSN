@@ -755,4 +755,111 @@ const handleFeatureToggle = (featureId: string, enabled: boolean) => {
   opacity: 0.7;
   line-height: 1.4;
 }
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .super-panel-container {
+    width: 100vw;
+    right: 0;
+  }
+  
+  .super-panel-header {
+    padding: 12px 16px;
+  }
+  
+  .super-panel-title {
+    font-size: 14px;
+    gap: 8px;
+  }
+  
+  .super-panel-settings,
+  .super-panel-refresh,
+  .super-panel-close {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .super-panel-content {
+    grid-template-columns: 1fr;
+    padding: 12px;
+    gap: 10px;
+  }
+  
+  .ai-settings-header {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+  
+  .ai-settings-content {
+    padding: 12px;
+    gap: 12px;
+  }
+  
+  .setting-label {
+    font-size: 12px;
+  }
+  
+  .setting-select,
+  .setting-input {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  
+  .setting-select {
+    padding-right: 32px;
+  }
+  
+  .toggle-visibility-btn {
+    padding: 6px 10px;
+  }
+  
+  .setting-desc {
+    font-size: 11px;
+  }
+}
+
+/* 小屏幕优化 */
+@media (max-width: 480px) {
+  .super-panel-header {
+    padding: 10px 12px;
+  }
+  
+  .super-panel-title {
+    font-size: 13px;
+    gap: 6px;
+    
+    span {
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+  
+  .header-actions {
+    gap: 4px;
+  }
+  
+  .super-panel-settings,
+  .super-panel-refresh,
+  .super-panel-close {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .super-panel-content {
+    padding: 8px;
+    gap: 8px;
+  }
+  
+  .ai-settings-header {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+  
+  .ai-settings-content {
+    padding: 10px;
+    gap: 10px;
+  }
+}
 </style>

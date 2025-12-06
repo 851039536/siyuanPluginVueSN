@@ -611,5 +611,8 @@
   "savingToArchive": "Saving to AI Archive...",
   "saveToArchiveSuccess": "Saved to AI Archive",
   "saveToArchiveFailed": "Failed to save to AI Archive",
-  "aiQuery": "AI Query"
+  "aiQuery": "AI Query",
+  "toggleTheme": "Toggle Theme",
+  "defaultTheme": "Default",
+  "githubTheme": "GitHub"
 }

@@ -26,6 +26,7 @@ export interface PluginSettings {
   videoCategories?: string[]     // 视频分类列表
   wordQueryApiKey: string        // 单词查询API密钥（已废弃，使用aiApiProvider和aiApiKey）
   compactMode: boolean           // 是否启用全局紧洛模式
+  statisticsTheme: 'default' | 'github'  // 统计面板主题风格
   // 统一的大模型API配置
   aiApiProvider: string          // AI API供应商: 'tongyi' | 'openai' | 'deepseek' | 'custom'
   aiApiKey: string               // AI API密钥
@@ -86,6 +87,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   videoCategories: ['默认分类', '教程', '演示', '其他'],
   wordQueryApiKey: 'sk-fae27cc50015409fb2524b0970d3f0b0',
   compactMode: true,
+  statisticsTheme: 'default',
   // 统一的大模型API配置默认值
   aiApiProvider: 'tongyi',
   aiApiKey: 'sk-fae27cc50015409fb2524b0970d3f0b0',

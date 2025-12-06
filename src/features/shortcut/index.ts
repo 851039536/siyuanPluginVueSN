@@ -26,6 +26,9 @@ export async function registerShortcut(plugin: Plugin) {
   // 添加Claude Code快捷键
   await manager.addShortcuts(getClaudeShortcuts())
 
+  // 添加OpenSpec快捷键
+  await manager.addShortcuts(getOpenSpecShortcuts())
+
   // 加载自定义快捷键从数据库
   const customShortcuts = await loadCustomShortcuts(plugin)
   if (customShortcuts.length > 0) {
@@ -492,6 +495,64 @@ function getClaudeShortcuts(): ShortcutInfo[] {
       keys: 'Tab',
       category: 'claude',
       group: '快捷键'
+    }
+  ]
+}
+
+/**
+ * 获取 OpenSpec 的快捷键
+ */
+function getOpenSpecShortcuts(): ShortcutInfo[] {
+  return [
+    // 核心命令
+    {
+      id: 'openspec_proposal',
+      name: '创建变更提案',
+      description: '创建新的 OpenSpec 变更提案',
+      keys: '/openspec:proposal',
+      category: 'openspec',
+      group: '核心命令'
+    },
+    {
+      id: 'openspec_apply',
+      name: '应用变更',
+      description: '应用已批准的 OpenSpec 变更',
+      keys: '/openspec:apply',
+      category: 'openspec',
+      group: '核心命令'
+    },
+    {
+      id: 'openspec_archive',
+      name: '归档变更',
+      description: '归档已部署的 OpenSpec 变更',
+      keys: '/openspec:archive',
+      category: 'openspec',
+      group: '核心命令'
+    },
+    // 辅助命令
+    {
+      id: 'openspec_validate',
+      name: '验证变更',
+      description: '验证 OpenSpec 变更的正确性',
+      keys: 'openspec validate',
+      category: 'openspec',
+      group: '辅助命令'
+    },
+    {
+      id: 'openspec_list',
+      name: '列出变更',
+      description: '列出所有 OpenSpec 变更',
+      keys: 'openspec list',
+      category: 'openspec',
+      group: '辅助命令'
+    },
+    {
+      id: 'openspec_show',
+      name: '显示详情',
+      description: '显示 OpenSpec 变更或规范的详细信息',
+      keys: 'openspec show',
+      category: 'openspec',
+      group: '辅助命令'
     }
   ]
 }

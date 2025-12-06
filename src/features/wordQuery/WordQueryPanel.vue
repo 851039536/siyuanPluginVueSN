@@ -3,15 +3,15 @@
     <!-- 顶部操作栏 -->
     <div class="query-header">
       <div class="mode-tabs">
-        <button 
-          class="mode-tab" 
+        <button
+          class="mode-tab"
           :class="{ active: currentMode === 'word' }"
           @click="switchMode('word')"
         >
           📖 {{ i18n.wordQuery || '单词查询' }}
         </button>
-        <button 
-          class="mode-tab" 
+        <button
+          class="mode-tab"
           :class="{ active: currentMode === 'translate' }"
           @click="switchMode('translate')"
         >
@@ -256,7 +256,7 @@
           <textarea
             v-model="translateText"
             class="translate-textarea"
-            :placeholder="i18n.enterTextToTranslate || '输入要翻译的文本...'"
+            :placeholder="i18n.enterTextToTranslate || '输入要翻译的文本，2秒后自动翻译...'"
             rows="8"
           ></textarea>
           <div class="input-actions">
@@ -362,6 +362,7 @@ const translateResult = ref('');
 const isTranslating = ref(false);
 const sourceLanguage = ref('auto');
 const targetLanguage = ref('zh');
+const autoTranslateTimer = ref<NodeJS.Timeout | null>(null);
 
 // 新增功能状态
 const showHistory = ref(false);
@@ -766,6 +767,24 @@ const setupAutoQuery = () => {
   }
 };
 
+// 自动翻译函数
+const setupAutoTranslate = () => {
+  // 清除之前的定时器
+  if (autoTranslateTimer.value) {
+    clearTimeout(autoTranslateTimer.value);
+    autoTranslateTimer.value = null;
+  }
+
+  const text = translateText.value.trim();
+  // 检查是否有内容且不在翻译中
+  if (text && !isTranslating.value) {
+    // 设置2秒后自动翻译
+    autoTranslateTimer.value = setTimeout(() => {
+      handleTranslate();
+    }, 2000);
+  }
+};
+
 // 切换复制选项显示
 const toggleCopyOptions = () => {
   showCopyOptions.value = !showCopyOptions.value;
@@ -874,7 +893,7 @@ const swapLanguages = () => {
   const temp = sourceLanguage.value;
   sourceLanguage.value = targetLanguage.value;
   targetLanguage.value = temp;
-  
+
   // 交换文本
   const tempText = translateText.value;
   translateText.value = translateResult.value;
@@ -940,6 +959,11 @@ watch(searchWord, () => {
   setupAutoQuery();
 });
 
+// 监听翻译文本变化，自动设置定时器
+watch(translateText, () => {
+  setupAutoTranslate();
+});
+
 // 监听高级选项变化
 watch([pronunciationType, autoPlayPronunciation, showRelatedWords], () => {
   saveAdvancedOptions();
@@ -961,6 +985,9 @@ onUnmounted(() => {
   // 清除定时器
   if (autoQueryTimer.value) {
     clearTimeout(autoQueryTimer.value);
+  }
+  if (autoTranslateTimer.value) {
+    clearTimeout(autoTranslateTimer.value);
   }
 });
 </script>

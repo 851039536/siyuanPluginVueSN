@@ -1,3 +1,7 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 <!-- OPENSPEC:START -->
 # OpenSpec Instructions
 
@@ -17,159 +21,114 @@ Keep this managed block so 'openspec update' can refresh the instructions.
 
 <!-- OPENSPEC:END -->
 
-一个基于Vue 3 + Vite + TypeScript构建的思源笔记插件开发模板项目。我需要更新README文件以包含实际的构建命令。
+## 项目概述
 
+这是一个基于 Vue 3 + Vite + TypeScript 构建的思源笔记插件开发模板项目。项目采用模块化功能架构，每个功能都是独立的模块，可以单独启用或禁用。
 
+## 开发命令
 
-## 任何项目都务必遵守的规则
-
-### Communication
-
-- 永远使用简体中文进行思考和对话
-
-### Documentation
-
-- 编写 .md 文档时，也要用中文
-- 正式文档写到项目的 docs/ 目录下
-- 用于讨论和评审的计划、方案等文档，写到项目的 discuss/ 目录下
-
-
-
-## 项目特性
-
-- Vue 3.3.8 作为前端框架
-- Vite 6.2.1 作为构建工具
-- TypeScript 5.0.4 提供类型支持
-- ESLint 9.22.0 进行代码规范检查
-- 多语言支持 (中文/英文)
-- 模块化功能架构
-
-## 实际可用的构建命令
-
-基于`package.json`中的scripts配置，以下命令是实际可用的：
-
-
-
-### 开发模式
-
+### 开发环境
 ```bash
 npm run dev          # 启动开发服务器，支持热重载
-npm run build        # 构建生产版本
+```
+
+### 构建命令
+```bash
+npm run build        # 构建生产版本到 ./dist 目录
 ```
 
 ### 发布相关
-
 ```bash
-npm run release              # 自动发布
+npm run release              # 自动发布（根据更改类型选择版本）
 npm run release:manual       # 手动发布
-npm run release:patch        # 补丁版本发布
-npm run release:minor        # 次版本发布
-npm run release:major        # 主版本发布
+npm run release:patch        # 补丁版本发布 (0.0.1 -> 0.0.2)
+npm run release:minor        # 次版本发布 (0.0.1 -> 0.1.0)
+npm run release:major        # 主版本发布 (0.0.1 -> 1.0.0)
 ```
 
 ### 代码质量
-
 ```bash
-npm run lint         # 运行ESLint检查
+npm run lint         # 运行 ESLint 检查
 ```
 
-## 项目结构
+## 核心架构
 
-```
-siyuan-plugin-vite-vue-sn/
-├── src/
-│   ├── components/           # Vue组件
-│   │   ├── SiyuanTheme/     # 思源主题风格组件
-│   │   │   └── SyTextarea.vue
-│   │   └── SettingPanel.vue  # 设置面板组件
-│   ├── config/              # 配置管理
-│   │   └── settings.ts      # 插件配置定义与存储
-│   ├── features/            # 功能模块
-│   │   ├── pageLock/       # 页面锁定功能
-│   │   ├── tableOfContents/ # 目录功能
-│   │   ├── wordCount/      # 字数统计
-│   │   ├── superPanel/     # 超级面板
-│   │   └── [其他功能模块]
-│   ├── i18n/               # 国际化
-│   │   ├── en_US.json      # 英文语言包
-│   │   └── zh_CN.json      # 中文语言包
-│   ├── types/              # TypeScript类型定义
-│   ├── utils/              # 工具函数
-│   ├── App.vue             # 主应用组件
-│   ├── api.ts              # API封装
-│   ├── index.ts            # 插件入口
-│   └── main.ts             # Vue应用初始化
-├── plugin.json             # 插件元数据
-├── vite.config.ts          # Vite构建配置
-├── tsconfig.json           # TypeScript配置
-├── package.json            # 项目配置和依赖
-└── README.md               # 项目文档
-```
+### 插件入口点
+- **src/index.ts**: 插件主类，继承自 SiYuan 的 Plugin 类
+- **src/main.ts**: Vue 应用初始化
+- **plugin.json**: 插件元数据配置
 
-## 核心技术栈
+### 功能模块系统
+所有功能模块位于 `src/features/` 目录下，每个模块都是独立的：
+- 每个功能有自己的文件夹，包含 Vue 组件、TypeScript 文件等
+- 通过 `src/features/index.ts` 统一导出所有功能
+- 功能在插件主类中根据配置动态注册
+- 新功能必须在 SuperPanelView.vue 超级面板添加功能开关
 
-- **前端框架**: Vue 3.3.8
-- **构建工具**: Vite 6.2.1
-- **语言**: TypeScript 5.0.4
-- **样式**: Sass 1.62.1
-- **代码规范**: ESLint 9.22.0
-- **图标**: @iconify/vue 5.0.0
-- **思源笔记**: 版本 1.1.0
+### 主要功能模块
+- **pageLock**: 页面加密锁定
+- **tableOfContents**: 文档目录导航
+- **imageCompressor**: 图片压缩工具
+- **superPanel**: 超级面板（核心功能聚合）
+- **aiContentGenerator**: AI 内容生成
+- **generalSettings**: 通用设置（字体、列表、代码块样式等）
+- **video**: 视频管理器
+- 其他功能模块...
 
-## 开发指南
+### 配置管理
+- **src/config/settings.ts**: 定义所有插件配置接口
+- 使用 SiYuan 的 `plugin.loadData()` 和 `plugin.saveData()` 进行持久化
+- 每个功能模块都有对应的启用开关
 
+### API 封装
+- **src/api.ts**: SiYuan API 的封装
+- **src/types/**: TypeScript 类型定义
 
+### 国际化
+- **src/i18n/**: 多语言支持（中文/英文）
+- 使用 Vue I18n 进行国际化管理
 
-### 环境要求
-
-- Node.js >= 16
-- pnpm (推荐) 或 npm
-- 思源笔记客户端
-
-### 安装依赖
-
-```bash
-pnpm install
-# 或
-npm install
+### 样式管理
+- 使用 Sass 预处理器
+- 组件样式通过 import 引入：
+```scss
+<style scoped lang="scss">
+@import "./index.scss";
+</style>
 ```
 
-### 配置开发环境
+## 重要开发约定
 
-创建 `.env` 文件并配置思源工作区路径：
+### 新功能开发流程
+1. 在 `src/features/` 下创建新功能文件夹
+2. 在 `src/features/index.ts` 导出功能
+3. 在 `src/config/settings.ts` 添加配置项
+4. 在 `superPanel/index.ts` 添加功能开关映射
+5. 在 SuperPanelView.vue 超级面板添加功能开关UI
 
+### 大模型 API 配置
+- 所有 AI 相关功能使用统一的 API 配置入口
+- 配置项：`aiApiProvider`（供应商）、`aiApiKey`（密钥）、`aiCustomEndpoint`（自定义端点）
 
+### 组件开发规范
+- 使用 Vue 3 Composition API
+- TypeScript 类型必须明确
+- 样式使用 Sass 并通过 import 引入
+- 图标使用 @iconify/vue
 
+### 环境配置
+创建 `.env` 文件配置 SiYuan 工作区路径：
 ```env
-VITE_SIYUAN_WORKSPACE_PATH=C:/Users/YourName/AppData/Roaming/SiYuan
+VITE_SIYUAN_WORKSPACE_PATH=<你的SiYuan工作区路径>
 ```
 
-或者在 Linux/Mac 上：
+### 热重载
+开发模式下，插件会自动构建到 SiYuan 工作区的 `data/plugins/siyuan-plugin-vite-vue-sn` 目录
 
-
-
-```env
-VITE_SIYUAN_WORKSPACE_PATH=/home/username/.config/SiYuan
-```
-
-### 开发模式
-
-```bash
-pnpm dev
-# 或
-npm run dev
-```
-
-监听构建模式会自动将插件构建到思源工作区的 `data/plugins/siyuan-plugin-vite-vue-sn` 目录，支持热重载。
-
-
-
-### 生产构建
-
-```bash
-pnpm build
-# 或
-npm run build
-```
-
-构建产物输出到 `./dist` 目录，并自动打包为 `package.zip`。
+## 技术栈
+- Vue 3.3.8
+- Vite 6.2.1
+- TypeScript 5.0.4
+- Sass 1.62.1
+- ESLint 9.22.0
+- SiYuan SDK 1.1.0

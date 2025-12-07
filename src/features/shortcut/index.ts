@@ -556,6 +556,16 @@ function getOpenSpecShortcuts(): ShortcutInfo[] {
       keys: 'openspec show',
       category: 'openspec',
       group: '辅助命令'
+    },
+    // 文档结构说明
+    {
+      id: 'openspec_doc_structure_info',
+      name: 'Feature 文档结构说明',
+      description: '1.proposal.md:说明为什么要做这个功能 2.spec.md:定义要做什么 3.design.md:定义怎么做 4.tasks.md:定义谁做什么、顺序与依赖',
+      keys: 'changes/<feature>/',
+      category: 'openspec',
+      group: '文档结构说明',
+      copyContent: ''
     }
   ]
 }

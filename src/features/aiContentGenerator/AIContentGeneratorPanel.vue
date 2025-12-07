@@ -754,11 +754,19 @@ const handleGenerate = async () => {
   stopTypewriter();
 
   try {
-    let finalSystemPrompt = systemPrompt.value;
-    console.log('系统提示词:', finalSystemPrompt.substring(0, 100) + '...');
-
-    // 问题3：默认就是Markdown格式输出，不需要额外配置
-    finalSystemPrompt += '\n\n**重要**: 请严格使用Markdown格式输出，包括标题(#)、列表(- 或 1.)、代码块(```)、粗体(**) 等标准语法。';
+    // 根据用户是否选择提示词来决定是否使用系统提示词
+    let finalSystemPrompt = '';
+    if (currentPromptName.value) {
+      // 用户选择了提示词，使用选中的提示词配置
+      finalSystemPrompt = systemPrompt.value;
+      console.log('使用选中的提示词:', currentPromptName.value, '内容:', finalSystemPrompt.substring(0, 100) + '...');
+      // 追加Markdown格式要求
+      finalSystemPrompt += '\n\n**重要**: 请严格使用Markdown格式输出，包括标题(#)、列表(- 或 1.)、代码块(```)、粗体(**) 等标准语法。';
+    } else {
+      // 用户未选择提示词，使用基础问答模式（仅保持Markdown格式要求）
+      finalSystemPrompt = '请使用Markdown格式输出回答。';
+      console.log('未选择提示词，使用基础问答模式');
+    }
 
     // 添加当前文档上下文（如果有）
     let contextInfo = '';
@@ -808,7 +816,7 @@ ${cleanDocContent}`;
         displayedContent.value = result;
       }
       showMessage('✓ 生成成功', 2000, 'info');
-      
+
       // 自动保存到AI问答封存笔记本（移动端不自动保存）
       if (!editMode.value && !isMobile.value) {
         await saveToArchiveNotebook();
@@ -842,8 +850,10 @@ const convertToSiyuanMarkdown = (content: string): string => {
   let converted = content;
 
   // 1. 确保标题前后有空行
-  converted = converted.replace(/([^\n])\n(#{1,6}\s)/g, '$1\n\n$2');
-  converted = converted.replace(/(#{1,6}\s[^\n]+)\n([^\n#])/g, '$1\n\n$2');
+  const headingStart = /([^\n])\n(#{1,6}\s)/g;
+  const headingEnd = /(#{1,6}\s[^\n]+)\n([^\n#])/g;
+  converted = converted.replace(headingStart, '$1\n\n$2');
+  converted = converted.replace(headingEnd, '$1\n\n$2');
 
   // 2. 处理粗体格式
   // 思源笔记在使用 markdown 模式时，粗体标记可能被解析但不显示效果
@@ -856,12 +866,16 @@ const convertToSiyuanMarkdown = (content: string): string => {
   // converted = converted.replace(/\*([^*]+?)\*/g, '$1'); // 如需移除斜体，取消注释
 
   // 4. 确保代码块前后有空行
-  converted = converted.replace(/([^\n])\n```/g, '$1\n\n```');
-  converted = converted.replace(/```\n([^\n])/g, '```\n\n$1');
+  const codeBlockStart = /([^\n])\n```/g;
+  const codeBlockEnd = /```\n([^\n])/g;
+  converted = converted.replace(codeBlockStart, '$1\n\n```');
+  converted = converted.replace(codeBlockEnd, '```\n\n$1');
 
   // 5. 确保列表前后有空行
-  converted = converted.replace(/([^\n])\n([-*+]\s)/g, '$1\n\n$2');
-  converted = converted.replace(/([^\n])\n(\d+\.\s)/g, '$1\n\n$2');
+  const listUnordered = /([^\n])\n([-*+]\s)/g;
+  const listOrdered = /([^\n])\n(\d+\.\s)/g;
+  converted = converted.replace(listUnordered, '$1\n\n$2');
+  converted = converted.replace(listOrdered, '$1\n\n$2');
 
   // 6. 清理多余的连续空行（最多保留两个换行符）
   converted = converted.replace(/\n{3,}/g, '\n\n');
@@ -890,7 +904,7 @@ const saveToArchiveNotebook = async () => {
 
     // 2. 根据内容自动分类
     const category = await autoClassifyContent(generatedContent.value);
-    
+
     // 3. 获取或创建分类文档
     const categoryDocId = await getOrCreateCategoryDoc(archiveNotebookId, category);
     if (!categoryDocId) {
@@ -900,17 +914,17 @@ const saveToArchiveNotebook = async () => {
 
     // 4. 生成文档标题
     const docTitle = await generateDocTitle(generatedContent.value);
-    
+
     // 5. 创建时间戳
-    const timestamp = new Date().toLocaleString('zh-CN', { 
-      year: 'numeric', 
-      month: '2-digit', 
-      day: '2-digit', 
-      hour: '2-digit', 
+    const timestamp = new Date().toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
       minute: '2-digit',
       second: '2-digit'
     }).replace(/\//g, '-').replace(/,/g, '');
-    
+
     const fullTitle = `${docTitle}-${timestamp}`;
 
     // 6. 在分类文档下创建子文档
@@ -939,7 +953,7 @@ const getOrCreateArchiveNotebook = async (): Promise<string | null> => {
   try {
     // 获取所有笔记本
     const notebooks = await api.lsNotebooks();
-    
+
     // 查找"AI问答封存"笔记本
     const archiveNotebook = notebooks.notebooks.find(
       (nb: any) => nb.name === 'AI问答封存'
@@ -970,22 +984,22 @@ const autoClassifyContent = async (content: string): Promise<string> => {
     if (/代码|函数|API|接口|算法|数据结构|编程|开发|技术|bug|debug/i.test(firstPart)) {
       return '技术文档';
     }
-    
+
     // 学习笔记关键词
     if (/学习|笔记|总结|复习|知识点|要点|理解|掌握/i.test(firstPart)) {
       return '学习笔记';
     }
-    
+
     // 创意想法关键词
     if (/创意|想法|灵感|构思|设计|方案|计划|头脑风暴/i.test(firstPart)) {
       return '创意想法';
     }
-    
+
     // 问答记录关键词
     if (/问题|回答|解答|疑问|为什么|怎么|如何|什么是/i.test(firstPart)) {
       return '问答记录';
     }
-    
+
     // 总结归纳关键词
     if (/总结|归纳|概括|梳理|整理|汇总|提炼/i.test(firstPart)) {
       return '总结归纳';
@@ -1171,7 +1185,7 @@ const clearContent = () => {
   errorMessage.value = '';
   showRaw.value = false;
   stopTypewriter();
-  
+
   // 移动端：清除后显示输入区域
   if (isMobile.value) {
     showInputSection.value = true;
@@ -1493,15 +1507,15 @@ const onPromptNameFocus = () => {
 const saveCurrentPrompt = async () => {
   // 如果输入框为空但有当前配置名称，使用当前配置名称
   const promptName = newPromptName.value.trim() || currentPromptName.value;
-  
+
   if (!promptName) {
     showMessage(props.i18n.enterPromptName || '请输入配置名称', 2000, 'info');
     return;
   }
-  
+
   // 检查是否已存在同名配置（更新模式）
   const existingIndex = savedPrompts.value.findIndex(p => p.name === promptName);
-  
+
   const promptConfig: AIPromptConfig = {
     id: existingIndex >= 0 ? savedPrompts.value[existingIndex].id : Date.now().toString(),
     name: promptName,
@@ -1535,10 +1549,10 @@ const saveCurrentPrompt = async () => {
   newPromptName.value = '';
   currentPromptName.value = promptName;
   showMessage(
-    existingIndex >= 0 
-      ? `✓ 已更新配置: ${promptConfig.name}` 
-      : `✓ 已保存配置: ${promptConfig.name}`, 
-    2000, 
+    existingIndex >= 0
+      ? `✓ 已更新配置: ${promptConfig.name}`
+      : `✓ 已保存配置: ${promptConfig.name}`,
+    2000,
     'info'
   );
 };
@@ -1828,7 +1842,7 @@ const checkIsMobile = () => {
   // 检测屏幕宽度
   const isSmallScreen = window.innerWidth <= 768;
   isMobile.value = isSiyuanMobile || isSmallScreen;
-  
+
   // 调试日志
   console.log('[AI生成器] 移动端检测:', {
     isSiyuanMobile,

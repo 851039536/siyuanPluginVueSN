@@ -38,24 +38,33 @@
         <span class="stat-label">自定义</span>
         <span class="stat-value">{{ customCount }}</span>
       </div>
-      <div class="stat-item" v-if="conflictCount > 0">
-        <span class="stat-label conflict">冲突</span>
-        <span class="stat-value conflict">{{ conflictCount }}</span>
-      </div>
     </div>
 
-    <!-- 分类标签 -->
-    <div class="shortcut-category-tabs">
-      <button
-        v-for="tab in tabs"
-        :key="tab"
-        class="category-tab"
-        :class="{ active: activeTab === tab }"
-        @click="activeTab = tab"
-      >
-        <span class="tab-label">{{ getCategoryLabel(tab) }}</span>
-        <span class="tab-count">{{ getTabCount(tab) }}</span>
-      </button>
+    <!-- 分类选择器 -->
+    <div class="shortcut-category-selector">
+      <div class="selector-header">
+        <label>分类:</label>
+        <div class="selector-control">
+          <div class="search-input-wrapper">
+            <input
+              v-model="categorySearch"
+              type="text"
+              class="category-search"
+              :placeholder="'搜索分类...'"
+            />
+            <svg class="category-search-icon"><use xlink:href="#iconSearch"></use></svg>
+          </div>
+          <select v-model="activeTab" class="category-select">
+            <option v-for="tab in filteredTabs" :key="tab" :value="tab">
+              {{ getCategoryLabel(tab) }} ({{ getTabCount(tab) }})
+            </option>
+          </select>
+          <svg class="dropdown-icon"><use xlink:href="#iconSelect"></use></svg>
+        </div>
+        <div v-if="categorySearch && filteredTabs.length === 0" class="search-result-hint">
+          未找到匹配的分类
+        </div>
+      </div>
     </div>
 
     <!-- 快捷筛选栏 -->
@@ -78,7 +87,22 @@
           @click="viewMode = 'grid'"
           title="网格视图"
         >
-          <svg class="shortcut-icon"><use xlink:href="#iconMenu"></use></svg>
+          <span class="grid-icon">
+            <span class="square"></span>
+            <span class="square"></span>
+          </span>
+        </button>
+        <button
+          class="toggle-btn"
+          :class="{ active: viewMode === 'three-col' }"
+          @click="viewMode = 'three-col'"
+          title="三列视图"
+        >
+          <span class="three-col-icon">
+            <span class="square"></span>
+            <span class="square"></span>
+            <span class="square"></span>
+          </span>
         </button>
         <button
           class="toggle-btn"
@@ -86,7 +110,9 @@
           @click="viewMode = 'list'"
           title="列表视图"
         >
-          <svg class="shortcut-icon"><use xlink:href="#iconList"></use></svg>
+          <span class="list-icon">
+            <span class="line"></span>
+          </span>
         </button>
       </div>
     </div>
@@ -103,21 +129,21 @@
           <span class="group-name">{{ group.name }}</span>
           <span class="group-count">{{ group.shortcuts.length }}</span>
         </div>
-        <div class="shortcut-grid" :class="{ 'list-view': viewMode === 'list' }">
+        <div class="shortcut-grid" :class="{ 'list-view': viewMode === 'list', 'three-col-view': viewMode === 'three-col' }">
           <div
             v-for="shortcut in group.shortcuts"
             :key="shortcut.id"
             class="shortcut-card"
             :class="{
               'is-favorite': isFavorite(shortcut.id),
-              'is-recent': isRecent(shortcut.id),
-              'has-conflict': hasConflict(shortcut.keys)
+              'is-recent': isRecent(shortcut.id)
             }"
           >
             <div class="card-header">
               <div class="shortcut-name">
                 <span class="name-text">{{ shortcut.name }}</span>
                 <span v-if="shortcut.platform" class="platform-badge">{{ shortcut.platform }}</span>
+                <span v-if="['npm', 'nvm', 'cmd', 'vscode', 'visual-studio'].includes(shortcut.category)" class="tool-badge">{{ getCategoryLabel(shortcut.category) }}</span>
               </div>
               <div class="shortcut-actions">
                 <button
@@ -157,7 +183,6 @@
               <span v-for="key in shortcut.keys.split('+')" :key="key" class="key-badge">
                 {{ key.trim() }}
               </span>
-              <span v-if="hasConflict(shortcut.keys)" class="conflict-badge" title="快捷键冲突">⚠️</span>
             </div>
             <div class="shortcut-desc">{{ shortcut.description }}</div>
           </div>
@@ -283,12 +308,14 @@ const activeFilter = ref('all')
 const quickFilters = [
   { key: 'all', label: '全部' },
   { key: 'favorite', label: '收藏' },
-  { key: 'recent', label: '最近使用' },
-  { key: 'conflict', label: '冲突' }
+  { key: 'recent', label: '最近使用' }
 ]
 
 // 视图模式
-const viewMode = ref<'grid' | 'list'>('grid')
+const viewMode = ref<'grid' | 'list' | 'three-col'>('grid')
+
+// 分类搜索
+const categorySearch = ref('')
 
 // 对话框显示状态
 const showDialog = ref(false)
@@ -319,15 +346,6 @@ const manager = getShortcutManager()
 const totalCount = computed(() => manager.getAllShortcuts().length)
 const favoriteCount = computed(() => favorites.value.size)
 const customCount = computed(() => manager.getByCategory('custom').length)
-const conflictCount = computed(() => {
-  const shortcuts = manager.getAllShortcuts()
-  const keyMap = new Map<string, number>()
-  shortcuts.forEach(s => {
-    const count = keyMap.get(s.keys) || 0
-    keyMap.set(s.keys, count + 1)
-  })
-  return Array.from(keyMap.values()).filter(count => count > 1).length
-})
 
 // 获取所有分类
 const tabs = computed(() => {
@@ -342,6 +360,30 @@ function getTabCount(category: string): number {
   return manager.getByCategory(category).length
 }
 
+// 过滤分类选项
+const filteredTabs = computed(() => {
+  const allTabs = tabs.value
+  if (!categorySearch.value) {
+    // 清空搜索时，确保 activeTab 有效
+    if (!allTabs.includes(activeTab.value) && allTabs.length > 0) {
+      activeTab.value = allTabs[0]
+    }
+    return allTabs
+  }
+
+  const filtered = allTabs.filter(tab => {
+    const label = getCategoryLabel(tab).toLowerCase()
+    return label.includes(categorySearch.value.toLowerCase())
+  })
+
+  // 如果当前选中的分类不在搜索结果中，且有搜索结果，则自动选择第一个
+  if (filtered.length > 0 && !filtered.includes(activeTab.value)) {
+    activeTab.value = filtered[0]
+  }
+
+  return filtered
+})
+
 // 分类标签映射
 function getCategoryLabel(category: string): string {
   const labels: Record<string, string> = {
@@ -350,6 +392,11 @@ function getCategoryLabel(category: string): string {
     'plugin': props.i18n.pluginShortcuts || '插件快捷键',
     'claude': props.i18n.claudeShortcuts || 'Claude Code',
     'openspec': props.i18n.openspecShortcuts || 'OpenSpec',
+    'npm': props.i18n.npmShortcuts || 'NPM',
+    'nvm': props.i18n.nvmShortcuts || 'NVM',
+    'cmd': props.i18n.cmdShortcuts || 'Windows CMD',
+    'vscode': props.i18n.vscodeShortcuts || 'VS Code',
+    'visual-studio': props.i18n.visualStudioShortcuts || 'Visual Studio',
     'custom': props.i18n.customShortcuts || '自定义'
   }
   return labels[category] || category
@@ -375,15 +422,6 @@ const filteredShortcuts = computed(() => {
     shortcuts = shortcuts.filter(s => favorites.value.has(s.id))
   } else if (activeFilter.value === 'recent') {
     shortcuts = shortcuts.filter(s => recentUsed.value.includes(s.id))
-  } else if (activeFilter.value === 'conflict') {
-    const conflictKeys = new Set<string>()
-    const keyMap = new Map<string, number>()
-    manager.getAllShortcuts().forEach(s => {
-      const count = keyMap.get(s.keys) || 0
-      keyMap.set(s.keys, count + 1)
-      if (count >= 1) conflictKeys.add(s.keys)
-    })
-    shortcuts = shortcuts.filter(s => conflictKeys.has(s.keys))
   }
 
   return shortcuts
@@ -511,15 +549,11 @@ function addToRecent(id: string) {
   if (recentUsed.value.length > 10) recentUsed.value.pop()
 }
 
-// 冲突检测
-function hasConflict(keys: string): boolean {
-  const shortcuts = manager.getAllShortcuts()
-  return shortcuts.filter(s => s.keys === keys).length > 1
-}
 
 // 复制快捷键信息
 function copyShortcutInfo(shortcut: ShortcutInfo) {
-  const text = shortcut.keys
+  // 优先复制 copyContent，如果没有则复制 keys（向后兼容）
+  const text = shortcut.copyContent || shortcut.keys
   navigator.clipboard.writeText(text).then(() => {
     // 添加到最近使用
     addToRecent(shortcut.id)
@@ -694,18 +728,10 @@ const showCopyTip = () => {
   text-transform: uppercase;
 }
 
-.stat-label.conflict {
-  color: #ff6b6b;
-}
-
 .stat-value {
   font-size: 16px;
   font-weight: 700;
   color: var(--b3-theme-primary);
-}
-
-.stat-value.conflict {
-  color: #ff6b6b;
 }
 
 .shortcut-search-input {
@@ -753,6 +779,168 @@ const showCopyTip = () => {
   height: 14px;
 }
 
+.grid-icon,
+.three-col-icon,
+.list-icon {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.grid-icon {
+  gap: 2px;
+}
+
+.three-col-icon {
+  gap: 2px;
+}
+
+.list-icon {
+  gap: 2px;
+}
+
+.square {
+  width: 4px;
+  height: 4px;
+  background-color: currentColor;
+  border-radius: 1px;
+  display: inline-block;
+}
+
+.line {
+  width: 8px;
+  height: 4px;
+  background-color: currentColor;
+  border-radius: 1px;
+  display: inline-block;
+}
+
+.toggle-btn.active .square,
+.toggle-btn.active .line {
+  background-color: var(--b3-theme-primary);
+}
+
+/* 分类选择器样式 */
+.shortcut-category-selector {
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  background: var(--b3-theme-surface);
+}
+
+.selector-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.selector-header label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--b3-theme-on-surface);
+  white-space: nowrap;
+}
+
+.selector-control {
+  flex: 1;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.search-input-wrapper {
+  position: relative;
+  flex: 0 0 140px;
+}
+
+.category-search {
+  width: 100%;
+  padding: 6px 10px;
+  padding-right: 30px;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 6px;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  font-size: 12px;
+  outline: none;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.category-search:focus {
+  border-color: var(--b3-theme-primary);
+  box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.1);
+}
+
+.category-search::placeholder {
+  color: var(--b3-theme-on-surface-variant);
+}
+
+.category-search-icon {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  color: var(--b3-theme-on-surface-variant);
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.category-search:not(:placeholder-shown) ~ .category-search-icon {
+  opacity: 0.3;
+}
+
+.search-result-hint {
+  flex-basis: 100%;
+  font-size: 11px;
+  color: var(--b3-theme-on-surface-variant);
+  font-style: italic;
+  margin-top: -4px;
+  margin-left: 4px;
+}
+
+.category-select {
+  flex: 1;
+  min-width: 120px;
+  padding: 6px 12px;
+  padding-right: 28px;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 6px;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  outline: none;
+}
+
+.category-select:hover {
+  border-color: var(--b3-theme-primary);
+}
+
+.category-select:focus {
+  border-color: var(--b3-theme-primary);
+  box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.1);
+}
+
+.dropdown-icon {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  color: var(--b3-theme-on-surface-variant);
+  pointer-events: none;
+}
+
+/* 保留原有标签样式（备用） */
 .shortcut-category-tabs {
   display: flex;
   gap: 0;
@@ -853,14 +1041,14 @@ const showCopyTip = () => {
 
 .view-toggle {
   display: flex;
-  gap: 4px;
+  gap: 3px;
   background: var(--b3-theme-background);
   border-radius: 6px;
   padding: 2px;
 }
 
 .toggle-btn {
-  padding: 5px 8px;
+  padding: 5px 7px;
   border: none;
   border-radius: 4px;
   background: transparent;
@@ -955,6 +1143,43 @@ const showCopyTip = () => {
   grid-template-columns: 1fr;
 }
 
+.shortcut-grid.three-col-view {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* 响应式设计 - 在小屏幕上自动降级为两列 */
+@media (max-width: 1200px) {
+  .shortcut-grid.three-col-view {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 800px) {
+  .shortcut-grid.three-col-view {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 三列视图下的卡片优化 */
+.shortcut-grid.three-col-view .shortcut-card {
+  padding: 10px;
+  gap: 6px;
+}
+
+.shortcut-grid.three-col-view .shortcut-name {
+  font-size: 12px;
+}
+
+.shortcut-grid.three-col-view .shortcut-desc {
+  font-size: 10px;
+  -webkit-line-clamp: 1;
+}
+
+.shortcut-grid.three-col-view .key-badge {
+  padding: 3px 6px;
+  font-size: 9px;
+}
+
 .shortcut-card {
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-theme-surface-lighter);
@@ -999,11 +1224,6 @@ const showCopyTip = () => {
   border-left: 3px solid var(--b3-theme-primary);
 }
 
-.shortcut-card.has-conflict {
-  border-color: #ff6b6b;
-  background: linear-gradient(135deg, var(--b3-theme-surface) 0%, rgba(255, 107, 107, 0.05) 100%);
-}
-
 .card-header {
   display: flex;
   align-items: flex-start;
@@ -1031,6 +1251,17 @@ const showCopyTip = () => {
   padding: 2px 6px;
   background: var(--b3-theme-surface-lighter);
   color: var(--b3-theme-on-surface-variant);
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.tool-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  background: var(--b3-theme-primary-lightest);
+  color: var(--b3-theme-primary);
   border-radius: 4px;
   font-size: 9px;
   font-weight: 600;
@@ -1076,12 +1307,6 @@ const showCopyTip = () => {
   white-space: nowrap;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3);
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
-}
-
-.conflict-badge {
-  display: inline-flex;
-  align-items: center;
-  font-size: 14px;
 }
 
 .shortcut-actions {

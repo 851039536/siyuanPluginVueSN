@@ -140,105 +140,176 @@
 
     <!-- 输入区域 -->
     <div class="input-section" v-show="showInputSection">
-      <!-- 当前选中的提示词显示（修复问题1） -->
-      <div v-if="currentPromptName" class="current-prompt-display">
-        <svg width="14" height="14">
-          <use xlink:href="#iconList"></use>
-        </svg>
-        <span class="prompt-label">{{ i18n.currentPrompt || '当前提示词' }}:</span>
-        <span class="prompt-value">{{ currentPromptName }}</span>
-        <button class="btn-clear-prompt" @click="clearCurrentPrompt" :title="i18n.clear || '清除'">
-          <svg width="12" height="12">
+      <!-- 普通模式：紧凑工具栏（提示词选择 + 引用文档 + 输入框 + 生成按钮） -->
+      <div v-if="!editMode" class="compact-toolbar">
+        <!-- 提示词选择按钮 -->
+        <div class="prompt-selector-wrapper">
+          <button class="btn-prompt-compact" @click="showPromptSelector = !showPromptSelector" :title="currentPromptName || (i18n.selectPrompt || '选择提示词')">
+            <svg width="14" height="14">
+              <use xlink:href="#iconList"></use>
+            </svg>
+            <span v-if="currentPromptName" class="prompt-name-compact">{{ currentPromptName }}</span>
+            <span v-else>{{ i18n.prompt || '提示词' }}</span>
+            <span v-if="savedPrompts.length > 0 && !currentPromptName" class="prompt-count-compact">{{ savedPrompts.length }}</span>
+            <button v-if="currentPromptName" class="btn-clear-inline" @click.stop="clearCurrentPrompt" :title="i18n.clear || '清除'">
+              <svg width="10" height="10">
+                <use xlink:href="#iconClose"></use>
+              </svg>
+            </button>
+          </button>
+
+          <!-- 提示词选择面板 -->
+          <div v-if="showPromptSelector" class="prompt-selector-panel">
+            <div class="prompt-selector-header">
+              <span>{{ i18n.savedPrompts || '已保存的提示词' }}</span>
+              <button class="btn-close-small" @click="showPromptSelector = false">
+                <svg width="12" height="12">
+                  <use xlink:href="#iconClose"></use>
+                </svg>
+              </button>
+            </div>
+
+            <div v-if="savedPrompts.length === 0" class="empty-prompts">
+              <p>{{ i18n.noSavedPrompts || '暂无保存的提示词，请在对话设置中保存' }}</p>
+            </div>
+
+            <div v-else class="prompt-list">
+              <div
+                v-for="(prompt, index) in savedPrompts"
+                :key="index"
+                class="prompt-item"
+                @click="loadPrompt(index)"
+              >
+                <div class="prompt-item-header">
+                  <span class="prompt-name">{{ prompt.name }}</span>
+                  <div class="prompt-item-actions">
+                    <button
+                      class="btn-edit-prompt"
+                      @click.stop="editPrompt(index)"
+                      :title="i18n.edit || '编辑'"
+                    >
+                      <svg width="14" height="14">
+                        <use xlink:href="#iconEdit"></use>
+                      </svg>
+                    </button>
+                    <button
+                      class="btn-delete-prompt"
+                      @click.stop="deletePrompt(index)"
+                      :title="i18n.delete || '删除'"
+                    >
+                      <svg width="14" height="14">
+                        <use xlink:href="#iconTrashcan"></use>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="prompt-item-preview">{{ getPromptPreview(prompt.systemPrompt) }}</div>
+                <div class="prompt-item-meta">
+                  <span>{{ i18n.temperature || '创造性' }}: {{ prompt.temperature }}</span>
+                  <span>{{ i18n.maxTokens || '最大长度' }}: {{ prompt.maxTokens }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 引用当前文档按钮 -->
+        <button
+          class="btn-reference-compact"
+          @click="insertCurrentDocReference"
+          :class="{ 'has-reference': referencedDocTitle }"
+          :title="referencedDocTitle || (i18n.referenceCurrentDoc || '引用当前文档内容')"
+        >
+          <span class="btn-icon">📄</span>
+          <span v-if="referencedDocTitle" class="ref-doc-name">{{ referencedDocTitle }}</span>
+          <span v-else>{{ i18n.refDoc || '引用' }}</span>
+          <button v-if="referencedDocTitle" class="btn-clear-inline" @click.stop="cancelDocReference" :title="i18n.cancel || '取消'">
+            <svg width="10" height="10">
+              <use xlink:href="#iconClose"></use>
+            </svg>
+          </button>
+        </button>
+
+        <!-- 输入框 -->
+        <textarea
+          v-model="userInput"
+          class="user-input-compact"
+          :placeholder="referencedDocContent ? (i18n.inputPlaceholderWithDoc || '输入问题...') : (i18n.inputPlaceholder || '输入您的问题...')"
+          rows="1"
+          @keydown.ctrl.enter="handleGenerate"
+          :disabled="isGenerating"
+        ></textarea>
+
+        <!-- 生成/停止按钮 -->
+        <button
+          v-if="!isGenerating"
+          class="btn-generate-compact"
+          @click="handleGenerate"
+          :disabled="!userInput.trim() && !referencedDocContent"
+          :title="i18n.generate || '生成'"
+        >
+          <svg width="16" height="16">
+            <use xlink:href="#iconSend"></use>
+          </svg>
+        </button>
+        <button
+          v-else
+          class="btn-stop-compact"
+          @click="handleStop"
+          :title="i18n.stopGeneration || '停止生成'"
+        >
+          <svg width="16" height="16">
             <use xlink:href="#iconClose"></use>
           </svg>
         </button>
       </div>
 
-      <!-- 提示词选择按钮 -->
-      <div class="prompt-selector-wrapper">
-        <button class="btn-prompt-selector" @click="showPromptSelector = !showPromptSelector">
-          <svg width="16" height="16">
-            <use xlink:href="#iconList"></use>
-          </svg>
-          <span>{{ i18n.selectPrompt || '选择提示词' }}</span>
-          <span v-if="savedPrompts.length > 0" class="prompt-count">({{ savedPrompts.length }})</span>
-          <svg width="12" height="12" class="arrow-icon">
-            <use :xlink:href="showPromptSelector ? '#iconUp' : '#iconDown'"></use>
-          </svg>
-        </button>
-
-        <!-- 提示词选择面板 -->
-        <div v-if="showPromptSelector" class="prompt-selector-panel">
-          <div class="prompt-selector-header">
-            <span>{{ i18n.savedPrompts || '已保存的提示词' }}</span>
-            <button class="btn-close-small" @click="showPromptSelector = false">
-              <svg width="12" height="12">
-                <use xlink:href="#iconClose"></use>
-              </svg>
-            </button>
-          </div>
-
-          <div v-if="savedPrompts.length === 0" class="empty-prompts">
-            <p>{{ i18n.noSavedPrompts || '暂无保存的提示词，请在对话设置中保存' }}</p>
-          </div>
-
-          <div v-else class="prompt-list">
-            <div
-              v-for="(prompt, index) in savedPrompts"
-              :key="index"
-              class="prompt-item"
-              @click="loadPrompt(index)"
-            >
-              <div class="prompt-item-header">
-                <span class="prompt-name">{{ prompt.name }}</span>
-                <div class="prompt-item-actions">
-                  <button
-                    class="btn-edit-prompt"
-                    @click.stop="editPrompt(index)"
-                    :title="i18n.edit || '编辑'"
-                  >
-                    <svg width="14" height="14">
-                      <use xlink:href="#iconEdit"></use>
-                    </svg>
-                  </button>
-                  <button
-                    class="btn-delete-prompt"
-                    @click.stop="deletePrompt(index)"
-                    :title="i18n.delete || '删除'"
-                  >
-                    <svg width="14" height="14">
-                      <use xlink:href="#iconTrashcan"></use>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-              <div class="prompt-item-preview">{{ getPromptPreview(prompt.systemPrompt) }}</div>
-              <div class="prompt-item-meta">
-                <span>{{ i18n.temperature || '创造性' }}: {{ prompt.temperature }}</span>
-                <span>{{ i18n.maxTokens || '最大长度' }}: {{ prompt.maxTokens }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Edit模式：目标文档选择 -->
-      <div v-if="editMode" class="edit-doc-selector">
-        <div class="selector-label">
+      <!-- Edit模式：紧凑工具栏（目标文档选择 + 输入框 + 执行按钮） -->
+      <div v-if="editMode" class="compact-toolbar edit-mode">
+        <!-- 目标文档选择 -->
+        <button class="btn-doc-compact" @click="selectTargetDocument" :title="editTargetDoc ? editTargetDoc.title : (i18n.selectDocument || '选择文档')">
           <svg width="14" height="14">
             <use xlink:href="#iconFile"></use>
           </svg>
-          <span>{{ i18n.targetDocument || '目标文档' }}:</span>
-        </div>
-        <button class="btn-select-doc" @click="selectTargetDocument">
-          <span v-if="!editTargetDoc">{{ i18n.selectDocument || '选择要编辑的文档' }}</span>
-          <span v-else class="selected-doc-name">📄 {{ editTargetDoc.title }}</span>
-          <svg width="14" height="14">
-            <use xlink:href="#iconSelect"></use>
+          <span v-if="editTargetDoc" class="doc-name-compact">{{ editTargetDoc.title }}</span>
+          <span v-else>{{ i18n.selectDoc || '选择文档' }}</span>
+          <button v-if="editTargetDoc" class="btn-clear-inline" @click.stop="clearTargetDocument" :title="i18n.clear || '清除'">
+            <svg width="10" height="10">
+              <use xlink:href="#iconClose"></use>
+            </svg>
+          </button>
+        </button>
+
+        <!-- 编辑模式：自定义输入框 -->
+        <textarea
+          v-if="editTargetDoc"
+          v-model="editCustomInput"
+          class="user-input-compact"
+          :placeholder="i18n.editCustomPlaceholder || '输入编辑指令...'"
+          rows="1"
+          @keydown.ctrl.enter="handleCustomEdit"
+          :disabled="isGenerating"
+        ></textarea>
+
+        <!-- 执行/停止按钮 -->
+        <button
+          v-if="!isGenerating && editTargetDoc"
+          class="btn-generate-compact"
+          @click="handleCustomEdit"
+          :disabled="!editCustomInput.trim()"
+          :title="i18n.execute || '执行'"
+        >
+          <svg width="16" height="16">
+            <use xlink:href="#iconSend"></use>
           </svg>
         </button>
-        <button v-if="editTargetDoc" class="btn-clear-doc" @click="clearTargetDocument" :title="i18n.clear || '清除'">
-          <svg width="12" height="12">
+        <button
+          v-else-if="isGenerating"
+          class="btn-stop-compact"
+          @click="handleStop"
+          :title="i18n.stopGeneration || '停止生成'"
+        >
+          <svg width="16" height="16">
             <use xlink:href="#iconClose"></use>
           </svg>
         </button>
@@ -298,96 +369,6 @@
           <p class="suggestion-text">{{ aiSuggestions }}</p>
           <button class="btn-apply-suggestions" @click="applySuggestions" :disabled="isGenerating">
             {{ i18n.applySuggestions || '应用建议优化' }}
-          </button>
-        </div>
-      </div>
-
-      <!-- 引用当前文档按钮（仅普通模式显示） -->
-      <div v-if="!editMode" class="reference-doc-wrapper">
-        <button
-          class="btn-reference-doc"
-          @click="insertCurrentDocReference"
-          :title="i18n.referenceCurrentDoc || '引用当前文档内容'"
-        >
-          <span class="btn-icon">📄</span>
-          <span>{{ i18n.referenceCurrentDoc || '@当前文档' }}</span>
-        </button>
-        <span v-if="referencedDocTitle" class="referenced-doc-title">
-          📄 {{ referencedDocTitle }}
-          <button class="btn-cancel-reference" @click="cancelDocReference" :title="i18n.cancel || '取消'">
-            <svg width="10" height="10">
-              <use xlink:href="#iconClose"></use>
-            </svg>
-          </button>
-        </span>
-      </div>
-
-      <!-- 输入框和生成按钮（仅普通模式显示） -->
-      <div v-if="!editMode" class="input-wrapper">
-        <textarea
-          v-model="userInput"
-          class="user-input"
-          :placeholder="referencedDocContent ? (i18n.inputPlaceholderWithDoc || '输入问题或直接生成总结...') : (i18n.inputPlaceholder || '输入您的问题或需求...')"
-          rows="2"
-          @keydown.ctrl.enter="handleGenerate"
-          :disabled="isGenerating"
-        ></textarea>
-        <button
-          v-if="!isGenerating"
-          class="btn-generate"
-          @click="handleGenerate"
-          :disabled="!userInput.trim() && !referencedDocContent"
-        >
-          <svg width="18" height="18">
-            <use xlink:href="#iconSend"></use>
-          </svg>
-          <span>{{ i18n.generate || '生成' }}</span>
-        </button>
-        <button
-          v-else
-          class="btn-stop"
-          @click="handleStop"
-          :title="i18n.stopGeneration || '停止生成'"
-        >
-          <svg width="18" height="18">
-            <use xlink:href="#iconClose"></use>
-          </svg>
-          <span>{{ i18n.stop || '停止' }}</span>
-        </button>
-      </div>
-
-      <!-- 编辑模式：自定义提问输入框 -->
-      <div v-if="editMode && editTargetDoc" class="edit-custom-input">
-        <div class="input-wrapper">
-          <textarea
-            v-model="editCustomInput"
-            class="user-input"
-            :placeholder="i18n.editCustomPlaceholder || '输入自定义编辑指令，例如：将文档改为口语化风格、添加更多示例...'"
-            rows="2"
-            @keydown.ctrl.enter="handleCustomEdit"
-            :disabled="isGenerating"
-          ></textarea>
-          <button
-            v-if="!isGenerating"
-            class="btn-generate"
-            @click="handleCustomEdit"
-            :disabled="!editCustomInput.trim()"
-          >
-            <svg width="18" height="18">
-              <use xlink:href="#iconSend"></use>
-            </svg>
-            <span>{{ i18n.execute || '执行' }}</span>
-          </button>
-          <button
-            v-else
-            class="btn-stop"
-            @click="handleStop"
-            :title="i18n.stopGeneration || '停止生成'"
-          >
-            <svg width="18" height="18">
-              <use xlink:href="#iconClose"></use>
-            </svg>
-            <span>{{ i18n.stop || '停止' }}</span>
           </button>
         </div>
       </div>

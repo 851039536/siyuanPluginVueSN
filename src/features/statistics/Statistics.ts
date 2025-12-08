@@ -17,8 +17,8 @@ interface StatisticsData {
   avgWordsPerDoc: number;  // 平均每文档字数
   dailyStats: DailyWordCount[];  // 每日字数统计
   currentPeriod: string;   // 当前统计周期
-  topTags?: Array<{ name: string; count: number }>;  // 热门标签
-  recentDocs?: Array<{ id: string; title: string; updated: string; words: number }>;  // 最近活跃文档
+  topTags: Array<{ name: string; count: number }>;  // 热门标签（已废弃，始终为空数组）
+  recentDocs: Array<{ id: string; title: string; updated: string; words: number }>;  // 最近活跃文档（已废弃，始终为空数组）
 }
 
 /**
@@ -42,6 +42,7 @@ export class Statistics {
   private viewMode: 'day' | 'week' | 'month' | 'year' = 'day'; // 当前查看模式
   private dayRange: 7 | 15 | 30 | 90 | 180 | 365 = 7; // 日视图的天数范围
   private monthYearRange: 1 | 2 | 3 = 1; // 月视图的年份范围
+  private statisticsTheme: 'default' | 'github' = 'default'; // 统计面板主题风格
   
   constructor(plugin: Plugin) {
     this.plugin = plugin;
@@ -53,6 +54,15 @@ export class Statistics {
    * 初始化统计模块
    */
   async init() {
+    // 加载保存的主题设置
+    try {
+      const settings = await this.plugin.loadData('plugin-settings');
+      if (settings && settings.statisticsTheme) {
+        this.statisticsTheme = settings.statisticsTheme;
+      }
+    } catch (error) {
+      console.error('加载主题设置失败:', error);
+    }
     this.registerDock();
   }
   
@@ -100,6 +110,20 @@ export class Statistics {
     // 创建 Vue 应用
     this.vueApp = createApp(StatisticsPanel, {
       i18n: this.plugin.i18n,
+      theme: this.statisticsTheme,
+      onThemeChange: async (theme: 'default' | 'github') => {
+        this.statisticsTheme = theme;
+        // 保存主题设置
+        try {
+          const settings = await this.plugin.loadData('plugin-settings');
+          if (settings) {
+            settings.statisticsTheme = theme;
+            await this.plugin.saveData('plugin-settings', settings);
+          }
+        } catch (error) {
+          console.error('保存主题设置失败:', error);
+        }
+      },
       onRefresh: async (params: {
         viewMode: 'day' | 'week' | 'month' | 'year'
         dayRange?: 7 | 15 | 30 | 90 | 180 | 365
@@ -111,7 +135,7 @@ export class Statistics {
         if (params.dayRange) this.dayRange = params.dayRange;
         if (params.monthYearRange) this.monthYearRange = params.monthYearRange;
         if (params.selectedYear) this.currentYear = params.selectedYear;
-        
+
         return await this.getStatistics();
       },
     });
@@ -421,18 +445,16 @@ export class Statistics {
    */
   private async getStatistics(): Promise<StatisticsData> {
     try {
-      // 并行获取所有基础统计
+      // 并行获取所有基础统计（移除热门标签和最近文档）
       const [
-        totalNotes, 
-        totalWords, 
-        totalBlocks, 
-        totalAssets, 
-        totalTags, 
+        totalNotes,
+        totalWords,
+        totalBlocks,
+        totalAssets,
+        totalTags,
         totalBacklinks,
         todayCreated,
-        todayModified,
-        topTags,
-        recentDocs
+        todayModified
       ] = await Promise.all([
         this.getTotalNotes(),
         this.getTotalWords(),
@@ -441,18 +463,16 @@ export class Statistics {
         this.getTotalTags(),
         this.getTotalBacklinks(),
         this.getTodayCreated(),
-        this.getTodayModified(),
-        this.getTopTags(10),
-        this.getRecentDocs(5)
+        this.getTodayModified()
       ]);
-      
+
       // 计算平均每文档字数
       const avgWordsPerDoc = totalNotes > 0 ? Math.round(totalWords / totalNotes) : 0;
-            
+
       // 根据不同模式获取每日统计
       let dailyStats: DailyWordCount[] = [];
       let currentPeriod = '';
-            
+
       switch (this.viewMode) {
         case 'day':
           dailyStats = await this.getDailyStats(this.dayRange);
@@ -484,7 +504,7 @@ export class Statistics {
           currentPeriod = this.plugin.i18n.recentYearsYearly;
           break;
       }
-      
+
       return {
         totalNotes,
         totalWords,
@@ -497,8 +517,8 @@ export class Statistics {
         avgWordsPerDoc,
         dailyStats,
         currentPeriod,
-        topTags,
-        recentDocs,
+        topTags: [],
+        recentDocs: [],
       };
     } catch (error) {
       console.error('获取统计数据失败:', error);
@@ -543,89 +563,20 @@ export class Statistics {
   }
   
   /**
-   * 获取热门标签（按使用次数排序）
-   */
-  private async getTopTags(limit: number = 10): Promise<Array<{ name: string; count: number }>> {
-    try {
-      // 尝试从 spans 表查询
-      let sql = `
-        SELECT content as name, COUNT(*) as count 
-        FROM spans 
-        WHERE type='tag' 
-        GROUP BY content 
-        ORDER BY count DESC 
-        LIMIT ${limit}
-      `;
-      let result = await this.executeSql(sql);
-      
-      if (result.length === 0) {
-        // 尝试从 attributes 表查询
-        sql = `
-          SELECT value as name, COUNT(*) as count 
-          FROM attributes 
-          WHERE name='tags' 
-          GROUP BY value 
-          ORDER BY count DESC 
-          LIMIT ${limit}
-        `;
-        result = await this.executeSql(sql);
-      }
-      
-      return result.map(row => ({
-        name: String(row.name).replace(/^#/, ''), // 移除标签前缀
-        count: row.count || 0
-      }));
-    } catch (error) {
-      console.error('获取热门标签失败:', error);
-      return [];
-    }
-  }
-  
-  /**
-   * 获取最近活跃文档
-   */
-  private async getRecentDocs(limit: number = 5): Promise<Array<{ id: string; title: string; updated: string; words: number }>> {
-    try {
-      const sql = `
-        SELECT 
-          d.id,
-          d.content as title,
-          d.updated,
-          (SELECT SUM(LENGTH(content)) FROM blocks WHERE root_id = d.root_id AND type='p') as words
-        FROM blocks d
-        WHERE d.type='d'
-        ORDER BY d.updated DESC
-        LIMIT ${limit}
-      `;
-      const result = await this.executeSql(sql);
-      
-      return result.map(row => ({
-        id: String(row.id),
-        title: String(row.title || this.plugin.i18n.untitled),
-        updated: this.formatTimestamp(String(row.updated)),
-        words: row.words || 0
-      }));
-    } catch (error) {
-      console.error('获取最近活跃文档失败:', error);
-      return [];
-    }
-  }
-  
-  /**
    * 格式化时间戳为可读日期
    */
   private formatTimestamp(timestamp: string): string {
     if (timestamp.length !== 14) return timestamp;
-    
+
     const year = timestamp.substring(0, 4);
     const month = timestamp.substring(4, 6);
     const day = timestamp.substring(6, 8);
     const hour = timestamp.substring(8, 10);
     const minute = timestamp.substring(10, 12);
-    
+
     return `${year}-${month}-${day} ${hour}:${minute}`;
   }
-  
+
   /**
    * 获取总笔记数量
    */

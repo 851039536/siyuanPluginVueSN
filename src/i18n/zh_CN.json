@@ -620,5 +620,8 @@
   "savingToArchive": "正在保存到AI问答封存...",
   "saveToArchiveSuccess": "已保存到AI问答封存",
   "saveToArchiveFailed": "保存到AI问答封存失败",
-  "aiQuery": "AI查询"
+  "aiQuery": "AI查询",
+  "toggleTheme": "切换主题",
+  "defaultTheme": "默认",
+  "githubTheme": "GitHub"
 }

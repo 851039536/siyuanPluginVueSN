@@ -182,8 +182,186 @@
 }
 
 .input-section {
-  padding: 12px 16px;
+  padding: 8px 12px;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
+}
+
+// 紧凑工具栏样式
+.compact-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+
+  // 提示词选择器包装
+  .prompt-selector-wrapper {
+    position: relative;
+    flex-shrink: 0;
+    margin-bottom: 0;
+  }
+
+  // 紧凑按钮通用样式
+  .btn-prompt-compact,
+  .btn-reference-compact,
+  .btn-doc-compact {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    background: var(--b3-theme-surface);
+    border: 1px solid var(--b3-theme-surface-lighter);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--b3-theme-on-surface);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    min-width: 80px;
+    max-width: 140px;
+    overflow: hidden;
+
+    &:hover {
+      border-color: var(--b3-theme-primary);
+      background: var(--b3-theme-surface-light);
+    }
+
+    svg {
+      flex-shrink: 0;
+      color: var(--b3-theme-primary);
+    }
+
+    .prompt-name-compact,
+    .doc-name-compact,
+    .ref-doc-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 80px;
+      color: var(--b3-theme-primary);
+      font-weight: 500;
+    }
+
+    .prompt-count-compact {
+      padding: 1px 4px;
+      background: var(--b3-theme-primary-lighter);
+      color: var(--b3-theme-primary);
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+  }
+
+  .btn-reference-compact {
+    &.has-reference {
+      background: var(--b3-theme-primary-lighter);
+      border-color: var(--b3-theme-primary-light);
+    }
+  }
+
+  // 清除按钮（内联）
+  .btn-clear-inline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    margin-left: 2px;
+    background: transparent;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.5;
+    transition: all 0.2s;
+
+    &:hover {
+      opacity: 1;
+      background: var(--b3-theme-error-lighter);
+      color: var(--b3-theme-error);
+    }
+  }
+
+  // 紧凑输入框
+  .user-input-compact {
+    flex: 1;
+    min-width: 100px;
+    padding: 6px 10px;
+    border: 1px solid var(--b3-theme-surface-lighter);
+    border-radius: 6px;
+    background: var(--b3-theme-background);
+    color: var(--b3-theme-on-background);
+    font-size: 12px;
+    line-height: 1.4;
+    resize: none;
+    outline: none;
+    transition: all 0.2s;
+
+    &:focus {
+      border-color: var(--b3-theme-primary);
+      box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.1);
+    }
+
+    &::placeholder {
+      color: var(--b3-theme-on-surface);
+      opacity: 0.5;
+    }
+  }
+
+  // 紧凑生成按钮
+  .btn-generate-compact {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: var(--b3-theme-primary);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    svg {
+      color: #fff !important;
+      fill: #fff !important;
+    }
+
+    &:hover:not(:disabled) {
+      opacity: 0.9;
+      transform: scale(1.05);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  // 紧凑停止按钮
+  .btn-stop-compact {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: var(--b3-theme-error);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    svg {
+      color: #fff !important;
+      fill: #fff !important;
+    }
+
+    &:hover {
+      opacity: 0.9;
+      transform: scale(1.05);
+    }
+  }
 }
 
 // Edit模式：目标文档选择器
@@ -1558,19 +1736,18 @@
 
 // AI智能编辑工具栏样式
 .ai-edit-toolbar {
-  padding: 12px 16px;
-  background: linear-gradient(135deg, var(--b3-theme-primary-lightest) 0%, var(--b3-theme-surface-lighter) 100%);
-  border-bottom: 1px solid var(--b3-theme-surface-light);
+  padding: 8px 12px;
+  background: linear-gradient(135deg, var(--b3-theme-primary-lightest) 0%, var(--b3-theme-surface-lighter) 100%);  border-bottom: 1px solid var(--b3-theme-surface-light);
   animation: slideDown 0.3s ease-out;
 
   .toolbar-label {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     color: var(--b3-theme-primary);
-    margin-bottom: 10px;
+    margin-bottom: 6px;
 
     svg {
       flex-shrink: 0;
@@ -1580,19 +1757,19 @@
   .toolbar-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 4px;
   }
 
   .btn-ai-action {
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 6px 12px;
+    gap: 3px;
+    padding: 4px 8px;
     background: var(--b3-theme-background);
     border: 1px solid var(--b3-theme-surface-light);
-    border-radius: 6px;
+    border-radius: 4px;
     cursor: pointer;
-    font-size: 12px;
+    font-size: 11px;
     color: var(--b3-theme-on-background);
     transition: all 0.2s;
     white-space: nowrap;
@@ -1631,13 +1808,13 @@
 
 // AI分析建议面板样式
 .ai-suggestions-panel {
-  margin: 12px 16px;
-  padding: 16px;
+  margin: 8px 12px;
+  padding: 12px;
   background: linear-gradient(135deg, var(--b3-theme-surface) 0%, var(--b3-theme-surface-lighter) 100%);
-  border: 2px solid var(--b3-theme-primary-lighter);
-  border-radius: 12px;
+  border: 1px solid var(--b3-theme-primary-lighter);
+  border-radius: 8px;
   animation: slideDown 0.3s ease-out;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 
   .suggestions-header {
     display: flex;
@@ -1710,6 +1887,72 @@
         cursor: not-allowed;
       }
     }
+  }
+}
+
+// 编辑模式：自定义提问输入框样式
+.edit-custom-input {
+  margin-top: 12px;
+  padding: 12px;
+  background: linear-gradient(135deg, var(--b3-theme-surface-lighter) 0%, var(--b3-theme-surface) 100%);
+  border: 2px dashed var(--b3-theme-primary-light);
+  border-radius: 10px;
+  animation: slideDown 0.3s ease-out;
+
+  .input-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .user-input {
+    min-height: 60px;
+    background: var(--b3-theme-background);
+    border: 2px solid var(--b3-theme-surface-light);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+    line-height: 1.5;
+    resize: vertical;
+    transition: all 0.2s;
+
+    &:focus {
+      border-color: var(--b3-theme-primary);
+      box-shadow: 0 0 0 3px rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.15);
+    }
+
+    &::placeholder {
+      color: var(--b3-theme-on-surface-light);
+      opacity: 0.7;
+    }
+  }
+
+  .btn-generate {
+    align-self: flex-end;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, var(--b3-theme-primary) 0%, var(--b3-theme-primary-dark) 100%);
+    color: var(--b3-theme-on-primary);
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.3);
+
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.4);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  .btn-stop {
+    align-self: flex-end;
   }
 }
 

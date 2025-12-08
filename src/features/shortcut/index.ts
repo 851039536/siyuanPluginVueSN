@@ -26,6 +26,12 @@ export async function registerShortcut(plugin: Plugin) {
   // 添加Claude Code快捷键
   await manager.addShortcuts(getClaudeShortcuts())
 
+  // 添加OpenSpec快捷键
+  await manager.addShortcuts(getOpenSpecShortcuts())
+
+  // 添加工具快捷键 (npm, nvm, cmd, vscode, Visual Studio)
+  await manager.addShortcuts(getToolShortcuts())
+
   // 加载自定义快捷键从数据库
   const customShortcuts = await loadCustomShortcuts(plugin)
   if (customShortcuts.length > 0) {
@@ -497,6 +503,74 @@ function getClaudeShortcuts(): ShortcutInfo[] {
 }
 
 /**
+ * 获取 OpenSpec 的快捷键
+ */
+function getOpenSpecShortcuts(): ShortcutInfo[] {
+  return [
+    // 核心命令
+    {
+      id: 'openspec_proposal',
+      name: '创建变更提案',
+      description: '创建新的 OpenSpec 变更提案',
+      keys: '/openspec:proposal',
+      category: 'openspec',
+      group: '核心命令'
+    },
+    {
+      id: 'openspec_apply',
+      name: '应用变更',
+      description: '应用已批准的 OpenSpec 变更',
+      keys: '/openspec:apply',
+      category: 'openspec',
+      group: '核心命令'
+    },
+    {
+      id: 'openspec_archive',
+      name: '归档变更',
+      description: '归档已部署的 OpenSpec 变更',
+      keys: '/openspec:archive',
+      category: 'openspec',
+      group: '核心命令'
+    },
+    // 辅助命令
+    {
+      id: 'openspec_validate',
+      name: '验证变更',
+      description: '验证 OpenSpec 变更的正确性',
+      keys: 'openspec validate',
+      category: 'openspec',
+      group: '辅助命令'
+    },
+    {
+      id: 'openspec_list',
+      name: '列出变更',
+      description: '列出所有 OpenSpec 变更',
+      keys: 'openspec list',
+      category: 'openspec',
+      group: '辅助命令'
+    },
+    {
+      id: 'openspec_show',
+      name: '显示详情',
+      description: '显示 OpenSpec 变更或规范的详细信息',
+      keys: 'openspec show',
+      category: 'openspec',
+      group: '辅助命令'
+    },
+    // 文档结构说明
+    {
+      id: 'openspec_doc_structure_info',
+      name: 'Feature 文档结构说明',
+      description: '1.proposal.md:说明为什么要做这个功能 2.spec.md:定义要做什么 3.design.md:定义怎么做 4.tasks.md:定义谁做什么、顺序与依赖',
+      keys: 'changes/<feature>/',
+      category: 'openspec',
+      group: '文档结构说明',
+      copyContent: ''
+    }
+  ]
+}
+
+/**
  * 获取插件的快捷键
  */
 function getPluginShortcuts(plugin: Plugin): ShortcutInfo[] {
@@ -543,6 +617,874 @@ function getPluginShortcuts(plugin: Plugin): ShortcutInfo[] {
       keys: 'Icon Click',
       category: 'plugin',
       group: '图片压缩'
+    }
+  ]
+}
+
+/**
+ * 获取开发工具的快捷键 (npm, nvm, cmd, vscode, Visual Studio)
+ */
+function getToolShortcuts(): ShortcutInfo[] {
+  return [
+    // NPM 快捷键
+    {
+      id: 'tool_npm_install',
+      name: 'npm install',
+      description: '安装项目依赖',
+      keys: 'Ctrl+Alt+N',
+      category: 'npm',
+      group: 'NPM',
+      copyContent: 'npm install'
+    },
+    {
+      id: 'tool_npm_install_g',
+      name: 'npm install -g',
+      description: '全局安装包',
+      keys: 'Ctrl+Alt+Shift+N',
+      category: 'npm',
+      group: 'NPM',
+      copyContent: 'npm install -g'
+    },
+    {
+      id: 'tool_npm_start',
+      name: 'npm start',
+      description: '启动开发服务器',
+      keys: 'Ctrl+Alt+S',
+      category: 'npm',
+      group: 'NPM',
+      copyContent: 'npm start'
+    },
+    {
+      id: 'tool_npm_run_build',
+      name: 'npm run build',
+      description: '构建生产版本',
+      keys: 'Ctrl+Alt+B',
+      category: 'npm',
+      group: 'NPM',
+      copyContent: 'npm run build'
+    },
+    {
+      id: 'tool_npm_test',
+      name: 'npm test',
+      description: '运行测试',
+      keys: 'Ctrl+Alt+T',
+      category: 'npm',
+      group: 'NPM',
+      copyContent: 'npm test'
+    },
+    {
+      id: 'tool_npm_dev',
+      name: 'npm run dev',
+      description: '启动开发模式',
+      keys: 'Ctrl+Alt+D',
+      category: 'npm',
+      group: 'NPM',
+      copyContent: 'npm run dev'
+    },
+    {
+      id: 'tool_npm_run_dev',
+      name: 'npm run dev',
+      description: '开发环境运行',
+      keys: 'Ctrl+Alt+Shift+D',
+      category: 'npm',
+      group: 'NPM',
+      copyContent: 'npm run dev'
+    },
+    {
+      id: 'tool_npm_run_lint',
+      name: 'npm run lint',
+      description: '运行代码检查',
+      keys: 'Ctrl+Alt+L',
+      category: 'npm',
+      group: 'NPM',
+      copyContent: 'npm run lint'
+    },
+    {
+      id: 'tool_npm_run_format',
+      name: 'npm run format',
+      description: '格式化代码',
+      keys: 'Ctrl+Alt+F',
+      category: 'npm',
+      group: 'NPM',
+      copyContent: 'npm run format'
+    },
+    {
+      id: 'tool_npm_publish',
+      name: 'npm publish',
+      description: '发布包到npm',
+      keys: 'Ctrl+Alt+P',
+      category: 'npm',
+      group: 'NPM',
+      copyContent: 'npm publish'
+    },
+    {
+      id: 'tool_npm_update',
+      name: 'npm update',
+      description: '更新依赖包',
+      keys: 'Ctrl+Alt+U',
+      category: 'npm',
+      group: 'NPM',
+      copyContent: 'npm update'
+    },
+    // NVM 快捷键
+    {
+      id: 'tool_nvm_use',
+      name: 'nvm use',
+      description: '切换 Node.js 版本',
+      keys: 'Ctrl+Alt+U',
+      category: 'nvm',
+      group: 'NVM',
+      copyContent: 'nvm use'
+    },
+    {
+      id: 'tool_nvm_install',
+      name: 'nvm install',
+      description: '安装指定版本的 Node.js',
+      keys: 'Ctrl+Alt+I',
+      category: 'nvm',
+      group: 'NVM',
+      copyContent: 'nvm install'
+    },
+    {
+      id: 'tool_nvm_list',
+      name: 'nvm list',
+      description: '列出已安装的 Node.js 版本',
+      keys: 'Ctrl+Alt+L',
+      category: 'nvm',
+      group: 'NVM',
+      copyContent: 'nvm list'
+    },
+    {
+      id: 'tool_nvm_list_available',
+      name: 'nvm list available',
+      description: '列出所有可用版本',
+      keys: 'Ctrl+Alt+Shift+L',
+      category: 'nvm',
+      group: 'NVM',
+      copyContent: 'nvm list available'
+    },
+    {
+      id: 'tool_nvm_uninstall',
+      name: 'nvm uninstall',
+      description: '卸载指定版本',
+      keys: 'Ctrl+Alt+R',
+      category: 'nvm',
+      group: 'NVM',
+      copyContent: 'nvm uninstall'
+    },
+    {
+      id: 'tool_nvm_alias',
+      name: 'nvm alias',
+      description: '创建版本别名',
+      keys: 'Ctrl+Alt+A',
+      category: 'nvm',
+      group: 'NVM',
+      copyContent: 'nvm alias'
+    },
+    {
+      id: 'tool_nvm_current',
+      name: 'nvm current',
+      description: '显示当前版本',
+      keys: 'Ctrl+Alt+C',
+      category: 'nvm',
+      group: 'NVM',
+      copyContent: 'nvm current'
+    },
+    {
+      id: 'tool_nvm_on',
+      name: 'nvm on',
+      description: '启用 NVM',
+      keys: 'Ctrl+Alt+O',
+      category: 'nvm',
+      group: 'NVM',
+      copyContent: 'nvm on'
+    },
+    {
+      id: 'tool_nvm_off',
+      name: 'nvm off',
+      description: '禁用 NVM',
+      keys: 'Ctrl+Alt+Shift+O',
+      category: 'nvm',
+      group: 'NVM',
+      copyContent: 'nvm off'
+    },
+    // CMD 命令列表
+    {
+      id: 'tool_cmd_dir',
+      name: 'dir',
+      description: '列出目录内容',
+      keys: '',
+      category: 'cmd',
+      group: 'Windows CMD',
+      copyContent: 'dir'
+    },
+    {
+      id: 'tool_cmd_cd',
+      name: 'cd',
+      description: '切换目录',
+      keys: '',
+      category: 'cmd',
+      group: 'Windows CMD',
+      copyContent: 'cd'
+    },
+    {
+      id: 'tool_cmd_mkdir',
+      name: 'mkdir',
+      description: '创建新目录',
+      keys: '',
+      category: 'cmd',
+      group: 'Windows CMD',
+      copyContent: 'mkdir'
+    },
+    {
+      id: 'tool_cmd_copy',
+      name: 'copy',
+      description: '复制文件',
+      keys: '',
+      category: 'cmd',
+      group: 'Windows CMD',
+      copyContent: 'copy'
+    },
+    {
+      id: 'tool_cmd_del',
+      name: 'del',
+      description: '删除文件',
+      keys: '',
+      category: 'cmd',
+      group: 'Windows CMD',
+      copyContent: 'del'
+    },
+    {
+      id: 'tool_cmd_move',
+      name: 'move',
+      description: '移动文件',
+      keys: '',
+      category: 'cmd',
+      group: 'Windows CMD',
+      copyContent: 'move'
+    },
+    {
+      id: 'tool_cmd_rename',
+      name: 'ren',
+      description: '重命名文件',
+      keys: '',
+      category: 'cmd',
+      group: 'Windows CMD',
+      copyContent: 'ren'
+    },
+    {
+      id: 'tool_cmd_cls',
+      name: 'cls',
+      description: '清屏',
+      keys: '',
+      category: 'cmd',
+      group: 'Windows CMD',
+      copyContent: 'cls'
+    },
+    {
+      id: 'tool_cmd_tree',
+      name: 'tree',
+      description: '显示目录树',
+      keys: '',
+      category: 'cmd',
+      group: 'Windows CMD',
+      copyContent: 'tree'
+    },
+    {
+      id: 'tool_cmd_type',
+      name: 'type',
+      description: '显示文件内容',
+      keys: '',
+      category: 'cmd',
+      group: 'Windows CMD',
+      copyContent: 'type'
+    },
+    {
+      id: 'tool_cmd_xcopy',
+      name: 'xcopy',
+      description: '高级复制文件',
+      keys: '',
+      category: 'cmd',
+      group: 'Windows CMD',
+      copyContent: 'xcopy'
+    },
+    {
+      id: 'tool_cmd_robocopy',
+      name: 'robocopy',
+      description: '强大的复制工具',
+      keys: '',
+      category: 'cmd',
+      group: 'Windows CMD',
+      copyContent: 'robocopy'
+    },
+    {
+      id: 'tool_cmd_ipconfig',
+      name: 'ipconfig',
+      description: '显示网络配置',
+      keys: '',
+      category: 'cmd',
+      group: 'Windows CMD',
+      copyContent: 'ipconfig'
+    },
+    {
+      id: 'tool_cmd_ping',
+      name: 'ping',
+      description: '测试网络连通性',
+      keys: '',
+      category: 'cmd',
+      group: 'Windows CMD',
+      copyContent: 'ping'
+    },
+    {
+      id: 'tool_cmd_tracert',
+      name: 'tracert',
+      description: '跟踪网络路径',
+      keys: '',
+      category: 'cmd',
+      group: 'Windows CMD',
+      copyContent: 'tracert'
+    },
+    {
+      id: 'tool_cmd_nslookup',
+      name: 'nslookup',
+      description: 'DNS 查询工具',
+      keys: '',
+      category: 'cmd',
+      group: 'Windows CMD',
+      copyContent: 'nslookup'
+    },
+    {
+      id: 'tool_cmd_tasklist',
+      name: 'tasklist',
+      description: '列出运行进程',
+      keys: '',
+      category: 'cmd',
+      group: 'Windows CMD',
+      copyContent: 'tasklist'
+    },
+    {
+      id: 'tool_cmd_taskkill',
+      name: 'taskkill',
+      description: '结束进程',
+      keys: '',
+      category: 'cmd',
+      group: 'Windows CMD',
+      copyContent: 'taskkill'
+    },
+    {
+      id: 'tool_cmd_netstat',
+      name: 'netstat',
+      description: '显示网络连接',
+      keys: '',
+      category: 'cmd',
+      group: 'Windows CMD',
+      copyContent: 'netstat'
+    },
+    {
+      id: 'tool_cmd_systeminfo',
+      name: 'systeminfo',
+      description: '显示系统信息',
+      keys: '',
+      category: 'cmd',
+      group: 'Windows CMD',
+      copyContent: 'systeminfo'
+    },
+    {
+      id: 'tool_cmd_sfc',
+      name: 'sfc /scannow',
+      description: '系统文件检查器',
+      keys: '',
+      category: 'cmd',
+      group: 'Windows CMD',
+      copyContent: 'sfc /scannow'
+    },
+    {
+      id: 'tool_cmd_chkdsk',
+      name: 'chkdsk',
+      description: '检查磁盘',
+      keys: '',
+      category: 'cmd',
+      group: 'Windows CMD',
+      copyContent: 'chkdsk'
+    },
+    {
+      id: 'tool_cmd_format',
+      name: 'format',
+      description: '格式化磁盘',
+      keys: '',
+      category: 'cmd',
+      group: 'Windows CMD',
+      copyContent: 'format'
+    },
+    {
+      id: 'tool_cmd_diskpart',
+      name: 'diskpart',
+      description: '磁盘管理工具',
+      keys: '',
+      category: 'cmd',
+      group: 'Windows CMD',
+      copyContent: 'diskpart'
+    },
+    {
+      id: 'tool_cmd_powercfg',
+      name: 'powercfg',
+      description: '电源配置管理',
+      keys: '',
+      category: 'cmd',
+      group: 'Windows CMD',
+      copyContent: 'powercfg'
+    },
+    // Visual Studio Code 快捷键
+    {
+      id: 'tool_vscode_command_palette',
+      name: 'Command Palette',
+      description: '打开命令面板',
+      keys: 'Ctrl+Shift+P',
+      category: 'vscode',
+      group: 'VS Code',
+      copyContent: 'Ctrl+Shift+P'
+    },
+    {
+      id: 'tool_vscode_terminal',
+      name: 'Integrated Terminal',
+      description: '打开集成终端',
+      keys: 'Ctrl+`',
+      category: 'vscode',
+      group: 'VS Code',
+      copyContent: 'Ctrl+`'
+    },
+    {
+      id: 'tool_vscode_format',
+      name: 'Format Document',
+      description: '格式化文档',
+      keys: 'Shift+Alt+F',
+      category: 'vscode',
+      group: 'VS Code',
+      copyContent: 'Shift+Alt+F'
+    },
+    {
+      id: 'tool_vscode_find',
+      name: 'Find',
+      description: '查找',
+      keys: 'Ctrl+F',
+      category: 'vscode',
+      group: 'VS Code',
+      copyContent: 'Ctrl+F'
+    },
+    {
+      id: 'tool_vscode_replace',
+      name: 'Replace',
+      description: '替换',
+      keys: 'Ctrl+H',
+      category: 'vscode',
+      group: 'VS Code',
+      copyContent: 'Ctrl+H'
+    },
+    {
+      id: 'tool_vscode_toggle_terminal',
+      name: 'Toggle Terminal',
+      description: '切换终端可见性',
+      keys: 'Ctrl+`',
+      category: 'vscode',
+      group: 'VS Code',
+      copyContent: 'Ctrl+`'
+    },
+    {
+      id: 'tool_vscode_go_to_file',
+      name: 'Go to File',
+      description: '快速打开文件',
+      keys: 'Ctrl+P',
+      category: 'vscode',
+      group: 'VS Code',
+      copyContent: 'Ctrl+P'
+    },
+    {
+      id: 'tool_vscode_go_to_line',
+      name: 'Go to Line',
+      description: '跳转到指定行',
+      keys: 'Ctrl+G',
+      category: 'vscode',
+      group: 'VS Code',
+      copyContent: 'Ctrl+G'
+    },
+    {
+      id: 'tool_vscode_show_problems',
+      name: 'Problems Panel',
+      description: '显示问题面板',
+      keys: 'Ctrl+Shift+M',
+      category: 'vscode',
+      group: 'VS Code',
+      copyContent: 'Ctrl+Shift+M'
+    },
+    {
+      id: 'tool_vscode_show_output',
+      name: 'Output Panel',
+      description: '显示输出面板',
+      keys: 'Ctrl+Shift+U',
+      category: 'vscode',
+      group: 'VS Code',
+      copyContent: 'Ctrl+Shift+U'
+    },
+    {
+      id: 'tool_vscode_show_debug_console',
+      name: 'Debug Console',
+      description: '显示调试控制台',
+      keys: 'Ctrl+Shift+Y',
+      category: 'vscode',
+      group: 'VS Code',
+      copyContent: 'Ctrl+Shift+Y'
+    },
+    {
+      id: 'tool_vscode_toggle_sidebar',
+      name: 'Toggle Sidebar',
+      description: '切换侧边栏',
+      keys: 'Ctrl+B',
+      category: 'vscode',
+      group: 'VS Code',
+      copyContent: 'Ctrl+B'
+    },
+    {
+      id: 'tool_vscode_quick_open',
+      name: 'Quick Open',
+      description: '快速打开',
+      keys: 'Ctrl+E',
+      category: 'vscode',
+      group: 'VS Code',
+      copyContent: 'Ctrl+E'
+    },
+    {
+      id: 'tool_vscode_new_file',
+      name: 'New File',
+      description: '新建文件',
+      keys: 'Ctrl+N',
+      category: 'vscode',
+      group: 'VS Code',
+      copyContent: 'Ctrl+N'
+    },
+    {
+      id: 'tool_vscode_open_file',
+      name: 'Open File',
+      description: '打开文件',
+      keys: 'Ctrl+O',
+      category: 'vscode',
+      group: 'VS Code',
+      copyContent: 'Ctrl+O'
+    },
+    {
+      id: 'tool_vscode_save',
+      name: 'Save',
+      description: '保存文件',
+      keys: 'Ctrl+S',
+      category: 'vscode',
+      group: 'VS Code',
+      copyContent: 'Ctrl+S'
+    },
+    {
+      id: 'tool_vscode_save_all',
+      name: 'Save All',
+      description: '保存所有文件',
+      keys: 'Ctrl+K, S',
+      category: 'vscode',
+      group: 'VS Code',
+      copyContent: 'Ctrl+K, S'
+    },
+    {
+      id: 'tool_vscode_close_editor',
+      name: 'Close Editor',
+      description: '关闭编辑器',
+      keys: 'Ctrl+W',
+      category: 'vscode',
+      group: 'VS Code',
+      copyContent: 'Ctrl+W'
+    },
+    {
+      id: 'tool_vscode_split_editor',
+      name: 'Split Editor',
+      description: '拆分编辑器',
+      keys: 'Ctrl+\\',
+      category: 'vscode',
+      group: 'VS Code',
+      copyContent: 'Ctrl+\\'
+    },
+    {
+      id: 'tool_vscode Zen Mode',
+      name: 'Zen Mode',
+      description: '禅模式',
+      keys: 'Ctrl+K, Z',
+      category: 'vscode',
+      group: 'VS Code',
+      copyContent: 'Ctrl+K, Z'
+    },
+    {
+      id: 'tool_vscode_toggle_fullscreen',
+      name: 'Toggle Fullscreen',
+      description: '切换全屏',
+      keys: 'F11',
+      category: 'vscode',
+      group: 'VS Code',
+      copyContent: 'F11'
+    },
+    // Visual Studio 快捷键
+    {
+      id: 'tool_vs_solution_explorer',
+      name: 'Solution Explorer',
+      description: '打开解决方案资源管理器',
+      keys: 'Ctrl+Alt+L',
+      category: 'visual-studio',
+      group: 'Visual Studio',
+      copyContent: 'Ctrl+Alt+L'
+    },
+    {
+      id: 'tool_vs_team_explorer',
+      name: 'Team Explorer',
+      description: '打开团队资源管理器',
+      keys: 'Ctrl+Alt+M',
+      category: 'visual-studio',
+      group: 'Visual Studio',
+      copyContent: 'Ctrl+Alt+M'
+    },
+    {
+      id: 'tool_vs_build_solution',
+      name: 'Build Solution',
+      description: '生成解决方案',
+      keys: 'Ctrl+Shift+B',
+      category: 'visual-studio',
+      group: 'Visual Studio',
+      copyContent: 'Ctrl+Shift+B'
+    },
+    {
+      id: 'tool_vs_start_debugging',
+      name: 'Start Debugging',
+      description: '开始调试',
+      keys: 'F5',
+      category: 'visual-studio',
+      group: 'Visual Studio',
+      copyContent: 'F5'
+    },
+    {
+      id: 'tool_vs_find_in_files',
+      name: 'Find in Files',
+      description: '在文件中查找',
+      keys: 'Ctrl+Shift+F',
+      category: 'visual-studio',
+      group: 'Visual Studio',
+      copyContent: 'Ctrl+Shift+F'
+    },
+    {
+      id: 'tool_vs_properties_window',
+      name: 'Properties Window',
+      description: '显示属性窗口',
+      keys: 'F4',
+      category: 'visual-studio',
+      group: 'Visual Studio',
+      copyContent: 'F4'
+    },
+    {
+      id: 'tool_vs_error_list',
+      name: 'Error List',
+      description: '显示错误列表',
+      keys: 'Ctrl+\\, E',
+      category: 'visual-studio',
+      group: 'Visual Studio',
+      copyContent: 'Ctrl+\\, E'
+    },
+    {
+      id: 'tool_vs_output_window',
+      name: 'Output Window',
+      description: '显示输出窗口',
+      keys: 'Ctrl+\\, O',
+      category: 'visual-studio',
+      group: 'Visual Studio',
+      copyContent: 'Ctrl+\\, O'
+    },
+    {
+      id: 'tool_vs_class_view',
+      name: 'Class View',
+      description: '显示类视图',
+      keys: 'Ctrl+Shift+C',
+      category: 'visual-studio',
+      group: 'Visual Studio',
+      copyContent: 'Ctrl+Shift+C'
+    },
+    {
+      id: 'tool_vs_object_browser',
+      name: 'Object Browser',
+      description: '显示对象浏览器',
+      keys: 'Ctrl+Alt+J',
+      category: 'visual-studio',
+      group: 'Visual Studio',
+      copyContent: 'Ctrl+Alt+J'
+    },
+    {
+      id: 'tool_vs_code_definition_window',
+      name: 'Code Definition Window',
+      description: '显示代码定义窗口',
+      keys: 'Ctrl+\\, D',
+      category: 'visual-studio',
+      group: 'Visual Studio',
+      copyContent: 'Ctrl+\\, D'
+    },
+    {
+      id: 'tool_vs_server_explorer',
+      name: 'Server Explorer',
+      description: '显示服务器资源管理器',
+      keys: 'Ctrl+Alt+S',
+      category: 'visual-studio',
+      group: 'Visual Studio',
+      copyContent: 'Ctrl+Alt+S'
+    },
+    {
+      id: 'tool_vs_stop_debugging',
+      name: 'Stop Debugging',
+      description: '停止调试',
+      keys: 'Shift+F5',
+      category: 'visual-studio',
+      group: 'Visual Studio',
+      copyContent: 'Shift+F5'
+    },
+    {
+      id: 'tool_vs_step_over',
+      name: 'Step Over',
+      description: '单步跳过',
+      keys: 'F10',
+      category: 'visual-studio',
+      group: 'Visual Studio',
+      copyContent: 'F10'
+    },
+    {
+      id: 'tool_vs_step_into',
+      name: 'Step Into',
+      description: '单步执行',
+      keys: 'F11',
+      category: 'visual-studio',
+      group: 'Visual Studio',
+      copyContent: 'F11'
+    },
+    {
+      id: 'tool_vs_step_out',
+      name: 'Step Out',
+      description: '单步跳出',
+      keys: 'Shift+F11',
+      category: 'visual-studio',
+      group: 'Visual Studio',
+      copyContent: 'Shift+F11'
+    },
+    {
+      id: 'tool_vs_toggle_breakpoint',
+      name: 'Toggle Breakpoint',
+      description: '切换断点',
+      keys: 'F9',
+      category: 'visual-studio',
+      group: 'Visual Studio',
+      copyContent: 'F9'
+    },
+    {
+      id: 'tool_vs_run_to_cursor',
+      name: 'Run to Cursor',
+      description: '运行到光标处',
+      keys: 'Ctrl+F10',
+      category: 'visual-studio',
+      group: 'Visual Studio',
+      copyContent: 'Ctrl+F10'
+    },
+    {
+      id: 'tool_vs_set_next_statement',
+      name: 'Set Next Statement',
+      description: '设置下一语句',
+      keys: 'Ctrl+Shift+F10',
+      category: 'visual-studio',
+      group: 'Visual Studio',
+      copyContent: 'Ctrl+Shift+F10'
+    },
+    {
+      id: 'tool_vs_comment_selection',
+      name: 'Comment Selection',
+      description: '注释选中代码',
+      keys: 'Ctrl+K, Ctrl+C',
+      category: 'visual-studio',
+      group: 'Visual Studio',
+      copyContent: 'Ctrl+K, Ctrl+C'
+    },
+    {
+      id: 'tool_vs_uncomment_selection',
+      name: 'Uncomment Selection',
+      description: '取消注释选中代码',
+      keys: 'Ctrl+K, Ctrl+U',
+      category: 'visual-studio',
+      group: 'Visual Studio',
+      copyContent: 'Ctrl+K, Ctrl+U'
+    },
+    {
+      id: 'tool_vs_format_document',
+      name: 'Format Document',
+      description: '格式化整个文档',
+      keys: 'Ctrl+K, Ctrl+D',
+      category: 'visual-studio',
+      group: 'Visual Studio',
+      copyContent: 'Ctrl+K, Ctrl+D'
+    },
+    {
+      id: 'tool_vs_format_selection',
+      name: 'Format Selection',
+      description: '格式化选中代码',
+      keys: 'Ctrl+K, Ctrl+F',
+      category: 'visual-studio',
+      group: 'Visual Studio',
+      copyContent: 'Ctrl+K, Ctrl+F'
+    },
+    {
+      id: 'tool_vs_go_to_definition',
+      name: 'Go to Definition',
+      description: '转到定义',
+      keys: 'F12',
+      category: 'visual-studio',
+      group: 'Visual Studio',
+      copyContent: 'F12'
+    },
+    {
+      id: 'tool_vs_peek_definition',
+      name: 'Peek Definition',
+      description: '查看定义',
+      keys: 'Alt+F12',
+      category: 'visual-studio',
+      group: 'Visual Studio',
+      copyContent: 'Alt+F12'
+    },
+    {
+      id: 'tool_vs_find_all_references',
+      name: 'Find All References',
+      description: '查找所有引用',
+      keys: 'Shift+F12',
+      category: 'visual-studio',
+      group: 'Visual Studio',
+      copyContent: 'Shift+F12'
+    },
+    {
+      id: 'tool_vs_navigate_to',
+      name: 'Navigate To',
+      description: '导航到',
+      keys: 'Ctrl+,',
+      category: 'visual-studio',
+      group: 'Visual Studio',
+      copyContent: 'Ctrl+,'
+    },
+    {
+      id: 'tool_vs_quick_find',
+      name: 'Quick Find',
+      description: '快速查找',
+      keys: 'Ctrl+F',
+      category: 'visual-studio',
+      group: 'Visual Studio',
+      copyContent: 'Ctrl+F'
+    },
+    {
+      id: 'tool_vs_replace',
+      name: 'Replace',
+      description: '替换',
+      keys: 'Ctrl+H',
+      category: 'visual-studio',
+      group: 'Visual Studio',
+      copyContent: 'Ctrl+H'
     }
   ]
 }

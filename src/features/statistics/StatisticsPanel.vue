@@ -1,9 +1,13 @@
 <template>
-  <div class="statistics-panel">
+  <div class="statistics-panel" :class="`theme-${currentTheme}`">
     <!-- 顶部操作栏 -->
     <div class="statistics-header">
       <button class="refresh-btn" :title="i18n.refresh || '刷新'" @click="refreshData" :disabled="loading">
         <svg class="icon" :class="{ rotating: loading }"><use xlink:href="#iconRefresh"></use></svg>
+      </button>
+      <button class="theme-toggle-btn" @click="toggleTheme" :title="i18n.toggleTheme || '切换主题'">
+        <span class="theme-icon">{{ currentTheme === 'default' ? '🌈' : '🐙' }}</span>
+        <span class="theme-text">{{ currentTheme === 'default' ? (i18n.defaultTheme || '默认') : (i18n.githubTheme || 'GitHub') }}</span>
       </button>
       <div class="last-update">{{ i18n.lastUpdate }}: {{ lastUpdateTime }}</div>
     </div>
@@ -190,44 +194,6 @@
           </div>
         </div>
       </div>
-
-      <!-- 热门标签云 -->
-      <div v-if="stats.topTags && stats.topTags.length > 0" class="tag-cloud-section">
-        <h3 class="section-title">🏷️ {{ i18n.topTags || '热门标签' }}</h3>
-        <div class="tag-cloud">
-          <span
-            v-for="tag in stats.topTags"
-            :key="tag.name"
-            class="tag-item"
-            :style="{ fontSize: getTagSize(tag.count) + 'px' }"
-            :title="`${tag.name}: ${tag.count} ${i18n.times || '次'}`"
-          >
-            {{ tag.name }}
-          </span>
-        </div>
-      </div>
-
-      <!-- 最近活跃文档 -->
-      <div v-if="stats.recentDocs && stats.recentDocs.length > 0" class="recent-docs-section">
-        <h3 class="section-title">📝 {{ i18n.recentDocs || '最近活跃' }}</h3>
-        <div class="doc-list">
-          <div
-            v-for="doc in stats.recentDocs"
-            :key="doc.id"
-            class="doc-item"
-            @click="openDocument(doc.id)"
-          >
-            <div class="doc-icon">📄</div>
-            <div class="doc-info">
-              <div class="doc-title">{{ doc.title || i18n.untitled }}</div>
-              <div class="doc-meta">
-                <span>{{ formatDate(doc.updated) }}</span>
-                <span>{{ doc.words }} {{ i18n.words }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- 空状态 -->
@@ -242,6 +208,8 @@ import { ref, computed, onMounted, watch } from 'vue'
 
 interface Props {
   i18n?: Record<string, any>
+  theme?: 'default' | 'github'
+  onThemeChange?: (theme: 'default' | 'github') => void
   onRefresh?: (params: {
     viewMode: 'day' | 'week' | 'month' | 'year'
     dayRange?: 7 | 15 | 30 | 90 | 180 | 365
@@ -262,8 +230,8 @@ interface StatisticsData {
   avgWordsPerDoc: number
   dailyStats: DailyWordCount[]
   currentPeriod: string
-  topTags?: Array<{ name: string; count: number }>
-  recentDocs?: Array<{ id: string; title: string; updated: string; words: number }>
+  topTags: Array<{ name: string; count: number }>
+  recentDocs: Array<{ id: string; title: string; updated: string; words: number }>
 }
 
 interface DailyWordCount {
@@ -274,6 +242,7 @@ interface DailyWordCount {
 
 const props = withDefaults(defineProps<Props>(), {
   i18n: () => ({}),
+  theme: 'default',
 })
 
 // 状态
@@ -285,6 +254,7 @@ const dayRange = ref<7 | 15 | 30 | 90 | 180 | 365>(7)
 const monthYearRange = ref<1 | 2 | 3>(1)
 const selectedYear = ref<number>(new Date().getFullYear())
 const chartData = ref<DailyWordCount[]>([])
+const currentTheme = ref<'default' | 'github'>(props.theme || 'default')
 
 // 视图模式选项
 const viewModes = computed(() => [
@@ -350,6 +320,13 @@ function getPeriodAvgLabel(): string {
 // 监听视图模式变化
 watch(viewMode, () => {
   refreshData()
+})
+
+// 监听主题变化
+watch(() => props.theme, (newTheme) => {
+  if (newTheme) {
+    currentTheme.value = newTheme
+  }
 })
 
 // 刷新数据
@@ -428,45 +405,32 @@ function formatChartLabel(label: string): string {
   return label
 }
 
-// 获取标签大小
-function getTagSize(count: number): number {
-  const maxCount = Math.max(...(stats.value?.topTags?.map(t => t.count) || [1]))
-  const minSize = 12
-  const maxSize = 24
-  return minSize + ((count / maxCount) * (maxSize - minSize))
-}
-
 // 格式化日期
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr)
   const now = new Date()
   const diff = now.getTime() - date.getTime()
   const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-  
+
   if (days === 0) return props.i18n.today || '今天'
   if (days === 1) return props.i18n.yesterday || '昨天'
   if (days < 7) return `${days} ${props.i18n.daysAgo || '天前'}`
-  
-  return date.toLocaleDateString('zh-CN')
-}
 
-// 打开文档
-function openDocument(docId: string) {
-  // 调用思源 API 打开文档
-  const url = `/api/filetree/openFile?id=${docId}`;
-  fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  }).catch(err => {
-    console.error('打开文档失败:', err);
-  });
+  return date.toLocaleDateString('zh-CN')
 }
 
 // 数字补零
 function padZero(num: number): string {
   return num < 10 ? '0' + num : String(num)
+}
+
+// 切换主题
+function toggleTheme() {
+  const newTheme = currentTheme.value === 'default' ? 'github' : 'default'
+  currentTheme.value = newTheme
+  if (props.onThemeChange) {
+    props.onThemeChange(newTheme)
+  }
 }
 
 // 初始化
@@ -530,6 +494,33 @@ defineExpose({
       &.rotating {
         animation: rotate 1s linear infinite;
       }
+    }
+  }
+
+  .theme-toggle-btn {
+    padding: 4px 8px;
+    border: 1px solid var(--b3-border-color);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--b3-theme-on-surface);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+
+    &:hover {
+      background: var(--b3-theme-surface-lighter);
+      border-color: var(--b3-theme-primary);
+    }
+
+    .theme-icon {
+      font-size: 14px;
+    }
+
+    .theme-text {
+      font-weight: 500;
     }
   }
 
@@ -629,6 +620,18 @@ defineExpose({
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
+    .theme-github & {
+      background: var(--b3-theme-surface);
+      color: var(--b3-theme-on-surface);
+      border: 1px solid var(--b3-border-color);
+      box-shadow: none;
+
+      &:hover {
+        transform: none;
+        border-color: var(--b3-theme-primary);
+      }
+    }
+
     .stat-item-inline {
       display: flex;
       align-items: center;
@@ -679,6 +682,18 @@ defineExpose({
     &:hover {
       transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .theme-github & {
+      background: var(--b3-theme-surface);
+      color: var(--b3-theme-on-surface);
+      border: 1px solid var(--b3-border-color);
+      box-shadow: none;
+
+      &:hover {
+        transform: none;
+        border-color: var(--b3-theme-primary);
+      }
     }
 
     .stat-item-small {
@@ -737,6 +752,24 @@ defineExpose({
 
     &.gradient-3 {
       background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .theme-github & {
+      background: var(--b3-theme-surface);
+      color: var(--b3-theme-on-surface);
+      border: 1px solid var(--b3-border-color);
+      box-shadow: none;
+
+      &:hover {
+        transform: none;
+        border-color: var(--b3-theme-primary);
+      }
+
+      &.gradient-1,
+      &.gradient-2,
+      &.gradient-3 {
+        background: var(--b3-theme-surface);
+      }
     }
 
     .card-icon {
@@ -942,6 +975,20 @@ defineExpose({
             box-shadow: 0 4px 8px rgba(245, 87, 108, 0.4);
             border: 2px solid #f5576c;
           }
+
+          .theme-github & {
+            background: #0969da;
+            box-shadow: none;
+
+            &:hover {
+              opacity: 0.7;
+            }
+
+            &.today {
+              background: #1a7f37;
+              border: 2px solid #1a7f37;
+            }
+          }
         }
 
         .bar-label {
@@ -987,6 +1034,19 @@ defineExpose({
         background: rgba(245, 87, 108, 0.05);
       }
 
+      .theme-github & {
+        border-left-color: #d0d7de;
+
+        &.active {
+          border-left-color: #0969da;
+        }
+
+        &.today {
+          border-left-color: #1a7f37;
+          background: rgba(26, 127, 55, 0.05);
+        }
+      }
+
       .data-date {
         font-size: 12px;
         color: var(--b3-theme-on-surface);
@@ -1009,114 +1069,6 @@ defineExpose({
       padding: 20px;
       color: var(--b3-theme-on-surface-light);
       font-size: 12px;
-    }
-  }
-}
-
-.tag-cloud-section {
-  margin-bottom: 16px;
-  padding: 16px;
-  background: var(--b3-theme-surface);
-  border-radius: 8px;
-
-  .section-title {
-    margin: 0 0 12px 0;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--b3-theme-on-surface);
-  }
-
-  .tag-cloud {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 12px;
-    background: var(--b3-theme-background);
-    border-radius: 6px;
-
-    .tag-item {
-      display: inline-block;
-      padding: 4px 10px;
-      background: var(--b3-theme-primary-light);
-      color: var(--b3-theme-primary);
-      border-radius: 16px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
-
-      &:hover {
-        background: var(--b3-theme-primary);
-        color: white;
-        transform: scale(1.05);
-      }
-    }
-  }
-}
-
-.recent-docs-section {
-  margin-bottom: 16px;
-  padding: 16px;
-  background: var(--b3-theme-surface);
-  border-radius: 8px;
-
-  .section-title {
-    margin: 0 0 12px 0;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--b3-theme-on-surface);
-  }
-
-  .doc-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-
-    .doc-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px;
-      background: var(--b3-theme-background);
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.2s;
-
-      &:hover {
-        background: var(--b3-theme-surface-lighter);
-        transform: translateX(4px);
-      }
-
-      .doc-icon {
-        font-size: 20px;
-        flex-shrink: 0;
-      }
-
-      .doc-info {
-        flex: 1;
-        min-width: 0;
-
-        .doc-title {
-          font-size: 12px;
-          font-weight: 500;
-          color: var(--b3-theme-on-surface);
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          margin-bottom: 4px;
-        }
-
-        .doc-meta {
-          display: flex;
-          gap: 12px;
-          font-size: 10px;
-          color: var(--b3-theme-on-surface-light);
-
-          span {
-            display: flex;
-            align-items: center;
-          }
-        }
-      }
     }
   }
 }

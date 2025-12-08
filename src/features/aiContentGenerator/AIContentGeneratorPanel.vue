@@ -140,105 +140,176 @@
 
     <!-- 输入区域 -->
     <div class="input-section" v-show="showInputSection">
-      <!-- 当前选中的提示词显示（修复问题1） -->
-      <div v-if="currentPromptName" class="current-prompt-display">
-        <svg width="14" height="14">
-          <use xlink:href="#iconList"></use>
-        </svg>
-        <span class="prompt-label">{{ i18n.currentPrompt || '当前提示词' }}:</span>
-        <span class="prompt-value">{{ currentPromptName }}</span>
-        <button class="btn-clear-prompt" @click="clearCurrentPrompt" :title="i18n.clear || '清除'">
-          <svg width="12" height="12">
+      <!-- 普通模式：紧凑工具栏（提示词选择 + 引用文档 + 输入框 + 生成按钮） -->
+      <div v-if="!editMode" class="compact-toolbar">
+        <!-- 提示词选择按钮 -->
+        <div class="prompt-selector-wrapper">
+          <button class="btn-prompt-compact" @click="showPromptSelector = !showPromptSelector" :title="currentPromptName || (i18n.selectPrompt || '选择提示词')">
+            <svg width="14" height="14">
+              <use xlink:href="#iconList"></use>
+            </svg>
+            <span v-if="currentPromptName" class="prompt-name-compact">{{ currentPromptName }}</span>
+            <span v-else>{{ i18n.prompt || '提示词' }}</span>
+            <span v-if="savedPrompts.length > 0 && !currentPromptName" class="prompt-count-compact">{{ savedPrompts.length }}</span>
+            <button v-if="currentPromptName" class="btn-clear-inline" @click.stop="clearCurrentPrompt" :title="i18n.clear || '清除'">
+              <svg width="10" height="10">
+                <use xlink:href="#iconClose"></use>
+              </svg>
+            </button>
+          </button>
+
+          <!-- 提示词选择面板 -->
+          <div v-if="showPromptSelector" class="prompt-selector-panel">
+            <div class="prompt-selector-header">
+              <span>{{ i18n.savedPrompts || '已保存的提示词' }}</span>
+              <button class="btn-close-small" @click="showPromptSelector = false">
+                <svg width="12" height="12">
+                  <use xlink:href="#iconClose"></use>
+                </svg>
+              </button>
+            </div>
+
+            <div v-if="savedPrompts.length === 0" class="empty-prompts">
+              <p>{{ i18n.noSavedPrompts || '暂无保存的提示词，请在对话设置中保存' }}</p>
+            </div>
+
+            <div v-else class="prompt-list">
+              <div
+                v-for="(prompt, index) in savedPrompts"
+                :key="index"
+                class="prompt-item"
+                @click="loadPrompt(index)"
+              >
+                <div class="prompt-item-header">
+                  <span class="prompt-name">{{ prompt.name }}</span>
+                  <div class="prompt-item-actions">
+                    <button
+                      class="btn-edit-prompt"
+                      @click.stop="editPrompt(index)"
+                      :title="i18n.edit || '编辑'"
+                    >
+                      <svg width="14" height="14">
+                        <use xlink:href="#iconEdit"></use>
+                      </svg>
+                    </button>
+                    <button
+                      class="btn-delete-prompt"
+                      @click.stop="deletePrompt(index)"
+                      :title="i18n.delete || '删除'"
+                    >
+                      <svg width="14" height="14">
+                        <use xlink:href="#iconTrashcan"></use>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="prompt-item-preview">{{ getPromptPreview(prompt.systemPrompt) }}</div>
+                <div class="prompt-item-meta">
+                  <span>{{ i18n.temperature || '创造性' }}: {{ prompt.temperature }}</span>
+                  <span>{{ i18n.maxTokens || '最大长度' }}: {{ prompt.maxTokens }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 引用当前文档按钮 -->
+        <button
+          class="btn-reference-compact"
+          @click="insertCurrentDocReference"
+          :class="{ 'has-reference': referencedDocTitle }"
+          :title="referencedDocTitle || (i18n.referenceCurrentDoc || '引用当前文档内容')"
+        >
+          <span class="btn-icon">📄</span>
+          <span v-if="referencedDocTitle" class="ref-doc-name">{{ referencedDocTitle }}</span>
+          <span v-else>{{ i18n.refDoc || '引用' }}</span>
+          <button v-if="referencedDocTitle" class="btn-clear-inline" @click.stop="cancelDocReference" :title="i18n.cancel || '取消'">
+            <svg width="10" height="10">
+              <use xlink:href="#iconClose"></use>
+            </svg>
+          </button>
+        </button>
+
+        <!-- 输入框 -->
+        <textarea
+          v-model="userInput"
+          class="user-input-compact"
+          :placeholder="referencedDocContent ? (i18n.inputPlaceholderWithDoc || '输入问题...') : (i18n.inputPlaceholder || '输入您的问题...')"
+          rows="1"
+          @keydown.ctrl.enter="handleGenerate"
+          :disabled="isGenerating"
+        ></textarea>
+
+        <!-- 生成/停止按钮 -->
+        <button
+          v-if="!isGenerating"
+          class="btn-generate-compact"
+          @click="handleGenerate"
+          :disabled="!userInput.trim() && !referencedDocContent"
+          :title="i18n.generate || '生成'"
+        >
+          <svg width="16" height="16">
+            <use xlink:href="#iconSend"></use>
+          </svg>
+        </button>
+        <button
+          v-else
+          class="btn-stop-compact"
+          @click="handleStop"
+          :title="i18n.stopGeneration || '停止生成'"
+        >
+          <svg width="16" height="16">
             <use xlink:href="#iconClose"></use>
           </svg>
         </button>
       </div>
 
-      <!-- 提示词选择按钮 -->
-      <div class="prompt-selector-wrapper">
-        <button class="btn-prompt-selector" @click="showPromptSelector = !showPromptSelector">
-          <svg width="16" height="16">
-            <use xlink:href="#iconList"></use>
-          </svg>
-          <span>{{ i18n.selectPrompt || '选择提示词' }}</span>
-          <span v-if="savedPrompts.length > 0" class="prompt-count">({{ savedPrompts.length }})</span>
-          <svg width="12" height="12" class="arrow-icon">
-            <use :xlink:href="showPromptSelector ? '#iconUp' : '#iconDown'"></use>
-          </svg>
-        </button>
-
-        <!-- 提示词选择面板 -->
-        <div v-if="showPromptSelector" class="prompt-selector-panel">
-          <div class="prompt-selector-header">
-            <span>{{ i18n.savedPrompts || '已保存的提示词' }}</span>
-            <button class="btn-close-small" @click="showPromptSelector = false">
-              <svg width="12" height="12">
-                <use xlink:href="#iconClose"></use>
-              </svg>
-            </button>
-          </div>
-
-          <div v-if="savedPrompts.length === 0" class="empty-prompts">
-            <p>{{ i18n.noSavedPrompts || '暂无保存的提示词，请在对话设置中保存' }}</p>
-          </div>
-
-          <div v-else class="prompt-list">
-            <div
-              v-for="(prompt, index) in savedPrompts"
-              :key="index"
-              class="prompt-item"
-              @click="loadPrompt(index)"
-            >
-              <div class="prompt-item-header">
-                <span class="prompt-name">{{ prompt.name }}</span>
-                <div class="prompt-item-actions">
-                  <button
-                    class="btn-edit-prompt"
-                    @click.stop="editPrompt(index)"
-                    :title="i18n.edit || '编辑'"
-                  >
-                    <svg width="14" height="14">
-                      <use xlink:href="#iconEdit"></use>
-                    </svg>
-                  </button>
-                  <button
-                    class="btn-delete-prompt"
-                    @click.stop="deletePrompt(index)"
-                    :title="i18n.delete || '删除'"
-                  >
-                    <svg width="14" height="14">
-                      <use xlink:href="#iconTrashcan"></use>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-              <div class="prompt-item-preview">{{ getPromptPreview(prompt.systemPrompt) }}</div>
-              <div class="prompt-item-meta">
-                <span>{{ i18n.temperature || '创造性' }}: {{ prompt.temperature }}</span>
-                <span>{{ i18n.maxTokens || '最大长度' }}: {{ prompt.maxTokens }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Edit模式：目标文档选择 -->
-      <div v-if="editMode" class="edit-doc-selector">
-        <div class="selector-label">
+      <!-- Edit模式：紧凑工具栏（目标文档选择 + 输入框 + 执行按钮） -->
+      <div v-if="editMode" class="compact-toolbar edit-mode">
+        <!-- 目标文档选择 -->
+        <button class="btn-doc-compact" @click="selectTargetDocument" :title="editTargetDoc ? editTargetDoc.title : (i18n.selectDocument || '选择文档')">
           <svg width="14" height="14">
             <use xlink:href="#iconFile"></use>
           </svg>
-          <span>{{ i18n.targetDocument || '目标文档' }}:</span>
-        </div>
-        <button class="btn-select-doc" @click="selectTargetDocument">
-          <span v-if="!editTargetDoc">{{ i18n.selectDocument || '选择要编辑的文档' }}</span>
-          <span v-else class="selected-doc-name">📄 {{ editTargetDoc.title }}</span>
-          <svg width="14" height="14">
-            <use xlink:href="#iconSelect"></use>
+          <span v-if="editTargetDoc" class="doc-name-compact">{{ editTargetDoc.title }}</span>
+          <span v-else>{{ i18n.selectDoc || '选择文档' }}</span>
+          <button v-if="editTargetDoc" class="btn-clear-inline" @click.stop="clearTargetDocument" :title="i18n.clear || '清除'">
+            <svg width="10" height="10">
+              <use xlink:href="#iconClose"></use>
+            </svg>
+          </button>
+        </button>
+
+        <!-- 编辑模式：自定义输入框 -->
+        <textarea
+          v-if="editTargetDoc"
+          v-model="editCustomInput"
+          class="user-input-compact"
+          :placeholder="i18n.editCustomPlaceholder || '输入编辑指令...'"
+          rows="1"
+          @keydown.ctrl.enter="handleCustomEdit"
+          :disabled="isGenerating"
+        ></textarea>
+
+        <!-- 执行/停止按钮 -->
+        <button
+          v-if="!isGenerating && editTargetDoc"
+          class="btn-generate-compact"
+          @click="handleCustomEdit"
+          :disabled="!editCustomInput.trim()"
+          :title="i18n.execute || '执行'"
+        >
+          <svg width="16" height="16">
+            <use xlink:href="#iconSend"></use>
           </svg>
         </button>
-        <button v-if="editTargetDoc" class="btn-clear-doc" @click="clearTargetDocument" :title="i18n.clear || '清除'">
-          <svg width="12" height="12">
+        <button
+          v-else-if="isGenerating"
+          class="btn-stop-compact"
+          @click="handleStop"
+          :title="i18n.stopGeneration || '停止生成'"
+        >
+          <svg width="16" height="16">
             <use xlink:href="#iconClose"></use>
           </svg>
         </button>
@@ -299,74 +370,6 @@
           <button class="btn-apply-suggestions" @click="applySuggestions" :disabled="isGenerating">
             {{ i18n.applySuggestions || '应用建议优化' }}
           </button>
-        </div>
-      </div>
-
-      <!-- 引用当前文档按钮（仅普通模式显示） -->
-      <div v-if="!editMode" class="reference-doc-wrapper">
-        <button
-          class="btn-reference-doc"
-          @click="insertCurrentDocReference"
-          :title="i18n.referenceCurrentDoc || '引用当前文档内容'"
-        >
-          <span class="btn-icon">📄</span>
-          <span>{{ i18n.referenceCurrentDoc || '@当前文档' }}</span>
-        </button>
-        <span v-if="referencedDocTitle" class="referenced-doc-title">
-          📄 {{ referencedDocTitle }}
-          <button class="btn-cancel-reference" @click="cancelDocReference" :title="i18n.cancel || '取消'">
-            <svg width="10" height="10">
-              <use xlink:href="#iconClose"></use>
-            </svg>
-          </button>
-        </span>
-      </div>
-
-      <!-- 输入框和生成按钮（仅普通模式显示） -->
-      <div v-if="!editMode" class="input-wrapper">
-        <textarea
-          v-model="userInput"
-          class="user-input"
-          :placeholder="referencedDocContent ? (i18n.inputPlaceholderWithDoc || '输入问题或直接生成总结...') : (i18n.inputPlaceholder || '输入您的问题或需求...')"
-          rows="2"
-          @keydown.ctrl.enter="handleGenerate"
-          :disabled="isGenerating"
-        ></textarea>
-        <button
-          v-if="!isGenerating"
-          class="btn-generate"
-          @click="handleGenerate"
-          :disabled="!userInput.trim() && !referencedDocContent"
-        >
-          <svg width="18" height="18">
-            <use xlink:href="#iconSend"></use>
-          </svg>
-          <span>{{ i18n.generate || '生成' }}</span>
-        </button>
-        <button
-          v-else
-          class="btn-stop"
-          @click="handleStop"
-          :title="i18n.stopGeneration || '停止生成'"
-        >
-          <svg width="18" height="18">
-            <use xlink:href="#iconClose"></use>
-          </svg>
-          <span>{{ i18n.stop || '停止' }}</span>
-        </button>
-      </div>
-
-      <!-- 编辑模式提示信息 -->
-      <div v-if="editMode && editTargetDoc" class="edit-mode-info">
-        <div class="doc-meta-info">
-          <div class="meta-item">
-            <svg width="14" height="14"><use xlink:href="#iconFile"></use></svg>
-            <span>{{ i18n.documentTitle || '文档标题' }}: <strong>{{ editTargetDoc.title }}</strong></span>
-          </div>
-          <div class="meta-item">
-            <svg width="14" height="14"><use xlink:href="#iconClock"></use></svg>
-            <span>{{ i18n.editModeHint || '使用AI编辑工具对文档进行智能优化' }}</span>
-          </div>
         </div>
       </div>
     </div>
@@ -590,6 +593,7 @@ const isUndoing = ref(false);
 // AI智能编辑状态
 const isAnalyzing = ref(false);
 const aiSuggestions = ref<string | null>(null);
+const editCustomInput = ref(''); // 编辑模式自定义提问输入
 
 // 编辑历史（用于撤回/重做）
 interface EditHistory {
@@ -712,6 +716,7 @@ const toggleEditMode = () => {
 const clearEditState = () => {
   editTargetDoc.value = null;
   originalContent.value = '';
+  editCustomInput.value = ''; // 清理自定义提问输入
 };
 
 
@@ -754,11 +759,19 @@ const handleGenerate = async () => {
   stopTypewriter();
 
   try {
-    let finalSystemPrompt = systemPrompt.value;
-    console.log('系统提示词:', finalSystemPrompt.substring(0, 100) + '...');
-
-    // 问题3：默认就是Markdown格式输出，不需要额外配置
-    finalSystemPrompt += '\n\n**重要**: 请严格使用Markdown格式输出，包括标题(#)、列表(- 或 1.)、代码块(```)、粗体(**) 等标准语法。';
+    // 根据用户是否选择提示词来决定是否使用系统提示词
+    let finalSystemPrompt = '';
+    if (currentPromptName.value) {
+      // 用户选择了提示词，使用选中的提示词配置
+      finalSystemPrompt = systemPrompt.value;
+      console.log('使用选中的提示词:', currentPromptName.value, '内容:', finalSystemPrompt.substring(0, 100) + '...');
+      // 追加Markdown格式要求
+      finalSystemPrompt += '\n\n**重要**: 请严格使用Markdown格式输出，包括标题(#)、列表(- 或 1.)、代码块(```)、粗体(**) 等标准语法。';
+    } else {
+      // 用户未选择提示词，使用基础问答模式（仅保持Markdown格式要求）
+      finalSystemPrompt = '请使用Markdown格式输出回答。';
+      console.log('未选择提示词，使用基础问答模式');
+    }
 
     // 添加当前文档上下文（如果有）
     let contextInfo = '';
@@ -808,7 +821,7 @@ ${cleanDocContent}`;
         displayedContent.value = result;
       }
       showMessage('✓ 生成成功', 2000, 'info');
-      
+
       // 自动保存到AI问答封存笔记本（移动端不自动保存）
       if (!editMode.value && !isMobile.value) {
         await saveToArchiveNotebook();
@@ -842,8 +855,10 @@ const convertToSiyuanMarkdown = (content: string): string => {
   let converted = content;
 
   // 1. 确保标题前后有空行
-  converted = converted.replace(/([^\n])\n(#{1,6}\s)/g, '$1\n\n$2');
-  converted = converted.replace(/(#{1,6}\s[^\n]+)\n([^\n#])/g, '$1\n\n$2');
+  const headingStart = /([^\n])\n(#{1,6}\s)/g;
+  const headingEnd = /(#{1,6}\s[^\n]+)\n([^\n#])/g;
+  converted = converted.replace(headingStart, '$1\n\n$2');
+  converted = converted.replace(headingEnd, '$1\n\n$2');
 
   // 2. 处理粗体格式
   // 思源笔记在使用 markdown 模式时，粗体标记可能被解析但不显示效果
@@ -856,12 +871,16 @@ const convertToSiyuanMarkdown = (content: string): string => {
   // converted = converted.replace(/\*([^*]+?)\*/g, '$1'); // 如需移除斜体，取消注释
 
   // 4. 确保代码块前后有空行
-  converted = converted.replace(/([^\n])\n```/g, '$1\n\n```');
-  converted = converted.replace(/```\n([^\n])/g, '```\n\n$1');
+  const codeBlockStart = /([^\n])\n```/g;
+  const codeBlockEnd = /```\n([^\n])/g;
+  converted = converted.replace(codeBlockStart, '$1\n\n```');
+  converted = converted.replace(codeBlockEnd, '```\n\n$1');
 
   // 5. 确保列表前后有空行
-  converted = converted.replace(/([^\n])\n([-*+]\s)/g, '$1\n\n$2');
-  converted = converted.replace(/([^\n])\n(\d+\.\s)/g, '$1\n\n$2');
+  const listUnordered = /([^\n])\n([-*+]\s)/g;
+  const listOrdered = /([^\n])\n(\d+\.\s)/g;
+  converted = converted.replace(listUnordered, '$1\n\n$2');
+  converted = converted.replace(listOrdered, '$1\n\n$2');
 
   // 6. 清理多余的连续空行（最多保留两个换行符）
   converted = converted.replace(/\n{3,}/g, '\n\n');
@@ -890,7 +909,7 @@ const saveToArchiveNotebook = async () => {
 
     // 2. 根据内容自动分类
     const category = await autoClassifyContent(generatedContent.value);
-    
+
     // 3. 获取或创建分类文档
     const categoryDocId = await getOrCreateCategoryDoc(archiveNotebookId, category);
     if (!categoryDocId) {
@@ -900,17 +919,17 @@ const saveToArchiveNotebook = async () => {
 
     // 4. 生成文档标题
     const docTitle = await generateDocTitle(generatedContent.value);
-    
+
     // 5. 创建时间戳
-    const timestamp = new Date().toLocaleString('zh-CN', { 
-      year: 'numeric', 
-      month: '2-digit', 
-      day: '2-digit', 
-      hour: '2-digit', 
+    const timestamp = new Date().toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
       minute: '2-digit',
       second: '2-digit'
     }).replace(/\//g, '-').replace(/,/g, '');
-    
+
     const fullTitle = `${docTitle}-${timestamp}`;
 
     // 6. 在分类文档下创建子文档
@@ -939,7 +958,7 @@ const getOrCreateArchiveNotebook = async (): Promise<string | null> => {
   try {
     // 获取所有笔记本
     const notebooks = await api.lsNotebooks();
-    
+
     // 查找"AI问答封存"笔记本
     const archiveNotebook = notebooks.notebooks.find(
       (nb: any) => nb.name === 'AI问答封存'
@@ -970,22 +989,22 @@ const autoClassifyContent = async (content: string): Promise<string> => {
     if (/代码|函数|API|接口|算法|数据结构|编程|开发|技术|bug|debug/i.test(firstPart)) {
       return '技术文档';
     }
-    
+
     // 学习笔记关键词
     if (/学习|笔记|总结|复习|知识点|要点|理解|掌握/i.test(firstPart)) {
       return '学习笔记';
     }
-    
+
     // 创意想法关键词
     if (/创意|想法|灵感|构思|设计|方案|计划|头脑风暴/i.test(firstPart)) {
       return '创意想法';
     }
-    
+
     // 问答记录关键词
     if (/问题|回答|解答|疑问|为什么|怎么|如何|什么是/i.test(firstPart)) {
       return '问答记录';
     }
-    
+
     // 总结归纳关键词
     if (/总结|归纳|概括|梳理|整理|汇总|提炼/i.test(firstPart)) {
       return '总结归纳';
@@ -1171,7 +1190,7 @@ const clearContent = () => {
   errorMessage.value = '';
   showRaw.value = false;
   stopTypewriter();
-  
+
   // 移动端：清除后显示输入区域
   if (isMobile.value) {
     showInputSection.value = true;
@@ -1389,6 +1408,71 @@ const aiEditAction = async (action: 'polish' | 'expand' | 'condense' | 'fix' | '
 };
 
 /**
+ * 编辑模式：自定义提问处理
+ */
+const handleCustomEdit = async () => {
+  if (!editTargetDoc.value) {
+    showMessage('请先选择要编辑的文档', 2000, 'info');
+    return;
+  }
+
+  if (!editCustomInput.value.trim()) {
+    showMessage('请输入编辑指令', 2000, 'info');
+    return;
+  }
+
+  // 移动端：自动收起设置面板
+  if (isMobile.value) {
+    showSettings.value = false;
+  }
+
+  // 创建新的 AbortController
+  abortController.value = new AbortController();
+
+  isGenerating.value = true;
+  generatedContent.value = '';
+  displayedContent.value = '';
+  errorMessage.value = '';
+  aiSuggestions.value = null;
+
+  try {
+    const options: GenerateOptions = {
+      userInput: `请根据以下指令对文档进行编辑。保持Markdown格式，直接输出编辑后的完整文档内容：
+
+编辑指令：${editCustomInput.value}
+
+原文档：
+${editTargetDoc.value.content}`,
+      systemPrompt: '你是一个专业的文档编辑助手，擅长根据用户指令优化Markdown文档。请直接输出编辑后的完整文档，不要添加任何解释性文字。',
+      temperature: 0.4,
+      maxTokens: maxTokens.value,
+      signal: abortController.value?.signal,
+      onChunk: (chunk: string) => {
+        displayedContent.value += chunk;
+        generatedContent.value += chunk;
+      }
+    };
+
+    await props.onGenerate(options);
+
+    // 执行成功后清空输入框
+    editCustomInput.value = '';
+    showMessage('✓ 自定义编辑完成', 2000, 'info');
+  } catch (error) {
+    if ((error as Error).name === 'AbortError') {
+      console.log('用户取消了自定义编辑');
+      return;
+    }
+    console.error('自定义编辑失败:', error);
+    errorMessage.value = (error as Error).message || '自定义编辑失败';
+    showMessage('自定义编辑失败: ' + errorMessage.value, 3000, 'error');
+  } finally {
+    isGenerating.value = false;
+    abortController.value = null;
+  }
+};
+
+/**
  * AI文档分析和建议
  */
 const analyzeDocument = async () => {
@@ -1493,15 +1577,15 @@ const onPromptNameFocus = () => {
 const saveCurrentPrompt = async () => {
   // 如果输入框为空但有当前配置名称，使用当前配置名称
   const promptName = newPromptName.value.trim() || currentPromptName.value;
-  
+
   if (!promptName) {
     showMessage(props.i18n.enterPromptName || '请输入配置名称', 2000, 'info');
     return;
   }
-  
+
   // 检查是否已存在同名配置（更新模式）
   const existingIndex = savedPrompts.value.findIndex(p => p.name === promptName);
-  
+
   const promptConfig: AIPromptConfig = {
     id: existingIndex >= 0 ? savedPrompts.value[existingIndex].id : Date.now().toString(),
     name: promptName,
@@ -1535,10 +1619,10 @@ const saveCurrentPrompt = async () => {
   newPromptName.value = '';
   currentPromptName.value = promptName;
   showMessage(
-    existingIndex >= 0 
-      ? `✓ 已更新配置: ${promptConfig.name}` 
-      : `✓ 已保存配置: ${promptConfig.name}`, 
-    2000, 
+    existingIndex >= 0
+      ? `✓ 已更新配置: ${promptConfig.name}`
+      : `✓ 已保存配置: ${promptConfig.name}`,
+    2000,
     'info'
   );
 };
@@ -1828,7 +1912,7 @@ const checkIsMobile = () => {
   // 检测屏幕宽度
   const isSmallScreen = window.innerWidth <= 768;
   isMobile.value = isSiyuanMobile || isSmallScreen;
-  
+
   // 调试日志
   console.log('[AI生成器] 移动端检测:', {
     isSiyuanMobile,

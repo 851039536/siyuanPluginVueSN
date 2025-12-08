@@ -1513,6 +1513,7 @@ function addShortcutDock(plugin: Plugin, manager: ShortcutManager) {
         setup() {
           return () => h(ShortcutPanel, {
             i18n: plugin.i18n,
+            plugin: plugin,
           })
         }
       })

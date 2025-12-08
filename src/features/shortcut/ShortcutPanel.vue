@@ -286,12 +286,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { getShortcutManager } from './manager'
+import { loadFavorites, saveFavorites } from './storage'
 import type { ShortcutGroup, ShortcutInfo } from './types'
 
 interface Props {
   i18n?: Record<string, any>
+  plugin?: any
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -300,6 +302,20 @@ const props = withDefaults(defineProps<Props>(), {
 
 // 搜索关键词
 const searchKeyword = ref('')
+
+// 加载收藏数据
+onMounted(async () => {
+  if (props.plugin) {
+    try {
+      const loadedFavorites = await loadFavorites(props.plugin)
+      favorites.value = new Set(loadedFavorites)
+    } catch (error) {
+      console.error('初始化收藏数据失败:', error)
+      // 失败时使用空集合，不影响其他功能
+      favorites.value = new Set()
+    }
+  }
+})
 
 // 活跃分类
 const activeTab = ref('all')
@@ -513,9 +529,20 @@ async function addShortcut() {
 async function deleteShortcut(id: string) {
   if (confirm(props.i18n.confirmDelete || '确认删除此快捷键？')) {
     await manager.removeShortcut(id)
+    // 从收藏中移除
     favorites.value.delete(id)
+    // 从最近使用中移除
     const index = recentUsed.value.indexOf(id)
     if (index > -1) recentUsed.value.splice(index, 1)
+
+    // 更新收藏数据到持久化存储
+    if (props.plugin) {
+      try {
+        await saveFavorites(props.plugin, Array.from(favorites.value))
+      } catch (error) {
+        console.error('更新收藏数据失败:', error)
+      }
+    }
   }
 }
 
@@ -530,11 +557,22 @@ function isFavorite(id: string): boolean {
   return favorites.value.has(id)
 }
 
-function toggleFavorite(id: string) {
+async function toggleFavorite(id: string) {
+  // 切换收藏状态
   if (favorites.value.has(id)) {
     favorites.value.delete(id)
   } else {
     favorites.value.add(id)
+  }
+
+  // 保存到持久化存储
+  if (props.plugin) {
+    try {
+      await saveFavorites(props.plugin, Array.from(favorites.value))
+    } catch (error) {
+      console.error('保存收藏状态失败:', error)
+      // 不影响界面更新，只记录错误
+    }
   }
 }
 

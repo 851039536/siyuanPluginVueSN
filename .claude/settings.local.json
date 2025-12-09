@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(openspec validate:*)",
-      "Bash(openspec:*)"
+      "Bash(openspec:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": [],
     "ask": []

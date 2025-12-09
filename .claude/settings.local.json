@@ -3,7 +3,9 @@
     "allow": [
       "Bash(openspec validate:*)",
       "Bash(openspec:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(cat:*)",
+      "Bash(npm run build)"
     ],
     "deny": [],
     "ask": []

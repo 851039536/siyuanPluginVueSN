@@ -5,7 +5,7 @@ import {
 import "@/index.scss";
 import PluginInfoString from '@/../plugin.json'
 import { destroy, init } from '@/main'
-import { registerPageLock, registerTableOfContents, registerImageCompressor, registerDocNavigation, registerShortcut, registerWordQuery, registerGeneralSettings, registerQRCode, registerUnitConverter, registerSuperPanel, registerDiskBrowser, registerCodeImageGenerator, registerAIContentGenerator, registerStatistics, registerPronunciation, registerEncryption, registerVideo } from '@/features'
+import { registerPageLock, registerTableOfContents, registerImageCompressor, registerDocNavigation, registerShortcut, registerWordQuery, registerGeneralSettings, registerQRCode, registerUnitConverter, registerSuperPanel, registerDiskBrowser, registerCodeImageGenerator, registerAIContentGenerator, registerStatistics, registerPronunciation, registerEncryption, registerVideo, registerEverythingSearch } from '@/features'
 import { loadSettings, saveSettings, type PluginSettings } from '@/config/settings'
 import { initCommands, destroyCommands } from '@/commands'
 
@@ -145,8 +145,10 @@ export default class PluginSample extends Plugin {
       await registerEncryption(this)
     }
     if (this.settings.enableVideo) {
-      console.log('注册视频管理器功能')
       registerVideo(this)
+    }
+    if (this.settings.enableEverythingSearch) {
+      registerEverythingSearch(this)
     }
   }
 

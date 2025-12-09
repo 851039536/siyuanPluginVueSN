@@ -20,6 +20,13 @@
       :visible="showVideoManager"
       @close="onCloseVideoManager"
     />
+
+    <!-- Everything搜索弹窗 -->
+    <EverythingSearchDialog
+      :visible="everythingSearchVisible"
+      @update:visible="(v) => everythingSearchVisible = v"
+      @close="hideEverythingSearch"
+    />
   </div>
 </template>
 
@@ -29,6 +36,8 @@ import { onMounted, ref, watchEffect } from 'vue'
 import ImageViewer from '@/features/imageCompressor/ImageViewer.vue'
 import QRCodeDialog from '@/features/qrCode/QRCodeDialog.vue'
 import VideoManager from '@/features/video/VideoManager.vue'
+import EverythingSearchDialog from '@/features/everythingSearch/EverythingSearchDialog.vue'
+import { everythingSearchVisible, hideEverythingSearch } from '@/features'
 import type PluginSample from '@/index'
 
 const plugin = usePlugin() as PluginSample
@@ -128,6 +137,13 @@ onMounted(() => {
 
   // 监听打开视频管理器事件
   window.addEventListener('openVideoManager', openVideoManager)
+
+  // 监听打开Everything搜索事件
+  window.addEventListener('openEverythingSearch', () => {
+    console.log('收到 openEverythingSearch 事件')
+    everythingSearchVisible.value = true
+    console.log('弹窗状态设置为:', everythingSearchVisible.value)
+  })
 })
 </script>
 

@@ -428,6 +428,16 @@ const features = computed<Feature[]>(() => [
     actions: [
       { key: 'openVideoManager', label: '打开管理器', hotkey: 'Ctrl+Alt+V' }
     ]
+  },
+  {
+    id: 'everythingSearch',
+    iconKey: 'everythingSearch',
+    title: props.i18n.everythingSearch || 'Everything搜索',
+    desc: props.i18n.everythingSearchDesc || '本地文件快速搜索工具',
+    enabled: props.settings.enableEverythingSearch,
+    actions: [
+      { key: 'openEverythingSearch', label: '打开搜索', hotkey: 'Ctrl+Alt+E' }
+    ]
   }
 ])
 

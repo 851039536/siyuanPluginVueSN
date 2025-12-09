@@ -126,6 +126,12 @@ export const FEATURE_ICONS = {
   video: {
     icon: 'mdi:video',
     color: '#e11d48'
+  },
+
+  // Everything本地搜索
+  everythingSearch: {
+    icon: 'mdi:file-search',
+    color: '#3b82f6'
   }
 } as const
 

@@ -23,6 +23,7 @@ export interface PluginSettings {
   enablePronunciation: boolean   // 是否启用谐音翻译功能
   enableEncryption: boolean      // 是否启用内容加密功能
   enableVideo: boolean           // 是否启用视频管理器功能
+  enableEverythingSearch: boolean // 是否启用Everything本地搜索功能
   videoCategories?: string[]     // 视频分类列表
   wordQueryApiKey: string        // 单词查询API密钥（已废弃，使用aiApiProvider和aiApiKey）
   compactMode: boolean           // 是否启用全局紧洛模式
@@ -84,6 +85,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enablePronunciation: true,
   enableEncryption: true,
   enableVideo: true,
+  enableEverythingSearch: true,
   videoCategories: ['默认分类', '教程', '演示', '其他'],
   wordQueryApiKey: 'sk-fae27cc50015409fb2524b0970d3f0b0',
   compactMode: true,

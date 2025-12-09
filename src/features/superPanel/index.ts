@@ -148,7 +148,8 @@ async function handleFeatureToggle(plugin: Plugin, featureId: string, enabled: b
     'statistics': 'enableStatistics',
     'pronunciation': 'enablePronunciation',
     'encryption': 'enableEncryption',
-    'video': 'enableVideo'
+    'video': 'enableVideo',
+    'everythingSearch': 'enableEverythingSearch'
   }
 
   const settingKey = settingsMap[featureId]
@@ -212,6 +213,12 @@ function handleFeatureAction(_plugin: Plugin, action: string) {
     case 'openVideoManager':
       // 触发打开视频管理器
       window.dispatchEvent(new CustomEvent('openVideoManager'))
+      closeSuperPanel()
+      break
+
+    case 'openEverythingSearch':
+      // 触发打开Everything搜索
+      window.dispatchEvent(new CustomEvent('openEverythingSearch'))
       closeSuperPanel()
       break
 

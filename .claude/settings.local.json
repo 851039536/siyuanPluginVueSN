@@ -5,7 +5,10 @@
       "Bash(openspec:*)",
       "Bash(mkdir:*)",
       "Bash(cat:*)",
-      "Bash(npm run build)"
+      "Bash(npm run build)",
+      "WebFetch(domain:platform.minimaxi.com)",
+      "WebFetch(domain:tophub.today)",
+      "WebFetch(domain:rebang.today)"
     ],
     "deny": [],
     "ask": []

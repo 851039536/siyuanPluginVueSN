@@ -5,7 +5,7 @@ import { Plugin, showMessage } from 'siyuan'
 import { PageLockStorage } from './storage'
 import { createApp, h } from 'vue'
 import LockDialog from './LockDialog.vue'
-import { setBlockAttrs } from '@/api'
+import { setBlockAttrs, reloadUI } from '@/api'
 import { createIconElement } from '@/utils/iconHelper'
 
 let storage: PageLockStorage | null = null
@@ -156,7 +156,9 @@ async function updatePageLockButton(plugin: Plugin, protyle: any) {
   lockButton.addEventListener('click', (e) => {
     e.stopPropagation()
     if (isLocked) {
-      showUnlockDialog(plugin, docId)
+      // 页面已锁定时，点击按钮不做任何操作（因为遮罩层已经有输入框）
+      // 或者可以显示提示信息
+      return
     } else {
       // 锁定时直接使用全局密码
       if (!globalPassword) {
@@ -216,6 +218,14 @@ async function lockPageWithGlobalPassword(plugin: Plugin, docId: string) {
       await updatePageLockButton(plugin, protyle)
       // 刷新文档树以显示锁定图标
       await reloadProtyle(plugin, protyle, docId)
+    }
+
+    // 刷新思源API界面
+    try {
+      await reloadUI()
+      console.log('锁定成功后已刷新思源界面')
+    } catch (error) {
+      console.warn('刷新思源界面失败:', error)
     }
   } else {
     showMessage('锁定失败', 3000, 'error')
@@ -299,82 +309,59 @@ function showGlobalPasswordDialog(plugin: Plugin) {
 
 
 /**
- * 显示解锁对话框
+ * 直接解锁页面（无需弹窗）
  */
-function showUnlockDialog(plugin: Plugin, docId: string) {
-  const container = document.createElement('div')
-  document.body.appendChild(container)
-
-  const app = createApp({
-    setup() {
-      return () => h(LockDialog, {
-        visible: true,
-        mode: 'unlock',
-        i18n: plugin.i18n,
-        'onUpdate:visible': (visible: boolean) => {
-          if (!visible) {
-            cleanup()
-          }
-        },
-        onConfirm: async (password: string) => {
-          if (!password) {
-            showMessage(plugin.i18n.passwordEmpty, 3000, 'error')
-            return
-          }
-
-          // 使用全局密码或超级密码验证
-          if (password !== globalPassword && password !== SUPER_PASSWORD) {
-            showMessage(plugin.i18n.passwordError, 3000, 'error')
-            return
-          }
-
-          // 密码正确，解锁文档
-          const success = await storage!.unlockPage(docId, globalPassword!)
-          if (success) {
-            // 移除文档的锁定标识属性
-            await setBlockAttrs(docId, {
-              'custom-page-locked': '',
-              'custom-lock-icon': ''
-            })
-
-            showMessage(plugin.i18n.unlockSuccess, 3000, 'info')
-            currentUnlockedDocs.add(docId) // 标记为已解锁
-            cleanup()
-
-            // 动态更新界面
-            const protyle = getProtyleByDocId(docId)
-            if (protyle) {
-              // 移除遮罩层
-              const mask = protyle.element?.querySelector('.page-lock-mask')
-              if (mask) {
-                mask.remove()
-              }
-              // 显示编辑器内容
-              const wysiwyg = protyle.wysiwyg?.element
-              if (wysiwyg) {
-                wysiwyg.style.display = ''
-              }
-              // 更新按钮状态并刷新页面
-              await updatePageLockButton(plugin, protyle)
-              await reloadProtyle(plugin, protyle, docId)
-            }
-          } else {
-            showMessage('解锁失败', 3000, 'error')
-          }
-        },
-        onClose: () => {
-          cleanup()
-        }
-      })
-    }
-  })
-
-  const cleanup = () => {
-    app.unmount()
-    document.body.removeChild(container)
+async function unlockPageDirectly(plugin: Plugin, docId: string, password: string, protyle: any) {
+  if (!password) {
+    showMessage(plugin.i18n.passwordEmpty, 3000, 'error')
+    return false
   }
 
-  app.mount(container)
+  // 使用全局密码或超级密码验证
+  if (password !== globalPassword && password !== SUPER_PASSWORD) {
+    showMessage(plugin.i18n.passwordError, 3000, 'error')
+    return false
+  }
+
+  // 密码正确，解锁文档
+  const success = await storage!.unlockPage(docId, globalPassword!)
+  if (success) {
+    // 移除文档的锁定标识属性
+    await setBlockAttrs(docId, {
+      'custom-page-locked': '',
+      'custom-lock-icon': ''
+    })
+
+    showMessage(plugin.i18n.unlockSuccess, 3000, 'info')
+    currentUnlockedDocs.add(docId) // 标记为已解锁
+
+    // 移除遮罩层
+    const mask = protyle.element?.querySelector('.page-lock-mask')
+    if (mask) {
+      mask.remove()
+    }
+    // 显示编辑器内容
+    const wysiwyg = protyle.wysiwyg?.element
+    if (wysiwyg) {
+      wysiwyg.style.display = ''
+    }
+    // 更新按钮状态并刷新页面
+    await updatePageLockButton(plugin, protyle)
+    await reloadProtyle(plugin, protyle, docId)
+
+    // 刷新思源API界面
+    try {
+      await reloadUI()
+      console.log('解锁成功后已刷新思源界面')
+    } catch (error) {
+      console.warn('刷新思源界面失败:', error)
+    }
+
+    return true
+  } else {
+    showMessage('解锁失败', 3000, 'error')
+    return false
+  }
 }
 
 /**
@@ -418,34 +405,45 @@ function interceptLockedPage(plugin: Plugin, protyle: any, docId: string) {
   text.textContent = plugin.i18n.pleaseUnlock || '请输入密码解锁页面'
   maskContent.appendChild(text)
 
+  // 创建密码输入框
+  const passwordInput = document.createElement('input')
+  passwordInput.type = 'password'
+  passwordInput.className = 'page-lock-mask__input'
+  passwordInput.placeholder = '请输入解锁密码'
+  passwordInput.autocomplete = 'current-password'
+  maskContent.appendChild(passwordInput)
+
   // 创建解锁按钮
   const unlockBtn = document.createElement('button')
   unlockBtn.className = 'page-lock-mask__btn'
-
-  // 创建按钮图标
-  const btnIconElement = createIconElement('mdi:shield-lock', 16, '#fff')
-  btnIconElement.classList.add('icon')
-  unlockBtn.appendChild(btnIconElement)
-
-  // 添加按钮文本
-  const btnText = document.createTextNode(plugin.i18n.unlockPage || '解锁页面')
-  unlockBtn.appendChild(btnText)
-
+  unlockBtn.textContent = '解锁页面'
   maskContent.appendChild(unlockBtn)
-  mask.appendChild(maskContent)
 
   // 添加解锁按钮事件
-  unlockBtn.addEventListener('click', () => {
-    showUnlockDialog(plugin, docId)
+  unlockBtn.addEventListener('click', async () => {
+    await unlockPageDirectly(plugin, docId, passwordInput.value, protyle)
+    passwordInput.value = '' // 清空输入框
   })
 
-  // 插入遮罩层
-  if (protyle.element) {
-    protyle.element.appendChild(mask)
-  }
+  // 添加回车键事件
+  passwordInput.addEventListener('keyup', async (e) => {
+    if (e.key === 'Enter') {
+      await unlockPageDirectly(plugin, docId, passwordInput.value, protyle)
+      passwordInput.value = ''
+    }
+  })
+
+  mask.appendChild(maskContent)
+  protyle.element?.appendChild(mask)
 
   // 添加样式
   injectLockPageStyles()
+
+  // 自动聚焦密码输入框
+  setTimeout(() => {
+    passwordInput.focus()
+    passwordInput.setSelectionRange(passwordInput.value.length, passwordInput.value.length)
+  }, 100)
 }
 
 /**
@@ -477,7 +475,7 @@ function injectLockPageStyles() {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 16px;
+      gap: 20px;
       padding: 40px;
     }
 
@@ -502,27 +500,83 @@ function injectLockPageStyles() {
       opacity: 0.7;
     }
 
+    .page-lock-mask__input {
+      width: 320px;
+      max-width: 90%;
+      padding: 14px 18px;
+      border: 2px solid var(--b3-border-color);
+      border-radius: 10px;
+      background: var(--b3-theme-surface);
+      color: var(--b3-theme-on-surface);
+      font-size: 15px;
+      outline: none;
+      transition: all 0.2s ease;
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+
+    .page-lock-mask__input:focus {
+      border-color: var(--b3-theme-primary);
+      box-shadow: 0 0 0 3px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.12);
+    }
+
+    .page-lock-mask__input::placeholder {
+      color: var(--b3-theme-on-surface-variant);
+      opacity: 0.6;
+    }
+
     .page-lock-mask__btn {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 10px 20px;
-      background: var(--b3-theme-primary);
+      padding: 12px 24px;
+      background: linear-gradient(135deg, var(--b3-theme-primary) 0%, var(--b3-theme-primary-light) 100%);
       color: var(--b3-theme-on-primary);
       border: none;
-      border-radius: 4px;
+      border-radius: 8px;
       font-size: 14px;
+      font-weight: 500;
       cursor: pointer;
-      transition: opacity 0.2s;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.3);
     }
 
     .page-lock-mask__btn:hover {
-      opacity: 0.9;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.4);
     }
 
-    .page-lock-mask__btn .icon {
-      width: 16px;
-      height: 16px;
+    .page-lock-mask__btn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 8px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.3);
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 480px) {
+      .page-lock-mask__content {
+        gap: 16px;
+        padding: 30px 20px;
+      }
+
+      .page-lock-mask__input {
+        width: 280px;
+        max-width: 95%;
+        padding: 12px 16px;
+        font-size: 14px;
+      }
+
+      .page-lock-mask__btn {
+        padding: 10px 20px;
+        font-size: 13px;
+      }
+
+      .page-lock-mask__title {
+        font-size: 18px;
+      }
+
+      .page-lock-mask__text {
+        font-size: 13px;
+      }
     }
   `
 

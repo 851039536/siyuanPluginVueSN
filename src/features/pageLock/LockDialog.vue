@@ -35,25 +35,27 @@
               class="page-lock-dialog__input"
               @keyup.enter="handleConfirm"
               autocomplete="current-password"
+              :autofocus="isUpdateMode"
             />
           </div>
 
           <!-- 新密码输入 -->
           <div class="page-lock-dialog__field">
-            <label v-if="isLockMode || isUpdateMode" class="field-label">
+            <label class="field-label">
               <span class="lock-icon">
                 <IconWrapper name="pageLock" :size="15" />
               </span>
               {{ isUpdateMode ? (i18n.newPasswordPlaceholder || '新密码') : (i18n.passwordPlaceholder || '密码') }}
             </label>
             <input
-              :ref="isUpdateMode ? undefined : 'firstInput'"
+              :ref="isUpdateMode ? 'secondInput' : 'firstInput'"
               v-model="password"
               type="password"
               :placeholder="passwordPlaceholder"
               class="page-lock-dialog__input"
               @keyup.enter="handleConfirm"
               :autocomplete="isUnlockMode ? 'current-password' : 'new-password'"
+              :autofocus="!isUpdateMode"
             />
           </div>
 
@@ -114,6 +116,7 @@ const password = ref('')
 const confirmPassword = ref('')
 const oldPassword = ref('')
 const firstInput = ref<HTMLInputElement>()
+const secondInput = ref<HTMLInputElement>()
 
 const isLockMode = computed(() => props.mode === 'lock')
 const isUpdateMode = computed(() => props.mode === 'update')
@@ -149,14 +152,27 @@ const handleMaskClick = () => {
   handleClose()
 }
 
-// 自动聚焦第一个输入框
+// 自动聚焦第一个输入框（作为 autofocus 的备用方案）
 const focusFirstInput = () => {
+  const getTargetInput = () => {
+    if (isUpdateMode.value) {
+      return firstInput.value as HTMLInputElement
+    }
+    return firstInput.value as HTMLInputElement
+  }
+
+  // 简单的聚焦备用方案
   setTimeout(() => {
-    firstInput.value?.focus()
+    const input = getTargetInput()
+    if (input) {
+      input.focus()
+      input.setSelectionRange(input.value.length, input.value.length)
+    }
   }, 100)
 }
 
 const handleClose = () => {
+  // 清空所有输入框
   password.value = ''
   confirmPassword.value = ''
   oldPassword.value = ''
@@ -167,9 +183,19 @@ const handleClose = () => {
 // 监听 visible 变化，自动聚焦
 watch(() => props.visible, (newVal) => {
   if (newVal) {
-    nextTick(() => {
+    // 立即聚焦，然后延迟再次聚焦确保成功
+    setTimeout(() => {
+      const input = firstInput.value as HTMLInputElement
+      if (input) {
+        input.focus()
+        input.setSelectionRange(input.value.length, input.value.length)
+      }
+    }, 100)
+
+    // 延迟聚焦，确保组件完全渲染
+    setTimeout(() => {
       focusFirstInput()
-    })
+    }, 200)
   }
 })
 

@@ -90,6 +90,18 @@
                   <span>升序</span>
                 </label>
               </div>
+              <div class="option-item drive-filter">
+                <span>盘符:</span>
+                <select v-model="options.selectedDrive" class="drive-select" @change="handleDriveChange">
+                  <option value="">所有盘符</option>
+                  <option v-for="drive in availableDrives" :key="drive" :value="drive">
+                    {{ drive }}
+                  </option>
+                </select>
+                <button class="refresh-drives-btn" @click="refreshDrives" title="刷新盘符列表">
+                  <span class="refresh-icon">🔄</span>
+                </button>
+              </div>
             </div>
 
             <!-- 服务状态提示 -->
@@ -259,8 +271,12 @@ const options = reactive({
   autoSearch: true,
   debounceDelay: 500,
   sort: 'date_modified' as 'name' | 'path' | 'size' | 'date_modified',
-  ascending: false
+  ascending: false,
+  selectedDrive: ''
 })
+
+// 可用盘符
+const availableDrives = ref<string[]>([])
 
 // 从插件存储加载配置
 const loadConfigFromPlugin = async () => {
@@ -274,6 +290,10 @@ const loadConfigFromPlugin = async () => {
     const optionsData = await plugin.loadData(OPTIONS_STORAGE_KEY)
     if (optionsData) {
       Object.assign(options, optionsData)
+      // 确保 selectedDrive 字段存在
+      if (typeof options.selectedDrive === 'undefined') {
+        options.selectedDrive = ''
+      }
     }
   } catch (error) {
     console.error('从插件存储加载配置失败:', error)
@@ -324,6 +344,36 @@ const checkService = async () => {
   serviceAvailable.value = await checkEverythingService(config)
 }
 
+// 检测系统盘符
+const detectDrives = async () => {
+  try {
+    // 预设常见盘符列表
+    const commonDrives = ['C:', 'D:', 'E:', 'F:', 'G:', 'H:', 'I:', 'J:', 'K:', 'L:', 'M:', 'N:', 'O:', 'P:', 'Q:', 'R:', 'S:', 'T:', 'U:', 'V:', 'W:', 'X:', 'Y:', 'Z:']
+
+    // 尝试通过Everything API检测实际可用的盘符
+    // 由于浏览器环境限制，我们先使用预设列表
+    // 在实际使用中，Everything会返回实际存在的盘符结果
+    availableDrives.value = commonDrives
+  } catch (error) {
+    console.error('检测盘符失败:', error)
+    // 备用方案：预设常见盘符
+    availableDrives.value = ['C:', 'D:', 'E:', 'F:', 'G:', 'H:', 'I:', 'J:']
+  }
+}
+
+// 刷新盘符列表
+const refreshDrives = () => {
+  detectDrives()
+}
+
+// 处理盘符变化
+const handleDriveChange = () => {
+  // 如果启用了自动搜索，立即重新搜索
+  if (options.autoSearch && searchQuery.value.trim()) {
+    debouncedSearch()
+  }
+}
+
 // 搜索
 const handleSearch = async () => {
   const query = searchQuery.value.trim()
@@ -335,13 +385,21 @@ const handleSearch = async () => {
     debounceTimer.value = null
   }
 
+  // 构建最终查询：如果选择了盘符，在查询前加上盘符限制
+  let finalQuery = query
+  if (options.selectedDrive) {
+    // 在Everything中，可以通过在查询前加上盘符路径来限制搜索范围
+    // 例如：d:\ filename.txt 会在D盘中搜索包含filename的文件
+    finalQuery = `${options.selectedDrive}\\ ${query}`
+  }
+
   isSearching.value = true
   errorMessage.value = ''
   hasSearched.value = true
 
   try {
     results.value = await searchFiles({
-      query,
+      query: finalQuery,
       matchCase: options.matchCase,
       matchWholeWord: options.matchWholeWord,
       matchPath: options.matchPath,
@@ -559,6 +617,7 @@ watch([config, options], () => {
 onMounted(async () => {
   document.addEventListener('keydown', handleKeyDown)
   await loadConfig()
+  await detectDrives() // 初始化时检测盘符
 })
 
 onUnmounted(() => {
@@ -791,6 +850,48 @@ onUnmounted(() => {
   align-items: center;
   gap: 4px;
   cursor: pointer;
+}
+
+.drive-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.drive-select {
+  padding: 2px 8px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.refresh-drives-btn {
+  padding: 4px;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--b3-theme-on-surface);
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 24px;
+}
+
+.refresh-drives-btn:hover {
+  background: var(--b3-theme-primary);
+  border-color: var(--b3-theme-primary);
+  color: #fff;
+}
+
+.refresh-icon {
+  font-size: 14px;
+  line-height: 1;
 }
 
 /* 服务警告 */

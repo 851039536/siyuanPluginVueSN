@@ -608,8 +608,8 @@ const handleFeatureToggle = (featureId: string, enabled: boolean) => {
   overflow-y: auto;
   padding: 16px;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
   align-content: start;
 
   /* 滚动条样式 */
@@ -792,7 +792,7 @@ const handleFeatureToggle = (featureId: string, enabled: boolean) => {
   .super-panel-content {
     grid-template-columns: 1fr;
     padding: 12px;
-    gap: 10px;
+    gap: 8px;
   }
   
   .ai-settings-header {
@@ -859,7 +859,7 @@ const handleFeatureToggle = (featureId: string, enabled: boolean) => {
   
   .super-panel-content {
     padding: 8px;
-    gap: 8px;
+    gap: 6px;
   }
   
   .ai-settings-header {

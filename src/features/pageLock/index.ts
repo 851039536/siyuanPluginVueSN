@@ -6,6 +6,7 @@ import { PageLockStorage } from './storage'
 import { createApp, h } from 'vue'
 import LockDialog from './LockDialog.vue'
 import { setBlockAttrs } from '@/api'
+import { createIconElement } from '@/utils/iconHelper'
 
 let storage: PageLockStorage | null = null
 let currentUnlockedDocs: Set<string> = new Set() // 当前会话已解锁的文档
@@ -137,11 +138,20 @@ async function updatePageLockButton(plugin: Plugin, protyle: any) {
   const lockButton = document.createElement('button')
   lockButton.className = 'page-lock-button block__icon b3-tooltips b3-tooltips__sw'
   lockButton.setAttribute('aria-label', isLocked ? plugin.i18n.unlockPage : plugin.i18n.lockPage)
-  lockButton.innerHTML = `
-    <svg class="icon-lock ${isLocked ? 'icon-lock--locked' : ''}">
-      <use xlink:href="#icon${isLocked ? 'Lock' : 'Unlock'}"></use>
-    </svg>
-  `
+
+  // 创建图标容器
+  const iconContainer = document.createElement('span')
+  iconContainer.style.display = 'inline-flex'
+  iconContainer.style.alignItems = 'center'
+  iconContainer.style.justifyContent = 'center'
+
+  // 使用新的图标系统
+  const iconName = isLocked ? 'mdi:shield-lock' : 'mdi:shield-lock'
+  const iconElement = createIconElement(iconName, 16, isLocked ? '#ef4444' : '#6b7280')
+  iconElement.classList.add('icon-lock', isLocked ? 'icon-lock--locked' : 'icon-lock--unlocked')
+  iconContainer.appendChild(iconElement)
+
+  lockButton.appendChild(iconContainer)
 
   lockButton.addEventListener('click', (e) => {
     e.stopPropagation()
@@ -386,23 +396,46 @@ function interceptLockedPage(plugin: Plugin, protyle: any, docId: string) {
   // 创建遮罩层
   const mask = document.createElement('div')
   mask.className = 'page-lock-mask'
-  mask.innerHTML = `
-    <div class="page-lock-mask__content">
-      <svg class="page-lock-mask__icon">
-        <use xlink:href="#iconLock"></use>
-      </svg>
-      <h3 class="page-lock-mask__title">${plugin.i18n.pageLocked}</h3>
-      <p class="page-lock-mask__text">${plugin.i18n.pleaseUnlock}</p>
-      <button class="page-lock-mask__btn">
-        <svg class="icon"><use xlink:href="#iconUnlock"></use></svg>
-        ${plugin.i18n.unlockPage}
-      </button>
-    </div>
-  `
+
+  // 创建遮罩内容
+  const maskContent = document.createElement('div')
+  maskContent.className = 'page-lock-mask__content'
+
+  // 创建图标
+  const iconElement = createIconElement('mdi:shield-lock', 48, '#ef4444')
+  iconElement.classList.add('page-lock-mask__icon')
+  maskContent.appendChild(iconElement)
+
+  // 创建标题
+  const title = document.createElement('h3')
+  title.className = 'page-lock-mask__title'
+  title.textContent = plugin.i18n.pageLocked || '页面已锁定'
+  maskContent.appendChild(title)
+
+  // 创建文本
+  const text = document.createElement('p')
+  text.className = 'page-lock-mask__text'
+  text.textContent = plugin.i18n.pleaseUnlock || '请输入密码解锁页面'
+  maskContent.appendChild(text)
+
+  // 创建解锁按钮
+  const unlockBtn = document.createElement('button')
+  unlockBtn.className = 'page-lock-mask__btn'
+
+  // 创建按钮图标
+  const btnIconElement = createIconElement('mdi:shield-lock', 16, '#fff')
+  btnIconElement.classList.add('icon')
+  unlockBtn.appendChild(btnIconElement)
+
+  // 添加按钮文本
+  const btnText = document.createTextNode(plugin.i18n.unlockPage || '解锁页面')
+  unlockBtn.appendChild(btnText)
+
+  maskContent.appendChild(unlockBtn)
+  mask.appendChild(maskContent)
 
   // 添加解锁按钮事件
-  const unlockBtn = mask.querySelector('.page-lock-mask__btn')
-  unlockBtn?.addEventListener('click', () => {
+  unlockBtn.addEventListener('click', () => {
     showUnlockDialog(plugin, docId)
   })
 

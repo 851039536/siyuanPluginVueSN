@@ -52,7 +52,7 @@ export const FEATURE_ICONS = {
 
   // 页面锁定
   pageLock: {
-    icon: 'mdi:lock',
+    icon: 'mdi:shield-lock',
     color: '#ef4444'
   },
 

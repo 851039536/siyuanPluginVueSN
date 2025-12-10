@@ -3,20 +3,18 @@
     <div class="page-lock-dialog" @click.stop>
       <div class="page-lock-dialog__header">
         <div class="header-icon">
-          <svg class="icon">
-            <use :xlink:href="headerIcon"></use>
-          </svg>
+          <IconWrapper :name="headerIconName" :size="20" />
         </div>
         <h3>{{ title }}</h3>
         <button class="page-lock-dialog__close" @click="handleClose">
-          <svg class="icon"><use xlink:href="#iconClose"></use></svg>
+          <IconWrapper name="close" :size="18" />
         </button>
       </div>
 
       <div class="page-lock-dialog__content">
         <!-- 提示信息 -->
         <div v-if="hintText" class="page-lock-dialog__hint">
-          <svg class="icon"><use xlink:href="#iconInfo"></use></svg>
+          <IconWrapper name="info" :size="16" />
           <span>{{ hintText }}</span>
         </div>
 
@@ -25,7 +23,7 @@
           <div v-if="isUpdateMode" class="page-lock-dialog__field">
             <label class="field-label">
               <span class="lock-icon">
-                <svg class="icon"><use xlink:href="#iconLock"></use></svg>
+                <IconWrapper name="pageLock" :size="15" />
               </span>
               {{ i18n.oldPasswordPlaceholder || '旧密码' }}
             </label>
@@ -44,7 +42,7 @@
           <div class="page-lock-dialog__field">
             <label v-if="isLockMode || isUpdateMode" class="field-label">
               <span class="lock-icon">
-                <svg class="icon"><use xlink:href="#iconLock"></use></svg>
+                <IconWrapper name="pageLock" :size="15" />
               </span>
               {{ isUpdateMode ? (i18n.newPasswordPlaceholder || '新密码') : (i18n.passwordPlaceholder || '密码') }}
             </label>
@@ -63,7 +61,7 @@
           <div v-if="isLockMode || isUpdateMode" class="page-lock-dialog__field">
             <label class="field-label">
               <span class="lock-icon">
-                <svg class="icon"><use xlink:href="#iconLock"></use></svg>
+                <IconWrapper name="pageLock" :size="15" />
               </span>
               {{ i18n.confirmPasswordPlaceholder || '确认密码' }}
             </label>
@@ -81,11 +79,11 @@
 
       <div class="page-lock-dialog__footer">
         <button class="page-lock-dialog__btn page-lock-dialog__btn--cancel" @click="handleClose">
-          <svg class="icon"><use xlink:href="#iconClose"></use></svg>
+          <IconWrapper name="close" :size="15" />
           {{ cancelText }}
         </button>
         <button class="page-lock-dialog__btn page-lock-dialog__btn--confirm" @click="handleConfirm">
-          <svg class="icon"><use xlink:href="#iconCheck"></use></svg>
+          <IconWrapper name="success" :size="15" />
           {{ confirmText }}
         </button>
       </div>
@@ -95,6 +93,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
+import IconWrapper from '@/components/IconWrapper.vue'
 
 interface Props {
   visible: boolean
@@ -126,10 +125,10 @@ const title = computed(() => {
   return props.i18n.enterPassword || '输入密码'
 })
 
-const headerIcon = computed(() => {
-  if (isUpdateMode.value) return '#iconRefresh'
-  if (isLockMode.value) return '#iconLock'
-  return '#iconUnlock'
+const headerIconName = computed(() => {
+  if (isUpdateMode.value) return 'refresh'
+  if (isLockMode.value) return 'pageLock'
+  return 'pageLock'
 })
 
 const hintText = computed(() => {

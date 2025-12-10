@@ -195,6 +195,7 @@ import {
   type EverythingSearchResult,
   type EverythingConfig
 } from './api'
+import { usePlugin } from '@/main'
 
 // Props
 interface Props {
@@ -211,6 +212,13 @@ const emit = defineEmits<{
 
 // Refs
 const searchInputRef = ref<HTMLInputElement | null>(null)
+
+// 配置存储键
+const CONFIG_STORAGE_KEY = 'everything-search-config'
+const OPTIONS_STORAGE_KEY = 'everything-search-options'
+
+// 获取插件实例
+const plugin = usePlugin()
 
 // 状态
 const searchQuery = ref('')
@@ -238,6 +246,63 @@ const options = reactive({
   autoSearch: true,
   debounceDelay: 500
 })
+
+// 从插件存储加载配置
+const loadConfigFromPlugin = async () => {
+  try {
+    const configData = await plugin.loadData(CONFIG_STORAGE_KEY)
+    if (configData) {
+      config.host = configData.host || 'localhost'
+      config.port = configData.port || 80
+    }
+
+    const optionsData = await plugin.loadData(OPTIONS_STORAGE_KEY)
+    if (optionsData) {
+      Object.assign(options, optionsData)
+    }
+  } catch (error) {
+    console.error('从插件存储加载配置失败:', error)
+  }
+}
+
+// 保存配置到插件存储
+const saveConfigToPlugin = async () => {
+  try {
+    await plugin.saveData(CONFIG_STORAGE_KEY, { host: config.host, port: config.port })
+    await plugin.saveData(OPTIONS_STORAGE_KEY, { ...options })
+  } catch (error) {
+    console.error('保存配置到插件存储失败:', error)
+  }
+}
+
+// 从localStorage迁移配置
+const migrateFromLocalStorage = () => {
+  try {
+    const savedConfig = localStorage.getItem('everything-search-config')
+    if (savedConfig) {
+      const data = JSON.parse(savedConfig)
+      config.host = data.host || config.host
+      config.port = data.port || config.port
+      // 清理localStorage
+      localStorage.removeItem('everything-search-config')
+    }
+
+    const savedOptions = localStorage.getItem('everything-search-options')
+    if (savedOptions) {
+      Object.assign(options, JSON.parse(savedOptions))
+      // 清理localStorage
+      localStorage.removeItem('everything-search-options')
+    }
+
+    // 如果从localStorage迁移了数据，保存到插件存储
+    if (savedConfig || savedOptions) {
+      saveConfigToPlugin()
+      console.log('Everything搜索配置已从localStorage迁移到插件存储')
+    }
+  } catch (error) {
+    console.error('从localStorage迁移配置失败:', error)
+  }
+}
 
 // 检查服务
 const checkService = async () => {
@@ -397,30 +462,51 @@ const handleKeyDown = (event: KeyboardEvent) => {
 }
 
 // 加载保存的配置
-const loadConfig = () => {
+const loadConfig = async () => {
   try {
-    const saved = localStorage.getItem('everything-search-config')
-    if (saved) {
-      const data = JSON.parse(saved)
-      config.host = data.host || 'localhost'
-      config.port = data.port || 80
-    }
-    const savedOptions = localStorage.getItem('everything-search-options')
-    if (savedOptions) {
-      Object.assign(options, JSON.parse(savedOptions))
+    // 首先尝试从插件存储加载
+    await loadConfigFromPlugin()
+
+    // 如果插件存储中没有配置，尝试从localStorage迁移
+    const hasConfig = await plugin.loadData(CONFIG_STORAGE_KEY)
+    const hasOptions = await plugin.loadData(OPTIONS_STORAGE_KEY)
+
+    if (!hasConfig || !hasOptions) {
+      migrateFromLocalStorage()
     }
   } catch (error) {
     console.error('加载配置失败:', error)
+    // 如果插件存储失败，尝试从localStorage加载作为后备
+    try {
+      const saved = localStorage.getItem('everything-search-config')
+      if (saved) {
+        const data = JSON.parse(saved)
+        config.host = data.host || 'localhost'
+        config.port = data.port || 80
+      }
+      const savedOptions = localStorage.getItem('everything-search-options')
+      if (savedOptions) {
+        Object.assign(options, JSON.parse(savedOptions))
+      }
+    } catch (fallbackError) {
+      console.error('从localStorage加载后备配置失败:', fallbackError)
+    }
   }
 }
 
 // 保存配置
-const saveConfig = () => {
+const saveConfig = async () => {
   try {
-    localStorage.setItem('everything-search-config', JSON.stringify(config))
-    localStorage.setItem('everything-search-options', JSON.stringify(options))
+    await saveConfigToPlugin()
   } catch (error) {
     console.error('保存配置失败:', error)
+    // 如果插件存储失败，尝试保存到localStorage作为后备
+    try {
+      localStorage.setItem('everything-search-config', JSON.stringify(config))
+      localStorage.setItem('everything-search-options', JSON.stringify(options))
+    } catch (fallbackError) {
+      console.error('保存到localStorage后备失败:', fallbackError)
+    }
   }
 }
 
@@ -448,12 +534,14 @@ watch(() => options.autoSearch, (newVal) => {
 
 // 监听配置变化
 watch([config, options], () => {
-  saveConfig()
+  saveConfig().catch(error => {
+    console.error('保存配置时出错:', error)
+  })
 }, { deep: true })
 
-onMounted(() => {
+onMounted(async () => {
   document.addEventListener('keydown', handleKeyDown)
-  loadConfig()
+  await loadConfig()
 })
 
 onUnmounted(() => {

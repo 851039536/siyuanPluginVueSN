@@ -138,6 +138,12 @@ export const FEATURE_ICONS = {
   systemMonitor: {
     icon: 'mdi:monitor-dashboard',
     color: '#8b5cf6'
+  },
+
+  // API使用参考
+  apiUsage: {
+    icon: 'mdi:api',
+    color: '#0ea5e9'
   }
 } as const
 

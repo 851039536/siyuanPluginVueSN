@@ -446,6 +446,16 @@ const features = computed<Feature[]>(() => [
     desc: props.i18n.systemMonitor?.description || '在状态栏显示 CPU 和内存使用情况',
     enabled: props.settings.enableSystemMonitor,
     actions: []
+  },
+  {
+    id: 'apiUsage',
+    iconKey: 'apiUsage',
+    title: props.i18n.apiUsage?.title || 'API使用参考',
+    desc: props.i18n.apiUsageDesc || '通过快捷键查看思源API使用方式参考',
+    enabled: props.settings.enableApiUsage,
+    actions: [
+      { key: 'openApiUsage', label: '打开API参考', hotkey: 'Ctrl+Alt+A' }
+    ]
   }
 ])
 

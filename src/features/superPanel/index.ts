@@ -150,7 +150,8 @@ async function handleFeatureToggle(plugin: Plugin, featureId: string, enabled: b
     'encryption': 'enableEncryption',
     'video': 'enableVideo',
     'everythingSearch': 'enableEverythingSearch',
-    'systemMonitor': 'enableSystemMonitor'
+    'systemMonitor': 'enableSystemMonitor',
+    'apiUsage': 'enableApiUsage'
   }
 
   const settingKey = settingsMap[featureId]
@@ -222,6 +223,14 @@ function handleFeatureAction(_plugin: Plugin, action: string) {
       // 触发打开Everything搜索
       window.dispatchEvent(new CustomEvent('openEverythingSearch'))
       closeSuperPanel()
+      break
+
+    case 'openApiUsage':
+      // 触发打开API使用参考
+      if ((_plugin as any).settings.enableApiUsage) {
+        window.dispatchEvent(new CustomEvent('openApiUsage'))
+        closeSuperPanel()
+      }
       break
 
     default:

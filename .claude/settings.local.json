@@ -12,7 +12,8 @@
       "Bash(pnpm run build:*)",
       "Bash(pnpm run dev:*)",
       "Bash(pnpm run lint:*)",
-      "Bash(pnpm build)"
+      "Bash(pnpm build)",
+      "Bash(pnpm lint:*)"
     ],
     "deny": [],
     "ask": []

@@ -34,12 +34,9 @@ function slugify(s: string): string {
     .toLowerCase()
 }
 
-// 配置 anchor 插件（为标题添加锚点）
+// 配置 anchor 插件（为标题添加锚点，但不添加链接）
 md.use(markdownItAnchor, {
-  permalink: markdownItAnchor.permalink.headerLink({
-    safariReaderFix: true,
-    class: 'header-anchor'
-  }),
+  permalink: false, // 禁用永久链接，避免标题变成链接
   level: [1, 2, 3, 4, 5, 6],
   slugify
 })

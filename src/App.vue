@@ -37,7 +37,7 @@ import ImageViewer from '@/features/imageCompressor/ImageViewer.vue'
 import QRCodeDialog from '@/features/qrCode/QRCodeDialog.vue'
 import VideoManager from '@/features/video/VideoManager.vue'
 import EverythingSearchDialog from '@/features/everythingSearch/EverythingSearchDialog.vue'
-import { everythingSearchVisible, hideEverythingSearch } from '@/features'
+import { everythingSearchVisible, hideEverythingSearch, showApiReferencePanel } from '@/features'
 import type PluginSample from '@/index'
 
 const plugin = usePlugin() as PluginSample
@@ -143,6 +143,12 @@ onMounted(() => {
     console.log('收到 openEverythingSearch 事件')
     everythingSearchVisible.value = true
     console.log('弹窗状态设置为:', everythingSearchVisible.value)
+  })
+
+  // 监听打开API参考事件
+  window.addEventListener('openApiReference', () => {
+    console.log('收到 openApiReference 事件')
+    showApiReferencePanel(plugin)
   })
 })
 </script>

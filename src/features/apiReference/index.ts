@@ -10,28 +10,31 @@ import ApiReferencePanel from './ApiReferencePanel.vue'
  * 注册API参考模块
  */
 export function registerApiReference(plugin: Plugin) {
-  // 使用思源的命令系统注册快捷键
+  // 添加快捷键命令
   plugin.addCommand({
     langKey: 'openApiReference',
-    hotkey: '⌃⌥A', // Ctrl+Alt+A
+    hotkey: 'Ctrl+Alt+A',
     callback: () => {
-      showApiReferencePanel(plugin)
-      console.log('[API Reference] Command triggered')
+      openApiReference()
     }
   })
 
-  // 监听超级面板中的打开API参考事件
-  window.addEventListener('openApiReference', () => {
-    showApiReferencePanel(plugin)
-  })
-
   console.log('API参考功能已注册，快捷键: Ctrl+Alt+A')
+  console.log('API参考样式已加载')
+}
+
+/**
+ * 打开API参考面板
+ */
+function openApiReference() {
+  // 通过全局事件触发打开API参考面板
+  window.dispatchEvent(new CustomEvent('openApiReference'))
 }
 
 /**
  * 显示API参考面板
  */
-function showApiReferencePanel(plugin: Plugin) {
+export function showApiReferencePanel(plugin: Plugin) {
   // 创建遮罩层
   const overlay = document.createElement('div')
   overlay.id = 'api-reference-overlay'

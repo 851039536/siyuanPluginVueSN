@@ -20,32 +20,53 @@
       </div>
     </div>
 
-    <!-- 快捷键提示 -->
-    <div class="shortcut-hint">
-      <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>A</kbd> {{ i18n.apiReference?.shortcutHint || '快速打开此面板' }}
+    <!-- 搜索栏 -->
+    <div class="search-bar">
+      <div class="search-input-wrapper">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 16 16">
+          <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" fill="currentColor"/>
+        </svg>
+        <input 
+          v-model="searchQuery"
+          type="text" 
+          class="search-input" 
+          :placeholder="i18n.apiReference?.searchPlaceholder || '搜索API文档...'"
+          @keydown.esc="searchQuery = ''"
+        />
+        <kbd v-if="!searchQuery" class="search-hint">Ctrl+Alt+A</kbd>
+        <button v-else class="clear-search" @click="searchQuery = ''">
+          <svg width="12" height="12" viewBox="0 0 16 16">
+            <path d="M2.146 2.146a.5.5 0 0 1 .708 0L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854a.5.5 0 0 1 0-.708z" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
     </div>
 
     <!-- API选择器 -->
     <div class="api-selector" v-if="providers.length > 0">
-      <div class="selector-label">{{ i18n.apiReference?.selectApi || '选择API' }}:</div>
       <div class="api-tabs">
         <button
-          v-for="provider in providers"
+          v-for="provider in filteredProviders"
           :key="provider.id"
           :class="['api-tab', { active: selectedProvider?.id === provider.id }]"
           @click="selectProvider(provider.id)"
         >
           <span class="provider-icon">{{ provider.icon }}</span>
           <span class="provider-name">{{ provider.name }}</span>
-          <span class="provider-version" v-if="provider.version">{{ provider.version }}</span>
+          <span class="provider-version" v-if="provider.version">v{{ provider.version }}</span>
           <button 
             class="remove-provider-btn" 
             @click.stop="removeProvider(provider.id)"
             :title="i18n.apiReference?.deleteProvider || '删除此API文档'"
           >
-            ×
+            <svg width="12" height="12" viewBox="0 0 16 16">
+              <path d="M2.146 2.146a.5.5 0 0 1 .708 0L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854a.5.5 0 0 1 0-.708z" fill="currentColor"/>
+            </svg>
           </button>
         </button>
+      </div>
+      <div v-if="filteredProviders.length === 0 && searchQuery" class="no-results">
+        {{ i18n.apiReference?.noResults || '未找到匹配的API文档' }}
       </div>
     </div>
 
@@ -163,19 +184,95 @@ const TocTree = defineComponent({
   setup(props, { emit }) {
     const handleClick = (slug: string, event: Event) => {
       event.preventDefault()
+      event.stopPropagation()
       emit('navigate', slug)
+    }
+
+    const handleMouseEnter = (event: Event, item: TocItem) => {
+      const target = event.currentTarget as HTMLElement
+      if (target) {
+        target.style.backgroundColor = 'rgba(13, 110, 253, 0.08)'
+        target.style.transform = 'translateX(4px)'
+        target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)'
+        const indicator = target.querySelector('.toc-indicator') as HTMLElement
+        if (indicator) {
+          indicator.style.backgroundColor = '#0d6efd'
+          indicator.style.transform = 'scale(1.2)'
+          indicator.style.boxShadow = '0 0 6px rgba(13, 110, 253, 0.4)'
+        }
+      }
+    }
+
+    const handleMouseLeave = (event: Event, item: TocItem) => {
+      const target = event.currentTarget as HTMLElement
+      const isActive = props.activeSlug === item.slug
+      if (target && !isActive) {
+        // 恢复原始背景色
+        target.style.backgroundColor = item.level === 1 ? 'rgba(0, 0, 0, 0.02)' : 'transparent'
+        target.style.transform = 'translateX(0)'
+        target.style.boxShadow = 'none'
+        const indicator = target.querySelector('.toc-indicator') as HTMLElement
+        if (indicator) {
+          indicator.style.transform = 'scale(1)'
+          indicator.style.boxShadow = item.level === 1 ? '0 0 4px rgba(13, 110, 253, 0.3)' : 'none'
+        }
+      }
     }
 
     const renderItem = (item: TocItem) => {
       const isActive = props.activeSlug === item.slug
       const hasChildren = item.children && item.children.length > 0
 
-      return h('li', { class: `toc-item toc-level-${item.level}` }, [
-        h('a', {
-          href: `#${item.slug}`,
+      return h('li', { 
+        class: `toc-item toc-level-${item.level}`,
+        'data-slug': item.slug,
+        'data-level': item.level
+      }, [
+        h('div', {
           class: { 'toc-link': true, 'active': isActive },
-          onClick: (e: Event) => handleClick(item.slug, e)
-        }, item.text),
+          'data-slug': item.slug,
+          'data-level': item.level,
+          style: {
+            display: 'flex',
+            alignItems: 'center',
+            padding: item.level === 1 ? '8px 16px' : '6px 16px',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            marginLeft: item.level > 1 ? `${(item.level - 1) * 20}px` : '0',
+            fontSize: item.level === 1 ? '15px' : item.level === 2 ? '14px' : item.level === 3 ? '13px' : '12px',
+            fontWeight: item.level === 1 ? '700' : item.level === 2 ? '600' : item.level === 3 ? '500' : '400',
+            backgroundColor: isActive ? 'rgba(13, 110, 253, 0.12)' : (item.level === 1 ? 'rgba(0, 0, 0, 0.02)' : 'transparent'),
+            borderLeft: isActive ? '3px solid #0d6efd' : 'none',
+            color: isActive ? '#0d6efd' : (item.level === 1 ? '#222' : item.level === 2 ? '#333' : '#666'),
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+            WebkitFontSmoothing: 'antialiased',
+            MozOsxFontSmoothing: 'grayscale',
+            margin: '1px 0'
+          },
+          onClick: (e: Event) => handleClick(item.slug, e),
+          onMouseenter: (e: Event) => handleMouseEnter(e, item),
+          onMouseleave: (e: Event) => handleMouseLeave(e, item)
+        }, [
+          h('div', { 
+            class: 'toc-indicator',
+            style: {
+              width: item.level === 1 ? '7px' : item.level === 2 ? '6px' : item.level === 3 ? '5px' : '4px',
+              height: item.level === 1 ? '7px' : item.level === 2 ? '6px' : item.level === 3 ? '5px' : '4px',
+              borderRadius: '50%',
+              backgroundColor: item.level === 1 ? '#0d6efd' : item.level === 2 ? '#0d6efd' : item.level === 3 ? '#6c757d' : '#adb5bd',
+              marginRight: '12px',
+              flexShrink: '0',
+              transition: 'all 0.2s ease',
+              opacity: item.level === 1 ? '1' : item.level === 2 ? '0.8' : item.level === 3 ? '0.6' : '0.4',
+              boxShadow: item.level === 1 ? '0 0 4px rgba(13, 110, 253, 0.3)' : 'none'
+            }
+          }),
+          h('span', { 
+            class: 'toc-text',
+            style: { flex: '1' }
+          }, item.text)
+        ]),
         hasChildren ? h('ul', { class: 'toc-children' }, item.children!.map(renderItem)) : null
       ])
     }
@@ -193,25 +290,89 @@ const showAddDialog = ref(false)
 const tocItems = ref<TocItem[]>([])
 const activeHeading = ref<string>('')
 const newProvider = ref({ name: '', icon: '📄', content: '' })
+const searchQuery = ref('')
 
 // 计算属性
 const renderedMarkdown = computed(() => {
   if (!selectedProvider.value) return ''
-  return renderMarkdown(selectedProvider.value.description || '')
+  let content = selectedProvider.value.description || ''
+  
+  // 如果有搜索关键词，高亮显示
+  if (searchQuery.value.trim()) {
+    const regex = new RegExp(`(${searchQuery.value.trim()})`, 'gi')
+    content = content.replace(regex, '<mark>$1</mark>')
+  }
+  
+  return renderMarkdown(content)
 })
 
 const hasToc = computed(() => tocItems.value.length > 0)
 const canAddProvider = computed(() => newProvider.value.name.trim() && newProvider.value.content.trim())
 
+const filteredProviders = computed(() => {
+  if (!searchQuery.value.trim()) return providers.value
+  const query = searchQuery.value.toLowerCase()
+  return providers.value.filter(p => 
+    p.name.toLowerCase().includes(query) || 
+    p.description.toLowerCase().includes(query)
+  )
+})
+
 // 生命周期
 onMounted(async () => {
+  console.log('API参考面板已挂载')
+  
+  // 强制注入关键样式
+  injectCriticalStyles()
+  
   await initializeDefaultProviders(props.plugin)
   const storedProviders = await storage.getProviders()
   providers.value = storedProviders
+  console.log('加载的API提供者:', providers.value.length)
   if (providers.value.length > 0) {
     await selectProvider(providers.value[0].id)
   }
 })
+
+// 强制注入关键样式，确保在第三方环境中也能正常显示
+function injectCriticalStyles() {
+  const styleId = 'api-reference-critical-styles'
+  if (document.getElementById(styleId)) return
+  
+  const style = document.createElement('style')
+  style.id = styleId
+  style.textContent = `
+    .api-reference-panel .toc-indicator {
+      border-radius: 50% !important;
+      margin-right: 12px !important;
+      flex-shrink: 0 !important;
+      transition: all 0.2s ease !important;
+    }
+    
+    .api-reference-panel .toc-text {
+      flex: 1 !important;
+      line-height: 1.4 !important;
+    }
+    
+    .api-reference-panel .toc-list {
+      list-style: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    
+    .api-reference-panel .toc-item {
+      margin: 0 !important;
+    }
+    
+    .api-reference-panel .toc-children {
+      list-style: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+  `
+  document.head.appendChild(style)
+  console.log('API参考关键样式已注入')
+}
 
 // 监听选中的提供者变化
 watch(selectedProvider, (newProvider) => {
@@ -342,6 +503,6 @@ function handleClose() {
 }
 </script>
 
-<style scoped lang="scss">
-@use "./index.scss";
+<style lang="scss">
+@import "./index.scss";
 </style>

@@ -118,10 +118,6 @@ watch(() => props.visible, async (newVisible) => {
   }
 })
 
-// 检测是否为英文单词
-function isEnglishWord(text: string): boolean {
-  return /^[a-zA-Z\s-]+$/.test(text)
-}
 
 // 检测是否为中文
 function isChinese(text: string): boolean {

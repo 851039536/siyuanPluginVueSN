@@ -1,283 +1,61 @@
 <template>
-  <div class="system-monitor-panel" :class="{ 'compact-mode': compactMode }">
-    <!-- CPU使用率 -->
-    <div v-if="showCpuUsage" class="monitor-item cpu-usage">
-      <span class="monitor-text">{{ i18n?.systemMonitor?.cpu || 'CPU' }}</span>
-      <span class="usage-value">{{ formatPercentage(cpuUsage) }}</span>
-      <div class="usage-bar">
-        <div class="usage-bar-fill" :style="{ width: `${cpuUsage}%` }" :class="getUsageClass(cpuUsage)"></div>
-      </div>
-    </div>
-
-    <!-- 内存使用率 -->
-    <div v-if="showMemoryUsage" class="monitor-item memory-usage">
-      <span class="monitor-text">{{ i18n?.systemMonitor?.memory || '内存' }}</span>
-      <span class="usage-value">{{ formatPercentage(memoryUsage) }}</span>
-      <div class="usage-bar">
-        <div class="usage-bar-fill" :style="{ width: `${memoryUsage}%` }" :class="getUsageClass(memoryUsage)"></div>
-      </div>
-    </div>
-
-    <!-- 内存详情（可选） -->
-    <div v-if="showMemoryDetails" class="memory-details">
-      <div class="detail-item">
-        <span class="detail-label">{{ i18n?.systemMonitor?.used || '已用' }}:</span>
-        <span class="detail-value">{{ formatMemory(memoryUsed) }}</span>
-      </div>
-      <div class="detail-item">
-        <span class="detail-label">{{ i18n?.systemMonitor?.free || '可用' }}:</span>
-        <span class="detail-value">{{ formatMemory(memoryFree) }}</span>
-      </div>
-      <div class="detail-item">
-        <span class="detail-label">{{ i18n?.systemMonitor?.total || '总计' }}:</span>
-        <span class="detail-value">{{ formatMemory(memoryTotal) }}</span>
-      </div>
-    </div>
-
-    <!-- 更新时间 -->
-    <div class="update-time" v-if="!compactMode">
-      {{ formatTime(lastUpdate) }}
-    </div>
-  </div>
+  <div></div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import type { SystemResourceUsage } from './types'
-import { getSystemResourceUsage } from './resourceMonitor'
+import { onMounted, onUnmounted } from 'vue'
 
-interface Props {
-  i18n?: any
-  compactMode?: boolean
-  showCpuUsage?: boolean
-  showMemoryUsage?: boolean
-  showMemoryDetails?: boolean
-  updateInterval?: number
-  onUpdate?: (usage: SystemResourceUsage) => void
+let intervalId: ReturnType<typeof setInterval> | null = null
+let started = false
+
+function start(usageBtn: Element, cpu: Element, mem: Element) {
+  if (intervalId) clearInterval(intervalId)
+  started = true
+  usageBtn.classList.remove('ft__secondary')
+  intervalId = setInterval(() => {
+    const cpuUsage = process.getCPUUsage()
+    const memUsage = process.memoryUsage()
+    cpu.textContent = `${cpuUsage.percentCPUUsage.toFixed(1)}%`
+    mem.textContent = `${(memUsage.rss / 1024 / 1024).toFixed(1)}M`
+  }, 3000)
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  compactMode: true,
-  showCpuUsage: true,
-  showMemoryUsage: true,
-  showMemoryDetails: false,
-  updateInterval: 1000,
-})
-
-// 状态
-const cpuUsage = ref(0)
-const memoryUsage = ref(0)
-const memoryTotal = ref(0)
-const memoryUsed = ref(0)
-const memoryFree = ref(0)
-const lastUpdate = ref(Date.now())
-let updateTimer: ReturnType<typeof setInterval> | null = null
-
-// 格式化函数
-const formatPercentage = (value: number) => {
-  return `${value.toFixed(1)}%`
+function stop(usageBtn: Element) {
+  if (intervalId) clearInterval(intervalId)
+  started = false
+  intervalId = null
+  usageBtn.classList.add('ft__secondary')
 }
 
-const formatMemory = (bytes: number) => {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
-}
-
-const formatTime = (timestamp: number) => {
-  const date = new Date(timestamp)
-  return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`
-}
-
-const getUsageClass = (usage: number) => {
-  if (usage < 50) return 'low'
-  if (usage < 80) return 'medium'
-  return 'high'
-}
-
-// 使用实际的资源监控器获取系统资源使用情况
-
-// 更新资源使用情况
-const updateResourceUsage = async () => {
-  try {
-    const usage = await getSystemResourceUsage()
-
-    cpuUsage.value = usage.cpuUsage
-    memoryUsage.value = usage.memoryUsage
-    memoryTotal.value = usage.memoryTotal
-    memoryUsed.value = usage.memoryUsed
-    memoryFree.value = usage.memoryFree
-    lastUpdate.value = usage.timestamp
-
-    // 触发更新回调
-    if (props.onUpdate) {
-      props.onUpdate(usage)
-    }
-  } catch (error) {
-    console.error('获取系统资源使用情况失败:', error)
-
-    // 如果获取失败，使用模拟数据作为回退
-    const now = Date.now()
-    const simulatedCpuUsage = Math.min(100, Math.max(0, 30 + Math.sin(now / 10000) * 20 + Math.random() * 15))
-    const totalMemory = 8 * 1024 * 1024 * 1024
-    const usedMemory = totalMemory * (0.4 + Math.sin(now / 15000) * 0.1 + Math.random() * 0.1)
-    const freeMemory = totalMemory - usedMemory
-    const memoryUsagePercent = (usedMemory / totalMemory) * 100
-
-    cpuUsage.value = simulatedCpuUsage
-    memoryUsage.value = memoryUsagePercent
-    memoryTotal.value = totalMemory
-    memoryUsed.value = usedMemory
-    memoryFree.value = freeMemory
-    lastUpdate.value = now
-  }
-}
-
-// 启动监控
-const startMonitoring = () => {
-  if (updateTimer) {
-    clearInterval(updateTimer)
-  }
-
-  // 立即更新一次
-  updateResourceUsage()
-
-  // 设置定时更新
-  updateTimer = setInterval(updateResourceUsage, props.updateInterval)
-}
-
-// 停止监控
-const stopMonitoring = () => {
-  if (updateTimer) {
-    clearInterval(updateTimer)
-    updateTimer = null
-  }
-}
-
-// 生命周期
 onMounted(() => {
-  startMonitoring()
+  setTimeout(() => {
+    if (typeof process === 'undefined') return
+
+    const counter = document.querySelector('#status .status__counter')
+    if (!counter) return
+
+    // 移除已存在的面板
+    const existing = document.querySelector('.status__resUsage')
+    if (existing) existing.remove()
+
+    const html = `<div class="status__resUsage" style="font-size:12px;cursor:pointer;"><span class="ft__on-surface">CPU</span>&nbsp;<span class="fn__cpu">0%</span><span class="fn__space"></span><span class="ft__on-surface">内存</span>&nbsp;<span class="fn__mem">0M</span><span class="fn__space"></span></div>`
+    counter.insertAdjacentHTML('beforebegin', html)
+
+    const usageBtn = counter.previousElementSibling!
+    const cpu = usageBtn.querySelector('.fn__cpu')!
+    const mem = usageBtn.querySelector('.fn__mem')!
+
+    usageBtn.addEventListener('click', () => {
+      started ? stop(usageBtn) : start(usageBtn, cpu, mem)
+    })
+
+    start(usageBtn, cpu, mem)
+  }, 2000)
 })
 
 onUnmounted(() => {
-  stopMonitoring()
-})
-
-// 监听属性变化
-const effectiveUpdateInterval = computed(() => props.updateInterval)
-watch(effectiveUpdateInterval, (newInterval) => {
-  stopMonitoring()
-  startMonitoring()
+  if (intervalId) clearInterval(intervalId)
+  const existing = document.querySelector('.status__resUsage')
+  if (existing) existing.remove()
 })
 </script>
-
-<style scoped>
-.system-monitor-panel {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 8px 4px 8px;
-  height: 28px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  font-size: 12px;
-  color: var(--b3-theme-on-surface);
-  background: transparent;
-  user-select: none;
-}
-
-.system-monitor-panel.compact-mode {
-  gap: 6px;
-}
-
-.monitor-item {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  min-width: 90px;
-  line-height: 1.2;
-  padding-top: 2px;
-  padding-bottom: 3px;
-}
-
-.monitor-item.compact-mode {
-  min-width: 80px;
-}
-
-.monitor-text {
-  font-weight: 500;
-  white-space: nowrap;
-  font-size: 11px;
-  margin-right: 1px;
-}
-
-.monitor-value {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  flex: 1;
-}
-
-.usage-value {
-  min-width: 32px;
-  text-align: right;
-  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Consolas', monospace;
-  font-weight: 600;
-  font-size: 11px;
-}
-
-.usage-bar {
-  width: 32px;
-  height: 6px;
-  background: var(--b3-theme-surface-lighter);
-  border-radius: 2px;
-  overflow: hidden;
-  align-self: center;
-}
-
-.usage-bar-fill {
-  height: 100%;
-  border-radius: 2px;
-  transition: width 0.5s ease;
-}
-
-.usage-bar-fill.low {
-  background: linear-gradient(90deg, #10b981, #34d399);
-}
-
-.usage-bar-fill.medium {
-  background: linear-gradient(90deg, #f59e0b, #fbbf24);
-}
-
-.usage-bar-fill.high {
-  background: linear-gradient(90deg, #ef4444, #f87171);
-}
-
-.memory-details {
-  display: flex;
-  gap: 8px;
-  font-size: 12px;
-  opacity: 0.8;
-}
-
-.detail-item {
-  display: flex;
-  gap: 2px;
-}
-
-.detail-label {
-  font-weight: 500;
-}
-
-.detail-value {
-  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Consolas', monospace;
-}
-
-.update-time {
-  font-size: 12px;
-  opacity: 0.6;
-  margin-left: auto;
-  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Consolas', monospace;
-}
-</style>

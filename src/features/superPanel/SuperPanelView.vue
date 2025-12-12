@@ -412,6 +412,14 @@ const features = computed<Feature[]>(() => [
     actions: []
   },
   {
+    id: 'pronunciation',
+    iconKey: 'pronunciation',
+    title: props.i18n.pronunciationHelp || '谐音翻译',
+    desc: props.i18n.pronunciationDesc || '英文单词生成谐音记忆，中文词语翻译成英文后生成谐音',
+    enabled: props.settings.enablePronunciation,
+    actions: []
+  },
+  {
     id: 'encryption',
     iconKey: 'encryption',
     title: props.i18n.encryption || '内容加密',

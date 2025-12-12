@@ -18,31 +18,30 @@
       <div class="dialog-body">
         <!-- 输入单词 -->
         <div class="input-section">
-          <label class="input-label">英文单词</label>
+          <label class="input-label">输入内容</label>
           <input
             v-model="inputWord"
             class="word-input"
-            placeholder="输入或选择英文单词..."
-            @keyup.enter="generatePronunciation"
+            placeholder="输入中文或英文..."
+            @keyup.enter="manualGenerate"
           />
         </div>
 
-        <!-- API提供商选择 -->
-        <div class="api-section">
-          <label class="setting-label">API提供商</label>
-          <select v-model="apiProvider" class="api-select">
-            <option value="tongyi">通义千问</option>
-            <option value="openai">OpenAI</option>
-            <option value="deepseek">DeepSeek</option>
-            <option value="custom">自定义</option>
-          </select>
+        <!-- 显示当前使用的API配置（只读） -->
+        <div class="api-info-section">
+          <div class="api-info-label">当前API配置</div>
+          <div class="api-info-content">
+            <span class="api-provider-badge">{{ getProviderDisplayName() }}</span>
+            <span class="api-model-text">{{ getCurrentModel() }}</span>
+          </div>
+          <div class="api-info-hint">在超级面板中配置 AI 设置</div>
         </div>
 
         <!-- 生成按钮 -->
         <div class="action-section">
           <button
             class="btn-generate"
-            @click="generatePronunciation"
+            @click="manualGenerate"
             :disabled="!inputWord || isGenerating"
           >
             <svg class="btn-icon" v-if="!isGenerating"><use xlink:href="#iconRefresh"></use></svg>
@@ -97,15 +96,25 @@ const emit = defineEmits<Emits>()
 
 // 状态
 const inputWord = ref(props.content || '')
-const apiProvider = ref('tongyi')
 const isGenerating = ref(false)
 const generatedResult = ref('')
 
-// 监听props变化
-watch(() => props.content, (newContent) => {
+// 监听props变化，自动触发翻译
+watch(() => props.content, async (newContent) => {
   if (newContent) {
     inputWord.value = newContent
     generatedResult.value = ''
+    // 自动触发翻译
+    await nextTick()
+    await generatePronunciation()
+  }
+})
+
+// 监听visible变化，弹窗打开时自动触发翻译
+watch(() => props.visible, async (newVisible) => {
+  if (newVisible && inputWord.value) {
+    await nextTick()
+    await generatePronunciation()
   }
 })
 
@@ -114,28 +123,79 @@ function isEnglishWord(text: string): boolean {
   return /^[a-zA-Z\s-]+$/.test(text)
 }
 
-// 获取API配置
+// 检测是否为中文
+function isChinese(text: string): boolean {
+  return /[\u4e00-\u9fa5]/.test(text)
+}
+
+// 获取API配置（从超级面板的统一配置中读取）
 function getApiConfig() {
   const settings = (props.plugin as any)?.settings || {}
   return {
-    provider: apiProvider.value,
+    provider: settings.aiApiProvider || 'tongyi',
     model: settings.aiModel || 'qwen-plus',
     apiKey: settings.aiApiKey || '',
     customEndpoint: settings.aiCustomEndpoint || ''
   }
 }
 
-// 构建提示词
-function buildPrompt(word: string): string {
-  return `请为英文单词 "${word}" 生成谐音记忆，要求：
+// 获取供应商显示名称
+function getProviderDisplayName(): string {
+  const config = getApiConfig()
+  const nameMap: Record<string, string> = {
+    'tongyi': '通义千问',
+    'openai': 'OpenAI',
+    'deepseek': 'DeepSeek',
+    'custom': '自定义API'
+  }
+  return nameMap[config.provider] || '未配置'
+}
+
+// 获取当前模型
+function getCurrentModel(): string {
+  const config = getApiConfig()
+  return config.model || '默认模型'
+}
+
+// 构建提示词（根据输入语言自动选择）
+function buildPrompt(text: string): string {
+  // 检测是否为中文，如果是中文则翻译成英文并生成谐音
+  if (isChinese(text)) {
+    return `请将中文词语 "${text}" 翻译成英文，并为英文翻译生成谐音记忆，要求：
+
+1. 提供准确的英文翻译
+2. 提供英式音标
+3. 为英文翻译生成中文谐音记忆
+4. 谐音使用带声调的拼音标注
+5. 严格按照以下格式输出：
+
+#### ${text}
+
+中文：${text}
+英文：[英文翻译]
+音标：[英式音标]
+谐音：[中文谐音(使用英式自然发音,带拼音标注),如:西斯腾(xī sī téng)]
+发音：[发音要点说明]
+
+注意事项：
+- 提供最常用的英文翻译
+- 音标使用英式标准
+- 谐音要贴近实际发音，便于记忆
+- 拼音必须带声调
+- 发音说明要包含音节、重音、元音特点等
+- 只输出格式化内容，不要有其他说明文字`
+  }
+
+  // 英文单词生成谐音记忆
+  return `请为英文单词 "${text}" 生成谐音记忆，要求：
 
 1. 使用英式标准发音
 2. 谐音使用带声调的拼音标注
 3. 严格按照以下格式输出：
 
-#### ${word}
+#### ${text}
 
-单词：${word}
+单词：${text}
 音标：[英式音标]
 释义：[中文释义]
 谐音：[中文谐音(使用英式自然发音,带拼音标注),如:西斯腾(xī sī téng)]
@@ -149,15 +209,10 @@ function buildPrompt(word: string): string {
 - 只输出格式化内容，不要有其他说明文字`
 }
 
-// 生成谐音翻译
+// 生成谐音翻译/中文翻译
 async function generatePronunciation() {
   if (!inputWord.value) {
-    showMessage('请输入单词', 3000, 'error')
-    return
-  }
-
-  if (!isEnglishWord(inputWord.value)) {
-    showMessage('请输入英文单词', 3000, 'error')
+    showMessage('请输入内容', 3000, 'error')
     return
   }
 
@@ -189,7 +244,57 @@ async function generatePronunciation() {
 
     if (result) {
       generatedResult.value = result
-      showMessage('✓ 谐音翻译已生成', 2000, 'info')
+      showMessage('✓ 谐音记忆已生成', 2000, 'info')
+    } else {
+      showMessage('生成失败，请重试', 3000, 'error')
+    }
+  } catch (error) {
+    console.error('Pronunciation generation error:', error)
+    const errorMsg = (error as Error).message || '未知错误'
+    showMessage('🚫 生成失败: ' + errorMsg, 5000, 'error')
+  } finally {
+    isGenerating.value = false
+  }
+}
+
+
+
+// 旧的生成函数保留用于手动触发
+async function manualGenerate() {
+  if (!inputWord.value) {
+    showMessage('请输入内容', 3000, 'error')
+    return
+  }
+
+  isGenerating.value = true
+  generatedResult.value = ''
+
+  try {
+    const prompt = buildPrompt(inputWord.value)
+    const config = getApiConfig()
+
+    let result = ''
+
+    switch (config.provider) {
+      case 'tongyi':
+        result = await callTongyiAPI(prompt, config)
+        break
+      case 'openai':
+        result = await callOpenAIAPI(prompt, config)
+        break
+      case 'deepseek':
+        result = await callDeepSeekAPI(prompt, config)
+        break
+      case 'custom':
+        result = await callCustomAPI(prompt, config)
+        break
+      default:
+        throw new Error(`不支持的API供应商: ${config.provider}`)
+    }
+
+    if (result) {
+      generatedResult.value = result
+      showMessage('✓ 谐音记忆已生成', 2000, 'info')
     } else {
       showMessage('生成失败，请重试', 3000, 'error')
     }
@@ -216,7 +321,7 @@ async function callTongyiAPI(prompt: string, config: any): Promise<string> {
       messages: [
         {
           role: 'system',
-          content: '你是一个专业的英语发音教学助手，擅长用中文谐音帮助学习者记忆英语单词发音。'
+          content: '你是一个专业的英语教学助手，擅长用中文谐音帮助学习者记忆英语单词发音，也能准确翻译中文词语为英文。'
         },
         {
           role: 'user',
@@ -275,7 +380,7 @@ async function callOpenAIAPI(prompt: string, config: any): Promise<string> {
     messages: [
       {
         role: 'system',
-        content: '你是一个专业的英语发音教学助手，擅长用中文谐音帮助学习者记忆英语单词发音。'
+        content: '你是一个专业的英语教学助手，擅长用中文谐音帮助学习者记忆英语单词发音，也能准确翻译中文词语为英文。'
       },
       {
         role: 'user',
@@ -322,7 +427,7 @@ async function callDeepSeekAPI(prompt: string, config: any): Promise<string> {
     messages: [
       {
         role: 'system',
-        content: '你是一个专业的英语发音教学助手，擅长用中文谐音帮助学习者记忆英语单词发音。'
+        content: '你是一个专业的英语教学助手，擅长用中文谐音帮助学习者记忆英语单词发音，也能准确翻译中文词语为英文。'
       },
       {
         role: 'user',
@@ -371,7 +476,7 @@ async function callCustomAPI(prompt: string, config: any): Promise<string> {
     messages: [
       {
         role: 'system',
-        content: '你是一个专业的英语发音教学助手，擅长用中文谐音帮助学习者记忆英语单词发音。'
+        content: '你是一个专业的英语教学助手，擅长用中文谐音帮助学习者记忆英语单词发音，也能准确翻译中文词语为英文。'
       },
       {
         role: 'user',
@@ -557,26 +662,53 @@ function closeDialog() {
   }
 }
 
-.api-section {
+.api-info-section {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+  padding: 8px 10px;
+  background: var(--b3-theme-surface);
+  border-radius: 4px;
+  border: 1px solid var(--b3-theme-surface-lighter);
 }
 
-.api-select {
-  padding: 7px;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 3px;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  font-size: 11px;
-  cursor: pointer;
-  outline: none;
-  transition: border-color 0.2s;
+.api-info-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--b3-theme-on-surface);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 2px;
+}
 
-  &:focus {
-    border-color: var(--b3-theme-primary);
-  }
+.api-info-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.api-provider-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  background: var(--b3-theme-primary-lightest);
+  color: var(--b3-theme-primary);
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.api-model-text {
+  font-size: 11px;
+  color: var(--b3-theme-on-surface);
+  font-family: monospace;
+}
+
+.api-info-hint {
+  font-size: 10px;
+  color: var(--b3-theme-on-surface-variant);
+  font-style: italic;
+  margin-top: 2px;
 }
 
 .action-section {

@@ -23,11 +23,6 @@ export function createPronunciationAction(plugin: Plugin): ToolbarAction {
         return
       }
 
-      // 检查是否为英文单词
-      if (!isEnglishWord(selectedText)) {
-        showMessage(plugin, '请选择英文单词')
-        return
-      }
 
       // 触发打开谐音翻译对话框事件
       openPronunciationDialog(selectedText)
@@ -35,12 +30,7 @@ export function createPronunciationAction(plugin: Plugin): ToolbarAction {
   }
 }
 
-/**
- * 检测是否为英文单词
- */
-function isEnglishWord(text: string): boolean {
-  return /^[a-zA-Z\s-]+$/.test(text)
-}
+
 
 /**
  * 打开谐音翻译对话框

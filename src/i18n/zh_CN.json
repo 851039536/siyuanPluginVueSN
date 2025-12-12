@@ -261,6 +261,8 @@
   "fontSize": "字体大小",
   "fontWeight": "字体粗细",
   "lineHeight": "行高",
+  "enableHighlight": "双击高亮功能",
+  "highlightDescription": "双击选中文本自动高亮显示",
   "normal": "正常",
   "bold": "粗体",
   "lighter": "细体",

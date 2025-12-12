@@ -21,7 +21,12 @@
       <div class="settings-content">
         <!-- 字体设置 -->
         <div v-show="activeCategory === 'font'" class="content-section">
-          <FontSettings :i18n="i18n" @change="handleFontChange" />
+          <FontSettings :i18n="i18n" :plugin="plugin" @change="handleFontChange" />
+        </div>
+
+        <!-- 高亮设置 -->
+        <div v-show="activeCategory === 'highlight'" class="content-section">
+          <HighlightSettings :i18n="i18n" :plugin="plugin" />
         </div>
 
         <!-- 代码块美化 -->
@@ -67,6 +72,7 @@ import CodeBlockSettings from './components/CodeBlockSettings.vue'
 import HeadingSettings from './components/HeadingSettings.vue'
 import ListSettings from './components/ListSettings.vue'
 import EncryptionSettings from './components/EncryptionSettings.vue'
+import HighlightSettings from './components/HighlightSettings.vue'
 
 interface Props {
   i18n?: any
@@ -88,6 +94,10 @@ const categories = computed(() => [
   {
     id: 'font',
     label: props.i18n.fontSettings || '字体设置'
+  },
+  {
+    id: 'highlight',
+    label: props.i18n.enableHighlight || '高亮设置'
   },
   {
     id: 'codeblock',

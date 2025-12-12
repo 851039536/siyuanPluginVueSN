@@ -492,3 +492,77 @@ export async function saveListSettingsToDB(plugin: Plugin, settings: ListSetting
     return false
   }
 }
+
+/**
+ * 高亮设置存储键
+ */
+const HIGHLIGHT_SETTINGS_KEY = 'highlight-settings'
+
+/**
+ * 加载高亮设置
+ */
+export async function loadHighlightSettings(plugin: Plugin): Promise<{ enableHighlight: boolean }> {
+  try {
+    const data = await plugin.loadData(HIGHLIGHT_SETTINGS_KEY)
+    if (!data) {
+      console.log('没有找到保存的高亮设置，使用默认值')
+      return { enableHighlight: true }
+    }
+    console.log('从数据库加载高亮设置:', data)
+    return { enableHighlight: data.enableHighlight ?? true }
+  } catch (error) {
+    console.error('加载高亮设置失败:', error)
+    return { enableHighlight: true }
+  }
+}
+
+/**
+ * 保存高亮设置
+ */
+export async function saveHighlightSettings(plugin: Plugin, settings: { enableHighlight: boolean }): Promise<boolean> {
+  try {
+    await plugin.saveData(HIGHLIGHT_SETTINGS_KEY, settings)
+    console.log('高亮设置已保存到数据库:', settings)
+    return true
+  } catch (error) {
+    console.error('保存高亮设置失败:', error)
+    return false
+  }
+}
+
+/**
+ * 字体设置存储键
+ */
+const FONT_SETTINGS_KEY = 'font-settings'
+
+/**
+ * 从数据库加载字体设置
+ */
+export async function loadFontSettingsFromDB(plugin: Plugin): Promise<FontSettings> {
+  try {
+    const data = await plugin.loadData(FONT_SETTINGS_KEY)
+    if (!data) {
+      console.log('没有找到保存的字体设置，使用默认值')
+      return { ...DEFAULT_FONT_SETTINGS }
+    }
+    console.log('从数据库加载字体设置:', data)
+    return { ...DEFAULT_FONT_SETTINGS, ...data }
+  } catch (error) {
+    console.error('加载字体设置失败:', error)
+    return { ...DEFAULT_FONT_SETTINGS }
+  }
+}
+
+/**
+ * 保存字体设置到数据库
+ */
+export async function saveFontSettingsToDB(plugin: Plugin, settings: FontSettings): Promise<boolean> {
+  try {
+    await plugin.saveData(FONT_SETTINGS_KEY, settings)
+    console.log('字体设置已保存到数据库:', settings)
+    return true
+  } catch (error) {
+    console.error('保存字体设置失败:', error)
+    return false
+  }
+}

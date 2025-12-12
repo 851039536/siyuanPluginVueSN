@@ -17,7 +17,8 @@
       "Bash(pnpm exec find:*)",
       "mcp__context7__resolve-library-id",
       "mcp__context7__get-library-docs",
-      "WebSearch"
+      "WebSearch",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []

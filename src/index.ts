@@ -5,8 +5,8 @@ import {
 import "@/index.scss";
 import PluginInfoString from '@/../plugin.json'
 import { destroy, init } from '@/main'
-import { registerPageLock, registerTableOfContents, registerImageCompressor, registerDocNavigation, registerShortcut, registerWordQuery, registerGeneralSettings, registerQRCode, registerUnitConverter, registerSuperPanel, registerDiskBrowser, registerCodeImageGenerator, registerAIContentGenerator, registerStatistics, registerPronunciation, registerEncryption, registerVideo, registerEverythingSearch, registerSystemMonitor, registerApiReference } from '@/features'
-import { loadSettings, saveSettings, type PluginSettings } from '@/config/settings'
+import { registerPageLock, registerTableOfContents, registerImageCompressor, registerDocNavigation, registerShortcut, registerWordQuery, registerGeneralSettings, registerQRCode, registerUnitConverter, registerSuperPanel, registerDiskBrowser, registerCodeImageGenerator, registerAIContentGenerator, registerStatistics, registerPronunciation, registerEncryption, registerVideo, registerEverythingSearch, registerSystemMonitor, registerApiReference, registerHighlight } from '@/features'
+import { loadSettings, saveSettings, loadHighlightSettings, type PluginSettings } from '@/config/settings'
 import { initCommands, destroyCommands } from '@/commands'
 
 let PluginInfo = {
@@ -158,6 +158,10 @@ export default class PluginSample extends Plugin {
       console.log('注册API参考功能')
       registerApiReference(this)
     }
+    // 注册双击高亮功能（从数据库读取设置）
+    console.log('注册双击高亮功能')
+    const highlightSettings = await loadHighlightSettings(this)
+    registerHighlight(this, highlightSettings.enableHighlight)
   }
 
   /**

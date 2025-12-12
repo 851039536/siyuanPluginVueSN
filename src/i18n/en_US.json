@@ -257,6 +257,8 @@
   "fontSize": "Font Size",
   "fontWeight": "Font Weight",
   "lineHeight": "Line Height",
+  "enableHighlight": "Double-Click Highlight",
+  "highlightDescription": "Double-click text to automatically highlight",
   "normal": "Normal",
   "bold": "Bold",
   "lighter": "Lighter",

@@ -96,7 +96,7 @@
         </div>
       </div>
 
-      <!-- 字体粗细 -->
+      <!-- 字体粗细和高亮功能 -->
       <div class="setting-row">
         <div class="setting-item">
           <label class="setting-label">
@@ -158,6 +158,7 @@ interface FontSettings {
 
 interface Props {
   i18n?: any
+  plugin?: any
   initialSettings?: FontSettings
 }
 
@@ -167,6 +168,7 @@ interface Emits {
 
 const props = withDefaults(defineProps<Props>(), {
   i18n: () => ({}),
+  plugin: null,
   initialSettings: () => ({
     fontFamily: '',
     fontSize: 14,
@@ -201,15 +203,24 @@ watch(lineHeightPreview, (val) => {
 })
 
 // 监听设置变化,自动保存
-watch(settings, (newSettings) => {
+watch(settings, async (newSettings) => {
   fontSizePreview.value = newSettings.fontSize
   lineHeightPreview.value = newSettings.lineHeight
   emit('change', newSettings)
-  // 自动保存到 localStorage
-  try {
-    localStorage.setItem('general-font-settings', JSON.stringify(newSettings))
-  } catch (error) {
-    console.error('自动保存失败:', error)
+  // 自动保存到思源数据库
+  if (props.plugin) {
+    try {
+      // 保存字体设置到思源数据库
+      await props.plugin.saveData('font-settings', {
+        fontFamily: newSettings.fontFamily,
+        fontSize: newSettings.fontSize,
+        fontWeight: newSettings.fontWeight,
+        lineHeight: newSettings.lineHeight
+      })
+      console.log('字体设置已保存:', newSettings)
+    } catch (error) {
+      console.error('自动保存失败:', error)
+    }
   }
 }, { deep: true })
 
@@ -225,21 +236,31 @@ function togglePreview() {
 }
 
 // 加载保存的设置
-function loadSettings() {
+async function loadSettings() {
   try {
-    const saved = localStorage.getItem('general-font-settings')
-    if (saved) {
-      const parsed = JSON.parse(saved)
-      settings.value = { ...DEFAULT_SETTINGS, ...parsed }
-      fontSizePreview.value = settings.value.fontSize
-      lineHeightPreview.value = settings.value.lineHeight
-
-      // 初始化滑块进度
-      nextTick(() => {
-        updateSliderProgress('fontSize', settings.value.fontSize, 8, 72)
-        updateSliderProgress('lineHeight', settings.value.lineHeight, 1, 3)
-      })
+    // 加载字体设置（从思源数据库）
+    let fontSettings = { ...DEFAULT_SETTINGS }
+    if (props.plugin) {
+      try {
+        const fontData = await props.plugin.loadData('font-settings')
+        if (fontData) {
+          fontSettings = { ...DEFAULT_SETTINGS, ...fontData }
+        }
+      } catch (error) {
+        console.error('加载字体设置失败:', error)
+      }
     }
+
+    // 应用设置
+    settings.value = fontSettings
+    fontSizePreview.value = settings.value.fontSize
+    lineHeightPreview.value = settings.value.lineHeight
+
+    // 初始化滑块进度
+    nextTick(() => {
+      updateSliderProgress('fontSize', settings.value.fontSize, 8, 72)
+      updateSliderProgress('lineHeight', settings.value.lineHeight, 1, 3)
+    })
   } catch (error) {
     console.error('加载设置失败:', error)
   }
@@ -260,7 +281,9 @@ function updateSliderProgress(type: string, value: number, min: number, max: num
 }
 
 // 初始化时加载设置
-loadSettings()
+loadSettings().catch(error => {
+  console.error('初始化加载设置失败:', error)
+})
 
 // 暴露方法
 defineExpose({
@@ -574,8 +597,6 @@ defineExpose({
   font-weight: 500;
   border: 1px solid var(--b3-theme-outline);
 }
-
-
 
 /* 响应式设计 */
 @media (max-width: 400px) {

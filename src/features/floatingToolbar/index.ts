@@ -1,6 +1,6 @@
 import { Plugin } from 'siyuan'
 import { FloatingToolbar } from './FloatingToolbar'
-import { createQRCodeAction } from './qrcode-action'
+import { createQRCodeAction } from './qrcode/qrcode-action'
 import type PluginSample from '@/index'
 
 /**
@@ -25,4 +25,4 @@ export function registerFloatingToolbar(plugin: Plugin): void {
 }
 
 // 导出二维码对话框组件供 App.vue 使用
-export { default as QRCodeDialog } from './QRCodeDialog.vue'
+export { default as QRCodeDialog } from './qrcode/QRCodeDialog.vue'

@@ -3,7 +3,7 @@
  * 为选中的文本生成二维码
  */
 import { Plugin } from 'siyuan'
-import { ToolbarAction } from './actions'
+import { ToolbarAction } from '../actions'
 
 /**
  * 创建二维码功能

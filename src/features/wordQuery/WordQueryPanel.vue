@@ -326,6 +326,7 @@ import IconWrapper from '@/components/IconWrapper.vue';
 // Props
 interface Props {
   i18n: any;
+  plugin?: any;
   onQuery: (word: string) => Promise<string>;
   onTranslate?: (text: string, sourceLang: string, targetLang: string) => Promise<string>;
 }
@@ -497,7 +498,7 @@ const handleQuery = async () => {
     if (result) {
       queryResult.value = result;
       // 添加到历史记录
-      addToHistory(word, result);
+      await addToHistory(word, result);
       // 检查是否已收藏
       checkIfFavorited(word);
       // 自动播放发音
@@ -516,7 +517,7 @@ const handleQuery = async () => {
 };
 
 // 添加到历史记录
-const addToHistory = (word: string, result: string) => {
+const addToHistory = async (word: string, result: string) => {
   const newItem: HistoryItem = {
     word,
     result,
@@ -531,35 +532,39 @@ const addToHistory = (word: string, result: string) => {
   if (queryHistory.value.length > maxHistoryItems.value) {
     queryHistory.value = queryHistory.value.slice(0, maxHistoryItems.value);
   }
-  // 保存到本地存储
-  saveHistory();
+  // 保存到思源数据库
+  await saveHistory();
 };
 
 // 保存历史记录
-const saveHistory = () => {
-  try {
-    localStorage.setItem('word-query-history', JSON.stringify(queryHistory.value));
-  } catch (error) {
-    console.error('Failed to save history:', error);
+const saveHistory = async () => {
+  if (props.plugin) {
+    try {
+      await props.plugin.saveData('word-query-history', queryHistory.value);
+    } catch (error) {
+      console.error('Failed to save history:', error);
+    }
   }
 };
 
 // 加载历史记录
-const loadHistory = () => {
-  try {
-    const saved = localStorage.getItem('word-query-history');
-    if (saved) {
-      queryHistory.value = JSON.parse(saved);
+const loadHistory = async () => {
+  if (props.plugin) {
+    try {
+      const saved = await props.plugin.loadData('word-query-history');
+      if (saved) {
+        queryHistory.value = saved;
+      }
+    } catch (error) {
+      console.error('Failed to load history:', error);
     }
-  } catch (error) {
-    console.error('Failed to load history:', error);
   }
 };
 
 // 清除历史记录
-const clearHistory = () => {
+const clearHistory = async () => {
   queryHistory.value = [];
-  saveHistory();
+  await saveHistory();
   showMessage('历史记录已清除', 2000, 'info');
 };
 
@@ -586,7 +591,7 @@ const checkIfFavorited = (word: string) => {
 };
 
 // 切换收藏
-const toggleFavorite = () => {
+const toggleFavorite = async () => {
   const word = searchWord.value.trim();
   if (!word || !queryResult.value) return;
 
@@ -606,34 +611,38 @@ const toggleFavorite = () => {
     currentWordFavorited.value = true;
     showMessage('已添加到收藏', 2000, 'info');
   }
-  saveFavorites();
+  await saveFavorites();
 };
 
 // 保存收藏
-const saveFavorites = () => {
-  try {
-    localStorage.setItem('word-query-favorites', JSON.stringify(favorites.value));
-  } catch (error) {
-    console.error('Failed to save favorites:', error);
+const saveFavorites = async () => {
+  if (props.plugin) {
+    try {
+      await props.plugin.saveData('word-query-favorites', favorites.value);
+    } catch (error) {
+      console.error('Failed to save favorites:', error);
+    }
   }
 };
 
 // 加载收藏
-const loadFavorites = () => {
-  try {
-    const saved = localStorage.getItem('word-query-favorites');
-    if (saved) {
-      favorites.value = JSON.parse(saved);
+const loadFavorites = async () => {
+  if (props.plugin) {
+    try {
+      const saved = await props.plugin.loadData('word-query-favorites');
+      if (saved) {
+        favorites.value = saved;
+      }
+    } catch (error) {
+      console.error('Failed to load favorites:', error);
     }
-  } catch (error) {
-    console.error('Failed to load favorites:', error);
   }
 };
 
 // 清除收藏
-const clearFavorites = () => {
+const clearFavorites = async () => {
   favorites.value = [];
-  saveFavorites();
+  await saveFavorites();
   showMessage('收藏已清除', 2000, 'info');
 };
 
@@ -646,9 +655,9 @@ const queryFromFavorite = (item: FavoriteItem) => {
 };
 
 // 删除收藏项
-const removeFavorite = (word: string) => {
+const removeFavorite = async (word: string) => {
   favorites.value = favorites.value.filter(item => item.word !== word);
-  saveFavorites();
+  await saveFavorites();
   if (searchWord.value === word) {
     currentWordFavorited.value = false;
   }
@@ -705,33 +714,39 @@ const exportToSiyuan = async () => {
 };
 
 // 保存高级选项
-const saveAdvancedOptions = () => {
-  try {
-    localStorage.setItem('word-query-pronunciation-type', pronunciationType.value);
-    localStorage.setItem('word-query-auto-play', JSON.stringify(autoPlayPronunciation.value));
-    localStorage.setItem('word-query-show-related', JSON.stringify(showRelatedWords.value));
-  } catch (error) {
-    console.error('Failed to save advanced options:', error);
+const saveAdvancedOptions = async () => {
+  if (props.plugin) {
+    try {
+      await props.plugin.saveData('word-query-options', {
+        pronunciationType: pronunciationType.value,
+        autoPlayPronunciation: autoPlayPronunciation.value,
+        showRelatedWords: showRelatedWords.value
+      });
+    } catch (error) {
+      console.error('Failed to save advanced options:', error);
+    }
   }
 };
 
 // 加载高级选项
-const loadAdvancedOptions = () => {
-  try {
-    const savedType = localStorage.getItem('word-query-pronunciation-type');
-    if (savedType) {
-      pronunciationType.value = savedType as 'uk' | 'us';
+const loadAdvancedOptions = async () => {
+  if (props.plugin) {
+    try {
+      const saved = await props.plugin.loadData('word-query-options');
+      if (saved) {
+        if (saved.pronunciationType) {
+          pronunciationType.value = saved.pronunciationType;
+        }
+        if (typeof saved.autoPlayPronunciation !== 'undefined') {
+          autoPlayPronunciation.value = saved.autoPlayPronunciation;
+        }
+        if (typeof saved.showRelatedWords !== 'undefined') {
+          showRelatedWords.value = saved.showRelatedWords;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load advanced options:', error);
     }
-    const savedAutoPlay = localStorage.getItem('word-query-auto-play');
-    if (savedAutoPlay) {
-      autoPlayPronunciation.value = JSON.parse(savedAutoPlay);
-    }
-    const savedShowRelated = localStorage.getItem('word-query-show-related');
-    if (savedShowRelated) {
-      showRelatedWords.value = JSON.parse(savedShowRelated);
-    }
-  } catch (error) {
-    console.error('Failed to load advanced options:', error);
   }
 };
 
@@ -965,18 +980,19 @@ watch(translateText, () => {
 });
 
 // 监听高级选项变化
-watch([pronunciationType, autoPlayPronunciation, showRelatedWords], () => {
-  saveAdvancedOptions();
+watch([pronunciationType, autoPlayPronunciation, showRelatedWords], async () => {
+  await saveAdvancedOptions();
 });
 
-onMounted(() => {
+onMounted(async () => {
   document.addEventListener('keydown', handleKeyDown);
   document.addEventListener('click', handleClickOutside);
   // 加载历史记录和收藏
-  loadHistory();
-  loadFavorites();
-  // 加载高级选项
-  loadAdvancedOptions();
+  await Promise.all([
+    loadHistory(),
+    loadFavorites(),
+    loadAdvancedOptions()
+  ]);
 });
 
 onUnmounted(() => {

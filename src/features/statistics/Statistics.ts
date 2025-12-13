@@ -1,6 +1,7 @@
 import { Plugin } from 'siyuan';
 import { createApp, App as VueApp } from 'vue';
 import StatisticsPanel from './StatisticsPanel.vue';
+import { StatisticsCache, StatisticsSnapshot } from './storage';
 
 /**
  * 统计数据接口
@@ -40,20 +41,22 @@ export class Statistics {
   private dockElement: HTMLElement | null = null;
   private vueApp: VueApp | null = null;
   private currentYear: number;
-  private viewMode: 'day' | 'week' | 'month' | 'year' = 'day'; // 当前查看模式
+  private viewMode: 'day' | 'week' | 'month' | 'year' | 'trend' | 'snapshot' = 'day'; // 当前查看模式
   private dayRange: 7 | 15 | 30 | 90 | 180 | 365 = 7; // 日视图的天数范围
   private monthYearRange: 1 | 2 | 3 = 1; // 月视图的年份范围
   private statisticsTheme: 'default' | 'github' = 'default'; // 统计面板主题风格
   private updateInterval: number = 60000; // 定时更新间隔（毫秒），默认1分钟
   private updateTimer: NodeJS.Timeout | null = null; // 定时器实例
   private lastUpdateTime: number = 0; // 上次更新时间戳
-  
+  private cache: StatisticsCache; // 缓存管理器
+
   constructor(plugin: Plugin) {
     this.plugin = plugin;
     const now = new Date();
     this.currentYear = now.getFullYear();
+    this.cache = new StatisticsCache(plugin);
   }
-  
+
   /**
    * 初始化统计模块
    */
@@ -96,13 +99,13 @@ export class Statistics {
       window.dispatchEvent(dockEvent);
     });
   }
-  
+
   /**
    * 注册右下角侧边栏
    */
   private registerDock() {
     console.log('注册统计面板 Dock');
-    
+
     this.plugin.addDock({
       config: {
         position: 'RightBottom',
@@ -120,24 +123,24 @@ export class Statistics {
       },
     });
   }
-  
+
   /**
    * 渲染侧边栏面板 - 使用 Vue 组件
    */
   private async renderDockPanel() {
     if (!this.dockElement) return;
-    
+
     // 清理旧的 Vue 实例
     if (this.vueApp) {
       this.vueApp.unmount();
       this.vueApp = null;
     }
-    
+
     // 创建容器
     this.dockElement.innerHTML = '<div id="statistics-vue-app"></div>';
     const container = this.dockElement.querySelector('#statistics-vue-app');
     if (!container) return;
-    
+
     // 创建 Vue 应用
     this.vueApp = createApp(StatisticsPanel, {
       i18n: this.plugin.i18n,
@@ -156,7 +159,7 @@ export class Statistics {
         }
       },
       onRefresh: async (params: {
-        viewMode: 'day' | 'week' | 'month' | 'year' | 'trend'
+        viewMode: 'day' | 'week' | 'month' | 'year' | 'trend' | 'snapshot'
         dayRange?: 7 | 15 | 30 | 90 | 180 | 365
         monthYearRange?: 1 | 2 | 3
         selectedYear?: number
@@ -167,25 +170,51 @@ export class Statistics {
         if (params.monthYearRange) this.monthYearRange = params.monthYearRange;
         if (params.selectedYear) this.currentYear = params.selectedYear;
 
+        // 快照模式不需要获取统计数据，返回空数据
+        if (params.viewMode === 'snapshot') {
+          return {
+            totalNotes: 0,
+            totalWords: 0,
+            totalBlocks: 0,
+            totalAssets: 0,
+            totalTags: 0,
+            totalBacklinks: 0,
+            todayCreated: 0,
+            todayModified: 0,
+            avgWordsPerDoc: 0,
+            dailyStats: [],
+            currentPeriod: '',
+            periodTotalWords: 0,
+            topTags: [],
+            recentDocs: [],
+          };
+        }
+
         return await this.getStatistics();
       },
       onGetHistoricalData: async (days?: number) => {
         return await this.getHistoricalStatistics(days || 30);
       },
+      onGetSnapshots: async (count?: number) => {
+        return await this.cache.getRecentSnapshots(count || 20);
+      },
+      onClearSnapshots: async () => {
+        await this.cache.clearSnapshots();
+      },
     });
-    
+
     this.vueApp.mount(container);
   }
-  
+
   /**
    * 旧的渲染方法（已废弃，保留作为参考）
    */
   private async renderDockPanelOld() {
     if (!this.dockElement) return;
-    
+
     // 获取统计数据
     const stats = await this.getStatistics();
-        
+
     this.dockElement.innerHTML = `
       <div style="padding: 16px; height: 100%; box-sizing: border-box; overflow-y: auto; background: var(--b3-theme-background);">
         <!-- 顶部卡片统计 -->
@@ -201,7 +230,7 @@ export class Statistics {
               <div style="font-size: 11px; opacity: 0.9; margin-top: 4px;">✍️ ${this.plugin.i18n.totalWords}</div>
             </div>
           </div>
-                  
+
           <!-- 次要统计：内容块 | 附件 | 标签 | 双链 -->
           <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;">
             <div style="padding: 10px 8px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 6px; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.08); text-align: center;">
@@ -222,7 +251,7 @@ export class Statistics {
             </div>
           </div>
         </div>
-        
+
         <!-- 查看模式切换 -->
         <div style="margin-bottom: 16px; padding: 12px; background: var(--b3-theme-surface); border-radius: 8px;">
           <div style="display: flex; gap: 8px; margin-bottom: 12px;">
@@ -231,7 +260,7 @@ export class Statistics {
             <button class="view-mode-btn" data-mode="month" style="flex: 1; padding: 8px; border: 2px solid ${this.viewMode === 'month' ? 'var(--b3-theme-primary)' : 'var(--b3-border-color)'}; background: ${this.viewMode === 'month' ? 'var(--b3-theme-primary-light)' : 'var(--b3-theme-background)'}; color: ${this.viewMode === 'month' ? 'var(--b3-theme-primary)' : 'var(--b3-theme-on-background)'}; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s;">📆 ${this.plugin.i18n.monthView}</button>
             <button class="view-mode-btn" data-mode="year" style="flex: 1; padding: 8px; border: 2px solid ${this.viewMode === 'year' ? 'var(--b3-theme-primary)' : 'var(--b3-border-color)'}; background: ${this.viewMode === 'year' ? 'var(--b3-theme-primary-light)' : 'var(--b3-theme-background)'}; color: ${this.viewMode === 'year' ? 'var(--b3-theme-primary)' : 'var(--b3-theme-on-background)'}; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s;">📈 ${this.plugin.i18n.yearView}</button>
           </div>
-                  
+
           ${this.viewMode === 'day' ? `
           <div style="margin-top: 8px;">
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
@@ -244,7 +273,7 @@ export class Statistics {
             </div>
           </div>
           ` : ''}
-          
+
           ${this.viewMode === 'month' ? `
           <div style="margin-top: 8px;">
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
@@ -254,7 +283,7 @@ export class Statistics {
             </div>
           </div>
           ` : ''}
-          
+
           ${this.viewMode === 'year' ? `
           <div style="margin-top: 8px;">
             <select id="yearSelect" style="width: 100%; padding: 6px 8px; border: 1px solid var(--b3-border-color); border-radius: 4px; background: var(--b3-theme-background); color: var(--b3-theme-on-background); cursor: pointer; font-size: 13px;">
@@ -263,20 +292,20 @@ export class Statistics {
           </div>
           ` : ''}
         </div>
-        
+
         <!-- 字数统计详情 -->
         <div style="margin-bottom: 16px; padding: 16px; background: var(--b3-theme-surface); border-radius: 8px;">
           <h3 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600; color: var(--b3-theme-on-surface);">
             ${stats.currentPeriod}
           </h3>
-                  
+
           <!-- 柱状图 -->
           ${stats.dailyStats.length > 0 ? `
           <div style="margin-bottom: 16px;">
             ${this.renderBarChart(stats.dailyStats)}
           </div>
           ` : ''}
-                  
+
           <!-- 每日字数列表 -->
           <div style="display: flex; flex-direction: column; gap: 8px;">
             ${stats.dailyStats.length > 0 ? stats.dailyStats.map(day => `
@@ -287,24 +316,24 @@ export class Statistics {
             `).join('') : '<div style="text-align: center; padding: 20px; color: var(--b3-theme-on-surface-light); font-size: 13px;">' + this.plugin.i18n.noData + '</div>'}
           </div>
         </div>
-        
+
         <!-- 最后更新时间 -->
         <div style="padding-top: 8px; border-top: 1px solid var(--b3-border-color); font-size: 11px; color: var(--b3-theme-on-surface-light); text-align: center;">
           ${this.plugin.i18n.lastUpdate}: ${new Date().toLocaleString('zh-CN')}
         </div>
       </div>
     `;
-        
+
     // 绑定事件
     this.bindPanelEvents();
   }
-  
+
   /**
    * 绑定面板事件监听
    */
   private bindPanelEvents() {
     if (!this.dockElement) return;
-    
+
     // 绑定查看模式切换按钮
     const modeButtons = this.dockElement.querySelectorAll('.view-mode-btn');
     modeButtons.forEach(btn => {
@@ -316,7 +345,7 @@ export class Statistics {
         }
       });
     });
-    
+
     // 绑定日视图范围按钮
     const dayRangeButtons = this.dockElement.querySelectorAll('.day-range-btn');
     dayRangeButtons.forEach(btn => {
@@ -326,7 +355,7 @@ export class Statistics {
         this.renderDockPanel();
       });
     });
-    
+
     // 绑定月视图年份范围按钮
     const monthYearRangeButtons = this.dockElement.querySelectorAll('.month-year-range-btn');
     monthYearRangeButtons.forEach(btn => {
@@ -336,7 +365,7 @@ export class Statistics {
         this.renderDockPanel();
       });
     });
-    
+
     // 绑定年份选择
     const yearSelect = this.dockElement.querySelector('#yearSelect') as HTMLSelectElement;
     if (yearSelect) {
@@ -347,7 +376,7 @@ export class Statistics {
       });
     }
   }
-    
+
   /**
    * 生成年份选项
    */
@@ -360,24 +389,24 @@ export class Statistics {
     }
     return options;
   }
-  
+
   /**
    * 格式化数字,添加千分位分隔符
    */
   private formatNumber(num: number): string {
     return num.toLocaleString('zh-CN');
   }
-  
+
   /**
    * 渲染柱状图
    */
   private renderBarChart(data: DailyWordCount[]): string {
     if (data.length === 0) return '';
-        
+
     // 计算最大值用于比例计算
     const maxWords = Math.max(...data.map(d => d.words));
     const maxHeight = 150; // 柱状图最大高度（像素）
-        
+
     return `
       <div style="padding: 12px; background: var(--b3-theme-background); border-radius: 6px; overflow-x: auto;">
         <div style="display: flex; align-items: flex-end; gap: ${data.length > 20 ? '4px' : '8px'}; min-height: ${maxHeight + 40}px; padding-bottom: 30px; position: relative;">
@@ -425,11 +454,11 @@ export class Statistics {
       </div>
     `;
   }
-  
+
   /**
    * 格式化图表标签
    */
-  private formatChartLabel(label: string, mode: 'day' | 'week' | 'month' | 'year'): string {
+  private formatChartLabel(label: string, mode: 'day' | 'week' | 'month' | 'year' | 'trend' | 'snapshot'): string {
     if (mode === 'day') {
       // 保留完整格式 "11/26 周二"
       return label;
@@ -439,14 +468,14 @@ export class Statistics {
     }
     return label;
   }
-  
+
   /**
    * 判断是否为今天
    */
   private isToday(dateStr: string): boolean {
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${this.padZero(today.getMonth() + 1)}-${this.padZero(today.getDate())}`;
-        
+
     // 处理不同格式的日期字符串
     // 可能是 "YYYY-MM-DD" 或 "YYYY-MM" 或 "YYYY"
     if (dateStr.length === 10) {
@@ -461,7 +490,7 @@ export class Statistics {
     }
     return false;
   }
-  
+
   /**
    * 格式化简短数字（K、M表示）
    */
@@ -473,7 +502,7 @@ export class Statistics {
     }
     return String(num);
   }
-  
+
   /**
    * 获取统计数据
    */
@@ -580,7 +609,7 @@ export class Statistics {
       };
     }
   }
-  
+
   /**
    * 获取今日新增文档数
    */
@@ -591,7 +620,7 @@ export class Statistics {
     const result = await this.executeSql(sql);
     return result[0]?.count || 0;
   }
-  
+
   /**
    * 获取今日修改文档数
    */
@@ -602,7 +631,7 @@ export class Statistics {
     const result = await this.executeSql(sql);
     return result[0]?.count || 0;
   }
-  
+
   /**
    * 格式化时间戳为可读日期
    */
@@ -626,7 +655,7 @@ export class Statistics {
     const result = await this.executeSql(sql);
     return result[0]?.count || 0;
   }
-  
+
   /**
    * 获取总字数
    * 只统计段落内容，避免重复统计
@@ -656,7 +685,7 @@ export class Statistics {
     // 这是思源笔记内部使用的统计方式
     return text.length;
   }
-  
+
   /**
    * 获取总块数（所有类型的内容块）
    */
@@ -665,7 +694,7 @@ export class Statistics {
     const result = await this.executeSql(sql);
     return result[0]?.count || 0;
   }
-  
+
   /**
    * 获取总附件数（图片、音频、视频、文件）
    */
@@ -674,7 +703,7 @@ export class Statistics {
     const result = await this.executeSql(sql);
     return result[0]?.count || 0;
   }
-  
+
   /**
    * 获取总标签数（多重查询机制）
    */
@@ -683,24 +712,24 @@ export class Statistics {
     let sql = `SELECT COUNT(DISTINCT content) as count FROM spans WHERE type='tag'`;
     let result = await this.executeSql(sql);
     let count = result[0]?.count || 0;
-        
+
     // 如果 spans 表没有数据，尝试 attributes 表
     if (count === 0) {
       sql = `SELECT COUNT(*) as count FROM attributes WHERE name='tags'`;
       result = await this.executeSql(sql);
       count = result[0]?.count || 0;
     }
-        
+
     // 最后尝试 blocks 表
     if (count === 0) {
       sql = `SELECT COUNT(*) as count FROM blocks WHERE type='tag'`;
       result = await this.executeSql(sql);
       count = result[0]?.count || 0;
     }
-        
+
     return count;
   }
-  
+
   /**
    * 获取总双链数（引用关系）
    */
@@ -709,7 +738,7 @@ export class Statistics {
     const result = await this.executeSql(sql);
     return result[0]?.count || 0;
   }
-  
+
   /**
    * 获取每日统计（最近N天）- 使用 length 字段优化
    */
@@ -769,7 +798,7 @@ export class Statistics {
 
     return result;
   }
-  
+
   /**
    * 获取每周统计（最近N周）- 使用 length 字段优化
    */
@@ -840,7 +869,7 @@ export class Statistics {
 
     return result;
   }
-  
+
   /**
    * 获取每月统计（整年）- 使用 length 字段优化
    */
@@ -887,7 +916,7 @@ export class Statistics {
 
     return result;
   }
-  
+
   /**
    * 获取最近N年的每月统计 - 使用 length 字段优化
    */
@@ -945,7 +974,7 @@ export class Statistics {
 
     return result;
   }
-  
+
   /**
    * 获取每年统计（最近N年）- 使用 length 字段优化
    */
@@ -993,7 +1022,7 @@ export class Statistics {
 
     return result;
   }
-  
+
   /**
    * 格式化日期为思源笔记格式
    */
@@ -1006,14 +1035,14 @@ export class Statistics {
     const second = this.padZero(date.getSeconds());
     return `${year}${month}${day}${hour}${minute}${second}`;
   }
-  
+
   /**
    * 数字补零
    */
   private padZero(num: number): string {
     return num < 10 ? '0' + num : String(num);
   }
-  
+
   /**
    * 执行 SQL 查询
    */
@@ -1026,7 +1055,7 @@ export class Statistics {
         },
         body: JSON.stringify({ stmt: sql }),
       });
-      
+
       const data = await response.json();
       if (data.code === 0) {
         return data.data || [];
@@ -1039,7 +1068,7 @@ export class Statistics {
       return [];
     }
   }
-  
+
   /**
    * 启动定时更新任务
    */
@@ -1086,7 +1115,21 @@ export class Statistics {
       console.log('开始收集统计数据...');
       const stats = await this.getStatistics();
 
-      // 保存到数据库
+      // 保存快照到缓存
+      await this.cache.addSnapshot({
+        timestamp: now,
+        totalNotes: stats.totalNotes,
+        totalWords: stats.totalWords,
+        totalBlocks: stats.totalBlocks,
+        totalAssets: stats.totalAssets,
+        totalTags: stats.totalTags,
+        totalBacklinks: stats.totalBacklinks,
+        todayCreated: stats.todayCreated,
+        todayModified: stats.todayModified,
+        avgWordsPerDoc: stats.avgWordsPerDoc
+      });
+
+      // 保存到数据库（按日期）
       const today = new Date();
       const dateKey = this.formatDateKey(today);
       const existingData = await this.plugin.loadData('statistics-history') || {};

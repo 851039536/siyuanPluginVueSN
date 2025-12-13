@@ -724,6 +724,13 @@
   "toggleTheme": "切换主题",
   "defaultTheme": "默认",
   "githubTheme": "GitHub",
+  "snapshotView": "快照",
+  "snapshotAnalysis": "快照分析",
+  "clearSnapshots": "清除快照",
+  "confirmClearSnapshots": "确认清除所有快照数据吗？",
+  "noSnapshots": "还没有快照数据，等待系统自动收集...",
+  "blocks": "块",
+  "assets": "附件",
   "systemMonitor": {
     "title": "系统监控",
     "description": "在状态栏显示 CPU 和内存使用情况",

@@ -162,7 +162,7 @@
       <!-- 图表区域 -->
       <div class="chart-section">
         <h3 class="section-title">{{ chartTitle }}</h3>
-        
+
         <!-- 柱状图 -->
         <div v-if="chartData.length > 0" class="bar-chart">
           <div class="chart-container">
@@ -280,6 +280,94 @@
             </div>
           </div>
         </div>
+
+        <!-- 快照视图 -->
+        <div v-if="viewMode === 'snapshot'" class="snapshot-view">
+          <h3 class="section-title">
+            {{ i18n.snapshotAnalysis || '快照分析' }}
+            <button @click="clearSnapshots" class="clear-btn" :title="i18n.clearSnapshots || '清除快照'">🗑️</button>
+          </h3>
+
+          <div v-if="snapshotData.length > 0" class="snapshot-stats">
+            <p class="snapshot-info">
+              📸 已保存 {{ snapshotData.length }} 个快照
+            </p>
+          </div>
+
+          <!-- 快照数据列表 -->
+          <div class="snapshot-data-list">
+            <div
+              v-for="(snapshot, index) in snapshotData"
+              :key="snapshot.timestamp"
+              class="snapshot-item"
+            >
+              <div class="snapshot-header">
+                <div class="snapshot-time">
+                  <span class="time-icon">⏰</span>
+                  <span class="time-text">{{ snapshot.datetime }}</span>
+                  <span v-if="index === 0" class="latest-badge">最新</span>
+                </div>
+              </div>
+              <div class="snapshot-stats-grid">
+                <div class="snapshot-stat">
+                  <span class="stat-icon">📓</span>
+                  <span class="stat-value">{{ formatNumber(snapshot.totalNotes) }}</span>
+                  <span class="stat-label">{{ i18n.totalNotes || '笔记' }}</span>
+                </div>
+                <div class="snapshot-stat">
+                  <span class="stat-icon">✍️</span>
+                  <span class="stat-value">{{ formatNumber(snapshot.totalWords) }}</span>
+                  <span class="stat-label">{{ i18n.words || '字数' }}</span>
+                </div>
+                <div class="snapshot-stat">
+                  <span class="stat-icon">🧩</span>
+                  <span class="stat-value">{{ formatShortNumber(snapshot.totalBlocks) }}</span>
+                  <span class="stat-label">{{ i18n.blocks || '块' }}</span>
+                </div>
+                <div class="snapshot-stat">
+                  <span class="stat-icon">📎</span>
+                  <span class="stat-value">{{ formatShortNumber(snapshot.totalAssets) }}</span>
+                  <span class="stat-label">{{ i18n.assets || '附件' }}</span>
+                </div>
+                <div class="snapshot-stat">
+                  <span class="stat-icon">📅</span>
+                  <span class="stat-value">{{ snapshot.todayCreated }}</span>
+                  <span class="stat-label">{{ i18n.created || '新增' }}</span>
+                </div>
+                <div class="snapshot-stat">
+                  <span class="stat-icon">✏️</span>
+                  <span class="stat-value">{{ snapshot.todayModified }}</span>
+                  <span class="stat-label">{{ i18n.modified || '修改' }}</span>
+                </div>
+              </div>
+              <!-- 显示与上一个快照的差异 -->
+              <div v-if="index < snapshotData.length - 1" class="snapshot-diff">
+                <span class="diff-label">变化：</span>
+                <span
+                  class="diff-value"
+                  :class="{
+                    'positive': snapshot.totalWords - snapshotData[index + 1].totalWords > 0,
+                    'negative': snapshot.totalWords - snapshotData[index + 1].totalWords < 0
+                  }"
+                >
+                  {{ snapshot.totalWords - snapshotData[index + 1].totalWords > 0 ? '+' : '' }}{{ formatNumber(snapshot.totalWords - snapshotData[index + 1].totalWords) }} 字
+                </span>
+                <span
+                  class="diff-value"
+                  :class="{
+                    'positive': snapshot.totalNotes - snapshotData[index + 1].totalNotes > 0,
+                    'negative': snapshot.totalNotes - snapshotData[index + 1].totalNotes < 0
+                  }"
+                >
+                  {{ snapshot.totalNotes - snapshotData[index + 1].totalNotes > 0 ? '+' : '' }}{{ snapshot.totalNotes - snapshotData[index + 1].totalNotes }} 笔记
+                </span>
+              </div>
+            </div>
+            <div v-if="snapshotData.length === 0" class="empty-snapshot">
+              📸 {{ i18n.noSnapshots || '还没有快照数据，等待系统自动收集...' }}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -298,12 +386,14 @@ interface Props {
   theme?: 'default' | 'github'
   onThemeChange?: (theme: 'default' | 'github') => void
   onRefresh?: (params: {
-    viewMode: 'day' | 'week' | 'month' | 'year' | 'trend'
+    viewMode: 'day' | 'week' | 'month' | 'year' | 'trend' | 'snapshot'
     dayRange?: 7 | 15 | 30 | 90 | 180 | 365
     monthYearRange?: 1 | 2 | 3
     selectedYear?: number
   }) => Promise<StatisticsData>
   onGetHistoricalData?: (days?: number) => Promise<any[]>
+  onGetSnapshots?: (count?: number) => Promise<any[]>
+  onClearSnapshots?: () => Promise<void>
 }
 
 interface StatisticsData {
@@ -338,7 +428,7 @@ const props = withDefaults(defineProps<Props>(), {
 const loading = ref(false)
 const stats = ref<StatisticsData | null>(null)
 const lastUpdateTime = ref('')
-const viewMode = ref<'day' | 'week' | 'month' | 'year' | 'trend'>('day')
+const viewMode = ref<'day' | 'week' | 'month' | 'year' | 'trend' | 'snapshot'>('day')
 const dayRange = ref<7 | 15 | 30 | 90 | 180 | 365>(7)
 const monthYearRange = ref<1 | 2 | 3>(1)
 const selectedYear = ref<number>(new Date().getFullYear())
@@ -346,6 +436,7 @@ const chartData = ref<DailyWordCount[]>([])
 const currentTheme = ref<'default' | 'github'>(props.theme || 'default')
 const historicalData = ref<any[]>([])
 const updateInterval = ref<number>(60000) // 默认1分钟
+const snapshotData = ref<any[]>([])
 
 // 视图模式选项
 const viewModes = computed(() => [
@@ -354,6 +445,7 @@ const viewModes = computed(() => [
   { value: 'month' as const, label: props.i18n.monthView || '月', icon: '📆' },
   { value: 'year' as const, label: props.i18n.yearView || '年', icon: '📈' },
   { value: 'trend' as const, label: props.i18n.trendView || '趋势', icon: '📈' },
+  { value: 'snapshot' as const, label: props.i18n.snapshotView || '快照', icon: '📸' },
 ])
 
 // 日视图范围选项
@@ -489,6 +581,11 @@ async function refreshData() {
     if (viewMode.value === 'trend') {
       await loadHistoricalData()
     }
+
+    // 如果是快照视图，加载快照数据
+    if (viewMode.value === 'snapshot') {
+      await loadSnapshotData()
+    }
   } catch (error) {
     console.error('刷新统计数据失败:', error)
   } finally {
@@ -501,9 +598,40 @@ async function loadHistoricalData() {
   if (!props.onGetHistoricalData) return
 
   try {
-    historicalData.value = await props.onGetHistoricalData(30) // 获取最近30天的数据
+    const data = await props.onGetHistoricalData(30) // 获取最近30天的数据
+    // 最新日期在最前面排序
+    historicalData.value = data.reverse()
   } catch (error) {
     console.error('加载历史数据失败:', error)
+  }
+}
+
+// 加载快照数据
+async function loadSnapshotData() {
+  if (!props.onGetSnapshots) return
+
+  try {
+    snapshotData.value = await props.onGetSnapshots(50) // 获取最近50个快照
+    console.log('已加载快照数据:', snapshotData.value.length)
+  } catch (error) {
+    console.error('加载快照数据失败:', error)
+  }
+}
+
+// 清除快照数据
+async function clearSnapshots() {
+  if (!props.onClearSnapshots) return
+
+  if (!confirm(props.i18n.confirmClearSnapshots || '确认清除所有快照数据吗？')) {
+    return
+  }
+
+  try {
+    await props.onClearSnapshots()
+    snapshotData.value = []
+    console.log('快照数据已清除')
+  } catch (error) {
+    console.error('清除快照数据失败:', error)
   }
 }
 
@@ -541,7 +669,7 @@ function getBarHeight(words: number): number {
 function isToday(dateStr: string): boolean {
   const today = new Date()
   const todayStr = `${today.getFullYear()}-${padZero(today.getMonth() + 1)}-${padZero(today.getDate())}`
-  
+
   if (dateStr.length === 10) {
     return dateStr === todayStr
   } else if (dateStr.length === 7) {
@@ -1351,6 +1479,190 @@ defineExpose({
           }
         }
       }
+    }
+  }
+}
+
+// 快照视图样式
+.snapshot-view {
+  .section-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .clear-btn {
+      padding: 4px 8px;
+      border: 1px solid var(--b3-border-color);
+      border-radius: 4px;
+      background: transparent;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+
+      &:hover {
+        background: var(--b3-theme-error);
+        color: white;
+        border-color: var(--b3-theme-error);
+      }
+    }
+  }
+
+  .snapshot-stats {
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    background: var(--b3-theme-surface);
+    border-radius: 6px;
+    border-left: 3px solid var(--b3-theme-primary);
+
+    .snapshot-info {
+      margin: 0;
+      font-size: 12px;
+      color: var(--b3-theme-on-surface);
+    }
+  }
+
+  .snapshot-data-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 500px;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: var(--b3-theme-surface-lighter);
+      border-radius: 3px;
+
+      &:hover {
+        background: var(--b3-theme-on-surface-variant);
+      }
+    }
+
+    .snapshot-item {
+      padding: 12px;
+      background: var(--b3-theme-surface);
+      border: 1px solid var(--b3-border-color);
+      border-radius: 8px;
+      transition: all 0.2s;
+
+      &:hover {
+        border-color: var(--b3-theme-primary);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .snapshot-header {
+        margin-bottom: 10px;
+
+        .snapshot-time {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+
+          .time-icon {
+            font-size: 14px;
+          }
+
+          .time-text {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--b3-theme-on-surface);
+          }
+
+          .latest-badge {
+            padding: 2px 6px;
+            background: var(--b3-theme-primary);
+            color: white;
+            font-size: 10px;
+            border-radius: 3px;
+            font-weight: 600;
+          }
+        }
+      }
+
+      .snapshot-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-bottom: 8px;
+
+        .snapshot-stat {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 4px;
+          padding: 8px;
+          background: var(--b3-theme-background);
+          border-radius: 6px;
+          transition: all 0.2s;
+
+          &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+          }
+
+          .stat-icon {
+            font-size: 16px;
+          }
+
+          .stat-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--b3-theme-primary);
+          }
+
+          .stat-label {
+            font-size: 9px;
+            color: var(--b3-theme-on-surface);
+            opacity: 0.7;
+          }
+        }
+      }
+
+      .snapshot-diff {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        background: var(--b3-theme-background);
+        border-radius: 4px;
+        font-size: 11px;
+
+        .diff-label {
+          font-weight: 600;
+          color: var(--b3-theme-on-surface);
+        }
+
+        .diff-value {
+          padding: 2px 6px;
+          border-radius: 3px;
+          font-weight: 600;
+
+          &.positive {
+            background: rgba(26, 127, 55, 0.1);
+            color: #1a7f37;
+          }
+
+          &.negative {
+            background: rgba(207, 34, 46, 0.1);
+            color: #cf222e;
+          }
+        }
+      }
+    }
+
+    .empty-snapshot {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--b3-theme-on-surface);
+      font-size: 13px;
+      opacity: 0.7;
     }
   }
 }

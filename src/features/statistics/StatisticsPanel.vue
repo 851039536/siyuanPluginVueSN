@@ -544,11 +544,11 @@ defineExpose({
 
   .last-update {
     font-size: 10px;
-    color: var(--b3-theme-on-surface-light);
+    color: var(--b3-theme-on-surface);
   }
 }
 
-@keyframes rotate {
+@keyframes spin {
   from {
     transform: rotate(0deg);
   }
@@ -557,13 +557,18 @@ defineExpose({
   }
 }
 
-.loading-state {
+.loading-state,
+.empty-state {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 200px;
-  color: var(--b3-theme-on-surface-light);
+  color: var(--b3-theme-on-surface);
+  font-size: 12px;
+}
+
+.loading-state {
+  flex-direction: column;
 
   .loading-spinner {
     width: 32px;
@@ -577,21 +582,6 @@ defineExpose({
 
   p {
     font-size: 12px;
-  }
-}
-
-.empty-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 200px;
-  color: var(--b3-theme-on-surface-light);
-  font-size: 12px;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
   }
 }
 
@@ -621,16 +611,10 @@ defineExpose({
 .stats-cards-compact {
   margin-bottom: 16px;
 
-  .stat-card-main {
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
-    padding: 16px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  .stat-card-main,
+  .stat-card-secondary {
     border-radius: 8px;
-    color: white;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    margin-bottom: 8px;
     transition: transform 0.2s, box-shadow 0.2s;
 
     &:hover {
@@ -649,6 +633,16 @@ defineExpose({
         border-color: var(--b3-theme-primary);
       }
     }
+  }
+
+  .stat-card-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 16px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    margin-bottom: 8px;
 
     .stat-item-inline {
       display: flex;
@@ -692,27 +686,7 @@ defineExpose({
     justify-content: space-between;
     padding: 12px 16px;
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    border-radius: 8px;
     color: white;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s, box-shadow 0.2s;
-
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-
-    .theme-github & {
-      background: var(--b3-theme-surface);
-      color: var(--b3-theme-on-surface);
-      border: 1px solid var(--b3-border-color);
-      box-shadow: none;
-
-      &:hover {
-        transform: none;
-        border-color: var(--b3-theme-primary);
-      }
-    }
 
     .stat-item-small {
       display: flex;
@@ -772,7 +746,10 @@ defineExpose({
       background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
     }
 
-    .theme-github & {
+    .theme-github &,
+    .theme-github &.gradient-1,
+    .theme-github &.gradient-2,
+    .theme-github &.gradient-3 {
       background: var(--b3-theme-surface);
       color: var(--b3-theme-on-surface);
       border: 1px solid var(--b3-border-color);
@@ -781,12 +758,6 @@ defineExpose({
       &:hover {
         transform: none;
         border-color: var(--b3-theme-primary);
-      }
-
-      &.gradient-1,
-      &.gradient-2,
-      &.gradient-3 {
-        background: var(--b3-theme-surface);
       }
     }
 
@@ -827,57 +798,45 @@ defineExpose({
     display: flex;
     gap: 8px;
     margin-bottom: 12px;
-
-    .mode-tab {
-      flex: 1;
-      padding: 8px;
-      border: 2px solid var(--b3-border-color);
-      border-radius: 6px;
-      background: var(--b3-theme-background);
-      color: var(--b3-theme-on-background);
-      font-size: 12px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
-
-      &:hover {
-        border-color: var(--b3-theme-primary);
-      }
-
-      &.active {
-        border-color: var(--b3-theme-primary);
-        background: var(--b3-theme-primary-light);
-        color: var(--b3-theme-primary);
-      }
-    }
   }
 
   .range-selector {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 6px;
+  }
 
-    .range-btn {
-      padding: 6px 8px;
-      border: 2px solid var(--b3-border-color);
-      border-radius: 4px;
-      background: var(--b3-theme-background);
-      color: var(--b3-theme-on-background);
-      font-size: 11px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
+  .mode-tab,
+  .range-btn {
+    border: 2px solid var(--b3-border-color);
+    background: var(--b3-theme-background);
+    color: var(--b3-theme-on-background);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
 
-      &:hover {
-        border-color: var(--b3-theme-primary);
-      }
-
-      &.active {
-        border-color: var(--b3-theme-primary);
-        background: var(--b3-theme-primary-light);
-        color: var(--b3-theme-primary);
-      }
+    &:hover {
+      border-color: var(--b3-theme-primary);
     }
+
+    &.active {
+      border-color: var(--b3-theme-primary);
+      background: var(--b3-theme-primary-light);
+      color: var(--b3-theme-primary);
+    }
+  }
+
+  .mode-tab {
+    flex: 1;
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 12px;
+  }
+
+  .range-btn {
+    padding: 6px 8px;
+    border-radius: 4px;
+    font-size: 11px;
   }
 
   .year-selector {
@@ -975,7 +934,7 @@ defineExpose({
         .bar-value {
           position: absolute;
           font-size: 10px;
-          color: var(--b3-theme-on-surface-light);
+          color: var(--b3-theme-on-surface);
           white-space: nowrap;
           transform: translateX(-50%);
           left: 50%;
@@ -1020,7 +979,7 @@ defineExpose({
           position: absolute;
           bottom: -25px;
           font-size: 10px;
-          color: var(--b3-theme-on-surface-light);
+          color: var(--b3-theme-on-surface);
           transform: rotate(-45deg);
           transform-origin: top left;
           white-space: nowrap;
@@ -1057,6 +1016,10 @@ defineExpose({
       &.today {
         border-left-color: #f5576c;
         background: rgba(245, 87, 108, 0.05);
+
+        .data-value {
+          color: #f5576c;
+        }
       }
 
       .theme-github & {
@@ -1083,16 +1046,12 @@ defineExpose({
         font-weight: 700;
         color: var(--b3-theme-primary);
       }
-
-      &.today .data-value {
-        color: #f5576c;
-      }
     }
 
     .empty-state {
       text-align: center;
       padding: 20px;
-      color: var(--b3-theme-on-surface-light);
+      color: var(--b3-theme-on-surface);
       font-size: 12px;
     }
   }

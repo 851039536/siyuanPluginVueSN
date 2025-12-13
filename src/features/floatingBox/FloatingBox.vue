@@ -1,10 +1,10 @@
 <template>
-  <div class="floating-box-wrapper">
+  <div class="floating-box-wrapper" ref="wrapperRef">
     <!-- 悬浮触发按钮 -->
     <div
       class="floating-box-trigger"
       :class="{ expanded: isExpanded }"
-      @click="toggleExpand"
+      @click.stop="toggleExpand"
       @mouseenter="showTooltip = true"
       @mouseleave="showTooltip = false"
     >
@@ -22,7 +22,7 @@
 
     <!-- 展开工具栏 -->
     <Transition name="toolbar">
-      <div v-if="isExpanded" class="floating-toolbar">
+      <div v-if="isExpanded" class="floating-toolbar" @click.stop>
         <!-- 工具按钮 -->
         <div
           v-for="tool in tools"
@@ -42,112 +42,43 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { showMessage } from 'siyuan'
-
-interface Tool {
-  id: string
-  label: string
-  title: string
-  icon: string
-  bgColor: string
-  action: () => void
-}
+import { ref, onMounted, onUnmounted } from 'vue'
+import { allTools } from './tools'
+import type { FloatingTool } from './types'
 
 defineProps<{
   i18n?: Record<string, string>
 }>()
 
+const wrapperRef = ref<HTMLElement | null>(null)
 const isExpanded = ref(false)
 const showTooltip = ref(false)
+const tools = ref<FloatingTool[]>(allTools)
 
 const toggleExpand = () => {
   isExpanded.value = !isExpanded.value
   showTooltip.value = false
 }
 
-// 工具配置
-const tools = ref<Tool[]>([
-  {
-    id: 'timestamp',
-    label: '时间戳',
-    title: '插入当前时间',
-    icon: '<path fill="currentColor" d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2m0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8m.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7V7z"/>',
-    bgColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    action: () => {
-      const now = new Date()
-      const timestamp = now.toLocaleString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-      navigator.clipboard.writeText(timestamp)
-      showMessage(`已复制: ${timestamp}`, 2000, 'info')
-    }
-  },
-  {
-    id: 'divider',
-    label: '分割线',
-    title: '插入分割线',
-    icon: '<path fill="currentColor" d="M19 13H5v-2h14v2z"/>',
-    bgColor: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-    action: () => {
-      navigator.clipboard.writeText('---')
-      showMessage('分割线已复制到剪贴板', 2000, 'info')
-    }
-  },
-  {
-    id: 'todo',
-    label: '待办',
-    title: '插入待办事项',
-    icon: '<path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2m0 16H5V5h14v14M17.99 9l-1.41-1.42-6.59 6.59-2.58-2.57-1.42 1.41 4 3.99 8-8z"/>',
-    bgColor: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-    action: () => {
-      navigator.clipboard.writeText('* [ ] ')
-      showMessage('待办格式已复制', 2000, 'info')
-    }
-  },
-  {
-    id: 'codeblock',
-    label: '代码块',
-    title: '插入代码块',
-    icon: '<path fill="currentColor" d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4m5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/>',
-    bgColor: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-    action: () => {
-      navigator.clipboard.writeText('```\n\n```')
-      showMessage('代码块格式已复制', 2000, 'info')
-    }
-  },
-  {
-    id: 'quote',
-    label: '引用',
-    title: '插入引用块',
-    icon: '<path fill="currentColor" d="M6 17h3l2-4V7H5v6h3l-2 4zm8 0h3l2-4V7h-6v6h3l-2 4z"/>',
-    bgColor: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-    action: () => {
-      navigator.clipboard.writeText('> ')
-      showMessage('引用格式已复制', 2000, 'info')
-    }
-  },
-  {
-    id: 'link',
-    label: '链接',
-    title: '插入链接格式',
-    icon: '<path fill="currentColor" d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1M8 13h8v-2H8v2m9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/>',
-    bgColor: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
-    action: () => {
-      navigator.clipboard.writeText('[链接文字](url)')
-      showMessage('链接格式已复制', 2000, 'info')
-    }
-  }
-])
-
-const handleToolClick = (tool: Tool) => {
+const handleToolClick = (tool: FloatingTool) => {
   tool.action()
   isExpanded.value = false
 }
+
+// 点击外部关闭
+const handleClickOutside = (event: MouseEvent) => {
+  if (wrapperRef.value && !wrapperRef.value.contains(event.target as Node)) {
+    isExpanded.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>
 
 <style scoped lang="scss">

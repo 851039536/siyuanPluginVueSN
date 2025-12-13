@@ -1,0 +1,11 @@
+/**
+ * 工具定义接口
+ */
+export interface FloatingTool {
+  id: string
+  label: string
+  title: string
+  icon: string
+  bgColor: string
+  action: () => void
+}

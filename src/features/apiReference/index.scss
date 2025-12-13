@@ -346,18 +346,18 @@
 
   &::-webkit-scrollbar {
     width: 8px;
-  }
 
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
+    &-track {
+      background: transparent;
+    }
 
-  &::-webkit-scrollbar-thumb {
-    background: var(--b3-theme-surface-lighter);
-    border-radius: 4px;
+    &-thumb {
+      background: var(--b3-theme-surface-lighter);
+      border-radius: 4px;
 
-    &:hover {
-      background: var(--b3-theme-on-surface-variant);
+      &:hover {
+        background: var(--b3-theme-on-surface-variant);
+      }
     }
   }
 }
@@ -386,7 +386,8 @@
   font-size: 12px;
 }
 
-.toc-list {
+.toc-list,
+.toc-children {
   list-style: none;
   padding: 0;
   margin: 0;
@@ -571,12 +572,6 @@
   }
 }
 
-.toc-children {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
 // ============================================================================
 // Markdown Content - GitHub Style
 // ============================================================================
@@ -589,18 +584,18 @@
 
   &::-webkit-scrollbar {
     width: 10px;
-  }
 
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
+    &-track {
+      background: transparent;
+    }
 
-  &::-webkit-scrollbar-thumb {
-    background: var(--b3-theme-surface-lighter);
-    border-radius: 5px;
+    &-thumb {
+      background: var(--b3-theme-surface-lighter);
+      border-radius: 5px;
 
-    &:hover {
-      background: var(--b3-theme-on-surface-variant);
+      &:hover {
+        background: var(--b3-theme-on-surface-variant);
+      }
     }
   }
 }
@@ -684,7 +679,8 @@
     margin-bottom: 12px;
   }
 
-  ul, ol {
+  ul,
+  ol {
     margin-top: 0;
     margin-bottom: 12px;
     padding-left: 1.5em;
@@ -755,7 +751,8 @@
     overflow: auto;
     display: block;
 
-    th, td {
+    th,
+    td {
       padding: 4px 8px;
       border: 1px solid var(--b3-border-color);
       font-size: 12px;
@@ -973,18 +970,18 @@
 
   &::-webkit-scrollbar {
     width: 6px;
-  }
 
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
+    &-track {
+      background: transparent;
+    }
 
-  &::-webkit-scrollbar-thumb {
-    background: var(--b3-theme-surface-lighter);
-    border-radius: 3px;
+    &-thumb {
+      background: var(--b3-theme-surface-lighter);
+      border-radius: 3px;
 
-    &:hover {
-      background: var(--b3-theme-on-surface-variant);
+      &:hover {
+        background: var(--b3-theme-on-surface-variant);
+      }
     }
   }
 }

@@ -78,6 +78,7 @@ export class WordQuery {
           setup() {
             return () => h(WordQueryPanel, {
               i18n: self.plugin.i18n,
+              plugin: self.plugin,
               onQuery: async (word: string) => {
                 return await self.queryWord(word);
               },

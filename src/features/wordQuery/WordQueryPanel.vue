@@ -556,36 +556,69 @@ const handleQuery = async () => {
 const dataOperations = {
   // 保存数据
   save: async (key: string, data: any) => {
-    if (props.plugin) {
-      try {
-        console.log(`[WordQuery] Saving ${key}:`, data);
-        await props.plugin.saveData(key, data);
-        console.log(`[WordQuery] Successfully saved ${key}`);
-      } catch (error) {
-        console.error(`Failed to save ${key}:`, error);
-        throw error; // 重新抛出错误以便上层处理
+    // 延迟检查 plugin 实例，确保在组件完全初始化后再保存
+    const checkAndSave = async (retryCount = 0) => {
+      const maxRetries = 10; // 最多重试10次
+      const retryDelay = 100; // 每次重试间隔100ms
+
+      if (props.plugin) {
+        try {
+          console.log(`[WordQuery] Saving ${key}:`, data);
+          await props.plugin.saveData(key, data);
+          console.log(`[WordQuery] Successfully saved ${key}`);
+          return true;
+        } catch (error) {
+          console.error(`Failed to save ${key}:`, error);
+          throw error;
+        }
+      } else {
+        console.warn(`[WordQuery] No plugin instance available for saving ${key}, retrying... (${retryCount + 1}/${maxRetries})`);
+
+        if (retryCount < maxRetries) {
+          // 等待后重试
+          await new Promise(resolve => setTimeout(resolve, retryDelay));
+          return checkAndSave(retryCount + 1);
+        } else {
+          console.error(`[WordQuery] Max retries reached, giving up on saving ${key}`);
+          return false;
+        }
       }
-    } else {
-      console.warn(`[WordQuery] No plugin instance available for saving ${key}`);
-    }
+    };
+
+    return await checkAndSave();
   },
 
   // 加载数据
   load: async (key: string) => {
-    if (props.plugin) {
-      try {
-        console.log(`[WordQuery] Loading ${key}...`);
-        const saved = await props.plugin.loadData(key);
-        console.log(`[WordQuery] Loaded ${key}:`, saved);
-        return saved;
-      } catch (error) {
-        console.error(`Failed to load ${key}:`, error);
-        return null;
+    // 延迟检查 plugin 实例
+    const checkAndLoad = async (retryCount = 0) => {
+      const maxRetries = 10;
+      const retryDelay = 100;
+
+      if (props.plugin) {
+        try {
+          console.log(`[WordQuery] Loading ${key}...`);
+          const saved = await props.plugin.loadData(key);
+          console.log(`[WordQuery] Loaded ${key}:`, saved);
+          return saved;
+        } catch (error) {
+          console.error(`Failed to load ${key}:`, error);
+          return null;
+        }
+      } else {
+        console.warn(`[WordQuery] No plugin instance available for loading ${key}, retrying... (${retryCount + 1}/${maxRetries})`);
+
+        if (retryCount < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, retryDelay));
+          return checkAndLoad(retryCount + 1);
+        } else {
+          console.error(`[WordQuery] Max retries reached, giving up on loading ${key}`);
+          return null;
+        }
       }
-    } else {
-      console.warn(`[WordQuery] No plugin instance available for loading ${key}`);
-      return null;
-    }
+    };
+
+    return await checkAndLoad();
   }
 };
 
@@ -613,7 +646,13 @@ const addToHistory = async (word: string, result: string) => {
     ...queryHistory.value.filter(item => item.word !== word)
   ].slice(0, PANEL_CONFIGS.history.maxItems);
 
-  await dataOperations.save('word-query-history', queryHistory.value);
+  // 保存历史记录（不阻塞主要流程）
+  try {
+    await dataOperations.save('word-query-history', queryHistory.value);
+  } catch (error) {
+    console.error('[WordQuery] Failed to save history:', error);
+    // 不显示错误提示，避免影响用户体验
+  }
 };
 
 // 加载历史记录
@@ -631,8 +670,12 @@ const loadHistory = async () => {
 const clearHistory = async () => {
   queryHistory.value = [];
   try {
-    await dataOperations.save('word-query-history', queryHistory.value);
-    showMessage('历史记录已清除', 2000, 'info');
+    const success = await dataOperations.save('word-query-history', queryHistory.value);
+    if (success) {
+      showMessage('历史记录已清除', 2000, 'info');
+    } else {
+      showMessage('清除历史记录失败 - Plugin 未就绪', 2000, 'error');
+    }
   } catch (error) {
     showMessage('清除历史记录失败', 2000, 'error');
   }
@@ -672,7 +715,10 @@ const toggleFavorite = async () => {
       showMessage('已添加到收藏', 2000, 'info');
     }
     // 立即保存数据
-    await dataOperations.save('word-query-favorites', favorites.value);
+    const success = await dataOperations.save('word-query-favorites', favorites.value);
+    if (!success) {
+      showMessage('保存收藏失败 - Plugin 未就绪', 2000, 'error');
+    }
     console.log('[WordQuery] Favorites updated:', favorites.value);
   } catch (error) {
     console.error('[WordQuery] Failed to toggle favorite:', error);
@@ -697,8 +743,12 @@ const loadFavorites = async () => {
 const clearFavorites = async () => {
   favorites.value = [];
   try {
-    await dataOperations.save('word-query-favorites', favorites.value);
-    showMessage('收藏已清除', 2000, 'info');
+    const success = await dataOperations.save('word-query-favorites', favorites.value);
+    if (success) {
+      showMessage('收藏已清除', 2000, 'info');
+    } else {
+      showMessage('清除收藏失败 - Plugin 未就绪', 2000, 'error');
+    }
   } catch (error) {
     console.error('[WordQuery] Failed to clear favorites:', error);
     showMessage('清除收藏失败', 2000, 'error');
@@ -717,11 +767,15 @@ const queryFromFavorite = (item: FavoriteItem) => {
 const removeFavorite = async (word: string) => {
   favorites.value = favorites.value.filter(item => item.word !== word);
   try {
-    await dataOperations.save('word-query-favorites', favorites.value);
+    const success = await dataOperations.save('word-query-favorites', favorites.value);
     if (searchWord.value === word) {
       currentWordFavorited.value = false;
     }
-    showMessage('已删除', 2000, 'info');
+    if (success) {
+      showMessage('已删除', 2000, 'info');
+    } else {
+      showMessage('删除失败 - Plugin 未就绪', 2000, 'error');
+    }
   } catch (error) {
     console.error('[WordQuery] Failed to remove favorite:', error);
     showMessage('删除失败', 2000, 'error');
@@ -1065,10 +1119,28 @@ watch([pronunciationType, autoPlayPronunciation, showRelatedWords], async () => 
   await saveAdvancedOptions();
 });
 
-onMounted(async () => {
-  console.log('[WordQuery] Component mounted, initializing...');
-  document.addEventListener('keydown', handleKeyDown);
-  document.addEventListener('click', handleClickOutside);
+// 等待 plugin 实例准备就绪
+const waitForPlugin = async (maxRetries = 20) => {
+  for (let i = 0; i < maxRetries; i++) {
+    if (props.plugin) {
+      console.log('[WordQuery] Plugin instance ready');
+      return true;
+    }
+    console.log(`[WordQuery] Waiting for plugin instance... (${i + 1}/${maxRetries})`);
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  console.error('[WordQuery] Plugin instance not available after max retries');
+  return false;
+};
+
+// 初始化数据
+const initializeData = async () => {
+  // 等待 plugin 实例准备就绪
+  const pluginReady = await waitForPlugin();
+  if (!pluginReady) {
+    console.error('[WordQuery] Cannot initialize data without plugin instance');
+    return;
+  }
 
   // 批量加载数据
   try {
@@ -1081,6 +1153,17 @@ onMounted(async () => {
   } catch (error) {
     console.error('[WordQuery] Failed to load data:', error);
   }
+};
+
+onMounted(async () => {
+  console.log('[WordQuery] Component mounted, initializing...');
+  document.addEventListener('keydown', handleKeyDown);
+  document.addEventListener('click', handleClickOutside);
+
+  // 延迟初始化数据，确保 plugin 实例已准备
+  setTimeout(() => {
+    initializeData();
+  }, 100);
 });
 
 onUnmounted(() => {

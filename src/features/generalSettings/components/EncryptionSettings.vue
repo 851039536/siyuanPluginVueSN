@@ -1,35 +1,37 @@
 <template>
-  <div class="encryption-settings">
-    <div class="settings-section">
-      <h3 class="section-title">{{ plugin.i18n.encryptionSettings }}</h3>
-      
+  <div class="encryption-section">
+    <div class="section-header">
+      <span class="section-title">{{ plugin.i18n.contentEncryption || '内容加密' }}</span>
+    </div>
+
+    <div class="section-content">
       <!-- 密码状态 -->
-      <div class="password-status" :class="{ 'has-password': hasPassword }">
-        <div class="status-label">{{ plugin.i18n.currentPasswordStatus }}</div>
-        <div class="status-value">
-          {{ hasPassword ? '✓ ' + plugin.i18n.passwordSet : '⚠ ' + plugin.i18n.passwordNotSetYet }}
-        </div>
+      <div class="status-card" :class="{ 'has-password': hasPassword }">
+        <span class="status-icon">{{ hasPassword ? '✓' : '⚠' }}</span>
+        <span class="status-text">
+          {{ hasPassword ? plugin.i18n.passwordSet : plugin.i18n.passwordNotSetYet }}
+        </span>
       </div>
 
       <!-- 密码输入 -->
       <div class="form-group">
         <label>{{ plugin.i18n.newPassword }}</label>
-        <input 
-          type="password" 
+        <input
           v-model="newPassword"
+          type="password"
           :placeholder="plugin.i18n.passwordPlaceholder"
           @keydown.enter="handleSavePassword"
-        />
+        >
       </div>
 
       <div class="form-group">
         <label>{{ plugin.i18n.confirmPassword }}</label>
-        <input 
-          type="password" 
+        <input
           v-model="confirmPassword"
+          type="password"
           :placeholder="plugin.i18n.confirmPasswordPlaceholder"
           @keydown.enter="handleSavePassword"
-        />
+        >
       </div>
 
       <!-- 保存按钮 -->
@@ -38,9 +40,12 @@
       </button>
 
       <!-- 提示信息 -->
-      <div class="encryption-tip">
-        {{ plugin.i18n.encryptionTip }}
-        <div class="algorithm-info">{{ plugin.i18n.algorithmInfo }}</div>
+      <div class="info-card">
+        <span class="info-icon">ℹ</span>
+        <div class="info-content">
+          <span class="info-text">{{ plugin.i18n.encryptionTip }}</span>
+          <span class="info-sub">{{ plugin.i18n.algorithmInfo }}</span>
+        </div>
       </div>
     </div>
   </div>
@@ -64,7 +69,6 @@ onMounted(() => {
 })
 
 onActivated(() => {
-  // 组件激活时重新检查密码状态
   checkPasswordStatus()
 })
 
@@ -72,9 +76,6 @@ function checkPasswordStatus() {
   const encryption = getEncryptionInstance()
   if (encryption) {
     hasPassword.value = encryption.hasPassword()
-    console.log('密码状态检查:', hasPassword.value)
-  } else {
-    console.warn('加密实例未找到')
   }
 }
 
@@ -97,92 +98,82 @@ async function handleSavePassword() {
     encryption.setPassword(pwd1)
     await encryption.savePassword()
     showMessage(props.plugin.i18n.passwordSetSuccess, 2000, 'info')
-    
-    // 清空输入框
     newPassword.value = ''
     confirmPassword.value = ''
-    
-    // 更新状态
     checkPasswordStatus()
   }
 }
 </script>
 
 <style scoped>
-.encryption-settings {
-  padding: 16px;
-}
-
-.settings-section {
-  background: var(--b3-theme-background);
-}
-
-.section-title {
-  margin: 0 0 16px 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--b3-theme-on-background);
-}
-
-.password-status {
-  margin-bottom: 20px;
-  padding: 12px;
+.encryption-section {
   background: var(--b3-theme-surface);
   border-radius: 8px;
   border: 1px solid var(--b3-theme-surface-lighter);
+  margin: 16px;
+  overflow: hidden;
 }
 
-.password-status.has-password {
-  background: var(--b3-card-success-background);
+.section-header {
+  padding: 12px 16px;
+  background: var(--b3-theme-surface-light);
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
 }
 
-.password-status:not(.has-password) {
-  background: var(--b3-card-warning-background);
-}
-
-.status-label {
-  margin-bottom: 8px;
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
   color: var(--b3-theme-on-surface);
+}
+
+.section-content {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.status-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 6px;
   font-size: 13px;
   font-weight: 500;
 }
 
-.status-value {
-  padding: 8px 12px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.has-password .status-value {
+.status-card.has-password {
   background: var(--b3-card-success-background);
   color: var(--b3-card-success-color);
 }
 
-:not(.has-password) .status-value {
+.status-card:not(.has-password) {
   background: var(--b3-card-warning-background);
   color: var(--b3-card-warning-color);
 }
 
+.status-icon {
+  font-size: 14px;
+}
+
 .form-group {
-  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .form-group label {
-  display: block;
-  margin-bottom: 8px;
   font-size: 13px;
   font-weight: 500;
   color: var(--b3-theme-on-background);
 }
 
 .form-group input {
-  width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--b3-theme-surface-lighter);
   border-radius: 6px;
-  box-sizing: border-box;
-  font-size: 14px;
+  font-size: 13px;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
   transition: border-color 0.2s;
@@ -194,14 +185,13 @@ async function handleSavePassword() {
 }
 
 .save-btn {
-  width: 100%;
-  padding: 12px;
+  padding: 10px 16px;
   border: none;
   background: var(--b3-theme-primary);
   color: var(--b3-theme-on-primary);
   border-radius: 6px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   transition: opacity 0.2s;
 }
@@ -210,19 +200,37 @@ async function handleSavePassword() {
   opacity: 0.9;
 }
 
-.encryption-tip {
-  margin-top: 20px;
-  padding: 12px;
-  background: var(--b3-theme-surface);
+.info-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--b3-theme-surface-light);
   border-radius: 6px;
-  font-size: 12px;
-  color: var(--b3-theme-on-surface-light);
-  line-height: 1.6;
   border-left: 3px solid var(--b3-theme-primary);
 }
 
-.algorithm-info {
-  margin-top: 8px;
+.info-icon {
+  font-size: 13px;
+  color: var(--b3-theme-primary);
+  flex-shrink: 0;
+}
+
+.info-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-text {
+  font-size: 12px;
+  color: var(--b3-theme-on-surface-light);
+  line-height: 1.5;
+}
+
+.info-sub {
+  font-size: 11px;
+  color: var(--b3-theme-on-surface-light);
   opacity: 0.8;
 }
 </style>

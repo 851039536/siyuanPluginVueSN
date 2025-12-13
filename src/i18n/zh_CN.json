@@ -20,7 +20,7 @@
   "pageLocked": "此页面已锁定",
   "pleaseUnlock": "请输入密码解锁后查看",
   "pleaseSetPasswordFirst": "请先设置全局密码",
-  "passwordSetting": "密码设置",
+  "passwordSetting": "文档加密设置",
   "passwordSettingDesc": "设置全局加密密码，用于锁定文档",
   "passwordSetSuccess": "密码设置成功",
   "passwordUpdateSuccess": "密码更新成功",
@@ -676,7 +676,8 @@
     "deleteProvider": "删除此API文档",
     "confirmDelete": "确定要删除此API文档吗？"
   },
-  "encryptionSettings": "加密设置",
+  "encryptionSettings": "密码加密",
+  "contentEncryption": "内容加密",
   "encryptText": "加密文本",
   "decryptText": "解密文本",
   "encryptSuccess": "文本加密成功",

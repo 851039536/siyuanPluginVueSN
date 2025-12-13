@@ -20,7 +20,7 @@
   "pageLocked": "This page is locked",
   "pleaseUnlock": "Please enter password to unlock",
   "pleaseSetPasswordFirst": "Please set global password first",
-  "passwordSetting": "Password Setting",
+  "passwordSetting": "Document Encryption Settings",
   "passwordSettingDesc": "Set global encryption password for locking documents",
   "passwordSetSuccess": "Password set successfully",
   "passwordUpdateSuccess": "Password updated successfully",
@@ -657,7 +657,8 @@
     "deleteProvider": "Delete this API documentation",
     "confirmDelete": "Are you sure you want to delete this API documentation?"
   },
-  "encryptionSettings": "Encryption Settings",
+  "encryptionSettings": "Password Encryption",
+  "contentEncryption": "Content Encryption",
   "encryptText": "Encrypt Text",
   "decryptText": "Decrypt Text",
   "encryptSuccess": "Text encrypted successfully",

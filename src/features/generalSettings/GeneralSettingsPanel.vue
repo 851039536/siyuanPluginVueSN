@@ -39,13 +39,9 @@
           <HeadingSettings :i18n="i18n" :plugin="plugin" @change="handleHeadingChange" />
         </div>
 
-        <!-- 密码设置 -->
-        <div v-show="activeCategory === 'password'" class="content-section">
-          <PasswordSettings :i18n="i18n" />
-        </div>
-
         <!-- 加密设置 -->
         <div v-show="activeCategory === 'encryption'" class="content-section">
+          <PasswordSettings :i18n="i18n" />
           <EncryptionSettings :plugin="plugin" />
         </div>
 
@@ -110,10 +106,6 @@ const categories = computed(() => [
   {
     id: 'list',
     label: props.i18n.listSettings || '列表设置'
-  },
-  {
-    id: 'password',
-    label: props.i18n.passwordSetting || '密码设置'
   },
   {
     id: 'encryption',

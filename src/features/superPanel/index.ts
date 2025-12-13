@@ -38,6 +38,11 @@ export function registerSuperPanel(plugin: Plugin) {
       toggleSuperPanel(plugin)
     }
   })
+
+  // 监听悬浮框触发的超级面板事件
+  window.addEventListener('toggleSuperPanel', () => {
+    toggleSuperPanel(plugin)
+  })
 }
 
 /**

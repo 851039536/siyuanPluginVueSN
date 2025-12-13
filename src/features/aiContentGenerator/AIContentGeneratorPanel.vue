@@ -673,7 +673,6 @@ const isUndoing = ref(false);
 const isInsertingSubDoc = ref(false); // 插入子文档状态
 
 // 自定义输入对话框状态
-const dialogInput = ref<HTMLInputElement | null>(null);
 const showDialog = ref(false);
 const inputDialogTitle = ref('');
 const inputDialogPlaceholder = ref('');
@@ -780,31 +779,7 @@ const CURRENT_PROMPT_STORAGE_KEY = 'ai-content-generator-current-prompt';
 const referencedDocTitle = ref('');
 const referencedDocContent = ref('');
 
-/**
- * 自定义输入对话框函数（兼容移动端）
- * @param title 对话框标题
- * @param defaultValue 默认值
- * @param placeholder 输入框占位符
- * @returns Promise，返回用户输入的值或null（如果取消）
- */
-const customPrompt = (title: string, defaultValue: string = '', placeholder: string = ''): Promise<string | null> => {
-  return new Promise((resolve) => {
-    inputDialogTitle.value = title;
-    inputDialogPlaceholder.value = placeholder;
-    inputDialogValue.value = defaultValue;
-    showDialog.value = true;
-    inputDialogResolve = resolve;
 
-    // 在下一个tick中聚焦输入框
-    nextTick(() => {
-      if (dialogInput.value) {
-        dialogInput.value.focus();
-        // 选中全部文本
-        dialogInput.value.select();
-      }
-    });
-  });
-};
 
 /**
  * 确认输入对话框
@@ -2216,34 +2191,11 @@ const saveSettings = async () => {
     }
   } catch (error) {
     console.error('保存设置失败:', error);
-    // 降级使用localStorage
-    try {
-      localStorage.setItem('ai-content-generator-settings', JSON.stringify(settings));
-    } catch (localError) {
-      console.error('localStorage保存也失败:', localError);
-    }
   }
 };
 
 // 加载设置
 const loadSettings = async () => {
-  if (!storage) {
-    // 降级使用localStorage
-    try {
-      const saved = localStorage.getItem('ai-content-generator-settings');
-      if (saved) {
-        const settings = JSON.parse(saved);
-        systemPrompt.value = settings.systemPrompt || systemPrompt.value;
-        temperature.value = settings.temperature ?? temperature.value;
-        maxTokens.value = settings.maxTokens || maxTokens.value;
-        enableTypewriter.value = settings.enableTypewriter ?? enableTypewriter.value;
-        contextMessageLimit.value = settings.contextMessageLimit ?? contextMessageLimit.value;
-      }
-    } catch (error) {
-      console.error('从localStorage加载设置失败:', error);
-    }
-    return;
-  }
 
   try {
     const settings = await storage.loadSettings();
@@ -2256,20 +2208,7 @@ const loadSettings = async () => {
     }
   } catch (error) {
     console.error('从插件存储加载设置失败:', error);
-    // 降级尝试localStorage
-    try {
-      const saved = localStorage.getItem('ai-content-generator-settings');
-      if (saved) {
-        const settings = JSON.parse(saved);
-        systemPrompt.value = settings.systemPrompt || systemPrompt.value;
-        temperature.value = settings.temperature ?? temperature.value;
-        maxTokens.value = settings.maxTokens || maxTokens.value;
-        enableTypewriter.value = settings.enableTypewriter ?? enableTypewriter.value;
-        contextMessageLimit.value = settings.contextMessageLimit ?? contextMessageLimit.value;
-      }
-    } catch (localError) {
-      console.error('从localStorage加载设置也失败:', localError);
-    }
+
   }
 };
 

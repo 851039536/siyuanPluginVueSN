@@ -625,21 +625,12 @@ const handleFeatureToggle = (featureId: string, enabled: boolean) => {
   }
 }
 
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .refresh-icon {
   display: block;
 }
 
 .refresh-icon.spinning {
-  animation: spin 1s linear infinite;
+  animation: rotate 1s linear infinite;
 }
 
 /* 面板内容 */

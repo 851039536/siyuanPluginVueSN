@@ -826,18 +826,6 @@ const showCopyTip = () => {
   gap: 2px;
 }
 
-.grid-icon {
-  gap: 2px;
-}
-
-.three-col-icon {
-  gap: 2px;
-}
-
-.list-icon {
-  gap: 2px;
-}
-
 .square {
   width: 4px;
   height: 4px;
@@ -977,67 +965,6 @@ const showCopyTip = () => {
   height: 14px;
   color: var(--b3-theme-on-surface-variant);
   pointer-events: none;
-}
-
-/* 保留原有标签样式（备用） */
-.shortcut-category-tabs {
-  display: flex;
-  gap: 0;
-  padding: 0;
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
-  overflow-x: auto;
-  background: var(--b3-theme-surface);
-}
-
-.category-tab {
-  flex: 0 0 auto;
-  padding: 10px 16px;
-  background: transparent;
-  border: none;
-  border-bottom: 3px solid transparent;
-  color: var(--b3-theme-on-surface-variant);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.category-tab:hover {
-  color: var(--b3-theme-on-surface);
-  background: var(--b3-theme-surface-lighter);
-}
-
-.category-tab.active {
-  color: var(--b3-theme-primary);
-  border-bottom-color: var(--b3-theme-primary);
-  font-weight: 600;
-}
-
-.tab-label {
-  display: inline-block;
-}
-
-.tab-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  background: var(--b3-theme-primary-lighter);
-  color: var(--b3-theme-primary);
-  border-radius: 9px;
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.category-tab.active .tab-count {
-  background: var(--b3-theme-primary);
-  color: white;
 }
 
 /* 筛选栏 */
@@ -1614,33 +1541,23 @@ const showCopyTip = () => {
 }
 
 /* 滚动条样式 */
-.shortcut-content::-webkit-scrollbar {
+.shortcut-content::-webkit-scrollbar,
+.dialog-body::-webkit-scrollbar {
   width: 5px;
 }
 
-.shortcut-content::-webkit-scrollbar-track {
+.shortcut-content::-webkit-scrollbar-track,
+.dialog-body::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.shortcut-content::-webkit-scrollbar-thumb {
+.shortcut-content::-webkit-scrollbar-thumb,
+.dialog-body::-webkit-scrollbar-thumb {
   background: var(--b3-theme-surface-lighter);
   border-radius: 2px;
 }
 
 .shortcut-content::-webkit-scrollbar-thumb:hover {
   background: var(--b3-theme-on-surface-variant);
-}
-
-.dialog-body::-webkit-scrollbar {
-  width: 5px;
-}
-
-.dialog-body::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.dialog-body::-webkit-scrollbar-thumb {
-  background: var(--b3-theme-surface-lighter);
-  border-radius: 2px;
 }
 </style>

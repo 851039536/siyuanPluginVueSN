@@ -147,7 +147,6 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
-import { showMessage } from 'siyuan'
 
 interface FontSettings {
   fontFamily: string

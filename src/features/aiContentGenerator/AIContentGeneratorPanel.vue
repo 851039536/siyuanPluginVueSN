@@ -772,13 +772,9 @@ watch(showPromptSelector, (newVal) => {
   }
 });
 
-// 需求3：持久化当前提示词选择
-const CURRENT_PROMPT_STORAGE_KEY = 'ai-content-generator-current-prompt';
-
 // 引用当前文档
 const referencedDocTitle = ref('');
 const referencedDocContent = ref('');
-
 
 
 /**
@@ -818,7 +814,6 @@ const removeFrontmatter = (content: string): string => {
 };
 
 
-
 // 渲染Markdown (使用marked库进行标准渲染，支持代码高亮)
 const renderedDisplayedMarkdown = computed(() => {
   if (!displayedContent.value) return '';
@@ -843,7 +838,7 @@ const renderedDisplayedMarkdown = computed(() => {
 
 
 
-// 监听渲染内容变化，应用代码高亮（修复问题3）
+// 监听渲染内容变化，应用代码高亮
 watch(renderedDisplayedMarkdown, async () => {
   await nextTick();
   // 手动对所有代码块应用高亮
@@ -1230,7 +1225,7 @@ const generateDocTitle = async (content: string): Promise<string> => {
   }
 };
 
-// 复制内容（需求2：修复Markdown格式复制）
+// 复制内容
 const copyContent = async () => {
   if (!generatedContent.value) return;
 
@@ -1337,7 +1332,6 @@ const insertContentToDocument = async (docId: string) => {
 const cancelDocReference = () => {
   referencedDocTitle.value = '';
   referencedDocContent.value = '';
-  showMessage('✓ 已取消文档引用', 1500, 'info');
 };
 
 // 清除内容
@@ -1432,9 +1426,6 @@ const clearTargetDocument = () => {
   clearContent();
   showMessage('✓ 已清除目标文档', 1500, 'info');
 };
-
-
-
 
 
 // 应用编辑

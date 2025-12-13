@@ -355,7 +355,6 @@ const selectedLanguage = ref('javascript')
 const selectedStyle = ref('github')
 const selectedTheme = ref('light')
 const fontSize = ref(14)
-const previewContainer = ref<HTMLDivElement>()
 const codePreview = ref<HTMLDivElement>()
 
 // 装饰选项
@@ -538,12 +537,6 @@ const downloadImage = async () => {
   }
 }
 
-// 关闭面板
-const closePanel = () => {
-  // 右侧边栏不需要关闭操作
-  // emit('update:visible', false)
-  // emit('close')
-}
 </script>
 
 <style scoped lang="scss">

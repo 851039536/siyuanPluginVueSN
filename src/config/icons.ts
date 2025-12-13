@@ -150,6 +150,12 @@ export const FEATURE_ICONS = {
   floatingToolbar: {
     icon: 'mdi:format-text',
     color: '#f97316'
+  },
+
+  // 悬浮框
+  floatingBox: {
+    icon: 'mdi:widgets',
+    color: '#8b5cf6'
   }
 } as const
 

@@ -5,7 +5,7 @@ import {
 import "@/index.scss";
 import PluginInfoString from '@/../plugin.json'
 import { destroy, init } from '@/main'
-import { registerPageLock, registerTableOfContents, registerImageCompressor, registerDocNavigation, registerShortcut, registerWordQuery, registerGeneralSettings, registerUnitConverter, registerSuperPanel, registerDiskBrowser, registerCodeImageGenerator, registerAIContentGenerator, registerStatistics, registerEncryption, registerVideo, registerEverythingSearch, registerSystemMonitor, registerApiReference, registerHighlight, registerFloatingToolbar } from '@/features'
+import { registerPageLock, registerTableOfContents, registerImageCompressor, registerDocNavigation, registerShortcut, registerWordQuery, registerGeneralSettings, registerUnitConverter, registerSuperPanel, registerDiskBrowser, registerCodeImageGenerator, registerAIContentGenerator, registerStatistics, registerEncryption, registerVideo, registerEverythingSearch, registerSystemMonitor, registerApiReference, registerHighlight, registerFloatingToolbar, registerFloatingBox } from '@/features'
 import { loadSettings, saveSettings, loadHighlightSettings, type PluginSettings } from '@/config/settings'
 import { initCommands, destroyCommands } from '@/commands'
 
@@ -71,6 +71,11 @@ export default class PluginSample extends Plugin {
   }
 
   onunload() {
+    // 清理悬浮框资源
+    if ((this as any).__floatingBox) {
+      (this as any).__floatingBox.destroy()
+    }
+
     // 清理浮动工具栏资源
     if ((this as any).__floatingToolbar) {
       (this as any).__floatingToolbar.destroy()
@@ -169,6 +174,12 @@ export default class PluginSample extends Plugin {
     if (this.settings.enableFloatingToolbar) {
       console.log('注册浮动工具栏功能')
       registerFloatingToolbar(this)
+    }
+
+    // 注册悬浮框功能
+    if (this.settings.enableFloatingBox) {
+      console.log('注册悬浮框功能')
+      registerFloatingBox(this)
     }
   }
 

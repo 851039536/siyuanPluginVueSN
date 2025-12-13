@@ -478,6 +478,14 @@ const features = computed<Feature[]>(() => [
     desc: props.i18n.floatingToolbarDescription || '选中文字时显示包含多种操作的工具栏',
     enabled: props.settings.enableFloatingToolbar,
     actions: []
+  },
+  {
+    id: 'floatingBox',
+    iconKey: 'floatingBox',
+    title: props.i18n.floatingBox?.title || '悬浮框',
+    desc: props.i18n.floatingBox?.description || '页面右侧显示可展开的功能悬浮框',
+    enabled: props.settings.enableFloatingBox,
+    actions: []
   }
 ])
 

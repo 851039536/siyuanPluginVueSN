@@ -1821,9 +1821,6 @@ const saveCurrentPrompt = async () => {
   try {
     if (storage) {
       await storage.savePrompts(savedPrompts.value);
-    } else {
-      // 降级使用localStorage
-      localStorage.setItem('ai-content-generator-prompts', JSON.stringify(savedPrompts.value));
     }
   } catch (error) {
     console.error('保存提示词配置失败:', error);
@@ -1847,11 +1844,8 @@ const clearCurrentPrompt = async () => {
   try {
     if (storage) {
       await storage.clearCurrentPrompt();
-    } else {
-      // 降级使用localStorage
-      localStorage.removeItem('ai-content-generator-current-prompt');
     }
-    showMessage('✓ 已清除提示词选择', 1500, 'info');
+    // showMessage('✓ 已清除提示词选择', 1500, 'info');
   } catch (error) {
     console.error('清除当前提示词失败:', error);
   }
@@ -1995,8 +1989,6 @@ const loadPrompt = (index: number) => {
   // 设置当前选中的提示词名称
   currentPromptName.value = prompt.name;
 
-  // 需求3：保存到localStorage
-  localStorage.setItem(CURRENT_PROMPT_STORAGE_KEY, prompt.name);
 
   showPromptSelector.value = false;
   showMessage(`✓ 已加载配置: ${prompt.name}`, 2000, 'info');
@@ -2051,37 +2043,11 @@ const savePromptsToStorage = async () => {
     await storage.savePrompts(savedPrompts.value);
   } catch (error) {
     console.error('保存提示词配置失败:', error);
-    // 降级使用localStorage
-    try {
-      localStorage.setItem('ai-content-generator-prompts', JSON.stringify(savedPrompts.value));
-    } catch (localError) {
-      console.error('localStorage保存也失败:', localError);
-    }
   }
 };
 
 // 从存储加载提示词配置
 const loadPromptsFromStorage = async () => {
-  if (!storage) {
-    // 降级使用localStorage
-    try {
-      const stored = localStorage.getItem('ai-content-generator-prompts');
-      if (stored) {
-        savedPrompts.value = JSON.parse(stored);
-      }
-
-      const currentPrompt = localStorage.getItem('ai-content-generator-current-prompt');
-      if (currentPrompt) {
-        const promptIndex = savedPrompts.value.findIndex(p => p.name === currentPrompt);
-        if (promptIndex !== -1) {
-          loadPrompt(promptIndex);
-        }
-      }
-    } catch (error) {
-      console.error('从localStorage加载提示词配置失败:', error);
-    }
-    return;
-  }
 
   try {
     const prompts = await storage.loadPrompts();
@@ -2098,23 +2064,6 @@ const loadPromptsFromStorage = async () => {
     }
   } catch (error) {
     console.error('从插件存储加载提示词配置失败:', error);
-    // 降级尝试localStorage
-    try {
-      const stored = localStorage.getItem('ai-content-generator-prompts');
-      if (stored) {
-        savedPrompts.value = JSON.parse(stored);
-      }
-
-      const currentPrompt = localStorage.getItem('ai-content-generator-current-prompt');
-      if (currentPrompt) {
-        const promptIndex = savedPrompts.value.findIndex(p => p.name === currentPrompt);
-        if (promptIndex !== -1) {
-          loadPrompt(promptIndex);
-        }
-      }
-    } catch (localError) {
-      console.error('从localStorage加载也失败:', localError);
-    }
   }
 };
 
@@ -2146,10 +2095,6 @@ onMounted(async () => {
   if (props.plugin) {
     storage = new AIGeneratorStorage(props.plugin);
     await storage.init();
-    loadPromptsFromStorage();
-    loadSettings();
-  } else {
-    // 降级使用localStorage
     loadPromptsFromStorage();
     loadSettings();
   }

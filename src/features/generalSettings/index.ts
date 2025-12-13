@@ -316,7 +316,17 @@ export class GeneralSettings {
         console.log('应用标题颜色:', settings.titleColor);
       }
 
-      style.textContent = colorCss + '\n' + fontSizeCss + '\n' + levelCss + '\n' + centerAlignCss + '\n' + titleColorCss;
+      // 文档标题字体大小样式
+      const titleFontSizeCss = settings.titleFontSize ? `
+        .protyle-title__input {
+          font-size: ${settings.titleFontSize}px !important;
+        }
+      ` : '';
+      if (settings.titleFontSize) {
+        console.log('应用标题字体大小:', settings.titleFontSize);
+      }
+
+      style.textContent = colorCss + '\n' + fontSizeCss + '\n' + levelCss + '\n' + centerAlignCss + '\n' + titleColorCss + '\n' + titleFontSizeCss;
 
       if (!style.parentElement) {
         document.head.appendChild(style);

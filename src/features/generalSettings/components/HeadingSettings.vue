@@ -90,13 +90,39 @@
               class="title-color-text"
               @change="onTitleColorChange"
             />
-            <button 
+            <button
               v-if="titleColor !== defaultTitleColor"
               class="reset-color-btn"
               @click="resetTitleColor"
             >
               {{ i18n.resetColor || '重置' }}
             </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 文档标题字体大小设置 -->
+      <div class="setting-row">
+        <div class="setting-item">
+          <label class="setting-label">
+            <span class="label-icon">📏</span>
+            {{ i18n.titleFontSize || '文档标题字体大小' }}
+            <span class="setting-value">{{ titleFontSize }}px</span>
+          </label>
+          <div class="slider-container">
+            <input
+              v-model.number="titleFontSize"
+              type="range"
+              min="16"
+              max="48"
+              step="1"
+              class="range-slider"
+              @input="onTitleFontSizeChange"
+            />
+            <div class="slider-labels">
+              <span>16px</span>
+              <span>48px</span>
+            </div>
           </div>
         </div>
       </div>
@@ -132,7 +158,7 @@
             {{ i18n.headingFontSize || '标题字体大小' }}
             <span class="setting-value">14px - 40px</span>
           </label>
-          
+
           <div class="font-size-container">
             <div v-for="level in 6" :key="level" class="font-size-item">
               <label class="font-size-label">
@@ -279,6 +305,7 @@ const titleCenterAlign = ref(false)
 const titleColor = ref('#2C3E50')
 const defaultTitleColor = '#2C3E50'
 const headingSizes = ref<HeadingSizes>({ ...props.initialFontSizes })
+const titleFontSize = ref(24)
 
 // 预设风格
 const styles: Record<string, HeadingColors> = {
@@ -441,13 +468,20 @@ function applyToDocument() {
     }
   ` : ''
 
-  style.textContent = colorCss + '\n' + fontSizeCss + '\n' + levelCss + '\n' + centerAlignCss + '\n' + titleColorCss
+  // 文档标题字体大小样式
+  const titleFontSizeCss = `
+    .protyle-title__input {
+      font-size: ${titleFontSize.value}px !important;
+    }
+  `
+
+  style.textContent = colorCss + '\n' + fontSizeCss + '\n' + levelCss + '\n' + centerAlignCss + '\n' + titleColorCss + '\n' + titleFontSizeCss
 
   if (!style.parentElement) {
     document.head.appendChild(style)
   }
 
-  console.log('CSS已应用到文档,字体大小:', headingSizes.value, '层级显示样式:', levelDisplayStyle.value, '标题居中:', titleCenterAlign.value, '标题颜色:', titleColor.value)
+  console.log('CSS已应用到文档,字体大小:', headingSizes.value, '层级显示样式:', levelDisplayStyle.value, '标题居中:', titleCenterAlign.value, '标题颜色:', titleColor.value, '标题字体大小:', titleFontSize.value)
 }
 
 // 生成层级显示 CSS
@@ -509,6 +543,13 @@ function onTitleColorChange() {
   autoSave()
 }
 
+// 标题字体大小变化处理
+function onTitleFontSizeChange() {
+  console.log('标题字体大小变化:', titleFontSize.value)
+  applyToDocument()
+  autoSave()
+}
+
 // 重置标题颜色
 function resetTitleColor() {
   titleColor.value = defaultTitleColor
@@ -527,7 +568,7 @@ async function autoSave() {
     console.warn('插件实例不可用，无法保存设置')
     return
   }
-  
+
   try {
     const settingsToSave = {
       style: selectedStyle.value,
@@ -536,12 +577,13 @@ async function autoSave() {
       levelDisplay: levelDisplayStyle.value,
       customMarkers: customLevelMarkers.value,
       titleCenterAlign: titleCenterAlign.value,
-      titleColor: titleColor.value
+      titleColor: titleColor.value,
+      titleFontSize: titleFontSize.value
     }
-    
+
     // 使用插件的数据存储 API
     const success = await saveHeadingSettings(props.plugin, settingsToSave)
-    
+
     if (success) {
       console.log('设置已保存到数据库:', settingsToSave)
     } else {
@@ -558,15 +600,15 @@ async function loadSettings() {
     console.warn('插件实例不可用，使用默认设置')
     return
   }
-  
+
   try {
     console.log('尝试从数据库加载设置...')
-    
+
     // 使用插件的数据存储 API
     const settings = await loadHeadingSettings(props.plugin)
-    
+
     console.log('从数据库加载的设置:', settings)
-    
+
     selectedStyle.value = settings.style || 'default'
     headingColors.value = { ...styles.default, ...settings.colors }
     headingSizes.value = { ...props.initialFontSizes, ...settings.fontSizes }
@@ -574,13 +616,15 @@ async function loadSettings() {
     customLevelMarkers.value = settings.customMarkers || ['1', '2', '3', '4', '5', '6']
     titleCenterAlign.value = settings.titleCenterAlign ?? false
     titleColor.value = settings.titleColor || defaultTitleColor
-    
+    titleFontSize.value = settings.titleFontSize || 24
+
     console.log('已加载设置:', {
       style: selectedStyle.value,
       fontSizes: headingSizes.value,
       levelDisplay: levelDisplayStyle.value,
       titleCenterAlign: titleCenterAlign.value,
-      titleColor: titleColor.value
+      titleColor: titleColor.value,
+      titleFontSize: titleFontSize.value
     })
   } catch (error) {
     console.error('加载设置失败:', error)
@@ -639,6 +683,13 @@ watch(headingSizes, (newValue, oldValue) => {
   autoSave()
 }, { deep: true })
 
+// 监听标题字体大小变化,自动保存并应用
+watch(titleFontSize, (newValue, oldValue) => {
+  console.log('titleFontSize 变化:', oldValue, '->', newValue)
+  applyToDocument()
+  autoSave()
+})
+
 // 暴露方法
 defineExpose({
   loadSettings,
@@ -649,14 +700,14 @@ defineExpose({
 
 <style scoped>
 .heading-settings {
-  padding: 16px;
+  padding: 12px;
   box-sizing: border-box;
 }
 
 .settings-container {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;
   max-width: 100%;
 }
 
@@ -669,7 +720,7 @@ defineExpose({
 .setting-item {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
 }
 
@@ -686,6 +737,18 @@ defineExpose({
 .label-icon {
   font-size: 14px;
   opacity: 0.8;
+}
+
+.setting-value {
+  margin-left: auto;
+  padding: 2px 8px;
+  background: var(--b3-theme-surface-variant);
+  color: var(--b3-theme-on-surface-variant);
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  min-width: 45px;
+  text-align: center;
 }
 
 .style-select {
@@ -709,13 +772,13 @@ defineExpose({
 .heading-colors {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  gap: 10px;
 }
 
 .color-item {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .color-label {
@@ -727,6 +790,7 @@ defineExpose({
   color: var(--b3-theme-on-surface);
 }
 
+/* 标题图标 - 基础样式 */
 .heading-icon {
   display: inline-flex;
   align-items: center;
@@ -744,13 +808,22 @@ defineExpose({
   font-size: 12px;
 }
 
-.color-input-group {
+/* 颜色输入组 - 统一样式 */
+.color-input-group,
+.title-color-input-group {
   display: flex;
   gap: 8px;
   align-items: center;
 }
 
-.color-picker {
+.title-color-input-group {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* 颜色选择器 - 统一样式 */
+.color-picker,
+.title-color-picker {
   width: 48px;
   height: 36px;
   border: 2px solid var(--b3-theme-outline);
@@ -760,11 +833,14 @@ defineExpose({
   background: transparent;
 }
 
-.color-picker:hover {
+.color-picker:hover,
+.title-color-picker:hover {
   border-color: var(--b3-theme-primary);
 }
 
-.color-text {
+/* 颜色文本输入 - 统一样式 */
+.color-text,
+.title-color-text {
   flex: 1;
   padding: 6px 10px;
   border: 2px solid var(--b3-theme-outline);
@@ -777,7 +853,12 @@ defineExpose({
   transition: all 0.2s ease;
 }
 
-.color-text:focus {
+.title-color-text {
+  min-width: 100px;
+}
+
+.color-text:focus,
+.title-color-text:focus {
   outline: none;
   border-color: var(--b3-theme-primary);
   box-shadow: 0 0 0 3px rgba(var(--b3-theme-primary-rgb), 0.1);
@@ -795,7 +876,7 @@ defineExpose({
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 16px;
+  padding: 8px 12px;
   background: var(--b3-theme-surface-variant);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -840,21 +921,21 @@ defineExpose({
 }
 
 .preview-content {
-  padding: 16px;
+  padding: 12px;
   border-top: 1px solid var(--b3-theme-outline);
 }
 
 .preview-box {
-  padding: 20px;
+  padding: 12px;
   background: var(--b3-theme-surface-variant);
   border-radius: 8px;
   border: 1px solid var(--b3-theme-outline);
 }
 
 .preview-heading {
-  margin: 12px 0;
+  margin: 8px 0;
   font-weight: 600;
-  line-height: 1.4;
+  line-height: 1.3;
 }
 
 .preview-heading.h1 {
@@ -886,8 +967,8 @@ defineExpose({
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-top: 8px;
-  padding: 8px 12px;
+  margin-top: 6px;
+  padding: 6px 10px;
   background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.08);
   border-left: 3px solid var(--b3-theme-primary);
   border-radius: 4px;
@@ -909,7 +990,7 @@ defineExpose({
 .custom-level-inputs {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  gap: 8px;
 }
 
 .custom-level-item {
@@ -968,29 +1049,13 @@ defineExpose({
 
 
 
-  .preview-heading.h1 {
-    font-size: 24px;
-  }
-
-  .preview-heading.h2 {
-    font-size: 20px;
-  }
-
-  .preview-heading.h3 {
-    font-size: 18px;
-  }
-
-  .preview-heading.h4 {
-    font-size: 16px;
-  }
-
-  .preview-heading.h5 {
-    font-size: 14px;
-  }
-
-  .preview-heading.h6 {
-    font-size: 13px;
-  }
+  /* 响应式预览标题大小 */
+  .preview-heading.h1 { font-size: 24px; }
+  .preview-heading.h2 { font-size: 20px; }
+  .preview-heading.h3 { font-size: 18px; }
+  .preview-heading.h4 { font-size: 16px; }
+  .preview-heading.h5 { font-size: 14px; }
+  .preview-heading.h6 { font-size: 13px; }
 }
 
 /* 标题居中设置样式 */
@@ -1012,47 +1077,7 @@ defineExpose({
   user-select: none;
 }
 
-/* 文档标题颜色设置样式 */
-.title-color-input-group {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.title-color-picker {
-  width: 48px;
-  height: 36px;
-  border: 2px solid var(--b3-theme-outline);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background: transparent;
-}
-
-.title-color-picker:hover {
-  border-color: var(--b3-theme-primary);
-}
-
-.title-color-text {
-  flex: 1;
-  min-width: 100px;
-  padding: 6px 10px;
-  border: 2px solid var(--b3-theme-outline);
-  border-radius: 6px;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-  font-size: 12px;
-  font-family: monospace;
-  text-transform: uppercase;
-  transition: all 0.2s ease;
-}
-
-.title-color-text:focus {
-  outline: none;
-  border-color: var(--b3-theme-primary);
-  box-shadow: 0 0 0 3px rgba(var(--b3-theme-primary-rgb), 0.1);
-}
+/* 文档标题颜色设置样式 - 已合并到上方的统一样式 */
 
 .reset-color-btn {
   padding: 6px 12px;
@@ -1076,15 +1101,15 @@ defineExpose({
 .font-size-container {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin-top: 8px;
+  gap: 10px;
+  margin-top: 6px;
 }
 
 .font-size-item {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px;
+  gap: 6px;
+  padding: 10px;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-theme-outline);
   border-radius: 8px;
@@ -1106,6 +1131,7 @@ defineExpose({
   margin: 0;
 }
 
+/* 标题图标(H1-H6) - 继承基础样式并扩展 */
 .heading-icon-h1,
 .heading-icon-h2,
 .heading-icon-h3,
@@ -1183,24 +1209,8 @@ defineExpose({
   transition: all 0.2s ease;
 }
 
-.range-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--b3-theme-primary);
-  cursor: pointer;
-  border: 3px solid var(--b3-theme-background);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  transition: all 0.2s ease;
-}
-
-.range-slider::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
-}
-
+/* 滑块滑钮 - 统一样式 */
+.range-slider::-webkit-slider-thumb,
 .range-slider::-moz-range-thumb {
   width: 18px;
   height: 18px;
@@ -1212,6 +1222,12 @@ defineExpose({
   transition: all 0.2s ease;
 }
 
+.range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.range-slider::-webkit-slider-thumb:hover,
 .range-slider::-moz-range-thumb:hover {
   transform: scale(1.2);
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);

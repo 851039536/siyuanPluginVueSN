@@ -314,6 +314,7 @@ export interface HeadingSettings {
   customMarkers: string[]
   titleCenterAlign: boolean
   titleColor: string
+  titleFontSize: number
 }
 
 /**
@@ -340,7 +341,8 @@ export const DEFAULT_HEADING_SETTINGS: HeadingSettings = {
   levelDisplay: 'none',
   customMarkers: ['1', '2', '3', '4', '5', '6'],
   titleCenterAlign: false,
-  titleColor: '#2C3E50'
+  titleColor: '#2C3E50',
+  titleFontSize: 24
 }
 
 /**
@@ -360,8 +362,8 @@ export async function loadHeadingSettings(plugin: Plugin): Promise<HeadingSettin
     }
     console.log('从数据库加载标题设置:', data)
     // 合并默认配置和已保存的配置
-    return { 
-      ...DEFAULT_HEADING_SETTINGS, 
+    return {
+      ...DEFAULT_HEADING_SETTINGS,
       ...data,
       colors: { ...DEFAULT_HEADING_SETTINGS.colors, ...data.colors }
     }

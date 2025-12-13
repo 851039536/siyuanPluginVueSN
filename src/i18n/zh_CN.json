@@ -232,6 +232,7 @@
   "customLevelMarkers": "自定义标记",
   "titleCenterAlign": "文档标题居中显示",
   "titleColor": "文档标题颜色",
+  "titleFontSize": "文档标题字体大小",
   "resetColor": "重置",
   "enableHeadingIcons": "启用标题图标",
   "iconStyle": "图标风格",

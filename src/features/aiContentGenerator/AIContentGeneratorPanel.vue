@@ -281,7 +281,7 @@
           :title="i18n.generate || '生成'"
         >
           <svg width="16" height="16">
-            <use xlink:href="#iconSend"></use>
+            <use xlink:href="#iconSparkles"></use>
           </svg>
         </button>
         <button
@@ -332,7 +332,7 @@
           :title="i18n.execute || '执行'"
         >
           <svg width="16" height="16">
-            <use xlink:href="#iconSend"></use>
+            <use xlink:href="#iconSparkles"></use>
           </svg>
         </button>
         <button

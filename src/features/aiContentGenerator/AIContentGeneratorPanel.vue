@@ -2128,7 +2128,10 @@ const useTemplate = (templateType: string) => {
 
 // 保存设置到存储
 const saveSettings = async () => {
-  if (!storage) return;
+  if (!storage) {
+    console.warn('存储实例未初始化，跳过设置保存');
+    return;
+  }
 
   const settings = {
     systemPrompt: systemPrompt.value,
@@ -2150,6 +2153,10 @@ const saveSettings = async () => {
 
 // 加载设置
 const loadSettings = async () => {
+  if (!storage) {
+    console.warn('存储实例未初始化，跳过设置加载');
+    return;
+  }
 
   try {
     const settings = await storage.loadSettings();
@@ -2162,7 +2169,6 @@ const loadSettings = async () => {
     }
   } catch (error) {
     console.error('从插件存储加载设置失败:', error);
-
   }
 };
 
@@ -2170,9 +2176,6 @@ const loadSettings = async () => {
 watch([systemPrompt, temperature, maxTokens, enableTypewriter, contextMessageLimit], () => {
   saveSettings();
 });
-
-// 初始化
-loadSettings();
 </script>
 
 <style scoped lang="scss">

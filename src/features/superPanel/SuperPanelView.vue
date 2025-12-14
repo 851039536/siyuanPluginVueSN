@@ -19,6 +19,20 @@
         </div>
         <div class="header-actions">
           <button
+            class="header-action-btn enable-all-btn"
+            :title="i18n.enableAll || '全部开启'"
+            @click="handleToggleAll(true)"
+          >
+            <IconWrapper name="success" :size="14" />
+          </button>
+          <button
+            class="header-action-btn disable-all-btn"
+            :title="i18n.disableAll || '全部关闭'"
+            @click="handleToggleAll(false)"
+          >
+            <IconWrapper name="close" :size="14" />
+          </button>
+          <button
             class="super-panel-settings"
             :title="i18n.aiSettings || 'AI配置'"
             @click="toggleAiSettings"
@@ -127,18 +141,6 @@
 
       <!-- 内容区 -->
       <div class="super-panel-content">
-        <!-- 全部开关按钮组 -->
-        <div class="toggle-all-buttons">
-          <button class="toggle-all-btn enable-all" @click="handleToggleAll(true)" :title="i18n.enableAll || '全部开启'">
-            <IconWrapper name="success" :size="16" />
-            <span>{{ i18n.enableAll || '全部开启' }}</span>
-          </button>
-          <button class="toggle-all-btn disable-all" @click="handleToggleAll(false)" :title="i18n.disableAll || '全部关闭'">
-            <IconWrapper name="close" :size="16" />
-            <span>{{ i18n.disableAll || '全部关闭' }}</span>
-          </button>
-        </div>
-
         <FeatureCard
           v-for="feature in features"
           :key="feature.id"
@@ -608,9 +610,10 @@ const handleToggleAll = (enabled: boolean) => {
 
 .super-panel-settings,
 .super-panel-refresh,
-.super-panel-close {
-  width: 32px;
-  height: 32px;
+.super-panel-close,
+.header-action-btn {
+  width: 28px;
+  height: 28px;
   border: none;
   background: transparent;
   border-radius: 6px;
@@ -623,6 +626,22 @@ const handleToggleAll = (enabled: boolean) => {
 
   &:hover {
     background: var(--b3-theme-surface-lighter);
+  }
+}
+
+.header-action-btn.enable-all-btn {
+  color: #10b981;
+
+  &:hover {
+    background: rgba(16, 185, 129, 0.15);
+  }
+}
+
+.header-action-btn.disable-all-btn {
+  color: #ef4444;
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.15);
   }
 }
 
@@ -683,62 +702,6 @@ const handleToggleAll = (enabled: boolean) => {
 
     &:hover {
       background: var(--b3-theme-on-surface);
-    }
-  }
-}
-
-/* 全部开关按钮组 */
-.toggle-all-buttons {
-  grid-column: 1 / -1;
-  display: flex;
-  gap: 12px;
-  margin-bottom: 8px;
-  padding: 8px;
-  background: var(--b3-theme-surface);
-  border-radius: 8px;
-  border: 1px solid var(--b3-theme-surface-lighter);
-}
-
-.toggle-all-btn {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  color: white;
-
-  &.enable-all {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-
-    &:hover {
-      background: linear-gradient(135deg, #059669 0%, #047857 100%);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-    }
-
-    &:active {
-      transform: translateY(0);
-    }
-  }
-
-  &.disable-all {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-
-    &:hover {
-      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-    }
-
-    &:active {
-      transform: translateY(0);
     }
   }
 }
@@ -896,25 +859,16 @@ const handleToggleAll = (enabled: boolean) => {
 
   .super-panel-settings,
   .super-panel-refresh,
-  .super-panel-close {
-    width: 28px;
-    height: 28px;
+  .super-panel-close,
+  .header-action-btn {
+    width: 26px;
+    height: 26px;
   }
 
   .super-panel-content {
     grid-template-columns: 1fr;
     padding: 12px;
     gap: 8px;
-  }
-
-  .toggle-all-buttons {
-    gap: 8px;
-    padding: 6px;
-  }
-
-  .toggle-all-btn {
-    padding: 8px 12px;
-    font-size: 12px;
   }
 
   .ai-settings-header {
@@ -974,24 +928,14 @@ const handleToggleAll = (enabled: boolean) => {
 
   .super-panel-settings,
   .super-panel-refresh,
-  .super-panel-close {
-    width: 24px;
-    height: 24px;
+  .super-panel-close,
+  .header-action-btn {
+    width: 22px;
+    height: 22px;
   }
 
   .super-panel-content {
     padding: 8px;
-    gap: 6px;
-  }
-
-  .toggle-all-buttons {
-    gap: 6px;
-    padding: 4px;
-  }
-
-  .toggle-all-btn {
-    padding: 6px 10px;
-    font-size: 11px;
     gap: 6px;
   }
 

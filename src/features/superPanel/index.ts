@@ -234,6 +234,8 @@ async function handleToggleAllFeatures(plugin: Plugin, enabled: boolean) {
       3000,
       'info'
     )
+    // 使用思源 API 刷新面板
+    await handleRefresh(plugin)
   } else {
     showMessage((plugin.i18n as any).saveFailed || '保存失败', 3000, 'error')
   }

@@ -776,6 +776,73 @@ watch(showPromptSelector, (newVal) => {
 const referencedDocTitle = ref('');
 const referencedDocContent = ref('');
 
+// ============ 公共工具函数 ============
+
+/**
+ * 开始生成内容的公共初始化
+ */
+const startGeneration = () => {
+  abortController.value = new AbortController();
+  isGenerating.value = true;
+  generatedContent.value = '';
+  displayedContent.value = '';
+  errorMessage.value = '';
+  aiSuggestions.value = null;
+};
+
+/**
+ * 结束生成内容的公共清理
+ */
+const finishGeneration = () => {
+  isGenerating.value = false;
+  abortController.value = null;
+};
+
+/**
+ * 处理生成过程中的错误
+ * @returns true 表示是用户取消，调用方应直接返回
+ */
+const handleGenerationError = (error: Error, context: string): boolean => {
+  if (error.name === 'AbortError') {
+    console.log(`用户取消了${context}`);
+    return true;
+  }
+  console.error(`${context}失败:`, error);
+  errorMessage.value = error.message || `${context}失败`;
+  showMessage(`${context}失败: ${errorMessage.value}`, 3000, 'error');
+  return false;
+};
+
+/**
+ * 默认的流式输出回调
+ */
+const defaultOnChunk = (chunk: string) => {
+  displayedContent.value += chunk;
+  generatedContent.value += chunk;
+};
+
+/**
+ * 获取当前文档ID（包含备用方案）
+ */
+const getCurrentDocId = async (): Promise<string | null> => {
+  const currentBlockId = getCurrentBlockId();
+  if (currentBlockId) {
+    return await getDocIdByBlockId(currentBlockId);
+  }
+  // 备用方案：使用激活窗口的文档
+  const protyle = document.querySelector('.layout__wnd--active .protyle:not(.fn__none)');
+  return protyle?.querySelector('.protyle-background')?.getAttribute('data-node-id') || null;
+};
+
+/**
+ * 移动端关闭设置面板
+ */
+const closeMobileSettings = () => {
+  if (isMobile.value) {
+    showSettings.value = false;
+  }
+};
+
 
 /**
  * 确认输入对话框
@@ -917,13 +984,7 @@ const handleGenerate = async () => {
     showInputSection.value = false;
   }
 
-  // 创建新的 AbortController
-  abortController.value = new AbortController();
-
-  isGenerating.value = true;
-  errorMessage.value = '';
-  generatedContent.value = '';
-  displayedContent.value = '';
+  startGeneration();
 
   try {
     // 根据用户是否选择提示词来决定是否使用系统提示词
@@ -971,12 +1032,7 @@ ${cleanDocContent}`;
       maxTokens: maxTokens.value,
       context: contextInfo || undefined,
       signal: abortController.value?.signal,
-      // 默认启用打字机效果，传入流式回调
-      onChunk: (chunk: string) => {
-        console.log('收到流式数据块:', chunk);
-        displayedContent.value += chunk;
-        generatedContent.value += chunk;
-      }
+      onChunk: defaultOnChunk
     };
 
     const result = await props.onGenerate(options);
@@ -997,17 +1053,9 @@ ${cleanDocContent}`;
       errorMessage.value = props.i18n.generateFailed || '生成失败，请重试';
     }
   } catch (error) {
-    // 如果是用户主动取消，不显示错误
-    if ((error as Error).name === 'AbortError') {
-      console.log('用户取消了生成');
-      return;
-    }
-    console.error('生成内容失败:', error);
-    errorMessage.value = (error as Error).message || '生成失败';
-    showMessage('生成失败: ' + errorMessage.value, 3000, 'error');
+    if (handleGenerationError(error as Error, '生成')) return;
   } finally {
-    isGenerating.value = false;
-    abortController.value = null;
+    finishGeneration();
   }
 };
 
@@ -1264,7 +1312,6 @@ const insertToCurrentDocument = async () => {
     return;
   }
 
-  // 确认对话框
   const confirmMessage = props.i18n.confirmInsertToDocument ||
     '确定要将生成的内容插入到当前文档吗？这将覆盖文档的现有内容。';
 
@@ -1274,29 +1321,11 @@ const insertToCurrentDocument = async () => {
 
   isInserting.value = true;
   try {
-    // 1. 获取当前光标所在的块ID
-    const currentBlockId = getCurrentBlockId();
-    if (!currentBlockId) {
-      // 备用方案：使用激活窗口的文档
-      const protyle = document.querySelector('.layout__wnd--active .protyle:not(.fn__none)');
-      const docId = protyle?.querySelector('.protyle-background')?.getAttribute('data-node-id');
-
-      if (!docId) {
-        showMessage('无法获取当前文档，请将光标放在文档中', 3000, 'error');
-        return;
-      }
-
-      await insertContentToDocument(docId);
-      return;
-    }
-
-    // 2. 通过块ID获取文档ID
-    const docId = await getDocIdByBlockId(currentBlockId);
+    const docId = await getCurrentDocId();
     if (!docId) {
-      showMessage('无法获取当前文档信息', 3000, 'error');
+      showMessage('无法获取当前文档，请将光标放在文档中', 3000, 'error');
       return;
     }
-
     await insertContentToDocument(docId);
   } catch (error) {
     console.error('插入文档失败:', error);
@@ -1365,29 +1394,11 @@ const clearContent = () => {
 // 选择目标文档
 const selectTargetDocument = async () => {
   try {
-    // 获取当前光标所在的块ID
-    const currentBlockId = getCurrentBlockId();
-    if (!currentBlockId) {
-      // 备用方案：使用激活窗口的文档
-      const protyle = document.querySelector('.layout__wnd--active .protyle:not(.fn__none)');
-      const docId = protyle?.querySelector('.protyle-background')?.getAttribute('data-node-id');
-
-      if (!docId) {
-        showMessage('无法获取当前文档，请将光标放在文档中', 3000, 'error');
-        return;
-      }
-
-      await loadTargetDocument(docId);
-      return;
-    }
-
-    // 通过块ID获取文档ID
-    const docId = await getDocIdByBlockId(currentBlockId);
+    const docId = await getCurrentDocId();
     if (!docId) {
-      showMessage('无法获取当前文档信息', 3000, 'error');
+      showMessage('无法获取当前文档，请将光标放在文档中', 3000, 'error');
       return;
     }
-
     await loadTargetDocument(docId);
   } catch (error) {
     console.error('选择文档失败:', error);
@@ -1516,10 +1527,7 @@ const aiEditAction = async (action: 'polish' | 'expand' | 'condense' | 'fix' | '
     return;
   }
 
-  // 移动端：自动收起设置面板
-  if (isMobile.value) {
-    showSettings.value = false;
-  }
+  closeMobileSettings();
 
   const actionPrompts = {
     polish: '请对以下文档进行润色优化，保持原有结构，提升语言质量和可读性，使表达更加专业、流畅。保持Markdown格式，直接输出优化后的完整文档内容：',
@@ -1531,43 +1539,25 @@ const aiEditAction = async (action: 'polish' | 'expand' | 'condense' | 'fix' | '
     summary: '请为以下文档生成一个简洁的总结，包括主要内容和关键要点。总结应该清晰明了，突出文档的核心信息。保持Markdown格式，直接输出总结内容：'
   };
 
-  // 创建新的 AbortController
-  abortController.value = new AbortController();
-
-  isGenerating.value = true;
-  generatedContent.value = '';
-  displayedContent.value = '';
-  errorMessage.value = '';
-  aiSuggestions.value = null; // 清除之前的建议
+  startGeneration();
 
   try {
     const options: GenerateOptions = {
       userInput: `${actionPrompts[action]}\n\n${editTargetDoc.value.content}`,
       systemPrompt: '你是一个专业的文档编辑助手，擅长优化Markdown文档。请直接输出优化后的完整文档，不要添加任何解释性文字。',
-      temperature: 0.3, // 降低创造性，提高准确性
+      temperature: 0.3,
       maxTokens: maxTokens.value,
       signal: abortController.value?.signal,
-      onChunk: (chunk: string) => {
-        displayedContent.value += chunk;
-        generatedContent.value += chunk;
-      }
+      onChunk: defaultOnChunk
     };
 
     await props.onGenerate(options);
 
     showMessage('✓ AI编辑完成', 2000, 'info');
   } catch (error) {
-    // 如果是用户主动取消，不显示错误
-    if ((error as Error).name === 'AbortError') {
-      console.log('用户取消了AI编辑');
-      return;
-    }
-    console.error('AI编辑失败:', error);
-    errorMessage.value = (error as Error).message || 'AI编辑失败';
-    showMessage('AI编辑失败: ' + errorMessage.value, 3000, 'error');
+    if (handleGenerationError(error as Error, 'AI编辑')) return;
   } finally {
-    isGenerating.value = false;
-    abortController.value = null;
+    finishGeneration();
   }
 };
 
@@ -1585,19 +1575,8 @@ const handleCustomEdit = async () => {
     return;
   }
 
-  // 移动端：自动收起设置面板
-  if (isMobile.value) {
-    showSettings.value = false;
-  }
-
-  // 创建新的 AbortController
-  abortController.value = new AbortController();
-
-  isGenerating.value = true;
-  generatedContent.value = '';
-  displayedContent.value = '';
-  errorMessage.value = '';
-  aiSuggestions.value = null;
+  closeMobileSettings();
+  startGeneration();
 
   try {
     const options: GenerateOptions = {
@@ -1611,28 +1590,17 @@ ${editTargetDoc.value.content}`,
       temperature: 0.4,
       maxTokens: maxTokens.value,
       signal: abortController.value?.signal,
-      onChunk: (chunk: string) => {
-        displayedContent.value += chunk;
-        generatedContent.value += chunk;
-      }
+      onChunk: defaultOnChunk
     };
 
     await props.onGenerate(options);
 
-    // 执行成功后清空输入框
     editCustomInput.value = '';
     showMessage('✓ 自定义编辑完成', 2000, 'info');
   } catch (error) {
-    if ((error as Error).name === 'AbortError') {
-      console.log('用户取消了自定义编辑');
-      return;
-    }
-    console.error('自定义编辑失败:', error);
-    errorMessage.value = (error as Error).message || '自定义编辑失败';
-    showMessage('自定义编辑失败: ' + errorMessage.value, 3000, 'error');
+    if (handleGenerationError(error as Error, '自定义编辑')) return;
   } finally {
-    isGenerating.value = false;
-    abortController.value = null;
+    finishGeneration();
   }
 };
 
@@ -1645,12 +1613,9 @@ const analyzeDocument = async () => {
     return;
   }
 
-  // 移动端：自动收起设置面板
-  if (isMobile.value) {
-    showSettings.value = false;
-  }
-
+  closeMobileSettings();
   isAnalyzing.value = true;
+
   try {
     const options: GenerateOptions = {
       userInput: `请分析以下文档，提供具体的优化建议，包括但不限于：
@@ -1664,11 +1629,7 @@ const analyzeDocument = async () => {
       temperature: 0.5,
       maxTokens: 1500,
       onChunk: (chunk: string) => {
-        if (!aiSuggestions.value) {
-          aiSuggestions.value = chunk;
-        } else {
-          aiSuggestions.value += chunk;
-        }
+        aiSuggestions.value = (aiSuggestions.value || '') + chunk;
       }
     };
 
@@ -1747,15 +1708,8 @@ const insertSubDocument = async () => {
 const applySuggestions = async () => {
   if (!editTargetDoc.value || !aiSuggestions.value) return;
 
-  // 移动端：自动收起设置面板
-  if (isMobile.value) {
-    showSettings.value = false;
-  }
-
-  isGenerating.value = true;
-  generatedContent.value = '';
-  displayedContent.value = '';
-  errorMessage.value = '';
+  closeMobileSettings();
+  startGeneration();
 
   try {
     const options: GenerateOptions = {
@@ -1769,22 +1723,17 @@ ${editTargetDoc.value.content}`,
       systemPrompt: '你是一个专业的文档编辑助手。请根据建议优化文档，直接输出结果，不要添加解释。',
       temperature: 0.3,
       maxTokens: maxTokens.value,
-      onChunk: (chunk: string) => {
-        displayedContent.value += chunk;
-        generatedContent.value += chunk;
-      }
+      onChunk: defaultOnChunk
     };
 
     await props.onGenerate(options);
 
-    aiSuggestions.value = null; // 应用后清除建议
+    aiSuggestions.value = null;
     showMessage('✓ 已应用优化建议', 2000, 'info');
   } catch (error) {
-    console.error('应用建议失败:', error);
-    errorMessage.value = (error as Error).message || '应用建议失败';
-    showMessage('应用建议失败: ' + errorMessage.value, 3000, 'error');
+    if (handleGenerationError(error as Error, '应用建议')) return;
   } finally {
-    isGenerating.value = false;
+    finishGeneration();
   }
 };
 
@@ -1914,33 +1863,15 @@ async function getDocIdByBlockId(blockId: string): Promise<string | null> {
 }
 
 /**
- * 插入当前文档引用（修复问题2）
+ * 插入当前文档引用
  */
 const insertCurrentDocReference = async () => {
   try {
-    // 1. 获取当前光标所在的块ID
-    const currentBlockId = getCurrentBlockId();
-    if (!currentBlockId) {
-      // 备用方案：使用激活窗口的文档
-      const protyle = document.querySelector('.layout__wnd--active .protyle:not(.fn__none)');
-      const docId = protyle?.querySelector('.protyle-background')?.getAttribute('data-node-id');
-
-      if (!docId) {
-        showMessage('无法获取当前文档，请将光标放在文档中', 3000, 'error');
-        return;
-      }
-
-      await loadDocumentContent(docId);
-      return;
-    }
-
-    // 2. 通过块ID获取文档ID
-    const docId = await getDocIdByBlockId(currentBlockId);
+    const docId = await getCurrentDocId();
     if (!docId) {
-      showMessage('无法获取当前文档信息', 3000, 'error');
+      showMessage('无法获取当前文档，请将光标放在文档中', 3000, 'error');
       return;
     }
-
     await loadDocumentContent(docId);
   } catch (error) {
     console.error('引用文档失败:', error);

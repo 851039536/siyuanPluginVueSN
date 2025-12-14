@@ -2104,8 +2104,8 @@ onMounted(async () => {
   if (props.plugin) {
     storage = new AIGeneratorStorage(props.plugin);
     await storage.init();
-    loadPromptsFromStorage();
-    loadSettings();
+    await loadPromptsFromStorage();
+    await loadSettings();
   }
 });
 

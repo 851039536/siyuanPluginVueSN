@@ -279,7 +279,7 @@
                 <!-- 显示与上一天的字数变化 -->
                 <div v-if="index < historicalData.length - 1" class="historical-diff">
                   <span class="diff-label">变化：</span>
-                  <span 
+                  <span
                     class="diff-value"
                     :class="{
                       'positive': item.totalWords - historicalData[index + 1].totalWords > 0,
@@ -288,7 +288,7 @@
                   >
                     {{ item.totalWords - historicalData[index + 1].totalWords > 0 ? '+' : '' }}{{ formatNumber(item.totalWords - historicalData[index + 1].totalWords) }} 字
                   </span>
-                  <span 
+                  <span
                     class="diff-value"
                     :class="{
                       'positive': item.totalNotes - historicalData[index + 1].totalNotes > 0,
@@ -393,10 +393,6 @@
       </div>
     </div>
 
-    <!-- 空状态 -->
-    <div v-else class="empty-state">
-      <p>{{ i18n.noData || '暂无数据' }}</p>
-    </div>
   </div>
 </template>
 

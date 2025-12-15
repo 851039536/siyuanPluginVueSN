@@ -1,6 +1,7 @@
 import { Plugin } from 'siyuan'
 import { createApp } from 'vue'
 import SystemMonitorPanel from './SystemMonitorPanel.vue'
+import './index.scss'
 
 let app: ReturnType<typeof createApp> | null = null
 

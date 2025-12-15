@@ -3,14 +3,11 @@
     v-if="showMonitor"
     ref="monitorElement"
     class="status__resUsage"
-    style="font-size:12px; cursor:default;"
   >
-    <span class="ft__on-surface">CPU</span>&nbsp;
-    <span class="fn__cpu">{{ cpuUsage }}</span>
-    <span class="fn__space"></span>
-    <span class="ft__on-surface">内存</span>&nbsp;
-    <span class="fn__mem">{{ memoryUsage }}</span>
-    <span class="fn__space"></span>
+    <span class="ft__on-surface">CPU</span>
+    <span class="fn__cpu" :data-level="getCpuLevel(cpuPercent)">{{ cpuUsage }}</span>
+    <span class="ft__on-surface">内存</span>
+    <span class="fn__mem" :data-level="getMemLevel(memPercent)">{{ memoryUsage }}</span>
   </div>
 </template>
 
@@ -20,11 +17,27 @@ import { ref, onMounted, onUnmounted } from 'vue'
 const showMonitor = ref(false)
 const cpuUsage = ref('0%')
 const memoryUsage = ref('0M')
+const cpuPercent = ref(0)
+const memPercent = ref(0)
 const monitorElement = ref<HTMLElement | null>(null)
 
 let intervalId: ReturnType<typeof setInterval> | null = null
 let timeoutId: ReturnType<typeof setTimeout> | null = null
 let observer: MutationObserver | null = null
+
+// 获取CPU使用率等级
+function getCpuLevel(percent: number): string {
+  if (percent >= 80) return 'high'
+  if (percent >= 60) return 'medium'
+  return 'normal'
+}
+
+// 获取内存使用率等级
+function getMemLevel(percent: number): string {
+  if (percent >= 85) return 'high'
+  if (percent >= 70) return 'medium'
+  return 'normal'
+}
 
 function start() {
   if (!monitorElement.value || intervalId) return
@@ -44,12 +57,17 @@ function start() {
 
     // 计算CPU使用率百分比
     const cpuDiff = (currCPU.user + currCPU.system) - (prevCPU.user + prevCPU.system)
-    const cpuPercent = Math.max(0, Math.min(100, (cpuDiff / (timeDiff * 1000)) * 100)) // 限制在0-100%
+    const cpuPercentValue = Math.max(0, Math.min(100, (cpuDiff / (timeDiff * 1000)) * 100)) // 限制在0-100%
 
     const memUsage = process.memoryUsage()
+    // 假设总内存为 8GB，需要根据实际情况调整
+    const totalMemory = 8 * 1024 * 1024 * 1024
+    const memPercentValue = Math.min(100, (memUsage.rss / totalMemory) * 100)
 
-    cpuUsage.value = `${cpuPercent.toFixed(1)}%`
+    cpuUsage.value = `${cpuPercentValue.toFixed(1)}%`
     memoryUsage.value = `${(memUsage.rss / 1024 / 1024).toFixed(1)}M`
+    cpuPercent.value = cpuPercentValue
+    memPercent.value = memPercentValue
 
     prevCPU = currCPU
     prevTime = currTime

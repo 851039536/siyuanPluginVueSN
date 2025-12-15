@@ -1,0 +1,138 @@
+// 系统监控面板样式
+
+.status__resUsage {
+  font-size: 12px;
+  cursor: default;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding: 0px 3px;
+  border-radius: 4px;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-theme-border);
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+    border-color: var(--b3-theme-primary);
+  }
+
+  // 标签文本（CPU、内存）
+  .ft__on-surface {
+    color: var(--b3-theme-on-surface);
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+  }
+
+  // CPU 使用率显示
+  .fn__cpu {
+    color: var(--b3-theme-primary);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    min-width: 35px;
+    text-align: right;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+
+    // 高CPU使用率警告
+    &[data-level="high"] {
+      background: var(--b3-theme-error-lighter);
+      color: var(--b3-theme-error);
+      animation: cpu-warning 1s ease-in-out infinite;
+    }
+
+    &[data-level="medium"] {
+      background: var(--b3-theme-warning-lighter);
+      color: var(--b3-theme-warning);
+    }
+  }
+
+  // 内存使用率显示
+  .fn__mem {
+    color: var(--b3-theme-secondary);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    min-width: 48px;
+    text-align: right;
+    border-radius: 3px;
+    background: var(--b3-theme-secondary-lightest);
+    transition: all 0.3s ease;
+
+    // 高内存使用率警告
+    &[data-level="high"] {
+      background: var(--b3-theme-error-lighter);
+      color: var(--b3-theme-error);
+      animation: mem-warning 1.5s ease-in-out infinite;
+    }
+
+    &[data-level="medium"] {
+      background: var(--b3-theme-warning-lighter);
+      color: var(--b3-theme-warning);
+    }
+  }
+
+
+}
+
+// 高使用率警告动画
+@keyframes cpu-warning {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(var(--b3-theme-error-rgb), 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(var(--b3-theme-error-rgb), 0);
+  }
+}
+
+@keyframes mem-warning {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+// 响应式调整
+@media (max-width: 768px) {
+  .status__resUsage {
+    font-size: 11px;
+    gap: 1px;
+    padding: 0px 3px;
+
+    .ft__on-surface {
+      font-size: 10px;
+    }
+
+    .fn__cpu,
+    .fn__mem {
+      min-width: 30px;
+      font-size: 11px;
+    }
+
+    .fn__space {
+      height: 12px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .status__resUsage {
+    font-size: 10px;
+    gap: 1px;
+    padding: 0px 3px;
+
+    .ft__on-surface {
+      display: none; // 小屏幕隐藏标签，只显示数值
+    }
+
+    .fn__cpu,
+    .fn__mem {
+      min-width: 32px;
+      font-size: 10px;
+    }
+  }
+}

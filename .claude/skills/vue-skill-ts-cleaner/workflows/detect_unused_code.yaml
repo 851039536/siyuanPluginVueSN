@@ -1,0 +1,13 @@
+name: detect_unused_code
+description: 识别并标记 Vue 3 script setup 中未被使用的代码
+checks:
+  - label: "未使用的 import 语句（包括类型和值导入）"
+    importance: ⭐⭐⭐
+  - label: "声明但从未读取或调用的变量（ref / const / let）"
+    importance: ⭐⭐⭐
+  - label: "未被模板或逻辑调用的函数（包括组合式函数内部定义的辅助函数）"
+    importance: ⭐⭐
+  - label: "定义但未使用的 TypeScript 接口或类型别名"
+    importance: ⭐⭐
+  - label: "重复的逻辑块或可合并的条件分支"
+    importance: ⭐

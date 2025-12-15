@@ -1113,12 +1113,12 @@ const handleStop = () => {
     // 但要重置所有相关状态
     isGenerating.value = false;
     resetEditStates();
-    showMessage('✓ 已停止生成', 2000, 'info');
+    // showMessage('✓ 已停止生成', 2000, 'info');
   } else {
     // 如果 abortController 不存在，也强制重置状态
     isGenerating.value = false;
     resetEditStates();
-    showMessage('✓ 已停止生成', 2000, 'info');
+    // showMessage('✓ 已停止生成', 2000, 'info');
   }
 };
 
@@ -1461,7 +1461,7 @@ const copyContent = async () => {
     // 转换为思源兼容的 Markdown 格式
     const siyuanContent = convertToSiyuanMarkdown(generatedContent.value);
     await navigator.clipboard.writeText(siyuanContent);
-    showMessage('✓ 已复制Markdown到剪贴板', 2000, 'info');
+    // showMessage('✓ 已复制Markdown到剪贴板', 2000, 'info');
   } catch (error) {
     console.error('复制失败:', error);
     showMessage('复制失败', 2000, 'error');
@@ -1530,7 +1530,7 @@ const insertContentToDocument = async (docId: string) => {
     // 使用updateBlock API更新文档内容
     await api.updateBlock('markdown', siyuanContent, docId);
 
-    showMessage(`✓ 已插入到文档: ${docBlock.content || '未命名文档'}`, 2000, 'info');
+    // showMessage(`✓ 已插入到文档: ${docBlock.content || '未命名文档'}`, 2000, 'info');
   } catch (error) {
     console.error('插入内容失败:', error);
     throw error;
@@ -1566,7 +1566,7 @@ const selectTargetDocument = async () => {
     await loadTargetDocument(docId);
   } catch (error) {
     console.error('选择文档失败:', error);
-    showMessage('选择文档失败: ' + (error as Error).message, 3000, 'error');
+    // showMessage('选择文档失败: ' + (error as Error).message, 3000, 'error');
   }
 };
 
@@ -1592,14 +1592,14 @@ const loadTargetDocument = async (docId: string) => {
   generatedContent.value = cleanContent;
   displayedContent.value = cleanContent;
 
-  showMessage(`✓ 已选择文档: ${editTargetDoc.value.title}`, 2000, 'info');
+  // showMessage(`✓ 已选择文档: ${editTargetDoc.value.title}`, 2000, 'info');
 };
 
 // 清除目标文档
 const clearTargetDocument = () => {
   clearEditState();
   clearContent();
-  showMessage('✓ 已清除目标文档', 1500, 'info');
+  // showMessage('✓ 已清除目标文档', 1500, 'info');
 };
 
 
@@ -1623,14 +1623,14 @@ const applyEdit = async () => {
     // 使用updateBlock API更新文档内容
     await api.updateBlock('markdown', siyuanContent, editTargetDoc.value.id);
 
-    showMessage(`✓ 已更新文档: ${editTargetDoc.value.title}`, 2000, 'info');
+    // showMessage(`✓ 已更新文档: ${editTargetDoc.value.title}`, 2000, 'info');
 
     // 更新原始内容为当前内容
     originalContent.value = generatedContent.value;
     editTargetDoc.value.content = generatedContent.value;
   } catch (error) {
     console.error('应用编辑失败:', error);
-    showMessage('应用编辑失败: ' + (error as Error).message, 3000, 'error');
+    // showMessage('应用编辑失败: ' + (error as Error).message, 3000, 'error');
   } finally {
     isApplying.value = false;
   }
@@ -1700,7 +1700,7 @@ const aiEditAction = async (action: 'polish' | 'expand' | 'condense' | 'fix' | '
 
     await props.onGenerate(options);
 
-    showMessage('✓ AI编辑完成', 2000, 'info');
+    // showMessage('✓ AI编辑完成', 2000, 'info');
   } catch (error) {
     if (handleGenerationError(error as Error, 'AI编辑')) return;
   } finally {
@@ -1783,7 +1783,7 @@ const analyzeDocument = async () => {
     };
 
     await props.onGenerate(options);
-    showMessage('✓ 分析完成', 2000, 'info');
+    // showMessage('✓ 分析完成', 2000, 'info');
   } catch (error) {
     if ((error as Error).name === 'AbortError') {
       console.log('用户取消了文档分析');
@@ -1875,7 +1875,7 @@ ${editTargetDoc.value.content}`,
       };
     }
 
-    showMessage('✓ 查重完成', 2000, 'info');
+    // showMessage('✓ 查重完成', 2000, 'info');
   } catch (error) {
     if ((error as Error).name === 'AbortError') {
       console.log('用户取消了查重分析');
@@ -2020,7 +2020,7 @@ ${editTargetDoc.value.content}`,
     await props.onGenerate(options);
 
     aiSuggestions.value = null;
-    showMessage('✓ 已应用优化建议', 2000, 'info');
+    // showMessage('✓ 已应用优化建议', 2000, 'info');
   } catch (error) {
     if (handleGenerationError(error as Error, '应用建议')) return;
   } finally {

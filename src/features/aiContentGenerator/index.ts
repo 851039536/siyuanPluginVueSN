@@ -612,7 +612,7 @@ ${options.userInput}`;
 
             if (content) {
               chunkCount++;
-              console.log(`DeepSeek流式输出块${chunkCount}:`, content.substring(0, 50));
+              // console.log(`DeepSeek流式输出块${chunkCount}:`, content.substring(0, 50));
               onChunk(content);
               fullContent += content;
             }
@@ -625,7 +625,7 @@ ${options.userInput}`;
       reader.releaseLock();
     }
 
-    console.log('DeepSeek流式输出完成，总长度:', fullContent.length);
+    // console.log('DeepSeek流式输出完成，总长度:', fullContent.length);
     return fullContent;
   }
 

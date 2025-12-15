@@ -20,7 +20,8 @@
       "WebSearch",
       "Bash(npx tsc:*)",
       "WebFetch(domain:github.com)",
-      "Skill(siyuan-skill-ui)"
+      "Skill(siyuan-skill-ui)",
+      "Bash(pnpm eslint:*)"
     ],
     "deny": [],
     "ask": []

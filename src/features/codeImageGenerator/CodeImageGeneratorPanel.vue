@@ -325,16 +325,69 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import type { CSSProperties } from 'vue'
 import { showMessage } from 'siyuan'
 import html2canvas from 'html2canvas'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github.css'
 import 'highlight.js/styles/github-dark.css'
 
+interface I18nKeys {
+  codeImageGenerator?: string
+  codeContent?: string
+  textContent?: string
+  codeContentPlaceholder?: string
+  textContentPlaceholder?: string
+  contentType?: string
+  codeMode?: string
+  textMode?: string
+  codeLanguage?: string
+  codeStyle?: string
+  githubStyle?: string
+  macStyle?: string
+  cartoonStyle?: string
+  waveStyle?: string
+  glassStyle?: string
+  neonStyle?: string
+  threeDStyle?: string
+  quoteStyle?: string
+  poetryStyle?: string
+  noteStyle?: string
+  posterStyle?: string
+  cardStyle?: string
+  newspaperStyle?: string
+  gradientTextStyle?: string
+  codeTheme?: string
+  lightTheme?: string
+  darkTheme?: string
+  fontSize?: string
+  decorations?: string
+  metadataOptions?: string
+  enableWatermark?: string
+  watermarkPlaceholder?: string
+  enableAuthor?: string
+  authorPlaceholder?: string
+  enableTimestamp?: string
+  advancedStyle?: string
+  borderWidth?: string
+  borderRadius?: string
+  paddingSize?: string
+  backgroundOpacity?: string
+  shadowIntensity?: string
+  preview?: string
+  copyImage?: string
+  downloadImage?: string
+  copyFailed?: string
+  imageCopied?: string
+  generateFailed?: string
+  imageDownloaded?: string
+  downloadFailed?: string
+}
+
 interface Props {
   visible: boolean
   content?: string
-  i18n?: Record<string, any>
+  i18n?: I18nKeys
 }
 
 interface Emits {
@@ -348,29 +401,56 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
+// 常量定义
+const DEFAULTS = {
+  fontSize: 14,
+  borderWidth: 1,
+  borderRadius: 8,
+  paddingSize: 16,
+  backgroundOpacity: 100,
+  shadowIntensity: 50,
+  watermarkText: 'SiYuan Notes',
+  selectedLanguage: 'javascript',
+  selectedStyle: 'github',
+  selectedTheme: 'light',
+  minFontSize: 12,
+  maxFontSize: 24,
+  maxBorderWidth: 10,
+  maxBorderRadius: 32,
+  maxPaddingSize: 48,
+  minShadowIntensity: 0,
+  maxShadowIntensity: 100,
+  scaleMultiplier: 3,
+  baseShadowOffset: 4,
+  baseShadowBlur: 12,
+  baseShadowOpacity: 0.1,
+  shadowOpacityStep: 500,
+  messageDuration: 3000
+} as const
+
 // 状态
 const contentType = ref<'code' | 'text'>('code')
-const codeContent = ref(props.content || '')
-const selectedLanguage = ref('javascript')
-const selectedStyle = ref('github')
-const selectedTheme = ref('light')
-const fontSize = ref(14)
+const codeContent = ref<string>(props.content || '')
+const selectedLanguage = ref<string>(DEFAULTS.selectedLanguage)
+const selectedStyle = ref<string>(DEFAULTS.selectedStyle)
+const selectedTheme = ref<string>(DEFAULTS.selectedTheme)
+const fontSize = ref<number>(DEFAULTS.fontSize)
 const codePreview = ref<HTMLDivElement>()
 
 // 装饰选项
-const showDecorations = ref(false)
-const enableWatermark = ref(false)
-const watermarkText = ref('SiYuan Notes')
-const enableAuthor = ref(false)
-const authorName = ref('')
-const enableTimestamp = ref(false)
+const showDecorations = ref<boolean>(false)
+const enableWatermark = ref<boolean>(false)
+const watermarkText = ref<string>(DEFAULTS.watermarkText)
+const enableAuthor = ref<boolean>(false)
+const authorName = ref<string>('')
+const enableTimestamp = ref<boolean>(false)
 
 // 高级装饰选项
-const borderWidth = ref(1)
-const borderRadius = ref(8)
-const paddingSize = ref(16)
-const backgroundOpacity = ref(100)
-const shadowIntensity = ref(50)
+const borderWidth = ref<number>(DEFAULTS.borderWidth)
+const borderRadius = ref<number>(DEFAULTS.borderRadius)
+const paddingSize = ref<number>(DEFAULTS.paddingSize)
+const backgroundOpacity = ref<number>(DEFAULTS.backgroundOpacity)
+const shadowIntensity = ref<number>(DEFAULTS.shadowIntensity)
 
 // 监听props变化
 watch(() => props.content, (newContent) => {
@@ -380,7 +460,7 @@ watch(() => props.content, (newContent) => {
 })
 
 // 高亮代码
-const highlightedCode = computed(() => {
+const highlightedCode = computed<string>(() => {
   if (!codeContent.value) {
     return '<span style="color: #999;">在这里输入代码...</span>'
   }
@@ -389,13 +469,13 @@ const highlightedCode = computed(() => {
     const result = hljs.highlight(codeContent.value, { language: selectedLanguage.value })
     return result.value
   } catch (error) {
-    console.error('代码高亮失败:', error)
+    console.error('代码高亮失败:', error instanceof Error ? error.message : String(error))
     return codeContent.value
   }
 })
 
 // 获取语言显示名称
-const getLanguageDisplay = () => {
+const getLanguageDisplay = (): string => {
   const languageMap: Record<string, string> = {
     javascript: 'JavaScript',
     typescript: 'TypeScript',
@@ -422,7 +502,7 @@ const getLanguageDisplay = () => {
 }
 
 // 当前时间
-const currentTime = computed(() => {
+const currentTime = computed<string>(() => {
   const now = new Date()
   return now.toLocaleString('zh-CN', {
     year: 'numeric',
@@ -434,106 +514,98 @@ const currentTime = computed(() => {
 })
 
 // 预览自定义样式
-const previewCustomStyle = computed(() => {
+const previewCustomStyle = computed<CSSProperties>(() => {
   return {
     borderRadius: `${borderRadius.value}px`,
     padding: `${paddingSize.value}px`,
     opacity: backgroundOpacity.value / 100,
-    boxShadow: `0 ${4 + shadowIntensity.value / 10}px ${12 + shadowIntensity.value / 5}px rgba(0, 0, 0, ${0.1 + shadowIntensity.value / 500})`,
+    boxShadow: `0 ${DEFAULTS.baseShadowOffset + shadowIntensity.value / 10}px ${DEFAULTS.baseShadowBlur + shadowIntensity.value / 5}px rgba(0, 0, 0, ${DEFAULTS.baseShadowOpacity + shadowIntensity.value / DEFAULTS.shadowOpacityStep})`,
     borderWidth: borderWidth.value > 0 ? `${borderWidth.value}px` : '0',
     borderStyle: borderWidth.value > 0 ? 'solid' : 'none'
   }
 })
 
+// 生成画布的公共方法
+const generateCanvas = async (): Promise<HTMLCanvasElement> => {
+  if (!codePreview.value) {
+    throw new Error('Preview element not found')
+  }
+
+  // 使用设备像素比,确保在高分辨率屏幕上清晰
+  const dpr = window.devicePixelRatio || 1
+  const scale = Math.max(dpr, DEFAULTS.scaleMultiplier) // 提高到至少 3 倍缩放
+
+  // 获取预览元素的实际背景色
+  const computedStyle = window.getComputedStyle(codePreview.value)
+  const bgColor = computedStyle.backgroundColor || 'transparent'
+
+  return await html2canvas(codePreview.value, {
+    backgroundColor: bgColor, // 使用预览元素的实际背景色
+    scale: scale,
+    logging: false,
+    useCORS: true,
+    allowTaint: true,
+    // 提高渲染质量
+    width: codePreview.value.scrollWidth,
+    height: codePreview.value.scrollHeight,
+    windowWidth: codePreview.value.scrollWidth,
+    windowHeight: codePreview.value.scrollHeight,
+    imageTimeout: 0,
+    removeContainer: true
+  })
+}
+
+// 生成文件名
+const createFilename = (): string => {
+  const timestamp = Date.now()
+  return contentType.value === 'code'
+    ? `code-${selectedLanguage.value}-${timestamp}.png`
+    : `text-${timestamp}.png`
+}
+
 // 复制图片到剪贴板
-const copyImage = async () => {
-  if (!codePreview.value || !codeContent.value) return
+const copyImage = async (): Promise<void> => {
+  if (!codeContent.value) return
 
   try {
-    // 使用设备像素比,确保在高分辨率屏幕上清晰
-    const dpr = window.devicePixelRatio || 1
-    const scale = Math.max(dpr, 3) // 提高到至少 3 倍缩放
-
-    // 获取预览元素的实际背景色
-    const computedStyle = window.getComputedStyle(codePreview.value)
-    const bgColor = computedStyle.backgroundColor || 'transparent'
-
-    const canvas = await html2canvas(codePreview.value, {
-      backgroundColor: bgColor, // 使用预览元素的实际背景色
-      scale: scale,
-      logging: false,
-      useCORS: true,
-      allowTaint: true,
-      // 提高渲染质量
-      width: codePreview.value.scrollWidth,
-      height: codePreview.value.scrollHeight,
-      windowWidth: codePreview.value.scrollWidth,
-      windowHeight: codePreview.value.scrollHeight,
-      imageTimeout: 0,
-      removeContainer: true
-    })
+    const canvas = await generateCanvas()
 
     canvas.toBlob(async (blob) => {
       if (!blob) {
-        showMessage(props.i18n.copyFailed || '复制失败', 3000, 'error')
+        showMessage(props.i18n.copyFailed || '复制失败', DEFAULTS.messageDuration, 'error')
         return
       }
 
       try {
         const item = new ClipboardItem({ 'image/png': blob })
         await navigator.clipboard.write([item])
-        showMessage(props.i18n.imageCopied || '图片已复制到剪贴板', 3000, 'info')
+        showMessage(props.i18n.imageCopied || '图片已复制到剪贴板', DEFAULTS.messageDuration, 'info')
       } catch (err) {
-        console.error('复制失败:', err)
-        showMessage(props.i18n.copyFailed || '复制失败', 3000, 'error')
+        console.error('复制失败:', err instanceof Error ? err.message : String(err))
+        showMessage(props.i18n.copyFailed || '复制失败', DEFAULTS.messageDuration, 'error')
       }
     }, 'image/png', 1.0) // 使用最高质量
   } catch (error) {
-    console.error('生成图片失败:', error)
-    showMessage(props.i18n.generateFailed || '生成图片失败', 3000, 'error')
+    console.error('生成图片失败:', error instanceof Error ? error.message : String(error))
+    showMessage(props.i18n.generateFailed || '生成图片失败', DEFAULTS.messageDuration, 'error')
   }
 }
 
 // 下载图片
-const downloadImage = async () => {
-  if (!codePreview.value || !codeContent.value) return
+const downloadImage = async (): Promise<void> => {
+  if (!codeContent.value) return
 
   try {
-    // 使用设备像素比,确保在高分辨率屏幕上清晰
-    const dpr = window.devicePixelRatio || 1
-    const scale = Math.max(dpr, 3) // 提高到至少 3 倍缩放
-
-    // 获取预览元素的实际背景色
-    const computedStyle = window.getComputedStyle(codePreview.value)
-    const bgColor = computedStyle.backgroundColor || 'transparent'
-
-    const canvas = await html2canvas(codePreview.value, {
-      backgroundColor: bgColor, // 使用预览元素的实际背景色
-      scale: scale,
-      logging: false,
-      useCORS: true,
-      allowTaint: true,
-      // 提高渲染质量
-      width: codePreview.value.scrollWidth,
-      height: codePreview.value.scrollHeight,
-      windowWidth: codePreview.value.scrollWidth,
-      windowHeight: codePreview.value.scrollHeight,
-      imageTimeout: 0,
-      removeContainer: true
-    })
-
+    const canvas = await generateCanvas()
     const link = document.createElement('a')
-    const filename = contentType.value === 'code'
-      ? `code-${selectedLanguage.value}-${Date.now()}.png`
-      : `text-${Date.now()}.png`
-    link.download = filename
+    link.download = createFilename()
     link.href = canvas.toDataURL('image/png', 1.0) // 使用最高质量
     link.click()
 
-    showMessage(props.i18n.imageDownloaded || '图片已下载', 3000, 'info')
+    showMessage(props.i18n.imageDownloaded || '图片已下载', DEFAULTS.messageDuration, 'info')
   } catch (error) {
-    console.error('下载失败:', error)
-    showMessage(props.i18n.downloadFailed || '下载失败', 3000, 'error')
+    console.error('下载失败:', error instanceof Error ? error.message : String(error))
+    showMessage(props.i18n.downloadFailed || '下载失败', DEFAULTS.messageDuration, 'error')
   }
 }
 

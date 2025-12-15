@@ -1342,6 +1342,32 @@
         box-shadow: 0 4px 12px rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.4);
       }
     }
+
+    &.btn-plagiarism {
+      background: linear-gradient(135deg, var(--b3-theme-warning-lighter) 0%, var(--b3-theme-warning) 100%);
+      color: var(--b3-theme-on-warning);
+      border-color: var(--b3-theme-warning);
+      font-weight: 600;
+
+      &:hover:not(:disabled) {
+        background: linear-gradient(135deg, var(--b3-theme-warning) 0%, var(--b3-theme-warning-dark) 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(var(--b3-theme-warning-rgb, 245, 158, 11), 0.4);
+      }
+    }
+
+    &.btn-stop-plagiarism {
+      background: linear-gradient(135deg, var(--b3-theme-error-lighter) 0%, var(--b3-theme-error) 100%);
+      color: var(--b3-theme-on-error);
+      border-color: var(--b3-theme-error);
+      font-weight: 600;
+
+      &:hover:not(:disabled) {
+        background: linear-gradient(135deg, var(--b3-theme-error) 0%, var(--b3-theme-error-dark) 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(var(--b3-theme-error-rgb, 239, 68, 68), 0.4);
+      }
+    }
   }
 }
 
@@ -1430,6 +1456,232 @@
 }
 
 
+
+
+
+// AI查重结果面板样式
+.plagiarism-result-panel {
+  margin: 8px 12px;
+  padding: 12px;
+  background: linear-gradient(135deg, var(--b3-theme-surface) 0%, var(--b3-theme-surface-lighter) 100%);
+  border: 1px solid var(--b3-theme-warning-lighter);
+  border-radius: 8px;
+  animation: slideDown 0.3s ease-out;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+  .result-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--b3-theme-warning-lighter);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--b3-theme-warning);
+
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .btn-close-result {
+      margin-left: auto;
+      padding: 4px;
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      color: var(--b3-theme-on-surface);
+      transition: all 0.2s;
+
+      &:hover {
+        background: var(--b3-theme-error-lighter);
+        transform: rotate(90deg);
+      }
+
+      svg {
+        width: 12px;
+        height: 12px;
+      }
+    }
+  }
+
+  .result-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .plagiarism-summary {
+    display: flex;
+    gap: 16px;
+    padding: 12px;
+    background: var(--b3-theme-background);
+    border-radius: 6px;
+
+    .summary-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+
+      &.low-risk {
+        .summary-value {
+          color: var(--b3-theme-success);
+          font-weight: 600;
+        }
+      }
+
+      &.medium-risk {
+        .summary-value {
+          color: var(--b3-theme-warning);
+          font-weight: 600;
+        }
+      }
+
+      &.high-risk {
+        .summary-value {
+          color: var(--b3-theme-error);
+          font-weight: 600;
+        }
+      }
+
+      .summary-label {
+        font-size: 12px;
+        color: var(--b3-theme-on-surface);
+        opacity: 0.7;
+      }
+
+      .summary-value {
+        font-size: 14px;
+        font-weight: 600;
+      }
+    }
+  }
+
+  .plagiarism-details {
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    .detail-text {
+      padding: 12px;
+      background: var(--b3-theme-background);
+      border-radius: 6px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--b3-theme-on-surface);
+
+      // Markdown内容样式
+      h1, h2, h3, h4, h5, h6 {
+        margin: 12px 0 8px 0;
+        font-weight: 600;
+        color: var(--b3-theme-on-background);
+      }
+
+      h1 { font-size: 16px; }
+      h2 { font-size: 15px; }
+      h3 { font-size: 14px; }
+
+      p {
+        margin: 8px 0;
+      }
+
+      ul, ol {
+        margin: 8px 0;
+        padding-left: 20px;
+      }
+
+      li {
+        margin: 4px 0;
+      }
+
+      strong {
+        color: var(--b3-theme-warning);
+        font-weight: 600;
+      }
+
+      em {
+        color: var(--b3-theme-success);
+        font-style: normal;
+        font-weight: 500;
+      }
+
+      code {
+        background: var(--b3-theme-surface-lighter);
+        padding: 2px 4px;
+        border-radius: 3px;
+        font-size: 12px;
+        color: var(--b3-theme-on-surface);
+      }
+
+      pre {
+        background: var(--b3-theme-surface-lighter);
+        padding: 12px;
+        border-radius: 6px;
+        overflow-x: auto;
+        margin: 8px 0;
+
+        code {
+          background: transparent;
+          padding: 0;
+        }
+      }
+
+      // 滚动条样式
+      &::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: var(--b3-theme-surface-lighter);
+        border-radius: 4px;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: var(--b3-theme-primary-lighter);
+        border-radius: 4px;
+
+        &:hover {
+          background: var(--b3-theme-primary);
+        }
+      }
+    }
+  }
+
+  .plagiarism-suggestions {
+    .suggestions-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--b3-theme-warning);
+      margin-bottom: 8px;
+      padding-left: 4px;
+    }
+
+    .suggestions-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+
+      li {
+        padding: 8px 12px;
+        margin-bottom: 6px;
+        background: var(--b3-theme-background);
+        border-left: 3px solid var(--b3-theme-warning);
+        border-radius: 4px;
+        font-size: 13px;
+        line-height: 1.5;
+        color: var(--b3-theme-on-surface);
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+    }
+  }
+}
 
 
 
@@ -1662,6 +1914,89 @@
         padding: 14px;
         font-size: 15px;
         min-height: 50px;
+      }
+    }
+  }
+
+  // 移动端：查重结果面板优化
+  .plagiarism-result-panel {
+    margin: 12px;
+    padding: 14px;
+
+    .result-header {
+      font-size: 15px;
+      margin-bottom: 14px;
+      padding-bottom: 14px;
+
+      svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .btn-close-result {
+        svg {
+          width: 14px;
+          height: 14px;
+        }
+      }
+    }
+
+    .plagiarism-summary {
+      flex-direction: column;
+      gap: 12px;
+      padding: 14px;
+
+      .summary-item {
+        .summary-label {
+          font-size: 13px;
+        }
+
+        .summary-value {
+          font-size: 15px;
+        }
+      }
+    }
+
+    .plagiarism-details {
+      max-height: 350px;
+
+      .detail-text {
+        font-size: 14px;
+        padding: 14px;
+
+        h1 { font-size: 17px; }
+        h2 { font-size: 16px; }
+        h3 { font-size: 15px; }
+
+        code {
+          font-size: 13px;
+          padding: 3px 6px;
+        }
+
+        pre {
+          padding: 14px;
+        }
+
+        ul, ol {
+          padding-left: 24px;
+        }
+
+        li {
+          margin: 6px 0;
+        }
+      }
+    }
+
+    .plagiarism-suggestions {
+      .suggestions-title {
+        font-size: 14px;
+      }
+
+      .suggestions-list {
+        li {
+          font-size: 14px;
+          padding: 10px 14px;
+        }
       }
     }
   }

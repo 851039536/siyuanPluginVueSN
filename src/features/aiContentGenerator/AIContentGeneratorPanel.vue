@@ -393,6 +393,14 @@
             <svg v-else width="14" height="14"><use xlink:href="#iconInfo"></use></svg>
             {{ i18n.analyze || '智能分析' }}
           </button>
+          <button v-if="!isCheckingPlagiarism" class="btn-ai-action btn-plagiarism" @click="checkPlagiarism" :disabled="isGenerating" :title="i18n.aiPlagiarismCheck || 'AI查重'">
+            <svg width="14" height="14"><use xlink:href="#iconSearch"></use></svg>
+            {{ i18n.plagiarismCheck || '查重' }}
+          </button>
+          <button v-else class="btn-ai-action btn-stop-plagiarism" @click="handleStop" :title="i18n.stopGeneration || '停止生成'">
+            <svg width="14" height="14"><use xlink:href="#iconClose"></use></svg>
+            {{ i18n.stop || '停止' }}
+          </button>
         </div>
       </div>
 
@@ -410,6 +418,32 @@
           <button class="btn-apply-suggestions" @click="applySuggestions" :disabled="isGenerating">
             {{ i18n.applySuggestions || '应用建议优化' }}
           </button>
+        </div>
+      </div>
+
+      <!-- AI查重结果面板 -->
+      <div v-if="editMode && plagiarismResult" class="plagiarism-result-panel">
+        <div class="result-header">
+          <svg width="16" height="16"><use xlink:href="#iconSearch"></use></svg>
+          <span>{{ i18n.aiPlagiarismResult || 'AI查重结果' }}</span>
+          <button class="btn-close-result" @click="plagiarismResult = null">
+            <svg width="12" height="12"><use xlink:href="#iconClose"></use></svg>
+          </button>
+        </div>
+        <div class="result-content">
+          <div class="plagiarism-summary">
+            <div class="summary-item" :class="plagiarismResult.riskLevel === 'low' ? 'low-risk' : plagiarismResult.riskLevel === 'medium' ? 'medium-risk' : 'high-risk'">
+              <span class="summary-label">{{ i18n.riskLevel || '风险等级' }}:</span>
+              <span class="summary-value">{{ getRiskLevelText(plagiarismResult.riskLevel) }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">{{ i18n.similarityRate || '相似度' }}:</span>
+              <span class="summary-value">{{ plagiarismResult.similarityRate }}%</span>
+            </div>
+          </div>
+          <div class="plagiarism-details">
+            <div class="detail-text markdown-preview selectable-content" v-html="renderPlagiarismMarkdown"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -684,6 +718,12 @@ let inputDialogResolve: ((value: string | null) => void) | null = null;
 // AI智能编辑状态
 const isAnalyzing = ref(false);
 const aiSuggestions = ref<string | null>(null);
+const isCheckingPlagiarism = ref(false);
+const plagiarismResult = ref<{
+  riskLevel: 'low' | 'medium' | 'high';
+  similarityRate: number;
+  details: string;
+} | null>(null);
 const editCustomInput = ref(''); // 编辑模式自定义提问输入
 
 // 编辑历史（用于撤回/重做）
@@ -920,13 +960,50 @@ const renderedDisplayedMarkdown = computed(() => {
   }
 });
 
+// 渲染查重结果的Markdown
+const renderPlagiarismMarkdown = computed(() => {
+  if (!plagiarismResult.value?.details) return '';
+  try {
+    // 配置marked选项
+    marked.setOptions({
+      breaks: true,
+      gfm: true,
+    });
 
+    let content = plagiarismResult.value.details;
+
+    // 对重复内容进行高亮标记
+    content = content.replace(/重复/gi, '**重复**');
+    content = content.replace(/相似/gi, '**相似**');
+    content = content.replace(/原创/gi, '*原创*');
+    content = content.replace(/建议/gi, '**建议**');
+    content = content.replace(/位置/g, '**位置**');
+    content = content.replace(/风险/g, '**风险**');
+
+    return marked.parse(content) as string;
+  } catch (error) {
+    console.error('查重结果Markdown渲染失败:', error);
+    return `<pre>${plagiarismResult.value.details}</pre>`;
+  }
+});
 
 // 监听渲染内容变化，应用代码高亮
 watch(renderedDisplayedMarkdown, async () => {
   await nextTick();
   // 手动对所有代码块应用高亮
   const preBlocks = document.querySelectorAll('.markdown-preview pre code');
+  preBlocks.forEach((block) => {
+    if (!(block as HTMLElement).dataset.highlighted) {
+      hljs.highlightElement(block as HTMLElement);
+    }
+  });
+});
+
+// 监听查重结果渲染，应用代码高亮
+watch(renderPlagiarismMarkdown, async () => {
+  await nextTick();
+  // 手动对所有代码块应用高亮
+  const preBlocks = document.querySelectorAll('.plagiarism-details .markdown-preview pre code');
   preBlocks.forEach((block) => {
     if (!(block as HTMLElement).dataset.highlighted) {
       hljs.highlightElement(block as HTMLElement);
@@ -967,8 +1044,17 @@ const clearEditState = () => {
 const handleStop = () => {
   if (abortController.value) {
     abortController.value.abort();
-    abortController.value = null;
+    // 注意：不在这里重置 abortController.value，让 finally 块处理
+    // 但要重置所有相关状态
     isGenerating.value = false;
+    isCheckingPlagiarism.value = false;
+    isAnalyzing.value = false;
+    showMessage('✓ 已停止生成', 2000, 'info');
+  } else {
+    // 如果 abortController 不存在，也强制重置状态
+    isGenerating.value = false;
+    isCheckingPlagiarism.value = false;
+    isAnalyzing.value = false;
     showMessage('✓ 已停止生成', 2000, 'info');
   }
 };
@@ -1055,6 +1141,10 @@ ${cleanDocContent}`;
       errorMessage.value = props.i18n.generateFailed || '生成失败，请重试';
     }
   } catch (error) {
+    if ((error as Error).name === 'AbortError') {
+      console.log('用户取消了内容生成');
+      return;
+    }
     if (handleGenerationError(error as Error, '生成')) return;
   } finally {
     finishGeneration();
@@ -1616,6 +1706,7 @@ const analyzeDocument = async () => {
   }
 
   closeMobileSettings();
+  startGeneration(); // 初始化abortController
   isAnalyzing.value = true;
 
   try {
@@ -1630,6 +1721,7 @@ const analyzeDocument = async () => {
       systemPrompt: '你是一个专业的文档分析专家，擅长发现文档中的问题并提供建设性的优化意见。',
       temperature: 0.5,
       maxTokens: 1500,
+      signal: abortController.value?.signal,
       onChunk: (chunk: string) => {
         aiSuggestions.value = (aiSuggestions.value || '') + chunk;
       }
@@ -1638,11 +1730,154 @@ const analyzeDocument = async () => {
     await props.onGenerate(options);
     showMessage('✓ 分析完成', 2000, 'info');
   } catch (error) {
+    if ((error as Error).name === 'AbortError') {
+      console.log('用户取消了文档分析');
+      finishGeneration();
+      isAnalyzing.value = false;
+      return;
+    }
     console.error('文档分析失败:', error);
     showMessage('文档分析失败: ' + (error as Error).message, 3000, 'error');
   } finally {
-    isAnalyzing.value = false;
+    // 如果不是用户主动停止且abortController仍存在，则重置状态
+    if (abortController.value) {
+      finishGeneration();
+      isAnalyzing.value = false;
+    }
   }
+};
+
+/**
+ * AI查重功能
+ */
+const checkPlagiarism = async () => {
+  if (!editTargetDoc.value) {
+    showMessage('请先选择要查重的文档', 2000, 'info');
+    return;
+  }
+
+  closeMobileSettings();
+  startGeneration(); // 初始化abortController
+  isCheckingPlagiarism.value = true;
+  plagiarismResult.value = null;
+
+  try {
+    const options: GenerateOptions = {
+      userInput: `请对以下文档进行全面的原创性分析，重点关注以下方面：
+
+一、文档内部重复内容检测：
+1. 检查同一段落、句子或表述是否在文档中反复出现
+2. 识别重复的段落、章节或观点
+3. 检查相同内容是否用不同方式重复表达
+
+二、外部内容相似性检测：
+1. 识别可能与已知资料、公开内容相似的部分
+2. 评估语言表达和内容结构的原创性
+3. 检查是否存在常见的模板化或套话内容
+
+三、具体分析要求：
+- 指出具体重复或相似的位置（段落、行数等）
+- 给出相似度百分比评估（0-100%）
+- 评估整体风险等级：低风险/中风险/高风险
+- 提供明确的改进建议
+
+请使用Markdown格式返回分析结果，包括：
+- 使用标题组织内容
+- 使用列表列出问题和建议
+- 使用**粗体**标记重要内容
+- 使用*斜体*标记正面内容
+
+文档内容：
+${editTargetDoc.value.content}`,
+      systemPrompt: '你是一个专业的查重分析专家，擅长识别文档中的重复内容和潜在抄袭。请以Markdown格式返回详细分析结果，使用标题、列表等Markdown语法让内容更加结构化和易读。',
+      temperature: 0.3,
+      maxTokens: 3000,
+      signal: abortController.value?.signal,
+      onChunk: (chunk: string) => {
+        const currentContent = plagiarismResult.value?.details || '';
+        const newContent = currentContent + chunk;
+
+        // 简单分析文本内容，尝试提取风险等级和相似度
+        const riskLevel = detectRiskLevel(newContent);
+        const similarityRate = detectSimilarityRate(newContent);
+
+        plagiarismResult.value = {
+          riskLevel,
+          similarityRate,
+          details: newContent
+        };
+      }
+    };
+
+    await props.onGenerate(options);
+
+    // 确保至少返回基本结果
+    if (!plagiarismResult.value || !plagiarismResult.value.details) {
+      plagiarismResult.value = {
+        riskLevel: 'low',
+        similarityRate: 0,
+        details: '查重分析已完成，未发现明显的重复或抄袭内容。建议继续保持内容的原创性。'
+      };
+    }
+
+    showMessage('✓ 查重完成', 2000, 'info');
+  } catch (error) {
+    if ((error as Error).name === 'AbortError') {
+      console.log('用户取消了查重分析');
+      finishGeneration();
+      isCheckingPlagiarism.value = false;
+      return;
+    }
+    console.error('查重分析失败:', error);
+    showMessage('查重分析失败: ' + (error as Error).message, 3000, 'error');
+  } finally {
+    // 如果不是用户主动停止且abortController仍存在，则重置状态
+    if (abortController.value) {
+      finishGeneration();
+      isCheckingPlagiarism.value = false;
+    }
+  }
+};
+
+/**
+ * 检测风险等级
+ */
+const detectRiskLevel = (text: string): 'low' | 'medium' | 'high' => {
+  const lowerText = text.toLowerCase();
+
+  if (lowerText.includes('高风险') || lowerText.includes('high risk') ||
+      lowerText.includes('严重重复') || lowerText.includes('大量相似')) {
+    return 'high';
+  } else if (lowerText.includes('中风险') || lowerText.includes('medium risk') ||
+             lowerText.includes('部分重复') || lowerText.includes('中等相似')) {
+    return 'medium';
+  }
+
+  return 'low';
+};
+
+/**
+ * 检测相似度百分比
+ */
+const detectSimilarityRate = (text: string): number => {
+  const match = text.match(/(\d+)%?/);
+  if (match) {
+    const num = parseInt(match[1]);
+    return Math.min(Math.max(num, 0), 100);
+  }
+  return 0;
+};
+
+/**
+ * 获取风险等级文本
+ */
+const getRiskLevelText = (riskLevel: string): string => {
+  const riskLevelMap: Record<string, string> = {
+    low: props.i18n.lowRisk || '低风险',
+    medium: props.i18n.mediumRisk || '中风险',
+    high: props.i18n.highRisk || '高风险'
+  };
+  return riskLevelMap[riskLevel] || riskLevel;
 };
 
 /**

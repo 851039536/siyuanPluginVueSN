@@ -855,7 +855,7 @@ const handleGenerationError = (error: Error, context: string): boolean => {
   console.error(`${context}失败:`, error);
   const message = error.message || `${context}失败`;
   errorMessage.value = message;
-  showMessage(`${context}失败: ${message}`, 3000, 'error');
+  // showMessage(`${context}失败: ${message}`, 3000, 'error');
   return false;
 };
 
@@ -2077,13 +2077,13 @@ const saveCurrentPrompt = async () => {
 
   newPromptName.value = '';
   currentPromptName.value = promptName;
-  showMessage(
-    existingIndex >= 0
-      ? `✓ 已更新配置: ${promptConfig.name}`
-      : `✓ 已保存配置: ${promptConfig.name}`,
-    2000,
-    'info'
-  );
+  // showMessage(
+  //   existingIndex >= 0
+  //     ? `✓ 已更新配置: ${promptConfig.name}`
+  //     : `✓ 已保存配置: ${promptConfig.name}`,
+  //   2000,
+  //   'info'
+  // );
 };
 
 // 清除当前提示词选择
@@ -2187,7 +2187,7 @@ async function loadDocumentContent(docId: string) {
     contentPreview: referencedDocContent.value.substring(0, 200)
   });
 
-  showMessage(`✓ 已引用文档: ${referencedDocTitle.value}`, 2000, 'info');
+  // showMessage(`✓ 已引用文档: ${referencedDocTitle.value}`, 2000, 'info');
 }
 
 // 加载提示词配置（需求3：持久化保存）
@@ -2206,7 +2206,7 @@ const loadPrompt = (index: number) => {
 
 
   showPromptSelector.value = false;
-  showMessage(`✓ 已加载配置: ${prompt.name}`, 2000, 'info');
+  // showMessage(`✓ 已加载配置: ${prompt.name}`, 2000, 'info');
 };
 
 // 编辑提示词配置
@@ -2228,7 +2228,7 @@ const editPrompt = (index: number) => {
   showSettings.value = true;
   showPromptSelector.value = false;
 
-  showMessage(`✓ 已加载配置到编辑区: ${prompt.name}，修改后请重新保存`, 3000, 'info');
+  // showMessage(`✓ 已加载配置到编辑区: ${prompt.name}，修改后请重新保存`, 3000, 'info');
 };
 
 // 删除提示词配置
@@ -2239,7 +2239,7 @@ const deletePrompt = (index: number) => {
   if (confirm(`${props.i18n.confirmDelete || '确定删除配置'}: ${prompt.name}?`)) {
     savedPrompts.value.splice(index, 1);
     savePromptsToStorage();
-    showMessage(`✓ 已删除配置: ${prompt.name}`, 2000, 'info');
+    // showMessage(`✓ 已删除配置: ${prompt.name}`, 2000, 'info');
   }
 };
 

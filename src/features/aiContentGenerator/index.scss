@@ -11,7 +11,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 4px 4px;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
   background: var(--b3-theme-surface);
 }
@@ -1692,7 +1692,7 @@
   }
 
   .panel-header {
-    padding: 10px 12px;
+    padding: 4px 4px;
     flex-wrap: wrap;
     gap: 8px;
 

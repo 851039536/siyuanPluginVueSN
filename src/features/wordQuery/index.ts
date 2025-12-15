@@ -50,7 +50,6 @@ export class WordQuery {
    */
   public init() {
     this.addDock();
-    console.log('单词查询模块已初始化');
   }
 
   /**

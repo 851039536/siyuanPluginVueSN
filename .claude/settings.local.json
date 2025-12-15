@@ -22,7 +22,8 @@
       "WebFetch(domain:github.com)",
       "Skill(siyuan-skill-ui)",
       "Bash(pnpm eslint:*)",
-      "Skill(vue-skill-ts-cleaner)"
+      "Skill(vue-skill-ts-cleaner)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []

@@ -830,6 +830,7 @@ const startGeneration = () => {
   displayedContent.value = '';
   errorMessage.value = '';
   aiSuggestions.value = null;
+  plagiarismResult.value = null;
 };
 
 /**
@@ -838,6 +839,8 @@ const startGeneration = () => {
 const finishGeneration = () => {
   isGenerating.value = false;
   abortController.value = null;
+  isAnalyzing.value = false;
+  isCheckingPlagiarism.value = false;
 };
 
 /**
@@ -850,9 +853,58 @@ const handleGenerationError = (error: Error, context: string): boolean => {
     return true;
   }
   console.error(`${context}失败:`, error);
-  errorMessage.value = error.message || `${context}失败`;
-  showMessage(`${context}失败: ${errorMessage.value}`, 3000, 'error');
+  const message = error.message || `${context}失败`;
+  errorMessage.value = message;
+  showMessage(`${context}失败: ${message}`, 3000, 'error');
   return false;
+};
+
+/**
+ * 统一的异步操作错误处理装饰器
+ * 自动处理 AbortError 和通用错误
+ */
+const withErrorHandling = async <T>(
+  operation: () => Promise<T>,
+  context: string
+): Promise<T | null> => {
+  try {
+    return await operation();
+  } catch (error) {
+    if ((error as Error).name === 'AbortError') {
+      console.log(`用户取消了${context}`);
+      return null;
+    }
+    handleGenerationError(error as Error, context);
+    return null;
+  }
+};
+
+/**
+ * 统一的文档加载函数
+ */
+const loadDocument = async (docId: string): Promise<{ title: string; content: string } | null> => {
+  try {
+    const docBlock = await api.getBlockByID(docId);
+    if (!docBlock) {
+      showMessage('无法获取文档信息', 3000, 'error');
+      return null;
+    }
+
+    const docContent = await api.exportMdContent(docId);
+    if (!docContent || !docContent.content) {
+      showMessage('无法获取文档内容', 3000, 'error');
+      return null;
+    }
+
+    return {
+      title: docBlock.content || '未命名文档',
+      content: docContent.content
+    };
+  } catch (error) {
+    console.error('加载文档失败:', error);
+    showMessage('加载文档失败: ' + (error as Error).message, 3000, 'error');
+    return null;
+  }
 };
 
 /**
@@ -1037,6 +1089,19 @@ const clearEditState = () => {
   editTargetDoc.value = null;
   originalContent.value = '';
   editCustomInput.value = ''; // 清理自定义提问输入
+  aiSuggestions.value = null;
+  plagiarismResult.value = null;
+};
+
+/**
+ * 统一的编辑状态重置函数
+ */
+const resetEditStates = () => {
+  isApplying.value = false;
+  isUndoing.value = false;
+  isInsertingSubDoc.value = false;
+  isAnalyzing.value = false;
+  isCheckingPlagiarism.value = false;
 };
 
 
@@ -1047,14 +1112,12 @@ const handleStop = () => {
     // 注意：不在这里重置 abortController.value，让 finally 块处理
     // 但要重置所有相关状态
     isGenerating.value = false;
-    isCheckingPlagiarism.value = false;
-    isAnalyzing.value = false;
+    resetEditStates();
     showMessage('✓ 已停止生成', 2000, 'info');
   } else {
     // 如果 abortController 不存在，也强制重置状态
     isGenerating.value = false;
-    isCheckingPlagiarism.value = false;
-    isAnalyzing.value = false;
+    resetEditStates();
     showMessage('✓ 已停止生成', 2000, 'info');
   }
 };
@@ -1149,6 +1212,16 @@ ${cleanDocContent}`;
   } finally {
     finishGeneration();
   }
+};
+
+/**
+ * 统一的内容处理函数
+ * 移除 frontmatter 和标题，并转换为思源兼容格式
+ */
+const processContent = (content: string): string => {
+  const withoutFrontmatter = removeFrontmatter(content);
+  const withoutHeadings = removeHeadings(withoutFrontmatter);
+  return convertToSiyuanMarkdown(withoutHeadings);
 };
 
 /**
@@ -1451,9 +1524,8 @@ const insertContentToDocument = async (docId: string) => {
       timestamp: Date.now()
     };
 
-    // 移除标题并转换为思源兼容的 Markdown 格式
-    const contentWithoutHeadings = removeHeadings(generatedContent.value);
-    const siyuanContent = convertToSiyuanMarkdown(contentWithoutHeadings);
+    // 使用统一的内容处理函数
+    const siyuanContent = processContent(generatedContent.value);
 
     // 使用updateBlock API更新文档内容
     await api.updateBlock('markdown', siyuanContent, docId);
@@ -1500,43 +1572,27 @@ const selectTargetDocument = async () => {
 
 // 加载目标文档
 const loadTargetDocument = async (docId: string) => {
-  try {
-    // 获取文档块信息
-    const docBlock = await api.getBlockByID(docId);
-    if (!docBlock) {
-      showMessage('无法获取文档信息', 3000, 'error');
-      return;
-    }
+  const result = await loadDocument(docId);
+  if (!result) return;
 
-    // 获取文档的Markdown内容
-    const docContent = await api.exportMdContent(docId);
-    if (!docContent || !docContent.content) {
-      showMessage('无法获取文档内容', 3000, 'error');
-      return;
-    }
+  // 移除frontmatter，获取纯净的Markdown内容
+  const cleanContent = removeFrontmatter(result.content);
 
-    // 移除frontmatter，获取纯净的Markdown内容
-    const cleanContent = removeFrontmatter(docContent.content);
+  // 保存文档信息（使用清理后的内容）
+  editTargetDoc.value = {
+    id: docId,
+    title: result.title,
+    content: cleanContent
+  };
 
-    // 保存文档信息（使用清理后的内容）
-    editTargetDoc.value = {
-      id: docId,
-      title: docBlock.content || '未命名文档',
-      content: cleanContent
-    };
+  // 保存原始内容用于对比（使用清理后的内容）
+  originalContent.value = cleanContent;
 
-    // 保存原始内容用于对比（使用清理后的内容）
-    originalContent.value = cleanContent;
+  // 将文档内容加载到生成内容区域（使用清理后的内容）
+  generatedContent.value = cleanContent;
+  displayedContent.value = cleanContent;
 
-    // 将文档内容加载到生成内容区域（使用清理后的内容）
-    generatedContent.value = cleanContent;
-    displayedContent.value = cleanContent;
-
-    showMessage(`✓ 已选择文档: ${editTargetDoc.value.title}`, 2000, 'info');
-  } catch (error) {
-    console.error('加载文档失败:', error);
-    showMessage('加载文档失败: ' + (error as Error).message, 3000, 'error');
-  }
+  showMessage(`✓ 已选择文档: ${editTargetDoc.value.title}`, 2000, 'info');
 };
 
 // 清除目标文档
@@ -1561,9 +1617,8 @@ const applyEdit = async () => {
       timestamp: Date.now()
     };
 
-    // 移除标题并转换为思源兼容的 Markdown 格式
-    const contentWithoutHeadings = removeHeadings(generatedContent.value);
-    const siyuanContent = convertToSiyuanMarkdown(contentWithoutHeadings);
+    // 使用统一的内容处理函数
+    const siyuanContent = processContent(generatedContent.value);
 
     // 使用updateBlock API更新文档内容
     await api.updateBlock('markdown', siyuanContent, editTargetDoc.value.id);
@@ -1903,9 +1958,8 @@ const insertSubDocument = async () => {
   isInsertingSubDoc.value = true;
 
   try {
-    // 移除标题并转换为思源兼容的 Markdown 格式
-    const contentWithoutHeadings = removeHeadings(generatedContent.value);
-    const siyuanContent = convertToSiyuanMarkdown(contentWithoutHeadings);
+    // 使用统一的内容处理函数
+    const siyuanContent = processContent(generatedContent.value);
 
     // 获取父文档信息
     const parentDoc = await api.getBlockByID(editTargetDoc.value.id);
@@ -2120,36 +2174,20 @@ const insertCurrentDocReference = async () => {
  * 加载文档内容
  */
 async function loadDocumentContent(docId: string) {
-  try {
-    // 3. 获取文档块信息
-    const docBlock = await api.getBlockByID(docId);
-    if (!docBlock) {
-      showMessage('无法获取文档信息', 3000, 'error');
-      return;
-    }
+  const result = await loadDocument(docId);
+  if (!result) return;
 
-    // 4. 获取文档的Markdown内容
-    const docContent = await api.exportMdContent(docId);
-    if (!docContent || !docContent.content) {
-      showMessage('无法获取文档内容', 3000, 'error');
-      return;
-    }
+  // 保存引用的文档信息
+  referencedDocTitle.value = result.title;
+  referencedDocContent.value = result.content;
 
-    // 5. 保存引用的文档信息
-    referencedDocTitle.value = docBlock.content || '未命名文档';
-    referencedDocContent.value = docContent.content;
+  console.log('文档引用成功:', {
+    title: referencedDocTitle.value,
+    contentLength: referencedDocContent.value.length,
+    contentPreview: referencedDocContent.value.substring(0, 200)
+  });
 
-    console.log('文档引用成功:', {
-      title: referencedDocTitle.value,
-      contentLength: referencedDocContent.value.length,
-      contentPreview: referencedDocContent.value.substring(0, 200)
-    });
-
-    showMessage(`✓ 已引用文档: ${referencedDocTitle.value}`, 2000, 'info');
-  } catch (error) {
-    console.error('加载文档内容失败:', error);
-    throw error;
-  }
+  showMessage(`✓ 已引用文档: ${referencedDocTitle.value}`, 2000, 'info');
 }
 
 // 加载提示词配置（需求3：持久化保存）

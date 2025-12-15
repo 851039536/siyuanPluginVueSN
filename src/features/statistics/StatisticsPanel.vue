@@ -132,7 +132,7 @@
             :key="range.value"
             class="range-btn"
             :class="{ active: dayRange === range.value }"
-            @click="dayRange = range.value; loadChartData()"
+            @click="dayRange = range.value; refreshData()"
           >
             {{ range.label }}
           </button>
@@ -145,7 +145,7 @@
             :key="range.value"
             class="range-btn"
             :class="{ active: monthYearRange === range.value }"
-            @click="monthYearRange = range.value; loadChartData()"
+            @click="monthYearRange = range.value; refreshData()"
           >
             {{ range.label }}
           </button>
@@ -153,7 +153,7 @@
 
         <!-- 年视图选择 -->
         <div v-if="viewMode === 'year'" class="year-selector">
-          <select v-model="selectedYear" @change="loadChartData" class="year-select">
+          <select v-model="selectedYear" @change="refreshData" class="year-select">
             <option v-for="year in availableYears" :key="year" :value="year">{{ year }}</option>
           </select>
         </div>
@@ -457,7 +457,6 @@ const selectedYear = ref<number>(new Date().getFullYear())
 const chartData = ref<DailyWordCount[]>([])
 const currentTheme = ref<'default' | 'github'>(props.theme || 'default')
 const historicalData = ref<any[]>([])
-const updateInterval = ref<number>(60000) // 默认1分钟
 const snapshotData = ref<any[]>([])
 
 // 视图模式选项
@@ -514,11 +513,9 @@ const periodAvgWords = computed(() => {
 
 // 更新间隔显示文本
 const updateIntervalText = computed(() => {
-  const seconds = updateInterval.value / 1000
+  const seconds = 60
   if (seconds < 60) {
     return `${seconds}秒`
-  } else if (seconds === 60) {
-    return '1分钟'
   } else {
     const minutes = seconds / 60
     return `${minutes}分钟`
@@ -657,10 +654,6 @@ async function clearSnapshots() {
   }
 }
 
-// 加载图表数据（已废弃，直接调用 refreshData）
-function loadChartData() {
-  refreshData()
-}
 
 // 格式化数字
 function formatNumber(num: number): string {
@@ -710,20 +703,6 @@ function formatChartLabel(label: string): string {
     return label.split(' ')[1] || label.split('/')[1] || label
   }
   return label
-}
-
-// 格式化日期
-function formatDate(dateStr: string): string {
-  const date = new Date(dateStr)
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-
-  if (days === 0) return props.i18n.today || '今天'
-  if (days === 1) return props.i18n.yesterday || '昨天'
-  if (days < 7) return `${days} ${props.i18n.daysAgo || '天前'}`
-
-  return date.toLocaleDateString('zh-CN')
 }
 
 // 数字补零

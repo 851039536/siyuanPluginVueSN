@@ -1,7 +1,7 @@
 import { Plugin } from 'siyuan';
 import { createApp, App as VueApp } from 'vue';
 import StatisticsPanel from './StatisticsPanel.vue';
-import { StatisticsCache, StatisticsSnapshot } from './storage';
+import { StatisticsCache } from './storage';
 
 /**
  * 统计数据接口

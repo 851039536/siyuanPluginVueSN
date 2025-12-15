@@ -1,0 +1,38 @@
+name: SCSS 样式审查与优化
+description: 审查 SiYuan 插件 Vue 组件中的样式代码，确保符合模块化、主题兼容与响应式规范。
+
+checks:
+  - title: "将 <style> 内容提取为 index.scss 文件"
+    description: "若 .vue 文件中存在 <style scoped lang=\"scss\"> 块，应将其内容移至同目录下的 index.scss，并通过 @use 引入。"
+    importance: ⭐⭐⭐⭐⭐
+    done: false
+
+  - title: "使用 @use 而非 @import"
+    description: "确保在 <style> 中使用 @use \"./index.scss\"; 引入本地样式，避免使用已废弃的 @import。"
+    importance: ⭐⭐⭐⭐
+    done: false
+
+  - title: "支持深色/浅色主题"
+    description: "样式需通过 CSS 变量（如 var(--b3-theme-background)）或 SCSS 条件判断适配 SiYuan 的 dark/light 主题，禁止硬编码颜色值。"
+    importance: ⭐⭐⭐⭐⭐
+    done: false
+
+  - title: "实现响应式设计"
+    description: "关键 UI 元素（如按钮、面板、输入框）需在移动端（max-width: 768px）下正常显示，使用媒体查询或弹性布局。"
+    importance: ⭐⭐⭐⭐
+    done: false
+
+  - title: "移除冗余 CSS 规则"
+    description: "删除未被使用的类、重复的选择器或可合并的样式声明，提升代码简洁性与维护性。"
+    importance: ⭐⭐⭐
+    done: false
+
+  - title: "避免全局样式污染"
+    description: "所有样式必须使用 scoped 或 BEM 命名规范，防止影响其他插件或主应用 UI。"
+    importance: ⭐⭐⭐⭐
+    done: false
+
+  - title: "SCSS 语法规范"
+    description: "使用嵌套、变量、mixin 等 SCSS 特性提升可读性；禁止在 SCSS 中混用 px（推荐使用 rem/vw/em）。"
+    importance: ⭐⭐⭐
+    done: false

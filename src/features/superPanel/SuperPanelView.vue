@@ -161,10 +161,136 @@ import FeatureCard from './components/FeatureCard.vue'
 import type { Feature } from './types'
 import { showMessage } from 'siyuan'
 
+// AI 模型配置常量
+const AI_MODELS_CONFIG = {
+  tongyi: {
+    common: [
+      { value: 'qwen-plus', label: 'Qwen Plus (推荐)' },
+      { value: 'qwen-turbo', label: 'Qwen Turbo (快速)' },
+      { value: 'qwen-max', label: 'Qwen Max (最强)' }
+    ],
+    all: [
+      { value: 'qwen-long', label: 'Qwen Long (长文本)' },
+      { value: 'qwen-vl-plus', label: 'Qwen VL Plus (视觉)' },
+      { value: 'qwen-vl-max', label: 'Qwen VL Max (视觉最强)' }
+    ]
+  },
+  openai: {
+    common: [
+      { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo (推荐)' },
+      { value: 'gpt-4', label: 'GPT-4' },
+      { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' }
+    ],
+    all: [
+      { value: 'gpt-4o', label: 'GPT-4o' },
+      { value: 'gpt-4o-mini', label: 'GPT-4o Mini' }
+    ]
+  },
+  deepseek: {
+    common: [
+      { value: 'deepseek-chat', label: 'DeepSeek Chat (推荐)' },
+      { value: 'deepseek-coder', label: 'DeepSeek Coder (代码)' },
+      { value: 'deepseek-reasoner', label: 'DeepSeek Reasoner (思考)' },
+    ],
+    all: []
+  },
+  custom: {
+    common: [],
+    all: []
+  }
+} as const
+
+// 默认模型配置
+const DEFAULT_MODELS = {
+  tongyi: 'qwen-plus',
+  openai: 'gpt-3.5-turbo',
+  deepseek: 'deepseek-chat',
+  custom: ''
+} as const
+
+// API 占位符配置
+const API_PLACEHOLDERS = {
+  tongyi: '请输入通义千问API密钥',
+  openai: '请输入OpenAI API密钥',
+  deepseek: '请输入DeepSeek API密钥',
+  custom: '请输入自定义API密钥'
+} as const
+
+// AI 设置接口
+interface AiSettings {
+  provider: string
+  model: string
+  apiKey: string
+  customEndpoint: string
+}
+
+// 插件设置接口
+interface PluginSettings {
+  // AI 相关设置
+  aiApiProvider?: string
+  aiModel?: string
+  aiCustomModel?: string
+  aiApiKey?: string
+  aiCustomEndpoint?: string
+
+  // 功能开关设置
+  enableTableOfContents?: boolean
+  enableImageCompressor?: boolean
+  enableDocNavigation?: boolean
+  enablePageLock?: boolean
+  enableWordQuery?: boolean
+  enableGeneralSettings?: boolean
+  enableQRCode?: boolean
+  enableUnitConverter?: boolean
+  enableShortcuts?: boolean
+  enableDiskBrowser?: boolean
+  enableCodeImageGenerator?: boolean
+  enableAIContentGenerator?: boolean
+  enableStatistics?: boolean
+  enablePronunciation?: boolean
+  enableEncryption?: boolean
+  enableVideo?: boolean
+  enableEverythingSearch?: boolean
+  enableSystemMonitor?: boolean
+  enableApiReference?: boolean
+  enableFloatingToolbar?: boolean
+  enableFloatingBox?: boolean
+}
+
+// 国际化接口
+interface I18n {
+  title?: string
+  enableAll?: string
+  disableAll?: string
+  aiSettings?: string
+  refresh?: string
+  close?: string
+  apiProvider?: string
+  tongyiQianwen?: string
+  openAI?: string
+  deepSeek?: string
+  customApi?: string
+  aiModel?: string
+  commonModels?: string
+  allModels?: string
+  customModel?: string
+  customModelName?: string
+  customModelPlaceholder?: string
+  customModelDesc?: string
+  apiKey?: string
+  tongyiQianwenPlaceholder?: string
+  openAIPlaceholder?: string
+  deepSeekPlaceholder?: string
+  customApiPlaceholder?: string
+  customEndpoint?: string
+  // ... 其他 i18n 键
+  [key: string]: any // 允许访问其他可能的键
+}
+
 interface Props {
   visible: boolean
-  settings: any
-  i18n: any
+  settings: PluginSettings
+  i18n: I18n
 }
 
 interface Emits {
@@ -173,7 +299,7 @@ interface Emits {
   (e: 'toggleFeature', featureId: string, enabled: boolean): void
   (e: 'toggleAllFeatures', enabled: boolean): void
   (e: 'refresh'): Promise<void>
-  (e: 'updateAiSettings', settings: { provider: string; model: string; apiKey: string; customEndpoint: string }): Promise<void>
+  (e: 'updateAiSettings', settings: AiSettings): Promise<void>
 }
 
 const props = defineProps<Props>()
@@ -198,56 +324,22 @@ const toggleAiSettings = () => {
 
 // 获取可用模型列表
 const getAvailableModels = () => {
-  const modelsByProvider: Record<string, { common: Array<{value: string, label: string}>, all: Array<{value: string, label: string}> }> = {
-    tongyi: {
-      common: [
-        { value: 'qwen-plus', label: 'Qwen Plus (推荐)' },
-        { value: 'qwen-turbo', label: 'Qwen Turbo (快速)' },
-        { value: 'qwen-max', label: 'Qwen Max (最强)' }
-      ],
-      all: [
-        { value: 'qwen-long', label: 'Qwen Long (长文本)' },
-        { value: 'qwen-vl-plus', label: 'Qwen VL Plus (视觉)' },
-        { value: 'qwen-vl-max', label: 'Qwen VL Max (视觉最强)' }
-      ]
-    },
-    openai: {
-      common: [
-        { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo (推荐)' },
-        { value: 'gpt-4', label: 'GPT-4' },
-        { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' }
-      ],
-      all: [
-        { value: 'gpt-4o', label: 'GPT-4o' },
-        { value: 'gpt-4o-mini', label: 'GPT-4o Mini' }
-      ]
-    },
-    deepseek: {
-      common: [
-        { value: 'deepseek-chat', label: 'DeepSeek Chat (推荐)' },
-        { value: 'deepseek-coder', label: 'DeepSeek Coder (代码)' },
-        { value: 'deepseek-reasoner', label: 'DeepSeek Reasoner (思考)' },
-      ],
-      all: []
-    },
-    custom: {
-      common: [],
-      all: []
-    }
-  }
-
-  return modelsByProvider[localAiProvider.value] || { common: [], all: [] }
+  return AI_MODELS_CONFIG[localAiProvider.value as keyof typeof AI_MODELS_CONFIG] || { common: [], all: [] }
 }
 
 // 获取API密钥占位符
 const getApiKeyPlaceholder = () => {
-  const placeholders: Record<string, string> = {
-    tongyi: props.i18n.tongyiQianwenPlaceholder || '请输入通义千问API密钥',
-    openai: props.i18n.openAIPlaceholder || '请输入OpenAI API密钥',
-    deepseek: props.i18n.deepSeekPlaceholder || '请输入DeepSeek API密钥',
-    custom: props.i18n.customApiPlaceholder || '请输入自定义API密钥'
+  const defaultPlaceholder = API_PLACEHOLDERS[localAiProvider.value as keyof typeof API_PLACEHOLDERS] || '请输入API密钥'
+
+  // 优先使用 i18n 中的占位符，如果没有则使用默认值
+  const i18nPlaceholders: Record<string, string | undefined> = {
+    tongyi: props.i18n.tongyiQianwenPlaceholder,
+    openai: props.i18n.openAIPlaceholder,
+    deepseek: props.i18n.deepSeekPlaceholder,
+    custom: props.i18n.customApiPlaceholder
   }
-  return placeholders[localAiProvider.value] || '请输入API密钥'
+
+  return i18nPlaceholders[localAiProvider.value] || defaultPlaceholder
 }
 
 // 获取API密钥描述
@@ -264,13 +356,7 @@ const getApiKeyDescription = () => {
 // 处理供应商变更
 const handleProviderChange = async () => {
   // 切换供应商时，自动选择该供应商的默认模型
-  const defaultModels: Record<string, string> = {
-    tongyi: 'qwen-plus',
-    openai: 'gpt-3.5-turbo',
-    deepseek: 'deepseek-chat',
-    custom: ''
-  }
-  localAiModel.value = defaultModels[localAiProvider.value] || ''
+  localAiModel.value = DEFAULT_MODELS[localAiProvider.value as keyof typeof DEFAULT_MODELS] || ''
   await saveAiSettings()
   showMessage('供应商已更新', 2000, 'info')
 }

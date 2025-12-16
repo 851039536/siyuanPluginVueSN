@@ -1,0 +1,460 @@
+// SuperPanelView 主样式文件
+@use 'sass:map';
+@use 'sass:string';
+
+// 引入模块专属文件
+@use './variables' as *;
+@use './mixins' as *;
+
+// 引入功能卡片样式（包含变量和mixins）
+@use './feature-card';
+
+// 引入全局样式（如果存在）
+// @use '../../styles/variables' as *;
+// @use '../../styles/mixins' as *;
+// @use '../../styles/themes' as *;
+
+// ==================== 遮罩层样式 ====================
+
+.super-panel-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(2px);
+  z-index: $z-overlay;
+
+  // 进入/离开动画
+  &.overlay-enter-active,
+  &.overlay-leave-active {
+    transition: opacity $transition-normal ease;
+  }
+
+  &.overlay-enter-from,
+  &.overlay-leave-to {
+    opacity: 0;
+  }
+}
+
+// ==================== 面板容器样式 ====================
+
+.super-panel-container {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: $panel-width;
+  height: 100vh;
+  background: var(--b3-theme-background);
+  box-shadow: -2px 0 12px rgba(0, 0, 0, 0.15);
+  z-index: $z-panel;
+  display: flex;
+  flex-direction: column;
+
+  // 进入/离开动画
+  &.panel-enter-active,
+  &.panel-leave-active {
+    transition: transform $transition-normal cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  &.panel-enter-from,
+  &.panel-leave-to {
+    transform: translateX(100%);
+  }
+}
+
+// ==================== 面板头部样式 ====================
+
+.super-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-lg $spacing-xl;
+  min-height: $panel-header-height;
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  background: var(--b3-theme-surface);
+  flex-shrink: 0;
+}
+
+.super-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--b3-theme-on-background);
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+// ==================== 头部按钮样式 ====================
+
+.super-panel-settings,
+.super-panel-refresh,
+.super-panel-close,
+.header-action-btn {
+  @include button-reset;
+  width: $btn-size;
+  height: $btn-size;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--b3-theme-on-surface);
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+  }
+}
+
+// 特殊按钮样式
+.header-action-btn {
+  &.enable-all-btn {
+    color: #10b981;
+
+    &:hover {
+      background: rgba(16, 185, 129, 0.15);
+    }
+  }
+
+  &.disable-all-btn {
+    color: #ef4444;
+
+    &:hover {
+      background: rgba(239, 68, 68, 0.15);
+    }
+  }
+}
+
+.super-panel-refresh {
+  &:hover:not(:disabled) {
+    .refresh-icon:not(.spinning) {
+      animation: rotate $transition-slow ease-in-out;
+    }
+  }
+}
+
+.super-panel-close {
+  &:hover {
+    background: var(--b3-theme-error-lighter);
+  }
+}
+
+.refresh-icon {
+  display: block;
+
+  &.spinning {
+    animation: rotate 1s linear infinite;
+  }
+}
+
+// ==================== AI配置面板样式 ====================
+
+.ai-settings-panel {
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  background: var(--b3-theme-surface-lighter);
+  @include slide-down-animation;
+  flex-shrink: 0;
+}
+
+.ai-settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-md $spacing-lg;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--b3-theme-on-surface);
+  background: var(--b3-theme-surface);
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+}
+
+.settings-close-btn {
+  @include button-reset;
+  padding: $spacing-xs;
+  color: var(--b3-theme-on-surface);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background: var(--b3-theme-error-lighter);
+    transform: rotate(90deg);
+  }
+}
+
+.ai-settings-content {
+  padding: $spacing-lg;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.setting-group {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.setting-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--b3-theme-on-surface);
+}
+
+// ==================== 表单控件样式 ====================
+
+.setting-select,
+.setting-input {
+  padding: $spacing-sm $spacing-md;
+  border: 2px solid var(--b3-theme-surface-light);
+  border-radius: 6px;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  outline: none;
+  font-size: 13px;
+  transition: all $transition-fast ease;
+
+  &:hover {
+    border-color: var(--b3-theme-primary-lighter);
+  }
+
+  &:focus {
+    border-color: var(--b3-theme-primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); // 使用固定RGB值确保兼容性
+  }
+}
+
+.setting-select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667' d='M6 9L2 5h8z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right $spacing-md center;
+  padding-right: 36px;
+}
+
+.setting-input-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+
+  .setting-input {
+    flex: 1;
+    border-radius: 6px 0 0 6px;
+  }
+}
+
+.toggle-visibility-btn {
+  @include button-reset;
+  padding: $spacing-sm $spacing-md;
+  background: var(--b3-theme-surface);
+  border: 2px solid var(--b3-theme-surface-light);
+  border-left: none;
+  border-radius: 0 6px 6px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--b3-theme-on-surface);
+
+  &:hover {
+    background: var(--b3-theme-primary);
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-on-primary);
+  }
+}
+
+.setting-desc {
+  font-size: 12px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
+  line-height: 1.4;
+}
+
+// ==================== 面板内容样式 ====================
+
+.super-panel-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: $spacing-lg;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: $spacing-sm;
+  align-content: start;
+  @include scrollbar-thin;
+}
+
+// ==================== 响应式设计 ====================
+
+// 平板设备适配
+@media (max-width: 768px) {
+  .super-panel-container {
+    width: 100vw;
+  }
+
+  .super-panel-header {
+    padding: $spacing-md $spacing-lg;
+  }
+
+  .super-panel-title {
+    font-size: 14px;
+    gap: $spacing-sm;
+  }
+
+  .super-panel-settings,
+  .super-panel-refresh,
+  .super-panel-close,
+  .header-action-btn {
+    width: $btn-size-mobile;
+    height: $btn-size-mobile;
+  }
+
+  .super-panel-content {
+    grid-template-columns: repeat(2, 1fr);
+    padding: $spacing-md;
+  }
+
+  .ai-settings-header {
+    padding: 10px $spacing-md;
+    font-size: 13px;
+  }
+
+  .ai-settings-content {
+    padding: $spacing-md;
+    gap: $spacing-md;
+  }
+
+  .setting-label {
+    font-size: 12px;
+  }
+
+  .setting-select,
+  .setting-input {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .setting-select {
+    padding-right: 32px;
+  }
+
+  .toggle-visibility-btn {
+    padding: 6px 10px;
+  }
+
+  .setting-desc {
+    font-size: 11px;
+  }
+}
+
+// 手机设备适配
+@media (max-width: 480px) {
+  .super-panel-header {
+    padding: 10px $spacing-md;
+  }
+
+  .super-panel-title {
+    font-size: 13px;
+    gap: $spacing-xs;
+
+    span {
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  .header-actions {
+    gap: $spacing-xs;
+  }
+
+  .super-panel-settings,
+  .super-panel-refresh,
+  .super-panel-close,
+  .header-action-btn {
+    width: $btn-size-small;
+    height: $btn-size-small;
+  }
+
+  .super-panel-content {
+    grid-template-columns: 1fr;
+    padding: $spacing-sm;
+    gap: $spacing-xs;
+  }
+
+  .ai-settings-header {
+    padding: $spacing-xs 10px;
+    font-size: 12px;
+  }
+
+  .ai-settings-content {
+    padding: 10px;
+    gap: 10px;
+  }
+}
+
+// ==================== 主题增强 ====================
+
+// 深色模式优化
+@media (prefers-color-scheme: dark) {
+  .super-panel-overlay {
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  .super-panel-container {
+    box-shadow: -2px 0 20px rgba(0, 0, 0, 0.3);
+  }
+}
+
+// 高对比度模式支持
+@media (prefers-contrast: high) {
+  .setting-select,
+  .setting-input {
+    border-width: 3px;
+  }
+
+  .header-action-btn.enable-all-btn {
+    border: 2px solid #10b981;
+  }
+
+  .header-action-btn.disable-all-btn {
+    border: 2px solid #ef4444;
+  }
+}
+
+// 减少动画模式支持
+@media (prefers-reduced-motion: reduce) {
+  .overlay-enter-active,
+  .overlay-leave-active,
+  .panel-enter-active,
+  .panel-leave-active {
+    transition: none;
+  }
+
+  .refresh-icon.spinning {
+    animation: none;
+  }
+
+  .settings-close-btn:hover {
+    transform: none;
+  }
+}
+
+// ==================== 打印样式 ====================
+
+@media print {
+  .super-panel-overlay,
+  .super-panel-container {
+    display: none;
+  }
+}

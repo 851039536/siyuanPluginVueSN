@@ -1,0 +1,181 @@
+// 功能卡片样式
+@use './variables' as *;
+@use './mixins' as *;
+
+.feature-card {
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 10px;
+  padding: $spacing-lg;
+  margin-bottom: 12px;
+  transition: all $transition-fast ease;
+  cursor: pointer;
+
+  &.enabled:hover {
+    border-color: var(--b3-theme-primary-lighter);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+  }
+
+  &.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  // 响应式调整
+  @include tablet-only {
+    padding: $spacing-md;
+  }
+
+  @include mobile-only {
+    padding: $spacing-sm;
+    margin-bottom: 8px;
+  }
+}
+
+.feature-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.feature-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--b3-theme-primary-lightest);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--b3-theme-primary);
+  transition: all $transition-fast ease;
+
+  .feature-card:hover & {
+    transform: scale(1.05);
+  }
+
+  @include mobile-only {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+.feature-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.feature-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--b3-theme-on-background);
+  margin-bottom: 4px;
+  @include text-ellipsis;
+
+  @include mobile-only {
+    font-size: 13px;
+  }
+}
+
+.feature-desc {
+  font-size: 12px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
+  line-height: 1.4;
+  @include text-ellipsis-multiline(2);
+
+  @include mobile-only {
+    font-size: 11px;
+  }
+}
+
+.feature-toggle {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.feature-actions {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  margin-top: $spacing-md;
+  padding-top: $spacing-md;
+  border-top: 1px solid var(--b3-theme-surface-lighter);
+
+  @include mobile-only {
+    margin-top: $spacing-sm;
+    padding-top: $spacing-sm;
+    gap: 6px;
+  }
+}
+
+.feature-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-sm $spacing-md;
+  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--b3-theme-on-background);
+  transition: all $transition-fast ease;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 2px;
+    background: var(--b3-theme-primary);
+    transform: translateX(-2px);
+    transition: transform $transition-fast ease;
+  }
+
+  &:hover {
+    background: var(--b3-theme-primary);
+    color: var(--b3-theme-surface);
+    border-color: var(--b3-theme-primary);
+    transform: translateX(4px);
+
+    &::before {
+      transform: translateX(0);
+    }
+  }
+
+  &:active {
+    transform: translateX(2px);
+  }
+
+  @include mobile-only {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+}
+
+.action-hotkey {
+  font-size: 11px;
+  opacity: 0.6;
+  font-family: monospace;
+  background: var(--b3-theme-surface-lighter);
+  padding: 2px 6px;
+  border-radius: 3px;
+  transition: all $transition-fast ease;
+
+  .feature-action-btn:hover & {
+    background: rgba(255, 255, 255, 0.2);
+    opacity: 0.8;
+  }
+
+  @include mobile-only {
+    font-size: 10px;
+    padding: 1px 4px;
+  }
+}

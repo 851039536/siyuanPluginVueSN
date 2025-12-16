@@ -1,172 +1,59 @@
-/* ========== 全局紧凑模式样式 ========== */
+// ========== SCSS 变量定义 ==========
 
-/* 当整个思源应用处于紧凑模式时 */
-html.siyuan-compact-mode {
-  /* 减少全局间距 */
-  --siyuan-compact-padding: 8px;
-  --siyuan-compact-gap: 8px;
-  --siyuan-compact-border-radius: 6px;
-  --siyuan-compact-font-size-reduction: 0.9;
+// 响应式断点
+$mobile-breakpoint: 768px;
+$tablet-breakpoint: 1024px;
 
-  /* 编辑器工具栏紧凑 */
-  .toolbar {
-    gap: 4px;
-    padding: 4px 8px;
-  }
+// 紧凑模式变量
+$compact-padding: 8px;
+$compact-gap: 8px;
+$compact-border-radius: 6px;
+$compact-font-size-reduction: 0.9;
 
-  /* 侧边栏紧凑 */
-  .sidebar {
-    font-size: 13px;
-  }
+// 代码块变量
+$codeblock-padding: 12px;
+$codeblock-font-size: 13px;
+$codeblock-border-radius: 8px;
+$codeblock-transition: all 0.2s ease;
+$codeblock-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 
-  .dock-item {
-    padding: 6px;
-  }
+// 动画持续时间
+$animation-fast: 0.2s;
+$animation-normal: 0.3s;
+$animation-slow: 3s;
 
-  /* 文件树紧凑 */
-  .file-tree {
-    font-size: 12px;
-  }
+// ========== Mixin 定义 ==========
 
-  .b3-list-item {
-    padding: 4px 8px;
-    min-height: 24px;
-  }
-
-  /* 编辑区紧凑 */
-  .protyle-content {
-    padding: 8px;
-  }
-
-  /* 标签紧凑 */
-  .tabs {
-    height: 28px;
-  }
-
-  .tab {
-    padding: 6px 12px;
-    font-size: 12px;
-  }
-
-  /* 对话框紧凑 */
-  .b3-dialog {
-    padding: 12px;
-  }
-
-  .b3-dialog__header {
-    padding: 8px 12px;
-    font-size: 14px;
-  }
-
-  .b3-dialog__body {
-    padding: 8px;
-    font-size: 13px;
-  }
-
-  /* 按钮紧凑 */
-  .b3-button {
-    padding: 6px 12px;
-    font-size: 12px;
-  }
-
-  /* 输入框紧凑 */
-  .b3-text-field,
-  .b3-input {
-    padding: 6px 8px;
-    font-size: 12px;
-  }
-
-  /* 下拉框紧凑 */
-  .b3-select {
-    padding: 6px 8px;
-    font-size: 12px;
-  }
-
-  .b3-menu {
-    padding: 4px 0;
-  }
-
-  .b3-menu__item {
-    padding: 6px 12px;
-    font-size: 12px;
-    min-height: 24px;
-  }
-
-  /* 块编辑器紧凑 */
-  .bq,
-  .li,
-  .p {
-    line-height: 1.4;
-    margin: 4px 0;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    margin: 4px 0;
-    padding: 4px 0;
-  }
-
-  /* 代码块紧凑 */
-  .hljs {
-    padding: 6px;
-  }
-
-  /* 表格紧凑 */
-  table {
-    padding: 4px;
-  }
-
-  td, th {
-    padding: 4px 8px;
-  }
-}
-
-/* ========== 代码块美化样式 ========== */
-
-/* GitHub 风格代码块 - 深色主题适配 */
-body.codeblock-style-github {
+// 代码块基础样式
+@mixin codeblock-base {
   .protyle-wysiwyg .code-block,
   .b3-typography .code-block,
   .protyle-wysiwyg [data-node-id][data-type="NodeCodeBlock"],
   .b3-typography [data-node-id][data-type="NodeCodeBlock"] {
-    border: 1px solid var(--b3-theme-outline);
-    border-radius: 8px;
-    background: var(--b3-theme-surface);
     overflow: hidden;
-    margin: 8px 0;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    transition: all 0.2s ease;
-
-    &:hover {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      transform: translateY(-1px);
-    }
+    margin: 0.5rem 0;
+    transition: $codeblock-transition;
 
     .protyle-action {
-      background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.03);
-      border-bottom: 1px solid var(--b3-theme-outline);
-      padding: 2px 14px;
       display: flex;
       align-items: center;
-      gap: 8px;
-      min-height: 24px;
+      gap: 0.5rem;
+      min-height: 1.5rem;
       position: relative;
 
       .protyle-action__language {
         position: absolute;
         left: 50%;
         transform: translateX(-50%);
-        font-size: 12px;
-        color: var(--b3-theme-on-surface-variant);
+        font-size: 0.75rem;
         font-weight: 600;
         letter-spacing: 0.5px;
-        text-transform: uppercase;
       }
 
       .protyle-icon {
         margin-left: auto;
-        color: var(--b3-theme-on-surface-variant);
         opacity: 0.7;
-        transition: opacity 0.2s ease;
+        transition: opacity $animation-fast ease;
 
         &:hover {
           opacity: 1;
@@ -176,12 +63,224 @@ body.codeblock-style-github {
 
     .hljs {
       background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.015) !important;
-      padding: var(--codeblock-padding, 12px) 14px;
-      padding-top: 12px;
-      font-family: 'Fira Code', 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
-      font-size: var(--codeblock-font-size, 13px);
+      padding: var(--codeblock-padding, #{$codeblock-padding}) 14px;
+      padding-top: #{$codeblock-padding};
+      font-size: var(--codeblock-font-size, #{$codeblock-font-size});
       line-height: 1.6;
       color: var(--b3-theme-on-surface);
+    }
+
+    // 移动端适配
+    @media (max-width: $mobile-breakpoint) {
+      margin: 0.25rem 0;
+
+      .protyle-action {
+        min-height: 1.25rem;
+        padding: 0.125rem 0.75rem;
+      }
+
+      .hljs {
+        padding: 0.75rem 0.75rem 0.75rem 1rem;
+        font-size: 0.75rem;
+      }
+    }
+  }
+}
+
+// 紧凑模式响应式适配
+@mixin compact-responsive {
+  @media (max-width: $mobile-breakpoint) {
+    --siyuan-compact-padding: #{$compact-padding * 0.5};
+    --siyuan-compact-gap: #{$compact-gap * 0.5};
+    --siyuan-compact-font-size-reduction: 0.8;
+
+    .toolbar {
+      gap: 0.125rem;
+      padding: 0.125rem 0.25rem;
+    }
+
+    .protyle-content {
+      padding: 0.25rem;
+    }
+
+    .b3-dialog {
+      padding: 0.5rem;
+    }
+
+    .b3-dialog__header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+    }
+
+    .b3-dialog__body {
+      padding: 0.5rem;
+      font-size: 0.75rem;
+    }
+  }
+}
+
+// ========== 全局紧凑模式样式 ==========
+
+/* 当整个思源应用处于紧凑模式时 */
+html.siyuan-compact-mode {
+  /* 减少全局间距 */
+  --siyuan-compact-padding: #{$compact-padding};
+  --siyuan-compact-gap: #{$compact-gap};
+  --siyuan-compact-border-radius: #{$compact-border-radius};
+  --siyuan-compact-font-size-reduction: #{$compact-font-size-reduction};
+
+  /* 编辑器工具栏紧凑 */
+  .toolbar {
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  /* 侧边栏紧凑 */
+  .sidebar {
+    font-size: 0.8125rem;
+  }
+
+  .dock-item {
+    padding: 0.375rem;
+  }
+
+  /* 文件树紧凑 */
+  .file-tree {
+    font-size: 0.75rem;
+  }
+
+  .b3-list-item {
+    padding: 0.25rem 0.5rem;
+    min-height: 1.5rem;
+  }
+
+  /* 编辑区紧凑 */
+  .protyle-content {
+    padding: 0.5rem;
+  }
+
+  /* 标签紧凑 */
+  .tabs {
+    height: 1.75rem;
+  }
+
+  .tab {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  /* 对话框紧凑 */
+  .b3-dialog {
+    padding: 0.75rem;
+  }
+
+  .b3-dialog__header {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
+
+  .b3-dialog__body {
+    padding: 0.5rem;
+    font-size: 0.8125rem;
+  }
+
+  /* 按钮紧凑 */
+  .b3-button {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  /* 输入框紧凑 */
+  .b3-text-field,
+  .b3-input {
+    padding: 0.375rem 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  /* 下拉框紧凑 */
+  .b3-select {
+    padding: 0.375rem 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .b3-menu {
+    padding: 0.25rem 0;
+  }
+
+  .b3-menu__item {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    min-height: 1.5rem;
+  }
+
+  /* 块编辑器紧凑 */
+  .bq,
+  .li,
+  .p {
+    line-height: 1.4;
+    margin: 0.25rem 0;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    margin: 0.25rem 0;
+    padding: 0.25rem 0;
+  }
+
+  /* 代码块紧凑 */
+  .hljs {
+    padding: 0.375rem;
+  }
+
+  /* 表格紧凑 */
+  table {
+    padding: 0.25rem;
+  }
+
+  td, th {
+    padding: 0.25rem 0.5rem;
+  }
+
+  // 应用响应式适配
+  @include compact-responsive;
+}
+
+// ========== 代码块美化样式 ==========
+
+/* GitHub 风格代码块 - 主题适配 */
+body.codeblock-style-github {
+  @include codeblock-base;
+
+  .protyle-wysiwyg .code-block,
+  .b3-typography .code-block,
+  .protyle-wysiwyg [data-node-id][data-type="NodeCodeBlock"],
+  .b3-typography [data-node-id][data-type="NodeCodeBlock"] {
+    border: 1px solid var(--b3-theme-outline);
+    border-radius: $codeblock-border-radius;
+    background: var(--b3-theme-surface);
+    box-shadow: $codeblock-shadow;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      transform: translateY(-0.0625rem);
+    }
+
+    .protyle-action {
+      background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.03);
+      border-bottom: 1px solid var(--b3-theme-outline);
+      padding: 0.125rem 0.875rem;
+
+      .protyle-action__language {
+        color: var(--b3-theme-on-surface-variant);
+        text-transform: uppercase;
+      }
+
+      .protyle-icon {
+        color: var(--b3-theme-on-surface-variant);
+      }
+    }
+
+    .hljs {
+      font-family: 'Fira Code', 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
       counter-reset: line;
 
       /* 添加行号 */
@@ -200,47 +299,41 @@ body.codeblock-style-github {
   }
 }
 
-/* Mac 风格代码块 - 深色主题适配 */
+/* Mac 风格代码块 - 主题适配 */
 body.codeblock-style-mac {
+  @include codeblock-base;
+
   .protyle-wysiwyg .code-block,
   .b3-typography .code-block,
   .protyle-wysiwyg [data-node-id][data-type="NodeCodeBlock"],
   .b3-typography [data-node-id][data-type="NodeCodeBlock"] {
     border: 1px solid var(--b3-theme-outline);
-    border-radius: 10px;
-    overflow: hidden;
+    border-radius: 0.625rem;
     box-shadow: 0 3px 12px rgba(0, 0, 0, 0.25);
-    margin: 8px 0;
-    transition: all 0.2s ease;
 
     &:hover {
       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-      transform: translateY(-2px);
+      transform: translateY(-0.125rem);
     }
 
     .protyle-action {
       background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.04);
       border-bottom: 1px solid var(--b3-theme-outline);
-      padding: 2px 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      position: relative;
-      min-height: 24px;
+      padding: 0.125rem 0.75rem;
 
       &::before {
         content: '';
-        width: 12px;
-        height: 12px;
+        width: 0.75rem;
+        height: 0.75rem;
         border-radius: 50%;
-        background: #ff5f56;
-        border: 1px solid #e0443e;
+        background: var(--mac-button-red, #ff5f56);
+        border: 1px solid var(--mac-button-red-border, #e0443e);
         box-shadow:
-          18px 0 0 0 #ffbd2e,
-          18px 0 0 1px #dea123,
-          36px 0 0 0 #27c93f,
-          36px 0 0 1px #1aab29;
-        transition: all 0.2s ease;
+          1.125rem 0 0 0 var(--mac-button-yellow, #ffbd2e),
+          1.125rem 0 0 1px var(--mac-button-yellow-border, #dea123),
+          2.25rem 0 0 0 var(--mac-button-green, #27c93f),
+          2.25rem 0 0 1px var(--mac-button-green-border, #1aab29);
+        transition: all $animation-fast ease;
       }
 
       &:hover::before {
@@ -248,39 +341,20 @@ body.codeblock-style-mac {
       }
 
       .protyle-action__language {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        font-size: 11px;
         color: var(--b3-theme-on-surface-variant);
-        font-weight: 600;
-        letter-spacing: 0.5px;
       }
 
       .protyle-icon {
-        margin-left: auto;
         color: var(--b3-theme-on-surface-variant);
-        opacity: 0.7;
-        transition: opacity 0.2s ease;
-
-        &:hover {
-          opacity: 1;
-        }
       }
     }
 
     .hljs {
-      background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.015) !important;
-      padding: var(--codeblock-padding, 12px) 14px;
-      padding-top: 12px;
       font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
-      font-size: var(--codeblock-font-size, 13px);
-      line-height: 1.6;
-      color: var(--b3-theme-on-surface);
 
       /* macOS 风格的滚动条 */
       &::-webkit-scrollbar {
-        height: 8px;
+        height: 0.5rem;
       }
 
       &::-webkit-scrollbar-track {
@@ -289,7 +363,7 @@ body.codeblock-style-mac {
 
       &::-webkit-scrollbar-thumb {
         background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.2);
-        border-radius: 4px;
+        border-radius: 0.25rem;
 
         &:hover {
           background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.3);
@@ -301,12 +375,13 @@ body.codeblock-style-mac {
 
 /* 默认风格代码块 - 保持思源原有样式但添加微妙增强 */
 body.codeblock-style-default {
+  @include codeblock-base;
+
   .protyle-wysiwyg .code-block,
   .b3-typography .code-block,
   .protyle-wysiwyg [data-node-id][data-type="NodeCodeBlock"],
   .b3-typography [data-node-id][data-type="NodeCodeBlock"] {
-    /* 使用思源默认样式，添加微妙的过渡效果 */
-    transition: all 0.2s ease;
+    transition: $codeblock-transition;
 
     &:hover {
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -314,58 +389,67 @@ body.codeblock-style-default {
 
     .hljs {
       font-family: 'Fira Code', 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
-      line-height: 1.6;
     }
   }
 }
 
-/* 卡通风格代码块 */
+/* 卡通风格代码块 - 主题适配 */
 body.codeblock-style-cartoon {
+  // 定义卡通风格的颜色变量
+  --cartoon-color-1: var(--b3-theme-primary, #ff6b9d);
+  --cartoon-color-2: var(--b3-theme-secondary, #feca57);
+  --cartoon-color-3: var(--b3-theme-tertiary, #48dbfb);
+  --cartoon-color-4: var(--b3-theme-success, #1dd1a1);
+
+  @include codeblock-base;
+
   .protyle-wysiwyg .code-block,
   .b3-typography .code-block,
   .protyle-wysiwyg [data-node-id][data-type="NodeCodeBlock"],
   .b3-typography [data-node-id][data-type="NodeCodeBlock"] {
     border: 2px solid;
-    border-image: linear-gradient(135deg, #ff6b9d, #feca57, #48dbfb, #1dd1a1) 1;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 3px 12px rgba(255, 107, 157, 0.25);
-    margin: 8px 0;
-    transition: all 0.3s ease;
-    animation: cartoonGlow 3s ease-in-out infinite;
+    border-image: linear-gradient(135deg,
+      var(--cartoon-color-1),
+      var(--cartoon-color-2),
+      var(--cartoon-color-3),
+      var(--cartoon-color-4)
+    ) 1;
+    border-radius: $codeblock-border-radius;
+    box-shadow: 0 3px 12px rgba(var(--b3-theme-primary-rgb, 255, 107, 157), 0.25);
+    animation: cartoonGlow $animation-slow ease-in-out infinite;
+    transition: all $animation-normal ease;
 
     &:hover {
-      box-shadow: 0 6px 24px rgba(255, 107, 157, 0.4);
-      transform: translateY(-2px) scale(1.01);
+      box-shadow: 0 6px 24px rgba(var(--b3-theme-primary-rgb, 255, 107, 157), 0.4);
+      transform: translateY(-0.125rem) scale(1.01);
     }
 
     .protyle-action {
       background: linear-gradient(135deg,
-        rgba(255, 107, 157, 0.06),
-        rgba(254, 202, 87, 0.06),
-        rgba(72, 219, 251, 0.06),
-        rgba(29, 209, 161, 0.06)
+        rgba(var(--b3-theme-primary-rgb, 255, 107, 157), 0.06),
+        rgba(var(--b3-theme-secondary-rgb, 254, 202, 87), 0.06),
+        rgba(var(--b3-theme-tertiary-rgb, 72, 219, 251), 0.06),
+        rgba(var(--b3-theme-success-rgb, 29, 209, 161), 0.06)
       );
       border-bottom: 1px dashed var(--b3-theme-outline);
-      padding: 2px 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      min-height: 24px;
-      position: relative;
+      padding: 0.125rem 0.75rem;
 
       &::before {
         content: '✨';
-        font-size: 12px;
-        animation: sparkleRotate 3s linear infinite;
+        font-size: 0.75rem;
+        animation: sparkleRotate $animation-slow linear infinite;
       }
 
       .protyle-action__language {
         flex: 1;
         text-align: center;
-        font-size: 11px;
         font-weight: 600;
-        background: linear-gradient(135deg, #ff6b9d, #feca57, #48dbfb, #1dd1a1);
+        background: linear-gradient(135deg,
+          var(--cartoon-color-1),
+          var(--cartoon-color-2),
+          var(--cartoon-color-3),
+          var(--cartoon-color-4)
+        );
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -374,8 +458,7 @@ body.codeblock-style-cartoon {
 
       .protyle-icon {
         color: var(--b3-theme-on-surface-variant);
-        opacity: 0.7;
-        transition: all 0.2s ease;
+        transition: all $animation-fast ease;
 
         &:hover {
           opacity: 1;
@@ -385,23 +468,18 @@ body.codeblock-style-cartoon {
     }
 
     .hljs {
-      background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.015) !important;
-      padding: var(--codeblock-padding, 12px) 12px;
-      padding-top: 12px;
+      padding: var(--codeblock-padding, #{$codeblock-padding}) 0.75rem;
       font-family: 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive, monospace;
-      font-size: var(--codeblock-font-size, 13px);
-      line-height: 1.6;
-      color: var(--b3-theme-on-surface);
       position: relative;
 
       &::after {
         content: '🎨';
         position: absolute;
-        bottom: 6px;
-        right: 6px;
-        font-size: 16px;
+        bottom: 0.375rem;
+        right: 0.375rem;
+        font-size: 1rem;
         opacity: 0.15;
-        animation: float 3s ease-in-out infinite;
+        animation: float $animation-slow ease-in-out infinite;
       }
     }
   }
@@ -422,8 +500,8 @@ body.codeblock-style-cartoon {
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-5px); }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-0.3125rem); }
 }
 
 /* 通用代码块增强 - 适用于所有风格 */
@@ -432,7 +510,6 @@ body[class*="codeblock-style-"] {
   .b3-typography .code-block,
   .protyle-wysiwyg [data-node-id][data-type="NodeCodeBlock"],
   .b3-typography [data-node-id][data-type="NodeCodeBlock"] {
-
     /* 代码块内的选中效果 */
     .hljs ::selection {
       background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.3);
@@ -441,22 +518,24 @@ body[class*="codeblock-style-"] {
     /* 代码块复制按钮优化 */
     .protyle-action__copy {
       opacity: 0;
-      transition: opacity 0.2s ease;
+      transition: opacity $animation-fast ease;
     }
 
     &:hover .protyle-action__copy {
       opacity: 1;
     }
 
-    /* 代码块语言标签样式优化 */
-    .protyle-action__language {
-      padding: 0px 6px;
-      border-radius: 4px;
-      background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1);
-      transition: all 0.2s ease;
+    /* 代码块语言标签样式优化 - 仅默认风格应用 */
+    &.protyle-wysiwyg [data-node-id][data-type="NodeCodeBlock"] {
+      .protyle-action__language {
+        padding: 0 0.375rem;
+        border-radius: 0.25rem;
+        background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1);
+        transition: all $animation-fast ease;
 
-      &:hover {
-        background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.2);
+        &:hover {
+          background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.2);
+        }
       }
     }
   }

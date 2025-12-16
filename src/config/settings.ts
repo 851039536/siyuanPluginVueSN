@@ -341,8 +341,6 @@ export async function resetHeadingSettings(plugin: Plugin): Promise<boolean> {
  */
 export interface CodeBlockSettings {
   style: 'default' | 'github' | 'mac' | 'cartoon'
-  fontSize: number
-  padding: number
   enableCollapse: boolean
   collapseHeight: number
 }
@@ -352,8 +350,6 @@ export interface CodeBlockSettings {
  */
 export const DEFAULT_CODEBLOCK_SETTINGS: CodeBlockSettings = {
   style: 'default',
-  fontSize: 13,
-  padding: 14,
   enableCollapse: true,
   collapseHeight: 400
 }

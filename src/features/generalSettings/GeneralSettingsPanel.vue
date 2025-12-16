@@ -19,11 +19,6 @@
 
       <!-- 右侧内容区域 -->
       <div class="settings-content">
-        <!-- 字体设置 -->
-        <div v-show="activeCategory === 'font'" class="content-section">
-          <FontSettings :i18n="i18n" :plugin="plugin" @change="handleFontChange" />
-        </div>
-
         <!-- 高亮设置 -->
         <div v-show="activeCategory === 'highlight'" class="content-section">
           <HighlightSettings :i18n="i18n" :plugin="plugin" />
@@ -61,7 +56,6 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import FontSettings from './components/FontSettings.vue'
 import GeneralActions from './components/GeneralActions.vue'
 import PasswordSettings from './components/PasswordSettings.vue'
 import CodeBlockSettings from './components/CodeBlockSettings.vue'
@@ -83,14 +77,10 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 // 当前激活的分类
-const activeCategory = ref('font')
+const activeCategory = ref('highlight')
 
 // 分类列表
 const categories = computed(() => [
-  {
-    id: 'font',
-    label: props.i18n.fontSettings || '字体设置'
-  },
   {
     id: 'highlight',
     label: props.i18n.enableHighlight || '高亮设置'
@@ -116,14 +106,6 @@ const categories = computed(() => [
     label: props.i18n.generalActions || '通用操作'
   }
 ])
-
-function handleFontChange(settings: any) {
-  console.log('字体设置已更改:', settings)
-  props.onSettingsChange?.({
-    moduleId: 'font',
-    settings
-  })
-}
 
 function handleCodeBlockChange(settings: any) {
   console.log('代码块设置已更改:', settings)
@@ -159,7 +141,6 @@ function handleListChange(settings: any) {
 
 // 暴露方法给父组件
 defineExpose({
-  handleFontChange,
   handleCodeBlockChange,
   handleActionsChange,
   handleHeadingChange,

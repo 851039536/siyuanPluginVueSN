@@ -34,50 +34,6 @@
           <span class="label-icon">⚙️</span>
           <span>{{ i18n.advancedSettings || '高级设置' }}</span>
         </div>
-        <!-- 字体大小 -->
-        <div class="setting-item">
-          <label class="setting-label">
-            <span class="label-icon">📏</span>
-            {{ i18n.fontSize || '字体大小' }}
-            <span class="setting-value">{{ settings.fontSize }}px</span>
-          </label>
-          <div class="slider-container">
-            <input
-              v-model.number="settings.fontSize"
-              type="range"
-              min="10"
-              max="20"
-              step="1"
-              class="range-slider"
-            />
-            <div class="slider-labels">
-              <span>10px</span>
-              <span>20px</span>
-            </div>
-          </div>
-        </div>
-        <!-- 内边距 -->
-        <div class="setting-item">
-          <label class="setting-label">
-            <span class="label-icon">📐</span>
-            {{ i18n.codePadding || '代码间距' }}
-            <span class="setting-value">{{ settings.padding }}px</span>
-          </label>
-          <div class="slider-container">
-            <input
-              v-model.number="settings.padding"
-              type="range"
-              min="8"
-              max="32"
-              step="2"
-              class="range-slider"
-            />
-            <div class="slider-labels">
-              <span>8px</span>
-              <span>32px</span>
-            </div>
-          </div>
-        </div>
         <!-- 代码块折叠设置 -->
         <div class="setting-item">
           <label class="setting-label">
@@ -251,8 +207,6 @@ import { saveCodeBlockSettings, loadCodeBlockSettings } from '@/config/settings'
 
 interface CodeBlockSettings {
   style: 'default' | 'github' | 'mac' | 'cartoon'
-  fontSize: number
-  padding: number
   enableCollapse: boolean
   collapseHeight: number
 }
@@ -272,8 +226,6 @@ const props = withDefaults(defineProps<Props>(), {
   plugin: null,
   initialSettings: () => ({
     style: 'default',
-    fontSize: 13,
-    padding: 14,
     enableCollapse: true,
     collapseHeight: 400
   })
@@ -286,8 +238,6 @@ const showPreview = ref(true)
 
 const DEFAULT_SETTINGS: CodeBlockSettings = {
   style: 'default',
-  fontSize: 13,
-  padding: 14,
   enableCollapse: true,
   collapseHeight: 400
 }
@@ -326,15 +276,6 @@ function applyCodeBlockStyle(style: string) {
   document.body.classList.remove('codeblock-style-default', 'codeblock-style-github', 'codeblock-style-mac', 'codeblock-style-cartoon')
   // 添加新的样式类
   document.body.classList.add(`codeblock-style-${style}`)
-
-  // 应用字体大小和间距
-  applyCodeBlockCustomization()
-}
-
-function applyCodeBlockCustomization() {
-  const root = document.documentElement
-  root.style.setProperty('--codeblock-font-size', `${settings.value.fontSize}px`)
-  root.style.setProperty('--codeblock-padding', `${settings.value.padding}px`)
 }
 
 function applyCodeBlockCollapse(enable: boolean, height: number) {

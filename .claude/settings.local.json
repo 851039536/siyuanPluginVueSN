@@ -23,7 +23,8 @@
       "Skill(siyuan-skill-ui)",
       "Bash(pnpm eslint:*)",
       "Skill(vue-skill-ts-cleaner)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

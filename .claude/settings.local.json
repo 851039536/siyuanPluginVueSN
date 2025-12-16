@@ -28,7 +28,8 @@
       "Bash(pbcopy:*)",
       "Bash(clip:*)",
       "Bash(xclip:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Skill(readme-maintainer)"
     ],
     "deny": [],
     "ask": []

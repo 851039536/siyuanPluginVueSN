@@ -1558,11 +1558,21 @@ const clearContent = () => {
 // 选择目标文档
 const selectTargetDocument = async () => {
   try {
-    const docId = await getCurrentDocId();
+    // 优先使用激活窗口的文档ID，而不是依赖光标位置
+    // 这样可以确保选择的是用户当前正在查看的文档
+    const protyle = document.querySelector('.layout__wnd--active .protyle:not(.fn__none)');
+    let docId = protyle?.querySelector('.protyle-background')?.getAttribute('data-node-id') || null;
+
+    // 如果激活窗口方法失败，再使用getCurrentDocId作为备用方案
+    if (!docId) {
+      docId = await getCurrentDocId();
+    }
+
     if (!docId) {
       showMessage('无法获取当前文档，请将光标放在文档中', 3000, 'error');
       return;
     }
+
     await loadTargetDocument(docId);
   } catch (error) {
     console.error('选择文档失败:', error);
@@ -1591,6 +1601,12 @@ const loadTargetDocument = async (docId: string) => {
   // 将文档内容加载到生成内容区域（使用清理后的内容）
   generatedContent.value = cleanContent;
   displayedContent.value = cleanContent;
+
+  // 清理编辑模式相关的状态，确保重新选择文档时显示正确的状态
+  editCustomInput.value = ''; // 清理自定义输入
+  aiSuggestions.value = null; // 清理AI建议
+  plagiarismResult.value = null; // 清理查重结果
+  lastEditHistory.value = null; // 清理编辑历史
 
   // showMessage(`✓ 已选择文档: ${editTargetDoc.value.title}`, 2000, 'info');
 };

@@ -24,7 +24,11 @@
       "Bash(pnpm eslint:*)",
       "Skill(vue-skill-ts-cleaner)",
       "Bash(node:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(pbcopy:*)",
+      "Bash(clip:*)",
+      "Bash(xclip:*)",
+      "Bash(python3:*)"
     ],
     "deny": [],
     "ask": []

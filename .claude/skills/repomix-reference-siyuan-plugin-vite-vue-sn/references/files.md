@@ -43542,7 +43542,6 @@ function applyToDocument() {
   let levelCss = ''
   if (levelDisplayStyle.value !== 'none') {
     levelCss = generateLevelDisplayCss(levelDisplayStyle.value)
-    console.log('生成的层级CSS:', levelCss)
   }
 
   // 标题居中样式（仅文档标题，不影响H1-H6）

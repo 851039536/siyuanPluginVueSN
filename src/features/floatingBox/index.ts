@@ -13,22 +13,34 @@ let container: HTMLElement | null = null
  * 注册悬浮框功能
  */
 export function registerFloatingBox(plugin: Plugin): void {
+  console.log('开始注册悬浮框功能')
+
   // 创建容器
   container = document.createElement('div')
   container.id = 'floating-box-container'
 
-  // 找到 layout__center 并插入
-  const layoutCenter = document.querySelector('.layout__center.fn__flex.fn__flex-1')
-  if (layoutCenter) {
-    layoutCenter.appendChild(container)
-  } else {
-    // 如果找不到，延迟插入
-    setTimeout(() => {
-      const center = document.querySelector('.layout__center.fn__flex.fn__flex-1')
-      if (center && container) {
-        center.appendChild(container)
-      }
-    }, 1000)
+  // 多种选择器尝试
+  const selectors = [
+    '.layout__center.fn__flex.fn__flex-1',
+    '.layout__center',
+    '#workspace',
+    'body'
+  ]
+
+  let inserted = false
+
+  for (const selector of selectors) {
+    const target = document.querySelector(selector)
+    if (target) {
+      console.log(`找到目标容器: ${selector}`)
+      target.appendChild(container)
+      inserted = true
+      break
+    }
+  }
+
+  if (!inserted) {
+    console.error('未能找到合适的容器插入悬浮框')
   }
 
   // 创建 Vue 应用
@@ -36,7 +48,12 @@ export function registerFloatingBox(plugin: Plugin): void {
     i18n: (plugin.i18n as any).floatingBox || {}
   })
 
-  vueApp.mount(container)
+  try {
+    vueApp.mount(container)
+    console.log('悬浮框 Vue 应用已挂载')
+  } catch (error) {
+    console.error('悬浮框挂载失败:', error)
+  }
 
   // 保存实例以便清理
   ;(plugin as any).__floatingBox = {
@@ -46,6 +63,7 @@ export function registerFloatingBox(plugin: Plugin): void {
         container.remove()
         vueApp = null
         container = null
+        console.log('悬浮框已销毁')
       }
     }
   }

@@ -158,24 +158,131 @@
             {{ i18n.headingFontSize || '标题字体大小' }}
           </label>
 
-          <div class="font-size-container">
-            <div v-for="level in 6" :key="level" class="font-size-item">
-              <label class="font-size-label">
-                <span :class="`heading-icon-h${level}`">H{{ level }}</span>
-                <span class="font-size-text">{{ i18n[`heading${level}Size`] || `H${level} 标题大小` }}</span>
-              </label>
-              <div class="input-group">
-                <input
-                  v-model.number="headingSizes[`h${level}`]"
-                  type="number"
-                  min="10"
-                  max="64"
-                  step="1"
-                  class="number-input"
-                  @change="onFontSizeChange"
-                  @input="onFontSizeChange"
-                />
-                <span class="unit-label">px</span>
+          <!-- 2列布局：一级和二级在同一行，三级和四级在同一行，五级和六级在同一行 -->
+          <div class="font-size-grid-2col">
+            <!-- H1 & H2 -->
+            <div class="font-size-row">
+              <div class="font-size-item-horizontal">
+                <label class="font-size-label-horizontal">
+                  <span class="heading-icon-h1 heading-icon-mini">H1</span>
+                  <span class="font-size-text">{{ i18n.heading1Size || '一级标题' }}</span>
+                </label>
+                <div class="input-group-horizontal">
+                  <input
+                    v-model.number="headingSizes.h1"
+                    type="number"
+                    min="10"
+                    max="64"
+                    step="1"
+                    class="number-input-mini"
+                    @change="onFontSizeChange"
+                    @input="onFontSizeChange"
+                  />
+                  <span class="unit-label-mini">px</span>
+                </div>
+              </div>
+              <div class="font-size-item-horizontal">
+                <label class="font-size-label-horizontal">
+                  <span class="heading-icon-h2 heading-icon-mini">H2</span>
+                  <span class="font-size-text">{{ i18n.heading2Size || '二级标题' }}</span>
+                </label>
+                <div class="input-group-horizontal">
+                  <input
+                    v-model.number="headingSizes.h2"
+                    type="number"
+                    min="10"
+                    max="64"
+                    step="1"
+                    class="number-input-mini"
+                    @change="onFontSizeChange"
+                    @input="onFontSizeChange"
+                  />
+                  <span class="unit-label-mini">px</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- H3 & H4 -->
+            <div class="font-size-row">
+              <div class="font-size-item-horizontal">
+                <label class="font-size-label-horizontal">
+                  <span class="heading-icon-h3 heading-icon-mini">H3</span>
+                  <span class="font-size-text">{{ i18n.heading3Size || '三级标题' }}</span>
+                </label>
+                <div class="input-group-horizontal">
+                  <input
+                    v-model.number="headingSizes.h3"
+                    type="number"
+                    min="10"
+                    max="64"
+                    step="1"
+                    class="number-input-mini"
+                    @change="onFontSizeChange"
+                    @input="onFontSizeChange"
+                  />
+                  <span class="unit-label-mini">px</span>
+                </div>
+              </div>
+              <div class="font-size-item-horizontal">
+                <label class="font-size-label-horizontal">
+                  <span class="heading-icon-h4 heading-icon-mini">H4</span>
+                  <span class="font-size-text">{{ i18n.heading4Size || '四级标题' }}</span>
+                </label>
+                <div class="input-group-horizontal">
+                  <input
+                    v-model.number="headingSizes.h4"
+                    type="number"
+                    min="10"
+                    max="64"
+                    step="1"
+                    class="number-input-mini"
+                    @change="onFontSizeChange"
+                    @input="onFontSizeChange"
+                  />
+                  <span class="unit-label-mini">px</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- H5 & H6 -->
+            <div class="font-size-row">
+              <div class="font-size-item-horizontal">
+                <label class="font-size-label-horizontal">
+                  <span class="heading-icon-h5 heading-icon-mini">H5</span>
+                  <span class="font-size-text">{{ i18n.heading5Size || '五级标题' }}</span>
+                </label>
+                <div class="input-group-horizontal">
+                  <input
+                    v-model.number="headingSizes.h5"
+                    type="number"
+                    min="10"
+                    max="64"
+                    step="1"
+                    class="number-input-mini"
+                    @change="onFontSizeChange"
+                    @input="onFontSizeChange"
+                  />
+                  <span class="unit-label-mini">px</span>
+                </div>
+              </div>
+              <div class="font-size-item-horizontal">
+                <label class="font-size-label-horizontal">
+                  <span class="heading-icon-h6 heading-icon-mini">H6</span>
+                  <span class="font-size-text">{{ i18n.heading6Size || '六级标题' }}</span>
+                </label>
+                <div class="input-group-horizontal">
+                  <input
+                    v-model.number="headingSizes.h6"
+                    type="number"
+                    min="10"
+                    max="64"
+                    step="1"
+                    class="number-input-mini"
+                    @change="onFontSizeChange"
+                    @input="onFontSizeChange"
+                  />
+                  <span class="unit-label-mini">px</span>
+                </div>
               </div>
             </div>
           </div>
@@ -1175,6 +1282,111 @@ defineExpose({
   font-size: 13px;
 }
 
+/* 2列布局样式 - 更紧凑的显示 */
+.font-size-grid-2col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+  padding-left: 8px;
+  border-left: 2px solid var(--b3-theme-surface-variant);
+}
+
+.font-size-row {
+  display: flex;
+  gap: 12px;
+  padding: 8px;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-theme-outline);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.font-size-row:hover {
+  border-color: var(--b3-theme-primary);
+  background: rgba(var(--b3-theme-primary-rgb), 0.03);
+}
+
+.font-size-item-horizontal {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  background: var(--b3-theme-surface-variant);
+  border-radius: 4px;
+  min-width: 0;
+}
+
+.font-size-label-horizontal {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--b3-theme-on-surface);
+  margin: 0;
+}
+
+/* 微型标题图标 - 用于紧凑布局 */
+.heading-icon-mini {
+  width: 24px;
+  height: 20px;
+  font-size: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* 水平输入组 - 紧凑样式 */
+.input-group-horizontal {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.number-input-mini {
+  flex: 1;
+  min-width: 48px;
+  width: 100%;
+  padding: 4px 6px;
+  border: 1px solid var(--b3-theme-outline);
+  border-radius: 4px;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.number-input-mini:focus {
+  outline: none;
+  border-color: var(--b3-theme-primary);
+  box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.1);
+}
+
+.number-input-mini:hover {
+  border-color: var(--b3-theme-primary);
+}
+
+.number-input-mini::-webkit-inner-spin-button,
+.number-input-mini::-webkit-outer-spin-button {
+  opacity: 1;
+}
+
+.unit-label-mini {
+  padding: 2px 6px;
+  background: var(--b3-theme-primary);
+  color: var(--b3-theme-on-primary);
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  min-width: 20px;
+  text-align: center;
+  white-space: nowrap;
+}
+
 /* 直接输入框样式 - 新的输入方式 */
 .input-group {
   display: flex;
@@ -1238,12 +1450,29 @@ defineExpose({
 }
 
 /* 响应式调整 */
-@media (max-width: 400px) {
+@media (max-width: 480px) {
+  /* 文档标题输入框 */
   .number-input {
     width: 70px;
     padding: 6px 8px;
   }
 
+  /* 2列布局响应式 - 在小屏幕上变为垂直堆叠 */
+  .font-size-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .font-size-item-horizontal {
+    width: 100%;
+  }
+
+  .font-size-grid-2col {
+    padding-left: 4px;
+  }
+}
+
+@media (max-width: 400px) {
   .font-size-item {
     padding: 8px;
   }

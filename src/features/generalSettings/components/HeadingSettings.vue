@@ -107,21 +107,21 @@
           <label class="setting-label">
             <span class="label-icon">📏</span>
             {{ i18n.titleFontSize || '文档标题字体大小' }}
-            <span class="setting-value">{{ titleFontSize }}px</span>
           </label>
-          <div class="slider-container">
+          <div class="input-group">
             <input
               v-model.number="titleFontSize"
-              type="range"
-              min="16"
-              max="48"
+              type="number"
+              min="10"
+              max="64"
               step="1"
-              class="range-slider"
+              class="number-input"
+              @change="onTitleFontSizeChange"
               @input="onTitleFontSizeChange"
             />
-            <div class="slider-labels">
-              <span>16px</span>
-              <span>48px</span>
+            <span class="unit-label">px</span>
+            <div class="input-range-hint">
+              <span class="hint-text">推荐范围: 10-64px</span>
             </div>
           </div>
         </div>
@@ -156,7 +156,6 @@
           <label class="setting-label">
             <span class="label-icon">📏</span>
             {{ i18n.headingFontSize || '标题字体大小' }}
-            <span class="setting-value">14px - 40px</span>
           </label>
 
           <div class="font-size-container">
@@ -164,22 +163,19 @@
               <label class="font-size-label">
                 <span :class="`heading-icon-h${level}`">H{{ level }}</span>
                 <span class="font-size-text">{{ i18n[`heading${level}Size`] || `H${level} 标题大小` }}</span>
-                <span class="font-size-value">{{ headingSizes[`h${level}`] }}px</span>
               </label>
-              <div class="slider-container">
+              <div class="input-group">
                 <input
                   v-model.number="headingSizes[`h${level}`]"
-                  type="range"
-                  min="14"
-                  max="40"
+                  type="number"
+                  min="10"
+                  max="64"
                   step="1"
-                  class="range-slider"
+                  class="number-input"
+                  @change="onFontSizeChange"
                   @input="onFontSizeChange"
                 />
-                <div class="slider-labels">
-                  <span>14px</span>
-                  <span>40px</span>
-                </div>
+                <span class="unit-label">px</span>
               </div>
             </div>
           </div>
@@ -1179,68 +1175,78 @@ defineExpose({
   font-size: 13px;
 }
 
-.font-size-value {
-  padding: 2px 8px;
+/* 直接输入框样式 - 新的输入方式 */
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.number-input {
+  width: 80px;
+  padding: 8px 12px;
+  border: 2px solid var(--b3-theme-outline);
+  border-radius: 6px;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.number-input:focus {
+  outline: none;
+  border-color: var(--b3-theme-primary);
+  box-shadow: 0 0 0 3px rgba(var(--b3-theme-primary-rgb), 0.1);
+}
+
+.number-input:hover {
+  border-color: var(--b3-theme-primary);
+}
+
+.number-input::-webkit-inner-spin-button,
+.number-input::-webkit-outer-spin-button {
+  opacity: 1;
+}
+
+.unit-label {
+  padding: 4px 8px;
   background: var(--b3-theme-primary);
   color: var(--b3-theme-on-primary);
-  border-radius: 12px;
+  border-radius: 4px;
   font-size: 11px;
   font-weight: 600;
-  min-width: 45px;
+  min-width: 24px;
   text-align: center;
 }
 
-.slider-container {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.input-range-hint {
   width: 100%;
-}
-
-.range-slider {
-  width: 100%;
-  height: 6px;
-  border-radius: 3px;
-  background: var(--b3-theme-surface-variant);
-  outline: none;
-  cursor: pointer;
-  -webkit-appearance: none;
-  appearance: none;
-  transition: all 0.2s ease;
-}
-
-/* 滑块滑钮 - 统一样式 */
-.range-slider::-webkit-slider-thumb,
-.range-slider::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--b3-theme-primary);
-  cursor: pointer;
-  border: 3px solid var(--b3-theme-background);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  transition: all 0.2s ease;
-}
-
-.range-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-}
-
-.range-slider::-webkit-slider-thumb:hover,
-.range-slider::-moz-range-thumb:hover {
-  transform: scale(1.2);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
-}
-
-.slider-labels {
   display: flex;
-  justify-content: space-between;
-  font-size: 11px;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.08);
+  border-left: 3px solid var(--b3-theme-primary);
+  border-radius: 4px;
+  font-size: 12px;
   color: var(--b3-theme-on-surface-variant);
-  font-weight: 500;
-  padding: 0 4px;
+  margin-top: 4px;
 }
 
+/* 响应式调整 */
+@media (max-width: 400px) {
+  .number-input {
+    width: 70px;
+    padding: 6px 8px;
+  }
+
+  .font-size-item {
+    padding: 8px;
+  }
+}
 
 </style>

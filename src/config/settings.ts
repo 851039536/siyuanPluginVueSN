@@ -296,11 +296,12 @@ export async function loadHeadingSettings(plugin: Plugin): Promise<HeadingSettin
       return { ...DEFAULT_HEADING_SETTINGS }
     }
     console.log('从数据库加载标题设置:', data)
-    // 合并默认配置和已保存的配置
+    // 合并默认配置和已保存的配置，确保 colors 和 fontSizes 都正确合并
     return {
       ...DEFAULT_HEADING_SETTINGS,
       ...data,
-      colors: { ...DEFAULT_HEADING_SETTINGS.colors, ...data.colors }
+      colors: { ...DEFAULT_HEADING_SETTINGS.colors, ...data.colors },
+      fontSizes: { ...DEFAULT_HEADING_SETTINGS.fontSizes, ...data.fontSizes }
     }
   } catch (error) {
     console.error('加载标题设置失败:', error)

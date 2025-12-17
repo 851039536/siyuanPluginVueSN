@@ -29,7 +29,8 @@
       "Bash(clip:*)",
       "Bash(xclip:*)",
       "Bash(python3:*)",
-      "Skill(readme-maintainer)"
+      "Skill(readme-maintainer)",
+      "Bash(npx eslint:*)"
     ],
     "deny": [],
     "ask": []

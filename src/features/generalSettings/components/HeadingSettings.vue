@@ -1200,41 +1200,14 @@ defineExpose({
   color: var(--b3-theme-on-primary);
 }
 
-/* 字体大小设置样式 */
-.font-size-container {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 6px;
-}
-
-.font-size-item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 10px;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-outline);
-  border-radius: 8px;
-  transition: all 0.2s ease;
-}
-
-.font-size-item:hover {
-  border-color: var(--b3-theme-primary);
-  box-shadow: 0 2px 8px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1);
-}
-
-.font-size-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+/* 字体大小文本标签 */
+.font-size-text {
+  flex: 1;
   font-size: 13px;
-  font-weight: 500;
   color: var(--b3-theme-on-surface);
-  margin: 0;
 }
 
-/* 标题图标(H1-H6) - 继承基础样式并扩展 */
+/* 标题图标(H1-H6) - 用于2列紧凑布局 */
 .heading-icon-h1,
 .heading-icon-h2,
 .heading-icon-h3,
@@ -1251,36 +1224,17 @@ defineExpose({
   font-size: 12px;
   font-weight: 700;
   flex-shrink: 0;
+  /* 使用CSS变量替代硬编码颜色，提高主题兼容性 */
+  background: linear-gradient(135deg, var(--b3-theme-primary), var(--b3-theme-primary-hover));
 }
 
-.heading-icon-h1 {
-  background: linear-gradient(135deg, #F39A94, #E57373);
-}
-
-.heading-icon-h2 {
-  background: linear-gradient(135deg, #F8D694, #FFB74D);
-}
-
-.heading-icon-h3 {
-  background: linear-gradient(135deg, #B1DCB9, #81C784);
-}
-
-.heading-icon-h4 {
-  background: linear-gradient(135deg, #AAD2FC, #64B5F6);
-}
-
-.heading-icon-h5 {
-  background: linear-gradient(135deg, #AC9DC0, #9575CD);
-}
-
-.heading-icon-h6 {
-  background: linear-gradient(135deg, #D7D7D7, #9E9E9E);
-}
-
-.font-size-text {
-  flex: 1;
-  font-size: 13px;
-}
+/* H1-H6特定的微调（保持视觉区分） */
+.heading-icon-h1 { background: linear-gradient(135deg, #F39A94, #E57373); }
+.heading-icon-h2 { background: linear-gradient(135deg, #F8D694, #FFB74D); }
+.heading-icon-h3 { background: linear-gradient(135deg, #B1DCB9, #81C784); }
+.heading-icon-h4 { background: linear-gradient(135deg, #AAD2FC, #64B5F6); }
+.heading-icon-h5 { background: linear-gradient(135deg, #AC9DC0, #9575CD); }
+.heading-icon-h6 { background: linear-gradient(135deg, #D7D7D7, #9E9E9E); }
 
 /* 2列布局样式 - 更紧凑的显示 */
 .font-size-grid-2col {
@@ -1337,12 +1291,34 @@ defineExpose({
   flex-shrink: 0;
 }
 
-/* 水平输入组 - 紧凑样式 */
+/* 直接输入框样式 - 通用样式定义 */
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
 .input-group-horizontal {
   display: flex;
   align-items: center;
   gap: 4px;
   min-width: 0;
+}
+
+/* 数字输入框 - 基础样式，支持两种尺寸 */
+.number-input {
+  width: 80px;
+  padding: 8px 12px;
+  border: 2px solid var(--b3-theme-outline);
+  border-radius: 6px;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  transition: all 0.2s ease;
 }
 
 .number-input-mini {
@@ -1360,81 +1336,51 @@ defineExpose({
   transition: all 0.2s ease;
 }
 
+/* 统一的输入框焦点和悬停状态 */
+.number-input:focus,
 .number-input-mini:focus {
   outline: none;
   border-color: var(--b3-theme-primary);
   box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.1);
 }
 
+.number-input:hover,
 .number-input-mini:hover {
   border-color: var(--b3-theme-primary);
 }
 
+.number-input::-webkit-inner-spin-button,
+.number-input::-webkit-outer-spin-button,
 .number-input-mini::-webkit-inner-spin-button,
 .number-input-mini::-webkit-outer-spin-button {
   opacity: 1;
 }
 
+/* 单位标签 - 支持两种尺寸 */
+.unit-label,
 .unit-label-mini {
-  padding: 2px 6px;
   background: var(--b3-theme-primary);
   color: var(--b3-theme-on-primary);
-  border-radius: 3px;
-  font-size: 10px;
+  border-radius: 4px;
   font-weight: 600;
-  min-width: 20px;
   text-align: center;
   white-space: nowrap;
 }
 
-/* 直接输入框样式 - 新的输入方式 */
-.input-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 4px;
-}
-
-.number-input {
-  width: 80px;
-  padding: 8px 12px;
-  border: 2px solid var(--b3-theme-outline);
-  border-radius: 6px;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-  font-size: 13px;
-  font-weight: 600;
-  text-align: center;
-  transition: all 0.2s ease;
-}
-
-.number-input:focus {
-  outline: none;
-  border-color: var(--b3-theme-primary);
-  box-shadow: 0 0 0 3px rgba(var(--b3-theme-primary-rgb), 0.1);
-}
-
-.number-input:hover {
-  border-color: var(--b3-theme-primary);
-}
-
-.number-input::-webkit-inner-spin-button,
-.number-input::-webkit-outer-spin-button {
-  opacity: 1;
-}
-
 .unit-label {
   padding: 4px 8px;
-  background: var(--b3-theme-primary);
-  color: var(--b3-theme-on-primary);
-  border-radius: 4px;
   font-size: 11px;
-  font-weight: 600;
   min-width: 24px;
-  text-align: center;
 }
 
+.unit-label-mini {
+  padding: 2px 6px;
+  font-size: 10px;
+  min-width: 20px;
+  border-radius: 3px;
+}
+
+/* 提示信息 */
 .input-range-hint {
   width: 100%;
   display: flex;
@@ -1449,12 +1395,30 @@ defineExpose({
   margin-top: 4px;
 }
 
-/* 响应式调整 */
+/* 响应式调整 - 移动端适配 */
+@media (max-width: 768px) {
+  /* 增大移动端触控区域 (符合iOS/Android规范: 最小44px) */
+  .number-input,
+  .number-input-mini {
+    min-height: 44px;
+  }
+
+  /* 确保单位标签有足够大小 */
+  .unit-label-mini {
+    min-width: 24px;
+    min-height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
 @media (max-width: 480px) {
-  /* 文档标题输入框 */
+  /* 文档标题输入框 - 适应小屏幕 */
   .number-input {
     width: 70px;
     padding: 6px 8px;
+    min-height: 40px;
   }
 
   /* 2列布局响应式 - 在小屏幕上变为垂直堆叠 */
@@ -1469,12 +1433,56 @@ defineExpose({
 
   .font-size-grid-2col {
     padding-left: 4px;
+    gap: 6px;
+  }
+
+  /* 紧凑输入框在小屏幕调整 */
+  .number-input-mini {
+    min-height: 38px;
+    padding: 4px 6px;
+    flex: 1;
+  }
+
+  /* 调整内部元素间距 */
+  .font-size-item-horizontal {
+    padding: 4px;
+  }
+
+  .font-size-label-horizontal {
+    gap: 4px;
+    font-size: 11px;
+  }
+
+  .heading-icon-mini {
+    width: 20px;
+    height: 18px;
+    font-size: 9px;
+  }
+
+  .input-group-horizontal {
+    gap: 2px;
   }
 }
 
-@media (max-width: 400px) {
-  .font-size-item {
-    padding: 8px;
+@media (max-width: 360px) {
+  /* 超小屏幕优化 */
+  .font-size-row {
+    gap: 6px;
+  }
+
+  .font-size-item-horizontal {
+    gap: 2px;
+  }
+
+  .number-input-mini {
+    min-width: 42px;
+    font-size: 11px;
+  }
+
+  .unit-label-mini {
+    min-width: 18px;
+    font-size: 9px;
+    padding: 2px 4px;
   }
 }
 

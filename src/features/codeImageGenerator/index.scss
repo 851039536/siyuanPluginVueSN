@@ -65,7 +65,6 @@
   border-radius: 6px;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
   font-size: 13px;
   line-height: 1.6;
   resize: vertical;
@@ -214,7 +213,6 @@
 .slider-value {
   font-size: 10px;
   min-width: 40px;
-  font-family: monospace;
 }
 
 .preview-container {
@@ -455,7 +453,6 @@
 
   pre {
     margin: 0;
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     line-height: 1.6;
   }
 
@@ -589,7 +586,6 @@
 }
 
 .text-style-poetry .text-body {
-  font-family: 'KaiTi', 'STKaiti', serif;
   font-size: 1.2em;
   line-height: 2;
 }
@@ -610,7 +606,6 @@
 }
 
 .text-style-note .text-body {
-  font-family: 'Segoe Print', 'Comic Sans MS', cursive;
   color: #2c3e50;
 }
 
@@ -667,7 +662,6 @@
 }
 
 .text-style-newspaper .text-body {
-  font-family: 'Times New Roman', serif;
   color: #1a1410;
 }
 

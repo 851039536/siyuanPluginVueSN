@@ -4,7 +4,7 @@
       <h4>文本转ASCII</h4>
       <div class="input-group">
         <label>输入文本</label>
-        <textarea 
+        <textarea
           v-model="textInput"
           @input="convertTextToAscii"
           placeholder="请输入要转换的文本"
@@ -21,7 +21,7 @@
       <h4>ASCII转文本</h4>
       <div class="input-group">
         <label>输入ASCII码</label>
-        <textarea 
+        <textarea
           v-model="asciiInput"
           @input="convertAsciiToText"
           placeholder="请输入ASCII码，用空格或逗号分隔"
@@ -39,18 +39,18 @@
       <div class="ascii-table-controls">
         <label>表格范围</label>
         <div class="range-controls">
-          <input 
-            v-model="tableStart" 
-            type="number" 
-            min="0" 
+          <input
+            v-model="tableStart"
+            type="number"
+            min="0"
             max="127"
             @input="updateAsciiTable"
           />
           <span>-</span>
-          <input 
-            v-model="tableEnd" 
-            type="number" 
-            min="0" 
+          <input
+            v-model="tableEnd"
+            type="number"
+            min="0"
             max="127"
             @input="updateAsciiTable"
           />
@@ -64,8 +64,8 @@
           <span>字符</span>
         </div>
         <div class="table-body">
-          <div 
-            v-for="row in asciiTableData" 
+          <div
+            v-for="row in asciiTableData"
             :key="row.dec"
             class="table-row"
           >
@@ -132,7 +132,7 @@ const convertTextToAscii = () => {
     asciiResult.value = ''
     return
   }
-  
+
   const asciiCodes = []
   for (let i = 0; i < textInput.value.length; i++) {
     const char = textInput.value[i]
@@ -147,13 +147,13 @@ const convertAsciiToText = () => {
     textResult.value = ''
     return
   }
-  
+
   try {
     const codes = asciiInput.value.split(/[\s,]+/)
       .filter(code => code.trim())
       .map(code => parseInt(code.trim()))
       .filter(code => !isNaN(code) && code >= 0 && code <= 127)
-    
+
     const text = String.fromCharCode(...codes)
     textResult.value = text
   } catch (error) {
@@ -165,7 +165,7 @@ const asciiTableData = computed(() => {
   const start = Math.max(0, Math.min(127, tableStart.value))
   const end = Math.max(start, Math.min(127, tableEnd.value))
   const data = []
-  
+
   for (let i = start; i <= end; i++) {
     data.push({
       dec: i,
@@ -174,7 +174,7 @@ const asciiTableData = computed(() => {
       char: getCharForDisplay(i)
     })
   }
-  
+
   return data
 })
 
@@ -239,7 +239,6 @@ const updateAsciiTable = () => {
         background: var(--b3-theme-background);
         color: var(--b3-theme-on-surface);
         font-size: 14px;
-        font-family: 'Courier New', monospace;
         resize: vertical;
 
         &:focus {
@@ -254,7 +253,6 @@ const updateAsciiTable = () => {
         background: var(--b3-theme-background);
         border: 1px solid var(--b3-border-color);
         border-radius: 4px;
-        font-family: 'Courier New', monospace;
         font-size: 14px;
         color: var(--b3-theme-primary);
         min-height: 40px;
@@ -328,7 +326,6 @@ const updateAsciiTable = () => {
           grid-template-columns: 1fr 1fr 1fr 2fr;
           border-bottom: 1px solid var(--b3-border-color);
           font-size: 12px;
-          font-family: 'Courier New', monospace;
 
           &:hover {
             background: var(--b3-theme-surface);

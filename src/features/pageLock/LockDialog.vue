@@ -475,7 +475,6 @@ const handleConfirm = () => {
   outline: none;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   box-sizing: border-box;
-  font-family: inherit;
 
   &:focus {
     border-color: var(--b3-theme-primary);

@@ -374,7 +374,6 @@ ${selector}>.li[data-subtype="u"]>.protyle-action::before {
     line-height: 1;
     margin-bottom: 0px;
     margin-left: ${settings.symbolMarginLeft}px;
-    font-family: Arial;
     content: "${firstSymbol}";
 }
 
@@ -571,7 +570,6 @@ input:checked + .slider:before {
   color: var(--b3-theme-on-surface);
   font-size: 13px;
   width: 120px;
-  font-family: monospace;
 }
 
 /* 格式选择器 */

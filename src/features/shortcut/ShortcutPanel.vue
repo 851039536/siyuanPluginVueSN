@@ -1268,7 +1268,6 @@ const showCopyTip = () => {
   color: white;
   border-radius: 4px;
   font-size: 10px;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
   font-weight: 700;
   white-space: nowrap;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3);

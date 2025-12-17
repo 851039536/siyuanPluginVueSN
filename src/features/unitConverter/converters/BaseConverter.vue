@@ -2,8 +2,8 @@
   <div class="base-converter">
     <div class="converter-input">
       <label>输入值</label>
-      <input 
-        v-model="inputValue" 
+      <input
+        v-model="inputValue"
         type="text"
         @input="convert"
         placeholder="请输入数值"
@@ -43,8 +43,8 @@
     <div class="converter-quick-results" v-if="result && !error">
       <h4>快速转换结果</h4>
       <div class="quick-results-grid">
-        <div 
-          v-for="base in bases.filter(b => b.value !== fromBase)" 
+        <div
+          v-for="base in bases.filter(b => b.value !== fromBase)"
           :key="base.value"
           class="quick-result-item"
         >
@@ -109,16 +109,16 @@ const usageInfo = [
 
 const isValidInput = (value: string, base: number): boolean => {
   if (!value) return false
-  
+
   const validChars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'.slice(0, base)
   const upperValue = value.toUpperCase()
-  
+
   for (const char of upperValue) {
     if (!validChars.includes(char)) {
       return false
     }
   }
-  
+
   return true
 }
 
@@ -126,15 +126,15 @@ const convertToBase = (targetBase: number): string => {
   if (!isValidInput(inputValue.value, fromBase.value)) {
     return '无效输入'
   }
-  
+
   try {
     // 先转换为十进制
     const decimalValue = parseInt(inputValue.value, fromBase.value)
-    
+
     if (isNaN(decimalValue)) {
       return '无效输入'
     }
-    
+
     // 再转换为目标进制
     return decimalValue.toString(targetBase).toUpperCase()
   } catch (e) {
@@ -144,14 +144,14 @@ const convertToBase = (targetBase: number): string => {
 
 const result = computed(() => {
   error.value = ''
-  
+
   if (!inputValue.value) return ''
-  
+
   if (!isValidInput(inputValue.value, fromBase.value)) {
     error.value = `无效的${fromBase.value}进制输入`
     return ''
   }
-  
+
   return convertToBase(toBase.value)
 })
 
@@ -206,7 +206,6 @@ const convert = () => {
       font-weight: 600;
       color: var(--b3-theme-on-surface);
       text-align: center;
-      font-family: 'Courier New', monospace;
 
       .input-display {
         color: var(--b3-theme-secondary);
@@ -256,7 +255,6 @@ const convert = () => {
         background: var(--b3-theme-surface);
         border-radius: 4px;
         font-size: 12px;
-        font-family: 'Courier New', monospace;
 
         .base-name {
           color: var(--b3-theme-on-surface);

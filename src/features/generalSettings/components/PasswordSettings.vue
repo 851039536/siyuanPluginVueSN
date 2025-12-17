@@ -164,7 +164,6 @@ defineExpose({
   background: var(--b3-theme-background);
   cursor: pointer;
   transition: all 0.2s ease;
-  font-family: inherit;
 }
 
 .action-btn:hover {

@@ -890,7 +890,6 @@ function injectLockPageStyles() {
       background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.2);
       border: 1px solid rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.4);
       border-radius: 4px;
-      font-family: monospace;
       font-size: 11px;
       font-weight: 600;
       color: var(--b3-theme-primary);
@@ -948,7 +947,6 @@ function injectLockPageStyles() {
       outline: none;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       box-sizing: border-box;
-      font-family: inherit;
       backdrop-filter: blur(10px);
     }
 

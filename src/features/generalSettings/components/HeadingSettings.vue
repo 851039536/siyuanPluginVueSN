@@ -951,7 +951,6 @@ defineExpose({
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   font-size: 12px;
-  font-family: monospace;
   text-transform: uppercase;
   transition: all 0.2s ease;
 }

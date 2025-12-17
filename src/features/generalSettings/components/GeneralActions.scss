@@ -203,7 +203,6 @@
 
   .info-value {
     color: var(--b3-theme-on-surface);
-    font-family: 'Courier New', monospace;
   }
 }
 
@@ -220,7 +219,6 @@
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
-  font-family: inherit;
 
   &:hover:not(:disabled) {
     transform: translateY(-2px);

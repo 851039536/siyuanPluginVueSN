@@ -34,7 +34,8 @@
       "Bash(findstr:*)",
       "Skill(git-commit-helper)",
       "Bash(git commit:*)",
-      "Bash(git push)"
+      "Bash(git push)",
+      "Bash(pnpm add:*)"
     ],
     "deny": [],
     "ask": []

@@ -156,6 +156,18 @@ export const FEATURE_ICONS = {
   floatingBox: {
     icon: 'mdi:widgets',
     color: '#8b5cf6'
+  },
+
+  // 文本对比
+  textDiff: {
+    icon: 'mdi:file-compare',
+    color: '#06b6d4'
+  },
+
+  // 技能库
+  skills: {
+    icon: 'mdi:brain',
+    color: '#a855f7'
   }
 } as const
 

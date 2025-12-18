@@ -7,6 +7,7 @@ import { createApp, type App as VueApp } from 'vue'
 import SuperPanelView from './SuperPanelView.vue'
 import { replaceTopBarIcon } from '@/utils/iconHelper'
 import { FEATURE_ICONS } from '@/config/icons'
+import { toggleTextDiff } from '../textDiff'
 
 let vueApp: VueApp | null = null
 let panelContainer: HTMLElement | null = null
@@ -162,6 +163,7 @@ async function handleFeatureToggle(plugin: Plugin, featureId: string, enabled: b
     'apiReference': 'enableApiReference',
     'floatingToolbar': 'enableFloatingToolbar',
     'floatingBox': 'enableFloatingBox',
+    'textDiff': 'enableTextDiff',
     'skills': 'enableSkills'
   }
 
@@ -301,6 +303,14 @@ function handleFeatureAction(_plugin: Plugin, action: string) {
       // 触发打开统计面板
       if ((_plugin as any).settings.enableStatistics) {
         window.dispatchEvent(new CustomEvent('openStatistics'))
+        closeSuperPanel()
+      }
+      break
+
+    case 'openTextDiff':
+      // 打开文本对比工具
+      if ((_plugin as any).settings.enableTextDiff) {
+        toggleTextDiff(_plugin)
         closeSuperPanel()
       }
       break

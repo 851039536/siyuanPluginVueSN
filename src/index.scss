@@ -32,7 +32,6 @@ $animation-slow: 3s;
   .b3-typography [data-node-id][data-type="NodeCodeBlock"] {
     overflow: hidden;
     margin: 0.5rem 0;
-    transition: $codeblock-transition;
 
     .protyle-action {
       display: flex;
@@ -261,7 +260,6 @@ body.codeblock-style-github {
 
     &:hover {
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      transform: translateY(-0.0625rem);
     }
 
     .protyle-action {
@@ -312,7 +310,6 @@ body.codeblock-style-mac {
 
     &:hover {
       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-      transform: translateY(-0.125rem);
     }
 
     .protyle-action {
@@ -378,8 +375,6 @@ body.codeblock-style-default {
   .b3-typography .code-block,
   .protyle-wysiwyg [data-node-id][data-type="NodeCodeBlock"],
   .b3-typography [data-node-id][data-type="NodeCodeBlock"] {
-    transition: $codeblock-transition;
-
     &:hover {
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
@@ -413,12 +408,9 @@ body.codeblock-style-cartoon {
     ) 1;
     border-radius: $codeblock-border-radius;
     box-shadow: 0 3px 12px rgba(var(--b3-theme-primary-rgb, 255, 107, 157), 0.25);
-    animation: cartoonGlow $animation-slow ease-in-out infinite;
-    transition: all $animation-normal ease;
 
     &:hover {
       box-shadow: 0 6px 24px rgba(var(--b3-theme-primary-rgb, 255, 107, 157), 0.4);
-      transform: translateY(-0.125rem) scale(1.01);
     }
 
     .protyle-action {
@@ -434,7 +426,6 @@ body.codeblock-style-cartoon {
       &::before {
         content: '✨';
         font-size: 0.75rem;
-        animation: sparkleRotate $animation-slow linear infinite;
       }
 
       .protyle-action__language {
@@ -475,7 +466,6 @@ body.codeblock-style-cartoon {
         right: 0.375rem;
         font-size: 1rem;
         opacity: 0.15;
-        animation: float $animation-slow ease-in-out infinite;
       }
     }
   }

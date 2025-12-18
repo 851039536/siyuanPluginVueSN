@@ -32,7 +32,8 @@
       "Skill(readme-maintainer)",
       "Bash(npx eslint:*)",
       "Bash(findstr:*)",
-      "Skill(git-commit-helper)"
+      "Skill(git-commit-helper)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

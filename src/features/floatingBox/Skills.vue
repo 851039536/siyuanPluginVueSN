@@ -2,7 +2,13 @@
   <div v-if="showModal" class="skills-modal-overlay" @click="handleOverlayClick">
     <div class="skills-modal" @click.stop>
       <div class="skills-modal-header">
-        <h2>{{ i18n?.skillsTitle || '技能库' }}</h2>
+        <div class="header-title">
+          <svg class="header-icon" width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8 14l2 2 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <h2>{{ i18n?.skillsTitle || '技能库' }}</h2>
+        </div>
         <button class="close-btn" @click="closeModal" :title="i18n?.close || '关闭'">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
             <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -12,15 +18,21 @@
 
       <div class="skills-modal-body">
         <div class="skills-controls">
-          <input
-            v-model="searchQuery"
-            type="text"
-            :placeholder="i18n?.search || '搜索技能...'"
-            class="search-input"
-          />
+          <div class="search-wrapper">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <input
+              v-model="searchQuery"
+              type="text"
+              :placeholder="i18n?.search || '搜索技能...'"
+              class="search-input"
+            />
+          </div>
           <button class="add-btn" @click="openAddModal">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
             {{ i18n?.addSkill || '添加技能' }}
           </button>
@@ -33,12 +45,15 @@
             class="skill-card"
           >
             <div class="skill-header">
-              <h3>{{ skill.title }}</h3>
+              <div class="skill-title-wrapper">
+                <svg class="skill-icon" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <h3>{{ skill.title }}</h3>
+              </div>
               <div class="skill-actions">
                 <button @click="editSkill(skill)" :title="i18n?.edit || '编辑'">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                    <path d="M11 4H4a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1zM18.5 8.5l1.5 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                  </svg>
+                  {{ i18n?.edit || '编辑' }}
                 </button>
                 <button @click="deleteSkill(skill.id)" :title="i18n?.delete || '删除'">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
@@ -51,10 +66,22 @@
               {{ skill.description }}
             </div>
             <div class="skill-content">
-              <div class="content-label">{{ i18n?.content || '内容' }}:</div>
+              <div class="content-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path d="M4 4h16v16H4V4z" stroke="currentColor" stroke-width="1.5"/>
+                  <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                {{ i18n?.content || '内容' }}
+              </div>
               <div class="content-value" @click="copyContent(skill.content)">
                 <pre>{{ skill.content }}</pre>
-                <div class="copy-hint">{{ i18n?.clickToCopy || '点击复制' }}</div>
+                <div class="copy-hint">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" stroke-width="1.5"/>
+                  </svg>
+                  {{ i18n?.clickToCopy || '点击复制' }}
+                </div>
               </div>
             </div>
           </div>
@@ -309,11 +336,22 @@ function handleOverlayClick() {
   padding: 20px 24px;
   border-bottom: 1px solid var(--b3-border-color);
 
-  h2 {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--b3-theme-on-background);
+  .header-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    .header-icon {
+      color: var(--b3-theme-primary);
+      flex-shrink: 0;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--b3-theme-on-background);
+    }
   }
 
   .close-btn {
@@ -345,18 +383,34 @@ function handleOverlayClick() {
   gap: 12px;
   margin-bottom: 20px;
 
-  .search-input {
+  .search-wrapper {
     flex: 1;
-    padding: 8px 12px;
-    border: 1px solid var(--b3-border-color);
-    border-radius: 6px;
-    background: var(--b3-theme-surface);
-    color: var(--b3-theme-on-background);
-    font-size: 14px;
+    position: relative;
+    display: flex;
+    align-items: center;
 
-    &:focus {
-      outline: none;
-      border-color: var(--b3-theme-primary);
+    .search-icon {
+      position: absolute;
+      left: 10px;
+      color: var(--b3-theme-on-surface-light);
+      pointer-events: none;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 8px 12px 8px 36px;
+      border: 1px solid var(--b3-border-color);
+      border-radius: 6px;
+      background: var(--b3-theme-surface);
+      color: var(--b3-theme-on-background);
+      font-size: 14px;
+      transition: all 0.2s;
+
+      &:focus {
+        outline: none;
+        border-color: var(--b3-theme-primary);
+        box-shadow: 0 0 0 3px rgba(var(--b3-theme-primary-rgb), 0.1);
+      }
     }
   }
 
@@ -373,9 +427,16 @@ function handleOverlayClick() {
     align-items: center;
     gap: 6px;
     transition: all 0.2s;
+    white-space: nowrap;
 
     &:hover {
       background: var(--b3-theme-primary-light);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(var(--b3-theme-primary-rgb), 0.3);
+    }
+
+    &:active {
+      transform: translateY(0);
     }
 
     svg {
@@ -396,10 +457,29 @@ function handleOverlayClick() {
   border-radius: 8px;
   padding: 16px;
   transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--b3-theme-primary);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
 
   &:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     border-color: var(--b3-theme-primary);
+    transform: translateY(-2px);
+
+    &::before {
+      opacity: 1;
+    }
   }
 }
 
@@ -410,12 +490,28 @@ function handleOverlayClick() {
   margin-bottom: 12px;
   gap: 8px;
 
-  h3 {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--b3-theme-on-background);
+  .skill-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     flex: 1;
+    min-width: 0;
+
+    .skill-icon {
+      color: var(--b3-theme-primary);
+      flex-shrink: 0;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--b3-theme-on-background);
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 
   .skill-actions {
@@ -428,12 +524,14 @@ function handleOverlayClick() {
       border: none;
       color: var(--b3-theme-on-surface);
       cursor: pointer;
-      padding: 4px;
+      padding: 4px 8px;
       border-radius: 4px;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: all 0.2s;
+      font-size: 12px;
+      white-space: nowrap;
 
       &:hover {
         background: var(--b3-list-hover);
@@ -456,6 +554,14 @@ function handleOverlayClick() {
     color: var(--b3-theme-on-surface);
     margin-bottom: 6px;
     font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    svg {
+      color: var(--b3-theme-on-surface-light);
+      flex-shrink: 0;
+    }
   }
 
   .content-value {
@@ -469,6 +575,7 @@ function handleOverlayClick() {
     &:hover {
       border-color: var(--b3-theme-primary);
       background: var(--b3-theme-surface-light);
+      box-shadow: 0 2px 8px rgba(var(--b3-theme-primary-rgb), 0.15);
     }
 
     pre {
@@ -486,6 +593,20 @@ function handleOverlayClick() {
       color: var(--b3-theme-on-surface-light);
       margin-top: 6px;
       text-align: right;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 4px;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+
+      svg {
+        flex-shrink: 0;
+      }
+    }
+
+    &:hover .copy-hint {
+      opacity: 1;
     }
   }
 }
@@ -579,8 +700,15 @@ function handleOverlayClick() {
   .skills-modal-header {
     padding: 16px 20px;
 
-    h2 {
-      font-size: 16px;
+    .header-title {
+      .header-icon {
+        width: 20px;
+        height: 20px;
+      }
+
+      h2 {
+        font-size: 16px;
+      }
     }
   }
 
@@ -595,9 +723,29 @@ function handleOverlayClick() {
   .skills-controls {
     flex-direction: column;
 
+    .search-wrapper .search-input {
+      padding: 10px 12px 10px 36px;
+    }
+
     .add-btn {
       width: 100%;
       justify-content: center;
+      padding: 10px 16px;
+    }
+  }
+
+  .skill-card {
+    .skill-header {
+      .skill-title-wrapper {
+        .skill-icon {
+          width: 16px;
+          height: 16px;
+        }
+
+        h3 {
+          font-size: 15px;
+        }
+      }
     }
   }
 }

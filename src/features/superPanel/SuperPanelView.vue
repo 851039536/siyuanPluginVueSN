@@ -159,6 +159,7 @@ import { computed, ref, watch } from 'vue'
 import IconWrapper from '@/components/IconWrapper.vue'
 import FeatureCard from './components/FeatureCard.vue'
 import type { Feature } from './types'
+import type { PluginSettings } from '@/config/settings'
 import { showMessage } from 'siyuan'
 
 // AI 模型配置常量
@@ -224,38 +225,7 @@ interface AiSettings {
   customEndpoint: string
 }
 
-// 插件设置接口
-interface PluginSettings {
-  // AI 相关设置
-  aiApiProvider?: string
-  aiModel?: string
-  aiCustomModel?: string
-  aiApiKey?: string
-  aiCustomEndpoint?: string
 
-  // 功能开关设置
-  enableTableOfContents?: boolean
-  enableImageCompressor?: boolean
-  enableDocNavigation?: boolean
-  enablePageLock?: boolean
-  enableWordQuery?: boolean
-  enableGeneralSettings?: boolean
-  enableQRCode?: boolean
-  enableUnitConverter?: boolean
-  enableShortcuts?: boolean
-  enableDiskBrowser?: boolean
-  enableCodeImageGenerator?: boolean
-  enableAIContentGenerator?: boolean
-  enableStatistics?: boolean
-  enablePronunciation?: boolean
-  enableEncryption?: boolean
-  enableVideo?: boolean
-  enableEverythingSearch?: boolean
-  enableSystemMonitor?: boolean
-  enableApiReference?: boolean
-  enableFloatingToolbar?: boolean
-  enableFloatingBox?: boolean
-}
 
 // 国际化接口
 interface I18n {
@@ -592,7 +562,7 @@ const features = computed<Feature[]>(() => [
     id: 'skills',
     iconKey: 'skills',
     title: props.i18n.skills?.title || '技能库',
-    desc: props.i18n.skills?.description || '管理常用技能和模板',
+    desc: props.i18n.skills?.description || '管理常用的Claude技能和模板',
     enabled: props.settings.enableSkills,
     actions: []
   }

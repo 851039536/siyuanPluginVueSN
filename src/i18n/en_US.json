@@ -352,6 +352,33 @@
   "qrcodeDownloadFailed": "Download failed",
   "qrcodeGenerateFailed": "Failed to generate QR code",
   "close": "Close",
+  "skills": {
+    "label": "Skills",
+    "title": "Skills Library",
+    "description": "Manage frequently used skills and templates",
+    "enableSkills": "Enable Skills Library",
+    "enableSkillsDesc": "Add Skills button to floating box, manage code snippets, text templates, etc.",
+    "modal": {
+      "title": "Skills Library",
+      "close": "Close",
+      "addSkill": "Add Skill",
+      "editSkill": "Edit Skill",
+      "delete": "Delete",
+      "edit": "Edit",
+      "search": "Search skills...",
+      "titleLabel": "Title",
+      "description": "Description",
+      "content": "Content",
+      "cancel": "Cancel",
+      "save": "Save",
+      "titlePlaceholder": "Enter skill title",
+      "descriptionPlaceholder": "Enter skill description",
+      "contentPlaceholder": "Enter content to copy",
+      "noSkills": "No skills yet, click to add",
+      "noSkillsFound": "No matching skills found",
+      "clickToCopy": "Click to copy"
+    }
+  },
   "superPanel": {
     "title": "Super Panel",
     "close": "Close",

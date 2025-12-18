@@ -356,6 +356,33 @@
   "qrcodeDownloadFailed": "下载失败",
   "qrcodeGenerateFailed": "生成二维码失败",
   "close": "关闭",
+  "skills": {
+    "label": "Skills",
+    "title": "技能库",
+    "description": "管理常用技能和模板",
+    "enableSkills": "启用技能库功能",
+    "enableSkillsDesc": "在悬浮框中添加技能库按钮，管理常用代码片段、文本模板等",
+    "modal": {
+      "title": "技能库",
+      "close": "关闭",
+      "addSkill": "添加技能",
+      "editSkill": "编辑技能",
+      "delete": "删除",
+      "edit": "编辑",
+      "search": "搜索技能...",
+      "titleLabel": "标题",
+      "description": "描述",
+      "content": "内容",
+      "cancel": "取消",
+      "save": "保存",
+      "titlePlaceholder": "请输入技能标题",
+      "descriptionPlaceholder": "请输入技能描述",
+      "contentPlaceholder": "请输入要复制的内容",
+      "noSkills": "暂无技能，点击添加",
+      "noSkillsFound": "未找到匹配的技能",
+      "clickToCopy": "点击复制"
+    }
+  },
   "superPanel": {
     "title": "超级面板",
     "close": "关闭",

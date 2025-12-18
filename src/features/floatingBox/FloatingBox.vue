@@ -38,16 +38,33 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { allTools } from './tools'
+import { ref, onMounted } from 'vue'
+import { superPanelTool, timestampTool, refreshTool, skillsTool } from './tools'
 import type { FloatingTool } from './types'
 
-defineProps<{
+const props = defineProps<{
   i18n?: Record<string, string>
+  plugin?: any
 }>()
 
 const isExpanded = ref(false)
-const tools = ref<FloatingTool[]>(allTools)
+const tools = ref<FloatingTool[]>([])
+
+onMounted(() => {
+  // Create tools array with plugin instance
+  const toolList: FloatingTool[] = [
+    superPanelTool,
+    timestampTool,
+    refreshTool,
+  ]
+
+  // Add skills tool if plugin is available
+  if (props.plugin && props.plugin.settings?.enableSkills !== false) {
+    toolList.push(skillsTool(props.plugin))
+  }
+
+  tools.value = toolList
+})
 
 const handleMouseEnter = () => {
   isExpanded.value = true

@@ -45,7 +45,8 @@ export function registerFloatingBox(plugin: Plugin): void {
 
   // 创建 Vue 应用
   vueApp = createApp(FloatingBox, {
-    i18n: (plugin.i18n as any).floatingBox || {}
+    i18n: (plugin.i18n as any).floatingBox || {},
+    plugin: plugin
   })
 
   try {

@@ -587,6 +587,14 @@ const features = computed<Feature[]>(() => [
     desc: props.i18n.floatingBox?.description || '页面右侧显示可展开的功能悬浮框',
     enabled: props.settings.enableFloatingBox,
     actions: []
+  },
+  {
+    id: 'skills',
+    iconKey: 'skills',
+    title: props.i18n.skills?.title || '技能库',
+    desc: props.i18n.skills?.description || '管理常用技能和模板',
+    enabled: props.settings.enableSkills,
+    actions: []
   }
 ])
 

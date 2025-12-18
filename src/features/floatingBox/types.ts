@@ -9,3 +9,13 @@ export interface FloatingTool {
   bgColor: string
   action: () => void
 }
+
+/**
+ * 技能接口
+ */
+export interface Skill {
+  id: string
+  title: string
+  description: string
+  content: string
+}

@@ -825,7 +825,14 @@
     "swap": "Swap",
     "originalPlaceholder": "Enter original text...",
     "modifiedPlaceholder": "Enter modified text...",
-    "emptyState": "Please enter text to see differences"
+    "emptyState": "Please enter text to see differences",
+    "fontSize": "Font Size",
+    "displayMode": "Display Mode",
+    "splitMode": "Split",
+    "unifiedMode": "Unified",
+    "theme": "Theme",
+    "lightTheme": "Light",
+    "darkTheme": "Dark"
   },
   "enableTextDiff": "Enable Text Diff Feature",
   "enableTextDiffDesc": "Provide text difference comparison functionality, supporting character, word, line, and patch modes"

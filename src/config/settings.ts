@@ -510,3 +510,58 @@ export async function saveFontSettingsToDB(plugin: Plugin, settings: FontSetting
     return false
   }
 }
+
+/**
+ * 文本对比设置接口
+ */
+export interface TextDiffSettings {
+  fontSize: number           // 字体大小
+  diffMode: 'split' | 'unified'  // 显示模式：分栏或统一
+  theme: 'light' | 'dark'    // 主题：浅色或深色
+}
+
+/**
+ * 默认文本对比设置
+ */
+export const DEFAULT_TEXTDIFF_SETTINGS: TextDiffSettings = {
+  fontSize: 14,
+  diffMode: 'split',
+  theme: 'light'
+}
+
+/**
+ * 文本对比设置存储键
+ */
+const TEXTDIFF_SETTINGS_KEY = 'textdiff-settings'
+
+/**
+ * 从数据库加载文本对比设置
+ */
+export async function loadTextDiffSettings(plugin: Plugin): Promise<TextDiffSettings> {
+  try {
+    const data = await plugin.loadData(TEXTDIFF_SETTINGS_KEY)
+    if (!data) {
+      console.log('没有找到保存的文本对比设置，使用默认值')
+      return { ...DEFAULT_TEXTDIFF_SETTINGS }
+    }
+    console.log('从数据库加载文本对比设置:', data)
+    return { ...DEFAULT_TEXTDIFF_SETTINGS, ...data }
+  } catch (error) {
+    console.error('加载文本对比设置失败:', error)
+    return { ...DEFAULT_TEXTDIFF_SETTINGS }
+  }
+}
+
+/**
+ * 保存文本对比设置到数据库
+ */
+export async function saveTextDiffSettings(plugin: Plugin, settings: TextDiffSettings): Promise<boolean> {
+  try {
+    await plugin.saveData(TEXTDIFF_SETTINGS_KEY, settings)
+    console.log('文本对比设置已保存到数据库:', settings)
+    return true
+  } catch (error) {
+    console.error('保存文本对比设置失败:', error)
+    return false
+  }
+}

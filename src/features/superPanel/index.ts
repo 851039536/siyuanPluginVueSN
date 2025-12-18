@@ -161,7 +161,8 @@ async function handleFeatureToggle(plugin: Plugin, featureId: string, enabled: b
     'systemMonitor': 'enableSystemMonitor',
     'apiReference': 'enableApiReference',
     'floatingToolbar': 'enableFloatingToolbar',
-    'floatingBox': 'enableFloatingBox'
+    'floatingBox': 'enableFloatingBox',
+    'skills': 'enableSkills'
   }
 
   const settingKey = settingsMap[featureId]

@@ -634,7 +634,7 @@ function handleOverlayClick() {
     input,
     textarea {
       width: 100%;
-      padding: 8px 12px;
+      padding: 8px 4px;
       border: 1px solid var(--b3-border-color);
       border-radius: 6px;
       background: var(--b3-theme-surface);

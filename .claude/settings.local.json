@@ -33,7 +33,8 @@
       "Bash(npx eslint:*)",
       "Bash(findstr:*)",
       "Skill(git-commit-helper)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git push)"
     ],
     "deny": [],
     "ask": []

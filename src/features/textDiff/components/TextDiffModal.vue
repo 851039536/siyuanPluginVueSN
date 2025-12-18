@@ -50,37 +50,44 @@
 
     <!-- 主内容区 -->
     <div class="diff-content">
-      <!-- 左侧：输入区域 -->
-      <div class="diff-panel input-area">
-        <div class="panel-header">
-          <label>{{ $t('original') }}</label>
-          <span class="char-count">{{ originalText.length }} {{ $t('chars') }}</span>
+      <!-- 上部：输入区域 -->
+      <div class="input-section">
+        <!-- 原文本 -->
+        <div class="diff-panel input-area">
+          <div class="panel-header">
+            <label>{{ $t('original') }}</label>
+            <span class="char-count">{{ originalText.length }} {{ $t('chars') }}</span>
+          </div>
+          <textarea
+            v-model="originalText"
+            :placeholder="$t('originalPlaceholder')"
+            class="diff-textarea"
+            @input="handleTextChange"
+          ></textarea>
         </div>
-        <textarea
-          v-model="originalText"
-          :placeholder="$t('originalPlaceholder')"
-          class="diff-textarea"
-          @input="handleTextChange"
-        ></textarea>
 
-        <div class="panel-header">
-          <label>{{ $t('modified') }}</label>
-          <span class="char-count">{{ modifiedText.length }} {{ $t('chars') }}</span>
+        <!-- 修改后文本 -->
+        <div class="diff-panel input-area">
+          <div class="panel-header">
+            <label>{{ $t('modified') }}</label>
+            <span class="char-count">{{ modifiedText.length }} {{ $t('chars') }}</span>
+          </div>
+          <textarea
+            v-model="modifiedText"
+            :placeholder="$t('modifiedPlaceholder')"
+            class="diff-textarea"
+            @input="handleTextChange"
+          ></textarea>
         </div>
-        <textarea
-          v-model="modifiedText"
-          :placeholder="$t('modifiedPlaceholder')"
-          class="diff-textarea"
-          @input="handleTextChange"
-        ></textarea>
       </div>
 
-      <!-- 右侧：差异显示 -->
+      <!-- 下部：差异显示 -->
       <div class="diff-panel result">
         <div class="panel-header">
           <label>{{ $t('diffResult') }}</label>
         </div>
         <Diff
+          class="diff-content-viewer"
           :mode="diffMode"
           :theme="diffTheme"
           language="plaintext"
@@ -88,6 +95,9 @@
           :current="modifiedText"
           :folding="false"
           :virtual-scroll="false"
+          :render-added="true"
+          :render-removed="true"
+          :hide-line-numbers="false"
         />
       </div>
     </div>
@@ -158,6 +168,7 @@ const $t = (key: string) => {
   flex-direction: column;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
+  overflow: hidden;
 }
 
 .diff-toolbar {
@@ -236,18 +247,42 @@ const $t = (key: string) => {
 
 .diff-content {
   flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  background: var(--b3-theme-surface-lighter);
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
+  min-height: 0;
+}
+
+.input-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--b3-theme-surface-lighter);
+  flex-shrink: 0;
+  max-height: 40vh;
+  overflow: hidden;
+
+  .input-area {
+    min-height: 200px;
+  }
+}
+
+.result {
+  flex: 1;
+  min-height: 300px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .diff-panel {
   display: flex;
   flex-direction: column;
   background: var(--b3-theme-background);
+  overflow: hidden;
 
   .panel-header {
+    flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -283,16 +318,17 @@ const $t = (key: string) => {
 
 .diff-textarea {
   width: 100%;
-  padding: 8px;
+  height: 100%;
+  padding: 12px;
   border: none;
   outline: none;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
   font-family: var(--b3-font-family);
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.6;
   resize: none;
-  min-height: 120px;
+  overflow-y: auto;
 
   &::placeholder {
     color: var(--b3-theme-outline);
@@ -301,29 +337,17 @@ const $t = (key: string) => {
 
 .input-area {
   .diff-textarea {
-    flex: 1;
+    min-height: 160px;
   }
 }
 
-.diff-result {
-  flex: 1;
-  padding: 1px;
-  overflow-x: auto;
-  overflow-y: auto;
-  font-family: monospace;
-  font-size: 11px;
-  line-height: 1.5;
-  white-space: pre;
+.diff-content-viewer {
+  height: 400px;
+  overflow: auto;
 
-  .empty-state {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  :deep(.vue-diff) {
     height: 100%;
-    color: var(--b3-theme-outline);
-    font-style: italic;
-    white-space: normal;
-    font-size: 11px;
+    overflow: auto;
   }
 }
 
@@ -331,9 +355,9 @@ const $t = (key: string) => {
 
 // 响应式设计
 @media (max-width: 1024px) {
-  .diff-content {
+  .input-section {
     grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr;
+    max-height: 50vh;
   }
 }
 
@@ -341,6 +365,7 @@ const $t = (key: string) => {
   .diff-toolbar {
     flex-direction: column;
     gap: 12px;
+    padding: 8px 12px;
 
     .diff-options {
       flex-direction: column;
@@ -349,6 +374,7 @@ const $t = (key: string) => {
 
       .option-group {
         flex-wrap: wrap;
+        justify-content: center;
       }
     }
 
@@ -356,6 +382,10 @@ const $t = (key: string) => {
       width: 100%;
       justify-content: flex-end;
     }
+  }
+
+  .diff-content {
+    height: calc(100vh - 100px);
   }
 }
 </style>

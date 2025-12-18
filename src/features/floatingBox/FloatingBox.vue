@@ -138,7 +138,7 @@ const handleToolClick = (tool: FloatingTool) => {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 6px;
+  padding: 4px;
   background: var(--b3-theme-background);
   border-radius: 10px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.08);
@@ -150,7 +150,7 @@ const handleToolClick = (tool: FloatingTool) => {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 10px;
+  padding: 4px 8px;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);

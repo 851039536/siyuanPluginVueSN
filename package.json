@@ -31,7 +31,8 @@
     "marked": "^17.0.1",
     "qrcode": "^1.5.4",
     "video.js": "^8.23.4",
-    "vue": "^3.3.8"
+    "vue": "^3.3.8",
+    "vue-diff": "^1.2.4"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^4.8.1",

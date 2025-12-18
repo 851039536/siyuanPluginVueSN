@@ -11,6 +11,7 @@
 - 模块化功能架构
 - ESLint 代码规范检查
 - 自动化版本发布
+- 22+ 功能模块 (超级面板、页面锁定、文档目录、图片压缩等)
 
 ## 快速开始
 
@@ -19,6 +20,44 @@
 - Node.js >= 16
 - pnpm (推荐) 或 npm/yarn
 - 思源笔记客户端
+
+### 安装依赖
+
+\`\`\`bash
+pnpm install
+\`\`\`
+
+### 配置开发环境
+
+创建 \`.env\` 文件并配置思源工作区路径：
+
+\`\`\`env
+VITE_SIYUAN_WORKSPACE_PATH=C:/Users/YourName/AppData/Roaming/SiYuan
+\`\`\`
+
+或者在 Linux/Mac 上：
+
+\`\`\`env
+VITE_SIYUAN_WORKSPACE_PATH=/home/username/.config/SiYuan
+\`\`\`
+
+### 开发模式
+
+\`\`\`bash
+pnpm dev
+\`\`\`
+
+监听构建模式会自动将插件构建到思源工作区的 \`data/plugins/siyuan-plugin-vite-vue-sn\` 目录，支持热重载。
+
+### 生产构建
+
+\`\`\`bash
+pnpm build
+\`\`\`
+
+构建产物输出到 \`./dist\` 目录，并自动打包为 \`package.zip\`。
+
+
 
 ### 安装依赖
 
@@ -62,33 +101,48 @@ pnpm build
 siyuan-plugin-vite-vue-sn/
 ├── src/
 │   ├── components/           # Vue 组件
-│   │   ├── SiyuanTheme/     # 思源主题风格组件
-│   │   │   └── SyTextarea.vue
-│   │   └── SettingPanel.vue # 设置面板组件
+│   │   ├── IconWrapper.vue   # 图标包装器
+│   │   ├── SettingPanel.vue  # 设置面板组件
+│   │   └── ui/              # UI 组件库
+│   ├── commands/            # 斜杠命令
+│   │   ├── DateTime.ts      # 日期时间命令
+│   │   └── index.ts         # 命令统一导出
 │   ├── config/              # 配置管理
+│   │   ├── icons.ts         # 图标配置
 │   │   └── settings.ts      # 插件配置定义与存储
-│   ├── features/            # 功能模块
-│   │   ├── pageLock/       # 页面锁定功能
-│   │   │   ├── LockDialog.vue
-│   │   │   ├── crypto.ts
-│   │   │   ├── index.ts
-│   │   │   └── storage.ts
-│   │   ├── tableOfContents/ # 目录功能
-│   │   │   └── index.ts
-│   │   ├── wordCount/      # 字数统计
-│   │   │   └── index.ts
-│   │   └── index.ts        # 功能统一导出
+│   ├── features/            # 功能模块 (22+)
+│   │   ├── aiContentGenerator/     # AI 内容生成
+│   │   ├── apiReference/           # API 参考面板
+│   │   ├── codeImageGenerator/     # 代码截图生成器
+│   │   ├── diskBrowser/            # 本地磁盘浏览器
+│   │   ├── docNavigation/          # 文档层级导航
+│   │   ├── encryption/             # 内容加密
+│   │   ├── everythingSearch/       # Everything 搜索集成
+│   │   ├── floatingBox/            # 浮动工具箱
+│   │   ├── floatingToolbar/        # 浮动工具栏
+│   │   ├── generalSettings/        # 通用设置
+│   │   ├── highlight/              # 高亮标记
+│   │   ├── imageCompressor/        # 图片压缩
+│   │   ├── pageLock/               # 页面加密锁定
+│   │   ├── shortcut/               # 快捷键面板
+│   │   ├── statistics/             # 数据统计
+│   │   ├── superPanel/             # 超级面板 (统一入口)
+│   │   ├── systemMonitor/          # 系统监控
+│   │   ├── tableOfContents/        # 文档目录
+│   │   ├── textDiff/               # 文本差异对比
+│   │   ├── unitConverter/          # 单位转换器
+│   │   ├── video/                  # 视频管理
+│   │   ├── wordQuery/              # 单词查询
+│   │   └── index.ts                # 功能统一导出
 │   ├── i18n/               # 国际化
 │   │   ├── en_US.json
 │   │   └── zh_CN.json
 │   ├── types/              # TypeScript 类型定义
-│   │   ├── api.d.ts
-│   │   └── index.d.ts
 │   ├── utils/              # 工具函数
-│   │   └── index.ts
 │   ├── App.vue             # 主应用组件
 │   ├── api.ts              # API 封装
 │   ├── index.ts            # 插件入口
+│   ├── index.scss          # 全局样式
 │   └── main.ts             # Vue 应用初始化
 ├── plugin.json             # 插件元数据
 ├── vite.config.ts          # Vite 构建配置
@@ -132,10 +186,30 @@ export default class PluginSample extends Plugin {
 2. 通过 `features/index.ts` 统一导出
 3. 在插件主类中根据配置注册
 
-示例功能模块：
+已实现的 22+ 功能模块：
 
-- pageLock: 页面加密锁定功能
-- tableOfContents: 文档目录功能
+- `superPanel`: 超级面板 - 统一功能入口
+- `pageLock`: 页面加密锁定功能
+- `tableOfContents`: 文档目录功能
+- `imageCompressor`: 图片压缩工具
+- `docNavigation`: 文档层级导航
+- `shortcut`: 快捷键面板与管理
+- `wordQuery`: 单词查询功能
+- `generalSettings`: 通用设置面板
+- `unitConverter`: 单位转换器
+- `diskBrowser`: 本地磁盘浏览器
+- `codeImageGenerator`: 代码截图生成器
+- `aiContentGenerator`: AI 内容生成
+- `statistics`: 数据统计面板
+- `encryption`: 内容加密功能
+- `video`: 视频管理工具
+- `everythingSearch`: Everything 搜索集成
+- `systemMonitor`: 系统监控面板
+- `apiReference`: API 参考面板
+- `highlight`: 高亮标记功能
+- `floatingToolbar`: 浮动工具栏
+- `floatingBox`: 浮动工具箱
+- `textDiff`: 文本差异对比
 
 ### 配置管理 (src/config/settings.ts)
 
@@ -368,6 +442,51 @@ pnpm release:manual
 - 样式: Sass 1.62.1
 - 代码规范: ESLint 9.22.0
 - SDK: siyuan 1.1.0
+- **图标库**: @iconify/vue 5.0.0
+- **Markdown**: markdown-it 14.1.0
+- **视频播放器**: video.js 8.23.4
+- **二维码**: qrcode 1.5.4
+- **差异对比**: vue-diff 1.2.4
+- **图片压缩**: browser-image-compression 2.0.2
+
+## 常用开发命令
+
+### 开发工作流
+
+\`\`\`bash
+# 安装依赖
+pnpm install
+
+# 启动开发模式（监听模式 + 热重载）
+# 当配置了 VITE_SIYUAN_WORKSPACE_PATH 时，自动构建到思源工作区
+pnpm dev
+
+# 生产构建（输出到 ./dist 并创建 package.zip）
+pnpm build
+\`\`\`
+
+### 代码质量
+
+\`\`\`bash
+# 使用 ESLint 检查代码
+pnpm lint
+\`\`\`
+
+### 版本发布管理
+
+\`\`\`bash
+# 自动版本递增和打包
+pnpm release:patch   # 0.0.1 -> 0.0.2
+pnpm release:minor   # 0.0.1 -> 0.1.0
+pnpm release:major   # 0.0.1 -> 1.0.0
+pnpm release:manual  # 手动输入版本
+\`\`\`
+
+发布脚本会自动执行以下操作：
+1. 更新 \`package.json\` 和 \`plugin.json\` 中的版本号
+2. 创建 git 标签
+3. 构建生产版本
+4. 生成 \`package.zip\` 用于分发
 
 ## 开发规范
 
@@ -384,6 +503,7 @@ pnpm release:manual
 - 通用组件放在 `src/components/` 下
 - 工具函数放在 `src/utils/` 下
 - 类型定义放在 `src/types/` 下
+- 斜杠命令放在 `src/commands/` 下
 
 ### 代码风格
 

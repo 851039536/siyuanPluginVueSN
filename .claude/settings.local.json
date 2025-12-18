@@ -31,7 +31,8 @@
       "Bash(python3:*)",
       "Skill(readme-maintainer)",
       "Bash(npx eslint:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Skill(git-commit-helper)"
     ],
     "deny": [],
     "ask": []

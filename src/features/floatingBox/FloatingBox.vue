@@ -39,7 +39,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { superPanelTool, timestampTool, refreshTool, skillsTool } from './tools'
+import { superPanelTool, timestampTool, refreshTool, skillsTool, textDiffTool } from './tools'
 import type { FloatingTool } from './types'
 
 const props = defineProps<{
@@ -56,6 +56,7 @@ onMounted(() => {
     superPanelTool,
     timestampTool,
     refreshTool,
+    textDiffTool,
   ]
 
   // Add skills tool if plugin is available
@@ -75,7 +76,8 @@ const handleMouseLeave = () => {
 }
 
 const handleToolClick = (tool: FloatingTool) => {
-  tool.action()
+  // 传递 plugin 实例给工具的 action 函数
+  tool.action(props.plugin)
 }
 </script>
 

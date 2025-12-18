@@ -7,7 +7,7 @@ export interface FloatingTool {
   title: string
   icon: string
   bgColor: string
-  action: () => void
+  action: (plugin?: any) => void
 }
 
 /**

@@ -371,7 +371,7 @@ watch(() => props.settings, (newSettings) => {
 }, { deep: true })
 
 // 功能列表配置
-const features = computed<Feature[]>(() => [
+const features = computed(() => [
   {
     id: 'tableOfContents',
     iconKey: 'tableOfContents',
@@ -557,6 +557,16 @@ const features = computed<Feature[]>(() => [
     desc: props.i18n.floatingBox?.description || '页面右侧显示可展开的功能悬浮框',
     enabled: props.settings.enableFloatingBox,
     actions: []
+  },
+  {
+    id: 'textDiff',
+    iconKey: 'textDiff',
+    title: props.i18n.textDiff?.title || '文本对比',
+    desc: props.i18n.enableTextDiffDesc || '提供文本差异对比功能，支持字符、词语、行和补丁模式对比',
+    enabled: props.settings.enableTextDiff,
+    actions: [
+      { key: 'openTextDiff', label: '打开文本对比', hotkey: '' }
+    ]
   },
   {
     id: 'skills',

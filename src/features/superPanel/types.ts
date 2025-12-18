@@ -22,7 +22,7 @@ export interface Feature {
   /** 功能ID */
   id: string
   /** 图标键名 */
-  iconKey: FeatureIconKey
+  iconKey: FeatureIconKey | 'textDiff' | 'skills'
   /** 功能标题 */
   title: string
   /** 功能描述 */

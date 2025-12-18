@@ -5,15 +5,15 @@
       <div class="diff-options">
         <!-- 模式选择 -->
         <div class="option-group">
-          <label class="option-label">显示模式:</label>
+          <label class="option-label">{{ $t('displayMode') }}:</label>
           <button
             v-for="mode in [
-              { value: 'split', label: '分栏' },
-              { value: 'unified', label: '统一' }
+              { value: 'split', label: $t('splitMode') },
+              { value: 'unified', label: $t('unifiedMode') }
             ]"
             :key="mode.value"
             :class="['option-btn', { active: diffMode === mode.value }]"
-            @click="diffMode = mode.value as 'split' | 'unified'"
+            @click="updateMode(mode.value as 'split' | 'unified')"
           >
             {{ mode.label }}
           </button>
@@ -21,18 +21,32 @@
 
         <!-- 主题选择 -->
         <div class="option-group">
-          <label class="option-label">主题:</label>
+          <label class="option-label">{{ $t('theme') }}:</label>
           <button
             v-for="theme in [
-              { value: 'light', label: '浅色' },
-              { value: 'dark', label: '深色' }
+              { value: 'light', label: $t('lightTheme') },
+              { value: 'dark', label: $t('darkTheme') }
             ]"
             :key="theme.value"
             :class="['option-btn', { active: diffTheme === theme.value }]"
-            @click="diffTheme = theme.value as 'light' | 'dark'"
+            @click="updateTheme(theme.value as 'light' | 'dark')"
           >
             {{ theme.label }}
           </button>
+        </div>
+
+        <!-- 字体大小选择 -->
+        <div class="option-group">
+          <label class="option-label">{{ $t('fontSize') }}:</label>
+          <select
+            :value="fontSize"
+            @change="updateFontSize(Number(($event.target as HTMLSelectElement).value))"
+            class="font-size-select"
+          >
+            <option v-for="size in [12, 14, 16, 18, 20, 24, 28, 32]" :key="size" :value="size">
+              {{ size }}px
+            </option>
+          </select>
         </div>
       </div>
 
@@ -105,14 +119,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { Icon } from '@iconify/vue'
 import { Diff } from 'vue-diff'
 import 'vue-diff/dist/index.css'
+import type { Plugin } from 'siyuan'
+import { loadTextDiffSettings, saveTextDiffSettings, type TextDiffSettings } from '../../../config/settings'
 
 const props = defineProps<{
   onClose?: () => void
   i18n?: any
+  plugin?: Plugin  // 添加 plugin 参数用于API调用
 }>()
 
 // 响应式数据
@@ -120,12 +137,73 @@ const originalText = ref('')
 const modifiedText = ref('')
 const diffMode = ref<'split' | 'unified'>('split')
 const diffTheme = ref<'light' | 'dark'>('light')
+const fontSize = ref<number>(14)
 
 // 处理文本变化
 const handleTextChange = () => {
   // vue-diff 会自动处理差异计算
 }
 
+// 加载保存的设置
+const loadSettings = async () => {
+  if (props.plugin) {
+    try {
+      const settings = await loadTextDiffSettings(props.plugin)
+      diffMode.value = settings.diffMode
+      diffTheme.value = settings.theme
+      fontSize.value = settings.fontSize
+      // 加载设置后立即更新字体大小
+      setFontSize(settings.fontSize)
+    } catch (error) {
+      console.error('加载文本对比设置失败:', error)
+    }
+  }
+}
+
+// 保存当前设置
+const saveSettings = async () => {
+  if (props.plugin) {
+    try {
+      const settings: TextDiffSettings = {
+        fontSize: fontSize.value,
+        diffMode: diffMode.value,
+        theme: diffTheme.value
+      }
+      await saveTextDiffSettings(props.plugin, settings)
+    } catch (error) {
+      console.error('保存文本对比设置失败:', error)
+    }
+  }
+}
+
+// 监听设置变化并保存
+const updateMode = (mode: 'split' | 'unified') => {
+  diffMode.value = mode
+  saveSettings()
+}
+
+const updateTheme = (theme: 'light' | 'dark') => {
+  diffTheme.value = theme
+  saveSettings()
+}
+
+const updateFontSize = (size: number) => {
+  fontSize.value = size
+  setFontSize(size)  // 立即更新字体大小
+  saveSettings()     // 保存到数据库
+}
+
+// 设置字体大小的 CSS 变量
+const setFontSize = (size: number) => {
+  document.documentElement.style.setProperty('--diff-font-size', `${size}px`)
+}
+
+// 组件挂载时加载设置
+onMounted(() => {
+  loadSettings()
+  // 初始设置字体大小
+  setFontSize(fontSize.value)
+})
 
 // 清空所有文本
 function clearAll() {
@@ -325,10 +403,10 @@ const $t = (key: string) => {
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
   font-family: var(--b3-font-family);
-  font-size: 14px;
   line-height: 1.6;
   resize: none;
   overflow-y: auto;
+  font-size: var(--diff-font-size, 14px);
 
   &::placeholder {
     color: var(--b3-theme-outline);
@@ -341,13 +419,42 @@ const $t = (key: string) => {
   }
 }
 
+.font-size-select {
+  padding: 4px 8px;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+
+  &:hover {
+    background: var(--b3-theme-surface-light);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--b3-theme-primary);
+  }
+}
+
 .diff-content-viewer {
   height: 400px;
   overflow: auto;
+  font-size: var(--diff-font-size, 14px);
 
   :deep(.vue-diff) {
     height: 100%;
     overflow: auto;
+  }
+
+  :deep(.vue-diff *),
+  :deep(.vue-diff .d2h-wrapper),
+  :deep(.vue-diff .d2h-file-wrapper),
+  :deep(.vue-diff .d2h-diff-table),
+  :deep(.vue-diff .d2h-diff-row) {
+    font-size: inherit !important;
   }
 }
 

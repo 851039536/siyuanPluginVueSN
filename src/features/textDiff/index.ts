@@ -96,7 +96,8 @@ function openTextDiff(plugin: Plugin) {
   // 创建 Vue 应用
   app = createApp(TextDiffModal, {
     onClose: closeTextDiff,
-    i18n: plugin.i18n
+    i18n: plugin.i18n,
+    plugin: plugin  // 传递 plugin 实例用于 API 调用
   })
 
   app.mount(container)

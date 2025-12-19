@@ -866,5 +866,17 @@
   "base64Image_decodeFailed": "Decode failed, please check Base64 format",
   "base64Image_copySuccess": "Copy successful",
   "base64Image_copyFailed": "Copy failed",
-  "base64Image_decode": "Decode"
+  "base64Image_decode": "Decode",
+  "base64Image_compressionSettings": "Compression Settings",
+  "base64Image_outputFormat": "Output Format",
+  "base64Image_quality": "Image Quality",
+  "base64Image_maxWidth": "Max Width",
+  "base64Image_maintainAspectRatio": "Maintain Aspect Ratio",
+  "base64Image_compressedSize": "Compressed Size",
+  "base64Image_copyBase64": "Pure Base64",
+  "base64Image_copyHtml": "HTML <img> Tag",
+  "base64Image_copyMarkdown": "Markdown Image Syntax",
+  "base64Image_copyCss": "CSS Background Image Syntax",
+  "base64Image_multipleFiles": "Selected {count} files, using the first one",
+  "base64Image_pasteSuccess": "Paste image successful"
 }

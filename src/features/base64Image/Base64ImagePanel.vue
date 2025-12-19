@@ -74,12 +74,81 @@
         </div>
 
         <div class="output-section">
+          <!-- 压缩和格式转换设置 -->
+          <div class="compression-settings">
+            <h4>{{ props.i18n.base64Image_compressionSettings || '压缩设置' }}</h4>
+            <div class="setting-group">
+              <label>{{ props.i18n.base64Image_outputFormat || '输出格式' }}</label>
+              <select v-model="outputFormat" class="format-select" @change="handleFile(selectedFile!)">
+                <option value="image/jpeg">JPEG</option>
+                <option value="image/png">PNG</option>
+                <option value="image/webp">WebP</option>
+                <option value="image/gif">GIF</option>
+              </select>
+            </div>
+            <div class="setting-group">
+              <label>
+                {{ props.i18n.base64Image_quality || '图片质量' }}: {{ compressionQuality }}%
+              </label>
+              <input
+                type="range"
+                v-model="compressionQuality"
+                min="10"
+                max="100"
+                step="5"
+                class="quality-slider"
+                @change="handleFile(selectedFile!)"
+              />
+            </div>
+            <div class="setting-group">
+              <label>
+                {{ props.i18n.base64Image_maxWidth || '最大宽度' }}: {{ maxWidth }}px
+              </label>
+              <input
+                type="range"
+                v-model="maxWidth"
+                min="100"
+                max="2000"
+                step="50"
+                class="width-slider"
+                @change="handleFile(selectedFile!)"
+              />
+            </div>
+            <div class="setting-group">
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  v-model="maintainAspectRatio"
+                  @change="handleFile(selectedFile!)"
+                />
+                {{ props.i18n.base64Image_maintainAspectRatio || '保持纵横比' }}
+              </label>
+            </div>
+          </div>
+
           <h4>{{ props.i18n.base64Image_base64Output || 'Base64输出' }}</h4>
           <div class="output-controls">
-            <button class="copy-btn" @click="copyToClipboard">
-              <IconWrapper name="copy" :size="14" />
-              {{ props.i18n.base64Image_copy || '复制' }}
-            </button>
+            <div class="copy-dropdown">
+              <button class="copy-btn dropdown-toggle" @click="toggleCopyDropdown">
+                <IconWrapper name="copy" :size="14" />
+                {{ props.i18n.base64Image_copy || '复制' }}
+                <span class="dropdown-arrow">▼</span>
+              </button>
+              <div v-if="showCopyDropdown" class="dropdown-menu">
+                <button class="dropdown-item" @click="copyBase64">
+                  {{ props.i18n.base64Image_copyBase64 || '纯Base64' }}
+                </button>
+                <button class="dropdown-item" @click="copyHtmlTag">
+                  {{ props.i18n.base64Image_copyHtml || 'HTML <img> 标签' }}
+                </button>
+                <button class="dropdown-item" @click="copyMarkdown">
+                  {{ props.i18n.base64Image_copyMarkdown || 'Markdown 图片语法' }}
+                </button>
+                <button class="dropdown-item" @click="copyCssBackground">
+                  {{ props.i18n.base64Image_copyCss || 'CSS 背景图片语法' }}
+                </button>
+              </div>
+            </div>
             <button class="download-btn" @click="downloadBase64">
               <IconWrapper name="download" :size="14" />
               {{ props.i18n.base64Image_download || '下载' }}
@@ -93,6 +162,7 @@
           ></textarea>
           <div class="output-info">
             <p><strong>{{ props.i18n.base64Image_outputSize || '输出大小' }}:</strong> {{ formatFileSize(base64Output.length) }}</p>
+            <p v-if="compressionApplied"><strong>{{ props.i18n.base64Image_compressedSize || '压缩后大小' }}:</strong> {{ formatFileSize(selectedFile?.size || 0) }}</p>
           </div>
         </div>
       </div>
@@ -146,7 +216,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import IconWrapper from '@/components/IconWrapper.vue'
 import { showMessage } from 'siyuan'
 
@@ -169,6 +239,16 @@ const base64Output = ref('')
 const base64Input = ref('')
 const decodedImageUrl = ref('')
 const decodedImageSize = ref('')
+
+// 压缩和格式转换设置
+const outputFormat = ref('image/png')
+const compressionQuality = ref(80)
+const maxWidth = ref(1920)
+const maintainAspectRatio = ref(true)
+const compressionApplied = ref(false)
+
+// 复制选项
+const showCopyDropdown = ref(false)
 
 // UI状态
 const isDragOver = ref(false)
@@ -217,14 +297,34 @@ const handleDragLeave = (e: DragEvent) => {
   }
 }
 
-const handleDrop = (e: DragEvent) => {
+const handleDrop = async (e: DragEvent) => {
   e.preventDefault()
   isDragOver.value = false
 
-  const file = e.dataTransfer?.files[0]
-  if (file) {
-    handleFile(file)
+  const files = e.dataTransfer?.files
+  if (!files || files.length === 0) return
+
+  // 处理拖拽的文件（支持文件夹）
+  const fileList: File[] = []
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i]
+    if (file.type.startsWith('image/')) {
+      fileList.push(file)
+    }
   }
+
+  if (fileList.length === 0) {
+    showMessage(props.i18n.base64Image_pleaseSelectImage || '请选择图片文件', 3000, 'error')
+    return
+  }
+
+  // 如果有多张图片，使用第一张
+  if (fileList.length > 1) {
+    showMessage(`已选择 ${fileList.length} 个文件，使用第一张`, 2000, 'info')
+  }
+
+  handleFile(fileList[0])
 }
 
 // 处理文件
@@ -237,13 +337,41 @@ const handleFile = (file: File) => {
   selectedFile.value = file
   imagePreviewUrl.value = URL.createObjectURL(file)
 
-  // 转换为Base64
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    const result = e.target?.result as string
-    base64Output.value = result
+  // 压缩和格式转换
+  compressAndConvert(file)
+}
+
+// 压缩和转换图片
+const compressAndConvert = (file: File) => {
+  const canvas = document.createElement('canvas')
+  const ctx = canvas.getContext('2d')
+  const img = new Image()
+
+  img.onload = () => {
+    // 计算新尺寸
+    let { width, height } = img
+
+    if (maintainAspectRatio.value && width > maxWidth.value) {
+      height = (height * maxWidth.value) / width
+      width = maxWidth.value
+    }
+
+    canvas.width = width
+    canvas.height = height
+
+    // 绘制压缩后的图片
+    ctx?.drawImage(img, 0, 0, width, height)
+
+    // 转换为Base64
+    const quality = compressionQuality.value / 100
+    const base64 = canvas.toDataURL(outputFormat.value, quality)
+    base64Output.value = base64
+    compressionApplied.value = outputFormat.value !== file.type || quality < 1 || width !== img.width
+
+    URL.revokeObjectURL(img.src)
   }
-  reader.readAsDataURL(file)
+
+  img.src = URL.createObjectURL(file)
 }
 
 // 解码Base64
@@ -280,11 +408,56 @@ const decodeBase64 = () => {
   }
 }
 
-// 复制到剪贴板
-const copyToClipboard = async () => {
+// 切换复制下拉菜单
+const toggleCopyDropdown = () => {
+  showCopyDropdown.value = !showCopyDropdown.value
+}
+
+// 复制纯Base64
+const copyBase64 = async () => {
   try {
-    await navigator.clipboard.writeText(base64Output.value)
+    const base64Only = base64Output.value.replace(/^data:image\/.*;base64,/, '')
+    await navigator.clipboard.writeText(base64Only)
     showMessage(props.i18n.base64Image_copySuccess || '复制成功', 2000, 'info')
+    showCopyDropdown.value = false
+  } catch (error) {
+    showMessage(props.i18n.base64Image_copyFailed || '复制失败', 3000, 'error')
+  }
+}
+
+// 复制HTML img标签
+const copyHtmlTag = async () => {
+  try {
+    const altText = selectedFile.value?.name || 'image'
+    const htmlTag = `<img src="${base64Output.value}" alt="${altText}">`
+    await navigator.clipboard.writeText(htmlTag)
+    showMessage(props.i18n.base64Image_copySuccess || '复制成功', 2000, 'info')
+    showCopyDropdown.value = false
+  } catch (error) {
+    showMessage(props.i18n.base64Image_copyFailed || '复制失败', 3000, 'error')
+  }
+}
+
+// 复制Markdown图片语法
+const copyMarkdown = async () => {
+  try {
+    const altText = selectedFile.value?.name || 'image'
+    const markdown = `![${altText}](${base64Output.value})`
+    await navigator.clipboard.writeText(markdown)
+    showMessage(props.i18n.base64Image_copySuccess || '复制成功', 2000, 'info')
+    showCopyDropdown.value = false
+  } catch (error) {
+    showMessage(props.i18n.base64Image_copyFailed || '复制失败', 3000, 'error')
+  }
+}
+
+// 复制CSS背景图片语法
+const copyCssBackground = async () => {
+  try {
+    const cssBackground = `background-image: url('${base64Output.value}');`
+    await navigator.clipboard.writeText(cssBackground)
+    showMessage(props.i18n.base64Image_copySuccess || '复制成功', 2000, 'info')
+    showCopyDropdown.value = false
   } catch (error) {
     showMessage(props.i18n.base64Image_copyFailed || '复制失败', 3000, 'error')
   }
@@ -352,6 +525,34 @@ watch(base64Input, (newValue) => {
     }, 500)
     return () => clearTimeout(timer)
   }
+})
+
+// 处理粘贴事件
+const handlePaste = async (e: ClipboardEvent) => {
+  const items = e.clipboardData?.items
+  if (!items) return
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i]
+    if (item.type.startsWith('image/')) {
+      const file = item.getAsFile()
+      if (file) {
+        showMessage(props.i18n.base64Image_pasteSuccess || '粘贴图片成功', 2000, 'info')
+        handleFile(file)
+        return
+      }
+    }
+  }
+}
+
+// 组件挂载时添加粘贴监听
+onMounted(() => {
+  document.addEventListener('paste', handlePaste)
+})
+
+// 组件卸载时移除粘贴监听
+onUnmounted(() => {
+  document.removeEventListener('paste', handlePaste)
 })
 </script>
 
@@ -504,6 +705,94 @@ watch(base64Input, (newValue) => {
     color: var(--text-color, #333);
   }
 
+  .compression-settings {
+    background: var(--settings-bg, #f8f9fa);
+    border: 1px solid var(--border-color, #e5e5e5);
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 16px;
+
+    h4 {
+      margin: 0 0 12px 0;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-color, #333);
+    }
+
+    .setting-group {
+      margin-bottom: 12px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 12px;
+        color: var(--text-secondary, #666);
+        font-weight: 500;
+      }
+
+      .format-select {
+        width: 100%;
+        padding: 6px 10px;
+        border: 1px solid var(--border-color, #e5e5e5);
+        border-radius: 4px;
+        background: var(--select-bg, #fff);
+        color: var(--text-color, #333);
+        font-size: 12px;
+        cursor: pointer;
+
+        &:focus {
+          outline: none;
+          border-color: var(--primary-color, #1976d2);
+        }
+      }
+
+      .quality-slider,
+      .width-slider {
+        width: 100%;
+        height: 4px;
+        background: var(--slider-bg, #e0e0e0);
+        border-radius: 2px;
+        outline: none;
+        cursor: pointer;
+
+        &::-webkit-slider-thumb {
+          appearance: none;
+          width: 16px;
+          height: 16px;
+          background: var(--primary-color, #1976d2);
+          border-radius: 50%;
+          cursor: pointer;
+        }
+
+        &::-moz-range-thumb {
+          width: 16px;
+          height: 16px;
+          background: var(--primary-color, #1976d2);
+          border-radius: 50%;
+          cursor: pointer;
+          border: none;
+        }
+      }
+
+      .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+
+        input[type="checkbox"] {
+          width: 16px;
+          height: 16px;
+          cursor: pointer;
+        }
+      }
+    }
+  }
+
   .image-preview {
     border: 1px solid var(--border-color, #e5e5e5);
     border-radius: 6px;
@@ -567,6 +856,54 @@ watch(base64Input, (newValue) => {
 
       &:hover {
         background: var(--primary-dark-color, #1565c0);
+      }
+    }
+
+    .copy-dropdown {
+      position: relative;
+
+      .dropdown-toggle {
+        .dropdown-arrow {
+          margin-left: 4px;
+          font-size: 10px;
+        }
+      }
+
+      .dropdown-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        margin-top: 4px;
+        background: var(--dropdown-bg, #fff);
+        border: 1px solid var(--border-color, #e5e5e5);
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        min-width: 180px;
+
+        .dropdown-item {
+          width: 100%;
+          padding: 8px 12px;
+          border: none;
+          background: transparent;
+          color: var(--text-color, #333);
+          cursor: pointer;
+          font-size: 12px;
+          text-align: left;
+          transition: background 0.2s;
+
+          &:hover {
+            background: var(--hover-bg, #f0f0f0);
+          }
+
+          &:first-child {
+            border-radius: 4px 4px 0 0;
+          }
+
+          &:last-child {
+            border-radius: 0 0 4px 4px;
+          }
+        }
       }
     }
   }

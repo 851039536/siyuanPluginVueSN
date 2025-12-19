@@ -203,9 +203,9 @@
             <span class="data-date">{{ item.dateLabel }}</span>
             <span class="data-value">{{ formatNumber(item.words) }}</span>
           </div>
-          <div v-if="chartData.length === 0" class="empty-state">
+          <!-- <div v-if="chartData.length === 0" class="empty-state">
             {{ i18n.noData }}
-          </div>
+          </div> -->
         </div>
 
         <!-- 趋势视图 -->

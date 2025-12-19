@@ -8,6 +8,79 @@
   overflow: hidden;
 }
 
+// 折叠功能相关样式
+.section-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.btn-collapse {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
+  transition: all 0.2s;
+
+  &:hover {
+    opacity: 1;
+    background: var(--b3-theme-surface-lighter);
+  }
+
+  .collapse-icon {
+    transition: transform 0.3s ease;
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+  }
+
+  &.collapsed .collapse-icon {
+    transform: rotate(-90deg);
+  }
+}
+
+// 折叠内容的动画效果
+.section-content.collapsed {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.3s ease-out, opacity 0.3s ease-out, padding 0.3s ease-out;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.section-content:not(.collapsed) {
+  max-height: 2000px;
+  opacity: 1;
+  transition: max-height 0.3s ease-in, opacity 0.3s ease-in;
+}
+
+// 工具栏动作区域折叠样式
+.toolbar-actions.collapsed {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.3s ease-out, opacity 0.3s ease-out, margin 0.3s ease-out;
+  margin: 0;
+}
+
+.toolbar-actions:not(.collapsed) {
+  max-height: 200px;
+  opacity: 1;
+  transition: max-height 0.3s ease-in, opacity 0.3s ease-in;
+}
+
 .panel-header {
   display: flex;
   align-items: center;
@@ -1625,6 +1698,37 @@
       }
     }
   }
+}
+
+// 建议和结果面板的折叠样式
+.suggestions-content.collapsed {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+  margin-top: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.suggestions-content:not(.collapsed) {
+  max-height: 500px;
+  opacity: 1;
+  transition: max-height 0.3s ease-in, opacity 0.3s ease-in;
+}
+
+.result-content.collapsed {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.3s ease-out, opacity 0.3s ease-out, margin 0.3s ease-out;
+  margin: 0;
+}
+
+.result-content:not(.collapsed) {
+  max-height: 800px;
+  opacity: 1;
+  transition: max-height 0.3s ease-in, opacity 0.3s ease-in;
 }
 
 // 移动端优化样式

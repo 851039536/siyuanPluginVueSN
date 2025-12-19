@@ -840,7 +840,8 @@
     "resources": "更多资源",
     "officialDocs": "官方API文档",
     "onlineTester": "在线API测试",
-    "apifoxDoc": "ApiFox文档",
+    "apifoxDoc": "ApiFox文档"
+  },
   "textDiff": {
     "title": "文本对比工具",
     "original": "原文本",

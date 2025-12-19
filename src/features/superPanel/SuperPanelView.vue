@@ -569,6 +569,16 @@ const features = computed(() => [
     ]
   },
   {
+    id: 'base64Image',
+    iconKey: 'base64Image',
+    title: props.i18n.base64Image || 'Base64图片转换',
+    desc: props.i18n.base64ImageDesc || '图片与Base64编码相互转换',
+    enabled: props.settings.enableBase64Image,
+    actions: [
+      { key: 'openBase64Image', label: '打开转换器', hotkey: 'Ctrl+Alt+B' }
+    ]
+  },
+  {
     id: 'skills',
     iconKey: 'skills',
     title: props.i18n.skills?.title || '技能库',

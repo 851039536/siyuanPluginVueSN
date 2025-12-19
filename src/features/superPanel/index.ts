@@ -164,6 +164,7 @@ async function handleFeatureToggle(plugin: Plugin, featureId: string, enabled: b
     'floatingToolbar': 'enableFloatingToolbar',
     'floatingBox': 'enableFloatingBox',
     'textDiff': 'enableTextDiff',
+    'base64Image': 'enableBase64Image',
     'skills': 'enableSkills'
   }
 
@@ -219,7 +220,9 @@ async function handleToggleAllFeatures(plugin: Plugin, enabled: boolean) {
     'enableSystemMonitor',
     'enableApiReference',
     'enableFloatingToolbar',
-    'enableFloatingBox'
+    'enableFloatingBox',
+    'enableTextDiff',
+    'enableBase64Image'
   ]
 
   // 构建新设置对象
@@ -311,6 +314,14 @@ function handleFeatureAction(_plugin: Plugin, action: string) {
       // 打开文本对比工具
       if ((_plugin as any).settings.enableTextDiff) {
         toggleTextDiff(_plugin)
+        closeSuperPanel()
+      }
+      break
+
+    case 'openBase64Image':
+      // 打开 Base64 图片转换器
+      if ((_plugin as any).settings.enableBase64Image) {
+        window.dispatchEvent(new CustomEvent('openBase64Image'))
         closeSuperPanel()
       }
       break

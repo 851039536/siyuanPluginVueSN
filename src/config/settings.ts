@@ -30,6 +30,7 @@ export interface PluginSettings {
   enableFloatingBox: boolean     // 是否启用悬浮框功能
   enableSkills: boolean          // 是否启用技能库功能
   enableTextDiff: boolean        // 是否启用文本对比功能
+  enableBase64Image: boolean     // 是否启用 Base64 图片转换器功能
   videoCategories?: string[]     // 视频分类列表
   wordQueryApiKey: string        // 单词查询API密钥(已废弃,使用aiApiProvider和aiApiKey)
   compactMode: boolean           // 是否启用全局紧洛模式
@@ -101,6 +102,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enableFloatingBox: true,
   enableSkills: true,
   enableTextDiff: true,
+  enableBase64Image: true,
   videoCategories: ['默认分类', '教程', '演示', '其他'],
   wordQueryApiKey: 'sk-fae27cc50015409fb2524b0970d3f0b0',
   compactMode: true,

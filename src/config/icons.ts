@@ -164,6 +164,12 @@ export const FEATURE_ICONS = {
     color: '#06b6d4'
   },
 
+  // Base64 图片转换器
+  base64Image: {
+    icon: 'mdi:code-brackets',
+    color: '#f59e0b'
+  },
+
   // 技能库
   skills: {
     icon: 'mdi:brain',

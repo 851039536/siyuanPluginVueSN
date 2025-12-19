@@ -41,14 +41,26 @@
     <div class="settings-panel" v-if="showSettings">
       <div class="panel-section">
         <div class="section-header">
-          <span>💬 {{ i18n.conversationSettings || '对话设置' }}</span>
+          <div class="section-title-wrapper">
+            <span>💬 {{ i18n.conversationSettings || '对话设置' }}</span>
+            <button
+              class="btn-collapse"
+              @click="toggleCollapse('settings')"
+              :class="{ 'collapsed': collapsedSections.settings }"
+              :title="collapsedSections.settings ? '展开设置' : '折叠设置'"
+            >
+              <svg width="14" height="14" class="collapse-icon">
+                <use :xlink:href="collapsedSections.settings ? '#iconRight' : '#iconDown'"></use>
+              </svg>
+            </button>
+          </div>
           <button class="btn-close" @click="toggleSettings">
             <svg width="14" height="14">
               <use xlink:href="#iconClose"></use>
             </svg>
           </button>
         </div>
-        <div class="section-content">
+        <div class="section-content" :class="{ 'collapsed': collapsedSections.settings }">
           <div class="setting-item">
             <div class="label-row">
               <label>{{ i18n.systemPrompt || '系统提示词' }}</label>
@@ -352,12 +364,24 @@
       <!-- Edit模式：AI智能编辑工具栏 -->
       <div v-if="editMode && editTargetDoc" class="ai-edit-toolbar">
         <div class="toolbar-label">
-          <svg width="14" height="14">
-            <use xlink:href="#iconSparkles"></use>
-          </svg>
-          <span>{{ i18n.aiEditTools || 'AI智能编辑' }}:</span>
+          <div class="section-title-wrapper">
+            <svg width="14" height="14">
+              <use xlink:href="#iconSparkles"></use>
+            </svg>
+            <span>{{ i18n.aiEditTools || 'AI智能编辑' }}:</span>
+            <button
+              class="btn-collapse"
+              @click="toggleCollapse('aiToolbar')"
+              :class="{ 'collapsed': collapsedSections.aiToolbar }"
+              :title="collapsedSections.aiToolbar ? '展开工具栏' : '折叠工具栏'"
+            >
+              <svg width="14" height="14" class="collapse-icon">
+                <use :xlink:href="collapsedSections.aiToolbar ? '#iconRight' : '#iconDown'"></use>
+              </svg>
+            </button>
+          </div>
         </div>
-        <div class="toolbar-actions">
+        <div class="toolbar-actions" :class="{ 'collapsed': collapsedSections.aiToolbar }">
           <button class="btn-ai-action" @click="aiEditAction('polish')" :disabled="isGenerating" :title="i18n.aiPolish || 'AI润色'">
             <svg width="14" height="14"><use xlink:href="#iconEdit"></use></svg>
             {{ i18n.polish || '润色' }}
@@ -407,13 +431,25 @@
       <!-- AI分析建议面板 -->
       <div v-if="editMode && aiSuggestions" class="ai-suggestions-panel">
         <div class="suggestions-header">
-          <svg width="16" height="16"><use xlink:href="#iconLightbulb"></use></svg>
-          <span>{{ i18n.aiSuggestions || 'AI优化建议' }}</span>
+          <div class="section-title-wrapper">
+            <svg width="16" height="16"><use xlink:href="#iconLightbulb"></use></svg>
+            <span>{{ i18n.aiSuggestions || 'AI优化建议' }}</span>
+            <button
+              class="btn-collapse"
+              @click="toggleCollapse('suggestions')"
+              :class="{ 'collapsed': collapsedSections.suggestions }"
+              :title="collapsedSections.suggestions ? '展开建议' : '折叠建议'"
+            >
+              <svg width="14" height="14" class="collapse-icon">
+                <use :xlink:href="collapsedSections.suggestions ? '#iconRight' : '#iconDown'"></use>
+              </svg>
+            </button>
+          </div>
           <button class="btn-close-suggestions" @click="aiSuggestions = null">
             <svg width="12" height="12"><use xlink:href="#iconClose"></use></svg>
           </button>
         </div>
-        <div class="suggestions-content">
+        <div class="suggestions-content" :class="{ 'collapsed': collapsedSections.suggestions }">
           <p class="suggestion-text">{{ aiSuggestions }}</p>
           <button class="btn-apply-suggestions" @click="applySuggestions" :disabled="isGenerating">
             {{ i18n.applySuggestions || '应用建议优化' }}
@@ -424,13 +460,25 @@
       <!-- AI查重结果面板 -->
       <div v-if="editMode && plagiarismResult" class="plagiarism-result-panel">
         <div class="result-header">
-          <svg width="16" height="16"><use xlink:href="#iconSearch"></use></svg>
-          <span>{{ i18n.aiPlagiarismResult || 'AI查重结果' }}</span>
+          <div class="section-title-wrapper">
+            <svg width="16" height="16"><use xlink:href="#iconSearch"></use></svg>
+            <span>{{ i18n.aiPlagiarismResult || 'AI查重结果' }}</span>
+            <button
+              class="btn-collapse"
+              @click="toggleCollapse('plagiarism')"
+              :class="{ 'collapsed': collapsedSections.plagiarism }"
+              :title="collapsedSections.plagiarism ? '展开结果' : '折叠结果'"
+            >
+              <svg width="14" height="14" class="collapse-icon">
+                <use :xlink:href="collapsedSections.plagiarism ? '#iconRight' : '#iconDown'"></use>
+              </svg>
+            </button>
+          </div>
           <button class="btn-close-result" @click="plagiarismResult = null">
             <svg width="12" height="12"><use xlink:href="#iconClose"></use></svg>
           </button>
         </div>
-        <div class="result-content">
+        <div class="result-content" :class="{ 'collapsed': collapsedSections.plagiarism }">
           <div class="plagiarism-summary">
             <div class="summary-item" :class="plagiarismResult.riskLevel === 'low' ? 'low-risk' : plagiarismResult.riskLevel === 'medium' ? 'medium-risk' : 'high-risk'">
               <span class="summary-label">{{ i18n.riskLevel || '风险等级' }}:</span>
@@ -699,6 +747,15 @@ const isMobile = ref(false);
 
 // 移动端：输入区域显示状态
 const showInputSection = ref(true);
+
+// 折叠状态管理
+const collapsedSections = ref({
+  settings: false,
+  aiToolbar: false,
+  suggestions: false,
+  plagiarism: false,
+  promptSelector: false
+});
 
 // Edit模式状态
 const editMode = ref(false);
@@ -1066,6 +1123,37 @@ watch(renderPlagiarismMarkdown, async () => {
 // 切换设置面板
 const toggleSettings = () => {
   showSettings.value = !showSettings.value;
+};
+
+// 折叠切换函数
+const toggleCollapse = (section: keyof typeof collapsedSections.value) => {
+  collapsedSections.value[section] = !collapsedSections.value[section];
+  saveCollapsedSections();
+};
+
+// 保存折叠状态到本地存储
+const saveCollapsedSections = async () => {
+  if (storage) {
+    try {
+      await storage.saveCollapsedSections(collapsedSections.value);
+    } catch (error) {
+      console.error('保存折叠状态失败:', error);
+    }
+  }
+};
+
+// 从本地存储加载折叠状态
+const loadCollapsedSections = async () => {
+  if (storage) {
+    try {
+      const saved = await storage.loadCollapsedSections();
+      if (saved) {
+        Object.assign(collapsedSections.value, saved);
+      }
+    } catch (error) {
+      console.error('加载折叠状态失败:', error);
+    }
+  }
 };
 
 // 切换Edit模式
@@ -2328,6 +2416,7 @@ onMounted(async () => {
     await storage.init();
     await loadPromptsFromStorage();
     await loadSettings();
+    await loadCollapsedSections();
   }
 });
 

@@ -36,6 +36,7 @@ export class AIGeneratorStorage {
   private readonly SETTINGS_STORAGE_KEY = 'ai-content-generator-settings'
   private readonly PROMPTS_STORAGE_KEY = 'ai-content-generator-prompts'
   private readonly CURRENT_PROMPT_STORAGE_KEY = 'ai-content-generator-current-prompt'
+  private readonly COLLAPSED_SECTIONS_STORAGE_KEY = 'ai-content-generator-collapsed-sections'
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
@@ -129,6 +130,32 @@ export class AIGeneratorStorage {
     } catch (error) {
       console.error('清除当前提示词失败:', error)
       return false
+    }
+  }
+
+  /**
+   * 保存折叠状态
+   */
+  async saveCollapsedSections(collapsedSections: Record<string, boolean>): Promise<boolean> {
+    try {
+      await this.plugin.saveData(this.COLLAPSED_SECTIONS_STORAGE_KEY, collapsedSections)
+      return true
+    } catch (error) {
+      console.error('保存折叠状态失败:', error)
+      return false
+    }
+  }
+
+  /**
+   * 加载折叠状态
+   */
+  async loadCollapsedSections(): Promise<Record<string, boolean> | null> {
+    try {
+      const data = await this.plugin.loadData(this.COLLAPSED_SECTIONS_STORAGE_KEY)
+      return data as Record<string, boolean> || null
+    } catch (error) {
+      console.error('加载折叠状态失败:', error)
+      return null
     }
   }
 

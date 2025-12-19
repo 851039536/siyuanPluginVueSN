@@ -814,7 +814,8 @@
     "resources": "More Resources",
     "officialDocs": "Official API Documentation",
     "onlineTester": "Online API Tester",
-    "apifoxDoc": "ApiFox Documentation",
+    "apifoxDoc": "ApiFox Documentation"
+  },
   "textDiff": {
     "title": "Text Diff Tool",
     "original": "Original Text",

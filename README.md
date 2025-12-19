@@ -542,14 +542,4 @@ A:
 - Vue 3 文档: https://vuejs.org/
 - Vite 文档: https://vitejs.dev/
 
-## 许可证
 
-MIT License
-
-## 贡献
-
-欢迎提交 Issue 和 Pull Request！
-
----
-
-开发愉快！🎉

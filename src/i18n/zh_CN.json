@@ -892,5 +892,17 @@
   "base64Image_decodeFailed": "解码失败，请检查Base64格式",
   "base64Image_copySuccess": "复制成功",
   "base64Image_copyFailed": "复制失败",
-  "base64Image_decode": "解码"
+  "base64Image_decode": "解码",
+  "base64Image_compressionSettings": "压缩设置",
+  "base64Image_outputFormat": "输出格式",
+  "base64Image_quality": "图片质量",
+  "base64Image_maxWidth": "最大宽度",
+  "base64Image_maintainAspectRatio": "保持纵横比",
+  "base64Image_compressedSize": "压缩后大小",
+  "base64Image_copyBase64": "纯Base64",
+  "base64Image_copyHtml": "HTML <img> 标签",
+  "base64Image_copyMarkdown": "Markdown 图片语法",
+  "base64Image_copyCss": "CSS 背景图片语法",
+  "base64Image_multipleFiles": "已选择 {count} 个文件，使用第一张",
+  "base64Image_pasteSuccess": "粘贴图片成功"
 }

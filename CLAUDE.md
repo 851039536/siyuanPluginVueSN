@@ -68,10 +68,7 @@ src/
 │   ├── aiContentGenerator/   # AI 内容生成
 │   ├── statistics/           # 数据统计
 │   ├── pronunciation/        # 谐音翻译
-│   ├── encryption/           # 内容加密
-│   ├── video/                # 视频管理
 │   ├── everythingSearch/     # Everything 搜索集成
-│   └── openVpn/              # OpenVPN 集成
 ├── components/        # 共享 Vue 组件
 ├── config/            # 配置管理
 ├── commands/          # 斜杠命令
@@ -85,9 +82,8 @@ src/
 1. 插件入口点 (`src/index.ts`)
 
 - 主 `PluginSample` 类继承 Siyuan 的 `Plugin`
-- 生命周期方法：`onload()`, `onunload()`
+- 生命周期：`onload()`, `onunload()`
 - 基于配置标志的功能注册
-- 平台检测（移动端、浏览器、Electron 等）
 
 2. 基于功能的模块系统
 
@@ -102,9 +98,9 @@ src/
 - 集中式设置接口：`PluginSettings`
 - 独立设置：字体、列表、标题、代码块
 - 默认值与保存的配置合并
-- 通过 Siyuan 的 `plugin.loadData()` / `plugin.saveData()` 持久化存储（避免使用localStorage）
+- 通过Siyuan的`plugin.loadData()`/`plugin.saveData()`持久化存储（避免使用localStorage）
 - API参考：docs/思源笔记 API 使用.md
-- 快捷键：实现遵循 ctrl+alt+？
+- 快捷键：遵循 ctrl+alt+？方式
 
 4. Vue 应用结构
 
@@ -238,32 +234,6 @@ const data = await plugin.loadData('key')
 plugin.openSetting()
 ```
 
-### 平台检测
-
-插件自动检测平台：
-
-```typescript
-this.isMobile      // 移动端或浏览器移动端
-this.isBrowser     // 基于浏览器
-this.isElectron    // Electron 应用
-this.isLocal       // localhost/127.0.0.1
-this.isInWindow    // window.html
-```
-
-## 构建输出
-
-### 开发模式 (`pnpm dev`)
-
-- 输出到：`{VITE_SIYUAN_WORKSPACE_PATH}/data/plugins/siyuan-plugin-vite-vue-sn`
-- 监听模式带实时重载
-- 非压缩版本用于调试
-
-### 生产模式 (`pnpm build`)
-
-- 输出到：`./dist/`
-- 创建：`./package.zip` 用于分发
-- 压缩和优化
-
 ## 依赖
 
 核心：
@@ -276,10 +246,7 @@ this.isInWindow    // window.html
 关键库：
 
 - @iconify/vue - 图标库
-- qrcode - 二维码生成
 - marked - Markdown 解析
-- video.js - 视频播放器
-- browser-image-compression - 图片压缩
 
 ## 资源
 

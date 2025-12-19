@@ -158,7 +158,6 @@
 import { computed, ref, watch } from 'vue'
 import IconWrapper from '@/components/IconWrapper.vue'
 import FeatureCard from './components/FeatureCard.vue'
-import type { Feature } from './types'
 import type { PluginSettings } from '@/config/settings'
 import { showMessage } from 'siyuan'
 

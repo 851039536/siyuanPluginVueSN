@@ -55,5 +55,12 @@
     "scss",
     "pcss",
     "postcss"
+  ],
+  "cSpell.words": [
+    "deepseek",
+    "Qianwen",
+    "qwen",
+    "Qwen",
+    "tongyi"
   ]
 }

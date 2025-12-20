@@ -11,7 +11,7 @@ $compact-border-radius: 6px;
 $compact-font-size-reduction: 0.9;
 
 // 代码块变量
-$codeblock-padding: 12px;
+$codeblock-padding: 4px;
 $codeblock-font-size: 13px;
 $codeblock-border-radius: 8px;
 $codeblock-transition: all 0.2s ease;
@@ -31,12 +31,12 @@ $animation-slow: 3s;
   .protyle-wysiwyg [data-node-id][data-type="NodeCodeBlock"],
   .b3-typography [data-node-id][data-type="NodeCodeBlock"] {
     overflow: hidden;
-    margin: 0.5rem 0;
+    // margin: 0.5rem 0;
 
     .protyle-action {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      // gap: 0.5rem;
       min-height: 1.5rem;
       position: relative;
 
@@ -62,7 +62,7 @@ $animation-slow: 3s;
 
     .hljs {
       background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.015) !important;
-      padding: var(--codeblock-padding, #{$codeblock-padding}) 14px;
+      padding: var(--codeblock-padding, #{$codeblock-padding}) 8px;
       padding-top: #{$codeblock-padding};
       font-size: var(--codeblock-font-size, #{$codeblock-font-size});
       line-height: 1.6;
@@ -456,7 +456,7 @@ body.codeblock-style-cartoon {
     }
 
     .hljs {
-      padding: var(--codeblock-padding, #{$codeblock-padding}) 0.75rem;
+      padding: var(--codeblock-padding, #{$codeblock-padding}) 8px;
       position: relative;
 
       &::after {

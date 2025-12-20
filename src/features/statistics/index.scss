@@ -394,15 +394,15 @@ $shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
 
 // ========== 视图模式区域 ==========
 .view-mode-section {
-  margin-bottom: 16px;
-  padding: 12px;
-  background: var(--b3-theme-surface);
-  border-radius: $card-border-radius;
+  // margin-bottom: 16px;
+  // padding: 12px;
+  // background: var(--b3-theme-surface);
+  // border-radius: $card-border-radius;
 
   .mode-tabs {
     display: flex;
-    gap: 8px;
-    margin-bottom: 12px;
+    gap: 6px;
+    margin-bottom: 10px;
   }
 
   .range-selector {
@@ -489,7 +489,7 @@ $shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
 // ========== 图表区域 ==========
 .chart-section {
   margin-bottom: 16px;
-  padding: 16px;
+  padding: 7px;
   background: var(--b3-theme-surface);
   border-radius: $card-border-radius;
 

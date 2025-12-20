@@ -3,6 +3,7 @@
     :icon="iconConfig.icon"
     :style="iconStyle"
     :class="className"
+    @error="handleIconError"
   />
 </template>
 
@@ -26,6 +27,12 @@ const props = defineProps<Props>()
 
 // 获取图标配置
 const iconConfig = computed(() => getIconConfig(props.name))
+
+// 处理图标加载错误
+const handleIconError = (error: any) => {
+  console.warn(`Failed to load icon: ${iconConfig.value.icon}`, error)
+  // 可以在这里添加备用图标逻辑
+}
 
 // 计算图标样式
 const iconStyle = computed(() => {

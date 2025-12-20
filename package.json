@@ -14,7 +14,8 @@
     "release:patch": "node ./release.js --mode=patch",
     "release:minor": "node ./release.js --mode=minor",
     "release:major": "node ./release.js --mode=major",
-    "build": "vite build"
+    "build": "vite build",
+    "validate:icons": "node scripts/validate-icons.mjs"
   },
   "dependencies": {
     "@iconify/vue": "^5.0.0",
@@ -36,6 +37,8 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "^4.8.1",
+    "@iconify/json": "^2.2.417",
+    "@iconify/utils": "^3.1.0",
     "@types/node": "^20.2.0",
     "@vitejs/plugin-vue": "^5.2.1",
     "@vue/tsconfig": "^0.7.0",

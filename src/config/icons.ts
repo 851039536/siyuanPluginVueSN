@@ -40,7 +40,7 @@ export const FEATURE_ICONS = {
 
   // 图片压缩
   imageCompressor: {
-    icon: 'mdi:image-size-select-actual',
+    icon: 'mdi:image',
     color: '#f59e0b'
   },
 
@@ -52,13 +52,13 @@ export const FEATURE_ICONS = {
 
   // 页面锁定
   pageLock: {
-    icon: 'mdi:shield-lock',
+    icon: 'mdi:lock',
     color: '#ef4444'
   },
 
   // 单词查询
   wordQuery: {
-    icon: 'mdi:book-alphabet',
+    icon: 'mdi:book',
     color: '#06b6d4'
   },
 
@@ -94,7 +94,7 @@ export const FEATURE_ICONS = {
 
   // 代码图片生成器
   codeImageGenerator: {
-    icon: 'mdi:code-braces-box',
+    icon: 'mdi:code-tags',
     color: '#22c55e'
   },
 

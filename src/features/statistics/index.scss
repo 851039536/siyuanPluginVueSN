@@ -248,10 +248,8 @@ $shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
     display: flex;
     align-items: center;
     justify-content: space-around;
-    padding: 16px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    margin-bottom: 8px;
+    padding: 12px;
+    margin-bottom: 6px;
 
     .stat-item-inline {
       display: flex;
@@ -327,13 +325,13 @@ $shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 
   .stat-card-small {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 12px;
+    padding: 10px;
     border-radius: $card-border-radius;
     color: white;
     box-shadow: $shadow-light;

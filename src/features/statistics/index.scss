@@ -225,7 +225,7 @@ $shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
 
 // ========== 统计卡片（紧凑布局） ==========
 .stats-cards-compact {
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 
   .stat-card-main,
   .stat-card-secondary {
@@ -438,6 +438,7 @@ $shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
       font-size: 12px;
       cursor: pointer;
       outline: none;
+      margin-bottom: 8px;
 
       &:focus {
         border-color: var(--b3-theme-primary);

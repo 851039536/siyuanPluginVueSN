@@ -282,20 +282,22 @@
                   <span
                     class="diff-value"
                     :class="{
-                      'positive': item.totalWords - historicalData[index + 1].totalWords > 0,
-                      'negative': item.totalWords - historicalData[index + 1].totalWords < 0
+                      'positive': getWordDiff(item, historicalData[index + 1]) > 0,
+                      'negative': getWordDiff(item, historicalData[index + 1]) < 0,
+                      'neutral': getWordDiff(item, historicalData[index + 1]) === 0
                     }"
                   >
-                    {{ item.totalWords - historicalData[index + 1].totalWords > 0 ? '+' : '' }}{{ formatNumber(item.totalWords - historicalData[index + 1].totalWords) }} 字
+                    {{ getWordDiff(item, historicalData[index + 1]) > 0 ? '+' : '' }}{{ formatNumber(getWordDiff(item, historicalData[index + 1])) }} 字
                   </span>
                   <span
                     class="diff-value"
                     :class="{
-                      'positive': item.totalNotes - historicalData[index + 1].totalNotes > 0,
-                      'negative': item.totalNotes - historicalData[index + 1].totalNotes < 0
+                      'positive': getNoteDiff(item, historicalData[index + 1]) > 0,
+                      'negative': getNoteDiff(item, historicalData[index + 1]) < 0,
+                      'neutral': getNoteDiff(item, historicalData[index + 1]) === 0
                     }"
                   >
-                    {{ item.totalNotes - historicalData[index + 1].totalNotes > 0 ? '+' : '' }}{{ item.totalNotes - historicalData[index + 1].totalNotes }} 笔记
+                    {{ getNoteDiff(item, historicalData[index + 1]) > 0 ? '+' : '' }}{{ getNoteDiff(item, historicalData[index + 1]) }} 笔记
                   </span>
                 </div>
               </div>
@@ -368,20 +370,22 @@
                 <span
                   class="diff-value"
                   :class="{
-                    'positive': snapshot.totalWords - snapshotData[index + 1].totalWords > 0,
-                    'negative': snapshot.totalWords - snapshotData[index + 1].totalWords < 0
+                    'positive': getSnapshotWordDiff(snapshot, snapshotData[index + 1]) > 0,
+                    'negative': getSnapshotWordDiff(snapshot, snapshotData[index + 1]) < 0,
+                    'neutral': getSnapshotWordDiff(snapshot, snapshotData[index + 1]) === 0
                   }"
                 >
-                  {{ snapshot.totalWords - snapshotData[index + 1].totalWords > 0 ? '+' : '' }}{{ formatNumber(snapshot.totalWords - snapshotData[index + 1].totalWords) }} 字
+                  {{ getSnapshotWordDiff(snapshot, snapshotData[index + 1]) > 0 ? '+' : '' }}{{ formatNumber(getSnapshotWordDiff(snapshot, snapshotData[index + 1])) }} 字
                 </span>
                 <span
                   class="diff-value"
                   :class="{
-                    'positive': snapshot.totalNotes - snapshotData[index + 1].totalNotes > 0,
-                    'negative': snapshot.totalNotes - snapshotData[index + 1].totalNotes < 0
+                    'positive': getSnapshotNoteDiff(snapshot, snapshotData[index + 1]) > 0,
+                    'negative': getSnapshotNoteDiff(snapshot, snapshotData[index + 1]) < 0,
+                    'neutral': getSnapshotNoteDiff(snapshot, snapshotData[index + 1]) === 0
                   }"
                 >
-                  {{ snapshot.totalNotes - snapshotData[index + 1].totalNotes > 0 ? '+' : '' }}{{ snapshot.totalNotes - snapshotData[index + 1].totalNotes }} 笔记
+                  {{ getSnapshotNoteDiff(snapshot, snapshotData[index + 1]) > 0 ? '+' : '' }}{{ getSnapshotNoteDiff(snapshot, snapshotData[index + 1]) }} 笔记
                 </span>
               </div>
             </div>
@@ -713,6 +717,42 @@ function toggleTheme() {
   if (props.onThemeChange) {
     props.onThemeChange(newTheme)
   }
+}
+
+// 计算字数差异（智能处理缺失数据）
+function getWordDiff(current: any, previous: any): number {
+  if (!current || !previous) return 0
+
+  // 如果前一天没有数据，不显示差异（避免负增长）
+  if (previous.totalWords === 0 && current.totalWords > 0) {
+    return 0
+  }
+
+  return current.totalWords - previous.totalWords
+}
+
+// 计算笔记数差异（智能处理缺失数据）
+function getNoteDiff(current: any, previous: any): number {
+  if (!current || !previous) return 0
+
+  // 如果前一天没有数据，不显示差异（避免负增长）
+  if (previous.totalNotes === 0 && current.totalNotes > 0) {
+    return 0
+  }
+
+  return current.totalNotes - previous.totalNotes
+}
+
+// 计算快照字数差异
+function getSnapshotWordDiff(current: any, previous: any): number {
+  if (!current || !previous) return 0
+  return current.totalWords - previous.totalWords
+}
+
+// 计算快照笔记数差异
+function getSnapshotNoteDiff(current: any, previous: any): number {
+  if (!current || !previous) return 0
+  return current.totalNotes - previous.totalNotes
 }
 
 // 初始化

@@ -803,6 +803,11 @@ $shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
               background: rgba(207, 34, 46, 0.1);
               color: #cf222e;
             }
+
+            &.neutral {
+              background: rgba(120, 120, 120, 0.1);
+              color: #666;
+            }
           }
         }
       }
@@ -979,6 +984,11 @@ $shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
           &.negative {
             background: rgba(207, 34, 46, 0.1);
             color: #cf222e;
+          }
+
+          &.neutral {
+            background: rgba(120, 120, 120, 0.1);
+            color: #666;
           }
         }
       }

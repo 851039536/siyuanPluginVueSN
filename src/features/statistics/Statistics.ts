@@ -1170,16 +1170,32 @@ export class Statistics {
             avgWordsPerDoc: dayData.avgWordsPerDoc
           });
         } else {
-          // 如果没有数据，填充0
-          result.push({
-            date: dateKey,
-            dateLabel: `${date.getMonth() + 1}/${date.getDate()}`,
-            totalNotes: 0,
-            totalWords: 0,
-            todayCreated: 0,
-            todayModified: 0,
-            avgWordsPerDoc: 0
-          });
+          // 如果没有数据，复制前一个有效数据（如果存在）
+          // 这避免了连续天数显示为0导致的负增长问题
+          const lastValidData = result.length > 0 ? result[result.length - 1] : null;
+          if (lastValidData && lastValidData.totalWords > 0) {
+            // 使用前一天的数据，避免显示为负增长
+            result.push({
+              date: dateKey,
+              dateLabel: `${date.getMonth() + 1}/${date.getDate()}`,
+              totalNotes: lastValidData.totalNotes,
+              totalWords: lastValidData.totalWords,
+              todayCreated: 0,  // 当天没有新增
+              todayModified: 0,  // 当天没有修改
+              avgWordsPerDoc: lastValidData.avgWordsPerDoc
+            });
+          } else {
+            // 确实没有数据，填充0
+            result.push({
+              date: dateKey,
+              dateLabel: `${date.getMonth() + 1}/${date.getDate()}`,
+              totalNotes: 0,
+              totalWords: 0,
+              todayCreated: 0,
+              todayModified: 0,
+              avgWordsPerDoc: 0
+            });
+          }
         }
       }
 

@@ -155,8 +155,9 @@
 import { ref, computed, onMounted } from 'vue'
 import type { Skill } from './types'
 
-defineProps<{
+const props = defineProps<{
   i18n?: Record<string, string>
+  plugin?: any
 }>()
 
 const emit = defineEmits<{
@@ -194,10 +195,11 @@ const filteredSkills = computed(() => {
 })
 
 async function loadSkills() {
+  if (!props.plugin) return
   try {
-    const stored = localStorage.getItem('siyuan-skills')
+    const stored = await props.plugin.loadData('siyuan-skills')
     if (stored) {
-      skills.value = JSON.parse(stored)
+      skills.value = stored as Skill[]
     }
   } catch (error) {
     console.error('Failed to load skills:', error)
@@ -205,8 +207,9 @@ async function loadSkills() {
 }
 
 async function saveSkills() {
+  if (!props.plugin) return
   try {
-    localStorage.setItem('siyuan-skills', JSON.stringify(skills.value))
+    await props.plugin.saveData('siyuan-skills', skills.value)
   } catch (error) {
     console.error('Failed to save skills:', error)
   }

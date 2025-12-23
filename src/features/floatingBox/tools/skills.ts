@@ -81,7 +81,8 @@ function showSkillsModal(plugin: Plugin) {
       noSkills: plugin.i18n?.skills?.modal?.noSkills || '暂无技能，点击添加',
       noSkillsFound: plugin.i18n?.skills?.modal?.noSkillsFound || '未找到匹配的技能',
       clickToCopy: plugin.i18n?.skills?.modal?.clickToCopy || '点击复制'
-    }
+    },
+    plugin: plugin
   })
 
   try {

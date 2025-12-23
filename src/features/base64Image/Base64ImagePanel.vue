@@ -913,7 +913,7 @@ onUnmounted(() => {
   .input-textarea {
     width: 100%;
     min-height: 200px;
-    padding: 8px;
+    padding: 2px;
     border: 1px solid var(--b3-theme-surface-lighter);
     border-radius: 6px;
     font-family: 'Courier New', monospace;
@@ -942,7 +942,7 @@ onUnmounted(() => {
   .input-textarea {
     width: 100%;
     min-height: 200px;
-    padding: 8px;
+    padding: 2px;
     border: 1px solid var(--b3-theme-surface-lighter);
     border-radius: 6px;
     font-family: 'Courier New', monospace;

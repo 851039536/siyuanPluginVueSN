@@ -103,6 +103,7 @@ Vue 应用结构
 - **功能可见性**：新功能必须在超级面板（SuperPanelView.vue）中提供开关设置
 - **数据持久化**：使用 `plugin.loadData()` 和 `plugin.saveData()` 方法，避免使用 localStorage
 - **思源 API 使用**：参考 `docs/思源笔记 API 使用.md` 文档
+- 工作区路径：参考 GeneralActions.vue 文件中的`openWorkspace`方法
 
 ## 开发指南
 

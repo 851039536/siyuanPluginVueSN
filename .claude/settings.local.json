@@ -40,7 +40,8 @@
       "Bash(pnpm dev)",
       "Skill(shadcn-vue-css-checker)",
       "Skill(shadcn-vue-css-checker:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(dir /s /b *.md)"
     ],
     "deny": [],
     "ask": []

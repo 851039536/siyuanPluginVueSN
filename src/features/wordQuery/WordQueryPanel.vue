@@ -563,12 +563,9 @@ const dataOperations = {
 
       if (props.plugin) {
         try {
-          console.log(`[WordQuery] Saving ${key}:`, data);
           await props.plugin.saveData(key, data);
-          console.log(`[WordQuery] Successfully saved ${key}`);
           return true;
         } catch (error) {
-          console.error(`Failed to save ${key}:`, error);
           throw error;
         }
       } else {

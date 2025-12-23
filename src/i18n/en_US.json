@@ -920,5 +920,6 @@
   "enterWorkspacePath": "Please enter SiYuan workspace path:",
   "workspacePathSet": "Workspace path set",
   "selectPathFailed": "Failed to select path",
-  "pleaseSelectWorkspace": "Please select workspace path first"
+  "pleaseSelectWorkspace": "Please select workspace path first",
+  "mobileBackupDisabled": "Mobile environment detected, backup feature has been automatically disabled to save data and storage"
 }

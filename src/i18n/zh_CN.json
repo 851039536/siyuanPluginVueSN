@@ -946,5 +946,6 @@
   "enterWorkspacePath": "请输入思源工作区路径:",
   "workspacePathSet": "工作区路径已设置",
   "selectPathFailed": "选择路径失败",
-  "pleaseSelectWorkspace": "请先选择工作区路径"
+  "pleaseSelectWorkspace": "请先选择工作区路径",
+  "mobileBackupDisabled": "检测到移动端环境，备份功能已自动禁用以节省流量和存储空间"
 }

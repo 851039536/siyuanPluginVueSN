@@ -3,6 +3,11 @@
     <div class="settings-container">
       <!-- 工作区信息 -->
       <div class="info-section">
+        <!-- 移动端提示 -->
+        <div v-if="isMobile" class="mobile-warning">
+          <span class="warning-icon">📱</span>
+          <span class="warning-text">{{ i18n.mobileBackupDisabled || '检测到移动端环境，备份功能已自动禁用以节省流量和存储空间' }}</span>
+        </div>
         <div class="section-header">
           <span class="section-icon">💾</span>
           <h4>{{ i18n.workspaceInfo || '工作区信息' }}</h4>
@@ -181,6 +186,7 @@ const isBackingUp = ref(false)
 const isLoading = ref(false)
 const lastBackupTime = ref('')
 const autoBackupEnabled = ref(false)
+const isMobile = ref(false)  // 是否为移动端
 const backupFrequency = ref('daily')
 const backupTime = ref('03:00')
 const keepBackupCount = ref(7)
@@ -189,6 +195,24 @@ const backupList = ref<Array<{ name: string; path: string; time: string; size: s
 // 定时器
 let autoBackupTimer: number | null = null
 let lastBackupTimestamp = 0
+
+// 检测是否为移动端
+function checkIsMobile(): boolean {
+  // 方式1: 检测 User Agent
+  const userAgent = navigator.userAgent.toLowerCase()
+  const mobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile|tablet/i.test(userAgent)
+
+  // 方式2: 检测屏幕宽度
+  const screenWidth = window.innerWidth <= 768
+
+  // 方式3: 检测触摸事件支持
+  const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+
+  // 方式4: 检测思源移动端环境（思源移动版会注入特定标记）
+  const isSiyuanMobile = (window as any)._siyuan_mobile === true
+
+  return mobileUA || screenWidth || (hasTouchScreen && mobileUA) || isSiyuanMobile
+}
 
 // 获取备份目录路径
 function getBackupDir(): string {
@@ -199,7 +223,18 @@ function getBackupDir(): string {
 
 // 初始化
 onMounted(async () => {
+  // 检测是否为移动端
+  isMobile.value = checkIsMobile()
+
   await loadSettings()
+
+  // 如果是移动端，自动禁用备份功能
+  if (isMobile.value && autoBackupEnabled.value) {
+    autoBackupEnabled.value = false
+    await saveSettings()
+    console.log('检测到移动端环境，已自动关闭备份功能')
+  }
+
   await detectWorkspacePath()
   await loadBackupList()
   startAutoBackupTimer()
@@ -689,433 +724,6 @@ defineExpose({
 })
 </script>
 
-<style scoped>
-.data-backup-settings {
-  height: 100%;
-  overflow-y: auto;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-}
-
-.settings-container {
-  padding: 20px;
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--b3-theme-surface-variant);
-}
-
-.section-header h4 {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--b3-theme-on-surface);
-  flex: 1;
-}
-
-.section-icon {
-  font-size: 18px;
-}
-
-.info-section {
-  background: linear-gradient(135deg, rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.08), rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.03));
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 20px;
-  border: 1px solid var(--b3-theme-surface-variant);
-}
-
-.info-grid {
-  display: grid;
-  gap: 12px;
-}
-
-.info-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.info-label {
-  font-size: 12px;
-  color: var(--b3-theme-on-surface-variant);
-}
-
-.info-value {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--b3-theme-on-surface);
-  word-break: break-all;
-}
-
-.workspace-path-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.workspace-path {
-  font-family: 'Consolas', 'Monaco', monospace;
-  font-size: 12px;
-  background: var(--b3-theme-surface);
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: 1px solid var(--b3-theme-surface-variant);
-  flex: 1;
-}
-
-.select-path-btn {
-  padding: 8px 16px;
-  border: 1px solid var(--b3-theme-primary);
-  border-radius: 6px;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-primary);
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.select-path-btn:hover {
-  background: var(--b3-theme-primary);
-  color: white;
-}
-
-.backup-section,
-.auto-backup-section,
-.history-section {
-  background: var(--b3-theme-surface);
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 20px;
-  border: 1px solid var(--b3-theme-surface-variant);
-}
-
-.backup-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.backup-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 24px;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.backup-btn.primary {
-  background: linear-gradient(135deg, var(--b3-theme-primary), var(--b3-theme-primary-light));
-  color: white;
-}
-
-.backup-btn.primary:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.3);
-}
-
-.backup-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.backup-hint {
-  font-size: 12px;
-  color: var(--b3-theme-on-surface-variant);
-  margin: 0;
-}
-
-.loading-spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.settings-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.form-item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.form-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--b3-theme-on-surface);
-}
-
-.form-select,
-.form-input {
-  padding: 8px 12px;
-  border: 1px solid var(--b3-theme-surface-variant);
-  border-radius: 6px;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.2s ease;
-}
-
-.form-select:focus,
-.form-input:focus {
-  border-color: var(--b3-theme-primary);
-}
-
-.form-input.small {
-  width: 80px;
-}
-
-.form-hint {
-  font-size: 11px;
-  color: var(--b3-theme-on-surface-variant);
-}
-
-.refresh-btn {
-  padding: 6px 12px;
-  border: 1px solid var(--b3-theme-surface-variant);
-  border-radius: 6px;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-surface);
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.refresh-btn:hover:not(:disabled) {
-  background: var(--b3-theme-surface);
-}
-
-.refresh-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.backup-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.backup-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px;
-  background: var(--b3-theme-background);
-  border-radius: 8px;
-  border: 1px solid var(--b3-theme-surface-variant);
-}
-
-.backup-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.backup-name {
-  font-weight: 500;
-  font-size: 13px;
-  color: var(--b3-theme-on-surface);
-}
-
-.backup-time,
-.backup-size {
-  font-size: 11px;
-  color: var(--b3-theme-on-surface-variant);
-}
-
-.backup-item .backup-actions {
-  display: flex;
-  flex-direction: row;
-  gap: 8px;
-}
-
-.action-btn {
-  padding: 6px 12px;
-  border: none;
-  border-radius: 6px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.action-btn.restore {
-  background: var(--b3-theme-primary);
-  color: white;
-}
-
-.action-btn.restore:hover {
-  background: var(--b3-theme-primary-light);
-}
-
-.action-btn.delete {
-  background: var(--b3-theme-error);
-  color: white;
-}
-
-.action-btn.delete:hover {
-  background: var(--b3-theme-error-light);
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-  color: var(--b3-theme-on-surface-variant);
-}
-
-.empty-icon {
-  font-size: 48px;
-  margin-bottom: 12px;
-  opacity: 0.5;
-}
-
-.empty-state p {
-  margin: 0;
-  font-size: 14px;
-}
-
-@media (max-width: 500px) {
-  .workspace-path-row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .select-path-btn {
-    width: 100%;
-  }
-
-  .backup-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .backup-item .backup-actions {
-    width: 100%;
-  }
-
-  .action-btn {
-    flex: 1;
-    text-align: center;
-  }
-}
-
-/* 输入对话框样式 */
-.input-dialog-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
-
-.input-dialog {
-  background: var(--b3-theme-background);
-  border-radius: 12px;
-  width: 90%;
-  max-width: 500px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-}
-
-.input-dialog-header {
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--b3-theme-surface-variant);
-}
-
-.input-dialog-header h4 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--b3-theme-on-surface);
-}
-
-.input-dialog-body {
-  padding: 20px;
-}
-
-.input-dialog-field {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--b3-theme-outline);
-  border-radius: 6px;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  font-size: 14px;
-  font-family: 'Consolas', 'Monaco', monospace;
-  outline: none;
-  transition: border-color 0.2s ease;
-}
-
-.input-dialog-field:focus {
-  border-color: var(--b3-theme-primary);
-}
-
-.input-dialog-footer {
-  padding: 12px 20px;
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  border-top: 1px solid var(--b3-theme-surface-variant);
-}
-
-.input-dialog-btn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.input-dialog-btn.cancel {
-  background: var(--b3-theme-surface-variant);
-  color: var(--b3-theme-on-surface);
-}
-
-.input-dialog-btn.cancel:hover {
-  background: var(--b3-theme-surface);
-}
-
-.input-dialog-btn.confirm {
-  background: var(--b3-theme-primary);
-  color: white;
-}
-
-.input-dialog-btn.confirm:hover {
-  background: var(--b3-theme-primary-light);
-}
+<style scoped lang="scss">
+@use './styles/DataBackupSettings.scss';
 </style>

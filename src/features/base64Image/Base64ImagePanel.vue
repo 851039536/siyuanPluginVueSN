@@ -878,7 +878,7 @@ onUnmounted(() => {
         background: var(--b3-theme-surface);
         border: 1px solid var(--b3-theme-surface-lighter);
         border-radius: 4px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 2px 8px var(--b3-theme-shadow, rgba(0, 0, 0, 0.15));
         z-index: 1000;
         min-width: 180px;
 
@@ -991,7 +991,7 @@ onUnmounted(() => {
 .loading-spinner {
   width: 16px;
   height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid var(--b3-theme-surface-lighter);
   border-top-color: var(--b3-theme-on-primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;

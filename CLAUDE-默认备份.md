@@ -41,7 +41,7 @@ pnpm release:manual  # 手动输入版本
 
 脚本自动执行：
 
-1. 更新 `package.json` 和 `plugin.json` 中的版本号
+1. 更新 package.json 和 plugin.json 版本号
 2. 创建 git 标签
 3. 构建生产版本
 4. 生成 `package.zip` 用于分发
@@ -53,22 +53,13 @@ pnpm release:manual  # 手动输入版本
 ```
 src/
 ├── features/          # 功能模块（模块化架构）
-│   ├── superPanel/           # 统一入口面板
-│   ├── pageLock/             # 页面加密/锁定
+│   ├── superPanel/           # 统一入口面板，模块功能开关集成。
 │   ├── tableOfContents/      # 文档目录
-│   ├── imageCompressor/      # 图片压缩
 │   ├── docNavigation/        # 文档层级导航
-│   ├── shortcut/             # 快捷键面板
 │   ├── wordQuery/            # 单词查询
 │   ├── generalSettings/      # 通用设置
-│   ├── qrCode/               # 二维码生成
 │   ├── unitConverter/        # 单位转换
-│   ├── diskBrowser/          # 本地磁盘浏览器
-│   ├── codeImageGenerator/   # 代码截图生成器
 │   ├── aiContentGenerator/   # AI 内容生成
-│   ├── statistics/           # 数据统计
-│   ├── pronunciation/        # 谐音翻译
-│   ├── everythingSearch/     # Everything 搜索集成
 ├── components/        # 共享 Vue 组件
 ├── config/            # 配置管理
 ├── commands/          # 斜杠命令
@@ -77,76 +68,43 @@ src/
 └── main.ts            # Vue 应用初始化
 ```
 
-### 核心架构模式
+### 开发参考
 
-1. 插件入口点 (`src/index.ts`)
+1. `src/index.ts`：插件入口主 `PluginSample` 类继承 Siyuan 的 `Plugin`
 
-- 主 `PluginSample` 类继承 Siyuan 的 `Plugin`
 - 生命周期：`onload()`, `onunload()`
-- 基于配置标志的功能注册
 
-2. 基于功能的模块系统
+**功能模块**
 
 - 每个功能都自包含在 `src/features/[feature-name]/` 中
 - 功能导出 `register[FeatureName]()` 函数
 - 功能根据 `plugin.settings` 条件性注册
 - 所有功能从 `src/features/index.ts` 导出
-- 新功能必须在超级面板中有开关设置显示 。
 
-3. 配置管理 (`src/config/settings.ts`)
+配置管理 (`src/config/settings.ts`)
 
 - 集中式设置接口：`PluginSettings`
 - 独立设置：字体、列表、标题、代码块
-- 默认值与保存的配置合并
-- 通过Siyuan的`plugin.loadData()`/`plugin.saveData()`持久化存储（避免使用localStorage）
-- API参考：docs/思源笔记 API 使用.md
-- 快捷键：遵循 ctrl+alt+？方式
 
-4. Vue 应用结构
+Vue 应用结构
 
 - 主应用在 `src/main.ts`（Vue 初始化）
 - `src/App.vue`（根组件）
 - 设置面板在 `src/components/SettingPanel.vue`
 - 共享组件在 `src/components/`
 
-5. 国际化
+国际化
 
 - 语言文件：`src/i18n/zh_CN.json` 和 `src/i18n/en_US.json`
-- ~500+ 个所有功能的翻译键
 - 通过 `plugin.i18n.featureName.key` 访问
 
-## 关键配置文件
+## 必须严格执行的规范
 
-### 构建配置 (`vite.config.ts`)
+- **功能可见性**：新功能必须在超级面板（SuperPanelView.vue）中提供开关设置
+- **数据持久化**：使用 `plugin.loadData()` 和 `plugin.saveData()` 方法，避免使用 localStorage
+- **思源 API 使用**：参考 `docs/思源笔记 API 使用.md` 文档
 
-- 当设置 `VITE_SIYUAN_WORKSPACE_PATH` 时，监听模式自动部署到思源工作区
-- 静态资源复制（README、icon、preview、plugin.json、i18n 文件）
-- 为插件兼容性输出 CommonJS
-- 开发模式下的实时重载
-- 生产构建的 ZIP 打包
-
-### ESLint 配置 (`eslint.config.mjs`)
-
-- 基于 `@antfu/eslint-config`
-- Vue + TS 支持
-- 样式规则：2 空格缩进、单引号
-- 自定义 i18n 键验证插件
-
-### TypeScript 配置 (`tsconfig.json`)
-
-- 严格 TypeScript 配置
-- Vue SFC 支持
-- 路径别名：`@/` 映射到 `src/`
-
-### 环境配置 (`.env`)
-
-```env
-VITE_SIYUAN_WORKSPACE_PATH=/path/to/siyuan/workspace
-```
-
-开发模式自动部署到思源需要此配置。
-
-## 功能开发指南
+## 开发指南
 
 ### 添加新功能
 
@@ -187,7 +145,7 @@ export const DEFAULT_SETTINGS = {
 }
 ```
 
-5. 在 `src/index.ts` 中注册
+5. `src/index.ts` 中注册
 
 ```typescript
 if (this.settings.enableMyFeature) {
@@ -210,11 +168,7 @@ if (this.settings.enableMyFeature) {
 
 ### API 封装 (`src/api.ts`)
 
-常用的 Siyuan API 调用已预封装：
-
-- `getBlockInfo(id)` - 获取块信息
-- `updateBlock(id, data)` - 更新块内容
-- `fetchSyncPost(endpoint, params)` - 通用 API 调用
+常用的 Siyuan API 调用
 
 ### 插件 API 使用
 
@@ -236,17 +190,11 @@ plugin.openSetting()
 
 ## 依赖
 
-核心：
-
-- Vue 3.3.8 - UI 框架
-- TypeScript 5.0.4 - 类型安全
-- Vite 6.2.1 - 构建工具
-- siyuan 1.1.0 - Siyuan SDK
-
-关键库：
-
-- @iconify/vue - 图标库
-- marked - Markdown 解析
+- Vue 3.3.8
+- TypeScript 5.0.4
+- Vite 6.2.1
+- siyuan 1.1.0
+- @iconify/vue
 
 ## 资源
 
@@ -254,4 +202,3 @@ plugin.openSetting()
 - [Vue 3 文档](https://vuejs.org/)
 - [Vite 文档](https://vitejs.dev/)
 - [Siyuan 插件示例](https://github.com/siyuan-note/plugin-sample)
-- [思源笔记官网](https://b3log.org/siyuan/)

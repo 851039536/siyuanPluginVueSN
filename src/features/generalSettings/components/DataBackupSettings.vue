@@ -45,7 +45,7 @@
             <span v-else class="btn-icon">📀</span>
             <span class="btn-text">{{ i18n.backupNow || '立即备份' }}</span>
           </button>
-          <p class="backup-hint">{{ i18n.backupHint || '备份将保存为 data-年月日.zip 格式' }}</p>
+          <p class="backup-hint">{{ i18n.backupHint || '备份将保存为 data-年月日-时分秒.zip 格式' }}</p>
         </div>
       </div>
 
@@ -192,9 +192,9 @@ const backupTime = ref('03:00')
 const keepBackupCount = ref(7)
 const backupList = ref<Array<{ name: string; path: string; time: string; size: string }>>([])
 
-// 定时器
-let autoBackupTimer: number | null = null
-let lastBackupTimestamp = 0
+// 自动备份相关
+let autoBackupTimer: number | null = null  // 组件本地定时器（用于备份操作）
+let lastBackupTimestamp = 0  // 上次备份时间戳
 
 // 检测是否为移动端
 function checkIsMobile(): boolean {
@@ -237,24 +237,52 @@ onMounted(async () => {
 
   await detectWorkspacePath()
   await loadBackupList()
-  startAutoBackupTimer()
+
+  // 监听全局自动备份触发事件
+  window.addEventListener('autoBackupTrigger', handleAutoBackupTrigger)
+
+  // 如果没有插件级别的定时器（旧版本兼容），则启动本地定时器
+  const generalSettings = props.plugin?.__generalSettings
+  if (!generalSettings) {
+    startAutoBackupTimer()
+  }
 })
 
 onUnmounted(() => {
   stopAutoBackupTimer()
+  window.removeEventListener('autoBackupTrigger', handleAutoBackupTrigger)
 })
+
+// 处理全局自动备份触发事件
+async function handleAutoBackupTrigger(event: CustomEvent) {
+  console.log('收到自动备份触发事件:', event.detail)
+  await performBackup()
+}
 
 // 监听备份频率变化，重启定时器
 watch(backupFrequency, () => {
-  startAutoBackupTimer()
+  // 通知插件级别的定时器更新
+  const generalSettings = props.plugin?.__generalSettings
+  if (generalSettings && typeof generalSettings.restartAutoBackupTimer === 'function') {
+    generalSettings.restartAutoBackupTimer(autoBackupEnabled.value, backupFrequency.value)
+  } else {
+    // 旧版本兼容：使用本地定时器
+    startAutoBackupTimer()
+  }
 })
 
 // 监听自动备份启用状态
 watch(autoBackupEnabled, (enabled) => {
-  if (enabled) {
-    startAutoBackupTimer()
+  const generalSettings = props.plugin?.__generalSettings
+  if (generalSettings && typeof generalSettings.restartAutoBackupTimer === 'function') {
+    generalSettings.restartAutoBackupTimer(enabled, backupFrequency.value)
   } else {
-    stopAutoBackupTimer()
+    // 旧版本兼容：使用本地定时器
+    if (enabled) {
+      startAutoBackupTimer()
+    } else {
+      stopAutoBackupTimer()
+    }
   }
 })
 
@@ -489,12 +517,15 @@ async function performBackup() {
   isBackingUp.value = true
 
   try {
-    // 生成文件名: data-251209.zip
+    // 生成文件名: data-251209-153045.zip (年月日-时分秒)
     const now = new Date()
     const year = now.getFullYear().toString().slice(-2)
     const month = (now.getMonth() + 1).toString().padStart(2, '0')
     const day = now.getDate().toString().padStart(2, '0')
-    const fileName = `data-${year}${month}${day}.zip`
+    const hour = now.getHours().toString().padStart(2, '0')
+    const minute = now.getMinutes().toString().padStart(2, '0')
+    const second = now.getSeconds().toString().padStart(2, '0')
+    const fileName = `data-${year}${month}${day}-${hour}${minute}${second}.zip`
     const backupDir = getBackupDir()
 
     // 显示消息
@@ -586,6 +617,12 @@ async function performBackup() {
     lastBackupTime.value = new Date().toLocaleString()
     lastBackupTimestamp = Date.now()
     await saveSettings()
+
+    // 通知插件级别更新时间戳
+    const generalSettings = props.plugin?.__generalSettings
+    if (generalSettings && typeof generalSettings.updateLastBackupTime === 'function') {
+      generalSettings.updateLastBackupTime(lastBackupTimestamp)
+    }
 
     // 添加到备份列表
     const stats = await fs.stat(zipFilePath)

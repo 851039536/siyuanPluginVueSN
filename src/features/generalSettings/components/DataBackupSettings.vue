@@ -114,9 +114,6 @@
               <span class="backup-size">{{ backup.size }}</span>
             </div>
             <div class="backup-actions">
-              <button @click="restoreBackup(backup)" class="action-btn restore">
-                {{ i18n.restore || '恢复' }}
-              </button>
               <button @click="deleteBackup(backup)" class="action-btn delete">
                 {{ i18n.delete || '删除' }}
               </button>
@@ -610,23 +607,6 @@ async function refreshBackupList() {
   isLoading.value = true
   await loadBackupList()
   isLoading.value = false
-}
-
-// 恢复备份
-async function restoreBackup(backup: { name: string; path: string }) {
-  try {
-    const confirmRestore = confirm(props.i18n.confirmRestore || '确定要恢复此备份吗？当前数据将被覆盖。')
-    if (!confirmRestore) return
-
-    showMessage(props.i18n.restoring || '正在恢复...', 0, 'info')
-
-    // 这里需要从备份文件恢复数据
-    // 由于浏览器环境限制，实际恢复逻辑需要根据备份内容来处理
-    showMessage(props.i18n.restoreSuccess || '恢复成功', 3000, 'success')
-  } catch (error) {
-    console.error('恢复备份失败:', error)
-    showMessage(props.i18n.restoreFailed || '恢复失败', 3000, 'error')
-  }
 }
 
 // 删除备份

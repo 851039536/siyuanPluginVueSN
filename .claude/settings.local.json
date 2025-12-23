@@ -39,7 +39,8 @@
       "Bash(pnpm remove:*)",
       "Bash(pnpm dev)",
       "Skill(shadcn-vue-css-checker)",
-      "Skill(shadcn-vue-css-checker:*)"
+      "Skill(shadcn-vue-css-checker:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

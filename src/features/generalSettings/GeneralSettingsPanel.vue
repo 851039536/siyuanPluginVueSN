@@ -49,6 +49,11 @@
         <div v-show="activeCategory === 'actions'" class="content-section">
           <GeneralActions :i18n="i18n" @change="handleActionsChange" />
         </div>
+
+        <!-- 数据备份 -->
+        <div v-show="activeCategory === 'backup'" class="content-section">
+          <DataBackupSettings :i18n="i18n" :plugin="plugin" @change="handleBackupChange" />
+        </div>
       </div>
     </div>
   </div>
@@ -63,6 +68,7 @@ import HeadingSettings from './components/HeadingSettings.vue'
 import ListSettings from './components/ListSettings.vue'
 import EncryptionSettings from './components/EncryptionSettings.vue'
 import HighlightSettings from './components/HighlightSettings.vue'
+import DataBackupSettings from './components/DataBackupSettings.vue'
 
 interface Props {
   i18n?: any
@@ -104,6 +110,10 @@ const categories = computed(() => [
   {
     id: 'actions',
     label: props.i18n.generalActions || '通用操作'
+  },
+  {
+    id: 'backup',
+    label: props.i18n.dataBackup || '数据备份'
   }
 ])
 
@@ -139,12 +149,21 @@ function handleListChange(settings: any) {
   })
 }
 
+function handleBackupChange(settings: any) {
+  console.log('备份设置已更改:', settings)
+  props.onSettingsChange?.({
+    moduleId: 'backup',
+    settings
+  })
+}
+
 // 暴露方法给父组件
 defineExpose({
   handleCodeBlockChange,
   handleActionsChange,
   handleHeadingChange,
-  handleListChange
+  handleListChange,
+  handleBackupChange
 })
 </script>
 

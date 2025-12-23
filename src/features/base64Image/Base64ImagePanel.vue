@@ -557,12 +557,13 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
+// 使用思源笔记主题 CSS 变量实现黑色主题兼容
 .base64-image-panel {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--panel-bg, #fff);
-  color: var(--panel-text, #333);
+  background: var(--panel-background, var(--b3-theme-background));
+  color: var(--panel-text-color, var(--b3-theme-on-background));
 }
 
 .panel-header {
@@ -570,8 +571,8 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  border-bottom: 1px solid var(--border-color, #e5e5e5);
-  background: var(--header-bg, #f8f9fa);
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  background: var(--b3-theme-surface);
 
   .panel-title {
     margin: 0;
@@ -580,7 +581,7 @@ onUnmounted(() => {
     display: flex;
     align-items: center;
     gap: 8px;
-    color: var(--text-color, #333);
+    color: var(--b3-theme-on-surface);
   }
 
   .header-actions {
@@ -594,12 +595,12 @@ onUnmounted(() => {
     background: transparent;
     cursor: pointer;
     border-radius: 4px;
-    color: var(--text-secondary, #666);
+    color: var(--b3-theme-on-surface-variant);
     transition: all 0.2s;
 
     &:hover {
-      background: var(--hover-bg, #f0f0f0);
-      color: var(--text-color, #333);
+      background: var(--b3-theme-surface-lighter);
+      color: var(--b3-theme-on-surface);
     }
   }
 }
@@ -608,14 +609,14 @@ onUnmounted(() => {
   display: flex;
   padding: 8px;
   gap: 8px;
-  border-bottom: 1px solid var(--border-color, #e5e5e5);
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
 
   .mode-tab {
     flex: 1;
     padding: 8px 12px;
-    border: 1px solid var(--border-color, #e5e5e5);
-    background: var(--tab-bg, #f8f9fa);
-    color: var(--text-secondary, #666);
+    border: 1px solid var(--b3-theme-surface-lighter);
+    background: var(--b3-theme-surface);
+    color: var(--b3-theme-on-surface-variant);
     cursor: pointer;
     border-radius: 6px;
     font-size: 13px;
@@ -623,13 +624,13 @@ onUnmounted(() => {
     transition: all 0.2s;
 
     &:hover {
-      background: var(--hover-bg, #f0f0f0);
+      background: var(--b3-theme-surface-lighter);
     }
 
     &.active {
-      background: var(--primary-bg, #e3f2fd);
-      color: var(--primary-color, #1976d2);
-      border-color: var(--primary-color, #1976d2);
+      background: var(--b3-theme-primary-container);
+      color: var(--b3-theme-on-primary-container);
+      border-color: var(--b3-theme-primary);
     }
   }
 }
@@ -644,34 +645,34 @@ onUnmounted(() => {
   margin-bottom: 16px;
 
   .upload-area {
-    border: 2px dashed var(--border-color, #ddd);
+    border: 2px dashed var(--b3-theme-surface-lighter);
     border-radius: 8px;
     padding: 32px;
     text-align: center;
     transition: all 0.3s;
-    background: var(--upload-bg, #fafafa);
+    background: var(--b3-theme-surface);
 
     &.drag-over {
-      border-color: var(--primary-color, #1976d2);
-      background: var(--primary-light-bg, #e3f2fd);
+      border-color: var(--b3-theme-primary);
+      background: var(--b3-theme-primary-container);
     }
 
     .upload-content {
       .upload-icon {
-        color: var(--text-secondary, #999);
+        color: var(--b3-theme-on-surface-variant);
         margin-bottom: 12px;
       }
 
       .upload-text {
         margin: 0 0 12px 0;
-        color: var(--text-secondary, #666);
+        color: var(--b3-theme-on-surface-variant);
         font-size: 14px;
       }
 
       .upload-btn {
         padding: 8px 16px;
-        background: var(--primary-color, #1976d2);
-        color: white;
+        background: var(--b3-theme-primary);
+        color: var(--b3-theme-on-primary);
         border: none;
         border-radius: 6px;
         cursor: pointer;
@@ -679,7 +680,7 @@ onUnmounted(() => {
         transition: background 0.2s;
 
         &:hover {
-          background: var(--primary-dark-color, #1565c0);
+          background: var(--b3-theme-primary-hover);
         }
       }
     }
@@ -702,12 +703,12 @@ onUnmounted(() => {
     margin: 0 0 12px 0;
     font-size: 14px;
     font-weight: 600;
-    color: var(--text-color, #333);
+    color: var(--b3-theme-on-surface);
   }
 
   .compression-settings {
-    background: var(--settings-bg, #f8f9fa);
-    border: 1px solid var(--border-color, #e5e5e5);
+    background: var(--b3-theme-surface-lighter);
+    border: 1px solid var(--b3-theme-surface-lighter);
     border-radius: 6px;
     padding: 12px;
     margin-bottom: 16px;
@@ -716,7 +717,7 @@ onUnmounted(() => {
       margin: 0 0 12px 0;
       font-size: 13px;
       font-weight: 600;
-      color: var(--text-color, #333);
+      color: var(--b3-theme-on-surface);
     }
 
     .setting-group {
@@ -730,23 +731,23 @@ onUnmounted(() => {
         display: block;
         margin-bottom: 6px;
         font-size: 12px;
-        color: var(--text-secondary, #666);
+        color: var(--b3-theme-on-surface-variant);
         font-weight: 500;
       }
 
       .format-select {
         width: 100%;
         padding: 6px 10px;
-        border: 1px solid var(--border-color, #e5e5e5);
+        border: 1px solid var(--b3-theme-surface-lighter);
         border-radius: 4px;
-        background: var(--select-bg, #fff);
-        color: var(--text-color, #333);
+        background: var(--b3-theme-background);
+        color: var(--b3-theme-on-background);
         font-size: 12px;
         cursor: pointer;
 
         &:focus {
           outline: none;
-          border-color: var(--primary-color, #1976d2);
+          border-color: var(--b3-theme-primary);
         }
       }
 
@@ -754,7 +755,7 @@ onUnmounted(() => {
       .width-slider {
         width: 100%;
         height: 4px;
-        background: var(--slider-bg, #e0e0e0);
+        background: var(--b3-theme-surface-lighter);
         border-radius: 2px;
         outline: none;
         cursor: pointer;
@@ -763,7 +764,7 @@ onUnmounted(() => {
           appearance: none;
           width: 16px;
           height: 16px;
-          background: var(--primary-color, #1976d2);
+          background: var(--b3-theme-primary);
           border-radius: 50%;
           cursor: pointer;
         }
@@ -771,7 +772,7 @@ onUnmounted(() => {
         &::-moz-range-thumb {
           width: 16px;
           height: 16px;
-          background: var(--primary-color, #1976d2);
+          background: var(--b3-theme-primary);
           border-radius: 50%;
           cursor: pointer;
           border: none;
@@ -794,10 +795,10 @@ onUnmounted(() => {
   }
 
   .image-preview {
-    border: 1px solid var(--border-color, #e5e5e5);
+    border: 1px solid var(--b3-theme-surface-lighter);
     border-radius: 6px;
     padding: 8px;
-    background: var(--bg-color, #fff);
+    background: var(--b3-theme-background);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -817,10 +818,10 @@ onUnmounted(() => {
     p {
       margin: 4px 0;
       font-size: 12px;
-      color: var(--text-secondary, #666);
+      color: var(--b3-theme-on-surface-variant);
 
       strong {
-        color: var(--text-color, #333);
+        color: var(--b3-theme-on-surface);
       }
     }
   }
@@ -833,9 +834,9 @@ onUnmounted(() => {
     .copy-btn,
     .download-btn {
       padding: 6px 12px;
-      border: 1px solid var(--border-color, #e5e5e5);
-      background: var(--btn-bg, #fff);
-      color: var(--text-color, #333);
+      border: 1px solid var(--b3-theme-surface-lighter);
+      background: var(--b3-theme-surface);
+      color: var(--b3-theme-on-surface);
       border-radius: 4px;
       cursor: pointer;
       font-size: 12px;
@@ -845,17 +846,17 @@ onUnmounted(() => {
       transition: all 0.2s;
 
       &:hover {
-        background: var(--hover-bg, #f0f0f0);
+        background: var(--b3-theme-surface-lighter);
       }
     }
 
     .download-btn {
-      background: var(--primary-color, #1976d2);
-      color: white;
-      border-color: var(--primary-color, #1976d2);
+      background: var(--b3-theme-primary);
+      color: var(--b3-theme-on-primary);
+      border-color: var(--b3-theme-primary);
 
       &:hover {
-        background: var(--primary-dark-color, #1565c0);
+        background: var(--b3-theme-primary-hover);
       }
     }
 
@@ -874,10 +875,10 @@ onUnmounted(() => {
         top: 100%;
         left: 0;
         margin-top: 4px;
-        background: var(--dropdown-bg, #fff);
-        border: 1px solid var(--border-color, #e5e5e5);
+        background: var(--b3-theme-surface);
+        border: 1px solid var(--b3-theme-surface-lighter);
         border-radius: 4px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         z-index: 1000;
         min-width: 180px;
 
@@ -886,14 +887,14 @@ onUnmounted(() => {
           padding: 8px 12px;
           border: none;
           background: transparent;
-          color: var(--text-color, #333);
+          color: var(--b3-theme-on-surface);
           cursor: pointer;
           font-size: 12px;
           text-align: left;
           transition: background 0.2s;
 
           &:hover {
-            background: var(--hover-bg, #f0f0f0);
+            background: var(--b3-theme-surface-lighter);
           }
 
           &:first-child {
@@ -913,17 +914,17 @@ onUnmounted(() => {
     width: 100%;
     min-height: 200px;
     padding: 8px;
-    border: 1px solid var(--border-color, #e5e5e5);
+    border: 1px solid var(--b3-theme-surface-lighter);
     border-radius: 6px;
     font-family: 'Courier New', monospace;
     font-size: 12px;
     resize: vertical;
-    background: var(--textarea-bg, #fafafa);
-    color: var(--text-color, #333);
+    background: var(--b3-theme-background);
+    color: var(--b3-theme-on-background);
 
     &:focus {
       outline: none;
-      border-color: var(--primary-color, #1976d2);
+      border-color: var(--b3-theme-primary);
     }
   }
 }
@@ -935,24 +936,24 @@ onUnmounted(() => {
     margin: 0 0 12px 0;
     font-size: 14px;
     font-weight: 600;
-    color: var(--text-color, #333);
+    color: var(--b3-theme-on-surface);
   }
 
   .input-textarea {
     width: 100%;
     min-height: 200px;
     padding: 8px;
-    border: 1px solid var(--border-color, #e5e5e5);
+    border: 1px solid var(--b3-theme-surface-lighter);
     border-radius: 6px;
     font-family: 'Courier New', monospace;
     font-size: 12px;
     resize: vertical;
-    background: var(--textarea-bg, #fafafa);
-    color: var(--text-color, #333);
+    background: var(--b3-theme-background);
+    color: var(--b3-theme-on-background);
 
     &:focus {
       outline: none;
-      border-color: var(--primary-color, #1976d2);
+      border-color: var(--b3-theme-primary);
     }
   }
 }
@@ -963,8 +964,8 @@ onUnmounted(() => {
   .convert-btn {
     width: 100%;
     padding: 12px;
-    background: var(--primary-color, #1976d2);
-    color: white;
+    background: var(--b3-theme-primary);
+    color: var(--b3-theme-on-primary);
     border: none;
     border-radius: 6px;
     cursor: pointer;
@@ -977,7 +978,7 @@ onUnmounted(() => {
     gap: 8px;
 
     &:hover:not(:disabled) {
-      background: var(--primary-dark-color, #1565c0);
+      background: var(--b3-theme-primary-hover);
     }
 
     &:disabled {
@@ -991,7 +992,7 @@ onUnmounted(() => {
   width: 16px;
   height: 16px;
   border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
+  border-top-color: var(--b3-theme-on-primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }

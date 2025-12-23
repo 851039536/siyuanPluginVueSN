@@ -7,12 +7,17 @@ import { createApp, h } from 'vue';
 // @ts-ignore
 import GeneralSettingsPanel from './GeneralSettingsPanel.vue';
 import { loadCodeBlockSettings, loadListSettingsFromDB, loadHeadingSettings } from '@/config/settings';
+import JSZip from 'jszip';
 
 /**
  * 通用设置类
  */
 export class GeneralSettings {
   private plugin: Plugin;
+  private autoBackupTimer: number | null = null;
+  private lastBackupTimestamp = 0;
+  private workspacePath = '';
+  private workspaceRoot = '';
 
   constructor(plugin: Plugin) {
     this.plugin = plugin;
@@ -30,6 +35,9 @@ export class GeneralSettings {
 
     // 监听页面内容变化，确保样式持续应用
     this.observeContentChanges();
+
+    // 启动自动备份定时器
+    await this.initAutoBackup();
 
     console.log('通用设置模块已初始化');
   }
@@ -504,6 +512,368 @@ export class GeneralSettings {
   }
 
   /**
+   * 初始化自动备份
+   */
+  private async initAutoBackup() {
+    try {
+      // 加载自动备份设置
+      const data = await this.plugin.loadData('data-backup-settings');
+      console.log('initAutoBackup - 加载的备份设置:', data);
+
+      if (data) {
+        this.workspacePath = data.workspacePath || '';
+        this.workspaceRoot = data.workspaceRoot || '';
+        this.lastBackupTimestamp = data.lastBackupTimestamp || 0;
+      }
+
+      // 检测是否为移动端
+      const isMobile = this.checkIsMobile();
+      const autoBackupEnabled = data?.autoBackupEnabled ?? false;
+      const backupFrequency = data?.backupFrequency ?? 'daily';
+
+      console.log('initAutoBackup - isMobile:', isMobile, 'autoBackupEnabled:', autoBackupEnabled, 'backupFrequency:', backupFrequency);
+
+      // 移动端自动禁用自动备份
+      if (!isMobile && autoBackupEnabled) {
+        this.startAutoBackupTimer(backupFrequency);
+        console.log('自动备份定时器已启动，频率:', backupFrequency);
+      } else {
+        console.log('自动备份未启动 - 移动端:', isMobile, '已启用:', autoBackupEnabled);
+      }
+    } catch (error) {
+      console.error('初始化自动备份失败:', error);
+    }
+  }
+
+  /**
+   * 检测是否为移动端
+   */
+  private checkIsMobile(): boolean {
+    const userAgent = navigator.userAgent.toLowerCase();
+    const mobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile|tablet/i.test(userAgent);
+    const screenWidth = window.innerWidth <= 768;
+    const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const isSiyuanMobile = (window as any)._siyuan_mobile === true;
+    return mobileUA || screenWidth || (hasTouchScreen && mobileUA) || isSiyuanMobile;
+  }
+
+  /**
+   * 启动自动备份定时器
+   */
+  private startAutoBackupTimer(backupFrequency: string) {
+    this.stopAutoBackupTimer();
+
+    const interval = this.getBackupInterval(backupFrequency);
+    console.log('startAutoBackupTimer - 备份频率:', backupFrequency, '间隔(ms):', interval);
+    console.log('startAutoBackupTimer - 上次备份时间戳:', this.lastBackupTimestamp, new Date(this.lastBackupTimestamp).toLocaleString());
+
+    const checkAndBackup = async () => {
+      // 确保有工作区路径
+      if (!this.workspacePath) {
+        console.log('自动备份检查 - 工作区路径为空，尝试检测...');
+        await this.detectWorkspacePath();
+        if (!this.workspacePath) {
+          console.log('自动备份检查 - 无法获取工作区路径，跳过备份');
+          return;
+        }
+      }
+
+      const now = new Date();
+      const currentTime = now.getTime();
+      const timeSinceLastBackup = currentTime - this.lastBackupTimestamp;
+
+      console.log('自动备份检查 - 当前时间:', now.toLocaleString(), '距离上次备份(ms):', timeSinceLastBackup, '需要间隔(ms):', interval);
+
+      // 如果距离上次备份时间超过间隔，则执行备份
+      if (timeSinceLastBackup >= interval) {
+        console.log('自动备份检查 - 触发备份');
+        await this.performAutoBackup(backupFrequency);
+      } else {
+        console.log('自动备份检查 - 未到备份时间，跳过');
+      }
+    };
+
+    // 每分钟检查一次
+    this.autoBackupTimer = window.setInterval(checkAndBackup, 60000);
+    console.log('自动备份定时器已设置，每分钟检查一次');
+
+    // 立即检查一次
+    console.log('立即执行首次备份检查...');
+    checkAndBackup();
+  }
+
+  /**
+   * 停止自动备份定时器
+   */
+  private stopAutoBackupTimer() {
+    if (this.autoBackupTimer) {
+      clearInterval(this.autoBackupTimer);
+      this.autoBackupTimer = null;
+      console.log('自动备份定时器已停止');
+    }
+  }
+
+  /**
+   * 检测工作区路径
+   */
+  private async detectWorkspacePath(): Promise<boolean> {
+    // 方式1: 检查环境变量
+    if ((window as any).__SIYUAN_WS__ || (window as any).SIYUAN_WORKSPACE) {
+      const rootPath = (window as any).__SIYUAN_WORKSPACE__ || (window as any).SIYUAN_WORKSPACE;
+      this.workspaceRoot = rootPath;
+      this.workspacePath = `${rootPath}/data`;
+      return true;
+    }
+
+    // 方式2: 尝试从 localStorage 获取
+    const savedPath = localStorage.getItem('siyuan-workspace-path');
+    const savedRoot = localStorage.getItem('siyuan-workspace-root');
+    if (savedPath) {
+      this.workspacePath = savedPath;
+      this.workspaceRoot = savedRoot || savedPath.replace(/\/data$/, '');
+      return true;
+    }
+
+    // 方式3: 尝试从插件配置获取
+    if (this.plugin && this.plugin.dataPath) {
+      this.workspaceRoot = this.plugin.dataPath;
+      this.workspacePath = `${this.plugin.dataPath}/data`;
+      return true;
+    }
+
+    // 方式4: 通过 API 获取工作区路径
+    try {
+      const response = await fetch('/api/system/getConf', {
+        method: 'POST'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const wsPath = data?.data?.conf?.system?.workspaceDir;
+        if (wsPath) {
+          this.workspaceRoot = wsPath;
+          this.workspacePath = `${wsPath}/data`;
+          localStorage.setItem('siyuan-workspace-root', wsPath);
+          localStorage.setItem('siyuan-workspace-path', `${wsPath}/data`);
+          return true;
+        }
+      }
+    } catch (e) {
+      console.error('通过 API 获取工作区路径失败:', e);
+    }
+
+    return false;
+  }
+
+  /**
+   * 获取备份间隔（毫秒）
+   */
+  private getBackupInterval(backupFrequency: string): number {
+    switch (backupFrequency) {
+      case 'minute':
+        return 60 * 1000; // 1 分钟
+      case 'hourly':
+        return 60 * 60 * 1000; // 1 小时
+      case 'daily':
+        return 24 * 60 * 60 * 1000; // 1 天
+      default:
+        return 24 * 60 * 60 * 1000;
+    }
+  }
+
+  /**
+   * 执行自动备份（直接在插件级别执行，不依赖 Vue 组件）
+   */
+  private async performAutoBackup(backupFrequency: string) {
+    console.log('performAutoBackup - 开始执行自动备份，频率:', backupFrequency);
+
+    try {
+      // 检查是否有 Node.js API 可用
+      if (typeof window.require !== 'function') {
+        console.log('自动备份 - 无法访问文件系统');
+        return;
+      }
+
+      const fs = window.require('fs').promises;
+      const path = window.require('path');
+
+      // 确保工作区路径存在
+      if (!this.workspacePath) {
+        await this.detectWorkspacePath();
+        if (!this.workspacePath) {
+          console.log('自动备份 - 无法获取工作区路径');
+          return;
+        }
+      }
+
+      // 获取备份设置
+      const data = await this.plugin.loadData('data-backup-settings');
+      const keepBackupCount = data?.keepBackupCount || 7;
+      const backupDir = `${this.workspaceRoot}/data-backup`;
+
+      // 生成文件名: data-251209-153045.zip (年月日-时分秒)
+      const now = new Date();
+      const year = now.getFullYear().toString().slice(-2);
+      const month = (now.getMonth() + 1).toString().padStart(2, '0');
+      const day = now.getDate().toString().padStart(2, '0');
+      const hour = now.getHours().toString().padStart(2, '0');
+      const minute = now.getMinutes().toString().padStart(2, '0');
+      const second = now.getSeconds().toString().padStart(2, '0');
+      const fileName = `data-${year}${month}${day}-${hour}${minute}${second}.zip`;
+
+      console.log('自动备份 - 开始创建备份文件:', fileName);
+
+      // 检查 data 目录是否存在
+      const dataPath = this.workspacePath;
+      try {
+        await fs.access(dataPath);
+      } catch {
+        console.log('自动备份 - data 目录不存在:', dataPath);
+        return;
+      }
+
+      // 创建 ZIP
+      const zip = new JSZip();
+
+      // 递归添加目录到 ZIP
+      const addDirectoryToZip = async (dirPath: string, zipPath: string) => {
+        const entries = await fs.readdir(dirPath, { withFileTypes: true });
+
+        for (const entry of entries) {
+          const fullPath = path.join(dirPath, entry.name);
+          const relativePath = zipPath ? `${zipPath}/${entry.name}` : entry.name;
+
+          if (entry.isDirectory()) {
+            // 跳过一些不需要备份的目录
+            if (entry.name === 'temp' || entry.name === '.recycle') {
+              continue;
+            }
+            await addDirectoryToZip(fullPath, relativePath);
+          } else if (entry.isFile()) {
+            try {
+              const content = await fs.readFile(fullPath);
+              zip.file(relativePath, content);
+            } catch (err) {
+              console.warn(`自动备份 - 无法读取文件: ${fullPath}`, err);
+            }
+          }
+        }
+      };
+
+      // 添加 data 目录内容到 ZIP
+      await addDirectoryToZip(dataPath, '');
+
+      // 添加备份信息
+      const backupData = {
+        timestamp: Date.now(),
+        backupTime: new Date().toISOString(),
+        version: '1.0',
+        workspaceRoot: this.workspaceRoot,
+        workspaceDataPath: this.workspacePath,
+        backupDir: backupDir,
+        isAutoBackup: true,
+        backupFrequency: backupFrequency
+      };
+      zip.file('backup-info.json', JSON.stringify(backupData, null, 2));
+
+      // 生成 ZIP 文件
+      console.log('自动备份 - 开始压缩...');
+      const zipBuffer = await zip.generateAsync({
+        type: 'uint8array',
+        compression: 'DEFLATE',
+        compressionOptions: { level: 6 }
+      });
+
+      // 确保备份目录存在
+      await fs.mkdir(backupDir, { recursive: true });
+
+      // 写入 ZIP 文件
+      const zipFilePath = path.join(backupDir, fileName);
+      await fs.writeFile(zipFilePath, zipBuffer);
+
+      console.log('自动备份 - 备份完成:', zipFilePath);
+
+      // 更新时间戳
+      this.lastBackupTimestamp = Date.now();
+      await this.saveBackupSettings();
+
+      // 清理旧备份
+      await this.cleanOldBackups(keepBackupCount, backupDir, fs, path);
+
+      // 显示通知
+      showMessage(`自动备份成功: ${fileName}`, 3000, 'info');
+    } catch (error) {
+      console.error('自动备份失败:', error);
+    }
+  }
+
+  /**
+   * 清理旧备份文件
+   */
+  private async cleanOldBackups(keepCount: number, backupDir: string, fs: any, path: any) {
+    try {
+      const entries = await fs.readdir(backupDir, { withFileTypes: true });
+      const backupFiles = entries
+        .filter((e: any) => e.isFile() && e.name.startsWith('data-') && e.name.endsWith('.zip'))
+        .map((e: any) => ({
+          name: e.name,
+          path: path.join(backupDir, e.name)
+        }));
+
+      // 按文件名排序（包含时间戳）
+      backupFiles.sort((a: any, b: any) => b.name.localeCompare(a.name));
+
+      // 删除超出数量的旧备份
+      if (backupFiles.length > keepCount) {
+        const filesToDelete = backupFiles.slice(keepCount);
+        for (const file of filesToDelete) {
+          try {
+            await fs.unlink(file.path);
+            console.log('自动备份 - 已删除旧备份:', file.name);
+          } catch (err) {
+            console.warn('自动备份 - 删除旧备份失败:', file.name, err);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('自动备份 - 清理旧备份失败:', error);
+    }
+  }
+
+  /**
+   * 保存备份设置（更新时间戳）
+   */
+  private async saveBackupSettings() {
+    try {
+      const data = await this.plugin.loadData('data-backup-settings') || {};
+      await this.plugin.saveData('data-backup-settings', {
+        ...data,
+        lastBackupTimestamp: this.lastBackupTimestamp,
+        lastBackupTime: new Date(this.lastBackupTimestamp).toLocaleString()
+      });
+    } catch (error) {
+      console.error('保存备份设置失败:', error);
+    }
+  }
+
+  /**
+   * 重新启动自动备份定时器（供 Vue 组件调用）
+   */
+  public restartAutoBackupTimer(enabled: boolean, backupFrequency: string) {
+    this.stopAutoBackupTimer();
+    if (enabled) {
+      this.startAutoBackupTimer(backupFrequency);
+      console.log('自动备份定时器已重启:', backupFrequency);
+    }
+  }
+
+  /**
+   * 更新上次备份时间（供 Vue 组件调用）
+   */
+  public updateLastBackupTime(timestamp: number) {
+    this.lastBackupTimestamp = timestamp;
+  }
+
+  /**
    * 销毁功能
    */
   public destroy() {
@@ -512,6 +882,8 @@ export class GeneralSettings {
       if ((this as any).contentObserver) {
         (this as any).contentObserver.disconnect();
       }
+      // 停止自动备份定时器
+      this.stopAutoBackupTimer();
       console.log('通用设置模块已销毁');
     } catch (error) {
       console.error('销毁通用设置模块失败:', error);

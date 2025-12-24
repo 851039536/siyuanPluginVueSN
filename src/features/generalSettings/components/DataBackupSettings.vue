@@ -509,7 +509,7 @@ async function performBackup() {
 
   // 检查工作区路径
   if (!workspacePath.value) {
-    showMessage(props.i18n.pleaseSelectWorkspace || '请先选择工作区路径', 3000, 'warning')
+    showMessage(props.i18n.pleaseSelectWorkspace || '请先选择工作区路径', 3000, 'info')
     await selectWorkspacePath()
     if (!workspacePath.value) return
   }
@@ -641,7 +641,7 @@ async function performBackup() {
     // 保存备份列表
     await props.plugin.saveData('backup-history', { list: backupList.value })
 
-    showMessage(props.i18n.backupSuccess || `备份成功: ${fileName}`, 3000, 'success')
+    showMessage(props.i18n.backupSuccess || `备份成功: ${fileName}`, 3000, 'info')
   } catch (error) {
     console.error('备份过程出错:', error)
     showMessage(`${props.i18n.backupFailed || '备份失败'}: ${error.message}`, 5000, 'error')
@@ -693,7 +693,7 @@ async function deleteBackup(backup: { name: string; path: string }) {
     // 保存更新后的列表
     await props.plugin.saveData('backup-history', { list: backupList.value })
 
-    showMessage(props.i18n.deleteSuccess || '删除成功', 2000, 'success')
+    showMessage(props.i18n.deleteSuccess || '删除成功', 2000, 'info')
   } catch (error) {
     console.error('删除备份失败:', error)
     showMessage(props.i18n.deleteFailed || '删除失败', 3000, 'error')

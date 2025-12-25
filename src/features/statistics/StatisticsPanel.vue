@@ -723,6 +723,14 @@ function toggleTheme() {
 function getWordDiff(current: any, previous: any): number {
   if (!current || !previous) return 0
 
+  // 如果前一天没有新增/修改数据（都是0），说明那天可能没有记录统计
+  // 这种情况下不显示差异，因为不知道实际变化
+  if (previous.todayCreated === 0 && previous.todayModified === 0 && current.totalWords > 0) {
+    // 但如果当前的总字数确实增加了，使用实际差值
+    const diff = current.totalWords - previous.totalWords
+    return diff > 0 ? diff : 0
+  }
+
   // 如果前一天没有数据，不显示差异（避免负增长）
   if (previous.totalWords === 0 && current.totalWords > 0) {
     return 0
@@ -734,6 +742,14 @@ function getWordDiff(current: any, previous: any): number {
 // 计算笔记数差异（智能处理缺失数据）
 function getNoteDiff(current: any, previous: any): number {
   if (!current || !previous) return 0
+
+  // 如果前一天没有新增/修改数据（都是0），说明那天可能没有记录统计
+  // 这种情况下不显示差异，因为不知道实际变化
+  if (previous.todayCreated === 0 && previous.todayModified === 0 && current.totalNotes > 0) {
+    // 但如果当前的笔记数确实增加了，使用实际差值
+    const diff = current.totalNotes - previous.totalNotes
+    return diff > 0 ? diff : 0
+  }
 
   // 如果前一天没有数据，不显示差异（避免负增长）
   if (previous.totalNotes === 0 && current.totalNotes > 0) {

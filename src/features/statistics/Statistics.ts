@@ -1151,41 +1151,147 @@ export class Statistics {
       const historyData = await this.plugin.loadData('statistics-history') || {};
       const today = new Date();
       const result = [];
+      let lastKnownStats = null; // 记录最后一次已知的统计数据
 
-      // 生成日期范围
+      console.log('getHistoricalStatistics 开始处理，历史数据keys:', Object.keys(historyData).sort());
+
+      // 生成日期范围（从最早到最晚，正序）
       for (let i = days - 1; i >= 0; i--) {
         const date = new Date(today);
         date.setDate(today.getDate() - i);
         const dateKey = this.formatDateKey(date);
+        const isToday = i === 0;
 
         const dayData = historyData[dateKey];
+
+        console.log(`处理日期 ${dateKey}, isToday=${isToday}, hasData=${!!dayData}, lastKnownStats=${!!lastKnownStats}`);
+
         if (dayData) {
-          result.push({
-            date: dateKey,
-            dateLabel: `${date.getMonth() + 1}/${date.getDate()}`,
-            totalNotes: dayData.totalNotes,
-            totalWords: dayData.totalWords,
-            todayCreated: dayData.todayCreated,
-            todayModified: dayData.todayModified,
-            avgWordsPerDoc: dayData.avgWordsPerDoc
-          });
+          // 有历史数据，但需要检查是否是有效数据
+          // 如果 totalWords 和 totalNotes 都是 0，说明是无效数据，应该跳过
+          const isValidData = dayData.totalWords > 0 || dayData.totalNotes > 0;
+
+          if (isValidData) {
+            // 有效数据，直接使用
+            const record = {
+              date: dateKey,
+              dateLabel: `${date.getMonth() + 1}/${date.getDate()}`,
+              totalNotes: dayData.totalNotes,
+              totalWords: dayData.totalWords,
+              todayCreated: dayData.todayCreated,
+              todayModified: dayData.todayModified,
+              avgWordsPerDoc: dayData.avgWordsPerDoc
+            };
+            result.push(record);
+            lastKnownStats = record; // 更新最后一次已知状态
+          } else {
+            console.log(`  跳过无效数据 ${dateKey}: totalWords=${dayData.totalWords}, totalNotes=${dayData.totalNotes}`);
+            // 无效数据，当作没有数据处理
+            if (lastKnownStats) {
+              result.push({
+                date: dateKey,
+                dateLabel: `${date.getMonth() + 1}/${date.getDate()}`,
+                totalNotes: lastKnownStats.totalNotes,
+                totalWords: lastKnownStats.totalWords,
+                todayCreated: 0,
+                todayModified: 0,
+                avgWordsPerDoc: lastKnownStats.avgWordsPerDoc
+              });
+            } else if (isToday) {
+              // 如果今天是无效数据，尝试获取实时数据
+              try {
+                const currentStats = await this.getStatistics();
+                const record = {
+                  date: dateKey,
+                  dateLabel: `${date.getMonth() + 1}/${date.getDate()}`,
+                  totalNotes: currentStats.totalNotes,
+                  totalWords: currentStats.totalWords,
+                  todayCreated: currentStats.todayCreated,
+                  todayModified: currentStats.todayModified,
+                  avgWordsPerDoc: currentStats.avgWordsPerDoc
+                };
+                result.push(record);
+                lastKnownStats = record;
+              } catch (error) {
+                console.error('获取今日实时数据失败:', error);
+                result.push({
+                  date: dateKey,
+                  dateLabel: `${date.getMonth() + 1}/${date.getDate()}`,
+                  totalNotes: 0,
+                  totalWords: 0,
+                  todayCreated: 0,
+                  todayModified: 0,
+                  avgWordsPerDoc: 0
+                });
+              }
+            } else {
+              // 填充0
+              result.push({
+                date: dateKey,
+                dateLabel: `${date.getMonth() + 1}/${date.getDate()}`,
+                totalNotes: 0,
+                totalWords: 0,
+                todayCreated: 0,
+                todayModified: 0,
+                avgWordsPerDoc: 0
+              });
+            }
+          }
+        } else if (isToday) {
+          // 今天没有历史数据，尝试获取实时数据
+          try {
+            const currentStats = await this.getStatistics();
+            const record = {
+              date: dateKey,
+              dateLabel: `${date.getMonth() + 1}/${date.getDate()}`,
+              totalNotes: currentStats.totalNotes,
+              totalWords: currentStats.totalWords,
+              todayCreated: currentStats.todayCreated,
+              todayModified: currentStats.todayModified,
+              avgWordsPerDoc: currentStats.avgWordsPerDoc
+            };
+            result.push(record);
+            lastKnownStats = record;
+          } catch (error) {
+            console.error('获取今日实时数据失败:', error);
+            // 获取失败时，使用最后一次已知的数据（如果有）
+            if (lastKnownStats) {
+              result.push({
+                date: dateKey,
+                dateLabel: `${date.getMonth() + 1}/${date.getDate()}`,
+                totalNotes: lastKnownStats.totalNotes,
+                totalWords: lastKnownStats.totalWords,
+                todayCreated: 0,
+                todayModified: 0,
+                avgWordsPerDoc: lastKnownStats.avgWordsPerDoc
+              });
+            } else {
+              result.push({
+                date: dateKey,
+                dateLabel: `${date.getMonth() + 1}/${date.getDate()}`,
+                totalNotes: 0,
+                totalWords: 0,
+                todayCreated: 0,
+                todayModified: 0,
+                avgWordsPerDoc: 0
+              });
+            }
+          }
         } else {
-          // 如果没有数据，复制前一个有效数据（如果存在）
-          // 这避免了连续天数显示为0导致的负增长问题
-          const lastValidData = result.length > 0 ? result[result.length - 1] : null;
-          if (lastValidData && lastValidData.totalWords > 0) {
-            // 使用前一天的数据，避免显示为负增长
+          // 过去某天没有历史数据
+          if (lastKnownStats) {
+            // 使用最后一次已知的数据，表示这天没有新的统计，但总数保持不变
             result.push({
               date: dateKey,
               dateLabel: `${date.getMonth() + 1}/${date.getDate()}`,
-              totalNotes: lastValidData.totalNotes,
-              totalWords: lastValidData.totalWords,
-              todayCreated: 0,  // 当天没有新增
-              todayModified: 0,  // 当天没有修改
-              avgWordsPerDoc: lastValidData.avgWordsPerDoc
+              totalNotes: lastKnownStats.totalNotes,
+              totalWords: lastKnownStats.totalWords,
+              todayCreated: 0,
+              todayModified: 0,
+              avgWordsPerDoc: lastKnownStats.avgWordsPerDoc
             });
           } else {
-            // 确实没有数据，填充0
+            // 还没有任何已知数据，填充0
             result.push({
               date: dateKey,
               dateLabel: `${date.getMonth() + 1}/${date.getDate()}`,

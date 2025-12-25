@@ -212,35 +212,27 @@
         <div v-if="viewMode === 'trend'" class="trend-view">
           <h3 class="section-title">{{ i18n.trendAnalysis || '趋势分析' }}</h3>
 
-          <!-- 趋势统计卡片 -->
-          <div v-if="trendStats" class="trend-stats-cards">
-            <div class="trend-stat-card">
-              <div class="trend-icon">📈</div>
-              <div class="trend-content">
-                <div class="trend-value">{{ formatNumber(trendStats.notesGrowth) }}</div>
-                <div class="trend-label">{{ i18n.notesGrowth || '笔记增长' }}</div>
-              </div>
+          <!-- 趋势统计列表 -->
+          <div v-if="trendStats" class="trend-stats-list">
+            <div class="trend-stat-item">
+              <span class="stat-icon">📈</span>
+              <span class="stat-label">{{ i18n.notesGrowth || '笔记增长' }}</span>
+              <span class="stat-value">{{ formatNumber(trendStats.notesGrowth) }}</span>
             </div>
-            <div class="trend-stat-card">
-              <div class="trend-icon">✍️</div>
-              <div class="trend-content">
-                <div class="trend-value">{{ formatNumber(trendStats.wordsGrowth) }}</div>
-                <div class="trend-label">{{ i18n.wordsGrowth || '字数增长' }}</div>
-              </div>
+            <div class="trend-stat-item">
+              <span class="stat-icon">✍️</span>
+              <span class="stat-label">{{ i18n.wordsGrowth || '字数增长' }}</span>
+              <span class="stat-value">{{ formatNumber(trendStats.wordsGrowth) }}</span>
             </div>
-            <div class="trend-stat-card">
-              <div class="trend-icon">📅</div>
-              <div class="trend-content">
-                <div class="trend-value">{{ trendStats.avgDailyCreated }}</div>
-                <div class="trend-label">{{ i18n.avgDailyCreated || '日均新增' }}</div>
-              </div>
+            <div class="trend-stat-item">
+              <span class="stat-icon">📅</span>
+              <span class="stat-label">{{ i18n.avgDailyCreated || '日均新增' }}</span>
+              <span class="stat-value">{{ trendStats.avgDailyCreated }}</span>
             </div>
-            <div class="trend-stat-card">
-              <div class="trend-icon">✏️</div>
-              <div class="trend-content">
-                <div class="trend-value">{{ trendStats.avgDailyModified }}</div>
-                <div class="trend-label">{{ i18n.avgDailyModified || '日均修改' }}</div>
-              </div>
+            <div class="trend-stat-item">
+              <span class="stat-icon">✏️</span>
+              <span class="stat-label">{{ i18n.avgDailyModified || '日均修改' }}</span>
+              <span class="stat-value">{{ trendStats.avgDailyModified }}</span>
             </div>
           </div>
 

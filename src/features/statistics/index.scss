@@ -649,54 +649,48 @@ $shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
 
 // ========== 趋势视图 ==========
 .trend-view {
-  .trend-stats-cards {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+  .trend-stats-list {
     margin-bottom: 16px;
+    margin-left: 8px;
+    margin-right: 8px;
+    border: 1px solid var(--b3-theme-border);
+    border-radius: 6px;
+    overflow: hidden;
 
-    .trend-stat-card {
+    .trend-stat-item {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 12px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--b3-theme-border);
       background: var(--b3-theme-surface);
-      @include theme-aware-border;
-      border-radius: $card-border-radius;
-      transition: $button-transition;
 
-      &:hover {
-        border-color: var(--b3-theme-primary);
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      &:last-child {
+        border-bottom: none;
       }
 
-      .trend-icon {
-        font-size: 24px;
-        flex-shrink: 0;
+      .stat-icon {
+        font-size: 18px;
+        margin-right: 10px;
       }
 
-      .trend-content {
+      .stat-label {
         flex: 1;
-        min-width: 0;
+        font-size: 13px;
+        color: var(--b3-theme-on-surface);
+      }
 
-        .trend-value {
-          font-size: 18px;
-          font-weight: 700;
-          color: var(--b3-theme-primary);
-          margin-bottom: 2px;
-        }
-
-        .trend-label {
-          font-size: 10px;
-          color: var(--b3-theme-on-surface);
-          opacity: 0.8;
-        }
+      .stat-value {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--b3-theme-primary);
       }
     }
   }
 
   .historical-data-list {
     margin-top: 16px;
+    margin-left: 8px;
+    margin-right: 8px;
 
     .subsection-title {
       margin: 0 0 12px 0;

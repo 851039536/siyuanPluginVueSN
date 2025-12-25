@@ -708,26 +708,8 @@ $shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
     .historical-table-container {
       max-height: 320px;
       overflow-y: auto;
-      background: var(--b3-theme-surface);
-      @include theme-aware-border;
-      border-radius: $card-border-radius;
-
-      &::-webkit-scrollbar {
-        width: 6px;
-      }
-
-      &::-webkit-scrollbar-track {
-        background: transparent;
-      }
-
-      &::-webkit-scrollbar-thumb {
-        background: var(--b3-theme-surface-lighter);
-        border-radius: 3px;
-
-        &:hover {
-          background: var(--b3-theme-on-surface-variant);
-        }
-      }
+      border: 1px solid var(--b3-theme-border);
+      border-radius: 6px;
 
       .historical-table {
         width: 100%;
@@ -741,12 +723,11 @@ $shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
           background: var(--b3-theme-surface);
 
           th {
-            padding: 10px 8px;
+            padding: 8px 10px;
             text-align: left;
             font-weight: 600;
             color: var(--b3-theme-on-surface);
-            border-bottom: 2px solid var(--b3-theme-border);
-            white-space: nowrap;
+            border-bottom: 1px solid var(--b3-theme-border);
 
             .th-icon {
               margin-right: 4px;
@@ -774,34 +755,21 @@ $shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
         tbody {
           .historical-row {
             border-bottom: 1px solid var(--b3-theme-border);
-            transition: background-color 0.2s ease;
 
             &:last-child {
               border-bottom: none;
             }
 
-            &:hover {
-              background: var(--b3-theme-background);
-            }
-
             &.today {
-              background: rgba(245, 87, 108, 0.08);
-
-              &:hover {
-                background: rgba(245, 87, 108, 0.12);
-              }
+              background: rgba(245, 87, 108, 0.06);
 
               .theme-github & {
-                background: rgba(26, 127, 55, 0.08);
-
-                &:hover {
-                  background: rgba(26, 127, 55, 0.12);
-                }
+                background: rgba(26, 127, 55, 0.06);
               }
             }
 
             td {
-              padding: 8px;
+              padding: 8px 10px;
               color: var(--b3-theme-on-surface);
 
               &.col-date {

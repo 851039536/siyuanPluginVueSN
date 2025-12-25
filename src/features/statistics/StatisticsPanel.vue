@@ -247,60 +247,70 @@
           <!-- 历史数据列表 -->
           <div class="historical-data-list">
             <h4 class="subsection-title">{{ i18n.historicalData || '历史数据' }}</h4>
-            <div class="historical-items">
-              <div
-                v-for="(item, index) in historicalData"
-                :key="item.date"
-                class="historical-item"
-              >
-                <div class="historical-date">{{ item.dateLabel }}</div>
-                <div class="historical-stats">
-                  <span class="stat-item">
-                    <span class="stat-icon">📓</span>
-                    <span class="stat-value">{{ formatNumber(item.totalNotes) }}</span>
-                    <span class="stat-label">{{ i18n.totalNotes || '笔记' }}</span>
-                  </span>
-                  <span class="stat-item">
-                    <span class="stat-icon">✍️</span>
-                    <span class="stat-value">{{ formatNumber(item.totalWords) }}</span>
-                    <span class="stat-label">{{ i18n.words || '字数' }}</span>
-                  </span>
-                  <span class="stat-item">
-                    <span class="stat-icon">📅</span>
-                    <span class="stat-value">{{ item.todayCreated }}</span>
-                    <span class="stat-label">{{ i18n.created || '新增' }}</span>
-                  </span>
-                  <span class="stat-item">
-                    <span class="stat-icon">✏️</span>
-                    <span class="stat-value">{{ item.todayModified }}</span>
-                    <span class="stat-label">{{ i18n.modified || '修改' }}</span>
-                  </span>
-                </div>
-                <!-- 显示与上一天的字数变化 -->
-                <div v-if="index < historicalData.length - 1" class="historical-diff">
-                  <span class="diff-label">变化：</span>
-                  <span
-                    class="diff-value"
-                    :class="{
-                      'positive': getWordDiff(item, historicalData[index + 1]) > 0,
-                      'negative': getWordDiff(item, historicalData[index + 1]) < 0,
-                      'neutral': getWordDiff(item, historicalData[index + 1]) === 0
-                    }"
+            <div class="historical-table-container">
+              <table class="historical-table">
+                <thead>
+                  <tr>
+                    <th class="col-date">{{ i18n.date || '日期' }}</th>
+                    <th class="col-notes">
+                      <span class="th-icon">📓</span>
+                      {{ i18n.totalNotes || '笔记' }}
+                    </th>
+                    <th class="col-words">
+                      <span class="th-icon">✍️</span>
+                      {{ i18n.words || '字数' }}
+                    </th>
+                    <th class="col-created">
+                      <span class="th-icon">📅</span>
+                      {{ i18n.created || '新增' }}
+                    </th>
+                    <th class="col-modified">
+                      <span class="th-icon">✏️</span>
+                      {{ i18n.modified || '修改' }}
+                    </th>
+                    <th class="col-change">{{ i18n.change || '变化' }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="(item, index) in historicalData"
+                    :key="item.date"
+                    class="historical-row"
+                    :class="{ today: isToday(item.date) }"
                   >
-                    {{ getWordDiff(item, historicalData[index + 1]) > 0 ? '+' : '' }}{{ formatNumber(getWordDiff(item, historicalData[index + 1])) }} 字
-                  </span>
-                  <span
-                    class="diff-value"
-                    :class="{
-                      'positive': getNoteDiff(item, historicalData[index + 1]) > 0,
-                      'negative': getNoteDiff(item, historicalData[index + 1]) < 0,
-                      'neutral': getNoteDiff(item, historicalData[index + 1]) === 0
-                    }"
-                  >
-                    {{ getNoteDiff(item, historicalData[index + 1]) > 0 ? '+' : '' }}{{ getNoteDiff(item, historicalData[index + 1]) }} 笔记
-                  </span>
-                </div>
-              </div>
+                    <td class="col-date">{{ item.dateLabel }}</td>
+                    <td class="col-notes">{{ formatNumber(item.totalNotes) }}</td>
+                    <td class="col-words">{{ formatNumber(item.totalWords) }}</td>
+                    <td class="col-created">{{ item.todayCreated }}</td>
+                    <td class="col-modified">{{ item.todayModified }}</td>
+                    <td class="col-change">
+                      <template v-if="index < historicalData.length - 1">
+                        <span
+                          class="change-item"
+                          :class="{
+                            'positive': getWordDiff(item, historicalData[index + 1]) > 0,
+                            'negative': getWordDiff(item, historicalData[index + 1]) < 0,
+                            'neutral': getWordDiff(item, historicalData[index + 1]) === 0
+                          }"
+                        >
+                          {{ getWordDiff(item, historicalData[index + 1]) > 0 ? '+' : '' }}{{ formatShortNumber(getWordDiff(item, historicalData[index + 1])) }}
+                        </span>
+                        <span
+                          class="change-item change-notes"
+                          :class="{
+                            'positive': getNoteDiff(item, historicalData[index + 1]) > 0,
+                            'negative': getNoteDiff(item, historicalData[index + 1]) < 0,
+                            'neutral': getNoteDiff(item, historicalData[index + 1]) === 0
+                          }"
+                        >
+                          {{ getNoteDiff(item, historicalData[index + 1]) > 0 ? '+' : '' }}{{ getNoteDiff(item, historicalData[index + 1]) }}
+                        </span>
+                      </template>
+                      <span v-else class="change-empty">-</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>

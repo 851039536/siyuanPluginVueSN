@@ -23,11 +23,11 @@ export class FlashcardReading {
    * 初始化单词阅读功能
    */
   public async init() {
-    // 初始化存储
-    await this.storage.init()
-
-    // 添加到右侧边栏
+    // 先添加到右侧边栏（同步执行，确保 dock 立即注册）
     this.addDock()
+
+    // 异步初始化存储
+    await this.storage.init()
 
     console.log('Flashcard Reading initialized')
   }

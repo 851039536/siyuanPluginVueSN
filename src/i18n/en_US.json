@@ -946,6 +946,7 @@
     "listView": "List",
     "singleView": "Single",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "play": "Play"
   }
 }

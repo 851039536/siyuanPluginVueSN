@@ -129,6 +129,15 @@
               background: #fee2e2;
               color: #ef4444;
             }
+
+            &.play-btn {
+              color: var(--b3-theme-primary);
+
+              &:hover {
+                background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1);
+                color: var(--b3-theme-primary);
+              }
+            }
           }
         }
       }
@@ -200,6 +209,37 @@
         padding: 4px 12px;
         border-radius: 4px;
         display: inline-block;
+      }
+
+      .play-btn-large {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin: 16px auto 0;
+        padding: 10px 24px;
+        background: var(--b3-theme-primary);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s;
+
+        &:hover {
+          background: var(--b3-theme-primary-hover);
+          transform: translateY(-1px);
+          box-shadow: 0 2px 8px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.3);
+        }
+
+        &:active {
+          transform: translateY(0);
+        }
+
+        .play-icon {
+          flex-shrink: 0;
+        }
       }
     }
 

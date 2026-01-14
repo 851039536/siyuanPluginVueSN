@@ -39,6 +39,11 @@
           <div class="card-header">
             <div class="card-title">{{ card.title }}</div>
             <div class="card-actions">
+              <button class="icon-btn play-btn" @click="playWord(card.title)" :title="i18n.play || '播放'">
+                <svg class="icon-icon" viewBox="0 0 24 24" width="14" height="14">
+                  <path fill="currentColor" d="M8 5v14l11-7z"/>
+                </svg>
+              </button>
               <button class="icon-btn" @click="editCard(card)" :title="i18n.editCard || '编辑'">
                 <IconWrapper name="edit" :size="14" />
               </button>
@@ -58,6 +63,13 @@
           <div class="card-title-large">{{ currentCard?.title }}</div>
           <div class="card-content-large">{{ currentCard?.content }}</div>
           <div class="card-category-large">{{ currentCard?.category }}</div>
+          <!-- 播放按钮 -->
+          <button class="play-btn-large" @click="playWord(currentCard?.title || '')" :title="i18n.play || '播放'">
+            <svg class="play-icon" viewBox="0 0 24 24" width="20" height="20">
+              <path fill="currentColor" d="M8 5v14l11-7z"/>
+            </svg>
+            {{ i18n.play || '播放' }}
+          </button>
         </div>
 
         <!-- 导航 -->
@@ -145,6 +157,7 @@
               v-model="formData.title"
               type="text"
               :placeholder="i18n.titlePlaceholder || '标题（不可重复）'"
+              @input="handleTitleInput"
               @blur="validateTitle"
             />
             <span class="error-msg" v-if="formErrors.title">{{ formErrors.title }}</span>
@@ -281,9 +294,22 @@ const nextCard = () => {
   }
 }
 
+const handleTitleInput = () => {
+  // 当标题变化时，清除之前的错误信息
+  if (formErrors.value.title) {
+    delete formErrors.value.title
+  }
+}
+
 const validateTitle = async () => {
   if (!formData.value.title.trim()) {
     formErrors.value.title = '标题不能为空'
+    return
+  }
+
+  // 如果是编辑模式且标题未变化，跳过唯一性检查
+  if (editingCard.value && formData.value.title === editingCard.value.title) {
+    delete formErrors.value.title
     return
   }
 
@@ -350,6 +376,22 @@ const deleteCard = async (card: Flashcard) => {
     await loadCards()
   } catch (error: any) {
     showMessage(error.message || '删除失败', 3000, 'error')
+  }
+}
+
+/**
+ * 播放单词发音（使用 Web Speech API）
+ * 参考 wordQuery 功能的实现方式
+ */
+const playWord = (word: string) => {
+  try {
+    const utterance = new SpeechSynthesisUtterance(word)
+    utterance.lang = 'en-US' // 默认美式发音
+    utterance.rate = 0.8 // 语速稍慢，便于听清
+    speechSynthesis.speak(utterance)
+  } catch (error) {
+    console.error('Failed to play pronunciation:', error)
+    showMessage('播放失败', 2000, 'error')
   }
 }
 

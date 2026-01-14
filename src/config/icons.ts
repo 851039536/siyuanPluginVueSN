@@ -174,6 +174,12 @@ export const FEATURE_ICONS = {
   skills: {
     icon: 'mdi:brain',
     color: '#a855f7'
+  },
+
+  // 单词阅读
+  flashcardReading: {
+    icon: 'mdi:card-bulleted',
+    color: '#f472b6'
   }
 } as const
 

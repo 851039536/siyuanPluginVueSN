@@ -5,7 +5,7 @@ import {
 import "@/index.scss";
 import PluginInfoString from '@/../plugin.json'
 import { destroy, init } from '@/main'
-import { registerPageLock, registerTableOfContents, registerImageCompressor, registerDocNavigation, registerShortcut, registerWordQuery, registerGeneralSettings, registerUnitConverter, registerSuperPanel, registerDiskBrowser, registerCodeImageGenerator, registerAIContentGenerator, registerStatistics, registerEncryption, registerVideo, registerEverythingSearch, registerSystemMonitor, registerApiReference, registerHighlight, registerFloatingToolbar, registerFloatingBox, registerTextDiff, registerBase64Image } from '@/features'
+import { registerPageLock, registerTableOfContents, registerImageCompressor, registerDocNavigation, registerShortcut, registerWordQuery, registerGeneralSettings, registerUnitConverter, registerSuperPanel, registerDiskBrowser, registerCodeImageGenerator, registerAIContentGenerator, registerStatistics, registerEncryption, registerVideo, registerEverythingSearch, registerSystemMonitor, registerApiReference, registerHighlight, registerFloatingToolbar, registerFloatingBox, registerTextDiff, registerBase64Image, registerFlashcardReading } from '@/features'
 import { loadSettings, saveSettings, loadHighlightSettings, type PluginSettings } from '@/config/settings'
 import { initCommands, destroyCommands } from '@/commands'
 
@@ -71,6 +71,11 @@ export default class PluginSample extends Plugin {
   }
 
   onunload() {
+    // 清理单词阅读资源
+    if ((this as any).__flashcardReading) {
+      (this as any).__flashcardReading.destroy()
+    }
+
     // 清理悬浮框资源
     if ((this as any).__floatingBox) {
       (this as any).__floatingBox.destroy()
@@ -192,6 +197,12 @@ export default class PluginSample extends Plugin {
     if (this.settings.enableBase64Image) {
       console.log('注册 Base64 图片转换器功能')
       registerBase64Image(this)
+    }
+
+    // 注册单词阅读功能
+    if (this.settings.enableFlashcardReading) {
+      console.log('注册单词阅读功能')
+      registerFlashcardReading(this)
     }
   }
 

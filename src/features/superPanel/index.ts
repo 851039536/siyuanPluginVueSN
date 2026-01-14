@@ -165,7 +165,8 @@ async function handleFeatureToggle(plugin: Plugin, featureId: string, enabled: b
     'floatingBox': 'enableFloatingBox',
     'textDiff': 'enableTextDiff',
     'base64Image': 'enableBase64Image',
-    'skills': 'enableSkills'
+    'skills': 'enableSkills',
+    'flashcardReading': 'enableFlashcardReading'
   }
 
   const settingKey = settingsMap[featureId]
@@ -222,7 +223,8 @@ async function handleToggleAllFeatures(plugin: Plugin, enabled: boolean) {
     'enableFloatingToolbar',
     'enableFloatingBox',
     'enableTextDiff',
-    'enableBase64Image'
+    'enableBase64Image',
+    'enableFlashcardReading'
   ]
 
   // 构建新设置对象
@@ -324,6 +326,12 @@ function handleFeatureAction(_plugin: Plugin, action: string) {
         window.dispatchEvent(new CustomEvent('openBase64Image'))
         closeSuperPanel()
       }
+      break
+
+    case 'openFlashcardReading':
+      // 打开单词阅读面板
+      window.dispatchEvent(new CustomEvent('openFlashcardReading'))
+      closeSuperPanel()
       break
 
     default:

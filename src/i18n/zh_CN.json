@@ -418,7 +418,7 @@
     "shortcuts": "快捷键面板",
     "shortcutsDesc": "查看和管理快捷键",
     "diskBrowser": "本地磁盘",
-    "diskBrowserDesc": "浏览本地磁盘和文件夹"
+    "diskBrowserDesc": "浏览本地磁盘和文件夹",
   },
   "toggleSuperPanel": "切换超级面板",
   "diskBrowser": "本地磁盘",
@@ -947,5 +947,31 @@
   "workspacePathSet": "工作区路径已设置",
   "selectPathFailed": "选择路径失败",
   "pleaseSelectWorkspace": "请先选择工作区路径",
-  "mobileBackupDisabled": "检测到移动端环境，备份功能已自动禁用以节省流量和存储空间"
+  "mobileBackupDisabled": "检测到移动端环境，备份功能已自动禁用以节省流量和存储空间",
+  "flashcardReading": {
+    "title": "单词阅读",
+    "description": "闪卡式阅读工具，支持分类和翻转",
+    "addCard": "添加卡片",
+    "editCard": "编辑卡片",
+    "deleteCard": "删除卡片",
+    "category": "类别",
+    "allCategories": "全部",
+    "title": "标题",
+    "content": "内容",
+    "titlePlaceholder": "标题（不可重复）",
+    "contentPlaceholder": "内容",
+    "categoryPlaceholder": "类别",
+    "flipCard": "点击翻转",
+    "noCards": "暂无卡片",
+    "titleDuplicate": "标题已存在",
+    "save": "保存",
+    "cancel": "取消",
+    "confirmDelete": "确定要删除这张卡片吗？",
+    "refresh": "刷新",
+    "openPanel": "打开阅读面板",
+    "listView": "列表",
+    "singleView": "单卡",
+    "previous": "上一页",
+    "next": "下一页"
+  }
 }

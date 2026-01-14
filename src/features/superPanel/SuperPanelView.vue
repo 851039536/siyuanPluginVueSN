@@ -582,6 +582,20 @@ const features = computed(() => [
     desc: props.i18n.skills?.description || '管理常用的Claude技能和模板',
     enabled: props.settings.enableSkills,
     actions: []
+  },
+  {
+    id: 'flashcardReading',
+    iconKey: 'flashcardReading',
+    title: props.i18n.flashcardReading?.title || '单词阅读',
+    desc: props.i18n.flashcardReading?.description || '闪卡式阅读工具，支持分类和翻转',
+    enabled: props.settings.enableFlashcardReading,
+    actions: [
+      {
+        key: 'openFlashcardReading',
+        label: props.i18n.flashcardReading?.openPanel || '打开阅读面板',
+        hotkey: ''
+      }
+    ]
   }
 ])
 

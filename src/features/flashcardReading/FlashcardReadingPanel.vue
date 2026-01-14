@@ -159,15 +159,12 @@
           </div>
           <div class="form-group">
             <label>{{ i18n.category || '类别' }}</label>
-            <input
-              v-model="formData.category"
-              type="text"
-              list="category-list"
-              :placeholder="i18n.categoryPlaceholder || '类别'"
-            />
-            <datalist id="category-list">
-              <option v-for="cat in categories" :key="cat" :value="cat" />
-            </datalist>
+            <select v-model="formData.category">
+              <option value="">{{ i18n.selectCategory || '请选择类别' }}</option>
+              <option v-for="cat in allCategories" :key="cat" :value="cat">
+                {{ cat }}
+              </option>
+            </select>
           </div>
         </div>
         <div class="dialog-footer">
@@ -218,7 +215,15 @@ const formData = ref<CreateFlashcardDTO>({
 })
 const formErrors = ref<Record<string, string>>({})
 
+// 预设类别
+const presetCategories = ['C#', '编程单词', 'JavaScript', 'Python', 'TypeScript', 'Vue', 'React', 'Go', 'Rust', 'Java']
+
 // 计算属性
+const allCategories = computed(() => {
+  const uniqueCategories = new Set([...presetCategories, ...categories.value])
+  return Array.from(uniqueCategories).sort()
+})
+
 const filteredCards = computed(() => {
   if (selectedCategory.value === 'all') {
     return cards.value
@@ -239,6 +244,7 @@ const paginatedCards = computed(() => {
 const isFormValid = computed(() => {
   return formData.value.title.trim() !== '' &&
          formData.value.content.trim() !== '' &&
+         formData.value.category.trim() !== '' &&
          Object.keys(formErrors.value).length === 0
 })
 

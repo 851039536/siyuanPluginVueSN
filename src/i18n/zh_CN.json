@@ -973,6 +973,7 @@
     "singleView": "单卡",
     "previous": "上一页",
     "next": "下一页",
-    "play": "播放"
+    "play": "播放",
+    "randomCard": "随机"
   }
 }

@@ -947,6 +947,7 @@
     "singleView": "Single",
     "previous": "Previous",
     "next": "Next",
-    "play": "Play"
+    "play": "Play",
+    "randomCard": "Random"
   }
 }

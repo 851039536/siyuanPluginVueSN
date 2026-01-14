@@ -18,13 +18,22 @@
 
     <!-- 类别筛选 -->
     <div class="category-filter">
-      <label>{{ i18n.category || '类别' }}:</label>
-      <select v-model="selectedCategory" @change="handleCategoryChange">
-        <option value="all">{{ i18n.allCategories || '全部' }}</option>
-        <option v-for="cat in categories" :key="cat" :value="cat">
-          {{ cat }}
-        </option>
-      </select>
+      <div class="filter-left">
+        <label>{{ i18n.category || '类别' }}:</label>
+        <select v-model="selectedCategory" @change="handleCategoryChange">
+          <option value="all">{{ i18n.allCategories || '全部' }}</option>
+          <option v-for="cat in categories" :key="cat" :value="cat">
+            {{ cat }}
+          </option>
+        </select>
+      </div>
+      <div class="statistics">
+        <span class="stat-item">{{ i18n.total || '总计' }}: {{ cards.length }}</span>
+        <template v-if="selectedCategory !== 'all'">
+          <span class="stat-divider">|</span>
+          <span class="stat-item">{{ selectedCategory }}: {{ filteredCards.length }}</span>
+        </template>
+      </div>
     </div>
 
     <!-- 卡片容器 -->

@@ -36,7 +36,17 @@
           :key="card.id"
           class="card-item"
         >
-          <div class="card-title">{{ card.title }}</div>
+          <div class="card-header">
+            <div class="card-title">{{ card.title }}</div>
+            <div class="card-actions">
+              <button class="icon-btn" @click="editCard(card)" :title="i18n.editCard || '编辑'">
+                <IconWrapper name="edit" :size="14" />
+              </button>
+              <button class="icon-btn danger" @click="deleteCard(card)" :title="i18n.deleteCard || '删除'">
+                <IconWrapper name="delete" :size="14" />
+              </button>
+            </div>
+          </div>
           <div class="card-content">{{ card.content }}</div>
           <div class="card-category">{{ card.category }}</div>
         </div>
@@ -293,10 +303,10 @@ const saveCard = async () => {
   try {
     if (editingCard.value) {
       await storage.updateCard(editingCard.value.id, formData.value)
-      showMessage('卡片已更新', 2000, 'success')
+      showMessage('卡片已更新', 2000, 'info')
     } else {
       await storage.createCard(formData.value)
-      showMessage('卡片已创建', 2000, 'success')
+      showMessage('卡片已创建', 2000, 'info')
     }
 
     closeDialog()
@@ -311,6 +321,30 @@ const closeDialog = () => {
   editingCard.value = null
   formData.value = { title: '', content: '', category: '' }
   formErrors.value = {}
+}
+
+const editCard = (card: Flashcard) => {
+  editingCard.value = card
+  formData.value = {
+    title: card.title,
+    content: card.content,
+    category: card.category
+  }
+  showCreateDialog.value = true
+}
+
+const deleteCard = async (card: Flashcard) => {
+  if (!confirm(props.i18n.confirmDelete || '确定要删除这张卡片吗？')) {
+    return
+  }
+
+  try {
+    await storage.deleteCard(card.id)
+    showMessage('卡片已删除', 2000, 'info')
+    await loadCards()
+  } catch (error: any) {
+    showMessage(error.message || '删除失败', 3000, 'error')
+  }
 }
 
 // 生命周期

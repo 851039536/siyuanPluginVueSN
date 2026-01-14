@@ -174,7 +174,7 @@ export class Statistics {
         return await this.getStatistics();
       },
       onGetHistoricalData: async (days?: number) => {
-        return await this.getHistoricalStatistics(days || 30);
+        return await this.getHistoricalStatistics(days);
       },
       onGetSnapshots: async (count?: number) => {
         return await this.cache.getRecentSnapshots(count || 20);
@@ -1145,18 +1145,32 @@ export class Statistics {
 
   /**
    * 获取历史统计数据
+   * @param days 获取的天数，如果不指定则返回所有历史数据（永久展示）
    */
-  async getHistoricalStatistics(days: number = 30): Promise<any[]> {
+  async getHistoricalStatistics(days?: number): Promise<any[]> {
     try {
       const historyData = await this.plugin.loadData('statistics-history') || {};
       const today = new Date();
       const result = [];
       let lastKnownStats = null; // 记录最后一次已知的统计数据
 
-      console.log('getHistoricalStatistics 开始处理，历史数据keys:', Object.keys(historyData).sort());
+      // 如果未指定天数，则计算从最早数据到今天的天数（永久展示）
+      let daysToProcess = days;
+      if (days === undefined) {
+        const dateKeys = Object.keys(historyData).sort();
+        if (dateKeys.length > 0) {
+          const earliestDate = new Date(dateKeys[0]);
+          const diffTime = today.getTime() - earliestDate.getTime();
+          daysToProcess = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        } else {
+          daysToProcess = 30; // 如果没有历史数据，默认30天
+        }
+      }
+
+      console.log('getHistoricalStatistics 开始处理，历史数据keys:', Object.keys(historyData).sort(), 'daysToProcess:', daysToProcess);
 
       // 生成日期范围（从最早到最晚，正序）
-      for (let i = days - 1; i >= 0; i--) {
+      for (let i = (daysToProcess || 30) - 1; i >= 0; i--) {
         const date = new Date(today);
         date.setDate(today.getDate() - i);
         const dateKey = this.formatDateKey(date);

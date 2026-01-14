@@ -619,7 +619,7 @@ async function loadHistoricalData() {
   if (!props.onGetHistoricalData) return
 
   try {
-    const data = await props.onGetHistoricalData(30) // 获取最近30天的数据
+    const data = await props.onGetHistoricalData() // 获取所有历史数据（永久展示）
     // 最新日期在最前面排序
     historicalData.value = data.reverse()
   } catch (error) {

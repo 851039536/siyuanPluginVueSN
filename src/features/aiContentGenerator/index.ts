@@ -69,14 +69,6 @@ export class AIContentGenerator {
   }
 
   /**
-   * 处理编辑器右键菜单事件
-   */
-
-  /**
-   * 为对话框生成内容
-   */
-
-  /**
    * 添加AI内容生成 Dock 到右侧边栏
    */
   private addDock() {

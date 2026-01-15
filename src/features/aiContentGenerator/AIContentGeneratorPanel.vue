@@ -3,7 +3,7 @@
     <!-- 顶部工具栏 -->
     <div class="panel-header">
       <div class="header-title">
-        <span>🤖 {{ i18n.aiContentGenerator || 'AI信息生成' }}</span>
+        <span>🤖 {{'AI信息生成' }}</span>
       </div>
       <div class="header-actions">
         <!-- 移动端：收起/展开输入区域按钮 -->
@@ -23,13 +23,13 @@
           class="btn-icon"
           @click="toggleEditMode"
           :class="{ 'active': editMode }"
-          :title="i18n.editMode || '编辑模式'"
+          :title="editMode ? '切换到普通模式' : '切换到编辑模式'"
         >
           <svg width="18" height="18" viewBox="0 0 24 24">
             <use xlink:href="#iconEdit"></use>
           </svg>
         </button>
-        <button class="btn-icon" @click="toggleSettings" :title="i18n.conversationSettings || '对话设置'">
+        <button class="btn-icon" @click="toggleSettings" :title="editMode ? '切换到普通模式' : '切换到编辑模式'">
           <svg width="18" height="18" viewBox="0 0 24 24">
             <use xlink:href="#iconSettings"></use>
           </svg>
@@ -42,7 +42,7 @@
       <div class="panel-section">
         <div class="section-header">
           <div class="section-title-wrapper">
-            <span>💬 {{ i18n.conversationSettings || '对话设置' }}</span>
+            <span>💬 {{ '对话设置' }}</span>
             <button
               class="btn-collapse"
               @click="toggleCollapse('settings')"
@@ -63,17 +63,17 @@
         <div class="section-content" :class="{ 'collapsed': collapsedSections.settings }">
           <div class="setting-item">
             <div class="label-row">
-              <label>{{ i18n.systemPrompt || '系统提示词' }}</label>
+              <label>{{ '系统提示词' }}</label>
             </div>
             <textarea
               v-model="systemPrompt"
               class="prompt-input"
-              :placeholder="i18n.systemPromptPlaceholder || '输入系统提示词，定义AI的角色和行为...'"
+              :placeholder="'输入系统提示词，定义AI的角色和行为...'"
               rows="4"
             ></textarea>
           </div>
           <div class="setting-item">
-            <label>{{ i18n.temperature || '创造性' }} ({{ temperature }})</label>
+            <label>{{  '创造性' }} ({{ temperature }})</label>
             <input
               type="range"
               v-model.number="temperature"
@@ -83,12 +83,12 @@
               class="slider"
             />
             <div class="slider-hint">
-              <span>{{ i18n.precise || '精确' }}</span>
-              <span>{{ i18n.creative || '创造' }}</span>
+              <span>{{ '精确' }}</span>
+              <span>{{  '创造' }}</span>
             </div>
           </div>
           <div class="setting-item">
-            <label>{{ i18n.maxTokens || '最大长度' }}</label>
+            <label>{{ '最大长度' }}</label>
             <input
               type="number"
               v-model.number="maxTokens"
@@ -100,7 +100,7 @@
           </div>
           <!-- 需求5：上下文消息数量配置 -->
           <div class="setting-item">
-            <label>{{ i18n.contextMessageLimit || '上下文消息数量' }} ({{ contextMessageLimit }})</label>
+            <label>{{  '上下文消息数量' }} ({{ contextMessageLimit }})</label>
             <input
               type="range"
               v-model.number="contextMessageLimit"
@@ -110,8 +110,8 @@
               class="slider"
             />
             <div class="slider-hint">
-              <span>{{ i18n.minimal || '最少' }} (1)</span>
-              <span>{{ i18n.maximum || '最多' }} (10)</span>
+              <span>{{ '最少' }} (1)</span>
+              <span>{{ '最多' }} (10)</span>
             </div>
           </div>
           <!-- 问题3：删除强制Markdown输出选项，默认就是Markdown格式 -->
@@ -120,9 +120,9 @@
           <!-- 保存提示词配置 -->
           <div class="setting-item save-prompt-section">
             <div class="save-prompt-header">
-              <label>{{ i18n.savePromptConfig || '保存当前配置' }}</label>
+              <label>{{ '保存当前配置' }}</label>
               <span v-if="currentPromptName" class="editing-hint">
-                ({{ i18n.editing || '编辑' }}: {{ currentPromptName }})
+                ({{ '编辑' }}: {{ currentPromptName }})
               </span>
             </div>
             <div class="save-prompt-input-group">
@@ -130,7 +130,7 @@
                 v-model="newPromptName"
                 type="text"
                 class="prompt-name-input"
-                :placeholder="currentPromptName || (i18n.promptNamePlaceholder || '输入配置名称...')"
+                :placeholder="currentPromptName || ( '输入配置名称...')"
                 @keydown.enter="saveCurrentPrompt"
                 @focus="onPromptNameFocus"
               />
@@ -142,7 +142,7 @@
                 <svg width="14" height="14">
                   <use xlink:href="#iconSave"></use>
                 </svg>
-                {{ i18n.save || '保存' }}
+                {{  '保存' }}
               </button>
             </div>
           </div>
@@ -159,14 +159,14 @@
           class="btn-reference-compact"
           @click="insertCurrentDocReference"
           :class="{ 'has-reference': referencedDocTitle }"
-          :title="referencedDocTitle || (i18n.referenceCurrentDoc || '引用当前文档内容')"
+          :title="referencedDocTitle || ('引用当前文档内容')"
         >
           <svg width="14" height="14">
             <use xlink:href="#iconFile"></use>
           </svg>
           <span v-if="referencedDocTitle" class="ref-doc-name">{{ referencedDocTitle }}</span>
-          <span v-else>{{ i18n.refDoc || '引用' }}</span>
-          <button v-if="referencedDocTitle" class="btn-clear-inline" @click.stop="cancelDocReference" :title="i18n.cancel || '取消'">
+          <span v-else>{{ '引用' }}</span>
+          <button v-if="referencedDocTitle" class="btn-clear-inline" @click.stop="cancelDocReference" :title=" '取消'">
             <svg width="10" height="10">
               <use xlink:href="#iconClose"></use>
             </svg>
@@ -177,7 +177,7 @@
         <textarea
           v-model="userInput"
           class="user-input-compact"
-          :placeholder="referencedDocContent ? (i18n.inputPlaceholderWithDoc || '输入问题...') : (i18n.inputPlaceholder || '输入您的问题...')"
+          :placeholder="referencedDocContent ? ('输入问题...') : ('输入您的问题...')"
           rows="1"
           @keydown.ctrl.enter="handleGenerate"
           :disabled="isGenerating"
@@ -189,7 +189,7 @@
           class="btn-generate-compact"
           @click="handleGenerate"
           :disabled="!userInput.trim() && !referencedDocContent"
-          :title="i18n.generate || '生成'"
+          :title="'生成'"
         >
           <svg width="16" height="16">
             <use xlink:href="#iconSparkles"></use>
@@ -199,7 +199,7 @@
           v-else
           class="btn-stop-compact"
           @click="handleStop"
-          :title="i18n.stopGeneration || '停止生成'"
+          :title="'停止生成'"
         >
           <svg width="16" height="16">
             <use xlink:href="#iconClose"></use>
@@ -211,14 +211,14 @@
       <div v-if="editMode" class="compact-toolbar edit-mode">
         <!-- 提示词选择按钮 -->
         <div class="prompt-selector-wrapper">
-          <button class="btn-prompt-compact" @click="showPromptSelector = !showPromptSelector" :title="currentPromptName || (i18n.selectPrompt || '选择提示词')">
+          <button class="btn-prompt-compact" @click="showPromptSelector = !showPromptSelector" :title="currentPromptName || ('选择提示词')">
             <svg width="14" height="14">
               <use xlink:href="#iconList"></use>
             </svg>
             <span v-if="currentPromptName" class="prompt-name-compact">{{ currentPromptName }}</span>
-            <span v-else>{{ i18n.prompt || '提示词' }}</span>
+            <span v-else>{{ '提示词' }}</span>
             <span v-if="savedPrompts.length > 0 && !currentPromptName" class="prompt-count-compact">{{ savedPrompts.length }}</span>
-            <button v-if="currentPromptName" class="btn-clear-inline" @click.stop="clearCurrentPrompt" :title="i18n.clear || '清除'">
+            <button v-if="currentPromptName" class="btn-clear-inline" @click.stop="clearCurrentPrompt" :title="'清除'">
               <svg width="10" height="10">
                 <use xlink:href="#iconClose"></use>
               </svg>
@@ -228,7 +228,7 @@
           <!-- 提示词选择面板 -->
           <div v-if="showPromptSelector" class="prompt-selector-panel">
             <div class="prompt-selector-header">
-              <span>{{ i18n.savedPrompts || '已保存的提示词' }}</span>
+              <span>{{'已保存的提示词' }}</span>
               <button class="btn-close-small" @click="showPromptSelector = false">
                 <svg width="12" height="12">
                   <use xlink:href="#iconClose"></use>
@@ -242,13 +242,13 @@
                 v-model="promptSearchQuery"
                 type="text"
                 class="prompt-search-input"
-                :placeholder="i18n.searchPrompts || '搜索提示词...'"
+                :placeholder="'搜索提示词...'"
               />
             </div>
 
             <div v-if="filteredPrompts.length === 0" class="empty-prompts">
-              <p v-if="savedPrompts.length === 0">{{ i18n.noSavedPrompts || '暂无保存的提示词，请在对话设置中保存' }}</p>
-              <p v-else>{{ i18n.noMatchingPrompts || '没有找到匹配的提示词' }}</p>
+              <p v-if="savedPrompts.length === 0">{{'暂无保存的提示词，请在对话设置中保存' }}</p>
+              <p v-else>{{'没有找到匹配的提示词' }}</p>
             </div>
 
             <div v-else class="prompt-list">
@@ -264,7 +264,7 @@
                     <button
                       class="btn-edit-prompt"
                       @click.stop="editPrompt(getOriginalIndex(prompt))"
-                      :title="i18n.edit || '编辑'"
+                      :title="'编辑'"
                     >
                       <svg width="14" height="14">
                         <use xlink:href="#iconEdit"></use>
@@ -273,7 +273,7 @@
                     <button
                       class="btn-delete-prompt"
                       @click.stop="deletePrompt(getOriginalIndex(prompt))"
-                      :title="i18n.delete || '删除'"
+                      :title="'删除'"
                     >
                       <svg width="14" height="14">
                         <use xlink:href="#iconTrashcan"></use>
@@ -283,8 +283,8 @@
                 </div>
                 <div class="prompt-item-preview">{{ getPromptPreview(prompt.systemPrompt) }}</div>
                 <div class="prompt-item-meta">
-                  <span>{{ i18n.temperature || '创造性' }}: {{ prompt.temperature }}</span>
-                  <span>{{ i18n.maxTokens || '最大长度' }}: {{ prompt.maxTokens }}</span>
+                  <span>{{'创造性' }}: {{ prompt.temperature }}</span>
+                  <span>{{'最大长度' }}: {{ prompt.maxTokens }}</span>
                 </div>
               </div>
 
@@ -294,7 +294,7 @@
                   class="btn-page"
                   @click="currentPage = Math.max(1, currentPage - 1)"
                   :disabled="currentPage === 1"
-                  :title="i18n.previousPage || '上一页'"
+                  :title="'上一页'"
                 >
                   ‹
                 </button>
@@ -303,7 +303,7 @@
                   class="btn-page"
                   @click="currentPage = Math.min(totalPages, currentPage + 1)"
                   :disabled="currentPage === totalPages"
-                  :title="i18n.nextPage || '下一页'"
+                  :title="'下一页'"
                 >
                   ›
                 </button>
@@ -313,13 +313,13 @@
         </div>
 
         <!-- 目标文档选择 -->
-        <button class="btn-doc-compact" @click="selectTargetDocument" :title="editTargetDoc ? editTargetDoc.title : (i18n.selectDocument || '选择文档')">
+        <button class="btn-doc-compact" @click="selectTargetDocument" :title="editTargetDoc ? editTargetDoc.title : ('选择文档')">
           <svg width="14" height="14">
             <use xlink:href="#iconFile"></use>
           </svg>
           <span v-if="editTargetDoc" class="doc-name-compact">{{ editTargetDoc.title }}</span>
-          <span v-else>{{ i18n.selectDoc || '选择文档' }}</span>
-          <button v-if="editTargetDoc" class="btn-clear-inline" @click.stop="clearTargetDocument" :title="i18n.clear || '清除'">
+          <span v-else>{{ '选择文档' }}</span>
+          <button v-if="editTargetDoc" class="btn-clear-inline" @click.stop="clearTargetDocument" :title="'清除'">
             <svg width="10" height="10">
               <use xlink:href="#iconClose"></use>
             </svg>
@@ -331,7 +331,7 @@
           v-if="editTargetDoc"
           v-model="editCustomInput"
           class="user-input-compact"
-          :placeholder="i18n.editCustomPlaceholder || '输入编辑指令...'"
+          :placeholder="'输入编辑指令...'"
           rows="1"
           @keydown.ctrl.enter="handleCustomEdit"
           :disabled="isGenerating"
@@ -343,7 +343,7 @@
           class="btn-generate-compact"
           @click="handleCustomEdit"
           :disabled="!editCustomInput.trim()"
-          :title="i18n.execute || '执行'"
+          :title="'执行'"
         >
           <svg width="16" height="16">
             <use xlink:href="#iconSparkles"></use>
@@ -353,7 +353,7 @@
           v-else-if="isGenerating"
           class="btn-stop-compact"
           @click="handleStop"
-          :title="i18n.stopGeneration || '停止生成'"
+          :title="'停止生成'"
         >
           <svg width="16" height="16">
             <use xlink:href="#iconClose"></use>
@@ -368,7 +368,7 @@
             <svg width="14" height="14">
               <use xlink:href="#iconSparkles"></use>
             </svg>
-            <span>{{ i18n.aiEditTools || 'AI智能编辑' }}:</span>
+            <span>{{'AI智能编辑' }}:</span>
             <button
               class="btn-collapse"
               @click="toggleCollapse('aiToolbar')"
@@ -382,48 +382,48 @@
           </div>
         </div>
         <div class="toolbar-actions" :class="{ 'collapsed': collapsedSections.aiToolbar }">
-          <button class="btn-ai-action" @click="aiEditAction('polish')" :disabled="isGenerating" :title="i18n.aiPolish || 'AI润色'">
+          <button class="btn-ai-action" @click="aiEditAction('polish')" :disabled="isGenerating" :title="'AI润色'">
             <svg width="14" height="14"><use xlink:href="#iconEdit"></use></svg>
-            {{ i18n.polish || '润色' }}
+            {{'润色' }}
           </button>
-          <button class="btn-ai-action" @click="aiEditAction('expand')" :disabled="isGenerating" :title="i18n.aiExpand || '扩写内容'">
+          <button class="btn-ai-action" @click="aiEditAction('expand')" :disabled="isGenerating" :title="'扩写内容'">
             <svg width="14" height="14"><use xlink:href="#iconAdd"></use></svg>
-            {{ i18n.expand || '扩写' }}
+            {{'扩写' }}
           </button>
-          <button class="btn-ai-action" @click="aiEditAction('condense')" :disabled="isGenerating" :title="i18n.aiCondense || '精简内容'">
+          <button class="btn-ai-action" @click="aiEditAction('condense')" :disabled="isGenerating" :title="'精简内容'">
             <svg width="14" height="14"><use xlink:href="#iconMin"></use></svg>
-            {{ i18n.condense || '精简' }}
+            {{'精简' }}
           </button>
-          <button class="btn-ai-action" @click="aiEditAction('fix')" :disabled="isGenerating" :title="i18n.aiFix || '修正错误'">
+          <button class="btn-ai-action" @click="aiEditAction('fix')" :disabled="isGenerating" :title="'修正错误'">
             <svg width="14" height="14"><use xlink:href="#iconCheck"></use></svg>
-            {{ i18n.fix || '纠错' }}
+            {{'纠错' }}
           </button>
-          <button class="btn-ai-action" @click="aiEditAction('translate')" :disabled="isGenerating" :title="i18n.aiTranslate || '翻译文档'">
+          <button class="btn-ai-action" @click="aiEditAction('translate')" :disabled="isGenerating" :title="'翻译文档'">
             <svg width="14" height="14"><use xlink:href="#iconLanguage"></use></svg>
-            {{ i18n.translate || '翻译' }}
+            {{'翻译' }}
           </button>
-          <button class="btn-ai-action" @click="aiEditAction('rewrite')" :disabled="isGenerating" :title="i18n.aiRewrite || '改写文档'">
+          <button class="btn-ai-action" @click="aiEditAction('rewrite')" :disabled="isGenerating" :title="'改写文档'">
             <svg width="14" height="14"><use xlink:href="#iconRefresh"></use></svg>
-            {{ i18n.rewrite || '改写' }}
+            {{'改写' }}
           </button>
-          <button class="btn-ai-action" @click="aiEditAction('summary')" :disabled="isGenerating" :title="i18n.aiSummary || 'AI总结文档'">
+          <button class="btn-ai-action" @click="aiEditAction('summary')" :disabled="isGenerating" :title="'AI总结文档'">
             <svg width="14" height="14" viewBox="0 0 24 24">
               <path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M13,12.5L11.5,14L10,12.5V16H8V12.5L10,14L11.5,12.5L13,14V16H15V12.5L13,12.5Z" />
             </svg>
-            {{ i18n.summary || '总结' }}
+            {{'总结' }}
           </button>
-          <button class="btn-ai-action btn-analyze" @click="analyzeDocument" :disabled="isGenerating || isAnalyzing" :title="i18n.aiAnalyze || 'AI分析建议'">
+          <button class="btn-ai-action btn-analyze" @click="analyzeDocument" :disabled="isGenerating || isAnalyzing" :title="'AI分析建议'">
             <div v-if="isAnalyzing" class="loading-spinner-tiny"></div>
             <svg v-else width="14" height="14"><use xlink:href="#iconInfo"></use></svg>
-            {{ i18n.analyze || '智能分析' }}
+            {{'智能分析' }}
           </button>
-          <button v-if="!isCheckingPlagiarism" class="btn-ai-action btn-plagiarism" @click="checkPlagiarism" :disabled="isGenerating" :title="i18n.aiPlagiarismCheck || 'AI查重'">
+          <button v-if="!isCheckingPlagiarism" class="btn-ai-action btn-plagiarism" @click="checkPlagiarism" :disabled="isGenerating" :title="'AI查重'">
             <svg width="14" height="14"><use xlink:href="#iconSearch"></use></svg>
-            {{ i18n.plagiarismCheck || '查重' }}
+            {{'查重' }}
           </button>
-          <button v-else class="btn-ai-action btn-stop-plagiarism" @click="handleStop" :title="i18n.stopGeneration || '停止生成'">
+          <button v-else class="btn-ai-action btn-stop-plagiarism" @click="handleStop" :title="'停止生成'">
             <svg width="14" height="14"><use xlink:href="#iconClose"></use></svg>
-            {{ i18n.stop || '停止' }}
+            {{'停止' }}
           </button>
         </div>
       </div>
@@ -433,7 +433,7 @@
         <div class="suggestions-header">
           <div class="section-title-wrapper">
             <svg width="16" height="16"><use xlink:href="#iconLightbulb"></use></svg>
-            <span>{{ i18n.aiSuggestions || 'AI优化建议' }}</span>
+            <span>{{'AI优化建议' }}</span>
             <button
               class="btn-collapse"
               @click="toggleCollapse('suggestions')"
@@ -452,7 +452,7 @@
         <div class="suggestions-content" :class="{ 'collapsed': collapsedSections.suggestions }">
           <p class="suggestion-text">{{ aiSuggestions }}</p>
           <button class="btn-apply-suggestions" @click="applySuggestions" :disabled="isGenerating">
-            {{ i18n.applySuggestions || '应用建议优化' }}
+            {{'应用建议优化' }}
           </button>
         </div>
       </div>
@@ -462,7 +462,7 @@
         <div class="result-header">
           <div class="section-title-wrapper">
             <svg width="16" height="16"><use xlink:href="#iconSearch"></use></svg>
-            <span>{{ i18n.aiPlagiarismResult || 'AI查重结果' }}</span>
+            <span>{{'AI查重结果' }}</span>
             <button
               class="btn-collapse"
               @click="toggleCollapse('plagiarism')"
@@ -481,11 +481,11 @@
         <div class="result-content" :class="{ 'collapsed': collapsedSections.plagiarism }">
           <div class="plagiarism-summary">
             <div class="summary-item" :class="plagiarismResult.riskLevel === 'low' ? 'low-risk' : plagiarismResult.riskLevel === 'medium' ? 'medium-risk' : 'high-risk'">
-              <span class="summary-label">{{ i18n.riskLevel || '风险等级' }}:</span>
+              <span class="summary-label">{{'风险等级' }}:</span>
               <span class="summary-value">{{ getRiskLevelText(plagiarismResult.riskLevel) }}</span>
             </div>
             <div class="summary-item">
-              <span class="summary-label">{{ i18n.similarityRate || '相似度' }}:</span>
+              <span class="summary-label">{{ '相似度' }}:</span>
               <span class="summary-value">{{ plagiarismResult.similarityRate }}%</span>
             </div>
           </div>
@@ -501,7 +501,7 @@
       <!-- 加载状态（仅在没有内容时显示） -->
       <div v-if="isGenerating && !displayedContent && !generatedContent" class="loading-state">
         <div class="loading-spinner-large"></div>
-        <p>{{ i18n.aiThinking || 'AI正在思考...' }}</p>
+        <p>{{ 'AI正在思考...' }}</p>
       </div>
 
       <!-- 错误提示 -->
@@ -511,7 +511,7 @@
         </svg>
         <p>{{ errorMessage }}</p>
         <button class="btn-retry" @click="handleGenerate">
-          {{ i18n.retry || '重试' }}
+          {{ '重试' }}
         </button>
       </div>
 
@@ -519,10 +519,10 @@
       <div v-else-if="displayedContent || generatedContent" class="result-container">
         <div class="result-header">
           <span class="result-title">
-            📝 {{ editMode ? (i18n.editContent || '编辑内容') : (i18n.generatedContent || '生成内容') }}
+            📝 {{ editMode ? ('编辑内容') : ('生成内容') }}
             <span v-if="isGenerating" class="generating-indicator">
               <span class="dot-flashing"></span>
-              {{ i18n.generating || '生成中' }}
+              {{ '生成中' }}
             </span>
           </span>
           <div class="result-actions">
@@ -533,49 +533,49 @@
                 v-if="isGenerating"
                 class="btn-action btn-stop"
                 @click="handleStop"
-                :title="i18n.stopGeneration || '停止生成'"
+                :title="'停止生成'"
               >
                 <svg width="16" height="16">
                   <use xlink:href="#iconClose"></use>
                 </svg>
-                {{ i18n.stop || '停止' }}
+                {{ '停止' }}
               </button>
               <button
                 class="btn-action btn-apply"
                 @click="applyEdit"
                 :disabled="!editTargetDoc || isApplying || isGenerating"
-                :title="i18n.applyEdit || '应用编辑'"
+                :title="'应用编辑'"
               >
                 <div v-if="isApplying" class="loading-spinner-small"></div>
                 <svg v-else width="16" height="16">
                   <use xlink:href="#iconCheck"></use>
                 </svg>
-                {{ i18n.applyEdit || '应用' }}
+                {{ '应用' }}
               </button>
               <button
                 class="btn-action btn-insert-subdoc"
                 @click="insertSubDocument"
                 :disabled="!editTargetDoc || isInsertingSubDoc || isGenerating"
-                :title="i18n.insertSubDocument || '插入子文档'"
+                :title="'插入子文档'"
               >
                 <div v-if="isInsertingSubDoc" class="loading-spinner-small"></div>
                 <svg v-else width="16" height="16" viewBox="0 0 24 24">
                   <path fill="currentColor" d="M20,18H4V6H20M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4M13,12H16V15H18V12H21V10H18V7H16V10H13V12Z" />
                 </svg>
-                {{ i18n.insertSubDoc || '子文档' }}
+                {{ '子文档' }}
               </button>
               <button
                 v-if="lastEditHistory && editMode"
                 class="btn-action btn-undo"
                 @click="undoEdit"
                 :disabled="isUndoing"
-                :title="i18n.undoEdit || '撤回编辑'"
+                :title="'撤回编辑'"
               >
                 <div v-if="isUndoing" class="loading-spinner-small"></div>
                 <svg v-else width="16" height="16">
                   <use xlink:href="#iconUndo"></use>
                 </svg>
-                {{ i18n.undo || '撤回' }}
+                {{ '撤回' }}
               </button>
             </template>
             <!-- 普通模式：撤回插入按钮 -->
@@ -584,13 +584,13 @@
               class="btn-action btn-undo"
               @click="undoEdit"
               :disabled="isUndoing"
-              :title="i18n.undoInsert || '撤回插入'"
+              :title="'撤回插入'"
             >
               <div v-if="isUndoing" class="loading-spinner-small"></div>
               <svg v-else width="16" height="16">
                 <use xlink:href="#iconUndo"></use>
               </svg>
-              {{ i18n.undo || '撤回' }}
+              {{ '撤回' }}
             </button>
             <!-- 通用按钮 -->
             <!-- 普通模式：保存到AI问答封存按钮（移动端隐藏） -->
@@ -599,12 +599,12 @@
               class="btn-action btn-save"
               @click="saveToArchiveNotebook"
               :disabled="isGenerating"
-              :title="i18n.saveToArchive || '保存到AI问答封存'"
+              :title="'保存到AI问答封存'"
             >
               <svg width="16" height="16">
                 <use xlink:href="#iconSave"></use>
               </svg>
-              {{ i18n.saveToArchive || '保存' }}
+              {{ '保存' }}
             </button>
             <!-- 普通模式：插入到当前文档按钮 -->
             <button
@@ -612,25 +612,25 @@
               class="btn-action btn-insert"
               @click="insertToCurrentDocument"
               :disabled="isInserting"
-              :title="i18n.insertToDocument || '插入到当前文档'"
+              :title="'插入到当前文档'"
             >
               <div v-if="isInserting" class="loading-spinner-small"></div>
               <svg v-else width="16" height="16">
                 <use xlink:href="#iconDownload"></use>
               </svg>
-              {{ i18n.insertToDoc || '插入' }}
+              {{ '插入' }}
             </button>
-            <button class="btn-action" @click="copyContent" :title="i18n.copyMarkdown || '复制Markdown'">
+            <button class="btn-action" @click="copyContent" :title="'复制Markdown'">
               <svg width="16" height="16">
                 <use xlink:href="#iconCopy"></use>
               </svg>
-              {{ i18n.copy || '复制' }}
+              {{ '复制' }}
             </button>
             <button class="btn-action btn-clear" @click="clearContent">
               <svg width="16" height="16">
                 <use xlink:href="#iconTrashcan"></use>
               </svg>
-              {{ i18n.clear || '清除' }}
+              {{ '清除' }}
             </button>
           </div>
         </div>
@@ -645,21 +645,21 @@
         <svg width="64" height="64" class="empty-icon">
           <use xlink:href="#iconFile"></use>
         </svg>
-        <p>{{ i18n.emptyHint || '输入问题后点击生成，AI将为您创建Markdown格式的内容' }}</p>
+        <p>{{ '输入问题后点击生成，AI将为您创建Markdown格式的内容' }}</p>
         <div class="quick-templates">
-          <p class="templates-title">{{ i18n.quickTemplates || '快速模板' }}:</p>
+          <p class="templates-title">{{ '快速模板' }}:</p>
           <div class="template-buttons">
             <button class="btn-template" @click="useTemplate('article')">
-              📄 {{ i18n.article || '文章大纲' }}
+              📄 {{ '文章大纲' }}
             </button>
             <button class="btn-template" @click="useTemplate('summary')">
-              📋 {{ i18n.summary || '内容总结' }}
+              📋 {{ '内容总结' }}
             </button>
             <button class="btn-template" @click="useTemplate('todo')">
-              ✅ {{ i18n.todoList || '待办清单' }}
+              ✅ {{ '待办清单' }}
             </button>
             <button class="btn-template" @click="useTemplate('ideas')">
-              💡 {{ i18n.brainstorm || '头脑风暴' }}
+              💡 {{ '头脑风暴' }}
             </button>
           </div>
         </div>
@@ -690,10 +690,10 @@
         </div>
         <div class="input-dialog-footer">
           <button class="btn-cancel" @click="cancelInputDialog">
-            {{ i18n.cancel || '取消' }}
+            {{ '取消' }}
           </button>
           <button class="btn-confirm" @click="confirmInputDialog" :disabled="!inputDialogValue.trim()">
-            {{ i18n.confirm || '确定' }}
+            {{ '确定' }}
           </button>
         </div>
       </div>
@@ -1165,8 +1165,8 @@ const toggleEditMode = () => {
   }
   showMessage(
     editMode.value
-      ? (props.i18n.editModeEnabled || '✓ 已启用编辑模式')
-      : (props.i18n.editModeDisabled || '✓ 已关闭编辑模式'),
+      ? ('✓ 已启用编辑模式')
+      : ('✓ 已关闭编辑模式'),
     1500,
     'info'
   );
@@ -1214,7 +1214,7 @@ const handleStop = () => {
 const handleGenerate = async () => {
   // 如果既没有输入也没有引用文档，提示用户
   if (!userInput.value.trim() && !referencedDocContent.value) {
-    showMessage(props.i18n.enterInput || '请输入内容或引用文档', 2000, 'info');
+    showMessage('请输入内容或引用文档', 2000, 'info');
     return;
   }
 
@@ -1289,7 +1289,7 @@ ${cleanDocContent}`;
         await saveToArchiveNotebook();
       }
     } else {
-      errorMessage.value = props.i18n.generateFailed || '生成失败，请重试';
+      errorMessage.value = '生成失败，请重试';
     }
   } catch (error) {
     if ((error as Error).name === 'AbortError') {
@@ -1565,8 +1565,7 @@ const insertToCurrentDocument = async () => {
     return;
   }
 
-  const confirmMessage = props.i18n.confirmInsertToDocument ||
-    '确定要将生成的内容插入到当前文档吗？这将覆盖文档的现有内容。';
+  const confirmMessage = '确定要将生成的内容插入到当前文档吗？这将覆盖文档的现有内容。';
 
   if (!confirm(confirmMessage)) {
     return;
@@ -2041,9 +2040,9 @@ const detectSimilarityRate = (text: string): number => {
  */
 const getRiskLevelText = (riskLevel: string): string => {
   const riskLevelMap: Record<string, string> = {
-    low: props.i18n.lowRisk || '低风险',
-    medium: props.i18n.mediumRisk || '中风险',
-    high: props.i18n.highRisk || '高风险'
+    low: '低风险',
+    medium: '中风险',
+    high: '高风险'
   };
   return riskLevelMap[riskLevel] || riskLevel;
 };
@@ -2154,7 +2153,7 @@ const saveCurrentPrompt = async () => {
   const promptName = newPromptName.value.trim() || currentPromptName.value;
 
   if (!promptName) {
-    showMessage(props.i18n.enterPromptName || '请输入配置名称', 2000, 'info');
+    showMessage('请输入配置名称', 2000, 'info');
     return;
   }
 
@@ -2349,7 +2348,7 @@ const deletePrompt = (index: number) => {
   const prompt = savedPrompts.value[index];
   if (!prompt) return;
 
-  if (confirm(`${props.i18n.confirmDelete || '确定删除配置'}: ${prompt.name}?`)) {
+  if (confirm(`确定删除配置: ${prompt.name}?`)) {
     savedPrompts.value.splice(index, 1);
     savePromptsToStorage();
     // showMessage(`✓ 已删除配置: ${prompt.name}`, 2000, 'info');

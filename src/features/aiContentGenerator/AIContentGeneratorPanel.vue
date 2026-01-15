@@ -6,18 +6,6 @@
         <span>🤖 {{'AI信息生成' }}</span>
       </div>
       <div class="header-actions">
-        <!-- 移动端：收起/展开输入区域按钮 -->
-        <button
-          v-if="isMobile"
-          class="btn-icon"
-          @click="showInputSection = !showInputSection"
-          :class="{ 'active': showInputSection }"
-          :title="showInputSection ? '收起输入' : '展开输入'"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24">
-            <use :xlink:href="showInputSection ? '#iconUp' : '#iconDown'"></use>
-          </svg>
-        </button>
         <!-- Edit模式切换按钮 -->
         <button
           class="btn-icon"
@@ -906,11 +894,35 @@ const loadDocument = async (docId: string): Promise<{ title: string; content: st
 };
 
 /**
- * 默认的流式输出回调
+ * 默认的流式输出回调（同时更新显示内容和生成内容）
  */
 const defaultOnChunk = (chunk: string) => {
   displayedContent.value += chunk;
   generatedContent.value += chunk;
+};
+
+/**
+ * 创建只更新单个目标的流式回调
+ * @param targetRef 目标响应式引用
+ * @returns 流式输出回调函数
+ */
+const createSingleTargetCallback = (targetRef: { value: string | null }) => {
+  return (chunk: string) => {
+    targetRef.value = (targetRef.value || '') + chunk;
+  };
+};
+
+/**
+ * 创建带自定义处理的流式回调
+ * @param onUpdate 自定义更新函数，接收累积的内容
+ * @returns 流式输出回调函数
+ */
+const createCustomStreamCallback = (onUpdate: (accumulatedContent: string) => void) => {
+  let accumulated = '';
+  return (chunk: string) => {
+    accumulated += chunk;
+    onUpdate(accumulated);
+  };
 };
 
 /**
@@ -964,78 +976,79 @@ const removeHeadings = (content: string): string => {
 };
 
 
-// 渲染Markdown (使用marked库进行标准渲染，支持代码高亮)
-const renderedDisplayedMarkdown = computed(() => {
-  if (!displayedContent.value) return '';
+/**
+ * 统一的 Markdown 渲染函数
+ */
+const renderMarkdown = (content: string, highlightKeywords: string[] = []): string => {
+  if (!content) return '';
+
   try {
-    // 配置marked选项
-    marked.setOptions({
-      breaks: true,  // 支持GFM换行
-      gfm: true,     // 启用GitHub风格的Markdown
-    });
-
-    let content = displayedContent.value;
-
-    // 移除标题中的粗体标记
-    content = content.replace(/^(#{1,6})\s+\*\*(.+?)\*\*\s*$/gm, '$1 $2');
-
-    return marked.parse(content) as string;
-  } catch (error) {
-    console.error('Markdown渲染失败:', error);
-    return `<pre>${displayedContent.value}</pre>`;
-  }
-});
-
-// 渲染查重结果的Markdown
-const renderPlagiarismMarkdown = computed(() => {
-  if (!plagiarismResult.value?.details) return '';
-  try {
-    // 配置marked选项
+    // 配置 marked 选项（全局配置一次）
     marked.setOptions({
       breaks: true,
       gfm: true,
     });
 
-    let content = plagiarismResult.value.details;
+    let processedContent = content;
 
-    // 对重复内容进行高亮标记
-    content = content.replace(/重复/gi, '**重复**');
-    content = content.replace(/相似/gi, '**相似**');
-    content = content.replace(/原创/gi, '*原创*');
-    content = content.replace(/建议/gi, '**建议**');
-    content = content.replace(/位置/g, '**位置**');
-    content = content.replace(/风险/g, '**风险**');
+    // 对特定关键词进行高亮标记
+    const boldKeywords = highlightKeywords.filter(k => k.startsWith('bold:')).map(k => k.slice(6));
+    const italicKeywords = highlightKeywords.filter(k => k.startsWith('italic:')).map(k => k.slice(8));
 
-    return marked.parse(content) as string;
+    boldKeywords.forEach(keyword => {
+      processedContent = processedContent.replace(new RegExp(keyword, 'gi'), `**${keyword}**`);
+    });
+    italicKeywords.forEach(keyword => {
+      processedContent = processedContent.replace(new RegExp(keyword, 'gi'), `*${keyword}*`);
+    });
+
+    // 移除标题中的粗体标记（对主内容）
+    processedContent = processedContent.replace(/^(#{1,6})\s+\*\*(.+?)\*\*\s*$/gm, '$1 $2');
+
+    return marked.parse(processedContent) as string;
   } catch (error) {
-    console.error('查重结果Markdown渲染失败:', error);
-    return `<pre>${plagiarismResult.value.details}</pre>`;
+    console.error('Markdown渲染失败:', error);
+    return `<pre>${content}</pre>`;
   }
+};
+
+// 渲染主内容 Markdown
+const renderedDisplayedMarkdown = computed(() => {
+  return renderMarkdown(displayedContent.value);
 });
+
+// 渲染查重结果 Markdown（带关键词高亮）
+const renderPlagiarismMarkdown = computed(() => {
+  if (!plagiarismResult.value?.details) return '';
+  const highlightKeywords = [
+    'bold:重复',
+    'bold:相似',
+    'italic:原创',
+    'bold:建议',
+    'bold:位置',
+    'bold:风险'
+  ];
+  return renderMarkdown(plagiarismResult.value.details, highlightKeywords);
+});
+
+/**
+ * 统一的代码高亮应用函数
+ */
+const applyCodeHighlighting = async (selector: string) => {
+  await nextTick();
+  const preBlocks = document.querySelectorAll(selector);
+  preBlocks.forEach((block) => {
+    if (!(block as HTMLElement).dataset.highlighted) {
+      hljs.highlightElement(block as HTMLElement);
+    }
+  });
+};
 
 // 监听渲染内容变化，应用代码高亮
-watch(renderedDisplayedMarkdown, async () => {
-  await nextTick();
-  // 手动对所有代码块应用高亮
-  const preBlocks = document.querySelectorAll('.markdown-preview pre code');
-  preBlocks.forEach((block) => {
-    if (!(block as HTMLElement).dataset.highlighted) {
-      hljs.highlightElement(block as HTMLElement);
-    }
-  });
-});
+watch(renderedDisplayedMarkdown, () => applyCodeHighlighting('.markdown-preview pre code'));
 
 // 监听查重结果渲染，应用代码高亮
-watch(renderPlagiarismMarkdown, async () => {
-  await nextTick();
-  // 手动对所有代码块应用高亮
-  const preBlocks = document.querySelectorAll('.plagiarism-details .markdown-preview pre code');
-  preBlocks.forEach((block) => {
-    if (!(block as HTMLElement).dataset.highlighted) {
-      hljs.highlightElement(block as HTMLElement);
-    }
-  });
-});
+watch(renderPlagiarismMarkdown, () => applyCodeHighlighting('.plagiarism-details .markdown-preview pre code'));
 
 // 切换设置面板
 const toggleSettings = () => {
@@ -1806,9 +1819,7 @@ const analyzeDocument = async () => {
       temperature: 0.5,
       maxTokens: 1500,
       signal: abortController.value?.signal,
-      onChunk: (chunk: string) => {
-        aiSuggestions.value = (aiSuggestions.value || '') + chunk;
-      }
+      onChunk: createSingleTargetCallback(aiSuggestions)
     };
 
     await props.onGenerate(options);
@@ -1877,10 +1888,7 @@ ${editTargetDoc.value.content}`,
       temperature: 0.3,
       maxTokens: 3000,
       signal: abortController.value?.signal,
-      onChunk: (chunk: string) => {
-        const currentContent = plagiarismResult.value?.details || '';
-        const newContent = currentContent + chunk;
-
+      onChunk: createCustomStreamCallback((newContent) => {
         // 简单分析文本内容，尝试提取风险等级和相似度
         const riskLevel = detectRiskLevel(newContent);
         const similarityRate = detectSimilarityRate(newContent);
@@ -1890,7 +1898,7 @@ ${editTargetDoc.value.content}`,
           similarityRate,
           details: newContent
         };
-      }
+      })
     };
 
     await props.onGenerate(options);

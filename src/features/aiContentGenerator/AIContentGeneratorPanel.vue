@@ -666,38 +666,6 @@
       </div>
     </div>
 
-    <!-- 自定义输入对话框 -->
-    <div v-if="showDialog" class="input-dialog-overlay" @click.self="cancelInputDialog">
-      <div class="input-dialog">
-        <div class="input-dialog-header">
-          <h3>{{ inputDialogTitle }}</h3>
-          <button class="btn-close-dialog" @click="cancelInputDialog">
-            <svg width="16" height="16">
-              <use xlink:href="#iconClose"></use>
-            </svg>
-          </button>
-        </div>
-        <div class="input-dialog-content">
-          <input
-            ref="dialogInput"
-            v-model="inputDialogValue"
-            type="text"
-            class="input-dialog-input"
-            :placeholder="inputDialogPlaceholder"
-            @keydown.enter="confirmInputDialog"
-            @keydown.esc="cancelInputDialog"
-          />
-        </div>
-        <div class="input-dialog-footer">
-          <button class="btn-cancel" @click="cancelInputDialog">
-            {{ '取消' }}
-          </button>
-          <button class="btn-confirm" @click="confirmInputDialog" :disabled="!inputDialogValue.trim()">
-            {{ '确定' }}
-          </button>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -764,13 +732,6 @@ const originalContent = ref(''); // 文档原始内容
 const isApplying = ref(false);
 const isUndoing = ref(false);
 const isInsertingSubDoc = ref(false); // 插入子文档状态
-
-// 自定义输入对话框状态
-const showDialog = ref(false);
-const inputDialogTitle = ref('');
-const inputDialogPlaceholder = ref('');
-const inputDialogValue = ref('');
-let inputDialogResolve: ((value: string | null) => void) | null = null;
 
 // AI智能编辑状态
 const isAnalyzing = ref(false);
@@ -917,26 +878,6 @@ const handleGenerationError = (error: Error, context: string): boolean => {
 };
 
 /**
- * 统一的异步操作错误处理装饰器
- * 自动处理 AbortError 和通用错误
- */
-const withErrorHandling = async <T>(
-  operation: () => Promise<T>,
-  context: string
-): Promise<T | null> => {
-  try {
-    return await operation();
-  } catch (error) {
-    if ((error as Error).name === 'AbortError') {
-      console.log(`用户取消了${context}`);
-      return null;
-    }
-    handleGenerationError(error as Error, context);
-    return null;
-  }
-};
-
-/**
  * 统一的文档加载函数
  */
 const loadDocument = async (docId: string): Promise<{ title: string; content: string } | null> => {
@@ -995,30 +936,6 @@ const closeMobileSettings = () => {
 };
 
 
-/**
- * 确认输入对话框
- */
-const confirmInputDialog = () => {
-  if (inputDialogResolve) {
-    const value = inputDialogValue.value.trim();
-    inputDialogResolve(value ? value : null);
-  }
-  showDialog.value = false;
-  inputDialogValue.value = '';
-  inputDialogResolve = null;
-};
-
-/**
- * 取消输入对话框
- */
-const cancelInputDialog = () => {
-  if (inputDialogResolve) {
-    inputDialogResolve(null);
-  }
-  showDialog.value = false;
-  inputDialogValue.value = '';
-  inputDialogResolve = null;
-};
 
 /**
  * 移除Markdown内容中的Frontmatter（YAML元数据）
@@ -2132,7 +2049,6 @@ ${editTargetDoc.value.content}`,
     await props.onGenerate(options);
 
     aiSuggestions.value = null;
-    // showMessage('✓ 已应用优化建议', 2000, 'info');
   } catch (error) {
     if (handleGenerationError(error as Error, '应用建议')) return;
   } finally {
@@ -2299,7 +2215,6 @@ async function loadDocumentContent(docId: string) {
     contentPreview: referencedDocContent.value.substring(0, 200)
   });
 
-  // showMessage(`✓ 已引用文档: ${referencedDocTitle.value}`, 2000, 'info');
 }
 
 // 加载提示词配置（需求3：持久化保存）
@@ -2315,10 +2230,7 @@ const loadPrompt = (index: number) => {
 
   // 设置当前选中的提示词名称
   currentPromptName.value = prompt.name;
-
-
   showPromptSelector.value = false;
-  // showMessage(`✓ 已加载配置: ${prompt.name}`, 2000, 'info');
 };
 
 // 编辑提示词配置
@@ -2339,8 +2251,6 @@ const editPrompt = (index: number) => {
   // 打开设置面板以便编辑
   showSettings.value = true;
   showPromptSelector.value = false;
-
-  // showMessage(`✓ 已加载配置到编辑区: ${prompt.name}，修改后请重新保存`, 3000, 'info');
 };
 
 // 删除提示词配置
@@ -2351,7 +2261,6 @@ const deletePrompt = (index: number) => {
   if (confirm(`确定删除配置: ${prompt.name}?`)) {
     savedPrompts.value.splice(index, 1);
     savePromptsToStorage();
-    // showMessage(`✓ 已删除配置: ${prompt.name}`, 2000, 'info');
   }
 };
 

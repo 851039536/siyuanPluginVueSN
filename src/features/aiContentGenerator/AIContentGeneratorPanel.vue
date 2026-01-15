@@ -6,18 +6,8 @@
         <span>🤖 {{'AI信息生成' }}</span>
       </div>
       <div class="header-actions">
-        <!-- Edit模式切换按钮 -->
-        <button
-          class="btn-icon"
-          @click="toggleEditMode"
-          :class="{ 'active': editMode }"
-          :title="editMode ? '切换到普通模式' : '切换到编辑模式'"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24">
-            <use xlink:href="#iconEdit"></use>
-          </svg>
-        </button>
-        <button class="btn-icon" @click="toggleSettings" :title="editMode ? '切换到普通模式' : '切换到编辑模式'">
+        <!-- 设置按钮 -->
+        <button class="btn-icon" @click="toggleSettings" :title="'对话设置'">
           <svg width="18" height="18" viewBox="0 0 24 24">
             <use xlink:href="#iconSettings"></use>
           </svg>
@@ -140,63 +130,8 @@
 
     <!-- 输入区域 -->
     <div class="input-section" v-show="showInputSection">
-      <!-- 普通模式：紧凑工具栏（引用文档 + 输入框 + 生成按钮） -->
-      <div v-if="!editMode" class="compact-toolbar">
-        <!-- 引用当前文档按钮 -->
-        <button
-          class="btn-reference-compact"
-          @click="insertCurrentDocReference"
-          :class="{ 'has-reference': referencedDocTitle }"
-          :title="referencedDocTitle || ('引用当前文档内容')"
-        >
-          <svg width="14" height="14">
-            <use xlink:href="#iconFile"></use>
-          </svg>
-          <span v-if="referencedDocTitle" class="ref-doc-name">{{ referencedDocTitle }}</span>
-          <span v-else>{{ '引用' }}</span>
-          <button v-if="referencedDocTitle" class="btn-clear-inline" @click.stop="cancelDocReference" :title=" '取消'">
-            <svg width="10" height="10">
-              <use xlink:href="#iconClose"></use>
-            </svg>
-          </button>
-        </button>
-
-        <!-- 输入框 -->
-        <textarea
-          v-model="userInput"
-          class="user-input-compact"
-          :placeholder="referencedDocContent ? ('输入问题...') : ('输入您的问题...')"
-          rows="1"
-          @keydown.ctrl.enter="handleGenerate"
-          :disabled="isGenerating"
-        ></textarea>
-
-        <!-- 生成/停止按钮 -->
-        <button
-          v-if="!isGenerating"
-          class="btn-generate-compact"
-          @click="handleGenerate"
-          :disabled="!userInput.trim() && !referencedDocContent"
-          :title="'生成'"
-        >
-          <svg width="16" height="16">
-            <use xlink:href="#iconSparkles"></use>
-          </svg>
-        </button>
-        <button
-          v-else
-          class="btn-stop-compact"
-          @click="handleStop"
-          :title="'停止生成'"
-        >
-          <svg width="16" height="16">
-            <use xlink:href="#iconClose"></use>
-          </svg>
-        </button>
-      </div>
-
-      <!-- Edit模式：紧凑工具栏（提示词选择 + 目标文档选择 + 输入框 + 执行按钮） -->
-      <div v-if="editMode" class="compact-toolbar edit-mode">
+      <!-- 编辑模式：紧凑工具栏（提示词选择 + 目标文档选择 + 输入框 + 执行按钮） -->
+      <div class="compact-toolbar edit-mode">
         <!-- 提示词选择按钮 -->
         <div class="prompt-selector-wrapper">
           <button class="btn-prompt-compact" @click="showPromptSelector = !showPromptSelector" :title="currentPromptName || ('选择提示词')">
@@ -349,8 +284,8 @@
         </button>
       </div>
 
-      <!-- Edit模式：AI智能编辑工具栏 -->
-      <div v-if="editMode && editTargetDoc" class="ai-edit-toolbar">
+      <!-- AI智能编辑工具栏 -->
+      <div v-if="editTargetDoc" class="ai-edit-toolbar">
         <div class="toolbar-label">
           <div class="section-title-wrapper">
             <svg width="14" height="14">
@@ -417,7 +352,7 @@
       </div>
 
       <!-- AI分析建议面板 -->
-      <div v-if="editMode && aiSuggestions" class="ai-suggestions-panel">
+      <div v-if="aiSuggestions" class="ai-suggestions-panel">
         <div class="suggestions-header">
           <div class="section-title-wrapper">
             <svg width="16" height="16"><use xlink:href="#iconLightbulb"></use></svg>
@@ -446,7 +381,7 @@
       </div>
 
       <!-- AI查重结果面板 -->
-      <div v-if="editMode && plagiarismResult" class="plagiarism-result-panel">
+      <div v-if="plagiarismResult" class="plagiarism-result-panel">
         <div class="result-header">
           <div class="section-title-wrapper">
             <svg width="16" height="16"><use xlink:href="#iconSearch"></use></svg>
@@ -498,115 +433,67 @@
           <use xlink:href="#iconCloseRound"></use>
         </svg>
         <p>{{ errorMessage }}</p>
-        <button class="btn-retry" @click="handleGenerate">
-          {{ '重试' }}
-        </button>
       </div>
 
       <!-- 生成结果（流式输出时也显示） -->
       <div v-else-if="displayedContent || generatedContent" class="result-container">
         <div class="result-header">
           <span class="result-title">
-            📝 {{ editMode ? ('编辑内容') : ('生成内容') }}
+            📝 {{'编辑内容' }}
             <span v-if="isGenerating" class="generating-indicator">
               <span class="dot-flashing"></span>
               {{ '生成中' }}
             </span>
           </span>
           <div class="result-actions">
-            <!-- Edit模式专用按钮 -->
-            <template v-if="editMode">
-              <!-- 停止生成按钮（编辑模式） -->
-              <button
-                v-if="isGenerating"
-                class="btn-action btn-stop"
-                @click="handleStop"
-                :title="'停止生成'"
-              >
-                <svg width="16" height="16">
-                  <use xlink:href="#iconClose"></use>
-                </svg>
-                {{ '停止' }}
-              </button>
-              <button
-                class="btn-action btn-apply"
-                @click="applyEdit"
-                :disabled="!editTargetDoc || isApplying || isGenerating"
-                :title="'应用编辑'"
-              >
-                <div v-if="isApplying" class="loading-spinner-small"></div>
-                <svg v-else width="16" height="16">
-                  <use xlink:href="#iconCheck"></use>
-                </svg>
-                {{ '应用' }}
-              </button>
-              <button
-                class="btn-action btn-insert-subdoc"
-                @click="insertSubDocument"
-                :disabled="!editTargetDoc || isInsertingSubDoc || isGenerating"
-                :title="'插入子文档'"
-              >
-                <div v-if="isInsertingSubDoc" class="loading-spinner-small"></div>
-                <svg v-else width="16" height="16" viewBox="0 0 24 24">
-                  <path fill="currentColor" d="M20,18H4V6H20M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4M13,12H16V15H18V12H21V10H18V7H16V10H13V12Z" />
-                </svg>
-                {{ '子文档' }}
-              </button>
-              <button
-                v-if="lastEditHistory && editMode"
-                class="btn-action btn-undo"
-                @click="undoEdit"
-                :disabled="isUndoing"
-                :title="'撤回编辑'"
-              >
-                <div v-if="isUndoing" class="loading-spinner-small"></div>
-                <svg v-else width="16" height="16">
-                  <use xlink:href="#iconUndo"></use>
-                </svg>
-                {{ '撤回' }}
-              </button>
-            </template>
-            <!-- 普通模式：撤回插入按钮 -->
+            <!-- 停止生成按钮 -->
             <button
-              v-if="!editMode && lastEditHistory"
+              v-if="isGenerating"
+              class="btn-action btn-stop"
+              @click="handleStop"
+              :title="'停止生成'"
+            >
+              <svg width="16" height="16">
+                <use xlink:href="#iconClose"></use>
+              </svg>
+              {{ '停止' }}
+            </button>
+            <button
+              class="btn-action btn-apply"
+              @click="applyEdit"
+              :disabled="!editTargetDoc || isApplying || isGenerating"
+              :title="'应用编辑'"
+            >
+              <div v-if="isApplying" class="loading-spinner-small"></div>
+              <svg v-else width="16" height="16">
+                <use xlink:href="#iconCheck"></use>
+              </svg>
+              {{ '应用' }}
+            </button>
+            <button
+              class="btn-action btn-insert-subdoc"
+              @click="insertSubDocument"
+              :disabled="!editTargetDoc || isInsertingSubDoc || isGenerating"
+              :title="'插入子文档'"
+            >
+              <div v-if="isInsertingSubDoc" class="loading-spinner-small"></div>
+              <svg v-else width="16" height="16" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M20,18H4V6H20M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4M13,12H16V15H18V12H21V10H18V7H16V10H13V12Z" />
+              </svg>
+              {{ '子文档' }}
+            </button>
+            <button
+              v-if="lastEditHistory"
               class="btn-action btn-undo"
               @click="undoEdit"
               :disabled="isUndoing"
-              :title="'撤回插入'"
+              :title="'撤回编辑'"
             >
               <div v-if="isUndoing" class="loading-spinner-small"></div>
               <svg v-else width="16" height="16">
                 <use xlink:href="#iconUndo"></use>
               </svg>
               {{ '撤回' }}
-            </button>
-            <!-- 通用按钮 -->
-            <!-- 普通模式：保存到AI问答封存按钮（移动端隐藏） -->
-            <button
-              v-if="!editMode && !isMobile"
-              class="btn-action btn-save"
-              @click="saveToArchiveNotebook"
-              :disabled="isGenerating"
-              :title="'保存到AI问答封存'"
-            >
-              <svg width="16" height="16">
-                <use xlink:href="#iconSave"></use>
-              </svg>
-              {{ '保存' }}
-            </button>
-            <!-- 普通模式：插入到当前文档按钮 -->
-            <button
-              v-if="!editMode"
-              class="btn-action btn-insert"
-              @click="insertToCurrentDocument"
-              :disabled="isInserting"
-              :title="'插入到当前文档'"
-            >
-              <div v-if="isInserting" class="loading-spinner-small"></div>
-              <svg v-else width="16" height="16">
-                <use xlink:href="#iconDownload"></use>
-              </svg>
-              {{ '插入' }}
             </button>
             <button class="btn-action" @click="copyContent" :title="'复制Markdown'">
               <svg width="16" height="16">
@@ -633,24 +520,7 @@
         <svg width="64" height="64" class="empty-icon">
           <use xlink:href="#iconFile"></use>
         </svg>
-        <p>{{ '输入问题后点击生成，AI将为您创建Markdown格式的内容' }}</p>
-        <div class="quick-templates">
-          <p class="templates-title">{{ '快速模板' }}:</p>
-          <div class="template-buttons">
-            <button class="btn-template" @click="useTemplate('article')">
-              📄 {{ '文章大纲' }}
-            </button>
-            <button class="btn-template" @click="useTemplate('summary')">
-              📋 {{ '内容总结' }}
-            </button>
-            <button class="btn-template" @click="useTemplate('todo')">
-              ✅ {{ '待办清单' }}
-            </button>
-            <button class="btn-template" @click="useTemplate('ideas')">
-              💡 {{ '头脑风暴' }}
-            </button>
-          </div>
-        </div>
+        <p>{{ '请选择文档并使用AI编辑功能' }}</p>
       </div>
     </div>
 
@@ -691,7 +561,6 @@ const props = withDefaults(defineProps<Props>(), {
 let storage: AIGeneratorStorage | null = null;
 
 // 状态
-const userInput = ref('');
 const generatedContent = ref('');
 const isGenerating = ref(false);
 const errorMessage = ref('');
@@ -713,8 +582,7 @@ const collapsedSections = ref({
   promptSelector: false
 });
 
-// Edit模式状态
-const editMode = ref(false);
+// 编辑模式状态
 const editTargetDoc = ref<{ id: string; title: string; content: string } | null>(null);
 const originalContent = ref(''); // 文档原始内容
 const isApplying = ref(false);
@@ -740,9 +608,6 @@ interface EditHistory {
   timestamp: number;
 }
 const lastEditHistory = ref<EditHistory | null>(null);
-
-// 普通模式：插入到当前文档状态
-const isInserting = ref(false);
 
 // 对话设置
 const systemPrompt = ref('你是一个专业的内容创作助手，擅长生成结构清晰、格式规范的Markdown文档。请确保输出内容使用标准的Markdown语法。');
@@ -819,10 +684,6 @@ watch(showPromptSelector, (newVal) => {
     currentPage.value = 1;
   }
 });
-
-// 引用当前文档
-const referencedDocTitle = ref('');
-const referencedDocContent = ref('');
 
 // ============ 公共工具函数 ============
 
@@ -1086,23 +947,7 @@ const loadCollapsedSections = async () => {
   }
 };
 
-// 切换Edit模式
-const toggleEditMode = () => {
-  editMode.value = !editMode.value;
-  if (!editMode.value) {
-    // 退出Edit模式时清理状态
-    clearEditState();
-  }
-  showMessage(
-    editMode.value
-      ? ('✓ 已启用编辑模式')
-      : ('✓ 已关闭编辑模式'),
-    1500,
-    'info'
-  );
-};
-
-// 清理Edit模式状态
+// 清理编辑模式状态
 const clearEditState = () => {
   editTargetDoc.value = null;
   originalContent.value = '';
@@ -1137,98 +982,6 @@ const handleStop = () => {
     isGenerating.value = false;
     resetEditStates();
     // showMessage('✓ 已停止生成', 2000, 'info');
-  }
-};
-
-// 生成内容
-const handleGenerate = async () => {
-  // 如果既没有输入也没有引用文档，提示用户
-  if (!userInput.value.trim() && !referencedDocContent.value) {
-    showMessage('请输入内容或引用文档', 2000, 'info');
-    return;
-  }
-
-  // 移动端：隐藏输入区域
-  if (isMobile.value) {
-    showInputSection.value = false;
-  }
-
-  startGeneration();
-
-  try {
-    // 根据用户是否选择提示词来决定是否使用系统提示词
-    let finalSystemPrompt = '';
-    if (currentPromptName.value) {
-      // 用户选择了提示词，使用选中的提示词配置
-      finalSystemPrompt = systemPrompt.value;
-      console.log('使用选中的提示词:', currentPromptName.value, '内容:', finalSystemPrompt.substring(0, 100) + '...');
-      // 追加Markdown格式要求
-      finalSystemPrompt += '\n\n**重要**: 请严格使用Markdown格式输出，包括标题(#)、列表(- 或 1.)、代码块(```)、粗体(**) 等标准语法。';
-    } else {
-      // 用户未选择提示词，使用基础问答模式（仅保持Markdown格式要求）
-      finalSystemPrompt = '请使用Markdown格式输出回答。';
-      console.log('未选择提示词，使用基础问答模式');
-    }
-
-    // 添加当前文档上下文（如果有）
-    let contextInfo = '';
-    if (referencedDocContent.value) {
-      // 移除文档内容中的 frontmatter
-      const cleanDocContent = removeFrontmatter(referencedDocContent.value);
-
-      contextInfo = `【参考文档】
-标题：${referencedDocTitle.value}
-内容：
-${cleanDocContent}`;
-      console.log('已添加文档上下文，标题:', referencedDocTitle.value, '内容长度:', cleanDocContent.length);
-    }
-
-    // 如果只引用了文档没有输入问题，使用默认的总结提示
-    let finalUserInput = userInput.value;
-    if (!userInput.value.trim() && referencedDocContent.value) {
-      // 当没有用户输入时，将系统提示词的要求融入到用户消息中
-      // 这样可以确保 AI 遵循系统提示词中的格式要求
-      finalUserInput = '请严格按照系统提示词中定义的文档结构和格式要求，对上述文档内容进行专业的技术文档撰写。如果文档内容不完整或只有标题，请基于标题主题，撰写一份完整、专业的技术说明文档。';
-      console.log('使用增强的默认提示（融合系统提示词要求）');
-    } else {
-      console.log('用户输入:', finalUserInput.substring(0, 100));
-    }
-
-    const options: GenerateOptions = {
-      userInput: finalUserInput,
-      systemPrompt: finalSystemPrompt,
-      temperature: temperature.value,
-      maxTokens: maxTokens.value,
-      context: contextInfo || undefined,
-      signal: abortController.value?.signal,
-      onChunk: defaultOnChunk
-    };
-
-    const result = await props.onGenerate(options);
-
-    if (result) {
-      // 如果流式输出没有更新内容（某些API可能不支持流式），使用返回的完整结果
-      if (!generatedContent.value && result) {
-        generatedContent.value = result;
-        displayedContent.value = result;
-      }
-      showMessage('✓ 生成成功', 2000, 'info');
-
-      // 自动保存到AI问答封存笔记本（移动端不自动保存）
-      if (!editMode.value && !isMobile.value) {
-        await saveToArchiveNotebook();
-      }
-    } else {
-      errorMessage.value = '生成失败，请重试';
-    }
-  } catch (error) {
-    if ((error as Error).name === 'AbortError') {
-      console.log('用户取消了内容生成');
-      return;
-    }
-    if (handleGenerationError(error as Error, '生成')) return;
-  } finally {
-    finishGeneration();
   }
 };
 
@@ -1286,189 +1039,6 @@ const convertToSiyuanMarkdown = (content: string): string => {
   return converted;
 };
 
-/**
- * 保存生成内容到"AI问答封存"笔记本
- */
-const saveToArchiveNotebook = async () => {
-  if (!generatedContent.value) {
-    showMessage('没有可保存的内容', 2000, 'info');
-    return;
-  }
-
-  try {
-
-    // 1. 获取或创建"AI问答封存"笔记本
-    const archiveNotebookId = await getOrCreateArchiveNotebook();
-    if (!archiveNotebookId) {
-      showMessage('无法创建AI问答封存笔记本', 3000, 'error');
-      return;
-    }
-
-    // 2. 根据内容自动分类
-    const category = await autoClassifyContent(generatedContent.value);
-
-    // 3. 获取或创建分类文档
-    const categoryDocId = await getOrCreateCategoryDoc(archiveNotebookId, category);
-    if (!categoryDocId) {
-      showMessage('无法创建分类文档', 3000, 'error');
-      return;
-    }
-
-    // 4. 生成文档标题
-    const docTitle = await generateDocTitle(generatedContent.value);
-
-    // 5. 创建时间戳
-    const timestamp = new Date().toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    }).replace(/\//g, '-').replace(/,/g, '');
-
-    const fullTitle = `${docTitle}-${timestamp}`;
-
-    // 6. 在分类文档下创建子文档
-    const docPath = `/${category}/${fullTitle}`;
-    const newDocId = await api.createDocWithMd(
-      archiveNotebookId,
-      docPath,
-      generatedContent.value
-    );
-
-    if (newDocId) {
-      showMessage(`✓ 已保存: AI问答封存/${category}/${fullTitle}`, 3000, 'info');
-    } else {
-      showMessage('保存失败', 3000, 'error');
-    }
-  } catch (error) {
-    showMessage('保存失败: ' + (error as Error).message, 3000, 'error');
-  }
-};
-
-/**
- * 获取或创建"AI问答封存"笔记本
- */
-const getOrCreateArchiveNotebook = async (): Promise<string | null> => {
-  try {
-    // 获取所有笔记本
-    const notebooks = await api.lsNotebooks();
-
-    // 查找"AI问答封存"笔记本
-    const archiveNotebook = notebooks.notebooks.find(
-      (nb: any) => nb.name === 'AI问答封存'
-    );
-
-    if (archiveNotebook) {
-      return archiveNotebook.id;
-    }
-
-    // 不存在则创建
-    const newNotebook = await api.createNotebook('AI问答封存');
-    return newNotebook?.id || null;
-  } catch (error) {
-    console.error('获取或创建笔记本失败:', error);
-    return null;
-  }
-};
-
-/**
- * 自动分类内容
- */
-const autoClassifyContent = async (content: string): Promise<string> => {
-  try {
-    // 简单的关键词匹配分类
-    const firstPart = content.substring(0, 500);
-
-    // 技术文档关键词
-    if (/代码|函数|API|接口|算法|数据结构|编程|开发|技术|bug|debug/i.test(firstPart)) {
-      return '技术文档';
-    }
-
-    // 学习笔记关键词
-    if (/学习|笔记|总结|复习|知识点|要点|理解|掌握/i.test(firstPart)) {
-      return '学习笔记';
-    }
-
-    // 创意想法关键词
-    if (/创意|想法|灵感|构思|设计|方案|计划|头脑风暴/i.test(firstPart)) {
-      return '创意想法';
-    }
-
-    // 问答记录关键词
-    if (/问题|回答|解答|疑问|为什么|怎么|如何|什么是/i.test(firstPart)) {
-      return '问答记录';
-    }
-
-    // 总结归纳关键词
-    if (/总结|归纳|概括|梳理|整理|汇总|提炼/i.test(firstPart)) {
-      return '总结归纳';
-    }
-
-    return '其他';
-  } catch (error) {
-    console.error('自动分类失败:', error);
-    return '其他';
-  }
-};
-
-/**
- * 获取或创建分类文档
- */
-const getOrCreateCategoryDoc = async (
-  notebookId: string,
-  category: string
-): Promise<string | null> => {
-  try {
-    // 查询是否已存在该分类文档
-    const sqlQuery = `SELECT id FROM blocks WHERE box = '${notebookId}' AND type = 'd' AND content = '${category}' LIMIT 1`;
-    const result = await api.sql(sqlQuery);
-
-    if (result && result.length > 0) {
-      return result[0].id;
-    }
-
-    // 不存在则创建
-    const docPath = `/${category}`;
-    const newDocId = await api.createDocWithMd(
-      notebookId,
-      docPath,
-      `# ${category}\n\n本文档用于存放${category}相关的AI生成内容。`
-    );
-
-    return newDocId;
-  } catch (error) {
-    console.error('获取或创建分类文档失败:', error);
-    return null;
-  }
-};
-
-/**
- * 生成文档标题
- */
-const generateDocTitle = async (content: string): Promise<string> => {
-  try {
-    // 从内容中提取第一个标题
-    const titleMatch = content.match(/^#\s+(.+)$/m);
-    if (titleMatch && titleMatch[1]) {
-      const title = titleMatch[1].trim().substring(0, 20);
-      return title.replace(/[^\u4e00-\u9fa5a-zA-Z0-9\s]/g, '');
-    }
-
-    // 如果没有标题，使用前20个字符
-    const firstLine = content.split('\n')[0].trim();
-    if (firstLine) {
-      return firstLine.substring(0, 20).replace(/[^\u4e00-\u9fa5a-zA-Z0-9\s]/g, '') || 'AI生成内容';
-    }
-
-    return 'AI生成内容';
-  } catch (error) {
-    console.error('生成标题失败:', error);
-    return 'AI生成内容';
-  }
-};
-
 // 复制内容
 const copyContent = async () => {
   if (!generatedContent.value) return;
@@ -1482,80 +1052,6 @@ const copyContent = async () => {
     console.error('复制失败:', error);
     showMessage('复制失败', 2000, 'error');
   }
-};
-
-/**
- * 插入到当前文档（普通模式）
- */
-const insertToCurrentDocument = async () => {
-  if (!generatedContent.value) {
-    showMessage('没有可插入的内容', 2000, 'info');
-    return;
-  }
-
-  const confirmMessage = '确定要将生成的内容插入到当前文档吗？这将覆盖文档的现有内容。';
-
-  if (!confirm(confirmMessage)) {
-    return;
-  }
-
-  isInserting.value = true;
-  try {
-    const docId = await getCurrentDocId();
-    if (!docId) {
-      showMessage('无法获取当前文档，请将光标放在文档中', 3000, 'error');
-      return;
-    }
-    await insertContentToDocument(docId);
-  } catch (error) {
-    console.error('插入文档失败:', error);
-    showMessage('插入文档失败: ' + (error as Error).message, 3000, 'error');
-  } finally {
-    isInserting.value = false;
-  }
-};
-
-/**
- * 将内容插入到指定文档
- */
-const insertContentToDocument = async (docId: string) => {
-  try {
-    // 获取文档信息（用于显示和历史记录）
-    const docBlock = await api.getBlockByID(docId);
-    if (!docBlock) {
-      showMessage('无法获取文档信息', 3000, 'error');
-      return;
-    }
-
-    // 获取原始内容（用于撤回）
-    const docContent = await api.exportMdContent(docId);
-    const originalContent = docContent?.content || '';
-
-    // 保存到编辑历史（用于撤回）
-    lastEditHistory.value = {
-      docId: docId,
-      docTitle: docBlock.content || '未命名文档',
-      originalContent: removeFrontmatter(originalContent),
-      timestamp: Date.now()
-    };
-
-    // 使用统一的内容处理函数
-    const siyuanContent = processContent(generatedContent.value);
-
-    // 使用updateBlock API更新文档内容
-    await api.updateBlock('markdown', siyuanContent, docId);
-
-    // showMessage(`✓ 已插入到文档: ${docBlock.content || '未命名文档'}`, 2000, 'info');
-  } catch (error) {
-    console.error('插入内容失败:', error);
-    throw error;
-  }
-};
-
-// 需求1：取消文档引用
-const cancelDocReference = () => {
-  referencedDocTitle.value = '';
-  referencedDocContent.value = '';
 };
 
 // 清除内容
@@ -2187,42 +1683,6 @@ async function getDocIdByBlockId(blockId: string): Promise<string | null> {
   }
 }
 
-/**
- * 插入当前文档引用
- */
-const insertCurrentDocReference = async () => {
-  try {
-    const docId = await getCurrentDocId();
-    if (!docId) {
-      showMessage('无法获取当前文档，请将光标放在文档中', 3000, 'error');
-      return;
-    }
-    await loadDocumentContent(docId);
-  } catch (error) {
-    console.error('引用文档失败:', error);
-    showMessage('引用文档失败: ' + (error as Error).message, 3000, 'error');
-  }
-};
-
-/**
- * 加载文档内容
- */
-async function loadDocumentContent(docId: string) {
-  const result = await loadDocument(docId);
-  if (!result) return;
-
-  // 保存引用的文档信息
-  referencedDocTitle.value = result.title;
-  referencedDocContent.value = result.content;
-
-  console.log('文档引用成功:', {
-    title: referencedDocTitle.value,
-    contentLength: referencedDocContent.value.length,
-    contentPreview: referencedDocContent.value.substring(0, 200)
-  });
-
-}
-
 // 加载提示词配置（需求3：持久化保存）
 const loadPrompt = (index: number) => {
   const prompt = savedPrompts.value[index];
@@ -2309,29 +1769,8 @@ const loadPromptsFromStorage = async () => {
   }
 };
 
-// 检测是否为移动端
-const checkIsMobile = () => {
-  // 检测思源笔记的移动端环境
-  const isSiyuanMobile = document.body.classList.contains('body--mobile');
-  // 检测屏幕宽度
-  const isSmallScreen = window.innerWidth <= 768;
-  isMobile.value = isSiyuanMobile || isSmallScreen;
-
-  // 调试日志
-  console.log('[AI生成器] 移动端检测:', {
-    isSiyuanMobile,
-    isSmallScreen,
-    screenWidth: window.innerWidth,
-    isMobile: isMobile.value,
-    bodyClasses: document.body.className
-  });
-};
-
 // 组件挂载时加载保存的提示词
 onMounted(async () => {
-  // 检测移动端
-  checkIsMobile();
-  window.addEventListener('resize', checkIsMobile);
 
   // 初始化存储实例
   if (props.plugin) {
@@ -2342,23 +1781,6 @@ onMounted(async () => {
     await loadCollapsedSections();
   }
 });
-
-// 组件卸载时清理事件监听
-onUnmounted(() => {
-  window.removeEventListener('resize', checkIsMobile);
-});
-
-// 使用模板
-const useTemplate = (templateType: string) => {
-  const templates: Record<string, string> = {
-    article: '请为以下主题生成一个详细的文章大纲，包含引言、主要章节和结论：',
-    summary: '请总结以下内容的核心要点，使用简洁的列表形式：',
-    todo: '请根据以下项目目标生成一个详细的待办事项清单：',
-    ideas: '请针对以下主题进行头脑风暴，生成至少10个创意想法：'
-  };
-
-  userInput.value = templates[templateType] || '';
-};
 
 // 保存设置到存储
 const saveSettings = async () => {

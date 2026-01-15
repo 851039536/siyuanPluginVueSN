@@ -1,19 +1,6 @@
 - 公开API：稳定性高，变更会确保向后兼容。（[来源](https://github.com/siyuan-note/siyuan/blob/master/API_zh_CN.md)）
 - 未公开API：稳定性低，可能随时改动，不保证向后兼容。（[来源](https://github.com/siyuan-note/siyuan/blob/master/kernel/api/router.go)）
 
-## 前言
-
-使用环境：
-
-1. 浏览器 - [api.siyuan-note.club](https://api.siyuan-note.club/)
-
-2. 浏览器中的 ApiFox - [直达链接](https://app.apifox.com/project/4484310/apis/doc-6907984?branchId=4130959)
-
-3. ApiFox 客户端
-
-**建议**：为访问最新 API，请直接使用上述在线链接，而非克隆本项目。
-
-**浏览器调试**：安装 [ApiFox 浏览器插件](https://docs.apifox.com/doc-5807583) 或允许浏览器跨域。
 
 ## 规范
 

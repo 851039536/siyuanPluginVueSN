@@ -92,7 +92,7 @@ Vue 应用结构
 - 设置面板在 `src/components/SettingPanel.vue`
 - 共享组件在 `src/components/`
 
-国际化
+国际化（新功能或修改不再使用）
 
 - 语言文件：`src/i18n/zh_CN.json` 和 `src/i18n/en_US.json`
 - 通过 `plugin.i18n.featureName.key` 访问

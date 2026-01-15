@@ -205,7 +205,7 @@
             <label>{{ i18n.content || '内容' }}</label>
             <textarea
               v-model="formData.content"
-              rows="4"
+              rows="6"
               :placeholder="i18n.contentPlaceholder || '内容'"
             ></textarea>
           </div>

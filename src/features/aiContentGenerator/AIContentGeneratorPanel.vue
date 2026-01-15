@@ -152,8 +152,63 @@
 
     <!-- 输入区域 -->
     <div class="input-section" v-show="showInputSection">
-      <!-- 普通模式：紧凑工具栏（提示词选择 + 引用文档 + 输入框 + 生成按钮） -->
+      <!-- 普通模式：紧凑工具栏（引用文档 + 输入框 + 生成按钮） -->
       <div v-if="!editMode" class="compact-toolbar">
+        <!-- 引用当前文档按钮 -->
+        <button
+          class="btn-reference-compact"
+          @click="insertCurrentDocReference"
+          :class="{ 'has-reference': referencedDocTitle }"
+          :title="referencedDocTitle || (i18n.referenceCurrentDoc || '引用当前文档内容')"
+        >
+          <svg width="14" height="14">
+            <use xlink:href="#iconFile"></use>
+          </svg>
+          <span v-if="referencedDocTitle" class="ref-doc-name">{{ referencedDocTitle }}</span>
+          <span v-else>{{ i18n.refDoc || '引用' }}</span>
+          <button v-if="referencedDocTitle" class="btn-clear-inline" @click.stop="cancelDocReference" :title="i18n.cancel || '取消'">
+            <svg width="10" height="10">
+              <use xlink:href="#iconClose"></use>
+            </svg>
+          </button>
+        </button>
+
+        <!-- 输入框 -->
+        <textarea
+          v-model="userInput"
+          class="user-input-compact"
+          :placeholder="referencedDocContent ? (i18n.inputPlaceholderWithDoc || '输入问题...') : (i18n.inputPlaceholder || '输入您的问题...')"
+          rows="1"
+          @keydown.ctrl.enter="handleGenerate"
+          :disabled="isGenerating"
+        ></textarea>
+
+        <!-- 生成/停止按钮 -->
+        <button
+          v-if="!isGenerating"
+          class="btn-generate-compact"
+          @click="handleGenerate"
+          :disabled="!userInput.trim() && !referencedDocContent"
+          :title="i18n.generate || '生成'"
+        >
+          <svg width="16" height="16">
+            <use xlink:href="#iconSparkles"></use>
+          </svg>
+        </button>
+        <button
+          v-else
+          class="btn-stop-compact"
+          @click="handleStop"
+          :title="i18n.stopGeneration || '停止生成'"
+        >
+          <svg width="16" height="16">
+            <use xlink:href="#iconClose"></use>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Edit模式：紧凑工具栏（提示词选择 + 目标文档选择 + 输入框 + 执行按钮） -->
+      <div v-if="editMode" class="compact-toolbar edit-mode">
         <!-- 提示词选择按钮 -->
         <div class="prompt-selector-wrapper">
           <button class="btn-prompt-compact" @click="showPromptSelector = !showPromptSelector" :title="currentPromptName || (i18n.selectPrompt || '选择提示词')">
@@ -257,61 +312,6 @@
           </div>
         </div>
 
-        <!-- 引用当前文档按钮 -->
-        <button
-          class="btn-reference-compact"
-          @click="insertCurrentDocReference"
-          :class="{ 'has-reference': referencedDocTitle }"
-          :title="referencedDocTitle || (i18n.referenceCurrentDoc || '引用当前文档内容')"
-        >
-          <svg width="14" height="14">
-            <use xlink:href="#iconFile"></use>
-          </svg>
-          <span v-if="referencedDocTitle" class="ref-doc-name">{{ referencedDocTitle }}</span>
-          <span v-else>{{ i18n.refDoc || '引用' }}</span>
-          <button v-if="referencedDocTitle" class="btn-clear-inline" @click.stop="cancelDocReference" :title="i18n.cancel || '取消'">
-            <svg width="10" height="10">
-              <use xlink:href="#iconClose"></use>
-            </svg>
-          </button>
-        </button>
-
-        <!-- 输入框 -->
-        <textarea
-          v-model="userInput"
-          class="user-input-compact"
-          :placeholder="referencedDocContent ? (i18n.inputPlaceholderWithDoc || '输入问题...') : (i18n.inputPlaceholder || '输入您的问题...')"
-          rows="1"
-          @keydown.ctrl.enter="handleGenerate"
-          :disabled="isGenerating"
-        ></textarea>
-
-        <!-- 生成/停止按钮 -->
-        <button
-          v-if="!isGenerating"
-          class="btn-generate-compact"
-          @click="handleGenerate"
-          :disabled="!userInput.trim() && !referencedDocContent"
-          :title="i18n.generate || '生成'"
-        >
-          <svg width="16" height="16">
-            <use xlink:href="#iconSparkles"></use>
-          </svg>
-        </button>
-        <button
-          v-else
-          class="btn-stop-compact"
-          @click="handleStop"
-          :title="i18n.stopGeneration || '停止生成'"
-        >
-          <svg width="16" height="16">
-            <use xlink:href="#iconClose"></use>
-          </svg>
-        </button>
-      </div>
-
-      <!-- Edit模式：紧凑工具栏（目标文档选择 + 输入框 + 执行按钮） -->
-      <div v-if="editMode" class="compact-toolbar edit-mode">
         <!-- 目标文档选择 -->
         <button class="btn-doc-compact" @click="selectTargetDocument" :title="editTargetDoc ? editTargetDoc.title : (i18n.selectDocument || '选择文档')">
           <svg width="14" height="14">
@@ -1830,6 +1830,15 @@ const handleCustomEdit = async () => {
   startGeneration();
 
   try {
+    // 根据是否选择提示词来决定系统提示词
+    let finalSystemPrompt = '你是一个专业的文档编辑助手，擅长根据用户指令优化Markdown文档。请直接输出编辑后的完整文档，不要添加任何解释性文字。';
+
+    if (currentPromptName.value) {
+      // 用户选择了提示词，使用选中的提示词配置
+      finalSystemPrompt = systemPrompt.value;
+      console.log('编辑模式使用选中的提示词:', currentPromptName.value);
+    }
+
     const options: GenerateOptions = {
       userInput: `请根据以下指令对文档进行编辑。保持Markdown格式，直接输出编辑后的完整文档内容：
 
@@ -1837,8 +1846,8 @@ const handleCustomEdit = async () => {
 
 原文档：
 ${editTargetDoc.value.content}`,
-      systemPrompt: '你是一个专业的文档编辑助手，擅长根据用户指令优化Markdown文档。请直接输出编辑后的完整文档，不要添加任何解释性文字。',
-      temperature: 0.4,
+      systemPrompt: finalSystemPrompt,
+      temperature: temperature.value,
       maxTokens: maxTokens.value,
       signal: abortController.value?.signal,
       onChunk: defaultOnChunk

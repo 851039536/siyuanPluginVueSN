@@ -190,6 +190,40 @@ const data = await plugin.loadData('key')
 // 设置
 plugin.openSetting()
 ```
+### 注册右边侧栏
+使用API：`plugin.addDock`
+
+- **配置：** 配置侧边栏的位置、大小、标题等。
+- 数据：传递一个物品。传递的对象可以直接被API访问。`thisinit`
+- init：初始化函数;在这里，你可以通过侧边栏的元素设置内部元素（所以不要用箭头函数来回调）。`this`
+
+以下示例请参考[sy-bookmark-plus/src/index.ts](https://liuyun.io/forward?goto=https%3A%2F%2Fgithub.com%2Ffrostime%2Fsy-bookmark-plus%2Fblob%2Fmain%2Fsrc%2Findex.ts)：
+
+```ts
+this.addDock({
+    type: '::dock',
+    config: {
+        position: 'RightBottom',
+        size: {
+            width: 200,
+            height: 200,
+        },
+        icon: 'iconBookmark',
+        title: 'Bookmark+'
+    },
+    data: {
+        plugin: this,
+        initBookmark: initBookmark,
+    },
+    init() {
+        this.data.initBookmark(this.element, this.data.plugin);
+    }
+});
+
+
+```
+
+
 
 ## 依赖
 

@@ -259,6 +259,32 @@
   width: 100%;
   flex-wrap: wrap;
 
+  // Edit模式特殊布局
+  &.edit-mode {
+    flex-wrap: wrap;
+
+    // 确保提示词选择器在上方独占一行
+    .prompt-selector-wrapper {
+      flex-basis: 100%;
+      max-width: 100%;
+    }
+
+    // 文档选择和输入框在同一行
+    .btn-doc-compact,
+    .user-input-compact,
+    .btn-generate-compact,
+    .btn-stop-compact {
+      flex: 1 1 auto;
+      min-width: 80px;
+    }
+
+    .btn-doc-compact {
+      flex: 0 0 auto;
+      min-width: 120px;
+      max-width: 200px;
+    }
+  }
+
   // 提示词选择器包装
   .prompt-selector-wrapper {
     position: relative;

@@ -903,6 +903,10 @@
     "previous": "上一页",
     "next": "下一页",
     "play": "播放",
-    "randomCard": "随机"
+    "randomCard": "随机",
+    "searchPlaceholder": "搜索标题或内容...",
+    "clearSearch": "清除",
+    "filtered": "筛选",
+    "total": "总计"
   }
 }

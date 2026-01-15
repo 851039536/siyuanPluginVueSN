@@ -876,6 +876,10 @@
     "previous": "Previous",
     "next": "Next",
     "play": "Play",
-    "randomCard": "Random"
+    "randomCard": "Random",
+    "searchPlaceholder": "Search title or content...",
+    "clearSearch": "Clear",
+    "filtered": "Filtered",
+    "total": "Total"
   }
 }

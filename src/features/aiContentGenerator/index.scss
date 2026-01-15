@@ -120,8 +120,7 @@
   }
 }
 
-.settings-panel,
-.context-panel {
+.settings-panel {
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
   background: var(--b3-theme-surface-lighter);
   animation: slideDown 0.3s ease-out;
@@ -295,7 +294,6 @@
 
   // 紧凑按钮通用样式
   .btn-prompt-compact,
-  .btn-reference-compact,
   .btn-doc-compact {
     display: flex;
     align-items: center;
@@ -328,8 +326,7 @@
     }
 
     .prompt-name-compact,
-    .doc-name-compact,
-    .ref-doc-name {
+    .doc-name-compact {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -348,13 +345,6 @@
       font-weight: 400;
       margin-left: 3px;
       flex-shrink: 0;
-    }
-  }
-
-  .btn-reference-compact {
-    &.has-reference {
-      background: var(--b3-theme-primary-lighter);
-      border-color: var(--b3-theme-primary-light);
     }
   }
 
@@ -387,7 +377,6 @@
 
   // 按钮悬停时显示清除按钮
   .btn-prompt-compact:hover .btn-clear-inline,
-  .btn-reference-compact:hover .btn-clear-inline,
   .btn-doc-compact:hover .btn-clear-inline {
     opacity: 0.8;
   }
@@ -478,71 +467,6 @@
       opacity: 0.9;
       transform: scale(1.05);
     }
-  }
-}
-
-// 当前提示词显示样式
-.current-prompt-display {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  margin-bottom: 8px;
-  background: linear-gradient(135deg, var(--b3-theme-primary-lighter), var(--b3-theme-primary-lightest));
-  border: 1px solid var(--b3-theme-primary-light);
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 400;
-  animation: slideIn 0.3s ease-out;
-
-  svg {
-    color: var(--b3-theme-primary);
-    flex-shrink: 0;
-  }
-
-  .prompt-label {
-    color: var(--b3-theme-on-surface);
-    font-weight: 400;
-    opacity: 0.8;
-  }
-
-  .prompt-value {
-    flex: 1;
-    color: var(--b3-theme-primary);
-    font-weight: 400;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .btn-clear-prompt {
-    flex-shrink: 0;
-    padding: 3px;
-    background: transparent;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
-    color: var(--b3-theme-on-surface);
-    opacity: 0.6;
-    transition: all 0.2s;
-
-    &:hover {
-      background: var(--b3-theme-error-lighter);
-      color: var(--b3-theme-error);
-      opacity: 1;
-      transform: rotate(90deg);
-    }
-  }
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -855,7 +779,6 @@
   color: var(--b3-theme-on-surface);
 }
 
-.loading-spinner,
 .loading-spinner-large,
 .loading-spinner-small,
 .loading-spinner-tiny {
@@ -863,7 +786,6 @@
   animation: spin 1s linear infinite;
 }
 
-.loading-spinner,
 .loading-spinner-small {
   width: 18px;
   height: 18px;
@@ -900,23 +822,6 @@
 .error-icon {
   color: var(--b3-theme-error);
   margin-bottom: 16px;
-}
-
-.btn-retry {
-  margin-top: 10px;
-  padding: 6px 12px;
-  background: var(--b3-theme-primary);
-  color: var(--b3-theme-on-primary);
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-size: 11px;
-  font-weight: 400;
-
-  &:hover {
-    opacity: 0.9;
-  }
 }
 
 .result-container {
@@ -1058,7 +963,6 @@
     }
   }
 
-  &.btn-insert,
   &.btn-insert-subdoc {
     background: var(--b3-theme-success-lighter);
     color: var(--b3-theme-success);
@@ -1271,43 +1175,6 @@
   color: var(--b3-theme-on-surface);
   opacity: 0.3;
   margin-bottom: 10px;
-}
-
-.quick-templates {
-  margin-top: 16px;
-  width: 100%;
-  max-width: 360px;
-}
-
-.templates-title {
-  font-size: 11px;
-  font-weight: 400;
-  margin-bottom: 8px;
-  color: var(--b3-theme-on-surface);
-}
-
-.template-buttons {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 6px;
-}
-
-.btn-template {
-  padding: 8px 10px;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 400;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-align: left;
-
-  &:hover {
-    background: var(--b3-theme-surface-light);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  }
 }
 
 // AI智能编辑工具栏样式
@@ -1692,38 +1559,6 @@
       }
     }
   }
-
-  .plagiarism-suggestions {
-    .suggestions-title {
-      font-size: 12px;
-      font-weight: 400;
-      color: var(--b3-theme-warning);
-      margin-bottom: 8px;
-      padding-left: 4px;
-    }
-
-    .suggestions-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-
-      li {
-        padding: 6px 10px;
-        margin-bottom: 4px;
-        background: var(--b3-theme-background);
-        border-left: 3px solid var(--b3-theme-warning);
-        border-radius: 4px;
-        font-size: 11px;
-        line-height: 1.4;
-        color: var(--b3-theme-on-surface);
-        font-weight: 400;
-
-        &:last-child {
-          margin-bottom: 0;
-        }
-      }
-    }
-  }
 }
 
 // 建议和结果面板的折叠样式
@@ -1897,34 +1732,6 @@
     }
   }
 
-  // 移动端：Edit模式优化
-  .edit-doc-selector {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-    padding: 12px;
-
-    .selector-label {
-      font-size: 14px;
-    }
-
-    .btn-select-doc {
-      padding: 12px;
-      font-size: 14px;
-      min-height: 48px;
-    }
-
-    .btn-clear-doc {
-      position: absolute;
-      right: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      padding: 8px;
-      min-width: 36px;
-      min-height: 36px;
-    }
-  }
-
   // 移动端：AI编辑工具栏优化
   .ai-edit-toolbar {
     padding: 12px;
@@ -2054,19 +1861,6 @@
         }
       }
     }
-
-    .plagiarism-suggestions {
-      .suggestions-title {
-        font-size: 14px;
-      }
-
-      .suggestions-list {
-        li {
-          font-size: 14px;
-          padding: 10px 14px;
-        }
-      }
-    }
   }
 
   // 移动端：输出区域优化
@@ -2108,7 +1902,7 @@
 
         // 移动端：重要按钮占满一行
         &.btn-apply,
-        &.btn-insert,
+        &.btn-insert-subdoc,
         &.btn-stop {
           flex: 1 1 100%;
           font-size: 15px;
@@ -2176,26 +1970,6 @@
     }
   }
 
-  .quick-templates {
-    max-width: 100%;
-
-    .templates-title {
-      font-size: 14px;
-    }
-
-    .template-buttons {
-      grid-template-columns: 1fr;
-      gap: 10px;
-
-      .btn-template {
-        padding: 14px;
-        font-size: 14px;
-        min-height: 50px;
-        text-align: center;
-      }
-    }
-  }
-
   // 移动端：加载和错误状态优化
   .loading-state,
   .error-state {
@@ -2203,12 +1977,6 @@
 
     p {
       font-size: 15px;
-    }
-
-    .btn-retry {
-      padding: 12px 20px;
-      font-size: 15px;
-      min-height: 48px;
     }
   }
 
@@ -2245,140 +2013,5 @@
       -webkit-overflow-scrolling: touch;
       overscroll-behavior: contain;
     }
-  }
-}
-
-// 自定义输入对话框样式
-.input-dialog-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.input-dialog {
-  background: var(--b3-theme-background);
-  border-radius: 8px;
-  min-width: 320px;
-  max-width: 90vw;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  overflow: hidden;
-}
-
-.input-dialog-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
-
-  h3 {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 400;
-    color: var(--b3-theme-on-background);
-  }
-}
-
-.btn-close-dialog {
-  padding: 4px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--b3-theme-on-surface);
-  border-radius: 4px;
-  transition: background 0.2s;
-
-  &:hover {
-    background: var(--b3-theme-surface-lighter);
-  }
-}
-
-.input-dialog-content {
-  padding: 20px;
-}
-
-.input-dialog-input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 4px;
-  font-size: 14px;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  outline: none;
-  transition: border-color 0.2s;
-  font-weight: 400;
-
-  &:focus {
-    border-color: var(--b3-theme-primary);
-  }
-}
-
-.input-dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 16px 20px;
-  border-top: 1px solid var(--b3-theme-surface-lighter);
-  background: var(--b3-theme-surface);
-}
-
-.btn-cancel,
-.btn-confirm {
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 400;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-cancel {
-  background: transparent;
-  color: var(--b3-theme-on-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
-
-  &:hover {
-    background: var(--b3-theme-surface-lighter);
-  }
-}
-
-.btn-confirm {
-  background: var(--b3-theme-primary);
-  color: var(--b3-theme-on-primary);
-  border: 1px solid var(--b3-theme-primary);
-
-  &:hover:not(:disabled) {
-    background: var(--b3-theme-primary-dark);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-}
-
-// 移动端对话框优化
-.body--mobile {
-  .input-dialog {
-    min-width: 280px;
-  }
-
-  .input-dialog-input {
-    padding: 12px;
-    font-size: 16px; // 防止iOS缩放
-  }
-
-  .btn-cancel,
-  .btn-confirm {
-    padding: 12px 20px;
-    min-width: 80px;
   }
 }

@@ -16,7 +16,7 @@
       </div>
     </div>
 
-    <!-- 类别筛选 -->
+    <!-- 类别筛选和搜索 -->
     <div class="category-filter">
       <div class="filter-left">
         <label>{{ i18n.category || '类别' }}:</label>
@@ -27,12 +27,33 @@
           </option>
         </select>
       </div>
-      <div class="statistics">
-        <span class="stat-item">{{ i18n.total || '总计' }}: {{ cards.length }}</span>
-        <template v-if="selectedCategory !== 'all'">
-          <span class="stat-divider">|</span>
-          <span class="stat-item">{{ selectedCategory }}: {{ filteredCards.length }}</span>
-        </template>
+      <div class="filter-right">
+        <div class="search-box">
+          <IconWrapper name="search" :size="14" />
+          <input
+            v-model="searchQuery"
+            type="text"
+            :placeholder="i18n.searchPlaceholder || '搜索标题或内容...'"
+          />
+          <button
+            v-if="searchQuery"
+            class="clear-btn"
+            @click="searchQuery = ''"
+            :title="i18n.clearSearch || '清除'"
+          >
+            <IconWrapper name="close" :size="12" />
+          </button>
+        </div>
+        <div class="statistics">
+          <span class="stat-item">{{ i18n.total || '总计' }}: {{ cards.length }}</span>
+          <template v-if="selectedCategory !== 'all' || searchQuery">
+            <span class="stat-divider">|</span>
+            <span class="stat-item">
+              {{ selectedCategory !== 'all' ? selectedCategory : (i18n.filtered || '筛选') }}:
+              {{ filteredCards.length }}
+            </span>
+          </template>
+        </div>
       </div>
     </div>
 
@@ -212,7 +233,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { showMessage } from 'siyuan'
 import IconWrapper from '@/components/IconWrapper.vue'
 import type { Plugin } from 'siyuan'
@@ -231,6 +252,7 @@ const storage = new FlashcardStorage(props.plugin)
 const cards = ref<Flashcard[]>([])
 const categories = ref<string[]>([])
 const selectedCategory = ref<string>('all')
+const searchQuery = ref<string>('')
 const viewMode = ref<'list' | 'single'>('list')
 const currentPage = ref(1)
 const pageSize = 10
@@ -256,10 +278,23 @@ const allCategories = computed(() => {
 })
 
 const filteredCards = computed(() => {
-  if (selectedCategory.value === 'all') {
-    return cards.value
+  let result = cards.value
+
+  // 先按类别筛选
+  if (selectedCategory.value !== 'all') {
+    result = result.filter(card => card.category === selectedCategory.value)
   }
-  return cards.value.filter(card => card.category === selectedCategory.value)
+
+  // 再按搜索关键词筛选
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase().trim()
+    result = result.filter(card =>
+      card.title.toLowerCase().includes(query) ||
+      card.content.toLowerCase().includes(query)
+    )
+  }
+
+  return result
 })
 
 const currentCard = computed(() => filteredCards.value[currentIndex.value])
@@ -293,6 +328,7 @@ const loadCards = async () => {
 const handleCategoryChange = () => {
   currentPage.value = 1
   currentIndex.value = 0
+  // 切换类别时保留搜索状态
 }
 
 const switchToSingleMode = () => {
@@ -432,6 +468,12 @@ const playWord = (word: string) => {
 // 生命周期
 onMounted(() => {
   loadCards()
+})
+
+// 监听搜索变化，重置分页和索引
+watch(searchQuery, () => {
+  currentPage.value = 1
+  currentIndex.value = 0
 })
 </script>
 

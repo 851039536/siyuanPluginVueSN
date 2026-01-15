@@ -48,12 +48,14 @@
     align-items: center;
     justify-content: space-between;
     gap: 8px;
+    flex-wrap: wrap;
 
     .filter-left {
       display: flex;
       align-items: center;
       gap: 8px;
       flex: 1;
+      min-width: 150px;
 
       label {
         font-size: 14px;
@@ -71,20 +73,80 @@
       }
     }
 
-    .statistics {
+    .filter-right {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      color: var(--b3-theme-secondary);
-      flex-shrink: 0;
+      gap: 12px;
+      flex: 1;
+      min-width: 200px;
+      justify-content: flex-end;
 
-      .stat-item {
-        font-weight: 500;
+      .search-box {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border: 1px solid var(--b3-theme-surface);
+        background: var(--b3-theme-background);
+        border-radius: 4px;
+        flex: 1;
+        max-width: 280px;
+        transition: all 0.2s;
+
+        &:focus-within {
+          border-color: var(--b3-theme-primary);
+          box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1);
+        }
+
+        input {
+          flex: 1;
+          border: none;
+          background: transparent;
+          outline: none;
+          color: var(--b3-theme-on-background);
+          font-size: 13px;
+          min-width: 0;
+
+          &::placeholder {
+            color: var(--b3-theme-secondary);
+          }
+        }
+
+        .clear-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 2px;
+          border: none;
+          background: transparent;
+          cursor: pointer;
+          color: var(--b3-theme-secondary);
+          border-radius: 2px;
+          transition: all 0.2s;
+
+          &:hover {
+            background: var(--b3-theme-hover);
+            color: var(--b3-theme-on-background);
+          }
+        }
       }
 
-      .stat-divider {
-        opacity: 0.5;
+      .statistics {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--b3-theme-secondary);
+        flex-shrink: 0;
+        white-space: nowrap;
+
+        .stat-item {
+          font-weight: 500;
+        }
+
+        .stat-divider {
+          opacity: 0.5;
+        }
       }
     }
   }

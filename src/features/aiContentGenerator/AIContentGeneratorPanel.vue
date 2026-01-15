@@ -92,9 +92,6 @@
               <span>{{ '最多' }} (10)</span>
             </div>
           </div>
-          <!-- 问题3：删除强制Markdown输出选项，默认就是Markdown格式 -->
-          <!-- 打字机效果已默认启用,不再提供可选项 -->
-
           <!-- 保存提示词配置 -->
           <div class="setting-item save-prompt-section">
             <div class="save-prompt-header">
@@ -528,7 +525,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, computed, watch, onMounted,  nextTick } from 'vue';
 import { showMessage } from 'siyuan';
 import { marked } from 'marked';
 import hljs from 'highlight.js';

@@ -476,13 +476,13 @@ const features = computed(() => [
   {
     id: 'statistics',
     iconKey: 'statistics',
-    title: props.i18n.statisticsPanel || '数据统计',
-    desc: props.i18n.enableStatisticsDesc || '显示笔记数据统计和分析',
+    title: '数据统计',
+    desc: '显示笔记数据统计和分析',
     enabled: props.settings.enableStatistics,
     actions: [
       {
         key: 'openStatistics',
-        label: props.i18n.openStatistics || '打开统计面板',
+        label: '打开统计面板',
         hotkey: ''
       }
     ]

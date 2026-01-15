@@ -3,12 +3,12 @@
     <!-- 顶部操作栏 -->
     <div class="statistics-header">
       <div class="header-left">
-        <button class="refresh-btn" :title="i18n.refresh || '刷新'" @click="refreshData" :disabled="loading">
+        <button class="refresh-btn" title="刷新" @click="refreshData" :disabled="loading">
           <svg class="icon" :class="{ rotating: loading }"><use xlink:href="#iconRefresh"></use></svg>
         </button>
-        <button class="theme-toggle-btn" @click="toggleTheme" :title="i18n.toggleTheme || '切换主题'">
+        <button class="theme-toggle-btn" @click="toggleTheme" title="切换主题">
           <span class="theme-icon">{{ currentTheme === 'default' ? '🌈' : '🐙' }}</span>
-          <span class="theme-text">{{ currentTheme === 'default' ? (i18n.defaultTheme || '默认') : (i18n.githubTheme || 'GitHub') }}</span>
+          <span class="theme-text">{{ currentTheme === 'default' ? '默认' : 'GitHub' }}</span>
         </button>
       </div>
       <div class="header-right">
@@ -16,14 +16,14 @@
           <span class="update-icon">⏱️</span>
           <span class="update-text">{{ updateIntervalText }}</span>
         </div>
-        <div class="last-update">{{ i18n.lastUpdate }}: {{ lastUpdateTime }}</div>
+        <div class="last-update">最后更新: {{ lastUpdateTime }}</div>
       </div>
     </div>
 
     <!-- 加载状态 -->
     <div v-if="loading && !stats" class="loading-state">
       <div class="loading-spinner"></div>
-      <p>{{ i18n.loading || '加载中...' }}</p>
+      <p>加载中...</p>
     </div>
 
     <!-- 主要内容 -->
@@ -36,7 +36,7 @@
             <span class="stat-icon">📓</span>
             <div class="stat-content">
               <div class="stat-value">{{ formatNumber(stats.totalNotes) }}</div>
-              <div class="stat-label">{{ i18n.totalNotes }}</div>
+              <div class="stat-label">笔记总数</div>
             </div>
           </div>
           <div class="stat-divider"></div>
@@ -44,7 +44,7 @@
             <span class="stat-icon">✍️</span>
             <div class="stat-content">
               <div class="stat-value">{{ formatNumber(stats.totalWords) }}</div>
-              <div class="stat-label">{{ i18n.totalWords }}</div>
+              <div class="stat-label">总字数</div>
             </div>
           </div>
         </div>
@@ -54,22 +54,22 @@
           <div class="stat-item-small">
             <span class="stat-icon-small">🧩</span>
             <span class="stat-value-small">{{ formatShortNumber(stats.totalBlocks) }}</span>
-            <span class="stat-label-small">{{ i18n.totalBlocks }}</span>
+            <span class="stat-label-small">内容块</span>
           </div>
           <div class="stat-item-small">
             <span class="stat-icon-small">📎</span>
             <span class="stat-value-small">{{ formatShortNumber(stats.totalAssets) }}</span>
-            <span class="stat-label-small">{{ i18n.totalAssets }}</span>
+            <span class="stat-label-small">附件</span>
           </div>
           <div class="stat-item-small">
             <span class="stat-icon-small">🏷️</span>
             <span class="stat-value-small">{{ formatShortNumber(stats.totalTags) }}</span>
-            <span class="stat-label-small">{{ i18n.totalTags }}</span>
+            <span class="stat-label-small">标签</span>
           </div>
           <div class="stat-item-small">
             <span class="stat-icon-small">🔗</span>
             <span class="stat-value-small">{{ formatShortNumber(stats.totalBacklinks) }}</span>
-            <span class="stat-label-small">{{ i18n.totalBacklinks }}</span>
+            <span class="stat-label-small">双链</span>
           </div>
         </div>
       </div>
@@ -80,21 +80,21 @@
           <div class="card-icon">📅</div>
           <div class="card-content">
             <div class="card-value-small">{{ stats.todayCreated }}</div>
-            <div class="card-label-small">{{ i18n.todayCreated || '今日新增' }}</div>
+            <div class="card-label-small">今日新增</div>
           </div>
         </div>
         <div class="stat-card-small gradient-2">
           <div class="card-icon">✏️</div>
           <div class="card-content">
             <div class="card-value-small">{{ stats.todayModified }}</div>
-            <div class="card-label-small">{{ i18n.todayModified || '今日修改' }}</div>
+            <div class="card-label-small">今日修改</div>
           </div>
         </div>
         <div class="stat-card-small gradient-3">
           <div class="card-icon">📊</div>
           <div class="card-content">
             <div class="card-value-small">{{ stats.avgWordsPerDoc }}</div>
-            <div class="card-label-small">{{ i18n.avgWordsPerDoc || '平均字数' }}</div>
+            <div class="card-label-small">平均字数</div>
           </div>
         </div>
       </div>
@@ -117,11 +117,11 @@
         <div v-if="periodAvgWords > 0 || (stats && stats.periodTotalWords > 0)" class="period-stats-cards">
           <div v-if="periodAvgWords > 0" class="period-stat-card">
             <span class="stat-label">{{ getPeriodAvgLabel() }}</span>
-            <span class="stat-value">{{ formatNumber(periodAvgWords) }} {{ i18n.words || '字' }}</span>
+            <span class="stat-value">{{ formatNumber(periodAvgWords) }} 字</span>
           </div>
           <div v-if="stats && stats.periodTotalWords > 0" class="period-stat-card">
             <span class="stat-label">{{ getPeriodTotalLabel() }}</span>
-            <span class="stat-value">{{ formatNumber(stats.periodTotalWords) }} {{ i18n.words || '字' }}</span>
+            <span class="stat-value">{{ formatNumber(stats.periodTotalWords) }} 字</span>
           </div>
         </div>
 
@@ -183,7 +183,7 @@
                 class="bar"
                 :class="{ today: isToday(item.date) }"
                 :style="{ height: getBarHeight(item.words) + 'px' }"
-                :title="`${item.dateLabel}: ${formatNumber(item.words)} ${i18n.words}`"
+                :title="`${item.dateLabel}: ${formatNumber(item.words)} 字`"
               ></div>
               <div class="bar-label" :class="{ today: isToday(item.date) }">
                 {{ formatChartLabel(item.dateLabel) }}
@@ -210,57 +210,57 @@
 
         <!-- 趋势视图 -->
         <div v-if="viewMode === 'trend'" class="trend-view">
-          <h3 class="section-title">{{ i18n.trendAnalysis || '趋势分析' }}</h3>
+          <h3 class="section-title">趋势分析</h3>
 
           <!-- 趋势统计列表 -->
           <div v-if="trendStats" class="trend-stats-list">
             <div class="trend-stat-item">
               <span class="stat-icon">📈</span>
-              <span class="stat-label">{{ i18n.notesGrowth || '笔记增长' }}</span>
+              <span class="stat-label">笔记增长</span>
               <span class="stat-value">{{ formatNumber(trendStats.notesGrowth) }}</span>
             </div>
             <div class="trend-stat-item">
               <span class="stat-icon">✍️</span>
-              <span class="stat-label">{{ i18n.wordsGrowth || '字数增长' }}</span>
+              <span class="stat-label">字数增长</span>
               <span class="stat-value">{{ formatNumber(trendStats.wordsGrowth) }}</span>
             </div>
             <div class="trend-stat-item">
               <span class="stat-icon">📅</span>
-              <span class="stat-label">{{ i18n.avgDailyCreated || '日均新增' }}</span>
+              <span class="stat-label">日均新增</span>
               <span class="stat-value">{{ trendStats.avgDailyCreated }}</span>
             </div>
             <div class="trend-stat-item">
               <span class="stat-icon">✏️</span>
-              <span class="stat-label">{{ i18n.avgDailyModified || '日均修改' }}</span>
+              <span class="stat-label">日均修改</span>
               <span class="stat-value">{{ trendStats.avgDailyModified }}</span>
             </div>
           </div>
 
           <!-- 历史数据列表 -->
           <div class="historical-data-list">
-            <h4 class="subsection-title">{{ i18n.historicalData || '历史数据' }}</h4>
+            <h4 class="subsection-title">历史数据</h4>
             <div class="historical-table-container">
               <table class="historical-table">
                 <thead>
                   <tr>
-                    <th class="col-date">{{ i18n.date || '日期' }}</th>
+                    <th class="col-date">日期</th>
                     <th class="col-notes">
                       <span class="th-icon">📓</span>
-                      {{ i18n.totalNotes || '笔记' }}
+                      笔记
                     </th>
                     <th class="col-words">
                       <span class="th-icon">✍️</span>
-                      {{ i18n.words || '字数' }}
+                      字数
                     </th>
                     <th class="col-created">
                       <span class="th-icon">📅</span>
-                      {{ i18n.created || '新增' }}
+                      新增
                     </th>
                     <th class="col-modified">
                       <span class="th-icon">✏️</span>
-                      {{ i18n.modified || '修改' }}
+                      修改
                     </th>
-                    <th class="col-change">{{ i18n.change || '变化' }}</th>
+                    <th class="col-change">变化</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -310,8 +310,8 @@
         <!-- 快照视图 -->
         <div v-if="viewMode === 'snapshot'" class="snapshot-view">
           <h3 class="section-title">
-            {{ i18n.snapshotAnalysis || '快照分析' }}
-            <button @click="clearSnapshots" class="clear-btn" :title="i18n.clearSnapshots || '清除快照'">🗑️</button>
+            快照分析
+            <button @click="clearSnapshots" class="clear-btn" title="清除快照">🗑️</button>
           </h3>
 
           <div v-if="snapshotData.length > 0" class="snapshot-stats">
@@ -338,32 +338,32 @@
                 <div class="snapshot-stat">
                   <span class="stat-icon">📓</span>
                   <span class="stat-value">{{ formatNumber(snapshot.totalNotes) }}</span>
-                  <span class="stat-label">{{ i18n.totalNotes || '笔记' }}</span>
+                  <span class="stat-label">笔记</span>
                 </div>
                 <div class="snapshot-stat">
                   <span class="stat-icon">✍️</span>
                   <span class="stat-value">{{ formatNumber(snapshot.totalWords) }}</span>
-                  <span class="stat-label">{{ i18n.words || '字数' }}</span>
+                  <span class="stat-label">字数</span>
                 </div>
                 <div class="snapshot-stat">
                   <span class="stat-icon">🧩</span>
                   <span class="stat-value">{{ formatShortNumber(snapshot.totalBlocks) }}</span>
-                  <span class="stat-label">{{ i18n.blocks || '块' }}</span>
+                  <span class="stat-label">块</span>
                 </div>
                 <div class="snapshot-stat">
                   <span class="stat-icon">📎</span>
                   <span class="stat-value">{{ formatShortNumber(snapshot.totalAssets) }}</span>
-                  <span class="stat-label">{{ i18n.assets || '附件' }}</span>
+                  <span class="stat-label">附件</span>
                 </div>
                 <div class="snapshot-stat">
                   <span class="stat-icon">📅</span>
                   <span class="stat-value">{{ snapshot.todayCreated }}</span>
-                  <span class="stat-label">{{ i18n.created || '新增' }}</span>
+                  <span class="stat-label">新增</span>
                 </div>
                 <div class="snapshot-stat">
                   <span class="stat-icon">✏️</span>
                   <span class="stat-value">{{ snapshot.todayModified }}</span>
-                  <span class="stat-label">{{ i18n.modified || '修改' }}</span>
+                  <span class="stat-label">修改</span>
                 </div>
               </div>
               <!-- 显示与上一个快照的差异 -->
@@ -392,7 +392,7 @@
               </div>
             </div>
             <div v-if="snapshotData.length === 0" class="empty-snapshot">
-              📸 {{ i18n.noSnapshots || '还没有快照数据，等待系统自动收集...' }}
+              📸 还没有快照数据，等待系统自动收集...
             </div>
           </div>
         </div>
@@ -406,7 +406,6 @@
 import { ref, computed, onMounted, watch } from 'vue'
 
 interface Props {
-  i18n?: Record<string, any>
   theme?: 'default' | 'github'
   onThemeChange?: (theme: 'default' | 'github') => void
   onRefresh?: (params: {
@@ -444,7 +443,6 @@ interface DailyWordCount {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  i18n: () => ({}),
   theme: 'default',
 })
 
@@ -463,29 +461,29 @@ const snapshotData = ref<any[]>([])
 
 // 视图模式选项
 const viewModes = computed(() => [
-  { value: 'day' as const, label: props.i18n.dayView || '日', icon: '📅' },
-  { value: 'week' as const, label: props.i18n.weekView || '周', icon: '📊' },
-  { value: 'month' as const, label: props.i18n.monthView || '月', icon: '📆' },
-  { value: 'year' as const, label: props.i18n.yearView || '年', icon: '📈' },
-  { value: 'trend' as const, label: props.i18n.trendView || '趋势', icon: '📈' },
-  { value: 'snapshot' as const, label: props.i18n.snapshotView || '快照', icon: '📸' },
+  { value: 'day' as const, label: '日', icon: '📅' },
+  { value: 'week' as const, label: '周', icon: '📊' },
+  { value: 'month' as const, label: '月', icon: '📆' },
+  { value: 'year' as const, label: '年', icon: '📈' },
+  { value: 'trend' as const, label: '趋势', icon: '📈' },
+  { value: 'snapshot' as const, label: '快照', icon: '📸' },
 ])
 
 // 日视图范围选项
 const dayRanges = computed(() => [
-  { value: 7 as const, label: props.i18n.recent7Days || '7天' },
-  { value: 15 as const, label: props.i18n.recent15Days || '15天' },
-  { value: 30 as const, label: props.i18n.recent30Days || '30天' },
-  { value: 90 as const, label: props.i18n.recent90Days || '季度' },
-  { value: 180 as const, label: props.i18n.recent180Days || '半年' },
-  { value: 365 as const, label: props.i18n.recent365Days || '整年' },
+  { value: 7 as const, label: '7天' },
+  { value: 15 as const, label: '15天' },
+  { value: 30 as const, label: '30天' },
+  { value: 90 as const, label: '季度' },
+  { value: 180 as const, label: '半年' },
+  { value: 365 as const, label: '整年' },
 ])
 
 // 月视图范围选项
 const monthRanges = computed(() => [
-  { value: 1 as const, label: props.i18n.recentYear || '最近一年' },
-  { value: 2 as const, label: props.i18n.recent2Years || '最近两年' },
-  { value: 3 as const, label: props.i18n.recent3Years || '最近三年' },
+  { value: 1 as const, label: '最近一年' },
+  { value: 2 as const, label: '最近两年' },
+  { value: 3 as const, label: '最近三年' },
 ])
 
 // 可用年份
@@ -552,21 +550,21 @@ const trendStats = computed(() => {
 // 获取时段平均标签
 function getPeriodAvgLabel(): string {
   const labels: Record<string, string> = {
-    'day': props.i18n.dailyAvgWords || '日均字数',
-    'week': props.i18n.weeklyAvgWords || '周均字数',
-    'month': props.i18n.monthlyAvgWords || '月均字数',
-    'year': props.i18n.yearlyAvgWords || '年均字数',
+    'day': '日均字数',
+    'week': '周均字数',
+    'month': '月均字数',
+    'year': '年均字数',
   }
-  return labels[viewMode.value] || props.i18n.avgWords || '平均字数'
+  return labels[viewMode.value] || '平均字数'
 }
 
 // 获取时段总字数标签
 function getPeriodTotalLabel(): string {
   const labels: Record<string, string> = {
-    'day': props.i18n.periodTotalWords || '总字数',
-    'week': props.i18n.periodTotalWords || '总字数',
-    'month': props.i18n.periodTotalWords || '总字数',
-    'year': props.i18n.periodTotalWords || '总字数',
+    'day': '总字数',
+    'week': '总字数',
+    'month': '总字数',
+    'year': '总字数',
   }
   return labels[viewMode.value] || '总字数'
 }
@@ -643,7 +641,7 @@ async function loadSnapshotData() {
 async function clearSnapshots() {
   if (!props.onClearSnapshots) return
 
-  if (!confirm(props.i18n.confirmClearSnapshots || '确认清除所有快照数据吗？')) {
+  if (!confirm('确认清除所有快照数据吗？')) {
     return
   }
 

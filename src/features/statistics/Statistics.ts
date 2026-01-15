@@ -111,7 +111,7 @@ export class Statistics {
         position: 'RightBottom',
         size: { width: 350, height: 0 },
         icon: 'iconDatabase', // 使用数据库图标，适合数据统计
-        title: this.plugin.i18n.statisticsPanel,
+        title: '数据统计',
         show: false,
       },
       data: {},
@@ -143,7 +143,6 @@ export class Statistics {
 
     // 创建 Vue 应用
     this.vueApp = createApp(StatisticsPanel, {
-      i18n: this.plugin.i18n,
       theme: this.statisticsTheme,
       onThemeChange: async (theme: 'default' | 'github') => {
         this.statisticsTheme = theme;
@@ -522,34 +521,34 @@ export class Statistics {
         case 'day':
           dailyStats = await this.getDailyStats(this.dayRange);
           const dayPeriodMap: Record<number, string> = {
-            7: this.plugin.i18n.recentWeekDaily || '最近一周每日字数',
-            15: this.plugin.i18n.recent15DaysDaily || '最近15天每日字数',
-            30: this.plugin.i18n.recent30DaysDaily || '最近30天每日字数',
-            90: this.plugin.i18n.recent90DaysDaily || '最近一季度每日字数',
-            180: this.plugin.i18n.recent180DaysDaily || '最近半年每日字数',
-            365: this.plugin.i18n.recent365DaysDaily || '最近一年每日字数'
+            7: '最近一周每日字数',
+            15: '最近15天每日字数',
+            30: '最近30天每日字数',
+            90: '最近一季度每日字数',
+            180: '最近半年每日字数',
+            365: '最近一年每日字数'
           };
           currentPeriod = dayPeriodMap[this.dayRange] || '每日字数统计';
           periodTotalWords = dailyStats.reduce((sum, item) => sum + item.words, 0);
           break;
         case 'week':
           dailyStats = await this.getWeeklyStats(4); // 最近4周
-          currentPeriod = this.plugin.i18n.recentWeeksWeekly;
+          currentPeriod = '最近4周每周字数';
           periodTotalWords = dailyStats.reduce((sum, item) => sum + item.words, 0);
           break;
         case 'month':
           dailyStats = await this.getMonthlyStatsRange(this.monthYearRange);
           const monthPeriodMap: Record<number, string> = {
-            1: this.plugin.i18n.recentYearMonthly || '最近一年每月字数',
-            2: this.plugin.i18n.recent2YearsMonthly || '最近两年每月字数',
-            3: this.plugin.i18n.recent3YearsMonthly || '最近三年每月字数'
+            1: '最近一年每月字数',
+            2: '最近两年每月字数',
+            3: '最近三年每月字数'
           };
           currentPeriod = monthPeriodMap[this.monthYearRange] || '每月字数统计';
           periodTotalWords = dailyStats.reduce((sum, item) => sum + item.words, 0);
           break;
         case 'year':
           dailyStats = await this.getYearlyStats(); // 最近5年
-          currentPeriod = this.plugin.i18n.recentYearsYearly;
+          currentPeriod = '最近5年每年字数';
           periodTotalWords = dailyStats.reduce((sum, item) => sum + item.words, 0);
           break;
       }
@@ -773,7 +772,7 @@ export class Statistics {
       result.push({
         date: dateStr,
         words,
-        dateLabel: `${date.getMonth() + 1}/${date.getDate()} ${[this.plugin.i18n.sunday, this.plugin.i18n.monday, this.plugin.i18n.tuesday, this.plugin.i18n.wednesday, this.plugin.i18n.thursday, this.plugin.i18n.friday, this.plugin.i18n.saturday][date.getDay()]}`,
+        dateLabel: `${date.getMonth() + 1}/${date.getDate()} ${['周日', '周一', '周二', '周三', '周四', '周五', '周六'][date.getDay()]}`,
       });
     }
 
@@ -891,7 +890,7 @@ export class Statistics {
       result.push({
         date: `${year}-${monthStr}`,
         words,
-        dateLabel: `${year}${this.plugin.i18n.year} ${month}${this.plugin.i18n.month}`,
+        dateLabel: `${year}年 ${month}月`,
       });
     }
 
@@ -997,7 +996,7 @@ export class Statistics {
       result.push({
         date: `${year}`,
         words,
-        dateLabel: `${year}${this.plugin.i18n.year}`,
+        dateLabel: `${year}年`,
       });
     }
 

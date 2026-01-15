@@ -105,7 +105,7 @@ Vue 应用结构
 
 - 工作区路径：通过 `/api/system/getConf` 获取工作区路径
 - **思源 API 使用**：参考 `docs/思源笔记 API 使用.md` 文档
-- **数据持久化**：使用 `plugin.loadData()` 和 `plugin.saveData()` 方法，避免使用 localStorage
+- **数据持久化**：使用 `plugin.loadData()` 和 `plugin.saveData()` 方法，避免使用 localStorage，插件生成的数据将保存在 data/storage/petal/<name>/ 目录下。
 
 ## 开发指南
 

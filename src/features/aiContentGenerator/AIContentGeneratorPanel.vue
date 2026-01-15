@@ -1296,7 +1296,6 @@ const saveToArchiveNotebook = async () => {
   }
 
   try {
-    showMessage('正在保存...', 1000, 'info');
 
     // 1. 获取或创建"AI问答封存"笔记本
     const archiveNotebookId = await getOrCreateArchiveNotebook();
@@ -1344,7 +1343,6 @@ const saveToArchiveNotebook = async () => {
       showMessage('保存失败', 3000, 'error');
     }
   } catch (error) {
-    console.error('保存到封存笔记本失败:', error);
     showMessage('保存失败: ' + (error as Error).message, 3000, 'error');
   }
 };

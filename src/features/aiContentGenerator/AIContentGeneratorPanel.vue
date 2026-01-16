@@ -689,7 +689,7 @@ const isUndoing = ref(false);
 const isInsertingSubDoc = ref(false); // 插入子文档状态
 
 // 自动获取文档相关状态
-const autoLoadEnabled = ref(true); // 是否启用自动加载
+const autoLoadEnabled = ref(false); // 是否启用自动加载
 const lastAutoLoadDocId = ref<string | null>(null); // 上次自动加载的文档ID
 const autoLoadDebounceTimer = ref<number | null>(null); // 防抖定时器
 

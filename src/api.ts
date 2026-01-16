@@ -261,6 +261,39 @@ export async function getBlockKramdown(
   return request(url, data);
 }
 
+/**
+ * 获取块的 Markdown 内容（用于拖拽块时只读取块内容）
+ * @param blockId 块 ID
+ * @returns 块的 Markdown 内容字符串
+ */
+export async function getBlockMarkdown(blockId: string): Promise<string | null> {
+  try {
+    console.log('📦 开始获取块 Markdown:', blockId);
+
+    // 方法1: 使用 getBlockKramdown 获取单个块内容
+    const kramdownData = await getBlockKramdown(blockId);
+    console.log('📦 getBlockKramdown 返回:', kramdownData);
+
+    // 注意：getBlockKramdown 返回的是 kramdown 属性，不是 content
+    if (kramdownData && kramdownData.kramdown) {
+      let content = kramdownData.kramdown;
+
+      // 移除思源特有的属性标记（如 {: id="xxx" updated="xxx"}）
+      content = content.replace(/\n\{: id="[^"]*"(?:\s+updated="[^"]*")?\}$/g, '');
+      content = content.trim();
+
+      console.log('📦 清理后的 kramdown 内容长度:', content.length);
+      return content;
+    }
+
+    console.warn('⚠️ getBlockKramdown 返回空内容');
+    return null;
+  } catch (error) {
+    console.error('❌ 获取块 Markdown 内容失败:', error);
+    return null;
+  }
+}
+
 export async function getChildBlocks(
   id: BlockId
 ): Promise<IResGetChildBlock[]> {

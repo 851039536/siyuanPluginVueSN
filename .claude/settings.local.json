@@ -44,7 +44,9 @@
       "Bash(dir /s /b *.md)",
       "Bash(git checkout src/features/aiContentGenerator/AIContentGeneratorPanel.vue)",
       "Bash(npm run lint)",
-      "Bash(git clone:*)"
+      "Bash(git clone:*)",
+      "Bash(curl:*)",
+      "Bash(npx vue-tsc:*)"
     ],
     "deny": [],
     "ask": []

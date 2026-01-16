@@ -560,6 +560,7 @@
             </svg>
             <span v-if="editTargetDoc" class="doc-name-compact">
               {{ editTargetDoc.title }}
+              <span v-if="editTargetDoc.isBlock" class="block-badge" title="块内容">块</span>
               <span v-if="autoLoadEnabled && lastAutoLoadDocId === editTargetDoc.id" class="auto-badge" title="自动加载">自动</span>
             </span>
             <span v-else>{{ '选择文档' }}</span>
@@ -675,7 +676,13 @@ const collapsedSections = ref({
 });
 
 // 编辑模式状态
-const editTargetDoc = ref<{ id: string; title: string; content: string } | null>(null);
+interface TargetDoc {
+  id: string;
+  title: string;
+  content: string;
+  isBlock?: boolean; // 是否为块内容（区别于整个文档）
+}
+const editTargetDoc = ref<TargetDoc | null>(null);
 const originalContent = ref(''); // 文档原始内容
 const isApplying = ref(false);
 const isUndoing = ref(false);
@@ -1021,6 +1028,7 @@ const handleDragLeave = (e: DragEvent) => {
 
 /**
  * 拖拽放置处理
+ * 支持：块拖拽、文档标签拖拽、文档树拖拽
  */
 const handleDrop = async (e: DragEvent) => {
   e.preventDefault();
@@ -1042,42 +1050,104 @@ const handleDrop = async (e: DragEvent) => {
   console.log('📦 dataTransfer.types:', transfer.types);
   console.log('📦 dataTransfer.items:', transfer.items);
 
-  // 尝试所有可能的类型
-  let docId: string | null = null;
+  // 尝试所有可能的类型获取 ID
+  let blockId: string | null = null;
+  let isBlockDrag = false; // 是否为块拖拽
 
-  // 方式 1: 尝试思源笔记的各种数据类型
-  const possibleTypes = ['siyuan/block', 'text/plain', 'text/html', 'Files'];
+  // 方式 1: 从 dataTransfer.types 中提取块 ID（最准确的方式）
+  // 思源笔记的块拖拽会在 types 中包含块 ID
+  // 格式类似：application/siyuan-gutternodeparagraph​null​20260116135906-7wheger​e:\siyuan2
+  console.log('📦 尝试从 types 中提取块 ID...');
+  for (const type of transfer.types) {
+    console.log('📦 检查类型:', type);
 
-  for (const type of possibleTypes) {
-    if (transfer.types.includes(type)) {
-      try {
-        const data = transfer.getData(type);
-        console.log(`📦 从 ${type} 获取数据:`, data);
+    // 匹配思源块拖拽的类型格式
+    // application/siyuan-gutternodeparagraph + null + blockId + path
+    const blockIdMatch = type.match(/application\/siyuan-gutternodeparagraph\S+(\d{14}-[a-z0-9]+)/);
+    if (blockIdMatch) {
+      blockId = blockIdMatch[1];
+      console.log('✅ 从 types 提取到块 ID:', blockId);
+      isBlockDrag = true;
+      break;
+    }
 
-        // 尝试提取文档 ID
-        // JSON 格式
-        const jsonMatch = data.match(/"id":"([^"]+)"/);
-        if (jsonMatch) {
-          docId = jsonMatch[1];
-          console.log('✅ 从 JSON 提取到文档 ID:', docId);
-          break;
+    // 备用：直接匹配块 ID 格式（14位数字-连字符-小写字母数字）
+    const idMatch = type.match(/(\d{14}-[a-z0-9]{7})/);
+    if (idMatch) {
+      blockId = idMatch[1];
+      console.log('✅ 从 types 提取到 ID（备用格式）:', blockId);
+      isBlockDrag = true;
+      break;
+    }
+  }
+
+  // 方式 2: 如果从 types 提取失败，尝试从数据内容提取
+  if (!blockId) {
+    console.log('📦 从 types 提取失败，尝试从数据内容提取...');
+    const possibleTypes = ['siyuan/block', 'text/plain', 'text/html', 'Files'];
+
+    for (const type of possibleTypes) {
+      if (transfer.types.includes(type)) {
+        try {
+          const data = transfer.getData(type);
+          console.log(`📦 从 ${type} 获取数据:`, data);
+          console.log(`📦 数据长度:`, data.length);
+          console.log(`📦 数据类型:`, typeof data);
+
+          // 尝试解析 JSON（思源的块拖拽数据）
+          try {
+            const jsonData = JSON.parse(data);
+            console.log('📦 解析后的 JSON:', jsonData);
+
+            // 思源笔记的块拖拽数据格式：
+            // 可能是单个块对象：{ id: "xxx", type: "h", ... }
+            // 或者是块数组：[{ id: "xxx", ... }, { id: "yyy", ... }]
+            if (Array.isArray(jsonData)) {
+              // 如果是数组，取第一个块（拖拽多个块时的主块）
+              if (jsonData.length > 0 && jsonData[0].id) {
+                blockId = jsonData[0].id;
+                console.log('✅ 从 JSON 数组提取到第一个 ID:', blockId);
+                break;
+              }
+            } else if (jsonData.id) {
+              // 单个块对象
+              blockId = jsonData.id;
+              console.log('✅ 从 JSON 对象提取到 ID:', blockId);
+              break;
+            }
+          } catch (jsonError) {
+            // 不是 JSON 格式，继续尝试其他方式
+            console.log('⚠️ 不是 JSON 格式，尝试其他方式');
+          }
+
+          // 尝试提取 ID（可能是块 ID 或文档 ID）
+          // JSON 格式
+          const jsonMatch = data.match(/"id":"([^"]+)"/);
+          if (jsonMatch) {
+            // 提取所有匹配的 ID
+            const allIds = data.match(/"id":"([^"]+)"/g);
+            console.log('📦 找到的所有 ID:', allIds);
+            blockId = jsonMatch[1];
+            console.log('✅ 从 JSON 提取到 ID:', blockId);
+            break;
+          }
+
+          // HTML 格式（思源可能使用）
+          const htmlIdMatch = data.match(/data-node-id="([^"]+)"/);
+          if (htmlIdMatch) {
+            blockId = htmlIdMatch[1];
+            console.log('✅ 从 HTML 提取到 ID:', blockId);
+            break;
+          }
+        } catch (error) {
+          console.warn(`⚠️ 读取 ${type} 数据失败:`, error);
         }
-
-        // HTML 格式（思源可能使用）
-        const htmlIdMatch = data.match(/data-node-id="([^"]+)"/);
-        if (htmlIdMatch) {
-          docId = htmlIdMatch[1];
-          console.log('✅ 从 HTML 提取到文档 ID:', docId);
-          break;
-        }
-      } catch (error) {
-        console.warn(`⚠️ 读取 ${type} 数据失败:`, error);
       }
     }
   }
 
   // 方式 2: 从 items 获取（异步）
-  if (!docId && transfer.items.length > 0) {
+  if (!blockId && transfer.items.length > 0) {
     console.log('📦 尝试从 items 获取数据...');
     for (let i = 0; i < transfer.items.length; i++) {
       const item = transfer.items[i];
@@ -1090,11 +1160,11 @@ const handleDrop = async (e: DragEvent) => {
           });
           console.log('📦 item 字符串数据:', data);
 
-          // 提取文档 ID
+          // 提取 ID
           const idMatch = data.match(/"id":"([^"]+)"/) || data.match(/data-node-id="([^"]+)"/);
           if (idMatch) {
-            docId = idMatch[1];
-            console.log('✅ 从 items 提取到文档 ID:', docId);
+            blockId = idMatch[1];
+            console.log('✅ 从 items 提取到 ID:', blockId);
             break;
           }
         } catch (error) {
@@ -1105,22 +1175,67 @@ const handleDrop = async (e: DragEvent) => {
   }
 
   // 方式 3: 从当前激活文档获取（备用方案）
-  if (!docId) {
+  if (!blockId) {
     console.log('📦 使用备用方案：获取激活文档');
-    docId = getActiveDocId();
-    if (docId) {
-      console.log('✅ 从激活窗口获取到文档 ID:', docId);
+    blockId = getActiveDocId();
+    if (blockId) {
+      console.log('✅ 从激活窗口获取到文档 ID:', blockId);
     }
   }
 
-  // 加载文档
-  if (docId) {
-    console.log('🎯 开始加载文档:', docId);
-    await loadTargetDocument(docId);
-    showMessage('✓ 已加载文档', 2000, 'info');
+  // 根据获取到的 ID 加载内容
+  if (blockId) {
+    console.log('🎯 开始处理拖拽内容:', blockId);
+
+    // 检测是否为块拖拽还是文档拖拽
+    // 方法 1: 检查 dataTransfer.types 是否包含 'siyuan/block'
+    if (transfer.types.includes('siyuan/block')) {
+      isBlockDrag = true;
+      console.log('📦 通过 dataTransfer.types 检测到块拖拽');
+    } else {
+      // 方法 2: 通过获取块信息，检查 type 是否为文档类型
+      // 在思源笔记中，文档的 type 为 'd'，其他类型（如段落、标题等）为块
+      try {
+        const block = await api.getBlockByID(blockId);
+        if (block) {
+          console.log('🔍 检查块类型:', { id: blockId, type: block.type, box: block.box });
+
+          // 如果 type 不是 'd'（文档类型），或者是文档但内容为空（说明可能是拖拽的特定块），则认为是块拖拽
+          // 另外检查 dataTransfer.types 包含的特定类型来判断
+          if (block.type !== 'd') {
+            isBlockDrag = true;
+            console.log('📦 通过块类型检测到块拖拽:', block.type);
+          } else if (transfer.types.includes('text/html') && transfer.types.includes('text/plain')) {
+            // 如果是文档类型，但拖拽数据包含 HTML 和纯文本，可能是从内容区拖拽的块
+            // 进一步检查：文档根节点的 content 通常为空或较短，而块有内容
+            const data = transfer.getData('text/plain');
+            if (data && data.length > 0 && !data.startsWith('{')) {
+              // 如果有纯文本数据且不是 JSON，很可能是块内容拖拽
+              isBlockDrag = true;
+              console.log('📦 通过数据格式检测到块拖拽');
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('⚠️ 检查块类型失败:', error);
+        // 如果检查失败，默认作为文档处理
+      }
+    }
+
+    if (isBlockDrag) {
+      // 块拖拽：只加载块内容
+      console.log('📦 确认为块拖拽，加载块内容');
+      await loadTargetBlock(blockId);
+      showMessage('✓ 已加载块内容', 2000, 'info');
+    } else {
+      // 文档拖拽：加载整个文档
+      console.log('📄 确认为文档拖拽，加载文档内容');
+      await loadTargetDocument(blockId);
+      showMessage('✓ 已加载文档', 2000, 'info');
+    }
   } else {
-    console.error('❌ 无法获取文档 ID');
-    showMessage('⚠️ 无法识别拖拽的文档', 3000, 'error');
+    console.error('❌ 无法获取 ID');
+    showMessage('⚠️ 无法识别拖拽的内容', 3000, 'error');
   }
 };
 
@@ -1440,7 +1555,8 @@ const loadTargetDocument = async (docId: string) => {
   editTargetDoc.value = {
     id: docId,
     title: result.title,
-    content: cleanContent
+    content: cleanContent,
+    isBlock: false // 标记为文档
   };
 
   // 保存原始内容用于对比（使用清理后的内容）
@@ -1457,6 +1573,93 @@ const loadTargetDocument = async (docId: string) => {
   lastEditHistory.value = null; // 清理编辑历史
 
   // showMessage(`✓ 已选择文档: ${editTargetDoc.value.title}`, 2000, 'info');
+};
+
+/**
+ * 加载目标块（用于拖拽块时只加载块内容）
+ */
+const loadTargetBlock = async (blockId: string) => {
+  try {
+    console.log('🎯 开始加载块:', blockId);
+
+    // 获取块信息
+    const block = await api.getBlockByID(blockId);
+    if (!block) {
+      console.error('❌ 无法获取块信息');
+      showMessage('无法获取块信息', 3000, 'error');
+      return;
+    }
+
+    console.log('📦 块信息:', { id: block.id, type: block.type, content: block.content, root_id: block.root_id });
+
+    // 获取块的 Markdown 内容
+    let blockContent = await api.getBlockMarkdown(blockId);
+
+    // 备用方案：如果 getBlockMarkdown 失败，尝试使用 block.content
+    if (!blockContent && block.content) {
+      console.warn('⚠️ getBlockMarkdown 返回空，使用 block.content 作为备用');
+      blockContent = block.content;
+
+      // 对于标题块，添加标题标记
+      if (block.type === 'h') {
+        const level = (block as any).headingLevel || 1;
+        const headingPrefix = '#'.repeat(level) + ' ';
+        if (!blockContent.startsWith('#')) {
+          blockContent = headingPrefix + blockContent;
+        }
+      }
+    }
+
+    if (!blockContent) {
+      console.error('❌ 无法获取块内容，blockContent 为空');
+      showMessage('无法获取块内容', 3000, 'error');
+      return;
+    }
+
+    console.log('✅ 块内容获取成功，长度:', blockContent.length);
+
+    // 获取块所属文档的路径（用于显示）
+    const hPath = await api.getHPathByID(block.root_id || blockId);
+    const docName = hPath ? hPath.split('/').pop() : '未命名';
+
+    // 构建块标题
+    const blockTitle = block.content
+      ? `${block.content.substring(0, 30)}${block.content.length > 30 ? '...' : ''}`
+      : '块内容';
+
+    // 移除 frontmatter
+    const cleanContent = removeFrontmatter(blockContent);
+
+    // 保存块信息
+    editTargetDoc.value = {
+      id: blockId,
+      title: `${blockTitle} (${docName})`,
+      content: cleanContent,
+      isBlock: true // 标记为块
+    };
+
+    // 保存原始内容用于对比
+    originalContent.value = cleanContent;
+
+    // 将块内容加载到生成内容区域
+    generatedContent.value = cleanContent;
+    displayedContent.value = cleanContent;
+
+    // 清理编辑模式相关的状态
+    editCustomInput.value = '';
+    aiSuggestions.value = null;
+    plagiarismResult.value = null;
+    lastEditHistory.value = null;
+
+    console.log('✅ 已加载块内容:', {
+      blockId,
+      blockTitle,
+      contentLength: cleanContent.length
+    });
+  } catch (error) {
+    console.error('❌ 加载块失败:', error);
+    showMessage('加载块失败: ' + (error as Error).message, 3000, 'error');
+  }
 };
 
 // 清除目标文档

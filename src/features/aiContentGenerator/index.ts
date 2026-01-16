@@ -185,7 +185,7 @@ ${options.userInput}`;
   }
 
   /**
-   * 调用通义千问API（修复问题2：支持流式输出）
+   * 调用通义千问API
    */
   private async callTongyiAPI(options: GenerateOptions): Promise<string> {
     const apiKey = this.getApiKey();
@@ -218,7 +218,7 @@ ${options.userInput}`;
       }
     };
 
-    // 如果有onChunk回调，使用流式输出（修复问题2）
+    // 如果有onChunk回调，使用流式输出
     if (options.onChunk) {
       return await this.callTongyiStreamAPI(apiUrl, apiKey, requestBody, options.onChunk, options.signal);
     }
@@ -254,7 +254,7 @@ ${options.userInput}`;
   }
 
   /**
-   * 调用通义千问流式API（修复问题2）
+   * 调用通义千问流式API
    */
   private async callTongyiStreamAPI(
     apiUrl: string,
@@ -316,7 +316,6 @@ ${options.userInput}`;
           try {
             const json = JSON.parse(data);
 
-            // 解析通义千问的SSE格式（修复问题2：正确处理增量输出）
             let content = '';
             if (json.output?.choices?.[0]?.message?.content) {
               content = json.output.choices[0].message.content;
@@ -326,7 +325,6 @@ ${options.userInput}`;
 
             if (content) {
               // 因为启用了incremental_output=true，每次返回的就是增量内容
-              // 直接调用onChunk，不需要计算差值（修复问题2）
               console.log('通义千问流式输出:', content);
               onChunk(content);
               fullContent += content;
@@ -473,7 +471,6 @@ ${options.userInput}`;
 
             if (content) {
               chunkCount++;
-              // console.log(`DeepSeek流式输出块${chunkCount}:`, content.substring(0, 50));
               onChunk(content);
               fullContent += content;
             }
@@ -486,7 +483,6 @@ ${options.userInput}`;
       reader.releaseLock();
     }
 
-    // console.log('DeepSeek流式输出完成，总长度:', fullContent.length);
     return fullContent;
   }
 

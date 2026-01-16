@@ -504,8 +504,8 @@
           v-if="!isGenerating && editTargetDoc"
           class="btn-generate-compact"
           @click="handleCustomEdit"
-          :disabled="!editCustomInput.trim()"
-          :title="'执行'"
+          :disabled="!editCustomInput.trim() && !currentPromptName"
+          :title="!editCustomInput.trim() && currentPromptName ? '使用当前提示词生成' : '执行'"
         >
           <svg width="16" height="16">
             <use xlink:href="#iconSparkles"></use>
@@ -1227,8 +1227,9 @@ const handleCustomEdit = async () => {
     return;
   }
 
-  if (!editCustomInput.value.trim()) {
-    showMessage('请输入编辑指令', 2000, 'info');
+  // 如果既没有自定义输入，又没有选择提示词，则提示用户
+  if (!editCustomInput.value.trim() && !currentPromptName.value) {
+    showMessage('请输入编辑指令或选择提示词', 2000, 'info');
     return;
   }
 
@@ -1238,26 +1239,41 @@ const handleCustomEdit = async () => {
   try {
     // 根据是否选择提示词来决定系统提示词
     let finalSystemPrompt = '你是一个专业的文档编辑助手，擅长根据用户指令优化Markdown文档。请直接输出编辑后的完整文档，不要添加任何解释性文字。';
+    let userInput: string;
 
-    if (currentPromptName.value) {
-      // 用户选择了提示词，使用选中的提示词配置
-      finalSystemPrompt = systemPrompt.value;
-      console.log('✅ 编辑模式使用选中的提示词:', currentPromptName.value, {
-        systemPrompt: systemPrompt.value.substring(0, 100) + '...',
-        temperature: temperature.value,
-        maxTokens: maxTokens.value
-      });
-    } else {
-      console.log('⚠️ 编辑模式使用默认提示词，未选择提示词配置');
-    }
+    if (editCustomInput.value.trim()) {
+      // 用户有自定义输入，使用自定义输入
+      if (currentPromptName.value) {
+        // 同时选择了提示词，使用选中的提示词配置
+        finalSystemPrompt = systemPrompt.value;
+        console.log('✅ 编辑模式使用选中的提示词:', currentPromptName.value, {
+          systemPrompt: systemPrompt.value.substring(0, 100) + '...',
+          temperature: temperature.value,
+          maxTokens: maxTokens.value
+        });
+      } else {
+        console.log('⚠️ 编辑模式使用默认提示词，未选择提示词配置');
+      }
 
-    const options: GenerateOptions = {
-      userInput: `请根据以下指令对文档进行编辑。保持Markdown格式，直接输出编辑后的完整文档内容：
+      userInput = `请根据以下指令对文档进行编辑。保持Markdown格式，直接输出编辑后的完整文档内容：
 
 编辑指令：${editCustomInput.value}
 
 原文档：
-${editTargetDoc.value.content}`,
+${editTargetDoc.value.content}`;
+    } else {
+      // 没有自定义输入，但选择了提示词，使用提示词配置直接生成
+      finalSystemPrompt = systemPrompt.value;
+      userInput = `${editTargetDoc.value.content}`;
+      console.log('✅ 编辑模式使用提示词直接生成:', currentPromptName.value, {
+        systemPrompt: systemPrompt.value.substring(0, 100) + '...',
+        temperature: temperature.value,
+        maxTokens: maxTokens.value
+      });
+    }
+
+    const options: GenerateOptions = {
+      userInput,
       systemPrompt: finalSystemPrompt,
       temperature: temperature.value,
       maxTokens: maxTokens.value,

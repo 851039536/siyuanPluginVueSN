@@ -17,7 +17,7 @@ export interface GenerateOptions {
   maxTokens: number;
   context?: string;
   signal?: AbortSignal;
-  onChunk?: (chunk: string) => void; // 流式输出回调（修复问题2：支持打字机效果）
+  onChunk?: (chunk: string) => void; // 流式输出回调
 }
 
 /**
@@ -66,7 +66,7 @@ export class AIContentGenerator {
         position: 'RightTop',
         size: { width: 400, height: 0 },
         icon: 'iconSparkles', // 使用思源内置的AI/魔法图标
-        title: this.plugin.i18n.aiContentGenerator || 'AI信息生成',
+        title: 'AI信息生成',
         show: false,
       },
       data: {},
@@ -104,17 +104,15 @@ export class AIContentGenerator {
    */
   public async generateContent(options: GenerateOptions): Promise<string> {
     if (!options.userInput) {
-      showMessage(this.plugin.i18n.enterInput || '请输入内容', 3000, 'error');
+      showMessage('请输入内容', 3000, 'error');
       return '';
     }
 
-    console.log('开始生成内容，配置:', {
-      provider: this.currentProvider,
-      model: this.currentModel,
-      hasOnChunk: !!options.onChunk
-    });
-
-    showMessage('🤖 AI正在生成内容...', 2000, 'info');
+    // console.log('开始生成内容，配置:', {
+    //   provider: this.currentProvider,
+    //   model: this.currentModel,
+    //   hasOnChunk: !!options.onChunk
+    // });
 
     try {
       const response = await this.callAPI(options);
@@ -122,7 +120,6 @@ export class AIContentGenerator {
       console.log('生成完成，响应长度:', response?.length || 0);
 
       if (response) {
-        showMessage('✓ 生成完成', 2000, 'info');
         return response;
       } else {
         showMessage('生成失败，请重试', 3000, 'error');

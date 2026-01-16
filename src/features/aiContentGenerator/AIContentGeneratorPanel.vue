@@ -1684,8 +1684,22 @@ const applyEdit = async () => {
       timestamp: Date.now()
     };
 
-    // 使用统一的内容处理函数
-    const siyuanContent = processContent(generatedContent.value);
+    let siyuanContent: string;
+
+    // 区分文档和块的处理
+    if (editTargetDoc.value.isBlock) {
+      // 块编辑：只移除 frontmatter，不移除标题
+      const withoutFrontmatter = removeFrontmatter(generatedContent.value);
+      siyuanContent = convertToSiyuanMarkdown(withoutFrontmatter);
+      console.log('📝 块编辑模式，跳过 removeHeadings');
+    } else {
+      // 文档编辑：移除 frontmatter 和标题
+      siyuanContent = processContent(generatedContent.value);
+      console.log('📝 文档编辑模式，使用完整 processContent');
+    }
+
+    console.log('📝 应用内容长度:', siyuanContent.length);
+    console.log('📝 应用内容预览:', siyuanContent.substring(0, 100));
 
     // 使用updateBlock API更新文档内容
     await api.updateBlock('markdown', siyuanContent, editTargetDoc.value.id);

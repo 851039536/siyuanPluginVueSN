@@ -6,6 +6,99 @@
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
   overflow: hidden;
+  position: relative;
+
+  // 拖拽状态样式
+  &.is-dragging {
+    outline: 2px dashed var(--b3-theme-primary);
+    outline-offset: -2px;
+  }
+
+  &.drag-over-block {
+    background: rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.05);
+  }
+
+  &.drag-over-tab {
+    background: rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.08);
+  }
+
+  &.drag-over-tree {
+    background: rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.1);
+  }
+}
+
+// 拖拽遮罩层
+.drag-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.95);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+
+  .drag-overlay-content {
+    text-align: center;
+    color: var(--b3-theme-on-primary);
+    animation: scaleIn 0.3s ease-out;
+
+    svg {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 16px;
+      color: var(--b3-theme-on-primary);
+      animation: bounce 1s ease-in-out infinite;
+    }
+
+    .drag-text {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0 0 8px 0;
+      color: var(--b3-theme-on-primary);
+    }
+
+    .drag-hint {
+      font-size: 14px;
+      margin: 0;
+      opacity: 0.8;
+      color: var(--b3-theme-on-primary);
+    }
+  }
+}
+
+// 拖拽动画
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 // 折叠功能相关样式

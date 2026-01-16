@@ -1,5 +1,24 @@
 <template>
-  <div class="ai-content-panel">
+  <div
+    class="ai-content-panel"
+    :class="{ 'is-dragging': isDragging, ['drag-over-' + dragOverType]: dragOverType }"
+    @dragenter="handleDragEnter"
+    @dragover="handleDragOver"
+    @dragleave="handleDragLeave"
+    @drop="handleDrop"
+    @dragend="handleDragEnd"
+  >
+    <!-- 拖拽提示遮罩 -->
+    <div v-if="isDragging" class="drag-overlay">
+      <div class="drag-overlay-content">
+        <svg width="48" height="48">
+          <use xlink:href="#iconDownload"></use>
+        </svg>
+        <p class="drag-text">{{ getDragText() }}</p>
+        <p class="drag-hint">松开鼠标加载文档</p>
+      </div>
+    </div>
+
     <!-- 顶部工具栏 -->
     <div class="panel-header">
       <div class="header-title">
@@ -606,6 +625,10 @@ const autoLoadEnabled = ref(true); // 是否启用自动加载
 const lastAutoLoadDocId = ref<string | null>(null); // 上次自动加载的文档ID
 const autoLoadDebounceTimer = ref<number | null>(null); // 防抖定时器
 
+// 拖拽相关状态
+const isDragging = ref(false); // 是否正在拖拽
+const dragOverType = ref<'block' | 'tab' | 'tree' | null>(null); // 拖拽类型
+
 // AI智能编辑状态
 const isAnalyzing = ref(false);
 const aiSuggestions = ref<string | null>(null);
@@ -890,6 +913,170 @@ const stopAutoLoadCurrentDoc = () => {
     autoLoadDebounceTimer.value = null;
   }
   document.removeEventListener('click', autoLoadCurrentDoc);
+};
+
+/**
+ * 拖拽进入处理
+ */
+const handleDragEnter = (e: DragEvent) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  console.log('🎯 拖拽进入事件触发');
+
+  // 简化：只要进入面板就显示拖拽状态
+  isDragging.value = true;
+  dragOverType.value = 'block'; // 默认为块类型
+};
+
+/**
+ * 拖拽悬停处理
+ */
+const handleDragOver = (e: DragEvent) => {
+  e.preventDefault();
+  e.stopPropagation();
+};
+
+/**
+ * 拖拽离开处理
+ */
+const handleDragLeave = (e: DragEvent) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const target = e.target as HTMLElement;
+  const panel = target.closest('.ai-content-panel');
+
+  // 只有离开整个面板时才清除状态
+  if (panel && !panel.contains(e.relatedTarget as Node)) {
+    isDragging.value = false;
+    dragOverType.value = null;
+  }
+};
+
+/**
+ * 拖拽放置处理
+ */
+const handleDrop = async (e: DragEvent) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  console.log('🎯 拖拽放置事件触发');
+
+  isDragging.value = false;
+  dragOverType.value = null;
+
+  // 获取拖拽数据
+  const transfer = e.dataTransfer;
+  if (!transfer) {
+    console.warn('⚠️ dataTransfer 为空');
+    return;
+  }
+
+  console.log('📦 dataTransfer:', transfer);
+  console.log('📦 dataTransfer.types:', transfer.types);
+  console.log('📦 dataTransfer.items:', transfer.items);
+
+  // 尝试所有可能的类型
+  let docId: string | null = null;
+
+  // 方式 1: 尝试思源笔记的各种数据类型
+  const possibleTypes = ['siyuan/block', 'text/plain', 'text/html', 'Files'];
+
+  for (const type of possibleTypes) {
+    if (transfer.types.includes(type)) {
+      try {
+        const data = transfer.getData(type);
+        console.log(`📦 从 ${type} 获取数据:`, data);
+
+        // 尝试提取文档 ID
+        // JSON 格式
+        const jsonMatch = data.match(/"id":"([^"]+)"/);
+        if (jsonMatch) {
+          docId = jsonMatch[1];
+          console.log('✅ 从 JSON 提取到文档 ID:', docId);
+          break;
+        }
+
+        // HTML 格式（思源可能使用）
+        const htmlIdMatch = data.match(/data-node-id="([^"]+)"/);
+        if (htmlIdMatch) {
+          docId = htmlIdMatch[1];
+          console.log('✅ 从 HTML 提取到文档 ID:', docId);
+          break;
+        }
+      } catch (error) {
+        console.warn(`⚠️ 读取 ${type} 数据失败:`, error);
+      }
+    }
+  }
+
+  // 方式 2: 从 items 获取（异步）
+  if (!docId && transfer.items.length > 0) {
+    console.log('📦 尝试从 items 获取数据...');
+    for (let i = 0; i < transfer.items.length; i++) {
+      const item = transfer.items[i];
+      console.log(`📦 item[${i}]:`, item.kind, item.type);
+
+      if (item.kind === 'string') {
+        try {
+          const data = await new Promise<string>((resolve) => {
+            item.getAsString(resolve);
+          });
+          console.log('📦 item 字符串数据:', data);
+
+          // 提取文档 ID
+          const idMatch = data.match(/"id":"([^"]+)"/) || data.match(/data-node-id="([^"]+)"/);
+          if (idMatch) {
+            docId = idMatch[1];
+            console.log('✅ 从 items 提取到文档 ID:', docId);
+            break;
+          }
+        } catch (error) {
+          console.warn('⚠️ 读取 item 数据失败:', error);
+        }
+      }
+    }
+  }
+
+  // 方式 3: 从当前激活文档获取（备用方案）
+  if (!docId) {
+    console.log('📦 使用备用方案：获取激活文档');
+    docId = getActiveDocId();
+    if (docId) {
+      console.log('✅ 从激活窗口获取到文档 ID:', docId);
+    }
+  }
+
+  // 加载文档
+  if (docId) {
+    console.log('🎯 开始加载文档:', docId);
+    await loadTargetDocument(docId);
+    showMessage('✓ 已加载文档', 2000, 'info');
+  } else {
+    console.error('❌ 无法获取文档 ID');
+    showMessage('⚠️ 无法识别拖拽的文档', 3000, 'error');
+  }
+};
+
+/**
+ * 拖拽结束处理
+ */
+const handleDragEnd = () => {
+  isDragging.value = false;
+  dragOverType.value = null;
+};
+
+/**
+ * 获取拖拽提示文本
+ */
+const getDragText = () => {
+  const typeMap = {
+    block: '拖拽块',
+    tab: '拖拽标签页',
+    tree: '拖拽文档'
+  };
+  return typeMap[dragOverType.value || 'block'] || '拖拽文档';
 };
 
 /**

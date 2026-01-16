@@ -475,18 +475,34 @@
         </div>
 
         <!-- 目标文档选择 -->
-        <button class="btn-doc-compact" @click="selectTargetDocument" :title="editTargetDoc ? editTargetDoc.title : ('选择文档')">
-          <svg width="14" height="14">
-            <use xlink:href="#iconFile"></use>
-          </svg>
-          <span v-if="editTargetDoc" class="doc-name-compact">{{ editTargetDoc.title }}</span>
-          <span v-else>{{ '选择文档' }}</span>
-          <button v-if="editTargetDoc" class="btn-clear-inline" @click.stop="clearTargetDocument" :title="'清除'">
-            <svg width="10" height="10">
-              <use xlink:href="#iconClose"></use>
+        <div class="doc-selector-wrapper">
+          <button class="btn-doc-compact" @click="selectTargetDocument" :title="editTargetDoc ? editTargetDoc.title : ('选择文档')">
+            <svg width="14" height="14">
+              <use xlink:href="#iconFile"></use>
+            </svg>
+            <span v-if="editTargetDoc" class="doc-name-compact">
+              {{ editTargetDoc.title }}
+              <span v-if="autoLoadEnabled && lastAutoLoadDocId === editTargetDoc.id" class="auto-badge" title="自动加载">自动</span>
+            </span>
+            <span v-else>{{ '选择文档' }}</span>
+            <button v-if="editTargetDoc" class="btn-clear-inline" @click.stop="clearTargetDocument" :title="'清除'">
+              <svg width="10" height="10">
+                <use xlink:href="#iconClose"></use>
+              </svg>
+            </button>
+          </button>
+          <!-- 自动加载开关 -->
+          <button
+            class="btn-auto-load"
+            @click="autoLoadEnabled = !autoLoadEnabled"
+            :class="{ 'active': autoLoadEnabled }"
+            :title="autoLoadEnabled ? '自动加载已开启' : '自动加载已关闭'"
+          >
+            <svg width="12" height="12">
+              <use :xlink:href="autoLoadEnabled ? '#iconFocus' : '#iconPause'"></use>
             </svg>
           </button>
-        </button>
+        </div>
 
         <!-- 编辑模式：自定义输入框 -->
         <textarea
@@ -584,6 +600,11 @@ const originalContent = ref(''); // 文档原始内容
 const isApplying = ref(false);
 const isUndoing = ref(false);
 const isInsertingSubDoc = ref(false); // 插入子文档状态
+
+// 自动获取文档相关状态
+const autoLoadEnabled = ref(true); // 是否启用自动加载
+const lastAutoLoadDocId = ref<string | null>(null); // 上次自动加载的文档ID
+const autoLoadDebounceTimer = ref<number | null>(null); // 防抖定时器
 
 // AI智能编辑状态
 const isAnalyzing = ref(false);
@@ -791,6 +812,84 @@ const getCurrentDocId = async (): Promise<string | null> => {
   // 备用方案：使用激活窗口的文档
   const protyle = document.querySelector('.layout__wnd--active .protyle:not(.fn__none)');
   return protyle?.querySelector('.protyle-background')?.getAttribute('data-node-id') || null;
+};
+
+/**
+ * 获取激活窗口的文档ID
+ */
+const getActiveDocId = (): string | null => {
+  const protyle = document.querySelector('.layout__wnd--active .protyle:not(.fn__none)');
+  return protyle?.querySelector('.protyle-background')?.getAttribute('data-node-id') || null;
+};
+
+/**
+ * 自动加载当前文档（带防抖）
+ */
+const autoLoadCurrentDoc = async () => {
+  if (!autoLoadEnabled.value) return;
+
+  // 清除之前的定时器
+  if (autoLoadDebounceTimer.value) {
+    clearTimeout(autoLoadDebounceTimer.value);
+  }
+
+  // 防抖：500ms 后执行
+  autoLoadDebounceTimer.value = window.setTimeout(async () => {
+    const docId = getActiveDocId();
+    if (!docId) return;
+
+    // 如果和上次加载的文档相同，则跳过
+    if (lastAutoLoadDocId.value === docId) return;
+
+    // 如果用户正在生成内容或手动选择了文档，则不自动切换
+    if (isGenerating.value || (editTargetDoc.value && editTargetDoc.value.id !== docId)) {
+      return;
+    }
+
+    console.log('📄 自动加载文档:', docId);
+    await loadTargetDocument(docId);
+    lastAutoLoadDocId.value = docId;
+  }, 500);
+};
+
+/**
+ * 启动自动加载监听
+ */
+const startAutoLoadCurrentDoc = () => {
+  // 监听窗口激活事件
+  document.addEventListener('click', autoLoadCurrentDoc);
+
+  // 监听标签页切换（通过 MutationObserver 监听 DOM 变化）
+  const observer = new MutationObserver(() => {
+    autoLoadCurrentDoc();
+  });
+
+  // 观察布局变化
+  const layoutEl = document.querySelector('.layout');
+  if (layoutEl) {
+    observer.observe(layoutEl, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class']
+    });
+  }
+
+  // 初始加载当前文档
+  setTimeout(() => {
+    autoLoadCurrentDoc();
+  }, 1000);
+};
+
+/**
+ * 停止自动加载监听
+ */
+const stopAutoLoadCurrentDoc = () => {
+  if (autoLoadDebounceTimer.value) {
+    clearTimeout(autoLoadDebounceTimer.value);
+    autoLoadDebounceTimer.value = null;
+  }
+  document.removeEventListener('click', autoLoadCurrentDoc);
 };
 
 /**
@@ -1798,6 +1897,9 @@ onMounted(async () => {
     await loadSettings();
     await loadCollapsedSections();
   }
+
+  // 启动自动加载当前文档
+  startAutoLoadCurrentDoc();
 });
 
 // 保存设置到存储

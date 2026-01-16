@@ -320,6 +320,12 @@
       min-width: 80px;
     }
 
+    .doc-selector-wrapper {
+      flex: 0 0 auto;
+      min-width: 170px;
+      max-width: 280px;
+    }
+
     .btn-doc-compact {
       flex: 0 0 auto;
       min-width: 120px;
@@ -407,6 +413,94 @@
       margin-left: 4px;
       flex-shrink: 0;
       box-shadow: 0 1px 3px rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.3);
+    }
+
+    // 自动加载徽章
+    .auto-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 1px 4px;
+      background: var(--b3-theme-primary-light);
+      color: var(--b3-theme-primary);
+      border-radius: 3px;
+      font-size: 9px;
+      font-weight: 600;
+      flex-shrink: 0;
+      margin-left: 4px;
+    }
+  }
+
+  // 文档选择器包装（支持自动加载开关）
+  .doc-selector-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    min-width: 140px;
+    max-width: 240px;
+
+    .btn-doc-compact {
+      flex: 1;
+      min-width: 0;
+      max-width: none;
+
+      .doc-name-compact {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+
+    // 自动加载开关按钮
+    .btn-auto-load {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      background: var(--b3-theme-surface);
+      border: 1px solid var(--b3-theme-surface-light);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: var(--b3-theme-on-surface);
+      opacity: 0.5;
+      flex-shrink: 0;
+
+      &:hover {
+        opacity: 0.8;
+        background: var(--b3-theme-surface-light);
+      }
+
+      &.active {
+        opacity: 1;
+        background: var(--b3-theme-primary-light);
+        border-color: var(--b3-theme-primary);
+        color: var(--b3-theme-primary);
+
+        svg {
+          animation: pulse 2s ease-in-out infinite;
+        }
+      }
+
+      svg {
+        width: 12px;
+        height: 12px;
+      }
+    }
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.6;
     }
   }
 

@@ -1,7 +1,6 @@
 import type SiYuanPluginViteVueSN from '@/index'
 import { createApp, type App as VueApp } from 'vue'
 import CodeImageGeneratorPanel from './CodeImageGeneratorPanel.vue'
-import { showMessage } from 'siyuan'
 
 let app: VueApp | null = null
 let container: HTMLElement | null = null

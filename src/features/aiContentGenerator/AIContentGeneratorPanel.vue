@@ -547,7 +547,7 @@ interface GenerateOptions {
   maxTokens: number;
   context?: string;
   signal?: AbortSignal;
-  onChunk?: (chunk: string) => void; // 流式输出回调（修复问题2）
+  onChunk?: (chunk: string) => void; // 流式输出回调
 }
 
 const props = withDefaults(defineProps<Props>(), {

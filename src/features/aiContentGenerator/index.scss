@@ -245,12 +245,42 @@
   }
 }
 
+// 内容显示区域（新布局：在上方）
+.content-display-section {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0; // 允许flex子元素正确收缩
+}
+
+// 主内容区域
+.main-content-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; // 允许flex子元素正确收缩
+}
+
+// 底部输入区域（新布局：在底部）
+.bottom-input-section {
+  border-top: 1px solid var(--b3-theme-surface-lighter);
+  background: var(--b3-theme-surface);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0; // 防止底部输入区域被压缩
+}
+
 .input-section {
   padding: 6px 8px;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
 }
 
-// 紧凑工具栏样式
+// 紧凑工具栏样式（底部输入区域）
 .compact-toolbar {
   display: flex;
   align-items: center;
@@ -258,8 +288,13 @@
   width: 100%;
   flex-wrap: wrap;
 
-  // Edit模式特殊布局
+  // 底部输入区域的特殊样式
   &.edit-mode {
+    background: var(--b3-theme-background);
+    border: 1px solid var(--b3-theme-surface-lighter);
+    border-radius: 6px;
+    padding: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     flex-wrap: wrap;
 
     // 确保提示词选择器在上方独占一行
@@ -759,13 +794,14 @@
   }
 }
 
-.output-section {
-  flex: 1;
-  overflow-y: auto;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-}
+// 旧的输出区域样式（已废弃，保留用于向后兼容）
+// .output-section {
+//   flex: 1;
+//   overflow-y: auto;
+//   padding: 10px;
+//   display: flex;
+//   flex-direction: column;
+// }
 
 .loading-state,
 .error-state,
@@ -1181,8 +1217,9 @@
 .ai-edit-toolbar {
   padding: 6px 8px;
   background: linear-gradient(135deg, var(--b3-theme-primary-lightest) 0%, var(--b3-theme-surface-lighter) 100%);
-  border-bottom: 1px solid var(--b3-theme-surface-light);
+  border-radius: 6px;
   animation: slideDown 0.3s ease-out;
+  margin-bottom: 4px;
 
   .toolbar-label {
     display: flex;
@@ -1281,13 +1318,13 @@
 
 // AI分析建议面板样式
 .ai-suggestions-panel {
-  margin: 6px 8px;
   padding: 8px;
   background: linear-gradient(135deg, var(--b3-theme-surface) 0%, var(--b3-theme-surface-lighter) 100%);
   border: 1px solid var(--b3-theme-primary-lighter);
   border-radius: 6px;
   animation: slideDown 0.3s ease-out;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  flex-shrink: 0; // 防止面板被压缩
 
   .suggestions-header {
     display: flex;
@@ -1368,13 +1405,13 @@
 
 // AI查重结果面板样式
 .plagiarism-result-panel {
-  margin: 6px 8px;
   padding: 8px;
   background: linear-gradient(135deg, var(--b3-theme-surface) 0%, var(--b3-theme-surface-lighter) 100%);
   border: 1px solid var(--b3-theme-warning-lighter);
   border-radius: 6px;
   animation: slideDown 0.3s ease-out;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  flex-shrink: 0; // 防止面板被压缩
 
   .result-header {
     display: flex;

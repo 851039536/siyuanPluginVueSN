@@ -43,7 +43,8 @@
       "Bash(git push:*)",
       "Bash(dir /s /b *.md)",
       "Bash(git checkout src/features/aiContentGenerator/AIContentGeneratorPanel.vue)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "Bash(git clone:*)"
     ],
     "deny": [],
     "ask": []

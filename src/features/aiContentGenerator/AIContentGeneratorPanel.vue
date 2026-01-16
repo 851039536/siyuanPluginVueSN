@@ -265,6 +265,19 @@
                 {{ '应用' }}
               </button>
               <button
+                v-if="editTargetDoc && originalContent && generatedContent && originalContent !== generatedContent"
+                class="btn-action btn-diff-mode"
+                @click="showDiffMode = !showDiffMode"
+                :class="{ active: showDiffMode }"
+                :title="showDiffMode ? '返回预览' : '查看差异'"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24">
+                  <path v-if="!showDiffMode" fill="currentColor" d="M3,13H11V3H3V13M3,21H11V15H3V21M13,21H21V11H13V21M13,3V9H21V3H13Z" />
+                  <path v-else fill="currentColor" d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
+                </svg>
+                {{ showDiffMode ? '预览' : '差异' }}
+              </button>
+              <button
                 class="btn-action btn-insert-subdoc"
                 @click="insertSubDocument"
                 :disabled="!editTargetDoc || isInsertingSubDoc || isGenerating"
@@ -304,8 +317,54 @@
             </div>
           </div>
           <div class="result-content">
-            <!-- 统一预览界面 -->
-            <div class="markdown-preview selectable-content" v-html="renderedDisplayedMarkdown"></div>
+            <!-- 预览模式 -->
+            <div v-if="!showDiffMode" class="markdown-preview selectable-content" v-html="renderedDisplayedMarkdown"></div>
+            <!-- 差异对比模式 -->
+            <div v-else class="diff-view-container">
+              <!-- 差异显示工具栏 -->
+              <div class="diff-view-toolbar">
+                <div class="diff-mode-options">
+                  <button
+                    :class="['diff-mode-btn', { active: diffMode === 'split' }]"
+                    @click="diffMode = 'split'"
+                    title="分栏显示"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24">
+                      <path fill="currentColor" d="M4,4H10V10H4V4M20,4V10H14V4H20M14,20H20V14H14V20M4,14V20H10V14H4Z" />
+                    </svg>
+                    分栏
+                  </button>
+                  <button
+                    :class="['diff-mode-btn', { active: diffMode === 'unified' }]"
+                    @click="diffMode = 'unified'"
+                    title="统一显示"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24">
+                      <path fill="currentColor" d="M2,2V22H22V2H2M20,20H4V4H20V20M8,8H16V10H8V8M8,11H16V13H8V11M8,14H16V16H8V14Z" />
+                    </svg>
+                    统一
+                  </button>
+                </div>
+                <div class="diff-view-info">
+                  <span class="diff-label">原文档 vs AI生成</span>
+                </div>
+              </div>
+              <!-- 差异显示组件 -->
+              <div class="diff-viewer-wrapper">
+                <Diff
+                  :mode="diffMode"
+                  theme="dark"
+                  language="markdown"
+                  :prev="originalContent"
+                  :current="generatedContent"
+                  :folding="false"
+                  :virtual-scroll="false"
+                  :render-added="true"
+                  :render-removed="true"
+                  :hide-line-numbers="false"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -568,6 +627,8 @@ import { showMessage } from 'siyuan';
 import { marked } from 'marked';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/github-dark.css';
+import { Diff } from 'vue-diff';
+import 'vue-diff/dist/index.css';
 import * as api from '@/api';
 import { AIGeneratorStorage, type AIPromptConfig } from './storage';
 
@@ -648,6 +709,10 @@ interface EditHistory {
   timestamp: number;
 }
 const lastEditHistory = ref<EditHistory | null>(null);
+
+// 差异显示模式
+const showDiffMode = ref(false); // 是否显示差异对比模式
+const diffMode = ref<'split' | 'unified'>('split'); // 差异显示模式：分栏或统一
 
 // 对话设置
 const systemPrompt = ref('你是一个专业的内容创作助手，擅长生成结构清晰、格式规范的Markdown文档。请确保输出内容使用标准的Markdown语法。');

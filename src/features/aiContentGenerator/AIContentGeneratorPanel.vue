@@ -563,10 +563,7 @@ const errorMessage = ref('');
 const showSettings = ref(false);
 const abortController = ref<AbortController | null>(null);
 
-// 移动端检测
-const isMobile = ref(false);
-
-// 移动端：输入区域显示状态
+// 输入区域显示状态
 const showInputSection = ref(true);
 
 // 折叠状态管理
@@ -794,12 +791,10 @@ const getCurrentDocId = async (): Promise<string | null> => {
 };
 
 /**
- * 移动端关闭设置面板
+ * 关闭设置面板
  */
-const closeMobileSettings = () => {
-  if (isMobile.value) {
-    showSettings.value = false;
-  }
+const closeSettings = () => {
+  showSettings.value = false;
 };
 
 
@@ -1053,11 +1048,6 @@ const clearContent = () => {
   generatedContent.value = '';
   displayedContent.value = '';
   errorMessage.value = '';
-
-  // 移动端：清除后显示输入区域
-  if (isMobile.value) {
-    showInputSection.value = true;
-  }
 };
 
 // 选择目标文档
@@ -1191,7 +1181,7 @@ const aiEditAction = async (action: 'polish' | 'expand' | 'condense' | 'fix' | '
     return;
   }
 
-  closeMobileSettings();
+  closeSettings();
 
   const actionPrompts = {
     polish: '请对以下文档进行润色优化，保持原有结构，提升语言质量和可读性，使表达更加专业、流畅。保持Markdown格式，直接输出优化后的完整文档内容：',
@@ -1239,7 +1229,7 @@ const handleCustomEdit = async () => {
     return;
   }
 
-  closeMobileSettings();
+  closeSettings();
   startGeneration();
 
   try {
@@ -1286,7 +1276,7 @@ const analyzeDocument = async () => {
     return;
   }
 
-  closeMobileSettings();
+  closeSettings();
   startGeneration(); // 初始化abortController
   isAnalyzing.value = true;
 
@@ -1335,7 +1325,7 @@ const checkPlagiarism = async () => {
     return;
   }
 
-  closeMobileSettings();
+  closeSettings();
   startGeneration(); // 初始化abortController
   isCheckingPlagiarism.value = true;
   plagiarismResult.value = null;
@@ -1520,7 +1510,7 @@ const insertSubDocument = async () => {
 const applySuggestions = async () => {
   if (!editTargetDoc.value || !aiSuggestions.value) return;
 
-  closeMobileSettings();
+  closeSettings();
   startGeneration();
 
   try {

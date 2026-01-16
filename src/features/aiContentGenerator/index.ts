@@ -28,7 +28,6 @@ export class AIContentGenerator {
   private currentProvider: string = 'tongyi';
   private currentModel: string = 'qwen-plus';
   private apiKey: string = '';
-  private customApiEndpoint: string = '';
 
   constructor(plugin: Plugin) {
     this.plugin = plugin;
@@ -37,28 +36,17 @@ export class AIContentGenerator {
     this.currentProvider = settings.aiApiProvider || 'tongyi';
     this.currentModel = settings.aiModel || 'qwen-plus';
     this.apiKey = settings.aiApiKey || '';
-    this.customApiEndpoint = settings.aiCustomEndpoint || '';
   }
 
   /**
    * 更新API配置（由超级面板调用）
    */
-  public updateApiConfig(provider: string, model: string, apiKey: string, customEndpoint: string) {
+  public updateApiConfig(provider: string, model: string, apiKey: string) {
     this.currentProvider = provider;
     this.currentModel = model;
     this.apiKey = apiKey;
-    this.customApiEndpoint = customEndpoint;
-    console.log('AI Content Generator API配置已更新:', { provider, model, customEndpoint });
+    console.log('AI Content Generator API配置已更新:', { provider, model });
   }
-
-  /**
-   * 获取API Key
-   */
-  private getApiKey(): string {
-    return this.apiKey || '';
-  }
-
-
 
   /**
    * 初始化AI内容生成功能
@@ -188,8 +176,7 @@ ${options.userInput}`;
    * 调用通义千问API
    */
   private async callTongyiAPI(options: GenerateOptions): Promise<string> {
-    const apiKey = this.getApiKey();
-    if (!apiKey) {
+    if (!this.apiKey) {
       throw new Error('请先在超级面板中配置API密钥');
     }
 
@@ -220,7 +207,7 @@ ${options.userInput}`;
 
     // 如果有onChunk回调，使用流式输出
     if (options.onChunk) {
-      return await this.callTongyiStreamAPI(apiUrl, apiKey, requestBody, options.onChunk, options.signal);
+      return await this.callTongyiStreamAPI(apiUrl, this.apiKey, requestBody, options.onChunk, options.signal);
     }
 
     // 否则使用普通请求
@@ -228,7 +215,7 @@ ${options.userInput}`;
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        'Authorization': `Bearer ${this.apiKey}`
       },
       body: JSON.stringify(requestBody),
       signal: options.signal
@@ -345,8 +332,7 @@ ${options.userInput}`;
    * 调用DeepSeek API
    */
   private async callDeepSeekAPI(options: GenerateOptions): Promise<string> {
-    const apiKey = this.getApiKey();
-    if (!apiKey) {
+    if (!this.apiKey) {
       throw new Error('请先在超级面板中配置API密钥');
     }
 
@@ -372,14 +358,14 @@ ${options.userInput}`;
     // 如果有onChunk回调，使用流式输出
     if (options.onChunk) {
       requestBody.stream = true;
-      return await this.callDeepSeekStreamAPI(apiUrl, apiKey, requestBody, options.onChunk, options.signal);
+      return await this.callDeepSeekStreamAPI(apiUrl, this.apiKey, requestBody, options.onChunk, options.signal);
     }
 
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        'Authorization': `Bearer ${this.apiKey}`
       },
       body: JSON.stringify(requestBody),
       signal: options.signal

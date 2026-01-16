@@ -1878,3 +1878,110 @@
   opacity: 1;
   transition: max-height 0.3s ease-in, opacity 0.3s ease-in;
 }
+
+// 差异显示模式样式
+.diff-view-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.diff-view-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  background: var(--b3-theme-surface);
+  flex-shrink: 0;
+
+  .diff-mode-options {
+    display: flex;
+    gap: 6px;
+  }
+
+  .diff-mode-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border: 1px solid var(--b3-theme-surface-light);
+    background: var(--b3-theme-background);
+    color: var(--b3-theme-on-background);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 11px;
+    font-weight: 400;
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    &:hover {
+      background: var(--b3-theme-surface-light);
+    }
+
+    &.active {
+      background: var(--b3-theme-primary);
+      color: var(--b3-theme-on-primary);
+      border-color: var(--b3-theme-primary);
+    }
+  }
+
+  .diff-view-info {
+    .diff-label {
+      font-size: 11px;
+      color: var(--b3-theme-on-surface);
+      opacity: 0.7;
+      font-weight: 400;
+    }
+  }
+}
+
+.diff-viewer-wrapper {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+
+  :deep(.vue-diff) {
+    height: 100%;
+    overflow: auto;
+  }
+
+  :deep(.vue-diff *),
+  :deep(.vue-diff .d2h-wrapper),
+  :deep(.vue-diff .d2h-file-wrapper),
+  :deep(.vue-diff .d2h-diff-table),
+  :deep(.vue-diff .d2h-diff-row) {
+    font-size: 12px !important;
+    font-weight: 400;
+  }
+}
+
+// 差异模式切换按钮样式
+.btn-diff-mode {
+  background: var(--b3-theme-info-lighter);
+  color: var(--b3-theme-info);
+  border-color: var(--b3-theme-info-light);
+
+  svg {
+    color: var(--b3-theme-info);
+  }
+
+  &:hover:not(:disabled) {
+    background: var(--b3-theme-info-light);
+  }
+
+  &.active {
+    background: var(--b3-theme-info);
+    color: var(--b3-theme-on-info);
+    border-color: var(--b3-theme-info);
+
+    svg {
+      color: var(--b3-theme-on-info);
+    }
+  }
+}

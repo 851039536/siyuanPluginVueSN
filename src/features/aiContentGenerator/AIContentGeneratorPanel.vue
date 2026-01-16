@@ -125,8 +125,250 @@
       </div>
     </div>
 
-    <!-- 输入区域 -->
-    <div class="input-section" v-show="showInputSection">
+    <!-- 内容显示区域（移到上方） -->
+    <div class="content-display-section">
+      <!-- AI分析建议面板 -->
+      <div v-if="aiSuggestions" class="ai-suggestions-panel">
+        <div class="suggestions-header">
+          <div class="section-title-wrapper">
+            <svg width="16" height="16"><use xlink:href="#iconLightbulb"></use></svg>
+            <span>{{'AI优化建议' }}</span>
+            <button
+              class="btn-collapse"
+              @click="toggleCollapse('suggestions')"
+              :class="{ 'collapsed': collapsedSections.suggestions }"
+              :title="collapsedSections.suggestions ? '展开建议' : '折叠建议'"
+            >
+              <svg width="14" height="14" class="collapse-icon">
+                <use :xlink:href="collapsedSections.suggestions ? '#iconRight' : '#iconDown'"></use>
+              </svg>
+            </button>
+          </div>
+          <button class="btn-close-suggestions" @click="aiSuggestions = null">
+            <svg width="12" height="12"><use xlink:href="#iconClose"></use></svg>
+          </button>
+        </div>
+        <div class="suggestions-content" :class="{ 'collapsed': collapsedSections.suggestions }">
+          <p class="suggestion-text">{{ aiSuggestions }}</p>
+          <button class="btn-apply-suggestions" @click="applySuggestions" :disabled="isGenerating">
+            {{'应用建议优化' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- AI查重结果面板 -->
+      <div v-if="plagiarismResult" class="plagiarism-result-panel">
+        <div class="result-header">
+          <div class="section-title-wrapper">
+            <svg width="16" height="16"><use xlink:href="#iconSearch"></use></svg>
+            <span>{{'AI查重结果' }}</span>
+            <button
+              class="btn-collapse"
+              @click="toggleCollapse('plagiarism')"
+              :class="{ 'collapsed': collapsedSections.plagiarism }"
+              :title="collapsedSections.plagiarism ? '展开结果' : '折叠结果'"
+            >
+              <svg width="14" height="14" class="collapse-icon">
+                <use :xlink:href="collapsedSections.plagiarism ? '#iconRight' : '#iconDown'"></use>
+              </svg>
+            </button>
+          </div>
+          <button class="btn-close-result" @click="plagiarismResult = null">
+            <svg width="12" height="12"><use xlink:href="#iconClose"></use></svg>
+          </button>
+        </div>
+        <div class="result-content" :class="{ 'collapsed': collapsedSections.plagiarism }">
+          <div class="plagiarism-summary">
+            <div class="summary-item" :class="plagiarismResult.riskLevel === 'low' ? 'low-risk' : plagiarismResult.riskLevel === 'medium' ? 'medium-risk' : 'high-risk'">
+              <span class="summary-label">{{'风险等级' }}:</span>
+              <span class="summary-value">{{ getRiskLevelText(plagiarismResult.riskLevel) }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">{{ '相似度' }}:</span>
+              <span class="summary-value">{{ plagiarismResult.similarityRate }}%</span>
+            </div>
+          </div>
+          <div class="plagiarism-details">
+            <div class="detail-text markdown-preview selectable-content" v-html="renderPlagiarismMarkdown"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 主内容显示区域 -->
+      <div class="main-content-area">
+        <!-- 加载状态（仅在没有内容时显示） -->
+        <div v-if="isGenerating && !displayedContent && !generatedContent" class="loading-state">
+          <div class="loading-spinner-large"></div>
+          <p>{{ 'AI正在思考...' }}</p>
+        </div>
+
+        <!-- 错误提示 -->
+        <div v-else-if="errorMessage && !displayedContent && !generatedContent" class="error-state">
+          <svg width="48" height="48" class="error-icon">
+            <use xlink:href="#iconCloseRound"></use>
+          </svg>
+          <p>{{ errorMessage }}</p>
+        </div>
+
+        <!-- 生成结果（流式输出时也显示） -->
+        <div v-else-if="displayedContent || generatedContent" class="result-container">
+          <div class="result-header">
+            <span class="result-title">
+              📝 {{'编辑内容' }}
+              <span v-if="isGenerating" class="generating-indicator">
+                <span class="dot-flashing"></span>
+                {{ '生成中' }}
+              </span>
+            </span>
+            <div class="result-actions">
+              <!-- 停止生成按钮 -->
+              <button
+                v-if="isGenerating"
+                class="btn-action btn-stop"
+                @click="handleStop"
+                :title="'停止生成'"
+              >
+                <svg width="16" height="16">
+                  <use xlink:href="#iconClose"></use>
+                </svg>
+                {{ '停止' }}
+              </button>
+              <button
+                class="btn-action btn-apply"
+                @click="applyEdit"
+                :disabled="!editTargetDoc || isApplying || isGenerating"
+                :title="'应用编辑'"
+              >
+                <div v-if="isApplying" class="loading-spinner-small"></div>
+                <svg v-else width="16" height="16">
+                  <use xlink:href="#iconCheck"></use>
+                </svg>
+                {{ '应用' }}
+              </button>
+              <button
+                class="btn-action btn-insert-subdoc"
+                @click="insertSubDocument"
+                :disabled="!editTargetDoc || isInsertingSubDoc || isGenerating"
+                :title="'插入子文档'"
+              >
+                <div v-if="isInsertingSubDoc" class="loading-spinner-small"></div>
+                <svg v-else width="16" height="16" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M20,18H4V6H20M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4M13,12H16V15H18V12H21V10H18V7H16V10H13V12Z" />
+                </svg>
+                {{ '子文档' }}
+              </button>
+              <button
+                v-if="lastEditHistory"
+                class="btn-action btn-undo"
+                @click="undoEdit"
+                :disabled="isUndoing"
+                :title="'撤回编辑'"
+              >
+                <div v-if="isUndoing" class="loading-spinner-small"></div>
+                <svg v-else width="16" height="16">
+                  <use xlink:href="#iconUndo"></use>
+                </svg>
+                {{ '撤回' }}
+              </button>
+              <button class="btn-action" @click="copyContent" :title="'复制Markdown'">
+                <svg width="16" height="16">
+                  <use xlink:href="#iconCopy"></use>
+                </svg>
+                {{ '复制' }}
+              </button>
+              <button class="btn-action btn-clear" @click="clearContent">
+                <svg width="16" height="16">
+                  <use xlink:href="#iconTrashcan"></use>
+                </svg>
+                {{ '清除' }}
+              </button>
+            </div>
+          </div>
+          <div class="result-content">
+            <!-- 统一预览界面 -->
+            <div class="markdown-preview selectable-content" v-html="renderedDisplayedMarkdown"></div>
+          </div>
+        </div>
+
+        <!-- 空状态 -->
+        <div v-else class="empty-state">
+          <svg width="64" height="64" class="empty-icon">
+            <use xlink:href="#iconFile"></use>
+          </svg>
+          <p>{{ '请选择文档并使用AI编辑功能' }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部输入区域 -->
+    <div class="bottom-input-section">
+      <!-- AI智能编辑工具栏 -->
+      <div v-if="editTargetDoc" class="ai-edit-toolbar">
+        <div class="toolbar-label">
+          <div class="section-title-wrapper">
+            <svg width="14" height="14">
+              <use xlink:href="#iconSparkles"></use>
+            </svg>
+            <span>{{'AI智能编辑' }}:</span>
+            <button
+              class="btn-collapse"
+              @click="toggleCollapse('aiToolbar')"
+              :class="{ 'collapsed': collapsedSections.aiToolbar }"
+              :title="collapsedSections.aiToolbar ? '展开工具栏' : '折叠工具栏'"
+            >
+              <svg width="14" height="14" class="collapse-icon">
+                <use :xlink:href="collapsedSections.aiToolbar ? '#iconRight' : '#iconDown'"></use>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="toolbar-actions" :class="{ 'collapsed': collapsedSections.aiToolbar }">
+          <button class="btn-ai-action" @click="aiEditAction('polish')" :disabled="isGenerating" :title="'AI润色'">
+            <svg width="14" height="14"><use xlink:href="#iconEdit"></use></svg>
+            {{'润色' }}
+          </button>
+          <button class="btn-ai-action" @click="aiEditAction('expand')" :disabled="isGenerating" :title="'扩写内容'">
+            <svg width="14" height="14"><use xlink:href="#iconAdd"></use></svg>
+            {{'扩写' }}
+          </button>
+          <button class="btn-ai-action" @click="aiEditAction('condense')" :disabled="isGenerating" :title="'精简内容'">
+            <svg width="14" height="14"><use xlink:href="#iconMin"></use></svg>
+            {{'精简' }}
+          </button>
+          <button class="btn-ai-action" @click="aiEditAction('fix')" :disabled="isGenerating" :title="'修正错误'">
+            <svg width="14" height="14"><use xlink:href="#iconCheck"></use></svg>
+            {{'纠错' }}
+          </button>
+          <button class="btn-ai-action" @click="aiEditAction('translate')" :disabled="isGenerating" :title="'翻译文档'">
+            <svg width="14" height="14"><use xlink:href="#iconLanguage"></use></svg>
+            {{'翻译' }}
+          </button>
+          <button class="btn-ai-action" @click="aiEditAction('rewrite')" :disabled="isGenerating" :title="'改写文档'">
+            <svg width="14" height="14"><use xlink:href="#iconRefresh"></use></svg>
+            {{'改写' }}
+          </button>
+          <button class="btn-ai-action" @click="aiEditAction('summary')" :disabled="isGenerating" :title="'AI总结文档'">
+            <svg width="14" height="14" viewBox="0 0 24 24">
+              <path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M13,12.5L11.5,14L10,12.5V16H8V12.5L10,14L11.5,12.5L13,14V16H15V12.5L13,12.5Z" />
+            </svg>
+            {{'总结' }}
+          </button>
+          <button class="btn-ai-action btn-analyze" @click="analyzeDocument" :disabled="isGenerating || isAnalyzing" :title="'AI分析建议'">
+            <div v-if="isAnalyzing" class="loading-spinner-tiny"></div>
+            <svg v-else width="14" height="14"><use xlink:href="#iconInfo"></use></svg>
+            {{'智能分析' }}
+          </button>
+          <button v-if="!isCheckingPlagiarism" class="btn-ai-action btn-plagiarism" @click="checkPlagiarism" :disabled="isGenerating" :title="'AI查重'">
+            <svg width="14" height="14"><use xlink:href="#iconSearch"></use></svg>
+            {{'查重' }}
+          </button>
+          <button v-else class="btn-ai-action btn-stop-plagiarism" @click="handleStop" :title="'停止生成'">
+            <svg width="14" height="14"><use xlink:href="#iconClose"></use></svg>
+            {{'停止' }}
+          </button>
+        </div>
+      </div>
+
       <!-- 编辑模式：紧凑工具栏（提示词选择 + 目标文档选择 + 输入框 + 执行按钮） -->
       <div class="compact-toolbar edit-mode">
         <!-- 提示词选择按钮 -->
@@ -280,245 +522,6 @@
           </svg>
         </button>
       </div>
-
-      <!-- AI智能编辑工具栏 -->
-      <div v-if="editTargetDoc" class="ai-edit-toolbar">
-        <div class="toolbar-label">
-          <div class="section-title-wrapper">
-            <svg width="14" height="14">
-              <use xlink:href="#iconSparkles"></use>
-            </svg>
-            <span>{{'AI智能编辑' }}:</span>
-            <button
-              class="btn-collapse"
-              @click="toggleCollapse('aiToolbar')"
-              :class="{ 'collapsed': collapsedSections.aiToolbar }"
-              :title="collapsedSections.aiToolbar ? '展开工具栏' : '折叠工具栏'"
-            >
-              <svg width="14" height="14" class="collapse-icon">
-                <use :xlink:href="collapsedSections.aiToolbar ? '#iconRight' : '#iconDown'"></use>
-              </svg>
-            </button>
-          </div>
-        </div>
-        <div class="toolbar-actions" :class="{ 'collapsed': collapsedSections.aiToolbar }">
-          <button class="btn-ai-action" @click="aiEditAction('polish')" :disabled="isGenerating" :title="'AI润色'">
-            <svg width="14" height="14"><use xlink:href="#iconEdit"></use></svg>
-            {{'润色' }}
-          </button>
-          <button class="btn-ai-action" @click="aiEditAction('expand')" :disabled="isGenerating" :title="'扩写内容'">
-            <svg width="14" height="14"><use xlink:href="#iconAdd"></use></svg>
-            {{'扩写' }}
-          </button>
-          <button class="btn-ai-action" @click="aiEditAction('condense')" :disabled="isGenerating" :title="'精简内容'">
-            <svg width="14" height="14"><use xlink:href="#iconMin"></use></svg>
-            {{'精简' }}
-          </button>
-          <button class="btn-ai-action" @click="aiEditAction('fix')" :disabled="isGenerating" :title="'修正错误'">
-            <svg width="14" height="14"><use xlink:href="#iconCheck"></use></svg>
-            {{'纠错' }}
-          </button>
-          <button class="btn-ai-action" @click="aiEditAction('translate')" :disabled="isGenerating" :title="'翻译文档'">
-            <svg width="14" height="14"><use xlink:href="#iconLanguage"></use></svg>
-            {{'翻译' }}
-          </button>
-          <button class="btn-ai-action" @click="aiEditAction('rewrite')" :disabled="isGenerating" :title="'改写文档'">
-            <svg width="14" height="14"><use xlink:href="#iconRefresh"></use></svg>
-            {{'改写' }}
-          </button>
-          <button class="btn-ai-action" @click="aiEditAction('summary')" :disabled="isGenerating" :title="'AI总结文档'">
-            <svg width="14" height="14" viewBox="0 0 24 24">
-              <path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M13,12.5L11.5,14L10,12.5V16H8V12.5L10,14L11.5,12.5L13,14V16H15V12.5L13,12.5Z" />
-            </svg>
-            {{'总结' }}
-          </button>
-          <button class="btn-ai-action btn-analyze" @click="analyzeDocument" :disabled="isGenerating || isAnalyzing" :title="'AI分析建议'">
-            <div v-if="isAnalyzing" class="loading-spinner-tiny"></div>
-            <svg v-else width="14" height="14"><use xlink:href="#iconInfo"></use></svg>
-            {{'智能分析' }}
-          </button>
-          <button v-if="!isCheckingPlagiarism" class="btn-ai-action btn-plagiarism" @click="checkPlagiarism" :disabled="isGenerating" :title="'AI查重'">
-            <svg width="14" height="14"><use xlink:href="#iconSearch"></use></svg>
-            {{'查重' }}
-          </button>
-          <button v-else class="btn-ai-action btn-stop-plagiarism" @click="handleStop" :title="'停止生成'">
-            <svg width="14" height="14"><use xlink:href="#iconClose"></use></svg>
-            {{'停止' }}
-          </button>
-        </div>
-      </div>
-
-      <!-- AI分析建议面板 -->
-      <div v-if="aiSuggestions" class="ai-suggestions-panel">
-        <div class="suggestions-header">
-          <div class="section-title-wrapper">
-            <svg width="16" height="16"><use xlink:href="#iconLightbulb"></use></svg>
-            <span>{{'AI优化建议' }}</span>
-            <button
-              class="btn-collapse"
-              @click="toggleCollapse('suggestions')"
-              :class="{ 'collapsed': collapsedSections.suggestions }"
-              :title="collapsedSections.suggestions ? '展开建议' : '折叠建议'"
-            >
-              <svg width="14" height="14" class="collapse-icon">
-                <use :xlink:href="collapsedSections.suggestions ? '#iconRight' : '#iconDown'"></use>
-              </svg>
-            </button>
-          </div>
-          <button class="btn-close-suggestions" @click="aiSuggestions = null">
-            <svg width="12" height="12"><use xlink:href="#iconClose"></use></svg>
-          </button>
-        </div>
-        <div class="suggestions-content" :class="{ 'collapsed': collapsedSections.suggestions }">
-          <p class="suggestion-text">{{ aiSuggestions }}</p>
-          <button class="btn-apply-suggestions" @click="applySuggestions" :disabled="isGenerating">
-            {{'应用建议优化' }}
-          </button>
-        </div>
-      </div>
-
-      <!-- AI查重结果面板 -->
-      <div v-if="plagiarismResult" class="plagiarism-result-panel">
-        <div class="result-header">
-          <div class="section-title-wrapper">
-            <svg width="16" height="16"><use xlink:href="#iconSearch"></use></svg>
-            <span>{{'AI查重结果' }}</span>
-            <button
-              class="btn-collapse"
-              @click="toggleCollapse('plagiarism')"
-              :class="{ 'collapsed': collapsedSections.plagiarism }"
-              :title="collapsedSections.plagiarism ? '展开结果' : '折叠结果'"
-            >
-              <svg width="14" height="14" class="collapse-icon">
-                <use :xlink:href="collapsedSections.plagiarism ? '#iconRight' : '#iconDown'"></use>
-              </svg>
-            </button>
-          </div>
-          <button class="btn-close-result" @click="plagiarismResult = null">
-            <svg width="12" height="12"><use xlink:href="#iconClose"></use></svg>
-          </button>
-        </div>
-        <div class="result-content" :class="{ 'collapsed': collapsedSections.plagiarism }">
-          <div class="plagiarism-summary">
-            <div class="summary-item" :class="plagiarismResult.riskLevel === 'low' ? 'low-risk' : plagiarismResult.riskLevel === 'medium' ? 'medium-risk' : 'high-risk'">
-              <span class="summary-label">{{'风险等级' }}:</span>
-              <span class="summary-value">{{ getRiskLevelText(plagiarismResult.riskLevel) }}</span>
-            </div>
-            <div class="summary-item">
-              <span class="summary-label">{{ '相似度' }}:</span>
-              <span class="summary-value">{{ plagiarismResult.similarityRate }}%</span>
-            </div>
-          </div>
-          <div class="plagiarism-details">
-            <div class="detail-text markdown-preview selectable-content" v-html="renderPlagiarismMarkdown"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 输出区域 -->
-    <div class="output-section">
-      <!-- 加载状态（仅在没有内容时显示） -->
-      <div v-if="isGenerating && !displayedContent && !generatedContent" class="loading-state">
-        <div class="loading-spinner-large"></div>
-        <p>{{ 'AI正在思考...' }}</p>
-      </div>
-
-      <!-- 错误提示 -->
-      <div v-else-if="errorMessage && !displayedContent && !generatedContent" class="error-state">
-        <svg width="48" height="48" class="error-icon">
-          <use xlink:href="#iconCloseRound"></use>
-        </svg>
-        <p>{{ errorMessage }}</p>
-      </div>
-
-      <!-- 生成结果（流式输出时也显示） -->
-      <div v-else-if="displayedContent || generatedContent" class="result-container">
-        <div class="result-header">
-          <span class="result-title">
-            📝 {{'编辑内容' }}
-            <span v-if="isGenerating" class="generating-indicator">
-              <span class="dot-flashing"></span>
-              {{ '生成中' }}
-            </span>
-          </span>
-          <div class="result-actions">
-            <!-- 停止生成按钮 -->
-            <button
-              v-if="isGenerating"
-              class="btn-action btn-stop"
-              @click="handleStop"
-              :title="'停止生成'"
-            >
-              <svg width="16" height="16">
-                <use xlink:href="#iconClose"></use>
-              </svg>
-              {{ '停止' }}
-            </button>
-            <button
-              class="btn-action btn-apply"
-              @click="applyEdit"
-              :disabled="!editTargetDoc || isApplying || isGenerating"
-              :title="'应用编辑'"
-            >
-              <div v-if="isApplying" class="loading-spinner-small"></div>
-              <svg v-else width="16" height="16">
-                <use xlink:href="#iconCheck"></use>
-              </svg>
-              {{ '应用' }}
-            </button>
-            <button
-              class="btn-action btn-insert-subdoc"
-              @click="insertSubDocument"
-              :disabled="!editTargetDoc || isInsertingSubDoc || isGenerating"
-              :title="'插入子文档'"
-            >
-              <div v-if="isInsertingSubDoc" class="loading-spinner-small"></div>
-              <svg v-else width="16" height="16" viewBox="0 0 24 24">
-                <path fill="currentColor" d="M20,18H4V6H20M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4M13,12H16V15H18V12H21V10H18V7H16V10H13V12Z" />
-              </svg>
-              {{ '子文档' }}
-            </button>
-            <button
-              v-if="lastEditHistory"
-              class="btn-action btn-undo"
-              @click="undoEdit"
-              :disabled="isUndoing"
-              :title="'撤回编辑'"
-            >
-              <div v-if="isUndoing" class="loading-spinner-small"></div>
-              <svg v-else width="16" height="16">
-                <use xlink:href="#iconUndo"></use>
-              </svg>
-              {{ '撤回' }}
-            </button>
-            <button class="btn-action" @click="copyContent" :title="'复制Markdown'">
-              <svg width="16" height="16">
-                <use xlink:href="#iconCopy"></use>
-              </svg>
-              {{ '复制' }}
-            </button>
-            <button class="btn-action btn-clear" @click="clearContent">
-              <svg width="16" height="16">
-                <use xlink:href="#iconTrashcan"></use>
-              </svg>
-              {{ '清除' }}
-            </button>
-          </div>
-        </div>
-        <div class="result-content">
-          <!-- 统一预览界面 -->
-          <div class="markdown-preview selectable-content" v-html="renderedDisplayedMarkdown"></div>
-        </div>
-      </div>
-
-      <!-- 空状态 -->
-      <div v-else class="empty-state">
-        <svg width="64" height="64" class="empty-icon">
-          <use xlink:href="#iconFile"></use>
-        </svg>
-        <p>{{ '请选择文档并使用AI编辑功能' }}</p>
-      </div>
     </div>
 
   </div>
@@ -563,8 +566,8 @@ const errorMessage = ref('');
 const showSettings = ref(false);
 const abortController = ref<AbortController | null>(null);
 
-// 输入区域显示状态
-const showInputSection = ref(true);
+// 输入区域显示状态（已废弃，新布局始终显示底部输入）
+// const showInputSection = ref(true);
 
 // 折叠状态管理
 const collapsedSections = ref({

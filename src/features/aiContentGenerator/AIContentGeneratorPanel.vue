@@ -533,7 +533,6 @@ import 'highlight.js/styles/github-dark.css';
 import * as api from '@/api';
 import { AIGeneratorStorage, type AIPromptConfig } from './storage';
 
-// Props
 interface Props {
   i18n: any;
   plugin: any;
@@ -612,7 +611,7 @@ const temperature = ref(0.7);
 const maxTokens = ref(10000); // 问题1：默认改为1万
 const enableTypewriter = ref(true);
 
-// 需求5：新增上下文消息数量配置
+// 上下文消息数量配置
 const contextMessageLimit = ref(1);
 
 // 上下文配置已删除
@@ -713,13 +712,11 @@ const finishGeneration = () => {
  */
 const handleGenerationError = (error: Error, context: string): boolean => {
   if (error.name === 'AbortError') {
-    console.log(`用户取消了${context}`);
     return true;
   }
   console.error(`${context}失败:`, error);
   const message = error.message || `${context}失败`;
   errorMessage.value = message;
-  // showMessage(`${context}失败: ${message}`, 3000, 'error');
   return false;
 };
 
@@ -1077,14 +1074,13 @@ const selectTargetDocument = async () => {
     }
 
     if (!docId) {
-      showMessage('无法获取当前文档，请将光标放在文档中', 3000, 'error');
+      showMessage('无法获取当前文档，请将光标放在文档中', 2000, 'error');
       return;
     }
 
     await loadTargetDocument(docId);
   } catch (error) {
     console.error('选择文档失败:', error);
-    // showMessage('选择文档失败: ' + (error as Error).message, 3000, 'error');
   }
 };
 
@@ -1147,14 +1143,12 @@ const applyEdit = async () => {
     // 使用updateBlock API更新文档内容
     await api.updateBlock('markdown', siyuanContent, editTargetDoc.value.id);
 
-    // showMessage(`✓ 已更新文档: ${editTargetDoc.value.title}`, 2000, 'info');
 
     // 更新原始内容为当前内容
     originalContent.value = generatedContent.value;
     editTargetDoc.value.content = generatedContent.value;
   } catch (error) {
     console.error('应用编辑失败:', error);
-    // showMessage('应用编辑失败: ' + (error as Error).message, 3000, 'error');
   } finally {
     isApplying.value = false;
   }
@@ -1183,7 +1177,6 @@ const undoEdit = async () => {
     lastEditHistory.value = null;
   } catch (error) {
     console.error('撤回编辑失败:', error);
-    showMessage('撤回编辑失败: ' + (error as Error).message, 3000, 'error');
   } finally {
     isUndoing.value = false;
   }
@@ -1621,7 +1614,6 @@ const clearCurrentPrompt = async () => {
     if (storage) {
       await storage.clearCurrentPrompt();
     }
-    // showMessage('✓ 已清除提示词选择', 1500, 'info');
   } catch (error) {
     console.error('清除当前提示词失败:', error);
   }
@@ -1680,7 +1672,7 @@ async function getDocIdByBlockId(blockId: string): Promise<string | null> {
   }
 }
 
-// 加载提示词配置（需求3：持久化保存）
+// 加载提示词配置
 const loadPrompt = (index: number) => {
   const prompt = savedPrompts.value[index];
   if (!prompt) return;

@@ -1242,7 +1242,13 @@ const handleCustomEdit = async () => {
     if (currentPromptName.value) {
       // 用户选择了提示词，使用选中的提示词配置
       finalSystemPrompt = systemPrompt.value;
-      console.log('编辑模式使用选中的提示词:', currentPromptName.value);
+      console.log('✅ 编辑模式使用选中的提示词:', currentPromptName.value, {
+        systemPrompt: systemPrompt.value.substring(0, 100) + '...',
+        temperature: temperature.value,
+        maxTokens: maxTokens.value
+      });
+    } else {
+      console.log('⚠️ 编辑模式使用默认提示词，未选择提示词配置');
     }
 
     const options: GenerateOptions = {
@@ -1666,7 +1672,7 @@ async function getDocIdByBlockId(blockId: string): Promise<string | null> {
 }
 
 // 加载提示词配置
-const loadPrompt = (index: number) => {
+const loadPrompt = async (index: number) => {
   const prompt = savedPrompts.value[index];
   if (!prompt) return;
 
@@ -1679,6 +1685,20 @@ const loadPrompt = (index: number) => {
   // 设置当前选中的提示词名称
   currentPromptName.value = prompt.name;
   showPromptSelector.value = false;
+
+  // 保存当前选中的提示词到存储
+  try {
+    if (storage) {
+      await storage.saveCurrentPrompt(prompt.name);
+      console.log('已加载并保存提示词配置:', prompt.name, {
+        systemPrompt: prompt.systemPrompt.substring(0, 50) + '...',
+        temperature: prompt.temperature,
+        maxTokens: prompt.maxTokens
+      });
+    }
+  } catch (error) {
+    console.error('保存当前提示词失败:', error);
+  }
 };
 
 // 编辑提示词配置
@@ -1813,6 +1833,11 @@ const loadSettings = async () => {
 // 监听设置变化
 watch([systemPrompt, temperature, maxTokens, enableTypewriter, contextMessageLimit], () => {
   saveSettings();
+});
+
+// 监听当前提示词名称变化（调试用）
+watch(currentPromptName, (newName, oldName) => {
+  console.log('📝 currentPromptName 变化:', { old: oldName, new: newName });
 });
 </script>
 

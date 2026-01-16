@@ -34,12 +34,15 @@
       </div>
     </div>
 
-    <!-- 对话设置面板 -->
+    <!-- 提示词配置面板 -->
     <div class="settings-panel" v-if="showSettings">
       <div class="panel-section">
         <div class="section-header">
           <div class="section-title-wrapper">
-            <span>💬 {{ '对话设置' }}</span>
+            <svg width="16" height="16" class="section-icon">
+              <use xlink:href="#iconSparkles"></use>
+            </svg>
+            <span>{{ '提示词配置' }}</span>
             <button
               class="btn-collapse"
               @click="toggleCollapse('settings')"
@@ -58,65 +61,101 @@
           </button>
         </div>
         <div class="section-content" :class="{ 'collapsed': collapsedSections.settings }">
-          <div class="setting-item">
-            <div class="label-row">
-              <label>{{ '系统提示词' }}</label>
+          <!-- 提示词内容 -->
+          <div class="prompt-content-section">
+            <div class="setting-item setting-item-full">
+              <div class="label-row">
+                <label class="setting-label">
+                  <svg width="14" height="14" class="label-icon">
+                    <use xlink:href="#iconEdit"></use>
+                  </svg>
+                  {{ '系统提示词' }}
+                </label>
+              </div>
+              <textarea
+                v-model="systemPrompt"
+                class="prompt-input"
+                :placeholder="'输入系统提示词，定义AI的角色和行为...'"
+                rows="5"
+              ></textarea>
             </div>
-            <textarea
-              v-model="systemPrompt"
-              class="prompt-input"
-              :placeholder="'输入系统提示词，定义AI的角色和行为...'"
-              rows="4"
-            ></textarea>
-          </div>
-          <div class="setting-item">
-            <label>{{  '创造性' }} ({{ temperature }})</label>
-            <input
-              type="range"
-              v-model.number="temperature"
-              min="0"
-              max="2"
-              step="0.1"
-              class="slider"
-            />
-            <div class="slider-hint">
-              <span>{{ '精确' }}</span>
-              <span>{{  '创造' }}</span>
+
+            <!-- 参数配置 -->
+            <div class="params-grid">
+              <div class="setting-item">
+                <label class="setting-label">
+                  <svg width="12" height="12" class="label-icon">
+                    <use xlink:href="#iconHot"></use>
+                  </svg>
+                  {{ '创造性' }}
+                  <span class="value-badge">{{ temperature }}</span>
+                </label>
+                <input
+                  type="range"
+                  v-model.number="temperature"
+                  min="0"
+                  max="2"
+                  step="0.1"
+                  class="slider"
+                />
+                <div class="slider-hint">
+                  <span>{{ '精确' }}</span>
+                  <span>{{ '创造' }}</span>
+                </div>
+              </div>
+
+              <div class="setting-item">
+                <label class="setting-label">
+                  <svg width="12" height="12" class="label-icon">
+                    <use xlink:href="#iconAlignLeft"></use>
+                  </svg>
+                  {{ '最大长度' }}
+                </label>
+                <input
+                  type="number"
+                  v-model.number="maxTokens"
+                  min="100"
+                  max="50000"
+                  step="100"
+                  class="number-input"
+                />
+              </div>
+
+              <div class="setting-item">
+                <label class="setting-label">
+                  <svg width="12" height="12" class="label-icon">
+                    <use xlink:href="#iconList"></use>
+                  </svg>
+                  {{ '上下文' }}
+                  <span class="value-badge">{{ contextMessageLimit }}</span>
+                </label>
+                <input
+                  type="range"
+                  v-model.number="contextMessageLimit"
+                  min="1"
+                  max="10"
+                  step="1"
+                  class="slider"
+                />
+                <div class="slider-hint">
+                  <span>1</span>
+                  <span>10</span>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="setting-item">
-            <label>{{ '最大长度' }}</label>
-            <input
-              type="number"
-              v-model.number="maxTokens"
-              min="100"
-              max="50000"
-              step="100"
-              class="number-input"
-            />
-          </div>
-          <!-- 需求5：上下文消息数量配置 -->
-          <div class="setting-item">
-            <label>{{  '上下文消息数量' }} ({{ contextMessageLimit }})</label>
-            <input
-              type="range"
-              v-model.number="contextMessageLimit"
-              min="1"
-              max="10"
-              step="1"
-              class="slider"
-            />
-            <div class="slider-hint">
-              <span>{{ '最少' }} (1)</span>
-              <span>{{ '最多' }} (10)</span>
-            </div>
-          </div>
-          <!-- 保存提示词配置 -->
-          <div class="setting-item save-prompt-section">
+
+          <!-- 保存操作区域 -->
+          <div class="save-prompt-section">
             <div class="save-prompt-header">
-              <label>{{ '保存当前配置' }}</label>
-              <span v-if="currentPromptName" class="editing-hint">
-                ({{ '编辑' }}: {{ currentPromptName }})
+              <label class="setting-label">
+                <svg width="14" height="14" class="label-icon">
+                  <use xlink:href="#iconSave"></use>
+                </svg>
+                {{ currentPromptName ? '更新配置' : '保存为新配置' }}
+              </label>
+              <span v-if="currentPromptName" class="editing-badge">
+                {{ currentPromptName }}
               </span>
             </div>
             <div class="save-prompt-input-group">
@@ -124,7 +163,7 @@
                 v-model="newPromptName"
                 type="text"
                 class="prompt-name-input"
-                :placeholder="currentPromptName || ( '输入配置名称...')"
+                :placeholder="currentPromptName || '输入配置名称...'"
                 @keydown.enter="saveCurrentPrompt"
                 @focus="onPromptNameFocus"
               />
@@ -134,9 +173,9 @@
                 :disabled="!newPromptName.trim() && !currentPromptName"
               >
                 <svg width="14" height="14">
-                  <use xlink:href="#iconSave"></use>
+                  <use xlink:href="#iconCheck"></use>
                 </svg>
-                {{  '保存' }}
+                {{ currentPromptName ? '更新' : '保存' }}
               </button>
             </div>
           </div>

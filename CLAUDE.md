@@ -96,6 +96,7 @@ Vue 应用结构
 
 - 语言文件：`src/i18n/zh_CN.json` 和 `src/i18n/en_US.json`
 - 通过 `plugin.i18n.featureName.key` 访问
+- json 格式 功能1:{xx:xx }，功能2:{xx:xx }这个方便分类
 
 ## 必须严格执行的规范
 

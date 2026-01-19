@@ -46,7 +46,8 @@
       "Bash(npm run lint)",
       "Bash(git clone:*)",
       "Bash(curl:*)",
-      "Bash(npx vue-tsc:*)"
+      "Bash(npx vue-tsc:*)",
+      "Bash(python -m json.tool:*)"
     ],
     "deny": [],
     "ask": []

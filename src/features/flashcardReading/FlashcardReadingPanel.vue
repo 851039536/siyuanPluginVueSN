@@ -88,7 +88,7 @@
       </div>
 
       <!-- 单卡模式 -->
-      <div class="single-card-view" v-else>
+      <div class="single-card-view" v-else-if="viewMode === 'single'">
         <div class="flashcard-large">
           <div class="card-title-large">{{ currentCard?.title }}</div>
           <div class="card-content-large">{{ currentCard?.content }}</div>
@@ -136,6 +136,75 @@
         </div>
       </div>
 
+      <!-- 统计模式 -->
+      <div class="statistics-view" v-else-if="viewMode === 'statistics'">
+        <!-- 总体统计 -->
+        <div class="stats-overview">
+          <div class="stat-card">
+            <div class="stat-value">{{ statisticsData.totalPractice }}</div>
+            <div class="stat-label">{{ i18n.totalPractice || '总练习次数' }}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ statisticsData.practicedCards }}</div>
+            <div class="stat-label">{{ i18n.practicedCards || '已练习卡片' }}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ statisticsData.totalCards }}</div>
+            <div class="stat-label">{{ i18n.totalCards || '总卡片数' }}</div>
+          </div>
+        </div>
+
+        <!-- 类别统计柱状图 -->
+        <div class="chart-section" v-if="statisticsData.categoryStats.length > 0">
+          <h4 class="chart-title">{{ i18n.categoryStats || '类别统计' }}</h4>
+          <div class="bar-chart">
+            <div
+              v-for="(item, index) in statisticsData.categoryStats"
+              :key="item.category"
+              class="bar-item"
+            >
+              <div class="bar-label">{{ item.category }}</div>
+              <div class="bar-container">
+                <div
+                  class="bar-fill"
+                  :style="{
+                    width: (item.count / statisticsData.categoryStats[0].count * 100) + '%',
+                    backgroundColor: getBarColor(index)
+                  }"
+                >
+                  <span class="bar-value">{{ item.count }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 卡片统计排行榜 -->
+        <div class="chart-section" v-if="statisticsData.cardStats.length > 0">
+          <h4 class="chart-title">{{ i18n.topCards || '练习排行榜' }}</h4>
+          <div class="rank-list">
+            <div
+              v-for="(item, index) in statisticsData.cardStats"
+              :key="item.title"
+              class="rank-item"
+            >
+              <div class="rank-number" :class="{ 'top-three': index < 3 }">{{ index + 1 }}</div>
+              <div class="rank-info">
+                <div class="rank-title">{{ item.title }}</div>
+                <div class="rank-category">{{ item.category }}</div>
+              </div>
+              <div class="rank-count">{{ item.count }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 空状态 -->
+        <div class="empty-stats" v-else>
+          <IconWrapper name="file" :size="48" />
+          <p>{{ i18n.noPracticeData || '暂无练习数据' }}</p>
+        </div>
+      </div>
+
       <!-- 分页控制 -->
       <div class="pagination" v-if="viewMode === 'list' && totalPages > 1">
         <button
@@ -180,6 +249,13 @@
         @click="switchToSingleMode"
       >
         {{ i18n.singleView || '单卡' }}
+      </button>
+      <button
+        class="mode-btn"
+        :class="{ active: viewMode === 'statistics' }"
+        @click="viewMode = 'statistics'"
+      >
+        {{ i18n.statisticsView || '统计' }}
       </button>
     </div>
 
@@ -256,7 +332,7 @@ const cards = ref<Flashcard[]>([])
 const categories = ref<string[]>([])
 const selectedCategory = ref<string>('all')
 const searchQuery = ref<string>('')
-const viewMode = ref<'list' | 'single'>('list')
+const viewMode = ref<'list' | 'single' | 'statistics'>('list')
 const currentPage = ref(1)
 const pageSize = 10
 const currentIndex = ref(0)
@@ -315,6 +391,51 @@ const isFormValid = computed(() => {
          formData.value.content.trim() !== '' &&
          formData.value.category.trim() !== '' &&
          Object.keys(formErrors.value).length === 0
+})
+
+// 统计相关计算属性
+const statisticsData = computed(() => {
+  // 按类别统计
+  const categoryStats = new Map<string, number>()
+  // 按卡片统计
+  const cardStats: Array<{ title: string; category: string; count: number }> = []
+
+  cards.value.forEach(card => {
+    // 类别统计
+    const count = card.practiceCount || 0
+    categoryStats.set(card.category, (categoryStats.get(card.category) || 0) + count)
+
+    // 卡片统计
+    if (count > 0) {
+      cardStats.push({
+        title: card.title,
+        category: card.category,
+        count
+      })
+    }
+  })
+
+  // 按练习次数排序
+  cardStats.sort((a, b) => b.count - a.count)
+
+  // 转换类别统计为数组并排序
+  const categoryArray = Array.from(categoryStats.entries())
+    .map(([category, count]) => ({ category, count }))
+    .sort((a, b) => b.count - a.count)
+
+  // 总练习次数
+  const totalPractice = cards.value.reduce((sum, card) => sum + (card.practiceCount || 0), 0)
+
+  // 已练习卡片数
+  const practicedCards = cards.value.filter(card => (card.practiceCount || 0) > 0).length
+
+  return {
+    totalPractice,
+    practicedCards,
+    totalCards: cards.value.length,
+    categoryStats: categoryArray,
+    cardStats: cardStats.slice(0, 20) // 只显示前20张
+  }
 })
 
 // 方法
@@ -378,6 +499,23 @@ const randomCard = () => {
   } while (newIndex === currentIndex.value && filteredCards.value.length > 1)
   currentIndex.value = newIndex
   playCurrentCard()
+}
+
+/**
+ * 获取柱状图颜色
+ */
+const getBarColor = (index: number): string => {
+  const colors = [
+    'var(--b3-theme-primary)',
+    '#10b981', // green
+    '#f59e0b', // amber
+    '#ef4444', // red
+    '#8b5cf6', // purple
+    '#ec4899', // pink
+    '#06b6d4', // cyan
+    '#84cc16', // lime
+  ]
+  return colors[index % colors.length]
 }
 
 const handleTitleInput = () => {

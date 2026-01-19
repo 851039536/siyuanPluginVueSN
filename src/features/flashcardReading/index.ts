@@ -43,7 +43,7 @@ export class FlashcardReading {
         position: 'RightTop',
         size: { width: 400, height: 0 },
         icon: 'iconCheck', //iconCheck
-        title: this.plugin.i18n.flashcardReading?.title || '单词阅读',
+        title: this.plugin.i18n.flashcardReading?.panelTitle || '单词阅读',
         show: false,
       },
       data: {},

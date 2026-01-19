@@ -4,7 +4,7 @@
     <div class="panel-header">
       <h3 class="panel-title">
         <IconWrapper name="flashcardReading" :size="20" />
-        <span>{{ i18n.title || '单词阅读' }}</span>
+        <span>{{ i18n.panelTitle || '单词阅读' }}</span>
       </h3>
       <div class="header-actions">
         <button class="action-btn" @click="showCreateDialog = true" :title="i18n.addCard || '添加卡片'">
@@ -321,7 +321,7 @@ const loadCards = async () => {
     categories.value = await storage.getCategories()
   } catch (error) {
     console.error('Failed to load cards:', error)
-    showMessage('加载卡片失败', 3000, 'error')
+    showMessage(props.i18n.loadFailed || '加载卡片失败', 3000, 'error')
   }
 }
 
@@ -373,7 +373,7 @@ const handleTitleInput = () => {
 
 const validateTitle = async () => {
   if (!formData.value.title.trim()) {
-    formErrors.value.title = '标题不能为空'
+    formErrors.value.title = props.i18n.titleEmpty || '标题不能为空'
     return
   }
 
@@ -405,16 +405,16 @@ const saveCard = async () => {
   try {
     if (editingCard.value) {
       await storage.updateCard(editingCard.value.id, formData.value)
-      showMessage('卡片已更新', 2000, 'info')
+      showMessage(props.i18n.updateSuccess || '卡片已更新', 2000, 'info')
     } else {
       await storage.createCard(formData.value)
-      showMessage('卡片已创建', 2000, 'info')
+      showMessage(props.i18n.createSuccess || '卡片已创建', 2000, 'info')
     }
 
     closeDialog()
     await loadCards()
   } catch (error: any) {
-    showMessage(error.message || '保存失败', 3000, 'error')
+    showMessage(error.message || props.i18n.saveFailed || '保存失败', 3000, 'error')
   }
 }
 
@@ -442,10 +442,10 @@ const deleteCard = async (card: Flashcard) => {
 
   try {
     await storage.deleteCard(card.id)
-    showMessage('卡片已删除', 2000, 'info')
+    showMessage(props.i18n.deleteSuccess || '卡片已删除', 2000, 'info')
     await loadCards()
   } catch (error: any) {
-    showMessage(error.message || '删除失败', 3000, 'error')
+    showMessage(error.message || props.i18n.deleteFailed || '删除失败', 3000, 'error')
   }
 }
 
@@ -461,7 +461,7 @@ const playWord = (word: string) => {
     speechSynthesis.speak(utterance)
   } catch (error) {
     console.error('Failed to play pronunciation:', error)
-    showMessage('播放失败', 2000, 'error')
+    showMessage(props.i18n.playFailed || '播放失败', 2000, 'error')
   }
 }
 

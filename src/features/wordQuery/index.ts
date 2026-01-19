@@ -62,7 +62,7 @@ export class WordQuery {
         position: 'RightTop',
         size: { width: 360, height: 0 },
         icon: 'iconLanguage', // 使用语言图标
-        title: this.plugin.i18n.wordQuery || '单词查询',
+        title: (this.plugin.i18n as any).wordQuery?.title || '单词查询',
         show: false,
       },
       data: {},

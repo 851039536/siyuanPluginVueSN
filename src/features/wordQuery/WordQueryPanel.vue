@@ -8,25 +8,25 @@
           :class="{ active: currentMode === 'word' }"
           @click="switchMode('word')"
         >
-          📖 {{ props.i18n.wordQuery || '单词查询' }}
+          📖 {{ props.i18n.wordQuery?.title || '单词查询' }}
         </button>
         <button
           class="mode-tab"
           :class="{ active: currentMode === 'translate' }"
           @click="switchMode('translate')"
         >
-          🌐 {{ props.i18n.translation || '长文翻译' }}
+          🌐 {{ props.i18n.wordQuery?.translation || '长文翻译' }}
         </button>
       </div>
 
       <div class="api-key-toggle">
-        <button class="settings-btn" @click="togglePanel('history')" :title="props.i18n.history || '历史记录'">
+        <button class="settings-btn" @click="togglePanel('history')" :title="props.i18n.wordQuery?.history || '历史记录'">
           <svg class="settings-icon"><use xlink:href="#iconHistory"></use></svg>
         </button>
-        <button class="settings-btn" @click="togglePanel('favorites')" :title="props.i18n.favorites || '我的收藏'">
+        <button class="settings-btn" @click="togglePanel('favorites')" :title="props.i18n.wordQuery?.favorites || '我的收藏'">
           <IconWrapper name="star" :size="18" />
         </button>
-        <button class="settings-btn" @click="togglePanel('advanced')" :title="props.i18n.advancedOptions || '高级选项'">
+        <button class="settings-btn" @click="togglePanel('advanced')" :title="props.i18n.wordQuery?.advancedOptions || '高级选项'">
           <IconWrapper name="generalSettings" :size="18" />
         </button>
       </div>
@@ -40,7 +40,7 @@
             v-model="searchWord"
             type="text"
             class="query-input"
-            :placeholder="props.i18n.enterWordPlaceholder || '输入单词或词语，2秒后自动查询...'"
+            :placeholder="props.i18n.wordQuery?.enterWordPlaceholder || '输入单词或词语，2秒后自动查询...'"
             @keyup.enter="handleQuery"
           />
           <button class="query-btn" @click="handleQuery" :disabled="isLoading">
@@ -80,7 +80,7 @@
       <!-- 历史记录面板内容 -->
       <div v-if="activePanel === 'history'" class="panel-content">
         <div v-if="queryHistory.length === 0" class="empty-state">
-          <p>📑 {{ props.i18n.noHistory || '暂无查询历史' }}</p>
+          <p>📑 {{ props.i18n.wordQuery?.noHistory || '暂无查询历史' }}</p>
         </div>
         <div v-else class="item-list">
           <div
@@ -98,7 +98,7 @@
       <!-- 收藏面板内容 -->
       <div v-if="activePanel === 'favorites'" class="panel-content">
         <div v-if="favorites.length === 0" class="empty-state">
-          <p>📚 {{ props.i18n.noFavorites || '暂无收藏单词' }}</p>
+          <p>📚 {{ props.i18n.wordQuery?.noFavorites || '暂无收藏单词' }}</p>
         </div>
         <div v-else class="item-list">
           <div
@@ -121,16 +121,16 @@
       <div v-if="activePanel === 'advanced'" class="panel-content advanced-content">
         <div class="option-group">
           <label class="option-label">
-            <span>🔊 {{ props.i18n.pronunciation || '发音设置' }}</span>
+            <span>🔊 {{ props.i18n.wordQuery?.pronunciation || '发音设置' }}</span>
           </label>
           <div class="option-row">
             <label class="radio-label">
               <input type="radio" value="uk" v-model="pronunciationType" />
-              <span>🇬🇧 {{ props.i18n.britishPronunciation || '英式发音' }}</span>
+              <span>🇬🇧 {{ props.i18n.wordQuery?.britishPronunciation || '英式发音' }}</span>
             </label>
             <label class="radio-label">
               <input type="radio" value="us" v-model="pronunciationType" />
-              <span>🇺🇸 {{ props.i18n.americanPronunciation || '美式发音' }}</span>
+              <span>🇺🇸 {{ props.i18n.wordQuery?.americanPronunciation || '美式发音' }}</span>
             </label>
           </div>
         </div>
@@ -138,14 +138,14 @@
         <div class="option-group">
           <label class="checkbox-label">
             <input type="checkbox" v-model="autoPlayPronunciation" />
-            <span>🎵 {{ props.i18n.autoPlayPronunciation || '查询后自动播放发音' }}</span>
+            <span>🎵 {{ props.i18n.wordQuery?.autoPlayPronunciation || '查询后自动播放发音' }}</span>
           </label>
         </div>
 
         <div class="option-group">
           <label class="checkbox-label">
             <input type="checkbox" v-model="showRelatedWords" />
-            <span>🔗 {{ props.i18n.showRelatedWords || '显示相关词推荐' }}</span>
+            <span>🔗 {{ props.i18n.wordQuery?.showRelatedWords || '显示相关词推荐' }}</span>
           </label>
         </div>
       </div>
@@ -156,7 +156,7 @@
       <!-- 加载状态 -->
       <div v-if="isLoading" class="query-loading">
         <div class="loading-spinner-large"></div>
-        <p>{{ props.i18n.querying || '正在查询...' }}</p>
+        <p>{{ props.i18n.wordQuery?.querying || '正在查询...' }}</p>
       </div>
 
       <!-- 错误提示 -->
@@ -172,27 +172,27 @@
           <div class="dropdown" :class="{ active: showCopyOptions }">
             <button class="action-btn copy-btn" @click="toggleCopyOptions">
               <svg class="action-icon"><use xlink:href="#iconCopy"></use></svg>
-              {{ props.i18n.copy || '复制' }}
+              {{ props.i18n.wordQuery?.copy || '复制' }}
               <svg class="dropdown-icon"><use xlink:href="#iconDown"></use></svg>
             </button>
             <div class="dropdown-menu" v-show="showCopyOptions">
               <button class="dropdown-item" @click="copyResult('all')">
-                {{ props.i18n.copyAll || '复制全部' }}
+                {{ props.i18n.wordQuery?.copyAll || '复制全部' }}
               </button>
               <button class="dropdown-item" @click="copyResult('phonetic')">
-                {{ props.i18n.copyPhonetic || '复制音标' }}
+                {{ props.i18n.wordQuery?.copyPhonetic || '复制音标' }}
               </button>
               <button class="dropdown-item" @click="copyResult('meaning')">
-                {{ props.i18n.copyMeaning || '复制释义' }}
+                {{ props.i18n.wordQuery?.copyMeaning || '复制释义' }}
               </button>
               <button class="dropdown-item" @click="copyResult('english')" v-if="extractContentParts.english">
-                {{ props.i18n.copyEnglish || '复制英文' }}
+                {{ props.i18n.wordQuery?.copyEnglish || '复制英文' }}
               </button>
               <button class="dropdown-item" @click="copyResult('pronunciation')">
-                {{ props.i18n.copyPronunciation || '复制谐音' }}
+                {{ props.i18n.wordQuery?.copyPronunciation || '复制谐音' }}
               </button>
               <button class="dropdown-item" @click="copyResult('example')">
-                {{ props.i18n.copyExample || '复制例句' }}
+                {{ props.i18n.wordQuery?.copyExample || '复制例句' }}
               </button>
             </div>
           </div>
@@ -200,24 +200,24 @@
           <!-- 收藏按钮 -->
           <button class="action-btn favorite-btn" @click="toggleFavorite" :class="{ favorited: currentWordFavorited }">
             <IconWrapper :name="currentWordFavorited ? 'star' : 'starOutline'" :size="16" class="action-icon" />
-            {{ currentWordFavorited ? (props.i18n.unfavorite || '取消收藏') : (props.i18n.favorite || '收藏') }}
+            {{ currentWordFavorited ? (props.i18n.wordQuery?.unfavorite || '取消收藏') : (props.i18n.wordQuery?.favorite || '收藏') }}
           </button>
 
           <!-- 播放发音按钮 -->
           <button class="action-btn play-btn" @click="playPronunciation(searchWord)">
             <svg class="action-icon"><use xlink:href="#iconPlay"></use></svg>
-            {{ props.i18n.play || '播放' }}
+            {{ props.i18n.wordQuery?.play || '播放' }}
           </button>
 
           <!-- 导出按钮 -->
           <button class="action-btn export-btn" @click="exportToSiyuan">
             <svg class="action-icon"><use xlink:href="#iconUpload"></use></svg>
-            {{ props.i18n.export || '导出' }}
+            {{ props.i18n.wordQuery?.export || '导出' }}
           </button>
 
           <button class="action-btn clear-btn" @click="clearResult">
             <svg class="action-icon"><use xlink:href="#iconTrashcan"></use></svg>
-            {{ props.i18n.clear || '清除' }}
+            {{ props.i18n.wordQuery?.clear || '清除' }}
           </button>
         </div>
       </div>
@@ -225,7 +225,7 @@
       <!-- 空状态 -->
       <div v-else class="query-empty">
         <div class="empty-icon">📚</div>
-        <p>{{ props.i18n.enterWordHint || '输入中英文单词或词语查询释义、音标、谐音等信息' }}</p>
+        <p>{{ props.i18n.wordQuery?.enterWordHint || '输入中英文单词或词语查询释义、音标、谐音等信息' }}</p>
       </div>
       </div>
     </div>
@@ -235,42 +235,42 @@
       <div class="translate-container">
         <div class="translate-input-section">
           <div class="section-header">
-            <span class="section-title">{{ props.i18n.sourceText || '原文' }}</span>
+            <span class="section-title">{{ props.i18n.wordQuery?.sourceText || '原文' }}</span>
             <div class="language-selector">
               <select v-model="sourceLanguage" class="language-select">
-                <option value="auto">{{ props.i18n.autoDetect || '自动检测' }}</option>
-                <option value="zh">{{ props.i18n.chinese || '中文' }}</option>
-                <option value="en">{{ props.i18n.english || '英文' }}</option>
-                <option value="ja">{{ props.i18n.japanese || '日文' }}</option>
-                <option value="ko">{{ props.i18n.korean || '韩文' }}</option>
-                <option value="fr">{{ props.i18n.french || '法文' }}</option>
-                <option value="de">{{ props.i18n.german || '德文' }}</option>
-                <option value="es">{{ props.i18n.spanish || '西班牙文' }}</option>
+                <option value="auto">{{ props.i18n.wordQuery?.autoDetect || '自动检测' }}</option>
+                <option value="zh">{{ props.i18n.wordQuery?.chinese || '中文' }}</option>
+                <option value="en">{{ props.i18n.wordQuery?.english || '英文' }}</option>
+                <option value="ja">{{ props.i18n.wordQuery?.japanese || '日文' }}</option>
+                <option value="ko">{{ props.i18n.wordQuery?.korean || '韩文' }}</option>
+                <option value="fr">{{ props.i18n.wordQuery?.french || '法文' }}</option>
+                <option value="de">{{ props.i18n.wordQuery?.german || '德文' }}</option>
+                <option value="es">{{ props.i18n.wordQuery?.spanish || '西班牙文' }}</option>
               </select>
             </div>
           </div>
           <textarea
             v-model="translateText"
             class="translate-textarea"
-            :placeholder="props.i18n.enterTextToTranslate || '输入要翻译的文本，2秒后自动翻译...'"
+            :placeholder="props.i18n.wordQuery?.enterTextToTranslate || '输入要翻译的文本，2秒后自动翻译...'"
             rows="8"
           ></textarea>
           <div class="input-actions">
             <button class="action-btn-small" @click="clearTranslateInput">
               <svg class="action-icon-small"><use xlink:href="#iconTrashcan"></use></svg>
-              {{ props.i18n.clear || '清除' }}
+              {{ props.i18n.wordQuery?.clear || '清除' }}
             </button>
             <button class="action-btn-small primary" @click="handleTranslate" :disabled="isTranslating">
               <div class="loading-spinner-small" v-if="isTranslating"></div>
               <svg class="action-icon-small" v-else><use xlink:href="#iconLanguage"></use></svg>
-              {{ isTranslating ? (props.i18n.translating || '翻译中...') : (props.i18n.translate || '翻译') }}
+              {{ isTranslating ? (props.i18n.wordQuery?.translating || '翻译中...') : (props.i18n.wordQuery?.translate || '翻译') }}
             </button>
           </div>
         </div>
 
         <div class="translate-divider">
           <div class="divider-line"></div>
-          <button class="swap-btn" @click="swapLanguages" :title="props.i18n.swapLanguages || '交换语言'">
+          <button class="swap-btn" @click="swapLanguages" :title="props.i18n.wordQuery?.swapLanguages || '交换语言'">
             <svg class="swap-icon"><use xlink:href="#iconRefresh"></use></svg>
           </button>
           <div class="divider-line"></div>
@@ -278,16 +278,16 @@
 
         <div class="translate-output-section">
           <div class="section-header">
-            <span class="section-title">{{ props.i18n.translatedText || '译文' }}</span>
+            <span class="section-title">{{ props.i18n.wordQuery?.translatedText || '译文' }}</span>
             <div class="language-selector">
               <select v-model="targetLanguage" class="language-select">
-                <option value="zh">{{ props.i18n.chinese || '中文' }}</option>
-                <option value="en">{{ props.i18n.english || '英文' }}</option>
-                <option value="ja">{{ props.i18n.japanese || '日文' }}</option>
-                <option value="ko">{{ props.i18n.korean || '韩文' }}</option>
-                <option value="fr">{{ props.i18n.french || '法文' }}</option>
-                <option value="de">{{ props.i18n.german || '德文' }}</option>
-                <option value="es">{{ props.i18n.spanish || '西班牙文' }}</option>
+                <option value="zh">{{ props.i18n.wordQuery?.chinese || '中文' }}</option>
+                <option value="en">{{ props.i18n.wordQuery?.english || '英文' }}</option>
+                <option value="ja">{{ props.i18n.wordQuery?.japanese || '日文' }}</option>
+                <option value="ko">{{ props.i18n.wordQuery?.korean || '韩文' }}</option>
+                <option value="fr">{{ props.i18n.wordQuery?.french || '法文' }}</option>
+                <option value="de">{{ props.i18n.wordQuery?.german || '德文' }}</option>
+                <option value="es">{{ props.i18n.wordQuery?.spanish || '西班牙文' }}</option>
               </select>
             </div>
           </div>
@@ -296,16 +296,16 @@
           </div>
           <div class="translate-empty" v-else>
             <div class="empty-icon">🌍</div>
-            <p>{{ props.i18n.translationWillAppearHere || '翻译结果将显示在这里' }}</p>
+            <p>{{ props.i18n.wordQuery?.translationWillAppearHere || '翻译结果将显示在这里' }}</p>
           </div>
           <div class="output-actions" v-if="translateResult">
             <button class="action-btn-small" @click="copyTranslation">
               <svg class="action-icon-small"><use xlink:href="#iconCopy"></use></svg>
-              {{ props.i18n.copy || '复制' }}
+              {{ props.i18n.wordQuery?.copy || '复制' }}
             </button>
             <button class="action-btn-small" @click="exportTranslation">
               <svg class="action-icon-small"><use xlink:href="#iconUpload"></use></svg>
-              {{ props.i18n.export || '导出' }}
+              {{ props.i18n.wordQuery?.export || '导出' }}
             </button>
           </div>
         </div>
@@ -542,11 +542,11 @@ const handleQuery = async () => {
         playPronunciation(word);
       }
     } else {
-      errorMessage.value = props.i18n.queryFailed || '查询失败,请重试';
+      errorMessage.value = props.i18n.wordQuery?.queryFailed || '查询失败,请重试';
     }
   } catch (error) {
     console.error('Query error:', error);
-    errorMessage.value = (error as Error).message || props.i18n.unknownError || '未知错误';
+    errorMessage.value = (error as Error).message || props.i18n.wordQuery?.unknownError || '未知错误';
   } finally {
     isLoading.value = false;
   }
@@ -947,7 +947,7 @@ const copyResult = async (type: string = 'all') => {
     showCopyOptions.value = false;
   } catch (error) {
     console.error('Copy failed:', error);
-    showMessage(props.i18n.copyFailed || '复制失败', 3000, 'error');
+    showMessage(props.i18n.wordQuery?.copyFailed || '复制失败', 3000, 'error');
   }
 };
 
@@ -1009,9 +1009,9 @@ const getPanelIcon = (panel: string) => {
 // 获取面板标题
 const getPanelTitle = (panel: string) => {
   const titles: Record<string, () => string> = {
-    history: () => `${props.i18n.queryHistory || '查询历史'} (${queryHistory.value.length})`,
-    favorites: () => `${props.i18n.myFavorites || '我的收藏'} (${favorites.value.length})`,
-    advanced: () => props.i18n.advancedOptions || '高级选项'
+    history: () => `${props.i18n.wordQuery?.queryHistory || '查询历史'} (${queryHistory.value.length})`,
+    favorites: () => `${props.i18n.wordQuery?.myFavorites || '我的收藏'} (${favorites.value.length})`,
+    advanced: () => props.i18n.wordQuery?.advancedOptions || '高级选项'
   };
   return titles[panel]?.() || '';
 };

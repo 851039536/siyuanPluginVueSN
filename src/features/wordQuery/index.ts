@@ -122,15 +122,12 @@ export class WordQuery {
       return '';
     }
 
-    showMessage('🔍 正在查询单词...', 2000, 'info');
-
     try {
       // 根据输入类型构建不同的提示词
       const prompt = this.buildPrompt(word);
       const response = await this.callAPI(prompt);
 
       if (response) {
-        showMessage('✓ 查询完成', 2000, 'info');
         return response;
       } else {
         showMessage('查询失败，请重试', 3000, 'error');

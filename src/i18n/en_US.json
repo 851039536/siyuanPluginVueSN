@@ -882,7 +882,7 @@
   "pleaseSelectWorkspace": "Please select workspace path first",
   "mobileBackupDisabled": "Mobile environment detected, backup feature has been automatically disabled to save data and storage",
   "flashcardReading": {
-    "title": "Flashcard Reading",
+    "panelTitle": "Flashcard Reading",
     "description": "Flashcard-style reading tool with category filtering",
     "addCard": "Add Card",
     "editCard": "Edit Card",
@@ -894,9 +894,11 @@
     "titlePlaceholder": "Title (must be unique)",
     "contentPlaceholder": "Content",
     "categoryPlaceholder": "Category",
+    "selectCategory": "Select category",
     "flipCard": "Click to flip",
     "noCards": "No cards yet",
     "titleDuplicate": "Title already exists",
+    "titleEmpty": "Title cannot be empty",
     "save": "Save",
     "cancel": "Cancel",
     "confirmDelete": "Are you sure you want to delete this card?",
@@ -911,6 +913,14 @@
     "searchPlaceholder": "Search title or content...",
     "clearSearch": "Clear",
     "filtered": "Filtered",
-    "total": "Total"
+    "total": "Total",
+    "loadFailed": "Failed to load cards",
+    "saveSuccess": "Card saved",
+    "updateSuccess": "Card updated",
+    "createSuccess": "Card created",
+    "deleteSuccess": "Card deleted",
+    "saveFailed": "Failed to save",
+    "deleteFailed": "Failed to delete",
+    "playFailed": "Failed to play"
   }
 }

@@ -909,7 +909,7 @@
   "pleaseSelectWorkspace": "请先选择工作区路径",
   "mobileBackupDisabled": "检测到移动端环境，备份功能已自动禁用以节省流量和存储空间",
   "flashcardReading": {
-    "title": "单词阅读",
+    "panelTitle": "单词阅读",
     "description": "闪卡式阅读工具，支持分类和翻转",
     "addCard": "添加卡片",
     "editCard": "编辑卡片",
@@ -921,9 +921,11 @@
     "titlePlaceholder": "标题（不可重复）",
     "contentPlaceholder": "内容",
     "categoryPlaceholder": "类别",
+    "selectCategory": "请选择类别",
     "flipCard": "点击翻转",
     "noCards": "暂无卡片",
     "titleDuplicate": "标题已存在",
+    "titleEmpty": "标题不能为空",
     "save": "保存",
     "cancel": "取消",
     "confirmDelete": "确定要删除这张卡片吗？",
@@ -938,6 +940,14 @@
     "searchPlaceholder": "搜索标题或内容...",
     "clearSearch": "清除",
     "filtered": "筛选",
-    "total": "总计"
+    "total": "总计",
+    "loadFailed": "加载卡片失败",
+    "saveSuccess": "卡片已保存",
+    "updateSuccess": "卡片已更新",
+    "createSuccess": "卡片已创建",
+    "deleteSuccess": "卡片已删除",
+    "saveFailed": "保存失败",
+    "deleteFailed": "删除失败",
+    "playFailed": "播放失败"
   }
 }

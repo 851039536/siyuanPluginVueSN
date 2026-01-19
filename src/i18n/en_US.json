@@ -225,7 +225,11 @@
     "highlightSuccess": "Highlight added",
     "highlightFailed": "Failed to add highlight",
     "cannotGetBlockId": "Cannot get current block ID",
-    "aiProcessInDevelopment": "AI processing feature is under development..."
+    "aiProcessInDevelopment": "AI processing feature is under development...",
+    "queryFlashcard": "Query Flashcard",
+    "noFlashcards": "No flashcard data",
+    "cardNotFound": "Card not found",
+    "queryFailed": "Query failed"
   },
   "normal": "Normal",
   "bold": "Bold",

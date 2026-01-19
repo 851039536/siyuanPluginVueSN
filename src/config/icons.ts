@@ -180,6 +180,12 @@ export const FEATURE_ICONS = {
   flashcardReading: {
     icon: 'mdi:card-bulleted',
     color: '#f472b6'
+  },
+
+  // 查询单词
+  flashcardQuery: {
+    icon: 'mdi:magnify',
+    color: '#3b82f6'
   }
 } as const
 

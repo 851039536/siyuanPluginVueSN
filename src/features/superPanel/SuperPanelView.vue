@@ -590,6 +590,14 @@ const features = computed(() => [
     desc: props.i18n.flashcardReading?.description || '闪卡式阅读工具，支持分类和翻转',
     enabled: props.settings.enableFlashcardReading,
     actions: []
+  },
+  {
+    id: 'flashcardQuery',
+    iconKey: 'flashcardQuery',
+    title: props.i18n.floatingToolbar?.queryFlashcard || '查询单词',
+    desc: '在浮动工具栏中快速查询单词卡片',
+    enabled: props.settings.enableFlashcardQuery,
+    actions: []
   }
 ])
 

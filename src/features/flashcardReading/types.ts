@@ -12,6 +12,7 @@ export interface Flashcard {
   category: string     // 类别
   createdAt: number    // 创建时间戳
   updatedAt: number    // 更新时间戳
+  practiceCount: number // 练习次数
 }
 
 /**

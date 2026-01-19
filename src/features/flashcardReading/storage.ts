@@ -36,7 +36,11 @@ export class FlashcardStorage {
   async getAllCards(): Promise<Flashcard[]> {
     try {
       const data = await this.plugin.loadData(this.STORAGE_KEY)
-      return data || []
+      // 兼容旧数据，为没有 practiceCount 字段的卡片添加默认值
+      return (data || []).map((card: Flashcard) => ({
+        ...card,
+        practiceCount: card.practiceCount ?? 0
+      }))
     } catch (error) {
       console.error('Failed to load cards:', error)
       return []
@@ -98,7 +102,8 @@ export class FlashcardStorage {
       content: data.content,
       category: data.category || '默认',
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
+      practiceCount: 0
     }
 
     const cards = await this.getAllCards()
@@ -167,5 +172,23 @@ export class FlashcardStorage {
     }
 
     return deletedCount
+  }
+
+  /**
+   * 增加卡片练习次数
+   */
+  async incrementPracticeCount(id: string): Promise<boolean> {
+    const cards = await this.getAllCards()
+    const index = cards.findIndex(card => card.id === id)
+
+    if (index === -1) {
+      return false
+    }
+
+    cards[index].practiceCount = (cards[index].practiceCount || 0) + 1
+    cards[index].updatedAt = Date.now()
+
+    await this.plugin.saveData(this.STORAGE_KEY, cards)
+    return true
   }
 }

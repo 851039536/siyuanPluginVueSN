@@ -15,12 +15,12 @@
         <!-- 代码输入区 -->
         <div class="input-section">
           <label class="section-label">
-            {{ contentType === 'code' ? (i18n.codeContent || '代码内容') : (i18n.textContent || '文字内容') }}
+            {{ contentType === 'code' ? (i18nPanel.codeContent || '代码内容') : (i18nPanel.textContent || '文字内容') }}
           </label>
           <textarea
             v-model="codeContent"
             class="code-textarea"
-            :placeholder="contentType === 'code' ? (i18n.codeContentPlaceholder || '请输入代码...') : (i18n.textContentPlaceholder || '请输入文字内容...')"
+            :placeholder="contentType === 'code' ? (i18nPanel.codeContentPlaceholder || '请输入代码...') : (i18nPanel.textContentPlaceholder || '请输入文字内容...')"
             spellcheck="false"
           ></textarea>
         </div>
@@ -30,16 +30,16 @@
           <div class="settings-row">
             <!-- 内容类型 -->
             <div class="setting-item">
-              <label class="setting-label">{{ i18n.contentType || '内容类型' }}</label>
+              <label class="setting-label">{{ i18nPanel.contentType || '内容类型' }}</label>
               <select v-model="contentType" class="setting-select">
-                <option value="code">{{ i18n.codeMode || '代码' }}</option>
-                <option value="text">{{ i18n.textMode || '文字' }}</option>
+                <option value="code">{{ i18nPanel.codeMode || '代码' }}</option>
+                <option value="text">{{ i18nPanel.textMode || '文字' }}</option>
               </select>
             </div>
 
             <!-- 语言选择(代码模式) -->
             <div class="setting-item" v-if="contentType === 'code'">
-              <label class="setting-label">{{ i18n.codeLanguage || '语言' }}</label>
+              <label class="setting-label">{{ i18nPanel.codeLanguage || '语言' }}</label>
               <select v-model="selectedLanguage" class="setting-select">
                 <option value="javascript">JavaScript</option>
                 <option value="typescript">TypeScript</option>
@@ -66,27 +66,27 @@
 
             <!-- 风格选择 -->
             <div class="setting-item">
-              <label class="setting-label">{{ i18n.codeStyle || '风格' }}</label>
+              <label class="setting-label">{{ i18nPanel.codeStyle || '风格' }}</label>
               <select v-model="selectedStyle" class="setting-select">
                 <!-- 代码模式风格 -->
                 <template v-if="contentType === 'code'">
-                  <option value="github">{{ i18n.githubStyle || 'GitHub' }}</option>
-                  <option value="mac">{{ i18n.macStyle || 'Mac' }}</option>
-                  <option value="cartoon">{{ i18n.cartoonStyle || '卡通' }}</option>
-                  <option value="wave">{{ i18n.waveStyle || '波浪渐变' }}</option>
-                  <option value="glass">{{ i18n.glassStyle || '玻璃拟态' }}</option>
-                  <option value="neon">{{ i18n.neonStyle || '霓虹灯' }}</option>
-                  <option value="3d">{{ i18n.threeDStyle || '3D立体' }}</option>
+                  <option value="github">{{ i18nPanel.styles?.github || 'GitHub' }}</option>
+                  <option value="mac">{{ i18nPanel.styles?.mac || 'Mac' }}</option>
+                  <option value="cartoon">{{ i18nPanel.styles?.cartoon || '卡通' }}</option>
+                  <option value="wave">{{ i18nPanel.styles?.wave || '波浪渐变' }}</option>
+                  <option value="glass">{{ i18nPanel.styles?.glass || '玻璃拟态' }}</option>
+                  <option value="neon">{{ i18nPanel.styles?.neon || '霓虹灯' }}</option>
+                  <option value="3d">{{ i18nPanel.styles?.threeD || '3D立体' }}</option>
                 </template>
                 <!-- 文字模式风格 -->
                 <template v-else>
-                  <option value="quote">{{ i18n.quoteStyle || '名人名言' }}</option>
-                  <option value="poetry">{{ i18n.poetryStyle || '诗词意境' }}</option>
-                  <option value="note">{{ i18n.noteStyle || '手写便签' }}</option>
-                  <option value="poster">{{ i18n.posterStyle || '激励海报' }}</option>
-                  <option value="card">{{ i18n.cardStyle || '引用卡片' }}</option>
-                  <option value="newspaper">{{ i18n.newspaperStyle || '复古报纸' }}</option>
-                  <option value="gradient">{{ i18n.gradientTextStyle || '渐变文字' }}</option>
+                  <option value="quote">{{ i18nPanel.styles?.quote || '名人名言' }}</option>
+                  <option value="poetry">{{ i18nPanel.styles?.poetry || '诗词意境' }}</option>
+                  <option value="note">{{ i18nPanel.styles?.note || '手写便签' }}</option>
+                  <option value="poster">{{ i18nPanel.styles?.poster || '激励海报' }}</option>
+                  <option value="card">{{ i18nPanel.styles?.card || '引用卡片' }}</option>
+                  <option value="newspaper">{{ i18nPanel.styles?.newspaper || '复古报纸' }}</option>
+                  <option value="gradient">{{ i18nPanel.styles?.gradientText || '渐变文字' }}</option>
                 </template>
               </select>
             </div>
@@ -95,16 +95,16 @@
           <div class="settings-row">
             <!-- 主题选择 -->
             <div class="setting-item">
-              <label class="setting-label">{{ i18n.codeTheme || '主题' }}</label>
+              <label class="setting-label">{{ i18nPanel.codeTheme || '主题' }}</label>
               <select v-model="selectedTheme" class="setting-select">
-                <option value="light">{{ i18n.lightTheme || '浅色' }}</option>
-                <option value="dark">{{ i18n.darkTheme || '深色' }}</option>
+                <option value="light">{{ i18nPanel.lightTheme || '浅色' }}</option>
+                <option value="dark">{{ i18nPanel.darkTheme || '深色' }}</option>
               </select>
             </div>
 
             <!-- 字体大小 -->
             <div class="setting-item">
-              <label class="setting-label">{{ i18n.fontSize || '字体大小' }}</label>
+              <label class="setting-label">{{ i18nPanel.fontSize || '字体大小' }}</label>
               <div class="size-control">
                 <input
                   v-model.number="fontSize"
@@ -122,7 +122,7 @@
           <!-- 装饰选项 -->
           <div class="decoration-section">
             <div class="decoration-header" @click="showDecorations = !showDecorations">
-              <span class="decoration-title">{{ i18n.decorations || '装饰选项' }}</span>
+              <span class="decoration-title">{{ i18nPanel.decorations || '装饰选项' }}</span>
               <svg class="decoration-toggle" :class="{ expanded: showDecorations }" viewBox="0 0 24 24">
                 <path fill="currentColor" d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"/>
               </svg>
@@ -130,45 +130,45 @@
             <div v-if="showDecorations" class="decoration-options">
               <!-- 水印、作者、时间 -->
               <div class="decoration-group">
-                <div class="decoration-group-title">{{ i18n.metadataOptions || '信息标签' }}</div>
+                <div class="decoration-group-title">{{ i18nPanel.metadataOptions || '信息标签' }}</div>
                 <div class="decoration-row">
                   <label class="decoration-checkbox">
                     <input type="checkbox" v-model="enableWatermark" />
-                    <span>{{ i18n.enableWatermark || '显示水印' }}</span>
+                    <span>{{ i18nPanel.enableWatermark || '显示水印' }}</span>
                   </label>
                   <input
                     v-if="enableWatermark"
                     v-model="watermarkText"
                     class="decoration-input"
-                    :placeholder="i18n.watermarkPlaceholder || '水印文字'"
+                    :placeholder="i18nPanel.watermarkPlaceholder || '水印文字'"
                   />
                 </div>
                 <div class="decoration-row">
                   <label class="decoration-checkbox">
                     <input type="checkbox" v-model="enableAuthor" />
-                    <span>{{ i18n.enableAuthor || '显示作者' }}</span>
+                    <span>{{ i18nPanel.enableAuthor || '显示作者' }}</span>
                   </label>
                   <input
                     v-if="enableAuthor"
                     v-model="authorName"
                     class="decoration-input"
-                    :placeholder="i18n.authorPlaceholder || '作者名称'"
+                    :placeholder="i18nPanel.authorPlaceholder || '作者名称'"
                   />
                 </div>
                 <div class="decoration-row">
                   <label class="decoration-checkbox">
                     <input type="checkbox" v-model="enableTimestamp" />
-                    <span>{{ i18n.enableTimestamp || '显示时间' }}</span>
+                    <span>{{ i18nPanel.enableTimestamp || '显示时间' }}</span>
                   </label>
                 </div>
               </div>
 
               <!-- 高级样式 -->
               <div class="decoration-group">
-                <div class="decoration-group-title">{{ i18n.advancedStyle || '高级样式' }}</div>
+                <div class="decoration-group-title">{{ i18nPanel.advancedStyle || '高级样式' }}</div>
 
                 <div class="decoration-slider-row">
-                  <label class="slider-label">{{ i18n.borderWidth || '边框宽度' }}</label>
+                  <label class="slider-label">{{ i18nPanel.borderWidth || '边框宽度' }}</label>
                   <div class="slider-control">
                     <input
                       v-model.number="borderWidth"
@@ -183,7 +183,7 @@
                 </div>
 
                 <div class="decoration-slider-row">
-                  <label class="slider-label">{{ i18n.borderRadius || '圆角大小' }}</label>
+                  <label class="slider-label">{{ i18nPanel.borderRadius || '圆角大小' }}</label>
                   <div class="slider-control">
                     <input
                       v-model.number="borderRadius"
@@ -198,7 +198,7 @@
                 </div>
 
                 <div class="decoration-slider-row">
-                  <label class="slider-label">{{ i18n.paddingSize || '内边距' }}</label>
+                  <label class="slider-label">{{ i18nPanel.paddingSize || '内边距' }}</label>
                   <div class="slider-control">
                     <input
                       v-model.number="paddingSize"
@@ -213,7 +213,7 @@
                 </div>
 
                 <div class="decoration-slider-row">
-                  <label class="slider-label">{{ i18n.backgroundOpacity || '背景透明度' }}</label>
+                  <label class="slider-label">{{ i18nPanel.backgroundOpacity || '背景透明度' }}</label>
                   <div class="slider-control">
                     <input
                       v-model.number="backgroundOpacity"
@@ -228,7 +228,7 @@
                 </div>
 
                 <div class="decoration-slider-row">
-                  <label class="slider-label">{{ i18n.shadowIntensity || '阴影强度' }}</label>
+                  <label class="slider-label">{{ i18nPanel.shadowIntensity || '阴影强度' }}</label>
                   <div class="slider-control">
                     <input
                       v-model.number="shadowIntensity"
@@ -248,7 +248,7 @@
 
         <!-- 预览区 -->
         <div class="preview-section">
-          <label class="section-label">{{ i18n.preview || '预览' }}</label>
+          <label class="section-label">{{ i18nPanel.preview || '预览' }}</label>
           <div class="preview-container" ref="previewContainer">
             <!-- 代码模式预览 -->
             <div
@@ -311,13 +311,13 @@
           <svg class="btn-icon" viewBox="0 0 24 24">
             <path fill="currentColor" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
           </svg>
-          <span>{{ i18n.copyImage || '复制图片' }}</span>
+          <span>{{ i18nPanel.copyImage || '复制图片' }}</span>
         </button>
         <button class="btn-action btn-primary" @click="downloadImage" :disabled="!codeContent">
           <svg class="btn-icon" viewBox="0 0 24 24">
             <path fill="currentColor" d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"/>
           </svg>
-          <span>{{ i18n.downloadImage || '下载图片' }}</span>
+          <span>{{ i18nPanel.downloadImage || '下载图片' }}</span>
         </button>
       </div>
     </div>
@@ -332,43 +332,44 @@ import hljs from 'highlight.js'
 import 'highlight.js/styles/github.css'
 import 'highlight.js/styles/github-dark.css'
 
-interface I18nKeys {
-  codeImageGenerator?: string
+interface I18nPanelKeys {
+  contentType?: string
+  codeMode?: string
+  textMode?: string
   codeContent?: string
   textContent?: string
   codeContentPlaceholder?: string
   textContentPlaceholder?: string
-  contentType?: string
-  codeMode?: string
-  textMode?: string
   codeLanguage?: string
   codeStyle?: string
-  githubStyle?: string
-  macStyle?: string
-  cartoonStyle?: string
-  waveStyle?: string
-  glassStyle?: string
-  neonStyle?: string
-  threeDStyle?: string
-  quoteStyle?: string
-  poetryStyle?: string
-  noteStyle?: string
-  posterStyle?: string
-  cardStyle?: string
-  newspaperStyle?: string
-  gradientTextStyle?: string
+  styles?: {
+    github?: string
+    mac?: string
+    cartoon?: string
+    wave?: string
+    glass?: string
+    neon?: string
+    threeD?: string
+    quote?: string
+    poetry?: string
+    note?: string
+    poster?: string
+    card?: string
+    newspaper?: string
+    gradientText?: string
+  }
   codeTheme?: string
   lightTheme?: string
   darkTheme?: string
   fontSize?: string
   decorations?: string
   metadataOptions?: string
+  advancedStyle?: string
   enableWatermark?: string
   watermarkPlaceholder?: string
   enableAuthor?: string
   authorPlaceholder?: string
   enableTimestamp?: string
-  advancedStyle?: string
   borderWidth?: string
   borderRadius?: string
   paddingSize?: string
@@ -377,11 +378,16 @@ interface I18nKeys {
   preview?: string
   copyImage?: string
   downloadImage?: string
-  copyFailed?: string
   imageCopied?: string
-  generateFailed?: string
   imageDownloaded?: string
+  generateFailed?: string
+  copyFailed?: string
   downloadFailed?: string
+}
+
+interface I18nKeys {
+  codeImageGenerator?: string
+  codeImageGeneratorPanel?: I18nPanelKeys
 }
 
 interface Props {
@@ -400,6 +406,9 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<Emits>()
+
+// 计算属性：简化 i18n 访问
+const i18nPanel = computed<I18nPanelKeys>(() => props.i18n?.codeImageGeneratorPanel || {})
 
 // 常量定义
 const DEFAULTS = {
@@ -572,22 +581,22 @@ const copyImage = async (): Promise<void> => {
 
     canvas.toBlob(async (blob) => {
       if (!blob) {
-        showMessage(props.i18n.copyFailed || '复制失败', DEFAULTS.messageDuration, 'error')
+        showMessage(props.i18n.codeImageGeneratorPanel?.copyFailed || '复制失败', DEFAULTS.messageDuration, 'error')
         return
       }
 
       try {
         const item = new ClipboardItem({ 'image/png': blob })
         await navigator.clipboard.write([item])
-        showMessage(props.i18n.imageCopied || '图片已复制到剪贴板', DEFAULTS.messageDuration, 'info')
+        showMessage(props.i18n.codeImageGeneratorPanel?.imageCopied || '图片已复制到剪贴板', DEFAULTS.messageDuration, 'info')
       } catch (err) {
         console.error('复制失败:', err instanceof Error ? err.message : String(err))
-        showMessage(props.i18n.copyFailed || '复制失败', DEFAULTS.messageDuration, 'error')
+        showMessage(props.i18n.codeImageGeneratorPanel?.copyFailed || '复制失败', DEFAULTS.messageDuration, 'error')
       }
     }, 'image/png', 1.0) // 使用最高质量
   } catch (error) {
     console.error('生成图片失败:', error instanceof Error ? error.message : String(error))
-    showMessage(props.i18n.generateFailed || '生成图片失败', DEFAULTS.messageDuration, 'error')
+    showMessage(props.i18n.codeImageGeneratorPanel?.generateFailed || '生成图片失败', DEFAULTS.messageDuration, 'error')
   }
 }
 
@@ -602,10 +611,10 @@ const downloadImage = async (): Promise<void> => {
     link.href = canvas.toDataURL('image/png', 1.0) // 使用最高质量
     link.click()
 
-    showMessage(props.i18n.imageDownloaded || '图片已下载', DEFAULTS.messageDuration, 'info')
+    showMessage(props.i18n.codeImageGeneratorPanel?.imageDownloaded || '图片已下载', DEFAULTS.messageDuration, 'info')
   } catch (error) {
     console.error('下载失败:', error instanceof Error ? error.message : String(error))
-    showMessage(props.i18n.downloadFailed || '下载失败', DEFAULTS.messageDuration, 'error')
+    showMessage(props.i18n.codeImageGeneratorPanel?.downloadFailed || '下载失败', DEFAULTS.messageDuration, 'error')
   }
 }
 

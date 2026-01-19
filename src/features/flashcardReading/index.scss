@@ -158,11 +158,13 @@
     gap: 12px;
     overflow: hidden;
     min-height: 0;
+    max-height: 800px;
   }
 
   // 卡片列表模式
   .card-list {
     flex: 1;
+    max-height: 95%;
     overflow-y: auto;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -253,6 +255,7 @@
   // 单卡模式
   .single-card-view {
     flex: 1;
+    max-height: 95%;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -484,7 +487,8 @@
 
   // 统计视图
   .statistics-view {
-    flex: 1;
+    flex: 0 1 auto;
+    max-height: 95%;
     overflow-y: auto;
     padding: 8px 0;
     min-height: 0;

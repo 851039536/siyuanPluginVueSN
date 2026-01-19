@@ -233,7 +233,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { showMessage } from 'siyuan'
 import IconWrapper from '@/components/IconWrapper.vue'
 import type { Plugin } from 'siyuan'
@@ -468,6 +468,24 @@ const playWord = (word: string) => {
 // 生命周期
 onMounted(() => {
   loadCards()
+
+  // 监听数据变化事件（由 PronunciationDialog 触发）
+  const handleDataChanged = () => {
+    loadCards()
+  }
+  window.addEventListener('flashcardDataChanged', handleDataChanged)
+
+  // 保存引用以便在 onUnmounted 中移除
+  ;(window as any).__flashcardDataChangedHandler = handleDataChanged
+})
+
+onUnmounted(() => {
+  // 移除事件监听器
+  const handler = (window as any).__flashcardDataChangedHandler
+  if (handler) {
+    window.removeEventListener('flashcardDataChanged', handler)
+    delete (window as any).__flashcardDataChangedHandler
+  }
 })
 
 // 监听搜索变化，重置分页和索引

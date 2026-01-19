@@ -43,20 +43,42 @@
           </div>
         </div>
 
-        
+
         <!-- 结果展示 -->
         <div class="result-section" v-if="generatedResult">
           <div class="result-header">
-            <label class="result-label">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-            </svg>
-            谐音记忆
-          </label>
-            <button class="btn-copy-result" @click="copyResult" :disabled="!generatedResult" title="复制结果">
-              <svg class="btn-icon"><use xlink:href="#iconCopy"></use></svg>
-            </button>
+            <div class="result-title">
+              <label class="result-label">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+              </svg>
+              谐音记忆
+            </label>
+              <!-- 来源标识 -->
+              <span class="source-badge" :class="{ local: isInFlashcard }">
+                {{ isInFlashcard ? '📚 来自单词本' : '🤖 AI生成' }}
+              </span>
+            </div>
+            <div class="result-actions">
+              <!-- 添加到单词本按钮（仅API生成的结果显示） -->
+              <button
+                v-if="!isInFlashcard"
+                class="btn-add-card"
+                @click="openAddToCardDialog"
+                title="添加到单词本"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                  <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+                添加到单词本
+              </button>
+              <button class="btn-copy-result" @click="copyResult" :disabled="!generatedResult" title="复制结果">
+                <svg class="btn-icon"><use xlink:href="#iconCopy"></use></svg>
+              </button>
+            </div>
           </div>
           <div class="result-content" v-html="formatResult(generatedResult)"></div>
         </div>
@@ -94,13 +116,50 @@
         </button>
       </div>
     </div>
+
+    <!-- 添加到单词本对话框 -->
+    <div class="dialog-overlay add-card-overlay" v-if="showAddToCardDialog" @click.self="showAddToCardDialog = false">
+      <div class="add-card-dialog" @click.stop>
+        <div class="add-card-header">
+          <h4>添加到单词本</h4>
+          <button class="close-btn" @click="showAddToCardDialog = false">
+            <svg class="icon"><use xlink:href="#iconClose"></use></svg>
+          </button>
+        </div>
+        <div class="add-card-body">
+          <div class="add-card-info">
+            <div class="info-item">
+              <span class="info-label">单词:</span>
+              <span class="info-value">{{ inputWord }}</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>选择类别</label>
+            <select v-model="selectedCategory">
+              <option value="">请选择类别</option>
+              <option v-for="cat in availableCategories" :key="cat" :value="cat">
+                {{ cat }}
+              </option>
+            </select>
+          </div>
+        </div>
+        <div class="add-card-footer">
+          <button class="btn-secondary" @click="showAddToCardDialog = false">取消</button>
+          <button class="btn-primary" @click="addToFlashcard" :disabled="!selectedCategory">
+            添加
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, computed } from 'vue'
 import { showMessage } from 'siyuan'
 import type PluginSample from '@/index'
+import { FlashcardStorage } from '@/features/flashcardReading/storage'
+import type { Flashcard } from '@/features/flashcardReading/types'
 
 interface Props {
   visible: boolean
@@ -124,6 +183,17 @@ const emit = defineEmits<Emits>()
 const inputWord = ref(props.content || '')
 const isGenerating = ref(false)
 const generatedResult = ref('')
+const resultSource = ref<'local' | 'api' | ''>('')
+const matchedCard = ref<Flashcard | null>(null)
+const showAddToCardDialog = ref(false)
+const selectedCategory = ref('')
+const availableCategories = ref<string[]>(['C#', '编程单词', 'JavaScript', 'Python', 'TypeScript', 'Vue', 'React', 'Go', 'Rust', 'Java'])
+
+// 初始化 FlashcardStorage
+const flashcardStorage = props.plugin ? new FlashcardStorage(props.plugin) : null
+
+// 检查结果是否已在单词本中
+const isInFlashcard = computed(() => resultSource.value === 'local')
 
 // 监听props变化，自动触发翻译
 watch(() => props.content, async (newContent) => {
@@ -223,8 +293,24 @@ async function generatePronunciation() {
 
   isGenerating.value = true
   generatedResult.value = ''
+  resultSource.value = ''
+  matchedCard.value = null
 
   try {
+    // 优先从本地 FlashcardStorage 查询
+    if (flashcardStorage) {
+      const localResult = await queryFromLocalStorage(inputWord.value)
+      if (localResult) {
+        generatedResult.value = localResult.content
+        resultSource.value = 'local'
+        matchedCard.value = localResult
+        showMessage('📚 从单词本加载', 2000, 'info')
+        isGenerating.value = false
+        return
+      }
+    }
+
+    // 本地未找到，调用 API 生成
     const prompt = buildPrompt(inputWord.value)
     const config = getApiConfig()
 
@@ -249,6 +335,7 @@ async function generatePronunciation() {
 
     if (result) {
       generatedResult.value = result
+      resultSource.value = 'api'
       showMessage('✓ 谐音记忆已生成', 2000, 'info')
     } else {
       showMessage('生成失败，请重试', 3000, 'error')
@@ -259,6 +346,102 @@ async function generatePronunciation() {
     showMessage('🚫 生成失败: ' + errorMsg, 5000, 'error')
   } finally {
     isGenerating.value = false
+  }
+}
+
+/**
+ * 从本地 FlashcardStorage 查询单词
+ * 优先按标题精确匹配，其次按内容包含匹配
+ */
+async function queryFromLocalStorage(word: string): Promise<Flashcard | null> {
+  if (!flashcardStorage) return null
+
+  try {
+    const allCards = await flashcardStorage.getAllCards()
+
+    // 优先精确匹配标题
+    const exactMatch = allCards.find(card =>
+      card.title.toLowerCase() === word.toLowerCase()
+    )
+    if (exactMatch) {
+      return exactMatch
+    }
+
+    // 其次模糊匹配标题
+    const fuzzyMatch = allCards.find(card =>
+      card.title.toLowerCase().includes(word.toLowerCase()) ||
+      word.toLowerCase().includes(card.title.toLowerCase())
+    )
+    if (fuzzyMatch) {
+      return fuzzyMatch
+    }
+
+    return null
+  } catch (error) {
+    console.error('Query from local storage error:', error)
+    return null
+  }
+}
+
+/**
+ * 打开添加到单词本对话框
+ */
+function openAddToCardDialog() {
+  // 加载现有类别
+  loadCategories()
+  selectedCategory.value = '编程单词'
+  showAddToCardDialog.value = true
+}
+
+/**
+ * 加载单词本中的类别
+ */
+async function loadCategories() {
+  if (!flashcardStorage) return
+
+  try {
+    const categories = await flashcardStorage.getCategories()
+    availableCategories.value = ['C#', '编程单词', 'JavaScript', 'Python', 'TypeScript', 'Vue', 'React', 'Go', 'Rust', 'Java', ...categories]
+    // 去重
+    availableCategories.value = Array.from(new Set(availableCategories.value)).sort()
+  } catch (error) {
+    console.error('Failed to load categories:', error)
+  }
+}
+
+/**
+ * 添加到单词本
+ */
+async function addToFlashcard() {
+  if (!flashcardStorage || !inputWord.value || !generatedResult.value) {
+    showMessage('数据不完整', 2000, 'error')
+    return
+  }
+
+  if (!selectedCategory.value) {
+    showMessage('请选择类别', 2000, 'error')
+    return
+  }
+
+  try {
+    await flashcardStorage.createCard({
+      title: inputWord.value,
+      content: generatedResult.value,
+      category: selectedCategory.value
+    })
+
+    resultSource.value = 'local'
+    showAddToCardDialog.value = false
+    showMessage('✓ 已添加到单词本', 2000, 'info')
+
+    // 通知其他组件刷新数据
+    window.dispatchEvent(new CustomEvent('flashcardDataChanged'))
+  } catch (error: any) {
+    if (error.message === 'Title already exists') {
+      showMessage('该单词已存在于单词本中', 3000, 'error')
+    } else {
+      showMessage('添加失败: ' + (error.message || '未知错误'), 3000, 'error')
+    }
   }
 }
 

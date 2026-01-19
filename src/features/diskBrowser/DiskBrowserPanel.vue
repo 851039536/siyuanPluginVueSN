@@ -1,12 +1,12 @@
 <template>
   <div class="disk-browser-panel">
     <div class="disk-browser-header">
-      <h3>{{ i18n.diskBrowserTitle || '本地磁盘浏览器' }}</h3>
+      <h3>{{ i18n.panelTitle || '本地磁盘浏览器' }}</h3>
       <div class="header-actions">
         <span v-if="cacheInfo" class="cache-info" :class="{ expired: isCacheExpired }" :title="getCacheTooltip()">
           {{ getCacheStatus() }}
         </span>
-        <button class="refresh-btn-small" @click="refreshDisks" :disabled="loading" :title="i18n.refresh || '刷新'">
+        <button class="refresh-btn-small" @click="refreshDisks" :disabled="loading" :title="i18n.refreshing || '刷新'">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21C9.73633 21 7.66145 20.1182 6.09277 18.6475" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             <path d="M3 8V12H7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -118,7 +118,7 @@
           <span v-if="getFolderCacheInfo(currentPath || expandedDisk)" class="cache-info-small" :class="{ expired: isFolderCacheExpired(currentPath || expandedDisk) }" :title="getFolderCacheTooltip(currentPath || expandedDisk)">
             {{ getFolderCacheStatus(currentPath || expandedDisk) }}
           </span>
-          <button class="refresh-folder-btn" @click.stop="refreshCurrentFolder()" :disabled="loadingFolders" :title="i18n.refresh || '刷新'">
+          <button class="refresh-folder-btn" @click.stop="refreshCurrentFolder()" :disabled="loadingFolders" :title="i18n.refreshing || '刷新'">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21C9.73633 21 7.66145 20.1182 6.09277 18.6475" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
               <path d="M3 8V12H7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>

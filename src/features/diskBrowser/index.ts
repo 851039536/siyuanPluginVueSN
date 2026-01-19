@@ -22,7 +22,7 @@ export function registerDiskBrowser(plugin: Plugin) {
       position: 'RightTop',
       size: { width: 380, height: 0 }, // 增加宽度以适应两行布局
       icon: 'iconFiles',
-      title: plugin.i18n.diskBrowser || '本地磁盘',
+      title: (plugin.i18n as any).diskBrowser?.panelTitle || '本地磁盘',
       show: false,
     },
     data: {},
@@ -36,7 +36,7 @@ export function registerDiskBrowser(plugin: Plugin) {
       const app = createApp({
         setup() {
           return () => h(DiskBrowserPanel, {
-            i18n: plugin.i18n,
+            i18n: plugin.i18n.diskBrowser,
             storage,
           })
         }

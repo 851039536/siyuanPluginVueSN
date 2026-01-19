@@ -669,7 +669,7 @@ const clearHistory = async () => {
   try {
     const success = await dataOperations.save('word-query-history', queryHistory.value);
     if (success) {
-      showMessage('历史记录已清除', 2000, 'info');
+      // showMessage('历史记录已清除', 2000, 'info');
     } else {
       showMessage('清除历史记录失败 - Plugin 未就绪', 2000, 'error');
     }
@@ -699,7 +699,7 @@ const toggleFavorite = async () => {
       // 取消收藏
       favorites.value = favorites.value.filter(item => item.word !== word);
       currentWordFavorited.value = false;
-      showMessage('已取消收藏', 2000, 'info');
+      // showMessage('已取消收藏', 2000, 'info');
     } else {
       // 添加收藏
       const newItem: FavoriteItem = {
@@ -709,16 +709,14 @@ const toggleFavorite = async () => {
       };
       favorites.value.unshift(newItem);
       currentWordFavorited.value = true;
-      showMessage('已添加到收藏', 2000, 'info');
+      // showMessage('已添加到收藏', 2000, 'info');
     }
     // 立即保存数据
     const success = await dataOperations.save('word-query-favorites', favorites.value);
     if (!success) {
       showMessage('保存收藏失败 - Plugin 未就绪', 2000, 'error');
     }
-    console.log('[WordQuery] Favorites updated:', favorites.value);
   } catch (error) {
-    console.error('[WordQuery] Failed to toggle favorite:', error);
     showMessage('保存收藏失败', 2000, 'error');
   }
 };
@@ -729,10 +727,8 @@ const loadFavorites = async () => {
   // 确保数据是数组，否则使用默认值
   if (saved && Array.isArray(saved)) {
     favorites.value = saved;
-    console.log('[WordQuery] Loaded favorites:', favorites.value);
   } else {
     favorites.value = [];
-    console.log('[WordQuery] No favorites found, initialized empty array');
   }
 };
 
@@ -742,12 +738,11 @@ const clearFavorites = async () => {
   try {
     const success = await dataOperations.save('word-query-favorites', favorites.value);
     if (success) {
-      showMessage('收藏已清除', 2000, 'info');
+      // showMessage('收藏已清除', 2000, 'info');
     } else {
       showMessage('清除收藏失败 - Plugin 未就绪', 2000, 'error');
     }
   } catch (error) {
-    console.error('[WordQuery] Failed to clear favorites:', error);
     showMessage('清除收藏失败', 2000, 'error');
   }
 };
@@ -769,12 +764,11 @@ const removeFavorite = async (word: string) => {
       currentWordFavorited.value = false;
     }
     if (success) {
-      showMessage('已删除', 2000, 'info');
+      // showMessage('已删除', 2000, 'info');
     } else {
       showMessage('删除失败 - Plugin 未就绪', 2000, 'error');
     }
   } catch (error) {
-    console.error('[WordQuery] Failed to remove favorite:', error);
     showMessage('删除失败', 2000, 'error');
   }
 };
@@ -804,7 +798,7 @@ const exportToSiyuan = async () => {
 
     // 复制到剪贴板
     await navigator.clipboard.writeText(content);
-    showMessage('已复制到剪贴板，可直接粘贴到文档', 3000, 'info');
+    // showMessage('已复制到剪贴板，可直接粘贴到文档', 3000, 'info');
   } catch (error) {
     console.error('Export failed:', error);
     showMessage('导出失败', 2000, 'error');
@@ -822,7 +816,6 @@ const advancedOptionsData = computed(() => ({
 const saveAdvancedOptions = async () => {
   try {
     await dataOperations.save('word-query-options', advancedOptionsData.value);
-    console.log('[WordQuery] Advanced options saved:', advancedOptionsData.value);
   } catch (error) {
     console.error('[WordQuery] Failed to save advanced options:', error);
   }
@@ -845,7 +838,6 @@ const loadAdvancedOptions = async () => {
     pronunciationType.value = 'uk';
     autoPlayPronunciation.value = false;
     showRelatedWords.value = true;
-    console.log('[WordQuery] No advanced options found, using defaults');
   }
 };
 
@@ -943,7 +935,7 @@ const copyResult = async (type: string = 'all') => {
   try {
     await navigator.clipboard.writeText(textToCopy);
     const typeText = COPY_TYPES[type as keyof typeof COPY_TYPES] || '';
-    showMessage(`已复制${typeText}到剪贴板`, 2000, 'info');
+    // showMessage(`已复制${typeText}到剪贴板`, 2000, 'info');
     showCopyOptions.value = false;
   } catch (error) {
     console.error('Copy failed:', error);
@@ -987,7 +979,7 @@ const handleTranslate = async () => {
       const result = await props.onQuery(prompt);
       translateResult.value = result;
     }
-    showMessage('✓ 翻译完成', 2000, 'info');
+    // showMessage('✓ 翻译完成', 2000, 'info');
   } catch (error) {
     console.error('Translation error:', error);
     showMessage('翻译失败: ' + (error as Error).message, 3000, 'error');
@@ -1052,7 +1044,7 @@ const copyTranslation = async () => {
 
   try {
     await navigator.clipboard.writeText(translateResult.value);
-    showMessage('已复制到剪贴板', 2000, 'info');
+    // showMessage('已复制到剪贴板', 2000, 'info');
   } catch (error) {
     console.error('Copy failed:', error);
     showMessage('复制失败', 2000, 'error');
@@ -1069,7 +1061,7 @@ const exportTranslation = async () => {
   try {
     const content = `## 翻译结果\n\n### 原文 (${getLanguageName(sourceLanguage.value)})\n${translateText.value}\n\n### 译文 (${getLanguageName(targetLanguage.value)})\n${translateResult.value}`;
     await navigator.clipboard.writeText(content);
-    showMessage('已复制到剪贴板，可直接粘贴到文档', 3000, 'info');
+    // showMessage('已复制到剪贴板，可直接粘贴到文档', 3000, 'info');
   } catch (error) {
     console.error('Export failed:', error);
     showMessage('导出失败', 2000, 'error');
@@ -1120,10 +1112,8 @@ watch([pronunciationType, autoPlayPronunciation, showRelatedWords], async () => 
 const waitForPlugin = async (maxRetries = 20) => {
   for (let i = 0; i < maxRetries; i++) {
     if (props.plugin) {
-      console.log('[WordQuery] Plugin instance ready');
       return true;
     }
-    console.log(`[WordQuery] Waiting for plugin instance... (${i + 1}/${maxRetries})`);
     await new Promise(resolve => setTimeout(resolve, 100));
   }
   console.error('[WordQuery] Plugin instance not available after max retries');
@@ -1146,7 +1136,6 @@ const initializeData = async () => {
       loadFavorites(),
       loadAdvancedOptions()
     ]);
-    console.log('[WordQuery] All data loaded successfully');
   } catch (error) {
     console.error('[WordQuery] Failed to load data:', error);
   }

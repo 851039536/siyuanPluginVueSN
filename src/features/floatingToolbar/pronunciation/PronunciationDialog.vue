@@ -244,8 +244,6 @@ function buildPrompt(text: string): string {
 4. 谐音使用带声调的拼音标注
 5. 严格按照以下格式输出：
 
-#### ${text}
-
 中文：${text}
 英文：[英文翻译]
 音标：[英式音标]
@@ -267,8 +265,6 @@ function buildPrompt(text: string): string {
 1. 使用英式标准发音
 2. 谐音使用带声调的拼音标注
 3. 严格按照以下格式输出：
-
-#### ${text}
 
 单词：${text}
 音标：[英式音标]
@@ -659,9 +655,9 @@ async function callCustomAPI(prompt: string, config: any): Promise<string> {
 
 // 格式化结果显示
 function formatResult(result: string): string {
-  // 将markdown格式转换为HTML
+  // 将markdown格式转换为HTML，移除标题行
   return result
-    .replace(/####\s+(.+)/g, '<h4>$1</h4>')
+    .replace(/####\s+(.+)\n*/g, '') // 移除标题行
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\n/g, '<br/>')
 }

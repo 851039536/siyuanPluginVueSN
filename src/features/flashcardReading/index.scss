@@ -308,6 +308,25 @@
         flex-shrink: 0;
       }
 
+      .card-meta-large {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .practice-count {
+        font-size: 13px;
+        color: var(--b3-theme-primary);
+        background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1);
+        padding: 4px 12px;
+        border-radius: 4px;
+        display: inline-block;
+        flex-shrink: 0;
+        font-weight: 500;
+      }
+
       .play-btn-large {
         display: flex;
         align-items: center;

@@ -69,7 +69,7 @@
           <div class="card-header">
             <div class="card-title">{{ card.title }}</div>
             <div class="card-actions">
-              <button class="icon-btn play-btn" @click="playWord(card.title)" :title="i18n.play || '播放'">
+              <button class="icon-btn play-btn" @click="playWord(card)" :title="i18n.play || '播放'">
                 <svg class="icon-icon" viewBox="0 0 24 24" width="14" height="14">
                   <path fill="currentColor" d="M8 5v14l11-7z"/>
                 </svg>
@@ -92,9 +92,12 @@
         <div class="flashcard-large">
           <div class="card-title-large">{{ currentCard?.title }}</div>
           <div class="card-content-large">{{ currentCard?.content }}</div>
-          <div class="card-category-large">{{ currentCard?.category }}</div>
+          <div class="card-meta-large">
+            <span class="card-category-large">{{ currentCard?.category }}</span>
+            <span class="practice-count">{{ i18n.practiceCount || '练习次数' }}: {{ currentCard?.practiceCount || 0 }}</span>
+          </div>
           <!-- 播放按钮 -->
-          <button class="play-btn-large" @click="playWord(currentCard?.title || '')" :title="i18n.play || '播放'">
+          <button class="play-btn-large" @click="playWord(currentCard)" :title="i18n.play || '播放'">
             <svg class="play-icon" viewBox="0 0 24 24" width="20" height="20">
               <path fill="currentColor" d="M8 5v14l11-7z"/>
             </svg>
@@ -336,20 +339,32 @@ const switchToSingleMode = () => {
   currentIndex.value = 0
 }
 
+/**
+ * 自动播放当前卡片
+ */
+const playCurrentCard = () => {
+  const card = currentCard.value
+  if (card) {
+    playWord(card)
+  }
+}
+
 const previousCard = () => {
   if (currentIndex.value > 0) {
     currentIndex.value--
+    playCurrentCard()
   }
 }
 
 const nextCard = () => {
   if (currentIndex.value < filteredCards.value.length - 1) {
     currentIndex.value++
+    playCurrentCard()
   }
 }
 
 /**
- * 随机选择一张卡片
+ * 随机选择一张卡片并自动播放
  * 使用 Fisher-Yates 洗牌算法思想，从当前筛选的卡片中随机选择
  */
 const randomCard = () => {
@@ -362,6 +377,7 @@ const randomCard = () => {
     newIndex = Math.floor(Math.random() * filteredCards.value.length)
   } while (newIndex === currentIndex.value && filteredCards.value.length > 1)
   currentIndex.value = newIndex
+  playCurrentCard()
 }
 
 const handleTitleInput = () => {
@@ -452,12 +468,29 @@ const deleteCard = async (card: Flashcard) => {
 /**
  * 播放单词发音（使用 Web Speech API）
  * 参考 wordQuery 功能的实现方式
+ * 单卡模式下传入卡片对象，播放完成后自动增加练习次数
  */
-const playWord = (word: string) => {
+const playWord = async (wordOrCard: string | Flashcard) => {
+  const word = typeof wordOrCard === 'string' ? wordOrCard : wordOrCard.title
+  const card = typeof wordOrCard === 'string' ? null : wordOrCard
+
   try {
     const utterance = new SpeechSynthesisUtterance(word)
     utterance.lang = 'en-US' // 默认美式发音
     utterance.rate = 0.8 // 语速稍慢，便于听清
+
+    // 单卡模式下，播放结束后增加练习次数
+    if (card) {
+      utterance.onend = async () => {
+        await storage.incrementPracticeCount(card.id)
+        // 更新本地数据
+        const index = cards.value.findIndex(c => c.id === card.id)
+        if (index !== -1) {
+          cards.value[index].practiceCount = (cards.value[index].practiceCount || 0) + 1
+        }
+      }
+    }
+
     speechSynthesis.speak(utterance)
   } catch (error) {
     console.error('Failed to play pronunciation:', error)

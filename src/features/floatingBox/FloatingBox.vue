@@ -54,7 +54,9 @@ import {
   createSuperPanelTool,
   createRefreshTool,
   skillsTool,
-  createTextDiffTool
+  createTextDiffTool,
+  createPasswordVaultTool,
+  createFlashcardReadingTool
 } from './tools'
 import type { FloatingTool } from './types'
 
@@ -68,10 +70,12 @@ const isMobile = ref(false)
 // 桌面端工具列表（全部功能）
 const desktopTools = ref<FloatingTool[]>([])
 
-// 移动端工具列表（仅超级面板和刷新）
+// 移动端工具列表（超级面板、刷新、密码箱、单词阅读）
 const mobileTools = computed(() => [
   createSuperPanelTool(props.plugin),
   createRefreshTool(props.plugin),
+  createPasswordVaultTool(props.plugin),
+  createFlashcardReadingTool(props.plugin),
 ])
 
 // 根据设备类型返回对应的工具列表

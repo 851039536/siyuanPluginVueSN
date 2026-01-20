@@ -5,6 +5,8 @@ export { superPanelTool, createSuperPanelTool } from './superPanel'
 export { refreshTool, createRefreshTool } from './refresh'
 export { createSkillsTool, skillsTool } from './skills'
 export { textDiffTool, createTextDiffTool } from './textDiff'
+export { passwordVaultTool, createPasswordVaultTool } from './passwordVault'
+export { flashcardReadingTool, createFlashcardReadingTool } from './flashcardReading'
 
 // 导出所有工具数组（不包含需要 plugin 参数的工具）
 import { superPanelTool } from './superPanel'

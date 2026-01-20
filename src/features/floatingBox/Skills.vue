@@ -145,11 +145,12 @@
 
           <div class="form-group">
             <label>{{ i18n?.description || '描述' }}</label>
-            <input
+            <textarea
               v-model="skillForm.description"
-              type="text"
               :placeholder="i18n?.descriptionPlaceholder || '请输入技能描述'"
-            />
+              rows="3"
+              class="description-textarea"
+            ></textarea>
           </div>
 
           <div class="form-group">

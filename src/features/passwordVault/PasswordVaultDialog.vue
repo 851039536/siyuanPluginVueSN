@@ -24,7 +24,16 @@
               <div class="login-body">
                 <div class="login-icon">🔐</div>
                 <h2>请输入主密码</h2>
-                <p class="login-hint">首次使用将创建新密码</p>
+                <p class="login-hint">{{ isFirstTime ? '首次使用将创建新密码' : '请输入密码以解锁' }}</p>
+
+                <!-- 显示保存的密码提示 -->
+                <div v-if="!isFirstTime && passwordHint" class="password-hint-display">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                  <span>提示：{{ passwordHint }}</span>
+                </div>
 
                 <form @submit.prevent="handleLogin" class="login-form">
                   <div class="password-input-wrapper">
@@ -48,6 +57,25 @@
                     </button>
                   </div>
 
+                  <!-- 首次设置时显示密码提示输入 -->
+                  <div v-if="isFirstTime" class="hint-input-group">
+                    <button type="button" class="hint-toggle-btn" @click="showHintInput = !showHintInput">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                      </svg>
+                      {{ showHintInput ? '取消密码提示' : '设置密码提示（推荐）' }}
+                    </button>
+                    <input
+                      v-if="showHintInput"
+                      v-model="passwordHint"
+                      type="text"
+                      placeholder="例如：我的生日、最喜欢的颜色等"
+                      class="hint-input"
+                      maxlength="50"
+                    />
+                  </div>
+
                   <div v-if="loginError" class="error-message">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                       <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
@@ -60,6 +88,13 @@
                     {{ isFirstTime ? '创建密码' : '解锁' }}
                   </button>
                 </form>
+
+                <!-- 忘记密码选项 -->
+                <div v-if="!isFirstTime" class="forgot-password-section">
+                  <button class="forgot-password-btn" @click="showForgotPasswordOptions">
+                    忘记密码？
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -117,12 +152,22 @@
                       class="search-input"
                     />
                   </div>
-                  <button class="add-btn" @click="openAddModal">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                    添加密码
-                  </button>
+                  <div class="action-buttons">
+                    <button class="export-btn" @click="exportAllData" title="导出所有数据">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 15V3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                      导出
+                    </button>
+                    <button class="add-btn" @click="openAddModal">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                      </svg>
+                      添加密码
+                    </button>
+                  </div>
                 </div>
 
                 <div class="entries-grid">
@@ -198,6 +243,13 @@
               </div>
 
               <div class="dialog-footer">
+                <button class="change-password-btn" @click="openChangePasswordModal">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="1.5"/>
+                  </svg>
+                  修改密码
+                </button>
                 <span class="shortcut-hint">Esc 关闭 | Ctrl+K 搜索</span>
               </div>
             </div>
@@ -377,6 +429,115 @@
       </div>
     </Transition>
   </Teleport>
+
+  <!-- Change Password Modal -->
+  <Teleport to="body">
+    <Transition name="fade">
+      <div v-if="showChangePasswordModal" class="password-vault-overlay modal-overlay" @click="closeChangePasswordModal">
+        <Transition name="scale">
+          <div v-if="showChangePasswordModal" class="password-vault-dialog small" @click.stop>
+            <div class="dialog-header">
+              <h2>修改主密码</h2>
+              <button class="close-btn" @click="closeChangePasswordModal">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
+
+            <div class="dialog-body">
+              <form @submit.prevent="handleChangePassword" class="change-password-form">
+                <div class="form-group">
+                  <label>当前密码</label>
+                  <div class="password-input-wrapper">
+                    <input
+                      v-model="oldPassword"
+                      :type="showOldPassword ? 'text' : 'password'"
+                      placeholder="请输入当前密码"
+                      required
+                    />
+                    <button type="button" class="toggle-visibility-btn" @click="showOldPassword = !showOldPassword">
+                      <svg v-if="showOldPassword" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/>
+                      </svg>
+                      <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M1 1l22 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label>新密码</label>
+                  <div class="password-input-wrapper">
+                    <input
+                      v-model="newPassword"
+                      :type="showNewPassword ? 'text' : 'password'"
+                      placeholder="请输入新密码"
+                      required
+                      minlength="6"
+                    />
+                    <button type="button" class="toggle-visibility-btn" @click="showNewPassword = !showNewPassword">
+                      <svg v-if="showNewPassword" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/>
+                      </svg>
+                      <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M1 1l22 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label>确认新密码</label>
+                  <div class="password-input-wrapper">
+                    <input
+                      v-model="confirmPassword"
+                      :type="showConfirmPassword ? 'text' : 'password'"
+                      placeholder="请再次输入新密码"
+                      required
+                      minlength="6"
+                    />
+                    <button type="button" class="toggle-visibility-btn" @click="showConfirmPassword = !showConfirmPassword">
+                      <svg v-if="showConfirmPassword" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/>
+                      </svg>
+                      <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M1 1l22 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div v-if="changePasswordError" class="error-message">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                  {{ changePasswordError }}
+                </div>
+
+                <div class="form-actions">
+                  <button type="button" class="cancel-btn" @click="closeChangePasswordModal">
+                    取消
+                  </button>
+                  <button type="submit" class="save-btn" :disabled="!oldPassword.trim() || !newPassword.trim() || !confirmPassword.trim()">
+                    确认修改
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </Transition>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -417,6 +578,7 @@ const VERIFY_SALT_KEY = 'password-vault-verify-salt'
 const ENCRYPTION_SALT_KEY = 'password-vault-encryption-salt'
 const ENTRIES_KEY = 'password-vault-entries'
 const CATEGORIES_KEY = 'password-vault-categories'
+const PASSWORD_HINT_KEY = 'password-vault-hint'
 
 // 状态
 const isLoggedIn = ref(false)
@@ -427,6 +589,8 @@ const isFirstTime = ref(false)
 const savedHash = ref('')
 const encryptionKey = ref<CryptoKey | null>(null)  // 当前会话的加密密钥
 const encryptionSalt = ref<string>('')              // 加密盐值
+const passwordHint = ref<string>('')                // 密码提示
+const showHintInput = ref(false)                    // 是否显示提示输入框
 
 const searchQuery = ref('')
 const selectedCategory = ref<string>('all')
@@ -434,6 +598,16 @@ const showAddModal = ref(false)
 const editingEntry = ref<PasswordEntry | null>(null)
 const showFormPassword = ref(false)
 const showPasswords = ref<Record<string, boolean>>({})
+
+// 修改密码状态
+const showChangePasswordModal = ref(false)
+const oldPassword = ref('')
+const newPassword = ref('')
+const confirmPassword = ref('')
+const showOldPassword = ref(false)
+const showNewPassword = ref(false)
+const showConfirmPassword = ref(false)
+const changePasswordError = ref('')
 
 const entries = ref<PasswordEntry[]>([])
 const categories = ref<PasswordCategory[]>([
@@ -470,14 +644,16 @@ const presetColors = [
 // 加载保存的密码验证信息
 async function loadMasterPasswordHash() {
   try {
-    const [storedHash, storedVerifySalt, storedEncryptSalt] = await Promise.all([
+    const [storedHash, storedVerifySalt, storedEncryptSalt, storedHint] = await Promise.all([
       plugin.loadData(MASTER_PASSWORD_KEY),
       plugin.loadData(VERIFY_SALT_KEY),
-      plugin.loadData(ENCRYPTION_SALT_KEY)
+      plugin.loadData(ENCRYPTION_SALT_KEY),
+      plugin.loadData(PASSWORD_HINT_KEY)
     ])
 
     if (storedHash && storedVerifySalt && storedEncryptSalt) {
       savedHash.value = storedHash as string
+      passwordHint.value = (storedHint as string) || ''
       isFirstTime.value = false
     } else {
       isFirstTime.value = true
@@ -502,7 +678,8 @@ async function handleLogin() {
     await Promise.all([
       plugin.saveData(MASTER_PASSWORD_KEY, hash),
       plugin.saveData(VERIFY_SALT_KEY, verifySalt),
-      plugin.saveData(ENCRYPTION_SALT_KEY, encryptSalt)
+      plugin.saveData(ENCRYPTION_SALT_KEY, encryptSalt),
+      passwordHint.value ? plugin.saveData(PASSWORD_HINT_KEY, passwordHint.value) : Promise.resolve()
     ])
 
     savedHash.value = hash
@@ -537,6 +714,235 @@ async function handleLogin() {
     } else {
       loginError.value = '密码错误，请重试'
     }
+  }
+}
+
+// 显示忘记密码选项
+async function showForgotPasswordOptions() {
+  const options = [
+    '查看密码提示',
+    '导出所有数据（需要密码）',
+    '重置所有数据（⚠️ 危险操作）',
+    '取消'
+  ]
+
+  const choice = await promptForChoice(
+    '忘记密码无法恢复加密数据。请选择：\n\n' +
+    '1. 查看密码提示 - 如果设置了提示\n' +
+    '2. 导出所有数据 - 登录后可导出备份\n' +
+    '3. 重置所有数据 - 清除所有数据重新开始\n' +
+    '4. 取消',
+    options
+  )
+
+  switch (choice) {
+    case 0: // 查看密码提示
+      if (passwordHint.value) {
+        alert(`密码提示：${passwordHint.value}`)
+      } else {
+        showMessage('未设置密码提示', 3000, 'info')
+      }
+      break
+    case 1: // 导出数据
+      showMessage('请先登录后，在主界面点击"导出"按钮备份数据', 4000, 'info')
+      break
+    case 2: // 重置数据
+      await resetAllData()
+      break
+  }
+}
+
+// 简单的选择提示函数
+function promptForChoice(message: string, options: string[]): Promise<number | null> {
+  return new Promise((resolve) => {
+    const choice = prompt(message + '\n\n请输入选项编号 (1-' + options.length + '):')
+    if (choice === null) {
+      resolve(null)
+      return
+    }
+    const num = parseInt(choice, 10)
+    if (num >= 1 && num <= options.length) {
+      resolve(num - 1)
+    } else {
+      resolve(null)
+    }
+  })
+}
+
+// 导出所有数据（JSON格式，明文）
+async function exportAllData() {
+  if (!entries.value.length) {
+    showMessage('没有数据可导出', 2000, 'info')
+    return
+  }
+
+  try {
+    const exportData = {
+      version: '1.0',
+      exportDate: new Date().toISOString(),
+      entries: entries.value,
+      categories: categories.value
+    }
+
+    const json = JSON.stringify(exportData, null, 2)
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `password-vault-backup-${new Date().toISOString().split('T')[0]}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+
+    showMessage('数据已导出，请妥善保管', 3000, 'info')
+  } catch (error) {
+    console.error('Export failed:', error)
+    showMessage('导出失败', 2000, 'error')
+  }
+}
+
+// 重置所有数据
+async function resetAllData() {
+  const confirm1 = prompt('⚠️ 警告：此操作将清除所有数据且无法恢复！\n\n请输入 "确认重置" 以继续：')
+  if (confirm1 !== '确认重置') {
+    showMessage('已取消重置', 2000, 'info')
+    return
+  }
+
+  const confirm2 = prompt('最后确认：请再次输入 "我明白后果" 以继续：')
+  if (confirm2 !== '我明白后果') {
+    showMessage('已取消重置', 2000, 'info')
+    return
+  }
+
+  try {
+    // 清除所有存储的数据
+    await Promise.all([
+      plugin.saveData(MASTER_PASSWORD_KEY, ''),
+      plugin.saveData(VERIFY_SALT_KEY, ''),
+      plugin.saveData(ENCRYPTION_SALT_KEY, ''),
+      plugin.saveData(PASSWORD_HINT_KEY, ''),
+      plugin.saveData(ENTRIES_KEY, ''),
+      plugin.saveData(CATEGORIES_KEY, '')
+    ])
+
+    // 重置状态
+    savedHash.value = ''
+    passwordHint.value = ''
+    isFirstTime.value = true
+    loginPassword.value = ''
+    loginError.value = ''
+
+    showMessage('所有数据已清除，请设置新的主密码', 3000, 'info')
+  } catch (error) {
+    console.error('Reset failed:', error)
+    showMessage('重置失败', 2000, 'error')
+  }
+}
+
+// 打开修改密码弹窗
+function openChangePasswordModal() {
+  oldPassword.value = ''
+  newPassword.value = ''
+  confirmPassword.value = ''
+  showOldPassword.value = false
+  showNewPassword.value = false
+  showConfirmPassword.value = false
+  changePasswordError.value = ''
+  showChangePasswordModal.value = true
+}
+
+// 关闭修改密码弹窗
+function closeChangePasswordModal() {
+  showChangePasswordModal.value = false
+  oldPassword.value = ''
+  newPassword.value = ''
+  confirmPassword.value = ''
+  changePasswordError.value = ''
+}
+
+// 处理修改密码
+async function handleChangePassword() {
+  changePasswordError.value = ''
+
+  // 验证输入
+  if (!oldPassword.value.trim() || !newPassword.value.trim() || !confirmPassword.value.trim()) {
+    changePasswordError.value = '请填写所有字段'
+    return
+  }
+
+  if (newPassword.value !== confirmPassword.value) {
+    changePasswordError.value = '两次输入的新密码不一致'
+    return
+  }
+
+  if (newPassword.value.length < 6) {
+    changePasswordError.value = '新密码至少需要6个字符'
+    return
+  }
+
+  if (oldPassword.value === newPassword.value) {
+    changePasswordError.value = '新密码不能与当前密码相同'
+    return
+  }
+
+  try {
+    // 获取当前验证盐值
+    const verifySalt = await plugin.loadData(VERIFY_SALT_KEY) as string
+    const oldHash = await hashMasterPassword(oldPassword.value, verifySalt)
+
+    // 验证旧密码
+    if (oldHash !== savedHash.value) {
+      changePasswordError.value = '当前密码错误'
+      return
+    }
+
+    // 生成新的盐值和哈希
+    const newVerifySalt = generateVerifySalt()
+    const newEncryptSalt = generateVerifySalt()
+    const newHash = await hashMasterPassword(newPassword.value, newVerifySalt)
+
+    // 使用新密码派生新密钥
+    const newKey = await deriveKey(newPassword.value, newEncryptSalt)
+
+    // 使用新密钥重新加密所有条目
+    const reEncryptedEntries: StoredPasswordEntry[] = await Promise.all(
+      entries.value.map(async (entry) => {
+        const { encryptedData, iv } = await encryptPassword(entry.password, newKey)
+        return {
+          id: entry.id,
+          category: entry.category,
+          name: entry.name,
+          account: entry.account,
+          encryptedPassword: encryptedData,
+          iv: iv,
+          description: entry.description,
+          createdAt: entry.createdAt,
+          updatedAt: Date.now()
+        }
+      })
+    )
+
+    // 保存所有新数据
+    await Promise.all([
+      plugin.saveData(MASTER_PASSWORD_KEY, newHash),
+      plugin.saveData(VERIFY_SALT_KEY, newVerifySalt),
+      plugin.saveData(ENCRYPTION_SALT_KEY, newEncryptSalt),
+      plugin.saveData(ENTRIES_KEY, reEncryptedEntries)
+    ])
+
+    // 更新状态
+    savedHash.value = newHash
+    encryptionSalt.value = newEncryptSalt
+    encryptionKey.value = newKey
+
+    showMessage('密码修改成功，请记住新密码', 3000, 'info')
+    closeChangePasswordModal()
+  } catch (error) {
+    console.error('Change password failed:', error)
+    changePasswordError.value = '密码修改失败，请重试'
   }
 }
 

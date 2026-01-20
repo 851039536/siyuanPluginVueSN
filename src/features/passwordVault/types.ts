@@ -39,3 +39,10 @@ export interface PasswordCategory {
   name: string    // 分类名称
   color: string   // 分类颜色
 }
+
+/**
+ * 密码提示设置
+ */
+export interface PasswordHint {
+  hint: string    // 密码提示文本
+}

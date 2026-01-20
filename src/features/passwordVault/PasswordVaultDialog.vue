@@ -382,8 +382,15 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { showMessage } from 'siyuan'
-import type { PasswordEntry, PasswordCategory } from './types'
+import type { PasswordEntry, PasswordCategory, StoredPasswordEntry } from './types'
 import { usePlugin } from '@/main'
+import {
+  deriveKey,
+  encryptPassword,
+  decryptPassword,
+  hashMasterPassword,
+  generateVerifySalt
+} from './crypto'
 
 // Props
 interface Props {
@@ -406,6 +413,8 @@ const loginInputRef = ref<HTMLInputElement | null>(null)
 
 // 存储键
 const MASTER_PASSWORD_KEY = 'password-vault-master-password'
+const VERIFY_SALT_KEY = 'password-vault-verify-salt'
+const ENCRYPTION_SALT_KEY = 'password-vault-encryption-salt'
 const ENTRIES_KEY = 'password-vault-entries'
 const CATEGORIES_KEY = 'password-vault-categories'
 
@@ -416,6 +425,8 @@ const showLoginPassword = ref(false)
 const loginError = ref('')
 const isFirstTime = ref(false)
 const savedHash = ref('')
+const encryptionKey = ref<CryptoKey | null>(null)  // 当前会话的加密密钥
+const encryptionSalt = ref<string>('')              // 加密盐值
 
 const searchQuery = ref('')
 const selectedCategory = ref<string>('all')
@@ -456,21 +467,17 @@ const presetColors = [
   '#84cc16'  // 黄绿色
 ]
 
-// 简单的哈希函数（用于验证密码，实际使用应使用更安全的方式）
-async function simpleHash(str: string): Promise<string> {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(str)
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
-}
-
-// 加载保存的密码哈希
+// 加载保存的密码验证信息
 async function loadMasterPasswordHash() {
   try {
-    const stored = await plugin.loadData(MASTER_PASSWORD_KEY)
-    if (stored) {
-      savedHash.value = stored as string
+    const [storedHash, storedVerifySalt, storedEncryptSalt] = await Promise.all([
+      plugin.loadData(MASTER_PASSWORD_KEY),
+      plugin.loadData(VERIFY_SALT_KEY),
+      plugin.loadData(ENCRYPTION_SALT_KEY)
+    ])
+
+    if (storedHash && storedVerifySalt && storedEncryptSalt) {
+      savedHash.value = storedHash as string
       isFirstTime.value = false
     } else {
       isFirstTime.value = true
@@ -485,21 +492,46 @@ async function loadMasterPasswordHash() {
 async function handleLogin() {
   if (!loginPassword.value.trim()) return
 
-  const hash = await simpleHash(loginPassword.value)
-
   if (isFirstTime.value) {
-    // 首次创建密码
-    await plugin.saveData(MASTER_PASSWORD_KEY, hash)
+    // 首次创建密码 - 生成盐值并保存
+    const verifySalt = generateVerifySalt()
+    const encryptSalt = generateVerifySalt()
+    const hash = await hashMasterPassword(loginPassword.value, verifySalt)
+
+    // 保存验证信息和加密盐值
+    await Promise.all([
+      plugin.saveData(MASTER_PASSWORD_KEY, hash),
+      plugin.saveData(VERIFY_SALT_KEY, verifySalt),
+      plugin.saveData(ENCRYPTION_SALT_KEY, encryptSalt)
+    ])
+
     savedHash.value = hash
+    encryptionSalt.value = encryptSalt
     isFirstTime.value = false
     isLoggedIn.value = true
+
+    // 派生加密密钥
+    encryptionKey.value = await deriveKey(loginPassword.value, encryptSalt)
+
     await loadEntries()
     await loadCategories()
   } else {
-    // 验证密码
+    // 验证密码 - 获取保存的盐值
+    const [verifySalt, encryptSalt] = await Promise.all([
+      plugin.loadData(VERIFY_SALT_KEY),
+      plugin.loadData(ENCRYPTION_SALT_KEY)
+    ]) as [string, string]
+
+    const hash = await hashMasterPassword(loginPassword.value, verifySalt)
+
     if (hash === savedHash.value) {
       isLoggedIn.value = true
       loginError.value = ''
+      encryptionSalt.value = encryptSalt
+
+      // 派生加密密钥
+      encryptionKey.value = await deriveKey(loginPassword.value, encryptSalt)
+
       await loadEntries()
       await loadCategories()
     } else {
@@ -508,15 +540,25 @@ async function handleLogin() {
   }
 }
 
-// 加载条目
+// 加载条目（解密密码）
 async function loadEntries() {
   try {
     const stored = await plugin.loadData(ENTRIES_KEY)
-    if (stored) {
-      entries.value = stored as PasswordEntry[]
+    if (stored && encryptionKey.value) {
+      const storedEntries = stored as StoredPasswordEntry[]
+      // 解密所有条目的密码
+      entries.value = await Promise.all(
+        storedEntries.map(async (entry) => ({
+          ...entry,
+          password: await decryptPassword(entry.encryptedPassword, entry.iv, encryptionKey.value!)
+        }))
+      )
+    } else {
+      entries.value = []
     }
   } catch (error) {
     console.error('Failed to load entries:', error)
+    entries.value = []
   }
 }
 
@@ -532,10 +574,31 @@ async function loadCategories() {
   }
 }
 
-// 保存条目
+// 保存条目（加密密码）
 async function saveEntries() {
+  if (!encryptionKey.value) {
+    console.error('No encryption key available')
+    return
+  }
   try {
-    await plugin.saveData(ENTRIES_KEY, entries.value)
+    // 加密所有条目的密码后存储
+    const storedEntries: StoredPasswordEntry[] = await Promise.all(
+      entries.value.map(async (entry) => {
+        const { encryptedData, iv } = await encryptPassword(entry.password, encryptionKey.value!)
+        return {
+          id: entry.id,
+          category: entry.category,
+          name: entry.name,
+          account: entry.account,
+          encryptedPassword: encryptedData,
+          iv: iv,
+          description: entry.description,
+          createdAt: entry.createdAt,
+          updatedAt: entry.updatedAt
+        }
+      })
+    )
+    await plugin.saveData(ENTRIES_KEY, storedEntries)
   } catch (error) {
     console.error('Failed to save entries:', error)
   }
@@ -735,6 +798,10 @@ const closeDialog = () => {
   isLoggedIn.value = false
   loginPassword.value = ''
   loginError.value = ''
+  // 清除加密密钥和解密后的数据（安全措施）
+  encryptionKey.value = null
+  encryptionSalt.value = ''
+  entries.value = []
   emit('update:visible', false)
   emit('close')
 }

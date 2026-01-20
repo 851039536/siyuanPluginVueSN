@@ -350,12 +350,23 @@
           </div>
           <div class="form-group">
             <label>{{ i18n.category || '类别' }}</label>
-            <select v-model="formData.category">
-              <option value="">{{ i18n.selectCategory || '请选择类别' }}</option>
-              <option v-for="cat in allCategories" :key="cat" :value="cat">
-                {{ cat }}
-              </option>
-            </select>
+            <div class="category-input-group">
+              <select v-model="formData.category" @change="handleCategorySelect">
+                <option value="">{{ i18n.selectCategory || '请选择类别' }}</option>
+                <option value="__custom__">{{ i18n.customCategory || '自定义...' }}</option>
+                <option v-for="cat in allCategories" :key="cat" :value="cat">
+                  {{ cat }}
+                </option>
+              </select>
+              <input
+                v-if="formData.category === '__custom__'"
+                v-model="customCategory"
+                type="text"
+                :placeholder="i18n.customCategoryPlaceholder || '输入自定义类别'"
+                class="custom-category-input"
+                @input="updateCustomCategory"
+              />
+            </div>
           </div>
         </div>
         <div class="dialog-footer">
@@ -407,9 +418,10 @@ const formData = ref<CreateFlashcardDTO>({
   category: ''
 })
 const formErrors = ref<Record<string, string>>({})
+const customCategory = ref('')
 
 // 预设类别
-const presetCategories = ['C#', '编程单词', 'JavaScript', 'Python', 'TypeScript', 'Vue', 'React', 'Go', 'Rust', 'Java']
+const presetCategories = ['C#', '编程单词', 'JavaScript', 'TypeScript', 'Vue', 'Rust']
 
 // 计算属性
 const allCategories = computed(() => {
@@ -638,15 +650,33 @@ const closeDialog = () => {
   editingCard.value = null
   formData.value = { title: '', content: '', category: '' }
   formErrors.value = {}
+  customCategory.value = ''
+}
+
+// 处理类别选择
+const handleCategorySelect = () => {
+  if (formData.value.category === '__custom__') {
+    customCategory.value = ''
+    formData.value.category = ''
+  }
+}
+
+// 更新自定义类别
+const updateCustomCategory = () => {
+  formData.value.category = customCategory.value.trim()
 }
 
 const editCard = (card: Flashcard) => {
   editingCard.value = card
+  const category = card.category
+  // 检查是否为自定义类别（不在预设类别中）
+  const isCustomCategory = !presetCategories.includes(category)
   formData.value = {
     title: card.title,
     content: card.content,
-    category: card.category
+    category: isCustomCategory ? '__custom__' : category
   }
+  customCategory.value = isCustomCategory ? category : ''
   showCreateDialog.value = true
 }
 

@@ -1,5 +1,5 @@
 <template>
-  <div v-if="showModal" class="skills-modal-overlay" @click="handleOverlayClick">
+  <div v-if="showModal" class="skills-modal-overlay" @click="closeModal">
     <div class="skills-modal" @click.stop>
       <div class="skills-modal-header">
         <div class="header-title">
@@ -120,7 +120,7 @@
   </div>
 
   <!-- Add/Edit Skill Modal -->
-  <div v-if="showAddModal" class="skills-modal-overlay" @click="handleAddOverlayClick">
+  <div v-if="showAddModal" class="skills-modal-overlay" @click="closeAddModal">
     <div class="skills-modal small" @click.stop>
       <div class="skills-modal-header">
         <h2>{{ editingSkill ? i18n?.editSkill || '编辑技能' : i18n?.addSkill || '添加技能' }}</h2>
@@ -380,10 +380,6 @@ function closeAddModal() {
   editingSkill.value = null
 }
 
-function handleAddOverlayClick() {
-  closeAddModal()
-}
-
 async function saveSkill() {
   try {
     if (editingSkill.value) {
@@ -485,10 +481,6 @@ function copyContent(content: string) {
 function closeModal() {
   showModal.value = false
   emit('close')
-}
-
-function handleOverlayClick() {
-  closeModal()
 }
 </script>
 <style lang="scss" scoped>

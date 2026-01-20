@@ -48,7 +48,6 @@ import {
 import type { FloatingTool } from './types'
 
 const props = defineProps<{
-  i18n?: Record<string, string>
   plugin?: any
 }>()
 

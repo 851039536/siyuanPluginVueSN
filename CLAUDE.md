@@ -73,7 +73,7 @@ src/
 
 - 生命周期：`onload()`, `onunload()`
 
-**功能模块**
+功能模块
 
 - 每个功能都自包含在 `src/features/[feature-name]/` 中
 - 功能导出 `register[FeatureName]()` 函数
@@ -100,13 +100,13 @@ Vue 应用结构
 
 ## 必须严格执行的规范
 
-- **功能可见性**：新功能必须在超级面板（SuperPanelView.vue）中提供开关设置
+- 功能可见性：新功能必须在超级面板（SuperPanelView.vue）中提供开关设置
 
 ## API参考
 
 - 工作区路径：通过 `/api/system/getConf` 获取工作区路径
-- **思源 API 使用**：参考 `docs/思源笔记 API 使用.md` 文档
-- **数据持久化**：使用 `plugin.loadData()` 和 `plugin.saveData()` 方法，避免使用 localStorage，插件生成的数据将保存在 data/storage/petal/<name>/ 目录下。
+- 思源 API 使用：参考 `docs/思源笔记 API 使用.md` 文档
+- 数据持久化：使用 `plugin.loadData()` 和 `plugin.saveData()` 方法，避免使用 localStorage，插件生成的数据将保存在 data/storage/petal/<name>/ 目录下。
 
 ## 开发指南
 
@@ -194,7 +194,7 @@ plugin.openSetting()
 ### 注册右边侧栏
 使用API：`plugin.addDock`
 
-- **配置：** 配置侧边栏的位置、大小、标题等。
+- 配置： 配置侧边栏的位置、大小、标题等。
 - 数据：传递一个物品。传递的对象可以直接被API访问。`thisinit`
 - init：初始化函数;在这里，你可以通过侧边栏的元素设置内部元素（所以不要用箭头函数来回调）。`this`
 

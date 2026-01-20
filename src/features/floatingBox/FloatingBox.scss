@@ -4,7 +4,7 @@
 // ========== 基础变量 ==========
 $floating-z-index: 100;
 $trigger-size: 30px;
-$trigger-size-mobile: 26px;
+$trigger-size-mobile: 44px;
 $toolbar-gap: 4px;
 $trigger-hover-scale: 1.08;
 $trigger-active-scale: 0.98;
@@ -172,21 +172,26 @@ $trigger-active-scale: 0.98;
     height: $trigger-size-mobile;
   }
 
+  .mobile-trigger .trigger-icon {
+    width: 24px;
+    height: 24px;
+  }
+
   .floating-toolbar {
-    right: 32px;
+    right: 52px;
   }
 
   .tool-item {
-    padding: 4px 8px;
-    min-width: 70px;
+    padding: 8px 12px;
+    min-width: 80px;
   }
 
   .tool-icon {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
   }
 
   .tool-label {
-    font-size: 10px;
+    font-size: 12px;
   }
 }

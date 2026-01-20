@@ -49,7 +49,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import {
   createSuperPanelTool,
   createRefreshTool,
@@ -63,10 +63,32 @@ const props = defineProps<{
 }>()
 
 const isExpanded = ref(false)
-const tools = ref<FloatingTool[]>([])
+const isMobile = ref(false)
+
+// 桌面端工具列表（全部功能）
+const desktopTools = ref<FloatingTool[]>([])
+
+// 移动端工具列表（仅超级面板和刷新）
+const mobileTools = computed(() => [
+  createSuperPanelTool(props.plugin),
+  createRefreshTool(props.plugin),
+])
+
+// 根据设备类型返回对应的工具列表
+const tools = computed(() => {
+  return isMobile.value ? mobileTools.value : desktopTools.value
+})
+
+// 检测是否为移动端
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768
+}
 
 onMounted(() => {
-  // Create tools array with plugin instance
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+
+  // Create desktop tools array with plugin instance
   const toolList: FloatingTool[] = [
     createSuperPanelTool(props.plugin),
     createRefreshTool(props.plugin),
@@ -78,7 +100,7 @@ onMounted(() => {
     toolList.push(skillsTool(props.plugin))
   }
 
-  tools.value = toolList
+  desktopTools.value = toolList
 })
 
 const handleMouseEnter = () => {

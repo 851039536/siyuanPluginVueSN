@@ -140,6 +140,27 @@ $trigger-active-scale: 0.98;
   transform: translateX(12px) scale(0.95);
 }
 
+// ========== 桌面端/移动端触发按钮显示控制 ==========
+.desktop-trigger {
+  // 默认显示（桌面端）
+  display: flex;
+
+  // 移动端隐藏
+  @media (max-width: 768px) {
+    display: none !important;
+  }
+}
+
+.mobile-trigger {
+  // 默认隐藏（桌面端）
+  display: none;
+
+  // 移动端显示
+  @media (max-width: 768px) {
+    display: flex !important;
+  }
+}
+
 // ========== 移动端适配 ==========
 @media (max-width: 768px) {
   .floating-box-wrapper {

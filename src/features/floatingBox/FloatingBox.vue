@@ -6,10 +6,21 @@
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"
   >
-    <!-- 悬浮触发按钮 -->
+    <!-- 桌面端：悬浮触发按钮 -->
     <div
-      class="floating-box-trigger"
+      class="floating-box-trigger desktop-trigger"
       :class="{ expanded: isExpanded }"
+    >
+      <svg class="trigger-icon" viewBox="0 0 24 24" width="16" height="16">
+        <path fill="currentColor" d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/>
+      </svg>
+    </div>
+
+    <!-- 移动端：点击触发按钮 -->
+    <div
+      class="floating-box-trigger mobile-trigger"
+      :class="{ expanded: isExpanded }"
+      @click="toggleMobileExpanded"
     >
       <svg class="trigger-icon" viewBox="0 0 24 24" width="16" height="16">
         <path fill="currentColor" d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/>
@@ -76,6 +87,10 @@ const handleMouseEnter = () => {
 
 const handleMouseLeave = () => {
   isExpanded.value = false
+}
+
+const toggleMobileExpanded = () => {
+  isExpanded.value = !isExpanded.value
 }
 
 const handleToolClick = (tool: FloatingTool) => {

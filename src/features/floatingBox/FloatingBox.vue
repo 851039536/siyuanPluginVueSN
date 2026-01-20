@@ -39,7 +39,13 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { superPanelTool, timestampTool, refreshTool, skillsTool, textDiffTool } from './tools'
+import {
+  createSuperPanelTool,
+  createTimestampTool,
+  createRefreshTool,
+  skillsTool,
+  createTextDiffTool
+} from './tools'
 import type { FloatingTool } from './types'
 
 const props = defineProps<{
@@ -53,10 +59,10 @@ const tools = ref<FloatingTool[]>([])
 onMounted(() => {
   // Create tools array with plugin instance
   const toolList: FloatingTool[] = [
-    superPanelTool,
-    timestampTool,
-    refreshTool,
-    textDiffTool,
+    createSuperPanelTool(props.plugin),
+    createTimestampTool(props.plugin),
+    createRefreshTool(props.plugin),
+    createTextDiffTool(props.plugin),
   ]
 
   // Add skills tool if plugin is available

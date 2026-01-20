@@ -1,11 +1,11 @@
 /**
  * 工具统一导出
  */
-export { superPanelTool } from './superPanel'
-export { timestampTool } from './timestamp'
-export { refreshTool } from './refresh'
+export { superPanelTool, createSuperPanelTool } from './superPanel'
+export { timestampTool, createTimestampTool } from './timestamp'
+export { refreshTool, createRefreshTool } from './refresh'
 export { skillsTool } from './skills'
-export { textDiffTool } from './textDiff'
+export { textDiffTool, createTextDiffTool } from './textDiff'
 
 // 导出所有工具数组
 import { superPanelTool } from './superPanel'

@@ -964,5 +964,19 @@
     "categoryStats": "Category Statistics",
     "topCards": "Practice Rankings",
     "noPracticeData": "No practice data yet"
+  },
+  "floatingBox": {
+    "title": "Floating Toolbox",
+    "description": "Display floating toolbox on the right side of the screen for quick access to common features",
+    "enable": "Enable Floating Toolbox",
+    "enableDesc": "Display floating toolbox on the right side with quick access to Super Panel, Timestamp, and other tools",
+    "superPanel": "Super Panel",
+    "superPanelTitle": "Open Super Panel",
+    "timestamp": "Timestamp",
+    "timestampTitle": "Insert Current Time",
+    "refresh": "Refresh",
+    "refreshTitle": "Refresh Interface",
+    "textDiff": "Text Diff",
+    "textDiffTitle": "Open Text Diff Tool"
   }
 }

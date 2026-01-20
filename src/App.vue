@@ -37,6 +37,13 @@
       @update:visible="(v) => everythingSearchVisible = v"
       @close="hideEverythingSearch"
     />
+
+    <!-- 密码箱弹窗 -->
+    <PasswordVaultDialog
+      :visible="passwordVaultVisible"
+      @update:visible="(v) => passwordVaultVisible = v"
+      @close="hidePasswordVault"
+    />
   </div>
 </template>
 
@@ -47,7 +54,8 @@ import ImageViewer from '@/features/imageCompressor/ImageViewer.vue'
 import { QRCodeDialog, PronunciationDialog } from '@/features/floatingToolbar'
 import VideoManager from '@/features/video/VideoManager.vue'
 import EverythingSearchDialog from '@/features/everythingSearch/EverythingSearchDialog.vue'
-import { everythingSearchVisible, hideEverythingSearch, showApiReferencePanel } from '@/features'
+import PasswordVaultDialog from '@/features/passwordVault/PasswordVaultDialog.vue'
+import { everythingSearchVisible, hideEverythingSearch, showApiReferencePanel, passwordVaultVisible, hidePasswordVault } from '@/features'
 import type PluginSample from '@/index'
 
 const plugin = usePlugin() as PluginSample
@@ -150,6 +158,12 @@ onMounted(() => {
   window.addEventListener('openApiReference', () => {
     console.log('收到 openApiReference 事件')
     showApiReferencePanel(plugin)
+  })
+
+  // 监听打开密码箱事件
+  window.addEventListener('openPasswordVault', () => {
+    console.log('收到 openPasswordVault 事件')
+    passwordVaultVisible.value = true
   })
 })
 </script>

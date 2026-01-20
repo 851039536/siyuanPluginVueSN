@@ -41,7 +41,6 @@
 import { ref, onMounted } from 'vue'
 import {
   createSuperPanelTool,
-  createTimestampTool,
   createRefreshTool,
   skillsTool,
   createTextDiffTool
@@ -60,7 +59,6 @@ onMounted(() => {
   // Create tools array with plugin instance
   const toolList: FloatingTool[] = [
     createSuperPanelTool(props.plugin),
-    createTimestampTool(props.plugin),
     createRefreshTool(props.plugin),
     createTextDiffTool(props.plugin),
   ]

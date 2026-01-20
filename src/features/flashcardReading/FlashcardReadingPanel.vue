@@ -364,7 +364,6 @@
                 type="text"
                 :placeholder="i18n.customCategoryPlaceholder || '输入自定义类别'"
                 class="custom-category-input"
-                @input="updateCustomCategory"
               />
             </div>
           </div>
@@ -460,9 +459,13 @@ const paginatedCards = computed(() => {
 })
 
 const isFormValid = computed(() => {
+  const hasValidCategory = formData.value.category === '__custom__'
+    ? customCategory.value.trim() !== ''
+    : formData.value.category.trim() !== ''
+
   return formData.value.title.trim() !== '' &&
          formData.value.content.trim() !== '' &&
-         formData.value.category.trim() !== '' &&
+         hasValidCategory &&
          Object.keys(formErrors.value).length === 0
 })
 
@@ -629,12 +632,27 @@ const saveCard = async () => {
     return
   }
 
+  // 处理自定义类别
+  const categoryToSave = formData.value.category === '__custom__'
+    ? customCategory.value.trim()
+    : formData.value.category
+
+  if (!categoryToSave) {
+    showMessage(props.i18n.selectCategory || '请选择类别', 2000, 'error')
+    return
+  }
+
   try {
+    const cardData = {
+      ...formData.value,
+      category: categoryToSave
+    }
+
     if (editingCard.value) {
-      await storage.updateCard(editingCard.value.id, formData.value)
+      await storage.updateCard(editingCard.value.id, cardData)
       showMessage(props.i18n.updateSuccess || '卡片已更新', 2000, 'info')
     } else {
-      await storage.createCard(formData.value)
+      await storage.createCard(cardData)
       showMessage(props.i18n.createSuccess || '卡片已创建', 2000, 'info')
     }
 
@@ -657,13 +675,7 @@ const closeDialog = () => {
 const handleCategorySelect = () => {
   if (formData.value.category === '__custom__') {
     customCategory.value = ''
-    formData.value.category = ''
   }
-}
-
-// 更新自定义类别
-const updateCustomCategory = () => {
-  formData.value.category = customCategory.value.trim()
 }
 
 const editCard = (card: Flashcard) => {

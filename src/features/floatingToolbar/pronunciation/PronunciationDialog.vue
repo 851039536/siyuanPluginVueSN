@@ -135,17 +135,27 @@
           </div>
           <div class="form-group">
             <label>选择类别</label>
-            <select v-model="selectedCategory">
-              <option value="">请选择类别</option>
-              <option v-for="cat in availableCategories" :key="cat" :value="cat">
-                {{ cat }}
-              </option>
-            </select>
+            <div class="category-input-group">
+              <select v-model="selectedCategory" @change="handleCategorySelect">
+                <option value="">请选择类别</option>
+                <option value="__custom__">自定义...</option>
+                <option v-for="cat in availableCategories" :key="cat" :value="cat">
+                  {{ cat }}
+                </option>
+              </select>
+              <input
+                v-if="selectedCategory === '__custom__'"
+                v-model="customCategoryInput"
+                type="text"
+                placeholder="输入自定义类别"
+                class="custom-category-input"
+              />
+            </div>
           </div>
         </div>
         <div class="add-card-footer">
           <button class="btn-secondary" @click="showAddToCardDialog = false">取消</button>
-          <button class="btn-primary" @click="addToFlashcard" :disabled="!selectedCategory">
+          <button class="btn-primary" @click="addToFlashcard" :disabled="!selectedCategory || (selectedCategory === '__custom__' && !customCategoryInput)">
             添加
           </button>
         </div>
@@ -187,6 +197,7 @@ const resultSource = ref<'local' | 'api' | ''>('')
 const matchedCard = ref<Flashcard | null>(null)
 const showAddToCardDialog = ref(false)
 const selectedCategory = ref('')
+const customCategoryInput = ref('')
 const availableCategories = ref<string[]>(['C#', '编程单词', 'JavaScript', 'TypeScript', 'Vue', 'Rust'])
 
 // 初始化 FlashcardStorage
@@ -386,7 +397,17 @@ function openAddToCardDialog() {
   // 加载现有类别
   loadCategories()
   selectedCategory.value = '编程单词'
+  customCategoryInput.value = ''
   showAddToCardDialog.value = true
+}
+
+/**
+ * 处理类别选择
+ */
+function handleCategorySelect() {
+  if (selectedCategory.value === '__custom__') {
+    customCategoryInput.value = ''
+  }
 }
 
 /**
@@ -414,7 +435,12 @@ async function addToFlashcard() {
     return
   }
 
-  if (!selectedCategory.value) {
+  // 处理自定义类别
+  const categoryToUse = selectedCategory.value === '__custom__'
+    ? customCategoryInput.value.trim()
+    : selectedCategory.value
+
+  if (!categoryToUse) {
     showMessage('请选择类别', 2000, 'error')
     return
   }
@@ -423,7 +449,7 @@ async function addToFlashcard() {
     await flashcardStorage.createCard({
       title: inputWord.value,
       content: generatedResult.value,
-      category: selectedCategory.value
+      category: categoryToUse
     })
 
     resultSource.value = 'local'

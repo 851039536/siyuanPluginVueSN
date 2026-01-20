@@ -283,11 +283,11 @@ onMounted(() => {
 .flashcard-large {
   background: linear-gradient(135deg, var(--b3-theme-primary) 0%, var(--b3-theme-primary-light) 100%);
   border-radius: 16px;
-  padding: 32px 24px;
+  padding: 28px 20px;
   color: var(--b3-theme-on-primary);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   height: 400px;
   justify-content: center;
   align-items: center;

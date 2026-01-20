@@ -10,16 +10,8 @@
           <h2>{{ i18n?.skillsTitle || '技能库' }}</h2>
         </div>
         <div class="header-actions">
-          <button class="icon-btn" @click="openCategoryManage" :title="i18n?.manageCategories || '管理分类'">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
-          <button class="close-btn" @click="closeModal" :title="i18n?.close || '关闭'">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          </button>
+          <Button :label="i18n?.manageCategories || '分类'" icon="pi pi-list" severity="secondary" outlined @click="openCategoryManage" />
+          <Button :label="i18n?.close || '关闭'" icon="pi pi-times" severity="secondary" outlined @click="closeModal" />
         </div>
       </div>
 
@@ -73,14 +65,8 @@
                 </span>
               </div>
               <div class="skill-actions">
-                <button @click="editSkill(skill)" :title="i18n?.edit || '编辑'">
-                  {{ i18n?.edit || '编辑' }}
-                </button>
-                <button @click="deleteSkill(skill.id)" :title="i18n?.delete || '删除'">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                    <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                  </svg>
-                </button>
+                <Button :label="i18n?.edit || '编辑'" size="small" severity="secondary" outlined @click="editSkill(skill)" />
+                <Button :label="i18n?.delete || '删除'" icon="pi pi-trash" size="small" severity="danger" outlined @click="deleteSkill(skill.id)" />
               </div>
             </div>
             <div class="skill-description">
@@ -120,11 +106,7 @@
     <div class="skills-modal small" @click.stop>
       <div class="skills-modal-header">
         <h2>{{ editingSkill ? i18n?.editSkill || '编辑技能' : i18n?.addSkill || '添加技能' }}</h2>
-        <button class="close-btn" @click="closeAddModal" :title="i18n?.close || '关闭'">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        </button>
+        <Button :label="i18n?.close || '关闭'" icon="pi pi-times" severity="secondary" outlined @click="closeAddModal" />
       </div>
 
       <div class="skills-modal-body">
@@ -169,12 +151,8 @@
           </div>
 
           <div class="form-actions">
-            <button type="button" class="cancel-btn" @click="closeAddModal">
-              {{ i18n?.cancel || '取消' }}
-            </button>
-            <button type="submit" class="save-btn">
-              {{ i18n?.save || '保存' }}
-            </button>
+            <Button :label="i18n?.cancel || '取消'" severity="secondary" variant="outlined" @click="closeAddModal" />
+            <Button :label="i18n?.save || '保存'" severity="info" type="submit" />
           </div>
         </form>
       </div>
@@ -186,11 +164,7 @@
     <div class="skills-modal small" @click.stop>
       <div class="skills-modal-header">
         <h2>{{ i18n?.manageCategories || '管理分类' }}</h2>
-        <button class="close-btn" @click="closeCategoryManage" :title="i18n?.close || '关闭'">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        </button>
+        <Button :label="i18n?.close || '关闭'" icon="pi pi-times" severity="secondary" outlined @click="closeCategoryManage" />
       </div>
 
       <div class="skills-modal-body">
@@ -209,11 +183,7 @@
               type="color"
               class="input-color"
             />
-            <button class="add-category-btn" @click="addCategory">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-            </button>
+            <Button :label="i18n?.add || '添加'" icon="pi pi-plus" severity="success" @click="addCategory" />
           </div>
         </div>
 
@@ -226,11 +196,7 @@
           >
             <span class="category-dot" :style="{ backgroundColor: cat.color }"></span>
             <span class="category-name">{{ cat.name }}</span>
-            <button class="delete-category-btn" @click="deleteCategory(cat.id)">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-            </button>
+            <Button :label="i18n?.delete || '删除'" icon="pi pi-trash" size="small" severity="danger" outlined @click="deleteCategory(cat.id)" />
           </div>
         </div>
       </div>
@@ -241,7 +207,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import type { Skill, SkillCategory } from './types'
-import Button from 'primevue/button';
+import Button from 'primevue/button'
 
 
 const props = defineProps<{

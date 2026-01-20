@@ -5,6 +5,8 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import type PluginSample from '@/index'
 import 'highlight.js/styles/github-dark.css'
+import PrimeVue from 'primevue/config';
+import Aura from '@primeuix/themes/aura';
 
 let plugin: Plugin | null = null
 export function usePlugin(pluginProps?: Plugin): Plugin {
@@ -35,6 +37,11 @@ export function init(pluginInstance: Plugin) {
   div.id = pluginInstance.name
   app = createApp(App)
   app.mount(div)
+  app.use(PrimeVue, {
+    theme: {
+        preset: Aura
+    }
+});
   document.body.appendChild(div)
 }
 

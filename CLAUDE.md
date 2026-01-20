@@ -98,6 +98,9 @@ Vue 应用结构
 - 通过 `plugin.i18n.featureName.key` 访问
 - json 格式 功能1:{xx:xx }，功能2:{xx:xx }这个方便分类
 
+组件库
+- primevue: "^4.5.4" ，文档参考：https://primevue.org/
+
 ## 必须严格执行的规范
 
 - 功能可见性：新功能必须在超级面板（SuperPanelView.vue）中提供开关设置

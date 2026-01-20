@@ -42,7 +42,7 @@ export class FlashcardReading {
       config: {
         position: 'RightTop',
         size: { width: 400, height: 0 },
-        icon: 'iconCheck', //iconCheck
+        icon: 'iconBookmark', // 书签图标，适合卡片收藏/阅读功能
         title: this.plugin.i18n.flashcardReading?.panelTitle || '单词阅读',
         show: false,
       },

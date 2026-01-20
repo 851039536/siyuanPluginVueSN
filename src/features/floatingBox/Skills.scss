@@ -174,8 +174,23 @@ $shadow-button: 0 4px 12px rgba(var(--b3-theme-primary-rgb), 0.3);
     }
   }
 
-  .close-btn {
-    @include close-button;
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .icon-btn {
+      @include close-button;
+      color: var(--b3-theme-on-surface);
+
+      &:hover {
+        color: var(--b3-theme-primary);
+      }
+    }
+
+    .close-btn {
+      @include close-button;
+    }
   }
 }
 
@@ -184,6 +199,53 @@ $shadow-button: 0 4px 12px rgba(var(--b3-theme-primary-rgb), 0.3);
   padding: 20px 24px;
   overflow-y: auto;
   flex: 1;
+}
+
+// ========== 分类筛选器 ==========
+.category-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--b3-border-color);
+
+  .category-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 16px;
+    border: 1px solid var(--b3-border-color);
+    background: var(--b3-theme-surface);
+    color: var(--b3-theme-on-surface);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: $button-transition;
+
+    .chip-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    &:hover {
+      background: var(--b3-list-hover);
+      border-color: var(--b3-theme-primary);
+    }
+
+    &.active {
+      background: var(--b3-theme-primary);
+      color: var(--b3-theme-on-primary);
+      border-color: var(--b3-theme-primary);
+
+      .chip-dot {
+        background: var(--b3-theme-on-primary) !important;
+      }
+    }
+  }
 }
 
 // ========== 搜索和控制栏 ==========
@@ -293,6 +355,14 @@ $shadow-button: 0 4px 12px rgba(var(--b3-theme-primary-rgb), 0.3);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+
+    .skill-category-tag {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      flex-shrink: 0;
     }
   }
 
@@ -418,8 +488,18 @@ $shadow-button: 0 4px 12px rgba(var(--b3-theme-primary-rgb), 0.3);
     }
 
     input,
-    textarea {
+    textarea,
+    select {
       @include form-input;
+    }
+
+    select.category-select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M6 9l6 6 6-6' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
     }
 
     textarea {
@@ -459,6 +539,115 @@ $shadow-button: 0 4px 12px rgba(var(--b3-theme-primary-rgb), 0.3);
   }
 }
 
+// ========== 分类管理弹窗 ==========
+.add-category-form {
+  margin-bottom: 20px;
+
+  .form-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+
+    .input-name {
+      flex: 1;
+      @include form-input;
+    }
+
+    .input-color {
+      width: 40px;
+      height: 36px;
+      padding: 2px;
+      border: 1px solid var(--b3-border-color);
+      border-radius: 6px;
+      cursor: pointer;
+      background: var(--b3-theme-surface);
+
+      &::-webkit-color-swatch-wrapper {
+        padding: 2px;
+      }
+
+      &::-webkit-color-swatch {
+        border: none;
+        border-radius: 4px;
+      }
+    }
+
+    .add-category-btn {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--b3-theme-primary);
+      color: var(--b3-theme-on-primary);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: $button-transition;
+
+      &:hover {
+        background: var(--b3-theme-primary-light);
+      }
+    }
+  }
+}
+
+.category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+
+  .category-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--b3-theme-surface);
+    border: 1px solid var(--b3-border-color);
+    border-radius: 6px;
+    transition: $button-transition;
+
+    &:hover {
+      background: var(--b3-list-hover);
+      border-color: var(--b3-theme-primary);
+    }
+
+    .category-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .category-name {
+      flex: 1;
+      font-size: 14px;
+      color: var(--b3-theme-on-background);
+    }
+
+    .delete-category-btn {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: none;
+      color: var(--b3-theme-on-surface);
+      cursor: pointer;
+      border-radius: 4px;
+      transition: $button-transition;
+
+      &:hover {
+        background: var(--b3-list-hover);
+        color: #ef4444;
+      }
+    }
+  }
+}
+
 // ========== 响应式设计 - 平板 ==========
 @media (max-width: 768px) {
   .skills-modal {
@@ -483,6 +672,15 @@ $shadow-button: 0 4px 12px rgba(var(--b3-theme-primary-rgb), 0.3);
 
   .skills-modal-body {
     padding: 16px 20px;
+  }
+
+  .category-filter {
+    gap: 6px;
+
+    .category-chip {
+      font-size: 12px;
+      padding: 5px 10px;
+    }
   }
 
   .skills-grid {
@@ -514,6 +712,19 @@ $shadow-button: 0 4px 12px rgba(var(--b3-theme-primary-rgb), 0.3);
         h3 {
           font-size: 15px;
         }
+
+        .skill-category-tag {
+          font-size: 10px;
+          padding: 2px 6px;
+        }
+      }
+    }
+  }
+
+  .add-category-form {
+    .form-row {
+      .input-name {
+        font-size: 14px;
       }
     }
   }

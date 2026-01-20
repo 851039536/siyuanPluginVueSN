@@ -18,4 +18,14 @@ export interface Skill {
   title: string
   description: string
   content: string
+  category: string
+}
+
+/**
+ * 技能分类接口
+ */
+export interface SkillCategory {
+  id: string
+  name: string
+  color?: string
 }

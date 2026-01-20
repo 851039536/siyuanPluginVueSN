@@ -719,54 +719,12 @@ async function handleLogin() {
 
 // 显示忘记密码选项
 async function showForgotPasswordOptions() {
-  const options = [
-    '查看密码提示',
-    '导出所有数据（需要密码）',
-    '重置所有数据（⚠️ 危险操作）',
-    '取消'
-  ]
-
-  const choice = await promptForChoice(
-    '忘记密码无法恢复加密数据。请选择：\n\n' +
-    '1. 查看密码提示 - 如果设置了提示\n' +
-    '2. 导出所有数据 - 登录后可导出备份\n' +
-    '3. 重置所有数据 - 清除所有数据重新开始\n' +
-    '4. 取消',
-    options
-  )
-
-  switch (choice) {
-    case 0: // 查看密码提示
-      if (passwordHint.value) {
-        alert(`密码提示：${passwordHint.value}`)
-      } else {
-        showMessage('未设置密码提示', 3000, 'info')
-      }
-      break
-    case 1: // 导出数据
-      showMessage('请先登录后，在主界面点击"导出"按钮备份数据', 4000, 'info')
-      break
-    case 2: // 重置数据
-      await resetAllData()
-      break
+  // 直接显示密码提示
+  if (passwordHint.value) {
+    showMessage(`密码提示：${passwordHint.value}`, 5000, 'info')
+  } else {
+    showMessage('未设置密码提示。如需重置，请联系开发者或查看插件数据目录手动删除数据', 5000, 'info')
   }
-}
-
-// 简单的选择提示函数
-function promptForChoice(message: string, options: string[]): Promise<number | null> {
-  return new Promise((resolve) => {
-    const choice = prompt(message + '\n\n请输入选项编号 (1-' + options.length + '):')
-    if (choice === null) {
-      resolve(null)
-      return
-    }
-    const num = parseInt(choice, 10)
-    if (num >= 1 && num <= options.length) {
-      resolve(num - 1)
-    } else {
-      resolve(null)
-    }
-  })
 }
 
 // 导出所有数据（JSON格式，明文）
@@ -800,45 +758,6 @@ async function exportAllData() {
   } catch (error) {
     console.error('Export failed:', error)
     showMessage('导出失败', 2000, 'error')
-  }
-}
-
-// 重置所有数据
-async function resetAllData() {
-  const confirm1 = prompt('⚠️ 警告：此操作将清除所有数据且无法恢复！\n\n请输入 "确认重置" 以继续：')
-  if (confirm1 !== '确认重置') {
-    showMessage('已取消重置', 2000, 'info')
-    return
-  }
-
-  const confirm2 = prompt('最后确认：请再次输入 "我明白后果" 以继续：')
-  if (confirm2 !== '我明白后果') {
-    showMessage('已取消重置', 2000, 'info')
-    return
-  }
-
-  try {
-    // 清除所有存储的数据
-    await Promise.all([
-      plugin.saveData(MASTER_PASSWORD_KEY, ''),
-      plugin.saveData(VERIFY_SALT_KEY, ''),
-      plugin.saveData(ENCRYPTION_SALT_KEY, ''),
-      plugin.saveData(PASSWORD_HINT_KEY, ''),
-      plugin.saveData(ENTRIES_KEY, ''),
-      plugin.saveData(CATEGORIES_KEY, '')
-    ])
-
-    // 重置状态
-    savedHash.value = ''
-    passwordHint.value = ''
-    isFirstTime.value = true
-    loginPassword.value = ''
-    loginError.value = ''
-
-    showMessage('所有数据已清除，请设置新的主密码', 3000, 'info')
-  } catch (error) {
-    console.error('Reset failed:', error)
-    showMessage('重置失败', 2000, 'error')
   }
 }
 
@@ -1123,17 +1042,15 @@ const deleteCategory = async (categoryId: string) => {
     return
   }
 
-  if (confirm('确定要删除这个类别吗？')) {
-    categories.value = categories.value.filter(c => c.id !== categoryId)
-    await saveCategories()
+  categories.value = categories.value.filter(c => c.id !== categoryId)
+  await saveCategories()
 
-    // 如果当前选中的是被删除的类别，重置为全部
-    if (selectedCategory.value === categoryId) {
-      selectedCategory.value = 'all'
-    }
-
-    showMessage('类别已删除', 2000, 'info')
+  // 如果当前选中的是被删除的类别，重置为全部
+  if (selectedCategory.value === categoryId) {
+    selectedCategory.value = 'all'
   }
+
+  showMessage('类别已删除', 2000, 'info')
 }
 
 // 保存条目
@@ -1177,11 +1094,10 @@ async function saveEntry() {
 
 // 删除条目
 async function deleteEntry(id: string) {
-  if (confirm('确定要删除这个密码条目吗？')) {
-    entries.value = entries.value.filter(e => e.id !== id)
-    delete showPasswords.value[id]
-    await saveEntries()
-  }
+  entries.value = entries.value.filter(e => e.id !== id)
+  delete showPasswords.value[id]
+  await saveEntries()
+  showMessage('密码条目已删除', 2000, 'info')
 }
 
 // 切换密码可见性

@@ -12,7 +12,6 @@ $card-border-radius: 8px;
 $button-transition: all 0.2s ease;
 $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
 $shadow-card: 0 4px 12px rgba(0, 0, 0, 0.1);
-$shadow-button: 0 4px 12px rgba(var(--b3-theme-primary-rgb), 0.3);
 
 // ========== 混合宏 ==========
 @mixin modal-overlay {
@@ -40,23 +39,6 @@ $shadow-button: 0 4px 12px rgba(var(--b3-theme-primary-rgb), 0.3);
   overflow: hidden;
 }
 
-@mixin close-button {
-  background: none;
-  border: none;
-  color: var(--b3-theme-on-background);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: $button-transition;
-
-  &:hover {
-    background: var(--b3-list-hover);
-  }
-}
-
 @mixin card-hover {
   transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
 
@@ -68,49 +50,6 @@ $shadow-button: 0 4px 12px rgba(var(--b3-theme-primary-rgb), 0.3);
     &::before {
       opacity: 1;
     }
-  }
-}
-
-@mixin button-primary {
-  background: var(--b3-theme-primary);
-  color: var(--b3-theme-on-primary);
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: $button-transition;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-
-  &:hover {
-    background: var(--b3-theme-primary-light);
-    transform: translateY(-1px);
-    box-shadow: $shadow-button;
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
-}
-
-@mixin button-secondary {
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: $button-transition;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  &:hover {
-    background: var(--b3-list-hover);
   }
 }
 
@@ -178,19 +117,6 @@ $shadow-button: 0 4px 12px rgba(var(--b3-theme-primary-rgb), 0.3);
     display: flex;
     align-items: center;
     gap: 8px;
-
-    .icon-btn {
-      @include close-button;
-      color: var(--b3-theme-on-surface);
-
-      &:hover {
-        color: var(--b3-theme-primary);
-      }
-    }
-
-    .close-btn {
-      @include close-button;
-    }
   }
 }
 
@@ -362,26 +288,6 @@ $shadow-button: 0 4px 12px rgba(var(--b3-theme-primary-rgb), 0.3);
     display: flex;
     gap: 4px;
     flex-shrink: 0;
-
-    button {
-      background: none;
-      border: none;
-      color: var(--b3-theme-on-surface);
-      cursor: pointer;
-      padding: 4px 8px;
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: $button-transition;
-      font-size: 12px;
-      white-space: nowrap;
-
-      &:hover {
-        background: var(--b3-list-hover);
-        color: var(--b3-theme-primary);
-      }
-    }
   }
 }
 
@@ -512,28 +418,6 @@ $shadow-button: 0 4px 12px rgba(var(--b3-theme-primary-rgb), 0.3);
     gap: 12px;
     justify-content: flex-end;
     margin-top: 24px;
-
-    button {
-      padding: 8px 20px;
-      border: none;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: $button-transition;
-
-      &.cancel-btn {
-        @include button-secondary;
-
-        &:hover {
-          background: var(--b3-list-hover);
-        }
-      }
-
-      &.save-btn {
-        @include button-primary;
-      }
-    }
   }
 }
 
@@ -567,24 +451,6 @@ $shadow-button: 0 4px 12px rgba(var(--b3-theme-primary-rgb), 0.3);
       &::-webkit-color-swatch {
         border: none;
         border-radius: 4px;
-      }
-    }
-
-    .add-category-btn {
-      width: 36px;
-      height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--b3-theme-primary);
-      color: var(--b3-theme-on-primary);
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: $button-transition;
-
-      &:hover {
-        background: var(--b3-theme-primary-light);
       }
     }
   }
@@ -623,25 +489,6 @@ $shadow-button: 0 4px 12px rgba(var(--b3-theme-primary-rgb), 0.3);
       flex: 1;
       font-size: 14px;
       color: var(--b3-theme-on-background);
-    }
-
-    .delete-category-btn {
-      width: 28px;
-      height: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: none;
-      border: none;
-      color: var(--b3-theme-on-surface);
-      cursor: pointer;
-      border-radius: 4px;
-      transition: $button-transition;
-
-      &:hover {
-        background: var(--b3-list-hover);
-        color: #ef4444;
-      }
     }
   }
 }

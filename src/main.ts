@@ -37,11 +37,23 @@ export function init(pluginInstance: Plugin) {
   div.id = pluginInstance.name
   app = createApp(App)
   app.mount(div)
-  app.use(PrimeVue, {
-    theme: {
-        preset: Aura
-    }
+//   app.use(PrimeVue, {
+//     theme: {
+//         preset: Aura
+//     }
+// });
+app.use(PrimeVue, {
+  theme: {
+      preset: Aura,
+      options: {
+          prefix: 'p',
+          darkModeSelector: 'system',
+          cssLayer: false
+      }
+  }
 });
+
+
   document.body.appendChild(div)
 }
 

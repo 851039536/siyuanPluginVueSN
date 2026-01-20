@@ -288,22 +288,49 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  min-height: 280px;
+  height: 400px;
   justify-content: center;
   align-items: center;
   text-align: center;
+  overflow: hidden;
 }
 
 .card-title-large {
-  font-size: 32px;
+  font-size: 26px;
   font-weight: 700;
   line-height: 1.2;
+  flex-shrink: 0;
 }
 
 .card-content-large {
-  font-size: 18px;
+  font-size: 15px;
   line-height: 1.6;
   opacity: 0.9;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  max-width: 100%;
+
+  // 自定义滚动条样式
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
+  }
 }
 
 .card-meta-large {
@@ -311,6 +338,7 @@ onMounted(() => {
   gap: 16px;
   font-size: 14px;
   opacity: 0.8;
+  flex-shrink: 0;
 }
 
 .card-category-large {
@@ -332,6 +360,7 @@ onMounted(() => {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  flex-shrink: 0;
 
   &:hover {
     transform: scale(1.05);

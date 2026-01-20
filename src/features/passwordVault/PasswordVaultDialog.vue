@@ -250,7 +250,6 @@
                   </svg>
                   修改密码
                 </button>
-                <span class="shortcut-hint">Esc 关闭 | Ctrl+K 搜索</span>
               </div>
             </div>
           </div>

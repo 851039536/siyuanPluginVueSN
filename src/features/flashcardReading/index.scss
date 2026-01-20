@@ -729,13 +729,28 @@
           }
 
           input,
-          textarea {
+          textarea,
+          select {
             padding: 8px 12px;
             border: 1px solid var(--b3-theme-surface);
             background: var(--b3-theme-background);
             border-radius: 4px;
             color: var(--b3-theme-on-background);
             font-family: inherit;
+          }
+
+          .category-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+
+            select {
+              width: 100%;
+            }
+
+            .custom-category-input {
+              margin-top: 4px;
+            }
           }
 
           .error-msg {

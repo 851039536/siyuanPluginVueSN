@@ -187,7 +187,7 @@ const resultSource = ref<'local' | 'api' | ''>('')
 const matchedCard = ref<Flashcard | null>(null)
 const showAddToCardDialog = ref(false)
 const selectedCategory = ref('')
-const availableCategories = ref<string[]>(['C#', '编程单词', 'JavaScript', 'Python', 'TypeScript', 'Vue', 'React', 'Go', 'Rust', 'Java'])
+const availableCategories = ref<string[]>(['C#', '编程单词', 'JavaScript', 'TypeScript', 'Vue', 'Rust'])
 
 // 初始化 FlashcardStorage
 const flashcardStorage = props.plugin ? new FlashcardStorage(props.plugin) : null
@@ -397,7 +397,7 @@ async function loadCategories() {
 
   try {
     const categories = await flashcardStorage.getCategories()
-    availableCategories.value = ['C#', '编程单词', 'JavaScript', 'Python', 'TypeScript', 'Vue', 'React', 'Go', 'Rust', 'Java', ...categories]
+    availableCategories.value = ['C#', '编程单词', 'JavaScript', 'TypeScript', 'Vue', 'Rust', ...categories]
     // 去重
     availableCategories.value = Array.from(new Set(availableCategories.value)).sort()
   } catch (error) {

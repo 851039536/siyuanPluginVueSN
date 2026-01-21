@@ -290,12 +290,16 @@
                     <td class="col-change">
                       <template v-if="index < historicalData.length - 1">
                         <Tag
-                          :value="getWordDiff(item, historicalData[index + 1]) > 0 ? '+' : '' + formatShortNumber(getWordDiff(item, historicalData[index + 1]))"
-                          :severity="getWordDiff(item, historicalData[index + 1]) > 0 ? 'success' : getWordDiff(item, historicalData[index + 1]) < 0 ? 'danger' : 'secondary'"
+                          v-if="getWordDiff(item, historicalData[index + 1]) !== 0"
+                          size="small"
+                          :value="(getWordDiff(item, historicalData[index + 1]) > 0 ? '+' : '') + formatShortNumber(getWordDiff(item, historicalData[index + 1])) + ' 字'"
+                          :severity="getWordDiff(item, historicalData[index + 1]) > 0 ? 'success' : 'danger'"
                         />
                         <Tag
-                          :value="getNoteDiff(item, historicalData[index + 1]) > 0 ? '+' : '' + getNoteDiff(item, historicalData[index + 1])"
-                          :severity="getNoteDiff(item, historicalData[index + 1]) > 0 ? 'success' : getNoteDiff(item, historicalData[index + 1]) < 0 ? 'danger' : 'secondary'"
+                          v-if="getNoteDiff(item, historicalData[index + 1]) !== 0"
+                          size="small"
+                          :value="(getNoteDiff(item, historicalData[index + 1]) > 0 ? '+' : '') + getNoteDiff(item, historicalData[index + 1]) + ' 笔记'"
+                          :severity="getNoteDiff(item, historicalData[index + 1]) > 0 ? 'success' : 'danger'"
                         />
                       </template>
                       <Tag v-else value="-" severity="secondary" />

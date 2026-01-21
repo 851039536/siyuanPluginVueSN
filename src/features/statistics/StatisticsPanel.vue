@@ -369,11 +369,11 @@
               <!-- 显示与上一个快照的差异 -->
               <div v-if="index < snapshotData.length - 1" class="snapshot-diff">
                 <span class="diff-label">变化：</span>
-                <Tag
+                <Tag size="small"
                   :value="getSnapshotWordDiff(snapshot, snapshotData[index + 1]) > 0 ? '+' : '' + formatNumber(getSnapshotWordDiff(snapshot, snapshotData[index + 1])) + ' 字'"
                   :severity="getSnapshotWordDiff(snapshot, snapshotData[index + 1]) > 0 ? 'success' : getSnapshotWordDiff(snapshot, snapshotData[index + 1]) < 0 ? 'danger' : 'secondary'"
                 />
-                <Tag
+                <Tag size="small"
                   :value="getSnapshotNoteDiff(snapshot, snapshotData[index + 1]) > 0 ? '+' : '' + getSnapshotNoteDiff(snapshot, snapshotData[index + 1]) + ' 笔记'"
                   :severity="getSnapshotNoteDiff(snapshot, snapshotData[index + 1]) > 0 ? 'success' : getSnapshotNoteDiff(snapshot, snapshotData[index + 1]) < 0 ? 'danger' : 'secondary'"
                 />

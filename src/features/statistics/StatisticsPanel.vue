@@ -289,28 +289,16 @@
                     <td class="col-modified">{{ item.todayModified }}</td>
                     <td class="col-change">
                       <template v-if="index < historicalData.length - 1">
-                        <span
-                          class="change-item"
-                          :class="{
-                            'positive': getWordDiff(item, historicalData[index + 1]) > 0,
-                            'negative': getWordDiff(item, historicalData[index + 1]) < 0,
-                            'neutral': getWordDiff(item, historicalData[index + 1]) === 0
-                          }"
-                        >
-                          {{ getWordDiff(item, historicalData[index + 1]) > 0 ? '+' : '' }}{{ formatShortNumber(getWordDiff(item, historicalData[index + 1])) }}
-                        </span>
-                        <span
-                          class="change-item change-notes"
-                          :class="{
-                            'positive': getNoteDiff(item, historicalData[index + 1]) > 0,
-                            'negative': getNoteDiff(item, historicalData[index + 1]) < 0,
-                            'neutral': getNoteDiff(item, historicalData[index + 1]) === 0
-                          }"
-                        >
-                          {{ getNoteDiff(item, historicalData[index + 1]) > 0 ? '+' : '' }}{{ getNoteDiff(item, historicalData[index + 1]) }}
-                        </span>
+                        <Tag
+                          :value="getWordDiff(item, historicalData[index + 1]) > 0 ? '+' : '' + formatShortNumber(getWordDiff(item, historicalData[index + 1]))"
+                          :severity="getWordDiff(item, historicalData[index + 1]) > 0 ? 'success' : getWordDiff(item, historicalData[index + 1]) < 0 ? 'danger' : 'secondary'"
+                        />
+                        <Tag
+                          :value="getNoteDiff(item, historicalData[index + 1]) > 0 ? '+' : '' + getNoteDiff(item, historicalData[index + 1])"
+                          :severity="getNoteDiff(item, historicalData[index + 1]) > 0 ? 'success' : getNoteDiff(item, historicalData[index + 1]) < 0 ? 'danger' : 'secondary'"
+                        />
                       </template>
-                      <span v-else class="change-empty">-</span>
+                      <Tag v-else value="-" severity="secondary" />
                     </td>
                   </tr>
                 </tbody>
@@ -343,7 +331,7 @@
                 <div class="snapshot-time">
                   <span class="time-icon">⏰</span>
                   <span class="time-text">{{ snapshot.datetime }}</span>
-                  <span v-if="index === 0" class="latest-badge">最新</span>
+                  <Tag v-if="index === 0" value="最新" severity="success" />
                 </div>
               </div>
               <div class="snapshot-stats-grid">
@@ -381,26 +369,14 @@
               <!-- 显示与上一个快照的差异 -->
               <div v-if="index < snapshotData.length - 1" class="snapshot-diff">
                 <span class="diff-label">变化：</span>
-                <span
-                  class="diff-value"
-                  :class="{
-                    'positive': getSnapshotWordDiff(snapshot, snapshotData[index + 1]) > 0,
-                    'negative': getSnapshotWordDiff(snapshot, snapshotData[index + 1]) < 0,
-                    'neutral': getSnapshotWordDiff(snapshot, snapshotData[index + 1]) === 0
-                  }"
-                >
-                  {{ getSnapshotWordDiff(snapshot, snapshotData[index + 1]) > 0 ? '+' : '' }}{{ formatNumber(getSnapshotWordDiff(snapshot, snapshotData[index + 1])) }} 字
-                </span>
-                <span
-                  class="diff-value"
-                  :class="{
-                    'positive': getSnapshotNoteDiff(snapshot, snapshotData[index + 1]) > 0,
-                    'negative': getSnapshotNoteDiff(snapshot, snapshotData[index + 1]) < 0,
-                    'neutral': getSnapshotNoteDiff(snapshot, snapshotData[index + 1]) === 0
-                  }"
-                >
-                  {{ getSnapshotNoteDiff(snapshot, snapshotData[index + 1]) > 0 ? '+' : '' }}{{ getSnapshotNoteDiff(snapshot, snapshotData[index + 1]) }} 笔记
-                </span>
+                <Tag
+                  :value="getSnapshotWordDiff(snapshot, snapshotData[index + 1]) > 0 ? '+' : '' + formatNumber(getSnapshotWordDiff(snapshot, snapshotData[index + 1])) + ' 字'"
+                  :severity="getSnapshotWordDiff(snapshot, snapshotData[index + 1]) > 0 ? 'success' : getSnapshotWordDiff(snapshot, snapshotData[index + 1]) < 0 ? 'danger' : 'secondary'"
+                />
+                <Tag
+                  :value="getSnapshotNoteDiff(snapshot, snapshotData[index + 1]) > 0 ? '+' : '' + getSnapshotNoteDiff(snapshot, snapshotData[index + 1]) + ' 笔记'"
+                  :severity="getSnapshotNoteDiff(snapshot, snapshotData[index + 1]) > 0 ? 'success' : getSnapshotNoteDiff(snapshot, snapshotData[index + 1]) < 0 ? 'danger' : 'secondary'"
+                />
               </div>
             </div>
             <div v-if="snapshotData.length === 0" class="empty-snapshot">
@@ -417,6 +393,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import Button from 'primevue/button'
+import Tag from 'primevue/tag'
 
 interface Props {
   theme?: 'default' | 'github'

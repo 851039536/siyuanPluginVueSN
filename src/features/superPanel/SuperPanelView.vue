@@ -18,50 +18,43 @@
           <span>{{ i18n.title || '超级面板' }}</span>
         </div>
         <div class="header-actions">
-          <button
-            class="header-action-btn enable-all-btn"
+          <Button size="small" icon="pi pi-check" variant="text" aria-label="Filter"
             :title="i18n.enableAll || '全部开启'"
             @click="handleToggleAll(true)"
           >
-            <IconWrapper name="success" :size="14" />
-          </button>
-          <button
-            class="header-action-btn disable-all-btn"
+          </Button>
+
+          <Button
+            icon="pi pi-times" size="small" variant="text"  aria-label="Filter"
             :title="i18n.disableAll || '全部关闭'"
             @click="handleToggleAll(false)"
           >
-            <IconWrapper name="close" :size="14" />
-          </button>
-          <button
-            class="super-panel-settings"
+          </Button>
+          <Button size="small" icon="pi pi-cog" variant="text"  aria-label="Filter"
             :title="i18n.aiSettings || 'AI配置'"
             @click="toggleAiSettings"
           >
-            <IconWrapper name="settings" :size="16" />
-          </button>
-          <button
-            class="super-panel-refresh"
+          </Button>
+          <Button size="small" icon="pi pi-refresh" variant="text"  aria-label="Filter"
             :title="i18n.refresh || '刷新'"
-            :disabled="isRefreshing"
             @click="handleRefresh"
           >
-            <svg class="refresh-icon" :class="{ spinning: isRefreshing }" viewBox="0 0 24 24" width="16" height="16">
-              <path fill="currentColor" d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
-            </svg>
-          </button>
-          <button class="super-panel-close" :title="i18n.close || '关闭'" @click="handleClose">
-            <IconWrapper name="close" :size="16" />
-          </button>
+          </Button>
+          <Button size="small" icon="pi pi-times" variant="text"  aria-label="Filter"
+            :title="i18n.close || '关闭'"
+            @click="handleClose"
+          >
+          </Button>
         </div>
       </div>
 
       <!-- AI配置区域 -->
       <div class="ai-settings-panel" v-if="showAiSettings">
         <div class="ai-settings-header">
-          <span>🤖 {{ i18n.aiSettings || 'AI大模型配置' }}</span>
-          <button class="settings-close-btn" @click="toggleAiSettings">
+          <span> {{ i18n.aiSettings || 'AI大模型配置' }}</span>
+          <Button  @click="toggleAiSettings" severity="secondary" text rounded>
             <IconWrapper name="close" :size="14" />
-          </button>
+          </Button>
         </div>
         <div class="ai-settings-content">
           <!-- API供应商选择 -->
@@ -117,9 +110,8 @@
                 :placeholder="getApiKeyPlaceholder()"
                 @input="handleApiKeyChange"
               />
-              <button class="toggle-visibility-btn" @click="apiKeyVisible = !apiKeyVisible">
-                <IconWrapper :name="apiKeyVisible ? 'eye' : 'eyeOff'" :size="14" />
-              </button>
+              <Button icon="pi pi-eye" class="toggle-visibility-btn" @click="apiKeyVisible = !apiKeyVisible" severity="secondary" text>
+              </Button>
             </div>
             <div class="setting-desc">{{ getApiKeyDescription() }}</div>
           </div>
@@ -160,6 +152,7 @@ import IconWrapper from '@/components/IconWrapper.vue'
 import FeatureCard from './components/FeatureCard.vue'
 import type { PluginSettings } from '@/config/settings'
 import { showMessage } from 'siyuan'
+import Button from 'primevue/button'
 
 // AI 模型配置常量
 const AI_MODELS_CONFIG = {

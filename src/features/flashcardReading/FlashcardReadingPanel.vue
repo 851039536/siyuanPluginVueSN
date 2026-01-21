@@ -47,22 +47,13 @@
       </div>
       <div class="filter-right">
         <div class="search-box">
-          <IconWrapper name="search" :size="14" />
+          <i class="pi pi-search" style="font-size: 14px"></i>
           <input
             v-model="searchQuery"
             type="text"
             :placeholder="i18n.searchPlaceholder || '搜索标题或内容...'"
           />
-          <Button
-            v-if="searchQuery"
-            icon="pi pi-times"
-            severity="secondary"
-            variant="text"
-            size="small"
-            rounded
-            @click="searchQuery = ''"
-            :title="i18n.clearSearch || '清除'"
-          />
+
         </div>
         <div class="statistics">
           <span class="stat-item">{{ i18n.total || '总计' }}: {{ cards.length }}</span>

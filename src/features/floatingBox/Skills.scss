@@ -101,7 +101,7 @@ $shadow-card: 0 4px 12px rgba(0, 0, 0, 0.1);
     gap: 10px;
 
     .header-icon {
-      color: var(--b3-theme-primary);
+      color: #22c55e;
       flex-shrink: 0;
     }
 
@@ -408,7 +408,6 @@ $shadow-card: 0 4px 12px rgba(0, 0, 0, 0.1);
 
       &.description-textarea {
         min-height: 72px;
-        rows: 3;
       }
     }
   }

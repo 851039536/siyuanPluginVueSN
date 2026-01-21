@@ -3,7 +3,7 @@
     <div class="skills-modal" @click.stop>
       <div class="skills-modal-header">
         <div class="header-title">
-         <i class="pi pi-asterisk" style="color: green"></i>
+         <i class="pi pi-asterisk header-icon"></i>
           <h2>{{ i18n?.skillsTitle || '技能库' }}</h2>
         </div>
         <div class="header-actions">

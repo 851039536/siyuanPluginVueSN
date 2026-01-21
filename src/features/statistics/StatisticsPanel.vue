@@ -3,13 +3,11 @@
     <!-- 顶部操作栏 -->
     <div class="statistics-header">
       <div class="header-left">
-        <button class="refresh-btn" title="刷新" @click="refreshData" :disabled="loading">
-          <svg class="icon" :class="{ rotating: loading }"><use xlink:href="#iconRefresh"></use></svg>
-        </button>
-        <button class="theme-toggle-btn" @click="toggleTheme" title="切换主题">
+        <Button size="small" class="refresh-btn" icon="pi pi-refresh" title="刷新" @click="refreshData" :disabled="loading" :loading="loading" severity="secondary" text rounded />
+        <Button class="theme-toggle-btn" @click="toggleTheme" title="切换主题" severity="secondary" text>
           <span class="theme-icon">{{ currentTheme === 'default' ? '🌈' : '🐙' }}</span>
           <span class="theme-text">{{ currentTheme === 'default' ? '默认' : 'GitHub' }}</span>
-        </button>
+        </Button>
       </div>
       <div class="header-right">
         <div class="auto-update-info">
@@ -102,15 +100,19 @@
       <!-- 查看模式切换 -->
       <div class="view-mode-section">
         <div class="mode-tabs">
-          <button
+          <Button
             v-for="mode in viewModes"
             :key="mode.value"
             class="mode-tab"
             :class="{ active: viewMode === mode.value }"
             @click="viewMode = mode.value"
+            :severity="viewMode === mode.value ? 'primary' : 'secondary'"
+            :text="viewMode !== mode.value"
+            :outlined="viewMode !== mode.value"
+            rounded
           >
             {{ mode.icon }} {{ mode.label }}
-          </button>
+          </Button>
         </div>
 
         <!-- 时段统计：平均字数和总字数 -->
@@ -127,28 +129,38 @@
 
         <!-- 日视图范围选择 -->
         <div v-if="viewMode === 'day'" class="range-selector">
-          <button
+          <Button
             v-for="range in dayRanges"
             :key="range.value"
             class="range-btn"
             :class="{ active: dayRange === range.value }"
             @click="dayRange = range.value; refreshData()"
+            :severity="dayRange === range.value ? 'primary' : 'secondary'"
+            :text="dayRange !== range.value"
+            :outlined="dayRange !== range.value"
+            rounded
+            size="small"
           >
             {{ range.label }}
-          </button>
+          </Button>
         </div>
 
         <!-- 月视图范围选择 -->
         <div v-if="viewMode === 'month'" class="range-selector">
-          <button
+          <Button
             v-for="range in monthRanges"
             :key="range.value"
             class="range-btn"
             :class="{ active: monthYearRange === range.value }"
             @click="monthYearRange = range.value; refreshData()"
+            :severity="monthYearRange === range.value ? 'primary' : 'secondary'"
+            :text="monthYearRange !== range.value"
+            :outlined="monthYearRange !== range.value"
+            rounded
+            size="small"
           >
             {{ range.label }}
-          </button>
+          </Button>
         </div>
 
         <!-- 年视图选择 -->
@@ -311,7 +323,7 @@
         <div v-if="viewMode === 'snapshot'" class="snapshot-view">
           <h3 class="section-title">
             快照分析
-            <button @click="clearSnapshots" class="clear-btn" title="清除快照">🗑️</button>
+            <Button @click="clearSnapshots" class="clear-btn" title="清除快照" icon="pi pi-trash" severity="danger" text rounded />
           </h3>
 
           <div v-if="snapshotData.length > 0" class="snapshot-stats">
@@ -404,6 +416,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import Button from 'primevue/button'
 
 interface Props {
   theme?: 'default' | 'github'

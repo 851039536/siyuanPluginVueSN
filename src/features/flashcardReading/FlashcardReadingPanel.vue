@@ -56,14 +56,10 @@
 
         </div>
         <div class="statistics">
-          <span class="stat-item">{{ i18n.total || '总计' }}: {{ cards.length }}</span>
-          <template v-if="selectedCategory !== 'all' || searchQuery">
-            <span class="stat-divider">|</span>
-            <span class="stat-item">
-              {{ selectedCategory !== 'all' ? selectedCategory : (i18n.filtered || '筛选') }}:
-              {{ filteredCards.length }}
-            </span>
-          </template>
+          <Tag :value="`${i18n.total || '总计'}: ${cards.length}`" severity="secondary" />
+          <Tag v-if="selectedCategory !== 'all' || searchQuery"
+            :value="`${selectedCategory !== 'all' ? selectedCategory : (i18n.filtered || '筛选')}: ${filteredCards.length}`"
+            severity="info" />
         </div>
       </div>
     </div>
@@ -110,7 +106,9 @@
             </div>
           </div>
           <div class="card-content">{{ card.content }}</div>
-          <div class="card-category">{{ card.category }}</div>
+          <div class="card-category">
+            <Tag size="small" :value="card.category" />
+          </div>
         </div>
       </div>
 
@@ -120,8 +118,8 @@
           <div class="card-title-large">{{ currentCard?.title }}</div>
           <div class="card-content-large">{{ currentCard?.content }}</div>
           <div class="card-meta-large">
-            <span class="card-category-large">{{ currentCard?.category }}</span>
-            <span class="practice-count">{{ i18n.practiceCount || '练习次数' }}: {{ currentCard?.practiceCount || 0 }}</span>
+            <Tag :value="currentCard?.category" severity="info" />
+            <Tag :value="`${i18n.practiceCount || '练习次数'}: ${currentCard?.practiceCount || 0}`" severity="success" />
           </div>
           <!-- 播放按钮 -->
           <Button
@@ -154,9 +152,7 @@
             @click.stop="randomCard"
             :title="i18n.randomCard || '随机'"
           />
-          <span class="card-counter">
-            {{ currentIndex + 1 }} / {{ filteredCards.length }}
-          </span>
+          <Tag :value="`${currentIndex + 1} / ${filteredCards.length}`" rounded />
           <Button
             icon="pi pi-chevron-right"
             severity="secondary"
@@ -221,7 +217,7 @@
               :key="item.title"
               class="rank-item"
             >
-              <div class="rank-number" :class="{ 'top-three': index < 3 }">{{ index + 1 }}</div>
+              <Tag :value="index + 1" :severity="index < 3 ? 'contrast' : 'secondary'" rounded />
               <div class="rank-info">
                 <div class="rank-title">{{ item.title }}</div>
                 <div class="rank-category">{{ item.category }}</div>
@@ -432,6 +428,8 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { showMessage } from 'siyuan'
 import Button from 'primevue/button'
+import Tag from 'primevue/tag';
+
 import IconWrapper from '@/components/IconWrapper.vue'
 import type { Plugin } from 'siyuan'
 import { FlashcardStorage } from './storage'

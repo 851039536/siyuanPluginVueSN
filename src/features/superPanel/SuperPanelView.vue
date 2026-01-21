@@ -378,9 +378,6 @@ const features = computed(() => [
     desc: props.i18n.tableOfContentsDesc || '快速生成文档目录和大纲',
     enabled: props.settings.enableTableOfContents,
     actions: [
-      { key: 'insertIndex', label: '插入索引', hotkey: 'Ctrl+Alt+I' },
-      { key: 'insertOutline', label: '插入大纲', hotkey: 'Ctrl+Alt+O' },
-      { key: 'insertRef', label: '插入引用', hotkey: 'Ctrl+Alt+R' }
     ]
   },
   {

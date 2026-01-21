@@ -14,6 +14,28 @@
 // @use '../../styles/mixins' as *;
 // @use '../../styles/themes' as *;
 
+// ==================== 全局动画 ====================
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+  }
+}
+
 // ==================== 遮罩层样式 ====================
 
 .super-panel-overlay {
@@ -96,10 +118,8 @@
 }
 
 // ==================== 头部按钮样式 ====================
+// 注意：头部按钮已使用 PrimeVue Button 组件，以下样式保留供自定义按钮使用
 
-.super-panel-settings,
-.super-panel-refresh,
-.super-panel-close,
 .header-action-btn {
   @include button-reset;
   width: $btn-size;
@@ -112,47 +132,6 @@
 
   &:hover {
     background: var(--b3-theme-surface-lighter);
-  }
-}
-
-// 特殊按钮样式
-.header-action-btn {
-  &.enable-all-btn {
-    color: #10b981;
-
-    &:hover {
-      background: rgba(16, 185, 129, 0.15);
-    }
-  }
-
-  &.disable-all-btn {
-    color: #ef4444;
-
-    &:hover {
-      background: rgba(239, 68, 68, 0.15);
-    }
-  }
-}
-
-.super-panel-refresh {
-  &:hover:not(:disabled) {
-    .refresh-icon:not(.spinning) {
-      animation: rotate $transition-slow ease-in-out;
-    }
-  }
-}
-
-.super-panel-close {
-  &:hover {
-    background: var(--b3-theme-error-lighter);
-  }
-}
-
-.refresh-icon {
-  display: block;
-
-  &.spinning {
-    animation: rotate 1s linear infinite;
   }
 }
 
@@ -175,21 +154,6 @@
   color: var(--b3-theme-on-surface);
   background: var(--b3-theme-surface);
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
-}
-
-.settings-close-btn {
-  @include button-reset;
-  padding: $spacing-xs;
-  color: var(--b3-theme-on-surface);
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  &:hover {
-    background: var(--b3-theme-error-lighter);
-    transform: rotate(90deg);
-  }
 }
 
 .ai-settings-content {
@@ -310,9 +274,6 @@
     gap: $spacing-sm;
   }
 
-  .super-panel-settings,
-  .super-panel-refresh,
-  .super-panel-close,
   .header-action-btn {
     width: $btn-size-mobile;
     height: $btn-size-mobile;
@@ -378,9 +339,6 @@
     gap: $spacing-xs;
   }
 
-  .super-panel-settings,
-  .super-panel-refresh,
-  .super-panel-close,
   .header-action-btn {
     width: $btn-size-small;
     height: $btn-size-small;
@@ -422,14 +380,6 @@
   .setting-input {
     border-width: 3px;
   }
-
-  .header-action-btn.enable-all-btn {
-    border: 2px solid #10b981;
-  }
-
-  .header-action-btn.disable-all-btn {
-    border: 2px solid #ef4444;
-  }
 }
 
 // 减少动画模式支持
@@ -441,12 +391,8 @@
     transition: none;
   }
 
-  .refresh-icon.spinning {
+  .ai-settings-panel {
     animation: none;
-  }
-
-  .settings-close-btn:hover {
-    transform: none;
   }
 }
 

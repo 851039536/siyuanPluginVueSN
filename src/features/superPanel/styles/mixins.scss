@@ -7,7 +7,7 @@
   background: transparent;
   cursor: pointer;
   outline: none;
-  transition: all var(--transition-fast, 0.2s) ease;
+  transition: all $transition-fast ease;
 
   &:disabled {
     opacity: 0.6;
@@ -37,15 +37,7 @@
 
 // 滑入动画
 @mixin slide-down-animation {
-  animation: slideDown var(--transition-normal, 0.3s) ease-out;
-}
-
-// 功能卡片布局
-@mixin feature-grid($columns: 3, $gap: 8px) {
-  display: grid;
-  grid-template-columns: repeat($columns, 1fr);
-  gap: $gap;
-  align-content: start;
+  animation: slideDown $transition-normal ease-out;
 }
 
 // 响应式断点
@@ -81,12 +73,4 @@
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-// Focus 样式
-@mixin focus-ring($color: var(--b3-theme-primary)) {
-  &:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba($color, 0.1);
-  }
 }

@@ -706,7 +706,7 @@ $shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
       .historical-table {
         width: 100%;
         border-collapse: collapse;
-        font-size: 12px;
+        font-size: 11px;
 
         thead {
           position: sticky;
@@ -715,7 +715,7 @@ $shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
           background: var(--b3-theme-surface);
 
           th {
-            padding: 8px 10px;
+            padding: 6px 8px;
             text-align: left;
             font-weight: 600;
             color: var(--b3-theme-on-surface);
@@ -761,7 +761,7 @@ $shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
             }
 
             td {
-              padding: 8px 10px;
+              padding: 6px 8px;
               color: var(--b3-theme-on-surface);
 
               &.col-date {

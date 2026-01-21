@@ -33,6 +33,7 @@ export interface PluginSettings {
   enableBase64Image: boolean     // 是否启用 Base64 图片转换器功能
   enableFlashcardReading: boolean // 是否启用单词阅读功能
   enableFlashcardQuery: boolean  // 是否启用查询单词功能
+  enableTranslate: boolean       // 是否启用翻译替换功能
   enablePasswordVault: boolean   // 是否启用密码箱功能
   videoCategories?: string[]     // 视频分类列表
   wordQueryApiKey: string        // 单词查询API密钥(已废弃,使用aiApiProvider和aiApiKey)
@@ -108,6 +109,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enableBase64Image: true,
   enableFlashcardReading: true,
   enableFlashcardQuery: true,
+  enableTranslate: true,
   enablePasswordVault: true,
   videoCategories: ['默认分类', '教程', '演示', '其他'],
   wordQueryApiKey: 'sk-fae27cc50015409fb2524b0970d3f0b0',

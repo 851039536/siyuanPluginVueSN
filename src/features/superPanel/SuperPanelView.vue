@@ -595,6 +595,14 @@ const features = computed(() => [
     desc: '在浮动工具栏中快速查询单词卡片',
     enabled: props.settings.enableFlashcardQuery,
     actions: []
+  },
+  {
+    id: 'translate',
+    iconKey: 'translate',
+    title: props.i18n.floatingToolbar?.translate || '英译中替换',
+    desc: '在浮动工具栏中快速翻译英文并替换',
+    enabled: props.settings.enableTranslate,
+    actions: []
   }
 ])
 

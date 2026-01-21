@@ -167,7 +167,8 @@ async function handleFeatureToggle(plugin: Plugin, featureId: string, enabled: b
     'base64Image': 'enableBase64Image',
     'skills': 'enableSkills',
     'flashcardReading': 'enableFlashcardReading',
-    'flashcardQuery': 'enableFlashcardQuery'
+    'flashcardQuery': 'enableFlashcardQuery',
+    'translate': 'enableTranslate'
   }
 
   const settingKey = settingsMap[featureId]
@@ -226,7 +227,8 @@ async function handleToggleAllFeatures(plugin: Plugin, enabled: boolean) {
     'enableTextDiff',
     'enableBase64Image',
     'enableFlashcardReading',
-    'enableFlashcardQuery'
+    'enableFlashcardQuery',
+    'enableTranslate'
   ]
 
   // 构建新设置对象

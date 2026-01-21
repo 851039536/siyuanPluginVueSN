@@ -186,6 +186,12 @@ export const FEATURE_ICONS = {
   flashcardQuery: {
     icon: 'mdi:magnify',
     color: '#3b82f6'
+  },
+
+  // 翻译替换
+  translate: {
+    icon: 'mdi:translate',
+    color: '#0d9488'
   }
 } as const
 

@@ -22,7 +22,7 @@ export interface Feature {
   /** 功能ID */
   id: string
   /** 图标键名 */
-  iconKey: FeatureIconKey | 'textDiff' | 'skills' | 'base64Image'
+  iconKey: FeatureIconKey | 'textDiff' | 'skills' | 'base64Image' | 'translate'
   /** 功能标题 */
   title: string
   /** 功能描述 */

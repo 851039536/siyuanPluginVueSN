@@ -2,10 +2,10 @@
   <div class="flashcard-reading-panel">
     <!-- 头部 -->
     <div class="panel-header">
-      <h3 class="panel-title">
-        <IconWrapper name="flashcardReading" :size="20" />
+      <h4 class="panel-title">
+       <i class="pi pi-headphones" style="font-size: 1.3rem"></i>
         <span>{{ i18n.panelTitle || '单词阅读' }}</span>
-      </h3>
+      </h4>
       <div class="header-actions">
         <Button
           icon="pi pi-question-circle"

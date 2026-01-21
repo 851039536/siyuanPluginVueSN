@@ -8,7 +8,8 @@ import { ToolbarAction, ToolbarActionManager } from './actions'
 export class FloatingToolbar {
     private plugin: Plugin
     private actionManager: ToolbarActionManager
-    private isProcessing: boolean = false
+    private selectionTimeoutId: ReturnType<typeof setTimeout> | null = null
+    private lastSelectionText: string = ''
 
     constructor(plugin: Plugin) {
         this.plugin = plugin
@@ -57,78 +58,102 @@ export class FloatingToolbar {
 
     /**
      * 绑定事件监听器
+     * 改为在 protyle 容器级别监听 mouseup，避免干扰选择过程
      */
     private bindEvents() {
-        // 监听选择变化事件
-        document.addEventListener('selectionchange', this.handleSelectionChange.bind(this))
+        // 使用事件委托在 protyle 容器级别监听 mouseup
+        // 这样不会干扰浏览器的文本选择过程
+        document.addEventListener('mouseup', this.handleDocumentMouseUp.bind(this), { passive: true })
     }
 
     /**
-     * 处理选择变化事件
+     * 处理文档级别的鼠标释放事件
+     * 延迟处理以确保选择完成后再添加按钮
      */
-    private handleSelectionChange() {
-        // 防止重复处理
-        if (this.isProcessing) return
+    private handleDocumentMouseUp() {
+        // 清除之前的定时器
+        if (this.selectionTimeoutId) {
+            clearTimeout(this.selectionTimeoutId)
+        }
 
-        const activeElement = document.activeElement
-        if (!activeElement) return
+        // 记录当前选择内容
+        const currentSelection = window.getSelection()?.toString().trim() || ''
+        this.lastSelectionText = currentSelection
 
-        // 查找最近的 protyle 容器
-        const protyle = activeElement.closest('.protyle')
-        if (!protyle) return
+        // 延迟执行，等待三击选择完成（500ms 足够三击完成）
+        this.selectionTimeoutId = setTimeout(() => {
+            // 再次检查选择是否与延迟前的内容一致（确保选择稳定）
+            const stableSelection = window.getSelection()?.toString().trim() || ''
+            if (stableSelection === this.lastSelectionText && stableSelection) {
+                this.processSelection()
+            } else if (!stableSelection) {
+                this.cleanupAllToolbars()
+            }
+        }, 400)
+    }
 
-        // 检查是否有选中的内容
-        if (!this.hasSelection(protyle)) return
+    /**
+     * 处理选择状态
+     */
+    private processSelection() {
+        const selection = window.getSelection()
+        const selectedText = selection?.toString().trim()
 
-        // 查找工具栏
+        if (!selectedText) {
+            return
+        }
+
+        // 查找选择范围内的 protyle 容器
+        const range = selection.getRangeAt(0)
+        let protyle: Element | null = null
+
+        // 对于 Element，使用 closest
+        if (range.commonAncestorContainer instanceof Element) {
+            protyle = range.commonAncestorContainer.closest('.protyle')
+        }
+
+        if (!protyle) {
+            // 尝试通过 parentNode 查找（对于文本节点）
+            let node: Node | null = range.commonAncestorContainer
+            while (node) {
+                if (node instanceof Element && node.classList.contains('protyle')) {
+                    this.processToolbar(node as Element)
+                    return
+                }
+                node = node.parentNode
+            }
+            return
+        }
+
+        this.processToolbar(protyle)
+    }
+
+    /**
+     * 处理单个工具栏
+     */
+    private processToolbar(protyle: Element) {
         const toolbar = protyle.querySelector('.protyle-toolbar') as HTMLElement
         if (!toolbar) return
 
-        // 防止重复添加事件监听器
-        if (!toolbar.hasAttribute('data-floating-toolbar-attached')) {
-            toolbar.setAttribute('data-floating-toolbar-attached', 'true')
-            this.attachToolbarEvents(toolbar, protyle)
-        }
+        // 检查按钮是否已添加
+        if (toolbar.hasAttribute('data-custom-buttons-added')) return
+
+        // 使用 requestAnimationFrame 在下一帧添加按钮
+        requestAnimationFrame(() => {
+            this.addCustomButtons(toolbar, protyle)
+        })
     }
 
     /**
-     * 检查是否有选中的内容
+     * 清理所有工具栏的标记
      */
-    private hasSelection(protyle: Element): boolean {
-        const selection = window.getSelection().toString().trim()
-        if (selection) return true
-
-        // 检查是否有多选块
-        const selects = protyle.querySelectorAll('.protyle-wysiwyg--select')
-        if (selects.length > 0) return true
-
-        return false
+    private cleanupAllToolbars() {
+        const toolbars = document.querySelectorAll('[data-custom-buttons-added]')
+        toolbars.forEach(toolbar => {
+            toolbar.removeAttribute('data-custom-buttons-added')
+        })
     }
 
-    /**
-     * 附加工具栏事件
-     */
-    private attachToolbarEvents(toolbar: HTMLElement, protyle: Element) {
-        const mouseupHandler = (event: MouseEvent) => {
-            toolbar.removeAttribute('data-floating-toolbar-attached')
-            document.removeEventListener('mouseup', mouseupHandler)
-            document.removeEventListener('keyup', mouseupHandler)
-            this.handleMouseUp(event, toolbar, protyle)
-        }
-
-        document.addEventListener('mouseup', mouseupHandler)
-        document.addEventListener('keyup', mouseupHandler)
-    }
-
-    /**
-     * 处理鼠标释放事件
-     */
-    private handleMouseUp(event: MouseEvent, toolbar: HTMLElement, protyle: Element) {
-        if (!this.hasSelection(protyle)) return
-
-        // 添加自定义按钮
-        this.addCustomButtons(toolbar, protyle)
-    }
 
     /**
      * 添加自定义按钮到工具栏
@@ -278,7 +303,7 @@ export class FloatingToolbar {
      */
     destroy() {
         // 移除事件监听
-        document.removeEventListener('selectionchange', this.handleSelectionChange.bind(this))
+        document.removeEventListener('mouseup', this.handleDocumentMouseUp.bind(this))
 
         // 移除所有自定义按钮
         const customButtons = document.querySelectorAll('.custom-toolbar-button')

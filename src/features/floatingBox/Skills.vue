@@ -8,6 +8,7 @@
             <path d="M8 14l2 2 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
           <h2>{{ i18n?.skillsTitle || '技能库' }}</h2>
+          <Button icon="pi pi-times" severity="danger" variant="text" rounded aria-label="Cancel" />
         </div>
         <div class="header-actions">
           <Button :label="i18n?.manageCategories || '分类'" icon="pi pi-list" severity="secondary" outlined @click="openCategoryManage" />
@@ -165,6 +166,7 @@
       <div class="skills-modal-header">
         <h2>{{ i18n?.manageCategories || '管理分类' }}</h2>
         <Button :label="i18n?.close || '关闭'" icon="pi pi-times" severity="secondary" outlined @click="closeCategoryManage" />
+
       </div>
 
       <div class="skills-modal-body">

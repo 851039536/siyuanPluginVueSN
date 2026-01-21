@@ -7,17 +7,30 @@
         <span>{{ i18n.panelTitle || '单词阅读' }}</span>
       </h3>
       <div class="header-actions">
-        <button class="action-btn help-btn" @click="showHelpDialog = true" :title="i18n.usageGuide || '使用说明'">
-          <svg class="help-icon" viewBox="0 0 24 24" width="16" height="16">
-            <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
-          </svg>
-        </button>
-        <button class="action-btn" @click="showCreateDialog = true" :title="i18n.addCard || '添加卡片'">
-          <IconWrapper name="add" :size="16" />
-        </button>
-        <button class="action-btn" @click="loadCards" :title="i18n.refresh || '刷新'">
-          <IconWrapper name="refresh" :size="16" />
-        </button>
+        <Button
+          icon="pi pi-question-circle"
+          severity="secondary"
+          variant="text"
+          rounded
+          @click="showHelpDialog = true"
+          :title="i18n.usageGuide || '使用说明'"
+        />
+        <Button
+          icon="pi pi-plus"
+          severity="secondary"
+          variant="text"
+          rounded
+          @click="showCreateDialog = true"
+          :title="i18n.addCard || '添加卡片'"
+        />
+        <Button
+          icon="pi pi-refresh"
+          severity="secondary"
+          variant="text"
+          rounded
+          @click="loadCards"
+          :title="i18n.refresh || '刷新'"
+        />
       </div>
     </div>
 
@@ -40,14 +53,16 @@
             type="text"
             :placeholder="i18n.searchPlaceholder || '搜索标题或内容...'"
           />
-          <button
+          <Button
             v-if="searchQuery"
-            class="clear-btn"
+            icon="pi pi-times"
+            severity="secondary"
+            variant="text"
+            size="small"
+            rounded
             @click="searchQuery = ''"
             :title="i18n.clearSearch || '清除'"
-          >
-            <IconWrapper name="close" :size="12" />
-          </button>
+          />
         </div>
         <div class="statistics">
           <span class="stat-item">{{ i18n.total || '总计' }}: {{ cards.length }}</span>
@@ -74,17 +89,33 @@
           <div class="card-header">
             <div class="card-title">{{ card.title }}</div>
             <div class="card-actions">
-              <button class="icon-btn play-btn" @click="playWord(card)" :title="i18n.play || '播放'">
-                <svg class="icon-icon" viewBox="0 0 24 24" width="14" height="14">
-                  <path fill="currentColor" d="M8 5v14l11-7z"/>
-                </svg>
-              </button>
-              <button class="icon-btn" @click="editCard(card)" :title="i18n.editCard || '编辑'">
-                <IconWrapper name="edit" :size="14" />
-              </button>
-              <button class="icon-btn danger" @click="deleteCard(card)" :title="i18n.deleteCard || '删除'">
-                <IconWrapper name="delete" :size="14" />
-              </button>
+              <Button
+                icon="pi pi-play"
+                severity="secondary"
+                variant="text"
+                size="small"
+                rounded
+                @click="playWord(card)"
+                :title="i18n.play || '播放'"
+              />
+              <Button
+                icon="pi pi-pencil"
+                severity="secondary"
+                variant="text"
+                size="small"
+                rounded
+                @click="editCard(card)"
+                :title="i18n.editCard || '编辑'"
+              />
+              <Button
+                icon="pi pi-trash"
+                severity="danger"
+                variant="text"
+                size="small"
+                rounded
+                @click="deleteCard(card)"
+                :title="i18n.deleteCard || '删除'"
+              />
             </div>
           </div>
           <div class="card-content">{{ card.content }}</div>
@@ -102,42 +133,48 @@
             <span class="practice-count">{{ i18n.practiceCount || '练习次数' }}: {{ currentCard?.practiceCount || 0 }}</span>
           </div>
           <!-- 播放按钮 -->
-          <button class="play-btn-large" @click="playWord(currentCard)" :title="i18n.play || '播放'">
-            <svg class="play-icon" viewBox="0 0 24 24" width="20" height="20">
-              <path fill="currentColor" d="M8 5v14l11-7z"/>
-            </svg>
-            {{ i18n.play || '播放' }}
-          </button>
+          <Button
+            :label="i18n.play || '播放'"
+            icon="pi pi-play"
+            iconPos="left"
+            size="large"
+            rounded
+            raised
+            @click="playWord(currentCard)"
+          />
         </div>
 
         <!-- 导航 -->
         <div class="card-navigation">
-          <button
-            class="nav-btn"
+          <Button
+            icon="pi pi-chevron-left"
+            severity="secondary"
+            rounded
+            outlined
             @click.stop="previousCard"
             :disabled="currentIndex === 0"
-          >
-            <IconWrapper name="back" :size="20" />
-          </button>
-          <button
-            class="nav-btn random-btn"
+            :title="i18n.previous || '上一个'"
+          />
+          <Button
+            icon="pi pi-sort-alt"
+            severity="secondary"
+            rounded
+            outlined
             @click.stop="randomCard"
             :title="i18n.randomCard || '随机'"
-          >
-            <svg class="icon-icon" viewBox="0 0 24 24" width="20" height="20">
-              <path fill="currentColor" d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/>
-            </svg>
-          </button>
+          />
           <span class="card-counter">
             {{ currentIndex + 1 }} / {{ filteredCards.length }}
           </span>
-          <button
-            class="nav-btn"
+          <Button
+            icon="pi pi-chevron-right"
+            severity="secondary"
+            rounded
+            outlined
             @click.stop="nextCard"
             :disabled="currentIndex === filteredCards.length - 1"
-          >
-            <IconWrapper name="forward" :size="20" />
-          </button>
+            :title="i18n.next || '下一个'"
+          />
         </div>
       </div>
 
@@ -212,21 +249,23 @@
 
       <!-- 分页控制 -->
       <div class="pagination" v-if="viewMode === 'list' && totalPages > 1">
-        <button
-          class="page-btn"
+        <Button
+          :label="i18n.previous || '上一页'"
+          severity="secondary"
+          variant="outlined"
+          size="small"
           @click="currentPage--"
           :disabled="currentPage === 1"
-        >
-          {{ i18n.previous || '上一页' }}
-        </button>
+        />
         <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
-        <button
-          class="page-btn"
+        <Button
+          :label="i18n.next || '下一页'"
+          severity="secondary"
+          variant="outlined"
+          size="small"
           @click="currentPage++"
           :disabled="currentPage === totalPages"
-        >
-          {{ i18n.next || '下一页' }}
-        </button>
+        />
       </div>
     </div>
 
@@ -234,34 +273,37 @@
     <div class="empty-state" v-else>
       <IconWrapper name="file" :size="48" />
       <p>{{ i18n.noCards || '暂无卡片' }}</p>
-      <button class="btn-primary" @click="showCreateDialog = true">
-        {{ i18n.addCard || '添加卡片' }}
-      </button>
+      <Button
+        :label="i18n.addCard || '添加卡片'"
+        icon="pi pi-plus"
+        @click="showCreateDialog = true"
+        raised
+      />
     </div>
 
     <!-- 视图模式切换 -->
     <div class="view-mode-toggle" v-if="cards.length > 0">
-      <button
-        class="mode-btn"
-        :class="{ active: viewMode === 'list' }"
+      <Button
+        :label="i18n.listView || '列表'"
+        :severity="viewMode === 'list' ? 'primary' : 'secondary'"
+        :variant="viewMode === 'list' ? 'filled' : 'outlined'"
+        size="small"
         @click="viewMode = 'list'"
-      >
-        {{ i18n.listView || '列表' }}
-      </button>
-      <button
-        class="mode-btn"
-        :class="{ active: viewMode === 'single' }"
+      />
+      <Button
+        :label="i18n.singleView || '单卡'"
+        :severity="viewMode === 'single' ? 'primary' : 'secondary'"
+        :variant="viewMode === 'single' ? 'filled' : 'outlined'"
+        size="small"
         @click="switchToSingleMode"
-      >
-        {{ i18n.singleView || '单卡' }}
-      </button>
-      <button
-        class="mode-btn"
-        :class="{ active: viewMode === 'statistics' }"
+      />
+      <Button
+        :label="i18n.statisticsView || '统计'"
+        :severity="viewMode === 'statistics' ? 'primary' : 'secondary'"
+        :variant="viewMode === 'statistics' ? 'filled' : 'outlined'"
+        size="small"
         @click="viewMode = 'statistics'"
-      >
-        {{ i18n.statisticsView || '统计' }}
-      </button>
+      />
     </div>
 
     <!-- 使用说明对话框 -->
@@ -269,9 +311,13 @@
       <div class="dialog help-dialog" @click.stop>
         <div class="dialog-header">
           <h4>{{ i18n.usageGuide || '使用说明' }}</h4>
-          <button class="close-btn" @click="showHelpDialog = false">
-            <IconWrapper name="close" :size="16" />
-          </button>
+          <Button
+            icon="pi pi-times"
+            severity="secondary"
+            variant="text"
+            rounded
+            @click="showHelpDialog = false"
+          />
         </div>
         <div class="dialog-body help-body">
           <div class="help-section">
@@ -312,9 +358,10 @@
           </div>
         </div>
         <div class="dialog-footer">
-          <button class="btn-primary" @click="showHelpDialog = false">
-            {{ i18n.close || '关闭' }}
-          </button>
+          <Button
+            :label="i18n.close || '关闭'"
+            @click="showHelpDialog = false"
+          />
         </div>
       </div>
     </div>
@@ -324,9 +371,13 @@
       <div class="dialog" @click.stop>
         <div class="dialog-header">
           <h4>{{ editingCard ? (i18n.editCard || '编辑卡片') : (i18n.addCard || '添加卡片') }}</h4>
-          <button class="close-btn" @click="closeDialog">
-            <IconWrapper name="close" :size="16" />
-          </button>
+          <Button
+            icon="pi pi-times"
+            severity="secondary"
+            variant="text"
+            rounded
+            @click="closeDialog"
+          />
         </div>
         <div class="dialog-body">
           <div class="form-group">
@@ -369,12 +420,17 @@
           </div>
         </div>
         <div class="dialog-footer">
-          <button class="btn-secondary" @click="closeDialog">
-            {{ i18n.cancel || '取消' }}
-          </button>
-          <button class="btn-primary" @click="saveCard" :disabled="!isFormValid">
-            {{ i18n.save || '保存' }}
-          </button>
+          <Button
+            :label="i18n.cancel || '取消'"
+            severity="secondary"
+            variant="outlined"
+            @click="closeDialog"
+          />
+          <Button
+            :label="i18n.save || '保存'"
+            @click="saveCard"
+            :disabled="!isFormValid"
+          />
         </div>
       </div>
     </div>
@@ -384,6 +440,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { showMessage } from 'siyuan'
+import Button from 'primevue/button'
 import IconWrapper from '@/components/IconWrapper.vue'
 import type { Plugin } from 'siyuan'
 import { FlashcardStorage } from './storage'

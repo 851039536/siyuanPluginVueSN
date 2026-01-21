@@ -4,11 +4,14 @@
       <div v-if="visible" class="flashcard-dialog-overlay" @click.self="close">
         <div class="flashcard-dialog">
           <!-- 关闭按钮 -->
-          <button class="close-btn" @click="close">
-            <svg viewBox="0 0 24 24" width="24" height="24">
-              <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-            </svg>
-          </button>
+          <Button
+            icon="pi pi-times"
+            severity="secondary"
+            variant="text"
+            rounded
+            class="close-btn"
+            @click="close"
+          />
 
           <!-- 空状态 -->
           <div v-if="filteredCards.length === 0" class="empty-state">
@@ -28,12 +31,16 @@
                 <span class="practice-count">{{ i18n.practiceCount || '练习次数' }}: {{ currentCard?.practiceCount || 0 }}</span>
               </div>
               <!-- 播放按钮 -->
-              <button class="play-btn-large" @click="playWord(currentCard)">
-                <svg class="play-icon" viewBox="0 0 24 24" width="24" height="24">
-                  <path fill="currentColor" d="M8 5v14l11-7z"/>
-                </svg>
-                {{ i18n.play || '播放' }}
-              </button>
+              <Button
+                :label="i18n.play || '播放'"
+                icon="pi pi-play"
+                iconPos="left"
+                size="large"
+                rounded
+                raised
+                class="play-btn-large"
+                @click="playWord(currentCard)"
+              />
             </div>
 
             <!-- 类别筛选 -->
@@ -49,36 +56,32 @@
 
             <!-- 导航 -->
             <div class="card-navigation">
-              <button
-                class="nav-btn"
+              <Button
+                icon="pi pi-chevron-left"
+                severity="secondary"
+                rounded
+                outlined
                 @click="previousCard"
                 :disabled="currentIndex === 0"
-              >
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                  <path fill="currentColor" d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-                </svg>
-              </button>
-              <button
-                class="nav-btn random-btn"
+              />
+              <Button
+                icon="pi pi-sort-alt"
+                severity="secondary"
+                rounded
+                outlined
                 @click="randomCard"
-                :title="i18n.randomCard || '随机'"
-              >
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                  <path fill="currentColor" d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/>
-                </svg>
-              </button>
+              />
               <span class="card-counter">
                 {{ currentIndex + 1 }} / {{ filteredCards.length }}
               </span>
-              <button
-                class="nav-btn"
+              <Button
+                icon="pi pi-chevron-right"
+                severity="secondary"
+                rounded
+                outlined
                 @click="nextCard"
                 :disabled="currentIndex === filteredCards.length - 1"
-              >
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                  <path fill="currentColor" d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
-                </svg>
-              </button>
+              />
             </div>
           </template>
         </div>
@@ -90,6 +93,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { showMessage } from 'siyuan'
+import Button from 'primevue/button'
 import type { Plugin } from 'siyuan'
 import { FlashcardStorage } from './storage'
 import type { Flashcard } from './types'
@@ -237,28 +241,11 @@ onMounted(() => {
   flex-direction: column;
   gap: 20px;
   overflow-y: auto;
-}
 
-.close-btn {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 36px;
-  height: 36px;
-  border: none;
-  background: var(--b3-list-hover);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: var(--b3-theme-on-background);
-  transition: all 0.2s;
-
-  &:hover {
-    background: var(--b3-theme-danger);
-    color: #fff;
-    transform: rotate(90deg);
+  .close-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
   }
 }
 
@@ -347,31 +334,6 @@ onMounted(() => {
   border-radius: 12px;
 }
 
-.play-btn-large {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
-  background: var(--b3-theme-on-primary);
-  color: var(--b3-theme-primary);
-  border: none;
-  border-radius: 24px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  flex-shrink: 0;
-
-  &:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  }
-
-  &:active {
-    transform: scale(0.98);
-  }
-}
-
 .category-filter {
   display: flex;
   align-items: center;
@@ -403,46 +365,6 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   gap: 12px;
-}
-
-.nav-btn {
-  width: 48px;
-  height: 48px;
-  border: none;
-  background: var(--b3-theme-background);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: var(--b3-theme-on-background);
-  transition: all 0.2s;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-
-  &:hover:not(:disabled) {
-    background: var(--b3-theme-primary);
-    color: var(--b3-theme-on-primary);
-    transform: scale(1.1);
-  }
-
-  &:active:not(:disabled) {
-    transform: scale(0.95);
-  }
-
-  &:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-  }
-}
-
-.random-btn {
-  background: var(--b3-theme-warning);
-  color: #fff;
-
-  &:hover:not(:disabled) {
-    background: var(--b3-theme-warning);
-    transform: rotate(180deg) scale(1.1);
-  }
 }
 
 .card-counter {

@@ -3,16 +3,12 @@
     <div class="skills-modal" @click.stop>
       <div class="skills-modal-header">
         <div class="header-title">
-          <svg class="header-icon" width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M8 14l2 2 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+         <i class="pi pi-asterisk" style="color: green"></i>
           <h2>{{ i18n?.skillsTitle || '技能库' }}</h2>
-          <Button icon="pi pi-times" severity="danger" variant="text" rounded aria-label="Cancel" />
         </div>
         <div class="header-actions">
-          <Button :label="i18n?.manageCategories || '分类'" icon="pi pi-list" severity="secondary" outlined @click="openCategoryManage" />
-          <Button :label="i18n?.close || '关闭'" icon="pi pi-times" severity="secondary" outlined @click="closeModal" />
+          <Button size="small"  icon="pi pi-list" severity="secondary" outlined @click="openCategoryManage" />
+          <Button size="small"  icon="pi pi-times" severity="secondary" outlined @click="closeModal" />
         </div>
       </div>
 
@@ -46,7 +42,7 @@
             />
           </div>
 
-          <Button :label="i18n?.addSkill || '添加技能'" severity="info" raised @click="openAddModal" />
+          <Button size="small" :label="i18n?.addSkill || '添加技能'" severity="info" raised @click="openAddModal" />
         </div>
 
         <div class="skills-grid">
@@ -66,8 +62,8 @@
                 </span>
               </div>
               <div class="skill-actions">
-                <Button :label="i18n?.edit || '编辑'" size="small" severity="secondary" outlined @click="editSkill(skill)" />
-                <Button :label="i18n?.delete || '删除'" icon="pi pi-trash" size="small" severity="danger" outlined @click="deleteSkill(skill.id)" />
+                <Button  icon="pi pi-pencil" size="small" severity="secondary" outlined @click="editSkill(skill)" />
+                <Button  icon="pi pi-trash" size="small" severity="danger" outlined @click="deleteSkill(skill.id)" />
               </div>
             </div>
             <div class="skill-description">
@@ -107,7 +103,7 @@
     <div class="skills-modal small" @click.stop>
       <div class="skills-modal-header">
         <h2>{{ editingSkill ? i18n?.editSkill || '编辑技能' : i18n?.addSkill || '添加技能' }}</h2>
-        <Button :label="i18n?.close || '关闭'" icon="pi pi-times" severity="secondary" outlined @click="closeAddModal" />
+        <Button size="small" icon="pi pi-times" severity="secondary" outlined @click="closeAddModal" />
       </div>
 
       <div class="skills-modal-body">

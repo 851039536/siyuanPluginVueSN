@@ -122,18 +122,7 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        font-size: 13px;
-        color: var(--b3-theme-secondary);
         flex-shrink: 0;
-        white-space: nowrap;
-
-        .stat-item {
-          font-weight: 500;
-        }
-
-        .stat-divider {
-          opacity: 0.5;
-        }
       }
     }
   }
@@ -200,12 +189,8 @@
       }
 
       .card-category {
-        font-size: 12px;
-        color: var(--b3-theme-secondary);
-        display: inline-block;
-        background: var(--b3-theme-background);
-        padding: 2px 8px;
-        border-radius: 4px;
+        display: flex;
+        justify-content: flex-start;
       }
     }
   }
@@ -256,34 +241,12 @@
         white-space: pre-wrap;
       }
 
-      .card-category-large {
-        font-size: 13px;
-        color: var(--b3-theme-secondary);
-        text-align: center;
-        background: var(--b3-theme-background);
-        padding: 4px 12px;
-        border-radius: 4px;
-        display: inline-block;
-        flex-shrink: 0;
-      }
-
       .card-meta-large {
         display: flex;
         align-items: center;
         gap: 12px;
         flex-wrap: wrap;
         justify-content: center;
-      }
-
-      .practice-count {
-        font-size: 13px;
-        color: var(--b3-theme-primary);
-        background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1);
-        padding: 4px 12px;
-        border-radius: 4px;
-        display: inline-block;
-        flex-shrink: 0;
-        font-weight: 500;
       }
     }
 
@@ -294,13 +257,6 @@
       flex-shrink: 0;
       padding: 12px 0;
       margin-top: 8px;
-
-      .card-counter {
-        font-size: 14px;
-        font-weight: 500;
-        min-width: 60px;
-        text-align: center;
-      }
     }
   }
 
@@ -444,25 +400,6 @@
 
           &:hover {
             background: var(--b3-theme-hover);
-          }
-
-          .rank-number {
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--b3-theme-secondary);
-            background: var(--b3-theme-background);
-            border-radius: 3px;
-            flex-shrink: 0;
-
-            &.top-three {
-              background: var(--b3-theme-primary);
-              color: white;
-            }
           }
 
           .rank-info {

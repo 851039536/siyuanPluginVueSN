@@ -65,7 +65,9 @@
       "Skill(blog-post-creator)",
       "Skill(blog-post-creator:*)",
       "Skill(vue-style-migrator)",
-      "Skill(vue-style-migrator:*)"
+      "Skill(vue-style-migrator:*)",
+      "Skill(content-creator)",
+      "Skill(content-creator:*)"
     ],
     "deny": [],
     "ask": []

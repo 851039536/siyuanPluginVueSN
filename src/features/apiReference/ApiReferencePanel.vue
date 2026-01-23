@@ -8,14 +8,10 @@
       </div>
       <div class="header-actions">
         <button class="action-btn" @click="showAddProviderDialog" :title="i18n.apiReference?.addProvider || '添加API文档'">
-          <svg width="16" height="16" viewBox="0 0 16 16">
-            <path d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2z" fill="currentColor"/>
-          </svg>
+          <Icon icon="lucide:plus" width="16" height="16" />
         </button>
         <button class="close-btn" @click="handleClose">
-          <svg width="16" height="16" viewBox="0 0 16 16">
-            <path d="M2.146 2.146a.5.5 0 0 1 .708 0L8 7.293 11.146 4.146a.5.5 0 0 1 .708.708L8.707 8l3.147 3.146a.5.5 0 0 1-.708.708L8 8.707l-3.146 3.147a.5.5 0 0 1-.708-.708L7.293 8 4.146 4.854a.5.5 0 0 1 0-.708z" fill="currentColor"/>
-          </svg>
+          <Icon icon="lucide:x" width="16" height="16" />
         </button>
       </div>
     </div>
@@ -23,9 +19,7 @@
     <!-- 搜索栏 -->
     <div class="search-bar">
       <div class="search-input-wrapper">
-        <svg class="search-icon" width="16" height="16" viewBox="0 0 16 16">
-          <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" fill="currentColor"/>
-        </svg>
+        <Icon class="search-icon" icon="lucide:search" width="16" height="16" />
         <input
           v-model="searchQuery"
           type="text"
@@ -35,9 +29,7 @@
         />
         <kbd v-if="!searchQuery" class="search-hint">Ctrl+Alt+A</kbd>
         <button v-else class="clear-search" @click="searchQuery = ''">
-          <svg width="12" height="12" viewBox="0 0 16 16">
-            <path d="M2.146 2.146a.5.5 0 0 1 .708 0L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854a.5.5 0 0 1 0-.708z" fill="currentColor"/>
-          </svg>
+          <Icon icon="lucide:x" width="12" height="12" />
         </button>
       </div>
     </div>
@@ -59,9 +51,7 @@
             @click.stop="removeProvider(provider.id)"
             :title="i18n.apiReference?.deleteProvider || '删除此API文档'"
           >
-            <svg width="12" height="12" viewBox="0 0 16 16">
-              <path d="M2.146 2.146a.5.5 0 0 1 .708 0L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854a.5.5 0 0 1 0-.708z" fill="currentColor"/>
-            </svg>
+            <Icon icon="lucide:x" width="12" height="12" />
           </button>
         </button>
       </div>
@@ -112,7 +102,9 @@
       <div class="dialog" @click.stop>
         <div class="dialog-header">
           <h3>{{ i18n.apiReference?.addProvider || '添加API文档' }}</h3>
-          <button class="close-btn" @click="hideAddProviderDialog">×</button>
+          <button class="close-btn" @click="hideAddProviderDialog">
+            <Icon icon="lucide:x" width="16" height="16" />
+          </button>
         </div>
         <div class="dialog-content">
           <div class="form-group">
@@ -158,6 +150,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick, watch, defineComponent, h } from 'vue'
+import { Icon } from '@iconify/vue'
 import { Plugin } from 'siyuan'
 import { renderMarkdown, extractToc, type TocItem } from './markdownLoader'
 import { createApiReferenceStorage } from './storage'

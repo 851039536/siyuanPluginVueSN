@@ -54,7 +54,18 @@
       "Skill(skill-creator)",
       "Skill(skill-creator:*)",
       "Bash(python:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(pip install:*)",
+      "Skill(pnpm-upgrade)",
+      "Skill(pnpm-upgrade:*)",
+      "Bash(pnpm self-update:*)",
+      "Bash(PYTHONIOENCODING=utf-8 python scripts/package_skill.py:*)",
+      "Bash(iconv:*)",
+      "Bash(powershell -Command \"Compress-Archive -Path ''vue-style-migrator/*'' -DestinationPath ''vue-style-migrator.zip'' -Force; Move-Item -Path ''vue-style-migrator.zip'' -Destination ''vue-style-migrator.skill'' -Force\")",
+      "Skill(blog-post-creator)",
+      "Skill(blog-post-creator:*)",
+      "Skill(vue-style-migrator)",
+      "Skill(vue-style-migrator:*)"
     ],
     "deny": [],
     "ask": []

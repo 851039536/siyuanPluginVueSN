@@ -50,7 +50,11 @@
       "Bash(python -m json.tool:*)",
       "mcp__context7__query-docs",
       "Skill(brand-guidelines)",
-      "Skill(brand-guidelines:*)"
+      "Skill(brand-guidelines:*)",
+      "Skill(skill-creator)",
+      "Skill(skill-creator:*)",
+      "Bash(python:*)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []

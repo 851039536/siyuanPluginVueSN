@@ -106,6 +106,83 @@ Vue 应用结构
 - 功能可见性：新功能必须在超级面板（SuperPanelView.vue）中提供开关设置
 - 不要使用SVG
 
+### 品牌设计规范
+
+本项目使用 **Anthropic 官方品牌色**，所有新增页面必须遵守以下规范：
+
+#### 品牌颜色（定义在 `src/index.scss`）
+
+```scss
+// 主色
+$brand-dark: #141413         // 主文本、深色背景
+$brand-light: #faf9f5        // 浅色背景、深色上的文本
+
+// 灰度
+$brand-mid-gray: #b0aea5     // 次要元素
+$brand-light-gray: #e8e6dc   // 微妙背景
+
+// 强调色
+$brand-orange: #d97757       // 主强调色（按钮、链接、错误提示）
+$brand-blue: #6a9bcc         // 次强调色
+$brand-green: #788c5d        // 第三强调色
+```
+
+#### 品牌字体
+
+```scss
+$font-heading: 'Poppins', Arial, sans-serif  // 标题（h1-h6，18px+）
+$font-body: 'Lora', Georgia, serif           // 正文
+```
+
+#### 使用指南
+
+1. **颜色使用**
+   - 主按钮/操作：`$brand-orange`
+   - 次要按钮/信息：`$brand-blue`
+   - 成功/完成：`$brand-green`
+   - 错误/警告：`$brand-orange`（非红色）
+   - 文本：`$brand-dark`
+   - 副文本：`$brand-mid-gray`
+
+2. **字体使用**
+   - 所有标题（h1-h6、表单 label、卡片标题）：`$font-heading`
+   - 正文内容、描述文本：`$font-body`
+
+3. **示例代码**
+
+```scss
+// 新组件样式示例
+.my-component {
+  color: $brand-dark;
+  font-family: $font-body;
+
+  h2 {
+    font-family: $font-heading;
+    color: $brand-orange;
+  }
+
+  .button-primary {
+    background: $brand-orange;
+    color: $brand-light;
+  }
+
+  .button-secondary {
+    background: $brand-blue;
+    color: $brand-light;
+  }
+
+  .error-message {
+    background: rgba(217, 119, 87, 0.1); // 品牌橙色淡化
+    color: $brand-orange;
+    border: 1px solid $brand-orange;
+  }
+}
+```
+
+#### 参考实现
+
+- `src/features/passwordVault/PasswordVaultDialog.scss` - 完整的品牌规范示例
+
 ## API参考
 
 - 工作区路径：通过 `/api/system/getConf` 获取工作区路径

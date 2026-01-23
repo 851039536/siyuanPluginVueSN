@@ -7,6 +7,6 @@
         "mcp-code-graph@latest",
         "vuejs/core"
       ]
-    },
+    }
   }
 }

@@ -72,15 +72,16 @@
       "Skill(blog-post:*)",
       "Bash(where convert magick inkscape)",
       "Bash(convert:*)",
-      "Bash(copy:*)"
+      "Bash(copy:*)",
+      "Bash(claude mcp add:*)",
+      "Bash(claude mcp remove:*)"
     ],
     "deny": [],
     "ask": []
   },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
-    "DeepGraph Vue MCP",
-    "filesystem"
+    "DeepGraph Vue MCP"
   ],
   "statusLine": {
     "type": "command",

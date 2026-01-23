@@ -125,7 +125,7 @@
                 <div class="category-filter">
                   <div class="category-chips">
                     <button
-                      v-for="cat in [{ id: 'all', name: '全部', color: '#6b7280' }, ...categories]"
+                      v-for="cat in [{ id: 'all', name: '全部', color: '#b0aea5' }, ...categories]"
                       :key="cat.id"
                       class="category-chip"
                       :class="{ active: selectedCategory === cat.id }"
@@ -695,7 +695,7 @@ const showHelpDialog = ref(false)
 
 const entries = ref<PasswordEntry[]>([])
 const categories = ref<PasswordCategory[]>([
-  { id: 'default', name: '默认', color: '#6b7280' }
+  { id: 'default', name: '默认', color: '#b0aea5' } // 使用品牌中灰色
 ])
 
 const entryForm = reactive({
@@ -710,19 +710,17 @@ const entryForm = reactive({
 const showCategoryManager = ref(false)
 const newCategory = reactive({
   name: '',
-  color: '#3b82f6'
+  color: '#d97757' // 使用品牌橙色作为默认
 })
 
-// 预设颜色
+// 预设颜色 (Anthropic 品牌色)
 const presetColors = [
-  '#3b82f6', // 蓝色
-  '#10b981', // 绿色
-  '#f59e0b', // 橙色
-  '#ef4444', // 红色
-  '#8b5cf6', // 紫色
-  '#ec4899', // 粉色
-  '#06b6d4', // 青色
-  '#84cc16'  // 黄绿色
+  '#d97757', // 橙色 - Primary accent
+  '#6a9bcc', // 蓝色 - Secondary accent
+  '#788c5d', // 绿色 - Tertiary accent
+  '#b0aea5', // 中灰 - Secondary
+  '#141413', // 深色 - Primary text
+  '#e8e6dc', // 浅灰 - Subtle backgrounds
 ]
 
 // 加载保存的密码验证信息

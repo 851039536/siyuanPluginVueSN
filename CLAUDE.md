@@ -92,7 +92,7 @@ Vue 应用结构
 - 设置面板在 `src/components/SettingPanel.vue`
 - 共享组件在 `src/components/`
 
-国际化（新功能或修改不再使用）
+国际化
 
 - 语言文件：`src/i18n/zh_CN.json` 和 `src/i18n/en_US.json`
 - 通过 `plugin.i18n.featureName.key` 访问
@@ -104,7 +104,7 @@ Vue 应用结构
 ## 必须严格执行的规范
 
 - 功能可见性：新功能必须在超级面板（SuperPanelView.vue）中提供开关设置
-- 不要使用SVG
+- 不要直接使用 SVG 文件，可使用 @iconify/vue
 
 ### 品牌设计规范
 
@@ -305,14 +305,13 @@ this.addDock({
 
 ```
 
-
-
 ## 依赖
 
 - Vue 3.3.8
 - TypeScript 5.0.4
 - Vite 6.2.1
 - siyuan 1.1.0
+- primevue 4.5.4
 - @iconify/vue
 
 ## 资源

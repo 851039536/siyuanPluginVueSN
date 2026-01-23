@@ -67,7 +67,12 @@
       "Skill(vue-style-migrator)",
       "Skill(vue-style-migrator:*)",
       "Skill(content-creator)",
-      "Skill(content-creator:*)"
+      "Skill(content-creator:*)",
+      "Skill(blog-post)",
+      "Skill(blog-post:*)",
+      "Bash(where convert magick inkscape)",
+      "Bash(convert:*)",
+      "Bash(copy:*)"
     ],
     "deny": [],
     "ask": []

@@ -289,20 +289,22 @@
                     <td class="col-modified">{{ item.todayModified }}</td>
                     <td class="col-change">
                       <template v-if="index < historicalData.length - 1">
-                        <Tag
+                        <span
                           v-if="getWordDiff(item, historicalData[index + 1]) !== 0"
-                          size="small"
-                          :value="(getWordDiff(item, historicalData[index + 1]) > 0 ? '+' : '') + formatShortNumber(getWordDiff(item, historicalData[index + 1])) + ' 字'"
-                          :severity="getWordDiff(item, historicalData[index + 1]) > 0 ? 'success' : 'danger'"
-                        />
-                        <Tag
+                          class="diff-tag"
+                          :class="getWordDiff(item, historicalData[index + 1]) > 0 ? 'success' : 'danger'"
+                        >
+                          {{ (getWordDiff(item, historicalData[index + 1]) > 0 ? '+' : '') + formatShortNumber(getWordDiff(item, historicalData[index + 1])) + ' 字' }}
+                        </span>
+                        <span
                           v-if="getNoteDiff(item, historicalData[index + 1]) !== 0"
-                          size="small"
-                          :value="(getNoteDiff(item, historicalData[index + 1]) > 0 ? '+' : '') + getNoteDiff(item, historicalData[index + 1]) + ' 笔记'"
-                          :severity="getNoteDiff(item, historicalData[index + 1]) > 0 ? 'success' : 'danger'"
-                        />
+                          class="diff-tag"
+                          :class="getNoteDiff(item, historicalData[index + 1]) > 0 ? 'success' : 'danger'"
+                        >
+                          {{ (getNoteDiff(item, historicalData[index + 1]) > 0 ? '+' : '') + getNoteDiff(item, historicalData[index + 1]) + ' 笔记' }}
+                        </span>
                       </template>
-                      <Tag v-else value="-" severity="secondary" />
+                      <span v-else class="diff-tag secondary">-</span>
                     </td>
                   </tr>
                 </tbody>

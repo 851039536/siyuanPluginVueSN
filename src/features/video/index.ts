@@ -1,6 +1,7 @@
 import { Plugin } from 'siyuan';
 import { showMessage } from 'siyuan';
 import { encryptVideo, decryptVideo, isEncryptedVideo, getEncryptedFileName, getOriginalFileName } from './crypto';
+export { isFFmpegAvailable, mergeVideos, mergeVideoAudio, compressVideo, formatFileSize, calculateCompressionRate, buildVideoPath, setFFmpegPath, getCurrentFFmpegPath, clearFFmpegPath } from './ffmpeg';
 
 export function registerVideo(plugin: Plugin) {
 

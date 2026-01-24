@@ -29,7 +29,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import type { EverythingConfig } from '../api'
 
 interface Props {
@@ -55,12 +54,14 @@ const updateConfig = (key: keyof EverythingConfig, value: EverythingConfig[keyof
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@import '@/index.scss';
+
 .dialog-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 20px;
+  padding: 8px 16px;
   background: var(--b3-theme-surface);
   border-top: 1px solid var(--b3-border-color);
 }
@@ -68,27 +69,35 @@ const updateConfig = (key: keyof EverythingConfig, value: EverythingConfig[keyof
 .config-section {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .config-label {
-  font-size: 12px;
-  color: var(--b3-theme-on-surface-light);
+  font-size: 10px;
+  font-family: $font-body;
+  color: $brand-mid-gray;
   white-space: nowrap;
 }
 
 .config-input {
-  padding: 4px 8px;
-  width: 100px;
+  padding: 3px 6px;
+  width: 75px;
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: 3px;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
-  font-size: 12px;
+  font-size: 11px;
+  font-family: $font-body;
+  transition: border-color 0.15s;
+
+  &:focus {
+    outline: none;
+    border-color: $brand-orange;
+  }
 }
 
 .port-input {
-  width: 60px;
+  width: 45px;
 }
 
 .footer-actions {
@@ -97,7 +106,8 @@ const updateConfig = (key: keyof EverythingConfig, value: EverythingConfig[keyof
 }
 
 .shortcut-hint {
-  font-size: 12px;
-  color: var(--b3-theme-on-surface-light);
+  font-size: 10px;
+  font-family: $font-body;
+  color: $brand-mid-gray;
 }
 </style>

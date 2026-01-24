@@ -119,19 +119,21 @@ const handleCopyPath = () => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@import '@/index.scss';
+
 .result-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 20px;
+  gap: 8px;
+  padding: 6px 16px;
   border-bottom: 1px solid var(--b3-border-color);
   cursor: pointer;
   transition: background 0.15s;
 }
 
 .result-item:hover {
-  background: var(--b3-theme-surface-light);
+  background: rgba(217, 119, 87, 0.06);
 }
 
 .result-item:hover .item-actions {
@@ -139,12 +141,12 @@ const handleCopyPath = () => {
 }
 
 .item-icon {
-  width: 36px;
-  height: 36px;
+  width: 26px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 16px;
   flex-shrink: 0;
 }
 
@@ -154,8 +156,9 @@ const handleCopyPath = () => {
 }
 
 .item-name {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
+  font-family: $font-heading;
   color: var(--b3-theme-on-background);
   white-space: nowrap;
   overflow: hidden;
@@ -163,58 +166,61 @@ const handleCopyPath = () => {
 }
 
 .item-path {
-  font-size: 12px;
-  color: var(--b3-theme-on-surface-light);
+  font-size: 10px;
+  font-family: $font-body;
+  color: $brand-mid-gray;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
 .item-meta {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 2px;
+  gap: 1px;
   flex-shrink: 0;
 }
 
 .item-size {
-  font-size: 12px;
+  font-size: 10px;
+  font-family: $font-body;
   color: var(--b3-theme-on-surface);
   font-weight: 500;
 }
 
 .item-date {
-  font-size: 11px;
-  color: var(--b3-theme-on-surface-light);
+  font-size: 9px;
+  font-family: $font-body;
+  color: $brand-mid-gray;
 }
 
 .item-actions {
   display: flex;
-  gap: 4px;
+  gap: 3px;
   opacity: 0;
   transition: opacity 0.15s;
 }
 
 .action-btn {
-  padding: 6px;
+  padding: 4px;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: 3px;
   cursor: pointer;
   color: var(--b3-theme-on-surface);
   transition: all 0.15s;
 }
 
 .action-btn:hover {
-  background: var(--b3-theme-primary);
-  border-color: var(--b3-theme-primary);
-  color: #fff;
+  background: $brand-orange;
+  border-color: $brand-orange;
+  color: $brand-light;
 }
 
 .action-icon {
-  width: 14px;
-  height: 14px;
+  width: 11px;
+  height: 11px;
 }
 </style>

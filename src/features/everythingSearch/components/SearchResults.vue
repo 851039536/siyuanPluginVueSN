@@ -105,7 +105,9 @@ const handleItemCopyPath = (item: EverythingSearchResult) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@import '@/index.scss';
+
 .results-area {
   flex: 1;
   overflow: hidden;
@@ -121,18 +123,19 @@ const handleItemCopyPath = (item: EverythingSearchResult) => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px;
-  color: var(--b3-theme-on-surface-light);
+  padding: 30px;
+  color: $brand-mid-gray;
+  font-family: $font-body;
 }
 
 .loading-spinner-large {
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--b3-border-color);
-  border-top-color: var(--b3-theme-primary);
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--b3-border-color);
+  border-top-color: $brand-orange;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 16px;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 10px;
 }
 
 @keyframes spin {
@@ -141,13 +144,13 @@ const handleItemCopyPath = (item: EverythingSearchResult) => {
 
 .empty-icon,
 .error-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
+  font-size: 32px;
+  margin-bottom: 10px;
 }
 
 .hint {
-  font-size: 12px;
-  margin-top: 8px;
+  font-size: 11px;
+  margin-top: 6px;
   opacity: 0.7;
 }
 
@@ -160,18 +163,37 @@ const handleItemCopyPath = (item: EverythingSearchResult) => {
 }
 
 .results-header {
-  padding: 8px 20px;
+  padding: 6px 16px;
   background: var(--b3-theme-surface-light);
   border-bottom: 1px solid var(--b3-border-color);
 }
 
 .results-count-text {
-  font-size: 13px;
+  font-size: 11px;
+  font-family: $font-body;
   color: var(--b3-theme-on-surface);
 }
 
 .results-scroll {
   flex: 1;
   overflow-y: auto;
+
+  /* 自定义滚动条 */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $brand-light-gray;
+    border-radius: 3px;
+
+    &:hover {
+      background: $brand-mid-gray;
+    }
+  }
 }
 </style>

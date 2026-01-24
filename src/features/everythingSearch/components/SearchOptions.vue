@@ -118,12 +118,14 @@ const handleRefreshDrives = () => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@import '@/index.scss';
+
 .search-options {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
-  padding: 12px 20px;
+  gap: 10px;
+  padding: 8px 16px;
   background: var(--b3-theme-surface-light);
   border-bottom: 1px solid var(--b3-border-color);
 }
@@ -131,8 +133,9 @@ const handleRefreshDrives = () => {
 .option-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 13px;
+  gap: 4px;
+  font-size: 12px;
+  font-family: $font-body;
   color: var(--b3-theme-on-surface);
 }
 
@@ -141,9 +144,10 @@ const handleRefreshDrives = () => {
 }
 
 .option-item input[type="checkbox"] {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   cursor: pointer;
+  accent-color: $brand-orange;
 }
 
 .select-option span {
@@ -154,61 +158,79 @@ const handleRefreshDrives = () => {
 .delay-select,
 .sort-select,
 .drive-select {
-  padding: 2px 8px;
+  padding: 2px 6px;
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: 3px;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
-  font-size: 13px;
+  font-size: 11px;
+  font-family: $font-body;
   cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.results-select:hover,
+.delay-select:hover,
+.sort-select:hover,
+.drive-select:hover {
+  border-color: $brand-orange;
+}
+
+.results-select:focus,
+.delay-select:focus,
+.sort-select:focus,
+.drive-select:focus {
+  outline: none;
+  border-color: $brand-orange;
+  box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.1);
 }
 
 .debounce-delay {
-  margin-left: 8px;
+  margin-left: 4px;
 }
 
 .sort-option {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .ascending-label {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   cursor: pointer;
 }
 
 .drive-filter {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .refresh-drives-btn {
-  padding: 4px;
+  padding: 3px;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: 3px;
   cursor: pointer;
   color: var(--b3-theme-on-surface);
   transition: all 0.15s;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 24px;
+  width: 22px;
+  height: 20px;
 }
 
 .refresh-drives-btn:hover {
-  background: var(--b3-theme-primary);
-  border-color: var(--b3-theme-primary);
-  color: #fff;
+  background: $brand-blue;
+  border-color: $brand-blue;
+  color: $brand-light;
 }
 
 .refresh-icon {
-  font-size: 14px;
+  font-size: 11px;
   line-height: 1;
 }
 </style>

@@ -32,12 +32,14 @@ const handleClose = () => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@import '@/index.scss';
+
 .dialog-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
+  padding: 10px 16px;
   border-bottom: 1px solid var(--b3-border-color);
   background: var(--b3-theme-surface);
 }
@@ -45,33 +47,34 @@ const handleClose = () => {
 .header-title {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 18px;
+  gap: 6px;
+  font-size: 15px;
   font-weight: 600;
-  color: var(--b3-theme-on-background);
+  font-family: $font-heading;
+  color: $brand-orange;
 }
 
 .title-icon {
-  font-size: 20px;
+  font-size: 16px;
 }
 
 .close-btn {
-  padding: 8px;
+  padding: 5px;
   background: transparent;
   border: none;
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
   color: var(--b3-theme-on-surface);
   transition: all 0.2s;
 }
 
 .close-btn:hover {
-  background: var(--b3-theme-error);
-  color: #fff;
+  background: rgba(217, 119, 87, 0.15);
+  color: $brand-orange;
 }
 
 .close-icon {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
 }
 </style>

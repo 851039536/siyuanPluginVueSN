@@ -15,7 +15,7 @@
           </button>
         </div>
       </div>
-      
+
       <!-- 工具栏 -->
       <VideoToolbar
         :categories="categories"
@@ -91,11 +91,11 @@
           <label>待加密视频数量</label>
           <div class="file-info">{{ unencryptedCount }} 个未加密视频</div>
         </div>
-        
+
         <div class="form-group">
           <label class="checkbox-label">
-            <input 
-              v-model="encryptDoubleCompress" 
+            <input
+              v-model="encryptDoubleCompress"
               type="checkbox"
               :disabled="encryptProgress"
             />
@@ -106,7 +106,7 @@
             双重压缩：生成 .sn2 格式，体积更小但速度较慢
           </div>
         </div>
-        
+
         <div class="form-group" v-if="encryptProgress">
           <label>加密进度</label>
           <div class="progress-info">
@@ -118,7 +118,7 @@
             </div>
           </div>
         </div>
-        
+
         <div class="form-group">
           <div class="encrypt-info">
             <div class="info-item">
@@ -133,15 +133,15 @@
         </div>
       </div>
       <div class="dialog-footer">
-        <button 
-          class="btn" 
+        <button
+          class="btn"
           @click="closeEncryptDialog"
           :disabled="encryptProgress"
         >
           取消
         </button>
-        <button 
-          class="btn btn-primary" 
+        <button
+          class="btn btn-primary"
           @click="handleBatchEncrypt"
           :disabled="encryptProgress"
         >
@@ -150,7 +150,7 @@
       </div>
     </div>
   </div>
-  
+
   <!-- 批量解密对话框 -->
   <div class="dialog-overlay" v-if="decryptDialogVisible" @click="closeDecryptDialog">
     <div class="dialog" @click.stop>
@@ -165,7 +165,7 @@
           <label>待解密视频数量</label>
           <div class="file-info">{{ encryptedCount }} 个加密视频</div>
         </div>
-        
+
         <div class="form-group" v-if="decryptProgress">
           <label>解密进度</label>
           <div class="progress-info">
@@ -177,7 +177,7 @@
             </div>
           </div>
         </div>
-        
+
         <div class="form-group">
           <div class="encrypt-info">
             <div class="info-item">
@@ -196,15 +196,15 @@
         </div>
       </div>
       <div class="dialog-footer">
-        <button 
-          class="btn" 
+        <button
+          class="btn"
           @click="closeDecryptDialog"
           :disabled="decryptProgress"
         >
           取消
         </button>
-        <button 
-          class="btn btn-primary" 
+        <button
+          class="btn btn-primary"
           @click="handleBatchDecrypt"
           :disabled="decryptProgress"
         >
@@ -795,49 +795,44 @@ async function loadVideos() {
 }
 
 async function refreshList() {
-  showMessage('正在扫描视频文件...', 0, 'info')
   await loadVideos()
   await loadCategories()
-  showMessage(`扫描完成，找到 ${videos.value.length} 个视频`, 2000, 'info')
 }
 
 async function openVideoFolder() {
-  showMessage(`视频文件夹: ${storagePath.value}`, 3000, 'info')
-  
+
   // 如果是桌面端，尝试打开文件夹
   if (window.require) {
     try {
       const { shell } = window.require('electron')
-      
+
       // 获取工作空间路径
       const response = await fetch('/api/system/getConf', {
         method: 'POST'
       })
-      
+
       if (response.ok) {
         const data = await response.json()
         const workspacePath = data?.data?.conf?.system?.workspaceDir
-        
+
         if (workspacePath) {
           const fullPath = `${workspacePath}/${storagePath.value}`
           const result = await shell.openPath(fullPath)
-          
+
           if (result) {
             console.error('打开文件夹失败:', result)
-            showMessage(`无法打开文件夹: ${result}`, 3000, 'error')
           } else {
-            showMessage('已打开视频文件夹', 2000, 'info')
+            // showMessage('已打开视频文件夹', 2000, 'info')
           }
         } else {
-          showMessage('无法获取工作空间路径', 2000, 'error')
+          // showMessage('无法获取工作空间路径', 2000, 'error')
         }
       }
     } catch (error) {
       console.error('打开文件夹失败:', error)
-      showMessage('打开文件夹失败', 2000, 'error')
     }
   } else {
-    showMessage('当前环境不支持打开文件夹', 2000, 'error')
+    // showMessage('当前环境不支持打开文件夹', 2000, 'error')
   }
 }
 
@@ -907,7 +902,7 @@ function showBatchEncryptDialog() {
 
 function closeEncryptDialog() {
   if (encryptProgress.value) {
-    showMessage('加密进行中，请稍候...', 2000, 'info')
+    // showMessage('加密进行中，请稍候...', 2000, 'info')
     return
   }
   encryptDialogVisible.value = false
@@ -930,11 +925,11 @@ async function handleBatchEncrypt() {
       }
     )
 
-    showMessage(
-      `加密完成！成功: ${result.success} 个，失败: ${result.failed} 个`,
-      5000,
-      result.failed > 0 ? 'error' : 'info'
-    )
+    // showMessage(
+    //   `加密完成！成功: ${result.success} 个，失败: ${result.failed} 个`,
+    //   5000,
+    //   result.failed > 0 ? 'error' : 'info'
+    // )
 
     if (result.errors.length > 0) {
       console.error('加密错误:', result.errors)
@@ -947,7 +942,7 @@ async function handleBatchEncrypt() {
     closeEncryptDialog()
   } catch (error) {
     console.error('批量加密失败:', error)
-    showMessage('批量加密失败: ' + (error as Error).message, 3000, 'error')
+    // showMessage('批量加密失败: ' + (error as Error).message, 3000, 'error')
   } finally {
     encryptProgress.value = false
   }
@@ -955,7 +950,7 @@ async function handleBatchEncrypt() {
 
 function showBatchDecryptDialog() {
   if (encryptedCount.value === 0) {
-    showMessage('没有需要解密的视频', 2000, 'info')
+    // showMessage('没有需要解密的视频', 2000, 'info')
     return
   }
   decryptProgress.value = false
@@ -964,7 +959,7 @@ function showBatchDecryptDialog() {
 
 function closeDecryptDialog() {
   if (decryptProgress.value) {
-    showMessage('解密进行中，请稍候...', 2000, 'info')
+    // showMessage('解密进行中，请稍候...', 2000, 'info')
     return
   }
   decryptDialogVisible.value = false
@@ -975,7 +970,7 @@ async function handleBatchDecrypt() {
   decryptCurrentIndex.value = 0
   decryptTotalCount.value = encryptedCount.value
   decryptCurrentFile.value = ''
-  
+
   try {
     const result = await decryptAllVideos(
       plugin,
@@ -985,21 +980,21 @@ async function handleBatchDecrypt() {
         decryptCurrentFile.value = fileName
       }
     )
-    
-    showMessage(
-      `解密完成！成功: ${result.success} 个，失败: ${result.failed} 个`,
-      5000,
-      result.failed > 0 ? 'error' : 'info'
-    )
-    
+
+    // showMessage(
+    //   `解密完成！成功: ${result.success} 个，失败: ${result.failed} 个`,
+    //   5000,
+    //   result.failed > 0 ? 'error' : 'info'
+    // )
+
     if (result.errors.length > 0) {
       console.error('解密错误:', result.errors)
     }
-    
+
     // 刷新列表
     await loadVideos()
     await loadCategories()
-    
+
     closeDecryptDialog()
   } catch (error) {
     console.error('批量解密失败:', error)
@@ -1011,11 +1006,11 @@ async function handleBatchDecrypt() {
 
 async function handleSingleDecrypt(video: any) {
   try {
-    showMessage(`正在解密: ${video.name}`, 0, 'info')
+    // showMessage(`正在解密: ${video.name}`, 0, 'info')
 
     await decryptVideoFile(video.path)
 
-    showMessage(`解密成功: ${video.name}`, 3000, 'info')
+    // showMessage(`解密成功: ${video.name}`, 3000, 'info')
 
     // 刷新列表
     await loadVideos()

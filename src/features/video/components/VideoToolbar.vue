@@ -72,11 +72,6 @@
     </button>
 
     <div class="toolbar-spacer"></div>
-
-    <!-- 状态提示 -->
-    <span class="toolbar-hint" :title="ffmpegPath">
-      {{ hasFFmpeg ? 'FFmpeg 已检测到' : 'FFmpeg 未安装，部分功能不可用' }}
-    </span>
   </div>
 </template>
 
@@ -319,12 +314,6 @@ function handleCategoryChange(event: Event) {
   .toolbar-spacer {
     flex: 1;
   }
-
-  .toolbar-hint {
-    font-size: 12px;
-    color: var(--b3-theme-on-surface-light);
-    font-style: italic;
-  }
 }
 
 // 响应式调整
@@ -355,10 +344,6 @@ function handleCategoryChange(event: Event) {
         flex: 1;
         min-width: auto;
       }
-    }
-
-    .toolbar-hint {
-      display: none;
     }
   }
 }

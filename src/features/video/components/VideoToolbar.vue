@@ -32,6 +32,14 @@
     <div  class="ffmpeg-tools">
       <button
         class="btn btn-ffmpeg"
+        @click="handleDownloadVideo"
+        title="下载视频"
+      >
+        <IconWrapper name="download" :size="14" />
+        <span>下载视频</span>
+      </button>
+      <button
+        class="btn btn-ffmpeg"
         @click="handleMergeVideos"
         title="视频合并"
       >
@@ -126,6 +134,8 @@ export interface VideoToolbarEmits {
   (e: 'batchEncrypt'): void
   /** 批量解密 */
   (e: 'batchDecrypt'): void
+  /** 下载视频 */
+  (e: 'downloadVideo'): void
   /** 视频合并 */
   (e: 'mergeVideos'): void
   /** 视频音频合并 */
@@ -172,6 +182,10 @@ function handleBatchEncrypt() {
 
 function handleBatchDecrypt() {
   emit('batchDecrypt')
+}
+
+function handleDownloadVideo() {
+  emit('downloadVideo')
 }
 
 function handleMergeVideos() {

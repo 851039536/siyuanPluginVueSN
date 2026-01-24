@@ -373,6 +373,22 @@
     color: var(--b3-theme-on-surface-light);
     line-height: 1.5;
   }
+
+  .path-input-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+
+    .b3-text-field {
+      flex: 1;
+    }
+
+    .btn {
+      padding: 8px 12px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+  }
 }
 
 .encrypt-info {

@@ -334,6 +334,11 @@ async function handleAutoMerge(fileName: string) {
     const fs = (window as any).require('fs')
     const path = (window as any).require('path')
 
+    // 规范化路径函数（统一使用正斜杠）
+    function normalizePath(p: string): string {
+      return p.replace(/\\/g, '/')
+    }
+
     // 读取目录中的所有文件及其修改时间
     const files = fs.readdirSync(videoDir)
     const fileStats = new Map<string, { mtime: number; size: number }>()
@@ -359,7 +364,6 @@ async function handleAutoMerge(fileName: string) {
     const audioFiles: Array<{ name: string; path: string; mtime: number; normalized: string }> = []
 
     const now = Date.now()
-    const recentThreshold = 2 * 60 * 1000 // 2分钟内的文件
 
     // 规范化文件名用于比较：移除所有格式代码和特殊字符
     function normalizeFileName(name: string): string {
@@ -369,39 +373,49 @@ async function handleAutoMerge(fileName: string) {
         .replace(/[^a-z0-9\u4e00-\u9fa5]/g, '') // 移除特殊字符，保留字母、数字、中文
     }
 
+    // 收集所有视频和音频文件（包括较旧的），稍后按时间排序选择
     for (const [fname, stats] of fileStats.entries()) {
       const ext = path.extname(fname).toLowerCase()
       const nameWithoutExt = path.basename(fname, ext)
       const normalized = normalizeFileName(nameWithoutExt)
 
-      // 只考虑最近创建的文件
-      if (now - stats.mtime > recentThreshold) {
+      // 跳过太旧的文件（超过1小时）
+      if (now - stats.mtime > 60 * 60 * 1000) {
+        console.log(`[AutoMerge] 跳过旧文件: ${fname} (${Math.round((now - stats.mtime) / 1000 / 60)}分钟前)`)
         continue
       }
 
       if (videoExtensions.includes(ext)) {
-        console.log(`[AutoMerge] 发现视频文件: ${fname} -> ${normalized}`)
+        console.log(`[AutoMerge] 发现视频文件: ${fname} -> ${normalized} (${Math.round((now - stats.mtime) / 1000)}秒前)`)
         videoFiles.push({ name: fname, path: path.join(videoDir, fname), mtime: stats.mtime, normalized })
       } else if (audioExtensions.includes(ext)) {
-        console.log(`[AutoMerge] 发现音频文件: ${fname} -> ${normalized}`)
+        console.log(`[AutoMerge] 发现音频文件: ${fname} -> ${normalized} (${Math.round((now - stats.mtime) / 1000)}秒前)`)
         audioFiles.push({ name: fname, path: path.join(videoDir, fname), mtime: stats.mtime, normalized })
       }
     }
 
-    console.log('[AutoMerge] 找到的视频文件:', videoFiles)
-    console.log('[AutoMerge] 找到的音频文件:', audioFiles)
+    // 按修改时间排序（最新的在前）
+    videoFiles.sort((a, b) => b.mtime - a.mtime)
+    audioFiles.sort((a, b) => b.mtime - a.mtime)
+
+    // 只保留最近的文件（最多3个视频和3个音频）
+    const recentVideoFiles = videoFiles.slice(0, 3)
+    const recentAudioFiles = audioFiles.slice(0, 3)
+
+    console.log('[AutoMerge] 最近的视频文件:', recentVideoFiles)
+    console.log('[AutoMerge] 最近的音频文件:', recentAudioFiles)
 
     let videoFile: string | null = null
     let audioFile: string | null = null
 
     // 匹配策略：找文件名最相似的视频和音频对
-    if (videoFiles.length > 0 && audioFiles.length > 0) {
+    if (recentVideoFiles.length > 0 && recentAudioFiles.length > 0) {
       let bestMatch = { video: -1, audio: -1, score: 0 }
 
-      for (let i = 0; i < videoFiles.length; i++) {
-        for (let j = 0; j < audioFiles.length; j++) {
-          const videoNorm = videoFiles[i].normalized
-          const audioNorm = audioFiles[j].normalized
+      for (let i = 0; i < recentVideoFiles.length; i++) {
+        for (let j = 0; j < recentAudioFiles.length; j++) {
+          const videoNorm = recentVideoFiles[i].normalized
+          const audioNorm = recentAudioFiles[j].normalized
 
           // 计算相似度（使用最长公共子序列）
           let score = 0
@@ -424,7 +438,7 @@ async function handleAutoMerge(fileName: string) {
             }
           }
 
-          console.log(`[AutoMerge] 匹配分数: 视频=${videoFiles[i].name}, 音频=${audioFiles[j].name}, 分数=${score}`)
+          console.log(`[AutoMerge] 匹配分数: 视频=${recentVideoFiles[i].name}, 音频=${recentAudioFiles[j].name}, 分数=${score}`)
 
           if (score > bestMatch.score) {
             bestMatch = { video: i, audio: j, score }
@@ -434,9 +448,9 @@ async function handleAutoMerge(fileName: string) {
 
       // 只有当相似度足够高时才合并
       if (bestMatch.score > 10 && bestMatch.video >= 0 && bestMatch.audio >= 0) {
-        videoFile = videoFiles[bestMatch.video].path
-        audioFile = audioFiles[bestMatch.audio].path
-        console.log('[AutoMerge] 最佳匹配:', videoFiles[bestMatch.video].name, '+', audioFiles[bestMatch.audio].name)
+        videoFile = recentVideoFiles[bestMatch.video].path
+        audioFile = recentAudioFiles[bestMatch.audio].path
+        console.log('[AutoMerge] 最佳匹配:', recentVideoFiles[bestMatch.video].name, '+', recentAudioFiles[bestMatch.audio].name)
       }
     }
 
@@ -450,12 +464,55 @@ async function handleAutoMerge(fileName: string) {
     downloadStatus.value = '正在合并音视频...'
     mergeStatus.value = '合并中...'
 
-    // 构建输出文件名（使用视频文件的基础部分）
+    // 构建输出文件名（使用视频文件的基础部分，移除所有格式代码）
     const videoFileName = path.basename(videoFile)
-    const outputBaseName = path.basename(videoFileName, path.extname(videoFileName))
-      .replace(/\.\w{5,6}$/, '') // 移除格式代码
+    let outputBaseName = path.basename(videoFileName, path.extname(videoFileName))
+    // 移除所有可能的格式代码（如 .f100024, .f30280 等）
+    outputBaseName = outputBaseName.replace(/\.\w{5,6}$/, '')
     const outputFileName = `${outputBaseName}.${downloadFormat.value}`
     const outputPath = await buildVideoPath(outputFileName)
+
+    // 检查输出文件是否与输入文件相同（使用规范化路径比较）
+    if (normalizePath(outputPath) === normalizePath(videoFile) || normalizePath(outputPath) === normalizePath(audioFile)) {
+      // 如果相同，添加临时后缀
+      const tempOutputFileName = `${outputBaseName}_temp.${downloadFormat.value}`
+      const tempOutputPath = await buildVideoPath(tempOutputFileName)
+
+      // 先合并到临时文件
+      const mergeResult = await mergeVideoAudio({
+        videoPath: videoFile.replace(`${workspacePath}/`, ''),
+        audioPath: audioFile.replace(`${workspacePath}/`, ''),
+        outputPath: tempOutputPath,
+        onProgress: (progress) => {
+          downloadProgressPercent.value = progress
+        }
+      })
+
+      if (mergeResult.success) {
+        // 删除原始文件
+        try {
+          fs.unlinkSync(videoFile)
+          fs.unlinkSync(audioFile)
+        } catch (e) {
+          console.log('[AutoMerge] 删除原始文件失败:', e)
+        }
+
+        // 重命名临时文件为目标文件名
+        try {
+          fs.renameSync(tempOutputPath, outputPath)
+          showMessage(`音视频合并成功！已保存为 ${outputFileName}`, 3000, 'info')
+          console.log('[AutoMerge] 合并成功，已删除原始文件并重命名')
+        } catch (e) {
+          showMessage(`音视频合并成功！已保存为 ${tempOutputFileName}`, 3000, 'info')
+          console.log('[AutoMerge] 合并成功，但重命名失败:', e)
+        }
+        return
+      } else {
+        showMessage(`音视频合并失败: ${mergeResult.error}`, 5000, 'error')
+        console.log('[AutoMerge] 合并失败:', mergeResult.error)
+        return
+      }
+    }
 
     console.log('[AutoMerge] 开始合并...')
     console.log('[AutoMerge] 视频路径:', videoFile)

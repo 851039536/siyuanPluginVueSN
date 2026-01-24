@@ -29,6 +29,7 @@
         @open-folder="openVideoFolder"
         @batch-encrypt="showBatchEncryptDialog"
         @batch-decrypt="showBatchDecryptDialog"
+        @download-video="showDownloadDialog"
         @merge-videos="showMergeDialog"
         @merge-audio="showMergeAudioDialog"
         @compress="showCompressDialog"
@@ -67,6 +68,13 @@
     title="视频播放"
     @close="closePlayer"
     @error="handlePlayerError"
+  />
+
+  <!-- 视频下载对话框 -->
+  <VideoDownloadDialog
+    :visible="downloadDialogVisible"
+    @close="closeDownloadDialog"
+    @success="refreshList"
   />
 
   <!-- 批量加密对话框 -->
@@ -627,6 +635,7 @@ import IconWrapper from '@/components/IconWrapper.vue'
 import VideoPlayerDialog from './components/VideoPlayerDialog.vue'
 import VideoListItem from './components/VideoListItem.vue'
 import VideoToolbar from './components/VideoToolbar.vue'
+import VideoDownloadDialog from './components/VideoDownloadDialog.vue'
 import {
   getVideoCategories,
   getVideoList,
@@ -716,6 +725,9 @@ const ffmpegPathDialogVisible = ref(false)
 const customFFmpegPath = ref('')
 const currentFFmpegPath = ref('')
 const ffmpegTestResult = ref<'success' | 'failed' | null>(null)
+
+// 下载对话框
+const downloadDialogVisible = ref(false)
 
 // 计算属性
 const filteredVideos = computed(() => {
@@ -1376,6 +1388,16 @@ function resetFFmpegPath() {
   currentFFmpegPath.value = getCurrentFFmpegPath()
   hasFFmpeg.value = isFFmpegAvailable()
   showMessage('已重置为默认路径', 2000, 'info')
+}
+
+// ==================== yt-dlp 下载方法 ====================
+
+function showDownloadDialog() {
+  downloadDialogVisible.value = true
+}
+
+function closeDownloadDialog() {
+  downloadDialogVisible.value = false
 }
 
 </script>

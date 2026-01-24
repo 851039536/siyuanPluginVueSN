@@ -96,11 +96,13 @@ defineExpose({
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@import '@/index.scss';
+
 .search-bar {
   display: flex;
-  gap: 12px;
-  padding: 16px 20px;
+  gap: 8px;
+  padding: 10px 16px;
   background: var(--b3-theme-surface);
   border-bottom: 1px solid var(--b3-border-color);
 }
@@ -109,22 +111,23 @@ defineExpose({
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  gap: 6px;
+  padding: 5px 10px;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
-  border-radius: 8px;
-  transition: border-color 0.2s;
+  border-radius: 6px;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .search-input-wrapper:focus-within {
-  border-color: var(--b3-theme-primary);
+  border-color: $brand-orange;
+  box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.1);
 }
 
 .search-icon {
-  width: 18px;
-  height: 18px;
-  color: var(--b3-theme-on-surface-light);
+  width: 14px;
+  height: 14px;
+  color: $brand-mid-gray;
   flex-shrink: 0;
 }
 
@@ -133,63 +136,65 @@ defineExpose({
   border: none;
   background: transparent;
   color: var(--b3-theme-on-background);
-  font-size: 15px;
+  font-size: 13px;
+  font-family: $font-body;
   outline: none;
 }
 
 .search-input::placeholder {
-  color: var(--b3-theme-on-surface-light);
+  color: $brand-mid-gray;
 }
 
 .clear-btn {
-  padding: 4px;
+  padding: 3px;
   background: transparent;
   border: none;
-  border-radius: 4px;
+  border-radius: 3px;
   cursor: pointer;
-  color: var(--b3-theme-on-surface-light);
-  transition: all 0.2s;
+  color: $brand-mid-gray;
+  transition: all 0.15s;
 }
 
 .clear-btn:hover {
-  color: var(--b3-theme-on-background);
-  background: var(--b3-theme-surface-light);
+  color: $brand-orange;
+  background: rgba(217, 119, 87, 0.1);
 }
 
 .clear-icon {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
 }
 
 .search-btn {
-  padding: 8px 20px;
-  background: var(--b3-theme-primary);
-  color: #fff;
+  padding: 6px 14px;
+  background: $brand-orange;
+  color: $brand-light;
   border: none;
-  border-radius: 8px;
-  font-size: 14px;
+  border-radius: 6px;
+  font-size: 13px;
   font-weight: 500;
+  font-family: $font-heading;
   cursor: pointer;
   transition: all 0.2s;
-  min-width: 80px;
+  min-width: 65px;
 }
 
 .search-btn:hover:not(:disabled) {
-  background: var(--b3-theme-primary-light);
+  background: shade($brand-orange, 10%);
 }
 
 .search-btn:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .loading-spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #fff;
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(250, 249, 245, 0.3);
+  border-top-color: $brand-light;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: spin 0.8s linear infinite;
   display: inline-block;
 }
 

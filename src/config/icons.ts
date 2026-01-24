@@ -192,6 +192,24 @@ export const FEATURE_ICONS = {
   translate: {
     icon: 'mdi:translate',
     color: '#0d9488'
+  },
+
+  // 视频相关图标
+  play: {
+    icon: 'mdi:play',
+    color: '#10b981'
+  },
+  pause: {
+    icon: 'mdi:pause',
+    color: '#f59e0b'
+  },
+  stop: {
+    icon: 'mdi:stop',
+    color: '#ef4444'
+  },
+  merge: {
+    icon: 'mdi:merge',
+    color: '#8b5cf6'
   }
 } as const
 

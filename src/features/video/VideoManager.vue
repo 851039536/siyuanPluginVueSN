@@ -17,139 +17,58 @@
       </div>
       
       <!-- 工具栏 -->
-      <div class="video-toolbar">
-        <button class="btn btn-primary" @click="refreshList">
-          <svg class="icon"><use xlink:href="#iconRefresh"></use></svg>
-          刷新列表
-        </button>
-        <button class="btn" @click="openVideoFolder">
-          <svg class="icon"><use xlink:href="#iconFolder"></use></svg>
-          打开文件夹
-        </button>
-        <button class="btn btn-encrypt" @click="showBatchEncryptDialog" v-if="hasUnencryptedVideos">
-          <svg class="icon"><use xlink:href="#iconLock"></use></svg>
-          批量加密
-        </button>
-        <button class="btn btn-decrypt" @click="showBatchDecryptDialog" v-if="hasEncryptedVideos">
-          <svg class="icon"><use xlink:href="#iconUnlock"></use></svg>
-          批量解密
-        </button>
+      <VideoToolbar
+        :categories="categories"
+        :selected-category="selectedCategory"
+        :show-encrypt-btn="hasUnencryptedVideos"
+        :show-decrypt-btn="hasEncryptedVideos"
+        :show-ffmpeg-tools="true"
+        :has-ffmpeg="hasFFmpeg"
+        :ffmpeg-path="currentFFmpegPath"
+        @refresh="refreshList"
+        @open-folder="openVideoFolder"
+        @batch-encrypt="showBatchEncryptDialog"
+        @batch-decrypt="showBatchDecryptDialog"
+        @merge-videos="showMergeDialog"
+        @merge-audio="showMergeAudioDialog"
+        @compress="showCompressDialog"
+        @ffmpeg-settings="showFFmpegPathDialog"
+        @category-change="handleCategoryChange"
+      />
 
-        <!-- FFmpeg 工具 -->
-        <div class="ffmpeg-tools">
-          <button class="btn btn-ffmpeg" @click="showMergeDialog" :disabled="!hasFFmpeg">
-            <svg class="icon"><use xlink:href="#iconMerge"></use></svg>
-            视频合并
-          </button>
-          <button class="btn btn-ffmpeg" @click="showMergeAudioDialog" :disabled="!hasFFmpeg">
-            <svg class="icon"><use xlink:href="#iconAudio"></use></svg>
-            视频音频合并
-          </button>
-          <button class="btn btn-ffmpeg" @click="showCompressDialog" :disabled="!hasFFmpeg">
-            <svg class="icon"><use xlink:href="#iconCompress"></use></svg>
-            视频压缩
-          </button>
-        </div>
-
-        <!-- 分类筛选 -->
-        <div class="category-filter">
-          <label>分类:</label>
-          <select v-model="selectedCategory" class="b3-select">
-            <option value="">全部</option>
-            <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-          </select>
-        </div>
-
-        <button class="btn" @click="showFFmpegPathDialog">
-          <svg class="icon"><use xlink:href="#iconSettings"></use></svg>
-          FFmpeg设置
-        </button>
-
-        <div class="toolbar-spacer"></div>
-
-        <span class="toolbar-hint" :title="currentFFmpegPath">
-          {{ hasFFmpeg ? 'FFmpeg 已检测到' : 'FFmpeg 未安装，部分功能不可用' }}
-        </span>
-      </div>
-      
       <!-- 视频列表 -->
       <div class="video-content">
         <div class="video-list" v-if="filteredVideos.length > 0">
           <div class="video-grid">
-            <div 
-              v-for="video in filteredVideos" 
-              :key="video.path" 
-              class="video-item"
-              @click="playVideo(video)"
-            >
-              <div class="video-thumbnail">
-                <div class="video-icon">
-                  <svg class="icon"><use xlink:href="#iconVideo"></use></svg>
-                </div>
-                <div class="video-info">
-                  <span class="video-name" :title="video.name">{{ video.name }}</span>
-                  <span class="video-size">{{ formatFileSize(video.size) }}</span>
-                </div>
-              </div>
-              <div class="video-actions">
-                <span class="video-category">{{ video.category }}</span>
-                <div class="action-buttons">
-                  <button class="icon-btn" @click.stop="playVideo(video)" title="播放">
-                    <svg class="icon"><use xlink:href="#iconPlay"></use></svg>
-                  </button>
-                  <template v-if="isEncryptedVideo(video.name)">
-                    <button class="icon-btn" @click.stop="handleSingleDecrypt(video)" title="解密">
-                      <svg class="icon"><use xlink:href="#iconUnlock"></use></svg>
-                    </button>
-                    <span class="encrypted-badge" :title="getEncryptionType(video.name)">
-                      {{ getEncryptionIcon(video.name) }}
-                    </span>
-                  </template>
-                </div>
-              </div>
-            </div>
+            <VideoListItem
+              v-for="video in filteredVideos"
+              :key="video.path"
+              :video="video"
+              @play="playVideo"
+              @decrypt="handleSingleDecrypt"
+            />
           </div>
         </div>
-        
+
         <div class="empty-state" v-else>
-          <svg class="empty-icon"><use xlink:href="#iconVideo"></use></svg>
+          <IconWrapper name="video" :size="64" class="empty-icon" />
           <p>暂无视频</p>
           <p class="empty-hint">请将视频文件放入 data/video 目录</p>
         </div>
       </div>
     </div>
   </div>
-  
-  <!-- 视频播放器 -->
-  <div class="dialog-overlay" v-if="playerVisible" @click="closePlayer">
-    <div class="dialog dialog-large" @click.stop>
-      <div class="dialog-header">
-        <h3>视频播放</h3>
-        <button class="icon-btn" @click="closePlayer">
-          <svg class="icon"><use xlink:href="#iconClose"></use></svg>
-        </button>
-      </div>
-      <div class="dialog-body">
-        <div class="video-player-container">
-          <video 
-            ref="videoPlayer" 
-            class="video-js vjs-default-skin vjs-big-play-centered"
-          >
-            您的浏览器不支持视频播放
-          </video>
-          <div class="video-details">
-            <h4>{{ currentVideo?.name }}</h4>
-            <div class="video-meta">
-              <span class="video-category">{{ currentVideo?.category }}</span>
-              <span>{{ formatFileSize(currentVideo?.size) }}</span>
-              <span>{{ formatDate(currentVideo?.modTime) }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  
+
+  <!-- 视频播放器对话框 -->
+  <VideoPlayerDialog
+    :visible="playerVisible"
+    :video="currentVideo"
+    :video-url="currentVideoUrl"
+    title="视频播放"
+    @close="closePlayer"
+    @error="handlePlayerError"
+  />
+
   <!-- 批量加密对话框 -->
   <div class="dialog-overlay" v-if="encryptDialogVisible" @click="closeEncryptDialog">
     <div class="dialog" @click.stop>
@@ -702,11 +621,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch, onBeforeUnmount } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { showMessage } from 'siyuan'
-import videojs from 'video.js'
-import type Player from 'video.js/dist/types/player'
-import 'video.js/dist/video-js.css'
+import IconWrapper from '@/components/IconWrapper.vue'
+import VideoPlayerDialog from './components/VideoPlayerDialog.vue'
+import VideoListItem from './components/VideoListItem.vue'
+import VideoToolbar from './components/VideoToolbar.vue'
 import {
   getVideoCategories,
   getVideoList,
@@ -722,8 +642,6 @@ import {
   mergeVideos,
   mergeVideoAudio,
   compressVideo,
-  formatFileSize as ffmpegFormatFileSize,
-  calculateCompressionRate as ffmpegCalculateCompressionRate,
   buildVideoPath,
   setFFmpegPath,
   getCurrentFFmpegPath,
@@ -751,8 +669,6 @@ const playerVisible = ref(false)
 const currentVideo = ref<any>(null)
 const currentVideoUrl = ref('')
 const storagePath = ref('data/video')
-const videoPlayer = ref<HTMLVideoElement>()
-let player: Player | null = null
 const encryptDialogVisible = ref(false)
 const encryptDoubleCompress = ref(false)
 const encryptProgress = ref(false)
@@ -852,13 +768,6 @@ onMounted(async () => {
   currentFFmpegPath.value = getCurrentFFmpegPath()
 })
 
-onBeforeUnmount(() => {
-  if (player) {
-    player.dispose()
-    player = null
-  }
-})
-
 // 方法
 function onClose() {
   emit('close')
@@ -925,14 +834,10 @@ async function playVideo(video: any) {
     currentVideo.value = video
     // 自动解密播放
     currentVideoUrl.value = await getVideoUrl(video.path)
-    
+
     if (currentVideoUrl.value) {
       console.log('播放视频:', video.name)
       playerVisible.value = true
-      
-      // 等待 DOM 更新后初始化 video.js
-      await new Promise(resolve => setTimeout(resolve, 100))
-      initVideoPlayer()
     } else {
       showMessage('视频加载失败', 3000, 'error')
     }
@@ -942,61 +847,26 @@ async function playVideo(video: any) {
   }
 }
 
-function initVideoPlayer() {
-  if (!videoPlayer.value) return
-  
-  // 销毁旧的播放器实例
-  if (player) {
-    player.dispose()
-    player = null
-  }
-  
-  // 初始化 video.js 播放器
-  player = videojs(videoPlayer.value, {
-    controls: true,
-    autoplay: false,
-    preload: 'auto',
-    fluid: false,
-    width: 800,
-    height: 450,
-    playbackRates: [0.5, 1, 1.5, 2],
-    controlBar: {
-      children: [
-        'playToggle',
-        'volumePanel',
-        'currentTimeDisplay',
-        'timeDivider',
-        'durationDisplay',
-        'progressControl',
-        'playbackRateMenuButton',
-        'pictureInPictureToggle',
-        'fullscreenToggle'
-      ]
-    }
-  })
-  
-  // 设置视频源
-  player.src({
-    src: currentVideoUrl.value,
-    type: 'video/mp4'
-  })
-}
-
 function closePlayer() {
-  // 销毁播放器
-  if (player) {
-    player.dispose()
-    player = null
-  }
-  
   // 释放 Blob URL 以避免内存泄漏
   if (currentVideoUrl.value && currentVideoUrl.value.startsWith('blob:')) {
     URL.revokeObjectURL(currentVideoUrl.value)
   }
-  
+
   currentVideo.value = null
   currentVideoUrl.value = ''
   playerVisible.value = false
+}
+
+// 处理播放器错误
+function handlePlayerError(error: any) {
+  console.error('Video player error:', error)
+  showMessage('视频播放出错', 3000, 'error')
+}
+
+// 处理分类变化
+function handleCategoryChange(category: string) {
+  selectedCategory.value = category
 }
 
 function formatFileSize(bytes?: number) {
@@ -1004,18 +874,13 @@ function formatFileSize(bytes?: number) {
   const units = ['B', 'KB', 'MB', 'GB']
   let size = bytes
   let unitIndex = 0
-  
+
   while (size >= 1024 && unitIndex < units.length - 1) {
     size /= 1024
     unitIndex++
   }
-  
-  return `${size.toFixed(1)} ${units[unitIndex]}`
-}
 
-function formatDate(timestamp?: number) {
-  if (!timestamp) return ''
-  return new Date(timestamp).toLocaleDateString()
+  return `${size.toFixed(1)} ${units[unitIndex]}`
 }
 
 function showBatchEncryptDialog() {
@@ -1041,7 +906,7 @@ async function handleBatchEncrypt() {
   encryptCurrentIndex.value = 0
   encryptTotalCount.value = unencryptedCount.value
   encryptCurrentFile.value = ''
-  
+
   try {
     const result = await encryptAllVideos(
       plugin,
@@ -1052,21 +917,21 @@ async function handleBatchEncrypt() {
         encryptCurrentFile.value = fileName
       }
     )
-    
+
     showMessage(
       `加密完成！成功: ${result.success} 个，失败: ${result.failed} 个`,
       5000,
       result.failed > 0 ? 'error' : 'info'
     )
-    
+
     if (result.errors.length > 0) {
       console.error('加密错误:', result.errors)
     }
-    
+
     // 刷新列表
     await loadVideos()
     await loadCategories()
-    
+
     closeEncryptDialog()
   } catch (error) {
     console.error('批量加密失败:', error)
@@ -1074,23 +939,6 @@ async function handleBatchEncrypt() {
   } finally {
     encryptProgress.value = false
   }
-}
-
-function getEncryptionType(fileName: string): string {
-  if (fileName.toLowerCase().endsWith('.sn2')) {
-    return '双重压缩加密'
-  }
-  if (fileName.toLowerCase().endsWith('.sn')) {
-    return '单重压缩加密'
-  }
-  return ''
-}
-
-function getEncryptionIcon(fileName: string): string {
-  if (fileName.toLowerCase().endsWith('.sn2')) {
-    return '🔒🔒'
-  }
-  return '🔒'
 }
 
 function showBatchDecryptDialog() {

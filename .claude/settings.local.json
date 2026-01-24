@@ -74,7 +74,20 @@
       "Bash(convert:*)",
       "Bash(copy:*)",
       "Bash(claude mcp add:*)",
-      "Bash(claude mcp remove:*)"
+      "Bash(claude mcp remove:*)",
+      "Skill(create-skill-file)",
+      "Skill(create-skill-file:*)",
+      "Skill(yt-dlp-downloader)",
+      "Skill(yt-dlp-downloader:*)",
+      "Bash(yt-dlp:*)",
+      "Bash(scoop install:*)",
+      "Bash(winget install:*)",
+      "Bash(ffmpeg:*)",
+      "Bash(choco:*)",
+      "Skill(markdown-converter)",
+      "Skill(markdown-converter:*)",
+      "Bash(uvx markitdown:*)",
+      "Bash(powershell -Command \"Test-Path ''e:\\\\2.资料合集\\\\RF功能测试''\")"
     ],
     "deny": [],
     "ask": []

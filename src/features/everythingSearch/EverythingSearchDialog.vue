@@ -103,6 +103,7 @@ const searchQuery = ref('')
 const serviceAvailable = ref(true)
 const availableDrives = ref<string[]>([])
 const debounceTimer = ref<number | null>(null)
+const saveConfigTimer = ref<number | null>(null)
 
 // 配置
 const config = reactive<EverythingConfig>({
@@ -137,8 +138,10 @@ const loadConfigFromPlugin = async () => {
   try {
     const configData = await plugin.loadData(CONFIG_STORAGE_KEY)
     if (configData) {
-      config.host = configData.host ?? 'localhost'
-      config.port = configData.port === undefined ? 80 : configData.port
+      Object.assign(config, {
+        host: configData.host || 'localhost',
+        port: configData.port || 80
+      })
     }
 
     const optionsData = await plugin.loadData(OPTIONS_STORAGE_KEY)
@@ -153,14 +156,27 @@ const loadConfigFromPlugin = async () => {
   }
 }
 
-/** 保存配置到插件存储 */
+/** 保存配置到插件存储（带防抖） */
 const saveConfigToPlugin = async () => {
-  try {
-    await plugin.saveData(CONFIG_STORAGE_KEY, { host: config.host, port: config.port })
-    await plugin.saveData(OPTIONS_STORAGE_KEY, { ...options })
-  } catch (error) {
-    console.error('保存配置到插件存储失败:', error)
+  // 清除之前的定时器
+  if (saveConfigTimer.value) {
+    clearTimeout(saveConfigTimer.value)
   }
+
+  // 延迟保存，避免频繁写入
+  saveConfigTimer.value = window.setTimeout(async () => {
+    try {
+      // 只保存有效值，空值使用默认值
+      const configToSave = {
+        host: config.host || 'localhost',
+        port: config.port || 80
+      }
+      await plugin.saveData(CONFIG_STORAGE_KEY, configToSave)
+      await plugin.saveData(OPTIONS_STORAGE_KEY, { ...options })
+    } catch (error) {
+      console.error('保存配置到插件存储失败:', error)
+    }
+  }, 500)
 }
 
 /** 检查服务 */
@@ -280,7 +296,7 @@ const handleOptionUpdate = (key: keyof SearchOptionsType, value: SearchOptionsTy
 
 /** 处理配置更新 */
 const handleConfigUpdate = (key: keyof EverythingConfig, value: EverythingConfig[keyof EverythingConfig]) => {
-  ;(config as any)[key] = value
+  Object.assign(config, { [key]: value })
 }
 
 /** 获取完整路径 */
@@ -366,6 +382,9 @@ onUnmounted(() => {
   document.removeEventListener('keydown', handleKeyDown)
   if (debounceTimer.value) {
     clearTimeout(debounceTimer.value)
+  }
+  if (saveConfigTimer.value) {
+    clearTimeout(saveConfigTimer.value)
   }
 })
 

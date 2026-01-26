@@ -1,4 +1,4 @@
-import type { EverythingSearchResult, EverythingConfig } from './api'
+export type { EverythingSearchResult, EverythingConfig } from './api'
 
 /** 搜索选项 */
 export interface SearchOptions {
@@ -32,7 +32,7 @@ export interface SearchState {
   /** 状态 */
   status: SearchStatus
   /** 结果列表 */
-  results: EverythingSearchResult[]
+  results: any[]
   /** 错误信息 */
   errorMessage: string
   /** 是否已搜索过 */

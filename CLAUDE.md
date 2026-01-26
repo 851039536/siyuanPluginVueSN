@@ -106,7 +106,7 @@ Vue 应用结构
 - 功能可见性：新功能必须在超级面板（SuperPanelView.vue）中提供开关设置
 - 不要直接使用 SVG 文件，可使用 @iconify/vue
 - 新功能必须使用 frontend-components 技能进行组件化。
-
+- 全局样式：导入方式 @use "@/index.scss" as *;
 ### 品牌设计规范
 
 本项目使用 Anthropic 官方品牌色，所有新增页面必须遵守以下规范：

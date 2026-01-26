@@ -55,7 +55,7 @@ const updateConfig = (key: keyof EverythingConfig, value: EverythingConfig[keyof
 </script>
 
 <style scoped lang="scss">
-@import '@/index.scss';
+@use "../../../index.scss" as *;
 
 .dialog-footer {
   display: flex;

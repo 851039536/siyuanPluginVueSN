@@ -379,7 +379,7 @@ const loadConfig = async () => {
 </script>
 
 <style scoped lang="scss">
-@import '@/index.scss';
+@use '@/index.scss' as *;
 
 .everything-search-overlay {
   position: fixed;

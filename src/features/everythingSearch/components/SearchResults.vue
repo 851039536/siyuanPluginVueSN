@@ -105,8 +105,8 @@ const handleItemCopyPath = (item: EverythingSearchResult) => {
 }
 </script>
 
-<style scoped lang="scss">
-@import '@/index.scss';
+<style lang="scss">
+@use "../../../index.scss" as *;
 
 .results-area {
   flex: 1;
@@ -124,7 +124,6 @@ const handleItemCopyPath = (item: EverythingSearchResult) => {
   align-items: center;
   justify-content: center;
   padding: 30px;
-  color: $brand-mid-gray;
   font-family: $font-body;
 }
 

@@ -138,7 +138,7 @@ const loadConfigFromPlugin = async () => {
     const configData = await plugin.loadData(CONFIG_STORAGE_KEY)
     if (configData) {
       config.host = configData.host || 'localhost'
-      config.port = configData.port || 80
+      config.port = typeof configData.port === 'number' ? configData.port : 80
     }
 
     const optionsData = await plugin.loadData(OPTIONS_STORAGE_KEY)

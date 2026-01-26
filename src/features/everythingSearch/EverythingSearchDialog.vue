@@ -137,8 +137,8 @@ const loadConfigFromPlugin = async () => {
   try {
     const configData = await plugin.loadData(CONFIG_STORAGE_KEY)
     if (configData) {
-      config.host = configData.host || 'localhost'
-      config.port = typeof configData.port === 'number' ? configData.port : 80
+      config.host = configData.host ?? 'localhost'
+      config.port = configData.port === undefined ? 80 : configData.port
     }
 
     const optionsData = await plugin.loadData(OPTIONS_STORAGE_KEY)
@@ -338,6 +338,7 @@ const handleKeyDown = (event: KeyboardEvent) => {
 watch(() => props.visible, async (newVal) => {
   if (newVal) {
     await nextTick()
+    await loadConfig()
     searchBarRef.value?.focus()
     checkService()
   }

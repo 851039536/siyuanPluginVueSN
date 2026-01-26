@@ -105,6 +105,7 @@ Vue 应用结构
 
 - 功能可见性：新功能必须在超级面板（SuperPanelView.vue）中提供开关设置
 - 不要直接使用 SVG 文件，可使用 @iconify/vue
+- 新功能必须使用 frontend-components 技能进行组件化。
 
 ### 品牌设计规范
 

@@ -106,7 +106,7 @@ const handleItemCopyPath = (item: EverythingSearchResult) => {
 </script>
 
 <style lang="scss">
-@use "../../../index.scss" as *;
+@use "@/index.scss" as *;
 
 .results-area {
   flex: 1;

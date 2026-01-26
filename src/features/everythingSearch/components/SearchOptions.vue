@@ -119,7 +119,7 @@ const handleRefreshDrives = () => {
 </script>
 
 <style scoped lang="scss">
-@use "../../../index.scss" as *;
+@use "@/index.scss" as *;
 
 .search-options {
   display: flex;

@@ -3,7 +3,7 @@
     <div class="skills-modal" @click.stop>
       <div class="skills-modal-header">
         <div class="header-title">
-         <i class="pi pi-asterisk header-icon"></i>
+         <Icon icon="mdi:star-circle" class="header-icon" />
           <h2>{{ i18n?.skillsTitle || '技能库' }}</h2>
         </div>
         <div class="header-actions">
@@ -16,12 +16,13 @@
         <!-- 分类筛选器 -->
         <div class="category-filter">
           <button
-            v-for="cat in [{ id: 'all', name: '全部', color: '#6b7280' }, ...categories]"
+            v-for="cat in allCategories"
             :key="cat.id"
             class="category-chip"
             :class="{ active: selectedCategory === cat.id }"
             :style="{ '--cat-color': cat.color }"
-            @click="selectedCategory = cat.id"
+            @click="selectCategory(cat.id)"
+            :aria-pressed="selectedCategory === cat.id"
           >
             <span class="chip-dot" :style="{ backgroundColor: cat.color }"></span>
             {{ cat.name }}
@@ -30,15 +31,13 @@
 
         <div class="skills-controls">
           <div class="search-wrapper">
-            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.5"/>
-              <path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>
+            <Icon icon="mdi:magnify" class="search-icon" />
             <input
               v-model="searchQuery"
               type="text"
               :placeholder="i18n?.search || '搜索技能...'"
               class="search-input"
+              aria-label="搜索技能"
             />
           </div>
 
@@ -50,12 +49,12 @@
             v-for="skill in filteredSkills"
             :key="skill.id"
             class="skill-card"
+            role="article"
+            :aria-label="`技能: ${skill.title}`"
           >
             <div class="skill-header">
               <div class="skill-title-wrapper">
-                <svg class="skill-icon" width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+                <Icon icon="mdi:star" class="skill-icon" />
                 <h3>{{ skill.title }}</h3>
                 <span class="skill-category-tag" :style="{ backgroundColor: getCategoryById(skill.category)?.color + '20', color: getCategoryById(skill.category)?.color }">
                   {{ getCategoryById(skill.category)?.name || '未分类' }}
@@ -71,26 +70,20 @@
             </div>
             <div class="skill-content">
               <div class="content-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <path d="M4 4h16v16H4V4z" stroke="currentColor" stroke-width="1.5"/>
-                  <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
+                <Icon icon="mdi:text-box" />
                 {{ i18n?.content || '内容' }}
               </div>
-              <div class="content-value" @click="copyContent(skill.content)">
+              <div class="content-value" @click="copyContent(skill.content)" role="button" tabindex="0" :aria-label="`点击复制内容: ${skill.title}`">
                 <pre>{{ skill.content }}</pre>
                 <div class="copy-hint">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="currentColor" stroke-width="1.5"/>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" stroke-width="1.5"/>
-                  </svg>
+                  <Icon icon="mdi:content-copy" />
                   {{ i18n?.clickToCopy || '点击复制' }}
                 </div>
               </div>
             </div>
           </div>
 
-          <div v-if="filteredSkills.length === 0" class="no-skills">
+          <div v-if="filteredSkills.length === 0" class="no-skills" role="status">
             {{ searchQuery ? i18n?.noSkillsFound || '未找到匹配的技能' : i18n?.noSkills || '暂无技能，点击添加' }}
           </div>
         </div>
@@ -107,20 +100,23 @@
       </div>
 
       <div class="skills-modal-body">
-        <form @submit.prevent="saveSkill" class="skill-form">
+        <form @submit.prevent="saveSkill" class="skill-form" @keydown.enter.prevent>
           <div class="form-group">
-            <label>{{ i18n?.title || '标题' }}</label>
+            <label for="skill-title">{{ i18n?.title || '标题' }}</label>
             <input
+              id="skill-title"
               v-model="skillForm.title"
               type="text"
               :placeholder="i18n?.titlePlaceholder || '请输入技能标题'"
               required
+              aria-required="true"
             />
           </div>
 
           <div class="form-group">
-            <label>{{ i18n?.description || '描述' }}</label>
+            <label for="skill-description">{{ i18n?.description || '描述' }}</label>
             <textarea
+              id="skill-description"
               v-model="skillForm.description"
               :placeholder="i18n?.descriptionPlaceholder || '请输入技能描述'"
               rows="3"
@@ -129,8 +125,8 @@
           </div>
 
           <div class="form-group">
-            <label>{{ i18n?.category || '分类' }}</label>
-            <select v-model="skillForm.category" class="category-select" required>
+            <label for="skill-category">{{ i18n?.category || '分类' }}</label>
+            <select v-model="skillForm.category" class="category-select" required id="skill-category" aria-required="true">
               <option v-for="cat in categories" :key="cat.id" :value="cat.id">
                 {{ cat.name }}
               </option>
@@ -138,12 +134,14 @@
           </div>
 
           <div class="form-group">
-            <label>{{ i18n?.content || '内容' }}</label>
+            <label for="skill-content">{{ i18n?.content || '内容' }}</label>
             <textarea
+              id="skill-content"
               v-model="skillForm.content"
               :placeholder="i18n?.contentPlaceholder || '请输入要复制的内容'"
               rows="6"
               required
+              aria-required="true"
             ></textarea>
           </div>
 
@@ -175,22 +173,25 @@
               :placeholder="i18n?.categoryName || '分类名称'"
               class="input-name"
               @keyup.enter="addCategory"
+              aria-label="分类名称"
             />
             <input
               v-model="categoryForm.color"
               type="color"
               class="input-color"
+              aria-label="分类颜色"
             />
             <Button :label="i18n?.add || '添加'" icon="pi pi-plus" severity="success" @click="addCategory" />
           </div>
         </div>
 
         <!-- 分类列表 -->
-        <div class="category-list">
+        <div class="category-list" role="list">
           <div
             v-for="cat in categories"
             :key="cat.id"
             class="category-item"
+            role="listitem"
           >
             <span class="category-dot" :style="{ backgroundColor: cat.color }"></span>
             <span class="category-name">{{ cat.name }}</span>
@@ -203,10 +204,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, onBeforeMount, onUnmounted } from 'vue'
 import type { Skill, SkillCategory } from './types'
 import Button from 'primevue/button'
+import { Icon } from '@iconify/vue'
 
+// Icons for better maintainability and consistency with project guidelines
+const categoryManageIcon = 'mdi:format-list-bulleted'
+const closeIcon = 'mdi:close'
+const editIcon = 'mdi:pencil'
+const deleteIcon = 'mdi:delete'
+const addIcon = 'mdi:plus'
 
 const props = defineProps<{
   i18n?: Record<string, string>
@@ -214,8 +222,21 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  close: []
+  (e: 'close'): void
 }>()
+
+// Set brand color to b3-theme-primary before component mounts
+onBeforeMount(() => {
+  // Apply brand orange to theme primary for both light and dark mode
+  document.documentElement.style.setProperty('--b3-theme-primary', '#d97757')
+  document.documentElement.style.setProperty('--b3-theme-primary-rgb', '217, 119, 87')
+})
+
+// Clean up brand color when component unmounts
+onUnmounted(() => {
+  document.documentElement.style.removeProperty('--b3-theme-primary')
+  document.documentElement.style.removeProperty('--b3-theme-primary-rgb')
+})
 
 const showModal = ref(true)
 const showAddModal = ref(false)
@@ -233,22 +254,42 @@ const skillForm = ref({
 
 const categoryForm = ref({
   name: '',
-  color: '#3b82f6'
+  color: '#d97757' // Default to brand orange
 })
 
 const skills = ref<Skill[]>([])
 const categories = ref<SkillCategory[]>([
-  { id: 'default', name: '默认', color: '#6b7280' }
+  { id: 'default', name: '默认', color: '#d97757' } // Brand orange
 ])
+
+// Computed property for all categories including "全部"
+const allCategories = computed(() => {
+  return [
+    { id: 'all', name: '全部', color: '#d97757' }, // Brand orange
+    ...categories.value
+  ]
+})
 
 // Load skills from Siyuan API
 onMounted(async () => {
   await loadSkills()
   await loadCategories()
+
+  // Set default category if none is set
+  if (categories.value.length > 0 && !skillForm.value.category) {
+    skillForm.value.category = categories.value[0].id
+  }
+})
+
+// Watch for changes in categories to update form defaults
+watch(categories, (newCategories) => {
+  if (newCategories.length > 0 && !skillForm.value.category) {
+    skillForm.value.category = newCategories[0].id
+  }
 })
 
 const filteredSkills = computed(() => {
-  let result = skills.value
+  let result = [...skills.value]
 
   // 按分类筛选
   if (selectedCategory.value !== 'all') {
@@ -257,31 +298,41 @@ const filteredSkills = computed(() => {
 
   // 按搜索词筛选
   if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    result = result.filter(skill =>
-      skill.title.toLowerCase().includes(query) ||
-      skill.description.toLowerCase().includes(query) ||
-      skill.content.toLowerCase().includes(query)
-    )
+    const query = searchQuery.value.toLowerCase().trim()
+    if (query) {
+      result = result.filter(skill =>
+        skill.title.toLowerCase().includes(query) ||
+        skill.description.toLowerCase().includes(query) ||
+        skill.content.toLowerCase().includes(query)
+      )
+    }
   }
 
   return result
 })
 
 // 获取分类对象
-const getCategoryById = (id: string) => {
+const getCategoryById = (id: string): SkillCategory => {
   return categories.value.find(c => c.id === id) || categories.value[0]
+}
+
+// Category selection handler
+const selectCategory = (categoryId: string) => {
+  selectedCategory.value = categoryId
 }
 
 async function loadSkills() {
   if (!props.plugin) return
   try {
     const stored = await props.plugin.loadData('siyuan-skills')
-    if (stored) {
+    if (stored && Array.isArray(stored)) {
       skills.value = stored as Skill[]
+    } else {
+      skills.value = []
     }
   } catch (error) {
     console.error('Failed to load skills:', error)
+    skills.value = []
   }
 }
 
@@ -289,11 +340,19 @@ async function loadCategories() {
   if (!props.plugin) return
   try {
     const stored = await props.plugin.loadData('siyuan-categories')
-    if (stored) {
+    if (stored && Array.isArray(stored)) {
       categories.value = stored as SkillCategory[]
+      // Ensure all categories have a color
+      categories.value = categories.value.map(cat => ({
+        ...cat,
+        color: cat.color || '#d97757' // Brand orange as default
+      }))
+    } else {
+      categories.value = [{ id: 'default', name: '默认', color: '#d97757' }]
     }
   } catch (error) {
     console.error('Failed to load categories:', error)
+    categories.value = [{ id: 'default', name: '默认', color: '#d97757' }]
   }
 }
 
@@ -303,6 +362,7 @@ async function saveCategories() {
     await props.plugin.saveData('siyuan-categories', categories.value)
   } catch (error) {
     console.error('Failed to save categories:', error)
+    throw error
   }
 }
 
@@ -312,6 +372,7 @@ async function saveSkills() {
     await props.plugin.saveData('siyuan-skills', skills.value)
   } catch (error) {
     console.error('Failed to save skills:', error)
+    throw error
   }
 }
 
@@ -321,7 +382,7 @@ function openAddModal() {
     title: '',
     description: '',
     content: '',
-    category: categories.value[0]?.id || ''
+    category: categories.value[0]?.id || 'default'
   }
   showAddModal.value = true
 }
@@ -344,15 +405,21 @@ function closeAddModal() {
 
 async function saveSkill() {
   try {
+    // Validate required fields
+    if (!skillForm.value.title.trim() || !skillForm.value.content.trim()) {
+      alert('标题和内容是必填项')
+      return
+    }
+
     if (editingSkill.value) {
       // Update existing skill
       const index = skills.value.findIndex(s => s.id === editingSkill.value!.id)
       if (index !== -1) {
         skills.value[index] = {
           ...editingSkill.value,
-          title: skillForm.value.title,
-          description: skillForm.value.description,
-          content: skillForm.value.content,
+          title: skillForm.value.title.trim(),
+          description: skillForm.value.description.trim(),
+          content: skillForm.value.content.trim(),
           category: skillForm.value.category
         }
       }
@@ -360,9 +427,9 @@ async function saveSkill() {
       // Add new skill
       const newSkill: Skill = {
         id: Date.now().toString(),
-        title: skillForm.value.title,
-        description: skillForm.value.description,
-        content: skillForm.value.content,
+        title: skillForm.value.title.trim(),
+        description: skillForm.value.description.trim(),
+        content: skillForm.value.content.trim(),
         category: skillForm.value.category
       }
       skills.value.push(newSkill)
@@ -372,6 +439,7 @@ async function saveSkill() {
     closeAddModal()
   } catch (error) {
     console.error('Failed to save skill:', error)
+    alert('保存失败，请重试')
   }
 }
 
@@ -379,7 +447,7 @@ async function saveSkill() {
 function openCategoryManage() {
   categoryForm.value = {
     name: '',
-    color: '#3b82f6'
+    color: '#d97757' // Brand orange
   }
   showCategoryManage.value = true
 }
@@ -389,11 +457,14 @@ function closeCategoryManage() {
 }
 
 async function addCategory() {
-  if (!categoryForm.value.name.trim()) return
+  if (!categoryForm.value.name.trim()) {
+    alert('分类名称不能为空')
+    return
+  }
 
   const newCategory: SkillCategory = {
     id: Date.now().toString(),
-    name: categoryForm.value.name,
+    name: categoryForm.value.name.trim(),
     color: categoryForm.value.color
   }
 
@@ -402,7 +473,7 @@ async function addCategory() {
 
   categoryForm.value = {
     name: '',
-    color: '#3b82f6'
+    color: '#d97757'
   }
 }
 
@@ -431,13 +502,14 @@ async function deleteSkill(id: string) {
   }
 }
 
-function copyContent(content: string) {
-  navigator.clipboard.writeText(content).then(() => {
-    // Could add a toast notification here
-    console.log('Content copied to clipboard')
-  }).catch(err => {
+async function copyContent(content: string) {
+  try {
+    await navigator.clipboard.writeText(content)
+    // Could add a toast notification here in the future
+  } catch (err) {
     console.error('Failed to copy content:', err)
-  })
+    alert('复制失败，请手动复制')
+  }
 }
 
 function closeModal() {

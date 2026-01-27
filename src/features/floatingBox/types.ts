@@ -27,5 +27,5 @@ export interface Skill {
 export interface SkillCategory {
   id: string
   name: string
-  color?: string
+  color: string // Make color required for consistency
 }

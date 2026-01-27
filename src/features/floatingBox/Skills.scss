@@ -1,7 +1,8 @@
-// 技能库组件样式 - 模块化 SCSS
+// 技能库组件样式 - 遵循 Anthropic 品牌规范
 // 兼容思源笔记深色/浅色主题，支持响应式设计
 
 @use "sass:color";
+@use "@/index.scss" as *;
 
 // ========== 基础变量 ==========
 $modal-z-index: 1000;
@@ -67,7 +68,7 @@ $shadow-card: 0 4px 12px rgba(0, 0, 0, 0.1);
   &:focus {
     outline: none;
     border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 3px rgba(var(--b3-theme-primary-rgb), 0.1);
+    box-shadow: 0 0 0 3px rgba(var(--b3-theme-primary-rgb, 217, 119, 87), 0.1);
   }
 }
 
@@ -101,7 +102,7 @@ $shadow-card: 0 4px 12px rgba(0, 0, 0, 0.1);
     gap: 10px;
 
     .header-icon {
-      color: #22c55e;
+      color: var(--b3-theme-primary);
       flex-shrink: 0;
     }
 
@@ -110,6 +111,7 @@ $shadow-card: 0 4px 12px rgba(0, 0, 0, 0.1);
       font-size: 18px;
       font-weight: 600;
       color: var(--b3-theme-on-background);
+      font-family: $font-heading;
     }
   }
 
@@ -205,8 +207,8 @@ $shadow-card: 0 4px 12px rgba(0, 0, 0, 0.1);
 
       &:focus {
         outline: none;
-        border-color: var(--b3-theme-primary);
-        box-shadow: 0 0 0 3px rgba(var(--b3-theme-primary-rgb), 0.1);
+        border-color: $brand-orange;
+        box-shadow: 0 0 0 3px rgba(217, 119, 87, 0.1);
       }
     }
   }
@@ -273,6 +275,7 @@ $shadow-card: 0 4px 12px rgba(0, 0, 0, 0.1);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      font-family: $font-heading;
     }
 
     .skill-category-tag {
@@ -297,6 +300,7 @@ $shadow-card: 0 4px 12px rgba(0, 0, 0, 0.1);
   color: var(--b3-theme-on-surface);
   margin-bottom: 12px;
   line-height: 1.5;
+  font-family: $font-body;
 }
 
 // ========== 技能内容 ==========
@@ -325,9 +329,9 @@ $shadow-card: 0 4px 12px rgba(0, 0, 0, 0.1);
     transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
 
     &:hover {
-      border-color: var(--b3-theme-primary);
+      border-color: $brand-orange;
       background: var(--b3-theme-surface-light);
-      box-shadow: 0 2px 8px rgba(var(--b3-theme-primary-rgb), 0.15);
+      box-shadow: 0 2px 8px rgba(217, 119, 87, 0.15);
     }
 
     pre {
@@ -336,7 +340,7 @@ $shadow-card: 0 4px 12px rgba(0, 0, 0, 0.1);
       color: var(--b3-theme-on-background);
       white-space: pre-wrap;
       word-break: break-word;
-      font-family: inherit;
+      font-family: $font-body;
       line-height: 1.5;
     }
 
@@ -474,7 +478,7 @@ $shadow-card: 0 4px 12px rgba(0, 0, 0, 0.1);
 
     &:hover {
       background: var(--b3-list-hover);
-      border-color: var(--b3-theme-primary);
+      border-color: $brand-orange;
     }
 
     .category-dot {

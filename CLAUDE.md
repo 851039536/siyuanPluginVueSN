@@ -131,8 +131,9 @@ $brand-green: #788c5d        // 第三强调色
 #### 品牌字体
 
 ```scss
-$font-heading: 'Poppins', Arial, sans-serif  // 标题（h1-h6，18px+）
-$font-body: 'Lora', Georgia, serif           // 正文
+// 品牌字体变量 - 现代字体栈，优化中文显示
+$font-heading: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+$font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
 ```
 
 #### 使用指南

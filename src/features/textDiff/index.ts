@@ -8,7 +8,7 @@ let container: HTMLElement | null = null
 /**
  * 注册文本对比功能
  */
-export function registerTextDiff() {
+export function registerTextDiff(plugin: Plugin): void {
   // 文本对比功能通过超级面板访问，不需要添加顶部栏按钮
   console.log('文本对比功能已注册，通过超级面板访问')
 }

@@ -24,7 +24,7 @@ export interface ShortcutInfo {
   /** 功能分组 (用于组织UI显示) */
   group?: string
   /** 平台限制 (如果不指定则适用所有平台) */
-  platform?: 'win' | 'mac' | 'linux
+  platform?: 'win' | 'mac' | 'linux'
   /** 复制内容 (复制时优先使用此字段) */
   copyContent?: string
 }

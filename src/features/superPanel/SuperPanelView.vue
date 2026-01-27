@@ -596,6 +596,16 @@ const features = computed(() => [
     desc: '在浮动工具栏中快速翻译英文并替换',
     enabled: props.settings.enableTranslate,
     actions: []
+  },
+  {
+    id: 'webDAV',
+    iconKey: 'webDAV',
+    title: props.i18n.webDAV || 'WebDAV同步',
+    desc: props.i18n.webDAVDesc || '使用WebDAV协议同步数据到云存储',
+    enabled: props.settings.enableWebDAV,
+    actions: [
+      { key: 'openWebDAV', label: '打开WebDAV', hotkey: '' }
+    ]
   }
 ])
 

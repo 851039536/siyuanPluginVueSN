@@ -168,7 +168,8 @@ async function handleFeatureToggle(plugin: Plugin, featureId: string, enabled: b
     'skills': 'enableSkills',
     'flashcardReading': 'enableFlashcardReading',
     'flashcardQuery': 'enableFlashcardQuery',
-    'translate': 'enableTranslate'
+    'translate': 'enableTranslate',
+    'webDAV': 'enableWebDAV'
   }
 
   const settingKey = settingsMap[featureId]
@@ -228,7 +229,9 @@ async function handleToggleAllFeatures(plugin: Plugin, enabled: boolean) {
     'enableBase64Image',
     'enableFlashcardReading',
     'enableFlashcardQuery',
-    'enableTranslate'
+    'enableTranslate',
+    'enablePasswordVault',
+    'enableWebDAV'
   ]
 
   // 构建新设置对象
@@ -335,6 +338,12 @@ function handleFeatureAction(_plugin: Plugin, action: string) {
     case 'openFlashcardReading':
       // 打开单词阅读面板
       window.dispatchEvent(new CustomEvent('openFlashcardReading'))
+      closeSuperPanel()
+      break
+
+    case 'openWebDAV':
+      // 打开 WebDAV 面板
+      window.dispatchEvent(new CustomEvent('openWebDAV'))
       closeSuperPanel()
       break
 

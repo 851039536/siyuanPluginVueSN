@@ -5,7 +5,7 @@ import {
 import "@/index.scss";
 import PluginInfoString from '@/../plugin.json'
 import { destroy, init } from '@/main'
-import { registerPageLock, registerTableOfContents, registerImageCompressor, registerDocNavigation, registerShortcut, registerWordQuery, registerGeneralSettings, registerUnitConverter, registerSuperPanel, registerDiskBrowser, registerCodeImageGenerator, registerAIContentGenerator, registerStatistics, registerEncryption, registerVideo, registerEverythingSearch, registerSystemMonitor, registerApiReference, registerHighlight, registerFloatingToolbar, registerFloatingBox, registerTextDiff, registerBase64Image, registerFlashcardReading, registerPasswordVault } from '@/features'
+import { registerPageLock, registerTableOfContents, registerImageCompressor, registerDocNavigation, registerShortcut, registerWordQuery, registerGeneralSettings, registerUnitConverter, registerSuperPanel, registerDiskBrowser, registerCodeImageGenerator, registerAIContentGenerator, registerStatistics, registerEncryption, registerVideo, registerEverythingSearch, registerSystemMonitor, registerApiReference, registerHighlight, registerFloatingToolbar, registerFloatingBox, registerTextDiff, registerBase64Image, registerFlashcardReading, registerPasswordVault, registerWebDAV } from '@/features'
 import { loadSettings, saveSettings, loadHighlightSettings, type PluginSettings } from '@/config/settings'
 import { initCommands, destroyCommands } from '@/commands'
 
@@ -209,6 +209,12 @@ export default class PluginSample extends Plugin {
     if (this.settings.enablePasswordVault) {
       console.log('注册密码箱功能')
       registerPasswordVault(this)
+    }
+
+    // 注册 WebDAV 功能
+    if (this.settings.enableWebDAV) {
+      console.log('注册 WebDAV 功能')
+      registerWebDAV(this)
     }
   }
 

@@ -146,7 +146,7 @@
         v-if="state.syncLogs.length > 0"
         :logs="state.syncLogs"
         :i18n="i18n"
-        @clear="clearLogs"
+        @clear="clearLogsAction"
       />
     </div>
   </div>
@@ -207,19 +207,19 @@ const saveConfig = () => {
 
 const handleTestConnection = async () => {
   if (!localConfig.value.serverUrl) {
-    showMessage(props.i18n.pleaseEnterServerUrl || '请输入服务器地址', 3000, 'warning')
+    showMessage(props.i18n.pleaseEnterServerUrl || '请输入服务器地址', 3000, 'error')
     return
   }
   await testConnection(localConfig.value)
   if (state.connectionStatus === 'connected') {
-    showMessage(props.i18n.connectionSuccess || '连接成功', 3000, 'success')
+    showMessage(props.i18n.connectionSuccess || '连接成功', 3000, 'info')
   }
 }
 
 const handleSyncNow = async () => {
   const success = await syncNow(localConfig.value)
   if (success) {
-    showMessage(props.i18n.syncCompleted || '同步完成', 3000, 'success')
+    // showMessage(props.i18n.syncCompleted || '同步完成', 3000, 'success')
   }
 }
 
@@ -233,18 +233,16 @@ const handleNavigate = async (path: string) => {
 
 const handleDownload = async (file: any) => {
   try {
-    showMessage(`${i18n.downloading || '正在下载'} ${file.name}...`, 3000, 'info')
     const blob = await webDAVService.downloadFile(localConfig.value, file)
 
     if (blob) {
       webDAVService.downloadBlob(blob, file.name)
-      showMessage(`${i18n.downloadComplete || '下载完成'} ${file.name}`, 3000, 'success')
     } else {
-      showMessage(i18n.downloadFailed || '下载失败', 3000, 'error')
+      showMessage(props.i18n.downloadFailed || '下载失败', 3000, 'error')
     }
   } catch (error) {
     console.error('[WebDAV] 下载错误:', error)
-    showMessage(i18n.downloadFailed || '下载失败', 3000, 'error')
+    showMessage(props.i18n.downloadFailed || '下载失败', 3000, 'error')
   }
 }
 

@@ -35,6 +35,8 @@ export interface PluginSettings {
   enableFlashcardQuery: boolean  // 是否启用查询单词功能
   enableTranslate: boolean       // 是否启用翻译替换功能
   enablePasswordVault: boolean   // 是否启用密码箱功能
+  enableWebDAV: boolean          // 是否启用WebDAV功能
+  webdavConfig: WebDAVConfig     // WebDAV服务器配置
   videoCategories?: string[]     // 视频分类列表
   wordQueryApiKey: string        // 单词查询API密钥(已废弃,使用aiApiProvider和aiApiKey)
   compactMode: boolean           // 是否启用全局紧洛模式
@@ -111,6 +113,16 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enableFlashcardQuery: true,
   enableTranslate: true,
   enablePasswordVault: true,
+  enableWebDAV: true,
+  webdavConfig: {
+    serverUrl: '',
+    username: '',
+    password: '',
+    basePath: '/',
+    autoSync: false,
+    syncInterval: 30,
+    lastSyncTime: ''
+  },
   videoCategories: ['默认分类', '教程', '演示', '其他'],
   wordQueryApiKey: 'sk-fae27cc50015409fb2524b0970d3f0b0',
   compactMode: true,
@@ -528,6 +540,19 @@ export interface TextDiffSettings {
   fontSize: number           // 字体大小
   diffMode: 'split' | 'unified'  // 显示模式：分栏或统一
   theme: 'light' | 'dark'    // 主题：浅色或深色
+}
+
+/**
+ * WebDAV配置接口
+ */
+export interface WebDAVConfig {
+  serverUrl: string          // WebDAV服务器地址
+  username: string           // 用户名
+  password: string           // 密码
+  basePath: string           // 基础路径
+  autoSync: boolean          // 是否自动同步
+  syncInterval: number       // 同步间隔(分钟)
+  lastSyncTime: string       // 最后同步时间
 }
 
 /**

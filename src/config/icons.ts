@@ -194,6 +194,12 @@ export const FEATURE_ICONS = {
     color: '#0d9488'
   },
 
+  // WebDAV
+  webDAV: {
+    icon: 'mdi:cloud-sync',
+    color: '#3b82f6'
+  },
+
   // 视频相关图标
   play: {
     icon: 'mdi:play',

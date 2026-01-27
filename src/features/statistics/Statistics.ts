@@ -44,7 +44,6 @@ export class Statistics {
   private viewMode: 'day' | 'week' | 'month' | 'year' | 'trend' | 'snapshot' = 'day'; // 当前查看模式
   private dayRange: 7 | 15 | 30 | 90 | 180 | 365 = 7; // 日视图的天数范围
   private monthYearRange: 1 | 2 | 3 = 1; // 月视图的年份范围
-  private statisticsTheme: 'default' | 'github' = 'default'; // 统计面板主题风格
   private updateInterval: number = 60000; // 定时更新间隔（毫秒），默认1分钟
   private updateTimer: NodeJS.Timeout | null = null; // 定时器实例
   private lastUpdateTime: number = 0; // 上次更新时间戳
@@ -61,13 +60,10 @@ export class Statistics {
    * 初始化统计模块
    */
   async init() {
-    // 加载保存的主题设置和更新间隔
+    // 加载保存的更新间隔
     try {
       const settings = await this.plugin.loadData('plugin-settings');
       if (settings) {
-        if (settings.statisticsTheme) {
-          this.statisticsTheme = settings.statisticsTheme;
-        }
         if (settings.statisticsUpdateInterval) {
           this.updateInterval = settings.statisticsUpdateInterval;
         }
@@ -143,20 +139,6 @@ export class Statistics {
 
     // 创建 Vue 应用
     this.vueApp = createApp(StatisticsPanel, {
-      theme: this.statisticsTheme,
-      onThemeChange: async (theme: 'default' | 'github') => {
-        this.statisticsTheme = theme;
-        // 保存主题设置
-        try {
-          const settings = await this.plugin.loadData('plugin-settings');
-          if (settings) {
-            settings.statisticsTheme = theme;
-            await this.plugin.saveData('plugin-settings', settings);
-          }
-        } catch (error) {
-          console.error('保存主题设置失败:', error);
-        }
-      },
       onRefresh: async (params: {
         viewMode: 'day' | 'week' | 'month' | 'year' | 'trend' | 'snapshot'
         dayRange?: 7 | 15 | 30 | 90 | 180 | 365

@@ -1,87 +1,8 @@
-// Statistics Panel Styles - Modular SCSS
-// Optimized with brand guidelines, theme support, and responsive design
+// Statistics Panel Styles - Following Siyuan Theme
 
-@use "sass:color";
 @use '../../index.scss' as *;
 @use '../superPanel/styles/variables' as *;
 @use '../superPanel/styles/mixins' as *;
-
-// ========== Local Variables ==========
-$stats-header-height: 48px;
-$stats-card-radius: 8px;
-$stats-transition: all 0.2s ease;
-$stats-shadow-light: 0 2px 8px rgba(0, 0, 0, 0.1);
-$stats-shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
-
-// Brand gradient colors
-$gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-$gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-$gradient-tertiary: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-
-// GitHub theme colors
-$github-bg-primary: var(--b3-theme-surface);
-$github-bg-secondary: var(--b3-theme-background);
-$github-border: #d0d7de;
-$github-border-dark: #484f58;
-$github-text-primary: var(--b3-theme-on-surface);
-$github-blue: #0969da;
-$github-green: #1a7f37;
-$github-red: #cf222e;
-
-// ========== Local Mixins ==========
-@mixin stats-card-hover {
-  transition: transform 0.2s, box-shadow 0.2s;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: $stats-shadow-medium;
-  }
-}
-
-@mixin stats-theme-border {
-  border: 1px solid var(--b3-border-color);
-
-  .theme-github & {
-    border-color: $github-border;
-  }
-}
-
-@mixin stats-button-base {
-  border: 2px solid var(--b3-border-color);
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  cursor: pointer;
-  transition: $stats-transition;
-
-  &:hover {
-    border-color: var(--b3-theme-primary);
-  }
-
-  &.active {
-    border-color: var(--b3-theme-primary);
-    background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1);
-    color: var(--b3-theme-primary);
-  }
-}
-
-@mixin stats-custom-scrollbar {
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--b3-theme-surface-lighter);
-    border-radius: 3px;
-
-    &:hover {
-      background: var(--b3-theme-on-surface-variant);
-    }
-  }
-}
 
 // ========== Main Container ==========
 .statistics-panel {
@@ -92,11 +13,6 @@ $github-red: #cf222e;
   color: var(--b3-theme-on-background);
   font-family: $font-body;
   overflow: hidden;
-
-  // Theme variants
-  &.theme-github {
-    background: $github-bg-secondary;
-  }
 }
 
 // ========== Header Section ==========
@@ -108,12 +24,7 @@ $github-red: #cf222e;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
   background: var(--b3-theme-surface);
   flex-shrink: 0;
-  min-height: $stats-header-height;
-
-  .theme-github & {
-    background: $github-bg-primary;
-    border-bottom-color: $github-border;
-  }
+  min-height: 48px;
 
   .header-left {
     display: flex;
@@ -151,14 +62,14 @@ $github-red: #cf222e;
 }
 
 // Button styles within header
-.refresh-btn,
-.theme-toggle-btn {
+.refresh-btn {
   padding: 4px 8px;
   border: 1px solid var(--b3-border-color);
   border-radius: 4px;
   background: transparent;
+  color: var(--b3-theme-primary);
   cursor: pointer;
-  transition: $stats-transition;
+  transition: all 0.2s ease;
 
   &:hover:not(:disabled) {
     background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1);
@@ -169,10 +80,6 @@ $github-red: #cf222e;
     opacity: 0.5;
     cursor: not-allowed;
   }
-}
-
-.refresh-btn {
-  color: var(--b3-theme-primary);
 
   .icon {
     width: 14px;
@@ -181,22 +88,6 @@ $github-red: #cf222e;
     &.rotating {
       animation: spin 1s linear infinite;
     }
-  }
-}
-
-.theme-toggle-btn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: var(--b3-theme-on-surface);
-
-  .theme-icon {
-    font-size: 14px;
-  }
-
-  .theme-text {
-    font-weight: 500;
   }
 }
 
@@ -218,15 +109,6 @@ $github-red: #cf222e;
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
   }
 }
 
@@ -271,7 +153,6 @@ $github-red: #cf222e;
   flex: 1;
   overflow-y: auto;
   padding: 12px;
-  @include stats-custom-scrollbar;
   animation: fadeIn 0.3s ease-out;
 }
 
@@ -281,19 +162,8 @@ $github-red: #cf222e;
 
   .stat-card-main,
   .stat-card-secondary {
-    @include stats-card-hover;
-    @include stats-theme-border;
-    border-radius: $stats-card-radius;
-
-    .theme-github & {
-      background: $github-bg-primary;
-      color: $github-text-primary;
-      box-shadow: none;
-
-      &:hover {
-        transform: none;
-      }
-    }
+    border: 1px solid var(--b3-border-color);
+    border-radius: 8px;
   }
 
   .stat-card-main {
@@ -341,10 +211,6 @@ $github-red: #cf222e;
       height: 40px;
       background: var(--b3-border-color);
       margin: 0 8px;
-
-      .theme-github & {
-        background: $github-border;
-      }
     }
   }
 
@@ -353,8 +219,7 @@ $github-red: #cf222e;
     align-items: center;
     justify-content: space-between;
     padding: 12px 16px;
-    background: $gradient-secondary;
-    color: white;
+    background: var(--b3-theme-surface);
 
     .stat-item-small {
       display: flex;
@@ -371,13 +236,14 @@ $github-red: #cf222e;
         font-family: $font-heading;
         font-size: 16px;
         font-weight: 700;
-        color: white;
+        color: var(--b3-theme-primary);
       }
 
       .stat-label-small {
         font-size: 10px;
         font-family: $font-body;
         opacity: 0.9;
+        color: var(--b3-theme-on-surface);
       }
     }
   }
@@ -395,42 +261,14 @@ $github-red: #cf222e;
     align-items: center;
     gap: 10px;
     padding: 10px;
-    border-radius: $stats-card-radius;
-    color: white;
-    box-shadow: $stats-shadow-light;
-    @include stats-card-hover;
-
-    &.gradient-1 {
-      background: $gradient-primary;
-    }
-
-    &.gradient-2 {
-      background: $gradient-secondary;
-    }
-
-    &.gradient-3 {
-      background: $gradient-tertiary;
-    }
-
-    // GitHub theme overrides
-    .theme-github &,
-    .theme-github &.gradient-1,
-    .theme-github &.gradient-2,
-    .theme-github &.gradient-3 {
-      @include stats-theme-border;
-      background: $github-bg-primary;
-      color: $github-text-primary;
-      box-shadow: none;
-
-      &:hover {
-        transform: none;
-        border-color: var(--b3-theme-primary);
-      }
-    }
+    border-radius: 8px;
+    border: 1px solid var(--b3-border-color);
+    background: var(--b3-theme-surface);
 
     .card-icon {
       font-size: 24px;
       flex-shrink: 0;
+      color: var(--b3-theme-primary);
     }
 
     .card-content {
@@ -443,13 +281,14 @@ $github-red: #cf222e;
         font-weight: 700;
         line-height: 1.2;
         margin-bottom: 2px;
+        color: var(--b3-theme-primary);
       }
 
       .card-label-small {
         font-size: 10px;
         font-family: $font-body;
         opacity: 0.9;
-        @include text-ellipsis;
+        color: var(--b3-theme-on-surface);
       }
     }
   }
@@ -471,8 +310,22 @@ $github-red: #cf222e;
 
   .mode-tab,
   .range-btn {
-    @include stats-button-base;
+    border: 2px solid var(--b3-border-color);
+    background: var(--b3-theme-background);
+    color: var(--b3-theme-on-background);
+    cursor: pointer;
+    transition: all 0.2s ease;
     font-family: $font-body;
+
+    &:hover {
+      border-color: var(--b3-theme-primary);
+    }
+
+    &.active {
+      border-color: var(--b3-theme-primary);
+      background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1);
+      color: var(--b3-theme-primary);
+    }
   }
 
   .mode-tab {
@@ -501,18 +354,10 @@ $github-red: #cf222e;
       cursor: pointer;
       outline: none;
       margin-bottom: 8px;
-      transition: $stats-transition;
+      transition: all 0.2s ease;
 
       &:focus {
         border-color: var(--b3-theme-primary);
-      }
-
-      .theme-github & {
-        border-color: $github-border;
-
-        &:focus {
-          border-color: $github-blue;
-        }
       }
     }
   }
@@ -531,14 +376,12 @@ $github-red: #cf222e;
     justify-content: center;
     padding: 12px 16px;
     background: var(--b3-theme-surface);
-    @include stats-theme-border;
+    border: 1px solid var(--b3-border-color);
     border-radius: 6px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    transition: $stats-transition;
+    transition: all 0.2s ease;
 
     &:hover {
       border-color: var(--b3-theme-primary);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     }
 
     .stat-label {
@@ -563,12 +406,7 @@ $github-red: #cf222e;
   margin-bottom: 16px;
   padding: 12px;
   background: var(--b3-theme-surface);
-  border-radius: $stats-card-radius;
-
-  .theme-github & {
-    background: $github-bg-primary;
-    border: 1px solid $github-border;
-  }
+  border-radius: 8px;
 
   .section-title {
     margin: 0 0 12px 0;
@@ -584,10 +422,6 @@ $github-red: #cf222e;
     background: var(--b3-theme-background);
     border-radius: 6px;
     overflow-x: auto;
-
-    .theme-github & {
-      background: $github-bg-secondary;
-    }
 
     .chart-container {
       display: flex;
@@ -618,10 +452,9 @@ $github-red: #cf222e;
         .bar {
           width: 100%;
           min-height: 5px;
-          background: $gradient-primary;
+          background: var(--b3-theme-primary);
           border-radius: 4px 4px 0 0;
           transition: all 0.3s ease;
-          box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
           cursor: pointer;
 
           &:hover {
@@ -630,23 +463,7 @@ $github-red: #cf222e;
           }
 
           &.today {
-            background: $gradient-secondary;
-            box-shadow: 0 4px 8px rgba(245, 87, 108, 0.4);
-            border: 2px solid #f5576c;
-          }
-
-          .theme-github & {
-            background: $github-blue;
-            box-shadow: none;
-
-            &:hover {
-              opacity: 0.7;
-            }
-
-            &.today {
-              background: $github-green;
-              border: 2px solid $github-green;
-            }
+            border: 2px solid var(--b3-theme-primary);
           }
         }
 
@@ -662,12 +479,8 @@ $github-red: #cf222e;
           left: 50%;
 
           &.today {
-            color: #f5576c;
             font-weight: 700;
-          }
-
-          .theme-github &.today {
-            color: $github-green;
+            color: var(--b3-theme-primary);
           }
         }
       }
@@ -686,33 +499,19 @@ $github-red: #cf222e;
       padding: 10px 12px;
       background: var(--b3-theme-background);
       border-radius: 6px;
-      border-left: 3px solid #ddd;
-      transition: $stats-transition;
-
-      .theme-github & {
-        border-left-color: $github-border;
-        background: $github-bg-secondary;
-
-        &.active {
-          border-left-color: $github-blue;
-        }
-
-        &.today {
-          border-left-color: $github-green;
-          background: rgba($github-green, 0.05);
-        }
-      }
+      border-left: 3px solid var(--b3-border-color);
+      transition: all 0.2s ease;
 
       &.active {
-        border-left-color: #667eea;
+        border-left-color: var(--b3-theme-primary);
       }
 
       &.today {
-        border-left-color: #f5576c;
-        background: rgba(245, 87, 108, 0.05);
+        border-left-color: var(--b3-theme-primary);
+        background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.05);
 
         .data-value {
-          color: #f5576c;
+          color: var(--b3-theme-primary);
         }
       }
 
@@ -743,21 +542,12 @@ $github-red: #cf222e;
     border-radius: 6px;
     overflow: hidden;
 
-    .theme-github & {
-      border-color: $github-border;
-    }
-
     .trend-stat-item {
       display: flex;
       align-items: center;
       padding: 10px 12px;
       border-bottom: 1px solid var(--b3-theme-border);
       background: var(--b3-theme-surface);
-
-      .theme-github & {
-        background: $github-bg-primary;
-        border-bottom-color: $github-border;
-      }
 
       &:last-child {
         border-bottom: none;
@@ -803,10 +593,6 @@ $github-red: #cf222e;
       border: 1px solid var(--b3-theme-border);
       border-radius: 6px;
 
-      .theme-github & {
-        border-color: $github-border;
-      }
-
       .historical-table {
         width: 100%;
         border-collapse: collapse;
@@ -819,10 +605,6 @@ $github-red: #cf222e;
           z-index: 1;
           background: var(--b3-theme-surface);
 
-          .theme-github & {
-            background: $github-bg-primary;
-          }
-
           th {
             padding: 6px 8px;
             text-align: left;
@@ -830,10 +612,6 @@ $github-red: #cf222e;
             font-weight: 600;
             color: var(--b3-theme-on-surface);
             border-bottom: 1px solid var(--b3-theme-border);
-
-            .theme-github & {
-              border-bottom-color: $github-border;
-            }
 
             .th-icon {
               margin-right: 4px;
@@ -862,20 +640,12 @@ $github-red: #cf222e;
           .historical-row {
             border-bottom: 1px solid var(--b3-theme-border);
 
-            .theme-github & {
-              border-bottom-color: $github-border;
-            }
-
             &:last-child {
               border-bottom: none;
             }
 
             &.today {
-              background: rgba(245, 87, 108, 0.06);
-
-              .theme-github & {
-                background: rgba($github-green, 0.06);
-              }
+              background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.06);
             }
 
             td {
@@ -910,13 +680,13 @@ $github-red: #cf222e;
                 font-family: $font-heading;
 
                 &.success {
-                  background: rgba($github-green, 0.15);
-                  color: $github-green;
+                  background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.15);
+                  color: var(--b3-theme-primary);
                 }
 
                 &.danger {
-                  background: rgba($github-red, 0.15);
-                  color: $github-red;
+                  background: rgba(var(--b3-theme-error-rgb, 239, 68, 68), 0.15);
+                  color: var(--b3-theme-error);
                 }
 
                 &.secondary {
@@ -935,13 +705,13 @@ $github-red: #cf222e;
                 font-family: $font-heading;
 
                 &.positive {
-                  background: rgba($github-green, 0.15);
-                  color: $github-green;
+                  background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.15);
+                  color: var(--b3-theme-primary);
                 }
 
                 &.negative {
-                  background: rgba($github-red, 0.15);
-                  color: $github-red;
+                  background: rgba(var(--b3-theme-error-rgb, 239, 68, 68), 0.15);
+                  color: var(--b3-theme-error);
                 }
 
                 &.neutral {
@@ -981,7 +751,7 @@ $github-red: #cf222e;
       background: transparent;
       cursor: pointer;
       font-size: 14px;
-      transition: $stats-transition;
+      transition: all 0.2s ease;
       font-family: $font-body;
 
       &:hover {
@@ -999,11 +769,6 @@ $github-red: #cf222e;
     border-radius: 6px;
     border-left: 3px solid var(--b3-theme-primary);
 
-    .theme-github & {
-      background: $github-bg-primary;
-      border-left-color: $github-blue;
-    }
-
     .snapshot-info {
       margin: 0;
       font-family: $font-body;
@@ -1018,22 +783,16 @@ $github-red: #cf222e;
     gap: 12px;
     max-height: 500px;
     overflow-y: auto;
-    @include stats-custom-scrollbar;
 
     .snapshot-item {
       padding: 12px;
       background: var(--b3-theme-surface);
-      @include stats-theme-border;
-      border-radius: $stats-card-radius;
-      transition: $stats-transition;
-
-      .theme-github & {
-        background: $github-bg-primary;
-      }
+      border: 1px solid var(--b3-border-color);
+      border-radius: 8px;
+      transition: all 0.2s ease;
 
       &:hover {
         border-color: var(--b3-theme-primary);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       }
 
       .snapshot-header {
@@ -1081,11 +840,7 @@ $github-red: #cf222e;
           padding: 8px;
           background: var(--b3-theme-background);
           border-radius: 6px;
-          transition: $stats-transition;
-
-          .theme-github & {
-            background: $github-bg-secondary;
-          }
+          transition: all 0.2s ease;
 
           &:hover {
             transform: translateY(-2px);
@@ -1121,10 +876,6 @@ $github-red: #cf222e;
         border-radius: 4px;
         font-size: 11px;
         font-family: $font-body;
-
-        .theme-github & {
-          background: $github-bg-secondary;
-        }
 
         .diff-label {
           font-weight: 600;

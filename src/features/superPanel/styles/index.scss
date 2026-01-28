@@ -118,7 +118,6 @@
 }
 
 // ==================== 头部按钮样式 ====================
-// 注意：头部按钮已使用 PrimeVue Button 组件，以下样式保留供自定义按钮使用
 
 .header-action-btn {
   @include button-reset;
@@ -132,6 +131,26 @@
 
   &:hover {
     background: var(--b3-theme-surface-lighter);
+  }
+}
+
+// ==================== AI设置关闭按钮样式 ====================
+
+.ai-settings-close-btn {
+  @include button-reset;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--b3-theme-on-surface);
+  background: var(--b3-theme-surface-lighter);
+  transition: all $transition-fast ease;
+
+  &:hover {
+    background: var(--b3-theme-surface-light);
+    color: var(--b3-theme-on-surface);
   }
 }
 

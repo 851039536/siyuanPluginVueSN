@@ -40,7 +40,6 @@ export class Statistics {
   private plugin: Plugin;
   private dockElement: HTMLElement | null = null;
   private vueApp: VueApp | null = null;
-  private currentYear: number;
   private viewMode: 'day' | 'week' | 'month' | 'year' | 'trend' | 'snapshot' = 'day'; // 当前查看模式
   private dayRange: 7 | 15 | 30 | 90 | 180 | 365 = 7; // 日视图的天数范围
   private monthYearRange: 1 | 2 | 3 = 1; // 月视图的年份范围
@@ -51,8 +50,6 @@ export class Statistics {
 
   constructor(plugin: Plugin) {
     this.plugin = plugin;
-    const now = new Date();
-    this.currentYear = now.getFullYear();
     this.cache = new StatisticsCache(plugin);
   }
 
@@ -149,7 +146,7 @@ export class Statistics {
         this.viewMode = params.viewMode;
         if (params.dayRange) this.dayRange = params.dayRange;
         if (params.monthYearRange) this.monthYearRange = params.monthYearRange;
-        if (params.selectedYear) this.currentYear = params.selectedYear;
+        // selectedYear 由 getYearlyStats 方法内部使用，不需要存储
 
         // 快照模式也需要获取统计数据以显示顶部卡片
         return await this.getStatistics();
@@ -168,302 +165,7 @@ export class Statistics {
     this.vueApp.mount(container);
   }
 
-  /**
-   * 旧的渲染方法（已废弃，保留作为参考）
-   */
-  private async renderDockPanelOld() {
-    if (!this.dockElement) return;
 
-    // 获取统计数据
-    const stats = await this.getStatistics();
-
-    this.dockElement.innerHTML = `
-      <div style="padding: 16px; height: 100%; box-sizing: border-box; overflow-y: auto; background: var(--b3-theme-background);">
-        <!-- 顶部卡片统计 -->
-        <div style="margin-bottom: 16px;">
-          <!-- 主要统计：笔记总数 | 总字数 -->
-          <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-            <div style="flex: 1; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 6px; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-              <div style="font-size: 24px; font-weight: 700; line-height: 1.2;">${stats.totalNotes}</div>
-              <div style="font-size: 11px; opacity: 0.9; margin-top: 4px;">📓 ${this.plugin.i18n.totalNotes}</div>
-            </div>
-            <div style="flex: 1; padding: 12px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 6px; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-              <div style="font-size: 24px; font-weight: 700; line-height: 1.2;">${this.formatNumber(stats.totalWords)}</div>
-              <div style="font-size: 11px; opacity: 0.9; margin-top: 4px;">✍️ ${this.plugin.i18n.totalWords}</div>
-            </div>
-          </div>
-
-          <!-- 次要统计：内容块 | 附件 | 标签 | 双链 -->
-          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;">
-            <div style="padding: 10px 8px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 6px; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.08); text-align: center;">
-              <div style="font-size: 18px; font-weight: 700; line-height: 1.2;">${this.formatShortNumber(stats.totalBlocks)}</div>
-              <div style="font-size: 10px; opacity: 0.9; margin-top: 3px;">🧩 ${this.plugin.i18n.totalBlocks}</div>
-            </div>
-            <div style="padding: 10px 8px; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); border-radius: 6px; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.08); text-align: center;">
-              <div style="font-size: 18px; font-weight: 700; line-height: 1.2;">${this.formatShortNumber(stats.totalAssets)}</div>
-              <div style="font-size: 10px; opacity: 0.9; margin-top: 3px;">📎 ${this.plugin.i18n.totalAssets}</div>
-            </div>
-            <div style="padding: 10px 8px; background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); border-radius: 6px; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.08); text-align: center;">
-              <div style="font-size: 18px; font-weight: 700; line-height: 1.2;">${this.formatShortNumber(stats.totalTags)}</div>
-              <div style="font-size: 10px; opacity: 0.9; margin-top: 3px;">🏷️ ${this.plugin.i18n.totalTags}</div>
-            </div>
-            <div style="padding: 10px 8px; background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); border-radius: 6px; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.08); text-align: center;">
-              <div style="font-size: 18px; font-weight: 700; line-height: 1.2;">${this.formatShortNumber(stats.totalBacklinks)}</div>
-              <div style="font-size: 10px; opacity: 0.9; margin-top: 3px;">🔗 ${this.plugin.i18n.totalBacklinks}</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 查看模式切换 -->
-        <div style="margin-bottom: 16px; padding: 12px; background: var(--b3-theme-surface); border-radius: 8px;">
-          <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-            <button class="view-mode-btn" data-mode="day" style="flex: 1; padding: 8px; border: 2px solid ${this.viewMode === 'day' ? 'var(--b3-theme-primary)' : 'var(--b3-border-color)'}; background: ${this.viewMode === 'day' ? 'var(--b3-theme-primary-light)' : 'var(--b3-theme-background)'}; color: ${this.viewMode === 'day' ? 'var(--b3-theme-primary)' : 'var(--b3-theme-on-background)'}; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s;">📅 ${this.plugin.i18n.dayView}</button>
-            <button class="view-mode-btn" data-mode="week" style="flex: 1; padding: 8px; border: 2px solid ${this.viewMode === 'week' ? 'var(--b3-theme-primary)' : 'var(--b3-border-color)'}; background: ${this.viewMode === 'week' ? 'var(--b3-theme-primary-light)' : 'var(--b3-theme-background)'}; color: ${this.viewMode === 'week' ? 'var(--b3-theme-primary)' : 'var(--b3-theme-on-background)'}; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s;">📊 ${this.plugin.i18n.weekView}</button>
-            <button class="view-mode-btn" data-mode="month" style="flex: 1; padding: 8px; border: 2px solid ${this.viewMode === 'month' ? 'var(--b3-theme-primary)' : 'var(--b3-border-color)'}; background: ${this.viewMode === 'month' ? 'var(--b3-theme-primary-light)' : 'var(--b3-theme-background)'}; color: ${this.viewMode === 'month' ? 'var(--b3-theme-primary)' : 'var(--b3-theme-on-background)'}; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s;">📆 ${this.plugin.i18n.monthView}</button>
-            <button class="view-mode-btn" data-mode="year" style="flex: 1; padding: 8px; border: 2px solid ${this.viewMode === 'year' ? 'var(--b3-theme-primary)' : 'var(--b3-border-color)'}; background: ${this.viewMode === 'year' ? 'var(--b3-theme-primary-light)' : 'var(--b3-theme-background)'}; color: ${this.viewMode === 'year' ? 'var(--b3-theme-primary)' : 'var(--b3-theme-on-background)'}; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s;">📈 ${this.plugin.i18n.yearView}</button>
-          </div>
-
-          ${this.viewMode === 'day' ? `
-          <div style="margin-top: 8px;">
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
-              <button class="day-range-btn" data-range="7" style="padding: 6px 8px; border: 2px solid ${this.dayRange === 7 ? 'var(--b3-theme-primary)' : 'var(--b3-border-color)'}; background: ${this.dayRange === 7 ? 'var(--b3-theme-primary-light)' : 'var(--b3-theme-background)'}; color: ${this.dayRange === 7 ? 'var(--b3-theme-primary)' : 'var(--b3-theme-on-background)'}; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">${this.plugin.i18n.recent7Days || '7天'}</button>
-              <button class="day-range-btn" data-range="15" style="padding: 6px 8px; border: 2px solid ${this.dayRange === 15 ? 'var(--b3-theme-primary)' : 'var(--b3-border-color)'}; background: ${this.dayRange === 15 ? 'var(--b3-theme-primary-light)' : 'var(--b3-theme-background)'}; color: ${this.dayRange === 15 ? 'var(--b3-theme-primary)' : 'var(--b3-theme-on-background)'}; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">${this.plugin.i18n.recent15Days || '15天'}</button>
-              <button class="day-range-btn" data-range="30" style="padding: 6px 8px; border: 2px solid ${this.dayRange === 30 ? 'var(--b3-theme-primary)' : 'var(--b3-border-color)'}; background: ${this.dayRange === 30 ? 'var(--b3-theme-primary-light)' : 'var(--b3-theme-background)'}; color: ${this.dayRange === 30 ? 'var(--b3-theme-primary)' : 'var(--b3-theme-on-background)'}; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">${this.plugin.i18n.recent30Days || '30天'}</button>
-              <button class="day-range-btn" data-range="90" style="padding: 6px 8px; border: 2px solid ${this.dayRange === 90 ? 'var(--b3-theme-primary)' : 'var(--b3-border-color)'}; background: ${this.dayRange === 90 ? 'var(--b3-theme-primary-light)' : 'var(--b3-theme-background)'}; color: ${this.dayRange === 90 ? 'var(--b3-theme-primary)' : 'var(--b3-theme-on-background)'}; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">${this.plugin.i18n.recent90Days || '季度'}</button>
-              <button class="day-range-btn" data-range="180" style="padding: 6px 8px; border: 2px solid ${this.dayRange === 180 ? 'var(--b3-theme-primary)' : 'var(--b3-border-color)'}; background: ${this.dayRange === 180 ? 'var(--b3-theme-primary-light)' : 'var(--b3-theme-background)'}; color: ${this.dayRange === 180 ? 'var(--b3-theme-primary)' : 'var(--b3-theme-on-background)'}; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">${this.plugin.i18n.recent180Days || '半年'}</button>
-              <button class="day-range-btn" data-range="365" style="padding: 6px 8px; border: 2px solid ${this.dayRange === 365 ? 'var(--b3-theme-primary)' : 'var(--b3-border-color)'}; background: ${this.dayRange === 365 ? 'var(--b3-theme-primary-light)' : 'var(--b3-theme-background)'}; color: ${this.dayRange === 365 ? 'var(--b3-theme-primary)' : 'var(--b3-theme-on-background)'}; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">${this.plugin.i18n.recent365Days || '整年'}</button>
-            </div>
-          </div>
-          ` : ''}
-
-          ${this.viewMode === 'month' ? `
-          <div style="margin-top: 8px;">
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
-              <button class="month-year-range-btn" data-range="1" style="padding: 6px 8px; border: 2px solid ${this.monthYearRange === 1 ? 'var(--b3-theme-primary)' : 'var(--b3-border-color)'}; background: ${this.monthYearRange === 1 ? 'var(--b3-theme-primary-light)' : 'var(--b3-theme-background)'}; color: ${this.monthYearRange === 1 ? 'var(--b3-theme-primary)' : 'var(--b3-theme-on-background)'}; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">${this.plugin.i18n.recentYear || '最近一年'}</button>
-              <button class="month-year-range-btn" data-range="2" style="padding: 6px 8px; border: 2px solid ${this.monthYearRange === 2 ? 'var(--b3-theme-primary)' : 'var(--b3-border-color)'}; background: ${this.monthYearRange === 2 ? 'var(--b3-theme-primary-light)' : 'var(--b3-theme-background)'}; color: ${this.monthYearRange === 2 ? 'var(--b3-theme-primary)' : 'var(--b3-theme-on-background)'}; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">${this.plugin.i18n.recent2Years || '最近两年'}</button>
-              <button class="month-year-range-btn" data-range="3" style="padding: 6px 8px; border: 2px solid ${this.monthYearRange === 3 ? 'var(--b3-theme-primary)' : 'var(--b3-border-color)'}; background: ${this.monthYearRange === 3 ? 'var(--b3-theme-primary-light)' : 'var(--b3-theme-background)'}; color: ${this.monthYearRange === 3 ? 'var(--b3-theme-primary)' : 'var(--b3-theme-on-background)'}; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">${this.plugin.i18n.recent3Years || '最近三年'}</button>
-            </div>
-          </div>
-          ` : ''}
-
-          ${this.viewMode === 'year' ? `
-          <div style="margin-top: 8px;">
-            <select id="yearSelect" style="width: 100%; padding: 6px 8px; border: 1px solid var(--b3-border-color); border-radius: 4px; background: var(--b3-theme-background); color: var(--b3-theme-on-background); cursor: pointer; font-size: 13px;">
-              ${this.generateYearOptions()}
-            </select>
-          </div>
-          ` : ''}
-        </div>
-
-        <!-- 字数统计详情 -->
-        <div style="margin-bottom: 16px; padding: 16px; background: var(--b3-theme-surface); border-radius: 8px;">
-          <h3 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600; color: var(--b3-theme-on-surface);">
-            ${stats.currentPeriod}
-          </h3>
-
-          <!-- 柱状图 -->
-          ${stats.dailyStats.length > 0 ? `
-          <div style="margin-bottom: 16px;">
-            ${this.renderBarChart(stats.dailyStats)}
-          </div>
-          ` : ''}
-
-          <!-- 每日字数列表 -->
-          <div style="display: flex; flex-direction: column; gap: 8px;">
-            ${stats.dailyStats.length > 0 ? stats.dailyStats.map(day => `
-              <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: var(--b3-theme-background); border-radius: 6px; border-left: 3px solid ${day.words > 0 ? '#667eea' : '#ddd'};">
-                <span style="font-size: 13px; color: var(--b3-theme-on-surface); font-weight: 500;">${day.dateLabel}</span>
-                <span style="font-size: 14px; font-weight: 700; color: ${day.words > 0 ? 'var(--b3-theme-primary)' : 'var(--b3-theme-on-surface-light)'};">${this.formatNumber(day.words)}</span>
-              </div>
-            `).join('') : '<div style="text-align: center; padding: 20px; color: var(--b3-theme-on-surface-light); font-size: 13px;">' + this.plugin.i18n.noData + '</div>'}
-          </div>
-        </div>
-
-        <!-- 最后更新时间 -->
-        <div style="padding-top: 8px; border-top: 1px solid var(--b3-border-color); font-size: 11px; color: var(--b3-theme-on-surface-light); text-align: center;">
-          ${this.plugin.i18n.lastUpdate}: ${new Date().toLocaleString('zh-CN')}
-        </div>
-      </div>
-    `;
-
-    // 绑定事件
-    this.bindPanelEvents();
-  }
-
-  /**
-   * 绑定面板事件监听
-   */
-  private bindPanelEvents() {
-    if (!this.dockElement) return;
-
-    // 绑定查看模式切换按钮
-    const modeButtons = this.dockElement.querySelectorAll('.view-mode-btn');
-    modeButtons.forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const mode = (e.target as HTMLElement).getAttribute('data-mode') as 'day' | 'week' | 'month' | 'year';
-        if (mode) {
-          this.viewMode = mode;
-          this.renderDockPanel();
-        }
-      });
-    });
-
-    // 绑定日视图范围按钮
-    const dayRangeButtons = this.dockElement.querySelectorAll('.day-range-btn');
-    dayRangeButtons.forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const range = parseInt((e.target as HTMLElement).getAttribute('data-range') || '7');
-        this.dayRange = range as 7 | 15 | 30 | 90 | 180 | 365;
-        this.renderDockPanel();
-      });
-    });
-
-    // 绑定月视图年份范围按钮
-    const monthYearRangeButtons = this.dockElement.querySelectorAll('.month-year-range-btn');
-    monthYearRangeButtons.forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const range = parseInt((e.target as HTMLElement).getAttribute('data-range') || '1');
-        this.monthYearRange = range as 1 | 2 | 3;
-        this.renderDockPanel();
-      });
-    });
-
-    // 绑定年份选择
-    const yearSelect = this.dockElement.querySelector('#yearSelect') as HTMLSelectElement;
-    if (yearSelect) {
-      yearSelect.value = String(this.currentYear);
-      yearSelect.addEventListener('change', (e) => {
-        this.currentYear = parseInt((e.target as HTMLSelectElement).value);
-        this.renderDockPanel();
-      });
-    }
-  }
-
-  /**
-   * 生成年份选项
-   */
-  private generateYearOptions(): string {
-    const currentYear = new Date().getFullYear();
-    const startYear = 2020; // 起始年份
-    let options = '';
-    for (let year = currentYear; year >= startYear; year--) {
-      options += `<option value="${year}">${year}</option>`;
-    }
-    return options;
-  }
-
-  /**
-   * 格式化数字,添加千分位分隔符
-   */
-  private formatNumber(num: number): string {
-    return num.toLocaleString('zh-CN');
-  }
-
-  /**
-   * 渲染柱状图
-   */
-  private renderBarChart(data: DailyWordCount[]): string {
-    if (data.length === 0) return '';
-
-    // 计算最大值用于比例计算
-    const maxWords = Math.max(...data.map(d => d.words));
-    const maxHeight = 150; // 柱状图最大高度（像素）
-
-    return `
-      <div style="padding: 12px; background: var(--b3-theme-background); border-radius: 6px; overflow-x: auto;">
-        <div style="display: flex; align-items: flex-end; gap: ${data.length > 20 ? '4px' : '8px'}; min-height: ${maxHeight + 40}px; padding-bottom: 30px; position: relative;">
-          ${data.map(day => {
-            const height = maxWords > 0 ? (day.words / maxWords) * maxHeight : 0;
-            const barWidth = data.length > 20 ? '20px' : data.length > 10 ? '24px' : '32px';
-            const isToday = this.isToday(day.date);
-            return `
-              <div style="flex: ${data.length > 12 ? '0 0 auto' : '1'}; display: flex; flex-direction: column; align-items: center; min-width: ${barWidth}; position: relative;">
-                <!-- 数值提示 -->
-                ${day.words > 0 ? `
-                <div style="position: absolute; bottom: ${height + 5}px; font-size: 10px; color: ${isToday ? '#f5576c' : 'var(--b3-theme-on-surface-light)'}; white-space: nowrap; transform: translateX(-50%); left: 50%; font-weight: ${isToday ? '700' : '400'};">
-                  ${this.formatShortNumber(day.words)}
-                </div>
-                ` : ''}
-                <!-- 柱子 -->
-                <div style="
-                  width: 100%;
-                  height: ${height}px;
-                  background: ${isToday ? 'linear-gradient(180deg, #f093fb 0%, #f5576c 100%)' : 'linear-gradient(180deg, #667eea 0%, #764ba2 100%)'};
-                  border-radius: 4px 4px 0 0;
-                  transition: all 0.3s ease;
-                  box-shadow: ${day.words > 0 ? (isToday ? '0 4px 8px rgba(245, 87, 108, 0.4)' : '0 2px 4px rgba(102, 126, 234, 0.3)') : 'none'};
-                  cursor: pointer;
-                  position: relative;
-                  ${height < 5 && day.words > 0 ? 'min-height: 5px;' : ''}
-                  ${isToday ? 'border: 2px solid #f5576c;' : ''}
-                " title="${day.dateLabel}: ${this.formatNumber(day.words)} ${this.plugin.i18n.words}${isToday ? ' (' + this.plugin.i18n.today + ')' : ''}"></div>
-                <!-- 日期标签 -->
-                <div style="
-                  position: absolute;
-                  bottom: -25px;
-                  font-size: ${data.length > 20 ? '9px' : '10px'};
-                  color: ${isToday ? '#f5576c' : 'var(--b3-theme-on-surface-light)'};
-                  font-weight: ${isToday ? '700' : '400'};
-                  transform: rotate(-45deg);
-                  transform-origin: top left;
-                  white-space: nowrap;
-                  left: 50%;
-                ">${this.formatChartLabel(day.dateLabel, this.viewMode)}</div>
-              </div>
-            `;
-          }).join('')}
-        </div>
-      </div>
-    `;
-  }
-
-  /**
-   * 格式化图表标签
-   */
-  private formatChartLabel(label: string, mode: 'day' | 'week' | 'month' | 'year' | 'trend' | 'snapshot'): string {
-    if (mode === 'day') {
-      // 保留完整格式 "11/26 周二"
-      return label;
-    } else if (mode === 'month') {
-      // 从 "2024年 11月" 提取 "11月"
-      return label.split(' ')[1] || label;
-    }
-    return label;
-  }
-
-  /**
-   * 判断是否为今天
-   */
-  private isToday(dateStr: string): boolean {
-    const today = new Date();
-    const todayStr = `${today.getFullYear()}-${this.padZero(today.getMonth() + 1)}-${this.padZero(today.getDate())}`;
-
-    // 处理不同格式的日期字符串
-    // 可能是 "YYYY-MM-DD" 或 "YYYY-MM" 或 "YYYY"
-    if (dateStr.length === 10) {
-      // YYYY-MM-DD 格式
-      return dateStr === todayStr;
-    } else if (dateStr.length === 7) {
-      // YYYY-MM 格式（月视图）
-      return dateStr === todayStr.substring(0, 7);
-    } else if (dateStr.length === 4) {
-      // YYYY 格式（年视图）
-      return dateStr === String(today.getFullYear());
-    }
-    return false;
-  }
-
-  /**
-   * 格式化简短数字（K、M表示）
-   */
-  private formatShortNumber(num: number): string {
-    if (num >= 1000000) {
-      return (num / 1000000).toFixed(1) + 'M';
-    } else if (num >= 1000) {
-      return (num / 1000).toFixed(1) + 'K';
-    }
-    return String(num);
-  }
 
   /**
    * 获取统计数据
@@ -595,21 +297,6 @@ export class Statistics {
   }
 
   /**
-   * 格式化时间戳为可读日期
-   */
-  private formatTimestamp(timestamp: string): string {
-    if (timestamp.length !== 14) return timestamp;
-
-    const year = timestamp.substring(0, 4);
-    const month = timestamp.substring(4, 6);
-    const day = timestamp.substring(6, 8);
-    const hour = timestamp.substring(8, 10);
-    const minute = timestamp.substring(10, 12);
-
-    return `${year}-${month}-${day} ${hour}:${minute}`;
-  }
-
-  /**
    * 获取总笔记数量
    */
   private async getTotalNotes(): Promise<number> {
@@ -634,18 +321,6 @@ export class Statistics {
     `;
     const result = await this.executeSql(sql);
     return result[0]?.total || 0;
-  }
-
-  /**
-   * 计算字符串的字数
-   * 使用思源笔记的统计方式：直接使用 length
-   */
-  private calculateWordCount(text: string): number {
-    if (!text) return 0;
-
-    // 使用简单的字符长度统计
-    // 这是思源笔记内部使用的统计方式
-    return text.length;
   }
 
   /**
@@ -826,53 +501,6 @@ export class Statistics {
         date: `${weekStart.getFullYear()}-${this.padZero(weekStart.getMonth() + 1)}-${this.padZero(weekStart.getDate())}`,
         words: weekWords,
         dateLabel: `${weekStart.getMonth() + 1}/${weekStart.getDate()} - ${weekEnd.getMonth() + 1}/${weekEnd.getDate()}`,
-      });
-    }
-
-    return result;
-  }
-
-  /**
-   * 获取每月统计（整年）- 使用 length 字段优化
-   */
-  private async getMonthlyStats(year: number): Promise<DailyWordCount[]> {
-    const startDate = `${year}0101000000`;
-    const endDate = `${year}1231235959`;
-
-    // 直接使用 length 字段按月份聚合
-    const sql = `
-      SELECT
-        substr(created, 1, 6) as month,
-        SUM(LENGTH(content)) as total
-      FROM blocks
-      WHERE type = 'p'
-        AND content IS NOT NULL
-        AND content != ''
-        AND created >= '${startDate}'
-        AND created <= '${endDate}'
-      GROUP BY substr(created, 1, 6)
-      ORDER BY month
-    `;
-
-    const queryResult = await this.executeSql(sql);
-
-    // 创建月份到字数的映射
-    const monthMap = new Map<string, number>();
-    queryResult.forEach(row => {
-      monthMap.set(String(row.month), row.total || 0);
-    });
-
-    // 生成12个月的完整列表
-    const result: DailyWordCount[] = [];
-    for (let month = 1; month <= 12; month++) {
-      const monthStr = this.padZero(month);
-      const monthKey = `${year}${monthStr}`;
-      const words = monthMap.get(monthKey) || 0;
-
-      result.push({
-        date: `${year}-${monthStr}`,
-        words,
-        dateLabel: `${year}年 ${month}月`,
       });
     }
 

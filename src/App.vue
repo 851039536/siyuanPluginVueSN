@@ -66,8 +66,6 @@ const qrcodeContent = ref('')
 const showPronunciationDialog = ref(false)
 const pronunciationWord = ref('')
 
-console.log('plugin is ', plugin)
-
 // 打开图片压缩器
 const openImageCompressor = () => {
   showImageViewer.value = true
@@ -149,20 +147,16 @@ onMounted(() => {
 
   // 监听打开Everything搜索事件
   window.addEventListener('openEverythingSearch', () => {
-    console.log('收到 openEverythingSearch 事件')
     everythingSearchVisible.value = true
-    console.log('弹窗状态设置为:', everythingSearchVisible.value)
   })
 
   // 监听打开API参考事件
   window.addEventListener('openApiReference', () => {
-    console.log('收到 openApiReference 事件')
     showApiReferencePanel(plugin)
   })
 
   // 监听打开密码箱事件
   window.addEventListener('openPasswordVault', () => {
-    console.log('收到 openPasswordVault 事件')
     passwordVaultVisible.value = true
   })
 })

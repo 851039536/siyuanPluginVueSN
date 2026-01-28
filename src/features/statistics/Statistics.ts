@@ -84,7 +84,6 @@ export class Statistics {
    */
   private bindEvents(): void {
     window.addEventListener('openStatistics', () => {
-      console.log('收到打开统计面板事件');
       // 触发Dock显示
       const dockEvent = new CustomEvent('dock-click', {
         detail: { dockId: 'statistics-dock' }
@@ -97,7 +96,6 @@ export class Statistics {
    * 注册右下角侧边栏
    */
   private registerDock() {
-    console.log('注册统计面板 Dock');
 
     this.plugin.addDock({
       config: {
@@ -110,7 +108,6 @@ export class Statistics {
       data: {},
       type: 'statistics-dock',
       init: (dock) => {
-        console.log('统计面板 Dock 初始化完成');
         this.dockElement = dock.element as HTMLElement;
         this.renderDockPanel();
       },
@@ -669,8 +666,6 @@ export class Statistics {
       this.updateTimer = null;
     }
 
-    console.log(`启动统计定时任务，更新间隔: ${this.updateInterval / 1000}秒`);
-
     // 立即执行一次
     this.collectAndStoreStatistics();
 
@@ -687,7 +682,6 @@ export class Statistics {
     if (this.updateTimer) {
       clearInterval(this.updateTimer);
       this.updateTimer = null;
-      console.log('已停止统计定时任务');
     }
   }
 
@@ -702,7 +696,6 @@ export class Statistics {
         return;
       }
 
-      console.log('开始收集统计数据...');
       const stats = await this.getStatistics();
 
       // 保存快照到缓存
@@ -746,7 +739,6 @@ export class Statistics {
       await this.plugin.saveData('statistics-history', existingData);
       this.lastUpdateTime = now;
 
-      console.log(`统计数据已保存: ${dateKey}`, existingData[dateKey]);
     } catch (error) {
       console.error('收集统计数据失败:', error);
     }
@@ -776,8 +768,6 @@ export class Statistics {
         }
       }
 
-      console.log('getHistoricalStatistics 开始处理，历史数据keys:', Object.keys(historyData).sort(), 'daysToProcess:', daysToProcess);
-
       // 生成日期范围（从最早到最晚，正序）
       for (let i = (daysToProcess || 30) - 1; i >= 0; i--) {
         const date = new Date(today);
@@ -786,8 +776,6 @@ export class Statistics {
         const isToday = i === 0;
 
         const dayData = historyData[dateKey];
-
-        console.log(`处理日期 ${dateKey}, isToday=${isToday}, hasData=${!!dayData}, lastKnownStats=${!!lastKnownStats}`);
 
         if (dayData) {
           // 有历史数据，但需要检查是否是有效数据
@@ -808,7 +796,6 @@ export class Statistics {
             result.push(record);
             lastKnownStats = record; // 更新最后一次已知状态
           } else {
-            console.log(`  跳过无效数据 ${dateKey}: totalWords=${dayData.totalWords}, totalNotes=${dayData.totalNotes}`);
             // 无效数据，当作没有数据处理
             if (lastKnownStats) {
               result.push({
@@ -940,8 +927,6 @@ export class Statistics {
    */
   async updateUpdateInterval(interval: number): Promise<void> {
     this.updateInterval = interval;
-    console.log(`更新定时任务间隔: ${interval / 1000}秒`);
-
     // 保存到设置
     try {
       const settings = await this.plugin.loadData('plugin-settings') || {};
@@ -959,14 +944,12 @@ export class Statistics {
    * 手动触发数据收集
    */
   async manualRefresh(): Promise<void> {
-    console.log('手动刷新统计数据');
     await this.collectAndStoreStatistics();
 
     // 如果面板已打开，刷新显示
     if (this.vueApp) {
       const stats = await this.getStatistics();
       // 这里可以添加刷新Vue组件的逻辑
-      console.log('统计数据已更新:', stats);
     }
   }
 

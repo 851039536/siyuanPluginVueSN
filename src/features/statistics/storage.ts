@@ -55,7 +55,6 @@ export class StatisticsCache {
       }
 
       await this.plugin.saveData(this.CACHE_KEY, snapshots);
-      console.log('统计快照已保存:', fullSnapshot.datetime);
     } catch (error) {
       console.error('保存统计快照失败:', error);
     }
@@ -88,7 +87,6 @@ export class StatisticsCache {
   async clearSnapshots(): Promise<void> {
     try {
       await this.plugin.saveData(this.CACHE_KEY, []);
-      console.log('已清除所有统计快照');
     } catch (error) {
       console.error('清除统计快照失败:', error);
     }

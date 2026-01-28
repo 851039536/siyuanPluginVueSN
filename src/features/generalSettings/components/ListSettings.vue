@@ -320,10 +320,8 @@ onMounted(async () => {
   }
 
   try {
-    console.log('尝试从数据库加载列表设置...')
     const loadedSettings = await loadListSettingsFromDB(props.plugin)
     Object.assign(settings, { ...defaultSettings, ...loadedSettings })
-    console.log('从数据库加载的列表设置:', settings)
     handleSettingsChange()
   } catch (error) {
     console.error('加载列表设置失败:', error)

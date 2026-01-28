@@ -22,7 +22,6 @@ export function registerCodeImageGenerator(plugin: SiYuanPluginViteVueSN) {
     data: {},
     type: 'code-image-generator',
     init(dock) {
-      console.log('初始化代码图片生成器面板')
 
       // 创建容器
       container = document.createElement('div')
@@ -36,15 +35,12 @@ export function registerCodeImageGenerator(plugin: SiYuanPluginViteVueSN) {
         visible: true,
         i18n: plugin.i18n,
         onClose: () => {
-          console.log('关闭代码图片生成器')
         }
       })
 
       app.mount(container)
-      console.log('代码图片生成器面板已挂载')
     },
     destroy() {
-      console.log('销毁代码图片生成器面板')
       // 销毁 Vue 应用
       if (app) {
         app.unmount()

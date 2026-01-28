@@ -353,8 +353,6 @@ async function handleAutoMerge(fileName: string) {
       }
     }
 
-    console.log('[AutoMerge] 目录中的文件:', Array.from(fileStats.keys()))
-
     // 查找可能的相关文件
     const videoExtensions = ['.mp4', '.mkv', '.webm', '.m4v']
     const audioExtensions = ['.m4a', '.aac', '.mp3', '.opus', '.ogg', '.wav']
@@ -381,15 +379,12 @@ async function handleAutoMerge(fileName: string) {
 
       // 跳过太旧的文件（超过1小时）
       if (now - stats.mtime > 60 * 60 * 1000) {
-        console.log(`[AutoMerge] 跳过旧文件: ${fname} (${Math.round((now - stats.mtime) / 1000 / 60)}分钟前)`)
         continue
       }
 
       if (videoExtensions.includes(ext)) {
-        console.log(`[AutoMerge] 发现视频文件: ${fname} -> ${normalized} (${Math.round((now - stats.mtime) / 1000)}秒前)`)
         videoFiles.push({ name: fname, path: path.join(videoDir, fname), mtime: stats.mtime, normalized })
       } else if (audioExtensions.includes(ext)) {
-        console.log(`[AutoMerge] 发现音频文件: ${fname} -> ${normalized} (${Math.round((now - stats.mtime) / 1000)}秒前)`)
         audioFiles.push({ name: fname, path: path.join(videoDir, fname), mtime: stats.mtime, normalized })
       }
     }
@@ -401,9 +396,6 @@ async function handleAutoMerge(fileName: string) {
     // 只保留最近的文件（最多3个视频和3个音频）
     const recentVideoFiles = videoFiles.slice(0, 3)
     const recentAudioFiles = audioFiles.slice(0, 3)
-
-    console.log('[AutoMerge] 最近的视频文件:', recentVideoFiles)
-    console.log('[AutoMerge] 最近的音频文件:', recentAudioFiles)
 
     let videoFile: string | null = null
     let audioFile: string | null = null
@@ -438,8 +430,6 @@ async function handleAutoMerge(fileName: string) {
             }
           }
 
-          console.log(`[AutoMerge] 匹配分数: 视频=${recentVideoFiles[i].name}, 音频=${recentAudioFiles[j].name}, 分数=${score}`)
-
           if (score > bestMatch.score) {
             bestMatch = { video: i, audio: j, score }
           }
@@ -450,13 +440,11 @@ async function handleAutoMerge(fileName: string) {
       if (bestMatch.score > 10 && bestMatch.video >= 0 && bestMatch.audio >= 0) {
         videoFile = recentVideoFiles[bestMatch.video].path
         audioFile = recentAudioFiles[bestMatch.audio].path
-        console.log('[AutoMerge] 最佳匹配:', recentVideoFiles[bestMatch.video].name, '+', recentAudioFiles[bestMatch.audio].name)
       }
     }
 
     if (!videoFile || !audioFile) {
       showMessage('未发现分离的音视频文件，无需合并', 2000, 'info')
-      console.log('[AutoMerge] 未找到匹配的音视频文件对')
       return
     }
 
@@ -494,30 +482,22 @@ async function handleAutoMerge(fileName: string) {
           fs.unlinkSync(videoFile)
           fs.unlinkSync(audioFile)
         } catch (e) {
-          console.log('[AutoMerge] 删除原始文件失败:', e)
+          showMessage(`音视频合并成功！已保存为 ${tempOutputFileName}（原始文件未删除）`, 3000, 'info')
         }
 
         // 重命名临时文件为目标文件名
         try {
           fs.renameSync(tempOutputPath, outputPath)
           showMessage(`音视频合并成功！已保存为 ${outputFileName}`, 3000, 'info')
-          console.log('[AutoMerge] 合并成功，已删除原始文件并重命名')
         } catch (e) {
           showMessage(`音视频合并成功！已保存为 ${tempOutputFileName}`, 3000, 'info')
-          console.log('[AutoMerge] 合并成功，但重命名失败:', e)
         }
         return
       } else {
         showMessage(`音视频合并失败: ${mergeResult.error}`, 5000, 'error')
-        console.log('[AutoMerge] 合并失败:', mergeResult.error)
         return
       }
     }
-
-    console.log('[AutoMerge] 开始合并...')
-    console.log('[AutoMerge] 视频路径:', videoFile)
-    console.log('[AutoMerge] 音频路径:', audioFile)
-    console.log('[AutoMerge] 输出路径:', outputPath)
 
     const mergeResult = await mergeVideoAudio({
       videoPath: videoFile.replace(`${workspacePath}/`, ''),
@@ -537,17 +517,13 @@ async function handleAutoMerge(fileName: string) {
         fs.unlinkSync(videoFile)
         fs.unlinkSync(audioFile)
         showMessage(`音视频合并成功！已保存为 ${outputFileName}`, 3000, 'info')
-        console.log('[AutoMerge] 合并成功，已删除原始文件')
       } catch (e) {
         showMessage(`音视频合并成功！已保存为 ${outputFileName}（原始文件未删除）`, 3000, 'info')
-        console.log('[AutoMerge] 合并成功，但删除原始文件失败:', e)
       }
     } else {
       showMessage(`音视频合并失败: ${mergeResult.error}`, 5000, 'error')
-      console.log('[AutoMerge] 合并失败:', mergeResult.error)
     }
   } catch (error: any) {
-    console.error('自动合并失败:', error)
     showMessage('自动合并失败: ' + error.message, 5000, 'error')
   } finally {
     mergeProgress.value = false

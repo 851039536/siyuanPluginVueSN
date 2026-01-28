@@ -17,7 +17,6 @@ export class DateTime {
    */
   init() {
     this.registerSlashCommands();
-    console.log('日期时间插入功能已加载');
   }
 
   /**
@@ -184,6 +183,5 @@ export class DateTime {
    * 销毁功能模块
    */
   destroy() {
-    console.log('日期时间插入功能已卸载');
   }
 }

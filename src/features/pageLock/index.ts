@@ -26,7 +26,6 @@ const MAX_CACHE_SIZE = 20 // 最大缓存条目数
 async function loadGlobalPassword(plugin: Plugin) {
   try {
     globalPassword = await plugin.loadData(GLOBAL_PASSWORD_KEY)
-    console.log('全局密码已加载:', globalPassword ? '已设置' : '未设置')
   } catch (error) {
     console.error('加载全局密码失败:', error)
   }
@@ -39,7 +38,6 @@ async function saveGlobalPassword(plugin: Plugin, password: string) {
   try {
     await plugin.saveData(GLOBAL_PASSWORD_KEY, password)
     globalPassword = password
-    console.log('全局密码已保存')
   } catch (error) {
     console.error('保存全局密码失败:', error)
   }
@@ -215,7 +213,6 @@ export function registerPageLock(plugin: Plugin) {
     }
   })
 
-  console.log('页面锁定功能已注册')
 
   // 监听来自通用设置的密码对话框打开事件
   window.addEventListener('open-password-dialog', () => {
@@ -340,7 +337,6 @@ async function lockPageWithGlobalPassword(plugin: Plugin, docId: string) {
     // 刷新思源API界面
     try {
       await reloadUI()
-      console.log('锁定成功后已刷新思源界面')
     } catch (error) {
       console.warn('刷新思源界面失败:', error)
     }
@@ -478,7 +474,6 @@ async function unlockPageDirectly(plugin: Plugin, docId: string, password: strin
     // 刷新思源API界面
     try {
       await reloadUI()
-      console.log('解锁成功后已刷新思源界面')
     } catch (error) {
       console.warn('刷新思源界面失败:', error)
     }
@@ -1215,5 +1210,4 @@ export function clearUnlockedDocs() {
 export function clearAllCaches() {
   maskCache.clear()
   lockStateCache.clear()
-  console.log('已清理 pageLock 缓存')
 }

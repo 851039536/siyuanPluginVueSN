@@ -45,7 +45,6 @@ export class AIContentGenerator {
     this.currentProvider = provider;
     this.currentModel = model;
     this.apiKey = apiKey;
-    console.log('AI Content Generator API配置已更新:', { provider, model });
   }
 
   /**
@@ -53,7 +52,6 @@ export class AIContentGenerator {
    */
   public init() {
     this.addDock();
-    console.log('AI内容生成模块已初始化');
   }
 
   /**
@@ -108,16 +106,8 @@ export class AIContentGenerator {
       return '';
     }
 
-    // console.log('开始生成内容，配置:', {
-    //   provider: this.currentProvider,
-    //   model: this.currentModel,
-    //   hasOnChunk: !!options.onChunk
-    // });
-
     try {
       const response = await this.callAPI(options);
-
-      console.log('生成完成，响应长度:', response?.length || 0);
 
       if (response) {
         return response;
@@ -126,7 +116,6 @@ export class AIContentGenerator {
         return '';
       }
     } catch (error) {
-      console.error('AI content generation error:', error);
       const errorMsg = (error as Error).message || '未知错误';
       showMessage('🚫 生成失败: ' + errorMsg, 5000, 'error');
       throw error;
@@ -147,9 +136,7 @@ export class AIContentGenerator {
 
 用户要求:
 ${options.userInput}`;
-      console.log('构建完整提示词，包含上下文，长度:', fullPrompt.length);
     } else {
-      console.log('构建提示词，无上下文，长度:', fullPrompt.length);
     }
 
     return fullPrompt;
@@ -309,7 +296,6 @@ ${options.userInput}`;
 
             if (content) {
               // 因为启用了incremental_output=true，每次返回的就是增量内容
-              console.log('通义千问流式输出:', content);
               onChunk(content);
               fullContent += content;
             }
@@ -392,7 +378,6 @@ ${options.userInput}`;
     onChunk: (chunk: string) => void,
     signal?: AbortSignal
   ): Promise<string> {
-    console.log('DeepSeek流式API请求开始');
 
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -410,7 +395,6 @@ ${options.userInput}`;
       throw new Error(`DeepSeek流式API请求失败: ${response.status} ${errorText}`);
     }
 
-    console.log('DeepSeek响应状态:', response.status);
 
     const reader = response.body?.getReader();
     if (!reader) {
@@ -426,7 +410,6 @@ ${options.userInput}`;
       while (true) {
         const { done, value } = await reader.read();
         if (done) {
-          console.log('DeepSeek流式读取完成，总块数:', chunkCount);
           break;
         }
 
@@ -444,7 +427,6 @@ ${options.userInput}`;
           }
 
           if (dataStr === '[DONE]') {
-            console.log('DeepSeek发送完成信号');
             continue;
           }
 
@@ -474,7 +456,6 @@ ${options.userInput}`;
    * 销毁功能
    */
   public destroy() {
-    console.log('AI内容生成模块已销毁');
   }
 }
 

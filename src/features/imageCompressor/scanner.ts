@@ -101,10 +101,7 @@ export async function scanAllAssets(
   // 思源笔记的 assets 目录通常在 data/assets
   const assetsPath = '/data/assets'
 
-  console.log('开始扫描图片文件...')
   const images = await scanDirectory(assetsPath, onProgress)
-  console.log(`扫描完成，找到 ${images.length} 张图片`)
-
   return images
 }
 
@@ -134,7 +131,6 @@ export async function getImageDetails(imageInfo: ImageInfo): Promise<ImageInfo> 
     imageInfo.width = dimensions.width
     imageInfo.height = dimensions.height
 
-    console.log(`✓ ${imageInfo.name}: ${blob.size} bytes, ${dimensions.width}×${dimensions.height}`)
   } catch (error) {
     console.error(`获取图片详情失败 ${imageInfo.path}:`, error)
     // 尝试备用方案
@@ -151,8 +147,6 @@ async function getImageDetailsByUrl(imageInfo: ImageInfo): Promise<ImageInfo> {
   try {
     // 将 /data/assets/xxx.jpg 转换为 /assets/xxx.jpg
     const assetUrl = imageInfo.path.replace('/data/assets/', '/assets/')
-    console.log(`尝试直接URL: ${assetUrl}`)
-
     // 使用 fetch 直接获取图片
     const response = await fetch(assetUrl)
     if (!response.ok) {
@@ -163,8 +157,6 @@ async function getImageDetailsByUrl(imageInfo: ImageInfo): Promise<ImageInfo> {
     const blob = await response.blob()
     imageInfo.size = blob.size
     imageInfo.url = assetUrl // 直接使用 assets URL
-
-    console.log(`通过URL获取成功: ${imageInfo.name}, 大小: ${blob.size} bytes`)
 
     // 获取图片尺寸
     const dimensions = await getImageDimensions(assetUrl, false)

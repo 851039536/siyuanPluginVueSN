@@ -232,7 +232,6 @@ onMounted(async () => {
   if (isMobile.value && autoBackupEnabled.value) {
     autoBackupEnabled.value = false
     await saveSettings()
-    console.log('检测到移动端环境，已自动关闭备份功能')
   }
 
   await detectWorkspacePath()
@@ -255,7 +254,6 @@ onUnmounted(() => {
 
 // 处理全局自动备份触发事件
 async function handleAutoBackupTrigger(event: CustomEvent) {
-  console.log('收到自动备份触发事件:', event.detail)
   await performBackup()
 }
 
@@ -328,7 +326,6 @@ async function saveSettings() {
         workspacePath: workspacePath.value,
         workspaceRoot: workspaceRoot.value
       })
-      console.log('备份设置已保存')
     }
   } catch (error) {
     console.error('保存备份设置失败:', error)
@@ -600,7 +597,6 @@ async function performBackup() {
     }, (metadata) => {
       // 可以在这里显示进度
       if (metadata.percent) {
-        console.log(`压缩进度: ${metadata.percent.toFixed(1)}%`)
       }
     })
 
@@ -610,8 +606,6 @@ async function performBackup() {
     // 写入 ZIP 文件
     const zipFilePath = path.join(backupDir, fileName)
     await fs.writeFile(zipFilePath, zipBuffer)
-
-    console.log('备份文件已保存到:', zipFilePath)
 
     // 更新时间
     lastBackupTime.value = new Date().toLocaleString()

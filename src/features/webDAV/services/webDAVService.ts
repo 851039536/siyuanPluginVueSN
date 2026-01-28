@@ -52,12 +52,6 @@ export class WebDAVService {
         fullUrl = new URL(basePath, serverUrl.origin + serverUrl.pathname)
       }
 
-      console.log('[WebDAV] 获取文件列表:', {
-        originalUrl: config.serverUrl,
-        basePath: basePath,
-        fullUrl: fullUrl.toString()
-      })
-
       const response = await fetch(fullUrl.toString(), {
         method: 'PROPFIND',
         headers: {
@@ -67,19 +61,14 @@ export class WebDAVService {
         }
       })
 
-      console.log('[WebDAV] 文件列表响应状态:', response.status, response.statusText)
-
       if (response.ok || response.status === 207) {
         const text = await response.text()
-        console.log('[WebDAV] 原始响应长度:', text.length)
 
         // 打印部分响应内容用于调试
         if (text.length > 0) {
-          console.log('[WebDAV] 响应预览:', text.substring(0, 500))
         }
 
         const files = this.parseWebDAVResponse(text)
-        console.log('[WebDAV] 解析到的文件数量:', files.length)
 
         if (files.length === 0 && text.length > 0) {
           console.warn('[WebDAV] 警告：响应不为空但未解析到文件，可能XML格式有问题')
@@ -161,8 +150,6 @@ export class WebDAVService {
       console.error('[WebDAV] 解析XML失败:', error)
     }
 
-    console.log('[WebDAV] 原始解析结果:', files.length, '个文件')
-
     return files
       .filter(f => f.name)
       .sort((a, b) => {
@@ -179,11 +166,9 @@ export class WebDAVService {
 
     try {
       const serverUrl = new URL(config.serverUrl)
-      
+
       // 构建文件的完整 URL
       const fileUrl = new URL(file.path, serverUrl.origin + serverUrl.pathname)
-      
-      console.log('[WebDAV] 下载文件:', fileUrl.toString())
 
       const response = await fetch(fileUrl.toString(), {
         method: 'GET',
@@ -194,10 +179,8 @@ export class WebDAVService {
 
       if (response.ok) {
         const blob = await response.blob()
-        console.log('[WebDAV] 文件下载成功，大小:', blob.size)
         return blob
       } else {
-        console.warn('[WebDAV] 文件下载失败:', response.status)
         return null
       }
     } catch (error) {

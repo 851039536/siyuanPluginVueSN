@@ -549,7 +549,6 @@ async function deleteShortcut(id: string) {
 // 刷新快捷键列表
 function refreshShortcuts() {
   // 重新加载快捷键数据
-  console.log('刷新快捷键列表')
 }
 
 // 收藏相关
@@ -692,7 +691,6 @@ const showCopyTip = () => {
   clearTimeout(copyTipTimer)
   // 这里可以集成思源笔记的 showMessage 或其他提示方案
   // 为了保持组件独立，这里仅通过 console 记录
-  console.log('快捷键信息已复制')
 }
 </script>
 

@@ -261,7 +261,6 @@ export async function downloadVideo(params: YtdlpDownloadParams): Promise<YtdlpR
     args.push('--newline')
     args.push('--progress')
 
-    console.log('yt-dlp 命令:', ytdlpPath, args.join(' '))
 
     return new Promise((resolve) => {
       const process = spawn(ytdlpPath, args)

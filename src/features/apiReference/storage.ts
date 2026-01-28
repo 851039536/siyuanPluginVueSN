@@ -63,10 +63,9 @@ export class ApiReferenceStorageManager {
         ...data,
         lastUpdated: Date.now()
       }
-      
+
       await this.plugin.saveData(STORAGE_KEY, newData)
       this.cache = newData
-      console.log('[API Reference Storage] Data saved successfully')
     } catch (error) {
       console.error('[API Reference Storage] Failed to save data:', error)
       throw error
@@ -116,7 +115,7 @@ export class ApiReferenceStorageManager {
     const newProviders = data.providers.filter(p => p.id !== providerId)
     const newMarkdownContent = { ...data.markdownContent }
     delete newMarkdownContent[providerId]
-    
+
     await this.saveData({
       providers: newProviders,
       markdownContent: newMarkdownContent

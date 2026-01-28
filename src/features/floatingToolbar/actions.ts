@@ -40,7 +40,6 @@ export class ToolbarActionManager {
         }
 
         this.actions.set(action.id, action)
-        console.log(`[FloatingToolbar] Registered action: ${action.id}`)
     }
 
     /**
@@ -49,7 +48,6 @@ export class ToolbarActionManager {
      */
     unregisterAction(actionId: string) {
         if (this.actions.delete(actionId)) {
-            console.log(`[FloatingToolbar] Unregistered action: ${actionId}`)
         }
     }
 
@@ -85,7 +83,6 @@ export class ToolbarActionManager {
     clear() {
         const count = this.actions.size
         this.actions.clear()
-        console.log(`[FloatingToolbar] Cleared ${count} actions`)
     }
 
     /**

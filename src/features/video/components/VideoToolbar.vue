@@ -160,12 +160,6 @@ const props = withDefaults(defineProps<VideoToolbarProps>(), {
 
 const emit = defineEmits<VideoToolbarEmits>()
 
-// 调试输出
-console.log('[VideoToolbar] props:', {
-  showFFmpegTools: props.showFFmpegTools,
-  hasFFmpeg: props.hasFFmpeg,
-  categories: props.categories
-})
 
 // 事件处理方法
 function handleRefresh() {

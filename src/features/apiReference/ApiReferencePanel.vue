@@ -272,7 +272,6 @@ const filteredProviders = computed(() => {
 
 // 生命周期
 onMounted(async () => {
-  console.log('API参考面板已挂载')
 
   // 强制注入关键样式
   injectCriticalStyles()
@@ -280,7 +279,6 @@ onMounted(async () => {
   await initializeDefaultProviders(props.plugin)
   const storedProviders = await storage.getProviders()
   providers.value = storedProviders
-  console.log('加载的API提供者:', providers.value.length)
   if (providers.value.length > 0) {
     await selectProvider(providers.value[0].id)
   }
@@ -323,7 +321,6 @@ function injectCriticalStyles() {
     }
   `
   document.head.appendChild(style)
-  console.log('API参考关键样式已注入')
 }
 
 // 监听选中的提供者变化

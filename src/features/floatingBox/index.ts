@@ -13,7 +13,6 @@ let container: HTMLElement | null = null
  * 注册悬浮框功能
  */
 export function registerFloatingBox(plugin: Plugin): void {
-  console.log('开始注册悬浮框功能')
 
   // 创建容器
   container = document.createElement('div')
@@ -32,7 +31,6 @@ export function registerFloatingBox(plugin: Plugin): void {
   for (const selector of selectors) {
     const target = document.querySelector(selector)
     if (target) {
-      console.log(`找到目标容器: ${selector}`)
       target.appendChild(container)
       inserted = true
       break
@@ -51,7 +49,6 @@ export function registerFloatingBox(plugin: Plugin): void {
 
   try {
     vueApp.mount(container)
-    console.log('悬浮框 Vue 应用已挂载')
   } catch (error) {
     console.error('悬浮框挂载失败:', error)
   }
@@ -64,7 +61,6 @@ export function registerFloatingBox(plugin: Plugin): void {
         container.remove()
         vueApp = null
         container = null
-        console.log('悬浮框已销毁')
       }
     }
   }

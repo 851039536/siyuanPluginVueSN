@@ -516,7 +516,6 @@ function onColorChange() {
 
 // 字体大小变化处理
 function onFontSizeChange() {
-  console.log('字体大小变化:', headingSizes.value)
   applyToDocument()
   autoSave()
 }
@@ -554,7 +553,6 @@ function applyToDocument() {
   let levelCss = ''
   if (levelDisplayStyle.value !== 'none') {
     levelCss = generateLevelDisplayCss(levelDisplayStyle.value)
-    // console.log('生成的层级CSS:', levelCss)
   }
 
   // 标题居中样式（仅文档标题，不影响H1-H6）
@@ -584,7 +582,6 @@ function applyToDocument() {
     document.head.appendChild(style)
   }
 
-  console.log('CSS已应用到文档,字体大小:', headingSizes.value, '层级显示样式:', levelDisplayStyle.value, '标题居中:', titleCenterAlign.value, '标题颜色:', titleColor.value, '标题字体大小:', titleFontSize.value)
 }
 
 // 生成层级显示 CSS
@@ -627,28 +624,24 @@ function generateLevelDisplayCss(style: string): string {
 
 // 应用层级显示
 function applyLevelDisplay() {
-  console.log('应用层级显示样式:', levelDisplayStyle.value)
   applyToDocument()
   autoSave()
 }
 
 // 应用标题居中
 function applyTitleCenterAlign() {
-  console.log('应用标题居中样式:', titleCenterAlign.value)
   applyToDocument()
   autoSave()
 }
 
 // 标题颜色变化处理
 function onTitleColorChange() {
-  console.log('标题颜色变化:', titleColor.value)
   applyToDocument()
   autoSave()
 }
 
 // 标题字体大小变化处理
 function onTitleFontSizeChange() {
-  console.log('标题字体大小变化:', titleFontSize.value)
   applyToDocument()
   autoSave()
 }
@@ -656,7 +649,6 @@ function onTitleFontSizeChange() {
 // 重置标题颜色
 function resetTitleColor() {
   titleColor.value = defaultTitleColor
-  console.log('标题颜色重置为默认值:', defaultTitleColor)
   applyToDocument()
   autoSave()
 }
@@ -688,7 +680,6 @@ async function autoSave() {
     const success = await saveHeadingSettings(props.plugin, settingsToSave)
 
     if (success) {
-      console.log('设置已保存到数据库:', settingsToSave)
     } else {
       console.error('保存设置失败')
     }
@@ -705,12 +696,8 @@ async function loadSettings() {
   }
 
   try {
-    console.log('尝试从数据库加载设置...')
-
     // 使用插件的数据存储 API
     const settings = await loadHeadingSettings(props.plugin)
-
-    console.log('从数据库加载的设置:', settings)
 
     selectedStyle.value = settings.style || 'default'
     headingColors.value = { ...styles.default, ...settings.colors }
@@ -721,14 +708,6 @@ async function loadSettings() {
     titleColor.value = settings.titleColor || defaultTitleColor
     titleFontSize.value = settings.titleFontSize || 24
 
-    console.log('已加载设置:', {
-      style: selectedStyle.value,
-      fontSizes: headingSizes.value,
-      levelDisplay: levelDisplayStyle.value,
-      titleCenterAlign: titleCenterAlign.value,
-      titleColor: titleColor.value,
-      titleFontSize: titleFontSize.value
-    })
   } catch (error) {
     console.error('加载设置失败:', error)
   }
@@ -736,12 +715,10 @@ async function loadSettings() {
 
 // 初始化 - 在组件挂载后执行
 onMounted(() => {
-  console.log('HeadingSettings 组件已挂载，开始加载设置')
   loadSettings()
   // 确保样式立即应用
   setTimeout(() => {
     applyToDocument()
-    console.log('HeadingSettings 样式已应用')
   }, 100)
 })
 
@@ -758,21 +735,18 @@ watch(selectedStyle, () => {
 
 // 监听层级显示变化,自动保存并应用
 watch(levelDisplayStyle, (newValue, oldValue) => {
-  console.log('levelDisplayStyle 变化:', oldValue, '->', newValue)
   applyToDocument()
   autoSave()
 })
 
 // 监听标题居中变化,自动保存并应用
 watch(titleCenterAlign, (newValue, oldValue) => {
-  console.log('titleCenterAlign 变化:', oldValue, '->', newValue)
   applyToDocument()
   autoSave()
 })
 
 // 监听标题颜色变化,自动保存并应用
 watch(titleColor, (newValue, oldValue) => {
-  console.log('titleColor 变化:', oldValue, '->', newValue)
   if (titleCenterAlign.value) {
     applyToDocument()
   }
@@ -781,14 +755,12 @@ watch(titleColor, (newValue, oldValue) => {
 
 // 监听字体大小变化,自动保存并应用
 watch(headingSizes, (newValue, oldValue) => {
-  console.log('headingSizes 变化:', oldValue, '->', newValue)
   applyToDocument()
   autoSave()
 }, { deep: true })
 
 // 监听标题字体大小变化,自动保存并应用
 watch(titleFontSize, (newValue, oldValue) => {
-  console.log('titleFontSize 变化:', oldValue, '->', newValue)
   applyToDocument()
   autoSave()
 })

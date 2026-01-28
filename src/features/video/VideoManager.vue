@@ -791,7 +791,6 @@ async function loadCategories() {
 
 async function loadVideos() {
   videos.value = await getVideoList(plugin)
-  console.log('已加载视频列表:', videos.value.length, '个')
 }
 
 async function refreshList() {
@@ -843,13 +842,11 @@ async function playVideo(video: any) {
     currentVideoUrl.value = await getVideoUrl(video.path)
 
     if (currentVideoUrl.value) {
-      console.log('播放视频:', video.name)
       playerVisible.value = true
     } else {
       showMessage('视频加载失败', 3000, 'error')
     }
   } catch (error) {
-    console.error('播放视频失败:', error)
     showMessage('视频播放失败: ' + (error as Error).message, 3000, 'error')
   }
 }

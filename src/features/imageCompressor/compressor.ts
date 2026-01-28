@@ -114,7 +114,6 @@ export async function replaceImage(
   try {
     // 使用 putFile API 替换文件,保持文件名不变
     await putFile(imagePath, false, compressedBlob)
-    console.log(`成功替换图片: ${imagePath}`)
     return true
   } catch (error) {
     console.error(`替换图片失败 ${imagePath}:`, error)
@@ -179,7 +178,6 @@ export async function backupImage(
 
     // 保存备份
     await putFile(backupPath, false, fileData)
-    console.log(`备份图片: ${imagePath} -> ${backupPath}`)
     return true
   } catch (error) {
     console.error(`备份图片失败 ${imagePath}:`, error)

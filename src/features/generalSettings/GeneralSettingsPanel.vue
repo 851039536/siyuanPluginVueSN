@@ -118,7 +118,6 @@ const categories = computed(() => [
 ])
 
 function handleCodeBlockChange(settings: any) {
-  console.log('代码块设置已更改:', settings)
   props.onSettingsChange?.({
     moduleId: 'codeblock',
     settings
@@ -126,7 +125,6 @@ function handleCodeBlockChange(settings: any) {
 }
 
 function handleActionsChange(settings: any) {
-  console.log('通用操作已更改:', settings)
   props.onSettingsChange?.({
     moduleId: 'actions',
     settings
@@ -134,7 +132,6 @@ function handleActionsChange(settings: any) {
 }
 
 function handleHeadingChange(settings: any) {
-  console.log('标题设置已更改:', settings)
   props.onSettingsChange?.({
     moduleId: 'heading',
     settings
@@ -142,7 +139,6 @@ function handleHeadingChange(settings: any) {
 }
 
 function handleListChange(settings: any) {
-  console.log('列表设置已更改:', settings)
   props.onSettingsChange?.({
     moduleId: 'list',
     settings
@@ -150,7 +146,6 @@ function handleListChange(settings: any) {
 }
 
 function handleBackupChange(settings: any) {
-  console.log('备份设置已更改:', settings)
   props.onSettingsChange?.({
     moduleId: 'backup',
     settings

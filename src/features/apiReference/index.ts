@@ -19,8 +19,6 @@ export function registerApiReference(plugin: Plugin) {
     }
   })
 
-  console.log('API参考功能已注册，快捷键: Ctrl+Alt+A')
-  console.log('API参考样式已加载')
 }
 
 /**
@@ -85,5 +83,4 @@ export function showApiReferencePanel(plugin: Plugin) {
   // 添加到页面
   document.body.appendChild(overlay)
 
-  console.log('API参考面板已打开')
 }

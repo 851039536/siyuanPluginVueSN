@@ -204,31 +204,3 @@ onMounted(() => {
   }
 }
 </style>
-
-<!-- 全局样式 -->
-<style lang="scss">
-.siyuan-plugin-vite-vue-sn-app {
-  width: 100vw;
-  height: 100dvh;
-  max-height: 100vh;
-  position: absolute;
-  top: 0px;
-  left: 0px;
-  pointer-events: none;
-  box-sizing: border-box;
-}
-
-.row {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-}
-
-.col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-</style>

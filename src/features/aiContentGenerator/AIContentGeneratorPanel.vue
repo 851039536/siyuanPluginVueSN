@@ -763,8 +763,7 @@ const diffMode = ref<'split' | 'unified'>('split'); // 差异显示模式：分�
 // 对话设置
 const systemPrompt = ref('你是一个专业的内容创作助手，擅长生成结构清晰、格式规范的Markdown文档。请确保输出内容使用标准的Markdown语法。');
 const temperature = ref(0.7);
-const maxTokens = ref(10000); // 问题1：默认改为1万
-const enableTypewriter = ref(true);
+const maxTokens = ref(10000);
 
 // 上下文消息数量配置
 const contextMessageLimit = ref(1);
@@ -778,7 +777,6 @@ interface SavedPrompt {
   systemPrompt: string;
   temperature: number;
   maxTokens: number;
-  enableTypewriter: boolean;
   contextMessageLimit: number;
   createdAt: number;
 }
@@ -1011,17 +1009,6 @@ const startAutoLoadCurrentDoc = () => {
   setTimeout(() => {
     autoLoadCurrentDoc();
   }, 1000);
-};
-
-/**
- * 停止自动加载监听
- */
-const stopAutoLoadCurrentDoc = () => {
-  if (autoLoadDebounceTimer.value) {
-    clearTimeout(autoLoadDebounceTimer.value);
-    autoLoadDebounceTimer.value = null;
-  }
-  document.removeEventListener('click', autoLoadCurrentDoc);
 };
 
 /**
@@ -1266,7 +1253,6 @@ const getDragText = () => {
 const closeSettings = () => {
   showSettings.value = false;
 };
-
 
 
 /**
@@ -2131,7 +2117,6 @@ const saveCurrentPrompt = async () => {
     systemPrompt: systemPrompt.value,
     temperature: temperature.value,
     maxTokens: maxTokens.value,
-    enableTypewriter: enableTypewriter.value,
     contextMessageLimit: contextMessageLimit.value,
     createdAt: existingIndex >= 0 ? savedPrompts.value[existingIndex].createdAt : Date.now()
   };
@@ -2237,7 +2222,6 @@ const loadPrompt = async (index: number) => {
   systemPrompt.value = prompt.systemPrompt;
   temperature.value = prompt.temperature;
   maxTokens.value = prompt.maxTokens;
-  enableTypewriter.value = prompt.enableTypewriter;
   contextMessageLimit.value = prompt.contextMessageLimit || 1;
 
   // 设置当前选中的提示词名称
@@ -2263,7 +2247,6 @@ const editPrompt = (index: number) => {
   systemPrompt.value = prompt.systemPrompt;
   temperature.value = prompt.temperature;
   maxTokens.value = prompt.maxTokens;
-  enableTypewriter.value = prompt.enableTypewriter;
   contextMessageLimit.value = prompt.contextMessageLimit;
 
   // 设置当前选中的提示词名称
@@ -2351,7 +2334,6 @@ const saveSettings = async () => {
     systemPrompt: systemPrompt.value,
     temperature: temperature.value,
     maxTokens: maxTokens.value,
-    enableTypewriter: enableTypewriter.value,
     contextMessageLimit: contextMessageLimit.value
   };
 
@@ -2377,7 +2359,6 @@ const loadSettings = async () => {
       systemPrompt.value = settings.systemPrompt || systemPrompt.value;
       temperature.value = settings.temperature ?? temperature.value;
       maxTokens.value = settings.maxTokens || maxTokens.value;
-      enableTypewriter.value = settings.enableTypewriter ?? enableTypewriter.value;
       contextMessageLimit.value = settings.contextMessageLimit ?? contextMessageLimit.value;
     }
   } catch (error) {
@@ -2386,7 +2367,7 @@ const loadSettings = async () => {
 };
 
 // 监听设置变化
-watch([systemPrompt, temperature, maxTokens, enableTypewriter, contextMessageLimit], () => {
+watch([systemPrompt, temperature, maxTokens, contextMessageLimit], () => {
   saveSettings();
 });
 

@@ -22,12 +22,6 @@ pnpm dev
 pnpm build
 ```
 
-### 代码质量
-
-```bash
-# ESLint 检查代码
-pnpm lint
-```
 
 ### 版本发布管理
 
@@ -70,7 +64,6 @@ src/
 ### 开发参考
 
 1. `src/index.ts`：插件入口主 `PluginSample` 类继承 Siyuan 的 `Plugin`
-
 - 生命周期：`onload()`, `onunload()`
 
 功能模块
@@ -100,10 +93,10 @@ Vue 应用结构
 
 ## 必须严格执行的规范
 
-- 功能可见性：新功能必须在超级面板（SuperPanelView.vue）中提供开关设置
+- 功能可见性：新功能必须在超级面板：SuperPanelView.vue 中提供开关设置
 - 不要直接使用 SVG 文件，可使用 @iconify/vue
-- 新功能必须使用 frontend-components 技能进行组件化。
-- 全局样式：导入方式 @use "@/index.scss" as *;
+- 新功能必须使用技能： frontend-components 进行组件化。
+- 如果是全局样式index.scss：导入方式 @use "@/index.scss" as *;
 ### 品牌设计规范
 
 本项目使用 Anthropic 官方品牌色，所有新增页面必须遵守以下规范：

@@ -61,8 +61,6 @@ export default class PluginSample extends Plugin {
       this.isElectron = false
     }
 
-    console.log('Plugin loaded, the plugin is ', this)
-
     // 加载配置
     this.settings = await loadSettings(this)
     console.log('插件配置已加载:', this.settings)
@@ -111,115 +109,121 @@ export default class PluginSample extends Plugin {
 
     // 根据配置注册功能模块
     if (this.settings.enablePageLock) {
-      console.log('注册页面锁定功能')
       registerPageLock(this)
     }
+
+    // 注册目录插件功能
     if (this.settings.enableTableOfContents) {
-      console.log('注册目录插件功能')
       registerTableOfContents(this)
     }
+
+    // 注册图片压缩功能
     if (this.settings.enableImageCompressor) {
-      console.log('注册图片压缩功能')
       registerImageCompressor(this)
     }
+
+    // 注册文档层级导航功能
     if (this.settings.enableDocNavigation) {
-      console.log('注册文档层级导航功能')
       registerDocNavigation(this)
     }
+
+    // 注册快捷键模块
     if (this.settings.enableShortcuts) {
-      console.log('注册快捷键模块')
       await registerShortcut(this)
     }
+
+    // 注册单词查询功能
     if (this.settings.enableWordQuery) {
-      console.log('注册单词查询功能')
       registerWordQuery(this)
     }
+    // 注册通用设置功能
     if (this.settings.enableGeneralSettings) {
-      console.log('注册通用设置功能')
       registerGeneralSettings(this)
     }
+
+    // 注册单位转换功能
     if (this.settings.enableUnitConverter) {
-      console.log('注册单位转换功能')
       registerUnitConverter(this)
     }
+
+    // 注册本地磁盘浏览器功能
     if (this.settings.enableDiskBrowser) {
-      console.log('注册本地磁盘浏览器功能')
       registerDiskBrowser(this)
     }
+
+    // 注册代码图片生成器功能
     if (this.settings.enableCodeImageGenerator) {
-      console.log('注册代码图片生成器功能')
       registerCodeImageGenerator(this)
     }
+
+    // 注册AI信息生成功能
     if (this.settings.enableAIContentGenerator) {
-      console.log('注册AI信息生成功能')
       registerAIContentGenerator(this)
     }
+
+    // 注册数据统计功能
     if (this.settings.enableStatistics) {
-      console.log('注册数据统计功能')
       registerStatistics(this)
     }
+
+    // 注册内容加密功能
     if (this.settings.enableEncryption) {
-      console.log('注册内容加密功能')
       await registerEncryption(this)
     }
+    // 注册视频播放功能
     if (this.settings.enableVideo) {
       registerVideo(this)
     }
+    // 注册全局搜索功能
     if (this.settings.enableEverythingSearch) {
       registerEverythingSearch(this)
     }
+
+    // 注册系统监控功能
     if (this.settings.enableSystemMonitor) {
-      console.log('注册系统监控功能')
       registerSystemMonitor(this)
     }
+
+    // 注册API参考功能
     if (this.settings.enableApiReference) {
-      console.log('注册API参考功能')
       registerApiReference(this)
     }
     // 注册双击高亮功能（从数据库读取设置）
-    console.log('注册双击高亮功能')
     const highlightSettings = await loadHighlightSettings(this)
     registerHighlight(this, highlightSettings.enableHighlight)
 
     // 注册浮动工具栏功能
     if (this.settings.enableFloatingToolbar) {
-      console.log('注册浮动工具栏功能')
       registerFloatingToolbar(this)
     }
 
     // 注册悬浮框功能
     if (this.settings.enableFloatingBox) {
-      console.log('注册悬浮框功能')
       registerFloatingBox(this)
     }
 
     // 注册文本对比功能
     if (this.settings.enableTextDiff) {
-      console.log('注册文本对比功能')
       registerTextDiff(this)
     }
 
     // 注册 Base64 图片转换器功能
     if (this.settings.enableBase64Image) {
-      console.log('注册 Base64 图片转换器功能')
       registerBase64Image(this)
     }
 
     // 注册单词阅读功能
     if (this.settings.enableFlashcardReading) {
-      console.log('注册单词阅读功能')
       registerFlashcardReading(this)
     }
 
     // 注册密码箱功能
     if (this.settings.enablePasswordVault) {
-      console.log('注册密码箱功能')
       registerPasswordVault(this)
     }
 
     // 注册 WebDAV 功能
     if (this.settings.enableWebDAV) {
-      console.log('注册 WebDAV 功能')
       registerWebDAV(this)
     }
   }

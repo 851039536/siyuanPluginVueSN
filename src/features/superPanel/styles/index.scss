@@ -2,8 +2,10 @@
 @use 'sass:map';
 @use 'sass:string';
 
-// 引入模块专属文件
+// 引入模块专属文件（同时 forward 给导入者使用）
+@forward './variables';
 @use './variables' as *;
+@forward './mixins';
 @use './mixins' as *;
 
 // 引入功能卡片样式（包含变量和mixins）

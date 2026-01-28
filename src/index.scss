@@ -3,7 +3,7 @@
 // 变量定义已移至 _variables.scss，组件可按需导入
 
 // 导入变量（用于本文件中的样式）
-@use './_variables' as *;
+@use './variables.scss' as *;
 
 // 代码块基础样式
 @mixin codeblock-base {

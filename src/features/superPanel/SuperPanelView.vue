@@ -12,138 +12,23 @@
   <Transition name="panel">
     <div v-if="visible" class="super-panel-container">
       <!-- 头部 -->
-      <div class="super-panel-header">
-        <div class="super-panel-title">
-          <IconWrapper name="superPanel" :size="20" />
-          <span>{{ i18n.title || '超级面板' }}</span>
-        </div>
-        <div class="header-actions">
-          <button
-            class="header-action-btn"
-            :title="i18n.enableAll || '全部开启'"
-            @click="handleToggleAll(true)"
-          >
-            <IconWrapper name="check" :size="16" />
-          </button>
-
-          <button
-            class="header-action-btn"
-            :title="i18n.disableAll || '全部关闭'"
-            @click="handleToggleAll(false)"
-          >
-            <IconWrapper name="close" :size="16" />
-          </button>
-          <button
-            class="header-action-btn"
-            :title="i18n.aiSettings || 'AI配置'"
-            @click="toggleAiSettings"
-          >
-            <IconWrapper name="settings" :size="16" />
-          </button>
-          <button
-            class="header-action-btn"
-            :title="i18n.refresh || '刷新'"
-            @click="handleRefresh"
-          >
-            <IconWrapper name="refresh" :size="16" />
-          </button>
-          <button
-            class="header-action-btn"
-            :title="i18n.close || '关闭'"
-            @click="handleClose"
-          >
-            <IconWrapper name="close" :size="16" />
-          </button>
-        </div>
-      </div>
+      <SuperPanelHeader
+        :title="i18n.title || '超级面板'"
+        :i18n="i18n"
+        @toggle-all="handleToggleAll"
+        @toggle-ai-settings="toggleAiSettings"
+        @refresh="handleRefresh"
+        @close="handleClose"
+      />
 
       <!-- AI配置区域 -->
-      <div class="ai-settings-panel" v-if="showAiSettings">
-        <div class="ai-settings-header">
-          <span> {{ i18n.aiSettings || 'AI大模型配置' }}</span>
-          <button class="ai-settings-close-btn" @click="toggleAiSettings">
-            <IconWrapper name="close" :size="14" />
-          </button>
-        </div>
-        <div class="ai-settings-content">
-          <!-- API供应商选择 -->
-          <div class="setting-group">
-            <label class="setting-label">{{ i18n.apiProvider || 'API供应商' }}</label>
-            <select v-model="localAiProvider" class="setting-select" @change="handleProviderChange">
-              <option value="tongyi">{{ i18n.tongyiQianwen || '通义千问' }}</option>
-              <option value="openai">{{ i18n.openAI || 'OpenAI' }}</option>
-              <option value="deepseek">{{ i18n.deepSeek || 'DeepSeek' }}</option>
-              <option value="custom">{{ i18n.customApi || '自定义API' }}</option>
-            </select>
-          </div>
-
-          <!-- 模型选择 -->
-          <div class="setting-group" v-if="localAiProvider !== 'custom'">
-            <label class="setting-label">{{ i18n.aiModel || '模型' }}</label>
-            <select v-model="localAiModel" class="setting-select" @change="handleModelChange">
-              <optgroup v-if="getAvailableModels().common.length > 0" :label="i18n.commonModels || '常用模型'">
-                <option v-for="model in getAvailableModels().common" :key="model.value" :value="model.value">
-                  {{ model.label }}
-                </option>
-              </optgroup>
-              <optgroup v-if="getAvailableModels().all.length > 0" :label="i18n.allModels || '全部模型'">
-                <option v-for="model in getAvailableModels().all" :key="model.value" :value="model.value">
-                  {{ model.label }}
-                </option>
-              </optgroup>
-              <option value="custom">{{ i18n.customModel || '自定义模型' }}</option>
-            </select>
-          </div>
-
-          <!-- 自定义模型名称 -->
-          <div class="setting-group" v-if="localAiModel === 'custom' && localAiProvider !== 'custom'">
-            <label class="setting-label">{{ i18n.customModelName || '自定义模型名称' }}</label>
-            <input
-              v-model="localAiCustomModel"
-              type="text"
-              class="setting-input"
-              :placeholder="i18n.customModelPlaceholder || '输入模型名称，如: gpt-4'"
-              @input="handleCustomModelChange"
-            />
-            <div class="setting-desc">{{ i18n.customModelDesc || '输入API支持的模型名称' }}</div>
-          </div>
-
-          <!-- API密钥输入 -->
-          <div class="setting-group">
-            <label class="setting-label">{{ i18n.apiKey || 'API密钥' }}</label>
-            <div class="setting-input-wrapper">
-              <input
-                v-model="localAiApiKey"
-                :type="apiKeyVisible ? 'text' : 'password'"
-                class="setting-input"
-                :placeholder="getApiKeyPlaceholder()"
-                @input="handleApiKeyChange"
-              />
-              <button
-                class="toggle-visibility-btn"
-                @click="apiKeyVisible = !apiKeyVisible"
-                :title="apiKeyVisible ? '隐藏密钥' : '显示密钥'"
-              >
-                <IconWrapper :name="apiKeyVisible ? 'eyeOff' : 'eye'" :size="14" />
-              </button>
-            </div>
-            <div class="setting-desc">{{ getApiKeyDescription() }}</div>
-          </div>
-
-          <!-- 自定义API端点 -->
-          <div class="setting-group" v-if="localAiProvider === 'custom'">
-            <label class="setting-label">{{ i18n.customEndpoint || 'API端点' }}</label>
-            <input
-              v-model="localAiCustomEndpoint"
-              type="text"
-              class="setting-input"
-              placeholder="https://api.example.com/v1/chat/completions"
-              @input="handleEndpointChange"
-            />
-            <div class="setting-desc">自定义API端点URL，用于连接自定义API服务</div>
-          </div>
-        </div>
-      </div>
+      <AiSettingsPanel
+        :visible="showAiSettings"
+        :settings="aiSettings"
+        :i18n="i18n"
+        @close="toggleAiSettings"
+        @update:settings="handleUpdateAiSettings"
+      />
 
       <!-- 内容区 -->
       <div class="super-panel-content">
@@ -161,105 +46,52 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import IconWrapper from '@/components/IconWrapper.vue'
+import { computed, ref } from 'vue'
+import SuperPanelHeader from './components/SuperPanelHeader.vue'
+import AiSettingsPanel, { type AiSettings } from './components/AiSettingsPanel.vue'
 import FeatureCard from './components/FeatureCard.vue'
 import type { PluginSettings } from '@/config/settings'
-import { showMessage } from 'siyuan'
-
-// AI 模型配置常量
-const AI_MODELS_CONFIG = {
-  tongyi: {
-    common: [
-      { value: 'qwen-plus', label: 'Qwen Plus (推荐)' },
-      { value: 'qwen-turbo', label: 'Qwen Turbo (快速)' },
-      { value: 'qwen-max', label: 'Qwen Max (最强)' }
-    ],
-    all: [
-      { value: 'qwen-long', label: 'Qwen Long (长文本)' },
-      { value: 'qwen-vl-plus', label: 'Qwen VL Plus (视觉)' },
-      { value: 'qwen-vl-max', label: 'Qwen VL Max (视觉最强)' }
-    ]
-  },
-  openai: {
-    common: [
-      { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo (推荐)' },
-      { value: 'gpt-4', label: 'GPT-4' },
-      { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' }
-    ],
-    all: [
-      { value: 'gpt-4o', label: 'GPT-4o' },
-      { value: 'gpt-4o-mini', label: 'GPT-4o Mini' }
-    ]
-  },
-  deepseek: {
-    common: [
-      { value: 'deepseek-chat', label: 'DeepSeek Chat (推荐)' },
-      { value: 'deepseek-coder', label: 'DeepSeek Coder (代码)' },
-      { value: 'deepseek-reasoner', label: 'DeepSeek Reasoner (思考)' },
-    ],
-    all: []
-  },
-  custom: {
-    common: [],
-    all: []
-  }
-} as const
-
-// 默认模型配置
-const DEFAULT_MODELS = {
-  tongyi: 'qwen-plus',
-  openai: 'gpt-3.5-turbo',
-  deepseek: 'deepseek-chat',
-  custom: ''
-} as const
-
-// API 占位符配置
-const API_PLACEHOLDERS = {
-  tongyi: '请输入通义千问API密钥',
-  openai: '请输入OpenAI API密钥',
-  deepseek: '请输入DeepSeek API密钥',
-  custom: '请输入自定义API密钥'
-} as const
-
-// AI 设置接口
-interface AiSettings {
-  provider: string
-  model: string
-  apiKey: string
-  customEndpoint: string
-}
-
-
+import type { Feature } from './types'
 
 // 国际化接口
 interface I18n {
   title?: string
-  enableAll?: string
-  disableAll?: string
-  aiSettings?: string
-  refresh?: string
-  close?: string
-  apiProvider?: string
-  tongyiQianwen?: string
-  openAI?: string
-  deepSeek?: string
-  customApi?: string
-  aiModel?: string
-  commonModels?: string
-  allModels?: string
-  customModel?: string
-  customModelName?: string
-  customModelPlaceholder?: string
-  customModelDesc?: string
-  apiKey?: string
-  tongyiQianwenPlaceholder?: string
-  openAIPlaceholder?: string
-  deepSeekPlaceholder?: string
-  customApiPlaceholder?: string
-  customEndpoint?: string
-  // ... 其他 i18n 键
-  [key: string]: any // 允许访问其他可能的键
+  tableOfContents?: string
+  tableOfContentsDesc?: string
+  imageCompressor?: string
+  imageCompressorDesc?: string
+  docNavigation?: string
+  docNavigationDesc?: string
+  pageLock?: string
+  pageLockDesc?: string
+  wordQuery?: string
+  wordQueryDesc?: string
+  generalSettings?: string
+  generalSettingsDesc?: string
+  qrCode?: string
+  qrCodeDesc?: string
+  unitConverter?: string
+  unitConverterDesc?: string
+  shortcuts?: string
+  shortcutsDesc?: string
+  diskBrowser?: string
+  diskBrowserDesc?: string
+  codeImageGenerator?: string
+  enableCodeImageGeneratorDesc?: string
+  aiContentGenerator?: string
+  aiContentGeneratorDesc?: string
+  pronunciationHelp?: string
+  pronunciationDesc?: string
+  encryption?: string
+  enableEncryptionDesc?: string
+  videoManager?: string
+  videoManagerDesc?: string
+  everythingSearch?: string
+  everythingSearchDesc?: string
+  webDAV?: string
+  webDAVDesc?: string
+  featureDisabled?: string
+  [key: string]: any
 }
 
 interface Props {
@@ -280,111 +112,37 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-// 刷新加载状态
-const isRefreshing = ref(false)
-
 // AI配置状态
 const showAiSettings = ref(false)
-const apiKeyVisible = ref(false)
-const localAiProvider = ref(props.settings.aiApiProvider || 'tongyi')
-const localAiModel = ref(props.settings.aiModel || 'qwen-plus')
-const localAiCustomModel = ref(props.settings.aiCustomModel || '')
-const localAiApiKey = ref(props.settings.aiApiKey || '')
-const localAiCustomEndpoint = ref(props.settings.aiCustomEndpoint || '')
+
+// AI设置数据
+const aiSettings = computed<AiSettings>(() => ({
+  provider: props.settings.aiApiProvider || 'tongyi',
+  model: props.settings.aiModel || 'qwen-plus',
+  customModel: props.settings.aiCustomModel || '',
+  apiKey: props.settings.aiApiKey || '',
+  customEndpoint: props.settings.aiCustomEndpoint || ''
+}))
 
 // 切换AI配置面板
 const toggleAiSettings = () => {
   showAiSettings.value = !showAiSettings.value
 }
 
-// 获取可用模型列表
-const getAvailableModels = () => {
-  return AI_MODELS_CONFIG[localAiProvider.value as keyof typeof AI_MODELS_CONFIG] || { common: [], all: [] }
+// 更新AI配置
+const handleUpdateAiSettings = async (settings: AiSettings) => {
+  await emit('updateAiSettings', settings)
 }
-
-// 获取API密钥占位符
-const getApiKeyPlaceholder = () => {
-  const defaultPlaceholder = API_PLACEHOLDERS[localAiProvider.value as keyof typeof API_PLACEHOLDERS] || '请输入API密钥'
-
-  // 优先使用 i18n 中的占位符，如果没有则使用默认值
-  const i18nPlaceholders: Record<string, string | undefined> = {
-    tongyi: props.i18n.tongyiQianwenPlaceholder,
-    openai: props.i18n.openAIPlaceholder,
-    deepseek: props.i18n.deepSeekPlaceholder,
-    custom: props.i18n.customApiPlaceholder
-  }
-
-  return i18nPlaceholders[localAiProvider.value] || defaultPlaceholder
-}
-
-// 获取API密钥描述
-const getApiKeyDescription = () => {
-  const descriptions: Record<string, string> = {
-    tongyi: `${props.i18n.tongyiQianwen || '通义千问'} API密钥，用于所有AI功能`,
-    openai: `${props.i18n.openAI || 'OpenAI'} API密钥，用于所有AI功能`,
-    deepseek: `${props.i18n.deepSeek || 'DeepSeek'} API密钥，用于所有AI功能`,
-    custom: `${props.i18n.customApi || '自定义API'} 密钥，用于所有AI功能`
-  }
-  return descriptions[localAiProvider.value] || 'API密钥，用于所有AI功能'
-}
-
-// 处理供应商变更
-const handleProviderChange = async () => {
-  // 切换供应商时，自动选择该供应商的默认模型
-  localAiModel.value = DEFAULT_MODELS[localAiProvider.value as keyof typeof DEFAULT_MODELS] || ''
-  await saveAiSettings()
-  showMessage('供应商已更新', 2000, 'info')
-}
-
-// 处理模型变更
-const handleModelChange = async () => {
-  await saveAiSettings()
-}
-
-// 处理自定义模型变更
-const handleCustomModelChange = async () => {
-  await saveAiSettings()
-}
-
-// 处理API密钥变更
-const handleApiKeyChange = async () => {
-  await saveAiSettings()
-}
-
-// 处理端点变更
-const handleEndpointChange = async () => {
-  await saveAiSettings()
-}
-
-// 保存AI配置
-const saveAiSettings = async () => {
-  await emit('updateAiSettings', {
-    provider: localAiProvider.value,
-    model: localAiModel.value === 'custom' ? localAiCustomModel.value : localAiModel.value,
-    apiKey: localAiApiKey.value,
-    customEndpoint: localAiCustomEndpoint.value
-  })
-}
-
-// 监听settings变化，同步本地状态
-watch(() => props.settings, (newSettings) => {
-  localAiProvider.value = newSettings.aiApiProvider || 'tongyi'
-  localAiModel.value = newSettings.aiModel || 'qwen-plus'
-  localAiCustomModel.value = newSettings.aiCustomModel || ''
-  localAiApiKey.value = newSettings.aiApiKey || ''
-  localAiCustomEndpoint.value = newSettings.aiCustomEndpoint || ''
-}, { deep: true })
 
 // 功能列表配置
-const features = computed(() => [
+const features = computed<Feature[]>(() => [
   {
     id: 'tableOfContents',
     iconKey: 'tableOfContents',
     title: props.i18n.tableOfContents || '目录索引',
     desc: props.i18n.tableOfContentsDesc || '快速生成文档目录和大纲',
     enabled: props.settings.enableTableOfContents,
-    actions: [
-    ]
+    actions: []
   },
   {
     id: 'imageCompressor',
@@ -627,16 +385,7 @@ const handleClose = () => {
 }
 
 const handleRefresh = async () => {
-  if (isRefreshing.value) return
-
-  isRefreshing.value = true
-  try {
-    await emit('refresh')
-  } finally {
-    // 注意:由于刷新会关闭并重新创建组件,这里的 finally 可能不会执行
-    // 但为了安全起见,仍然保留
-    isRefreshing.value = false
-  }
+  await emit('refresh')
 }
 
 const handleFeatureAction = (action: string) => {
@@ -653,6 +402,5 @@ const handleToggleAll = (enabled: boolean) => {
 </script>
 
 <style scoped lang="scss">
-// 引入模块样式
 @use './styles/index.scss';
 </style>

@@ -295,8 +295,6 @@ export class GeneralSettings {
           text-align: center !important;
         }
       ` : '';
-      if (settings.titleCenterAlign) {
-      }
 
       // 文档标题颜色样式（独立于居中设置）
       const titleColorCss = settings.titleColor ? `
@@ -304,17 +302,13 @@ export class GeneralSettings {
           color: ${settings.titleColor} !important;
         }
       ` : '';
-      if (settings.titleColor) {
-      }
 
       // 文档标题字体大小样式
       const titleFontSizeCss = settings.titleFontSize ? `
         .protyle-title__input {
           font-size: ${settings.titleFontSize}px !important;
         }
-      ` : '';
-      if (settings.titleFontSize) {
-      }
+      ` : ''
 
       style.textContent = colorCss + '\n' + fontSizeCss + '\n' + levelCss + '\n' + centerAlignCss + '\n' + titleColorCss + '\n' + titleFontSizeCss;
 
@@ -870,16 +864,13 @@ export function registerGeneralSettings(plugin: Plugin) {
 
       if (workspacePath) {
         // 使用 Electron API 打开文件夹（真实环境）
-        let successfullyOpened = false
         if ((window as any).require) {
           try {
             const { shell } = (window as any).require('electron')
-            const result = await shell.openPath(workspacePath)
-            successfullyOpened = !result // shell.openPath返回空字符串表示成功
+            await shell.openPath(workspacePath)
           } catch (electronError) {
             console.warn('Electron API 不可用或失败:', electronError)
           }
-        } else {
         }
 
         // 显示成功消息

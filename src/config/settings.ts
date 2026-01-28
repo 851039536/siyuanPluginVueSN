@@ -38,7 +38,6 @@ export interface PluginSettings {
   enableWebDAV: boolean          // 是否启用WebDAV功能
   webdavConfig: WebDAVConfig     // WebDAV服务器配置
   videoCategories?: string[]     // 视频分类列表
-  wordQueryApiKey: string        // 单词查询API密钥(已废弃,使用aiApiProvider和aiApiKey)
   compactMode: boolean           // 是否启用全局紧洛模式
   statisticsTheme: 'default' | 'github'  // 统计面板主题风格
   statisticsUpdateInterval: number  // 统计自动更新时间间隔(毫秒),默认60000(1分钟)
@@ -124,7 +123,6 @@ export const DEFAULT_SETTINGS: PluginSettings = {
     lastSyncTime: ''
   },
   videoCategories: ['默认分类', '教程', '演示', '其他'],
-  wordQueryApiKey: 'sk-fae27cc50015409fb2524b0970d3f0b0',
   compactMode: true,
   statisticsTheme: 'default',
   statisticsUpdateInterval: 60000,
@@ -207,46 +205,29 @@ export async function saveSettings(plugin: Plugin, settings: PluginSettings): Pr
 
 
 /**
- * 重置列表设置
- */
-export function resetListSettings(): boolean {
-  try {
-    localStorage.removeItem('general-list-settings')
-    return true
-  } catch (error) {
-    console.error('重置列表设置失败:', error)
-    return false
-  }
-}
-
-/**
  * 应用列表样式CSS到页面
  */
 export function applyListStyles(css: string): void {
   if (!css) {
     // 移除现有的列表样式
-    removeExistingListStyles()
+    const existingStyle = document.getElementById('custom-list-styles')
+    if (existingStyle) {
+      existingStyle.remove()
+    }
     return
   }
 
   // 移除现有的样式
-  removeExistingListStyles()
+  const existingStyle = document.getElementById('custom-list-styles')
+  if (existingStyle) {
+    existingStyle.remove()
+  }
 
   // 创建新的样式元素
   const styleElement = document.createElement('style')
   styleElement.id = 'custom-list-styles'
   styleElement.textContent = css
   document.head.appendChild(styleElement)
-}
-
-/**
- * 移除现有的列表样式
- */
-function removeExistingListStyles(): void {
-  const existingStyle = document.getElementById('custom-list-styles')
-  if (existingStyle) {
-    existingStyle.remove()
-  }
 }
 
 /**

@@ -10,7 +10,6 @@ export interface AIGeneratorSettings {
   systemPrompt: string
   temperature: number
   maxTokens: number
-  enableTypewriter: boolean
   contextMessageLimit: number
 }
 
@@ -23,7 +22,6 @@ export interface AIPromptConfig {
   systemPrompt: string
   temperature: number
   maxTokens: number
-  enableTypewriter: boolean
   contextMessageLimit: number
   createdAt: number
 }
@@ -171,7 +169,6 @@ export class AIGeneratorStorage {
           systemPrompt: '',
           temperature: 0.7,
           maxTokens: 10000,
-          enableTypewriter: true,
           contextMessageLimit: 5
         }
         await this.saveSettings(defaultSettings)

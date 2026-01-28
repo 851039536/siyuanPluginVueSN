@@ -186,21 +186,5 @@ onMounted(() => {
   justify-content: center;
   align-items: center;
   flex-wrap: nowrap;
-
-  .demo {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    pointer-events: auto;
-
-    z-index: 10;
-
-    background-color: var(--b3-theme-surface);
-    border-radius: var(--b3-border-radius);
-    border: 1px solid var(--b3-border-color);
-    padding: 16px;
-  }
 }
 </style>

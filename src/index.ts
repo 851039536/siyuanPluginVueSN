@@ -8,6 +8,7 @@ import {
 // Vite 会将此 CSS 编译到 index.css 并在入口点立即注入
 import "@/index.scss";
 
+
 import PluginInfoString from '@/../plugin.json'
 import { destroy, init } from '@/main'
 import { registerPageLock, registerTableOfContents, registerImageCompressor, registerDocNavigation, registerShortcut, registerWordQuery, registerGeneralSettings, registerUnitConverter, registerSuperPanel, registerDiskBrowser, registerCodeImageGenerator, registerAIContentGenerator, registerStatistics, registerEncryption, registerVideo, registerEverythingSearch, registerSystemMonitor, registerApiReference, registerHighlight, registerFloatingToolbar, registerFloatingBox, registerTextDiff, registerBase64Image, registerFlashcardReading, registerPasswordVault, registerWebDAV } from '@/features'

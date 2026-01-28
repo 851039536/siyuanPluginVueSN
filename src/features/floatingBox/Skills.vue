@@ -24,7 +24,6 @@
             :key="cat.id"
             class="category-chip"
             :class="{ active: selectedCategory === cat.id }"
-            :style="{ '--cat-color': cat.color }"
             @click="selectCategory(cat.id)"
             :aria-pressed="selectedCategory === cat.id"
           >

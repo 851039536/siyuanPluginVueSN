@@ -155,10 +155,6 @@ $shadow-card: 0 4px 12px rgba(0, 0, 0, 0.1);
       border-color: $brand-blue;
       color: $brand-blue;
     }
-
-    &.btn-outlined {
-      border-color: var(--b3-border-color);
-    }
   }
 
   // 危险按钮（红色）
@@ -170,15 +166,6 @@ $shadow-card: 0 4px 12px rgba(0, 0, 0, 0.1);
     &:hover:not(:disabled) {
       background: rgba(220, 53, 69, 0.1);
       border-color: #dc3545;
-    }
-
-    &.btn-outlined {
-      border-color: var(--b3-border-color);
-
-      &:hover:not(:disabled) {
-        background: rgba(220, 53, 69, 0.1);
-        border-color: #dc3545;
-      }
     }
   }
 

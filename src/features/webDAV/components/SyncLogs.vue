@@ -2,13 +2,12 @@
   <div class="sync-logs" v-if="logs.length > 0">
     <div class="logs-header">
       <span>{{ i18n.syncLogs || '同步日志' }}</span>
-      <Button
-        :label="i18n.clearLogs || '清空'"
-        size="small"
-        text
+      <button
+        class="btn-clear"
         @click="onClear"
-        severity="secondary"
-      />
+      >
+        {{ i18n.clearLogs || '清空' }}
+      </button>
     </div>
     <div class="logs-list">
       <div
@@ -24,7 +23,6 @@
 </template>
 
 <script setup lang="ts">
-import Button from 'primevue/button'
 import type { SyncLog } from '../types'
 import { formatTime } from '../utils'
 
@@ -47,6 +45,9 @@ const onClear = () => {
 </script>
 
 <style scoped lang="scss">
+@use "sass:color";
+@use "@/index.scss" as *;
+
 .sync-logs {
   border: 1px solid var(--border-color, #e5e7eb);
   border-radius: 8px;
@@ -64,6 +65,28 @@ const onClear = () => {
       font-size: 13px;
       font-weight: 600;
       color: var(--text-secondary, #6b7280);
+    }
+
+    .btn-clear {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 10px;
+      border: 1px solid var(--border-color, #e5e7eb);
+      border-radius: 4px;
+      background: transparent;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      font-family: $font-body;
+      color: var(--text-secondary, #6b7280);
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: var(--background-hover, #f3f4f6);
+        color: #ef4444;
+        border-color: #ef4444;
+      }
     }
   }
 

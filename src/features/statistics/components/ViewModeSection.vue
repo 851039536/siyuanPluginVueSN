@@ -2,19 +2,15 @@
   <div class="view-mode-section">
     <!-- 视图模式切换 -->
     <div class="mode-tabs">
-      <Button
+      <button
         v-for="mode in viewModes"
         :key="mode.value"
         class="mode-tab"
         :class="{ active: modelValue === mode.value }"
         @click="$emit('update:modelValue', mode.value)"
-        :severity="modelValue === mode.value ? 'primary' : 'secondary'"
-        :text="modelValue !== mode.value"
-        :outlined="modelValue !== mode.value"
-        rounded
       >
         {{ mode.icon }} {{ mode.label }}
-      </Button>
+      </button>
     </div>
 
     <!-- 时段统计卡片 -->
@@ -31,38 +27,28 @@
 
     <!-- 日视图范围选择 -->
     <div v-if="modelValue === 'day'" class="range-selector">
-      <Button
+      <button
         v-for="range in dayRanges"
         :key="range.value"
         class="range-btn"
         :class="{ active: dayRange === range.value }"
         @click="$emit('update:dayRange', range.value); $emit('refresh')"
-        :severity="dayRange === range.value ? 'primary' : 'secondary'"
-        :text="dayRange !== range.value"
-        :outlined="dayRange !== range.value"
-        rounded
-        size="small"
       >
         {{ range.label }}
-      </Button>
+      </button>
     </div>
 
     <!-- 月视图范围选择 -->
     <div v-if="modelValue === 'month'" class="range-selector">
-      <Button
+      <button
         v-for="range in monthRanges"
         :key="range.value"
         class="range-btn"
         :class="{ active: monthYearRange === range.value }"
         @click="$emit('update:monthYearRange', range.value); $emit('refresh')"
-        :severity="monthYearRange === range.value ? 'primary' : 'secondary'"
-        :text="monthYearRange !== range.value"
-        :outlined="monthYearRange !== range.value"
-        rounded
-        size="small"
       >
         {{ range.label }}
-      </Button>
+      </button>
     </div>
 
     <!-- 年视图选择 -->
@@ -80,7 +66,6 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import Button from 'primevue/button'
 
 interface Props {
   modelValue?: 'day' | 'week' | 'month' | 'year' | 'trend' | 'snapshot'
@@ -244,6 +229,9 @@ $stats-transition: all 0.2s ease;
   .range-btn {
     @include stats-button-base;
     font-family: $font-body;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .mode-tab {
@@ -251,12 +239,14 @@ $stats-transition: all 0.2s ease;
     padding: 8px;
     border-radius: 6px;
     font-size: 12px;
+    white-space: nowrap;
   }
 
   .range-btn {
     padding: 6px 8px;
     border-radius: 4px;
     font-size: 11px;
+    white-space: nowrap;
   }
 
   .year-selector {

@@ -3,24 +3,22 @@
     <div class="section-header">
       <span class="section-title">{{ i18n.fileList || '文件列表' }}</span>
       <div class="header-actions">
-        <Button
+        <button
           v-if="currentPath !== '/'"
-          icon="pi pi-arrow-up"
-          size="small"
-          text
+          class="btn-icon-small"
           :title="i18n.goBack || '返回上级'"
           @click="onGoBack"
-          severity="secondary"
-        />
-        <Button
-          :icon="loading ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'"
-          size="small"
-          text
-          :loading="loading"
-          @click="onRefresh"
+        >
+          <Icon icon="mdi:arrow-up" />
+        </button>
+        <button
+          class="btn-icon-small"
           :title="i18n.refresh || '刷新'"
-          severity="secondary"
-        />
+          :disabled="loading"
+          @click="onRefresh"
+        >
+          <Icon icon="mdi:refresh" :class="{ 'spin-icon': loading }" />
+        </button>
       </div>
     </div>
 
@@ -47,24 +45,22 @@
           </div>
         </div>
         <div class="file-actions" v-if="selectedFile?.path === file.path">
-          <Button
+          <button
             v-if="file.isDirectory"
-            icon="pi pi-folder-open"
-            size="small"
-            text
+            class="btn-icon-small btn-primary"
             :title="i18n.openFolder || '打开文件夹'"
-            severity="info"
             @click.stop="onOpenFolder(file)"
-          />
-          <Button
+          >
+            <Icon icon="mdi:folder-open" />
+          </button>
+          <button
             v-else
-            icon="pi pi-download"
-            size="small"
-            text
+            class="btn-icon-small btn-primary"
             :title="i18n.download || '下载'"
-            severity="info"
             @click.stop="onDownload(file)"
-          />
+          >
+            <Icon icon="mdi:download" />
+          </button>
         </div>
         <div class="file-type-badge" :class="{ directory: file.isDirectory }">
           {{ file.isDirectory ? (i18n.folder || '文件夹') : (i18n.file || '文件') }}
@@ -78,7 +74,7 @@
     </div>
 
     <div class="loading-files" v-else>
-      <i class="pi pi-spin pi-spinner"></i>
+      <Icon icon="mdi:loading" class="spin-icon" />
       <span>{{ i18n.loadingFiles || '正在加载文件列表...' }}</span>
     </div>
   </div>
@@ -86,7 +82,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import Button from 'primevue/button'
+import { Icon } from '@iconify/vue'
 import type { WebDAVFile } from '../types'
 import { formatFileSize, getFileIcon, formatTime } from '../utils'
 
@@ -149,6 +145,62 @@ const onDownload = (file: WebDAVFile) => {
 </script>
 
 <style scoped lang="scss">
+@use "sass:color";
+@use "@/index.scss" as *;
+
+// 按钮样式
+.btn-icon-small {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 4px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-secondary, #6b7280);
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover:not(:disabled) {
+    background: var(--background-hover, #f3f4f6);
+    color: var(--text-color, #374151);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &.btn-primary {
+    color: #3b82f6;
+
+    &:hover:not(:disabled) {
+      background: rgba(59, 130, 246, 0.1);
+      color: #2563eb;
+    }
+  }
+
+  .spin-icon {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+}
+
 .file-list-section {
   width: 100%;
   margin-bottom: 24px;

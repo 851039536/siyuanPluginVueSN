@@ -3,31 +3,29 @@
     <div class="webdav-header">
       <h3>{{ i18n.panelTitle || 'WebDAV同步' }}</h3>
       <div class="header-actions">
-        <Button
-          :label="i18n.testConnection || '测试连接'"
-          icon="pi pi-link"
-          size="small"
-          :loading="testingConnection"
+        <button
+          class="btn btn-secondary btn-small"
+          :disabled="testingConnection"
           @click="handleTestConnection"
-          severity="secondary"
-        />
-        <Button
-          :label="i18n.syncNow || '立即同步'"
-          icon="pi pi-sync"
-          size="small"
-          :loading="syncing"
+        >
+          <Icon :icon="testingConnection ? 'mdi:loading' : 'mdi:link'" :class="{ 'spin-icon': testingConnection }" />
+          {{ i18n.testConnection || '测试连接' }}
+        </button>
+        <button
+          class="btn btn-primary btn-small"
+          :disabled="syncing || !isConfigured"
           @click="handleSyncNow"
-          :disabled="!isConfigured"
-          severity="primary"
-        />
-        <Button
-          icon="pi pi-times"
-          size="small"
+        >
+          <Icon :icon="syncing ? 'mdi:loading' : 'mdi:sync'" :class="{ 'spin-icon': syncing }" />
+          {{ i18n.syncNow || '立即同步' }}
+        </button>
+        <button
+          class="btn btn-icon btn-text"
           @click="closePanel"
-          severity="secondary"
-          text
           :title="i18n.close || '关闭'"
-        />
+        >
+          <Icon icon="mdi:close" />
+        </button>
       </div>
     </div>
 
@@ -83,13 +81,13 @@
                 :placeholder="i18n.passwordPlaceholder || '输入密码'"
                 @input="debouncedSave"
               />
-              <Button
-                icon="pi pi-eye"
-                class="toggle-visibility-btn"
+              <button
+                class="btn btn-icon btn-text toggle-visibility-btn"
                 @click="passwordVisible = !passwordVisible"
-                severity="secondary"
-                text
-              />
+                :aria-label="passwordVisible ? '隐藏密码' : '显示密码'"
+              >
+                <Icon :icon="passwordVisible ? 'mdi:eye-off' : 'mdi:eye'" />
+              </button>
             </div>
           </div>
         </div>
@@ -154,7 +152,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted } from 'vue'
-import Button from 'primevue/button'
+import { Icon } from '@iconify/vue'
 import type { WebDAVConfig } from '@/config/settings'
 import { showMessage } from 'siyuan'
 import { useWebDAV } from './composables'

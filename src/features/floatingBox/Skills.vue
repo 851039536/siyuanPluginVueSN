@@ -7,8 +7,12 @@
           <h2>{{ i18n?.skillsTitle || '技能库' }}</h2>
         </div>
         <div class="header-actions">
-          <Button size="small"  icon="pi pi-list" severity="secondary" outlined @click="openCategoryManage" />
-          <Button size="small"  icon="pi pi-times" severity="secondary" outlined @click="closeModal" />
+          <button class="btn btn-icon btn-secondary" @click="openCategoryManage" :aria-label="i18n?.manageCategories || '管理分类'">
+            <Icon icon="mdi:format-list-bulleted" />
+          </button>
+          <button class="btn btn-icon btn-secondary" @click="closeModal" :aria-label="i18n?.close || '关闭'">
+            <Icon icon="mdi:close" />
+          </button>
         </div>
       </div>
 
@@ -41,7 +45,9 @@
             />
           </div>
 
-          <Button size="small" :label="i18n?.addSkill || '添加技能'" severity="info" raised @click="openAddModal" />
+          <button class="btn btn-primary btn-small" @click="openAddModal">
+            {{ i18n?.addSkill || '添加技能' }}
+          </button>
         </div>
 
         <div class="skills-grid">
@@ -61,8 +67,12 @@
                 </span>
               </div>
               <div class="skill-actions">
-                <Button  icon="pi pi-pencil" size="small" severity="secondary" outlined @click="editSkill(skill)" />
-                <Button  icon="pi pi-trash" size="small" severity="danger" outlined @click="deleteSkill(skill.id)" />
+                <button class="btn btn-icon btn-secondary" @click="editSkill(skill)" :aria-label="i18n?.edit || '编辑'">
+                  <Icon icon="mdi:pencil" />
+                </button>
+                <button class="btn btn-icon btn-danger" @click="deleteSkill(skill.id)" :aria-label="i18n?.delete || '删除'">
+                  <Icon icon="mdi:delete" />
+                </button>
               </div>
             </div>
             <div class="skill-description">
@@ -96,7 +106,9 @@
     <div class="skills-modal small" @click.stop>
       <div class="skills-modal-header">
         <h2>{{ editingSkill ? i18n?.editSkill || '编辑技能' : i18n?.addSkill || '添加技能' }}</h2>
-        <Button size="small" icon="pi pi-times" severity="secondary" outlined @click="closeAddModal" />
+        <button class="btn btn-icon btn-secondary" @click="closeAddModal" :aria-label="i18n?.close || '关闭'">
+          <Icon icon="mdi:close" />
+        </button>
       </div>
 
       <div class="skills-modal-body">
@@ -146,8 +158,12 @@
           </div>
 
           <div class="form-actions">
-            <Button :label="i18n?.cancel || '取消'" severity="secondary" variant="outlined" @click="closeAddModal" />
-            <Button :label="i18n?.save || '保存'" severity="info" type="submit" />
+            <button type="button" class="btn btn-secondary" @click="closeAddModal">
+              {{ i18n?.cancel || '取消' }}
+            </button>
+            <button type="submit" class="btn btn-primary">
+              {{ i18n?.save || '保存' }}
+            </button>
           </div>
         </form>
       </div>
@@ -159,7 +175,10 @@
     <div class="skills-modal small" @click.stop>
       <div class="skills-modal-header">
         <h2>{{ i18n?.manageCategories || '管理分类' }}</h2>
-        <Button :label="i18n?.close || '关闭'" icon="pi pi-times" severity="secondary" outlined @click="closeCategoryManage" />
+        <button class="btn btn-secondary" @click="closeCategoryManage">
+          {{ i18n?.close || '关闭' }}
+          <Icon icon="mdi:close" />
+        </button>
 
       </div>
 
@@ -181,7 +200,10 @@
               class="input-color"
               aria-label="分类颜色"
             />
-            <Button :label="i18n?.add || '添加'" icon="pi pi-plus" severity="success" @click="addCategory" />
+            <button class="btn btn-success" @click="addCategory">
+              <Icon icon="mdi:plus" />
+              {{ i18n?.add || '添加' }}
+            </button>
           </div>
         </div>
 
@@ -195,7 +217,10 @@
           >
             <span class="category-dot" :style="{ backgroundColor: cat.color }"></span>
             <span class="category-name">{{ cat.name }}</span>
-            <Button :label="i18n?.delete || '删除'" icon="pi pi-trash" size="small" severity="danger" outlined @click="deleteCategory(cat.id)" />
+            <button class="btn btn-small btn-danger btn-outlined" @click="deleteCategory(cat.id)">
+              <Icon icon="mdi:delete" />
+              {{ i18n?.delete || '删除' }}
+            </button>
           </div>
         </div>
       </div>
@@ -206,15 +231,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, onBeforeMount, onUnmounted } from 'vue'
 import type { Skill, SkillCategory } from './types'
-import Button from 'primevue/button'
 import { Icon } from '@iconify/vue'
-
-// Icons for better maintainability and consistency with project guidelines
-const categoryManageIcon = 'mdi:format-list-bulleted'
-const closeIcon = 'mdi:close'
-const editIcon = 'mdi:pencil'
-const deleteIcon = 'mdi:delete'
-const addIcon = 'mdi:plus'
 
 const props = defineProps<{
   i18n?: Record<string, string>

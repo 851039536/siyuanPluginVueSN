@@ -1,3 +1,120 @@
+@use "sass:color";
+@use "@/index.scss" as *;
+
+$button-transition: all 0.2s ease;
+
+// ========== 自定义按钮组件 ==========
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: $font-body;
+  cursor: pointer;
+  transition: $button-transition;
+  white-space: nowrap;
+  background: transparent;
+  color: var(--text-color, #1f2937);
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-color, #3b82f6);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  // 图标按钮
+  &.btn-icon {
+    padding: 8px;
+    width: 32px;
+    height: 32px;
+  }
+
+  // 小尺寸按钮
+  &.btn-small {
+    padding: 6px 12px;
+    font-size: 13px;
+
+    &.btn-icon {
+      width: 28px;
+      height: 28px;
+      padding: 6px;
+
+      svg {
+        width: 14px;
+        height: 14px;
+      }
+    }
+  }
+
+  // 主要按钮
+  &.btn-primary {
+    background: var(--primary-color, #3b82f6);
+    color: #ffffff;
+    border-color: var(--primary-color, #3b82f6);
+
+    &:hover:not(:disabled) {
+      background: color.scale(#3b82f6, $lightness: -10%);
+      border-color: color.scale(#3b82f6, $lightness: -10%);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+  }
+
+  // 次要按钮
+  &.btn-secondary {
+    background: var(--background-secondary, #f9fafb);
+    color: var(--text-color, #1f2937);
+    border-color: var(--border-color, #d1d5db);
+
+    &:hover:not(:disabled) {
+      background: var(--background-hover, #f3f4f6);
+      border-color: var(--primary-color, #3b82f6);
+    }
+  }
+
+  // 文本按钮（无边框）
+  &.btn-text {
+    background: transparent;
+    border-color: transparent;
+    color: var(--text-secondary, #6b7280);
+
+    &:hover:not(:disabled) {
+      background: var(--background-hover, #f3f4f6);
+      color: var(--text-color, #1f2937);
+    }
+  }
+
+  // 旋转动画（用于加载状态）
+  .spin-icon {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+}
+
 .webdav-content {
   flex: 1;
   overflow-y: auto;

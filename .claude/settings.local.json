@@ -87,7 +87,8 @@
       "Skill(markdown-converter)",
       "Skill(markdown-converter:*)",
       "Bash(uvx markitdown:*)",
-      "Bash(powershell -Command \"Test-Path ''e:\\\\2.资料合集\\\\RF功能测试''\")"
+      "Bash(powershell -Command \"Test-Path ''e:\\\\2.资料合集\\\\RF功能测试''\")",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

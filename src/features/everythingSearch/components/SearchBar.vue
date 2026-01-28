@@ -97,7 +97,7 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
-@use "@/index.scss" as *;
+@use "@/variables" as *;
 
 .search-bar {
   display: flex;

@@ -49,7 +49,7 @@ withDefaults(defineProps<Props>(), {
 </script>
 
 <style scoped lang="scss">
-@use "@/index.scss" as *;
+@use "@/variables" as *;
 @use "../../superPanel/styles/variables" as *;
 @use "../../superPanel/styles/mixins" as *;
 

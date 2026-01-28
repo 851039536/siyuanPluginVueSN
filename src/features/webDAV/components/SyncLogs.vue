@@ -46,7 +46,7 @@ const onClear = () => {
 
 <style scoped lang="scss">
 @use "sass:color";
-@use "@/index.scss" as *;
+@use "@/variables" as *;
 
 .sync-logs {
   border: 1px solid var(--border-color, #e5e7eb);

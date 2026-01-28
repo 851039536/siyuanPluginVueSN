@@ -1,0 +1,35 @@
+// ========== SCSS 变量定义 ==========
+// 此文件包含所有 SCSS 变量，可供组件导入使用
+
+// ========== Anthropic 品牌变量 ==========
+
+// 品牌颜色 - 专业沉稳风格
+$brand-dark: #141413;         // Primary text and dark backgrounds
+$brand-light: #faf9f5;        // Light backgrounds and text on dark
+$brand-mid-gray: #9a9990;     // Secondary elements（更深的灰，增强层次）
+$brand-light-gray: #e8e6dc;   // Subtle backgrounds
+$brand-subtle-gray: #d4d2ca;  // 新增：微妙分隔线、边框
+$brand-orange: #c97a5d;       // Primary accent（降低饱和度，更沉稳的陶土橙）
+$brand-blue: #5d8fb3;         // Secondary accent（更深更沉稳的蓝灰）
+$brand-green: #6b8051;        // Tertiary accent（偏橄榄绿，更克制）
+
+// 品牌字体变量 - 现代字体栈，优化中文显示
+$font-heading: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+$font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+
+// ========== 响应式断点 ==========
+$mobile-breakpoint: 768px;
+$tablet-breakpoint: 1024px;
+
+// ========== 紧凑模式变量 ==========
+$compact-padding: 8px;
+$compact-gap: 8px;
+$compact-border-radius: 6px;
+$compact-font-size-reduction: 0.9;
+
+// ========== 代码块变量 ==========
+$codeblock-padding: 4px;
+$codeblock-font-size: 13px;
+$codeblock-border-radius: 8px;
+$codeblock-transition: all 0.2s ease;
+$codeblock-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);

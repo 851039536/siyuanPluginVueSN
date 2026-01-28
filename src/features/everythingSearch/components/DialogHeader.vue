@@ -33,7 +33,7 @@ const handleClose = () => {
 </script>
 
 <style scoped lang="scss">
-@use "@/index.scss" as *;
+@use "@/variables" as *;
 
 .dialog-header {
   display: flex;

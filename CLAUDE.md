@@ -101,7 +101,7 @@ Vue 应用结构
 
 本项目使用 Anthropic 官方品牌色，所有新增页面必须遵守以下规范：
 
-#### 品牌颜色（定义在 `src/index.scss`）
+#### 品牌颜色（定义在 `src/_variables.scss`）
 
 ```scss
 // 主色
@@ -170,10 +170,6 @@ $font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Ne
   }
 }
 ```
-
-#### 参考实现
-
-- `src/features/passwordVault/PasswordVaultDialog.scss` - 完整的品牌规范示例
 
 ## API参考
 

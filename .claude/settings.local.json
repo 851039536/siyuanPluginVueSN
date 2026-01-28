@@ -88,7 +88,15 @@
       "Skill(markdown-converter:*)",
       "Bash(uvx markitdown:*)",
       "Bash(powershell -Command \"Test-Path ''e:\\\\2.资料合集\\\\RF功能测试''\")",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(while read f)",
+      "Bash(do basename \"$f\")",
+      "Bash(done)",
+      "Bash(for f in src/features/*/index.scss src/features/*/*.scss)",
+      "Bash(do [ -f \"$f\" ])",
+      "Bash(echo:*)",
+      "Bash(while read file)",
+      "Bash(du:*)"
     ],
     "deny": [],
     "ask": []

@@ -181,6 +181,10 @@ export const FEATURE_ICONS = {
     icon: 'mdi:card-bulleted',
     color: '#f472b6'
   },
+  headphones: {
+    icon: 'mdi:headphones',
+    color: '#f472b6'
+  },
 
   // 查询单词
   flashcardQuery: {
@@ -290,6 +294,15 @@ export const COMMON_ICONS = {
   },
   down: {
     icon: 'mdi:arrow-down',
+  },
+  chevronLeft: {
+    icon: 'mdi:chevron-left',
+  },
+  chevronRight: {
+    icon: 'mdi:chevron-right',
+  },
+  shuffle: {
+    icon: 'mdi:shuffle-variant',
   },
 
   // 文件类

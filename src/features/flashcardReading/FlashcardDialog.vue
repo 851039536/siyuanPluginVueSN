@@ -4,20 +4,16 @@
       <div v-if="visible" class="flashcard-dialog-overlay" @click.self="close">
         <div class="flashcard-dialog">
           <!-- 关闭按钮 -->
-          <Button
-            icon="pi pi-times"
-            severity="secondary"
-            variant="text"
-            rounded
-            class="close-btn"
+          <button
+            class="icon-btn close-btn"
             @click="close"
-          />
+          >
+            <IconWrapper name="close" :size="16" />
+          </button>
 
           <!-- 空状态 -->
           <div v-if="filteredCards.length === 0" class="empty-state">
-            <svg viewBox="0 0 24 24" width="64" height="64">
-              <path fill="currentColor" d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-            </svg>
+            <IconWrapper name="file" :size="64" />
             <p>{{ i18n.noCards || '暂无卡片' }}</p>
           </div>
 
@@ -31,16 +27,13 @@
                 <span class="practice-count">{{ i18n.practiceCount || '练习次数' }}: {{ currentCard?.practiceCount || 0 }}</span>
               </div>
               <!-- 播放按钮 -->
-              <Button
-                :label="i18n.play || '播放'"
-                icon="pi pi-play"
-                iconPos="left"
-                size="large"
-                rounded
-                raised
-                class="play-btn-large"
+              <button
+                class="btn btn-large btn-raised play-btn-large"
                 @click="playWord(currentCard)"
-              />
+              >
+                <IconWrapper name="play" :size="16" />
+                <span>{{ i18n.play || '播放' }}</span>
+              </button>
             </div>
 
             <!-- 类别筛选 -->
@@ -56,32 +49,29 @@
 
             <!-- 导航 -->
             <div class="card-navigation">
-              <Button
-                icon="pi pi-chevron-left"
-                severity="secondary"
-                rounded
-                outlined
+              <button
+                class="btn btn-outlined"
                 @click="previousCard"
                 :disabled="currentIndex === 0"
-              />
-              <Button
-                icon="pi pi-sort-alt"
-                severity="secondary"
-                rounded
-                outlined
+              >
+                <IconWrapper name="chevronLeft" :size="16" />
+              </button>
+              <button
+                class="btn btn-outlined"
                 @click="randomCard"
-              />
+              >
+                <IconWrapper name="shuffle" :size="16" />
+              </button>
               <span class="card-counter">
                 {{ currentIndex + 1 }} / {{ filteredCards.length }}
               </span>
-              <Button
-                icon="pi pi-chevron-right"
-                severity="secondary"
-                rounded
-                outlined
+              <button
+                class="btn btn-outlined"
                 @click="nextCard"
                 :disabled="currentIndex === filteredCards.length - 1"
-              />
+              >
+                <IconWrapper name="chevronRight" :size="16" />
+              </button>
             </div>
           </template>
         </div>
@@ -91,9 +81,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { showMessage } from 'siyuan'
-import Button from 'primevue/button'
+
+import IconWrapper from '@/components/IconWrapper.vue'
 import type { Plugin } from 'siyuan'
 import { FlashcardStorage } from './storage'
 import type { Flashcard } from './types'
@@ -213,6 +204,8 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+@use './index.scss' as *;
+
 .flashcard-dialog-overlay {
   position: fixed;
   top: 0;
@@ -256,14 +249,10 @@ onMounted(() => {
   gap: 16px;
   padding: 40px 20px;
   color: var(--b3-theme-on-surface);
-
-  svg {
-    opacity: 0.3;
-  }
+  opacity: 0.6;
 
   p {
     font-size: 14px;
-    opacity: 0.7;
   }
 }
 

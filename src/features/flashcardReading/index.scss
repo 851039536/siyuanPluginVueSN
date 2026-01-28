@@ -1,3 +1,140 @@
+// ========== 自定义按钮样式 ==========
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--b3-theme-on-surface);
+  transition: all 0.2s;
+
+  &:hover {
+    background: var(--b3-theme-surface);
+    color: var(--b3-theme-primary);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &.icon-btn-small {
+    padding: 4px 8px;
+  }
+
+  &.icon-btn-danger:hover {
+    background: rgba(217, 119, 87, 0.1);
+    color: #d97757;
+  }
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+
+  &:hover:not(:disabled) {
+    background: var(--b3-theme-surface-light);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &.btn-small {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  &.btn-large {
+    padding: 12px 24px;
+    font-size: 16px;
+  }
+
+  &.btn-primary {
+    background: var(--b3-theme-primary);
+    color: #fff;
+
+    &:hover:not(:disabled) {
+      background: var(--b3-theme-primary-light);
+    }
+  }
+
+  &.btn-outlined {
+    background: transparent;
+    border: 1px solid var(--b3-border-color);
+
+    &:hover:not(:disabled) {
+      background: var(--b3-theme-primary);
+      border-color: var(--b3-theme-primary);
+      color: #fff;
+    }
+  }
+
+  &.btn-raised {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+
+    &:hover:not(:disabled) {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+  }
+}
+
+// ========== 自定义标签样式 ==========
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+
+  &.tag-small {
+    padding: 2px 8px;
+    font-size: 11px;
+  }
+
+  &.tag-rounded {
+    border-radius: 12px;
+  }
+
+  &.tag-secondary {
+    background: var(--b3-theme-surface);
+    color: var(--b3-theme-on-surface);
+  }
+
+  &.tag-info {
+    background: var(--b3-theme-primary);
+    color: #fff;
+  }
+
+  &.tag-success {
+    background: #10b981;
+    color: #fff;
+  }
+
+  &.tag-contrast {
+    background: var(--b3-theme-on-background);
+    color: var(--b3-theme-background);
+  }
+}
+
 .flashcard-reading-panel {
   display: flex;
   flex-direction: column;

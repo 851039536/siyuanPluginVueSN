@@ -49,7 +49,7 @@
 
 <script setup lang="ts">
 import { usePlugin } from '@/main'
-import { onMounted, ref, watchEffect } from 'vue'
+import { onMounted, ref } from 'vue'
 import ImageViewer from '@/features/imageCompressor/ImageViewer.vue'
 import { QRCodeDialog, PronunciationDialog } from '@/features/floatingToolbar'
 import VideoManager from '@/features/video/VideoManager.vue'

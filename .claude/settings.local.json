@@ -96,7 +96,8 @@
       "Bash(do [ -f \"$f\" ])",
       "Bash(echo:*)",
       "Bash(while read file)",
-      "Bash(du:*)"
+      "Bash(du:*)",
+      "mcp__sequential-thinking__sequentialthinking"
     ],
     "deny": [],
     "ask": []

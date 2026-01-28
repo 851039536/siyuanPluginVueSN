@@ -19,7 +19,6 @@
   },
   "dependencies": {
     "@iconify/vue": "^5.0.0",
-    "@primeuix/themes": "^2.0.3",
     "@types/markdown-it": "^14.1.2",
     "@types/markdown-it-anchor": "^7.0.0",
     "@types/video.js": "^7.3.58",
@@ -32,8 +31,6 @@
     "markdown-it-anchor": "^9.2.0",
     "markdown-it-toc-done-right": "^4.2.0",
     "marked": "^17.0.1",
-    "primeicons": "^7.0.0",
-    "primevue": "^4.5.4",
     "qrcode": "^1.5.4",
     "video.js": "^8.23.4",
     "vue": "^3.3.8",

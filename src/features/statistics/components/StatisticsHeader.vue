@@ -1,18 +1,14 @@
 <template>
   <div class="statistics-header">
     <div class="header-left">
-      <Button
-        size="small"
+      <button
         class="refresh-btn"
-        icon="pi pi-refresh"
         :title="i18n.refresh"
         @click="handleRefresh"
         :disabled="loading"
-        :loading="loading"
-        severity="secondary"
-        text
-        rounded
-      />
+      >
+        <Icon :icon="loading ? 'mdi:loading' : 'mdi:refresh'" :class="{ 'spin-icon': loading }" />
+      </button>
     </div>
     <div class="header-right">
       <div class="auto-update-info">
@@ -26,7 +22,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import Button from 'primevue/button'
+import { Icon } from '@iconify/vue'
 
 interface Props {
   loading?: boolean
@@ -124,12 +120,35 @@ $stats-transition: all 0.2s ease;
 }
 
 .refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   padding: 4px 8px;
   border: 1px solid var(--b3-border-color);
   border-radius: 4px;
   background: transparent;
   cursor: pointer;
   transition: $stats-transition;
+  color: var(--b3-theme-primary);
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .spin-icon {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
 
   &:hover:not(:disabled) {
     background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1);
@@ -140,8 +159,6 @@ $stats-transition: all 0.2s ease;
     opacity: 0.5;
     cursor: not-allowed;
   }
-
-  color: var(--b3-theme-primary);
 }
 
 // Responsive design

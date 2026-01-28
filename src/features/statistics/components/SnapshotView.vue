@@ -2,7 +2,9 @@
   <div class="snapshot-view">
     <h3 class="section-title">
       {{ i18n.title }}
-      <Button @click="handleClear" class="clear-btn" :title="i18n.clearTitle" icon="pi pi-trash" severity="danger" text rounded />
+      <button @click="handleClear" class="clear-btn" :title="i18n.clearTitle">
+        <Icon icon="mdi:delete" />
+      </button>
     </h3>
 
     <div v-if="snapshotData.length > 0" class="snapshot-stats">
@@ -22,7 +24,7 @@
           <div class="snapshot-time">
             <span class="time-icon">⏰</span>
             <span class="time-text">{{ snapshot.datetime }}</span>
-            <Tag v-if="index === 0" :value="i18n.latest" severity="success" />
+            <span v-if="index === 0" class="tag tag-success">{{ i18n.latest }}</span>
           </div>
         </div>
         <div class="snapshot-stats-grid">
@@ -60,14 +62,16 @@
         <!-- 显示与上一个快照的差异 -->
         <div v-if="index < snapshotData.length - 1" class="snapshot-diff">
           <span class="diff-label">{{ i18n.changeLabel }}:</span>
-          <Tag size="small"
-            :value="(getSnapshotWordDiff(snapshot, snapshotData[index + 1]) > 0 ? '+' : '') + formatNumber(getSnapshotWordDiff(snapshot, snapshotData[index + 1])) + ' ' + i18n.wordsUnit"
-            :severity="getSnapshotWordDiff(snapshot, snapshotData[index + 1]) > 0 ? 'success' : getSnapshotWordDiff(snapshot, snapshotData[index + 1]) < 0 ? 'danger' : 'secondary'"
-          />
-          <Tag size="small"
-            :value="(getSnapshotNoteDiff(snapshot, snapshotData[index + 1]) > 0 ? '+' : '') + getSnapshotNoteDiff(snapshot, snapshotData[index + 1]) + ' ' + i18n.notesUnit"
-            :severity="getSnapshotNoteDiff(snapshot, snapshotData[index + 1]) > 0 ? 'success' : getSnapshotNoteDiff(snapshot, snapshotData[index + 1]) < 0 ? 'danger' : 'secondary'"
-          />
+          <span class="tag tag-small"
+            :class="getSnapshotWordDiff(snapshot, snapshotData[index + 1]) > 0 ? 'tag-success' : getSnapshotWordDiff(snapshot, snapshotData[index + 1]) < 0 ? 'tag-danger' : 'tag-secondary'"
+          >
+            {{ (getSnapshotWordDiff(snapshot, snapshotData[index + 1]) > 0 ? '+' : '') + formatNumber(getSnapshotWordDiff(snapshot, snapshotData[index + 1])) + ' ' + i18n.wordsUnit }}
+          </span>
+          <span class="tag tag-small"
+            :class="getSnapshotNoteDiff(snapshot, snapshotData[index + 1]) > 0 ? 'tag-success' : getSnapshotNoteDiff(snapshot, snapshotData[index + 1]) < 0 ? 'tag-danger' : 'tag-secondary'"
+          >
+            {{ (getSnapshotNoteDiff(snapshot, snapshotData[index + 1]) > 0 ? '+' : '') + getSnapshotNoteDiff(snapshot, snapshotData[index + 1]) + ' ' + i18n.notesUnit }}
+          </span>
         </div>
       </div>
       <div v-if="snapshotData.length === 0" class="empty-snapshot">
@@ -78,8 +82,7 @@
 </template>
 
 <script setup lang="ts">
-import Button from 'primevue/button'
-import Tag from 'primevue/tag'
+import { Icon } from '@iconify/vue'
 
 interface SnapshotData {
   timestamp: number
@@ -190,6 +193,10 @@ $stats-transition: all 0.2s ease;
     color: var(--b3-theme-on-surface);
 
     .clear-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
       padding: 4px 8px;
       border: 1px solid var(--b3-border-color);
       border-radius: 4px;
@@ -198,12 +205,49 @@ $stats-transition: all 0.2s ease;
       font-size: 14px;
       transition: $stats-transition;
       font-family: $font-body;
+      color: var(--b3-theme-on-surface);
+
+      svg {
+        width: 16px;
+        height: 16px;
+      }
 
       &:hover {
         background: var(--b3-theme-error);
         color: white;
         border-color: var(--b3-theme-error);
       }
+    }
+  }
+
+  // Tag 组件样式
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    font-family: $font-body;
+
+    &.tag-small {
+      font-size: 10px;
+      padding: 2px 6px;
+    }
+
+    &.tag-success {
+      background: rgba(16, 185, 129, 0.15);
+      color: #10b981;
+    }
+
+    &.tag-danger {
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+    }
+
+    &.tag-secondary {
+      background: rgba(107, 114, 128, 0.15);
+      color: #6b7280;
     }
   }
 

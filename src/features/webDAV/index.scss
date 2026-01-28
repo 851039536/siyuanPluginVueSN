@@ -1,5 +1,6 @@
 @use "sass:color";
-@use "@/index.scss" as *;
+// 只导入变量，不导入全局样式（全局样式已在 index.ts 中导入）
+@use "@/variables" as *;
 
 $button-transition: all 0.2s ease;
 

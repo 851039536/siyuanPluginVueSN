@@ -146,7 +146,7 @@ const onDownload = (file: WebDAVFile) => {
 
 <style scoped lang="scss">
 @use "sass:color";
-@use "@/index.scss" as *;
+@use "@/variables" as *;
 
 // 按钮样式
 .btn-icon-small {

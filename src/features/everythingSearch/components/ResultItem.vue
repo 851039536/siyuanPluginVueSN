@@ -120,7 +120,7 @@ const handleCopyPath = () => {
 </script>
 
 <style scoped lang="scss">
-@use "@/index.scss" as *;
+@use "@/variables" as *;
 
 .result-item {
   display: flex;

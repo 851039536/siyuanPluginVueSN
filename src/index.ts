@@ -21,7 +21,6 @@ let PluginInfo = {
 try {
   PluginInfo = PluginInfoString
 } catch (err) {
-  console.log('Plugin info parse error: ', err)
 }
 const {
   version,
@@ -63,7 +62,6 @@ export default class PluginSample extends Plugin {
 
     // 加载配置
     this.settings = await loadSettings(this)
-    console.log('插件配置已加载:', this.settings)
 
     // 注册功能模块
     await this.registerFeatures()
@@ -104,7 +102,6 @@ export default class PluginSample extends Plugin {
    */
   private async registerFeatures() {
     // 注册超级面板（统一入口，始终启用）
-    console.log('注册超级面板')
     registerSuperPanel(this)
 
     // 根据配置注册功能模块
@@ -235,7 +232,6 @@ export default class PluginSample extends Plugin {
     this.settings = newSettings
     const success = await saveSettings(this, newSettings)
     if (success) {
-      console.log('配置已更新:', this.settings)
     }
     return success
   }

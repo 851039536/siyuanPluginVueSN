@@ -9,7 +9,6 @@ import 'highlight.js/styles/github-dark.css'
 
 let plugin: Plugin | null = null
 export function usePlugin(pluginProps?: Plugin): Plugin {
-  console.log('usePlugin', pluginProps, plugin)
   if (pluginProps) {
     plugin = pluginProps
   }

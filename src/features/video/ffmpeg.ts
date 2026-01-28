@@ -249,8 +249,6 @@ export async function mergeVideos(params: MergeVideosParams): Promise<FFmpegResu
     const escapedListPath = escapeFilePathForCmd(listPath)
     const cmd = `${ffmpegPath} -f concat -safe 0 -i ${escapedListPath} -c copy ${escapedOutputPath} -y`
 
-    console.log('FFmpeg 合并命令:', cmd)
-
     // 执行命令
     onProgress?.(10)
     const { stdout, stderr } = await execAsync(cmd, {
@@ -300,10 +298,6 @@ export async function mergeVideoAudio(params: MergeVideoAudioParams): Promise<FF
     const absoluteVideoPath = await resolveAbsolutePath(videoPath)
     const absoluteAudioPath = await resolveAbsolutePath(audioPath)
 
-    console.log('视频路径:', absoluteVideoPath)
-    console.log('音频路径:', absoluteAudioPath)
-    console.log('输出路径:', outputPath)
-
     // 构建 FFmpeg 命令
     // -i video: 输入视频
     // -i audio: 输入音频
@@ -314,8 +308,6 @@ export async function mergeVideoAudio(params: MergeVideoAudioParams): Promise<FF
     const escapedAudioPath = escapeFilePathForCmd(absoluteAudioPath)
     const escapedOutputPath = escapeFilePathForCmd(outputPath)
     const cmd = `${ffmpegPath} -i ${escapedVideoPath} -i ${escapedAudioPath} -c:v copy -c:a aac -shortest ${escapedOutputPath} -y`
-
-    console.log('FFmpeg 命令:', cmd)
 
     onProgress?.(10)
     const { stdout, stderr } = await execAsync(cmd, {
@@ -363,8 +355,6 @@ export async function compressVideo(params: CompressVideoParams): Promise<FFmpeg
     // 将相对路径转换为绝对路径
     const absoluteInputPath = await resolveAbsolutePath(inputPath)
 
-    console.log('输入路径:', absoluteInputPath)
-    console.log('输出路径:', outputPath)
 
     // 构建 FFmpeg 命令
     let cmd = `${ffmpegPath}`
@@ -397,8 +387,6 @@ export async function compressVideo(params: CompressVideoParams): Promise<FFmpeg
 
     // 输出文件
     cmd += ` ${escapeFilePathForCmd(outputPath)} -y`
-
-    console.log('FFmpeg 压缩命令:', cmd)
 
     onProgress?.(10)
     const { stdout, stderr } = await execAsync(cmd, {

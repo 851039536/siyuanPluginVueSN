@@ -10,7 +10,6 @@ let selectedText = ''
 export function registerHighlight(plugin: Plugin, enableHighlight: boolean = true) {
   // 如果功能未启用，则不注册
   if (!enableHighlight) {
-    console.log('双击高亮功能已禁用')
     return
   }
 
@@ -44,8 +43,6 @@ export function registerHighlight(plugin: Plugin, enableHighlight: boolean = tru
   document.addEventListener('mousedown', () => {
     unhighlight()
   })
-
-  console.log('双击高亮功能已注册')
 }
 
 function highlight(text: string) {

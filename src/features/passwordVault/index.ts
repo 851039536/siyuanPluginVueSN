@@ -38,7 +38,6 @@ export function registerPasswordVault(plugin: Plugin) {
     langText: '密码箱',
     hotkey: '⌃⌥W', // Ctrl+Alt+W
     callback: () => {
-      console.log('密码箱快捷键触发')
       showPasswordVault()
     }
   })

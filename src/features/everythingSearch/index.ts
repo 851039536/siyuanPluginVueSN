@@ -38,7 +38,6 @@ export function registerEverythingSearch(plugin: Plugin) {
     langText: 'Everything本地搜索',
     hotkey: '⌃⌥E', // Ctrl+Alt+E
     callback: () => {
-      console.log('Everything搜索快捷键触发')
       showEverythingSearch()
     }
   })

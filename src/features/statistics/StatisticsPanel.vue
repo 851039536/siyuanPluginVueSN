@@ -396,7 +396,6 @@ async function loadSnapshotData() {
 
   try {
     snapshotData.value = await props.onGetSnapshots(50)
-    console.log('已加载快照数据:', snapshotData.value.length)
   } catch (error) {
     console.error('加载快照数据失败:', error)
   }
@@ -409,7 +408,6 @@ async function clearSnapshots() {
   try {
     await props.onClearSnapshots()
     snapshotData.value = []
-    console.log('快照数据已清除')
   } catch (error) {
     console.error('清除快照数据失败:', error)
   }

@@ -87,7 +87,6 @@ function showSkillsModal(plugin: Plugin) {
 
   try {
     vueApp.mount(container)
-    console.log('Skills modal opened')
   } catch (error) {
     console.error('Failed to mount skills modal:', error)
   }
@@ -115,7 +114,6 @@ function closeSkillsModal() {
     vueApp?.unmount()
     vueApp = null
     container = null
-    console.log('Skills modal closed')
   }
 }
 

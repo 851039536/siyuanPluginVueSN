@@ -28,7 +28,6 @@ export class ModuleManager {
    */
   registerModule(module: SettingsModule): void {
     this.modules.set(module.id, module);
-    console.log(`设置模块已注册: ${module.name}`);
   }
 
   /**
@@ -60,7 +59,6 @@ export class ModuleManager {
     const module = this.modules.get(id);
     if (module) {
       module.enabled = enabled;
-      console.log(`模块 ${module.name} ${enabled ? '已启用' : '已禁用'}`);
     }
   }
 
@@ -70,7 +68,6 @@ export class ModuleManager {
   removeModule(id: string): boolean {
     const result = this.modules.delete(id);
     if (result) {
-      console.log(`设置模块已移除: ${id}`);
     }
     return result;
   }
@@ -80,7 +77,6 @@ export class ModuleManager {
    */
   clearModules(): void {
     this.modules.clear();
-    console.log('所有设置模块已清空');
   }
 
   /**

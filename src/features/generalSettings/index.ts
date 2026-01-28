@@ -39,7 +39,6 @@ export class GeneralSettings {
     // 启动自动备份定时器
     await this.initAutoBackup();
 
-    console.log('通用设置模块已初始化');
   }
 
   /**
@@ -87,7 +86,6 @@ export class GeneralSettings {
    * 处理设置变化
    */
   private handleSettingsChange(settings: any) {
-    console.log('通用设置已更新:', settings);
 
     // 根据模块类型处理不同的设置
     if (settings.moduleId === 'font') {
@@ -206,7 +204,6 @@ export class GeneralSettings {
       // 从插件数据库加载设置
       const settings = await loadCodeBlockSettings(this.plugin);
       this.applyCodeBlockStyleFromSettings(settings);
-      console.log('代码块样式已从数据库加载并应用:', settings);
     } catch (error) {
       console.error('应用代码块样式失败:', error);
     }
@@ -220,7 +217,6 @@ export class GeneralSettings {
       // 从插件数据库加载设置
       const settings = await loadListSettingsFromDB(this.plugin);
       this.applyListStyles(settings);
-      console.log('列表样式已从数据库加载并应用:', settings);
     } catch (error) {
       console.error('应用列表样式失败:', error);
     }
@@ -239,14 +235,12 @@ export class GeneralSettings {
         document.addEventListener('DOMContentLoaded', () => {
           setTimeout(() => {
             this.applyHeadingStyles(settings);
-            console.log('标题样式已从数据库加载并应用 (DOM ready):', settings);
           }, 200);
         });
       } else {
         // DOM 已经加载完成，稍微延迟以确保页面完全渲染
         setTimeout(() => {
           this.applyHeadingStyles(settings);
-          console.log('标题样式已从数据库加载并应用:', settings);
         }, 200);
       }
     } catch (error) {
@@ -261,13 +255,6 @@ export class GeneralSettings {
     try {
       const style = document.getElementById('heading-colors-style') || document.createElement('style');
       style.id = 'heading-colors-style';
-
-      console.log('应用标题样式，设置内容:', {
-        titleCenterAlign: settings.titleCenterAlign,
-        titleColor: settings.titleColor,
-        levelDisplay: settings.levelDisplay,
-        hasColors: !!settings.colors
-      });
 
       // 颜色样式
       const colors = settings.colors || {};
@@ -295,13 +282,11 @@ export class GeneralSettings {
         `)
         .join('\n');
 
-      console.log('应用字体大小样式:', fontSizes);
 
       // 层级显示样式
       let levelCss = '';
       if (settings.levelDisplay && settings.levelDisplay !== 'none') {
         levelCss = this.generateLevelDisplayCss(settings.levelDisplay, settings.customMarkers || []);
-        console.log('应用层级显示样式:', settings.levelDisplay);
       }
 
       // 标题居中样式（仅文档标题）
@@ -311,7 +296,6 @@ export class GeneralSettings {
         }
       ` : '';
       if (settings.titleCenterAlign) {
-        console.log('应用标题居中样式');
       }
 
       // 文档标题颜色样式（独立于居中设置）
@@ -321,7 +305,6 @@ export class GeneralSettings {
         }
       ` : '';
       if (settings.titleColor) {
-        console.log('应用标题颜色:', settings.titleColor);
       }
 
       // 文档标题字体大小样式
@@ -331,7 +314,6 @@ export class GeneralSettings {
         }
       ` : '';
       if (settings.titleFontSize) {
-        console.log('应用标题字体大小:', settings.titleFontSize);
       }
 
       style.textContent = colorCss + '\n' + fontSizeCss + '\n' + levelCss + '\n' + centerAlignCss + '\n' + titleColorCss + '\n' + titleFontSizeCss;
@@ -340,7 +322,6 @@ export class GeneralSettings {
         document.head.appendChild(style);
       }
 
-      console.log('标题样式已应用到文档');
     } catch (error) {
       console.error('应用标题样式失败:', error);
     }
@@ -402,7 +383,6 @@ export class GeneralSettings {
         this.removeExistingListStyles();
       }
 
-      console.log('列表样式已应用:', settings);
     } catch (error) {
       console.error('应用列表样式失败:', error);
     }
@@ -426,7 +406,6 @@ export class GeneralSettings {
     styleElement.textContent = css;
     document.head.appendChild(styleElement);
 
-    console.log('列表样式已应用到页面');
   }
 
   /**
@@ -436,7 +415,6 @@ export class GeneralSettings {
     const existingStyle = document.getElementById('custom-list-styles');
     if (existingStyle) {
       existingStyle.remove();
-      console.log('已移除现有的列表样式');
     }
   }
 
@@ -450,7 +428,6 @@ export class GeneralSettings {
       document.body.classList.remove('codeblock-style-default', 'codeblock-style-github', 'codeblock-style-mac');
       // 添加新的样式类
       document.body.classList.add(`codeblock-style-${style}`);
-      console.log(`代码块样式已应用: ${style}`);
     } catch (error) {
       console.error('应用代码块样式失败:', error);
     }
@@ -505,7 +482,6 @@ export class GeneralSettings {
       // 保存 observer 实例以便清理
       (this as any).contentObserver = observer;
 
-      console.log('已启动内容变化观察器');
     } catch (error) {
       console.error('启动内容变化观察器失败:', error);
     }
@@ -518,7 +494,6 @@ export class GeneralSettings {
     try {
       // 加载自动备份设置
       const data = await this.plugin.loadData('data-backup-settings');
-      console.log('initAutoBackup - 加载的备份设置:', data);
 
       if (data) {
         this.workspacePath = data.workspacePath || '';
@@ -531,14 +506,9 @@ export class GeneralSettings {
       const autoBackupEnabled = data?.autoBackupEnabled ?? false;
       const backupFrequency = data?.backupFrequency ?? 'daily';
 
-      console.log('initAutoBackup - isMobile:', isMobile, 'autoBackupEnabled:', autoBackupEnabled, 'backupFrequency:', backupFrequency);
-
       // 移动端自动禁用自动备份
       if (!isMobile && autoBackupEnabled) {
         this.startAutoBackupTimer(backupFrequency);
-        console.log('自动备份定时器已启动，频率:', backupFrequency);
-      } else {
-        console.log('自动备份未启动 - 移动端:', isMobile, '已启用:', autoBackupEnabled);
       }
     } catch (error) {
       console.error('初始化自动备份失败:', error);
@@ -564,16 +534,11 @@ export class GeneralSettings {
     this.stopAutoBackupTimer();
 
     const interval = this.getBackupInterval(backupFrequency);
-    console.log('startAutoBackupTimer - 备份频率:', backupFrequency, '间隔(ms):', interval);
-    console.log('startAutoBackupTimer - 上次备份时间戳:', this.lastBackupTimestamp, new Date(this.lastBackupTimestamp).toLocaleString());
-
     const checkAndBackup = async () => {
       // 确保有工作区路径
       if (!this.workspacePath) {
-        console.log('自动备份检查 - 工作区路径为空，尝试检测...');
         await this.detectWorkspacePath();
         if (!this.workspacePath) {
-          console.log('自动备份检查 - 无法获取工作区路径，跳过备份');
           return;
         }
       }
@@ -582,23 +547,16 @@ export class GeneralSettings {
       const currentTime = now.getTime();
       const timeSinceLastBackup = currentTime - this.lastBackupTimestamp;
 
-      console.log('自动备份检查 - 当前时间:', now.toLocaleString(), '距离上次备份(ms):', timeSinceLastBackup, '需要间隔(ms):', interval);
-
       // 如果距离上次备份时间超过间隔，则执行备份
       if (timeSinceLastBackup >= interval) {
-        console.log('自动备份检查 - 触发备份');
         await this.performAutoBackup(backupFrequency);
-      } else {
-        console.log('自动备份检查 - 未到备份时间，跳过');
       }
     };
 
     // 每分钟检查一次
     this.autoBackupTimer = window.setInterval(checkAndBackup, 60000);
-    console.log('自动备份定时器已设置，每分钟检查一次');
 
     // 立即检查一次
-    console.log('立即执行首次备份检查...');
     checkAndBackup();
   }
 
@@ -609,7 +567,6 @@ export class GeneralSettings {
     if (this.autoBackupTimer) {
       clearInterval(this.autoBackupTimer);
       this.autoBackupTimer = null;
-      console.log('自动备份定时器已停止');
     }
   }
 
@@ -684,12 +641,10 @@ export class GeneralSettings {
    * 执行自动备份（直接在插件级别执行，不依赖 Vue 组件）
    */
   private async performAutoBackup(backupFrequency: string) {
-    console.log('performAutoBackup - 开始执行自动备份，频率:', backupFrequency);
 
     try {
       // 检查是否有 Node.js API 可用
       if (typeof window.require !== 'function') {
-        console.log('自动备份 - 无法访问文件系统');
         return;
       }
 
@@ -700,7 +655,6 @@ export class GeneralSettings {
       if (!this.workspacePath) {
         await this.detectWorkspacePath();
         if (!this.workspacePath) {
-          console.log('自动备份 - 无法获取工作区路径');
           return;
         }
       }
@@ -720,14 +674,12 @@ export class GeneralSettings {
       const second = now.getSeconds().toString().padStart(2, '0');
       const fileName = `data-${year}${month}${day}-${hour}${minute}${second}.zip`;
 
-      console.log('自动备份 - 开始创建备份文件:', fileName);
 
       // 检查 data 目录是否存在
       const dataPath = this.workspacePath;
       try {
         await fs.access(dataPath);
       } catch {
-        console.log('自动备份 - data 目录不存在:', dataPath);
         return;
       }
 
@@ -776,7 +728,6 @@ export class GeneralSettings {
       zip.file('backup-info.json', JSON.stringify(backupData, null, 2));
 
       // 生成 ZIP 文件
-      console.log('自动备份 - 开始压缩...');
       const zipBuffer = await zip.generateAsync({
         type: 'uint8array',
         compression: 'DEFLATE',
@@ -789,8 +740,6 @@ export class GeneralSettings {
       // 写入 ZIP 文件
       const zipFilePath = path.join(backupDir, fileName);
       await fs.writeFile(zipFilePath, zipBuffer);
-
-      console.log('自动备份 - 备份完成:', zipFilePath);
 
       // 更新时间戳
       this.lastBackupTimestamp = Date.now();
@@ -828,7 +777,6 @@ export class GeneralSettings {
         for (const file of filesToDelete) {
           try {
             await fs.unlink(file.path);
-            console.log('自动备份 - 已删除旧备份:', file.name);
           } catch (err) {
             console.warn('自动备份 - 删除旧备份失败:', file.name, err);
           }
@@ -862,7 +810,6 @@ export class GeneralSettings {
     this.stopAutoBackupTimer();
     if (enabled) {
       this.startAutoBackupTimer(backupFrequency);
-      console.log('自动备份定时器已重启:', backupFrequency);
     }
   }
 
@@ -884,7 +831,6 @@ export class GeneralSettings {
       }
       // 停止自动备份定时器
       this.stopAutoBackupTimer();
-      console.log('通用设置模块已销毁');
     } catch (error) {
       console.error('销毁通用设置模块失败:', error);
     }
@@ -930,17 +876,14 @@ export function registerGeneralSettings(plugin: Plugin) {
             const { shell } = (window as any).require('electron')
             const result = await shell.openPath(workspacePath)
             successfullyOpened = !result // shell.openPath返回空字符串表示成功
-            console.log('使用Electron打开工作区，结果:', result || '成功')
           } catch (electronError) {
             console.warn('Electron API 不可用或失败:', electronError)
           }
         } else {
-          console.log('非Electron环境')
         }
 
         // 显示成功消息
         showMessage(plugin.i18n.workspaceOpened || '工作区已打开', 2000, 'info')
-        console.log('工作区打开命令已执行，路径:', workspacePath)
       } else {
         showMessage(plugin.i18n.openWorkspaceFailed || '打开工作区失败', 3000, 'error')
         console.error('无法获取工作区路径')
@@ -967,7 +910,6 @@ export function registerGeneralSettings(plugin: Plugin) {
         const result = document.querySelectorAll(selector)
         if (result.length > 0) {
           tabs = result
-          console.log(`Found tabs using selector: ${selector}, count: ${tabs.length}`)
           break
         }
       }
@@ -1021,13 +963,11 @@ export function registerGeneralSettings(plugin: Plugin) {
       }
 
       showMessage(plugin.i18n.allTabsClosed || '所有页签已关闭', 2000, 'info')
-      console.log(`Closed ${closedCount} tabs, total: ${tabs.length}`, closedCount === 0 ? '(might not have found tabs or tabs cannot be closed)' : '')
     } catch (error) {
       console.error('Failed to close tabs:', error)
       showMessage(plugin.i18n.closeTabsFailed || '关闭页签失败', 3000, 'error')
     }
   })
 
-  console.log('通用设置模块已注册');
   return settings;
 }

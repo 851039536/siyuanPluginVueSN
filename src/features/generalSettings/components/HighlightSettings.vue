@@ -65,8 +65,6 @@ async function handleToggleChange() {
       await props.plugin.saveData('highlight-settings', {
         enableHighlight: enableHighlight.value
       })
-      console.log('高亮设置已保存:', enableHighlight.value)
-
       // 显示提示消息
       showMessage(
         enableHighlight.value ? '双击高亮功能已启用' : '双击高亮功能已禁用',

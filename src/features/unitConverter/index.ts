@@ -6,10 +6,8 @@ import UnitConverter from './UnitConverter.vue'
  * 注册单位转换功能
  */
 export const registerUnitConverter = (plugin: PluginSample) => {
-  console.log('注册单位转换功能')
-
   const self = plugin
-  
+
   plugin.addDock({
     config: {
       position: 'RightTop',

@@ -194,7 +194,6 @@ export async function loadSettings(plugin: Plugin): Promise<PluginSettings> {
 export async function saveSettings(plugin: Plugin, settings: PluginSettings): Promise<boolean> {
   try {
     await plugin.saveData(SETTINGS_KEY, settings)
-    console.log('配置已保存:', settings)
     return true
   } catch (error) {
     console.error('保存配置失败:', error)
@@ -213,7 +212,6 @@ export async function saveSettings(plugin: Plugin, settings: PluginSettings): Pr
 export function resetListSettings(): boolean {
   try {
     localStorage.removeItem('general-list-settings')
-    console.log('列表设置已重置')
     return true
   } catch (error) {
     console.error('重置列表设置失败:', error)
@@ -239,8 +237,6 @@ export function applyListStyles(css: string): void {
   styleElement.id = 'custom-list-styles'
   styleElement.textContent = css
   document.head.appendChild(styleElement)
-
-  console.log('列表样式已应用到页面')
 }
 
 /**
@@ -250,7 +246,6 @@ function removeExistingListStyles(): void {
   const existingStyle = document.getElementById('custom-list-styles')
   if (existingStyle) {
     existingStyle.remove()
-    console.log('已移除现有的列表样式')
   }
 }
 
@@ -322,10 +317,8 @@ export async function loadHeadingSettings(plugin: Plugin): Promise<HeadingSettin
   try {
     const data = await plugin.loadData(HEADING_SETTINGS_KEY)
     if (!data) {
-      console.log('没有找到保存的标题设置，使用默认值')
       return { ...DEFAULT_HEADING_SETTINGS }
     }
-    console.log('从数据库加载标题设置:', data)
     // 合并默认配置和已保存的配置，确保 colors 和 fontSizes 都正确合并
     return {
       ...DEFAULT_HEADING_SETTINGS,
@@ -345,7 +338,6 @@ export async function loadHeadingSettings(plugin: Plugin): Promise<HeadingSettin
 export async function saveHeadingSettings(plugin: Plugin, settings: HeadingSettings): Promise<boolean> {
   try {
     await plugin.saveData(HEADING_SETTINGS_KEY, settings)
-    console.log('标题设置已保存到数据库:', settings)
     return true
   } catch (error) {
     console.error('保存标题设置失败:', error)
@@ -359,7 +351,6 @@ export async function saveHeadingSettings(plugin: Plugin, settings: HeadingSetti
 export async function resetHeadingSettings(plugin: Plugin): Promise<boolean> {
   try {
     await plugin.saveData(HEADING_SETTINGS_KEY, DEFAULT_HEADING_SETTINGS)
-    console.log('标题设置已重置')
     return true
   } catch (error) {
     console.error('重置标题设置失败:', error)
@@ -397,10 +388,8 @@ export async function loadCodeBlockSettings(plugin: Plugin): Promise<CodeBlockSe
   try {
     const data = await plugin.loadData(CODEBLOCK_SETTINGS_KEY)
     if (!data) {
-      console.log('没有找到保存的代码块设置，使用默认值')
       return { ...DEFAULT_CODEBLOCK_SETTINGS }
     }
-    console.log('从数据库加载代码块设置:', data)
     return { ...DEFAULT_CODEBLOCK_SETTINGS, ...data }
   } catch (error) {
     console.error('加载代码块设置失败:', error)
@@ -414,7 +403,6 @@ export async function loadCodeBlockSettings(plugin: Plugin): Promise<CodeBlockSe
 export async function saveCodeBlockSettings(plugin: Plugin, settings: CodeBlockSettings): Promise<boolean> {
   try {
     await plugin.saveData(CODEBLOCK_SETTINGS_KEY, settings)
-    console.log('代码块设置已保存到数据库:', settings)
     return true
   } catch (error) {
     console.error('保存代码块设置失败:', error)
@@ -434,10 +422,8 @@ export async function loadListSettingsFromDB(plugin: Plugin): Promise<ListSettin
   try {
     const data = await plugin.loadData(LIST_SETTINGS_KEY)
     if (!data) {
-      console.log('没有找到保存的列表设置，使用默认值')
       return { ...DEFAULT_LIST_SETTINGS }
     }
-    console.log('从数据库加载列表设置:', data)
     return { ...DEFAULT_LIST_SETTINGS, ...data }
   } catch (error) {
     console.error('加载列表设置失败:', error)
@@ -451,7 +437,6 @@ export async function loadListSettingsFromDB(plugin: Plugin): Promise<ListSettin
 export async function saveListSettingsToDB(plugin: Plugin, settings: ListSettings): Promise<boolean> {
   try {
     await plugin.saveData(LIST_SETTINGS_KEY, settings)
-    console.log('列表设置已保存到数据库:', settings)
     return true
   } catch (error) {
     console.error('保存列表设置失败:', error)
@@ -471,10 +456,8 @@ export async function loadHighlightSettings(plugin: Plugin): Promise<{ enableHig
   try {
     const data = await plugin.loadData(HIGHLIGHT_SETTINGS_KEY)
     if (!data) {
-      console.log('没有找到保存的高亮设置，使用默认值')
       return { enableHighlight: true }
     }
-    console.log('从数据库加载高亮设置:', data)
     return { enableHighlight: data.enableHighlight ?? true }
   } catch (error) {
     console.error('加载高亮设置失败:', error)
@@ -488,7 +471,6 @@ export async function loadHighlightSettings(plugin: Plugin): Promise<{ enableHig
 export async function saveHighlightSettings(plugin: Plugin, settings: { enableHighlight: boolean }): Promise<boolean> {
   try {
     await plugin.saveData(HIGHLIGHT_SETTINGS_KEY, settings)
-    console.log('高亮设置已保存到数据库:', settings)
     return true
   } catch (error) {
     console.error('保存高亮设置失败:', error)
@@ -508,10 +490,8 @@ export async function loadFontSettingsFromDB(plugin: Plugin): Promise<FontSettin
   try {
     const data = await plugin.loadData(FONT_SETTINGS_KEY)
     if (!data) {
-      console.log('没有找到保存的字体设置，使用默认值')
       return { ...DEFAULT_FONT_SETTINGS }
     }
-    console.log('从数据库加载字体设置:', data)
     return { ...DEFAULT_FONT_SETTINGS, ...data }
   } catch (error) {
     console.error('加载字体设置失败:', error)
@@ -525,7 +505,6 @@ export async function loadFontSettingsFromDB(plugin: Plugin): Promise<FontSettin
 export async function saveFontSettingsToDB(plugin: Plugin, settings: FontSettings): Promise<boolean> {
   try {
     await plugin.saveData(FONT_SETTINGS_KEY, settings)
-    console.log('字体设置已保存到数据库:', settings)
     return true
   } catch (error) {
     console.error('保存字体设置失败:', error)
@@ -576,10 +555,8 @@ export async function loadTextDiffSettings(plugin: Plugin): Promise<TextDiffSett
   try {
     const data = await plugin.loadData(TEXTDIFF_SETTINGS_KEY)
     if (!data) {
-      console.log('没有找到保存的文本对比设置，使用默认值')
       return { ...DEFAULT_TEXTDIFF_SETTINGS }
     }
-    console.log('从数据库加载文本对比设置:', data)
     return { ...DEFAULT_TEXTDIFF_SETTINGS, ...data }
   } catch (error) {
     console.error('加载文本对比设置失败:', error)
@@ -593,7 +570,6 @@ export async function loadTextDiffSettings(plugin: Plugin): Promise<TextDiffSett
 export async function saveTextDiffSettings(plugin: Plugin, settings: TextDiffSettings): Promise<boolean> {
   try {
     await plugin.saveData(TEXTDIFF_SETTINGS_KEY, settings)
-    console.log('文本对比设置已保存到数据库:', settings)
     return true
   } catch (error) {
     console.error('保存文本对比设置失败:', error)

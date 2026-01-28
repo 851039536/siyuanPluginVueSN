@@ -104,7 +104,6 @@ async function scanVideoDirectory(basePath: string, currentPath: string = ''): P
     const result = await response.json();
 
     if (result.code !== 0 || !result.data) {
-      console.log('目录不存在或为空:', fullPath);
       return videos;
     }
 
@@ -145,10 +144,8 @@ async function scanVideoDirectory(basePath: string, currentPath: string = ''): P
 export async function getVideoList(_plugin: Plugin): Promise<any[]> {
   try {
     const storagePath = await getVideoStoragePath();
-    console.log('开始扫描视频目录:', storagePath);
 
     const videos = await scanVideoDirectory(storagePath);
-    console.log('扫描完成，找到', videos.length, '个视频文件');
 
     return videos;
   } catch (error) {

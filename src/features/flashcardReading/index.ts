@@ -105,7 +105,6 @@ export class FlashcardReading {
     if (!dialogPlugin) dialogPlugin = this.plugin
     if (!dialogI18n) dialogI18n = this.plugin.i18n?.flashcardReading || {}
 
-    console.log('Flashcard Reading initialized')
   }
 
   /**
@@ -160,7 +159,6 @@ export class FlashcardReading {
    * 销毁功能
    */
   public destroy() {
-    console.log('Flashcard Reading destroyed')
   }
 }
 

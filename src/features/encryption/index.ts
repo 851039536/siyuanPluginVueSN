@@ -513,7 +513,6 @@ export class Encryption {
       const data = await this.plugin.loadData('encryption_password.json')
       if (data && data.password) {
         this.password = data.password
-        console.log('密码已从存储中加载')
       }
     } catch (error) {
       console.error('加载密码失败:', error)

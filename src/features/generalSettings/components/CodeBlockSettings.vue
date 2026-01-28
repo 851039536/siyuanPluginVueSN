@@ -569,10 +569,8 @@ async function loadSettings() {
   }
 
   try {
-    console.log('尝试从数据库加载代码块设置...')
     const loadedSettings = await loadCodeBlockSettings(props.plugin)
     settings.value = { ...DEFAULT_SETTINGS, ...loadedSettings }
-    console.log('从数据库加载的代码块设置:', settings.value)
     applyCodeBlockStyle(settings.value.style)
   } catch (error) {
     console.error('加载设置失败:', error)

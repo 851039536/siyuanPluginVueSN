@@ -39,7 +39,6 @@ export async function loadWebDAVConfig(plugin: Plugin): Promise<WebDAVConfig> {
 export async function saveWebDAVConfig(plugin: Plugin, config: WebDAVConfig): Promise<boolean> {
   try {
     await plugin.saveData(WEBDAV_CONFIG_KEY, config)
-    console.log('WebDAV配置已保存:', config)
     return true
   } catch (error) {
     console.error('保存WebDAV配置失败:', error)
@@ -53,7 +52,6 @@ export async function saveWebDAVConfig(plugin: Plugin, config: WebDAVConfig): Pr
 export async function resetWebDAVConfig(plugin: Plugin): Promise<boolean> {
   try {
     await plugin.saveData(WEBDAV_CONFIG_KEY, DEFAULT_WEBDAV_CONFIG)
-    console.log('WebDAV配置已重置')
     return true
   } catch (error) {
     console.error('重置WebDAV配置失败:', error)
@@ -108,7 +106,6 @@ export async function loadSyncStatus(plugin: Plugin): Promise<SyncStatus> {
 export async function saveSyncStatus(plugin: Plugin, status: SyncStatus): Promise<boolean> {
   try {
     await plugin.saveData(SYNC_STATUS_KEY, status)
-    console.log('同步状态已保存:', status)
     return true
   } catch (error) {
     console.error('保存同步状态失败:', error)

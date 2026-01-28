@@ -594,16 +594,13 @@ const dataOperations = {
 
       if (props.plugin) {
         try {
-          console.log(`[WordQuery] Loading ${key}...`);
           const saved = await props.plugin.loadData(key);
-          console.log(`[WordQuery] Loaded ${key}:`, saved);
           return saved;
         } catch (error) {
           console.error(`Failed to load ${key}:`, error);
           return null;
         }
       } else {
-        console.warn(`[WordQuery] No plugin instance available for loading ${key}, retrying... (${retryCount + 1}/${maxRetries})`);
 
         if (retryCount < maxRetries) {
           await new Promise(resolve => setTimeout(resolve, retryDelay));
@@ -828,11 +825,6 @@ const loadAdvancedOptions = async () => {
     pronunciationType.value = saved.pronunciationType || 'uk';
     autoPlayPronunciation.value = saved.autoPlayPronunciation ?? false;
     showRelatedWords.value = saved.showRelatedWords ?? true;
-    console.log('[WordQuery] Loaded advanced options:', {
-      pronunciationType: pronunciationType.value,
-      autoPlayPronunciation: autoPlayPronunciation.value,
-      showRelatedWords: showRelatedWords.value
-    });
   } else {
     // 使用默认值
     pronunciationType.value = 'uk';
@@ -1142,7 +1134,6 @@ const initializeData = async () => {
 };
 
 onMounted(async () => {
-  console.log('[WordQuery] Component mounted, initializing...');
   document.addEventListener('keydown', handleKeyDown);
   document.addEventListener('click', handleClickOutside);
 
@@ -1159,7 +1150,6 @@ onUnmounted(() => {
   // 清理所有定时器
   clearTimer('autoQueryTimer');
   clearTimer('autoTranslateTimer');
-  console.log('[WordQuery] Component unmounted');
 });
 
 // 强制刷新当前单词的收藏状态

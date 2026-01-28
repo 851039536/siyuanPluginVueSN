@@ -39,7 +39,7 @@ const anchorSlugCounts = new Map<string, number>()
 
 function uniqueSlugify(s: string): string {
   const baseSlug = slugify(s)
-  
+
   if (anchorSlugCounts.has(baseSlug)) {
     const count = anchorSlugCounts.get(baseSlug)! + 1
     anchorSlugCounts.set(baseSlug, count)
@@ -114,13 +114,12 @@ export function extractToc(content: string): TocItem[] {
   const stack: TocItem[] = []
   const slugCounts = new Map<string, number>() // 用于跟踪重复的 slug
 
-  console.log('[API Reference] Parsing tokens, total:', tokens.length)
 
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i]
     if (token.type === 'heading_open') {
       const level = parseInt(token.tag.substring(1))
-      
+
       // 获取标题文本 - 需要收集所有 inline token 的内容
       let text = ''
       const inlineToken = tokens[i + 1]
@@ -151,7 +150,6 @@ export function extractToc(content: string): TocItem[] {
         slugCounts.set(baseSlug, 0)
       }
 
-      console.log(`[API Reference] Found heading: level=${level}, text="${text}", slug="${uniqueSlug}"`)
 
       const item: TocItem = { level, text, slug: uniqueSlug }
 
@@ -174,7 +172,6 @@ export function extractToc(content: string): TocItem[] {
     }
   }
 
-  console.log('[API Reference] Extracted TOC items:', toc.length, toc)
   return toc
 }
 
@@ -184,7 +181,7 @@ export function extractToc(content: string): TocItem[] {
 export function parseMarkdownToProvider(content: string, filename: string): ApiProvider {
   // 简化实现，暂时返回基本结构
   const providerId = filename.replace('.md', '')
-  
+
   return {
     id: providerId,
     name: providerId,

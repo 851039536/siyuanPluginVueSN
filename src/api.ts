@@ -268,11 +268,9 @@ export async function getBlockKramdown(
  */
 export async function getBlockMarkdown(blockId: string): Promise<string | null> {
   try {
-    console.log('📦 开始获取块 Markdown:', blockId);
 
     // 方法1: 使用 getBlockKramdown 获取单个块内容
     const kramdownData = await getBlockKramdown(blockId);
-    console.log('📦 getBlockKramdown 返回:', kramdownData);
 
     // 注意：getBlockKramdown 返回的是 kramdown 属性，不是 content
     if (kramdownData && kramdownData.kramdown) {
@@ -282,7 +280,6 @@ export async function getBlockMarkdown(blockId: string): Promise<string | null> 
       content = content.replace(/\n\{: id="[^"]*"(?:\s+updated="[^"]*")?\}$/g, '');
       content = content.trim();
 
-      console.log('📦 清理后的 kramdown 内容长度:', content.length);
       return content;
     }
 
@@ -401,7 +398,6 @@ export async function getFile(path: string): Promise<any> {
 
     // 直接返回 Blob
     const blob = await response.blob();
-    console.log('getFile success:', { path, size: blob.size, type: blob.type });
     return blob;
   } catch (error_msg) {
     console.error('getFile API error:', { path, error: error_msg });

@@ -35,7 +35,6 @@ export class WordQuery {
     this.currentModel = model;
     this.apiKey = apiKey;
     this.customApiEndpoint = customEndpoint;
-    console.log('Word Query API配置已更新:', { provider, model, customEndpoint });
   }
 
   /**
@@ -564,7 +563,6 @@ ${text}`;
    * 销毁功能
    */
   public destroy() {
-    console.log('单词查询模块已销毁');
   }
 }
 

@@ -85,6 +85,69 @@ Vue 应用结构
 - 设置面板在 `src/components/SettingPanel.vue`
 - 共享组件在 `src/components/`
 
+共享组件库
+
+项目提供可复用的共享组件，遵循品牌设计规范：
+
+#### Button 组件
+
+通用按钮组件，支持多种变体和状态。
+
+**基础用法**
+
+```vue
+<script setup lang="ts">
+import Button from '@/components/Button.vue'
+</script>
+
+<template>
+  <!-- 主要操作 -->
+  <Button variant="primary" @click="handleSubmit">提交</Button>
+
+  <!-- 带图标 -->
+  <Button icon="iconSettings" @click="handleSettings">设置</Button>
+
+  <!-- 次要操作 -->
+  <Button variant="secondary" @click="handleCancel">取消</Button>
+
+  <!-- 危险操作 -->
+  <Button variant="danger" @click="handleDelete">删除</Button>
+
+  <!-- 加载状态 -->
+  <Button :loading="isSubmitting">提交中...</Button>
+
+  <!-- 仅图标 -->
+  <Button icon="iconClose" size="small" @click="handleClose" />
+</template>
+```
+
+**Props**
+
+- `variant`: `'primary' | 'secondary' | 'success' | 'danger' | 'ghost'` (默认: `'primary'`)
+- `size`: `'small' | 'medium' | 'large'` (默认: `'medium'`)
+- `icon`: `IconKey` - 图标名称
+- `iconSize`: `number` (默认: `16`)
+- `disabled`: `boolean` (默认: `false`)
+- `loading`: `boolean` (默认: `false`)
+- `iconPosition`: `'left' | 'right'` (默认: `'left'`)
+- `block`: `boolean` (默认: `false`)
+
+**详细文档**：[src/components/Button.md](src/components/Button.md)
+
+#### IconWrapper 组件
+
+图标包装器，支持 Iconify 图标库。
+
+```vue
+<script setup lang="ts">
+import IconWrapper from '@/components/IconWrapper.vue'
+</script>
+
+<template>
+  <IconWrapper name="iconSettings" :size="20" />
+</template>
+```
+
 国际化
 
 - 语言文件：`src/i18n/zh_CN.json` 和 `src/i18n/en_US.json`
@@ -97,6 +160,45 @@ Vue 应用结构
 - 不要直接使用 SVG 文件，可使用 @iconify/vue
 - 新功能必须使用技能： frontend-components 进行组件化。
 - 如果是全局样式index.scss：导入方式 @use "@/index.scss" as *;
+
+### 共享组件开发规范
+
+创建新共享组件时，请遵循以下原则：
+
+1. **组件位置**：所有共享组件放在 `src/components/` 目录
+2. **组件文档**：为复杂组件创建对应的 `.md` 文档（如 [Button.md](src/components/Button.md)）
+3. **使用品牌变量**：组件样式必须使用 `src/_variables.scss` 中定义的品牌变量
+4. **Props 定义**：使用 TypeScript 接口定义 Props，并提供详细注释
+5. **组件复用**：优先使用现有共享组件（Button、IconWrapper），而非重复实现
+
+**示例：创建新组件**
+
+```vue
+<!-- src/components/MyComponent.vue -->
+<template>
+  <div class="my-component">
+    <slot />
+  </div>
+</template>
+
+<script setup lang="ts">
+interface Props {
+  /** 属性描述 */
+  value: string
+}
+
+defineProps<Props>()
+</script>
+
+<style scoped lang="scss">
+@use '@/index.scss' as *;
+
+.my-component {
+  color: $brand-dark;
+  font-family: $font-body;
+}
+</style>
+```
 ### 品牌设计规范
 
 本项目使用 Anthropic 官方品牌色，所有新增页面必须遵守以下规范：

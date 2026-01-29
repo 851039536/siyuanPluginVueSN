@@ -180,8 +180,6 @@ ${text}`
   switch (config.provider) {
     case 'tongyi':
       return await callTongyiAPI(prompt, config.model, config.apiKey)
-    case 'openai':
-      return await callOpenAIAPI(prompt, config.model, config.apiKey)
     case 'deepseek':
       return await callDeepSeekAPI(prompt, config.model, config.apiKey)
     case 'custom':
@@ -241,50 +239,6 @@ async function callTongyiAPI(prompt: string, model: string, apiKey: string): Pro
     return data.choices[0].message.content.trim()
   } else {
     throw new Error('API返回数据格式错误')
-  }
-}
-
-/**
- * 调用 OpenAI API
- */
-async function callOpenAIAPI(prompt: string, model: string, apiKey: string): Promise<string> {
-  const apiUrl = 'https://api.openai.com/v1/chat/completions'
-  const requestBody = {
-    model: model || 'gpt-3.5-turbo',
-    messages: [
-      {
-        role: 'system',
-        content: '你是一个专业的翻译助手，擅长将英文翻译成流畅的中文。'
-      },
-      {
-        role: 'user',
-        content: prompt
-      }
-    ],
-    temperature: 0.3,
-    max_tokens: 2000
-  }
-
-  const response = await fetch(apiUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
-    body: JSON.stringify(requestBody)
-  })
-
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(`OpenAI API请求失败: ${response.status} ${errorText}`)
-  }
-
-  const data = await response.json()
-
-  if (data.choices?.[0]?.message?.content) {
-    return data.choices[0].message.content.trim()
-  } else {
-    throw new Error('OpenAI API返回数据格式错误')
   }
 }
 

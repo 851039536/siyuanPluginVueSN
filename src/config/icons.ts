@@ -334,6 +334,20 @@ export const COMMON_ICONS = {
   },
   eyeOff: {
     icon: 'mdi:eye-off',
+  },
+
+  // 列表相关
+  listBulleted: {
+    icon: 'mdi:format-list-bulleted'
+  },
+  textBox: {
+    icon: 'mdi:text-box'
+  },
+  contentCopy: {
+    icon: 'mdi:content-copy'
+  },
+  starCircle: {
+    icon: 'mdi:star-circle'
   }
 } as const
 

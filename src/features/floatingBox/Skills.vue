@@ -3,16 +3,14 @@
     <div class="skills-modal" @click.stop>
       <div class="skills-modal-header">
         <div class="header-title">
-         <Icon icon="mdi:star-circle" class="header-icon" />
+         <IconWrapper name="starCircle" :size="24" class="header-icon" />
           <h2>{{ i18n?.skillsTitle || '技能库' }}</h2>
         </div>
         <div class="header-actions">
-          <button class="btn btn-icon btn-secondary" @click="openCategoryManage" :aria-label="i18n?.manageCategories || '管理分类'">
-            <Icon icon="mdi:format-list-bulleted" />
-          </button>
-          <button class="btn btn-icon btn-secondary" @click="closeModal" :aria-label="i18n?.close || '关闭'">
-            <Icon icon="mdi:close" />
-          </button>
+          <Button variant="ghost" size="small" icon="listBulleted" @click="openCategoryManage">
+            {{ i18n?.manageCategories || '管理分类' }}
+          </Button>
+          <Button variant="ghost" icon="close" size="small" @click="closeModal" />
         </div>
       </div>
 
@@ -34,7 +32,7 @@
 
         <div class="skills-controls">
           <div class="search-wrapper">
-            <Icon icon="mdi:magnify" class="search-icon" />
+            <IconWrapper name="search" :size="18" class="search-icon" />
             <input
               v-model="searchQuery"
               type="text"
@@ -44,9 +42,9 @@
             />
           </div>
 
-          <button class="btn btn-primary btn-small" @click="openAddModal">
+          <Button variant="primary" size="small" @click="openAddModal">
             {{ i18n?.addSkill || '添加技能' }}
-          </button>
+          </Button>
         </div>
 
         <div class="skills-grid">
@@ -59,19 +57,15 @@
           >
             <div class="skill-header">
               <div class="skill-title-wrapper">
-                <Icon icon="mdi:star" class="skill-icon" />
+                <IconWrapper name="star" :size="18" class="skill-icon" />
                 <h3>{{ skill.title }}</h3>
                 <span class="skill-category-tag" :style="{ backgroundColor: getCategoryById(skill.category)?.color + '20', color: getCategoryById(skill.category)?.color }">
                   {{ getCategoryById(skill.category)?.name || '未分类' }}
                 </span>
               </div>
               <div class="skill-actions">
-                <button class="btn btn-icon btn-secondary" @click="editSkill(skill)" :aria-label="i18n?.edit || '编辑'">
-                  <Icon icon="mdi:pencil" />
-                </button>
-                <button class="btn btn-icon btn-danger" @click="deleteSkill(skill.id)" :aria-label="i18n?.delete || '删除'">
-                  <Icon icon="mdi:delete" />
-                </button>
+                <Button variant="ghost" icon="edit" size="small" @click="editSkill(skill)" />
+                <Button variant="danger" icon="delete" size="small" @click="deleteSkill(skill.id)" />
               </div>
             </div>
             <div class="skill-description">
@@ -79,13 +73,13 @@
             </div>
             <div class="skill-content">
               <div class="content-label">
-                <Icon icon="mdi:text-box" />
+                <IconWrapper name="textBox" :size="16" />
                 {{ i18n?.content || '内容' }}
               </div>
               <div class="content-value" @click="copyContent(skill.content)" role="button" tabindex="0" :aria-label="`点击复制内容: ${skill.title}`">
                 <pre>{{ skill.content }}</pre>
                 <div class="copy-hint">
-                  <Icon icon="mdi:content-copy" />
+                  <IconWrapper name="contentCopy" :size="14" />
                   {{ i18n?.clickToCopy || '点击复制' }}
                 </div>
               </div>
@@ -105,9 +99,7 @@
     <div class="skills-modal small" @click.stop>
       <div class="skills-modal-header">
         <h2>{{ editingSkill ? i18n?.editSkill || '编辑技能' : i18n?.addSkill || '添加技能' }}</h2>
-        <button class="btn btn-icon btn-secondary" @click="closeAddModal" :aria-label="i18n?.close || '关闭'">
-          <Icon icon="mdi:close" />
-        </button>
+        <Button variant="ghost" icon="close" size="small" @click="closeAddModal" />
       </div>
 
       <div class="skills-modal-body">
@@ -157,12 +149,12 @@
           </div>
 
           <div class="form-actions">
-            <button type="button" class="btn btn-secondary" @click="closeAddModal">
+            <Button type="button" variant="secondary" @click="closeAddModal">
               {{ i18n?.cancel || '取消' }}
-            </button>
-            <button type="submit" class="btn btn-primary">
+            </Button>
+            <Button type="submit" variant="primary">
               {{ i18n?.save || '保存' }}
-            </button>
+            </Button>
           </div>
         </form>
       </div>
@@ -174,10 +166,9 @@
     <div class="skills-modal small" @click.stop>
       <div class="skills-modal-header">
         <h2>{{ i18n?.manageCategories || '管理分类' }}</h2>
-        <button class="btn btn-secondary" @click="closeCategoryManage">
+        <Button variant="secondary" icon="close" icon-position="right" @click="closeCategoryManage">
           {{ i18n?.close || '关闭' }}
-          <Icon icon="mdi:close" />
-        </button>
+        </Button>
 
       </div>
 
@@ -199,10 +190,9 @@
               class="input-color"
               aria-label="分类颜色"
             />
-            <button class="btn btn-success" @click="addCategory">
-              <Icon icon="mdi:plus" />
+            <Button variant="success" icon="add" @click="addCategory">
               {{ i18n?.add || '添加' }}
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -216,10 +206,9 @@
           >
             <span class="category-dot" :style="{ backgroundColor: cat.color }"></span>
             <span class="category-name">{{ cat.name }}</span>
-            <button class="btn btn-small btn-danger btn-outlined" @click="deleteCategory(cat.id)">
-              <Icon icon="mdi:delete" />
+            <Button variant="danger" icon="delete" size="small" @click="deleteCategory(cat.id)">
               {{ i18n?.delete || '删除' }}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -230,7 +219,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, onBeforeMount, onUnmounted } from 'vue'
 import type { Skill, SkillCategory } from './types'
-import { Icon } from '@iconify/vue'
+import Button from '@/components/Button.vue'
+import IconWrapper from '@/components/IconWrapper.vue'
 
 const props = defineProps<{
   i18n?: Record<string, string>

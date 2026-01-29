@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, useSlots } from 'vue'
 import IconWrapper from '@/components/IconWrapper.vue'
 import type { IconKey } from '@/config/icons'
 
@@ -55,6 +55,8 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
+const slots = useSlots()
+
 const buttonClasses = computed(() => [
   'si-button',
   `si-button--${props.variant}`,
@@ -62,7 +64,7 @@ const buttonClasses = computed(() => [
   {
     'si-button--disabled': props.disabled || props.loading,
     'si-button--loading': props.loading,
-    'si-button--icon-only': !props.$slots?.default && props.icon,
+    'si-button--icon-only': !slots.default && props.icon,
     'si-button--block': props.block,
     'si-button--icon-right': props.iconPosition === 'right'
   }
@@ -86,7 +88,7 @@ const handleClick = (event: MouseEvent) => {
 </script>
 
 <style scoped lang="scss">
-@use '@/index.scss' as *;
+@use '@/variables.scss' as *;
 
 .si-button {
   // 基础样式
@@ -126,80 +128,81 @@ const handleClick = (event: MouseEvent) => {
 
   // 颜色变体
   &--primary {
-    background: $brand-orange;
-    color: $brand-light;
+    background: var(--b3-theme-primary, $brand-orange);
+    color: var(--b3-theme-on-primary, $brand-light);
 
     &:hover:not(.si-button--disabled):not(.si-button--loading) {
-      background: darken($brand-orange, 8%);
+      filter: brightness(1.1);
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(201, 122, 93, 0.3);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
 
     &:active:not(.si-button--disabled):not(.si-button--loading) {
       transform: translateY(0);
-      box-shadow: 0 2px 6px rgba(201, 122, 93, 0.2);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
     }
   }
 
   &--secondary {
-    background: $brand-blue;
-    color: $brand-light;
+    background: var(--b3-theme-background, $brand-blue);
+    color: var(--b3-theme-on-background, $brand-light);
+    border: 1px solid var(--b3-theme-border, rgba(0, 0, 0, 0.1));
 
     &:hover:not(.si-button--disabled):not(.si-button--loading) {
-      background: darken($brand-blue, 8%);
+      filter: brightness(1.1);
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(93, 143, 179, 0.3);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
 
     &:active:not(.si-button--disabled):not(.si-button--loading) {
       transform: translateY(0);
-      box-shadow: 0 2px 6px rgba(93, 143, 179, 0.2);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
     }
   }
 
   &--success {
-    background: $brand-green;
-    color: $brand-light;
+    background: #10b981;
+    color: white;
 
     &:hover:not(.si-button--disabled):not(.si-button--loading) {
-      background: darken($brand-green, 8%);
+      filter: brightness(1.1);
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(107, 128, 81, 0.3);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
     }
 
     &:active:not(.si-button--disabled):not(.si-button--loading) {
       transform: translateY(0);
-      box-shadow: 0 2px 6px rgba(107, 128, 81, 0.2);
+      box-shadow: 0 2px 6px rgba(16, 185, 129, 0.2);
     }
   }
 
   &--danger {
     background: transparent;
-    color: $brand-orange;
-    border-color: $brand-orange;
+    color: #ef4444;
+    border-color: #ef4444;
 
     &:hover:not(.si-button--disabled):not(.si-button--loading) {
-      background: rgba(201, 122, 93, 0.1);
-      border-color: darken($brand-orange, 8%);
+      background: rgba(239, 68, 68, 0.1);
+      border-color: #dc2626;
     }
 
     &:active:not(.si-button--disabled):not(.si-button--loading) {
-      background: rgba(201, 122, 93, 0.15);
+      background: rgba(239, 68, 68, 0.15);
     }
   }
 
   &--ghost {
     background: transparent;
-    color: $brand-dark;
-    border-color: $brand-subtle-gray;
+    color: var(--b3-theme-on-surface, $brand-dark);
+    border-color: var(--b3-theme-surface-lighter, $brand-subtle-gray);
 
     &:hover:not(.si-button--disabled):not(.si-button--loading) {
-      background: $brand-light-gray;
-      border-color: $brand-mid-gray;
+      background: var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.05));
+      border-color: var(--b3-theme-on-surface-variant, $brand-mid-gray);
     }
 
     &:active:not(.si-button--disabled):not(.si-button--loading) {
-      background: rgba(0, 0, 0, 0.05);
+      background: rgba(0, 0, 0, 0.08);
     }
   }
 
@@ -277,7 +280,7 @@ const handleClick = (event: MouseEvent) => {
     transform: translate(-50%, -50%);
     width: 16px;
     height: 16px;
-    border: 2px solid $brand-light;
+    border: 2px solid currentColor;
     border-top-color: transparent;
     border-radius: 50%;
     animation: spin 0.6s linear infinite;

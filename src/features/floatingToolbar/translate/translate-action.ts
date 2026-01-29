@@ -16,6 +16,41 @@ interface AiConfig {
 }
 
 /**
+ * API 提供商配置
+ */
+const API_PROVIDERS = {
+  tongyi: {
+    url: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation',
+    defaultModel: 'qwen-plus',
+    formatRequest: (model: string, messages: any[]) => ({
+      model,
+      input: { messages },
+      parameters: { temperature: 0.3, top_p: 0.8, max_tokens: 2000 }
+    })
+  },
+  deepseek: {
+    url: 'https://api.deepseek.com/v1/chat/completions',
+    defaultModel: 'deepseek-chat',
+    formatRequest: (model: string, messages: any[]) => ({
+      model,
+      messages,
+      temperature: 0.3,
+      max_tokens: 2000
+    })
+  },
+  custom: {
+    url: '',
+    defaultModel: 'default',
+    formatRequest: (model: string, messages: any[]) => ({
+      model,
+      messages,
+      temperature: 0.3,
+      max_tokens: 2000
+    })
+  }
+}
+
+/**
  * 创建翻译替换功能
  * @param plugin 插件实例
  * @returns 翻译替换工具栏功能
@@ -177,49 +212,35 @@ async function callTranslateAPI(text: string, config: AiConfig): Promise<string>
 
 ${text}`
 
-  switch (config.provider) {
-    case 'tongyi':
-      return await callTongyiAPI(prompt, config.model, config.apiKey)
-    case 'deepseek':
-      return await callDeepSeekAPI(prompt, config.model, config.apiKey)
-    case 'custom':
-      return await callCustomAPI(prompt, config.model, config.apiKey, config.customEndpoint)
-    default:
-      throw new Error(`不支持的API供应商: ${config.provider}`)
+  const provider = API_PROVIDERS[config.provider as keyof typeof API_PROVIDERS]
+  if (!provider) {
+    throw new Error(`不支持的API供应商: ${config.provider}`)
   }
-}
 
-/**
- * 调用通义千问 API
- */
-async function callTongyiAPI(prompt: string, model: string, apiKey: string): Promise<string> {
-  const apiUrl = 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation'
-  const requestBody = {
-    model: model || 'qwen-plus',
-    input: {
-      messages: [
-        {
-          role: 'system',
-          content: '你是一个专业的翻译助手，擅长将英文翻译成流畅的中文。'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ]
-    },
-    parameters: {
-      temperature: 0.3,
-      top_p: 0.8,
-      max_tokens: 2000
-    }
+  const apiUrl = config.provider === 'custom' ? config.customEndpoint : provider.url
+  if (!apiUrl) {
+    throw new Error('自定义API端点未设置')
   }
+
+  const model = config.model || provider.defaultModel
+  const messages = [
+    {
+      role: 'system',
+      content: '你是一个专业的翻译助手，擅长将英文翻译成流畅的中文。'
+    },
+    {
+      role: 'user',
+      content: prompt
+    }
+  ]
+
+  const requestBody = provider.formatRequest(model, messages)
 
   const response = await fetch(apiUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
+      'Authorization': `Bearer ${config.apiKey}`
     },
     body: JSON.stringify(requestBody)
   })
@@ -230,112 +251,23 @@ async function callTongyiAPI(prompt: string, model: string, apiKey: string): Pro
   }
 
   const data = await response.json()
-
-  if (data.output?.text) {
-    return data.output.text.trim()
-  } else if (data.output?.choices?.[0]?.message?.content) {
-    return data.output.choices[0].message.content.trim()
-  } else if (data.choices?.[0]?.message?.content) {
-    return data.choices[0].message.content.trim()
-  } else {
-    throw new Error('API返回数据格式错误')
-  }
+  return extractTextFromResponse(data)
 }
 
 /**
- * 调用 DeepSeek API
+ * 从 API 响应中提取文本内容
  */
-async function callDeepSeekAPI(prompt: string, model: string, apiKey: string): Promise<string> {
-  const apiUrl = 'https://api.deepseek.com/v1/chat/completions'
-  const requestBody = {
-    model: model || 'deepseek-chat',
-    messages: [
-      {
-        role: 'system',
-        content: '你是一个专业的翻译助手，擅长将英文翻译成流畅的中文。'
-      },
-      {
-        role: 'user',
-        content: prompt
-      }
-    ],
-    temperature: 0.3,
-    max_tokens: 2000
-  }
-
-  const response = await fetch(apiUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
-    body: JSON.stringify(requestBody)
-  })
-
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(`DeepSeek API请求失败: ${response.status} ${errorText}`)
-  }
-
-  const data = await response.json()
-
-  if (data.choices?.[0]?.message?.content) {
-    return data.choices[0].message.content.trim()
-  } else {
-    throw new Error('DeepSeek API返回数据格式错误')
-  }
-}
-
-/**
- * 调用自定义 API
- */
-async function callCustomAPI(prompt: string, model: string, apiKey: string, endpoint: string): Promise<string> {
-  if (!endpoint) {
-    throw new Error('自定义API端点未设置')
-  }
-
-  const requestBody = {
-    model: model || 'default',
-    messages: [
-      {
-        role: 'system',
-        content: '你是一个专业的翻译助手，擅长将英文翻译成流畅的中文。'
-      },
-      {
-        role: 'user',
-        content: prompt
-      }
-    ],
-    temperature: 0.3,
-    max_tokens: 2000
-  }
-
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
-    body: JSON.stringify(requestBody)
-  })
-
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(`自定义API请求失败: ${response.status} ${errorText}`)
-  }
-
-  const data = await response.json()
-
-  // 尝试多种响应格式
+function extractTextFromResponse(data: any): string {
   if (data.choices?.[0]?.message?.content) {
     return data.choices[0].message.content.trim()
   } else if (data.output?.text) {
     return data.output.text.trim()
+  } else if (data.output?.choices?.[0]?.message?.content) {
+    return data.output.choices[0].message.content.trim()
   } else if (data.text) {
     return data.text.trim()
-  } else {
-    throw new Error('自定义API返回数据格式错误')
   }
+  throw new Error('API返回数据格式错误')
 }
 
 /**

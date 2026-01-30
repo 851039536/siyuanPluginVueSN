@@ -15,7 +15,7 @@
         <span v-if="selectedLabel" class="si-select__value">{{ selectedLabel }}</span>
         <span v-else class="si-select__placeholder">{{ placeholder }}</span>
         <IconWrapper
-          :name="isOpen ? 'chevron-up' : 'chevron-down'"
+          :name="(isOpen ? 'chevron-up' : 'chevron-down') as any"
           :size="iconSize"
           class="si-select__arrow"
         />
@@ -56,7 +56,7 @@
                 <div class="si-select__group-label">{{ option.label }}</div>
                 <div
                   v-for="(groupOption, groupIndex) in option.options"
-                  :key="getOptionKey(groupOption, groupIndex)"
+                  :key="getOptionKey(groupOption, groupIndex as number)"
                   class="si-select__option"
                   :class="{
                     'si-select__option--selected': isSelected(groupOption.value),

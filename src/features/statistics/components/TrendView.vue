@@ -5,16 +5,6 @@
     <!-- 趋势统计列表 -->
     <div v-if="trendStats" class="trend-stats-list">
       <div class="trend-stat-item">
-        <span class="stat-icon">📈</span>
-        <span class="stat-label">{{ i18n.notesGrowth }}</span>
-        <span class="stat-value">{{ formatNumber(trendStats.notesGrowth) }}</span>
-      </div>
-      <div class="trend-stat-item">
-        <span class="stat-icon">✍️</span>
-        <span class="stat-label">{{ i18n.wordsGrowth }}</span>
-        <span class="stat-value">{{ formatNumber(trendStats.wordsGrowth) }}</span>
-      </div>
-      <div class="trend-stat-item">
         <span class="stat-icon">📅</span>
         <span class="stat-label">{{ i18n.avgDailyCreated }}</span>
         <span class="stat-value">{{ trendStats.avgDailyCreated }}</span>

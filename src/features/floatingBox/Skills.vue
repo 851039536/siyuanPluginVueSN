@@ -84,6 +84,34 @@
                 </div>
               </div>
             </div>
+
+            <div v-if="skill.content2" class="skill-content">
+              <div class="content-label">
+                <IconWrapper name="textBox" :size="16" />
+                {{ i18n?.content2 || '内容2' }}
+              </div>
+              <div class="content-value" @click="copyContent(skill.content2)" role="button" tabindex="0" :aria-label="`点击复制内容2: ${skill.title}`">
+                <pre>{{ skill.content2 }}</pre>
+                <div class="copy-hint">
+                  <IconWrapper name="contentCopy" :size="14" />
+                  {{ i18n?.clickToCopy || '复制' }}
+                </div>
+              </div>
+            </div>
+
+            <div v-if="skill.content3" class="skill-content">
+              <div class="content-label">
+                <IconWrapper name="textBox" :size="16" />
+                {{ i18n?.content3 || '内容3' }}
+              </div>
+              <div class="content-value" @click="copyContent(skill.content3)" role="button" tabindex="0" :aria-label="`点击复制内容3: ${skill.title}`">
+                <pre>{{ skill.content3 }}</pre>
+                <div class="copy-hint">
+                  <IconWrapper name="contentCopy" :size="14" />
+                  {{ i18n?.clickToCopy || '复制' }}
+                </div>
+              </div>
+            </div>
           </div>
 
           <div v-if="filteredSkills.length === 0" class="no-skills" role="status">
@@ -145,6 +173,26 @@
               rows="6"
               required
               aria-required="true"
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="skill-content2">{{ i18n?.content2 || '内容2' }}</label>
+            <textarea
+              id="skill-content2"
+              v-model="skillForm.content2"
+              :placeholder="i18n?.content2Placeholder || '请输入要复制的内容2'"
+              rows="6"
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="skill-content3">{{ i18n?.content3 || '内容3' }}</label>
+            <textarea
+              id="skill-content3"
+              v-model="skillForm.content3"
+              :placeholder="i18n?.content3Placeholder || '请输入要复制的内容3'"
+              rows="6"
             ></textarea>
           </div>
 
@@ -255,6 +303,8 @@ const skillForm = ref({
   title: '',
   description: '',
   content: '',
+  content2: '',
+  content3: '',
   category: ''
 })
 
@@ -307,9 +357,9 @@ const filteredSkills = computed(() => {
     const query = searchQuery.value.toLowerCase().trim()
     if (query) {
       result = result.filter(skill =>
-        skill.title.toLowerCase().includes(query) ||
-        skill.description.toLowerCase().includes(query) ||
-        skill.content.toLowerCase().includes(query)
+        (skill.title || '').toLowerCase().includes(query) ||
+        (skill.description || '').toLowerCase().includes(query) ||
+        (skill.content || '').toLowerCase().includes(query)
       )
     }
   }
@@ -388,6 +438,8 @@ function openAddModal() {
     title: '',
     description: '',
     content: '',
+    content2: '',
+    content3: '',
     category: categories.value[0]?.id || 'default'
   }
   showAddModal.value = true
@@ -399,6 +451,8 @@ function editSkill(skill: Skill) {
     title: skill.title,
     description: skill.description,
     content: skill.content,
+    content2: skill.content2 || '',
+    content3: skill.content3 || '',
     category: skill.category
   }
   showAddModal.value = true
@@ -426,6 +480,8 @@ async function saveSkill() {
           title: skillForm.value.title.trim(),
           description: skillForm.value.description.trim(),
           content: skillForm.value.content.trim(),
+          content2: skillForm.value.content2.trim(),
+          content3: skillForm.value.content3.trim(),
           category: skillForm.value.category
         }
       }
@@ -436,6 +492,8 @@ async function saveSkill() {
         title: skillForm.value.title.trim(),
         description: skillForm.value.description.trim(),
         content: skillForm.value.content.trim(),
+        content2: skillForm.value.content2.trim(),
+        content3: skillForm.value.content3.trim(),
         category: skillForm.value.category
       }
       skills.value.push(newSkill)

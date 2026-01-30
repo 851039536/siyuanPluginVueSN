@@ -73,14 +73,18 @@ function showSkillsModal(plugin: Plugin) {
       title: plugin.i18n?.skills?.modal?.titleLabel || '标题',
       description: plugin.i18n?.skills?.modal?.description || '描述',
       content: plugin.i18n?.skills?.modal?.content || '内容',
+      content2: plugin.i18n?.skills?.modal?.content2 || '内容2',
+      content3: plugin.i18n?.skills?.modal?.content3 || '内容3',
       cancel: plugin.i18n?.skills?.modal?.cancel || '取消',
       save: plugin.i18n?.skills?.modal?.save || '保存',
       titlePlaceholder: plugin.i18n?.skills?.modal?.titlePlaceholder || '请输入技能标题',
       descriptionPlaceholder: plugin.i18n?.skills?.modal?.descriptionPlaceholder || '请输入技能描述',
       contentPlaceholder: plugin.i18n?.skills?.modal?.contentPlaceholder || '请输入要复制的内容',
+      content2Placeholder: plugin.i18n?.skills?.modal?.content2Placeholder || '请输入要复制的内容2',
+      content3Placeholder: plugin.i18n?.skills?.modal?.content3Placeholder || '请输入要复制的内容3',
       noSkills: plugin.i18n?.skills?.modal?.noSkills || '暂无技能，点击添加',
       noSkillsFound: plugin.i18n?.skills?.modal?.noSkillsFound || '未找到匹配的技能',
-      clickToCopy: plugin.i18n?.skills?.modal?.clickToCopy || '点击复制'
+      clickToCopy: plugin.i18n?.skills?.modal?.clickToCopy || '复制'
     },
     plugin: plugin
   })

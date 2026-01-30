@@ -259,11 +259,11 @@ const handleClick = (event: MouseEvent) => {
     flex-shrink: 0;
 
     &--left {
-      margin-right: 4px;
+      // margin-right: 4px;
     }
 
     &--right {
-      margin-left: 4px;
+      // margin-left: 4px;
     }
   }
 

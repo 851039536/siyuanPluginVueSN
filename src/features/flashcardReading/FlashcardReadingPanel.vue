@@ -35,12 +35,12 @@
     <div class="category-filter">
       <div class="filter-left">
         <label>{{ i18n.category || '类别' }}:</label>
-        <select v-model="selectedCategory" @change="handleCategoryChange">
-          <option value="all">{{ i18n.allCategories || '全部' }}</option>
-          <option v-for="cat in categories" :key="cat" :value="cat">
-            {{ cat }}
-          </option>
-        </select>
+        <Select
+          v-model="selectedCategory"
+          :options="categoryOptions"
+          size="small"
+          @change="handleCategoryChange"
+        />
       </div>
       <div class="filter-right">
         <div class="search-box">
@@ -364,13 +364,11 @@
           <div class="form-group">
             <label>{{ i18n.category || '类别' }}</label>
             <div class="category-input-group">
-              <select v-model="formData.category" @change="handleCategorySelect">
-                <option value="">{{ i18n.selectCategory || '请选择类别' }}</option>
-                <option value="__custom__">{{ i18n.customCategory || '自定义...' }}</option>
-                <option v-for="cat in allCategories" :key="cat" :value="cat">
-                  {{ cat }}
-                </option>
-              </select>
+              <Select
+                v-model="formData.category"
+                :options="formCategoryOptions"
+                @change="handleCategorySelect"
+              />
               <input
                 v-if="formData.category === '__custom__'"
                 v-model="customCategory"
@@ -406,6 +404,8 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { showMessage } from 'siyuan'
 
 import IconWrapper from '@/components/IconWrapper.vue'
+import Select from '@/components/Select.vue'
+import type { SelectOption } from '@/components/Select.vue'
 import type { Plugin } from 'siyuan'
 import { FlashcardStorage } from './storage'
 import type { Flashcard, CreateFlashcardDTO } from './types'
@@ -444,6 +444,17 @@ const customCategory = ref('')
 const presetCategories = ['C#', '编程单词', 'JavaScript', 'TypeScript', 'Vue', 'Rust']
 
 // 计算属性
+const categoryOptions = computed<SelectOption[]>(() => [
+  { value: 'all', label: props.i18n.allCategories || '全部' },
+  ...categories.value.map(cat => ({ value: cat, label: cat }))
+])
+
+const formCategoryOptions = computed<SelectOption[]>(() => [
+  { value: '', label: props.i18n.selectCategory || '请选择类别' },
+  { value: '__custom__', label: props.i18n.customCategory || '自定义...' },
+  ...allCategories.value.map(cat => ({ value: cat, label: cat }))
+])
+
 const allCategories = computed(() => {
   const uniqueCategories = new Set([...presetCategories, ...categories.value])
   return Array.from(uniqueCategories).sort()

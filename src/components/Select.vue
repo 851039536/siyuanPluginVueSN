@@ -389,11 +389,11 @@ onUnmounted(() => {
     margin-bottom: 6px;
     font-size: 13px;
     font-weight: 500;
-    color: $brand-dark;
+    color: var(--b3-theme-on-background);
   }
 
   &__required {
-    color: $brand-orange;
+    color: var(--b3-theme-primary);
     margin-left: 2px;
   }
 
@@ -406,8 +406,8 @@ onUnmounted(() => {
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    background: $brand-light;
-    border: 1px solid $brand-subtle-gray;
+    background: var(--b3-theme-background);
+    border: 1px solid var(--b3-border-color);
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -415,12 +415,12 @@ onUnmounted(() => {
     user-select: none;
 
     &:hover:not(.si-select__trigger--disabled) {
-      border-color: $brand-mid-gray;
+      border-color: var(--b3-theme-secondary);
     }
 
     &:focus-visible {
-      border-color: $brand-orange;
-      box-shadow: 0 0 0 3px rgba(201, 122, 93, 0.1);
+      border-color: var(--b3-theme-primary);
+      box-shadow: 0 0 0 3px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1);
     }
   }
 
@@ -429,22 +429,22 @@ onUnmounted(() => {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: $brand-dark;
+    color: var(--b3-theme-on-background);
   }
 
   &__placeholder {
     flex: 1;
-    color: $brand-mid-gray;
+    color: var(--b3-theme-secondary);
   }
 
   &__arrow {
     flex-shrink: 0;
-    color: $brand-mid-gray;
+    color: var(--b3-theme-secondary);
     transition: transform 0.2s ease;
   }
 
   &__trigger--disabled {
-    background: rgba(0, 0, 0, 0.03);
+    background: var(--b3-theme-surface);
     cursor: not-allowed;
     opacity: 0.6;
 
@@ -457,10 +457,10 @@ onUnmounted(() => {
     position: absolute;
     z-index: 1000;
     width: 100%;
-    background: $brand-light;
-    border: 1px solid $brand-subtle-gray;
+    background: var(--b3-theme-background);
+    border: 1px solid var(--b3-border-color);
     border-radius: 6px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
     overflow: hidden;
     margin-top: 4px;
 
@@ -473,27 +473,33 @@ onUnmounted(() => {
 
   &__filter {
     padding: 8px;
-    border-bottom: 1px solid $brand-subtle-gray;
+    border-bottom: 1px solid var(--b3-border-color);
   }
 
   &__filter-input {
     width: 100%;
     padding: 6px 10px;
-    border: 1px solid $brand-subtle-gray;
+    border: 1px solid var(--b3-border-color);
     border-radius: 4px;
     font-size: 13px;
     font-family: $font-body;
     outline: none;
+    background: var(--b3-theme-background);
+    color: var(--b3-theme-on-background);
 
     &:focus {
-      border-color: $brand-orange;
+      border-color: var(--b3-theme-primary);
+    }
+
+    &::placeholder {
+      color: var(--b3-theme-secondary);
     }
   }
 
   &__empty {
     padding: 12px;
     text-align: center;
-    color: $brand-mid-gray;
+    color: var(--b3-theme-secondary);
     font-size: 13px;
   }
 
@@ -511,11 +517,11 @@ onUnmounted(() => {
     }
 
     &::-webkit-scrollbar-thumb {
-      background: $brand-light-gray;
+      background: var(--b3-theme-surface-light);
       border-radius: 3px;
 
       &:hover {
-        background: $brand-mid-gray;
+        background: var(--b3-theme-secondary);
       }
     }
 
@@ -529,7 +535,7 @@ onUnmounted(() => {
       padding: 8px 12px 4px;
       font-size: 12px;
       font-weight: 600;
-      color: $brand-mid-gray;
+      color: var(--b3-theme-secondary);
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
@@ -538,19 +544,19 @@ onUnmounted(() => {
   &__option {
     padding: 8px 12px;
     font-size: 14px;
-    color: $brand-dark;
+    color: var(--b3-theme-on-background);
     cursor: pointer;
     transition: background 0.15s ease;
     user-select: none;
 
     &:hover,
     &--hovered {
-      background: rgba(0, 0, 0, 0.05);
+      background: var(--b3-theme-hover);
     }
 
     &--selected {
-      background: rgba(201, 122, 93, 0.1);
-      color: $brand-orange;
+      background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.15);
+      color: var(--b3-theme-primary);
       font-weight: 500;
     }
 
@@ -563,7 +569,7 @@ onUnmounted(() => {
   &__hint {
     margin-top: 4px;
     font-size: 12px;
-    color: $brand-mid-gray;
+    color: var(--b3-theme-secondary);
   }
 
   // 尺寸变体

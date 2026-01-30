@@ -80,7 +80,7 @@
                 <pre>{{ skill.content }}</pre>
                 <div class="copy-hint">
                   <IconWrapper name="contentCopy" :size="14" />
-                  {{ i18n?.clickToCopy || '点击复制' }}
+                  {{ i18n?.clickToCopy || '复制' }}
                 </div>
               </div>
             </div>

@@ -333,7 +333,7 @@
       "contentPlaceholder": "请输入要复制的内容",
       "noSkills": "暂无技能，点击添加",
       "noSkillsFound": "未找到匹配的技能",
-      "clickToCopy": "点击复制"
+      "clickToCopy": "复制"
     }
   },
   "superPanel": {

@@ -7,27 +7,27 @@
         <span>{{ i18n.panelTitle || '单词阅读' }}</span>
       </h4>
       <div class="header-actions">
-        <button
-          class="icon-btn"
+        <Button
+          variant="ghost"
+          size="small"
+          icon="help"
           @click="showHelpDialog = true"
           :title="i18n.usageGuide || '使用说明'"
-        >
-          <IconWrapper name="help" :size="16" />
-        </button>
-        <button
-          class="icon-btn"
+        />
+        <Button
+          variant="ghost"
+          size="small"
+          icon="add"
           @click="showCreateDialog = true"
           :title="i18n.addCard || '添加卡片'"
-        >
-          <IconWrapper name="add" :size="16" />
-        </button>
-        <button
-          class="icon-btn"
+        />
+        <Button
+          variant="ghost"
+          size="small"
+          icon="refresh"
           @click="loadCards"
           :title="i18n.refresh || '刷新'"
-        >
-          <IconWrapper name="refresh" :size="16" />
-        </button>
+        />
       </div>
     </div>
 
@@ -72,27 +72,30 @@
           <div class="card-header">
             <div class="card-title">{{ card.title }}</div>
             <div class="card-actions">
-              <button
-                class="icon-btn icon-btn-small"
+              <Button
+                variant="ghost"
+                size="small"
+                icon="play"
+                :iconSize="14"
                 @click="playWord(card)"
                 :title="i18n.play || '播放'"
-              >
-                <IconWrapper name="play" :size="14" />
-              </button>
-              <button
-                class="icon-btn icon-btn-small"
+              />
+              <Button
+                variant="ghost"
+                size="small"
+                icon="edit"
+                :iconSize="14"
                 @click="editCard(card)"
                 :title="i18n.editCard || '编辑'"
-              >
-                <IconWrapper name="edit" :size="14" />
-              </button>
-              <button
-                class="icon-btn icon-btn-small icon-btn-danger"
+              />
+              <Button
+                variant="danger"
+                size="small"
+                icon="delete"
+                :iconSize="14"
                 @click="deleteCard(card)"
                 :title="i18n.deleteCard || '删除'"
-              >
-                <IconWrapper name="delete" :size="14" />
-              </button>
+              />
             </div>
           </div>
           <div class="card-content">{{ card.content }}</div>
@@ -112,41 +115,39 @@
             <span class="tag tag-success">{{ i18n.practiceCount || '练习次数' }}: {{ currentCard?.practiceCount || 0 }}</span>
           </div>
           <!-- 播放按钮 -->
-          <button
-            class="btn btn-large btn-raised"
+          <Button
+            variant="primary"
+            size="large"
+            icon="play"
             @click="playWord(currentCard)"
           >
-            <IconWrapper name="play" :size="16" />
-            <span>{{ i18n.play || '播放' }}</span>
-          </button>
+            {{ i18n.play || '播放' }}
+          </Button>
         </div>
 
         <!-- 导航 -->
         <div class="card-navigation">
-          <button
-            class="btn btn-outlined"
-            @click.stop="previousCard"
+          <Button
+            variant="ghost"
+            icon="chevronLeft"
             :disabled="currentIndex === 0"
+            @click.stop="previousCard"
             :title="i18n.previous || '上一个'"
-          >
-            <IconWrapper name="chevronLeft" :size="16" />
-          </button>
-          <button
-            class="btn btn-outlined"
+          />
+          <Button
+            variant="ghost"
+            icon="shuffle"
             @click.stop="randomCard"
             :title="i18n.randomCard || '随机'"
-          >
-            <IconWrapper name="shuffle" :size="16" />
-          </button>
+          />
           <span class="tag tag-rounded">{{ currentIndex + 1 }} / {{ filteredCards.length }}</span>
-          <button
-            class="btn btn-outlined"
-            @click.stop="nextCard"
+          <Button
+            variant="ghost"
+            icon="chevronRight"
             :disabled="currentIndex === filteredCards.length - 1"
+            @click.stop="nextCard"
             :title="i18n.next || '下一个'"
-          >
-            <IconWrapper name="chevronRight" :size="16" />
-          </button>
+          />
         </div>
       </div>
 
@@ -221,21 +222,23 @@
 
       <!-- 分页控制 -->
       <div class="pagination" v-if="viewMode === 'list' && totalPages > 1">
-        <button
-          class="btn btn-outlined btn-small"
+        <Button
+          variant="secondary"
+          size="small"
           @click="currentPage--"
           :disabled="currentPage === 1"
         >
           {{ i18n.previous || '上一页' }}
-        </button>
+        </Button>
         <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
-        <button
-          class="btn btn-outlined btn-small"
+        <Button
+          variant="secondary"
+          size="small"
           @click="currentPage++"
           :disabled="currentPage === totalPages"
         >
           {{ i18n.next || '下一页' }}
-        </button>
+        </Button>
       </div>
     </div>
 
@@ -243,38 +246,38 @@
     <div class="empty-state" v-else>
       <IconWrapper name="file" :size="48" />
       <p>{{ i18n.noCards || '暂无卡片' }}</p>
-      <button
-        class="btn btn-raised"
+      <Button
+        variant="primary"
+        icon="add"
         @click="showCreateDialog = true"
       >
-        <IconWrapper name="add" :size="16" />
-        <span>{{ i18n.addCard || '添加卡片' }}</span>
-      </button>
+        {{ i18n.addCard || '添加卡片' }}
+      </Button>
     </div>
 
     <!-- 视图模式切换 -->
     <div class="view-mode-toggle" v-if="cards.length > 0">
-      <button
-        class="btn btn-small"
-        :class="viewMode === 'list' ? 'btn-primary' : 'btn-outlined'"
+      <Button
+        :variant="viewMode === 'list' ? 'primary' : 'secondary'"
+        size="small"
         @click="viewMode = 'list'"
       >
         {{ i18n.listView || '列表' }}
-      </button>
-      <button
-        class="btn btn-small"
-        :class="viewMode === 'single' ? 'btn-primary' : 'btn-outlined'"
+      </Button>
+      <Button
+        :variant="viewMode === 'single' ? 'primary' : 'secondary'"
+        size="small"
         @click="switchToSingleMode"
       >
         {{ i18n.singleView || '单卡' }}
-      </button>
-      <button
-        class="btn btn-small"
-        :class="viewMode === 'statistics' ? 'btn-primary' : 'btn-outlined'"
+      </Button>
+      <Button
+        :variant="viewMode === 'statistics' ? 'primary' : 'secondary'"
+        size="small"
         @click="viewMode = 'statistics'"
       >
         {{ i18n.statisticsView || '统计' }}
-      </button>
+      </Button>
     </div>
 
     <!-- 使用说明对话框 -->
@@ -282,9 +285,7 @@
       <div class="dialog help-dialog" @click.stop>
         <div class="dialog-header">
           <h4>{{ i18n.usageGuide || '使用说明' }}</h4>
-          <button class="icon-btn" @click="showHelpDialog = false">
-            <IconWrapper name="close" :size="16" />
-          </button>
+          <Button variant="ghost" size="small" icon="close" @click="showHelpDialog = false" />
         </div>
         <div class="dialog-body help-body">
           <div class="help-section">
@@ -325,9 +326,9 @@
           </div>
         </div>
         <div class="dialog-footer">
-          <button class="btn" @click="showHelpDialog = false">
+          <Button variant="primary" @click="showHelpDialog = false">
             {{ i18n.close || '关闭' }}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -337,9 +338,7 @@
       <div class="dialog" @click.stop>
         <div class="dialog-header">
           <h4>{{ editingCard ? (i18n.editCard || '编辑卡片') : (i18n.addCard || '添加卡片') }}</h4>
-          <button class="icon-btn" @click="closeDialog">
-            <IconWrapper name="close" :size="16" />
-          </button>
+          <Button variant="ghost" size="small" icon="close" @click="closeDialog" />
         </div>
         <div class="dialog-body">
           <div class="form-group">
@@ -380,19 +379,19 @@
           </div>
         </div>
         <div class="dialog-footer">
-          <button
-            class="btn btn-outlined"
+          <Button
+            variant="secondary"
             @click="closeDialog"
           >
             {{ i18n.cancel || '取消' }}
-          </button>
-          <button
-            class="btn btn-primary"
+          </Button>
+          <Button
+            variant="primary"
             @click="saveCard"
             :disabled="!isFormValid"
           >
             {{ i18n.save || '保存' }}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -404,6 +403,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { showMessage } from 'siyuan'
 
 import IconWrapper from '@/components/IconWrapper.vue'
+import Button from '@/components/Button.vue'
 import Select from '@/components/Select.vue'
 import type { SelectOption } from '@/components/Select.vue'
 import type { Plugin } from 'siyuan'

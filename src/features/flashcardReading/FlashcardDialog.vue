@@ -4,12 +4,13 @@
       <div v-if="visible" class="flashcard-dialog-overlay" @click.self="close">
         <div class="flashcard-dialog">
           <!-- 关闭按钮 -->
-          <button
-            class="icon-btn close-btn"
+          <Button
+            variant="ghost"
+            size="small"
+            icon="close"
+            class="close-btn"
             @click="close"
-          >
-            <IconWrapper name="close" :size="16" />
-          </button>
+          />
 
           <!-- 空状态 -->
           <div v-if="filteredCards.length === 0" class="empty-state">
@@ -27,51 +28,47 @@
                 <span class="practice-count">{{ i18n.practiceCount || '练习次数' }}: {{ currentCard?.practiceCount || 0 }}</span>
               </div>
               <!-- 播放按钮 -->
-              <button
-                class="btn btn-large btn-raised play-btn-large"
+              <Button
+                variant="success"
+                size="large"
                 @click="playWord(currentCard)"
               >
-                <IconWrapper name="play" :size="16" />
-                <span>{{ i18n.play || '播放' }}</span>
-              </button>
+                {{ i18n.play || '播放' }}
+              </Button>
             </div>
 
             <!-- 类别筛选 -->
             <div class="category-filter">
               <label>{{ i18n.category || '类别' }}:</label>
-              <select v-model="selectedCategory" @change="handleCategoryChange">
-                <option value="all">{{ i18n.allCategories || '全部' }}</option>
-                <option v-for="cat in categories" :key="cat" :value="cat">
-                  {{ cat }}
-                </option>
-              </select>
+              <Select
+                v-model="selectedCategory"
+                :options="categoryOptions"
+                @change="handleCategoryChange"
+              />
             </div>
 
             <!-- 导航 -->
             <div class="card-navigation">
-              <button
-                class="btn btn-outlined"
-                @click="previousCard"
+              <Button
+                variant="ghost"
+                icon="chevronLeft"
                 :disabled="currentIndex === 0"
-              >
-                <IconWrapper name="chevronLeft" :size="16" />
-              </button>
-              <button
-                class="btn btn-outlined"
+                @click="previousCard"
+              />
+              <Button
+                variant="ghost"
+                icon="shuffle"
                 @click="randomCard"
-              >
-                <IconWrapper name="shuffle" :size="16" />
-              </button>
+              />
               <span class="card-counter">
                 {{ currentIndex + 1 }} / {{ filteredCards.length }}
               </span>
-              <button
-                class="btn btn-outlined"
-                @click="nextCard"
+              <Button
+                variant="ghost"
+                icon="chevronRight"
                 :disabled="currentIndex === filteredCards.length - 1"
-              >
-                <IconWrapper name="chevronRight" :size="16" />
-              </button>
+                @click="nextCard"
+              />
             </div>
           </template>
         </div>
@@ -85,6 +82,9 @@ import { ref, computed, onMounted } from 'vue'
 import { showMessage } from 'siyuan'
 
 import IconWrapper from '@/components/IconWrapper.vue'
+import Button from '@/components/Button.vue'
+import Select from '@/components/Select.vue'
+import type { SelectOption } from '@/components/Select.vue'
 import type { Plugin } from 'siyuan'
 import { FlashcardStorage } from './storage'
 import type { Flashcard } from './types'
@@ -111,6 +111,11 @@ const filteredCards = computed(() => {
 })
 
 const currentCard = computed(() => filteredCards.value[currentIndex.value])
+
+const categoryOptions = computed<SelectOption[]>(() => [
+  { value: 'all', label: props.i18n.allCategories || '全部' },
+  ...categories.value.map(cat => ({ value: cat, label: cat }))
+])
 
 const loadCards = async () => {
   try {
@@ -239,6 +244,7 @@ onMounted(() => {
     position: absolute;
     top: 12px;
     right: 12px;
+    z-index: 1;
   }
 }
 
@@ -337,15 +343,9 @@ onMounted(() => {
     white-space: nowrap;
   }
 
-  select {
+  // Select 组件宽度样式
+  :deep(.si-select) {
     flex: 1;
-    padding: 8px 12px;
-    border: none;
-    background: var(--b3-theme-background);
-    border-radius: 8px;
-    font-size: 14px;
-    color: var(--b3-theme-on-background);
-    cursor: pointer;
   }
 }
 

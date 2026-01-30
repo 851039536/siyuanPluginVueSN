@@ -11,9 +11,7 @@ $modal-border-radius: 12px;
 $modal-small-max-width: 500px;
 $modal-large-max-width: 800px;
 $card-border-radius: 8px;
-$button-transition: all 0.2s ease;
 $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
-$shadow-card: 0 4px 12px rgba(0, 0, 0, 0.1);
 
 // ========== 混合宏 ==========
 @mixin modal-overlay {
@@ -46,7 +44,7 @@ $shadow-card: 0 4px 12px rgba(0, 0, 0, 0.1);
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: $shadow-card;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     border-color: var(--b3-theme-primary);
 
     &::before {
@@ -94,7 +92,7 @@ $shadow-card: 0 4px 12px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px;
+  padding: 16px 20px;
   border-bottom: 1px solid var(--b3-border-color);
 
   .header-title {
@@ -125,7 +123,7 @@ $shadow-card: 0 4px 12px rgba(0, 0, 0, 0.1);
 
 // ========== 模态框主体 ==========
 .skills-modal-body {
-  padding: 20px 24px;
+  padding: 16px 20px;
   overflow-y: auto;
   flex: 1;
 }
@@ -135,8 +133,8 @@ $shadow-card: 0 4px 12px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 16px;
-  padding-bottom: 16px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
   border-bottom: 1px solid var(--b3-border-color);
 
   .category-chip {
@@ -151,7 +149,7 @@ $shadow-card: 0 4px 12px rgba(0, 0, 0, 0.1);
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
-    transition: $button-transition;
+    transition: all 0.2s ease;
 
     .chip-dot {
       width: 8px;
@@ -181,7 +179,7 @@ $shadow-card: 0 4px 12px rgba(0, 0, 0, 0.1);
 .skills-controls {
   display: flex;
   gap: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 
   .search-wrapper {
     flex: 1;
@@ -221,7 +219,7 @@ $shadow-card: 0 4px 12px rgba(0, 0, 0, 0.1);
 .skills-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  gap: 12px;
 }
 
 // ========== 技能卡片 ==========
@@ -229,7 +227,7 @@ $shadow-card: 0 4px 12px rgba(0, 0, 0, 0.1);
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
   border-radius: $card-border-radius;
-  padding: 16px;
+  padding: 12px;
   position: relative;
   overflow: hidden;
   @include card-hover;
@@ -380,7 +378,7 @@ $shadow-card: 0 4px 12px rgba(0, 0, 0, 0.1);
 // ========== 表单 ==========
 .skill-form {
   .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 
     label {
       display: block;
@@ -427,7 +425,7 @@ $shadow-card: 0 4px 12px rgba(0, 0, 0, 0.1);
 
 // ========== 分类管理弹窗 ==========
 .add-category-form {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 
   .form-row {
     display: flex;
@@ -475,7 +473,7 @@ $shadow-card: 0 4px 12px rgba(0, 0, 0, 0.1);
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
     border-radius: 6px;
-    transition: $button-transition;
+    transition: all 0.2s ease;
 
     &:hover {
       background: var(--b3-list-hover);

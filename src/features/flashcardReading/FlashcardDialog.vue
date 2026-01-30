@@ -20,7 +20,11 @@
 
           <!-- 单卡视图 -->
           <template v-else>
-            <div class="flashcard-large">
+            <Card
+              variant="elevated"
+              size="large"
+              class="flashcard-large"
+            >
               <div class="card-title-large">{{ currentCard?.title }}</div>
               <div class="card-content-large">{{ currentCard?.content }}</div>
               <div class="card-meta-large">
@@ -35,7 +39,7 @@
               >
                 {{ i18n.play || '播放' }}
               </Button>
-            </div>
+            </Card>
 
             <!-- 类别筛选 -->
             <div class="category-filter">
@@ -84,6 +88,7 @@ import { showMessage } from 'siyuan'
 import IconWrapper from '@/components/IconWrapper.vue'
 import Button from '@/components/Button.vue'
 import Select from '@/components/Select.vue'
+import Card from '@/components/Card.vue'
 import type { SelectOption } from '@/components/Select.vue'
 import type { Plugin } from 'siyuan'
 import { FlashcardStorage } from './storage'
@@ -264,8 +269,6 @@ onMounted(() => {
 
 .flashcard-large {
   background: linear-gradient(135deg, var(--b3-theme-primary) 0%, var(--b3-theme-primary-light) 100%);
-  border-radius: 16px;
-  padding: 28px 20px;
   color: var(--b3-theme-on-primary);
   display: flex;
   flex-direction: column;
@@ -275,6 +278,17 @@ onMounted(() => {
   align-items: center;
   text-align: center;
   overflow: hidden;
+
+  // 覆盖 Card 组件的默认样式
+  :deep(.si-card__body) {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+    padding: 28px 20px;
+  }
 }
 
 .card-title-large {

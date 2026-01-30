@@ -219,7 +219,7 @@ const selectedOption = computed(() => {
       if (option.isGroup) {
         const found = option.options.find(opt => opt.value === props.modelValue)
         if (found) return found
-      } else if (option.value === props.modelValue) {
+      } else if (!option.isGroup && option.value === props.modelValue) {
         return option
       }
     }

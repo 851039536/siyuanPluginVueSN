@@ -105,36 +105,9 @@
       min-width: 200px;
       justify-content: flex-end;
 
-      .search-box {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 10px;
-        border: 1px solid var(--b3-theme-surface);
-        background: var(--b3-theme-background);
-        border-radius: 4px;
+      .search-input {
         flex: 1;
         max-width: 280px;
-        transition: all 0.2s;
-
-        &:focus-within {
-          border-color: var(--b3-theme-primary);
-          box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1);
-        }
-
-        input {
-          flex: 1;
-          border: none;
-          background: transparent;
-          outline: none;
-          color: var(--b3-theme-on-background);
-          font-size: 13px;
-          min-width: 0;
-
-          &::placeholder {
-            color: var(--b3-theme-secondary);
-          }
-        }
       }
 
       .statistics {
@@ -168,20 +141,18 @@
     align-content: start;
     min-height: 0;
 
-    .card-item {
-      padding: 12px 16px;
-      background: var(--b3-theme-surface);
-      border-radius: 6px;
-      border-left: 3px solid var(--b3-theme-primary);
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+    .flashcard-item {
+      // Card 组件样式覆盖
+      :deep(.si-card) {
+        border-left: 3px solid var(--b3-theme-primary);
+      }
 
       .card-header {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
         gap: 8px;
+        width: 100%;
 
         .card-title {
           font-size: 15px;
@@ -205,11 +176,6 @@
         opacity: 0.85;
         word-wrap: break-word;
         white-space: pre-wrap;
-      }
-
-      .card-category {
-        display: flex;
-        justify-content: flex-start;
       }
     }
   }
@@ -520,17 +486,6 @@
             font-weight: 500;
           }
 
-          input,
-          textarea,
-          select {
-            padding: 8px 12px;
-            border: 1px solid var(--b3-theme-surface);
-            background: var(--b3-theme-background);
-            border-radius: 4px;
-            color: var(--b3-theme-on-background);
-            font-family: inherit;
-          }
-
           .category-input-group {
             display: flex;
             flex-direction: column;
@@ -541,18 +496,9 @@
               width: 100%;
             }
 
-            select {
-              width: 100%;
-            }
-
             .custom-category-input {
               margin-top: 4px;
             }
-          }
-
-          .error-msg {
-            font-size: 12px;
-            color: #ef4444;
           }
         }
       }

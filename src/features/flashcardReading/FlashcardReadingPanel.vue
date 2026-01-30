@@ -43,14 +43,13 @@
         />
       </div>
       <div class="filter-right">
-        <div class="search-box">
-          <IconWrapper name="search" :size="14" />
-          <input
-            v-model="searchQuery"
-            type="text"
-            :placeholder="i18n.searchPlaceholder || '搜索标题或内容...'"
-          />
-        </div>
+        <Input
+          v-model="searchQuery"
+          :placeholder="i18n.searchPlaceholder || '搜索标题或内容...'"
+          prefixIcon="search"
+          size="small"
+          class="search-input"
+        />
         <div class="statistics">
           <span class="tag tag-secondary">{{ i18n.total || '总计' }}: {{ cards.length }}</span>
           <span v-if="selectedCategory !== 'all' || searchQuery" class="tag tag-info">
@@ -64,45 +63,49 @@
     <div class="card-container" v-if="cards.length > 0">
       <!-- 列表模式 -->
       <div class="card-list" v-if="viewMode === 'list'">
-        <div
+        <Card
           v-for="card in paginatedCards"
           :key="card.id"
-          class="card-item"
+          variant="bordered"
+          size="small"
+          class="flashcard-item"
         >
-          <div class="card-header">
-            <div class="card-title">{{ card.title }}</div>
-            <div class="card-actions">
-              <Button
-                variant="ghost"
-                size="small"
-                icon="play"
-                :iconSize="14"
-                @click="playWord(card)"
-                :title="i18n.play || '播放'"
-              />
-              <Button
-                variant="ghost"
-                size="small"
-                icon="edit"
-                :iconSize="14"
-                @click="editCard(card)"
-                :title="i18n.editCard || '编辑'"
-              />
-              <Button
-                variant="danger"
-                size="small"
-                icon="delete"
-                :iconSize="14"
-                @click="deleteCard(card)"
-                :title="i18n.deleteCard || '删除'"
-              />
+          <template #header>
+            <div class="card-header">
+              <span class="card-title">{{ card.title }}</span>
+              <div class="card-actions">
+                <Button
+                  variant="ghost"
+                  size="small"
+                  icon="play"
+                  :iconSize="14"
+                  @click="playWord(card)"
+                  :title="i18n.play || '播放'"
+                />
+                <Button
+                  variant="ghost"
+                  size="small"
+                  icon="edit"
+                  :iconSize="14"
+                  @click="editCard(card)"
+                  :title="i18n.editCard || '编辑'"
+                />
+                <Button
+                  variant="danger"
+                  size="small"
+                  icon="delete"
+                  :iconSize="14"
+                  @click="deleteCard(card)"
+                  :title="i18n.deleteCard || '删除'"
+                />
+              </div>
             </div>
-          </div>
+          </template>
           <div class="card-content">{{ card.content }}</div>
-          <div class="card-category">
+          <template #footer>
             <span class="tag tag-small">{{ card.category }}</span>
-          </div>
-        </div>
+          </template>
+        </Card>
       </div>
 
       <!-- 单卡模式 -->
@@ -341,25 +344,23 @@
           <Button variant="ghost" size="small" icon="close" @click="closeDialog" />
         </div>
         <div class="dialog-body">
-          <div class="form-group">
-            <label>{{ i18n.title || '标题' }}</label>
-            <input
-              v-model="formData.title"
-              type="text"
-              :placeholder="i18n.titlePlaceholder || '标题（不可重复）'"
-              @input="handleTitleInput"
-              @blur="validateTitle"
-            />
-            <span class="error-msg" v-if="formErrors.title">{{ formErrors.title }}</span>
-          </div>
-          <div class="form-group">
-            <label>{{ i18n.content || '内容' }}</label>
-            <textarea
-              v-model="formData.content"
-              rows="6"
-              :placeholder="i18n.contentPlaceholder || '内容'"
-            ></textarea>
-          </div>
+          <Input
+            v-model="formData.title"
+            :label="i18n.title || '标题'"
+            :placeholder="i18n.titlePlaceholder || '标题（不可重复）'"
+            :error="formErrors.title"
+            @input="handleTitleInput"
+            @blur="validateTitle"
+            required
+          />
+          <Input
+            v-model="formData.content"
+            type="textarea"
+            :label="i18n.content || '内容'"
+            :placeholder="i18n.contentPlaceholder || '内容'"
+            :maxlength="1000"
+            :showCount="true"
+          />
           <div class="form-group">
             <label>{{ i18n.category || '类别' }}</label>
             <div class="category-input-group">
@@ -368,10 +369,9 @@
                 :options="formCategoryOptions"
                 @change="handleCategorySelect"
               />
-              <input
+              <Input
                 v-if="formData.category === '__custom__'"
                 v-model="customCategory"
-                type="text"
                 :placeholder="i18n.customCategoryPlaceholder || '输入自定义类别'"
                 class="custom-category-input"
               />
@@ -405,6 +405,8 @@ import { showMessage } from 'siyuan'
 import IconWrapper from '@/components/IconWrapper.vue'
 import Button from '@/components/Button.vue'
 import Select from '@/components/Select.vue'
+import Input from '@/components/Input.vue'
+import Card from '@/components/Card.vue'
 import type { SelectOption } from '@/components/Select.vue'
 import type { Plugin } from 'siyuan'
 import { FlashcardStorage } from './storage'

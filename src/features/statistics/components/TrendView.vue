@@ -85,12 +85,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-interface TrendStats {
-  notesGrowth: number
-  wordsGrowth: number
-  avgDailyCreated: number
-  avgDailyModified: number
-}
 
 interface HistoricalDataItem {
   date: string

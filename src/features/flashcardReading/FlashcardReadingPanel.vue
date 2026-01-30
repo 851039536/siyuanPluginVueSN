@@ -410,14 +410,109 @@ import type { Plugin } from 'siyuan'
 import { FlashcardStorage } from './storage'
 import type { Flashcard, CreateFlashcardDTO } from './types'
 
+// ========== 类型定义 ==========
+
+interface I18n {
+  panelTitle?: string
+  category?: string
+  allCategories?: string
+  searchPlaceholder?: string
+  total?: string
+  filtered?: string
+  listView?: string
+  singleView?: string
+  statisticsView?: string
+  play?: string
+  editCard?: string
+  deleteCard?: string
+  addCard?: string
+  refresh?: string
+  usageGuide?: string
+  previous?: string
+  next?: string
+  randomCard?: string
+  practiceCount?: string
+  noCards?: string
+  noPracticeData?: string
+  title?: string
+  content?: string
+  selectCategory?: string
+  customCategory?: string
+  customCategoryPlaceholder?: string
+  cancel?: string
+  save?: string
+  close?: string
+  titlePlaceholder?: string
+  contentPlaceholder?: string
+  titleEmpty?: string
+  titleDuplicate?: string
+  loadFailed?: string
+  updateSuccess?: string
+  createSuccess?: string
+  saveFailed?: string
+  deleteSuccess?: string
+  deleteFailed?: string
+  confirmDelete?: string
+  playFailed?: string
+  helpOverview?: string
+  helpOverviewDesc?: string
+  helpCardManagement?: string
+  helpAddCard?: string
+  helpEditCard?: string
+  helpDeleteCard?: string
+  helpCardCategory?: string
+  helpViewModes?: string
+  helpListView?: string
+  helpSingleView?: string
+  helpStatisticsView?: string
+  helpPractice?: string
+  helpPronunciation?: string
+  helpAutoPlay?: string
+  helpPracticeCount?: string
+  helpSearch?: string
+  helpCategoryFilter?: string
+  helpSearchKeyword?: string
+  categoryStats?: string
+  topCards?: string
+  totalPractice?: string
+  practicedCards?: string
+  totalCards?: string
+}
+
 interface Props {
-  i18n: any
+  i18n: I18n
   plugin: Plugin
 }
 
+// ========== 常量配置 ==========
+
+const CONFIG = {
+  PAGE_SIZE: 10,
+  PRESET_CATEGORIES: ['C#', '编程单词', 'JavaScript', 'TypeScript', 'Vue', 'Rust'] as string[],
+  BAR_COLORS: [
+    'var(--b3-theme-primary)',
+    '#10b981',
+    '#f59e0b',
+    '#ef4444',
+    '#8b5cf6',
+    '#ec4899',
+    '#06b6d4',
+    '#84cc16',
+  ] as string[],
+}
+
+// ========== 辅助函数 ==========
+
 const props = defineProps<Props>()
 
-// 状态
+/** 获取 i18n 文本，带默认值 */
+const t = (key: keyof I18n, fallback: string): string => props.i18n[key] || fallback
+
+/** 获取柱状图颜色 */
+const getBarColor = (index: number): string => CONFIG.BAR_COLORS[index % CONFIG.BAR_COLORS.length]
+
+// ========== 状态管理 ==========
+
 const storage = new FlashcardStorage(props.plugin)
 const cards = ref<Flashcard[]>([])
 const categories = ref<string[]>([])
@@ -425,7 +520,6 @@ const selectedCategory = ref<string>('all')
 const searchQuery = ref<string>('')
 const viewMode = ref<'list' | 'single' | 'statistics'>('list')
 const currentPage = ref(1)
-const pageSize = 10
 const currentIndex = ref(0)
 
 // 对话框状态
@@ -440,9 +534,6 @@ const formData = ref<CreateFlashcardDTO>({
 const formErrors = ref<Record<string, string>>({})
 const customCategory = ref('')
 
-// 预设类别
-const presetCategories = ['C#', '编程单词', 'JavaScript', 'TypeScript', 'Vue', 'Rust']
-
 // 计算属性
 const categoryOptions = computed<SelectOption[]>(() => [
   { value: 'all', label: props.i18n.allCategories || '全部' },
@@ -456,7 +547,7 @@ const formCategoryOptions = computed<SelectOption[]>(() => [
 ])
 
 const allCategories = computed(() => {
-  const uniqueCategories = new Set([...presetCategories, ...categories.value])
+  const uniqueCategories = new Set([...CONFIG.PRESET_CATEGORIES, ...categories.value])
   return Array.from(uniqueCategories).sort()
 })
 
@@ -482,11 +573,11 @@ const filteredCards = computed(() => {
 
 const currentCard = computed(() => filteredCards.value[currentIndex.value])
 
-const totalPages = computed(() => Math.ceil(filteredCards.value.length / pageSize))
+const totalPages = computed(() => Math.ceil(filteredCards.value.length / CONFIG.PAGE_SIZE))
 
 const paginatedCards = computed(() => {
-  const start = (currentPage.value - 1) * pageSize
-  const end = start + pageSize
+  const start = (currentPage.value - 1) * CONFIG.PAGE_SIZE
+  const end = start + CONFIG.PAGE_SIZE
   return filteredCards.value.slice(start, end)
 })
 
@@ -609,23 +700,6 @@ const randomCard = () => {
   playCurrentCard()
 }
 
-/**
- * 获取柱状图颜色
- */
-const getBarColor = (index: number): string => {
-  const colors = [
-    'var(--b3-theme-primary)',
-    '#10b981', // green
-    '#f59e0b', // amber
-    '#ef4444', // red
-    '#8b5cf6', // purple
-    '#ec4899', // pink
-    '#06b6d4', // cyan
-    '#84cc16', // lime
-  ]
-  return colors[index % colors.length]
-}
-
 const handleTitleInput = () => {
   // 当标题变化时，清除之前的错误信息
   if (formErrors.value.title) {
@@ -714,7 +788,7 @@ const editCard = (card: Flashcard) => {
   editingCard.value = card
   const category = card.category
   // 检查是否为自定义类别（不在预设类别中）
-  const isCustomCategory = !presetCategories.includes(category)
+  const isCustomCategory = !CONFIG.PRESET_CATEGORIES.includes(category)
   formData.value = {
     title: card.title,
     content: card.content,

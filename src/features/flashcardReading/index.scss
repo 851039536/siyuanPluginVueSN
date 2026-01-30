@@ -1,99 +1,3 @@
-// ========== 自定义按钮样式 ==========
-.icon-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px;
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  color: var(--b3-theme-on-surface);
-  transition: all 0.2s;
-
-  &:hover {
-    background: var(--b3-theme-surface);
-    color: var(--b3-theme-primary);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  &.icon-btn-small {
-    padding: 4px 8px;
-  }
-
-  &.icon-btn-danger:hover {
-    background: rgba(217, 119, 87, 0.1);
-    color: #d97757;
-  }
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-
-  &:hover:not(:disabled) {
-    background: var(--b3-theme-surface-light);
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  &.btn-small {
-    padding: 6px 12px;
-    font-size: 13px;
-  }
-
-  &.btn-large {
-    padding: 12px 24px;
-    font-size: 16px;
-  }
-
-  &.btn-primary {
-    background: var(--b3-theme-primary);
-    color: #fff;
-
-    &:hover:not(:disabled) {
-      background: var(--b3-theme-primary-light);
-    }
-  }
-
-  &.btn-outlined {
-    background: transparent;
-    border: 1px solid var(--b3-border-color);
-
-    &:hover:not(:disabled) {
-      background: var(--b3-theme-primary);
-      border-color: var(--b3-theme-primary);
-      color: #fff;
-    }
-  }
-
-  &.btn-raised {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-
-    &:hover:not(:disabled) {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    }
-  }
-}
-
 // ========== 自定义标签样式 ==========
 .tag {
   display: inline-flex;
@@ -191,16 +95,6 @@
         flex: 1;
         min-width: 0;
       }
-
-      select {
-        flex: 1;
-        padding: 6px 12px;
-        border: 1px solid var(--b3-theme-surface);
-        background: var(--b3-theme-background);
-        border-radius: 4px;
-        color: var(--b3-theme-on-background);
-        min-width: 0;
-      }
     }
 
     .filter-right {
@@ -239,24 +133,6 @@
 
           &::placeholder {
             color: var(--b3-theme-secondary);
-          }
-        }
-
-        .clear-btn {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 2px;
-          border: none;
-          background: transparent;
-          cursor: pointer;
-          color: var(--b3-theme-secondary);
-          border-radius: 2px;
-          transition: all 0.2s;
-
-          &:hover {
-            background: var(--b3-theme-hover);
-            color: var(--b3-theme-on-background);
           }
         }
       }
@@ -688,51 +564,52 @@
         padding: 16px;
         border-top: 1px solid var(--b3-theme-surface);
       }
-    }
 
-    &.help-dialog {
-      max-width: 600px;
+      // 帮助对话框特殊样式
+      &.help-dialog {
+        max-width: 600px;
 
-      .help-body {
-        max-height: 500px;
-        overflow-y: auto;
+        .help-body {
+          max-height: 500px;
+          overflow-y: auto;
 
-        .help-section {
-          margin-bottom: 20px;
+          .help-section {
+            margin-bottom: 20px;
 
-          &:last-child {
-            margin-bottom: 0;
-          }
+            &:last-child {
+              margin-bottom: 0;
+            }
 
-          h5 {
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--b3-theme-on-background);
-            margin-bottom: 10px;
-            padding-bottom: 6px;
-            border-bottom: 1px solid var(--b3-theme-surface);
-          }
-
-          p {
-            font-size: 14px;
-            line-height: 1.6;
-            color: var(--b3-theme-on-background);
-            opacity: 0.9;
-          }
-
-          ul {
-            margin: 0;
-            padding-left: 20px;
-
-            li {
-              font-size: 14px;
-              line-height: 1.8;
+            h5 {
+              font-size: 15px;
+              font-weight: 600;
               color: var(--b3-theme-on-background);
-              opacity: 0.85;
-              margin-bottom: 4px;
+              margin-bottom: 10px;
+              padding-bottom: 6px;
+              border-bottom: 1px solid var(--b3-theme-surface);
+            }
 
-              &:last-child {
-                margin-bottom: 0;
+            p {
+              font-size: 14px;
+              line-height: 1.6;
+              color: var(--b3-theme-on-background);
+              opacity: 0.9;
+            }
+
+            ul {
+              margin: 0;
+              padding-left: 20px;
+
+              li {
+                font-size: 14px;
+                line-height: 1.8;
+                color: var(--b3-theme-on-background);
+                opacity: 0.85;
+                margin-bottom: 4px;
+
+                &:last-child {
+                  margin-bottom: 0;
+                }
               }
             }
           }

@@ -18,6 +18,8 @@ export interface Skill {
   title: string
   description: string
   content: string
+  content2?: string
+  content3?: string
   category: string
 }
 

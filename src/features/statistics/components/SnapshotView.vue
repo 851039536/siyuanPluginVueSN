@@ -2,9 +2,13 @@
   <div class="snapshot-view">
     <h3 class="section-title">
       {{ i18n.title }}
-      <button @click="handleClear" class="clear-btn" :title="i18n.clearTitle">
-        <Icon icon="mdi:delete" />
-      </button>
+      <Button
+        icon="mdi:delete"
+        variant="ghost"
+        size="small"
+        :title="i18n.clearTitle"
+        @click="handleClear"
+      />
     </h3>
 
     <div v-if="snapshotData.length > 0" class="snapshot-stats">
@@ -82,7 +86,7 @@
 </template>
 
 <script setup lang="ts">
-import { Icon } from '@iconify/vue'
+import Button from '@/components/Button.vue'
 
 interface SnapshotData {
   timestamp: number
@@ -191,33 +195,6 @@ $stats-transition: all 0.2s ease;
     font-size: 14px;
     font-weight: 600;
     color: var(--b3-theme-on-surface);
-
-    .clear-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      padding: 4px 8px;
-      border: 1px solid var(--b3-border-color);
-      border-radius: 4px;
-      background: transparent;
-      cursor: pointer;
-      font-size: 14px;
-      transition: $stats-transition;
-      font-family: $font-body;
-      color: var(--b3-theme-on-surface);
-
-      svg {
-        width: 16px;
-        height: 16px;
-      }
-
-      &:hover {
-        background: var(--b3-theme-error);
-        color: white;
-        border-color: var(--b3-theme-error);
-      }
-    }
   }
 
   // Tag 组件样式

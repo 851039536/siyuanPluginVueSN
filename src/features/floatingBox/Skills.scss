@@ -7,7 +7,6 @@
 
 // ========== 基础变量 ==========
 $modal-z-index: 1000;
-$modal-border-radius: 12px;
 $modal-small-max-width: 500px;
 $modal-large-max-width: 1100px;
 $card-border-radius: 8px;
@@ -30,7 +29,7 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
 
 @mixin modal-base {
   background: var(--b3-theme-background);
-  border-radius: $modal-border-radius;
+  border-radius: 12px;
   display: flex;
   flex-direction: column;
   box-shadow: $shadow-modal;
@@ -195,14 +194,8 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
     }
 
     .search-input {
-      width: 100%;
-      padding: 8px 12px 8px 36px;
-      border: 1px solid var(--b3-border-color);
-      border-radius: 6px;
-      background: var(--b3-theme-surface);
-      color: var(--b3-theme-on-background);
-      font-size: 14px;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      @include form-input;
+      padding-left: 36px;
 
       &:focus {
         outline: none;
@@ -211,8 +204,6 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
       }
     }
   }
-
-
 }
 
 // ========== 技能网格 ==========
@@ -544,30 +535,22 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
   }
 
   .skill-card {
-    .skill-header {
-      .skill-title-wrapper {
-        .skill-icon {
-          width: 16px;
-          height: 16px;
-        }
+    .skill-icon {
+      width: 16px;
+      height: 16px;
+    }
 
-        h3 {
-          font-size: 15px;
-        }
+    h3 {
+      font-size: 15px;
+    }
 
-        .skill-category-tag {
-          font-size: 10px;
-          padding: 2px 6px;
-        }
-      }
+    .skill-category-tag {
+      font-size: 10px;
+      padding: 2px 6px;
     }
   }
 
-  .add-category-form {
-    .form-row {
-      .input-name {
-        font-size: 14px;
-      }
-    }
+  .input-name {
+    font-size: 14px;
   }
 }

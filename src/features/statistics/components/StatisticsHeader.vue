@@ -2,7 +2,7 @@
   <div class="statistics-header">
     <div class="header-left">
       <Button
-        :icon="loading ? 'mdi:loading' : 'mdi:refresh'"
+        :icon="refreshIcon"
         variant="ghost"
         size="small"
         :loading="loading"
@@ -23,6 +23,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import Button from '@/components/Button.vue'
+import type { IconKey } from '@/config/icons'
 
 interface Props {
   loading?: boolean
@@ -58,6 +59,10 @@ const updateIntervalText = computed(() => {
     const minutes = seconds / 60
     return `${minutes}分钟`
   }
+})
+
+const refreshIcon = computed<IconKey>(() => {
+  return props.loading ? 'loading' : 'refresh'
 })
 
 function handleRefresh() {

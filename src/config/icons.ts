@@ -252,6 +252,9 @@ export const COMMON_ICONS = {
   refresh: {
     icon: 'mdi:refresh',
   },
+  loading: {
+    icon: 'mdi:loading',
+  },
   // 收藏类
   star: {
     icon: 'mdi:star',

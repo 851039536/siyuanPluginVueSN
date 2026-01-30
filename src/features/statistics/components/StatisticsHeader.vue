@@ -1,14 +1,14 @@
 <template>
   <div class="statistics-header">
     <div class="header-left">
-      <button
-        class="refresh-btn"
+      <Button
+        :icon="loading ? 'mdi:loading' : 'mdi:refresh'"
+        variant="ghost"
+        size="small"
+        :loading="loading"
         :title="i18n.refresh"
         @click="handleRefresh"
-        :disabled="loading"
-      >
-        <Icon :icon="loading ? 'mdi:loading' : 'mdi:refresh'" :class="{ 'spin-icon': loading }" />
-      </button>
+      />
     </div>
     <div class="header-right">
       <div class="auto-update-info">
@@ -22,7 +22,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Icon } from '@iconify/vue'
+import Button from '@/components/Button.vue'
 
 interface Props {
   loading?: boolean
@@ -116,48 +116,6 @@ $stats-transition: all 0.2s ease;
     font-size: 10px;
     color: var(--b3-theme-on-surface);
     font-family: $font-body;
-  }
-}
-
-.refresh-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 4px 8px;
-  border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
-  background: transparent;
-  cursor: pointer;
-  transition: $stats-transition;
-  color: var(--b3-theme-primary);
-
-  svg {
-    width: 16px;
-    height: 16px;
-  }
-
-  .spin-icon {
-    animation: spin 1s linear infinite;
-  }
-
-  @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  &:hover:not(:disabled) {
-    background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1);
-    border-color: var(--b3-theme-primary);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
   }
 }
 

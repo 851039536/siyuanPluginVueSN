@@ -694,20 +694,6 @@
   gap: 8px;
 }
 
-.decoration-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  color: var(--b3-theme-on-background);
-  cursor: pointer;
-  min-width: 90px;
-
-  input[type="checkbox"] {
-    cursor: pointer;
-  }
-}
-
 .decoration-input {
   flex: 1;
   padding: 5px 8px;

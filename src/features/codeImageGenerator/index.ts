@@ -17,7 +17,7 @@ export function registerCodeImageGenerator(plugin: SiYuanPluginViteVueSN) {
       position: 'RightBottom',
       size: { width: 600, height: 0 },
       icon: 'iconCode',
-      title: plugin.i18n.codeImageGenerator || '代码图片生成',
+      title: plugin.i18n.codeImageGenerator || '图片生成',
     },
     data: {},
     type: 'code-image-generator',

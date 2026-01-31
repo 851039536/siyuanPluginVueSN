@@ -56,25 +56,6 @@
   letter-spacing: 0.5px;
 }
 
-.code-textarea {
-  width: 100%;
-  min-height: 100px;
-  max-height: 180px;
-  padding: 10px;
-  border: 2px solid var(--b3-theme-surface-lighter);
-  border-radius: 5px;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  font-size: 12px;
-  line-height: 1.5;
-  resize: vertical;
-  outline: none;
-  transition: border-color 0.2s;
-
-  &:focus {
-    border-color: var(--b3-theme-primary);
-  }
-}
 
 .settings-section {
   display: flex;
@@ -103,37 +84,17 @@
   color: var(--b3-theme-on-surface);
 }
 
-.setting-select {
-  padding: 6px 10px;
-  border: 2px solid var(--b3-theme-surface-lighter);
-  border-radius: 5px;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  font-size: 12px;
-  cursor: pointer;
-  outline: none;
-  transition: border-color 0.2s;
-
-  &:hover {
-    border-color: var(--b3-theme-primary-lighter);
-  }
-
-  &:focus {
-    border-color: var(--b3-theme-primary);
-  }
-}
-
 // 通用滑块控制容器
 .size-control,
 .slider-control {
   display: flex;
   align-items: center;
   gap: 8px;
-}
 
-.slider-control {
-  flex: 1;
-  gap: 6px;
+  &.slider-control {
+    flex: 1;
+    gap: 6px;
+  }
 }
 
 // 通用滑块基础样式
@@ -147,20 +108,18 @@
   appearance: none;
 }
 
-// 通用滑块滑块样式
-@mixin slider-thumb($size) {
+// 滑块滑块样式
+@mixin slider-thumb($size, $shadow: 0 1px 3px rgba(0, 0, 0, 0.2)) {
   width: $size;
   height: $size;
   border-radius: 50%;
   background: var(--b3-theme-primary);
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  box-shadow: $shadow;
 }
 
-.size-slider,
-.mini-slider {
-  @extend %slider-base;
-
+// 滑块跨浏览器样式重置
+@mixin slider-reset {
   &::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
@@ -171,27 +130,25 @@
   }
 }
 
+.size-slider,
+.mini-slider {
+  @extend %slider-base;
+  @include slider-reset;
+}
+
 .size-slider {
   height: 3px;
 
-  &::-webkit-slider-thumb {
-    @include slider-thumb(14px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  }
-
+  &::-webkit-slider-thumb,
   &::-moz-range-thumb {
-    @include slider-thumb(14px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    @include slider-thumb(14px, 0 2px 4px rgba(0, 0, 0, 0.2));
   }
 }
 
 .mini-slider {
   height: 2px;
 
-  &::-webkit-slider-thumb {
-    @include slider-thumb(10px);
-  }
-
+  &::-webkit-slider-thumb,
   &::-moz-range-thumb {
     @include slider-thumb(10px);
   }
@@ -203,16 +160,16 @@
   color: var(--b3-theme-on-surface);
   text-align: right;
   font-weight: 600;
-}
 
-.size-value {
-  font-size: 11px;
-  min-width: 40px;
-}
+  &.size-value {
+    font-size: 11px;
+    min-width: 40px;
+  }
 
-.slider-value {
-  font-size: 10px;
-  min-width: 36px;
+  &.slider-value {
+    font-size: 10px;
+    min-width: 36px;
+  }
 }
 
 .preview-container {
@@ -300,19 +257,6 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
-/* 玻璃风格代码内容 - 增强对比度 */
-.style-glass.theme-light .code-content {
-  color: #0a0a0a;
-  background: rgba(255, 255, 255, 0.6);
-  text-shadow: none;
-}
-
-.style-glass.theme-dark .code-content {
-  color: #f0f0f0;
-  background: rgba(0, 0, 0, 0.4);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-}
-
 /* 霓虹灯风格 */
 .style-neon.theme-light {
   background: #1a1a2e;
@@ -357,36 +301,18 @@
 .style-neon.theme-light .code-content {
   color: #00ffff;
   background: rgba(0, 20, 40, 0.6);
-  text-shadow:
-    0 0 5px #0ff,
-    0 0 10px #0ff;
+  text-shadow: 0 0 5px #0ff, 0 0 10px #0ff;
   font-weight: 500;
 }
 
 .style-neon.theme-dark .code-content {
   color: #ff00ff;
   background: rgba(20, 0, 40, 0.6);
-  text-shadow:
-    0 0 5px #f0f,
-    0 0 10px #f0f;
+  text-shadow: 0 0 5px #f0f, 0 0 10px #f0f;
   font-weight: 500;
 }
 
-.style-neon .window-header {
-  background: rgba(0, 0, 0, 0.3);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.style-neon.theme-light .window-title {
-  color: #0ff;
-  text-shadow: 0 0 5px #0ff;
-}
-
-.style-neon.theme-dark .window-title {
-  color: #f0f;
-  text-shadow: 0 0 5px #f0f;
-}
-
+// 窗口样式
 .window-header {
   display: flex;
   align-items: center;
@@ -394,11 +320,16 @@
   background: rgba(0, 0, 0, 0.05);
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   gap: 10px;
-}
 
-.theme-dark .window-header {
-  background: rgba(255, 255, 255, 0.05);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  .theme-dark & {
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .style-neon & {
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  }
 }
 
 .window-buttons {
@@ -413,6 +344,7 @@
   display: block;
 }
 
+// GitHub/Mac 风格窗口按钮
 .style-github .window-btn,
 .style-mac .window-btn {
   &.close { background: #ff5f56; }
@@ -420,6 +352,7 @@
   &.maximize { background: #27c93f; }
 }
 
+// 卡通风格窗口按钮
 .style-cartoon .window-btn {
   &.close { background: #ff6b9d; }
   &.minimize { background: #feca57; }
@@ -432,19 +365,21 @@
   color: var(--b3-theme-on-surface);
   flex: 1;
   text-align: center;
-}
 
-.theme-light .window-title {
-  color: #2c3e50;
-}
-
-.theme-dark .window-title {
-  color: #8b949e;
-}
-
-.style-cartoon .window-title {
-  color: #ffffff;
-  font-weight: 600;
+  .theme-light & { color: #2c3e50; }
+  .theme-dark & { color: #8b949e; }
+  .style-cartoon & {
+    color: #ffffff;
+    font-weight: 600;
+  }
+  .style-neon.theme-light & {
+    color: #0ff;
+    text-shadow: 0 0 5px #0ff;
+  }
+  .style-neon.theme-dark & {
+    color: #f0f;
+    text-shadow: 0 0 5px #f0f;
+  }
 }
 
 .code-content {
@@ -460,26 +395,41 @@
     display: block;
     white-space: pre;
   }
-}
 
-.theme-light .code-content {
-  color: #1a1a1a;
-  background: #ffffff;
-}
+  // 通用主题样式
+  .theme-light & {
+    color: #1a1a1a;
+    background: #ffffff;
+  }
 
-.theme-dark .code-content {
-  color: #c9d1d9;
-  background: #0d1117;
-}
+  .theme-dark & {
+    color: #c9d1d9;
+    background: #0d1117;
+  }
 
-.style-cartoon.theme-light .code-content {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.1);
-}
+  // 卡通风格覆盖
+  .style-cartoon.theme-light & {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+  }
 
-.style-cartoon.theme-dark .code-content {
-  color: #e0e0e0;
-  background: rgba(0, 0, 0, 0.3);
+  .style-cartoon.theme-dark & {
+    color: #e0e0e0;
+    background: rgba(0, 0, 0, 0.3);
+  }
+
+  // 玻璃风格覆盖
+  .style-glass.theme-light & {
+    color: #0a0a0a;
+    background: rgba(255, 255, 255, 0.6);
+    text-shadow: none;
+  }
+
+  .style-glass.theme-dark & {
+    color: #f0f0f0;
+    background: rgba(0, 0, 0, 0.4);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  }
 }
 
 /* 装饰元素 */
@@ -490,20 +440,20 @@
   justify-content: space-between;
   align-items: center;
   border-top: 1px solid rgba(0, 0, 0, 0.1);
-}
 
-.theme-dark .decorations {
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  .theme-dark & {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
 }
 
 .watermark {
   font-size: 9px;
   color: rgba(0, 0, 0, 0.5);
   font-weight: 500;
-}
 
-.theme-dark .watermark {
-  color: rgba(255, 255, 255, 0.3);
+  .theme-dark & {
+    color: rgba(255, 255, 255, 0.3);
+  }
 }
 
 .metadata {
@@ -511,10 +461,10 @@
   gap: 10px;
   font-size: 10px;
   color: rgba(0, 0, 0, 0.7);
-}
 
-.theme-dark .metadata {
-  color: rgba(255, 255, 255, 0.5);
+  .theme-dark & {
+    color: rgba(255, 255, 255, 0.5);
+  }
 }
 
 .author::before {
@@ -813,50 +763,6 @@
   border-top: 1px solid var(--b3-theme-surface-lighter);
   background: var(--b3-theme-surface);
   flex-shrink: 0;
-}
-
-.btn-action {
-  flex: 1;
-  padding: 8px 12px;
-  border: 2px solid var(--b3-theme-outline);
-  border-radius: 5px;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transition: all 0.2s ease;
-
-  &:hover:not(:disabled) {
-    background: var(--b3-theme-primary);
-    color: var(--b3-theme-on-primary);
-    border-color: var(--b3-theme-primary);
-    transform: translateY(-1px);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-}
-
-.btn-primary {
-  background: var(--b3-theme-primary);
-  color: var(--b3-theme-on-primary);
-  border-color: var(--b3-theme-primary);
-
-  &:hover:not(:disabled) {
-    opacity: 0.9;
-  }
-}
-
-.btn-icon {
-  width: 14px;
-  height: 14px;
 }
 
 .panel-body::-webkit-scrollbar {

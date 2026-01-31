@@ -39,6 +39,108 @@
   }
 }
 
+// ========== 共享样式 ==========
+
+// 空状态（通用）
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 40px 20px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
+
+  p {
+    font-size: 14px;
+  }
+}
+
+// 大卡片样式（共享）
+.flashcard-large {
+  background: linear-gradient(135deg, var(--b3-theme-primary) 0%, var(--b3-theme-primary-light) 100%);
+  color: var(--b3-theme-on-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  overflow: hidden;
+
+  // 覆盖 Card 组件的默认样式
+  :deep(.si-card__body) {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+    padding: 28px 20px;
+  }
+}
+
+.card-title-large {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+
+.card-content-large {
+  font-size: 15px;
+  line-height: 1.6;
+  opacity: 0.9;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  max-width: 100%;
+
+  // 自定义滚动条样式
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
+  }
+}
+
+.card-meta-large {
+  display: flex;
+  gap: 16px;
+  font-size: 14px;
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+
+.card-category-large {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+
+.card-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+// ========== FlashcardReadingPanel 特有样式 ==========
+
 .flashcard-reading-panel {
   display: flex;
   flex-direction: column;
@@ -192,52 +294,7 @@
     .flashcard-large {
       width: 100%;
       max-width: 500px;
-      min-height: 400px;
-      padding: 24px;
-      background: var(--b3-theme-surface);
-      border-radius: 8px;
-      border-left: 4px solid var(--b3-theme-primary);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-
-      .card-title-large {
-        font-size: 20px;
-        font-weight: 600;
-        margin-bottom: 16px;
-        color: var(--b3-theme-on-background);
-      }
-
-      .card-content-large {
-        font-size: 16px;
-        line-height: 1.6;
-        color: var(--b3-theme-on-background);
-        opacity: 0.9;
-        margin-bottom: 16px;
-        min-height: 160px;
-        max-height: 240px;
-        overflow-y: auto;
-        word-wrap: break-word;
-        white-space: pre-wrap;
-      }
-
-      .card-meta-large {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        flex-wrap: wrap;
-        justify-content: center;
-      }
-    }
-
-    .card-navigation {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      flex-shrink: 0;
-      padding: 12px 0;
-      margin-top: 8px;
+      height: 400px;
     }
   }
 
@@ -250,20 +307,6 @@
     .page-info {
       font-size: 14px;
       font-weight: 500;
-    }
-  }
-
-  .empty-state {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    opacity: 0.6;
-
-    p {
-      font-size: 14px;
     }
   }
 

@@ -216,6 +216,8 @@ onMounted(() => {
 <style scoped lang="scss">
 @use './index.scss' as *;
 
+// ========== 对话框特定样式 ==========
+
 .flashcard-dialog-overlay {
   position: fixed;
   top: 0;
@@ -253,123 +255,6 @@ onMounted(() => {
   }
 }
 
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  padding: 40px 20px;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.6;
-
-  p {
-    font-size: 14px;
-  }
-}
-
-.flashcard-large {
-  background: linear-gradient(135deg, var(--b3-theme-primary) 0%, var(--b3-theme-primary-light) 100%);
-  color: var(--b3-theme-on-primary);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  height: 400px;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  overflow: hidden;
-
-  // 覆盖 Card 组件的默认样式
-  :deep(.si-card__body) {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    height: 100%;
-    justify-content: center;
-    align-items: center;
-    padding: 28px 20px;
-  }
-}
-
-.card-title-large {
-  font-size: 26px;
-  font-weight: 700;
-  line-height: 1.2;
-  flex-shrink: 0;
-}
-
-.card-content-large {
-  font-size: 15px;
-  line-height: 1.6;
-  opacity: 0.9;
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow-y: auto;
-  max-width: 100%;
-
-  // 自定义滚动条样式
-  &::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 2px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 2px;
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.5);
-    }
-  }
-}
-
-.card-meta-large {
-  display: flex;
-  gap: 16px;
-  font-size: 14px;
-  opacity: 0.8;
-  flex-shrink: 0;
-}
-
-.card-category-large {
-  background: rgba(255, 255, 255, 0.2);
-  padding: 4px 12px;
-  border-radius: 12px;
-}
-
-.category-filter {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px;
-  background: var(--b3-list-hover);
-  border-radius: 12px;
-
-  label {
-    font-size: 14px;
-    color: var(--b3-theme-on-background);
-    white-space: nowrap;
-  }
-
-  // Select 组件宽度样式
-  :deep(.si-select) {
-    flex: 1;
-  }
-}
-
-.card-navigation {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-}
-
 .card-counter {
   font-size: 14px;
   font-weight: 600;
@@ -378,7 +263,8 @@ onMounted(() => {
   text-align: center;
 }
 
-// 对话框动画
+// ========== 对话框动画 ==========
+
 .dialog-enter-active,
 .dialog-leave-active {
   transition: all 0.3s ease;

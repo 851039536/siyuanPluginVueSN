@@ -3,32 +3,36 @@
     <!-- 顶部操作栏 -->
     <div class="query-header">
       <div class="mode-tabs">
-        <button
+        <Button
           class="mode-tab"
           :class="{ active: currentMode === 'word' }"
+          variant="ghost"
+          size="small"
           @click="switchMode('word')"
         >
           📖 {{ props.i18n.wordQuery?.title || '单词查询' }}
-        </button>
-        <button
+        </Button>
+        <Button
           class="mode-tab"
           :class="{ active: currentMode === 'translate' }"
+          variant="ghost"
+          size="small"
           @click="switchMode('translate')"
         >
           🌐 {{ props.i18n.wordQuery?.translation || '长文翻译' }}
-        </button>
+        </Button>
       </div>
 
       <div class="api-key-toggle">
-        <button class="settings-btn" @click="togglePanel('history')" :title="props.i18n.wordQuery?.history || '历史记录'">
-          <svg class="settings-icon"><use xlink:href="#iconHistory"></use></svg>
-        </button>
-        <button class="settings-btn" @click="togglePanel('favorites')" :title="props.i18n.wordQuery?.favorites || '我的收藏'">
+        <Button variant="ghost" size="small" @click="togglePanel('history')" :title="props.i18n.wordQuery?.history || '历史记录'">
+          <IconWrapper name="textBox" :size="18" />
+        </Button>
+        <Button variant="ghost" size="small" @click="togglePanel('favorites')" :title="props.i18n.wordQuery?.favorites || '我的收藏'">
           <IconWrapper name="star" :size="18" />
-        </button>
-        <button class="settings-btn" @click="togglePanel('advanced')" :title="props.i18n.wordQuery?.advancedOptions || '高级选项'">
+        </Button>
+        <Button variant="ghost" size="small" @click="togglePanel('advanced')" :title="props.i18n.wordQuery?.advancedOptions || '高级选项'">
           <IconWrapper name="generalSettings" :size="18" />
-        </button>
+        </Button>
       </div>
     </div>
 
@@ -36,19 +40,15 @@
     <div v-if="currentMode === 'word'" class="mode-content">
       <div class="input-section">
         <div class="input-wrapper">
-          <input
+          <Input
             v-model="searchWord"
-            type="text"
             class="query-input"
             :placeholder="props.i18n.wordQuery?.enterWordPlaceholder || '输入单词或词语，2秒后自动查询...'"
-            @keyup.enter="handleQuery"
+            @keydown.enter="handleQuery"
           />
-          <button class="query-btn" @click="handleQuery" :disabled="isLoading">
-            <svg class="query-icon" v-if="!isLoading">
-              <use xlink:href="#iconSearch"></use>
-            </svg>
-            <div class="loading-spinner" v-else></div>
-          </button>
+          <Button class="query-btn" @click="handleQuery" :disabled="isLoading" :loading="isLoading">
+            <IconWrapper name="search" :size="16" />
+          </Button>
         </div>
       </div>
 
@@ -61,19 +61,21 @@
       <div class="panel-header">
         <span>{{ getPanelIcon(activePanel) }} {{ getPanelTitle(activePanel) }}</span>
         <div class="panel-actions">
-          <button
+          <Button
             v-if="activePanel === 'history' && queryHistory.length > 0"
-            class="btn-clear"
+            variant="ghost"
+            size="small"
             @click="clearHistory"
-          >清除</button>
-          <button
+          >清除</Button>
+          <Button
             v-if="activePanel === 'favorites' && favorites.length > 0"
-            class="btn-clear"
+            variant="ghost"
+            size="small"
             @click="clearFavorites"
-          >清除</button>
-          <button class="close-btn" @click="togglePanel(null)">
-            <svg class="close-icon"><use xlink:href="#iconClose"></use></svg>
-          </button>
+          >清除</Button>
+          <Button variant="ghost" size="small" @click="togglePanel(null)">
+            <IconWrapper name="close" :size="16" />
+          </Button>
         </div>
       </div>
 
@@ -110,9 +112,9 @@
               <div class="item-word">{{ item.word }}</div>
               <div class="item-time">{{ formatTime(item.timestamp) }}</div>
             </div>
-            <button class="btn-remove" @click="removeFavorite(item.word)">
-              <svg class="remove-icon"><use xlink:href="#iconTrashcan"></use></svg>
-            </button>
+            <Button variant="ghost" size="small" @click="removeFavorite(item.word)">
+              <IconWrapper name="delete" :size="16" />
+            </Button>
           </div>
         </div>
       </div>
@@ -170,55 +172,55 @@
         <div class="result-actions">
           <!-- 复制选项下拉菜单 -->
           <div class="dropdown" :class="{ active: showCopyOptions }">
-            <button class="action-btn copy-btn" @click="toggleCopyOptions">
-              <svg class="action-icon"><use xlink:href="#iconCopy"></use></svg>
+            <Button variant="secondary" size="small" @click="toggleCopyOptions">
+              <IconWrapper name="contentCopy" :size="16" />
               {{ props.i18n.wordQuery?.copy || '复制' }}
-              <svg class="dropdown-icon"><use xlink:href="#iconDown"></use></svg>
-            </button>
+              <IconWrapper name="down" :size="12" />
+            </Button>
             <div class="dropdown-menu" v-show="showCopyOptions">
-              <button class="dropdown-item" @click="copyResult('all')">
+              <Button variant="ghost" size="small" class="dropdown-item" @click="copyResult('all')">
                 {{ props.i18n.wordQuery?.copyAll || '复制全部' }}
-              </button>
-              <button class="dropdown-item" @click="copyResult('phonetic')">
+              </Button>
+              <Button variant="ghost" size="small" class="dropdown-item" @click="copyResult('phonetic')">
                 {{ props.i18n.wordQuery?.copyPhonetic || '复制音标' }}
-              </button>
-              <button class="dropdown-item" @click="copyResult('meaning')">
+              </Button>
+              <Button variant="ghost" size="small" class="dropdown-item" @click="copyResult('meaning')">
                 {{ props.i18n.wordQuery?.copyMeaning || '复制释义' }}
-              </button>
-              <button class="dropdown-item" @click="copyResult('english')" v-if="extractContentParts.english">
+              </Button>
+              <Button variant="ghost" size="small" class="dropdown-item" @click="copyResult('english')" v-if="extractContentParts.english">
                 {{ props.i18n.wordQuery?.copyEnglish || '复制英文' }}
-              </button>
-              <button class="dropdown-item" @click="copyResult('pronunciation')">
+              </Button>
+              <Button variant="ghost" size="small" class="dropdown-item" @click="copyResult('pronunciation')">
                 {{ props.i18n.wordQuery?.copyPronunciation || '复制谐音' }}
-              </button>
-              <button class="dropdown-item" @click="copyResult('example')">
+              </Button>
+              <Button variant="ghost" size="small" class="dropdown-item" @click="copyResult('example')">
                 {{ props.i18n.wordQuery?.copyExample || '复制例句' }}
-              </button>
+              </Button>
             </div>
           </div>
 
           <!-- 收藏按钮 -->
-          <button class="action-btn favorite-btn" @click="toggleFavorite" :class="{ favorited: currentWordFavorited }">
-            <IconWrapper :name="currentWordFavorited ? 'star' : 'starOutline'" :size="16" class="action-icon" />
+          <Button variant="secondary" size="small" @click="toggleFavorite" :class="{ favorited: currentWordFavorited }">
+            <IconWrapper :name="currentWordFavorited ? 'star' : 'starOutline'" :size="16" />
             {{ currentWordFavorited ? (props.i18n.wordQuery?.unfavorite || '取消收藏') : (props.i18n.wordQuery?.favorite || '收藏') }}
-          </button>
+          </Button>
 
           <!-- 播放发音按钮 -->
-          <button class="action-btn play-btn" @click="playPronunciation(searchWord)">
-            <svg class="action-icon"><use xlink:href="#iconPlay"></use></svg>
+          <Button variant="secondary" size="small" @click="playPronunciation(searchWord)">
+            <IconWrapper name="play" :size="16" />
             {{ props.i18n.wordQuery?.play || '播放' }}
-          </button>
+          </Button>
 
           <!-- 导出按钮 -->
-          <button class="action-btn export-btn" @click="exportToSiyuan">
-            <svg class="action-icon"><use xlink:href="#iconUpload"></use></svg>
+          <Button variant="secondary" size="small" @click="exportToSiyuan">
+            <IconWrapper name="up" :size="16" />
             {{ props.i18n.wordQuery?.export || '导出' }}
-          </button>
+          </Button>
 
-          <button class="action-btn clear-btn" @click="clearResult">
-            <svg class="action-icon"><use xlink:href="#iconTrashcan"></use></svg>
+          <Button variant="ghost" size="small" @click="clearResult">
+            <IconWrapper name="delete" :size="16" />
             {{ props.i18n.wordQuery?.clear || '清除' }}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -236,60 +238,48 @@
         <div class="translate-input-section">
           <div class="section-header">
             <span class="section-title">{{ props.i18n.wordQuery?.sourceText || '原文' }}</span>
-            <div class="language-selector">
-              <select v-model="sourceLanguage" class="language-select">
-                <option value="auto">{{ props.i18n.wordQuery?.autoDetect || '自动检测' }}</option>
-                <option value="zh">{{ props.i18n.wordQuery?.chinese || '中文' }}</option>
-                <option value="en">{{ props.i18n.wordQuery?.english || '英文' }}</option>
-                <option value="ja">{{ props.i18n.wordQuery?.japanese || '日文' }}</option>
-                <option value="ko">{{ props.i18n.wordQuery?.korean || '韩文' }}</option>
-                <option value="fr">{{ props.i18n.wordQuery?.french || '法文' }}</option>
-                <option value="de">{{ props.i18n.wordQuery?.german || '德文' }}</option>
-                <option value="es">{{ props.i18n.wordQuery?.spanish || '西班牙文' }}</option>
-              </select>
-            </div>
+            <Select
+              v-model="sourceLanguage"
+              :options="LANGUAGE_OPTIONS"
+              size="small"
+              class="language-select"
+            />
           </div>
-          <textarea
+          <Textarea
             v-model="translateText"
             class="translate-textarea"
             :placeholder="props.i18n.wordQuery?.enterTextToTranslate || '输入要翻译的文本，2秒后自动翻译...'"
-            rows="8"
-          ></textarea>
+            :rows="8"
+          />
           <div class="input-actions">
-            <button class="action-btn-small" @click="clearTranslateInput">
-              <svg class="action-icon-small"><use xlink:href="#iconTrashcan"></use></svg>
+            <Button variant="ghost" size="small" @click="clearTranslateInput">
+              <IconWrapper name="delete" :size="16" />
               {{ props.i18n.wordQuery?.clear || '清除' }}
-            </button>
-            <button class="action-btn-small primary" @click="handleTranslate" :disabled="isTranslating">
-              <div class="loading-spinner-small" v-if="isTranslating"></div>
-              <svg class="action-icon-small" v-else><use xlink:href="#iconLanguage"></use></svg>
+            </Button>
+            <Button variant="primary" size="small" @click="handleTranslate" :disabled="isTranslating" :loading="isTranslating">
+              <IconWrapper name="translate" :size="16" />
               {{ isTranslating ? (props.i18n.wordQuery?.translating || '翻译中...') : (props.i18n.wordQuery?.translate || '翻译') }}
-            </button>
+            </Button>
           </div>
         </div>
 
         <div class="translate-divider">
           <div class="divider-line"></div>
-          <button class="swap-btn" @click="swapLanguages" :title="props.i18n.wordQuery?.swapLanguages || '交换语言'">
-            <svg class="swap-icon"><use xlink:href="#iconRefresh"></use></svg>
-          </button>
+          <Button variant="ghost" size="small" class="swap-btn" @click="swapLanguages" :title="props.i18n.wordQuery?.swapLanguages || '交换语言'">
+            <IconWrapper name="shuffle" :size="16" />
+          </Button>
           <div class="divider-line"></div>
         </div>
 
         <div class="translate-output-section">
           <div class="section-header">
             <span class="section-title">{{ props.i18n.wordQuery?.translatedText || '译文' }}</span>
-            <div class="language-selector">
-              <select v-model="targetLanguage" class="language-select">
-                <option value="zh">{{ props.i18n.wordQuery?.chinese || '中文' }}</option>
-                <option value="en">{{ props.i18n.wordQuery?.english || '英文' }}</option>
-                <option value="ja">{{ props.i18n.wordQuery?.japanese || '日文' }}</option>
-                <option value="ko">{{ props.i18n.wordQuery?.korean || '韩文' }}</option>
-                <option value="fr">{{ props.i18n.wordQuery?.french || '法文' }}</option>
-                <option value="de">{{ props.i18n.wordQuery?.german || '德文' }}</option>
-                <option value="es">{{ props.i18n.wordQuery?.spanish || '西班牙文' }}</option>
-              </select>
-            </div>
+            <Select
+              v-model="targetLanguage"
+              :options="TARGET_LANGUAGE_OPTIONS"
+              size="small"
+              class="language-select"
+            />
           </div>
           <div class="translate-result" v-if="translateResult">
             <div class="result-text">{{ translateResult }}</div>
@@ -299,14 +289,14 @@
             <p>{{ props.i18n.wordQuery?.translationWillAppearHere || '翻译结果将显示在这里' }}</p>
           </div>
           <div class="output-actions" v-if="translateResult">
-            <button class="action-btn-small" @click="copyTranslation">
-              <svg class="action-icon-small"><use xlink:href="#iconCopy"></use></svg>
+            <Button variant="ghost" size="small" @click="copyTranslation">
+              <IconWrapper name="contentCopy" :size="16" />
               {{ props.i18n.wordQuery?.copy || '复制' }}
-            </button>
-            <button class="action-btn-small" @click="exportTranslation">
-              <svg class="action-icon-small"><use xlink:href="#iconUpload"></use></svg>
+            </Button>
+            <Button variant="ghost" size="small" @click="exportTranslation">
+              <IconWrapper name="up" :size="16" />
               {{ props.i18n.wordQuery?.export || '导出' }}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -318,6 +308,10 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { showMessage } from 'siyuan';
 import IconWrapper from '@/components/IconWrapper.vue';
+import Button from '@/components/Button.vue';
+import Input from '@/components/Input.vue';
+import Select from '@/components/Select.vue';
+import Textarea from '@/components/Textarea.vue';
 
 // Props
 interface Props {
@@ -383,6 +377,21 @@ const LANGUAGE_NAMES: Record<string, string> = {
   'de': '德文',
   'es': '西班牙文'
 };
+
+// 语言选项数组
+const LANGUAGE_OPTIONS = [
+  { value: 'auto', label: '自动检测' },
+  { value: 'zh', label: '中文' },
+  { value: 'en', label: '英文' },
+  { value: 'ja', label: '日文' },
+  { value: 'ko', label: '韩文' },
+  { value: 'fr', label: '法文' },
+  { value: 'de', label: '德文' },
+  { value: 'es', label: '西班牙文' }
+];
+
+// 目标语言选项（不包含自动检测）
+const TARGET_LANGUAGE_OPTIONS = LANGUAGE_OPTIONS.filter(opt => opt.value !== 'auto');
 
 // 基础状态
 const currentMode = ref<'word' | 'translate'>('word');
@@ -896,16 +905,6 @@ const toggleCopyOptions = () => {
   showCopyOptions.value = !showCopyOptions.value;
 };
 
-// 复制类型配置
-const COPY_TYPES = {
-  all: '全部',
-  phonetic: '音标',
-  meaning: '释义',
-  english: '英文',
-  pronunciation: '谐音',
-  example: '例句'
-};
-
 // 复制结果
 const copyResult = async (type: string = 'all') => {
   let textToCopy = '';
@@ -926,8 +925,7 @@ const copyResult = async (type: string = 'all') => {
 
   try {
     await navigator.clipboard.writeText(textToCopy);
-    const typeText = COPY_TYPES[type as keyof typeof COPY_TYPES] || '';
-    // showMessage(`已复制${typeText}到剪贴板`, 2000, 'info');
+    // showMessage(`已复制${COPY_TYPES[type as keyof typeof COPY_TYPES] || ''}到剪贴板`, 2000, 'info');
     showCopyOptions.value = false;
   } catch (error) {
     console.error('Copy failed:', error);

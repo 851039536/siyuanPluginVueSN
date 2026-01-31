@@ -43,12 +43,11 @@
         />
       </div>
       <div class="filter-right">
-        <Input
+         <Input
           v-model="searchQuery"
           :placeholder="i18n.searchPlaceholder || '搜索标题或内容...'"
           prefixIcon="search"
           size="small"
-          class="search-input"
         />
         <div class="statistics">
           <span class="tag tag-secondary">{{ i18n.total || '总计' }}: {{ cards.length }}</span>

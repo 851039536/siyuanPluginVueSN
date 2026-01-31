@@ -305,7 +305,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, type Ref } from 'vue';
 import { showMessage } from 'siyuan';
 import IconWrapper from '@/components/IconWrapper.vue';
 import Button from '@/components/Button.vue';
@@ -313,7 +313,10 @@ import Input from '@/components/Input.vue';
 import Select from '@/components/Select.vue';
 import Textarea from '@/components/Textarea.vue';
 
-// Props
+// ================================
+// 类型定义
+// ================================
+
 interface Props {
   i18n: any;
   plugin?: any;
@@ -321,9 +324,6 @@ interface Props {
   onTranslate?: (text: string, sourceLang: string, targetLang: string) => Promise<string>;
 }
 
-const props = defineProps<Props>();
-
-// 接口定义
 interface HistoryItem {
   word: string;
   result: string;
@@ -337,48 +337,10 @@ interface FavoriteItem {
   note?: string;
 }
 
-interface PanelConfig {
-  key: 'history' | 'favorites' | 'advanced';
-  title: string;
-  icon: string;
-  data?: any;
-  maxItems?: number;
-}
-
+// ================================
 // 常量配置
-const PANEL_CONFIGS: Record<string, PanelConfig> = {
-  history: {
-    key: 'history',
-    title: 'queryHistory',
-    icon: 'iconHistory',
-    data: 'queryHistory',
-    maxItems: 50
-  },
-  favorites: {
-    key: 'favorites',
-    title: 'myFavorites',
-    icon: 'star',
-    data: 'favorites'
-  },
-  advanced: {
-    key: 'advanced',
-    title: 'advancedOptions',
-    icon: 'generalSettings'
-  }
-};
+// ================================
 
-const LANGUAGE_NAMES: Record<string, string> = {
-  'auto': '自动检测',
-  'zh': '中文',
-  'en': '英文',
-  'ja': '日文',
-  'ko': '韩文',
-  'fr': '法文',
-  'de': '德文',
-  'es': '西班牙文'
-};
-
-// 语言选项数组
 const LANGUAGE_OPTIONS = [
   { value: 'auto', label: '自动检测' },
   { value: 'zh', label: '中文' },
@@ -390,8 +352,47 @@ const LANGUAGE_OPTIONS = [
   { value: 'es', label: '西班牙文' }
 ];
 
+// 从 LANGUAGE_OPTIONS 派生语言名称映射
+const LANGUAGE_NAMES = Object.fromEntries(
+  LANGUAGE_OPTIONS.map(opt => [opt.value, opt.label])
+) as Record<string, string>;
+
 // 目标语言选项（不包含自动检测）
 const TARGET_LANGUAGE_OPTIONS = LANGUAGE_OPTIONS.filter(opt => opt.value !== 'auto');
+
+// 配置常量
+const MAX_HISTORY_ITEMS = 50;
+const AUTO_OPERATION_DELAY = 2000;
+const WORD_PATTERN = /^[a-zA-Z0-9\s\-.,;:!?'"()（）【】《》《""''\u4e00-\u9fa5\u3000-\u303F\uFF00-\uFFEF]+$/;
+
+// 字段类型配置
+const FIELD_MAPPINGS = [
+  { pattern: /(单词|词语)：/, class: 'word-section', label: '$1：' },
+  { pattern: /(拼音|音标)：/, class: 'phonetic-section', label: '$1：' },
+  { pattern: /(英文)：/, class: 'english-section', label: '$1：' },
+  { pattern: /(释义)：/, class: 'meaning-section', label: '$1：' },
+  { pattern: /(谐音)：/, class: 'pronunciation-section', label: '$1：' },
+  { pattern: /(发音)：/, class: 'tip-section', label: '$1：' },
+  { pattern: /(例句)：/, class: 'example-section', label: '$1：' }
+];
+
+// 内容提取模式
+const CONTENT_PATTERNS = {
+  phonetic: [/音标：[^\n]+/, /拼音：[^\n]+/],
+  meaning: [/释义：[^\n]+/],
+  english: [/英文：[^\n]+/],
+  pronunciation: [/谐音：[^\n]+/],
+  example: [/例句：[\s\S]+/]
+};
+
+// 数据存储键
+const STORAGE_KEYS = {
+  HISTORY: 'word-query-history',
+  FAVORITES: 'word-query-favorites',
+  OPTIONS: 'word-query-options'
+};
+
+const props = defineProps<Props>();
 
 // 基础状态
 const currentMode = ref<'word' | 'translate'>('word');
@@ -422,17 +423,6 @@ const showRelatedWords = ref(true);
 // 定时器
 const autoQueryTimer = ref<NodeJS.Timeout | null>(null);
 const autoTranslateTimer = ref<NodeJS.Timeout | null>(null);
-
-// 字段类型配置
-const FIELD_MAPPINGS = [
-  { pattern: /(单词|词语)：/, class: 'word-section', label: '$1：' },
-  { pattern: /(拼音|音标)：/, class: 'phonetic-section', label: '$1：' },
-  { pattern: /(英文)：/, class: 'english-section', label: '$1：' },
-  { pattern: /(释义)：/, class: 'meaning-section', label: '$1：' },
-  { pattern: /(谐音)：/, class: 'pronunciation-section', label: '$1：' },
-  { pattern: /(发音)：/, class: 'tip-section', label: '$1：' },
-  { pattern: /(例句)：/, class: 'example-section', label: '$1：' }
-];
 
 // 格式化查询结果
 const formattedResult = computed(() => {
@@ -478,15 +468,6 @@ const formattedResult = computed(() => {
 
   return html;
 });
-
-// 内容提取配置
-const CONTENT_PATTERNS = {
-  phonetic: [/音标：[^\n]+/, /拼音：[^\n]+/],
-  meaning: [/释义：[^\n]+/],
-  english: [/英文：[^\n]+/],
-  pronunciation: [/谐音：[^\n]+/],
-  example: [/例句：[\s\S]+/]
-};
 
 // 提取查询结果中的各个部分
 const extractContentParts = computed(() => {
@@ -540,13 +521,8 @@ const handleQuery = async () => {
     const result = await props.onQuery(word);
     if (result) {
       queryResult.value = result;
-      // 添加到历史记录
       await addToHistory(word, result);
-      // 延迟检查收藏状态，确保数据已加载
-      setTimeout(() => {
-        checkIfFavorited(word);
-      }, 50);
-      // 自动播放发音
+      setTimeout(() => checkIfFavorited(word), 50);
       if (autoPlayPronunciation.value) {
         playPronunciation(word);
       }
@@ -647,11 +623,11 @@ const addToHistory = async (word: string, result: string) => {
   queryHistory.value = [
     newItem,
     ...queryHistory.value.filter(item => item.word !== word)
-  ].slice(0, PANEL_CONFIGS.history.maxItems);
+  ].slice(0, MAX_HISTORY_ITEMS);
 
   // 保存历史记录（不阻塞主要流程）
   try {
-    await dataOperations.save('word-query-history', queryHistory.value);
+    await dataOperations.save(STORAGE_KEYS.HISTORY, queryHistory.value);
   } catch (error) {
     console.error('[WordQuery] Failed to save history:', error);
     // 不显示错误提示，避免影响用户体验
@@ -660,7 +636,7 @@ const addToHistory = async (word: string, result: string) => {
 
 // 加载历史记录
 const loadHistory = async () => {
-  const saved = await dataOperations.load('word-query-history');
+  const saved = await dataOperations.load(STORAGE_KEYS.HISTORY);
   // 确保数据是数组，否则使用默认值
   if (saved && Array.isArray(saved)) {
     queryHistory.value = saved;
@@ -673,10 +649,8 @@ const loadHistory = async () => {
 const clearHistory = async () => {
   queryHistory.value = [];
   try {
-    const success = await dataOperations.save('word-query-history', queryHistory.value);
-    if (success) {
-      // showMessage('历史记录已清除', 2000, 'info');
-    } else {
+    const success = await dataOperations.save(STORAGE_KEYS.HISTORY, queryHistory.value);
+    if (!success) {
       showMessage('清除历史记录失败 - Plugin 未就绪', 2000, 'error');
     }
   } catch (error) {
@@ -702,12 +676,9 @@ const toggleFavorite = async () => {
 
   try {
     if (currentWordFavorited.value) {
-      // 取消收藏
       favorites.value = favorites.value.filter(item => item.word !== word);
       currentWordFavorited.value = false;
-      // showMessage('已取消收藏', 2000, 'info');
     } else {
-      // 添加收藏
       const newItem: FavoriteItem = {
         word,
         result: queryResult.value,
@@ -715,10 +686,9 @@ const toggleFavorite = async () => {
       };
       favorites.value.unshift(newItem);
       currentWordFavorited.value = true;
-      // showMessage('已添加到收藏', 2000, 'info');
     }
     // 立即保存数据
-    const success = await dataOperations.save('word-query-favorites', favorites.value);
+    const success = await dataOperations.save(STORAGE_KEYS.FAVORITES, favorites.value);
     if (!success) {
       showMessage('保存收藏失败 - Plugin 未就绪', 2000, 'error');
     }
@@ -729,7 +699,7 @@ const toggleFavorite = async () => {
 
 // 加载收藏
 const loadFavorites = async () => {
-  const saved = await dataOperations.load('word-query-favorites');
+  const saved = await dataOperations.load(STORAGE_KEYS.FAVORITES);
   // 确保数据是数组，否则使用默认值
   if (saved && Array.isArray(saved)) {
     favorites.value = saved;
@@ -742,10 +712,8 @@ const loadFavorites = async () => {
 const clearFavorites = async () => {
   favorites.value = [];
   try {
-    const success = await dataOperations.save('word-query-favorites', favorites.value);
-    if (success) {
-      // showMessage('收藏已清除', 2000, 'info');
-    } else {
+    const success = await dataOperations.save(STORAGE_KEYS.FAVORITES, favorites.value);
+    if (!success) {
       showMessage('清除收藏失败 - Plugin 未就绪', 2000, 'error');
     }
   } catch (error) {
@@ -765,13 +733,11 @@ const queryFromFavorite = (item: FavoriteItem) => {
 const removeFavorite = async (word: string) => {
   favorites.value = favorites.value.filter(item => item.word !== word);
   try {
-    const success = await dataOperations.save('word-query-favorites', favorites.value);
+    const success = await dataOperations.save(STORAGE_KEYS.FAVORITES, favorites.value);
     if (searchWord.value === word) {
       currentWordFavorited.value = false;
     }
-    if (success) {
-      // showMessage('已删除', 2000, 'info');
-    } else {
+    if (!success) {
       showMessage('删除失败 - Plugin 未就绪', 2000, 'error');
     }
   } catch (error) {
@@ -798,17 +764,9 @@ const exportToSiyuan = async () => {
     return;
   }
 
-  try {
-    const word = searchWord.value.trim();
-    const content = `## ${word}\n\n${queryResult.value}`;
-
-    // 复制到剪贴板
-    await navigator.clipboard.writeText(content);
-    // showMessage('已复制到剪贴板，可直接粘贴到文档', 3000, 'info');
-  } catch (error) {
-    console.error('Export failed:', error);
-    showMessage('导出失败', 2000, 'error');
-  }
+  const word = searchWord.value.trim();
+  const content = `## ${word}\n\n${queryResult.value}`;
+  copyToClipboard(content, props.i18n.wordQuery?.exportFailed || '导出失败');
 };
 
 // 高级选项数据
@@ -821,7 +779,7 @@ const advancedOptionsData = computed(() => ({
 // 保存高级选项
 const saveAdvancedOptions = async () => {
   try {
-    await dataOperations.save('word-query-options', advancedOptionsData.value);
+    await dataOperations.save(STORAGE_KEYS.OPTIONS, advancedOptionsData.value);
   } catch (error) {
     console.error('[WordQuery] Failed to save advanced options:', error);
   }
@@ -829,7 +787,7 @@ const saveAdvancedOptions = async () => {
 
 // 加载高级选项
 const loadAdvancedOptions = async () => {
-  const saved = await dataOperations.load('word-query-options');
+  const saved = await dataOperations.load(STORAGE_KEYS.OPTIONS);
   if (saved && typeof saved === 'object') {
     pronunciationType.value = saved.pronunciationType || 'uk';
     autoPlayPronunciation.value = saved.autoPlayPronunciation ?? false;
@@ -857,28 +815,17 @@ const formatTime = (timestamp: number) => {
   return new Date(timestamp).toLocaleDateString();
 };
 
-// 自动操作配置
-const AUTO_OPERATION_DELAY = 2000;
-const WORD_PATTERN = /^[a-zA-Z0-9\s\-.,;:!?'"()（）【】《》《""''\u4e00-\u9fa5\u3000-\u303F\uFF00-\uFFEF]+$/;
-
 // 清除定时器
-const clearTimer = (timerRef: 'autoQueryTimer' | 'autoTranslateTimer') => {
-  if (autoQueryTimer.value || autoTranslateTimer.value) {
-    const timer = timerRef === 'autoQueryTimer' ? autoQueryTimer.value : autoTranslateTimer.value;
-    if (timer) {
-      clearTimeout(timer);
-      if (timerRef === 'autoQueryTimer') {
-        autoQueryTimer.value = null;
-      } else {
-        autoTranslateTimer.value = null;
-      }
-    }
+const clearTimer = (timerRef: Ref<NodeJS.Timeout | null>) => {
+  if (timerRef.value) {
+    clearTimeout(timerRef.value);
+    timerRef.value = null;
   }
 };
 
 // 自动查询函数
 const setupAutoQuery = () => {
-  clearTimer('autoQueryTimer');
+  clearTimer(autoQueryTimer);
 
   const word = searchWord.value.trim();
   if (word && WORD_PATTERN.test(word)) {
@@ -890,7 +837,7 @@ const setupAutoQuery = () => {
 
 // 自动翻译函数
 const setupAutoTranslate = () => {
-  clearTimer('autoTranslateTimer');
+  clearTimer(autoTranslateTimer);
 
   const text = translateText.value.trim();
   if (text && !isTranslating.value) {
@@ -923,13 +870,8 @@ const copyResult = async (type: string = 'all') => {
     return;
   }
 
-  try {
-    await navigator.clipboard.writeText(textToCopy);
-    // showMessage(`已复制${COPY_TYPES[type as keyof typeof COPY_TYPES] || ''}到剪贴板`, 2000, 'info');
+  if (copyToClipboard(textToCopy, props.i18n.wordQuery?.copyFailed || '复制失败')) {
     showCopyOptions.value = false;
-  } catch (error) {
-    console.error('Copy failed:', error);
-    showMessage(props.i18n.wordQuery?.copyFailed || '复制失败', 3000, 'error');
   }
 };
 
@@ -969,7 +911,6 @@ const handleTranslate = async () => {
       const result = await props.onQuery(prompt);
       translateResult.value = result;
     }
-    // showMessage('✓ 翻译完成', 2000, 'info');
   } catch (error) {
     console.error('Translation error:', error);
     showMessage('翻译失败: ' + (error as Error).message, 3000, 'error');
@@ -989,13 +930,17 @@ const getPanelIcon = (panel: string) => {
 };
 
 // 获取面板标题
-const getPanelTitle = (panel: string) => {
-  const titles: Record<string, () => string> = {
-    history: () => `${props.i18n.wordQuery?.queryHistory || '查询历史'} (${queryHistory.value.length})`,
-    favorites: () => `${props.i18n.wordQuery?.myFavorites || '我的收藏'} (${favorites.value.length})`,
-    advanced: () => props.i18n.wordQuery?.advancedOptions || '高级选项'
-  };
-  return titles[panel]?.() || '';
+const getPanelTitle = (panel: string): string => {
+  switch (panel) {
+    case 'history':
+      return `${props.i18n.wordQuery?.queryHistory || '查询历史'} (${queryHistory.value.length})`;
+    case 'favorites':
+      return `${props.i18n.wordQuery?.myFavorites || '我的收藏'} (${favorites.value.length})`;
+    case 'advanced':
+      return props.i18n.wordQuery?.advancedOptions || '高级选项';
+    default:
+      return '';
+  }
 };
 
 // 获取语言名称
@@ -1031,14 +976,7 @@ const copyTranslation = async () => {
     showMessage('没有可复制的内容', 2000, 'error');
     return;
   }
-
-  try {
-    await navigator.clipboard.writeText(translateResult.value);
-    // showMessage('已复制到剪贴板', 2000, 'info');
-  } catch (error) {
-    console.error('Copy failed:', error);
-    showMessage('复制失败', 2000, 'error');
-  }
+  copyToClipboard(translateResult.value, '复制失败');
 };
 
 // 导出翻译结果
@@ -1048,14 +986,8 @@ const exportTranslation = async () => {
     return;
   }
 
-  try {
-    const content = `## 翻译结果\n\n### 原文 (${getLanguageName(sourceLanguage.value)})\n${translateText.value}\n\n### 译文 (${getLanguageName(targetLanguage.value)})\n${translateResult.value}`;
-    await navigator.clipboard.writeText(content);
-    // showMessage('已复制到剪贴板，可直接粘贴到文档', 3000, 'info');
-  } catch (error) {
-    console.error('Export failed:', error);
-    showMessage('导出失败', 2000, 'error');
-  }
+  const content = `## 翻译结果\n\n### 原文 (${getLanguageName(sourceLanguage.value)})\n${translateText.value}\n\n### 译文 (${getLanguageName(targetLanguage.value)})\n${translateResult.value}`;
+  copyToClipboard(content, '导出失败');
 };
 
 // 键盘快捷键
@@ -1083,12 +1015,41 @@ const handleClickOutside = (event: Event) => {
   }
 };
 
-// 监听搜索词变化，自动设置定时器
+// ================================
+// 通用工具函数
+// ================================
+
+// 剪贴板操作通用函数
+const copyToClipboard = async (text: string, errorMessage?: string) => {
+  if (!text) return false;
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (error) {
+    console.error('Copy failed:', error);
+    if (errorMessage) showMessage(errorMessage, 3000, 'error');
+    return false;
+  }
+};
+
+// 刷新收藏状态
+const refreshFavoriteStatus = () => {
+  const word = searchWord.value.trim();
+  if (word) checkIfFavorited(word);
+};
+
+// ================================
+// 监听器
+// ================================
+
+// 监听搜索词变化（合并两个 watch）
 watch(searchWord, () => {
   setupAutoQuery();
+  // 延迟检查收藏状态，确保数据已加载
+  setTimeout(refreshFavoriteStatus, 100);
 });
 
-// 监听翻译文本变化，自动设置定时器
+// 监听翻译文本变化
 watch(translateText, () => {
   setupAutoTranslate();
 });
@@ -1098,12 +1059,14 @@ watch([pronunciationType, autoPlayPronunciation, showRelatedWords], async () => 
   await saveAdvancedOptions();
 });
 
+// ================================
+// 生命周期
+// ================================
+
 // 等待 plugin 实例准备就绪
 const waitForPlugin = async (maxRetries = 20) => {
   for (let i = 0; i < maxRetries; i++) {
-    if (props.plugin) {
-      return true;
-    }
+    if (props.plugin) return true;
     await new Promise(resolve => setTimeout(resolve, 100));
   }
   console.error('[WordQuery] Plugin instance not available after max retries');
@@ -1112,14 +1075,12 @@ const waitForPlugin = async (maxRetries = 20) => {
 
 // 初始化数据
 const initializeData = async () => {
-  // 等待 plugin 实例准备就绪
   const pluginReady = await waitForPlugin();
   if (!pluginReady) {
     console.error('[WordQuery] Cannot initialize data without plugin instance');
     return;
   }
 
-  // 批量加载数据
   try {
     await Promise.all([
       loadHistory(),
@@ -1135,10 +1096,8 @@ onMounted(async () => {
   document.addEventListener('keydown', handleKeyDown);
   document.addEventListener('click', handleClickOutside);
 
-  // 延迟初始化数据，确保 plugin 实例已准备
-  setTimeout(() => {
-    initializeData();
-  }, 100);
+  // 延迟初始化数据
+  setTimeout(initializeData, 100);
 });
 
 onUnmounted(() => {
@@ -1146,25 +1105,8 @@ onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
 
   // 清理所有定时器
-  clearTimer('autoQueryTimer');
-  clearTimer('autoTranslateTimer');
-});
-
-// 强制刷新当前单词的收藏状态
-const refreshFavoriteStatus = () => {
-  const word = searchWord.value.trim();
-  if (word) {
-    checkIfFavorited(word);
-  }
-};
-
-// 监听搜索词变化，刷新收藏状态
-watch(searchWord, () => {
-  setupAutoQuery();
-  // 延迟检查收藏状态，确保数据已加载
-  setTimeout(() => {
-    refreshFavoriteStatus();
-  }, 100);
+  autoQueryTimer.value && clearTimeout(autoQueryTimer.value);
+  autoTranslateTimer.value && clearTimeout(autoTranslateTimer.value);
 });
 </script>
 

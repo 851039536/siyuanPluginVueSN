@@ -32,6 +32,7 @@
               <Select
                 v-model="contentType"
                 :options="contentTypeOptions"
+                size="small"
               />
             </div>
 
@@ -41,6 +42,7 @@
               <Select
                 v-model="selectedLanguage"
                 :options="languageOptions"
+                size="small"
               />
             </div>
 
@@ -50,6 +52,7 @@
               <Select
                 v-model="selectedStyle"
                 :options="currentStyleOptions"
+                size="small"
               />
             </div>
           </div>
@@ -61,6 +64,7 @@
               <Select
                 v-model="selectedTheme"
                 :options="themeOptions"
+                size="small"
               />
             </div>
 

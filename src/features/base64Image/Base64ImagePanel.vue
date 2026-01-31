@@ -38,7 +38,6 @@
           class="upload-area"
           @drop="handleDrop"
           @dragover="handleDragOver"
-          @dragenter="handleDragEnter"
           @dragleave="handleDragLeave"
           :class="{ 'drag-over': isDragOver }"
         >
@@ -47,7 +46,7 @@
             type="file"
             accept="image/*"
             @change="handleFileSelect"
-            style="display: none"
+            class="hidden-file-input"
           />
           <div class="upload-content">
             <IconWrapper name="image" :size="48" class="upload-icon" />
@@ -284,13 +283,8 @@ const handleFileSelect = (event: Event) => {
   }
 }
 
-// 处理拖拽
+// 处理拖拽进入/悬停
 const handleDragOver = (e: DragEvent) => {
-  e.preventDefault()
-  isDragOver.value = true
-}
-
-const handleDragEnter = (e: DragEvent) => {
   e.preventDefault()
   isDragOver.value = true
 }
@@ -311,29 +305,22 @@ const handleDrop = async (e: DragEvent) => {
   isDragOver.value = false
 
   const files = e.dataTransfer?.files
-  if (!files || files.length === 0) return
+  if (!files?.length) return
 
-  // 处理拖拽的文件（支持文件夹）
-  const fileList: File[] = []
+  // 过滤图片文件
+  const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'))
 
-  for (let i = 0; i < files.length; i++) {
-    const file = files[i]
-    if (file.type.startsWith('image/')) {
-      fileList.push(file)
-    }
-  }
-
-  if (fileList.length === 0) {
+  if (imageFiles.length === 0) {
     showMessage(props.i18n.base64Image_pleaseSelectImage || '请选择图片文件', 3000, 'error')
     return
   }
 
-  // 如果有多张图片，使用第一张
-  if (fileList.length > 1) {
-    showMessage(`已选择 ${fileList.length} 个文件，使用第一张`, 2000, 'info')
+  // 如果有多张图片，提示使用第一张
+  if (imageFiles.length > 1) {
+    showMessage(`已选择 ${imageFiles.length} 个文件，使用第一张`, 2000, 'info')
   }
 
-  handleFile(fileList[0])
+  handleFile(imageFiles[0])
 }
 
 // 处理文件
@@ -422,24 +409,30 @@ const toggleCopyDropdown = () => {
   showCopyDropdown.value = !showCopyDropdown.value
 }
 
-// 复制纯Base64
-const copyBase64 = async () => {
-  try {
-    const base64Only = base64Output.value.replace(/^data:image\/.*;base64,/, '')
-    await navigator.clipboard.writeText(base64Only)
-    showMessage(props.i18n.base64Image_copySuccess || '复制成功', 2000, 'info')
-    showCopyDropdown.value = false
-  } catch (error) {
-    showMessage(props.i18n.base64Image_copyFailed || '复制失败', 3000, 'error')
-  }
-}
+// 通用复制函数
+type CopyFormat = 'base64' | 'html' | 'markdown' | 'css'
 
-// 复制HTML img标签
-const copyHtmlTag = async () => {
+const copyToClipboard = async (format: CopyFormat) => {
   try {
     const altText = selectedFile.value?.name || 'image'
-    const htmlTag = `<img src="${base64Output.value}" alt="${altText}">`
-    await navigator.clipboard.writeText(htmlTag)
+    let content: string
+
+    switch (format) {
+      case 'base64':
+        content = base64Output.value.replace(/^data:image\/.*;base64,/, '')
+        break
+      case 'html':
+        content = `<img src="${base64Output.value}" alt="${altText}">`
+        break
+      case 'markdown':
+        content = `![${altText}](${base64Output.value})`
+        break
+      case 'css':
+        content = `background-image: url('${base64Output.value}');`
+        break
+    }
+
+    await navigator.clipboard.writeText(content)
     showMessage(props.i18n.base64Image_copySuccess || '复制成功', 2000, 'info')
     showCopyDropdown.value = false
   } catch (error) {
@@ -447,52 +440,30 @@ const copyHtmlTag = async () => {
   }
 }
 
-// 复制Markdown图片语法
-const copyMarkdown = async () => {
-  try {
-    const altText = selectedFile.value?.name || 'image'
-    const markdown = `![${altText}](${base64Output.value})`
-    await navigator.clipboard.writeText(markdown)
-    showMessage(props.i18n.base64Image_copySuccess || '复制成功', 2000, 'info')
-    showCopyDropdown.value = false
-  } catch (error) {
-    showMessage(props.i18n.base64Image_copyFailed || '复制失败', 3000, 'error')
-  }
+const copyBase64 = () => copyToClipboard('base64')
+const copyHtmlTag = () => copyToClipboard('html')
+const copyMarkdown = () => copyToClipboard('markdown')
+const copyCssBackground = () => copyToClipboard('css')
+
+// 通用下载函数
+const downloadFile = (url: string, filename: string) => {
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
 }
 
-// 复制CSS背景图片语法
-const copyCssBackground = async () => {
-  try {
-    const cssBackground = `background-image: url('${base64Output.value}');`
-    await navigator.clipboard.writeText(cssBackground)
-    showMessage(props.i18n.base64Image_copySuccess || '复制成功', 2000, 'info')
-    showCopyDropdown.value = false
-  } catch (error) {
-    showMessage(props.i18n.base64Image_copyFailed || '复制失败', 3000, 'error')
-  }
-}
-
-// 下载Base64
 const downloadBase64 = () => {
   const blob = new Blob([base64Output.value], { type: 'text/plain' })
   const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `${selectedFile.value?.name || 'base64'}.txt`
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
+  downloadFile(url, `${selectedFile.value?.name || 'base64'}.txt`)
   URL.revokeObjectURL(url)
 }
 
-// 下载解码后的图片
 const downloadDecodedImage = () => {
-  const a = document.createElement('a')
-  a.href = decodedImageUrl.value
-  a.download = 'decoded-image.png'
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
+  downloadFile(decodedImageUrl.value, 'decoded-image.png')
 }
 
 // 复制解码后的图片URL
@@ -541,16 +512,12 @@ const handlePaste = async (e: ClipboardEvent) => {
   const items = e.clipboardData?.items
   if (!items) return
 
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i]
-    if (item.type.startsWith('image/')) {
-      const file = item.getAsFile()
-      if (file) {
-        showMessage(props.i18n.base64Image_pasteSuccess || '粘贴图片成功', 2000, 'info')
-        handleFile(file)
-        return
-      }
-    }
+  const imageItem = Array.from(items).find(item => item.type.startsWith('image/'))
+  const file = imageItem?.getAsFile()
+
+  if (file) {
+    showMessage(props.i18n.base64Image_pasteSuccess || '粘贴图片成功', 2000, 'info')
+    handleFile(file)
   }
 }
 
@@ -566,6 +533,52 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
+// 公共样式
+%section-title {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--b3-theme-on-surface);
+}
+
+%info-text {
+  margin: 4px 0;
+  font-size: 12px;
+  color: var(--b3-theme-on-surface-variant);
+
+  strong {
+    color: var(--b3-theme-on-surface);
+  }
+}
+
+// 滑块公共样式
+%range-slider {
+  width: 100%;
+  height: 4px;
+  background: var(--b3-theme-surface-lighter);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+
+  &::-webkit-slider-thumb {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--b3-theme-primary);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  &::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: var(--b3-theme-primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+  }
+}
+
 // 使用思源笔记主题 CSS 变量实现黑色主题兼容
 .base64-image-panel {
   display: flex;
@@ -633,6 +646,14 @@ onUnmounted(() => {
   flex: 1;
   overflow-y: auto;
   padding: 16px;
+
+  > h4 {
+    @extend %section-title;
+  }
+
+  .hidden-file-input {
+    display: none;
+  }
 }
 
 .upload-section {
@@ -678,11 +699,8 @@ onUnmounted(() => {
 
 .preview-section,
 .output-section {
-  h4 {
-    margin: 0 0 12px 0;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--b3-theme-on-surface);
+  > h4 {
+    @extend %section-title;
   }
 
   .compression-settings {
@@ -716,30 +734,7 @@ onUnmounted(() => {
 
       .quality-slider,
       .width-slider {
-        width: 100%;
-        height: 4px;
-        background: var(--b3-theme-surface-lighter);
-        border-radius: 2px;
-        outline: none;
-        cursor: pointer;
-
-        &::-webkit-slider-thumb {
-          appearance: none;
-          width: 16px;
-          height: 16px;
-          background: var(--b3-theme-primary);
-          border-radius: 50%;
-          cursor: pointer;
-        }
-
-        &::-moz-range-thumb {
-          width: 16px;
-          height: 16px;
-          background: var(--b3-theme-primary);
-          border-radius: 50%;
-          cursor: pointer;
-          border: none;
-        }
+        @extend %range-slider;
       }
 
       .checkbox-label {
@@ -779,13 +774,7 @@ onUnmounted(() => {
   .file-info,
   .output-info {
     p {
-      margin: 4px 0;
-      font-size: 12px;
-      color: var(--b3-theme-on-surface-variant);
-
-      strong {
-        color: var(--b3-theme-on-surface);
-      }
+      @extend %info-text;
     }
   }
 
@@ -797,11 +786,9 @@ onUnmounted(() => {
     .copy-dropdown {
       position: relative;
 
-      .dropdown-toggle {
-        .dropdown-arrow {
-          margin-left: 4px;
-          font-size: 10px;
-        }
+      .dropdown-arrow {
+        margin-left: 4px;
+        font-size: 10px;
       }
 
       .dropdown-menu {
@@ -847,11 +834,8 @@ onUnmounted(() => {
 .input-section {
   margin-bottom: 16px;
 
-  h4 {
-    margin: 0 0 12px 0;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--b3-theme-on-surface);
+  > h4 {
+    @extend %section-title;
   }
 }
 

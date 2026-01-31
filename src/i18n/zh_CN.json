@@ -487,7 +487,7 @@
     "navigatedToFavorite": "已跳转到收藏夹",
     "navigationFailed": "导航失败"
   },
-  "codeImageGenerator": "代码图片生成",
+  "codeImageGenerator": "图片生成",
   "enableCodeImageGenerator": "启用代码图片生成器",
   "enableCodeImageGeneratorDesc": "在右侧边栏生成代码或文字图片，支持多种风格和装饰选项",
   "codeImageGeneratorPanel": {

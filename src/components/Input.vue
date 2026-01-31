@@ -46,7 +46,7 @@
         class="si-input__clear"
         @click="handleClear"
       >
-        <IconWrapper name="x" :size="iconSize" />
+        <IconWrapper :name="'x' as IconKey" :size="iconSize" />
       </span>
       <span
         v-if="showPassword && type === 'password' && !disabled && !readonly"
@@ -54,7 +54,7 @@
         @click="togglePasswordVisibility"
       >
         <IconWrapper
-          :name="passwordVisible ? 'eye-off' : 'eye'"
+          :name="(passwordVisible ? 'eye-off' : 'eye') as IconKey"
           :size="iconSize"
         />
       </span>
@@ -71,6 +71,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, useAttrs, nextTick } from 'vue'
 import IconWrapper from '@/components/IconWrapper.vue'
+import type { IconKey } from '@/config/icons'
 
 type InputType = 'text' | 'password' | 'email' | 'number' | 'tel' | 'url' | 'search' | 'textarea'
 type InputSize = 'small' | 'medium' | 'large'
@@ -97,9 +98,9 @@ interface Props {
   /** 错误文本 */
   error?: string
   /** 前缀图标 */
-  prefixIcon?: string
+  prefixIcon?: IconKey
   /** 后缀图标 */
-  suffixIcon?: string
+  suffixIcon?: IconKey
   /** 图标大小 */
   iconSize?: number
   /** 最大长度 */

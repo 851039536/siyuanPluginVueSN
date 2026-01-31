@@ -76,15 +76,15 @@
                 v-else
                 class="si-select__option"
                 :class="{
-                  'si-select__option--selected': isSelected(option.value),
-                  'si-select__option--disabled': option.disabled,
+                  'si-select__option--selected': isSelected((option as SelectOption).value),
+                  'si-select__option--disabled': (option as SelectOption).disabled,
                   'si-select__option--hovered': hoveredIndex === index
                 }"
-                @click.stop="selectOption(option)"
+                @click.stop="selectOption(option as SelectOption)"
                 @mouseenter="setHoveredIndex(index)"
               >
                 <slot name="option" :option="option">
-                  {{ option.label }}
+                  {{ (option as SelectOption).label }}
                 </slot>
               </div>
             </template>
@@ -216,11 +216,11 @@ const selectedOption = computed(() => {
 
   const findOption = (options: OptionType[]): SelectOption | null => {
     for (const option of options) {
-      if (option.isGroup) {
-        const found = option.options.find(opt => opt.value === props.modelValue)
+      if ((option as SelectGroupOption).isGroup) {
+        const found = (option as SelectGroupOption).options.find(opt => opt.value === props.modelValue)
         if (found) return found
-      } else if (!option.isGroup && option.value === props.modelValue) {
-        return option
+      } else if (!(option as SelectGroupOption).isGroup && (option as SelectOption).value === props.modelValue) {
+        return option as SelectOption
       }
     }
     return null
@@ -253,12 +253,12 @@ const filteredOptions = computed(() => {
     option.label.toLowerCase().includes(query)
 
   return props.options.reduce<OptionType[]>((acc, option) => {
-    if (option.isGroup) {
-      const filtered = filterGroup(option)
+    if ((option as SelectGroupOption).isGroup) {
+      const filtered = filterGroup(option as SelectGroupOption)
       if (filtered.options.length > 0) {
         acc.push(filtered)
       }
-    } else if (filterOption(option)) {
+    } else if (filterOption(option as SelectOption)) {
       acc.push(option)
     }
     return acc
@@ -266,8 +266,12 @@ const filteredOptions = computed(() => {
 })
 
 // 方法
+const isGroupOption = (option: OptionType): option is SelectGroupOption => {
+  return (option as SelectGroupOption).isGroup === true
+}
+
 const getOptionKey = (option: SelectOption | SelectGroupOption, index: number): string => {
-  if (option.isGroup) {
+  if (isGroupOption(option)) {
     return `group-${option.label}-${index}`
   }
   return `option-${option.value}-${index}`
@@ -319,8 +323,8 @@ const handleKeydown = (event: KeyboardEvent) => {
       event.preventDefault()
       if (isOpen.value && hoveredIndex.value >= 0) {
         const option = filteredOptions.value[hoveredIndex.value]
-        if (option && !option.isGroup && !option.disabled) {
-          selectOption(option)
+        if (option && !isGroupOption(option) && !(option as SelectOption).disabled) {
+          selectOption(option as SelectOption)
         }
       } else {
         toggleDropdown()

@@ -101,34 +101,37 @@
               <div class="decoration-group">
                 <div class="decoration-group-title">{{ i18nPanel.metadataOptions || '信息标签' }}</div>
                 <div class="decoration-row">
-                  <label class="decoration-checkbox">
-                    <input type="checkbox" v-model="enableWatermark" />
-                    <span>{{ i18nPanel.enableWatermark || '显示水印' }}</span>
-                  </label>
+                  <Switch
+                    v-model="enableWatermark"
+                    :label="i18nPanel.enableWatermark || '显示水印'"
+                    size="small"
+                  />
                   <Input
                     v-if="enableWatermark"
                     v-model="watermarkText"
-                    class="decoration-input"
+                   size="small"
                     :placeholder="i18nPanel.watermarkPlaceholder || '水印文字'"
                   />
                 </div>
                 <div class="decoration-row">
-                  <label class="decoration-checkbox">
-                    <input type="checkbox" v-model="enableAuthor" />
-                    <span>{{ i18nPanel.enableAuthor || '显示作者' }}</span>
-                  </label>
+                  <Switch
+                    v-model="enableAuthor"
+                    :label="i18nPanel.enableAuthor || '显示作者'"
+                    size="small"
+                  />
                   <Input
                     v-if="enableAuthor"
                     v-model="authorName"
-                    class="decoration-input"
+                   size="small"
                     :placeholder="i18nPanel.authorPlaceholder || '作者名称'"
                   />
                 </div>
                 <div class="decoration-row">
-                  <label class="decoration-checkbox">
-                    <input type="checkbox" v-model="enableTimestamp" />
-                    <span>{{ i18nPanel.enableTimestamp || '显示时间' }}</span>
-                  </label>
+                  <Switch
+                    v-model="enableTimestamp"
+                    :label="i18nPanel.enableTimestamp || '显示时间'"
+                    size="small"
+                  />
                 </div>
               </div>
 
@@ -298,6 +301,7 @@ import Button from '@/components/Button.vue'
 import Input from '@/components/Input.vue'
 import Textarea from '@/components/Textarea.vue'
 import Select from '@/components/Select.vue'
+import Switch from '@/components/Switch.vue'
 import IconWrapper from '@/components/IconWrapper.vue'
 import type { SelectOption } from '@/components/Select.vue'
 

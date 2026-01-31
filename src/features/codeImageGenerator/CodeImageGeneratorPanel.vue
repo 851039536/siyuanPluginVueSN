@@ -3,9 +3,7 @@
     <!-- 头部 -->
     <div class="panel-header">
       <div class="panel-title">
-        <svg class="panel-icon" viewBox="0 0 24 24">
-          <path fill="currentColor" d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/>
-        </svg>
+        <IconWrapper name="codeImageGenerator" :size="20" class="panel-icon" />
         <span>{{ i18n.codeImageGenerator || '代码图片生成' }}</span>
       </div>
     </div>
@@ -17,12 +15,12 @@
           <label class="section-label">
             {{ contentType === 'code' ? (i18nPanel.codeContent || '代码内容') : (i18nPanel.textContent || '文字内容') }}
           </label>
-          <textarea
+          <Textarea
             v-model="codeContent"
-            class="code-textarea"
             :placeholder="contentType === 'code' ? (i18nPanel.codeContentPlaceholder || '请输入代码...') : (i18nPanel.textContentPlaceholder || '请输入文字内容...')"
-            spellcheck="false"
-          ></textarea>
+            :rows="10"
+            :spellcheck="false"
+          />
         </div>
 
         <!-- 设置区 -->
@@ -31,64 +29,28 @@
             <!-- 内容类型 -->
             <div class="setting-item">
               <label class="setting-label">{{ i18nPanel.contentType || '内容类型' }}</label>
-              <select v-model="contentType" class="setting-select">
-                <option value="code">{{ i18nPanel.codeMode || '代码' }}</option>
-                <option value="text">{{ i18nPanel.textMode || '文字' }}</option>
-              </select>
+              <Select
+                v-model="contentType"
+                :options="contentTypeOptions"
+              />
             </div>
 
             <!-- 语言选择(代码模式) -->
             <div class="setting-item" v-if="contentType === 'code'">
               <label class="setting-label">{{ i18nPanel.codeLanguage || '语言' }}</label>
-              <select v-model="selectedLanguage" class="setting-select">
-                <option value="javascript">JavaScript</option>
-                <option value="typescript">TypeScript</option>
-                <option value="python">Python</option>
-                <option value="java">Java</option>
-                <option value="cpp">C++</option>
-                <option value="csharp">C#</option>
-                <option value="go">Go</option>
-                <option value="rust">Rust</option>
-                <option value="php">PHP</option>
-                <option value="ruby">Ruby</option>
-                <option value="swift">Swift</option>
-                <option value="kotlin">Kotlin</option>
-                <option value="html">HTML</option>
-                <option value="css">CSS</option>
-                <option value="scss">SCSS</option>
-                <option value="json">JSON</option>
-                <option value="yaml">YAML</option>
-                <option value="markdown">Markdown</option>
-                <option value="sql">SQL</option>
-                <option value="bash">Bash</option>
-              </select>
+              <Select
+                v-model="selectedLanguage"
+                :options="languageOptions"
+              />
             </div>
 
             <!-- 风格选择 -->
             <div class="setting-item">
               <label class="setting-label">{{ i18nPanel.codeStyle || '风格' }}</label>
-              <select v-model="selectedStyle" class="setting-select">
-                <!-- 代码模式风格 -->
-                <template v-if="contentType === 'code'">
-                  <option value="github">{{ i18nPanel.styles?.github || 'GitHub' }}</option>
-                  <option value="mac">{{ i18nPanel.styles?.mac || 'Mac' }}</option>
-                  <option value="cartoon">{{ i18nPanel.styles?.cartoon || '卡通' }}</option>
-                  <option value="wave">{{ i18nPanel.styles?.wave || '波浪渐变' }}</option>
-                  <option value="glass">{{ i18nPanel.styles?.glass || '玻璃拟态' }}</option>
-                  <option value="neon">{{ i18nPanel.styles?.neon || '霓虹灯' }}</option>
-                  <option value="3d">{{ i18nPanel.styles?.threeD || '3D立体' }}</option>
-                </template>
-                <!-- 文字模式风格 -->
-                <template v-else>
-                  <option value="quote">{{ i18nPanel.styles?.quote || '名人名言' }}</option>
-                  <option value="poetry">{{ i18nPanel.styles?.poetry || '诗词意境' }}</option>
-                  <option value="note">{{ i18nPanel.styles?.note || '手写便签' }}</option>
-                  <option value="poster">{{ i18nPanel.styles?.poster || '激励海报' }}</option>
-                  <option value="card">{{ i18nPanel.styles?.card || '引用卡片' }}</option>
-                  <option value="newspaper">{{ i18nPanel.styles?.newspaper || '复古报纸' }}</option>
-                  <option value="gradient">{{ i18nPanel.styles?.gradientText || '渐变文字' }}</option>
-                </template>
-              </select>
+              <Select
+                v-model="selectedStyle"
+                :options="currentStyleOptions"
+              />
             </div>
           </div>
 
@@ -96,10 +58,10 @@
             <!-- 主题选择 -->
             <div class="setting-item">
               <label class="setting-label">{{ i18nPanel.codeTheme || '主题' }}</label>
-              <select v-model="selectedTheme" class="setting-select">
-                <option value="light">{{ i18nPanel.lightTheme || '浅色' }}</option>
-                <option value="dark">{{ i18nPanel.darkTheme || '深色' }}</option>
-              </select>
+              <Select
+                v-model="selectedTheme"
+                :options="themeOptions"
+              />
             </div>
 
             <!-- 字体大小 -->
@@ -123,9 +85,12 @@
           <div class="decoration-section">
             <div class="decoration-header" @click="showDecorations = !showDecorations">
               <span class="decoration-title">{{ i18nPanel.decorations || '装饰选项' }}</span>
-              <svg class="decoration-toggle" :class="{ expanded: showDecorations }" viewBox="0 0 24 24">
-                <path fill="currentColor" d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"/>
-              </svg>
+              <IconWrapper
+                :name="showDecorations ? 'chevronUp' : 'chevronDown'"
+                :size="16"
+                class="decoration-toggle"
+                :class="{ expanded: showDecorations }"
+              />
             </div>
             <div v-if="showDecorations" class="decoration-options">
               <!-- 水印、作者、时间 -->
@@ -136,7 +101,7 @@
                     <input type="checkbox" v-model="enableWatermark" />
                     <span>{{ i18nPanel.enableWatermark || '显示水印' }}</span>
                   </label>
-                  <input
+                  <Input
                     v-if="enableWatermark"
                     v-model="watermarkText"
                     class="decoration-input"
@@ -148,7 +113,7 @@
                     <input type="checkbox" v-model="enableAuthor" />
                     <span>{{ i18nPanel.enableAuthor || '显示作者' }}</span>
                   </label>
-                  <input
+                  <Input
                     v-if="enableAuthor"
                     v-model="authorName"
                     class="decoration-input"
@@ -249,7 +214,7 @@
         <!-- 预览区 -->
         <div class="preview-section">
           <label class="section-label">{{ i18nPanel.preview || '预览' }}</label>
-          <div class="preview-container" ref="previewContainer">
+          <div class="preview-container">
             <!-- 代码模式预览 -->
             <div
               v-if="contentType === 'code'"
@@ -307,18 +272,12 @@
 
       <!-- 底部操作 -->
       <div class="panel-footer">
-        <button class="btn-action" @click="copyImage" :disabled="!codeContent">
-          <svg class="btn-icon" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-          </svg>
-          <span>{{ i18nPanel.copyImage || '复制图片' }}</span>
-        </button>
-        <button class="btn-action btn-primary" @click="downloadImage" :disabled="!codeContent">
-          <svg class="btn-icon" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"/>
-          </svg>
-          <span>{{ i18nPanel.downloadImage || '下载图片' }}</span>
-        </button>
+        <Button variant="secondary" @click="copyImage" :disabled="!codeContent" icon="contentCopy">
+          {{ i18nPanel.copyImage || '复制图片' }}
+        </Button>
+        <Button variant="primary" @click="downloadImage" :disabled="!codeContent" icon="download">
+          {{ i18nPanel.downloadImage || '下载图片' }}
+        </Button>
       </div>
     </div>
 </template>
@@ -331,33 +290,78 @@ import html2canvas from 'html2canvas'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github.css'
 import 'highlight.js/styles/github-dark.css'
+import Button from '@/components/Button.vue'
+import Input from '@/components/Input.vue'
+import Textarea from '@/components/Textarea.vue'
+import Select from '@/components/Select.vue'
+import IconWrapper from '@/components/IconWrapper.vue'
+import type { SelectOption } from '@/components/Select.vue'
+
+// 语言配置（统一管理，避免重复）
+const LANGUAGE_MAP = Object.freeze({
+  javascript: 'JavaScript',
+  typescript: 'TypeScript',
+  python: 'Python',
+  java: 'Java',
+  cpp: 'C++',
+  csharp: 'C#',
+  go: 'Go',
+  rust: 'Rust',
+  php: 'PHP',
+  ruby: 'Ruby',
+  swift: 'Swift',
+  kotlin: 'Kotlin',
+  html: 'HTML',
+  css: 'CSS',
+  scss: 'SCSS',
+  json: 'JSON',
+  yaml: 'YAML',
+  markdown: 'Markdown',
+  sql: 'SQL',
+  bash: 'Bash'
+} as const)
+
+// Select 组件选项数据（从语言配置生成）
+const contentTypeOptions: SelectOption[] = [
+  { value: 'code', label: '代码' },
+  { value: 'text', label: '文字' }
+]
+
+const languageOptions: SelectOption[] = Object.entries(LANGUAGE_MAP).map(([value, label]) => ({ value, label }))
+
+const codeStyleOptions: SelectOption[] = [
+  { value: 'github', label: 'GitHub' },
+  { value: 'mac', label: 'Mac' },
+  { value: 'cartoon', label: '卡通' },
+  { value: 'wave', label: '波浪渐变' },
+  { value: 'glass', label: '玻璃拟态' },
+  { value: 'neon', label: '霓虹灯' },
+  { value: '3d', label: '3D立体' }
+]
+
+const textStyleOptions: SelectOption[] = [
+  { value: 'quote', label: '名人名言' },
+  { value: 'poetry', label: '诗词意境' },
+  { value: 'note', label: '手写便签' },
+  { value: 'poster', label: '激励海报' },
+  { value: 'card', label: '引用卡片' },
+  { value: 'newspaper', label: '复古报纸' },
+  { value: 'gradient', label: '渐变文字' }
+]
+
+const themeOptions: SelectOption[] = [
+  { value: 'light', label: '浅色' },
+  { value: 'dark', label: '深色' }
+]
 
 interface I18nPanelKeys {
   contentType?: string
-  codeMode?: string
-  textMode?: string
   codeContent?: string
   textContent?: string
   codeContentPlaceholder?: string
   textContentPlaceholder?: string
   codeLanguage?: string
   codeStyle?: string
-  styles?: {
-    github?: string
-    mac?: string
-    cartoon?: string
-    wave?: string
-    glass?: string
-    neon?: string
-    threeD?: string
-    quote?: string
-    poetry?: string
-    note?: string
-    poster?: string
-    card?: string
-    newspaper?: string
-    gradientText?: string
-  }
   codeTheme?: string
   lightTheme?: string
   darkTheme?: string
@@ -391,27 +395,24 @@ interface I18nKeys {
 }
 
 interface Props {
-  visible: boolean
   content?: string
   i18n?: I18nKeys
-}
-
-interface Emits {
-  (e: 'update:visible', value: boolean): void
-  (e: 'close'): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
   i18n: () => ({})
 })
 
-const emit = defineEmits<Emits>()
-
 // 计算属性：简化 i18n 访问
 const i18nPanel = computed<I18nPanelKeys>(() => props.i18n?.codeImageGeneratorPanel || {})
 
+// 计算属性：根据内容类型返回对应的风格选项
+const currentStyleOptions = computed<SelectOption[]>(() => {
+  return contentType.value === 'code' ? codeStyleOptions : textStyleOptions
+})
+
 // 常量定义
-const DEFAULTS = {
+const DEFAULTS = Object.freeze({
   fontSize: 14,
   borderWidth: 1,
   borderRadius: 8,
@@ -419,23 +420,12 @@ const DEFAULTS = {
   backgroundOpacity: 100,
   shadowIntensity: 50,
   watermarkText: 'SiYuan Notes',
-  selectedLanguage: 'javascript',
-  selectedStyle: 'github',
-  selectedTheme: 'light',
-  minFontSize: 12,
-  maxFontSize: 24,
-  maxBorderWidth: 10,
-  maxBorderRadius: 32,
-  maxPaddingSize: 48,
-  minShadowIntensity: 0,
-  maxShadowIntensity: 100,
+  selectedLanguage: 'javascript' as const,
+  selectedStyle: 'github' as const,
+  selectedTheme: 'light' as const,
   scaleMultiplier: 3,
-  baseShadowOffset: 4,
-  baseShadowBlur: 12,
-  baseShadowOpacity: 0.1,
-  shadowOpacityStep: 500,
   messageDuration: 3000
-} as const
+})
 
 // 状态
 const contentType = ref<'code' | 'text'>('code')
@@ -485,29 +475,7 @@ const highlightedCode = computed<string>(() => {
 
 // 获取语言显示名称
 const getLanguageDisplay = (): string => {
-  const languageMap: Record<string, string> = {
-    javascript: 'JavaScript',
-    typescript: 'TypeScript',
-    python: 'Python',
-    java: 'Java',
-    cpp: 'C++',
-    csharp: 'C#',
-    go: 'Go',
-    rust: 'Rust',
-    php: 'PHP',
-    ruby: 'Ruby',
-    swift: 'Swift',
-    kotlin: 'Kotlin',
-    html: 'HTML',
-    css: 'CSS',
-    scss: 'SCSS',
-    json: 'JSON',
-    yaml: 'YAML',
-    markdown: 'Markdown',
-    sql: 'SQL',
-    bash: 'Bash'
-  }
-  return languageMap[selectedLanguage.value] || selectedLanguage.value
+  return LANGUAGE_MAP[selectedLanguage.value as keyof typeof LANGUAGE_MAP] || selectedLanguage.value
 }
 
 // 当前时间
@@ -524,11 +492,12 @@ const currentTime = computed<string>(() => {
 
 // 预览自定义样式
 const previewCustomStyle = computed<CSSProperties>(() => {
+  const shadowIntensityRatio = shadowIntensity.value / 100
   return {
     borderRadius: `${borderRadius.value}px`,
     padding: `${paddingSize.value}px`,
     opacity: backgroundOpacity.value / 100,
-    boxShadow: `0 ${DEFAULTS.baseShadowOffset + shadowIntensity.value / 10}px ${DEFAULTS.baseShadowBlur + shadowIntensity.value / 5}px rgba(0, 0, 0, ${DEFAULTS.baseShadowOpacity + shadowIntensity.value / DEFAULTS.shadowOpacityStep})`,
+    boxShadow: `0 ${4 + shadowIntensity.value / 10}px ${12 + shadowIntensity.value / 5}px rgba(0, 0, 0, ${0.1 + shadowIntensityRatio * 0.3})`,
     borderWidth: borderWidth.value > 0 ? `${borderWidth.value}px` : '0',
     borderStyle: borderWidth.value > 0 ? 'solid' : 'none'
   }

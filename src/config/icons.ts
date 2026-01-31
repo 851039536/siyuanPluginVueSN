@@ -351,6 +351,15 @@ export const COMMON_ICONS = {
   },
   starCircle: {
     icon: 'mdi:star-circle'
+  },
+  chevronUp: {
+    icon: 'mdi:chevron-up'
+  },
+  chevronDown: {
+    icon: 'mdi:chevron-down'
+  },
+  download: {
+    icon: 'mdi:download'
   }
 } as const
 

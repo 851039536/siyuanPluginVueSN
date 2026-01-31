@@ -352,13 +352,13 @@
             @blur="validateTitle"
             required
           />
-          <Input
+          <Textarea
             v-model="formData.content"
-            type="textarea"
             :label="i18n.content || '内容'"
             :placeholder="i18n.contentPlaceholder || '内容'"
             :maxlength="1000"
             :showCount="true"
+            :rows="8"
           />
           <div class="form-group">
             <label>{{ i18n.category || '类别' }}</label>
@@ -405,6 +405,7 @@ import IconWrapper from '@/components/IconWrapper.vue'
 import Button from '@/components/Button.vue'
 import Select from '@/components/Select.vue'
 import Input from '@/components/Input.vue'
+import Textarea from '@/components/Textarea.vue'
 import Card from '@/components/Card.vue'
 import type { SelectOption } from '@/components/Select.vue'
 import type { Plugin } from 'siyuan'

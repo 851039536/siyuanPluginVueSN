@@ -20,11 +20,7 @@
 
           <!-- 单卡视图 -->
           <template v-else>
-            <Card
-              variant="elevated"
-              size="large"
-              class="flashcard-large"
-            >
+            <div class="flashcard-large">
               <div class="card-title-large">{{ currentCard?.title }}</div>
               <div class="card-content-large">{{ currentCard?.content }}</div>
               <div class="card-meta-large">
@@ -39,7 +35,7 @@
               >
                 {{ i18n.play || '播放' }}
               </Button>
-            </Card>
+            </div>
 
             <!-- 类别筛选 -->
             <div class="category-filter">
@@ -88,7 +84,6 @@ import { showMessage } from 'siyuan'
 import IconWrapper from '@/components/IconWrapper.vue'
 import Button from '@/components/Button.vue'
 import Select from '@/components/Select.vue'
-import Card from '@/components/Card.vue'
 import type { SelectOption } from '@/components/Select.vue'
 import type { Plugin } from 'siyuan'
 import { FlashcardStorage } from './storage'

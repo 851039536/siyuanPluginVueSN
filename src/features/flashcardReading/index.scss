@@ -20,19 +20,14 @@
     border-radius: 12px;
   }
 
-  &.tag-secondary {
-    background: var(--b3-theme-surface);
-    color: var(--b3-theme-on-surface);
-  }
-
   &.tag-info {
     background: var(--b3-theme-primary);
-    color: #fff;
+    color: $brand-light;
   }
 
   &.tag-success {
-    background: #10b981;
-    color: #fff;
+    background: $brand-green;
+    color: $brand-light;
   }
 
   &.tag-contrast {
@@ -61,7 +56,6 @@
 
 // 大卡片样式（共享）
 .flashcard-large {
-  // 使用品牌渐变背景 - 橙色到蓝色渐变
   background: linear-gradient(135deg, $brand-orange 0%, $brand-blue 100%);
   color: $brand-light;
   display: flex;
@@ -73,22 +67,7 @@
   overflow: hidden;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(201, 122, 93, 0.3);
-
-  // 覆盖 Card 组件的默认样式
-  :deep(.si-card) {
-    background: transparent;
-    border: none;
-    box-shadow: none;
-  }
-
-  :deep(.si-card__body) {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    justify-content: center;
-    align-items: center;
-    padding: 28px 20px;
-  }
+  padding: 28px 20px;
 }
 
 .card-title-large {
@@ -203,7 +182,6 @@
         font-weight: 500;
       }
 
-      // Select 组件宽度样式
       .si-select {
         flex: 1;
         min-width: 0;
@@ -217,7 +195,6 @@
       flex: 1;
       min-width: 200px;
       justify-content: flex-end;
-
 
       .statistics {
         display: flex;
@@ -251,7 +228,6 @@
     min-height: 0;
 
     .flashcard-item {
-      // Card 组件样式覆盖
       :deep(.si-card) {
         border-left: 3px solid var(--b3-theme-primary);
       }
@@ -326,7 +302,7 @@
     gap: 8px;
   }
 
-  // 统计视图（紧凑版）
+  // 统计视图
   .statistics-view {
     flex: 0 1 auto;
     max-height: 95%;
@@ -412,7 +388,7 @@
               .bar-value {
                 font-size: 11px;
                 font-weight: 600;
-                color: white;
+                color: $brand-light;
               }
             }
           }
@@ -541,7 +517,6 @@
             flex-direction: column;
             gap: 6px;
 
-            // Select 组件宽度样式
             .si-select {
               width: 100%;
             }

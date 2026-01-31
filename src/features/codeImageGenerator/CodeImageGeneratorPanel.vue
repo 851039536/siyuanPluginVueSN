@@ -301,6 +301,10 @@ import Select from '@/components/Select.vue'
 import IconWrapper from '@/components/IconWrapper.vue'
 import type { SelectOption } from '@/components/Select.vue'
 
+// 错误消息工具函数
+const getErrorMsg = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error)
+
 // 语言配置（统一管理，避免重复）
 const LANGUAGE_MAP = Object.freeze({
   javascript: 'JavaScript',
@@ -404,6 +408,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  content: '',
   i18n: () => ({})
 })
 
@@ -472,15 +477,14 @@ const highlightedCode = computed<string>(() => {
     const result = hljs.highlight(codeContent.value, { language: selectedLanguage.value })
     return result.value
   } catch (error) {
-    console.error('代码高亮失败:', error instanceof Error ? error.message : String(error))
+    console.error('代码高亮失败:', getErrorMsg(error))
     return codeContent.value
   }
 })
 
 // 获取语言显示名称
-const getLanguageDisplay = (): string => {
-  return LANGUAGE_MAP[selectedLanguage.value as keyof typeof LANGUAGE_MAP] || selectedLanguage.value
-}
+const getLanguageDisplay = (): string =>
+  LANGUAGE_MAP[selectedLanguage.value as keyof typeof LANGUAGE_MAP] ?? selectedLanguage.value
 
 // 当前时间
 const currentTime = computed<string>(() => {
@@ -495,17 +499,14 @@ const currentTime = computed<string>(() => {
 })
 
 // 预览自定义样式
-const previewCustomStyle = computed<CSSProperties>(() => {
-  const shadowIntensityRatio = shadowIntensity.value / 100
-  return {
-    borderRadius: `${borderRadius.value}px`,
-    padding: `${paddingSize.value}px`,
-    opacity: backgroundOpacity.value / 100,
-    boxShadow: `0 ${4 + shadowIntensity.value / 10}px ${12 + shadowIntensity.value / 5}px rgba(0, 0, 0, ${0.1 + shadowIntensityRatio * 0.3})`,
-    borderWidth: borderWidth.value > 0 ? `${borderWidth.value}px` : '0',
-    borderStyle: borderWidth.value > 0 ? 'solid' : 'none'
-  }
-})
+const previewCustomStyle = computed<CSSProperties>(() => ({
+  borderRadius: `${borderRadius.value}px`,
+  padding: `${paddingSize.value}px`,
+  opacity: backgroundOpacity.value / 100,
+  boxShadow: `0 ${4 + shadowIntensity.value / 10}px ${12 + shadowIntensity.value / 5}px rgba(0, 0, 0, ${0.1 + shadowIntensity.value * 0.003})`,
+  borderWidth: borderWidth.value > 0 ? `${borderWidth.value}px` : '0',
+  borderStyle: borderWidth.value > 0 ? 'solid' : 'none'
+}))
 
 // 生成画布的公共方法
 const generateCanvas = async (): Promise<HTMLCanvasElement> => {
@@ -513,21 +514,17 @@ const generateCanvas = async (): Promise<HTMLCanvasElement> => {
     throw new Error('Preview element not found')
   }
 
-  // 使用设备像素比,确保在高分辨率屏幕上清晰
-  const dpr = window.devicePixelRatio || 1
-  const scale = Math.max(dpr, DEFAULTS.scaleMultiplier) // 提高到至少 3 倍缩放
-
-  // 获取预览元素的实际背景色
+  const dpr = window.devicePixelRatio ?? 1
+  const scale = Math.max(dpr, DEFAULTS.scaleMultiplier)
   const computedStyle = window.getComputedStyle(codePreview.value)
-  const bgColor = computedStyle.backgroundColor || 'transparent'
+  const bgColor = computedStyle.backgroundColor ?? 'transparent'
 
   return await html2canvas(codePreview.value, {
-    backgroundColor: bgColor, // 使用预览元素的实际背景色
-    scale: scale,
+    backgroundColor: bgColor,
+    scale,
     logging: false,
     useCORS: true,
     allowTaint: true,
-    // 提高渲染质量
     width: codePreview.value.scrollWidth,
     height: codePreview.value.scrollHeight,
     windowWidth: codePreview.value.scrollWidth,
@@ -538,12 +535,8 @@ const generateCanvas = async (): Promise<HTMLCanvasElement> => {
 }
 
 // 生成文件名
-const createFilename = (): string => {
-  const timestamp = Date.now()
-  return contentType.value === 'code'
-    ? `code-${selectedLanguage.value}-${timestamp}.png`
-    : `text-${timestamp}.png`
-}
+const createFilename = (): string =>
+  `${contentType.value === 'code' ? `code-${selectedLanguage.value}` : 'text'}-${Date.now()}.png`
 
 // 复制图片到剪贴板
 const copyImage = async (): Promise<void> => {
@@ -563,12 +556,12 @@ const copyImage = async (): Promise<void> => {
         await navigator.clipboard.write([item])
         showMessage(props.i18n.codeImageGeneratorPanel?.imageCopied || '图片已复制到剪贴板', DEFAULTS.messageDuration, 'info')
       } catch (err) {
-        console.error('复制失败:', err instanceof Error ? err.message : String(err))
+        console.error('复制失败:', getErrorMsg(err))
         showMessage(props.i18n.codeImageGeneratorPanel?.copyFailed || '复制失败', DEFAULTS.messageDuration, 'error')
       }
     }, 'image/png', 1.0) // 使用最高质量
   } catch (error) {
-    console.error('生成图片失败:', error instanceof Error ? error.message : String(error))
+    console.error('生成图片失败:', getErrorMsg(error))
     showMessage(props.i18n.codeImageGeneratorPanel?.generateFailed || '生成图片失败', DEFAULTS.messageDuration, 'error')
   }
 }
@@ -586,7 +579,7 @@ const downloadImage = async (): Promise<void> => {
 
     showMessage(props.i18n.codeImageGeneratorPanel?.imageDownloaded || '图片已下载', DEFAULTS.messageDuration, 'info')
   } catch (error) {
-    console.error('下载失败:', error instanceof Error ? error.message : String(error))
+    console.error('下载失败:', getErrorMsg(error))
     showMessage(props.i18n.codeImageGeneratorPanel?.downloadFailed || '下载失败', DEFAULTS.messageDuration, 'error')
   }
 }

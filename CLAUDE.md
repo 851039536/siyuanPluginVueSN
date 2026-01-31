@@ -94,7 +94,7 @@ Vue 应用结构
 通用按钮组件，支持多种变体和状态。
 - 需适配黑白主题，使用思源主题变量
 
-**基础用法**
+基础用法
 
 ```vue
 <script setup lang="ts">
@@ -122,7 +122,7 @@ import Button from '@/components/Button.vue'
 </template>
 ```
 
-**Props**
+Props
 
 - `variant`: `'primary' | 'secondary' | 'success' | 'danger' | 'ghost'` (默认: `'primary'`)
 - `size`: `'small' | 'medium' | 'large'` (默认: `'medium'`)
@@ -133,7 +133,7 @@ import Button from '@/components/Button.vue'
 - `iconPosition`: `'left' | 'right'` (默认: `'left'`)
 - `block`: `boolean` (默认: `false`)
 
-**详细文档**：[src/components/Button.md](src/components/Button.md)
+详细文档：[src/components/Button.md](src/components/Button.md)
 
 #### IconWrapper 组件
 
@@ -166,13 +166,13 @@ import IconWrapper from '@/components/IconWrapper.vue'
 
 创建新共享组件时，请遵循以下原则：
 
-1. **组件位置**：所有共享组件放在 `src/components/` 目录
-2. **组件文档**：为复杂组件创建对应的 `.md` 文档（如 [Button.md](src/components/Button.md)）
-3. **使用品牌变量**：组件样式必须使用 `src/_variables.scss` 中定义的品牌变量
-4. **Props 定义**：使用 TypeScript 接口定义 Props，并提供详细注释
-5. **组件复用**：优先使用现有共享组件（Button,IconWrapper,Select,Input），而非重复实现
+1. 组件位置：所有共享组件放在 `src/components/` 目录
+2. 组件文档：为复杂组件创建对应的 `.md` 文档（如 [Button.md](src/components/Button.md)）
+3. 使用品牌变量：组件样式必须使用 `src/_variables.scss` 中定义的品牌变量
+4. Props 定义：使用 TypeScript 接口定义 Props，并提供详细注释
+5. 组件复用：优先使用现有共享组件（Button,IconWrapper,Select,Input），而非重复实现
 
-**示例：创建新组件**
+示例：创建新组件
 
 ```vue
 <!-- src/components/MyComponent.vue -->
@@ -184,7 +184,7 @@ import IconWrapper from '@/components/IconWrapper.vue'
 
 <script setup lang="ts">
 interface Props {
-  /** 属性描述 */
+  / 属性描述 */
   value: string
 }
 

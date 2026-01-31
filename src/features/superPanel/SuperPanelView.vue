@@ -293,16 +293,6 @@ const features = computed<Feature[]>(() => [
     actions: []
   },
   {
-    id: 'apiReference',
-    iconKey: 'apiReference',
-    title: props.i18n.apiReference?.title || 'API参考',
-    desc: props.i18n.enableApiReferenceDesc || '多API使用方式参考，支持思源、OpenAI、GitHub等',
-    enabled: props.settings.enableApiReference,
-    actions: [
-      { key: 'openApiReference', label: '打开API参考', hotkey: 'Ctrl+Alt+A' }
-    ]
-  },
-  {
     id: 'floatingToolbar',
     iconKey: 'floatingToolbar',
     title: props.i18n.floatingToolbar?.title || '浮动工具栏',

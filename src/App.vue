@@ -55,7 +55,7 @@ import { QRCodeDialog, PronunciationDialog } from '@/features/floatingToolbar'
 import VideoManager from '@/features/video/VideoManager.vue'
 import EverythingSearchDialog from '@/features/everythingSearch/EverythingSearchDialog.vue'
 import PasswordVaultDialog from '@/features/passwordVault/PasswordVaultDialog.vue'
-import { everythingSearchVisible, hideEverythingSearch, showApiReferencePanel, passwordVaultVisible, hidePasswordVault } from '@/features'
+import { everythingSearchVisible, hideEverythingSearch, passwordVaultVisible, hidePasswordVault } from '@/features'
 import type PluginSample from '@/index'
 
 const plugin = usePlugin() as PluginSample
@@ -148,11 +148,6 @@ onMounted(() => {
   // 监听打开Everything搜索事件
   window.addEventListener('openEverythingSearch', () => {
     everythingSearchVisible.value = true
-  })
-
-  // 监听打开API参考事件
-  window.addEventListener('openApiReference', () => {
-    showApiReferencePanel(plugin)
   })
 
   // 监听打开密码箱事件

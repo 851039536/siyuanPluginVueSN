@@ -160,7 +160,6 @@ async function handleFeatureToggle(plugin: Plugin, featureId: string, enabled: b
     'video': 'enableVideo',
     'everythingSearch': 'enableEverythingSearch',
     'systemMonitor': 'enableSystemMonitor',
-    'apiReference': 'enableApiReference',
     'floatingToolbar': 'enableFloatingToolbar',
     'floatingBox': 'enableFloatingBox',
     'textDiff': 'enableTextDiff',
@@ -222,7 +221,6 @@ async function handleToggleAllFeatures(plugin: Plugin, enabled: boolean) {
     'enableVideo',
     'enableEverythingSearch',
     'enableSystemMonitor',
-    'enableApiReference',
     'enableFloatingToolbar',
     'enableFloatingBox',
     'enableTextDiff',
@@ -303,13 +301,6 @@ function handleFeatureAction(_plugin: Plugin, action: string) {
       closeSuperPanel()
       break
 
-    case 'openApiReference':
-      // 触发打开API参考
-      if ((_plugin as any).settings.enableApiReference) {
-        window.dispatchEvent(new CustomEvent('openApiReference'))
-        closeSuperPanel()
-      }
-      break
 
     case 'openStatistics':
       // 触发打开统计面板

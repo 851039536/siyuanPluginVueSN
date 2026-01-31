@@ -11,7 +11,7 @@ import "@/index.scss";
 
 import PluginInfoString from '@/../plugin.json'
 import { destroy, init } from '@/main'
-import { registerPageLock, registerTableOfContents, registerImageCompressor, registerDocNavigation, registerShortcut, registerWordQuery, registerGeneralSettings, registerUnitConverter, registerSuperPanel, registerDiskBrowser, registerCodeImageGenerator, registerAIContentGenerator, registerStatistics, registerEncryption, registerVideo, registerEverythingSearch, registerSystemMonitor, registerApiReference, registerHighlight, registerFloatingToolbar, registerFloatingBox, registerTextDiff, registerBase64Image, registerFlashcardReading, registerPasswordVault, registerWebDAV } from '@/features'
+import { registerPageLock, registerTableOfContents, registerImageCompressor, registerDocNavigation, registerShortcut, registerWordQuery, registerGeneralSettings, registerUnitConverter, registerSuperPanel, registerDiskBrowser, registerCodeImageGenerator, registerAIContentGenerator, registerStatistics, registerEncryption, registerVideo, registerEverythingSearch, registerSystemMonitor, registerHighlight, registerFloatingToolbar, registerFloatingBox, registerTextDiff, registerBase64Image, registerFlashcardReading, registerPasswordVault, registerWebDAV } from '@/features'
 import { loadSettings, saveSettings, loadHighlightSettings, type PluginSettings } from '@/config/settings'
 import { initCommands, destroyCommands } from '@/commands'
 
@@ -181,10 +181,6 @@ export default class PluginSample extends Plugin {
       registerSystemMonitor(this)
     }
 
-    // 注册API参考功能
-    if (this.settings.enableApiReference) {
-      registerApiReference(this)
-    }
     // 注册双击高亮功能（从数据库读取设置）
     const highlightSettings = await loadHighlightSettings(this)
     registerHighlight(this, highlightSettings.enableHighlight)

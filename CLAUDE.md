@@ -170,7 +170,7 @@ import IconWrapper from '@/components/IconWrapper.vue'
 2. **组件文档**：为复杂组件创建对应的 `.md` 文档（如 [Button.md](src/components/Button.md)）
 3. **使用品牌变量**：组件样式必须使用 `src/_variables.scss` 中定义的品牌变量
 4. **Props 定义**：使用 TypeScript 接口定义 Props，并提供详细注释
-5. **组件复用**：优先使用现有共享组件（Button、IconWrapper），而非重复实现
+5. **组件复用**：优先使用现有共享组件（Button,IconWrapper,Select,Input），而非重复实现
 
 **示例：创建新组件**
 

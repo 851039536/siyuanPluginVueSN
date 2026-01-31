@@ -202,77 +202,43 @@ defineProps<Props>()
 ```
 ### 品牌设计规范
 
-本项目使用 Anthropic 官方品牌色，所有新增页面必须遵守以下规范：
+本项目采用 **shadcn-vue** 设计系统，基于 HSL 颜色空间，支持亮色/暗色主题切换。
 
-#### 品牌颜色（定义在 `src/_variables.scss`）
-
-```scss
-// 主色
-$brand-dark: #141413         // 主文本、深色背景
-$brand-light: #faf9f5        // 浅色背景、深色上的文本
-
-// 灰度
-$brand-mid-gray: #b0aea5     // 次要元素
-$brand-light-gray: #e8e6dc   // 微妙背景
-
-// 强调色
-$brand-orange: #d97757       // 主强调色（按钮、链接、错误提示）
-$brand-blue: #6a9bcc         // 次强调色
-$brand-green: #788c5d        // 第三强调色
-```
-
-#### 品牌字体
+#### 快速使用
 
 ```scss
-// 品牌字体变量 - 现代字体栈，优化中文显示
-$font-heading: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
-$font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
-```
+@use '@/index.scss' as *;
 
-#### 使用指南
-
-1. 颜色使用
-   - 主按钮/操作：`$brand-orange`
-   - 次要按钮/信息：`$brand-blue`
-   - 成功/完成：`$brand-green`
-   - 错误/警告：`$brand-orange`（非红色）
-   - 文本：`$brand-dark`
-   - 副文本：`$brand-mid-gray`
-
-2. 字体使用
-   - 所有标题（h1-h6、表单 label、卡片标题）：`$font-heading`
-   - 正文内容、描述文本：`$font-body`
-
-3. 示例代码
-
-```scss
-// 新组件样式示例
+// 组件样式
 .my-component {
   color: $brand-dark;
   font-family: $font-body;
-
-  h2 {
-    font-family: $font-heading;
-    color: $brand-orange;
-  }
-
-  .button-primary {
-    background: $brand-orange;
-    color: $brand-light;
-  }
-
-  .button-secondary {
-    background: $brand-blue;
-    color: $brand-light;
-  }
-
-  .error-message {
-    background: rgba(217, 119, 87, 0.1); // 品牌橙色淡化
-    color: $brand-orange;
-    border: 1px solid $brand-orange;
-  }
+  border-radius: $radius-lg;
+  box-shadow: $shadow-base;
+  padding: $spacing-4;
 }
 ```
+
+#### 常用变量
+
+| 类型 | 变量 | 用途 |
+|------|------|------|
+| 颜色 | `$brand-primary` | 主色（黑色） |
+| 颜色 | `$brand-destructive` | 危险色（红） |
+| 颜色 | `$brand-success` | 成功色（绿） |
+| 颜色 | `$brand-dark / $brand-light` | 深色/浅色文本 |
+| 字体 | `$font-heading / $font-body` | 标题/正文字体 |
+| 圆角 | `$radius-sm ~ $radius-full` | 4px ~ 完全圆角 |
+| 阴影 | `$shadow-sm ~ $shadow-2xl` | 阴影层级 |
+| 间距 | `$spacing-1 ~ $spacing-16` | 4px ~ 64px |
+
+#### 完整变量定义
+
+所有变量定义见 [src/_variables.scss](src/_variables.scss)
+
+#### 设计系统参考
+
+- [shadcn-vue 官方文档](https://www.shadcn-vue.com/docs/theming)
 
 ## API参考
 

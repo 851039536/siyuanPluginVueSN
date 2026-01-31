@@ -1,25 +1,172 @@
 // ========== SCSS 变量定义 ==========
 // 此文件包含所有 SCSS 变量，可供组件导入使用
+// 设计系统：基于 shadcn-vue 的设计规范
 
-// ========== Anthropic 品牌变量 ==========
+// ========== 基础颜色变量（Shadcn-vue 风格） ==========
 
-// 品牌颜色 - 专业沉稳风格
-$brand-dark: #141413;         // Primary text and dark backgrounds
-$brand-light: #faf9f5;        // Light backgrounds and text on dark
-$brand-mid-gray: #9a9990;     // Secondary elements（更深的灰，增强层次）
-$brand-light-gray: #e8e6dc;   // Subtle backgrounds
-$brand-subtle-gray: #d4d2ca;  // 新增：微妙分隔线、边框
-$brand-orange: #c97a5d;       // Primary accent（降低饱和度，更沉稳的陶土橙）
-$brand-blue: #5d8fb3;         // Secondary accent（更深更沉稳的蓝灰）
-$brand-green: #6b8051;        // Tertiary accent（偏橄榄绿，更克制）
+// 亮色主题基础色
+$background-light: 0 0% 100%;           // 白色背景
+$foreground-light: 240 10% 3.9%;        // 深色文本
 
-// 品牌字体变量 - 现代字体栈，优化中文显示
-$font-heading: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
-$font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+// 卡片和弹出层
+$card-light: 0 0% 100%;                 // 卡片背景
+$card-foreground-light: 240 10% 3.9%;   // 卡片文本
+$popover-light: 0 0% 100%;              // 弹出层背景
+$popover-foreground-light: 240 10% 3.9%;// 弹出层文本
+
+// 主色调（Primary）- 黑色系
+$primary-light: 240 5.9% 10%;           // 主色背景
+$primary-foreground-light: 0 0% 98%;    // 主色文本
+
+// 次要色调（Secondary）
+$secondary-light: 240 4.8% 95.9%;       // 次要背景
+$secondary-foreground-light: 240 5.9% 10%; // 次要文本
+
+// 静音色调（Muted）
+$muted-light: 240 4.8% 95.9%;           // 静音背景
+$muted-foreground-light: 240 3.8% 46.1%; // 静音文本
+
+// 强调色调（Accent）
+$accent-light: 240 4.8% 95.9%;          // 强调背景
+$accent-foreground-light: 240 5.9% 10%; // 强调文本
+
+// 危险色调（Destructive）
+$destructive-light: 0 84.2% 60.2%;      // 危险背景（红色）
+$destructive-foreground-light: 0 0% 98%; // 危险文本
+
+// 边框和输入
+$border-light: 240 5.9% 90%;            // 边框颜色
+$input-light: 240 5.9% 90%;             // 输入框边框
+$ring-light: 240 5.9% 10%;              // 焦点环颜色
+
+// ========== 暗色主题基础色 ==========
+
+// 暗色主题基础色
+$background-dark: 240 10% 3.9%;         // 深色背景
+$foreground-dark: 0 0% 98%;             // 浅色文本
+
+// 卡片和弹出层
+$card-dark: 240 10% 3.9%;               // 卡片背景
+$card-foreground-dark: 0 0% 98%;        // 卡片文本
+$popover-dark: 240 10% 3.9%;            // 弹出层背景
+$popover-foreground-dark: 0 0% 98%;     // 弹出层文本
+
+// 主色调（Primary）- 浅色系
+$primary-dark: 0 0% 98%;                // 主色背景
+$primary-foreground-dark: 240 5.9% 10%; // 主色文本
+
+// 次要色调（Secondary）
+$secondary-dark: 240 3.7% 15.9%;        // 次要背景
+$secondary-foreground-dark: 0 0% 98%;   // 次要文本
+
+// 静音色调（Muted）
+$muted-dark: 240 3.7% 15.9%;            // 静音背景
+$muted-foreground-dark: 240 5% 64.9%;   // 静音文本
+
+// 强调色调（Accent）
+$accent-dark: 240 3.7% 15.9%;           // 强调背景
+$accent-foreground-dark: 0 0% 98%;      // 强调文本
+
+// 危险色调（Destructive）
+$destructive-dark: 0 62.8% 30.6%;       // 危险背景
+$destructive-foreground-dark: 0 0% 98%; // 危险文本
+
+// 边框和输入
+$border-dark: 240 3.7% 15.9%;           // 边框颜色
+$input-dark: 240 3.7% 15.9%;            // 输入框边框
+$ring-dark: 240 4.9% 83.9%;             // 焦点环颜色
+
+// ========== 语义化颜色（HSL 格式） ==========
+
+// 成功色（绿色系）
+$success-base: 142 76% 36%;
+$success-light: #22c55e;
+$success-dark: #4ade80;
+
+// 警告色（黄色系）
+$warning-base: 38 92% 50%;
+$warning-light: #eab308;
+$warning-dark: #facc15;
+
+// 信息色（蓝色系）
+$info-base: 217 91% 60%;
+$info-light: #3b82f6;
+$info-dark: #60a5fa;
+
+// ========== 字体变量 ==========
+
+// Shadcn-vue 字体栈 - 优化中英文显示
+$font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+// 中文字体优先的字体栈
+$font-zh: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+// 字体大小
+$font-size-xs: 0.75rem;      // 12px
+$font-size-sm: 0.875rem;     // 14px
+$font-size-base: 1rem;       // 16px
+$font-size-lg: 1.125rem;     // 18px
+$font-size-xl: 1.25rem;      // 20px
+$font-size-2xl: 1.5rem;      // 24px
+$font-size-3xl: 1.875rem;    // 30px
+$font-size-4xl: 2.25rem;     // 36px
+
+// 字重
+$font-weight-light: 300;
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// 行高
+$line-height-tight: 1.25;
+$line-height-normal: 1.5;
+$line-height-relaxed: 1.75;
+
+// ========== 圆角变量（Radius） ==========
+
+$radius-none: 0;
+$radius-sm: 0.25rem;      // 4px
+$radius-base: 0.375rem;   // 6px
+$radius-md: 0.5rem;       // 8px
+$radius-lg: 0.75rem;      // 12px
+$radius-xl: 1rem;         // 16px
+$radius-2xl: 1.5rem;      // 24px
+$radius-full: 9999px;
+
+// ========== 阴影变量（Shadow） ==========
+
+$shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+$shadow-base: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+$shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+$shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+$shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+$shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+
+// ========== 间距变量（Spacing） ==========
+
+$spacing-0: 0;
+$spacing-1: 0.25rem;    // 4px
+$spacing-2: 0.5rem;     // 8px
+$spacing-3: 0.75rem;    // 12px
+$spacing-4: 1rem;       // 16px
+$spacing-5: 1.25rem;    // 20px
+$spacing-6: 1.5rem;     // 24px
+$spacing-8: 2rem;       // 32px
+$spacing-10: 2.5rem;    // 40px
+$spacing-12: 3rem;      // 48px
+$spacing-16: 4rem;      // 64px
+
+// ========== 过渡和动画 ==========
+
+$transition-base: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+$transition-fast: all 100ms cubic-bezier(0.4, 0, 0.2, 1);
+$transition-slow: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
 
 // ========== 响应式断点 ==========
 $mobile-breakpoint: 768px;
 $tablet-breakpoint: 1024px;
+$desktop-breakpoint: 1280px;
 
 // ========== 紧凑模式变量 ==========
 $compact-padding: 8px;
@@ -33,3 +180,39 @@ $codeblock-font-size: 13px;
 $codeblock-border-radius: 8px;
 $codeblock-transition: all 0.2s ease;
 $codeblock-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+
+// ========== HSL 转 RGB 辅助函数 ==========
+// 用于从 HSL 值生成可用的颜色
+@function hsl-to-hex($h, $s, $l) {
+  @return hsl($h, $s, $l);
+}
+
+// ========== 语义化颜色别名（向后兼容） ==========
+
+// 主色（用于主要文本、深色背景）
+$brand-dark: hsl(240, 10%, 4%);
+$brand-light: hsl(0, 0%, 100%);
+
+// 灰度（用于次要元素）
+$brand-mid-gray: hsl(240, 5%, 65%);
+$brand-light-gray: hsl(240, 5%, 96%);
+$brand-subtle-gray: hsl(240, 5%, 90%);
+
+// 强调色（用于交互元素）
+$brand-primary: hsl(240, 6%, 10%);      // 黑色主色
+$brand-secondary: hsl(240, 5%, 96%);    // 浅灰次色
+$brand-accent: hsl(240, 4%, 96%);       // 强调色
+$brand-destructive: hsl(0, 84%, 60%);   // 危险色（红色）
+$brand-success: hsl(142, 76%, 36%);     // 成功色（绿色）
+$brand-warning: hsl(38, 92%, 50%);      // 警告色（黄色）
+$brand-info: hsl(217, 91%, 60%);        // 信息色（蓝色）
+
+// ========== 原有品牌色（向后兼容） ==========
+// 保留原有的橙色、蓝色、绿色变量以确保现有组件正常工作
+$brand-orange: #c97a5d;       // 原主强调色（陶土橙）
+$brand-blue: #5d8fb3;         // 原次强调色（蓝灰）
+$brand-green: #6b8051;        // 原第三强调色（橄榄绿）
+
+// 字体变量（向后兼容）
+$font-heading: $font-zh;
+$font-body: $font-zh;

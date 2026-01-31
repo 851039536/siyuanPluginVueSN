@@ -7,28 +7,28 @@
         {{ props.i18n.base64Image || 'Base64图片转换' }}
       </h3>
       <div class="header-actions">
-        <button class="action-btn" @click="clearAll" :title="props.i18n.base64Image_clearAll || '清空全部'">
-          <IconWrapper name="trash" :size="16" />
-        </button>
+        <Button variant="ghost" size="small" icon="delete" :icon-size="16" @click="clearAll" :title="props.i18n.base64Image_clearAll || '清空全部'" />
       </div>
     </div>
 
     <!-- 转换模式切换 -->
     <div class="mode-tabs">
-      <button
+      <Button
         class="mode-tab"
         :class="{ active: currentMode === 'encode' }"
+        variant="ghost"
         @click="switchMode('encode')"
       >
         📤 {{ props.i18n.base64Image_encode || '图片转Base64' }}
-      </button>
-      <button
+      </Button>
+      <Button
         class="mode-tab"
         :class="{ active: currentMode === 'decode' }"
+        variant="ghost"
         @click="switchMode('decode')"
       >
         📥 {{ props.i18n.base64Image_decode || 'Base64转图片' }}
-      </button>
+      </Button>
     </div>
 
     <!-- 图片转Base64模式 -->
@@ -52,9 +52,9 @@
           <div class="upload-content">
             <IconWrapper name="image" :size="48" class="upload-icon" />
             <p class="upload-text">{{ props.i18n.base64Image_dragImageHere || '拖拽图片到此处，或' }}</p>
-            <button class="upload-btn" @click="triggerFileSelect">
+            <Button class="upload-btn" variant="primary" @click="triggerFileSelect">
               {{ props.i18n.base64Image_selectFile || '选择文件' }}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -78,13 +78,13 @@
           <div class="compression-settings">
             <h4>{{ props.i18n.base64Image_compressionSettings || '压缩设置' }}</h4>
             <div class="setting-group">
-              <label>{{ props.i18n.base64Image_outputFormat || '输出格式' }}</label>
-              <select v-model="outputFormat" class="format-select" @change="handleFile(selectedFile!)">
-                <option value="image/jpeg">JPEG</option>
-                <option value="image/png">PNG</option>
-                <option value="image/webp">WebP</option>
-                <option value="image/gif">GIF</option>
-              </select>
+              <Select
+                :label="props.i18n.base64Image_outputFormat || '输出格式'"
+                :options="formatOptions"
+                v-model="outputFormat"
+                size="small"
+                @change="handleFile(selectedFile!)"
+              />
             </div>
             <div class="setting-group">
               <label>
@@ -129,11 +129,10 @@
           <h4>{{ props.i18n.base64Image_base64Output || 'Base64输出' }}</h4>
           <div class="output-controls">
             <div class="copy-dropdown">
-              <button class="copy-btn dropdown-toggle" @click="toggleCopyDropdown">
-                <IconWrapper name="copy" :size="14" />
+              <Button class="dropdown-toggle" variant="ghost" size="small" icon="contentCopy" :icon-size="14" @click="toggleCopyDropdown">
                 {{ props.i18n.base64Image_copy || '复制' }}
                 <span class="dropdown-arrow">▼</span>
-              </button>
+              </Button>
               <div v-if="showCopyDropdown" class="dropdown-menu">
                 <button class="dropdown-item" @click="copyBase64">
                   {{ props.i18n.base64Image_copyBase64 || '纯Base64' }}
@@ -149,17 +148,17 @@
                 </button>
               </div>
             </div>
-            <button class="download-btn" @click="downloadBase64">
-              <IconWrapper name="download" :size="14" />
+            <Button class="download-btn" variant="primary" size="small" @click="downloadBase64">
               {{ props.i18n.base64Image_download || '下载' }}
-            </button>
+            </Button>
           </div>
-          <textarea
+          <Textarea
             v-model="base64Output"
             class="output-textarea"
             :placeholder="props.i18n.base64Image_base64Placeholder || 'Base64编码将显示在这里...'"
-            readonly
-          ></textarea>
+            :readonly="true"
+            :rows="8"
+          />
           <div class="output-info">
             <p><strong>{{ props.i18n.base64Image_outputSize || '输出大小' }}:</strong> {{ formatFileSize(base64Output.length) }}</p>
             <p v-if="compressionApplied"><strong>{{ props.i18n.base64Image_compressedSize || '压缩后大小' }}:</strong> {{ formatFileSize(selectedFile?.size || 0) }}</p>
@@ -172,11 +171,12 @@
     <div v-if="currentMode === 'decode'" class="mode-content">
       <div class="input-section">
         <h4>{{ props.i18n.base64Image_base64Input || 'Base64输入' }}</h4>
-        <textarea
+        <Textarea
           v-model="base64Input"
           class="input-textarea"
           :placeholder="props.i18n.base64Image_base64InputPlaceholder || '在此粘贴Base64编码（支持 data:image/ 格式）...'"
-        ></textarea>
+          :rows="8"
+        />
       </div>
 
       <div v-if="decodedImageUrl" class="result-section">
@@ -189,14 +189,12 @@
 
         <div class="output-section">
           <div class="output-controls">
-            <button class="download-btn" @click="downloadDecodedImage">
-              <IconWrapper name="download" :size="14" />
+            <Button class="download-btn" variant="primary" size="small" @click="downloadDecodedImage">
               {{ props.i18n.base64Image_downloadImage || '下载图片' }}
-            </button>
-            <button class="copy-btn" @click="copyDecodedImageUrl">
-              <IconWrapper name="copy" :size="14" />
+            </Button>
+            <Button class="copy-btn" variant="ghost" size="small" icon="contentCopy" :icon-size="14" @click="copyDecodedImageUrl">
               {{ props.i18n.base64Image_copyUrl || '复制URL' }}
-            </button>
+            </Button>
           </div>
           <div class="output-info">
             <p><strong>{{ props.i18n.base64Image_imageSize || '图片大小' }}:</strong> {{ decodedImageSize }}</p>
@@ -207,10 +205,9 @@
 
     <!-- 转换按钮 -->
     <div v-if="currentMode === 'decode' && base64Input" class="action-section">
-      <button class="convert-btn" @click="decodeBase64" :disabled="isDecoding">
-        <div v-if="isDecoding" class="loading-spinner"></div>
-        <span v-else>🔄 {{ props.i18n.base64Image_decode || '解码' }}</span>
-      </button>
+      <Button class="convert-btn" variant="primary" @click="decodeBase64" :loading="isDecoding" :disabled="isDecoding">
+        🔄 {{ props.i18n.base64Image_decode || '解码' }}
+      </Button>
     </div>
   </div>
 </template>
@@ -218,6 +215,10 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import IconWrapper from '@/components/IconWrapper.vue'
+import Button from '@/components/Button.vue'
+import Select from '@/components/Select.vue'
+import Textarea from '@/components/Textarea.vue'
+import type { SelectOption } from '@/components/Select.vue'
 import { showMessage } from 'siyuan'
 
 interface Props {
@@ -246,6 +247,14 @@ const compressionQuality = ref(80)
 const maxWidth = ref(1920)
 const maintainAspectRatio = ref(true)
 const compressionApplied = ref(false)
+
+// 格式选项
+const formatOptions: SelectOption[] = [
+  { value: 'image/jpeg', label: 'JPEG' },
+  { value: 'image/png', label: 'PNG' },
+  { value: 'image/webp', label: 'WebP' },
+  { value: 'image/gif', label: 'GIF' }
+]
 
 // 复制选项
 const showCopyDropdown = ref(false)
@@ -588,21 +597,6 @@ onUnmounted(() => {
     display: flex;
     gap: 8px;
   }
-
-  .action-btn {
-    padding: 6px;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    border-radius: 4px;
-    color: var(--b3-theme-on-surface-variant);
-    transition: all 0.2s;
-
-    &:hover {
-      background: var(--b3-theme-surface-lighter);
-      color: var(--b3-theme-on-surface);
-    }
-  }
 }
 
 .mode-tabs {
@@ -668,21 +662,6 @@ onUnmounted(() => {
         color: var(--b3-theme-on-surface-variant);
         font-size: 14px;
       }
-
-      .upload-btn {
-        padding: 8px 16px;
-        background: var(--b3-theme-primary);
-        color: var(--b3-theme-on-primary);
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: background 0.2s;
-
-        &:hover {
-          background: var(--b3-theme-primary-hover);
-        }
-      }
     }
   }
 }
@@ -733,22 +712,6 @@ onUnmounted(() => {
         font-size: 12px;
         color: var(--b3-theme-on-surface-variant);
         font-weight: 500;
-      }
-
-      .format-select {
-        width: 100%;
-        padding: 6px 10px;
-        border: 1px solid var(--b3-theme-surface-lighter);
-        border-radius: 4px;
-        background: var(--b3-theme-background);
-        color: var(--b3-theme-on-background);
-        font-size: 12px;
-        cursor: pointer;
-
-        &:focus {
-          outline: none;
-          border-color: var(--b3-theme-primary);
-        }
       }
 
       .quality-slider,
@@ -831,35 +794,6 @@ onUnmounted(() => {
     gap: 8px;
     margin-bottom: 8px;
 
-    .copy-btn,
-    .download-btn {
-      padding: 6px 12px;
-      border: 1px solid var(--b3-theme-surface-lighter);
-      background: var(--b3-theme-surface);
-      color: var(--b3-theme-on-surface);
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      transition: all 0.2s;
-
-      &:hover {
-        background: var(--b3-theme-surface-lighter);
-      }
-    }
-
-    .download-btn {
-      background: var(--b3-theme-primary);
-      color: var(--b3-theme-on-primary);
-      border-color: var(--b3-theme-primary);
-
-      &:hover {
-        background: var(--b3-theme-primary-hover);
-      }
-    }
-
     .copy-dropdown {
       position: relative;
 
@@ -908,25 +842,6 @@ onUnmounted(() => {
       }
     }
   }
-
-  .output-textarea,
-  .input-textarea {
-    width: 100%;
-    min-height: 200px;
-    padding: 2px;
-    border: 1px solid var(--b3-theme-surface-lighter);
-    border-radius: 6px;
-    font-family: 'Courier New', monospace;
-    font-size: 12px;
-    resize: vertical;
-    background: var(--b3-theme-background);
-    color: var(--b3-theme-on-background);
-
-    &:focus {
-      outline: none;
-      border-color: var(--b3-theme-primary);
-    }
-  }
 }
 
 .input-section {
@@ -938,24 +853,6 @@ onUnmounted(() => {
     font-weight: 600;
     color: var(--b3-theme-on-surface);
   }
-
-  .input-textarea {
-    width: 100%;
-    min-height: 200px;
-    padding: 2px;
-    border: 1px solid var(--b3-theme-surface-lighter);
-    border-radius: 6px;
-    font-family: 'Courier New', monospace;
-    font-size: 12px;
-    resize: vertical;
-    background: var(--b3-theme-background);
-    color: var(--b3-theme-on-background);
-
-    &:focus {
-      outline: none;
-      border-color: var(--b3-theme-primary);
-    }
-  }
 }
 
 .action-section {
@@ -963,43 +860,6 @@ onUnmounted(() => {
 
   .convert-btn {
     width: 100%;
-    padding: 12px;
-    background: var(--b3-theme-primary);
-    color: var(--b3-theme-on-primary);
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    transition: background 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-
-    &:hover:not(:disabled) {
-      background: var(--b3-theme-primary-hover);
-    }
-
-    &:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-  }
-}
-
-.loading-spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid var(--b3-theme-surface-lighter);
-  border-top-color: var(--b3-theme-on-primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
   }
 }
 </style>

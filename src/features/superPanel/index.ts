@@ -168,6 +168,7 @@ async function handleFeatureToggle(plugin: Plugin, featureId: string, enabled: b
     'flashcardReading': 'enableFlashcardReading',
     'flashcardQuery': 'enableFlashcardQuery',
     'translate': 'enableTranslate',
+    'codeTranslation': 'enableCodeTranslation',
     'webDAV': 'enableWebDAV'
   }
 
@@ -228,6 +229,7 @@ async function handleToggleAllFeatures(plugin: Plugin, enabled: boolean) {
     'enableFlashcardReading',
     'enableFlashcardQuery',
     'enableTranslate',
+    'enableCodeTranslation',
     'enablePasswordVault',
     'enableWebDAV'
   ]

@@ -198,6 +198,12 @@ export const FEATURE_ICONS = {
     color: '#0d9488'
   },
 
+  // 编程字段翻译
+  codeTranslation: {
+    icon: 'mdi:code-json',
+    color: '#8b5cf6'
+  },
+
   // WebDAV
   webDAV: {
     icon: 'mdi:cloud-sync',

@@ -21,6 +21,15 @@
         >
           🌐 {{ props.i18n.wordQuery?.translation || '长文翻译' }}
         </Button>
+        <Button
+          class="mode-tab"
+          :class="{ active: currentMode === 'codeTranslation' }"
+          variant="ghost"
+          size="small"
+          @click="switchMode('codeTranslation')"
+        >
+          💻 {{ props.i18n.wordQuery?.codeTranslation || '编程翻译' }}
+        </Button>
       </div>
 
       <div class="api-key-toggle">
@@ -233,7 +242,7 @@
     </div>
 
     <!-- 翻译模式 -->
-    <div v-else class="mode-content translate-mode">
+    <div v-else-if="currentMode === 'translate'" class="mode-content translate-mode">
       <div class="translate-container">
         <div class="translate-input-section">
           <div class="section-header">
@@ -301,6 +310,14 @@
         </div>
       </div>
     </div>
+
+    <!-- 编程翻译模式 -->
+    <div v-else-if="currentMode === 'codeTranslation'" class="mode-content">
+      <CodeTranslationPanel
+        :i18n="props.i18n.wordQuery || {}"
+        :plugin="props.plugin"
+      />
+    </div>
   </div>
 </template>
 
@@ -312,6 +329,7 @@ import Button from '@/components/Button.vue';
 import Input from '@/components/Input.vue';
 import Select from '@/components/Select.vue';
 import Textarea from '@/components/Textarea.vue';
+import CodeTranslationPanel from './CodeTranslationPanel.vue';
 
 // ================================
 // 类型定义
@@ -395,7 +413,7 @@ const STORAGE_KEYS = {
 const props = defineProps<Props>();
 
 // 基础状态
-const currentMode = ref<'word' | 'translate'>('word');
+const currentMode = ref<'word' | 'translate' | 'codeTranslation'>('word');
 const searchWord = ref('');
 const queryResult = ref('');
 const isLoading = ref(false);
@@ -882,7 +900,7 @@ const clearResult = () => {
 };
 
 // 切换模式
-const switchMode = (mode: 'word' | 'translate') => {
+const switchMode = (mode: 'word' | 'translate' | 'codeTranslation') => {
   currentMode.value = mode;
   // 关闭所有面板
   activePanel.value = null;

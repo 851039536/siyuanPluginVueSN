@@ -22,7 +22,7 @@ export function registerHighlight(_plugin: Plugin, enableHighlight: boolean = tr
 
     selectedText = selection
     const matchCount = highlightText(selection)
-    showToast(`高亮 "${selection}" (${matchCount} 处匹配)`)
+    showToast(selection, matchCount)
   }
 
   const handleMouseDown = () => {
@@ -41,29 +41,41 @@ function addStyles() {
   const style = document.createElement('style')
   style.textContent = `
     ::highlight(selected-results) {
-      background-color: rgb(235, 235, 5);
+      background-color: rgb(255, 220, 60);
       color: rgb(0, 0, 0);
+      border-radius: 2px;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
     }
     ::selection {
       color: rgb(0, 0, 0);
     }
     .highlight-toast {
       position: fixed;
-      bottom: 100px;
+      bottom: 80px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(0,0,0,0.8);
-      color: white;
-      padding: 8px 16px;
-      border-radius: 4px;
-      font-size: 14px;
+      background: var(--b3-theme-surface);
+      color: var(--b3-theme-on-surface);
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 13px;
       z-index: 10000;
       pointer-events: none;
       opacity: 0;
-      transition: opacity 0.3s;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transition: opacity 0.2s, transform 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--b3-border-color);
     }
     .highlight-toast.show {
       opacity: 1;
+      transform: translateX(-50%) translateY(-4px);
+    }
+    .highlight-toast .count {
+      color: var(--b3-theme-primary);
+      font-weight: 600;
     }
   `
   document.head.appendChild(style)
@@ -132,19 +144,19 @@ function highlightText(value: string): number {
 }
 
 /** 显示提示 */
-function showToast(message: string) {
+function showToast(text: string, count: number) {
   const existing = document.querySelector('.highlight-toast')
   existing?.remove()
 
   const toast = document.createElement('div')
   toast.className = 'highlight-toast'
-  toast.textContent = message
+  toast.innerHTML = `已高亮 "${text.length > 20 ? text.slice(0, 20) + '...' : text}" <span class="count">${count}</span> 处`
   document.body.appendChild(toast)
 
   requestAnimationFrame(() => toast.classList.add('show'))
 
   setTimeout(() => {
     toast.classList.remove('show')
-    setTimeout(() => toast.remove(), 300)
-  }, 2000)
+    setTimeout(() => toast.remove(), 200)
+  }, 1800)
 }

@@ -6,7 +6,7 @@ import { Plugin } from 'siyuan'
 import * as api from '@/api'
 
 // 防抖定时器
-let updateTimer: any = null
+let updateTimer: ReturnType<typeof setTimeout> | null = null
 // 缓存文档层级数据，避免重复查询
 const docHierarchyCache = new Map<string, { parent: Block | null; children: Block[]; timestamp: number }>()
 
@@ -14,21 +14,52 @@ const docHierarchyCache = new Map<string, { parent: Block | null; children: Bloc
  * 注册文档层级导航功能
  */
 export function registerDocNavigation(plugin: Plugin) {
-  // 监听文档切换，动态添加/更新导航UI
-  plugin.eventBus.on('switch-protyle', async ({ detail }) => {
-    await updateDocNavigationDebounced(plugin, detail.protyle)
-  })
+  // 统一处理文档加载事件
+  const handleEvent = async (e: CustomEvent) => {
+    const { protyle } = e.detail as { protyle: any }
+    updateDocNavigationDebounced(plugin, protyle)
+  }
 
-  // 监听文档动态加载
-  plugin.eventBus.on('loaded-protyle-dynamic', async ({ detail }) => {
-    await updateDocNavigationDebounced(plugin, detail.protyle)
-  })
+  const events: ('switch-protyle' | 'loaded-protyle-dynamic' | 'loaded-protyle-static')[] = [
+    'switch-protyle',
+    'loaded-protyle-dynamic',
+    'loaded-protyle-static'
+  ]
+  events.forEach(event => plugin.eventBus.on(event, handleEvent))
+}
 
-  // 监听文档静态加载
-  plugin.eventBus.on('loaded-protyle-static', async ({ detail }) => {
-    await updateDocNavigationDebounced(plugin, detail.protyle)
-  })
+/**
+ * 创建文档链接HTML
+ */
+function createDocLink(doc: Block, hidden = false): string {
+  const name = doc.content.replace(/<[^>]*>/g, '')
+  const hiddenClass = hidden ? ' doc-nav-link-hidden' : ''
+  return `<a class="doc-nav-link${hiddenClass}" data-doc-id="${doc.id}" title="${name}">${name}</a>`
+}
 
+/**
+ * 插入导航容器到指定位置
+ */
+function insertNavigation(protyle: any, navContainer: HTMLElement) {
+  const targetEl = protyle.element?.querySelector('.protyle-title')
+  const containerClass = 'doc-navigation-container'
+
+  const insert = (parent: Element, method: 'after' | 'before') => {
+    const sibling = method === 'after' ? parent.nextElementSibling : parent.previousElementSibling
+    if (sibling?.classList.contains(containerClass)) {
+      parent[method](navContainer)
+      sibling.remove()
+    } else {
+      parent[method](navContainer)
+    }
+  }
+
+  if (targetEl) {
+    insert(targetEl, 'after')
+  } else {
+    const wysiwyg = protyle.element?.querySelector('.protyle-wysiwyg')
+    wysiwyg && insert(wysiwyg, 'before')
+  }
 }
 
 /**
@@ -99,11 +130,10 @@ async function getDocHierarchy(currentDoc: Block): Promise<{ parent: Block | nul
     // 清理过期缓存（保留最近 20 个）
     if (docHierarchyCache.size > 20) {
       const entries = Array.from(docHierarchyCache.entries())
-      entries.sort((a, b) => b[1].timestamp - a[1].timestamp)
+        .sort((a, b) => b[1].timestamp - a[1].timestamp)
+        .slice(0, 20)
       docHierarchyCache.clear()
-      entries.slice(0, 20).forEach(([key, value]) => {
-        docHierarchyCache.set(key, value)
-      })
+      entries.forEach(([key, value]) => docHierarchyCache.set(key, value))
     }
 
     return { parent, children }
@@ -116,25 +146,17 @@ async function getDocHierarchy(currentDoc: Block): Promise<{ parent: Block | nul
 /**
  * 防抖更新导航（避免短时间内多次触发）
  */
-async function updateDocNavigationDebounced(plugin: Plugin, protyle: any) {
-  const docId = protyle?.block?.rootID
-  if (!docId) return
+function updateDocNavigationDebounced(plugin: Plugin, protyle: any) {
+  if (!protyle?.block?.rootID) return
 
-  // 清除之前的定时器
-  if (updateTimer) {
-    clearTimeout(updateTimer)
-  }
-
-  // 设置新的定时器，延迟执行
-  updateTimer = setTimeout(async () => {
-    await updateDocNavigation(plugin, protyle)
-  }, 100) // 100ms 防抖
+  updateTimer && clearTimeout(updateTimer)
+  updateTimer = setTimeout(() => updateDocNavigation(plugin, protyle), 100)
 }
 
 /**
  * 更新文档层级导航UI
  */
-async function updateDocNavigation(plugin: Plugin, protyle: any) {
+async function updateDocNavigation(_plugin: Plugin, protyle: any) {
   try {
     const docId = protyle?.block?.rootID
     if (!docId) return
@@ -185,25 +207,14 @@ async function updateDocNavigation(plugin: Plugin, protyle: any) {
       `
 
       // 显示前5个
-      const displayCount = 5
-      childDocs.slice(0, displayCount).forEach((childDoc) => {
-        const docName = childDoc.content.replace(/<[^>]*>/g, '')
-        navHTML += `<a class="doc-nav-link" data-doc-id="${childDoc.id}" title="${docName}">${docName}</a>`
-      })
+      const [visibleDocs, hiddenDocs] = [childDocs.slice(0, 5), childDocs.slice(5)]
+      navHTML += visibleDocs.map(d => createDocLink(d)).join('')
 
       // 如果有更多文档，显示展开按钮
-      if (childDocs.length > displayCount) {
-        const hiddenCount = childDocs.length - displayCount
-        navHTML += `<button class="doc-nav-expand" title="展开 ${hiddenCount} 个文档">
-          <svg class="expand-icon"><use xlink:href="#iconExpand"></use></svg>
-          +${hiddenCount}
-        </button>`
-
-        // 隐藏的文档（默认不显示，展开后在同一行换行显示）
-        childDocs.slice(displayCount).forEach((childDoc) => {
-          const docName = childDoc.content.replace(/<[^>]*>/g, '')
-          navHTML += `<a class="doc-nav-link doc-nav-link-hidden" data-doc-id="${childDoc.id}" title="${docName}">${docName}</a>`
-        })
+      if (hiddenDocs.length) {
+        navHTML += `<button class="doc-nav-expand" title="展开 ${hiddenDocs.length} 个文档">
+          <svg class="expand-icon"><use xlink:href="#iconExpand"></use></svg>+${hiddenDocs.length}
+        </button>${hiddenDocs.map(d => createDocLink(d, true)).join('')}`
       }
 
       navHTML += `
@@ -216,72 +227,10 @@ async function updateDocNavigation(plugin: Plugin, protyle: any) {
     navContainer.innerHTML = navHTML
 
     // 使用事件委托优化事件监听（减少内存占用）
-    navContainer.addEventListener('click', (e) => {
-      const target = e.target as HTMLElement
-
-      // 处理导航链接点击
-      const link = target.closest('.doc-nav-link')
-      if (link) {
-        e.preventDefault()
-        const targetDocId = link.getAttribute('data-doc-id')
-        if (targetDocId) {
-          window.open(`siyuan://blocks/${targetDocId}`)
-        }
-        return
-      }
-
-      // 处理展开按钮点击
-      const expandBtn = target.closest('.doc-nav-expand')
-      if (expandBtn) {
-        e.preventDefault()
-        const childrenList = navContainer.querySelector('.doc-nav-children-list')
-        const hiddenLinks = navContainer.querySelectorAll('.doc-nav-link-hidden')
-        const isExpanded = childrenList?.getAttribute('data-expanded') === 'true'
-
-        if (isExpanded) {
-          // 折叠
-          childrenList?.setAttribute('data-expanded', 'false')
-          hiddenLinks.forEach(link => link.classList.remove('show'))
-          const hiddenCount = hiddenLinks.length
-          expandBtn.innerHTML = `<svg class="expand-icon"><use xlink:href="#iconExpand"></use></svg>+${hiddenCount}`
-          expandBtn.setAttribute('title', `展开 ${hiddenCount} 个文档`)
-        } else {
-          // 展开
-          childrenList?.setAttribute('data-expanded', 'true')
-          hiddenLinks.forEach(link => link.classList.add('show'))
-          expandBtn.innerHTML = `<svg class="expand-icon"><use xlink:href="#iconContract"></use></svg>收起`
-          expandBtn.setAttribute('title', '收起')
-        }
-      }
-    })
+    navContainer.addEventListener('click', handleNavClick)
 
     // 插入到编辑器顶部标题下方（先插入新导航，再移除旧导航，避免跳闪）
-    const protyleTitle = protyle.element?.querySelector('.protyle-title')
-    if (protyleTitle) {
-      // 检查标题下方是否已有导航
-      const nextElement = protyleTitle.nextElementSibling
-      if (nextElement?.classList.contains('doc-navigation-container')) {
-        // 先插入新导航，再移除旧导航（避免视觉跳闪）
-        protyleTitle.after(navContainer)
-        nextElement.remove()
-      } else {
-        protyleTitle.after(navContainer)
-      }
-    } else {
-      // 如果没有找到标题，插入到 protyle-wysiwyg 前面
-      const wysiwyg = protyle.element?.querySelector('.protyle-wysiwyg')
-      if (wysiwyg) {
-        // 检查 wysiwyg 前是否已有导航
-        const prevElement = wysiwyg.previousElementSibling
-        if (prevElement?.classList.contains('doc-navigation-container')) {
-          // 先插入新导航，再移除旧导航（避免视觉跳闪）
-          wysiwyg.before(navContainer)
-          prevElement.remove()
-        } else {
-          wysiwyg.before(navContainer)
-        }
-      }
-    }
+    insertNavigation(protyle, navContainer)
 
     // 注入样式
     injectNavigationStyles()
@@ -301,17 +250,17 @@ function injectNavigationStyles() {
 
   const style = document.createElement('style')
   style.id = styleId
-  style.textContent = `
+  style.textContent = /* css */ `
     .doc-navigation-container {
-      margin: 6px 0 12px 0;
+      margin: 6px 0 12px;
       padding: 0;
       display: flex;
       justify-content: center;
     }
 
     .doc-navigation {
+      --dn-transition: border-color .2s cubic-bezier(.4,0,.2,1), background .2s cubic-bezier(.4,0,.2,1), box-shadow .2s cubic-bezier(.4,0,.2,1);
       display: flex;
-      flex-direction: row;
       align-items: center;
       gap: 12px;
       padding: 8px 14px;
@@ -321,18 +270,17 @@ function injectNavigationStyles() {
       font-size: 13px;
       line-height: 1.5;
       max-width: 95%;
-      transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: var(--dn-transition);
       flex-wrap: wrap;
     }
 
     .doc-navigation:hover {
       border-color: var(--b3-theme-primary-lighter);
       background: var(--b3-theme-surface);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      box-shadow: 0 2px 4px rgb(0 0 0 / 5%);
     }
 
-    .doc-nav-parent,
-    .doc-nav-children {
+    .doc-nav-parent, .doc-nav-children {
       display: flex;
       align-items: center;
       gap: 5px;
@@ -345,13 +293,13 @@ function injectNavigationStyles() {
       height: 13px;
       flex-shrink: 0;
       color: var(--b3-theme-on-surface);
-      opacity: 0.65;
-      transition: opacity 0.2s;
+      opacity: .65;
+      transition: opacity .2s;
     }
 
     .doc-nav-parent:hover .doc-nav-icon,
     .doc-nav-children:hover .doc-nav-icon {
-      opacity: 0.9;
+      opacity: .9;
     }
 
     .doc-nav-label {
@@ -360,14 +308,15 @@ function injectNavigationStyles() {
       flex-shrink: 0;
       font-size: 11.5px;
       white-space: nowrap;
-      opacity: 0.75;
+      opacity: .75;
     }
 
     .doc-nav-link {
+      --dn-link-transition: background .2s cubic-bezier(.4,0,.2,1), color .2s cubic-bezier(.4,0,.2,1), border-color .2s cubic-bezier(.4,0,.2,1), transform .2s cubic-bezier(.4,0,.2,1), box-shadow .2s cubic-bezier(.4,0,.2,1);
       color: var(--b3-theme-primary);
       text-decoration: none;
       cursor: pointer;
-      transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: var(--dn-link-transition);
       padding: 2px 7px;
       border-radius: 5px;
       white-space: nowrap;
@@ -388,7 +337,7 @@ function injectNavigationStyles() {
       border-color: var(--b3-theme-primary);
       text-decoration: none;
       transform: translateY(-1px);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
     }
 
     .doc-nav-link:active {
@@ -407,25 +356,20 @@ function injectNavigationStyles() {
 
     .doc-nav-link-hidden {
       display: none;
-      animation: fadeIn 0.3s ease;
+      animation: dn-fadeIn .3s ease;
     }
 
     .doc-nav-link-hidden.show {
       display: inline-flex;
     }
 
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: scale(0.95);
-      }
-      to {
-        opacity: 1;
-        transform: scale(1);
-      }
+    @keyframes dn-fadeIn {
+      from { opacity: 0; transform: scale(.95) }
+      to { opacity: 1; transform: scale(1) }
     }
 
     .doc-nav-expand {
+      --dn-expand-transition: background .2s cubic-bezier(.4,0,.2,1), color .2s cubic-bezier(.4,0,.2,1), border-style .2s cubic-bezier(.4,0,.2,1), opacity .2s cubic-bezier(.4,0,.2,1), transform .2s cubic-bezier(.4,0,.2,1), box-shadow .2s cubic-bezier(.4,0,.2,1);
       background: transparent;
       color: var(--b3-theme-primary);
       border: 1px dashed var(--b3-theme-primary);
@@ -434,12 +378,12 @@ function injectNavigationStyles() {
       cursor: pointer;
       font-size: 11px;
       font-weight: 600;
-      transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-style 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: var(--dn-expand-transition);
       display: inline-flex;
       align-items: center;
       gap: 3px;
       flex-shrink: 0;
-      opacity: 0.85;
+      opacity: .85;
     }
 
     .doc-nav-expand:hover {
@@ -448,17 +392,17 @@ function injectNavigationStyles() {
       border-style: solid;
       opacity: 1;
       transform: scale(1.05) translateY(-1px);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
     }
 
     .doc-nav-expand:active {
-      transform: scale(0.98);
+      transform: scale(.98);
     }
 
     .doc-nav-expand .expand-icon {
       width: 11px;
       height: 11px;
-      transition: transform 0.2s;
+      transition: transform .2s;
     }
 
     .doc-navigation-container[data-expanded="true"] .expand-icon {
@@ -467,4 +411,41 @@ function injectNavigationStyles() {
   `
 
   document.head.appendChild(style)
+}
+
+/**
+ * 处理导航点击事件
+ */
+function handleNavClick(e: Event) {
+  const target = e.target as HTMLElement
+
+  // 处理导航链接点击
+  const link = target.closest('.doc-nav-link')
+  if (link) {
+    e.preventDefault()
+    const docId = link.getAttribute('data-doc-id')
+    docId && window.open(`siyuan://blocks/${docId}`)
+    return
+  }
+
+  // 处理展开/折叠按钮点击
+  const expandBtn = target.closest('.doc-nav-expand')
+  if (!expandBtn) return
+
+  e.preventDefault()
+  const navContainer = target.closest('.doc-navigation-container')
+  const childrenList = navContainer?.querySelector('.doc-nav-children-list')
+  const hiddenLinks = navContainer?.querySelectorAll('.doc-nav-link-hidden')
+  if (!childrenList || !hiddenLinks?.length) return
+
+  const isExpanded = childrenList.getAttribute('data-expanded') === 'true'
+  const hiddenCount = hiddenLinks.length
+
+  childrenList.setAttribute('data-expanded', String(!isExpanded))
+  hiddenLinks.forEach(link => link.classList.toggle('show', !isExpanded))
+
+  expandBtn.innerHTML = isExpanded
+    ? `<svg class="expand-icon"><use xlink:href="#iconExpand"></use></svg>+${hiddenCount}`
+    : `<svg class="expand-icon"><use xlink:href="#iconContract"></use></svg>收起`
+  expandBtn.setAttribute('title', isExpanded ? `展开 ${hiddenCount} 个文档` : '收起')
 }

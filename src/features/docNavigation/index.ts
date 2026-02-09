@@ -252,102 +252,73 @@ function injectNavigationStyles() {
   style.id = styleId
   style.textContent = /* css */ `
     .doc-navigation-container {
-      margin: 6px 0 12px;
-      padding: 0;
+      margin: 4px 0 12px;
       display: flex;
       justify-content: center;
     }
 
     .doc-navigation {
-      --dn-transition: border-color .2s cubic-bezier(.4,0,.2,1), background .2s cubic-bezier(.4,0,.2,1), box-shadow .2s cubic-bezier(.4,0,.2,1);
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 8px 14px;
-      background: transparent;
-      border: 1px solid var(--b3-theme-surface-lighter);
-      border-radius: 8px;
+      gap: 16px;
+      padding: 4px 0;
       font-size: 13px;
       line-height: 1.5;
       max-width: 95%;
-      transition: var(--dn-transition);
       flex-wrap: wrap;
-    }
-
-    .doc-navigation:hover {
-      border-color: var(--b3-theme-primary-lighter);
-      background: var(--b3-theme-surface);
-      box-shadow: 0 2px 4px rgb(0 0 0 / 5%);
     }
 
     .doc-nav-parent, .doc-nav-children {
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
       flex-wrap: wrap;
       min-width: 0;
     }
 
     .doc-nav-icon {
-      width: 13px;
-      height: 13px;
+      width: 12px;
+      height: 12px;
       flex-shrink: 0;
       color: var(--b3-theme-on-surface);
-      opacity: .65;
-      transition: opacity .2s;
-    }
-
-    .doc-nav-parent:hover .doc-nav-icon,
-    .doc-nav-children:hover .doc-nav-icon {
-      opacity: .9;
+      opacity: .5;
     }
 
     .doc-nav-label {
       color: var(--b3-theme-on-surface);
-      font-weight: 600;
+      font-weight: 500;
       flex-shrink: 0;
-      font-size: 11.5px;
+      font-size: 12px;
       white-space: nowrap;
-      opacity: .75;
+      opacity: .7;
     }
 
     .doc-nav-link {
-      --dn-link-transition: background .2s cubic-bezier(.4,0,.2,1), color .2s cubic-bezier(.4,0,.2,1), border-color .2s cubic-bezier(.4,0,.2,1), transform .2s cubic-bezier(.4,0,.2,1), box-shadow .2s cubic-bezier(.4,0,.2,1);
       color: var(--b3-theme-primary);
       text-decoration: none;
       cursor: pointer;
-      transition: var(--dn-link-transition);
-      padding: 2px 7px;
-      border-radius: 5px;
+      padding: 1px 6px;
+      border-radius: 4px;
       white-space: nowrap;
-      font-size: 11.5px;
-      font-weight: 500;
-      background: transparent;
-      border: 1px solid var(--b3-theme-surface-lighter);
+      font-size: 12px;
+      background: var(--b3-theme-surface-lighter);
       display: inline-flex;
       align-items: center;
-      max-width: 200px;
+      max-width: 180px;
       overflow: hidden;
       text-overflow: ellipsis;
+      transition: background .15s;
     }
 
     .doc-nav-link:hover {
-      background: var(--b3-theme-primary);
-      color: var(--b3-theme-surface);
-      border-color: var(--b3-theme-primary);
+      background: var(--b3-theme-primary-lightest);
       text-decoration: none;
-      transform: translateY(-1px);
-      box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
-    }
-
-    .doc-nav-link:active {
-      transform: translateY(0);
     }
 
     .doc-nav-children-list {
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
       flex-wrap: wrap;
       overflow: visible;
       min-width: 0;
@@ -356,57 +327,37 @@ function injectNavigationStyles() {
 
     .doc-nav-link-hidden {
       display: none;
-      animation: dn-fadeIn .3s ease;
     }
 
     .doc-nav-link-hidden.show {
       display: inline-flex;
     }
 
-    @keyframes dn-fadeIn {
-      from { opacity: 0; transform: scale(.95) }
-      to { opacity: 1; transform: scale(1) }
-    }
-
     .doc-nav-expand {
-      --dn-expand-transition: background .2s cubic-bezier(.4,0,.2,1), color .2s cubic-bezier(.4,0,.2,1), border-style .2s cubic-bezier(.4,0,.2,1), opacity .2s cubic-bezier(.4,0,.2,1), transform .2s cubic-bezier(.4,0,.2,1), box-shadow .2s cubic-bezier(.4,0,.2,1);
-      background: transparent;
       color: var(--b3-theme-primary);
-      border: 1px dashed var(--b3-theme-primary);
-      border-radius: 5px;
-      padding: 2px 8px;
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      padding: 1px 6px;
       cursor: pointer;
       font-size: 11px;
-      font-weight: 600;
-      transition: var(--dn-expand-transition);
+      font-weight: 500;
       display: inline-flex;
       align-items: center;
       gap: 3px;
       flex-shrink: 0;
-      opacity: .85;
+      opacity: .8;
+      transition: opacity .15s;
     }
 
     .doc-nav-expand:hover {
-      background: var(--b3-theme-primary);
-      color: var(--b3-theme-surface);
-      border-style: solid;
       opacity: 1;
-      transform: scale(1.05) translateY(-1px);
-      box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
-    }
-
-    .doc-nav-expand:active {
-      transform: scale(.98);
+      background: var(--b3-theme-surface-lighter);
     }
 
     .doc-nav-expand .expand-icon {
-      width: 11px;
-      height: 11px;
-      transition: transform .2s;
-    }
-
-    .doc-navigation-container[data-expanded="true"] .expand-icon {
-      transform: rotate(180deg);
+      width: 10px;
+      height: 10px;
     }
   `
 

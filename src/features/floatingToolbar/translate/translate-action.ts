@@ -191,3 +191,30 @@ function extractTextFromResponse(data: any): string {
   }
   throw new Error('API返回数据格式错误')
 }
+
+/**
+ * 使用思源 API 更新块内容
+ */
+async function updateBlockContent(blockId: string, content: string): Promise<void> {
+  const response = await fetch('/api/block/updateBlock', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      dataType: 'markdown',
+      data: content,
+      id: blockId
+    })
+  })
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    throw new Error(`更新块失败: ${response.status} ${errorText}`)
+  }
+
+  const result = await response.json()
+  if (result.code !== 0) {
+    throw new Error(`更新块失败: ${result.msg || '未知错误'}`)
+  }
+}

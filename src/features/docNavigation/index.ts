@@ -8,8 +8,12 @@ import './style.scss'
 
 // 防抖定时器
 let updateTimer: ReturnType<typeof setTimeout> | null = null
-// 缓存文档层级数据，避免重复查询
+// 缓存文档层级数据，避免重复查询 (LRU: 最多20个，60秒过期)
 const docHierarchyCache = new Map<string, { parent: Block | null; children: Block[]; timestamp: number }>()
+const MAX_CACHE_SIZE = 20
+const CACHE_TTL = 60000
+// HTML 文本缓存
+const htmlCache = new Map<string, string>()
 
 /**
  * 注册文档层级导航功能
@@ -24,26 +28,48 @@ export function registerDocNavigation(plugin: Plugin) {
   })
 }
 
-const stripHtml = (html: string) => html.replace(/<[^>]*>/g, '')
+const stripHtml = (html: string): string => {
+  let text = htmlCache.get(html)
+  if (!text) {
+    text = html.replace(/<[^>]*>/g, '')
+    // 限制缓存大小
+    if (htmlCache.size > 100) htmlCache.clear()
+    htmlCache.set(html, text)
+  }
+  return text
+}
 
 const createDocLink = (hidden = false) => (doc: Block): string =>
   `<a class="doc-nav-link${hidden ? ' doc-nav-link-hidden' : ''}" data-doc-id="${doc.id}" title="${stripHtml(doc.content)}">${stripHtml(doc.content)}</a>`
+
+// 缓存目标元素引用
+const targetCache = new WeakMap<any, { el: Element; method: 'after' | 'before' }>()
 
 /**
  * 插入导航容器到指定位置
  */
 function insertNavigation(protyle: any, navContainer: HTMLElement) {
-  const target = protyle.element?.querySelector('.protyle-title') ||
-                 protyle.element?.querySelector('.protyle-wysiwyg')
-  if (!target) return
+  let cached = targetCache.get(protyle)
 
-  const method = target.classList.contains('protyle-title') ? 'after' : 'before'
-  const sibling = method === 'after' ? target.nextElementSibling : target.previousElementSibling
+  if (!cached) {
+    const target = protyle.element?.querySelector('.protyle-title') ||
+                   protyle.element?.querySelector('.protyle-wysiwyg')
+    if (!target) return
+    cached = {
+      el: target,
+      method: target.classList.contains('protyle-title') ? 'after' : 'before'
+    }
+    targetCache.set(protyle, cached)
+  }
+
+  const sibling = cached.method === 'after'
+    ? cached.el.nextElementSibling
+    : cached.el.previousElementSibling
 
   if (sibling?.classList.contains('doc-navigation-container')) {
     sibling.remove()
   }
-  target[method](navContainer)
+  cached.el[cached.method](navContainer)
 }
 
 /**
@@ -63,11 +89,14 @@ async function getDocHierarchy(currentDoc: Block): Promise<{ parent: Block | nul
       return { parent: null, children: [] }
     }
 
-    // 检查缓存（60秒内有效）
+    // 检查缓存
     const cacheKey = `${currentDoc.box}:${currentDoc.id}`
     const cached = docHierarchyCache.get(cacheKey)
     const now = Date.now()
-    if (cached && (now - cached.timestamp) < 60000) {
+    if (cached && now - cached.timestamp < CACHE_TTL) {
+      // LRU: 删除后重新添加，使其成为最新
+      docHierarchyCache.delete(cacheKey)
+      docHierarchyCache.set(cacheKey, cached)
       return { parent: cached.parent, children: cached.children }
     }
 
@@ -108,18 +137,13 @@ async function getDocHierarchy(currentDoc: Block): Promise<{ parent: Block | nul
       }
     })
 
-    // 缓存结果
+    // 缓存结果 (LRU)
     docHierarchyCache.set(cacheKey, { parent, children, timestamp: now })
 
-    // 清理过期缓存（保留最近 20 个）
-    if (docHierarchyCache.size > 20) {
-      const newCache = new Map(
-        Array.from(docHierarchyCache.entries())
-          .sort((a, b) => b[1].timestamp - a[1].timestamp)
-          .slice(0, 20)
-      )
-      docHierarchyCache.clear()
-      newCache.forEach((v, k) => docHierarchyCache.set(k, v))
+    // 超出限制时删除最老的 (Map 的 keys 按插入顺序排列)
+    if (docHierarchyCache.size > MAX_CACHE_SIZE) {
+      const firstKey = docHierarchyCache.keys().next().value
+      firstKey && docHierarchyCache.delete(firstKey)
     }
 
     return { parent, children }
@@ -139,6 +163,46 @@ function updateDocNavigationDebounced(plugin: Plugin, protyle: any) {
   updateTimer = setTimeout(() => updateDocNavigation(plugin, protyle), 100)
 }
 
+// 使用 WeakMap 存储容器，避免重复查询 DOM
+const navContainers = new WeakMap<any, HTMLElement>()
+
+/**
+ * 生成导航 HTML
+ */
+function generateNavHTML(_docId: string, parentDoc: Block | null, childDocs: Block[]): string {
+  const parts: string[] = ['<div class="doc-navigation">']
+
+  if (parentDoc) {
+    parts.push(`
+      <div class="doc-nav-parent">
+        <svg class="doc-nav-icon"><use xlink:href="#iconUp"></use></svg>
+        <span class="doc-nav-label">上级:</span>
+        <a class="doc-nav-link" data-doc-id="${parentDoc.id}">${stripHtml(parentDoc.content)}</a>
+      </div>`)
+  }
+
+  if (childDocs.length) {
+    const [visible, hidden] = [childDocs.slice(0, 5), childDocs.slice(5)]
+    parts.push(`
+      <div class="doc-nav-children">
+        <svg class="doc-nav-icon"><use xlink:href="#iconDown"></use></svg>
+        <span class="doc-nav-label">下级 (${childDocs.length}):</span>
+        <div class="doc-nav-children-list" data-expanded="false">
+          ${visible.map(createDocLink()).join('')}`)
+
+    if (hidden.length) {
+      parts.push(`<button class="doc-nav-expand" title="展开 ${hidden.length} 个文档">
+        <svg class="expand-icon"><use xlink:href="#iconExpand"></use></svg>+${hidden.length}
+      </button>${hidden.map(createDocLink(true)).join('')}`)
+    }
+
+    parts.push('</div></div>')
+  }
+
+  parts.push('</div>')
+  return parts.join('')
+}
+
 /**
  * 更新文档层级导航UI
  */
@@ -152,48 +216,34 @@ async function updateDocNavigation(_plugin: Plugin, protyle: any) {
 
     const { parent: parentDoc, children: childDocs } = await getDocHierarchy(currentDoc)
 
+    // 无数据时移除导航
     if (!parentDoc && !childDocs.length) {
-      protyle.element?.querySelector('.doc-navigation-container')?.remove()
+      const existing = navContainers.get(protyle)
+      if (existing) {
+        existing.remove()
+        navContainers.delete(protyle)
+      }
       return
     }
 
-    const navContainer = document.createElement('div')
-    navContainer.className = 'doc-navigation-container'
-    navContainer.dataset.docId = docId
+    // 复用现有容器或创建新的
+    let container = navContainers.get(protyle)
+    const html = generateNavHTML(docId, parentDoc, childDocs)
 
-    const parts: string[] = ['<div class="doc-navigation">']
-
-    if (parentDoc) {
-      parts.push(`
-        <div class="doc-nav-parent">
-          <svg class="doc-nav-icon"><use xlink:href="#iconUp"></use></svg>
-          <span class="doc-nav-label">上级:</span>
-          <a class="doc-nav-link" data-doc-id="${parentDoc.id}">${stripHtml(parentDoc.content)}</a>
-        </div>`)
+    if (container) {
+      // 复用：只更新内容，保留事件监听
+      container.dataset.docId = docId
+      container.innerHTML = html
+    } else {
+      // 创建新容器
+      container = document.createElement('div')
+      container.className = 'doc-navigation-container'
+      container.dataset.docId = docId
+      container.innerHTML = html
+      container.addEventListener('click', handleNavClick)
+      navContainers.set(protyle, container)
+      insertNavigation(protyle, container)
     }
-
-    if (childDocs.length) {
-      const [visible, hidden] = [childDocs.slice(0, 5), childDocs.slice(5)]
-      parts.push(`
-        <div class="doc-nav-children">
-          <svg class="doc-nav-icon"><use xlink:href="#iconDown"></use></svg>
-          <span class="doc-nav-label">下级 (${childDocs.length}):</span>
-          <div class="doc-nav-children-list" data-expanded="false">
-            ${visible.map(createDocLink()).join('')}`)
-
-      if (hidden.length) {
-        parts.push(`<button class="doc-nav-expand" title="展开 ${hidden.length} 个文档">
-          <svg class="expand-icon"><use xlink:href="#iconExpand"></use></svg>+${hidden.length}
-        </button>${hidden.map(createDocLink(true)).join('')}`)
-      }
-
-      parts.push('</div></div>')
-    }
-
-    parts.push('</div>')
-    navContainer.innerHTML = parts.join('')
-    navContainer.addEventListener('click', handleNavClick)
-    insertNavigation(protyle, navContainer)
   } catch (error) {
     console.error('更新文档层级导航失败:', error)
   }
@@ -202,11 +252,10 @@ async function updateDocNavigation(_plugin: Plugin, protyle: any) {
 function handleNavClick(e: Event) {
   const target = e.target as HTMLElement
 
-  const link = target.closest('.doc-nav-link')
+  const link = target.closest('.doc-nav-link') as HTMLElement | null
   if (link) {
     e.preventDefault()
-    const docId = link.getAttribute('data-doc-id')
-    docId && window.open(`siyuan://blocks/${docId}`)
+    link.dataset.docId && window.open(`siyuan://blocks/${link.dataset.docId}`)
     return
   }
 
@@ -214,13 +263,14 @@ function handleNavClick(e: Event) {
   if (!expandBtn) return
 
   e.preventDefault()
-  const container = target.closest('.doc-navigation-container')
-  const list = container?.querySelector('.doc-nav-children-list')
-  const hidden = container?.querySelectorAll('.doc-nav-link-hidden')
-  if (!list || !hidden?.length) return
+  const list = expandBtn.parentElement as HTMLElement | null
+  if (!list) return
 
-  const expanded = list.getAttribute('data-expanded') === 'true'
-  list.setAttribute('data-expanded', String(!expanded))
+  const hidden = list.querySelectorAll('.doc-nav-link-hidden')
+  if (!hidden.length) return
+
+  const expanded = list.dataset.expanded === 'true'
+  list.dataset.expanded = String(!expanded)
   hidden.forEach(el => el.classList.toggle('show', !expanded))
 
   const count = hidden.length

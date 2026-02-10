@@ -4,6 +4,7 @@
  */
 import { Plugin } from 'siyuan'
 import { ToolbarAction } from '../actions'
+import { showI18nMessage, dispatchDialogEvent } from '../utils'
 
 /**
  * 创建二维码功能
@@ -19,44 +20,12 @@ export function createQRCodeAction(plugin: Plugin): ToolbarAction {
     </svg>`,
     handler: async (selectedText: string) => {
       if (!selectedText) {
-        showMessage(plugin, (plugin.i18n as any).floatingToolbar?.noTextSelected || '未选中文本')
+        showI18nMessage(plugin, 'noTextSelected', '未选中文本')
         return
       }
 
       // 触发打开二维码对话框事件
-      openQRCodeDialog(selectedText)
+      dispatchDialogEvent('openQRCodeDialog', selectedText)
     }
   }
-}
-
-/**
- * 打开二维码对话框
- * @param content 要生成二维码的内容
- */
-function openQRCodeDialog(content: string) {
-  // 使用 setTimeout 确保事件在同步执行流之外
-  setTimeout(() => {
-    const event = new CustomEvent('openQRCodeDialog', {
-      detail: { content }
-    })
-    window.dispatchEvent(event)
-  }, 0)
-}
-
-/**
- * 显示消息
- * @param plugin 插件实例
- * @param message 消息内容
- */
-function showMessage(plugin: Plugin, message: string) {
-  fetch('/api/notification/pushMsg', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      msg: message,
-      timeout: 3000
-    })
-  })
 }

@@ -1,5 +1,6 @@
 import { Plugin } from 'siyuan'
 import { ToolbarAction, ToolbarActionManager } from './actions'
+import { showI18nMessage } from './utils'
 
 /**
  * 浮动工具栏增强类
@@ -13,7 +14,7 @@ export class FloatingToolbar {
 
     constructor(plugin: Plugin) {
         this.plugin = plugin
-        this.actionManager = new ToolbarActionManager(plugin)
+        this.actionManager = new ToolbarActionManager()
     }
 
     /**
@@ -63,14 +64,14 @@ export class FloatingToolbar {
     private bindEvents() {
         // 使用事件委托在 protyle 容器级别监听 mouseup
         // 这样不会干扰浏览器的文本选择过程
-        document.addEventListener('mouseup', this.handleDocumentMouseUp.bind(this), { passive: true })
+        document.addEventListener('mouseup', this.handleDocumentMouseUp, { passive: true })
     }
 
     /**
      * 处理文档级别的鼠标释放事件
-     * 延迟处理以确保选择完成后再添加按钮
+     * 使用箭头函数保持上下文，避免bind创建新实例
      */
-    private handleDocumentMouseUp() {
+    private handleDocumentMouseUp = () => {
         // 清除之前的定时器
         if (this.selectionTimeoutId) {
             clearTimeout(this.selectionTimeoutId)
@@ -80,7 +81,7 @@ export class FloatingToolbar {
         const currentSelection = window.getSelection()?.toString().trim() || ''
         this.lastSelectionText = currentSelection
 
-        // 延迟执行，等待三击选择完成（500ms 足够三击完成）
+        // 延迟执行，等待三击选择完成（400ms 足够三击完成）
         this.selectionTimeoutId = setTimeout(() => {
             // 再次检查选择是否与延迟前的内容一致（确保选择稳定）
             const stableSelection = window.getSelection()?.toString().trim() || ''
@@ -243,7 +244,7 @@ export class FloatingToolbar {
     private async copyText(text: string) {
         try {
             await navigator.clipboard.writeText(text)
-            this.showMessage((this.plugin.i18n as any).floatingToolbar?.copySuccess || '已复制到剪贴板')
+            showI18nMessage(this.plugin, 'copySuccess', '已复制到剪贴板')
         } catch (error) {
             // 降级方案
             const textarea = document.createElement('textarea')
@@ -252,24 +253,8 @@ export class FloatingToolbar {
             textarea.select()
             document.execCommand('copy')
             document.body.removeChild(textarea)
-            this.showMessage((this.plugin.i18n as any).floatingToolbar?.copySuccess || '已复制到剪贴板')
+            showI18nMessage(this.plugin, 'copySuccess', '已复制到剪贴板')
         }
-    }
-
-    /**
-     * 显示消息
-     */
-    private showMessage(message: string) {
-        fetch('/api/notification/pushMsg', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                msg: message,
-                timeout: 7000
-            })
-        })
     }
 
     /**
@@ -302,27 +287,22 @@ export class FloatingToolbar {
      * 销毁工具栏增强，清理资源
      */
     destroy() {
-        // 移除事件监听
-        document.removeEventListener('mouseup', this.handleDocumentMouseUp.bind(this))
+        // 移除事件监听（使用箭头函数同一引用）
+        document.removeEventListener('mouseup', this.handleDocumentMouseUp)
 
         // 移除所有自定义按钮
-        const customButtons = document.querySelectorAll('.custom-toolbar-button')
-        customButtons.forEach(button => {
+        document.querySelectorAll('.custom-toolbar-button').forEach(button => {
             button.remove()
         })
 
         // 清理标记
-        const toolbars = document.querySelectorAll('[data-floating-toolbar-attached], [data-custom-buttons-added]')
-        toolbars.forEach(toolbar => {
+        document.querySelectorAll('[data-floating-toolbar-attached], [data-custom-buttons-added]').forEach(toolbar => {
             toolbar.removeAttribute('data-floating-toolbar-attached')
             toolbar.removeAttribute('data-custom-buttons-added')
         })
 
         // 移除样式
-        const style = document.getElementById('floating-toolbar-enhanced-styles')
-        if (style) {
-            style.remove()
-        }
+        document.getElementById('floating-toolbar-enhanced-styles')?.remove()
 
         // 清理功能管理器
         this.actionManager.clear()

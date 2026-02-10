@@ -78,7 +78,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, shallowRef } from 'vue'
 import { showMessage } from 'siyuan'
 
 import IconWrapper from '@/components/IconWrapper.vue'
@@ -89,8 +89,17 @@ import type { Plugin } from 'siyuan'
 import { FlashcardStorage } from './storage'
 import type { Flashcard } from './types'
 
+interface I18n {
+  noCards?: string
+  category?: string
+  allCategories?: string
+  practiceCount?: string
+  play?: string
+  playFailed?: string
+}
+
 interface Props {
-  i18n: any
+  i18n: I18n
   plugin: Plugin
 }
 
@@ -98,8 +107,8 @@ const props = defineProps<Props>()
 
 const visible = ref(false)
 const storage = new FlashcardStorage(props.plugin)
-const cards = ref<Flashcard[]>([])
-const categories = ref<string[]>([])
+const cards = shallowRef<Flashcard[]>([])
+const categories = shallowRef<string[]>([])
 const selectedCategory = ref<string>('all')
 const currentIndex = ref(0)
 
@@ -199,12 +208,18 @@ defineExpose({
 })
 
 // 监听数据变化事件
+let dataChangeHandler: (() => void) | null = null
+
 onMounted(() => {
-  const handleDataChanged = () => {
-    loadCards()
+  dataChangeHandler = () => loadCards()
+  window.addEventListener('flashcardDataChanged', dataChangeHandler)
+})
+
+onUnmounted(() => {
+  if (dataChangeHandler) {
+    window.removeEventListener('flashcardDataChanged', dataChangeHandler)
+    dataChangeHandler = null
   }
-  window.addEventListener('flashcardDataChanged', handleDataChanged)
-  ;(window as any).__flashcardDialogDataChangedHandler = handleDataChanged
 })
 </script>
 

@@ -398,7 +398,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, shallowRef } from 'vue'
 import { showMessage } from 'siyuan'
 
 import IconWrapper from '@/components/IconWrapper.vue'
@@ -507,22 +507,22 @@ const CONFIG = {
 
 const props = defineProps<Props>()
 
-/** 获取 i18n 文本，带默认值 */
-const t = (key: keyof I18n, fallback: string): string => props.i18n[key] || fallback
-
 /** 获取柱状图颜色 */
 const getBarColor = (index: number): string => CONFIG.BAR_COLORS[index % CONFIG.BAR_COLORS.length]
 
 // ========== 状态管理 ==========
 
 const storage = new FlashcardStorage(props.plugin)
-const cards = ref<Flashcard[]>([])
-const categories = ref<string[]>([])
+const cards = shallowRef<Flashcard[]>([])
+const categories = shallowRef<string[]>([])
 const selectedCategory = ref<string>('all')
 const searchQuery = ref<string>('')
 const viewMode = ref<'list' | 'single' | 'statistics'>('list')
 const currentPage = ref(1)
 const currentIndex = ref(0)
+
+// 缓存搜索关键词小写值，避免重复计算
+const normalizedSearchQuery = computed(() => searchQuery.value.toLowerCase().trim())
 
 // 对话框状态
 const showCreateDialog = ref(false)
@@ -555,15 +555,16 @@ const allCategories = computed(() => {
 
 const filteredCards = computed(() => {
   let result = cards.value
+  const category = selectedCategory.value
+  const query = normalizedSearchQuery.value
 
   // 先按类别筛选
-  if (selectedCategory.value !== 'all') {
-    result = result.filter(card => card.category === selectedCategory.value)
+  if (category !== 'all') {
+    result = result.filter(card => card.category === category)
   }
 
   // 再按搜索关键词筛选
-  if (searchQuery.value.trim()) {
-    const query = searchQuery.value.toLowerCase().trim()
+  if (query) {
     result = result.filter(card =>
       card.title.toLowerCase().includes(query) ||
       card.content.toLowerCase().includes(query)
@@ -594,48 +595,41 @@ const isFormValid = computed(() => {
          Object.keys(formErrors.value).length === 0
 })
 
-// 统计相关计算属性
+// 统计相关计算属性 - 使用单次遍历优化性能
 const statisticsData = computed(() => {
-  // 按类别统计
+  const cardList = cards.value
   const categoryStats = new Map<string, number>()
-  // 按卡片统计
   const cardStats: Array<{ title: string; category: string; count: number }> = []
+  let totalPractice = 0
+  let practicedCards = 0
 
-  cards.value.forEach(card => {
-    // 类别统计
+  // 单次遍历完成所有统计
+  for (const card of cardList) {
     const count = card.practiceCount || 0
+    totalPractice += count
+    if (count > 0) practicedCards++
+
+    // 类别统计
     categoryStats.set(card.category, (categoryStats.get(card.category) || 0) + count)
 
-    // 卡片统计
+    // 卡片统计（仅收集有练习记录的）
     if (count > 0) {
-      cardStats.push({
-        title: card.title,
-        category: card.category,
-        count
-      })
+      cardStats.push({ title: card.title, category: card.category, count })
     }
-  })
+  }
 
-  // 按练习次数排序
+  // 排序
   cardStats.sort((a, b) => b.count - a.count)
-
-  // 转换类别统计为数组并排序
   const categoryArray = Array.from(categoryStats.entries())
     .map(([category, count]) => ({ category, count }))
     .sort((a, b) => b.count - a.count)
 
-  // 总练习次数
-  const totalPractice = cards.value.reduce((sum, card) => sum + (card.practiceCount || 0), 0)
-
-  // 已练习卡片数
-  const practicedCards = cards.value.filter(card => (card.practiceCount || 0) > 0).length
-
   return {
     totalPractice,
     practicedCards,
-    totalCards: cards.value.length,
+    totalCards: cardList.length,
     categoryStats: categoryArray,
-    cardStats: cardStats.slice(0, 20) // 只显示前20张
+    cardStats: cardStats.slice(0, 20)
   }
 })
 
@@ -848,25 +842,20 @@ const playWord = async (wordOrCard: string | Flashcard) => {
 }
 
 // 生命周期
+let dataChangeHandler: (() => void) | null = null
+
 onMounted(() => {
   loadCards()
 
-  // 监听数据变化事件（由 PronunciationDialog 触发）
-  const handleDataChanged = () => {
-    loadCards()
-  }
-  window.addEventListener('flashcardDataChanged', handleDataChanged)
-
-  // 保存引用以便在 onUnmounted 中移除
-  ;(window as any).__flashcardDataChangedHandler = handleDataChanged
+  // 监听数据变化事件
+  dataChangeHandler = () => loadCards()
+  window.addEventListener('flashcardDataChanged', dataChangeHandler)
 })
 
 onUnmounted(() => {
-  // 移除事件监听器
-  const handler = (window as any).__flashcardDataChangedHandler
-  if (handler) {
-    window.removeEventListener('flashcardDataChanged', handler)
-    delete (window as any).__flashcardDataChangedHandler
+  if (dataChangeHandler) {
+    window.removeEventListener('flashcardDataChanged', dataChangeHandler)
+    dataChangeHandler = null
   }
 })
 

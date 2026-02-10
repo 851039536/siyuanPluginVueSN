@@ -4,6 +4,7 @@
  */
 import { Plugin } from 'siyuan'
 import { ToolbarAction } from '../actions'
+import { showMessage, getSelectedBlockId, isEnglishText } from '../utils'
 
 /**
  * AI 配置接口
@@ -75,18 +76,18 @@ export function createTranslateAction(plugin: Plugin): ToolbarAction {
  */
 async function translateAndReplace(plugin: Plugin, text: string) {
   if (!text.trim()) {
-    showMessage(plugin, (plugin.i18n as any).floatingToolbar?.noTextSelected || '未选中文本')
+    showMessage((plugin.i18n as any).floatingToolbar?.noTextSelected || '未选中文本', 3000)
     return
   }
 
   // 检查是否为英文
   if (!isEnglishText(text)) {
-    showMessage(plugin, '请选择英文文本进行翻译')
+    showMessage('请选择英文文本进行翻译', 3000)
     return
   }
 
   try {
-    showMessage(plugin, '正在翻译...', 2000)
+    showMessage('正在翻译...', 2000)
 
     // 获取 AI 配置
     const aiConfig = getAiConfig(plugin)
@@ -100,28 +101,18 @@ async function translateAndReplace(plugin: Plugin, text: string) {
       if (blockId) {
         // 使用思源 API 更新块内容
         await updateBlockContent(blockId, translatedText)
-        showMessage(plugin, '翻译完成', 2000)
+        showMessage('翻译完成', 2000)
       } else {
-        showMessage(plugin, '无法获取当前块ID', 3000)
+        showMessage('无法获取当前块ID', 3000)
       }
     } else {
-      showMessage(plugin, '翻译失败，请重试', 3000)
+      showMessage('翻译失败，请重试', 3000)
     }
   } catch (error) {
     console.error('Translation error:', error)
     const errorMsg = (error as Error).message || '未知错误'
-    showMessage(plugin, '翻译失败: ' + errorMsg, 5000)
+    showMessage('翻译失败: ' + errorMsg, 5000)
   }
-}
-
-/**
- * 检测是否为英文文本
- */
-function isEnglishText(text: string): boolean {
-  // 检查是否主要包含英文字母和常见英文标点
-  const englishChars = text.match(/[a-zA-Z]/g)
-  const totalChars = text.replace(/\s/g, '').length
-  return englishChars !== null && englishChars.length > totalChars * 0.5
 }
 
 /**
@@ -138,79 +129,10 @@ function getAiConfig(plugin: Plugin): AiConfig {
 }
 
 /**
- * 获取当前选中的块 ID
- */
-function getSelectedBlockId(): string | null {
-  // 方法1: 获取当前选中的块
-  const selectedBlock = document.querySelector('.protyle-wysiwyg--select')
-  if (selectedBlock) {
-    return selectedBlock.getAttribute('data-node-id')
-  }
-
-  // 方法2: 获取光标所在的块（聚焦的块）
-  const focusedBlock = document.querySelector('.protyle-wysiwyg [data-node-id].protyle-wysiwyg--focus')
-  if (focusedBlock) {
-    return focusedBlock.getAttribute('data-node-id')
-  }
-
-  // 方法3: 通过 window.getSelection() 精确获取光标位置
-  const selection = window.getSelection()
-  if (selection && selection.rangeCount > 0) {
-    const range = selection.getRangeAt(0)
-    let node: Node | null = range.startContainer
-
-    // 向上查找直到找到带有 data-node-id 和 data-type 的元素
-    while (node) {
-      if (node instanceof Element) {
-        const nodeId = node.getAttribute('data-node-id')
-        const dataType = node.getAttribute('data-type')
-
-        // 必须同时有 data-node-id 和 data-type 才是有效的块
-        if (nodeId && dataType) {
-          return nodeId
-        }
-      }
-      node = node.parentNode
-    }
-  }
-
-  return null
-}
-
-/**
- * 使用思源 API 更新块内容
- */
-async function updateBlockContent(blockId: string, content: string): Promise<void> {
-  const response = await fetch('/api/block/updateBlock', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      dataType: 'markdown',
-      data: content,
-      id: blockId
-    })
-  })
-
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(`更新块失败: ${response.status} ${errorText}`)
-  }
-
-  const result = await response.json()
-  if (result.code !== 0) {
-    throw new Error(`更新块失败: ${result.msg || '未知错误'}`)
-  }
-}
-
-/**
  * 调用翻译 API
  */
 async function callTranslateAPI(text: string, config: AiConfig): Promise<string> {
-  const prompt = `请将以下英文文本翻译成中文，只输出翻译结果，不要有任何解释或说明：
-
-${text}`
+  const prompt = `请将以下英文文本翻译成中文，只输出翻译结果，不要有任何解释或说明：\n\n${text}`
 
   const provider = API_PROVIDERS[config.provider as keyof typeof API_PROVIDERS]
   if (!provider) {
@@ -268,20 +190,4 @@ function extractTextFromResponse(data: any): string {
     return data.text.trim()
   }
   throw new Error('API返回数据格式错误')
-}
-
-/**
- * 显示消息
- */
-function showMessage(plugin: Plugin, message: string, timeout: number = 3000) {
-  fetch('/api/notification/pushMsg', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      msg: message,
-      timeout: timeout
-    })
-  })
 }

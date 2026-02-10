@@ -1,19 +1,17 @@
-import { Plugin } from 'siyuan'
-
 /**
  * 工具栏功能接口定义
  */
 export interface ToolbarAction {
-    /** 功能唯一标识符 */
-    id: string
-    /** 功能显示名称 */
-    name: string
-    /** 功能图标 SVG 字符串 */
-    icon: string
-    /** 可选的快捷键 */
-    hotkey?: string
-    /** 功能处理函数 */
-    handler: (selectedText: string) => Promise<void> | void
+  /** 功能唯一标识符 */
+  id: string
+  /** 功能显示名称 */
+  name: string
+  /** 功能图标 SVG 字符串 */
+  icon: string
+  /** 可选的快捷键 */
+  hotkey?: string
+  /** 功能处理函数 */
+  handler: (selectedText: string) => Promise<void> | void
 }
 
 /**
@@ -21,11 +19,9 @@ export interface ToolbarAction {
  * 负责管理所有注册的浮动工具栏功能
  */
 export class ToolbarActionManager {
-    private plugin: Plugin
     private actions: Map<string, ToolbarAction> = new Map()
 
-    constructor(plugin: Plugin) {
-        this.plugin = plugin
+    constructor() {
     }
 
     /**
@@ -47,8 +43,7 @@ export class ToolbarActionManager {
      * @param actionId 要移除的功能 ID
      */
     unregisterAction(actionId: string) {
-        if (this.actions.delete(actionId)) {
-        }
+        this.actions.delete(actionId)
     }
 
     /**
@@ -81,7 +76,6 @@ export class ToolbarActionManager {
      * 清除所有已注册的功能
      */
     clear() {
-        const count = this.actions.size
         this.actions.clear()
     }
 

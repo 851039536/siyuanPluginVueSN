@@ -166,7 +166,6 @@ async function handleFeatureToggle(plugin: Plugin, featureId: string, enabled: b
     'base64Image': 'enableBase64Image',
     'skills': 'enableSkills',
     'flashcardReading': 'enableFlashcardReading',
-    'flashcardQuery': 'enableFlashcardQuery',
     'translate': 'enableTranslate',
     'codeTranslation': 'enableCodeTranslation',
     'webDAV': 'enableWebDAV'
@@ -227,7 +226,6 @@ async function handleToggleAllFeatures(plugin: Plugin, enabled: boolean) {
     'enableTextDiff',
     'enableBase64Image',
     'enableFlashcardReading',
-    'enableFlashcardQuery',
     'enableTranslate',
     'enableCodeTranslation',
     'enablePasswordVault',

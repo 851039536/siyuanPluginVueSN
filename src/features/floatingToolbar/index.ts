@@ -2,7 +2,6 @@ import { Plugin } from 'siyuan'
 import { FloatingToolbar } from './FloatingToolbar'
 import { createQRCodeAction } from './qrcode/qrcode-action'
 import { createPronunciationAction } from './pronunciation/pronunciation-action'
-import { createFlashcardQueryAction } from './flashcardQuery/flashcardQuery-action'
 import { createTranslateAction } from './translate/translate-action'
 import type PluginSample from '@/index'
 
@@ -26,11 +25,6 @@ export function registerFloatingToolbar(plugin: Plugin): void {
     // 注册谐音翻译功能（如果启用）
     if (pluginInstance.settings?.enablePronunciation) {
         floatingToolbar.registerAction(createPronunciationAction(plugin));
-    }
-
-    // 注册查询单词功能（如果启用）
-    if (pluginInstance.settings?.enableFlashcardQuery) {
-        floatingToolbar.registerAction(createFlashcardQueryAction(plugin));
     }
 
     // 注册翻译替换功能（如果启用）

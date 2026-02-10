@@ -342,14 +342,7 @@ const features = computed<Feature[]>(() => [
     enabled: props.settings.enableFlashcardReading,
     actions: []
   },
-  {
-    id: 'flashcardQuery',
-    iconKey: 'flashcardQuery',
-    title: props.i18n.floatingToolbar?.queryFlashcard || '查询单词',
-    desc: '在浮动工具栏中快速查询单词卡片',
-    enabled: props.settings.enableFlashcardQuery,
-    actions: []
-  },
+
   {
     id: 'translate',
     iconKey: 'translate',

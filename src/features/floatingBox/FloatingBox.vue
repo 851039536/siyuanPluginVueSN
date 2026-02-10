@@ -6,21 +6,11 @@
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"
   >
-    <!-- 桌面端：悬浮触发按钮 -->
+    <!-- 触发按钮 - 桌面端悬停，移动端点击 -->
     <div
-      class="floating-box-trigger desktop-trigger"
+      class="floating-box-trigger"
       :class="{ expanded: isExpanded }"
-    >
-      <svg class="trigger-icon" viewBox="0 0 24 24" width="16" height="16">
-        <path fill="currentColor" d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/>
-      </svg>
-    </div>
-
-    <!-- 移动端：点击触发按钮 -->
-    <div
-      class="floating-box-trigger mobile-trigger"
-      :class="{ expanded: isExpanded }"
-      @click="toggleMobileExpanded"
+      @click="isMobile && toggleExpanded()"
     >
       <svg class="trigger-icon" viewBox="0 0 24 24" width="16" height="16">
         <path fill="currentColor" d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/>
@@ -49,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import {
   createSuperPanelTool,
   createRefreshTool,
@@ -70,29 +60,36 @@ const isMobile = ref(false)
 // 桌面端工具列表（全部功能）
 const desktopTools = ref<FloatingTool[]>([])
 
-// 移动端工具列表（超级面板、刷新、密码箱、单词阅读）
-const mobileTools = computed(() => [
-  createSuperPanelTool(props.plugin),
-  createRefreshTool(props.plugin),
-  createPasswordVaultTool(props.plugin),
-  createFlashcardReadingTool(props.plugin),
-])
+// 移动端工具列表（超级面板、刷新、密码箱、单词阅读）- 缓存避免重复创建
+const mobileToolsCache = ref<FloatingTool[]>([])
 
 // 根据设备类型返回对应的工具列表
-const tools = computed(() => {
-  return isMobile.value ? mobileTools.value : desktopTools.value
-})
+const tools = computed(() => isMobile.value ? mobileToolsCache.value : desktopTools.value)
 
-// 检测是否为移动端
+// 检测是否为移动端（带防抖）
+let resizeTimer: ReturnType<typeof setTimeout> | null = null
+const MOBILE_BREAKPOINT = 768
+
 const checkMobile = () => {
-  isMobile.value = window.innerWidth <= 768
+  isMobile.value = window.innerWidth <= MOBILE_BREAKPOINT
 }
 
-onMounted(() => {
-  checkMobile()
-  window.addEventListener('resize', checkMobile)
+const debouncedCheckMobile = () => {
+  if (resizeTimer) clearTimeout(resizeTimer)
+  resizeTimer = setTimeout(checkMobile, 150)
+}
 
-  // Create desktop tools array with plugin instance
+// 初始化工具列表
+const initTools = () => {
+  // 移动端工具（缓存）
+  mobileToolsCache.value = [
+    createSuperPanelTool(props.plugin),
+    createRefreshTool(props.plugin),
+    createPasswordVaultTool(props.plugin),
+    createFlashcardReadingTool(props.plugin),
+  ]
+
+  // 桌面端工具
   const toolList: FloatingTool[] = [
     createSuperPanelTool(props.plugin),
     createRefreshTool(props.plugin),
@@ -100,27 +97,37 @@ onMounted(() => {
   ]
 
   // Add skills tool if plugin is available
-  if (props.plugin && props.plugin.settings?.enableSkills !== false) {
+  if (props.plugin?.settings?.enableSkills !== false) {
     toolList.push(skillsTool(props.plugin))
   }
 
   desktopTools.value = toolList
+}
+
+onMounted(() => {
+  checkMobile()
+  initTools()
+  window.addEventListener('resize', debouncedCheckMobile)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', debouncedCheckMobile)
+  if (resizeTimer) clearTimeout(resizeTimer)
 })
 
 const handleMouseEnter = () => {
-  isExpanded.value = true
+  if (!isMobile.value) isExpanded.value = true
 }
 
 const handleMouseLeave = () => {
-  isExpanded.value = false
+  if (!isMobile.value) isExpanded.value = false
 }
 
-const toggleMobileExpanded = () => {
+const toggleExpanded = () => {
   isExpanded.value = !isExpanded.value
 }
 
 const handleToolClick = (tool: FloatingTool) => {
-  // 传递 plugin 实例给工具的 action 函数
   tool.action(props.plugin)
 }
 </script>

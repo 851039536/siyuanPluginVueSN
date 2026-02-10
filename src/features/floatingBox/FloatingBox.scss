@@ -140,26 +140,9 @@ $trigger-active-scale: 0.98;
   transform: translateX(12px) scale(0.95);
 }
 
-// ========== 桌面端/移动端触发按钮显示控制 ==========
-.desktop-trigger {
-  // 默认显示（桌面端）
-  display: flex;
-
-  // 移动端隐藏
-  @media (max-width: 768px) {
-    display: none !important;
-  }
-}
-
-.mobile-trigger {
-  // 默认隐藏（桌面端）
-  display: none;
-
-  // 移动端显示
-  @media (max-width: 768px) {
-    display: flex !important;
-  }
-}
+// 注：桌面端和移动端触发按钮已合并为单个元素，通过不同交互方式区分
+// 桌面端：mouseenter/mouseleave 展开/收起
+// 移动端：click 切换展开状态
 
 // ========== 移动端适配 ==========
 @media (max-width: 768px) {

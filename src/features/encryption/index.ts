@@ -5,9 +5,23 @@
  */
 import { Plugin, showMessage } from 'siyuan'
 
+// 常量定义
+const CONSTANTS = {
+  STORAGE_KEY: 'encryption_password.json',
+  ENCRYPTED_PATTERN: /^\[encrypted\](.*)\[\/encrypted\]$/,
+  ENCRYPTED_WRAPPER: (text: string) => `[encrypted]${text}[/encrypted]`,
+  SALT: 'siyuan-encryption-salt-v1',
+  IV_LENGTH: 12,
+  PBKDF2_ITERATIONS: 100000,
+  KEY_LENGTH: 256
+} as const
+
 export class Encryption {
   private plugin: Plugin
   private password: string = ''
+  private cachedKey: CryptoKey | null = null
+  private textEncoder = new TextEncoder()
+  private textDecoder = new TextDecoder()
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
@@ -69,24 +83,48 @@ export class Encryption {
   }
 
   /**
+   * 验证选中文本
+   */
+  private validateSelection(): { text: string; range: Range } | null {
+    const selection = window.getSelection()
+    if (!selection || selection.rangeCount === 0) {
+      return null
+    }
+
+    const text = selection.toString().trim()
+    if (!text) {
+      return null
+    }
+
+    const range = selection.getRangeAt(0).cloneRange()
+    return { text, range }
+  }
+
+  /**
    * 加密选中的文本
    */
   private async encryptSelectedText() {
-    const selection = this.getSelectedText()
-    if (!selection) {
+    const validation = this.validateSelection()
+    if (!validation) {
       await this.showError(this.plugin.i18n.noTextSelected)
       return
     }
 
-    // 检查是否已配置密码
     if (!this.password) {
       await this.showError(this.plugin.i18n.passwordNotSet)
       return
     }
 
     try {
-      const encrypted = await this.encrypt(selection, this.password)
-      const replacedText = `[encrypted]${encrypted}[/encrypted]`
+      const encrypted = await this.encrypt(validation.text, this.password)
+      const replacedText = CONSTANTS.ENCRYPTED_WRAPPER(encrypted)
+      
+      const currentSelection = window.getSelection()
+      if (currentSelection) {
+        currentSelection.removeAllRanges()
+        currentSelection.addRange(validation.range)
+      }
+      
       await this.replaceSelectedText(replacedText)
       showMessage(this.plugin.i18n.encryptSuccess, 2000, 'info')
     } catch (error) {
@@ -98,37 +136,19 @@ export class Encryption {
    * 解密选中的文本
    */
   private async decryptSelectedText() {
-    const selection = this.getSelectedText()
-    if (!selection) {
+    const validation = this.validateSelection()
+    if (!validation) {
       await this.showError(this.plugin.i18n.noTextSelected)
       return
     }
 
-    // 检查格式
-    const encryptedMatch = selection.match(/^\[encrypted\](.*)\[\/encrypted\]$/)
+    const encryptedMatch = validation.text.match(CONSTANTS.ENCRYPTED_PATTERN)
     if (!encryptedMatch) {
       await this.showError(this.plugin.i18n.invalidEncryptedFormat)
       return
     }
 
-    // 保存当前选区，因为弹窗后选区会丢失
-    const currentSelection = window.getSelection()
-    if (!currentSelection || currentSelection.rangeCount === 0) {
-      await this.showError(this.plugin.i18n.noTextSelected)
-      return
-    }
-    const savedRange = currentSelection.getRangeAt(0).cloneRange()
-
-    // 显示解密对话框
-    await this.showDecryptDialog(encryptedMatch[1], savedRange)
-  }
-
-  /**
-   * 获取选中的文本
-   */
-  private getSelectedText(): string {
-    const selection = window.getSelection()
-    return selection ? selection.toString() : ''
+    await this.showDecryptDialog(encryptedMatch[1], validation.range)
   }
 
   /**
@@ -173,6 +193,19 @@ export class Encryption {
   }
 
   /**
+   * 获取或派生加密密钥（带缓存）
+   */
+  private async getOrDeriveKey(password: string): Promise<CryptoKey> {
+    if (this.cachedKey) {
+      return this.cachedKey
+    }
+
+    const key = await this.deriveKey(password)
+    this.cachedKey = key
+    return key
+  }
+
+  /**
    * 使用 AES-256-GCM 加密算法加密文本
    */
   private async encrypt(text: string, password: string): Promise<string> {
@@ -181,13 +214,12 @@ export class Encryption {
     }
 
     try {
-      const key = await this.deriveKey(password)
-      const iv = crypto.getRandomValues(new Uint8Array(12))
-      const encoder = new TextEncoder()
-      const data = encoder.encode(text)
+      const key = await this.getOrDeriveKey(password)
+      const iv = crypto.getRandomValues(new Uint8Array(CONSTANTS.IV_LENGTH))
+      const data = this.textEncoder.encode(text)
 
       const encryptedData = await crypto.subtle.encrypt(
-        { name: 'AES-GCM', iv: iv },
+        { name: 'AES-GCM', iv },
         key,
         data
       )
@@ -196,7 +228,7 @@ export class Encryption {
       combined.set(iv, 0)
       combined.set(new Uint8Array(encryptedData), iv.length)
 
-      return this.arrayBufferToBase64(combined)
+      return btoa(String.fromCharCode(...combined))
     } catch (error) {
       throw new Error('加密失败：' + (error as Error).message)
     }
@@ -211,19 +243,23 @@ export class Encryption {
     }
 
     try {
-      const key = await this.deriveKey(password)
-      const combined = this.base64ToArrayBuffer(encryptedText)
-      const iv = combined.slice(0, 12)
-      const encryptedData = combined.slice(12)
+      const key = await this.getOrDeriveKey(password)
+      const binary = atob(encryptedText)
+      const combined = new Uint8Array(binary.length)
+      for (let i = 0; i < binary.length; i++) {
+        combined[i] = binary.charCodeAt(i)
+      }
+      
+      const iv = combined.slice(0, CONSTANTS.IV_LENGTH)
+      const encryptedData = combined.slice(CONSTANTS.IV_LENGTH)
 
       const decryptedData = await crypto.subtle.decrypt(
-        { name: 'AES-GCM', iv: iv },
+        { name: 'AES-GCM', iv },
         key,
         encryptedData
       )
 
-      const decoder = new TextDecoder()
-      return decoder.decode(decryptedData)
+      return this.textDecoder.decode(decryptedData)
     } catch (error) {
       throw new Error('解密失败：密码错误或数据损坏')
     }
@@ -233,8 +269,7 @@ export class Encryption {
    * 从密码派生加密密钥
    */
   private async deriveKey(password: string): Promise<CryptoKey> {
-    const encoder = new TextEncoder()
-    const passwordData = encoder.encode(password)
+    const passwordData = this.textEncoder.encode(password)
 
     const keyMaterial = await crypto.subtle.importKey(
       'raw',
@@ -244,43 +279,20 @@ export class Encryption {
       ['deriveKey']
     )
 
-    const salt = encoder.encode('siyuan-encryption-salt-v1')
+    const salt = this.textEncoder.encode(CONSTANTS.SALT)
 
     return await crypto.subtle.deriveKey(
       {
         name: 'PBKDF2',
-        salt: salt,
-        iterations: 100000,
+        salt,
+        iterations: CONSTANTS.PBKDF2_ITERATIONS,
         hash: 'SHA-256',
       },
       keyMaterial,
-      { name: 'AES-GCM', length: 256 },
+      { name: 'AES-GCM', length: CONSTANTS.KEY_LENGTH },
       false,
       ['encrypt', 'decrypt']
     )
-  }
-
-  /**
-   * ArrayBuffer 转 Base64
-   */
-  private arrayBufferToBase64(buffer: Uint8Array): string {
-    let binary = ''
-    for (let i = 0; i < buffer.byteLength; i++) {
-      binary += String.fromCharCode(buffer[i])
-    }
-    return btoa(binary)
-  }
-
-  /**
-   * Base64 转 ArrayBuffer
-   */
-  private base64ToArrayBuffer(base64: string): Uint8Array {
-    const binary = atob(base64)
-    const bytes = new Uint8Array(binary.length)
-    for (let i = 0; i < binary.length; i++) {
-      bytes[i] = binary.charCodeAt(i)
-    }
-    return bytes
   }
 
   /**
@@ -485,6 +497,7 @@ export class Encryption {
    */
   public setPassword(password: string) {
     this.password = password
+    this.cachedKey = null
   }
 
   /**
@@ -499,7 +512,7 @@ export class Encryption {
    */
   public async savePassword() {
     try {
-      await this.plugin.saveData('encryption_password.json', { password: this.password })
+      await this.plugin.saveData(CONSTANTS.STORAGE_KEY, { password: this.password })
     } catch (error) {
       console.error('保存密码失败:', error)
     }
@@ -510,8 +523,8 @@ export class Encryption {
    */
   private async loadPassword() {
     try {
-      const data = await this.plugin.loadData('encryption_password.json')
-      if (data && data.password) {
+      const data = await this.plugin.loadData(CONSTANTS.STORAGE_KEY)
+      if (data?.password) {
         this.password = data.password
       }
     } catch (error) {

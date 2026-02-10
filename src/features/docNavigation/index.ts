@@ -4,6 +4,7 @@
  */
 import { Plugin } from 'siyuan'
 import * as api from '@/api'
+import './style.scss'
 
 // 防抖定时器
 let updateTimer: ReturnType<typeof setTimeout> | null = null
@@ -231,137 +232,9 @@ async function updateDocNavigation(_plugin: Plugin, protyle: any) {
 
     // 插入到编辑器顶部标题下方（先插入新导航，再移除旧导航，避免跳闪）
     insertNavigation(protyle, navContainer)
-
-    // 注入样式
-    injectNavigationStyles()
   } catch (error) {
     console.error('更新文档层级导航失败:', error)
   }
-}
-
-/**
- * 注入导航样式
- */
-function injectNavigationStyles() {
-  const styleId = 'doc-navigation-styles'
-  if (document.getElementById(styleId)) {
-    return
-  }
-
-  const style = document.createElement('style')
-  style.id = styleId
-  style.textContent = /* css */ `
-    .doc-navigation-container {
-      margin: 4px 0 12px;
-      display: flex;
-      justify-content: center;
-    }
-
-    .doc-navigation {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 4px 0;
-      font-size: 13px;
-      line-height: 1.5;
-      max-width: 95%;
-      flex-wrap: wrap;
-    }
-
-    .doc-nav-parent, .doc-nav-children {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
-      min-width: 0;
-    }
-
-    .doc-nav-icon {
-      width: 12px;
-      height: 12px;
-      flex-shrink: 0;
-      color: var(--b3-theme-on-surface);
-      opacity: .5;
-    }
-
-    .doc-nav-label {
-      color: var(--b3-theme-on-surface);
-      font-weight: 500;
-      flex-shrink: 0;
-      font-size: 12px;
-      white-space: nowrap;
-      opacity: .7;
-    }
-
-    .doc-nav-link {
-      color: var(--b3-theme-primary);
-      text-decoration: none;
-      cursor: pointer;
-      padding: 1px 6px;
-      border-radius: 4px;
-      white-space: nowrap;
-      font-size: 12px;
-      background: var(--b3-theme-surface-lighter);
-      display: inline-flex;
-      align-items: center;
-      max-width: 180px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      transition: background .15s;
-    }
-
-    .doc-nav-link:hover {
-      background: var(--b3-theme-primary-lightest);
-      text-decoration: none;
-    }
-
-    .doc-nav-children-list {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
-      overflow: visible;
-      min-width: 0;
-      flex: 1;
-    }
-
-    .doc-nav-link-hidden {
-      display: none;
-    }
-
-    .doc-nav-link-hidden.show {
-      display: inline-flex;
-    }
-
-    .doc-nav-expand {
-      color: var(--b3-theme-primary);
-      background: transparent;
-      border: none;
-      border-radius: 4px;
-      padding: 1px 6px;
-      cursor: pointer;
-      font-size: 11px;
-      font-weight: 500;
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-      flex-shrink: 0;
-      opacity: .8;
-      transition: opacity .15s;
-    }
-
-    .doc-nav-expand:hover {
-      opacity: 1;
-      background: var(--b3-theme-surface-lighter);
-    }
-
-    .doc-nav-expand .expand-icon {
-      width: 10px;
-      height: 10px;
-    }
-  `
-
-  document.head.appendChild(style)
 }
 
 /**

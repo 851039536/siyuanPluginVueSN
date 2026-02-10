@@ -2,16 +2,16 @@
  * 工具栏功能接口定义
  */
 export interface ToolbarAction {
-  /** 功能唯一标识符 */
-  id: string
-  /** 功能显示名称 */
-  name: string
-  /** 功能图标 SVG 字符串 */
-  icon: string
-  /** 可选的快捷键 */
-  hotkey?: string
-  /** 功能处理函数 */
-  handler: (selectedText: string) => Promise<void> | void
+    /** 功能唯一标识符 */
+    id: string
+    /** 功能显示名称 */
+    name: string
+    /** 功能图标 SVG 字符串 */
+    icon: string
+    /** 可选的快捷键 */
+    hotkey?: string
+    /** 功能处理函数 */
+    handler: (selectedText: string) => Promise<void> | void
 }
 
 /**
@@ -21,20 +21,15 @@ export interface ToolbarAction {
 export class ToolbarActionManager {
     private actions: Map<string, ToolbarAction> = new Map()
 
-    constructor() {
-    }
-
     /**
      * 注册新功能
      * @param action 要注册的功能
-     * @throws 如果功能 ID 已存在，抛出错误
      */
-    registerAction(action: ToolbarAction) {
+    registerAction(action: ToolbarAction): void {
         if (this.actions.has(action.id)) {
             console.warn(`[FloatingToolbar] Action with id "${action.id}" already registered`)
             return
         }
-
         this.actions.set(action.id, action)
     }
 
@@ -42,7 +37,7 @@ export class ToolbarActionManager {
      * 移除功能
      * @param actionId 要移除的功能 ID
      */
-    unregisterAction(actionId: string) {
+    unregisterAction(actionId: string): void {
         this.actions.delete(actionId)
     }
 
@@ -75,7 +70,7 @@ export class ToolbarActionManager {
     /**
      * 清除所有已注册的功能
      */
-    clear() {
+    clear(): void {
         this.actions.clear()
     }
 
@@ -91,8 +86,10 @@ export class ToolbarActionManager {
      * 批量注册功能
      * @param actions 要注册的功能数组
      */
-    registerActions(actions: ToolbarAction[]) {
-        actions.forEach(action => this.registerAction(action))
+    registerActions(actions: ToolbarAction[]): void {
+        for (const action of actions) {
+            this.registerAction(action)
+        }
     }
 }
 
@@ -104,7 +101,7 @@ export class ToolbarActionFactory {
      * 创建一个简单的功能
      * @param id 功能 ID
      * @param name 功能名称
-     * @param icon 图标名称（使用 SiYuan 内置图标）
+     * @param iconName 图标名称（使用 SiYuan 内置图标）
      * @param handler 处理函数
      * @returns 功能对象
      */
@@ -126,7 +123,7 @@ export class ToolbarActionFactory {
      * 创建一个带快捷键的功能
      * @param id 功能 ID
      * @param name 功能名称
-     * @param icon 图标名称
+     * @param iconName 图标名称
      * @param hotkey 快捷键
      * @param handler 处理函数
      * @returns 功能对象
@@ -168,4 +165,20 @@ export class ToolbarActionFactory {
             handler
         }
     }
+}
+
+// 类型守卫：检查对象是否为 ToolbarAction
+export function isToolbarAction(obj: unknown): obj is ToolbarAction {
+    return (
+        typeof obj === 'object' &&
+        obj !== null &&
+        'id' in obj &&
+        'name' in obj &&
+        'icon' in obj &&
+        'handler' in obj &&
+        typeof (obj as ToolbarAction).id === 'string' &&
+        typeof (obj as ToolbarAction).name === 'string' &&
+        typeof (obj as ToolbarAction).icon === 'string' &&
+        typeof (obj as ToolbarAction).handler === 'function'
+    )
 }

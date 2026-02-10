@@ -1,0 +1,45 @@
+/**
+ * floatingToolbar 公共样式变量
+ * 统一对话框、按钮、表单等组件的设计系统
+ */
+
+// ========================================
+// 基础变量
+// ========================================
+
+// 圆角
+$radius-sm: 4px !default;
+$radius-md: 6px !default;
+$radius-lg: 8px !default;
+$radius-xl: 12px !default;
+$radius-full: 50% !default;
+
+// 过渡
+$transition-fast: 0.15s ease !default;
+$transition-base: 0.2s ease !default;
+$transition-slow: 0.3s ease !default;
+
+// 阴影
+$shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1) !default;
+$shadow-md: 0 2px 8px rgba(0, 0, 0, 0.08) !default;
+$shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.15) !default;
+$shadow-xl: 0 10px 30px rgba(0, 0, 0, 0.2) !default;
+$shadow-primary: 0 2px 8px rgba(66, 133, 244, 0.3) !default;
+
+// Z-index 层级
+$z-overlay: 1000 !default;
+$z-dialog: 1001 !default;
+$z-dropdown: 1100 !default;
+
+// ========================================
+// 对话框变量
+// ========================================
+$dialog-max-width: 500px !default;
+$dialog-max-width-sm: 420px !default;
+$dialog-padding: 20px !default;
+
+// ========================================
+// 断点
+// ========================================
+$breakpoint-sm: 480px !default;
+$breakpoint-md: 768px !default;

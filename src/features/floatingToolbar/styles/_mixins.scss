@@ -1,0 +1,295 @@
+/**
+ * floatingToolbar 公共样式混合宏
+ */
+
+@use "variables" as *;
+
+// ========================================
+// 布局混合宏
+// ========================================
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin flex-column($gap: 0) {
+  display: flex;
+  flex-direction: column;
+  @if $gap > 0 {
+    gap: $gap;
+  }
+}
+
+// ========================================
+// 对话框基础混合宏
+// ========================================
+
+@mixin dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  @include flex-center;
+  z-index: $z-overlay;
+  padding: $dialog-padding;
+  pointer-events: auto;
+
+  @media (max-width: $breakpoint-md) {
+    padding: 10px;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: 5px;
+  }
+}
+
+@mixin dialog-container($max-width: $dialog-max-width) {
+  background: var(--b3-theme-background);
+  border-radius: $radius-xl;
+  box-shadow: $shadow-xl;
+  width: 100%;
+  max-width: $max-width;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--b3-theme-surface-lighter);
+
+  @media (max-width: $breakpoint-md) {
+    max-width: 95vw;
+    max-height: 90vh;
+  }
+}
+
+@mixin dialog-header($gradient: false) {
+  @include flex-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  flex-shrink: 0;
+
+  @if $gradient {
+    background: linear-gradient(to right, var(--b3-theme-primary), var(--b3-theme-primary-light));
+  } @else {
+    background: var(--b3-theme-surface);
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: 12px 16px;
+  }
+}
+
+@mixin dialog-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  @include flex-column(16px);
+
+  @media (max-width: $breakpoint-md) {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: 12px;
+    gap: 10px;
+  }
+}
+
+@mixin dialog-footer {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--b3-theme-surface-lighter);
+  background: var(--b3-theme-surface);
+  flex-shrink: 0;
+
+  @media (max-width: $breakpoint-sm) {
+    padding: 12px 16px;
+    gap: 8px;
+    flex-direction: column;
+  }
+}
+
+// ========================================
+// 表单元素混合宏
+// ========================================
+
+@mixin input-base {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--b3-theme-outline);
+  border-radius: $radius-md;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  font-size: 14px;
+  outline: none;
+  transition: border-color $transition-base;
+
+  &:focus {
+    border-color: var(--b3-theme-primary);
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+  }
+}
+
+@mixin input-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--b3-theme-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+// ========================================
+// 按钮混合宏
+// ========================================
+
+@mixin btn-base {
+  padding: 10px 16px;
+  border: 1px solid var(--b3-theme-outline);
+  border-radius: $radius-md;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  @include flex-center;
+  gap: 6px;
+  transition: all $transition-base;
+  box-shadow: $shadow-sm;
+
+  &:hover:not(:disabled) {
+    background: var(--b3-theme-primary);
+    color: var(--b3-theme-on-primary);
+    border-color: var(--b3-theme-primary);
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+@mixin btn-primary {
+  @include btn-base;
+  border: none;
+  background: linear-gradient(to right, var(--b3-theme-primary), var(--b3-theme-primary-light));
+  color: var(--b3-theme-on-primary);
+  box-shadow: $shadow-primary;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(66, 133, 244, 0.3);
+  }
+}
+
+@mixin btn-icon($size: 32px) {
+  width: $size;
+  height: $size;
+  @include flex-center;
+  border: none;
+  border-radius: $radius-full;
+  background: transparent;
+  color: var(--b3-theme-on-surface-variant);
+  cursor: pointer;
+  transition: all $transition-base;
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+    color: var(--b3-theme-on-background);
+  }
+}
+
+// ========================================
+// 关闭按钮混合宏
+// ========================================
+
+@mixin close-btn($light: false) {
+  @include btn-icon(32px);
+
+  @if $light {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--b3-theme-on-primary);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.1);
+    }
+  }
+
+  .icon {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+// ========================================
+// 滚动条混合宏
+// ========================================
+
+@mixin custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--b3-theme-surface-lighter);
+    border-radius: 2px;
+
+    &:hover {
+      background: var(--b3-theme-on-surface-variant);
+    }
+  }
+}
+
+// ========================================
+// 状态混合宏
+// ========================================
+
+@mixin empty-state {
+  @include flex-column(16px);
+  @include flex-center;
+  padding: 32px 20px;
+  text-align: center;
+  color: var(--b3-theme-on-surface-variant);
+  background: var(--b3-theme-surface);
+  border-radius: $radius-md;
+  border: 1px dashed var(--b3-theme-surface-lighter);
+
+  @media (max-width: $breakpoint-sm) {
+    padding: 24px 16px;
+  }
+}
+
+@mixin loading-spinner($size: 32px) {
+  width: $size;
+  height: $size;
+  border: 3px solid var(--b3-theme-surface-lighter);
+  border-top: 3px solid var(--b3-theme-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+// ========================================
+// 动画关键帧
+// ========================================
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

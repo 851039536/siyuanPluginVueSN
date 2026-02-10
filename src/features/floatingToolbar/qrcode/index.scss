@@ -1,60 +1,34 @@
-// QRCode Dialog 样式
-// 二维码生成对话框的模块化样式
+/**
+ * QRCode Dialog 样式 - 优化版本
+ * 使用公共样式变量和混合宏
+ */
 
-// 基础样式变量
-$dialog-max-width: 420px;
-$dialog-radius: 6px;
-$overlay-z-index: 1000;
-$transition-speed: 0.2s;
+@use "../styles" as ft;
 
-// 覆盖层
+// ========================================
+// 遮罩层和对话框主体
+// ========================================
 .qrcode-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: $overlay-z-index;
-  padding: 20px;
-  pointer-events: auto;
-
-  // 移动端适配
-  @media (max-width: 768px) {
-    padding: 10px;
-  }
+  @include ft.dialog-overlay;
 }
 
-// 对话框主体
 .qrcode-dialog {
-  background: var(--b3-theme-background);
-  border-radius: $dialog-radius;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
-  width: 100%;
-  max-width: $dialog-max-width;
-  max-height: 85vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  @include ft.dialog-container(420px);
+  border-radius: ft.$radius-md;
 
-  // 移动端适配
-  @media (max-width: 768px) {
+  @media (max-width: ft.$breakpoint-md) {
     max-height: 90vh;
   }
 }
 
+// ========================================
 // 对话框头部
+// ========================================
 .dialog-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  @include ft.dialog-header(false);
   padding: 12px 14px;
-  border-bottom: 1px solid var(--b3-theme-surface);
-  background: var(--b3-theme-surface);
-  flex-shrink: 0;
 
-  // 移动端适配
-  @media (max-width: 768px) {
+  @media (max-width: ft.$breakpoint-md) {
     padding: 10px 12px;
   }
 }
@@ -67,8 +41,7 @@ $transition-speed: 0.2s;
   font-weight: 600;
   color: var(--b3-theme-on-background);
 
-  // 移动端适配
-  @media (max-width: 768px) {
+  @media (max-width: ft.$breakpoint-md) {
     font-size: 13px;
   }
 }
@@ -79,23 +52,9 @@ $transition-speed: 0.2s;
   color: var(--b3-theme-primary);
 }
 
-// 关闭按钮
 .close-btn {
-  background: transparent;
-  border: none;
-  color: var(--b3-theme-on-surface-variant);
-  cursor: pointer;
+  @include ft.close-btn;
   padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: all $transition-speed;
-
-  &:hover {
-    background: var(--b3-theme-surface-lighter);
-    color: var(--b3-theme-on-background);
-  }
 
   .icon {
     width: 18px;
@@ -103,45 +62,26 @@ $transition-speed: 0.2s;
   }
 }
 
+// ========================================
 // 对话框主体
+// ========================================
 .dialog-body {
-  flex: 1;
-  overflow-y: auto;
+  @include ft.dialog-body;
   padding: 12px;
-  display: flex;
-  flex-direction: column;
   gap: 10px;
+  @include ft.custom-scrollbar;
 
-  // 自定义滚动条
-  &::-webkit-scrollbar {
-    width: 5px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--b3-theme-surface-lighter);
-    border-radius: 2px;
-
-    &:hover {
-      background: var(--b3-theme-on-surface-variant);
-    }
-  }
-
-  // 移动端适配
-  @media (max-width: 768px) {
+  @media (max-width: ft.$breakpoint-md) {
     padding: 10px;
     gap: 8px;
   }
 }
 
+// ========================================
 // 输入区域
+// ========================================
 .input-section {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  @include ft.flex-column(6px);
 }
 
 .input-label {
@@ -156,38 +96,33 @@ $transition-speed: 0.2s;
   width: 100%;
   min-height: 45px;
   max-height: 80px;
-  padding: 2px;
+  padding: 8px;
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 3px;
+  border-radius: ft.$radius-sm;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
   font-size: 14px;
   line-height: 1.4;
   resize: vertical;
   outline: none;
-  transition: border-color $transition-speed;
-  word-wrap: break-word;
+  transition: border-color ft.$transition-base;
   overflow-wrap: break-word;
   word-break: break-word;
-  white-space: pre-wrap;
-  overflow-x: hidden; // 防止水平滚动条
-  overflow-y: auto;
 
   &:focus {
     border-color: var(--b3-theme-primary);
   }
 
-  // 移动端适配
-  @media (max-width: 768px) {
-    font-size: 12px; // 移动端稍大一点
+  @media (max-width: ft.$breakpoint-md) {
+    font-size: 12px;
   }
 }
 
+// ========================================
 // 二维码区域
+// ========================================
 .qrcode-section {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  @include ft.flex-column(6px);
   align-items: center;
 }
 
@@ -206,10 +141,8 @@ $transition-speed: 0.2s;
   min-height: 180px;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 3px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border-radius: ft.$radius-sm;
+  @include ft.flex-center;
   padding: 12px;
 
   canvas {
@@ -217,32 +150,28 @@ $transition-speed: 0.2s;
     height: auto;
   }
 
-  // 移动端适配
-  @media (max-width: 768px) {
+  @media (max-width: ft.$breakpoint-md) {
     min-height: 160px;
     padding: 8px;
   }
 }
 
+// ========================================
 // 设置区域
+// ========================================
 .settings-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  @include ft.flex-column(8px);
   padding: 10px;
   background: var(--b3-theme-surface);
-  border-radius: 3px;
+  border-radius: ft.$radius-sm;
 
-  // 移动端适配
-  @media (max-width: 768px) {
+  @media (max-width: ft.$breakpoint-md) {
     padding: 8px;
   }
 }
 
 .setting-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  @include ft.flex-column(4px);
 }
 
 .setting-label {
@@ -289,11 +218,10 @@ $transition-speed: 0.2s;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   }
 
-  // 移动端优化
-  @media (max-width: 768px) {
+  @media (max-width: ft.$breakpoint-md) {
     &::-webkit-slider-thumb {
       width: 18px;
-      height: 18px; // 移动端手指触摸更友好
+      height: 18px;
     }
   }
 }
@@ -310,13 +238,13 @@ $transition-speed: 0.2s;
 .error-select {
   padding: 5px 7px;
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 3px;
+  border-radius: ft.$radius-sm;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
   font-size: 11px;
   cursor: pointer;
   outline: none;
-  transition: border-color $transition-speed;
+  transition: border-color ft.$transition-base;
 
   &:focus {
     border-color: var(--b3-theme-primary);
@@ -327,14 +255,15 @@ $transition-speed: 0.2s;
     cursor: not-allowed;
   }
 
-  // 移动端优化
-  @media (max-width: 768px) {
+  @media (max-width: ft.$breakpoint-md) {
     font-size: 12px;
     padding: 6px 8px;
   }
 }
 
+// ========================================
 // 对话框底部
+// ========================================
 .dialog-footer {
   display: flex;
   gap: 6px;
@@ -343,8 +272,7 @@ $transition-speed: 0.2s;
   background: var(--b3-theme-surface);
   flex-shrink: 0;
 
-  // 移动端适配 - 改为垂直布局
-  @media (max-width: 768px) {
+  @media (max-width: ft.$breakpoint-md) {
     flex-direction: column;
     gap: 8px;
     padding: 8px 10px;
@@ -358,17 +286,15 @@ $transition-speed: 0.2s;
   flex: 1;
   padding: 7px 10px;
   border: 1px solid var(--b3-theme-outline);
-  border-radius: 3px;
+  border-radius: ft.$radius-sm;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  @include ft.flex-center;
   gap: 4px;
-  transition: all $transition-speed ease;
+  transition: all ft.$transition-base;
 
   &:hover:not(:disabled) {
     background: var(--b3-theme-primary);
@@ -380,10 +306,6 @@ $transition-speed: 0.2s;
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-
-    &:hover {
-      transform: none;
-    }
   }
 
   .btn-icon {
@@ -391,14 +313,12 @@ $transition-speed: 0.2s;
     height: 12px;
   }
 
-  // 移动端适配
-  @media (max-width: 768px) {
+  @media (max-width: ft.$breakpoint-md) {
     font-size: 12px;
     padding: 10px 12px;
   }
 }
 
-// 关闭按钮特殊样式
 .btn-close {
   background: var(--b3-theme-primary);
   color: var(--b3-theme-on-primary);

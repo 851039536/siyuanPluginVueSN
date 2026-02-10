@@ -76,18 +76,18 @@ export function createTranslateAction(plugin: Plugin): ToolbarAction {
  */
 async function translateAndReplace(plugin: Plugin, text: string) {
   if (!text.trim()) {
-    showMessage((plugin.i18n as any).floatingToolbar?.noTextSelected || '未选中文本', 3000)
+    showMessage((plugin.i18n as any).floatingToolbar?.noTextSelected || '未选中文本', { timeout: 3000 })
     return
   }
 
   // 检查是否为英文
   if (!isEnglishText(text)) {
-    showMessage('请选择英文文本进行翻译', 3000)
+    showMessage('请选择英文文本进行翻译', { timeout: 3000 })
     return
   }
 
   try {
-    showMessage('正在翻译...', 2000)
+    showMessage('正在翻译...', { timeout: 2000 })
 
     // 获取 AI 配置
     const aiConfig = getAiConfig(plugin)
@@ -101,17 +101,17 @@ async function translateAndReplace(plugin: Plugin, text: string) {
       if (blockId) {
         // 使用思源 API 更新块内容
         await updateBlockContent(blockId, translatedText)
-        showMessage('翻译完成', 2000)
+        showMessage('翻译完成', { timeout: 2000 })
       } else {
-        showMessage('无法获取当前块ID', 3000)
+        showMessage('无法获取当前块ID', { timeout: 3000 })
       }
     } else {
-      showMessage('翻译失败，请重试', 3000)
+      showMessage('翻译失败，请重试', { timeout: 3000 })
     }
   } catch (error) {
     console.error('Translation error:', error)
     const errorMsg = (error as Error).message || '未知错误'
-    showMessage('翻译失败: ' + errorMsg, 5000)
+    showMessage('翻译失败: ' + errorMsg, { timeout: 5000 })
   }
 }
 

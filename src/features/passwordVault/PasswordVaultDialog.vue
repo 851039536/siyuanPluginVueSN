@@ -918,6 +918,12 @@ async function saveEntry() {
 
 // 删除条目
 async function deleteEntry(id: string) {
+  const entry = entries.value.find(e => e.id === id)
+  if (!entry) return
+
+  const confirmed = window.confirm(`确定要删除密码条目「${entry.name}」吗？此操作不可恢复。`)
+  if (!confirmed) return
+
   entries.value = entries.value.filter(e => e.id !== id)
   // 清理密码可见性状态，避免内存泄漏
   if (id in showPasswords.value) {

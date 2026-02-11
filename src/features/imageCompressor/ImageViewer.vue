@@ -125,8 +125,7 @@
               v-if="image.url"
               :src="image.url"
               :alt="image.name"
-              @load="onImageLoad"
-              @error="onImageError($event, image)"
+              @error="onImageError"
               loading="lazy"
             />
             <div v-else class="image-placeholder">
@@ -258,7 +257,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, shallowRef, nextTick } from 'vue'
 import { showMessage } from 'siyuan'
 import type { ImageInfo, CompressOptions, CompressResult } from './types'
 import { scanAllAssets, batchGetImageDetails } from './scanner'
@@ -279,15 +278,15 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-// 状态
-const images = ref<ImageInfo[]>([])
+// 状态 - 使用 shallowRef 优化大型数组性能
+const images = shallowRef<ImageInfo[]>([])
 const selectedImages = ref<Set<string>>(new Set())
 const scanning = ref(false)
 const compressing = ref(false)
 const replacing = ref(false)
 const scanProgress = ref(0)
 const scanProgressText = ref('')
-const compressResults = ref<CompressResult[]>([])
+const compressResults = shallowRef<CompressResult[]>([])
 const showCompressDialog = ref(false)
 const imageListRef = ref<HTMLElement | null>(null)
 const previewImageData = ref<ImageInfo | null>(null)
@@ -299,7 +298,7 @@ const pageSize = ref(30) // 默认每页30张
 // 过滤状态
 const minFileSize = ref(0) // 最小文件大小(KB), 0表示不过滤
 
-// 过滤后的图片列表
+// 过滤后的图片列表 - 使用缓存优化
 const filteredImages = computed(() => {
   if (minFileSize.value === 0) {
     return images.value
@@ -316,18 +315,6 @@ const paginatedImages = computed(() => {
   return filteredImages.value.slice(start, end)
 })
 
-// 监听页码变化,滚动到顶部
-watch(currentPage, () => {
-  if (imageListRef.value) {
-    imageListRef.value.scrollTop = 0
-  }
-})
-
-// 监听过滤条件变化,重置到第一页
-watch(minFileSize, () => {
-  currentPage.value = 1
-})
-
 // 统计信息
 const stats = computed(() => {
   if (compressResults.value.length === 0) {
@@ -341,6 +328,23 @@ const stats = computed(() => {
   }
   return getCompressStats(compressResults.value)
 })
+
+// 监听页码变化,滚动到顶部
+watch(currentPage, () => {
+  nextTick(() => {
+    imageListRef.value?.scrollTo({ top: 0, behavior: 'smooth' })
+  })
+})
+
+// 监听过滤条件变化,重置到第一页
+watch(minFileSize, () => {
+  currentPage.value = 1
+})
+
+// 工具函数：延迟显示消息
+const showDelayedMessage = (message: string, duration: number, type: 'info' | 'error' = 'info') => {
+  setTimeout(() => showMessage(message, duration, type), 100)
+}
 
 // 扫描图片
 const onScanImages = async () => {
@@ -366,16 +370,12 @@ const onScanImages = async () => {
     )
 
     images.value = detailedImages
-    currentPage.value = 1 // 重置到第一页
+    currentPage.value = 1
 
     // 显示统计信息
     const totalSize = detailedImages.reduce((sum, img) => sum + img.size, 0)
     const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2)
-    showMessage(
-      `扫描完成: 共 ${detailedImages.length} 张图片, 总大小 ${totalSizeMB} MB`,
-      3000,
-      'info'
-    )
+    showMessage(`扫描完成: 共 ${detailedImages.length} 张图片, 总大小 ${totalSizeMB} MB`, 3000, 'info')
   } catch (error) {
     console.error('扫描图片失败:', error)
     showMessage('扫描图片失败: ' + error, 5000, 'error')
@@ -385,33 +385,33 @@ const onScanImages = async () => {
   }
 }
 
+// 更新选中状态（统一触发响应式）
+const updateSelection = (operation: (set: Set<string>) => void) => {
+  operation(selectedImages.value)
+  selectedImages.value = new Set(selectedImages.value)
+}
+
 // 切换选择
 const toggleSelect = (path: string) => {
-  if (selectedImages.value.has(path)) {
-    selectedImages.value.delete(path)
-  } else {
-    selectedImages.value.add(path)
-  }
-  // 触发响应式更新
-  selectedImages.value = new Set(selectedImages.value)
+  updateSelection(set => {
+    if (set.has(path)) {
+      set.delete(path)
+    } else {
+      set.add(path)
+    }
+  })
 }
 
 // 全选当前页
 const onSelectAll = () => {
-  paginatedImages.value.forEach(img => selectedImages.value.add(img.path))
-  selectedImages.value = new Set(selectedImages.value)
-}
-
-// 全选所有页
-const onSelectAllPages = () => {
-  filteredImages.value.forEach(img => selectedImages.value.add(img.path))
-  selectedImages.value = new Set(selectedImages.value)
+  updateSelection(set => {
+    paginatedImages.value.forEach(img => set.add(img.path))
+  })
 }
 
 // 取消全选
 const onDeselectAll = () => {
-  selectedImages.value.clear()
-  selectedImages.value = new Set(selectedImages.value)
+  updateSelection(set => set.clear())
 }
 
 // 开始压缩
@@ -440,20 +440,11 @@ const onCompressConfirm = async (options: CompressOptions) => {
 
     compressResults.value = results
 
-    // 延迟显示消息,避免对话框关闭竞态
-    setTimeout(() => {
-      const successCount = results.filter(r => r.success).length
-      showMessage(
-        `压缩完成! 成功 ${successCount}/${results.length} 张`,
-        3000,
-        'info'
-      )
-    }, 100)
+    const successCount = results.filter(r => r.success).length
+    showDelayedMessage(`压缩完成! 成功 ${successCount}/${results.length} 张`, 3000, 'info')
   } catch (error) {
     console.error('压缩失败:', error)
-    setTimeout(() => {
-      showMessage('压缩失败: ' + error, 5000, 'error')
-    }, 100)
+    showDelayedMessage('压缩失败: ' + error, 5000, 'error')
   } finally {
     compressing.value = false
   }
@@ -475,13 +466,11 @@ const onReplaceImages = async () => {
       }
     )
 
-    setTimeout(() => {
-      showMessage(
-        `替换完成! 成功 ${success} 张, 失败 ${failed} 张。如需查看最新状态，请手动点击"扫描图片"`,
-        5000,
-        success > 0 ? 'info' : 'error'
-      )
-    }, 100)
+    showDelayedMessage(
+      `替换完成! 成功 ${success} 张, 失败 ${failed} 张。如需查看最新状态，请手动点击"扫描图片"`,
+      5000,
+      success > 0 ? 'info' : 'error'
+    )
 
     // 清空压缩结果，但不自动刷新
     const successfulResults = compressResults.value.filter(r => r.success)
@@ -489,31 +478,23 @@ const onReplaceImages = async () => {
 
     // 从当前列表中移除已替换的图片（避免混淆）
     if (success > 0 && successfulResults.length > 0) {
-      const replacedPaths = new Set(
-        successfulResults.map(r => r.originalFile.path)
-      )
+      const replacedPaths = new Set(successfulResults.map(r => r.originalFile.path))
       images.value = images.value.filter(img => !replacedPaths.has(img.path))
       // 清空这些图片的选中状态
-      replacedPaths.forEach(path => selectedImages.value.delete(path))
-      selectedImages.value = new Set(selectedImages.value)
+      updateSelection(set => {
+        replacedPaths.forEach(path => set.delete(path))
+      })
     }
   } catch (error) {
     console.error('替换失败:', error)
-    setTimeout(() => {
-      showMessage('替换失败: ' + error, 5000, 'error')
-    }, 100)
+    showDelayedMessage('替换失败: ' + error, 5000, 'error')
   } finally {
     replacing.value = false
   }
 }
 
-// 图片加载成功
-const onImageLoad = (e: Event) => {
-  // 图片加载成功，无需额外处理
-}
-
 // 图片加载错误
-const onImageError = (e: Event, image: ImageInfo) => {
+const onImageError = (e: Event) => {
   const img = e.target as HTMLImageElement
   img.style.display = 'none'
   const parent = img.parentElement

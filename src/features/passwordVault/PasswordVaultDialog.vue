@@ -5,73 +5,15 @@
         <Transition name="scale">
           <div v-if="visible" class="password-vault-dialog">
             <!-- 登录界面 -->
-            <div v-if="!isLoggedIn" class="login-container">
-              <div class="dialog-header">
-                <div class="header-title">
-                  <IconWrapper name="settings" :size="24" />
-                  <span>密码箱</span>
-                </div>
-                <Button  icon="close" variant="ghost" size="small" @click="closeDialog" />
-              </div>
-
-              <div class="login-body">
-                <div class="login-icon">🔐</div>
-                <h2>请输入主密码</h2>
-                <p class="login-hint">{{ isFirstTime ? '首次使用将创建新密码' : '请输入密码以解锁' }}</p>
-
-                <!-- 显示保存的密码提示 -->
-                <div v-if="!isFirstTime && passwordHint" class="password-hint-display">
-                  <IconWrapper name="info" :size="14" />
-                  <span>提示：{{ passwordHint }}</span>
-                </div>
-
-                <form @submit.prevent="handleLogin" class="login-form">
-                  <div class="password-input-wrapper">
-                    <Input
-                      v-model="loginPassword"
-                      :type="showLoginPassword ? 'text' : 'password'"
-                      placeholder="请输入密码"
-                      class="password-input"
-                      ref="loginInputRef"
-                      @keydown.esc="closeDialog"
-                    />
-                    <Button type="button" class="toggle-visibility-btn" :icon="showLoginPassword ? 'eye' : 'eyeOff'" variant="ghost" size="small" @click="showLoginPassword = !showLoginPassword" />
-                  </div>
-
-                  <!-- 首次设置时显示密码提示输入 -->
-                  <div v-if="isFirstTime" class="hint-input-group">
-                    <Button type="button" class="hint-toggle-btn" variant="ghost" size="small" @click="showHintInput = !showHintInput">
-                      <IconWrapper name="info" :size="14" />
-                      {{ showHintInput ? '取消密码提示' : '设置密码提示（推荐）' }}
-                    </Button>
-                    <Input
-                      v-if="showHintInput"
-                      v-model="passwordHint"
-                      type="text"
-                      placeholder="例如：我的生日、最喜欢的颜色等"
-                      class="hint-input"
-                      :maxlength="50"
-                    />
-                  </div>
-
-                  <div v-if="loginError" class="error-message">
-                    <IconWrapper name="error" :size="16" />
-                    {{ loginError }}
-                  </div>
-
-                  <Button type="submit" class="login-btn" variant="primary" :disabled="!loginPassword.trim()" block>
-                    {{ isFirstTime ? '创建密码' : '解锁' }}
-                  </Button>
-                </form>
-
-                <!-- 忘记密码选项 -->
-                <div v-if="!isFirstTime" class="forgot-password-section">
-                  <Button class="forgot-password-btn" variant="ghost" size="small" @click="showForgotPasswordOptions">
-                    忘记密码？
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <PasswordVaultLogin
+              v-if="!isLoggedIn"
+              :is-first-time="isFirstTime"
+              :password-hint="passwordHint"
+              :login-error="loginError"
+              @login="handleLogin"
+              @close="closeDialog"
+              @forgot-password="showForgotPasswordOptions"
+            />
 
             <!-- 主界面 -->
             <div v-else class="main-container">
@@ -469,13 +411,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { showMessage } from 'siyuan'
 import IconWrapper from '@/components/IconWrapper.vue'
 import Button from '@/components/Button.vue'
 import Input from '@/components/Input.vue'
 import Textarea from '@/components/Textarea.vue'
 import Select from '@/components/Select.vue'
+import PasswordVaultLogin from './PasswordVaultLogin.vue'
 import type { PasswordEntry, PasswordCategory, StoredPasswordEntry } from './types'
 import { usePlugin } from '@/main'
 import {
@@ -502,9 +445,6 @@ const emit = defineEmits<{
 // 获取插件实例
 const plugin = usePlugin()
 
-// Refs
-const loginInputRef = ref<HTMLInputElement | null>(null)
-
 // 存储键
 const MASTER_PASSWORD_KEY = 'password-vault-master-password'
 const VERIFY_SALT_KEY = 'password-vault-verify-salt'
@@ -515,15 +455,12 @@ const PASSWORD_HINT_KEY = 'password-vault-hint'
 
 // 状态
 const isLoggedIn = ref(false)
-const loginPassword = ref('')
-const showLoginPassword = ref(false)
 const loginError = ref('')
 const isFirstTime = ref(false)
 const savedHash = ref('')
 const encryptionKey = ref<CryptoKey | null>(null)  // 当前会话的加密密钥
 const encryptionSalt = ref<string>('')              // 加密盐值
 const passwordHint = ref<string>('')                // 密码提示
-const showHintInput = ref(false)                    // 是否显示提示输入框
 
 const searchQuery = ref('')
 const selectedCategory = ref<string>('all')
@@ -597,14 +534,19 @@ async function loadMasterPasswordHash() {
 }
 
 // 处理登录
-async function handleLogin() {
-  if (!loginPassword.value.trim()) return
+async function handleLogin(inputPassword: string, hint?: string) {
+  if (!inputPassword.trim()) return
 
   if (isFirstTime.value) {
     // 首次创建密码 - 生成盐值并保存
     const verifySalt = generateVerifySalt()
     const encryptSalt = generateVerifySalt()
-    const hash = await hashMasterPassword(loginPassword.value, verifySalt)
+    const hash = await hashMasterPassword(inputPassword, verifySalt)
+
+    // 更新密码提示
+    if (hint) {
+      passwordHint.value = hint
+    }
 
     // 保存验证信息和加密盐值
     await Promise.all([
@@ -620,7 +562,7 @@ async function handleLogin() {
     isLoggedIn.value = true
 
     // 派生加密密钥
-    encryptionKey.value = await deriveKey(loginPassword.value, encryptSalt)
+    encryptionKey.value = await deriveKey(inputPassword, encryptSalt)
 
     await loadEntries()
     await loadCategories()
@@ -631,7 +573,7 @@ async function handleLogin() {
       plugin.loadData(ENCRYPTION_SALT_KEY)
     ]) as [string, string]
 
-    const hash = await hashMasterPassword(loginPassword.value, verifySalt)
+    const hash = await hashMasterPassword(inputPassword, verifySalt)
 
     if (hash === savedHash.value) {
       isLoggedIn.value = true
@@ -639,7 +581,7 @@ async function handleLogin() {
       encryptionSalt.value = encryptSalt
 
       // 派生加密密钥
-      encryptionKey.value = await deriveKey(loginPassword.value, encryptSalt)
+      encryptionKey.value = await deriveKey(inputPassword, encryptSalt)
 
       await loadEntries()
       await loadCategories()
@@ -1050,7 +992,6 @@ const copyPassword = async (password: string) => {
 // 关闭弹窗
 const closeDialog = () => {
   isLoggedIn.value = false
-  loginPassword.value = ''
   loginError.value = ''
   // 清除加密密钥和解密后的数据（安全措施）
   encryptionKey.value = null
@@ -1087,10 +1028,6 @@ const handleKeyDown = (event: KeyboardEvent) => {
 watch(() => props.visible, async (newVal) => {
   if (newVal) {
     await loadMasterPasswordHash()
-    await nextTick()
-    if (!isLoggedIn.value) {
-      loginInputRef.value?.focus()
-    }
   }
 })
 

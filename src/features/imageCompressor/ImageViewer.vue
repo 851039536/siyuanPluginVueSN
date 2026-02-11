@@ -24,16 +24,11 @@
 
       <!-- 操作栏 -->
       <div class="viewer-toolbar">
-        <button
-          class="btn btn-primary"
-          @click="onScanImages"
-          :disabled="scanning"
-        >
+        <button class="btn btn-primary" @click="onScanImages" :disabled="scanning">
           <svg class="icon"><use xlink:href="#iconRefresh"></use></svg>
           {{ scanning ? i18n.scanning : i18n.scanImages }}
         </button>
 
-        <!-- 文件大小过滤 -->
         <div class="filter-group">
           <label class="filter-label">只显示大于:</label>
           <select class="filter-select" v-model.number="minFileSize">
@@ -49,48 +44,29 @@
 
         <div class="toolbar-spacer"></div>
 
-        <!-- 分页控制 -->
-        <div class="pagination-controls" v-if="totalPages > 1">
-          <button class="btn btn-text btn-sm" @click="currentPage = 1" :disabled="currentPage === 1">
-            首页
-          </button>
-          <button class="btn btn-text btn-sm" @click="currentPage--" :disabled="currentPage === 1">
-            上一页
-          </button>
-          <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
-          <button class="btn btn-text btn-sm" @click="currentPage++" :disabled="currentPage === totalPages">
-            下一页
-          </button>
-          <button class="btn btn-text btn-sm" @click="currentPage = totalPages" :disabled="currentPage === totalPages">
-            末页
-          </button>
-          <select class="page-size-select" v-model.number="pageSize" @change="currentPage = 1">
-            <option :value="20">20/页</option>
-            <option :value="30">30/页</option>
-            <option :value="50">50/页</option>
-            <option :value="100">100/页</option>
-          </select>
-        </div>
+        <template v-if="totalPages > 1">
+          <div class="pagination-controls">
+            <button class="btn btn-text btn-sm" @click="currentPage = 1" :disabled="currentPage === 1">首页</button>
+            <button class="btn btn-text btn-sm" @click="currentPage--" :disabled="currentPage === 1">上一页</button>
+            <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
+            <button class="btn btn-text btn-sm" @click="currentPage++" :disabled="currentPage === totalPages">下一页</button>
+            <button class="btn btn-text btn-sm" @click="currentPage = totalPages" :disabled="currentPage === totalPages">末页</button>
+            <select class="page-size-select" v-model.number="pageSize" @change="currentPage = 1">
+              <option :value="20">20/页</option>
+              <option :value="30">30/页</option>
+              <option :value="50">50/页</option>
+              <option :value="100">100/页</option>
+            </select>
+          </div>
+        </template>
 
-        <button
-          class="btn btn-text"
-          @click="onSelectAll"
-          :disabled="filteredImages.length === 0"
-        >
+        <button class="btn btn-text" @click="onSelectAll" :disabled="filteredImages.length === 0">
           {{ i18n.selectAll }}
         </button>
-        <button
-          class="btn btn-text"
-          @click="onDeselectAll"
-          :disabled="selectedImages.size === 0"
-        >
+        <button class="btn btn-text" @click="onDeselectAll" :disabled="selectedImages.size === 0">
           {{ i18n.deselectAll }}
         </button>
-        <button
-          class="btn btn-primary"
-          @click="onCompress"
-          :disabled="selectedImages.size === 0 || compressing"
-        >
+        <button class="btn btn-primary" @click="onCompress" :disabled="selectedImages.size === 0 || compressing">
           <svg class="icon"><use xlink:href="#iconImage"></use></svg>
           {{ compressing ? i18n.compressing : i18n.compress }}
           <span v-if="selectedImages.size > 0">({{ selectedImages.size }})</span>
@@ -107,27 +83,12 @@
 
       <!-- 图片列表 -->
       <div class="image-list" ref="imageListRef" v-if="paginatedImages.length > 0">
-        <div
-          v-for="image in paginatedImages"
-          :key="image.path"
-          class="image-item"
-          :class="{ selected: selectedImages.has(image.path) }"
-        >
+        <div v-for="image in paginatedImages" :key="image.path" class="image-item" :class="{ selected: selectedImages.has(image.path) }">
           <div class="image-checkbox" @click.stop="toggleSelect(image.path)">
-            <input
-              type="checkbox"
-              :checked="selectedImages.has(image.path)"
-              @click.stop="toggleSelect(image.path)"
-            />
+            <input type="checkbox" :checked="selectedImages.has(image.path)" @click.stop="toggleSelect(image.path)" />
           </div>
           <div class="image-preview" @click.stop="previewImage(image)">
-            <img
-              v-if="image.url"
-              :src="image.url"
-              :alt="image.name"
-              @error="onImageError"
-              loading="lazy"
-            />
+            <img v-if="image.url" :src="image.url" :alt="image.name" @error="onImageError" loading="lazy" />
             <div v-else class="image-placeholder">
               <svg class="icon"><use xlink:href="#iconImage"></use></svg>
               <p>加载中...</p>
@@ -140,19 +101,11 @@
           <div class="image-info" @click.stop="toggleSelect(image.path)">
             <div class="image-name" :title="image.name">{{ image.name }}</div>
             <div class="image-actions">
-              <button
-                class="action-btn"
-                @click.stop="copyImageName(image.name)"
-                title="复制图片名称"
-              >
+              <button class="action-btn" @click.stop="copyImageName(image.name)" title="复制图片名称">
                 <svg class="icon"><use xlink:href="#iconCopy"></use></svg>
                 复制
               </button>
-              <button
-                class="action-btn"
-                @click.stop="navigateToDoc(image)"
-                title="导航到关联文档"
-              >
+              <button class="action-btn" @click.stop="navigateToDoc(image)" title="导航到关联文档">
                 <svg class="icon"><use xlink:href="#iconLink"></use></svg>
                 定位
               </button>
@@ -160,9 +113,7 @@
             <div class="image-meta">
               <div class="meta-row">
                 <span class="meta-label">尺寸:</span>
-                <span v-if="image.width && image.height">
-                  {{ image.width }} × {{ image.height }}
-                </span>
+                <span v-if="image.width && image.height">{{ image.width }} × {{ image.height }}</span>
                 <span v-else>-</span>
               </div>
               <div class="meta-row">
@@ -188,9 +139,7 @@
       <div class="compress-results" v-if="compressResults.length > 0">
         <div class="results-header">
           <h3>{{ i18n.statistics }}</h3>
-          <button class="btn btn-sm" @click="compressResults = []">
-            清除结果
-          </button>
+          <button class="btn btn-sm" @click="compressResults = []">清除结果</button>
         </div>
         <div class="results-stats">
           <div class="stat-item">
@@ -214,11 +163,7 @@
             <span class="stat-value">{{ stats.totalSavedMB }} MB</span>
           </div>
         </div>
-        <button
-          class="btn btn-primary btn-block"
-          @click="onReplaceImages"
-          :disabled="replacing"
-        >
+        <button class="btn btn-primary btn-block" @click="onReplaceImages" :disabled="replacing">
           {{ replacing ? i18n.replacing : i18n.replace }}
         </button>
       </div>
@@ -515,28 +460,25 @@ const copyImageName = async (name: string) => {
 }
 
 // 从图片名称中提取文档ID
-function extractDocIdFromImageName(imageName: string): string | null {
-  // 思源笔记图片命名格式: {hash}-{timestamp}-{docId}.{ext}
-  // 例如: 01c8d88a60112d6fcb8beb900d4ecf89-20250913160629-4j7x9v8.jpg
+const extractDocIdFromImageName = (imageName: string): string | null => {
   const match = imageName.match(/-([a-z0-9]{7})\.[^.]+$/)
   return match ? match[1] : null
+}
+
+// 打开文档
+const openDoc = (docId: string) => {
+  window.open(`siyuan://blocks/${docId}`)
 }
 
 // 导航到关联文档
 const navigateToDoc = async (image: ImageInfo) => {
   try {
-    // 方法1: 从文件名提取文档ID
-    const docIdFromName = extractDocIdFromImageName(image.name)
-    if (docIdFromName) {
-      // 验证文档是否存在
-      const doc = await api.getBlockByID(docIdFromName)
-      if (doc) {
-        window.open(`siyuan://blocks/${docIdFromName}`)
-        return
-      }
+    const docId = extractDocIdFromImageName(image.name)
+    if (docId && await api.getBlockByID(docId)) {
+      openDoc(docId)
+      return
     }
 
-    // 方法2: 通过SQL查询引用了该图片的文档
     const imagePath = image.path.replace('/data/', '')
     const blocks = await api.sql(`
       SELECT DISTINCT root_id, content, hpath
@@ -547,18 +489,9 @@ const navigateToDoc = async (image: ImageInfo) => {
       LIMIT 5
     `)
 
-    if (blocks && blocks.length > 0) {
-      if (blocks.length === 1) {
-        // 只有一个文档,直接打开
-        window.open(`siyuan://blocks/${blocks[0].root_id}`)
-        showMessage(`已打开文档`, 2000, 'info')
-      } else {
-        // 多个文档,显示列表供用户选择
-        const docList = blocks.map((b, i) => `${i + 1}. ${b.hpath || b.content}`).join('\n')
-        showMessage(`该图片在 ${blocks.length} 个文档中被引用`, 3000, 'info')
-        // 默认打开第一个(最新更新的)
-        window.open(`siyuan://blocks/${blocks[0].root_id}`)
-      }
+    if (blocks?.length) {
+      showMessage(`该图片在 ${blocks.length} 个文档中被引用`, 3000, 'info')
+      openDoc(blocks[0].root_id)
     } else {
       showMessage('未找到引用该图片的文档', 3000, 'info')
     }
@@ -585,16 +518,57 @@ const onClose = () => {
 </script>
 
 <style scoped lang="scss">
-.image-viewer-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
+// Mixins
+@mixin flex-center {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin icon-base {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+}
+
+@mixin button-base {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:not(:disabled):hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  .icon {
+    @include icon-base;
+  }
+}
+
+.image-viewer-overlay {
+  @include flex-center;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
   z-index: 9999;
   pointer-events: auto;
 }
@@ -612,16 +586,13 @@ const onClose = () => {
 }
 
 .viewer-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  @include flex-between;
   padding: 16px 24px;
   border-bottom: 1px solid var(--b3-border-color);
   background: var(--b3-theme-surface);
 
   .header-left {
-    display: flex;
-    align-items: center;
+    @include flex-center;
     gap: 16px;
 
     h2 {
@@ -649,6 +620,7 @@ const onClose = () => {
     color: var(--b3-theme-on-background);
     opacity: 0.6;
     border-radius: 4px;
+    transition: all 0.2s;
 
     &:hover {
       opacity: 1;
@@ -663,8 +635,7 @@ const onClose = () => {
 }
 
 .viewer-toolbar {
-  display: flex;
-  align-items: center;
+  @include flex-center;
   gap: 12px;
   padding: 12px 24px;
   border-bottom: 1px solid var(--b3-border-color);
@@ -677,8 +648,7 @@ const onClose = () => {
 }
 
 .filter-group {
-  display: flex;
-  align-items: center;
+  @include flex-center;
   gap: 8px;
   padding: 6px 12px;
   background: var(--b3-theme-surface);
@@ -701,6 +671,7 @@ const onClose = () => {
     color: var(--b3-theme-on-background);
     font-size: 12px;
     cursor: pointer;
+    transition: border-color 0.2s;
 
     &:hover {
       border-color: var(--b3-theme-primary);
@@ -719,8 +690,7 @@ const onClose = () => {
 }
 
 .pagination-controls {
-  display: flex;
-  align-items: center;
+  @include flex-center;
   gap: 8px;
   padding: 4px 12px;
   background: var(--b3-theme-surface);
@@ -734,40 +704,8 @@ const onClose = () => {
   }
 }
 
-.btn,
-.icon-btn {
-  .icon {
-    width: 16px;
-    height: 16px;
-  }
-}
-
-.icon-btn .icon {
-  width: 20px;
-  height: 20px;
-}
-
 .btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: none;
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  &:not(:disabled):hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
-  }
+  @include button-base;
 }
 
 .btn-primary {
@@ -781,6 +719,7 @@ const onClose = () => {
 
   &:hover {
     background: var(--b3-theme-surface);
+    transform: none;
   }
 }
 
@@ -867,9 +806,7 @@ const onClose = () => {
   width: 100%;
   height: 200px;
   background: var(--b3-theme-background);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  @include flex-center;
   overflow: hidden;
   cursor: pointer;
 
@@ -886,10 +823,8 @@ const onClose = () => {
   }
 
   .image-placeholder {
-    display: flex;
+    @include flex-center;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
     width: 100%;
     height: 100%;
     gap: 8px;
@@ -909,12 +844,8 @@ const onClose = () => {
   }
 
   .preview-hint {
+    @include flex-center;
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    display: flex;
-    align-items: center;
     gap: 6px;
     padding: 8px 16px;
     background: rgba(0, 0, 0, 0.75);
@@ -947,14 +878,14 @@ const onClose = () => {
 }
 
 .image-actions {
-  display: flex;
+  @include flex-center;
   gap: 8px;
   margin-bottom: 8px;
+  justify-content: flex-start;
 }
 
 .action-btn {
-  display: inline-flex;
-  align-items: center;
+  @include flex-center;
   gap: 4px;
   padding: 4px 8px;
   font-size: 12px;
@@ -985,9 +916,9 @@ const onClose = () => {
   margin-bottom: 4px;
 
   .meta-row {
-    display: flex;
-    align-items: center;
+    @include flex-center;
     gap: 8px;
+    justify-content: flex-start;
   }
 
   .meta-label {
@@ -1013,11 +944,9 @@ const onClose = () => {
 }
 
 .empty-state {
-  flex: 1;
-  display: flex;
+  @include flex-center;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  flex: 1;
   gap: 16px;
 
   .empty-icon {
@@ -1039,9 +968,7 @@ const onClose = () => {
 }
 
 .results-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  @include flex-between;
   margin-bottom: 16px;
 
   h3 {
@@ -1060,9 +987,7 @@ const onClose = () => {
 }
 
 .stat-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  @include flex-between;
   padding: 10px 14px;
   background: var(--b3-theme-background);
   border-radius: 6px;
@@ -1095,27 +1020,21 @@ const onClose = () => {
   }
 }
 
-// 图片预览对话框
 .image-preview-dialog {
+  @include flex-center;
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: rgba(0, 0, 0, 0.9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   z-index: 10000;
   animation: fadeIn 0.2s;
+}
 
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 
@@ -1131,9 +1050,7 @@ const onClose = () => {
 }
 
 .preview-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  @include flex-between;
   padding: 16px 20px;
   border-bottom: 1px solid var(--b3-border-color);
   background: var(--b3-theme-surface);
@@ -1149,19 +1066,18 @@ const onClose = () => {
     }
 
     .preview-meta {
-      display: flex;
+      @include flex-center;
       gap: 16px;
       font-size: 12px;
       color: var(--b3-theme-on-surface-light);
       opacity: 0.8;
+      justify-content: flex-start;
     }
   }
 }
 
 .preview-image-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  @include flex-center;
   padding: 20px;
   max-height: calc(90vh - 80px);
   overflow: auto;

@@ -1,0 +1,163 @@
+// 使用说明对话框样式
+@use '@/index.scss' as *;
+@use '@/variables.scss' as *;
+
+// Flex 居中
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Flex 行布局
+@mixin flex-row {
+  display: flex;
+  align-items: center;
+}
+
+@mixin flex-row-gap($gap: 8px) {
+  @include flex-row;
+  gap: $gap;
+}
+
+// 图标按钮基础样式
+@mixin icon-button-base {
+  padding: 6px 8px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  @include flex-center;
+  transition: $transition-base;
+}
+
+// 标题样式
+@mixin heading-style {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--b3-theme-on-background);
+  margin: 0;
+  font-family: $font-heading;
+}
+
+%icon-button {
+  @include icon-button-base;
+}
+
+%icon-button-hover-light {
+  &:hover {
+    background: var(--b3-theme-surface-light);
+  }
+}
+
+.help-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  @include flex-center;
+  z-index: 100001;
+  border-radius: 0;
+}
+
+.help-dialog {
+  width: 500px;
+  max-width: 90%;
+  max-height: 80%;
+  background: var(--b3-theme-background);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+.help-dialog-header {
+  @include flex-row-gap(10px);
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--b3-border-color);
+  background: var(--b3-theme-surface);
+
+  h3 {
+    @include heading-style;
+  }
+}
+
+.help-close-btn {
+  @extend %icon-button;
+  @extend %icon-button-hover-light;
+  padding: 6px;
+}
+
+.help-dialog-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.help-section {
+  margin-bottom: 20px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  h4 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--b3-theme-on-background);
+    margin: 0 0 10px 0;
+    @include flex-row-gap(8px);
+    font-family: $font-heading;
+
+    &::before {
+      content: '';
+      width: 3px;
+      height: 16px;
+      background: var(--b3-theme-primary);
+      border-radius: 2px;
+    }
+  }
+
+  p {
+    font-size: 14px;
+    color: var(--b3-theme-on-surface);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 20px;
+
+    li {
+      font-size: 14px;
+      color: var(--b3-theme-on-surface);
+      line-height: 1.8;
+      margin-bottom: 4px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+}
+
+.help-dialog-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--b3-border-color);
+  background: var(--b3-theme-surface);
+  display: flex;
+  justify-content: flex-end;
+}
+
+// 过渡动画
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity $transition-base ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}

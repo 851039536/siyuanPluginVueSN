@@ -812,20 +812,31 @@ async function saveCategories() {
   }
 }
 
-// 过滤条目
+// 过滤条目 - 使用缓存策略优化性能
 const filteredEntries = computed(() => {
-  let result = entries.value
+  const allEntries = entries.value
+  const category = selectedCategory.value
+  const query = searchQuery.value
 
-  if (selectedCategory.value !== 'all') {
-    result = result.filter(entry => entry.category === selectedCategory.value)
+  // 无过滤条件时直接返回原数组，避免创建新数组
+  if (category === 'all' && !query) {
+    return allEntries
   }
 
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
+  let result = allEntries
+
+  // 先按分类过滤
+  if (category !== 'all') {
+    result = result.filter(entry => entry.category === category)
+  }
+
+  // 再按搜索词过滤
+  if (query) {
+    const lowerQuery = query.toLowerCase()
     result = result.filter(entry =>
-      entry.name.toLowerCase().includes(query) ||
-      entry.account.toLowerCase().includes(query) ||
-      entry.description.toLowerCase().includes(query)
+      entry.name.toLowerCase().includes(lowerQuery) ||
+      entry.account.toLowerCase().includes(lowerQuery) ||
+      entry.description.toLowerCase().includes(lowerQuery)
     )
   }
 
@@ -969,7 +980,10 @@ async function saveEntry() {
 // 删除条目
 async function deleteEntry(id: string) {
   entries.value = entries.value.filter(e => e.id !== id)
-  delete showPasswords.value[id]
+  // 清理密码可见性状态，避免内存泄漏
+  if (id in showPasswords.value) {
+    delete showPasswords.value[id]
+  }
   await saveEntries()
   showMessage('密码条目已删除', 2000, 'info')
 }
@@ -997,6 +1011,10 @@ const closeDialog = () => {
   encryptionKey.value = null
   encryptionSalt.value = ''
   entries.value = []
+  // 清理密码可见性状态，防止内存泄漏
+  Object.keys(showPasswords.value).forEach(key => {
+    delete showPasswords.value[key]
+  })
   emit('update:visible', false)
   emit('close')
 }

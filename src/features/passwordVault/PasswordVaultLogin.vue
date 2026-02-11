@@ -129,16 +129,15 @@ const handleSubmit = () => {
 // Lifecycle
 // ============================================================
 
-// 监听首次使用状态变化，重置表单
-watch(() => props.isFirstTime, () => {
+// 监听首次使用状态变化，重置表单并自动聚焦
+watch(() => props.isFirstTime, async () => {
+  // 重置表单
   password.value = ''
   hint.value = ''
   showHintInput.value = false
   showPassword.value = false
-})
 
-// 当组件挂载时自动聚焦
-watch(() => props.isFirstTime, async () => {
+  // 自动聚焦输入框
   await nextTick()
   inputRef.value?.focus()
 }, { immediate: true })

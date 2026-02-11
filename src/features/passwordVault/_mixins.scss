@@ -1,0 +1,127 @@
+/**
+ * PasswordVault 模块共享 Mixins
+ * 提取公共样式，避免在多个文件中重复定义
+ */
+
+@use '@/index.scss' as *;
+@use '@/variables.scss' as *;
+
+// ============================================================
+// Flex 布局 Mixins
+// ============================================================
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-center-gap($gap: 8px) {
+  @include flex-center;
+  gap: $gap;
+}
+
+@mixin flex-row {
+  display: flex;
+  align-items: center;
+}
+
+@mixin flex-row-gap($gap: 8px) {
+  @include flex-row;
+  gap: $gap;
+}
+
+// ============================================================
+// 组件基础样式 Mixins
+// ============================================================
+
+@mixin icon-button-base {
+  padding: 6px 8px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  @include flex-center;
+  transition: $transition-base;
+}
+
+@mixin input-base {
+  padding: 10px 12px;
+  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-border-color);
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--b3-theme-on-background);
+  outline: none;
+  transition: border-color $transition-base;
+
+  &:focus {
+    border-color: var(--b3-theme-primary);
+  }
+
+  &::placeholder {
+    color: var(--b3-theme-on-surface-light);
+  }
+}
+
+@mixin card-base {
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: 10px;
+  transition: $transition-base;
+}
+
+@mixin heading-style {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--b3-theme-on-background);
+  margin: 0;
+  font-family: $font-heading;
+}
+
+// ============================================================
+// 占位符类 (Placeholder Classes)
+// ============================================================
+
+%icon-button {
+  @include icon-button-base;
+}
+
+%icon-button-hover-light {
+  &:hover {
+    background: var(--b3-theme-surface-light);
+  }
+}
+
+// ============================================================
+// 过渡动画
+// ============================================================
+
+@mixin fade-transition {
+  &-enter-active,
+  &-leave-active {
+    transition: opacity $transition-base ease;
+  }
+
+  &-enter-from,
+  &-leave-to {
+    opacity: 0;
+  }
+}
+
+@mixin scale-transition {
+  &-enter-active,
+  &-leave-active {
+    transition: all $transition-base ease;
+  }
+
+  &-enter-from,
+  &-leave-to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+// 使用示例:
+// .fade { @include fade-transition; }
+// .scale { @include scale-transition; }

@@ -1,54 +1,7 @@
 // 使用说明对话框样式
 @use '@/index.scss' as *;
 @use '@/variables.scss' as *;
-
-// Flex 居中
-@mixin flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-// Flex 行布局
-@mixin flex-row {
-  display: flex;
-  align-items: center;
-}
-
-@mixin flex-row-gap($gap: 8px) {
-  @include flex-row;
-  gap: $gap;
-}
-
-// 图标按钮基础样式
-@mixin icon-button-base {
-  padding: 6px 8px;
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  @include flex-center;
-  transition: $transition-base;
-}
-
-// 标题样式
-@mixin heading-style {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--b3-theme-on-background);
-  margin: 0;
-  font-family: $font-heading;
-}
-
-%icon-button {
-  @include icon-button-base;
-}
-
-%icon-button-hover-light {
-  &:hover {
-    background: var(--b3-theme-surface-light);
-  }
-}
+@use 'mixins' as *;
 
 .help-dialog-overlay {
   position: fixed;
@@ -151,13 +104,5 @@
   justify-content: flex-end;
 }
 
-// 过渡动画
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity $transition-base ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
+// 过渡动画 (Vue Transition 类)
+.fade { @include fade-transition; }

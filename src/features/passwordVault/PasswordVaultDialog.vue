@@ -440,6 +440,15 @@ const presetColors = [
   '#e8e6dc', // 浅灰 - Subtle backgrounds
 ]
 
+// 使用 Map 缓存类别查找，优化性能 (O(n) -> O(1))
+const categoriesMap = computed(() => {
+  const map = new Map<string, PasswordCategory>()
+  for (const cat of categories.value) {
+    map.set(cat.id, cat)
+  }
+  return map
+})
+
 // 加载保存的密码验证信息
 async function loadMasterPasswordHash() {
   try {
@@ -773,9 +782,9 @@ const filteredEntries = computed(() => {
   return result
 })
 
-// 获取分类对象
-const getCategoryById = (id: string) => {
-  return categories.value.find(c => c.id === id)
+// 获取分类对象 - 使用 Map 缓存实现 O(1) 查找
+const getCategoryById = (id: string): PasswordCategory | undefined => {
+  return categoriesMap.value.get(id)
 }
 
 // 打开添加弹窗

@@ -3,20 +3,10 @@
  * 使用 AES-GCM 加密算法和 PBKDF2 密钥派生
  */
 
-/**
- * 加密后的密码条目
- */
-export interface EncryptedPasswordEntry {
-  id: string
-  category: string
-  name: string
-  account: string
-  encryptedPassword: string    // 加密后的密码
-  iv: string                    // 初始化向量 (Base64)
-  description: string
-  createdAt: number
-  updatedAt: number
-}
+import type { StoredPasswordEntry } from './types'
+
+// 重新导出类型，保持向后兼容
+export type EncryptedPasswordEntry = StoredPasswordEntry
 
 /**
  * 加密配置

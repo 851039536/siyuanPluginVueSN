@@ -44,43 +44,36 @@ async function saveGlobalPassword(plugin: Plugin, password: string) {
 }
 
 /**
- * 清理过期缓存（参考 docNavigation）
+ * 通用缓存清理函数（LRU策略）
  */
-function cleanupCache() {
+function cleanupCacheEntry<K, V>(cache: Map<K, { value: V; timestamp: number }>) {
   const now = Date.now()
+  const MAX_CACHE_SIZE = 20
 
-  // 清理过期的遮罩层缓存
-  for (const [key, value] of maskCache.entries()) {
-    if (now - value.timestamp > CACHE_EXPIRE_TIME) {
-      maskCache.delete(key)
-    }
-  }
-
-  // 清理过期的锁定状态缓存
-  for (const [key, value] of lockStateCache.entries()) {
-    if (now - value.timestamp > CACHE_EXPIRE_TIME) {
-      lockStateCache.delete(key)
+  // 清理过期条目
+  for (const [key, entry] of cache.entries()) {
+    if (now - entry.timestamp > CACHE_EXPIRE_TIME) {
+      cache.delete(key)
     }
   }
 
   // 限制缓存大小（LRU策略）
-  if (maskCache.size > MAX_CACHE_SIZE) {
-    const entries = Array.from(maskCache.entries())
+  if (cache.size > MAX_CACHE_SIZE) {
+    const entries = Array.from(cache.entries())
     entries.sort((a, b) => b[1].timestamp - a[1].timestamp)
-    maskCache.clear()
-    entries.slice(0, MAX_CACHE_SIZE).forEach(([key, value]) => {
-      maskCache.set(key, value)
+    cache.clear()
+    entries.slice(0, MAX_CACHE_SIZE).forEach(([key, entry]) => {
+      cache.set(key, entry)
     })
   }
+}
 
-  if (lockStateCache.size > MAX_CACHE_SIZE) {
-    const entries = Array.from(lockStateCache.entries())
-    entries.sort((a, b) => b[1].timestamp - a[1].timestamp)
-    lockStateCache.clear()
-    entries.slice(0, MAX_CACHE_SIZE).forEach(([key, value]) => {
-      lockStateCache.set(key, value)
-    })
-  }
+/**
+ * 清理过期缓存（参考 docNavigation）
+ */
+function cleanupCache() {
+  cleanupCacheEntry(maskCache)
+  cleanupCacheEntry(lockStateCache)
 }
 
 /**
@@ -146,14 +139,21 @@ function getProtyleByDocId(docId: string): any {
 }
 
 /**
+ * 安全刷新思源界面
+ */
+async function safeReloadUI() {
+  try {
+    await reloadUI()
+  } catch (error) {
+    console.warn('刷新思源界面失败:', error)
+  }
+}
+
+/**
  * 刷新protyle编辑器（关闭并重新打开标签页）
  */
 async function reloadProtyle(_plugin: Plugin, protyle: any, docId: string) {
-  // 根据思源的机制，加锁/解锁后需要关闭并重新打开文档才能看到标识
-  // 但DOM状态（遮罩层/按钮）已经更新，不需要关闭页面
-  // 只需要刷新文档树的图标即可
   try {
-    // 触发文档树更新事件
     const event = new CustomEvent('protyle-reload', {
       detail: { docId, protyle }
     })
@@ -334,12 +334,7 @@ async function lockPageWithGlobalPassword(plugin: Plugin, docId: string) {
       await reloadProtyle(plugin, protyle, docId)
     }
 
-    // 刷新思源API界面
-    try {
-      await reloadUI()
-    } catch (error) {
-      console.warn('刷新思源界面失败:', error)
-    }
+    await safeReloadUI()
   } else {
     showMessage('锁定失败', 3000, 'error')
   }
@@ -454,14 +449,9 @@ async function unlockPageDirectly(plugin: Plugin, docId: string, password: strin
     // 移除遮罩层
     const mask = protyle.element?.querySelector('.page-lock-mask')
     if (mask) {
-      // 添加解锁动画
-      mask.classList.add('unlocking')
-      setTimeout(() => {
-        mask.remove()
-      }, 800)
-    } else {
-      mask?.remove()
+      mask.remove()
     }
+
     // 显示编辑器内容
     const wysiwyg = protyle.wysiwyg?.element
     if (wysiwyg) {
@@ -471,12 +461,7 @@ async function unlockPageDirectly(plugin: Plugin, docId: string, password: strin
     await updatePageLockButton(plugin, protyle)
     await reloadProtyle(plugin, protyle, docId)
 
-    // 刷新思源API界面
-    try {
-      await reloadUI()
-    } catch (error) {
-      console.warn('刷新思源界面失败:', error)
-    }
+    await safeReloadUI()
 
     return true
   } else {
@@ -532,11 +517,6 @@ function interceptLockedPage(plugin: Plugin, protyle: any, docId: string) {
       iconElement.classList.add('page-lock-mask__icon')
       iconContainer.appendChild(iconElement)
 
-      // 添加图标光晕效果
-      const iconGlow = document.createElement('div')
-      iconGlow.className = 'icon-glow'
-      iconContainer.appendChild(iconGlow)
-
       maskContent.appendChild(iconContainer)
 
       // 创建标题
@@ -582,11 +562,6 @@ function interceptLockedPage(plugin: Plugin, protyle: any, docId: string) {
       inputContainer.appendChild(inputIcon)
       inputContainer.appendChild(passwordInput)
 
-      // 创建输入框焦点效果
-      const inputFocus = document.createElement('div')
-      inputFocus.className = 'input-focus-effect'
-      inputContainer.appendChild(inputFocus)
-
       maskContent.appendChild(inputContainer)
 
       // 创建按钮容器
@@ -596,45 +571,17 @@ function interceptLockedPage(plugin: Plugin, protyle: any, docId: string) {
       // 创建解锁按钮
       unlockBtn = document.createElement('button')
       unlockBtn.className = 'page-lock-mask__btn'
-      unlockBtn.innerHTML = `
-        <span class="btn-text">解锁页面</span>
-        <div class="btn-ripple"></div>
-      `
+      unlockBtn.innerHTML = '<span class="btn-text">解锁页面</span>'
       buttonContainer.appendChild(unlockBtn)
       maskContent.appendChild(buttonContainer)
 
       mask.appendChild(maskContent)
 
-      // 添加简化的鼠标跟踪效果（使用节流）
-      let mouseMoveTimeout: any = null
-      mask.addEventListener('mousemove', (e) => {
-        if (mouseMoveTimeout) return
-        mouseMoveTimeout = setTimeout(() => {
-          const rect = mask!.getBoundingClientRect()
-          const x = ((e.clientX - rect.left) / rect.width) * 100
-          const y = ((e.clientY - rect.top) / rect.height) * 100
-          mask!.style.setProperty('--mouse-x', `${x}%`)
-          mask!.style.setProperty('--mouse-y', `${y}%`)
-          mouseMoveTimeout = null
-        }, 50) // 50ms 节流
-      })
-
       // 添加解锁按钮事件（仅对新创建的遮罩层）
       if (unlockBtn && passwordInput) {
-        unlockBtn.addEventListener('click', async (e) => {
-          // 按钮涟漪效果
-          const ripple = unlockBtn.querySelector('.btn-ripple')
-          ripple.style.setProperty('--x', `${e.offsetX}px`)
-          ripple.style.setProperty('--y', `${e.offsetY}px`)
-          ripple.classList.add('active')
-
+        unlockBtn.addEventListener('click', async () => {
           await unlockPageDirectly(plugin, docId, passwordInput.value, protyle)
           passwordInput.value = ''
-
-          // 清除涟漪效果
-          setTimeout(() => {
-            ripple.classList.remove('active')
-          }, 600)
         })
 
         // 添加回车键事件
@@ -664,9 +611,7 @@ function interceptLockedPage(plugin: Plugin, protyle: any, docId: string) {
       setTimeout(() => {
         passwordInput!.focus()
         passwordInput!.setSelectionRange(passwordInput!.value.length, passwordInput!.value.length)
-        // 添加输入框聚焦动画
-        passwordInput!.classList.add('focused')
-      }, 150)
+      }, 100)
     }
   })
 }
@@ -683,100 +628,43 @@ function injectLockPageStyles() {
   const style = document.createElement('style')
   style.id = styleId
   style.textContent = `
-    /* 占位遮罩 - 防止空白闪烁 */
+    /* 占位遮罩 */
     .page-lock-mask--placeholder {
-      background: linear-gradient(135deg,
-        rgba(var(--b3-theme-background-rgb, 30, 30, 30), 0.95) 0%,
-        rgba(var(--b3-theme-surface-rgb, 40, 40, 40), 0.95) 100%);
-      backdrop-filter: blur(20px) saturate(1.5);
+      background: var(--b3-theme-background);
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 100;
     }
 
-    /* 成功解锁动画 */
-    .page-lock-mask.unlocking {
-      animation: unlockFadeOut 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-
-    @keyframes unlockFadeOut {
-      0% {
-        opacity: 1;
-        transform: scale(1);
-      }
-      100% {
-        opacity: 0;
-        transform: scale(1.1);
-      }
-    }
-
-    /* 主遮罩层 - 玻璃态效果 */
+    /* 主遮罩层 */
     .page-lock-mask {
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      background: linear-gradient(135deg,
-        rgba(var(--b3-theme-background-rgb, 30, 30, 30), 0.95) 0%,
-        rgba(var(--b3-theme-surface-rgb, 40, 40, 40), 0.95) 100%);
-      backdrop-filter: blur(20px) saturate(1.5);
+      background: var(--b3-theme-background);
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 100;
-      overflow: hidden;
     }
 
-    /* 简化的动态背景 - 移除粒子效果避免闪烁 */
-    .page-lock-mask::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: radial-gradient(
-        circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
-        rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.08) 0%,
-        transparent 50%
-      );
-      pointer-events: none;
-      transition: background 0.3s ease;
-    }
-
-    /* 遮罩内容容器 - 简化初始动画 */
+    /* 遮罩内容容器 */
     .page-lock-mask__content {
       position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 28px;
-      padding: 50px;
-      background: rgba(var(--b3-theme-surface-rgb, 40, 40, 40), 0.6);
-      border: 1px solid rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.2);
-      border-radius: 24px;
-      box-shadow:
-        0 20px 60px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(30px) saturate(1.8);
-      animation: contentEntrance 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      gap: 24px;
+      padding: 32px;
+      background: var(--b3-theme-surface);
+      border: 1px solid var(--b3-border-color);
+      border-radius: 8px;
+      box-shadow: var(--b3-shadow);
       z-index: 10;
     }
-
-    @keyframes contentEntrance {
-      from {
-        opacity: 0;
-        transform: translateY(10px) scale(0.98);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-    }
-
-    /* 移除脉冲光环，避免初始加载闪烁 */
 
     /* 图标容器 */
     .icon-container {
@@ -784,85 +672,32 @@ function injectLockPageStyles() {
       display: flex;
       align-items: center;
       justify-content: center;
-      animation: iconFloat 3s ease-in-out infinite;
-    }
-
-    @keyframes iconFloat {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-8px); }
     }
 
     .page-lock-mask__icon {
-      width: 72px;
-      height: 72px;
+      width: 48px;
+      height: 48px;
       color: var(--b3-theme-primary);
-      filter: drop-shadow(0 0 20px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.5));
-      animation: iconGlow 2s ease-in-out infinite;
-    }
-
-    @keyframes iconGlow {
-      0%, 100% {
-        filter: drop-shadow(0 0 20px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.5));
-      }
-      50% {
-        filter: drop-shadow(0 0 30px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.8));
-      }
     }
 
     .icon-glow {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 100px;
-      height: 100px;
-      background: radial-gradient(
-        circle,
-        rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.3) 0%,
-        transparent 70%
-      );
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      animation: iconGlowPulse 2s ease-in-out infinite;
-    }
-
-    @keyframes iconGlowPulse {
-      0%, 100% {
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 0.5;
-      }
-      50% {
-        transform: translate(-50%, -50%) scale(1.2);
-        opacity: 0.8;
-      }
+      display: none;
     }
 
     /* 标题样式 */
     .page-lock-mask__title {
       margin: 0;
-      font-size: 24px;
-      font-weight: 600;
+      font-size: 18px;
+      font-weight: 500;
       color: var(--b3-theme-on-background);
-      background: linear-gradient(135deg,
-        var(--b3-theme-primary) 0%,
-        var(--b3-theme-primary-light) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      animation: titleShimmer 3s ease-in-out infinite;
-    }
-
-    @keyframes titleShimmer {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.8; }
     }
 
     /* 文本样式 */
     .page-lock-mask__text {
       margin: 0;
-      font-size: 16px;
+      font-size: 14px;
       color: var(--b3-theme-on-surface);
       opacity: 0.8;
-      animation: textFadeIn 1s ease-out 0.3s both;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -873,7 +708,6 @@ function injectLockPageStyles() {
       font-size: 13px;
       color: var(--b3-theme-primary);
       opacity: 0.7;
-      animation: hintPulse 2s ease-in-out infinite;
       display: flex;
       align-items: center;
       gap: 6px;
@@ -881,219 +715,99 @@ function injectLockPageStyles() {
 
     .enter-key {
       display: inline-block;
-      padding: 2px 8px;
-      background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.2);
-      border: 1px solid rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.4);
+      padding: 2px 6px;
+      background: var(--b3-theme-surface-lighter);
+      border: 1px solid var(--b3-border-color);
       border-radius: 4px;
-      font-size: 11px;
-      font-weight: 600;
+      font-size: 12px;
+      font-weight: 500;
       color: var(--b3-theme-primary);
-      animation: keyPulse 2s ease-in-out infinite;
-    }
-
-    @keyframes keyPulse {
-      0%, 100% {
-        background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.2);
-        transform: translateY(0);
-      }
-      50% {
-        background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.3);
-        transform: translateY(-2px);
-      }
-    }
-
-    @keyframes hintPulse {
-      0%, 100% { opacity: 0.7; }
-      50% { opacity: 1; }
-    }
-
-    @keyframes textFadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 0.8; transform: translateY(0); }
     }
 
     /* 输入框容器 */
     .input-container {
       position: relative;
-      width: 360px;
+      width: 320px;
       max-width: 90%;
-      animation: inputSlideIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
-    }
-
-    @keyframes inputSlideIn {
-      from {
-        opacity: 0;
-        transform: translateX(-20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(0);
-      }
     }
 
     .page-lock-mask__input {
       width: 100%;
-      padding: 16px 20px 16px 20px;
-      border: 2px solid rgba(var(--b3-border-color-rgb, 100, 100, 100), 0.3);
-      border-radius: 12px;
-      background: rgba(var(--b3-theme-surface-rgb, 40, 40, 40), 0.8);
+      padding: 10px 12px;
+      border: 1px solid var(--b3-border-color);
+      border-radius: 6px;
+      background: var(--b3-theme-background);
       color: var(--b3-theme-on-surface);
-      font-size: 16px;
+      font-size: 14px;
       outline: none;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       box-sizing: border-box;
-      backdrop-filter: blur(10px);
     }
 
     .page-lock-mask__input:focus {
       border-color: var(--b3-theme-primary);
-      background: rgba(var(--b3-theme-surface-rgb, 40, 40, 40), 0.9);
-      box-shadow:
-        0 0 0 4px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.15),
-        0 10px 30px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.2);
-      transform: translateY(-2px);
-    }
-
-    .page-lock-mask__input:focus ~ .icon-container svg {
-      color: var(--b3-theme-primary) !important;
-      filter: drop-shadow(0 0 8px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.6));
-    }
-
-    .page-lock-mask__input:focus + .input-focus-effect,
-    .page-lock-mask__input.focused + .input-focus-effect {
-      opacity: 1;
-      transform: scale(1);
+      box-shadow: 0 0 0 3px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1);
     }
 
     .page-lock-mask__input::placeholder {
       color: var(--b3-theme-on-surface-variant);
-      opacity: 0.5;
-      transition: opacity 0.3s ease;
-    }
-
-    .page-lock-mask__input:focus::placeholder {
-      opacity: 0.3;
+      opacity: 0.6;
     }
 
     .input-focus-effect {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      border: 2px solid var(--b3-theme-primary);
-      border-radius: 12px;
-      opacity: 0;
-      transform: scale(0.95);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      pointer-events: none;
-      box-shadow:
-        0 0 20px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.3),
-        inset 0 0 20px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1);
+      display: none;
     }
 
     /* 按钮容器 */
     .button-container {
       position: relative;
-      animation: buttonSlideIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.6s both;
-    }
-
-    @keyframes buttonSlideIn {
-      from {
-        opacity: 0;
-        transform: translateX(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(0);
-      }
     }
 
     .page-lock-mask__btn {
-      position: relative;
-      overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
-      padding: 16px 36px;
-      background: linear-gradient(135deg,
-        var(--b3-theme-primary) 0%,
-        var(--b3-theme-primary-light) 50%,
-        var(--b3-theme-primary) 100%);
-      background-size: 200% 100%;
+      gap: 8px;
+      padding: 10px 24px;
+      background: var(--b3-theme-primary);
       color: var(--b3-theme-on-primary);
       border: none;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: 600;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
       cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow:
-        0 8px 20px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
     }
 
     .page-lock-mask__btn:hover {
-      transform: translateY(-3px) scale(1.02);
-      box-shadow:
-        0 12px 30px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.5),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
-      background-position: 100% 0;
+      background: var(--b3-theme-primary-light);
     }
 
     .page-lock-mask__btn:active {
-      transform: translateY(-1px) scale(0.98);
-      box-shadow:
-        0 4px 15px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.4),
-        inset 0 2px 0 rgba(0, 0, 0, 0.1);
+      background: var(--b3-theme-primary-dark);
     }
 
-    .btn-text {
-      position: relative;
-      z-index: 2;
-    }
-
-    /* 按钮涟漪效果 */
     .btn-ripple {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 0;
-      height: 0;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.6);
-      transform: translate(-50%, -50%);
-      transition: width 0.6s, height 0.6s;
-      pointer-events: none;
-    }
-
-    .btn-ripple.active {
-      width: 300px;
-      height: 300px;
+      display: none;
     }
 
     /* 响应式设计 */
     @media (max-width: 480px) {
       .page-lock-mask__content {
         gap: 20px;
-        padding: 30px 20px;
+        padding: 24px 20px;
         margin: 20px;
       }
 
       .page-lock-mask__icon {
-        width: 56px;
-        height: 56px;
+        width: 40px;
+        height: 40px;
       }
 
       .page-lock-mask__title {
-        font-size: 20px;
+        font-size: 16px;
       }
 
       .page-lock-mask__text {
-        font-size: 14px;
+        font-size: 13px;
       }
 
       .hint-text {
@@ -1101,8 +815,8 @@ function injectLockPageStyles() {
       }
 
       .enter-key {
-        font-size: 10px;
-        padding: 1px 6px;
+        font-size: 11px;
+        padding: 1px 5px;
       }
 
       .input-container {
@@ -1111,17 +825,13 @@ function injectLockPageStyles() {
       }
 
       .page-lock-mask__input {
-        padding: 14px 16px;
-        font-size: 15px;
+        padding: 9px 11px;
+        font-size: 13px;
       }
 
       .page-lock-mask__btn {
-        padding: 14px 28px;
-        font-size: 14px;
-      }
-
-      .particle {
-        display: none;
+        padding: 9px 20px;
+        font-size: 13px;
       }
     }
   `
@@ -1141,7 +851,7 @@ function injectButtonStyles() {
   const style = document.createElement('style')
   style.id = styleId
   style.textContent = `
-    /* 锁定按钮样式 - 融入思源原生UI */
+    /* 锁定按钮样式 */
     .page-lock-button {
       display: flex;
       align-items: center;
@@ -1154,7 +864,6 @@ function injectButtonStyles() {
       background: transparent;
       border-radius: 4px;
       cursor: pointer;
-      transition: all 0.15s ease;
       color: var(--b3-theme-on-background);
       opacity: 0.68;
     }
@@ -1166,13 +875,11 @@ function injectButtonStyles() {
 
     .page-lock-button:active {
       background: var(--b3-theme-surface);
-      transform: scale(0.95);
     }
 
     .page-lock-button .icon-lock {
       width: 18px;
       height: 18px;
-      transition: all 0.2s ease;
     }
 
     /* 锁定状态的图标样式 */
@@ -1181,12 +888,7 @@ function injectButtonStyles() {
       opacity: 1;
     }
 
-    /* 悬停时的动画效果 */
-    .page-lock-button:hover .icon-lock {
-      transform: scale(1.1);
-    }
-
-    /* 确保标题栏右侧工具栏存在 */
+    /* 标题栏右侧工具栏 */
     .protyle-title__icons--right {
       display: flex;
       align-items: center;

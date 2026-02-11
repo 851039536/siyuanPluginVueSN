@@ -8,17 +8,10 @@
             <div v-if="!isLoggedIn" class="login-container">
               <div class="dialog-header">
                 <div class="header-title">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="1.5"/>
-                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z" stroke="currentColor" stroke-width="1.5"/>
-                  </svg>
+                  <IconWrapper name="settings" :size="24" />
                   <span>密码箱</span>
                 </div>
-                <button class="close-btn" @click="closeDialog">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                  </svg>
-                </button>
+                <Button  icon="close" variant="ghost" size="small" @click="closeDialog" />
               </div>
 
               <div class="login-body">
@@ -28,72 +21,54 @@
 
                 <!-- 显示保存的密码提示 -->
                 <div v-if="!isFirstTime && passwordHint" class="password-hint-display">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
-                    <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                  </svg>
+                  <IconWrapper name="info" :size="14" />
                   <span>提示：{{ passwordHint }}</span>
                 </div>
 
                 <form @submit.prevent="handleLogin" class="login-form">
                   <div class="password-input-wrapper">
-                    <input
+                    <Input
                       v-model="loginPassword"
                       :type="showLoginPassword ? 'text' : 'password'"
                       placeholder="请输入密码"
                       class="password-input"
                       ref="loginInputRef"
-                      @keyup.esc="closeDialog"
+                      @keydown.esc="closeDialog"
                     />
-                    <button type="button" class="toggle-visibility-btn" @click="showLoginPassword = !showLoginPassword">
-                      <svg v-if="showLoginPassword" width="18" height="18" viewBox="0 0 24 24" fill="none">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/>
-                      </svg>
-                      <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none">
-                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M1 1l22 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                      </svg>
-                    </button>
+                    <Button type="button" class="toggle-visibility-btn" :icon="showLoginPassword ? 'eye' : 'eyeOff'" variant="ghost" size="small" @click="showLoginPassword = !showLoginPassword" />
                   </div>
 
                   <!-- 首次设置时显示密码提示输入 -->
                   <div v-if="isFirstTime" class="hint-input-group">
-                    <button type="button" class="hint-toggle-btn" @click="showHintInput = !showHintInput">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
-                        <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                      </svg>
+                    <Button type="button" class="hint-toggle-btn" variant="ghost" size="small" @click="showHintInput = !showHintInput">
+                      <IconWrapper name="info" :size="14" />
                       {{ showHintInput ? '取消密码提示' : '设置密码提示（推荐）' }}
-                    </button>
-                    <input
+                    </Button>
+                    <Input
                       v-if="showHintInput"
                       v-model="passwordHint"
                       type="text"
                       placeholder="例如：我的生日、最喜欢的颜色等"
                       class="hint-input"
-                      maxlength="50"
+                      :maxlength="50"
                     />
                   </div>
 
                   <div v-if="loginError" class="error-message">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
-                      <path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
+                    <IconWrapper name="error" :size="16" />
                     {{ loginError }}
                   </div>
 
-                  <button type="submit" class="login-btn" :disabled="!loginPassword.trim()">
+                  <Button type="submit" class="login-btn" variant="primary" :disabled="!loginPassword.trim()" block>
                     {{ isFirstTime ? '创建密码' : '解锁' }}
-                  </button>
+                  </Button>
                 </form>
 
                 <!-- 忘记密码选项 -->
                 <div v-if="!isFirstTime" class="forgot-password-section">
-                  <button class="forgot-password-btn" @click="showForgotPasswordOptions">
+                  <Button class="forgot-password-btn" variant="ghost" size="small" @click="showForgotPasswordOptions">
                     忘记密码？
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -102,21 +77,12 @@
             <div v-else class="main-container">
               <div class="dialog-header">
                 <div class="header-title">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="1.5"/>
-                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z" stroke="currentColor" stroke-width="1.5"/>
-                  </svg>
+                  <IconWrapper name="settings" :size="22" />
                   <h2>密码箱</h2>
                 </div>
                 <div class="header-actions">
-                  <button class="help-btn" @click="showHelpDialog = true" title="使用说明">
-                    <IconWrapper name="help" :size="16" />
-                  </button>
-                  <button class="close-btn" @click="closeDialog">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                  </button>
+                  <Button class="help-btn" icon="help" variant="ghost" size="small" @click="showHelpDialog = true" title="使用说明" />
+                  <Button class="close-btn" icon="close" variant="ghost" size="small" @click="closeDialog" />
                 </div>
               </div>
 
@@ -136,43 +102,23 @@
                       {{ cat.name }}
                     </button>
                   </div>
-                  <button class="manage-categories-btn" @click="openCategoryManager" title="管理类别">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="1.5"/>
-                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z" stroke="currentColor" stroke-width="1.5"/>
-                    </svg>
-                  </button>
+                  <Button class="manage-categories-btn" icon="settings" variant="ghost" size="small" @click="openCategoryManager" title="管理类别" />
                 </div>
 
                 <div class="entries-controls">
-                  <div class="search-wrapper">
-                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.5"/>
-                      <path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                    </svg>
-                    <input
+                    <IconWrapper name="search" :size="16" class="search-icon" />
+                    <Input
                       v-model="searchQuery"
                       type="text"
                       placeholder="搜索名称、账号或描述..."
-                      class="search-input"
+                      size="small"
                     />
-                  </div>
-                  <div class="action-buttons">
-                    <button class="export-btn" @click="exportAllData" title="导出所有数据">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M12 15V3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
+                    <Button  icon="download" variant="ghost" size="small" @click="exportAllData" title="导出所有数据">
                       导出
-                    </button>
-                    <button class="add-btn" @click="openAddModal">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                        <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                      </svg>
+                    </Button>
+                    <Button  icon="add" variant="primary" size="small" @click="openAddModal">
                       添加密码
-                    </button>
-                  </div>
+                    </Button>
                 </div>
 
                 <div class="entries-grid">
@@ -183,31 +129,21 @@
                   >
                     <div class="entry-header">
                       <div class="entry-title-wrapper">
-                        <svg class="entry-icon" width="18" height="18" viewBox="0 0 24 24" fill="none">
-                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                          <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="1.5"/>
-                        </svg>
+                        <IconWrapper name="file" :size="18" class="entry-icon" />
                         <h3>{{ entry.name }}</h3>
                         <span class="entry-category-tag" :style="{ backgroundColor: getCategoryById(entry.category)?.color + '20', color: getCategoryById(entry.category)?.color }">
                           {{ getCategoryById(entry.category)?.name || '未分类' }}
                         </span>
                       </div>
                       <div class="entry-actions">
-                        <button @click="editEntry(entry)" :title="'编辑'">
-                          {{ '编辑' }}
-                        </button>
-                        <button @click="deleteEntry(entry.id)" :title="'删除'">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                            <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                          </svg>
-                        </button>
+                        <Button @click="editEntry(entry)" variant="ghost" size="small" :title="'编辑'">
+                          编辑
+                        </Button>
+                        <Button @click="deleteEntry(entry.id)" icon="delete" variant="ghost" size="small" :title="'删除'" />
                       </div>
                     </div>
                     <div class="entry-account">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="1.5"/>
-                      </svg>
+                      <IconWrapper name="file" :size="14" />
                       {{ entry.account }}
                     </div>
                     <div class="entry-description">
@@ -215,29 +151,17 @@
                     </div>
                     <div class="entry-field">
                       <div class="field-label">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" stroke-width="1.5"/>
-                          <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="1.5"/>
-                        </svg>
+                        <IconWrapper name="pageLock" :size="14" />
                         密码
                       </div>
                       <div class="field-value" @click="copyPassword(entry.password)">
                         <span class="password-mask">{{ showPasswords[entry.id] ? entry.password : '••••••••' }}</span>
                         <div class="action-hint">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="currentColor" stroke-width="1.5"/>
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" stroke-width="1.5"/>
-                          </svg>
+                          <IconWrapper name="contentCopy" :size="12" />
                           {{ showPasswords[entry.id] ? '点击复制' : '点击显示' }}
                         </div>
                       </div>
-                      <button class="toggle-password-btn" @click.stop="togglePasswordVisibility(entry.id)">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                          <path v-if="!showPasswords[entry.id]" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                          <path v-else d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                          <circle v-if="!showPasswords[entry.id]" cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/>
-                        </svg>
-                      </button>
+                      <Button  :icon="showPasswords[entry.id] ? 'eye' : 'eyeOff'" variant="ghost" size="small" @click.stop="togglePasswordVisibility(entry.id)" />
                     </div>
                   </div>
 
@@ -248,13 +172,10 @@
               </div>
 
               <div class="dialog-footer">
-                <button class="change-password-btn" @click="openChangePasswordModal">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" stroke-width="1.5"/>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="1.5"/>
-                  </svg>
+                <Button  variant="ghost" size="small" @click="openChangePasswordModal">
+                  <IconWrapper name="pageLock" :size="14" />
                   修改密码
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -264,11 +185,7 @@
                 <div class="help-dialog" @click.stop>
                   <div class="help-dialog-header">
                     <h3>使用说明</h3>
-                    <button class="help-close-btn" @click="showHelpDialog = false">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                        <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                      </svg>
-                    </button>
+                    <Button class="help-close-btn" icon="close" variant="ghost" size="small" @click="showHelpDialog = false" />
                   </div>
                   <div class="help-dialog-body">
                     <div class="help-section">
@@ -328,9 +245,9 @@
                     </div>
                   </div>
                   <div class="help-dialog-footer">
-                    <button class="help-close-btn-primary" @click="showHelpDialog = false">
+                    <Button  variant="primary" @click="showHelpDialog = false" block>
                       我知道了
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -349,28 +266,24 @@
           <div v-if="showAddModal" class="password-vault-dialog small" @click.stop>
             <div class="dialog-header">
               <h2>{{ editingEntry ? '编辑密码' : '添加密码' }}</h2>
-              <button class="close-btn" @click="closeAddModal">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                  <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-              </button>
+              <Button  icon="close" variant="ghost" size="small" @click="closeAddModal" />
             </div>
 
             <div class="dialog-body">
               <form @submit.prevent="saveEntry" class="entry-form">
                 <div class="form-group">
-                  <label>类别</label>
-                  <select v-model="entryForm.category" class="form-select" required>
-                    <option v-for="cat in categories" :key="cat.id" :value="cat.id">
-                      {{ cat.name }}
-                    </option>
-                  </select>
+                  <Select
+                    v-model="entryForm.category"
+                    label="类别"
+                    :options="categories.map(cat => ({ value: cat.id, label: cat.name }))"
+                    required
+                  />
                 </div>
 
                 <div class="form-group">
-                  <label>名称</label>
-                  <input
+                  <Input
                     v-model="entryForm.name"
+                    label="名称"
                     type="text"
                     placeholder="请输入名称（如：Google、GitHub等）"
                     required
@@ -378,9 +291,9 @@
                 </div>
 
                 <div class="form-group">
-                  <label>账号</label>
-                  <input
+                  <Input
                     v-model="entryForm.account"
+                    label="账号"
                     type="text"
                     placeholder="请输入账号"
                     required
@@ -388,43 +301,32 @@
                 </div>
 
                 <div class="form-group">
-                  <label>密码</label>
-                  <div class="password-input-wrapper">
-                    <input
-                      v-model="entryForm.password"
-                      :type="showFormPassword ? 'text' : 'password'"
-                      placeholder="请输入密码"
-                      required
-                    />
-                    <button type="button" class="toggle-visibility-btn" @click="showFormPassword = !showFormPassword">
-                      <svg v-if="showFormPassword" width="18" height="18" viewBox="0 0 24 24" fill="none">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/>
-                      </svg>
-                      <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none">
-                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                    </button>
-                  </div>
+                  <Input
+                    v-model="entryForm.password"
+                    label="密码"
+                    :type="showFormPassword ? 'text' : 'password'"
+                    placeholder="请输入密码"
+                    :show-password="true"
+                    required
+                  />
                 </div>
 
                 <div class="form-group">
-                  <label>描述</label>
-                  <textarea
+                  <Textarea
                     v-model="entryForm.description"
+                    label="描述"
                     placeholder="请输入描述信息"
-                    rows="3"
-                    class="form-textarea"
-                  ></textarea>
+                    :rows="3"
+                  />
                 </div>
 
                 <div class="form-actions">
-                  <button type="button" class="cancel-btn" @click="closeAddModal">
+                  <Button type="button" variant="ghost" @click="closeAddModal">
                     取消
-                  </button>
-                  <button type="submit" class="save-btn">
+                  </Button>
+                  <Button type="submit" variant="primary">
                     保存
-                  </button>
+                  </Button>
                 </div>
               </form>
             </div>
@@ -442,11 +344,7 @@
           <div v-if="showCategoryManager" class="password-vault-dialog category-manager" @click.stop>
             <div class="dialog-header">
               <h2>管理类别</h2>
-              <button class="close-btn" @click="closeCategoryManager">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                  <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-              </button>
+              <Button  icon="close" variant="ghost" size="small" @click="closeCategoryManager" />
             </div>
 
             <div class="dialog-body">
@@ -454,12 +352,11 @@
               <div class="add-category-section">
                 <h3>添加新类别</h3>
                 <div class="add-category-form">
-                  <input
+                  <Input
                     v-model="newCategory.name"
                     type="text"
                     placeholder="类别名称"
-                    class="category-name-input"
-                    maxlength="10"
+                    :maxlength="10"
                   />
                   <div class="color-picker-wrapper">
                     <button
@@ -471,12 +368,9 @@
                       @click="newCategory.color = color"
                     ></button>
                   </div>
-                  <button class="add-category-btn" @click="addCategory" :disabled="!newCategory.name.trim()">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
+                  <Button  icon="add" variant="primary" size="small" @click="addCategory" :disabled="!newCategory.name.trim()">
                     添加
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -491,16 +385,14 @@
                   >
                     <span class="category-dot" :style="{ backgroundColor: cat.color }"></span>
                     <span class="category-name">{{ cat.name }}</span>
-                    <button
+                    <Button
                       v-if="cat.id !== 'default'"
-                      class="delete-category-btn"
+                      icon="close"
+                      variant="ghost"
+                      size="small"
                       @click="deleteCategory(cat.id)"
                       title="删除类别"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                        <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                      </svg>
-                    </button>
+                    />
                     <span v-else class="default-badge">默认</span>
                   </div>
                 </div>
@@ -520,98 +412,52 @@
           <div v-if="showChangePasswordModal" class="password-vault-dialog small" @click.stop>
             <div class="dialog-header">
               <h2>修改主密码</h2>
-              <button class="close-btn" @click="closeChangePasswordModal">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                  <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-              </button>
+              <Button  icon="close" variant="ghost" size="small" @click="closeChangePasswordModal" />
             </div>
 
             <div class="dialog-body">
               <form @submit.prevent="handleChangePassword" class="change-password-form">
-                <div class="form-group">
-                  <label>当前密码</label>
-                  <div class="password-input-wrapper">
-                    <input
-                      v-model="oldPassword"
-                      :type="showOldPassword ? 'text' : 'password'"
-                      placeholder="请输入当前密码"
-                      required
-                    />
-                    <button type="button" class="toggle-visibility-btn" @click="showOldPassword = !showOldPassword">
-                      <svg v-if="showOldPassword" width="18" height="18" viewBox="0 0 24 24" fill="none">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/>
-                      </svg>
-                      <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none">
-                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M1 1l22 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
+                <Input
+                  v-model="oldPassword"
+                  label="当前密码"
+                  :type="showOldPassword ? 'text' : 'password'"
+                  placeholder="请输入当前密码"
+                  :show-password="true"
+                  required
+                />
 
-                <div class="form-group">
-                  <label>新密码</label>
-                  <div class="password-input-wrapper">
-                    <input
-                      v-model="newPassword"
-                      :type="showNewPassword ? 'text' : 'password'"
-                      placeholder="请输入新密码"
-                      required
-                      minlength="6"
-                    />
-                    <button type="button" class="toggle-visibility-btn" @click="showNewPassword = !showNewPassword">
-                      <svg v-if="showNewPassword" width="18" height="18" viewBox="0 0 24 24" fill="none">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/>
-                      </svg>
-                      <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none">
-                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M1 1l22 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
+                <Input
+                  v-model="newPassword"
+                  label="新密码"
+                  :type="showNewPassword ? 'text' : 'password'"
+                  placeholder="请输入新密码"
+                  :show-password="true"
+                  :minlength="6"
+                  required
+                />
 
-                <div class="form-group">
-                  <label>确认新密码</label>
-                  <div class="password-input-wrapper">
-                    <input
-                      v-model="confirmPassword"
-                      :type="showConfirmPassword ? 'text' : 'password'"
-                      placeholder="请再次输入新密码"
-                      required
-                      minlength="6"
-                    />
-                    <button type="button" class="toggle-visibility-btn" @click="showConfirmPassword = !showConfirmPassword">
-                      <svg v-if="showConfirmPassword" width="18" height="18" viewBox="0 0 24 24" fill="none">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/>
-                      </svg>
-                      <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none">
-                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M1 1l22 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
+                <Input
+                  v-model="confirmPassword"
+                  label="确认新密码"
+                  :type="showConfirmPassword ? 'text' : 'password'"
+                  placeholder="请再次输入新密码"
+                  :show-password="true"
+                  :minlength="6"
+                  required
+                />
 
                 <div v-if="changePasswordError" class="error-message">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
-                    <path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                  </svg>
+                  <IconWrapper name="error" :size="16" />
                   {{ changePasswordError }}
                 </div>
 
                 <div class="form-actions">
-                  <button type="button" class="cancel-btn" @click="closeChangePasswordModal">
+                  <Button type="button" variant="ghost" @click="closeChangePasswordModal">
                     取消
-                  </button>
-                  <button type="submit" class="save-btn" :disabled="!oldPassword.trim() || !newPassword.trim() || !confirmPassword.trim()">
+                  </Button>
+                  <Button type="submit" variant="primary" :disabled="!oldPassword.trim() || !newPassword.trim() || !confirmPassword.trim()">
                     确认修改
-                  </button>
+                  </Button>
                 </div>
               </form>
             </div>
@@ -626,6 +472,10 @@
 import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { showMessage } from 'siyuan'
 import IconWrapper from '@/components/IconWrapper.vue'
+import Button from '@/components/Button.vue'
+import Input from '@/components/Input.vue'
+import Textarea from '@/components/Textarea.vue'
+import Select from '@/components/Select.vue'
 import type { PasswordEntry, PasswordCategory, StoredPasswordEntry } from './types'
 import { usePlugin } from '@/main'
 import {

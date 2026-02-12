@@ -92,32 +92,38 @@ const props = withDefaults(defineProps<Props>(), {
 @use "../index.scss" as stats;
 
 .stats-cards-compact {
-  margin-bottom: $spacing-sm;
-
-  .stat-card-main,
-  .stat-card-secondary {
-    @include stats.stats-card-hover;
-    @include stats.stats-theme-border;
-    border-radius: stats.$stats-card-radius;
-  }
+  margin-bottom: $spacing-md;
 
   .stat-card-main {
+    @include stats.stats-card-base;
     display: flex;
     align-items: center;
     justify-content: space-around;
-    padding: 12px;
-    margin-bottom: 6px;
-    background: var(--b3-theme-surface);
+    padding: 20px;
+    margin-bottom: 12px;
+    position: relative;
+    background: stats.$gradient-surface;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--b3-theme-primary);
+    }
 
     .stat-item-inline {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 16px;
       flex: 1;
 
       .stat-icon {
-        font-size: 32px;
+        font-size: 36px;
         flex-shrink: 0;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
       }
 
       .stat-content {
@@ -125,81 +131,117 @@ const props = withDefaults(defineProps<Props>(), {
 
         .stat-value {
           font-family: $font-heading;
-          font-size: 24px;
-          font-weight: 700;
-          line-height: 1.2;
-          margin-bottom: 2px;
+          font-size: 28px;
+          font-weight: 800;
+          line-height: 1.1;
+          margin-bottom: 4px;
           color: var(--b3-theme-primary);
+          letter-spacing: -0.5px;
         }
 
         .stat-label {
-          font-size: 11px;
+          font-size: 12px;
           font-family: $font-body;
-          opacity: 0.9;
+          font-weight: 500;
           color: var(--b3-theme-on-surface);
+          opacity: 0.7;
         }
       }
     }
 
     .stat-divider {
       width: 1px;
-      height: 40px;
+      height: 48px;
       background: var(--b3-border-color);
-      margin: 0 8px;
+      margin: 0 16px;
+      opacity: 0.5;
     }
   }
 
   .stat-card-secondary {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 16px;
+    @include stats.stats-card-base;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    padding: 16px;
     background: var(--b3-theme-surface);
-    color: var(--b3-theme-on-surface);
 
     .stat-item-small {
       display: flex;
+      flex-direction: column;
       align-items: center;
       gap: 6px;
-      flex: 1;
-      justify-content: center;
+      position: relative;
+
+      &:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 20%;
+        height: 60%;
+        width: 1px;
+        background: var(--b3-border-color);
+        opacity: 0.5;
+      }
 
       .stat-icon-small {
-        font-size: 16px;
+        font-size: 18px;
+        opacity: 0.8;
       }
 
       .stat-value-small {
         font-family: $font-heading;
-        font-size: 16px;
+        font-size: 18px;
         font-weight: 700;
-        color: var(--b3-theme-primary);
+        color: var(--b3-theme-on-surface);
       }
 
       .stat-label-small {
         font-size: 10px;
         font-family: $font-body;
-        opacity: 0.9;
+        font-weight: 500;
+        opacity: 0.6;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
       }
     }
   }
 }
 
-
 // Mobile responsive
 @include mobile-only {
-  .stats-cards-compact .stat-card-main {
-    flex-direction: column;
-    text-align: center;
+  .stats-cards-compact {
+    .stat-card-main {
+      flex-direction: column;
+      padding: 16px;
+      gap: 16px;
 
-    .stat-divider {
-      width: 40px;
-      height: 1px;
-      margin: 8px 0;
+      &::before {
+        width: 100%;
+        height: 4px;
+      }
+
+      .stat-divider {
+        width: 60%;
+        height: 1px;
+        margin: 0;
+      }
+
+      .stat-item-inline {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+      }
     }
 
-    .stat-item-inline {
-      justify-content: center;
+    .stat-card-secondary {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+
+      .stat-item-small:nth-child(2n)::after {
+        display: none;
+      }
     }
   }
 }
 </style>
+

@@ -16,14 +16,15 @@
     <!-- 时段统计卡片 -->
     <div v-if="periodAvgWords > 0 || periodTotalWords > 0" class="period-stats-cards">
       <div v-if="periodAvgWords > 0" class="period-stat-card">
-        <span class="stat-label">{{ periodAvgLabel }}</span>
         <span class="stat-value">{{ formatNumber(periodAvgWords) }} {{ i18n.wordsUnit }}</span>
+        <span class="stat-label">{{ periodAvgLabel }}</span>
       </div>
       <div v-if="periodTotalWords > 0" class="period-stat-card">
-        <span class="stat-label">{{ periodTotalLabel }}</span>
         <span class="stat-value">{{ formatNumber(periodTotalWords) }} {{ i18n.wordsUnit }}</span>
+        <span class="stat-label">{{ periodTotalLabel }}</span>
       </div>
     </div>
+
 
     <!-- 日视图范围选择 -->
     <div v-if="modelValue === 'day'" class="range-selector">
@@ -191,132 +192,168 @@ function formatNumber(num: number): string {
 @use "@/variables" as *;
 @use "../../superPanel/styles/variables" as *;
 @use "../../superPanel/styles/mixins" as *;
+@use "../index.scss" as stats;
 
 .view-mode-section {
+  margin-bottom: $spacing-md;
+
   .mode-tabs {
     display: flex;
-    gap: 6px;
-    margin-bottom: 10px;
-  }
-
-  .range-selector {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
-  }
-
-  .mode-tab,
-  .range-btn {
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 4px;
+    background: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
-    background: var(--b3-theme-background);
-    color: var(--b3-theme-on-background);
-    cursor: pointer;
-    font-family: $font-body;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    &:hover {
-      border-color: var(--b3-theme-primary);
-    }
-
-    &.active {
-      border-color: var(--b3-theme-primary);
-      background: var(--b3-theme-surface-lighter);
-      color: var(--b3-theme-primary);
-    }
+    border-radius: 10px;
   }
 
   .mode-tab {
     flex: 1;
-    padding: 8px;
+    padding: 10px 8px;
+    border: none;
+    background: transparent;
+    color: var(--b3-theme-on-surface);
+    cursor: pointer;
+    font-family: $font-body;
+    font-size: 13px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     border-radius: 6px;
-    font-size: 12px;
+    transition: stats.$stats-transition;
     white-space: nowrap;
+
+    &:hover {
+      background: var(--b3-theme-background);
+      color: var(--b3-theme-primary);
+    }
+
+    &.active {
+      background: var(--b3-theme-primary);
+      color: var(--b3-theme-on-primary);
+      box-shadow: 0 4px 12px rgba(var(--b3-theme-primary-rgb), 0.3);
+    }
+  }
+
+  .range-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
   }
 
   .range-btn {
-    padding: 6px 8px;
-    border-radius: 4px;
-    font-size: 11px;
-    white-space: nowrap;
+    padding: 8px 16px;
+    border: 1px solid var(--b3-border-color);
+    background: var(--b3-theme-surface);
+    color: var(--b3-theme-on-surface);
+    cursor: pointer;
+    font-family: $font-body;
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: 20px;
+    transition: stats.$stats-transition;
+
+    &:hover {
+      border-color: var(--b3-theme-primary);
+      color: var(--b3-theme-primary);
+      background: var(--b3-theme-primary-lighter, rgba(var(--b3-theme-primary-rgb), 0.05));
+    }
+
+    &.active {
+      border-color: var(--b3-theme-primary);
+      background: var(--b3-theme-primary);
+      color: var(--b3-theme-on-primary);
+    }
   }
 
   .year-selector {
+    margin-bottom: 16px;
+
     .year-select {
       width: 100%;
-      padding: 6px 8px;
+      padding: 10px 16px;
       border: 1px solid var(--b3-border-color);
-      border-radius: 4px;
-      background: var(--b3-theme-background);
-      color: var(--b3-theme-on-background);
+      border-radius: 10px;
+      background: var(--b3-theme-surface);
+      color: var(--b3-theme-on-surface);
       font-family: $font-body;
-      font-size: 12px;
+      font-size: 14px;
+      font-weight: 500;
       cursor: pointer;
       outline: none;
-      margin-bottom: 8px;
-      transition: $stats-transition;
+      transition: stats.$stats-transition;
 
       &:focus {
         border-color: var(--b3-theme-primary);
+        box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.1);
       }
     }
   }
 
   .period-stats-cards {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 10px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: $spacing-md;
+    margin-top: 8px;
   }
 
   .period-stat-card {
-    flex: 1;
+    @include stats.stats-card-base;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 12px 16px;
-    background: var(--b3-theme-surface);
-    border: 1px solid var(--b3-border-color);
-    border-radius: 6px;
-
-    &:hover {
-      border-color: var(--b3-theme-primary);
-    }
+    align-items: flex-start;
+    padding: 16px;
+    background: stats.$gradient-surface;
 
     .stat-label {
       font-family: $font-body;
       font-size: 12px;
-      font-weight: 500;
+      font-weight: 600;
       color: var(--b3-theme-on-surface);
-      margin-bottom: 4px;
+      opacity: 0.6;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .stat-value {
       font-family: $font-heading;
-      font-size: 16px;
-      font-weight: 700;
+      font-size: 20px;
+      font-weight: 800;
       color: var(--b3-theme-primary);
     }
   }
 }
 
 // Responsive design
-@include tablet-only {
+@include mobile-only {
   .view-mode-section {
     .mode-tabs {
-      flex-wrap: wrap;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      
+      &::-webkit-scrollbar {
+        display: none;
+      }
+    }
+
+    .mode-tab {
+      flex: none;
+      padding: 8px 16px;
     }
 
     .range-selector {
-      grid-template-columns: repeat(2, 1fr);
+      justify-content: center;
+    }
+
+    .period-stats-cards {
+      grid-template-columns: 1fr;
+      gap: 12px;
     }
   }
 }
-
-@include mobile-only {
-  .view-mode-section .range-selector {
-    grid-template-columns: 1fr;
-  }
-}
 </style>
+

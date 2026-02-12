@@ -74,18 +74,23 @@ function handleRefresh() {
 @use "@/variables" as *;
 @use "../../superPanel/styles/variables" as *;
 @use "../../superPanel/styles/mixins" as *;
+@use "../index.scss" as stats;
 
-$stats-header-height: 48px;
+$stats-header-height: 56px;
 
 .statistics-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  padding: 0 16px;
+  border-bottom: 1px solid var(--b3-border-color);
   background: var(--b3-theme-surface);
   flex-shrink: 0;
-  min-height: $stats-header-height;
+  height: $stats-header-height;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  @include stats.stats-glass-effect;
 
   .header-left {
     display: flex;
@@ -95,49 +100,54 @@ $stats-header-height: 48px;
 
   .header-right {
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 4px;
+    align-items: center;
+    gap: 16px;
   }
 
   .auto-update-info {
     display: flex;
     align-items: center;
     gap: 4px;
-    font-size: 10px;
+    font-size: 11px;
     color: var(--b3-theme-on-surface);
+    background: var(--b3-theme-background);
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--b3-border-color);
 
     .update-icon {
       font-size: 12px;
     }
 
     .update-text {
-      font-weight: 500;
+      font-weight: 600;
+      opacity: 0.8;
     }
   }
 
   .last-update {
-    font-size: 10px;
+    font-size: 11px;
     color: var(--b3-theme-on-surface);
+    opacity: 0.6;
     font-family: $font-body;
+    font-weight: 500;
   }
 }
 
 // Responsive design
-@include tablet-only {
+@include mobile-only {
   .statistics-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: $spacing-sm;
+    height: auto;
+    padding: 12px 16px;
+    flex-wrap: wrap;
+    gap: 12px;
 
-    .header-left,
     .header-right {
       width: 100%;
-    }
-
-    .header-right {
-      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
     }
   }
 }
 </style>
+

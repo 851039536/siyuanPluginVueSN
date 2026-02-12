@@ -57,23 +57,34 @@ withDefaults(defineProps<Props>(), {
 .extended-stats-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: $spacing-sm;
-  margin-bottom: $spacing-sm;
+  gap: $spacing-md;
+  margin-bottom: $spacing-md;
 
   .stat-card-small {
+    @include stats.stats-card-base;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px;
-    border-radius: stats.$stats-card-radius;
+    gap: 12px;
+    padding: 16px;
     background: var(--b3-theme-surface);
     color: var(--b3-theme-on-surface);
-    @include stats.stats-theme-border;
-    @include stats.stats-card-hover;
 
     .card-icon {
-      font-size: 24px;
+      font-size: 28px;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--b3-theme-background);
+      border-radius: 10px;
       flex-shrink: 0;
+      transition: stats.$stats-transition;
+    }
+
+    &:hover .card-icon {
+      background: var(--b3-theme-primary-lighter, rgba(var(--b3-theme-primary-rgb), 0.1));
+      transform: scale(1.1);
     }
 
     .card-content {
@@ -82,28 +93,36 @@ withDefaults(defineProps<Props>(), {
 
       .card-value-small {
         font-family: $font-heading;
-        font-size: 20px;
-        font-weight: 700;
-        line-height: 1.2;
+        font-size: 22px;
+        font-weight: 800;
+        line-height: 1.1;
         margin-bottom: 2px;
         color: var(--b3-theme-primary);
       }
 
       .card-label-small {
-        font-size: 10px;
+        font-size: 11px;
         font-family: $font-body;
-        opacity: 0.9;
+        font-weight: 500;
+        opacity: 0.6;
         @include text-ellipsis;
       }
     }
   }
 }
 
-
 // Responsive design
 @include tablet-only {
   .extended-stats-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@include mobile-only {
+  .extended-stats-cards {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 }
 </style>
+

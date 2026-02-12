@@ -217,9 +217,15 @@ function padZero(num: number): string {
 
 <style scoped lang="scss">
 @use "@/variables" as *;
+@use "@/_variables" as base;
 @use "../../superPanel/styles/variables" as *;
 @use "../../superPanel/styles/mixins" as *;
 @use "../index.scss" as stats;
+
+// 定义局部颜色变量，如果全局没有定义
+$github-green: #2da44e;
+$github-red: #cf222e;
+
 
 .trend-view {
   .trend-stats-list {

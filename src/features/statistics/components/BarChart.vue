@@ -1,7 +1,7 @@
 <template>
   <div class="bar-chart-section">
-    <h3 class="section-title">{{ title }}</h3>
     <div class="bar-chart-container">
+
       <div class="chart-viewport">
         <div
           v-for="item in chartData"
@@ -107,72 +107,89 @@ function formatChartLabel(label: string): string {
 @use "../index.scss" as stats;
 
 .bar-chart-section {
-  padding: 12px;
-  background: var(--b3-theme-background);
-  border-radius: 6px;
-
   .bar-chart-container {
     overflow-x: auto;
-    margin-bottom: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 8px;
     @include scrollbar-thin;
+    
+    &::-webkit-scrollbar {
+      height: 4px;
+    }
   }
 
   .chart-viewport {
     display: flex;
     align-items: flex-end;
-    gap: 8px;
-    min-height: 190px;
-    padding-bottom: 30px;
+    gap: 12px;
+    min-height: 200px;
+    padding: 20px 10px 40px 10px;
     position: relative;
 
     .bar-item {
       display: flex;
       flex-direction: column;
       align-items: center;
-      min-width: 32px;
+      min-width: 40px;
       position: relative;
+      transition: stats.$stats-transition;
+
+      &:hover {
+        .bar {
+          filter: brightness(1.1);
+          box-shadow: 0 0 12px rgba(var(--b3-theme-primary-rgb), 0.4);
+        }
+        .bar-value {
+          opacity: 1;
+          transform: translateX(-50%) translateY(-5px);
+        }
+      }
 
       .bar-value {
         position: absolute;
         font-family: $font-heading;
-        font-size: 10px;
-        font-weight: 500;
-        color: var(--b3-theme-on-surface);
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--b3-theme-primary);
         white-space: nowrap;
         transform: translateX(-50%);
         left: 50%;
+        opacity: 0.7;
+        transition: stats.$stats-transition;
       }
 
       .bar {
         width: 100%;
-        min-height: 5px;
-        background: var(--b3-theme-primary);
-        border-radius: 4px 4px 0 0;
+        min-height: 4px;
+        background: stats.$gradient-primary;
+        border-radius: 6px 6px 2px 2px;
         cursor: pointer;
-
-        &:hover {
-          opacity: 0.8;
-        }
+        transition: stats.$stats-transition;
 
         &.today {
           background: var(--b3-theme-secondary);
-          border: 1px solid var(--b3-theme-primary);
+          border: 2px solid var(--b3-theme-primary);
+          box-shadow: 0 0 15px rgba(var(--b3-theme-secondary-rgb), 0.3);
         }
       }
 
       .bar-label {
         position: absolute;
-        bottom: -25px;
+        bottom: -30px;
         font-family: $font-body;
-        font-size: 10px;
+        font-size: 11px;
+        font-weight: 500;
         color: var(--b3-theme-on-surface);
+        opacity: 0.6;
         transform: rotate(-45deg);
         transform-origin: top left;
         white-space: nowrap;
         left: 50%;
+        transition: stats.$stats-transition;
 
         &.today {
           color: var(--b3-theme-primary);
+          opacity: 1;
           font-weight: 700;
         }
       }
@@ -181,28 +198,34 @@ function formatChartLabel(label: string): string {
 }
 
 
+
 .data-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
 
   .data-item {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 12px;
+    flex-direction: column;
+    padding: 12px;
     background: var(--b3-theme-background);
-    border-radius: 6px;
-    border-left: 3px solid var(--b3-border-color);
+    border-radius: 8px;
+    border: 1px solid var(--b3-border-color);
+    transition: stats.$stats-transition;
+
+    &:hover {
+      border-color: var(--b3-theme-primary);
+      transform: translateY(-2px);
+    }
 
     &.active {
-      border-left-color: var(--b3-theme-primary);
+      background: var(--b3-theme-surface-lighter, rgba(var(--b3-theme-primary-rgb), 0.05));
     }
 
     &.today {
-      border-left-color: var(--b3-theme-secondary);
-      background: var(--b3-theme-surface);
-
+      border-color: var(--b3-theme-primary);
+      background: var(--b3-theme-primary-lighter, rgba(var(--b3-theme-primary-rgb), 0.1));
+      
       .data-value {
         color: var(--b3-theme-primary);
       }
@@ -210,16 +233,19 @@ function formatChartLabel(label: string): string {
 
     .data-date {
       font-family: $font-body;
-      font-size: 12px;
-      font-weight: 500;
+      font-size: 11px;
+      font-weight: 600;
       color: var(--b3-theme-on-surface);
+      opacity: 0.5;
+      margin-bottom: 4px;
+      text-transform: uppercase;
     }
 
     .data-value {
       font-family: $font-heading;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--b3-theme-primary);
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--b3-theme-on-surface);
     }
   }
 }
@@ -227,12 +253,15 @@ function formatChartLabel(label: string): string {
 // Responsive design
 @include mobile-only {
   .bar-chart-section {
-    padding: 8px;
-
     .chart-viewport {
-      min-width: 600px;
+      min-width: 500px;
     }
   }
+  
+  .data-list {
+    grid-template-columns: 1fr 1fr;
+  }
 }
+
 
 </style>

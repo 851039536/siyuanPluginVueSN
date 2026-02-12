@@ -50,7 +50,9 @@
 
       <!-- 图表区域 -->
       <div class="chart-section">
+        <h3 v-if="viewMode !== 'trend' && viewMode !== 'snapshot'" class="section-title">{{ chartTitle }}</h3>
         <!-- 柱状图 (仅在非趋势和非快照视图下显示) -->
+
         <BarChart
           v-if="viewMode !== 'trend' && viewMode !== 'snapshot'"
           :title="chartTitle"

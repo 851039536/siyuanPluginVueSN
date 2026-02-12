@@ -221,9 +221,6 @@ function padZero(num: number): string {
 @use "../../superPanel/styles/mixins" as *;
 @use "../index.scss" as stats;
 
-$github-green: #1a7f37;
-$github-red: #cf222e;
-
 .trend-view {
   .trend-stats-list {
     margin: 0 8px 16px;

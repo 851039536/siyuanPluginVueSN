@@ -146,21 +146,17 @@ function formatChartLabel(label: string): string {
       .bar {
         width: 100%;
         min-height: 5px;
-        background: stats.$gradient-primary;
+        background: var(--b3-theme-primary);
         border-radius: 4px 4px 0 0;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
         cursor: pointer;
 
         &:hover {
           opacity: 0.8;
-          transform: scaleY(1.02);
         }
 
         &.today {
-          background: stats.$gradient-secondary;
-          box-shadow: 0 4px 8px rgba(245, 87, 108, 0.4);
-          border: 2px solid #f5576c;
+          background: var(--b3-theme-secondary);
+          border: 1px solid var(--b3-theme-primary);
         }
       }
 
@@ -176,7 +172,7 @@ function formatChartLabel(label: string): string {
         left: 50%;
 
         &.today {
-          color: #f5576c;
+          color: var(--b3-theme-primary);
           font-weight: 700;
         }
       }
@@ -197,19 +193,18 @@ function formatChartLabel(label: string): string {
     padding: 10px 12px;
     background: var(--b3-theme-background);
     border-radius: 6px;
-    border-left: 3px solid #ddd;
-    transition: all 0.2s ease;
+    border-left: 3px solid var(--b3-border-color);
 
     &.active {
-      border-left-color: #667eea;
+      border-left-color: var(--b3-theme-primary);
     }
 
     &.today {
-      border-left-color: #f5576c;
-      background: rgba(245, 87, 108, 0.05);
+      border-left-color: var(--b3-theme-secondary);
+      background: var(--b3-theme-surface);
 
       .data-value {
-        color: #f5576c;
+        color: var(--b3-theme-primary);
       }
     }
 

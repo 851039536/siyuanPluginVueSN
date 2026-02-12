@@ -76,7 +76,6 @@ function handleRefresh() {
 @use "../../superPanel/styles/mixins" as *;
 
 $stats-header-height: 48px;
-$stats-transition: all 0.2s ease;
 
 .statistics-header {
   display: flex;

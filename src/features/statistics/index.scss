@@ -15,20 +15,13 @@ $gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
 $gradient-tertiary: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
 
 @mixin stats-card-hover {
-  transition: transform 0.2s, box-shadow 0.2s;
-
   &:hover {
-    transform: translateY(-2px);
     box-shadow: $stats-shadow-medium;
   }
 }
 
 @mixin stats-theme-border {
   border: 1px solid var(--b3-border-color);
-
-  .theme-github & {
-    border-color: var(--b3-border-color);
-  }
 }
 
 // ========== Shared Component Styles ==========
@@ -71,17 +64,6 @@ $gradient-tertiary: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
   }
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 // ========== Loading State ==========
 .loading-state {
   display: flex;
@@ -90,7 +72,6 @@ $gradient-tertiary: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
   justify-content: center;
   height: 200px;
   color: var(--b3-theme-on-surface);
-  animation: fadeIn 0.3s ease-out;
 
   .loading-spinner {
     width: 32px;
@@ -123,7 +104,6 @@ $gradient-tertiary: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
   flex: 1;
   overflow-y: auto;
   padding: 12px;
-  animation: fadeIn 0.3s ease-out;
 }
 
 // Component styles are now scoped in individual components:

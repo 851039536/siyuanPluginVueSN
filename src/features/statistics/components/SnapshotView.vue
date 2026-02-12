@@ -215,18 +215,19 @@ $stats-transition: all 0.2s ease;
     }
 
     &.tag-success {
-      background: rgba(16, 185, 129, 0.15);
-      color: #10b981;
+      background: var(--b3-theme-success-background);
+      color: var(--b3-theme-success);
     }
 
     &.tag-danger {
-      background: rgba(239, 68, 68, 0.15);
-      color: #ef4444;
+      background: var(--b3-theme-error-background);
+      color: var(--b3-theme-error);
     }
 
     &.tag-secondary {
-      background: rgba(107, 114, 128, 0.15);
-      color: #6b7280;
+      background: var(--b3-theme-surface);
+      color: var(--b3-theme-on-surface);
+      opacity: 0.6;
     }
   }
 
@@ -300,11 +301,9 @@ $stats-transition: all 0.2s ease;
           padding: 8px;
           background: var(--b3-theme-background);
           border-radius: 6px;
-          transition: $stats-transition;
 
           &:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--b3-theme-primary);
           }
 
           .stat-icon {

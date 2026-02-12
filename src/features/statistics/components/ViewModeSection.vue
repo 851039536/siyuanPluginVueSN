@@ -192,26 +192,6 @@ function formatNumber(num: number): string {
 @use "../../superPanel/styles/variables" as *;
 @use "../../superPanel/styles/mixins" as *;
 
-$stats-transition: all 0.2s ease;
-
-@mixin stats-button-base {
-  border: 2px solid var(--b3-border-color);
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  cursor: pointer;
-  transition: $stats-transition;
-
-  &:hover {
-    border-color: var(--b3-theme-primary);
-  }
-
-  &.active {
-    border-color: var(--b3-theme-primary);
-    background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1);
-    color: var(--b3-theme-primary);
-  }
-}
-
 .view-mode-section {
   .mode-tabs {
     display: flex;
@@ -227,11 +207,24 @@ $stats-transition: all 0.2s ease;
 
   .mode-tab,
   .range-btn {
-    @include stats-button-base;
+    border: 1px solid var(--b3-border-color);
+    background: var(--b3-theme-background);
+    color: var(--b3-theme-on-background);
+    cursor: pointer;
     font-family: $font-body;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+
+    &:hover {
+      border-color: var(--b3-theme-primary);
+    }
+
+    &.active {
+      border-color: var(--b3-theme-primary);
+      background: var(--b3-theme-surface-lighter);
+      color: var(--b3-theme-primary);
+    }
   }
 
   .mode-tab {
@@ -286,12 +279,9 @@ $stats-transition: all 0.2s ease;
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
     border-radius: 6px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    transition: $stats-transition;
 
     &:hover {
       border-color: var(--b3-theme-primary);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     }
 
     .stat-label {

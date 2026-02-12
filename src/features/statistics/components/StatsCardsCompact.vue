@@ -154,8 +154,8 @@ const props = withDefaults(defineProps<Props>(), {
     align-items: center;
     justify-content: space-between;
     padding: 12px 16px;
-    background: stats.$gradient-secondary;
-    color: white;
+    background: var(--b3-theme-surface);
+    color: var(--b3-theme-on-surface);
 
     .stat-item-small {
       display: flex;
@@ -172,7 +172,7 @@ const props = withDefaults(defineProps<Props>(), {
         font-family: $font-heading;
         font-size: 16px;
         font-weight: 700;
-        color: white;
+        color: var(--b3-theme-primary);
       }
 
       .stat-label-small {

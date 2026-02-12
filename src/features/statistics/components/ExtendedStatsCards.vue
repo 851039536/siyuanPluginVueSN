@@ -1,20 +1,20 @@
 <template>
   <div class="extended-stats-cards">
-    <div class="stat-card-small gradient-1">
+    <div class="stat-card-small">
       <div class="card-icon">📅</div>
       <div class="card-content">
         <div class="card-value-small">{{ todayCreated }}</div>
         <div class="card-label-small">{{ i18n.todayCreated }}</div>
       </div>
     </div>
-    <div class="stat-card-small gradient-2">
+    <div class="stat-card-small">
       <div class="card-icon">✏️</div>
       <div class="card-content">
         <div class="card-value-small">{{ todayModified }}</div>
         <div class="card-label-small">{{ i18n.todayModified }}</div>
       </div>
     </div>
-    <div class="stat-card-small gradient-3">
+    <div class="stat-card-small">
       <div class="card-icon">📊</div>
       <div class="card-content">
         <div class="card-value-small">{{ avgWordsPerDoc }}</div>
@@ -66,37 +66,10 @@ withDefaults(defineProps<Props>(), {
     gap: 10px;
     padding: 10px;
     border-radius: stats.$stats-card-radius;
-    color: white;
-    box-shadow: stats.$stats-shadow-light;
+    background: var(--b3-theme-surface);
+    color: var(--b3-theme-on-surface);
+    @include stats.stats-theme-border;
     @include stats.stats-card-hover;
-
-    &.gradient-1 {
-      background: stats.$gradient-primary;
-    }
-
-    &.gradient-2 {
-      background: stats.$gradient-secondary;
-    }
-
-    &.gradient-3 {
-      background: stats.$gradient-tertiary;
-    }
-
-    // GitHub theme overrides
-    .theme-github &,
-    .theme-github &.gradient-1,
-    .theme-github &.gradient-2,
-    .theme-github &.gradient-3 {
-      @include stats.stats-theme-border;
-      background: var(--b3-theme-surface);
-      color: var(--b3-theme-on-surface);
-      box-shadow: none;
-
-      &:hover {
-        transform: none;
-        border-color: var(--b3-theme-primary);
-      }
-    }
 
     .card-icon {
       font-size: 24px;
@@ -113,6 +86,7 @@ withDefaults(defineProps<Props>(), {
         font-weight: 700;
         line-height: 1.2;
         margin-bottom: 2px;
+        color: var(--b3-theme-primary);
       }
 
       .card-label-small {

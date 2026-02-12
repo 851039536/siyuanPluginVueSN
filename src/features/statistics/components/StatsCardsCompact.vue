@@ -92,15 +92,13 @@ const props = withDefaults(defineProps<Props>(), {
 @use "../index.scss" as stats;
 
 .stats-cards-compact {
-  margin-bottom: $spacing-md;
-
   .stat-card-main {
     @include stats.stats-card-base;
     display: flex;
     align-items: center;
     justify-content: space-around;
-    padding: 20px;
-    margin-bottom: 12px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
     position: relative;
     background: stats.$gradient-surface;
 
@@ -109,7 +107,7 @@ const props = withDefaults(defineProps<Props>(), {
       position: absolute;
       top: 0;
       left: 0;
-      width: 4px;
+      width: 3px;
       height: 100%;
       background: var(--b3-theme-primary);
     }
@@ -117,13 +115,13 @@ const props = withDefaults(defineProps<Props>(), {
     .stat-item-inline {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 12px;
       flex: 1;
 
       .stat-icon {
-        font-size: 36px;
+        font-size: 28px;
         flex-shrink: 0;
-        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
       }
 
       .stat-content {
@@ -131,30 +129,30 @@ const props = withDefaults(defineProps<Props>(), {
 
         .stat-value {
           font-family: $font-heading;
-          font-size: 28px;
+          font-size: 22px;
           font-weight: 800;
           line-height: 1.1;
-          margin-bottom: 4px;
+          margin-bottom: 2px;
           color: var(--b3-theme-primary);
-          letter-spacing: -0.5px;
+          letter-spacing: -0.3px;
         }
 
         .stat-label {
-          font-size: 12px;
+          font-size: 11px;
           font-family: $font-body;
           font-weight: 500;
           color: var(--b3-theme-on-surface);
-          opacity: 0.7;
+          opacity: 0.6;
         }
       }
     }
 
     .stat-divider {
       width: 1px;
-      height: 48px;
+      height: 32px;
       background: var(--b3-border-color);
-      margin: 0 16px;
-      opacity: 0.5;
+      margin: 0 12px;
+      opacity: 0.4;
     }
   }
 
@@ -162,50 +160,51 @@ const props = withDefaults(defineProps<Props>(), {
     @include stats.stats-card-base;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    padding: 16px;
+    padding: 10px 12px;
     background: var(--b3-theme-surface);
 
     .stat-item-small {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
       position: relative;
 
       &:not(:last-child)::after {
         content: '';
         position: absolute;
         right: 0;
-        top: 20%;
-        height: 60%;
+        top: 25%;
+        height: 50%;
         width: 1px;
         background: var(--b3-border-color);
-        opacity: 0.5;
+        opacity: 0.4;
       }
 
       .stat-icon-small {
-        font-size: 18px;
-        opacity: 0.8;
+        font-size: 14px;
+        opacity: 0.7;
       }
 
       .stat-value-small {
         font-family: $font-heading;
-        font-size: 18px;
+        font-size: 14px;
         font-weight: 700;
         color: var(--b3-theme-on-surface);
       }
 
       .stat-label-small {
-        font-size: 10px;
+        font-size: 9px;
         font-family: $font-body;
         font-weight: 500;
-        opacity: 0.6;
+        opacity: 0.5;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.4px;
       }
     }
   }
 }
+
 
 // Mobile responsive
 @include mobile-only {

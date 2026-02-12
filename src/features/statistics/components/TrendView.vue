@@ -229,16 +229,16 @@ $github-red: #cf222e;
 
 .trend-view {
   .trend-stats-list {
-    margin: 0 8px 16px;
-    border: 1px solid var(--b3-theme-border);
-    border-radius: 6px;
+    margin: 0 0 16px 0;
+    border: 1px solid var(--b3-border-color);
+    border-radius: 8px;
     overflow: hidden;
 
     .trend-stat-item {
       display: flex;
       align-items: center;
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--b3-theme-border);
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--b3-border-color);
       background: var(--b3-theme-surface);
 
       &:last-child {
@@ -246,41 +246,42 @@ $github-red: #cf222e;
       }
 
       .stat-icon {
-        font-size: 18px;
-        margin-right: 10px;
+        font-size: 16px;
+        margin-right: 8px;
       }
 
       .stat-label {
         flex: 1;
         font-family: $font-body;
-        font-size: 13px;
+        font-size: 12px;
         color: var(--b3-theme-on-surface);
+        opacity: 0.7;
       }
 
       .stat-value {
         font-family: $font-heading;
-        font-size: 15px;
-        font-weight: 600;
+        font-size: 14px;
+        font-weight: 700;
         color: var(--b3-theme-primary);
       }
     }
   }
 
   .historical-data-list {
-    margin: 16px 8px 0;
+    margin: 0;
 
     .historical-table-container {
-      max-height: 320px;
+      max-height: 280px;
       overflow-y: auto;
-      border: 1px solid var(--b3-theme-border);
-      border-radius: 6px;
+      border: 1px solid var(--b3-border-color);
+      border-radius: 8px;
       @include scrollbar-thin;
 
       .historical-table {
         width: 100%;
         border-collapse: collapse;
         font-family: $font-body;
-        font-size: 11px;
+        font-size: 10px;
 
         thead {
           position: sticky;
@@ -289,31 +290,32 @@ $github-red: #cf222e;
           background: var(--b3-theme-surface);
 
           th {
-            padding: 6px 8px;
+            padding: 5px 8px;
             text-align: left;
             font-family: $font-heading;
-            font-weight: 600;
+            font-weight: 700;
             color: var(--b3-theme-on-surface);
-            border-bottom: 1px solid var(--b3-theme-border);
+            border-bottom: 1px solid var(--b3-border-color);
+            background: var(--b3-theme-surface);
 
             .th-icon {
-              margin-right: 4px;
+              margin-right: 3px;
             }
 
             &.col-date {
-              width: 80px;
+              width: 70px;
             }
 
             &.col-notes,
             &.col-words,
             &.col-created,
             &.col-modified {
-              width: 60px;
+              width: 50px;
               text-align: right;
             }
 
             &.col-change {
-              width: 100px;
+              width: 90px;
               text-align: center;
             }
           }
@@ -321,18 +323,18 @@ $github-red: #cf222e;
 
         tbody {
           .historical-row {
-            border-bottom: 1px solid var(--b3-theme-border);
+            border-bottom: 1px solid var(--b3-border-color);
 
             &:last-child {
               border-bottom: none;
             }
 
             &.today {
-              background: rgba(245, 87, 108, 0.06);
+              background: rgba(var(--b3-theme-primary-rgb), 0.05);
             }
 
             td {
-              padding: 6px 8px;
+              padding: 5px 8px;
               color: var(--b3-theme-on-surface);
 
               &.col-date {
@@ -347,6 +349,7 @@ $github-red: #cf222e;
               &.col-modified {
                 text-align: right;
                 font-variant-numeric: tabular-nums;
+                opacity: 0.9;
               }
 
               &.col-change {
@@ -355,26 +358,27 @@ $github-red: #cf222e;
 
               .diff-tag {
                 display: inline-block;
-                padding: 2px 8px;
-                border-radius: 4px;
-                font-weight: 600;
-                font-size: 11px;
-                margin: 0 2px;
+                padding: 1px 6px;
+                border-radius: 3px;
+                font-weight: 700;
+                font-size: 10px;
+                margin: 0 1px;
                 font-family: $font-heading;
 
                 &.success {
-                  background: rgba($github-green, 0.15);
+                  background: rgba($github-green, 0.12);
                   color: $github-green;
                 }
 
                 &.danger {
-                  background: rgba($github-red, 0.15);
+                  background: rgba($github-red, 0.12);
                   color: $github-red;
                 }
 
                 &.secondary {
-                  background: rgba(120, 120, 120, 0.1);
-                  color: #666;
+                  background: rgba(var(--b3-theme-on-surface-rgb), 0.05);
+                  color: var(--b3-theme-on-surface);
+                  opacity: 0.5;
                 }
               }
             }
@@ -384,6 +388,7 @@ $github-red: #cf222e;
     }
   }
 }
+
 
 
 // Responsive design

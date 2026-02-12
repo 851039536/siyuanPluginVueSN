@@ -17,7 +17,6 @@
 
     <!-- 主要内容 -->
     <div v-else-if="stats" class="statistics-content">
-      <!-- 顶部卡片统计 - 紧凑布局 -->
       <StatsCardsCompact
         :total-notes="stats.totalNotes"
         :total-words="stats.totalWords"
@@ -28,7 +27,6 @@
         :i18n="statsCardsI18n"
       />
 
-      <!-- 新增统计卡片 - 卡片形式 -->
       <ExtendedStatsCards
         :today-created="stats.todayCreated"
         :today-modified="stats.todayModified"
@@ -36,7 +34,6 @@
         :i18n="extendedCardsI18n"
       />
 
-      <!-- 查看模式切换 -->
       <ViewModeSection
         v-model="viewMode"
         v-model:day-range="dayRange"
@@ -48,11 +45,8 @@
         @refresh="refreshData"
       />
 
-      <!-- 图表区域 -->
       <div class="chart-section">
         <h3 v-if="viewMode !== 'trend' && viewMode !== 'snapshot'" class="section-title">{{ chartTitle }}</h3>
-        <!-- 柱状图 (仅在非趋势和非快照视图下显示) -->
-
         <BarChart
           v-if="viewMode !== 'trend' && viewMode !== 'snapshot'"
           :title="chartTitle"
@@ -60,14 +54,12 @@
           :i18n="barChartI18n"
         />
 
-        <!-- 趋势视图 -->
         <TrendView
           v-if="viewMode === 'trend'"
           :historical-data="historicalData"
           :i18n="trendViewI18n"
         />
 
-        <!-- 快照视图 -->
         <SnapshotView
           v-if="viewMode === 'snapshot'"
           :snapshot-data="snapshotData"
@@ -76,6 +68,7 @@
         />
       </div>
     </div>
+
   </div>
 </template>
 

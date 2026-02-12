@@ -3,16 +3,28 @@
     v-if="showMonitor"
     ref="monitorElement"
     class="status__resUsage"
+    :title="systemInfoTooltip"
   >
-    <span class="ft__on-surface">CPU</span>
-    <span class="fn__cpu" :data-level="cpuLevel">{{ cpuUsageDisplay }}</span>
-    <span class="ft__on-surface">内存</span>
-    <span class="fn__mem" :data-level="memLevel">{{ memoryUsageDisplay }}</span>
+    <div class="monitor-item" :data-level="cpuLevel">
+      <Icon icon="ph:cpu" class="monitor-icon" />
+      <span class="monitor-value">{{ cpuUsageDisplay }}</span>
+    </div>
+    
+    <div class="monitor-item" :data-level="memLevel">
+      <Icon icon="ph:memory" class="monitor-icon" />
+      <span class="monitor-value">{{ memoryUsageDisplay }}</span>
+    </div>
+
+    <div class="monitor-item uptime-item">
+      <Icon icon="ph:timer" class="monitor-icon" />
+      <span class="monitor-value">{{ uptimeDisplay }}</span>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { Icon } from '@iconify/vue'
 
 // ============================================================================
 // Constants & Types
@@ -34,15 +46,28 @@ type ResourceLevel = 'normal' | 'medium' | 'high'
 const showMonitor = ref(false)
 const cpuPercent = ref(0)
 const memPercent = ref(0)
+const uptimeSeconds = ref(0)
 const monitorElement = ref<HTMLElement | null>(null)
 
 // ============================================================================
 // Computed
 // ============================================================================
-const cpuUsageDisplay = computed(() => `${cpuPercent.value.toFixed(1)}%`)
+const cpuUsageDisplay = computed(() => `${Math.round(cpuPercent.value)}%`)
 const memoryUsageDisplay = computed(() => {
-  const bytes = (memPercent.value / 100) * DEFAULT_TOTAL_MEMORY_GB * 1024 * 1024 * 1024
-  return `${(bytes / (1024 * 1024)).toFixed(1)}M`
+  const mbs = (memPercent.value / 100) * DEFAULT_TOTAL_MEMORY_GB * 1024
+  return mbs > 1000 ? `${(mbs / 1024).toFixed(1)}G` : `${Math.round(mbs)}M`
+})
+
+const uptimeDisplay = computed(() => {
+  const h = Math.floor(uptimeSeconds.value / 3600)
+  const m = Math.floor((uptimeSeconds.value % 3600) / 60)
+  if (h > 0) return `${h}h${m}m`
+  return `${m}m`
+})
+
+const systemInfoTooltip = computed(() => {
+  const platform = typeof process !== 'undefined' ? `${process.platform} ${process.arch}` : 'Unknown'
+  return `系统: ${platform}\n运行时间: ${Math.floor(uptimeSeconds.value / 3600)}小时 ${Math.floor((uptimeSeconds.value % 3600) / 60)}分\n内存限制: ${DEFAULT_TOTAL_MEMORY_GB}GB`
 })
 
 const getLevel = (percent: number, { HIGH, MEDIUM }: { HIGH: number, MEDIUM: number }): ResourceLevel => {
@@ -59,6 +84,9 @@ const memLevel = computed(() => getLevel(memPercent.value, THRESHOLDS.MEM))
 // ============================================================================
 let intervalId: ReturnType<typeof setInterval> | null = null
 let timeoutId: ReturnType<typeof setTimeout> | null = null
+let lastCPU: NodeJS.CpuUsage | null = null
+let lastTime: number | null = null
+
 
 function updateStats() {
   if (typeof process === 'undefined') return
@@ -82,14 +110,14 @@ function updateStats() {
   const memUsage = process.memoryUsage()
   const totalMemory = DEFAULT_TOTAL_MEMORY_GB * 1024 * 1024 * 1024
   memPercent.value = Math.min(100, (memUsage.rss / totalMemory) * 100)
-}
 
-let lastCPU: NodeJS.CpuUsage | null = null
-let lastTime: number | null = null
+  // Uptime
+  uptimeSeconds.value = Math.floor(process.uptime())
+}
 
 function start() {
   if (intervalId) return
-  updateStats() // Initial call
+  updateStats()
   intervalId = setInterval(updateStats, MONITOR_INTERVAL_MS)
 }
 
@@ -104,7 +132,6 @@ function tryInsertToStatusBar() {
   const counter = document.querySelector('#status .status__counter')
   if (!counter || !monitorElement.value) return false
 
-  // Avoid duplicate insertion
   const existing = document.querySelector('.status__resUsage')
   if (existing && existing !== monitorElement.value) {
     existing.remove()
@@ -115,17 +142,12 @@ function tryInsertToStatusBar() {
 }
 
 onMounted(() => {
-  // Wait for SiYuan UI to be ready
   timeoutId = setTimeout(() => {
-    showMonitor.value = true // Render the element
+    showMonitor.value = true
     
-    // Use nextTick equivalent to wait for ref update
     setTimeout(() => {
       if (tryInsertToStatusBar()) {
         start()
-      } else {
-        // Fallback or retry if needed, but usually 2s is enough
-        console.warn('System Monitor: Status bar counter not found')
       }
     }, 0)
   }, INITIAL_DELAY_MS)
@@ -136,4 +158,5 @@ onUnmounted(() => {
   stop()
 })
 </script>
+
 

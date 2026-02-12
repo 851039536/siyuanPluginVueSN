@@ -5,7 +5,8 @@ import './index.scss'
 
 let app: ReturnType<typeof createApp> | null = null
 
-export function registerSystemMonitor(plugin: Plugin) {
+export function registerSystemMonitor(_plugin: Plugin) {
+
   if (app) return // Avoid duplicate registration
   
   const container = document.createElement('div')

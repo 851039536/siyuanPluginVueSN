@@ -1,89 +1,90 @@
 // 系统监控面板样式
 .status__resUsage {
-  font-size: 12px;
-  cursor: default;
+  font-size: 11px;
   display: flex;
   align-items: center;
-  gap: 2px;
-  padding: 0 4px;
-  border-radius: 4px;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-border);
-  transition: all 0.2s ease;
+  gap: 3px;
+  padding: 0 2px;
+  height: 29px;
+  user-select: none;
 
-  &:hover {
-    background: var(--b3-theme-surface-lighter);
-    border-color: var(--b3-theme-primary);
-  }
+ 
 
-  // 标签与数值通用样式
-  span {
-    white-space: nowrap;
-    transition: all 0.3s ease;
-  }
-
-  .ft__on-surface {
-    color: var(--b3-theme-on-surface);
-    font-size: 10px;
-    font-weight: 500;
-    text-transform: uppercase;
-    opacity: 0.8;
-  }
-
-  .fn__cpu, .fn__mem {
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    min-width: 35px;
-    text-align: right;
-    border-radius: 2px;
+  .monitor-item {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 100%;
     padding: 0 2px;
+    border-radius: 2px;
+    transition: all 0.2s ease;
 
+    .monitor-icon {
+      font-size: 14px;
+      opacity: 0.7;
+    }
+
+    .monitor-value {
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      min-width: 28px;
+    }
+
+    // 状态级别颜色
     &[data-level="high"] {
-      background: var(--b3-theme-error-lighter);
       color: var(--b3-theme-error);
+      background: var(--b3-theme-error-lighter);
       animation: res-warning-flash 1s ease-in-out infinite;
+      
+      .monitor-icon { opacity: 1; }
     }
 
     &[data-level="medium"] {
-      background: var(--b3-theme-warning-lighter);
       color: var(--b3-theme-warning);
+      background: var(--b3-theme-warning-lighter);
+      .monitor-icon { opacity: 1; }
+    }
+
+    &:not([data-level]) {
+      color: var(--b3-theme-on-surface);
+      opacity: 0.8;
     }
   }
 
-  .fn__cpu {
-    color: var(--b3-theme-primary);
-    min-width: 38px;
-  }
-
-  .fn__mem {
-    color: var(--b3-theme-secondary);
-    min-width: 50px;
-    background: var(--b3-theme-secondary-lightest);
+  // 特定项目样式
+  .monitor-item:nth-child(1) { color: var(--b3-theme-primary); } // CPU
+  .monitor-item:nth-child(2) { color: var(--b3-theme-secondary); } // MEM
+  .uptime-item { 
+    color: var(--b3-theme-on-surface);
+    opacity: 0.6;
+    border-left: 1px solid var(--b3-theme-border);
+    padding-left: 6px;
+    margin-left: -2px;
+    
+    .monitor-value {
+      font-weight: 400;
+      min-width: 32px;
+    }
   }
 }
 
 // 统一警告动画
 @keyframes res-warning-flash {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(0.98); }
+  50% { opacity: 0.7; transform: scale(0.95); }
 }
 
 // 响应式调整
+@media (max-width: 1024px) {
+  .status__resUsage {
+    gap: 4px;
+    .uptime-item { display: none; } // 中等屏幕隐藏运行时间
+  }
+}
+
 @media (max-width: 768px) {
   .status__resUsage {
-    gap: 1px;
-    padding: 0 2px;
-    
-    .fn__cpu { min-width: 32px; }
-    .fn__mem { min-width: 42px; }
+    padding: 0 4px;
+    .monitor-value { min-width: unset; }
   }
 }
-
-@media (max-width: 480px) {
-  .status__resUsage {
-    .ft__on-surface {
-      display: none; // 极窄屏幕隐藏标签
-    }
-  }
-}
-

@@ -195,33 +195,31 @@ function formatNumber(num: number): string {
 @use "../index.scss" as stats;
 
 .view-mode-section {
-  margin-bottom: $spacing-md;
-
   .mode-tabs {
     display: flex;
-    gap: 8px;
-    margin-bottom: 16px;
-    padding: 4px;
+    gap: 4px;
+    margin-bottom: 12px;
+    padding: 3px;
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
-    border-radius: 10px;
+    border-radius: 8px;
   }
 
   .mode-tab {
     flex: 1;
-    padding: 10px 8px;
+    padding: 6px 4px;
     border: none;
     background: transparent;
     color: var(--b3-theme-on-surface);
     cursor: pointer;
     font-family: $font-body;
-    font-size: 13px;
-    font-weight: 500;
+    font-size: 11px;
+    font-weight: 600;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    border-radius: 6px;
+    gap: 4px;
+    border-radius: 5px;
     transition: stats.$stats-transition;
     white-space: nowrap;
 
@@ -233,27 +231,28 @@ function formatNumber(num: number): string {
     &.active {
       background: var(--b3-theme-primary);
       color: var(--b3-theme-on-primary);
-      box-shadow: 0 4px 12px rgba(var(--b3-theme-primary-rgb), 0.3);
+      box-shadow: 0 2px 8px rgba(var(--b3-theme-primary-rgb), 0.2);
     }
   }
 
   .range-selector {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 16px;
+    gap: 6px;
+    margin-bottom: 12px;
+    justify-content: center;
   }
 
   .range-btn {
-    padding: 8px 16px;
+    padding: 5px 12px;
     border: 1px solid var(--b3-border-color);
     background: var(--b3-theme-surface);
     color: var(--b3-theme-on-surface);
     cursor: pointer;
     font-family: $font-body;
-    font-size: 12px;
-    font-weight: 500;
-    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 15px;
     transition: stats.$stats-transition;
 
     &:hover {
@@ -270,18 +269,18 @@ function formatNumber(num: number): string {
   }
 
   .year-selector {
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 
     .year-select {
       width: 100%;
-      padding: 10px 16px;
+      padding: 6px 12px;
       border: 1px solid var(--b3-border-color);
-      border-radius: 10px;
+      border-radius: 8px;
       background: var(--b3-theme-surface);
       color: var(--b3-theme-on-surface);
       font-family: $font-body;
-      font-size: 14px;
-      font-weight: 500;
+      font-size: 12px;
+      font-weight: 600;
       cursor: pointer;
       outline: none;
       transition: stats.$stats-transition;
@@ -296,8 +295,8 @@ function formatNumber(num: number): string {
   .period-stats-cards {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: $spacing-md;
-    margin-top: 8px;
+    gap: 8px;
+    margin-top: 4px;
   }
 
   .period-stat-card {
@@ -305,28 +304,29 @@ function formatNumber(num: number): string {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    padding: 16px;
+    padding: 10px 12px;
     background: stats.$gradient-surface;
 
     .stat-label {
       font-family: $font-body;
-      font-size: 12px;
+      font-size: 10px;
       font-weight: 600;
       color: var(--b3-theme-on-surface);
-      opacity: 0.6;
-      margin-bottom: 6px;
+      opacity: 0.5;
+      margin-bottom: 2px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.3px;
     }
 
     .stat-value {
       font-family: $font-heading;
-      font-size: 20px;
+      font-size: 16px;
       font-weight: 800;
       color: var(--b3-theme-primary);
     }
   }
 }
+
 
 // Responsive design
 @include mobile-only {

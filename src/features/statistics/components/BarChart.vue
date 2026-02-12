@@ -109,78 +109,78 @@ function formatChartLabel(label: string): string {
 .bar-chart-section {
   .bar-chart-container {
     overflow-x: auto;
-    margin-bottom: 24px;
-    padding-bottom: 8px;
+    margin-bottom: 16px;
+    padding-bottom: 6px;
     @include scrollbar-thin;
     
     &::-webkit-scrollbar {
-      height: 4px;
+      height: 3px;
     }
   }
 
   .chart-viewport {
     display: flex;
     align-items: flex-end;
-    gap: 12px;
-    min-height: 200px;
-    padding: 20px 10px 40px 10px;
+    gap: 8px;
+    min-height: 160px;
+    padding: 15px 5px 35px 5px;
     position: relative;
 
     .bar-item {
       display: flex;
       flex-direction: column;
       align-items: center;
-      min-width: 40px;
+      min-width: 32px;
       position: relative;
       transition: stats.$stats-transition;
 
       &:hover {
         .bar {
           filter: brightness(1.1);
-          box-shadow: 0 0 12px rgba(var(--b3-theme-primary-rgb), 0.4);
+          box-shadow: 0 0 8px rgba(var(--b3-theme-primary-rgb), 0.3);
         }
         .bar-value {
           opacity: 1;
-          transform: translateX(-50%) translateY(-5px);
+          transform: translateX(-50%) translateY(-3px);
         }
       }
 
       .bar-value {
         position: absolute;
         font-family: $font-heading;
-        font-size: 11px;
+        font-size: 10px;
         font-weight: 700;
         color: var(--b3-theme-primary);
         white-space: nowrap;
         transform: translateX(-50%);
         left: 50%;
-        opacity: 0.7;
+        opacity: 0.6;
         transition: stats.$stats-transition;
       }
 
       .bar {
         width: 100%;
-        min-height: 4px;
+        min-height: 3px;
         background: stats.$gradient-primary;
-        border-radius: 6px 6px 2px 2px;
+        border-radius: 4px 4px 1px 1px;
         cursor: pointer;
         transition: stats.$stats-transition;
 
         &.today {
           background: var(--b3-theme-secondary);
-          border: 2px solid var(--b3-theme-primary);
-          box-shadow: 0 0 15px rgba(var(--b3-theme-secondary-rgb), 0.3);
+          border: 1.5px solid var(--b3-theme-primary);
+          box-shadow: 0 0 10px rgba(var(--b3-theme-secondary-rgb), 0.2);
         }
       }
 
       .bar-label {
         position: absolute;
-        bottom: -30px;
+        bottom: -25px;
         font-family: $font-body;
-        font-size: 11px;
+        font-size: 10px;
         font-weight: 500;
         color: var(--b3-theme-on-surface);
-        opacity: 0.6;
+        opacity: 0.5;
         transform: rotate(-45deg);
         transform-origin: top left;
         white-space: nowrap;
@@ -197,34 +197,32 @@ function formatChartLabel(label: string): string {
   }
 }
 
-
-
 .data-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
 
   .data-item {
     display: flex;
     flex-direction: column;
-    padding: 12px;
+    padding: 8px 10px;
     background: var(--b3-theme-background);
-    border-radius: 8px;
+    border-radius: 6px;
     border: 1px solid var(--b3-border-color);
     transition: stats.$stats-transition;
 
     &:hover {
       border-color: var(--b3-theme-primary);
-      transform: translateY(-2px);
+      transform: translateY(-1px);
     }
 
     &.active {
-      background: var(--b3-theme-surface-lighter, rgba(var(--b3-theme-primary-rgb), 0.05));
+      background: var(--b3-theme-surface-lighter, rgba(var(--b3-theme-primary-rgb), 0.03));
     }
 
     &.today {
       border-color: var(--b3-theme-primary);
-      background: var(--b3-theme-primary-lighter, rgba(var(--b3-theme-primary-rgb), 0.1));
+      background: var(--b3-theme-primary-lighter, rgba(var(--b3-theme-primary-rgb), 0.08));
       
       .data-value {
         color: var(--b3-theme-primary);
@@ -233,22 +231,23 @@ function formatChartLabel(label: string): string {
 
     .data-date {
       font-family: $font-body;
-      font-size: 11px;
+      font-size: 9px;
       font-weight: 600;
       color: var(--b3-theme-on-surface);
       opacity: 0.5;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
       text-transform: uppercase;
     }
 
     .data-value {
       font-family: $font-heading;
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 800;
       color: var(--b3-theme-on-surface);
     }
   }
 }
+
 
 // Responsive design
 @include mobile-only {

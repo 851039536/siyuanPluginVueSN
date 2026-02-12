@@ -57,34 +57,33 @@ withDefaults(defineProps<Props>(), {
 .extended-stats-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: $spacing-md;
-  margin-bottom: $spacing-md;
+  gap: 8px;
 
   .stat-card-small {
     @include stats.stats-card-base;
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 16px;
+    gap: 8px;
+    padding: 10px 12px;
     background: var(--b3-theme-surface);
     color: var(--b3-theme-on-surface);
 
     .card-icon {
-      font-size: 28px;
-      width: 44px;
-      height: 44px;
+      font-size: 20px;
+      width: 32px;
+      height: 32px;
       display: flex;
       align-items: center;
       justify-content: center;
       background: var(--b3-theme-background);
-      border-radius: 10px;
+      border-radius: 8px;
       flex-shrink: 0;
       transition: stats.$stats-transition;
     }
 
     &:hover .card-icon {
       background: var(--b3-theme-primary-lighter, rgba(var(--b3-theme-primary-rgb), 0.1));
-      transform: scale(1.1);
+      transform: scale(1.05);
     }
 
     .card-content {
@@ -93,7 +92,7 @@ withDefaults(defineProps<Props>(), {
 
       .card-value-small {
         font-family: $font-heading;
-        font-size: 22px;
+        font-size: 18px;
         font-weight: 800;
         line-height: 1.1;
         margin-bottom: 2px;
@@ -101,15 +100,16 @@ withDefaults(defineProps<Props>(), {
       }
 
       .card-label-small {
-        font-size: 11px;
+        font-size: 10px;
         font-family: $font-body;
         font-weight: 500;
-        opacity: 0.6;
+        opacity: 0.5;
         @include text-ellipsis;
       }
     }
   }
 }
+
 
 // Responsive design
 @include tablet-only {

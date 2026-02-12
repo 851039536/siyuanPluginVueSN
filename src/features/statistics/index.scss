@@ -5,7 +5,52 @@
 @use '../superPanel/styles/variables' as *;
 @use '../superPanel/styles/mixins' as *;
 
+// ========== Variables & Mixins ==========
+$stats-card-radius: 8px;
+$stats-shadow-light: 0 2px 8px rgba(0, 0, 0, 0.1);
+$stats-shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+$gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+$gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+$gradient-tertiary: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+
+@mixin stats-card-hover {
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $stats-shadow-medium;
+  }
+}
+
+@mixin stats-theme-border {
+  border: 1px solid var(--b3-border-color);
+
+  .theme-github & {
+    border-color: var(--b3-border-color);
+  }
+}
+
+// ========== Shared Component Styles ==========
+.section-title {
+  margin: 0 0 12px 0;
+  font-family: $font-heading;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--b3-theme-on-surface);
+}
+
+.subsection-title {
+  margin: 0 0 8px 0;
+  font-family: $font-heading;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--b3-theme-on-surface);
+}
+
 // ========== Main Container ==========
+
+
 .statistics-panel {
   display: flex;
   flex-direction: column;

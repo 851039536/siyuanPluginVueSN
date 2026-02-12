@@ -246,86 +246,25 @@ const historicalData = ref<any[]>([])
 const snapshotData = ref<any[]>([])
 const updateInterval = ref(60)
 
-// I18n 分组
-const headerI18n = computed(() => ({
-  refresh: props.i18n.refresh,
-  lastUpdate: props.i18n.lastUpdate,
-}))
+// I18n 分组 - 简化映射
+const headerI18n = computed(() => props.i18n)
+const statsCardsI18n = computed(() => props.i18n)
+const extendedCardsI18n = computed(() => props.i18n)
+const barChartI18n = computed(() => props.i18n)
 
-const statsCardsI18n = computed(() => ({
-  totalNotes: props.i18n.totalNotes,
-  totalWords: props.i18n.totalWords,
-  totalBlocks: props.i18n.totalBlocks,
-  totalAssets: props.i18n.totalAssets,
-  totalTags: props.i18n.totalTags,
-  totalBacklinks: props.i18n.totalBacklinks,
-}))
-
-const extendedCardsI18n = computed(() => ({
-  todayCreated: props.i18n.todayCreated,
-  todayModified: props.i18n.todayModified,
-  avgWordsPerDoc: props.i18n.avgWordsPerDoc,
-}))
-
-const viewModeI18n = computed(() => ({
-  day: props.i18n.day,
-  week: props.i18n.week,
-  month: props.i18n.month,
-  year: props.i18n.year,
-  trend: props.i18n.trend,
-  snapshot: props.i18n.snapshot,
-  avgLabel: props.i18n.avgLabel,
-  totalLabel: props.i18n.totalLabel,
-  wordsUnit: props.i18n.wordsUnit,
-  days7: props.i18n.days7,
-  days15: props.i18n.days15,
-  days30: props.i18n.days30,
-  quarter: props.i18n.quarter,
-  halfYear: props.i18n.halfYear,
-  fullYear: props.i18n.fullYear,
-  last1Year: props.i18n.last1Year,
-  last2Years: props.i18n.last2Years,
-  last3Years: props.i18n.last3Years,
-}))
-
-const barChartI18n = computed(() => ({
-  wordsUnit: props.i18n.wordsUnit,
-}))
+const viewModeI18n = computed(() => props.i18n)
 
 const trendViewI18n = computed(() => ({
+  ...props.i18n,
   title: props.i18n.trendTitle,
-  notesGrowth: props.i18n.notesGrowth,
-  wordsGrowth: props.i18n.wordsGrowth,
-  avgDailyCreated: props.i18n.avgDailyCreated,
-  avgDailyModified: props.i18n.avgDailyModified,
-  historicalData: props.i18n.historicalData,
-  date: props.i18n.date,
-  notes: props.i18n.notes,
-  words: props.i18n.words,
-  created: props.i18n.created,
-  modified: props.i18n.modified,
-  change: props.i18n.change,
-  wordsUnit: props.i18n.wordsUnit,
-  notesUnit: props.i18n.notesUnit,
 }))
 
 const snapshotViewI18n = computed(() => ({
+  ...props.i18n,
   title: props.i18n.snapshotTitle,
-  clearTitle: props.i18n.clearTitle,
-  savedCount: props.i18n.savedCount,
-  latest: props.i18n.latest,
-  notes: props.i18n.notes,
-  words: props.i18n.words,
-  blocks: props.i18n.blocks,
-  assets: props.i18n.assets,
-  created: props.i18n.created,
-  modified: props.i18n.modified,
-  changeLabel: props.i18n.changeLabel,
-  wordsUnit: props.i18n.wordsUnit,
-  notesUnit: props.i18n.notesUnit,
   emptyMessage: props.i18n.emptySnapshot,
-  confirmClear: props.i18n.confirmClear,
 }))
+
 
 // 图表标题
 const chartTitle = computed(() => {

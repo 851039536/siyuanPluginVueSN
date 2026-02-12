@@ -45,36 +45,37 @@
           </thead>
           <tbody>
             <tr
-              v-for="(item, index) in historicalData"
-              :key="item.date"
+              v-for="row in historicalRows"
+              :key="row.item.date"
               class="historical-row"
-              :class="{ today: isToday(item.date) }"
+              :class="{ today: row.isToday }"
             >
-              <td class="col-date">{{ item.dateLabel }}</td>
-              <td class="col-notes">{{ formatNumber(item.totalNotes) }}</td>
-              <td class="col-words">{{ formatNumber(item.totalWords) }}</td>
-              <td class="col-created">{{ item.todayCreated }}</td>
-              <td class="col-modified">{{ item.todayModified }}</td>
+              <td class="col-date">{{ row.item.dateLabel }}</td>
+              <td class="col-notes">{{ formatNumber(row.item.totalNotes) }}</td>
+              <td class="col-words">{{ formatNumber(row.item.totalWords) }}</td>
+              <td class="col-created">{{ row.item.todayCreated }}</td>
+              <td class="col-modified">{{ row.item.todayModified }}</td>
               <td class="col-change">
-                <template v-if="index < historicalData.length - 1">
+                <template v-if="row.hasPrevious">
                   <span
-                    v-if="getWordDiff(item, historicalData[index + 1]) !== 0"
+                    v-if="row.wordDiff !== 0"
                     class="diff-tag"
-                    :class="getWordDiff(item, historicalData[index + 1]) > 0 ? 'success' : 'danger'"
+                    :class="row.wordDiff > 0 ? 'success' : 'danger'"
                   >
-                    {{ (getWordDiff(item, historicalData[index + 1]) > 0 ? '+' : '') + formatShortNumber(getWordDiff(item, historicalData[index + 1])) + ' ' + i18n.wordsUnit }}
+                    {{ (row.wordDiff > 0 ? '+' : '') + formatShortNumber(row.wordDiff) + ' ' + i18n.wordsUnit }}
                   </span>
                   <span
-                    v-if="getNoteDiff(item, historicalData[index + 1]) !== 0"
+                    v-if="row.noteDiff !== 0"
                     class="diff-tag"
-                    :class="getNoteDiff(item, historicalData[index + 1]) > 0 ? 'success' : 'danger'"
+                    :class="row.noteDiff > 0 ? 'success' : 'danger'"
                   >
-                    {{ (getNoteDiff(item, historicalData[index + 1]) > 0 ? '+' : '') + getNoteDiff(item, historicalData[index + 1]) + ' ' + i18n.notesUnit }}
+                    {{ (row.noteDiff > 0 ? '+' : '') + row.noteDiff + ' ' + i18n.notesUnit }}
                   </span>
                 </template>
                 <span v-else class="diff-tag secondary">-</span>
               </td>
             </tr>
+
           </tbody>
         </table>
       </div>
@@ -84,9 +85,10 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-
+import { formatNumber, formatShortNumber } from '../utils'
 
 interface HistoricalDataItem {
+
   date: string
   dateLabel: string
   totalNotes: number
@@ -159,18 +161,23 @@ const trendStats = computed(() => {
   }
 })
 
-function formatNumber(num: number): string {
-  return num.toLocaleString('zh-CN')
-}
+const historicalRows = computed(() => {
+  const today = new Date()
+  const todayStr = `${today.getFullYear()}-${padZero(today.getMonth() + 1)}-${padZero(today.getDate())}`
+  return props.historicalData.map((item, index) => {
+    const previous = props.historicalData[index + 1]
+    const wordDiff = previous ? getWordDiff(item, previous) : 0
+    const noteDiff = previous ? getNoteDiff(item, previous) : 0
+    return {
+      item,
+      wordDiff,
+      noteDiff,
+      hasPrevious: Boolean(previous),
+      isToday: item.date === todayStr,
+    }
+  })
+})
 
-function formatShortNumber(num: number): string {
-  if (num >= 1000000) {
-    return (num / 1000000).toFixed(1) + 'M'
-  } else if (num >= 1000) {
-    return (num / 1000).toFixed(1) + 'K'
-  }
-  return String(num)
-}
 
 function getWordDiff(current: HistoricalDataItem, previous: HistoricalDataItem): number {
   if (!current || !previous) return 0
@@ -202,42 +209,24 @@ function getNoteDiff(current: HistoricalDataItem, previous: HistoricalDataItem):
   return current.totalNotes - previous.totalNotes
 }
 
-function isToday(dateStr: string): boolean {
-  const today = new Date()
-  const todayStr = `${today.getFullYear()}-${padZero(today.getMonth() + 1)}-${padZero(today.getDate())}`
-
-  if (dateStr.length === 10) {
-    return dateStr === todayStr
-  }
-  return false
-}
-
 function padZero(num: number): string {
   return num < 10 ? '0' + num : String(num)
 }
 </script>
 
+
 <style scoped lang="scss">
 @use "@/variables" as *;
 @use "../../superPanel/styles/variables" as *;
 @use "../../superPanel/styles/mixins" as *;
+@use "../index.scss" as stats;
 
 $github-green: #1a7f37;
 $github-red: #cf222e;
 
 .trend-view {
-  .section-title {
-    margin: 0 0 12px 0;
-    font-family: $font-heading;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--b3-theme-on-surface);
-  }
-
   .trend-stats-list {
-    margin-bottom: 16px;
-    margin-left: 8px;
-    margin-right: 8px;
+    margin: 0 8px 16px;
     border: 1px solid var(--b3-theme-border);
     border-radius: 6px;
     overflow: hidden;
@@ -275,17 +264,7 @@ $github-red: #cf222e;
   }
 
   .historical-data-list {
-    margin-top: 16px;
-    margin-left: 8px;
-    margin-right: 8px;
-
-    .subsection-title {
-      margin: 0 0 8px 0;
-      font-family: $font-heading;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--b3-theme-on-surface);
-    }
+    margin: 16px 8px 0;
 
     .historical-table-container {
       max-height: 320px;
@@ -402,6 +381,7 @@ $github-red: #cf222e;
     }
   }
 }
+
 
 // Responsive design
 @include mobile-only {

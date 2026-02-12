@@ -3,7 +3,8 @@
     <h3 class="section-title">
       {{ i18n.title }}
       <Button
-        icon="mdi:delete"
+        icon="delete"
+
         variant="ghost"
         size="small"
         :title="i18n.clearTitle"
@@ -11,82 +12,84 @@
       />
     </h3>
 
-    <div v-if="snapshotData.length > 0" class="snapshot-stats">
+    <div v-if="snapshotRows.length > 0" class="snapshot-stats">
       <p class="snapshot-info">
-        📸 {{ i18n.savedCount }}: {{ snapshotData.length }}
+        📸 {{ i18n.savedCount }}: {{ snapshotRows.length }}
       </p>
     </div>
+
 
     <!-- 快照数据列表 -->
     <div class="snapshot-data-list">
       <div
-        v-for="(snapshot, index) in snapshotData"
-        :key="snapshot.timestamp"
+        v-for="row in snapshotRows"
+        :key="row.snapshot.timestamp"
         class="snapshot-item"
       >
         <div class="snapshot-header">
           <div class="snapshot-time">
             <span class="time-icon">⏰</span>
-            <span class="time-text">{{ snapshot.datetime }}</span>
-            <span v-if="index === 0" class="tag tag-success">{{ i18n.latest }}</span>
+            <span class="time-text">{{ row.snapshot.datetime }}</span>
+            <span v-if="row.isLatest" class="tag tag-success">{{ i18n.latest }}</span>
           </div>
         </div>
         <div class="snapshot-stats-grid">
           <div class="snapshot-stat">
             <span class="stat-icon">📓</span>
-            <span class="stat-value">{{ formatNumber(snapshot.totalNotes) }}</span>
+            <span class="stat-value">{{ formatNumber(row.snapshot.totalNotes) }}</span>
             <span class="stat-label">{{ i18n.notes }}</span>
           </div>
           <div class="snapshot-stat">
             <span class="stat-icon">✍️</span>
-            <span class="stat-value">{{ formatNumber(snapshot.totalWords) }}</span>
+            <span class="stat-value">{{ formatNumber(row.snapshot.totalWords) }}</span>
             <span class="stat-label">{{ i18n.words }}</span>
           </div>
           <div class="snapshot-stat">
             <span class="stat-icon">🧩</span>
-            <span class="stat-value">{{ formatShortNumber(snapshot.totalBlocks) }}</span>
+            <span class="stat-value">{{ formatShortNumber(row.snapshot.totalBlocks) }}</span>
             <span class="stat-label">{{ i18n.blocks }}</span>
           </div>
           <div class="snapshot-stat">
             <span class="stat-icon">📎</span>
-            <span class="stat-value">{{ formatShortNumber(snapshot.totalAssets) }}</span>
+            <span class="stat-value">{{ formatShortNumber(row.snapshot.totalAssets) }}</span>
             <span class="stat-label">{{ i18n.assets }}</span>
           </div>
           <div class="snapshot-stat">
             <span class="stat-icon">📅</span>
-            <span class="stat-value">{{ snapshot.todayCreated }}</span>
+            <span class="stat-value">{{ row.snapshot.todayCreated }}</span>
             <span class="stat-label">{{ i18n.created }}</span>
           </div>
           <div class="snapshot-stat">
             <span class="stat-icon">✏️</span>
-            <span class="stat-value">{{ snapshot.todayModified }}</span>
+            <span class="stat-value">{{ row.snapshot.todayModified }}</span>
             <span class="stat-label">{{ i18n.modified }}</span>
           </div>
         </div>
         <!-- 显示与上一个快照的差异 -->
-        <div v-if="index < snapshotData.length - 1" class="snapshot-diff">
+        <div v-if="row.hasComparison" class="snapshot-diff">
           <span class="diff-label">{{ i18n.changeLabel }}:</span>
-          <span class="tag tag-small"
-            :class="getSnapshotWordDiff(snapshot, snapshotData[index + 1]) > 0 ? 'tag-success' : getSnapshotWordDiff(snapshot, snapshotData[index + 1]) < 0 ? 'tag-danger' : 'tag-secondary'"
-          >
-            {{ (getSnapshotWordDiff(snapshot, snapshotData[index + 1]) > 0 ? '+' : '') + formatNumber(getSnapshotWordDiff(snapshot, snapshotData[index + 1])) + ' ' + i18n.wordsUnit }}
+          <span class="tag tag-small" :class="getDiffClass(row.wordDiff)">
+            {{ (row.wordDiff > 0 ? '+' : '') + formatNumber(row.wordDiff) + ' ' + i18n.wordsUnit }}
           </span>
-          <span class="tag tag-small"
-            :class="getSnapshotNoteDiff(snapshot, snapshotData[index + 1]) > 0 ? 'tag-success' : getSnapshotNoteDiff(snapshot, snapshotData[index + 1]) < 0 ? 'tag-danger' : 'tag-secondary'"
-          >
-            {{ (getSnapshotNoteDiff(snapshot, snapshotData[index + 1]) > 0 ? '+' : '') + getSnapshotNoteDiff(snapshot, snapshotData[index + 1]) + ' ' + i18n.notesUnit }}
+          <span class="tag tag-small" :class="getDiffClass(row.noteDiff)">
+            {{ (row.noteDiff > 0 ? '+' : '') + row.noteDiff + ' ' + i18n.notesUnit }}
           </span>
         </div>
       </div>
-      <div v-if="snapshotData.length === 0" class="empty-snapshot">
+      <div v-if="snapshotRows.length === 0" class="empty-snapshot">
         📸 {{ i18n.emptyMessage }}
       </div>
+
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import Button from '@/components/Button.vue'
+import { formatNumber, formatShortNumber } from '../utils'
+
+
 
 interface SnapshotData {
   timestamp: number
@@ -147,17 +150,26 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
-function formatNumber(num: number): string {
-  return num.toLocaleString('zh-CN')
-}
+const snapshotRows = computed(() => {
+  return props.snapshotData.map((snapshot, index) => {
+    const previous = props.snapshotData[index + 1]
+    const wordDiff = previous ? getSnapshotWordDiff(snapshot, previous) : 0
+    const noteDiff = previous ? getSnapshotNoteDiff(snapshot, previous) : 0
+    return {
+      snapshot,
+      index,
+      wordDiff,
+      noteDiff,
+      hasComparison: Boolean(previous),
+      isLatest: index === 0,
+    }
+  })
+})
 
-function formatShortNumber(num: number): string {
-  if (num >= 1000000) {
-    return (num / 1000000).toFixed(1) + 'M'
-  } else if (num >= 1000) {
-    return (num / 1000).toFixed(1) + 'K'
-  }
-  return String(num)
+function getDiffClass(diff: number): string {
+  if (diff > 0) return 'tag-success'
+  if (diff < 0) return 'tag-danger'
+  return 'tag-secondary'
 }
 
 function getSnapshotWordDiff(current: SnapshotData, previous: SnapshotData): number {
@@ -177,26 +189,16 @@ function handleClear() {
 }
 </script>
 
+
 <style scoped lang="scss">
 @use "@/variables" as *;
 @use "../../superPanel/styles/variables" as *;
 @use "../../superPanel/styles/mixins" as *;
+@use "../index.scss" as stats;
 
-$stats-card-radius: 8px;
 $stats-transition: all 0.2s ease;
 
 .snapshot-view {
-  .section-title {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 0 0 12px 0;
-    font-family: $font-heading;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--b3-theme-on-surface);
-  }
-
   // Tag 组件样式
   .tag {
     display: inline-flex;
@@ -255,12 +257,12 @@ $stats-transition: all 0.2s ease;
       padding: 12px;
       background: var(--b3-theme-surface);
       border: 1px solid var(--b3-border-color);
-      border-radius: $stats-card-radius;
+      border-radius: stats.$stats-card-radius;
       transition: $stats-transition;
 
       &:hover {
         border-color: var(--b3-theme-primary);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: stats.$stats-shadow-light;
       }
 
       .snapshot-header {
@@ -352,6 +354,7 @@ $stats-transition: all 0.2s ease;
     }
   }
 }
+
 
 // Responsive design
 @include tablet-only {

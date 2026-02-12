@@ -3,6 +3,22 @@ import { createApp, App as VueApp } from 'vue';
 import StatisticsPanel from './StatisticsPanel.vue';
 import { StatisticsCache } from './storage';
 
+const DAY_PERIOD_MAP: Record<number, string> = {
+  7: '最近一周每日字数',
+  15: '最近15天每日字数',
+  30: '最近30天每日字数',
+  90: '最近一季度每日字数',
+  180: '最近半年每日字数',
+  365: '最近一年每日字数'
+};
+
+const MONTH_PERIOD_MAP: Record<number, string> = {
+  1: '最近一年每月字数',
+  2: '最近两年每月字数',
+  3: '最近三年每月字数'
+};
+
+
 /**
  * 统计数据接口
  */
@@ -169,70 +185,68 @@ export class Statistics {
    */
   private async getStatistics(): Promise<StatisticsData> {
     try {
-      // 并行获取所有基础统计（移除热门标签和最近文档）
-      const [
-        totalNotes,
-        totalWords,
-        totalBlocks,
-        totalAssets,
-        totalTags,
-        totalBacklinks,
-        todayCreated,
-        todayModified
-      ] = await Promise.all([
-        this.getTotalNotes(),
-        this.getTotalWords(),
-        this.getTotalBlocks(),
-        this.getTotalAssets(),
-        this.getTotalTags(),
-        this.getTotalBacklinks(),
-        this.getTodayCreated(),
-        this.getTodayModified()
+      const today = new Date();
+      const todayStr = this.formatDate(today).substring(0, 8);
+
+      // 合并基础统计查询，减少 API 调用次数
+      const combinedSql = `
+        SELECT 
+          (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d') as totalNotes,
+          (SELECT SUM(LENGTH(content)) FROM blocks WHERE type = 'p' AND content IS NOT NULL AND content != '') as totalWords,
+          (SELECT COUNT(*) FROM blocks WHERE type IN ('p', 'h', 'l', 'i', 't', 'c', 'html', 'query_embed')) as totalBlocks,
+          (SELECT COUNT(*) FROM blocks WHERE type IN ('img', 'audio', 'video', 'widget', 'iframe')) as totalAssets,
+          (SELECT COUNT(*) FROM refs) as totalBacklinks,
+          (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d' AND substr(created, 1, 8) = '${todayStr}') as todayCreated,
+          (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d' AND substr(updated, 1, 8) = '${todayStr}') as todayModified
+      `;
+
+      const [combinedResult, totalTags] = await Promise.all([
+        this.executeSql(combinedSql),
+        this.getTotalTags()
       ]);
+
+      const baseStats = combinedResult[0] || {};
+      const totalNotes = Number(baseStats.totalNotes || 0);
+      const totalWords = Number(baseStats.totalWords || 0);
+      const totalBlocks = Number(baseStats.totalBlocks || 0);
+      const totalAssets = Number(baseStats.totalAssets || 0);
+      const totalBacklinks = Number(baseStats.totalBacklinks || 0);
+      const todayCreated = Number(baseStats.todayCreated || 0);
+      const todayModified = Number(baseStats.todayModified || 0);
 
       // 计算平均每文档字数
       const avgWordsPerDoc = totalNotes > 0 ? Math.round(totalWords / totalNotes) : 0;
+
 
       // 根据不同模式获取每日统计
       let dailyStats: DailyWordCount[] = [];
       let currentPeriod = '';
       let periodTotalWords = 0;
+      const sumWords = (items: DailyWordCount[]) => items.reduce((sum, item) => sum + item.words, 0);
 
       switch (this.viewMode) {
         case 'day':
           dailyStats = await this.getDailyStats(this.dayRange);
-          const dayPeriodMap: Record<number, string> = {
-            7: '最近一周每日字数',
-            15: '最近15天每日字数',
-            30: '最近30天每日字数',
-            90: '最近一季度每日字数',
-            180: '最近半年每日字数',
-            365: '最近一年每日字数'
-          };
-          currentPeriod = dayPeriodMap[this.dayRange] || '每日字数统计';
-          periodTotalWords = dailyStats.reduce((sum, item) => sum + item.words, 0);
+          currentPeriod = DAY_PERIOD_MAP[this.dayRange] || '每日字数统计';
+          periodTotalWords = sumWords(dailyStats);
           break;
         case 'week':
           dailyStats = await this.getWeeklyStats(4); // 最近4周
           currentPeriod = '最近4周每周字数';
-          periodTotalWords = dailyStats.reduce((sum, item) => sum + item.words, 0);
+          periodTotalWords = sumWords(dailyStats);
           break;
         case 'month':
           dailyStats = await this.getMonthlyStatsRange(this.monthYearRange);
-          const monthPeriodMap: Record<number, string> = {
-            1: '最近一年每月字数',
-            2: '最近两年每月字数',
-            3: '最近三年每月字数'
-          };
-          currentPeriod = monthPeriodMap[this.monthYearRange] || '每月字数统计';
-          periodTotalWords = dailyStats.reduce((sum, item) => sum + item.words, 0);
+          currentPeriod = MONTH_PERIOD_MAP[this.monthYearRange] || '每月字数统计';
+          periodTotalWords = sumWords(dailyStats);
           break;
         case 'year':
           dailyStats = await this.getYearlyStats(); // 最近5年
           currentPeriod = '最近5年每年字数';
-          periodTotalWords = dailyStats.reduce((sum, item) => sum + item.words, 0);
+          periodTotalWords = sumWords(dailyStats);
           break;
       }
+
 
       return {
         totalNotes,
@@ -272,73 +286,6 @@ export class Statistics {
   }
 
   /**
-   * 获取今日新增文档数
-   */
-  private async getTodayCreated(): Promise<number> {
-    const today = new Date();
-    const startDate = this.formatDate(today).substring(0, 8);
-    const sql = `SELECT COUNT(DISTINCT root_id) as count FROM blocks WHERE type='d' AND substr(created, 1, 8) = '${startDate}'`;
-    const result = await this.executeSql(sql);
-    return result[0]?.count || 0;
-  }
-
-  /**
-   * 获取今日修改文档数
-   */
-  private async getTodayModified(): Promise<number> {
-    const today = new Date();
-    const startDate = this.formatDate(today).substring(0, 8);
-    const sql = `SELECT COUNT(DISTINCT root_id) as count FROM blocks WHERE type='d' AND substr(updated, 1, 8) = '${startDate}'`;
-    const result = await this.executeSql(sql);
-    return result[0]?.count || 0;
-  }
-
-  /**
-   * 获取总笔记数量
-   */
-  private async getTotalNotes(): Promise<number> {
-    const sql = `SELECT COUNT(DISTINCT root_id) as count FROM blocks WHERE type='d'`;
-    const result = await this.executeSql(sql);
-    return result[0]?.count || 0;
-  }
-
-  /**
-   * 获取总字数
-   * 只统计段落内容，避免重复统计
-   */
-  private async getTotalWords(): Promise<number> {
-    // 思源笔记官方统计可能只统计段落（type='p'）
-    // 标题、列表等可能已经包含在段落中，避免重复统计
-    const sql = `
-      SELECT SUM(LENGTH(content)) as total
-      FROM blocks
-      WHERE type = 'p'
-        AND content IS NOT NULL
-        AND content != ''
-    `;
-    const result = await this.executeSql(sql);
-    return result[0]?.total || 0;
-  }
-
-  /**
-   * 获取总块数（所有类型的内容块）
-   */
-  private async getTotalBlocks(): Promise<number> {
-    const sql = `SELECT COUNT(*) as count FROM blocks WHERE type IN ('p', 'h', 'l', 'i', 't', 'c', 'html', 'query_embed')`;
-    const result = await this.executeSql(sql);
-    return result[0]?.count || 0;
-  }
-
-  /**
-   * 获取总附件数（图片、音频、视频、文件）
-   */
-  private async getTotalAssets(): Promise<number> {
-    const sql = `SELECT COUNT(*) as count FROM blocks WHERE type IN ('img', 'audio', 'video', 'widget', 'iframe')`;
-    const result = await this.executeSql(sql);
-    return result[0]?.count || 0;
-  }
-
-  /**
    * 获取总标签数（多重查询机制）
    */
   private async getTotalTags(): Promise<number> {
@@ -365,12 +312,27 @@ export class Statistics {
   }
 
   /**
-   * 获取总双链数（引用关系）
+   * 聚合字数统计的核心 SQL 方法
+   * @param startDate 开始日期字符串
+   * @param endDate 结束日期字符串
+   * @param subStrLen 截取日期字符串的长度 (4:年, 6:月, 8:日)
+   * @param groupField 聚合字段名
    */
-  private async getTotalBacklinks(): Promise<number> {
-    const sql = `SELECT COUNT(*) as count FROM refs`;
-    const result = await this.executeSql(sql);
-    return result[0]?.count || 0;
+  private async getWordCountAggregation(startDate: string, endDate: string, subStrLen: number, groupField: string): Promise<any[]> {
+    const sql = `
+      SELECT
+        substr(created, 1, ${subStrLen}) as ${groupField},
+        SUM(LENGTH(content)) as total
+      FROM blocks
+      WHERE type = 'p'
+        AND content IS NOT NULL
+        AND content != ''
+        AND created >= '${startDate}'
+        AND created <= '${endDate}'
+      GROUP BY substr(created, 1, ${subStrLen})
+      ORDER BY ${groupField}
+    `;
+    return await this.executeSql(sql);
   }
 
   /**
@@ -385,22 +347,7 @@ export class Statistics {
     const startDateStr = this.formatDate(startDate);
     const endDateStr = this.formatDate(today);
 
-    // 直接使用 length 字段按日期聚合
-    const sql = `
-      SELECT
-        substr(created, 1, 8) as date,
-        SUM(LENGTH(content)) as total
-      FROM blocks
-      WHERE type = 'p'
-        AND content IS NOT NULL
-        AND content != ''
-        AND created >= '${startDateStr}'
-        AND created <= '${endDateStr}'
-      GROUP BY substr(created, 1, 8)
-      ORDER BY date
-    `;
-
-    const queryResult = await this.executeSql(sql);
+    const queryResult = await this.getWordCountAggregation(startDateStr, endDateStr, 8, 'date');
 
     // 创建日期到字数的映射
     const dateMap = new Map<string, number>();
@@ -451,22 +398,7 @@ export class Statistics {
     const startDate = this.formatDate(firstWeekStart);
     const endDate = this.formatDate(lastWeekEnd);
 
-    // 直接使用 length 字段按日期聚合
-    const sql = `
-      SELECT
-        substr(created, 1, 8) as date,
-        SUM(LENGTH(content)) as total
-      FROM blocks
-      WHERE type = 'p'
-        AND content IS NOT NULL
-        AND content != ''
-        AND created >= '${startDate}'
-        AND created <= '${endDate}'
-      GROUP BY substr(created, 1, 8)
-      ORDER BY date
-    `;
-
-    const queryResult = await this.executeSql(sql);
+    const queryResult = await this.getWordCountAggregation(startDate, endDate, 8, 'date');
 
     // 创建日期到字数的映射
     const dateMap = new Map<string, number>();
@@ -517,22 +449,7 @@ export class Statistics {
     const startDate = `${startYear}0101000000`;
     const endDate = this.formatDate(today);
 
-    // 直接使用 length 字段按月份聚合
-    const sql = `
-      SELECT
-        substr(created, 1, 6) as month,
-        SUM(LENGTH(content)) as total
-      FROM blocks
-      WHERE type = 'p'
-        AND content IS NOT NULL
-        AND content != ''
-        AND created >= '${startDate}'
-        AND created <= '${endDate}'
-      GROUP BY substr(created, 1, 6)
-      ORDER BY month
-    `;
-
-    const queryResult = await this.executeSql(sql);
+    const queryResult = await this.getWordCountAggregation(startDate, endDate, 6, 'month');
 
     // 创建月份到字数的映射
     const monthMap = new Map<string, number>();
@@ -542,9 +459,10 @@ export class Statistics {
 
     // 生成完整的月份列表（从起始年月到当前年月）
     const result: DailyWordCount[] = [];
-    for (let y = startYear; y <= currentYear; y++) {
-      const startM = (y === startYear) ? 1 : 1;
+      for (let y = startYear; y <= currentYear; y++) {
+      const startM = 1;
       const endM = (y === currentYear) ? currentMonth : 12;
+
 
       for (let m = startM; m <= endM; m++) {
         const monthStr = this.padZero(m);
@@ -571,22 +489,7 @@ export class Statistics {
     const startDate = `${startYear}0101000000`;
     const endDate = `${currentYear}1231235959`;
 
-    // 直接使用 length 字段按年份聚合
-    const sql = `
-      SELECT
-        substr(created, 1, 4) as year,
-        SUM(LENGTH(content)) as total
-      FROM blocks
-      WHERE type = 'p'
-        AND content IS NOT NULL
-        AND content != ''
-        AND created >= '${startDate}'
-        AND created <= '${endDate}'
-      GROUP BY substr(created, 1, 4)
-      ORDER BY year
-    `;
-
-    const queryResult = await this.executeSql(sql);
+    const queryResult = await this.getWordCountAggregation(startDate, endDate, 4, 'year');
 
     // 创建年份到字数的映射
     const yearMap = new Map<string, number>();
@@ -610,6 +513,7 @@ export class Statistics {
     return result;
   }
 
+
   /**
    * 格式化日期为思源笔记格式
    */
@@ -629,6 +533,8 @@ export class Statistics {
   private padZero(num: number): string {
     return num < 10 ? '0' + num : String(num);
   }
+
+
 
   /**
    * 执行 SQL 查询
@@ -948,10 +854,11 @@ export class Statistics {
 
     // 如果面板已打开，刷新显示
     if (this.vueApp) {
-      const stats = await this.getStatistics();
-      // 这里可以添加刷新Vue组件的逻辑
+      await this.getStatistics();
+      // 这里可以根据需要通知 Vue 组件更新
     }
   }
+
 
   /**
    * 格式化日期为键值

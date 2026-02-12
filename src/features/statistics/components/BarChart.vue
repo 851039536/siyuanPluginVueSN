@@ -1,11 +1,11 @@
 <template>
-  <div class="bar-chart">
+  <div class="bar-chart-section">
     <h3 class="section-title">{{ title }}</h3>
-    <div class="bar-chart">
-      <div class="chart-container">
+    <div class="bar-chart-container">
+      <div class="chart-viewport">
         <div
-          v-for="(item, index) in chartData"
-          :key="index"
+          v-for="item in chartData"
+          :key="item.date"
           class="bar-item"
           :style="{ flex: chartData.length > 12 ? '0 0 auto' : '1' }"
         >
@@ -29,6 +29,7 @@
       </div>
     </div>
 
+
     <!-- 数据列表 -->
     <div class="data-list">
       <div
@@ -46,8 +47,10 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { formatNumber, formatShortNumber, isToday } from '../utils'
 
 interface ChartDataItem {
+
   date: string
   words: number
   dateLabel: string
@@ -69,41 +72,19 @@ const props = withDefaults(defineProps<Props>(), {
   }),
 })
 
-function formatNumber(num: number): string {
-  return num.toLocaleString('zh-CN')
-}
-
-function formatShortNumber(num: number): string {
-  if (num >= 1000000) {
-    return (num / 1000000).toFixed(1) + 'M'
-  } else if (num >= 1000) {
-    return (num / 1000).toFixed(1) + 'K'
-  }
-  return String(num)
-}
+const maxWords = computed(() => {
+  if (!props.chartData.length) return 0
+  return Math.max(...props.chartData.map(item => item.words))
+})
 
 function getBarHeight(words: number): number {
-  if (!props.chartData.length) return 0
-  const maxWords = Math.max(...props.chartData.map(d => d.words))
-  if (maxWords === 0) return 0
+  const max = maxWords.value
+  if (max === 0) return 0
   const maxHeight = 150
-  const height = (words / maxWords) * maxHeight
+  const height = (words / max) * maxHeight
   return Math.max(height, words > 0 ? 5 : 0)
 }
 
-function isToday(dateStr: string): boolean {
-  const today = new Date()
-  const todayStr = `${today.getFullYear()}-${padZero(today.getMonth() + 1)}-${padZero(today.getDate())}`
-
-  if (dateStr.length === 10) {
-    return dateStr === todayStr
-  } else if (dateStr.length === 7) {
-    return dateStr === todayStr.substring(0, 7)
-  } else if (dateStr.length === 4) {
-    return dateStr === String(today.getFullYear())
-  }
-  return false
-}
 
 function formatChartLabel(label: string): string {
   // 可以根据需要自定义标签格式化逻辑
@@ -116,36 +97,27 @@ function formatChartLabel(label: string): string {
   }
   return label
 }
-
-function padZero(num: number): string {
-  return num < 10 ? '0' + num : String(num)
-}
 </script>
+
 
 <style scoped lang="scss">
 @use "@/variables" as *;
 @use "../../superPanel/styles/variables" as *;
 @use "../../superPanel/styles/mixins" as *;
+@use "../index.scss" as stats;
 
-$stats-card-radius: 8px;
-$gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-$gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-
-.bar-chart {
+.bar-chart-section {
   padding: 12px;
   background: var(--b3-theme-background);
   border-radius: 6px;
-  overflow-x: auto;
 
-  .section-title {
-    margin: 0 0 12px 0;
-    font-family: $font-heading;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--b3-theme-on-surface);
+  .bar-chart-container {
+    overflow-x: auto;
+    margin-bottom: 12px;
+    @include scrollbar-thin;
   }
 
-  .chart-container {
+  .chart-viewport {
     display: flex;
     align-items: flex-end;
     gap: 8px;
@@ -174,7 +146,7 @@ $gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
       .bar {
         width: 100%;
         min-height: 5px;
-        background: $gradient-primary;
+        background: stats.$gradient-primary;
         border-radius: 4px 4px 0 0;
         transition: all 0.3s ease;
         box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
@@ -186,7 +158,7 @@ $gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
         }
 
         &.today {
-          background: $gradient-secondary;
+          background: stats.$gradient-secondary;
           box-shadow: 0 4px 8px rgba(245, 87, 108, 0.4);
           border: 2px solid #f5576c;
         }
@@ -211,6 +183,7 @@ $gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
     }
   }
 }
+
 
 .data-list {
   display: flex;
@@ -258,12 +231,13 @@ $gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
 
 // Responsive design
 @include mobile-only {
-  .bar-chart {
+  .bar-chart-section {
     padding: 8px;
 
-    .chart-container {
+    .chart-viewport {
       min-width: 600px;
     }
   }
 }
+
 </style>

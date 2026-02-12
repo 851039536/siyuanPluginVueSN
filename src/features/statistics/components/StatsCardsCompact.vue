@@ -46,9 +46,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { formatNumber, formatShortNumber } from '../utils'
 
 interface Props {
+
   totalNotes?: number
   totalWords?: number
   totalBlocks?: number
@@ -81,56 +82,23 @@ const props = withDefaults(defineProps<Props>(), {
     totalBacklinks: '双链',
   }),
 })
-
-function formatNumber(num: number): string {
-  return num.toLocaleString('zh-CN')
-}
-
-function formatShortNumber(num: number): string {
-  if (num >= 1000000) {
-    return (num / 1000000).toFixed(1) + 'M'
-  } else if (num >= 1000) {
-    return (num / 1000).toFixed(1) + 'K'
-  }
-  return String(num)
-}
 </script>
+
 
 <style scoped lang="scss">
 @use "@/variables" as *;
 @use "../../superPanel/styles/variables" as *;
 @use "../../superPanel/styles/mixins" as *;
-
-$stats-card-radius: 8px;
-$stats-shadow-light: 0 2px 8px rgba(0, 0, 0, 0.1);
-$stats-shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
-$gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-
-@mixin stats-card-hover {
-  transition: transform 0.2s, box-shadow 0.2s;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: $stats-shadow-medium;
-  }
-}
-
-@mixin stats-theme-border {
-  border: 1px solid var(--b3-border-color);
-
-  .theme-github & {
-    border-color: var(--b3-border-color);
-  }
-}
+@use "../index.scss" as stats;
 
 .stats-cards-compact {
   margin-bottom: $spacing-sm;
 
   .stat-card-main,
   .stat-card-secondary {
-    @include stats-card-hover;
-    @include stats-theme-border;
-    border-radius: $stats-card-radius;
+    @include stats.stats-card-hover;
+    @include stats.stats-theme-border;
+    border-radius: stats.$stats-card-radius;
   }
 
   .stat-card-main {
@@ -186,7 +154,7 @@ $gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
     align-items: center;
     justify-content: space-between;
     padding: 12px 16px;
-    background: $gradient-secondary;
+    background: stats.$gradient-secondary;
     color: white;
 
     .stat-item-small {
@@ -215,6 +183,7 @@ $gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
     }
   }
 }
+
 
 // Mobile responsive
 @include mobile-only {

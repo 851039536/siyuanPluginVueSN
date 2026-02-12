@@ -52,31 +52,7 @@ withDefaults(defineProps<Props>(), {
 @use "@/variables" as *;
 @use "../../superPanel/styles/variables" as *;
 @use "../../superPanel/styles/mixins" as *;
-
-$stats-card-radius: 8px;
-$stats-shadow-light: 0 2px 8px rgba(0, 0, 0, 0.1);
-$stats-shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
-
-$gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-$gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-$gradient-tertiary: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-
-@mixin stats-card-hover {
-  transition: transform 0.2s, box-shadow 0.2s;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: $stats-shadow-medium;
-  }
-}
-
-@mixin stats-theme-border {
-  border: 1px solid var(--b3-border-color);
-
-  .theme-github & {
-    border-color: var(--b3-border-color);
-  }
-}
+@use "../index.scss" as stats;
 
 .extended-stats-cards {
   display: grid;
@@ -89,21 +65,21 @@ $gradient-tertiary: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
     align-items: center;
     gap: 10px;
     padding: 10px;
-    border-radius: $stats-card-radius;
+    border-radius: stats.$stats-card-radius;
     color: white;
-    box-shadow: $stats-shadow-light;
-    @include stats-card-hover;
+    box-shadow: stats.$stats-shadow-light;
+    @include stats.stats-card-hover;
 
     &.gradient-1 {
-      background: $gradient-primary;
+      background: stats.$gradient-primary;
     }
 
     &.gradient-2 {
-      background: $gradient-secondary;
+      background: stats.$gradient-secondary;
     }
 
     &.gradient-3 {
-      background: $gradient-tertiary;
+      background: stats.$gradient-tertiary;
     }
 
     // GitHub theme overrides
@@ -111,7 +87,7 @@ $gradient-tertiary: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
     .theme-github &.gradient-1,
     .theme-github &.gradient-2,
     .theme-github &.gradient-3 {
-      @include stats-theme-border;
+      @include stats.stats-theme-border;
       background: var(--b3-theme-surface);
       color: var(--b3-theme-on-surface);
       box-shadow: none;
@@ -148,6 +124,7 @@ $gradient-tertiary: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
     }
   }
 }
+
 
 // Responsive design
 @include tablet-only {

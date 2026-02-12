@@ -15,26 +15,21 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 // ============================================================================
-// Constants
+// Constants & Types
 // ============================================================================
-const CPU_HIGH_THRESHOLD = 80
-const CPU_MEDIUM_THRESHOLD = 60
-const MEM_HIGH_THRESHOLD = 85
-const MEM_MEDIUM_THRESHOLD = 70
+const THRESHOLDS = {
+  CPU: { HIGH: 80, MEDIUM: 60 },
+  MEM: { HIGH: 85, MEDIUM: 70 }
+}
 
 const MONITOR_INTERVAL_MS = 3000
 const INITIAL_DELAY_MS = 2000
-const MOUNT_TIMEOUT_MS = 1000
-
 const DEFAULT_TOTAL_MEMORY_GB = 8
 
-// ============================================================================
-// Types
-// ============================================================================
 type ResourceLevel = 'normal' | 'medium' | 'high'
 
 // ============================================================================
-// Component State
+// State
 // ============================================================================
 const showMonitor = ref(false)
 const cpuPercent = ref(0)
@@ -42,60 +37,60 @@ const memPercent = ref(0)
 const monitorElement = ref<HTMLElement | null>(null)
 
 // ============================================================================
-// Computed Properties
+// Computed
 // ============================================================================
 const cpuUsageDisplay = computed(() => `${cpuPercent.value.toFixed(1)}%`)
-const memoryUsageDisplay = computed(() => `${((memPercent.value / 100) * DEFAULT_TOTAL_MEMORY_GB * 1024).toFixed(1)}M`)
-
-const cpuLevel = computed<ResourceLevel>(() => {
-  if (cpuPercent.value >= CPU_HIGH_THRESHOLD) return 'high'
-  if (cpuPercent.value >= CPU_MEDIUM_THRESHOLD) return 'medium'
-  return 'normal'
+const memoryUsageDisplay = computed(() => {
+  const bytes = (memPercent.value / 100) * DEFAULT_TOTAL_MEMORY_GB * 1024 * 1024 * 1024
+  return `${(bytes / (1024 * 1024)).toFixed(1)}M`
 })
 
-const memLevel = computed<ResourceLevel>(() => {
-  if (memPercent.value >= MEM_HIGH_THRESHOLD) return 'high'
-  if (memPercent.value >= MEM_MEDIUM_THRESHOLD) return 'medium'
+const getLevel = (percent: number, { HIGH, MEDIUM }: { HIGH: number, MEDIUM: number }): ResourceLevel => {
+  if (percent >= HIGH) return 'high'
+  if (percent >= MEDIUM) return 'medium'
   return 'normal'
-})
+}
+
+const cpuLevel = computed(() => getLevel(cpuPercent.value, THRESHOLDS.CPU))
+const memLevel = computed(() => getLevel(memPercent.value, THRESHOLDS.MEM))
 
 // ============================================================================
-// Monitor Logic
+// Logic
 // ============================================================================
 let intervalId: ReturnType<typeof setInterval> | null = null
 let timeoutId: ReturnType<typeof setTimeout> | null = null
-let observer: MutationObserver | null = null
+
+function updateStats() {
+  if (typeof process === 'undefined') return
+
+  // CPU
+  const currCPU = process.cpuUsage()
+  const currTime = Date.now()
+  
+  if (lastCPU && lastTime) {
+    const timeDiff = currTime - lastTime
+    if (timeDiff > 0) {
+      const cpuDiff = (currCPU.user + currCPU.system) - (lastCPU.user + lastCPU.system)
+      cpuPercent.value = Math.max(0, Math.min(100, (cpuDiff / (timeDiff * 1000)) * 100))
+    }
+  }
+  
+  lastCPU = currCPU
+  lastTime = currTime
+
+  // Memory
+  const memUsage = process.memoryUsage()
+  const totalMemory = DEFAULT_TOTAL_MEMORY_GB * 1024 * 1024 * 1024
+  memPercent.value = Math.min(100, (memUsage.rss / totalMemory) * 100)
+}
+
+let lastCPU: NodeJS.CpuUsage | null = null
+let lastTime: number | null = null
 
 function start() {
-  if (!monitorElement.value || intervalId) return
-
-  showMonitor.value = true
-
-  let prevCPU = process.cpuUsage()
-  let prevTime = Date.now()
-
-  intervalId = setInterval(() => {
-    const currCPU = process.cpuUsage()
-    const currTime = Date.now()
-    const timeDiff = currTime - prevTime
-
-    // 防止除零错误
-    if (timeDiff === 0) return
-
-    // 计算CPU使用率百分比
-    const cpuDiff = (currCPU.user + currCPU.system) - (prevCPU.user + prevCPU.system)
-    const cpuPercentValue = Math.max(0, Math.min(100, (cpuDiff / (timeDiff * 1000)) * 100))
-
-    const memUsage = process.memoryUsage()
-    const totalMemory = DEFAULT_TOTAL_MEMORY_GB * 1024 * 1024 * 1024
-    const memPercentValue = Math.min(100, (memUsage.rss / totalMemory) * 100)
-
-    cpuPercent.value = cpuPercentValue
-    memPercent.value = memPercentValue
-
-    prevCPU = currCPU
-    prevTime = currTime
-  }, MONITOR_INTERVAL_MS)
+  if (intervalId) return
+  updateStats() // Initial call
+  intervalId = setInterval(updateStats, MONITOR_INTERVAL_MS)
 }
 
 function stop() {
@@ -103,64 +98,42 @@ function stop() {
     clearInterval(intervalId)
     intervalId = null
   }
-  showMonitor.value = false
 }
 
-function cleanup() {
-  if (timeoutId) {
-    clearTimeout(timeoutId)
-    timeoutId = null
-  }
-  stop()
+function tryInsertToStatusBar() {
+  const counter = document.querySelector('#status .status__counter')
+  if (!counter || !monitorElement.value) return false
 
-  if (observer) {
-    observer.disconnect()
-    observer = null
+  // Avoid duplicate insertion
+  const existing = document.querySelector('.status__resUsage')
+  if (existing && existing !== monitorElement.value) {
+    existing.remove()
   }
+
+  counter.parentNode?.insertBefore(monitorElement.value, counter)
+  return true
 }
 
-// ============================================================================
-// Lifecycle Hooks
-// ============================================================================
 onMounted(() => {
+  // Wait for SiYuan UI to be ready
   timeoutId = setTimeout(() => {
-    if (typeof process === 'undefined') return
-
-    const counter = document.querySelector('#status .status__counter')
-    if (!counter) return
-
-    // 移除已存在的面板
-    const existing = document.querySelector('.status__resUsage')
-    if (existing) existing.remove()
-
-    // 使用MutationObserver监听monitorElement是否已挂载
-    observer = new MutationObserver(() => {
-      if (monitorElement.value && document.body.contains(monitorElement.value)) {
-        // 元素已挂载，移动到正确位置
-        counter.parentNode?.insertBefore(monitorElement.value, counter)
-        observer?.disconnect()
-        observer = null
-        start()
-      }
-    })
-
-    // 开始监听
-    observer.observe(document.body, { childList: true, subtree: true })
-
-    // 立即显示监控器（触发v-if渲染）
-    showMonitor.value = true
-
-    // 1秒后如果还没挂载，强制检查
+    showMonitor.value = true // Render the element
+    
+    // Use nextTick equivalent to wait for ref update
     setTimeout(() => {
-      if (monitorElement.value) {
-        counter.parentNode?.insertBefore(monitorElement.value, counter)
-        observer?.disconnect()
-        observer = null
+      if (tryInsertToStatusBar()) {
         start()
+      } else {
+        // Fallback or retry if needed, but usually 2s is enough
+        console.warn('System Monitor: Status bar counter not found')
       }
-    }, MOUNT_TIMEOUT_MS)
+    }, 0)
   }, INITIAL_DELAY_MS)
 })
 
-onUnmounted(cleanup)
+onUnmounted(() => {
+  if (timeoutId) clearTimeout(timeoutId)
+  stop()
+})
 </script>
+

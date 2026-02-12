@@ -6,10 +6,13 @@ import './index.scss'
 let app: ReturnType<typeof createApp> | null = null
 
 export function registerSystemMonitor(plugin: Plugin) {
+  if (app) return // Avoid duplicate registration
+  
   const container = document.createElement('div')
   app = createApp(SystemMonitorPanel)
   app.mount(container)
 }
+
 
 export function unregisterSystemMonitor() {
   if (app) {

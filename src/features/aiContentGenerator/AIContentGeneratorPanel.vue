@@ -40,36 +40,6 @@
 
     <!-- 内容显示区域（移到上方） -->
     <div class="content-display-section">
-      <!-- AI分析建议面板 -->
-      <div v-if="aiSuggestions" class="ai-suggestions-panel">
-        <div class="suggestions-header">
-          <div class="section-title-wrapper">
-            <svg width="16" height="16"><use xlink:href="#iconLightbulb"></use></svg>
-            <span>{{'AI优化建议' }}</span>
-            <Button
-              :class="['btn-collapse', { 'collapsed': collapsedSections.suggestions }]"
-              @click="toggleCollapse('suggestions')"
-              :title="collapsedSections.suggestions ? '展开建议' : '折叠建议'"
-              variant="ghost"
-              size="small"
-            >
-              <svg width="14" height="14" class="collapse-icon">
-                <use :xlink:href="collapsedSections.suggestions ? '#iconRight' : '#iconDown'"></use>
-              </svg>
-            </Button>
-          </div>
-          <Button @click="aiSuggestions = null" variant="ghost" size="small">
-            <svg width="12" height="12"><use xlink:href="#iconClose"></use></svg>
-          </Button>
-        </div>
-        <div class="suggestions-content" :class="{ 'collapsed': collapsedSections.suggestions }">
-          <p class="suggestion-text">{{ aiSuggestions }}</p>
-          <Button @click="applySuggestions" :disabled="isGenerating" variant="primary" size="small">
-            {{'应用建议优化' }}
-          </Button>
-        </div>
-      </div>
-
     <!-- AI查重结果面板 -->
     <PlagiarismResultPanel
       v-if="plagiarismResult"
@@ -308,11 +278,7 @@
             </svg>
             {{'总结' }}
           </Button>
-          <Button @click="analyzeDocument" :disabled="isGenerating || isAnalyzing" :title="'AI分析建议'" variant="ghost" size="small">
-            <div v-if="isAnalyzing" class="loading-spinner-tiny"></div>
-            <svg v-else width="14" height="14"><use xlink:href="#iconInfo"></use></svg>
-            {{'智能分析' }}
-          </Button>
+
           <Button v-if="!isCheckingPlagiarism" @click="checkPlagiarism" :disabled="isGenerating" :title="'AI查重'" variant="ghost" size="small">
             <svg width="14" height="14"><use xlink:href="#iconSearch"></use></svg>
             {{'查重' }}
@@ -553,7 +519,6 @@ const abortController = ref<AbortController | null>(null);
 const collapsedSections = ref({
   settings: false,
   aiToolbar: false,
-  suggestions: false,
   plagiarism: false,
   promptSelector: false
 });
@@ -584,8 +549,6 @@ const isDragging = ref(false); // 是否正在拖拽
 const dragOverType = ref<'block' | 'tab' | 'tree' | null>(null); // 拖拽类型
 
 // AI智能编辑状态
-const isAnalyzing = ref(false);
-const aiSuggestions = ref<string | null>(null);
 const isCheckingPlagiarism = ref(false);
 const plagiarismResult = ref<{
   riskLevel: 'low' | 'medium' | 'high';
@@ -696,7 +659,6 @@ const startGeneration = () => {
   generatedContent.value = '';
   displayedContent.value = '';
   errorMessage.value = '';
-  aiSuggestions.value = null;
   plagiarismResult.value = null;
 };
 
@@ -706,7 +668,6 @@ const startGeneration = () => {
 const finishGeneration = () => {
   isGenerating.value = false;
   abortController.value = null;
-  isAnalyzing.value = false;
   isCheckingPlagiarism.value = false;
 };
 
@@ -760,17 +721,6 @@ const loadDocument = async (docId: string): Promise<{ title: string; content: st
 const defaultOnChunk = (chunk: string) => {
   displayedContent.value += chunk;
   generatedContent.value += chunk;
-};
-
-/**
- * 创建只更新单个目标的流式回调
- * @param targetRef 目标响应式引用
- * @returns 流式输出回调函数
- */
-const createSingleTargetCallback = (targetRef: { value: string | null }) => {
-  return (chunk: string) => {
-    targetRef.value = (targetRef.value || '') + chunk;
-  };
 };
 
 /**
@@ -1279,7 +1229,6 @@ const resetEditStates = () => {
   isApplying.value = false;
   isUndoing.value = false;
   isInsertingSubDoc.value = false;
-  isAnalyzing.value = false;
   isCheckingPlagiarism.value = false;
 };
 
@@ -1406,7 +1355,6 @@ const selectTargetDocument = async () => {
  */
 const resetEditRelatedState = () => {
   editCustomInput.value = '';
-  aiSuggestions.value = null;
   plagiarismResult.value = null;
   lastEditHistory.value = null;
 };
@@ -1689,51 +1637,6 @@ ${editTargetDoc.value.content}`;
 };
 
 /**
- * AI文档分析和建议
- */
-const analyzeDocument = async () => {
-  if (!editTargetDoc.value) {
-    showMessage('请先选择要分析的文档', 2000, 'info');
-    return;
-  }
-
-  closeSettings();
-  startGeneration();
-  isAnalyzing.value = true;
-
-  try {
-    const options: GenerateOptions = {
-      userInput: `请分析以下文档，提供具体的优化建议，包括但不限于：
-1. 结构优化建议
-2. 内容完善建议
-3. 语言表达改进点
-4. 逻辑性和连贯性建议
-
-请用简洁的语言给出分析报告和可执行的建议。\n\n文档内容：\n${editTargetDoc.value.content}`,
-      systemPrompt: '你是一个专业的文档分析专家，擅长发现文档中的问题并提供建设性的优化意见。',
-      temperature: 0.5,
-      maxTokens: 1500,
-      signal: abortController.value?.signal,
-      onChunk: createSingleTargetCallback(aiSuggestions)
-    };
-
-    await props.onGenerate(options);
-  } catch (error) {
-    if (handleGenerationError(error as Error, '文档分析', true)) {
-      finishGeneration();
-      isAnalyzing.value = false;
-      return;
-    }
-    showMessage('文档分析失败: ' + (error as Error).message, 3000, 'error');
-  } finally {
-    if (abortController.value) {
-      finishGeneration();
-      isAnalyzing.value = false;
-    }
-  }
-};
-
-/**
  * AI查重功能
  */
 const checkPlagiarism = async () => {
@@ -1906,40 +1809,6 @@ const insertSubDocument = async () => {
     showMessage('插入子文档失败: ' + (error as Error).message, 3000, 'error');
   } finally {
     isInsertingSubDoc.value = false;
-  }
-};
-
-/**
- * 应用AI建议进行优化
- */
-const applySuggestions = async () => {
-  if (!editTargetDoc.value || !aiSuggestions.value) return;
-
-  closeSettings();
-  startGeneration();
-
-  try {
-    const options: GenerateOptions = {
-      userInput: `请根据以下分析建议，对文档进行优化。直接输出优化后的完整文档内容，保持Markdown格式。
-
-分析建议：
-${aiSuggestions.value}
-
-原文档：
-${editTargetDoc.value.content}`,
-      systemPrompt: '你是一个专业的文档编辑助手。请根据建议优化文档，直接输出结果，不要添加解释。',
-      temperature: 0.3,
-      maxTokens: maxTokens.value,
-      onChunk: defaultOnChunk
-    };
-
-    await props.onGenerate(options);
-
-    aiSuggestions.value = null;
-  } catch (error) {
-    if (handleGenerationError(error as Error, '应用建议')) return;
-  } finally {
-    finishGeneration();
   }
 };
 

@@ -198,7 +198,7 @@ function formatNumber(num: number): string {
   .mode-tabs {
     display: flex;
     gap: 4px;
-    margin-bottom: 12px;
+    // margin-bottom: 12px;
     padding: 3px;
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
@@ -239,7 +239,7 @@ function formatNumber(num: number): string {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    margin-bottom: 12px;
+    margin-top: 10px;
     justify-content: center;
   }
 
@@ -269,8 +269,8 @@ function formatNumber(num: number): string {
   }
 
   .year-selector {
-    margin-bottom: 12px;
 
+    margin-top: 10px;
     .year-select {
       width: 100%;
       padding: 6px 12px;
@@ -296,7 +296,7 @@ function formatNumber(num: number): string {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 8px;
-    margin-top: 4px;
+    margin-top: 10px;
   }
 
   .period-stat-card {

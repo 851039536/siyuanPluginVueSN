@@ -53,43 +53,9 @@ import FeatureCard from './components/FeatureCard.vue'
 import type { PluginSettings } from '@/config/settings'
 import type { Feature } from './types'
 
-// 国际化接口
+// 国际化接口 - 使用索引签名简化定义
 interface I18n {
   title?: string
-  tableOfContents?: string
-  tableOfContentsDesc?: string
-  imageCompressor?: string
-  imageCompressorDesc?: string
-  docNavigation?: string
-  docNavigationDesc?: string
-  pageLock?: string
-  pageLockDesc?: string
-  wordQuery?: string
-  wordQueryDesc?: string
-  generalSettings?: string
-  generalSettingsDesc?: string
-  qrCode?: string
-  qrCodeDesc?: string
-  unitConverter?: string
-  unitConverterDesc?: string
-  shortcuts?: string
-  shortcutsDesc?: string
-  diskBrowser?: string
-  diskBrowserDesc?: string
-  codeImageGenerator?: string
-  enableCodeImageGeneratorDesc?: string
-  aiContentGenerator?: string
-  aiContentGeneratorDesc?: string
-  pronunciationHelp?: string
-  pronunciationDesc?: string
-  encryption?: string
-  enableEncryptionDesc?: string
-  videoManager?: string
-  videoManagerDesc?: string
-  everythingSearch?: string
-  everythingSearchDesc?: string
-  webDAV?: string
-  webDAVDesc?: string
   featureDisabled?: string
   [key: string]: any
 }

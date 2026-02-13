@@ -87,35 +87,5 @@ const actions = computed<HeaderAction[]>(() => [
 </script>
 
 <style scoped lang="scss">
-.super-panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  min-height: 60px;
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
-  background: var(--b3-theme-surface);
-  flex-shrink: 0;
-}
-
-.super-panel-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--b3-theme-on-background);
-
-  span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+@use '../styles/index.scss';
 </style>

@@ -33,32 +33,5 @@ const handleChange = (event: Event) => {
 </script>
 
 <style scoped lang="scss">
-@use '../styles/index.scss' as *;
-
-.setting-select {
-  padding: $spacing-sm $spacing-md;
-  border: 2px solid var(--b3-theme-surface-light);
-  border-radius: 6px;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  outline: none;
-  font-size: 13px;
-  transition: all $transition-fast ease;
-  width: 100%;
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667' d='M6 9L2 5h8z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right $spacing-md center;
-  padding-right: 36px;
-
-  &:hover {
-    border-color: var(--b3-theme-primary-lighter);
-  }
-
-  &:focus {
-    border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  }
-}
+@use '../styles/index.scss';
 </style>

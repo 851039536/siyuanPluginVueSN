@@ -33,29 +33,5 @@ const handleClick = () => {
 </script>
 
 <style scoped lang="scss">
-// 直接定义样式，不使用外部 mixin
-.header-action-btn {
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  outline: none;
-  transition: all 0.2s ease;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--b3-theme-on-surface);
-  position: relative;
-
-  &:hover {
-    background: var(--b3-theme-surface-lighter);
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-}
+@use '../styles/index.scss';
 </style>

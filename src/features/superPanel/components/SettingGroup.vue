@@ -20,22 +20,5 @@ withDefaults(defineProps<Props>(), {})
 </script>
 
 <style scoped lang="scss">
-.setting-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.setting-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--b3-theme-on-surface);
-}
-
-.setting-desc {
-  font-size: 12px;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.7;
-  line-height: 1.4;
-}
+@use '../styles/index.scss';
 </style>

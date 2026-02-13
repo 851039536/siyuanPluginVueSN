@@ -116,18 +116,8 @@ function closeSuperPanel() {
 async function handleRefresh(plugin: Plugin) {
   try {
     showMessage((plugin.i18n as any).superPanel?.refreshing || '正在刷新...', 1000, 'info')
-
-    // 先关闭面板
-    if (vueApp && panelContainer) {
-      vueApp.unmount()
-      panelContainer.remove()
-      vueApp = null
-      panelContainer = null
-    }
-
-    // 使用 setTimeout 确保 DOM 完全清理后再重新打开
+    closeSuperPanel()
     await new Promise(resolve => setTimeout(resolve, 100))
-
     openSuperPanel(plugin)
     showMessage((plugin.i18n as any).superPanel?.refreshSuccess || '已刷新', 1500, 'info')
   } catch (error) {
@@ -137,41 +127,49 @@ async function handleRefresh(plugin: Plugin) {
 }
 
 /**
+ * 功能ID到设置键的映射表（单一数据源）
+ */
+const FEATURE_SETTINGS_MAP: Record<string, string> = {
+  tableOfContents: 'enableTableOfContents',
+  imageCompressor: 'enableImageCompressor',
+  docNavigation: 'enableDocNavigation',
+  pageLock: 'enablePageLock',
+  wordQuery: 'enableWordQuery',
+  generalSettings: 'enableGeneralSettings',
+  qrCode: 'enableQRCode',
+  unitConverter: 'enableUnitConverter',
+  shortcuts: 'enableShortcuts',
+  diskBrowser: 'enableDiskBrowser',
+  codeImageGenerator: 'enableCodeImageGenerator',
+  aiContentGenerator: 'enableAIContentGenerator',
+  statistics: 'enableStatistics',
+  pronunciation: 'enablePronunciation',
+  encryption: 'enableEncryption',
+  video: 'enableVideo',
+  everythingSearch: 'enableEverythingSearch',
+  systemMonitor: 'enableSystemMonitor',
+  floatingToolbar: 'enableFloatingToolbar',
+  floatingBox: 'enableFloatingBox',
+  textDiff: 'enableTextDiff',
+  base64Image: 'enableBase64Image',
+  skills: 'enableSkills',
+  flashcardReading: 'enableFlashcardReading',
+  translate: 'enableTranslate',
+  codeTranslation: 'enableCodeTranslation',
+  webDAV: 'enableWebDAV'
+}
+
+/**
+ * 所有功能的设置键列表（从映射表自动生成）
+ */
+const ALL_FEATURE_SETTINGS = Object.values(FEATURE_SETTINGS_MAP)
+
+/**
  * 处理功能开关切换
  */
 async function handleFeatureToggle(plugin: Plugin, featureId: string, enabled: boolean) {
   const pluginSample = plugin as any
-  const settingsMap: Record<string, keyof typeof pluginSample.settings> = {
-    'tableOfContents': 'enableTableOfContents',
-    'imageCompressor': 'enableImageCompressor',
-    'docNavigation': 'enableDocNavigation',
-    'pageLock': 'enablePageLock',
-    'wordQuery': 'enableWordQuery',
-    'generalSettings': 'enableGeneralSettings',
-    'qrCode': 'enableQRCode',
-    'unitConverter': 'enableUnitConverter',
-    'shortcuts': 'enableShortcuts',
-    'diskBrowser': 'enableDiskBrowser',
-    'codeImageGenerator': 'enableCodeImageGenerator',
-    'aiContentGenerator': 'enableAIContentGenerator',
-    'statistics': 'enableStatistics',
-    'pronunciation': 'enablePronunciation',
-    'encryption': 'enableEncryption',
-    'video': 'enableVideo',
-    'everythingSearch': 'enableEverythingSearch',
-    'systemMonitor': 'enableSystemMonitor',
-    'floatingToolbar': 'enableFloatingToolbar',
-    'floatingBox': 'enableFloatingBox',
-    'textDiff': 'enableTextDiff',
-    'base64Image': 'enableBase64Image',
-    'skills': 'enableSkills',
-    'flashcardReading': 'enableFlashcardReading',
-    'translate': 'enableTranslate',
-    'codeTranslation': 'enableCodeTranslation',
-    'webDAV': 'enableWebDAV'
-  }
-
-  const settingKey = settingsMap[featureId]
+  const settingKey = FEATURE_SETTINGS_MAP[featureId]
   if (settingKey) {
     const newSettings = {
       ...pluginSample.settings,
@@ -180,15 +178,13 @@ async function handleFeatureToggle(plugin: Plugin, featureId: string, enabled: b
 
     const success = await pluginSample.updateSettings(newSettings)
     if (success) {
-
-        showMessage(
-          enabled
-            ? (plugin.i18n as any).featureEnabled || '功能已启用，请重启插件生效'
-            : (plugin.i18n as any).featureDisabled || '功能已禁用，请重启插件生效',
-          3000,
-          'info'
-        )
-      // 不关闭面板，让用户可以继续操作
+      showMessage(
+        enabled
+          ? (plugin.i18n as any).featureEnabled || '功能已启用，请重启插件生效'
+          : (plugin.i18n as any).featureDisabled || '功能已禁用，请重启插件生效',
+        3000,
+        'info'
+      )
     } else {
       showMessage((plugin.i18n as any).saveFailed || '保存失败', 3000, 'error')
     }
@@ -201,40 +197,9 @@ async function handleFeatureToggle(plugin: Plugin, featureId: string, enabled: b
 async function handleToggleAllFeatures(plugin: Plugin, enabled: boolean) {
   const pluginSample = plugin as any
 
-  // 所有功能的设置键
-  const allFeatureSettings = [
-    'enableTableOfContents',
-    'enableImageCompressor',
-    'enableDocNavigation',
-    'enablePageLock',
-    'enableWordQuery',
-    'enableGeneralSettings',
-    'enableQRCode',
-    'enableUnitConverter',
-    'enableShortcuts',
-    'enableDiskBrowser',
-    'enableCodeImageGenerator',
-    'enableAIContentGenerator',
-    'enableStatistics',
-    'enablePronunciation',
-    'enableEncryption',
-    'enableVideo',
-    'enableEverythingSearch',
-    'enableSystemMonitor',
-    'enableFloatingToolbar',
-    'enableFloatingBox',
-    'enableTextDiff',
-    'enableBase64Image',
-    'enableFlashcardReading',
-    'enableTranslate',
-    'enableCodeTranslation',
-    'enablePasswordVault',
-    'enableWebDAV'
-  ]
-
   // 构建新设置对象
   const newSettings = { ...pluginSample.settings }
-  allFeatureSettings.forEach(key => {
+  ALL_FEATURE_SETTINGS.forEach(key => {
     newSettings[key] = enabled
   })
 
@@ -247,7 +212,6 @@ async function handleToggleAllFeatures(plugin: Plugin, enabled: boolean) {
       3000,
       'info'
     )
-    // 使用思源 API 刷新面板
     await handleRefresh(plugin)
   } else {
     showMessage((plugin.i18n as any).saveFailed || '保存失败', 3000, 'error')

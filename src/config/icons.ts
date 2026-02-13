@@ -366,6 +366,9 @@ export const COMMON_ICONS = {
   },
   download: {
     icon: 'mdi:download'
+  },
+  openInNew: {
+    icon: 'mdi:open-in-new'
   }
 } as const
 

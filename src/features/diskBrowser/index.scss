@@ -30,100 +30,13 @@
   gap: 8px;
 }
 
-// 缓存信息基础样式
-%cache-info-base {
-  background: var(--b3-theme-primary-lightest);
-  color: var(--b3-theme-primary);
-  white-space: nowrap;
-  transition: all 0.2s ease;
-
-  &.expired {
-    background: var(--b3-theme-error-lighter);
-    color: var(--b3-theme-error);
-  }
-}
-
-.cache-info {
-  @extend %cache-info-base;
-  font-size: 11px;
-  padding: 3px 8px;
-  border-radius: 4px;
-
-  &.expired {
-    animation: pulse 2s ease-in-out infinite;
-  }
-}
-
-.cache-info-small {
-  @extend %cache-info-base;
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 3px;
-}
-
-// 图标按钮基础样式
-%icon-btn-base {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--b3-theme-on-surface);
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover:not(:disabled) {
-    background: var(--b3-theme-surface-lighter);
-  }
-}
-
-// 带旋转动画的刷新按钮
-@mixin refresh-btn-disabled {
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-
-    svg {
-      animation: spin 1s linear infinite;
-    }
-  }
-}
-
-.refresh-btn-small {
-  @extend %icon-btn-base;
-  @include refresh-btn-disabled;
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-}
-
-.refresh-folder-btn,
-.copy-path-btn,
-.back-btn {
-  @extend %icon-btn-base;
-  width: 28px;
-  height: 28px;
-}
-
-.refresh-folder-btn {
-  @include refresh-btn-disabled;
-}
-
-.copy-path-btn,
-.back-btn {
-  &:hover {
-    color: var(--b3-theme-primary);
-  }
-}
-
-// 横向磁盘列表 - 优化为两行显示
+// 横向磁盘列表
 .disk-list-horizontal {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   padding: 12px;
-  max-height: 180px; // 限制最大高度，确保最多两行
+  max-height: 180px;
   overflow-y: auto;
   overflow-x: hidden;
   flex-shrink: 0;
@@ -144,6 +57,92 @@
   }
 }
 
+// 磁盘卡片
+.disk-card {
+  width: calc(25% - 6px);
+  min-width: 120px;
+  max-width: 180px;
+  flex-shrink: 0;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+}
+
+.disk-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.disk-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: var(--b3-theme-primary-lightest);
+  color: var(--b3-theme-primary);
+}
+
+.disk-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.disk-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--b3-theme-on-background);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.disk-label {
+  font-size: 11px;
+  color: var(--b3-theme-on-surface-light);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 6px;
+  padding: 0 4px;
+  height: 14px;
+}
+
+.expand-indicator {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--b3-theme-on-surface-light);
+  transition: all 0.2s ease;
+}
+
+.disk-usage-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--b3-theme-surface-lighter);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.usage-fill {
+  height: 100%;
+  background: var(--b3-theme-primary);
+  transition: width 0.3s ease;
+}
+
+.disk-space {
+  font-size: 11px;
+  color: var(--b3-theme-on-surface-light);
+  text-align: center;
+  white-space: nowrap;
+}
+
 // 收藏夹区域
 .favorites-section {
   border-top: 1px solid var(--b3-theme-surface-lighter);
@@ -161,25 +160,9 @@
   font-size: 11px;
   font-weight: 600;
 
-  svg {
-    color: var(--b3-theme-primary);
-    flex-shrink: 0;
-  }
-
   span {
     flex: 1;
   }
-}
-
-.favorites-count {
-  padding: 2px 6px;
-  border-radius: 10px;
-  background: var(--b3-theme-primary-lightest);
-  color: var(--b3-theme-primary);
-  font-size: 10px;
-  font-weight: 600;
-  min-width: 18px;
-  text-align: center;
 }
 
 .favorites-list-horizontal {
@@ -253,129 +236,13 @@
 }
 
 .favorite-remove-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border: none;
-  border-radius: 3px;
-  background: transparent;
-  color: var(--b3-theme-on-surface-light);
-  cursor: pointer;
   opacity: 0;
   transition: all 0.2s ease;
   flex-shrink: 0;
 
   &:hover {
-    background: var(--b3-theme-error);
-    color: white;
-    transform: scale(1.1);
+    color: var(--b3-theme-error) !important;
   }
-}
-
-.disk-card {
-  display: flex;
-  flex-direction: column;
-  width: calc(25% - 6px); // 每行4个，减去gap
-  min-width: 120px;
-  max-width: 180px;
-  padding: 10px;
-  border-radius: 8px;
-  background: var(--b3-theme-surface);
-  border: 2px solid transparent;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-
-  &:hover {
-    background: var(--b3-theme-surface-lighter);
-    transform: translateY(-2px);
-  }
-
-  &.active {
-    border-color: var(--b3-theme-primary);
-    background: var(--b3-theme-primary-lightest);
-  }
-
-  &.expanded {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
-}
-
-.disk-card-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.disk-icon {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  background: var(--b3-theme-primary-lightest);
-  color: var(--b3-theme-primary);
-}
-
-.disk-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.disk-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--b3-theme-on-background);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.disk-label {
-  font-size: 11px;
-  color: var(--b3-theme-on-surface-light);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-bottom: 6px;
-  padding: 0 4px;
-  height: 14px; // 固定高度，确保布局一致
-}
-
-.expand-indicator {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--b3-theme-on-surface-light);
-  transition: all 0.2s ease;
-}
-
-.disk-usage-bar {
-  width: 100%;
-  height: 4px;
-  background: var(--b3-theme-surface-lighter);
-  border-radius: 2px;
-  overflow: hidden;
-  margin-bottom: 6px;
-}
-
-.usage-fill {
-  height: 100%;
-  background: var(--b3-theme-primary);
-  transition: width 0.3s ease;
-}
-
-.disk-space {
-  font-size: 11px;
-  color: var(--b3-theme-on-surface-light);
-  text-align: center;
-  white-space: nowrap;
 }
 
 // 文件夹列表区域
@@ -416,25 +283,10 @@
 }
 
 .breadcrumb-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--b3-theme-on-surface);
   font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
 
   &:hover {
-    background: var(--b3-theme-surface-lighter);
     color: var(--b3-theme-primary);
-  }
-
-  svg {
-    flex-shrink: 0;
   }
 }
 
@@ -465,61 +317,10 @@
   }
 }
 
-.back-btn {
-  @extend %icon-btn-base;
-  width: 28px;
-  height: 28px;
-  flex-shrink: 0;
-
-  &:hover {
-    color: var(--b3-theme-primary);
-  }
-}
-
-.item-count {
-  font-size: 11px;
-  padding: 2px 6px;
-  border-radius: 3px;
-  background: var(--b3-theme-surface-lighter);
-  color: var(--b3-theme-on-surface-light);
-  white-space: nowrap;
-}
-
 .folder-header-actions {
   display: flex;
   align-items: center;
   gap: 6px;
-}
-
-.refresh-folder-btn {
-  @include refresh-btn-disabled;
-}
-
-.copy-path-btn {
-  &:hover {
-    color: var(--b3-theme-primary);
-  }
-}
-
-.open-disk-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 4px 8px;
-  height: 28px;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--b3-theme-on-surface);
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: var(--b3-theme-surface-lighter);
-    color: var(--b3-theme-primary);
-  }
 }
 
 .folder-items {
@@ -604,45 +405,12 @@
 }
 
 .folder-action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: 4px;
-  background: var(--b3-theme-surface-lighter);
-  color: var(--b3-theme-on-surface);
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: var(--b3-theme-primary);
-    color: white;
-    transform: scale(1.1);
-  }
-
-  &.favorite-btn {
-    &.is-favorite {
-      background: var(--b3-theme-primary);
-      color: white;
-
-      &:hover {
-        background: var(--b3-theme-error);
-        color: white;
-      }
-    }
-
-    &:not(.is-favorite) {
-      &:hover {
-        background: var(--b3-theme-primary);
-        color: white;
-      }
-    }
+  &.is-favorite {
+    color: var(--b3-theme-primary);
   }
 }
 
-// 空状态和加载状态基础样式
+// 空状态和加载状态
 %center-state-base {
   display: flex;
   flex-direction: column;
@@ -655,7 +423,7 @@
   padding: 60px 20px;
   color: var(--b3-theme-on-surface-light);
 
-  svg {
+  svg, :deep(svg) {
     opacity: 0.3;
     margin-bottom: 16px;
   }
@@ -690,14 +458,5 @@
 @keyframes spin {
   to {
     transform: rotate(360deg);
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
   }
 }

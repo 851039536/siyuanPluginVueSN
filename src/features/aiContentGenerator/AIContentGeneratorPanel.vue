@@ -26,11 +26,11 @@
       </div>
       <div class="header-actions">
         <!-- 设置按钮 -->
-        <button class="btn-icon" @click="toggleSettings" :title="'对话设置'">
-          <svg width="18" height="18" viewBox="0 0 24 24">
+        <Button  variant="ghost" size="small" @click="toggleSettings" :title="'对话设置'">
+          <svg width="18" height="16" viewBox="0 0 24 24">
             <use xlink:href="#iconSettings"></use>
           </svg>
-        </button>
+        </Button>
       </div>
     </div>
 
@@ -54,11 +54,11 @@
               </svg>
             </button>
           </div>
-          <button class="btn-close" @click="toggleSettings">
+          <Button variant="ghost" size="small"  @click="toggleSettings">
             <svg width="14" height="14">
               <use xlink:href="#iconClose"></use>
             </svg>
-          </button>
+          </Button>
         </div>
         <div class="section-content" :class="{ 'collapsed': collapsedSections.settings }">
           <!-- 提示词内容 -->
@@ -72,12 +72,11 @@
                   {{ '系统提示词' }}
                 </label>
               </div>
-              <textarea
+              <Textarea
                 v-model="systemPrompt"
-                class="prompt-input"
                 :placeholder="'输入系统提示词，定义AI的角色和行为...'"
-                rows="5"
-              ></textarea>
+                :rows="10"
+              />
             </div>
 
             <!-- 参数配置 -->
@@ -111,13 +110,12 @@
                   </svg>
                   {{ '最大长度' }}
                 </label>
-                <input
+                <Input
                   type="number"
                   v-model.number="maxTokens"
-                  min="100"
-                  max="50000"
-                  step="100"
-                  class="number-input"
+                  :min="100"
+                  :max="50000"
+                  :step="100"
                 />
               </div>
 
@@ -159,24 +157,24 @@
               </span>
             </div>
             <div class="save-prompt-input-group">
-              <input
+              <Input
                 v-model="newPromptName"
                 type="text"
-                class="prompt-name-input"
                 :placeholder="currentPromptName || '输入配置名称...'"
                 @keydown.enter="saveCurrentPrompt"
                 @focus="onPromptNameFocus"
               />
-              <button
-                class="btn-save-prompt"
+              <Button
                 @click="saveCurrentPrompt"
                 :disabled="!newPromptName.trim() && !currentPromptName"
+                variant="primary"
+                size="small"
               >
                 <svg width="14" height="14">
                   <use xlink:href="#iconCheck"></use>
                 </svg>
                 {{ currentPromptName ? '更新' : '保存' }}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -202,15 +200,15 @@
               </svg>
             </button>
           </div>
-          <button class="btn-close-suggestions" @click="aiSuggestions = null">
+          <Button @click="aiSuggestions = null" variant="ghost" size="small">
             <svg width="12" height="12"><use xlink:href="#iconClose"></use></svg>
-          </button>
+          </Button>
         </div>
         <div class="suggestions-content" :class="{ 'collapsed': collapsedSections.suggestions }">
           <p class="suggestion-text">{{ aiSuggestions }}</p>
-          <button class="btn-apply-suggestions" @click="applySuggestions" :disabled="isGenerating">
+          <Button @click="applySuggestions" :disabled="isGenerating" variant="primary" size="small">
             {{'应用建议优化' }}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -231,9 +229,9 @@
               </svg>
             </button>
           </div>
-          <button class="btn-close-result" @click="plagiarismResult = null">
+          <Button @click="plagiarismResult = null" variant="ghost" size="small">
             <svg width="12" height="12"><use xlink:href="#iconClose"></use></svg>
-          </button>
+          </Button>
         </div>
         <div class="result-content" :class="{ 'collapsed': collapsedSections.plagiarism }">
           <div class="plagiarism-summary">
@@ -280,79 +278,84 @@
             </span>
             <div class="result-actions">
               <!-- 停止生成按钮 -->
-              <button
+              <Button
                 v-if="isGenerating"
-                class="btn-action btn-stop"
                 @click="handleStop"
                 :title="'停止生成'"
+                variant="danger"
+                size="small"
               >
                 <svg width="16" height="16">
                   <use xlink:href="#iconClose"></use>
                 </svg>
                 {{ '停止' }}
-              </button>
-              <button
-                class="btn-action btn-apply"
+              </Button>
+              <Button
                 @click="applyEdit"
                 :disabled="!editTargetDoc || isApplying || isGenerating"
                 :title="'应用编辑'"
+                variant="primary"
+                size="small"
               >
                 <div v-if="isApplying" class="loading-spinner-small"></div>
                 <svg v-else width="16" height="16">
                   <use xlink:href="#iconCheck"></use>
                 </svg>
                 {{ '应用' }}
-              </button>
-              <button
+              </Button>
+              <Button
                 v-if="editTargetDoc && originalContent && generatedContent && originalContent !== generatedContent"
-                class="btn-action btn-diff-mode"
                 @click="showDiffMode = !showDiffMode"
                 :class="{ active: showDiffMode }"
                 :title="showDiffMode ? '返回预览' : '查看差异'"
+                variant="ghost"
+                size="small"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24">
                   <path v-if="!showDiffMode" fill="currentColor" d="M3,13H11V3H3V13M3,21H11V15H3V21M13,21H21V11H13V21M13,3V9H21V3H13Z" />
                   <path v-else fill="currentColor" d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
                 </svg>
                 {{ showDiffMode ? '预览' : '差异' }}
-              </button>
-              <button
-                class="btn-action btn-insert-subdoc"
+              </Button>
+              <Button
                 @click="insertSubDocument"
                 :disabled="!editTargetDoc || isInsertingSubDoc || isGenerating"
                 :title="'插入子文档'"
+                variant="ghost"
+                size="small"
               >
                 <div v-if="isInsertingSubDoc" class="loading-spinner-small"></div>
                 <svg v-else width="16" height="16" viewBox="0 0 24 24">
                   <path fill="currentColor" d="M20,18H4V6H20M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4M13,12H16V15H18V12H21V10H18V7H16V10H13V12Z" />
                 </svg>
                 {{ '子文档' }}
-              </button>
-              <button
+              </Button>
+              <Button
                 v-if="lastEditHistory"
-                class="btn-action btn-undo"
                 @click="undoEdit"
                 :disabled="isUndoing"
                 :title="'撤回编辑'"
+                variant="ghost"
+                size="small"
               >
                 <div v-if="isUndoing" class="loading-spinner-small"></div>
                 <svg v-else width="16" height="16">
                   <use xlink:href="#iconUndo"></use>
                 </svg>
                 {{ '撤回' }}
-              </button>
-              <button class="btn-action" @click="copyContent" :title="'复制Markdown'">
+              </Button>
+              <Button @click="copyContent" :title="'复制Markdown'" variant="ghost" size="small">
                 <svg width="16" height="16">
                   <use xlink:href="#iconCopy"></use>
                 </svg>
                 {{ '复制' }}
-              </button>
-              <button class="btn-action btn-clear" @click="clearContent">
+              </Button>
+              <Button @click="clearContent" variant="ghost" size="small">
                 <svg width="16" height="16">
                   <use xlink:href="#iconTrashcan"></use>
                 </svg>
                 {{ '清除' }}
-              </button>
+              </Button>
             </div>
           </div>
           <div class="result-content">
@@ -363,26 +366,30 @@
               <!-- 差异显示工具栏 -->
               <div class="diff-view-toolbar">
                 <div class="diff-mode-options">
-                  <button
+                  <Button
                     :class="['diff-mode-btn', { active: diffMode === 'split' }]"
                     @click="diffMode = 'split'"
                     title="分栏显示"
+                    variant="ghost"
+                    size="small"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24">
                       <path fill="currentColor" d="M4,4H10V10H4V4M20,4V10H14V4H20M14,20H20V14H14V20M4,14V20H10V14H4Z" />
                     </svg>
                     分栏
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     :class="['diff-mode-btn', { active: diffMode === 'unified' }]"
                     @click="diffMode = 'unified'"
                     title="统一显示"
+                    variant="ghost"
+                    size="small"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24">
                       <path fill="currentColor" d="M2,2V22H22V2H2M20,20H4V4H20V20M8,8H16V10H8V8M8,11H16V13H8V11M8,14H16V16H8V14Z" />
                     </svg>
                     统一
-                  </button>
+                  </Button>
                 </div>
                 <div class="diff-view-info">
                   <span class="diff-label">原文档 vs AI生成</span>
@@ -440,49 +447,49 @@
           </div>
         </div>
         <div class="toolbar-actions" :class="{ 'collapsed': collapsedSections.aiToolbar }">
-          <button class="btn-ai-action" @click="aiEditAction('polish')" :disabled="isGenerating" :title="'AI润色'">
+          <Button  @click="aiEditAction('polish')" :disabled="isGenerating" :title="'AI润色'" variant="ghost" size="small">
             <svg width="14" height="14"><use xlink:href="#iconEdit"></use></svg>
             {{'润色' }}
-          </button>
-          <button class="btn-ai-action" @click="aiEditAction('expand')" :disabled="isGenerating" :title="'扩写内容'">
+          </Button>
+          <Button  @click="aiEditAction('expand')" :disabled="isGenerating" :title="'扩写内容'" variant="ghost" size="small">
             <svg width="14" height="14"><use xlink:href="#iconAdd"></use></svg>
             {{'扩写' }}
-          </button>
-          <button class="btn-ai-action" @click="aiEditAction('condense')" :disabled="isGenerating" :title="'精简内容'">
+          </Button>
+          <Button  @click="aiEditAction('condense')" :disabled="isGenerating" :title="'精简内容'" variant="ghost" size="small">
             <svg width="14" height="14"><use xlink:href="#iconMin"></use></svg>
             {{'精简' }}
-          </button>
-          <button class="btn-ai-action" @click="aiEditAction('fix')" :disabled="isGenerating" :title="'修正错误'">
+          </Button>
+          <Button  @click="aiEditAction('fix')" :disabled="isGenerating" :title="'修正错误'" variant="ghost" size="small">
             <svg width="14" height="14"><use xlink:href="#iconCheck"></use></svg>
             {{'纠错' }}
-          </button>
-          <button class="btn-ai-action" @click="aiEditAction('translate')" :disabled="isGenerating" :title="'翻译文档'">
+          </Button>
+          <Button  @click="aiEditAction('translate')" :disabled="isGenerating" :title="'翻译文档'" variant="ghost" size="small">
             <svg width="14" height="14"><use xlink:href="#iconLanguage"></use></svg>
             {{'翻译' }}
-          </button>
-          <button class="btn-ai-action" @click="aiEditAction('rewrite')" :disabled="isGenerating" :title="'改写文档'">
+          </Button>
+          <Button  @click="aiEditAction('rewrite')" :disabled="isGenerating" :title="'改写文档'" variant="ghost" size="small">
             <svg width="14" height="14"><use xlink:href="#iconRefresh"></use></svg>
             {{'改写' }}
-          </button>
-          <button class="btn-ai-action" @click="aiEditAction('summary')" :disabled="isGenerating" :title="'AI总结文档'">
+          </Button>
+          <Button  @click="aiEditAction('summary')" :disabled="isGenerating" :title="'AI总结文档'" variant="ghost" size="small">
             <svg width="14" height="14" viewBox="0 0 24 24">
               <path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M13,12.5L11.5,14L10,12.5V16H8V12.5L10,14L11.5,12.5L13,14V16H15V12.5L13,12.5Z" />
             </svg>
             {{'总结' }}
-          </button>
-          <button class="btn-ai-action btn-analyze" @click="analyzeDocument" :disabled="isGenerating || isAnalyzing" :title="'AI分析建议'">
+          </Button>
+          <Button @click="analyzeDocument" :disabled="isGenerating || isAnalyzing" :title="'AI分析建议'" variant="ghost" size="small">
             <div v-if="isAnalyzing" class="loading-spinner-tiny"></div>
             <svg v-else width="14" height="14"><use xlink:href="#iconInfo"></use></svg>
             {{'智能分析' }}
-          </button>
-          <button v-if="!isCheckingPlagiarism" class="btn-ai-action btn-plagiarism" @click="checkPlagiarism" :disabled="isGenerating" :title="'AI查重'">
+          </Button>
+          <Button v-if="!isCheckingPlagiarism" @click="checkPlagiarism" :disabled="isGenerating" :title="'AI查重'" variant="ghost" size="small">
             <svg width="14" height="14"><use xlink:href="#iconSearch"></use></svg>
             {{'查重' }}
-          </button>
-          <button v-else class="btn-ai-action btn-stop-plagiarism" @click="handleStop" :title="'停止生成'">
+          </Button>
+          <Button v-else @click="handleStop" :title="'停止生成'" variant="danger" size="small">
             <svg width="14" height="14"><use xlink:href="#iconClose"></use></svg>
             {{'停止' }}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -490,37 +497,35 @@
       <div class="compact-toolbar edit-mode">
         <!-- 提示词选择按钮 -->
         <div class="prompt-selector-wrapper">
-          <button class="btn-prompt-compact" @click="showPromptSelector = !showPromptSelector" :title="currentPromptName || ('选择提示词')">
+          <Button  variant="ghost" size="small" @click="showPromptSelector = !showPromptSelector" :title="currentPromptName || ('选择提示词')">
             <svg width="14" height="14">
               <use xlink:href="#iconList"></use>
             </svg>
             <span v-if="currentPromptName" class="prompt-name-compact">{{ currentPromptName }}</span>
             <span v-else>{{ '提示词' }}</span>
             <span v-if="savedPrompts.length > 0 && !currentPromptName" class="prompt-count-compact">{{ savedPrompts.length }}</span>
-            <button v-if="currentPromptName" class="btn-clear-inline" @click.stop="clearCurrentPrompt" :title="'清除'">
+            <Button v-if="currentPromptName" variant="ghost" size="small"  @click.stop="clearCurrentPrompt" :title="'清除'">
               <svg width="10" height="10">
                 <use xlink:href="#iconClose"></use>
               </svg>
-            </button>
-          </button>
+            </Button>
+          </Button>
 
           <!-- 提示词选择面板 -->
           <div v-if="showPromptSelector" class="prompt-selector-panel">
             <div class="prompt-selector-header">
-              <span>{{'已保存的提示词' }}</span>
-              <button class="btn-close-small" @click="showPromptSelector = false">
+              <Button @click="showPromptSelector = false" variant="ghost" size="small">
                 <svg width="12" height="12">
                   <use xlink:href="#iconClose"></use>
                 </svg>
-              </button>
+              </Button>
             </div>
 
             <!-- 搜索框 -->
             <div v-if="savedPrompts.length > 5" class="prompt-search-wrapper">
-              <input
+              <Input
                 v-model="promptSearchQuery"
                 type="text"
-                class="prompt-search-input"
                 :placeholder="'搜索提示词...'"
               />
             </div>
@@ -540,24 +545,26 @@
                 <div class="prompt-item-header">
                   <span class="prompt-name">{{ prompt.name }}</span>
                   <div class="prompt-item-actions">
-                    <button
-                      class="btn-edit-prompt"
+                    <Button
                       @click.stop="editPrompt(getOriginalIndex(prompt))"
                       :title="'编辑'"
+                      variant="ghost"
+                      size="small"
                     >
                       <svg width="14" height="14">
                         <use xlink:href="#iconEdit"></use>
                       </svg>
-                    </button>
-                    <button
-                      class="btn-delete-prompt"
+                    </Button>
+                    <Button
                       @click.stop="deletePrompt(getOriginalIndex(prompt))"
                       :title="'删除'"
+                      variant="ghost"
+                      size="small"
                     >
                       <svg width="14" height="14">
                         <use xlink:href="#iconTrashcan"></use>
                       </svg>
-                    </button>
+                    </Button>
                   </div>
                 </div>
                 <div class="prompt-item-preview">{{ getPromptPreview(prompt.systemPrompt) }}</div>
@@ -569,23 +576,25 @@
 
               <!-- 分页控制 -->
               <div v-if="totalPages > 1" class="prompt-pagination">
-                <button
-                  class="btn-page"
+                <Button
                   @click="currentPage = Math.max(1, currentPage - 1)"
                   :disabled="currentPage === 1"
                   :title="'上一页'"
+                  variant="ghost"
+                  size="small"
                 >
                   ‹
-                </button>
+                </Button>
                 <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
-                <button
-                  class="btn-page"
+                <Button
                   @click="currentPage = Math.min(totalPages, currentPage + 1)"
                   :disabled="currentPage === totalPages"
                   :title="'下一页'"
+                  variant="ghost"
+                  size="small"
                 >
                   ›
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -593,7 +602,7 @@
 
         <!-- 目标文档选择 -->
         <div class="doc-selector-wrapper">
-          <button class="btn-doc-compact" @click="selectTargetDocument" :title="editTargetDoc ? editTargetDoc.title : ('选择文档')">
+          <Button  variant="ghost" size="small" @click="selectTargetDocument" :title="editTargetDoc ? editTargetDoc.title : ('选择文档')">
             <svg width="14" height="14">
               <use xlink:href="#iconFile"></use>
             </svg>
@@ -603,58 +612,54 @@
               <span v-if="autoLoadEnabled && lastAutoLoadDocId === editTargetDoc.id" class="auto-badge" title="自动加载">自动</span>
             </span>
             <span v-else>{{ '选择文档' }}</span>
-            <button v-if="editTargetDoc" class="btn-clear-inline" @click.stop="clearTargetDocument" :title="'清除'">
+            <Button v-if="editTargetDoc" variant="ghost" size="small"  @click.stop="clearTargetDocument" :title="'清除'">
               <svg width="10" height="10">
                 <use xlink:href="#iconClose"></use>
               </svg>
-            </button>
-          </button>
+            </Button>
+          </Button>
           <!-- 自动加载开关 -->
-          <button
-            class="btn-auto-load"
-            @click="autoLoadEnabled = !autoLoadEnabled"
-            :class="{ 'active': autoLoadEnabled }"
+          <Switch
+            v-model="autoLoadEnabled"
             :title="autoLoadEnabled ? '自动加载已开启' : '自动加载已关闭'"
-          >
-            <svg width="12" height="12">
-              <use :xlink:href="autoLoadEnabled ? '#iconFocus' : '#iconPause'"></use>
-            </svg>
-          </button>
+          />
         </div>
 
         <!-- 编辑模式：自定义输入框 -->
-        <textarea
+        <Textarea
           v-if="editTargetDoc"
           v-model="editCustomInput"
-          class="user-input-compact"
           :placeholder="'输入编辑指令...'"
-          rows="1"
-          @keydown.ctrl.enter="handleCustomEdit"
+          :rows="1"
+          :autosize="true"
           :disabled="isGenerating"
-        ></textarea>
+          @keydown.ctrl.enter="handleCustomEdit"
+        />
 
         <!-- 执行/停止按钮 -->
-        <button
+        <Button
           v-if="!isGenerating && editTargetDoc"
-          class="btn-generate-compact"
           @click="handleCustomEdit"
           :disabled="!editCustomInput.trim() && !currentPromptName"
           :title="!editCustomInput.trim() && currentPromptName ? '使用当前提示词生成' : '执行'"
+          variant="primary"
+          size="small"
         >
           <svg width="16" height="16">
             <use xlink:href="#iconSparkles"></use>
           </svg>
-        </button>
-        <button
+        </Button>
+        <Button
           v-else-if="isGenerating"
-          class="btn-stop-compact"
           @click="handleStop"
           :title="'停止生成'"
+          variant="danger"
+          size="small"
         >
           <svg width="16" height="16">
             <use xlink:href="#iconClose"></use>
           </svg>
-        </button>
+        </Button>
       </div>
     </div>
 
@@ -662,7 +667,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted,  nextTick } from 'vue';
+import { ref, computed, watch, onMounted, nextTick } from 'vue';
 import { showMessage } from 'siyuan';
 import { marked } from 'marked';
 import hljs from 'highlight.js';
@@ -671,6 +676,10 @@ import { Diff } from 'vue-diff';
 import 'vue-diff/dist/index.css';
 import * as api from '@/api';
 import { AIGeneratorStorage, type AIPromptConfig } from './storage';
+import Button from '@/components/Button.vue';
+import Input from '@/components/Input.vue';
+import Textarea from '@/components/Textarea.vue';
+import Switch from '@/components/Switch.vue';
 
 interface Props {
   i18n: any;
@@ -2371,9 +2380,6 @@ watch([systemPrompt, temperature, maxTokens, contextMessageLimit], () => {
   saveSettings();
 });
 
-// 监听当前提示词名称变化（调试用）
-watch(currentPromptName, (newName, oldName) => {
-});
 </script>
 
 <style scoped lang="scss">

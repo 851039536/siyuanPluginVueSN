@@ -1444,13 +1444,10 @@
 
 // AI智能编辑工具栏样式
 .ai-edit-toolbar {
-  padding: 8px 10px;
-  background: linear-gradient(135deg, rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.08) 0%, rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.03) 100%);
+  padding: 6px 8px;
   border: 1px solid rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.15);
   border-radius: 8px;
-  animation: slideDown 0.3s ease-out;
-  margin-bottom: 6px;
-  backdrop-filter: blur(8px);
+  margin-bottom: 4px;
 
   .toolbar-label {
     display: flex;
@@ -1485,7 +1482,6 @@
     font-size: 10px;
     font-weight: 500;
     color: var(--b3-theme-on-background);
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     white-space: nowrap;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 
@@ -1499,7 +1495,6 @@
       background: var(--b3-theme-primary);
       color: var(--b3-theme-on-primary);
       border-color: var(--b3-theme-primary);
-      transform: translateY(-2px);
       box-shadow: 0 3px 8px rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.35);
     }
 
@@ -1563,7 +1558,6 @@
   background: linear-gradient(135deg, var(--b3-theme-surface) 0%, var(--b3-theme-surface-lighter) 100%);
   border: 1px solid var(--b3-theme-primary-lighter);
   border-radius: 6px;
-  animation: slideDown 0.3s ease-out;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   flex-shrink: 0; // 防止面板被压缩
 
@@ -1629,7 +1623,6 @@
       font-size: 11px;
       font-weight: 400;
       color: var(--b3-theme-on-primary);
-      transition: all 0.2s;
 
       &:hover:not(:disabled) {
         transform: translateY(-1px);
@@ -1678,7 +1671,6 @@
       border-radius: 3px;
       cursor: pointer;
       color: var(--b3-theme-on-surface);
-      transition: all 0.2s;
 
       &:hover {
         background: var(--b3-theme-error-lighter);
@@ -1844,7 +1836,6 @@
   max-height: 0;
   overflow: hidden;
   opacity: 0;
-  transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
   margin-top: 0;
   padding-top: 0;
   padding-bottom: 0;
@@ -1853,21 +1844,18 @@
 .suggestions-content:not(.collapsed) {
   max-height: 500px;
   opacity: 1;
-  transition: max-height 0.3s ease-in, opacity 0.3s ease-in;
 }
 
 .result-content.collapsed {
   max-height: 0;
   overflow: hidden;
   opacity: 0;
-  transition: max-height 0.3s ease-out, opacity 0.3s ease-out, margin 0.3s ease-out;
   margin: 0;
 }
 
 .result-content:not(.collapsed) {
   max-height: 800px;
   opacity: 1;
-  transition: max-height 0.3s ease-in, opacity 0.3s ease-in;
 }
 
 // 差异显示模式样式
@@ -1902,7 +1890,6 @@
     color: var(--b3-theme-on-background);
     border-radius: 4px;
     cursor: pointer;
-    transition: all 0.2s;
     font-size: 11px;
     font-weight: 400;
 

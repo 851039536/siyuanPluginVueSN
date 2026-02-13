@@ -70,44 +70,15 @@
         </div>
       </div>
 
-      <!-- AI查重结果面板 -->
-      <div v-if="plagiarismResult" class="plagiarism-result-panel">
-        <div class="result-header">
-          <div class="section-title-wrapper">
-            <svg width="16" height="16"><use xlink:href="#iconSearch"></use></svg>
-            <span>{{'AI查重结果' }}</span>
-            <Button
-              :class="['btn-collapse', { 'collapsed': collapsedSections.plagiarism }]"
-              @click="toggleCollapse('plagiarism')"
-              :title="collapsedSections.plagiarism ? '展开结果' : '折叠结果'"
-              variant="ghost"
-              size="small"
-            >
-              <svg width="14" height="14" class="collapse-icon">
-                <use :xlink:href="collapsedSections.plagiarism ? '#iconRight' : '#iconDown'"></use>
-              </svg>
-            </Button>
-          </div>
-          <Button @click="plagiarismResult = null" variant="ghost" size="small">
-            <svg width="12" height="12"><use xlink:href="#iconClose"></use></svg>
-          </Button>
-        </div>
-        <div class="result-content" :class="{ 'collapsed': collapsedSections.plagiarism }">
-          <div class="plagiarism-summary">
-            <div class="summary-item" :class="plagiarismResult.riskLevel === 'low' ? 'low-risk' : plagiarismResult.riskLevel === 'medium' ? 'medium-risk' : 'high-risk'">
-              <span class="summary-label">{{'风险等级' }}:</span>
-              <span class="summary-value">{{ getRiskLevelText(plagiarismResult.riskLevel) }}</span>
-            </div>
-            <div class="summary-item">
-              <span class="summary-label">{{ '相似度' }}:</span>
-              <span class="summary-value">{{ plagiarismResult.similarityRate }}%</span>
-            </div>
-          </div>
-          <div class="plagiarism-details">
-            <div class="detail-text markdown-preview selectable-content" v-html="renderPlagiarismMarkdown"></div>
-          </div>
-        </div>
-      </div>
+    <!-- AI查重结果面板 -->
+    <PlagiarismResultPanel
+      v-if="plagiarismResult"
+      :plagiarismResult="plagiarismResult"
+      :collapsed="collapsedSections.plagiarism"
+      :renderedHtml="renderPlagiarismMarkdown"
+      @toggle-collapse="toggleCollapse('plagiarism')"
+      @close="plagiarismResult = null"
+    />
 
       <!-- 主内容显示区域 -->
       <div class="main-content-area">
@@ -538,6 +509,7 @@ import * as api from '@/api';
 import { AIGeneratorStorage, type AIPromptConfig } from './storage';
 import PanelHeader from './components/PanelHeader.vue';
 import SettingsPanel from './components/SettingsPanel.vue';
+import PlagiarismResultPanel from './components/PlagiarismResultPanel.vue';
 import Button from '@/components/Button.vue';
 import Input from '@/components/Input.vue';
 import Textarea from '@/components/Textarea.vue';
@@ -1862,14 +1834,7 @@ const detectSimilarityRate = (text: string): number => {
 /**
  * 获取风险等级文本
  */
-const getRiskLevelText = (riskLevel: string): string => {
-  const riskLevelMap: Record<string, string> = {
-    low: '低风险',
-    medium: '中风险',
-    high: '高风险'
-  };
-  return riskLevelMap[riskLevel] || riskLevel;
-};
+
 
 /**
  * 插入子文档功能

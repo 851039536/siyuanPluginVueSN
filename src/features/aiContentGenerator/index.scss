@@ -382,14 +382,7 @@
 
 // 底部输入区域（新布局：在底部）
 .bottom-input-section {
-  border-top: 1px solid var(--b3-theme-surface-lighter);
-  background: linear-gradient(to top, var(--b3-theme-surface) 0%, var(--b3-theme-surface-lighter) 100%);
-  padding: 10px 12px 12px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex-shrink: 0; // 防止底部输入区域被压缩
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
+  padding: 4px ;
 }
 
 .input-section {

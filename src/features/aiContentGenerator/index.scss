@@ -1,4 +1,39 @@
 // AI内容生成器面板样式 - 优化间距和字体
+
+// 通用混合宏
+@mixin no-animation {
+  animation: none !important;
+  transition: none !important;
+}
+
+@mixin base-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+  color: var(--b3-theme-on-surface);
+  @include no-animation;
+}
+
+@mixin collapsed-state {
+  max-height: 0 !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
+  margin: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  @include no-animation;
+}
+
+@mixin expanded-state($max-height: 2000px) {
+  max-height: $max-height !important;
+  opacity: 1 !important;
+  @include no-animation;
+}
+
 .ai-content-panel {
   display: flex;
   flex-direction: column;
@@ -40,19 +75,16 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  animation: fadeIn 0.2s ease-out;
 
   .drag-overlay-content {
     text-align: center;
     color: var(--b3-theme-on-primary);
-    animation: scaleIn 0.3s ease-out;
 
     svg {
       width: 48px;
       height: 48px;
       margin-bottom: 16px;
       color: var(--b3-theme-on-primary);
-      animation: bounce 1s ease-in-out infinite;
     }
 
     .drag-text {
@@ -71,36 +103,6 @@
   }
 }
 
-// 拖拽动画
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes scaleIn {
-  from {
-    transform: scale(0.8);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-@keyframes bounce {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
 // 折叠功能相关样式
 .section-title-wrapper {
   display: flex;
@@ -110,19 +112,11 @@
 }
 
 .btn-collapse {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  @include base-button;
   width: 20px;
   height: 20px;
   padding: 0;
-  background: transparent;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  color: var(--b3-theme-on-surface);
   opacity: 0.6;
-  transition: all 0.2s;
 
   &:hover {
     opacity: 1;
@@ -130,8 +124,6 @@
   }
 
   .collapse-icon {
-    transition: transform 0.3s ease;
-
     svg {
       width: 14px;
       height: 14px;
@@ -143,35 +135,19 @@
   }
 }
 
-// 折叠内容的动画效果
-.section-content.collapsed {
-  max-height: 0;
-  overflow: hidden;
-  opacity: 0;
-  transition: max-height 0.3s ease-out, opacity 0.3s ease-out, padding 0.3s ease-out;
-  padding-top: 0;
-  padding-bottom: 0;
+// 折叠内容样式合并
+.section-content, .toolbar-actions, .suggestions-content, .result-content {
+  &.collapsed {
+    @include collapsed-state;
+  }
 }
 
 .section-content:not(.collapsed) {
-  max-height: 2000px;
-  opacity: 1;
-  transition: max-height 0.3s ease-in, opacity 0.3s ease-in;
-}
-
-// 工具栏动作区域折叠样式
-.toolbar-actions.collapsed {
-  max-height: 0;
-  overflow: hidden;
-  opacity: 0;
-  transition: max-height 0.3s ease-out, opacity 0.3s ease-out, margin 0.3s ease-out;
-  margin: 0;
+  @include expanded-state(2000px);
 }
 
 .toolbar-actions:not(.collapsed) {
-  max-height: 200px;
-  opacity: 1;
-  transition: max-height 0.3s ease-in, opacity 0.3s ease-in;
+  @include expanded-state(200px);
 }
 
 .panel-header {
@@ -195,13 +171,8 @@
 }
 
 .btn-icon {
+  @include base-button;
   padding: 5px;
-  background: transparent;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  color: var(--b3-theme-on-surface);
-  transition: all 0.2s;
 
   &:hover {
     background: var(--b3-theme-surface-lighter);
@@ -216,19 +187,8 @@
 .settings-panel {
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
   background: var(--b3-theme-surface-lighter);
-  animation: slideDown 0.3s ease-out;
 }
 
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
 .panel-section {
   padding: 6px 10px;
@@ -250,19 +210,15 @@
 }
 
 .btn-close {
+  @include base-button;
   padding: 3px;
-  background: transparent;
-  border: none;
   border-radius: 3px;
-  cursor: pointer;
-  color: var(--b3-theme-on-surface);
-  transition: all 0.2s;
 
   &:hover {
     background: var(--b3-theme-error-lighter);
-    transform: rotate(90deg);
   }
 }
+
 
 .section-content {
   display: flex;
@@ -354,7 +310,6 @@
   line-height: 1.4;
   resize: vertical;
   outline: none;
-  transition: all 0.2s;
   font-weight: 400;
 
   &:focus {
@@ -362,6 +317,7 @@
     box-shadow: 0 0 0 1px rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.1);
   }
 }
+
 
 .slider {
   width: 100%;
@@ -457,9 +413,9 @@
     padding: 6px 3px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.02);
     flex-wrap: wrap;
-    transition: all 0.3s ease;
 
     &:focus-within {
+
       border-color: var(--b3-theme-primary);
       box-shadow: 0 2px 12px rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.15), 0 0 0 1px rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.1);
     }
@@ -515,7 +471,6 @@
     font-weight: 500;
     color: var(--b3-theme-on-surface);
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     white-space: nowrap;
     min-width: 120px;
     max-width: 300px;
@@ -527,6 +482,7 @@
 
     // 提示词选中状态的样式增强
     &:has(.prompt-name-compact) {
+
       background: linear-gradient(135deg, rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.1) 0%, var(--b3-theme-surface-light) 100%);
       border-color: var(--b3-theme-primary-light);
       box-shadow: 0 0 0 1px rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.1);
@@ -540,12 +496,11 @@
       border-color: var(--b3-theme-primary);
       background: linear-gradient(135deg, var(--b3-theme-primary-lighter) 0%, var(--b3-theme-surface-light) 100%);
       box-shadow: 0 2px 6px rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.2);
-      transform: translateY(-1px);
     }
 
     &:active {
-      transform: translateY(0);
     }
+
 
     svg {
       flex-shrink: 0;
@@ -642,7 +597,6 @@
       border: 1px solid var(--b3-theme-surface-light);
       border-radius: 6px;
       cursor: pointer;
-      transition: all 0.2s;
       color: var(--b3-theme-on-surface);
       opacity: 0.5;
       flex-shrink: 0;
@@ -657,10 +611,6 @@
         background: var(--b3-theme-primary-light);
         border-color: var(--b3-theme-primary);
         color: var(--b3-theme-primary);
-
-        svg {
-          animation: pulse 2s ease-in-out infinite;
-        }
       }
 
       svg {
@@ -670,14 +620,6 @@
     }
   }
 
-  @keyframes pulse {
-    0%, 100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.6;
-    }
-  }
 
   // 清除按钮（内联）
   .btn-clear-inline {
@@ -696,16 +638,15 @@
     cursor: pointer;
     color: var(--b3-theme-on-surface);
     opacity: 0.4;
-    transition: all 0.2s;
     z-index: 2;
 
     &:hover {
       opacity: 1;
       background: var(--b3-theme-error-lighter);
       color: var(--b3-theme-error);
-      transform: translateY(-50%) scale(1.1);
     }
   }
+
 
   // 按钮悬停时显示清除按钮
   .btn-prompt-compact:hover .btn-clear-inline,
@@ -726,7 +667,6 @@
     line-height: 1.4;
     resize: none;
     outline: none;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     font-weight: 400;
 
     &:focus {
@@ -734,6 +674,7 @@
       box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.1);
       background: var(--b3-theme-surface);
     }
+
 
     &::placeholder {
       color: var(--b3-theme-on-surface);
@@ -754,7 +695,6 @@
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 2px 6px rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.3);
 
     svg {
@@ -765,12 +705,10 @@
     }
 
     &:hover:not(:disabled) {
-      transform: translateY(-2px) scale(1.05);
       box-shadow: 0 4px 12px rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.4);
     }
 
     &:active:not(:disabled) {
-      transform: translateY(0) scale(1);
     }
 
     &:disabled {
@@ -793,7 +731,6 @@
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 2px 6px rgba(var(--b3-theme-error-rgb, 239, 68, 68), 0.3);
 
     svg {
@@ -804,15 +741,14 @@
     }
 
     &:hover {
-      transform: translateY(-2px) scale(1.05);
       box-shadow: 0 4px 12px rgba(var(--b3-theme-error-rgb, 239, 68, 68), 0.4);
     }
 
     &:active {
-      transform: translateY(0) scale(1);
     }
   }
 }
+
 
 .prompt-selector-panel {
   position: absolute;
@@ -828,7 +764,6 @@
   max-height: 400px;
   display: flex;
   flex-direction: column;
-  animation: slideUp 0.2s ease-out;
 }
 
 @keyframes slideUp {
@@ -841,6 +776,7 @@
     transform: translateY(0);
   }
 }
+
 
 .prompt-selector-header {
   display: flex;
@@ -892,12 +828,12 @@
   font-size: 11px;
   font-weight: 400;
   outline: none;
-  transition: all 0.2s;
 
   &:focus {
     border-color: var(--b3-theme-primary);
     background: var(--b3-theme-background);
   }
+
 
   &::placeholder {
     color: var(--b3-theme-on-surface);
@@ -931,13 +867,13 @@
   color: var(--b3-theme-on-surface);
   font-size: 12px;
   font-weight: 400;
-  transition: all 0.2s;
 
   &:hover:not(:disabled) {
     background: var(--b3-theme-primary);
     color: var(--b3-theme-on-primary);
     border-color: var(--b3-theme-primary);
   }
+
 
   &:disabled {
     opacity: 0.4;
@@ -959,13 +895,12 @@
   border: 1px solid var(--b3-theme-surface-lighter);
   border-radius: 4px;
   cursor: pointer;
-  transition: all 0.2s;
 
   &:hover {
     border-color: var(--b3-theme-primary);
     background: var(--b3-theme-surface-light);
-    transform: translateX(2px);
   }
+
 
   &:last-child {
     margin-bottom: 0;
@@ -992,19 +927,16 @@
 
 .btn-edit-prompt,
 .btn-delete-prompt {
+  @include base-button;
   padding: 3px;
-  background: transparent;
-  border: none;
   border-radius: 3px;
-  cursor: pointer;
-  color: var(--b3-theme-on-surface);
   opacity: 0.6;
-  transition: all 0.2s;
 
   &:hover {
     opacity: 1;
   }
 }
+
 
 .btn-edit-prompt:hover {
   background: var(--b3-theme-primary-lighter);
@@ -1081,13 +1013,13 @@
   font-size: 11px;
   font-weight: 400;
   outline: none;
-  transition: all 0.2s;
 
   &:focus {
     border-color: var(--b3-theme-primary);
     box-shadow: 0 0 0 1px rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.1);
   }
 }
+
 
 .btn-save-prompt {
   display: flex;
@@ -1101,12 +1033,10 @@
   font-size: 11px;
   font-weight: 400;
   cursor: pointer;
-  transition: all 0.2s;
   white-space: nowrap;
 
   &:hover:not(:disabled) {
     opacity: 0.9;
-    transform: translateY(-1px);
   }
 
   &:disabled {
@@ -1114,6 +1044,7 @@
     cursor: not-allowed;
   }
 }
+
 
 .loading-state,
 .error-state,

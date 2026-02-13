@@ -406,7 +406,6 @@
             <span v-if="editTargetDoc" class="doc-name-compact">
               {{ editTargetDoc.title }}
               <Tag v-if="editTargetDoc.isBlock" size="small" variant="primary" title="块内容">块</Tag>
-              <Tag v-if="autoLoadEnabled && lastAutoLoadDocId === editTargetDoc.id" size="small" variant="success" title="自动加载">自动</Tag>
             </span>
             <span v-else>{{ '选择文档' }}</span>
             <Button v-if="editTargetDoc" variant="ghost" size="small"  @click.stop="clearTargetDocument" :title="'清除'">
@@ -415,11 +414,6 @@
               </svg>
             </Button>
           </Button>
-          <!-- 自动加载开关 -->
-          <Switch
-            v-model="autoLoadEnabled"
-            :title="autoLoadEnabled ? '自动加载已开启' : '自动加载已关闭'"
-          />
         </div>
 
         <!-- 编辑模式：自定义输入框 -->
@@ -464,7 +458,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, computed, watch, onMounted, nextTick } from 'vue';
 import { showMessage } from 'siyuan';
 import { marked } from 'marked';
 import hljs from 'highlight.js';
@@ -479,7 +473,6 @@ import PlagiarismResultPanel from './components/PlagiarismResultPanel.vue';
 import Button from '@/components/Button.vue';
 import Input from '@/components/Input.vue';
 import Textarea from '@/components/Textarea.vue';
-import Switch from '@/components/Switch.vue';
 import Tag from '@/components/Tag.vue';
 
 interface Props {
@@ -535,14 +528,6 @@ const originalContent = ref(''); // 文档原始内容
 const isApplying = ref(false);
 const isUndoing = ref(false);
 const isInsertingSubDoc = ref(false); // 插入子文档状态
-
-// 自动获取文档相关状态
-const autoLoadEnabled = ref(false); // 是否启用自动加载
-const lastAutoLoadDocId = ref<string | null>(null); // 上次自动加载的文档ID
-const autoLoadDebounceTimer = ref<number | null>(null); // 防抖定时器
-
-// 自动加载监听器引用（用于清理）
-let autoLoadObserver: MutationObserver | null = null;
 
 // 拖拽相关状态
 const isDragging = ref(false); // 是否正在拖拽
@@ -602,8 +587,6 @@ const currentPage = ref(1);
 
 // ============ 常量定义 ============
 const ITEMS_PER_PAGE = 10; // 每页显示数量
-const AUTO_LOAD_DEBOUNCE_MS = 500; // 自动加载防抖时间
-const AUTO_LOAD_INIT_DELAY_MS = 1000; // 自动加载初始化延迟
 
 // 过滤后的提示词
 const filteredPrompts = computed(() => {
@@ -755,80 +738,6 @@ const getCurrentDocId = async (): Promise<string | null> => {
 const getActiveDocId = (): string | null => {
   const protyle = document.querySelector('.layout__wnd--active .protyle:not(.fn__none)');
   return protyle?.querySelector('.protyle-background')?.getAttribute('data-node-id') || null;
-};
-
-/**
- * 自动加载当前文档（带防抖）
- */
-const autoLoadCurrentDoc = async () => {
-  if (!autoLoadEnabled.value) return;
-
-  // 清除之前的定时器
-  if (autoLoadDebounceTimer.value) {
-    clearTimeout(autoLoadDebounceTimer.value);
-  }
-
-  // 防抖：延迟执行
-  autoLoadDebounceTimer.value = window.setTimeout(async () => {
-    const docId = getActiveDocId();
-    if (!docId) return;
-
-    // 如果和上次加载的文档相同，则跳过
-    if (lastAutoLoadDocId.value === docId) return;
-
-    // 如果用户正在生成内容或手动选择了文档，则不自动切换
-    if (isGenerating.value || (editTargetDoc.value && editTargetDoc.value.id !== docId)) {
-      return;
-    }
-    await loadTargetDocument(docId);
-    lastAutoLoadDocId.value = docId;
-  }, AUTO_LOAD_DEBOUNCE_MS);
-};
-
-/**
- * 启动自动加载监听
- */
-const startAutoLoadCurrentDoc = () => {
-  // 监听窗口激活事件
-  document.addEventListener('click', autoLoadCurrentDoc);
-
-  // 监听标签页切换（通过 MutationObserver 监听 DOM 变化）
-  autoLoadObserver = new MutationObserver(() => {
-    autoLoadCurrentDoc();
-  });
-
-  // 观察布局变化
-  const layoutEl = document.querySelector('.layout');
-  if (layoutEl) {
-    autoLoadObserver.observe(layoutEl, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['class']
-    });
-  }
-
-  // 初始加载当前文档
-  setTimeout(() => {
-    autoLoadCurrentDoc();
-  }, AUTO_LOAD_INIT_DELAY_MS);
-};
-
-/**
- * 停止自动加载监听（清理函数）
- */
-const stopAutoLoadCurrentDoc = () => {
-  document.removeEventListener('click', autoLoadCurrentDoc);
-  
-  if (autoLoadObserver) {
-    autoLoadObserver.disconnect();
-    autoLoadObserver = null;
-  }
-  
-  if (autoLoadDebounceTimer.value) {
-    clearTimeout(autoLoadDebounceTimer.value);
-    autoLoadDebounceTimer.value = null;
-  }
 };
 
 /**
@@ -2029,17 +1938,6 @@ onMounted(async () => {
     await loadPromptsFromStorage();
     await loadSettings();
     await loadCollapsedSections();
-  }
-
-  // 启动自动加载当前文档
-  startAutoLoadCurrentDoc();
-});
-
-// 组件卸载时清理资源
-onUnmounted(() => {
-  stopAutoLoadCurrentDoc();
-  if (autoLoadDebounceTimer.value) {
-    clearTimeout(autoLoadDebounceTimer.value);
   }
 });
 

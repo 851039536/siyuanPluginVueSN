@@ -505,9 +505,6 @@ const errorMessage = ref('');
 const showSettings = ref(false);
 const abortController = ref<AbortController | null>(null);
 
-// 输入区域显示状态（已废弃，新布局始终显示底部输入）
-// const showInputSection = ref(true);
-
 // 折叠状态管理
 const collapsedSections = ref({
   settings: false,
@@ -717,19 +714,6 @@ const createCustomStreamCallback = (onUpdate: (accumulatedContent: string) => vo
     accumulated += chunk;
     onUpdate(accumulated);
   };
-};
-
-/**
- * 获取当前文档ID（包含备用方案）
- */
-const getCurrentDocId = async (): Promise<string | null> => {
-  const currentBlockId = getCurrentBlockId();
-  if (currentBlockId) {
-    return await getDocIdByBlockId(currentBlockId);
-  }
-  // 备用方案：使用激活窗口的文档
-  const protyle = document.querySelector('.layout__wnd--active .protyle:not(.fn__none)');
-  return protyle?.querySelector('.protyle-background')?.getAttribute('data-node-id') || null;
 };
 
 /**
@@ -980,14 +964,6 @@ const detectDragType = async (blockId: string, transfer: DataTransfer): Promise<
 };
 
 /**
- * 关闭设置面板
- */
-const closeSettings = () => {
-  showSettings.value = false;
-};
-
-
-/**
  * 移除Markdown内容中的Frontmatter（YAML元数据）
  * @param content 原始内容
  * @returns 移除frontmatter后的内容
@@ -1131,32 +1107,17 @@ const clearEditState = () => {
   resetEditRelatedState();
 };
 
-/**
- * 统一的编辑状态重置函数
- */
-const resetEditStates = () => {
-  isApplying.value = false;
-  isUndoing.value = false;
-  isInsertingSubDoc.value = false;
-  isCheckingPlagiarism.value = false;
-};
-
-
 // 停止生成
 const handleStop = () => {
   if (abortController.value) {
     abortController.value.abort();
-    // 注意：不在这里重置 abortController.value，让 finally 块处理
-    // 但要重置所有相关状态
-    isGenerating.value = false;
-    resetEditStates();
-    // showMessage('✓ 已停止生成', 2000, 'info');
-  } else {
-    // 如果 abortController 不存在，也强制重置状态
-    isGenerating.value = false;
-    resetEditStates();
-    // showMessage('✓ 已停止生成', 2000, 'info');
   }
+  // 重置所有相关状态
+  isGenerating.value = false;
+  isApplying.value = false;
+  isUndoing.value = false;
+  isInsertingSubDoc.value = false;
+  isCheckingPlagiarism.value = false;
 };
 
 /**
@@ -1243,9 +1204,12 @@ const selectTargetDocument = async () => {
     const protyle = document.querySelector('.layout__wnd--active .protyle:not(.fn__none)');
     let docId = protyle?.querySelector('.protyle-background')?.getAttribute('data-node-id') || null;
 
-    // 如果激活窗口方法失败，再使用getCurrentDocId作为备用方案
+    // 如果激活窗口方法失败，再通过光标位置获取
     if (!docId) {
-      docId = await getCurrentDocId();
+      const currentBlockId = getCurrentBlockId();
+      if (currentBlockId) {
+        docId = await getDocIdByBlockId(currentBlockId);
+      }
     }
 
     if (!docId) {
@@ -1450,7 +1414,7 @@ const aiEditAction = async (action: 'polish' | 'expand' | 'condense' | 'fix' | '
     return;
   }
 
-  closeSettings();
+  showSettings.value = false;
 
   const actionPrompts = {
     polish: '请对以下文档进行润色优化，保持原有结构，提升语言质量和可读性，使表达更加专业、流畅。保持Markdown格式，直接输出优化后的完整文档内容：',
@@ -1497,7 +1461,7 @@ const handleCustomEdit = async () => {
     return;
   }
 
-  closeSettings();
+  showSettings.value = false;
   startGeneration();
 
   try {
@@ -1554,7 +1518,7 @@ const checkPlagiarism = async () => {
     return;
   }
 
-  closeSettings();
+  showSettings.value = false;
   startGeneration();
   isCheckingPlagiarism.value = true;
   plagiarismResult.value = null;
@@ -1657,11 +1621,6 @@ const detectSimilarityRate = (text: string): number => {
   }
   return 0;
 };
-
-/**
- * 获取风险等级文本
- */
-
 
 /**
  * 插入子文档功能

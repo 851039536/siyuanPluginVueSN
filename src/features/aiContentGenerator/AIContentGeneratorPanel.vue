@@ -20,159 +20,23 @@
     </div>
 
     <!-- 顶部工具栏 -->
-    <div class="panel-header">
-      <div class="header-title">
-        <span>{{'AI信息生成' }}</span>
-      </div>
-      <div class="header-actions">
-        <!-- 设置按钮 -->
-        <Button  variant="ghost" size="small" @click="toggleSettings" :title="'对话设置'">
-          <svg width="18" height="16" viewBox="0 0 24 24">
-            <use xlink:href="#iconSettings"></use>
-          </svg>
-        </Button>
-      </div>
-    </div>
+    <PanelHeader @toggle-settings="toggleSettings" />
 
     <!-- 提示词配置面板 -->
-    <div class="settings-panel" v-if="showSettings">
-      <div class="panel-section">
-        <div class="section-header">
-          <div class="section-title-wrapper">
-            <svg width="16" height="16" class="section-icon">
-              <use xlink:href="#iconSparkles"></use>
-            </svg>
-            <span>{{ '提示词配置' }}</span>
-            <Button
-              :class="['btn-collapse', { 'collapsed': collapsedSections.settings }]"
-              @click="toggleCollapse('settings')"
-              :title="collapsedSections.settings ? '展开设置' : '折叠设置'"
-              variant="ghost"
-              size="small"
-            >
-              <svg width="14" height="14" class="collapse-icon">
-                <use :xlink:href="collapsedSections.settings ? '#iconRight' : '#iconDown'"></use>
-              </svg>
-            </Button>
-          </div>
-          <Button variant="ghost" size="small"  @click="toggleSettings">
-            <svg width="14" height="14">
-              <use xlink:href="#iconClose"></use>
-            </svg>
-          </Button>
-        </div>
-        <div class="section-content" :class="{ 'collapsed': collapsedSections.settings }">
-          <!-- 提示词内容 -->
-          <div class="prompt-content-section">
-            <div class="setting-item setting-item-full">
-              <div class="label-row">
-                <label class="setting-label">
-                  <svg width="14" height="14" class="label-icon">
-                    <use xlink:href="#iconEdit"></use>
-                  </svg>
-                  {{ '系统提示词' }}
-                </label>
-              </div>
-              <Textarea
-                v-model="systemPrompt"
-                :placeholder="'输入系统提示词，定义AI的角色和行为...'"
-                :rows="10"
-              />
-            </div>
-
-            <!-- 参数配置 -->
-            <div class="params-grid">
-              <div class="setting-item">
-                <label class="setting-label">
-                  <svg width="12" height="12" class="label-icon">
-                    <use xlink:href="#iconHot"></use>
-                  </svg>
-                  {{ '创造性' }}
-                </label>
-                <Slider
-                  v-model="temperature"
-                  :min="0"
-                  :max="2"
-                  :step="0.1"
-                  :showValue="true"
-                  :showMinMax="true"
-                  :formatValue="v => v.toFixed(1)"
-                  :hint="'精确 - 创造'"
-                />
-              </div>
-
-              <div class="setting-item">
-                <label class="setting-label">
-                  <svg width="12" height="12" class="label-icon">
-                    <use xlink:href="#iconAlignLeft"></use>
-                  </svg>
-                  {{ '最大长度' }}
-                </label>
-                <Input
-                  type="number"
-                  v-model.number="maxTokens"
-                  :min="100"
-                  :max="50000"
-                  :step="100"
-                />
-              </div>
-
-              <div class="setting-item">
-                <label class="setting-label">
-                  <svg width="12" height="12" class="label-icon">
-                    <use xlink:href="#iconList"></use>
-                  </svg>
-                  {{ '上下文' }}
-                </label>
-                <Slider
-                  v-model="contextMessageLimit"
-                  :min="1"
-                  :max="10"
-                  :step="1"
-                  :showValue="true"
-                  :showMinMax="true"
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- 保存操作区域 -->
-          <div class="save-prompt-section">
-            <div class="save-prompt-header">
-              <label class="setting-label">
-                <svg width="14" height="14" class="label-icon">
-                  <use xlink:href="#iconSave"></use>
-                </svg>
-                {{ currentPromptName ? '更新配置' : '保存为新配置' }}
-              </label>
-              <Tag v-if="currentPromptName" size="small" variant="info">
-                {{ currentPromptName }}
-              </Tag>
-            </div>
-            <div class="save-prompt-input-group">
-              <Input
-                v-model="newPromptName"
-                type="text"
-                :placeholder="currentPromptName || '输入配置名称...'"
-                @keydown.enter="saveCurrentPrompt"
-                @focus="onPromptNameFocus"
-              />
-              <Button
-                @click="saveCurrentPrompt"
-                :disabled="!newPromptName.trim() && !currentPromptName"
-                variant="primary"
-                size="small"
-              >
-                <svg width="14" height="14">
-                  <use xlink:href="#iconCheck"></use>
-                </svg>
-                {{ currentPromptName ? '更新' : '保存' }}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <SettingsPanel
+      :showSettings="showSettings"
+      :collapsed="collapsedSections.settings"
+      v-model:systemPrompt="systemPrompt"
+      v-model:temperature="temperature"
+      v-model:maxTokens="maxTokens"
+      v-model:contextMessageLimit="contextMessageLimit"
+      :currentPromptName="currentPromptName"
+      v-model:newPromptName="newPromptName"
+      @toggle-settings="toggleSettings"
+      @toggle-collapse="toggleCollapse('settings')"
+      @save-current-prompt="saveCurrentPrompt"
+      @on-prompt-name-focus="onPromptNameFocus"
+    />
 
     <!-- 内容显示区域（移到上方） -->
     <div class="content-display-section">
@@ -672,11 +536,12 @@ import { Diff } from 'vue-diff';
 import 'vue-diff/dist/index.css';
 import * as api from '@/api';
 import { AIGeneratorStorage, type AIPromptConfig } from './storage';
+import PanelHeader from './components/PanelHeader.vue';
+import SettingsPanel from './components/SettingsPanel.vue';
 import Button from '@/components/Button.vue';
 import Input from '@/components/Input.vue';
 import Textarea from '@/components/Textarea.vue';
 import Switch from '@/components/Switch.vue';
-import Slider from '@/components/Slider.vue';
 import Tag from '@/components/Tag.vue';
 
 interface Props {

@@ -22,7 +22,7 @@
     <!-- 顶部工具栏 -->
     <div class="panel-header">
       <div class="header-title">
-        <span>🤖 {{'AI信息生成' }}</span>
+        <span>{{'AI信息生成' }}</span>
       </div>
       <div class="header-actions">
         <!-- 设置按钮 -->
@@ -43,16 +43,17 @@
               <use xlink:href="#iconSparkles"></use>
             </svg>
             <span>{{ '提示词配置' }}</span>
-            <button
-              class="btn-collapse"
+            <Button
+              :class="['btn-collapse', { 'collapsed': collapsedSections.settings }]"
               @click="toggleCollapse('settings')"
-              :class="{ 'collapsed': collapsedSections.settings }"
               :title="collapsedSections.settings ? '展开设置' : '折叠设置'"
+              variant="ghost"
+              size="small"
             >
               <svg width="14" height="14" class="collapse-icon">
                 <use :xlink:href="collapsedSections.settings ? '#iconRight' : '#iconDown'"></use>
               </svg>
-            </button>
+            </Button>
           </div>
           <Button variant="ghost" size="small"  @click="toggleSettings">
             <svg width="14" height="14">
@@ -87,20 +88,17 @@
                     <use xlink:href="#iconHot"></use>
                   </svg>
                   {{ '创造性' }}
-                  <span class="value-badge">{{ temperature }}</span>
                 </label>
-                <input
-                  type="range"
-                  v-model.number="temperature"
-                  min="0"
-                  max="2"
-                  step="0.1"
-                  class="slider"
+                <Slider
+                  v-model="temperature"
+                  :min="0"
+                  :max="2"
+                  :step="0.1"
+                  :showValue="true"
+                  :showMinMax="true"
+                  :formatValue="v => v.toFixed(1)"
+                  :hint="'精确 - 创造'"
                 />
-                <div class="slider-hint">
-                  <span>{{ '精确' }}</span>
-                  <span>{{ '创造' }}</span>
-                </div>
               </div>
 
               <div class="setting-item">
@@ -125,20 +123,15 @@
                     <use xlink:href="#iconList"></use>
                   </svg>
                   {{ '上下文' }}
-                  <span class="value-badge">{{ contextMessageLimit }}</span>
                 </label>
-                <input
-                  type="range"
-                  v-model.number="contextMessageLimit"
-                  min="1"
-                  max="10"
-                  step="1"
-                  class="slider"
+                <Slider
+                  v-model="contextMessageLimit"
+                  :min="1"
+                  :max="10"
+                  :step="1"
+                  :showValue="true"
+                  :showMinMax="true"
                 />
-                <div class="slider-hint">
-                  <span>1</span>
-                  <span>10</span>
-                </div>
               </div>
             </div>
           </div>
@@ -152,9 +145,9 @@
                 </svg>
                 {{ currentPromptName ? '更新配置' : '保存为新配置' }}
               </label>
-              <span v-if="currentPromptName" class="editing-badge">
+              <Tag v-if="currentPromptName" size="small" variant="info">
                 {{ currentPromptName }}
-              </span>
+              </Tag>
             </div>
             <div class="save-prompt-input-group">
               <Input
@@ -189,16 +182,17 @@
           <div class="section-title-wrapper">
             <svg width="16" height="16"><use xlink:href="#iconLightbulb"></use></svg>
             <span>{{'AI优化建议' }}</span>
-            <button
-              class="btn-collapse"
+            <Button
+              :class="['btn-collapse', { 'collapsed': collapsedSections.suggestions }]"
               @click="toggleCollapse('suggestions')"
-              :class="{ 'collapsed': collapsedSections.suggestions }"
               :title="collapsedSections.suggestions ? '展开建议' : '折叠建议'"
+              variant="ghost"
+              size="small"
             >
               <svg width="14" height="14" class="collapse-icon">
                 <use :xlink:href="collapsedSections.suggestions ? '#iconRight' : '#iconDown'"></use>
               </svg>
-            </button>
+            </Button>
           </div>
           <Button @click="aiSuggestions = null" variant="ghost" size="small">
             <svg width="12" height="12"><use xlink:href="#iconClose"></use></svg>
@@ -218,16 +212,17 @@
           <div class="section-title-wrapper">
             <svg width="16" height="16"><use xlink:href="#iconSearch"></use></svg>
             <span>{{'AI查重结果' }}</span>
-            <button
-              class="btn-collapse"
+            <Button
+              :class="['btn-collapse', { 'collapsed': collapsedSections.plagiarism }]"
               @click="toggleCollapse('plagiarism')"
-              :class="{ 'collapsed': collapsedSections.plagiarism }"
               :title="collapsedSections.plagiarism ? '展开结果' : '折叠结果'"
+              variant="ghost"
+              size="small"
             >
               <svg width="14" height="14" class="collapse-icon">
                 <use :xlink:href="collapsedSections.plagiarism ? '#iconRight' : '#iconDown'"></use>
               </svg>
-            </button>
+            </Button>
           </div>
           <Button @click="plagiarismResult = null" variant="ghost" size="small">
             <svg width="12" height="12"><use xlink:href="#iconClose"></use></svg>
@@ -434,16 +429,17 @@
               <use xlink:href="#iconSparkles"></use>
             </svg>
             <span>{{'AI智能编辑' }}:</span>
-            <button
-              class="btn-collapse"
+            <Button
+              :class="['btn-collapse', { 'collapsed': collapsedSections.aiToolbar }]"
               @click="toggleCollapse('aiToolbar')"
-              :class="{ 'collapsed': collapsedSections.aiToolbar }"
               :title="collapsedSections.aiToolbar ? '展开工具栏' : '折叠工具栏'"
+              variant="ghost"
+              size="small"
             >
               <svg width="14" height="14" class="collapse-icon">
                 <use :xlink:href="collapsedSections.aiToolbar ? '#iconRight' : '#iconDown'"></use>
               </svg>
-            </button>
+            </Button>
           </div>
         </div>
         <div class="toolbar-actions" :class="{ 'collapsed': collapsedSections.aiToolbar }">
@@ -608,8 +604,8 @@
             </svg>
             <span v-if="editTargetDoc" class="doc-name-compact">
               {{ editTargetDoc.title }}
-              <span v-if="editTargetDoc.isBlock" class="block-badge" title="块内容">块</span>
-              <span v-if="autoLoadEnabled && lastAutoLoadDocId === editTargetDoc.id" class="auto-badge" title="自动加载">自动</span>
+              <Tag v-if="editTargetDoc.isBlock" size="small" variant="primary" title="块内容">块</Tag>
+              <Tag v-if="autoLoadEnabled && lastAutoLoadDocId === editTargetDoc.id" size="small" variant="success" title="自动加载">自动</Tag>
             </span>
             <span v-else>{{ '选择文档' }}</span>
             <Button v-if="editTargetDoc" variant="ghost" size="small"  @click.stop="clearTargetDocument" :title="'清除'">
@@ -680,6 +676,8 @@ import Button from '@/components/Button.vue';
 import Input from '@/components/Input.vue';
 import Textarea from '@/components/Textarea.vue';
 import Switch from '@/components/Switch.vue';
+import Slider from '@/components/Slider.vue';
+import Tag from '@/components/Tag.vue';
 
 interface Props {
   i18n: any;

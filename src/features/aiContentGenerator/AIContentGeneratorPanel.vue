@@ -498,7 +498,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, nextTick } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { showMessage } from 'siyuan';
 import { marked } from 'marked';
 import hljs from 'highlight.js';
@@ -576,6 +576,9 @@ const autoLoadEnabled = ref(false); // 是否启用自动加载
 const lastAutoLoadDocId = ref<string | null>(null); // 上次自动加载的文档ID
 const autoLoadDebounceTimer = ref<number | null>(null); // 防抖定时器
 
+// 自动加载监听器引用（用于清理）
+let autoLoadObserver: MutationObserver | null = null;
+
 // 拖拽相关状态
 const isDragging = ref(false); // 是否正在拖拽
 const dragOverType = ref<'block' | 'tab' | 'tree' | null>(null); // 拖拽类型
@@ -633,7 +636,11 @@ const currentPromptName = ref(''); // 当前选中的提示词名称
 // 提示词搜索和分页状态
 const promptSearchQuery = ref('');
 const currentPage = ref(1);
+
+// ============ 常量定义 ============
 const ITEMS_PER_PAGE = 10; // 每页显示数量
+const AUTO_LOAD_DEBOUNCE_MS = 500; // 自动加载防抖时间
+const AUTO_LOAD_INIT_DELAY_MS = 1000; // 自动加载初始化延迟
 
 // 过滤后的提示词
 const filteredPrompts = computed(() => {
@@ -707,13 +714,15 @@ const finishGeneration = () => {
  * 处理生成过程中的错误
  * @returns true 表示是用户取消，调用方应直接返回
  */
-const handleGenerationError = (error: Error, context: string): boolean => {
+const handleGenerationError = (error: Error, context: string, skipMessage = false): boolean => {
   if (error.name === 'AbortError') {
     return true;
   }
   console.error(`${context}失败:`, error);
-  const message = error.message || `${context}失败`;
-  errorMessage.value = message;
+  if (!skipMessage) {
+    const message = error.message || `${context}失败`;
+    errorMessage.value = message;
+  }
   return false;
 };
 
@@ -809,7 +818,7 @@ const autoLoadCurrentDoc = async () => {
     clearTimeout(autoLoadDebounceTimer.value);
   }
 
-  // 防抖：500ms 后执行
+  // 防抖：延迟执行
   autoLoadDebounceTimer.value = window.setTimeout(async () => {
     const docId = getActiveDocId();
     if (!docId) return;
@@ -823,7 +832,7 @@ const autoLoadCurrentDoc = async () => {
     }
     await loadTargetDocument(docId);
     lastAutoLoadDocId.value = docId;
-  }, 500);
+  }, AUTO_LOAD_DEBOUNCE_MS);
 };
 
 /**
@@ -834,14 +843,14 @@ const startAutoLoadCurrentDoc = () => {
   document.addEventListener('click', autoLoadCurrentDoc);
 
   // 监听标签页切换（通过 MutationObserver 监听 DOM 变化）
-  const observer = new MutationObserver(() => {
+  autoLoadObserver = new MutationObserver(() => {
     autoLoadCurrentDoc();
   });
 
   // 观察布局变化
   const layoutEl = document.querySelector('.layout');
   if (layoutEl) {
-    observer.observe(layoutEl, {
+    autoLoadObserver.observe(layoutEl, {
       childList: true,
       subtree: true,
       attributes: true,
@@ -852,7 +861,24 @@ const startAutoLoadCurrentDoc = () => {
   // 初始加载当前文档
   setTimeout(() => {
     autoLoadCurrentDoc();
-  }, 1000);
+  }, AUTO_LOAD_INIT_DELAY_MS);
+};
+
+/**
+ * 停止自动加载监听（清理函数）
+ */
+const stopAutoLoadCurrentDoc = () => {
+  document.removeEventListener('click', autoLoadCurrentDoc);
+  
+  if (autoLoadObserver) {
+    autoLoadObserver.disconnect();
+    autoLoadObserver = null;
+  }
+  
+  if (autoLoadDebounceTimer.value) {
+    clearTimeout(autoLoadDebounceTimer.value);
+    autoLoadDebounceTimer.value = null;
+  }
 };
 
 /**
@@ -910,158 +936,43 @@ const handleDrop = async (e: DragEvent) => {
     return;
   }
 
-  // 尝试所有可能的类型获取 ID
+  // 尝试多种方式提取块 ID
   let blockId: string | null = null;
-  let isBlockDrag = false; // 是否为块拖拽
+  let isBlockDrag = false;
 
-  // 方式 1: 从 dataTransfer.types 中提取块 ID（最准确的方式）
-  // 思源笔记的块拖拽会在 types 中包含块 ID
-  // 格式类似：application/siyuan-gutternodeparagraph​null​20260116135906-7wheger​e:\siyuan2
-  for (const type of transfer.types) {
-
-    // 匹配思源块拖拽的类型格式
-    // application/siyuan-gutternodeparagraph + null + blockId + path
-    const blockIdMatch = type.match(/application\/siyuan-gutternodeparagraph\S+(\d{14}-[a-z0-9]+)/);
-    if (blockIdMatch) {
-      blockId = blockIdMatch[1];
-      isBlockDrag = true;
-      break;
-    }
-
-    // 备用：直接匹配块 ID 格式（14位数字-连字符-小写字母数字）
-    const idMatch = type.match(/(\d{14}-[a-z0-9]{7})/);
-    if (idMatch) {
-      blockId = idMatch[1];
-      isBlockDrag = true;
-      break;
-    }
+  // 方式 1: 从 dataTransfer.types 中提取块 ID
+  const typeResult = extractBlockIdFromTypes(transfer.types);
+  if (typeResult.blockId) {
+    blockId = typeResult.blockId;
+    isBlockDrag = typeResult.isBlockDrag;
   }
 
-  // 方式 2: 如果从 types 提取失败，尝试从数据内容提取
+  // 方式 2: 从数据内容提取
   if (!blockId) {
-    const possibleTypes = ['siyuan/block', 'text/plain', 'text/html', 'Files'];
-
-    for (const type of possibleTypes) {
-      if (transfer.types.includes(type)) {
-        try {
-          const data = transfer.getData(type);
-
-          // 尝试解析 JSON（思源的块拖拽数据）
-          try {
-            const jsonData = JSON.parse(data);
-
-            // 思源笔记的块拖拽数据格式：
-            // 可能是单个块对象：{ id: "xxx", type: "h", ... }
-            // 或者是块数组：[{ id: "xxx", ... }, { id: "yyy", ... }]
-            if (Array.isArray(jsonData)) {
-              // 如果是数组，取第一个块（拖拽多个块时的主块）
-              if (jsonData.length > 0 && jsonData[0].id) {
-                blockId = jsonData[0].id;
-                break;
-              }
-            } else if (jsonData.id) {
-              // 单个块对象
-              blockId = jsonData.id;
-              break;
-            }
-          } catch (jsonError) {
-            // 不是 JSON 格式，继续尝试其他方式
-          }
-
-          // 尝试提取 ID（可能是块 ID 或文档 ID）
-          // JSON 格式
-          const jsonMatch = data.match(/"id":"([^"]+)"/);
-          if (jsonMatch) {
-            // 提取所有匹配的 ID
-            const allIds = data.match(/"id":"([^"]+)"/g);
-            blockId = jsonMatch[1];
-            break;
-          }
-
-          // HTML 格式（思源可能使用）
-          const htmlIdMatch = data.match(/data-node-id="([^"]+)"/);
-          if (htmlIdMatch) {
-            blockId = htmlIdMatch[1];
-            break;
-          }
-        } catch (error) {
-          console.warn(`⚠️ 读取 ${type} 数据失败:`, error);
-        }
-      }
-    }
+    blockId = extractBlockIdFromData(transfer);
   }
 
-  // 方式 2: 从 items 获取（异步）
+  // 方式 3: 从 items 异步获取
   if (!blockId && transfer.items.length > 0) {
-    for (let i = 0; i < transfer.items.length; i++) {
-      const item = transfer.items[i];
-
-      if (item.kind === 'string') {
-        try {
-          const data = await new Promise<string>((resolve) => {
-            item.getAsString(resolve);
-          });
-
-          // 提取 ID
-          const idMatch = data.match(/"id":"([^"]+)"/) || data.match(/data-node-id="([^"]+)"/);
-          if (idMatch) {
-            blockId = idMatch[1];
-            break;
-          }
-        } catch (error) {
-          console.warn('⚠️ 读取 item 数据失败:', error);
-        }
-      }
-    }
+    blockId = await extractBlockIdFromItems(transfer.items);
   }
 
-  // 方式 3: 从当前激活文档获取（备用方案）
+  // 方式 4: 从当前激活文档获取（备用方案）
   if (!blockId) {
     blockId = getActiveDocId();
-    if (blockId) {
-    }
   }
 
   // 根据获取到的 ID 加载内容
   if (blockId) {
-
-    // 检测是否为块拖拽还是文档拖拽
-    // 方法 1: 检查 dataTransfer.types 是否包含 'siyuan/block'
-    if (transfer.types.includes('siyuan/block')) {
-      isBlockDrag = true;
-    } else {
-      // 方法 2: 通过获取块信息，检查 type 是否为文档类型
-      // 在思源笔记中，文档的 type 为 'd'，其他类型（如段落、标题等）为块
-      try {
-        const block = await api.getBlockByID(blockId);
-        if (block) {
-
-          // 如果 type 不是 'd'（文档类型），或者是文档但内容为空（说明可能是拖拽的特定块），则认为是块拖拽
-          // 另外检查 dataTransfer.types 包含的特定类型来判断
-          if (block.type !== 'd') {
-            isBlockDrag = true;
-          } else if (transfer.types.includes('text/html') && transfer.types.includes('text/plain')) {
-            // 如果是文档类型，但拖拽数据包含 HTML 和纯文本，可能是从内容区拖拽的块
-            // 进一步检查：文档根节点的 content 通常为空或较短，而块有内容
-            const data = transfer.getData('text/plain');
-            if (data && data.length > 0 && !data.startsWith('{')) {
-              // 如果有纯文本数据且不是 JSON，很可能是块内容拖拽
-              isBlockDrag = true;
-            }
-          }
-        }
-      } catch (error) {
-        console.warn('⚠️ 检查块类型失败:', error);
-        // 如果检查失败，默认作为文档处理
-      }
+    // 如果还未确定是否为块拖拽，进行检测
+    if (!isBlockDrag) {
+      isBlockDrag = await detectDragType(blockId, transfer);
     }
 
     if (isBlockDrag) {
-      // 块拖拽：只加载块内容
       await loadTargetBlock(blockId);
       showMessage('✓ 已加载块内容', 2000, 'info');
     } else {
-      // 文档拖拽：加载整个文档
       await loadTargetDocument(blockId);
       showMessage('✓ 已加载文档', 2000, 'info');
     }
@@ -1089,6 +1000,124 @@ const getDragText = () => {
     tree: '拖拽文档'
   };
   return typeMap[dragOverType.value || 'block'] || '拖拽文档';
+};
+
+/**
+ * 从 dataTransfer.types 中提取块 ID
+ */
+const extractBlockIdFromTypes = (types: readonly string[]): { blockId: string | null; isBlockDrag: boolean } => {
+  for (const type of types) {
+    // 匹配思源块拖拽的类型格式
+    const blockIdMatch = type.match(/application\/siyuan-gutternodeparagraph\S+(\d{14}-[a-z0-9]+)/);
+    if (blockIdMatch) {
+      return { blockId: blockIdMatch[1], isBlockDrag: true };
+    }
+
+    // 备用：直接匹配块 ID 格式
+    const idMatch = type.match(/(\d{14}-[a-z0-9]{7})/);
+    if (idMatch) {
+      return { blockId: idMatch[1], isBlockDrag: true };
+    }
+  }
+  return { blockId: null, isBlockDrag: false };
+};
+
+/**
+ * 从拖拽数据内容中提取块 ID
+ */
+const extractBlockIdFromData = (transfer: DataTransfer): string | null => {
+  const possibleTypes = ['siyuan/block', 'text/plain', 'text/html', 'Files'];
+
+  for (const type of possibleTypes) {
+    if (transfer.types.includes(type)) {
+      try {
+        const data = transfer.getData(type);
+
+        // 尝试解析 JSON
+        try {
+          const jsonData = JSON.parse(data);
+          if (Array.isArray(jsonData) && jsonData.length > 0 && jsonData[0].id) {
+            return jsonData[0].id;
+          } else if (jsonData.id) {
+            return jsonData.id;
+          }
+        } catch {
+          // 不是 JSON 格式，继续尝试其他方式
+        }
+
+        // 尝试提取 ID（可能是块 ID 或文档 ID）
+        const jsonMatch = data.match(/"id":"([^"]+)"/);
+        if (jsonMatch) {
+          return jsonMatch[1];
+        }
+
+        // HTML 格式
+        const htmlIdMatch = data.match(/data-node-id="([^"]+)"/);
+        if (htmlIdMatch) {
+          return htmlIdMatch[1];
+        }
+      } catch (error) {
+        console.warn(`⚠️ 读取 ${type} 数据失败:`, error);
+      }
+    }
+  }
+  return null;
+};
+
+/**
+ * 异步从 dataTransfer.items 中提取块 ID
+ */
+const extractBlockIdFromItems = async (items: DataTransferItemList): Promise<string | null> => {
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+
+    if (item.kind === 'string') {
+      try {
+        const data = await new Promise<string>((resolve) => {
+          item.getAsString(resolve);
+        });
+
+        const idMatch = data.match(/"id":"([^"]+)"/) || data.match(/data-node-id="([^"]+)"/);
+        if (idMatch) {
+          return idMatch[1];
+        }
+      } catch (error) {
+        console.warn('⚠️ 读取 item 数据失败:', error);
+      }
+    }
+  }
+  return null;
+};
+
+/**
+ * 检测拖拽类型（块还是文档）
+ */
+const detectDragType = async (blockId: string, transfer: DataTransfer): Promise<boolean> => {
+  // 方法 1: 检查 dataTransfer.types 是否包含 'siyuan/block'
+  if (transfer.types.includes('siyuan/block')) {
+    return true;
+  }
+
+  // 方法 2: 通过获取块信息，检查 type 是否为文档类型
+  try {
+    const block = await api.getBlockByID(blockId);
+    if (block) {
+      // 如果 type 不是 'd'（文档类型），则是块拖拽
+      if (block.type !== 'd') {
+        return true;
+      } else if (transfer.types.includes('text/html') && transfer.types.includes('text/plain')) {
+        // 进一步检查：文档根节点的 content 通常为空或较短
+        const data = transfer.getData('text/plain');
+        if (data && data.length > 0 && !data.startsWith('{')) {
+          return true;
+        }
+      }
+    }
+  } catch (error) {
+    console.warn('⚠️ 检查块类型失败:', error);
+  }
+
+  return false;
 };
 
 /**
@@ -1240,9 +1269,7 @@ const loadCollapsedSections = async () => {
 const clearEditState = () => {
   editTargetDoc.value = null;
   originalContent.value = '';
-  editCustomInput.value = ''; // 清理自定义提问输入
-  aiSuggestions.value = null;
-  plagiarismResult.value = null;
+  resetEditRelatedState();
 };
 
 /**
@@ -1374,6 +1401,27 @@ const selectTargetDocument = async () => {
   }
 };
 
+/**
+ * 清理编辑模式相关的状态（通用清理函数）
+ */
+const resetEditRelatedState = () => {
+  editCustomInput.value = '';
+  aiSuggestions.value = null;
+  plagiarismResult.value = null;
+  lastEditHistory.value = null;
+};
+
+/**
+ * 设置目标文档状态
+ */
+const setTargetDocState = (doc: TargetDoc, content: string) => {
+  editTargetDoc.value = doc;
+  originalContent.value = content;
+  generatedContent.value = content;
+  displayedContent.value = content;
+  resetEditRelatedState();
+};
+
 // 加载目标文档
 const loadTargetDocument = async (docId: string) => {
   const result = await loadDocument(docId);
@@ -1382,28 +1430,16 @@ const loadTargetDocument = async (docId: string) => {
   // 移除frontmatter，获取纯净的Markdown内容
   const cleanContent = removeFrontmatter(result.content);
 
-  // 保存文档信息（使用清理后的内容）
-  editTargetDoc.value = {
-    id: docId,
-    title: result.title,
-    content: cleanContent,
-    isBlock: false // 标记为文档
-  };
-
-  // 保存原始内容用于对比（使用清理后的内容）
-  originalContent.value = cleanContent;
-
-  // 将文档内容加载到生成内容区域（使用清理后的内容）
-  generatedContent.value = cleanContent;
-  displayedContent.value = cleanContent;
-
-  // 清理编辑模式相关的状态，确保重新选择文档时显示正确的状态
-  editCustomInput.value = ''; // 清理自定义输入
-  aiSuggestions.value = null; // 清理AI建议
-  plagiarismResult.value = null; // 清理查重结果
-  lastEditHistory.value = null; // 清理编辑历史
-
-  // showMessage(`✓ 已选择文档: ${editTargetDoc.value.title}`, 2000, 'info');
+  // 设置目标文档状态
+  setTargetDocState(
+    {
+      id: docId,
+      title: result.title,
+      content: cleanContent,
+      isBlock: false
+    },
+    cleanContent
+  );
 };
 
 /**
@@ -1411,7 +1447,6 @@ const loadTargetDocument = async (docId: string) => {
  */
 const loadTargetBlock = async (blockId: string) => {
   try {
-
     // 获取块信息
     const block = await api.getBlockByID(blockId);
     if (!block) {
@@ -1444,7 +1479,6 @@ const loadTargetBlock = async (blockId: string) => {
       return;
     }
 
-
     // 获取块所属文档的路径（用于显示）
     const hPath = await api.getHPathByID(block.root_id || blockId);
     const docName = hPath ? hPath.split('/').pop() : '未命名';
@@ -1457,27 +1491,16 @@ const loadTargetBlock = async (blockId: string) => {
     // 移除 frontmatter
     const cleanContent = removeFrontmatter(blockContent);
 
-    // 保存块信息
-    editTargetDoc.value = {
-      id: blockId,
-      title: `${blockTitle} (${docName})`,
-      content: cleanContent,
-      isBlock: true // 标记为块
-    };
-
-    // 保存原始内容用于对比
-    originalContent.value = cleanContent;
-
-    // 将块内容加载到生成内容区域
-    generatedContent.value = cleanContent;
-    displayedContent.value = cleanContent;
-
-    // 清理编辑模式相关的状态
-    editCustomInput.value = '';
-    aiSuggestions.value = null;
-    plagiarismResult.value = null;
-    lastEditHistory.value = null;
-
+    // 设置目标文档状态
+    setTargetDocState(
+      {
+        id: blockId,
+        title: `${blockTitle} (${docName})`,
+        content: cleanContent,
+        isBlock: true
+      },
+      cleanContent
+    );
 
   } catch (error) {
     console.error('❌ 加载块失败:', error);
@@ -1595,8 +1618,6 @@ const aiEditAction = async (action: 'polish' | 'expand' | 'condense' | 'fix' | '
     };
 
     await props.onGenerate(options);
-
-    // showMessage('✓ AI编辑完成', 2000, 'info');
   } catch (error) {
     if (handleGenerationError(error as Error, 'AI编辑')) return;
   } finally {
@@ -1660,7 +1681,6 @@ ${editTargetDoc.value.content}`;
     await props.onGenerate(options);
 
     editCustomInput.value = '';
-    showMessage('✓ 自定义编辑完成', 2000, 'info');
   } catch (error) {
     if (handleGenerationError(error as Error, '自定义编辑')) return;
   } finally {
@@ -1678,7 +1698,7 @@ const analyzeDocument = async () => {
   }
 
   closeSettings();
-  startGeneration(); // 初始化abortController
+  startGeneration();
   isAnalyzing.value = true;
 
   try {
@@ -1698,16 +1718,14 @@ const analyzeDocument = async () => {
     };
 
     await props.onGenerate(options);
-    // showMessage('✓ 分析完成', 2000, 'info');
   } catch (error) {
-    if ((error as Error).name === 'AbortError') {
+    if (handleGenerationError(error as Error, '文档分析', true)) {
       finishGeneration();
       isAnalyzing.value = false;
       return;
     }
     showMessage('文档分析失败: ' + (error as Error).message, 3000, 'error');
   } finally {
-    // 如果不是用户主动停止且abortController仍存在，则重置状态
     if (abortController.value) {
       finishGeneration();
       isAnalyzing.value = false;
@@ -1725,7 +1743,7 @@ const checkPlagiarism = async () => {
   }
 
   closeSettings();
-  startGeneration(); // 初始化abortController
+  startGeneration();
   isCheckingPlagiarism.value = true;
   plagiarismResult.value = null;
 
@@ -1752,8 +1770,8 @@ const checkPlagiarism = async () => {
 请使用Markdown格式返回分析结果，包括：
 - 使用标题组织内容
 - 使用列表列出问题和建议
-- 使用**粗体**标记重要内容
-- 使用*斜体*标记正面内容
+- 使用粗体标记重要内容
+- 使用斜体标记正面内容
 
 文档内容：
 ${editTargetDoc.value.content}`,
@@ -1784,17 +1802,14 @@ ${editTargetDoc.value.content}`,
         details: '查重分析已完成，未发现明显的重复或抄袭内容。建议继续保持内容的原创性。'
       };
     }
-
-    // showMessage('✓ 查重完成', 2000, 'info');
   } catch (error) {
-    if ((error as Error).name === 'AbortError') {
+    if (handleGenerationError(error as Error, '查重分析', true)) {
       finishGeneration();
       isCheckingPlagiarism.value = false;
       return;
     }
     showMessage('查重分析失败: ' + (error as Error).message, 3000, 'error');
   } finally {
-    // 如果不是用户主动停止且abortController仍存在，则重置状态
     if (abortController.value) {
       finishGeneration();
       isCheckingPlagiarism.value = false;
@@ -1976,13 +1991,6 @@ const saveCurrentPrompt = async () => {
 
   newPromptName.value = '';
   currentPromptName.value = promptName;
-  // showMessage(
-  //   existingIndex >= 0
-  //     ? `✓ 已更新配置: ${promptConfig.name}`
-  //     : `✓ 已保存配置: ${promptConfig.name}`,
-  //   2000,
-  //   'info'
-  // );
 };
 
 // 清除当前提示词选择
@@ -2051,18 +2059,23 @@ async function getDocIdByBlockId(blockId: string): Promise<string | null> {
   }
 }
 
+/**
+ * 应用提示词配置到当前状态
+ */
+const applyPromptConfig = (prompt: SavedPrompt) => {
+  systemPrompt.value = prompt.systemPrompt;
+  temperature.value = prompt.temperature;
+  maxTokens.value = prompt.maxTokens;
+  contextMessageLimit.value = prompt.contextMessageLimit || 1;
+  currentPromptName.value = prompt.name;
+};
+
 // 加载提示词配置
 const loadPrompt = async (index: number) => {
   const prompt = savedPrompts.value[index];
   if (!prompt) return;
 
-  systemPrompt.value = prompt.systemPrompt;
-  temperature.value = prompt.temperature;
-  maxTokens.value = prompt.maxTokens;
-  contextMessageLimit.value = prompt.contextMessageLimit || 1;
-
-  // 设置当前选中的提示词名称
-  currentPromptName.value = prompt.name;
+  applyPromptConfig(prompt);
   showPromptSelector.value = false;
 
   // 保存当前选中的提示词到存储
@@ -2080,14 +2093,7 @@ const editPrompt = (index: number) => {
   const prompt = savedPrompts.value[index];
   if (!prompt) return;
 
-  // 加载配置到编辑区域
-  systemPrompt.value = prompt.systemPrompt;
-  temperature.value = prompt.temperature;
-  maxTokens.value = prompt.maxTokens;
-  contextMessageLimit.value = prompt.contextMessageLimit;
-
-  // 设置当前选中的提示词名称
-  currentPromptName.value = prompt.name;
+  applyPromptConfig(prompt);
 
   // 打开设置面板以便编辑
   showSettings.value = true;
@@ -2160,12 +2166,20 @@ onMounted(async () => {
   startAutoLoadCurrentDoc();
 });
 
+// 组件卸载时清理资源
+onUnmounted(() => {
+  stopAutoLoadCurrentDoc();
+  if (autoLoadDebounceTimer.value) {
+    clearTimeout(autoLoadDebounceTimer.value);
+  }
+});
+
+// 是否已完成初始设置加载（用于避免初始加载时触发保存）
+let isSettingsLoaded = false;
+
 // 保存设置到存储
 const saveSettings = async () => {
-  if (!storage) {
-    console.warn('存储实例未初始化，跳过设置保存');
-    return;
-  }
+  if (!storage || !isSettingsLoaded) return;
 
   const settings = {
     systemPrompt: systemPrompt.value,
@@ -2175,9 +2189,7 @@ const saveSettings = async () => {
   };
 
   try {
-    const success = await storage.saveSettings(settings);
-    if (success) {
-    }
+    await storage.saveSettings(settings);
   } catch (error) {
     console.error('保存设置失败:', error);
   }
@@ -2185,10 +2197,7 @@ const saveSettings = async () => {
 
 // 加载设置
 const loadSettings = async () => {
-  if (!storage) {
-    console.warn('存储实例未初始化，跳过设置加载');
-    return;
-  }
+  if (!storage) return;
 
   try {
     const settings = await storage.loadSettings();
@@ -2198,14 +2207,21 @@ const loadSettings = async () => {
       maxTokens.value = settings.maxTokens || maxTokens.value;
       contextMessageLimit.value = settings.contextMessageLimit ?? contextMessageLimit.value;
     }
+    isSettingsLoaded = true;
   } catch (error) {
     console.error('从插件存储加载设置失败:', error);
   }
 };
 
-// 监听设置变化
+// 监听设置变化（使用 debounce 避免频繁保存）
+let settingsSaveTimer: number | null = null;
 watch([systemPrompt, temperature, maxTokens, contextMessageLimit], () => {
-  saveSettings();
+  if (settingsSaveTimer) {
+    clearTimeout(settingsSaveTimer);
+  }
+  settingsSaveTimer = window.setTimeout(() => {
+    saveSettings();
+  }, 300);
 });
 
 </script>

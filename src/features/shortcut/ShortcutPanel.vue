@@ -2,25 +2,17 @@
   <div class="shortcut-panel">
     <!-- 顶部操作栏 -->
     <div class="shortcut-header">
-      <input
+      <Input
         v-model="searchKeyword"
-        type="text"
-        class="shortcut-search-input"
         :placeholder="i18n.searchPlaceholder || '搜索快捷键...'"
+        prefix-icon="search"
+        size="medium"
       />
       <div class="header-actions">
-        <button class="icon-btn" :title="'刷新'" @click="refreshShortcuts">
-          <svg class="shortcut-icon"><use xlink:href="#iconRefresh"></use></svg>
-        </button>
-        <button class="icon-btn" :title="'导出'" @click="showExportDialog">
-          <svg class="shortcut-icon"><use xlink:href="#iconDownload"></use></svg>
-        </button>
-        <button class="icon-btn" :title="'导入'" @click="showImportDialog">
-          <svg class="shortcut-icon"><use xlink:href="#iconUpload"></use></svg>
-        </button>
-        <button class="shortcut-add-btn" :title="i18n.addCustomShortcut || '添加快捷键'" @click="showAddDialog">
-          <svg class="shortcut-icon"><use xlink:href="#iconAdd"></use></svg>
-        </button>
+        <Button variant="ghost" size="small" icon="refresh" :title="'刷新'" @click="refreshShortcuts" />
+        <Button variant="ghost" size="small" icon="download" :title="'导出'" @click="showExportDialog" />
+        <Button variant="ghost" size="small" :icon="'file' as any" :title="'导入'" @click="showImportDialog" />
+        <Button variant="primary" size="small" icon="add" :title="i18n.addCustomShortcut || '添加快捷键'" @click="showAddDialog" />
       </div>
     </div>
 
@@ -45,21 +37,17 @@
       <div class="selector-header">
         <label>分类:</label>
         <div class="selector-control">
-          <div class="search-input-wrapper">
-            <input
-              v-model="categorySearch"
-              type="text"
-              class="category-search"
-              :placeholder="'搜索分类...'"
-            />
-            <svg class="category-search-icon"><use xlink:href="#iconSearch"></use></svg>
-          </div>
-          <select v-model="activeTab" class="category-select">
-            <option v-for="tab in filteredTabs" :key="tab" :value="tab">
-              {{ getCategoryLabel(tab) }} ({{ getTabCount(tab) }})
-            </option>
-          </select>
-          <svg class="dropdown-icon"><use xlink:href="#iconSelect"></use></svg>
+          <Input
+            v-model="categorySearch"
+            :placeholder="'搜索分类...'"
+            prefix-icon="search"
+            size="small"
+          />
+          <Select
+            v-model="activeTab"
+            :options="selectOptions"
+            size="small"
+          />
         </div>
         <div v-if="categorySearch && filteredTabs.length === 0" class="search-result-hint">
           未找到匹配的分类
@@ -70,20 +58,20 @@
     <!-- 快捷筛选栏 -->
     <div class="shortcut-filters">
       <div class="filter-group">
-        <button
+        <Button
           v-for="filter in quickFilters"
           :key="filter.key"
-          class="filter-btn"
-          :class="{ active: activeFilter === filter.key }"
+          :variant="activeFilter === filter.key ? 'primary' : 'ghost'"
+          size="small"
           @click="activeFilter = filter.key"
         >
           {{ filter.label }}
-        </button>
+        </Button>
       </div>
       <div class="view-toggle">
-        <button
-          class="toggle-btn"
-          :class="{ active: viewMode === 'grid' }"
+        <Button
+          :variant="viewMode === 'grid' ? 'primary' : 'ghost'"
+          size="small"
           @click="viewMode = 'grid'"
           title="网格视图"
         >
@@ -91,10 +79,10 @@
             <span class="square"></span>
             <span class="square"></span>
           </span>
-        </button>
-        <button
-          class="toggle-btn"
-          :class="{ active: viewMode === 'three-col' }"
+        </Button>
+        <Button
+          :variant="viewMode === 'three-col' ? 'primary' : 'ghost'"
+          size="small"
           @click="viewMode = 'three-col'"
           title="三列视图"
         >
@@ -103,17 +91,17 @@
             <span class="square"></span>
             <span class="square"></span>
           </span>
-        </button>
-        <button
-          class="toggle-btn"
-          :class="{ active: viewMode === 'list' }"
+        </Button>
+        <Button
+          :variant="viewMode === 'list' ? 'primary' : 'ghost'"
+          size="small"
           @click="viewMode = 'list'"
           title="列表视图"
         >
           <span class="list-icon">
             <span class="line"></span>
           </span>
-        </button>
+        </Button>
       </div>
     </div>
 
@@ -130,10 +118,11 @@
           <span class="group-count">{{ group.shortcuts.length }}</span>
         </div>
         <div class="shortcut-grid" :class="{ 'list-view': viewMode === 'list', 'three-col-view': viewMode === 'three-col' }">
-          <div
+          <Card
             v-for="shortcut in group.shortcuts"
             :key="shortcut.id"
-            class="shortcut-card"
+            variant="bordered"
+            size="small"
             :class="{
               'is-favorite': isFavorite(shortcut.id),
               'is-recent': isRecent(shortcut.id)
@@ -146,38 +135,37 @@
                 <span v-if="['npm', 'nvm', 'cmd', 'vscode', 'visual-studio'].includes(shortcut.category)" class="tool-badge">{{ getCategoryLabel(shortcut.category) }}</span>
               </div>
               <div class="shortcut-actions">
-                <button
-                  class="action-btn favorite-btn"
+                <Button
+                  variant="ghost"
+                  size="small"
+                  :icon="isFavorite(shortcut.id) ? 'star' : 'starOutline'"
                   :class="{ active: isFavorite(shortcut.id) }"
                   :title="isFavorite(shortcut.id) ? '取消收藏' : '收藏'"
                   @click="toggleFavorite(shortcut.id)"
-                >
-                  <span class="star-icon" v-if="isFavorite(shortcut.id)">★</span>
-                  <span class="star-icon" v-else>☆</span>
-                </button>
-                <button
-                  class="action-btn copy-btn"
+                />
+                <Button
+                  variant="ghost"
+                  size="small"
+                  icon="contentCopy"
                   :title="i18n.copy || '复制'"
                   @click="copyShortcutInfo(shortcut)"
-                >
-                  <svg class="shortcut-icon"><use xlink:href="#iconCopy"></use></svg>
-                </button>
-                <button
+                />
+                <Button
                   v-if="shortcut.category === 'custom'"
-                  class="action-btn edit-btn"
+                  variant="ghost"
+                  size="small"
+                  icon="edit"
                   :title="'编辑'"
                   @click="editShortcut(shortcut)"
-                >
-                  <svg class="shortcut-icon"><use xlink:href="#iconEdit"></use></svg>
-                </button>
-                <button
+                />
+                <Button
                   v-if="shortcut.category === 'custom'"
-                  class="action-btn delete-btn"
+                  variant="ghost"
+                  size="small"
+                  icon="delete"
                   :title="i18n.delete || '删除'"
                   @click="deleteShortcut(shortcut.id)"
-                >
-                  <svg class="shortcut-icon"><use xlink:href="#iconTrash"></use></svg>
-                </button>
+                />
               </div>
             </div>
             <div class="shortcut-keys" @click="copyShortcutInfo(shortcut)" :title="i18n.copy || '复制'">
@@ -186,7 +174,7 @@
               </span>
             </div>
             <div class="shortcut-desc">{{ shortcut.description }}</div>
-          </div>
+          </Card>
         </div>
       </div>
     </div>
@@ -196,31 +184,33 @@
       <div class="shortcut-dialog" @click.stop>
         <div class="dialog-header">
           <div class="dialog-title">{{ dialogType === 'add' ? (i18n.addCustomShortcut || '添加快捷键') : '编辑快捷键' }}</div>
-          <button class="close-btn" @click="closeDialog">
-            <svg class="shortcut-icon"><use xlink:href="#iconClose"></use></svg>
-          </button>
+          <Button variant="ghost" size="small" icon="close" @click="closeDialog" />
         </div>
         <div class="dialog-body">
-          <div class="form-group">
-            <label>{{ i18n.shortcutName || '快捷键名称' }}</label>
-            <input v-model="formData.name" type="text" :placeholder="i18n.enterName || '输入快捷键名称'" />
-          </div>
-          <div class="form-group">
-            <label>{{ i18n.description || '描述' }}</label>
-            <input v-model="formData.description" type="text" :placeholder="i18n.enterDescription || '输入功能描述'" />
-          </div>
-          <div class="form-group">
-            <label>{{ i18n.shortcutKeys || '快捷键' }}</label>
-            <input v-model="formData.keys" type="text" :placeholder="i18n.keysPlaceholder || '例如: Ctrl+K'" />
-          </div>
-          <div class="form-group">
-            <label>{{ i18n.group || '分组' }}</label>
-            <input v-model="formData.group" type="text" :placeholder="i18n.enterGroup || '输入分组名称'" />
-          </div>
+          <Input
+            v-model="formData.name"
+            :label="i18n.shortcutName || '快捷键名称'"
+            :placeholder="i18n.enterName || '输入快捷键名称'"
+          />
+          <Input
+            v-model="formData.description"
+            :label="i18n.description || '描述'"
+            :placeholder="i18n.enterDescription || '输入功能描述'"
+          />
+          <Input
+            v-model="formData.keys"
+            :label="i18n.shortcutKeys || '快捷键'"
+            :placeholder="i18n.keysPlaceholder || '例如: Ctrl+K'"
+          />
+          <Input
+            v-model="formData.group"
+            :label="i18n.group || '分组'"
+            :placeholder="i18n.enterGroup || '输入分组名称'"
+          />
         </div>
         <div class="dialog-footer">
-          <button class="btn-cancel" @click="closeDialog">{{ i18n.cancel || '取消' }}</button>
-          <button class="btn-confirm" @click="addShortcut">{{ i18n.confirm || '确认' }}</button>
+          <Button variant="secondary" @click="closeDialog">{{ i18n.cancel || '取消' }}</Button>
+          <Button variant="primary" @click="addShortcut">{{ i18n.confirm || '确认' }}</Button>
         </div>
       </div>
     </div>
@@ -230,9 +220,7 @@
       <div class="shortcut-dialog" @click.stop>
         <div class="dialog-header">
           <div class="dialog-title">导出快捷键</div>
-          <button class="close-btn" @click="closeDialog">
-            <svg class="shortcut-icon"><use xlink:href="#iconClose"></use></svg>
-          </button>
+          <Button variant="ghost" size="small" icon="close" @click="closeDialog" />
         </div>
         <div class="dialog-body">
           <div class="form-group">
@@ -253,8 +241,8 @@
           </div>
         </div>
         <div class="dialog-footer">
-          <button class="btn-cancel" @click="closeDialog">取消</button>
-          <button class="btn-confirm" @click="exportShortcuts">导出</button>
+          <Button variant="secondary" @click="closeDialog">取消</Button>
+          <Button variant="primary" @click="exportShortcuts">导出</Button>
         </div>
       </div>
     </div>
@@ -264,9 +252,7 @@
       <div class="shortcut-dialog" @click.stop>
         <div class="dialog-header">
           <div class="dialog-title">导入快捷键</div>
-          <button class="close-btn" @click="closeDialog">
-            <svg class="shortcut-icon"><use xlink:href="#iconClose"></use></svg>
-          </button>
+          <Button variant="ghost" size="small" icon="close" @click="closeDialog" />
         </div>
         <div class="dialog-body">
           <div class="form-group">
@@ -278,7 +264,7 @@
           </div>
         </div>
         <div class="dialog-footer">
-          <button class="btn-cancel" @click="closeDialog">关闭</button>
+          <Button variant="secondary" @click="closeDialog">关闭</Button>
         </div>
       </div>
     </div>
@@ -287,9 +273,14 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import Button from '@/components/Button.vue'
+import Input from '@/components/Input.vue'
+import Select from '@/components/Select.vue'
+import Card from '@/components/Card.vue'
 import { getShortcutManager } from './manager'
 import { loadFavorites, saveFavorites } from './storage'
 import type { ShortcutGroup, ShortcutInfo } from './types'
+import type { SelectOption } from '@/components/Select.vue'
 
 interface Props {
   i18n?: Record<string, any>
@@ -369,6 +360,14 @@ const tabs = computed(() => {
   const allShortcuts = manager.getAllShortcuts()
   const categories = new Set(allShortcuts.map(s => s.category))
   return ['all', ...Array.from(categories).sort()]
+})
+
+// Select 组件的选项
+const selectOptions = computed((): SelectOption[] => {
+  return filteredTabs.value.map(tab => ({
+    value: tab,
+    label: `${getCategoryLabel(tab)} (${getTabCount(tab)})`
+  }))
 })
 
 // 获取分类数量
@@ -718,27 +717,6 @@ const showCopyTip = () => {
   gap: 6px;
 }
 
-.icon-btn {
-  padding: 8px 10px;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 6px;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-surface);
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.icon-btn:hover {
-  background: var(--b3-theme-surface);
-  border-color: var(--b3-theme-primary);
-  color: var(--b3-theme-primary);
-  transform: translateY(-1px);
-}
-
-/* 统计信息栏 */
 .shortcut-stats {
   display: flex;
   gap: 12px;
@@ -771,81 +749,6 @@ const showCopyTip = () => {
   color: var(--b3-theme-primary);
 }
 
-.shortcut-search-input {
-  flex: 1;
-  padding: 8px 12px;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 6px;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  font-size: 13px;
-  outline: none;
-  transition: all 0.2s;
-}
-
-.shortcut-search-input:focus {
-  border-color: var(--b3-theme-primary);
-  box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.1);
-}
-
-.shortcut-search-input::placeholder {
-  color: var(--b3-theme-on-surface-variant);
-}
-
-.shortcut-add-btn {
-  padding: 8px 12px;
-  border: 1px solid var(--b3-theme-primary);
-  border-radius: 6px;
-  background: var(--b3-theme-primary);
-  color: white;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.shortcut-add-btn:hover {
-  opacity: 0.85;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.shortcut-icon {
-  width: 14px;
-  height: 14px;
-}
-
-.grid-icon,
-.three-col-icon,
-.list-icon {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.square {
-  width: 4px;
-  height: 4px;
-  background-color: currentColor;
-  border-radius: 1px;
-  display: inline-block;
-}
-
-.line {
-  width: 8px;
-  height: 4px;
-  background-color: currentColor;
-  border-radius: 1px;
-  display: inline-block;
-}
-
-.toggle-btn.active .square,
-.toggle-btn.active .line {
-  background-color: var(--b3-theme-primary);
-}
-
-/* 分类选择器样式 */
 .shortcut-category-selector {
   padding: 8px 16px;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
@@ -873,50 +776,6 @@ const showCopyTip = () => {
   align-items: center;
 }
 
-.search-input-wrapper {
-  position: relative;
-  flex: 0 0 140px;
-}
-
-.category-search {
-  width: 100%;
-  padding: 6px 10px;
-  padding-right: 30px;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 6px;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  font-size: 12px;
-  outline: none;
-  transition: all 0.2s;
-  box-sizing: border-box;
-}
-
-.category-search:focus {
-  border-color: var(--b3-theme-primary);
-  box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.1);
-}
-
-.category-search::placeholder {
-  color: var(--b3-theme-on-surface-variant);
-}
-
-.category-search-icon {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 14px;
-  height: 14px;
-  color: var(--b3-theme-on-surface-variant);
-  pointer-events: none;
-  opacity: 0.6;
-}
-
-.category-search:not(:placeholder-shown) ~ .category-search-icon {
-  opacity: 0.3;
-}
-
 .search-result-hint {
   flex-basis: 100%;
   font-size: 11px;
@@ -926,46 +785,6 @@ const showCopyTip = () => {
   margin-left: 4px;
 }
 
-.category-select {
-  flex: 1;
-  min-width: 120px;
-  padding: 6px 12px;
-  padding-right: 28px;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 6px;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  outline: none;
-}
-
-.category-select:hover {
-  border-color: var(--b3-theme-primary);
-}
-
-.category-select:focus {
-  border-color: var(--b3-theme-primary);
-  box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.1);
-}
-
-.dropdown-icon {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 14px;
-  height: 14px;
-  color: var(--b3-theme-on-surface-variant);
-  pointer-events: none;
-}
-
-/* 筛选栏 */
 .shortcut-filters {
   display: flex;
   justify-content: space-between;
@@ -980,29 +799,6 @@ const showCopyTip = () => {
   gap: 6px;
 }
 
-.filter-btn {
-  padding: 5px 12px;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 15px;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-surface);
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.filter-btn:hover {
-  background: var(--b3-theme-surface);
-  border-color: var(--b3-theme-primary);
-}
-
-.filter-btn.active {
-  background: var(--b3-theme-primary);
-  color: white;
-  border-color: var(--b3-theme-primary);
-}
-
 .view-toggle {
   display: flex;
   gap: 3px;
@@ -1011,27 +807,28 @@ const showCopyTip = () => {
   padding: 2px;
 }
 
-.toggle-btn {
-  padding: 5px 7px;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--b3-theme-on-surface-variant);
-  cursor: pointer;
-  transition: all 0.2s;
+.grid-icon,
+.three-col-icon,
+.list-icon {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 2px;
 }
 
-.toggle-btn:hover {
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
+.square {
+  width: 4px;
+  height: 4px;
+  background-color: currentColor;
+  border-radius: 1px;
+  display: inline-block;
 }
 
-.toggle-btn.active {
-  background: var(--b3-theme-primary);
-  color: white;
+.line {
+  width: 8px;
+  height: 4px;
+  background-color: currentColor;
+  border-radius: 1px;
+  display: inline-block;
 }
 
 .shortcut-content {
@@ -1111,7 +908,6 @@ const showCopyTip = () => {
   grid-template-columns: repeat(3, 1fr);
 }
 
-/* 响应式设计 - 在小屏幕上自动降级为两列 */
 @media (max-width: 1200px) {
   .shortcut-grid.three-col-view {
     grid-template-columns: repeat(2, 1fr);
@@ -1124,67 +920,11 @@ const showCopyTip = () => {
   }
 }
 
-/* 三列视图下的卡片优化 */
-.shortcut-grid.three-col-view .shortcut-card {
-  padding: 10px;
-  gap: 6px;
-}
-
-.shortcut-grid.three-col-view .shortcut-name {
-  font-size: 12px;
-}
-
-.shortcut-grid.three-col-view .shortcut-desc {
-  font-size: 10px;
-  -webkit-line-clamp: 1;
-}
-
-.shortcut-grid.three-col-view .key-badge {
-  padding: 3px 6px;
-  font-size: 9px;
-}
-
-.shortcut-card {
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 8px;
-  padding: 12px;
-  transition: all 0.2s;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-}
-
-.shortcut-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--b3-theme-primary), var(--b3-theme-primary-light));
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.shortcut-card:hover::before {
-  opacity: 1;
-}
-
-.shortcut-card:hover {
-  border-color: var(--b3-theme-primary);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
-}
-
-.shortcut-card.is-favorite {
+.is-favorite {
   background: linear-gradient(135deg, var(--b3-theme-surface) 0%, var(--b3-theme-primary-lightest) 100%);
 }
 
-.shortcut-card.is-recent {
+.is-recent {
   border-left: 3px solid var(--b3-theme-primary);
 }
 
@@ -1280,60 +1020,6 @@ const showCopyTip = () => {
   transition: opacity 0.2s;
 }
 
-.shortcut-card:hover .shortcut-actions {
-  opacity: 1;
-}
-
-.action-btn {
-  padding: 4px;
-  background: transparent;
-  border: none;
-  border-radius: 4px;
-  color: var(--b3-theme-on-surface-variant);
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0;
-}
-
-.action-btn:hover {
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-primary);
-  transform: scale(1.1);
-}
-
-.favorite-btn.active {
-  color: #ffd700;
-}
-
-.favorite-btn.active:hover {
-  color: #ffed4e;
-}
-
-.star-icon {
-  font-size: 16px;
-  line-height: 1;
-  display: inline-block;
-}
-
-.copy-btn:active {
-  background: var(--b3-theme-primary);
-  color: white;
-}
-
-.edit-btn:hover {
-  background: var(--b3-theme-primary-lighter);
-  color: var(--b3-theme-primary);
-}
-
-.delete-btn:hover {
-  background: #ff6b6b;
-  color: white;
-}
-
-/* 对话框样式 */
 .shortcut-dialog-overlay {
   position: fixed;
   top: 0;
@@ -1384,22 +1070,6 @@ const showCopyTip = () => {
   color: var(--b3-theme-on-background);
 }
 
-.close-btn {
-  background: transparent;
-  border: none;
-  color: var(--b3-theme-on-surface-variant);
-  cursor: pointer;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.2s;
-}
-
-.close-btn:hover {
-  color: var(--b3-theme-on-background);
-}
-
 .dialog-body {
   flex: 1;
   padding: 16px;
@@ -1420,23 +1090,6 @@ const showCopyTip = () => {
   font-weight: 600;
   color: var(--b3-theme-on-surface);
   margin-bottom: 4px;
-}
-
-.form-group input {
-  width: 100%;
-  padding: 6px 8px;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 3px;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-background);
-  font-size: 12px;
-  outline: none;
-  transition: border-color 0.2s;
-  box-sizing: border-box;
-}
-
-.form-group input:focus {
-  border-color: var(--b3-theme-primary);
 }
 
 .form-group input[type="file"] {
@@ -1505,39 +1158,6 @@ const showCopyTip = () => {
   background: var(--b3-theme-surface);
 }
 
-.btn-cancel,
-.btn-confirm {
-  flex: 1;
-  padding: 6px 12px;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 3px;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-cancel {
-  background: transparent;
-  color: var(--b3-theme-on-surface);
-}
-
-.btn-cancel:hover {
-  background: var(--b3-theme-background);
-  border-color: var(--b3-theme-on-surface);
-}
-
-.btn-confirm {
-  background: var(--b3-theme-primary);
-  color: var(--b3-theme-background);
-  border-color: var(--b3-theme-primary);
-}
-
-.btn-confirm:hover {
-  opacity: 0.9;
-}
-
-/* 滚动条样式 */
 .shortcut-content::-webkit-scrollbar,
 .dialog-body::-webkit-scrollbar {
   width: 5px;

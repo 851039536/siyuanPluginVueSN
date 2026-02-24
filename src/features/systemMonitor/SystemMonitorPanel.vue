@@ -24,6 +24,10 @@
       <Icon icon="ph:lock-key" class="monitor-icon" />
     </div>
 
+    <div class="monitor-item video-manager-item" @click="handleOpenVideoManager" title="视频管理器">
+      <Icon icon="ph:video" class="monitor-icon" />
+    </div>
+
   </div>
 </template>
 
@@ -45,6 +49,10 @@ const {
 
 const handleOpenPasswordVault = () => {
   showPasswordVault()
+}
+
+const handleOpenVideoManager = () => {
+  window.dispatchEvent(new CustomEvent('openVideoManager'))
 }
 </script>
 

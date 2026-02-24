@@ -83,6 +83,21 @@
       }
     }
   }
+
+  .video-manager-item {
+    color: var(--b3-theme-primary);
+    cursor: pointer;
+    padding: 0 4px;
+
+    &:hover {
+      background: var(--b3-theme-surface-lighter);
+      opacity: 1;
+
+      .monitor-icon {
+        opacity: 1;
+      }
+    }
+  }
 }
 
 // 统一警告动画

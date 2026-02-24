@@ -8,14 +8,14 @@
   height: 29px;
   user-select: none;
 
- 
+
 
   .monitor-item {
     display: flex;
     align-items: center;
     gap: 2px;
     height: 100%;
-    padding: 0 2px;
+    // padding: 0 2px;
     border-radius: 2px;
     transition: all 0.2s ease;
 
@@ -35,7 +35,7 @@
       color: var(--b3-theme-error);
       background: var(--b3-theme-error-lighter);
       animation: res-warning-flash 1s ease-in-out infinite;
-      
+
       .monitor-icon { opacity: 1; }
     }
 
@@ -54,13 +54,13 @@
   // 特定项目样式
   .monitor-item:nth-child(1) { color: var(--b3-theme-primary); } // CPU
   .monitor-item:nth-child(2) { color: var(--b3-theme-secondary); } // MEM
-  .uptime-item { 
+  .uptime-item {
     color: var(--b3-theme-on-surface);
     opacity: 0.6;
     border-left: 1px solid var(--b3-theme-border);
     padding-left: 6px;
     margin-left: -2px;
-    
+
     .monitor-value {
       font-weight: 400;
       min-width: 32px;

@@ -100,7 +100,8 @@
       "mcp__sequential-thinking__sequentialthinking",
       "Bash(grep:*)",
       "Bash(for file in diskBrowser/index.scss wordQuery/index.scss codeImageGenerator/index.scss aiContentGenerator/index.scss passwordVault/PasswordVaultDialog.scss flashcardReading/index.scss apiReference/index.scss statistics/index.scss webDAV/index.scss)",
-      "Bash(do echo \"=== Checking: $file ===\")"
+      "Bash(do echo \"=== Checking: $file ===\")",
+      "Bash(claude:*)"
     ],
     "deny": [],
     "ask": []

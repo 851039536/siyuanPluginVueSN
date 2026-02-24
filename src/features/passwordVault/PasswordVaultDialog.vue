@@ -100,7 +100,7 @@
                         <span class="password-mask">{{ showPasswords[entry.id] ? entry.password : '••••••••' }}</span>
                         <div class="action-hint">
                           <IconWrapper name="contentCopy" :size="12" />
-                          {{ showPasswords[entry.id] ? '点击复制' : '点击显示' }}
+                         点击复制
                         </div>
                       </div>
                       <Button  :icon="showPasswords[entry.id] ? 'eye' : 'eyeOff'" variant="ghost" size="small" @click.stop="togglePasswordVisibility(entry.id)" />

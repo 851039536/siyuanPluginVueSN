@@ -84,9 +84,13 @@
                         <Button @click="deleteEntry(entry.id)" icon="delete" variant="ghost" size="small" :title="'删除'" />
                       </div>
                     </div>
-                    <div class="entry-account">
+                    <div class="entry-account" @click="copyAccount(entry.account)">
                       <IconWrapper name="file" :size="14" />
-                      {{ entry.account }}
+                      <span class="account-text">{{ entry.account }}</span>
+                      <div class="action-hint">
+                        <IconWrapper name="contentCopy" :size="12" />
+                        点击复制
+                      </div>
                     </div>
                     <div class="entry-description">
                       {{ entry.description }}
@@ -936,6 +940,16 @@ async function deleteEntry(id: string) {
 // 切换密码可见性
 const togglePasswordVisibility = (id: string) => {
   showPasswords.value[id] = !showPasswords.value[id]
+}
+
+// 复制账号
+const copyAccount = async (account: string) => {
+  try {
+    await navigator.clipboard.writeText(account)
+    showMessage('账号已复制', 2000, 'info')
+  } catch (error) {
+    showMessage('复制失败', 2000, 'error')
+  }
 }
 
 // 复制密码

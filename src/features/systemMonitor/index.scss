@@ -8,14 +8,11 @@
   height: 29px;
   user-select: none;
 
-
-
   .monitor-item {
     display: flex;
     align-items: center;
     gap: 2px;
     height: 100%;
-    // padding: 0 2px;
     border-radius: 2px;
     transition: all 0.2s ease;
 
@@ -67,10 +64,9 @@
     }
   }
 
-  .password-vault-item {
-    color: var(--b3-theme-success);
-    border-left: 1px solid var(--b3-theme-border);
-    padding-left: 6px;
+  // 可点击项目通用样式
+  .password-vault-item,
+  .video-manager-item {
     cursor: pointer;
     padding: 0 4px;
 
@@ -84,19 +80,14 @@
     }
   }
 
+  .password-vault-item {
+    color: var(--b3-theme-success);
+    border-left: 1px solid var(--b3-theme-border);
+    padding-left: 6px;
+  }
+
   .video-manager-item {
     color: var(--b3-theme-primary);
-    cursor: pointer;
-    padding: 0 4px;
-
-    &:hover {
-      background: var(--b3-theme-surface-lighter);
-      opacity: 1;
-
-      .monitor-icon {
-        opacity: 1;
-      }
-    }
   }
 }
 

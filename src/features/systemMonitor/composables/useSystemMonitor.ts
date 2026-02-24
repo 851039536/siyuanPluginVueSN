@@ -8,6 +8,16 @@ import {
   type SystemMonitorState
 } from '../types'
 
+const TOTAL_MEMORY_BYTES = DEFAULT_TOTAL_MEMORY_GB * 1024 * 1024 * 1024
+const TOTAL_MEMORY_MB = DEFAULT_TOTAL_MEMORY_GB * 1024
+
+function formatUptime(seconds: number): { hours: number; minutes: number } {
+  return {
+    hours: Math.floor(seconds / 3600),
+    minutes: Math.floor((seconds % 3600) / 60)
+  }
+}
+
 export function useSystemMonitor() {
   const state = reactive<SystemMonitorState>({
     cpuPercent: 0,
@@ -25,20 +35,19 @@ export function useSystemMonitor() {
   const cpuUsageDisplay = computed(() => `${Math.round(state.cpuPercent)}%`)
 
   const memoryUsageDisplay = computed(() => {
-    const mbs = (state.memPercent / 100) * DEFAULT_TOTAL_MEMORY_GB * 1024
+    const mbs = (state.memPercent / 100) * TOTAL_MEMORY_MB
     return mbs > 1000 ? `${(mbs / 1024).toFixed(1)}G` : `${Math.round(mbs)}M`
   })
 
   const uptimeDisplay = computed(() => {
-    const h = Math.floor(state.uptimeSeconds / 3600)
-    const m = Math.floor((state.uptimeSeconds % 3600) / 60)
-    if (h > 0) return `${h}h${m}m`
-    return `${m}m`
+    const { hours, minutes } = formatUptime(state.uptimeSeconds)
+    return hours > 0 ? `${hours}h${minutes}m` : `${minutes}m`
   })
 
   const systemInfoTooltip = computed(() => {
     const platform = typeof process !== 'undefined' ? `${process.platform} ${process.arch}` : 'Unknown'
-    return `系统: ${platform}\n运行时间: ${Math.floor(state.uptimeSeconds / 3600)}小时 ${Math.floor((state.uptimeSeconds % 3600) / 60)}分\n内存限制: ${DEFAULT_TOTAL_MEMORY_GB}GB`
+    const { hours, minutes } = formatUptime(state.uptimeSeconds)
+    return `系统: ${platform}\n运行时间: ${hours}小时 ${minutes}分\n内存限制: ${DEFAULT_TOTAL_MEMORY_GB}GB`
   })
 
   const getLevel = (percent: number, { HIGH, MEDIUM }: { HIGH: number; MEDIUM: number }): ResourceLevel => {
@@ -68,9 +77,7 @@ export function useSystemMonitor() {
     lastTime = currTime
 
     const memUsage = process.memoryUsage()
-    const totalMemory = DEFAULT_TOTAL_MEMORY_GB * 1024 * 1024 * 1024
-    state.memPercent = Math.min(100, (memUsage.rss / totalMemory) * 100)
-
+    state.memPercent = Math.min(100, (memUsage.rss / TOTAL_MEMORY_BYTES) * 100)
     state.uptimeSeconds = Math.floor(process.uptime())
   }
 
@@ -103,12 +110,11 @@ export function useSystemMonitor() {
   onMounted(() => {
     timeoutId = setTimeout(() => {
       state.showMonitor = true
-
-      setTimeout(() => {
+      requestAnimationFrame(() => {
         if (tryInsertToStatusBar()) {
           start()
         }
-      }, 0)
+      })
     }, INITIAL_DELAY_MS)
   })
 

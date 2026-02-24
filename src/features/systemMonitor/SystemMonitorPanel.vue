@@ -20,12 +20,17 @@
       <span class="monitor-value">{{ uptimeDisplay }}</span>
     </div>
 
+    <div class="monitor-item password-vault-item" @click="handleOpenPasswordVault" title="密码箱">
+      <Icon icon="ph:lock-key" class="monitor-icon" />
+    </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
 import { useSystemMonitor } from './composables/useSystemMonitor'
+import { showPasswordVault } from '../passwordVault'
 
 const {
   state,
@@ -37,6 +42,10 @@ const {
   cpuLevel,
   memLevel
 } = useSystemMonitor()
+
+const handleOpenPasswordVault = () => {
+  showPasswordVault()
+}
 </script>
 
 

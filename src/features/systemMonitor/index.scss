@@ -66,6 +66,23 @@
       min-width: 32px;
     }
   }
+
+  .password-vault-item {
+    color: var(--b3-theme-success);
+    border-left: 1px solid var(--b3-theme-border);
+    padding-left: 6px;
+    cursor: pointer;
+    padding: 0 4px;
+
+    &:hover {
+      background: var(--b3-theme-surface-lighter);
+      opacity: 1;
+
+      .monitor-icon {
+        opacity: 1;
+      }
+    }
+  }
 }
 
 // 统一警告动画

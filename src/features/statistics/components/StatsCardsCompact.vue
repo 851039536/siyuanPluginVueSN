@@ -32,6 +32,11 @@
         <span class="stat-label-small">{{ i18n.totalAssets }}</span>
       </div>
       <div class="stat-item-small">
+        <span class="stat-icon-small">🖼️</span>
+        <span class="stat-value-small">{{ formatShortNumber(totalImages) }}</span>
+        <span class="stat-label-small">{{ i18n.totalImages }}</span>
+      </div>
+      <div class="stat-item-small">
         <span class="stat-icon-small">🏷️</span>
         <span class="stat-value-small">{{ formatShortNumber(totalTags) }}</span>
         <span class="stat-label-small">{{ i18n.totalTags }}</span>
@@ -54,6 +59,7 @@ interface Props {
   totalWords?: number
   totalBlocks?: number
   totalAssets?: number
+  totalImages?: number
   totalTags?: number
   totalBacklinks?: number
   i18n?: {
@@ -61,6 +67,7 @@ interface Props {
     totalWords: string
     totalBlocks: string
     totalAssets: string
+    totalImages: string
     totalTags: string
     totalBacklinks: string
   }
@@ -71,6 +78,7 @@ const props = withDefaults(defineProps<Props>(), {
   totalWords: 0,
   totalBlocks: 0,
   totalAssets: 0,
+  totalImages: 0,
   totalTags: 0,
   totalBacklinks: 0,
   i18n: () => ({
@@ -78,6 +86,7 @@ const props = withDefaults(defineProps<Props>(), {
     totalWords: '总字数',
     totalBlocks: '内容块',
     totalAssets: '附件',
+    totalImages: '图片',
     totalTags: '标签',
     totalBacklinks: '双链',
   }),
@@ -159,7 +168,7 @@ const props = withDefaults(defineProps<Props>(), {
   .stat-card-secondary {
     @include stats.stats-card-base;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     padding: 10px 12px;
     background: var(--b3-theme-surface);
 

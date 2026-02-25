@@ -2,6 +2,7 @@ import { Plugin } from 'siyuan';
 import { createApp, App as VueApp } from 'vue';
 import StatisticsPanel from './StatisticsPanel.vue';
 import { StatisticsCache } from './storage';
+import { readDir } from '@/api';
 
 const DAY_PERIOD_MAP: Record<number, string> = {
   7: '最近一周每日字数',
@@ -37,6 +38,7 @@ interface StatisticsData {
   periodTotalWords: number; // 当前时段总字数
   topTags: Array<{ name: string; count: number }>;  // 热门标签（已废弃，始终为空数组）
   recentDocs: Array<{ id: string; title: string; updated: string; words: number }>;  // 最近活跃文档（已废弃，始终为空数组）
+  totalImages: number;     // 思源图片总数（data/assets目录）
 }
 
 /**
@@ -200,9 +202,10 @@ export class Statistics {
           (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d' AND substr(updated, 1, 8) = '${todayStr}') as todayModified
       `;
 
-      const [combinedResult, totalTags] = await Promise.all([
+      const [combinedResult, totalTags, totalImages] = await Promise.all([
         this.executeSql(combinedSql),
-        this.getTotalTags()
+        this.getTotalTags(),
+        this.getTotalImages()
       ]);
 
       const baseStats = combinedResult[0] || {};
@@ -263,6 +266,7 @@ export class Statistics {
         periodTotalWords,
         topTags: [],
         recentDocs: [],
+        totalImages,
       };
     } catch (error) {
       console.error('获取统计数据失败:', error);
@@ -281,6 +285,7 @@ export class Statistics {
         periodTotalWords: 0,
         topTags: [],
         recentDocs: [],
+        totalImages: 0,
       };
     }
   }
@@ -309,6 +314,50 @@ export class Statistics {
     }
 
     return count;
+  }
+
+  /**
+   * 统计 data/assets 目录下的图片数量
+   */
+  private async getTotalImages(): Promise<number> {
+    const IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp'];
+    
+    const isImageFile = (filename: string): boolean => {
+      const ext = filename.toLowerCase().substring(filename.lastIndexOf('.'));
+      return IMAGE_EXTENSIONS.includes(ext);
+    };
+
+    const countImagesInDirectory = async (path: string): Promise<number> => {
+      let count = 0;
+      try {
+        const result = await readDir(path);
+        if (!result) return 0;
+
+        const files = Array.isArray(result) ? result : [result];
+        
+        for (const file of files) {
+          const fullPath = `${path}/${file.name}`;
+          
+          if (file.isDir) {
+            // 递归统计子目录
+            count += await countImagesInDirectory(fullPath);
+          } else if (isImageFile(file.name)) {
+            count++;
+          }
+        }
+      } catch (error) {
+        console.error(`统计目录图片失败 ${path}:`, error);
+      }
+      return count;
+    };
+
+    try {
+      const assetsPath = '/data/assets';
+      return await countImagesInDirectory(assetsPath);
+    } catch (error) {
+      console.error('统计思源图片失败:', error);
+      return 0;
+    }
   }
 
   /**
@@ -611,6 +660,7 @@ export class Statistics {
         totalWords: stats.totalWords,
         totalBlocks: stats.totalBlocks,
         totalAssets: stats.totalAssets,
+        totalImages: stats.totalImages,
         totalTags: stats.totalTags,
         totalBacklinks: stats.totalBacklinks,
         todayCreated: stats.todayCreated,

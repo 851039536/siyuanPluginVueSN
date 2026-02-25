@@ -22,6 +22,7 @@
         :total-words="stats.totalWords"
         :total-blocks="stats.totalBlocks"
         :total-assets="stats.totalAssets"
+        :total-images="stats.totalImages"
         :total-tags="stats.totalTags"
         :total-backlinks="stats.totalBacklinks"
         :i18n="statsCardsI18n"
@@ -100,6 +101,7 @@ interface Props {
     totalWords: string
     totalBlocks: string
     totalAssets: string
+    totalImages: string
     totalTags: string
     totalBacklinks: string
     todayCreated: string
@@ -153,6 +155,7 @@ interface StatisticsData {
   totalWords: number
   totalBlocks: number
   totalAssets: number
+  totalImages: number
   totalTags: number
   totalBacklinks: number
   todayCreated: number
@@ -180,6 +183,7 @@ const props = withDefaults(defineProps<Props>(), {
     totalWords: '总字数',
     totalBlocks: '内容块',
     totalAssets: '附件',
+    totalImages: '图片',
     totalTags: '标签',
     totalBacklinks: '双链',
     todayCreated: '今日新增',

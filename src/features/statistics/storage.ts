@@ -14,6 +14,7 @@ export interface StatisticsSnapshot {
   totalWords: number;          // 总字数
   totalBlocks: number;         // 总块数
   totalAssets: number;         // 总附件数
+  totalImages: number;         // 总图片数
   totalTags: number;           // 总标签数
   totalBacklinks: number;      // 总双链数
   todayCreated: number;        // 今日新增

@@ -55,6 +55,11 @@
             <span class="stat-label">{{ i18n.assets }}</span>
           </div>
           <div class="snapshot-stat">
+            <span class="stat-icon">🖼️</span>
+            <span class="stat-value">{{ formatShortNumber(row.snapshot.totalImages || 0) }}</span>
+            <span class="stat-label">{{ i18n.images }}</span>
+          </div>
+          <div class="snapshot-stat">
             <span class="stat-icon">📅</span>
             <span class="stat-value">{{ row.snapshot.todayCreated }}</span>
             <span class="stat-label">{{ i18n.created }}</span>
@@ -98,6 +103,7 @@ interface SnapshotData {
   totalWords: number
   totalBlocks: number
   totalAssets: number
+  totalImages?: number
   todayCreated: number
   todayModified: number
 }
@@ -113,6 +119,7 @@ interface Props {
     words: string
     blocks: string
     assets: string
+    images: string
     created: string
     modified: string
     changeLabel: string
@@ -138,6 +145,7 @@ const props = withDefaults(defineProps<Props>(), {
     words: '字数',
     blocks: '块',
     assets: '附件',
+    images: '图片',
     created: '新增',
     modified: '修改',
     changeLabel: '变化',

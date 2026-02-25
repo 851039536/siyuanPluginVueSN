@@ -36,9 +36,6 @@
         <Button variant="ghost" size="small" @click="togglePanel('history')" :title="props.i18n.wordQuery?.history || '历史记录'">
           <IconWrapper name="textBox" :size="18" />
         </Button>
-        <Button variant="ghost" size="small" @click="togglePanel('favorites')" :title="props.i18n.wordQuery?.favorites || '我的收藏'">
-          <IconWrapper name="star" :size="18" />
-        </Button>
         <Button variant="ghost" size="small" @click="togglePanel('advanced')" :title="props.i18n.wordQuery?.advancedOptions || '高级选项'">
           <IconWrapper name="generalSettings" :size="18" />
         </Button>
@@ -76,12 +73,6 @@
             size="small"
             @click="clearHistory"
           >清除</Button>
-          <Button
-            v-if="activePanel === 'favorites' && favorites.length > 0"
-            variant="ghost"
-            size="small"
-            @click="clearFavorites"
-          >清除</Button>
           <Button variant="ghost" size="small" @click="togglePanel(null)">
             <IconWrapper name="close" :size="16" />
           </Button>
@@ -106,27 +97,7 @@
         </div>
       </div>
 
-      <!-- 收藏面板内容 -->
-      <div v-if="activePanel === 'favorites'" class="panel-content">
-        <div v-if="favorites.length === 0" class="empty-state">
-          <p>📚 {{ props.i18n.wordQuery?.noFavorites || '暂无收藏单词' }}</p>
-        </div>
-        <div v-else class="item-list">
-          <div
-            v-for="item in favorites"
-            :key="item.timestamp"
-            class="list-item"
-          >
-            <div class="item-content" @click="queryFromFavorite(item)">
-              <div class="item-word">{{ item.word }}</div>
-              <div class="item-time">{{ formatTime(item.timestamp) }}</div>
-            </div>
-            <Button variant="ghost" size="small" @click="removeFavorite(item.word)">
-              <IconWrapper name="delete" :size="16" />
-            </Button>
-          </div>
-        </div>
-      </div>
+
 
       <!-- 高级选项面板内容 -->
       <div v-if="activePanel === 'advanced'" class="panel-content advanced-content">
@@ -208,11 +179,7 @@
             </div>
           </div>
 
-          <!-- 收藏按钮 -->
-          <Button variant="secondary" size="small" @click="toggleFavorite" :class="{ favorited: currentWordFavorited }">
-            <IconWrapper :name="currentWordFavorited ? 'star' : 'starOutline'" :size="16" />
-            {{ currentWordFavorited ? (props.i18n.wordQuery?.unfavorite || '取消收藏') : (props.i18n.wordQuery?.favorite || '收藏') }}
-          </Button>
+
 
           <!-- 播放发音按钮 -->
           <Button variant="secondary" size="small" @click="playPronunciation(searchWord)">
@@ -348,12 +315,7 @@ interface HistoryItem {
   timestamp: number;
 }
 
-interface FavoriteItem {
-  word: string;
-  result: string;
-  timestamp: number;
-  note?: string;
-}
+
 
 // ================================
 // 常量配置
@@ -406,7 +368,6 @@ const CONTENT_PATTERNS = {
 // 数据存储键
 const STORAGE_KEYS = {
   HISTORY: 'word-query-history',
-  FAVORITES: 'word-query-favorites',
   OPTIONS: 'word-query-options'
 };
 
@@ -430,8 +391,6 @@ const targetLanguage = ref('zh');
 // 面板状态管理
 const activePanel = ref<string | null>(null);
 const queryHistory = ref<HistoryItem[]>([]);
-const favorites = ref<FavoriteItem[]>([]);
-const currentWordFavorited = ref(false);
 
 // 设置状态
 const pronunciationType = ref<'uk' | 'us'>('uk');
@@ -540,7 +499,6 @@ const handleQuery = async () => {
     if (result) {
       queryResult.value = result;
       await addToHistory(word, result);
-      setTimeout(() => checkIfFavorited(word), 50);
       if (autoPlayPronunciation.value) {
         playPronunciation(word);
       }
@@ -624,10 +582,7 @@ const togglePanel = (panelKey: string | null) => {
   activePanel.value = activePanel.value === panelKey ? null : panelKey;
 };
 
-// 检查是否已收藏
-const checkIfFavorited = (word: string) => {
-  currentWordFavorited.value = favorites.value.some(item => item.word === word);
-};
+
 
 // 添加到历史记录
 const addToHistory = async (word: string, result: string) => {
@@ -680,88 +635,10 @@ const clearHistory = async () => {
 const queryFromHistory = (item: HistoryItem) => {
   searchWord.value = item.word;
   queryResult.value = item.result;
-  checkIfFavorited(item.word);
   activePanel.value = null;
 };
 
-// 切换收藏
-const toggleFavorite = async () => {
-  const word = searchWord.value.trim();
-  if (!word || !queryResult.value) {
-    showMessage('请先查询单词', 2000, 'info');
-    return;
-  }
 
-  try {
-    if (currentWordFavorited.value) {
-      favorites.value = favorites.value.filter(item => item.word !== word);
-      currentWordFavorited.value = false;
-    } else {
-      const newItem: FavoriteItem = {
-        word,
-        result: queryResult.value,
-        timestamp: Date.now()
-      };
-      favorites.value.unshift(newItem);
-      currentWordFavorited.value = true;
-    }
-    // 立即保存数据
-    const success = await dataOperations.save(STORAGE_KEYS.FAVORITES, favorites.value);
-    if (!success) {
-      showMessage('保存收藏失败 - Plugin 未就绪', 2000, 'error');
-    }
-  } catch (error) {
-    showMessage('保存收藏失败', 2000, 'error');
-  }
-};
-
-// 加载收藏
-const loadFavorites = async () => {
-  const saved = await dataOperations.load(STORAGE_KEYS.FAVORITES);
-  // 确保数据是数组，否则使用默认值
-  if (saved && Array.isArray(saved)) {
-    favorites.value = saved;
-  } else {
-    favorites.value = [];
-  }
-};
-
-// 清除收藏
-const clearFavorites = async () => {
-  favorites.value = [];
-  try {
-    const success = await dataOperations.save(STORAGE_KEYS.FAVORITES, favorites.value);
-    if (!success) {
-      showMessage('清除收藏失败 - Plugin 未就绪', 2000, 'error');
-    }
-  } catch (error) {
-    showMessage('清除收藏失败', 2000, 'error');
-  }
-};
-
-// 从收藏查询
-const queryFromFavorite = (item: FavoriteItem) => {
-  searchWord.value = item.word;
-  queryResult.value = item.result;
-  currentWordFavorited.value = true;
-  activePanel.value = null;
-};
-
-// 删除收藏项
-const removeFavorite = async (word: string) => {
-  favorites.value = favorites.value.filter(item => item.word !== word);
-  try {
-    const success = await dataOperations.save(STORAGE_KEYS.FAVORITES, favorites.value);
-    if (searchWord.value === word) {
-      currentWordFavorited.value = false;
-    }
-    if (!success) {
-      showMessage('删除失败 - Plugin 未就绪', 2000, 'error');
-    }
-  } catch (error) {
-    showMessage('删除失败', 2000, 'error');
-  }
-};
 
 // 播放发音
 const playPronunciation = (word: string) => {
@@ -941,7 +818,6 @@ const handleTranslate = async () => {
 const getPanelIcon = (panel: string) => {
   const icons: Record<string, string> = {
     history: '🕒',
-    favorites: '⭐',
     advanced: '⚙️'
   };
   return icons[panel] || '';
@@ -952,8 +828,6 @@ const getPanelTitle = (panel: string): string => {
   switch (panel) {
     case 'history':
       return `${props.i18n.wordQuery?.queryHistory || '查询历史'} (${queryHistory.value.length})`;
-    case 'favorites':
-      return `${props.i18n.wordQuery?.myFavorites || '我的收藏'} (${favorites.value.length})`;
     case 'advanced':
       return props.i18n.wordQuery?.advancedOptions || '高级选项';
     default:
@@ -1050,21 +924,13 @@ const copyToClipboard = async (text: string, errorMessage?: string) => {
   }
 };
 
-// 刷新收藏状态
-const refreshFavoriteStatus = () => {
-  const word = searchWord.value.trim();
-  if (word) checkIfFavorited(word);
-};
-
 // ================================
 // 监听器
 // ================================
 
-// 监听搜索词变化（合并两个 watch）
+// 监听搜索词变化
 watch(searchWord, () => {
   setupAutoQuery();
-  // 延迟检查收藏状态，确保数据已加载
-  setTimeout(refreshFavoriteStatus, 100);
 });
 
 // 监听翻译文本变化
@@ -1102,7 +968,6 @@ const initializeData = async () => {
   try {
     await Promise.all([
       loadHistory(),
-      loadFavorites(),
       loadAdvancedOptions()
     ]);
   } catch (error) {

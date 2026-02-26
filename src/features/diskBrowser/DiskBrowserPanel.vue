@@ -293,10 +293,8 @@ interface CacheStatus {
 
 interface Props {
   i18n: Record<string, string>
-  storage: {
-    saveFavorites: (favorites: string[]) => Promise<void>
-    loadFavorites: () => Promise<string[] | null>
-  }
+  loadFavorites: () => Promise<string[]>
+  saveFavorites: (favorites: string[]) => Promise<boolean>
 }
 
 const props = defineProps<Props>()
@@ -524,7 +522,7 @@ function isFavorite(folderPath: string): boolean {
  */
 async function saveFavorites(): Promise<void> {
   try {
-    await props.storage.saveFavorites(favoriteFolders.value)
+    await props.saveFavorites(favoriteFolders.value)
   } catch (error) {
     console.error('保存收藏夹失败:', error)
   }
@@ -535,8 +533,8 @@ async function saveFavorites(): Promise<void> {
  */
 async function loadFavorites(): Promise<void> {
   try {
-    const favorites = await props.storage.loadFavorites()
-    favoriteFolders.value = favorites || []
+    const favorites = await props.loadFavorites()
+    favoriteFolders.value = favorites
   } catch (error) {
     console.error('加载收藏夹失败:', error)
     favoriteFolders.value = []

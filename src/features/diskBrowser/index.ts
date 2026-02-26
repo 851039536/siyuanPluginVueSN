@@ -5,22 +5,53 @@
 import { Plugin } from 'siyuan'
 import { createApp, h } from 'vue'
 import DiskBrowserPanel from './DiskBrowserPanel.vue'
-import { DiskBrowserStorage } from './storage'
+import { PluginStorage } from '@/utils/pluginStorage'
+
+/**
+ * 磁盘浏览器设置接口
+ */
+interface DiskBrowserSettings {
+  favoriteFolders: string[]
+}
 
 /**
  * 注册本地磁盘浏览器功能
  */
 export function registerDiskBrowser(plugin: Plugin) {
+  const STORAGE_KEY = 'disk-browser-settings'
 
-  // 初始化存储
-  const storage = new DiskBrowserStorage(plugin)
-  storage.init()
+  const storage = new PluginStorage(plugin)
 
-  // 添加右侧边栏 Dock
+  const loadFavorites = async (): Promise<string[]> => {
+    const settings = await storage.loadWithDefault<DiskBrowserSettings>(STORAGE_KEY, { favoriteFolders: [] })
+    return settings.favoriteFolders
+  }
+
+  const saveFavorites = async (favorites: string[]): Promise<boolean> => {
+    const settings: DiskBrowserSettings = { favoriteFolders: favorites }
+    return storage.save(STORAGE_KEY, settings)
+  }
+
+  const initStorage = async (): Promise<void> => {
+    try {
+      const settings = await storage.load<DiskBrowserSettings>(STORAGE_KEY)
+      if (!settings) {
+        const defaultSettings: DiskBrowserSettings = {
+          favoriteFolders: []
+        }
+        await storage.save(STORAGE_KEY, defaultSettings)
+      }
+    } catch (error) {
+      console.error('初始化磁盘浏览器存储失败:', error)
+    }
+  }
+
+  initStorage()
+
   plugin.addDock({
     config: {
       position: 'RightTop',
-      size: { width: 380, height: 0 }, // 增加宽度以适应两行布局
+      size: { width: 380, height: 0 },
       icon: 'iconFiles',
       title: (plugin.i18n as any).diskBrowser?.panelTitle || '本地磁盘',
       show: false,
@@ -28,7 +59,6 @@ export function registerDiskBrowser(plugin: Plugin) {
     data: {},
     type: 'disk-browser-dock',
     init(dock: any) {
-      // 创建 Vue 应用
       const container = document.createElement('div')
       container.style.height = '100%'
       container.style.overflow = 'hidden'
@@ -37,7 +67,8 @@ export function registerDiskBrowser(plugin: Plugin) {
         setup() {
           return () => h(DiskBrowserPanel, {
             i18n: plugin.i18n.diskBrowser,
-            storage,
+            loadFavorites,
+            saveFavorites,
           })
         }
       })
@@ -45,7 +76,6 @@ export function registerDiskBrowser(plugin: Plugin) {
       app.mount(container)
       dock.element?.appendChild(container)
 
-      // 保存应用引用，以便卸载时清理
       dock.__app = app
       dock.__container = container
     },

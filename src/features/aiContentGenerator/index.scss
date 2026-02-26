@@ -3,7 +3,6 @@
 // 通用混合宏
 @mixin no-animation {
   animation: none !important;
-  transition: none !important;
 }
 
 @mixin base-button {
@@ -131,7 +130,6 @@
   }
 
   &.collapsed .collapse-icon {
-    transform: rotate(-90deg);
   }
 }
 
@@ -399,11 +397,9 @@
     border-radius: 4px;
     cursor: pointer;
     color: var(--b3-theme-on-surface);
-    transition: all 0.2s;
 
     &:hover {
       background: var(--b3-theme-error-lighter);
-      transform: rotate(90deg);
     }
   }
 }
@@ -492,7 +488,6 @@
 .loading-spinner-small,
 .loading-spinner-tiny {
   border-radius: 50%;
-  animation: spin 1s linear infinite;
 }
 
 .loading-spinner-large {
@@ -517,10 +512,6 @@
   border-top-color: var(--b3-theme-on-primary);
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
 .error-icon {
   color: var(--b3-theme-error);
   margin-bottom: 16px;
@@ -530,18 +521,6 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  animation: fadeIn 0.3s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .result-header {
@@ -568,16 +547,6 @@
   font-size: 10px;
   font-weight: 400;
   color: var(--b3-theme-primary);
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
-  }
 }
 
 .dot-flashing {
@@ -586,7 +555,6 @@
   height: 6px;
   border-radius: 50%;
   background-color: var(--b3-theme-primary);
-  animation: dot-flashing 1s infinite linear alternate;
 }
 
 .dot-flashing::before,
@@ -603,8 +571,6 @@
   height: 6px;
   border-radius: 50%;
   background-color: var(--b3-theme-primary);
-  animation: dot-flashing 1s infinite alternate;
-  animation-delay: 0s;
 }
 
 .dot-flashing::after {
@@ -613,17 +579,6 @@
   height: 6px;
   border-radius: 50%;
   background-color: var(--b3-theme-primary);
-  animation: dot-flashing 1s infinite alternate;
-  animation-delay: 1s;
-}
-
-@keyframes dot-flashing {
-  0% {
-    opacity: 0.2;
-  }
-  50%, 100% {
-    opacity: 1;
-  }
 }
 
 .result-actions {
@@ -840,7 +795,6 @@
   background: linear-gradient(135deg, var(--b3-theme-surface) 0%, var(--b3-theme-surface-lighter) 100%);
   border: 1px solid var(--b3-theme-warning-lighter);
   border-radius: 6px;
-  animation: slideDown 0.3s ease-out;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   flex-shrink: 0; // 防止面板被压缩
 
@@ -871,7 +825,6 @@
 
       &:hover {
         background: var(--b3-theme-error-lighter);
-        transform: rotate(90deg);
       }
 
       svg {

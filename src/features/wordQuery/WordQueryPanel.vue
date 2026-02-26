@@ -33,9 +33,6 @@
       </div>
 
       <div class="api-key-toggle">
-        <Button variant="ghost" size="small" @click="togglePanel('history')" :title="props.i18n.wordQuery?.history || '历史记录'">
-          <IconWrapper name="textBox" :size="18" />
-        </Button>
         <Button variant="ghost" size="small" @click="togglePanel('advanced')" :title="props.i18n.wordQuery?.advancedOptions || '高级选项'">
           <IconWrapper name="generalSettings" :size="18" />
         </Button>
@@ -67,33 +64,9 @@
       <div class="panel-header">
         <span>{{ getPanelIcon(activePanel) }} {{ getPanelTitle(activePanel) }}</span>
         <div class="panel-actions">
-          <Button
-            v-if="activePanel === 'history' && queryHistory.length > 0"
-            variant="ghost"
-            size="small"
-            @click="clearHistory"
-          >清除</Button>
           <Button variant="ghost" size="small" @click="togglePanel(null)">
             <IconWrapper name="close" :size="16" />
           </Button>
-        </div>
-      </div>
-
-      <!-- 历史记录面板内容 -->
-      <div v-if="activePanel === 'history'" class="panel-content">
-        <div v-if="queryHistory.length === 0" class="empty-state">
-          <p>📑 {{ props.i18n.wordQuery?.noHistory || '暂无查询历史' }}</p>
-        </div>
-        <div v-else class="item-list">
-          <div
-            v-for="item in queryHistory"
-            :key="item.timestamp"
-            class="list-item"
-            @click="queryFromHistory(item)"
-          >
-            <div class="item-word">{{ item.word }}</div>
-            <div class="item-time">{{ formatTime(item.timestamp) }}</div>
-          </div>
         </div>
       </div>
 
@@ -309,11 +282,7 @@ interface Props {
   onTranslate?: (text: string, sourceLang: string, targetLang: string) => Promise<string>;
 }
 
-interface HistoryItem {
-  word: string;
-  result: string;
-  timestamp: number;
-}
+
 
 
 
@@ -341,7 +310,6 @@ const LANGUAGE_NAMES = Object.fromEntries(
 const TARGET_LANGUAGE_OPTIONS = LANGUAGE_OPTIONS.filter(opt => opt.value !== 'auto');
 
 // 配置常量
-const MAX_HISTORY_ITEMS = 50;
 const AUTO_OPERATION_DELAY = 2000;
 const WORD_PATTERN = /^[a-zA-Z0-9\s\-.,;:!?'"()（）【】《》《""''\u4e00-\u9fa5\u3000-\u303F\uFF00-\uFFEF]+$/;
 
@@ -367,7 +335,6 @@ const CONTENT_PATTERNS = {
 
 // 数据存储键
 const STORAGE_KEYS = {
-  HISTORY: 'word-query-history',
   OPTIONS: 'word-query-options'
 };
 
@@ -390,7 +357,6 @@ const targetLanguage = ref('zh');
 
 // 面板状态管理
 const activePanel = ref<string | null>(null);
-const queryHistory = ref<HistoryItem[]>([]);
 
 // 设置状态
 const pronunciationType = ref<'uk' | 'us'>('uk');
@@ -498,7 +464,6 @@ const handleQuery = async () => {
     const result = await props.onQuery(word);
     if (result) {
       queryResult.value = result;
-      await addToHistory(word, result);
       if (autoPlayPronunciation.value) {
         playPronunciation(word);
       }
@@ -584,62 +549,6 @@ const togglePanel = (panelKey: string | null) => {
 
 
 
-// 添加到历史记录
-const addToHistory = async (word: string, result: string) => {
-  const newItem: HistoryItem = {
-    word,
-    result,
-    timestamp: Date.now()
-  };
-
-  // 移除重复项并添加到开头
-  queryHistory.value = [
-    newItem,
-    ...queryHistory.value.filter(item => item.word !== word)
-  ].slice(0, MAX_HISTORY_ITEMS);
-
-  // 保存历史记录（不阻塞主要流程）
-  try {
-    await dataOperations.save(STORAGE_KEYS.HISTORY, queryHistory.value);
-  } catch (error) {
-    console.error('[WordQuery] Failed to save history:', error);
-    // 不显示错误提示，避免影响用户体验
-  }
-};
-
-// 加载历史记录
-const loadHistory = async () => {
-  const saved = await dataOperations.load(STORAGE_KEYS.HISTORY);
-  // 确保数据是数组，否则使用默认值
-  if (saved && Array.isArray(saved)) {
-    queryHistory.value = saved;
-  } else {
-    queryHistory.value = [];
-  }
-};
-
-// 清除历史记录
-const clearHistory = async () => {
-  queryHistory.value = [];
-  try {
-    const success = await dataOperations.save(STORAGE_KEYS.HISTORY, queryHistory.value);
-    if (!success) {
-      showMessage('清除历史记录失败 - Plugin 未就绪', 2000, 'error');
-    }
-  } catch (error) {
-    showMessage('清除历史记录失败', 2000, 'error');
-  }
-};
-
-// 从历史记录查询
-const queryFromHistory = (item: HistoryItem) => {
-  searchWord.value = item.word;
-  queryResult.value = item.result;
-  activePanel.value = null;
-};
-
-
-
 // 播放发音
 const playPronunciation = (word: string) => {
   try {
@@ -695,20 +604,7 @@ const loadAdvancedOptions = async () => {
   }
 };
 
-// 格式化时间
-const formatTime = (timestamp: number) => {
-  const now = Date.now();
-  const diff = now - timestamp;
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
 
-  if (minutes < 1) return '刚刚';
-  if (minutes < 60) return `${minutes}分钟前`;
-  if (hours < 24) return `${hours}小时前`;
-  if (days < 7) return `${days}天前`;
-  return new Date(timestamp).toLocaleDateString();
-};
 
 // 清除定时器
 const clearTimer = (timerRef: Ref<NodeJS.Timeout | null>) => {
@@ -817,7 +713,6 @@ const handleTranslate = async () => {
 // 获取面板图标
 const getPanelIcon = (panel: string) => {
   const icons: Record<string, string> = {
-    history: '🕒',
     advanced: '⚙️'
   };
   return icons[panel] || '';
@@ -826,8 +721,6 @@ const getPanelIcon = (panel: string) => {
 // 获取面板标题
 const getPanelTitle = (panel: string): string => {
   switch (panel) {
-    case 'history':
-      return `${props.i18n.wordQuery?.queryHistory || '查询历史'} (${queryHistory.value.length})`;
     case 'advanced':
       return props.i18n.wordQuery?.advancedOptions || '高级选项';
     default:
@@ -966,10 +859,7 @@ const initializeData = async () => {
   }
 
   try {
-    await Promise.all([
-      loadHistory(),
-      loadAdvancedOptions()
-    ]);
+    await loadAdvancedOptions();
   } catch (error) {
     console.error('[WordQuery] Failed to load data:', error);
   }

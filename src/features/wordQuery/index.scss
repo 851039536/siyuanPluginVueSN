@@ -271,52 +271,6 @@
         padding: 8px;
         max-height: 240px;
         overflow-y: auto;
-
-        .empty-state {
-          text-align: center;
-          padding: 32px 16px;
-          color: var(--b3-theme-secondary, $brand-mid-gray);
-          font-size: 14px;
-        }
-
-        // 列表样式
-        .item-list {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-        }
-
-        .list-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 8px 12px;
-          background: var(--b3-theme-background, $brand-light);
-          border-radius: 6px;
-          border: 1px solid var(--b3-border-color, $brand-subtle-gray);
-          transition: all 0.2s ease;
-
-          &:hover {
-            background-color: var(--b3-theme-surface-lighter, $brand-light-gray);
-            border-color: var(--b3-theme-secondary, $brand-mid-gray);
-          }
-
-          .item-content {
-            cursor: pointer;
-            flex: 1;
-          }
-
-          .item-word {
-            font-weight: 500;
-            font-size: 14px;
-            color: var(--b3-theme-on-background, $brand-dark);
-          }
-
-          .item-time {
-            font-size: 12px;
-            color: var(--b3-theme-secondary, $brand-mid-gray);
-          }
-        }
       }
 
       // 高级选项

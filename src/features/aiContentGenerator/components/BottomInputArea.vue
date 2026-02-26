@@ -2,26 +2,7 @@
   <div class="bottom-input-section">
     <!-- AI智能编辑工具栏 -->
     <div v-if="editTargetDoc" class="ai-edit-toolbar">
-      <div class="toolbar-label">
-        <div class="section-title-wrapper">
-          <svg width="14" height="14">
-            <use xlink:href="#iconSparkles"></use>
-          </svg>
-          <span>{{ 'AI智能编辑' }}:</span>
-          <Button
-            :class="['btn-collapse', { 'collapsed': collapsedAiToolbar }]"
-            @click="$emit('toggle-ai-toolbar')"
-            :title="collapsedAiToolbar ? '展开工具栏' : '折叠工具栏'"
-            variant="ghost"
-            size="small"
-          >
-            <svg width="14" height="14" class="collapse-icon">
-              <use :xlink:href="collapsedAiToolbar ? '#iconRight' : '#iconDown'"></use>
-            </svg>
-          </Button>
-        </div>
-      </div>
-      <div class="toolbar-actions" :class="{ 'collapsed': collapsedAiToolbar }">
+      <div class="toolbar-actions">
         <Button @click="$emit('ai-edit', 'polish')" :disabled="isGenerating" :title="'AI润色'" variant="ghost" size="small">
           <svg width="14" height="14"><use xlink:href="#iconEdit"></use></svg>
           {{ '润色' }}
@@ -225,9 +206,6 @@ interface Props {
   isCheckingPlagiarism: boolean;
   editTargetDoc: TargetDoc | null;
 
-  // AI工具栏
-  collapsedAiToolbar: boolean;
-
   // 提示词选择
   showPromptSelector: boolean;
   currentPromptName: string;
@@ -248,7 +226,6 @@ const emit = defineEmits<{
   (e: 'ai-edit', action: 'polish' | 'expand' | 'condense' | 'fix' | 'translate' | 'rewrite' | 'summary'): void;
   (e: 'check-plagiarism'): void;
   (e: 'stop'): void;
-  (e: 'toggle-ai-toolbar'): void;
   (e: 'toggle-prompt-selector'): void;
   (e: 'clear-current-prompt'): void;
   (e: 'load-prompt', index: number): void;

@@ -1,11 +1,12 @@
 /**
- * AI内容生成器数据存储管理
- */
+* AI内容生成器数据存储管理
+*/
 import { Plugin } from 'siyuan'
+import { PluginStorage } from '@/utils/pluginStorage'
 
 /**
- * AI生成器设置接口
- */
+* AI生成器设置接口
+*/
 export interface AIGeneratorSettings {
   systemPrompt: string
   temperature: number
@@ -14,8 +15,8 @@ export interface AIGeneratorSettings {
 }
 
 /**
- * AI提示词配置接口
- */
+* AI提示词配置接口
+*/
 export interface AIPromptConfig {
   id: string
   name: string
@@ -27,134 +28,80 @@ export interface AIPromptConfig {
 }
 
 /**
- * AI内容生成器存储管理器
- */
+* AI内容生成器存储管理器
+*/
 export class AIGeneratorStorage {
-  private plugin: Plugin
+  private storage: PluginStorage
   private readonly SETTINGS_STORAGE_KEY = 'ai-content-generator-settings'
   private readonly PROMPTS_STORAGE_KEY = 'ai-content-generator-prompts'
   private readonly CURRENT_PROMPT_STORAGE_KEY = 'ai-content-generator-current-prompt'
   private readonly COLLAPSED_SECTIONS_STORAGE_KEY = 'ai-content-generator-collapsed-sections'
 
   constructor(plugin: Plugin) {
-    this.plugin = plugin
+    this.storage = new PluginStorage(plugin)
   }
 
   /**
    * 保存设置
    */
   async saveSettings(settings: AIGeneratorSettings): Promise<boolean> {
-    try {
-      await this.plugin.saveData(this.SETTINGS_STORAGE_KEY, settings)
-      return true
-    } catch (error) {
-      console.error('保存AI生成器设置失败:', error)
-      return false
-    }
+    return this.storage.save(this.SETTINGS_STORAGE_KEY, settings)
   }
 
   /**
    * 加载设置
    */
   async loadSettings(): Promise<AIGeneratorSettings | null> {
-    try {
-      const data = await this.plugin.loadData(this.SETTINGS_STORAGE_KEY)
-      return data as AIGeneratorSettings
-    } catch (error) {
-      console.error('加载AI生成器设置失败:', error)
-      return null
-    }
+    return this.storage.load<AIGeneratorSettings>(this.SETTINGS_STORAGE_KEY)
   }
 
   /**
    * 保存提示词配置列表
    */
   async savePrompts(prompts: AIPromptConfig[]): Promise<boolean> {
-    try {
-      await this.plugin.saveData(this.PROMPTS_STORAGE_KEY, prompts)
-      return true
-    } catch (error) {
-      console.error('保存提示词配置失败:', error)
-      return false
-    }
+    return this.storage.save(this.PROMPTS_STORAGE_KEY, prompts)
   }
 
   /**
    * 加载提示词配置列表
    */
   async loadPrompts(): Promise<AIPromptConfig[]> {
-    try {
-      const data = await this.plugin.loadData(this.PROMPTS_STORAGE_KEY)
-      return data || []
-    } catch (error) {
-      console.error('加载提示词配置失败:', error)
-      return []
-    }
+    return this.storage.loadWithDefault<AIPromptConfig[]>(this.PROMPTS_STORAGE_KEY, [])
   }
 
   /**
    * 保存当前选中的提示词
    */
   async saveCurrentPrompt(promptName: string): Promise<boolean> {
-    try {
-      await this.plugin.saveData(this.CURRENT_PROMPT_STORAGE_KEY, promptName)
-      return true
-    } catch (error) {
-      console.error('保存当前提示词失败:', error)
-      return false
-    }
+    return this.storage.save(this.CURRENT_PROMPT_STORAGE_KEY, promptName)
   }
 
   /**
    * 加载当前选中的提示词
    */
   async loadCurrentPrompt(): Promise<string | null> {
-    try {
-      const data = await this.plugin.loadData(this.CURRENT_PROMPT_STORAGE_KEY)
-      return data as string || null
-    } catch (error) {
-      console.error('加载当前提示词失败:', error)
-      return null
-    }
+    return this.storage.load<string>(this.CURRENT_PROMPT_STORAGE_KEY)
   }
 
   /**
    * 清除当前提示词选择
    */
   async clearCurrentPrompt(): Promise<boolean> {
-    try {
-      await this.plugin.saveData(this.CURRENT_PROMPT_STORAGE_KEY, '')
-      return true
-    } catch (error) {
-      console.error('清除当前提示词失败:', error)
-      return false
-    }
+    return this.storage.remove(this.CURRENT_PROMPT_STORAGE_KEY)
   }
 
   /**
    * 保存折叠状态
    */
   async saveCollapsedSections(collapsedSections: Record<string, boolean>): Promise<boolean> {
-    try {
-      await this.plugin.saveData(this.COLLAPSED_SECTIONS_STORAGE_KEY, collapsedSections)
-      return true
-    } catch (error) {
-      console.error('保存折叠状态失败:', error)
-      return false
-    }
+    return this.storage.save(this.COLLAPSED_SECTIONS_STORAGE_KEY, collapsedSections)
   }
 
   /**
    * 加载折叠状态
    */
   async loadCollapsedSections(): Promise<Record<string, boolean> | null> {
-    try {
-      const data = await this.plugin.loadData(this.COLLAPSED_SECTIONS_STORAGE_KEY)
-      return data as Record<string, boolean> || null
-    } catch (error) {
-      console.error('加载折叠状态失败:', error)
-      return null
-    }
+    return this.storage.load<Record<string, boolean>>(this.COLLAPSED_SECTIONS_STORAGE_KEY)
   }
 
   /**

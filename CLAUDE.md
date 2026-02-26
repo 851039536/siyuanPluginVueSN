@@ -244,7 +244,32 @@ defineProps<Props>()
 
 - 工作区路径：通过 `/api/system/getConf` 获取工作区路径
 - 思源 API 使用：参考 `docs/思源笔记 API 使用.md` 文档
-- 数据持久化：使用 `plugin.loadData()` 和 `plugin.saveData()` 方法，避免使用 localStorage，插件生成的数据将保存在 data/storage/petal/<name>/ 目录下。
+- 数据持久化：使用 `src/utils/pluginStorage.ts` 中的 `PluginStorage` 类，避免直接使用 `plugin.loadData()` 和 `plugin.saveData()`，插件生成的数据将保存在 data/storage/petal/<name>/ 目录下。
+
+### PluginStorage 使用示例
+
+```typescript
+import { Plugin } from 'siyuan'
+import { PluginStorage } from '@/utils/pluginStorage'
+
+// 创建存储实例
+const storage = new PluginStorage(plugin)
+
+// 保存数据
+await storage.save('my-key', { name: 'value' })
+
+// 加载数据
+const data = await storage.load<MyType>('my-key')
+
+// 加载数据（带默认值）
+const data = await storage.loadWithDefault('my-key', [])
+
+// 删除数据
+await storage.remove('my-key')
+
+// 检查数据是否存在
+const exists = await storage.exists('my-key')
+```
 
 ## 开发指南
 

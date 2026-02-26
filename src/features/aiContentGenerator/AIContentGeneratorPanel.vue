@@ -126,10 +126,6 @@ import SettingsPanel from './components/SettingsPanel.vue';
 import PlagiarismResultPanel from './components/PlagiarismResultPanel.vue';
 import MainContentArea from './components/MainContentArea.vue';
 import BottomInputArea from './components/BottomInputArea.vue';
-import Button from '@/components/Button.vue';
-import Input from '@/components/Input.vue';
-import Textarea from '@/components/Textarea.vue';
-import Tag from '@/components/Tag.vue';
 
 interface Props {
   i18n: any;
@@ -266,10 +262,6 @@ const totalPages = computed(() => {
   return Math.ceil(filteredPrompts.value.length / ITEMS_PER_PAGE) || 1;
 });
 
-// 获取原始索引（用于处理过滤后的列表）
-const getOriginalIndex = (prompt: SavedPrompt) => {
-  return savedPrompts.value.findIndex(p => p.id === prompt.id);
-};
 
 // 监听搜索查询变化，重置页码
 watch(promptSearchQuery, () => {
@@ -476,7 +468,6 @@ const handleDrop = async (e: DragEvent) => {
       showMessage('✓ 已加载文档', 2000, 'info');
     }
   } else {
-    console.error('❌ 无法获取 ID');
     showMessage('⚠️ 无法识别拖拽的内容', 3000, 'error');
   }
 };
@@ -927,7 +918,6 @@ const loadTargetBlock = async (blockId: string) => {
     // 获取块信息
     const block = await api.getBlockByID(blockId);
     if (!block) {
-      console.error('❌ 无法获取块信息');
       showMessage('无法获取块信息', 3000, 'error');
       return;
     }
@@ -937,7 +927,6 @@ const loadTargetBlock = async (blockId: string) => {
 
     // 备用方案：如果 getBlockMarkdown 失败，尝试使用 block.content
     if (!blockContent && block.content) {
-      console.warn('⚠️ getBlockMarkdown 返回空，使用 block.content 作为备用');
       blockContent = block.content;
 
       // 对于标题块，添加标题标记
@@ -951,7 +940,6 @@ const loadTargetBlock = async (blockId: string) => {
     }
 
     if (!blockContent) {
-      console.error('❌ 无法获取块内容，blockContent 为空');
       showMessage('无法获取块内容', 3000, 'error');
       return;
     }
@@ -980,7 +968,6 @@ const loadTargetBlock = async (blockId: string) => {
     );
 
   } catch (error) {
-    console.error('❌ 加载块失败:', error);
     showMessage('加载块失败: ' + (error as Error).message, 3000, 'error');
   }
 };
@@ -1504,12 +1491,6 @@ const deletePrompt = (index: number) => {
   }
 };
 
-// 获取提示词预览
-const getPromptPreview = (text: string): string => {
-  const maxLength = 60;
-  if (text.length <= maxLength) return text;
-  return text.substring(0, maxLength) + '...';
-};
 
 // 保存提示词到存储
 const savePromptsToStorage = async () => {

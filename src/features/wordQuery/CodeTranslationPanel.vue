@@ -206,5 +206,5 @@ watch(() => chineseInput.value, () => {
 </script>
 
 <style scoped lang="scss">
-@import "./codeTranslation.scss";
+@use "./codeTranslation.scss";
 </style>

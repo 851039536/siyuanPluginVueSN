@@ -576,9 +576,9 @@ const saveAdvancedOptions = async () => {
 const loadAdvancedOptions = async () => {
   const saved = await dataOperations.load(STORAGE_KEYS.OPTIONS);
   if (saved && typeof saved === 'object') {
-    pronunciationType.value = saved.pronunciationType || 'uk';
-    autoPlayPronunciation.value = saved.autoPlayPronunciation ?? false;
-    showRelatedWords.value = saved.showRelatedWords ?? true;
+    pronunciationType.value = (saved as any).pronunciationType || 'uk';
+    autoPlayPronunciation.value = (saved as any).autoPlayPronunciation ?? false;
+    showRelatedWords.value = (saved as any).showRelatedWords ?? true;
   } else {
     // 使用默认值
     pronunciationType.value = 'uk';

@@ -56,7 +56,7 @@ export const NAMING_STYLES: NamingStyle[] = [
 const API_PROVIDERS = {
   tongyi: {
     url: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation',
-    formatRequest: (model: string, messages: any[]) => ({
+    buildRequest: (model: string, messages: any[]) => ({
       model,
       input: { messages },
       parameters: { temperature: 0.3, top_p: 0.8, max_tokens: 2000 }
@@ -64,7 +64,7 @@ const API_PROVIDERS = {
   },
   deepseek: {
     url: 'https://api.deepseek.com/v1/chat/completions',
-    formatRequest: (model: string, messages: any[]) => ({
+    buildRequest: (model: string, messages: any[]) => ({
       model,
       messages,
       temperature: 0.3,
@@ -73,7 +73,7 @@ const API_PROVIDERS = {
   },
   openai: {
     url: 'https://api.openai.com/v1/chat/completions',
-    formatRequest: (model: string, messages: any[]) => ({
+    buildRequest: (model: string, messages: any[]) => ({
       model,
       messages,
       temperature: 0.3,
@@ -130,7 +130,7 @@ async function callTranslationAPI(
     }
   ]
 
-  const requestBody = provider.formatRequest(model, messages)
+  const requestBody = provider.buildRequest(model, messages)
 
   const response = await fetch(apiUrl, {
     method: 'POST',
@@ -153,21 +153,20 @@ async function callTranslationAPI(
  * 从API响应中提取文本内容
  */
 function extractTextFromResponse(data: any, provider: string): string {
-  switch (provider) {
-    case 'tongyi':
-      if (data.output && data.output.choices && data.output.choices.length > 0) {
-        return data.output.choices[0].message.content
-      }
-      break
-    case 'deepseek':
-    case 'openai':
-    case 'custom':
-      if (data.choices && data.choices.length > 0) {
-        return data.choices[0].message.content
-      }
-      break
+  const possiblePaths = [
+    () => data.output?.text,
+    () => data.output?.choices?.[0]?.message?.content,
+    () => data.choices?.[0]?.message?.content,
+    () => data.text,
+    () => data.content
+  ];
+
+  for (const getText of possiblePaths) {
+    const text = getText();
+    if (text) return text;
   }
-  throw new Error('API返回数据格式错误')
+
+  throw new Error('API返回数据格式错误');
 }
 
 /**

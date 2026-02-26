@@ -121,7 +121,6 @@
         flex-direction: column;
         height: 100%;
         min-height: 0;
-        animation: fadeIn 0.3s ease-in-out;
 
         .result-content {
           flex: 1;
@@ -175,7 +174,6 @@
             border-left: 3px solid;
             line-height: 1.5;
             font-size: 14px;
-            transition: all 0.2s ease;
 
             &:hover {
               border-color: var(--b3-theme-secondary, $brand-mid-gray);
@@ -243,7 +241,6 @@
     .common-panel {
       border-bottom: 1px solid var(--b3-border-color, $brand-subtle-gray);
       background: var(--b3-theme-surface-lighter, $brand-light-gray);
-      animation: slideDown 0.2s ease-out;
       max-width: 100%;
       overflow: hidden;
       max-height: 300px;
@@ -432,26 +429,6 @@
         }
       }
     }
-  }
-}
-
-// ================================
-// 9. 动画定义
-// ================================
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
   }
 }
 

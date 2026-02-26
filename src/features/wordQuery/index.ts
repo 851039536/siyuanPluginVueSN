@@ -144,184 +144,106 @@ export class WordQuery {
    * 构建提示词
    */
   private buildPrompt(word: string): string {
-    // 根据输入类型选择不同的提示词
-    if (this.isEnglishWord(word)) {
-      return `请为英文单词 "${word}" 生成详细信息，要求：
+    const isEnglish = this.isEnglishWord(word);
+    const isChinese = this.isChinese(word);
 
-1. 使用英式标准发音
+    const basePrompt = `请为${isEnglish ? '英文单词' : '中文词语'} "${word}" 生成详细信息，要求：
+
+1. 使用英式标准发音${isEnglish ? '' : '（如果是英文）'}
 2. 谐音使用带声调的拼音标注
 3. 严格按照以下格式输出：
 
 #### ${word}
 
-单词：${word}
+${isEnglish ? `单词：${word}
 音标：[英式音标]
 释义：[中文释义]
-谐音：[中文谐音(使用英式自然发音,带拼音标注),如:西斯腾(xī sī téng)]
+谐音：[中文谐音(使用英式自然发音,带拼音标注),如:西斯腾(xī sī téng)]` : `词语：${word}
+拼音：[标准拼音]
+英文：[英文翻译]
+释义：[中文释义]
+谐音：[英文谐音，便于记忆，如:桑普(sǎmpǔ)]`}
 发音：[发音要点说明]
-例句：[英文例句及中文翻译]
+例句：[${isEnglish ? '英文例句及中文翻译' : '中文例句及英文翻译'}]
 
 注意事项：
-- 音标必须是英式音标
+- ${isEnglish ? '音标必须是英式音标' : '英文翻译要准确自然'}
 - 谐音要贴近实际发音，便于记忆
 - 拼音必须带声调
 - 发音说明要包含音节、重音、元音特点等
 - 提供常用例句
 - 只输出格式化内容，不要有其他说明文字`;
-    } else if (this.isChinese(word)) {
-      return `请为中文词语 "${word}" 生成详细信息，要求：
 
-1. 提供英文翻译
-2. 使用英式标准发音
-3. 谐音使用带声调的拼音标注
-4. 严格按照以下格式输出：
-
-#### ${word}
-
-词语：${word}
-拼音：[标准拼音]
-英文：[英文翻译]
-释义：[中文释义]
-谐音：[英文谐音，便于记忆，如:桑普(sǎmpǔ)]
-发音：[发音要点说明]
-例句：[中文例句及英文翻译]
-
-注意事项：
-- 英文翻译要准确自然
-- 谐音要贴近实际英文发音，便于记忆
-- 拼音必须带声调
-- 发音说明要包含音节、重音、元音特点等
-- 提供常用例句
-- 只输出格式化内容，不要有其他说明文字`;
-    } else {
-      // 对于混合输入或其他情况，尝试智能判断
-      const hasChinese = /[\u4e00-\u9fa5]/.test(word);
-      const hasEnglish = /[a-zA-Z]/.test(word);
-
-      if (hasChinese && !hasEnglish) {
-        // 主要为中文，按中文处理
-        return `请为中文词语 "${word}" 生成详细信息，要求：
-
-1. 提供英文翻译
-2. 使用英式标准发音
-3. 谐音使用带声调的拼音标注
-4. 严格按照以下格式输出：
-
-#### ${word}
-
-词语：${word}
-拼音：[标准拼音]
-英文：[英文翻译]
-释义：[中文释义]
-谐音：[英文谐音，便于记忆，如:桑普(sǎmpǔ)]
-发音：[发音要点说明]
-例句：[中文例句及英文翻译]
-
-注意事项：
-- 英文翻译要准确自然
-- 谐音要贴近实际英文发音，便于记忆
-- 拼音必须带声调
-- 发音说明要包含音节、重音、元音特点等
-- 提供常用例句
-- 只输出格式化内容，不要有其他说明文字`;
-      } else if (hasEnglish && !hasChinese) {
-        // 主要为英文，按英文处理
-        return `请为英文单词 "${word}" 生成详细信息，要求：
-
-1. 使用英式标准发音
-2. 谐音使用带声调的拼音标注
-3. 严格按照以下格式输出：
-
-#### ${word}
-
-单词：${word}
-音标：[英式音标]
-释义：[中文释义]
-谐音：[中文谐音(使用英式自然发音,带拼音标注),如:西斯腾(xī sī téng)]
-发音：[发音要点说明]
-例句：[英文例句及中文翻译]
-
-注意事项：
-- 音标必须是英式音标
-- 谐音要贴近实际发音，便于记忆
-- 拼音必须带声调
-- 发音说明要包含音节、重音、元音特点等
-- 提供常用例句
-- 只输出格式化内容，不要有其他说明文字`;
-      } else {
-        // 混合内容，智能判断主语言
-        return `请为词语 "${word}" 生成详细信息，分析该词语的语言类型，如果是英文，请提供中文释义；如果是中文，请提供英文翻译。
-
-1. 使用英式标准发音（如果是英文）
-2. 谐音使用带声调的拼音标注
-3. 严格按照以下格式输出：
-
-#### ${word}
-
-词语：${word}
-拼音/音标：[拼音或音标]
-释义：[中文或英文释义]
-谐音：[谐音记忆]
-发音：[发音要点说明]
-例句：[例句及翻译]
-
-注意事项：
-- 智能判断主要语言类型
-- 只输出格式化内容，不要有其他说明文字`;
-      }
-    }
+    return basePrompt;
   }
+
+  /**
+   * API提供商配置
+   */
+  private readonly API_PROVIDERS = {
+    tongyi: {
+      url: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation',
+      buildRequest: (model: string, messages: any[]) => ({
+        model,
+        input: { messages },
+        parameters: { temperature: 0.7, top_p: 0.8, max_tokens: 800 }
+      })
+    },
+    openai: {
+      url: 'https://api.openai.com/v1/chat/completions',
+      buildRequest: (model: string, messages: any[]) => ({
+        model,
+        messages,
+        temperature: 0.7,
+        max_tokens: 800
+      })
+    },
+    deepseek: {
+      url: 'https://api.deepseek.com/v1/chat/completions',
+      buildRequest: (model: string, messages: any[]) => ({
+        model,
+        messages,
+        temperature: 0.7,
+        max_tokens: 800
+      })
+    }
+  };
 
   /**
    * 调用API
    */
   private async callAPI(prompt: string): Promise<string> {
-    switch (this.currentProvider) {
-      case 'tongyi':
-        return await this.callTongyiAPI(prompt);
-      case 'openai':
-        return await this.callOpenAIAPI(prompt);
-      case 'deepseek':
-        return await this.callDeepSeekAPI(prompt);
-      case 'custom':
-        return await this.callCustomAPI(prompt);
-      default:
-        throw new Error(`不支持的API供应商: ${this.currentProvider}`);
-    }
-  }
+    const provider = this.currentProvider === 'custom' ? 'openai' : this.currentProvider;
+    const providerConfig = this.API_PROVIDERS[provider as keyof typeof this.API_PROVIDERS];
 
-  /**
-   * 调用通义千问API
-   */
-  private async callTongyiAPI(prompt: string): Promise<string> {
-    const apiKey = this.getApiKey();
-    const apiUrl = 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation';
-    const requestBody = {
-      model: this.currentModel || 'qwen-plus',
-      input: {
-        messages: [
-          {
-            role: 'system',
-            content: '你是一个专业的多语言教学助手，擅长提供单词的详细释义、音标、谐音和例句。'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ]
+    if (!providerConfig) {
+      throw new Error(`不支持的API供应商: ${this.currentProvider}`);
+    }
+
+    const apiUrl = this.currentProvider === 'custom' ? this.customApiEndpoint : providerConfig.url;
+    if (!apiUrl) {
+      throw new Error('API端点未设置');
+    }
+
+    const model = this.currentModel || (this.currentProvider === 'tongyi' ? 'qwen-plus' : 'gpt-3.5-turbo');
+    const messages = [
+      {
+        role: 'system',
+        content: '你是一个专业的多语言教学助手，擅长提供单词的详细释义、音标、谐音和例句。'
       },
-      parameters: {
-        temperature: 0.7,
-        top_p: 0.8,
-        max_tokens: 800
+      {
+        role: 'user',
+        content: prompt
       }
-    };
+    ];
+
+    const requestBody = providerConfig.buildRequest(model, messages);
 
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        'Authorization': `Bearer ${this.getApiKey()}`
       },
       body: JSON.stringify(requestBody)
     });
@@ -332,169 +254,27 @@ export class WordQuery {
     }
 
     const data = await response.json();
-
-    // 尝试多种可能的响应格式
-    if (data.output && data.output.text) {
-      return data.output.text;
-    } else if (data.output && data.output.choices && data.output.choices.length > 0) {
-      return data.output.choices[0].message.content;
-    } else if (data.choices && data.choices.length > 0) {
-      return data.choices[0].message.content;
-    } else if (data.text) {
-      return data.text;
-    } else if (data.content) {
-      return data.content;
-    } else {
-      throw new Error(`API返回数据格式错误，响应结构: ${JSON.stringify(Object.keys(data))}`);
-    }
+    return this.extractResponseText(data, this.currentProvider);
   }
 
   /**
-   * 调用OpenAI API
+   * 从API响应中提取文本内容
    */
-  private async callOpenAIAPI(prompt: string): Promise<string> {
-    const apiKey = this.getApiKey();
-    const apiUrl = 'https://api.openai.com/v1/chat/completions';
-    const requestBody = {
-      model: this.currentModel || 'gpt-3.5-turbo',
-      messages: [
-        {
-          role: 'system',
-          content: '你是一个专业的多语言教学助手，擅长提供单词的详细释义、音标、谐音和例句。'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      temperature: 0.7,
-      max_tokens: 800
-    };
+  private extractResponseText(data: any, provider: string): string {
+    const possiblePaths = [
+      () => data.output?.text,
+      () => data.output?.choices?.[0]?.message?.content,
+      () => data.choices?.[0]?.message?.content,
+      () => data.text,
+      () => data.content
+    ];
 
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify(requestBody)
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`OpenAI API请求失败: ${response.status} ${errorText}`);
+    for (const getText of possiblePaths) {
+      const text = getText();
+      if (text) return text;
     }
 
-    const data = await response.json();
-
-    if (data.choices && data.choices.length > 0) {
-      return data.choices[0].message.content;
-    } else {
-      throw new Error('OpenAI API返回数据格式错误');
-    }
-  }
-
-  /**
-   * 调用DeepSeek API
-   */
-  private async callDeepSeekAPI(prompt: string): Promise<string> {
-    const apiKey = this.getApiKey();
-    const apiUrl = 'https://api.deepseek.com/v1/chat/completions';
-    const requestBody = {
-      model: this.currentModel || 'deepseek-chat',
-      messages: [
-        {
-          role: 'system',
-          content: '你是一个专业的多语言教学助手，擅长提供单词的详细释义、音标、谐音和例句。'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      temperature: 0.7,
-      max_tokens: 800
-    };
-
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify(requestBody)
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`DeepSeek API请求失败: ${response.status} ${errorText}`);
-    }
-
-    const data = await response.json();
-
-    if (data.choices && data.choices.length > 0) {
-      return data.choices[0].message.content;
-    } else {
-      throw new Error('DeepSeek API返回数据格式错误');
-    }
-  }
-
-  /**
-   * 调用自定义API
-   */
-  private async callCustomAPI(prompt: string): Promise<string> {
-    const apiKey = this.getApiKey();
-    const apiUrl = this.customApiEndpoint;
-
-    if (!apiUrl) {
-      throw new Error('自定义API端点未设置');
-    }
-
-    // 尝试使用通用的OpenAI兼容格式
-    const requestBody = {
-      model: this.currentModel || 'default',
-      messages: [
-        {
-          role: 'system',
-          content: '你是一个专业的多语言教学助手，擅长提供单词的详细释义、音标、谐音和例句。'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      temperature: 0.7,
-      max_tokens: 800
-    };
-
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify(requestBody)
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`自定义API请求失败: ${response.status} ${errorText}`);
-    }
-
-    const data = await response.json();
-
-    // 尝试多种响应格式
-    if (data.choices && data.choices.length > 0) {
-      return data.choices[0].message.content;
-    } else if (data.output && data.output.text) {
-      return data.output.text;
-    } else if (data.text) {
-      return data.text;
-    } else if (data.content) {
-      return data.content;
-    } else {
-      throw new Error('自定义API返回数据格式错误');
-    }
+    throw new Error(`API返回数据格式错误，响应结构: ${JSON.stringify(Object.keys(data))}`);
   }
 
   /**

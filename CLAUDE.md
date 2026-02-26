@@ -149,12 +149,6 @@ import IconWrapper from '@/components/IconWrapper.vue'
 </template>
 ```
 
-国际化
-
-- 语言文件：`src/i18n/zh_CN.json` 和 `src/i18n/en_US.json`
-- 通过 `plugin.i18n.featureName.key` 访问
-- json 格式 功能1:{xx:xx }，功能2:{xx:xx }这个方便分类
-
 ## 必须严格执行的规范
 
 - 功能可见性：新功能必须在超级面板：SuperPanelView.vue 中提供开关设置
@@ -275,6 +269,10 @@ const exists = await storage.exists('my-key')
 
 ### 添加新功能
 
+#### 方式一：简单功能（非 Vue）
+
+适用于简单的工具栏按钮、菜单项等功能。
+
 1. 创建功能目录： `src/features/myFeature/`
 2. 实现功能： `src/features/myFeature/index.ts`
 
@@ -320,71 +318,250 @@ if (this.settings.enableMyFeature) {
 }
 ```
 
-6. 添加翻译： `src/i18n/zh_CN.json` 和 `src/i18n/en_US.json`
+6. 添加翻译
+
+在 `src/i18n/zh_CN.json` 中添加功能翻译（格式：`功能名: { key: value }`）。
+
+
+
+#### 方式二：Vue 3 SFC 功能（推荐）
+
+适用于需要 UI 界面的复杂功能，参考 [aiContentGenerator](src/features/aiContentGenerator/) 实现。
+
+**目录结构**
+
+```
+src/features/myFeature/
+├── index.vue              # 主面板组件
+├── types/
+│   ├── index.ts           # 类型定义和注册函数
+│   └── storage.ts         # 数据存储管理（可选）
+├── components/            # 子组件（按需）
+│   ├── PanelHeader.vue
+│   └── MainContent.vue
+└── styles/
+    └── index.scss         # 功能专属样式
+```
+
+**1. 主面板组件 (`index.vue`)**
+
+```vue
+<template>
+  <div class="my-feature-panel">
+    <PanelHeader @toggle-settings="toggleSettings" />
+    <!-- 内容区域 -->
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import Button from '@/components/Button.vue'
+import PanelHeader from './components/PanelHeader.vue'
+import { MyFeatureStorage } from './types/storage'
+
+const props = defineProps<{
+  i18n: any
+  plugin: any
+}>()
+
+const showSettings = ref(false)
+const storage = new MyFeatureStorage(props.plugin)
+
+onMounted(async () => {
+  await storage.init()
+})
+
+function toggleSettings() {
+  showSettings.value = !showSettings.value
+}
+</script>
+
+<style scoped lang="scss">
+@use "../styles/index.scss";
+</style>
+```
+
+**2. 注册函数和类型 (`types/index.ts`)**
+
+```typescript
+import { Plugin } from 'siyuan'
+import { createApp, h } from 'vue'
+// @ts-ignore
+import MyFeaturePanel from '../index.vue'
+
+export interface MyFeatureOptions {
+  // 定义功能选项
+}
+
+export class MyFeatureManager {
+  private plugin: Plugin
+
+  constructor(plugin: Plugin) {
+    this.plugin = plugin
+  }
+
+  public init() {
+    this.addDock()
+  }
+
+  private addDock() {
+    const self = this
+    this.plugin.addDock({
+      config: {
+        position: 'RightTop',
+        size: { width: 400, height: 0 },
+        icon: 'iconSettings',
+        title: '我的功能',
+        show: false,
+      },
+      data: {},
+      type: 'my-feature-dock',
+      init: (dock: any) => {
+        const container = document.createElement('div')
+        container.style.height = '100%'
+        container.style.overflow = 'hidden'
+
+        const app = createApp({
+          setup() {
+            return () => h(MyFeaturePanel, {
+              i18n: self.plugin.i18n,
+              plugin: self.plugin,
+            })
+          }
+        })
+
+        app.mount(container)
+        dock.element?.appendChild(container)
+
+        dock.__app = app
+        dock.__container = container
+      },
+    })
+  }
+
+  public destroy() {
+    // 清理逻辑
+  }
+}
+
+export function registerMyFeature(plugin: Plugin) {
+  const manager = new MyFeatureManager(plugin)
+  manager.init()
+  ;(plugin as any).__myFeature = manager
+  return manager
+}
+```
+
+**3. 存储管理 (`types/storage.ts`)**
+
+```typescript
+import { Plugin } from 'siyuan'
+import { PluginStorage } from '@/utils/pluginStorage'
+
+export interface MyFeatureSettings {
+  // 定义设置接口
+  enabled: boolean
+}
+
+export class MyFeatureStorage {
+  private storage: PluginStorage
+  private readonly SETTINGS_KEY = 'my-feature-settings'
+
+  constructor(plugin: Plugin) {
+    this.storage = new PluginStorage(plugin)
+  }
+
+  async saveSettings(settings: MyFeatureSettings): Promise<boolean> {
+    return this.storage.save(this.SETTINGS_KEY, settings)
+  }
+
+  async loadSettings(): Promise<MyFeatureSettings | null> {
+    return this.storage.load<MyFeatureSettings>(this.SETTINGS_KEY)
+  }
+
+  async init(): Promise<void> {
+    const settings = await this.loadSettings()
+    if (!settings) {
+      await this.saveSettings({ enabled: true })
+    }
+  }
+}
+```
+
+**4. 样式文件 (`styles/index.scss`)**
+
+```scss
+// 使用思源主题变量
+.my-feature-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+}
+
+.panel-header {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+}
+```
+
+**5. 导出注册函数**
+
+在 `src/features/index.ts` 中添加：
+
+```typescript
+export { registerMyFeature } from './myFeature/types'
+```
+
+**6. 注册功能**
+
+在 `src/index.ts` 的 `onload()` 中：
+
+```typescript
+if (this.settings.enableMyFeature) {
+  registerMyFeature(this)
+}
+```
+
+**7. 添加翻译**
+
+`src/i18n/zh_CN.json`:
 
 ```json
 {
   "myFeature": {
     "title": "我的功能",
-    "description": "功能描述"
+    "description": "功能描述",
+    "settings": {
+      "enabled": "启用功能"
+    }
   }
 }
 ```
+
+**8. 在超级面板添加开关**
+
+在 `src/features/superPanel/SuperPanelView.vue` 中添加功能开关。
 
 ## Siyuan API 集成
 
 ### API 封装 (`src/api.ts`)
 
-常用的 Siyuan API 调用
+常用的 Siyuan API 调用，详见 [Siyuan API 文档](https://github.com/siyuan-note/siyuan/blob/master/API.md)。
 
-### 插件 API 使用
+### 注册右边侧栏 (Dock)
 
-```typescript
-// 添加菜单项
-plugin.addTopBar({
-  icon: 'iconEdit',
-  title: 'My Action',
-  callback: () => { /* ... */ }
-})
+使用 API：`plugin.addDock`
 
-// 存储
-await plugin.saveData('key', value)
-const data = await plugin.loadData('key')
+**Dock 位置选项：**
+- `LeftTop`, `LeftBottom`, `RightTop`, `RightBottom`
 
-// 设置
-plugin.openSetting()
-```
-### 注册右边侧栏
-使用API：`plugin.addDock`
+**完整示例：** 参考 [sy-bookmark-plus](https://github.com/frostime/sy-bookmark-plus)
 
-- 配置： 配置侧边栏的位置、大小、标题等。
-- 数据：传递一个物品。传递的对象可以直接被API访问。`thisinit`
-- init：初始化函数;在这里，你可以通过侧边栏的元素设置内部元素（所以不要用箭头函数来回调）。`this`
+**Vue 3 Dock 注册：** 见"方式二：Vue 3 SFC 功能"中的 `addDock()` 实现示例。
 
-以下示例请参考[sy-bookmark-plus/src/index.ts](https://liuyun.io/forward?goto=https%3A%2F%2Fgithub.com%2Ffrostime%2Fsy-bookmark-plus%2Fblob%2Fmain%2Fsrc%2Findex.ts)：
 
-```ts
-this.addDock({
-    type: '::dock',
-    config: {
-        position: 'RightBottom',
-        size: {
-            width: 200,
-            height: 200,
-        },
-        icon: 'iconBookmark',
-        title: 'Bookmark+'
-    },
-    data: {
-        plugin: this,
-        initBookmark: initBookmark,
-    },
-    init() {
-        this.data.initBookmark(this.element, this.data.plugin);
-    }
-});
-
-```
 
 ## 依赖
 

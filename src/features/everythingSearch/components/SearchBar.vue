@@ -116,7 +116,6 @@ defineExpose({
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
   border-radius: 6px;
-  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .search-input-wrapper:focus-within {
@@ -152,7 +151,6 @@ defineExpose({
   border-radius: 3px;
   cursor: pointer;
   color: $brand-mid-gray;
-  transition: all 0.15s;
 }
 
 .clear-btn:hover {
@@ -175,7 +173,6 @@ defineExpose({
   font-weight: 500;
   font-family: $font-heading;
   cursor: pointer;
-  transition: all 0.2s;
   min-width: 65px;
 }
 
@@ -194,11 +191,6 @@ defineExpose({
   border: 2px solid rgba(250, 249, 245, 0.3);
   border-top-color: $brand-light;
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
   display: inline-block;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 </style>

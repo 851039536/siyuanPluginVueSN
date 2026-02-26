@@ -61,7 +61,6 @@ const handleRetry = () => {
   border-radius: 4px;
   font-size: 12px;
   cursor: pointer;
-  transition: background 0.2s;
   flex-shrink: 0;
 }
 

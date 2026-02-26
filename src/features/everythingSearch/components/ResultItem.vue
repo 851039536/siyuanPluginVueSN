@@ -129,7 +129,6 @@ const handleCopyPath = () => {
   padding: 6px 16px;
   border-bottom: 1px solid var(--b3-border-color);
   cursor: pointer;
-  transition: background 0.15s;
 }
 
 .result-item:hover {
@@ -200,7 +199,6 @@ const handleCopyPath = () => {
   display: flex;
   gap: 3px;
   opacity: 0;
-  transition: opacity 0.15s;
 }
 
 .action-btn {
@@ -210,7 +208,6 @@ const handleCopyPath = () => {
   border-radius: 3px;
   cursor: pointer;
   color: var(--b3-theme-on-surface);
-  transition: all 0.15s;
 }
 
 .action-btn:hover {

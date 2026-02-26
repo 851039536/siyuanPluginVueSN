@@ -133,12 +133,7 @@ const handleItemCopyPath = (item: EverythingSearchResult) => {
   border: 2px solid var(--b3-border-color);
   border-top-color: $brand-orange;
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
   margin-bottom: 10px;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 
 .empty-icon,

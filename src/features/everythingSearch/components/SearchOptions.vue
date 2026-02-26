@@ -166,7 +166,6 @@ const handleRefreshDrives = () => {
   font-size: 11px;
   font-family: $font-body;
   cursor: pointer;
-  transition: border-color 0.15s;
 }
 
 .results-select:hover,
@@ -215,7 +214,6 @@ const handleRefreshDrives = () => {
   border-radius: 3px;
   cursor: pointer;
   color: var(--b3-theme-on-surface);
-  transition: all 0.15s;
   display: flex;
   align-items: center;
   justify-content: center;

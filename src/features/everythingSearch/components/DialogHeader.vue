@@ -65,7 +65,6 @@ const handleClose = () => {
   border-radius: 4px;
   cursor: pointer;
   color: var(--b3-theme-on-surface);
-  transition: all 0.2s;
 }
 
 .close-btn:hover {

@@ -88,7 +88,6 @@ const updateConfig = (key: keyof EverythingConfig, value: EverythingConfig[keyof
   color: var(--b3-theme-on-background);
   font-size: 11px;
   font-family: $font-body;
-  transition: border-color 0.15s;
 
   &:focus {
     outline: none;

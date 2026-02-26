@@ -1,9 +1,7 @@
 <template>
   <Teleport to="body">
-    <Transition name="fade">
-      <div v-if="visible" class="everything-search-overlay" @click.self="closeDialog">
-        <Transition name="scale">
-          <div v-if="visible" class="everything-search-dialog">
+    <div v-if="visible" class="everything-search-overlay" @click.self="closeDialog">
+      <div v-if="visible" class="everything-search-dialog">
             <!-- 头部 -->
             <DialogHeader @close="closeDialog" />
 
@@ -47,9 +45,7 @@
               @update:config="handleConfigUpdate"
             />
           </div>
-        </Transition>
       </div>
-    </Transition>
   </Teleport>
 </template>
 
@@ -427,24 +423,5 @@ const loadConfig = async () => {
   flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--b3-border-color);
-}
-
-/* 动画 */
-.fade-enter-active,
-.fade-leave-active,
-.scale-enter-active,
-.scale-leave-active {
-  transition: all 0.2s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
-.scale-enter-from,
-.scale-leave-to {
-  opacity: 0;
-  transform: scale(0.95) translateY(-20px);
 }
 </style>

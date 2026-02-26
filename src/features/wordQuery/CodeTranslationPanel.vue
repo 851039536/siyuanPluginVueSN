@@ -66,7 +66,7 @@
       <div v-if="translationResult" class="result-section">
         <div class="result-header">
           <span class="result-label">
-            <IconWrapper name="checkCircle" :size="14" />
+            <IconWrapper name="success" :size="14" />
             {{ i18n.translationResult || '翻译结果' }}
           </span>
           <Button variant="ghost" size="small" @click="copyResult">

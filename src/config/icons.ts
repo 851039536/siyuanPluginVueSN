@@ -369,6 +369,17 @@ export const COMMON_ICONS = {
   },
   openInNew: {
     icon: 'mdi:open-in-new'
+  },
+
+  // 编程翻译相关
+  code: {
+    icon: 'mdi:code'
+  },
+  format: {
+    icon: 'mdi:format-text'
+  },
+  lightbulb: {
+    icon: 'mdi:lightbulb'
   }
 } as const
 

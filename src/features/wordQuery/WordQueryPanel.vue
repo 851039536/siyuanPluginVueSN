@@ -62,7 +62,7 @@
       class="common-panel"
     >
       <div class="panel-header">
-        <span>{{ getPanelIcon(activePanel) }} {{ getPanelTitle(activePanel) }}</span>
+        <span>{{ getPanelConfig(activePanel).icon }} {{ getPanelConfig(activePanel).title }}</span>
         <div class="panel-actions">
           <Button variant="ghost" size="small" @click="togglePanel(null)">
             <IconWrapper name="close" :size="16" />
@@ -480,65 +480,48 @@ const handleQuery = async () => {
 
 // 数据操作封装
 const dataOperations = {
-  // 保存数据
-  save: async (key: string, data: any) => {
-    // 延迟检查 plugin 实例，确保在组件完全初始化后再保存
-    const checkAndSave = async (retryCount = 0) => {
-      const maxRetries = 10; // 最多重试10次
-      const retryDelay = 100; // 每次重试间隔100ms
+  async withPluginRetry<T>(
+    operation: (plugin: any) => Promise<T>,
+    operationName: string
+  ): Promise<T | null> {
+    const maxRetries = 10;
+    const retryDelay = 100;
 
+    const executeWithRetry = async (retryCount = 0): Promise<T | null> => {
       if (props.plugin) {
         try {
-          await props.plugin.saveData(key, data);
-          return true;
+          return await operation(props.plugin);
         } catch (error) {
+          console.error(`[WordQuery] ${operationName} failed:`, error);
           throw error;
         }
-      } else {
-        console.warn(`[WordQuery] No plugin instance available for saving ${key}, retrying... (${retryCount + 1}/${maxRetries})`);
-
-        if (retryCount < maxRetries) {
-          // 等待后重试
-          await new Promise(resolve => setTimeout(resolve, retryDelay));
-          return checkAndSave(retryCount + 1);
-        } else {
-          console.error(`[WordQuery] Max retries reached, giving up on saving ${key}`);
-          return false;
-        }
       }
+
+      if (retryCount < maxRetries) {
+        console.warn(`[WordQuery] No plugin instance for ${operationName}, retrying... (${retryCount + 1}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
+        return executeWithRetry(retryCount + 1);
+      }
+
+      console.error(`[WordQuery] Max retries reached for ${operationName}`);
+      return null;
     };
 
-    return await checkAndSave();
+    return executeWithRetry();
   },
 
-  // 加载数据
+  save: async (key: string, data: any) => {
+    return dataOperations.withPluginRetry(
+      (plugin) => plugin.saveData(key, data),
+      `saving ${key}`
+    );
+  },
+
   load: async (key: string) => {
-    // 延迟检查 plugin 实例
-    const checkAndLoad = async (retryCount = 0) => {
-      const maxRetries = 10;
-      const retryDelay = 100;
-
-      if (props.plugin) {
-        try {
-          const saved = await props.plugin.loadData(key);
-          return saved;
-        } catch (error) {
-          console.error(`Failed to load ${key}:`, error);
-          return null;
-        }
-      } else {
-
-        if (retryCount < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, retryDelay));
-          return checkAndLoad(retryCount + 1);
-        } else {
-          console.error(`[WordQuery] Max retries reached, giving up on loading ${key}`);
-          return null;
-        }
-      }
-    };
-
-    return await checkAndLoad();
+    return dataOperations.withPluginRetry(
+      (plugin) => plugin.loadData(key),
+      `loading ${key}`
+    );
   }
 };
 
@@ -711,21 +694,15 @@ const handleTranslate = async () => {
 };
 
 // 获取面板图标
-const getPanelIcon = (panel: string) => {
-  const icons: Record<string, string> = {
-    advanced: '⚙️'
-  };
-  return icons[panel] || '';
-};
-
-// 获取面板标题
-const getPanelTitle = (panel: string): string => {
-  switch (panel) {
-    case 'advanced':
-      return props.i18n.wordQuery?.advancedOptions || '高级选项';
-    default:
-      return '';
+const PANEL_CONFIG = {
+  advanced: {
+    icon: '⚙️',
+    title: props.i18n.wordQuery?.advancedOptions || '高级选项'
   }
+} as const;
+
+const getPanelConfig = (panel: string) => {
+  return PANEL_CONFIG[panel as keyof typeof PANEL_CONFIG] || { icon: '', title: '' };
 };
 
 // 获取语言名称
@@ -753,6 +730,14 @@ const swapLanguages = () => {
 const clearTranslateInput = () => {
   translateText.value = '';
   translateResult.value = '';
+};
+
+const clearAll = () => {
+  searchWord.value = '';
+  queryResult.value = '';
+  translateText.value = '';
+  translateResult.value = '';
+  errorMessage.value = '';
 };
 
 // 复制翻译结果

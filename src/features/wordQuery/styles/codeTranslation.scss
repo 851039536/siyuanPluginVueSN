@@ -77,7 +77,6 @@
     border: 2px solid transparent;
     border-radius: 6px;
     cursor: pointer;
-    transition: all 0.2s ease;
 
     &:hover {
       border-color: var(--b3-theme-primary-light);
@@ -212,7 +211,6 @@
       background: var(--b3-theme-background);
       border-radius: 4px;
       cursor: pointer;
-      transition: all 0.2s ease;
       font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
       font-size: 13px;
       color: var(--b3-theme-on-background);

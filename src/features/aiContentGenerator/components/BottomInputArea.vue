@@ -93,21 +93,8 @@
           </div>
 
           <!-- 搜索框 -->
-          <div v-if="savedPrompts.length > 5" class="prompt-search-wrapper">
-            <Input
-              :model-value="promptSearchQuery"
-              @update:model-value="$emit('update:promptSearchQuery', $event)"
-              type="text"
-              :placeholder="'搜索提示词...'"
-            />
-          </div>
 
-          <div v-if="filteredPrompts.length === 0" class="empty-prompts">
-            <p v-if="savedPrompts.length === 0">{{ '暂无保存的提示词，请在对话设置中保存' }}</p>
-            <p v-else>{{ '没有找到匹配的提示词' }}</p>
-          </div>
-
-          <div v-else class="prompt-list">
+          <div  class="prompt-list">
             <div
               v-for="(prompt, index) in paginatedPrompts"
               :key="prompt.id || index"
@@ -146,28 +133,6 @@
               </div>
             </div>
 
-            <!-- 分页控制 -->
-            <div v-if="totalPages > 1" class="prompt-pagination">
-              <Button
-                @click="$emit('update:currentPage', Math.max(1, currentPage - 1))"
-                :disabled="currentPage === 1"
-                :title="'上一页'"
-                variant="ghost"
-                size="small"
-              >
-                ‹
-              </Button>
-              <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
-              <Button
-                @click="$emit('update:currentPage', Math.min(totalPages, currentPage + 1))"
-                :disabled="currentPage === totalPages"
-                :title="'下一页'"
-                variant="ghost"
-                size="small"
-              >
-                ›
-              </Button>
-            </div>
           </div>
         </div>
       </div>
@@ -234,7 +199,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import Button from '@/components/Button.vue';
-import Input from '@/components/Input.vue';
 import Textarea from '@/components/Textarea.vue';
 import Tag from '@/components/Tag.vue';
 

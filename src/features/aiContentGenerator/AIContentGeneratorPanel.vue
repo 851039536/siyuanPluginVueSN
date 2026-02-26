@@ -236,6 +236,24 @@ const currentPage = ref(1);
 
 // ============ 常量定义 ============
 const ITEMS_PER_PAGE = 10; // 每页显示数量
+const SETTINGS_SAVE_DEBOUNCE_MS = 300; // 设置保存防抖时间(毫秒)
+
+// 消息常量
+const MESSAGES = {
+  PLEASE_SELECT_DOC: '请先选择要编辑的文档',
+  PLEASE_ENTER_PROMPT_NAME: '请输入配置名称',
+  PLEASE_ENTER_EDIT_INSTRUCTION: '请输入编辑指令或选择提示词',
+  PLEASE_SELECT_DOC_AND_GENERATE: '请先选择文档并生成内容',
+  CANNOT_GET_DOC: '无法获取当前文档，请将光标放在文档中',
+  CANNOT_GET_BLOCK_INFO: '无法获取块信息',
+  CANNOT_GET_BLOCK_CONTENT: '无法获取块内容',
+  LOAD_DOC_FAILED: '加载文档失败',
+  LOAD_BLOCK_FAILED: '加载块失败',
+  COPY_FAILED: '复制失败',
+  INSERT_SUB_DOC_FAILED: '插入子文档失败',
+  CREATE_SUB_DOC_FAILED: '创建子文档失败',
+  CANNOT_GET_PARENT_DOC: '无法获取父文档信息'
+};
 
 // 过滤后的提示词
 const filteredPrompts = computed(() => {
@@ -291,12 +309,22 @@ const startGeneration = () => {
 };
 
 /**
+ * 重置所有生成相关的状态
+ */
+const resetAllGenerationStates = () => {
+  isGenerating.value = false;
+  isCheckingPlagiarism.value = false;
+  isApplying.value = false;
+  isUndoing.value = false;
+  isInsertingSubDoc.value = false;
+  abortController.value = null;
+};
+
+/**
  * 结束生成内容的公共清理
  */
 const finishGeneration = () => {
-  isGenerating.value = false;
-  abortController.value = null;
-  isCheckingPlagiarism.value = false;
+  resetAllGenerationStates();
 };
 
 /**
@@ -722,28 +750,38 @@ const toggleCollapse = (section: keyof typeof collapsedSections.value) => {
   saveCollapsedSections();
 };
 
+/**
+ * 安全执行存储操作的辅助函数
+ */
+const safeStorageOperation = async <T>(
+  operation: () => Promise<T>,
+  errorMessage: string
+): Promise<T | null> => {
+  if (!storage) return null;
+  try {
+    return await operation();
+  } catch (error) {
+    console.error(errorMessage, error);
+    return null;
+  }
+};
+
 // 保存折叠状态到本地存储
 const saveCollapsedSections = async () => {
-  if (storage) {
-    try {
-      await storage.saveCollapsedSections(collapsedSections.value);
-    } catch (error) {
-      console.error('保存折叠状态失败:', error);
-    }
-  }
+  await safeStorageOperation(
+    () => storage!.saveCollapsedSections(collapsedSections.value),
+    '保存折叠状态失败:'
+  );
 };
 
 // 从本地存储加载折叠状态
 const loadCollapsedSections = async () => {
-  if (storage) {
-    try {
-      const saved = await storage.loadCollapsedSections();
-      if (saved) {
-        Object.assign(collapsedSections.value, saved);
-      }
-    } catch (error) {
-      console.error('加载折叠状态失败:', error);
-    }
+  const saved = await safeStorageOperation(
+    () => storage!.loadCollapsedSections(),
+    '加载折叠状态失败:'
+  );
+  if (saved) {
+    Object.assign(collapsedSections.value, saved);
   }
 };
 
@@ -759,12 +797,7 @@ const handleStop = () => {
   if (abortController.value) {
     abortController.value.abort();
   }
-  // 重置所有相关状态
-  isGenerating.value = false;
-  isApplying.value = false;
-  isUndoing.value = false;
-  isInsertingSubDoc.value = false;
-  isCheckingPlagiarism.value = false;
+  resetAllGenerationStates();
 };
 
 /**
@@ -775,6 +808,23 @@ const processContent = (content: string): string => {
   const withoutFrontmatter = removeFrontmatter(content);
   const withoutHeadings = removeHeadings(withoutFrontmatter);
   return convertToSiyuanMarkdown(withoutHeadings);
+};
+
+/**
+ * 根据内容类型处理内容
+ * @param content 原始内容
+ * @param isBlock 是否为块内容
+ * @returns 处理后的内容
+ */
+const processContentByType = (content: string, isBlock: boolean): string => {
+  if (isBlock) {
+    // 块内容：只移除 frontmatter
+    const withoutFrontmatter = removeFrontmatter(content);
+    return convertToSiyuanMarkdown(withoutFrontmatter);
+  } else {
+    // 文档内容：移除 frontmatter 和标题
+    return processContent(content);
+  }
 };
 
 /**
@@ -994,17 +1044,8 @@ const applyEdit = async () => {
       timestamp: Date.now()
     };
 
-    let siyuanContent: string;
-
     // 区分文档和块的处理
-    if (editTargetDoc.value.isBlock) {
-      // 块编辑：只移除 frontmatter，不移除标题
-      const withoutFrontmatter = removeFrontmatter(generatedContent.value);
-      siyuanContent = convertToSiyuanMarkdown(withoutFrontmatter);
-    } else {
-      // 文档编辑：移除 frontmatter 和标题
-      siyuanContent = processContent(generatedContent.value);
-    }
+    const siyuanContent = processContentByType(generatedContent.value, editTargetDoc.value.isBlock);
 
     // 使用updateBlock API更新文档内容
     await api.updateBlock('markdown', siyuanContent, editTargetDoc.value.id);
@@ -1223,15 +1264,13 @@ ${editTargetDoc.value.content}`,
     }
   } catch (error) {
     if (handleGenerationError(error as Error, '查重分析', true)) {
-      finishGeneration();
-      isCheckingPlagiarism.value = false;
+      resetAllGenerationStates();
       return;
     }
     showMessage('查重分析失败: ' + (error as Error).message, 3000, 'error');
   } finally {
     if (abortController.value) {
-      finishGeneration();
-      isCheckingPlagiarism.value = false;
+      resetAllGenerationStates();
     }
   }
 };
@@ -1361,13 +1400,10 @@ const saveCurrentPrompt = async () => {
     savedPrompts.value.push(promptConfig);
   }
 
-  try {
-    if (storage) {
-      await storage.savePrompts(savedPrompts.value);
-    }
-  } catch (error) {
-    console.error('保存提示词配置失败:', error);
-  }
+  await safeStorageOperation(
+    () => storage!.savePrompts(savedPrompts.value),
+    '保存提示词配置失败:'
+  );
 
   newPromptName.value = '';
   currentPromptName.value = promptName;
@@ -1376,14 +1412,10 @@ const saveCurrentPrompt = async () => {
 // 清除当前提示词选择
 const clearCurrentPrompt = async () => {
   currentPromptName.value = '';
-
-  try {
-    if (storage) {
-      await storage.clearCurrentPrompt();
-    }
-  } catch (error) {
-    console.error('清除当前提示词失败:', error);
-  }
+  await safeStorageOperation(
+    () => storage!.clearCurrentPrompt(),
+    '清除当前提示词失败:'
+  );
 };
 
 /**
@@ -1459,13 +1491,10 @@ const loadPrompt = async (index: number) => {
   showPromptSelector.value = false;
 
   // 保存当前选中的提示词到存储
-  try {
-    if (storage) {
-      await storage.saveCurrentPrompt(prompt.name);
-    }
-  } catch (error) {
-    console.error('保存当前提示词失败:', error);
-  }
+  await safeStorageOperation(
+    () => storage!.saveCurrentPrompt(prompt.name),
+    '保存当前提示词失败:'
+  );
 };
 
 // 编辑提示词配置
@@ -1494,17 +1523,15 @@ const deletePrompt = (index: number) => {
 
 // 保存提示词到存储
 const savePromptsToStorage = async () => {
-  if (!storage) return;
-
-  try {
-    await storage.savePrompts(savedPrompts.value);
-  } catch (error) {
-    console.error('保存提示词配置失败:', error);
-  }
+  await safeStorageOperation(
+    () => storage!.savePrompts(savedPrompts.value),
+    '保存提示词配置失败:'
+  );
 };
 
 // 从存储加载提示词配置
 const loadPromptsFromStorage = async () => {
+  if (!storage) return;
 
   try {
     const prompts = await storage.loadPrompts();
@@ -1551,11 +1578,10 @@ const saveSettings = async () => {
     contextMessageLimit: contextMessageLimit.value
   };
 
-  try {
-    await storage.saveSettings(settings);
-  } catch (error) {
-    console.error('保存设置失败:', error);
-  }
+  await safeStorageOperation(
+    () => storage!.saveSettings(settings),
+    '保存设置失败:'
+  );
 };
 
 // 加载设置
@@ -1584,7 +1610,7 @@ watch([systemPrompt, temperature, maxTokens, contextMessageLimit], () => {
   }
   settingsSaveTimer = window.setTimeout(() => {
     saveSettings();
-  }, 300);
+  }, SETTINGS_SAVE_DEBOUNCE_MS);
 });
 
 </script>

@@ -408,19 +408,6 @@
   }
 }
 
-.empty-prompts {
-  padding: 16px;
-  text-align: center;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.6;
-  font-size: 11px;
-}
-
-// 搜索框样式
-.prompt-search-wrapper {
-  padding: 6px 10px;
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
-}
 
 .prompt-list {
   overflow-y: auto;
@@ -428,23 +415,6 @@
   max-height: 340px;
 }
 
-// 分页控件样式
-.prompt-pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 8px 6px;
-  border-top: 1px solid var(--b3-theme-surface-lighter);
-  margin-top: 6px;
-}
-
-.page-info {
-  font-size: 10px;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.7;
-  font-weight: 400;
-}
 
 .prompt-item {
   padding: 6px 8px;

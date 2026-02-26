@@ -118,7 +118,7 @@ import { marked } from 'marked';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/github-dark.css';
 import * as api from '@/api';
-import { AIGeneratorStorage, type AIPromptConfig } from './storage';
+import { AIGeneratorStorage, type AIPromptConfig } from './types/storage';
 import PanelHeader from './components/PanelHeader.vue';
 import SettingsPanel from './components/SettingsPanel.vue';
 import PlagiarismResultPanel from './components/PlagiarismResultPanel.vue';
@@ -235,22 +235,6 @@ const currentPage = ref(1);
 const ITEMS_PER_PAGE = 10; // 每页显示数量
 const SETTINGS_SAVE_DEBOUNCE_MS = 300; // 设置保存防抖时间(毫秒)
 
-// 消息常量
-const MESSAGES = {
-  PLEASE_SELECT_DOC: '请先选择要编辑的文档',
-  PLEASE_ENTER_PROMPT_NAME: '请输入配置名称',
-  PLEASE_ENTER_EDIT_INSTRUCTION: '请输入编辑指令或选择提示词',
-  PLEASE_SELECT_DOC_AND_GENERATE: '请先选择文档并生成内容',
-  CANNOT_GET_DOC: '无法获取当前文档，请将光标放在文档中',
-  CANNOT_GET_BLOCK_INFO: '无法获取块信息',
-  CANNOT_GET_BLOCK_CONTENT: '无法获取块内容',
-  LOAD_DOC_FAILED: '加载文档失败',
-  LOAD_BLOCK_FAILED: '加载块失败',
-  COPY_FAILED: '复制失败',
-  INSERT_SUB_DOC_FAILED: '插入子文档失败',
-  CREATE_SUB_DOC_FAILED: '创建子文档失败',
-  CANNOT_GET_PARENT_DOC: '无法获取父文档信息'
-};
 
 // 过滤后的提示词
 const filteredPrompts = computed(() => {
@@ -448,7 +432,6 @@ const handleDrop = async (e: DragEvent) => {
   // 获取拖拽数据
   const transfer = e.dataTransfer;
   if (!transfer) {
-    console.warn('⚠️ dataTransfer 为空');
     return;
   }
 
@@ -1613,5 +1596,5 @@ watch([systemPrompt, temperature, maxTokens, contextMessageLimit], () => {
 </script>
 
 <style scoped lang="scss">
-@use "./index.scss";
+@use "./styles/index.scss";
 </style>

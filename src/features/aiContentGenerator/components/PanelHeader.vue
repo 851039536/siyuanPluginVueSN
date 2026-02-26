@@ -31,5 +31,5 @@ defineEmits<{
 </script>
 
 <style scoped lang="scss">
-@use "../index.scss";
+@use "../styles/index.scss";
 </style>

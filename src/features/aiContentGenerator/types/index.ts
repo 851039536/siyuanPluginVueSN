@@ -5,7 +5,7 @@
 import { Plugin, showMessage } from 'siyuan';
 import { createApp, h } from 'vue';
 // @ts-ignore
-import AIContentGeneratorPanel from './AIContentGeneratorPanel.vue';
+import AIContentGeneratorPanel from '../index.vue';
 
 /**
  * 生成选项接口

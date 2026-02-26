@@ -264,5 +264,5 @@ const getPromptPreview = (text: string): string => {
 </script>
 
 <style scoped lang="scss">
-@use "../index.scss";
+@use "../styles/index.scss";
 </style>

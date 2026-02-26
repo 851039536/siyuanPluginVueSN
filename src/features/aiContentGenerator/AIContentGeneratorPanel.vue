@@ -83,7 +83,6 @@
       :is-generating="isGenerating"
       :is-checking-plagiarism="isCheckingPlagiarism"
       :edit-target-doc="editTargetDoc"
-      :collapsed-ai-toolbar="collapsedSections.aiToolbar"
       :show-prompt-selector="showPromptSelector"
       :current-prompt-name="currentPromptName"
       :saved-prompts="savedPrompts"
@@ -96,7 +95,6 @@
       @ai-edit="aiEditAction"
       @check-plagiarism="checkPlagiarism"
       @stop="handleStop"
-      @toggle-ai-toolbar="toggleCollapse('aiToolbar')"
       @toggle-prompt-selector="showPromptSelector = !showPromptSelector"
       @clear-current-prompt="clearCurrentPrompt"
       @load-prompt="loadPrompt"
@@ -160,7 +158,6 @@ const abortController = ref<AbortController | null>(null);
 // 折叠状态管理
 const collapsedSections = ref({
   settings: false,
-  aiToolbar: false,
   plagiarism: false,
   promptSelector: false
 });

@@ -17,22 +17,6 @@
   @include no-animation;
 }
 
-@mixin collapsed-state {
-  max-height: 0 !important;
-  overflow: hidden !important;
-  opacity: 0 !important;
-  margin: 0 !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  @include no-animation;
-}
-
-@mixin expanded-state($max-height: 2000px) {
-  max-height: $max-height !important;
-  opacity: 1 !important;
-  @include no-animation;
-}
-
 .ai-content-panel {
   display: flex;
   flex-direction: column;
@@ -100,52 +84,6 @@
       color: var(--b3-theme-on-primary);
     }
   }
-}
-
-// 折叠功能相关样式
-.section-title-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex: 1;
-}
-
-.btn-collapse {
-  @include base-button;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  opacity: 0.6;
-
-  &:hover {
-    opacity: 1;
-    background: var(--b3-theme-surface-lighter);
-  }
-
-  .collapse-icon {
-    svg {
-      width: 14px;
-      height: 14px;
-    }
-  }
-
-  &.collapsed .collapse-icon {
-  }
-}
-
-// 折叠内容样式合并
-.section-content, .toolbar-actions, .suggestions-content, .result-content {
-  &.collapsed {
-    @include collapsed-state;
-  }
-}
-
-.section-content:not(.collapsed) {
-  @include expanded-state(2000px);
-}
-
-.toolbar-actions:not(.collapsed) {
-  @include expanded-state(200px);
 }
 
 .panel-header {
@@ -766,21 +704,6 @@
   border: 1px solid rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.15);
   border-radius: 8px;
   margin-bottom: 4px;
-
-  .toolbar-label {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--b3-theme-primary);
-    margin-bottom: 6px;
-    letter-spacing: 0.3px;
-
-    svg {
-      flex-shrink: 0;
-    }
-  }
 
   .toolbar-actions {
     display: flex;

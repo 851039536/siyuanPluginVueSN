@@ -342,6 +342,7 @@ const compressAndConvert = (file: File) => {
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d')
   const img = new Image()
+  const objectUrl = URL.createObjectURL(file)
 
   img.onload = () => {
     // 计算新尺寸
@@ -364,10 +365,11 @@ const compressAndConvert = (file: File) => {
     base64Output.value = base64
     compressionApplied.value = outputFormat.value !== file.type || quality < 1 || width !== img.width
 
-    URL.revokeObjectURL(img.src)
+    // 绘制完成后再释放 URL
+    URL.revokeObjectURL(objectUrl)
   }
 
-  img.src = URL.createObjectURL(file)
+  img.src = objectUrl
 }
 
 // 解码Base64
@@ -445,6 +447,22 @@ const copyHtmlTag = () => copyToClipboard('html')
 const copyMarkdown = () => copyToClipboard('markdown')
 const copyCssBackground = () => copyToClipboard('css')
 
+// 解码定时器
+let decodeTimer: ReturnType<typeof setTimeout> | null = null
+
+// 监听Base64输入变化，自动解码
+watch(base64Input, (newValue) => {
+  if (decodeTimer) {
+    clearTimeout(decodeTimer)
+    decodeTimer = null
+  }
+  if (newValue && currentMode.value === 'decode') {
+    decodeTimer = setTimeout(() => {
+      decodeBase64()
+    }, 500)
+  }
+})
+
 // 通用下载函数
 const downloadFile = (url: string, filename: string) => {
   const a = document.createElement('a')
@@ -495,17 +513,6 @@ const formatFileSize = (bytes: number): string => {
   const i = Math.floor(Math.log(bytes) / Math.log(k))
   return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
 }
-
-// 监听Base64输入变化，自动解码
-watch(base64Input, (newValue) => {
-  if (newValue && currentMode.value === 'decode') {
-    // 延迟解码，避免频繁操作
-    const timer = setTimeout(() => {
-      decodeBase64()
-    }, 500)
-    return () => clearTimeout(timer)
-  }
-})
 
 // 处理粘贴事件
 const handlePaste = async (e: ClipboardEvent) => {

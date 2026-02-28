@@ -3,7 +3,7 @@
  */
 import { Plugin } from 'siyuan'
 import { createApp, h } from 'vue'
-import Base64ImagePanel from './Base64ImagePanel.vue'
+import Base64ImagePanel from '../Base64ImagePanel.vue'
 
 /**
  * 注册 Base64 图片转换器功能

@@ -19,7 +19,7 @@
         variant="ghost"
         @click="switchMode('encode')"
       >
-        📤 {{ props.i18n.base64Image_encode || '图片转Base64' }}
+        {{ props.i18n.base64Image_encode || '图片转Base64' }}
       </Button>
       <Button
         class="mode-tab"
@@ -27,7 +27,7 @@
         variant="ghost"
         @click="switchMode('decode')"
       >
-        📥 {{ props.i18n.base64Image_decode || 'Base64转图片' }}
+        {{ props.i18n.base64Image_decode || 'Base64转图片' }}
       </Button>
     </div>
 
@@ -533,6 +533,5 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
-@use "./index.scss";
-
+@use "./styles/index.scss";
 </style>

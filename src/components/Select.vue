@@ -60,10 +60,11 @@
                   class="si-select__option"
                   :class="{
                     'si-select__option--selected': isSelected(groupOption.value),
-                    'si-select__option--disabled': groupOption.disabled
+                    'si-select__option--disabled': groupOption.disabled,
+                    'si-select__option--hovered': hoveredGroupKey === `${index}-${groupIndex}`
                   }"
                   @click.stop="selectOption(groupOption)"
-                  @mouseenter="setHoveredIndex(-1)"
+                  @mouseenter="setHoveredGroupOption(index, groupIndex as number)"
                 >
                   <slot name="option" :option="groupOption">
                     {{ groupOption.label }}
@@ -192,6 +193,7 @@ const containerAttrs = computed(() => {
 const isOpen = ref(false)
 const filterQuery = ref('')
 const hoveredIndex = ref(-1)
+const hoveredGroupKey = ref<string | null>(null)
 const wrapperRef = ref<HTMLElement>()
 const filterInputRef = ref<HTMLInputElement>()
 
@@ -281,6 +283,12 @@ const isSelected = (value: string | number | boolean) => value === props.modelVa
 
 const setHoveredIndex = (index: number) => {
   hoveredIndex.value = index
+  hoveredGroupKey.value = null
+}
+
+const setHoveredGroupOption = (groupIndex: number, optionIndex: number) => {
+  hoveredIndex.value = -1
+  hoveredGroupKey.value = `${groupIndex}-${optionIndex}`
 }
 
 const selectOption = (option: SelectOption) => {
@@ -312,6 +320,7 @@ const closeDropdown = () => {
   emit('visible-change', false)
   filterQuery.value = ''
   hoveredIndex.value = -1
+  hoveredGroupKey.value = null
 }
 
 const handleKeydown = (event: KeyboardEvent) => {
@@ -550,18 +559,23 @@ onUnmounted(() => {
     font-size: 14px;
     color: var(--b3-theme-on-background);
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: all 0.15s ease;
     user-select: none;
 
     &:hover,
     &--hovered {
-      background: var(--b3-theme-hover, rgba(0, 0, 0, 0.05));
+      background: var(--b3-theme-hover, rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.08));
     }
 
     &--selected {
       background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.15);
       color: var(--b3-theme-primary);
       font-weight: 500;
+
+      &:hover,
+      &.si-select__option--hovered {
+        background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.25);
+      }
     }
 
     &--disabled {

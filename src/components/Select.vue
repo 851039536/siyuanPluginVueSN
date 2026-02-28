@@ -15,7 +15,7 @@
         <span v-if="selectedLabel" class="si-select__value">{{ selectedLabel }}</span>
         <span v-else class="si-select__placeholder">{{ placeholder }}</span>
         <IconWrapper
-          :name="(isOpen ? 'chevron-up' : 'chevron-down') as any"
+          :name="(isOpen ? 'chevronUp' : 'chevronDown') as any"
           :size="iconSize"
           class="si-select__arrow"
         />
@@ -63,7 +63,7 @@
                     'si-select__option--disabled': groupOption.disabled
                   }"
                   @click.stop="selectOption(groupOption)"
-                  @mouseenter="setHoveredIndex(index)"
+                  @mouseenter="setHoveredIndex(-1)"
                 >
                   <slot name="option" :option="groupOption">
                     {{ groupOption.label }}
@@ -555,7 +555,7 @@ onUnmounted(() => {
 
     &:hover,
     &--hovered {
-      background: var(--b3-theme-hover);
+      background: var(--b3-theme-hover, rgba(0, 0, 0, 0.05));
     }
 
     &--selected {

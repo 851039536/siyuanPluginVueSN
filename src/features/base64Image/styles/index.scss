@@ -44,6 +44,26 @@
   }
 }
 
+// 文本输入框样式
+%text-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 6px;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  font-size: 13px;
+
+  &:focus {
+    outline: none;
+    border-color: var(--b3-theme-primary);
+  }
+
+  &::placeholder {
+    color: var(--b3-theme-on-surface-variant);
+  }
+}
+
 // 使用思源笔记主题 CSS 变量实现黑色主题兼容
 .base64-image-panel {
   display: flex;
@@ -79,19 +99,21 @@
 
 .mode-tabs {
   display: flex;
+  flex-wrap: wrap;
   padding: 8px;
   gap: 8px;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
 
   .mode-tab {
     flex: 1;
+    min-width: 60px;
     padding: 8px 12px;
     border: 1px solid var(--b3-theme-surface-lighter);
     background: var(--b3-theme-surface);
     color: var(--b3-theme-on-surface-variant);
     cursor: pointer;
     border-radius: 6px;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
 
     &:hover {
@@ -165,128 +187,138 @@
   > h4 {
     @extend %section-title;
   }
+}
 
-  .compression-settings {
-    background: var(--b3-theme-surface-lighter);
-    border: 1px solid var(--b3-theme-surface-lighter);
-    border-radius: 6px;
-    padding: 12px;
-    margin-bottom: 16px;
+.settings-card {
+  background: var(--b3-theme-surface-lighter);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 16px;
 
-    h4 {
-      margin: 0 0 12px 0;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--b3-theme-on-surface);
-    }
-
-    .setting-group {
-      margin-bottom: 12px;
-
-      &:last-child {
-        margin-bottom: 0;
-      }
-
-      label {
-        display: block;
-        margin-bottom: 6px;
-        font-size: 12px;
-        color: var(--b3-theme-on-surface-variant);
-        font-weight: 500;
-      }
-
-      .quality-slider,
-      .width-slider {
-        @extend %range-slider;
-      }
-
-      .checkbox-label {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        cursor: pointer;
-
-        input[type="checkbox"] {
-          width: 16px;
-          height: 16px;
-          cursor: pointer;
-        }
-      }
-    }
+  h4 {
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--b3-theme-on-surface);
   }
+}
 
-  .image-preview {
-    border: 1px solid var(--b3-theme-surface-lighter);
-    border-radius: 6px;
-    padding: 8px;
-    background: var(--b3-theme-background);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 150px;
+.compression-settings,
+.filter-settings,
+.watermark-settings {
+  @extend .settings-card;
+
+  .setting-group {
     margin-bottom: 12px;
 
-    img {
-      max-width: 100%;
-      max-height: 300px;
-      object-fit: contain;
-      border-radius: 4px;
+    &:last-child {
+      margin-bottom: 0;
     }
-  }
 
-  .file-info,
-  .output-info {
-    p {
-      @extend %info-text;
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 12px;
+      color: var(--b3-theme-on-surface-variant);
+      font-weight: 500;
     }
-  }
 
-  .output-controls {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 8px;
+    .quality-slider,
+    .width-slider {
+      @extend %range-slider;
+    }
 
-    .copy-dropdown {
-      position: relative;
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
 
-      .dropdown-arrow {
-        margin-left: 4px;
-        font-size: 10px;
+      input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
       }
+    }
 
-      .dropdown-menu {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        margin-top: 4px;
-        background: var(--b3-theme-surface);
-        border: 1px solid var(--b3-theme-surface-lighter);
-        border-radius: 4px;
-        box-shadow: 0 2px 8px var(--b3-theme-shadow, rgba(0, 0, 0, 0.15));
-        z-index: 1000;
-        min-width: 180px;
+    .text-input {
+      @extend %text-input;
+    }
+  }
+}
 
-        .dropdown-item {
-          width: 100%;
-          padding: 8px 12px;
-          border: none;
-          background: transparent;
-          color: var(--b3-theme-on-surface);
-          cursor: pointer;
-          font-size: 12px;
-          text-align: left;
+.image-preview {
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 6px;
+  padding: 8px;
+  background: var(--b3-theme-background);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 150px;
+  margin-bottom: 12px;
 
-          &:hover {
-            background: var(--b3-theme-surface-lighter);
-          }
+  img {
+    max-width: 100%;
+    max-height: 300px;
+    object-fit: contain;
+    border-radius: 4px;
+  }
+}
 
-          &:first-child {
-            border-radius: 4px 4px 0 0;
-          }
+.file-info,
+.output-info {
+  p {
+    @extend %info-text;
+  }
+}
 
-          &:last-child {
-            border-radius: 0 0 4px 4px;
-          }
+.output-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+
+  .copy-dropdown {
+    position: relative;
+
+    .dropdown-arrow {
+      margin-left: 4px;
+      font-size: 10px;
+    }
+
+    .dropdown-menu {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      margin-top: 4px;
+      background: var(--b3-theme-surface);
+      border: 1px solid var(--b3-theme-surface-lighter);
+      border-radius: 4px;
+      box-shadow: 0 2px 8px var(--b3-theme-shadow, rgba(0, 0, 0, 0.15));
+      z-index: 1000;
+      min-width: 180px;
+
+      .dropdown-item {
+        width: 100%;
+        padding: 8px 12px;
+        border: none;
+        background: transparent;
+        color: var(--b3-theme-on-surface);
+        cursor: pointer;
+        font-size: 12px;
+        text-align: left;
+
+        &:hover {
+          background: var(--b3-theme-surface-lighter);
+        }
+
+        &:first-child {
+          border-radius: 4px 4px 0 0;
+        }
+
+        &:last-child {
+          border-radius: 0 0 4px 4px;
         }
       }
     }
@@ -298,6 +330,126 @@
 
   > h4 {
     @extend %section-title;
+  }
+
+  .text-input {
+    @extend %text-input;
+    margin-bottom: 12px;
+  }
+
+  .url-input {
+    margin-bottom: 12px;
+  }
+
+  .fetch-btn,
+  .generate-btn {
+    width: 100%;
+  }
+}
+
+// 统计对比
+.stats-section {
+  background: var(--b3-theme-surface-lighter);
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 12px;
+
+  h4 {
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--b3-theme-on-surface);
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .stat-item {
+    text-align: center;
+    padding: 8px;
+    background: var(--b3-theme-surface);
+    border-radius: 4px;
+
+    .stat-label {
+      display: block;
+      font-size: 11px;
+      color: var(--b3-theme-on-surface-variant);
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--b3-theme-on-surface);
+
+      &.positive {
+        color: var(--b3-card-success-color, #22c55e);
+      }
+
+      &.negative {
+        color: var(--b3-card-error-color, #ef4444);
+      }
+
+      &.neutral {
+        color: var(--b3-theme-on-surface);
+      }
+    }
+  }
+}
+
+// 二维码设置
+.qrcode-settings {
+  margin-top: 12px;
+
+  .setting-group {
+    margin-bottom: 12px;
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 12px;
+      color: var(--b3-theme-on-surface-variant);
+      font-weight: 500;
+    }
+
+    .quality-slider {
+      @extend %range-slider;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+
+      input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+      }
+    }
+  }
+}
+
+// 二维码结果
+.qrcode-result {
+  .qrcode-preview {
+    border: 1px solid var(--b3-theme-surface-lighter);
+    border-radius: 6px;
+    padding: 16px;
+    background: var(--b3-theme-background);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 150px;
+
+    img {
+      max-width: 200px;
+      border-radius: 4px;
+    }
   }
 }
 

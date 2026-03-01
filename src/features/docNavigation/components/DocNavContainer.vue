@@ -2,16 +2,14 @@
   <div v-if="hasNavigation" class="doc-navigation-container" :data-doc-id="docId">
     <div class="doc-navigation">
       <div v-if="parentDoc" class="doc-nav-parent">
-        <svg class="doc-nav-icon"><use xlink:href="#iconUp"></use></svg>
-        <span class="doc-nav-label">上级:</span>
+        <svg class="doc-nav-icon" title="上级文档"><use xlink:href="#iconUp"></use></svg>
         <a class="doc-nav-link" :data-doc-id="parentDoc.id" :title="stripHtml(parentDoc.content)" @click="openDoc(parentDoc.id)">
           {{ stripHtml(parentDoc.content) }}
         </a>
       </div>
 
       <div v-if="childDocs.length" class="doc-nav-children">
-        <svg class="doc-nav-icon"><use xlink:href="#iconDown"></use></svg>
-        <span class="doc-nav-label">下级 ({{ childDocs.length }}):</span>
+        <svg class="doc-nav-icon" :title="`下级文档 (${childDocs.length})`"><use xlink:href="#iconDown"></use></svg>
         <div class="doc-nav-children-list" :data-expanded="isExpanded">
           <a
             v-for="doc in visibleChildren"

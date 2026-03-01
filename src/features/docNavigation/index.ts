@@ -12,7 +12,6 @@ export { useDocNavigation } from './composables/useDocNavigation'
 import './styles/index.scss'
 
 let updateTimer: ReturnType<typeof setTimeout> | null = null
-const navContainers = new WeakMap<any, any>()
 
 export function registerDocNavigation(plugin: Plugin) {
   const handleEvent = (e: CustomEvent) => {
@@ -41,11 +40,16 @@ async function updateDocNavigation(plugin: Plugin, protyle: ProtyleLike) {
 
     removeExistingNav(protyle)
 
-    let container = navContainers.get(protyle)
+    const protyleRef = protyle as any
+    if (protyleRef.__docNavApp) {
+      protyleRef.__docNavApp.unmount()
+      protyleRef.__docNavApp = null
+    }
 
+    let container = protyleRef.__docNavContainer
     if (!container) {
       container = document.createElement('div')
-      navContainers.set(protyle, container)
+      protyleRef.__docNavContainer = container
     }
 
     const app = createApp({
@@ -57,15 +61,13 @@ async function updateDocNavigation(plugin: Plugin, protyle: ProtyleLike) {
     })
 
     app.mount(container)
+    protyleRef.__docNavApp = app
 
     if (target.method === 'after') {
       target.el.after(container)
     } else {
       target.el.before(container)
     }
-
-    ;(protyle as any).__docNavApp = app
-    ;(protyle as any).__docNavContainer = container
   } catch (error) {
     console.error('更新文档层级导航失败:', error)
   }

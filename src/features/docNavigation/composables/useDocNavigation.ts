@@ -2,7 +2,6 @@ import { ref, computed, type Ref, type ComputedRef } from 'vue'
 import * as api from '@/api'
 import { DocNavigationCache, fetchDocHierarchy } from '../types/storage'
 import type { Block, DocHierarchy, ProtyleLike, TargetCacheItem } from '../types'
-import { DEFAULT_OPTIONS } from '../types'
 
 export interface UseDocNavigationReturn {
   parentDoc: Ref<Block | null>
@@ -114,5 +113,3 @@ export function removeExistingNav(protyle: ProtyleLike): void {
     sibling.remove()
   }
 }
-
-export { cache }

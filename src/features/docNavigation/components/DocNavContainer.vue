@@ -48,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch, onMounted } from 'vue'
+import { computed, watch } from 'vue'
 import { useDocNavigation } from '../composables/useDocNavigation'
 
 const props = defineProps<{
@@ -77,12 +77,6 @@ watch(() => props.docId, (newDocId) => {
     loadHierarchy(newDocId)
   }
 }, { immediate: true })
-
-onMounted(() => {
-  if (props.docId) {
-    loadHierarchy(props.docId)
-  }
-})
 </script>
 
 <style scoped lang="scss">

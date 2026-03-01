@@ -12,8 +12,8 @@ let container: HTMLElement | null = null
 export function createSkillsTool(plugin: Plugin): FloatingTool {
   return {
     id: 'skills',
-    label: plugin.i18n?.skills?.label || 'Skills',
-    title: plugin.i18n?.skills?.title || '技能库',
+    label: (plugin.i18n?.skills as any)?.label || 'Skills',
+    title: (plugin.i18n?.skills as any)?.title || '技能库',
     icon: `
       <path fill="currentColor" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
       <circle cx="12" cy="12" r="3.2"/>
@@ -63,28 +63,28 @@ function showSkillsModal(plugin: Plugin) {
   // Create Vue app
   vueApp = createApp(Skills, {
     i18n: {
-      skillsTitle: plugin.i18n?.skills?.modal?.title || '技能库',
-      close: plugin.i18n?.skills?.modal?.close || '关闭',
-      addSkill: plugin.i18n?.skills?.modal?.addSkill || '添加技能',
-      editSkill: plugin.i18n?.skills?.modal?.editSkill || '编辑技能',
-      delete: plugin.i18n?.skills?.modal?.delete || '删除',
-      edit: plugin.i18n?.skills?.modal?.edit || '编辑',
-      search: plugin.i18n?.skills?.modal?.search || '搜索技能...',
-      title: plugin.i18n?.skills?.modal?.titleLabel || '标题',
-      description: plugin.i18n?.skills?.modal?.description || '描述',
-      content: plugin.i18n?.skills?.modal?.content || '内容',
-      content2: plugin.i18n?.skills?.modal?.content2 || '内容2',
-      content3: plugin.i18n?.skills?.modal?.content3 || '内容3',
-      cancel: plugin.i18n?.skills?.modal?.cancel || '取消',
-      save: plugin.i18n?.skills?.modal?.save || '保存',
-      titlePlaceholder: plugin.i18n?.skills?.modal?.titlePlaceholder || '请输入技能标题',
-      descriptionPlaceholder: plugin.i18n?.skills?.modal?.descriptionPlaceholder || '请输入技能描述',
-      contentPlaceholder: plugin.i18n?.skills?.modal?.contentPlaceholder || '请输入要复制的内容',
-      content2Placeholder: plugin.i18n?.skills?.modal?.content2Placeholder || '请输入要复制的内容2',
-      content3Placeholder: plugin.i18n?.skills?.modal?.content3Placeholder || '请输入要复制的内容3',
-      noSkills: plugin.i18n?.skills?.modal?.noSkills || '暂无技能，点击添加',
-      noSkillsFound: plugin.i18n?.skills?.modal?.noSkillsFound || '未找到匹配的技能',
-      clickToCopy: plugin.i18n?.skills?.modal?.clickToCopy || '复制'
+      skillsTitle: (plugin.i18n?.skills as any)?.modal?.title || '技能库',
+      close: (plugin.i18n?.skills as any)?.modal?.close || '关闭',
+      addSkill: (plugin.i18n?.skills as any)?.modal?.addSkill || '添加技能',
+      editSkill: (plugin.i18n?.skills as any)?.modal?.editSkill || '编辑技能',
+      delete: (plugin.i18n?.skills as any)?.modal?.delete || '删除',
+      edit: (plugin.i18n?.skills as any)?.modal?.edit || '编辑',
+      search: (plugin.i18n?.skills as any)?.modal?.search || '搜索技能...',
+      title: (plugin.i18n?.skills as any)?.modal?.titleLabel || '标题',
+      description: (plugin.i18n?.skills as any)?.modal?.description || '描述',
+      content: (plugin.i18n?.skills as any)?.modal?.content || '内容',
+      content2: (plugin.i18n?.skills as any)?.modal?.content2 || '内容2',
+      content3: (plugin.i18n?.skills as any)?.modal?.content3 || '内容3',
+      cancel: (plugin.i18n?.skills as any)?.modal?.cancel || '取消',
+      save: (plugin.i18n?.skills as any)?.modal?.save || '保存',
+      titlePlaceholder: (plugin.i18n?.skills as any)?.modal?.titlePlaceholder || '请输入技能标题',
+      descriptionPlaceholder: (plugin.i18n?.skills as any)?.modal?.descriptionPlaceholder || '请输入技能描述',
+      contentPlaceholder: (plugin.i18n?.skills as any)?.modal?.contentPlaceholder || '请输入要复制的内容',
+      content2Placeholder: (plugin.i18n?.skills as any)?.modal?.content2Placeholder || '请输入要复制的内容2',
+      content3Placeholder: (plugin.i18n?.skills as any)?.modal?.content3Placeholder || '请输入要复制的内容3',
+      noSkills: (plugin.i18n?.skills as any)?.modal?.noSkills || '暂无技能，点击添加',
+      noSkillsFound: (plugin.i18n?.skills as any)?.modal?.noSkillsFound || '未找到匹配的技能',
+      clickToCopy: (plugin.i18n?.skills as any)?.modal?.clickToCopy || '复制'
     },
     plugin: plugin
   })

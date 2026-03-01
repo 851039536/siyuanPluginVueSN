@@ -22,6 +22,8 @@
         :cards="paginatedCards"
         :i18n="i18n"
         @play="playWord"
+        @copyTitle="copyTitle"
+        @copyContent="copyContent"
         @edit="editCard"
         @delete="deleteCard"
       />
@@ -450,6 +452,26 @@ const playWord = async (wordOrCard: string | Flashcard | null) => {
   } catch (error) {
     console.error('Failed to play pronunciation:', error)
     showMessage(props.i18n.playFailed || '播放失败', 2000, 'error')
+  }
+}
+
+const copyTitle = async (card: Flashcard) => {
+  try {
+    await navigator.clipboard.writeText(card.title)
+    showMessage('已复制单词', 2000, 'info')
+  } catch (error) {
+    console.error('Failed to copy title:', error)
+    showMessage('复制失败', 2000, 'error')
+  }
+}
+
+const copyContent = async (card: Flashcard) => {
+  try {
+    await navigator.clipboard.writeText(card.content)
+    showMessage('已复制内容', 2000, 'info')
+  } catch (error) {
+    console.error('Failed to copy content:', error)
+    showMessage('复制失败', 2000, 'error')
   }
 }
 

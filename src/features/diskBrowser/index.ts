@@ -1,52 +1,15 @@
-/**
- * 本地磁盘浏览器功能模块
- * 在右侧边栏显示本地磁盘，支持查看和打开
- */
 import { Plugin } from 'siyuan'
 import { createApp, h } from 'vue'
-import DiskBrowserPanel from './DiskBrowserPanel.vue'
-import { PluginStorage } from '@/utils/pluginStorage'
+import DiskBrowserPanel from './index.vue'
+import { DiskBrowserStorage } from './types/storage'
 
-/**
- * 磁盘浏览器设置接口
- */
-interface DiskBrowserSettings {
-  favoriteFolders: string[]
-}
+export type { DiskInfo, FolderInfo, CacheData, CacheStatus, DiskBrowserSettings, DiskBrowserI18n } from './types'
+export { DiskBrowserStorage } from './types/storage'
+export { useDiskBrowser } from './composables/useDiskBrowser'
 
-/**
- * 注册本地磁盘浏览器功能
- */
 export function registerDiskBrowser(plugin: Plugin) {
-  const STORAGE_KEY = 'disk-browser-settings'
-
-  const storage = new PluginStorage(plugin)
-
-  const loadFavorites = async (): Promise<string[]> => {
-    const settings = await storage.loadWithDefault<DiskBrowserSettings>(STORAGE_KEY, { favoriteFolders: [] })
-    return settings.favoriteFolders
-  }
-
-  const saveFavorites = async (favorites: string[]): Promise<boolean> => {
-    const settings: DiskBrowserSettings = { favoriteFolders: favorites }
-    return storage.save(STORAGE_KEY, settings)
-  }
-
-  const initStorage = async (): Promise<void> => {
-    try {
-      const settings = await storage.load<DiskBrowserSettings>(STORAGE_KEY)
-      if (!settings) {
-        const defaultSettings: DiskBrowserSettings = {
-          favoriteFolders: []
-        }
-        await storage.save(STORAGE_KEY, defaultSettings)
-      }
-    } catch (error) {
-      console.error('初始化磁盘浏览器存储失败:', error)
-    }
-  }
-
-  initStorage()
+  const storage = new DiskBrowserStorage(plugin)
+  storage.init()
 
   plugin.addDock({
     config: {
@@ -67,8 +30,7 @@ export function registerDiskBrowser(plugin: Plugin) {
         setup() {
           return () => h(DiskBrowserPanel, {
             i18n: plugin.i18n.diskBrowser,
-            loadFavorites,
-            saveFavorites,
+            plugin: plugin,
           })
         }
       })
@@ -80,5 +42,4 @@ export function registerDiskBrowser(plugin: Plugin) {
       dock.__container = container
     },
   })
-
 }

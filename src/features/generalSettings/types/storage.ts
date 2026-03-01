@@ -1,0 +1,163 @@
+/**
+ * 通用设置数据存储管理
+ */
+import { Plugin } from 'siyuan';
+import { PluginStorage } from '@/utils/pluginStorage';
+
+export interface FontSettings {
+  fontFamily: string;
+  fontSize: number;
+  fontWeight: string;
+  lineHeight: number;
+}
+
+export interface CodeBlockSettings {
+  style: 'default' | 'github' | 'mac' | 'cartoon';
+  enableCollapse: boolean;
+  collapseHeight: number;
+}
+
+export interface HeadingColors {
+  h1: string;
+  h2: string;
+  h3: string;
+  h4: string;
+  h5: string;
+  h6: string;
+}
+
+export interface HeadingSizes {
+  h1: number;
+  h2: number;
+  h3: number;
+  h4: number;
+  h5: number;
+  h6: number;
+}
+
+export interface HeadingSettings {
+  colors: HeadingColors;
+  fontSizes: HeadingSizes;
+  levelDisplay: string;
+  customMarkers: string[];
+  titleCenterAlign: boolean;
+  titleColor: string;
+  titleFontSize: number;
+}
+
+export interface ListSettings {
+  enableCustomUnorderedList: boolean;
+  enableCustomOrderedList: boolean;
+  firstLevelSymbol: string;
+  secondLevelSymbol: string;
+  thirdLevelSymbol: string;
+  customFirstLevelSymbol: string;
+  customSecondLevelSymbol: string;
+  customThirdLevelSymbol: string;
+  symbolSize: number;
+  symbolMarginLeft: number;
+  numberFormat: string;
+  applyToListBlocks: boolean;
+  applyToEmbedBlocks: boolean;
+  applyToFloatWindows: boolean;
+  css?: string;
+}
+
+export interface HighlightSettings {
+  enableHighlight: boolean;
+}
+
+export interface BackupSettings {
+  autoBackupEnabled: boolean;
+  backupFrequency: string;
+  backupTime: string;
+  keepBackupCount: number;
+  lastBackupTime: string;
+  lastBackupTimestamp: number;
+  workspacePath: string;
+  workspaceRoot: string;
+}
+
+export class GeneralSettingsStorage {
+  private storage: PluginStorage;
+
+  private readonly KEYS = {
+    FONT: 'general-font-settings',
+    CODEBLOCK: 'codeblock-settings',
+    HEADING: 'heading-settings',
+    LIST: 'list-settings',
+    HIGHLIGHT: 'highlight-settings',
+    BACKUP: 'data-backup-settings'
+  };
+
+  constructor(plugin: Plugin) {
+    this.storage = new PluginStorage(plugin);
+  }
+
+  async saveFontSettings(settings: FontSettings): Promise<boolean> {
+    localStorage.setItem(this.KEYS.FONT, JSON.stringify(settings));
+    return true;
+  }
+
+  async loadFontSettings(): Promise<FontSettings | null> {
+    const saved = localStorage.getItem(this.KEYS.FONT);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  async saveCodeBlockSettings(settings: CodeBlockSettings): Promise<boolean> {
+    return this.storage.save(this.KEYS.CODEBLOCK, settings);
+  }
+
+  async loadCodeBlockSettings(): Promise<CodeBlockSettings | null> {
+    return this.storage.load<CodeBlockSettings>(this.KEYS.CODEBLOCK);
+  }
+
+  async saveHeadingSettings(settings: HeadingSettings): Promise<boolean> {
+    return this.storage.save(this.KEYS.HEADING, settings);
+  }
+
+  async loadHeadingSettings(): Promise<HeadingSettings | null> {
+    return this.storage.load<HeadingSettings>(this.KEYS.HEADING);
+  }
+
+  async saveListSettings(settings: ListSettings): Promise<boolean> {
+    localStorage.setItem(this.KEYS.LIST, JSON.stringify(settings));
+    return this.storage.save(this.KEYS.LIST, settings);
+  }
+
+  async loadListSettings(): Promise<ListSettings | null> {
+    return this.storage.load<ListSettings>(this.KEYS.LIST);
+  }
+
+  async saveHighlightSettings(settings: HighlightSettings): Promise<boolean> {
+    return this.storage.save(this.KEYS.HIGHLIGHT, settings);
+  }
+
+  async loadHighlightSettings(): Promise<HighlightSettings | null> {
+    return this.storage.load<HighlightSettings>(this.KEYS.HIGHLIGHT);
+  }
+
+  async saveBackupSettings(settings: BackupSettings): Promise<boolean> {
+    return this.storage.save(this.KEYS.BACKUP, settings);
+  }
+
+  async loadBackupSettings(): Promise<BackupSettings | null> {
+    return this.storage.load<BackupSettings>(this.KEYS.BACKUP);
+  }
+
+  async clearAllSettings(): Promise<void> {
+    localStorage.removeItem(this.KEYS.FONT);
+    localStorage.removeItem(this.KEYS.LIST);
+    await this.storage.remove(this.KEYS.CODEBLOCK);
+    await this.storage.remove(this.KEYS.HEADING);
+    await this.storage.remove(this.KEYS.HIGHLIGHT);
+    await this.storage.remove(this.KEYS.BACKUP);
+  }
+}

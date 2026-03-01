@@ -165,7 +165,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { showMessage } from 'siyuan'
-import { checkIsMobile } from '../index'
+import { checkIsMobile } from '../types'
 import JSZip from 'jszip'
 
 interface Props {

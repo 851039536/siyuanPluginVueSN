@@ -9,6 +9,36 @@ import GeneralSettingsPanel from './GeneralSettingsPanel.vue';
 import { loadCodeBlockSettings, loadListSettingsFromDB, loadHeadingSettings } from '@/config/settings';
 import JSZip from 'jszip';
 
+export function checkIsMobile(): boolean {
+  const userAgent = navigator.userAgent.toLowerCase();
+  const mobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile|tablet/i.test(userAgent);
+  const screenWidth = window.innerWidth <= 768;
+  const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  const isSiyuanMobile = (window as any)._siyuan_mobile === true;
+  return mobileUA || screenWidth || (hasTouchScreen && mobileUA) || isSiyuanMobile;
+}
+
+const CODEBLOCK_STYLES = ['default', 'github', 'mac', 'cartoon'] as const;
+type CodeBlockStyle = typeof CODEBLOCK_STYLES[number];
+
+export const HEADING_LEVEL_MAPPINGS: Record<string, string[]> = {
+  number: ['1', '2', '3', '4', '5', '6'],
+  roman: ['I', 'II', 'III', 'IV', 'V', 'VI'],
+  chinese: ['一', '二', '三', '四', '五', '六'],
+  chineseUpper: ['壹', '贰', '叁', '肆', '伍', '陆'],
+  dots: ['•', '••', '•••', '••••', '•••••', '••••••'],
+  emoji: ['😀', '😁', '😂', '🤣', '😊', '😎'],
+  star: ['⭐', '⭐⭐', '⭐⭐⭐', '⭐⭐⭐⭐', '⭐⭐⭐⭐⭐', '⭐⭐⭐⭐⭐⭐'],
+  arrow: ['→', '→→', '→→→', '→→→→', '→→→→→', '→→→→→→'],
+  tag: ['H1', 'H2', 'H3', 'H4', 'H5', 'H6'],
+  bracket: ['[1]', '[2]', '[3]', '[4]', '[5]', '[6]']
+};
+
+export function applyCodeBlockStyle(style: CodeBlockStyle | string): void {
+  CODEBLOCK_STYLES.forEach(s => document.body.classList.remove(`codeblock-style-${s}`));
+  document.body.classList.add(`codeblock-style-${style}`);
+}
+
 /**
  * 通用设置类
  */
@@ -325,21 +355,9 @@ export class GeneralSettings {
    * 生成层级显示 CSS
    */
   private generateLevelDisplayCss(style: string, customMarkers: string[]): string {
-    const levelMappings: Record<string, string[]> = {
-      number: ['1', '2', '3', '4', '5', '6'],
-      roman: ['I', 'II', 'III', 'IV', 'V', 'VI'],
-      chinese: ['一', '二', '三', '四', '五', '六'],
-      chineseUpper: ['壹', '贰', '叁', '肆', '伍', '陆'],
-      dots: ['•', '••', '•••', '••••', '•••••', '••••••'],
-      emoji: ['😀', '😁', '😂', '🤣', '😊', '😎'],
-      star: ['⭐', '⭐⭐', '⭐⭐⭐', '⭐⭐⭐⭐', '⭐⭐⭐⭐⭐', '⭐⭐⭐⭐⭐⭐'],
-      arrow: ['→', '→→', '→→→', '→→→→', '→→→→→', '→→→→→→'],
-      tag: ['H1', 'H2', 'H3', 'H4', 'H5', 'H6'],
-      bracket: ['[1]', '[2]', '[3]', '[4]', '[5]', '[6]'],
-      custom: customMarkers
-    };
-
-    const levels = levelMappings[style] || levelMappings.number;
+    const levels = style === 'custom'
+      ? customMarkers
+      : (HEADING_LEVEL_MAPPINGS[style] || HEADING_LEVEL_MAPPINGS.number);
 
     return levels.map((label, index) => {
       const level = index + 1;
@@ -417,11 +435,7 @@ export class GeneralSettings {
    */
   private applyCodeBlockStyleFromSettings(settings: any) {
     try {
-      const style = settings.style || 'default';
-      // 移除旧的样式类
-      document.body.classList.remove('codeblock-style-default', 'codeblock-style-github', 'codeblock-style-mac');
-      // 添加新的样式类
-      document.body.classList.add(`codeblock-style-${style}`);
+      applyCodeBlockStyle(settings.style || 'default');
     } catch (error) {
       console.error('应用代码块样式失败:', error);
     }
@@ -496,7 +510,7 @@ export class GeneralSettings {
       }
 
       // 检测是否为移动端
-      const isMobile = this.checkIsMobile();
+      const isMobile = checkIsMobile();
       const autoBackupEnabled = data?.autoBackupEnabled ?? false;
       const backupFrequency = data?.backupFrequency ?? 'daily';
 
@@ -507,18 +521,6 @@ export class GeneralSettings {
     } catch (error) {
       console.error('初始化自动备份失败:', error);
     }
-  }
-
-  /**
-   * 检测是否为移动端
-   */
-  private checkIsMobile(): boolean {
-    const userAgent = navigator.userAgent.toLowerCase();
-    const mobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile|tablet/i.test(userAgent);
-    const screenWidth = window.innerWidth <= 768;
-    const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    const isSiyuanMobile = (window as any)._siyuan_mobile === true;
-    return mobileUA || screenWidth || (hasTouchScreen && mobileUA) || isSiyuanMobile;
   }
 
   /**

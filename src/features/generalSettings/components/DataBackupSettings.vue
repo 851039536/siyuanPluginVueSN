@@ -165,8 +165,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { showMessage } from 'siyuan'
-
-// 导入 JSZip 用于创建 zip 文件
+import { checkIsMobile } from '../index'
 import JSZip from 'jszip'
 
 interface Props {
@@ -180,39 +179,20 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 // 响应式数据
-const workspacePath = ref('')  // 工作区路径（包含 data 文件夹）
-const workspaceRoot = ref('')  // 工作区根路径
+const workspacePath = ref('')
+const workspaceRoot = ref('')
 const isBackingUp = ref(false)
 const isLoading = ref(false)
 const lastBackupTime = ref('')
 const autoBackupEnabled = ref(false)
-const isMobile = ref(false)  // 是否为移动端
+const isMobile = ref(false)
 const backupFrequency = ref('daily')
 const backupTime = ref('03:00')
 const keepBackupCount = ref(7)
 const backupList = ref<Array<{ name: string; path: string; time: string; size: string }>>([])
 
-// 自动备份相关
-let autoBackupTimer: number | null = null  // 组件本地定时器（用于备份操作）
-let lastBackupTimestamp = 0  // 上次备份时间戳
-
-// 检测是否为移动端
-function checkIsMobile(): boolean {
-  // 方式1: 检测 User Agent
-  const userAgent = navigator.userAgent.toLowerCase()
-  const mobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile|tablet/i.test(userAgent)
-
-  // 方式2: 检测屏幕宽度
-  const screenWidth = window.innerWidth <= 768
-
-  // 方式3: 检测触摸事件支持
-  const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0
-
-  // 方式4: 检测思源移动端环境（思源移动版会注入特定标记）
-  const isSiyuanMobile = (window as any)._siyuan_mobile === true
-
-  return mobileUA || screenWidth || (hasTouchScreen && mobileUA) || isSiyuanMobile
-}
+let autoBackupTimer: number | null = null
+let lastBackupTimestamp = 0
 
 // 获取备份目录路径
 function getBackupDir(): string {

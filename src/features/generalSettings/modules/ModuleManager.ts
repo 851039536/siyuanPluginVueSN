@@ -66,10 +66,7 @@ export class ModuleManager {
    * 移除模块
    */
   removeModule(id: string): boolean {
-    const result = this.modules.delete(id);
-    if (result) {
-    }
-    return result;
+    return this.modules.delete(id);
   }
 
   /**

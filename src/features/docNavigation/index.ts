@@ -5,8 +5,8 @@ import { findNavigationTarget, removeExistingNav } from './composables/useDocNav
 import type { ProtyleLike } from './types'
 import { DEFAULT_OPTIONS } from './types'
 
-export type { Block, DocHierarchy, DocNavigationOptions, DocNavigationI18n, ProtyleLike } from './types'
-export { DocNavigationCache, fetchDocHierarchy } from './types/storage'
+export type { Block, DocHierarchy, DocNavigationOptions, DocNavigationI18n, ProtyleLike, BreadcrumbItem, SiblingDocs } from './types'
+export { DocNavigationCache, fetchDocHierarchy, fetchBreadcrumb, fetchSiblingDocs } from './types/storage'
 export { useDocNavigation } from './composables/useDocNavigation'
 
 import './styles/index.scss'

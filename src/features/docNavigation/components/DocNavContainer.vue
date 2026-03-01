@@ -1,6 +1,47 @@
 <template>
-  <div v-if="hasNavigation" class="doc-navigation-container" :data-doc-id="docId">
+  <div v-if="hasNavigation || hasBreadcrumbs || hasSiblings" class="doc-navigation-container" :data-doc-id="docId">
     <div class="doc-navigation">
+      <div v-if="hasBreadcrumbs" class="doc-nav-breadcrumb">
+        <template v-for="(item, index) in breadcrumbs" :key="item.id">
+          <a class="doc-nav-breadcrumb-link" :data-doc-id="item.id" :title="stripHtml(item.content)" @click="openDoc(item.id)">
+            {{ stripHtml(item.content) }}
+          </a>
+          <span v-if="index < breadcrumbs.length - 1" class="doc-nav-breadcrumb-separator">/</span>
+        </template>
+      </div>
+
+      <div v-if="hasSiblings" class="doc-nav-siblings">
+        <a
+          v-if="siblingDocs.prev"
+          class="doc-nav-sibling doc-nav-sibling-prev"
+          :data-doc-id="siblingDocs.prev.id"
+          :title="'上一篇: ' + stripHtml(siblingDocs.prev.content)"
+          @click="openDoc(siblingDocs.prev.id)"
+        >
+          <IconWrapper name="chevronLeft" size="14" />
+          <span class="doc-nav-sibling-text">{{ stripHtml(siblingDocs.prev.content) }}</span>
+        </a>
+        <span v-else class="doc-nav-sibling doc-nav-sibling-disabled">
+          <IconWrapper name="chevronLeft" size="14" />
+        </span>
+
+        <span class="doc-nav-sibling-count">{{ siblingDocs.currentIndex + 1 }}/{{ siblingDocs.siblings.length }}</span>
+
+        <a
+          v-if="siblingDocs.next"
+          class="doc-nav-sibling doc-nav-sibling-next"
+          :data-doc-id="siblingDocs.next.id"
+          :title="'下一篇: ' + stripHtml(siblingDocs.next.content)"
+          @click="openDoc(siblingDocs.next.id)"
+        >
+          <span class="doc-nav-sibling-text">{{ stripHtml(siblingDocs.next.content) }}</span>
+          <IconWrapper name="chevronRight" size="14" />
+        </a>
+        <span v-else class="doc-nav-sibling doc-nav-sibling-disabled">
+          <IconWrapper name="chevronRight" size="14" />
+        </span>
+      </div>
+
       <div v-if="parentDoc" class="doc-nav-parent">
         <IconWrapper name="docNavParent" class="doc-nav-icon" size="18" title="上级文档" />
         <a class="doc-nav-link" :data-doc-id="parentDoc.id" :title="stripHtml(parentDoc.content)" @click="openDoc(parentDoc.id)">
@@ -57,7 +98,11 @@ const props = defineProps<{
 const {
   parentDoc,
   childDocs,
+  breadcrumbs,
+  siblingDocs,
   hasNavigation,
+  hasBreadcrumbs,
+  hasSiblings,
   isExpanded,
   visibleChildren,
   hiddenChildren,

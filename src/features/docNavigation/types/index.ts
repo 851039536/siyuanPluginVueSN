@@ -4,7 +4,7 @@ export interface Block {
   content: string
   hpath: string
   box?: string
-  doc_type?: 'parent' | 'child'
+  doc_type?: 'parent' | 'child' | 'sibling' | 'breadcrumb'
 }
 
 export interface DocHierarchy {
@@ -12,9 +12,33 @@ export interface DocHierarchy {
   children: Block[]
 }
 
+export interface BreadcrumbItem {
+  id: string
+  content: string
+  hpath: string
+}
+
+export interface SiblingDocs {
+  prev: Block | null
+  next: Block | null
+  siblings: Block[]
+  currentIndex: number
+}
+
 export interface DocHierarchyCacheItem {
   parent: Block | null
   children: Block[]
+  timestamp: number
+}
+
+export interface BreadcrumbCacheItem {
+  items: BreadcrumbItem[]
+  timestamp: number
+}
+
+export interface SiblingCacheItem {
+  siblings: Block[]
+  currentIndex: number
   timestamp: number
 }
 

@@ -1,12 +1,16 @@
 import { ref, computed, type Ref, type ComputedRef } from 'vue'
 import * as api from '@/api'
-import { DocNavigationCache, fetchDocHierarchy } from '../types/storage'
-import type { Block, DocHierarchy, ProtyleLike, TargetCacheItem } from '../types'
+import { DocNavigationCache, fetchDocHierarchy, fetchBreadcrumb, fetchSiblingDocs } from '../types/storage'
+import type { Block, DocHierarchy, ProtyleLike, TargetCacheItem, BreadcrumbItem, SiblingDocs } from '../types'
 
 export interface UseDocNavigationReturn {
   parentDoc: Ref<Block | null>
   childDocs: Ref<Block[]>
+  breadcrumbs: Ref<BreadcrumbItem[]>
+  siblingDocs: Ref<SiblingDocs>
   hasNavigation: ComputedRef<boolean>
+  hasBreadcrumbs: ComputedRef<boolean>
+  hasSiblings: ComputedRef<boolean>
   isExpanded: Ref<boolean>
   visibleChildren: ComputedRef<Block[]>
   hiddenChildren: ComputedRef<Block[]>
@@ -22,10 +26,20 @@ const targetCache = new WeakMap<any, TargetCacheItem>()
 export function useDocNavigation(): UseDocNavigationReturn {
   const parentDoc = ref<Block | null>(null)
   const childDocs = ref<Block[]>([])
+  const breadcrumbs = ref<BreadcrumbItem[]>([])
+  const siblingDocs = ref<SiblingDocs>({ prev: null, next: null, siblings: [], currentIndex: -1 })
   const isExpanded = ref(false)
 
   const hasNavigation = computed(() => {
     return parentDoc.value !== null || childDocs.value.length > 0
+  })
+
+  const hasBreadcrumbs = computed(() => {
+    return breadcrumbs.value.length > 0
+  })
+
+  const hasSiblings = computed(() => {
+    return siblingDocs.value.siblings.length > 1
   })
 
   const visibleChildren = computed(() => {
@@ -42,16 +56,27 @@ export function useDocNavigation(): UseDocNavigationReturn {
       if (!currentDoc?.box || !currentDoc.hpath) {
         parentDoc.value = null
         childDocs.value = []
+        breadcrumbs.value = []
+        siblingDocs.value = { prev: null, next: null, siblings: [], currentIndex: -1 }
         return
       }
 
-      const hierarchy: DocHierarchy = await fetchDocHierarchy(currentDoc, cache)
+      const [hierarchy, breadcrumbItems, siblings] = await Promise.all([
+        fetchDocHierarchy(currentDoc, cache),
+        fetchBreadcrumb(currentDoc, cache),
+        fetchSiblingDocs(currentDoc, cache),
+      ])
+
       parentDoc.value = hierarchy.parent
       childDocs.value = hierarchy.children
+      breadcrumbs.value = breadcrumbItems
+      siblingDocs.value = siblings
     } catch (error) {
       console.error('加载文档层级失败:', error)
       parentDoc.value = null
       childDocs.value = []
+      breadcrumbs.value = []
+      siblingDocs.value = { prev: null, next: null, siblings: [], currentIndex: -1 }
     }
   }
 
@@ -72,7 +97,11 @@ export function useDocNavigation(): UseDocNavigationReturn {
   return {
     parentDoc,
     childDocs,
+    breadcrumbs,
+    siblingDocs,
     hasNavigation,
+    hasBreadcrumbs,
+    hasSiblings,
     isExpanded,
     visibleChildren,
     hiddenChildren,

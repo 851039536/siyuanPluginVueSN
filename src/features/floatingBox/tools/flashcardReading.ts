@@ -1,5 +1,5 @@
 import type { FloatingTool } from '../types'
-import { toggleFlashcardDialog } from '../../flashcardReading'
+import { toggleFlashcardDialog } from '../../flashcardReading/types'
 
 /**
  * 单词阅读工具

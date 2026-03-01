@@ -1,9 +1,6 @@
 import type { FloatingTool } from '../types'
 import { togglePasswordVault } from '../../passwordVault'
 
-/**
- * 密码箱工具
- */
 export function createPasswordVaultTool(plugin?: any): FloatingTool {
   return {
     id: 'passwordVault',
@@ -16,5 +13,3 @@ export function createPasswordVaultTool(plugin?: any): FloatingTool {
     }
   }
 }
-
-export const passwordVaultTool: FloatingTool = createPasswordVaultTool()

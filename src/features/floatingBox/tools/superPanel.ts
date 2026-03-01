@@ -1,8 +1,5 @@
 import type { FloatingTool } from '../types'
 
-/**
- * 超级面板工具
- */
 export function createSuperPanelTool(plugin?: any): FloatingTool {
   return {
     id: 'superPanel',
@@ -15,5 +12,3 @@ export function createSuperPanelTool(plugin?: any): FloatingTool {
     }
   }
 }
-
-export const superPanelTool: FloatingTool = createSuperPanelTool()

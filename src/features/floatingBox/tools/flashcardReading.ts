@@ -1,9 +1,6 @@
 import type { FloatingTool } from '../types'
 import { toggleFlashcardDialog } from '../../flashcardReading/types'
 
-/**
- * 单词阅读工具
- */
 export function createFlashcardReadingTool(plugin?: any): FloatingTool {
   return {
     id: 'flashcardReading',
@@ -16,5 +13,3 @@ export function createFlashcardReadingTool(plugin?: any): FloatingTool {
     }
   }
 }
-
-export const flashcardReadingTool: FloatingTool = createFlashcardReadingTool()

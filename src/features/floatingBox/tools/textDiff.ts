@@ -1,9 +1,6 @@
 import type { FloatingTool } from '../types'
 import { toggleTextDiff } from '../../textDiff'
 
-/**
- * 文本对比工具
- */
 export function createTextDiffTool(plugin?: any): FloatingTool {
   return {
     id: 'textDiff',
@@ -20,5 +17,3 @@ export function createTextDiffTool(plugin?: any): FloatingTool {
     }
   }
 }
-
-export const textDiffTool: FloatingTool = createTextDiffTool()

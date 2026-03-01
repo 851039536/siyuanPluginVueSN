@@ -260,7 +260,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, onBeforeMount, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onBeforeMount, onUnmounted } from 'vue'
 import type { Skill, SkillCategory } from '../types'
 import Button from '@/components/Button.vue'
 import IconWrapper from '@/components/IconWrapper.vue'
@@ -318,36 +318,27 @@ const allCategories = computed(() => {
 })
 
 onMounted(async () => {
-  await loadSkills()
-  await loadCategories()
+  await Promise.all([loadSkills(), loadCategories()])
 
   if (categories.value.length > 0 && !skillForm.value.category) {
     skillForm.value.category = categories.value[0].id
   }
 })
 
-watch(categories, (newCategories) => {
-  if (newCategories.length > 0 && !skillForm.value.category) {
-    skillForm.value.category = newCategories[0].id
-  }
-})
-
 const filteredSkills = computed(() => {
-  let result = [...skills.value]
+  let result = skills.value
 
   if (selectedCategory.value !== 'all') {
     result = result.filter(skill => skill.category === selectedCategory.value)
   }
 
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase().trim()
-    if (query) {
-      result = result.filter(skill =>
-        (skill.title || '').toLowerCase().includes(query) ||
-        (skill.description || '').toLowerCase().includes(query) ||
-        (skill.content || '').toLowerCase().includes(query)
-      )
-    }
+  const query = searchQuery.value.toLowerCase().trim()
+  if (query) {
+    result = result.filter(skill =>
+      skill.title?.toLowerCase().includes(query) ||
+      skill.description?.toLowerCase().includes(query) ||
+      skill.content?.toLowerCase().includes(query)
+    )
   }
 
   return result

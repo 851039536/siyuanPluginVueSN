@@ -1,9 +1,6 @@
 import { reloadUI } from '@/api'
 import type { FloatingTool } from '../types'
 
-/**
- * 刷新工具
- */
 export function createRefreshTool(plugin?: any): FloatingTool {
   return {
     id: 'refresh',
@@ -20,5 +17,3 @@ export function createRefreshTool(plugin?: any): FloatingTool {
     }
   }
 }
-
-export const refreshTool: FloatingTool = createRefreshTool()

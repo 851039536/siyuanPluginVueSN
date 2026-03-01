@@ -49,13 +49,34 @@ const props = defineProps<{
 const isExpanded = ref(false)
 const isMobile = ref(false)
 
-const desktopTools = ref<FloatingTool[]>([])
-const mobileToolsCache = ref<FloatingTool[]>([])
-
-const tools = computed(() => isMobile.value ? mobileToolsCache.value : desktopTools.value)
-
-let resizeTimer: ReturnType<typeof setTimeout> | null = null
 const MOBILE_BREAKPOINT = 768
+let resizeTimer: ReturnType<typeof setTimeout> | null = null
+
+const tools = computed<FloatingTool[]>(() => {
+  const baseTools: FloatingTool[] = [
+    createSuperPanelTool(props.plugin),
+    createRefreshTool(props.plugin),
+  ]
+
+  if (isMobile.value) {
+    return [
+      ...baseTools,
+      createPasswordVaultTool(props.plugin),
+      createFlashcardReadingTool(props.plugin),
+    ]
+  }
+
+  const desktopTools: FloatingTool[] = [
+    ...baseTools,
+    createTextDiffTool(props.plugin),
+  ]
+
+  if (props.plugin?.settings?.enableSkills !== false) {
+    desktopTools.push(skillsTool(props.plugin))
+  }
+
+  return desktopTools
+})
 
 const checkMobile = () => {
   isMobile.value = window.innerWidth <= MOBILE_BREAKPOINT
@@ -66,30 +87,8 @@ const debouncedCheckMobile = () => {
   resizeTimer = setTimeout(checkMobile, 150)
 }
 
-const initTools = () => {
-  mobileToolsCache.value = [
-    createSuperPanelTool(props.plugin),
-    createRefreshTool(props.plugin),
-    createPasswordVaultTool(props.plugin),
-    createFlashcardReadingTool(props.plugin),
-  ]
-
-  const toolList: FloatingTool[] = [
-    createSuperPanelTool(props.plugin),
-    createRefreshTool(props.plugin),
-    createTextDiffTool(props.plugin),
-  ]
-
-  if (props.plugin?.settings?.enableSkills !== false) {
-    toolList.push(skillsTool(props.plugin))
-  }
-
-  desktopTools.value = toolList
-}
-
 onMounted(() => {
   checkMobile()
-  initTools()
   window.addEventListener('resize', debouncedCheckMobile)
 })
 

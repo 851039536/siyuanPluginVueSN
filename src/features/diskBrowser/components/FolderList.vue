@@ -132,6 +132,7 @@ import Button from '@/components/Button.vue'
 import IconWrapper from '@/components/IconWrapper.vue'
 import Tag from '@/components/Tag.vue'
 import type { FolderInfo, CacheStatus, DiskBrowserI18n } from '../types'
+import { formatSize } from '../utils'
 
 interface Props {
   folders: FolderInfo[]
@@ -158,14 +159,6 @@ defineEmits<{
 
 function isFavorite(path: string): boolean {
   return props.favoriteFolders.includes(path)
-}
-
-function formatSize(bytes?: number): string {
-  if (!bytes || bytes === 0) return '0 B'
-  const units = ['B', 'KB', 'MB', 'GB', 'TB']
-  const k = 1024
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return (bytes / Math.pow(k, i)).toFixed(2) + ' ' + units[i]
 }
 </script>
 

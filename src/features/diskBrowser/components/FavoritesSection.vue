@@ -36,6 +36,7 @@ import Button from '@/components/Button.vue'
 import IconWrapper from '@/components/IconWrapper.vue'
 import Badge from '@/components/Badge.vue'
 import type { DiskBrowserI18n } from '../types'
+import { getFolderName } from '../utils'
 
 interface Props {
   favoriteFolders: string[]
@@ -47,11 +48,6 @@ defineEmits<{
   navigate: [path: string]
   remove: [path: string]
 }>()
-
-function getFolderName(path: string): string {
-  const parts = path.split('\\')
-  return parts[parts.length - 1] || path
-}
 </script>
 
 <style scoped lang="scss">

@@ -1,7 +1,7 @@
 import { ref, computed, type Ref, type ComputedRef } from 'vue'
 import * as api from '@/api'
 import { DocNavigationCache, fetchDocHierarchy, fetchBreadcrumb, fetchSiblingDocs } from '../types/storage'
-import type { Block, DocHierarchy, ProtyleLike, TargetCacheItem, BreadcrumbItem, SiblingDocs } from '../types'
+import type { Block, ProtyleLike, TargetCacheItem, BreadcrumbItem, SiblingDocs } from '../types'
 
 export interface UseDocNavigationReturn {
   parentDoc: Ref<Block | null>

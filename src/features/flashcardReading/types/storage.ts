@@ -2,17 +2,18 @@
  * 单词阅读功能 - 数据存储层
  */
 import { Plugin } from 'siyuan'
-import type { Flashcard, CreateFlashcardDTO, UpdateFlashcardDTO } from './types'
+import { PluginStorage } from '@/utils/pluginStorage'
+import type { Flashcard, CreateFlashcardDTO, UpdateFlashcardDTO } from './index'
 
 /**
  * Flashcard 存储类
  */
 export class FlashcardStorage {
-  private plugin: Plugin
+  private storage: PluginStorage
   private readonly STORAGE_KEY = 'flashcard-cards'
 
   constructor(plugin: Plugin) {
-    this.plugin = plugin
+    this.storage = new PluginStorage(plugin)
   }
 
   /**
@@ -21,7 +22,6 @@ export class FlashcardStorage {
   async init(): Promise<void> {
     const cards = await this.getAllCards()
     if (cards.length === 0) {
-      // 可选：为首次使用的用户创建示例卡片
       await this.createCard({
         title: '示例卡片',
         content: '这是一个示例卡片的内容',
@@ -35,8 +35,7 @@ export class FlashcardStorage {
    */
   async getAllCards(): Promise<Flashcard[]> {
     try {
-      const data = await this.plugin.loadData(this.STORAGE_KEY)
-      // 兼容旧数据，为没有 practiceCount 字段的卡片添加默认值
+      const data = await this.storage.load<Flashcard[]>(this.STORAGE_KEY)
       return (data || []).map((card: Flashcard) => ({
         ...card,
         practiceCount: card.practiceCount ?? 0
@@ -89,7 +88,6 @@ export class FlashcardStorage {
    * 创建新卡片
    */
   async createCard(data: CreateFlashcardDTO): Promise<Flashcard> {
-    // 检查标题唯一性
     const isUnique = await this.isTitleUnique(data.title)
     if (!isUnique) {
       throw new Error('Title already exists')
@@ -108,7 +106,7 @@ export class FlashcardStorage {
 
     const cards = await this.getAllCards()
     cards.push(newCard)
-    await this.plugin.saveData(this.STORAGE_KEY, cards)
+    await this.storage.save(this.STORAGE_KEY, cards)
 
     return newCard
   }
@@ -124,7 +122,6 @@ export class FlashcardStorage {
       return false
     }
 
-    // 如果更新标题，检查唯一性
     if (data.title && data.title !== cards[index].title) {
       const isUnique = await this.isTitleUnique(data.title, id)
       if (!isUnique) {
@@ -132,14 +129,13 @@ export class FlashcardStorage {
       }
     }
 
-    // 更新字段
     cards[index] = {
       ...cards[index],
       ...data,
       updatedAt: Date.now()
     }
 
-    await this.plugin.saveData(this.STORAGE_KEY, cards)
+    await this.storage.save(this.STORAGE_KEY, cards)
     return true
   }
 
@@ -151,10 +147,10 @@ export class FlashcardStorage {
     const filteredCards = cards.filter(card => card.id !== id)
 
     if (filteredCards.length === cards.length) {
-      return false // 卡片未找到
+      return false
     }
 
-    await this.plugin.saveData(this.STORAGE_KEY, filteredCards)
+    await this.storage.save(this.STORAGE_KEY, filteredCards)
     return true
   }
 
@@ -168,7 +164,7 @@ export class FlashcardStorage {
     const deletedCount = cards.length - filteredCards.length
 
     if (deletedCount > 0) {
-      await this.plugin.saveData(this.STORAGE_KEY, filteredCards)
+      await this.storage.save(this.STORAGE_KEY, filteredCards)
     }
 
     return deletedCount
@@ -188,7 +184,7 @@ export class FlashcardStorage {
     cards[index].practiceCount = (cards[index].practiceCount || 0) + 1
     cards[index].updatedAt = Date.now()
 
-    await this.plugin.saveData(this.STORAGE_KEY, cards)
+    await this.storage.save(this.STORAGE_KEY, cards)
     return true
   }
 }

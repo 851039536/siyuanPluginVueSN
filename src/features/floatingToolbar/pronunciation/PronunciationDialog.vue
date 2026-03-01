@@ -168,7 +168,7 @@
 import { ref, watch, nextTick, computed } from 'vue'
 import { showMessage } from 'siyuan'
 import type PluginSample from '@/index'
-import { FlashcardStorage } from '@/features/flashcardReading/storage'
+import { FlashcardStorage } from '@/features/flashcardReading/types/storage'
 import type { Flashcard } from '@/features/flashcardReading/types'
 
 interface Props {

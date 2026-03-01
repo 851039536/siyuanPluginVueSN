@@ -1,6 +1,5 @@
-@use '../../_variables.scss' as *;
+@use '../../../_variables.scss' as *;
 
-// ========== 自定义标签样式 ==========
 .tag {
   display: inline-flex;
   align-items: center;
@@ -36,9 +35,6 @@
   }
 }
 
-// ========== 共享样式 ==========
-
-// 空状态（通用）
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -54,7 +50,6 @@
   }
 }
 
-// 大卡片样式（共享）
 .flashcard-large {
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-background);
@@ -71,7 +66,6 @@
   padding: 32px 24px;
   position: relative;
 
-  // 左侧主题色标识条
   &::before {
     content: '';
     position: absolute;
@@ -102,7 +96,6 @@
   overflow-y: auto;
   max-width: 100%;
 
-  // 自定义滚动条样式
   &::-webkit-scrollbar {
     width: 4px;
   }
@@ -128,7 +121,6 @@
   font-size: 13px;
   flex-shrink: 0;
 
-  // 标签样式
   :deep(.tag) {
     background: var(--b3-theme-background);
     color: var(--b3-theme-on-surface);
@@ -158,8 +150,6 @@
   border-radius: 24px;
   border: 1px solid var(--b3-theme-surface-lighter);
 }
-
-// ========== FlashcardReadingPanel 特有样式 ==========
 
 .flashcard-reading-panel {
   display: flex;
@@ -245,7 +235,6 @@
     max-height: 800px;
   }
 
-  // 卡片列表模式
   .card-list {
     flex: 1;
     max-height: 95%;
@@ -295,7 +284,6 @@
     }
   }
 
-  // 单卡模式
   .single-card-view {
     flex: 1;
     max-height: 95%;
@@ -333,7 +321,6 @@
     gap: 8px;
   }
 
-  // 统计视图
   .statistics-view {
     flex: 0 1 auto;
     max-height: 95%;
@@ -341,7 +328,6 @@
     padding: 8px 4px;
     min-height: 0;
 
-    // 总体统计卡片
     .stats-overview {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -416,7 +402,6 @@
       }
     }
 
-    // 进度概览
     .progress-section {
       margin-bottom: 16px;
       padding: 14px 16px;
@@ -459,7 +444,6 @@
       }
     }
 
-    // 图表区块
     .chart-section {
       margin-bottom: 16px;
       padding: 14px 16px;
@@ -481,7 +465,6 @@
         }
       }
 
-      // 柱状图
       .bar-chart {
         display: flex;
         flex-direction: column;
@@ -539,7 +522,6 @@
               transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
               min-width: 30px;
 
-              // 不同排名的颜色
               &-0 { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
               &-1 { background: linear-gradient(90deg, #64748b, #94a3b8); }
               &-2 { background: linear-gradient(90deg, #b45309, #d97706); }
@@ -564,7 +546,6 @@
         }
       }
 
-      // 排行榜
       .rank-list {
         display: flex;
         flex-direction: column;
@@ -675,7 +656,6 @@
       }
     }
 
-    // 空状态
     .empty-stats {
       display: flex;
       flex-direction: column;
@@ -704,10 +684,9 @@
     }
   }
 
-  // 对话框样式
   .dialog-overlay {
     position: fixed;
-    inset: 0; // 简写 top/left/right/bottom
+    inset: 0;
     background: rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
@@ -749,13 +728,11 @@
       border-top: 1px solid var(--b3-theme-surface);
     }
 
-    // 帮助对话框特殊样式
     &.help-dialog {
       max-width: 600px;
     }
   }
 
-  // 帮助内容样式 - 独立块减少嵌套
   .help-body {
     max-height: 500px;
     overflow-y: auto;
@@ -798,7 +775,6 @@
     }
   }
 
-  // 表单样式
   .form-group {
     display: flex;
     flex-direction: column;

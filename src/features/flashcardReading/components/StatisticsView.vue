@@ -1,0 +1,136 @@
+<template>
+  <div class="statistics-view">
+    <div class="stats-overview">
+      <div class="stat-card stat-card-primary">
+        <div class="stat-icon">
+          <IconWrapper name="refresh" :size="24" />
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ statistics.totalPractice }}</div>
+          <div class="stat-label">{{ i18n.totalPractice || '总练习次数' }}</div>
+        </div>
+      </div>
+      <div class="stat-card stat-card-success">
+        <div class="stat-icon">
+          <IconWrapper name="success" :size="24" />
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ statistics.practicedCards }}</div>
+          <div class="stat-label">{{ i18n.practicedCards || '已练习卡片' }}</div>
+        </div>
+        <div class="stat-badge" v-if="statistics.totalCards > 0">
+          {{ Math.round(statistics.practicedCards / statistics.totalCards * 100) }}%
+        </div>
+      </div>
+      <div class="stat-card stat-card-info">
+        <div class="stat-icon">
+          <IconWrapper name="listBulleted" :size="24" />
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ statistics.totalCards }}</div>
+          <div class="stat-label">{{ i18n.totalCards || '总卡片数' }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="progress-section" v-if="statistics.totalCards > 0">
+      <div class="progress-header">
+        <span class="progress-title">{{ i18n.masteryProgress || '掌握进度' }}</span>
+        <span class="progress-value">{{ statistics.practicedCards }}/{{ statistics.totalCards }}</span>
+      </div>
+      <div class="progress-bar">
+        <div
+          class="progress-fill"
+          :style="{ width: (statistics.practicedCards / statistics.totalCards * 100) + '%' }"
+        />
+      </div>
+    </div>
+
+    <div class="chart-section" v-if="statistics.categoryStats.length > 0">
+      <h4 class="chart-title">
+        <IconWrapper name="statistics" :size="16" />
+        {{ i18n.categoryStats || '类别统计' }}
+      </h4>
+      <div class="bar-chart">
+        <div
+          v-for="(item, index) in statistics.categoryStats"
+          :key="item.category"
+          class="bar-item"
+          :class="{ 'bar-item-top': index < 3 }"
+        >
+          <div class="bar-rank" v-if="index < 3">
+            <IconWrapper :name="index === 0 ? 'star' : 'starOutline'" :size="14" />
+          </div>
+          <div class="bar-label">{{ item.category }}</div>
+          <div class="bar-container">
+            <div
+              class="bar-fill"
+              :class="'bar-fill-' + (index % 4)"
+              :style="{
+                width: statistics.totalPractice > 0
+                  ? (item.count / statistics.totalPractice * 100) + '%'
+                  : '0%'
+              }"
+            >
+              <span class="bar-value">{{ item.count }}</span>
+            </div>
+          </div>
+          <div class="bar-percent" v-if="statistics.totalPractice > 0">
+            {{ Math.round(item.count / statistics.totalPractice * 100) }}%
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-section" v-if="statistics.cardStats.length > 0">
+      <h4 class="chart-title">
+        <IconWrapper name="starCircle" :size="16" />
+        {{ i18n.topCards || '练习排行榜' }}
+      </h4>
+      <div class="rank-list">
+        <div
+          v-for="(item, index) in statistics.cardStats"
+          :key="item.title"
+          class="rank-item"
+          :class="{ 'rank-item-top': index < 3 }"
+        >
+          <div class="rank-medal" :class="'rank-medal-' + index">
+            <IconWrapper
+              :name="index < 3 ? 'star' : 'starOutline'"
+              :size="index < 3 ? 14 : 12"
+            />
+            <span v-if="index >= 3" class="rank-number">{{ index + 1 }}</span>
+          </div>
+          <div class="rank-info">
+            <div class="rank-title">{{ item.title }}</div>
+            <div class="rank-category">
+              <span class="category-tag">{{ item.category }}</span>
+            </div>
+          </div>
+          <div class="rank-count">
+            <IconWrapper name="headphones" :size="12" />
+            <span>{{ item.count }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="empty-stats" v-else>
+      <div class="empty-icon">
+        <IconWrapper name="statistics" :size="64" />
+      </div>
+      <p class="empty-title">{{ i18n.noPracticeData || '暂无练习数据' }}</p>
+      <p class="empty-desc">{{ i18n.startPracticeHint || '开始练习单词，这里将显示你的学习统计' }}</p>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import IconWrapper from '@/components/IconWrapper.vue'
+import type { StatisticsData, I18n } from '../types'
+
+defineProps<{
+  statistics: StatisticsData
+  i18n: I18n
+}>()
+</script>

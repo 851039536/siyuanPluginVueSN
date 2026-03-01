@@ -3,7 +3,6 @@
     <Transition name="dialog">
       <div v-if="visible" class="flashcard-dialog-overlay" @click.self="close">
         <div class="flashcard-dialog">
-          <!-- 关闭按钮 -->
           <Button
             variant="ghost"
             size="small"
@@ -12,13 +11,11 @@
             @click="close"
           />
 
-          <!-- 空状态 -->
           <div v-if="filteredCards.length === 0" class="empty-state">
             <IconWrapper name="file" :size="64" />
             <p>{{ i18n.noCards || '暂无卡片' }}</p>
           </div>
 
-          <!-- 单卡视图 -->
           <template v-else>
             <div class="flashcard-large">
               <div class="card-title-large">{{ currentCard?.title }}</div>
@@ -27,7 +24,6 @@
                 <span class="card-category-large">{{ currentCard?.category }}</span>
                 <span class="practice-count">{{ i18n.practiceCount || '练习次数' }}: {{ currentCard?.practiceCount || 0 }}</span>
               </div>
-              <!-- 播放按钮 -->
               <Button
                 variant="success"
                 size="large"
@@ -37,7 +33,6 @@
               </Button>
             </div>
 
-            <!-- 类别筛选 -->
             <div class="category-filter">
               <label>{{ i18n.category || '类别' }}:</label>
               <Select
@@ -47,7 +42,6 @@
               />
             </div>
 
-            <!-- 导航 -->
             <div class="card-navigation">
               <Button
                 variant="ghost"
@@ -86,17 +80,9 @@ import Button from '@/components/Button.vue'
 import Select from '@/components/Select.vue'
 import type { SelectOption } from '@/components/Select.vue'
 import type { Plugin } from 'siyuan'
-import { FlashcardStorage } from './storage'
-import type { Flashcard } from './types'
 
-interface I18n {
-  noCards?: string
-  category?: string
-  allCategories?: string
-  practiceCount?: string
-  play?: string
-  playFailed?: string
-}
+import { FlashcardStorage } from '../types/storage'
+import type { Flashcard, I18n } from '../types'
 
 interface Props {
   i18n: I18n
@@ -140,7 +126,9 @@ const handleCategoryChange = () => {
   currentIndex.value = 0
 }
 
-const playWord = async (card: Flashcard) => {
+const playWord = async (card: Flashcard | null) => {
+  if (!card) return
+  
   try {
     const utterance = new SpeechSynthesisUtterance(card.title)
     utterance.lang = 'en-US'
@@ -200,14 +188,12 @@ const close = () => {
   visible.value = false
 }
 
-// 暴露方法和属性供外部调用
 defineExpose({
   open,
   close,
   visible
 })
 
-// 监听数据变化事件
 let dataChangeHandler: (() => void) | null = null
 
 onMounted(() => {
@@ -224,9 +210,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
-@use './index.scss' as *;
-
-// ========== 对话框特定样式 ==========
+@use '../styles/index.scss' as *;
 
 .flashcard-dialog-overlay {
   position: fixed;
@@ -272,8 +256,6 @@ onUnmounted(() => {
   min-width: 60px;
   text-align: center;
 }
-
-// ========== 对话框动画 ==========
 
 .dialog-enter-active,
 .dialog-leave-active {

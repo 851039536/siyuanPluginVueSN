@@ -4,8 +4,16 @@ import type { DiskInfo, FolderInfo, CacheData, CacheStatus, DiskBrowserI18n } fr
 import { getDefaultDisks } from '../types'
 import { DiskBrowserStorage } from '../types/storage'
 import type { Plugin } from 'siyuan'
-
-let CACHE_EXPIRY_TIME = 60 * 60 * 1000
+import {
+  formatSize,
+  getFolderName,
+  computeCacheStatus,
+  getCacheExpiryTime,
+  isCacheValid,
+  buildPath,
+  formatDate,
+  copyToClipboard
+} from '../utils'
 
 const DEBOUNCE_DELAY = 500
 
@@ -13,18 +21,6 @@ let isExecutingCommand = false
 let lastExecutionTime = 0
 let currentOperationId = 0
 const operationMap = new Map<number, string>()
-
-function isNetworkSlow(): boolean {
-  if (typeof navigator !== 'undefined' && (navigator as any).connection) {
-    const connection = (navigator as any).connection
-    return ['slow-2g', '2g', '3g'].includes(connection.effectiveType)
-  }
-  return false
-}
-
-function updateCacheTime(): void {
-  CACHE_EXPIRY_TIME = isNetworkSlow() ? 10 * 60 * 1000 : 60 * 60 * 1000
-}
 
 async function execWithTimeout(command: string, timeout = 3000): Promise<{ stdout: string; stderr: string }> {
   if (!window.require) {
@@ -96,11 +92,6 @@ async function retryExec(
   }
 }
 
-function isCacheValid<T>(cacheData: CacheData<T> | null | undefined): cacheData is CacheData<T> {
-  if (!cacheData) return false
-  return Date.now() - cacheData.timestamp < CACHE_EXPIRY_TIME
-}
-
 export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
   const storage = new DiskBrowserStorage(plugin)
 
@@ -116,7 +107,7 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
   const diskCache = ref<CacheData<DiskInfo[]> | null>(null)
   const folderCacheMap = ref<Map<string, CacheData<FolderInfo[]>>>(new Map())
 
-  let cacheUpdateTimer: number | null = null
+  let cacheExpiryTime = getCacheExpiryTime()
 
   const pathSegments = computed(() => {
     if (!currentPath.value || currentPath.value === expandedDisk.value) return []
@@ -131,55 +122,14 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
   })
 
   const cacheStatus = computed((): CacheStatus => {
-    if (!diskCache.value) {
-      return { text: '', isExpired: false, tooltip: '' }
-    }
-
-    const now = Date.now()
-    const elapsed = now - diskCache.value.timestamp
-    const remaining = CACHE_EXPIRY_TIME - elapsed
-
-    if (remaining <= 0) {
-      return {
-        text: i18n.cacheExpired || '缓存已过期',
-        isExpired: true,
-        tooltip: i18n.cacheExpiredTooltip || '缓存已过期，点击刷新按钮获取最新数据'
-      }
-    }
-
-    const minutes = Math.floor(remaining / 60000)
-    return {
-      text: `${minutes}${i18n.minutesRemaining || '分钟'}`,
-      isExpired: false,
-      tooltip: i18n.cacheValidTooltip || `缓存有效期剩余 ${minutes}分钟`
-    }
+    return computeCacheStatus(diskCache.value, i18n, cacheExpiryTime, 'full')
   })
 
   const currentFolderCache = computed((): CacheStatus => {
     const path = currentPath.value || expandedDisk.value
     if (!path) return { text: '', isExpired: false, tooltip: '' }
-
     const cached = folderCacheMap.value.get(path)
-    if (!cached) return { text: '', isExpired: false, tooltip: '' }
-
-    const now = Date.now()
-    const elapsed = now - cached.timestamp
-    const remaining = CACHE_EXPIRY_TIME - elapsed
-
-    if (remaining <= 0) {
-      return {
-        text: i18n.expired || '已过期',
-        isExpired: true,
-        tooltip: i18n.cacheExpiredTooltip || '缓存已过期，点击刷新按钮获取最新数据'
-      }
-    }
-
-    const minutes = Math.floor(remaining / 60000)
-    return {
-      text: `${minutes}${i18n.min || '分'}`,
-      isExpired: false,
-      tooltip: i18n.cacheValidTooltip || `缓存有效期剩余 ${minutes}分`
-    }
+    return computeCacheStatus(cached, i18n, cacheExpiryTime, 'short')
   })
 
   function toggleFavorite(folderPath: string): void {
@@ -217,9 +167,9 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
   }
 
   async function fetchDisks(forceRefresh = false): Promise<void> {
-    updateCacheTime()
+    cacheExpiryTime = getCacheExpiryTime()
 
-    if (!forceRefresh && isCacheValid(diskCache.value)) {
+    if (!forceRefresh && isCacheValid(diskCache.value, cacheExpiryTime)) {
       disks.value = diskCache.value.data
       return
     }
@@ -281,11 +231,54 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
     }
   }
 
+  function processFolderList(stdout: string, basePath: string, includeFiles = false): FolderInfo[] {
+    return stdout
+      ?.trim()
+      .split('\n')
+      .map(line => line.trim())
+      .filter(name => name && name !== '.' && name !== '..')
+      .map(name => ({
+        name,
+        path: buildPath(basePath, name)
+      })) || []
+  }
+
+  function processItemList(stdout: string, path: string): FolderInfo[] {
+    const itemList: FolderInfo[] = []
+    try {
+      const itemData = JSON.parse(stdout)
+      const itemArray = Array.isArray(itemData) ? itemData : [itemData]
+
+      for (const item of itemArray) {
+        if (item?.Name) {
+          const itemName = String(item.Name).trim()
+          itemList.push({
+            name: itemName,
+            path: buildPath(path, itemName),
+            isFile: item.IsFile || false,
+            size: item.Length ? parseInt(item.Length) : undefined,
+            modifiedTime: item.LastWriteTime || undefined
+          })
+        }
+      }
+
+      itemList.sort((a, b) => {
+        if (a.isFile === b.isFile) {
+          return a.name.localeCompare(b.name, 'zh-CN')
+        }
+        return a.isFile ? 1 : -1
+      })
+    } catch {
+      // 解析失败返回空列表
+    }
+    return itemList
+  }
+
   async function loadFolders(drive: string, forceRefresh = false): Promise<void> {
-    updateCacheTime()
+    cacheExpiryTime = getCacheExpiryTime()
 
     const cachedFolders = folderCacheMap.value.get(drive)
-    if (!forceRefresh && isCacheValid(cachedFolders)) {
+    if (!forceRefresh && isCacheValid(cachedFolders, cacheExpiryTime)) {
       folders.value = cachedFolders.data
       return
     }
@@ -298,16 +291,7 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
         const command = `powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -Path '${drive}\\' -Directory -ErrorAction SilentlyContinue | Where-Object { -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) } | Select-Object -ExpandProperty Name | ForEach-Object { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Write-Output $_ }"`
         const { stdout } = await retryExec(command, 1, 5000, '获取文件夹列表')
 
-        const folderList: FolderInfo[] = stdout
-          ?.trim()
-          .split('\n')
-          .map(line => line.trim())
-          .filter(name => name && name !== '.' && name !== '..')
-          .map(name => ({
-            name,
-            path: `${drive}\\${name}`
-          })) || []
-
+        const folderList = processFolderList(stdout, drive)
         folders.value = folderList
         folderCacheMap.value.set(drive, { data: folderList, timestamp: Date.now() })
       }
@@ -349,7 +333,7 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
 
   async function loadFoldersFromPath(path: string, forceRefresh = false): Promise<void> {
     const cachedFolders = folderCacheMap.value.get(path)
-    if (!forceRefresh && isCacheValid(cachedFolders)) {
+    if (!forceRefresh && isCacheValid(cachedFolders, cacheExpiryTime)) {
       folders.value = cachedFolders.data
       return
     }
@@ -362,35 +346,7 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
         const command = `powershell -NoProfile -ExecutionPolicy Bypass -Command "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-ChildItem -Path '${path}' -ErrorAction SilentlyContinue | Where-Object { -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) } | Select-Object Name, @{Name='IsFile';Expression={-not $_.PSIsContainer}}, Length, LastWriteTime | ConvertTo-Json -Compress"`
         const { stdout } = await retryExec(command, 1, 5000, '获取文件夹列表')
 
-        const itemList: FolderInfo[] = []
-        try {
-          const itemData = JSON.parse(stdout)
-          const itemArray = Array.isArray(itemData) ? itemData : [itemData]
-
-          for (const item of itemArray) {
-            if (item?.Name) {
-              const itemName = String(item.Name).trim()
-              const separator = path.endsWith('\\') || path.endsWith(':') ? '' : '\\'
-              itemList.push({
-                name: itemName,
-                path: `${path}${separator}${itemName}`.replace(/\\\\/g, '\\'),
-                isFile: item.IsFile || false,
-                size: item.Length ? parseInt(item.Length) : undefined,
-                modifiedTime: item.LastWriteTime || undefined
-              })
-            }
-          }
-
-          itemList.sort((a, b) => {
-            if (a.isFile === b.isFile) {
-              return a.name.localeCompare(b.name, 'zh-CN')
-            }
-            return a.isFile ? 1 : -1
-          })
-        } catch (e) {
-          // 解析失败返回空列表
-        }
-
+        const itemList = processItemList(stdout, path)
         folders.value = itemList
         folderCacheMap.value.set(path, { data: itemList, timestamp: Date.now() })
       }
@@ -472,73 +428,22 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
     }
   }
 
-  function copyPathToClipboard(path: string): void {
-    if (navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(path).then(() => {
-        showMessage(i18n.pathCopied || '路径已复制', 2000, 'info')
-      }).catch(() => fallbackCopyToClipboard(path))
-    } else {
-      fallbackCopyToClipboard(path)
-    }
+  async function copyPathToClipboard(path: string): Promise<void> {
+    const success = await copyToClipboard(path, i18n)
+    showMessage(success
+      ? (i18n.pathCopied || '路径已复制')
+      : (i18n.copyFailed || '复制失败'), 2000, success ? 'info' : 'error')
   }
 
-  function fallbackCopyToClipboard(text: string): void {
-    const textarea = document.createElement('textarea')
-    textarea.value = text
-    textarea.style.cssText = 'position:fixed;opacity:0;'
-    document.body.appendChild(textarea)
-    textarea.select()
-    try {
-      document.execCommand('copy')
-      showMessage(i18n.pathCopied || '路径已复制', 2000, 'info')
-    } catch {
-      showMessage(i18n.copyFailed || '复制失败', 2000, 'error')
-    }
-    document.body.removeChild(textarea)
-  }
-
-  function formatDate(dateString: string): string {
-    try {
-      const date = new Date(dateString)
-      const now = new Date()
-      const diff = now.getTime() - date.getTime()
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-
-      if (days === 0) return i18n.today || '今天'
-      if (days === 1) return i18n.yesterday || '昨天'
-      if (days < 7) return `${days} ${i18n.daysAgo || '天前'}`
-
-      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-    } catch {
-      return dateString
-    }
-  }
-
-  function formatSize(bytes?: number): string {
-    if (!bytes || bytes === 0) return '0 B'
-    const units = ['B', 'KB', 'MB', 'GB', 'TB']
-    const k = 1024
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return (bytes / Math.pow(k, i)).toFixed(2) + ' ' + units[i]
-  }
-
-  function getFolderName(path: string): string {
-    const parts = path.split('\\')
-    return parts[parts.length - 1] || path
-  }
+  const formatDateWithI18n = (dateString: string): string => formatDate(dateString, i18n)
 
   function init(): void {
     loadFavorites()
     fetchDisks()
-    cacheUpdateTimer = window.setInterval(() => {
-      diskCache.value = diskCache.value
-    }, 60000)
   }
 
   function destroy(): void {
-    if (cacheUpdateTimer) {
-      clearInterval(cacheUpdateTimer)
-    }
+    // 清理资源
   }
 
   onMounted(() => {
@@ -578,7 +483,7 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
     navigateToPath,
     navigateToFavorite,
     copyPathToClipboard,
-    formatDate,
+    formatDate: formatDateWithI18n,
     formatSize,
     getFolderName
   }

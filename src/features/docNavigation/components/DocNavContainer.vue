@@ -50,7 +50,6 @@
 <script setup lang="ts">
 import { computed, watch, onMounted } from 'vue'
 import { useDocNavigation } from '../composables/useDocNavigation'
-import type { Block } from '../types'
 
 const props = defineProps<{
   docId: string

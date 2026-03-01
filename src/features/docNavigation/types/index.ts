@@ -1,4 +1,3 @@
-import type { Plugin } from 'siyuan'
 
 export interface Block {
   id: string

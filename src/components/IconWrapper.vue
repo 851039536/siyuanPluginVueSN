@@ -3,6 +3,7 @@
     :icon="iconConfig.icon"
     :style="iconStyle"
     :class="className"
+    :title="title"
     @error="handleIconError"
   />
 </template>
@@ -21,6 +22,8 @@ interface Props {
   color?: string
   /** 自定义类名 */
   className?: string
+  /** 鼠标悬停提示 */
+  title?: string
 }
 
 const props = defineProps<Props>()

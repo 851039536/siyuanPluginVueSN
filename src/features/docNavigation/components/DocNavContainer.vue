@@ -2,14 +2,14 @@
   <div v-if="hasNavigation" class="doc-navigation-container" :data-doc-id="docId">
     <div class="doc-navigation">
       <div v-if="parentDoc" class="doc-nav-parent">
-        <svg class="doc-nav-icon" title="上级文档"><use xlink:href="#iconUp"></use></svg>
+        <IconWrapper name="docNavParent" class="doc-nav-icon" size="18" title="上级文档" />
         <a class="doc-nav-link" :data-doc-id="parentDoc.id" :title="stripHtml(parentDoc.content)" @click="openDoc(parentDoc.id)">
           {{ stripHtml(parentDoc.content) }}
         </a>
       </div>
 
       <div v-if="childDocs.length" class="doc-nav-children">
-        <svg class="doc-nav-icon" :title="`下级文档 (${childDocs.length})`"><use xlink:href="#iconDown"></use></svg>
+        <IconWrapper name="docNavChildren" class="doc-nav-icon" size="18" :title="`下级文档 (${childDocs.length})`" />
         <div class="doc-nav-children-list" :data-expanded="isExpanded">
           <a
             v-for="doc in visibleChildren"
@@ -47,6 +47,7 @@
 
 <script setup lang="ts">
 import { computed, watch } from 'vue'
+import IconWrapper from '@/components/IconWrapper.vue'
 import { useDocNavigation } from '../composables/useDocNavigation'
 
 const props = defineProps<{

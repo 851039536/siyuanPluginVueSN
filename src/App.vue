@@ -50,7 +50,7 @@
 <script setup lang="ts">
 import { usePlugin } from '@/main'
 import { onMounted, ref } from 'vue'
-import ImageViewer from '@/features/imageCompressor/ImageViewer.vue'
+import ImageViewer from '@/features/imageCompressor/index.vue'
 import { QRCodeDialog, PronunciationDialog } from '@/features/floatingToolbar'
 import VideoManager from '@/features/video/VideoManager.vue'
 import EverythingSearchDialog from '@/features/everythingSearch/EverythingSearchDialog.vue'

@@ -9,7 +9,6 @@
       </div>
 
       <div class="dialog-content">
-        <!-- 压缩质量 -->
         <div class="setting-item">
           <label class="setting-label">
             {{ i18n.quality }}
@@ -26,7 +25,6 @@
           <div class="hint-text">建议: 80% 可获得良好的压缩率和质量平衡</div>
         </div>
 
-        <!-- 最大文件大小 -->
         <div class="setting-item">
           <label class="setting-label">
             {{ i18n.maxSize }}
@@ -43,7 +41,6 @@
           <div class="hint-text">超过此大小的图片将被压缩</div>
         </div>
 
-        <!-- 最大宽高 -->
         <div class="setting-item">
           <label class="setting-label">
             {{ i18n.maxDimension }}
@@ -60,7 +57,6 @@
           <div class="hint-text">超过此尺寸的图片将被等比缩放</div>
         </div>
 
-        <!-- Web Worker -->
         <div class="setting-item">
           <label class="checkbox-label">
             <input
@@ -73,7 +69,6 @@
           <div class="hint-text">在后台线程处理，不阻塞界面</div>
         </div>
 
-        <!-- 预估统计 -->
         <div class="statistics-preview" v-if="selectedCount > 0">
           <div class="stat-row">
             <span>已选择图片:</span>
@@ -100,8 +95,8 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import type { CompressOptions } from './types'
-import { DEFAULT_COMPRESS_OPTIONS } from './compressor'
+import type { CompressOptions } from '../types'
+import { DEFAULT_COMPRESS_OPTIONS } from '../services/compressor'
 
 interface Props {
   i18n: any
@@ -116,33 +111,30 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-// 压缩配置
 const options = ref<CompressOptions>({
   ...DEFAULT_COMPRESS_OPTIONS
 })
 
-// 预估时间
 const estimatedTime = computed(() => {
   if (props.selectedCount === 0) return '0秒'
-  // 假设每张图片平均 1-2 秒
   const seconds = props.selectedCount * 1.5
   if (seconds < 60) return `约 ${Math.ceil(seconds)} 秒`
   const minutes = Math.ceil(seconds / 60)
   return `约 ${minutes} 分钟`
 })
 
-// 确认
 const onConfirm = () => {
   emit('confirm', options.value)
 }
 
-// 取消
 const onCancel = () => {
   emit('cancel')
 }
 </script>
 
 <style scoped lang="scss">
+@use '../styles/index.scss' as *;
+
 .compress-dialog-overlay {
   position: fixed;
   top: 0;

@@ -1,7 +1,6 @@
 <template>
   <div class="image-viewer-overlay" v-if="visible" @click="onClose">
     <div class="image-viewer" @click.stop>
-      <!-- 头部工具栏 -->
       <div class="viewer-header">
         <div class="header-left">
           <h2>{{ i18n.title }}</h2>
@@ -22,7 +21,6 @@
         </div>
       </div>
 
-      <!-- 操作栏 -->
       <div class="viewer-toolbar">
         <button class="btn btn-primary" @click="onScanImages" :disabled="scanning">
           <svg class="icon"><use xlink:href="#iconRefresh"></use></svg>
@@ -73,15 +71,11 @@
         </button>
       </div>
 
-      <!-- 扫描进度 -->
       <div class="progress-bar" v-if="scanning">
         <div class="progress-fill" :style="{ width: scanProgress + '%' }"></div>
         <span class="progress-text">{{ scanProgressText }}</span>
       </div>
 
-
-
-      <!-- 图片列表 -->
       <div class="image-list" ref="imageListRef" v-if="paginatedImages.length > 0">
         <div v-for="image in paginatedImages" :key="image.path" class="image-item" :class="{ selected: selectedImages.has(image.path) }">
           <div class="image-checkbox" @click.stop="toggleSelect(image.path)">
@@ -126,7 +120,6 @@
         </div>
       </div>
 
-      <!-- 空状态 -->
       <div class="empty-state" v-else-if="!scanning">
         <svg class="empty-icon"><use xlink:href="#iconImage"></use></svg>
         <p>{{ i18n.scanImages }}</p>
@@ -135,7 +128,6 @@
         </button>
       </div>
 
-      <!-- 压缩结果 -->
       <div class="compress-results" v-if="compressResults.length > 0">
         <div class="results-header">
           <h3>{{ i18n.statistics }}</h3>
@@ -169,7 +161,6 @@
       </div>
     </div>
 
-    <!-- 图片预览对话框 -->
     <div class="image-preview-dialog" v-if="previewImageData" @click="closePreview">
       <div class="preview-content" @click.stop>
         <div class="preview-header">
@@ -190,7 +181,6 @@
       </div>
     </div>
 
-    <!-- 压缩配置对话框 -->
     <CompressDialog
       v-if="showCompressDialog"
       :i18n="i18n"
@@ -205,10 +195,10 @@
 import { ref, computed, watch, shallowRef, nextTick } from 'vue'
 import { showMessage } from 'siyuan'
 import type { ImageInfo, CompressOptions, CompressResult } from './types'
-import { scanAllAssets, batchGetImageDetails } from './scanner'
-import { batchCompressImages, batchReplaceImages, getCompressStats } from './compressor'
-import { formatFileSize } from './comparator'
-import CompressDialog from './CompressDialog.vue'
+import { scanAllAssets, batchGetImageDetails } from './services/scanner'
+import { batchCompressImages, batchReplaceImages, getCompressStats } from './services/compressor'
+import { formatFileSize } from './services/comparator'
+import CompressDialog from './components/CompressDialog.vue'
 import * as api from '@/api'
 
 interface Props {
@@ -216,14 +206,15 @@ interface Props {
   i18n: any
 }
 
-interface Emits {
-  (e: 'close'): void
-}
-
 const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
+const emit = defineEmits<{
+  (e: 'close'): void
+}>()
 
-// 状态 - 使用 shallowRef 优化大型数组性能
+const visible = computed({
+  get: () => props.visible,
+  set: () => emit('close')
+})
 const images = shallowRef<ImageInfo[]>([])
 const selectedImages = ref<Set<string>>(new Set())
 const scanning = ref(false)
@@ -236,14 +227,11 @@ const showCompressDialog = ref(false)
 const imageListRef = ref<HTMLElement | null>(null)
 const previewImageData = ref<ImageInfo | null>(null)
 
-// 分页状态
 const currentPage = ref(1)
-const pageSize = ref(30) // 默认每页30张
+const pageSize = ref(30)
 
-// 过滤状态
-const minFileSize = ref(0) // 最小文件大小(KB), 0表示不过滤
+const minFileSize = ref(0)
 
-// 过滤后的图片列表 - 使用缓存优化
 const filteredImages = computed(() => {
   if (minFileSize.value === 0) {
     return images.value
@@ -252,7 +240,6 @@ const filteredImages = computed(() => {
   return images.value.filter(img => img.size >= minBytes)
 })
 
-// 分页计算 - 基于过滤后的列表
 const totalPages = computed(() => Math.ceil(filteredImages.value.length / pageSize.value))
 const paginatedImages = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
@@ -260,7 +247,6 @@ const paginatedImages = computed(() => {
   return filteredImages.value.slice(start, end)
 })
 
-// 统计信息
 const stats = computed(() => {
   if (compressResults.value.length === 0) {
     return {
@@ -274,24 +260,20 @@ const stats = computed(() => {
   return getCompressStats(compressResults.value)
 })
 
-// 监听页码变化,滚动到顶部
 watch(currentPage, () => {
   nextTick(() => {
     imageListRef.value?.scrollTo({ top: 0, behavior: 'smooth' })
   })
 })
 
-// 监听过滤条件变化,重置到第一页
 watch(minFileSize, () => {
   currentPage.value = 1
 })
 
-// 工具函数：延迟显示消息
 const showDelayedMessage = (message: string, duration: number, type: 'info' | 'error' = 'info') => {
   setTimeout(() => showMessage(message, duration, type), 100)
 }
 
-// 扫描图片
 const onScanImages = async () => {
   scanning.value = true
   scanProgress.value = 0
@@ -317,7 +299,6 @@ const onScanImages = async () => {
     images.value = detailedImages
     currentPage.value = 1
 
-    // 显示统计信息
     const totalSize = detailedImages.reduce((sum, img) => sum + img.size, 0)
     const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2)
     showMessage(`扫描完成: 共 ${detailedImages.length} 张图片, 总大小 ${totalSizeMB} MB`, 3000, 'info')
@@ -330,13 +311,11 @@ const onScanImages = async () => {
   }
 }
 
-// 更新选中状态（统一触发响应式）
 const updateSelection = (operation: (set: Set<string>) => void) => {
   operation(selectedImages.value)
   selectedImages.value = new Set(selectedImages.value)
 }
 
-// 切换选择
 const toggleSelect = (path: string) => {
   updateSelection(set => {
     if (set.has(path)) {
@@ -347,24 +326,20 @@ const toggleSelect = (path: string) => {
   })
 }
 
-// 全选当前页
 const onSelectAll = () => {
   updateSelection(set => {
     paginatedImages.value.forEach(img => set.add(img.path))
   })
 }
 
-// 取消全选
 const onDeselectAll = () => {
   updateSelection(set => set.clear())
 }
 
-// 开始压缩
 const onCompress = () => {
   showCompressDialog.value = true
 }
 
-// 确认压缩
 const onCompressConfirm = async (options: CompressOptions) => {
   showCompressDialog.value = false
   compressing.value = true
@@ -395,7 +370,6 @@ const onCompressConfirm = async (options: CompressOptions) => {
   }
 }
 
-// 替换原图
 const onReplaceImages = async () => {
   if (!confirm('确定要替换原图吗? 此操作不可撤销!')) {
     return
@@ -417,15 +391,12 @@ const onReplaceImages = async () => {
       success > 0 ? 'info' : 'error'
     )
 
-    // 清空压缩结果，但不自动刷新
     const successfulResults = compressResults.value.filter(r => r.success)
     compressResults.value = []
 
-    // 从当前列表中移除已替换的图片（避免混淆）
     if (success > 0 && successfulResults.length > 0) {
       const replacedPaths = new Set(successfulResults.map(r => r.originalFile.path))
       images.value = images.value.filter(img => !replacedPaths.has(img.path))
-      // 清空这些图片的选中状态
       updateSelection(set => {
         replacedPaths.forEach(path => set.delete(path))
       })
@@ -438,7 +409,6 @@ const onReplaceImages = async () => {
   }
 }
 
-// 图片加载错误
 const onImageError = (e: Event) => {
   const img = e.target as HTMLImageElement
   img.style.display = 'none'
@@ -448,7 +418,6 @@ const onImageError = (e: Event) => {
   }
 }
 
-// 复制图片名称
 const copyImageName = async (name: string) => {
   try {
     await navigator.clipboard.writeText(name)
@@ -459,18 +428,15 @@ const copyImageName = async (name: string) => {
   }
 }
 
-// 从图片名称中提取文档ID
 const extractDocIdFromImageName = (imageName: string): string | null => {
   const match = imageName.match(/-([a-z0-9]{7})\.[^.]+$/)
   return match ? match[1] : null
 }
 
-// 打开文档
 const openDoc = (docId: string) => {
   window.open(`siyuan://blocks/${docId}`)
 }
 
-// 导航到关联文档
 const navigateToDoc = async (image: ImageInfo) => {
   try {
     const docId = extractDocIdFromImageName(image.name)
@@ -501,592 +467,19 @@ const navigateToDoc = async (image: ImageInfo) => {
   }
 }
 
-// 预览图片
 const previewImage = (image: ImageInfo) => {
   previewImageData.value = image
 }
 
-// 关闭预览
 const closePreview = () => {
   previewImageData.value = null
 }
 
-// 关闭
 const onClose = () => {
   emit('close')
 }
 </script>
 
 <style scoped lang="scss">
-// Mixins
-@mixin flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-@mixin flex-between {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-@mixin icon-base {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-}
-
-@mixin button-base {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: none;
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  &:not(:disabled):hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
-  }
-
-  .icon {
-    @include icon-base;
-  }
-}
-
-.image-viewer-overlay {
-  @include flex-center;
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.8);
-  z-index: 9999;
-  pointer-events: auto;
-}
-
-.image-viewer {
-  width: 90%;
-  max-width: 1200px;
-  height: 85vh;
-  background: var(--b3-theme-background);
-  border-radius: 12px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-}
-
-.viewer-header {
-  @include flex-between;
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--b3-border-color);
-  background: var(--b3-theme-surface);
-
-  .header-left {
-    @include flex-center;
-    gap: 16px;
-
-    h2 {
-      margin: 0;
-      font-size: 20px;
-      font-weight: 600;
-      color: var(--b3-theme-on-background);
-    }
-
-    .image-count {
-      padding: 4px 12px;
-      background: var(--b3-theme-primary);
-      color: #fff;
-      border-radius: 12px;
-      font-size: 13px;
-      font-weight: 500;
-    }
-  }
-
-  .icon-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 8px;
-    color: var(--b3-theme-on-background);
-    opacity: 0.6;
-    border-radius: 4px;
-    transition: all 0.2s;
-
-    &:hover {
-      opacity: 1;
-      background: var(--b3-theme-surface-lighter);
-    }
-
-    .icon {
-      width: 20px;
-      height: 20px;
-    }
-  }
-}
-
-.viewer-toolbar {
-  @include flex-center;
-  gap: 12px;
-  padding: 12px 24px;
-  border-bottom: 1px solid var(--b3-border-color);
-  background: var(--b3-theme-background);
-  flex-wrap: wrap;
-
-  .toolbar-spacer {
-    flex: 1;
-  }
-}
-
-.filter-group {
-  @include flex-center;
-  gap: 8px;
-  padding: 6px 12px;
-  background: var(--b3-theme-surface);
-  border-radius: 6px;
-  border: 1px solid var(--b3-border-color);
-
-  .filter-label {
-    font-size: 13px;
-    color: var(--b3-theme-on-background);
-    font-weight: 500;
-    white-space: nowrap;
-  }
-
-  .filter-select,
-  .page-size-select {
-    padding: 4px 8px;
-    border: 1px solid var(--b3-border-color);
-    border-radius: 4px;
-    background: var(--b3-theme-background);
-    color: var(--b3-theme-on-background);
-    font-size: 12px;
-    cursor: pointer;
-    transition: border-color 0.2s;
-
-    &:hover {
-      border-color: var(--b3-theme-primary);
-    }
-  }
-
-  .filter-select {
-    min-width: 90px;
-
-    &:focus {
-      outline: none;
-      border-color: var(--b3-theme-primary);
-      box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.1);
-    }
-  }
-}
-
-.pagination-controls {
-  @include flex-center;
-  gap: 8px;
-  padding: 4px 12px;
-  background: var(--b3-theme-surface);
-  border-radius: 6px;
-
-  .page-info {
-    font-size: 13px;
-    color: var(--b3-theme-on-background);
-    padding: 0 8px;
-    font-weight: 500;
-  }
-}
-
-.btn {
-  @include button-base;
-}
-
-.btn-primary {
-  background: var(--b3-theme-primary);
-  color: #fff;
-}
-
-.btn-text {
-  background: transparent;
-  color: var(--b3-theme-on-background);
-
-  &:hover {
-    background: var(--b3-theme-surface);
-    transform: none;
-  }
-}
-
-.btn-sm {
-  padding: 4px 12px;
-  font-size: 13px;
-}
-
-.btn-block {
-  width: 100%;
-  justify-content: center;
-}
-
-.progress-bar {
-  position: relative;
-  height: 4px;
-  background: var(--b3-theme-surface);
-
-  .progress-fill {
-    height: 100%;
-    background: var(--b3-theme-primary);
-    transition: width 0.3s;
-  }
-
-  .progress-text {
-    position: absolute;
-    top: 8px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 12px;
-    color: var(--b3-theme-on-background);
-  }
-}
-
-.image-list {
-  flex: 1;
-  min-height: 300px;
-  overflow-y: auto;
-  padding: 16px;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 16px;
-  align-content: start;
-}
-
-.image-item {
-  position: relative;
-  background: var(--b3-theme-surface);
-  border-radius: 8px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: 2px solid transparent;
-  min-height: 320px;
-  display: flex;
-  flex-direction: column;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-
-  &.selected {
-    border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 3px rgba(var(--b3-theme-primary-rgb), 0.1);
-  }
-}
-
-.image-checkbox {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  z-index: 10;
-
-  input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-  }
-}
-
-.image-preview {
-  position: relative;
-  width: 100%;
-  height: 200px;
-  background: var(--b3-theme-background);
-  @include flex-center;
-  overflow: hidden;
-  cursor: pointer;
-
-  &:hover {
-    .preview-hint {
-      opacity: 1;
-    }
-  }
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .image-placeholder {
-    @include flex-center;
-    flex-direction: column;
-    width: 100%;
-    height: 100%;
-    gap: 8px;
-
-    .icon {
-      width: 48px;
-      height: 48px;
-      opacity: 0.3;
-    }
-
-    p {
-      margin: 0;
-      font-size: 12px;
-      color: var(--b3-theme-on-surface-light);
-      opacity: 0.6;
-    }
-  }
-
-  .preview-hint {
-    @include flex-center;
-    position: absolute;
-    gap: 6px;
-    padding: 8px 16px;
-    background: rgba(0, 0, 0, 0.75);
-    color: #fff;
-    border-radius: 20px;
-    font-size: 13px;
-    opacity: 0;
-    transition: opacity 0.2s;
-    pointer-events: none;
-
-    .icon {
-      width: 16px;
-      height: 16px;
-    }
-  }
-}
-
-.image-info {
-  padding: 12px;
-}
-
-.image-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--b3-theme-on-background);
-  margin-bottom: 6px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.image-actions {
-  @include flex-center;
-  gap: 8px;
-  margin-bottom: 8px;
-  justify-content: flex-start;
-}
-
-.action-btn {
-  @include flex-center;
-  gap: 4px;
-  padding: 4px 8px;
-  font-size: 12px;
-  background: var(--b3-theme-background);
-  border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s;
-  color: var(--b3-theme-on-background);
-
-  .icon {
-    width: 14px;
-    height: 14px;
-  }
-
-  &:hover {
-    background: var(--b3-theme-primary);
-    color: #fff;
-    border-color: var(--b3-theme-primary);
-  }
-}
-
-.image-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 12px;
-  margin-bottom: 4px;
-
-  .meta-row {
-    @include flex-center;
-    gap: 8px;
-    justify-content: flex-start;
-  }
-
-  .meta-label {
-    color: var(--b3-theme-on-surface-light);
-    opacity: 0.7;
-    min-width: 36px;
-    font-weight: 500;
-  }
-
-  .meta-value {
-    color: var(--b3-theme-primary);
-    font-weight: 600;
-  }
-}
-
-.image-path {
-  font-size: 11px;
-  color: var(--b3-theme-on-surface-light);
-  opacity: 0.6;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.empty-state {
-  @include flex-center;
-  flex-direction: column;
-  flex: 1;
-  gap: 16px;
-
-  .empty-icon {
-    width: 80px;
-    height: 80px;
-    opacity: 0.3;
-  }
-
-  p {
-    font-size: 16px;
-    color: var(--b3-theme-on-surface-light);
-  }
-}
-
-.compress-results {
-  padding: 20px 24px;
-  border-top: 2px solid var(--b3-border-color);
-  background: var(--b3-theme-surface);
-}
-
-.results-header {
-  @include flex-between;
-  margin-bottom: 16px;
-
-  h3 {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--b3-theme-on-background);
-  }
-}
-
-.results-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.stat-item {
-  @include flex-between;
-  padding: 10px 14px;
-  background: var(--b3-theme-background);
-  border-radius: 6px;
-
-  &.success {
-    background: rgba(76, 175, 80, 0.1);
-
-    .stat-value {
-      color: #4caf50;
-    }
-  }
-
-  &.failed {
-    background: rgba(244, 67, 54, 0.1);
-
-    .stat-value {
-      color: #f44336;
-    }
-  }
-
-  .stat-label {
-    font-size: 13px;
-    color: var(--b3-theme-on-surface-light);
-  }
-
-  .stat-value {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--b3-theme-primary);
-  }
-}
-
-.image-preview-dialog {
-  @include flex-center;
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.9);
-  z-index: 10000;
-  animation: fadeIn 0.2s;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.preview-content {
-  max-width: 90vw;
-  max-height: 90vh;
-  background: var(--b3-theme-background);
-  border-radius: 8px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-}
-
-.preview-header {
-  @include flex-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--b3-border-color);
-  background: var(--b3-theme-surface);
-
-  .preview-title {
-    flex: 1;
-
-    h3 {
-      margin: 0 0 4px 0;
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--b3-theme-on-background);
-    }
-
-    .preview-meta {
-      @include flex-center;
-      gap: 16px;
-      font-size: 12px;
-      color: var(--b3-theme-on-surface-light);
-      opacity: 0.8;
-      justify-content: flex-start;
-    }
-  }
-}
-
-.preview-image-wrapper {
-  @include flex-center;
-  padding: 20px;
-  max-height: calc(90vh - 80px);
-  overflow: auto;
-
-  img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-    border-radius: 4px;
-  }
-}
+@use "./styles/index.scss" as *;
 </style>

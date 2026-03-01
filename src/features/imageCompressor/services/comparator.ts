@@ -1,11 +1,5 @@
-/**
- * 图片对比器 - 对比原图和压缩后图片的差异
- */
-import type { ImageInfo, ImageComparison } from './types'
+import type { ImageInfo, ImageComparison } from '../types'
 
-/**
- * 创建图片对比数据
- */
 export function createComparison(
   original: ImageInfo,
   compressedBlob: Blob
@@ -27,9 +21,6 @@ export function createComparison(
   }
 }
 
-/**
- * 格式化文件大小
- */
 export function formatFileSize(bytes: number): string {
   if (bytes === 0) return '0 B'
 
@@ -40,9 +31,6 @@ export function formatFileSize(bytes: number): string {
   return `${(bytes / Math.pow(k, i)).toFixed(2)} ${units[i]}`
 }
 
-/**
- * 计算 PSNR (峰值信噪比) - 用于评估图片质量损失
- */
 export async function calculatePSNR(
   originalUrl: string,
   compressedUrl: string
@@ -75,9 +63,6 @@ export async function calculatePSNR(
   })
 }
 
-/**
- * 比较两张图片并计算 PSNR
- */
 function compareTwoImages(img1: HTMLImageElement, img2: HTMLImageElement): number {
   try {
     const canvas1 = document.createElement('canvas')
@@ -87,7 +72,6 @@ function compareTwoImages(img1: HTMLImageElement, img2: HTMLImageElement): numbe
 
     if (!ctx1 || !ctx2) return 0
 
-    // 使用较小的尺寸以提高性能
     const width = Math.min(img1.width, img2.width, 500)
     const height = Math.min(img1.height, img2.height, 500)
 
@@ -117,7 +101,7 @@ function compareTwoImages(img1: HTMLImageElement, img2: HTMLImageElement): numbe
 
     mse /= (width * height * 3)
 
-    if (mse === 0) return Infinity // 完全相同
+    if (mse === 0) return Infinity
 
     const maxPixelValue = 255
     const psnr = 10 * Math.log10((maxPixelValue * maxPixelValue) / mse)
@@ -129,9 +113,6 @@ function compareTwoImages(img1: HTMLImageElement, img2: HTMLImageElement): numbe
   }
 }
 
-/**
- * 生成差异图(热力图)
- */
 export async function generateDiffImage(
   originalUrl: string,
   compressedUrl: string
@@ -164,9 +145,6 @@ export async function generateDiffImage(
   })
 }
 
-/**
- * 创建差异画布
- */
 function createDiffCanvas(img1: HTMLImageElement, img2: HTMLImageElement): string | null {
   try {
     const canvas = document.createElement('canvas')
@@ -208,28 +186,23 @@ function createDiffCanvas(img1: HTMLImageElement, img2: HTMLImageElement): strin
       const g2 = data2[i + 1]
       const b2 = data2[i + 2]
 
-      // 计算差异
       const diff = Math.abs(r1 - r2) + Math.abs(g1 - g2) + Math.abs(b1 - b2)
 
-      // 使用热力图表示差异
       if (diff < 10) {
-        // 几乎无差异 - 绿色
         diffData.data[i] = 0
         diffData.data[i + 1] = 255
         diffData.data[i + 2] = 0
       } else if (diff < 50) {
-        // 轻微差异 - 黄色
         diffData.data[i] = 255
         diffData.data[i + 1] = 255
         diffData.data[i + 2] = 0
       } else {
-        // 明显差异 - 红色
         diffData.data[i] = 255
         diffData.data[i + 1] = 0
         diffData.data[i + 2] = 0
       }
 
-      diffData.data[i + 3] = 255 // Alpha
+      diffData.data[i + 3] = 255
     }
 
     ctx.putImageData(diffData, 0, 0)
@@ -241,9 +214,6 @@ function createDiffCanvas(img1: HTMLImageElement, img2: HTMLImageElement): strin
   }
 }
 
-/**
- * 获取质量评级
- */
 export function getQualityRating(psnr: number): string {
   if (psnr === Infinity || psnr === 0) return '未知'
   if (psnr >= 40) return '优秀'

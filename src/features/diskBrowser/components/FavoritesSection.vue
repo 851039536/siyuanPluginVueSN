@@ -64,8 +64,7 @@ function getFolderName(path: string): string {
 }
 
 .favorites-header {
-  display: flex;
-  align-items: center;
+  @include flex-align-center;
   gap: 6px;
   padding: 6px 12px;
   background: var(--b3-theme-surface-lighter);
@@ -79,29 +78,16 @@ function getFolderName(path: string): string {
 }
 
 .favorites-list-horizontal {
-  display: flex;
+  @include flex-align-center;
   gap: 6px;
   padding: 8px;
   overflow-x: auto;
   overflow-y: hidden;
-
-  &::-webkit-scrollbar {
-    height: 6px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--b3-theme-surface-lighter);
-    border-radius: 3px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
+  @include scrollbar(6px, 6px);
 }
 
 .favorite-card {
-  display: flex;
-  align-items: center;
+  @include flex-align-center;
   gap: 6px;
   min-width: 120px;
   max-width: 180px;
@@ -112,11 +98,12 @@ function getFolderName(path: string): string {
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
+  @include card-hover-effect(-1px);
+  @include gpu-accelerate;
 
   &:hover {
     background: var(--b3-theme-surface-lighter);
     border-color: var(--b3-theme-primary);
-    transform: translateY(-1px);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 
     .favorite-remove-btn {
@@ -126,15 +113,7 @@ function getFolderName(path: string): string {
 }
 
 .favorite-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
-  background: var(--b3-theme-primary-lightest);
-  color: var(--b3-theme-primary);
-  flex-shrink: 0;
+  @include icon-container(24px);
 }
 
 .favorite-name {
@@ -143,9 +122,7 @@ function getFolderName(path: string): string {
   font-size: 12px;
   font-weight: 500;
   color: var(--b3-theme-on-background);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  @include text-ellipsis;
 }
 
 .favorite-remove-btn {

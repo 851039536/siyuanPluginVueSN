@@ -1,3 +1,77 @@
+// ==================== Mixins ====================
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-align-center {
+  display: flex;
+  align-items: center;
+}
+
+@mixin text-ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@mixin scrollbar($width: 6px, $height: 6px) {
+  &::-webkit-scrollbar {
+    width: $width;
+    height: $height;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--b3-theme-surface-lighter);
+    border-radius: calc($width / 2);
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@mixin icon-container($size: 24px, $bg: var(--b3-theme-primary-lightest), $color: var(--b3-theme-primary)) {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: $size;
+  height: $size;
+  border-radius: 4px;
+  background: $bg;
+  color: $color;
+}
+
+@mixin card-hover-effect($translate-y: -2px) {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY($translate-y);
+  }
+}
+
+@mixin gpu-accelerate {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+@mixin contain-layout {
+  contain: layout style;
+}
+
+// ==================== Animations ====================
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+// ==================== Base Styles ====================
 .disk-browser-panel {
   display: flex;
   flex-direction: column;
@@ -6,10 +80,11 @@
   color: var(--b3-theme-on-background);
   font-size: 14px;
   overflow: hidden;
+  @include contain-layout;
 }
 
 .disk-list-horizontal {
-  display: flex;
+  @include flex-align-center;
   flex-wrap: wrap;
   gap: 8px;
   padding: 12px;
@@ -18,18 +93,9 @@
   overflow-x: hidden;
   flex-shrink: 0;
   align-content: flex-start;
+  @include scrollbar;
 
-  &::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--b3-theme-surface-lighter);
-    border-radius: 3px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
+  &:deep(.disk-card) {
+    @include card-hover-effect;
   }
 }

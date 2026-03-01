@@ -69,10 +69,8 @@ function formatSize(bytes?: number): string {
   min-width: 120px;
   max-width: 180px;
   flex-shrink: 0;
-
-  &:hover {
-    transform: translateY(-2px);
-  }
+  @include card-hover-effect;
+  @include gpu-accelerate;
 
   &:deep(.si-card__header) {
     padding: 8px 10px;
@@ -85,21 +83,13 @@ function formatSize(bytes?: number): string {
 }
 
 .disk-card-header {
-  display: flex;
-  align-items: center;
+  @include flex-align-center;
   gap: 8px;
 }
 
 .disk-icon {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
+  @include icon-container(32px);
   border-radius: 6px;
-  background: var(--b3-theme-primary-lightest);
-  color: var(--b3-theme-primary);
 }
 
 .disk-info {
@@ -111,17 +101,13 @@ function formatSize(bytes?: number): string {
   font-size: 14px;
   font-weight: 600;
   color: var(--b3-theme-on-background);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  @include text-ellipsis;
 }
 
 .disk-label {
   font-size: 11px;
   color: var(--b3-theme-on-surface-light);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  @include text-ellipsis;
   margin-bottom: 6px;
   padding: 0 4px;
   height: 14px;
@@ -129,9 +115,7 @@ function formatSize(bytes?: number): string {
 
 .expand-indicator {
   flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  @include flex-center;
   color: var(--b3-theme-on-surface-light);
   transition: all 0.2s ease;
 }

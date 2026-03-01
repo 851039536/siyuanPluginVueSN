@@ -46,8 +46,7 @@ defineEmits<{
 @use "../styles/index.scss" as *;
 
 .disk-browser-header {
-  display: flex;
-  align-items: center;
+  @include flex-align-center;
   justify-content: space-between;
   padding: 12px 16px;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
@@ -62,8 +61,7 @@ defineEmits<{
 }
 
 .header-actions {
-  display: flex;
-  align-items: center;
+  @include flex-align-center;
   gap: 8px;
 }
 
@@ -71,10 +69,5 @@ defineEmits<{
   &.expired {
     animation: pulse 2s ease-in-out infinite;
   }
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
 }
 </style>

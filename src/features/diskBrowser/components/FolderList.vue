@@ -178,11 +178,11 @@ function formatSize(bytes?: number): string {
   flex-direction: column;
   overflow: hidden;
   border-top: 1px solid var(--b3-theme-surface-lighter);
+  @include contain-layout;
 }
 
 .folder-list-header {
-  display: flex;
-  align-items: center;
+  @include flex-align-center;
   justify-content: space-between;
   padding: 10px 16px;
   background: var(--b3-theme-surface);
@@ -190,8 +190,7 @@ function formatSize(bytes?: number): string {
   flex-shrink: 0;
 
   .header-left {
-    display: flex;
-    align-items: center;
+    @include flex-align-center;
     gap: 8px;
     flex: 1;
     min-width: 0;
@@ -200,16 +199,13 @@ function formatSize(bytes?: number): string {
       font-size: 13px;
       font-weight: 600;
       color: var(--b3-theme-on-background);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      @include text-ellipsis;
     }
   }
 }
 
 .folder-header-actions {
-  display: flex;
-  align-items: center;
+  @include flex-align-center;
   gap: 6px;
 }
 
@@ -217,11 +213,11 @@ function formatSize(bytes?: number): string {
   flex: 1;
   overflow-y: auto;
   padding: 8px;
+  @include scrollbar;
 }
 
 .folder-item {
-  display: flex;
-  align-items: center;
+  @include flex-align-center;
   gap: 10px;
   padding: 10px 12px;
   margin-bottom: 4px;
@@ -229,6 +225,7 @@ function formatSize(bytes?: number): string {
   background: var(--b3-theme-surface);
   cursor: pointer;
   transition: all 0.2s ease;
+  @include gpu-accelerate;
 
   &:hover {
     background: var(--b3-theme-surface-lighter);
@@ -248,8 +245,7 @@ function formatSize(bytes?: number): string {
 
 .folder-icon {
   flex-shrink: 0;
-  display: flex;
-  align-items: center;
+  @include flex-center;
   color: var(--b3-theme-primary);
 }
 
@@ -264,14 +260,11 @@ function formatSize(bytes?: number): string {
 .folder-name {
   font-size: 13px;
   color: var(--b3-theme-on-background);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  @include text-ellipsis;
 }
 
 .folder-meta {
-  display: flex;
-  align-items: center;
+  @include flex-align-center;
   gap: 12px;
   font-size: 11px;
   color: var(--b3-theme-on-surface-light);
@@ -287,8 +280,7 @@ function formatSize(bytes?: number): string {
 
 .folder-actions {
   flex-shrink: 0;
-  display: flex;
-  align-items: center;
+  @include flex-align-center;
   gap: 4px;
   opacity: 0;
   transition: opacity 0.2s ease;
@@ -301,10 +293,8 @@ function formatSize(bytes?: number): string {
 }
 
 .empty-state {
-  display: flex;
+  @include flex-center;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
   padding: 60px 20px;
   color: var(--b3-theme-on-surface-light);
 
@@ -321,10 +311,8 @@ function formatSize(bytes?: number): string {
 }
 
 .loading-state {
-  display: flex;
+  @include flex-center;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
   padding: 40px;
   gap: 12px;
 
@@ -341,11 +329,5 @@ function formatSize(bytes?: number): string {
   border-top-color: var(--b3-theme-primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 </style>

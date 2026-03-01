@@ -49,28 +49,18 @@ defineEmits<{
 @use "../styles/index.scss" as *;
 
 .breadcrumb-nav {
-  display: flex;
-  align-items: center;
+  @include flex-align-center;
   padding: 8px 16px;
   background: var(--b3-theme-surface);
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
   overflow-x: auto;
   white-space: nowrap;
   flex-shrink: 0;
-
-  &::-webkit-scrollbar {
-    height: 4px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--b3-theme-surface-lighter);
-    border-radius: 2px;
-  }
+  @include scrollbar(4px, 4px);
 }
 
 .breadcrumb-segment {
-  display: flex;
-  align-items: center;
+  @include flex-align-center;
   gap: 4px;
   color: var(--b3-theme-on-surface-light);
 }

@@ -15,7 +15,6 @@
       </div>
 
       <div class="skills-modal-body">
-        <!-- 分类筛选器 -->
         <div class="category-filter">
           <button
             v-for="cat in allCategories"
@@ -122,7 +121,6 @@
     </div>
   </div>
 
-  <!-- Add/Edit Skill Modal -->
   <div v-if="showAddModal" class="skills-modal-overlay" @click="closeAddModal">
     <div class="skills-modal small" @click.stop>
       <div class="skills-modal-header">
@@ -209,7 +207,6 @@
     </div>
   </div>
 
-  <!-- Category Manage Modal -->
   <div v-if="showCategoryManage" class="skills-modal-overlay" @click="closeCategoryManage">
     <div class="skills-modal small" @click.stop>
       <div class="skills-modal-header">
@@ -221,7 +218,6 @@
       </div>
 
       <div class="skills-modal-body">
-        <!-- 添加分类表单 -->
         <div class="add-category-form">
           <div class="form-row">
             <input
@@ -244,7 +240,6 @@
           </div>
         </div>
 
-        <!-- 分类列表 -->
         <div class="category-list" role="list">
           <div
             v-for="cat in categories"
@@ -266,7 +261,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, onBeforeMount, onUnmounted } from 'vue'
-import type { Skill, SkillCategory } from './types'
+import type { Skill, SkillCategory } from '../types'
 import Button from '@/components/Button.vue'
 import IconWrapper from '@/components/IconWrapper.vue'
 
@@ -279,14 +274,11 @@ const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
-// Set brand color to b3-theme-primary before component mounts
 onBeforeMount(() => {
-  // Apply brand orange to theme primary for both light and dark mode
   document.documentElement.style.setProperty('--b3-theme-primary', '#d97757')
   document.documentElement.style.setProperty('--b3-theme-primary-rgb', '217, 119, 87')
 })
 
-// Clean up brand color when component unmounts
 onUnmounted(() => {
   document.documentElement.style.removeProperty('--b3-theme-primary')
   document.documentElement.style.removeProperty('--b3-theme-primary-rgb')
@@ -310,34 +302,30 @@ const skillForm = ref({
 
 const categoryForm = ref({
   name: '',
-  color: '#d97757' // Default to brand orange
+  color: '#d97757'
 })
 
 const skills = ref<Skill[]>([])
 const categories = ref<SkillCategory[]>([
-  { id: 'default', name: '默认', color: '#d97757' } // Brand orange
+  { id: 'default', name: '默认', color: '#d97757' }
 ])
 
-// Computed property for all categories including "全部"
 const allCategories = computed(() => {
   return [
-    { id: 'all', name: '全部', color: '#d97757' }, // Brand orange
+    { id: 'all', name: '全部', color: '#d97757' },
     ...categories.value
   ]
 })
 
-// Load skills from Siyuan API
 onMounted(async () => {
   await loadSkills()
   await loadCategories()
 
-  // Set default category if none is set
   if (categories.value.length > 0 && !skillForm.value.category) {
     skillForm.value.category = categories.value[0].id
   }
 })
 
-// Watch for changes in categories to update form defaults
 watch(categories, (newCategories) => {
   if (newCategories.length > 0 && !skillForm.value.category) {
     skillForm.value.category = newCategories[0].id
@@ -347,12 +335,10 @@ watch(categories, (newCategories) => {
 const filteredSkills = computed(() => {
   let result = [...skills.value]
 
-  // 按分类筛选
   if (selectedCategory.value !== 'all') {
     result = result.filter(skill => skill.category === selectedCategory.value)
   }
 
-  // 按搜索词筛选
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase().trim()
     if (query) {
@@ -367,12 +353,10 @@ const filteredSkills = computed(() => {
   return result
 })
 
-// 获取分类对象
 const getCategoryById = (id: string): SkillCategory => {
   return categories.value.find(c => c.id === id) || categories.value[0]
 }
 
-// Category selection handler
 const selectCategory = (categoryId: string) => {
   selectedCategory.value = categoryId
 }
@@ -398,10 +382,9 @@ async function loadCategories() {
     const stored = await props.plugin.loadData('siyuan-categories')
     if (stored && Array.isArray(stored)) {
       categories.value = stored as SkillCategory[]
-      // Ensure all categories have a color
       categories.value = categories.value.map(cat => ({
         ...cat,
-        color: cat.color || '#d97757' // Brand orange as default
+        color: cat.color || '#d97757'
       }))
     } else {
       categories.value = [{ id: 'default', name: '默认', color: '#d97757' }]
@@ -465,14 +448,12 @@ function closeAddModal() {
 
 async function saveSkill() {
   try {
-    // Validate required fields
     if (!skillForm.value.title.trim() || !skillForm.value.content.trim()) {
       alert('标题和内容是必填项')
       return
     }
 
     if (editingSkill.value) {
-      // Update existing skill
       const index = skills.value.findIndex(s => s.id === editingSkill.value!.id)
       if (index !== -1) {
         skills.value[index] = {
@@ -486,7 +467,6 @@ async function saveSkill() {
         }
       }
     } else {
-      // Add new skill
       const newSkill: Skill = {
         id: Date.now().toString(),
         title: skillForm.value.title.trim(),
@@ -507,11 +487,10 @@ async function saveSkill() {
   }
 }
 
-// 分类管理相关函数
 function openCategoryManage() {
   categoryForm.value = {
     name: '',
-    color: '#d97757' // Brand orange
+    color: '#d97757'
   }
   showCategoryManage.value = true
 }
@@ -542,7 +521,6 @@ async function addCategory() {
 }
 
 async function deleteCategory(id: string) {
-  // 检查是否有技能使用该分类
   const hasSkillsInCategory = skills.value.some(s => s.category === id)
   if (hasSkillsInCategory) {
     alert('无法删除：该分类下还有技能')
@@ -551,7 +529,6 @@ async function deleteCategory(id: string) {
 
   if (confirm('确定要删除这个分类吗？')) {
     categories.value = categories.value.filter(c => c.id !== id)
-    // 如果当前选中了被删除的分类，切换到全部
     if (selectedCategory.value === id) {
       selectedCategory.value = 'all'
     }
@@ -569,7 +546,6 @@ async function deleteSkill(id: string) {
 async function copyContent(content: string) {
   try {
     await navigator.clipboard.writeText(content)
-    // Could add a toast notification here in the future
   } catch (err) {
     console.error('Failed to copy content:', err)
     alert('复制失败，请手动复制')
@@ -582,5 +558,5 @@ function closeModal() {
 }
 </script>
 <style lang="scss" scoped>
-@use './Skills.scss';
+@use '../styles/index.scss';
 </style>

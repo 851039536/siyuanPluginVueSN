@@ -6,7 +6,6 @@
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"
   >
-    <!-- 触发按钮 - 桌面端悬停，移动端点击 -->
     <div
       class="floating-box-trigger"
       :class="{ expanded: isExpanded }"
@@ -17,22 +16,14 @@
       </svg>
     </div>
 
-    <!-- 展开工具栏 -->
     <Transition name="toolbar">
       <div v-if="isExpanded" class="floating-toolbar">
-        <!-- 工具按钮 -->
-        <div
+        <ToolItem
           v-for="tool in tools"
           :key="tool.id"
-          class="tool-item"
-          :title="tool.title"
-          @click="handleToolClick(tool)"
-        >
-          <div class="tool-icon" :style="{ background: tool.bgColor }">
-            <svg viewBox="0 0 24 24" width="18" height="18" v-html="tool.icon" />
-          </div>
-          <span class="tool-label">{{ tool.label }}</span>
-        </div>
+          :tool="tool"
+          :plugin="plugin"
+        />
       </div>
     </Transition>
   </div>
@@ -40,6 +31,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
+import ToolItem from './components/ToolItem.vue'
 import {
   createSuperPanelTool,
   createRefreshTool,
@@ -57,16 +49,11 @@ const props = defineProps<{
 const isExpanded = ref(false)
 const isMobile = ref(false)
 
-// 桌面端工具列表（全部功能）
 const desktopTools = ref<FloatingTool[]>([])
-
-// 移动端工具列表（超级面板、刷新、密码箱、单词阅读）- 缓存避免重复创建
 const mobileToolsCache = ref<FloatingTool[]>([])
 
-// 根据设备类型返回对应的工具列表
 const tools = computed(() => isMobile.value ? mobileToolsCache.value : desktopTools.value)
 
-// 检测是否为移动端（带防抖）
 let resizeTimer: ReturnType<typeof setTimeout> | null = null
 const MOBILE_BREAKPOINT = 768
 
@@ -79,9 +66,7 @@ const debouncedCheckMobile = () => {
   resizeTimer = setTimeout(checkMobile, 150)
 }
 
-// 初始化工具列表
 const initTools = () => {
-  // 移动端工具（缓存）
   mobileToolsCache.value = [
     createSuperPanelTool(props.plugin),
     createRefreshTool(props.plugin),
@@ -89,14 +74,12 @@ const initTools = () => {
     createFlashcardReadingTool(props.plugin),
   ]
 
-  // 桌面端工具
   const toolList: FloatingTool[] = [
     createSuperPanelTool(props.plugin),
     createRefreshTool(props.plugin),
     createTextDiffTool(props.plugin),
   ]
 
-  // Add skills tool if plugin is available
   if (props.plugin?.settings?.enableSkills !== false) {
     toolList.push(skillsTool(props.plugin))
   }
@@ -126,12 +109,8 @@ const handleMouseLeave = () => {
 const toggleExpanded = () => {
   isExpanded.value = !isExpanded.value
 }
-
-const handleToolClick = (tool: FloatingTool) => {
-  tool.action(props.plugin)
-}
 </script>
 
 <style scoped lang="scss">
-@use './FloatingBox.scss';
+@use './styles/index.scss';
 </style>

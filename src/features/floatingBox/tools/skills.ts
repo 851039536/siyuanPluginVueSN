@@ -3,7 +3,7 @@
  */
 import { Plugin } from 'siyuan'
 import { createApp, type App as VueApp } from 'vue'
-import Skills from '../Skills.vue'
+import Skills from '../components/SkillsModal.vue'
 import type { FloatingTool } from '../types'
 
 let vueApp: VueApp | null = null

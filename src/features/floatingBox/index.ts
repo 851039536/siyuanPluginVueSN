@@ -4,21 +4,17 @@
  */
 import { Plugin } from 'siyuan'
 import { createApp, type App as VueApp } from 'vue'
-import FloatingBox from './FloatingBox.vue'
+import FloatingBox from './index.vue'
+
+export type { FloatingTool, Skill, SkillCategory, FloatingBoxOptions } from './types'
 
 let vueApp: VueApp | null = null
 let container: HTMLElement | null = null
 
-/**
- * 注册悬浮框功能
- */
 export function registerFloatingBox(plugin: Plugin): void {
-
-  // 创建容器
   container = document.createElement('div')
   container.id = 'floating-box-container'
 
-  // 多种选择器尝试
   const selectors = [
     '.layout__center.fn__flex.fn__flex-1',
     '.layout__center',
@@ -41,7 +37,6 @@ export function registerFloatingBox(plugin: Plugin): void {
     console.error('未能找到合适的容器插入悬浮框')
   }
 
-  // 创建 Vue 应用
   vueApp = createApp(FloatingBox, {
     i18n: (plugin.i18n as any).floatingBox || {},
     plugin: plugin
@@ -53,7 +48,6 @@ export function registerFloatingBox(plugin: Plugin): void {
     console.error('悬浮框挂载失败:', error)
   }
 
-  // 保存实例以便清理
   ;(plugin as any).__floatingBox = {
     destroy: () => {
       if (vueApp && container) {

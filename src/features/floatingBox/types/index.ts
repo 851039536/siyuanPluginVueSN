@@ -1,6 +1,7 @@
 /**
- * 工具定义接口
+ * 悬浮框功能类型定义
  */
+
 export interface FloatingTool {
   id: string
   label: string
@@ -10,9 +11,6 @@ export interface FloatingTool {
   action: (plugin?: any) => void
 }
 
-/**
- * 技能接口
- */
 export interface Skill {
   id: string
   title: string
@@ -23,11 +21,13 @@ export interface Skill {
   category: string
 }
 
-/**
- * 技能分类接口
- */
 export interface SkillCategory {
   id: string
   name: string
-  color: string // Make color required for consistency
+  color: string
+}
+
+export interface FloatingBoxOptions {
+  position?: 'left' | 'right'
+  offset?: number
 }

@@ -8,7 +8,7 @@
       <div class="dialog-body">
         <Input
           :modelValue="localFormData.title"
-          @update:modelValue="updateField('title', $event)"
+          @update:modelValue="updateField('title', String($event))"
           :label="i18n.title || '标题'"
           :placeholder="i18n.titlePlaceholder || '标题（不可重复）'"
           :error="formErrors.title"
@@ -30,14 +30,14 @@
           <div class="category-input-group">
             <Select
               :modelValue="localFormData.category"
-              @update:modelValue="updateField('category', $event)"
+              @update:modelValue="updateField('category', String($event))"
               :options="categoryOptions"
               @change="$emit('change:category')"
             />
             <Input
               v-if="localFormData.category === '__custom__'"
               :modelValue="localCustomCategory"
-              @update:modelValue="$emit('update:customCategory', $event)"
+@update:modelValue="emit('update:customCategory', String($event))"
               :placeholder="i18n.customCategoryPlaceholder || '输入自定义类别'"
               class="custom-category-input"
             />

@@ -6,13 +6,13 @@
         :modelValue="selectedCategory"
         :options="categoryOptions"
         size="small"
-        @update:modelValue="$emit('update:selectedCategory', $event)"
+        @update:modelValue="(val) => $emit('update:selectedCategory', val as string)"
       />
     </div>
     <div class="filter-right">
       <Input
         :modelValue="searchQuery"
-        @update:modelValue="$emit('update:searchQuery', $event)"
+        @update:modelValue="(val) => $emit('update:searchQuery', val as string)"
         :placeholder="i18n.searchPlaceholder || '搜索标题或内容...'"
         prefixIcon="search"
         size="small"

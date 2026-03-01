@@ -247,7 +247,7 @@ export class FlashcardReading {
         const app = createApp({
           setup() {
             return () => h(FlashcardReadingPanel, {
-              i18n: self.plugin.i18n.flashcardReading || {},
+              i18n: (self.plugin.i18n?.flashcardReading as I18n) || ({} as I18n),
               plugin: self.plugin
             })
           }

@@ -3,6 +3,8 @@
  * 替代原有的硬编码样式注入，使用 CSS 变量实现动态样式
  */
 
+import { HEADING_LEVEL_MAPPINGS } from '../index'
+
 export interface HeadingSettingsStyleVars {
   // 标题颜色
   '--hs-heading-h1-color'?: string
@@ -59,21 +61,9 @@ export function getLevelDisplayVars(
   style: string,
   customMarkers: string[] = ['1', '2', '3', '4', '5', '6']
 ): Record<string, string> {
-  const mappings: Record<string, string[]> = {
-    number: ['1', '2', '3', '4', '5', '6'],
-    roman: ['I', 'II', 'III', 'IV', 'V', 'VI'],
-    chinese: ['一', '二', '三', '四', '五', '六'],
-    chineseUpper: ['壹', '贰', '叁', '肆', '伍', '陆'],
-    dots: ['•', '••', '•••', '••••', '••••••', '•••••••••'],
-    emoji: ['😀', '😁', '😂', '🤣', '😊', '😎'],
-    star: ['⭐', '⭐⭐', '⭐⭐⭐', '⭐⭐⭐⭐', '⭐⭐⭐⭐⭐', '⭐⭐⭐⭐⭐⭐'],
-    arrow: ['→', '→→', '→→→', '→→→→', '→→→→→', '→→→→→→'],
-    tag: ['H1', 'H2', 'H3', 'H4', 'H5', 'H6'],
-    bracket: ['[1]', '[2]', '[3]', '[4]', '[5]', '[6]'],
-    custom: customMarkers
-  }
-
-  const levels = mappings[style] || mappings.number
+  const levels = style === 'custom'
+    ? customMarkers
+    : (HEADING_LEVEL_MAPPINGS[style] || HEADING_LEVEL_MAPPINGS.number)
   const vars: Record<string, string> = {}
 
   levels.forEach((label, index) => {

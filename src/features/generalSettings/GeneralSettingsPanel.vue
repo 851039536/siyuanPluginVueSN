@@ -117,42 +117,18 @@ const categories = computed(() => [
   }
 ])
 
-function handleCodeBlockChange(settings: any) {
-  props.onSettingsChange?.({
-    moduleId: 'codeblock',
-    settings
-  })
+function createSettingsHandler(moduleId: string) {
+  return (settings: any) => {
+    props.onSettingsChange?.({ moduleId, settings })
+  }
 }
 
-function handleActionsChange(settings: any) {
-  props.onSettingsChange?.({
-    moduleId: 'actions',
-    settings
-  })
-}
+const handleCodeBlockChange = createSettingsHandler('codeblock')
+const handleActionsChange = createSettingsHandler('actions')
+const handleHeadingChange = createSettingsHandler('heading')
+const handleListChange = createSettingsHandler('list')
+const handleBackupChange = createSettingsHandler('backup')
 
-function handleHeadingChange(settings: any) {
-  props.onSettingsChange?.({
-    moduleId: 'heading',
-    settings
-  })
-}
-
-function handleListChange(settings: any) {
-  props.onSettingsChange?.({
-    moduleId: 'list',
-    settings
-  })
-}
-
-function handleBackupChange(settings: any) {
-  props.onSettingsChange?.({
-    moduleId: 'backup',
-    settings
-  })
-}
-
-// 暴露方法给父组件
 defineExpose({
   handleCodeBlockChange,
   handleActionsChange,

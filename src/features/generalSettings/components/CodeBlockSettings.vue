@@ -204,6 +204,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
 import { saveCodeBlockSettings, loadCodeBlockSettings } from '@/config/settings'
+import { applyCodeBlockStyle } from '../index'
 
 interface CodeBlockSettings {
   style: 'default' | 'github' | 'mac' | 'cartoon'
@@ -242,12 +243,10 @@ const DEFAULT_SETTINGS: CodeBlockSettings = {
   collapseHeight: 400
 }
 
-// 监听设置变化，自动保存
 watch(settings, async (newSettings) => {
   emit('change', newSettings)
   applyCodeBlockStyle(newSettings.style)
   applyCodeBlockCollapse(newSettings.enableCollapse, newSettings.collapseHeight)
-  // 自动保存到数据库
   if (props.plugin) {
     try {
       await saveCodeBlockSettings(props.plugin, newSettings)
@@ -269,13 +268,6 @@ function getStyleName(style: string): string {
     cartoon: props.i18n.cartoonStyle || '卡通风格'
   }
   return names[style] || style
-}
-
-function applyCodeBlockStyle(style: string) {
-  // 移除旧的样式类
-  document.body.classList.remove('codeblock-style-default', 'codeblock-style-github', 'codeblock-style-mac', 'codeblock-style-cartoon')
-  // 添加新的样式类
-  document.body.classList.add(`codeblock-style-${style}`)
 }
 
 function applyCodeBlockCollapse(enable: boolean, height: number) {

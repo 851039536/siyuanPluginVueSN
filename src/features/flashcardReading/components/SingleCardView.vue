@@ -45,7 +45,6 @@
 
 <script setup lang="ts">
 import Button from '@/components/Button.vue'
-import IconWrapper from '@/components/IconWrapper.vue'
 import type { Flashcard, I18n } from '../types'
 
 defineProps<{

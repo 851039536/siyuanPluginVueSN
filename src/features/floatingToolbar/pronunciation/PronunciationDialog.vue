@@ -358,7 +358,7 @@ async function generatePronunciation() {
 
 /**
  * 从本地 FlashcardStorage 查询单词
- * 优先按标题精确匹配，其次按内容包含匹配
+ * 仅按标题精确匹配
  */
 async function queryFromLocalStorage(word: string): Promise<Flashcard | null> {
   if (!flashcardStorage) return null
@@ -366,24 +366,10 @@ async function queryFromLocalStorage(word: string): Promise<Flashcard | null> {
   try {
     const allCards = await flashcardStorage.getAllCards()
 
-    // 优先精确匹配标题
     const exactMatch = allCards.find(card =>
       card.title.toLowerCase() === word.toLowerCase()
     )
-    if (exactMatch) {
-      return exactMatch
-    }
-
-    // 其次模糊匹配标题
-    const fuzzyMatch = allCards.find(card =>
-      card.title.toLowerCase().includes(word.toLowerCase()) ||
-      word.toLowerCase().includes(card.title.toLowerCase())
-    )
-    if (fuzzyMatch) {
-      return fuzzyMatch
-    }
-
-    return null
+    return exactMatch || null
   } catch (error) {
     console.error('Query from local storage error:', error)
     return null

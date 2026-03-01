@@ -93,6 +93,11 @@ export default class PluginSample extends Plugin {
       (this as any).__generalSettings.destroy()
     }
 
+    // 清理高亮功能资源
+    if ((this as any).__highlightManager) {
+      (this as any).__highlightManager.disable()
+    }
+
     destroyCommands()
     destroy()
   }

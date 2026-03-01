@@ -1,162 +1,213 @@
 import { Plugin } from 'siyuan'
 
-/**
- * 双击高亮字体功能
- * 功能：双击选中文本自动高亮所有匹配项，显示匹配数量
- */
+const HIGHLIGHT_STYLE_ID = 'highlight-feature-styles'
 
-let selectedText = ''
-let styleAdded = false
+export class HighlightManager {
+  private selectedText = ''
+  private styleAdded = false
+  private active = false
+  private toastEl: HTMLDivElement | null = null
+  private toastTimer: ReturnType<typeof setTimeout> | null = null
 
-export function registerHighlight(_plugin: Plugin, enableHighlight: boolean = true) {
-  if (!enableHighlight) return
+  constructor(_plugin: Plugin) {}
 
-  addStyles()
+  enable() {
+    if (this.active) return
+    this.active = true
+    this.addStyles()
+    document.addEventListener('mouseup', this.handleMouseUp)
+    document.addEventListener('mousedown', this.handleMouseDown)
+  }
 
-  const handleMouseUp = (event: MouseEvent) => {
+  disable() {
+    if (!this.active) return
+    this.active = false
+    document.removeEventListener('mouseup', this.handleMouseUp)
+    document.removeEventListener('mousedown', this.handleMouseDown)
+    CSS.highlights?.delete('selected-results')
+    this.selectedText = ''
+    this.clearToast()
+  }
+
+  private handleMouseUp = (event: MouseEvent) => {
     const selection = window.getSelection()?.toString().trim()
-    if (!selection || selection === selectedText) return
+    if (!selection || selection === this.selectedText) return
 
     const target = event.target as HTMLElement
     if (!target.closest('.protyle-wysiwyg')) return
 
-    selectedText = selection
-    const matchCount = highlightText(selection)
-    showToast(selection, matchCount)
+    this.selectedText = selection
+    const matchCount = this.highlightText(selection)
+    this.showToast(selection, matchCount)
   }
 
-  const handleMouseDown = () => {
-    selectedText = ''
+  private handleMouseDown = () => {
+    this.selectedText = ''
     CSS.highlights?.delete('selected-results')
   }
 
-  document.addEventListener('mouseup', handleMouseUp)
-  document.addEventListener('mousedown', handleMouseDown)
-}
-
-/** 添加样式 */
-function addStyles() {
-  if (styleAdded) return
-
-  const style = document.createElement('style')
-  style.textContent = `
-    ::highlight(selected-results) {
-      background-color: rgb(255, 220, 60);
-      color: rgb(0, 0, 0);
-      border-radius: 2px;
-      box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+  private addStyles() {
+    if (this.styleAdded) return
+    if (document.getElementById(HIGHLIGHT_STYLE_ID)) {
+      this.styleAdded = true
+      return
     }
-    ::selection {
-      color: rgb(0, 0, 0);
-    }
-    .highlight-toast {
-      position: fixed;
-      bottom: 80px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--b3-theme-surface);
-      color: var(--b3-theme-on-surface);
-      padding: 10px 18px;
-      border-radius: 6px;
-      font-size: 13px;
-      z-index: 10000;
-      pointer-events: none;
-      opacity: 0;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      transition: opacity 0.2s, transform 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      border: 1px solid var(--b3-border-color);
-    }
-    .highlight-toast.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(-4px);
-    }
-    .highlight-toast .count {
-      color: var(--b3-theme-primary);
-      font-weight: 600;
-    }
-  `
-  document.head.appendChild(style)
-  styleAdded = true
-}
 
-/** 高亮文本，返回匹配数量 */
-function highlightText(value: string): number {
-  const docRoot = document.querySelector('.layout-tab-container > div:not(.fn__none) .protyle-wysiwyg')
-  if (!docRoot) return 0
-
-  const str = value.trim().toLowerCase()
-  if (!str) return 0
-
-  const docText = docRoot.textContent?.toLowerCase() ?? ''
-  const allTextNodes: Text[] = []
-  const cumLengths: number[] = []
-  let cumLen = 0
-
-  const treeWalker = document.createTreeWalker(docRoot, NodeFilter.SHOW_TEXT)
-  let node: Node | null
-  while ((node = treeWalker.nextNode())) {
-    allTextNodes.push(node as Text)
-    cumLen += node.textContent?.length ?? 0
-    cumLengths.push(cumLen)
+    const style = document.createElement('style')
+    style.id = HIGHLIGHT_STYLE_ID
+    style.textContent = `
+      ::highlight(selected-results) {
+        background-color: rgb(255, 220, 60);
+        color: rgb(0, 0, 0);
+        border-radius: 2px;
+        box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+      }
+      ::selection {
+        color: rgb(0, 0, 0);
+      }
+      .highlight-toast {
+        position: fixed;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--b3-theme-surface);
+        color: var(--b3-theme-on-surface);
+        padding: 10px 18px;
+        border-radius: 6px;
+        font-size: 13px;
+        z-index: 10000;
+        pointer-events: none;
+        opacity: 0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transition: opacity 0.2s, transform 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid var(--b3-border-color);
+      }
+      .highlight-toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(-4px);
+      }
+      .highlight-toast .count {
+        color: var(--b3-theme-primary);
+        font-weight: 600;
+      }
+    `
+    document.head.appendChild(style)
+    this.styleAdded = true
   }
 
-  const ranges: Range[] = []
-  let startIndex = 0
-  let nodeIdx = 0
-  const nodeCount = allTextNodes.length
+  private highlightText(value: string): number {
+    const docRoot = document.querySelector('.layout-tab-container > div:not(.fn__none) .protyle-wysiwyg')
+    if (!docRoot) return 0
 
-  while ((startIndex = docText.indexOf(str, startIndex)) !== -1) {
-    const endIndex = startIndex + str.length
-    const range = document.createRange()
+    const str = value.trim().toLowerCase()
+    if (!str) return 0
 
-    try {
-      while (nodeIdx < nodeCount - 1 && cumLengths[nodeIdx] <= startIndex) nodeIdx++
+    const docText = docRoot.textContent?.toLowerCase() ?? ''
+    const allTextNodes: Text[] = []
+    const cumLengths: number[] = []
+    let cumLen = 0
 
-      const startNode = allTextNodes[nodeIdx]
-      const startOffset = startIndex - (cumLengths[nodeIdx] - startNode.textContent!.length)
-      range.setStart(startNode, startOffset)
-
-      let endNodeIdx = nodeIdx
-      while (endNodeIdx < nodeCount - 1 && cumLengths[endNodeIdx] < endIndex) endNodeIdx++
-
-      const endNode = allTextNodes[endNodeIdx]
-      const endOffset = endIndex - (cumLengths[endNodeIdx] - endNode.textContent!.length)
-      range.setEnd(endNode, endOffset)
-
-      ranges.push(range)
-    } catch (error) {
-      console.error('Highlight range error:', error)
+    const treeWalker = document.createTreeWalker(docRoot, NodeFilter.SHOW_TEXT)
+    let node: Node | null
+    while ((node = treeWalker.nextNode())) {
+      allTextNodes.push(node as Text)
+      cumLen += node.textContent?.length ?? 0
+      cumLengths.push(cumLen)
     }
 
-    startIndex = endIndex
+    const ranges: Range[] = []
+    let startIndex = 0
+    const nodeCount = allTextNodes.length
+
+    const findNodeIndex = (pos: number, startIdx: number): number => {
+      let left = startIdx
+      let right = nodeCount - 1
+      while (left < right) {
+        const mid = Math.floor((left + right + 1) / 2)
+        if (cumLengths[mid] <= pos) left = mid
+        else right = mid - 1
+      }
+      return left
+    }
+
+    let lastNodeIdx = 0
+
+    while ((startIndex = docText.indexOf(str, startIndex)) !== -1) {
+      const endIndex = startIndex + str.length
+      const range = document.createRange()
+
+      try {
+        lastNodeIdx = findNodeIndex(startIndex, lastNodeIdx)
+        const startNode = allTextNodes[lastNodeIdx]
+        const startOffset = startIndex - (cumLengths[lastNodeIdx] - startNode.textContent!.length)
+        range.setStart(startNode, startOffset)
+
+        const endNodeIdx = findNodeIndex(endIndex - 1, lastNodeIdx)
+        const endNode = allTextNodes[endNodeIdx]
+        const endOffset = endIndex - (cumLengths[endNodeIdx] - endNode.textContent!.length)
+        range.setEnd(endNode, endOffset)
+
+        ranges.push(range)
+      } catch {
+        // Skip invalid range
+      }
+
+      startIndex = endIndex
+    }
+
+    if (ranges.length > 0) {
+      CSS.highlights?.set('selected-results', new Highlight(...ranges))
+    } else {
+      CSS.highlights?.delete('selected-results')
+    }
+
+    return ranges.length
   }
 
-  if (ranges.length > 0) {
-    CSS.highlights?.set('selected-results', new Highlight(...ranges))
-  } else {
-    CSS.highlights?.delete('selected-results')
+  private showToast(text: string, count: number) {
+    this.clearToast()
+
+    if (!this.toastEl) {
+      this.toastEl = document.createElement('div')
+      this.toastEl.className = 'highlight-toast'
+    }
+
+    const displayText = text.length > 20 ? text.slice(0, 20) + '...' : text
+    this.toastEl.innerHTML = `"${displayText}" <span class="count">${count}</span> 处`
+
+    if (!this.toastEl.parentElement) {
+      document.body.appendChild(this.toastEl)
+    }
+
+    requestAnimationFrame(() => this.toastEl!.classList.add('show'))
+
+    this.toastTimer = setTimeout(() => {
+      if (this.toastEl) {
+        this.toastEl.classList.remove('show')
+        setTimeout(() => this.toastEl?.remove(), 200)
+      }
+    }, 1800)
   }
 
-  return ranges.length
+  private clearToast() {
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer)
+      this.toastTimer = null
+    }
+    if (this.toastEl) {
+      this.toastEl.remove()
+      this.toastEl = null
+    }
+  }
 }
 
-/** 显示提示 */
-function showToast(text: string, count: number) {
-  const existing = document.querySelector('.highlight-toast')
-  existing?.remove()
-
-  const toast = document.createElement('div')
-  toast.className = 'highlight-toast'
-  toast.innerHTML = `已高亮 "${text.length > 20 ? text.slice(0, 20) + '...' : text}" <span class="count">${count}</span> 处`
-  document.body.appendChild(toast)
-
-  requestAnimationFrame(() => toast.classList.add('show'))
-
-  setTimeout(() => {
-    toast.classList.remove('show')
-    setTimeout(() => toast.remove(), 200)
-  }, 1800)
+export function registerHighlight(plugin: Plugin, enableHighlight = true): HighlightManager | null {
+  if (!enableHighlight) return null
+  const manager = new HighlightManager(plugin)
+  manager.enable()
+  ;(plugin as any).__highlightManager = manager
+  return manager
 }

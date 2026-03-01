@@ -101,6 +101,8 @@ export interface I18n {
   singleView?: string
   statisticsView?: string
   play?: string
+  copyTitle?: string
+  copyContent?: string
   editCard?: string
   deleteCard?: string
   addCard?: string

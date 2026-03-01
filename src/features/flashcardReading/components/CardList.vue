@@ -22,6 +22,22 @@
             <Button
               variant="ghost"
               size="small"
+              icon="contentCopy"
+              :iconSize="14"
+              @click="$emit('copyTitle', card)"
+              :title="i18n.copyTitle || '复制单词'"
+            />
+            <Button
+              variant="ghost"
+              size="small"
+              icon="contentCopy"
+              :iconSize="14"
+              @click="$emit('copyContent', card)"
+              :title="i18n.copyContent || '复制内容'"
+            />
+            <Button
+              variant="ghost"
+              size="small"
               icon="edit"
               :iconSize="14"
               @click="$emit('edit', card)"
@@ -58,6 +74,8 @@ defineProps<{
 
 defineEmits<{
   play: [card: Flashcard]
+  copyTitle: [card: Flashcard]
+  copyContent: [card: Flashcard]
   edit: [card: Flashcard]
   delete: [card: Flashcard]
 }>()

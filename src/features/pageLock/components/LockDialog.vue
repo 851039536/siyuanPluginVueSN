@@ -91,7 +91,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import IconWrapper from '@/components/IconWrapper/index.vue'
+import IconWrapper from '@/components/IconWrapper.vue'
 import type { LockDialogProps, LockDialogEmits } from '../types'
 
 const props = defineProps<LockDialogProps>()

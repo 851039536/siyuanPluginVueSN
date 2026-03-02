@@ -12,14 +12,12 @@
       </div>
 
       <div class="page-lock-dialog__content">
-        <!-- 提示信息 -->
         <div v-if="hintText" class="page-lock-dialog__hint">
           <IconWrapper name="info" :size="16" />
           <span>{{ hintText }}</span>
         </div>
 
         <div class="page-lock-dialog__form">
-          <!-- 更新密码模式：先输入旧密码 -->
           <div v-if="isUpdateMode" class="page-lock-dialog__field">
             <label class="field-label">
               <span class="lock-icon">
@@ -39,7 +37,6 @@
             />
           </div>
 
-          <!-- 新密码输入 -->
           <div class="page-lock-dialog__field">
             <label class="field-label">
               <span class="lock-icon">
@@ -59,7 +56,6 @@
             />
           </div>
 
-          <!-- 锁定或更新模式：需要确认密码 -->
           <div v-if="isLockMode || isUpdateMode" class="page-lock-dialog__field">
             <label class="field-label">
               <span class="lock-icon">
@@ -95,22 +91,11 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import IconWrapper from '@/components/IconWrapper.vue'
+import IconWrapper from '@/components/IconWrapper/index.vue'
+import type { LockDialogProps, LockDialogEmits } from '../types'
 
-interface Props {
-  visible: boolean
-  mode: 'lock' | 'unlock' | 'update'
-  i18n: any
-}
-
-interface Emits {
-  (e: 'update:visible', value: boolean): void
-  (e: 'confirm', password: string, confirmPassword?: string, oldPassword?: string): void
-  (e: 'close'): void
-}
-
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
+const props = defineProps<LockDialogProps>()
+const emit = defineEmits<LockDialogEmits>()
 
 const password = ref('')
 const confirmPassword = ref('')

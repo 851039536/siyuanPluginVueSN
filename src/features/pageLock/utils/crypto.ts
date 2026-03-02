@@ -1,10 +1,3 @@
-/**
- * 密码加密/解密工具
- */
-
-/**
- * 使用SHA-256加密密码
- */
 export async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder()
   const data = encoder.encode(password)
@@ -14,9 +7,6 @@ export async function hashPassword(password: string): Promise<string> {
   return hashHex
 }
 
-/**
- * 验证密码
- */
 export async function verifyPassword(password: string, hash: string): Promise<boolean> {
   const passwordHash = await hashPassword(password)
   return passwordHash === hash

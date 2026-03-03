@@ -9,8 +9,6 @@ import {
   saveGlobalPassword,
   getGlobalPassword,
   getProtyleByDocId,
-  safeReloadUI,
-  reloadProtyle,
   SUPER_PASSWORD
 } from './utils/helpers'
 import {
@@ -52,14 +50,25 @@ export async function updatePageLockButton(plugin: Plugin, protyle: any) {
   iconContainer.appendChild(iconElement)
   lockButton.appendChild(iconContainer)
 
-  lockButton.addEventListener('click', (e) => {
+  lockButton.addEventListener('click', async (e) => {
     e.stopPropagation()
-    if (!isLocked && !getGlobalPassword()) {
+    const globalPwd = getGlobalPassword()
+
+    if (!isLocked && !globalPwd) {
       showMessage(plugin.i18n.pleaseSetPasswordFirst || '请先设置全局密码', 3000, 'error')
       return
     }
-    if (!isLocked) {
-      lockPageWithGlobalPassword(plugin, docId)
+
+    // 重新获取最新的 protyle 和锁定状态
+    const currentProtyle = getProtyleByDocId(docId) || protyle
+    const currentLockState = await getCachedLockState(docId)
+
+    if (!currentLockState) {
+      // 未锁定 -> 锁定
+      await lockPageWithGlobalPassword(plugin, docId, currentProtyle)
+    } else {
+      // 已锁定 -> 显示解锁遮罩
+      interceptLockedPage(plugin, currentProtyle, docId)
     }
   })
 
@@ -78,7 +87,7 @@ export async function updatePageLockButton(plugin: Plugin, protyle: any) {
   injectButtonStyles()
 }
 
-export async function lockPageWithGlobalPassword(plugin: Plugin, docId: string) {
+export async function lockPageWithGlobalPassword(plugin: Plugin, docId: string, protyle?: any) {
   const globalPwd = getGlobalPassword()
   if (!globalPwd) {
     showMessage(plugin.i18n.pleaseSetPasswordFirst || '请先设置全局密码', 3000, 'error')
@@ -96,14 +105,12 @@ export async function lockPageWithGlobalPassword(plugin: Plugin, docId: string) 
     currentUnlockedDocs.delete(docId)
     setCachedLockState(docId, true)
 
-    const protyle = getProtyleByDocId(docId)
-    if (protyle) {
-      interceptLockedPage(plugin, protyle, docId)
-      await updatePageLockButton(plugin, protyle)
-      await reloadProtyle(plugin, protyle, docId)
+    // 使用传入的 protyle 或重新获取
+    const currentProtyle = protyle || getProtyleByDocId(docId)
+    if (currentProtyle) {
+      interceptLockedPage(plugin, currentProtyle, docId)
+      await updatePageLockButton(plugin, currentProtyle)
     }
-
-    await safeReloadUI()
   } else {
     showMessage('锁定失败', 3000, 'error')
   }
@@ -192,16 +199,15 @@ export async function unlockPageDirectly(plugin: Plugin, docId: string, password
   currentUnlockedDocs.add(docId)
   setCachedLockState(docId, false)
 
-  protyle.element?.querySelector('.page-lock-mask')?.remove()
+  // 获取最新的 protyle 对象
+  const currentProtyle = getProtyleByDocId(docId) || protyle
+  currentProtyle.element?.querySelector('.page-lock-mask')?.remove()
 
-  const wysiwyg = protyle.wysiwyg?.element
+  const wysiwyg = currentProtyle.wysiwyg?.element
   if (wysiwyg) {
     wysiwyg.style.display = ''
   }
-  await updatePageLockButton(plugin, protyle)
-  await reloadProtyle(plugin, protyle, docId)
-
-  await safeReloadUI()
+  await updatePageLockButton(plugin, currentProtyle)
 
   return true
 }

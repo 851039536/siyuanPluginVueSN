@@ -5,6 +5,9 @@
 // 导入变量（用于本文件中的样式）
 @use './variables.scss' as *;
 
+// 导入页面锁定功能样式
+@use './features/pageLock/styles/index.scss';
+
 // 代码块基础样式
 @mixin codeblock-base {
   .protyle-wysiwyg .code-block,

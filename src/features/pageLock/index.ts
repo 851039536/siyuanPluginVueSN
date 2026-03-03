@@ -19,7 +19,6 @@ import {
   getCachedMask,
   setCachedMask
 } from './utils/cache'
-import { injectLockPageStyles, injectButtonStyles } from './utils/styles'
 import LockDialog from './components/LockDialog.vue'
 
 let storage: PageLockStorage | null = null
@@ -81,8 +80,6 @@ export async function updatePageLockButton(plugin: Plugin, protyle: any) {
     iconsRight.appendChild(lockButton)
     protyleTitle.appendChild(iconsRight)
   }
-
-  injectButtonStyles()
 }
 
 export async function lockPageWithGlobalPassword(plugin: Plugin, docId: string, protyle?: any) {
@@ -326,8 +323,6 @@ export function registerPageLock(plugin: Plugin) {
   storage = new PageLockStorage(plugin)
   storage.init()
   loadGlobalPassword(plugin)
-  injectLockPageStyles()
-  injectButtonStyles()
 
   const updateButton = async ({ detail }: any) => {
     await updatePageLockButton(plugin, detail.protyle)

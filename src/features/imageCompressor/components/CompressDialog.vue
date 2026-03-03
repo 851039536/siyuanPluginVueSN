@@ -10,62 +10,52 @@
 
       <div class="dialog-content">
         <div class="setting-item">
-          <label class="setting-label">
-            {{ i18n.quality }}
-            <span class="setting-value">{{ (options.quality * 100).toFixed(0) }}%</span>
-          </label>
-          <input
-            type="range"
-            min="0.1"
-            max="1"
-            step="0.1"
-            v-model.number="options.quality"
-            class="slider"
+          <SiSlider
+            :label="i18n.quality"
+            :model-value="options.quality"
+            :min="0.1"
+            :max="1"
+            :step="0.1"
+            :show-value="true"
+            :format-value="formatQuality"
+            hint="建议: 80% 可获得良好的压缩率和质量平衡"
+            @update:model-value="(v) => options.quality = v"
           />
-          <div class="hint-text">建议: 80% 可获得良好的压缩率和质量平衡</div>
         </div>
 
         <div class="setting-item">
-          <label class="setting-label">
-            {{ i18n.maxSize }}
-            <span class="setting-value">{{ options.maxSizeMB }} MB</span>
-          </label>
-          <input
-            type="range"
-            min="0.1"
-            max="10"
-            step="0.1"
-            v-model.number="options.maxSizeMB"
-            class="slider"
+          <SiSlider
+            :label="i18n.maxSize"
+            :model-value="options.maxSizeMB"
+            :min="0.1"
+            :max="10"
+            :step="0.1"
+            :show-value="true"
+            :format-value="formatMaxSize"
+            hint="超过此大小的图片将被压缩"
+            @update:model-value="(v) => options.maxSizeMB = v"
           />
-          <div class="hint-text">超过此大小的图片将被压缩</div>
         </div>
 
         <div class="setting-item">
-          <label class="setting-label">
-            {{ i18n.maxDimension }}
-            <span class="setting-value">{{ options.maxWidthOrHeight }} px</span>
-          </label>
-          <input
-            type="range"
-            min="500"
-            max="4000"
-            step="100"
-            v-model.number="options.maxWidthOrHeight"
-            class="slider"
+          <SiSlider
+            :label="i18n.maxDimension"
+            :model-value="options.maxWidthOrHeight"
+            :min="500"
+            :max="4000"
+            :step="100"
+            :show-value="true"
+            :format-value="formatMaxDimension"
+            hint="超过此尺寸的图片将被等比缩放"
+            @update:model-value="(v) => options.maxWidthOrHeight = v"
           />
-          <div class="hint-text">超过此尺寸的图片将被等比缩放</div>
         </div>
 
         <div class="setting-item">
-          <label class="checkbox-label">
-            <input
-              type="checkbox"
-              v-model="options.useWebWorker"
-              class="checkbox"
-            />
-            <span>使用 Web Worker (推荐)</span>
-          </label>
+          <SiSwitch
+            v-model="options.useWebWorker"
+            label="使用 Web Worker (推荐)"
+          />
           <div class="hint-text">在后台线程处理，不阻塞界面</div>
         </div>
 
@@ -82,12 +72,12 @@
       </div>
 
       <div class="dialog-footer">
-        <button class="btn btn-cancel" @click="onCancel">
+        <SiButton variant="secondary" @click="onCancel">
           {{ i18n.cancel }}
-        </button>
-        <button class="btn btn-primary" @click="onConfirm">
+        </SiButton>
+        <SiButton @click="onConfirm">
           {{ i18n.compress }}
-        </button>
+        </SiButton>
       </div>
     </div>
   </div>
@@ -97,6 +87,9 @@
 import { ref, computed } from 'vue'
 import type { CompressOptions } from '../types'
 import { DEFAULT_COMPRESS_OPTIONS } from '../services/compressor'
+import SiButton from '@/components/Button.vue'
+import SiSlider from '@/components/Slider.vue'
+import SiSwitch from '@/components/Switch.vue'
 
 interface Props {
   i18n: any
@@ -122,6 +115,18 @@ const estimatedTime = computed(() => {
   const minutes = Math.ceil(seconds / 60)
   return `约 ${minutes} 分钟`
 })
+
+const formatQuality = (value: number): string => {
+  return `${(value * 100).toFixed(0)}%`
+}
+
+const formatMaxSize = (value: number): string => {
+  return `${value} MB`
+}
+
+const formatMaxDimension = (value: number): string => {
+  return `${value} px`
+}
 
 const onConfirm = () => {
   emit('confirm', options.value)
@@ -206,61 +211,6 @@ const onCancel = () => {
   }
 }
 
-.setting-label {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--b3-theme-on-background);
-
-  .setting-value {
-    color: var(--b3-theme-primary);
-    font-weight: 600;
-  }
-}
-
-.slider {
-  width: 100%;
-  height: 6px;
-  -webkit-appearance: none;
-  appearance: none;
-  background: var(--b3-theme-surface);
-  border-radius: 3px;
-  outline: none;
-
-  &::-webkit-slider-thumb,
-  &::-moz-range-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: var(--b3-theme-primary);
-    cursor: pointer;
-  }
-
-  &::-moz-range-thumb {
-    border: none;
-  }
-}
-
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  color: var(--b3-theme-on-background);
-
-  .checkbox {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-  }
-}
-
 .hint-text {
   margin-top: 6px;
   font-size: 12px;
@@ -300,37 +250,5 @@ const onCancel = () => {
   gap: 12px;
   padding: 16px 20px;
   border-top: 1px solid var(--b3-border-color);
-}
-
-.btn {
-  padding: 8px 20px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: none;
-
-  &:hover {
-    opacity: 0.9;
-  }
-}
-
-.btn-cancel {
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-
-  &:hover {
-    background: var(--b3-theme-surface-lighter);
-  }
-}
-
-.btn-primary {
-  background: var(--b3-theme-primary);
-  color: #fff;
-
-  &:hover {
-    background: var(--b3-theme-primary-light);
-  }
 }
 </style>

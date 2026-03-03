@@ -16,33 +16,6 @@
   height: 16px;
 }
 
-@mixin button-base {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: none;
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  &:not(:disabled):hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
-  }
-
-  .icon {
-    @include icon-base;
-  }
-}
-
 .image-viewer-overlay {
   @include flex-center;
   position: fixed;
@@ -133,29 +106,6 @@
   background: var(--b3-theme-surface);
   border-radius: 6px;
   border: 1px solid var(--b3-border-color);
-
-  .filter-label {
-    font-size: 13px;
-    color: var(--b3-theme-on-background);
-    font-weight: 500;
-    white-space: nowrap;
-  }
-
-  .filter-select,
-  .page-size-select {
-    padding: 4px 8px;
-    border: 1px solid var(--b3-border-color);
-    border-radius: 4px;
-    background: var(--b3-theme-background);
-    color: var(--b3-theme-on-background);
-    font-size: 13px;
-    cursor: pointer;
-
-    &:focus {
-      outline: none;
-      border-color: var(--b3-theme-primary);
-    }
-  }
 }
 
 .pagination-controls {
@@ -167,40 +117,6 @@
   .page-info {
     padding: 0 8px;
     font-weight: 500;
-  }
-}
-
-.btn {
-  @include button-base;
-
-  &.btn-primary {
-    background: var(--b3-theme-primary);
-    color: #fff;
-  }
-
-  &.btn-secondary {
-    background: var(--b3-theme-surface);
-    color: var(--b3-theme-on-background);
-    border: 1px solid var(--b3-border-color);
-  }
-
-  &.btn-text {
-    background: transparent;
-    color: var(--b3-theme-on-background);
-
-    &:hover {
-      background: var(--b3-theme-surface-lighter);
-    }
-  }
-
-  &.btn-sm {
-    padding: 4px 12px;
-    font-size: 12px;
-  }
-
-  &.btn-block {
-    width: 100%;
-    justify-content: center;
   }
 }
 

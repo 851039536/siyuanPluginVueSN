@@ -22,53 +22,48 @@
       </div>
 
       <div class="viewer-toolbar">
-        <button class="btn btn-primary" @click="onScanImages" :disabled="scanning">
-          <svg class="icon"><use xlink:href="#iconRefresh"></use></svg>
+        <SiButton :loading="scanning" @click="onScanImages">
           {{ scanning ? i18n.scanning : i18n.scanImages }}
-        </button>
+        </SiButton>
 
         <div class="filter-group">
-          <label class="filter-label">只显示大于:</label>
-          <select class="filter-select" v-model.number="minFileSize">
-            <option :value="0">全部</option>
-            <option :value="100">100 KB</option>
-            <option :value="200">200 KB</option>
-            <option :value="500">500 KB</option>
-            <option :value="1024">1 MB</option>
-            <option :value="2048">2 MB</option>
-            <option :value="5120">5 MB</option>
-          </select>
+          <SiSelect
+            :options="minFileSizeOptions"
+            :model-value="minFileSize"
+            label="只显示大于"
+            size="small"
+            @update:model-value="(v) => minFileSize = Number(v)"
+          />
         </div>
 
         <div class="toolbar-spacer"></div>
 
         <template v-if="totalPages > 1">
           <div class="pagination-controls">
-            <button class="btn btn-text btn-sm" @click="currentPage = 1" :disabled="currentPage === 1">首页</button>
-            <button class="btn btn-text btn-sm" @click="currentPage--" :disabled="currentPage === 1">上一页</button>
+            <SiButton variant="ghost" size="small" @click="currentPage = 1" :disabled="currentPage === 1">首页</SiButton>
+            <SiButton variant="ghost" size="small" @click="currentPage--" :disabled="currentPage === 1">上一页</SiButton>
             <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
-            <button class="btn btn-text btn-sm" @click="currentPage++" :disabled="currentPage === totalPages">下一页</button>
-            <button class="btn btn-text btn-sm" @click="currentPage = totalPages" :disabled="currentPage === totalPages">末页</button>
-            <select class="page-size-select" v-model.number="pageSize" @change="currentPage = 1">
-              <option :value="20">20/页</option>
-              <option :value="30">30/页</option>
-              <option :value="50">50/页</option>
-              <option :value="100">100/页</option>
-            </select>
+            <SiButton variant="ghost" size="small" @click="currentPage++" :disabled="currentPage === totalPages">下一页</SiButton>
+            <SiButton variant="ghost" size="small" @click="currentPage = totalPages" :disabled="currentPage === totalPages">末页</SiButton>
+            <SiSelect
+              :options="pageSizeOptions"
+              :model-value="pageSize"
+              size="small"
+              @update:model-value="(v) => { pageSize = Number(v); currentPage = 1 }"
+            />
           </div>
         </template>
 
-        <button class="btn btn-text" @click="onSelectAll" :disabled="filteredImages.length === 0">
+        <SiButton variant="ghost" @click="onSelectAll" :disabled="filteredImages.length === 0">
           {{ i18n.selectAll }}
-        </button>
-        <button class="btn btn-text" @click="onDeselectAll" :disabled="selectedImages.size === 0">
+        </SiButton>
+        <SiButton variant="ghost" @click="onDeselectAll" :disabled="selectedImages.size === 0">
           {{ i18n.deselectAll }}
-        </button>
-        <button class="btn btn-primary" @click="onCompress" :disabled="selectedImages.size === 0 || compressing">
-          <svg class="icon"><use xlink:href="#iconImage"></use></svg>
+        </SiButton>
+        <SiButton :loading="compressing" @click="onCompress" :disabled="selectedImages.size === 0">
           {{ compressing ? i18n.compressing : i18n.compress }}
           <span v-if="selectedImages.size > 0">({{ selectedImages.size }})</span>
-        </button>
+        </SiButton>
       </div>
 
       <div class="progress-bar" v-if="scanning">
@@ -123,15 +118,15 @@
       <div class="empty-state" v-else-if="!scanning">
         <svg class="empty-icon"><use xlink:href="#iconImage"></use></svg>
         <p>{{ i18n.scanImages }}</p>
-        <button class="btn btn-primary" @click="onScanImages">
+        <SiButton @click="onScanImages">
           开始扫描
-        </button>
+        </SiButton>
       </div>
 
       <div class="compress-results" v-if="compressResults.length > 0">
         <div class="results-header">
           <h3>{{ i18n.statistics }}</h3>
-          <button class="btn btn-sm" @click="compressResults = []">清除结果</button>
+          <SiButton variant="ghost" size="small" @click="compressResults = []">清除结果</SiButton>
         </div>
         <div class="results-stats">
           <div class="stat-item">
@@ -155,9 +150,9 @@
             <span class="stat-value">{{ stats.totalSavedMB }} MB</span>
           </div>
         </div>
-        <button class="btn btn-primary btn-block" @click="onReplaceImages" :disabled="replacing">
+        <SiButton :loading="replacing" block @click="onReplaceImages" :disabled="replacing">
           {{ replacing ? i18n.replacing : i18n.replace }}
-        </button>
+        </SiButton>
       </div>
     </div>
 
@@ -199,6 +194,8 @@ import { scanAllAssets, batchGetImageDetails } from './services/scanner'
 import { batchCompressImages, batchReplaceImages, getCompressStats } from './services/compressor'
 import { formatFileSize } from './services/comparator'
 import CompressDialog from './components/CompressDialog.vue'
+import SiButton from '@/components/Button.vue'
+import SiSelect from '@/components/Select.vue'
 import * as api from '@/api'
 
 interface Props {
@@ -231,6 +228,23 @@ const currentPage = ref(1)
 const pageSize = ref(30)
 
 const minFileSize = ref(0)
+
+const minFileSizeOptions = computed(() => [
+  { value: 0, label: '全部' },
+  { value: 100, label: '100 KB' },
+  { value: 200, label: '200 KB' },
+  { value: 500, label: '500 KB' },
+  { value: 1024, label: '1 MB' },
+  { value: 2048, label: '2 MB' },
+  { value: 5120, label: '5 MB' }
+])
+
+const pageSizeOptions = computed(() => [
+  { value: 20, label: '20/页' },
+  { value: 30, label: '30/页' },
+  { value: 50, label: '50/页' },
+  { value: 100, label: '100/页' }
+])
 
 const filteredImages = computed(() => {
   if (minFileSize.value === 0) {

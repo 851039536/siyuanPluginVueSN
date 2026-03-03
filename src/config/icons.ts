@@ -245,6 +245,9 @@ export const COMMON_ICONS = {
   close: {
     icon: 'mdi:close',
   },
+  x: {
+    icon: 'mdi:close',
+  },
   settings: {
     icon: 'mdi:cog',
   },
@@ -262,6 +265,12 @@ export const COMMON_ICONS = {
   },
   add: {
     icon: 'mdi:plus',
+  },
+  plus: {
+    icon: 'mdi:plus',
+  },
+  copy: {
+    icon: 'mdi:content-copy',
   },
   refresh: {
     icon: 'mdi:refresh',

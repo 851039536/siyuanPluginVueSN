@@ -6,9 +6,11 @@
           <IconWrapper :name="headerIconName" :size="20" />
         </div>
         <h3>{{ title }}</h3>
-        <button class="page-lock-dialog__close" @click="handleClose">
-          <IconWrapper name="close" :size="18" />
-        </button>
+        <Button class="page-lock-dialog__close" variant="ghost" size="small" @click="handleClose">
+          <template #icon>
+            <IconWrapper name="close" :size="18" />
+          </template>
+        </Button>
       </div>
 
       <div class="page-lock-dialog__content">
@@ -19,80 +21,75 @@
 
         <div class="page-lock-dialog__form">
           <div v-if="isUpdateMode" class="page-lock-dialog__field">
-            <label class="field-label">
-              <span class="lock-icon">
-                <IconWrapper name="pageLock" :size="15" />
-              </span>
-              {{ i18n.oldPasswordPlaceholder || '旧密码' }}
-            </label>
-            <input
+            <Input
               ref="firstInput"
               v-model="oldPassword"
               type="password"
+              :label="oldPasswordLabel"
               :placeholder="i18n.oldPasswordPlaceholder"
-              class="page-lock-dialog__input"
-              @keyup.enter="handleConfirm"
-              autocomplete="current-password"
+              :prefix-icon="'pageLock' as IconKey"
+              :show-password="true"
+              :autocomplete="'current-password'"
               :autofocus="isUpdateMode"
+              @keydown.enter="handleConfirm"
             />
           </div>
 
           <div class="page-lock-dialog__field">
-            <label class="field-label">
-              <span class="lock-icon">
-                <IconWrapper name="pageLock" :size="15" />
-              </span>
-              {{ isUpdateMode ? (i18n.newPasswordPlaceholder || '新密码') : (i18n.passwordPlaceholder || '密码') }}
-            </label>
-            <input
+            <Input
               :ref="isUpdateMode ? 'secondInput' : 'firstInput'"
               v-model="password"
               type="password"
+              :label="passwordLabel"
               :placeholder="passwordPlaceholder"
-              class="page-lock-dialog__input"
-              @keyup.enter="handleConfirm"
+              :prefix-icon="'pageLock' as IconKey"
+              :show-password="true"
               :autocomplete="!isLockMode && !isUpdateMode ? 'current-password' : 'new-password'"
               :autofocus="!isUpdateMode"
+              @keydown.enter="handleConfirm"
             />
           </div>
 
           <div v-if="isLockMode || isUpdateMode" class="page-lock-dialog__field">
-            <label class="field-label">
-              <span class="lock-icon">
-                <IconWrapper name="pageLock" :size="15" />
-              </span>
-              {{ i18n.confirmPasswordPlaceholder || '确认密码' }}
-            </label>
-            <input
+            <Input
               v-model="confirmPassword"
               type="password"
+              :label="confirmPasswordLabel"
               :placeholder="confirmPasswordPlaceholder"
-              class="page-lock-dialog__input"
-              @keyup.enter="handleConfirm"
-              autocomplete="new-password"
+              :prefix-icon="'pageLock' as IconKey"
+              :show-password="true"
+              :autocomplete="'new-password'"
+              @keydown.enter="handleConfirm"
             />
           </div>
         </div>
       </div>
 
       <div class="page-lock-dialog__footer">
-        <button class="page-lock-dialog__btn page-lock-dialog__btn--cancel" @click="handleClose">
-          <IconWrapper name="close" :size="15" />
+        <Button variant="secondary" @click="handleClose">
+          <template #icon>
+            <IconWrapper name="close" :size="15" />
+          </template>
           {{ cancelText }}
-        </button>
-        <button class="page-lock-dialog__btn page-lock-dialog__btn--confirm" @click="handleConfirm">
-          <IconWrapper name="success" :size="15" />
+        </Button>
+        <Button @click="handleConfirm">
+          <template #icon>
+            <IconWrapper name="success" :size="15" />
+          </template>
           {{ confirmText }}
-        </button>
+        </Button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import IconWrapper from '@/components/IconWrapper.vue'
+import Button from '@/components/Button.vue'
+import Input from '@/components/Input.vue'
 import type { LockDialogProps, LockDialogEmits } from '../types'
+import type { IconKey } from '@/config/icons'
 
 const props = defineProps<LockDialogProps>()
 const emit = defineEmits<LockDialogEmits>()
@@ -100,7 +97,7 @@ const emit = defineEmits<LockDialogEmits>()
 const password = ref('')
 const confirmPassword = ref('')
 const oldPassword = ref('')
-const firstInput = ref<HTMLInputElement>()
+const firstInput = ref<InstanceType<typeof Input>>()
 
 const isLockMode = computed(() => props.mode === 'lock')
 const isUpdateMode = computed(() => props.mode === 'update')
@@ -119,6 +116,18 @@ const hintText = computed(() => {
   return props.i18n.unlockHint || '请输入密码解锁文档'
 })
 
+const oldPasswordLabel = computed(() => {
+  return props.i18n.oldPasswordPlaceholder || '旧密码'
+})
+
+const passwordLabel = computed(() => {
+  return isUpdateMode.value ? (props.i18n.newPasswordPlaceholder || '新密码') : (props.i18n.passwordPlaceholder || '密码')
+})
+
+const confirmPasswordLabel = computed(() => {
+  return props.i18n.confirmPasswordPlaceholder || '确认密码'
+})
+
 const passwordPlaceholder = computed(() =>
   isUpdateMode.value ? props.i18n.newPasswordPlaceholder || '请输入新密码' : props.i18n.passwordPlaceholder || '请输入密码'
 )
@@ -133,10 +142,10 @@ const clearPasswords = () => {
 }
 
 const focusInput = () => {
-  const input = firstInput.value
-  if (input) {
-    input.focus()
-    input.setSelectionRange(input.value.length, input.value.length)
+  if (firstInput.value) {
+    nextTick(() => {
+      firstInput.value?.focus?.()
+    })
   }
 }
 

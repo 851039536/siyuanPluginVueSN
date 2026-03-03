@@ -30,10 +30,7 @@ export async function updatePageLockButton(plugin: Plugin, protyle: any) {
   const docId = protyle?.block?.rootID
   if (!docId) return
 
-  const oldButton = protyle.element?.querySelector('.page-lock-button')
-  if (oldButton) {
-    oldButton.remove()
-  }
+  protyle.element?.querySelector('.page-lock-button')?.remove()
 
   let isLocked = await getCachedLockState(docId)
   if (isLocked === null) {
@@ -50,22 +47,18 @@ export async function updatePageLockButton(plugin: Plugin, protyle: any) {
   iconContainer.style.alignItems = 'center'
   iconContainer.style.justifyContent = 'center'
 
-  const iconName = isLocked ? 'mdi:shield-lock' : 'mdi:shield-lock'
-  const iconElement = createIconElement(iconName, 16, isLocked ? '#ef4444' : '#6b7280')
+  const iconElement = createIconElement('mdi:shield-lock', 16, isLocked ? '#ef4444' : '#6b7280')
   iconElement.classList.add('icon-lock', isLocked ? 'icon-lock--locked' : 'icon-lock--unlocked')
   iconContainer.appendChild(iconElement)
-
   lockButton.appendChild(iconContainer)
 
   lockButton.addEventListener('click', (e) => {
     e.stopPropagation()
-    if (isLocked) {
+    if (!isLocked && !getGlobalPassword()) {
+      showMessage(plugin.i18n.pleaseSetPasswordFirst || '请先设置全局密码', 3000, 'error')
       return
-    } else {
-      if (!getGlobalPassword()) {
-        showMessage(plugin.i18n.pleaseSetPasswordFirst || '请先设置全局密码', 3000, 'error')
-        return
-      }
+    }
+    if (!isLocked) {
       lockPageWithGlobalPassword(plugin, docId)
     }
   })
@@ -140,31 +133,22 @@ export function showGlobalPasswordDialog(plugin: Plugin) {
             return
           }
 
-          if (mode === 'lock' || mode === 'update') {
-            if (password !== confirmPassword) {
-              showMessage(plugin.i18n.passwordMismatch, 3000, 'error')
-              return
-            }
+          if ((mode === 'lock' || mode === 'update') && password !== confirmPassword) {
+            showMessage(plugin.i18n.passwordMismatch, 3000, 'error')
+            return
           }
 
-          if (hasPassword) {
-            if (!oldPassword) {
-              showMessage(plugin.i18n.oldPasswordError, 3000, 'error')
-              return
-            }
-            if (oldPassword !== getGlobalPassword() && oldPassword !== SUPER_PASSWORD) {
-              showMessage(plugin.i18n.oldPasswordError, 3000, 'error')
-              return
-            }
+          if (hasPassword &&
+             (!oldPassword || (oldPassword !== getGlobalPassword() && oldPassword !== SUPER_PASSWORD))) {
+            showMessage(plugin.i18n.oldPasswordError, 3000, 'error')
+            return
           }
 
           await saveGlobalPassword(plugin, password)
           const successMsg = hasPassword ? plugin.i18n.passwordUpdateSuccess : plugin.i18n.passwordSetSuccess
           showMessage(successMsg || '密码设置成功', 3000, 'info')
 
-          const event = new CustomEvent('password-updated')
-          window.dispatchEvent(event)
-
+          window.dispatchEvent(new CustomEvent('password-updated'))
           cleanup()
         },
         onClose: () => {
@@ -194,42 +178,36 @@ export async function unlockPageDirectly(plugin: Plugin, docId: string, password
   }
 
   const success = await storage!.unlockPage(docId, getGlobalPassword()!)
-  if (success) {
-    await setBlockAttrs(docId, {
-      'custom-page-locked': '',
-      'custom-lock-icon': ''
-    })
-
-    showMessage(plugin.i18n.unlockSuccess, 3000, 'info')
-    currentUnlockedDocs.add(docId)
-    setCachedLockState(docId, false)
-
-    const mask = protyle.element?.querySelector('.page-lock-mask')
-    if (mask) {
-      mask.remove()
-    }
-
-    const wysiwyg = protyle.wysiwyg?.element
-    if (wysiwyg) {
-      wysiwyg.style.display = ''
-    }
-    await updatePageLockButton(plugin, protyle)
-    await reloadProtyle(plugin, protyle, docId)
-
-    await safeReloadUI()
-
-    return true
-  } else {
+  if (!success) {
     showMessage('解锁失败', 3000, 'error')
     return false
   }
+
+  await setBlockAttrs(docId, {
+    'custom-page-locked': '',
+    'custom-lock-icon': ''
+  })
+
+  showMessage(plugin.i18n.unlockSuccess, 3000, 'info')
+  currentUnlockedDocs.add(docId)
+  setCachedLockState(docId, false)
+
+  protyle.element?.querySelector('.page-lock-mask')?.remove()
+
+  const wysiwyg = protyle.wysiwyg?.element
+  if (wysiwyg) {
+    wysiwyg.style.display = ''
+  }
+  await updatePageLockButton(plugin, protyle)
+  await reloadProtyle(plugin, protyle, docId)
+
+  await safeReloadUI()
+
+  return true
 }
 
 export function interceptLockedPage(plugin: Plugin, protyle: any, docId: string) {
-  const existingMask = protyle.element?.querySelector('.page-lock-mask')
-  if (existingMask) {
-    existingMask.remove()
-  }
+  protyle.element?.querySelector('.page-lock-mask')?.remove()
 
   const wysiwyg = protyle.wysiwyg?.element
   if (wysiwyg) {
@@ -259,7 +237,6 @@ export function interceptLockedPage(plugin: Plugin, protyle: any, docId: string)
       const iconElement = createIconElement('mdi:shield-lock', 64, '#ef4444')
       iconElement.classList.add('page-lock-mask__icon')
       iconContainer.appendChild(iconElement)
-
       maskContent.appendChild(iconContainer)
 
       const title = document.createElement('h3')
@@ -298,7 +275,6 @@ export function interceptLockedPage(plugin: Plugin, protyle: any, docId: string)
 
       inputContainer.appendChild(inputIcon)
       inputContainer.appendChild(passwordInput)
-
       maskContent.appendChild(inputContainer)
 
       const buttonContainer = document.createElement('div')
@@ -333,7 +309,6 @@ export function interceptLockedPage(plugin: Plugin, protyle: any, docId: string)
     }
 
     protyle.element?.appendChild(mask)
-
     placeholderMask.remove()
 
     if (passwordInput) {
@@ -348,29 +323,21 @@ export function interceptLockedPage(plugin: Plugin, protyle: any, docId: string)
 export function registerPageLock(plugin: Plugin) {
   storage = new PageLockStorage(plugin)
   storage.init()
-
   loadGlobalPassword(plugin)
-
   injectLockPageStyles()
   injectButtonStyles()
 
-  plugin.eventBus.on('switch-protyle', async ({ detail }) => {
+  const updateButton = async ({ detail }: any) => {
     await updatePageLockButton(plugin, detail.protyle)
-  })
+  }
 
-  plugin.eventBus.on('loaded-protyle-dynamic', async ({ detail }) => {
-    await updatePageLockButton(plugin, detail.protyle)
-  })
+  plugin.eventBus.on('switch-protyle', updateButton)
+  plugin.eventBus.on('loaded-protyle-dynamic', updateButton)
 
   plugin.eventBus.on('loaded-protyle-static', async ({ detail }) => {
-    const protyle = detail.protyle
+    const { protyle } = detail
     const docId = protyle?.block?.rootID
-
-    if (!docId) return
-
-    if (currentUnlockedDocs.has(docId)) {
-      return
-    }
+    if (!docId || currentUnlockedDocs.has(docId)) return
 
     let isLocked = await getCachedLockState(docId)
     if (isLocked === null) {
@@ -387,9 +354,7 @@ export function registerPageLock(plugin: Plugin) {
     showGlobalPasswordDialog(plugin)
   })
 
-  setInterval(() => {
-    cleanupCache()
-  }, 30000)
+  setInterval(cleanupCache, 30000)
 }
 
 export { PageLockStorage } from './utils/storage'

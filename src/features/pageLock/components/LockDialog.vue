@@ -51,7 +51,7 @@
               :placeholder="passwordPlaceholder"
               class="page-lock-dialog__input"
               @keyup.enter="handleConfirm"
-              :autocomplete="isUnlockMode ? 'current-password' : 'new-password'"
+              :autocomplete="!isLockMode && !isUpdateMode ? 'current-password' : 'new-password'"
               :autofocus="!isUpdateMode"
             />
           </div>
@@ -104,7 +104,6 @@ const firstInput = ref<HTMLInputElement>()
 
 const isLockMode = computed(() => props.mode === 'lock')
 const isUpdateMode = computed(() => props.mode === 'update')
-const isUnlockMode = computed(() => props.mode === 'unlock')
 
 const title = computed(() => {
   if (isUpdateMode.value) return props.i18n.updatePassword || '更新密码'
@@ -112,10 +111,7 @@ const title = computed(() => {
   return props.i18n.enterPassword || '输入密码'
 })
 
-const headerIconName = computed(() => {
-  if (isUpdateMode.value) return 'refresh'
-  return 'pageLock'
-})
+const headerIconName = computed(() => isUpdateMode.value ? 'refresh' : 'pageLock')
 
 const hintText = computed(() => {
   if (isUpdateMode.value) return props.i18n.updatePasswordHint || '请先输入旧密码，然后设置新密码'
@@ -123,17 +119,12 @@ const hintText = computed(() => {
   return props.i18n.unlockHint || '请输入密码解锁文档'
 })
 
-const passwordPlaceholder = computed(() => {
-  if (isUpdateMode.value) return props.i18n.newPasswordPlaceholder || '请输入新密码'
-  return props.i18n.passwordPlaceholder || '请输入密码'
-})
+const passwordPlaceholder = computed(() =>
+  isUpdateMode.value ? props.i18n.newPasswordPlaceholder || '请输入新密码' : props.i18n.passwordPlaceholder || '请输入密码'
+)
 const confirmPasswordPlaceholder = computed(() => props.i18n.confirmPasswordPlaceholder || '请再次输入密码')
 const confirmText = computed(() => props.i18n.confirm || '确认')
 const cancelText = computed(() => props.i18n.cancel || '取消')
-
-const handleMaskClick = () => {
-  handleClose()
-}
 
 const clearPasswords = () => {
   password.value = ''
@@ -155,11 +146,9 @@ const handleClose = () => {
   emit('close')
 }
 
-watch(() => props.visible, (newVal) => {
-  if (newVal) {
-    setTimeout(focusInput, 100)
-  }
-})
+const handleMaskClick = () => {
+  handleClose()
+}
 
 const handleConfirm = () => {
   if (isUpdateMode.value) {
@@ -171,8 +160,14 @@ const handleConfirm = () => {
   }
   clearPasswords()
 }
+
+watch(() => props.visible, (newVal) => {
+  if (newVal) {
+    setTimeout(focusInput, 100)
+  }
+})
 </script>
 
 <style lang="scss" scoped>
-@import "../styles/index.scss";
+@use "../styles/index.scss";
 </style>

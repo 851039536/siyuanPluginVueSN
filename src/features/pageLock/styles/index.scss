@@ -148,13 +148,12 @@
     background: var(--b3-theme-primary);
     opacity: 0;
     z-index: 0;
+    transition: opacity 0.2s ease;
   }
 }
 
-.page-lock-dialog__field:focus-within {
-  .lock-icon::before {
-    opacity: 0.1;
-  }
+.page-lock-dialog__field:focus-within .lock-icon::before {
+  opacity: 0.1;
 }
 
 .page-lock-dialog__input {

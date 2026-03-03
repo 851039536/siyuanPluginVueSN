@@ -9,38 +9,37 @@
           </svg>
           <span>{{ i18n.pronunciationHelp || '谐音翻译' }}</span>
         </div>
-        <button class="close-btn" @click="closeDialog" :title="i18n.close || '关闭'">
-          <svg class="icon"><use xlink:href="#iconClose"></use></svg>
-        </button>
+        <Button
+          variant="ghost"
+          size="small"
+          icon="x"
+          @click="closeDialog"
+          :title="i18n.close || '关闭'"
+        />
       </div>
 
       <!-- 对话框内容 -->
       <div class="dialog-body">
         <!-- 输入单词 -->
         <div class="input-section">
-          <label class="input-label">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path>
-            </svg>
-            输入内容
-          </label>
-          <div class="input-wrapper">
-            <input
-              v-model="inputWord"
-              class="word-input"
-              placeholder="输入中文或英文..."
-              @keyup.enter="generatePronunciation"
-            />
-            <button
-              class="btn-generate-small"
-              @click="generatePronunciation"
-              :disabled="!inputWord || isGenerating"
-              :title="isGenerating ? '生成中...' : '生成谐音'"
-            >
-              <svg class="btn-icon" v-if="!isGenerating"><use xlink:href="#iconRefresh"></use></svg>
-              <span v-if="isGenerating">...</span>
-            </button>
-          </div>
+          <Input
+            v-model="inputWord"
+            label="输入内容"
+            placeholder="输入中文或英文..."
+            @keyup.enter="generatePronunciation"
+          />
+          <Button
+            class="btn-generate-small"
+            @click="generatePronunciation"
+            :disabled="!inputWord || isGenerating"
+            :title="isGenerating ? '生成中...' : '生成谐音'"
+            variant="primary"
+            size="small"
+            icon="refresh"
+            :loading="isGenerating"
+          >
+            {{ isGenerating ? '生成中...' : '生成' }}
+          </Button>
         </div>
 
 
@@ -61,23 +60,24 @@
               </span>
             </div>
             <div class="result-actions">
-              <!-- 添加到单词本按钮（仅API生成的结果显示） -->
-              <button
+              <Button
                 v-if="!isInFlashcard"
-                class="btn-add-card"
+                variant="ghost"
+                size="small"
+                icon="plus"
                 @click="openAddToCardDialog"
                 title="添加到单词本"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                  <polyline points="7 3 7 8 15 8"></polyline>
-                </svg>
                 添加到单词本
-              </button>
-              <button class="btn-copy-result" @click="copyResult" :disabled="!generatedResult" title="复制结果">
-                <svg class="btn-icon"><use xlink:href="#iconCopy"></use></svg>
-              </button>
+              </Button>
+              <Button
+                variant="ghost"
+                size="small"
+                icon="copy"
+                @click="copyResult"
+                :disabled="!generatedResult"
+                title="复制结果"
+              />
             </div>
           </div>
           <div class="result-content" v-html="formatResult(generatedResult)"></div>
@@ -107,13 +107,22 @@
 
       <!-- 对话框底部 -->
       <div class="dialog-footer">
-        <button class="btn-copy" @click="copyResult" :disabled="!generatedResult">
-          <svg class="btn-icon"><use xlink:href="#iconCopy"></use></svg>
-          <span>复制结果</span>
-        </button>
-        <button class="btn-close" @click="closeDialog">
+        <Button
+          variant="secondary"
+          icon="copy"
+          @click="copyResult"
+          :disabled="!generatedResult"
+          block
+        >
+          复制结果
+        </Button>
+        <Button
+          variant="primary"
+          @click="closeDialog"
+          block
+        >
           关闭
-        </button>
+        </Button>
       </div>
     </div>
 
@@ -122,9 +131,12 @@
       <div class="add-card-dialog" @click.stop>
         <div class="add-card-header">
           <h4>添加到单词本</h4>
-          <button class="close-btn" @click="showAddToCardDialog = false">
-            <svg class="icon"><use xlink:href="#iconClose"></use></svg>
-          </button>
+          <Button
+            variant="ghost"
+            size="small"
+            icon="x"
+            @click="showAddToCardDialog = false"
+          />
         </div>
         <div class="add-card-body">
           <div class="add-card-info">
@@ -134,30 +146,36 @@
             </div>
           </div>
           <div class="form-group">
-            <label>选择类别</label>
-            <div class="category-input-group">
-              <select v-model="selectedCategory" @change="handleCategorySelect">
-                <option value="">请选择类别</option>
-                <option value="__custom__">自定义...</option>
-                <option v-for="cat in availableCategories" :key="cat" :value="cat">
-                  {{ cat }}
-                </option>
-              </select>
-              <input
-                v-if="selectedCategory === '__custom__'"
-                v-model="customCategoryInput"
-                type="text"
-                placeholder="输入自定义类别"
-                class="custom-category-input"
-              />
-            </div>
+            <Select
+              v-model="selectedCategory"
+              label="选择类别"
+              placeholder="请选择类别"
+              :options="categoryOptions"
+              @change="handleCategorySelect"
+            />
+            <Input
+              v-if="selectedCategory === '__custom__'"
+              v-model="customCategoryInput"
+              placeholder="输入自定义类别"
+            />
           </div>
         </div>
         <div class="add-card-footer">
-          <button class="btn-secondary" @click="showAddToCardDialog = false">取消</button>
-          <button class="btn-primary" @click="addToFlashcard" :disabled="!selectedCategory || (selectedCategory === '__custom__' && !customCategoryInput)">
+          <Button
+            variant="secondary"
+            @click="showAddToCardDialog = false"
+            block
+          >
+            取消
+          </Button>
+          <Button
+            variant="primary"
+            @click="addToFlashcard"
+            :disabled="!selectedCategory || (selectedCategory === '__custom__' && !customCategoryInput)"
+            block
+          >
             添加
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -170,6 +188,9 @@ import { showMessage } from 'siyuan'
 import type PluginSample from '@/index'
 import { FlashcardStorage } from '@/features/flashcardReading/types/storage'
 import type { Flashcard } from '@/features/flashcardReading/types'
+import Button from '@/components/Button.vue'
+import Input from '@/components/Input.vue'
+import Select, { type SelectOption } from '@/components/Select.vue'
 
 interface Props {
   visible: boolean
@@ -199,6 +220,17 @@ const showAddToCardDialog = ref(false)
 const selectedCategory = ref('')
 const customCategoryInput = ref('')
 const availableCategories = ref<string[]>(['C#', '编程单词', 'JavaScript', 'TypeScript', 'Vue', 'Rust'])
+
+const categoryOptions = computed<SelectOption[]>(() => {
+  const options: SelectOption[] = [
+    { value: '', label: '请选择类别' },
+    { value: '__custom__', label: '自定义...' }
+  ]
+  availableCategories.value.forEach(cat => {
+    options.push({ value: cat, label: cat })
+  })
+  return options
+})
 
 // 初始化 FlashcardStorage
 const flashcardStorage = props.plugin ? new FlashcardStorage(props.plugin) : null

@@ -50,10 +50,6 @@
   }
 }
 
-.close-btn {
-  @include ft.close-btn(true);
-}
-
 // ========================================
 // 对话框主体
 // ========================================
@@ -69,56 +65,8 @@
   @include ft.flex-column(8px);
 }
 
-.input-label {
-  @include ft.input-label;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.word-input {
-  width: 100%;
-  padding: 12px 14px;
-  border: 2px solid var(--b3-theme-surface-lighter);
-  border-radius: ft.$radius-md;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  font-size: 14px;
-  outline: none;
-  transition: ft.$transition-base;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-
-  &:focus {
-    border-color: var(--b3-theme-primary);
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1), 0 0 0 2px rgba(66, 133, 244, 0.2);
-  }
-}
-
-.input-wrapper {
-  display: flex;
-  gap: 10px;
-
-  @media (max-width: ft.$breakpoint-sm) {
-    flex-direction: column;
-    gap: 8px;
-  }
-}
-
-// 生成按钮（小）
 .btn-generate-small {
-  @include ft.btn-primary;
-  padding: 0 16px;
-  min-height: 42px;
-  flex-shrink: 0;
-
-  @media (max-width: ft.$breakpoint-sm) {
-    width: 100%;
-  }
-
-  .btn-icon {
-    width: 14px;
-    height: 14px;
-  }
+  margin-top: 8px;
 }
 
 // ========================================
@@ -175,34 +123,6 @@
   }
 }
 
-// 添加到单词本按钮
-.btn-add-card {
-  padding: 6px 10px;
-  border: 1px solid var(--b3-theme-primary);
-  border-radius: ft.$radius-sm;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-primary);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  transition: ft.$transition-base;
-  box-shadow: ft.$shadow-sm;
-
-  &:hover {
-    background: var(--b3-theme-primary);
-    color: var(--b3-theme-on-primary);
-    transform: translateY(-1px);
-    box-shadow: ft.$shadow-primary;
-  }
-
-  svg {
-    flex-shrink: 0;
-  }
-}
-
 .result-content {
   font-size: 14px;
   line-height: 1.7;
@@ -232,37 +152,6 @@
     :deep(h4) {
       font-size: 16px;
     }
-  }
-}
-
-// 复制按钮（结果区）
-.btn-copy-result {
-  padding: 6px;
-  border: 1px solid var(--b3-theme-outline);
-  border-radius: ft.$radius-sm;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  cursor: pointer;
-  @include ft.flex-center;
-  transition: ft.$transition-base;
-  box-shadow: ft.$shadow-sm;
-
-  &:hover:not(:disabled) {
-    background: var(--b3-theme-primary);
-    color: var(--b3-theme-on-primary);
-    border-color: var(--b3-theme-primary);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  .btn-icon {
-    width: 14px;
-    height: 14px;
   }
 }
 
@@ -335,20 +224,6 @@
   @include ft.dialog-footer;
 }
 
-.btn-copy,
-.btn-close {
-  @include ft.btn-base;
-  flex: 1;
-
-  @media (max-width: ft.$breakpoint-sm) {
-    width: 100%;
-  }
-}
-
-.btn-close {
-  @include ft.btn-primary;
-}
-
 // ========================================
 // 添加到单词本对话框
 // ========================================
@@ -372,17 +247,6 @@
     font-size: 15px;
     font-weight: 600;
     color: var(--b3-theme-on-background);
-  }
-
-  .close-btn {
-    @include ft.close-btn;
-    width: 28px;
-    height: 28px;
-
-    .icon {
-      width: 16px;
-      height: 16px;
-    }
   }
 }
 
@@ -418,32 +282,6 @@
 
 .form-group {
   @include ft.flex-column(6px);
-
-  label {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--b3-theme-on-surface);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  select,
-  .custom-category-input {
-    @include ft.input-base;
-  }
-
-  select {
-    cursor: pointer;
-
-    option {
-      background: var(--b3-theme-background);
-      color: var(--b3-theme-on-background);
-    }
-  }
-
-  .category-input-group {
-    @include ft.flex-column(6px);
-  }
 }
 
 .add-card-footer {
@@ -452,19 +290,4 @@
   padding: 14px 18px;
   border-top: 1px solid var(--b3-theme-surface-lighter);
   background: var(--b3-theme-surface);
-
-  .btn-secondary {
-    @include ft.btn-base;
-    flex: 1;
-
-    &:hover:not(:disabled) {
-      background: var(--b3-theme-surface-lighter);
-      color: var(--b3-theme-on-background);
-    }
-  }
-
-  .btn-primary {
-    @include ft.btn-primary;
-    flex: 1;
-  }
 }

@@ -9,22 +9,26 @@
           </svg>
           <span>{{ i18n.qrcodeGenerate || '二维码生成' }}</span>
         </div>
-        <button class="close-btn" @click="closeDialog" :title="i18n.close || '关闭'">
-          <svg class="icon"><use xlink:href="#iconClose"></use></svg>
-        </button>
+        <Button
+          variant="ghost"
+          size="small"
+          icon="x"
+          @click="closeDialog"
+          :title="i18n.close || '关闭'"
+        />
       </div>
 
       <!-- 对话框内容 -->
       <div class="dialog-body">
         <!-- 输入内容 -->
         <div class="input-section">
-          <label class="input-label">{{ i18n.qrcodeContent || '内容' }}</label>
-          <textarea
+          <Textarea
             v-model="inputContent"
-            class="content-input"
+            :label="i18n.qrcodeContent || '内容'"
             :placeholder="i18n.qrcodePlaceholder || '输入或选择内容生成二维码...'"
+            :rows="3"
             @input="regenerateQRCode"
-          ></textarea>
+          />
         </div>
 
         <!-- 二维码预览 -->
@@ -52,39 +56,55 @@
           </div>
 
           <div class="setting-item">
-            <label class="setting-label">{{ i18n.qrcodeErrorCorrection || '纠错级别' }}</label>
-            <select v-model="errorCorrection" class="error-select" @change="regenerateQRCode">
-              <option value="L">{{ i18n.qrcodeErrorL || 'L (7%)' }}</option>
-              <option value="M">{{ i18n.qrcodeErrorM || 'M (15%)' }}</option>
-              <option value="Q">{{ i18n.qrcodeErrorQ || 'Q (25%)' }}</option>
-              <option value="H">{{ i18n.qrcodeErrorH || 'H (30%)' }}</option>
-            </select>
+            <Select
+              v-model="errorCorrection"
+              :label="i18n.qrcodeErrorCorrection || '纠错级别'"
+              :options="errorCorrectionOptions"
+              @change="regenerateQRCode"
+            />
           </div>
         </div>
       </div>
 
       <!-- 对话框底部 -->
       <div class="dialog-footer">
-        <button class="btn-copy" @click="copyQRCode" :disabled="!inputContent">
-          <svg class="btn-icon"><use xlink:href="#iconCopy"></use></svg>
-          <span>{{ i18n.qrcodeCopy || '复制图片' }}</span>
-        </button>
-        <button class="btn-download" @click="downloadQRCode" :disabled="!inputContent">
-          <svg class="btn-icon"><use xlink:href="#iconDownload"></use></svg>
-          <span>{{ i18n.qrcodeDownload || '下载' }}</span>
-        </button>
-        <button class="btn-close" @click="closeDialog">
+        <Button
+          variant="secondary"
+          icon="copy"
+          @click="copyQRCode"
+          :disabled="!inputContent"
+          block
+        >
+          {{ i18n.qrcodeCopy || '复制图片' }}
+        </Button>
+        <Button
+          variant="secondary"
+          icon="download"
+          @click="downloadQRCode"
+          :disabled="!inputContent"
+          block
+        >
+          {{ i18n.qrcodeDownload || '下载' }}
+        </Button>
+        <Button
+          variant="primary"
+          @click="closeDialog"
+          block
+        >
           {{ i18n.close || '关闭' }}
-        </button>
+        </Button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, computed } from 'vue'
 import QRCode from 'qrcode'
 import { showMessage } from 'siyuan'
+import Button from '@/components/Button.vue'
+import Textarea from '@/components/Textarea.vue'
+import Select, { type SelectOption } from '@/components/Select.vue'
 
 interface Props {
   visible: boolean
@@ -111,6 +131,13 @@ const qrcodeContainer = ref<HTMLDivElement>()
 const isGenerating = ref(false)
 const errorMessage = ref('')
 let lastGeneratedContent = ''
+
+const errorCorrectionOptions = computed<SelectOption[]>(() => [
+  { value: 'L', label: 'L (7%)' },
+  { value: 'M', label: 'M (15%)' },
+  { value: 'Q', label: 'Q (25%)' },
+  { value: 'H', label: 'H (30%)' }
+])
 
 // 监听props变化
 watch(() => props.content, (newContent) => {

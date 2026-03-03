@@ -52,16 +52,6 @@
   color: var(--b3-theme-primary);
 }
 
-.close-btn {
-  @include ft.close-btn;
-  padding: 4px;
-
-  .icon {
-    width: 18px;
-    height: 18px;
-  }
-}
-
 // ========================================
 // 对话框主体
 // ========================================
@@ -82,40 +72,6 @@
 // ========================================
 .input-section {
   @include ft.flex-column(6px);
-}
-
-.input-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--b3-theme-on-surface);
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-
-.content-input {
-  width: 100%;
-  min-height: 45px;
-  max-height: 80px;
-  padding: 8px;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: ft.$radius-sm;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  font-size: 14px;
-  line-height: 1.4;
-  resize: vertical;
-  outline: none;
-  transition: border-color ft.$transition-base;
-  overflow-wrap: break-word;
-  word-break: break-word;
-
-  &:focus {
-    border-color: var(--b3-theme-primary);
-  }
-
-  @media (max-width: ft.$breakpoint-md) {
-    font-size: 12px;
-  }
 }
 
 // ========================================
@@ -234,33 +190,6 @@
   font-weight: 600;
 }
 
-// 错误级别选择器
-.error-select {
-  padding: 5px 7px;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: ft.$radius-sm;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  font-size: 11px;
-  cursor: pointer;
-  outline: none;
-  transition: border-color ft.$transition-base;
-
-  &:focus {
-    border-color: var(--b3-theme-primary);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  @media (max-width: ft.$breakpoint-md) {
-    font-size: 12px;
-    padding: 6px 8px;
-  }
-}
-
 // ========================================
 // 对话框底部
 // ========================================
@@ -276,55 +205,5 @@
     flex-direction: column;
     gap: 8px;
     padding: 8px 10px;
-  }
-}
-
-// 按钮样式
-.btn-copy,
-.btn-download,
-.btn-close {
-  flex: 1;
-  padding: 7px 10px;
-  border: 1px solid var(--b3-theme-outline);
-  border-radius: ft.$radius-sm;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  @include ft.flex-center;
-  gap: 4px;
-  transition: all ft.$transition-base;
-
-  &:hover:not(:disabled) {
-    background: var(--b3-theme-primary);
-    color: var(--b3-theme-on-primary);
-    border-color: var(--b3-theme-primary);
-    transform: translateY(-1px);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  .btn-icon {
-    width: 12px;
-    height: 12px;
-  }
-
-  @media (max-width: ft.$breakpoint-md) {
-    font-size: 12px;
-    padding: 10px 12px;
-  }
-}
-
-.btn-close {
-  background: var(--b3-theme-primary);
-  color: var(--b3-theme-on-primary);
-  border-color: var(--b3-theme-primary);
-
-  &:hover {
-    opacity: 0.9;
   }
 }

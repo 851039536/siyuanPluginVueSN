@@ -1,26 +1,26 @@
 <template>
   <div class="appearance-settings">
     <h4>{{ i18n.appearanceSettings || '外观设置' }}</h4>
-    
+
     <div class="setting-list">
       <div class="setting-item">
         <label>{{ i18n.themeMode || '主题模式' }}</label>
-        <select v-model="themeMode" class="compact-select">
-          <option value="auto">{{ i18n.auto || '自动' }}</option>
-          <option value="light">{{ i18n.light || '浅色' }}</option>
-          <option value="dark">{{ i18n.dark || '深色' }}</option>
-        </select>
+        <SiSelect
+          v-model="themeMode"
+          :options="themeOptions"
+          class="compact-select"
+        />
       </div>
 
       <div class="setting-item">
         <label>{{ i18n.interfaceScale || '界面缩放' }}</label>
         <div class="input-group">
-          <input 
-            v-model.number="interfaceScale" 
-            type="number" 
-            min="80" 
-            max="150"
-            step="10"
+          <SiInput
+            v-model.number="interfaceScale"
+            type="number"
+            :min="80"
+            :max="150"
+            :step="10"
             class="compact-number"
           />
           <span>%</span>
@@ -29,17 +29,13 @@
 
       <div class="setting-item">
         <label>{{ i18n.showSidebar || '显示侧边栏' }}</label>
-        <input 
-          type="checkbox" 
-          v-model="showSidebar" 
-          class="compact-checkbox"
-        />
+        <SiSwitch v-model="showSidebar" />
       </div>
     </div>
 
     <div class="action-buttons">
-      <button @click="save" class="save-btn">{{ i18n.save || '保存' }}</button>
-      <button @click="reset" class="reset-btn">{{ i18n.reset || '重置' }}</button>
+      <SiButton @click="save" variant="primary">{{ i18n.save || '保存' }}</SiButton>
+      <SiButton @click="reset" variant="ghost">{{ i18n.reset || '重置' }}</SiButton>
     </div>
   </div>
 </template>
@@ -47,6 +43,10 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
 import { showMessage } from 'siyuan'
+import SiButton from '@/components/Button.vue'
+import SiSwitch from '@/components/Switch.vue'
+import SiInput from '@/components/Input.vue'
+import SiSelect from '@/components/Select.vue'
 
 interface Props {
   i18n?: any
@@ -67,6 +67,12 @@ const emit = defineEmits<Emits>()
 const themeMode = ref('auto')
 const interfaceScale = ref(100)
 const showSidebar = ref(true)
+
+const themeOptions = [
+  { value: 'auto', label: '自动' },
+  { value: 'light', label: '浅色' },
+  { value: 'dark', label: '深色' }
+]
 
 const DEFAULT_SETTINGS = {
   themeMode: 'auto',
@@ -117,7 +123,6 @@ function reset() {
   }
 }
 
-// 加载设置
 async function loadSettings() {
   if (props.plugin) {
     try {
@@ -178,53 +183,15 @@ onMounted(() => {
 }
 
 .compact-select {
-  padding: 4px 8px;
-  border: 1px solid var(--b3-theme-outline);
-  border-radius: 3px;
-  background: var(--b3-theme-surface-variant);
-  color: var(--b3-theme-on-surface-variant);
-  font-size: 12px;
+  min-width: 120px;
 }
 
 .compact-number {
-  width: 60px;
-  padding: 4px 6px;
-  border: 1px solid var(--b3-theme-outline);
-  border-radius: 3px;
-  background: var(--b3-theme-surface-variant);
-  color: var(--b3-theme-on-surface-variant);
-  font-size: 12px;
-  text-align: center;
-}
-
-.compact-checkbox {
-  width: 16px;
-  height: 16px;
+  width: 80px;
 }
 
 .action-buttons {
   display: flex;
   gap: 8px;
-}
-
-.save-btn,
-.reset-btn {
-  flex: 1;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 4px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.save-btn {
-  background: var(--b3-theme-primary);
-  color: var(--b3-theme-on-primary);
-}
-
-.reset-btn {
-  background: var(--b3-theme-surface-variant);
-  color: var(--b3-theme-on-surface-variant);
 }
 </style>

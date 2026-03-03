@@ -4,14 +4,10 @@
       <span class="label-icon">🖍️</span>
       {{ i18n?.enableHighlight || '双击高亮功能' }}
     </label>
-    <label class="toggle-switch">
-      <input
-        type="checkbox"
-        v-model="enableHighlight"
-        @change="handleToggleChange"
-      />
-      <span class="toggle-slider"></span>
-    </label>
+    <SiSwitch
+      v-model="enableHighlight"
+      @change="handleToggleChange"
+    />
     <p class="toggle-description">
       {{ i18n?.highlightDescription || '双击选中文本自动高亮显示' }}
     </p>
@@ -21,6 +17,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { showMessage } from 'siyuan'
+import SiSwitch from '@/components/Switch.vue'
 
 const props = defineProps<{
   i18n?: Record<string, string>
@@ -76,55 +73,6 @@ defineExpose({ loadSettings, enableHighlight })
 .label-icon {
   font-size: 14px;
   opacity: 0.8;
-}
-
-.toggle-switch {
-  position: relative;
-  display: inline-block;
-  width: 50px;
-  height: 28px;
-}
-
-.toggle-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.toggle-slider {
-  position: absolute;
-  inset: 0;
-  background-color: var(--b3-theme-surface-variant);
-  transition: 0.3s;
-  border-radius: 28px;
-  border: 2px solid var(--b3-theme-outline);
-  cursor: pointer;
-}
-
-.toggle-slider::before {
-  content: "";
-  position: absolute;
-  height: 20px;
-  width: 20px;
-  left: 2px;
-  bottom: 2px;
-  background-color: var(--b3-theme-background);
-  transition: 0.3s;
-  border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-input:checked + .toggle-slider {
-  background-color: var(--b3-theme-primary);
-  border-color: var(--b3-theme-primary);
-}
-
-input:checked + .toggle-slider::before {
-  transform: translateX(22px);
-}
-
-input:focus + .toggle-slider {
-  box-shadow: 0 0 0 3px rgba(var(--b3-theme-primary-rgb), 0.2);
 }
 
 .toggle-description {

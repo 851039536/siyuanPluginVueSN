@@ -55,7 +55,7 @@ export function injectLockPageStyles() {
       color: var(--b3-theme-primary);
     }
 
-    .icon-glow {
+    .icon-glow, .input-focus-effect, .btn-ripple {
       display: none;
     }
 
@@ -125,10 +125,6 @@ export function injectLockPageStyles() {
       opacity: 0.6;
     }
 
-    .input-focus-effect {
-      display: none;
-    }
-
     .button-container {
       position: relative;
     }
@@ -156,10 +152,6 @@ export function injectLockPageStyles() {
       background: var(--b3-theme-primary-dark);
     }
 
-    .btn-ripple {
-      display: none;
-    }
-
     @media (max-width: 480px) {
       .page-lock-mask__content {
         gap: 20px;
@@ -176,12 +168,8 @@ export function injectLockPageStyles() {
         font-size: 16px;
       }
 
-      .page-lock-mask__text {
+      .page-lock-mask__text, .hint-text, .page-lock-mask__input {
         font-size: 13px;
-      }
-
-      .hint-text {
-        font-size: 12px;
       }
 
       .enter-key {
@@ -196,7 +184,6 @@ export function injectLockPageStyles() {
 
       .page-lock-mask__input {
         padding: 9px 11px;
-        font-size: 13px;
       }
 
       .page-lock-mask__btn {

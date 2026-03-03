@@ -141,54 +141,28 @@ const onCancel = () => {
 @use '../styles/index.scss' as *;
 
 .compress-dialog-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  @include flex-center;
+  @include overlay-base;
   background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   z-index: 10000;
-  pointer-events: auto;
 }
 
 .compress-dialog {
   width: 90%;
   max-width: 500px;
-  background: var(--b3-theme-background);
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  overflow: hidden;
-  pointer-events: auto;
+  @include dialog-base;
 }
 
 .dialog-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--b3-border-color);
+  @include header-base;
 
   h3 {
-    margin: 0;
     font-size: 18px;
-    font-weight: 600;
-    color: var(--b3-theme-on-background);
   }
 
   .close-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
+    @include button-base;
     padding: 4px;
-    color: var(--b3-theme-on-background);
-    opacity: 0.6;
-
-    &:hover {
-      opacity: 1;
-    }
 
     .icon {
       width: 20px;
@@ -226,29 +200,11 @@ const onCancel = () => {
   border-left: 3px solid var(--b3-theme-primary);
 
   .stat-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-    font-size: 14px;
-    color: var(--b3-theme-on-background);
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-
-    .stat-value {
-      font-weight: 600;
-      color: var(--b3-theme-primary);
-    }
+    @include stat-row-base;
   }
 }
 
 .dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 16px 20px;
-  border-top: 1px solid var(--b3-border-color);
+  @include footer-base;
 }
 </style>

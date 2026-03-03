@@ -3,10 +3,15 @@ import { DEFAULT_OPTIONS } from '../types'
 export const CACHE_EXPIRE_TIME = DEFAULT_OPTIONS.cacheExpireTime
 export const MAX_CACHE_SIZE = DEFAULT_OPTIONS.maxCacheSize
 
-const maskCache = new Map<string, { element: HTMLElement; timestamp: number }>()
-const lockStateCache = new Map<string, { isLocked: boolean; timestamp: number }>()
+interface CacheEntry<T> {
+  value: T
+  timestamp: number
+}
 
-function cleanupSingleCache<T>(cache: Map<string, { value: T; timestamp: number }>) {
+const maskCache = new Map<string, CacheEntry<HTMLElement>>()
+const lockStateCache = new Map<string, CacheEntry<boolean>>()
+
+function cleanupSingleCache<T>(cache: Map<string, CacheEntry<T>>) {
   const now = Date.now()
   for (const [key, entry] of cache.entries()) {
     if (now - entry.timestamp > CACHE_EXPIRE_TIME) {
@@ -22,20 +27,20 @@ function cleanupSingleCache<T>(cache: Map<string, { value: T; timestamp: number 
 }
 
 export function cleanupCache() {
-  cleanupSingleCache(maskCache as unknown as Map<string, { value: unknown; timestamp: number }>)
-  cleanupSingleCache(lockStateCache as unknown as Map<string, { value: unknown; timestamp: number }>)
+  cleanupSingleCache(maskCache)
+  cleanupSingleCache(lockStateCache)
 }
 
 export async function getCachedLockState(docId: string): Promise<boolean | null> {
   const cached = lockStateCache.get(docId)
   if (cached && (Date.now() - cached.timestamp) < CACHE_EXPIRE_TIME) {
-    return cached.isLocked
+    return cached.value
   }
   return null
 }
 
 export function setCachedLockState(docId: string, isLocked: boolean) {
-  lockStateCache.set(docId, { isLocked, timestamp: Date.now() })
+  lockStateCache.set(docId, { value: isLocked, timestamp: Date.now() })
   cleanupCache()
 }
 
@@ -43,12 +48,12 @@ export function getCachedMask(docId: string): HTMLElement | null {
   const cached = maskCache.get(docId)
   if (cached && (Date.now() - cached.timestamp) < CACHE_EXPIRE_TIME) {
     cached.timestamp = Date.now()
-    return cached.element
+    return cached.value
   }
   return null
 }
 
 export function setCachedMask(docId: string, element: HTMLElement) {
-  maskCache.set(docId, { element, timestamp: Date.now() })
+  maskCache.set(docId, { value: element, timestamp: Date.now() })
   cleanupCache()
 }

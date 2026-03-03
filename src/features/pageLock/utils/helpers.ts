@@ -1,5 +1,4 @@
 import type { Plugin } from 'siyuan'
-import { reloadUI } from '@/api'
 
 let globalPassword: string | null = null
 const GLOBAL_PASSWORD_KEY = 'global-password'
@@ -34,21 +33,6 @@ export function getProtyleByDocId(docId: string): any {
   return protyle
 }
 
-export async function safeReloadUI() {
-  try {
-    await reloadUI()
-  } catch (error) {
-    console.warn('刷新思源界面失败:', error)
-  }
-}
-
-export async function reloadProtyle(_plugin: Plugin, protyle: any, docId: string) {
-  try {
-    const event = new CustomEvent('protyle-reload', {
-      detail: { docId, protyle }
-    })
-    document.dispatchEvent(event)
-  } catch (error) {
-    console.warn('刷新文档树失败:', error)
-  }
+export function getCurrentOrCachedProtyle(docId: string, fallbackProtyle?: any): any {
+  return getProtyleByDocId(docId) || fallbackProtyle
 }

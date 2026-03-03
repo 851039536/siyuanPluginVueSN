@@ -1,12 +1,16 @@
-export function injectLockPageStyles() {
-  const styleId = 'page-lock-styles'
+function injectStyle(styleId: string, styleContent: string) {
   if (document.getElementById(styleId)) {
     return
   }
 
   const style = document.createElement('style')
   style.id = styleId
-  style.textContent = `
+  style.textContent = styleContent
+  document.head.appendChild(style)
+}
+
+export function injectLockPageStyles() {
+  injectStyle('page-lock-styles', `
     .page-lock-mask--placeholder {
       background: var(--b3-theme-background);
       display: flex;
@@ -191,20 +195,11 @@ export function injectLockPageStyles() {
         font-size: 13px;
       }
     }
-  `
-
-  document.head.appendChild(style)
+  `)
 }
 
 export function injectButtonStyles() {
-  const styleId = 'page-lock-button-styles'
-  if (document.getElementById(styleId)) {
-    return
-  }
-
-  const style = document.createElement('style')
-  style.id = styleId
-  style.textContent = `
+  injectStyle('page-lock-button-styles', `
     .page-lock-button {
       display: flex;
       align-items: center;
@@ -245,7 +240,5 @@ export function injectButtonStyles() {
       align-items: center;
       gap: 2px;
     }
-  `
-
-  document.head.appendChild(style)
+  `)
 }

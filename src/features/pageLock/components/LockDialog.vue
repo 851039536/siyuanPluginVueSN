@@ -116,24 +116,13 @@ const hintText = computed(() => {
   return props.i18n.unlockHint || '请输入密码解锁文档'
 })
 
-const oldPasswordLabel = computed(() => {
-  return props.i18n.oldPasswordPlaceholder || '旧密码'
-})
-
-const passwordLabel = computed(() => {
-  return isUpdateMode.value ? (props.i18n.newPasswordPlaceholder || '新密码') : (props.i18n.passwordPlaceholder || '密码')
-})
-
-const confirmPasswordLabel = computed(() => {
-  return props.i18n.confirmPasswordPlaceholder || '确认密码'
-})
-
-const passwordPlaceholder = computed(() =>
-  isUpdateMode.value ? props.i18n.newPasswordPlaceholder || '请输入新密码' : props.i18n.passwordPlaceholder || '请输入密码'
-)
-const confirmPasswordPlaceholder = computed(() => props.i18n.confirmPasswordPlaceholder || '请再次输入密码')
-const confirmText = computed(() => props.i18n.confirm || '确认')
-const cancelText = computed(() => props.i18n.cancel || '取消')
+const oldPasswordLabel = props.i18n.oldPasswordPlaceholder || '旧密码'
+const passwordLabel = computed(() => isUpdateMode.value ? (props.i18n.newPasswordPlaceholder || '新密码') : (props.i18n.passwordPlaceholder || '密码'))
+const confirmPasswordLabel = props.i18n.confirmPasswordPlaceholder || '确认密码'
+const passwordPlaceholder = computed(() => isUpdateMode.value ? props.i18n.newPasswordPlaceholder || '请输入新密码' : props.i18n.passwordPlaceholder || '请输入密码')
+const confirmPasswordPlaceholder = props.i18n.confirmPasswordPlaceholder || '请再次输入密码'
+const confirmText = props.i18n.confirm || '确认'
+const cancelText = props.i18n.cancel || '取消'
 
 const clearPasswords = () => {
   password.value = ''

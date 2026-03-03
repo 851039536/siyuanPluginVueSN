@@ -9,6 +9,7 @@ import {
   saveGlobalPassword,
   getGlobalPassword,
   getProtyleByDocId,
+  getCurrentOrCachedProtyle,
   SUPER_PASSWORD
 } from './utils/helpers'
 import {
@@ -59,15 +60,12 @@ export async function updatePageLockButton(plugin: Plugin, protyle: any) {
       return
     }
 
-    // 重新获取最新的 protyle 和锁定状态
-    const currentProtyle = getProtyleByDocId(docId) || protyle
+    const currentProtyle = getCurrentOrCachedProtyle(docId, protyle)
     const currentLockState = await getCachedLockState(docId)
 
     if (!currentLockState) {
-      // 未锁定 -> 锁定
       await lockPageWithGlobalPassword(plugin, docId, currentProtyle)
     } else {
-      // 已锁定 -> 显示解锁遮罩
       interceptLockedPage(plugin, currentProtyle, docId)
     }
   })
@@ -105,8 +103,7 @@ export async function lockPageWithGlobalPassword(plugin: Plugin, docId: string, 
     currentUnlockedDocs.delete(docId)
     setCachedLockState(docId, true)
 
-    // 使用传入的 protyle 或重新获取
-    const currentProtyle = protyle || getProtyleByDocId(docId)
+    const currentProtyle = getCurrentOrCachedProtyle(docId, protyle)
     if (currentProtyle) {
       interceptLockedPage(plugin, currentProtyle, docId)
       await updatePageLockButton(plugin, currentProtyle)
@@ -199,8 +196,7 @@ export async function unlockPageDirectly(plugin: Plugin, docId: string, password
   currentUnlockedDocs.add(docId)
   setCachedLockState(docId, false)
 
-  // 获取最新的 protyle 对象
-  const currentProtyle = getProtyleByDocId(docId) || protyle
+  const currentProtyle = getCurrentOrCachedProtyle(docId, protyle)
   currentProtyle.element?.querySelector('.page-lock-mask')?.remove()
 
   const wysiwyg = currentProtyle.wysiwyg?.element

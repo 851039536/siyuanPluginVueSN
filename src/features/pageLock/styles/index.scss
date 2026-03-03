@@ -58,25 +58,10 @@
 }
 
 .page-lock-dialog__close {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--b3-theme-on-background);
-  opacity: 0.6;
-  border-radius: 4px;
-
-  &:hover {
-    opacity: 1;
-    background: var(--b3-theme-surface-lighter);
-  }
-
-  .icon {
-    width: 16px;
-    height: 16px;
+  .si-button {
+    padding: 0;
+    width: 32px;
+    height: 32px;
   }
 }
 
@@ -115,70 +100,7 @@
 .page-lock-dialog__field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-
-  .field-label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--b3-theme-on-surface);
-
-    .icon {
-      width: 14px;
-      height: 14px;
-      color: var(--b3-theme-primary);
-    }
-  }
-}
-
-.lock-icon {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  &::before {
-    content: '';
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: var(--b3-theme-primary);
-    opacity: 0;
-    z-index: 0;
-    transition: opacity 0.2s ease;
-  }
-}
-
-.page-lock-dialog__field:focus-within .lock-icon::before {
-  opacity: 0.1;
-}
-
-.page-lock-dialog__input {
-  padding: 10px 12px;
-  border: 1px solid var(--b3-border-color);
-  border-radius: 6px;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-surface);
-  font-size: 14px;
-  outline: none;
-  box-sizing: border-box;
-
-  &:focus {
-    border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 3px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1);
-  }
-
-  &::placeholder {
-    color: var(--b3-theme-on-surface-variant);
-    opacity: 0.6;
-  }
-
-  &:hover:not(:focus) {
-    border-color: var(--b3-theme-on-surface-variant);
-  }
+  gap: 0;
 }
 
 .page-lock-dialog__footer {
@@ -188,52 +110,6 @@
   padding: 16px 20px;
   background: var(--b3-theme-surface);
   border-top: 1px solid var(--b3-border-color);
-}
-
-.page-lock-dialog__btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  border: none;
-  outline: none;
-  white-space: nowrap;
-
-  .icon {
-    width: 14px;
-    height: 14px;
-  }
-
-  &--cancel {
-    background: var(--b3-theme-background);
-    color: var(--b3-theme-on-surface);
-    border: 1px solid var(--b3-border-color);
-
-    &:hover {
-      background: var(--b3-theme-surface-lighter);
-    }
-
-    &:active {
-      background: var(--b3-theme-surface);
-    }
-  }
-
-  &--confirm {
-    background: var(--b3-theme-primary);
-    color: var(--b3-theme-on-primary);
-
-    &:hover {
-      background: var(--b3-theme-primary-light);
-    }
-
-    &:active {
-      background: var(--b3-theme-primary-dark);
-    }
-  }
 }
 
 @media (max-width: 480px) {
@@ -260,15 +136,6 @@
     }
   }
 
-  .page-lock-dialog__field {
-    .field-label {
-      .icon {
-        width: 13px;
-        height: 13px;
-      }
-    }
-  }
-
   .page-lock-dialog__content {
     padding: 16px;
   }
@@ -282,17 +149,7 @@
     gap: 14px;
   }
 
-  .page-lock-dialog__input {
-    padding: 9px 11px;
-    font-size: 13px;
-  }
-
   .page-lock-dialog__footer {
     padding: 12px 16px;
-  }
-
-  .page-lock-dialog__btn {
-    padding: 7px 14px;
-    font-size: 13px;
   }
 }

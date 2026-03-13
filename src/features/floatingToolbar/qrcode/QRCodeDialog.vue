@@ -175,7 +175,6 @@ async function regenerateQRCode() {
     qrcodeContainer.value.appendChild(canvas)
     isGenerating.value = false
   } catch (error) {
-    console.error('生成二维码失败:', error)
     errorMessage.value = props.i18n.qrcodeGenerateFailed || '生成二维码失败'
     showMessage(errorMessage.value, 3000, 'error')
     isGenerating.value = false
@@ -204,16 +203,13 @@ async function copyQRCode() {
         navigator.clipboard.write([item]).then(() => {
           showMessage(props.i18n.qrcodeCopied || '二维码已复制到剪贴板', 3000, 'info')
         }).catch((err) => {
-          console.error('剪贴板写入失败:', err)
           showMessage(props.i18n.qrcodeCopyFailed || '复制失败', 3000, 'error')
         })
       } catch (err) {
-        console.error('复制错误:', err)
         showMessage(props.i18n.qrcodeCopyFailed || '复制失败', 3000, 'error')
       }
     })
   } catch (error) {
-    console.error('复制二维码失败:', error)
     showMessage(props.i18n.qrcodeCopyFailed || '复制失败', 3000, 'error')
   }
 }
@@ -245,11 +241,9 @@ function downloadQRCode() {
       document.body.removeChild(link)
       showMessage(props.i18n.qrcodeDownloaded || '二维码已下载', 3000, 'info')
     } catch (downloadErr) {
-      console.error('下载需要未捕获的错误:', downloadErr)
       showMessage(props.i18n.qrcodeDownloadFailed || '下载失败', 3000, 'error')
     }
   } catch (error) {
-    console.error('下载二维码失败:', error)
     showMessage(props.i18n.qrcodeDownloadFailed || '下载失败', 3000, 'error')
   }
 }

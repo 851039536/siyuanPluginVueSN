@@ -1,7 +1,6 @@
 import { Plugin } from 'siyuan';
 import { createApp, App as VueApp } from 'vue';
 import StatisticsPanel from './StatisticsPanel.vue';
-import { StatisticsCache } from './storage';
 import { readDir } from '@/api';
 
 const DAY_PERIOD_MAP: Record<number, string> = {
@@ -58,17 +57,15 @@ export class Statistics {
   private plugin: Plugin;
   private dockElement: HTMLElement | null = null;
   private vueApp: VueApp | null = null;
-  private viewMode: 'day' | 'week' | 'month' | 'year' | 'trend' | 'snapshot' = 'day'; // 当前查看模式
+  private viewMode: 'day' | 'week' | 'month' | 'year' | 'trend' = 'day'; // 当前查看模式
   private dayRange: 7 | 15 | 30 | 90 | 180 | 365 = 7; // 日视图的天数范围
   private monthYearRange: 1 | 2 | 3 = 1; // 月视图的年份范围
   private updateInterval: number = 60000; // 定时更新间隔（毫秒），默认1分钟
   private updateTimer: NodeJS.Timeout | null = null; // 定时器实例
   private lastUpdateTime: number = 0; // 上次更新时间戳
-  private cache: StatisticsCache; // 缓存管理器
 
   constructor(plugin: Plugin) {
     this.plugin = plugin;
-    this.cache = new StatisticsCache(plugin);
   }
 
   /**
@@ -152,7 +149,7 @@ export class Statistics {
     // 创建 Vue 应用
     this.vueApp = createApp(StatisticsPanel, {
       onRefresh: async (params: {
-        viewMode: 'day' | 'week' | 'month' | 'year' | 'trend' | 'snapshot'
+        viewMode: 'day' | 'week' | 'month' | 'year' | 'trend'
         dayRange?: 7 | 15 | 30 | 90 | 180 | 365
         monthYearRange?: 1 | 2 | 3
         selectedYear?: number
@@ -163,17 +160,10 @@ export class Statistics {
         if (params.monthYearRange) this.monthYearRange = params.monthYearRange;
         // selectedYear 由 getYearlyStats 方法内部使用，不需要存储
 
-        // 快照模式也需要获取统计数据以显示顶部卡片
         return await this.getStatistics();
       },
       onGetHistoricalData: async (days?: number) => {
         return await this.getHistoricalStatistics(days);
-      },
-      onGetSnapshots: async (count?: number) => {
-        return await this.cache.getRecentSnapshots(count || 20);
-      },
-      onClearSnapshots: async () => {
-        await this.cache.clearSnapshots();
       },
     });
 
@@ -192,7 +182,7 @@ export class Statistics {
 
       // 合并基础统计查询，减少 API 调用次数
       const combinedSql = `
-        SELECT 
+        SELECT
           (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d') as totalNotes,
           (SELECT SUM(LENGTH(content)) FROM blocks WHERE type = 'p' AND content IS NOT NULL AND content != '') as totalWords,
           (SELECT COUNT(*) FROM blocks WHERE type IN ('p', 'h', 'l', 'i', 't', 'c', 'html', 'query_embed')) as totalBlocks,
@@ -321,7 +311,7 @@ export class Statistics {
    */
   private async getTotalImages(): Promise<number> {
     const IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp'];
-    
+
     const isImageFile = (filename: string): boolean => {
       const ext = filename.toLowerCase().substring(filename.lastIndexOf('.'));
       return IMAGE_EXTENSIONS.includes(ext);
@@ -334,10 +324,10 @@ export class Statistics {
         if (!result) return 0;
 
         const files = Array.isArray(result) ? result : [result];
-        
+
         for (const file of files) {
           const fullPath = `${path}/${file.name}`;
-          
+
           if (file.isDir) {
             // 递归统计子目录
             count += await countImagesInDirectory(fullPath);
@@ -652,21 +642,6 @@ export class Statistics {
       }
 
       const stats = await this.getStatistics();
-
-      // 保存快照到缓存
-      await this.cache.addSnapshot({
-        timestamp: now,
-        totalNotes: stats.totalNotes,
-        totalWords: stats.totalWords,
-        totalBlocks: stats.totalBlocks,
-        totalAssets: stats.totalAssets,
-        totalImages: stats.totalImages,
-        totalTags: stats.totalTags,
-        totalBacklinks: stats.totalBacklinks,
-        todayCreated: stats.todayCreated,
-        todayModified: stats.todayModified,
-        avgWordsPerDoc: stats.avgWordsPerDoc
-      });
 
       // 保存到数据库（按日期）
       const today = new Date();

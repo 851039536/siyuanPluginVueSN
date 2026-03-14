@@ -69,7 +69,7 @@
 import { computed } from 'vue'
 
 interface Props {
-  modelValue?: 'day' | 'week' | 'month' | 'year' | 'trend' | 'snapshot'
+  modelValue?: 'day' | 'week' | 'month' | 'year' | 'trend'
   dayRange?: 7 | 15 | 30 | 90 | 180 | 365
   monthYearRange?: 1 | 2 | 3
   selectedYear?: number
@@ -81,7 +81,6 @@ interface Props {
     month: string
     year: string
     trend: string
-    snapshot: string
     avgLabel: string
     totalLabel: string
     wordsUnit: string
@@ -98,7 +97,7 @@ interface Props {
 }
 
 interface Emits {
-  (e: 'update:modelValue', value: 'day' | 'week' | 'month' | 'year' | 'trend' | 'snapshot'): void
+  (e: 'update:modelValue', value: 'day' | 'week' | 'month' | 'year' | 'trend'): void
   (e: 'update:dayRange', value: 7 | 15 | 30 | 90 | 180 | 365): void
   (e: 'update:monthYearRange', value: 1 | 2 | 3): void
   (e: 'update:selectedYear', value: number): void
@@ -118,7 +117,6 @@ const props = withDefaults(defineProps<Props>(), {
     month: '月',
     year: '年',
     trend: '趋势',
-    snapshot: '快照',
     avgLabel: '日均字数',
     totalLabel: '总字数',
     wordsUnit: '字',
@@ -142,7 +140,6 @@ const viewModes = computed(() => [
   { value: 'month' as const, label: props.i18n.month, icon: '📆' },
   { value: 'year' as const, label: props.i18n.year, icon: '📈' },
   { value: 'trend' as const, label: props.i18n.trend, icon: '📈' },
-  { value: 'snapshot' as const, label: props.i18n.snapshot, icon: '📸' },
 ])
 
 const dayRanges = computed(() => [
@@ -356,4 +353,3 @@ function formatNumber(num: number): string {
   }
 }
 </style>
-

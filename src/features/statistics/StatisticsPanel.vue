@@ -47,9 +47,9 @@
       />
 
       <div class="chart-section">
-        <h3 v-if="viewMode !== 'trend' && viewMode !== 'snapshot'" class="section-title">{{ chartTitle }}</h3>
+        <h3 v-if="viewMode !== 'trend'" class="section-title">{{ chartTitle }}</h3>
         <BarChart
-          v-if="viewMode !== 'trend' && viewMode !== 'snapshot'"
+          v-if="viewMode !== 'trend'"
           :title="chartTitle"
           :chart-data="chartData"
           :i18n="barChartI18n"
@@ -59,13 +59,6 @@
           v-if="viewMode === 'trend'"
           :historical-data="historicalData"
           :i18n="trendViewI18n"
-        />
-
-        <SnapshotView
-          v-if="viewMode === 'snapshot'"
-          :snapshot-data="snapshotData"
-          :i18n="snapshotViewI18n"
-          @clear="clearSnapshots"
         />
       </div>
     </div>
@@ -81,18 +74,15 @@ import ExtendedStatsCards from './components/ExtendedStatsCards.vue'
 import ViewModeSection from './components/ViewModeSection.vue'
 import BarChart from './components/BarChart.vue'
 import TrendView from './components/TrendView.vue'
-import SnapshotView from './components/SnapshotView.vue'
 
 interface Props {
   onRefresh?: (params: {
-    viewMode: 'day' | 'week' | 'month' | 'year' | 'trend' | 'snapshot'
+    viewMode: 'day' | 'week' | 'month' | 'year' | 'trend'
     dayRange?: 7 | 15 | 30 | 90 | 180 | 365
     monthYearRange?: 1 | 2 | 3
     selectedYear?: number
   }) => Promise<StatisticsData>
   onGetHistoricalData?: (days?: number) => Promise<any[]>
-  onGetSnapshots?: (count?: number) => Promise<any[]>
-  onClearSnapshots?: () => Promise<void>
   i18n?: {
     loading: string
     refresh: string
@@ -112,7 +102,6 @@ interface Props {
     month: string
     year: string
     trend: string
-    snapshot: string
     avgLabel: string
     totalLabel: string
     wordsUnit: string
@@ -138,15 +127,9 @@ interface Props {
     created: string
     modified: string
     change: string
-    snapshotTitle: string
-    clearTitle: string
-    savedCount: string
-    latest: string
     blocks: string
     assets: string
     changeLabel: string
-    emptySnapshot: string
-    confirmClear: string
   }
 }
 
@@ -194,7 +177,6 @@ const props = withDefaults(defineProps<Props>(), {
     month: '月',
     year: '年',
     trend: '趋势',
-    snapshot: '快照',
     avgLabel: '日均字数',
     totalLabel: '总字数',
     wordsUnit: '字',
@@ -220,37 +202,27 @@ const props = withDefaults(defineProps<Props>(), {
     created: '新增',
     modified: '修改',
     change: '变化',
-    snapshotTitle: '快照分析',
-    clearTitle: '清除快照',
-    savedCount: '已保存',
-    latest: '最新',
     blocks: '块',
     assets: '附件',
     changeLabel: '变化',
-    emptySnapshot: '还没有快照数据，等待系统自动收集...',
-    confirmClear: '确认清除所有快照数据吗？',
   }),
 })
 
-// 状态
 const loading = ref(false)
 const stats = ref<StatisticsData | null>(null)
 const lastUpdateTime = ref('')
-const viewMode = ref<'day' | 'week' | 'month' | 'year' | 'trend' | 'snapshot'>('day')
+const viewMode = ref<'day' | 'week' | 'month' | 'year' | 'trend'>('day')
 const dayRange = ref<7 | 15 | 30 | 90 | 180 | 365>(7)
 const monthYearRange = ref<1 | 2 | 3>(1)
 const selectedYear = ref<number>(new Date().getFullYear())
 const chartData = ref<DailyWordCount[]>([])
 const historicalData = ref<any[]>([])
-const snapshotData = ref<any[]>([])
 const updateInterval = ref(60)
 
-// I18n 分组 - 简化映射
 const headerI18n = computed(() => props.i18n)
 const statsCardsI18n = computed(() => props.i18n)
 const extendedCardsI18n = computed(() => props.i18n)
 const barChartI18n = computed(() => props.i18n)
-
 const viewModeI18n = computed(() => props.i18n)
 
 const trendViewI18n = computed(() => ({
@@ -258,19 +230,10 @@ const trendViewI18n = computed(() => ({
   title: props.i18n.trendTitle,
 }))
 
-const snapshotViewI18n = computed(() => ({
-  ...props.i18n,
-  title: props.i18n.snapshotTitle,
-  emptyMessage: props.i18n.emptySnapshot,
-}))
-
-
-// 图表标题
 const chartTitle = computed(() => {
   return stats.value?.currentPeriod || ''
 })
 
-// 计算时段平均每日字数
 const periodAvgWords = computed(() => {
   if (!chartData.value || chartData.value.length === 0) return 0
 
@@ -280,12 +243,10 @@ const periodAvgWords = computed(() => {
   return days > 0 ? Math.round(totalWords / days) : 0
 })
 
-// 监听视图模式变化
 watch(viewMode, () => {
   refreshData()
 })
 
-// 刷新数据
 async function refreshData() {
   if (!props.onRefresh) return
 
@@ -300,14 +261,8 @@ async function refreshData() {
     chartData.value = stats.value.dailyStats || []
     lastUpdateTime.value = new Date().toLocaleString('zh-CN')
 
-    // 如果是趋势视图，获取历史数据
     if (viewMode.value === 'trend') {
       await loadHistoricalData()
-    }
-
-    // 如果是快照视图，加载快照数据
-    if (viewMode.value === 'snapshot') {
-      await loadSnapshotData()
     }
   } catch (error) {
     console.error('刷新统计数据失败:', error)
@@ -316,10 +271,8 @@ async function refreshData() {
   }
 }
 
-// 加载历史数据
 async function loadHistoricalData() {
   if (!props.onGetHistoricalData) return
-
   try {
     const data = await props.onGetHistoricalData()
     historicalData.value = data.reverse()
@@ -328,36 +281,11 @@ async function loadHistoricalData() {
   }
 }
 
-// 加载快照数据
-async function loadSnapshotData() {
-  if (!props.onGetSnapshots) return
-
-  try {
-    snapshotData.value = await props.onGetSnapshots(50)
-  } catch (error) {
-    console.error('加载快照数据失败:', error)
-  }
-}
-
-// 清除快照数据
-async function clearSnapshots() {
-  if (!props.onClearSnapshots) return
-
-  try {
-    await props.onClearSnapshots()
-    snapshotData.value = []
-  } catch (error) {
-    console.error('清除快照数据失败:', error)
-  }
-}
-
-// 初始化
 onMounted(() => {
   loading.value = true
   refreshData()
 })
 
-// 暴露方法给父组件
 defineExpose({
   refreshData,
 })

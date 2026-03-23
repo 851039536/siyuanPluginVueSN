@@ -11,6 +11,7 @@ export const THRESHOLDS: Thresholds = {
 }
 
 export const MONITOR_INTERVAL_MS = 3000
+export const STATISTICS_INTERVAL_MS = 60000 // 统计数据更新间隔（1分钟）
 export const INITIAL_DELAY_MS = 2000
 export const DEFAULT_TOTAL_MEMORY_GB = 8
 
@@ -19,4 +20,6 @@ export interface SystemMonitorState {
   memPercent: number
   uptimeSeconds: number
   showMonitor: boolean
+  totalNotes: number
+  totalWords: number
 }

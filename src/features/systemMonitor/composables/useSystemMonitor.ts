@@ -2,6 +2,7 @@ import { ref, computed, reactive, onMounted, onUnmounted } from 'vue'
 import {
   THRESHOLDS,
   MONITOR_INTERVAL_MS,
+  STATISTICS_INTERVAL_MS,
   INITIAL_DELAY_MS,
   DEFAULT_TOTAL_MEMORY_GB,
   type ResourceLevel,
@@ -23,7 +24,9 @@ export function useSystemMonitor() {
     cpuPercent: 0,
     memPercent: 0,
     uptimeSeconds: 0,
-    showMonitor: false
+    showMonitor: false,
+    totalNotes: 0,
+    totalWords: 0
   })
 
   const monitorElement = ref<HTMLElement | null>(null)
@@ -31,6 +34,7 @@ export function useSystemMonitor() {
   let timeoutId: ReturnType<typeof setTimeout> | null = null
   let lastCPU: NodeJS.CpuUsage | null = null
   let lastTime: number | null = null
+  let statisticsIntervalId: ReturnType<typeof setInterval> | null = null
 
   const cpuUsageDisplay = computed(() => `${Math.round(state.cpuPercent)}%`)
 
@@ -42,6 +46,25 @@ export function useSystemMonitor() {
   const uptimeDisplay = computed(() => {
     const { hours, minutes } = formatUptime(state.uptimeSeconds)
     return hours > 0 ? `${hours}h${minutes}m` : `${minutes}m`
+  })
+
+  const totalNotesDisplay = computed(() => {
+    const count = state.totalNotes
+    if (count >= 10000) return `${(count / 10000).toFixed(1)}w`
+    if (count >= 1000) return `${(count / 1000).toFixed(1)}k`
+    return String(count)
+  })
+
+  const totalWordsDisplay = computed(() => {
+    const count = state.totalWords
+    if (count >= 100000000) return `${(count / 100000000).toFixed(1)}亿`
+    if (count >= 10000) return `${(count / 10000).toFixed(1)}万`
+    if (count >= 1000) return `${(count / 1000).toFixed(1)}k`
+    return String(count)
+  })
+
+  const statisticsTooltip = computed(() => {
+    return `文档数: ${state.totalNotes} 篇\n总字数: ${state.totalWords.toLocaleString()} 字`
   })
 
   const systemInfoTooltip = computed(() => {
@@ -58,6 +81,28 @@ export function useSystemMonitor() {
 
   const cpuLevel = computed(() => getLevel(state.cpuPercent, THRESHOLDS.CPU))
   const memLevel = computed(() => getLevel(state.memPercent, THRESHOLDS.MEM))
+
+  async function fetchStatistics() {
+    try {
+      const sql = `
+        SELECT
+          (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d') as totalNotes,
+          (SELECT SUM(LENGTH(content)) FROM blocks WHERE type = 'p' AND content IS NOT NULL AND content != '') as totalWords
+      `
+      const response = await fetch('/api/query/sql', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stmt: sql })
+      })
+      const data = await response.json()
+      if (data.code === 0 && data.data?.[0]) {
+        state.totalNotes = Number(data.data[0].totalNotes || 0)
+        state.totalWords = Number(data.data[0].totalWords || 0)
+      }
+    } catch (error) {
+      console.error('获取统计数据失败:', error)
+    }
+  }
 
   function updateStats() {
     if (typeof process === 'undefined') return
@@ -87,10 +132,20 @@ export function useSystemMonitor() {
     intervalId = setInterval(updateStats, MONITOR_INTERVAL_MS)
   }
 
+  function startStatistics() {
+    if (statisticsIntervalId) return
+    fetchStatistics()
+    statisticsIntervalId = setInterval(fetchStatistics, STATISTICS_INTERVAL_MS)
+  }
+
   function stop() {
     if (intervalId) {
       clearInterval(intervalId)
       intervalId = null
+    }
+    if (statisticsIntervalId) {
+      clearInterval(statisticsIntervalId)
+      statisticsIntervalId = null
     }
   }
 
@@ -113,6 +168,7 @@ export function useSystemMonitor() {
       requestAnimationFrame(() => {
         if (tryInsertToStatusBar()) {
           start()
+          startStatistics()
         }
       })
     }, INITIAL_DELAY_MS)
@@ -131,6 +187,9 @@ export function useSystemMonitor() {
     uptimeDisplay,
     systemInfoTooltip,
     cpuLevel,
-    memLevel
+    memLevel,
+    totalNotesDisplay,
+    totalWordsDisplay,
+    statisticsTooltip
   }
 }

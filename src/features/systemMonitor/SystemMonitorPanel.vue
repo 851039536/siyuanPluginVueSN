@@ -5,6 +5,16 @@
     class="status__resUsage"
     :title="systemInfoTooltip"
   >
+    <div class="monitor-item statistics-item" :title="statisticsTooltip">
+      <Icon icon="ph:file-text" class="monitor-icon" />
+      <span class="monitor-value">{{ totalNotesDisplay }}</span>
+    </div>
+
+    <div class="monitor-item statistics-item" :title="statisticsTooltip">
+      <Icon icon="ph:text-aa" class="monitor-icon" />
+      <span class="monitor-value">{{ totalWordsDisplay }}</span>
+    </div>
+
     <div class="monitor-item" :data-level="cpuLevel">
       <Icon icon="ph:cpu" class="monitor-icon" />
       <span class="monitor-value">{{ cpuUsageDisplay }}</span>
@@ -44,7 +54,10 @@ const {
   uptimeDisplay,
   systemInfoTooltip,
   cpuLevel,
-  memLevel
+  memLevel,
+  totalNotesDisplay,
+  totalWordsDisplay,
+  statisticsTooltip
 } = useSystemMonitor()
 
 const handleOpenPasswordVault = () => {

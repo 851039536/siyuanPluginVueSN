@@ -49,8 +49,22 @@
   }
 
   // 特定项目样式
-  .monitor-item:nth-child(1) { color: var(--b3-theme-primary); } // CPU
-  .monitor-item:nth-child(2) { color: var(--b3-theme-secondary); } // MEM
+  .monitor-item:nth-child(1) { color: var(--b3-theme-primary); } // 文档数
+  .monitor-item:nth-child(2) { color: var(--b3-theme-secondary); } // 字数
+  .monitor-item:nth-child(3) { color: var(--b3-theme-primary); } // CPU
+  .monitor-item:nth-child(4) { color: var(--b3-theme-secondary); } // MEM
+
+  // 统计项样式
+  .statistics-item {
+    color: var(--b3-theme-on-surface);
+    opacity: 0.7;
+    cursor: default;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+
   .uptime-item {
     color: var(--b3-theme-on-surface);
     opacity: 0.6;

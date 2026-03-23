@@ -278,6 +278,25 @@ export class TableOfContentsManager {
       // 生成内容
       let content = '## 📋 子文档大纲\n\n'
 
+      // 优化：一次性查询所有子文档的标题，避免 N+1 查询问题
+      const subDocIds = subDocs.map(d => `'${escapeSqlString(d.id)}'`).join(',')
+      const allHeadings = await api.sql(`
+        SELECT id, root_id, content, subtype, sort
+        FROM blocks
+        WHERE root_id IN (${subDocIds})
+        AND type = 'h'
+        ORDER BY root_id, sort ASC
+      `)
+
+      // 按文档ID分组标题
+      const headingMap = new Map<string, any[]>()
+      for (const h of (allHeadings || [])) {
+        if (!headingMap.has(h.root_id)) {
+          headingMap.set(h.root_id, [])
+        }
+        headingMap.get(h.root_id)!.push(h)
+      }
+
       for (let i = 0; i < subDocs.length; i++) {
         const subDoc = subDocs[i]
         const docName = subDoc.content.replace(/<[^>]*>/g, '')
@@ -285,13 +304,8 @@ export class TableOfContentsManager {
         // 使用引用块语法，添加图标美化
         content += `### 📄 ((${subDoc.id} "${docName}"))\n\n`
 
-        // 获取子文档的大纲(标题)
-        const headings = await api.sql(`
-          SELECT * FROM blocks
-          WHERE root_id = '${escapeSqlString(subDoc.id)}'
-          AND type = 'h'
-          ORDER BY sort ASC
-        `)
+        // 从预查询结果中获取该子文档的标题
+        const headings = headingMap.get(subDoc.id)
 
         if (headings && headings.length > 0) {
           for (const heading of headings) {

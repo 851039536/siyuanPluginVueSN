@@ -3,11 +3,6 @@
  * 使用 AES-GCM 加密算法和 PBKDF2 密钥派生
  */
 
-import type { StoredPasswordEntry } from '../types'
-
-// 重新导出类型，保持向后兼容
-export type EncryptedPasswordEntry = StoredPasswordEntry
-
 /**
  * 加密配置
  */

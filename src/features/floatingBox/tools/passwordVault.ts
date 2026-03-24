@@ -1,5 +1,5 @@
 import type { FloatingTool } from '../types'
-import { togglePasswordVault } from '../../passwordVault'
+import { togglePasswordVault } from '../../passwordVault/types'
 
 export function createPasswordVaultTool(plugin?: any): FloatingTool {
   return {

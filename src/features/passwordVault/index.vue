@@ -351,9 +351,10 @@ import Button from '@/components/Button.vue'
 import Input from '@/components/Input.vue'
 import Textarea from '@/components/Textarea.vue'
 import Select from '@/components/Select.vue'
-import PasswordVaultLogin from './PasswordVaultLogin.vue'
-import HelpDialog from './HelpDialog.vue'
+import PasswordVaultLogin from './components/PasswordVaultLogin.vue'
+import HelpDialog from './components/HelpDialog.vue'
 import type { PasswordEntry, PasswordCategory, StoredPasswordEntry } from './types'
+import { PasswordVaultStorage, STORAGE_KEYS } from './types/storage'
 import { usePlugin } from '@/main'
 import {
   deriveKey,
@@ -361,7 +362,7 @@ import {
   decryptPassword,
   hashMasterPassword,
   generateVerifySalt
-} from './crypto'
+} from './utils/crypto'
 
 // Props
 interface Props {
@@ -379,13 +380,8 @@ const emit = defineEmits<{
 // 获取插件实例
 const plugin = usePlugin()
 
-// 存储键
-const MASTER_PASSWORD_KEY = 'password-vault-master-password'
-const VERIFY_SALT_KEY = 'password-vault-verify-salt'
-const ENCRYPTION_SALT_KEY = 'password-vault-encryption-salt'
-const ENTRIES_KEY = 'password-vault-entries'
-const CATEGORIES_KEY = 'password-vault-categories'
-const PASSWORD_HINT_KEY = 'password-vault-hint'
+// 存储管理器
+const storage = new PasswordVaultStorage(plugin)
 
 // 状态
 const isLoggedIn = ref(false)
@@ -456,16 +452,12 @@ const categoriesMap = computed(() => {
 // 加载保存的密码验证信息
 async function loadMasterPasswordHash() {
   try {
-    const [storedHash, storedVerifySalt, storedEncryptSalt, storedHint] = await Promise.all([
-      plugin.loadData(MASTER_PASSWORD_KEY),
-      plugin.loadData(VERIFY_SALT_KEY),
-      plugin.loadData(ENCRYPTION_SALT_KEY),
-      plugin.loadData(PASSWORD_HINT_KEY)
-    ])
+    const { hash, verifySalt, encryptionSalt: encSalt, hint } = await storage.loadVerificationData()
 
-    if (storedHash && storedVerifySalt && storedEncryptSalt) {
-      savedHash.value = storedHash as string
-      passwordHint.value = (storedHint as string) || ''
+    if (hash && verifySalt && encSalt) {
+      savedHash.value = hash
+      passwordHint.value = hint || ''
+      encryptionSalt.value = encSalt
       isFirstTime.value = false
     } else {
       isFirstTime.value = true
@@ -492,12 +484,12 @@ async function handleLogin(inputPassword: string, hint?: string) {
     }
 
     // 保存验证信息和加密盐值
-    await Promise.all([
-      plugin.saveData(MASTER_PASSWORD_KEY, hash),
-      plugin.saveData(VERIFY_SALT_KEY, verifySalt),
-      plugin.saveData(ENCRYPTION_SALT_KEY, encryptSalt),
-      passwordHint.value ? plugin.saveData(PASSWORD_HINT_KEY, passwordHint.value) : Promise.resolve()
-    ])
+    await storage.saveInitData({
+      hash,
+      verifySalt,
+      encryptionSalt: encryptSalt,
+      hint: passwordHint.value
+    })
 
     savedHash.value = hash
     encryptionSalt.value = encryptSalt
@@ -511,10 +503,13 @@ async function handleLogin(inputPassword: string, hint?: string) {
     await loadCategories()
   } else {
     // 验证密码 - 获取保存的盐值
-    const [verifySalt, encryptSalt] = await Promise.all([
-      plugin.loadData(VERIFY_SALT_KEY),
-      plugin.loadData(ENCRYPTION_SALT_KEY)
-    ]) as [string, string]
+    const verifySalt = await storage.loadVerifySalt()
+    const encryptSalt = await storage.loadEncryptionSalt()
+
+    if (!verifySalt || !encryptSalt) {
+      loginError.value = '数据损坏，请联系开发者'
+      return
+    }
 
     const hash = await hashMasterPassword(inputPassword, verifySalt)
 
@@ -626,7 +621,12 @@ async function handleChangePassword() {
 
   try {
     // 获取当前验证盐值
-    const verifySalt = await plugin.loadData(VERIFY_SALT_KEY) as string
+    const verifySalt = await storage.loadVerifySalt()
+    if (!verifySalt) {
+      changePasswordError.value = '数据损坏'
+      return
+    }
+    
     const oldHash = await hashMasterPassword(oldPassword.value, verifySalt)
 
     // 验证旧密码
@@ -663,10 +663,10 @@ async function handleChangePassword() {
 
     // 保存所有新数据
     await Promise.all([
-      plugin.saveData(MASTER_PASSWORD_KEY, newHash),
-      plugin.saveData(VERIFY_SALT_KEY, newVerifySalt),
-      plugin.saveData(ENCRYPTION_SALT_KEY, newEncryptSalt),
-      plugin.saveData(ENTRIES_KEY, reEncryptedEntries)
+      storage.saveMasterPasswordHash(newHash),
+      storage.saveVerifySalt(newVerifySalt),
+      storage.saveEncryptionSalt(newEncryptSalt),
+      storage.saveEntries(reEncryptedEntries)
     ])
 
     // 更新状态
@@ -685,12 +685,11 @@ async function handleChangePassword() {
 // 加载条目（解密密码）
 async function loadEntries() {
   try {
-    const stored = await plugin.loadData(ENTRIES_KEY)
+    const stored = await storage.loadEntries()
     if (stored && encryptionKey.value) {
-      const storedEntries = stored as StoredPasswordEntry[]
       // 解密所有条目的密码
       entries.value = await Promise.all(
-        storedEntries.map(async (entry) => ({
+        stored.map(async (entry) => ({
           ...entry,
           password: await decryptPassword(entry.encryptedPassword, entry.iv, encryptionKey.value!)
         }))
@@ -707,9 +706,9 @@ async function loadEntries() {
 // 加载分类
 async function loadCategories() {
   try {
-    const stored = await plugin.loadData(CATEGORIES_KEY)
+    const stored = await storage.loadCategories()
     if (stored) {
-      categories.value = stored as PasswordCategory[]
+      categories.value = stored
     }
   } catch (error) {
     console.error('Failed to load categories:', error)
@@ -740,7 +739,7 @@ async function saveEntries() {
         }
       })
     )
-    await plugin.saveData(ENTRIES_KEY, storedEntries)
+    await storage.saveEntries(storedEntries)
   } catch (error) {
     console.error('Failed to save entries:', error)
   }
@@ -749,7 +748,7 @@ async function saveEntries() {
 // 保存分类
 async function saveCategories() {
   try {
-    await plugin.saveData(CATEGORIES_KEY, categories.value)
+    await storage.saveCategories(categories.value)
   } catch (error) {
     console.error('Failed to save categories:', error)
   }
@@ -1018,5 +1017,5 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@use './PasswordVaultDialog.scss';
+@use './styles/index.scss';
 </style>

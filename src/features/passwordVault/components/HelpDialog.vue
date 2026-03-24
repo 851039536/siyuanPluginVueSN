@@ -94,5 +94,5 @@ const close = () => {
 </script>
 
 <style lang="scss" scoped>
-@use './HelpDialog.scss';
+@use '../styles/help.scss';
 </style>

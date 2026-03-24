@@ -44,7 +44,7 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
 import { useSystemMonitor } from './composables/useSystemMonitor'
-import { showPasswordVault } from '../passwordVault'
+import { showPasswordVault } from '../passwordVault/types'
 
 const {
   state,

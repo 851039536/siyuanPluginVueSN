@@ -54,7 +54,7 @@ import ImageViewer from '@/features/imageCompressor/index.vue'
 import { QRCodeDialog, PronunciationDialog } from '@/features/floatingToolbar'
 import VideoManager from '@/features/video/VideoManager.vue'
 import EverythingSearchDialog from '@/features/everythingSearch/EverythingSearchDialog.vue'
-import PasswordVaultDialog from '@/features/passwordVault/PasswordVaultDialog.vue'
+import PasswordVaultDialog from '@/features/passwordVault/index.vue'
 import { everythingSearchVisible, hideEverythingSearch, passwordVaultVisible, hidePasswordVault } from '@/features'
 import type PluginSample from '@/index'
 

@@ -144,5 +144,5 @@ watch(() => props.isFirstTime, async () => {
 </script>
 
 <style lang="scss" scoped>
-@use './PasswordVaultLogin.scss';
+@use '../styles/login.scss';
 </style>

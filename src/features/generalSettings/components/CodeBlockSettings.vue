@@ -585,6 +585,6 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
-@use "./CodeBlockSettings.scss";
+@use "./styles/CodeBlockSettings.scss";
 
 </style>

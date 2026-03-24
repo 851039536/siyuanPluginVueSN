@@ -187,5 +187,5 @@ defineExpose({
 </script>
 
 <style lang="scss" scoped>
-@use './GeneralActions.scss';
+@use "./styles/GeneralActions.scss";
 </style>

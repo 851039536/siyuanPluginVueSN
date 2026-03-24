@@ -152,6 +152,16 @@
     h2 {
       @include heading-style;
     }
+
+    .entry-count {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--b3-theme-on-surface-light);
+      background: var(--b3-theme-surface-light);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-family: $font-body;
+    }
   }
 }
 

@@ -21,6 +21,7 @@
                 <div class="header-title">
                   <IconWrapper name="settings" :size="22" />
                   <h2>密码箱</h2>
+                  <span class="entry-count">{{ filteredEntries.length }}/{{ entries.length }}条</span>
                 </div>
                 <div class="header-actions">
                   <Button class="help-btn" icon="help" variant="ghost" size="small" @click="showHelpDialog = true" title="使用说明" />

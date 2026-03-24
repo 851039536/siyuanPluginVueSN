@@ -21,24 +21,8 @@
 // ============================================================
 
 .dialog-header {
-  @include flex-row-gap(10px);
-  justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--b3-border-color);
-  background: var(--b3-theme-surface);
+  @include dialog-header;
   flex-shrink: 0;
-
-  .header-title {
-    @include flex-row-gap(10px);
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--b3-theme-on-background);
-    font-family: $font-heading;
-
-    :deep(.icon-wrapper) {
-      color: var(--b3-theme-primary);
-    }
-  }
 }
 
 // ============================================================
@@ -132,17 +116,7 @@
 // ============================================================
 
 .error-message {
-  @include flex-row-gap(8px);
-  padding: 10px 14px;
-  background: rgba($brand-orange, 0.1);
-  color: $brand-orange;
-  border: 1px solid $brand-orange;
-  border-radius: 6px;
-  font-size: 13px;
-
-  :deep(.icon-wrapper) {
-    color: $brand-orange;
-  }
+  @include error-message;
 }
 
 // ============================================================

@@ -941,25 +941,21 @@ const togglePasswordVisibility = (id: string) => {
   showPasswords.value[id] = !showPasswords.value[id]
 }
 
-// 复制账号
-const copyAccount = async (account: string) => {
+// 通用复制函数
+const copyToClipboard = async (text: string, label: string) => {
   try {
-    await navigator.clipboard.writeText(account)
-    showMessage('账号已复制', 2000, 'info')
-  } catch (error) {
+    await navigator.clipboard.writeText(text)
+    showMessage(`${label}已复制`, 2000, 'info')
+  } catch {
     showMessage('复制失败', 2000, 'error')
   }
 }
 
+// 复制账号
+const copyAccount = (account: string) => copyToClipboard(account, '账号')
+
 // 复制密码
-const copyPassword = async (password: string) => {
-  try {
-    await navigator.clipboard.writeText(password)
-    showMessage('密码已复制', 2000, 'info')
-  } catch (error) {
-    showMessage('复制失败', 2000, 'error')
-  }
-}
+const copyPassword = (password: string) => copyToClipboard(password, '密码')
 
 // 关闭弹窗
 const closeDialog = () => {

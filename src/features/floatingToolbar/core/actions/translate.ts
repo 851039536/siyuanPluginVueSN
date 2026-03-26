@@ -3,7 +3,7 @@
  * 将选中的英文翻译成中文并自动替换当前内容
  */
 import { Plugin } from 'siyuan'
-import { ToolbarAction } from '../actions'
+import { ToolbarAction } from '../../types'
 import { showMessage, getSelectedBlockId, isEnglishText } from '../utils'
 
 /**

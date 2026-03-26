@@ -1,5 +1,5 @@
 import { Plugin } from 'siyuan'
-import { ToolbarAction, ToolbarActionManager } from './actions'
+import { ToolbarAction, ToolbarActionManager } from '../types'
 import { showI18nMessage } from './utils'
 
 /**

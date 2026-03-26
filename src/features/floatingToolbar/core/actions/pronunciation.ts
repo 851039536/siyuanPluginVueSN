@@ -3,7 +3,7 @@
  * 为选中的英文单词生成谐音记忆
  */
 import { Plugin } from 'siyuan'
-import { ToolbarAction } from '../actions'
+import { ToolbarAction } from '../../types'
 import { showI18nMessage, dispatchDialogEvent } from '../utils'
 
 /**

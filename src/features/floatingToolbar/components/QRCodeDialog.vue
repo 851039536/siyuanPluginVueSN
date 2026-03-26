@@ -256,5 +256,5 @@ function closeDialog() {
 </script>
 
 <style lang="scss">
-@use "./index.scss";
+@use "./styles/qrcode.scss";
 </style>

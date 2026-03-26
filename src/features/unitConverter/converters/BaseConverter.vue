@@ -1,32 +1,26 @@
 <template>
   <div class="base-converter">
-    <div class="converter-input">
-      <label>输入值</label>
-      <input
-        v-model="inputValue"
-        type="text"
-        @input="convert"
-        placeholder="请输入数值"
-      />
-    </div>
+    <Input
+      v-model="inputValue"
+      type="text"
+      label="输入值"
+      placeholder="请输入数值"
+      @input="convert"
+    />
 
-    <div class="converter-from">
-      <label>从进制</label>
-      <select v-model="fromBase" @change="convert">
-        <option v-for="base in bases" :key="base.value" :value="base.value">
-          {{ base.name }} ({{ base.value }})
-        </option>
-      </select>
-    </div>
+    <Select
+      v-model="fromBase"
+      :options="baseOptions"
+      label="从进制"
+      @change="convert"
+    />
 
-    <div class="converter-to">
-      <label>到进制</label>
-      <select v-model="toBase" @change="convert">
-        <option v-for="base in bases" :key="base.value" :value="base.value">
-          {{ base.name }} ({{ base.value }})
-        </option>
-      </select>
-    </div>
+    <Select
+      v-model="toBase"
+      :options="baseOptions"
+      label="到进制"
+      @change="convert"
+    />
 
     <div class="converter-result" v-if="result && !error">
       <div class="result-value">
@@ -67,6 +61,8 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import Input from '@/components/Input.vue'
+import Select from '@/components/Select.vue'
 
 interface I18n {
   inputValue?: string
@@ -97,6 +93,13 @@ const bases = [
   { value: 32, name: '三十二进制' },
   { value: 36, name: '三十六进制' }
 ]
+
+const baseOptions = computed(() => 
+  bases.map(base => ({
+    value: base.value,
+    label: `${base.name} (${base.value})`
+  }))
+)
 
 const usageInfo = [
   { base: 2, name: '二进制', chars: '0-1' },
@@ -165,35 +168,6 @@ const convert = () => {
   display: flex;
   flex-direction: column;
   gap: 16px;
-
-  .converter-input,
-  .converter-from,
-  .converter-to {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-
-    label {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--b3-theme-on-surface);
-    }
-
-    input,
-    select {
-      padding: 8px 12px;
-      border: 1px solid var(--b3-border-color);
-      border-radius: 4px;
-      background: var(--b3-theme-surface);
-      color: var(--b3-theme-on-surface);
-      font-size: 14px;
-
-      &:focus {
-        outline: none;
-        border-color: var(--b3-primary);
-      }
-    }
-  }
 
   .converter-result {
     padding: 16px;

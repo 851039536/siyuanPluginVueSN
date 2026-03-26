@@ -1,33 +1,26 @@
 <template>
   <div class="mass-converter">
-    <div class="converter-input">
-      <label>输入值</label>
-      <input 
-        v-model="inputValue" 
-        type="number" 
-        step="any"
-        @input="convert"
-        placeholder="请输入数值"
-      />
-    </div>
+    <Input
+      v-model="inputValue"
+      type="number"
+      label="输入值"
+      placeholder="请输入数值"
+      @input="convert"
+    />
 
-    <div class="converter-from">
-      <label>从单位</label>
-      <select v-model="fromUnit" @change="convert">
-        <option v-for="unit in units" :key="unit.key" :value="unit.key">
-          {{ unit.name }} ({{ unit.symbol }})
-        </option>
-      </select>
-    </div>
+    <Select
+      v-model="fromUnit"
+      :options="unitOptions"
+      label="从单位"
+      @change="convert"
+    />
 
-    <div class="converter-to">
-      <label>到单位</label>
-      <select v-model="toUnit" @change="convert">
-        <option v-for="unit in units" :key="unit.key" :value="unit.key">
-          {{ unit.name }} ({{ unit.symbol }})
-        </option>
-      </select>
-    </div>
+    <Select
+      v-model="toUnit"
+      :options="unitOptions"
+      label="到单位"
+      @change="convert"
+    />
 
     <div class="converter-result" v-if="result !== null">
       <div class="result-value">
@@ -55,6 +48,8 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import Input from '@/components/Input.vue'
+import Select from '@/components/Select.vue'
 
 interface I18n {
   inputValue?: string
@@ -91,6 +86,13 @@ const units = [
   { key: 'quarter', name: '四分之一英担', symbol: 'qr', factor: 12.7006 },
   { key: 'hundredweight', name: '英担', symbol: 'cwt', factor: 50.8023 }
 ]
+
+const unitOptions = computed(() => 
+  units.map(unit => ({
+    value: unit.key,
+    label: `${unit.name} (${unit.symbol})`
+  }))
+)
 
 const getUnitFactor = (unitKey: string) => {
   const unit = units.find(u => u.key === unitKey)
@@ -133,35 +135,6 @@ const convert = () => {
   display: flex;
   flex-direction: column;
   gap: 16px;
-
-  .converter-input,
-  .converter-from,
-  .converter-to {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-
-    label {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--b3-theme-on-surface);
-    }
-
-    input,
-    select {
-      padding: 8px 12px;
-      border: 1px solid var(--b3-border-color);
-      border-radius: 4px;
-      background: var(--b3-theme-surface);
-      color: var(--b3-theme-on-surface);
-      font-size: 14px;
-
-      &:focus {
-        outline: none;
-        border-color: var(--b3-primary);
-      }
-    }
-  }
 
   .converter-result {
     padding: 16px;

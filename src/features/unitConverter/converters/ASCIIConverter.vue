@@ -2,15 +2,13 @@
   <div class="ascii-converter">
     <div class="converter-section">
       <h4>文本转ASCII</h4>
-      <div class="input-group">
-        <label>输入文本</label>
-        <textarea
-          v-model="textInput"
-          @input="convertTextToAscii"
-          placeholder="请输入要转换的文本"
-          rows="3"
-        ></textarea>
-      </div>
+      <Textarea
+        v-model="textInput"
+        label="输入文本"
+        placeholder="请输入要转换的文本"
+        :rows="3"
+        @input="convertTextToAscii"
+      />
       <div class="output-group" v-if="asciiResult">
         <label>ASCII结果</label>
         <div class="ascii-output">{{ asciiResult }}</div>
@@ -19,15 +17,13 @@
 
     <div class="converter-section">
       <h4>ASCII转文本</h4>
-      <div class="input-group">
-        <label>输入ASCII码</label>
-        <textarea
-          v-model="asciiInput"
-          @input="convertAsciiToText"
-          placeholder="请输入ASCII码，用空格或逗号分隔"
-          rows="3"
-        ></textarea>
-      </div>
+      <Textarea
+        v-model="asciiInput"
+        label="输入ASCII码"
+        placeholder="请输入ASCII码，用空格或逗号分隔"
+        :rows="3"
+        @input="convertAsciiToText"
+      />
       <div class="output-group" v-if="textResult">
         <label>文本结果</label>
         <div class="text-output">{{ textResult }}</div>
@@ -39,19 +35,17 @@
       <div class="ascii-table-controls">
         <label>表格范围</label>
         <div class="range-controls">
-          <input
+          <Input
             v-model="tableStart"
             type="number"
-            min="0"
-            max="127"
+            size="small"
             @input="updateAsciiTable"
           />
           <span>-</span>
-          <input
+          <Input
             v-model="tableEnd"
             type="number"
-            min="0"
-            max="127"
+            size="small"
             @input="updateAsciiTable"
           />
         </div>
@@ -91,6 +85,8 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import Input from '@/components/Input.vue'
+import Textarea from '@/components/Textarea.vue'
 
 interface I18n {
   textToAscii?: string
@@ -219,32 +215,16 @@ const updateAsciiTable = () => {
       color: var(--b3-theme-on-surface);
     }
 
-    .input-group,
     .output-group {
       display: flex;
       flex-direction: column;
       gap: 4px;
-      margin-bottom: 12px;
+      margin-top: 12px;
 
       label {
         font-size: 12px;
         font-weight: 500;
         color: var(--b3-theme-on-surface);
-      }
-
-      textarea {
-        padding: 8px 12px;
-        border: 1px solid var(--b3-border-color);
-        border-radius: 4px;
-        background: var(--b3-theme-background);
-        color: var(--b3-theme-on-surface);
-        font-size: 14px;
-        resize: vertical;
-
-        &:focus {
-          outline: none;
-          border-color: var(--b3-primary);
-        }
       }
 
       .ascii-output,
@@ -276,21 +256,6 @@ const updateAsciiTable = () => {
         display: flex;
         align-items: center;
         gap: 8px;
-
-        input {
-          width: 80px;
-          padding: 6px 8px;
-          border: 1px solid var(--b3-border-color);
-          border-radius: 4px;
-          background: var(--b3-theme-background);
-          color: var(--b3-theme-on-surface);
-          font-size: 12px;
-
-          &:focus {
-            outline: none;
-            border-color: var(--b3-primary);
-          }
-        }
 
         span {
           color: var(--b3-theme-on-surface);

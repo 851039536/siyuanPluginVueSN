@@ -5,14 +5,15 @@
     </div>
     
     <div class="converter-tabs">
-      <button 
+      <Button
         v-for="tab in tabs" 
         :key="tab.key"
-        :class="['tab-button', { active: activeTab === tab.key }]"
+        :variant="activeTab === tab.key ? 'primary' : 'ghost'"
+        size="small"
         @click="activeTab = tab.key"
       >
         {{ tab.name }}
-      </button>
+      </Button>
     </div>
 
     <div class="converter-content">
@@ -71,6 +72,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import Button from '@/components/Button.vue'
 import LengthConverter from './converters/LengthConverter.vue'
 import AreaConverter from './converters/AreaConverter.vue'
 import VolumeConverter from './converters/VolumeConverter.vue'
@@ -136,26 +138,6 @@ const tabs = [
     margin-bottom: 16px;
     border-bottom: 1px solid var(--b3-border-color);
     padding-bottom: 8px;
-
-    .tab-button {
-      padding: 6px 12px;
-      border: none;
-      background: transparent;
-      color: var(--b3-theme-on-surface);
-      cursor: pointer;
-      border-radius: 4px 4px 0 0;
-      font-size: 12px;
-      transition: all 0.2s ease;
-
-      &:hover {
-        background: var(--b3-theme-surface);
-      }
-
-      &.active {
-        background: var(--b3-primary);
-        color: var(--b3-on-primary);
-      }
-    }
   }
 
   .converter-content {

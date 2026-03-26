@@ -23,16 +23,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  
-  // 按钮图标样式
-  .btn,
-  .icon-btn {
-    .icon {
-      width: 14px;
-      height: 14px;
-    }
-  }
-  
+
   .video-header {
     display: flex;
     justify-content: space-between;
@@ -276,17 +267,12 @@
     align-items: center;
     padding: 16px 20px;
     border-bottom: 1px solid var(--b3-border-color);
-    
+
     h3 {
       margin: 0;
       font-size: 16px;
       font-weight: 600;
       color: var(--b3-theme-on-background);
-    }
-    
-    .icon-btn .icon {
-      width: 14px;
-      height: 14px;
     }
   }
   
@@ -308,7 +294,7 @@
 // 表单样式
 .form-group {
   margin-bottom: 16px;
-  
+
   label {
     display: block;
     margin-bottom: 8px;
@@ -316,27 +302,7 @@
     font-weight: 500;
     color: var(--b3-theme-on-background);
   }
-  
-  .b3-text-field {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid var(--b3-border-color);
-    border-radius: var(--b3-border-radius);
-    background: var(--b3-theme-surface);
-    color: var(--b3-theme-on-background);
-    font-size: 14px;
-    
-    &:focus {
-      outline: none;
-      border-color: var(--b3-theme-primary);
-    }
-    
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-  }
-  
+
   .file-info {
     padding: 8px 12px;
     background: var(--b3-theme-surface);
@@ -524,15 +490,6 @@
       text-overflow: ellipsis;
       white-space: nowrap;
       font-size: 13px;
-    }
-
-    .icon-btn {
-      padding: 2px 4px;
-
-      .icon {
-        width: 12px;
-        height: 12px;
-      }
     }
   }
 

@@ -2,24 +2,22 @@
   <div class="dialog-footer">
     <div class="config-section">
       <span class="config-label">服务地址:</span>
-      <input
+      <Input
         :model-value="config.host"
-        @input="updateConfig('host', ($event.target as HTMLInputElement).value)"
         type="text"
-        class="config-input"
+        size="small"
         placeholder="localhost"
         aria-label="服务地址"
+        @update:model-value="updateConfig('host', $event as string)"
       />
       <span class="config-label">端口:</span>
-      <input
+      <Input
         :model-value="config.port"
-        @input="updateConfig('port', Number(($event.target as HTMLInputElement).value))"
         type="number"
-        class="config-input port-input"
+        size="small"
         placeholder="80"
         aria-label="服务端口"
-        min="1"
-        max="65535"
+        @update:model-value="updateConfig('port', Number($event))"
       />
     </div>
     <div class="footer-actions">
@@ -29,6 +27,7 @@
 </template>
 
 <script setup lang="ts">
+import Input from '@/components/Input.vue'
 import type { EverythingConfig } from '../types'
 
 interface Props {
@@ -77,26 +76,6 @@ const updateConfig = (key: keyof EverythingConfig, value: EverythingConfig[keyof
   font-family: $font-body;
   color: $brand-mid-gray;
   white-space: nowrap;
-}
-
-.config-input {
-  padding: 3px 6px;
-  width: 75px;
-  border: 1px solid var(--b3-border-color);
-  border-radius: 3px;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  font-size: 11px;
-  font-family: $font-body;
-
-  &:focus {
-    outline: none;
-    border-color: $brand-orange;
-  }
-}
-
-.port-input {
-  width: 45px;
 }
 
 .footer-actions {

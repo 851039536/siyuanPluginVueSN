@@ -1,88 +1,121 @@
 <template>
   <div class="search-options">
     <!-- 自动搜索选项 -->
-    <label class="option-item checkbox-option">
-      <input type="checkbox" :checked="options.autoSearch" @change="updateOption('autoSearch', ($event.target as HTMLInputElement).checked)" />
-      <span>自动搜索</span>
-    </label>
+    <div class="option-item">
+      <Switch
+        :model-value="options.autoSearch"
+        size="small"
+        label="自动搜索"
+        @update:model-value="updateOption('autoSearch', $event)"
+      />
+    </div>
 
     <!-- 区分大小写 -->
-    <label class="option-item checkbox-option">
-      <input type="checkbox" :checked="options.matchCase" @change="updateOption('matchCase', ($event.target as HTMLInputElement).checked)" />
-      <span>区分大小写</span>
-    </label>
+    <div class="option-item">
+      <Switch
+        :model-value="options.matchCase"
+        size="small"
+        label="区分大小写"
+        @update:model-value="updateOption('matchCase', $event)"
+      />
+    </div>
 
     <!-- 全词匹配 -->
-    <label class="option-item checkbox-option">
-      <input type="checkbox" :checked="options.matchWholeWord" @change="updateOption('matchWholeWord', ($event.target as HTMLInputElement).checked)" />
-      <span>全词匹配</span>
-    </label>
+    <div class="option-item">
+      <Switch
+        :model-value="options.matchWholeWord"
+        size="small"
+        label="全词匹配"
+        @update:model-value="updateOption('matchWholeWord', $event)"
+      />
+    </div>
 
     <!-- 匹配路径 -->
-    <label class="option-item checkbox-option">
-      <input type="checkbox" :checked="options.matchPath" @change="updateOption('matchPath', ($event.target as HTMLInputElement).checked)" />
-      <span>匹配路径</span>
-    </label>
+    <div class="option-item">
+      <Switch
+        :model-value="options.matchPath"
+        size="small"
+        label="匹配路径"
+        @update:model-value="updateOption('matchPath', $event)"
+      />
+    </div>
 
     <!-- 正则表达式 -->
-    <label class="option-item checkbox-option">
-      <input type="checkbox" :checked="options.regex" @change="updateOption('regex', ($event.target as HTMLInputElement).checked)" />
-      <span>正则表达式</span>
-    </label>
+    <div class="option-item">
+      <Switch
+        :model-value="options.regex"
+        size="small"
+        label="正则表达式"
+        @update:model-value="updateOption('regex', $event)"
+      />
+    </div>
 
     <!-- 最大结果数 -->
     <div class="option-item select-option">
-      <span>最大结果:</span>
-      <select :value="options.maxResults" @change="updateOption('maxResults', Number(($event.target as HTMLSelectElement).value))" class="results-select">
-        <option :value="50">50</option>
-        <option :value="100">100</option>
-        <option :value="200">200</option>
-        <option :value="500">500</option>
-      </select>
+      <span class="option-label">最大结果:</span>
+      <Select
+        :model-value="options.maxResults"
+        :options="maxResultsOptions"
+        size="small"
+        @update:model-value="updateOption('maxResults', $event as number)"
+      />
     </div>
 
     <!-- 防抖延迟（仅自动搜索时显示） -->
     <div v-if="options.autoSearch" class="option-item select-option debounce-delay">
-      <span>延迟:</span>
-      <select :value="options.debounceDelay" @change="updateOption('debounceDelay', Number(($event.target as HTMLSelectElement).value))" class="delay-select">
-        <option :value="200">200ms</option>
-        <option :value="500">500ms</option>
-        <option :value="1000">1s</option>
-      </select>
+      <span class="option-label">延迟:</span>
+      <Select
+        :model-value="options.debounceDelay"
+        :options="debounceOptions"
+        size="small"
+        @update:model-value="updateOption('debounceDelay', $event as number)"
+      />
     </div>
 
     <!-- 排序选项 -->
     <div class="option-item select-option sort-option">
-      <span>排序:</span>
-      <select :value="options.sort" @change="updateOption('sort', ($event.target as HTMLSelectElement).value)" class="sort-select">
-        <option value="date_modified">修改时间</option>
-        <option value="name">名称</option>
-        <option value="path">路径</option>
-        <option value="size">大小</option>
-      </select>
-      <label class="ascending-label">
-        <input type="checkbox" :checked="options.ascending" @change="updateOption('ascending', ($event.target as HTMLInputElement).checked)" />
-        <span>升序</span>
-      </label>
+      <span class="option-label">排序:</span>
+      <Select
+        :model-value="options.sort"
+        :options="sortOptions"
+        size="small"
+        @update:model-value="updateOption('sort', $event as string)"
+      />
+      <Switch
+        :model-value="options.ascending"
+        size="small"
+        label="升序"
+        @update:model-value="updateOption('ascending', $event)"
+      />
     </div>
 
     <!-- 盘符过滤 -->
     <div class="option-item select-option drive-filter">
-      <span>盘符:</span>
-      <select :value="options.selectedDrive" @change="handleDriveChange" class="drive-select">
-        <option value="">所有盘符</option>
-        <option v-for="drive in availableDrives" :key="drive" :value="drive">
-          {{ drive }}
-        </option>
-      </select>
-      <button class="refresh-drives-btn" @click="handleRefreshDrives" title="刷新盘符列表" aria-label="刷新盘符列表">
-        <span class="refresh-icon">🔄</span>
-      </button>
+      <span class="option-label">盘符:</span>
+      <Select
+        :model-value="options.selectedDrive"
+        :options="driveOptions"
+        size="small"
+        @update:model-value="handleDriveChange"
+      />
+      <Button
+        variant="ghost"
+        size="small"
+        icon="refresh"
+        :icon-size="12"
+        title="刷新盘符列表"
+        aria-label="刷新盘符列表"
+        @click="handleRefreshDrives"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import Switch from '@/components/Switch.vue'
+import Select from '@/components/Select.vue'
+import Button from '@/components/Button.vue'
 import type { SearchOptions } from '../types'
 
 interface Props {
@@ -101,15 +134,43 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
+/** 最大结果选项 */
+const maxResultsOptions = computed(() => [
+  { value: 50, label: '50' },
+  { value: 100, label: '100' },
+  { value: 200, label: '200' },
+  { value: 500, label: '500' }
+])
+
+/** 防抖延迟选项 */
+const debounceOptions = computed(() => [
+  { value: 200, label: '200ms' },
+  { value: 500, label: '500ms' },
+  { value: 1000, label: '1s' }
+])
+
+/** 排序选项 */
+const sortOptions = computed(() => [
+  { value: 'date_modified', label: '修改时间' },
+  { value: 'name', label: '名称' },
+  { value: 'path', label: '路径' },
+  { value: 'size', label: '大小' }
+])
+
+/** 盘符选项 */
+const driveOptions = computed(() => [
+  { value: '', label: '所有盘符' },
+  ...props.availableDrives.map(drive => ({ value: drive, label: drive }))
+])
+
 /** 更新选项 */
 const updateOption = (key: keyof SearchOptions, value: SearchOptions[keyof SearchOptions]) => {
   emit('update:options', key, value)
 }
 
 /** 处理盘符变化 */
-const handleDriveChange = (event: Event) => {
-  const value = (event.target as HTMLSelectElement).value
-  emit('driveChange', value)
+const handleDriveChange = (value: string | number | boolean | null) => {
+  emit('driveChange', String(value || ''))
 }
 
 /** 处理刷新盘符 */
@@ -139,49 +200,15 @@ const handleRefreshDrives = () => {
   color: var(--b3-theme-on-surface);
 }
 
-.checkbox-option {
-  cursor: pointer;
-}
-
-.option-item input[type="checkbox"] {
-  width: 12px;
-  height: 12px;
-  cursor: pointer;
-  accent-color: $brand-orange;
-}
-
-.select-option span {
+.option-label {
   white-space: nowrap;
+  font-size: 12px;
 }
 
-.results-select,
-.delay-select,
-.sort-select,
-.drive-select {
-  padding: 2px 6px;
-  border: 1px solid var(--b3-border-color);
-  border-radius: 3px;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  font-size: 11px;
-  font-family: $font-body;
-  cursor: pointer;
-}
-
-.results-select:hover,
-.delay-select:hover,
-.sort-select:hover,
-.drive-select:hover {
-  border-color: $brand-orange;
-}
-
-.results-select:focus,
-.delay-select:focus,
-.sort-select:focus,
-.drive-select:focus {
-  outline: none;
-  border-color: $brand-orange;
-  box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.1);
+.select-option {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .debounce-delay {
@@ -194,41 +221,9 @@ const handleRefreshDrives = () => {
   gap: 4px;
 }
 
-.ascending-label {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  cursor: pointer;
-}
-
 .drive-filter {
   display: flex;
   align-items: center;
   gap: 4px;
-}
-
-.refresh-drives-btn {
-  padding: 3px;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
-  border-radius: 3px;
-  cursor: pointer;
-  color: var(--b3-theme-on-surface);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 20px;
-}
-
-.refresh-drives-btn:hover {
-  background: $brand-blue;
-  border-color: $brand-blue;
-  color: $brand-light;
-}
-
-.refresh-icon {
-  font-size: 11px;
-  line-height: 1;
 }
 </style>

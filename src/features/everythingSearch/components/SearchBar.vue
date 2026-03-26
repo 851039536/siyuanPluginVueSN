@@ -1,30 +1,37 @@
 <template>
   <div class="search-bar">
     <div class="search-input-wrapper">
-      <svg class="search-icon"><use xlink:href="#iconSearch"></use></svg>
-      <input
+      <IconWrapper name="search" :size="14" class="search-icon" />
+      <Input
         ref="inputRef"
         :model-value="modelValue"
-        @input="handleInput"
         type="text"
-        class="search-input"
+        size="small"
         :placeholder="placeholder"
-        @keyup.enter="handleSearchKey"
-        @keyup.esc="handleEscapeKey"
+        :show-clear="true"
+        :clearable="true"
+        @update:model-value="handleInput"
+        @keydown="handleKeydown"
+        @clear="handleClear"
       />
-      <button v-if="modelValue" class="clear-btn" @click="handleClear" aria-label="清除搜索">
-        <svg class="clear-icon"><use xlink:href="#iconClose"></use></svg>
-      </button>
     </div>
-    <button class="search-btn" @click="handleSearch" :disabled="isSearching || !modelValue?.trim()">
-      <span v-if="isSearching" class="loading-spinner"></span>
-      <span v-else>{{ searchButtonText }}</span>
-    </button>
+    <Button
+      variant="primary"
+      size="small"
+      :disabled="isSearching || !modelValue?.trim()"
+      :loading="isSearching"
+      @click="handleSearch"
+    >
+      {{ searchButtonText }}
+    </Button>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
+import Input from '@/components/Input.vue'
+import Button from '@/components/Button.vue'
+import IconWrapper from '@/components/IconWrapper.vue'
 
 interface Props {
   /** 搜索关键词 */
@@ -51,26 +58,23 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
-const inputRef = ref<HTMLInputElement | null>(null)
+const inputRef = ref<InstanceType<typeof Input> | null>(null)
 
 /** 搜索按钮文本 */
 const searchButtonText = computed(() => props.autoSearch ? '立即搜索' : '搜索')
 
 /** 处理输入 */
-const handleInput = (event: Event) => {
-  emit('update:modelValue', (event.target as HTMLInputElement).value)
+const handleInput = (value: string | number | null) => {
+  emit('update:modelValue', String(value || ''))
 }
 
-/** 处理搜索按键 */
-const handleSearchKey = () => {
-  if (!props.autoSearch) {
+/** 处理键盘事件 */
+const handleKeydown = (event: KeyboardEvent) => {
+  if (event.key === 'Enter' && !props.autoSearch) {
     emit('search')
+  } else if (event.key === 'Escape') {
+    emit('escape')
   }
-}
-
-/** 处理 Escape 键 */
-const handleEscapeKey = () => {
-  emit('escape')
 }
 
 /** 处理清除 */
@@ -112,85 +116,12 @@ defineExpose({
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 10px;
-  background: var(--b3-theme-background);
-  border: 1px solid var(--b3-border-color);
-  border-radius: 6px;
-}
-
-.search-input-wrapper:focus-within {
-  border-color: $brand-orange;
-  box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.1);
+  padding: 0 4px;
+  background: transparent;
 }
 
 .search-icon {
-  width: 14px;
-  height: 14px;
   color: $brand-mid-gray;
   flex-shrink: 0;
-}
-
-.search-input {
-  flex: 1;
-  border: none;
-  background: transparent;
-  color: var(--b3-theme-on-background);
-  font-size: 13px;
-  font-family: $font-body;
-  outline: none;
-}
-
-.search-input::placeholder {
-  color: $brand-mid-gray;
-}
-
-.clear-btn {
-  padding: 3px;
-  background: transparent;
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
-  color: $brand-mid-gray;
-}
-
-.clear-btn:hover {
-  color: $brand-orange;
-  background: rgba(217, 119, 87, 0.1);
-}
-
-.clear-icon {
-  width: 12px;
-  height: 12px;
-}
-
-.search-btn {
-  padding: 6px 14px;
-  background: $brand-orange;
-  color: $brand-light;
-  border: none;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  font-family: $font-heading;
-  cursor: pointer;
-  min-width: 65px;
-}
-
-.search-btn:hover:not(:disabled) {
-  background: shade($brand-orange, 10%);
-}
-
-.search-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.loading-spinner {
-  width: 13px;
-  height: 13px;
-  border: 2px solid rgba(250, 249, 245, 0.3);
-  border-top-color: $brand-light;
-  border-radius: 50%;
-  display: inline-block;
 }
 </style>

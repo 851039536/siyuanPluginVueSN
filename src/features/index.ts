@@ -9,7 +9,7 @@ export { registerShortcut, addCustomShortcut, addCustomShortcuts, getShortcutMan
 export { registerWordQuery } from './wordQuery'
 export { registerGeneralSettings } from './generalSettings/types'
 export { registerUnitConverter } from './unitConverter'
-export { registerSuperPanel } from './superPanel'
+export { registerSuperPanel } from './superPanel/types'
 export { registerDiskBrowser } from './diskBrowser'
 export { registerCodeImageGenerator } from './codeImageGenerator/types'
 export { registerAIContentGenerator } from './aiContentGenerator/types'

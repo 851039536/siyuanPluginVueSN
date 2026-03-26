@@ -67,14 +67,7 @@ import AiModelSelect from './AiModelSelect.vue'
 import ApiKeyInput from './ApiKeyInput.vue'
 import SettingGroup from './SettingGroup.vue'
 import TextInput from './TextInput.vue'
-
-export interface AiSettings {
-  provider: string
-  model: string
-  customModel: string
-  apiKey: string
-  customEndpoint: string
-}
+import type { AiSettings } from '../types'
 
 interface Props {
   visible: boolean

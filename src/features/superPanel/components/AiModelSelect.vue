@@ -7,11 +7,11 @@
       @change="handleModelChange"
     >
       <optgroup
-        v-if="getAvailableModels().common.length > 0"
+        v-if="availableModels.common.length > 0"
         :label="i18n.commonModels || '常用模型'"
       >
         <option
-          v-for="model in getAvailableModels().common"
+          v-for="model in availableModels.common"
           :key="model.value"
           :value="model.value"
         >
@@ -19,11 +19,11 @@
         </option>
       </optgroup>
       <optgroup
-        v-if="getAvailableModels().all.length > 0"
+        v-if="availableModels.all.length > 0"
         :label="i18n.allModels || '全部模型'"
       >
         <option
-          v-for="model in getAvailableModels().all"
+          v-for="model in availableModels.all"
           :key="model.value"
           :value="model.value"
         >
@@ -117,9 +117,10 @@ const emit = defineEmits<Emits>()
 
 const showCustomInput = computed(() => props.modelValue === 'custom')
 
-const getAvailableModels = () => {
+// 使用 computed 缓存模型配置，避免每次渲染都创建新对象
+const availableModels = computed(() => {
   return AI_MODELS_CONFIG[props.provider] || { common: [], all: [] }
-}
+})
 
 const handleModelChange = (event: Event) => {
   const target = event.target as HTMLSelectElement
@@ -132,5 +133,5 @@ const handleCustomModelChange = (value: string) => {
 </script>
 
 <style scoped lang="scss">
-@use '../styles/index.scss' as *;
+@use '../styles/index.scss';
 </style>

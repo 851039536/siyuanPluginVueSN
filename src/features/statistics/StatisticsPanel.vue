@@ -32,6 +32,10 @@
         :today-created="stats.todayCreated"
         :today-modified="stats.todayModified"
         :avg-words-per-doc="stats.avgWordsPerDoc"
+        :yesterday-created="yesterdayCreated"
+        :yesterday-modified="yesterdayModified"
+        :created-change="createdChange"
+        :modified-change="modifiedChange"
         :i18n="extendedCardsI18n"
       />
 
@@ -221,13 +225,19 @@ const updateInterval = ref(60)
 
 const headerI18n = computed(() => props.i18n)
 const statsCardsI18n = computed(() => props.i18n)
-const extendedCardsI18n = computed(() => props.i18n)
+const extendedCardsI18n = computed(() => ({
+  ...props.i18n,
+  vsYesterday: '较昨日',
+}))
 const barChartI18n = computed(() => props.i18n)
 const viewModeI18n = computed(() => props.i18n)
 
 const trendViewI18n = computed(() => ({
   ...props.i18n,
   title: props.i18n.trendTitle,
+  dayOverDay: '日环比',
+  weekOverWeek: '周环比',
+  monthOverMonth: '月环比',
 }))
 
 const chartTitle = computed(() => {
@@ -242,6 +252,52 @@ const periodAvgWords = computed(() => {
 
   return days > 0 ? Math.round(totalWords / days) : 0
 })
+
+// 计算昨日数据
+const yesterdayCreated = computed(() => {
+  if (!historicalData.value || historicalData.value.length < 2) return null
+  // historicalData 是按日期倒序排列的，第一个是最新
+  // 我们需要找到昨天的数据
+  const today = new Date()
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+  const yesterdayStr = `${yesterday.getFullYear()}-${padZero(yesterday.getMonth() + 1)}-${padZero(yesterday.getDate())}`
+
+  const yesterdayData = historicalData.value.find(item => item.date === yesterdayStr)
+  return yesterdayData?.todayCreated ?? null
+})
+
+const yesterdayModified = computed(() => {
+  if (!historicalData.value || historicalData.value.length < 2) return null
+  const today = new Date()
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+  const yesterdayStr = `${yesterday.getFullYear()}-${padZero(yesterday.getMonth() + 1)}-${padZero(yesterday.getDate())}`
+
+  const yesterdayData = historicalData.value.find(item => item.date === yesterdayStr)
+  return yesterdayData?.todayModified ?? null
+})
+
+// 计算变化百分比
+const createdChange = computed(() => {
+  if (yesterdayCreated.value === null || yesterdayCreated.value === 0) {
+    return stats.value?.todayCreated ? 100 : null // 如果昨天为0，今天有数据则显示100%
+  }
+  if (stats.value?.todayCreated === undefined) return null
+  return ((stats.value.todayCreated - yesterdayCreated.value) / yesterdayCreated.value) * 100
+})
+
+const modifiedChange = computed(() => {
+  if (yesterdayModified.value === null || yesterdayModified.value === 0) {
+    return stats.value?.todayModified ? 100 : null
+  }
+  if (stats.value?.todayModified === undefined) return null
+  return ((stats.value.todayModified - yesterdayModified.value) / yesterdayModified.value) * 100
+})
+
+function padZero(num: number): string {
+  return num < 10 ? '0' + num : String(num)
+}
 
 watch(viewMode, () => {
   refreshData()

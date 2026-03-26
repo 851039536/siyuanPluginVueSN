@@ -162,13 +162,3 @@ $gradient-surface: linear-gradient(180deg, var(--b3-theme-surface) 0%, var(--b3-
     }
   }
 }
-
-
-
-// Component styles are now scoped in individual components:
-// - .statistics-header -> StatisticsHeader.vue
-// - .stats-cards-compact -> StatsCardsCompact.vue
-// - .extended-stats-cards -> ExtendedStatsCards.vue
-// - .view-mode-section -> ViewModeSection.vue
-// - .bar-chart -> BarChart.vue
-// - .trend-view -> TrendView.vue

@@ -43,6 +43,7 @@
         :historical-data="historicalData"
         :total-notes="stats.totalNotes"
         :total-words="stats.totalWords"
+        :total-backlinks="stats.totalBacklinks"
         :i18n="insightCardsI18n"
       />
 
@@ -249,21 +250,34 @@ const trendViewI18n = computed(() => ({
 }))
 
 const insightCardsI18n = computed(() => ({
+  writerLevel: '写作等级',
+  expProgress: '经验进度',
+  toNextLevel: '距离下一等级',
   streakDays: '连续活跃',
   daysStreak: '天连续记录',
   maxStreak: '最长',
   days: '天',
+  nextReward: '下个奖励',
+  weeklyGoal: '本周目标',
+  notesCreated: '新建笔记',
+  wordsWritten: '写作字数',
+  activeDays: '活跃天数',
+  activityHeatmap: '活跃热力图',
+  less: '少',
+  more: '多',
+  last30Days: '近30天',
+  activeDaysCount: '天活跃',
+  knowledgeWealth: '知识财富',
+  gold: '金币',
+  fromNotes: '笔记贡献',
+  fromWords: '字数贡献',
+  fromLinks: '双链贡献',
+  fromStreak: '连签奖励',
+  wealthRank: '财富等级',
   milestones: '里程碑',
-  bestRecords: '最佳记录',
   yearOverYear: '年同比',
-  mostWordsDay: '单日字数最多',
-  mostCreatedDay: '单日新增最多',
-  longestNote: '最长笔记',
-  wordsUnit: '字',
-  notesUnit: '篇',
   notes: '笔记',
   words: '字数',
-  remaining: '剩余',
 }))
 
 const chartTitle = computed(() => {

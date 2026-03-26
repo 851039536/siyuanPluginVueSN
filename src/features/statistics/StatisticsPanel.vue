@@ -25,18 +25,12 @@
         :total-images="stats.totalImages"
         :total-tags="stats.totalTags"
         :total-backlinks="stats.totalBacklinks"
-        :i18n="statsCardsI18n"
-      />
-
-      <ExtendedStatsCards
         :today-created="stats.todayCreated"
         :today-modified="stats.todayModified"
         :avg-words-per-doc="stats.avgWordsPerDoc"
-        :yesterday-created="yesterdayCreated"
-        :yesterday-modified="yesterdayModified"
         :created-change="createdChange"
         :modified-change="modifiedChange"
-        :i18n="extendedCardsI18n"
+        :i18n="statsCardsI18n"
       />
 
       <InsightCards
@@ -82,7 +76,6 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import StatisticsHeader from './components/StatisticsHeader.vue'
 import StatsCardsCompact from './components/StatsCardsCompact.vue'
-import ExtendedStatsCards from './components/ExtendedStatsCards.vue'
 import InsightCards from './components/InsightCards.vue'
 import ViewModeSection from './components/ViewModeSection.vue'
 import BarChart from './components/BarChart.vue'
@@ -234,10 +227,6 @@ const updateInterval = ref(60)
 
 const headerI18n = computed(() => props.i18n)
 const statsCardsI18n = computed(() => props.i18n)
-const extendedCardsI18n = computed(() => ({
-  ...props.i18n,
-  vsYesterday: '较昨日',
-}))
 const barChartI18n = computed(() => props.i18n)
 const viewModeI18n = computed(() => props.i18n)
 

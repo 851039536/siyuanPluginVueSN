@@ -13,27 +13,28 @@
         <div class="feature-title">{{ feature.title }}</div>
         <div class="feature-desc">{{ feature.desc }}</div>
       </div>
-      <div class="feature-toggle">
-        <input
-          type="checkbox"
-          class="b3-switch fn__flex-center"
-          :checked="feature.enabled"
-          @click.stop="handleToggle"
+      <div class="feature-toggle" @click.stop>
+        <Switch
+          :model-value="feature.enabled"
+          size="small"
+          @update:model-value="handleToggle"
         />
       </div>
     </div>
 
     <!-- 功能操作按钮 -->
     <div v-if="feature.actions.length > 0 && feature.enabled" class="feature-actions">
-      <button
+      <Button
         v-for="action in feature.actions"
         :key="action.key"
-        class="feature-action-btn"
+        variant="ghost"
+        size="small"
+        block
         @click.stop="handleAction(action.key)"
       >
         <span>{{ action.label }}</span>
         <span class="action-hotkey">{{ action.hotkey }}</span>
-      </button>
+      </Button>
     </div>
   </div>
 </template>
@@ -41,6 +42,8 @@
 <script setup lang="ts">
 import { showMessage } from 'siyuan'
 import IconWrapper from '@/components/IconWrapper.vue'
+import Switch from '@/components/Switch.vue'
+import Button from '@/components/Button.vue'
 import type { Feature } from '../types'
 
 interface Props {
@@ -62,8 +65,8 @@ const handleCardClick = () => {
   }
 }
 
-const handleToggle = () => {
-  emit('toggle', props.feature.id, !props.feature.enabled)
+const handleToggle = (newValue: boolean) => {
+  emit('toggle', props.feature.id, newValue)
 }
 
 const handleAction = (actionKey: string) => {

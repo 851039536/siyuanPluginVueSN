@@ -115,43 +115,6 @@
   gap: $spacing-sm;
 }
 
-// ==================== 头部按钮样式 ====================
-
-.header-action-btn {
-  @include button-reset;
-  width: $btn-size;
-  height: $btn-size;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--b3-theme-on-surface);
-
-  &:hover {
-    background: var(--b3-theme-surface-lighter);
-  }
-}
-
-// ==================== AI设置关闭按钮样式 ====================
-
-.ai-settings-close-btn {
-  @include button-reset;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--b3-theme-on-surface);
-  background: var(--b3-theme-surface-lighter);
-  transition: all $transition-fast ease;
-
-  &:hover {
-    background: var(--b3-theme-surface-light);
-    color: var(--b3-theme-on-surface);
-  }
-}
-
 // ==================== AI配置面板样式 ====================
 
 .ai-settings-panel {
@@ -232,25 +195,6 @@
   .setting-input {
     flex: 1;
     border-radius: 6px 0 0 6px;
-  }
-}
-
-.toggle-visibility-btn {
-  @include button-reset;
-  padding: $spacing-sm $spacing-md;
-  background: var(--b3-theme-surface);
-  border: 2px solid var(--b3-theme-surface-light);
-  border-left: none;
-  border-radius: 0 6px 6px 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--b3-theme-on-surface);
-
-  &:hover {
-    background: var(--b3-theme-primary);
-    border-color: var(--b3-theme-primary);
-    color: var(--b3-theme-on-primary);
   }
 }
 

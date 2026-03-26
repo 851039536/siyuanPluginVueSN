@@ -2,9 +2,13 @@
   <div class="ai-settings-panel" v-if="visible">
     <div class="ai-settings-header">
       <span>{{ i18n.aiSettings || 'AI大模型配置' }}</span>
-      <button class="ai-settings-close-btn" @click="handleClose">
-        <IconWrapper name="close" :size="14" />
-      </button>
+      <Button
+        variant="ghost"
+        size="small"
+        icon="close"
+        :icon-size="14"
+        @click="handleClose"
+      />
     </div>
     <div class="ai-settings-content">
       <!-- API供应商选择 -->
@@ -57,7 +61,7 @@
 
 <script setup lang="ts">
 import { showMessage } from 'siyuan'
-import IconWrapper from '@/components/IconWrapper.vue'
+import Button from '@/components/Button.vue'
 import AiProviderSelect from './AiProviderSelect.vue'
 import AiModelSelect from './AiModelSelect.vue'
 import ApiKeyInput from './ApiKeyInput.vue'

@@ -1,11 +1,16 @@
 <template>
-  <button class="header-action-btn" :title="title" @click="handleClick">
-    <IconWrapper :name="icon" :size="size" />
-  </button>
+  <Button
+    variant="ghost"
+    size="small"
+    :icon="icon"
+    :icon-size="size"
+    :title="title"
+    @click="handleClick"
+  />
 </template>
 
 <script setup lang="ts">
-import IconWrapper from '@/components/IconWrapper.vue'
+import Button from '@/components/Button.vue'
 import type { IconKey } from '@/config/icons'
 
 interface Props {
@@ -31,7 +36,3 @@ const handleClick = () => {
   }
 }
 </script>
-
-<style scoped lang="scss">
-@use '../styles/index.scss';
-</style>

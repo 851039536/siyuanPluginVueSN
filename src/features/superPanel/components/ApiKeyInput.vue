@@ -6,21 +6,21 @@
       :placeholder="getPlaceholder()"
       @update:model-value="handleInput"
     />
-    <button
-      class="toggle-visibility-btn"
-      type="button"
-      @click="toggleVisibility"
+    <Button
+      variant="ghost"
+      size="small"
+      :icon="visible ? 'eyeOff' : 'eye'"
+      :icon-size="14"
       :title="visible ? '隐藏密钥' : '显示密钥'"
-    >
-      <IconWrapper :name="visible ? 'eyeOff' : 'eye'" :size="14" />
-    </button>
+      @click="toggleVisibility"
+    />
   </div>
   <div class="setting-desc">{{ getDescription() }}</div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import IconWrapper from '@/components/IconWrapper.vue'
+import Button from '@/components/Button.vue'
 import TextInput from './TextInput.vue'
 
 interface Props {
@@ -98,26 +98,6 @@ const handleInput = (value: string) => {
     &:focus {
       z-index: 1;
     }
-  }
-}
-
-.toggle-visibility-btn {
-  @include button-reset;
-  padding: $spacing-sm $spacing-md;
-  background: var(--b3-theme-surface);
-  border: 2px solid var(--b3-theme-surface-light);
-  border-left: none;
-  border-radius: 0 6px 6px 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--b3-theme-on-surface);
-  height: 100%;
-
-  &:hover {
-    background: var(--b3-theme-primary);
-    border-color: var(--b3-theme-primary);
-    color: var(--b3-theme-on-primary);
   }
 }
 

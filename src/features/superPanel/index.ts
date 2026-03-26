@@ -3,14 +3,16 @@
  * 在右侧边栏提供所有功能的快捷访问
  */
 import { Plugin, showMessage } from 'siyuan'
-import { createApp, type App as VueApp } from 'vue'
+import { createApp, reactive, type App as VueApp } from 'vue'
 import SuperPanelView from './SuperPanelView.vue'
 import { replaceTopBarIcon } from '@/utils/iconHelper'
 import { FEATURE_ICONS } from '@/config/icons'
 import { toggleTextDiff } from '../textDiff'
+import type { PluginSettings } from '@/config/settings'
 
 let vueApp: VueApp | null = null
 let panelContainer: HTMLElement | null = null
+let reactiveSettings: PluginSettings | null = null
 
 /**
  * 注册超级面板功能
@@ -68,10 +70,13 @@ function openSuperPanel(plugin: Plugin) {
   panelContainer.id = 'super-panel-vue-container'
   document.body.appendChild(panelContainer)
 
+  // 创建响应式 settings 对象
+  reactiveSettings = reactive<PluginSettings>((plugin as any).settings)
+
   // 创建 Vue 应用
   vueApp = createApp(SuperPanelView, {
     visible: true,
-    settings: (plugin as any).settings,
+    settings: reactiveSettings,
     i18n: (plugin.i18n as any).superPanel || {},
     onClose: () => {
       closeSuperPanel()
@@ -105,6 +110,7 @@ function closeSuperPanel() {
     panelContainer.remove()
     vueApp = null
     panelContainer = null
+    reactiveSettings = null
   }
 }
 
@@ -178,11 +184,15 @@ async function handleFeatureToggle(plugin: Plugin, featureId: string, enabled: b
 
     const success = await pluginSample.updateSettings(newSettings)
     if (success) {
+      // 更新响应式 settings 对象，触发 UI 实时更新
+      if (reactiveSettings) {
+        ;(reactiveSettings as any)[settingKey] = enabled
+      }
       showMessage(
         enabled
-          ? (plugin.i18n as any).featureEnabled || '功能已启用，请重启插件生效'
-          : (plugin.i18n as any).featureDisabled || '功能已禁用，请重启插件生效',
-        3000,
+          ? (plugin.i18n as any).featureEnabled || '功能已启用'
+          : (plugin.i18n as any).featureDisabled || '功能已禁用',
+        2000,
         'info'
       )
     } else {
@@ -205,14 +215,19 @@ async function handleToggleAllFeatures(plugin: Plugin, enabled: boolean) {
 
   const success = await pluginSample.updateSettings(newSettings)
   if (success) {
+    // 更新响应式 settings 对象，触发 UI 实时更新
+    if (reactiveSettings) {
+      ALL_FEATURE_SETTINGS.forEach(key => {
+        ;(reactiveSettings as any)[key] = enabled
+      })
+    }
     showMessage(
       enabled
-        ? (plugin.i18n as any).superPanel?.allFeaturesEnabled || '所有功能已开启，请重启插件生效'
-        : (plugin.i18n as any).superPanel?.allFeaturesDisabled || '所有功能已关闭，请重启插件生效',
-      3000,
+        ? (plugin.i18n as any).superPanel?.allFeaturesEnabled || '所有功能已开启'
+        : (plugin.i18n as any).superPanel?.allFeaturesDisabled || '所有功能已关闭',
+      2000,
       'info'
     )
-    await handleRefresh(plugin)
   } else {
     showMessage((plugin.i18n as any).saveFailed || '保存失败', 3000, 'error')
   }
@@ -326,6 +341,13 @@ async function handleUpdateAiSettings(
 
   const success = await pluginSample.updateSettings(newSettings)
   if (success) {
+    // 更新响应式 settings 对象
+    if (reactiveSettings) {
+      reactiveSettings.aiApiProvider = aiSettings.provider
+      reactiveSettings.aiModel = aiSettings.model
+      reactiveSettings.aiApiKey = aiSettings.apiKey
+      reactiveSettings.aiCustomEndpoint = aiSettings.customEndpoint
+    }
     // 通知相关功能模块更新配置
     if (pluginSample.__wordQuery) {
       pluginSample.__wordQuery.updateApiConfig(aiSettings.provider, aiSettings.model, aiSettings.apiKey, aiSettings.customEndpoint)
@@ -333,6 +355,7 @@ async function handleUpdateAiSettings(
     if (pluginSample.__aiContentGenerator) {
       pluginSample.__aiContentGenerator.updateApiConfig(aiSettings.provider, aiSettings.model, aiSettings.apiKey, aiSettings.customEndpoint)
     }
+    showMessage('AI配置已保存', 2000, 'info')
   } else {
     showMessage((plugin.i18n as any).saveFailed || '保存失败', 3000, 'error')
   }

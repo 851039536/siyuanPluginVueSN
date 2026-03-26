@@ -73,16 +73,16 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import Button from '@/components/Button.vue'
-import LengthConverter from './converters/LengthConverter.vue'
-import AreaConverter from './converters/AreaConverter.vue'
-import VolumeConverter from './converters/VolumeConverter.vue'
-import MassConverter from './converters/MassConverter.vue'
-import PowerConverter from './converters/PowerConverter.vue'
-import TimeConverter from './converters/TimeConverter.vue'
-import SpeedConverter from './converters/SpeedConverter.vue'
-import DataConverter from './converters/DataConverter.vue'
-import BaseConverter from './converters/BaseConverter.vue'
-import ASCIIConverter from './converters/ASCIIConverter.vue'
+import LengthConverter from './components/LengthConverter.vue'
+import AreaConverter from './components/AreaConverter.vue'
+import VolumeConverter from './components/VolumeConverter.vue'
+import MassConverter from './components/MassConverter.vue'
+import PowerConverter from './components/PowerConverter.vue'
+import TimeConverter from './components/TimeConverter.vue'
+import SpeedConverter from './components/SpeedConverter.vue'
+import DataConverter from './components/DataConverter.vue'
+import BaseConverter from './components/BaseConverter.vue'
+import ASCIIConverter from './components/ASCIIConverter.vue'
 
 interface I18n {
   unitConverterTitle?: string
@@ -90,6 +90,7 @@ interface I18n {
 
 interface Props {
   i18n?: I18n
+  plugin?: any
 }
 
 defineProps<Props>()
@@ -110,40 +111,6 @@ const tabs = [
 ]
 </script>
 
-<style lang="scss" scoped>
-.unit-converter {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  background: var(--b3-theme-background);
-  padding: 16px;
-  box-sizing: border-box;
-
-  .converter-header {
-    margin-bottom: 16px;
-    
-    h3 {
-      margin: 0;
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--b3-theme-on-background);
-    }
-  }
-
-  .converter-tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-bottom: 16px;
-    border-bottom: 1px solid var(--b3-border-color);
-    padding-bottom: 8px;
-  }
-
-  .converter-content {
-    flex: 1;
-    overflow-y: auto;
-    min-height: 0;
-  }
-}
+<style scoped lang="scss">
+@use "./styles/index.scss";
 </style>

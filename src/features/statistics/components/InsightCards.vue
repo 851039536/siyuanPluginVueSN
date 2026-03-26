@@ -550,6 +550,7 @@ function padZero(num: number): string {
 </script>
 
 <style scoped lang="scss">
+@use "sass:color";
 @use "@/variables" as *;
 @use "../../superPanel/styles/variables" as *;
 @use "../../superPanel/styles/mixins" as *;
@@ -609,11 +610,11 @@ $gold: #f59e0b;
   font-size: 12px;
   margin-bottom: 10px;
 
-  &.bronze { background: linear-gradient(135deg, rgba(#cd7f32, 0.2), rgba(#cd7f32, 0.1)); color: darken(#cd7f32, 10%); border: 1px solid rgba(#cd7f32, 0.3); }
-  &.silver { background: linear-gradient(135deg, rgba(#c0c0c0, 0.3), rgba(#c0c0c0, 0.1)); color: darken(#c0c0c0, 20%); border: 1px solid rgba(#c0c0c0, 0.4); }
-  &.gold { background: linear-gradient(135deg, rgba($gold, 0.3), rgba($gold, 0.1)); color: darken($gold, 15%); border: 1px solid rgba($gold, 0.5); }
-  &.platinum { background: linear-gradient(135deg, rgba(#e5e4e2, 0.4), rgba(#e5e4e2, 0.2)); color: darken(#e5e4e2, 30%); border: 1px solid rgba(#e5e4e2, 0.5); }
-  &.diamond { background: linear-gradient(135deg, rgba(#b9f2ff, 0.4), rgba(#b9f2ff, 0.2)); color: darken(#b9f2ff, 40%); border: 1px solid rgba(#b9f2ff, 0.5); }
+  &.bronze { background: linear-gradient(135deg, rgba(#cd7f32, 0.2), rgba(#cd7f32, 0.1)); color: color.adjust(#cd7f32, $lightness: -10%); border: 1px solid rgba(#cd7f32, 0.3); }
+  &.silver { background: linear-gradient(135deg, rgba(#c0c0c0, 0.3), rgba(#c0c0c0, 0.1)); color: color.adjust(#c0c0c0, $lightness: -20%); border: 1px solid rgba(#c0c0c0, 0.4); }
+  &.gold { background: linear-gradient(135deg, rgba($gold, 0.3), rgba($gold, 0.1)); color: color.adjust($gold, $lightness: -15%); border: 1px solid rgba($gold, 0.5); }
+  &.platinum { background: linear-gradient(135deg, rgba(#e5e4e2, 0.4), rgba(#e5e4e2, 0.2)); color: color.adjust(#e5e4e2, $lightness: -30%); border: 1px solid rgba(#e5e4e2, 0.5); }
+  &.diamond { background: linear-gradient(135deg, rgba(#b9f2ff, 0.4), rgba(#b9f2ff, 0.2)); color: color.adjust(#b9f2ff, $lightness: -40%); border: 1px solid rgba(#b9f2ff, 0.5); }
 }
 
 .progress-section {

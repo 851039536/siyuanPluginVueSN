@@ -1,0 +1,83 @@
+// 单位转换器样式
+.unit-converter {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--b3-theme-background);
+  padding: 16px;
+  box-sizing: border-box;
+
+  .converter-header {
+    margin-bottom: 16px;
+    
+    h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--b3-theme-on-background);
+    }
+  }
+
+  .converter-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--b3-border-color);
+    padding-bottom: 8px;
+  }
+
+  .converter-content {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+  }
+}
+
+// 转换器通用样式
+.converter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  background: var(--b3-theme-surface);
+  border-radius: 8px;
+  margin-bottom: 8px;
+
+  .converter-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    label {
+      min-width: 60px;
+      font-size: 13px;
+      color: var(--b3-theme-on-surface);
+    }
+
+    select, input {
+      flex: 1;
+      padding: 6px 10px;
+      border: 1px solid var(--b3-border-color);
+      border-radius: 4px;
+      background: var(--b3-theme-background);
+      color: var(--b3-theme-on-background);
+      font-size: 13px;
+
+      &:focus {
+        outline: none;
+        border-color: var(--b3-theme-primary);
+      }
+    }
+  }
+
+  .converter-result {
+    padding: 8px 12px;
+    background: var(--b3-theme-surface-lighter);
+    border-radius: 4px;
+    font-size: 14px;
+    color: var(--b3-theme-on-surface);
+    word-break: break-all;
+  }
+}

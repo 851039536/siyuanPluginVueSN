@@ -10,9 +10,7 @@
           </span>
         </div>
         <div class="header-right">
-          <button class="icon-btn" @click="onClose" title="关闭">
-            <svg class="icon"><use xlink:href="#iconClose"></use></svg>
-          </button>
+          <Button icon="x" variant="ghost" size="small" @click="onClose" title="关闭" />
         </div>
       </div>
 
@@ -82,9 +80,7 @@
     <div class="dialog" @click.stop>
       <div class="dialog-header">
         <h3>🔒 批量加密视频</h3>
-        <button class="icon-btn" @click="closeEncryptDialog" :disabled="encryptProgress">
-          <svg class="icon"><use xlink:href="#iconClose"></use></svg>
-        </button>
+        <Button icon="x" variant="ghost" size="small" @click="closeEncryptDialog" :disabled="encryptProgress" />
       </div>
       <div class="dialog-body">
         <div class="form-group">
@@ -133,20 +129,12 @@
         </div>
       </div>
       <div class="dialog-footer">
-        <button
-          class="btn"
-          @click="closeEncryptDialog"
-          :disabled="encryptProgress"
-        >
+        <Button variant="secondary" @click="closeEncryptDialog" :disabled="encryptProgress">
           取消
-        </button>
-        <button
-          class="btn btn-primary"
-          @click="handleBatchEncrypt"
-          :disabled="encryptProgress"
-        >
+        </Button>
+        <Button variant="primary" @click="handleBatchEncrypt" :disabled="encryptProgress">
           {{ encryptProgress ? '加密中...' : '开始加密' }}
-        </button>
+        </Button>
       </div>
     </div>
   </div>
@@ -156,9 +144,7 @@
     <div class="dialog" @click.stop>
       <div class="dialog-header">
         <h3>🔓 批量解密视频</h3>
-        <button class="icon-btn" @click="closeDecryptDialog" :disabled="decryptProgress">
-          <svg class="icon"><use xlink:href="#iconClose"></use></svg>
-        </button>
+        <Button icon="x" variant="ghost" size="small" @click="closeDecryptDialog" :disabled="decryptProgress" />
       </div>
       <div class="dialog-body">
         <div class="form-group">
@@ -196,20 +182,12 @@
         </div>
       </div>
       <div class="dialog-footer">
-        <button
-          class="btn"
-          @click="closeDecryptDialog"
-          :disabled="decryptProgress"
-        >
+        <Button variant="secondary" @click="closeDecryptDialog" :disabled="decryptProgress">
           取消
-        </button>
-        <button
-          class="btn btn-primary"
-          @click="handleBatchDecrypt"
-          :disabled="decryptProgress"
-        >
+        </Button>
+        <Button variant="primary" @click="handleBatchDecrypt" :disabled="decryptProgress">
           {{ decryptProgress ? '解密中...' : '开始解密' }}
-        </button>
+        </Button>
       </div>
     </div>
   </div>
@@ -219,9 +197,7 @@
     <div class="dialog" @click.stop>
       <div class="dialog-header">
         <h3>🎬 视频合并</h3>
-        <button class="icon-btn" @click="closeMergeDialog" :disabled="mergeProgress">
-          <svg class="icon"><use xlink:href="#iconClose"></use></svg>
-        </button>
+        <Button icon="x" variant="ghost" size="small" @click="closeMergeDialog" :disabled="mergeProgress" />
       </div>
       <div class="dialog-body">
         <div class="form-group">
@@ -234,9 +210,7 @@
             >
               <span class="video-index">{{ index + 1 }}</span>
               <span class="video-name" :title="video.name">{{ video.name }}</span>
-              <button class="icon-btn" @click="removeMergeVideo(index)" title="移除">
-                <svg class="icon"><use xlink:href="#iconClose"></use></svg>
-              </button>
+              <Button icon="x" variant="ghost" size="small" @click="removeMergeVideo(index)" title="移除" />
             </div>
             <div v-if="mergeSelectedVideos.length === 0" class="empty-selection">
               请选择视频文件
@@ -262,10 +236,8 @@
 
         <div class="form-group">
           <label>输出文件名</label>
-          <input
+          <Input
             v-model="mergeOutputName"
-            type="text"
-            class="b3-text-field"
             placeholder="merged_video.mp4"
           />
         </div>
@@ -302,20 +274,12 @@
         </div>
       </div>
       <div class="dialog-footer">
-        <button
-          class="btn"
-          @click="closeMergeDialog"
-          :disabled="mergeProgress"
-        >
+        <Button variant="secondary" @click="closeMergeDialog" :disabled="mergeProgress">
           {{ mergeResult ? '关闭' : '取消' }}
-        </button>
-        <button
-          class="btn btn-primary"
-          @click="handleMergeVideos"
-          :disabled="mergeProgress || mergeSelectedVideos.length < 2"
-        >
+        </Button>
+        <Button variant="primary" @click="handleMergeVideos" :disabled="mergeProgress || mergeSelectedVideos.length < 2">
           {{ mergeProgress ? '合并中...' : '开始合并' }}
-        </button>
+        </Button>
       </div>
     </div>
   </div>
@@ -325,45 +289,23 @@
     <div class="dialog" @click.stop>
       <div class="dialog-header">
         <h3>🎵 视频音频合并</h3>
-        <button class="icon-btn" @click="closeMergeAudioDialog" :disabled="mergeAudioProgress">
-          <svg class="icon"><use xlink:href="#iconClose"></use></svg>
-        </button>
+        <Button icon="x" variant="ghost" size="small" @click="closeMergeAudioDialog" :disabled="mergeAudioProgress" />
       </div>
       <div class="dialog-body">
         <div class="form-group">
           <label>选择视频文件</label>
-          <select v-model="selectedVideoForMerge" class="b3-select">
-            <option value="">请选择视频...</option>
-            <option
-              v-for="video in videos"
-              :key="video.path"
-              :value="video.path"
-            >
-              {{ video.name }} ({{ formatFileSize(video.size) }})
-            </option>
-          </select>
+          <Select v-model="selectedVideoForMerge" :options="videoOptions" />
         </div>
 
         <div class="form-group">
           <label>选择音频文件</label>
-          <select v-model="selectedAudioForMerge" class="b3-select">
-            <option value="">请选择音频...</option>
-            <option
-              v-for="audio in audioFiles"
-              :key="audio.path"
-              :value="audio.path"
-            >
-              {{ audio.name }} ({{ formatFileSize(audio.size) }})
-            </option>
-          </select>
+          <Select v-model="selectedAudioForMerge" :options="audioOptions" />
         </div>
 
         <div class="form-group">
           <label>输出文件名</label>
-          <input
+          <Input
             v-model="mergeAudioOutputName"
-            type="text"
-            class="b3-text-field"
             placeholder="video_with_audio.mp4"
           />
         </div>
@@ -400,20 +342,12 @@
         </div>
       </div>
       <div class="dialog-footer">
-        <button
-          class="btn"
-          @click="closeMergeAudioDialog"
-          :disabled="mergeAudioProgress"
-        >
+        <Button variant="secondary" @click="closeMergeAudioDialog" :disabled="mergeAudioProgress">
           {{ mergeAudioResult ? '关闭' : '取消' }}
-        </button>
-        <button
-          class="btn btn-primary"
-          @click="handleMergeVideoAudio"
-          :disabled="mergeAudioProgress || !selectedVideoForMerge || !selectedAudioForMerge"
-        >
+        </Button>
+        <Button variant="primary" @click="handleMergeVideoAudio" :disabled="mergeAudioProgress || !selectedVideoForMerge || !selectedAudioForMerge">
           {{ mergeAudioProgress ? '合并中...' : '开始合并' }}
-        </button>
+        </Button>
       </div>
     </div>
   </div>
@@ -423,23 +357,12 @@
     <div class="dialog" @click.stop>
       <div class="dialog-header">
         <h3>🗜️ 视频压缩</h3>
-        <button class="icon-btn" @click="closeCompressDialog" :disabled="compressProgress">
-          <svg class="icon"><use xlink:href="#iconClose"></use></svg>
-        </button>
+        <Button icon="x" variant="ghost" size="small" @click="closeCompressDialog" :disabled="compressProgress" />
       </div>
       <div class="dialog-body">
         <div class="form-group">
           <label>选择要压缩的视频</label>
-          <select v-model="selectedVideoForCompress" class="b3-select">
-            <option value="">请选择视频...</option>
-            <option
-              v-for="video in videos"
-              :key="video.path"
-              :value="video.path"
-            >
-              {{ video.name }} ({{ formatFileSize(video.size) }})
-            </option>
-          </select>
+          <Select v-model="selectedVideoForCompress" :options="videoOptions" />
         </div>
 
         <div class="form-group">
@@ -458,13 +381,9 @@
 
         <div class="form-group" v-if="compressMode === 'crf'">
           <label>CRF 值（越小质量越好，推荐 23-28）</label>
-          <input
-            v-model.number="compressCRF"
+          <Input
+            v-model="compressCRF"
             type="number"
-            class="b3-text-field"
-            min="18"
-            max="51"
-            step="1"
           />
           <div class="form-hint">
             18-23: 高质量（文件较大）<br>
@@ -475,10 +394,8 @@
 
         <div class="form-group" v-if="compressMode === 'bitrate'">
           <label>目标比特率</label>
-          <input
+          <Input
             v-model="compressBitrate"
-            type="text"
-            class="b3-text-field"
             placeholder="1000k"
           />
           <div class="form-hint">
@@ -488,10 +405,8 @@
 
         <div class="form-group">
           <label>输出文件名</label>
-          <input
+          <Input
             v-model="compressOutputName"
-            type="text"
-            class="b3-text-field"
             placeholder="compressed_video.mp4"
           />
         </div>
@@ -549,20 +464,12 @@
         </div>
       </div>
       <div class="dialog-footer">
-        <button
-          class="btn"
-          @click="closeCompressDialog"
-          :disabled="compressProgress"
-        >
+        <Button variant="secondary" @click="closeCompressDialog" :disabled="compressProgress">
           {{ compressResult ? '关闭' : '取消' }}
-        </button>
-        <button
-          class="btn btn-primary"
-          @click="handleCompressVideo"
-          :disabled="compressProgress || !selectedVideoForCompress"
-        >
+        </Button>
+        <Button variant="primary" @click="handleCompressVideo" :disabled="compressProgress || !selectedVideoForCompress">
           {{ compressProgress ? '压缩中...' : '开始压缩' }}
-        </button>
+        </Button>
       </div>
     </div>
   </div>
@@ -572,9 +479,7 @@
     <div class="dialog" @click.stop>
       <div class="dialog-header">
         <h3>⚙️ FFmpeg 路径设置</h3>
-        <button class="icon-btn" @click="closeFFmpegPathDialog">
-          <svg class="icon"><use xlink:href="#iconClose"></use></svg>
-        </button>
+        <Button icon="x" variant="ghost" size="small" @click="closeFFmpegPathDialog" />
       </div>
       <div class="dialog-body">
         <div class="form-group">
@@ -589,10 +494,8 @@
 
         <div class="form-group">
           <label>自定义 FFmpeg 路径</label>
-          <input
+          <Input
             v-model="customFFmpegPath"
-            type="text"
-            class="b3-text-field"
             placeholder="例如：E:\\Program\\ffmpeg-8.0.1-essentials_build\\bin\\ffmpeg.exe"
           />
           <div class="form-hint">
@@ -613,15 +516,15 @@
         </div>
       </div>
       <div class="dialog-footer">
-        <button class="btn" @click="resetFFmpegPath">
+        <Button variant="secondary" @click="resetFFmpegPath">
           重置
-        </button>
-        <button class="btn" @click="testFFmpegPath">
+        </Button>
+        <Button variant="secondary" @click="testFFmpegPath">
           测试路径
-        </button>
-        <button class="btn btn-primary" @click="saveFFmpegPath">
+        </Button>
+        <Button variant="primary" @click="saveFFmpegPath">
           保存
-        </button>
+        </Button>
       </div>
     </div>
   </div>
@@ -632,6 +535,9 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { showMessage } from 'siyuan'
 import IconWrapper from '@/components/IconWrapper.vue'
+import Button from '@/components/Button.vue'
+import Input from '@/components/Input.vue'
+import Select from '@/components/Select.vue'
 import VideoPlayerDialog from './components/VideoPlayerDialog.vue'
 import VideoListItem from './components/VideoListItem.vue'
 import VideoToolbar from './components/VideoToolbar.vue'
@@ -760,6 +666,24 @@ const decryptProgressPercent = computed(() => {
   if (decryptTotalCount.value === 0) return 0
   return Math.round((decryptCurrentIndex.value / decryptTotalCount.value) * 100)
 })
+
+// 视频选项列表
+const videoOptions = computed(() => [
+  { value: '', label: '请选择视频...' },
+  ...videos.value.map(video => ({
+    value: video.path,
+    label: `${video.name} (${formatFileSize(video.size)})`
+  }))
+])
+
+// 音频选项列表
+const audioOptions = computed(() => [
+  { value: '', label: '请选择音频...' },
+  ...audioFiles.value.map(audio => ({
+    value: audio.path,
+    label: `${audio.name} (${formatFileSize(audio.size)})`
+  }))
+])
 
 // 监听 visible 变化，自动刷新列表
 watch(() => props.visible, async (newVal) => {

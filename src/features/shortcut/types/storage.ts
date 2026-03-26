@@ -197,3 +197,19 @@ export async function clearFavorites(plugin: Plugin): Promise<boolean> {
   const storage = new ShortcutStorage(plugin)
   return storage.clearFavorites()
 }
+
+/**
+ * 加载最近使用数据
+ */
+export async function loadRecent(plugin: Plugin): Promise<string[]> {
+  const storage = new ShortcutStorage(plugin)
+  return storage.loadRecent()
+}
+
+/**
+ * 保存最近使用数据
+ */
+export async function saveRecent(plugin: Plugin, recent: string[]): Promise<boolean> {
+  const storage = new ShortcutStorage(plugin)
+  return storage.saveRecent(recent)
+}

@@ -68,49 +68,5 @@ defineEmits<{
 </script>
 
 <style scoped lang="scss">
-.shortcut-filters {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 16px;
-  background: var(--b3-theme-surface);
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
-}
-
-.filter-group {
-  display: flex;
-  gap: 6px;
-}
-
-.view-toggle {
-  display: flex;
-  gap: 3px;
-  background: var(--b3-theme-background);
-  border-radius: 6px;
-  padding: 2px;
-}
-
-.grid-icon,
-.three-col-icon,
-.list-icon {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.square {
-  width: 4px;
-  height: 4px;
-  background-color: currentColor;
-  border-radius: 1px;
-  display: inline-block;
-}
-
-.line {
-  width: 8px;
-  height: 4px;
-  background-color: currentColor;
-  border-radius: 1px;
-  display: inline-block;
-}
+// 样式已在 ../styles/index.scss 中定义
 </style>

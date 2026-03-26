@@ -7,7 +7,6 @@
         label="输入文本"
         placeholder="请输入要转换的文本"
         :rows="3"
-        @input="convertTextToAscii"
       />
       <div class="output-group" v-if="asciiResult">
         <label>ASCII结果</label>
@@ -22,7 +21,6 @@
         label="输入ASCII码"
         placeholder="请输入ASCII码，用空格或逗号分隔"
         :rows="3"
-        @input="convertAsciiToText"
       />
       <div class="output-group" v-if="textResult">
         <label>文本结果</label>
@@ -36,17 +34,15 @@
         <label>表格范围</label>
         <div class="range-controls">
           <Input
-            v-model="tableStart"
+            v-model.number="tableStart"
             type="number"
             size="small"
-            @input="updateAsciiTable"
           />
           <span>-</span>
           <Input
-            v-model="tableEnd"
+            v-model.number="tableEnd"
             type="number"
             size="small"
-            @input="updateAsciiTable"
           />
         </div>
       </div>
@@ -88,250 +84,145 @@ import { ref, computed } from 'vue'
 import Input from '@/components/Input.vue'
 import Textarea from '@/components/Textarea.vue'
 
-interface I18n {
-  textToAscii?: string
-  inputText?: string
-  textPlaceholder?: string
-  asciiResult?: string
-  asciiToText?: string
-  inputAscii?: string
-  asciiPlaceholder?: string
-  textResult?: string
-  asciiTable?: string
-  tableRange?: string
-  decimal?: string
-  hexadecimal?: string
-  binary?: string
-  character?: string
-  usageInfo?: string
-  infoText?: string
-  infoAscii?: string
-  infoTable?: string
-  invalidAscii?: string
-}
-
-interface Props {
-  i18n?: I18n
-}
-
-defineProps<Props>()
-
 const textInput = ref('')
-const asciiResult = ref('')
 const asciiInput = ref('')
-const textResult = ref('')
 const tableStart = ref(32)
 const tableEnd = ref(126)
 
-const convertTextToAscii = () => {
-  if (!textInput.value) {
-    asciiResult.value = ''
-    return
-  }
+// 控制字符名称映射（常量）
+const CONTROL_CHARS = [
+  'NUL', 'SOH', 'STX', 'ETX', 'EOT', 'ENQ', 'ACK', 'BEL',
+  'BS', 'HT', 'LF', 'VT', 'FF', 'CR', 'SO', 'SI',
+  'DLE', 'DC1', 'DC2', 'DC3', 'DC4', 'NAK', 'SYN', 'ETB',
+  'CAN', 'EM', 'SUB', 'ESC', 'FS', 'GS', 'RS', 'US'
+]
 
-  const asciiCodes = []
-  for (let i = 0; i < textInput.value.length; i++) {
-    const char = textInput.value[i]
-    const code = char.charCodeAt(0)
-    asciiCodes.push(code)
-  }
-  asciiResult.value = asciiCodes.join(' ')
-}
+// 文本转ASCII（计算属性，自动响应）
+const asciiResult = computed(() => {
+  if (!textInput.value) return ''
+  return Array.from(textInput.value)
+    .map(char => char.charCodeAt(0))
+    .join(' ')
+})
 
-const convertAsciiToText = () => {
-  if (!asciiInput.value) {
-    textResult.value = ''
-    return
-  }
-
+// ASCII转文本（计算属性，自动响应）
+const textResult = computed(() => {
+  if (!asciiInput.value) return ''
+  
   try {
-    const codes = asciiInput.value.split(/[\s,]+/)
+    const codes = asciiInput.value
+      .split(/[\s,]+/)
       .filter(code => code.trim())
       .map(code => parseInt(code.trim()))
       .filter(code => !isNaN(code) && code >= 0 && code <= 127)
-
-    const text = String.fromCharCode(...codes)
-    textResult.value = text
-  } catch (error) {
-    textResult.value = '无效的ASCII码'
+    
+    return String.fromCharCode(...codes)
+  } catch {
+    return '无效的ASCII码'
   }
-}
+})
 
+// ASCII码表数据
 const asciiTableData = computed(() => {
   const start = Math.max(0, Math.min(127, tableStart.value))
   const end = Math.max(start, Math.min(127, tableEnd.value))
-  const data = []
-
-  for (let i = start; i <= end; i++) {
-    data.push({
-      dec: i,
-      hex: i.toString(16).toUpperCase(),
-      bin: i.toString(2).padStart(8, '0'),
-      char: getCharForDisplay(i)
-    })
-  }
-
-  return data
+  
+  return Array.from({ length: end - start + 1 }, (_, i) => {
+    const code = start + i
+    return {
+      dec: code,
+      hex: code.toString(16).toUpperCase(),
+      bin: code.toString(2).padStart(8, '0'),
+      char: getCharForDisplay(code)
+    }
+  })
 })
 
-const getCharForDisplay = (code: number): string => {
-  if (code < 32) {
-    // 控制字符
-    const controlChars = [
-      'NUL', 'SOH', 'STX', 'ETX', 'EOT', 'ENQ', 'ACK', 'BEL',
-      'BS', 'HT', 'LF', 'VT', 'FF', 'CR', 'SO', 'SI',
-      'DLE', 'DC1', 'DC2', 'DC3', 'DC4', 'NAK', 'SYN', 'ETB',
-      'CAN', 'EM', 'SUB', 'ESC', 'FS', 'GS', 'RS', 'US'
-    ]
-    return controlChars[code] || ''
-  } else if (code === 127) {
-    return 'DEL'
-  } else {
-    return String.fromCharCode(code)
-  }
-}
-
-const updateAsciiTable = () => {
-  // 触发计算属性更新
+function getCharForDisplay(code: number): string {
+  if (code < 32) return CONTROL_CHARS[code] || ''
+  if (code === 127) return 'DEL'
+  return String.fromCharCode(code)
 }
 </script>
 
 <style lang="scss" scoped>
+@use "../styles/index.scss" as *;
+
 .ascii-converter {
   display: flex;
   flex-direction: column;
   gap: 20px;
 
-  .converter-section {
-    border: 1px solid var(--b3-border-color);
-    border-radius: 8px;
-    padding: 16px;
-    background: var(--b3-theme-surface);
+  .ascii-table-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
 
-    h4 {
-      margin: 0 0 12px 0;
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--b3-theme-on-surface);
-    }
-
-    .output-group {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      margin-top: 12px;
-
-      label {
-        font-size: 12px;
-        font-weight: 500;
-        color: var(--b3-theme-on-surface);
-      }
-
-      .ascii-output,
-      .text-output {
-        padding: 12px;
-        background: var(--b3-theme-background);
-        border: 1px solid var(--b3-border-color);
-        border-radius: 4px;
-        font-size: 14px;
-        color: var(--b3-theme-primary);
-        min-height: 40px;
-        word-break: break-all;
-      }
-    }
-
-    .ascii-table-controls {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 12px;
-
-      label {
-        font-size: 12px;
-        font-weight: 500;
-        color: var(--b3-theme-on-surface);
-      }
-
-      .range-controls {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-
-        span {
-          color: var(--b3-theme-on-surface);
-          font-weight: 500;
-        }
-      }
-    }
-
-    .ascii-table {
-      border: 1px solid var(--b3-border-color);
-      border-radius: 4px;
-      overflow: hidden;
-      max-height: 300px;
-      overflow-y: auto;
-
-      .table-header {
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr 2fr;
-        background: var(--b3-primary);
-        color: var(--b3-on-primary);
-        font-weight: 600;
-        font-size: 12px;
-        padding: 8px 12px;
-
-        span {
-          text-align: center;
-        }
-      }
-
-      .table-body {
-        .table-row {
-          display: grid;
-          grid-template-columns: 1fr 1fr 1fr 2fr;
-          border-bottom: 1px solid var(--b3-border-color);
-          font-size: 12px;
-
-          &:hover {
-            background: var(--b3-theme-surface);
-          }
-
-          span {
-            padding: 6px 12px;
-            text-align: center;
-            color: var(--b3-theme-on-surface);
-
-            &:first-child {
-              font-weight: 600;
-            }
-
-            &:last-child {
-              font-weight: 500;
-              color: var(--b3-theme-secondary);
-            }
-          }
-        }
-      }
-    }
-  }
-
-  .converter-info {
-    h4 {
-      margin: 0 0 12px 0;
-      font-size: 14px;
+    label {
+      font-size: 12px;
       font-weight: 500;
       color: var(--b3-theme-on-surface);
     }
 
-    ul {
-      margin: 0;
-      padding-left: 20px;
-      font-size: 12px;
-      color: var(--b3-theme-on-surface);
-      line-height: 1.6;
+    .range-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
 
-      li {
-        margin-bottom: 4px;
+      span {
+        color: var(--b3-theme-on-surface);
+        font-weight: 500;
+      }
+    }
+  }
+
+  .ascii-table {
+    border: 1px solid var(--b3-border-color);
+    border-radius: 4px;
+    overflow: hidden;
+    max-height: 300px;
+    overflow-y: auto;
+
+    .table-header {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 2fr;
+      background: var(--b3-primary);
+      color: var(--b3-on-primary);
+      font-weight: 600;
+      font-size: 12px;
+      padding: 8px 12px;
+
+      span {
+        text-align: center;
+      }
+    }
+
+    .table-body {
+      .table-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 2fr;
+        border-bottom: 1px solid var(--b3-border-color);
+        font-size: 12px;
+
+        &:hover {
+          background: var(--b3-theme-surface);
+        }
+
+        span {
+          padding: 6px 12px;
+          text-align: center;
+          color: var(--b3-theme-on-surface);
+
+          &:first-child {
+            font-weight: 600;
+          }
+
+          &:last-child {
+            font-weight: 500;
+            color: var(--b3-theme-secondary);
+          }
+        }
       }
     }
   }

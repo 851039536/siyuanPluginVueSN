@@ -1,7 +1,7 @@
 <template>
   <div class="unit-converter">
     <div class="converter-header">
-      <h3>{{ i18n.unitConverterTitle || '单位转换' }}</h3>
+      <h3>{{ i18n?.unitConverterTitle || '单位转换' }}</h3>
     </div>
     
     <div class="converter-tabs">
@@ -17,61 +17,13 @@
     </div>
 
     <div class="converter-content">
-      <!-- 长度转换 -->
-      <LengthConverter 
-        v-if="activeTab === 'length'" 
-      />
-      
-      <!-- 面积转换 -->
-      <AreaConverter 
-        v-if="activeTab === 'area'" 
-      />
-      
-      <!-- 体积转换 -->
-      <VolumeConverter 
-        v-if="activeTab === 'volume'" 
-      />
-      
-      <!-- 质量转换 -->
-      <MassConverter 
-        v-if="activeTab === 'mass'" 
-      />
-      
-      <!-- 功率转换 -->
-      <PowerConverter 
-        v-if="activeTab === 'power'" 
-      />
-      
-      <!-- 时间转换 -->
-      <TimeConverter 
-        v-if="activeTab === 'time'" 
-      />
-      
-      <!-- 速度转换 -->
-      <SpeedConverter 
-        v-if="activeTab === 'speed'" 
-      />
-      
-      <!-- 数据存储转换 -->
-      <DataConverter 
-        v-if="activeTab === 'data'" 
-      />
-      
-      <!-- 进制转换 -->
-      <BaseConverter 
-        v-if="activeTab === 'base'" 
-      />
-      
-      <!-- ASCII转换 -->
-      <ASCIIConverter 
-        v-if="activeTab === 'ascii'" 
-      />
+      <component :is="currentComponent" :key="activeTab" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import Button from '@/components/Button.vue'
 import LengthConverter from './components/LengthConverter.vue'
 import AreaConverter from './components/AreaConverter.vue'
@@ -109,6 +61,21 @@ const tabs = [
   { key: 'base', name: '进制' },
   { key: 'ascii', name: 'ASCII' }
 ]
+
+const componentMap: Record<string, any> = {
+  length: LengthConverter,
+  area: AreaConverter,
+  volume: VolumeConverter,
+  mass: MassConverter,
+  power: PowerConverter,
+  time: TimeConverter,
+  speed: SpeedConverter,
+  data: DataConverter,
+  base: BaseConverter,
+  ascii: ASCIIConverter
+}
+
+const currentComponent = computed(() => componentMap[activeTab.value])
 </script>
 
 <style scoped lang="scss">

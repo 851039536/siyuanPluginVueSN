@@ -1,7 +1,8 @@
 <template>
   <div class="stats-cards-compact">
-    <!-- 主要统计：笔记和字数 -->
+    <!-- 主要统计：笔记、字数、今日动态 -->
     <div class="stat-card-main">
+      <!-- 核心数据：笔记总数、总字数 -->
       <div class="stat-item-inline">
         <span class="stat-icon">📓</span>
         <div class="stat-content">
@@ -15,6 +16,49 @@
         <div class="stat-content">
           <div class="stat-value">{{ formatNumber(totalWords) }}</div>
           <div class="stat-label">{{ i18n.totalWords }}</div>
+        </div>
+      </div>
+      <div class="stat-divider"></div>
+      <!-- 今日动态 -->
+      <div class="stat-item-inline compact">
+        <span class="stat-icon-small">📅</span>
+        <div class="stat-content-compact">
+          <div class="stat-value-row">
+            <span class="stat-value-small">{{ todayCreated }}</span>
+            <span
+              v-if="createdChange !== null"
+              class="change-badge"
+              :class="getChangeClass(createdChange)"
+            >
+              {{ getChangeArrow(createdChange) }}{{ formatPercent(createdChange) }}
+            </span>
+          </div>
+          <div class="stat-label-tiny">{{ i18n.todayCreated }}</div>
+        </div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item-inline compact">
+        <span class="stat-icon-small">✏️</span>
+        <div class="stat-content-compact">
+          <div class="stat-value-row">
+            <span class="stat-value-small">{{ todayModified }}</span>
+            <span
+              v-if="modifiedChange !== null"
+              class="change-badge"
+              :class="getChangeClass(modifiedChange)"
+            >
+              {{ getChangeArrow(modifiedChange) }}{{ formatPercent(modifiedChange) }}
+            </span>
+          </div>
+          <div class="stat-label-tiny">{{ i18n.todayModified }}</div>
+        </div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item-inline compact">
+        <span class="stat-icon-small">📊</span>
+        <div class="stat-content-compact">
+          <div class="stat-value-small">{{ avgWordsPerDoc }}</div>
+          <div class="stat-label-tiny">{{ i18n.avgWordsPerDoc }}</div>
         </div>
       </div>
     </div>
@@ -54,7 +98,6 @@
 import { formatNumber, formatShortNumber } from '../utils'
 
 interface Props {
-
   totalNotes?: number
   totalWords?: number
   totalBlocks?: number
@@ -62,6 +105,11 @@ interface Props {
   totalImages?: number
   totalTags?: number
   totalBacklinks?: number
+  todayCreated?: number
+  todayModified?: number
+  avgWordsPerDoc?: number
+  createdChange?: number | null
+  modifiedChange?: number | null
   i18n?: {
     totalNotes: string
     totalWords: string
@@ -70,6 +118,9 @@ interface Props {
     totalImages: string
     totalTags: string
     totalBacklinks: string
+    todayCreated: string
+    todayModified: string
+    avgWordsPerDoc: string
   }
 }
 
@@ -81,6 +132,11 @@ const props = withDefaults(defineProps<Props>(), {
   totalImages: 0,
   totalTags: 0,
   totalBacklinks: 0,
+  todayCreated: 0,
+  todayModified: 0,
+  avgWordsPerDoc: 0,
+  createdChange: null,
+  modifiedChange: null,
   i18n: () => ({
     totalNotes: '笔记总数',
     totalWords: '总字数',
@@ -89,8 +145,26 @@ const props = withDefaults(defineProps<Props>(), {
     totalImages: '图片',
     totalTags: '标签',
     totalBacklinks: '双链',
+    todayCreated: '今日新增',
+    todayModified: '今日修改',
+    avgWordsPerDoc: '平均字数',
   }),
 })
+
+function getChangeClass(change: number | null): string {
+  if (change === null || change === 0) return 'neutral'
+  return change > 0 ? 'positive' : 'negative'
+}
+
+function getChangeArrow(change: number | null): string {
+  if (change === null || change === 0) return ''
+  return change > 0 ? '↑' : '↓'
+}
+
+function formatPercent(change: number | null): string {
+  if (change === null) return ''
+  return Math.abs(change).toFixed(0) + '%'
+}
 </script>
 
 
@@ -100,16 +174,20 @@ const props = withDefaults(defineProps<Props>(), {
 @use "../../superPanel/styles/mixins" as *;
 @use "../index.scss" as stats;
 
+$github-green: #2da44e;
+$github-red: #cf222e;
+
 .stats-cards-compact {
   .stat-card-main {
     @include stats.stats-card-base;
     display: flex;
     align-items: center;
-    justify-content: space-around;
-    padding: 12px 16px;
+    justify-content: space-between;
+    padding: 10px 12px;
     margin-bottom: 8px;
     position: relative;
     background: stats.$gradient-surface;
+    gap: 8px;
 
     &::before {
       content: '';
@@ -124,13 +202,23 @@ const props = withDefaults(defineProps<Props>(), {
     .stat-item-inline {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
       flex: 1;
 
+      &.compact {
+        flex: 0.8;
+        justify-content: center;
+      }
+
       .stat-icon {
-        font-size: 28px;
+        font-size: 24px;
         flex-shrink: 0;
         filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+      }
+
+      .stat-icon-small {
+        font-size: 16px;
+        flex-shrink: 0;
       }
 
       .stat-content {
@@ -138,7 +226,7 @@ const props = withDefaults(defineProps<Props>(), {
 
         .stat-value {
           font-family: $font-heading;
-          font-size: 22px;
+          font-size: 20px;
           font-weight: 800;
           line-height: 1.1;
           margin-bottom: 2px;
@@ -147,21 +235,65 @@ const props = withDefaults(defineProps<Props>(), {
         }
 
         .stat-label {
-          font-size: 11px;
+          font-size: 10px;
           font-family: $font-body;
           font-weight: 500;
           color: var(--b3-theme-on-surface);
           opacity: 0.6;
         }
       }
+
+      .stat-content-compact {
+        text-align: center;
+
+        .stat-value-row {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+        }
+
+        .stat-value-small {
+          font-family: $font-heading;
+          font-size: 16px;
+          font-weight: 700;
+          color: var(--b3-theme-primary);
+        }
+
+        .stat-label-tiny {
+          font-size: 9px;
+          color: var(--b3-theme-on-surface);
+          opacity: 0.5;
+          margin-top: 2px;
+        }
+
+        .change-badge {
+          display: inline-flex;
+          align-items: center;
+          padding: 1px 4px;
+          border-radius: 8px;
+          font-size: 8px;
+          font-weight: 700;
+
+          &.positive {
+            background: rgba($github-green, 0.15);
+            color: $github-green;
+          }
+
+          &.negative {
+            background: rgba($github-red, 0.15);
+            color: $github-red;
+          }
+        }
+      }
     }
 
     .stat-divider {
       width: 1px;
-      height: 32px;
+      height: 28px;
       background: var(--b3-border-color);
-      margin: 0 12px;
-      opacity: 0.4;
+      opacity: 0.3;
+      flex-shrink: 0;
     }
   }
 
@@ -169,14 +301,14 @@ const props = withDefaults(defineProps<Props>(), {
     @include stats.stats-card-base;
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    padding: 10px 12px;
+    padding: 8px 10px;
     background: var(--b3-theme-surface);
 
     .stat-item-small {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
+      gap: 3px;
       position: relative;
 
       &:not(:last-child)::after {
@@ -191,13 +323,13 @@ const props = withDefaults(defineProps<Props>(), {
       }
 
       .stat-icon-small {
-        font-size: 14px;
+        font-size: 13px;
         opacity: 0.7;
       }
 
       .stat-value-small {
         font-family: $font-heading;
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 700;
         color: var(--b3-theme-on-surface);
       }
@@ -208,44 +340,45 @@ const props = withDefaults(defineProps<Props>(), {
         font-weight: 500;
         opacity: 0.5;
         text-transform: uppercase;
-        letter-spacing: 0.4px;
+        letter-spacing: 0.3px;
       }
     }
   }
 }
 
-
 // Mobile responsive
 @include mobile-only {
   .stats-cards-compact {
     .stat-card-main {
-      flex-direction: column;
-      padding: 16px;
-      gap: 16px;
+      flex-wrap: wrap;
+      padding: 12px;
+      gap: 10px;
 
       &::before {
         width: 100%;
-        height: 4px;
-      }
-
-      .stat-divider {
-        width: 60%;
-        height: 1px;
-        margin: 0;
+        height: 3px;
       }
 
       .stat-item-inline {
-        width: 100%;
-        justify-content: center;
-        text-align: center;
+        flex: 1 1 45%;
+        min-width: 100px;
+
+        &.compact {
+          flex: 1 1 30%;
+          min-width: 80px;
+        }
+      }
+
+      .stat-divider {
+        display: none;
       }
     }
 
     .stat-card-secondary {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
 
-      .stat-item-small:nth-child(2n)::after {
+      .stat-item-small:nth-child(3n)::after {
         display: none;
       }
     }

@@ -83,7 +83,7 @@ const handleInput = (value: string) => {
 </script>
 
 <style scoped lang="scss">
-@use '../styles/index.scss' as *;
+@use '../styles/index.scss';
 
 .setting-input-wrapper {
   display: flex;
@@ -99,9 +99,5 @@ const handleInput = (value: string) => {
       z-index: 1;
     }
   }
-}
-
-.setting-desc {
-  margin-top: $spacing-xs;
 }
 </style>

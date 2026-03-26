@@ -94,13 +94,38 @@ const FEATURE_SETTINGS_MAP: Record<string, string> = {
 const ALL_FEATURE_SETTINGS = Object.values(FEATURE_SETTINGS_MAP)
 
 /**
+ * 简单事件映射表：action -> CustomEvent 名称
+ */
+const SIMPLE_ACTION_EVENTS: Record<string, string> = {
+  insertIndex: 'executeCommand',
+  insertOutline: 'executeCommand',
+  insertRef: 'executeCommand',
+  openCompressor: 'openImageCompressor',
+  openVideoManager: 'openVideoManager',
+  openEverythingSearch: 'openEverythingSearch',
+  openFlashcardReading: 'openFlashcardReading',
+  openWebDAV: 'openWebDAV'
+}
+
+/**
+ * 需要检查设置键的 action 映射
+ */
+const ACTION_SETTINGS_MAP: Record<string, { event: string; settingKey: string }> = {
+  openStatistics: { event: 'openStatistics', settingKey: 'enableStatistics' },
+  openBase64Image: { event: 'openBase64Image', settingKey: 'enableBase64Image' }
+}
+
+/**
  * 超级面板管理器
  */
 export class SuperPanelManager {
   private plugin: Plugin
+  private boundToggleHandler: () => void
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
+    // 绑定事件处理器，确保 add/remove 使用同一引用
+    this.boundToggleHandler = this.toggle.bind(this)
   }
 
   public init() {
@@ -135,9 +160,7 @@ export class SuperPanelManager {
   }
 
   private addEventListeners() {
-    window.addEventListener('toggleSuperPanel', () => {
-      this.toggle()
-    })
+    window.addEventListener('toggleSuperPanel', this.boundToggleHandler)
   }
 
   private toggle() {
@@ -266,77 +289,47 @@ export class SuperPanelManager {
   }
 
   private handleFeatureAction(action: string) {
-    switch (action) {
-      case 'insertIndex':
-        window.dispatchEvent(new CustomEvent('executeCommand', {
-          detail: { command: 'insertIndex' }
-        }))
-        this.close()
-        break
-
-      case 'insertOutline':
-        window.dispatchEvent(new CustomEvent('executeCommand', {
-          detail: { command: 'insertSubDocsWithOutline' }
-        }))
-        this.close()
-        break
-
-      case 'insertRef':
-        window.dispatchEvent(new CustomEvent('executeCommand', {
-          detail: { command: 'insertSubDocsRef' }
-        }))
-        this.close()
-        break
-
-      case 'openCompressor':
-        window.dispatchEvent(new CustomEvent('openImageCompressor'))
-        this.close()
-        break
-
-      case 'openVideoManager':
-        window.dispatchEvent(new CustomEvent('openVideoManager'))
-        this.close()
-        break
-
-      case 'openEverythingSearch':
-        window.dispatchEvent(new CustomEvent('openEverythingSearch'))
-        this.close()
-        break
-
-      case 'openStatistics':
-        if ((this.plugin as any).settings.enableStatistics) {
-          window.dispatchEvent(new CustomEvent('openStatistics'))
-          this.close()
-        }
-        break
-
-      case 'openTextDiff':
-        if ((this.plugin as any).settings.enableTextDiff) {
-          toggleTextDiff(this.plugin)
-          this.close()
-        }
-        break
-
-      case 'openBase64Image':
-        if ((this.plugin as any).settings.enableBase64Image) {
-          window.dispatchEvent(new CustomEvent('openBase64Image'))
-          this.close()
-        }
-        break
-
-      case 'openFlashcardReading':
-        window.dispatchEvent(new CustomEvent('openFlashcardReading'))
-        this.close()
-        break
-
-      case 'openWebDAV':
-        window.dispatchEvent(new CustomEvent('openWebDAV'))
-        this.close()
-        break
-
-      default:
-        showMessage('功能开发中...', 2000, 'info')
+    // 处理带命令详情的事件
+    const commandDetails: Record<string, string> = {
+      insertIndex: 'insertIndex',
+      insertOutline: 'insertSubDocsWithOutline',
+      insertRef: 'insertSubDocsRef'
     }
+
+    // 处理简单事件
+    if (SIMPLE_ACTION_EVENTS[action]) {
+      const eventName = SIMPLE_ACTION_EVENTS[action]
+      if (commandDetails[action]) {
+        window.dispatchEvent(new CustomEvent(eventName, {
+          detail: { command: commandDetails[action] }
+        }))
+      } else {
+        window.dispatchEvent(new CustomEvent(eventName))
+      }
+      this.close()
+      return
+    }
+
+    // 处理需要检查设置的事件
+    const actionConfig = ACTION_SETTINGS_MAP[action]
+    if (actionConfig) {
+      if ((this.plugin as any).settings[actionConfig.settingKey]) {
+        window.dispatchEvent(new CustomEvent(actionConfig.event))
+        this.close()
+      }
+      return
+    }
+
+    // 特殊处理：文本对比
+    if (action === 'openTextDiff') {
+      if ((this.plugin as any).settings.enableTextDiff) {
+        toggleTextDiff(this.plugin)
+        this.close()
+      }
+      return
+    }
+
+    showMessage('功能开发中...', 2000, 'info')
   }
 
   private async handleUpdateAiSettings(aiSettings: AiSettings) {
@@ -374,9 +367,7 @@ export class SuperPanelManager {
 
   public destroy() {
     this.close()
-    window.removeEventListener('toggleSuperPanel', () => {
-      this.toggle()
-    })
+    window.removeEventListener('toggleSuperPanel', this.boundToggleHandler)
   }
 }
 

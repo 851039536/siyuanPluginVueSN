@@ -48,10 +48,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import SuperPanelHeader from './components/SuperPanelHeader.vue'
-import AiSettingsPanel, { type AiSettings } from './components/AiSettingsPanel.vue'
+import AiSettingsPanel from './components/AiSettingsPanel.vue'
 import FeatureCard from './components/FeatureCard.vue'
 import type { PluginSettings } from '@/config/settings'
-import type { Feature } from './types'
+import type { Feature, AiSettings } from './types'
 
 // 国际化接口 - 使用索引签名简化定义
 interface I18n {
@@ -71,8 +71,8 @@ interface Emits {
   (e: 'action', action: string): void
   (e: 'toggleFeature', featureId: string, enabled: boolean): void
   (e: 'toggleAllFeatures', enabled: boolean): void
-  (e: 'refresh'): Promise<void>
-  (e: 'updateAiSettings', settings: AiSettings): Promise<void>
+  (e: 'refresh'): void
+  (e: 'updateAiSettings', settings: AiSettings): void
 }
 
 const props = defineProps<Props>()
@@ -96,8 +96,8 @@ const toggleAiSettings = () => {
 }
 
 // 更新AI配置
-const handleUpdateAiSettings = async (settings: AiSettings) => {
-  await emit('updateAiSettings', settings)
+const handleUpdateAiSettings = (settings: AiSettings) => {
+  emit('updateAiSettings', settings)
 }
 
 // 功能列表配置
@@ -333,8 +333,8 @@ const handleClose = () => {
   emit('close')
 }
 
-const handleRefresh = async () => {
-  await emit('refresh')
+const handleRefresh = () => {
+  emit('refresh')
 }
 
 const handleFeatureAction = (action: string) => {

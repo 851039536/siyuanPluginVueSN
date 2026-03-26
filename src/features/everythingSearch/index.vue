@@ -56,12 +56,11 @@ import {
   searchFiles,
   checkEverythingService,
   openFile,
-  showInExplorer,
-  type EverythingSearchResult,
-  type EverythingConfig
+  showInExplorer
 } from './api'
 import { usePlugin } from '@/main'
-import type { SearchOptions as SearchOptionsType, SearchState } from './types'
+import type { SearchOptions as SearchOptionsType, SearchState, EverythingSearchResult, EverythingConfig } from './types'
+import { EverythingSearchStorage, DEFAULT_CONFIG, DEFAULT_OPTIONS } from './types/storage'
 
 // 子组件
 import DialogHeader from './components/DialogHeader.vue'
@@ -87,12 +86,11 @@ const emit = defineEmits<{
 // Refs
 const searchBarRef = ref<InstanceType<typeof SearchBar> | null>(null)
 
-// 配置存储键
-const CONFIG_STORAGE_KEY = 'everything-search-config'
-const OPTIONS_STORAGE_KEY = 'everything-search-options'
-
 // 获取插件实例
 const plugin = usePlugin()
+
+// 存储管理
+const storage = new EverythingSearchStorage(plugin)
 
 // 状态
 const searchQuery = ref('')
@@ -102,24 +100,10 @@ const debounceTimer = ref<number | null>(null)
 const saveConfigTimer = ref<number | null>(null)
 
 // 配置
-const config = reactive<EverythingConfig>({
-  host: 'localhost',
-  port: 80
-})
+const config = reactive<EverythingConfig>({ ...DEFAULT_CONFIG })
 
 // 搜索选项
-const options = reactive<SearchOptionsType>({
-  matchCase: false,
-  matchWholeWord: false,
-  matchPath: false,
-  regex: false,
-  maxResults: 100,
-  autoSearch: true,
-  debounceDelay: 500,
-  sort: 'date_modified',
-  ascending: false,
-  selectedDrive: ''
-})
+const options = reactive<SearchOptionsType>({ ...DEFAULT_OPTIONS })
 
 // 搜索状态
 const searchState = reactive<SearchState>({
@@ -132,20 +116,11 @@ const searchState = reactive<SearchState>({
 /** 从插件存储加载配置 */
 const loadConfigFromPlugin = async () => {
   try {
-    const configData = await plugin.loadData(CONFIG_STORAGE_KEY)
-    if (configData) {
-      Object.assign(config, {
-        host: configData.host || 'localhost',
-        port: configData.port || 80
-      })
-    }
-
-    const optionsData = await plugin.loadData(OPTIONS_STORAGE_KEY)
-    if (optionsData) {
-      Object.assign(options, optionsData)
-      if (typeof options.selectedDrive === 'undefined') {
-        options.selectedDrive = ''
-      }
+    const savedData = await storage.init()
+    Object.assign(config, savedData.config)
+    Object.assign(options, savedData.options)
+    if (typeof options.selectedDrive === 'undefined') {
+      options.selectedDrive = ''
     }
   } catch (error) {
     console.error('从插件存储加载配置失败:', error)
@@ -162,13 +137,8 @@ const saveConfigToPlugin = async () => {
   // 延迟保存，避免频繁写入
   saveConfigTimer.value = window.setTimeout(async () => {
     try {
-      // 只保存有效值，空值使用默认值
-      const configToSave = {
-        host: config.host || 'localhost',
-        port: config.port || 80
-      }
-      await plugin.saveData(CONFIG_STORAGE_KEY, configToSave)
-      await plugin.saveData(OPTIONS_STORAGE_KEY, { ...options })
+      await storage.saveConfig(config)
+      await storage.saveOptions(options)
     } catch (error) {
       console.error('保存配置到插件存储失败:', error)
     }
@@ -395,33 +365,5 @@ const loadConfig = async () => {
 </script>
 
 <style scoped lang="scss">
-@use '@/variables' as *;
-
-.everything-search-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(20, 20, 19, 0.6);
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 10vh;
-  z-index: 99999;
-  backdrop-filter: blur(4px);
-}
-
-.everything-search-dialog {
-  width: 800px;
-  max-width: 90vw;
-  max-height: 80vh;
-  background: var(--b3-theme-background);
-  border-radius: 10px;
-  box-shadow: 0 20px 60px rgba(20, 20, 19, 0.35);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border: 1px solid var(--b3-border-color);
-}
+@use "./styles/index.scss";
 </style>

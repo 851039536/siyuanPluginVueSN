@@ -1,0 +1,34 @@
+/**
+ * Everything本地搜索功能样式
+ * 使用思源主题变量
+ */
+
+// 遮罩层
+.everything-search-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(20, 20, 19, 0.6);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 10vh;
+  z-index: 99999;
+  backdrop-filter: blur(4px);
+}
+
+// 主对话框
+.everything-search-dialog {
+  width: 800px;
+  max-width: 90vw;
+  max-height: 80vh;
+  background: var(--b3-theme-background);
+  border-radius: 10px;
+  box-shadow: 0 20px 60px rgba(20, 20, 19, 0.35);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--b3-border-color);
+}

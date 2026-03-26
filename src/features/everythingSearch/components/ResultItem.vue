@@ -34,7 +34,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { EverythingSearchResult } from '../api'
+import type { EverythingSearchResult } from '../types'
 import { formatFileSize, getFileIconType } from '../api'
 
 interface Props {

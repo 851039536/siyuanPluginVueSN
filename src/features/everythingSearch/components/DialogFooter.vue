@@ -29,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import type { EverythingConfig } from '../api'
+import type { EverythingConfig } from '../types'
 
 interface Props {
   /** 配置 */

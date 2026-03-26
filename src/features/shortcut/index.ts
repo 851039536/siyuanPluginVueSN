@@ -5,9 +5,10 @@
  */
 import { Plugin } from 'siyuan'
 import { createApp, h } from 'vue'
-import ShortcutPanel from './ShortcutPanel.vue'
+// @ts-ignore
+import ShortcutPanel from './index.vue'
 import { ShortcutManager, getShortcutManager } from './manager'
-import { loadCustomShortcuts, saveCustomShortcuts } from './storage'
+import { loadCustomShortcuts, saveCustomShortcuts } from './types/storage'
 import type { ShortcutInfo } from './types'
 
 /**
@@ -1206,7 +1207,7 @@ function getToolShortcuts(): ShortcutInfo[] {
       copyContent: 'Ctrl+\\'
     },
     {
-      id: 'tool_vscode Zen Mode',
+      id: 'tool_vscode_Zen_Mode',
       name: 'Zen Mode',
       description: '禅模式',
       keys: 'Ctrl+K, Z',
@@ -1551,4 +1552,4 @@ export { getShortcutManager, ShortcutManager }
 /**
  * 导出类型
  */
-export type { ShortcutInfo, ShortcutGroup } from './types'
+export type { ShortcutInfo, ShortcutGroup, ViewMode, DialogType, QuickFilter, ShortcutFormData } from './types'

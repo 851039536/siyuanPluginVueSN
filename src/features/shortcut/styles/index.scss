@@ -1,0 +1,499 @@
+/**
+ * 快捷键面板 - 样式文件
+ * 使用思源主题变量
+ */
+
+// 面板基础样式
+.shortcut-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  font-size: 13px;
+  overflow: hidden;
+}
+
+// 顶部操作栏
+.shortcut-header {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  background: var(--b3-theme-surface);
+}
+
+.header-actions {
+  display: flex;
+  gap: 6px;
+}
+
+// 统计信息栏
+.shortcut-stats {
+  display: flex;
+  gap: 12px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, var(--b3-theme-primary-lightest) 0%, var(--b3-theme-surface) 100%);
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 12px;
+  background: var(--b3-theme-background);
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.stat-label {
+  font-size: 10px;
+  color: var(--b3-theme-on-surface-variant);
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.stat-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--b3-theme-primary);
+}
+
+// 分类选择器
+.shortcut-category-selector {
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  background: var(--b3-theme-surface);
+}
+
+.selector-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.selector-header label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--b3-theme-on-surface);
+  white-space: nowrap;
+}
+
+.selector-control {
+  flex: 1;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.search-result-hint {
+  flex-basis: 100%;
+  font-size: 11px;
+  color: var(--b3-theme-on-surface-variant);
+  font-style: italic;
+  margin-top: -4px;
+  margin-left: 4px;
+}
+
+// 筛选栏
+.shortcut-filters {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background: var(--b3-theme-surface);
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+}
+
+.filter-group {
+  display: flex;
+  gap: 6px;
+}
+
+.view-toggle {
+  display: flex;
+  gap: 3px;
+  background: var(--b3-theme-background);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.grid-icon,
+.three-col-icon,
+.list-icon {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.square {
+  width: 4px;
+  height: 4px;
+  background-color: currentColor;
+  border-radius: 1px;
+  display: inline-block;
+}
+
+.line {
+  width: 8px;
+  height: 4px;
+  background-color: currentColor;
+  border-radius: 1px;
+  display: inline-block;
+}
+
+// 快捷键列表
+.shortcut-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.shortcut-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--b3-theme-on-surface-variant);
+  font-size: 12px;
+  gap: 12px;
+}
+
+.empty-icon {
+  width: 48px;
+  height: 48px;
+  opacity: 0.3;
+}
+
+// 快捷键分组
+.shortcut-group {
+  padding: 0;
+  margin-bottom: 16px;
+}
+
+.group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--b3-theme-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: var(--b3-theme-surface);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-left: 4px solid var(--b3-theme-primary);
+}
+
+.group-name {
+  flex: 1;
+}
+
+.group-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: var(--b3-theme-primary);
+  color: white;
+  border-radius: 10px;
+  font-size: 10px;
+}
+
+// 快捷键网格
+.shortcut-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 12px;
+}
+
+.shortcut-grid.list-view {
+  grid-template-columns: 1fr;
+}
+
+.shortcut-grid.three-col-view {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 1200px) {
+  .shortcut-grid.three-col-view {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 800px) {
+  .shortcut-grid.three-col-view {
+    grid-template-columns: 1fr;
+  }
+}
+
+// 卡片状态
+.is-favorite {
+  background: linear-gradient(135deg, var(--b3-theme-surface) 0%, var(--b3-theme-primary-lightest) 100%);
+}
+
+.is-recent {
+  border-left: 3px solid var(--b3-theme-primary);
+}
+
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.shortcut-name {
+  font-weight: 600;
+  color: var(--b3-theme-on-surface);
+  font-size: 13px;
+  line-height: 1.3;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.name-text {
+  flex: 1;
+}
+
+.platform-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  background: var(--b3-theme-surface-lighter);
+  color: var(--b3-theme-on-surface-variant);
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.tool-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  background: var(--b3-theme-primary-lightest);
+  color: var(--b3-theme-primary);
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.shortcut-desc {
+  font-size: 11px;
+  color: var(--b3-theme-on-surface-variant);
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.shortcut-keys {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.shortcut-keys:hover {
+  opacity: 0.8;
+}
+
+.shortcut-keys:active {
+  opacity: 0.6;
+}
+
+.key-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  background: linear-gradient(135deg, var(--b3-theme-primary) 0%, var(--b3-theme-primary-light) 100%);
+  color: white;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+.shortcut-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+  opacity: 1;
+  transition: opacity 0.2s;
+}
+
+// 对话框
+.shortcut-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.shortcut-dialog {
+  background: var(--b3-theme-background);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  max-width: 450px;
+  width: 90%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  animation: dialogSlideIn 0.3s ease-out;
+}
+
+@keyframes dialogSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+}
+
+.dialog-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--b3-theme-on-background);
+}
+
+.dialog-body {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.form-group {
+  margin-bottom: 12px;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-group label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--b3-theme-on-surface);
+  margin-bottom: 4px;
+}
+
+.form-group input[type="file"] {
+  width: 100%;
+  padding: 8px;
+  border: 1px dashed var(--b3-theme-surface-lighter);
+  border-radius: 4px;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-background);
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.form-group input[type="file"]:hover {
+  border-color: var(--b3-theme-primary);
+}
+
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.radio-label:hover {
+  background: var(--b3-theme-surface);
+  border-color: var(--b3-theme-primary);
+}
+
+.radio-label input[type="radio"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+.export-preview,
+.import-hint {
+  padding: 12px;
+  background: var(--b3-theme-surface);
+  border-radius: 4px;
+  border-left: 3px solid var(--b3-theme-primary);
+}
+
+.export-preview p,
+.import-hint p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--b3-theme-on-surface-variant);
+}
+
+.dialog-footer {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--b3-theme-surface-lighter);
+  background: var(--b3-theme-surface);
+}
+
+// 滚动条
+.shortcut-content::-webkit-scrollbar,
+.dialog-body::-webkit-scrollbar {
+  width: 5px;
+}
+
+.shortcut-content::-webkit-scrollbar-track,
+.dialog-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.shortcut-content::-webkit-scrollbar-thumb,
+.dialog-body::-webkit-scrollbar-thumb {
+  background: var(--b3-theme-surface-lighter);
+  border-radius: 2px;
+}
+
+.shortcut-content::-webkit-scrollbar-thumb:hover {
+  background: var(--b3-theme-on-surface-variant);
+}

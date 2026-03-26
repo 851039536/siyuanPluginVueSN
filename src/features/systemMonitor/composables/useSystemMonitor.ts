@@ -7,7 +7,7 @@ import {
   DEFAULT_TOTAL_MEMORY_GB,
   type ResourceLevel,
   type SystemMonitorState
-} from '../types'
+} from '../types/index'
 
 const TOTAL_MEMORY_BYTES = DEFAULT_TOTAL_MEMORY_GB * 1024 * 1024 * 1024
 const TOTAL_MEMORY_MB = DEFAULT_TOTAL_MEMORY_GB * 1024

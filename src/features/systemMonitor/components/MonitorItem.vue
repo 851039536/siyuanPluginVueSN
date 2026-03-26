@@ -1,0 +1,37 @@
+<template>
+  <div
+    class="monitor-item"
+    :class="[itemClass, level ? `level-${level}` : '']"
+    :data-level="level"
+    :title="title"
+    @click="$emit('click', $event)"
+  >
+    <Icon v-if="icon" :icon="icon" :width="14" class="monitor-icon" />
+    <span v-if="$slots.default" class="monitor-value">
+      <slot />
+    </span>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { Icon } from '@iconify/vue'
+import type { ResourceLevel } from '../types'
+
+interface Props {
+  icon?: string
+  title?: string
+  level?: ResourceLevel
+  itemClass?: string
+}
+
+withDefaults(defineProps<Props>(), {
+  icon: undefined,
+  title: undefined,
+  level: undefined,
+  itemClass: undefined,
+})
+
+defineEmits<{
+  click: [event: MouseEvent]
+}>()
+</script>

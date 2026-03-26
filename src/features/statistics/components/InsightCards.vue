@@ -1146,6 +1146,15 @@ $diamond: #b9f2ff;
 
 // 知识财富卡片
 .wealth-card {
+  height: 180px;
+  display: flex;
+  flex-direction: column;
+
+  .card-body {
+    flex: 1;
+    overflow: auto;
+  }
+
   .wealth-display {
     .wealth-main {
       display: flex;
@@ -1235,6 +1244,15 @@ $diamond: #b9f2ff;
 
 // 里程碑卡片
 .milestone-card {
+  height: 180px;
+  display: flex;
+  flex-direction: column;
+
+  .card-body {
+    flex: 1;
+    overflow: auto;
+  }
+
   .milestones-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);

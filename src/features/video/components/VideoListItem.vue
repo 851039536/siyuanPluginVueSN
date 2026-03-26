@@ -12,21 +12,23 @@
     <div class="video-actions">
       <span class="video-category">{{ video.category }}</span>
       <div class="action-buttons">
-        <button
-          class="icon-btn"
+        <Button
+          variant="ghost"
+          size="small"
+          icon="play"
+          :icon-size="14"
           @click.stop="handlePlay"
           :title="playTitle"
-        >
-          <IconWrapper name="play" :size="14" />
-        </button>
+        />
         <template v-if="isEncrypted">
-          <button
-            class="icon-btn"
+          <Button
+            variant="ghost"
+            size="small"
+            icon="encryption"
+            :icon-size="14"
             @click.stop="handleDecrypt"
             title="解密"
-          >
-            <IconWrapper name="encryption" :size="14" />
-          </button>
+          />
           <span
             class="encrypted-badge"
             :title="encryptionType"
@@ -42,6 +44,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import IconWrapper from '@/components/IconWrapper.vue'
+import Button from '@/components/Button.vue'
 import type { VideoData } from './VideoPlayerDialog.vue'
 
 /**
@@ -219,24 +222,6 @@ function formatFileSize(bytes?: number): string {
       gap: 4px;
       align-items: center;
 
-      .icon-btn {
-        padding: 4px;
-        background: transparent;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        color: var(--b3-theme-on-surface-light);
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        &:hover {
-          background: var(--b3-theme-primary-lightest);
-          color: var(--b3-theme-primary);
-        }
-      }
-
       .encrypted-badge {
         font-size: 14px;
         padding: 2px 6px;
@@ -279,11 +264,6 @@ function formatFileSize(bytes?: number): string {
       }
 
       .action-buttons {
-        .icon-btn :deep(.icon) {
-          width: 12px !important;
-          height: 12px !important;
-        }
-
         .encrypted-badge {
           font-size: 12px;
         }

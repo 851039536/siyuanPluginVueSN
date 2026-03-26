@@ -3,28 +3,24 @@
     <div class="dialog" @click.stop>
       <div class="dialog-header">
         <h3>📥 视频下载</h3>
-        <button class="icon-btn" @click="onClose" :disabled="downloadProgress">
-          <svg class="icon"><use xlink:href="#iconClose"></use></svg>
-        </button>
+        <Button icon="x" variant="ghost" size="small" @click="onClose" :disabled="downloadProgress" />
       </div>
       <div class="dialog-body">
         <!-- yt-dlp 路径设置 -->
         <div class="form-group">
           <label>yt-dlp 路径</label>
           <div class="path-input-group">
-            <input
+            <Input
               v-model="currentYtdlpPath"
-              type="text"
-              class="b3-text-field"
               placeholder="E:\Program\yt-dlp.exe"
               :disabled="downloadProgress"
             />
-            <button class="btn" @click="testYtdlpPath" :disabled="downloadProgress" title="测试路径">
+            <Button variant="secondary" size="small" @click="testYtdlpPath" :disabled="downloadProgress" title="测试路径">
               测试
-            </button>
-            <button class="btn" @click="saveYtdlpPath" :disabled="downloadProgress" title="保存路径">
+            </Button>
+            <Button variant="secondary" size="small" @click="saveYtdlpPath" :disabled="downloadProgress" title="保存路径">
               保存
-            </button>
+            </Button>
           </div>
           <div class="form-hint" v-if="ytdlpTestResult">
             <span :style="{ color: ytdlpTestResult === 'success' ? '#788c5d' : '#d97757' }">
@@ -35,10 +31,8 @@
 
         <div class="form-group">
           <label>视频链接</label>
-          <input
+          <Input
             v-model="downloadUrl"
-            type="text"
-            class="b3-text-field"
             placeholder="请输入视频 URL（支持 YouTube、Bilibili 等）"
             :disabled="downloadProgress"
           />
@@ -49,23 +43,12 @@
 
         <div class="form-group">
           <label>下载质量</label>
-          <select v-model="downloadQuality" class="b3-select" :disabled="downloadProgress">
-            <option value="best">最佳质量</option>
-            <option value="1080p">1080p</option>
-            <option value="720p">720p</option>
-            <option value="480p">480p</option>
-            <option value="360p">360p</option>
-          </select>
+          <Select v-model="downloadQuality" :options="qualityOptions" :disabled="downloadProgress" />
         </div>
 
         <div class="form-group">
           <label>输出格式</label>
-          <select v-model="downloadFormat" class="b3-select" :disabled="downloadProgress">
-            <option value="mp4">MP4（推荐）</option>
-            <option value="webm">WebM</option>
-            <option value="mkv">MKV</option>
-            <option value="best">最佳格式</option>
-          </select>
+          <Select v-model="downloadFormat" :options="formatOptions" :disabled="downloadProgress" />
         </div>
 
         <div class="form-group">
@@ -128,28 +111,31 @@
         </div>
       </div>
       <div class="dialog-footer">
-        <button
-          class="btn"
+        <Button
+          variant="secondary"
           @click="onClose"
           :disabled="downloadProgress"
         >
           {{ downloadResult ? '关闭' : '取消' }}
-        </button>
-        <button
-          class="btn btn-primary"
+        </Button>
+        <Button
+          variant="primary"
           @click="handleDownloadVideo"
           :disabled="downloadProgress || !downloadUrl"
         >
           {{ downloadProgress ? '下载中...' : '开始下载' }}
-        </button>
+        </Button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { showMessage } from 'siyuan'
+import Button from '@/components/Button.vue'
+import Input from '@/components/Input.vue'
+import Select from '@/components/Select.vue'
 import {
   downloadVideo,
   setYtdlpPath,
@@ -178,6 +164,22 @@ const emit = defineEmits<{
 const downloadUrl = ref('')
 const downloadQuality = ref<'best' | '1080p' | '720p' | '480p' | '360p'>('best')
 const downloadFormat = ref<'mp4' | 'webm' | 'mkv' | 'best'>('mp4')
+
+// 选项数据
+const qualityOptions = computed(() => [
+  { value: 'best', label: '最佳质量' },
+  { value: '1080p', label: '1080p' },
+  { value: '720p', label: '720p' },
+  { value: '480p', label: '480p' },
+  { value: '360p', label: '360p' }
+])
+
+const formatOptions = computed(() => [
+  { value: 'mp4', label: 'MP4（推荐）' },
+  { value: 'webm', label: 'WebM' },
+  { value: 'mkv', label: 'MKV' },
+  { value: 'best', label: '最佳格式' }
+])
 const downloadSubtitle = ref(false)
 const autoMergeVideoAudio = ref(false)
 const downloadProgress = ref(false)
@@ -533,4 +535,10 @@ async function handleAutoMerge(fileName: string) {
 
 <style scoped lang="scss">
 @use "../index.scss";
+
+.path-input-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
 </style>

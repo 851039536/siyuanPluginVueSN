@@ -1,90 +1,125 @@
 <template>
   <div class="video-toolbar">
     <!-- 主要操作按钮 -->
-    <button class="btn btn-primary" @click="handleRefresh">
-      <IconWrapper name="refresh" :size="14" />
+    <Button variant="primary" size="small" @click="handleRefresh">
+      <template #icon>
+        <IconWrapper name="refresh" :size="14" />
+      </template>
       <span>刷新列表</span>
-    </button>
-    <button class="btn" @click="handleOpenFolder">
-      <IconWrapper name="folder" :size="14" />
+    </Button>
+    <Button variant="secondary" size="small" @click="handleOpenFolder">
+      <template #icon>
+        <IconWrapper name="folder" :size="14" />
+      </template>
       <span>打开文件夹</span>
-    </button>
+    </Button>
 
     <!-- 加密相关按钮 -->
-    <button
+    <Button
       v-if="showEncryptBtn"
-      class="btn btn-encrypt"
+      variant="ghost"
+      size="small"
+      class="btn-encrypt"
       @click="handleBatchEncrypt"
     >
-      <IconWrapper name="encryption" :size="14" />
+      <template #icon>
+        <IconWrapper name="encryption" :size="14" />
+      </template>
       <span>批量加密</span>
-    </button>
-    <button
+    </Button>
+    <Button
       v-if="showDecryptBtn"
-      class="btn btn-decrypt"
+      variant="ghost"
+      size="small"
+      class="btn-decrypt"
       @click="handleBatchDecrypt"
     >
-      <IconWrapper name="encryption" :size="14" />
+      <template #icon>
+        <IconWrapper name="encryption" :size="14" />
+      </template>
       <span>批量解密</span>
-    </button>
+    </Button>
 
     <!-- FFmpeg 工具组 -->
-    <div  class="ffmpeg-tools">
-      <button
-        class="btn btn-ffmpeg"
+    <div class="ffmpeg-tools">
+      <Button
+        variant="ghost"
+        size="small"
+        class="btn-ffmpeg"
         @click="handleDownloadVideo"
         title="下载视频"
       >
-        <IconWrapper name="download" :size="14" />
+        <template #icon>
+          <IconWrapper name="download" :size="14" />
+        </template>
         <span>下载视频</span>
-      </button>
-      <button
-        class="btn btn-ffmpeg"
+      </Button>
+      <Button
+        variant="ghost"
+        size="small"
+        class="btn-ffmpeg"
         @click="handleMergeVideos"
         title="视频合并"
       >
-        <IconWrapper name="merge" :size="14" />
+        <template #icon>
+          <IconWrapper name="merge" :size="14" />
+        </template>
         <span>视频合并</span>
-      </button>
-      <button
-        class="btn btn-ffmpeg"
+      </Button>
+      <Button
+        variant="ghost"
+        size="small"
+        class="btn-ffmpeg"
         @click="handleMergeAudio"
         title="视频音频合并"
       >
-        <IconWrapper name="merge" :size="14" />
+        <template #icon>
+          <IconWrapper name="merge" :size="14" />
+        </template>
         <span>视频音频合并</span>
-      </button>
-      <button
-        class="btn btn-ffmpeg"
+      </Button>
+      <Button
+        variant="ghost"
+        size="small"
+        class="btn-ffmpeg"
         @click="handleCompress"
         title="视频压缩"
       >
-        <IconWrapper name="video" :size="14" />
+        <template #icon>
+          <IconWrapper name="video" :size="14" />
+        </template>
         <span>视频压缩</span>
-      </button>
+      </Button>
     </div>
 
     <!-- 分类筛选 -->
     <div v-if="categories.length > 0" class="category-filter">
       <label>分类:</label>
-      <select :value="selectedCategory" @change="handleCategoryChange" class="b3-select">
-        <option value="">全部</option>
-        <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-      </select>
+      <Select
+        :model-value="selectedCategory"
+        :options="categoryOptions"
+        size="small"
+        @update:model-value="handleCategoryChange"
+      />
     </div>
 
     <!-- FFmpeg 设置按钮 -->
-    <button class="btn" @click="handleFFmpegSettings">
-      <IconWrapper name="settings" :size="14" />
+    <Button variant="ghost" size="small" @click="handleFFmpegSettings">
+      <template #icon>
+        <IconWrapper name="settings" :size="14" />
+      </template>
       <span>FFmpeg设置</span>
-    </button>
+    </Button>
 
     <div class="toolbar-spacer"></div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import IconWrapper from '@/components/IconWrapper.vue'
+import Button from '@/components/Button.vue'
+import Select from '@/components/Select.vue'
 
 /**
  * 工具栏按钮配置
@@ -160,6 +195,11 @@ const props = withDefaults(defineProps<VideoToolbarProps>(), {
 
 const emit = defineEmits<VideoToolbarEmits>()
 
+// 分类选项
+const categoryOptions = computed(() => [
+  { value: '', label: '全部' },
+  ...props.categories.map(cat => ({ value: cat, label: cat }))
+])
 
 // 事件处理方法
 function handleRefresh() {
@@ -198,9 +238,8 @@ function handleFFmpegSettings() {
   emit('ffmpegSettings')
 }
 
-function handleCategoryChange(event: Event) {
-  const target = event.target as HTMLSelectElement
-  emit('categoryChange', target.value)
+function handleCategoryChange(value: string) {
+  emit('categoryChange', value)
 }
 </script>
 
@@ -213,62 +252,26 @@ function handleCategoryChange(event: Event) {
   border-bottom: 1px solid var(--b3-border-color);
   background: var(--b3-theme-surface);
 
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    border: 1px solid var(--b3-border-color);
-    border-radius: var(--b3-border-radius);
+  .btn-encrypt {
+    background: var(--b3-theme-primary-lightest);
+    color: var(--b3-theme-primary);
+    border-color: var(--b3-theme-primary);
+
+    &:hover:not(:disabled) {
+      background: var(--b3-theme-primary);
+      color: var(--b3-theme-on-primary);
+    }
+  }
+
+  .btn-decrypt {
     background: var(--b3-theme-surface);
     color: var(--b3-theme-on-surface);
-    font-size: 13px;
-    cursor: pointer;
-    transition: all 0.2s ease;
+    border: 1px solid var(--b3-border-color);
 
     &:hover:not(:disabled) {
       background: var(--b3-theme-primary-lightest);
-      border-color: var(--b3-theme-primary);
-      color: var(--b3-theme-primary);
-    }
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    &.btn-primary {
-      background: var(--b3-theme-primary);
-      color: var(--b3-theme-on-primary);
-      border-color: var(--b3-theme-primary);
-
-      &:hover:not(:disabled) {
-        background: var(--b3-theme-primary);
-        filter: brightness(1.1);
-      }
-    }
-
-    &.btn-encrypt {
-      background: var(--b3-theme-primary-lightest);
       color: var(--b3-theme-primary);
       border-color: var(--b3-theme-primary);
-
-      &:hover:not(:disabled) {
-        background: var(--b3-theme-primary);
-        color: var(--b3-theme-on-primary);
-      }
-    }
-
-    &.btn-decrypt {
-      background: var(--b3-theme-surface);
-      color: var(--b3-theme-on-surface);
-      border: 1px solid var(--b3-border-color);
-
-      &:hover:not(:disabled) {
-        background: var(--b3-theme-primary-lightest);
-        color: var(--b3-theme-primary);
-        border-color: var(--b3-theme-primary);
-      }
     }
   }
 
@@ -280,22 +283,6 @@ function handleCategoryChange(event: Event) {
     label {
       font-size: 13px;
       color: var(--b3-theme-on-surface);
-    }
-
-    .b3-select {
-      min-width: 150px;
-      padding: 6px 8px;
-      border: 1px solid var(--b3-border-color);
-      border-radius: var(--b3-border-radius);
-      background: var(--b3-theme-background);
-      color: var(--b3-theme-on-background);
-      font-size: 13px;
-      cursor: pointer;
-
-      &:focus {
-        outline: none;
-        border-color: var(--b3-theme-primary);
-      }
     }
   }
 
@@ -331,27 +318,13 @@ function handleCategoryChange(event: Event) {
     padding: 8px 12px;
     gap: 8px;
 
-    .btn {
-      font-size: 12px;
-      padding: 6px 10px;
-
-      span {
-        display: none;
-      }
-
-      :deep(.icon) {
-        margin: 0;
-      }
+    :deep(.si-button) span {
+      display: none;
     }
 
     .category-filter {
       width: 100%;
       order: -1;
-
-      .b3-select {
-        flex: 1;
-        min-width: auto;
-      }
     }
   }
 }
@@ -359,13 +332,9 @@ function handleCategoryChange(event: Event) {
 // 小屏幕优化
 @media (max-width: 480px) {
   .video-toolbar {
-    .btn {
+    :deep(.si-button) {
       flex: 1;
       min-width: 0;
-
-      span {
-        display: none;
-      }
     }
 
     .category-filter {

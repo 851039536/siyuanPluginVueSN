@@ -724,5 +724,5 @@ function closeDialog() {
 </script>
 
 <style scoped lang="scss">
-@use "./index.scss";
+@use "./styles/pronunciation.scss";
 </style>

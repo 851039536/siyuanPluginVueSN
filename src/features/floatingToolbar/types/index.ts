@@ -1,4 +1,8 @@
 /**
+ * 浮动工具栏 - 类型定义
+ */
+
+/**
  * 工具栏功能接口定义
  */
 export interface ToolbarAction {
@@ -167,7 +171,9 @@ export class ToolbarActionFactory {
     }
 }
 
-// 类型守卫：检查对象是否为 ToolbarAction
+/**
+ * 类型守卫：检查对象是否为 ToolbarAction
+ */
 export function isToolbarAction(obj: unknown): obj is ToolbarAction {
     return (
         typeof obj === 'object' &&

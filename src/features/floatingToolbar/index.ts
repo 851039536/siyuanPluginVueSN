@@ -1,8 +1,6 @@
 import { Plugin } from 'siyuan'
-import { FloatingToolbar } from './FloatingToolbar'
-import { createQRCodeAction } from './qrcode/qrcode-action'
-import { createPronunciationAction } from './pronunciation/pronunciation-action'
-import { createTranslateAction } from './translate/translate-action'
+import { FloatingToolbar } from './core/FloatingToolbar'
+import { createQRCodeAction, createPronunciationAction, createTranslateAction } from './core/actions'
 import type PluginSample from '@/index'
 
 /**
@@ -37,8 +35,11 @@ export function registerFloatingToolbar(plugin: Plugin): void {
 }
 
 // 导出对话框组件供 App.vue 使用
-export { default as QRCodeDialog } from './qrcode/QRCodeDialog.vue'
-export { default as PronunciationDialog } from './pronunciation/PronunciationDialog.vue'
+export { default as QRCodeDialog } from './components/QRCodeDialog.vue'
+export { default as PronunciationDialog } from './components/PronunciationDialog.vue'
+
+// 导出类型
+export * from './types'
 
 // 导出工具函数供其他模块使用
-export * from './utils'
+export * from './core/utils'

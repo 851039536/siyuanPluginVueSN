@@ -3,7 +3,7 @@
  * 为选中的文本生成二维码
  */
 import { Plugin } from 'siyuan'
-import { ToolbarAction } from '../actions'
+import { ToolbarAction } from '../../types'
 import { showI18nMessage, dispatchDialogEvent } from '../utils'
 
 /**

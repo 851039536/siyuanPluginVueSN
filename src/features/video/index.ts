@@ -1,8 +1,9 @@
 import { Plugin } from 'siyuan';
 import { showMessage } from 'siyuan';
 import { encryptVideo, decryptVideo, isEncryptedVideo, getEncryptedFileName, getOriginalFileName } from './crypto';
-export { isFFmpegAvailable, mergeVideos, mergeVideoAudio, compressVideo, formatFileSize, calculateCompressionRate, buildVideoPath, setFFmpegPath, getCurrentFFmpegPath, clearFFmpegPath } from './ffmpeg';
+export { isFFmpegAvailable, mergeVideos, mergeVideoAudio, compressVideo, buildVideoPath, setFFmpegPath, getCurrentFFmpegPath, clearFFmpegPath } from './ffmpeg';
 export { isYtdlpAvailable, downloadVideo, getVideoInfo, getYtdlpVersion, setYtdlpPath, getCurrentYtdlpPath, clearYtdlpPath, getSupportedSites } from './ytdlp';
+export { formatFileSize, calculateCompressionRate, getWorkspacePath } from './utils';
 
 export function registerVideo(plugin: Plugin) {
 

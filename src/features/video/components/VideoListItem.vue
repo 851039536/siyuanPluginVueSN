@@ -45,6 +45,7 @@
 import { computed } from 'vue'
 import IconWrapper from '@/components/IconWrapper.vue'
 import Button from '@/components/Button.vue'
+import { formatFileSize } from '../utils'
 import type { VideoData } from './VideoPlayerDialog.vue'
 
 /**
@@ -118,21 +119,6 @@ function handlePlay() {
 // 处理解密
 function handleDecrypt() {
   emit('decrypt', props.video)
-}
-
-// 格式化文件大小
-function formatFileSize(bytes?: number): string {
-  if (!bytes) return '0 B'
-  const units = ['B', 'KB', 'MB', 'GB']
-  let size = bytes
-  let unitIndex = 0
-
-  while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024
-    unitIndex++
-  }
-
-  return `${size.toFixed(1)} ${units[unitIndex]}`
 }
 </script>
 

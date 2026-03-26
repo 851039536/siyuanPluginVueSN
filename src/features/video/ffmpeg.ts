@@ -3,7 +3,10 @@
  * 支持视频合并、视频音频合并、视频压缩
  */
 
-import { showMessage } from 'siyuan'
+import { getWorkspacePath, escapeFilePathForCmd, formatFileSize, calculateCompressionRate } from './utils'
+
+// 重新导出供外部使用
+export { formatFileSize, calculateCompressionRate }
 
 /**
  * FFmpeg 处理结果
@@ -55,7 +58,7 @@ export function isFFmpegAvailable(): boolean {
     try {
       const { exec } = (window as any).require('child_process')
       // 尝试检查 ffmpeg 命令
-      exec('ffmpeg -version', (error: any) => {
+      exec('ffmpeg -version', (_error: any) => {
         // 如果没有错误，说明 ffmpeg 可用
         // 如果有错误，可能是命令不存在
       })
@@ -164,25 +167,6 @@ export function clearFFmpegPath(): void {
 }
 
 /**
- * 转义文件路径中的特殊字符，用于命令行参数
- * Windows: 转义双引号和反斜杠，处理中文路径
- * Unix: 转义单引号
- */
-function escapeFilePathForCmd(filePath: string): string {
-  // 检测平台
-  const platform = (window as any).require('os').platform()
-
-  if (platform === 'win32') {
-    // Windows: 使用双引号包裹，转义内部双引号
-    // 对于中文路径和特殊字符，需要确保路径格式正确
-    return `"${filePath.replace(/"/g, '\\"')}"`
-  } else {
-    // Unix/Linux/macOS: 使用单引号包裹，转义单引号
-    return `'${filePath.replace(/'/g, "'\\''")}'`
-  }
-}
-
-/**
  * 将相对路径转换为绝对路径
  * @param relativePath 相对路径（如 data/video/test.mp4）
  * @returns 绝对路径
@@ -251,7 +235,7 @@ export async function mergeVideos(params: MergeVideosParams): Promise<FFmpegResu
 
     // 执行命令
     onProgress?.(10)
-    const { stdout, stderr } = await execAsync(cmd, {
+    await execAsync(cmd, {
       encoding: 'utf8',
       maxBuffer: 1024 * 1024 * 10 // 10MB
     })
@@ -310,7 +294,7 @@ export async function mergeVideoAudio(params: MergeVideoAudioParams): Promise<FF
     const cmd = `${ffmpegPath} -i ${escapedVideoPath} -i ${escapedAudioPath} -c:v copy -c:a aac -shortest ${escapedOutputPath} -y`
 
     onProgress?.(10)
-    const { stdout, stderr } = await execAsync(cmd, {
+    await execAsync(cmd, {
       // Windows 下需要设置 encoding 为 utf8 以正确处理中文
       encoding: 'utf8',
       // 设置最大缓冲区
@@ -389,7 +373,7 @@ export async function compressVideo(params: CompressVideoParams): Promise<FFmpeg
     cmd += ` ${escapeFilePathForCmd(outputPath)} -y`
 
     onProgress?.(10)
-    const { stdout, stderr } = await execAsync(cmd, {
+    await execAsync(cmd, {
       encoding: 'utf8',
       maxBuffer: 1024 * 1024 * 10 // 10MB
     })
@@ -432,9 +416,9 @@ export async function getVideoInfo(videoPath: string): Promise<{
 
     // 解析输出
     const lines = stdout.split('\n')
-    const info: any = {}
+    const info: Record<string, number> = {}
 
-    lines.forEach(line => {
+    lines.forEach((line: string) => {
       const [key, value] = line.split('=')
       if (key && value) {
         info[key] = parseFloat(value)
@@ -458,26 +442,6 @@ export async function getVideoInfo(videoPath: string): Promise<{
 }
 
 /**
- * 格式化文件大小
- */
-export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 B'
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-}
-
-/**
- * 计算压缩率
- */
-export function calculateCompressionRate(originalSize: number, compressedSize: number): string {
-  if (originalSize === 0) return '0%'
-  const rate = ((originalSize - compressedSize) / originalSize) * 100
-  return rate.toFixed(1) + '%'
-}
-
-/**
  * 检查文件是否存在
  */
 export function checkFileExists(filePath: string): boolean {
@@ -487,25 +451,6 @@ export function checkFileExists(filePath: string): boolean {
   } catch (error) {
     return false
   }
-}
-
-/**
- * 获取工作区路径
- */
-export async function getWorkspacePath(): Promise<string> {
-  try {
-    const response = await fetch('/api/system/getConf', {
-      method: 'POST'
-    })
-
-    if (response.ok) {
-      const data = await response.json()
-      return data?.data?.conf?.system?.workspaceDir || ''
-    }
-  } catch (error) {
-    console.error('获取工作区路径失败:', error)
-  }
-  return ''
 }
 
 /**

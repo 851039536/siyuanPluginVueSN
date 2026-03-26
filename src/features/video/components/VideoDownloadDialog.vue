@@ -145,9 +145,9 @@ import {
 import {
   mergeVideoAudio,
   isFFmpegAvailable,
-  buildVideoPath,
-  getWorkspacePath
+  buildVideoPath
 } from '../ffmpeg'
+import { getWorkspacePath } from '../utils'
 
 // Props
 const props = defineProps<{

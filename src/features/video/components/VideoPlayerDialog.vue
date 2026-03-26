@@ -31,10 +31,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { computed, watch } from 'vue'
 import type Player from 'video.js/dist/types/player'
 import IconWrapper from '@/components/IconWrapper.vue'
-import VideoPlayer, { type VideoPlayerEmits } from './VideoPlayer.vue'
+import VideoPlayer from './VideoPlayer.vue'
+import { formatFileSize } from '../utils'
 
 /**
  * 视频数据接口
@@ -123,21 +124,6 @@ function handlePlayerError(error: any) {
   emit('error', error)
 }
 
-// 格式化文件大小
-function formatFileSize(bytes?: number): string {
-  if (!bytes) return '0 B'
-  const units = ['B', 'KB', 'MB', 'GB']
-  let size = bytes
-  let unitIndex = 0
-
-  while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024
-    unitIndex++
-  }
-
-  return `${size.toFixed(1)} ${units[unitIndex]}`
-}
-
 // 格式化日期
 function formatDate(timestamp?: number): string {
   if (!timestamp) return ''
@@ -153,64 +139,18 @@ watch(() => props.visible, (newVal) => {
 </script>
 
 <style scoped lang="scss">
-// 对话框样式
-.dialog-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1001;
-  pointer-events: auto;
-}
+@use "../index.scss";
 
-.dialog {
-  background: var(--b3-theme-background);
-  border-radius: var(--b3-border-radius);
-  box-shadow: var(--b3-dialog-shadow);
-  width: 90vw;
-  max-width: 500px;
-  max-height: 80vh;
-  display: flex;
-  flex-direction: column;
+// 视频播放器对话框特定样式
+.dialog-header {
+  .icon-btn {
+    cursor: pointer;
+    color: var(--b3-theme-on-surface-light);
+    transition: color 0.2s ease;
 
-  &.dialog-large {
-    max-width: 800px;
-  }
-
-  .dialog-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--b3-border-color);
-
-    h3 {
-      margin: 0;
-      font-size: 16px;
-      font-weight: 600;
+    &:hover {
       color: var(--b3-theme-on-background);
     }
-
-    .icon-btn {
-      cursor: pointer;
-      color: var(--b3-theme-on-surface-light);
-      transition: color 0.2s ease;
-
-      &:hover {
-        color: var(--b3-theme-on-background);
-      }
-    }
-  }
-
-  .dialog-body {
-    padding: 20px;
-    overflow-y: auto;
-    flex: 1;
   }
 }
 
@@ -245,29 +185,6 @@ watch(() => props.visible, (newVal) => {
         border-radius: 4px;
         font-size: 12px;
       }
-    }
-  }
-}
-
-// 响应式调整
-@media (max-width: 768px) {
-  .dialog {
-    width: 100vw;
-    height: 100vh;
-    max-width: none;
-    max-height: none;
-    border-radius: 0;
-
-    .dialog-header {
-      padding: 12px 16px;
-
-      h3 {
-        font-size: 14px;
-      }
-    }
-
-    .dialog-body {
-      padding: 16px;
     }
   }
 }

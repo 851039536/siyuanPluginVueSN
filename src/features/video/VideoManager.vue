@@ -532,7 +532,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, shallowRef, onMounted, computed, watch } from 'vue'
 import { showMessage } from 'siyuan'
 import IconWrapper from '@/components/IconWrapper.vue'
 import Button from '@/components/Button.vue'
@@ -560,7 +560,9 @@ import {
   buildVideoPath,
   setFFmpegPath,
   getCurrentFFmpegPath,
-  clearFFmpegPath
+  clearFFmpegPath,
+  formatFileSize,
+  calculateCompressionRate
 } from './ffmpeg'
 import { usePlugin } from '@/main'
 
@@ -576,28 +578,37 @@ const emit = defineEmits<{
   close: []
 }>()
 
-// 响应式数据
-const videos = ref<any[]>([])
+// ==================== 核心状态 ====================
+// 使用 shallowRef 优化大数组性能
+const videos = shallowRef<any[]>([])
 const categories = ref<string[]>([])
 const selectedCategory = ref('')
+
+// ==================== 视频播放状态 ====================
 const playerVisible = ref(false)
 const currentVideo = ref<any>(null)
 const currentVideoUrl = ref('')
 const storagePath = ref('data/video')
+
+// ==================== 加密进度状态 ====================
 const encryptDialogVisible = ref(false)
 const encryptDoubleCompress = ref(false)
 const encryptProgress = ref(false)
 const encryptCurrentIndex = ref(0)
 const encryptTotalCount = ref(0)
 const encryptCurrentFile = ref('')
+
+// ==================== 解密进度状态 ====================
 const decryptDialogVisible = ref(false)
 const decryptProgress = ref(false)
 const decryptCurrentIndex = ref(0)
 const decryptTotalCount = ref(0)
 const decryptCurrentFile = ref('')
 
-// FFmpeg 相关响应式数据
+// ==================== FFmpeg 状态 ====================
 const hasFFmpeg = ref(false)
+
+// 视频合并
 const mergeDialogVisible = ref(false)
 const mergeSelectedVideos = ref<any[]>([])
 const mergeOutputName = ref('merged_video.mp4')
@@ -605,6 +616,7 @@ const mergeProgress = ref(false)
 const mergeProgressPercent = ref(0)
 const mergeResult = ref<{ success: boolean; outputPath?: string; error?: string } | null>(null)
 
+// 音频合并
 const mergeAudioDialogVisible = ref(false)
 const selectedVideoForMerge = ref('')
 const selectedAudioForMerge = ref('')
@@ -614,6 +626,7 @@ const mergeAudioProgress = ref(false)
 const mergeAudioProgressPercent = ref(0)
 const mergeAudioResult = ref<{ success: boolean; outputPath?: string; error?: string } | null>(null)
 
+// 视频压缩
 const compressDialogVisible = ref(false)
 const selectedVideoForCompress = ref('')
 const compressMode = ref<'crf' | 'bitrate'>('crf')
@@ -632,7 +645,7 @@ const customFFmpegPath = ref('')
 const currentFFmpegPath = ref('')
 const ffmpegTestResult = ref<'success' | 'failed' | null>(null)
 
-// 下载对话框
+// ==================== 下载状态 ====================
 const downloadDialogVisible = ref(false)
 
 // 计算属性
@@ -795,20 +808,6 @@ function handlePlayerError(error: any) {
 // 处理分类变化
 function handleCategoryChange(category: string) {
   selectedCategory.value = category
-}
-
-function formatFileSize(bytes?: number) {
-  if (!bytes) return '0 B'
-  const units = ['B', 'KB', 'MB', 'GB']
-  let size = bytes
-  let unitIndex = 0
-
-  while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024
-    unitIndex++
-  }
-
-  return `${size.toFixed(1)} ${units[unitIndex]}`
 }
 
 function showBatchEncryptDialog() {
@@ -1239,13 +1238,6 @@ async function handleCompressVideo() {
   } finally {
     compressProgress.value = false
   }
-}
-
-// 使用 ffmpeg.ts 中的函数
-function calculateCompressionRate(originalSize: number, compressedSize: number): string {
-  if (originalSize === 0) return '0%'
-  const rate = ((originalSize - compressedSize) / originalSize) * 100
-  return rate.toFixed(1) + '%'
 }
 
 // FFmpeg 路径设置相关方法

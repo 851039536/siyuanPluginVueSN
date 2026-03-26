@@ -3,7 +3,7 @@
  * 支持从 YouTube、Bilibili 等网站下载视频
  */
 
-import { showMessage } from 'siyuan'
+import { getWorkspacePath } from './utils'
 
 /**
  * yt-dlp 下载结果
@@ -159,18 +159,6 @@ export async function getYtdlpVersion(): Promise<string> {
 }
 
 /**
- * 转义文件路径中的特殊字符
- */
-function escapeFilePathForCmd(filePath: string): string {
-  const platform = (window as any).require('os').platform()
-  if (platform === 'win32') {
-    return `"${filePath.replace(/"/g, '\\"')}"`
-  } else {
-    return `'${filePath.replace(/'/g, "'\\''")}'`
-  }
-}
-
-/**
  * 解析下载质量参数
  */
 function getQualityFormat(quality: string, format: string): string {
@@ -187,25 +175,6 @@ function getQualityFormat(quality: string, format: string): string {
   }
 
   return qualityMap[quality] || qualityMap['best']
-}
-
-/**
- * 获取工作区路径
- */
-async function getWorkspacePath(): Promise<string> {
-  try {
-    const response = await fetch('/api/system/getConf', {
-      method: 'POST'
-    })
-
-    if (response.ok) {
-      const data = await response.json()
-      return data?.data?.conf?.system?.workspaceDir || ''
-    }
-  } catch (error) {
-    console.error('获取工作区路径失败:', error)
-  }
-  return ''
 }
 
 /**

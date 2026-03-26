@@ -1,25 +1,6 @@
 import { Plugin } from 'siyuan'
 import { ToolbarAction, ToolbarActionManager } from '../types'
-import { showI18nMessage } from './utils'
-
-/**
- * 防抖函数
- * @param fn 要执行的函数
- * @param delay 延迟时间（毫秒）
- * @returns 防抖后的函数
- */
-function debounce<T extends (...args: any[]) => void>(fn: T, delay: number): (...args: Parameters<T>) => void {
-    let timeoutId: ReturnType<typeof setTimeout> | null = null
-    return (...args: Parameters<T>) => {
-        if (timeoutId) {
-            clearTimeout(timeoutId)
-        }
-        timeoutId = setTimeout(() => {
-            fn(...args)
-            timeoutId = null
-        }, delay)
-    }
-}
+import { showI18nMessage, debounce } from './utils'
 
 /**
  * 浮动工具栏增强类
@@ -87,8 +68,6 @@ export class FloatingToolbar {
      */
     private bindEvents() {
         document.addEventListener('mouseup', this.handleDocumentMouseUp, { passive: true })
-        // 监听选择变化，清理工具栏
-        document.addEventListener('selectionchange', this.handleSelectionChange.bind(this), { passive: true })
     }
 
     /**
@@ -96,30 +75,34 @@ export class FloatingToolbar {
      * 使用箭头函数保持上下文
      */
     private handleDocumentMouseUp = () => {
-        // 记录当前选择内容用于防抖比较
-        this.lastSelectionText = window.getSelection()?.toString().trim() || ''
-        // 使用防抖处理
-        this.debouncedHandleMouseUp()
-    }
-
-    /**
-     * 处理选择变化
-     */
-    private handleSelectionChange() {
-        // 防止重复处理
-        if (this.isProcessing) return
-
+        // 获取当前选择
         const selection = window.getSelection()
         const selectedText = selection?.toString().trim() || ''
-
+        
+        // 记录当前选择内容用于防抖比较
+        this.lastSelectionText = selectedText
+        
         // 选择为空时清理工具栏
         if (!selectedText) {
             this.cleanupAllToolbars()
             return
         }
+        
+        // 使用防抖处理
+        this.debouncedHandleMouseUp()
+    }
+
+    /**
+     * 处理选择变化（防抖后调用）
+     */
+    private handleSelectionChange() {
+        // 防止重复处理
+        if (this.isProcessing) return
+
+        const selectedText = this.lastSelectionText
 
         // 选择内容与上次一致且有效，开始处理
-        if (selectedText === this.lastSelectionText && selectedText) {
+        if (selectedText) {
             this.processSelection()
         }
     }
@@ -133,9 +116,8 @@ export class FloatingToolbar {
 
         try {
             const selection = window.getSelection()
-            const selectedText = selection?.toString().trim()
 
-            if (!selectedText || !selection.rangeCount) {
+            if (!selection?.rangeCount) {
                 return
             }
 

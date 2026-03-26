@@ -102,49 +102,27 @@ export class ToolbarActionManager {
  */
 export class ToolbarActionFactory {
     /**
-     * 创建一个简单的功能
+     * 创建一个简单的功能（使用 SiYuan 内置图标）
      * @param id 功能 ID
      * @param name 功能名称
      * @param iconName 图标名称（使用 SiYuan 内置图标）
      * @param handler 处理函数
+     * @param hotkey 可选快捷键
      * @returns 功能对象
      */
     static createSimpleAction(
         id: string,
         name: string,
         iconName: string,
-        handler: (selectedText: string) => Promise<void> | void
+        handler: (selectedText: string) => Promise<void> | void,
+        hotkey?: string
     ): ToolbarAction {
         return {
             id,
             name,
             icon: `<svg><use xlink:href="#icon${iconName}"></use></svg>`,
-            handler
-        }
-    }
-
-    /**
-     * 创建一个带快捷键的功能
-     * @param id 功能 ID
-     * @param name 功能名称
-     * @param iconName 图标名称
-     * @param hotkey 快捷键
-     * @param handler 处理函数
-     * @returns 功能对象
-     */
-    static createActionWithHotkey(
-        id: string,
-        name: string,
-        iconName: string,
-        hotkey: string,
-        handler: (selectedText: string) => Promise<void> | void
-    ): ToolbarAction {
-        return {
-            id,
-            name,
-            icon: `<svg><use xlink:href="#icon${iconName}"></use></svg>`,
-            hotkey,
-            handler
+            handler,
+            ...(hotkey && { hotkey })
         }
     }
 
@@ -154,19 +132,22 @@ export class ToolbarActionFactory {
      * @param name 功能名称
      * @param svg 自定义 SVG 图标
      * @param handler 处理函数
+     * @param hotkey 可选快捷键
      * @returns 功能对象
      */
-    static createActionWithCustomIcon(
+    static createWithCustomIcon(
         id: string,
         name: string,
         svg: string,
-        handler: (selectedText: string) => Promise<void> | void
+        handler: (selectedText: string) => Promise<void> | void,
+        hotkey?: string
     ): ToolbarAction {
         return {
             id,
             name,
             icon: svg,
-            handler
+            handler,
+            ...(hotkey && { hotkey })
         }
     }
 }

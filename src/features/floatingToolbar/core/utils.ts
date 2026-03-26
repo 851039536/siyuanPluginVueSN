@@ -1,4 +1,27 @@
 import type { Plugin } from 'siyuan'
+import type { ToolbarAction } from '../types'
+
+/**
+ * 防抖函数
+ * @param fn 要执行的函数
+ * @param delay 延迟时间（毫秒）
+ * @returns 防抖后的函数
+ */
+export function debounce<T extends (...args: any[]) => void>(
+    fn: T,
+    delay: number
+): (...args: Parameters<T>) => void {
+    let timeoutId: ReturnType<typeof setTimeout> | null = null
+    return (...args: Parameters<T>) => {
+        if (timeoutId) {
+            clearTimeout(timeoutId)
+        }
+        timeoutId = setTimeout(() => {
+            fn(...args)
+            timeoutId = null
+        }, delay)
+    }
+}
 
 /**
  * 通知消息选项
@@ -159,4 +182,47 @@ export function getI18nText(
     }
 
     return typeof value === 'string' ? value : defaultValue
+}
+
+/**
+ * 对话框 Action 配置
+ */
+export interface DialogActionConfig {
+    /** 功能唯一标识符 */
+    id: string
+    /** 国际化键名 */
+    i18nKey: string
+    /** 默认名称 */
+    defaultMessage: string
+    /** SVG 图标 */
+    icon: string
+    /** 要派发的事件名称 */
+    eventName: string
+}
+
+/**
+ * 创建对话框类型 Action 的工厂函数
+ * 统一创建打开对话框类型的工具栏功能
+ * @param plugin 插件实例
+ * @param config 对话框配置
+ * @returns ToolbarAction
+ */
+export function createDialogAction(
+    plugin: Plugin,
+    config: DialogActionConfig
+): ToolbarAction {
+    const { id, i18nKey, defaultMessage, icon, eventName } = config
+
+    return {
+        id,
+        name: (plugin.i18n as Record<string, any>)?.floatingToolbar?.[i18nKey] || defaultMessage,
+        icon,
+        handler: async (selectedText: string) => {
+            if (!selectedText) {
+                showI18nMessage(plugin, 'noTextSelected', '未选中文本')
+                return
+            }
+            dispatchDialogEvent(eventName, selectedText)
+        }
+    }
 }

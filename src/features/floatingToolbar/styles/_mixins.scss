@@ -85,6 +85,45 @@
   }
 }
 
+// 对话框标题样式
+@mixin dialog-title($light: false) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+
+  @if $light {
+    color: var(--b3-theme-on-primary);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  } @else {
+    color: var(--b3-theme-on-background);
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: 14px;
+    gap: 6px;
+  }
+}
+
+// 对话框图标样式
+@mixin dialog-icon($size: 22px, $light: false) {
+  width: $size;
+  height: $size;
+
+  @if $light {
+    color: var(--b3-theme-on-primary);
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.2));
+  } @else {
+    color: var(--b3-theme-primary);
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    width: $size - 4px;
+    height: $size - 4px;
+  }
+}
+
 @mixin dialog-body {
   flex: 1;
   overflow-y: auto;

@@ -34,12 +34,9 @@
 }
 
 .dialog-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  @include ft.dialog-title(false);
   font-size: 14px;
-  font-weight: 600;
-  color: var(--b3-theme-on-background);
+  gap: 6px;
 
   @media (max-width: ft.$breakpoint-md) {
     font-size: 13px;
@@ -47,9 +44,7 @@
 }
 
 .dialog-icon {
-  width: 20px;
-  height: 20px;
-  color: var(--b3-theme-primary);
+  @include ft.dialog-icon(20px, false);
 }
 
 // ========================================

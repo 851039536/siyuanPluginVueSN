@@ -39,6 +39,13 @@
         :i18n="extendedCardsI18n"
       />
 
+      <InsightCards
+        :historical-data="historicalData"
+        :total-notes="stats.totalNotes"
+        :total-words="stats.totalWords"
+        :i18n="insightCardsI18n"
+      />
+
       <ViewModeSection
         v-model="viewMode"
         v-model:day-range="dayRange"
@@ -75,6 +82,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import StatisticsHeader from './components/StatisticsHeader.vue'
 import StatsCardsCompact from './components/StatsCardsCompact.vue'
 import ExtendedStatsCards from './components/ExtendedStatsCards.vue'
+import InsightCards from './components/InsightCards.vue'
 import ViewModeSection from './components/ViewModeSection.vue'
 import BarChart from './components/BarChart.vue'
 import TrendView from './components/TrendView.vue'
@@ -240,6 +248,24 @@ const trendViewI18n = computed(() => ({
   monthOverMonth: '月环比',
 }))
 
+const insightCardsI18n = computed(() => ({
+  streakDays: '连续活跃',
+  daysStreak: '天连续记录',
+  maxStreak: '最长',
+  days: '天',
+  milestones: '里程碑',
+  bestRecords: '最佳记录',
+  yearOverYear: '年同比',
+  mostWordsDay: '单日字数最多',
+  mostCreatedDay: '单日新增最多',
+  longestNote: '最长笔记',
+  wordsUnit: '字',
+  notesUnit: '篇',
+  notes: '笔记',
+  words: '字数',
+  remaining: '剩余',
+}))
+
 const chartTitle = computed(() => {
   return stats.value?.currentPeriod || ''
 })
@@ -317,9 +343,8 @@ async function refreshData() {
     chartData.value = stats.value.dailyStats || []
     lastUpdateTime.value = new Date().toLocaleString('zh-CN')
 
-    if (viewMode.value === 'trend') {
-      await loadHistoricalData()
-    }
+    // 始终加载历史数据，供 InsightCards 和 TrendView 使用
+    await loadHistoricalData()
   } catch (error) {
     console.error('刷新统计数据失败:', error)
   } finally {

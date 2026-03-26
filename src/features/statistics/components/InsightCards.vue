@@ -1,70 +1,51 @@
 <template>
   <div class="insight-cards">
-    <!-- 第一行：称号卡片 + 连续活跃 -->
+    <!-- 第一行：写作等级 + 连续活跃 -->
     <div class="insight-row">
-      <!-- 活跃等级/称号卡片 -->
-      <div class="insight-card level-card">
+      <div class="insight-card">
         <div class="card-header">
           <span class="card-icon">{{ currentLevel.icon }}</span>
           <span class="card-title">{{ i18n.writerLevel }}</span>
         </div>
         <div class="card-body">
-          <div class="level-display">
-            <div class="level-badge" :class="currentLevel.tier">
-              <span class="badge-icon">{{ currentLevel.icon }}</span>
-              <span class="badge-name">{{ currentLevel.name }}</span>
-            </div>
+          <div class="level-badge" :class="currentLevel.tier">
+            <span>{{ currentLevel.icon }}</span>
+            <span>{{ currentLevel.name }}</span>
           </div>
-          <div class="level-progress">
+          <div class="progress-section">
             <div class="progress-info">
-              <span class="progress-label">{{ i18n.expProgress }}</span>
-              <span class="progress-value">{{ currentLevel.currentExp }} / {{ currentLevel.nextLevelExp }}</span>
+              <span>{{ i18n.expProgress }}</span>
+              <span>{{ currentLevel.currentExp }} / {{ currentLevel.nextLevelExp }}</span>
             </div>
             <div class="progress-bar">
               <div class="progress-fill" :style="{ width: currentLevel.progressPercent + '%' }"></div>
-              <div class="progress-glow"></div>
             </div>
-            <div class="next-level-hint">
-              {{ i18n.toNextLevel }}: {{ currentLevel.nextLevelName }}
-            </div>
+            <div class="progress-hint">{{ i18n.toNextLevel }}: {{ currentLevel.nextLevelName }}</div>
           </div>
-          <div class="level-benefits">
-            <span v-for="benefit in currentLevel.benefits" :key="benefit" class="benefit-tag">
-              {{ benefit }}
-            </span>
+          <div class="benefit-tags">
+            <span v-for="benefit in currentLevel.benefits" :key="benefit">{{ benefit }}</span>
           </div>
         </div>
       </div>
 
-      <!-- 连续活跃天数 -->
-      <div class="insight-card streak-card">
+      <div class="insight-card">
         <div class="card-header">
           <span class="card-icon">🔥</span>
           <span class="card-title">{{ i18n.streakDays }}</span>
         </div>
-        <div class="card-body">
-          <div class="streak-display">
-            <div class="streak-number">{{ streakDays }}</div>
-            <div class="streak-label">{{ i18n.daysStreak }}</div>
-            <div v-if="maxStreakDays > streakDays" class="max-streak">
-              🏆 {{ i18n.maxStreak }}: {{ maxStreakDays }} {{ i18n.days }}
-            </div>
+        <div class="card-body streak-body">
+          <div class="streak-number">{{ streakDays }}</div>
+          <div class="streak-label">{{ i18n.daysStreak }}</div>
+          <div v-if="maxStreakDays > streakDays" class="max-streak">
+            🏆 {{ i18n.maxStreak }}: {{ maxStreakDays }} {{ i18n.days }}
           </div>
           <div class="streak-reward">
-            <div class="reward-title">{{ i18n.nextReward }}</div>
-            <div class="reward-item">
-              <span class="reward-icon">🎁</span>
-              <span class="reward-text">{{ getNextStreakReward() }}</span>
-              <span class="reward-progress">{{ streakDays }}/{{ nextStreakMilestone }}</span>
-            </div>
-            <div class="streak-flames">
-              <span
-                v-for="n in 7"
-                :key="n"
-                class="flame"
-                :class="{ active: n <= streakDays, locked: n > streakDays }"
-              >🔥</span>
-            </div>
+            <span class="reward-icon">🎁</span>
+            <span>{{ getNextStreakReward() }}</span>
+            <span class="reward-progress">{{ streakDays }}/{{ nextStreakMilestone }}</span>
+          </div>
+          <div class="streak-flames">
+            <span v-for="n in 7" :key="n" :class="{ active: n <= streakDays }">🔥</span>
           </div>
         </div>
       </div>
@@ -72,8 +53,7 @@
 
     <!-- 第二行：本周目标 + 热力图 -->
     <div class="insight-row">
-      <!-- 本周目标 -->
-      <div class="insight-card weekly-card">
+      <div class="insight-card">
         <div class="card-header">
           <span class="card-icon">🎯</span>
           <span class="card-title">{{ i18n.weeklyGoal }}</span>
@@ -82,201 +62,103 @@
           <div class="weekly-progress">
             <div class="progress-ring">
               <svg viewBox="0 0 36 36">
-                <path
-                  class="ring-bg"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                />
-                <path
-                  class="ring-fill"
-                  :stroke-dasharray="`${weeklyProgress}, 100`"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                />
+                <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <path class="ring-fill" :stroke-dasharray="`${weeklyProgress}, 100`" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
               </svg>
-              <div class="ring-text">{{ weeklyProgress.toFixed(0) }}%</div>
+              <span class="ring-text">{{ weeklyProgress.toFixed(0) }}%</span>
             </div>
             <div class="weekly-stats">
               <div class="stat-row">
-                <span class="stat-label">{{ i18n.notesCreated }}</span>
-                <span class="stat-value">{{ weeklyStats.created }} / {{ weeklyGoal.created }}</span>
+                <span>{{ i18n.notesCreated }}</span>
+                <span>{{ weeklyStats.created }} / {{ weeklyGoal.created }}</span>
               </div>
               <div class="stat-row">
-                <span class="stat-label">{{ i18n.wordsWritten }}</span>
-                <span class="stat-value">{{ formatNumber(weeklyStats.words) }} / {{ formatNumber(weeklyGoal.words) }}</span>
+                <span>{{ i18n.wordsWritten }}</span>
+                <span>{{ formatNumber(weeklyStats.words) }} / {{ formatNumber(weeklyGoal.words) }}</span>
               </div>
               <div class="stat-row">
-                <span class="stat-label">{{ i18n.activeDays }}</span>
-                <span class="stat-value">{{ weeklyStats.activeDays }} / 7</span>
+                <span>{{ i18n.activeDays }}</span>
+                <span>{{ weeklyStats.activeDays }} / 7</span>
               </div>
             </div>
           </div>
           <div class="weekly-days">
-            <span
-              v-for="(day, index) in weekDays"
-              :key="index"
-              class="day-dot"
-              :class="{ active: day.active, today: day.isToday }"
-            >
-              {{ day.label }}
-            </span>
+            <span v-for="(day, idx) in weekDays" :key="idx" :class="{ active: day.active, today: day.isToday }">{{ day.label }}</span>
           </div>
         </div>
       </div>
 
-      <!-- 迷你热力日历 -->
-      <div class="insight-card heatmap-card">
+      <div class="insight-card">
         <div class="card-header">
           <span class="card-icon">📊</span>
           <span class="card-title">{{ i18n.activityHeatmap }}</span>
         </div>
         <div class="card-body">
           <div class="heatmap-grid">
-            <div
-              v-for="(cell, index) in heatmapCells"
-              :key="index"
-              class="heatmap-cell"
-              :class="cell.level"
-              :title="cell.tooltip"
-            ></div>
+            <div v-for="(cell, idx) in heatmapCells" :key="idx" :class="cell.level" :title="cell.tooltip"></div>
           </div>
           <div class="heatmap-legend">
-            <span class="legend-label">{{ i18n.less }}</span>
-            <span class="legend-cell level-0"></span>
-            <span class="legend-cell level-1"></span>
-            <span class="legend-cell level-2"></span>
-            <span class="legend-cell level-3"></span>
-            <span class="legend-cell level-4"></span>
-            <span class="legend-label">{{ i18n.more }}</span>
+            <span>{{ i18n.less }}</span>
+            <span class="level-0"></span><span class="level-1"></span><span class="level-2"></span><span class="level-3"></span><span class="level-4"></span>
+            <span>{{ i18n.more }}</span>
           </div>
-          <div class="heatmap-summary">
-            <span>{{ i18n.last30Days }}: {{ activeDaysInMonth }} {{ i18n.activeDaysCount }}</span>
-          </div>
+          <div class="heatmap-summary">{{ i18n.last30Days }}: {{ activeDaysInMonth }} {{ i18n.activeDaysCount }}</div>
         </div>
       </div>
     </div>
 
-    <!-- 第三行：知识财富 + 里程碑 -->
+    <!-- 第三行：知识财富（含年同比） + 里程碑 -->
     <div class="insight-row">
-      <!-- 知识财富值 -->
-      <div class="insight-card wealth-card">
+      <div class="insight-card fixed-height">
         <div class="card-header">
           <span class="card-icon">💎</span>
           <span class="card-title">{{ i18n.knowledgeWealth }}</span>
         </div>
-        <div class="card-body">
-          <div class="wealth-display">
-            <div class="wealth-main">
-              <span class="wealth-icon">💰</span>
-              <span class="wealth-value">{{ formatNumber(knowledgeWealth.total) }}</span>
-              <span class="wealth-unit">{{ i18n.gold }}</span>
-            </div>
-            <div class="wealth-breakdown">
-              <div class="breakdown-item">
-                <span class="breakdown-icon">📓</span>
-                <span class="breakdown-label">{{ i18n.fromNotes }}</span>
-                <span class="breakdown-value">+{{ formatNumber(knowledgeWealth.fromNotes) }}</span>
-              </div>
-              <div class="breakdown-item">
-                <span class="breakdown-icon">✍️</span>
-                <span class="breakdown-label">{{ i18n.fromWords }}</span>
-                <span class="breakdown-value">+{{ formatNumber(knowledgeWealth.fromWords) }}</span>
-              </div>
-              <div class="breakdown-item">
-                <span class="breakdown-icon">🔗</span>
-                <span class="breakdown-label">{{ i18n.fromLinks }}</span>
-                <span class="breakdown-value">+{{ formatNumber(knowledgeWealth.fromLinks) }}</span>
-              </div>
-              <div class="breakdown-item">
-                <span class="breakdown-icon">🔥</span>
-                <span class="breakdown-label">{{ i18n.fromStreak }}</span>
-                <span class="breakdown-value">+{{ formatNumber(knowledgeWealth.fromStreak) }}</span>
-              </div>
-            </div>
+        <div class="card-body scrollable">
+          <div class="wealth-main">
+            <span>💰</span>
+            <span class="wealth-value">{{ formatNumber(knowledgeWealth.total) }}</span>
+            <span class="wealth-unit">{{ i18n.gold }}</span>
+          </div>
+          <div class="wealth-breakdown">
+            <div class="breakdown-item"><span>📓</span><span>{{ i18n.fromNotes }}</span><span>+{{ formatNumber(knowledgeWealth.fromNotes) }}</span></div>
+            <div class="breakdown-item"><span>✍️</span><span>{{ i18n.fromWords }}</span><span>+{{ formatNumber(knowledgeWealth.fromWords) }}</span></div>
+            <div class="breakdown-item"><span>🔗</span><span>{{ i18n.fromLinks }}</span><span>+{{ formatNumber(knowledgeWealth.fromLinks) }}</span></div>
+            <div class="breakdown-item"><span>🔥</span><span>{{ i18n.fromStreak }}</span><span>+{{ formatNumber(knowledgeWealth.fromStreak) }}</span></div>
           </div>
           <div class="wealth-rank">
-            <span class="rank-label">{{ i18n.wealthRank }}:</span>
-            <span class="rank-value">{{ wealthRank.title }}</span>
-            <span class="rank-icon">{{ wealthRank.icon }}</span>
+            <span>{{ i18n.wealthRank }}:</span>
+            <span>{{ wealthRank.title }}</span>
+            <span>{{ wealthRank.icon }}</span>
+          </div>
+          <!-- 年同比简化版 -->
+          <div class="year-compare">
+            <span>📈 {{ i18n.yearOverYear }}</span>
+            <span :class="yearStats.change.notes >= 0 ? 'up' : 'down'">
+              {{ yearStats.change.notes >= 0 ? '↑' : '↓' }}{{ Math.abs(yearStats.change.notes).toFixed(0) }}%
+            </span>
           </div>
         </div>
       </div>
 
-      <!-- 里程碑成就 -->
-      <div class="insight-card milestone-card">
+      <div class="insight-card fixed-height">
         <div class="card-header">
           <span class="card-icon">🏆</span>
           <span class="card-title">{{ i18n.milestones }}</span>
           <span class="achieved-count">{{ achievedMilestones.length }}/{{ allMilestones.length }}</span>
         </div>
-        <div class="card-body">
+        <div class="card-body scrollable">
           <div class="milestones-grid">
             <div
-              v-for="milestone in visibleMilestones"
-              :key="milestone.id"
+              v-for="m in visibleMilestones"
+              :key="m.id"
               class="milestone-item"
-              :class="{ achieved: milestone.achieved, locked: !milestone.achieved }"
+              :class="{ achieved: m.achieved }"
             >
-              <span class="milestone-icon">{{ milestone.achieved ? milestone.icon : '🔒' }}</span>
-              <span class="milestone-text">{{ milestone.label }}</span>
-              <div v-if="!milestone.achieved" class="milestone-progress">
-                <div class="mini-progress">
-                  <div class="mini-fill" :style="{ width: milestone.progress + '%' }"></div>
-                </div>
-                <span class="progress-text">{{ milestone.progress.toFixed(0) }}%</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 第四行：年同比 -->
-    <div class="insight-row single">
-      <!-- 年同比 -->
-      <div class="insight-card year-card">
-        <div class="card-header">
-          <span class="card-icon">📈</span>
-          <span class="card-title">{{ i18n.yearOverYear }}</span>
-        </div>
-        <div class="card-body">
-          <div class="year-comparison">
-            <div class="comparison-row">
-              <div class="year-col current">
-                <div class="year-label">{{ currentYear }}</div>
-                <div class="year-value">{{ formatNumber(yearStats.current.totalNotes) }}</div>
-                <div class="year-unit">{{ i18n.notes }}</div>
-              </div>
-              <div class="comparison-arrow">
-                <div
-                  class="change-badge"
-                  :class="yearStats.change.notes >= 0 ? 'positive' : 'negative'"
-                >
-                  {{ yearStats.change.notes >= 0 ? '↑' : '↓' }}
-                  {{ Math.abs(yearStats.change.notes).toFixed(1) }}%
-                </div>
-              </div>
-              <div class="year-col previous">
-                <div class="year-label">{{ currentYear - 1 }}</div>
-                <div class="year-value">{{ formatNumber(yearStats.previous.totalNotes) }}</div>
-                <div class="year-unit">{{ i18n.notes }}</div>
-              </div>
-            </div>
-            <div class="comparison-row">
-              <div class="year-col current">
-                <div class="year-value">{{ formatNumber(yearStats.current.totalWords) }}</div>
-                <div class="year-unit">{{ i18n.words }}</div>
-              </div>
-              <div class="comparison-arrow">
-                <div
-                  class="change-badge"
-                  :class="yearStats.change.words >= 0 ? 'positive' : 'negative'"
-                >
-                  {{ yearStats.change.words >= 0 ? '↑' : '↓' }}
-                  {{ Math.abs(yearStats.change.words).toFixed(1) }}%
-                </div>
-              </div>
-              <div class="year-col previous">
-                <div class="year-value">{{ formatNumber(yearStats.previous.totalWords) }}</div>
-                <div class="year-unit">{{ i18n.words }}</div>
+              <span class="milestone-icon">{{ m.achieved ? m.icon : '🔒' }}</span>
+              <span class="milestone-text">{{ m.label }}</span>
+              <div v-if="!m.achieved" class="mini-progress">
+                <div class="mini-fill" :style="{ width: m.progress + '%' }"></div>
               </div>
             </div>
           </div>
@@ -673,13 +555,9 @@ function padZero(num: number): string {
 @use "../../superPanel/styles/mixins" as *;
 @use "../index.scss" as stats;
 
-$github-green: #2da44e;
-$github-red: #cf222e;
+$green: #2da44e;
+$red: #cf222e;
 $gold: #f59e0b;
-$bronze: #cd7f32;
-$silver: #c0c0c0;
-$platinum: #e5e4e2;
-$diamond: #b9f2ff;
 
 .insight-cards {
   display: flex;
@@ -691,24 +569,16 @@ $diamond: #b9f2ff;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 8px;
-
-    &.single {
-      grid-template-columns: 1fr;
-    }
   }
 
   .insight-card {
     @include stats.stats-card-base;
     border: 1px solid var(--b3-border-color);
-    border-radius: 10px;
+    border-radius: 8px;
     overflow: hidden;
     background: var(--b3-theme-surface);
-    transition: all 0.2s ease;
 
-    &:hover {
-      border-color: rgba(var(--b3-theme-primary-rgb), 0.3);
-      box-shadow: 0 2px 8px rgba(var(--b3-theme-primary-rgb), 0.1);
-    }
+    &.fixed-height { height: 180px; display: flex; flex-direction: column; }
 
     .card-header {
       display: flex;
@@ -718,690 +588,136 @@ $diamond: #b9f2ff;
       background: rgba(var(--b3-theme-primary-rgb), 0.06);
       border-bottom: 1px solid var(--b3-border-color);
 
-      .card-icon {
-        font-size: 14px;
-      }
-
-      .card-title {
-        flex: 1;
-        font-family: $font-heading;
-        font-size: 11px;
-        font-weight: 700;
-        color: var(--b3-theme-primary);
-      }
-
-      .achieved-count {
-        font-size: 10px;
-        color: var(--b3-theme-on-surface);
-        opacity: 0.6;
-      }
+      .card-icon { font-size: 14px; }
+      .card-title { flex: 1; font-size: 11px; font-weight: 700; color: var(--b3-theme-primary); }
+      .achieved-count { font-size: 10px; opacity: 0.6; }
     }
 
-    .card-body {
-      padding: 10px 12px;
-    }
+    .card-body { padding: 10px 12px; }
+    .card-body.scrollable { flex: 1; overflow: auto; }
   }
 }
 
 // 等级卡片
-.level-card {
-  .level-display {
-    margin-bottom: 10px;
+.level-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 12px;
+  margin-bottom: 10px;
 
-    .level-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-weight: 700;
-      font-family: $font-heading;
+  &.bronze { background: linear-gradient(135deg, rgba(#cd7f32, 0.2), rgba(#cd7f32, 0.1)); color: darken(#cd7f32, 10%); border: 1px solid rgba(#cd7f32, 0.3); }
+  &.silver { background: linear-gradient(135deg, rgba(#c0c0c0, 0.3), rgba(#c0c0c0, 0.1)); color: darken(#c0c0c0, 20%); border: 1px solid rgba(#c0c0c0, 0.4); }
+  &.gold { background: linear-gradient(135deg, rgba($gold, 0.3), rgba($gold, 0.1)); color: darken($gold, 15%); border: 1px solid rgba($gold, 0.5); }
+  &.platinum { background: linear-gradient(135deg, rgba(#e5e4e2, 0.4), rgba(#e5e4e2, 0.2)); color: darken(#e5e4e2, 30%); border: 1px solid rgba(#e5e4e2, 0.5); }
+  &.diamond { background: linear-gradient(135deg, rgba(#b9f2ff, 0.4), rgba(#b9f2ff, 0.2)); color: darken(#b9f2ff, 40%); border: 1px solid rgba(#b9f2ff, 0.5); }
+}
 
-      &.bronze {
-        background: linear-gradient(135deg, rgba($bronze, 0.2), rgba($bronze, 0.1));
-        color: darken($bronze, 10%);
-        border: 1px solid rgba($bronze, 0.3);
-      }
-
-      &.silver {
-        background: linear-gradient(135deg, rgba($silver, 0.3), rgba($silver, 0.1));
-        color: darken($silver, 20%);
-        border: 1px solid rgba($silver, 0.4);
-      }
-
-      &.gold {
-        background: linear-gradient(135deg, rgba($gold, 0.3), rgba($gold, 0.1));
-        color: darken($gold, 15%);
-        border: 1px solid rgba($gold, 0.5);
-      }
-
-      &.platinum {
-        background: linear-gradient(135deg, rgba($platinum, 0.4), rgba($platinum, 0.2));
-        color: darken($platinum, 30%);
-        border: 1px solid rgba($platinum, 0.5);
-      }
-
-      &.diamond {
-        background: linear-gradient(135deg, rgba($diamond, 0.4), rgba($diamond, 0.2));
-        color: darken($diamond, 40%);
-        border: 1px solid rgba($diamond, 0.5);
-      }
-
-      .badge-icon {
-        font-size: 16px;
-      }
-
-      .badge-name {
-        font-size: 12px;
-      }
-    }
+.progress-section {
+  margin-bottom: 8px;
+  .progress-info { display: flex; justify-content: space-between; font-size: 9px; margin-bottom: 4px; opacity: 0.6; }
+  .progress-bar { height: 6px; background: rgba(var(--b3-theme-primary-rgb), 0.1); border-radius: 3px; overflow: hidden;
+    .progress-fill { height: 100%; background: var(--b3-theme-primary); transition: width 0.5s ease; }
   }
+  .progress-hint { font-size: 8px; opacity: 0.5; margin-top: 4px; text-align: center; }
+}
 
-  .level-progress {
-    margin-bottom: 8px;
+.benefit-tags { display: flex; flex-wrap: wrap; gap: 4px;
+  span { font-size: 8px; padding: 2px 6px; background: rgba(var(--b3-theme-primary-rgb), 0.08); border-radius: 4px; opacity: 0.7; }
+}
 
-    .progress-info {
-      display: flex;
-      justify-content: space-between;
-      font-size: 9px;
-      margin-bottom: 4px;
-
-      .progress-label {
-        opacity: 0.6;
-      }
-
-      .progress-value {
-        font-weight: 600;
-        color: var(--b3-theme-primary);
-      }
-    }
-
-    .progress-bar {
-      height: 6px;
-      background: rgba(var(--b3-theme-primary-rgb), 0.1);
-      border-radius: 3px;
-      overflow: hidden;
-      position: relative;
-
-      .progress-fill {
-        height: 100%;
-        background: linear-gradient(90deg, var(--b3-theme-primary), rgba(var(--b3-theme-primary-rgb), 0.7));
-        border-radius: 3px;
-        transition: width 0.5s ease;
-      }
-
-      .progress-glow {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-        animation: shimmer 2s infinite;
-      }
-    }
-
-    .next-level-hint {
-      font-size: 8px;
-      color: var(--b3-theme-on-surface);
-      opacity: 0.5;
-      margin-top: 4px;
-      text-align: center;
-    }
-  }
-
-  .level-benefits {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-
-    .benefit-tag {
-      font-size: 8px;
-      padding: 2px 6px;
-      background: rgba(var(--b3-theme-primary-rgb), 0.08);
-      border-radius: 4px;
-      color: var(--b3-theme-on-surface);
-      opacity: 0.7;
-    }
+// 连续活跃
+.streak-body { text-align: center; }
+.streak-number { font-size: 32px; font-weight: 800; background: linear-gradient(135deg, $gold, #ff8c00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; }
+.streak-label { font-size: 10px; opacity: 0.6; }
+.max-streak { font-size: 9px; opacity: 0.4; margin-top: 4px; }
+.streak-reward { display: flex; align-items: center; gap: 6px; padding: 4px 8px; background: rgba($gold, 0.1); border-radius: 6px; font-size: 10px; margin: 10px 0;
+  .reward-icon { font-size: 12px; }
+  .reward-progress { margin-left: auto; font-size: 9px; opacity: 0.7; }
+}
+.streak-flames { display: flex; justify-content: center; gap: 4px;
+  span { font-size: 14px; opacity: 0.3; transition: all 0.3s ease;
+    &.active { opacity: 1; animation: flicker 1s ease-in-out infinite; }
   }
 }
 
-// 连续活跃卡片
-.streak-card {
-  .streak-display {
-    text-align: center;
-    margin-bottom: 10px;
-
-    .streak-number {
-      font-family: $font-heading;
-      font-size: 32px;
-      font-weight: 800;
-      background: linear-gradient(135deg, $gold, #ff8c00);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      line-height: 1;
-    }
-
-    .streak-label {
-      font-size: 10px;
-      color: var(--b3-theme-on-surface);
-      opacity: 0.6;
-    }
-
-    .max-streak {
-      font-size: 9px;
-      color: var(--b3-theme-on-surface);
-      opacity: 0.4;
-      margin-top: 4px;
-    }
+// 本周目标
+.weekly-progress { display: flex; gap: 12px; margin-bottom: 10px; }
+.progress-ring { position: relative; width: 50px; height: 50px;
+  svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+  .ring-bg { fill: none; stroke: rgba(var(--b3-theme-primary-rgb), 0.1); stroke-width: 3; }
+  .ring-fill { fill: none; stroke: var(--b3-theme-primary); stroke-width: 3; stroke-linecap: round; transition: stroke-dasharray 0.5s ease; }
+  .ring-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 10px; font-weight: 700; color: var(--b3-theme-primary); }
+}
+.weekly-stats { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 4px;
+  .stat-row { display: flex; justify-content: space-between; font-size: 9px;
+    span:first-child { opacity: 0.6; }
+    span:last-child { font-weight: 600; color: var(--b3-theme-primary); }
   }
-
-  .streak-reward {
-    .reward-title {
-      font-size: 9px;
-      color: var(--b3-theme-on-surface);
-      opacity: 0.5;
-      margin-bottom: 4px;
-    }
-
-    .reward-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 8px;
-      background: rgba($gold, 0.1);
-      border-radius: 6px;
-      font-size: 10px;
-      margin-bottom: 8px;
-
-      .reward-icon {
-        font-size: 12px;
-      }
-
-      .reward-text {
-        flex: 1;
-        font-weight: 600;
-        color: darken($gold, 10%);
-      }
-
-      .reward-progress {
-        font-size: 9px;
-        opacity: 0.7;
-      }
-    }
-
-    .streak-flames {
-      display: flex;
-      justify-content: center;
-      gap: 4px;
-
-      .flame {
-        font-size: 14px;
-        opacity: 0.3;
-        transition: all 0.3s ease;
-
-        &.active {
-          opacity: 1;
-          animation: flicker 1s ease-in-out infinite;
-        }
-
-        &.locked {
-          filter: grayscale(1);
-        }
-      }
-    }
+}
+.weekly-days { display: flex; justify-content: space-between; padding: 6px 4px; background: rgba(var(--b3-theme-primary-rgb), 0.03); border-radius: 6px;
+  span { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 9px; border-radius: 50%; background: rgba(var(--b3-theme-on-surface-rgb), 0.05); opacity: 0.5;
+    &.active { background: rgba($green, 0.2); color: $green; opacity: 1; }
+    &.today { border: 2px solid var(--b3-theme-primary); font-weight: 700; opacity: 1; }
   }
 }
 
-// 本周目标卡片
-.weekly-card {
-  .weekly-progress {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 10px;
-
-    .progress-ring {
-      position: relative;
-      width: 50px;
-      height: 50px;
-
-      svg {
-        transform: rotate(-90deg);
-        width: 100%;
-        height: 100%;
-      }
-
-      .ring-bg {
-        fill: none;
-        stroke: rgba(var(--b3-theme-primary-rgb), 0.1);
-        stroke-width: 3;
-      }
-
-      .ring-fill {
-        fill: none;
-        stroke: var(--b3-theme-primary);
-        stroke-width: 3;
-        stroke-linecap: round;
-        transition: stroke-dasharray 0.5s ease;
-      }
-
-      .ring-text {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        font-size: 10px;
-        font-weight: 700;
-        font-family: $font-heading;
-        color: var(--b3-theme-primary);
-      }
-    }
-
-    .weekly-stats {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      gap: 4px;
-
-      .stat-row {
-        display: flex;
-        justify-content: space-between;
-        font-size: 9px;
-
-        .stat-label {
-          opacity: 0.6;
-        }
-
-        .stat-value {
-          font-weight: 600;
-          color: var(--b3-theme-primary);
-        }
-      }
-    }
-  }
-
-  .weekly-days {
-    display: flex;
-    justify-content: space-between;
-    padding: 6px 4px;
-    background: rgba(var(--b3-theme-primary-rgb), 0.03);
-    border-radius: 6px;
-
-    .day-dot {
-      width: 22px;
-      height: 22px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 9px;
-      border-radius: 50%;
-      background: rgba(var(--b3-theme-on-surface-rgb), 0.05);
-      color: var(--b3-theme-on-surface);
-      opacity: 0.5;
-      transition: all 0.2s ease;
-
-      &.active {
-        background: rgba($github-green, 0.2);
-        color: $github-green;
-        opacity: 1;
-      }
-
-      &.today {
-        border: 2px solid var(--b3-theme-primary);
-        font-weight: 700;
-        opacity: 1;
-      }
-    }
+// 热力图
+.heatmap-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; margin-bottom: 8px;
+  div { aspect-ratio: 1; border-radius: 2px; transition: transform 0.2s ease; cursor: pointer;
+    &:hover { transform: scale(1.2); }
+    &.level-0 { background: rgba(var(--b3-theme-on-surface-rgb), 0.05); }
+    &.level-1 { background: rgba($green, 0.2); }
+    &.level-2 { background: rgba($green, 0.4); }
+    &.level-3 { background: rgba($green, 0.6); }
+    &.level-4 { background: $green; }
   }
 }
+.heatmap-legend { display: flex; align-items: center; justify-content: flex-end; gap: 3px; margin-bottom: 6px; font-size: 8px; opacity: 0.5;
+  span:not(.level-0):not(.level-1):not(.level-2):not(.level-3):not(.level-4) { }
+  .level-0, .level-1, .level-2, .level-3, .level-4 { width: 8px; height: 8px; border-radius: 1px; }
+  .level-0 { background: rgba(var(--b3-theme-on-surface-rgb), 0.05); }
+  .level-1 { background: rgba($green, 0.2); }
+  .level-2 { background: rgba($green, 0.4); }
+  .level-3 { background: rgba($green, 0.6); }
+  .level-4 { background: $green; }
+}
+.heatmap-summary { font-size: 9px; opacity: 0.6; text-align: center; }
 
-// 热力日历卡片
-.heatmap-card {
-  .heatmap-grid {
-    display: grid;
-    grid-template-columns: repeat(10, 1fr);
-    gap: 3px;
-    margin-bottom: 8px;
-
-    .heatmap-cell {
-      aspect-ratio: 1;
-      border-radius: 2px;
-      transition: transform 0.2s ease;
-
-      &:hover {
-        transform: scale(1.2);
-      }
-
-      &.level-0 {
-        background: rgba(var(--b3-theme-on-surface-rgb), 0.05);
-      }
-
-      &.level-1 {
-        background: rgba($github-green, 0.2);
-      }
-
-      &.level-2 {
-        background: rgba($github-green, 0.4);
-      }
-
-      &.level-3 {
-        background: rgba($github-green, 0.6);
-      }
-
-      &.level-4 {
-        background: $github-green;
-      }
-    }
-  }
-
-  .heatmap-legend {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 3px;
-    margin-bottom: 6px;
-
-    .legend-label {
-      font-size: 8px;
-      color: var(--b3-theme-on-surface);
-      opacity: 0.5;
-    }
-
-    .legend-cell {
-      width: 8px;
-      height: 8px;
-      border-radius: 1px;
-
-      &.level-0 {
-        background: rgba(var(--b3-theme-on-surface-rgb), 0.05);
-      }
-
-      &.level-1 {
-        background: rgba($github-green, 0.2);
-      }
-
-      &.level-2 {
-        background: rgba($github-green, 0.4);
-      }
-
-      &.level-3 {
-        background: rgba($github-green, 0.6);
-      }
-
-      &.level-4 {
-        background: $github-green;
-      }
-    }
-  }
-
-  .heatmap-summary {
-    font-size: 9px;
-    color: var(--b3-theme-on-surface);
-    opacity: 0.6;
-    text-align: center;
+// 知识财富
+.wealth-main { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 10px;
+  .wealth-value { font-size: 24px; font-weight: 800; background: linear-gradient(135deg, $gold, #ff8c00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .wealth-unit { font-size: 10px; opacity: 0.6; }
+}
+.wealth-breakdown { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px;
+  .breakdown-item { display: flex; align-items: center; gap: 4px; font-size: 9px; padding: 4px 6px; background: rgba(var(--b3-theme-primary-rgb), 0.03); border-radius: 4px;
+    span:nth-child(2) { flex: 1; opacity: 0.6; }
+    span:last-child { font-weight: 600; color: $green; }
   }
 }
-
-// 知识财富卡片
-.wealth-card {
-  height: 180px;
-  display: flex;
-  flex-direction: column;
-
-  .card-body {
-    flex: 1;
-    overflow: auto;
-  }
-
-  .wealth-display {
-    .wealth-main {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      margin-bottom: 10px;
-
-      .wealth-icon {
-        font-size: 20px;
-        animation: float 3s ease-in-out infinite;
-      }
-
-      .wealth-value {
-        font-family: $font-heading;
-        font-size: 24px;
-        font-weight: 800;
-        background: linear-gradient(135deg, $gold, #ff8c00);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-      }
-
-      .wealth-unit {
-        font-size: 10px;
-        color: var(--b3-theme-on-surface);
-        opacity: 0.6;
-      }
-    }
-
-    .wealth-breakdown {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 4px;
-
-      .breakdown-item {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        font-size: 9px;
-        padding: 4px 6px;
-        background: rgba(var(--b3-theme-primary-rgb), 0.03);
-        border-radius: 4px;
-
-        .breakdown-icon {
-          font-size: 10px;
-        }
-
-        .breakdown-label {
-          flex: 1;
-          opacity: 0.6;
-        }
-
-        .breakdown-value {
-          font-weight: 600;
-          color: $github-green;
-        }
-      }
-    }
-  }
-
-  .wealth-rank {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    margin-top: 10px;
-    padding-top: 8px;
-    border-top: 1px dashed var(--b3-border-color);
-
-    .rank-label {
-      font-size: 9px;
-      opacity: 0.6;
-    }
-
-    .rank-value {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--b3-theme-primary);
-    }
-
-    .rank-icon {
-      font-size: 14px;
-    }
-  }
+.wealth-rank { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--b3-border-color); font-size: 9px;
+  span:nth-child(2) { font-size: 11px; font-weight: 700; color: var(--b3-theme-primary); }
+}
+.year-compare { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--b3-border-color); font-size: 10px;
+  .up { color: $green; font-weight: 600; }
+  .down { color: $red; font-weight: 600; }
 }
 
-// 里程碑卡片
-.milestone-card {
-  height: 180px;
-  display: flex;
-  flex-direction: column;
-
-  .card-body {
-    flex: 1;
-    overflow: auto;
+// 里程碑
+.milestones-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+.milestone-item { display: flex; flex-direction: column; align-items: center; padding: 8px 6px; background: rgba(var(--b3-theme-primary-rgb), 0.03); border-radius: 6px;
+  &.achieved { background: rgba($green, 0.1);
+    .milestone-text { color: $green; font-weight: 600; }
   }
-
-  .milestones-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 6px;
-
-    .milestone-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 8px 6px;
-      background: rgba(var(--b3-theme-primary-rgb), 0.03);
-      border-radius: 6px;
-      transition: all 0.2s ease;
-
-      &.achieved {
-        background: rgba($github-green, 0.1);
-
-        .milestone-icon {
-          font-size: 18px;
-        }
-
-        .milestone-text {
-          color: $github-green;
-          font-weight: 600;
-        }
-      }
-
-      &.locked {
-        opacity: 0.6;
-
-        .milestone-icon {
-          font-size: 14px;
-        }
-      }
-
-      .milestone-icon {
-        margin-bottom: 4px;
-      }
-
-      .milestone-text {
-        font-size: 9px;
-        text-align: center;
-      }
-
-      .milestone-progress {
-        width: 100%;
-        margin-top: 4px;
-
-        .mini-progress {
-          height: 3px;
-          background: rgba(var(--b3-theme-primary-rgb), 0.1);
-          border-radius: 2px;
-          overflow: hidden;
-
-          .mini-fill {
-            height: 100%;
-            background: var(--b3-theme-primary);
-            transition: width 0.3s ease;
-          }
-        }
-
-        .progress-text {
-          font-size: 8px;
-          color: var(--b3-theme-primary);
-          opacity: 0.7;
-        }
-      }
-    }
+  &:not(.achieved) { opacity: 0.6; }
+  .milestone-icon { margin-bottom: 4px; }
+  .milestone-text { font-size: 9px; text-align: center; }
+  .mini-progress { width: 100%; height: 3px; background: rgba(var(--b3-theme-primary-rgb), 0.1); border-radius: 2px; margin-top: 4px; overflow: hidden;
+    .mini-fill { height: 100%; background: var(--b3-theme-primary); transition: width 0.3s ease; }
   }
-}
-
-// 年同比卡片
-.year-card {
-  .year-comparison {
-    .comparison-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 6px 0;
-      border-bottom: 1px dashed var(--b3-border-color);
-
-      &:last-child {
-        border-bottom: none;
-      }
-
-      .year-col {
-        flex: 1;
-        text-align: center;
-
-        &.current .year-value {
-          color: var(--b3-theme-primary);
-        }
-
-        &.previous .year-value {
-          opacity: 0.5;
-        }
-
-        .year-label {
-          font-size: 9px;
-          opacity: 0.5;
-        }
-
-        .year-value {
-          font-size: 14px;
-          font-weight: 700;
-          font-family: $font-heading;
-        }
-
-        .year-unit {
-          font-size: 8px;
-          opacity: 0.4;
-        }
-      }
-
-      .comparison-arrow {
-        flex: 0 0 50px;
-        text-align: center;
-
-        .change-badge {
-          display: inline-block;
-          padding: 2px 8px;
-          border-radius: 10px;
-          font-size: 9px;
-          font-weight: 700;
-
-          &.positive {
-            background: rgba($github-green, 0.15);
-            color: $github-green;
-          }
-
-          &.negative {
-            background: rgba($github-red, 0.15);
-            color: $github-red;
-          }
-        }
-      }
-    }
-  }
-}
-
-// 动画
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
 }
 
 @keyframes flicker {
@@ -1409,26 +725,7 @@ $diamond: #b9f2ff;
   50% { opacity: 0.8; transform: scale(0.95); }
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
-}
-
-// 响应式设计
 @include tablet-only {
-  .insight-cards .insight-row {
-    grid-template-columns: 1fr;
-  }
-}
-
-@include mobile-only {
-  .insight-cards {
-    margin-left: 4px;
-    margin-right: 4px;
-
-    .insight-row {
-      grid-template-columns: 1fr;
-    }
-  }
+  .insight-cards .insight-row { grid-template-columns: 1fr; }
 }
 </style>

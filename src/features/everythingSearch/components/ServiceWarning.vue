@@ -2,13 +2,20 @@
   <div class="service-warning" role="alert" aria-live="polite">
     <span class="warning-icon" aria-hidden="true">⚠️</span>
     <span class="warning-message">{{ message }}</span>
-    <button class="retry-btn" @click="handleRetry" aria-label="重试连接服务">
+    <Button
+      variant="secondary"
+      size="small"
+      @click="handleRetry"
+      aria-label="重试连接服务"
+    >
       {{ retryButtonText }}
-    </button>
+    </Button>
   </div>
 </template>
 
 <script setup lang="ts">
+import Button from '@/components/Button.vue'
+
 interface Props {
   /** 重试按钮文本 */
   retryButtonText?: string
@@ -33,7 +40,9 @@ const handleRetry = () => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use "@/variables" as *;
+
 .service-warning {
   display: flex;
   align-items: center;
@@ -42,6 +51,7 @@ const handleRetry = () => {
   background: #fef3cd;
   color: #856404;
   font-size: 13px;
+  font-family: $font-body;
 }
 
 .warning-icon {
@@ -51,20 +61,5 @@ const handleRetry = () => {
 
 .warning-message {
   flex: 1;
-}
-
-.retry-btn {
-  padding: 4px 12px;
-  background: #856404;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  font-size: 12px;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.retry-btn:hover {
-  background: #6d5303;
 }
 </style>

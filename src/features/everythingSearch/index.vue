@@ -167,7 +167,7 @@ const refreshDrives = () => {
 }
 
 /** 处理盘符变化 */
-const handleDriveChange = (drive: string) => {
+const handleDriveChange = () => {
   if (options.autoSearch && searchQuery.value.trim()) {
     debouncedSearch()
   }
@@ -271,7 +271,7 @@ const getFullPath = (item: EverythingSearchResult) => {
 }
 
 /** 点击项目 */
-const handleItemClick = (item: EverythingSearchResult) => {
+const handleItemClick = () => {
   // 单击选中（预留）
 }
 

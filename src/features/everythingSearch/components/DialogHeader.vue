@@ -4,13 +4,20 @@
       <span class="title-icon" aria-hidden="true">🔍</span>
       <span>{{ title }}</span>
     </div>
-    <button class="close-btn" @click="handleClose" aria-label="关闭对话框">
-      <svg class="close-icon"><use xlink:href="#iconClose"></use></svg>
-    </button>
+    <Button
+      variant="ghost"
+      size="small"
+      icon="x"
+      :icon-size="12"
+      aria-label="关闭对话框"
+      @click="handleClose"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
+import Button from '@/components/Button.vue'
+
 interface Props {
   /** 标题文本 */
   title?: string
@@ -56,24 +63,5 @@ const handleClose = () => {
 
 .title-icon {
   font-size: 16px;
-}
-
-.close-btn {
-  padding: 5px;
-  background: transparent;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  color: var(--b3-theme-on-surface);
-}
-
-.close-btn:hover {
-  background: rgba(217, 119, 87, 0.15);
-  color: $brand-orange;
-}
-
-.close-icon {
-  width: 12px;
-  height: 12px;
 }
 </style>

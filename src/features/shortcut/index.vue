@@ -127,8 +127,15 @@ import ShortcutDialog from './components/ShortcutDialog.vue'
 import ExportDialog from './components/ExportDialog.vue'
 import ImportDialog from './components/ImportDialog.vue'
 import { getShortcutManager } from './manager'
-import { loadFavorites, saveFavorites } from './types/storage'
+import { loadFavorites, saveFavorites, loadRecent, saveRecent } from './types/storage'
 import type { ShortcutInfo, ViewMode, DialogType, QuickFilter, ShortcutFormData } from './types'
+
+// 快捷筛选选项 - 提取为常量避免重复创建
+const QUICK_FILTERS: QuickFilter[] = [
+  { key: 'all', label: '全部' },
+  { key: 'favorite', label: '收藏' },
+  { key: 'recent', label: '最近使用' }
+]
 
 interface Props {
   i18n?: Record<string, any>
@@ -160,12 +167,8 @@ const formData = ref<ShortcutFormData>({
   group: '自定义'
 })
 
-// 快捷筛选选项
-const quickFilters: QuickFilter[] = [
-  { key: 'all', label: '全部' },
-  { key: 'favorite', label: '收藏' },
-  { key: 'recent', label: '最近使用' }
-]
+// 快捷筛选选项 - 使用常量
+const quickFilters = QUICK_FILTERS
 
 // 获取快捷键管理器
 const manager = getShortcutManager()
@@ -179,11 +182,17 @@ const customCount = computed(() => manager.getByCategory('custom').length)
 onMounted(async () => {
   if (props.plugin) {
     try {
-      const loadedFavorites = await loadFavorites(props.plugin)
+      // 并行加载收藏和最近使用数据
+      const [loadedFavorites, loadedRecent] = await Promise.all([
+        loadFavorites(props.plugin),
+        loadRecent(props.plugin)
+      ])
       favorites.value = new Set(loadedFavorites)
+      recentUsed.value = loadedRecent
     } catch (error) {
-      console.error('初始化收藏数据失败:', error)
+      console.error('初始化数据失败:', error)
       favorites.value = new Set()
+      recentUsed.value = []
     }
   }
 })
@@ -201,22 +210,23 @@ function getTabCount(category: string): number {
   return manager.getByCategory(category).length
 }
 
-// 分类标签映射
+// 分类标签映射 - 使用 computed 缓存 i18n 映射
+const categoryLabels = computed(() => ({
+  'all': props.i18n.allShortcuts || '全部',
+  'siyuan': props.i18n.siyuanShortcuts || '思源笔记',
+  'plugin': props.i18n.pluginShortcuts || '插件快捷键',
+  'claude': props.i18n.claudeShortcuts || 'Claude Code',
+  'openspec': props.i18n.openspecShortcuts || 'OpenSpec',
+  'npm': props.i18n.npmShortcuts || 'NPM',
+  'nvm': props.i18n.nvmShortcuts || 'NVM',
+  'cmd': props.i18n.cmdShortcuts || 'Windows CMD',
+  'vscode': props.i18n.vscodeShortcuts || 'VS Code',
+  'visual-studio': props.i18n.visualStudioShortcuts || 'Visual Studio',
+  'custom': props.i18n.customShortcuts || '自定义'
+}))
+
 function getCategoryLabel(category: string): string {
-  const labels: Record<string, string> = {
-    'all': props.i18n.allShortcuts || '全部',
-    'siyuan': props.i18n.siyuanShortcuts || '思源笔记',
-    'plugin': props.i18n.pluginShortcuts || '插件快捷键',
-    'claude': props.i18n.claudeShortcuts || 'Claude Code',
-    'openspec': props.i18n.openspecShortcuts || 'OpenSpec',
-    'npm': props.i18n.npmShortcuts || 'NPM',
-    'nvm': props.i18n.nvmShortcuts || 'NVM',
-    'cmd': props.i18n.cmdShortcuts || 'Windows CMD',
-    'vscode': props.i18n.vscodeShortcuts || 'VS Code',
-    'visual-studio': props.i18n.visualStudioShortcuts || 'Visual Studio',
-    'custom': props.i18n.customShortcuts || '自定义'
-  }
-  return labels[category] || category
+  return categoryLabels.value[category] || category
 }
 
 // 是否显示工具徽章
@@ -224,19 +234,16 @@ function showToolBadge(category: string): boolean {
   return ['npm', 'nvm', 'cmd', 'vscode', 'visual-studio'].includes(category)
 }
 
-// 过滤快捷键
+// 过滤快捷键 - 优化性能，减少不必要的调用
 const filteredShortcuts = computed(() => {
-  let shortcuts = manager.getAllShortcuts()
+  // 先获取基础数据
+  let shortcuts = searchKeyword.value
+    ? manager.search(searchKeyword.value)
+    : manager.getAllShortcuts()
 
-  // 按分类过滤
+  // 按分类过滤（合并搜索和分类条件）
   if (activeTab.value !== 'all') {
     shortcuts = shortcuts.filter(s => s.category === activeTab.value)
-  }
-
-  // 按搜索关键词过滤
-  if (searchKeyword.value) {
-    shortcuts = manager.search(searchKeyword.value)
-      .filter(s => activeTab.value === 'all' || s.category === activeTab.value)
   }
 
   // 按快捷筛选过滤
@@ -275,11 +282,19 @@ function isRecent(id: string): boolean {
   return recentUsed.value.includes(id)
 }
 
-function addToRecent(id: string) {
+async function addToRecent(id: string) {
   const index = recentUsed.value.indexOf(id)
   if (index > -1) recentUsed.value.splice(index, 1)
   recentUsed.value.unshift(id)
   if (recentUsed.value.length > 10) recentUsed.value.pop()
+
+  if (props.plugin) {
+    try {
+      await saveRecent(props.plugin, recentUsed.value)
+    } catch (error) {
+      console.error('保存最近使用失败:', error)
+    }
+  }
 }
 
 // 复制快捷键信息
@@ -356,9 +371,9 @@ async function deleteShortcut(id: string) {
   }
 }
 
-// 刷新快捷键列表
+// 刷新快捷键列表（当前数据已在 computed 中自动更新）
 function refreshShortcuts() {
-  // 重新加载快捷键数据
+  // 快捷键数据通过 computed 自动更新，无需手动刷新
 }
 
 // 导出快捷键

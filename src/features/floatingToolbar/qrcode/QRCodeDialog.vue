@@ -33,26 +33,24 @@
 
         <!-- 二维码预览 -->
         <div class="qrcode-section">
-          <label class="qrcode-label">{{ i18n.qrcodePreview || '二维码预览' }}</label>
+          <Label tag="span" size="small">{{ i18n.qrcodePreview || '二维码预览' }}</Label>
           <div class="qrcode-preview" ref="qrcodeContainer"></div>
         </div>
 
         <!-- 设置选项 -->
         <div class="settings-section">
           <div class="setting-item">
-            <label class="setting-label">{{ i18n.qrcodeSize || '大小' }}</label>
-            <div class="size-control">
-              <input
-                v-model.number="qrcodeSize"
-                type="range"
-                min="100"
-                max="500"
-                step="10"
-                class="size-slider"
-                @input="regenerateQRCode"
-              />
-              <span class="size-value">{{ qrcodeSize }}px</span>
-            </div>
+            <Slider
+              v-model="qrcodeSize"
+              label="大小"
+              :min="100"
+              :max="500"
+              :step="10"
+              :showValue="true"
+              :formatValue="v => v + 'px'"
+              size="small"
+              @input="regenerateQRCode"
+            />
           </div>
 
           <div class="setting-item">
@@ -105,6 +103,8 @@ import { showMessage } from 'siyuan'
 import Button from '@/components/Button.vue'
 import Textarea from '@/components/Textarea.vue'
 import Select, { type SelectOption } from '@/components/Select.vue'
+import Slider from '@/components/Slider.vue'
+import Label from '@/components/Label.vue'
 
 interface Props {
   visible: boolean

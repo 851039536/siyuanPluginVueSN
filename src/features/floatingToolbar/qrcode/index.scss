@@ -130,66 +130,6 @@
   @include ft.flex-column(4px);
 }
 
-.setting-label {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--b3-theme-on-surface);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-}
-
-// 尺寸控制
-.size-control {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.size-slider {
-  flex: 1;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--b3-theme-surface-lighter);
-  outline: none;
-  cursor: pointer;
-  appearance: none;
-
-  &::-webkit-slider-thumb {
-    appearance: none;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: var(--b3-theme-primary);
-    cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  }
-
-  &::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: var(--b3-theme-primary);
-    cursor: pointer;
-    border: none;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  }
-
-  @media (max-width: ft.$breakpoint-md) {
-    &::-webkit-slider-thumb {
-      width: 18px;
-      height: 18px;
-    }
-  }
-}
-
-.size-value {
-  font-size: 10px;
-  color: var(--b3-theme-on-surface);
-  min-width: 40px;
-  text-align: right;
-  font-weight: 600;
-}
-
 // ========================================
 // 对话框底部
 // ========================================

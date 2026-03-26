@@ -47,13 +47,9 @@
         <div class="result-section" v-if="generatedResult">
           <div class="result-header">
             <div class="result-title">
-              <label class="result-label">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-              </svg>
-              谐音记忆
-            </label>
+              <Label tag="span" size="small" icon="wordQuery" class="result-label">
+                谐音记忆
+              </Label>
               <!-- 来源标识 -->
               <span class="source-badge" :class="{ local: isInFlashcard }">
                 {{ isInFlashcard ? '📚 来自单词本' : '🤖 AI生成' }}
@@ -191,6 +187,7 @@ import type { Flashcard } from '@/features/flashcardReading/types'
 import Button from '@/components/Button.vue'
 import Input from '@/components/Input.vue'
 import Select, { type SelectOption } from '@/components/Select.vue'
+import Label from '@/components/Label.vue'
 
 interface Props {
   visible: boolean

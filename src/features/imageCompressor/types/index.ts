@@ -1,5 +1,5 @@
 import { Plugin } from 'siyuan'
-import { createApp, h } from 'vue'
+import { createApp, h, ref } from 'vue'
 import ImageCompressorPanel from '../index.vue'
 
 export interface ImageInfo {
@@ -69,6 +69,8 @@ export class ImageCompressorManager {
 
   private addDock() {
     const self = this
+    const visible = ref(false)
+    
     this.plugin.addDock({
       config: {
         position: 'RightTop',
@@ -87,9 +89,12 @@ export class ImageCompressorManager {
         const app = createApp({
           setup() {
             return () => h(ImageCompressorPanel, {
-              visible: true,
+              visible: visible.value,
               i18n: self.plugin.i18n,
               plugin: self.plugin,
+              onClose: () => {
+                visible.value = false
+              }
             })
           }
         })
@@ -99,6 +104,7 @@ export class ImageCompressorManager {
 
         dock.__app = app
         dock.__container = container
+        dock.__visible = visible
       },
     })
   }

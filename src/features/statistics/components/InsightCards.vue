@@ -230,16 +230,30 @@ const currentYear = new Date().getFullYear()
 
 // ============ 等级系统 ============
 const levels = [
+  // 青铜段位 (0 - 3,999)
   { tier: 'bronze', name: '笔记新手', icon: '🌱', minExp: 0, benefits: ['基础功能'] },
-  { tier: 'bronze', name: '记录学徒', icon: '📝', minExp: 100, benefits: ['基础功能'] },
-  { tier: 'silver', name: '知识探索者', icon: '🔍', minExp: 500, benefits: ['基础功能', '数据统计'] },
-  { tier: 'silver', name: '写作达人', icon: '✍️', minExp: 1500, benefits: ['基础功能', '数据统计'] },
-  { tier: 'gold', name: '知识管理者', icon: '📚', minExp: 5000, benefits: ['基础功能', '数据统计', '高级分析'] },
-  { tier: 'gold', name: '笔记大师', icon: '🎓', minExp: 15000, benefits: ['基础功能', '数据统计', '高级分析'] },
-  { tier: 'platinum', name: '知识架构师', icon: '🏛️', minExp: 50000, benefits: ['全部功能', '专属徽章'] },
-  { tier: 'platinum', name: '智慧行者', icon: '🌟', minExp: 100000, benefits: ['全部功能', '专属徽章', '尊享特权'] },
-  { tier: 'diamond', name: '传奇作者', icon: '💎', minExp: 250000, benefits: ['全部功能', '专属徽章', '尊享特权', '名人堂'] },
-  { tier: 'diamond', name: '知识之神', icon: '👑', minExp: 500000, benefits: ['全部特权'] },
+  { tier: 'bronze', name: '记录学徒', icon: '📝', minExp: 1000, benefits: ['基础功能'] },
+  { tier: 'bronze', name: '知识探索者', icon: '🔍', minExp: 2000, benefits: ['基础功能', '数据统计'] },
+  { tier: 'bronze', name: '写作达人', icon: '✍️', minExp: 4000, benefits: ['基础功能', '数据统计'] },
+  // 白银段位 (10,000 - 39,999)
+  { tier: 'silver', name: '知识管理者', icon: '📚', minExp: 10000, benefits: ['基础功能', '数据统计', '高级分析'] },
+  { tier: 'silver', name: '笔记大师', icon: '🎓', minExp: 20000, benefits: ['基础功能', '数据统计', '高级分析'] },
+  { tier: 'silver', name: '知识架构师', icon: '🏛️', minExp: 40000, benefits: ['全部功能', '专属徽章'] },
+  // 黄金段位 (100,000 - 499,999)
+  { tier: 'gold', name: '智慧行者', icon: '🌟', minExp: 100000, benefits: ['全部功能', '专属徽章', '尊享特权'] },
+  { tier: 'gold', name: '传奇作者', icon: '💎', minExp: 250000, benefits: ['全部功能', '专属徽章', '尊享特权', '名人堂'] },
+  { tier: 'gold', name: '知识领主', icon: '👑', minExp: 300000, benefits: ['全部特权', '专属头衔'] },
+  { tier: 'gold', name: '思想先锋', icon: '🚀', minExp: 400000, benefits: ['全部特权', '专属头衔'] },
+  { tier: 'gold', name: '知识守护者', icon: '🛡️', minExp: 500000, benefits: ['全部特权', '专属头衔', '社区荣誉'] },
+  // 铂金段位 (1,000,000 - 9,999,999)
+  { tier: 'platinum', name: '博学大家', icon: '📖', minExp: 1000000, benefits: ['至尊特权', '专属客服'] },
+  { tier: 'platinum', name: '文字巨匠', icon: '✨', minExp: 2000000, benefits: ['至尊特权', '专属客服', '定制服务'] },
+  { tier: 'platinum', name: '知识泰斗', icon: '🏅', minExp: 4000000, benefits: ['至尊特权', '专属客服', '定制服务'] },
+  { tier: 'platinum', name: '思想领袖', icon: '🎯', minExp: 10000000, benefits: ['传奇特权', '终身VIP'] },
+  // 钻石段位 (25,000,000+)
+  { tier: 'diamond', name: '文坛巨擘', icon: '💠', minExp: 25000000, benefits: ['传奇特权', '终身VIP', '殿堂荣誉'] },
+  { tier: 'diamond', name: '知识圣者', icon: '🌟', minExp: 50000000, benefits: ['传奇特权', '终身VIP', '殿堂荣誉'] },
+  { tier: 'diamond', name: '写作之神', icon: '👑', minExp: 100000000, benefits: ['至高荣耀', '永恒传奇'] },
 ]
 
 const currentLevel = computed(() => {
@@ -270,8 +284,8 @@ const currentLevel = computed(() => {
 
 function calculateExp(): number {
   let exp = 0
-  exp += props.totalNotes * 10 // 每篇笔记10经验
-  exp += Math.floor(props.totalWords / 100) // 每100字1经验
+  exp += props.totalNotes * 20 // 每篇笔记10经验
+  exp += Math.floor(props.totalWords / 80) // 每100字1经验
   exp += streakDays.value * 5 // 每连续天5经验
   exp += props.totalBacklinks * 3 // 每个双链3经验
   return exp

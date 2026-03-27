@@ -648,7 +648,7 @@ $gold: #f59e0b;
   span { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 9px; border-radius: 50%; background: rgba(var(--b3-theme-on-surface-rgb), 0.05); opacity: 0.5; position: relative;
     &.active { background: rgba($green, 0.2); color: $green; opacity: 1; }
     &.today { border: 2px solid var(--b3-theme-primary); font-weight: 700; opacity: 1; }
-    &.best { background: rgba($gold, 0.3); color: darken($gold, 10%); opacity: 1;
+    &.best { background: rgba($gold, 0.3); color: color.adjust($gold, $lightness: -10%); opacity: 1;
       .best-indicator { position: absolute; top: -4px; right: -4px; font-size: 8px; color: $gold; }
     }
   }

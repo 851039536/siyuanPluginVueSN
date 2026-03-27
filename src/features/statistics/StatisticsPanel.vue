@@ -38,7 +38,9 @@
         :total-notes="stats.totalNotes"
         :total-words="stats.totalWords"
         :total-backlinks="stats.totalBacklinks"
+        :weekly-goal="weeklyGoal"
         :i18n="insightCardsI18n"
+        @save-weekly-goal="handleSaveWeeklyGoal"
       />
 
       <ViewModeSection
@@ -89,6 +91,8 @@ interface Props {
     selectedYear?: number
   }) => Promise<StatisticsData>
   onGetHistoricalData?: (days?: number) => Promise<any[]>
+  onGetWeeklyGoal?: () => Promise<{ created: number; words: number }>
+  onSaveWeeklyGoal?: (goal: { created: number; words: number }) => Promise<boolean>
   i18n?: {
     loading: string
     refresh: string
@@ -224,6 +228,7 @@ const selectedYear = ref<number>(new Date().getFullYear())
 const chartData = ref<DailyWordCount[]>([])
 const historicalData = ref<any[]>([])
 const updateInterval = ref(60)
+const weeklyGoal = ref({ created: 30, words: 100000 })
 
 const headerI18n = computed(() => props.i18n)
 const statsCardsI18n = computed(() => props.i18n)
@@ -267,6 +272,11 @@ const insightCardsI18n = computed(() => ({
   yearOverYear: '年同比',
   notes: '笔记',
   words: '字数',
+  editGoal: '编辑目标',
+  save: '保存',
+  cancel: '取消',
+  notesUnit: '篇',
+  wordsUnit: '字',
 }))
 
 const chartTitle = computed(() => {
@@ -365,8 +375,33 @@ async function loadHistoricalData() {
   }
 }
 
+async function loadWeeklyGoal() {
+  if (!props.onGetWeeklyGoal) return
+  try {
+    const goal = await props.onGetWeeklyGoal()
+    if (goal) {
+      weeklyGoal.value = goal
+    }
+  } catch (error) {
+    console.error('加载周目标失败:', error)
+  }
+}
+
+async function handleSaveWeeklyGoal(goal: { created: number; words: number }) {
+  if (!props.onSaveWeeklyGoal) return
+  try {
+    const success = await props.onSaveWeeklyGoal(goal)
+    if (success) {
+      weeklyGoal.value = goal
+    }
+  } catch (error) {
+    console.error('保存周目标失败:', error)
+  }
+}
+
 onMounted(() => {
   loading.value = true
+  loadWeeklyGoal()
   refreshData()
 })
 

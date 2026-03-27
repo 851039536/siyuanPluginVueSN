@@ -6,6 +6,7 @@
         <div class="card-header">
           <span class="card-icon">🎯</span>
           <span class="card-title">{{ i18n.weeklyGoal }}</span>
+          <button class="goal-edit-btn" @click="showGoalEditor = true" :title="i18n.editGoal || '编辑目标'">⚙️</button>
         </div>
         <div class="card-body">
           <div class="weekly-progress">
@@ -31,8 +32,57 @@
               </div>
             </div>
           </div>
+          <!-- 本周趋势条形图 -->
+          <div class="weekly-trend-chart">
+            <div class="trend-bars">
+              <div
+                v-for="(day, idx) in weekDaysDetail"
+                :key="idx"
+                class="trend-bar-wrapper"
+                :class="{ today: day.isToday, best: day.isBest }"
+              >
+                <div class="trend-bar" :style="{ height: day.barHeight + '%' }">
+                  <span v-if="day.isBest" class="best-badge">👑</span>
+                </div>
+                <span class="trend-label">{{ day.label }}</span>
+              </div>
+            </div>
+          </div>
+          <!-- 周日历标记 -->
           <div class="weekly-days">
-            <span v-for="(day, idx) in weekDays" :key="idx" :class="{ active: day.active, today: day.isToday }">{{ day.label }}</span>
+            <span
+              v-for="(day, idx) in weekDays"
+              :key="idx"
+              :class="{ active: day.active, today: day.isToday, best: day.isBest }"
+            >
+              {{ day.label }}
+              <span v-if="day.isBest && day.active" class="best-indicator">★</span>
+            </span>
+          </div>
+        </div>
+        <!-- 目标编辑弹窗 -->
+        <div v-if="showGoalEditor" class="goal-editor-overlay" @click.self="showGoalEditor = false">
+          <div class="goal-editor">
+            <div class="editor-header">
+              <span>⚙️ {{ i18n.editGoal || '编辑目标' }}</span>
+              <button class="close-btn" @click="showGoalEditor = false">✕</button>
+            </div>
+            <div class="editor-body">
+              <div class="editor-field">
+                <label>{{ i18n.notesCreated }}</label>
+                <input type="number" v-model.number="tempGoal.created" min="1" max="1000" />
+                <span class="unit">{{ i18n.notesUnit || '篇' }}</span>
+              </div>
+              <div class="editor-field">
+                <label>{{ i18n.wordsWritten }}</label>
+                <input type="number" v-model.number="tempGoal.words" min="1000" step="1000" />
+                <span class="unit">{{ i18n.wordsUnit || '字' }}</span>
+              </div>
+            </div>
+            <div class="editor-footer">
+              <button class="cancel-btn" @click="showGoalEditor = false">{{ i18n.cancel || '取消' }}</button>
+              <button class="save-btn" @click="saveGoal">{{ i18n.save || '保存' }}</button>
+            </div>
           </div>
         </div>
       </div>
@@ -117,7 +167,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { formatNumber } from '../utils'
 
 interface HistoricalDataItem {
@@ -129,11 +179,17 @@ interface HistoricalDataItem {
   todayModified: number
 }
 
+interface WeeklyGoal {
+  created: number
+  words: number
+}
+
 interface Props {
   historicalData?: HistoricalDataItem[]
   totalNotes?: number
   totalWords?: number
   totalBacklinks?: number
+  weeklyGoal?: WeeklyGoal
   i18n?: Record<string, string>
 }
 
@@ -142,6 +198,7 @@ const props = withDefaults(defineProps<Props>(), {
   totalNotes: 0,
   totalWords: 0,
   totalBacklinks: 0,
+  weeklyGoal: () => ({ created: 30, words: 100000 }),
   i18n: () => ({
     weeklyGoal: '本周目标',
     notesCreated: '新建笔记',
@@ -162,14 +219,45 @@ const props = withDefaults(defineProps<Props>(), {
     yearOverYear: '年同比',
     notes: '笔记',
     words: '字数',
+    editGoal: '编辑目标',
+    save: '保存',
+    cancel: '取消',
+    notesUnit: '篇',
+    wordsUnit: '字',
   }),
 })
+
+const emit = defineEmits<{
+  (e: 'save-weekly-goal', goal: WeeklyGoal): void
+}>()
+
+// 目标编辑器状态
+const showGoalEditor = ref(false)
+const tempGoal = ref<WeeklyGoal>({ created: 30, words: 100000 })
+
+// 监听外部 weeklyGoal 变化，同步到临时目标
+watch(() => props.weeklyGoal, (newGoal) => {
+  tempGoal.value = { ...newGoal }
+}, { immediate: true })
+
+// 打开编辑器时重置临时目标
+watch(showGoalEditor, (show) => {
+  if (show) {
+    tempGoal.value = { ...props.weeklyGoal }
+  }
+})
+
+// 保存目标
+function saveGoal() {
+  if (tempGoal.value.created > 0 && tempGoal.value.words > 0) {
+    emit('save-weekly-goal', { ...tempGoal.value })
+    showGoalEditor.value = false
+  }
+}
 
 const currentYear = new Date().getFullYear()
 
 // ============ 本周目标 ============
-const weeklyGoal = { created: 30, words: 100000 }
-
 const weeklyStats = computed(() => {
   const now = new Date()
   const dayOfWeek = now.getDay() || 7
@@ -198,15 +286,72 @@ const weeklyStats = computed(() => {
 })
 
 const weeklyProgress = computed(() => {
-  const notesProgress = (weeklyStats.value.created / weeklyGoal.created) * 50
-  const wordsProgress = (weeklyStats.value.words / weeklyGoal.words) * 50
+  const notesProgress = (weeklyStats.value.created / props.weeklyGoal.created) * 50
+  const wordsProgress = (weeklyStats.value.words / props.weeklyGoal.words) * 50
   return Math.min(notesProgress + wordsProgress, 100)
+})
+
+// 本周每日详细数据（用于趋势条形图）
+const weekDaysDetail = computed(() => {
+  const days = []
+  const now = new Date()
+  const dayOfWeek = now.getDay() || 7
+  let maxValue = 0
+  const dayDataList: { label: string; value: number; date: string; isToday: boolean }[] = []
+
+  // 先收集所有数据并找出最大值
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(now)
+    date.setDate(date.getDate() - dayOfWeek + 1 + i)
+    const dateStr = formatDate(date)
+    const dayData = props.historicalData.find(d => d.date === dateStr)
+    const value = dayData ? (dayData.todayCreated * 100 + dayData.todayModified) : 0
+    const isToday = dateStr === formatDate(now)
+
+    dayDataList.push({
+      label: ['一', '二', '三', '四', '五', '六', '日'][i],
+      value,
+      date: dateStr,
+      isToday,
+    })
+    if (value > maxValue) maxValue = value
+  }
+
+  // 找出最佳日
+  const bestIdx = dayDataList.findIndex(d => d.value === maxValue && d.value > 0)
+
+  // 计算柱状图高度
+  for (let i = 0; i < dayDataList.length; i++) {
+    const d = dayDataList[i]
+    days.push({
+      ...d,
+      barHeight: maxValue > 0 ? (d.value / maxValue) * 100 : 0,
+      isBest: i === bestIdx,
+    })
+  }
+
+  return days
 })
 
 const weekDays = computed(() => {
   const days = []
   const now = new Date()
   const dayOfWeek = now.getDay() || 7
+
+  // 找出本周最大产出日
+  let maxActivity = 0
+  let bestDate = ''
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(now)
+    date.setDate(date.getDate() - dayOfWeek + 1 + i)
+    const dateStr = formatDate(date)
+    const dayData = props.historicalData.find(d => d.date === dateStr)
+    const activity = dayData ? (dayData.todayCreated + dayData.todayModified) : 0
+    if (activity > maxActivity) {
+      maxActivity = activity
+      bestDate = dateStr
+    }
+  }
 
   for (let i = 0; i < 7; i++) {
     const date = new Date(now)
@@ -218,6 +363,7 @@ const weekDays = computed(() => {
       label: ['一', '二', '三', '四', '五', '六', '日'][i],
       active: dayData && (dayData.todayCreated > 0 || dayData.todayModified > 0),
       isToday: dateStr === formatDate(now),
+      isBest: dateStr === bestDate && maxActivity > 0,
     })
   }
 
@@ -432,10 +578,174 @@ $gold: #f59e0b;
     span:last-child { font-weight: 600; color: var(--b3-theme-primary); }
   }
 }
+
+// 目标编辑按钮
+.goal-edit-btn {
+  background: none;
+  border: none;
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0.5;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  &:hover {
+    opacity: 1;
+    background: rgba(var(--b3-theme-primary-rgb), 0.1);
+  }
+}
+
+// 趋势条形图
+.weekly-trend-chart {
+  margin-bottom: 8px;
+  padding: 8px;
+  background: rgba(var(--b3-theme-primary-rgb), 0.03);
+  border-radius: 6px;
+}
+.trend-bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 40px;
+  gap: 4px;
+}
+.trend-bar-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  position: relative;
+  &.today .trend-bar {
+    background: linear-gradient(180deg, var(--b3-theme-primary), rgba(var(--b3-theme-primary-rgb), 0.6));
+  }
+  &.best .trend-bar {
+    background: linear-gradient(180deg, $gold, #ff8c00);
+  }
+  .trend-bar {
+    width: 100%;
+    max-width: 16px;
+    min-height: 2px;
+    background: rgba(var(--b3-theme-primary-rgb), 0.3);
+    border-radius: 2px 2px 0 0;
+    transition: height 0.3s ease;
+    position: relative;
+  }
+  .best-badge {
+    position: absolute;
+    top: -14px;
+    font-size: 10px;
+  }
+  .trend-label {
+    font-size: 8px;
+    opacity: 0.5;
+    margin-top: 2px;
+  }
+}
+
+// 周日历标记
 .weekly-days { display: flex; justify-content: space-between; padding: 6px 4px; background: rgba(var(--b3-theme-primary-rgb), 0.03); border-radius: 6px;
-  span { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 9px; border-radius: 50%; background: rgba(var(--b3-theme-on-surface-rgb), 0.05); opacity: 0.5;
+  span { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 9px; border-radius: 50%; background: rgba(var(--b3-theme-on-surface-rgb), 0.05); opacity: 0.5; position: relative;
     &.active { background: rgba($green, 0.2); color: $green; opacity: 1; }
     &.today { border: 2px solid var(--b3-theme-primary); font-weight: 700; opacity: 1; }
+    &.best { background: rgba($gold, 0.3); color: darken($gold, 10%); opacity: 1;
+      .best-indicator { position: absolute; top: -4px; right: -4px; font-size: 8px; color: $gold; }
+    }
+  }
+}
+
+// 目标编辑弹窗
+.goal-editor-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.goal-editor {
+  background: var(--b3-theme-surface);
+  border-radius: 12px;
+  padding: 16px;
+  min-width: 280px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  .editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    font-weight: 600;
+    font-size: 14px;
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      opacity: 0.5;
+      &:hover { opacity: 1; }
+    }
+  }
+  .editor-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .editor-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    label {
+      flex: 1;
+      font-size: 12px;
+      opacity: 0.8;
+    }
+    input {
+      width: 100px;
+      padding: 6px 10px;
+      border: 1px solid var(--b3-border-color);
+      border-radius: 6px;
+      background: var(--b3-theme-background);
+      color: var(--b3-theme-on-background);
+      font-size: 12px;
+      text-align: right;
+      &:focus {
+        outline: none;
+        border-color: var(--b3-theme-primary);
+      }
+    }
+    .unit {
+      font-size: 11px;
+      opacity: 0.6;
+      width: 24px;
+    }
+  }
+  .editor-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+    button {
+      padding: 6px 16px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+    }
+    .cancel-btn {
+      background: rgba(var(--b3-theme-on-surface-rgb), 0.1);
+      color: var(--b3-theme-on-surface);
+      &:hover { background: rgba(var(--b3-theme-on-surface-rgb), 0.15); }
+    }
+    .save-btn {
+      background: var(--b3-theme-primary);
+      color: white;
+      &:hover { opacity: 0.9; }
+    }
   }
 }
 

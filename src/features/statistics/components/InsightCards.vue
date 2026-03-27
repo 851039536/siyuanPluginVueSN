@@ -1,57 +1,6 @@
 <template>
   <div class="insight-cards">
-    <!-- 第一行：写作等级 + 连续活跃 -->
-    <div class="insight-row">
-      <div class="insight-card">
-        <div class="card-header">
-          <span class="card-icon">{{ currentLevel.icon }}</span>
-          <span class="card-title">{{ i18n.writerLevel }}</span>
-        </div>
-        <div class="card-body">
-          <div class="level-badge" :class="currentLevel.tier">
-            <span>{{ currentLevel.icon }}</span>
-            <span>{{ currentLevel.name }}</span>
-          </div>
-          <div class="progress-section">
-            <div class="progress-info">
-              <span>{{ i18n.expProgress }}</span>
-              <span>{{ currentLevel.currentExp }} / {{ currentLevel.nextLevelExp }}</span>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-fill" :style="{ width: currentLevel.progressPercent + '%' }"></div>
-            </div>
-            <div class="progress-hint">{{ i18n.toNextLevel }}: {{ currentLevel.nextLevelName }}</div>
-          </div>
-          <div class="benefit-tags">
-            <span v-for="benefit in currentLevel.benefits" :key="benefit">{{ benefit }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="insight-card">
-        <div class="card-header">
-          <span class="card-icon">🔥</span>
-          <span class="card-title">{{ i18n.streakDays }}</span>
-        </div>
-        <div class="card-body streak-body">
-          <div class="streak-number">{{ streakDays }}</div>
-          <div class="streak-label">{{ i18n.daysStreak }}</div>
-          <div v-if="maxStreakDays > streakDays" class="max-streak">
-            🏆 {{ i18n.maxStreak }}: {{ maxStreakDays }} {{ i18n.days }}
-          </div>
-          <div class="streak-reward">
-            <span class="reward-icon">🎁</span>
-            <span>{{ getNextStreakReward() }}</span>
-            <span class="reward-progress">{{ streakDays }}/{{ nextStreakMilestone }}</span>
-          </div>
-          <div class="streak-flames">
-            <span v-for="n in 7" :key="n" :class="{ active: n <= streakDays }">🔥</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 第二行：本周目标 + 热力图 -->
+    <!-- 第一行：本周目标 + 热力图 -->
     <div class="insight-row">
       <div class="insight-card">
         <div class="card-header">
@@ -124,7 +73,6 @@
             <div class="breakdown-item"><span>📓</span><span>{{ i18n.fromNotes }}</span><span>+{{ formatNumber(knowledgeWealth.fromNotes) }}</span></div>
             <div class="breakdown-item"><span>✍️</span><span>{{ i18n.fromWords }}</span><span>+{{ formatNumber(knowledgeWealth.fromWords) }}</span></div>
             <div class="breakdown-item"><span>🔗</span><span>{{ i18n.fromLinks }}</span><span>+{{ formatNumber(knowledgeWealth.fromLinks) }}</span></div>
-            <div class="breakdown-item"><span>🔥</span><span>{{ i18n.fromStreak }}</span><span>+{{ formatNumber(knowledgeWealth.fromStreak) }}</span></div>
           </div>
           <div class="wealth-rank">
             <span>{{ i18n.wealthRank }}:</span>
@@ -195,14 +143,6 @@ const props = withDefaults(defineProps<Props>(), {
   totalWords: 0,
   totalBacklinks: 0,
   i18n: () => ({
-    writerLevel: '写作等级',
-    expProgress: '经验进度',
-    toNextLevel: '距离下一等级',
-    streakDays: '连续活跃',
-    daysStreak: '天连续记录',
-    maxStreak: '最长',
-    days: '天',
-    nextReward: '下个奖励',
     weeklyGoal: '本周目标',
     notesCreated: '新建笔记',
     wordsWritten: '写作字数',
@@ -217,7 +157,6 @@ const props = withDefaults(defineProps<Props>(), {
     fromNotes: '笔记贡献',
     fromWords: '字数贡献',
     fromLinks: '双链贡献',
-    fromStreak: '连签奖励',
     wealthRank: '财富等级',
     milestones: '里程碑',
     yearOverYear: '年同比',
@@ -227,138 +166,6 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const currentYear = new Date().getFullYear()
-
-// ============ 等级系统 ============
-const levels = [
-  // 青铜段位 (0 - 3,999)
-  { tier: 'bronze', name: '笔记新手', icon: '🌱', minExp: 0, benefits: ['基础功能'] },
-  { tier: 'bronze', name: '记录学徒', icon: '📝', minExp: 1000, benefits: ['基础功能'] },
-  { tier: 'bronze', name: '知识探索者', icon: '🔍', minExp: 2000, benefits: ['基础功能', '数据统计'] },
-  { tier: 'bronze', name: '写作达人', icon: '✍️', minExp: 4000, benefits: ['基础功能', '数据统计'] },
-  // 白银段位 (10,000 - 39,999)
-  { tier: 'silver', name: '知识管理者', icon: '📚', minExp: 10000, benefits: ['基础功能', '数据统计', '高级分析'] },
-  { tier: 'silver', name: '笔记大师', icon: '🎓', minExp: 20000, benefits: ['基础功能', '数据统计', '高级分析'] },
-  { tier: 'silver', name: '知识架构师', icon: '🏛️', minExp: 40000, benefits: ['全部功能', '专属徽章'] },
-  // 黄金段位 (100,000 - 499,999)
-  { tier: 'gold', name: '智慧行者', icon: '🌟', minExp: 100000, benefits: ['全部功能', '专属徽章', '尊享特权'] },
-  { tier: 'gold', name: '传奇作者', icon: '💎', minExp: 250000, benefits: ['全部功能', '专属徽章', '尊享特权', '名人堂'] },
-  { tier: 'gold', name: '知识领主', icon: '👑', minExp: 300000, benefits: ['全部特权', '专属头衔'] },
-  { tier: 'gold', name: '思想先锋', icon: '🚀', minExp: 400000, benefits: ['全部特权', '专属头衔'] },
-  { tier: 'gold', name: '知识守护者', icon: '🛡️', minExp: 500000, benefits: ['全部特权', '专属头衔', '社区荣誉'] },
-  // 铂金段位 (1,000,000 - 9,999,999)
-  { tier: 'platinum', name: '博学大家', icon: '📖', minExp: 1000000, benefits: ['至尊特权', '专属客服'] },
-  { tier: 'platinum', name: '文字巨匠', icon: '✨', minExp: 2000000, benefits: ['至尊特权', '专属客服', '定制服务'] },
-  { tier: 'platinum', name: '知识泰斗', icon: '🏅', minExp: 4000000, benefits: ['至尊特权', '专属客服', '定制服务'] },
-  { tier: 'platinum', name: '思想领袖', icon: '🎯', minExp: 10000000, benefits: ['传奇特权', '终身VIP'] },
-  // 钻石段位 (25,000,000+)
-  { tier: 'diamond', name: '文坛巨擘', icon: '💠', minExp: 25000000, benefits: ['传奇特权', '终身VIP', '殿堂荣誉'] },
-  { tier: 'diamond', name: '知识圣者', icon: '🌟', minExp: 50000000, benefits: ['传奇特权', '终身VIP', '殿堂荣誉'] },
-  { tier: 'diamond', name: '写作之神', icon: '👑', minExp: 100000000, benefits: ['至高荣耀', '永恒传奇'] },
-]
-
-const currentLevel = computed(() => {
-  const exp = calculateExp()
-  let current = levels[0]
-  let next = levels[1]
-
-  for (let i = 0; i < levels.length; i++) {
-    if (exp >= levels[i].minExp) {
-      current = levels[i]
-      next = levels[i + 1] || levels[i]
-    }
-  }
-
-  const currentExp = exp - current.minExp
-  const neededExp = next.minExp - current.minExp
-  const progressPercent = Math.min((currentExp / neededExp) * 100, 100)
-
-  return {
-    ...current,
-    currentExp: exp,
-    nextLevelExp: next.minExp,
-    nextLevelName: next.name,
-    progressPercent,
-    benefits: current.benefits,
-  }
-})
-
-function calculateExp(): number {
-  let exp = 0
-  exp += props.totalNotes * 20 // 每篇笔记10经验
-  exp += Math.floor(props.totalWords / 80) // 每100字1经验
-  exp += streakDays.value * 5 // 每连续天5经验
-  exp += props.totalBacklinks * 3 // 每个双链3经验
-  return exp
-}
-
-// ============ 连续活跃 ============
-const streakDays = computed(() => {
-  if (props.historicalData.length === 0) return 0
-
-  const sortedData = [...props.historicalData].sort((a, b) => b.date.localeCompare(a.date))
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-
-  let streak = 0
-  let checkDate = new Date(today)
-
-  for (let i = 0; i < sortedData.length; i++) {
-    const dateStr = formatDate(checkDate)
-    const dayData = sortedData.find(d => d.date === dateStr)
-
-    if (dayData && (dayData.todayCreated > 0 || dayData.todayModified > 0)) {
-      streak++
-      checkDate.setDate(checkDate.getDate() - 1)
-    } else if (i === 0) {
-      checkDate.setDate(checkDate.getDate() - 1)
-      i--
-    } else {
-      break
-    }
-  }
-
-  return streak
-})
-
-const maxStreakDays = computed(() => {
-  if (props.historicalData.length === 0) return 0
-
-  const sortedData = [...props.historicalData].sort((a, b) => a.date.localeCompare(b.date))
-  let maxStreak = 0
-  let currentStreak = 0
-
-  for (const data of sortedData) {
-    if (data.todayCreated > 0 || data.todayModified > 0) {
-      currentStreak++
-      maxStreak = Math.max(maxStreak, currentStreak)
-    } else {
-      currentStreak = 0
-    }
-  }
-
-  return maxStreak
-})
-
-const nextStreakMilestone = computed(() => {
-  const milestones = [7, 14, 30, 60, 100, 180, 365]
-  for (const m of milestones) {
-    if (streakDays.value < m) return m
-  }
-  return 365
-})
-
-function getNextStreakReward(): string {
-  const rewards: Record<number, string> = {
-    7: '周坚持徽章 🏅',
-    14: '双周勇士 🗡️',
-    30: '月度达人 🌙',
-    60: '双月冠军 👑',
-    100: '百日传奇 ⭐',
-    180: '半年大师 🎖️',
-    365: '年度巨星 🌟',
-  }
-  return rewards[nextStreakMilestone.value] || '终极荣誉 💎'
-}
 
 // ============ 本周目标 ============
 const weeklyGoal = { created: 30, words: 100000 }
@@ -454,14 +261,12 @@ const knowledgeWealth = computed(() => {
   const fromNotes = props.totalNotes * 100
   const fromWords = Math.floor(props.totalWords / 10)
   const fromLinks = props.totalBacklinks * 50
-  const fromStreak = streakDays.value * 20
 
   return {
     fromNotes,
     fromWords,
     fromLinks,
-    fromStreak,
-    total: fromNotes + fromWords + fromLinks + fromStreak,
+    total: fromNotes + fromWords + fromLinks,
   }
 })
 
@@ -613,52 +418,6 @@ $gold: #f59e0b;
   }
 }
 
-// 等级卡片
-.level-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-weight: 700;
-  font-size: 12px;
-  margin-bottom: 10px;
-
-  &.bronze { background: linear-gradient(135deg, rgba(#cd7f32, 0.2), rgba(#cd7f32, 0.1)); color: color.adjust(#cd7f32, $lightness: -10%); border: 1px solid rgba(#cd7f32, 0.3); }
-  &.silver { background: linear-gradient(135deg, rgba(#c0c0c0, 0.3), rgba(#c0c0c0, 0.1)); color: color.adjust(#c0c0c0, $lightness: -20%); border: 1px solid rgba(#c0c0c0, 0.4); }
-  &.gold { background: linear-gradient(135deg, rgba($gold, 0.3), rgba($gold, 0.1)); color: color.adjust($gold, $lightness: -15%); border: 1px solid rgba($gold, 0.5); }
-  &.platinum { background: linear-gradient(135deg, rgba(#e5e4e2, 0.4), rgba(#e5e4e2, 0.2)); color: color.adjust(#e5e4e2, $lightness: -30%); border: 1px solid rgba(#e5e4e2, 0.5); }
-  &.diamond { background: linear-gradient(135deg, rgba(#b9f2ff, 0.4), rgba(#b9f2ff, 0.2)); color: color.adjust(#b9f2ff, $lightness: -40%); border: 1px solid rgba(#b9f2ff, 0.5); }
-}
-
-.progress-section {
-  margin-bottom: 8px;
-  .progress-info { display: flex; justify-content: space-between; font-size: 9px; margin-bottom: 4px; opacity: 0.6; }
-  .progress-bar { height: 6px; background: rgba(var(--b3-theme-primary-rgb), 0.1); border-radius: 3px; overflow: hidden;
-    .progress-fill { height: 100%; background: var(--b3-theme-primary); transition: width 0.5s ease; }
-  }
-  .progress-hint { font-size: 8px; opacity: 0.5; margin-top: 4px; text-align: center; }
-}
-
-.benefit-tags { display: flex; flex-wrap: wrap; gap: 4px;
-  span { font-size: 8px; padding: 2px 6px; background: rgba(var(--b3-theme-primary-rgb), 0.08); border-radius: 4px; opacity: 0.7; }
-}
-
-// 连续活跃
-.streak-body { text-align: center; }
-.streak-number { font-size: 32px; font-weight: 800; background: linear-gradient(135deg, $gold, #ff8c00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; }
-.streak-label { font-size: 10px; opacity: 0.6; }
-.max-streak { font-size: 9px; opacity: 0.4; margin-top: 4px; }
-.streak-reward { display: flex; align-items: center; gap: 6px; padding: 4px 8px; background: rgba($gold, 0.1); border-radius: 6px; font-size: 10px; margin: 10px 0;
-  .reward-icon { font-size: 12px; }
-  .reward-progress { margin-left: auto; font-size: 9px; opacity: 0.7; }
-}
-.streak-flames { display: flex; justify-content: center; gap: 4px;
-  span { font-size: 14px; opacity: 0.3; transition: all 0.3s ease;
-    &.active { opacity: 1; animation: flicker 1s ease-in-out infinite; }
-  }
-}
-
 // 本周目标
 .weekly-progress { display: flex; gap: 12px; margin-bottom: 10px; }
 .progress-ring { position: relative; width: 50px; height: 50px;
@@ -733,11 +492,6 @@ $gold: #f59e0b;
   .mini-progress { width: 100%; height: 3px; background: rgba(var(--b3-theme-primary-rgb), 0.1); border-radius: 2px; margin-top: 4px; overflow: hidden;
     .mini-fill { height: 100%; background: var(--b3-theme-primary); transition: width 0.3s ease; }
   }
-}
-
-@keyframes flicker {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(0.95); }
 }
 
 @include tablet-only {

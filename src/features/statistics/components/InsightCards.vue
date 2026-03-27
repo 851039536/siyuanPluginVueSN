@@ -347,7 +347,7 @@ function getNextStreakReward(): string {
 }
 
 // ============ 本周目标 ============
-const weeklyGoal = { created: 7, words: 7000 }
+const weeklyGoal = { created: 30, words: 100000 }
 
 const weeklyStats = computed(() => {
   const now = new Date()

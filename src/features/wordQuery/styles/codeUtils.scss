@@ -1,0 +1,409 @@
+@use '@/variables.scss' as *;
+
+// ========== 通用面板样式 ==========
+.code-comment-panel,
+.code-explainer-panel,
+.regex-generator-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  background: var(--b3-theme-background);
+  border-radius: 8px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.panel-header {
+  .panel-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--b3-theme-on-background);
+  }
+}
+
+.panel-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+// ========== 输入区域 ==========
+.input-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  .input-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--b3-theme-on-surface);
+  }
+
+  .code-textarea,
+  .description-textarea {
+    width: 100%;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    resize: vertical;
+  }
+}
+
+// ========== 风格选择区域 ==========
+.style-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  .style-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--b3-theme-on-surface);
+  }
+
+  .style-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+  }
+
+  .style-option {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px;
+    background: var(--b3-theme-surface);
+    border: 2px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+
+    &.active {
+      border-color: var(--b3-theme-primary);
+      background: var(--b3-theme-primary-light);
+    }
+
+    .style-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--b3-theme-on-surface);
+    }
+
+    .style-example {
+      font-size: 12px;
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      color: var(--b3-theme-on-surface-light);
+    }
+  }
+}
+
+// ========== 操作按钮区域 ==========
+.action-section {
+  display: flex;
+  gap: 8px;
+}
+
+// ========== 结果展示区域 ==========
+.result-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--b3-theme-surface);
+  border-radius: 8px;
+
+  .result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    .result-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--b3-theme-on-surface);
+    }
+
+    .meta-info {
+      display: flex;
+      gap: 8px;
+
+      .meta-tag {
+        padding: 2px 8px;
+        background: var(--b3-theme-primary-light);
+        border-radius: 4px;
+        font-size: 12px;
+        color: var(--b3-theme-primary);
+
+        &.complexity {
+          background: var(--b3-theme-warning-light, #fef3c7);
+          color: var(--b3-theme-warning, #d97706);
+        }
+      }
+    }
+  }
+
+  .result-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .code-result {
+    margin: 0;
+    padding: 12px;
+    background: var(--b3-theme-background);
+    border-radius: 6px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    color: var(--b3-theme-on-background);
+  }
+
+  .result-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+}
+
+// ========== 解释区域 ==========
+.explanation-section,
+.suggestions-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--b3-theme-on-surface);
+  }
+
+  .explanation-text {
+    padding: 12px;
+    background: var(--b3-theme-background);
+    border-radius: 6px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--b3-theme-on-background);
+  }
+}
+
+.suggestions-section {
+  border-top: 1px solid var(--b3-border-color);
+  padding-top: 12px;
+
+  .suggestions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .suggestion-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--b3-theme-background);
+    border-radius: 4px;
+    font-size: 14px;
+    color: var(--b3-theme-on-background);
+
+    .suggestion-index {
+      color: var(--b3-theme-primary);
+      font-weight: 600;
+    }
+  }
+}
+
+// ========== 正则生成器特殊样式 ==========
+.examples-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  .examples-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .examples-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--b3-theme-on-surface);
+    }
+  }
+
+  .examples-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .example-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .example-inputs {
+      display: flex;
+      flex: 1;
+      gap: 8px;
+
+      .match-input,
+      .not-match-input {
+        flex: 1;
+      }
+    }
+  }
+}
+
+.regex-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px;
+  background: var(--b3-theme-background);
+  border-radius: 6px;
+
+  .regex-pattern {
+    flex: 1;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--b3-theme-primary);
+    word-break: break-all;
+  }
+}
+
+.examples-result-section {
+  border-top: 1px solid var(--b3-border-color);
+  padding-top: 12px;
+
+  .examples-result-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .example-result-item {
+    padding: 4px 8px;
+    background: var(--b3-theme-surface-light);
+    border-radius: 4px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    color: var(--b3-theme-on-surface);
+  }
+}
+
+// ========== 测试区域 ==========
+.test-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid var(--b3-border-color);
+  padding-top: 12px;
+
+  .test-input-area {
+    display: flex;
+    gap: 8px;
+  }
+
+  .test-result {
+    padding: 8px 12px;
+    background: var(--b3-theme-background);
+    border-radius: 6px;
+
+    .matches-info {
+      .match-count {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--b3-theme-success, #22c55e);
+      }
+
+      .matches-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+      }
+
+      .match-item {
+        padding: 2px 8px;
+        background: var(--b3-theme-success-light, #dcfce7);
+        border-radius: 4px;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        font-size: 12px;
+        color: var(--b3-theme-success, #16a34a);
+      }
+    }
+
+    .no-match {
+      font-size: 13px;
+      color: var(--b3-theme-on-surface-light);
+    }
+
+    .error-info {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--b3-theme-error);
+    }
+  }
+}
+
+// ========== 错误提示 ==========
+.error-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--b3-theme-error-light);
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--b3-theme-error);
+}
+
+// ========== 响应式调整 ==========
+@media (max-width: 480px) {
+  .code-comment-panel,
+  .code-explainer-panel,
+  .regex-generator-panel {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .style-section .style-options {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
+
+  .example-item .example-inputs {
+    flex-direction: column;
+  }
+}

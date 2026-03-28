@@ -29,6 +29,33 @@
         >
           💻 {{ props.i18n.wordQuery?.codeTranslation || '编程翻译' }}
         </Button>
+        <Button
+          class="mode-tab"
+          :class="{ active: currentMode === 'codeComment' }"
+          variant="ghost"
+          size="small"
+          @click="switchMode('codeComment')"
+        >
+          💬 {{ props.i18n.wordQuery?.codeComment || '注释生成' }}
+        </Button>
+        <Button
+          class="mode-tab"
+          :class="{ active: currentMode === 'codeExplain' }"
+          variant="ghost"
+          size="small"
+          @click="switchMode('codeExplain')"
+        >
+          🔍 {{ props.i18n.wordQuery?.codeExplain || '代码解释' }}
+        </Button>
+        <Button
+          class="mode-tab"
+          :class="{ active: currentMode === 'regex' }"
+          variant="ghost"
+          size="small"
+          @click="switchMode('regex')"
+        >
+          🎯 {{ props.i18n.wordQuery?.regexGenerator || '正则生成' }}
+        </Button>
       </div>
 
       <div class="api-key-toggle">
@@ -240,6 +267,27 @@
         :plugin="props.plugin"
       />
     </div>
+
+    <div v-else-if="currentMode === 'codeComment'" class="mode-content">
+      <CodeCommentGenerator
+        :i18n="props.i18n.wordQuery || {}"
+        :plugin="props.plugin"
+      />
+    </div>
+
+    <div v-else-if="currentMode === 'codeExplain'" class="mode-content">
+      <CodeExplainer
+        :i18n="props.i18n.wordQuery || {}"
+        :plugin="props.plugin"
+      />
+    </div>
+
+    <div v-else-if="currentMode === 'regex'" class="mode-content">
+      <RegexGenerator
+        :i18n="props.i18n.wordQuery || {}"
+        :plugin="props.plugin"
+      />
+    </div>
   </div>
 </template>
 
@@ -252,6 +300,9 @@ import Input from '@/components/Input.vue';
 import Select from '@/components/Select.vue';
 import Textarea from '@/components/Textarea.vue';
 import CodeTranslationPanel from './components/CodeTranslationPanel.vue';
+import CodeCommentGenerator from './components/CodeCommentGenerator.vue';
+import CodeExplainer from './components/CodeExplainer.vue';
+import RegexGenerator from './components/RegexGenerator.vue';
 import { WordQueryStorage } from './types/storage';
 
 interface Props {
@@ -301,7 +352,7 @@ const CONTENT_PATTERNS = {
 
 const props = defineProps<Props>();
 
-const currentMode = ref<'word' | 'translate' | 'codeTranslation'>('word');
+const currentMode = ref<'word' | 'translate' | 'codeTranslation' | 'codeComment' | 'codeExplain' | 'regex'>('word');
 const searchWord = ref('');
 const queryResult = ref('');
 const isLoading = ref(false);
@@ -525,7 +576,7 @@ const clearResult = () => {
   errorMessage.value = '';
 };
 
-const switchMode = (mode: 'word' | 'translate' | 'codeTranslation') => {
+const switchMode = (mode: 'word' | 'translate' | 'codeTranslation' | 'codeComment' | 'codeExplain' | 'regex') => {
   currentMode.value = mode;
   activePanel.value = null;
 };

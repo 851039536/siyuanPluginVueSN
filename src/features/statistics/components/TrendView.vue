@@ -1,6 +1,13 @@
 <template>
   <div class="trend-view">
-    <h3 class="section-title">{{ i18n.title }}</h3>
+    <!-- 标题行：包含标题和日均统计 -->
+    <div class="section-header">
+      <h3 class="section-title">{{ i18n.title }}</h3>
+      <div v-if="trendStats" class="trend-stats-inline">
+        <span class="stat-item">📅 {{ i18n.avgDailyCreated }} <strong>{{ trendStats.avgDailyCreated }}</strong></span>
+        <span class="stat-item">✏️ {{ i18n.avgDailyModified }} <strong>{{ trendStats.avgDailyModified }}</strong></span>
+      </div>
+    </div>
 
     <!-- 周期对比汇总 -->
     <div v-if="comparisonStats" class="comparison-section">
@@ -163,22 +170,6 @@
               {{ formatChange(comparisonStats.monthChange.words) }}
             </span>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 趋势统计列表 -->
-    <div v-if="trendStats" class="trend-stats-list">
-      <div class="trend-stat-item">
-        <div class="stat-group">
-          <span class="stat-icon">📅</span>
-          <span class="stat-label">{{ i18n.avgDailyCreated }}</span>
-          <span class="stat-value">{{ trendStats.avgDailyCreated }}</span>
-        </div>
-        <div class="stat-group">
-          <span class="stat-icon">✏️</span>
-          <span class="stat-label">{{ i18n.avgDailyModified }}</span>
-          <span class="stat-value">{{ trendStats.avgDailyModified }}</span>
         </div>
       </div>
     </div>
@@ -634,40 +625,35 @@ $github-red: #cf222e;
     }
   }
 
-  .trend-stats-list {
-    margin: 0 0 16px 0;
-    border: 1px solid var(--b3-border-color);
-    border-radius: 8px;
-    overflow: hidden;
+  // 标题行
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--b3-border-color);
 
-    .trend-stat-item {
+    .section-title {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--b3-theme-primary);
+    }
+
+    .trend-stats-inline {
       display: flex;
-      align-items: center;
-      justify-content: space-around;
-      padding: 10px 12px;
-      background: var(--b3-theme-surface);
+      gap: 16px;
+      font-size: 11px;
 
-      .stat-group {
-        display: flex;
-        align-items: center;
-        gap: 6px;
+      .stat-item {
+        color: var(--b3-theme-on-surface);
+        opacity: 0.7;
 
-        .stat-icon {
-          font-size: 16px;
-        }
-
-        .stat-label {
-          font-family: $font-body;
-          font-size: 12px;
-          color: var(--b3-theme-on-surface);
-          opacity: 0.7;
-        }
-
-        .stat-value {
-          font-family: $font-heading;
-          font-size: 14px;
-          font-weight: 700;
+        strong {
           color: var(--b3-theme-primary);
+          font-weight: 700;
+          margin-left: 4px;
         }
       }
     }
@@ -814,9 +800,10 @@ $github-red: #cf222e;
       margin-right: 4px;
     }
 
-    .trend-stats-list {
-      margin-left: 4px;
-      margin-right: 4px;
+    .section-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
     }
 
     .historical-data-list {

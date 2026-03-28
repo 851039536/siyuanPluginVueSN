@@ -363,6 +363,9 @@ export const COMMON_ICONS = {
   },
 
   // 列表相关
+  list: {
+    icon: 'mdi:format-list-bulleted'
+  },
   listBulleted: {
     icon: 'mdi:format-list-bulleted'
   },
@@ -397,6 +400,14 @@ export const COMMON_ICONS = {
   },
   lightbulb: {
     icon: 'mdi:lightbulb'
+  },
+  regex: {
+    icon: 'mdi:regex',
+    color: '#f97316'
+  },
+  sparkles: {
+    icon: 'mdi:auto-fix',
+    color: '#a855f7'
   }
 } as const
 

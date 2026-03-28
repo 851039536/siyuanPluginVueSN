@@ -78,11 +78,6 @@
     border-radius: 6px;
     cursor: pointer;
 
-    &:hover {
-      border-color: var(--b3-theme-primary-light);
-      background: var(--b3-theme-surface-light);
-    }
-
     &.active {
       border-color: var(--b3-theme-primary);
       background: var(--b3-theme-primary-light);
@@ -217,7 +212,6 @@
 
       &:hover {
         background: var(--b3-theme-surface-light);
-        transform: translateX(4px);
       }
     }
   }

@@ -124,7 +124,7 @@ import { showMessage } from 'siyuan'
 import IconWrapper from '@/components/IconWrapper.vue'
 import Button from '@/components/Button.vue'
 import Textarea from '@/components/Textarea.vue'
-import { translateCodeField, NAMING_STYLES, type NamingStyle, type CodeTranslationResult } from './codeTranslation'
+import { translateCodeField, NAMING_STYLES, type NamingStyle, type CodeTranslationResult } from '../utils/codeTranslation'
 
 interface Props {
   i18n: any
@@ -206,5 +206,5 @@ watch(() => chineseInput.value, () => {
 </script>
 
 <style scoped lang="scss">
-@use "./styles/codeTranslation.scss";
+@use "../styles/codeTranslation.scss";
 </style>

@@ -18,39 +18,35 @@
     <div v-else-if="displayedContent || generatedContent" class="result-container">
       <div class="result-header">
         <span class="result-title">
-          📝 {{ '编辑内容' }}
           <span v-if="isGenerating" class="generating-indicator">
             <span class="dot-flashing"></span>
-            {{ '生成中' }}
+            生成中...
           </span>
         </span>
         <div class="result-actions">
-          <!-- 停止生成按钮 -->
+          <!-- 主要操作 -->
           <Button
             v-if="isGenerating"
             @click="$emit('stop')"
-            :title="'停止生成'"
+            title="停止生成"
             variant="danger"
             size="small"
           >
-            <svg width="16" height="16">
-              <use xlink:href="#iconClose"></use>
-            </svg>
-            {{ '停止' }}
+            <svg width="14" height="14"><use xlink:href="#iconClose"></use></svg>
+            停止
           </Button>
           <Button
             @click="$emit('apply-edit')"
             :disabled="!canApply"
-            :title="'应用编辑'"
+            title="应用编辑"
             variant="primary"
             size="small"
           >
             <div v-if="isApplying" class="loading-spinner-small"></div>
-            <svg v-else width="16" height="16">
-              <use xlink:href="#iconCheck"></use>
-            </svg>
-            {{ '应用' }}
+            <svg v-else width="14" height="14"><use xlink:href="#iconCheck"></use></svg>
+            应用
           </Button>
+          <!-- 次要操作 -->
           <Button
             v-if="canShowDiff"
             @click="$emit('toggle-diff')"
@@ -59,50 +55,34 @@
             variant="ghost"
             size="small"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24">
-              <path v-if="!showDiffMode" fill="currentColor" d="M3,13H11V3H3V13M3,21H11V15H3V21M13,21H21V11H13V21M13,3V9H21V3H13Z" />
-              <path v-else fill="currentColor" d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
-            </svg>
-            {{ showDiffMode ? '预览' : '差异' }}
+            <svg width="14" height="14"><use xlink:href="#iconDiff"></use></svg>
           </Button>
           <Button
             @click="$emit('insert-subdoc')"
             :disabled="!canInsertSubDoc"
-            :title="'插入子文档'"
+            title="插入为子文档"
             variant="ghost"
             size="small"
           >
             <div v-if="isInsertingSubDoc" class="loading-spinner-small"></div>
-            <svg v-else width="16" height="16" viewBox="0 0 24 24">
-              <path fill="currentColor" d="M20,18H4V6H20M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4M13,12H16V15H18V12H21V10H18V7H16V10H13V12Z" />
-            </svg>
-            {{ '子文档' }}
+            <svg v-else width="14" height="14"><use xlink:href="#iconAdd"></use></svg>
           </Button>
           <Button
             v-if="canUndo"
             @click="$emit('undo-edit')"
             :disabled="isUndoing"
-            :title="'撤回编辑'"
+            title="撤回编辑"
             variant="ghost"
             size="small"
           >
             <div v-if="isUndoing" class="loading-spinner-small"></div>
-            <svg v-else width="16" height="16">
-              <use xlink:href="#iconUndo"></use>
-            </svg>
-            {{ '撤回' }}
+            <svg v-else width="14" height="14"><use xlink:href="#iconUndo"></use></svg>
           </Button>
-          <Button @click="$emit('copy')" :title="'复制Markdown'" variant="ghost" size="small">
-            <svg width="16" height="16">
-              <use xlink:href="#iconCopy"></use>
-            </svg>
-            {{ '复制' }}
+          <Button @click="$emit('copy')" title="复制" variant="ghost" size="small">
+            <svg width="14" height="14"><use xlink:href="#iconCopy"></use></svg>
           </Button>
-          <Button @click="$emit('clear')" variant="ghost" size="small">
-            <svg width="16" height="16">
-              <use xlink:href="#iconTrashcan"></use>
-            </svg>
-            {{ '清除' }}
+          <Button @click="$emit('clear')" title="清除" variant="ghost" size="small">
+            <svg width="14" height="14"><use xlink:href="#iconTrashcan"></use></svg>
           </Button>
         </div>
       </div>
@@ -121,9 +101,6 @@
                 variant="ghost"
                 size="small"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24">
-                  <path fill="currentColor" d="M4,4H10V10H4V4M20,4V10H14V4H20M14,20H20V14H14V20M4,14V20H10V14H4Z" />
-                </svg>
                 分栏
               </Button>
               <Button
@@ -133,15 +110,10 @@
                 variant="ghost"
                 size="small"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24">
-                  <path fill="currentColor" d="M2,2V22H22V2H2M20,20H4V4H20V20M8,8H16V10H8V8M8,11H16V13H8V11M8,14H16V16H8V14Z" />
-                </svg>
                 统一
               </Button>
             </div>
-            <div class="diff-view-info">
-              <span class="diff-label">原文档 vs AI生成</span>
-            </div>
+            <span class="diff-label">原文 vs 生成</span>
           </div>
           <!-- 差异显示组件 -->
           <div class="diff-viewer-wrapper">
@@ -164,10 +136,11 @@
 
     <!-- 空状态 -->
     <div v-else class="empty-state">
-      <svg width="64" height="64" class="empty-icon">
+      <svg width="48" height="48" class="empty-icon">
         <use xlink:href="#iconFile"></use>
       </svg>
-      <p>{{ '请选择文档并使用AI编辑功能' }}</p>
+      <p class="empty-title">选择文档开始编辑</p>
+      <p class="empty-hint">点击下方"选择文档"或拖拽文档到此面板</p>
     </div>
   </div>
 </template>

@@ -1,10 +1,4 @@
-// WordQuery 组件样式
-// 使用项目品牌变量和公共组件样式
 @use '@/variables.scss' as *;
-
-// ================================
-// 1. 主容器样式
-// ================================
 
 .word-query-panel {
   display: flex;
@@ -19,10 +13,6 @@
   line-height: 1.5;
   overflow: hidden;
 
-  // ================================
-  // 2. 查询头部
-  // ================================
-
   .query-header {
     padding: 16px;
     border-bottom: 1px solid var(--b3-border-color, $brand-subtle-gray);
@@ -33,7 +23,6 @@
     background: var(--b3-theme-background, $brand-light);
     gap: 16px;
 
-    // 模式标签（使用 Button ghost 变体，仅需自定义激活状态）
     .mode-tabs {
       display: flex;
       gap: 8px;
@@ -51,17 +40,12 @@
     }
   }
 
-  // ================================
-  // 3. 模式内容区域
-  // ================================
-
   .mode-content {
     flex: 1;
     display: flex;
     flex-direction: column;
     overflow: hidden;
 
-    // 输入区域（使用公共 Input 组件）
     .input-section {
       padding: 16px;
       border-bottom: 1px solid var(--b3-border-color, $brand-subtle-gray);
@@ -73,15 +57,10 @@
         width: 100%;
       }
 
-      // 自定义查询按钮样式覆盖
       .query-btn {
         flex-shrink: 0;
       }
     }
-
-    // ================================
-    // 4. 查询内容区域
-    // ================================
 
     .query-content {
       flex: 1;
@@ -92,7 +71,6 @@
       justify-content: center;
       min-height: 0;
 
-      // 加载状态
       .query-loading {
         display: flex;
         flex-direction: column;
@@ -102,7 +80,6 @@
         color: var(--b3-theme-on-background, $brand-dark);
       }
 
-      // 错误状态
       .query-error {
         display: flex;
         align-items: center;
@@ -111,10 +88,6 @@
         color: var(--b3-theme-error, $brand-orange);
         text-align: center;
       }
-
-      // ================================
-      // 5. 查询结果
-      // ================================
 
       .query-result {
         display: flex;
@@ -159,12 +132,10 @@
             content: "";
           }
 
-          // 结果包装器
           .result-wrapper {
             padding: 16px 0;
           }
 
-          // 结果段落（统一样式，用颜色区分）
           .result-section {
             margin-bottom: 16px;
             padding: 16px;
@@ -174,10 +145,6 @@
             border-left: 3px solid;
             line-height: 1.5;
             font-size: 14px;
-
-            &:hover {
-              border-color: var(--b3-theme-secondary, $brand-mid-gray);
-            }
 
             &:last-child {
               margin-bottom: 0;
@@ -192,7 +159,6 @@
               font-weight: 600;
             }
 
-            // 不同内容类型的颜色
             &.word-section { border-left-color: var(--b3-theme-primary, $brand-orange); }
             &.phonetic-section { border-left-color: var(--b3-theme-primary, $brand-orange); .result-label { color: var(--b3-theme-primary, $brand-orange); } }
             &.english-section { border-left-color: var(--b3-theme-success, $brand-green); .result-label { color: var(--b3-theme-success, $brand-green); } }
@@ -203,7 +169,6 @@
           }
         }
 
-        // 结果操作按钮（使用公共 Button 组件，仅需覆盖特定样式）
         .result-actions {
           display: flex;
           gap: 8px;
@@ -211,10 +176,6 @@
           flex-shrink: 0;
         }
       }
-
-      // ================================
-      // 6. 空状态
-      // ================================
 
       .query-empty {
         display: flex;
@@ -233,10 +194,6 @@
         }
       }
     }
-
-    // ================================
-    // 7. 通用面板
-    // ================================
 
     .common-panel {
       border-bottom: 1px solid var(--b3-border-color, $brand-subtle-gray);
@@ -270,7 +227,6 @@
         overflow-y: auto;
       }
 
-      // 高级选项
       .advanced-content {
         padding: 16px;
 
@@ -306,7 +262,6 @@
             cursor: pointer;
             padding: 8px;
             border-radius: 6px;
-            transition: background-color 0.2s ease;
 
             &:hover {
               background-color: var(--b3-theme-surface-lighter, $brand-light-gray);
@@ -323,10 +278,6 @@
       }
     }
   }
-
-  // ================================
-  // 8. 翻译模式
-  // ================================
 
   .translate-mode {
     padding: 16px;
@@ -411,7 +362,6 @@
         }
       }
 
-      // 翻译分隔符
       .translate-divider {
         display: flex;
         align-items: center;
@@ -432,11 +382,6 @@
   }
 }
 
-// ================================
-// 10. 响应式设计
-// ================================
-
-// 小屏设备 (< 480px)
 @media (max-width: 480px) {
   .word-query-panel {
     .query-header {
@@ -474,7 +419,6 @@
   }
 }
 
-// 短屏设备 (< 500px 高度)
 @media (max-height: 500px) {
   .word-query-panel {
     .query-content {

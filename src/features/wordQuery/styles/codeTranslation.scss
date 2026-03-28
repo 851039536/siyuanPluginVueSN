@@ -159,6 +159,27 @@
       font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
       color: var(--b3-theme-on-background);
       word-break: break-all;
+
+      &.abbreviation {
+        cursor: pointer;
+        font-weight: 600;
+        color: var(--b3-theme-primary);
+        transition: opacity 0.2s;
+
+        &:hover {
+          opacity: 0.8;
+        }
+      }
+    }
+
+    .copy-icon {
+      opacity: 0.5;
+      cursor: pointer;
+      transition: opacity 0.2s;
+
+      &:hover {
+        opacity: 1;
+      }
     }
 
     &.highlight {

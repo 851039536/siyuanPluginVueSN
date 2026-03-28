@@ -85,6 +85,11 @@
               <span class="result-value">{{ translationResult.translated }}</span>
             </div>
             <div class="result-item">
+              <span class="result-key">{{ i18n.abbreviation || '缩写' }}:</span>
+              <span class="result-value abbreviation" @click="copyAbbreviation">{{ generateAbbreviation(translationResult.translated) }}</span>
+              <IconWrapper name="contentCopy" :size="12" class="copy-icon" />
+            </div>
+            <div class="result-item">
               <span class="result-key">{{ i18n.style || '风格' }}:</span>
               <span class="result-value">{{ selectedStyle.label }}</span>
             </div>
@@ -196,6 +201,40 @@ function copyResult() {
 function copySuggestion(suggestion: string) {
   navigator.clipboard.writeText(suggestion)
   showMessage(props.i18n.copied || '已复制', 1500, 'info')
+}
+
+/**
+ * 根据命名风格生成缩写
+ * 例如: getUserInfo -> GUI, get_user_info -> GUI
+ */
+function generateAbbreviation(text: string): string {
+  if (!text) return ''
+  
+  let words: string[] = []
+  
+  // 根据命名风格分割单词
+  if (text.includes('_')) {
+    // snake_case 或 SCREAMING_SNAKE_CASE
+    words = text.split('_').filter(w => w.length > 0)
+  } else if (text.includes('-')) {
+    // kebab-case
+    words = text.split('-').filter(w => w.length > 0)
+  } else {
+    // camelCase 或 PascalCase - 按大写字母分割
+    const matches = text.match(/[A-Z]?[a-z]+|[A-Z]+(?=[A-Z][a-z]|\b)/g)
+    words = matches || [text]
+  }
+  
+  // 取每个单词的首字母并转为大写
+  return words.map(w => w.charAt(0).toUpperCase()).join('')
+}
+
+function copyAbbreviation() {
+  if (translationResult.value) {
+    const abbr = generateAbbreviation(translationResult.value.translated)
+    navigator.clipboard.writeText(abbr)
+    showMessage(props.i18n.copied || '已复制', 1500, 'info')
+  }
 }
 
 watch(() => chineseInput.value, () => {

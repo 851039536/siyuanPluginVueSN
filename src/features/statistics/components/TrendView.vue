@@ -170,14 +170,16 @@
     <!-- 趋势统计列表 -->
     <div v-if="trendStats" class="trend-stats-list">
       <div class="trend-stat-item">
-        <span class="stat-icon">📅</span>
-        <span class="stat-label">{{ i18n.avgDailyCreated }}</span>
-        <span class="stat-value">{{ trendStats.avgDailyCreated }}</span>
-      </div>
-      <div class="trend-stat-item">
-        <span class="stat-icon">✏️</span>
-        <span class="stat-label">{{ i18n.avgDailyModified }}</span>
-        <span class="stat-value">{{ trendStats.avgDailyModified }}</span>
+        <div class="stat-group">
+          <span class="stat-icon">📅</span>
+          <span class="stat-label">{{ i18n.avgDailyCreated }}</span>
+          <span class="stat-value">{{ trendStats.avgDailyCreated }}</span>
+        </div>
+        <div class="stat-group">
+          <span class="stat-icon">✏️</span>
+          <span class="stat-label">{{ i18n.avgDailyModified }}</span>
+          <span class="stat-value">{{ trendStats.avgDailyModified }}</span>
+        </div>
       </div>
     </div>
 
@@ -641,32 +643,32 @@ $github-red: #cf222e;
     .trend-stat-item {
       display: flex;
       align-items: center;
-      padding: 8px 12px;
-      border-bottom: 1px solid var(--b3-border-color);
+      justify-content: space-around;
+      padding: 10px 12px;
       background: var(--b3-theme-surface);
 
-      &:last-child {
-        border-bottom: none;
-      }
+      .stat-group {
+        display: flex;
+        align-items: center;
+        gap: 6px;
 
-      .stat-icon {
-        font-size: 16px;
-        margin-right: 8px;
-      }
+        .stat-icon {
+          font-size: 16px;
+        }
 
-      .stat-label {
-        flex: 1;
-        font-family: $font-body;
-        font-size: 12px;
-        color: var(--b3-theme-on-surface);
-        opacity: 0.7;
-      }
+        .stat-label {
+          font-family: $font-body;
+          font-size: 12px;
+          color: var(--b3-theme-on-surface);
+          opacity: 0.7;
+        }
 
-      .stat-value {
-        font-family: $font-heading;
-        font-size: 14px;
-        font-weight: 700;
-        color: var(--b3-theme-primary);
+        .stat-value {
+          font-family: $font-heading;
+          font-size: 14px;
+          font-weight: 700;
+          color: var(--b3-theme-primary);
+        }
       }
     }
   }

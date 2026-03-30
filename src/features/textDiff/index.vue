@@ -16,18 +16,6 @@
         </div>
 
         <div class="option-group">
-          <span class="option-label">{{ $t('theme') }}</span>
-          <button
-            v-for="theme in themeOptions"
-            :key="theme.value"
-            :class="['toggle-btn', { active: diffTheme === theme.value }]"
-            @click="updateTheme(theme.value)"
-          >
-            {{ theme.label }}
-          </button>
-        </div>
-
-        <div class="option-group">
           <span class="option-label">{{ $t('fontSize') }}</span>
           <select class="font-select" :value="fontSize" @change="updateFontSize(Number(($event.target as HTMLSelectElement).value))">
             <option v-for="opt in FONT_SIZE_OPTIONS" :key="opt.value" :value="opt.value">
@@ -132,8 +120,10 @@ const storage = props.plugin ? new TextDiffStorage(props.plugin) : null
 const originalText = ref('')
 const modifiedText = ref('')
 const diffMode = ref<'split' | 'unified'>('split')
-const diffTheme = ref<'light' | 'dark'>('light')
 const fontSize = ref<number>(14)
+
+// 固定使用浅色主题
+const diffTheme = 'light'
 
 // 选项数据
 const FONT_SIZE_OPTIONS = [
@@ -150,11 +140,6 @@ const modeOptions = computed(() => [
   { value: 'unified' as const, label: $t('unifiedMode') }
 ])
 
-const themeOptions = computed(() => [
-  { value: 'light' as const, label: $t('lightTheme') },
-  { value: 'dark' as const, label: $t('darkTheme') }
-])
-
 // 设置字体大小
 const setFontSize = (size: number) => {
   document.documentElement.style.setProperty('--diff-font-size', `${size}px`)
@@ -166,7 +151,6 @@ const loadSettings = async () => {
   try {
     const settings = await storage.loadSettings()
     diffMode.value = settings.diffMode
-    diffTheme.value = settings.theme
     fontSize.value = settings.fontSize
     setFontSize(settings.fontSize)
   } catch (error) {
@@ -181,7 +165,7 @@ const saveSettings = async () => {
     const settings: TextDiffSettings = {
       fontSize: fontSize.value,
       diffMode: diffMode.value,
-      theme: diffTheme.value
+      theme: 'light'
     }
     await storage.saveSettings(settings)
   } catch (error) {
@@ -191,11 +175,6 @@ const saveSettings = async () => {
 
 const updateMode = (mode: 'split' | 'unified') => {
   diffMode.value = mode
-  saveSettings()
-}
-
-const updateTheme = (theme: 'light' | 'dark') => {
-  diffTheme.value = theme
   saveSettings()
 }
 

@@ -7,7 +7,7 @@ import { createApp, reactive, type App as VueApp } from 'vue'
 import SuperPanelPanel from '../index.vue'
 import { replaceTopBarIcon } from '@/utils/iconHelper'
 import { FEATURE_ICONS, type IconKey } from '@/config/icons'
-import { toggleTextDiff } from '../../textDiff'
+import { TextDiffManager } from '../../textDiff/types'
 import type { PluginSettings } from '@/config/settings'
 
 /**
@@ -323,7 +323,10 @@ export class SuperPanelManager {
     // 特殊处理：文本对比
     if (action === 'openTextDiff') {
       if ((this.plugin as any).settings.enableTextDiff) {
-        toggleTextDiff(this.plugin)
+        const manager = (this.plugin as any).__textDiff as TextDiffManager
+        if (manager) {
+          manager.toggle()
+        }
         this.close()
       }
       return

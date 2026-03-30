@@ -141,13 +141,13 @@ import {
   setYtdlpPath,
   getCurrentYtdlpPath,
   type YtdlpResult
-} from '../ytdlp'
+} from '../utils/ytdlp'
 import {
   mergeVideoAudio,
   isFFmpegAvailable,
   buildVideoPath
-} from '../ffmpeg'
-import { getWorkspacePath } from '../utils'
+} from '../utils/ffmpeg'
+import { getWorkspacePath } from '../utils/utils'
 
 // Props
 const props = defineProps<{
@@ -534,7 +534,7 @@ async function handleAutoMerge(fileName: string) {
 </script>
 
 <style scoped lang="scss">
-@use "../index.scss";
+@use "../styles/index.scss";
 
 .path-input-group {
   display: flex;

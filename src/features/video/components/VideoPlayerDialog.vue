@@ -35,7 +35,7 @@ import { computed, watch } from 'vue'
 import type Player from 'video.js/dist/types/player'
 import IconWrapper from '@/components/IconWrapper.vue'
 import VideoPlayer from './VideoPlayer.vue'
-import { formatFileSize } from '../utils'
+import { formatFileSize } from '../utils/utils'
 
 /**
  * 视频数据接口
@@ -139,7 +139,7 @@ watch(() => props.visible, (newVal) => {
 </script>
 
 <style scoped lang="scss">
-@use "../index.scss";
+@use "../styles/index.scss";
 
 // 视频播放器对话框特定样式
 .dialog-header {

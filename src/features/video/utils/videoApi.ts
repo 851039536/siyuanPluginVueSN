@@ -1,59 +1,27 @@
-import { Plugin } from 'siyuan';
-import { showMessage } from 'siyuan';
-import { encryptVideo, decryptVideo, isEncryptedVideo, getEncryptedFileName, getOriginalFileName } from './crypto';
-export { isFFmpegAvailable, mergeVideos, mergeVideoAudio, compressVideo, buildVideoPath, setFFmpegPath, getCurrentFFmpegPath, clearFFmpegPath } from './ffmpeg';
-export { isYtdlpAvailable, downloadVideo, getVideoInfo, getYtdlpVersion, setYtdlpPath, getCurrentYtdlpPath, clearYtdlpPath, getSupportedSites } from './ytdlp';
-export { formatFileSize, calculateCompressionRate, getWorkspacePath } from './utils';
-
-export function registerVideo(plugin: Plugin) {
-
-  // 添加快捷键：Ctrl+Alt+V 打开视频管理器
-  plugin.addCommand({
-    langKey: 'videoManager',
-    hotkey: '⌃⌥V',
-    callback: () => {
-      openVideoManager(plugin);
-    }
-  });
-
-  // 添加右键菜单
-  plugin.eventBus.on('click-blockicon', (event: any) => {
-    const { detail } = event;
-    if (detail.type === 'video') {
-      // 处理视频相关操作
-      showMessage('视频功能已触发', 2000, 'info');
-    }
-  });
-
-}
-
 /**
- * 打开视频管理器
+ * 视频管理器 API 函数
  */
-export function openVideoManager(_plugin: Plugin) {
-  // 触发全局事件，由主插件处理
-  window.dispatchEvent(new CustomEvent('openVideoManager'));
-  showMessage('打开视频管理器', 2000, 'info');
-}
+import { Plugin } from 'siyuan'
+import { encryptVideo, decryptVideo, isEncryptedVideo, getEncryptedFileName, getOriginalFileName } from './crypto'
 
 /**
  * 获取视频存储目录路径（默认为 data/video）
  */
 export async function getVideoStoragePath(): Promise<string> {
-  return 'data/video';
+  return 'data/video'
 }
 
 /**
  * 视频文件扩展名
  */
-const VIDEO_EXTENSIONS = ['.mp4', '.webm', '.ogg', '.avi', '.mov', '.wmv', '.flv', '.mkv', '.m4v', '.sn', '.sn2'];
+const VIDEO_EXTENSIONS = ['.mp4', '.webm', '.ogg', '.avi', '.mov', '.wmv', '.flv', '.mkv', '.m4v', '.sn', '.sn2']
 
 /**
  * 判断是否为视频文件
  */
 function isVideoFile(fileName: string): boolean {
-  const lowerName = fileName.toLowerCase();
-  return VIDEO_EXTENSIONS.some(ext => lowerName.endsWith(ext));
+  const lowerName = fileName.toLowerCase()
+  return VIDEO_EXTENSIONS.some(ext => lowerName.endsWith(ext))
 }
 
 /**
@@ -69,26 +37,26 @@ async function getFileSize(filePath: string): Promise<number> {
       body: JSON.stringify({
         path: filePath
       })
-    });
+    })
 
     if (response.ok) {
-      const blob = await response.blob();
-      return blob.size;
+      const blob = await response.blob()
+      return blob.size
     } else {
-      console.warn('获取文件大小失败:', filePath, response.status);
+      console.warn('获取文件大小失败:', filePath, response.status)
     }
   } catch (error) {
-    console.error('获取文件大小异常:', filePath, error);
+    console.error('获取文件大小异常:', filePath, error)
   }
-  return 0;
+  return 0
 }
 
 /**
  * 递归扫描目录获取所有视频文件
  */
 async function scanVideoDirectory(basePath: string, currentPath: string = ''): Promise<any[]> {
-  const videos: any[] = [];
-  const fullPath = currentPath ? `${basePath}/${currentPath}` : basePath;
+  const videos: any[] = []
+  const fullPath = currentPath ? `${basePath}/${currentPath}` : basePath
 
   try {
     // 读取目录内容
@@ -100,43 +68,43 @@ async function scanVideoDirectory(basePath: string, currentPath: string = ''): P
       body: JSON.stringify({
         path: fullPath
       })
-    });
+    })
 
-    const result = await response.json();
+    const result = await response.json()
 
     if (result.code !== 0 || !result.data) {
-      return videos;
+      return videos
     }
 
     // 遍历目录内容
     for (const item of result.data) {
-      const itemPath = currentPath ? `${currentPath}/${item.name}` : item.name;
-      const itemFullPath = `${basePath}/${itemPath}`;
+      const itemPath = currentPath ? `${currentPath}/${item.name}` : item.name
+      const itemFullPath = `${basePath}/${itemPath}`
 
       if (item.isDir) {
         // 递归扫描子目录
-        const subVideos = await scanVideoDirectory(basePath, itemPath);
-        videos.push(...subVideos);
+        const subVideos = await scanVideoDirectory(basePath, itemPath)
+        videos.push(...subVideos)
       } else if (isVideoFile(item.name)) {
         // 获取文件大小
-        const size = await getFileSize(itemFullPath);
+        const size = await getFileSize(itemFullPath)
 
         // 添加视频文件
-        const category = currentPath || '根目录';
+        const category = currentPath || '根目录'
         videos.push({
           name: item.name,
           path: itemFullPath,
           category: category,
           size: size,
           modTime: item.updated * 1000 || Date.now() // updated 是秒级时间戳，转换为毫秒
-        });
+        })
       }
     }
   } catch (error) {
-    console.error('扫描目录失败:', fullPath, error);
+    console.error('扫描目录失败:', fullPath, error)
   }
 
-  return videos;
+  return videos
 }
 
 /**
@@ -144,14 +112,14 @@ async function scanVideoDirectory(basePath: string, currentPath: string = ''): P
  */
 export async function getVideoList(_plugin: Plugin): Promise<any[]> {
   try {
-    const storagePath = await getVideoStoragePath();
+    const storagePath = await getVideoStoragePath()
 
-    const videos = await scanVideoDirectory(storagePath);
+    const videos = await scanVideoDirectory(storagePath)
 
-    return videos;
+    return videos
   } catch (error) {
-    console.error('获取视频列表失败:', error);
-    return [];
+    console.error('获取视频列表失败:', error)
+    return []
   }
 }
 
@@ -159,16 +127,16 @@ export async function getVideoList(_plugin: Plugin): Promise<any[]> {
  * 获取所有分类（从扫描结果中提取）
  */
 export async function getVideoCategories(plugin: Plugin): Promise<string[]> {
-  const videos = await getVideoList(plugin);
-  const categories = new Set<string>();
+  const videos = await getVideoList(plugin)
+  const categories = new Set<string>()
 
   videos.forEach(video => {
     if (video.category) {
-      categories.add(video.category);
+      categories.add(video.category)
     }
-  });
+  })
 
-  return Array.from(categories).sort();
+  return Array.from(categories).sort()
 }
 
 /**
@@ -185,10 +153,10 @@ export async function getVideoUrl(videoPath: string): Promise<string> {
       body: JSON.stringify({
         path: videoPath
       })
-    });
+    })
 
     if (response.ok) {
-      const blob = await response.blob();
+      const blob = await response.blob()
 
       // 检查是否为加密视频，自动解密
       if (isEncryptedVideo(videoPath)) {
@@ -199,14 +167,14 @@ export async function getVideoUrl(videoPath: string): Promise<string> {
       }
 
       // 创建 Blob URL 用于视频播放
-      return URL.createObjectURL(blob);
+      return URL.createObjectURL(blob)
     } else {
-      console.error('获取视频文件失败:', videoPath, response.status);
-      return '';
+      console.error('获取视频文件失败:', videoPath, response.status)
+      return ''
     }
   } catch (error) {
-    console.error('获取视频URL失败:', videoPath, error);
-    throw error;
+    console.error('获取视频URL失败:', videoPath, error)
+    throw error
   }
 }
 
@@ -230,7 +198,7 @@ export async function encryptVideoFile(
       body: JSON.stringify({
         path: videoPath
       })
-    });
+    })
 
     if (!response.ok) {
       throw new Error('读取视频文件失败')
@@ -347,7 +315,7 @@ export async function decryptVideoFile(videoPath: string): Promise<string> {
       body: JSON.stringify({
         path: videoPath
       })
-    });
+    })
 
     if (!response.ok) {
       throw new Error('读取加密文件失败')

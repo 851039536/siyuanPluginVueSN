@@ -45,30 +45,86 @@
     <div class="diff-main">
       <!-- 输入区域 -->
       <div class="input-section">
-        <div class="input-panel">
+        <!-- 原文本面板 -->
+        <div 
+          class="input-panel"
+          :class="{ 'drag-over': dragState.original }"
+          @dragover.prevent="handleDragOver('original', $event)"
+          @dragleave="handleDragLeave('original')"
+          @drop.prevent="handleDrop('original', $event)"
+        >
           <div class="panel-header">
-            <span class="panel-title">{{ $t('original') }}</span>
-            <span class="char-count">{{ originalText.length }} {{ $t('chars') }}</span>
+            <div class="header-left">
+              <span class="panel-title">{{ $t('original') }}</span>
+              <span v-if="originalFileName" class="file-name">{{ originalFileName }}</span>
+            </div>
+            <div class="header-right">
+              <span class="char-count">{{ originalText.length }} {{ $t('chars') }}</span>
+              <button class="file-btn" @click="triggerFileInput('original')" :title="$t('selectFile')">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                  <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>
+                </svg>
+              </button>
+            </div>
           </div>
           <textarea
             v-model="originalText"
             :placeholder="$t('originalPlaceholder')"
             class="input-textarea"
           ></textarea>
+          <!-- 拖拽提示层 -->
+          <div v-if="dragState.original" class="drag-overlay">
+            <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+              <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
+            </svg>
+            <span>{{ $t('dropFile') }}</span>
+          </div>
         </div>
 
-        <div class="input-panel">
+        <!-- 修改后文本面板 -->
+        <div 
+          class="input-panel"
+          :class="{ 'drag-over': dragState.modified }"
+          @dragover.prevent="handleDragOver('modified', $event)"
+          @dragleave="handleDragLeave('modified')"
+          @drop.prevent="handleDrop('modified', $event)"
+        >
           <div class="panel-header">
-            <span class="panel-title">{{ $t('modified') }}</span>
-            <span class="char-count">{{ modifiedText.length }} {{ $t('chars') }}</span>
+            <div class="header-left">
+              <span class="panel-title">{{ $t('modified') }}</span>
+              <span v-if="modifiedFileName" class="file-name">{{ modifiedFileName }}</span>
+            </div>
+            <div class="header-right">
+              <span class="char-count">{{ modifiedText.length }} {{ $t('chars') }}</span>
+              <button class="file-btn" @click="triggerFileInput('modified')" :title="$t('selectFile')">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                  <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>
+                </svg>
+              </button>
+            </div>
           </div>
           <textarea
             v-model="modifiedText"
             :placeholder="$t('modifiedPlaceholder')"
             class="input-textarea"
           ></textarea>
+          <!-- 拖拽提示层 -->
+          <div v-if="dragState.modified" class="drag-overlay">
+            <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+              <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
+            </svg>
+            <span>{{ $t('dropFile') }}</span>
+          </div>
         </div>
       </div>
+
+      <!-- 隐藏的文件输入 -->
+      <input
+        ref="fileInputRef"
+        type="file"
+        style="display: none"
+        @change="handleFileSelect"
+      />
 
       <!-- 分割线 -->
       <div class="divider">
@@ -101,7 +157,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { Diff } from 'vue-diff'
 import 'vue-diff/dist/index.css'
 import type { Plugin } from 'siyuan'
@@ -116,11 +172,23 @@ const props = defineProps<{
 // 存储管理
 const storage = props.plugin ? new TextDiffStorage(props.plugin) : null
 
+// 文件输入引用
+const fileInputRef = ref<HTMLInputElement | null>(null)
+const currentInputTarget = ref<'original' | 'modified'>('original')
+
 // 响应式数据
 const originalText = ref('')
 const modifiedText = ref('')
+const originalFileName = ref('')
+const modifiedFileName = ref('')
 const diffMode = ref<'split' | 'unified'>('split')
 const fontSize = ref<number>(14)
+
+// 拖拽状态
+const dragState = reactive({
+  original: false,
+  modified: false
+})
 
 // 固定使用浅色主题
 const diffTheme = 'light'
@@ -187,12 +255,74 @@ const updateFontSize = (size: number) => {
 const clearAll = () => {
   originalText.value = ''
   modifiedText.value = ''
+  originalFileName.value = ''
+  modifiedFileName.value = ''
 }
 
 const swapTexts = () => {
-  const temp = originalText.value
+  const tempText = originalText.value
+  const tempName = originalFileName.value
   originalText.value = modifiedText.value
-  modifiedText.value = temp
+  originalFileName.value = modifiedFileName.value
+  modifiedText.value = tempText
+  modifiedFileName.value = tempName
+}
+
+// 触发文件选择
+const triggerFileInput = (target: 'original' | 'modified') => {
+  currentInputTarget.value = target
+  fileInputRef.value?.click()
+}
+
+// 处理文件选择
+const handleFileSelect = (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (file) {
+    readFile(file, currentInputTarget.value)
+  }
+  // 重置 input 以允许再次选择同一文件
+  input.value = ''
+}
+
+// 处理拖拽进入
+const handleDragOver = (target: 'original' | 'modified', event: DragEvent) => {
+  if (event.dataTransfer?.types.includes('Files')) {
+    dragState[target] = true
+  }
+}
+
+// 处理拖拽离开
+const handleDragLeave = (target: 'original' | 'modified') => {
+  dragState[target] = false
+}
+
+// 处理文件放置
+const handleDrop = (target: 'original' | 'modified', event: DragEvent) => {
+  dragState[target] = false
+  const file = event.dataTransfer?.files?.[0]
+  if (file) {
+    readFile(file, target)
+  }
+}
+
+// 读取文件内容
+const readFile = (file: File, target: 'original' | 'modified') => {
+  const reader = new FileReader()
+  reader.onload = () => {
+    const content = reader.result as string
+    if (target === 'original') {
+      originalText.value = content
+      originalFileName.value = file.name
+    } else {
+      modifiedText.value = content
+      modifiedFileName.value = file.name
+    }
+  }
+  reader.onerror = () => {
+    console.error('读取文件失败:', file.name)
+  }
+  reader.readAsText(file)
 }
 
 // 国际化
@@ -207,15 +337,14 @@ const $t = (key: string): string => {
     modified: '修改后文本',
     diffResult: '差异结果',
     chars: '字符',
-    originalPlaceholder: '输入原始文本...',
-    modifiedPlaceholder: '输入修改后文本...',
+    originalPlaceholder: '输入原始文本或拖拽文件到此处...',
+    modifiedPlaceholder: '输入修改后文本或拖拽文件到此处...',
     displayMode: '显示模式',
     splitMode: '分栏',
     unifiedMode: '统一',
-    theme: '主题',
-    lightTheme: '浅色',
-    darkTheme: '深色',
-    fontSize: '字体'
+    fontSize: '字体',
+    selectFile: '选择文件',
+    dropFile: '释放文件以导入'
   }
   return translations[key] || key
 }
@@ -355,6 +484,11 @@ onMounted(() => {
   background: var(--b3-theme-background);
   overflow: hidden;
   min-height: 150px;
+  position: relative;
+
+  &.drag-over {
+    background: var(--b3-theme-surface-lighter);
+  }
 }
 
 .panel-header {
@@ -367,15 +501,57 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .panel-title {
   font-size: 12px;
   font-weight: 600;
   color: var(--b3-theme-on-surface);
+  flex-shrink: 0;
+}
+
+.file-name {
+  font-size: 11px;
+  color: var(--b3-theme-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .char-count {
   font-size: 11px;
   color: var(--b3-theme-on-surface-variant);
+}
+
+.file-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--b3-theme-on-surface-variant);
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+    color: var(--b3-theme-on-surface);
+  }
 }
 
 .input-textarea {
@@ -393,6 +569,28 @@ onMounted(() => {
   &::placeholder {
     color: var(--b3-theme-on-surface-variant);
     opacity: 0.6;
+  }
+}
+
+// 拖拽提示层
+.drag-overlay {
+  position: absolute;
+  inset: 0;
+  top: 29px; // header height
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(var(--b3-theme-primary-rgb, 235, 94, 42), 0.1);
+  border: 2px dashed var(--b3-theme-primary);
+  color: var(--b3-theme-primary);
+  pointer-events: none;
+  z-index: 10;
+
+  span {
+    font-size: 13px;
+    font-weight: 500;
   }
 }
 

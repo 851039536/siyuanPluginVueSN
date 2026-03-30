@@ -18,16 +18,9 @@ export class TextDiffManager {
   }
 
   /**
-   * 初始化功能
-   */
-  public init() {
-    // 文本对比功能通过超级面板访问，不需要添加顶部栏按钮
-  }
-
-  /**
    * 切换文本对比工具显示/隐藏
    */
-  public toggle() {
+  public toggle = () => {
     if (this.app && this.container) {
       this.close()
     } else {
@@ -103,13 +96,12 @@ export class TextDiffManager {
     }
 
     // 创建 Vue 应用
-    const self = this
     this.app = createApp({
-      setup() {
+      setup: () => {
         return () => h(TextDiffPanel, {
-          onClose: () => self.close(),
-          i18n: self.plugin.i18n,
-          plugin: self.plugin
+          onClose: this.close,
+          i18n: this.plugin.i18n,
+          plugin: this.plugin
         })
       }
     })
@@ -120,7 +112,7 @@ export class TextDiffManager {
   /**
    * 关闭文本对比工具
    */
-  private close() {
+  private close = () => {
     if (this.app) {
       this.app.unmount()
       this.app = null
@@ -147,7 +139,6 @@ export class TextDiffManager {
  */
 export function registerTextDiff(plugin: Plugin): TextDiffManager {
   const manager = new TextDiffManager(plugin)
-  manager.init()
   ;(plugin as any).__textDiff = manager
   return manager
 }

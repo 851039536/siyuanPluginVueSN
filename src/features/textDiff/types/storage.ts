@@ -42,19 +42,6 @@ export class TextDiffStorage {
    */
   async loadSettings(): Promise<TextDiffSettings> {
     const settings = await this.storage.load<TextDiffSettings>(this.SETTINGS_KEY)
-    if (!settings) {
-      return { ...DEFAULT_TEXTDIFF_SETTINGS }
-    }
     return { ...DEFAULT_TEXTDIFF_SETTINGS, ...settings }
-  }
-
-  /**
-   * 初始化存储
-   */
-  async init(): Promise<void> {
-    const settings = await this.loadSettings()
-    if (!settings) {
-      await this.saveSettings(DEFAULT_TEXTDIFF_SETTINGS)
-    }
   }
 }

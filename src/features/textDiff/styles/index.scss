@@ -16,29 +16,29 @@
   padding: 12px 16px;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
   background: var(--b3-theme-surface);
+}
 
-  .diff-options {
-    display: flex;
-    gap: 20px;
-    align-items: center;
+.diff-options {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
 
-    .option-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+.option-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
-      .option-label {
-        font-size: 13px;
-        color: var(--b3-theme-on-surface);
-        font-weight: 500;
-      }
-    }
-  }
+.option-label {
+  font-size: 13px;
+  color: var(--b3-theme-on-surface);
+  font-weight: 500;
+}
 
-  .diff-actions {
-    display: flex;
-    gap: 8px;
-  }
+.diff-actions {
+  display: flex;
+  gap: 8px;
 }
 
 .diff-content {
@@ -57,10 +57,10 @@
   flex-shrink: 0;
   max-height: 40vh;
   overflow: hidden;
+}
 
-  .input-area {
-    min-height: 200px;
-  }
+.input-area {
+  min-height: 200px;
 }
 
 .result {
@@ -76,35 +76,21 @@
   flex-direction: column;
   background: var(--b3-theme-background);
   overflow: hidden;
+}
 
-  .panel-header {
-    flex-shrink: 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 12px;
-    background: var(--b3-theme-surface);
-    border-bottom: 1px solid var(--b3-theme-surface-lighter);
+.panel-header {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--b3-theme-surface);
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+}
 
-    .char-count {
-      font-size: 12px;
-      color: var(--b3-theme-on-surface-variant);
-    }
-
-    .diff-stats {
-      display: flex;
-      gap: 8px;
-      font-size: 12px;
-
-      .added {
-        color: var(--b3-theme-success);
-      }
-
-      .removed {
-        color: var(--b3-theme-error);
-      }
-    }
-  }
+.char-count {
+  font-size: 12px;
+  color: var(--b3-theme-on-surface-variant);
 }
 
 .diff-content-viewer {
@@ -139,22 +125,22 @@
     flex-direction: column;
     gap: 12px;
     padding: 8px 12px;
+  }
 
-    .diff-options {
-      flex-direction: column;
-      gap: 12px;
-      width: 100%;
+  .diff-options {
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+  }
 
-      .option-group {
-        flex-wrap: wrap;
-        justify-content: center;
-      }
-    }
+  .option-group {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
 
-    .diff-actions {
-      width: 100%;
-      justify-content: flex-end;
-    }
+  .diff-actions {
+    width: 100%;
+    justify-content: flex-end;
   }
 
   .diff-content {

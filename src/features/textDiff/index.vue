@@ -42,7 +42,7 @@
           <Label class="option-label">{{ $t('fontSize') }}:</Label>
           <Select
             :model-value="fontSize"
-            :options="fontSizeOptions"
+            :options="[...FONT_SIZE_OPTIONS]"
             size="small"
             @update:model-value="updateFontSize"
           />
@@ -140,8 +140,8 @@ const diffMode = ref<'split' | 'unified'>('split')
 const diffTheme = ref<'light' | 'dark'>('light')
 const fontSize = ref<number>(14)
 
-// 字体大小选项
-const fontSizeOptions = [
+// 字体大小选项（常量）
+const FONT_SIZE_OPTIONS = [
   { value: 12, label: '12px' },
   { value: 14, label: '14px' },
   { value: 16, label: '16px' },
@@ -150,41 +150,45 @@ const fontSizeOptions = [
   { value: 24, label: '24px' },
   { value: 28, label: '28px' },
   { value: 32, label: '32px' }
-]
+] as const
+
+// 设置字体大小的 CSS 变量
+const setFontSize = (size: number) => {
+  document.documentElement.style.setProperty('--diff-font-size', `${size}px`)
+}
 
 // 加载保存的设置
 const loadSettings = async () => {
-  if (storage) {
-    try {
-      const settings = await storage.loadSettings()
-      diffMode.value = settings.diffMode
-      diffTheme.value = settings.theme
-      fontSize.value = settings.fontSize
-      // 加载设置后立即更新字体大小
-      setFontSize(settings.fontSize)
-    } catch (error) {
-      console.error('加载文本对比设置失败:', error)
-    }
+  if (!storage) return
+
+  try {
+    const settings = await storage.loadSettings()
+    diffMode.value = settings.diffMode
+    diffTheme.value = settings.theme
+    fontSize.value = settings.fontSize
+    setFontSize(settings.fontSize)
+  } catch (error) {
+    console.error('加载文本对比设置失败:', error)
   }
 }
 
 // 保存当前设置
 const saveSettings = async () => {
-  if (storage) {
-    try {
-      const settings: TextDiffSettings = {
-        fontSize: fontSize.value,
-        diffMode: diffMode.value,
-        theme: diffTheme.value
-      }
-      await storage.saveSettings(settings)
-    } catch (error) {
-      console.error('保存文本对比设置失败:', error)
+  if (!storage) return
+
+  try {
+    const settings: TextDiffSettings = {
+      fontSize: fontSize.value,
+      diffMode: diffMode.value,
+      theme: diffTheme.value
     }
+    await storage.saveSettings(settings)
+  } catch (error) {
+    console.error('保存文本对比设置失败:', error)
   }
 }
 
-// 监听设置变化并保存
+// 更新设置并保存
 const updateMode = (mode: 'split' | 'unified') => {
   diffMode.value = mode
   saveSettings()
@@ -197,41 +201,29 @@ const updateTheme = (theme: 'light' | 'dark') => {
 
 const updateFontSize = (size: number) => {
   fontSize.value = size
-  setFontSize(size)  // 立即更新字体大小
-  saveSettings()     // 保存到数据库
+  setFontSize(size)
+  saveSettings()
 }
-
-// 设置字体大小的 CSS 变量
-const setFontSize = (size: number) => {
-  document.documentElement.style.setProperty('--diff-font-size', `${size}px`)
-}
-
-// 组件挂载时加载设置
-onMounted(() => {
-  loadSettings()
-  // 初始设置字体大小
-  setFontSize(fontSize.value)
-})
 
 // 清空所有文本
-function clearAll() {
+const clearAll = () => {
   originalText.value = ''
   modifiedText.value = ''
 }
 
 // 交换文本内容
-function swapTexts() {
+const swapTexts = () => {
   const temp = originalText.value
   originalText.value = modifiedText.value
   modifiedText.value = temp
 }
 
 // 国际化函数
-const $t = (key: string) => {
-  if (props.i18n && props.i18n.textDiff && props.i18n.textDiff[key]) {
+const $t = (key: string): string => {
+  if (props.i18n?.textDiff?.[key]) {
     return props.i18n.textDiff[key]
   }
-  // 回退到硬编码的翻译
+
   const translations: Record<string, string> = {
     clear: '清空',
     swap: '交换',
@@ -252,6 +244,12 @@ const $t = (key: string) => {
   }
   return translations[key] || key
 }
+
+// 组件挂载时加载设置
+onMounted(() => {
+  loadSettings()
+  setFontSize(fontSize.value)
+})
 </script>
 
 <style scoped lang="scss">

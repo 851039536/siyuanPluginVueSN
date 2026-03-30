@@ -550,8 +550,8 @@ import {
   encryptAllVideos,
   decryptAllVideos,
   decryptVideoFile
-} from './index'
-import { isEncryptedVideo } from './crypto'
+} from './utils/videoApi'
+import { isEncryptedVideo } from './utils/crypto'
 import {
   isFFmpegAvailable,
   mergeVideos,
@@ -563,7 +563,7 @@ import {
   clearFFmpegPath,
   formatFileSize,
   calculateCompressionRate
-} from './ffmpeg'
+} from './utils/ffmpeg'
 import { usePlugin } from '@/main'
 
 const plugin = usePlugin()
@@ -1311,5 +1311,5 @@ function closeDownloadDialog() {
 </script>
 
 <style scoped lang="scss">
-@use "./index.scss";
+@use "./styles/index.scss";
 </style>

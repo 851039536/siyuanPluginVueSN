@@ -45,7 +45,7 @@
 import { computed } from 'vue'
 import IconWrapper from '@/components/IconWrapper.vue'
 import Button from '@/components/Button.vue'
-import { formatFileSize } from '../utils'
+import { formatFileSize } from '../utils/utils'
 import type { VideoData } from './VideoPlayerDialog.vue'
 
 /**

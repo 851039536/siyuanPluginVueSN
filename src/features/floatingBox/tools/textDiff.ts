@@ -1,5 +1,5 @@
 import type { FloatingTool } from '../types'
-import { toggleTextDiff } from '../../textDiff'
+import { TextDiffManager } from '../../textDiff/types'
 
 export function createTextDiffTool(plugin?: any): FloatingTool {
   return {
@@ -10,7 +10,10 @@ export function createTextDiffTool(plugin?: any): FloatingTool {
     bgColor: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
     action: () => {
       if (plugin) {
-        toggleTextDiff(plugin)
+        const manager = (plugin as any).__textDiff as TextDiffManager
+        if (manager) {
+          manager.toggle()
+        }
       } else {
         console.error('未获取到 plugin 实例，无法打开文本对比工具')
       }

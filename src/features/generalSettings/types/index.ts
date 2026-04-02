@@ -66,6 +66,8 @@ export class GeneralSettings {
     await this.applyListStyle();
     await this.applyHeadingStyle();
     await this.applyDocumentFontStyle();
+    await this.applyTableStyle();
+    await this.applyListStyleEnhanced();
     this.observeContentChanges();
     await this.initAutoBackup();
   }
@@ -117,6 +119,10 @@ export class GeneralSettings {
       this.applyListStyles(settings.settings);
     } else if (settings.moduleId === 'documentFont') {
       this.applyDocumentFontStyles(settings.settings);
+    } else if (settings.moduleId === 'tableStyle') {
+      this.applyTableStyles(settings.settings);
+    } else if (settings.moduleId === 'listStyle') {
+      this.applyListStylesEnhanced(settings.settings);
     }
     this.dispatchEvent('general-settings-changed', settings);
   }
@@ -345,6 +351,163 @@ export class GeneralSettings {
       document.head.appendChild(style);
     } catch (error) {
       console.error('应用文档字体样式失败:', error);
+    }
+  }
+
+  public async applyTableStyle() {
+    try {
+      const settings = await this.storage.loadTableStyleSettings();
+      if (settings) {
+        this.applyTableStyles(settings);
+      }
+    } catch (error) {
+      console.error('应用表格样式失败:', error);
+    }
+  }
+
+  private applyTableStyles(tableSettings: any) {
+    try {
+      // 移除现有样式
+      const existingStyle = document.getElementById('table-style-settings')
+      if (existingStyle) {
+        existingStyle.remove()
+      }
+
+      if (!tableSettings.enabled) {
+        return
+      }
+
+      // 创建新的样式元素
+      const style = document.createElement('style')
+      style.id = 'table-style-settings'
+      
+      style.textContent = `
+        /* 表格整体外框 */
+        .protyle-wysiwyg table {
+          border-collapse: collapse !important;
+          border: 1px solid ${tableSettings.borderColor} !important;
+          border-radius: ${tableSettings.borderRadius}px !important;
+          overflow: hidden;
+          box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* 表格内部网格线 */
+        .protyle-wysiwyg table th,
+        .protyle-wysiwyg table td {
+          border: 1.5px solid ${tableSettings.cellBorderColor} !important;
+        }
+        
+        /* 表头 */
+        .protyle-wysiwyg table th {
+          background-color: ${tableSettings.headerBackground} !important;
+          color: ${tableSettings.textColor};
+        }
+        
+        /* 奇数行 */
+        .protyle-wysiwyg table tr:nth-child(odd) {
+          background-color: ${tableSettings.oddRowBackground} !important;
+          color: ${tableSettings.textColor};
+        }
+        
+        /* 偶数行 */
+        .protyle-wysiwyg table tr:nth-child(even) {
+          background-color: ${tableSettings.evenRowBackground} !important;
+          color: ${tableSettings.textColor};
+        }
+        
+        /* 暗色主题适配 */
+        :root[data-theme-mode="dark"] .protyle-wysiwyg table th {
+          color: #ffffff;
+        }
+        
+        :root[data-theme-mode="dark"] .protyle-wysiwyg table tr:nth-child(odd),
+        :root[data-theme-mode="dark"] .protyle-wysiwyg table tr:nth-child(even) {
+          color: #ffffff;
+        }
+      `
+      
+      document.head.appendChild(style)
+    } catch (error) {
+      console.error('应用表格样式失败:', error)
+    }
+  }
+
+  public async applyListStyleEnhanced() {
+    try {
+      const settings = await this.storage.loadListStyleSettings();
+      if (settings) {
+        this.applyListStylesEnhanced(settings);
+      }
+    } catch (error) {
+      console.error('应用列表样式失败:', error);
+    }
+  }
+
+  private applyListStylesEnhanced(listSettings: any) {
+    try {
+      // 移除现有样式
+      const existingStyle = document.getElementById('list-style-settings')
+      if (existingStyle) {
+        existingStyle.remove()
+      }
+
+      if (!listSettings.enabled) {
+        return
+      }
+
+      // 创建新的样式元素
+      const style = document.createElement('style')
+      style.id = 'list-style-settings'
+      
+      // 有序列表颜色
+      const orderedListCss = listSettings.orderedListColors.map((color: string, index: number) => {
+        const depth = '.li[data-subtype="o"] '.repeat(index)
+        return `
+          ${depth}.li[data-subtype="o"] > .protyle-action--order {
+            color: ${color} !important;
+            font-weight: bold !important;
+          }
+        `
+      }).join('\n')
+      
+      // 无序列表颜色和符号
+      const unorderedListCss = listSettings.unorderedListColors.map((color: string, index: number) => {
+        const depth = '[data-subtype="u"] > '.repeat(index)
+        const symbol = index % 2 === 0 ? '•' : '▪'
+        return `
+          ${depth}.li[data-subtype="u"] > .protyle-action::before {
+            content: "${symbol}";
+            font-size: ${listSettings.symbolSize}em;
+            font-weight: bold;
+            font-family: Arial;
+            position: absolute;
+            color: ${color} !important;
+          }
+        `
+      }).join('\n')
+      
+      style.textContent = `
+        /* 有序列表样式 */
+        ${orderedListCss}
+        
+        /* 无序列表样式 - 隐藏原始符号 */
+        [data-subtype="u"] > .li[data-subtype="u"] > .protyle-action svg {
+          color: transparent;
+        }
+        
+        /* 无序列表符号 */
+        ${unorderedListCss}
+        
+        /* 暗色主题适配 */
+        :root[data-theme-mode="dark"] .li[data-subtype="o"] > .protyle-action--order,
+        :root[data-theme-mode="dark"] .li[data-subtype="u"] > .protyle-action::before {
+          opacity: 0.9;
+        }
+      `
+      
+      document.head.appendChild(style)
+    } catch (error) {
+      console.error('应用列表样式失败:', error)
     }
   }
 

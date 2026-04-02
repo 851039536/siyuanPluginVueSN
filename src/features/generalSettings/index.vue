@@ -45,6 +45,14 @@
         <div v-show="activeCategory === 'documentFont'" class="content-section">
           <DocumentFontSettings :i18n="i18n" :plugin="plugin" @change="handleDocumentFontChange" />
         </div>
+
+        <div v-show="activeCategory === 'tableStyle'" class="content-section">
+          <TableStyleSettings :i18n="i18n" :plugin="plugin" @change="handleTableStyleChange" />
+        </div>
+
+        <div v-show="activeCategory === 'listStyle'" class="content-section">
+          <ListStyleSettings :i18n="i18n" :plugin="plugin" @change="handleListStyleChange" />
+        </div>
       </div>
     </div>
   </div>
@@ -60,6 +68,8 @@ import EncryptionSettings from './components/EncryptionSettings.vue'
 import HighlightSettings from './components/HighlightSettings.vue'
 import DataBackupSettings from './components/DataBackupSettings.vue'
 import DocumentFontSettings from './components/DocumentFontSettings.vue'
+import TableStyleSettings from './components/TableStyleSettings.vue'
+import ListStyleSettings from './components/ListStyleSettings.vue'
 
 interface Props {
   i18n?: any
@@ -93,6 +103,14 @@ const categories = computed(() => [
     label: props.i18n.documentFontSettings || '文档字体'
   },
   {
+    id: 'tableStyle',
+    label: props.i18n.tableStyleSettings || '表格样式'
+  },
+  {
+    id: 'listStyle',
+    label: props.i18n.listStyleSettings || '列表样式'
+  },
+  {
     id: 'encryption',
     label: props.i18n.encryptionSettings || '加密设置'
   },
@@ -117,13 +135,17 @@ const handleActionsChange = createSettingsHandler('actions')
 const handleHeadingChange = createSettingsHandler('heading')
 const handleBackupChange = createSettingsHandler('backup')
 const handleDocumentFontChange = createSettingsHandler('documentFont')
+const handleTableStyleChange = createSettingsHandler('tableStyle')
+const handleListStyleChange = createSettingsHandler('listStyle')
 
 defineExpose({
   handleCodeBlockChange,
   handleActionsChange,
   handleHeadingChange,
   handleBackupChange,
-  handleDocumentFontChange
+  handleDocumentFontChange,
+  handleTableStyleChange,
+  handleListStyleChange
 })
 </script>
 

@@ -265,13 +265,26 @@ export class GeneralSettings {
       const fontFamily = fontSettings.fontFamily ? `'${fontSettings.fontFamily}', ` : '';
       
       style.textContent = `
-        /* 编辑器内容区域 */
+        /* 编辑器内容区域 - 基础样式 */
         .protyle-wysiwyg {
           font-family: ${fontFamily}var(--b3-font-family) !important;
           font-size: ${fontSettings.fontSize}px !important;
-          line-height: ${fontSettings.lineHeight} !important;
           letter-spacing: ${fontSettings.letterSpacing}px !important;
           font-weight: ${fontSettings.fontWeight} !important;
+        }
+        
+        /* 行高 - 需要应用到具体元素 */
+        .protyle-wysiwyg [data-node-id][data-type="NodeParagraph"],
+        .protyle-wysiwyg [data-node-id][data-type="NodeParagraph"] p,
+        .protyle-wysiwyg [data-node-id][data-type="NodeParagraph"] div,
+        .protyle-wysiwyg [data-node-id][data-type="NodeHeading"],
+        .protyle-wysiwyg [data-node-id][data-type="NodeHeading"] div,
+        .protyle-wysiwyg [data-node-id][data-type="NodeList"],
+        .protyle-wysiwyg [data-node-id][data-type="NodeList"] li,
+        .protyle-wysiwyg [data-node-id][data-type="NodeList"] p,
+        .protyle-wysiwyg [data-node-id][data-type="NodeBlockquote"],
+        .protyle-wysiwyg [data-node-id][data-type="NodeBlockquote"] p {
+          line-height: ${fontSettings.lineHeight} !important;
         }
         
         /* 段落间距 */
@@ -279,32 +292,53 @@ export class GeneralSettings {
           margin-bottom: ${fontSettings.paragraphSpacing}px !important;
         }
         
-        /* 预览区域 */
+        /* 预览区域 - 基础样式 */
         .b3-typography {
           font-family: ${fontFamily}var(--b3-font-family) !important;
           font-size: ${fontSettings.fontSize}px !important;
-          line-height: ${fontSettings.lineHeight} !important;
           letter-spacing: ${fontSettings.letterSpacing}px !important;
           font-weight: ${fontSettings.fontWeight} !important;
+        }
+        
+        /* 预览区域行高 */
+        .b3-typography p,
+        .b3-typography div,
+        .b3-typography li,
+        .b3-typography h1,
+        .b3-typography h2,
+        .b3-typography h3,
+        .b3-typography h4,
+        .b3-typography h5,
+        .b3-typography h6 {
+          line-height: ${fontSettings.lineHeight} !important;
         }
         
         .b3-typography p {
           margin-bottom: ${fontSettings.paragraphSpacing}px !important;
         }
         
-        /* 导出预览 */
+        /* 导出预览 - 基础样式 */
         .render-node {
           font-family: ${fontFamily}var(--b3-font-family) !important;
           font-size: ${fontSettings.fontSize}px !important;
-          line-height: ${fontSettings.lineHeight} !important;
           letter-spacing: ${fontSettings.letterSpacing}px !important;
           font-weight: ${fontSettings.fontWeight} !important;
         }
         
-        /* 代码块不受影响 */
-        .protyle-wysiwyg .code-block .hljs,
+        /* 导出预览行高 */
+        .render-node p,
+        .render-node div,
+        .render-node li {
+          line-height: ${fontSettings.lineHeight} !important;
+        }
+        
+        /* 代码块保持原字体和行高 */
+        .protyle-wysiwyg .code-block,
+        .protyle-wysiwyg .code-block *,
+        .b3-typography pre,
         .b3-typography pre code {
           font-family: var(--b3-font-family-code) !important;
+          line-height: 1.5 !important;
         }
       `;
       

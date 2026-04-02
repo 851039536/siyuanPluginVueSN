@@ -11,6 +11,16 @@ export interface FontSettings {
   lineHeight: number;
 }
 
+export interface DocumentFontSettings {
+  enabled: boolean;
+  fontFamily: string;
+  fontSize: number;
+  lineHeight: number;
+  letterSpacing: number;
+  paragraphSpacing: number;
+  fontWeight: string;
+}
+
 export interface CodeBlockSettings {
   style: 'default' | 'github' | 'mac' | 'cartoon';
   enableCollapse: boolean;
@@ -87,7 +97,8 @@ export class GeneralSettingsStorage {
     HEADING: 'heading-settings',
     LIST: 'list-settings',
     HIGHLIGHT: 'highlight-settings',
-    BACKUP: 'data-backup-settings'
+    BACKUP: 'data-backup-settings',
+    DOCUMENT_FONT: 'document-font-settings'
   };
 
   constructor(plugin: Plugin) {
@@ -150,6 +161,14 @@ export class GeneralSettingsStorage {
 
   async loadBackupSettings(): Promise<BackupSettings | null> {
     return this.storage.load<BackupSettings>(this.KEYS.BACKUP);
+  }
+
+  async saveDocumentFontSettings(settings: DocumentFontSettings): Promise<boolean> {
+    return this.storage.save(this.KEYS.DOCUMENT_FONT, settings);
+  }
+
+  async loadDocumentFontSettings(): Promise<DocumentFontSettings | null> {
+    return this.storage.load<DocumentFontSettings>(this.KEYS.DOCUMENT_FONT);
   }
 
   async clearAllSettings(): Promise<void> {

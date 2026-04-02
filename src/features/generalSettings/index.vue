@@ -41,6 +41,10 @@
         <div v-show="activeCategory === 'backup'" class="content-section">
           <DataBackupSettings :i18n="i18n" :plugin="plugin" @change="handleBackupChange" />
         </div>
+
+        <div v-show="activeCategory === 'documentFont'" class="content-section">
+          <DocumentFontSettings :i18n="i18n" :plugin="plugin" @change="handleDocumentFontChange" />
+        </div>
       </div>
     </div>
   </div>
@@ -55,6 +59,7 @@ import HeadingSettings from './components/HeadingSettings.vue'
 import EncryptionSettings from './components/EncryptionSettings.vue'
 import HighlightSettings from './components/HighlightSettings.vue'
 import DataBackupSettings from './components/DataBackupSettings.vue'
+import DocumentFontSettings from './components/DocumentFontSettings.vue'
 
 interface Props {
   i18n?: any
@@ -84,6 +89,10 @@ const categories = computed(() => [
     label: props.i18n.headingSettings || '标题配置'
   },
   {
+    id: 'documentFont',
+    label: props.i18n.documentFontSettings || '文档字体'
+  },
+  {
     id: 'encryption',
     label: props.i18n.encryptionSettings || '加密设置'
   },
@@ -107,12 +116,14 @@ const handleCodeBlockChange = createSettingsHandler('codeblock')
 const handleActionsChange = createSettingsHandler('actions')
 const handleHeadingChange = createSettingsHandler('heading')
 const handleBackupChange = createSettingsHandler('backup')
+const handleDocumentFontChange = createSettingsHandler('documentFont')
 
 defineExpose({
   handleCodeBlockChange,
   handleActionsChange,
   handleHeadingChange,
-  handleBackupChange
+  handleBackupChange,
+  handleDocumentFontChange
 })
 </script>
 

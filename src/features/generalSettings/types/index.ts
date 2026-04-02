@@ -65,6 +65,7 @@ export class GeneralSettings {
     await this.applyCodeBlockStyle();
     await this.applyListStyle();
     await this.applyHeadingStyle();
+    await this.applyDocumentFontStyle();
     this.observeContentChanges();
     await this.initAutoBackup();
   }
@@ -114,6 +115,8 @@ export class GeneralSettings {
       this.applyCodeBlockStyleFromSettings(settings.settings);
     } else if (settings.moduleId === 'list') {
       this.applyListStyles(settings.settings);
+    } else if (settings.moduleId === 'documentFont') {
+      this.applyDocumentFontStyles(settings.settings);
     }
     this.dispatchEvent('general-settings-changed', settings);
   }
@@ -229,6 +232,85 @@ export class GeneralSettings {
       }
     } catch (error) {
       console.error('应用标题样式失败:', error);
+    }
+  }
+
+  public async applyDocumentFontStyle() {
+    try {
+      const settings = await this.storage.loadDocumentFontSettings();
+      if (settings) {
+        this.applyDocumentFontStyles(settings);
+      }
+    } catch (error) {
+      console.error('应用文档字体样式失败:', error);
+    }
+  }
+
+  private applyDocumentFontStyles(fontSettings: any) {
+    try {
+      // 移除现有样式
+      const existingStyle = document.getElementById('document-font-settings');
+      if (existingStyle) {
+        existingStyle.remove();
+      }
+
+      if (!fontSettings.enabled) {
+        return;
+      }
+
+      // 创建新的样式元素
+      const style = document.createElement('style');
+      style.id = 'document-font-settings';
+      
+      const fontFamily = fontSettings.fontFamily ? `'${fontSettings.fontFamily}', ` : '';
+      
+      style.textContent = `
+        /* 编辑器内容区域 */
+        .protyle-wysiwyg {
+          font-family: ${fontFamily}var(--b3-font-family) !important;
+          font-size: ${fontSettings.fontSize}px !important;
+          line-height: ${fontSettings.lineHeight} !important;
+          letter-spacing: ${fontSettings.letterSpacing}px !important;
+          font-weight: ${fontSettings.fontWeight} !important;
+        }
+        
+        /* 段落间距 */
+        .protyle-wysiwyg [data-node-id][data-type="NodeParagraph"] {
+          margin-bottom: ${fontSettings.paragraphSpacing}px !important;
+        }
+        
+        /* 预览区域 */
+        .b3-typography {
+          font-family: ${fontFamily}var(--b3-font-family) !important;
+          font-size: ${fontSettings.fontSize}px !important;
+          line-height: ${fontSettings.lineHeight} !important;
+          letter-spacing: ${fontSettings.letterSpacing}px !important;
+          font-weight: ${fontSettings.fontWeight} !important;
+        }
+        
+        .b3-typography p {
+          margin-bottom: ${fontSettings.paragraphSpacing}px !important;
+        }
+        
+        /* 导出预览 */
+        .render-node {
+          font-family: ${fontFamily}var(--b3-font-family) !important;
+          font-size: ${fontSettings.fontSize}px !important;
+          line-height: ${fontSettings.lineHeight} !important;
+          letter-spacing: ${fontSettings.letterSpacing}px !important;
+          font-weight: ${fontSettings.fontWeight} !important;
+        }
+        
+        /* 代码块不受影响 */
+        .protyle-wysiwyg .code-block .hljs,
+        .b3-typography pre code {
+          font-family: var(--b3-font-family-code) !important;
+        }
+      `;
+      
+      document.head.appendChild(style);
+    } catch (error) {
+      console.error('应用文档字体样式失败:', error);
     }
   }
 

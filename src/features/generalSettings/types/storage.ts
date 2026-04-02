@@ -21,6 +21,24 @@ export interface DocumentFontSettings {
   fontWeight: string;
 }
 
+export interface TableStyleSettings {
+  enabled: boolean;
+  borderColor: string;
+  cellBorderColor: string;
+  headerBackground: string;
+  oddRowBackground: string;
+  evenRowBackground: string;
+  textColor: string;
+  borderRadius: number;
+}
+
+export interface ListStyleSettings {
+  enabled: boolean;
+  orderedListColors: string[];
+  unorderedListColors: string[];
+  symbolSize: number;
+}
+
 export interface CodeBlockSettings {
   style: 'default' | 'github' | 'mac' | 'cartoon';
   enableCollapse: boolean;
@@ -98,7 +116,9 @@ export class GeneralSettingsStorage {
     LIST: 'list-settings',
     HIGHLIGHT: 'highlight-settings',
     BACKUP: 'data-backup-settings',
-    DOCUMENT_FONT: 'document-font-settings'
+    DOCUMENT_FONT: 'document-font-settings',
+    TABLE_STYLE: 'table-style-settings',
+    LIST_STYLE: 'list-style-settings'
   };
 
   constructor(plugin: Plugin) {
@@ -169,6 +189,22 @@ export class GeneralSettingsStorage {
 
   async loadDocumentFontSettings(): Promise<DocumentFontSettings | null> {
     return this.storage.load<DocumentFontSettings>(this.KEYS.DOCUMENT_FONT);
+  }
+
+  async saveTableStyleSettings(settings: TableStyleSettings): Promise<boolean> {
+    return this.storage.save(this.KEYS.TABLE_STYLE, settings);
+  }
+
+  async loadTableStyleSettings(): Promise<TableStyleSettings | null> {
+    return this.storage.load<TableStyleSettings>(this.KEYS.TABLE_STYLE);
+  }
+
+  async saveListStyleSettings(settings: ListStyleSettings): Promise<boolean> {
+    return this.storage.save(this.KEYS.LIST_STYLE, settings);
+  }
+
+  async loadListStyleSettings(): Promise<ListStyleSettings | null> {
+    return this.storage.load<ListStyleSettings>(this.KEYS.LIST_STYLE);
   }
 
   async clearAllSettings(): Promise<void> {

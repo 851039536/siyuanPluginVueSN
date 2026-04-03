@@ -53,13 +53,15 @@
             <select v-model="presetFont" class="font-select" @change="applyPresetFont">
               <option value="">{{ i18n.selectFont || '选择字体' }}</option>
               <option value="Microsoft YaHei">微软雅黑</option>
-              <option value="SimSun">宋体</option>
-              <option value="SimHei">黑体</option>
-              <option value="KaiTi">楷体</option>
-              <option value="FangSong">仿宋</option>
-              <option value="Arial">Arial</option>
-              <option value="Times New Roman">Times New Roman</option>
-              <option value="Georgia">Georgia</option>
+              <option value="Microsoft YaHei Light">微软雅黑 Light</option>
+              <option value="Segoe UI">Segoe UI</option>
+              <option value="等线">等线 (DengXian)</option>
+              <option value="仿宋">仿宋</option>
+              <option value="华文细黑">华文细黑</option>
+              <option value="华文黑体">华文黑体</option>
+              <option value="华文楷体">华文楷体</option>
+              <option value="华文宋体">华文宋体</option>
+              <option value="黑体">黑体</option>
               <option value="system-ui">系统默认</option>
             </select>
           </div>
@@ -358,7 +360,12 @@ function applyDocumentFontStyles(fontSettings: DocumentFontSettingsData) {
     const style = document.createElement('style')
     style.id = 'document-font-settings'
     
-    const fontFamily = fontSettings.fontFamily ? `'${fontSettings.fontFamily}', ` : ''
+    // 处理字体族：如果包含逗号则直接使用，否则加引号
+    let fontFamily = ''
+    if (fontSettings.fontFamily) {
+      const fonts = fontSettings.fontFamily.split(',').map(f => f.trim())
+      fontFamily = fonts.map(f => `'${f}'`).join(', ') + ', '
+    }
     
     style.textContent = `
       /* 编辑器内容区域 - 基础样式 */

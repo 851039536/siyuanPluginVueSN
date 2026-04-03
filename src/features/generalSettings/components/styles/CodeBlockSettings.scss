@@ -792,3 +792,289 @@
     font-size: 9px;
   }
 }
+
+/* 新增: 颜色选择器样式 */
+.color-picker-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.color-picker {
+  width: 40px;
+  height: 28px;
+  border: 1px solid var(--b3-theme-outline);
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 2px;
+  background: var(--b3-theme-surface);
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+    transform: scale(1.05);
+  }
+}
+
+.color-input {
+  flex: 1;
+  padding: 4px 8px;
+  font-size: 12px;
+  border: 1px solid var(--b3-theme-outline);
+  border-radius: 6px;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  transition: all 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+/* 新增: 边框设置样式 */
+.border-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.02);
+  border-radius: 6px;
+  border: 1px solid var(--b3-theme-outline);
+}
+
+.border-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  label {
+    min-width: 80px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--b3-theme-on-surface-variant);
+  }
+}
+
+/* 新增: 阴影选项样式 */
+.shadow-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.shadow-btn {
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid var(--b3-theme-outline);
+  border-radius: 6px;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: var(--b3-theme-surface-variant);
+    border-color: var(--b3-theme-primary);
+  }
+
+  &.active {
+    background: var(--b3-theme-primary);
+    color: var(--b3-theme-on-primary);
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+/* 新增: 子设置样式 */
+.sub-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  margin-top: 8px;
+  background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.02);
+  border-radius: 6px;
+  border: 1px solid var(--b3-theme-outline);
+}
+
+.sub-setting-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  label {
+    min-width: 100px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--b3-theme-on-surface-variant);
+  }
+}
+
+/* 新增: 字体设置样式 */
+.font-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.02);
+  border-radius: 6px;
+  border: 1px solid var(--b3-theme-outline);
+}
+
+.font-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  label {
+    min-width: 80px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--b3-theme-on-surface-variant);
+  }
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.text-input {
+  flex: 1;
+  padding: 4px 8px;
+  font-size: 12px;
+  border: 1px solid var(--b3-theme-outline);
+  border-radius: 6px;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  transition: all 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+.font-input {
+  min-width: 0;
+}
+
+.font-select {
+  padding: 4px 8px;
+  font-size: 11px;
+  border: 1px solid var(--b3-theme-outline);
+  border-radius: 6px;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 100px;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+/* 新增: 代码颜色设置样式 */
+.color-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.02);
+  border-radius: 6px;
+  border: 1px solid var(--b3-theme-outline);
+}
+
+.color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  label {
+    min-width: 100px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--b3-theme-on-surface-variant);
+  }
+}
+
+/* 新增: 小型滑块容器 */
+.slider-container.small {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+
+  .range-slider {
+    flex: 1;
+  }
+
+  .slider-value {
+    min-width: 40px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--b3-theme-on-surface);
+    padding: 2px 6px;
+    background: var(--b3-theme-surface);
+    border-radius: 4px;
+    border: 1px solid var(--b3-theme-outline);
+    text-align: center;
+  }
+}
+
+/* 新增: 颜色预览效果 */
+.color-picker::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.color-picker::-webkit-color-swatch {
+  border: none;
+  border-radius: 4px;
+}
+
+.color-picker::-moz-color-swatch {
+  border: none;
+  border-radius: 4px;
+}
+
+/* 响应式调整 */
+@media (max-width: 600px) {
+  .border-row,
+  .font-row,
+  .color-row,
+  .sub-setting-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+
+    label {
+      min-width: auto;
+    }
+  }
+
+  .color-picker-container {
+    width: 100%;
+  }
+
+  .input-group {
+    width: 100%;
+  }
+
+  .shadow-options {
+    width: 100%;
+  }
+
+  .shadow-btn {
+    flex: 1;
+    text-align: center;
+  }
+}

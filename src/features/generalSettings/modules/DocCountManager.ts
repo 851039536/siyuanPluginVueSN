@@ -5,6 +5,15 @@
 export class DocCountManager {
   private updateTimer: number | null = null
   private updateInterval = 3600000 // 默认1小时
+  private fontStyle: {
+    fontSize: string
+    color: string
+    fontWeight: string
+  } = {
+    fontSize: '12px',
+    color: '#8c8c8c',
+    fontWeight: 'normal'
+  }
 
   /**
    * 启动文档数统计功能
@@ -34,6 +43,14 @@ export class DocCountManager {
   }
 
   /**
+   * 设置字体样式
+   */
+  public setFontStyle(style: { fontSize: string; color: string; fontWeight: string }): void {
+    this.fontStyle = style
+    this.updateCountStyles()
+  }
+
+  /**
    * 给笔记本添加文档数
    */
   private async setBoxCount(): Promise<void> {
@@ -51,8 +68,24 @@ export class DocCountManager {
       const boxText = li.querySelector('span.b3-list-item__text')
       if (!boxText) continue
       
+      // 移除旧的文档数显示（包括带样式的span）
+      const oldCountSpan = boxText.querySelector('.doc-count-number')
+      if (oldCountSpan) {
+        oldCountSpan.remove()
+      }
+      
+      // 移除文本中的文档数
       const text = boxText.textContent?.replace(/\s*\(\d+\)$/, '') || ''
-      boxText.textContent = text + ` (${count})`
+      boxText.textContent = text
+      
+      // 创建带样式的文档数显示
+      const countSpan = document.createElement('span')
+      countSpan.className = 'doc-count-number'
+      countSpan.textContent = ` (${count})`
+      countSpan.style.fontSize = this.fontStyle.fontSize
+      countSpan.style.color = this.fontStyle.color
+      countSpan.style.fontWeight = this.fontStyle.fontWeight
+      boxText.appendChild(countSpan)
     }
   }
 
@@ -76,15 +109,25 @@ export class DocCountManager {
   }
 
   /**
+   * 更新所有文档数的样式
+   */
+  private updateCountStyles(): void {
+    const countSpans = document.querySelectorAll('.doc-count-number')
+    countSpans.forEach((span) => {
+      const htmlSpan = span as HTMLElement
+      htmlSpan.style.fontSize = this.fontStyle.fontSize
+      htmlSpan.style.color = this.fontStyle.color
+      htmlSpan.style.fontWeight = this.fontStyle.fontWeight
+    })
+  }
+
+  /**
    * 清除所有文档数显示
    */
   private clearAllCounts(): void {
-    const boxTexts = document.querySelectorAll('span.b3-list-item__text')
-    boxTexts.forEach((text) => {
-      const content = text.textContent
-      if (content) {
-        text.textContent = content.replace(/\s*\(\d+\)$/, '')
-      }
+    const countSpans = document.querySelectorAll('.doc-count-number')
+    countSpans.forEach((span) => {
+      span.remove()
     })
   }
 

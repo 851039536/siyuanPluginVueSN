@@ -555,3 +555,55 @@ export async function saveTextDiffSettings(plugin: Plugin, settings: TextDiffSet
     return false
   }
 }
+
+/**
+ * 钉住页签设置接口
+ */
+export interface TabPinSettings {
+  enabled: boolean           // 是否启用钉住页签优化
+  textColor: string          // 页签文字颜色
+  backgroundColor: string    // 页签背景颜色
+}
+
+/**
+ * 默认钉住页签设置
+ */
+export const DEFAULT_TABPIN_SETTINGS: TabPinSettings = {
+  enabled: true,
+  textColor: 'inherit',
+  backgroundColor: 'rgba(var(--b3-theme-primary-rgb), 0.1)'
+}
+
+/**
+ * 钉住页签设置存储键
+ */
+const TABPIN_SETTINGS_KEY = 'tabpin-settings'
+
+/**
+ * 加载钉住页签设置
+ */
+export async function loadTabPinSettings(plugin: Plugin): Promise<TabPinSettings> {
+  try {
+    const data = await plugin.loadData(TABPIN_SETTINGS_KEY)
+    if (!data) {
+      return { ...DEFAULT_TABPIN_SETTINGS }
+    }
+    return { ...DEFAULT_TABPIN_SETTINGS, ...data }
+  } catch (error) {
+    console.error('加载钉住页签设置失败:', error)
+    return { ...DEFAULT_TABPIN_SETTINGS }
+  }
+}
+
+/**
+ * 保存钉住页签设置
+ */
+export async function saveTabPinSettings(plugin: Plugin, settings: TabPinSettings): Promise<boolean> {
+  try {
+    await plugin.saveData(TABPIN_SETTINGS_KEY, settings)
+    return true
+  } catch (error) {
+    console.error('保存钉住页签设置失败:', error)
+    return false
+  }
+}

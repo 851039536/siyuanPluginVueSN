@@ -156,59 +156,6 @@
           </div>
         </div>
 
-        <!-- 行号设置 -->
-        <div class="setting-item">
-          <label class="setting-label">
-            <span class="label-icon">🔢</span>
-            {{ i18n.lineNumberSettings || '行号设置' }}
-          </label>
-          <div class="toggle-container">
-            <label class="toggle-switch">
-              <input
-                type="checkbox"
-                v-model="settings.showLineNumber"
-                class="toggle-input"
-              />
-              <span class="toggle-slider"></span>
-            </label>
-            <span class="toggle-description">
-              {{ settings.showLineNumber ? (i18n.showLineNumber || '显示行号') : (i18n.hideLineNumber || '隐藏行号') }}
-            </span>
-          </div>
-          <div v-if="settings.showLineNumber" class="sub-settings">
-            <div class="sub-setting-row">
-              <label>{{ i18n.lineNumberColor || '行号颜色' }}</label>
-              <div class="color-picker-container">
-                <input
-                  v-model="settings.lineNumberColor"
-                  type="color"
-                  class="color-picker"
-                />
-                <input
-                  v-model="settings.lineNumberColor"
-                  type="text"
-                  class="color-input"
-                />
-              </div>
-            </div>
-            <div class="sub-setting-row">
-              <label>{{ i18n.lineNumberBackground || '行号背景' }}</label>
-              <div class="color-picker-container">
-                <input
-                  v-model="settings.lineNumberBackground"
-                  type="color"
-                  class="color-picker"
-                />
-                <input
-                  v-model="settings.lineNumberBackground"
-                  type="text"
-                  class="color-input"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
         <!-- 代码字体设置 -->
         <div class="setting-item">
           <label class="setting-label">
@@ -441,10 +388,6 @@ interface CodeBlockSettings {
   borderWidth: number
   borderRadius: number
   boxShadow: string
-  // 行号样式
-  lineNumberColor: string
-  lineNumberBackground: string
-  showLineNumber: boolean
   // 代码字体
   codeFontFamily: string
   codeFontSize: number
@@ -481,9 +424,6 @@ const props = withDefaults(defineProps<Props>(), {
     borderWidth: 1,
     borderRadius: 6,
     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-    lineNumberColor: '#abb2bf',
-    lineNumberBackground: '#21252b',
-    showLineNumber: true,
     codeFontFamily: 'Consolas',
     codeFontSize: 14,
     codeLineHeight: 1.6,
@@ -511,9 +451,6 @@ const DEFAULT_SETTINGS: CodeBlockSettings = {
   borderWidth: 1,
   borderRadius: 6,
   boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-  lineNumberColor: '#abb2bf',
-  lineNumberBackground: '#21252b',
-  showLineNumber: true,
   codeFontFamily: 'Consolas',
   codeFontSize: 14,
   codeLineHeight: 1.6,
@@ -603,19 +540,6 @@ function applyCodeBlockEnhancedStyles(codeSettings: CodeBlockSettings) {
         line-height: ${codeSettings.codeLineHeight} !important;
         color: ${codeSettings.textColor} !important;
       }
-
-      /* 行号样式 */
-      .protyle-wysiwyg .code-block .hljs .ln {
-        color: ${codeSettings.lineNumberColor} !important;
-        background-color: ${codeSettings.lineNumberBackground} !important;
-      }
-
-      ${codeSettings.showLineNumber ? '' : `
-      /* 隐藏行号 */
-      .protyle-wysiwyg .code-block .hljs .ln {
-        display: none !important;
-      }
-      `}
 
       /* 代码高亮颜色 */
       .protyle-wysiwyg .code-block .hljs-keyword,

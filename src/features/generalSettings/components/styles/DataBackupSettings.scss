@@ -1,5 +1,10 @@
 // DataBackupSettings 组件样式
-// 使用 SCSS 特性提升可读性与维护性
+
+// ==================== 基础变量 ====================
+$radius-sm: 0.375rem;
+$radius-md: 0.5rem;
+$radius-lg: 0.75rem;
+$transition: all 0.2s ease;
 
 // ==================== 根容器 ====================
 .data-backup-settings {
@@ -10,21 +15,21 @@
 }
 
 .settings-container {
-  padding: 1.25rem; // 20px
+  padding: 1.25rem;
 }
 
 // ==================== 章节头部 ====================
 .section-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem; // 8px
-  margin-bottom: 1rem; // 16px
-  padding-bottom: 0.75rem; // 12px
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--b3-theme-surface-variant);
 
   h4 {
     margin: 0;
-    font-size: 0.875rem; // 14px
+    font-size: 0.875rem;
     font-weight: 600;
     color: var(--b3-theme-on-surface);
     flex: 1;
@@ -32,41 +37,46 @@
 }
 
 .section-icon {
-  font-size: 1.125rem; // 18px
+  font-size: 1.125rem;
+}
+
+// ==================== 卡片区块 mixin ====================
+@mixin card-section {
+  background: var(--b3-theme-surface);
+  border-radius: $radius-lg;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--b3-theme-surface-variant);
 }
 
 // ==================== 信息区块 ====================
 .info-section {
-  background: linear-gradient(
-    135deg,
-    rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.08),
-    rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.03)
-  );
-  border-radius: 0.75rem; // 12px
-  padding: 1rem; // 16px
-  margin-bottom: 1.25rem; // 20px
-  border: 1px solid var(--b3-theme-surface-variant);
+  @include card-section;
+  background: linear-gradient(135deg, rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.08), rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.03));
+}
+
+// ==================== 通用区块样式 ====================
+.backup-section,
+.auto-backup-section,
+.history-section {
+  @include card-section;
 }
 
 // ==================== 移动端警告 ====================
 .mobile-warning {
   display: flex;
   align-items: center;
-  gap: 0.625rem; // 10px
-  padding: 0.75rem 1rem; // 12px 16px
-  margin-bottom: 1rem; // 16px
-  background: linear-gradient(
-    135deg,
-    rgba(255, 152, 0, 0.12),
-    rgba(255, 152, 0, 0.06)
-  );
+  gap: 0.625rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, rgba(255, 152, 0, 0.12), rgba(255, 152, 0, 0.06));
   border: 1px solid rgba(255, 152, 0, 0.3);
-  border-radius: 0.625rem; // 10px
-  font-size: 0.8125rem; // 13px
+  border-radius: 0.625rem;
+  font-size: 0.8125rem;
   color: var(--b3-theme-on-surface);
 
   .warning-icon {
-    font-size: 1.125rem; // 18px
+    font-size: 1.125rem;
     flex-shrink: 0;
   }
 
@@ -78,22 +88,22 @@
 
 .info-grid {
   display: grid;
-  gap: 0.75rem; // 12px
+  gap: 0.75rem;
 }
 
 .info-item {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem; // 4px
+  gap: 0.25rem;
 }
 
 .info-label {
-  font-size: 0.75rem; // 12px
+  font-size: 0.75rem;
   color: var(--b3-theme-on-surface-variant);
 }
 
 .info-value {
-  font-size: 0.875rem; // 14px
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--b3-theme-on-surface);
   word-break: break-all;
@@ -103,29 +113,40 @@
 .workspace-path-row {
   display: flex;
   align-items: center;
-  gap: 0.75rem; // 12px
+  gap: 0.75rem;
 }
 
 .workspace-path {
   font-family: 'Consolas', 'Monaco', monospace;
-  font-size: 0.75rem; // 12px
+  font-size: 0.75rem;
   background: var(--b3-theme-surface);
-  padding: 0.5rem 0.75rem; // 8px 12px
-  border-radius: 0.375rem; // 6px
+  padding: 0.5rem 0.75rem;
+  border-radius: $radius-sm;
   border: 1px solid var(--b3-theme-surface-variant);
   flex: 1;
 }
 
+.path-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+// ==================== 按钮基础样式 ====================
+%btn-base {
+  padding: 0.5rem 1rem;
+  border-radius: $radius-sm;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: $transition;
+  white-space: nowrap;
+}
+
 .select-path-btn {
-  padding: 0.5rem 1rem; // 8px 16px
+  @extend %btn-base;
   border: 1px solid var(--b3-theme-primary);
-  border-radius: 0.375rem; // 6px
   background: var(--b3-theme-background);
   color: var(--b3-theme-primary);
-  font-size: 0.75rem; // 12px
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
 
   &:hover {
     background: var(--b3-theme-primary);
@@ -133,43 +154,48 @@
   }
 }
 
-// ==================== 通用区块样式 ====================
-.backup-section,
-.auto-backup-section,
-.history-section {
-  background: var(--b3-theme-surface);
-  border-radius: 0.75rem; // 12px
-  padding: 1rem; // 16px
-  margin-bottom: 1.25rem; // 20px
+.open-folder-btn {
+  @extend %btn-base;
+  padding: 0.5rem;
   border: 1px solid var(--b3-theme-surface-variant);
+  background: var(--b3-theme-background);
+  font-size: 1rem;
+  min-width: 2.25rem;
+  justify-content: center;
+
+  &:hover:not(:disabled) {
+    background: var(--b3-theme-surface);
+    border-color: var(--b3-theme-primary);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }
 
 // ==================== 备份操作 ====================
 .backup-actions {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem; // 12px;
+  gap: 0.75rem;
 }
 
 .backup-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem; // 8px
-  padding: 0.75rem 1.5rem; // 12px 24px
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
   border: none;
-  border-radius: 0.5rem; // 8px
-  font-size: 0.875rem; // 14px
+  border-radius: $radius-md;
+  font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: $transition;
 
   &.primary {
-    background: linear-gradient(
-      135deg,
-      var(--b3-theme-primary),
-      var(--b3-theme-primary-light)
-    );
+    background: linear-gradient(135deg, var(--b3-theme-primary), var(--b3-theme-primary-light));
     color: #fff;
 
     &:hover:not(:disabled) {
@@ -185,15 +211,15 @@
 }
 
 .backup-hint {
-  font-size: 0.75rem; // 12px
+  font-size: 0.75rem;
   color: var(--b3-theme-on-surface-variant);
   margin: 0;
 }
 
 // ==================== 加载动画 ====================
 .loading-spinner {
-  width: 1rem; // 16px
-  height: 1rem; // 16px
+  width: 1rem;
+  height: 1rem;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-top-color: #fff;
   border-radius: 50%;
@@ -201,65 +227,65 @@
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
 // ==================== 表单样式 ====================
 .settings-form {
   display: flex;
   flex-direction: column;
-  gap: 1rem; // 16px
+  gap: 1rem;
 }
 
 .form-item {
   display: flex;
   flex-direction: column;
-  gap: 0.375rem; // 6px
+  gap: 0.375rem;
 }
 
 .form-label {
-  font-size: 0.8125rem; // 13px
+  font-size: 0.8125rem;
   font-weight: 500;
   color: var(--b3-theme-on-surface);
 }
 
-.form-select,
-.form-input {
-  padding: 0.5rem 0.75rem; // 8px 12px
+// 输入框基础样式
+%input-base {
+  padding: 0.5rem 0.75rem;
   border: 1px solid var(--b3-theme-surface-variant);
-  border-radius: 0.375rem; // 6px
+  border-radius: $radius-sm;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
-  font-size: 0.875rem; // 14px
+  font-size: 0.875rem;
   outline: none;
   transition: border-color 0.2s ease;
 
   &:focus {
     border-color: var(--b3-theme-primary);
   }
+}
+
+.form-select,
+.form-input {
+  @extend %input-base;
 
   &.small {
-    width: 5rem; // 80px
+    width: 5rem;
   }
 }
 
 .form-hint {
-  font-size: 0.6875rem; // 11px
+  font-size: 0.6875rem;
   color: var(--b3-theme-on-surface-variant);
 }
 
 // ==================== 刷新按钮 ====================
 .refresh-btn {
-  padding: 0.375rem 0.75rem; // 6px 12px
+  @extend %btn-base;
+  padding: 0.375rem 0.75rem;
   border: 1px solid var(--b3-theme-surface-variant);
-  border-radius: 0.375rem; // 6px
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-surface);
-  font-size: 0.75rem; // 12px
-  cursor: pointer;
-  transition: all 0.2s ease;
 
   &:hover:not(:disabled) {
     background: var(--b3-theme-surface);
@@ -275,51 +301,48 @@
 .backup-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem; // 8px
+  gap: 0.5rem;
 }
 
 .backup-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem; // 12px
+  padding: 0.75rem;
   background: var(--b3-theme-background);
-  border-radius: 0.5rem; // 8px
+  border-radius: $radius-md;
   border: 1px solid var(--b3-theme-surface-variant);
 
   .backup-info {
     display: flex;
     flex-direction: column;
-    gap: 0.125rem; // 2px
+    gap: 0.125rem;
   }
 
   .backup-actions {
     display: flex;
     flex-direction: row;
-    gap: 0.5rem; // 8px
+    gap: 0.5rem;
   }
 }
 
 .backup-name {
   font-weight: 500;
-  font-size: 0.8125rem; // 13px
+  font-size: 0.8125rem;
   color: var(--b3-theme-on-surface);
 }
 
 .backup-time,
 .backup-size {
-  font-size: 0.6875rem; // 11px
+  font-size: 0.6875rem;
   color: var(--b3-theme-on-surface-variant);
 }
 
 // ==================== 操作按钮 ====================
 .action-btn {
-  padding: 0.375rem 0.75rem; // 6px 12px
+  @extend %btn-base;
+  padding: 0.375rem 0.75rem;
   border: none;
-  border-radius: 0.375rem; // 6px
-  font-size: 0.75rem; // 12px
-  cursor: pointer;
-  transition: all 0.2s ease;
 
   &.restore {
     background: var(--b3-theme-primary);
@@ -346,18 +369,18 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2.5rem 1.25rem; // 40px 20px
+  padding: 2.5rem 1.25rem;
   color: var(--b3-theme-on-surface-variant);
 
   p {
     margin: 0;
-    font-size: 0.875rem; // 14px
+    font-size: 0.875rem;
   }
 }
 
 .empty-icon {
-  font-size: 3rem; // 48px
-  margin-bottom: 0.75rem; // 12px
+  font-size: 3rem;
+  margin-bottom: 0.75rem;
   opacity: 0.5;
 }
 
@@ -375,7 +398,7 @@
   .backup-item {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.75rem; // 12px
+    gap: 0.75rem;
 
     .backup-actions {
       width: 100%;
@@ -401,60 +424,47 @@
 
 .input-dialog {
   background: var(--b3-theme-background);
-  border-radius: 0.75rem; // 12px
+  border-radius: $radius-lg;
   width: 90%;
-  max-width: 31.25rem; // 500px
+  max-width: 31.25rem;
   box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.2);
 }
 
 .input-dialog-header {
-  padding: 1rem 1.25rem; // 16px 20px
+  padding: 1rem 1.25rem;
   border-bottom: 1px solid var(--b3-theme-surface-variant);
 
   h4 {
     margin: 0;
-    font-size: 1rem; // 16px
+    font-size: 1rem;
     font-weight: 600;
     color: var(--b3-theme-on-surface);
   }
 }
 
 .input-dialog-body {
-  padding: 1.25rem; // 20px
+  padding: 1.25rem;
 }
 
 .input-dialog-field {
+  @extend %input-base;
   width: 100%;
-  padding: 0.625rem 0.75rem; // 10px 12px
-  border: 1px solid var(--b3-theme-outline);
-  border-radius: 0.375rem; // 6px
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  font-size: 0.875rem; // 14px
+  padding: 0.625rem 0.75rem;
   font-family: 'Consolas', 'Monaco', monospace;
-  outline: none;
-  transition: border-color 0.2s ease;
-
-  &:focus {
-    border-color: var(--b3-theme-primary);
-  }
 }
 
 .input-dialog-footer {
-  padding: 0.75rem 1.25rem; // 12px 20px
+  padding: 0.75rem 1.25rem;
   display: flex;
   justify-content: flex-end;
-  gap: 0.75rem; // 12px
+  gap: 0.75rem;
   border-top: 1px solid var(--b3-theme-surface-variant);
 }
 
 .input-dialog-btn {
-  padding: 0.5rem 1rem; // 8px 16px
+  @extend %btn-base;
+  font-size: 0.875rem;
   border: none;
-  border-radius: 0.375rem; // 6px
-  font-size: 0.875rem; // 14px
-  cursor: pointer;
-  transition: all 0.2s ease;
 
   &.cancel {
     background: var(--b3-theme-surface-variant);

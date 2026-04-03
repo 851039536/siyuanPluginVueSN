@@ -17,9 +17,19 @@
             <span class="info-label">{{ i18n.workspacePath || '工作区路径' }}</span>
             <div class="workspace-path-row">
               <span class="info-value workspace-path">{{ workspacePath || i18n.notSet || '未设置' }}</span>
-              <button @click="selectWorkspacePath" class="select-path-btn">
-                {{ i18n.selectPath || '选择路径' }}
-              </button>
+              <div class="path-actions">
+                <button @click="selectWorkspacePath" class="select-path-btn">
+                  {{ i18n.selectPath || '选择路径' }}
+                </button>
+                <button
+                  @click="openWorkspaceFolder"
+                  class="open-folder-btn"
+                  :disabled="!workspaceRoot"
+                  :title="i18n.openInExplorer || '在文件管理器中打开'"
+                >
+                  📂
+                </button>
+              </div>
             </div>
           </div>
           <div class="info-item">
@@ -196,19 +206,39 @@ let lastBackupTimestamp = 0
 
 // 获取备份目录路径
 function getBackupDir(): string {
-  // 备份目录在工作区根目录下，而不是 data 目录下
-  // 例如：E:\siyuan2\data-backup
   return `${workspaceRoot.value}/data-backup`
+}
+
+// 统一更新工作区路径并持久化
+function updateWorkspacePath(root: string, shouldSave = false) {
+  workspaceRoot.value = root
+  workspacePath.value = `${root}/data`
+  localStorage.setItem('siyuan-workspace-root', root)
+  localStorage.setItem('siyuan-workspace-path', `${root}/data`)
+  if (shouldSave) {
+    saveSettings()
+  }
+}
+
+// 通过 API 获取工作区路径（提取为独立方法避免重复）
+async function fetchWorkspacePath(): Promise<string | null> {
+  try {
+    const response = await fetch('/api/system/getConf', { method: 'POST' })
+    if (response.ok) {
+      const data = await response.json()
+      return data?.data?.conf?.system?.workspaceDir || null
+    }
+  } catch (e) {
+    console.error('通过 API 获取工作区路径失败:', e)
+  }
+  return null
 }
 
 // 初始化
 onMounted(async () => {
-  // 检测是否为移动端
   isMobile.value = checkIsMobile()
-
   await loadSettings()
 
-  // 如果是移动端，自动禁用备份功能
   if (isMobile.value && autoBackupEnabled.value) {
     autoBackupEnabled.value = false
     await saveSettings()
@@ -217,10 +247,8 @@ onMounted(async () => {
   await detectWorkspacePath()
   await loadBackupList()
 
-  // 监听全局自动备份触发事件
   window.addEventListener('autoBackupTrigger', handleAutoBackupTrigger)
 
-  // 如果没有插件级别的定时器（旧版本兼容），则启动本地定时器
   const generalSettings = props.plugin?.__generalSettings
   if (!generalSettings) {
     startAutoBackupTimer()
@@ -232,37 +260,27 @@ onUnmounted(() => {
   window.removeEventListener('autoBackupTrigger', handleAutoBackupTrigger)
 })
 
-// 处理全局自动备份触发事件
-async function handleAutoBackupTrigger(event: CustomEvent) {
+async function handleAutoBackupTrigger() {
   await performBackup()
 }
 
-// 监听备份频率变化，重启定时器
-watch(backupFrequency, () => {
-  // 通知插件级别的定时器更新
-  const generalSettings = props.plugin?.__generalSettings
-  if (generalSettings && typeof generalSettings.restartAutoBackupTimer === 'function') {
-    generalSettings.restartAutoBackupTimer(autoBackupEnabled.value, backupFrequency.value)
-  } else {
-    // 旧版本兼容：使用本地定时器
-    startAutoBackupTimer()
-  }
-})
-
-// 监听自动备份启用状态
-watch(autoBackupEnabled, (enabled) => {
+// 统一处理定时器重启逻辑
+function handleTimerRestart(enabled: boolean) {
   const generalSettings = props.plugin?.__generalSettings
   if (generalSettings && typeof generalSettings.restartAutoBackupTimer === 'function') {
     generalSettings.restartAutoBackupTimer(enabled, backupFrequency.value)
+  } else if (enabled) {
+    startAutoBackupTimer()
   } else {
-    // 旧版本兼容：使用本地定时器
-    if (enabled) {
-      startAutoBackupTimer()
-    } else {
-      stopAutoBackupTimer()
-    }
+    stopAutoBackupTimer()
   }
-})
+}
+
+// 监听备份频率变化
+watch(backupFrequency, () => handleTimerRestart(autoBackupEnabled.value))
+
+// 监听自动备份启用状态
+watch(autoBackupEnabled, (enabled) => handleTimerRestart(enabled))
 
 // 加载设置
 async function loadSettings() {
@@ -276,10 +294,8 @@ async function loadSettings() {
         keepBackupCount.value = data.keepBackupCount ?? 7
         lastBackupTime.value = data.lastBackupTime ?? ''
         lastBackupTimestamp = data.lastBackupTimestamp ?? 0
-        // 加载保存的工作区路径
         if (data.workspacePath) {
           workspacePath.value = data.workspacePath
-          // 从 workspacePath 推断 workspaceRoot
           workspaceRoot.value = data.workspaceRoot || data.workspacePath.replace(/\/data$/, '')
         }
         if (data.workspaceRoot) {
@@ -315,14 +331,13 @@ async function saveSettings() {
 // 检测工作区路径
 async function detectWorkspacePath() {
   // 方式1: 检查环境变量
-  if ((window as any).__SIYUAN_WS__ || (window as any).SIYUAN_WORKSPACE) {
-    const rootPath = (window as any).__SIYUAN_WORKSPACE__ || (window as any).SIYUAN_WORKSPACE
-    workspaceRoot.value = rootPath
-    workspacePath.value = `${rootPath}/data`  // 直接指向 data 目录
+  const envRoot = (window as any).__SIYUAN_WORKSPACE__ || (window as any).SIYUAN_WORKSPACE
+  if (envRoot) {
+    updateWorkspacePath(envRoot)
     return
   }
 
-  // 方式2: 尝试从 localStorage 获取
+  // 方式2: 从 localStorage 获取
   const savedPath = localStorage.getItem('siyuan-workspace-path')
   const savedRoot = localStorage.getItem('siyuan-workspace-root')
   if (savedPath) {
@@ -331,47 +346,27 @@ async function detectWorkspacePath() {
     return
   }
 
-  // 方式3: 尝试从插件配置获取
+  // 方式3: 从插件配置获取
   try {
-    if (props.plugin && props.plugin.dataPath) {
-      workspaceRoot.value = props.plugin.dataPath
-      workspacePath.value = `${props.plugin.dataPath}/data`
+    if (props.plugin?.dataPath) {
+      updateWorkspacePath(props.plugin.dataPath)
       return
     }
-  } catch (e) {
-    // 忽略错误
+  } catch { /* 忽略错误 */ }
+
+  // 方式4: 通过 API 获取
+  const apiPath = await fetchWorkspacePath()
+  if (apiPath) {
+    updateWorkspacePath(apiPath)
+    return
   }
 
-  // 方式4: 通过 API 获取工作区路径
-  try {
-    const response = await fetch('/api/system/getConf', {
-      method: 'POST'
-    })
-    if (response.ok) {
-      const data = await response.json()
-      const wsPath = data?.data?.conf?.system?.workspaceDir
-      if (wsPath) {
-        workspaceRoot.value = wsPath
-        workspacePath.value = `${wsPath}/data`  // 直接指向 data 目录
-        localStorage.setItem('siyuan-workspace-root', wsPath)
-        localStorage.setItem('siyuan-workspace-path', `${wsPath}/data`)
-        return
-      }
-    }
-  } catch (e) {
-    console.error('通过 API 获取工作区路径失败:', e)
-  }
-
-  // 方式5: 监听来自其他组件的事件
+  // 方式5: 监听事件
   window.addEventListener('workspacePathDetected', handleWorkspacePathDetected)
 }
 
-// 处理工作区路径检测事件
 function handleWorkspacePathDetected(event: CustomEvent) {
-  workspaceRoot.value = event.detail.path
-  workspacePath.value = `${event.detail.path}/data`
-  localStorage.setItem('siyuan-workspace-root', event.detail.path)
-  localStorage.setItem('siyuan-workspace-path', `${event.detail.path}/data`)
+  updateWorkspacePath(event.detail.path)
 }
 
 // 输入对话框相关
@@ -381,14 +376,12 @@ const inputDialogPlaceholder = ref('')
 const inputDialogResolve = ref<((value: string | null) => void) | null>(null)
 const dialogInputRef = ref<HTMLInputElement | null>(null)
 
-// 显示输入对话框
 function showInputDialogHelper(placeholder: string): Promise<string | null> {
   return new Promise((resolve) => {
     inputDialogPlaceholder.value = placeholder
     inputDialogValue.value = workspaceRoot.value || ''
     inputDialogResolve.value = resolve
     showInputDialog.value = true
-    // 自动聚焦到输入框
     nextTick(() => {
       dialogInputRef.value?.focus()
       dialogInputRef.value?.select()
@@ -396,86 +389,92 @@ function showInputDialogHelper(placeholder: string): Promise<string | null> {
   })
 }
 
-// 确认输入
 function confirmInputDialog() {
   const value = inputDialogValue.value.trim()
   showInputDialog.value = false
-  if (inputDialogResolve.value) {
-    inputDialogResolve.value(value || null)
-    inputDialogResolve.value = null
-  }
+  inputDialogResolve.value?.(value || null)
+  inputDialogResolve.value = null
 }
 
-// 取消输入
 function cancelInputDialog() {
   showInputDialog.value = false
-  if (inputDialogResolve.value) {
-    inputDialogResolve.value(null)
-    inputDialogResolve.value = null
+  inputDialogResolve.value?.(null)
+  inputDialogResolve.value = null
+}
+
+// 打开工作区文件夹
+async function openWorkspaceFolder() {
+  if (!workspaceRoot.value) {
+    showMessage(props.i18n.pleaseSelectWorkspace || '请先选择工作区路径', 3000, 'info')
+    return
+  }
+
+  try {
+    // 桌面版：使用 Electron shell 打开文件夹
+    if (typeof window.require === 'function') {
+      const electron = window.require('electron')
+      const shell = electron.shell || electron.remote?.shell
+      if (shell?.openPath) {
+        await shell.openPath(workspaceRoot.value)
+        return
+      }
+    }
+
+    // Web 版：尝试使用思源 API
+    const response = await fetch('/api/file/getFile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: workspaceRoot.value })
+    })
+
+    if (response.ok) {
+      showMessage(props.i18n.folderOpened || '已在浏览器中打开', 2000, 'info')
+    } else {
+      showMessage(props.i18n.openFolderFailed || '打开文件夹失败，请手动访问路径', 3000, 'error')
+    }
+  } catch (error) {
+    console.error('打开工作区文件夹失败:', error)
+    showMessage(props.i18n.openFolderFailed || '打开文件夹失败，请手动访问路径', 3000, 'error')
   }
 }
 
 // 选择工作区路径
 async function selectWorkspacePath() {
-  // 如果还没获取到工作区路径，先尝试获取
   if (!workspaceRoot.value) {
-    try {
-      const response = await fetch('/api/system/getConf', {
-        method: 'POST'
-      })
-      if (response.ok) {
-        const data = await response.json()
-        const wsPath = data?.data?.conf?.system?.workspaceDir
-        if (wsPath) {
-          workspaceRoot.value = wsPath
-          workspacePath.value = `${wsPath}/data`
-          await saveSettings()
-          showMessage(props.i18n.workspacePathSet || '工作区路径已自动获取', 2000, 'info')
-          return
-        }
-      }
-    } catch (e) {
-      console.error('获取工作区路径失败:', e)
+    const wsPath = await fetchWorkspacePath()
+    if (wsPath) {
+      updateWorkspacePath(wsPath, true)
+      showMessage(props.i18n.workspacePathSet || '工作区路径已自动获取', 2000, 'info')
+      return
     }
   }
 
-  // 尝试使用 Electron dialog（桌面版思源笔记）
+  // 使用 Electron dialog
   if (typeof window.require === 'function') {
     try {
       const electron = window.require('electron')
       const remote = electron.remote || electron
-
-      // 检查 dialog 是否存在
       if (remote?.dialog?.showOpenDialog) {
         const result = await remote.dialog.showOpenDialog({
           properties: ['openDirectory'],
           title: props.i18n.selectWorkspace || '选择思源工作区',
           defaultPath: workspaceRoot.value || undefined
         })
-
-        if (!result.canceled && result.filePaths.length > 0) {
-          workspaceRoot.value = result.filePaths[0]
-          workspacePath.value = `${result.filePaths[0]}/data`
-          localStorage.setItem('siyuan-workspace-root', workspaceRoot.value)
-          localStorage.setItem('siyuan-workspace-path', workspacePath.value)
-          await saveSettings()
+        if (!result.canceled && result.filePaths[0]) {
+          updateWorkspacePath(result.filePaths[0], true)
           showMessage(props.i18n.workspacePathSet || '工作区路径已设置', 2000, 'info')
           return
         }
       }
     } catch (error) {
-      console.warn('Electron dialog 不可用，使用手动输入:', error)
+      console.warn('Electron dialog 不可用:', error)
     }
   }
 
-  // 降级方案：使用自定义输入对话框
+  // 手动输入
   const inputPath = await showInputDialogHelper(props.i18n.enterWorkspacePath || '请输入思源工作区路径:')
   if (inputPath) {
-    workspaceRoot.value = inputPath
-    workspacePath.value = `${inputPath}/data`
-    localStorage.setItem('siyuan-workspace-root', workspaceRoot.value)
-    localStorage.setItem('siyuan-workspace-path', workspacePath.value)
-    await saveSettings()
+    updateWorkspacePath(inputPath, true)
     showMessage(props.i18n.workspacePathSet || '工作区路径已设置', 2000, 'info')
   }
 }
@@ -484,7 +483,6 @@ async function selectWorkspacePath() {
 async function performBackup() {
   if (isBackingUp.value) return
 
-  // 检查工作区路径
   if (!workspacePath.value) {
     showMessage(props.i18n.pleaseSelectWorkspace || '请先选择工作区路径', 3000, 'info')
     await selectWorkspacePath()
@@ -494,7 +492,6 @@ async function performBackup() {
   isBackingUp.value = true
 
   try {
-    // 生成文件名: data-251209-153045.zip (年月日-时分秒)
     const now = new Date()
     const year = now.getFullYear().toString().slice(-2)
     const month = (now.getMonth() + 1).toString().padStart(2, '0')
@@ -505,48 +502,33 @@ async function performBackup() {
     const fileName = `data-${year}${month}${day}-${hour}${minute}${second}.zip`
     const backupDir = getBackupDir()
 
-    // 显示消息
-    showMessage(props.i18n.backingUp || '正在备份...', 0, 'info')
-
-    // 检查是否有 Node.js API 可用（桌面版思源笔记）
     if (typeof window.require !== 'function') {
       throw new Error('无法访问文件系统，请使用桌面版思源笔记')
     }
 
-    // 在思源笔记中，Node.js 模块通过 window.require 直接加载
     const fs = window.require('fs').promises
     const path = window.require('path')
 
-    // 检查 data 目录是否存在
-    const dataPath = workspacePath.value
     try {
-      await fs.access(dataPath)
+      await fs.access(workspacePath.value)
     } catch {
-      throw new Error(`data 目录不存在: ${dataPath}`)
+      throw new Error(`data 目录不存在: ${workspacePath.value}`)
     }
 
-    // 创建 ZIP
     const zip = new JSZip()
+    const skipDirs = new Set(['temp', '.recycle'])
 
-    // 递归添加目录到 ZIP
     async function addDirectoryToZip(dirPath: string, zipPath: string) {
       const entries = await fs.readdir(dirPath, { withFileTypes: true })
-
       for (const entry of entries) {
         const fullPath = path.join(dirPath, entry.name)
         const relativePath = zipPath ? `${zipPath}/${entry.name}` : entry.name
-
         if (entry.isDirectory()) {
-          // 跳过一些不需要备份的目录
-          if (entry.name === 'temp' || entry.name === '.recycle') {
-            continue
-          }
+          if (skipDirs.has(entry.name)) continue
           await addDirectoryToZip(fullPath, relativePath)
         } else if (entry.isFile()) {
-          // 读取文件内容并添加到 ZIP
           try {
-            const content = await fs.readFile(fullPath)
-            zip.file(relativePath, content)
+            zip.file(relativePath, await fs.readFile(fullPath))
           } catch (err) {
             console.warn(`无法读取文件: ${fullPath}`, err)
           }
@@ -554,51 +536,34 @@ async function performBackup() {
       }
     }
 
-    // 添加 data 目录内容到 ZIP
-    await addDirectoryToZip(dataPath, '')
+    await addDirectoryToZip(workspacePath.value, '')
 
-    // 添加备份信息
-    const backupData = {
+    zip.file('backup-info.json', JSON.stringify({
       timestamp: Date.now(),
       backupTime: new Date().toISOString(),
       version: '1.0',
       workspaceRoot: workspaceRoot.value,
       workspaceDataPath: workspacePath.value,
-      backupDir: backupDir
-    }
-    zip.file('backup-info.json', JSON.stringify(backupData, null, 2))
+      backupDir
+    }, null, 2))
 
-    // 生成 ZIP 文件
-    showMessage(props.i18n.compressing || '正在压缩...', 0, 'info')
+    //开始压缩
     const zipBuffer = await zip.generateAsync({
       type: 'uint8array',
       compression: 'DEFLATE',
       compressionOptions: { level: 6 }
-    }, (metadata) => {
-      // 可以在这里显示进度
-      if (metadata.percent) {
-      }
     })
 
-    // 确保备份目录存在
     await fs.mkdir(backupDir, { recursive: true })
-
-    // 写入 ZIP 文件
     const zipFilePath = path.join(backupDir, fileName)
     await fs.writeFile(zipFilePath, zipBuffer)
 
-    // 更新时间
     lastBackupTime.value = new Date().toLocaleString()
     lastBackupTimestamp = Date.now()
     await saveSettings()
 
-    // 通知插件级别更新时间戳
-    const generalSettings = props.plugin?.__generalSettings
-    if (generalSettings && typeof generalSettings.updateLastBackupTime === 'function') {
-      generalSettings.updateLastBackupTime(lastBackupTimestamp)
-    }
+    props.plugin?.__generalSettings?.updateLastBackupTime?.(lastBackupTimestamp)
 
-    // 添加到备份列表
     const stats = await fs.stat(zipFilePath)
     backupList.value.unshift({
       name: fileName,
@@ -607,14 +572,11 @@ async function performBackup() {
       size: formatFileSize(stats.size)
     })
 
-    // 限制备份列表数量
     if (backupList.value.length > keepBackupCount.value) {
       backupList.value = backupList.value.slice(0, keepBackupCount.value)
     }
 
-    // 保存备份列表
     await props.plugin.saveData('backup-history', { list: backupList.value })
-
     showMessage(props.i18n.backupSuccess || `备份成功: ${fileName}`, 3000, 'info')
   } catch (error) {
     console.error('备份过程出错:', error)

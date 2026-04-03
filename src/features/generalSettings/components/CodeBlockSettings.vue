@@ -111,6 +111,7 @@
                   max="5"
                   step="0.5"
                   class="range-slider"
+                  @change="applySettings"
                 />
                 <span class="slider-value">{{ settings.borderWidth }}px</span>
               </div>
@@ -125,6 +126,7 @@
                   max="20"
                   step="1"
                   class="range-slider"
+                  @change="applySettings"
                 />
                 <span class="slider-value">{{ settings.borderRadius }}px</span>
               </div>
@@ -218,6 +220,7 @@
                   type="text"
                   class="text-input font-input"
                   :placeholder="i18n.fontFamilyPlaceholder || '输入字体名称'"
+                  @input="applySettings"
                 />
                 <select v-model="presetCodeFont" class="font-select" @change="applyPresetCodeFont">
                   <option value="">{{ i18n.selectFont || '选择字体' }}</option>
@@ -240,6 +243,7 @@
                   max="20"
                   step="1"
                   class="range-slider"
+                  @input="applySettings"
                 />
                 <span class="slider-value">{{ settings.codeFontSize }}px</span>
               </div>
@@ -254,6 +258,7 @@
                   max="2.0"
                   step="0.1"
                   class="range-slider"
+                  @input="applySettings"
                 />
                 <span class="slider-value">{{ settings.codeLineHeight }}</span>
               </div>
@@ -521,6 +526,12 @@ watch(settings, async (newSettings) => {
   applyCodeBlockCollapse(newSettings.enableCollapse, newSettings.collapseHeight)
   if (newSettings.enabled) {
     applyCodeBlockEnhancedStyles(newSettings)
+  } else {
+    // 移除增强样式
+    const existingStyle = document.getElementById('codeblock-enhanced-style')
+    if (existingStyle) {
+      existingStyle.remove()
+    }
   }
   if (props.plugin) {
     try {
@@ -529,12 +540,17 @@ watch(settings, async (newSettings) => {
       console.error('自动保存失败:', error)
     }
   }
-}, { deep: true })
+}, { deep: true, immediate: false })
 
 function applyPresetCodeFont() {
   if (presetCodeFont.value) {
     settings.value.codeFontFamily = presetCodeFont.value
   }
+}
+
+function applySettings() {
+  // 设置会通过 watch 自动应用和保存
+  // 这个函数只是为了显式触发更新
 }
 
 function applyCodeBlockEnhancedStyles(codeSettings: CodeBlockSettings) {
@@ -937,6 +953,7 @@ function applyCodeBlockCollapse(enable: boolean, height: number) {
 async function loadSettings() {
   if (!props.plugin) {
     console.warn('插件实例不可用，使用默认设置')
+    settings.value = { ...DEFAULT_SETTINGS }
     return
   }
 
@@ -944,11 +961,13 @@ async function loadSettings() {
     const loadedSettings = await loadCodeBlockSettings(props.plugin)
     settings.value = { ...DEFAULT_SETTINGS, ...loadedSettings }
     applyCodeBlockStyle(settings.value.style)
+    applyCodeBlockCollapse(settings.value.enableCollapse, settings.value.collapseHeight)
     if (settings.value.enabled) {
       applyCodeBlockEnhancedStyles(settings.value)
     }
   } catch (error) {
     console.error('加载设置失败:', error)
+    settings.value = { ...DEFAULT_SETTINGS }
   }
 }
 

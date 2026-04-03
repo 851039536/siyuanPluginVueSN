@@ -37,6 +37,79 @@
         <option value="14400000">{{ i18n?.interval4hour || '4小时' }}</option>
       </select>
     </div>
+
+    <!-- 字体样式设置 -->
+    <div class="font-style-settings">
+      <div class="settings-title">
+        <span class="title-icon">🎨</span>
+        {{ i18n?.fontStyleSettings || '字体样式设置' }}
+      </div>
+
+      <div class="style-row">
+        <label class="style-label">
+          {{ i18n?.fontSize || '字体大小' }}
+        </label>
+        <select v-model="fontSize" class="style-select" @change="handleFontStyleChange">
+          <option value="10px">10px</option>
+          <option value="11px">11px</option>
+          <option value="12px">12px</option>
+          <option value="13px">13px</option>
+          <option value="14px">14px</option>
+          <option value="15px">15px</option>
+          <option value="16px">16px</option>
+        </select>
+      </div>
+
+      <div class="style-row">
+        <label class="style-label">
+          {{ i18n?.fontColor || '字体颜色' }}
+        </label>
+        <div class="color-input-wrapper">
+          <input
+            type="color"
+            v-model="fontColor"
+            class="color-picker"
+            @input="handleFontStyleChange"
+          />
+          <input
+            type="text"
+            v-model="fontColor"
+            class="color-text"
+            @change="handleFontStyleChange"
+            placeholder="#8c8c8c"
+          />
+        </div>
+      </div>
+
+      <div class="style-row">
+        <label class="style-label">
+          {{ i18n?.fontWeight || '字体粗细' }}
+        </label>
+        <select v-model="fontWeight" class="style-select" @change="handleFontStyleChange">
+          <option value="normal">{{ i18n?.fontWeightNormal || '正常' }}</option>
+          <option value="bold">{{ i18n?.fontWeightBold || '粗体' }}</option>
+          <option value="lighter">{{ i18n?.fontWeightLighter || '细体' }}</option>
+        </select>
+      </div>
+
+      <!-- 样式预览 -->
+      <div class="style-preview">
+        <label class="preview-label">
+          {{ i18n?.stylePreview || '样式预览' }}
+        </label>
+        <div class="preview-box">
+          <span class="preview-text">我的笔记本</span>
+          <span
+            class="preview-count"
+            :style="{
+              fontSize: fontSize,
+              color: fontColor,
+              fontWeight: fontWeight
+            }"
+          >(123)</span>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -57,6 +130,9 @@ const emit = defineEmits<{
 
 const enableDocCount = ref(true)
 const updateInterval = ref('3600000')
+const fontSize = ref('12px')
+const fontColor = ref('#8c8c8c')
+const fontWeight = ref('normal')
 let docCountManager: DocCountManager | null = null
 
 const loadSettings = async () => {
@@ -65,6 +141,9 @@ const loadSettings = async () => {
     if (data) {
       enableDocCount.value = data.enableDocCount ?? true
       updateInterval.value = data.updateInterval || '3600000'
+      fontSize.value = data.fontSize || '12px'
+      fontColor.value = data.fontColor || '#8c8c8c'
+      fontWeight.value = data.fontWeight || 'normal'
     }
   } catch (e) {
     console.error('加载文档数统计设置失败:', e)
@@ -75,7 +154,10 @@ const handleToggleChange = async () => {
   try {
     await props.plugin?.saveData('doc-count-settings', {
       enableDocCount: enableDocCount.value,
-      updateInterval: updateInterval.value
+      updateInterval: updateInterval.value,
+      fontSize: fontSize.value,
+      fontColor: fontColor.value,
+      fontWeight: fontWeight.value
     })
     
     if (enableDocCount.value) {
@@ -92,7 +174,10 @@ const handleToggleChange = async () => {
     
     emit('change', {
       enableDocCount: enableDocCount.value,
-      updateInterval: updateInterval.value
+      updateInterval: updateInterval.value,
+      fontSize: fontSize.value,
+      fontColor: fontColor.value,
+      fontWeight: fontWeight.value
     })
   } catch (e) {
     console.error('保存文档数统计设置失败:', e)
@@ -103,7 +188,10 @@ const handleIntervalChange = async () => {
   try {
     await props.plugin?.saveData('doc-count-settings', {
       enableDocCount: enableDocCount.value,
-      updateInterval: updateInterval.value
+      updateInterval: updateInterval.value,
+      fontSize: fontSize.value,
+      fontColor: fontColor.value,
+      fontWeight: fontWeight.value
     })
     
     docCountManager?.setUpdateInterval(parseInt(updateInterval.value))
@@ -114,6 +202,28 @@ const handleIntervalChange = async () => {
   }
 }
 
+const handleFontStyleChange = async () => {
+  try {
+    await props.plugin?.saveData('doc-count-settings', {
+      enableDocCount: enableDocCount.value,
+      updateInterval: updateInterval.value,
+      fontSize: fontSize.value,
+      fontColor: fontColor.value,
+      fontWeight: fontWeight.value
+    })
+    
+    docCountManager?.setFontStyle({
+      fontSize: fontSize.value,
+      color: fontColor.value,
+      fontWeight: fontWeight.value
+    })
+    
+    showMessage('字体样式已修改', 2000, 'info')
+  } catch (e) {
+    console.error('保存字体样式失败:', e)
+  }
+}
+
 onMounted(async () => {
   await loadSettings()
   
@@ -121,6 +231,11 @@ onMounted(async () => {
     docCountManager = new DocCountManager()
     docCountManager.start()
     docCountManager.setUpdateInterval(parseInt(updateInterval.value))
+    docCountManager.setFontStyle({
+      fontSize: fontSize.value,
+      color: fontColor.value,
+      fontWeight: fontWeight.value
+    })
   }
 })
 
@@ -233,4 +348,140 @@ defineExpose({ loadSettings, enableDocCount })
   border-color: var(--b3-theme-primary);
   box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.1);
 }
+
+.font-style-settings {
+  margin-top: 20px;
+  padding: 12px 14px;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 8px;
+}
+
+.settings-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--b3-theme-on-surface);
+  margin-bottom: 14px;
+}
+
+.style-row {
+  margin-bottom: 12px;
+}
+
+.style-row:last-of-type {
+  margin-bottom: 0;
+}
+
+.style-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--b3-theme-on-surface-variant);
+  margin-bottom: 6px;
+}
+
+.style-select {
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 13px;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 6px;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.style-select:hover {
+  border-color: var(--b3-theme-primary);
+}
+
+.style-select:focus {
+  outline: none;
+  border-color: var(--b3-theme-primary);
+  box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.1);
+}
+
+.color-input-wrapper {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.color-picker {
+  width: 40px;
+  height: 32px;
+  padding: 2px;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 6px;
+  cursor: pointer;
+  background: var(--b3-theme-background);
+}
+
+.color-picker::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+
+.color-picker::-webkit-color-swatch {
+  border: none;
+  border-radius: 4px;
+}
+
+.color-text {
+  flex: 1;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-family: monospace;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 6px;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  transition: all 0.2s;
+}
+
+.color-text:hover {
+  border-color: var(--b3-theme-primary);
+}
+
+.color-text:focus {
+  outline: none;
+  border-color: var(--b3-theme-primary);
+  box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.1);
+}
+
+.style-preview {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--b3-theme-surface-lighter);
+}
+
+.preview-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--b3-theme-on-surface-variant);
+  margin-bottom: 8px;
+}
+
+.preview-box {
+  padding: 10px 12px;
+  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 6px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+}
+
+.preview-text {
+  color: var(--b3-theme-on-background);
+}
+
+.preview-count {
+  margin-left: 2px;
+}
+
 </style>

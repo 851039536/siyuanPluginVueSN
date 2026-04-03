@@ -34,10 +34,6 @@
           <EncryptionSettings :plugin="plugin" />
         </div>
 
-        <div v-show="activeCategory === 'actions'" class="content-section">
-          <GeneralActions :i18n="i18n" @change="handleActionsChange" />
-        </div>
-
         <div v-show="activeCategory === 'backup'" class="content-section">
           <DataBackupSettings :i18n="i18n" :plugin="plugin" @change="handleBackupChange" />
         </div>
@@ -64,7 +60,6 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import GeneralActions from './components/GeneralActions.vue'
 import PasswordSettings from './components/PasswordSettings.vue'
 import CodeBlockSettings from './components/CodeBlockSettings.vue'
 import HeadingSettings from './components/HeadingSettings.vue'
@@ -124,10 +119,6 @@ const categories = computed(() => [
     label: props.i18n.encryptionSettings || '加密设置'
   },
   {
-    id: 'actions',
-    label: props.i18n.generalActions || '通用操作'
-  },
-  {
     id: 'backup',
     label: props.i18n.dataBackup || '数据备份'
   }
@@ -140,7 +131,6 @@ function createSettingsHandler(moduleId: string) {
 }
 
 const handleCodeBlockChange = createSettingsHandler('codeblock')
-const handleActionsChange = createSettingsHandler('actions')
 const handleHeadingChange = createSettingsHandler('heading')
 const handleBackupChange = createSettingsHandler('backup')
 const handleDocumentFontChange = createSettingsHandler('documentFont')
@@ -150,7 +140,6 @@ const handleTabPinChange = createSettingsHandler('tabPin')
 
 defineExpose({
   handleCodeBlockChange,
-  handleActionsChange,
   handleHeadingChange,
   handleBackupChange,
   handleDocumentFontChange,

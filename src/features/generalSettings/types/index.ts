@@ -638,8 +638,122 @@ export class GeneralSettings {
   private applyCodeBlockStyleFromSettings(settings: any) {
     try {
       applyCodeBlockStyle(settings.style || 'default');
+
+      // 应用代码块样式增强
+      if (settings.enabled) {
+        this.applyCodeBlockEnhancedStyles(settings);
+      } else {
+        // 移除增强样式
+        const existingStyle = document.getElementById('codeblock-enhanced-style');
+        if (existingStyle) {
+          existingStyle.remove();
+        }
+      }
     } catch (error) {
       console.error('应用代码块样式失败:', error);
+    }
+  }
+
+  private applyCodeBlockEnhancedStyles(codeSettings: any) {
+    try {
+      // 移除现有样式
+      const existingStyle = document.getElementById('codeblock-enhanced-style');
+      if (existingStyle) {
+        existingStyle.remove();
+      }
+
+      if (!codeSettings.enabled) {
+        return;
+      }
+
+      // 创建新的样式元素
+      const style = document.createElement('style');
+      style.id = 'codeblock-enhanced-style';
+
+      style.textContent = `
+        /* 代码块基础样式 */
+        .protyle-wysiwyg .code-block {
+          background-color: ${codeSettings.backgroundColor} !important;
+          border: ${codeSettings.borderWidth}px solid ${codeSettings.borderColor} !important;
+          border-radius: ${codeSettings.borderRadius}px !important;
+          box-shadow: ${codeSettings.boxShadow !== 'none' ? codeSettings.boxShadow : 'none'} !important;
+        }
+
+        /* 代码块内容 */
+        .protyle-wysiwyg .code-block .hljs {
+          font-family: '${codeSettings.codeFontFamily}', monospace !important;
+          font-size: ${codeSettings.codeFontSize}px !important;
+          line-height: ${codeSettings.codeLineHeight} !important;
+          color: ${codeSettings.textColor} !important;
+        }
+
+        /* 行号样式 */
+        .protyle-wysiwyg .code-block .hljs .ln {
+          color: ${codeSettings.lineNumberColor} !important;
+          background-color: ${codeSettings.lineNumberBackground} !important;
+        }
+
+        ${codeSettings.showLineNumber ? '' : `
+        /* 隐藏行号 */
+        .protyle-wysiwyg .code-block .hljs .ln {
+          display: none !important;
+        }
+        `}
+
+        /* 代码高亮颜色 */
+        .protyle-wysiwyg .code-block .hljs-keyword,
+        .protyle-wysiwyg .code-block .hljs-selector-tag,
+        .protyle-wysiwyg .code-block .hljs-built_in,
+        .protyle-wysiwyg .code-block .hljs-name,
+        .protyle-wysiwyg .code-block .hljs-tag {
+          color: ${codeSettings.keywordColor} !important;
+        }
+
+        .protyle-wysiwyg .code-block .hljs-string,
+        .protyle-wysiwyg .code-block .hljs-title,
+        .protyle-wysiwyg .code-block .hljs-section,
+        .protyle-wysiwyg .code-block .hljs-attribute,
+        .protyle-wysiwyg .code-block .hljs-literal,
+        .protyle-wysiwyg .code-block .hljs-template-tag,
+        .protyle-wysiwyg .code-block .hljs-template-variable,
+        .protyle-wysiwyg .code-block .hljs-type {
+          color: ${codeSettings.stringColor} !important;
+        }
+
+        .protyle-wysiwyg .code-block .hljs-comment,
+        .protyle-wysiwyg .code-block .hljs-quote {
+          color: ${codeSettings.commentColor} !important;
+        }
+
+        .protyle-wysiwyg .code-block .hljs-function {
+          color: ${codeSettings.functionColor} !important;
+        }
+
+        .protyle-wysiwyg .code-block .hljs-number {
+          color: ${codeSettings.numberColor} !important;
+        }
+
+        /* 预览区域代码块 */
+        .b3-typography pre,
+        .b3-typography pre code {
+          font-family: '${codeSettings.codeFontFamily}', monospace !important;
+          font-size: ${codeSettings.codeFontSize}px !important;
+          line-height: ${codeSettings.codeLineHeight} !important;
+          background-color: ${codeSettings.backgroundColor} !important;
+          border: ${codeSettings.borderWidth}px solid ${codeSettings.borderColor} !important;
+          border-radius: ${codeSettings.borderRadius}px !important;
+          color: ${codeSettings.textColor} !important;
+        }
+
+        /* 暗色主题适配 */
+        :root[data-theme-mode="dark"] .protyle-wysiwyg .code-block {
+          box-shadow: ${codeSettings.boxShadow !== 'none' ? '0 2px 8px rgba(0, 0, 0, 0.3)' : 'none'} !important;
+        }
+      `;
+
+      document.head.appendChild(style);
+    } catch (error) {
+      console.error('应用代码块增强样式失败:', error);
     }
   }
 

@@ -313,32 +313,7 @@
         </div>
       </div>
 
-      <!-- 预览区域 -->
-      <div class="preview-section">
-        <div class="preview-toggle" @click="togglePreview">
-          <span class="preview-icon">{{ showPreview ? '👁️' : '👁️‍🗨️' }}</span>
-          <span>{{ i18n.preview || '预览效果' }}</span>
-          <span class="toggle-arrow" :class="{ expanded: showPreview }">▼</span>
-        </div>
-        <transition name="preview-expand">
-          <div v-show="showPreview" class="preview-content">
-            <div class="preview-box">
-              <div
-                v-for="level in 6"
-                :key="level"
-                class="preview-heading"
-                :class="`h${level}`"
-                :style="{
-                  color: headingColors[`h${level}`],
-                  fontSize: headingSizes[`h${level}`] + 'px'
-                }"
-              >
-                {{ i18n[`heading${level}Preview`] || `这是 H${level} 标题预览` }}
-              </div>
-            </div>
-          </div>
-        </transition>
-      </div>
+
     </div>
   </div>
 </template>
@@ -400,7 +375,6 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<Emits>()
 
 const selectedStyle = ref('default')
-const showPreview = ref(false)
 const headingColors = ref<HeadingColors>({ ...props.initialSettings })
 const levelDisplayStyle = ref('none')
 const customLevelMarkers = ref<string[]>(['1', '2', '3', '4', '5', '6'])
@@ -494,6 +468,12 @@ function applyStyle() {
   }
 }
 
+// 统一的设置变更处理函数
+function handleSettingsChange() {
+  applyToDocument()
+  autoSave()
+}
+
 // 颜色变化时检测是否为自定义
 function onColorChange() {
   let isCustom = true
@@ -511,77 +491,46 @@ function onColorChange() {
     selectedStyle.value = 'custom'
   }
   emit('change', headingColors.value)
-  applyToDocument()
-}
-
-// 字体大小变化处理
-function onFontSizeChange() {
-  applyToDocument()
-  autoSave()
+  handleSettingsChange()
 }
 
 // 应用到文档
 function applyToDocument() {
-  const style = document.getElementById('heading-colors-style') || document.createElement('style')
-  style.id = 'heading-colors-style'
+  let style = document.getElementById('heading-colors-style') as HTMLStyleElement | null
+  if (!style) {
+    style = document.createElement('style')
+    style.id = 'heading-colors-style'
+    document.head.appendChild(style)
+  }
 
-  // 颜色样式
-  const colorCss = Object.entries(headingColors.value)
+  // 颜色和字体大小样式合并生成
+  const headingStyles = Object.entries(headingColors.value)
     .map(([level, color]) => {
+      const size = headingSizes.value[level as keyof HeadingSizes]
       return `
         .protyle-wysiwyg [data-node-id].${level},
         .protyle-wysiwyg .${level},
         .b3-typography .${level} {
           color: ${color} !important;
+          font-size: ${size}px !important;
         }
       `
     })
     .join('\n')
 
-  // 字体大小样式（H1-H6）
-  const fontSizeCss = Object.entries(headingSizes.value)
-    .map(([level, size]) => `
-      .protyle-wysiwyg [data-node-id].${level},
-      .protyle-wysiwyg .${level},
-      .b3-typography .${level} {
-        font-size: ${size}px !important;
-      }
-    `)
-    .join('\n')
-
   // 层级显示样式
-  let levelCss = ''
-  if (levelDisplayStyle.value !== 'none') {
-    levelCss = generateLevelDisplayCss(levelDisplayStyle.value)
-  }
+  const levelCss = levelDisplayStyle.value !== 'none' ? generateLevelDisplayCss(levelDisplayStyle.value) : ''
 
-  // 标题居中样式（仅文档标题，不影响H1-H6）
-  const centerAlignCss = titleCenterAlign.value ? `
+  // 文档标题样式（合并居中、颜色、字体大小）
+  const titleStyles = `
     .protyle-title__input {
-      text-align: center !important;
-    }
-  ` : ''
-
-  // 文档标题颜色样式（独立于居中设置）
-  const titleColorCss = titleColor.value ? `
-    .protyle-title__input {
-      color: ${titleColor.value} !important;
-    }
-  ` : ''
-
-  // 文档标题字体大小样式
-  const titleFontSizeCss = `
-    .protyle-title__input {
+      ${titleCenterAlign.value ? 'text-align: center !important;' : ''}
+      ${titleColor.value ? `color: ${titleColor.value} !important;` : ''}
       font-size: ${titleFontSize.value}px !important;
     }
   `
 
-  style.textContent = colorCss + '\n' + fontSizeCss + '\n' + levelCss + '\n' + centerAlignCss + '\n' + titleColorCss + '\n' + titleFontSizeCss
-
-  if (!style.parentElement) {
-    document.head.appendChild(style)
-  }
-
+  style.textContent = headingStyles + '\n' + levelCss + '\n' + titleStyles
 }
 
 // 生成层级显示 CSS
@@ -624,45 +573,38 @@ function generateLevelDisplayCss(style: string): string {
 
 // 应用层级显示
 function applyLevelDisplay() {
-  applyToDocument()
-  autoSave()
+  handleSettingsChange()
 }
 
 // 应用标题居中
 function applyTitleCenterAlign() {
-  applyToDocument()
-  autoSave()
+  handleSettingsChange()
 }
 
 // 标题颜色变化处理
 function onTitleColorChange() {
-  applyToDocument()
-  autoSave()
+  handleSettingsChange()
 }
 
 // 标题字体大小变化处理
 function onTitleFontSizeChange() {
-  applyToDocument()
-  autoSave()
+  handleSettingsChange()
+}
+
+// H1-H6 标题字体大小变化处理
+function onFontSizeChange() {
+  handleSettingsChange()
 }
 
 // 重置标题颜色
 function resetTitleColor() {
   titleColor.value = defaultTitleColor
-  applyToDocument()
-  autoSave()
-}
-
-function togglePreview() {
-  showPreview.value = !showPreview.value
+  handleSettingsChange()
 }
 
 // 自动保存设置
 async function autoSave() {
-  if (!props.plugin) {
-    console.warn('插件实例不可用，无法保存设置')
-    return
-  }
+  if (!props.plugin) return
 
   try {
     const settingsToSave = {
@@ -676,13 +618,7 @@ async function autoSave() {
       titleFontSize: titleFontSize.value
     }
 
-    // 使用插件的数据存储 API
-    const success = await saveHeadingSettings(props.plugin, settingsToSave)
-
-    if (success) {
-    } else {
-      console.error('保存设置失败')
-    }
+    await saveHeadingSettings(props.plugin, settingsToSave)
   } catch (error) {
     console.error('保存失败:', error)
   }
@@ -714,56 +650,40 @@ async function loadSettings() {
 }
 
 // 初始化 - 在组件挂载后执行
-onMounted(() => {
-  loadSettings()
-  // 确保样式立即应用
-  setTimeout(() => {
-    applyToDocument()
-  }, 100)
+onMounted(async () => {
+  await loadSettings()
+  applyToDocument()
 })
 
-// 监听设置变化，自动保存
+// 监听颜色变化，自动保存
 watch(headingColors, (newColors) => {
   emit('change', newColors)
   autoSave()
 }, { deep: true })
 
 // 监听风格变化,自动保存
-watch(selectedStyle, () => {
-  autoSave()
-})
+watch(selectedStyle, autoSave)
 
-// 监听层级显示变化,自动保存并应用
-watch(levelDisplayStyle, (newValue, oldValue) => {
-  applyToDocument()
-  autoSave()
-})
+// 监听层级显示变化
+watch(levelDisplayStyle, handleSettingsChange)
 
-// 监听标题居中变化,自动保存并应用
-watch(titleCenterAlign, (newValue, oldValue) => {
-  applyToDocument()
-  autoSave()
-})
+// 监听标题居中变化
+watch(titleCenterAlign, handleSettingsChange)
 
-// 监听标题颜色变化,自动保存并应用
-watch(titleColor, (newValue, oldValue) => {
+// 监听标题颜色变化
+watch(titleColor, (newValue) => {
   if (titleCenterAlign.value) {
-    applyToDocument()
+    handleSettingsChange()
+  } else {
+    autoSave()
   }
-  autoSave()
 })
 
-// 监听字体大小变化,自动保存并应用
-watch(headingSizes, (newValue, oldValue) => {
-  applyToDocument()
-  autoSave()
-}, { deep: true })
+// 监听字体大小变化
+watch(headingSizes, handleSettingsChange, { deep: true })
 
-// 监听标题字体大小变化,自动保存并应用
-watch(titleFontSize, (newValue, oldValue) => {
-  applyToDocument()
-  autoSave()
-})
+// 监听标题字体大小变化
+watch(titleFontSize, handleSettingsChange)
 
 // 暴露方法
 defineExpose({
@@ -917,6 +837,7 @@ defineExpose({
 .color-text,
 .title-color-text {
   flex: 1;
+  min-width: 100px;
   padding: 6px 10px;
   border: 2px solid var(--b3-theme-outline);
   border-radius: 6px;
@@ -927,113 +848,11 @@ defineExpose({
   transition: all 0.2s ease;
 }
 
-.title-color-text {
-  min-width: 100px;
-}
-
 .color-text:focus,
 .title-color-text:focus {
   outline: none;
   border-color: var(--b3-theme-primary);
   box-shadow: 0 0 0 3px rgba(var(--b3-theme-primary-rgb), 0.1);
-}
-
-/* 预览区域 */
-.preview-section {
-  border: 2px solid var(--b3-theme-outline);
-  border-radius: 12px;
-  overflow: hidden;
-  background: var(--b3-theme-surface);
-}
-
-.preview-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: var(--b3-theme-surface-variant);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-weight: 500;
-  color: var(--b3-theme-on-surface);
-}
-
-.preview-toggle:hover {
-  background: var(--b3-theme-outline);
-}
-
-.preview-icon {
-  font-size: 16px;
-}
-
-.toggle-arrow {
-  margin-left: auto;
-  transition: transform 0.3s ease;
-  font-size: 12px;
-}
-
-.toggle-arrow.expanded {
-  transform: rotate(180deg);
-}
-
-.preview-expand-enter-active,
-.preview-expand-leave-active {
-  transition: all 0.3s ease;
-  overflow: hidden;
-}
-
-.preview-expand-enter-from,
-.preview-expand-leave-to {
-  max-height: 0;
-  opacity: 0;
-}
-
-.preview-expand-enter-to,
-.preview-expand-leave-from {
-  max-height: 400px;
-  opacity: 1;
-}
-
-.preview-content {
-  padding: 12px;
-  border-top: 1px solid var(--b3-theme-outline);
-}
-
-.preview-box {
-  padding: 12px;
-  background: var(--b3-theme-surface-variant);
-  border-radius: 8px;
-  border: 1px solid var(--b3-theme-outline);
-}
-
-.preview-heading {
-  margin: 8px 0;
-  font-weight: 600;
-  line-height: 1.3;
-}
-
-.preview-heading.h1 {
-  font-size: 28px;
-}
-
-.preview-heading.h2 {
-  font-size: 24px;
-}
-
-.preview-heading.h3 {
-  font-size: 20px;
-}
-
-.preview-heading.h4 {
-  font-size: 18px;
-}
-
-.preview-heading.h5 {
-  font-size: 16px;
-}
-
-.preview-heading.h6 {
-  font-size: 14px;
 }
 
 /* 层级显示提示 */
@@ -1120,16 +939,6 @@ defineExpose({
     grid-template-columns: 1fr;
     gap: 10px;
   }
-
-
-
-  /* 响应式预览标题大小 */
-  .preview-heading.h1 { font-size: 24px; }
-  .preview-heading.h2 { font-size: 20px; }
-  .preview-heading.h3 { font-size: 18px; }
-  .preview-heading.h4 { font-size: 16px; }
-  .preview-heading.h5 { font-size: 14px; }
-  .preview-heading.h6 { font-size: 13px; }
 }
 
 /* 标题居中设置样式 */
@@ -1195,8 +1004,6 @@ defineExpose({
   font-size: 12px;
   font-weight: 700;
   flex-shrink: 0;
-  /* 使用CSS变量替代硬编码颜色，提高主题兼容性 */
-  background: linear-gradient(135deg, var(--b3-theme-primary), var(--b3-theme-primary-hover));
 }
 
 /* H1-H6特定的微调（保持视觉区分） */
@@ -1279,17 +1086,21 @@ defineExpose({
 }
 
 /* 数字输入框 - 基础样式，支持两种尺寸 */
-.number-input {
-  width: 80px;
+.number-input,
+.number-input-mini {
   padding: 8px 12px;
   border: 2px solid var(--b3-theme-outline);
   border-radius: 6px;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
-  font-size: 13px;
   font-weight: 600;
   text-align: center;
   transition: all 0.2s ease;
+}
+
+.number-input {
+  width: 80px;
+  font-size: 13px;
 }
 
 .number-input-mini {
@@ -1297,14 +1108,9 @@ defineExpose({
   min-width: 48px;
   width: 100%;
   padding: 4px 6px;
-  border: 1px solid var(--b3-theme-outline);
+  border-width: 1px;
   border-radius: 4px;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
   font-size: 12px;
-  font-weight: 600;
-  text-align: center;
-  transition: all 0.2s ease;
 }
 
 /* 统一的输入框焦点和悬停状态 */

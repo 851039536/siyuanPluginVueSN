@@ -1031,6 +1031,47 @@
   }
 }
 
+/* 新增: 滑块按钮样式 */
+.slider-btn {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--b3-theme-outline);
+  border-radius: 4px;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  &:hover {
+    background: var(--b3-theme-surface-variant);
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+/* 新增: 滑块行容器 */
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+
+  .range-slider {
+    flex: 1;
+  }
+}
+
 /* 新增: 颜色预览效果 */
 .color-picker::-webkit-color-swatch-wrapper {
   padding: 0;

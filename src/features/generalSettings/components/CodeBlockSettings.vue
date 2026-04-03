@@ -104,6 +104,7 @@
             <div class="border-row">
               <label>{{ i18n.borderWidth || '边框宽度' }}</label>
               <div class="slider-container small">
+                <button class="slider-btn" @click="adjustValue('borderWidth', -0.5, 0, 5)">−</button>
                 <input
                   v-model.number="settings.borderWidth"
                   type="range"
@@ -113,12 +114,14 @@
                   class="range-slider"
                   @change="applySettings"
                 />
+                <button class="slider-btn" @click="adjustValue('borderWidth', 0.5, 0, 5)">+</button>
                 <span class="slider-value">{{ settings.borderWidth }}px</span>
               </div>
             </div>
             <div class="border-row">
               <label>{{ i18n.borderRadius || '圆角' }}</label>
               <div class="slider-container small">
+                <button class="slider-btn" @click="adjustValue('borderRadius', -1, 0, 20)">−</button>
                 <input
                   v-model.number="settings.borderRadius"
                   type="range"
@@ -128,6 +131,7 @@
                   class="range-slider"
                   @change="applySettings"
                 />
+                <button class="slider-btn" @click="adjustValue('borderRadius', 1, 0, 20)">+</button>
                 <span class="slider-value">{{ settings.borderRadius }}px</span>
               </div>
             </div>
@@ -236,6 +240,7 @@
             <div class="font-row">
               <label>{{ i18n.fontSize || '字体大小' }}</label>
               <div class="slider-container small">
+                <button class="slider-btn" @click="adjustValue('codeFontSize', -1, 10, 20)">−</button>
                 <input
                   v-model.number="settings.codeFontSize"
                   type="range"
@@ -245,12 +250,14 @@
                   class="range-slider"
                   @input="applySettings"
                 />
+                <button class="slider-btn" @click="adjustValue('codeFontSize', 1, 10, 20)">+</button>
                 <span class="slider-value">{{ settings.codeFontSize }}px</span>
               </div>
             </div>
             <div class="font-row">
               <label>{{ i18n.lineHeight || '行高' }}</label>
               <div class="slider-container small">
+                <button class="slider-btn" @click="adjustValue('codeLineHeight', -0.1, 1.2, 2.0)">−</button>
                 <input
                   v-model.number="settings.codeLineHeight"
                   type="range"
@@ -260,6 +267,7 @@
                   class="range-slider"
                   @input="applySettings"
                 />
+                <button class="slider-btn" @click="adjustValue('codeLineHeight', 0.1, 1.2, 2.0)">+</button>
                 <span class="slider-value">{{ settings.codeLineHeight }}</span>
               </div>
             </div>
@@ -394,14 +402,18 @@
             <span class="setting-value">{{ settings.collapseHeight }}px</span>
           </label>
           <div class="slider-container">
-            <input
-              v-model.number="settings.collapseHeight"
-              type="range"
-              min="200"
-              max="800"
-              step="50"
-              class="range-slider"
-            />
+            <div class="slider-row">
+              <button class="slider-btn" @click="adjustValue('collapseHeight', -50, 200, 800)">−</button>
+              <input
+                v-model.number="settings.collapseHeight"
+                type="range"
+                min="200"
+                max="800"
+                step="50"
+                class="range-slider"
+              />
+              <button class="slider-btn" @click="adjustValue('collapseHeight', 50, 200, 800)">+</button>
+            </div>
             <div class="slider-labels">
               <span>200px</span>
               <span>800px</span>
@@ -551,6 +563,12 @@ function applyPresetCodeFont() {
 function applySettings() {
   // 设置会通过 watch 自动应用和保存
   // 这个函数只是为了显式触发更新
+}
+
+function adjustValue(key: keyof CodeBlockSettings, delta: number, min: number, max: number) {
+  const currentValue = settings.value[key] as number
+  const newValue = Math.max(min, Math.min(max, currentValue + delta))
+  settings.value[key] = newValue as any
 }
 
 function applyCodeBlockEnhancedStyles(codeSettings: CodeBlockSettings) {

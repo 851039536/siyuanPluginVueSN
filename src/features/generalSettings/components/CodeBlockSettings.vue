@@ -404,126 +404,6 @@
           </div>
         </div>
       </div>
-      <!-- 预览区域 -->
-      <div class="preview-section">
-        <div class="preview-toggle" @click="togglePreview">
-          <span class="preview-icon">{{ showPreview ? '👁️' : '👁️‍🗨️' }}</span>
-          <span>{{ i18n.preview || '预览效果' }}</span>
-          <span class="toggle-arrow" :class="{ expanded: showPreview }">▼</span>
-        </div>
-        <transition name="preview-expand">
-          <div v-show="showPreview" class="preview-content">
-            <div class="preview-box" :class="`style-${settings.style}`">
-              <!-- Mac 风格头部 -->
-              <div v-if="settings.style === 'mac'" class="mac-header">
-                <div class="mac-buttons">
-                  <span class="mac-btn close"></span>
-                  <span class="mac-btn minimize"></span>
-                  <span class="mac-btn maximize"></span>
-                </div>
-                <div class="mac-title">JavaScript</div>
-              </div>
-              <!-- GitHub 风格头部 -->
-              <div v-if="settings.style === 'github'" class="github-header">
-                <span class="github-lang">JavaScript</span>
-              </div>
-              <!-- 卡通风格头部 -->
-              <div v-if="settings.style === 'cartoon'" class="cartoon-header">
-                <div class="cartoon-decoration">
-                  <span class="cartoon-dot" style="background: #ff6b9d"></span>
-                  <span class="cartoon-dot" style="background: #feca57"></span>
-                  <span class="cartoon-dot" style="background: #48dbfb"></span>
-                  <span class="cartoon-dot" style="background: #1dd1a1"></span>
-                </div>
-                <div class="cartoon-title">✨ JavaScript ✨</div>
-              </div>
-              <!-- 代码内容 - 所有风格共用 -->
-              <div class="code-content" :style="{ maxHeight: settings.enableCollapse ? settings.collapseHeight + 'px' : 'none', overflow: settings.enableCollapse ? 'hidden' : 'auto' }">
-                <div class="code-line">
-                  <span class="line-number">1</span>
-                  <span class="code-text">
-                    <span class="keyword">function</span> <span class="function">greet</span><span class="punctuation">(</span><span class="parameter">name</span><span class="punctuation">)</span> <span class="punctuation">{</span>
-                  </span>
-                </div>
-                <div class="code-line">
-                  <span class="line-number">2</span>
-                  <span class="code-text">
-                    <span class="indent">  </span><span class="keyword">const</span> <span class="variable">message</span> <span class="operator">=</span> <span class="string">`Hello, ${name}!`</span><span class="punctuation">;</span>
-                  </span>
-                </div>
-                <div class="code-line">
-                  <span class="line-number">3</span>
-                  <span class="code-text">
-                    <span class="indent">  </span><span class="variable">console</span><span class="punctuation">.</span><span class="method">log</span><span class="punctuation">(</span><span class="variable">message</span><span class="punctuation">);</span>
-                  </span>
-                </div>
-                <div class="code-line">
-                  <span class="line-number">4</span>
-                  <span class="code-text">
-                    <span class="indent">  </span><span class="keyword">return</span> <span class="boolean">true</span><span class="punctuation">;</span>
-                  </span>
-                </div>
-                <div class="code-line">
-                  <span class="line-number">5</span>
-                  <span class="code-text">
-                    <span class="indent">  </span><span class="keyword">return</span> <span class="boolean">false</span><span class="punctuation">;</span>
-                  </span>
-                </div>
-                <div class="code-line">
-                  <span class="line-number">6</span>
-                  <span class="code-text">
-                    <span class="indent">  </span><span class="keyword">return</span> <span class="boolean">null</span><span class="punctuation">;</span>
-                  </span>
-                </div>
-                <div class="code-line">
-                  <span class="line-number">7</span>
-                  <span class="code-text">
-                    <span class="indent">  </span><span class="keyword">return</span> <span class="boolean">undefined</span><span class="punctuation">;</span>
-                  </span>
-                </div>
-                <div class="code-line">
-                  <span class="line-number">8</span>
-                  <span class="code-text">
-                    <span class="indent">  </span><span class="keyword">return</span> <span class="string">""</span><span class="punctuation">;</span>
-                  </span>
-                </div>
-                <div class="code-line">
-                  <span class="line-number">9</span>
-                  <span class="code-text">
-                    <span class="indent">  </span><span class="keyword">return</span> <span class="number">0</span><span class="punctuation">;</span>
-                  </span>
-                </div>
-                <div class="code-line">
-                  <span class="line-number">10</span>
-                  <span class="code-text">
-                    <span class="indent">  </span><span class="keyword">return</span> <span class="punctuation">[]</span><span class="punctuation">;</span>
-                  </span>
-                </div>
-                <div class="code-line">
-                  <span class="line-number">11</span>
-                  <span class="code-text">
-                    <span class="indent">  </span><span class="keyword">return</span> <span class="punctuation">{}</span><span class="punctuation">;</span>
-                  </span>
-                </div>
-                <div class="code-line">
-                  <span class="line-number">12</span>
-                  <span class="code-text">
-                    <span class="punctuation">}</span>
-                  </span>
-                </div>
-              </div>
-              <!-- 折叠预览指示器 -->
-              <div v-if="settings.enableCollapse" class="collapse-preview-indicator">
-                <span class="collapse-text">{{ i18n.collapsePreview || '折叠预览' }}</span>
-                <span class="collapse-height">{{ settings.collapseHeight }}px</span>
-              </div>
-            </div>
-            <div class="preview-info">
-              <span class="info-item">{{ getStyleName(settings.style) }}</span>
-            </div>
-          </div>
-        </transition>
-      </div>
     </div>
   </div>
 </template>
@@ -602,7 +482,6 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<Emits>()
 
 const settings = ref<CodeBlockSettings>({ ...props.initialSettings })
-const showPreview = ref(true)
 const presetCodeFont = ref('')
 
 const DEFAULT_SETTINGS: CodeBlockSettings = {
@@ -759,10 +638,6 @@ function applyCodeBlockEnhancedStyles(codeSettings: CodeBlockSettings) {
   } catch (error) {
     console.error('应用代码块增强样式失败:', error)
   }
-}
-
-function togglePreview() {
-  showPreview.value = !showPreview.value
 }
 
 function getStyleName(style: string): string {

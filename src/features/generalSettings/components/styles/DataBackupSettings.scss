@@ -237,7 +237,24 @@ $transition: all 0.15s ease;
 .settings-form {
   display: flex;
   flex-direction: column;
-  gap: 0.625rem;
+  gap: 0.5rem;
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  .form-label {
+    min-width: 4.5rem;
+    margin: 0;
+  }
+
+  .form-select,
+  .form-input {
+    flex: 1;
+    max-width: 8rem;
+  }
 }
 
 .form-item {

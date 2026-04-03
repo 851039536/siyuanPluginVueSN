@@ -782,7 +782,7 @@ defineExpose({
   background: var(--b3-theme-surface-variant);
   border-radius: 6px;
   transition: all 0.2s ease;
-  
+
   &:hover {
     background: rgba(var(--b3-theme-primary-rgb), 0.08);
   }
@@ -818,7 +818,7 @@ defineExpose({
   transition: all 0.2s ease;
   background: transparent;
   flex-shrink: 0;
-  
+
   &:hover {
     border-color: var(--b3-theme-primary);
   }
@@ -836,7 +836,7 @@ defineExpose({
   font-weight: 500;
   text-transform: uppercase;
   transition: all 0.2s ease;
-  
+
   &:focus {
     outline: none;
     border-color: var(--b3-theme-primary);

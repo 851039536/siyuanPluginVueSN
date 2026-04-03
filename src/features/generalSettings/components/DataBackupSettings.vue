@@ -640,6 +640,10 @@ function startAutoBackupTimer() {
 
   if (!autoBackupEnabled.value) return
 
+  // 记录上次执行的时间点，用于防止同一时间点重复执行
+  let lastExecutedHour = -1  // 用于每小时模式
+  let lastExecutedDateStr = '' // 用于每天模式
+
   // 检查是否需要执行备份
   const checkAndBackup = async () => {
     // 确保有工作区路径
@@ -650,10 +654,42 @@ function startAutoBackupTimer() {
 
     const now = new Date()
     const currentTime = now.getTime()
-    const interval = getBackupInterval()
+    const currentHour = now.getHours()
+    const currentMinute = now.getMinutes()
+    const currentDateStr = now.toDateString()
 
-    // 如果距离上次备份时间超过间隔，则执行备份
-    if (currentTime - lastBackupTimestamp >= interval) {
+    let shouldBackup = false
+
+    switch (backupFrequency.value) {
+      case 'minute':
+        // 每分钟：距离上次备份超过1分钟就执行
+        if (currentTime - lastBackupTimestamp >= 60 * 1000) {
+          shouldBackup = true
+        }
+        break
+
+      case 'hourly':
+        // 每小时：在整点执行（分钟数为0时触发）
+        if (currentMinute === 0 && lastExecutedHour !== currentHour) {
+          shouldBackup = true
+          lastExecutedHour = currentHour
+        }
+        break
+
+      case 'daily':
+        // 每天：在用户指定的时间点执行
+        const [targetHour, targetMinute] = backupTime.value.split(':').map(Number)
+        if (currentHour === targetHour &&
+            currentMinute === targetMinute &&
+            lastExecutedDateStr !== currentDateStr) {
+          shouldBackup = true
+          lastExecutedDateStr = currentDateStr
+        }
+        break
+    }
+
+    if (shouldBackup) {
+      console.log(`[自动备份] 触发备份，频率: ${backupFrequency.value}, 时间: ${now.toLocaleString()}`)
       await performBackup()
     }
   }
@@ -669,20 +705,6 @@ function stopAutoBackupTimer() {
   if (autoBackupTimer) {
     clearInterval(autoBackupTimer)
     autoBackupTimer = null
-  }
-}
-
-// 获取备份间隔（毫秒）
-function getBackupInterval(): number {
-  switch (backupFrequency.value) {
-    case 'minute':
-      return 60 * 1000 // 1 分钟
-    case 'hourly':
-      return 60 * 60 * 1000 // 1 小时
-    case 'daily':
-      return 24 * 60 * 60 * 1000 // 1 天
-    default:
-      return 24 * 60 * 60 * 1000
   }
 }
 

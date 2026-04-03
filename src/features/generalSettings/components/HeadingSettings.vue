@@ -290,25 +290,28 @@
       </div>
 
       <!-- 标题颜色设置 -->
-      <div class="heading-colors">
-        <div v-for="level in 6" :key="level" class="color-item">
-          <label class="color-label">
-            <span class="heading-icon">H{{ level }}</span>
-            <span class="heading-text">{{ i18n[`heading${level}`] || `标题 ${level}` }}</span>
+      <div class="setting-row">
+        <div class="setting-item">
+          <label class="setting-label">
+            <span class="label-icon">🎨</span>
+            {{ i18n.headingColors || '标题颜色' }}
           </label>
-          <div class="color-input-group">
-            <input
-              v-model="headingColors[`h${level}`]"
-              type="color"
-              class="color-picker"
-              @change="onColorChange"
-            />
-            <input
-              v-model="headingColors[`h${level}`]"
-              type="text"
-              class="color-text"
-              @change="onColorChange"
-            />
+          <div class="heading-colors">
+            <div v-for="level in 6" :key="level" class="color-item-compact">
+              <span class="heading-badge" :class="`heading-badge-h${level}`">H{{ level }}</span>
+              <input
+                v-model="headingColors[`h${level}`]"
+                type="color"
+                class="color-picker-mini"
+                @change="onColorChange"
+              />
+              <input
+                v-model="headingColors[`h${level}`]"
+                type="text"
+                class="color-text-mini"
+                @change="onColorChange"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -763,44 +766,82 @@ defineExpose({
   box-shadow: 0 0 0 3px rgba(var(--b3-theme-primary-rgb), 0.1);
 }
 
-/* 标题颜色设置 */
+/* 标题颜色设置 - 3列紧凑布局 */
 .heading-colors {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 4px;
 }
 
-.color-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.color-label {
+.color-item-compact {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--b3-theme-on-surface);
+  padding: 8px;
+  background: var(--b3-theme-surface-variant);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: rgba(var(--b3-theme-primary-rgb), 0.08);
+  }
 }
 
-/* 标题图标 - 基础样式 */
-.heading-icon {
-  display: inline-flex;
+.heading-badge {
+  min-width: 32px;
+  height: 24px;
+  display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 20px;
-  background: var(--b3-theme-primary);
-  color: var(--b3-theme-on-primary);
   border-radius: 4px;
   font-size: 11px;
   font-weight: 700;
+  color: var(--b3-theme-on-primary);
+  flex-shrink: 0;
 }
 
-.heading-text {
-  font-size: 12px;
+/* H1-H6徽章颜色 */
+.heading-badge-h1 { background: linear-gradient(135deg, #F39A94, #E57373); }
+.heading-badge-h2 { background: linear-gradient(135deg, #F8D694, #FFB74D); }
+.heading-badge-h3 { background: linear-gradient(135deg, #B1DCB9, #81C784); }
+.heading-badge-h4 { background: linear-gradient(135deg, #AAD2FC, #64B5F6); }
+.heading-badge-h5 { background: linear-gradient(135deg, #AC9DC0, #9575CD); }
+.heading-badge-h6 { background: linear-gradient(135deg, #D7D7D7, #9E9E9E); }
+
+.color-picker-mini {
+  width: 36px;
+  height: 28px;
+  border: 2px solid var(--b3-theme-outline);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+  flex-shrink: 0;
+  
+  &:hover {
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+.color-text-mini {
+  flex: 1;
+  min-width: 60px;
+  padding: 4px 8px;
+  border: 2px solid var(--b3-theme-outline);
+  border-radius: 6px;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+  
+  &:focus {
+    outline: none;
+    border-color: var(--b3-theme-primary);
+    box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.1);
+  }
 }
 
 /* 颜色输入组 - 统一样式 */
@@ -936,8 +977,13 @@ defineExpose({
   }
 
   .heading-colors {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 320px) {
+  .heading-colors {
     grid-template-columns: 1fr;
-    gap: 10px;
   }
 }
 

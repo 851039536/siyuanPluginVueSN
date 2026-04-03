@@ -45,18 +45,15 @@
           <span class="section-icon">📦</span>
           <h4>{{ i18n.manualBackup || '手动备份' }}</h4>
         </div>
-        <div class="backup-actions">
-          <button
-            @click="performBackup"
-            class="backup-btn primary"
-            :disabled="isBackingUp"
-          >
-            <span v-if="isBackingUp" class="loading-spinner"></span>
-            <span v-else class="btn-icon">📀</span>
-            <span class="btn-text">{{ i18n.backupNow || '立即备份' }}</span>
-          </button>
-          <p class="backup-hint">{{ i18n.backupHint || '备份将保存为 data-年月日-时分秒.zip 格式' }}</p>
-        </div>
+        <button
+          @click="performBackup"
+          class="backup-btn primary"
+          :disabled="isBackingUp"
+        >
+          <span v-if="isBackingUp" class="loading-spinner"></span>
+          <span v-else>📀</span>
+          <span>{{ i18n.backupNow || '立即备份' }}</span>
+        </button>
       </div>
 
       <!-- 自动备份设置 -->
@@ -66,7 +63,7 @@
           <h4>{{ i18n.autoBackupSettings || '自动备份设置' }}</h4>
         </div>
         <div class="settings-form">
-          <div class="form-item">
+          <div class="form-row">
             <label class="form-label">{{ i18n.autoBackup || '自动备份' }}</label>
             <select v-model="autoBackupEnabled" class="form-select" @change="saveSettings">
               <option :value="false">{{ i18n.disabled || '禁用' }}</option>
@@ -74,37 +71,38 @@
             </select>
           </div>
 
-          <div v-if="autoBackupEnabled" class="form-item">
-            <label class="form-label">{{ i18n.backupFrequency || '备份频率' }}</label>
-            <select v-model="backupFrequency" class="form-select" @change="saveSettings">
-              <option value="minute">{{ i18n.everyMinute || '每分钟' }}</option>
-              <option value="hourly">{{ i18n.everyHour || '每小时' }}</option>
-              <option value="daily">{{ i18n.everyDay || '每天' }}</option>
-            </select>
-          </div>
+          <template v-if="autoBackupEnabled">
+            <div class="form-row">
+              <label class="form-label">{{ i18n.backupFrequency || '备份频率' }}</label>
+              <select v-model="backupFrequency" class="form-select" @change="saveSettings">
+                <option value="minute">{{ i18n.everyMinute || '每分钟' }}</option>
+                <option value="hourly">{{ i18n.everyHour || '每小时' }}</option>
+                <option value="daily">{{ i18n.everyDay || '每天' }}</option>
+              </select>
+            </div>
 
-          <div v-if="autoBackupEnabled && backupFrequency === 'daily'" class="form-item">
-            <label class="form-label">{{ i18n.backupTime || '备份时间' }}</label>
-            <input
-              type="time"
-              v-model="backupTime"
-              class="form-input"
-              @change="saveSettings"
-            />
-          </div>
+            <div v-if="backupFrequency === 'daily'" class="form-row">
+              <label class="form-label">{{ i18n.backupTime || '备份时间' }}</label>
+              <input
+                type="time"
+                v-model="backupTime"
+                class="form-input"
+                @change="saveSettings"
+              />
+            </div>
 
-          <div v-if="autoBackupEnabled" class="form-item">
-            <label class="form-label">{{ i18n.keepBackups || '保留备份数' }}</label>
-            <input
-              type="number"
-              v-model="keepBackupCount"
-              class="form-input small"
-              min="1"
-              max="30"
-              @change="saveSettings"
-            />
-            <span class="form-hint">{{ i18n.keepBackupsHint || '个备份文件，超出将自动删除最旧的' }}</span>
-          </div>
+            <div class="form-row">
+              <label class="form-label">{{ i18n.keepBackups || '保留备份数' }}</label>
+              <input
+                type="number"
+                v-model="keepBackupCount"
+                class="form-input small"
+                min="1"
+                max="30"
+                @change="saveSettings"
+              />
+            </div>
+          </template>
         </div>
       </div>
 

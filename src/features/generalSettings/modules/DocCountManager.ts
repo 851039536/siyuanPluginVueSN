@@ -1,10 +1,9 @@
 /**
  * 笔记本文档数统计管理器
- * 用于在笔记本列表中显示文档数量，并支持右键菜单查看文件夹文档数
+ * 用于在笔记本列表中显示文档数量
  */
 export class DocCountManager {
   private updateTimer: number | null = null
-  private contextMenuObserver: MutationObserver | null = null
   private updateInterval = 3600000 // 默认1小时
 
   /**
@@ -13,7 +12,6 @@ export class DocCountManager {
   public start(): void {
     this.setBoxCount()
     this.startAutoUpdate()
-    this.observeContextMenu()
   }
 
   /**
@@ -21,7 +19,6 @@ export class DocCountManager {
    */
   public stop(): void {
     this.stopAutoUpdate()
-    this.stopContextMenuObserver()
     this.clearAllCounts()
   }
 
@@ -79,89 +76,6 @@ export class DocCountManager {
   }
 
   /**
-   * 监听右键菜单，动态显示文件夹的文档数
-   */
-  private observeContextMenu(): void {
-    const treeSelector = this.isMobile() ? '#sidebar .b3-list--mobile' : '.sy__file'
-    
-    this.whenElementExist(treeSelector).then((fileTree) => {
-      if (!fileTree) return
-
-      const onMenuShow = async (event: Event) => {
-        const target = event.target as HTMLElement
-        const currLi = target.closest<HTMLElement>(
-          'li.b3-list-item:not([data-type="navigation-root"],[data-count="0"])'
-        )
-        if (!currLi) return
-
-        // 关闭上次的菜单，防止2个菜单冲突
-        document.body.click()
-
-        this.whenElementExist('button[data-id="rename"]').then(async (renameBtn) => {
-          if (!renameBtn) return
-          
-          const html = `<button data-id="docNums" class="b3-menu__item"><svg class="b3-menu__icon " style=""><use xlink:href="#iconList"></use></svg><span class="b3-menu__label">显示文档数</span></button>`
-          renameBtn.insertAdjacentHTML('afterend', html)
-          
-          const docNumBtn = renameBtn.parentElement?.querySelector<HTMLButtonElement>('button[data-id="docNums"]')
-          if (!docNumBtn) return
-          
-          docNumBtn.onclick = async () => {
-            const nodeId = currLi.dataset.nodeId
-            if (!nodeId) return
-            
-            const response = await this.query(
-              `SELECT count(*) as count FROM blocks where path like '%/${nodeId}%' and type = 'd' and id != '${nodeId}';`
-            )
-            if (!response[0] || !response[0]['count']) {
-              document.body.click()
-              return
-            }
-            
-            const count = response[0]['count']
-            const boxText = currLi.querySelector('span.b3-list-item__text')
-            if (!boxText) return
-            
-            const text = boxText.textContent?.replace(/\s*\(\d+\)$/, '') || ''
-            boxText.textContent = text + ` (${count})`
-            document.body.click()
-          }
-        })
-      }
-
-      if (this.isMobile()) {
-        // 监听手机版更多按钮被单击
-        fileTree.addEventListener('touchend', (event: Event) => {
-          const target = event.target as HTMLElement
-          if (target.closest('span[data-type="more-file"]')) {
-            onMenuShow(event)
-          }
-        })
-      } else {
-        // 监听桌面版更多按钮被单击
-        fileTree.addEventListener('mouseup', (event: Event) => {
-          const target = event.target as HTMLElement
-          if (target.closest('span[data-type="more-file"]')) {
-            onMenuShow(event)
-          }
-        })
-        // 监听文档树右键事件
-        fileTree.addEventListener('contextmenu', onMenuShow)
-      }
-    })
-  }
-
-  /**
-   * 停止右键菜单观察器
-   */
-  private stopContextMenuObserver(): void {
-    if (this.contextMenuObserver) {
-      this.contextMenuObserver.disconnect()
-      this.contextMenuObserver = null
-    }
-  }
-
-  /**
    * 清除所有文档数显示
    */
   private clearAllCounts(): void {
@@ -210,24 +124,4 @@ export class DocCountManager {
     }
   }
 
-  /**
-   * 判断是否为移动端
-   */
-  private isMobile(): boolean {
-    return !!document.getElementById('sidebar')
-  }
-
-  /**
-   * 等待元素出现
-   */
-  private whenElementExist(selector: string, node?: Element): Promise<Element | null> {
-    return new Promise((resolve) => {
-      const check = () => {
-        const el = (node || document).querySelector(selector)
-        if (el) resolve(el)
-        else requestAnimationFrame(check)
-      }
-      check()
-    })
-  }
 }

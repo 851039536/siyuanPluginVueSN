@@ -20,7 +20,6 @@
       </div>
       <ul class="description-list">
         <li>{{ i18n?.docCountFeature1 || '在笔记本列表中显示每个笔记本的文档数量' }}</li>
-        <li>{{ i18n?.docCountFeature2 || '右键菜单可查看文件夹的子文档数量' }}</li>
         <li>{{ i18n?.docCountFeature3 || '支持手机端和桌面端' }}</li>
         <li>{{ i18n?.docCountFeature4 || '每小时自动更新笔记本文档数' }}</li>
       </ul>

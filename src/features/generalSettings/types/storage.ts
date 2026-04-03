@@ -43,6 +43,28 @@ export interface CodeBlockSettings {
   style: 'default' | 'github' | 'mac' | 'cartoon';
   enableCollapse: boolean;
   collapseHeight: number;
+  // 样式增强
+  enabled: boolean;
+  backgroundColor: string;
+  borderColor: string;
+  borderWidth: number;
+  borderRadius: number;
+  boxShadow: string;
+  // 行号样式
+  lineNumberColor: string;
+  lineNumberBackground: string;
+  showLineNumber: boolean;
+  // 代码字体
+  codeFontFamily: string;
+  codeFontSize: number;
+  codeLineHeight: number;
+  // 代码颜色
+  textColor: string;
+  keywordColor: string;
+  stringColor: string;
+  commentColor: string;
+  functionColor: string;
+  numberColor: string;
 }
 
 export interface HeadingColors {

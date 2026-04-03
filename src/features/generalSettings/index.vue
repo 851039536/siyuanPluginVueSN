@@ -53,6 +53,10 @@
         <div v-show="activeCategory === 'listStyle'" class="content-section">
           <ListStyleSettings :i18n="i18n" :plugin="plugin" @change="handleListStyleChange" />
         </div>
+
+        <div v-show="activeCategory === 'tabPin'" class="content-section">
+          <TabPinSettings :i18n="i18n" :plugin="plugin" @change="handleTabPinChange" />
+        </div>
       </div>
     </div>
   </div>
@@ -70,6 +74,7 @@ import DataBackupSettings from './components/DataBackupSettings.vue'
 import DocumentFontSettings from './components/DocumentFontSettings.vue'
 import TableStyleSettings from './components/TableStyleSettings.vue'
 import ListStyleSettings from './components/ListStyleSettings.vue'
+import TabPinSettings from './components/TabPinSettings.vue'
 
 interface Props {
   i18n?: any
@@ -111,6 +116,10 @@ const categories = computed(() => [
     label: props.i18n.listStyleSettings || '列表样式'
   },
   {
+    id: 'tabPin',
+    label: props.i18n.tabPinSettings || '钉住页签'
+  },
+  {
     id: 'encryption',
     label: props.i18n.encryptionSettings || '加密设置'
   },
@@ -137,6 +146,7 @@ const handleBackupChange = createSettingsHandler('backup')
 const handleDocumentFontChange = createSettingsHandler('documentFont')
 const handleTableStyleChange = createSettingsHandler('tableStyle')
 const handleListStyleChange = createSettingsHandler('listStyle')
+const handleTabPinChange = createSettingsHandler('tabPin')
 
 defineExpose({
   handleCodeBlockChange,
@@ -145,7 +155,8 @@ defineExpose({
   handleBackupChange,
   handleDocumentFontChange,
   handleTableStyleChange,
-  handleListStyleChange
+  handleListStyleChange,
+  handleTabPinChange
 })
 </script>
 

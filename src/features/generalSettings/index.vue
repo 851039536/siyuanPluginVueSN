@@ -53,6 +53,10 @@
         <div v-show="activeCategory === 'tabPin'" class="content-section">
           <TabPinSettings :i18n="i18n" :plugin="plugin" @change="handleTabPinChange" />
         </div>
+
+        <div v-show="activeCategory === 'docCount'" class="content-section">
+          <DocCountSettings :i18n="i18n" :plugin="plugin" @change="handleDocCountChange" />
+        </div>
       </div>
     </div>
   </div>
@@ -70,6 +74,7 @@ import DocumentFontSettings from './components/DocumentFontSettings.vue'
 import TableStyleSettings from './components/TableStyleSettings.vue'
 import ListStyleSettings from './components/ListStyleSettings.vue'
 import TabPinSettings from './components/TabPinSettings.vue'
+import DocCountSettings from './components/DocCountSettings.vue'
 
 interface Props {
   i18n?: any
@@ -121,6 +126,10 @@ const categories = computed(() => [
   {
     id: 'backup',
     label: props.i18n.dataBackup || '数据备份'
+  },
+  {
+    id: 'docCount',
+    label: props.i18n.docCountSettings || '文档数统计'
   }
 ])
 
@@ -137,6 +146,7 @@ const handleDocumentFontChange = createSettingsHandler('documentFont')
 const handleTableStyleChange = createSettingsHandler('tableStyle')
 const handleListStyleChange = createSettingsHandler('listStyle')
 const handleTabPinChange = createSettingsHandler('tabPin')
+const handleDocCountChange = createSettingsHandler('docCount')
 
 defineExpose({
   handleCodeBlockChange,
@@ -145,7 +155,8 @@ defineExpose({
   handleDocumentFontChange,
   handleTableStyleChange,
   handleListStyleChange,
-  handleTabPinChange
+  handleTabPinChange,
+  handleDocCountChange
 })
 </script>
 

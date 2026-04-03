@@ -20,6 +20,36 @@
         </div>
       </div>
 
+      <!-- 显示模式选项 -->
+      <div v-if="enabled" class="setting-row">
+        <div class="setting-item">
+          <label class="setting-label">
+            <span class="label-icon">👁️</span>
+            {{ i18n.tabPinDisplayMode || '显示模式' }}
+          </label>
+          <div class="display-mode-options">
+            <label class="radio-item">
+              <input
+                v-model="displayMode"
+                type="radio"
+                value="iconAndText"
+                @change="onDisplayModeChange"
+              />
+              <span class="radio-label">{{ i18n.iconAndText || '图标 + 标题' }}</span>
+            </label>
+            <label class="radio-item">
+              <input
+                v-model="displayMode"
+                type="radio"
+                value="textOnly"
+                @change="onDisplayModeChange"
+              />
+              <span class="radio-label">{{ i18n.textOnly || '仅标题' }}</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
       <!-- 页签设置选项 -->
       <div v-if="enabled" class="setting-row">
         <div class="setting-item">
@@ -120,6 +150,7 @@ const defaultBackgroundColor = 'rgba(var(--b3-theme-primary-rgb), 0.1)'
 
 // 状态
 const enabled = ref(true)
+const displayMode = ref<'iconAndText' | 'textOnly'>('iconAndText')
 const textColor = ref(defaultTextColor)
 const backgroundColor = ref(defaultBackgroundColor)
 
@@ -139,20 +170,33 @@ function applyToDocument() {
   }
 
   if (enabled.value) {
-    const css = `
-      /* 钉住页签：同时显示图标和标题 */
+    let css = `
+      /* 钉住页签：显示标题文本 */
       .layout-tab-bar .item.item--pin .item__text {
         width: auto !important;
         max-width: none !important;
         display: flex !important;
       }
-      
+    `
+
+    // 根据显示模式添加不同的样式
+    if (displayMode.value === 'textOnly') {
+      css += `
+        /* 仅显示标题：隐藏图标 */
+        .layout-tab-bar .item.item--pin .item__icon {
+          display: none !important;
+        }
+      `
+    }
+
+    css += `
       /* 钉住页签：应用自定义颜色 */
       .layout-tab-bar .item.item--pin {
         ${textColor.value !== defaultTextColor ? `color: ${textColor.value} !important;` : ''}
         ${backgroundColor.value !== defaultBackgroundColor ? `background: ${backgroundColor.value} !important;` : ''}
       }
     `
+
     style.textContent = css
   } else {
     // 禁用时移除所有样式
@@ -162,6 +206,11 @@ function applyToDocument() {
 
 // 启用状态变化
 function onEnabledChange() {
+  handleSettingsChange()
+}
+
+// 显示模式变化
+function onDisplayModeChange() {
   handleSettingsChange()
 }
 
@@ -194,6 +243,7 @@ async function autoSave() {
   try {
     const settingsToSave = {
       enabled: enabled.value,
+      displayMode: displayMode.value,
       textColor: textColor.value,
       backgroundColor: backgroundColor.value
     }
@@ -216,6 +266,7 @@ async function loadSettings() {
     const settings = await loadTabPinSettings(props.plugin)
 
     enabled.value = settings.enabled ?? true
+    displayMode.value = settings.displayMode || 'iconAndText'
     textColor.value = settings.textColor || defaultTextColor
     backgroundColor.value = settings.backgroundColor || defaultBackgroundColor
 
@@ -232,6 +283,7 @@ onMounted(async () => {
 
 // 监听变化，自动保存
 watch(enabled, handleSettingsChange)
+watch(displayMode, handleSettingsChange)
 watch(textColor, handleSettingsChange)
 watch(backgroundColor, handleSettingsChange)
 
@@ -239,6 +291,7 @@ watch(backgroundColor, handleSettingsChange)
 defineExpose({
   loadSettings,
   enabled,
+  displayMode,
   textColor,
   backgroundColor
 })
@@ -299,6 +352,41 @@ defineExpose({
 }
 
 .toggle-label {
+  font-size: 13px;
+  color: var(--b3-theme-on-surface);
+  user-select: none;
+}
+
+/* 显示模式选项 */
+.display-mode-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.radio-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 6px 10px;
+  background: var(--b3-theme-surface-variant);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.radio-item:hover {
+  background: rgba(var(--b3-theme-primary-rgb), 0.08);
+}
+
+.radio-item input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.radio-label {
   font-size: 13px;
   color: var(--b3-theme-on-surface);
   user-select: none;

@@ -561,6 +561,7 @@ export async function saveTextDiffSettings(plugin: Plugin, settings: TextDiffSet
  */
 export interface TabPinSettings {
   enabled: boolean           // 是否启用钉住页签优化
+  displayMode: 'iconAndText' | 'textOnly'  // 显示模式：图标+标题 或 仅标题
   textColor: string          // 页签文字颜色
   backgroundColor: string    // 页签背景颜色
 }
@@ -570,6 +571,7 @@ export interface TabPinSettings {
  */
 export const DEFAULT_TABPIN_SETTINGS: TabPinSettings = {
   enabled: true,
+  displayMode: 'iconAndText',
   textColor: 'inherit',
   backgroundColor: 'rgba(var(--b3-theme-primary-rgb), 0.1)'
 }

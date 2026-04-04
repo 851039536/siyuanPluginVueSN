@@ -52,12 +52,12 @@
             v-for="notebook in notebooks"
             :key="notebook.id"
             class="notebook-item"
-            :class="{ selected: selectedNotebooks.includes(notebook.id) }"
+            :class="{ selected: selectedNotebooks.has(notebook.id) }"
             @click="toggleNotebook(notebook.id)"
           >
             <input
               type="checkbox"
-              :checked="selectedNotebooks.includes(notebook.id)"
+              :checked="selectedNotebooks.has(notebook.id)"
               @click.stop
               @change="toggleNotebook(notebook.id)"
             />
@@ -100,7 +100,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { lsNotebooks, pushMsg, pushErrMsg } from '@/api'
 import Button from '@/components/Button.vue'
 // @ts-ignore
@@ -132,7 +132,7 @@ const emit = defineEmits(['change'])
 const loading = ref(true)
 const exporting = ref(false)
 const notebooks = ref<Notebook[]>([])
-const selectedNotebooks = ref<string[]>([])
+const selectedNotebooks = ref<Set<string>>(new Set())
 const exportLogs = ref<ExportLog[]>([])
 const exportProgress = ref({
   show: false,
@@ -140,6 +140,9 @@ const exportProgress = ref({
   total: 0,
   percent: 0
 })
+
+// 计算属性：优化查找性能
+const selectedNotebookIds = computed(() => Array.from(selectedNotebooks.value))
 
 // 加载笔记本列表
 onMounted(async () => {
@@ -167,88 +170,89 @@ async function loadNotebooks() {
 }
 
 function toggleNotebook(notebookId: string) {
-  const index = selectedNotebooks.value.indexOf(notebookId)
-  if (index > -1) {
-    selectedNotebooks.value.splice(index, 1)
+  if (selectedNotebooks.value.has(notebookId)) {
+    selectedNotebooks.value.delete(notebookId)
   } else {
-    selectedNotebooks.value.push(notebookId)
+    selectedNotebooks.value.add(notebookId)
   }
 }
 
 function selectAll() {
-  selectedNotebooks.value = notebooks.value.map(nb => nb.id)
+  selectedNotebooks.value = new Set(notebooks.value.map(nb => nb.id))
 }
 
 function deselectAll() {
-  selectedNotebooks.value = []
+  selectedNotebooks.value.clear()
+}
+
+// 公共函数：下载 ZIP 文件
+async function downloadZipBlob(zipPath: string): Promise<Blob> {
+  const response = await fetch(zipPath)
+  if (!response.ok) {
+    throw new Error(`下载失败: ${response.status}`)
+  }
+  return response.blob()
+}
+
+// 公共函数：触发浏览器下载
+function triggerDownload(blob: Blob, filename: string) {
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  
+  setTimeout(() => {
+    window.URL.revokeObjectURL(url)
+    document.body.removeChild(a)
+  }, 100)
+}
+
+// 公共函数：更新进度
+function updateProgress(current: number, total: number) {
+  exportProgress.value.current = current
+  exportProgress.value.percent = Math.round((current / total) * 100)
 }
 
 async function exportAllNotebooks() {
   exporting.value = true
   addLog('info', '开始批量导出所有笔记本并打包...')
   
-  exportProgress.value = {
-    show: true,
-    current: 0,
-    total: notebooks.value.length,
-    percent: 0
-  }
+  exportProgress.value = { show: true, current: 0, total: notebooks.value.length, percent: 0 }
 
   const zip = new JSZip()
   const errors: string[] = []
 
-  // 遍历所有笔记本
-  for (let i = 0; i < notebooks.value.length; i++) {
-    const notebook = notebooks.value[i]
-    
+  for (const [index, notebook] of notebooks.value.entries()) {
     try {
       addLog('info', `正在导出: ${notebook.name}`)
       
-      // 1. 获取笔记本ZIP
       const response = await fetch('/api/export/exportNotebookMd', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ notebook: notebook.id })
       })
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
 
       const result = await response.json()
-      
-      if (result.code !== 0) {
-        throw new Error(result.msg || '导出失败')
-      }
+      if (result.code !== 0) throw new Error(result.msg || '导出失败')
 
-      // 2. 下载ZIP文件
       const zipPath = result.data?.zip
-      if (!zipPath) {
-        throw new Error('未获取到ZIP文件路径')
-      }
+      if (!zipPath) throw new Error('未获取到ZIP文件路径')
 
-      const zipResponse = await fetch(zipPath)
-      if (!zipResponse.ok) {
-        throw new Error(`下载ZIP文件失败: ${zipResponse.status}`)
-      }
-
-      // 3. 获取ZIP文件的二进制数据
-      const zipBlob = await zipResponse.blob()
-      
-      // 4. 添加到总ZIP中
+      const zipBlob = await downloadZipBlob(zipPath)
       zip.file(`${notebook.name}.zip`, zipBlob)
       
       addLog('success', `✅ 已添加: ${notebook.name}`)
-
     } catch (error) {
-      const errorMsg = `❌ 导出失败: ${notebook.name}`
-      addLog('error', errorMsg)
+      addLog('error', `❌ 导出失败: ${notebook.name}`)
       errors.push(notebook.name)
       console.error(`导出笔记本 ${notebook.name} 失败:`, error)
     }
 
-    exportProgress.value.current = i + 1
-    exportProgress.value.percent = Math.round(((i + 1) / notebooks.value.length) * 100)
+    updateProgress(index + 1, notebooks.value.length)
   }
 
   // 生成最终的ZIP文件
@@ -260,34 +264,18 @@ async function exportAllNotebooks() {
       compression: 'DEFLATE',
       compressionOptions: { level: 6 }
     }, (metadata) => {
-      // 显示打包进度
       const percent = Math.round(metadata.percent)
-      if (percent % 10 === 0) { // 每10%更新一次
-        addLog('info', `打包进度: ${percent}%`)
-      }
+      if (percent % 10 === 0) addLog('info', `打包进度: ${percent}%`)
     })
 
-    // 下载最终的ZIP文件
     const timestamp = new Date().toISOString().slice(0, 10)
-    const url = window.URL.createObjectURL(finalZipBlob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `all-notebooks-${timestamp}.zip`
-    document.body.appendChild(a)
-    a.click()
-    
-    setTimeout(() => {
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
-    }, 1000)
+    triggerDownload(finalZipBlob, `all-notebooks-${timestamp}.zip`)
 
     addLog('success', `✅ 已打包所有笔记本到一个 ZIP 文件`)
     await pushMsg(`成功导出并打包 ${notebooks.value.length - errors.length} 个笔记本`)
-
   } catch (error) {
-    const errorMsg = '❌ 打包失败'
-    addLog('error', errorMsg)
-    await pushErrMsg(errorMsg)
+    addLog('error', '❌ 打包失败')
+    await pushErrMsg('打包失败')
     console.error('打包失败:', error)
   }
 
@@ -304,64 +292,31 @@ async function exportAll() {
   addLog('info', '开始导出整个工作空间...')
   
   try {
-    // 调用工作空间导出API
     const response = await fetch('/api/export/exportData', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({})
     })
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
 
-    // 解析JSON响应
     const result = await response.json()
-    
-    if (result.code !== 0) {
-      throw new Error(result.msg || '导出失败')
-    }
+    if (result.code !== 0) throw new Error(result.msg || '导出失败')
 
-    // 获取ZIP文件路径
     const zipPath = result.data?.zip
-    if (!zipPath) {
-      throw new Error('未获取到ZIP文件路径')
-    }
+    if (!zipPath) throw new Error('未获取到ZIP文件路径')
 
     addLog('info', `正在下载: ${zipPath}`)
-
-    // 下载ZIP文件
-    const zipResponse = await fetch(zipPath)
-    if (!zipResponse.ok) {
-      throw new Error(`下载ZIP文件失败: ${zipResponse.status}`)
-    }
-
-    const blob = await zipResponse.blob()
+    const blob = await downloadZipBlob(zipPath)
     
-    // 创建下载链接
     const timestamp = new Date().toISOString().slice(0, 10)
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `siyuan-workspace-${timestamp}.zip`
-    document.body.appendChild(a)
-    a.click()
-    
-    // 清理
-    setTimeout(() => {
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
-    }, 100)
+    triggerDownload(blob, `siyuan-workspace-${timestamp}.zip`)
 
     addLog('success', `✅ 已导出整个工作空间`)
     await pushMsg(`成功导出整个工作空间`)
-
   } catch (error) {
-    const errorMsg = `❌ 导出工作空间失败`
-    addLog('error', errorMsg)
-    await pushErrMsg(errorMsg)
+    addLog('error', `❌ 导出工作空间失败`)
+    await pushErrMsg('导出工作空间失败')
     console.error('导出工作空间失败:', error)
   } finally {
     exporting.value = false
@@ -369,23 +324,18 @@ async function exportAll() {
 }
 
 async function exportSelected() {
-  if (selectedNotebooks.value.length === 0) {
+  const selectedList = selectedNotebookIds.value
+  if (selectedList.length === 0) {
     await pushErrMsg('请至少选择一个笔记本')
     return
   }
 
   exporting.value = true
-  exportProgress.value = {
-    show: true,
-    current: 0,
-    total: selectedNotebooks.value.length,
-    percent: 0
-  }
+  exportProgress.value = { show: true, current: 0, total: selectedList.length, percent: 0 }
 
   const errors: string[] = []
 
-  for (let i = 0; i < selectedNotebooks.value.length; i++) {
-    const notebookId = selectedNotebooks.value[i]
+  for (const [index, notebookId] of selectedList.entries()) {
     const notebook = notebooks.value.find(nb => nb.id === notebookId)
     
     if (notebook) {
@@ -393,22 +343,20 @@ async function exportSelected() {
         await exportNotebookMd(notebookId, notebook.name)
         addLog('success', `✅ 已导出: ${notebook.name}`)
       } catch (error) {
-        const errorMsg = `❌ 导出失败: ${notebook.name}`
-        addLog('error', errorMsg)
+        addLog('error', `❌ 导出失败: ${notebook.name}`)
         errors.push(notebook.name)
         console.error(`导出笔记本 ${notebook.name} 失败:`, error)
       }
     }
 
-    exportProgress.value.current = i + 1
-    exportProgress.value.percent = Math.round(((i + 1) / selectedNotebooks.value.length) * 100)
+    updateProgress(index + 1, selectedList.length)
   }
 
   exporting.value = false
   exportProgress.value.show = false
 
   if (errors.length === 0) {
-    await pushMsg(`成功导出 ${selectedNotebooks.value.length} 个笔记本`)
+    await pushMsg(`成功导出 ${selectedList.length} 个笔记本`)
   } else {
     await pushErrMsg(`${errors.length} 个笔记本导出失败: ${errors.join(', ')}`)
   }
@@ -418,58 +366,24 @@ async function exportNotebookMd(notebookId: string, notebookName: string) {
   try {
     addLog('info', `开始导出: ${notebookName}`)
     
-    // 第一步: 调用导出API获取ZIP文件路径
     const response = await fetch('/api/export/exportNotebookMd', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        notebook: notebookId
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notebook: notebookId })
     })
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
 
-    // 第二步: 解析JSON响应
     const result = await response.json()
-    
-    if (result.code !== 0) {
-      throw new Error(result.msg || '导出失败')
-    }
+    if (result.code !== 0) throw new Error(result.msg || '导出失败')
 
-    // 第三步: 从响应中获取ZIP文件路径
     const zipPath = result.data?.zip
-    if (!zipPath) {
-      throw new Error('未获取到ZIP文件路径')
-    }
+    if (!zipPath) throw new Error('未获取到ZIP文件路径')
 
     addLog('info', `正在下载: ${zipPath}`)
-
-    // 第四步: 下载ZIP文件
-    const zipResponse = await fetch(zipPath)
-    if (!zipResponse.ok) {
-      throw new Error(`下载ZIP文件失败: ${zipResponse.status}`)
-    }
-
-    const blob = await zipResponse.blob()
+    const blob = await downloadZipBlob(zipPath)
     
-    // 第五步: 创建下载链接
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${notebookName}.zip`
-    document.body.appendChild(a)
-    a.click()
-    
-    // 清理
-    setTimeout(() => {
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
-    }, 100)
-
+    triggerDownload(blob, `${notebookName}.zip`)
   } catch (error) {
     console.error('导出失败详情:', error)
     throw error

@@ -401,53 +401,53 @@ function addLog(type: ExportLog['type'], message: string) {
 
 <style scoped lang="scss">
 .markdown-export-settings {
-  padding: 20px;
+  padding: 12px;
 }
 
 .settings-section {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .section-title {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--b3-theme-on-background);
-  margin: 0 0 8px;
+  margin: 0 0 4px;
 }
 
 .section-desc {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--b3-theme-on-surface);
   opacity: 0.6;
-  margin: 0 0 20px;
+  margin: 0 0 12px;
 }
 
 .action-buttons {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
 .button-group {
   display: flex;
-  gap: 12px;
+  gap: 8px;
 }
 
 .export-tips {
-  margin-bottom: 20px;
-  padding: 16px;
+  margin-bottom: 12px;
+  padding: 10px;
   background: var(--b3-theme-surface);
-  border-radius: 6px;
+  border-radius: 4px;
   border-left: 3px solid var(--b3-theme-primary);
 }
 
 .tip-item {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  margin-bottom: 8px;
-  font-size: 13px;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-size: 12px;
   color: var(--b3-theme-on-surface);
 
   &:last-child {
@@ -457,39 +457,40 @@ function addLog(type: ExportLog['type'], message: string) {
 
 .tip-icon {
   flex-shrink: 0;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .tip-text {
   flex: 1;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 .notebook-list {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .loading,
 .empty {
   text-align: center;
-  padding: 40px;
+  padding: 24px;
   color: var(--b3-theme-on-surface);
   opacity: 0.6;
+  font-size: 13px;
 }
 
 .notebook-items {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .notebook-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
+  gap: 10px;
+  padding: 8px 10px;
   border: 1px solid var(--b3-border-color);
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
 
@@ -503,37 +504,37 @@ function addLog(type: ExportLog['type'], message: string) {
   }
 
   input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     cursor: pointer;
   }
 
   .notebook-icon {
-    font-size: 20px;
+    font-size: 18px;
   }
 
   .notebook-name {
     flex: 1;
-    font-size: 14px;
+    font-size: 13px;
     color: var(--b3-theme-on-background);
   }
 
   .notebook-count {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--b3-theme-on-surface);
     opacity: 0.6;
   }
 }
 
 .export-progress {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 
   .progress-bar {
-    height: 8px;
+    height: 6px;
     background: var(--b3-theme-surface-light);
-    border-radius: 4px;
+    border-radius: 3px;
     overflow: hidden;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
 
   .progress-fill {
@@ -544,32 +545,32 @@ function addLog(type: ExportLog['type'], message: string) {
 
   .progress-text {
     text-align: center;
-    font-size: 12px;
+    font-size: 11px;
     color: var(--b3-theme-on-surface);
   }
 }
 
 .export-logs {
-  margin-top: 20px;
+  margin-top: 12px;
 
   h4 {
-    margin: 0 0 12px;
-    font-size: 14px;
+    margin: 0 0 8px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--b3-theme-on-background);
   }
 
   .log-items {
-    max-height: 200px;
+    max-height: 150px;
     overflow-y: auto;
     background: var(--b3-theme-surface);
-    border-radius: 6px;
-    padding: 12px;
+    border-radius: 4px;
+    padding: 8px;
   }
 
   .log-item {
-    font-size: 12px;
-    padding: 4px 0;
+    font-size: 11px;
+    padding: 3px 0;
     font-family: monospace;
 
     &.success {

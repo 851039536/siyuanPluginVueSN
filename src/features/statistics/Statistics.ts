@@ -288,29 +288,22 @@ export class Statistics {
   }
 
   /**
-   * 获取总标签数（多重查询机制）
+   * 获取总标签数（优化版：单次查询）
+   * 思源笔记的标签可能存储在多个位置：
+   * - spans 表：内联标签
+   * - attributes 表：块属性标签
+   * - blocks 表：独立标签块
    */
   private async getTotalTags(): Promise<number> {
-    // 优先查询 spans 表
-    let sql = `SELECT COUNT(DISTINCT content) as count FROM spans WHERE type='tag'`;
-    let result = await this.executeSql(sql);
-    let count = result[0]?.count || 0;
-
-    // 如果 spans 表没有数据，尝试 attributes 表
-    if (count === 0) {
-      sql = `SELECT COUNT(*) as count FROM attributes WHERE name='tags'`;
-      result = await this.executeSql(sql);
-      count = result[0]?.count || 0;
-    }
-
-    // 最后尝试 blocks 表
-    if (count === 0) {
-      sql = `SELECT COUNT(*) as count FROM blocks WHERE type='tag'`;
-      result = await this.executeSql(sql);
-      count = result[0]?.count || 0;
-    }
-
-    return count;
+    // 优化：一次性查询所有可能的标签来源，避免多次全表扫描
+    const sql = `
+      SELECT
+        COALESCE((SELECT COUNT(DISTINCT content) FROM spans WHERE type='tag'), 0) +
+        COALESCE((SELECT COUNT(DISTINCT value) FROM attributes WHERE name='tags' AND value IS NOT NULL AND value != ''), 0) +
+        COALESCE((SELECT COUNT(*) FROM blocks WHERE type='tag'), 0) as totalTags
+    `;
+    const result = await this.executeSql(sql);
+    return Number(result[0]?.totalTags || 0);
   }
 
   /**

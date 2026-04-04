@@ -84,10 +84,11 @@ export function useSystemMonitor() {
 
   async function fetchStatistics() {
     try {
+      // 优化：使用预存的 length 字段代替 LENGTH(content)，避免对每行数据计算长度
       const sql = `
         SELECT
           (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d') as totalNotes,
-          (SELECT SUM(LENGTH(content)) FROM blocks WHERE type = 'p' AND content IS NOT NULL AND content != '') as totalWords
+          (SELECT SUM(length) FROM blocks WHERE type = 'p' AND length > 0) as totalWords
       `
       const response = await fetch('/api/query/sql', {
         method: 'POST',

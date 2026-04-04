@@ -242,8 +242,22 @@ async function exportAllNotebooks() {
       const zipPath = result.data?.zip
       if (!zipPath) throw new Error('未获取到ZIP文件路径')
 
+      // 下载并解压笔记本的 ZIP 文件
       const zipBlob = await downloadZipBlob(zipPath)
-      zip.file(`${notebook.name}.zip`, zipBlob)
+      const notebookZip = await JSZip.loadAsync(zipBlob)
+      
+      // 将笔记本的内容直接添加到大 ZIP 中（保持文件夹结构）
+      const notebookFolder = zip.folder(notebook.name)
+      if (notebookFolder) {
+        for (const [relativePath, file] of Object.entries(notebookZip.files)) {
+          if (!file.dir) {
+            const content = await file.async('blob')
+            notebookFolder.file(relativePath, content)
+          } else {
+            notebookFolder.folder(relativePath)
+          }
+        }
+      }
       
       addLog('success', `✅ 已添加: ${notebook.name}`)
     } catch (error) {

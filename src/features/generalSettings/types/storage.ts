@@ -39,6 +39,14 @@ export interface ListStyleSettings {
   symbolSize: number;
 }
 
+export interface DocCountSettings {
+  enableDocCount: boolean;
+  updateInterval: string;
+  fontSize: string;
+  fontColor: string;
+  fontWeight: string;
+}
+
 export interface CodeBlockSettings {
   style: 'default' | 'github' | 'mac' | 'cartoon';
   enableCollapse: boolean;
@@ -140,7 +148,8 @@ export class GeneralSettingsStorage {
     BACKUP: 'data-backup-settings',
     DOCUMENT_FONT: 'document-font-settings',
     TABLE_STYLE: 'table-style-settings',
-    LIST_STYLE: 'list-style-settings'
+    LIST_STYLE: 'list-style-settings',
+    DOC_COUNT: 'doc-count-settings'
   };
 
   constructor(plugin: Plugin) {
@@ -227,6 +236,14 @@ export class GeneralSettingsStorage {
 
   async loadListStyleSettings(): Promise<ListStyleSettings | null> {
     return this.storage.load<ListStyleSettings>(this.KEYS.LIST_STYLE);
+  }
+
+  async saveDocCountSettings(settings: DocCountSettings): Promise<boolean> {
+    return this.storage.save(this.KEYS.DOC_COUNT, settings);
+  }
+
+  async loadDocCountSettings(): Promise<DocCountSettings | null> {
+    return this.storage.load<DocCountSettings>(this.KEYS.DOC_COUNT);
   }
 
   async clearAllSettings(): Promise<void> {

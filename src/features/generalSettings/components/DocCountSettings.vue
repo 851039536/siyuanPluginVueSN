@@ -133,7 +133,14 @@ const updateInterval = ref('3600000')
 const fontSize = ref('12px')
 const fontColor = ref('#8c8c8c')
 const fontWeight = ref('normal')
-let docCountManager: DocCountManager | null = null
+
+/**
+ * 获取 GeneralSettings 实例中的 DocCountManager
+ */
+const getDocCountManager = (): DocCountManager | null => {
+  const generalSettings = props.plugin?.__generalSettings
+  return generalSettings?.docCountManager || null
+}
 
 const loadSettings = async () => {
   try {
@@ -160,10 +167,25 @@ const handleToggleChange = async () => {
       fontWeight: fontWeight.value
     })
     
+    const manager = getDocCountManager()
     if (enableDocCount.value) {
-      docCountManager?.start()
+      // 如果启用但管理器不存在,创建并启动
+      if (!manager && props.plugin?.__generalSettings) {
+        props.plugin.__generalSettings.docCountManager = new DocCountManager()
+        const newManager = getDocCountManager()
+        newManager?.start()
+        newManager?.setUpdateInterval(parseInt(updateInterval.value))
+        newManager?.setFontStyle({
+          fontSize: fontSize.value,
+          color: fontColor.value,
+          fontWeight: fontWeight.value
+        })
+      } else {
+        manager?.start()
+      }
     } else {
-      docCountManager?.stop()
+      // 如果禁用,停止管理器
+      manager?.stop()
     }
     
     showMessage(
@@ -194,7 +216,8 @@ const handleIntervalChange = async () => {
       fontWeight: fontWeight.value
     })
     
-    docCountManager?.setUpdateInterval(parseInt(updateInterval.value))
+    const manager = getDocCountManager()
+    manager?.setUpdateInterval(parseInt(updateInterval.value))
     
     showMessage('更新间隔已修改', 2000, 'info')
   } catch (e) {
@@ -212,7 +235,8 @@ const handleFontStyleChange = async () => {
       fontWeight: fontWeight.value
     })
     
-    docCountManager?.setFontStyle({
+    const manager = getDocCountManager()
+    manager?.setFontStyle({
       fontSize: fontSize.value,
       color: fontColor.value,
       fontWeight: fontWeight.value
@@ -226,21 +250,12 @@ const handleFontStyleChange = async () => {
 
 onMounted(async () => {
   await loadSettings()
-  
-  if (enableDocCount.value) {
-    docCountManager = new DocCountManager()
-    docCountManager.start()
-    docCountManager.setUpdateInterval(parseInt(updateInterval.value))
-    docCountManager.setFontStyle({
-      fontSize: fontSize.value,
-      color: fontColor.value,
-      fontWeight: fontWeight.value
-    })
-  }
+  // 注意:不再在这里创建和启动 DocCountManager
+  // 它由 GeneralSettings 在插件启动时统一管理
 })
 
 onUnmounted(() => {
-  docCountManager?.stop()
+  // 清理工作由 GeneralSettings 统一处理
 })
 
 defineExpose({ loadSettings, enableDocCount })

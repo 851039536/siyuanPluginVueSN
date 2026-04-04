@@ -7,6 +7,7 @@ import { createApp, h } from 'vue';
 import JSZip from 'jszip';
 import { loadCodeBlockSettings, loadListSettingsFromDB, loadHeadingSettings } from '@/config/settings';
 import { GeneralSettingsStorage } from './storage';
+import { DocCountManager } from '../modules/DocCountManager';
 // @ts-ignore
 import GeneralSettingsPanel from '../index.vue';
 
@@ -53,6 +54,7 @@ export class GeneralSettings {
   private workspaceRoot = '';
   private storage: GeneralSettingsStorage;
   private contentObserver: MutationObserver | null = null;
+  private docCountManager: DocCountManager | null = null;
 
   constructor(plugin: Plugin) {
     this.plugin = plugin;
@@ -68,6 +70,7 @@ export class GeneralSettings {
     await this.applyDocumentFontStyle();
     await this.applyTableStyle();
     await this.applyListStyleEnhanced();
+    await this.applyDocCountStyle();
     this.observeContentChanges();
     await this.initAutoBackup();
   }
@@ -440,6 +443,25 @@ export class GeneralSettings {
       }
     } catch (error) {
       console.error('应用列表样式失败:', error);
+    }
+  }
+
+  public async applyDocCountStyle() {
+    try {
+      const settings = await this.storage.loadDocCountSettings();
+      if (settings && settings.enableDocCount) {
+        // 如果功能已启用,启动管理器
+        this.docCountManager = new DocCountManager();
+        this.docCountManager.start();
+        this.docCountManager.setUpdateInterval(parseInt(settings.updateInterval));
+        this.docCountManager.setFontStyle({
+          fontSize: settings.fontSize,
+          color: settings.fontColor,
+          fontWeight: settings.fontWeight
+        });
+      }
+    } catch (error) {
+      console.error('应用文档数统计样式失败:', error);
     }
   }
 
@@ -1044,6 +1066,10 @@ export class GeneralSettings {
     if (this.contentObserver) {
       this.contentObserver.disconnect();
       this.contentObserver = null;
+    }
+    if (this.docCountManager) {
+      this.docCountManager.stop();
+      this.docCountManager = null;
     }
   }
 }

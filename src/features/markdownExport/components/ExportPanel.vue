@@ -8,11 +8,30 @@
     <div class="panel-content">
       <!-- 操作按钮 -->
       <div class="action-buttons">
-        <button class="btn btn-primary" @click="exportSelected" :disabled="exporting">
-          {{ exporting ? '导出中...' : '导出选中的笔记本' }}
-        </button>
-        <button class="btn btn-secondary" @click="selectAll">全选</button>
-        <button class="btn btn-secondary" @click="deselectAll">取消全选</button>
+        <div class="button-group">
+          <button class="btn btn-primary" @click="exportSelected" :disabled="exporting">
+            {{ exporting ? '导出中...' : '导出选中的笔记本' }}
+          </button>
+          <button class="btn btn-success" @click="exportAll" :disabled="exporting">
+            {{ exporting ? '导出中...' : '📦 一键导出工作空间' }}
+          </button>
+        </div>
+        <div class="button-group">
+          <button class="btn btn-secondary" @click="selectAll">全选</button>
+          <button class="btn btn-secondary" @click="deselectAll">取消全选</button>
+        </div>
+      </div>
+
+      <!-- 提示信息 -->
+      <div class="export-tips">
+        <div class="tip-item">
+          <span class="tip-icon">💡</span>
+          <span class="tip-text">"导出选中的笔记本"会为每个笔记本生成一个 ZIP 文件</span>
+        </div>
+        <div class="tip-item">
+          <span class="tip-icon">💡</span>
+          <span class="tip-text">"一键导出工作空间"会将所有笔记本打包成一个 ZIP 文件</span>
+        </div>
       </div>
 
       <!-- 笔记本列表 -->
@@ -152,6 +171,75 @@ function selectAll() {
 
 function deselectAll() {
   selectedNotebooks.value = []
+}
+
+async function exportAll() {
+  exporting.value = true
+  addLog('info', '开始导出整个工作空间...')
+  
+  try {
+    // 调用工作空间导出API
+    const response = await fetch('/api/export/exportData', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({})
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    // 解析JSON响应
+    const result = await response.json()
+    
+    if (result.code !== 0) {
+      throw new Error(result.msg || '导出失败')
+    }
+
+    // 获取ZIP文件路径
+    const zipPath = result.data?.zip
+    if (!zipPath) {
+      throw new Error('未获取到ZIP文件路径')
+    }
+
+    addLog('info', `正在下载: ${zipPath}`)
+
+    // 下载ZIP文件
+    const zipResponse = await fetch(zipPath)
+    if (!zipResponse.ok) {
+      throw new Error(`下载ZIP文件失败: ${zipResponse.status}`)
+    }
+
+    const blob = await zipResponse.blob()
+    
+    // 创建下载链接
+    const timestamp = new Date().toISOString().slice(0, 10)
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `siyuan-workspace-${timestamp}.zip`
+    document.body.appendChild(a)
+    a.click()
+    
+    // 清理
+    setTimeout(() => {
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    }, 100)
+
+    addLog('success', `✅ 已导出整个工作空间`)
+    await pushMsg(`成功导出整个工作空间`)
+
+  } catch (error) {
+    const errorMsg = `❌ 导出工作空间失败`
+    addLog('error', errorMsg)
+    await pushErrMsg(errorMsg)
+    console.error('导出工作空间失败:', error)
+  } finally {
+    exporting.value = false
+  }
 }
 
 async function exportSelected() {
@@ -327,8 +415,14 @@ function addLog(type: ExportLog['type'], message: string) {
 
 .action-buttons {
   display: flex;
+  flex-direction: column;
   gap: 12px;
   margin-bottom: 20px;
+}
+
+.button-group {
+  display: flex;
+  gap: 12px;
 }
 
 .btn {
@@ -354,6 +448,21 @@ function addLog(type: ExportLog['type'], message: string) {
   }
 }
 
+.btn-success {
+  background: #4caf50;
+  color: white;
+
+  &:hover:not(:disabled) {
+    background: #45a049;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+}
+
 .btn-secondary {
   background: var(--b3-theme-surface-light);
   color: var(--b3-theme-on-surface);
@@ -361,6 +470,37 @@ function addLog(type: ExportLog['type'], message: string) {
   &:hover:not(:disabled) {
     background: var(--b3-theme-surface);
   }
+}
+
+.export-tips {
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background: var(--b3-theme-surface);
+  border-radius: 6px;
+  border-left: 3px solid var(--b3-theme-primary);
+}
+
+.tip-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--b3-theme-on-surface);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.tip-icon {
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+.tip-text {
+  flex: 1;
+  line-height: 1.5;
 }
 
 .notebook-list {

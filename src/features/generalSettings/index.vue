@@ -57,6 +57,10 @@
         <div v-show="activeCategory === 'docCount'" class="content-section">
           <DocCountSettings :i18n="i18n" :plugin="plugin" @change="handleDocCountChange" />
         </div>
+
+        <div v-show="activeCategory === 'markdownExport'" class="content-section">
+          <MarkdownExportSettings :i18n="i18n" :plugin="plugin" />
+        </div>
       </div>
     </div>
   </div>
@@ -75,6 +79,7 @@ import TableStyleSettings from './components/TableStyleSettings.vue'
 import ListStyleSettings from './components/ListStyleSettings.vue'
 import TabPinSettings from './components/TabPinSettings.vue'
 import DocCountSettings from './components/DocCountSettings.vue'
+import MarkdownExportSettings from './components/MarkdownExportSettings.vue'
 
 interface Props {
   i18n?: any
@@ -130,6 +135,10 @@ const categories = computed(() => [
   {
     id: 'docCount',
     label: props.i18n.docCountSettings || '文档数统计'
+  },
+  {
+    id: 'markdownExport',
+    label: 'Markdown 导出'
   }
 ])
 

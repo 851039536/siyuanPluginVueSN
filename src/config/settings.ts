@@ -36,6 +36,7 @@ export interface PluginSettings {
   enablePasswordVault: boolean   // 是否启用密码箱功能
   enableWebDAV: boolean          // 是否启用WebDAV功能
   webdavConfig: WebDAVConfig     // WebDAV服务器配置
+  enableMarkdownExport: boolean  // 是否启用Markdown导出功能
   videoCategories?: string[]     // 视频分类列表
   compactMode: boolean           // 是否启用全局紧洛模式
   statisticsTheme: 'default' | 'github'  // 统计面板主题风格
@@ -120,6 +121,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
     syncInterval: 30,
     lastSyncTime: ''
   },
+  enableMarkdownExport: true,
   videoCategories: ['默认分类', '教程', '演示', '其他'],
   compactMode: true,
   statisticsTheme: 'default',

@@ -269,6 +269,37 @@ const exists = await storage.exists('my-key')
 
 ### 添加新功能
 
+#### 通用设置模块开发注意事项
+
+在 `generalSettings` 模块中添加新功能时，**必须在 `GeneralSettings` 类的 `init()` 方法中初始化功能**，而不是在 Vue 组件的 `onMounted` 中初始化。
+
+**错误示例**：
+```typescript
+// ❌ 在 Vue 组件中初始化（不会在插件启动时生效）
+onMounted(() => {
+  const manager = new MyManager()
+  manager.start()
+})
+```
+
+**正确示例**：
+```typescript
+// ✅ 在 GeneralSettings.init() 中初始化（插件启动时生效）
+public async init() {
+  await this.applyMyFeatureStyle()  // 在插件启动时初始化
+}
+
+public async applyMyFeatureStyle() {
+  const settings = await this.storage.loadMyFeatureSettings()
+  if (settings && settings.enabled) {
+    this.myManager = new MyManager()
+    this.myManager.start()
+  }
+}
+```
+
+参考实现：`DocCountManager`、`HighlightManager`
+
 #### 方式一：简单功能（非 Vue）
 
 适用于简单的工具栏按钮、菜单项等功能。

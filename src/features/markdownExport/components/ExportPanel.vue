@@ -12,6 +12,9 @@
           <button class="btn btn-primary" @click="exportSelected" :disabled="exporting">
             {{ exporting ? '导出中...' : '导出选中的笔记本' }}
           </button>
+          <button class="btn btn-warning" @click="exportAllNotebooks" :disabled="exporting">
+            {{ exporting ? '导出中...' : '📁 一键导出所有笔记本' }}
+          </button>
           <button class="btn btn-success" @click="exportAll" :disabled="exporting">
             {{ exporting ? '导出中...' : '📦 一键导出工作空间' }}
           </button>
@@ -26,11 +29,15 @@
       <div class="export-tips">
         <div class="tip-item">
           <span class="tip-icon">💡</span>
-          <span class="tip-text">"导出选中的笔记本"会为每个笔记本生成一个 ZIP 文件</span>
+          <span class="tip-text">"导出选中的笔记本": 导出勾选的笔记本,每个生成一个 ZIP</span>
         </div>
         <div class="tip-item">
           <span class="tip-icon">💡</span>
-          <span class="tip-text">"一键导出工作空间"会将所有笔记本打包成一个 ZIP 文件</span>
+          <span class="tip-text">"一键导出所有笔记本": 自动导出所有笔记本并打包成一个 ZIP 文件</span>
+        </div>
+        <div class="tip-item">
+          <span class="tip-icon">💡</span>
+          <span class="tip-text">"一键导出工作空间": 将整个工作空间打包成一个 ZIP 文件</span>
         </div>
       </div>
 
@@ -97,6 +104,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { lsNotebooks, pushMsg, pushErrMsg } from '@/api'
+// @ts-ignore
+import JSZip from 'jszip'
 
 interface Notebook {
   id: string
@@ -171,6 +180,122 @@ function selectAll() {
 
 function deselectAll() {
   selectedNotebooks.value = []
+}
+
+async function exportAllNotebooks() {
+  exporting.value = true
+  addLog('info', '开始批量导出所有笔记本并打包...')
+  
+  exportProgress.value = {
+    show: true,
+    current: 0,
+    total: notebooks.value.length,
+    percent: 0
+  }
+
+  const zip = new JSZip()
+  const errors: string[] = []
+
+  // 遍历所有笔记本
+  for (let i = 0; i < notebooks.value.length; i++) {
+    const notebook = notebooks.value[i]
+    
+    try {
+      addLog('info', `正在导出: ${notebook.name}`)
+      
+      // 1. 获取笔记本ZIP
+      const response = await fetch('/api/export/exportNotebookMd', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notebook: notebook.id })
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const result = await response.json()
+      
+      if (result.code !== 0) {
+        throw new Error(result.msg || '导出失败')
+      }
+
+      // 2. 下载ZIP文件
+      const zipPath = result.data?.zip
+      if (!zipPath) {
+        throw new Error('未获取到ZIP文件路径')
+      }
+
+      const zipResponse = await fetch(zipPath)
+      if (!zipResponse.ok) {
+        throw new Error(`下载ZIP文件失败: ${zipResponse.status}`)
+      }
+
+      // 3. 获取ZIP文件的二进制数据
+      const zipBlob = await zipResponse.blob()
+      
+      // 4. 添加到总ZIP中
+      zip.file(`${notebook.name}.zip`, zipBlob)
+      
+      addLog('success', `✅ 已添加: ${notebook.name}`)
+
+    } catch (error) {
+      const errorMsg = `❌ 导出失败: ${notebook.name}`
+      addLog('error', errorMsg)
+      errors.push(notebook.name)
+      console.error(`导出笔记本 ${notebook.name} 失败:`, error)
+    }
+
+    exportProgress.value.current = i + 1
+    exportProgress.value.percent = Math.round(((i + 1) / notebooks.value.length) * 100)
+  }
+
+  // 生成最终的ZIP文件
+  try {
+    addLog('info', '正在打包所有笔记本...')
+    
+    const finalZipBlob = await zip.generateAsync({ 
+      type: 'blob',
+      compression: 'DEFLATE',
+      compressionOptions: { level: 6 }
+    }, (metadata) => {
+      // 显示打包进度
+      const percent = Math.round(metadata.percent)
+      if (percent % 10 === 0) { // 每10%更新一次
+        addLog('info', `打包进度: ${percent}%`)
+      }
+    })
+
+    // 下载最终的ZIP文件
+    const timestamp = new Date().toISOString().slice(0, 10)
+    const url = window.URL.createObjectURL(finalZipBlob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `all-notebooks-${timestamp}.zip`
+    document.body.appendChild(a)
+    a.click()
+    
+    setTimeout(() => {
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    }, 1000)
+
+    addLog('success', `✅ 已打包所有笔记本到一个 ZIP 文件`)
+    await pushMsg(`成功导出并打包 ${notebooks.value.length - errors.length} 个笔记本`)
+
+  } catch (error) {
+    const errorMsg = '❌ 打包失败'
+    addLog('error', errorMsg)
+    await pushErrMsg(errorMsg)
+    console.error('打包失败:', error)
+  }
+
+  exporting.value = false
+  exportProgress.value.show = false
+
+  if (errors.length > 0) {
+    await pushErrMsg(`${errors.length} 个笔记本导出失败: ${errors.join(', ')}`)
+  }
 }
 
 async function exportAll() {
@@ -445,6 +570,21 @@ function addLog(type: ExportLog['type'], message: string) {
 
   &:hover:not(:disabled) {
     background: var(--b3-theme-primary-light);
+  }
+}
+
+.btn-warning {
+  background: #ff9800;
+  color: white;
+
+  &:hover:not(:disabled) {
+    background: #f57c00;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
   }
 }
 

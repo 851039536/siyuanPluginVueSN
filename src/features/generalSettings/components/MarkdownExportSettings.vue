@@ -7,19 +7,19 @@
       <!-- 操作按钮 -->
       <div class="action-buttons">
         <div class="button-group">
-          <button class="btn btn-primary" @click="exportSelected" :disabled="exporting">
+          <Button variant="primary" @click="exportSelected" :disabled="exporting" :loading="exporting">
             {{ exporting ? '导出中...' : '导出选中的笔记本' }}
-          </button>
-          <button class="btn btn-warning" @click="exportAllNotebooks" :disabled="exporting">
+          </Button>
+          <Button variant="primary" @click="exportAllNotebooks" :disabled="exporting" :loading="exporting">
             {{ exporting ? '导出中...' : '📁 一键导出所有笔记本' }}
-          </button>
-          <button class="btn btn-success" @click="exportAll" :disabled="exporting">
+          </Button>
+          <Button variant="success" @click="exportAll" :disabled="exporting" :loading="exporting">
             {{ exporting ? '导出中...' : '📦 一键导出工作空间' }}
-          </button>
+          </Button>
         </div>
         <div class="button-group">
-          <button class="btn btn-secondary" @click="selectAll">全选</button>
-          <button class="btn btn-secondary" @click="deselectAll">取消全选</button>
+          <Button variant="secondary" @click="selectAll">全选</Button>
+          <Button variant="secondary" @click="deselectAll">取消全选</Button>
         </div>
       </div>
 
@@ -102,6 +102,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { lsNotebooks, pushMsg, pushErrMsg } from '@/api'
+import Button from '@/components/Button.vue'
 // @ts-ignore
 import JSZip from 'jszip'
 
@@ -517,78 +518,6 @@ function addLog(type: ExportLog['type'], message: string) {
 .button-group {
   display: flex;
   gap: 12px;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-}
-
-.btn-primary {
-  background: var(--b3-theme-primary);
-  color: white;
-
-  &:hover:not(:disabled) {
-    background: var(--b3-theme-primary-light);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
-
-  &:active:not(:disabled) {
-    transform: translateY(0);
-  }
-}
-
-.btn-warning {
-  background: #ff9800;
-  color: white;
-
-  &:hover:not(:disabled) {
-    background: #f57c00;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
-  }
-
-  &:active:not(:disabled) {
-    transform: translateY(0);
-  }
-}
-
-.btn-success {
-  background: #4caf50;
-  color: white;
-
-  &:hover:not(:disabled) {
-    background: #45a049;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
-  }
-
-  &:active:not(:disabled) {
-    transform: translateY(0);
-  }
-}
-
-.btn-secondary {
-  background: var(--b3-theme-surface-light);
-  color: var(--b3-theme-on-surface);
-
-  &:hover:not(:disabled) {
-    background: var(--b3-theme-surface);
-  }
 }
 
 .export-tips {

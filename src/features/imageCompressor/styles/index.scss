@@ -173,10 +173,11 @@
 .filter-group {
   @include flex-center;
   gap: 8px;
-  padding: 6px 12px;
+  padding: 4px 8px;
   background: var(--b3-theme-surface);
   border-radius: 6px;
   border: 1px solid var(--b3-border-color);
+  width: 180px
 }
 
 .pagination-controls {

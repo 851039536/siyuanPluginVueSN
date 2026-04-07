@@ -126,6 +126,11 @@
 
   .icon-btn {
     @include button-base;
+
+    .icon {
+      width: 20px;
+      height: 20px;
+    }
   }
 }
 
@@ -149,11 +154,6 @@
       font-size: 13px;
       font-weight: 500;
     }
-  }
-
-  .icon-btn .icon {
-    width: 20px;
-    height: 20px;
   }
 }
 
@@ -493,10 +493,13 @@
   overflow: auto;
   @include flex-center;
   padding: 20px;
+  min-height: 0;
 
   img {
     max-width: 100%;
-    max-height: 70vh;
+    max-height: 100%;
+    width: auto;
+    height: auto;
     object-fit: contain;
   }
 }

@@ -311,6 +311,12 @@
     transition: opacity 0.2s ease;
     @include flex-center;
     gap: 4px;
+
+    .icon {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
   }
 
   &:hover .preview-hint {

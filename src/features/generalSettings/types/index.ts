@@ -71,6 +71,7 @@ export class GeneralSettings {
     await this.applyTableStyle();
     await this.applyListStyleEnhanced();
     await this.applyDocCountStyle();
+    await this.applyTabPinStyle();
     this.observeContentChanges();
     await this.initAutoBackup();
   }
@@ -126,6 +127,8 @@ export class GeneralSettings {
       this.applyTableStyles(settings.settings);
     } else if (settings.moduleId === 'listStyle') {
       this.applyListStylesEnhanced(settings.settings);
+    } else if (settings.moduleId === 'tabPin') {
+      this.applyTabPinStyles(settings.settings);
     }
     this.dispatchEvent('general-settings-changed', settings);
   }
@@ -462,6 +465,71 @@ export class GeneralSettings {
       }
     } catch (error) {
       console.error('应用文档数统计样式失败:', error);
+    }
+  }
+
+  public async applyTabPinStyle() {
+    try {
+      const settings = await this.storage.loadTabPinSettings();
+      if (settings) {
+        this.applyTabPinStyles(settings);
+      }
+    } catch (error) {
+      console.error('应用钉住页签样式失败:', error);
+    }
+  }
+
+  private applyTabPinStyles(tabPinSettings: any) {
+    try {
+      // 移除现有样式
+      const existingStyle = document.getElementById('tab-pin-settings-style');
+      if (existingStyle) {
+        existingStyle.remove();
+      }
+
+      if (!tabPinSettings.enabled) {
+        return;
+      }
+
+      // 默认值
+      const defaultTextColor = 'inherit';
+      const defaultBackgroundColor = 'rgba(var(--b3-theme-primary-rgb), 0.1)';
+
+      // 创建新的样式元素
+      const style = document.createElement('style');
+      style.id = 'tab-pin-settings-style';
+      
+      let css = `
+        /* 钉住页签：显示标题文本 */
+        .layout-tab-bar .item.item--pin .item__text {
+          width: auto !important;
+          max-width: none !important;
+          display: flex !important;
+        }
+      `;
+
+      // 根据显示模式添加不同的样式
+      if (tabPinSettings.displayMode === 'textOnly') {
+        css += `
+          /* 仅显示标题：隐藏图标 */
+          .layout-tab-bar .item.item--pin .item__icon {
+            display: none !important;
+          }
+        `;
+      }
+
+      css += `
+        /* 钉住页签：应用自定义颜色 */
+        .layout-tab-bar .item.item--pin {
+          ${tabPinSettings.textColor !== defaultTextColor ? `color: ${tabPinSettings.textColor} !important;` : ''}
+          ${tabPinSettings.backgroundColor !== defaultBackgroundColor ? `background: ${tabPinSettings.backgroundColor} !important;` : ''}
+        }
+      `;
+
+      style.textContent = css;
+      document.head.appendChild(style);
+    } catch (error) {
+      console.error('应用钉住页签样式失败:', error);
     }
   }
 

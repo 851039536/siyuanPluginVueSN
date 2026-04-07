@@ -278,7 +278,7 @@ async function loadSettings() {
 // 初始化 - 在组件挂载后执行
 onMounted(async () => {
   await loadSettings()
-  applyToDocument()
+  // 样式应用已移至 GeneralSettings.init() 中
 })
 
 // 监听变化，自动保存

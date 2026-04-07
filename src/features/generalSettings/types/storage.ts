@@ -47,6 +47,13 @@ export interface DocCountSettings {
   fontWeight: string;
 }
 
+export interface TabPinSettings {
+  enabled: boolean;
+  displayMode: 'iconAndText' | 'textOnly';
+  textColor: string;
+  backgroundColor: string;
+}
+
 export interface CodeBlockSettings {
   style: 'default' | 'github' | 'mac' | 'cartoon';
   enableCollapse: boolean;
@@ -149,7 +156,8 @@ export class GeneralSettingsStorage {
     DOCUMENT_FONT: 'document-font-settings',
     TABLE_STYLE: 'table-style-settings',
     LIST_STYLE: 'list-style-settings',
-    DOC_COUNT: 'doc-count-settings'
+    DOC_COUNT: 'doc-count-settings',
+    TAB_PIN: 'tabpin-settings'
   };
 
   constructor(plugin: Plugin) {
@@ -244,6 +252,14 @@ export class GeneralSettingsStorage {
 
   async loadDocCountSettings(): Promise<DocCountSettings | null> {
     return this.storage.load<DocCountSettings>(this.KEYS.DOC_COUNT);
+  }
+
+  async saveTabPinSettings(settings: TabPinSettings): Promise<boolean> {
+    return this.storage.save(this.KEYS.TAB_PIN, settings);
+  }
+
+  async loadTabPinSettings(): Promise<TabPinSettings | null> {
+    return this.storage.load<TabPinSettings>(this.KEYS.TAB_PIN);
   }
 
   async clearAllSettings(): Promise<void> {

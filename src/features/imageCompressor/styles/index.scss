@@ -460,6 +460,7 @@
 
 .image-preview-dialog {
   @include overlay-base;
+  @include flex-center;
   z-index: 10001;
 }
 

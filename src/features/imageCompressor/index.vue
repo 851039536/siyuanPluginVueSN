@@ -29,8 +29,18 @@
         <div class="filter-group">
           <SiSelect
             :options="minFileSizeOptions"
+            :model-value="scanMinFileSize"
+            label="扫描筛选"
+            size="small"
+            @update:model-value="(v) => scanMinFileSize = Number(v)"
+          />
+        </div>
+
+        <div class="filter-group">
+          <SiSelect
+            :options="minFileSizeOptions"
             :model-value="minFileSize"
-            label="只显示大于"
+            label="显示筛选"
             size="small"
             @update:model-value="(v) => minFileSize = Number(v)"
           />
@@ -228,6 +238,7 @@ const currentPage = ref(1)
 const pageSize = ref(30)
 
 const minFileSize = ref(0)
+const scanMinFileSize = ref(0)  // 扫描时的大小筛选
 
 const minFileSizeOptions = computed(() => [
   { value: 0, label: '全部' },
@@ -307,7 +318,8 @@ const onScanImages = async () => {
       (current, total) => {
         scanProgress.value = 50 + Math.floor((current / total) * 50)
         scanProgressText.value = `获取详情... ${current}/${total}`
-      }
+      },
+      scanMinFileSize.value
     )
 
     images.value = detailedImages
@@ -315,7 +327,12 @@ const onScanImages = async () => {
 
     const totalSize = detailedImages.reduce((sum, img) => sum + img.size, 0)
     const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2)
-    showMessage(`扫描完成: 共 ${detailedImages.length} 张图片, 总大小 ${totalSizeMB} MB`, 3000, 'info')
+    
+    let message = `扫描完成: 共 ${detailedImages.length} 张图片, 总大小 ${totalSizeMB} MB`
+    if (scanMinFileSize.value > 0) {
+      message += ` (已筛选 ≥${scanMinFileSize.value}KB)`
+    }
+    showMessage(message, 3000, 'info')
   } catch (error) {
     console.error('扫描图片失败:', error)
     showMessage('扫描图片失败: ' + error, 5000, 'error')

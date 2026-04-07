@@ -156,10 +156,12 @@ function getImageDimensions(url: string, revokeUrl = true): Promise<{ width: num
 
 export async function batchGetImageDetails(
   images: ImageInfo[],
-  onProgress?: (current: number, total: number) => void
+  onProgress?: (current: number, total: number) => void,
+  minSizeKB: number = 0
 ): Promise<ImageInfo[]> {
   const detailedImages: ImageInfo[] = []
   const total = images.length
+  const minBytes = minSizeKB * 1024
 
   for (let i = 0; i < images.length; i++) {
     if (onProgress) {
@@ -167,6 +169,16 @@ export async function batchGetImageDetails(
     }
 
     const detailed = await getImageDetails(images[i])
+    
+    // 如果设置了最小大小筛选，且图片大小小于阈值，则跳过
+    if (minBytes > 0 && detailed.size > 0 && detailed.size < minBytes) {
+      // 清理 URL
+      if (detailed.url && detailed.url.startsWith('blob:')) {
+        URL.revokeObjectURL(detailed.url)
+      }
+      continue
+    }
+    
     detailedImages.push(detailed)
   }
 

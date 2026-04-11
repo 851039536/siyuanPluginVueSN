@@ -27,22 +27,22 @@
 </template>
 
 <script setup lang="ts">
-import Button from '@/components/Button.vue'
-import IconWrapper from '@/components/IconWrapper.vue'
-import type { DiskBrowserI18n } from '../types'
+import Button from "@/components/Button.vue";
+import IconWrapper from "@/components/IconWrapper.vue";
+import type { DiskBrowserI18n } from "../types";
 
 interface Props {
-  currentPath: string
-  expandedDisk: string
-  pathSegments: string[]
-  i18n: DiskBrowserI18n
+	currentPath: string;
+	expandedDisk: string;
+	pathSegments: string[];
+	i18n: DiskBrowserI18n;
 }
 
-defineProps<Props>()
+defineProps<Props>();
 defineEmits<{
-  'navigate-root': []
-  'navigate-path': [index: number]
-}>()
+	"navigate-root": [];
+	"navigate-path": [index: number];
+}>();
 </script>
 
 <style scoped lang="scss">

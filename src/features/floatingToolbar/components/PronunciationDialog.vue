@@ -179,104 +179,117 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, computed } from 'vue'
-import { showMessage } from 'siyuan'
-import type PluginSample from '@/index'
-import { FlashcardStorage } from '@/features/flashcardReading/types/storage'
-import type { Flashcard } from '@/features/flashcardReading/types'
-import Button from '@/components/Button.vue'
-import Input from '@/components/Input.vue'
-import Select, { type SelectOption } from '@/components/Select.vue'
-import Label from '@/components/Label.vue'
+import { ref, watch, nextTick, computed } from "vue";
+import { showMessage } from "siyuan";
+import type PluginSample from "@/index";
+import { FlashcardStorage } from "@/features/flashcardReading/types/storage";
+import type { Flashcard } from "@/features/flashcardReading/types";
+import Button from "@/components/Button.vue";
+import Input from "@/components/Input.vue";
+import Select, { type SelectOption } from "@/components/Select.vue";
+import Label from "@/components/Label.vue";
 
 interface Props {
-  visible: boolean
-  content?: string
-  plugin?: PluginSample
-  i18n?: Record<string, any>
+	visible: boolean;
+	content?: string;
+	plugin?: PluginSample;
+	i18n?: Record<string, any>;
 }
 
 interface Emits {
-  (e: 'update:visible', value: boolean): void
-  (e: 'close'): void
+	(e: "update:visible", value: boolean): void;
+	(e: "close"): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  i18n: () => ({})
-})
+	i18n: () => ({}),
+});
 
-const emit = defineEmits<Emits>()
+const emit = defineEmits<Emits>();
 
 // 状态
-const inputWord = ref(props.content || '')
-const isGenerating = ref(false)
-const generatedResult = ref('')
-const resultSource = ref<'local' | 'api' | ''>('')
-const matchedCard = ref<Flashcard | null>(null)
-const showAddToCardDialog = ref(false)
-const selectedCategory = ref('')
-const customCategoryInput = ref('')
-const availableCategories = ref<string[]>(['C#', '编程单词', 'JavaScript', 'TypeScript', 'Vue', 'Rust'])
+const inputWord = ref(props.content || "");
+const isGenerating = ref(false);
+const generatedResult = ref("");
+const resultSource = ref<"local" | "api" | "">("");
+const matchedCard = ref<Flashcard | null>(null);
+const showAddToCardDialog = ref(false);
+const selectedCategory = ref("");
+const customCategoryInput = ref("");
+const availableCategories = ref<string[]>([
+	"C#",
+	"编程单词",
+	"JavaScript",
+	"TypeScript",
+	"Vue",
+	"Rust",
+]);
 
 const categoryOptions = computed<SelectOption[]>(() => {
-  const options: SelectOption[] = [
-    { value: '', label: '请选择类别' },
-    { value: '__custom__', label: '自定义...' }
-  ]
-  availableCategories.value.forEach(cat => {
-    options.push({ value: cat, label: cat })
-  })
-  return options
-})
+	const options: SelectOption[] = [
+		{ value: "", label: "请选择类别" },
+		{ value: "__custom__", label: "自定义..." },
+	];
+	availableCategories.value.forEach((cat) => {
+		options.push({ value: cat, label: cat });
+	});
+	return options;
+});
 
 // 初始化 FlashcardStorage
-const flashcardStorage = props.plugin ? new FlashcardStorage(props.plugin) : null
+const flashcardStorage = props.plugin
+	? new FlashcardStorage(props.plugin)
+	: null;
 
 // 检查结果是否已在单词本中
-const isInFlashcard = computed(() => resultSource.value === 'local')
+const isInFlashcard = computed(() => resultSource.value === "local");
 
 // 监听props变化，自动触发翻译
-watch(() => props.content, async (newContent) => {
-  if (newContent) {
-    inputWord.value = newContent
-    generatedResult.value = ''
-    // 自动触发翻译
-    await nextTick()
-    await generatePronunciation()
-  }
-})
+watch(
+	() => props.content,
+	async (newContent) => {
+		if (newContent) {
+			inputWord.value = newContent;
+			generatedResult.value = "";
+			// 自动触发翻译
+			await nextTick();
+			await generatePronunciation();
+		}
+	},
+);
 
 // 监听visible变化，弹窗打开时自动触发翻译
-watch(() => props.visible, async (newVisible) => {
-  if (newVisible && inputWord.value) {
-    await nextTick()
-    await generatePronunciation()
-  }
-})
-
+watch(
+	() => props.visible,
+	async (newVisible) => {
+		if (newVisible && inputWord.value) {
+			await nextTick();
+			await generatePronunciation();
+		}
+	},
+);
 
 // 检测是否为中文
 function isChinese(text: string): boolean {
-  return /[\u4e00-\u9fa5]/.test(text)
+	return /[\u4e00-\u9fa5]/.test(text);
 }
 
 // 获取API配置（从超级面板的统一配置中读取）
 function getApiConfig() {
-  const settings = (props.plugin as any)?.settings || {}
-  return {
-    provider: settings.aiApiProvider || 'tongyi',
-    model: settings.aiModel || 'qwen-plus',
-    apiKey: settings.aiApiKey || '',
-    customEndpoint: settings.aiCustomEndpoint || ''
-  }
+	const settings = (props.plugin as any)?.settings || {};
+	return {
+		provider: settings.aiApiProvider || "tongyi",
+		model: settings.aiModel || "qwen-plus",
+		apiKey: settings.aiApiKey || "",
+		customEndpoint: settings.aiCustomEndpoint || "",
+	};
 }
-
 
 // 构建提示词（根据输入语言自动选择）
 function buildPrompt(text: string): string {
-  // 检测是否为中文，如果是中文则翻译成英文并生成谐音
-  if (isChinese(text)) {
-    return `请将中文词语 "${text}" 翻译成英文，并为英文翻译生成谐音记忆，要求：
+	// 检测是否为中文，如果是中文则翻译成英文并生成谐音
+	if (isChinese(text)) {
+		return `请将中文词语 "${text}" 翻译成英文，并为英文翻译生成谐音记忆，要求：
 
 1. 提供准确的英文翻译
 2. 提供英式音标
@@ -296,11 +309,11 @@ function buildPrompt(text: string): string {
 - 谐音要贴近实际发音，便于记忆
 - 拼音必须带声调
 - 发音说明要包含音节、重音、元音特点等
-- 只输出格式化内容，不要有其他说明文字`
-  }
+- 只输出格式化内容，不要有其他说明文字`;
+	}
 
-  // 英文单词生成谐音记忆
-  return `请为英文单词 "${text}" 生成谐音记忆，要求：
+	// 英文单词生成谐音记忆
+	return `请为英文单词 "${text}" 生成谐音记忆，要求：
 
 1. 使用英式标准发音
 2. 谐音使用带声调的拼音标注
@@ -317,72 +330,72 @@ function buildPrompt(text: string): string {
 - 谐音要贴近实际发音，便于记忆
 - 拼音必须带声调
 - 发音说明要包含音节、重音、元音特点等
-- 只输出格式化内容，不要有其他说明文字`
+- 只输出格式化内容，不要有其他说明文字`;
 }
 
 // 生成谐音翻译/中文翻译
 async function generatePronunciation() {
-  if (!inputWord.value) {
-    showMessage('请输入内容', 3000, 'error')
-    return
-  }
+	if (!inputWord.value) {
+		showMessage("请输入内容", 3000, "error");
+		return;
+	}
 
-  isGenerating.value = true
-  generatedResult.value = ''
-  resultSource.value = ''
-  matchedCard.value = null
+	isGenerating.value = true;
+	generatedResult.value = "";
+	resultSource.value = "";
+	matchedCard.value = null;
 
-  try {
-    // 优先从本地 FlashcardStorage 查询
-    if (flashcardStorage) {
-      const localResult = await queryFromLocalStorage(inputWord.value)
-      if (localResult) {
-        generatedResult.value = localResult.content
-        resultSource.value = 'local'
-        matchedCard.value = localResult
-        showMessage('📚 从单词本加载', 2000, 'info')
-        isGenerating.value = false
-        return
-      }
-    }
+	try {
+		// 优先从本地 FlashcardStorage 查询
+		if (flashcardStorage) {
+			const localResult = await queryFromLocalStorage(inputWord.value);
+			if (localResult) {
+				generatedResult.value = localResult.content;
+				resultSource.value = "local";
+				matchedCard.value = localResult;
+				showMessage("📚 从单词本加载", 2000, "info");
+				isGenerating.value = false;
+				return;
+			}
+		}
 
-    // 本地未找到，调用 API 生成
-    const prompt = buildPrompt(inputWord.value)
-    const config = getApiConfig()
+		// 本地未找到，调用 API 生成
+		const prompt = buildPrompt(inputWord.value);
+		const config = getApiConfig();
 
-    let result = ''
+		let result = "";
 
-    switch (config.provider) {
-      case 'tongyi':
-        result = await callTongyiAPI(prompt, config)
-        break
-      case 'openai':
-        result = await callOpenAIAPI(prompt, config)
-        break
-      case 'deepseek':
-        result = await callDeepSeekAPI(prompt, config)
-        break
-      case 'custom':
-        result = await callCustomAPI(prompt, config)
-        break
-      default:
-        throw new Error(`不支持的API供应商: ${config.provider}`)
-    }
+		switch (config.provider) {
+			case "tongyi":
+				result = await callTongyiAPI(prompt, config);
+				break;
+			case "openai":
+				result = await callOpenAIAPI(prompt, config);
+				break;
+			case "deepseek":
+				result = await callDeepSeekAPI(prompt, config);
+				break;
+			case "custom":
+				result = await callCustomAPI(prompt, config);
+				break;
+			default:
+				throw new Error(`不支持的API供应商: ${config.provider}`);
+		}
 
-    if (result) {
-      generatedResult.value = result
-      resultSource.value = 'api'
-      showMessage('✓ 谐音记忆已生成', 2000, 'info')
-    } else {
-      showMessage('生成失败，请重试', 3000, 'error')
-    }
-  } catch (error) {
-    console.error('Pronunciation generation error:', error)
-    const errorMsg = (error as Error).message || '未知错误'
-    showMessage('🚫 生成失败: ' + errorMsg, 5000, 'error')
-  } finally {
-    isGenerating.value = false
-  }
+		if (result) {
+			generatedResult.value = result;
+			resultSource.value = "api";
+			showMessage("✓ 谐音记忆已生成", 2000, "info");
+		} else {
+			showMessage("生成失败，请重试", 3000, "error");
+		}
+	} catch (error) {
+		console.error("Pronunciation generation error:", error);
+		const errorMsg = (error as Error).message || "未知错误";
+		showMessage("🚫 生成失败: " + errorMsg, 5000, "error");
+	} finally {
+		isGenerating.value = false;
+	}
 }
 
 /**
@@ -390,336 +403,355 @@ async function generatePronunciation() {
  * 仅按标题精确匹配
  */
 async function queryFromLocalStorage(word: string): Promise<Flashcard | null> {
-  if (!flashcardStorage) return null
+	if (!flashcardStorage) return null;
 
-  try {
-    const allCards = await flashcardStorage.getAllCards()
+	try {
+		const allCards = await flashcardStorage.getAllCards();
 
-    const exactMatch = allCards.find(card =>
-      card.title.toLowerCase() === word.toLowerCase()
-    )
-    return exactMatch || null
-  } catch (error) {
-    console.error('Query from local storage error:', error)
-    return null
-  }
+		const exactMatch = allCards.find(
+			(card) => card.title.toLowerCase() === word.toLowerCase(),
+		);
+		return exactMatch || null;
+	} catch (error) {
+		console.error("Query from local storage error:", error);
+		return null;
+	}
 }
 
 /**
  * 打开添加到单词本对话框
  */
 function openAddToCardDialog() {
-  // 加载现有类别
-  loadCategories()
-  selectedCategory.value = '编程单词'
-  customCategoryInput.value = ''
-  showAddToCardDialog.value = true
+	// 加载现有类别
+	loadCategories();
+	selectedCategory.value = "编程单词";
+	customCategoryInput.value = "";
+	showAddToCardDialog.value = true;
 }
 
 /**
  * 处理类别选择
  */
 function handleCategorySelect() {
-  if (selectedCategory.value === '__custom__') {
-    customCategoryInput.value = ''
-  }
+	if (selectedCategory.value === "__custom__") {
+		customCategoryInput.value = "";
+	}
 }
 
 /**
  * 加载单词本中的类别
  */
 async function loadCategories() {
-  if (!flashcardStorage) return
+	if (!flashcardStorage) return;
 
-  try {
-    const categories = await flashcardStorage.getCategories()
-    availableCategories.value = ['C#', '编程单词', 'JavaScript', 'TypeScript', 'Vue', 'Rust', ...categories]
-    // 去重
-    availableCategories.value = Array.from(new Set(availableCategories.value)).sort()
-  } catch (error) {
-    console.error('Failed to load categories:', error)
-  }
+	try {
+		const categories = await flashcardStorage.getCategories();
+		availableCategories.value = [
+			"C#",
+			"编程单词",
+			"JavaScript",
+			"TypeScript",
+			"Vue",
+			"Rust",
+			...categories,
+		];
+		// 去重
+		availableCategories.value = Array.from(
+			new Set(availableCategories.value),
+		).sort();
+	} catch (error) {
+		console.error("Failed to load categories:", error);
+	}
 }
 
 /**
  * 添加到单词本
  */
 async function addToFlashcard() {
-  if (!flashcardStorage || !inputWord.value || !generatedResult.value) {
-    showMessage('数据不完整', 2000, 'error')
-    return
-  }
+	if (!flashcardStorage || !inputWord.value || !generatedResult.value) {
+		showMessage("数据不完整", 2000, "error");
+		return;
+	}
 
-  // 处理自定义类别
-  const categoryToUse = selectedCategory.value === '__custom__'
-    ? customCategoryInput.value.trim()
-    : selectedCategory.value
+	// 处理自定义类别
+	const categoryToUse =
+		selectedCategory.value === "__custom__"
+			? customCategoryInput.value.trim()
+			: selectedCategory.value;
 
-  if (!categoryToUse) {
-    showMessage('请选择类别', 2000, 'error')
-    return
-  }
+	if (!categoryToUse) {
+		showMessage("请选择类别", 2000, "error");
+		return;
+	}
 
-  try {
-    await flashcardStorage.createCard({
-      title: inputWord.value,
-      content: generatedResult.value,
-      category: categoryToUse
-    })
+	try {
+		await flashcardStorage.createCard({
+			title: inputWord.value,
+			content: generatedResult.value,
+			category: categoryToUse,
+		});
 
-    resultSource.value = 'local'
-    showAddToCardDialog.value = false
-    showMessage('✓ 已添加到单词本', 2000, 'info')
+		resultSource.value = "local";
+		showAddToCardDialog.value = false;
+		showMessage("✓ 已添加到单词本", 2000, "info");
 
-    // 通知其他组件刷新数据
-    window.dispatchEvent(new CustomEvent('flashcardDataChanged'))
-  } catch (error: any) {
-    if (error.message === 'Title already exists') {
-      showMessage('该单词已存在于单词本中', 3000, 'error')
-    } else {
-      showMessage('添加失败: ' + (error.message || '未知错误'), 3000, 'error')
-    }
-  }
+		// 通知其他组件刷新数据
+		window.dispatchEvent(new CustomEvent("flashcardDataChanged"));
+	} catch (error: any) {
+		if (error.message === "Title already exists") {
+			showMessage("该单词已存在于单词本中", 3000, "error");
+		} else {
+			showMessage("添加失败: " + (error.message || "未知错误"), 3000, "error");
+		}
+	}
 }
-
-
-
 
 // 调用通义千问API
 async function callTongyiAPI(prompt: string, config: any): Promise<string> {
-  if (!config.apiKey) {
-    throw new Error('请先在超级面板中配置API密钥')
-  }
+	if (!config.apiKey) {
+		throw new Error("请先在超级面板中配置API密钥");
+	}
 
-  const apiUrl = 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation'
+	const apiUrl =
+		"https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation";
 
-  const requestBody = {
-    model: config.model || 'qwen-plus',
-    input: {
-      messages: [
-        {
-          role: 'system',
-          content: '你是一个专业的英语教学助手，擅长用中文谐音帮助学习者记忆英语单词发音，也能准确翻译中文词语为英文。'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ]
-    },
-    parameters: {
-      temperature: 0.7,
-      top_p: 0.8,
-      max_tokens: 800
-    }
-  }
+	const requestBody = {
+		model: config.model || "qwen-plus",
+		input: {
+			messages: [
+				{
+					role: "system",
+					content:
+						"你是一个专业的英语教学助手，擅长用中文谐音帮助学习者记忆英语单词发音，也能准确翻译中文词语为英文。",
+				},
+				{
+					role: "user",
+					content: prompt,
+				},
+			],
+		},
+		parameters: {
+			temperature: 0.7,
+			top_p: 0.8,
+			max_tokens: 800,
+		},
+	};
 
-  const response = await fetch(apiUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.apiKey}`
-    },
-    body: JSON.stringify(requestBody)
-  })
+	const response = await fetch(apiUrl, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			Authorization: `Bearer ${config.apiKey}`,
+		},
+		body: JSON.stringify(requestBody),
+	});
 
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(`API请求失败: ${response.status} ${errorText}`)
-  }
+	if (!response.ok) {
+		const errorText = await response.text();
+		throw new Error(`API请求失败: ${response.status} ${errorText}`);
+	}
 
-  const data = await response.json()
+	const data = await response.json();
 
-  if (data.output && data.output.text) {
-    return data.output.text
-  } else if (data.output && data.output.choices && data.output.choices.length > 0) {
-    return data.output.choices[0].message.content
-  } else if (data.choices && data.choices.length > 0) {
-    return data.choices[0].message.content
-  } else if (data.text) {
-    return data.text
-  } else if (data.content) {
-    return data.content
-  } else {
-    throw new Error(`API返回数据格式错误，响应结构: ${JSON.stringify(Object.keys(data))}`)
-  }
+	if (data.output && data.output.text) {
+		return data.output.text;
+	} else if (
+		data.output &&
+		data.output.choices &&
+		data.output.choices.length > 0
+	) {
+		return data.output.choices[0].message.content;
+	} else if (data.choices && data.choices.length > 0) {
+		return data.choices[0].message.content;
+	} else if (data.text) {
+		return data.text;
+	} else if (data.content) {
+		return data.content;
+	} else {
+		throw new Error(
+			`API返回数据格式错误，响应结构: ${JSON.stringify(Object.keys(data))}`,
+		);
+	}
 }
 
 // 调用OpenAI API
 async function callOpenAIAPI(prompt: string, config: any): Promise<string> {
-  if (!config.apiKey) {
-    throw new Error('请先在超级面板中配置API密钥')
-  }
+	if (!config.apiKey) {
+		throw new Error("请先在超级面板中配置API密钥");
+	}
 
-  const apiUrl = 'https://api.openai.com/v1/chat/completions'
+	const apiUrl = "https://api.openai.com/v1/chat/completions";
 
-  const requestBody = {
-    model: config.model || 'gpt-3.5-turbo',
-    messages: [
-      {
-        role: 'system',
-        content: '你是一个专业的英语教学助手，擅长用中文谐音帮助学习者记忆英语单词发音，也能准确翻译中文词语为英文。'
-      },
-      {
-        role: 'user',
-        content: prompt
-      }
-    ],
-    temperature: 0.7,
-    max_tokens: 800
-  }
+	const requestBody = {
+		model: config.model || "gpt-3.5-turbo",
+		messages: [
+			{
+				role: "system",
+				content:
+					"你是一个专业的英语教学助手，擅长用中文谐音帮助学习者记忆英语单词发音，也能准确翻译中文词语为英文。",
+			},
+			{
+				role: "user",
+				content: prompt,
+			},
+		],
+		temperature: 0.7,
+		max_tokens: 800,
+	};
 
-  const response = await fetch(apiUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.apiKey}`
-    },
-    body: JSON.stringify(requestBody)
-  })
+	const response = await fetch(apiUrl, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			Authorization: `Bearer ${config.apiKey}`,
+		},
+		body: JSON.stringify(requestBody),
+	});
 
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(`OpenAI API请求失败: ${response.status} ${errorText}`)
-  }
+	if (!response.ok) {
+		const errorText = await response.text();
+		throw new Error(`OpenAI API请求失败: ${response.status} ${errorText}`);
+	}
 
-  const data = await response.json()
+	const data = await response.json();
 
-  if (data.choices && data.choices.length > 0) {
-    return data.choices[0].message.content
-  } else {
-    throw new Error('OpenAI API返回数据格式错误')
-  }
+	if (data.choices && data.choices.length > 0) {
+		return data.choices[0].message.content;
+	} else {
+		throw new Error("OpenAI API返回数据格式错误");
+	}
 }
 
 // 调用DeepSeek API
 async function callDeepSeekAPI(prompt: string, config: any): Promise<string> {
-  if (!config.apiKey) {
-    throw new Error('请先在超级面板中配置API密钥')
-  }
+	if (!config.apiKey) {
+		throw new Error("请先在超级面板中配置API密钥");
+	}
 
-  const apiUrl = 'https://api.deepseek.com/v1/chat/completions'
+	const apiUrl = "https://api.deepseek.com/v1/chat/completions";
 
-  const requestBody = {
-    model: config.model || 'deepseek-chat',
-    messages: [
-      {
-        role: 'system',
-        content: '你是一个专业的英语教学助手，擅长用中文谐音帮助学习者记忆英语单词发音，也能准确翻译中文词语为英文。'
-      },
-      {
-        role: 'user',
-        content: prompt
-      }
-    ],
-    temperature: 0.7,
-    max_tokens: 800
-  }
+	const requestBody = {
+		model: config.model || "deepseek-chat",
+		messages: [
+			{
+				role: "system",
+				content:
+					"你是一个专业的英语教学助手，擅长用中文谐音帮助学习者记忆英语单词发音，也能准确翻译中文词语为英文。",
+			},
+			{
+				role: "user",
+				content: prompt,
+			},
+		],
+		temperature: 0.7,
+		max_tokens: 800,
+	};
 
-  const response = await fetch(apiUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.apiKey}`
-    },
-    body: JSON.stringify(requestBody)
-  })
+	const response = await fetch(apiUrl, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			Authorization: `Bearer ${config.apiKey}`,
+		},
+		body: JSON.stringify(requestBody),
+	});
 
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(`DeepSeek API请求失败: ${response.status} ${errorText}`)
-  }
+	if (!response.ok) {
+		const errorText = await response.text();
+		throw new Error(`DeepSeek API请求失败: ${response.status} ${errorText}`);
+	}
 
-  const data = await response.json()
+	const data = await response.json();
 
-  if (data.choices && data.choices.length > 0) {
-    return data.choices[0].message.content
-  } else {
-    throw new Error('DeepSeek API返回数据格式错误')
-  }
+	if (data.choices && data.choices.length > 0) {
+		return data.choices[0].message.content;
+	} else {
+		throw new Error("DeepSeek API返回数据格式错误");
+	}
 }
 
 // 调用自定义API
 async function callCustomAPI(prompt: string, config: any): Promise<string> {
-  if (!config.apiKey) {
-    throw new Error('请先在超级面板中配置API密钥')
-  }
+	if (!config.apiKey) {
+		throw new Error("请先在超级面板中配置API密钥");
+	}
 
-  if (!config.customEndpoint) {
-    throw new Error('请先在超级面板中配置自定义API端点')
-  }
+	if (!config.customEndpoint) {
+		throw new Error("请先在超级面板中配置自定义API端点");
+	}
 
-  const requestBody = {
-    model: config.model || 'default',
-    messages: [
-      {
-        role: 'system',
-        content: '你是一个专业的英语教学助手，擅长用中文谐音帮助学习者记忆英语单词发音，也能准确翻译中文词语为英文。'
-      },
-      {
-        role: 'user',
-        content: prompt
-      }
-    ],
-    temperature: 0.7,
-    max_tokens: 800
-  }
+	const requestBody = {
+		model: config.model || "default",
+		messages: [
+			{
+				role: "system",
+				content:
+					"你是一个专业的英语教学助手，擅长用中文谐音帮助学习者记忆英语单词发音，也能准确翻译中文词语为英文。",
+			},
+			{
+				role: "user",
+				content: prompt,
+			},
+		],
+		temperature: 0.7,
+		max_tokens: 800,
+	};
 
-  const response = await fetch(config.customEndpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.apiKey}`
-    },
-    body: JSON.stringify(requestBody)
-  })
+	const response = await fetch(config.customEndpoint, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			Authorization: `Bearer ${config.apiKey}`,
+		},
+		body: JSON.stringify(requestBody),
+	});
 
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(`自定义API请求失败: ${response.status} ${errorText}`)
-  }
+	if (!response.ok) {
+		const errorText = await response.text();
+		throw new Error(`自定义API请求失败: ${response.status} ${errorText}`);
+	}
 
-  const data = await response.json()
+	const data = await response.json();
 
-  if (data.choices && data.choices.length > 0) {
-    return data.choices[0].message.content
-  } else if (data.output && data.output.text) {
-    return data.output.text
-  } else if (data.text) {
-    return data.text
-  } else if (data.content) {
-    return data.content
-  } else {
-    throw new Error('自定义API返回数据格式错误')
-  }
+	if (data.choices && data.choices.length > 0) {
+		return data.choices[0].message.content;
+	} else if (data.output && data.output.text) {
+		return data.output.text;
+	} else if (data.text) {
+		return data.text;
+	} else if (data.content) {
+		return data.content;
+	} else {
+		throw new Error("自定义API返回数据格式错误");
+	}
 }
 
 // 格式化结果显示
 function formatResult(result: string): string {
-  // 将markdown格式转换为HTML，移除标题行
-  return result
-    .replace(/####\s+(.+)\n*/g, '') // 移除标题行
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\n/g, '<br/>')
+	// 将markdown格式转换为HTML，移除标题行
+	return result
+		.replace(/####\s+(.+)\n*/g, "") // 移除标题行
+		.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+		.replace(/\n/g, "<br/>");
 }
 
 // 复制结果到剪贴板
 async function copyResult() {
-  if (!generatedResult.value) return
+	if (!generatedResult.value) return;
 
-  try {
-    await navigator.clipboard.writeText(generatedResult.value)
-    showMessage('📋 已复制到剪贴板', 2000, 'info')
-  } catch (error) {
-    console.error('复制失败:', error)
-    showMessage('复制失败', 3000, 'error')
-  }
+	try {
+		await navigator.clipboard.writeText(generatedResult.value);
+		showMessage("📋 已复制到剪贴板", 2000, "info");
+	} catch (error) {
+		console.error("复制失败:", error);
+		showMessage("复制失败", 3000, "error");
+	}
 }
 
 // 关闭对话框
 function closeDialog() {
-  emit('update:visible', false)
-  emit('close')
+	emit("update:visible", false);
+	emit("close");
 }
 </script>
 

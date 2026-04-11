@@ -101,290 +101,318 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, nextTick, useAttrs } from 'vue'
-import IconWrapper from '@/components/IconWrapper.vue'
+import {
+	ref,
+	computed,
+	watch,
+	onMounted,
+	onUnmounted,
+	nextTick,
+	useAttrs,
+} from "vue";
+import IconWrapper from "@/components/IconWrapper.vue";
 
-type SelectSize = 'small' | 'medium' | 'large'
+type SelectSize = "small" | "medium" | "large";
 
 export interface SelectOption {
-  /** 选项值 */
-  value: string | number | boolean
-  /** 显示标签 */
-  label: string
-  /** 是否禁用 */
-  disabled?: boolean
-  /** 自定义数据 */
-  [key: string]: any
+	/** 选项值 */
+	value: string | number | boolean;
+	/** 显示标签 */
+	label: string;
+	/** 是否禁用 */
+	disabled?: boolean;
+	/** 自定义数据 */
+	[key: string]: any;
 }
 
 export interface SelectGroupOption {
-  /** 分组标识 */
-  isGroup: true
-  /** 分组标签 */
-  label: string
-  /** 分组选项 */
-  options: SelectOption[]
+	/** 分组标识 */
+	isGroup: true;
+	/** 分组标签 */
+	label: string;
+	/** 分组选项 */
+	options: SelectOption[];
 }
 
-type OptionType = SelectOption | SelectGroupOption
+type OptionType = SelectOption | SelectGroupOption;
 
 interface Props {
-  /** 选项数据 */
-  options: OptionType[]
-  /** 绑定值 */
-  modelValue?: string | number | boolean | null
-  /** 占位文本 */
-  placeholder?: string
-  /** 禁用状态 */
-  disabled?: boolean
-  /** 尺寸 */
-  size?: SelectSize
-  /** 标签文本 */
-  label?: string
-  /** 是否必填 */
-  required?: boolean
-  /** 提示文本 */
-  hint?: string
-  /** 是否可筛选 */
-  filterable?: boolean
-  /** 筛选占位文本 */
-  filterPlaceholder?: string
-  /** 空状态文本 */
-  emptyText?: string
-  /** 下拉框位置 */
-  placement?: 'top' | 'bottom' | 'auto'
-  /** 下拉框最大高度 */
-  maxHeight?: string | number
-  /** 图标大小 */
-  iconSize?: number
-  /** 是否清除 */
-  clearable?: boolean
+	/** 选项数据 */
+	options: OptionType[];
+	/** 绑定值 */
+	modelValue?: string | number | boolean | null;
+	/** 占位文本 */
+	placeholder?: string;
+	/** 禁用状态 */
+	disabled?: boolean;
+	/** 尺寸 */
+	size?: SelectSize;
+	/** 标签文本 */
+	label?: string;
+	/** 是否必填 */
+	required?: boolean;
+	/** 提示文本 */
+	hint?: string;
+	/** 是否可筛选 */
+	filterable?: boolean;
+	/** 筛选占位文本 */
+	filterPlaceholder?: string;
+	/** 空状态文本 */
+	emptyText?: string;
+	/** 下拉框位置 */
+	placement?: "top" | "bottom" | "auto";
+	/** 下拉框最大高度 */
+	maxHeight?: string | number;
+	/** 图标大小 */
+	iconSize?: number;
+	/** 是否清除 */
+	clearable?: boolean;
 }
 
 interface Emits {
-  (e: 'update:modelValue', value: string | number | boolean | null): void
-  (e: 'change', value: string | number | boolean | null, option: SelectOption): void
-  (e: 'visible-change', visible: boolean): void
+	(e: "update:modelValue", value: string | number | boolean | null): void;
+	(
+		e: "change",
+		value: string | number | boolean | null,
+		option: SelectOption,
+	): void;
+	(e: "visible-change", visible: boolean): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  placeholder: '请选择',
-  disabled: false,
-  size: 'medium',
-  required: false,
-  filterable: false,
-  filterPlaceholder: '搜索...',
-  emptyText: '暂无数据',
-  placement: 'auto',
-  maxHeight: 200,
-  iconSize: 14,
-  clearable: false
-})
+	placeholder: "请选择",
+	disabled: false,
+	size: "medium",
+	required: false,
+	filterable: false,
+	filterPlaceholder: "搜索...",
+	emptyText: "暂无数据",
+	placement: "auto",
+	maxHeight: 200,
+	iconSize: 14,
+	clearable: false,
+});
 
-const emit = defineEmits<Emits>()
-const attrs = useAttrs()
+const emit = defineEmits<Emits>();
+const attrs = useAttrs();
 
 const containerAttrs = computed(() => {
-  const { class: className, style, ...rest } = attrs
-  return rest
-})
+	const { class: className, style, ...rest } = attrs;
+	return rest;
+});
 
 // 状态
-const isOpen = ref(false)
-const filterQuery = ref('')
-const hoveredIndex = ref(-1)
-const hoveredGroupKey = ref<string | null>(null)
-const wrapperRef = ref<HTMLElement>()
-const filterInputRef = ref<HTMLInputElement>()
+const isOpen = ref(false);
+const filterQuery = ref("");
+const hoveredIndex = ref(-1);
+const hoveredGroupKey = ref<string | null>(null);
+const wrapperRef = ref<HTMLElement>();
+const filterInputRef = ref<HTMLInputElement>();
 
 // 计算属性
 const selectClasses = computed(() => [
-  'si-select',
-  `si-select--${props.size}`,
-  {
-    'si-select--disabled': props.disabled,
-    'si-select--labeled': props.label
-  }
-])
+	"si-select",
+	`si-select--${props.size}`,
+	{
+		"si-select--disabled": props.disabled,
+		"si-select--labeled": props.label,
+	},
+]);
 
 const dropdownClasses = computed(() => [
-  `si-select__dropdown--${props.placement}`
-])
+	`si-select__dropdown--${props.placement}`,
+]);
 
 const selectedOption = computed(() => {
-  if (props.modelValue === null || props.modelValue === undefined) {
-    return null
-  }
+	if (props.modelValue === null || props.modelValue === undefined) {
+		return null;
+	}
 
-  const findOption = (options: OptionType[]): SelectOption | null => {
-    for (const option of options) {
-      if ((option as SelectGroupOption).isGroup) {
-        const found = (option as SelectGroupOption).options.find(opt => opt.value === props.modelValue)
-        if (found) return found
-      } else if (!(option as SelectGroupOption).isGroup && (option as SelectOption).value === props.modelValue) {
-        return option as SelectOption
-      }
-    }
-    return null
-  }
+	const findOption = (options: OptionType[]): SelectOption | null => {
+		for (const option of options) {
+			if ((option as SelectGroupOption).isGroup) {
+				const found = (option as SelectGroupOption).options.find(
+					(opt) => opt.value === props.modelValue,
+				);
+				if (found) return found;
+			} else if (
+				!(option as SelectGroupOption).isGroup &&
+				(option as SelectOption).value === props.modelValue
+			) {
+				return option as SelectOption;
+			}
+		}
+		return null;
+	};
 
-  return findOption(props.options)
-})
+	return findOption(props.options);
+});
 
-const selectedLabel = computed(() => selectedOption.value?.label || '')
+const selectedLabel = computed(() => selectedOption.value?.label || "");
 
 const hasGroups = computed(() =>
-  props.options.some(option => (option as SelectGroupOption).isGroup)
-)
+	props.options.some((option) => (option as SelectGroupOption).isGroup),
+);
 
 const filteredOptions = computed(() => {
-  if (!props.filterable || !filterQuery.value) {
-    return props.options
-  }
+	if (!props.filterable || !filterQuery.value) {
+		return props.options;
+	}
 
-  const query = filterQuery.value.toLowerCase()
+	const query = filterQuery.value.toLowerCase();
 
-  const filterGroup = (group: SelectGroupOption): SelectGroupOption => ({
-    ...group,
-    options: group.options.filter(opt =>
-      opt.label.toLowerCase().includes(query)
-    )
-  })
+	const filterGroup = (group: SelectGroupOption): SelectGroupOption => ({
+		...group,
+		options: group.options.filter((opt) =>
+			opt.label.toLowerCase().includes(query),
+		),
+	});
 
-  const filterOption = (option: SelectOption): boolean =>
-    option.label.toLowerCase().includes(query)
+	const filterOption = (option: SelectOption): boolean =>
+		option.label.toLowerCase().includes(query);
 
-  return props.options.reduce<OptionType[]>((acc, option) => {
-    if ((option as SelectGroupOption).isGroup) {
-      const filtered = filterGroup(option as SelectGroupOption)
-      if (filtered.options.length > 0) {
-        acc.push(filtered)
-      }
-    } else if (filterOption(option as SelectOption)) {
-      acc.push(option)
-    }
-    return acc
-  }, [])
-})
+	return props.options.reduce<OptionType[]>((acc, option) => {
+		if ((option as SelectGroupOption).isGroup) {
+			const filtered = filterGroup(option as SelectGroupOption);
+			if (filtered.options.length > 0) {
+				acc.push(filtered);
+			}
+		} else if (filterOption(option as SelectOption)) {
+			acc.push(option);
+		}
+		return acc;
+	}, []);
+});
 
 // 方法
 const isGroupOption = (option: OptionType): option is SelectGroupOption => {
-  return (option as SelectGroupOption).isGroup === true
-}
+	return (option as SelectGroupOption).isGroup === true;
+};
 
-const getOptionKey = (option: SelectOption | SelectGroupOption, index: number): string => {
-  if (isGroupOption(option)) {
-    return `group-${option.label}-${index}`
-  }
-  return `option-${option.value}-${index}`
-}
+const getOptionKey = (
+	option: SelectOption | SelectGroupOption,
+	index: number,
+): string => {
+	if (isGroupOption(option)) {
+		return `group-${option.label}-${index}`;
+	}
+	return `option-${option.value}-${index}`;
+};
 
-const isSelected = (value: string | number | boolean) => value === props.modelValue
+const isSelected = (value: string | number | boolean) =>
+	value === props.modelValue;
 
 const setHoveredIndex = (index: number) => {
-  hoveredIndex.value = index
-  hoveredGroupKey.value = null
-}
+	hoveredIndex.value = index;
+	hoveredGroupKey.value = null;
+};
 
 const setHoveredGroupOption = (groupIndex: number, optionIndex: number) => {
-  hoveredIndex.value = -1
-  hoveredGroupKey.value = `${groupIndex}-${optionIndex}`
-}
+	hoveredIndex.value = -1;
+	hoveredGroupKey.value = `${groupIndex}-${optionIndex}`;
+};
 
 const selectOption = (option: SelectOption) => {
-  if (option.disabled) return
+	if (option.disabled) return;
 
-  emit('update:modelValue', option.value)
-  emit('change', option.value, option)
-  isOpen.value = false
-  filterQuery.value = ''
-}
+	emit("update:modelValue", option.value);
+	emit("change", option.value, option);
+	isOpen.value = false;
+	filterQuery.value = "";
+};
 
 const toggleDropdown = () => {
-  if (props.disabled) return
+	if (props.disabled) return;
 
-  isOpen.value = !isOpen.value
-  emit('visible-change', isOpen.value)
+	isOpen.value = !isOpen.value;
+	emit("visible-change", isOpen.value);
 
-  if (isOpen.value) {
-    nextTick(() => {
-      if (props.filterable) {
-        filterInputRef.value?.focus()
-      }
-    })
-  }
-}
+	if (isOpen.value) {
+		nextTick(() => {
+			if (props.filterable) {
+				filterInputRef.value?.focus();
+			}
+		});
+	}
+};
 
 const closeDropdown = () => {
-  isOpen.value = false
-  emit('visible-change', false)
-  filterQuery.value = ''
-  hoveredIndex.value = -1
-  hoveredGroupKey.value = null
-}
+	isOpen.value = false;
+	emit("visible-change", false);
+	filterQuery.value = "";
+	hoveredIndex.value = -1;
+	hoveredGroupKey.value = null;
+};
 
 const handleKeydown = (event: KeyboardEvent) => {
-  if (props.disabled) return
+	if (props.disabled) return;
 
-  switch (event.key) {
-    case 'Enter':
-    case ' ':
-      event.preventDefault()
-      if (isOpen.value && hoveredIndex.value >= 0) {
-        const option = filteredOptions.value[hoveredIndex.value]
-        if (option && !isGroupOption(option) && !(option as SelectOption).disabled) {
-          selectOption(option as SelectOption)
-        }
-      } else {
-        toggleDropdown()
-      }
-      break
-    case 'Escape':
-      event.preventDefault()
-      closeDropdown()
-      break
-    case 'ArrowDown':
-      event.preventDefault()
-      if (!isOpen.value) {
-        toggleDropdown()
-      } else {
-        hoveredIndex.value = Math.min(
-          hoveredIndex.value + 1,
-          filteredOptions.value.length - 1
-        )
-      }
-      break
-    case 'ArrowUp':
-      event.preventDefault()
-      if (isOpen.value) {
-        hoveredIndex.value = Math.max(hoveredIndex.value - 1, 0)
-      }
-      break
-    case 'Tab':
-      closeDropdown()
-      break
-  }
-}
+	switch (event.key) {
+		case "Enter":
+		case " ":
+			event.preventDefault();
+			if (isOpen.value && hoveredIndex.value >= 0) {
+				const option = filteredOptions.value[hoveredIndex.value];
+				if (
+					option &&
+					!isGroupOption(option) &&
+					!(option as SelectOption).disabled
+				) {
+					selectOption(option as SelectOption);
+				}
+			} else {
+				toggleDropdown();
+			}
+			break;
+		case "Escape":
+			event.preventDefault();
+			closeDropdown();
+			break;
+		case "ArrowDown":
+			event.preventDefault();
+			if (!isOpen.value) {
+				toggleDropdown();
+			} else {
+				hoveredIndex.value = Math.min(
+					hoveredIndex.value + 1,
+					filteredOptions.value.length - 1,
+				);
+			}
+			break;
+		case "ArrowUp":
+			event.preventDefault();
+			if (isOpen.value) {
+				hoveredIndex.value = Math.max(hoveredIndex.value - 1, 0);
+			}
+			break;
+		case "Tab":
+			closeDropdown();
+			break;
+	}
+};
 
 const handleClickOutside = (event: MouseEvent) => {
-  if (wrapperRef.value && !wrapperRef.value.contains(event.target as Node)) {
-    closeDropdown()
-  }
-}
+	if (wrapperRef.value && !wrapperRef.value.contains(event.target as Node)) {
+		closeDropdown();
+	}
+};
 
 // 监听
-watch(() => props.modelValue, () => {
-  filterQuery.value = ''
-})
+watch(
+	() => props.modelValue,
+	() => {
+		filterQuery.value = "";
+	},
+);
 
 // 生命周期
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
+	document.addEventListener("click", handleClickOutside);
+});
 
 onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-})
+	document.removeEventListener("click", handleClickOutside);
+});
 </script>
 
 <style scoped lang="scss">

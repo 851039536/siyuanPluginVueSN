@@ -114,151 +114,153 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import { showMessage } from 'siyuan'
-import SiSwitch from '@/components/Switch.vue'
-import { DocCountManager } from '../modules/DocCountManager'
+import { ref, onMounted, onUnmounted } from "vue";
+import { showMessage } from "siyuan";
+import SiSwitch from "@/components/Switch.vue";
+import { DocCountManager } from "../modules/DocCountManager";
 
 const props = defineProps<{
-  i18n?: Record<string, string>
-  plugin?: any
-}>()
+	i18n?: Record<string, string>;
+	plugin?: any;
+}>();
 
 const emit = defineEmits<{
-  change: [settings: any]
-}>()
+	change: [settings: any];
+}>();
 
-const enableDocCount = ref(true)
-const updateInterval = ref('3600000')
-const fontSize = ref('12px')
-const fontColor = ref('#8c8c8c')
-const fontWeight = ref('normal')
+const enableDocCount = ref(true);
+const updateInterval = ref("3600000");
+const fontSize = ref("12px");
+const fontColor = ref("#8c8c8c");
+const fontWeight = ref("normal");
 
 /**
  * 获取 GeneralSettings 实例中的 DocCountManager
  */
 const getDocCountManager = (): DocCountManager | null => {
-  const generalSettings = props.plugin?.__generalSettings
-  return generalSettings?.docCountManager || null
-}
+	const generalSettings = props.plugin?.__generalSettings;
+	return generalSettings?.docCountManager || null;
+};
 
 const loadSettings = async () => {
-  try {
-    const data = await props.plugin?.loadData('doc-count-settings')
-    if (data) {
-      enableDocCount.value = data.enableDocCount ?? true
-      updateInterval.value = data.updateInterval || '3600000'
-      fontSize.value = data.fontSize || '12px'
-      fontColor.value = data.fontColor || '#8c8c8c'
-      fontWeight.value = data.fontWeight || 'normal'
-    }
-  } catch (e) {
-    console.error('加载文档数统计设置失败:', e)
-  }
-}
+	try {
+		const data = await props.plugin?.loadData("doc-count-settings");
+		if (data) {
+			enableDocCount.value = data.enableDocCount ?? true;
+			updateInterval.value = data.updateInterval || "3600000";
+			fontSize.value = data.fontSize || "12px";
+			fontColor.value = data.fontColor || "#8c8c8c";
+			fontWeight.value = data.fontWeight || "normal";
+		}
+	} catch (e) {
+		console.error("加载文档数统计设置失败:", e);
+	}
+};
 
 const handleToggleChange = async () => {
-  try {
-    await props.plugin?.saveData('doc-count-settings', {
-      enableDocCount: enableDocCount.value,
-      updateInterval: updateInterval.value,
-      fontSize: fontSize.value,
-      fontColor: fontColor.value,
-      fontWeight: fontWeight.value
-    })
-    
-    const manager = getDocCountManager()
-    if (enableDocCount.value) {
-      // 如果启用但管理器不存在,创建并启动
-      if (!manager && props.plugin?.__generalSettings) {
-        props.plugin.__generalSettings.docCountManager = new DocCountManager()
-        const newManager = getDocCountManager()
-        newManager?.start()
-        newManager?.setUpdateInterval(parseInt(updateInterval.value))
-        newManager?.setFontStyle({
-          fontSize: fontSize.value,
-          color: fontColor.value,
-          fontWeight: fontWeight.value
-        })
-      } else {
-        manager?.start()
-      }
-    } else {
-      // 如果禁用,停止管理器
-      manager?.stop()
-    }
-    
-    showMessage(
-      enableDocCount.value ? '笔记本文档数统计已启用' : '笔记本文档数统计已禁用',
-      2000,
-      'info'
-    )
-    
-    emit('change', {
-      enableDocCount: enableDocCount.value,
-      updateInterval: updateInterval.value,
-      fontSize: fontSize.value,
-      fontColor: fontColor.value,
-      fontWeight: fontWeight.value
-    })
-  } catch (e) {
-    console.error('保存文档数统计设置失败:', e)
-  }
-}
+	try {
+		await props.plugin?.saveData("doc-count-settings", {
+			enableDocCount: enableDocCount.value,
+			updateInterval: updateInterval.value,
+			fontSize: fontSize.value,
+			fontColor: fontColor.value,
+			fontWeight: fontWeight.value,
+		});
+
+		const manager = getDocCountManager();
+		if (enableDocCount.value) {
+			// 如果启用但管理器不存在,创建并启动
+			if (!manager && props.plugin?.__generalSettings) {
+				props.plugin.__generalSettings.docCountManager = new DocCountManager();
+				const newManager = getDocCountManager();
+				newManager?.start();
+				newManager?.setUpdateInterval(parseInt(updateInterval.value));
+				newManager?.setFontStyle({
+					fontSize: fontSize.value,
+					color: fontColor.value,
+					fontWeight: fontWeight.value,
+				});
+			} else {
+				manager?.start();
+			}
+		} else {
+			// 如果禁用,停止管理器
+			manager?.stop();
+		}
+
+		showMessage(
+			enableDocCount.value
+				? "笔记本文档数统计已启用"
+				: "笔记本文档数统计已禁用",
+			2000,
+			"info",
+		);
+
+		emit("change", {
+			enableDocCount: enableDocCount.value,
+			updateInterval: updateInterval.value,
+			fontSize: fontSize.value,
+			fontColor: fontColor.value,
+			fontWeight: fontWeight.value,
+		});
+	} catch (e) {
+		console.error("保存文档数统计设置失败:", e);
+	}
+};
 
 const handleIntervalChange = async () => {
-  try {
-    await props.plugin?.saveData('doc-count-settings', {
-      enableDocCount: enableDocCount.value,
-      updateInterval: updateInterval.value,
-      fontSize: fontSize.value,
-      fontColor: fontColor.value,
-      fontWeight: fontWeight.value
-    })
-    
-    const manager = getDocCountManager()
-    manager?.setUpdateInterval(parseInt(updateInterval.value))
-    
-    showMessage('更新间隔已修改', 2000, 'info')
-  } catch (e) {
-    console.error('保存更新间隔失败:', e)
-  }
-}
+	try {
+		await props.plugin?.saveData("doc-count-settings", {
+			enableDocCount: enableDocCount.value,
+			updateInterval: updateInterval.value,
+			fontSize: fontSize.value,
+			fontColor: fontColor.value,
+			fontWeight: fontWeight.value,
+		});
+
+		const manager = getDocCountManager();
+		manager?.setUpdateInterval(parseInt(updateInterval.value));
+
+		showMessage("更新间隔已修改", 2000, "info");
+	} catch (e) {
+		console.error("保存更新间隔失败:", e);
+	}
+};
 
 const handleFontStyleChange = async () => {
-  try {
-    await props.plugin?.saveData('doc-count-settings', {
-      enableDocCount: enableDocCount.value,
-      updateInterval: updateInterval.value,
-      fontSize: fontSize.value,
-      fontColor: fontColor.value,
-      fontWeight: fontWeight.value
-    })
-    
-    const manager = getDocCountManager()
-    manager?.setFontStyle({
-      fontSize: fontSize.value,
-      color: fontColor.value,
-      fontWeight: fontWeight.value
-    })
-    
-    showMessage('字体样式已修改', 2000, 'info')
-  } catch (e) {
-    console.error('保存字体样式失败:', e)
-  }
-}
+	try {
+		await props.plugin?.saveData("doc-count-settings", {
+			enableDocCount: enableDocCount.value,
+			updateInterval: updateInterval.value,
+			fontSize: fontSize.value,
+			fontColor: fontColor.value,
+			fontWeight: fontWeight.value,
+		});
+
+		const manager = getDocCountManager();
+		manager?.setFontStyle({
+			fontSize: fontSize.value,
+			color: fontColor.value,
+			fontWeight: fontWeight.value,
+		});
+
+		showMessage("字体样式已修改", 2000, "info");
+	} catch (e) {
+		console.error("保存字体样式失败:", e);
+	}
+};
 
 onMounted(async () => {
-  await loadSettings()
-  // 注意:不再在这里创建和启动 DocCountManager
-  // 它由 GeneralSettings 在插件启动时统一管理
-})
+	await loadSettings();
+	// 注意:不再在这里创建和启动 DocCountManager
+	// 它由 GeneralSettings 在插件启动时统一管理
+});
 
 onUnmounted(() => {
-  // 清理工作由 GeneralSettings 统一处理
-})
+	// 清理工作由 GeneralSettings 统一处理
+});
 
-defineExpose({ loadSettings, enableDocCount })
+defineExpose({ loadSettings, enableDocCount });
 </script>
 
 <style scoped>

@@ -161,359 +161,472 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { formatNumber } from '../utils'
+import { computed, ref, watch } from "vue";
+import { formatNumber } from "../utils";
 
 interface HistoricalDataItem {
-  date: string
-  dateLabel: string
-  totalNotes: number
-  totalWords: number
-  todayCreated: number
-  todayModified: number
+	date: string;
+	dateLabel: string;
+	totalNotes: number;
+	totalWords: number;
+	todayCreated: number;
+	todayModified: number;
 }
 
 interface WeeklyGoal {
-  created: number
-  words: number
+	created: number;
+	words: number;
 }
 
 interface Props {
-  historicalData?: HistoricalDataItem[]
-  totalNotes?: number
-  totalWords?: number
-  totalBacklinks?: number
-  weeklyGoal?: WeeklyGoal
-  i18n?: Record<string, string>
+	historicalData?: HistoricalDataItem[];
+	totalNotes?: number;
+	totalWords?: number;
+	totalBacklinks?: number;
+	weeklyGoal?: WeeklyGoal;
+	i18n?: Record<string, string>;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  historicalData: () => [],
-  totalNotes: 0,
-  totalWords: 0,
-  totalBacklinks: 0,
-  weeklyGoal: () => ({ created: 30, words: 100000 }),
-  i18n: () => ({
-    weeklyGoal: '本周目标',
-    notesCreated: '新建笔记',
-    wordsWritten: '写作字数',
-    activeDays: '活跃天数',
-    activityHeatmap: '活跃热力图',
-    less: '少',
-    more: '多',
-    last30Days: '近30天',
-    activeDaysCount: '天活跃',
-    knowledgeWealth: '知识财富',
-    gold: '金币',
-    fromNotes: '笔记贡献',
-    fromWords: '字数贡献',
-    fromLinks: '双链贡献',
-    wealthRank: '财富等级',
-    milestones: '里程碑',
-    yearOverYear: '年同比',
-    notes: '笔记',
-    words: '字数',
-    editGoal: '编辑目标',
-    save: '保存',
-    cancel: '取消',
-    notesUnit: '篇',
-    wordsUnit: '字',
-  }),
-})
+	historicalData: () => [],
+	totalNotes: 0,
+	totalWords: 0,
+	totalBacklinks: 0,
+	weeklyGoal: () => ({ created: 30, words: 100000 }),
+	i18n: () => ({
+		weeklyGoal: "本周目标",
+		notesCreated: "新建笔记",
+		wordsWritten: "写作字数",
+		activeDays: "活跃天数",
+		activityHeatmap: "活跃热力图",
+		less: "少",
+		more: "多",
+		last30Days: "近30天",
+		activeDaysCount: "天活跃",
+		knowledgeWealth: "知识财富",
+		gold: "金币",
+		fromNotes: "笔记贡献",
+		fromWords: "字数贡献",
+		fromLinks: "双链贡献",
+		wealthRank: "财富等级",
+		milestones: "里程碑",
+		yearOverYear: "年同比",
+		notes: "笔记",
+		words: "字数",
+		editGoal: "编辑目标",
+		save: "保存",
+		cancel: "取消",
+		notesUnit: "篇",
+		wordsUnit: "字",
+	}),
+});
 
 const emit = defineEmits<{
-  (e: 'save-weekly-goal', goal: WeeklyGoal): void
-}>()
+	(e: "save-weekly-goal", goal: WeeklyGoal): void;
+}>();
 
 // 目标编辑器状态
-const showGoalEditor = ref(false)
-const tempGoal = ref<WeeklyGoal>({ created: 30, words: 100000 })
+const showGoalEditor = ref(false);
+const tempGoal = ref<WeeklyGoal>({ created: 30, words: 100000 });
 
 // 监听外部 weeklyGoal 变化，同步到临时目标
-watch(() => props.weeklyGoal, (newGoal) => {
-  tempGoal.value = { ...newGoal }
-}, { immediate: true })
+watch(
+	() => props.weeklyGoal,
+	(newGoal) => {
+		tempGoal.value = { ...newGoal };
+	},
+	{ immediate: true },
+);
 
 // 打开编辑器时重置临时目标
 watch(showGoalEditor, (show) => {
-  if (show) {
-    tempGoal.value = { ...props.weeklyGoal }
-  }
-})
+	if (show) {
+		tempGoal.value = { ...props.weeklyGoal };
+	}
+});
 
 // 保存目标
 function saveGoal() {
-  if (tempGoal.value.created > 0 && tempGoal.value.words > 0) {
-    emit('save-weekly-goal', { ...tempGoal.value })
-    showGoalEditor.value = false
-  }
+	if (tempGoal.value.created > 0 && tempGoal.value.words > 0) {
+		emit("save-weekly-goal", { ...tempGoal.value });
+		showGoalEditor.value = false;
+	}
 }
 
-const currentYear = new Date().getFullYear()
+const currentYear = new Date().getFullYear();
 
 // ============ 本周目标 ============
 const weeklyStats = computed(() => {
-  const now = new Date()
-  const dayOfWeek = now.getDay() || 7
-  const weekStart = new Date(now)
-  weekStart.setDate(weekStart.getDate() - dayOfWeek + 1)
-  weekStart.setHours(0, 0, 0, 0)
+	const now = new Date();
+	const dayOfWeek = now.getDay() || 7;
+	const weekStart = new Date(now);
+	weekStart.setDate(weekStart.getDate() - dayOfWeek + 1);
+	weekStart.setHours(0, 0, 0, 0);
 
-  let created = 0
-  let words = 0
-  let activeDays = 0
-  const activeSet = new Set<string>()
+	let created = 0;
+	let words = 0;
+	let activeDays = 0;
+	const activeSet = new Set<string>();
 
-  // 按 date 排序，确保可以找到前一天的数据来计算字数差值
-  const sortedData = [...props.historicalData].sort((a, b) => a.date.localeCompare(b.date))
+	// 按 date 排序，确保可以找到前一天的数据来计算字数差值
+	const sortedData = [...props.historicalData].sort((a, b) =>
+		a.date.localeCompare(b.date),
+	);
 
-  for (let i = 0; i < sortedData.length; i++) {
-    const data = sortedData[i]
-    const dataDate = new Date(data.date)
-    if (dataDate >= weekStart && dataDate <= now) {
-      created += data.todayCreated
-      // 通过相邻两天的 totalWords 差值计算当日写作字数
-      const prevData = i > 0 ? sortedData[i - 1] : null
-      if (prevData && prevData.totalWords > 0) {
-        const diff = data.totalWords - prevData.totalWords
-        words += diff > 0 ? diff : 0
-      }
-      if (data.todayCreated > 0 || data.todayModified > 0) {
-        activeSet.add(data.date)
-        activeDays = activeSet.size
-      }
-    }
-  }
+	for (let i = 0; i < sortedData.length; i++) {
+		const data = sortedData[i];
+		const dataDate = new Date(data.date);
+		if (dataDate >= weekStart && dataDate <= now) {
+			created += data.todayCreated;
+			// 通过相邻两天的 totalWords 差值计算当日写作字数
+			const prevData = i > 0 ? sortedData[i - 1] : null;
+			if (prevData && prevData.totalWords > 0) {
+				const diff = data.totalWords - prevData.totalWords;
+				words += diff > 0 ? diff : 0;
+			}
+			if (data.todayCreated > 0 || data.todayModified > 0) {
+				activeSet.add(data.date);
+				activeDays = activeSet.size;
+			}
+		}
+	}
 
-  return { created, words, activeDays }
-})
+	return { created, words, activeDays };
+});
 
 const weeklyProgress = computed(() => {
-  const notesProgress = (weeklyStats.value.created / props.weeklyGoal.created) * 50
-  const wordsProgress = (weeklyStats.value.words / props.weeklyGoal.words) * 50
-  return Math.min(notesProgress + wordsProgress, 100)
-})
+	const notesProgress =
+		(weeklyStats.value.created / props.weeklyGoal.created) * 50;
+	const wordsProgress = (weeklyStats.value.words / props.weeklyGoal.words) * 50;
+	return Math.min(notesProgress + wordsProgress, 100);
+});
 
 // 本周每日详细数据（用于趋势条形图）
 const weekDaysDetail = computed(() => {
-  const days = []
-  const now = new Date()
-  const dayOfWeek = now.getDay() || 7
-  let maxValue = 0
-  const dayDataList: { label: string; value: number; date: string; isToday: boolean }[] = []
+	const days = [];
+	const now = new Date();
+	const dayOfWeek = now.getDay() || 7;
+	let maxValue = 0;
+	const dayDataList: {
+		label: string;
+		value: number;
+		date: string;
+		isToday: boolean;
+	}[] = [];
 
-  // 先收集所有数据并找出最大值
-  for (let i = 0; i < 7; i++) {
-    const date = new Date(now)
-    date.setDate(date.getDate() - dayOfWeek + 1 + i)
-    const dateStr = formatDate(date)
-    const dayData = props.historicalData.find(d => d.date === dateStr)
-    const value = dayData ? (dayData.todayCreated * 100 + dayData.todayModified) : 0
-    const isToday = dateStr === formatDate(now)
+	// 先收集所有数据并找出最大值
+	for (let i = 0; i < 7; i++) {
+		const date = new Date(now);
+		date.setDate(date.getDate() - dayOfWeek + 1 + i);
+		const dateStr = formatDate(date);
+		const dayData = props.historicalData.find((d) => d.date === dateStr);
+		const value = dayData
+			? dayData.todayCreated * 100 + dayData.todayModified
+			: 0;
+		const isToday = dateStr === formatDate(now);
 
-    dayDataList.push({
-      label: ['一', '二', '三', '四', '五', '六', '日'][i],
-      value,
-      date: dateStr,
-      isToday,
-    })
-    if (value > maxValue) maxValue = value
-  }
+		dayDataList.push({
+			label: ["一", "二", "三", "四", "五", "六", "日"][i],
+			value,
+			date: dateStr,
+			isToday,
+		});
+		if (value > maxValue) maxValue = value;
+	}
 
-  // 找出最佳日
-  const bestIdx = dayDataList.findIndex(d => d.value === maxValue && d.value > 0)
+	// 找出最佳日
+	const bestIdx = dayDataList.findIndex(
+		(d) => d.value === maxValue && d.value > 0,
+	);
 
-  // 计算柱状图高度
-  for (let i = 0; i < dayDataList.length; i++) {
-    const d = dayDataList[i]
-    days.push({
-      ...d,
-      barHeight: maxValue > 0 ? (d.value / maxValue) * 100 : 0,
-      isBest: i === bestIdx,
-    })
-  }
+	// 计算柱状图高度
+	for (let i = 0; i < dayDataList.length; i++) {
+		const d = dayDataList[i];
+		days.push({
+			...d,
+			barHeight: maxValue > 0 ? (d.value / maxValue) * 100 : 0,
+			isBest: i === bestIdx,
+		});
+	}
 
-  return days
-})
+	return days;
+});
 
 const weekDays = computed(() => {
-  const days = []
-  const now = new Date()
-  const dayOfWeek = now.getDay() || 7
+	const days = [];
+	const now = new Date();
+	const dayOfWeek = now.getDay() || 7;
 
-  // 找出本周最大产出日
-  let maxActivity = 0
-  let bestDate = ''
-  for (let i = 0; i < 7; i++) {
-    const date = new Date(now)
-    date.setDate(date.getDate() - dayOfWeek + 1 + i)
-    const dateStr = formatDate(date)
-    const dayData = props.historicalData.find(d => d.date === dateStr)
-    const activity = dayData ? (dayData.todayCreated + dayData.todayModified) : 0
-    if (activity > maxActivity) {
-      maxActivity = activity
-      bestDate = dateStr
-    }
-  }
+	// 找出本周最大产出日
+	let maxActivity = 0;
+	let bestDate = "";
+	for (let i = 0; i < 7; i++) {
+		const date = new Date(now);
+		date.setDate(date.getDate() - dayOfWeek + 1 + i);
+		const dateStr = formatDate(date);
+		const dayData = props.historicalData.find((d) => d.date === dateStr);
+		const activity = dayData ? dayData.todayCreated + dayData.todayModified : 0;
+		if (activity > maxActivity) {
+			maxActivity = activity;
+			bestDate = dateStr;
+		}
+	}
 
-  for (let i = 0; i < 7; i++) {
-    const date = new Date(now)
-    date.setDate(date.getDate() - dayOfWeek + 1 + i)
-    const dateStr = formatDate(date)
-    const dayData = props.historicalData.find(d => d.date === dateStr)
+	for (let i = 0; i < 7; i++) {
+		const date = new Date(now);
+		date.setDate(date.getDate() - dayOfWeek + 1 + i);
+		const dateStr = formatDate(date);
+		const dayData = props.historicalData.find((d) => d.date === dateStr);
 
-    days.push({
-      label: ['一', '二', '三', '四', '五', '六', '日'][i],
-      active: dayData && (dayData.todayCreated > 0 || dayData.todayModified > 0),
-      isToday: dateStr === formatDate(now),
-      isBest: dateStr === bestDate && maxActivity > 0,
-    })
-  }
+		days.push({
+			label: ["一", "二", "三", "四", "五", "六", "日"][i],
+			active:
+				dayData && (dayData.todayCreated > 0 || dayData.todayModified > 0),
+			isToday: dateStr === formatDate(now),
+			isBest: dateStr === bestDate && maxActivity > 0,
+		});
+	}
 
-  return days
-})
+	return days;
+});
 
 // ============ 热力日历 ============
 const heatmapCells = computed(() => {
-  const cells = []
-  const now = new Date()
+	const cells = [];
+	const now = new Date();
 
-  for (let i = 29; i >= 0; i--) {
-    const date = new Date(now)
-    date.setDate(date.getDate() - i)
-    const dateStr = formatDate(date)
-    const dayData = props.historicalData.find(d => d.date === dateStr)
+	for (let i = 29; i >= 0; i--) {
+		const date = new Date(now);
+		date.setDate(date.getDate() - i);
+		const dateStr = formatDate(date);
+		const dayData = props.historicalData.find((d) => d.date === dateStr);
 
-    const activity = dayData ? (dayData.todayCreated + dayData.todayModified) : 0
-    let level = 'level-0'
-    if (activity > 0) level = 'level-1'
-    if (activity > 5) level = 'level-2'
-    if (activity > 15) level = 'level-3'
-    if (activity > 30) level = 'level-4'
+		const activity = dayData ? dayData.todayCreated + dayData.todayModified : 0;
+		let level = "level-0";
+		if (activity > 0) level = "level-1";
+		if (activity > 5) level = "level-2";
+		if (activity > 15) level = "level-3";
+		if (activity > 30) level = "level-4";
 
-    cells.push({
-      date: dateStr,
-      level,
-      tooltip: `${dateStr}: ${activity}次操作`,
-    })
-  }
+		cells.push({
+			date: dateStr,
+			level,
+			tooltip: `${dateStr}: ${activity}次操作`,
+		});
+	}
 
-  return cells
-})
+	return cells;
+});
 
 const activeDaysInMonth = computed(() => {
-  return heatmapCells.value.filter(c => c.level !== 'level-0').length
-})
+	return heatmapCells.value.filter((c) => c.level !== "level-0").length;
+});
 
 // ============ 知识财富 ============
 const knowledgeWealth = computed(() => {
-  const fromNotes = props.totalNotes * 100
-  const fromWords = Math.floor(props.totalWords / 10)
-  const fromLinks = props.totalBacklinks * 50
+	const fromNotes = props.totalNotes * 100;
+	const fromWords = Math.floor(props.totalWords / 10);
+	const fromLinks = props.totalBacklinks * 50;
 
-  return {
-    fromNotes,
-    fromWords,
-    fromLinks,
-    total: fromNotes + fromWords + fromLinks,
-  }
-})
+	return {
+		fromNotes,
+		fromWords,
+		fromLinks,
+		total: fromNotes + fromWords + fromLinks,
+	};
+});
 
 const wealthRank = computed(() => {
-  const notes = props.totalNotes
-  // 参考里程碑：500、1500、3000、3500、4000、5000、7500、10000
-  if (notes >= 10000) return { title: '笔记之神', icon: '👑' }
-  if (notes >= 7500) return { title: '传奇作者', icon: '💎' }
-  if (notes >= 5000) return { title: '知识架构师', icon: '🌟' }
-  if (notes >= 4000) return { title: '笔记大师', icon: '🎓' }
-  if (notes >= 3500) return { title: '知识管理者', icon: '📚' }
-  if (notes >= 3000) return { title: '写作达人', icon: '✍️' }
-  if (notes >= 1500) return { title: '知识探索者', icon: '🔍' }
-  if (notes >= 500) return { title: '记录学徒', icon: '📝' }
-  return { title: '笔记新手', icon: '🌱' }
-})
+	const notes = props.totalNotes;
+	// 参考里程碑：500、1500、3000、3500、4000、5000、7500、10000
+	if (notes >= 10000) return { title: "笔记之神", icon: "👑" };
+	if (notes >= 7500) return { title: "传奇作者", icon: "💎" };
+	if (notes >= 5000) return { title: "知识架构师", icon: "🌟" };
+	if (notes >= 4000) return { title: "笔记大师", icon: "🎓" };
+	if (notes >= 3500) return { title: "知识管理者", icon: "📚" };
+	if (notes >= 3000) return { title: "写作达人", icon: "✍️" };
+	if (notes >= 1500) return { title: "知识探索者", icon: "🔍" };
+	if (notes >= 500) return { title: "记录学徒", icon: "📝" };
+	return { title: "笔记新手", icon: "🌱" };
+});
 
 // ============ 里程碑 ============
 const allMilestones = [
-  // 笔记里程碑：500篇起
-  { id: 'notes-500', icon: '🌱', label: '500篇笔记', target: 500, type: 'notes' },
-  { id: 'notes-1500', icon: '🌿', label: '1500篇笔记', target: 1500, type: 'notes' },
-  { id: 'notes-3000', icon: '🌳', label: '3000篇笔记', target: 3000, type: 'notes' },
-  { id: 'notes-3500', icon: '🌲', label: '3500篇笔记', target: 3500, type: 'notes' },
-  { id: 'notes-4000', icon: '🏔️', label: '4000篇笔记', target: 4000, type: 'notes' },
-  { id: 'notes-5000', icon: '⛰️', label: '5000篇笔记', target: 5000, type: 'notes' },
-  { id: 'notes-7500', icon: '🗻', label: '7500篇笔记', target: 7500, type: 'notes' },
-  { id: 'notes-10000', icon: '🏔️', label: '1万篇笔记', target: 10000, type: 'notes' },
-  // 字数里程碑：50万字起
-  { id: 'words-50w', icon: '📚', label: '50万字', target: 500000, type: 'words' },
-  { id: 'words-100w', icon: '🎓', label: '100万字', target: 1000000, type: 'words' },
-  { id: 'words-200w', icon: '📖', label: '200万字', target: 2000000, type: 'words' },
-  { id: 'words-300w', icon: '📜', label: '300万字', target: 3000000, type: 'words' },
-  { id: 'words-500w', icon: '🏆', label: '500万字', target: 5000000, type: 'words' },
-  { id: 'words-1000w', icon: '👑', label: '1000万字', target: 10000000, type: 'words' },
-  { id: 'words-5000w', icon: '💎', label: '5000万字', target: 50000000, type: 'words' },
-  { id: 'words-1yi', icon: '🌟', label: '1亿字', target: 100000000, type: 'words' },
-]
+	// 笔记里程碑：500篇起
+	{
+		id: "notes-500",
+		icon: "🌱",
+		label: "500篇笔记",
+		target: 500,
+		type: "notes",
+	},
+	{
+		id: "notes-1500",
+		icon: "🌿",
+		label: "1500篇笔记",
+		target: 1500,
+		type: "notes",
+	},
+	{
+		id: "notes-3000",
+		icon: "🌳",
+		label: "3000篇笔记",
+		target: 3000,
+		type: "notes",
+	},
+	{
+		id: "notes-3500",
+		icon: "🌲",
+		label: "3500篇笔记",
+		target: 3500,
+		type: "notes",
+	},
+	{
+		id: "notes-4000",
+		icon: "🏔️",
+		label: "4000篇笔记",
+		target: 4000,
+		type: "notes",
+	},
+	{
+		id: "notes-5000",
+		icon: "⛰️",
+		label: "5000篇笔记",
+		target: 5000,
+		type: "notes",
+	},
+	{
+		id: "notes-7500",
+		icon: "🗻",
+		label: "7500篇笔记",
+		target: 7500,
+		type: "notes",
+	},
+	{
+		id: "notes-10000",
+		icon: "🏔️",
+		label: "1万篇笔记",
+		target: 10000,
+		type: "notes",
+	},
+	// 字数里程碑：50万字起
+	{
+		id: "words-50w",
+		icon: "📚",
+		label: "50万字",
+		target: 500000,
+		type: "words",
+	},
+	{
+		id: "words-100w",
+		icon: "🎓",
+		label: "100万字",
+		target: 1000000,
+		type: "words",
+	},
+	{
+		id: "words-200w",
+		icon: "📖",
+		label: "200万字",
+		target: 2000000,
+		type: "words",
+	},
+	{
+		id: "words-300w",
+		icon: "📜",
+		label: "300万字",
+		target: 3000000,
+		type: "words",
+	},
+	{
+		id: "words-500w",
+		icon: "🏆",
+		label: "500万字",
+		target: 5000000,
+		type: "words",
+	},
+	{
+		id: "words-1000w",
+		icon: "👑",
+		label: "1000万字",
+		target: 10000000,
+		type: "words",
+	},
+	{
+		id: "words-5000w",
+		icon: "💎",
+		label: "5000万字",
+		target: 50000000,
+		type: "words",
+	},
+	{
+		id: "words-1yi",
+		icon: "🌟",
+		label: "1亿字",
+		target: 100000000,
+		type: "words",
+	},
+];
 
 const achievedMilestones = computed(() => {
-  return allMilestones.filter(m => {
-    const current = m.type === 'notes' ? props.totalNotes : props.totalWords
-    return current >= m.target
-  })
-})
+	return allMilestones.filter((m) => {
+		const current = m.type === "notes" ? props.totalNotes : props.totalWords;
+		return current >= m.target;
+	});
+});
 
 const visibleMilestones = computed(() => {
-  return allMilestones.map(m => {
-    const current = m.type === 'notes' ? props.totalNotes : props.totalWords
-    const achieved = current >= m.target
-    const progress = achieved ? 100 : Math.min((current / m.target) * 100, 100)
-    return { ...m, achieved, progress }
-  })
-})
+	return allMilestones.map((m) => {
+		const current = m.type === "notes" ? props.totalNotes : props.totalWords;
+		const achieved = current >= m.target;
+		const progress = achieved ? 100 : Math.min((current / m.target) * 100, 100);
+		return { ...m, achieved, progress };
+	});
+});
 
 // ============ 年同比 ============
 const yearStats = computed(() => {
-  const currentYearStr = currentYear.toString()
-  const previousYearStr = (currentYear - 1).toString()
+	const currentYearStr = currentYear.toString();
+	const previousYearStr = (currentYear - 1).toString();
 
-  let currentYearNotes = 0
-  let currentYearWords = 0
-  let previousYearNotes = 0
-  let previousYearWords = 0
+	let currentYearNotes = 0;
+	let currentYearWords = 0;
+	let previousYearNotes = 0;
+	let previousYearWords = 0;
 
-  for (const data of props.historicalData) {
-    const year = data.date.substring(0, 4)
-    if (year === currentYearStr) {
-      currentYearNotes = data.totalNotes
-      currentYearWords = data.totalWords
-    } else if (year === previousYearStr) {
-      previousYearNotes = data.totalNotes
-      previousYearWords = data.totalWords
-    }
-  }
+	for (const data of props.historicalData) {
+		const year = data.date.substring(0, 4);
+		if (year === currentYearStr) {
+			currentYearNotes = data.totalNotes;
+			currentYearWords = data.totalWords;
+		} else if (year === previousYearStr) {
+			previousYearNotes = data.totalNotes;
+			previousYearWords = data.totalWords;
+		}
+	}
 
-  const calcChange = (current: number, previous: number): number => {
-    if (previous === 0) return current > 0 ? 100 : 0
-    return ((current - previous) / previous) * 100
-  }
+	const calcChange = (current: number, previous: number): number => {
+		if (previous === 0) return current > 0 ? 100 : 0;
+		return ((current - previous) / previous) * 100;
+	};
 
-  return {
-    current: { totalNotes: currentYearNotes, totalWords: currentYearWords },
-    previous: { totalNotes: previousYearNotes, totalWords: previousYearWords },
-    change: {
-      notes: calcChange(currentYearNotes, previousYearNotes),
-      words: calcChange(currentYearWords, previousYearWords),
-    },
-  }
-})
+	return {
+		current: { totalNotes: currentYearNotes, totalWords: currentYearWords },
+		previous: { totalNotes: previousYearNotes, totalWords: previousYearWords },
+		change: {
+			notes: calcChange(currentYearNotes, previousYearNotes),
+			words: calcChange(currentYearWords, previousYearWords),
+		},
+	};
+});
 
 // ============ 工具函数 ============
 function formatDate(date: Date): string {
-  return `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())}`
+	return `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())}`;
 }
 
 function padZero(num: number): string {
-  return num < 10 ? '0' + num : String(num)
+	return num < 10 ? "0" + num : String(num);
 }
 </script>
 

@@ -52,56 +52,56 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onActivated } from 'vue'
-import { showMessage, type Plugin } from 'siyuan'
-import { getEncryptionInstance } from '../../encryption'
+import { ref, onMounted, onActivated } from "vue";
+import { showMessage, type Plugin } from "siyuan";
+import { getEncryptionInstance } from "../../encryption";
 
 const props = defineProps<{
-  plugin: Plugin
-}>()
+	plugin: Plugin;
+}>();
 
-const newPassword = ref('')
-const confirmPassword = ref('')
-const hasPassword = ref(false)
+const newPassword = ref("");
+const confirmPassword = ref("");
+const hasPassword = ref(false);
 
 onMounted(() => {
-  checkPasswordStatus()
-})
+	checkPasswordStatus();
+});
 
 onActivated(() => {
-  checkPasswordStatus()
-})
+	checkPasswordStatus();
+});
 
 function checkPasswordStatus() {
-  const encryption = getEncryptionInstance()
-  if (encryption) {
-    hasPassword.value = encryption.hasPassword()
-  }
+	const encryption = getEncryptionInstance();
+	if (encryption) {
+		hasPassword.value = encryption.hasPassword();
+	}
 }
 
 async function handleSavePassword() {
-  const pwd1 = newPassword.value.trim()
-  const pwd2 = confirmPassword.value.trim()
+	const pwd1 = newPassword.value.trim();
+	const pwd2 = confirmPassword.value.trim();
 
-  if (!pwd1) {
-    showMessage(props.plugin.i18n.passwordEmpty, 3000, 'error')
-    return
-  }
+	if (!pwd1) {
+		showMessage(props.plugin.i18n.passwordEmpty, 3000, "error");
+		return;
+	}
 
-  if (pwd1 !== pwd2) {
-    showMessage(props.plugin.i18n.passwordMismatch, 3000, 'error')
-    return
-  }
+	if (pwd1 !== pwd2) {
+		showMessage(props.plugin.i18n.passwordMismatch, 3000, "error");
+		return;
+	}
 
-  const encryption = getEncryptionInstance()
-  if (encryption) {
-    encryption.setPassword(pwd1)
-    await encryption.savePassword()
-    showMessage(props.plugin.i18n.passwordSetSuccess, 2000, 'info')
-    newPassword.value = ''
-    confirmPassword.value = ''
-    checkPasswordStatus()
-  }
+	const encryption = getEncryptionInstance();
+	if (encryption) {
+		encryption.setPassword(pwd1);
+		await encryption.savePassword();
+		showMessage(props.plugin.i18n.passwordSetSuccess, 2000, "info");
+		newPassword.value = "";
+		confirmPassword.value = "";
+		checkPasswordStatus();
+	}
 }
 </script>
 

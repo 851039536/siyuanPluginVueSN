@@ -14,24 +14,24 @@
 </template>
 
 <script setup lang="ts">
-import { Icon } from '@iconify/vue'
-import type { ResourceLevel } from '../types'
+import { Icon } from "@iconify/vue";
+import type { ResourceLevel } from "../types";
 
 interface Props {
-  icon?: string
-  title?: string
-  level?: ResourceLevel
-  itemClass?: string
+	icon?: string;
+	title?: string;
+	level?: ResourceLevel;
+	itemClass?: string;
 }
 
 withDefaults(defineProps<Props>(), {
-  icon: undefined,
-  title: undefined,
-  level: undefined,
-  itemClass: undefined,
-})
+	icon: undefined,
+	title: undefined,
+	level: undefined,
+	itemClass: undefined,
+});
 
 defineEmits<{
-  click: [event: MouseEvent]
-}>()
+	click: [event: MouseEvent];
+}>();
 </script>

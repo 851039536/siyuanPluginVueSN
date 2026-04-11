@@ -142,63 +142,75 @@
 </template>
 
 <script setup lang="ts">
-import Input from '@/components/Input.vue'
-import Switch from '@/components/Switch.vue'
-import IconWrapper from '@/components/IconWrapper.vue'
+import Input from "@/components/Input.vue";
+import Switch from "@/components/Switch.vue";
+import IconWrapper from "@/components/IconWrapper.vue";
 
 interface Props {
-  expanded: boolean
-  title: string
-  metadataTitle: string
-  advancedStyleTitle: string
-  enableWatermark: boolean
-  watermarkText: string
-  watermarkLabel: string
-  watermarkPlaceholder: string
-  enableAuthor: boolean
-  authorName: string
-  authorLabel: string
-  authorPlaceholder: string
-  enableTimestamp: boolean
-  timestampLabel: string
-  borderWidth: number
-  borderWidthLabel: string
-  borderRadius: number
-  borderRadiusLabel: string
-  paddingSize: number
-  paddingLabel: string
-  backgroundOpacity: number
-  opacityLabel: string
-  shadowIntensity: number
-  shadowLabel: string
+	expanded: boolean;
+	title: string;
+	metadataTitle: string;
+	advancedStyleTitle: string;
+	enableWatermark: boolean;
+	watermarkText: string;
+	watermarkLabel: string;
+	watermarkPlaceholder: string;
+	enableAuthor: boolean;
+	authorName: string;
+	authorLabel: string;
+	authorPlaceholder: string;
+	enableTimestamp: boolean;
+	timestampLabel: string;
+	borderWidth: number;
+	borderWidthLabel: string;
+	borderRadius: number;
+	borderRadiusLabel: string;
+	paddingSize: number;
+	paddingLabel: string;
+	backgroundOpacity: number;
+	opacityLabel: string;
+	shadowIntensity: number;
+	shadowLabel: string;
 }
 
-defineProps<Props>()
+defineProps<Props>();
 const emit = defineEmits<{
-  toggle: []
-  'update:enableWatermark': [value: boolean]
-  'update:watermarkText': [value: string]
-  'update:enableAuthor': [value: boolean]
-  'update:authorName': [value: string]
-  'update:enableTimestamp': [value: boolean]
-  'update:borderWidth': [value: number]
-  'update:borderRadius': [value: number]
-  'update:paddingSize': [value: number]
-  'update:backgroundOpacity': [value: number]
-  'update:shadowIntensity': [value: number]
-}>()
+	toggle: [];
+	"update:enableWatermark": [value: boolean];
+	"update:watermarkText": [value: string];
+	"update:enableAuthor": [value: boolean];
+	"update:authorName": [value: string];
+	"update:enableTimestamp": [value: boolean];
+	"update:borderWidth": [value: number];
+	"update:borderRadius": [value: number];
+	"update:paddingSize": [value: number];
+	"update:backgroundOpacity": [value: number];
+	"update:shadowIntensity": [value: number];
+}>();
 
 // 事件处理函数
-const onWatermarkEnableChange = (value: boolean) => emit('update:enableWatermark', value)
-const onWatermarkTextChange = (value: string) => emit('update:watermarkText', value)
-const onAuthorEnableChange = (value: boolean) => emit('update:enableAuthor', value)
-const onAuthorNameChange = (value: string) => emit('update:authorName', value)
-const onTimestampEnableChange = (value: boolean) => emit('update:enableTimestamp', value)
-const onBorderWidthChange = (e: Event) => emit('update:borderWidth', Number((e.target as HTMLInputElement).value))
-const onBorderRadiusChange = (e: Event) => emit('update:borderRadius', Number((e.target as HTMLInputElement).value))
-const onPaddingSizeChange = (e: Event) => emit('update:paddingSize', Number((e.target as HTMLInputElement).value))
-const onOpacityChange = (e: Event) => emit('update:backgroundOpacity', Number((e.target as HTMLInputElement).value))
-const onShadowChange = (e: Event) => emit('update:shadowIntensity', Number((e.target as HTMLInputElement).value))
+const onWatermarkEnableChange = (value: boolean) =>
+	emit("update:enableWatermark", value);
+const onWatermarkTextChange = (value: string) =>
+	emit("update:watermarkText", value);
+const onAuthorEnableChange = (value: boolean) =>
+	emit("update:enableAuthor", value);
+const onAuthorNameChange = (value: string) => emit("update:authorName", value);
+const onTimestampEnableChange = (value: boolean) =>
+	emit("update:enableTimestamp", value);
+const onBorderWidthChange = (e: Event) =>
+	emit("update:borderWidth", Number((e.target as HTMLInputElement).value));
+const onBorderRadiusChange = (e: Event) =>
+	emit("update:borderRadius", Number((e.target as HTMLInputElement).value));
+const onPaddingSizeChange = (e: Event) =>
+	emit("update:paddingSize", Number((e.target as HTMLInputElement).value));
+const onOpacityChange = (e: Event) =>
+	emit(
+		"update:backgroundOpacity",
+		Number((e.target as HTMLInputElement).value),
+	);
+const onShadowChange = (e: Event) =>
+	emit("update:shadowIntensity", Number((e.target as HTMLInputElement).value));
 </script>
 
 <style scoped lang="scss">

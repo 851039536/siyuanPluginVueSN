@@ -1,1 +1,1 @@
-export { WebDAVService, webDAVService } from './webDAVService'
+export { WebDAVService, webDAVService } from "./webDAVService";

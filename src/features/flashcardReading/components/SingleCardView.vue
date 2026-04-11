@@ -44,20 +44,20 @@
 </template>
 
 <script setup lang="ts">
-import Button from '@/components/Button.vue'
-import type { Flashcard, I18n } from '../types'
+import Button from "@/components/Button.vue";
+import type { Flashcard, I18n } from "../types";
 
 defineProps<{
-  currentCard: Flashcard | null
-  currentIndex: number
-  totalCards: number
-  i18n: I18n
-}>()
+	currentCard: Flashcard | null;
+	currentIndex: number;
+	totalCards: number;
+	i18n: I18n;
+}>();
 
 defineEmits<{
-  play: [card: Flashcard | null]
-  previous: []
-  next: []
-  random: []
-}>()
+	play: [card: Flashcard | null];
+	previous: [];
+	next: [];
+	random: [];
+}>();
 </script>

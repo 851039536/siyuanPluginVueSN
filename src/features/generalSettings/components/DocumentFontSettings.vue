@@ -243,131 +243,135 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, onMounted } from 'vue'
-import { Plugin } from 'siyuan'
+import { ref, watch, computed, onMounted } from "vue";
+import { Plugin } from "siyuan";
 
 export interface DocumentFontSettingsData {
-  enabled: boolean
-  fontFamily: string
-  fontSize: number
-  lineHeight: number
-  letterSpacing: number
-  paragraphSpacing: number
-  fontWeight: string
+	enabled: boolean;
+	fontFamily: string;
+	fontSize: number;
+	lineHeight: number;
+	letterSpacing: number;
+	paragraphSpacing: number;
+	fontWeight: string;
 }
 
 interface Props {
-  i18n?: any
-  plugin?: Plugin
+	i18n?: any;
+	plugin?: Plugin;
 }
 
 interface Emits {
-  (e: 'change', settings: DocumentFontSettingsData): void
+	(e: "change", settings: DocumentFontSettingsData): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  i18n: () => ({}),
-  plugin: null
-})
+	i18n: () => ({}),
+	plugin: null,
+});
 
-const emit = defineEmits<Emits>()
+const emit = defineEmits<Emits>();
 
 const DEFAULT_SETTINGS: DocumentFontSettingsData = {
-  enabled: false,
-  fontFamily: '',
-  fontSize: 12,
-  lineHeight: 1.6,
-  letterSpacing: 0,
-  paragraphSpacing: 8,
-  fontWeight: 'normal'
-}
+	enabled: false,
+	fontFamily: "",
+	fontSize: 12,
+	lineHeight: 1.6,
+	letterSpacing: 0,
+	paragraphSpacing: 8,
+	fontWeight: "normal",
+};
 
-const settings = ref<DocumentFontSettingsData>({ ...DEFAULT_SETTINGS })
-const showPreview = ref(true)
-const presetFont = ref('')
+const settings = ref<DocumentFontSettingsData>({ ...DEFAULT_SETTINGS });
+const showPreview = ref(true);
+const presetFont = ref("");
 
-const presetFontSizes = [12, 14, 16, 18]
-const presetLineHeights = [1.4, 1.6, 1.8, 2.0]
+const presetFontSizes = [12, 14, 16, 18];
+const presetLineHeights = [1.4, 1.6, 1.8, 2.0];
 
 const fontWeights = [
-  { label: '细体', value: 'lighter' },
-  { label: '正常', value: 'normal' },
-  { label: '粗体', value: 'bold' }
-]
+	{ label: "细体", value: "lighter" },
+	{ label: "正常", value: "normal" },
+	{ label: "粗体", value: "bold" },
+];
 
 const previewStyle = computed(() => ({
-  fontFamily: settings.value.fontFamily || 'inherit',
-  fontSize: `${settings.value.fontSize}px`,
-  lineHeight: settings.value.lineHeight,
-  letterSpacing: `${settings.value.letterSpacing}px`,
-  fontWeight: settings.value.fontWeight
-}))
+	fontFamily: settings.value.fontFamily || "inherit",
+	fontSize: `${settings.value.fontSize}px`,
+	lineHeight: settings.value.lineHeight,
+	letterSpacing: `${settings.value.letterSpacing}px`,
+	fontWeight: settings.value.fontWeight,
+}));
 
-watch(settings, (newSettings) => {
-  emit('change', newSettings)
-  saveSettings()
-}, { deep: true })
+watch(
+	settings,
+	(newSettings) => {
+		emit("change", newSettings);
+		saveSettings();
+	},
+	{ deep: true },
+);
 
 function applySettings() {
-  applyDocumentFontStyles(settings.value)
+	applyDocumentFontStyles(settings.value);
 }
 
 function applyPresetFont() {
-  if (presetFont.value) {
-    settings.value.fontFamily = presetFont.value
-    applySettings()
-  }
+	if (presetFont.value) {
+		settings.value.fontFamily = presetFont.value;
+		applySettings();
+	}
 }
 
 function setFontSize(size: number) {
-  settings.value.fontSize = size
-  applySettings()
+	settings.value.fontSize = size;
+	applySettings();
 }
 
 function setLineHeight(lh: number) {
-  settings.value.lineHeight = lh
-  applySettings()
+	settings.value.lineHeight = lh;
+	applySettings();
 }
 
 function setFontWeight(weight: string) {
-  settings.value.fontWeight = weight
-  applySettings()
+	settings.value.fontWeight = weight;
+	applySettings();
 }
 
 function togglePreview() {
-  showPreview.value = !showPreview.value
+	showPreview.value = !showPreview.value;
 }
 
 function resetSettings() {
-  settings.value = { ...DEFAULT_SETTINGS }
-  presetFont.value = ''
-  applySettings()
+	settings.value = { ...DEFAULT_SETTINGS };
+	presetFont.value = "";
+	applySettings();
 }
 
 function applyDocumentFontStyles(fontSettings: DocumentFontSettingsData) {
-  try {
-    // 移除现有样式
-    const existingStyle = document.getElementById('document-font-settings')
-    if (existingStyle) {
-      existingStyle.remove()
-    }
+	try {
+		// 移除现有样式
+		const existingStyle = document.getElementById("document-font-settings");
+		if (existingStyle) {
+			existingStyle.remove();
+		}
 
-    if (!fontSettings.enabled) {
-      return
-    }
+		if (!fontSettings.enabled) {
+			return;
+		}
 
-    // 创建新的样式元素
-    const style = document.createElement('style')
-    style.id = 'document-font-settings'
-    
-    // 处理字体族：如果包含逗号则直接使用，否则加引号
-    let fontFamily = ''
-    if (fontSettings.fontFamily) {
-      const fonts = fontSettings.fontFamily.split(',').map(f => f.trim())
-      fontFamily = fonts.map(f => `'${f}'`).join(', ') + ', '
-    }
-    
-    style.textContent = `
+		// 创建新的样式元素
+		const style = document.createElement("style");
+		style.id = "document-font-settings";
+
+		// 处理字体族：如果包含逗号则直接使用，否则加引号
+		let fontFamily = "";
+		if (fontSettings.fontFamily) {
+			const fonts = fontSettings.fontFamily.split(",").map((f) => f.trim());
+			fontFamily = fonts.map((f) => `'${f}'`).join(", ") + ", ";
+		}
+
+		style.textContent = `
       /* 编辑器内容区域 - 基础样式 */
       .protyle-wysiwyg {
         font-family: ${fontFamily}var(--b3-font-family) !important;
@@ -443,50 +447,50 @@ function applyDocumentFontStyles(fontSettings: DocumentFontSettingsData) {
         font-family: var(--b3-font-family-code) !important;
         line-height: 1.5 !important;
       }
-    `
-    
-    document.head.appendChild(style)
-  } catch (error) {
-    console.error('应用文档字体样式失败:', error)
-  }
+    `;
+
+		document.head.appendChild(style);
+	} catch (error) {
+		console.error("应用文档字体样式失败:", error);
+	}
 }
 
 async function loadSettings() {
-  if (!props.plugin) {
-    return
-  }
+	if (!props.plugin) {
+		return;
+	}
 
-  try {
-    const data = await props.plugin.loadData('document-font-settings')
-    if (data) {
-      settings.value = { ...DEFAULT_SETTINGS, ...data }
-      applySettings()
-    }
-  } catch (error) {
-    console.error('加载文档字体设置失败:', error)
-  }
+	try {
+		const data = await props.plugin.loadData("document-font-settings");
+		if (data) {
+			settings.value = { ...DEFAULT_SETTINGS, ...data };
+			applySettings();
+		}
+	} catch (error) {
+		console.error("加载文档字体设置失败:", error);
+	}
 }
 
 async function saveSettings() {
-  if (!props.plugin) {
-    return
-  }
+	if (!props.plugin) {
+		return;
+	}
 
-  try {
-    await props.plugin.saveData('document-font-settings', settings.value)
-  } catch (error) {
-    console.error('保存文档字体设置失败:', error)
-  }
+	try {
+		await props.plugin.saveData("document-font-settings", settings.value);
+	} catch (error) {
+		console.error("保存文档字体设置失败:", error);
+	}
 }
 
 onMounted(async () => {
-  await loadSettings()
-})
+	await loadSettings();
+});
 
 defineExpose({
-  settings,
-  loadSettings
-})
+	settings,
+	loadSettings,
+});
 </script>
 
 <style scoped lang="scss">

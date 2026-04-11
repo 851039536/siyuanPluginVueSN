@@ -7,6 +7,6 @@
 </template>
 
 <script setup lang="ts">
-import BaseUnitConverter from './BaseUnitConverter.vue'
-import { TIME_UNITS } from '../utils/units'
+import BaseUnitConverter from "./BaseUnitConverter.vue";
+import { TIME_UNITS } from "../utils/units";
 </script>

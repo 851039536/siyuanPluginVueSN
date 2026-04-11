@@ -60,87 +60,87 @@
 </template>
 
 <script setup lang="ts">
-import { showMessage } from 'siyuan'
-import Button from '@/components/Button.vue'
-import AiProviderSelect from './AiProviderSelect.vue'
-import AiModelSelect from './AiModelSelect.vue'
-import ApiKeyInput from './ApiKeyInput.vue'
-import SettingGroup from './SettingGroup.vue'
-import TextInput from './TextInput.vue'
-import type { AiSettings } from '../types'
+import { showMessage } from "siyuan";
+import Button from "@/components/Button.vue";
+import AiProviderSelect from "./AiProviderSelect.vue";
+import AiModelSelect from "./AiModelSelect.vue";
+import ApiKeyInput from "./ApiKeyInput.vue";
+import SettingGroup from "./SettingGroup.vue";
+import TextInput from "./TextInput.vue";
+import type { AiSettings } from "../types";
 
 interface Props {
-  visible: boolean
-  settings: AiSettings
-  i18n: {
-    aiSettings?: string
-    apiProvider?: string
-    aiModel?: string
-    apiKey?: string
-    customEndpoint?: string
-    tongyiQianwen?: string
-    openAI?: string
-    deepSeek?: string
-    customApi?: string
-    [key: string]: any
-  }
+	visible: boolean;
+	settings: AiSettings;
+	i18n: {
+		aiSettings?: string;
+		apiProvider?: string;
+		aiModel?: string;
+		apiKey?: string;
+		customEndpoint?: string;
+		tongyiQianwen?: string;
+		openAI?: string;
+		deepSeek?: string;
+		customApi?: string;
+		[key: string]: any;
+	};
 }
 
 interface Emits {
-  (e: 'close'): void
-  (e: 'update:settings', settings: AiSettings): void
+	(e: "close"): void;
+	(e: "update:settings", settings: AiSettings): void;
 }
 
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
+const props = defineProps<Props>();
+const emit = defineEmits<Emits>();
 
 const handleClose = () => {
-  emit('close')
-}
+	emit("close");
+};
 
 const handleProviderChange = async (provider: string) => {
-  const defaultModels: Record<string, string> = {
-    tongyi: 'qwen-plus',
-    openai: 'gpt-3.5-turbo',
-    deepseek: 'deepseek-chat',
-    custom: ''
-  }
+	const defaultModels: Record<string, string> = {
+		tongyi: "qwen-plus",
+		openai: "gpt-3.5-turbo",
+		deepseek: "deepseek-chat",
+		custom: "",
+	};
 
-  emit('update:settings', {
-    ...props.settings,
-    provider,
-    model: defaultModels[provider] || ''
-  })
-  showMessage('供应商已更新', 2000, 'info')
-}
+	emit("update:settings", {
+		...props.settings,
+		provider,
+		model: defaultModels[provider] || "",
+	});
+	showMessage("供应商已更新", 2000, "info");
+};
 
 const handleModelChange = (model: string) => {
-  emit('update:settings', {
-    ...props.settings,
-    model
-  })
-}
+	emit("update:settings", {
+		...props.settings,
+		model,
+	});
+};
 
 const handleCustomModelChange = (customModel: string) => {
-  emit('update:settings', {
-    ...props.settings,
-    customModel
-  })
-}
+	emit("update:settings", {
+		...props.settings,
+		customModel,
+	});
+};
 
 const handleApiKeyChange = (apiKey: string) => {
-  emit('update:settings', {
-    ...props.settings,
-    apiKey
-  })
-}
+	emit("update:settings", {
+		...props.settings,
+		apiKey,
+	});
+};
 
 const handleEndpointChange = (customEndpoint: string) => {
-  emit('update:settings', {
-    ...props.settings,
-    customEndpoint
-  })
-}
+	emit("update:settings", {
+		...props.settings,
+		customEndpoint,
+	});
+};
 </script>
 
 <style scoped lang="scss">

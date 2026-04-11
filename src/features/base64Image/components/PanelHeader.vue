@@ -18,18 +18,18 @@
 </template>
 
 <script setup lang="ts">
-import IconWrapper from '@/components/IconWrapper.vue'
-import Button from '@/components/Button.vue'
+import IconWrapper from "@/components/IconWrapper.vue";
+import Button from "@/components/Button.vue";
 
 interface Props {
-  title: string
-  clearTitle: string
+	title: string;
+	clearTitle: string;
 }
 
-defineProps<Props>()
+defineProps<Props>();
 defineEmits<{
-  clear: []
-}>()
+	clear: [];
+}>();
 </script>
 
 <style scoped lang="scss">

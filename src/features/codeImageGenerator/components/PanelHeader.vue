@@ -8,13 +8,13 @@
 </template>
 
 <script setup lang="ts">
-import IconWrapper from '@/components/IconWrapper.vue'
+import IconWrapper from "@/components/IconWrapper.vue";
 
 interface Props {
-  title: string
+	title: string;
 }
 
-defineProps<Props>()
+defineProps<Props>();
 </script>
 
 <style scoped lang="scss">

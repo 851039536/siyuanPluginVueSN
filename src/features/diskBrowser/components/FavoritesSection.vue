@@ -32,22 +32,22 @@
 </template>
 
 <script setup lang="ts">
-import Button from '@/components/Button.vue'
-import IconWrapper from '@/components/IconWrapper.vue'
-import Badge from '@/components/Badge.vue'
-import type { DiskBrowserI18n } from '../types'
-import { getFolderName } from '../utils'
+import Button from "@/components/Button.vue";
+import IconWrapper from "@/components/IconWrapper.vue";
+import Badge from "@/components/Badge.vue";
+import type { DiskBrowserI18n } from "../types";
+import { getFolderName } from "../utils";
 
 interface Props {
-  favoriteFolders: string[]
-  i18n: DiskBrowserI18n
+	favoriteFolders: string[];
+	i18n: DiskBrowserI18n;
 }
 
-defineProps<Props>()
+defineProps<Props>();
 defineEmits<{
-  navigate: [path: string]
-  remove: [path: string]
-}>()
+	navigate: [path: string];
+	remove: [path: string];
+}>();
 </script>
 
 <style scoped lang="scss">

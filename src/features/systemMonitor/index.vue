@@ -50,29 +50,29 @@
 </template>
 
 <script setup lang="ts">
-import MonitorItem from './components/MonitorItem.vue'
-import { useSystemMonitor } from './composables/useSystemMonitor'
-import { showPasswordVault } from '../passwordVault/types'
+import MonitorItem from "./components/MonitorItem.vue";
+import { useSystemMonitor } from "./composables/useSystemMonitor";
+import { showPasswordVault } from "../passwordVault/types";
 
 const {
-  state,
-  monitorElement,
-  cpuUsageDisplay,
-  memoryUsageDisplay,
-  uptimeDisplay,
-  systemInfoTooltip,
-  cpuLevel,
-  memLevel,
-  totalNotesDisplay,
-  totalWordsDisplay,
-  statisticsTooltip
-} = useSystemMonitor()
+	state,
+	monitorElement,
+	cpuUsageDisplay,
+	memoryUsageDisplay,
+	uptimeDisplay,
+	systemInfoTooltip,
+	cpuLevel,
+	memLevel,
+	totalNotesDisplay,
+	totalWordsDisplay,
+	statisticsTooltip,
+} = useSystemMonitor();
 
 const handleOpenPasswordVault = () => {
-  showPasswordVault()
-}
+	showPasswordVault();
+};
 
 const handleOpenVideoManager = () => {
-  window.dispatchEvent(new CustomEvent('openVideoManager'))
-}
+	window.dispatchEvent(new CustomEvent("openVideoManager"));
+};
 </script>

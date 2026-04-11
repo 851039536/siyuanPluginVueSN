@@ -72,141 +72,142 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, shallowRef } from 'vue'
-import { showMessage } from 'siyuan'
+import { ref, computed, onMounted, onUnmounted, shallowRef } from "vue";
+import { showMessage } from "siyuan";
 
-import IconWrapper from '@/components/IconWrapper.vue'
-import Button from '@/components/Button.vue'
-import Select from '@/components/Select.vue'
-import type { SelectOption } from '@/components/Select.vue'
-import type { Plugin } from 'siyuan'
+import IconWrapper from "@/components/IconWrapper.vue";
+import Button from "@/components/Button.vue";
+import Select from "@/components/Select.vue";
+import type { SelectOption } from "@/components/Select.vue";
+import type { Plugin } from "siyuan";
 
-import { FlashcardStorage } from '../types/storage'
-import type { Flashcard, I18n } from '../types'
+import { FlashcardStorage } from "../types/storage";
+import type { Flashcard, I18n } from "../types";
 
 interface Props {
-  i18n: I18n
-  plugin: Plugin
+	i18n: I18n;
+	plugin: Plugin;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
-const visible = ref(false)
-const storage = new FlashcardStorage(props.plugin)
-const cards = shallowRef<Flashcard[]>([])
-const categories = shallowRef<string[]>([])
-const selectedCategory = ref<string>('all')
-const currentIndex = ref(0)
+const visible = ref(false);
+const storage = new FlashcardStorage(props.plugin);
+const cards = shallowRef<Flashcard[]>([]);
+const categories = shallowRef<string[]>([]);
+const selectedCategory = ref<string>("all");
+const currentIndex = ref(0);
 
 const filteredCards = computed(() => {
-  if (selectedCategory.value === 'all') {
-    return cards.value
-  }
-  return cards.value.filter(card => card.category === selectedCategory.value)
-})
+	if (selectedCategory.value === "all") {
+		return cards.value;
+	}
+	return cards.value.filter((card) => card.category === selectedCategory.value);
+});
 
-const currentCard = computed(() => filteredCards.value[currentIndex.value])
+const currentCard = computed(() => filteredCards.value[currentIndex.value]);
 
 const categoryOptions = computed<SelectOption[]>(() => [
-  { value: 'all', label: props.i18n.allCategories || '全部' },
-  ...categories.value.map(cat => ({ value: cat, label: cat }))
-])
+	{ value: "all", label: props.i18n.allCategories || "全部" },
+	...categories.value.map((cat) => ({ value: cat, label: cat })),
+]);
 
 const loadCards = async () => {
-  try {
-    cards.value = await storage.getAllCards()
-    categories.value = await storage.getCategories()
-    currentIndex.value = 0
-  } catch (error) {
-    console.error('Failed to load cards:', error)
-  }
-}
+	try {
+		cards.value = await storage.getAllCards();
+		categories.value = await storage.getCategories();
+		currentIndex.value = 0;
+	} catch (error) {
+		console.error("Failed to load cards:", error);
+	}
+};
 
 const handleCategoryChange = () => {
-  currentIndex.value = 0
-}
+	currentIndex.value = 0;
+};
 
 const playWord = async (card: Flashcard | null) => {
-  if (!card) return
-  
-  try {
-    const utterance = new SpeechSynthesisUtterance(card.title)
-    utterance.lang = 'en-US'
-    utterance.rate = 0.8
+	if (!card) return;
 
-    utterance.onend = async () => {
-      await storage.incrementPracticeCount(card.id)
-      const index = cards.value.findIndex(c => c.id === card.id)
-      if (index !== -1) {
-        cards.value[index].practiceCount = (cards.value[index].practiceCount || 0) + 1
-      }
-    }
+	try {
+		const utterance = new SpeechSynthesisUtterance(card.title);
+		utterance.lang = "en-US";
+		utterance.rate = 0.8;
 
-    speechSynthesis.speak(utterance)
-  } catch (error) {
-    showMessage(props.i18n.playFailed || '播放失败', 2000, 'error')
-  }
-}
+		utterance.onend = async () => {
+			await storage.incrementPracticeCount(card.id);
+			const index = cards.value.findIndex((c) => c.id === card.id);
+			if (index !== -1) {
+				cards.value[index].practiceCount =
+					(cards.value[index].practiceCount || 0) + 1;
+			}
+		};
+
+		speechSynthesis.speak(utterance);
+	} catch (error) {
+		showMessage(props.i18n.playFailed || "播放失败", 2000, "error");
+	}
+};
 
 const previousCard = () => {
-  if (currentIndex.value > 0) {
-    currentIndex.value--
-    playAuto()
-  }
-}
+	if (currentIndex.value > 0) {
+		currentIndex.value--;
+		playAuto();
+	}
+};
 
 const nextCard = () => {
-  if (currentIndex.value < filteredCards.value.length - 1) {
-    currentIndex.value++
-    playAuto()
-  }
-}
+	if (currentIndex.value < filteredCards.value.length - 1) {
+		currentIndex.value++;
+		playAuto();
+	}
+};
 
 const randomCard = () => {
-  if (filteredCards.value.length <= 1) return
-  let newIndex: number
-  do {
-    newIndex = Math.floor(Math.random() * filteredCards.value.length)
-  } while (newIndex === currentIndex.value && filteredCards.value.length > 1)
-  currentIndex.value = newIndex
-  playAuto()
-}
+	if (filteredCards.value.length <= 1) return;
+	let newIndex: number;
+	do {
+		newIndex = Math.floor(Math.random() * filteredCards.value.length);
+	} while (newIndex === currentIndex.value && filteredCards.value.length > 1);
+	currentIndex.value = newIndex;
+	playAuto();
+};
 
 const playAuto = () => {
-  const card = currentCard.value
-  if (card) {
-    playWord(card)
-  }
-}
+	const card = currentCard.value;
+	if (card) {
+		playWord(card);
+	}
+};
 
 const open = () => {
-  visible.value = true
-  loadCards()
-}
+	visible.value = true;
+	loadCards();
+};
 
 const close = () => {
-  visible.value = false
-}
+	visible.value = false;
+};
 
 defineExpose({
-  open,
-  close,
-  visible
-})
+	open,
+	close,
+	visible,
+});
 
-let dataChangeHandler: (() => void) | null = null
+let dataChangeHandler: (() => void) | null = null;
 
 onMounted(() => {
-  dataChangeHandler = () => loadCards()
-  window.addEventListener('flashcardDataChanged', dataChangeHandler)
-})
+	dataChangeHandler = () => loadCards();
+	window.addEventListener("flashcardDataChanged", dataChangeHandler);
+});
 
 onUnmounted(() => {
-  if (dataChangeHandler) {
-    window.removeEventListener('flashcardDataChanged', dataChangeHandler)
-    dataChangeHandler = null
-  }
-})
+	if (dataChangeHandler) {
+		window.removeEventListener("flashcardDataChanged", dataChangeHandler);
+		dataChangeHandler = null;
+	}
+});
 </script>
 
 <style scoped lang="scss">

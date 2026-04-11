@@ -12,16 +12,16 @@
 </template>
 
 <script setup lang="ts">
-import type { FloatingTool } from '../types'
+import type { FloatingTool } from "../types";
 
 const props = defineProps<{
-  tool: FloatingTool
-  plugin?: any
-}>()
+	tool: FloatingTool;
+	plugin?: any;
+}>();
 
 const handleClick = () => {
-  props.tool.action(props.plugin)
-}
+	props.tool.action(props.plugin);
+};
 </script>
 
 <style scoped lang="scss">

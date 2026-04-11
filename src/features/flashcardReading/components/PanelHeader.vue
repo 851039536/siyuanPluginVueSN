@@ -31,17 +31,17 @@
 </template>
 
 <script setup lang="ts">
-import IconWrapper from '@/components/IconWrapper.vue'
-import Button from '@/components/Button.vue'
-import type { I18n } from '../types'
+import IconWrapper from "@/components/IconWrapper.vue";
+import Button from "@/components/Button.vue";
+import type { I18n } from "../types";
 
 defineProps<{
-  i18n: I18n
-}>()
+	i18n: I18n;
+}>();
 
 defineEmits<{
-  showHelp: []
-  addCard: []
-  refresh: []
-}>()
+	showHelp: [];
+	addCard: [];
+	refresh: [];
+}>();
 </script>

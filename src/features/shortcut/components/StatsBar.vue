@@ -17,19 +17,19 @@
 
 <script setup lang="ts">
 interface Props {
-  totalCount: number
-  favoriteCount: number
-  customCount: number
-  totalLabel?: string
-  favoriteLabel?: string
-  customLabel?: string
+	totalCount: number;
+	favoriteCount: number;
+	customCount: number;
+	totalLabel?: string;
+	favoriteLabel?: string;
+	customLabel?: string;
 }
 
 withDefaults(defineProps<Props>(), {
-  totalLabel: '总计',
-  favoriteLabel: '收藏',
-  customLabel: '自定义'
-})
+	totalLabel: "总计",
+	favoriteLabel: "收藏",
+	customLabel: "自定义",
+});
 </script>
 
 <style scoped lang="scss">

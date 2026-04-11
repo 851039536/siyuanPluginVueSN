@@ -35,64 +35,64 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import ShortcutCard from './ShortcutCard.vue'
-import type { ShortcutInfo, ShortcutGroup, ViewMode } from '../types'
+import { computed } from "vue";
+import ShortcutCard from "./ShortcutCard.vue";
+import type { ShortcutInfo, ShortcutGroup, ViewMode } from "../types";
 
 interface Props {
-  shortcuts: ShortcutInfo[]
-  viewMode: ViewMode
-  isFavorite: (id: string) => boolean
-  isRecent: (id: string) => boolean
-  getCategoryLabel: (category: string) => string
-  showToolBadge: (category: string) => boolean
-  emptyText?: string
-  favoriteTitle?: string
-  unFavoriteTitle?: string
-  copyTitle?: string
-  editTitle?: string
-  deleteTitle?: string
-  otherGroupLabel?: string
+	shortcuts: ShortcutInfo[];
+	viewMode: ViewMode;
+	isFavorite: (id: string) => boolean;
+	isRecent: (id: string) => boolean;
+	getCategoryLabel: (category: string) => string;
+	showToolBadge: (category: string) => boolean;
+	emptyText?: string;
+	favoriteTitle?: string;
+	unFavoriteTitle?: string;
+	copyTitle?: string;
+	editTitle?: string;
+	deleteTitle?: string;
+	otherGroupLabel?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  emptyText: '未找到快捷键',
-  favoriteTitle: '收藏',
-  unFavoriteTitle: '取消收藏',
-  copyTitle: '复制',
-  editTitle: '编辑',
-  deleteTitle: '删除',
-  otherGroupLabel: '其他'
-})
+	emptyText: "未找到快捷键",
+	favoriteTitle: "收藏",
+	unFavoriteTitle: "取消收藏",
+	copyTitle: "复制",
+	editTitle: "编辑",
+	deleteTitle: "删除",
+	otherGroupLabel: "其他",
+});
 
 defineEmits<{
-  'toggleFavorite': [id: string]
-  'copy': [shortcut: ShortcutInfo]
-  'edit': [shortcut: ShortcutInfo]
-  'delete': [id: string]
-}>()
+	toggleFavorite: [id: string];
+	copy: [shortcut: ShortcutInfo];
+	edit: [shortcut: ShortcutInfo];
+	delete: [id: string];
+}>();
 
 const gridClass = computed(() => ({
-  'list-view': props.viewMode === 'list',
-  'three-col-view': props.viewMode === 'three-col'
-}))
+	"list-view": props.viewMode === "list",
+	"three-col-view": props.viewMode === "three-col",
+}));
 
 const groupedShortcuts = computed((): ShortcutGroup[] => {
-  const groupMap = new Map<string, ShortcutInfo[]>()
+	const groupMap = new Map<string, ShortcutInfo[]>();
 
-  props.shortcuts.forEach(shortcut => {
-    const group = shortcut.group || props.otherGroupLabel
-    if (!groupMap.has(group)) {
-      groupMap.set(group, [])
-    }
-    groupMap.get(group)!.push(shortcut)
-  })
+	props.shortcuts.forEach((shortcut) => {
+		const group = shortcut.group || props.otherGroupLabel;
+		if (!groupMap.has(group)) {
+			groupMap.set(group, []);
+		}
+		groupMap.get(group)!.push(shortcut);
+	});
 
-  return Array.from(groupMap.entries()).map(([name, shortcuts]) => ({
-    name,
-    shortcuts
-  }))
-})
+	return Array.from(groupMap.entries()).map(([name, shortcuts]) => ({
+		name,
+		shortcuts,
+	}));
+});
 </script>
 
 <style scoped lang="scss">

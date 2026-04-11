@@ -32,47 +32,50 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import Button from '@/components/Button.vue'
+import { ref, watch } from "vue";
+import Button from "@/components/Button.vue";
 
 interface Props {
-  visible: boolean
-  count: number
-  format: 'json' | 'markdown'
-  title?: string
-  formatLabel?: string
-  jsonOption?: string
-  markdownOption?: string
-  previewText?: string
-  previewUnit?: string
-  cancelText?: string
-  exportText?: string
+	visible: boolean;
+	count: number;
+	format: "json" | "markdown";
+	title?: string;
+	formatLabel?: string;
+	jsonOption?: string;
+	markdownOption?: string;
+	previewText?: string;
+	previewUnit?: string;
+	cancelText?: string;
+	exportText?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  title: '导出快捷键',
-  formatLabel: '导出格式',
-  jsonOption: 'JSON 格式',
-  markdownOption: 'Markdown 表格',
-  previewText: '将导出',
-  previewUnit: '个快捷键',
-  cancelText: '取消',
-  exportText: '导出'
-})
+	title: "导出快捷键",
+	formatLabel: "导出格式",
+	jsonOption: "JSON 格式",
+	markdownOption: "Markdown 表格",
+	previewText: "将导出",
+	previewUnit: "个快捷键",
+	cancelText: "取消",
+	exportText: "导出",
+});
 
 const emit = defineEmits<{
-  'close': []
-  'export': [format: 'json' | 'markdown']
-}>()
+	close: [];
+	export: [format: "json" | "markdown"];
+}>();
 
-const localFormat = ref<'json' | 'markdown'>(props.format)
+const localFormat = ref<"json" | "markdown">(props.format);
 
-watch(() => props.format, (val) => {
-  localFormat.value = val
-})
+watch(
+	() => props.format,
+	(val) => {
+		localFormat.value = val;
+	},
+);
 
 function handleExport() {
-  emit('export', localFormat.value)
+	emit("export", localFormat.value);
 }
 </script>
 

@@ -22,55 +22,55 @@
 </template>
 
 <script setup lang="ts">
-import Button from '@/components/Button.vue'
-import type { ShortcutInfo } from '../types'
+import Button from "@/components/Button.vue";
+import type { ShortcutInfo } from "../types";
 
 interface Props {
-  visible: boolean
-  title?: string
-  fileLabel?: string
-  hintText?: string
-  closeText?: string
-  formatErrorText?: string
-  importSuccessText?: string
-  importErrorText?: string
+	visible: boolean;
+	title?: string;
+	fileLabel?: string;
+	hintText?: string;
+	closeText?: string;
+	formatErrorText?: string;
+	importSuccessText?: string;
+	importErrorText?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  title: '导入快捷键',
-  fileLabel: '选择 JSON 文件',
-  hintText: '请选择符合格式的 JSON 文件',
-  closeText: '关闭',
-  formatErrorText: '文件格式错误',
-  importSuccessText: '成功导入',
-  importErrorText: '导入失败，请检查文件格式'
-})
+	title: "导入快捷键",
+	fileLabel: "选择 JSON 文件",
+	hintText: "请选择符合格式的 JSON 文件",
+	closeText: "关闭",
+	formatErrorText: "文件格式错误",
+	importSuccessText: "成功导入",
+	importErrorText: "导入失败，请检查文件格式",
+});
 
 const emit = defineEmits<{
-  'close': []
-  'import': [shortcuts: ShortcutInfo[]]
-}>()
+	close: [];
+	import: [shortcuts: ShortcutInfo[]];
+}>();
 
 async function handleFileChange(event: Event) {
-  const target = event.target as HTMLInputElement
-  const file = target.files?.[0]
-  if (!file) return
+	const target = event.target as HTMLInputElement;
+	const file = target.files?.[0];
+	if (!file) return;
 
-  try {
-    const text = await file.text()
-    const data = JSON.parse(text) as ShortcutInfo[]
+	try {
+		const text = await file.text();
+		const data = JSON.parse(text) as ShortcutInfo[];
 
-    if (!Array.isArray(data)) {
-      alert(props.formatErrorText)
-      return
-    }
+		if (!Array.isArray(data)) {
+			alert(props.formatErrorText);
+			return;
+		}
 
-    emit('import', data)
-    alert(`${props.importSuccessText} ${data.length} 个快捷键`)
-  } catch (error) {
-    console.error('导入失败:', error)
-    alert(props.importErrorText)
-  }
+		emit("import", data);
+		alert(`${props.importSuccessText} ${data.length} 个快捷键`);
+	} catch (error) {
+		console.error("导入失败:", error);
+		alert(props.importErrorText);
+	}
 }
 </script>
 

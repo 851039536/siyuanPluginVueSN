@@ -23,25 +23,25 @@
 </template>
 
 <script setup lang="ts">
-import type { SyncLog } from '../types'
-import { formatTime } from '../utils'
+import type { SyncLog } from "../types";
+import { formatTime } from "../utils";
 
 interface Props {
-  logs: SyncLog[]
-  i18n: Record<string, any>
+	logs: SyncLog[];
+	i18n: Record<string, any>;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
 interface Emits {
-  (e: 'clear'): void
+	(e: "clear"): void;
 }
 
-const emit = defineEmits<Emits>()
+const emit = defineEmits<Emits>();
 
 const onClear = () => {
-  emit('clear')
-}
+	emit("clear");
+};
 </script>
 
 <style scoped lang="scss">

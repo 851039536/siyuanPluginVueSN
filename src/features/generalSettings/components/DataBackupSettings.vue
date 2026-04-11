@@ -171,550 +171,614 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import { showMessage } from 'siyuan'
-import { checkIsMobile } from '../types'
-import JSZip from 'jszip'
+import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
+import { showMessage } from "siyuan";
+import { checkIsMobile } from "../types";
+import JSZip from "jszip";
 
 interface Props {
-  i18n?: any
-  plugin?: any
+	i18n?: any;
+	plugin?: any;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  i18n: () => ({}),
-  plugin: null
-})
+	i18n: () => ({}),
+	plugin: null,
+});
 
 // 响应式数据
-const workspacePath = ref('')
-const workspaceRoot = ref('')
-const isBackingUp = ref(false)
-const isLoading = ref(false)
-const lastBackupTime = ref('')
-const autoBackupEnabled = ref(false)
-const isMobile = ref(false)
-const backupFrequency = ref('daily')
-const backupTime = ref('03:00')
-const keepBackupCount = ref(7)
-const backupList = ref<Array<{ name: string; path: string; time: string; size: string }>>([])
+const workspacePath = ref("");
+const workspaceRoot = ref("");
+const isBackingUp = ref(false);
+const isLoading = ref(false);
+const lastBackupTime = ref("");
+const autoBackupEnabled = ref(false);
+const isMobile = ref(false);
+const backupFrequency = ref("daily");
+const backupTime = ref("03:00");
+const keepBackupCount = ref(7);
+const backupList = ref<
+	Array<{ name: string; path: string; time: string; size: string }>
+>([]);
 
-let autoBackupTimer: number | null = null
-let lastBackupTimestamp = 0
+let autoBackupTimer: number | null = null;
+let lastBackupTimestamp = 0;
 
 // 获取备份目录路径
 function getBackupDir(): string {
-  return `${workspaceRoot.value}/data-backup`
+	return `${workspaceRoot.value}/data-backup`;
 }
 
 // 统一更新工作区路径并持久化
 function updateWorkspacePath(root: string, shouldSave = false) {
-  workspaceRoot.value = root
-  workspacePath.value = `${root}/data`
-  localStorage.setItem('siyuan-workspace-root', root)
-  localStorage.setItem('siyuan-workspace-path', `${root}/data`)
-  if (shouldSave) {
-    saveSettings()
-  }
+	workspaceRoot.value = root;
+	workspacePath.value = `${root}/data`;
+	localStorage.setItem("siyuan-workspace-root", root);
+	localStorage.setItem("siyuan-workspace-path", `${root}/data`);
+	if (shouldSave) {
+		saveSettings();
+	}
 }
 
 // 通过 API 获取工作区路径（提取为独立方法避免重复）
 async function fetchWorkspacePath(): Promise<string | null> {
-  try {
-    const response = await fetch('/api/system/getConf', { method: 'POST' })
-    if (response.ok) {
-      const data = await response.json()
-      return data?.data?.conf?.system?.workspaceDir || null
-    }
-  } catch (e) {
-    console.error('通过 API 获取工作区路径失败:', e)
-  }
-  return null
+	try {
+		const response = await fetch("/api/system/getConf", { method: "POST" });
+		if (response.ok) {
+			const data = await response.json();
+			return data?.data?.conf?.system?.workspaceDir || null;
+		}
+	} catch (e) {
+		console.error("通过 API 获取工作区路径失败:", e);
+	}
+	return null;
 }
 
 // 初始化
 onMounted(async () => {
-  isMobile.value = checkIsMobile()
-  await loadSettings()
+	isMobile.value = checkIsMobile();
+	await loadSettings();
 
-  if (isMobile.value && autoBackupEnabled.value) {
-    autoBackupEnabled.value = false
-    await saveSettings()
-  }
+	if (isMobile.value && autoBackupEnabled.value) {
+		autoBackupEnabled.value = false;
+		await saveSettings();
+	}
 
-  await detectWorkspacePath()
-  await loadBackupList()
+	await detectWorkspacePath();
+	await loadBackupList();
 
-  window.addEventListener('autoBackupTrigger', handleAutoBackupTrigger)
+	window.addEventListener("autoBackupTrigger", handleAutoBackupTrigger);
 
-  const generalSettings = props.plugin?.__generalSettings
-  if (!generalSettings) {
-    startAutoBackupTimer()
-  }
-})
+	const generalSettings = props.plugin?.__generalSettings;
+	if (!generalSettings) {
+		startAutoBackupTimer();
+	}
+});
 
 onUnmounted(() => {
-  stopAutoBackupTimer()
-  window.removeEventListener('autoBackupTrigger', handleAutoBackupTrigger)
-})
+	stopAutoBackupTimer();
+	window.removeEventListener("autoBackupTrigger", handleAutoBackupTrigger);
+});
 
 async function handleAutoBackupTrigger() {
-  await performBackup()
+	await performBackup();
 }
 
 // 统一处理定时器重启逻辑
 function handleTimerRestart(enabled: boolean) {
-  const generalSettings = props.plugin?.__generalSettings
-  if (generalSettings && typeof generalSettings.restartAutoBackupTimer === 'function') {
-    generalSettings.restartAutoBackupTimer(enabled, backupFrequency.value)
-  } else if (enabled) {
-    startAutoBackupTimer()
-  } else {
-    stopAutoBackupTimer()
-  }
+	const generalSettings = props.plugin?.__generalSettings;
+	if (
+		generalSettings &&
+		typeof generalSettings.restartAutoBackupTimer === "function"
+	) {
+		generalSettings.restartAutoBackupTimer(enabled, backupFrequency.value);
+	} else if (enabled) {
+		startAutoBackupTimer();
+	} else {
+		stopAutoBackupTimer();
+	}
 }
 
 // 监听备份频率变化
-watch(backupFrequency, () => handleTimerRestart(autoBackupEnabled.value))
+watch(backupFrequency, () => handleTimerRestart(autoBackupEnabled.value));
 
 // 监听自动备份启用状态
-watch(autoBackupEnabled, (enabled) => handleTimerRestart(enabled))
+watch(autoBackupEnabled, (enabled) => handleTimerRestart(enabled));
 
 // 加载设置
 async function loadSettings() {
-  try {
-    if (props.plugin) {
-      const data = await props.plugin.loadData('data-backup-settings')
-      if (data) {
-        autoBackupEnabled.value = data.autoBackupEnabled ?? false
-        backupFrequency.value = data.backupFrequency ?? 'daily'
-        backupTime.value = data.backupTime ?? '03:00'
-        keepBackupCount.value = data.keepBackupCount ?? 7
-        lastBackupTime.value = data.lastBackupTime ?? ''
-        lastBackupTimestamp = data.lastBackupTimestamp ?? 0
-        if (data.workspacePath) {
-          workspacePath.value = data.workspacePath
-          workspaceRoot.value = data.workspaceRoot || data.workspacePath.replace(/\/data$/, '')
-        }
-        if (data.workspaceRoot) {
-          workspaceRoot.value = data.workspaceRoot
-        }
-      }
-    }
-  } catch (error) {
-    console.error('加载备份设置失败:', error)
-  }
+	try {
+		if (props.plugin) {
+			const data = await props.plugin.loadData("data-backup-settings");
+			if (data) {
+				autoBackupEnabled.value = data.autoBackupEnabled ?? false;
+				backupFrequency.value = data.backupFrequency ?? "daily";
+				backupTime.value = data.backupTime ?? "03:00";
+				keepBackupCount.value = data.keepBackupCount ?? 7;
+				lastBackupTime.value = data.lastBackupTime ?? "";
+				lastBackupTimestamp = data.lastBackupTimestamp ?? 0;
+				if (data.workspacePath) {
+					workspacePath.value = data.workspacePath;
+					workspaceRoot.value =
+						data.workspaceRoot || data.workspacePath.replace(/\/data$/, "");
+				}
+				if (data.workspaceRoot) {
+					workspaceRoot.value = data.workspaceRoot;
+				}
+			}
+		}
+	} catch (error) {
+		console.error("加载备份设置失败:", error);
+	}
 }
 
 // 保存设置
 async function saveSettings() {
-  try {
-    if (props.plugin) {
-      await props.plugin.saveData('data-backup-settings', {
-        autoBackupEnabled: autoBackupEnabled.value,
-        backupFrequency: backupFrequency.value,
-        backupTime: backupTime.value,
-        keepBackupCount: keepBackupCount.value,
-        lastBackupTime: lastBackupTime.value,
-        lastBackupTimestamp,
-        workspacePath: workspacePath.value,
-        workspaceRoot: workspaceRoot.value
-      })
-    }
-  } catch (error) {
-    console.error('保存备份设置失败:', error)
-  }
+	try {
+		if (props.plugin) {
+			await props.plugin.saveData("data-backup-settings", {
+				autoBackupEnabled: autoBackupEnabled.value,
+				backupFrequency: backupFrequency.value,
+				backupTime: backupTime.value,
+				keepBackupCount: keepBackupCount.value,
+				lastBackupTime: lastBackupTime.value,
+				lastBackupTimestamp,
+				workspacePath: workspacePath.value,
+				workspaceRoot: workspaceRoot.value,
+			});
+		}
+	} catch (error) {
+		console.error("保存备份设置失败:", error);
+	}
 }
 
 // 检测工作区路径
 async function detectWorkspacePath() {
-  // 方式1: 检查环境变量
-  const envRoot = (window as any).__SIYUAN_WORKSPACE__ || (window as any).SIYUAN_WORKSPACE
-  if (envRoot) {
-    updateWorkspacePath(envRoot)
-    return
-  }
+	// 方式1: 检查环境变量
+	const envRoot =
+		(window as any).__SIYUAN_WORKSPACE__ || (window as any).SIYUAN_WORKSPACE;
+	if (envRoot) {
+		updateWorkspacePath(envRoot);
+		return;
+	}
 
-  // 方式2: 从 localStorage 获取
-  const savedPath = localStorage.getItem('siyuan-workspace-path')
-  const savedRoot = localStorage.getItem('siyuan-workspace-root')
-  if (savedPath) {
-    workspacePath.value = savedPath
-    workspaceRoot.value = savedRoot || savedPath.replace(/\/data$/, '')
-    return
-  }
+	// 方式2: 从 localStorage 获取
+	const savedPath = localStorage.getItem("siyuan-workspace-path");
+	const savedRoot = localStorage.getItem("siyuan-workspace-root");
+	if (savedPath) {
+		workspacePath.value = savedPath;
+		workspaceRoot.value = savedRoot || savedPath.replace(/\/data$/, "");
+		return;
+	}
 
-  // 方式3: 从插件配置获取
-  try {
-    if (props.plugin?.dataPath) {
-      updateWorkspacePath(props.plugin.dataPath)
-      return
-    }
-  } catch { /* 忽略错误 */ }
+	// 方式3: 从插件配置获取
+	try {
+		if (props.plugin?.dataPath) {
+			updateWorkspacePath(props.plugin.dataPath);
+			return;
+		}
+	} catch {
+		/* 忽略错误 */
+	}
 
-  // 方式4: 通过 API 获取
-  const apiPath = await fetchWorkspacePath()
-  if (apiPath) {
-    updateWorkspacePath(apiPath)
-    return
-  }
+	// 方式4: 通过 API 获取
+	const apiPath = await fetchWorkspacePath();
+	if (apiPath) {
+		updateWorkspacePath(apiPath);
+		return;
+	}
 
-  // 方式5: 监听事件
-  window.addEventListener('workspacePathDetected', handleWorkspacePathDetected)
+	// 方式5: 监听事件
+	window.addEventListener("workspacePathDetected", handleWorkspacePathDetected);
 }
 
 function handleWorkspacePathDetected(event: CustomEvent) {
-  updateWorkspacePath(event.detail.path)
+	updateWorkspacePath(event.detail.path);
 }
 
 // 输入对话框相关
-const showInputDialog = ref(false)
-const inputDialogValue = ref('')
-const inputDialogPlaceholder = ref('')
-const inputDialogResolve = ref<((value: string | null) => void) | null>(null)
-const dialogInputRef = ref<HTMLInputElement | null>(null)
+const showInputDialog = ref(false);
+const inputDialogValue = ref("");
+const inputDialogPlaceholder = ref("");
+const inputDialogResolve = ref<((value: string | null) => void) | null>(null);
+const dialogInputRef = ref<HTMLInputElement | null>(null);
 
 function showInputDialogHelper(placeholder: string): Promise<string | null> {
-  return new Promise((resolve) => {
-    inputDialogPlaceholder.value = placeholder
-    inputDialogValue.value = workspaceRoot.value || ''
-    inputDialogResolve.value = resolve
-    showInputDialog.value = true
-    nextTick(() => {
-      dialogInputRef.value?.focus()
-      dialogInputRef.value?.select()
-    })
-  })
+	return new Promise((resolve) => {
+		inputDialogPlaceholder.value = placeholder;
+		inputDialogValue.value = workspaceRoot.value || "";
+		inputDialogResolve.value = resolve;
+		showInputDialog.value = true;
+		nextTick(() => {
+			dialogInputRef.value?.focus();
+			dialogInputRef.value?.select();
+		});
+	});
 }
 
 function confirmInputDialog() {
-  const value = inputDialogValue.value.trim()
-  showInputDialog.value = false
-  inputDialogResolve.value?.(value || null)
-  inputDialogResolve.value = null
+	const value = inputDialogValue.value.trim();
+	showInputDialog.value = false;
+	inputDialogResolve.value?.(value || null);
+	inputDialogResolve.value = null;
 }
 
 function cancelInputDialog() {
-  showInputDialog.value = false
-  inputDialogResolve.value?.(null)
-  inputDialogResolve.value = null
+	showInputDialog.value = false;
+	inputDialogResolve.value?.(null);
+	inputDialogResolve.value = null;
 }
 
 // 打开工作区文件夹
 async function openWorkspaceFolder() {
-  if (!workspaceRoot.value) {
-    showMessage(props.i18n.pleaseSelectWorkspace || '请先选择工作区路径', 3000, 'info')
-    return
-  }
+	if (!workspaceRoot.value) {
+		showMessage(
+			props.i18n.pleaseSelectWorkspace || "请先选择工作区路径",
+			3000,
+			"info",
+		);
+		return;
+	}
 
-  try {
-    // 桌面版：使用 Electron shell 打开文件夹
-    if (typeof window.require === 'function') {
-      const electron = window.require('electron')
-      const shell = electron.shell || electron.remote?.shell
-      if (shell?.openPath) {
-        await shell.openPath(workspaceRoot.value)
-        return
-      }
-    }
+	try {
+		// 桌面版：使用 Electron shell 打开文件夹
+		if (typeof window.require === "function") {
+			const electron = window.require("electron");
+			const shell = electron.shell || electron.remote?.shell;
+			if (shell?.openPath) {
+				await shell.openPath(workspaceRoot.value);
+				return;
+			}
+		}
 
-    // Web 版：尝试使用思源 API
-    const response = await fetch('/api/file/getFile', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path: workspaceRoot.value })
-    })
+		// Web 版：尝试使用思源 API
+		const response = await fetch("/api/file/getFile", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ path: workspaceRoot.value }),
+		});
 
-    if (response.ok) {
-      showMessage(props.i18n.folderOpened || '已在浏览器中打开', 2000, 'info')
-    } else {
-      showMessage(props.i18n.openFolderFailed || '打开文件夹失败，请手动访问路径', 3000, 'error')
-    }
-  } catch (error) {
-    console.error('打开工作区文件夹失败:', error)
-    showMessage(props.i18n.openFolderFailed || '打开文件夹失败，请手动访问路径', 3000, 'error')
-  }
+		if (response.ok) {
+			showMessage(props.i18n.folderOpened || "已在浏览器中打开", 2000, "info");
+		} else {
+			showMessage(
+				props.i18n.openFolderFailed || "打开文件夹失败，请手动访问路径",
+				3000,
+				"error",
+			);
+		}
+	} catch (error) {
+		console.error("打开工作区文件夹失败:", error);
+		showMessage(
+			props.i18n.openFolderFailed || "打开文件夹失败，请手动访问路径",
+			3000,
+			"error",
+		);
+	}
 }
 
 // 选择工作区路径
 async function selectWorkspacePath() {
-  if (!workspaceRoot.value) {
-    const wsPath = await fetchWorkspacePath()
-    if (wsPath) {
-      updateWorkspacePath(wsPath, true)
-      showMessage(props.i18n.workspacePathSet || '工作区路径已自动获取', 2000, 'info')
-      return
-    }
-  }
+	if (!workspaceRoot.value) {
+		const wsPath = await fetchWorkspacePath();
+		if (wsPath) {
+			updateWorkspacePath(wsPath, true);
+			showMessage(
+				props.i18n.workspacePathSet || "工作区路径已自动获取",
+				2000,
+				"info",
+			);
+			return;
+		}
+	}
 
-  // 使用 Electron dialog
-  if (typeof window.require === 'function') {
-    try {
-      const electron = window.require('electron')
-      const remote = electron.remote || electron
-      if (remote?.dialog?.showOpenDialog) {
-        const result = await remote.dialog.showOpenDialog({
-          properties: ['openDirectory'],
-          title: props.i18n.selectWorkspace || '选择思源工作区',
-          defaultPath: workspaceRoot.value || undefined
-        })
-        if (!result.canceled && result.filePaths[0]) {
-          updateWorkspacePath(result.filePaths[0], true)
-          showMessage(props.i18n.workspacePathSet || '工作区路径已设置', 2000, 'info')
-          return
-        }
-      }
-    } catch (error) {
-      console.warn('Electron dialog 不可用:', error)
-    }
-  }
+	// 使用 Electron dialog
+	if (typeof window.require === "function") {
+		try {
+			const electron = window.require("electron");
+			const remote = electron.remote || electron;
+			if (remote?.dialog?.showOpenDialog) {
+				const result = await remote.dialog.showOpenDialog({
+					properties: ["openDirectory"],
+					title: props.i18n.selectWorkspace || "选择思源工作区",
+					defaultPath: workspaceRoot.value || undefined,
+				});
+				if (!result.canceled && result.filePaths[0]) {
+					updateWorkspacePath(result.filePaths[0], true);
+					showMessage(
+						props.i18n.workspacePathSet || "工作区路径已设置",
+						2000,
+						"info",
+					);
+					return;
+				}
+			}
+		} catch (error) {
+			console.warn("Electron dialog 不可用:", error);
+		}
+	}
 
-  // 手动输入
-  const inputPath = await showInputDialogHelper(props.i18n.enterWorkspacePath || '请输入思源工作区路径:')
-  if (inputPath) {
-    updateWorkspacePath(inputPath, true)
-    showMessage(props.i18n.workspacePathSet || '工作区路径已设置', 2000, 'info')
-  }
+	// 手动输入
+	const inputPath = await showInputDialogHelper(
+		props.i18n.enterWorkspacePath || "请输入思源工作区路径:",
+	);
+	if (inputPath) {
+		updateWorkspacePath(inputPath, true);
+		showMessage(
+			props.i18n.workspacePathSet || "工作区路径已设置",
+			2000,
+			"info",
+		);
+	}
 }
 
 // 手动备份
 async function performBackup() {
-  if (isBackingUp.value) return
+	if (isBackingUp.value) return;
 
-  if (!workspacePath.value) {
-    showMessage(props.i18n.pleaseSelectWorkspace || '请先选择工作区路径', 3000, 'info')
-    await selectWorkspacePath()
-    if (!workspacePath.value) return
-  }
+	if (!workspacePath.value) {
+		showMessage(
+			props.i18n.pleaseSelectWorkspace || "请先选择工作区路径",
+			3000,
+			"info",
+		);
+		await selectWorkspacePath();
+		if (!workspacePath.value) return;
+	}
 
-  isBackingUp.value = true
+	isBackingUp.value = true;
 
-  try {
-    const now = new Date()
-    const year = now.getFullYear().toString().slice(-2)
-    const month = (now.getMonth() + 1).toString().padStart(2, '0')
-    const day = now.getDate().toString().padStart(2, '0')
-    const hour = now.getHours().toString().padStart(2, '0')
-    const minute = now.getMinutes().toString().padStart(2, '0')
-    const second = now.getSeconds().toString().padStart(2, '0')
-    const fileName = `data-${year}${month}${day}-${hour}${minute}${second}.zip`
-    const backupDir = getBackupDir()
+	try {
+		const now = new Date();
+		const year = now.getFullYear().toString().slice(-2);
+		const month = (now.getMonth() + 1).toString().padStart(2, "0");
+		const day = now.getDate().toString().padStart(2, "0");
+		const hour = now.getHours().toString().padStart(2, "0");
+		const minute = now.getMinutes().toString().padStart(2, "0");
+		const second = now.getSeconds().toString().padStart(2, "0");
+		const fileName = `data-${year}${month}${day}-${hour}${minute}${second}.zip`;
+		const backupDir = getBackupDir();
 
-    if (typeof window.require !== 'function') {
-      throw new Error('无法访问文件系统，请使用桌面版思源笔记')
-    }
+		if (typeof window.require !== "function") {
+			throw new Error("无法访问文件系统，请使用桌面版思源笔记");
+		}
 
-    const fs = window.require('fs').promises
-    const path = window.require('path')
+		const fs = window.require("fs").promises;
+		const path = window.require("path");
 
-    try {
-      await fs.access(workspacePath.value)
-    } catch {
-      throw new Error(`data 目录不存在: ${workspacePath.value}`)
-    }
+		try {
+			await fs.access(workspacePath.value);
+		} catch {
+			throw new Error(`data 目录不存在: ${workspacePath.value}`);
+		}
 
-    const zip = new JSZip()
-    const skipDirs = new Set(['temp', '.recycle'])
+		const zip = new JSZip();
+		const skipDirs = new Set(["temp", ".recycle"]);
 
-    async function addDirectoryToZip(dirPath: string, zipPath: string) {
-      const entries = await fs.readdir(dirPath, { withFileTypes: true })
-      for (const entry of entries) {
-        const fullPath = path.join(dirPath, entry.name)
-        const relativePath = zipPath ? `${zipPath}/${entry.name}` : entry.name
-        if (entry.isDirectory()) {
-          if (skipDirs.has(entry.name)) continue
-          await addDirectoryToZip(fullPath, relativePath)
-        } else if (entry.isFile()) {
-          try {
-            zip.file(relativePath, await fs.readFile(fullPath))
-          } catch (err) {
-            console.warn(`无法读取文件: ${fullPath}`, err)
-          }
-        }
-      }
-    }
+		async function addDirectoryToZip(dirPath: string, zipPath: string) {
+			const entries = await fs.readdir(dirPath, { withFileTypes: true });
+			for (const entry of entries) {
+				const fullPath = path.join(dirPath, entry.name);
+				const relativePath = zipPath ? `${zipPath}/${entry.name}` : entry.name;
+				if (entry.isDirectory()) {
+					if (skipDirs.has(entry.name)) continue;
+					await addDirectoryToZip(fullPath, relativePath);
+				} else if (entry.isFile()) {
+					try {
+						zip.file(relativePath, await fs.readFile(fullPath));
+					} catch (err) {
+						console.warn(`无法读取文件: ${fullPath}`, err);
+					}
+				}
+			}
+		}
 
-    await addDirectoryToZip(workspacePath.value, '')
+		await addDirectoryToZip(workspacePath.value, "");
 
-    zip.file('backup-info.json', JSON.stringify({
-      timestamp: Date.now(),
-      backupTime: new Date().toISOString(),
-      version: '1.0',
-      workspaceRoot: workspaceRoot.value,
-      workspaceDataPath: workspacePath.value,
-      backupDir
-    }, null, 2))
+		zip.file(
+			"backup-info.json",
+			JSON.stringify(
+				{
+					timestamp: Date.now(),
+					backupTime: new Date().toISOString(),
+					version: "1.0",
+					workspaceRoot: workspaceRoot.value,
+					workspaceDataPath: workspacePath.value,
+					backupDir,
+				},
+				null,
+				2,
+			),
+		);
 
-    //开始压缩
-    const zipBuffer = await zip.generateAsync({
-      type: 'uint8array',
-      compression: 'DEFLATE',
-      compressionOptions: { level: 6 }
-    })
+		//开始压缩
+		const zipBuffer = await zip.generateAsync({
+			type: "uint8array",
+			compression: "DEFLATE",
+			compressionOptions: { level: 6 },
+		});
 
-    await fs.mkdir(backupDir, { recursive: true })
-    const zipFilePath = path.join(backupDir, fileName)
-    await fs.writeFile(zipFilePath, zipBuffer)
+		await fs.mkdir(backupDir, { recursive: true });
+		const zipFilePath = path.join(backupDir, fileName);
+		await fs.writeFile(zipFilePath, zipBuffer);
 
-    lastBackupTime.value = new Date().toLocaleString()
-    lastBackupTimestamp = Date.now()
-    await saveSettings()
+		lastBackupTime.value = new Date().toLocaleString();
+		lastBackupTimestamp = Date.now();
+		await saveSettings();
 
-    props.plugin?.__generalSettings?.updateLastBackupTime?.(lastBackupTimestamp)
+		props.plugin?.__generalSettings?.updateLastBackupTime?.(
+			lastBackupTimestamp,
+		);
 
-    const stats = await fs.stat(zipFilePath)
-    backupList.value.unshift({
-      name: fileName,
-      path: zipFilePath,
-      time: lastBackupTime.value,
-      size: formatFileSize(stats.size)
-    })
+		const stats = await fs.stat(zipFilePath);
+		backupList.value.unshift({
+			name: fileName,
+			path: zipFilePath,
+			time: lastBackupTime.value,
+			size: formatFileSize(stats.size),
+		});
 
-    if (backupList.value.length > keepBackupCount.value) {
-      backupList.value = backupList.value.slice(0, keepBackupCount.value)
-    }
+		if (backupList.value.length > keepBackupCount.value) {
+			backupList.value = backupList.value.slice(0, keepBackupCount.value);
+		}
 
-    await props.plugin.saveData('backup-history', { list: backupList.value })
-    showMessage(props.i18n.backupSuccess || `备份成功: ${fileName}`, 3000, 'info')
-  } catch (error) {
-    console.error('备份过程出错:', error)
-    showMessage(`${props.i18n.backupFailed || '备份失败'}: ${error.message}`, 5000, 'error')
-  } finally {
-    isBackingUp.value = false
-  }
+		await props.plugin.saveData("backup-history", { list: backupList.value });
+		showMessage(
+			props.i18n.backupSuccess || `备份成功: ${fileName}`,
+			3000,
+			"info",
+		);
+	} catch (error) {
+		console.error("备份过程出错:", error);
+		showMessage(
+			`${props.i18n.backupFailed || "备份失败"}: ${error.message}`,
+			5000,
+			"error",
+		);
+	} finally {
+		isBackingUp.value = false;
+	}
 }
 
 // 格式化文件大小
 function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 B'
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return (bytes / Math.pow(k, i)).toFixed(2) + ' ' + sizes[i]
+	if (bytes === 0) return "0 B";
+	const k = 1024;
+	const sizes = ["B", "KB", "MB", "GB"];
+	const i = Math.floor(Math.log(bytes) / Math.log(k));
+	return (bytes / Math.pow(k, i)).toFixed(2) + " " + sizes[i];
 }
 
 // 加载备份列表
 async function loadBackupList() {
-  backupList.value = []
+	backupList.value = [];
 
-  try {
-    // 检查是否有保存的备份记录
-    const backupHistory = await props.plugin.loadData('backup-history')
-    if (backupHistory && backupHistory.list) {
-      backupList.value = backupHistory.list
-    }
-  } catch (error) {
-    console.error('加载备份列表失败:', error)
-  }
+	try {
+		// 检查是否有保存的备份记录
+		const backupHistory = await props.plugin.loadData("backup-history");
+		if (backupHistory && backupHistory.list) {
+			backupList.value = backupHistory.list;
+		}
+	} catch (error) {
+		console.error("加载备份列表失败:", error);
+	}
 }
 
 // 刷新备份列表
 async function refreshBackupList() {
-  isLoading.value = true
-  await loadBackupList()
-  isLoading.value = false
+	isLoading.value = true;
+	await loadBackupList();
+	isLoading.value = false;
 }
 
 // 删除备份
 async function deleteBackup(backup: { name: string; path: string }) {
-  try {
-    const confirmDelete = confirm(props.i18n.confirmDelete || '确定要删除此备份吗？')
-    if (!confirmDelete) return
+	try {
+		const confirmDelete = confirm(
+			props.i18n.confirmDelete || "确定要删除此备份吗？",
+		);
+		if (!confirmDelete) return;
 
-    // 从列表中移除
-    backupList.value = backupList.value.filter(b => b.name !== backup.name)
+		// 从列表中移除
+		backupList.value = backupList.value.filter((b) => b.name !== backup.name);
 
-    // 保存更新后的列表
-    await props.plugin.saveData('backup-history', { list: backupList.value })
+		// 保存更新后的列表
+		await props.plugin.saveData("backup-history", { list: backupList.value });
 
-    showMessage(props.i18n.deleteSuccess || '删除成功', 2000, 'info')
-  } catch (error) {
-    console.error('删除备份失败:', error)
-    showMessage(props.i18n.deleteFailed || '删除失败', 3000, 'error')
-  }
+		showMessage(props.i18n.deleteSuccess || "删除成功", 2000, "info");
+	} catch (error) {
+		console.error("删除备份失败:", error);
+		showMessage(props.i18n.deleteFailed || "删除失败", 3000, "error");
+	}
 }
 
 // 自动备份定时器
 function startAutoBackupTimer() {
-  stopAutoBackupTimer()
+	stopAutoBackupTimer();
 
-  if (!autoBackupEnabled.value) return
+	if (!autoBackupEnabled.value) return;
 
-  // 记录上次执行的时间点，用于防止同一时间点重复执行
-  let lastExecutedHour = -1  // 用于每小时模式
-  let lastExecutedDateStr = '' // 用于每天模式
+	// 记录上次执行的时间点，用于防止同一时间点重复执行
+	let lastExecutedHour = -1; // 用于每小时模式
+	let lastExecutedDateStr = ""; // 用于每天模式
 
-  // 检查是否需要执行备份
-  const checkAndBackup = async () => {
-    // 确保有工作区路径
-    if (!workspacePath.value) {
-      await detectWorkspacePath()
-      if (!workspacePath.value) return
-    }
+	// 检查是否需要执行备份
+	const checkAndBackup = async () => {
+		// 确保有工作区路径
+		if (!workspacePath.value) {
+			await detectWorkspacePath();
+			if (!workspacePath.value) return;
+		}
 
-    const now = new Date()
-    const currentTime = now.getTime()
-    const currentHour = now.getHours()
-    const currentMinute = now.getMinutes()
-    const currentDateStr = now.toDateString()
+		const now = new Date();
+		const currentTime = now.getTime();
+		const currentHour = now.getHours();
+		const currentMinute = now.getMinutes();
+		const currentDateStr = now.toDateString();
 
-    let shouldBackup = false
+		let shouldBackup = false;
 
-    switch (backupFrequency.value) {
-      case 'minute':
-        // 每分钟：距离上次备份超过1分钟就执行
-        if (currentTime - lastBackupTimestamp >= 60 * 1000) {
-          shouldBackup = true
-        }
-        break
+		switch (backupFrequency.value) {
+			case "minute":
+				// 每分钟：距离上次备份超过1分钟就执行
+				if (currentTime - lastBackupTimestamp >= 60 * 1000) {
+					shouldBackup = true;
+				}
+				break;
 
-      case 'hourly':
-        // 每小时：在整点执行（分钟数为0时触发）
-        if (currentMinute === 0 && lastExecutedHour !== currentHour) {
-          shouldBackup = true
-          lastExecutedHour = currentHour
-        }
-        break
+			case "hourly":
+				// 每小时：在整点执行（分钟数为0时触发）
+				if (currentMinute === 0 && lastExecutedHour !== currentHour) {
+					shouldBackup = true;
+					lastExecutedHour = currentHour;
+				}
+				break;
 
-      case 'daily':
-        // 每天：在用户指定的时间点执行
-        const [targetHour, targetMinute] = backupTime.value.split(':').map(Number)
-        if (currentHour === targetHour &&
-            currentMinute === targetMinute &&
-            lastExecutedDateStr !== currentDateStr) {
-          shouldBackup = true
-          lastExecutedDateStr = currentDateStr
-        }
-        break
-    }
+			case "daily":
+				// 每天：在用户指定的时间点执行
+				const [targetHour, targetMinute] = backupTime.value
+					.split(":")
+					.map(Number);
+				if (
+					currentHour === targetHour &&
+					currentMinute === targetMinute &&
+					lastExecutedDateStr !== currentDateStr
+				) {
+					shouldBackup = true;
+					lastExecutedDateStr = currentDateStr;
+				}
+				break;
+		}
 
-    if (shouldBackup) {
-      console.log(`[自动备份] 触发备份，频率: ${backupFrequency.value}, 时间: ${now.toLocaleString()}`)
-      await performBackup()
-    }
-  }
+		if (shouldBackup) {
+			console.log(
+				`[自动备份] 触发备份，频率: ${backupFrequency.value}, 时间: ${now.toLocaleString()}`,
+			);
+			await performBackup();
+		}
+	};
 
-  // 每分钟检查一次
-  autoBackupTimer = window.setInterval(checkAndBackup, 60000)
+	// 每分钟检查一次
+	autoBackupTimer = window.setInterval(checkAndBackup, 60000);
 
-  // 立即检查一次
-  checkAndBackup()
+	// 立即检查一次
+	checkAndBackup();
 }
 
 function stopAutoBackupTimer() {
-  if (autoBackupTimer) {
-    clearInterval(autoBackupTimer)
-    autoBackupTimer = null
-  }
+	if (autoBackupTimer) {
+		clearInterval(autoBackupTimer);
+		autoBackupTimer = null;
+	}
 }
 
 // 暴露方法给父组件
 defineExpose({
-  loadSettings,
-  saveSettings,
-  performBackup,
-  refreshBackupList
-})
+	loadSettings,
+	saveSettings,
+	performBackup,
+	refreshBackupList,
+});
 </script>
 
 <style scoped lang="scss">

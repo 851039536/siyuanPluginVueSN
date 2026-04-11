@@ -170,107 +170,114 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
-import { Plugin } from 'siyuan'
+import { ref, watch, onMounted } from "vue";
+import { Plugin } from "siyuan";
 
 export interface ListStyleSettingsData {
-  enabled: boolean
-  orderedListColors: string[]
-  unorderedListColors: string[]
-  symbolSize: number
+	enabled: boolean;
+	orderedListColors: string[];
+	unorderedListColors: string[];
+	symbolSize: number;
 }
 
 interface Props {
-  i18n?: any
-  plugin?: Plugin
+	i18n?: any;
+	plugin?: Plugin;
 }
 
 interface Emits {
-  (e: 'change', settings: ListStyleSettingsData): void
+	(e: "change", settings: ListStyleSettingsData): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  i18n: () => ({}),
-  plugin: null
-})
+	i18n: () => ({}),
+	plugin: null,
+});
 
-const emit = defineEmits<Emits>()
+const emit = defineEmits<Emits>();
 
 const DEFAULT_SETTINGS: ListStyleSettingsData = {
-  enabled: false,
-  orderedListColors: [
-    '#000000',
-    '#0080ff',
-    '#00b600',
-    '#fd8700',
-    '#be6fff',
-    '#888888'
-  ],
-  unorderedListColors: [
-    '#000000',
-    '#0080ff',
-    '#00b600',
-    '#fd8700',
-    '#be6fff',
-    '#888888'
-  ],
-  symbolSize: 1.6
-}
+	enabled: false,
+	orderedListColors: [
+		"#000000",
+		"#0080ff",
+		"#00b600",
+		"#fd8700",
+		"#be6fff",
+		"#888888",
+	],
+	unorderedListColors: [
+		"#000000",
+		"#0080ff",
+		"#00b600",
+		"#fd8700",
+		"#be6fff",
+		"#888888",
+	],
+	symbolSize: 1.6,
+};
 
-const settings = ref<ListStyleSettingsData>({ ...DEFAULT_SETTINGS })
-const showPreview = ref(true)
+const settings = ref<ListStyleSettingsData>({ ...DEFAULT_SETTINGS });
+const showPreview = ref(true);
 
-watch(settings, (newSettings) => {
-  emit('change', newSettings)
-  saveSettings()
-  applySettings()
-}, { deep: true })
+watch(
+	settings,
+	(newSettings) => {
+		emit("change", newSettings);
+		saveSettings();
+		applySettings();
+	},
+	{ deep: true },
+);
 
 function togglePreview() {
-  showPreview.value = !showPreview.value
+	showPreview.value = !showPreview.value;
 }
 
 function resetSettings() {
-  settings.value = { ...DEFAULT_SETTINGS }
-  applySettings()
+	settings.value = { ...DEFAULT_SETTINGS };
+	applySettings();
 }
 
 function applySettings() {
-  applyListStyles(settings.value)
+	applyListStyles(settings.value);
 }
 
 function applyListStyles(listSettings: ListStyleSettingsData) {
-  try {
-    // 移除现有样式
-    const existingStyle = document.getElementById('list-style-settings')
-    if (existingStyle) {
-      existingStyle.remove()
-    }
+	try {
+		// 移除现有样式
+		const existingStyle = document.getElementById("list-style-settings");
+		if (existingStyle) {
+			existingStyle.remove();
+		}
 
-    if (!listSettings.enabled) {
-      return
-    }
+		if (!listSettings.enabled) {
+			return;
+		}
 
-    // 创建新的样式元素
-    const style = document.createElement('style')
-    style.id = 'list-style-settings'
-    
-    // 有序列表颜色
-    const orderedListCss = listSettings.orderedListColors.map((color, index) => {
-      const depth = '.li[data-subtype="o"] '.repeat(index)
-      return `
+		// 创建新的样式元素
+		const style = document.createElement("style");
+		style.id = "list-style-settings";
+
+		// 有序列表颜色
+		const orderedListCss = listSettings.orderedListColors
+			.map((color, index) => {
+				const depth = '.li[data-subtype="o"] '.repeat(index);
+				return `
         ${depth}.li[data-subtype="o"] > .protyle-action--order {
           color: ${color} !important;
           font-weight: bold !important;
         }
-      `
-    }).join('\n')
-    
-    // 无序列表颜色和符号
-    const unorderedListCss = listSettings.unorderedListColors.map((color, index) => {
-      const depth = '[data-subtype="u"] > '.repeat(index)
-      const symbol = index % 2 === 0 ? '•' : '▪'
-      return `
+      `;
+			})
+			.join("\n");
+
+		// 无序列表颜色和符号
+		const unorderedListCss = listSettings.unorderedListColors
+			.map((color, index) => {
+				const depth = '[data-subtype="u"] > '.repeat(index);
+				const symbol = index % 2 === 0 ? "•" : "▪";
+				return `
         ${depth}.li[data-subtype="u"] > .protyle-action::before {
           content: "${symbol}";
           font-size: ${listSettings.symbolSize}em;
@@ -279,10 +286,11 @@ function applyListStyles(listSettings: ListStyleSettingsData) {
           position: absolute;
           color: ${color} !important;
         }
-      `
-    }).join('\n')
-    
-    style.textContent = `
+      `;
+			})
+			.join("\n");
+
+		style.textContent = `
       /* 有序列表样式 */
       ${orderedListCss}
       
@@ -299,50 +307,50 @@ function applyListStyles(listSettings: ListStyleSettingsData) {
       :root[data-theme-mode="dark"] .li[data-subtype="u"] > .protyle-action::before {
         opacity: 0.9;
       }
-    `
-    
-    document.head.appendChild(style)
-  } catch (error) {
-    console.error('应用列表样式失败:', error)
-  }
+    `;
+
+		document.head.appendChild(style);
+	} catch (error) {
+		console.error("应用列表样式失败:", error);
+	}
 }
 
 async function loadSettings() {
-  if (!props.plugin) {
-    return
-  }
+	if (!props.plugin) {
+		return;
+	}
 
-  try {
-    const data = await props.plugin.loadData('list-style-settings')
-    if (data) {
-      settings.value = { ...DEFAULT_SETTINGS, ...data }
-      applySettings()
-    }
-  } catch (error) {
-    console.error('加载列表样式设置失败:', error)
-  }
+	try {
+		const data = await props.plugin.loadData("list-style-settings");
+		if (data) {
+			settings.value = { ...DEFAULT_SETTINGS, ...data };
+			applySettings();
+		}
+	} catch (error) {
+		console.error("加载列表样式设置失败:", error);
+	}
 }
 
 async function saveSettings() {
-  if (!props.plugin) {
-    return
-  }
+	if (!props.plugin) {
+		return;
+	}
 
-  try {
-    await props.plugin.saveData('list-style-settings', settings.value)
-  } catch (error) {
-    console.error('保存列表样式设置失败:', error)
-  }
+	try {
+		await props.plugin.saveData("list-style-settings", settings.value);
+	} catch (error) {
+		console.error("保存列表样式设置失败:", error);
+	}
 }
 
 onMounted(async () => {
-  await loadSettings()
-})
+	await loadSettings();
+});
 
 defineExpose({
-  settings,
-  loadSettings
-})
+	settings,
+	loadSettings,
+});
 </script>
 
 <style scoped lang="scss">

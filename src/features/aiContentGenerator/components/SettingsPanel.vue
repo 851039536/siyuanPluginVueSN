@@ -117,33 +117,33 @@
 </template>
 
 <script setup lang="ts">
-import Button from '@/components/Button.vue';
-import Input from '@/components/Input.vue';
-import Textarea from '@/components/Textarea.vue';
-import Slider from '@/components/Slider.vue';
-import Tag from '@/components/Tag.vue';
+import Button from "@/components/Button.vue";
+import Input from "@/components/Input.vue";
+import Textarea from "@/components/Textarea.vue";
+import Slider from "@/components/Slider.vue";
+import Tag from "@/components/Tag.vue";
 
 defineProps<{
-  showSettings: boolean;
-  collapsed: boolean;
-  systemPrompt: string;
-  temperature: number;
-  maxTokens: number;
-  contextMessageLimit: number;
-  currentPromptName: string;
-  newPromptName: string;
+	showSettings: boolean;
+	collapsed: boolean;
+	systemPrompt: string;
+	temperature: number;
+	maxTokens: number;
+	contextMessageLimit: number;
+	currentPromptName: string;
+	newPromptName: string;
 }>();
 
 defineEmits<{
-  'update:systemPrompt': [value: string];
-  'update:temperature': [value: number];
-  'update:maxTokens': [value: number];
-  'update:contextMessageLimit': [value: number];
-  'update:newPromptName': [value: string];
-  'toggle-settings': [];
-  'toggle-collapse': [];
-  'save-current-prompt': [];
-  'on-prompt-name-focus': [];
+	"update:systemPrompt": [value: string];
+	"update:temperature": [value: number];
+	"update:maxTokens": [value: number];
+	"update:contextMessageLimit": [value: number];
+	"update:newPromptName": [value: string];
+	"toggle-settings": [];
+	"toggle-collapse": [];
+	"save-current-prompt": [];
+	"on-prompt-name-focus": [];
 }>();
 </script>
 

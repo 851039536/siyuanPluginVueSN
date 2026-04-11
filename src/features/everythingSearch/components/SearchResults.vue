@@ -47,62 +47,62 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import ResultItem from './ResultItem.vue'
-import type { EverythingSearchResult, SearchState } from '../types'
+import { computed } from "vue";
+import ResultItem from "./ResultItem.vue";
+import type { EverythingSearchResult, SearchState } from "../types";
 
 interface Props {
-  /** 搜索状态 */
-  state: SearchState
-  /** 是否启用自动搜索 */
-  autoSearch?: boolean
+	/** 搜索状态 */
+	state: SearchState;
+	/** 是否启用自动搜索 */
+	autoSearch?: boolean;
 }
 
 interface Emits {
-  (e: 'itemClick', item: EverythingSearchResult): void
-  (e: 'itemDblClick', item: EverythingSearchResult): void
-  (e: 'itemOpen', item: EverythingSearchResult): void
-  (e: 'itemShowInFolder', item: EverythingSearchResult): void
-  (e: 'itemCopyPath', item: EverythingSearchResult): void
+	(e: "itemClick", item: EverythingSearchResult): void;
+	(e: "itemDblClick", item: EverythingSearchResult): void;
+	(e: "itemOpen", item: EverythingSearchResult): void;
+	(e: "itemShowInFolder", item: EverythingSearchResult): void;
+	(e: "itemCopyPath", item: EverythingSearchResult): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  autoSearch: true
-})
+	autoSearch: true,
+});
 
-const emit = defineEmits<Emits>()
+const emit = defineEmits<Emits>();
 
 /** 空状态提示文本 */
 const emptyHintText = computed(() => {
-  return props.autoSearch
-    ? '输入关键词自动搜索本地文件'
-    : '输入关键词点击搜索按钮搜索本地文件'
-})
+	return props.autoSearch
+		? "输入关键词自动搜索本地文件"
+		: "输入关键词点击搜索按钮搜索本地文件";
+});
 
 /** 处理项目点击 */
 const handleItemClick = (item: EverythingSearchResult) => {
-  emit('itemClick', item)
-}
+	emit("itemClick", item);
+};
 
 /** 处理项目双击 */
 const handleItemDblClick = (item: EverythingSearchResult) => {
-  emit('itemDblClick', item)
-}
+	emit("itemDblClick", item);
+};
 
 /** 处理项目打开 */
 const handleItemOpen = (item: EverythingSearchResult) => {
-  emit('itemOpen', item)
-}
+	emit("itemOpen", item);
+};
 
 /** 处理在文件夹中显示 */
 const handleItemShowInFolder = (item: EverythingSearchResult) => {
-  emit('itemShowInFolder', item)
-}
+	emit("itemShowInFolder", item);
+};
 
 /** 处理复制路径 */
 const handleItemCopyPath = (item: EverythingSearchResult) => {
-  emit('itemCopyPath', item)
-}
+	emit("itemCopyPath", item);
+};
 </script>
 
 <style lang="scss">

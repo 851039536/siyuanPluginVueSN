@@ -97,82 +97,85 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { showMessage } from 'siyuan'
-import IconWrapper from '@/components/IconWrapper.vue'
-import Button from '@/components/Button.vue'
-import Textarea from '@/components/Textarea.vue'
-import {
-  explainCode,
-  type CodeExplanationResult
-} from '../utils/codeUtils'
+import { ref, watch } from "vue";
+import { showMessage } from "siyuan";
+import IconWrapper from "@/components/IconWrapper.vue";
+import Button from "@/components/Button.vue";
+import Textarea from "@/components/Textarea.vue";
+import { explainCode, type CodeExplanationResult } from "../utils/codeUtils";
 
 interface Props {
-  i18n: any
-  plugin?: any
+	i18n: any;
+	plugin?: any;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
-const codeInput = ref('')
-const result = ref<CodeExplanationResult | null>(null)
-const isExplaining = ref(false)
-const errorMessage = ref('')
+const codeInput = ref("");
+const result = ref<CodeExplanationResult | null>(null);
+const isExplaining = ref(false);
+const errorMessage = ref("");
 
 function handleInput() {
-  errorMessage.value = ''
+	errorMessage.value = "";
 }
 
 async function handleExplain() {
-  if (!codeInput.value.trim()) {
-    errorMessage.value = props.i18n.enterCode || '请输入代码内容'
-    return
-  }
+	if (!codeInput.value.trim()) {
+		errorMessage.value = props.i18n.enterCode || "请输入代码内容";
+		return;
+	}
 
-  isExplaining.value = true
-  errorMessage.value = ''
+	isExplaining.value = true;
+	errorMessage.value = "";
 
-  try {
-    const config = getApiConfig()
-    const res = await explainCode(codeInput.value.trim(), config)
-    result.value = res
-  } catch (error) {
-    console.error('解释代码失败:', error)
-    errorMessage.value = (error as Error).message || props.i18n.analysisFailed || '分析失败，请重试'
-  } finally {
-    isExplaining.value = false
-  }
+	try {
+		const config = getApiConfig();
+		const res = await explainCode(codeInput.value.trim(), config);
+		result.value = res;
+	} catch (error) {
+		console.error("解释代码失败:", error);
+		errorMessage.value =
+			(error as Error).message ||
+			props.i18n.analysisFailed ||
+			"分析失败，请重试";
+	} finally {
+		isExplaining.value = false;
+	}
 }
 
 function handleClear() {
-  codeInput.value = ''
-  result.value = null
-  errorMessage.value = ''
+	codeInput.value = "";
+	result.value = null;
+	errorMessage.value = "";
 }
 
 function getApiConfig() {
-  const settings = (props.plugin as any)?.settings || {}
-  return {
-    provider: settings.aiApiProvider || 'tongyi',
-    model: settings.aiModel || 'qwen-plus',
-    apiKey: settings.aiApiKey || '',
-    customEndpoint: settings.aiCustomEndpoint || ''
-  }
+	const settings = (props.plugin as any)?.settings || {};
+	return {
+		provider: settings.aiApiProvider || "tongyi",
+		model: settings.aiModel || "qwen-plus",
+		apiKey: settings.aiApiKey || "",
+		customEndpoint: settings.aiCustomEndpoint || "",
+	};
 }
 
 function copyExplanation() {
-  if (result.value) {
-    const text = `代码解释：\n${result.value.explanation}\n\n语言：${result.value.language}\n复杂度：${result.value.complexity}\n\n优化建议：\n${result.value.suggestions.map((s, i) => `${i + 1}. ${s}`).join('\n')}`
-    navigator.clipboard.writeText(text)
-    showMessage(props.i18n.copied || '已复制', 1500, 'info')
-  }
+	if (result.value) {
+		const text = `代码解释：\n${result.value.explanation}\n\n语言：${result.value.language}\n复杂度：${result.value.complexity}\n\n优化建议：\n${result.value.suggestions.map((s, i) => `${i + 1}. ${s}`).join("\n")}`;
+		navigator.clipboard.writeText(text);
+		showMessage(props.i18n.copied || "已复制", 1500, "info");
+	}
 }
 
-watch(() => codeInput.value, () => {
-  if (errorMessage.value) {
-    errorMessage.value = ''
-  }
-})
+watch(
+	() => codeInput.value,
+	() => {
+		if (errorMessage.value) {
+			errorMessage.value = "";
+		}
+	},
+);
 </script>
 
 <style scoped lang="scss">

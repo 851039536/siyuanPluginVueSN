@@ -157,202 +157,202 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
-import { Diff } from 'vue-diff'
-import 'vue-diff/dist/index.css'
-import type { Plugin } from 'siyuan'
-import { TextDiffStorage, type TextDiffSettings } from './types/storage'
+import { ref, reactive, computed, onMounted } from "vue";
+import { Diff } from "vue-diff";
+import "vue-diff/dist/index.css";
+import type { Plugin } from "siyuan";
+import { TextDiffStorage, type TextDiffSettings } from "./types/storage";
 
 const props = defineProps<{
-  onClose?: () => void
-  i18n?: any
-  plugin?: Plugin
-}>()
+	onClose?: () => void;
+	i18n?: any;
+	plugin?: Plugin;
+}>();
 
 // 存储管理
-const storage = props.plugin ? new TextDiffStorage(props.plugin) : null
+const storage = props.plugin ? new TextDiffStorage(props.plugin) : null;
 
 // 文件输入引用
-const fileInputRef = ref<HTMLInputElement | null>(null)
-const currentInputTarget = ref<'original' | 'modified'>('original')
+const fileInputRef = ref<HTMLInputElement | null>(null);
+const currentInputTarget = ref<"original" | "modified">("original");
 
 // 响应式数据
-const originalText = ref('')
-const modifiedText = ref('')
-const originalFileName = ref('')
-const modifiedFileName = ref('')
-const diffMode = ref<'split' | 'unified'>('split')
-const fontSize = ref<number>(14)
+const originalText = ref("");
+const modifiedText = ref("");
+const originalFileName = ref("");
+const modifiedFileName = ref("");
+const diffMode = ref<"split" | "unified">("split");
+const fontSize = ref<number>(14);
 
 // 拖拽状态
 const dragState = reactive({
-  original: false,
-  modified: false
-})
+	original: false,
+	modified: false,
+});
 
 // 固定使用浅色主题
-const diffTheme = 'light'
+const diffTheme = "light";
 
 // 选项数据
 const FONT_SIZE_OPTIONS = [
-  { value: 12, label: '12px' },
-  { value: 14, label: '14px' },
-  { value: 16, label: '16px' },
-  { value: 18, label: '18px' },
-  { value: 20, label: '20px' },
-  { value: 24, label: '24px' }
-]
+	{ value: 12, label: "12px" },
+	{ value: 14, label: "14px" },
+	{ value: 16, label: "16px" },
+	{ value: 18, label: "18px" },
+	{ value: 20, label: "20px" },
+	{ value: 24, label: "24px" },
+];
 
 const modeOptions = computed(() => [
-  { value: 'split' as const, label: $t('splitMode') },
-  { value: 'unified' as const, label: $t('unifiedMode') }
-])
+	{ value: "split" as const, label: $t("splitMode") },
+	{ value: "unified" as const, label: $t("unifiedMode") },
+]);
 
 // 设置字体大小
 const setFontSize = (size: number) => {
-  document.documentElement.style.setProperty('--diff-font-size', `${size}px`)
-}
+	document.documentElement.style.setProperty("--diff-font-size", `${size}px`);
+};
 
 // 加载设置
 const loadSettings = async () => {
-  if (!storage) return
-  try {
-    const settings = await storage.loadSettings()
-    diffMode.value = settings.diffMode
-    fontSize.value = settings.fontSize
-    setFontSize(settings.fontSize)
-  } catch (error) {
-    console.error('加载设置失败:', error)
-  }
-}
+	if (!storage) return;
+	try {
+		const settings = await storage.loadSettings();
+		diffMode.value = settings.diffMode;
+		fontSize.value = settings.fontSize;
+		setFontSize(settings.fontSize);
+	} catch (error) {
+		console.error("加载设置失败:", error);
+	}
+};
 
 // 保存设置
 const saveSettings = async () => {
-  if (!storage) return
-  try {
-    const settings: TextDiffSettings = {
-      fontSize: fontSize.value,
-      diffMode: diffMode.value,
-      theme: 'light'
-    }
-    await storage.saveSettings(settings)
-  } catch (error) {
-    console.error('保存设置失败:', error)
-  }
-}
+	if (!storage) return;
+	try {
+		const settings: TextDiffSettings = {
+			fontSize: fontSize.value,
+			diffMode: diffMode.value,
+			theme: "light",
+		};
+		await storage.saveSettings(settings);
+	} catch (error) {
+		console.error("保存设置失败:", error);
+	}
+};
 
-const updateMode = (mode: 'split' | 'unified') => {
-  diffMode.value = mode
-  saveSettings()
-}
+const updateMode = (mode: "split" | "unified") => {
+	diffMode.value = mode;
+	saveSettings();
+};
 
 const updateFontSize = (size: number) => {
-  fontSize.value = size
-  setFontSize(size)
-  saveSettings()
-}
+	fontSize.value = size;
+	setFontSize(size);
+	saveSettings();
+};
 
 const clearAll = () => {
-  originalText.value = ''
-  modifiedText.value = ''
-  originalFileName.value = ''
-  modifiedFileName.value = ''
-}
+	originalText.value = "";
+	modifiedText.value = "";
+	originalFileName.value = "";
+	modifiedFileName.value = "";
+};
 
 const swapTexts = () => {
-  const tempText = originalText.value
-  const tempName = originalFileName.value
-  originalText.value = modifiedText.value
-  originalFileName.value = modifiedFileName.value
-  modifiedText.value = tempText
-  modifiedFileName.value = tempName
-}
+	const tempText = originalText.value;
+	const tempName = originalFileName.value;
+	originalText.value = modifiedText.value;
+	originalFileName.value = modifiedFileName.value;
+	modifiedText.value = tempText;
+	modifiedFileName.value = tempName;
+};
 
 // 触发文件选择
-const triggerFileInput = (target: 'original' | 'modified') => {
-  currentInputTarget.value = target
-  fileInputRef.value?.click()
-}
+const triggerFileInput = (target: "original" | "modified") => {
+	currentInputTarget.value = target;
+	fileInputRef.value?.click();
+};
 
 // 处理文件选择
 const handleFileSelect = (event: Event) => {
-  const input = event.target as HTMLInputElement
-  const file = input.files?.[0]
-  if (file) {
-    readFile(file, currentInputTarget.value)
-  }
-  // 重置 input 以允许再次选择同一文件
-  input.value = ''
-}
+	const input = event.target as HTMLInputElement;
+	const file = input.files?.[0];
+	if (file) {
+		readFile(file, currentInputTarget.value);
+	}
+	// 重置 input 以允许再次选择同一文件
+	input.value = "";
+};
 
 // 处理拖拽进入
-const handleDragOver = (target: 'original' | 'modified', event: DragEvent) => {
-  if (event.dataTransfer?.types.includes('Files')) {
-    dragState[target] = true
-  }
-}
+const handleDragOver = (target: "original" | "modified", event: DragEvent) => {
+	if (event.dataTransfer?.types.includes("Files")) {
+		dragState[target] = true;
+	}
+};
 
 // 处理拖拽离开
-const handleDragLeave = (target: 'original' | 'modified') => {
-  dragState[target] = false
-}
+const handleDragLeave = (target: "original" | "modified") => {
+	dragState[target] = false;
+};
 
 // 处理文件放置
-const handleDrop = (target: 'original' | 'modified', event: DragEvent) => {
-  dragState[target] = false
-  const file = event.dataTransfer?.files?.[0]
-  if (file) {
-    readFile(file, target)
-  }
-}
+const handleDrop = (target: "original" | "modified", event: DragEvent) => {
+	dragState[target] = false;
+	const file = event.dataTransfer?.files?.[0];
+	if (file) {
+		readFile(file, target);
+	}
+};
 
 // 读取文件内容
-const readFile = (file: File, target: 'original' | 'modified') => {
-  const reader = new FileReader()
-  reader.onload = () => {
-    const content = reader.result as string
-    if (target === 'original') {
-      originalText.value = content
-      originalFileName.value = file.name
-    } else {
-      modifiedText.value = content
-      modifiedFileName.value = file.name
-    }
-  }
-  reader.onerror = () => {
-    console.error('读取文件失败:', file.name)
-  }
-  reader.readAsText(file)
-}
+const readFile = (file: File, target: "original" | "modified") => {
+	const reader = new FileReader();
+	reader.onload = () => {
+		const content = reader.result as string;
+		if (target === "original") {
+			originalText.value = content;
+			originalFileName.value = file.name;
+		} else {
+			modifiedText.value = content;
+			modifiedFileName.value = file.name;
+		}
+	};
+	reader.onerror = () => {
+		console.error("读取文件失败:", file.name);
+	};
+	reader.readAsText(file);
+};
 
 // 国际化
 const $t = (key: string): string => {
-  if (props.i18n?.textDiff?.[key]) {
-    return props.i18n.textDiff[key]
-  }
-  const translations: Record<string, string> = {
-    clear: '清空',
-    swap: '交换',
-    original: '原文本',
-    modified: '修改后文本',
-    diffResult: '差异结果',
-    chars: '字符',
-    originalPlaceholder: '输入原始文本或拖拽文件到此处...',
-    modifiedPlaceholder: '输入修改后文本或拖拽文件到此处...',
-    displayMode: '显示模式',
-    splitMode: '分栏',
-    unifiedMode: '统一',
-    fontSize: '字体',
-    selectFile: '选择文件',
-    dropFile: '释放文件以导入'
-  }
-  return translations[key] || key
-}
+	if (props.i18n?.textDiff?.[key]) {
+		return props.i18n.textDiff[key];
+	}
+	const translations: Record<string, string> = {
+		clear: "清空",
+		swap: "交换",
+		original: "原文本",
+		modified: "修改后文本",
+		diffResult: "差异结果",
+		chars: "字符",
+		originalPlaceholder: "输入原始文本或拖拽文件到此处...",
+		modifiedPlaceholder: "输入修改后文本或拖拽文件到此处...",
+		displayMode: "显示模式",
+		splitMode: "分栏",
+		unifiedMode: "统一",
+		fontSize: "字体",
+		selectFile: "选择文件",
+		dropFile: "释放文件以导入",
+	};
+	return translations[key] || key;
+};
 
 onMounted(() => {
-  loadSettings()
-  setFontSize(fontSize.value)
-})
+	loadSettings();
+	setFontSize(fontSize.value);
+});
 </script>
 
 <style scoped lang="scss">

@@ -73,74 +73,82 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
-import IconWrapper from '@/components/IconWrapper.vue'
-import Button from '@/components/Button.vue'
-import Input from '@/components/Input.vue'
+import { ref, watch, nextTick } from "vue";
+import IconWrapper from "@/components/IconWrapper.vue";
+import Button from "@/components/Button.vue";
+import Input from "@/components/Input.vue";
 
 // ============================================================
 // Props
 // ============================================================
 
 interface Props {
-  isFirstTime: boolean
-  passwordHint?: string
-  loginError?: string
+	isFirstTime: boolean;
+	passwordHint?: string;
+	loginError?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  passwordHint: '',
-  loginError: ''
-})
+	passwordHint: "",
+	loginError: "",
+});
 
 // ============================================================
 // Emits
 // ============================================================
 
 interface Emits {
-  (e: 'login', password: string, hint?: string): void
-  (e: 'close'): void
-  (e: 'forgotPassword'): void
+	(e: "login", password: string, hint?: string): void;
+	(e: "close"): void;
+	(e: "forgotPassword"): void;
 }
 
-const emit = defineEmits<Emits>()
+const emit = defineEmits<Emits>();
 
 // ============================================================
 // State
 // ============================================================
 
-const password = ref('')
-const showPassword = ref(false)
-const hint = ref('')
-const showHintInput = ref(false)
-const inputRef = ref<HTMLInputElement | null>(null)
+const password = ref("");
+const showPassword = ref(false);
+const hint = ref("");
+const showHintInput = ref(false);
+const inputRef = ref<HTMLInputElement | null>(null);
 
 // ============================================================
 // Methods
 // ============================================================
 
 const handleSubmit = () => {
-  if (!password.value.trim()) return
-  // 发送登录事件
-  emit('login', password.value.trim(), props.isFirstTime ? hint.value.trim() : undefined)
-}
+	if (!password.value.trim()) return;
+	// 发送登录事件
+	emit(
+		"login",
+		password.value.trim(),
+		props.isFirstTime ? hint.value.trim() : undefined,
+	);
+};
 
 // ============================================================
 // Lifecycle
 // ============================================================
 
 // 监听首次使用状态变化，重置表单并自动聚焦
-watch(() => props.isFirstTime, async () => {
-  // 重置表单
-  password.value = ''
-  hint.value = ''
-  showHintInput.value = false
-  showPassword.value = false
+watch(
+	() => props.isFirstTime,
+	async () => {
+		// 重置表单
+		password.value = "";
+		hint.value = "";
+		showHintInput.value = false;
+		showPassword.value = false;
 
-  // 自动聚焦输入框
-  await nextTick()
-  inputRef.value?.focus()
-}, { immediate: true })
+		// 自动聚焦输入框
+		await nextTick();
+		inputRef.value?.focus();
+	},
+	{ immediate: true },
+);
 </script>
 
 <style lang="scss" scoped>

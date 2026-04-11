@@ -66,122 +66,125 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed } from "vue";
 
 interface Props {
-  modelValue?: 'day' | 'week' | 'month' | 'year' | 'trend'
-  dayRange?: 7 | 15 | 30 | 90 | 180 | 365
-  monthYearRange?: 1 | 2 | 3
-  selectedYear?: number
-  periodAvgWords?: number
-  periodTotalWords?: number
-  i18n?: {
-    day: string
-    week: string
-    month: string
-    year: string
-    trend: string
-    avgLabel: string
-    totalLabel: string
-    wordsUnit: string
-    days7: string
-    days15: string
-    days30: string
-    quarter: string
-    halfYear: string
-    fullYear: string
-    last1Year: string
-    last2Years: string
-    last3Years: string
-  }
+	modelValue?: "day" | "week" | "month" | "year" | "trend";
+	dayRange?: 7 | 15 | 30 | 90 | 180 | 365;
+	monthYearRange?: 1 | 2 | 3;
+	selectedYear?: number;
+	periodAvgWords?: number;
+	periodTotalWords?: number;
+	i18n?: {
+		day: string;
+		week: string;
+		month: string;
+		year: string;
+		trend: string;
+		avgLabel: string;
+		totalLabel: string;
+		wordsUnit: string;
+		days7: string;
+		days15: string;
+		days30: string;
+		quarter: string;
+		halfYear: string;
+		fullYear: string;
+		last1Year: string;
+		last2Years: string;
+		last3Years: string;
+	};
 }
 
 interface Emits {
-  (e: 'update:modelValue', value: 'day' | 'week' | 'month' | 'year' | 'trend'): void
-  (e: 'update:dayRange', value: 7 | 15 | 30 | 90 | 180 | 365): void
-  (e: 'update:monthYearRange', value: 1 | 2 | 3): void
-  (e: 'update:selectedYear', value: number): void
-  (e: 'refresh'): void
+	(
+		e: "update:modelValue",
+		value: "day" | "week" | "month" | "year" | "trend",
+	): void;
+	(e: "update:dayRange", value: 7 | 15 | 30 | 90 | 180 | 365): void;
+	(e: "update:monthYearRange", value: 1 | 2 | 3): void;
+	(e: "update:selectedYear", value: number): void;
+	(e: "refresh"): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  modelValue: 'day',
-  dayRange: 7,
-  monthYearRange: 1,
-  selectedYear: new Date().getFullYear(),
-  periodAvgWords: 0,
-  periodTotalWords: 0,
-  i18n: () => ({
-    day: '日',
-    week: '周',
-    month: '月',
-    year: '年',
-    trend: '趋势',
-    avgLabel: '日均字数',
-    totalLabel: '总字数',
-    wordsUnit: '字',
-    days7: '7天',
-    days15: '15天',
-    days30: '30天',
-    quarter: '季度',
-    halfYear: '半年',
-    fullYear: '整年',
-    last1Year: '最近一年',
-    last2Years: '最近两年',
-    last3Years: '最近三年',
-  }),
-})
+	modelValue: "day",
+	dayRange: 7,
+	monthYearRange: 1,
+	selectedYear: new Date().getFullYear(),
+	periodAvgWords: 0,
+	periodTotalWords: 0,
+	i18n: () => ({
+		day: "日",
+		week: "周",
+		month: "月",
+		year: "年",
+		trend: "趋势",
+		avgLabel: "日均字数",
+		totalLabel: "总字数",
+		wordsUnit: "字",
+		days7: "7天",
+		days15: "15天",
+		days30: "30天",
+		quarter: "季度",
+		halfYear: "半年",
+		fullYear: "整年",
+		last1Year: "最近一年",
+		last2Years: "最近两年",
+		last3Years: "最近三年",
+	}),
+});
 
-defineEmits<Emits>()
+defineEmits<Emits>();
 
 const viewModes = computed(() => [
-  { value: 'day' as const, label: props.i18n.day, icon: '📅' },
-  { value: 'week' as const, label: props.i18n.week, icon: '📊' },
-  { value: 'month' as const, label: props.i18n.month, icon: '📆' },
-  { value: 'year' as const, label: props.i18n.year, icon: '📈' },
-  { value: 'trend' as const, label: props.i18n.trend, icon: '📈' },
-])
+	{ value: "day" as const, label: props.i18n.day, icon: "📅" },
+	{ value: "week" as const, label: props.i18n.week, icon: "📊" },
+	{ value: "month" as const, label: props.i18n.month, icon: "📆" },
+	{ value: "year" as const, label: props.i18n.year, icon: "📈" },
+	{ value: "trend" as const, label: props.i18n.trend, icon: "📈" },
+]);
 
 const dayRanges = computed(() => [
-  { value: 7 as const, label: props.i18n.days7 },
-  { value: 15 as const, label: props.i18n.days15 },
-  { value: 30 as const, label: props.i18n.days30 },
-  { value: 90 as const, label: props.i18n.quarter },
-  { value: 180 as const, label: props.i18n.halfYear },
-  { value: 365 as const, label: props.i18n.fullYear },
-])
+	{ value: 7 as const, label: props.i18n.days7 },
+	{ value: 15 as const, label: props.i18n.days15 },
+	{ value: 30 as const, label: props.i18n.days30 },
+	{ value: 90 as const, label: props.i18n.quarter },
+	{ value: 180 as const, label: props.i18n.halfYear },
+	{ value: 365 as const, label: props.i18n.fullYear },
+]);
 
 const monthRanges = computed(() => [
-  { value: 1 as const, label: props.i18n.last1Year },
-  { value: 2 as const, label: props.i18n.last2Years },
-  { value: 3 as const, label: props.i18n.last3Years },
-])
+	{ value: 1 as const, label: props.i18n.last1Year },
+	{ value: 2 as const, label: props.i18n.last2Years },
+	{ value: 3 as const, label: props.i18n.last3Years },
+]);
 
 const availableYears = computed(() => {
-  const currentYear = new Date().getFullYear()
-  const years = []
-  for (let year = currentYear; year >= 2020; year--) {
-    years.push(year)
-  }
-  return years
-})
+	const currentYear = new Date().getFullYear();
+	const years = [];
+	for (let year = currentYear; year >= 2020; year--) {
+		years.push(year);
+	}
+	return years;
+});
 
 const periodAvgLabel = computed(() => {
-  const labels: Record<string, string> = {
-    'day': props.i18n.avgLabel,
-    'week': '周均字数',
-    'month': '月均字数',
-    'year': '年均字数',
-  }
-  return labels[props.modelValue] || props.i18n.avgLabel
-})
+	const labels: Record<string, string> = {
+		day: props.i18n.avgLabel,
+		week: "周均字数",
+		month: "月均字数",
+		year: "年均字数",
+	};
+	return labels[props.modelValue] || props.i18n.avgLabel;
+});
 
 const periodTotalLabel = computed(() => {
-  return props.i18n.totalLabel
-})
+	return props.i18n.totalLabel;
+});
 
 function formatNumber(num: number): string {
-  return num.toLocaleString('zh-CN')
+	return num.toLocaleString("zh-CN");
 }
 </script>
 

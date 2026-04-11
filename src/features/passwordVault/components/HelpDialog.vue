@@ -76,21 +76,21 @@
 </template>
 
 <script setup lang="ts">
-import Button from '@/components/Button.vue'
+import Button from "@/components/Button.vue";
 
 interface Props {
-  visible: boolean
+	visible: boolean;
 }
 
-defineProps<Props>()
+defineProps<Props>();
 
 const emit = defineEmits<{
-  (e: 'close'): void
-}>()
+	(e: "close"): void;
+}>();
 
 const close = () => {
-  emit('close')
-}
+	emit("close");
+};
 </script>
 
 <style lang="scss" scoped>

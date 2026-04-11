@@ -87,75 +87,75 @@
 </template>
 
 <script setup lang="ts">
-import { formatNumber, formatShortNumber } from '../utils'
+import { formatNumber, formatShortNumber } from "../utils";
 
 interface Props {
-  totalNotes?: number
-  totalWords?: number
-  totalBlocks?: number
-  totalAssets?: number
-  totalImages?: number
-  totalTags?: number
-  totalBacklinks?: number
-  todayCreated?: number
-  todayModified?: number
-  avgWordsPerDoc?: number
-  createdChange?: number | null
-  modifiedChange?: number | null
-  i18n?: {
-    totalNotes: string
-    totalWords: string
-    totalBlocks: string
-    totalAssets: string
-    totalImages: string
-    totalTags: string
-    totalBacklinks: string
-    todayCreated: string
-    todayModified: string
-    avgWordsPerDoc: string
-  }
+	totalNotes?: number;
+	totalWords?: number;
+	totalBlocks?: number;
+	totalAssets?: number;
+	totalImages?: number;
+	totalTags?: number;
+	totalBacklinks?: number;
+	todayCreated?: number;
+	todayModified?: number;
+	avgWordsPerDoc?: number;
+	createdChange?: number | null;
+	modifiedChange?: number | null;
+	i18n?: {
+		totalNotes: string;
+		totalWords: string;
+		totalBlocks: string;
+		totalAssets: string;
+		totalImages: string;
+		totalTags: string;
+		totalBacklinks: string;
+		todayCreated: string;
+		todayModified: string;
+		avgWordsPerDoc: string;
+	};
 }
 
 withDefaults(defineProps<Props>(), {
-  totalNotes: 0,
-  totalWords: 0,
-  totalBlocks: 0,
-  totalAssets: 0,
-  totalImages: 0,
-  totalTags: 0,
-  totalBacklinks: 0,
-  todayCreated: 0,
-  todayModified: 0,
-  avgWordsPerDoc: 0,
-  createdChange: null,
-  modifiedChange: null,
-  i18n: () => ({
-    totalNotes: '笔记总数',
-    totalWords: '总字数',
-    totalBlocks: '内容块',
-    totalAssets: '附件',
-    totalImages: '图片',
-    totalTags: '标签',
-    totalBacklinks: '双链',
-    todayCreated: '今日新增',
-    todayModified: '今日修改',
-    avgWordsPerDoc: '平均字数',
-  }),
-})
+	totalNotes: 0,
+	totalWords: 0,
+	totalBlocks: 0,
+	totalAssets: 0,
+	totalImages: 0,
+	totalTags: 0,
+	totalBacklinks: 0,
+	todayCreated: 0,
+	todayModified: 0,
+	avgWordsPerDoc: 0,
+	createdChange: null,
+	modifiedChange: null,
+	i18n: () => ({
+		totalNotes: "笔记总数",
+		totalWords: "总字数",
+		totalBlocks: "内容块",
+		totalAssets: "附件",
+		totalImages: "图片",
+		totalTags: "标签",
+		totalBacklinks: "双链",
+		todayCreated: "今日新增",
+		todayModified: "今日修改",
+		avgWordsPerDoc: "平均字数",
+	}),
+});
 
 function getChangeClass(change: number | null): string {
-  if (!change) return ''
-  return change > 0 ? 'up' : 'down'
+	if (!change) return "";
+	return change > 0 ? "up" : "down";
 }
 
 function getChangeArrow(change: number | null): string {
-  if (!change) return ''
-  return change > 0 ? '↑' : '↓'
+	if (!change) return "";
+	return change > 0 ? "↑" : "↓";
 }
 
 function formatPercent(change: number | null): string {
-  if (change === null) return ''
-  return Math.abs(change).toFixed(0) + '%'
+	if (change === null) return "";
+	return Math.abs(change).toFixed(0) + "%";
 }
 </script>
 

@@ -126,11 +126,11 @@
 </template>
 
 <script setup lang="ts">
-import IconWrapper from '@/components/IconWrapper.vue'
-import type { StatisticsData, I18n } from '../types'
+import IconWrapper from "@/components/IconWrapper.vue";
+import type { StatisticsData, I18n } from "../types";
 
 defineProps<{
-  statistics: StatisticsData
-  i18n: I18n
-}>()
+	statistics: StatisticsData;
+	i18n: I18n;
+}>();
 </script>

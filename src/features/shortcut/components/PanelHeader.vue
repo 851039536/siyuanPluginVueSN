@@ -17,24 +17,24 @@
 </template>
 
 <script setup lang="ts">
-import Button from '@/components/Button.vue'
-import Input from '@/components/Input.vue'
+import Button from "@/components/Button.vue";
+import Input from "@/components/Input.vue";
 
 interface Props {
-  searchKeyword: string
-  placeholder: string
-  addTitle: string
+	searchKeyword: string;
+	placeholder: string;
+	addTitle: string;
 }
 
-defineProps<Props>()
+defineProps<Props>();
 
 defineEmits<{
-  'update:searchKeyword': [value: string]
-  'refresh': []
-  'export': []
-  'import': []
-  'add': []
-}>()
+	"update:searchKeyword": [value: string];
+	refresh: [];
+	export: [];
+	import: [];
+	add: [];
+}>();
 </script>
 
 <style scoped lang="scss">

@@ -87,40 +87,46 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue'
-import IconWrapper from '@/components/IconWrapper.vue'
-import { useDocNavigation } from '../composables/useDocNavigation'
+import { computed, watch } from "vue";
+import IconWrapper from "@/components/IconWrapper.vue";
+import { useDocNavigation } from "../composables/useDocNavigation";
 
 const props = defineProps<{
-  docId: string
-}>()
+	docId: string;
+}>();
 
 const {
-  parentDoc,
-  childDocs,
-  breadcrumbs,
-  siblingDocs,
-  hasNavigation,
-  hasBreadcrumbs,
-  hasSiblings,
-  isExpanded,
-  visibleChildren,
-  hiddenChildren,
-  loadHierarchy,
-  toggleExpand,
-  openDoc,
-  stripHtml,
-} = useDocNavigation()
+	parentDoc,
+	childDocs,
+	breadcrumbs,
+	siblingDocs,
+	hasNavigation,
+	hasBreadcrumbs,
+	hasSiblings,
+	isExpanded,
+	visibleChildren,
+	hiddenChildren,
+	loadHierarchy,
+	toggleExpand,
+	openDoc,
+	stripHtml,
+} = useDocNavigation();
 
 const expandTitle = computed(() => {
-  return isExpanded.value ? '收起' : `展开 ${hiddenChildren.value.length} 个文档`
-})
+	return isExpanded.value
+		? "收起"
+		: `展开 ${hiddenChildren.value.length} 个文档`;
+});
 
-watch(() => props.docId, (newDocId) => {
-  if (newDocId) {
-    loadHierarchy(newDocId)
-  }
-}, { immediate: true })
+watch(
+	() => props.docId,
+	(newDocId) => {
+		if (newDocId) {
+			loadHierarchy(newDocId);
+		}
+	},
+	{ immediate: true },
+);
 </script>
 
 <style scoped lang="scss">

@@ -21,11 +21,11 @@
 
 <script setup lang="ts">
 interface Props {
-  status: 'unknown' | 'connected' | 'error'
-  text: string
+	status: "unknown" | "connected" | "error";
+	text: string;
 }
 
-defineProps<Props>()
+defineProps<Props>();
 </script>
 
 <style scoped lang="scss">

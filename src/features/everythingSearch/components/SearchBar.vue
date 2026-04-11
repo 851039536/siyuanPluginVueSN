@@ -28,76 +28,78 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue'
-import Input from '@/components/Input.vue'
-import Button from '@/components/Button.vue'
-import IconWrapper from '@/components/IconWrapper.vue'
+import { ref, computed, nextTick } from "vue";
+import Input from "@/components/Input.vue";
+import Button from "@/components/Button.vue";
+import IconWrapper from "@/components/IconWrapper.vue";
 
 interface Props {
-  /** 搜索关键词 */
-  modelValue: string
-  /** 是否正在搜索 */
-  isSearching: boolean
-  /** 是否启用自动搜索 */
-  autoSearch?: boolean
-  /** 输入框占位符 */
-  placeholder?: string
+	/** 搜索关键词 */
+	modelValue: string;
+	/** 是否正在搜索 */
+	isSearching: boolean;
+	/** 是否启用自动搜索 */
+	autoSearch?: boolean;
+	/** 输入框占位符 */
+	placeholder?: string;
 }
 
 interface Emits {
-  (e: 'update:modelValue', value: string): void
-  (e: 'search'): void
-  (e: 'clear'): void
-  (e: 'escape'): void
+	(e: "update:modelValue", value: string): void;
+	(e: "search"): void;
+	(e: "clear"): void;
+	(e: "escape"): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  autoSearch: true,
-  placeholder: '输入关键词搜索本地文件...'
-})
+	autoSearch: true,
+	placeholder: "输入关键词搜索本地文件...",
+});
 
-const emit = defineEmits<Emits>()
+const emit = defineEmits<Emits>();
 
-const inputRef = ref<InstanceType<typeof Input> | null>(null)
+const inputRef = ref<InstanceType<typeof Input> | null>(null);
 
 /** 搜索按钮文本 */
-const searchButtonText = computed(() => props.autoSearch ? '立即搜索' : '搜索')
+const searchButtonText = computed(() =>
+	props.autoSearch ? "立即搜索" : "搜索",
+);
 
 /** 处理输入 */
 const handleInput = (value: string | number | null) => {
-  emit('update:modelValue', String(value || ''))
-}
+	emit("update:modelValue", String(value || ""));
+};
 
 /** 处理键盘事件 */
 const handleKeydown = (event: KeyboardEvent) => {
-  if (event.key === 'Enter' && !props.autoSearch) {
-    emit('search')
-  } else if (event.key === 'Escape') {
-    emit('escape')
-  }
-}
+	if (event.key === "Enter" && !props.autoSearch) {
+		emit("search");
+	} else if (event.key === "Escape") {
+		emit("escape");
+	}
+};
 
 /** 处理清除 */
 const handleClear = () => {
-  emit('update:modelValue', '')
-  emit('clear')
-}
+	emit("update:modelValue", "");
+	emit("clear");
+};
 
 /** 处理搜索 */
 const handleSearch = () => {
-  emit('search')
-}
+	emit("search");
+};
 
 /** 聚焦输入框 */
 const focus = async () => {
-  await nextTick()
-  inputRef.value?.focus()
-}
+	await nextTick();
+	inputRef.value?.focus();
+};
 
 // 暴露方法供父组件调用
 defineExpose({
-  focus
-})
+	focus,
+});
 </script>
 
 <style scoped lang="scss">

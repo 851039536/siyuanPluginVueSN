@@ -9,27 +9,27 @@
 
 <script setup lang="ts">
 interface Props {
-  modelValue: string
-  i18n: {
-    tongyiQianwen?: string
-    openAI?: string
-    deepSeek?: string
-    customApi?: string
-    [key: string]: any
-  }
+	modelValue: string;
+	i18n: {
+		tongyiQianwen?: string;
+		openAI?: string;
+		deepSeek?: string;
+		customApi?: string;
+		[key: string]: any;
+	};
 }
 
 interface Emits {
-  (e: 'update:modelValue', value: string): void
+	(e: "update:modelValue", value: string): void;
 }
 
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
+const props = defineProps<Props>();
+const emit = defineEmits<Emits>();
 
 const handleChange = (event: Event) => {
-  const target = event.target as HTMLSelectElement
-  emit('update:modelValue', target.value)
-}
+	const target = event.target as HTMLSelectElement;
+	emit("update:modelValue", target.value);
+};
 </script>
 
 <style scoped lang="scss">

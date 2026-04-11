@@ -21,52 +21,52 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import Button from '@/components/Button.vue'
-import type { IconKey } from '@/config/icons'
+import { computed } from "vue";
+import Button from "@/components/Button.vue";
+import type { IconKey } from "@/config/icons";
 
 interface Props {
-  loading?: boolean
-  lastUpdateTime?: string
-  updateInterval?: number
-  i18n?: {
-    refresh: string
-    lastUpdate: string
-  }
+	loading?: boolean;
+	lastUpdateTime?: string;
+	updateInterval?: number;
+	i18n?: {
+		refresh: string;
+		lastUpdate: string;
+	};
 }
 
 interface Emits {
-  (e: 'refresh'): void
+	(e: "refresh"): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  loading: false,
-  lastUpdateTime: '',
-  updateInterval: 60,
-  i18n: () => ({
-    refresh: '刷新',
-    lastUpdate: '最后更新',
-  }),
-})
+	loading: false,
+	lastUpdateTime: "",
+	updateInterval: 60,
+	i18n: () => ({
+		refresh: "刷新",
+		lastUpdate: "最后更新",
+	}),
+});
 
-const emit = defineEmits<Emits>()
+const emit = defineEmits<Emits>();
 
 const updateIntervalText = computed(() => {
-  const seconds = props.updateInterval
-  if (seconds < 60) {
-    return `${seconds}秒`
-  } else {
-    const minutes = seconds / 60
-    return `${minutes}分钟`
-  }
-})
+	const seconds = props.updateInterval;
+	if (seconds < 60) {
+		return `${seconds}秒`;
+	} else {
+		const minutes = seconds / 60;
+		return `${minutes}分钟`;
+	}
+});
 
 const refreshIcon = computed<IconKey>(() => {
-  return props.loading ? 'loading' : 'refresh'
-})
+	return props.loading ? "loading" : "refresh";
+});
 
 function handleRefresh() {
-  emit('refresh')
+	emit("refresh");
 }
 </script>
 

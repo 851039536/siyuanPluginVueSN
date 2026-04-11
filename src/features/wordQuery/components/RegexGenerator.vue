@@ -156,108 +156,123 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { showMessage } from 'siyuan'
-import IconWrapper from '@/components/IconWrapper.vue'
-import Button from '@/components/Button.vue'
-import Input from '@/components/Input.vue'
-import Textarea from '@/components/Textarea.vue'
+import { ref, watch } from "vue";
+import { showMessage } from "siyuan";
+import IconWrapper from "@/components/IconWrapper.vue";
+import Button from "@/components/Button.vue";
+import Input from "@/components/Input.vue";
+import Textarea from "@/components/Textarea.vue";
 import {
-  generateRegex,
-  testRegex,
-  type RegexExample,
-  type RegexResult
-} from '../utils/codeUtils'
+	generateRegex,
+	testRegex,
+	type RegexExample,
+	type RegexResult,
+} from "../utils/codeUtils";
 
 interface Props {
-  i18n: any
-  plugin?: any
+	i18n: any;
+	plugin?: any;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
-const description = ref('')
-const examples = ref<RegexExample[]>([{ match: '', notMatch: '' }])
-const result = ref<RegexResult | null>(null)
-const testString = ref('')
-const testResult = ref<{ matches: string[]; isValid: boolean; error?: string } | null>(null)
-const isGenerating = ref(false)
-const errorMessage = ref('')
+const description = ref("");
+const examples = ref<RegexExample[]>([{ match: "", notMatch: "" }]);
+const result = ref<RegexResult | null>(null);
+const testString = ref("");
+const testResult = ref<{
+	matches: string[];
+	isValid: boolean;
+	error?: string;
+} | null>(null);
+const isGenerating = ref(false);
+const errorMessage = ref("");
 
 function addExample() {
-  examples.value.push({ match: '', notMatch: '' })
+	examples.value.push({ match: "", notMatch: "" });
 }
 
 function removeExample(index: number) {
-  if (examples.value.length > 1) {
-    examples.value.splice(index, 1)
-  }
+	if (examples.value.length > 1) {
+		examples.value.splice(index, 1);
+	}
 }
 
 function handleInput() {
-  errorMessage.value = ''
+	errorMessage.value = "";
 }
 
 async function handleGenerate() {
-  const validExamples = examples.value.filter(e => e.match.trim())
-  if (!description.value.trim() && validExamples.length === 0) {
-    errorMessage.value = props.i18n.enterDescOrExample || '请输入描述或提供匹配示例'
-    return
-  }
+	const validExamples = examples.value.filter((e) => e.match.trim());
+	if (!description.value.trim() && validExamples.length === 0) {
+		errorMessage.value =
+			props.i18n.enterDescOrExample || "请输入描述或提供匹配示例";
+		return;
+	}
 
-  isGenerating.value = true
-  errorMessage.value = ''
+	isGenerating.value = true;
+	errorMessage.value = "";
 
-  try {
-    const config = getApiConfig()
-    const res = await generateRegex(description.value.trim(), validExamples, config)
-    result.value = res
-    testResult.value = null
-  } catch (error) {
-    console.error('生成正则失败:', error)
-    errorMessage.value = (error as Error).message || props.i18n.generateFailed || '生成失败，请重试'
-  } finally {
-    isGenerating.value = false
-  }
+	try {
+		const config = getApiConfig();
+		const res = await generateRegex(
+			description.value.trim(),
+			validExamples,
+			config,
+		);
+		result.value = res;
+		testResult.value = null;
+	} catch (error) {
+		console.error("生成正则失败:", error);
+		errorMessage.value =
+			(error as Error).message ||
+			props.i18n.generateFailed ||
+			"生成失败，请重试";
+	} finally {
+		isGenerating.value = false;
+	}
 }
 
 function handleTest() {
-  if (!result.value?.regex || !testString.value.trim()) return
+	if (!result.value?.regex || !testString.value.trim()) return;
 
-  testResult.value = testRegex(result.value.regex, testString.value)
+	testResult.value = testRegex(result.value.regex, testString.value);
 }
 
 function handleClear() {
-  description.value = ''
-  examples.value = [{ match: '', notMatch: '' }]
-  result.value = null
-  testString.value = ''
-  testResult.value = null
-  errorMessage.value = ''
+	description.value = "";
+	examples.value = [{ match: "", notMatch: "" }];
+	result.value = null;
+	testString.value = "";
+	testResult.value = null;
+	errorMessage.value = "";
 }
 
 function getApiConfig() {
-  const settings = (props.plugin as any)?.settings || {}
-  return {
-    provider: settings.aiApiProvider || 'tongyi',
-    model: settings.aiModel || 'qwen-plus',
-    apiKey: settings.aiApiKey || '',
-    customEndpoint: settings.aiCustomEndpoint || ''
-  }
+	const settings = (props.plugin as any)?.settings || {};
+	return {
+		provider: settings.aiApiProvider || "tongyi",
+		model: settings.aiModel || "qwen-plus",
+		apiKey: settings.aiApiKey || "",
+		customEndpoint: settings.aiCustomEndpoint || "",
+	};
 }
 
 function copyRegex() {
-  if (result.value) {
-    navigator.clipboard.writeText(result.value.regex)
-    showMessage(props.i18n.copied || '已复制', 1500, 'info')
-  }
+	if (result.value) {
+		navigator.clipboard.writeText(result.value.regex);
+		showMessage(props.i18n.copied || "已复制", 1500, "info");
+	}
 }
 
-watch(() => description.value, () => {
-  if (errorMessage.value) {
-    errorMessage.value = ''
-  }
-})
+watch(
+	() => description.value,
+	() => {
+		if (errorMessage.value) {
+			errorMessage.value = "";
+		}
+	},
+);
 </script>
 
 <style scoped lang="scss">

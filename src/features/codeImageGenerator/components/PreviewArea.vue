@@ -58,31 +58,33 @@
 </template>
 
 <script setup lang="ts">
-import type { CSSProperties } from 'vue'
+import type { CSSProperties } from "vue";
 
 interface Props {
-  contentType: 'code' | 'text'
-  selectedStyle: string
-  selectedTheme: string
-  fontSize: number
-  customStyle: CSSProperties
-  highlightedCode: string
-  languageDisplay: string
-  content: string
-  defaultText: string
-  currentTime: string
-  showDecorations: boolean
-  enableWatermark: boolean
-  watermarkText: string
-  enableAuthor: boolean
-  authorName: string
-  enableTimestamp: boolean
-  previewLabel: string
+	contentType: "code" | "text";
+	selectedStyle: string;
+	selectedTheme: string;
+	fontSize: number;
+	customStyle: CSSProperties;
+	highlightedCode: string;
+	languageDisplay: string;
+	content: string;
+	defaultText: string;
+	currentTime: string;
+	showDecorations: boolean;
+	enableWatermark: boolean;
+	watermarkText: string;
+	enableAuthor: boolean;
+	authorName: string;
+	enableTimestamp: boolean;
+	previewLabel: string;
 }
 
-defineProps<Props>()
+defineProps<Props>();
 
-const previewRef = defineModel<HTMLDivElement | undefined>('previewRef', { default: undefined })
+const previewRef = defineModel<HTMLDivElement | undefined>("previewRef", {
+	default: undefined,
+});
 </script>
 
 <style scoped lang="scss">

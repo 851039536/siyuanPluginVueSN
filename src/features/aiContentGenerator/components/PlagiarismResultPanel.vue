@@ -39,39 +39,43 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import Button from '@/components/Button.vue';
+import { computed } from "vue";
+import Button from "@/components/Button.vue";
 
 interface PlagiarismResult {
-  riskLevel: string;
-  similarityRate: number;
-  details: string;
+	riskLevel: string;
+	similarityRate: number;
+	details: string;
 }
 
 const props = defineProps<{
-  plagiarismResult: PlagiarismResult;
-  collapsed: boolean;
-  renderedHtml: string;
+	plagiarismResult: PlagiarismResult;
+	collapsed: boolean;
+	renderedHtml: string;
 }>();
 
 defineEmits<{
-  'toggle-collapse': [];
-  'close': [];
+	"toggle-collapse": [];
+	close: [];
 }>();
 
 const riskLevelClass = computed(() => {
-  const level = props.plagiarismResult.riskLevel;
-  return level === 'low' ? 'low-risk' : level === 'medium' ? 'medium-risk' : 'high-risk';
+	const level = props.plagiarismResult.riskLevel;
+	return level === "low"
+		? "low-risk"
+		: level === "medium"
+			? "medium-risk"
+			: "high-risk";
 });
 
 const riskLevelText = computed(() => {
-  const level = props.plagiarismResult.riskLevel;
-  const riskLevelMap: Record<string, string> = {
-    low: '低风险',
-    medium: '中风险',
-    high: '高风险'
-  };
-  return riskLevelMap[level] || level;
+	const level = props.plagiarismResult.riskLevel;
+	const riskLevelMap: Record<string, string> = {
+		low: "低风险",
+		medium: "中风险",
+		high: "高风险",
+	};
+	return riskLevelMap[level] || level;
 });
 </script>
 

@@ -57,48 +57,56 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import Button from '@/components/Button.vue'
-import Input from '@/components/Input.vue'
-import Textarea from '@/components/Textarea.vue'
-import Select from '@/components/Select.vue'
-import type { SelectOption } from '@/components/Select.vue'
-import type { Flashcard, FormData, FormErrors, I18n } from '../types'
+import { ref, watch } from "vue";
+import Button from "@/components/Button.vue";
+import Input from "@/components/Input.vue";
+import Textarea from "@/components/Textarea.vue";
+import Select from "@/components/Select.vue";
+import type { SelectOption } from "@/components/Select.vue";
+import type { Flashcard, FormData, FormErrors, I18n } from "../types";
 
 const props = defineProps<{
-  visible: boolean
-  editingCard: Flashcard | null
-  formData: FormData
-  formErrors: FormErrors
-  customCategory: string
-  categoryOptions: SelectOption[]
-  isValid: boolean
-  i18n: I18n
-}>()
+	visible: boolean;
+	editingCard: Flashcard | null;
+	formData: FormData;
+	formErrors: FormErrors;
+	customCategory: string;
+	categoryOptions: SelectOption[];
+	isValid: boolean;
+	i18n: I18n;
+}>();
 
 const emit = defineEmits<{
-  close: []
-  save: []
-  'input:title': []
-  'validate:title': []
-  'change:category': []
-  'update:formData': [value: FormData]
-  'update:customCategory': [value: string]
-}>()
+	close: [];
+	save: [];
+	"input:title": [];
+	"validate:title": [];
+	"change:category": [];
+	"update:formData": [value: FormData];
+	"update:customCategory": [value: string];
+}>();
 
-const localFormData = ref<FormData>({ title: '', content: '', category: '' })
-const localCustomCategory = ref('')
+const localFormData = ref<FormData>({ title: "", content: "", category: "" });
+const localCustomCategory = ref("");
 
-watch(() => props.formData, (newVal) => {
-  localFormData.value = { ...newVal }
-}, { immediate: true, deep: true })
+watch(
+	() => props.formData,
+	(newVal) => {
+		localFormData.value = { ...newVal };
+	},
+	{ immediate: true, deep: true },
+);
 
-watch(() => props.customCategory, (newVal) => {
-  localCustomCategory.value = newVal
-}, { immediate: true })
+watch(
+	() => props.customCategory,
+	(newVal) => {
+		localCustomCategory.value = newVal;
+	},
+	{ immediate: true },
+);
 
 const updateField = (field: keyof FormData, value: string) => {
-  localFormData.value[field] = value
-  emit('update:formData', { ...localFormData.value })
-}
+	localFormData.value[field] = value;
+	emit("update:formData", { ...localFormData.value });
+};
 </script>

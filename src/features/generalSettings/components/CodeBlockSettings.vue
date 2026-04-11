@@ -373,164 +373,188 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
-import { saveCodeBlockSettings, loadCodeBlockSettings } from '@/config/settings'
-import { applyCodeBlockStyle } from '../types'
+import { ref, watch, onMounted } from "vue";
+import {
+	saveCodeBlockSettings,
+	loadCodeBlockSettings,
+} from "@/config/settings";
+import { applyCodeBlockStyle } from "../types";
 
 interface CodeBlockSettings {
-  style: 'default' | 'github' | 'mac' | 'cartoon'
-  enableCollapse: boolean
-  collapseHeight: number
-  // 样式增强
-  enabled: boolean
-  backgroundColor: string
-  borderColor: string
-  borderWidth: number
-  borderRadius: number
-  boxShadow: string
-  // 代码字体
-  codeFontFamily: string
-  codeFontSize: number
-  codeLineHeight: number
-  // 代码颜色
-  textColor: string
-  keywordColor: string
-  stringColor: string
-  commentColor: string
-  functionColor: string
-  numberColor: string
+	style: "default" | "github" | "mac" | "cartoon";
+	enableCollapse: boolean;
+	collapseHeight: number;
+	// 样式增强
+	enabled: boolean;
+	backgroundColor: string;
+	borderColor: string;
+	borderWidth: number;
+	borderRadius: number;
+	boxShadow: string;
+	// 代码字体
+	codeFontFamily: string;
+	codeFontSize: number;
+	codeLineHeight: number;
+	// 代码颜色
+	textColor: string;
+	keywordColor: string;
+	stringColor: string;
+	commentColor: string;
+	functionColor: string;
+	numberColor: string;
 }
 
 interface Props {
-  i18n?: any
-  plugin?: any
-  initialSettings?: CodeBlockSettings
+	i18n?: any;
+	plugin?: any;
+	initialSettings?: CodeBlockSettings;
 }
 
 interface Emits {
-  (e: 'change', settings: CodeBlockSettings): void
+	(e: "change", settings: CodeBlockSettings): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  i18n: () => ({}),
-  plugin: null,
-  initialSettings: () => ({
-    style: 'default',
-    enableCollapse: true,
-    collapseHeight: 400,
-    enabled: false,
-    backgroundColor: '#282c34',
-    borderColor: '#3e4451',
-    borderWidth: 1,
-    borderRadius: 6,
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-    codeFontFamily: 'Consolas',
-    codeFontSize: 14,
-    codeLineHeight: 1.6,
-    textColor: '#abb2bf',
-    keywordColor: '#c678dd',
-    stringColor: '#98c379',
-    commentColor: '#5c6370',
-    functionColor: '#61afef',
-    numberColor: '#d19a66'
-  })
-})
+	i18n: () => ({}),
+	plugin: null,
+	initialSettings: () => ({
+		style: "default",
+		enableCollapse: true,
+		collapseHeight: 400,
+		enabled: false,
+		backgroundColor: "#282c34",
+		borderColor: "#3e4451",
+		borderWidth: 1,
+		borderRadius: 6,
+		boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+		codeFontFamily: "Consolas",
+		codeFontSize: 14,
+		codeLineHeight: 1.6,
+		textColor: "#abb2bf",
+		keywordColor: "#c678dd",
+		stringColor: "#98c379",
+		commentColor: "#5c6370",
+		functionColor: "#61afef",
+		numberColor: "#d19a66",
+	}),
+});
 
-const emit = defineEmits<Emits>()
+const emit = defineEmits<Emits>();
 
-const settings = ref<CodeBlockSettings>({ ...props.initialSettings })
-const presetCodeFont = ref('')
+const settings = ref<CodeBlockSettings>({ ...props.initialSettings });
+const presetCodeFont = ref("");
 
 const DEFAULT_SETTINGS: CodeBlockSettings = {
-  style: 'default',
-  enableCollapse: true,
-  collapseHeight: 400,
-  enabled: false,
-  backgroundColor: '#282c34',
-  borderColor: '#3e4451',
-  borderWidth: 1,
-  borderRadius: 6,
-  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-  codeFontFamily: 'Consolas',
-  codeFontSize: 14,
-  codeLineHeight: 1.6,
-  textColor: '#abb2bf',
-  keywordColor: '#c678dd',
-  stringColor: '#98c379',
-  commentColor: '#5c6370',
-  functionColor: '#61afef',
-  numberColor: '#d19a66'
-}
+	style: "default",
+	enableCollapse: true,
+	collapseHeight: 400,
+	enabled: false,
+	backgroundColor: "#282c34",
+	borderColor: "#3e4451",
+	borderWidth: 1,
+	borderRadius: 6,
+	boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+	codeFontFamily: "Consolas",
+	codeFontSize: 14,
+	codeLineHeight: 1.6,
+	textColor: "#abb2bf",
+	keywordColor: "#c678dd",
+	stringColor: "#98c379",
+	commentColor: "#5c6370",
+	functionColor: "#61afef",
+	numberColor: "#d19a66",
+};
 
 const shadowOptions = [
-  { label: props.i18n.noneShadow || '无阴影', value: 'none' },
-  { label: props.i18n.lightShadow || '轻阴影', value: '0 2px 8px rgba(0, 0, 0, 0.1)' },
-  { label: props.i18n.mediumShadow || '中阴影', value: '0 4px 12px rgba(0, 0, 0, 0.15)' },
-  { label: props.i18n.heavyShadow || '重阴影', value: '0 8px 24px rgba(0, 0, 0, 0.2)' }
-]
+	{ label: props.i18n.noneShadow || "无阴影", value: "none" },
+	{
+		label: props.i18n.lightShadow || "轻阴影",
+		value: "0 2px 8px rgba(0, 0, 0, 0.1)",
+	},
+	{
+		label: props.i18n.mediumShadow || "中阴影",
+		value: "0 4px 12px rgba(0, 0, 0, 0.15)",
+	},
+	{
+		label: props.i18n.heavyShadow || "重阴影",
+		value: "0 8px 24px rgba(0, 0, 0, 0.2)",
+	},
+];
 
-watch(settings, async (newSettings) => {
-  emit('change', newSettings)
-  applyCodeBlockStyle(newSettings.style)
-  applyCodeBlockCollapse(newSettings.enableCollapse, newSettings.collapseHeight)
-  if (newSettings.enabled) {
-    applyCodeBlockEnhancedStyles(newSettings)
-  } else {
-    // 移除增强样式
-    const existingStyle = document.getElementById('codeblock-enhanced-style')
-    if (existingStyle) {
-      existingStyle.remove()
-    }
-  }
-  if (props.plugin) {
-    try {
-      await saveCodeBlockSettings(props.plugin, newSettings)
-    } catch (error) {
-      console.error('自动保存失败:', error)
-    }
-  }
-}, { deep: true, immediate: false })
+watch(
+	settings,
+	async (newSettings) => {
+		emit("change", newSettings);
+		applyCodeBlockStyle(newSettings.style);
+		applyCodeBlockCollapse(
+			newSettings.enableCollapse,
+			newSettings.collapseHeight,
+		);
+		if (newSettings.enabled) {
+			applyCodeBlockEnhancedStyles(newSettings);
+		} else {
+			// 移除增强样式
+			const existingStyle = document.getElementById("codeblock-enhanced-style");
+			if (existingStyle) {
+				existingStyle.remove();
+			}
+		}
+		if (props.plugin) {
+			try {
+				await saveCodeBlockSettings(props.plugin, newSettings);
+			} catch (error) {
+				console.error("自动保存失败:", error);
+			}
+		}
+	},
+	{ deep: true, immediate: false },
+);
 
 function applyPresetCodeFont() {
-  if (presetCodeFont.value) {
-    settings.value.codeFontFamily = presetCodeFont.value
-  }
+	if (presetCodeFont.value) {
+		settings.value.codeFontFamily = presetCodeFont.value;
+	}
 }
 
 function applySettings() {
-  // 设置会通过 watch 自动应用和保存
-  // 这个函数只是为了显式触发更新
+	// 设置会通过 watch 自动应用和保存
+	// 这个函数只是为了显式触发更新
 }
 
-function adjustValue(key: keyof CodeBlockSettings, delta: number, min: number, max: number) {
-  const currentValue = settings.value[key] as number
-  const newValue = Math.max(min, Math.min(max, currentValue + delta))
-  settings.value[key] = newValue as any
+function adjustValue(
+	key: keyof CodeBlockSettings,
+	delta: number,
+	min: number,
+	max: number,
+) {
+	const currentValue = settings.value[key] as number;
+	const newValue = Math.max(min, Math.min(max, currentValue + delta));
+	settings.value[key] = newValue as any;
 }
 
 function applyCodeBlockEnhancedStyles(codeSettings: CodeBlockSettings) {
-  try {
-    // 移除现有样式
-    const existingStyle = document.getElementById('codeblock-enhanced-style')
-    if (existingStyle) {
-      existingStyle.remove()
-    }
+	try {
+		// 移除现有样式
+		const existingStyle = document.getElementById("codeblock-enhanced-style");
+		if (existingStyle) {
+			existingStyle.remove();
+		}
 
-    if (!codeSettings.enabled) {
-      return
-    }
+		if (!codeSettings.enabled) {
+			return;
+		}
 
-    // 创建新的样式元素
-    const style = document.createElement('style')
-    style.id = 'codeblock-enhanced-style'
+		// 创建新的样式元素
+		const style = document.createElement("style");
+		style.id = "codeblock-enhanced-style";
 
-    style.textContent = `
+		style.textContent = `
       /* 代码块基础样式 */
       .protyle-wysiwyg .code-block {
         background-color: ${codeSettings.backgroundColor} !important;
         border: ${codeSettings.borderWidth}px solid ${codeSettings.borderColor} !important;
         border-radius: ${codeSettings.borderRadius}px !important;
-        box-shadow: ${codeSettings.boxShadow !== 'none' ? codeSettings.boxShadow : 'none'} !important;
+        box-shadow: ${codeSettings.boxShadow !== "none" ? codeSettings.boxShadow : "none"} !important;
       }
 
       /* 代码块内容 */
@@ -588,46 +612,46 @@ function applyCodeBlockEnhancedStyles(codeSettings: CodeBlockSettings) {
 
       /* 暗色主题适配 */
       :root[data-theme-mode="dark"] .protyle-wysiwyg .code-block {
-        box-shadow: ${codeSettings.boxShadow !== 'none' ? '0 2px 8px rgba(0, 0, 0, 0.3)' : 'none'} !important;
+        box-shadow: ${codeSettings.boxShadow !== "none" ? "0 2px 8px rgba(0, 0, 0, 0.3)" : "none"} !important;
       }
-    `
+    `;
 
-    document.head.appendChild(style)
-  } catch (error) {
-    console.error('应用代码块增强样式失败:', error)
-  }
+		document.head.appendChild(style);
+	} catch (error) {
+		console.error("应用代码块增强样式失败:", error);
+	}
 }
 
 function getStyleName(style: string): string {
-  const names: Record<string, string> = {
-    default: props.i18n.defaultStyle || '默认风格',
-    github: props.i18n.githubStyle || 'GitHub 风格',
-    mac: props.i18n.macStyle || 'Mac 风格',
-    cartoon: props.i18n.cartoonStyle || '卡通风格'
-  }
-  return names[style] || style
+	const names: Record<string, string> = {
+		default: props.i18n.defaultStyle || "默认风格",
+		github: props.i18n.githubStyle || "GitHub 风格",
+		mac: props.i18n.macStyle || "Mac 风格",
+		cartoon: props.i18n.cartoonStyle || "卡通风格",
+	};
+	return names[style] || style;
 }
 
 function applyCodeBlockCollapse(enable: boolean, height: number) {
-  // 移除现有的折叠样式和功能
-  const existingStyle = document.getElementById('codeblock-collapse-style')
-  if (existingStyle) {
-    existingStyle.remove()
-  }
+	// 移除现有的折叠样式和功能
+	const existingStyle = document.getElementById("codeblock-collapse-style");
+	if (existingStyle) {
+		existingStyle.remove();
+	}
 
-  const existingScript = document.getElementById('codeblock-collapse-script')
-  if (existingScript) {
-    existingScript.remove()
-  }
+	const existingScript = document.getElementById("codeblock-collapse-script");
+	if (existingScript) {
+		existingScript.remove();
+	}
 
-  if (!enable) {
-    return
-  }
+	if (!enable) {
+		return;
+	}
 
-  // 添加折叠样式 - GitHub 风格
-  const style = document.createElement('style')
-  style.id = 'codeblock-collapse-style'
-  style.innerHTML = `
+	// 添加折叠样式 - GitHub 风格
+	const style = document.createElement("style");
+	style.id = "codeblock-collapse-style";
+	style.innerHTML = `
     /* GitHub 风格折叠按钮 */
     .code-block .code-expand-wrapper {
       position: absolute;
@@ -717,13 +741,13 @@ function applyCodeBlockCollapse(enable: boolean, height: number) {
         height: 100px;
       }
     }
-  `
-  document.head.appendChild(style)
+  `;
+	document.head.appendChild(style);
 
-  // 添加折叠功能脚本
-  const script = document.createElement('script')
-  script.id = 'codeblock-collapse-script'
-  script.innerHTML = `
+	// 添加折叠功能脚本
+	const script = document.createElement("script");
+	script.id = "codeblock-collapse-script";
+	script.innerHTML = `
     (function() {
       const codeMaxHeight = ${height};
       let running = false;
@@ -887,45 +911,51 @@ function applyCodeBlockCollapse(enable: boolean, height: number) {
         initCodeBlockCollapse();
       }
     })();
-  `
-  document.head.appendChild(script)
+  `;
+	document.head.appendChild(script);
 }
 
 // 加载保存的设置
 async function loadSettings() {
-  if (!props.plugin) {
-    console.warn('插件实例不可用，使用默认设置')
-    settings.value = { ...DEFAULT_SETTINGS }
-    return
-  }
+	if (!props.plugin) {
+		console.warn("插件实例不可用，使用默认设置");
+		settings.value = { ...DEFAULT_SETTINGS };
+		return;
+	}
 
-  try {
-    const loadedSettings = await loadCodeBlockSettings(props.plugin)
-    settings.value = { ...DEFAULT_SETTINGS, ...loadedSettings }
-    applyCodeBlockStyle(settings.value.style)
-    applyCodeBlockCollapse(settings.value.enableCollapse, settings.value.collapseHeight)
-    if (settings.value.enabled) {
-      applyCodeBlockEnhancedStyles(settings.value)
-    }
-  } catch (error) {
-    console.error('加载设置失败:', error)
-    settings.value = { ...DEFAULT_SETTINGS }
-  }
+	try {
+		const loadedSettings = await loadCodeBlockSettings(props.plugin);
+		settings.value = { ...DEFAULT_SETTINGS, ...loadedSettings };
+		applyCodeBlockStyle(settings.value.style);
+		applyCodeBlockCollapse(
+			settings.value.enableCollapse,
+			settings.value.collapseHeight,
+		);
+		if (settings.value.enabled) {
+			applyCodeBlockEnhancedStyles(settings.value);
+		}
+	} catch (error) {
+		console.error("加载设置失败:", error);
+		settings.value = { ...DEFAULT_SETTINGS };
+	}
 }
 
 // 初始化时加载设置并应用样式
 onMounted(async () => {
-  await loadSettings()
-  // 确保在页面加载时应用保存的样式
-  applyCodeBlockStyle(settings.value.style)
-  applyCodeBlockCollapse(settings.value.enableCollapse, settings.value.collapseHeight)
-})
+	await loadSettings();
+	// 确保在页面加载时应用保存的样式
+	applyCodeBlockStyle(settings.value.style);
+	applyCodeBlockCollapse(
+		settings.value.enableCollapse,
+		settings.value.collapseHeight,
+	);
+});
 
 // 暴露方法
 defineExpose({
-  loadSettings,
-  settings
-})
+	loadSettings,
+	settings,
+});
 </script>
 
 <style scoped lang="scss">

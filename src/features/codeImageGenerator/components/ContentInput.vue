@@ -14,21 +14,21 @@
 </template>
 
 <script setup lang="ts">
-import Textarea from '@/components/Textarea.vue'
+import Textarea from "@/components/Textarea.vue";
 
 interface Props {
-  modelValue: string
-  contentType: 'code' | 'text'
-  codeLabel: string
-  textLabel: string
-  codePlaceholder: string
-  textPlaceholder: string
+	modelValue: string;
+	contentType: "code" | "text";
+	codeLabel: string;
+	textLabel: string;
+	codePlaceholder: string;
+	textPlaceholder: string;
 }
 
-defineProps<Props>()
+defineProps<Props>();
 defineEmits<{
-  'update:modelValue': [value: string]
-}>()
+	"update:modelValue": [value: string];
+}>();
 </script>
 
 <style scoped lang="scss">

@@ -9,78 +9,78 @@
 </template>
 
 <script setup lang="ts">
-import { computed, useSlots } from 'vue'
-import IconWrapper from '@/components/IconWrapper.vue'
-import type { IconKey } from '@/config/icons'
+import { computed, useSlots } from "vue";
+import IconWrapper from "@/components/IconWrapper.vue";
+import type { IconKey } from "@/config/icons";
 
-type ButtonVariant = 'primary' | 'secondary' | 'success' | 'danger' | 'ghost'
-type ButtonSize = 'small' | 'medium' | 'large'
+type ButtonVariant = "primary" | "secondary" | "success" | "danger" | "ghost";
+type ButtonSize = "small" | "medium" | "large";
 
 interface Props {
-  /** 按钮变体 */
-  variant?: ButtonVariant
-  /** 按钮尺寸 */
-  size?: ButtonSize
-  /** 图标名称 */
-  icon?: IconKey
-  /** 图标大小 */
-  iconSize?: number
-  /** 禁用状态 */
-  disabled?: boolean
-  /** 加载状态 */
-  loading?: boolean
-  /** 图标位置 */
-  iconPosition?: 'left' | 'right'
-  /** 是否为块级按钮 */
-  block?: boolean
+	/** 按钮变体 */
+	variant?: ButtonVariant;
+	/** 按钮尺寸 */
+	size?: ButtonSize;
+	/** 图标名称 */
+	icon?: IconKey;
+	/** 图标大小 */
+	iconSize?: number;
+	/** 禁用状态 */
+	disabled?: boolean;
+	/** 加载状态 */
+	loading?: boolean;
+	/** 图标位置 */
+	iconPosition?: "left" | "right";
+	/** 是否为块级按钮 */
+	block?: boolean;
 }
 
 interface Emits {
-  (e: 'click', event: MouseEvent): void
+	(e: "click", event: MouseEvent): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  variant: 'primary',
-  size: 'medium',
-  iconSize: 16,
-  iconPosition: 'left',
-  disabled: false,
-  loading: false,
-  block: false
-})
+	variant: "primary",
+	size: "medium",
+	iconSize: 16,
+	iconPosition: "left",
+	disabled: false,
+	loading: false,
+	block: false,
+});
 
-const emit = defineEmits<Emits>()
+const emit = defineEmits<Emits>();
 
-const slots = useSlots()
+const slots = useSlots();
 
 const buttonClasses = computed(() => [
-  'si-button',
-  `si-button--${props.variant}`,
-  `si-button--${props.size}`,
-  {
-    'si-button--disabled': props.disabled || props.loading,
-    'si-button--loading': props.loading,
-    'si-button--icon-only': !slots.default && props.icon,
-    'si-button--block': props.block,
-    'si-button--icon-right': props.iconPosition === 'right'
-  }
-])
+	"si-button",
+	`si-button--${props.variant}`,
+	`si-button--${props.size}`,
+	{
+		"si-button--disabled": props.disabled || props.loading,
+		"si-button--loading": props.loading,
+		"si-button--icon-only": !slots.default && props.icon,
+		"si-button--block": props.block,
+		"si-button--icon-right": props.iconPosition === "right",
+	},
+]);
 
 const iconClass = computed(() => ({
-  'si-button__icon': true,
-  'si-button__icon--left': props.iconPosition === 'left',
-  'si-button__icon--right': props.iconPosition === 'right'
-}))
+	"si-button__icon": true,
+	"si-button__icon--left": props.iconPosition === "left",
+	"si-button__icon--right": props.iconPosition === "right",
+}));
 
 const textClass = computed(() => ({
-  'si-button__text': true
-}))
+	"si-button__text": true,
+}));
 
 const handleClick = (event: MouseEvent) => {
-  if (!props.disabled && !props.loading) {
-    emit('click', event)
-  }
-}
+	if (!props.disabled && !props.loading) {
+		emit("click", event);
+	}
+};
 </script>
 
 <style scoped lang="scss">

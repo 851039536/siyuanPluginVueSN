@@ -71,42 +71,44 @@
 </template>
 
 <script setup lang="ts">
-import Select from '@/components/Select.vue'
-import type { SelectOption } from '@/components/Select.vue'
+import Select from "@/components/Select.vue";
+import type { SelectOption } from "@/components/Select.vue";
 
 interface Props {
-  contentType: 'code' | 'text'
-  selectedLanguage: string
-  selectedStyle: string
-  selectedTheme: string
-  fontSize: number
-  contentTypeLabel: string
-  languageLabel: string
-  styleLabel: string
-  themeLabel: string
-  fontSizeLabel: string
-  contentTypeOptions: SelectOption[]
-  languageOptions: SelectOption[]
-  styleOptions: SelectOption[]
-  themeOptions: SelectOption[]
+	contentType: "code" | "text";
+	selectedLanguage: string;
+	selectedStyle: string;
+	selectedTheme: string;
+	fontSize: number;
+	contentTypeLabel: string;
+	languageLabel: string;
+	styleLabel: string;
+	themeLabel: string;
+	fontSizeLabel: string;
+	contentTypeOptions: SelectOption[];
+	languageOptions: SelectOption[];
+	styleOptions: SelectOption[];
+	themeOptions: SelectOption[];
 }
 
-defineProps<Props>()
+defineProps<Props>();
 const emit = defineEmits<{
-  'update:contentType': [value: string]
-  'update:selectedLanguage': [value: string]
-  'update:selectedStyle': [value: string]
-  'update:selectedTheme': [value: string]
-  'update:fontSize': [value: number]
-}>()
+	"update:contentType": [value: string];
+	"update:selectedLanguage": [value: string];
+	"update:selectedStyle": [value: string];
+	"update:selectedTheme": [value: string];
+	"update:fontSize": [value: number];
+}>();
 
-const onContentTypeChange = (value: string) => emit('update:contentType', value)
-const onLanguageChange = (value: string) => emit('update:selectedLanguage', value)
-const onStyleChange = (value: string) => emit('update:selectedStyle', value)
-const onThemeChange = (value: string) => emit('update:selectedTheme', value)
+const onContentTypeChange = (value: string) =>
+	emit("update:contentType", value);
+const onLanguageChange = (value: string) =>
+	emit("update:selectedLanguage", value);
+const onStyleChange = (value: string) => emit("update:selectedStyle", value);
+const onThemeChange = (value: string) => emit("update:selectedTheme", value);
 const onFontSizeChange = (e: Event) => {
-  emit('update:fontSize', Number((e.target as HTMLInputElement).value))
-}
+	emit("update:fontSize", Number((e.target as HTMLInputElement).value));
+};
 </script>
 
 <style scoped lang="scss">

@@ -260,292 +260,297 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeMount, onUnmounted } from 'vue'
-import type { Skill, SkillCategory } from '../types'
-import Button from '@/components/Button.vue'
-import IconWrapper from '@/components/IconWrapper.vue'
+import { ref, computed, onMounted, onBeforeMount, onUnmounted } from "vue";
+import type { Skill, SkillCategory } from "../types";
+import Button from "@/components/Button.vue";
+import IconWrapper from "@/components/IconWrapper.vue";
 
 const props = defineProps<{
-  i18n?: Record<string, string>
-  plugin?: any
-}>()
+	i18n?: Record<string, string>;
+	plugin?: any;
+}>();
 
 const emit = defineEmits<{
-  (e: 'close'): void
-}>()
+	(e: "close"): void;
+}>();
 
 onBeforeMount(() => {
-  document.documentElement.style.setProperty('--b3-theme-primary', '#d97757')
-  document.documentElement.style.setProperty('--b3-theme-primary-rgb', '217, 119, 87')
-})
+	document.documentElement.style.setProperty("--b3-theme-primary", "#d97757");
+	document.documentElement.style.setProperty(
+		"--b3-theme-primary-rgb",
+		"217, 119, 87",
+	);
+});
 
 onUnmounted(() => {
-  document.documentElement.style.removeProperty('--b3-theme-primary')
-  document.documentElement.style.removeProperty('--b3-theme-primary-rgb')
-})
+	document.documentElement.style.removeProperty("--b3-theme-primary");
+	document.documentElement.style.removeProperty("--b3-theme-primary-rgb");
+});
 
-const showModal = ref(true)
-const showAddModal = ref(false)
-const showCategoryManage = ref(false)
-const editingSkill = ref<Skill | null>(null)
-const searchQuery = ref('')
-const selectedCategory = ref<string>('all')
+const showModal = ref(true);
+const showAddModal = ref(false);
+const showCategoryManage = ref(false);
+const editingSkill = ref<Skill | null>(null);
+const searchQuery = ref("");
+const selectedCategory = ref<string>("all");
 
 const skillForm = ref({
-  title: '',
-  description: '',
-  content: '',
-  content2: '',
-  content3: '',
-  category: ''
-})
+	title: "",
+	description: "",
+	content: "",
+	content2: "",
+	content3: "",
+	category: "",
+});
 
 const categoryForm = ref({
-  name: '',
-  color: '#d97757'
-})
+	name: "",
+	color: "#d97757",
+});
 
-const skills = ref<Skill[]>([])
+const skills = ref<Skill[]>([]);
 const categories = ref<SkillCategory[]>([
-  { id: 'default', name: '默认', color: '#d97757' }
-])
+	{ id: "default", name: "默认", color: "#d97757" },
+]);
 
 const allCategories = computed(() => {
-  return [
-    { id: 'all', name: '全部', color: '#d97757' },
-    ...categories.value
-  ]
-})
+	return [{ id: "all", name: "全部", color: "#d97757" }, ...categories.value];
+});
 
 onMounted(async () => {
-  await Promise.all([loadSkills(), loadCategories()])
+	await Promise.all([loadSkills(), loadCategories()]);
 
-  if (categories.value.length > 0 && !skillForm.value.category) {
-    skillForm.value.category = categories.value[0].id
-  }
-})
+	if (categories.value.length > 0 && !skillForm.value.category) {
+		skillForm.value.category = categories.value[0].id;
+	}
+});
 
 const filteredSkills = computed(() => {
-  let result = skills.value
+	let result = skills.value;
 
-  if (selectedCategory.value !== 'all') {
-    result = result.filter(skill => skill.category === selectedCategory.value)
-  }
+	if (selectedCategory.value !== "all") {
+		result = result.filter(
+			(skill) => skill.category === selectedCategory.value,
+		);
+	}
 
-  const query = searchQuery.value.toLowerCase().trim()
-  if (query) {
-    result = result.filter(skill =>
-      skill.title?.toLowerCase().includes(query) ||
-      skill.description?.toLowerCase().includes(query) ||
-      skill.content?.toLowerCase().includes(query)
-    )
-  }
+	const query = searchQuery.value.toLowerCase().trim();
+	if (query) {
+		result = result.filter(
+			(skill) =>
+				skill.title?.toLowerCase().includes(query) ||
+				skill.description?.toLowerCase().includes(query) ||
+				skill.content?.toLowerCase().includes(query),
+		);
+	}
 
-  return result
-})
+	return result;
+});
 
 const getCategoryById = (id: string): SkillCategory => {
-  return categories.value.find(c => c.id === id) || categories.value[0]
-}
+	return categories.value.find((c) => c.id === id) || categories.value[0];
+};
 
 const selectCategory = (categoryId: string) => {
-  selectedCategory.value = categoryId
-}
+	selectedCategory.value = categoryId;
+};
 
 async function loadSkills() {
-  if (!props.plugin) return
-  try {
-    const stored = await props.plugin.loadData('siyuan-skills')
-    if (stored && Array.isArray(stored)) {
-      skills.value = stored as Skill[]
-    } else {
-      skills.value = []
-    }
-  } catch (error) {
-    console.error('Failed to load skills:', error)
-    skills.value = []
-  }
+	if (!props.plugin) return;
+	try {
+		const stored = await props.plugin.loadData("siyuan-skills");
+		if (stored && Array.isArray(stored)) {
+			skills.value = stored as Skill[];
+		} else {
+			skills.value = [];
+		}
+	} catch (error) {
+		console.error("Failed to load skills:", error);
+		skills.value = [];
+	}
 }
 
 async function loadCategories() {
-  if (!props.plugin) return
-  try {
-    const stored = await props.plugin.loadData('siyuan-categories')
-    if (stored && Array.isArray(stored)) {
-      categories.value = stored as SkillCategory[]
-      categories.value = categories.value.map(cat => ({
-        ...cat,
-        color: cat.color || '#d97757'
-      }))
-    } else {
-      categories.value = [{ id: 'default', name: '默认', color: '#d97757' }]
-    }
-  } catch (error) {
-    console.error('Failed to load categories:', error)
-    categories.value = [{ id: 'default', name: '默认', color: '#d97757' }]
-  }
+	if (!props.plugin) return;
+	try {
+		const stored = await props.plugin.loadData("siyuan-categories");
+		if (stored && Array.isArray(stored)) {
+			categories.value = stored as SkillCategory[];
+			categories.value = categories.value.map((cat) => ({
+				...cat,
+				color: cat.color || "#d97757",
+			}));
+		} else {
+			categories.value = [{ id: "default", name: "默认", color: "#d97757" }];
+		}
+	} catch (error) {
+		console.error("Failed to load categories:", error);
+		categories.value = [{ id: "default", name: "默认", color: "#d97757" }];
+	}
 }
 
 async function saveCategories() {
-  if (!props.plugin) return
-  try {
-    await props.plugin.saveData('siyuan-categories', categories.value)
-  } catch (error) {
-    console.error('Failed to save categories:', error)
-    throw error
-  }
+	if (!props.plugin) return;
+	try {
+		await props.plugin.saveData("siyuan-categories", categories.value);
+	} catch (error) {
+		console.error("Failed to save categories:", error);
+		throw error;
+	}
 }
 
 async function saveSkills() {
-  if (!props.plugin) return
-  try {
-    await props.plugin.saveData('siyuan-skills', skills.value)
-  } catch (error) {
-    console.error('Failed to save skills:', error)
-    throw error
-  }
+	if (!props.plugin) return;
+	try {
+		await props.plugin.saveData("siyuan-skills", skills.value);
+	} catch (error) {
+		console.error("Failed to save skills:", error);
+		throw error;
+	}
 }
 
 function openAddModal() {
-  editingSkill.value = null
-  skillForm.value = {
-    title: '',
-    description: '',
-    content: '',
-    content2: '',
-    content3: '',
-    category: categories.value[0]?.id || 'default'
-  }
-  showAddModal.value = true
+	editingSkill.value = null;
+	skillForm.value = {
+		title: "",
+		description: "",
+		content: "",
+		content2: "",
+		content3: "",
+		category: categories.value[0]?.id || "default",
+	};
+	showAddModal.value = true;
 }
 
 function editSkill(skill: Skill) {
-  editingSkill.value = skill
-  skillForm.value = {
-    title: skill.title,
-    description: skill.description,
-    content: skill.content,
-    content2: skill.content2 || '',
-    content3: skill.content3 || '',
-    category: skill.category
-  }
-  showAddModal.value = true
+	editingSkill.value = skill;
+	skillForm.value = {
+		title: skill.title,
+		description: skill.description,
+		content: skill.content,
+		content2: skill.content2 || "",
+		content3: skill.content3 || "",
+		category: skill.category,
+	};
+	showAddModal.value = true;
 }
 
 function closeAddModal() {
-  showAddModal.value = false
-  editingSkill.value = null
+	showAddModal.value = false;
+	editingSkill.value = null;
 }
 
 async function saveSkill() {
-  try {
-    if (!skillForm.value.title.trim() || !skillForm.value.content.trim()) {
-      alert('标题和内容是必填项')
-      return
-    }
+	try {
+		if (!skillForm.value.title.trim() || !skillForm.value.content.trim()) {
+			alert("标题和内容是必填项");
+			return;
+		}
 
-    if (editingSkill.value) {
-      const index = skills.value.findIndex(s => s.id === editingSkill.value!.id)
-      if (index !== -1) {
-        skills.value[index] = {
-          ...editingSkill.value,
-          title: skillForm.value.title.trim(),
-          description: skillForm.value.description.trim(),
-          content: skillForm.value.content.trim(),
-          content2: skillForm.value.content2.trim(),
-          content3: skillForm.value.content3.trim(),
-          category: skillForm.value.category
-        }
-      }
-    } else {
-      const newSkill: Skill = {
-        id: Date.now().toString(),
-        title: skillForm.value.title.trim(),
-        description: skillForm.value.description.trim(),
-        content: skillForm.value.content.trim(),
-        content2: skillForm.value.content2.trim(),
-        content3: skillForm.value.content3.trim(),
-        category: skillForm.value.category
-      }
-      skills.value.push(newSkill)
-    }
+		if (editingSkill.value) {
+			const index = skills.value.findIndex(
+				(s) => s.id === editingSkill.value!.id,
+			);
+			if (index !== -1) {
+				skills.value[index] = {
+					...editingSkill.value,
+					title: skillForm.value.title.trim(),
+					description: skillForm.value.description.trim(),
+					content: skillForm.value.content.trim(),
+					content2: skillForm.value.content2.trim(),
+					content3: skillForm.value.content3.trim(),
+					category: skillForm.value.category,
+				};
+			}
+		} else {
+			const newSkill: Skill = {
+				id: Date.now().toString(),
+				title: skillForm.value.title.trim(),
+				description: skillForm.value.description.trim(),
+				content: skillForm.value.content.trim(),
+				content2: skillForm.value.content2.trim(),
+				content3: skillForm.value.content3.trim(),
+				category: skillForm.value.category,
+			};
+			skills.value.push(newSkill);
+		}
 
-    await saveSkills()
-    closeAddModal()
-  } catch (error) {
-    console.error('Failed to save skill:', error)
-    alert('保存失败，请重试')
-  }
+		await saveSkills();
+		closeAddModal();
+	} catch (error) {
+		console.error("Failed to save skill:", error);
+		alert("保存失败，请重试");
+	}
 }
 
 function openCategoryManage() {
-  categoryForm.value = {
-    name: '',
-    color: '#d97757'
-  }
-  showCategoryManage.value = true
+	categoryForm.value = {
+		name: "",
+		color: "#d97757",
+	};
+	showCategoryManage.value = true;
 }
 
 function closeCategoryManage() {
-  showCategoryManage.value = false
+	showCategoryManage.value = false;
 }
 
 async function addCategory() {
-  if (!categoryForm.value.name.trim()) {
-    alert('分类名称不能为空')
-    return
-  }
+	if (!categoryForm.value.name.trim()) {
+		alert("分类名称不能为空");
+		return;
+	}
 
-  const newCategory: SkillCategory = {
-    id: Date.now().toString(),
-    name: categoryForm.value.name.trim(),
-    color: categoryForm.value.color
-  }
+	const newCategory: SkillCategory = {
+		id: Date.now().toString(),
+		name: categoryForm.value.name.trim(),
+		color: categoryForm.value.color,
+	};
 
-  categories.value.push(newCategory)
-  await saveCategories()
+	categories.value.push(newCategory);
+	await saveCategories();
 
-  categoryForm.value = {
-    name: '',
-    color: '#d97757'
-  }
+	categoryForm.value = {
+		name: "",
+		color: "#d97757",
+	};
 }
 
 async function deleteCategory(id: string) {
-  const hasSkillsInCategory = skills.value.some(s => s.category === id)
-  if (hasSkillsInCategory) {
-    alert('无法删除：该分类下还有技能')
-    return
-  }
+	const hasSkillsInCategory = skills.value.some((s) => s.category === id);
+	if (hasSkillsInCategory) {
+		alert("无法删除：该分类下还有技能");
+		return;
+	}
 
-  if (confirm('确定要删除这个分类吗？')) {
-    categories.value = categories.value.filter(c => c.id !== id)
-    if (selectedCategory.value === id) {
-      selectedCategory.value = 'all'
-    }
-    await saveCategories()
-  }
+	if (confirm("确定要删除这个分类吗？")) {
+		categories.value = categories.value.filter((c) => c.id !== id);
+		if (selectedCategory.value === id) {
+			selectedCategory.value = "all";
+		}
+		await saveCategories();
+	}
 }
 
 async function deleteSkill(id: string) {
-  if (confirm('确定要删除这个技能吗？')) {
-    skills.value = skills.value.filter(s => s.id !== id)
-    await saveSkills()
-  }
+	if (confirm("确定要删除这个技能吗？")) {
+		skills.value = skills.value.filter((s) => s.id !== id);
+		await saveSkills();
+	}
 }
 
 async function copyContent(content: string) {
-  try {
-    await navigator.clipboard.writeText(content)
-  } catch (err) {
-    console.error('Failed to copy content:', err)
-    alert('复制失败，请手动复制')
-  }
+	try {
+		await navigator.clipboard.writeText(content);
+	} catch (err) {
+		console.error("Failed to copy content:", err);
+		alert("复制失败，请手动复制");
+	}
 }
 
 function closeModal() {
-  showModal.value = false
-  emit('close')
+	showModal.value = false;
+	emit("close");
 }
 </script>
 <style lang="scss" scoped>

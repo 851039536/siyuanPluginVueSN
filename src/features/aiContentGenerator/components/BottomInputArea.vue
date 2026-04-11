@@ -182,60 +182,70 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import Button from '@/components/Button.vue';
-import Textarea from '@/components/Textarea.vue';
-import Tag from '@/components/Tag.vue';
+import { ref, computed } from "vue";
+import Button from "@/components/Button.vue";
+import Textarea from "@/components/Textarea.vue";
+import Tag from "@/components/Tag.vue";
 
 interface TargetDoc {
-  id: string;
-  title: string;
-  content: string;
-  isBlock?: boolean;
+	id: string;
+	title: string;
+	content: string;
+	isBlock?: boolean;
 }
 
 interface SavedPrompt {
-  id: string;
-  name: string;
-  systemPrompt: string;
-  temperature: number;
-  maxTokens: number;
-  contextMessageLimit: number;
-  createdAt: number;
+	id: string;
+	name: string;
+	systemPrompt: string;
+	temperature: number;
+	maxTokens: number;
+	contextMessageLimit: number;
+	createdAt: number;
 }
 
 interface Props {
-  isGenerating: boolean;
-  isCheckingPlagiarism: boolean;
-  editTargetDoc: TargetDoc | null;
-  showPromptSelector: boolean;
-  currentPromptName: string;
-  savedPrompts: SavedPrompt[];
-  filteredPrompts: SavedPrompt[];
-  paginatedPrompts: SavedPrompt[];
-  promptSearchQuery: string;
-  currentPage: number;
-  totalPages: number;
-  editCustomInput: string;
+	isGenerating: boolean;
+	isCheckingPlagiarism: boolean;
+	editTargetDoc: TargetDoc | null;
+	showPromptSelector: boolean;
+	currentPromptName: string;
+	savedPrompts: SavedPrompt[];
+	filteredPrompts: SavedPrompt[];
+	paginatedPrompts: SavedPrompt[];
+	promptSearchQuery: string;
+	currentPage: number;
+	totalPages: number;
+	editCustomInput: string;
 }
 
 const props = defineProps<Props>();
 
 const emit = defineEmits<{
-  (e: 'ai-edit', action: 'polish' | 'expand' | 'condense' | 'fix' | 'translate' | 'rewrite' | 'summary'): void;
-  (e: 'check-plagiarism'): void;
-  (e: 'stop'): void;
-  (e: 'toggle-prompt-selector'): void;
-  (e: 'clear-current-prompt'): void;
-  (e: 'load-prompt', index: number): void;
-  (e: 'edit-prompt', index: number): void;
-  (e: 'delete-prompt', index: number): void;
-  (e: 'select-target-doc'): void;
-  (e: 'clear-target-doc'): void;
-  (e: 'custom-edit'): void;
-  (e: 'update:promptSearchQuery', value: string): void;
-  (e: 'update:currentPage', value: number): void;
-  (e: 'update:editCustomInput', value: string): void;
+	(
+		e: "ai-edit",
+		action:
+			| "polish"
+			| "expand"
+			| "condense"
+			| "fix"
+			| "translate"
+			| "rewrite"
+			| "summary",
+	): void;
+	(e: "check-plagiarism"): void;
+	(e: "stop"): void;
+	(e: "toggle-prompt-selector"): void;
+	(e: "clear-current-prompt"): void;
+	(e: "load-prompt", index: number): void;
+	(e: "edit-prompt", index: number): void;
+	(e: "delete-prompt", index: number): void;
+	(e: "select-target-doc"): void;
+	(e: "clear-target-doc"): void;
+	(e: "custom-edit"): void;
+	(e: "update:promptSearchQuery", value: string): void;
+	(e: "update:currentPage", value: number): void;
+	(e: "update:editCustomInput", value: string): void;
 }>();
 
 // 下拉菜单状态
@@ -243,41 +253,41 @@ const showQuickMenu = ref(false);
 
 // 计算属性
 const canExecute = computed(() => {
-  return props.editCustomInput.trim() || props.currentPromptName;
+	return props.editCustomInput.trim() || props.currentPromptName;
 });
 
 const executeButtonTitle = computed(() => {
-  return !props.editCustomInput.trim() && props.currentPromptName
-    ? '使用当前提示词生成'
-    : '执行';
+	return !props.editCustomInput.trim() && props.currentPromptName
+		? "使用当前提示词生成"
+		: "执行";
 });
 
 // 截断标题
 const truncateTitle = (title: string, maxLen = 12) => {
-  if (title.length <= maxLen) return title;
-  return title.substring(0, maxLen) + '...';
+	if (title.length <= maxLen) return title;
+	return title.substring(0, maxLen) + "...";
 };
 
 // 处理快捷操作
 const handleQuickAction = (action: string) => {
-  showQuickMenu.value = false;
-  if (action === 'plagiarism') {
-    emit('check-plagiarism');
-  } else {
-    emit('ai-edit', action as any);
-  }
+	showQuickMenu.value = false;
+	if (action === "plagiarism") {
+		emit("check-plagiarism");
+	} else {
+		emit("ai-edit", action as any);
+	}
 };
 
 // 获取原始索引
 const getOriginalIndex = (prompt: SavedPrompt) => {
-  return props.savedPrompts.findIndex(p => p.id === prompt.id);
+	return props.savedPrompts.findIndex((p) => p.id === prompt.id);
 };
 
 // 获取提示词预览
 const getPromptPreview = (text: string): string => {
-  const maxLength = 50;
-  if (text.length <= maxLength) return text;
-  return text.substring(0, maxLength) + '...';
+	const maxLength = 50;
+	if (text.length <= maxLength) return text;
+	return text.substring(0, maxLength) + "...";
 };
 </script>
 

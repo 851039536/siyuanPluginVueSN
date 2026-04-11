@@ -29,44 +29,44 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { showMessage } from 'siyuan'
-import SiSwitch from '@/components/Switch.vue'
+import { ref, onMounted } from "vue";
+import { showMessage } from "siyuan";
+import SiSwitch from "@/components/Switch.vue";
 
 const props = defineProps<{
-  i18n?: Record<string, string>
-  plugin?: any
-}>()
+	i18n?: Record<string, string>;
+	plugin?: any;
+}>();
 
-const enableHighlight = ref(true)
+const enableHighlight = ref(true);
 
 const loadSettings = async () => {
-  try {
-    const data = await props.plugin?.loadData('highlight-settings')
-    if (data) enableHighlight.value = data.enableHighlight ?? true
-  } catch (e) {
-    console.error('加载高亮设置失败:', e)
-  }
-}
+	try {
+		const data = await props.plugin?.loadData("highlight-settings");
+		if (data) enableHighlight.value = data.enableHighlight ?? true;
+	} catch (e) {
+		console.error("加载高亮设置失败:", e);
+	}
+};
 
 const handleToggleChange = async () => {
-  try {
-    await props.plugin?.saveData('highlight-settings', {
-      enableHighlight: enableHighlight.value
-    })
-    showMessage(
-      enableHighlight.value ? '双击高亮功能已启用' : '双击高亮功能已禁用',
-      2000,
-      'info'
-    )
-  } catch (e) {
-    console.error('保存高亮设置失败:', e)
-  }
-}
+	try {
+		await props.plugin?.saveData("highlight-settings", {
+			enableHighlight: enableHighlight.value,
+		});
+		showMessage(
+			enableHighlight.value ? "双击高亮功能已启用" : "双击高亮功能已禁用",
+			2000,
+			"info",
+		);
+	} catch (e) {
+		console.error("保存高亮设置失败:", e);
+	}
+};
 
-onMounted(loadSettings)
+onMounted(loadSettings);
 
-defineExpose({ loadSettings, enableHighlight })
+defineExpose({ loadSettings, enableHighlight });
 </script>
 
 <style scoped>

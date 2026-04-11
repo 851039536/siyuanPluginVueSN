@@ -2,281 +2,315 @@
  * 通用设置功能模块
  * 提供模块化的通用配置功能，包括字体设置、外观设置等
  */
-import { Plugin } from 'siyuan';
-import { createApp, h } from 'vue';
-import JSZip from 'jszip';
-import { loadCodeBlockSettings, loadListSettingsFromDB, loadHeadingSettings } from '@/config/settings';
-import { GeneralSettingsStorage } from './storage';
-import { DocCountManager } from '../modules/DocCountManager';
+import { Plugin } from "siyuan";
+import { createApp, h } from "vue";
+import JSZip from "jszip";
+import {
+	loadCodeBlockSettings,
+	loadListSettingsFromDB,
+	loadHeadingSettings,
+} from "@/config/settings";
+import { GeneralSettingsStorage } from "./storage";
+import { DocCountManager } from "../modules/DocCountManager";
 // @ts-ignore
-import GeneralSettingsPanel from '../index.vue';
+import GeneralSettingsPanel from "../index.vue";
 
-export const CODEBLOCK_STYLES = ['default', 'github', 'mac', 'cartoon'] as const;
-export type CodeBlockStyle = typeof CODEBLOCK_STYLES[number];
+export const CODEBLOCK_STYLES = [
+	"default",
+	"github",
+	"mac",
+	"cartoon",
+] as const;
+export type CodeBlockStyle = (typeof CODEBLOCK_STYLES)[number];
 
 export const HEADING_LEVEL_MAPPINGS: Record<string, string[]> = {
-  number: ['1', '2', '3', '4', '5', '6'],
-  roman: ['I', 'II', 'III', 'IV', 'V', 'VI'],
-  chinese: ['一', '二', '三', '四', '五', '六'],
-  chineseUpper: ['壹', '贰', '叁', '肆', '伍', '陆'],
-  dots: ['•', '••', '•••', '••••', '•••••', '••••••'],
-  emoji: ['😀', '😁', '😂', '🤣', '😊', '😎'],
-  star: ['⭐', '⭐⭐', '⭐⭐⭐', '⭐⭐⭐⭐', '⭐⭐⭐⭐⭐', '⭐⭐⭐⭐⭐⭐'],
-  arrow: ['→', '→→', '→→→', '→→→→', '→→→→→', '→→→→→→'],
-  tag: ['H1', 'H2', 'H3', 'H4', 'H5', 'H6'],
-  bracket: ['[1]', '[2]', '[3]', '[4]', '[5]', '[6]']
+	number: ["1", "2", "3", "4", "5", "6"],
+	roman: ["I", "II", "III", "IV", "V", "VI"],
+	chinese: ["一", "二", "三", "四", "五", "六"],
+	chineseUpper: ["壹", "贰", "叁", "肆", "伍", "陆"],
+	dots: ["•", "••", "•••", "••••", "•••••", "••••••"],
+	emoji: ["😀", "😁", "😂", "🤣", "😊", "😎"],
+	star: ["⭐", "⭐⭐", "⭐⭐⭐", "⭐⭐⭐⭐", "⭐⭐⭐⭐⭐", "⭐⭐⭐⭐⭐⭐"],
+	arrow: ["→", "→→", "→→→", "→→→→", "→→→→→", "→→→→→→"],
+	tag: ["H1", "H2", "H3", "H4", "H5", "H6"],
+	bracket: ["[1]", "[2]", "[3]", "[4]", "[5]", "[6]"],
 };
 
 export interface GeneralSettingsOptions {
-  autoBackupEnabled?: boolean;
-  backupFrequency?: string;
+	autoBackupEnabled?: boolean;
+	backupFrequency?: string;
 }
 
 export function checkIsMobile(): boolean {
-  const userAgent = navigator.userAgent.toLowerCase();
-  const mobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile|tablet/i.test(userAgent);
-  const screenWidth = window.innerWidth <= 768;
-  const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-  const isSiyuanMobile = (window as any)._siyuan_mobile === true;
-  return mobileUA || screenWidth || (hasTouchScreen && mobileUA) || isSiyuanMobile;
+	const userAgent = navigator.userAgent.toLowerCase();
+	const mobileUA =
+		/android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile|tablet/i.test(
+			userAgent,
+		);
+	const screenWidth = window.innerWidth <= 768;
+	const hasTouchScreen =
+		"ontouchstart" in window || navigator.maxTouchPoints > 0;
+	const isSiyuanMobile = (window as any)._siyuan_mobile === true;
+	return (
+		mobileUA || screenWidth || (hasTouchScreen && mobileUA) || isSiyuanMobile
+	);
 }
 
 export function applyCodeBlockStyle(style: CodeBlockStyle | string): void {
-  CODEBLOCK_STYLES.forEach(s => document.body.classList.remove(`codeblock-style-${s}`));
-  document.body.classList.add(`codeblock-style-${style}`);
+	CODEBLOCK_STYLES.forEach((s) =>
+		document.body.classList.remove(`codeblock-style-${s}`),
+	);
+	document.body.classList.add(`codeblock-style-${style}`);
 }
 
 export class GeneralSettings {
-  private plugin: Plugin;
-  private autoBackupTimer: number | null = null;
-  private lastBackupTimestamp = 0;
-  private workspacePath = '';
-  private workspaceRoot = '';
-  private storage: GeneralSettingsStorage;
-  private contentObserver: MutationObserver | null = null;
-  private docCountManager: DocCountManager | null = null;
+	private plugin: Plugin;
+	private autoBackupTimer: number | null = null;
+	private lastBackupTimestamp = 0;
+	private workspacePath = "";
+	private workspaceRoot = "";
+	private storage: GeneralSettingsStorage;
+	private contentObserver: MutationObserver | null = null;
+	private docCountManager: DocCountManager | null = null;
 
-  constructor(plugin: Plugin) {
-    this.plugin = plugin;
-    this.storage = new GeneralSettingsStorage(plugin);
-  }
+	constructor(plugin: Plugin) {
+		this.plugin = plugin;
+		this.storage = new GeneralSettingsStorage(plugin);
+	}
 
-  public async init() {
-    this.addDock();
-    this.applySavedSettings();
-    await this.applyCodeBlockStyle();
-    await this.applyListStyle();
-    await this.applyHeadingStyle();
-    await this.applyDocumentFontStyle();
-    await this.applyTableStyle();
-    await this.applyListStyleEnhanced();
-    await this.applyDocCountStyle();
-    await this.applyTabPinStyle();
-    this.observeContentChanges();
-    await this.initAutoBackup();
-  }
+	public async init() {
+		this.addDock();
+		this.applySavedSettings();
+		await this.applyCodeBlockStyle();
+		await this.applyListStyle();
+		await this.applyHeadingStyle();
+		await this.applyDocumentFontStyle();
+		await this.applyTableStyle();
+		await this.applyListStyleEnhanced();
+		await this.applyDocCountStyle();
+		await this.applyTabPinStyle();
+		this.observeContentChanges();
+		await this.initAutoBackup();
+	}
 
-  private addDock() {
-    const self = this;
-    this.plugin.addDock({
-      config: {
-        position: 'RightTop',
-        size: { width: 360, height: 0 },
-        icon: 'iconSettings',
-        title: this.plugin.i18n.generalSettings || '通用设置',
-        show: false,
-      },
-      data: {},
-      type: 'general-settings-dock',
-      init: (dock: any) => {
-        const container = document.createElement('div');
-        container.style.height = '100%';
-        container.style.overflow = 'hidden';
+	private addDock() {
+		const self = this;
+		this.plugin.addDock({
+			config: {
+				position: "RightTop",
+				size: { width: 360, height: 0 },
+				icon: "iconSettings",
+				title: this.plugin.i18n.generalSettings || "通用设置",
+				show: false,
+			},
+			data: {},
+			type: "general-settings-dock",
+			init: (dock: any) => {
+				const container = document.createElement("div");
+				container.style.height = "100%";
+				container.style.overflow = "hidden";
 
-        const app = createApp({
-          setup() {
-            return () => h(GeneralSettingsPanel, {
-              i18n: self.plugin.i18n,
-              plugin: self.plugin,
-              onSettingsChange: (settings: any) => {
-                self.handleSettingsChange(settings);
-              }
-            });
-          }
-        });
+				const app = createApp({
+					setup() {
+						return () =>
+							h(GeneralSettingsPanel, {
+								i18n: self.plugin.i18n,
+								plugin: self.plugin,
+								onSettingsChange: (settings: any) => {
+									self.handleSettingsChange(settings);
+								},
+							});
+					},
+				});
 
-        app.mount(container);
-        dock.element?.appendChild(container);
+				app.mount(container);
+				dock.element?.appendChild(container);
 
-        dock.__app = app;
-        dock.__container = container;
-      },
-    });
-  }
+				dock.__app = app;
+				dock.__container = container;
+			},
+		});
+	}
 
-  private handleSettingsChange(settings: any) {
-    if (settings.moduleId === 'font') {
-      this.applyGlobalFontStyles(settings.settings);
-    } else if (settings.moduleId === 'codeblock') {
-      this.applyCodeBlockStyleFromSettings(settings.settings);
-    } else if (settings.moduleId === 'list') {
-      this.applyListStyles(settings.settings);
-    } else if (settings.moduleId === 'documentFont') {
-      this.applyDocumentFontStyles(settings.settings);
-    } else if (settings.moduleId === 'tableStyle') {
-      this.applyTableStyles(settings.settings);
-    } else if (settings.moduleId === 'listStyle') {
-      this.applyListStylesEnhanced(settings.settings);
-    } else if (settings.moduleId === 'tabPin') {
-      this.applyTabPinStyles(settings.settings);
-    }
-    this.dispatchEvent('general-settings-changed', settings);
-  }
+	private handleSettingsChange(settings: any) {
+		if (settings.moduleId === "font") {
+			this.applyGlobalFontStyles(settings.settings);
+		} else if (settings.moduleId === "codeblock") {
+			this.applyCodeBlockStyleFromSettings(settings.settings);
+		} else if (settings.moduleId === "list") {
+			this.applyListStyles(settings.settings);
+		} else if (settings.moduleId === "documentFont") {
+			this.applyDocumentFontStyles(settings.settings);
+		} else if (settings.moduleId === "tableStyle") {
+			this.applyTableStyles(settings.settings);
+		} else if (settings.moduleId === "listStyle") {
+			this.applyListStylesEnhanced(settings.settings);
+		} else if (settings.moduleId === "tabPin") {
+			this.applyTabPinStyles(settings.settings);
+		}
+		this.dispatchEvent("general-settings-changed", settings);
+	}
 
-  private applyGlobalFontStyles(fontSettings: any) {
-    try {
-      const root = document.documentElement;
+	private applyGlobalFontStyles(fontSettings: any) {
+		try {
+			const root = document.documentElement;
 
-      if (fontSettings.fontFamily) {
-        root.style.setProperty('--general-font-family', fontSettings.fontFamily);
-        this.applyToSiyuanElements('font-family', fontSettings.fontFamily);
-      }
+			if (fontSettings.fontFamily) {
+				root.style.setProperty(
+					"--general-font-family",
+					fontSettings.fontFamily,
+				);
+				this.applyToSiyuanElements("font-family", fontSettings.fontFamily);
+			}
 
-      root.style.setProperty('--general-font-size', `${fontSettings.fontSize}px`);
-      this.applyToSiyuanElements('font-size', `${fontSettings.fontSize}px`);
+			root.style.setProperty(
+				"--general-font-size",
+				`${fontSettings.fontSize}px`,
+			);
+			this.applyToSiyuanElements("font-size", `${fontSettings.fontSize}px`);
 
-      root.style.setProperty('--general-font-weight', fontSettings.fontWeight);
-      this.applyToSiyuanElements('font-weight', fontSettings.fontWeight);
+			root.style.setProperty("--general-font-weight", fontSettings.fontWeight);
+			this.applyToSiyuanElements("font-weight", fontSettings.fontWeight);
 
-      root.style.setProperty('--general-line-height', fontSettings.lineHeight.toString());
-      this.applyToSiyuanElements('line-height', fontSettings.lineHeight.toString());
+			root.style.setProperty(
+				"--general-line-height",
+				fontSettings.lineHeight.toString(),
+			);
+			this.applyToSiyuanElements(
+				"line-height",
+				fontSettings.lineHeight.toString(),
+			);
+		} catch (error) {
+			console.error("应用全局字体样式失败:", error);
+		}
+	}
 
-    } catch (error) {
-      console.error('应用全局字体样式失败:', error);
-    }
-  }
+	private applyToSiyuanElements(property: string, value: string) {
+		try {
+			const editorElements = document.querySelectorAll(
+				".protyle-content, .protyle-wysiwyg",
+			);
+			editorElements.forEach((el: any) => {
+				el.style[property as any] = value;
+			});
 
-  private applyToSiyuanElements(property: string, value: string) {
-    try {
-      const editorElements = document.querySelectorAll('.protyle-content, .protyle-wysiwyg');
-      editorElements.forEach((el: any) => {
-        el.style[property as any] = value;
-      });
+			const contentElements = document.querySelectorAll(
+				".b3-typography, .render-node",
+			);
+			contentElements.forEach((el: any) => {
+				el.style[property as any] = value;
+			});
+		} catch (error) {
+			console.error(`应用字体样式到思源元素失败:`, error);
+		}
+	}
 
-      const contentElements = document.querySelectorAll('.b3-typography, .render-node');
-      contentElements.forEach((el: any) => {
-        el.style[property as any] = value;
-      });
+	private dispatchEvent(eventType: string, data: any) {
+		try {
+			const event = new CustomEvent(eventType, {
+				detail: data,
+				bubbles: true,
+				cancelable: true,
+			});
+			document.dispatchEvent(event);
+		} catch (error) {
+			console.error("发送事件失败:", error);
+		}
+	}
 
-    } catch (error) {
-      console.error(`应用字体样式到思源元素失败:`, error);
-    }
-  }
+	public getCurrentFontSettings(): any {
+		try {
+			const saved = localStorage.getItem("general-font-settings");
+			if (saved) {
+				return JSON.parse(saved);
+			}
+		} catch (error) {
+			console.error("获取字体设置失败:", error);
+		}
 
-  private dispatchEvent(eventType: string, data: any) {
-    try {
-      const event = new CustomEvent(eventType, {
-        detail: data,
-        bubbles: true,
-        cancelable: true
-      });
-      document.dispatchEvent(event);
-    } catch (error) {
-      console.error('发送事件失败:', error);
-    }
-  }
+		return {
+			fontFamily: "",
+			fontSize: 14,
+			fontWeight: "normal",
+			lineHeight: 1.6,
+		};
+	}
 
-  public getCurrentFontSettings(): any {
-    try {
-      const saved = localStorage.getItem('general-font-settings');
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    } catch (error) {
-      console.error('获取字体设置失败:', error);
-    }
+	public applySavedSettings() {
+		const settings = this.getCurrentFontSettings();
+		this.applyGlobalFontStyles(settings);
+	}
 
-    return {
-      fontFamily: '',
-      fontSize: 14,
-      fontWeight: 'normal',
-      lineHeight: 1.6
-    };
-  }
+	public async applyCodeBlockStyle() {
+		try {
+			const settings = await loadCodeBlockSettings(this.plugin);
+			this.applyCodeBlockStyleFromSettings(settings);
+		} catch (error) {
+			console.error("应用代码块样式失败:", error);
+		}
+	}
 
-  public applySavedSettings() {
-    const settings = this.getCurrentFontSettings();
-    this.applyGlobalFontStyles(settings);
-  }
+	public async applyListStyle() {
+		try {
+			const settings = await loadListSettingsFromDB(this.plugin);
+			this.applyListStyles(settings);
+		} catch (error) {
+			console.error("应用列表样式失败:", error);
+		}
+	}
 
-  public async applyCodeBlockStyle() {
-    try {
-      const settings = await loadCodeBlockSettings(this.plugin);
-      this.applyCodeBlockStyleFromSettings(settings);
-    } catch (error) {
-      console.error('应用代码块样式失败:', error);
-    }
-  }
+	public async applyHeadingStyle() {
+		try {
+			const settings = await loadHeadingSettings(this.plugin);
 
-  public async applyListStyle() {
-    try {
-      const settings = await loadListSettingsFromDB(this.plugin);
-      this.applyListStyles(settings);
-    } catch (error) {
-      console.error('应用列表样式失败:', error);
-    }
-  }
+			if (document.readyState === "loading") {
+				document.addEventListener("DOMContentLoaded", () => {
+					setTimeout(() => {
+						this.applyHeadingStyles(settings);
+					}, 200);
+				});
+			} else {
+				setTimeout(() => {
+					this.applyHeadingStyles(settings);
+				}, 200);
+			}
+		} catch (error) {
+			console.error("应用标题样式失败:", error);
+		}
+	}
 
-  public async applyHeadingStyle() {
-    try {
-      const settings = await loadHeadingSettings(this.plugin);
+	public async applyDocumentFontStyle() {
+		try {
+			const settings = await this.storage.loadDocumentFontSettings();
+			if (settings) {
+				this.applyDocumentFontStyles(settings);
+			}
+		} catch (error) {
+			console.error("应用文档字体样式失败:", error);
+		}
+	}
 
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-          setTimeout(() => {
-            this.applyHeadingStyles(settings);
-          }, 200);
-        });
-      } else {
-        setTimeout(() => {
-          this.applyHeadingStyles(settings);
-        }, 200);
-      }
-    } catch (error) {
-      console.error('应用标题样式失败:', error);
-    }
-  }
+	private applyDocumentFontStyles(fontSettings: any) {
+		try {
+			// 移除现有样式
+			const existingStyle = document.getElementById("document-font-settings");
+			if (existingStyle) {
+				existingStyle.remove();
+			}
 
-  public async applyDocumentFontStyle() {
-    try {
-      const settings = await this.storage.loadDocumentFontSettings();
-      if (settings) {
-        this.applyDocumentFontStyles(settings);
-      }
-    } catch (error) {
-      console.error('应用文档字体样式失败:', error);
-    }
-  }
+			if (!fontSettings.enabled) {
+				return;
+			}
 
-  private applyDocumentFontStyles(fontSettings: any) {
-    try {
-      // 移除现有样式
-      const existingStyle = document.getElementById('document-font-settings');
-      if (existingStyle) {
-        existingStyle.remove();
-      }
+			// 创建新的样式元素
+			const style = document.createElement("style");
+			style.id = "document-font-settings";
 
-      if (!fontSettings.enabled) {
-        return;
-      }
+			const fontFamily = fontSettings.fontFamily
+				? `'${fontSettings.fontFamily}', `
+				: "";
 
-      // 创建新的样式元素
-      const style = document.createElement('style');
-      style.id = 'document-font-settings';
-      
-      const fontFamily = fontSettings.fontFamily ? `'${fontSettings.fontFamily}', ` : '';
-      
-      style.textContent = `
+			style.textContent = `
         /* 编辑器内容区域 - 基础样式 */
         .protyle-wysiwyg {
           font-family: ${fontFamily}var(--b3-font-family) !important;
@@ -353,41 +387,41 @@ export class GeneralSettings {
           line-height: 1.5 !important;
         }
       `;
-      
-      document.head.appendChild(style);
-    } catch (error) {
-      console.error('应用文档字体样式失败:', error);
-    }
-  }
 
-  public async applyTableStyle() {
-    try {
-      const settings = await this.storage.loadTableStyleSettings();
-      if (settings) {
-        this.applyTableStyles(settings);
-      }
-    } catch (error) {
-      console.error('应用表格样式失败:', error);
-    }
-  }
+			document.head.appendChild(style);
+		} catch (error) {
+			console.error("应用文档字体样式失败:", error);
+		}
+	}
 
-  private applyTableStyles(tableSettings: any) {
-    try {
-      // 移除现有样式
-      const existingStyle = document.getElementById('table-style-settings')
-      if (existingStyle) {
-        existingStyle.remove()
-      }
+	public async applyTableStyle() {
+		try {
+			const settings = await this.storage.loadTableStyleSettings();
+			if (settings) {
+				this.applyTableStyles(settings);
+			}
+		} catch (error) {
+			console.error("应用表格样式失败:", error);
+		}
+	}
 
-      if (!tableSettings.enabled) {
-        return
-      }
+	private applyTableStyles(tableSettings: any) {
+		try {
+			// 移除现有样式
+			const existingStyle = document.getElementById("table-style-settings");
+			if (existingStyle) {
+				existingStyle.remove();
+			}
 
-      // 创建新的样式元素
-      const style = document.createElement('style')
-      style.id = 'table-style-settings'
-      
-      style.textContent = `
+			if (!tableSettings.enabled) {
+				return;
+			}
+
+			// 创建新的样式元素
+			const style = document.createElement("style");
+			style.id = "table-style-settings";
+
+			style.textContent = `
         /* 表格整体外框 */
         .protyle-wysiwyg table {
           border-collapse: collapse !important;
@@ -430,76 +464,78 @@ export class GeneralSettings {
         :root[data-theme-mode="dark"] .protyle-wysiwyg table tr:nth-child(even) {
           color: #ffffff;
         }
-      `
-      
-      document.head.appendChild(style)
-    } catch (error) {
-      console.error('应用表格样式失败:', error)
-    }
-  }
+      `;
 
-  public async applyListStyleEnhanced() {
-    try {
-      const settings = await this.storage.loadListStyleSettings();
-      if (settings) {
-        this.applyListStylesEnhanced(settings);
-      }
-    } catch (error) {
-      console.error('应用列表样式失败:', error);
-    }
-  }
+			document.head.appendChild(style);
+		} catch (error) {
+			console.error("应用表格样式失败:", error);
+		}
+	}
 
-  public async applyDocCountStyle() {
-    try {
-      const settings = await this.storage.loadDocCountSettings();
-      if (settings && settings.enableDocCount) {
-        // 如果功能已启用,启动管理器
-        this.docCountManager = new DocCountManager();
-        this.docCountManager.start();
-        this.docCountManager.setUpdateInterval(parseInt(settings.updateInterval));
-        this.docCountManager.setFontStyle({
-          fontSize: settings.fontSize,
-          color: settings.fontColor,
-          fontWeight: settings.fontWeight
-        });
-      }
-    } catch (error) {
-      console.error('应用文档数统计样式失败:', error);
-    }
-  }
+	public async applyListStyleEnhanced() {
+		try {
+			const settings = await this.storage.loadListStyleSettings();
+			if (settings) {
+				this.applyListStylesEnhanced(settings);
+			}
+		} catch (error) {
+			console.error("应用列表样式失败:", error);
+		}
+	}
 
-  public async applyTabPinStyle() {
-    try {
-      const settings = await this.storage.loadTabPinSettings();
-      if (settings) {
-        this.applyTabPinStyles(settings);
-      }
-    } catch (error) {
-      console.error('应用钉住页签样式失败:', error);
-    }
-  }
+	public async applyDocCountStyle() {
+		try {
+			const settings = await this.storage.loadDocCountSettings();
+			if (settings && settings.enableDocCount) {
+				// 如果功能已启用,启动管理器
+				this.docCountManager = new DocCountManager();
+				this.docCountManager.start();
+				this.docCountManager.setUpdateInterval(
+					parseInt(settings.updateInterval),
+				);
+				this.docCountManager.setFontStyle({
+					fontSize: settings.fontSize,
+					color: settings.fontColor,
+					fontWeight: settings.fontWeight,
+				});
+			}
+		} catch (error) {
+			console.error("应用文档数统计样式失败:", error);
+		}
+	}
 
-  private applyTabPinStyles(tabPinSettings: any) {
-    try {
-      // 移除现有样式
-      const existingStyle = document.getElementById('tab-pin-settings-style');
-      if (existingStyle) {
-        existingStyle.remove();
-      }
+	public async applyTabPinStyle() {
+		try {
+			const settings = await this.storage.loadTabPinSettings();
+			if (settings) {
+				this.applyTabPinStyles(settings);
+			}
+		} catch (error) {
+			console.error("应用钉住页签样式失败:", error);
+		}
+	}
 
-      if (!tabPinSettings.enabled) {
-        return;
-      }
+	private applyTabPinStyles(tabPinSettings: any) {
+		try {
+			// 移除现有样式
+			const existingStyle = document.getElementById("tab-pin-settings-style");
+			if (existingStyle) {
+				existingStyle.remove();
+			}
 
-      // 默认值
-      const defaultTextColor = 'inherit';
-      const defaultBackgroundColor = 'rgba(var(--b3-theme-primary-rgb), 0.1)';
+			if (!tabPinSettings.enabled) {
+				return;
+			}
 
-      // 创建新的样式元素
-      const style = document.createElement('style');
-      style.id = 'tab-pin-settings-style';
-      
-      let css = `
+			// 默认值
+			const defaultTextColor = "inherit";
+			const defaultBackgroundColor = "rgba(var(--b3-theme-primary-rgb), 0.1)";
+
+			// 创建新的样式元素
+			const style = document.createElement("style");
+			style.id = "tab-pin-settings-style";
+
+			let css = `
         /* 钉住页签：显示标题文本 */
         .layout-tab-bar .item.item--pin .item__text {
           width: auto !important;
@@ -508,63 +544,66 @@ export class GeneralSettings {
         }
       `;
 
-      // 根据显示模式添加不同的样式
-      if (tabPinSettings.displayMode === 'textOnly') {
-        css += `
+			// 根据显示模式添加不同的样式
+			if (tabPinSettings.displayMode === "textOnly") {
+				css += `
           /* 仅显示标题：隐藏图标 */
           .layout-tab-bar .item.item--pin .item__icon {
             display: none !important;
           }
         `;
-      }
+			}
 
-      css += `
+			css += `
         /* 钉住页签：应用自定义颜色 */
         .layout-tab-bar .item.item--pin {
-          ${tabPinSettings.textColor !== defaultTextColor ? `color: ${tabPinSettings.textColor} !important;` : ''}
-          ${tabPinSettings.backgroundColor !== defaultBackgroundColor ? `background: ${tabPinSettings.backgroundColor} !important;` : ''}
+          ${tabPinSettings.textColor !== defaultTextColor ? `color: ${tabPinSettings.textColor} !important;` : ""}
+          ${tabPinSettings.backgroundColor !== defaultBackgroundColor ? `background: ${tabPinSettings.backgroundColor} !important;` : ""}
         }
       `;
 
-      style.textContent = css;
-      document.head.appendChild(style);
-    } catch (error) {
-      console.error('应用钉住页签样式失败:', error);
-    }
-  }
+			style.textContent = css;
+			document.head.appendChild(style);
+		} catch (error) {
+			console.error("应用钉住页签样式失败:", error);
+		}
+	}
 
-  private applyListStylesEnhanced(listSettings: any) {
-    try {
-      // 移除现有样式
-      const existingStyle = document.getElementById('list-style-settings')
-      if (existingStyle) {
-        existingStyle.remove()
-      }
+	private applyListStylesEnhanced(listSettings: any) {
+		try {
+			// 移除现有样式
+			const existingStyle = document.getElementById("list-style-settings");
+			if (existingStyle) {
+				existingStyle.remove();
+			}
 
-      if (!listSettings.enabled) {
-        return
-      }
+			if (!listSettings.enabled) {
+				return;
+			}
 
-      // 创建新的样式元素
-      const style = document.createElement('style')
-      style.id = 'list-style-settings'
-      
-      // 有序列表颜色
-      const orderedListCss = listSettings.orderedListColors.map((color: string, index: number) => {
-        const depth = '.li[data-subtype="o"] '.repeat(index)
-        return `
+			// 创建新的样式元素
+			const style = document.createElement("style");
+			style.id = "list-style-settings";
+
+			// 有序列表颜色
+			const orderedListCss = listSettings.orderedListColors
+				.map((color: string, index: number) => {
+					const depth = '.li[data-subtype="o"] '.repeat(index);
+					return `
           ${depth}.li[data-subtype="o"] > .protyle-action--order {
             color: ${color} !important;
             font-weight: bold !important;
           }
-        `
-      }).join('\n')
-      
-      // 无序列表颜色和符号
-      const unorderedListCss = listSettings.unorderedListColors.map((color: string, index: number) => {
-        const depth = '[data-subtype="u"] > '.repeat(index)
-        const symbol = index % 2 === 0 ? '•' : '▪'
-        return `
+        `;
+				})
+				.join("\n");
+
+			// 无序列表颜色和符号
+			const unorderedListCss = listSettings.unorderedListColors
+				.map((color: string, index: number) => {
+					const depth = '[data-subtype="u"] > '.repeat(index);
+					const symbol = index % 2 === 0 ? "•" : "▪";
+					return `
           ${depth}.li[data-subtype="u"] > .protyle-action::before {
             content: "${symbol}";
             font-size: ${listSettings.symbolSize}em;
@@ -573,10 +612,11 @@ export class GeneralSettings {
             position: absolute;
             color: ${color} !important;
           }
-        `
-      }).join('\n')
-      
-      style.textContent = `
+        `;
+				})
+				.join("\n");
+
+			style.textContent = `
         /* 有序列表样式 */
         ${orderedListCss}
         
@@ -593,89 +633,118 @@ export class GeneralSettings {
         :root[data-theme-mode="dark"] .li[data-subtype="u"] > .protyle-action::before {
           opacity: 0.9;
         }
-      `
-      
-      document.head.appendChild(style)
-    } catch (error) {
-      console.error('应用列表样式失败:', error)
-    }
-  }
+      `;
 
-  private applyHeadingStyles(settings: any) {
-    try {
-      const style = document.getElementById('heading-colors-style') || document.createElement('style');
-      style.id = 'heading-colors-style';
+			document.head.appendChild(style);
+		} catch (error) {
+			console.error("应用列表样式失败:", error);
+		}
+	}
 
-      const colors = settings.colors || {};
-      const colorCss = Object.entries(colors)
-        .map(([level, color]) => {
-          return `
+	private applyHeadingStyles(settings: any) {
+		try {
+			const style =
+				document.getElementById("heading-colors-style") ||
+				document.createElement("style");
+			style.id = "heading-colors-style";
+
+			const colors = settings.colors || {};
+			const colorCss = Object.entries(colors)
+				.map(([level, color]) => {
+					return `
             .protyle-wysiwyg [data-node-id].${level},
             .protyle-wysiwyg .${level},
             .b3-typography .${level} {
               color: ${color} !important;
             }
           `;
-        })
-        .join('\n');
+				})
+				.join("\n");
 
-      const fontSizes = settings.fontSizes || {};
-      const fontSizeCss = Object.entries(fontSizes)
-        .map(([level, size]) => `
+			const fontSizes = settings.fontSizes || {};
+			const fontSizeCss = Object.entries(fontSizes)
+				.map(
+					([level, size]) => `
           .protyle-wysiwyg [data-node-id].${level},
           .protyle-wysiwyg .${level},
           .b3-typography .${level} {
             font-size: ${size}px !important;
           }
-        `)
-        .join('\n');
+        `,
+				)
+				.join("\n");
 
-      let levelCss = '';
-      if (settings.levelDisplay && settings.levelDisplay !== 'none') {
-        levelCss = this.generateLevelDisplayCss(settings.levelDisplay, settings.customMarkers || []);
-      }
+			let levelCss = "";
+			if (settings.levelDisplay && settings.levelDisplay !== "none") {
+				levelCss = this.generateLevelDisplayCss(
+					settings.levelDisplay,
+					settings.customMarkers || [],
+				);
+			}
 
-      const centerAlignCss = settings.titleCenterAlign ? `
+			const centerAlignCss = settings.titleCenterAlign
+				? `
         .protyle-title__input {
           text-align: center !important;
         }
-      ` : '';
+      `
+				: "";
 
-      const titleColorCss = settings.titleColor ? `
+			const titleColorCss = settings.titleColor
+				? `
         .protyle-title__input {
           color: ${settings.titleColor} !important;
         }
-      ` : '';
+      `
+				: "";
 
-      const titleFontSizeCss = settings.titleFontSize ? `
+			const titleFontSizeCss = settings.titleFontSize
+				? `
         .protyle-title__input {
           font-size: ${settings.titleFontSize}px !important;
         }
-      ` : '';
+      `
+				: "";
 
-      style.textContent = colorCss + '\n' + fontSizeCss + '\n' + levelCss + '\n' + centerAlignCss + '\n' + titleColorCss + '\n' + titleFontSizeCss;
+			style.textContent =
+				colorCss +
+				"\n" +
+				fontSizeCss +
+				"\n" +
+				levelCss +
+				"\n" +
+				centerAlignCss +
+				"\n" +
+				titleColorCss +
+				"\n" +
+				titleFontSizeCss;
 
-      if (!style.parentElement) {
-        document.head.appendChild(style);
-      }
+			if (!style.parentElement) {
+				document.head.appendChild(style);
+			}
+		} catch (error) {
+			console.error("应用标题样式失败:", error);
+		}
+	}
 
-    } catch (error) {
-      console.error('应用标题样式失败:', error);
-    }
-  }
+	private generateLevelDisplayCss(
+		style: string,
+		customMarkers: string[],
+	): string {
+		const levels =
+			style === "custom"
+				? customMarkers
+				: HEADING_LEVEL_MAPPINGS[style] || HEADING_LEVEL_MAPPINGS.number;
 
-  private generateLevelDisplayCss(style: string, customMarkers: string[]): string {
-    const levels = style === 'custom'
-      ? customMarkers
-      : (HEADING_LEVEL_MAPPINGS[style] || HEADING_LEVEL_MAPPINGS.number);
+		return levels
+			.map((label, index) => {
+				const level = index + 1;
+				const tagStyles =
+					style === "tag"
+						? "background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.15); padding: 2px 6px; border-radius: 4px; font-weight: 600; opacity: 0.7;"
+						: "";
 
-    return levels.map((label, index) => {
-      const level = index + 1;
-      const tagStyles = style === 'tag'
-        ? 'background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.15); padding: 2px 6px; border-radius: 4px; font-weight: 600; opacity: 0.7;'
-        : '';
-
-      return `
+				return `
         .protyle-wysiwyg div[data-subtype="h${level}"][data-node-id]:not([type]) > div[contenteditable]:first-child::after,
         .protyle-wysiwyg div[data-subtype="h${level}"][data-node-id] > div.h${level}[contenteditable]::after {
           content: "  ${label}";
@@ -686,87 +755,89 @@ export class GeneralSettings {
           ${tagStyles}
         }
       `;
-    }).join('\n');
-  }
+			})
+			.join("\n");
+	}
 
-  private applyListStyles(settings: any) {
-    try {
-      localStorage.setItem('general-list-settings', JSON.stringify(settings));
+	private applyListStyles(settings: any) {
+		try {
+			localStorage.setItem("general-list-settings", JSON.stringify(settings));
 
-      if (settings.css) {
-        this.applyListCSS(settings.css);
-      } else {
-        this.removeExistingListStyles();
-      }
+			if (settings.css) {
+				this.applyListCSS(settings.css);
+			} else {
+				this.removeExistingListStyles();
+			}
+		} catch (error) {
+			console.error("应用列表样式失败:", error);
+		}
+	}
 
-    } catch (error) {
-      console.error('应用列表样式失败:', error);
-    }
-  }
+	private applyListCSS(css: string) {
+		if (!css) {
+			this.removeExistingListStyles();
+			return;
+		}
 
-  private applyListCSS(css: string) {
-    if (!css) {
-      this.removeExistingListStyles();
-      return;
-    }
+		this.removeExistingListStyles();
 
-    this.removeExistingListStyles();
+		const styleElement = document.createElement("style");
+		styleElement.id = "custom-list-styles";
+		styleElement.textContent = css;
+		document.head.appendChild(styleElement);
+	}
 
-    const styleElement = document.createElement('style');
-    styleElement.id = 'custom-list-styles';
-    styleElement.textContent = css;
-    document.head.appendChild(styleElement);
-  }
+	private removeExistingListStyles() {
+		const existingStyle = document.getElementById("custom-list-styles");
+		if (existingStyle) {
+			existingStyle.remove();
+		}
+	}
 
-  private removeExistingListStyles() {
-    const existingStyle = document.getElementById('custom-list-styles');
-    if (existingStyle) {
-      existingStyle.remove();
-    }
-  }
+	private applyCodeBlockStyleFromSettings(settings: any) {
+		try {
+			applyCodeBlockStyle(settings.style || "default");
 
-  private applyCodeBlockStyleFromSettings(settings: any) {
-    try {
-      applyCodeBlockStyle(settings.style || 'default');
+			// 应用代码块样式增强
+			if (settings.enabled) {
+				this.applyCodeBlockEnhancedStyles(settings);
+			} else {
+				// 移除增强样式
+				const existingStyle = document.getElementById(
+					"codeblock-enhanced-style",
+				);
+				if (existingStyle) {
+					existingStyle.remove();
+				}
+			}
+		} catch (error) {
+			console.error("应用代码块样式失败:", error);
+		}
+	}
 
-      // 应用代码块样式增强
-      if (settings.enabled) {
-        this.applyCodeBlockEnhancedStyles(settings);
-      } else {
-        // 移除增强样式
-        const existingStyle = document.getElementById('codeblock-enhanced-style');
-        if (existingStyle) {
-          existingStyle.remove();
-        }
-      }
-    } catch (error) {
-      console.error('应用代码块样式失败:', error);
-    }
-  }
+	private applyCodeBlockEnhancedStyles(codeSettings: any) {
+		try {
+			// 移除现有样式
+			const existingStyle = document.getElementById("codeblock-enhanced-style");
+			if (existingStyle) {
+				existingStyle.remove();
+			}
 
-  private applyCodeBlockEnhancedStyles(codeSettings: any) {
-    try {
-      // 移除现有样式
-      const existingStyle = document.getElementById('codeblock-enhanced-style');
-      if (existingStyle) {
-        existingStyle.remove();
-      }
+			if (!codeSettings.enabled) {
+				return;
+			}
 
-      if (!codeSettings.enabled) {
-        return;
-      }
+			// 创建新的样式元素
+			const style = document.createElement("style");
+			style.id = "codeblock-enhanced-style";
 
-      // 创建新的样式元素
-      const style = document.createElement('style');
-      style.id = 'codeblock-enhanced-style';
-
-      style.textContent = `
+			style.textContent = `
         /* 代码块基础样式 */
         .protyle-wysiwyg .code-block {
           background-color: ${codeSettings.backgroundColor} !important;
           border: ${codeSettings.borderWidth}px solid ${codeSettings.borderColor} !important;
           border-radius: ${codeSettings.borderRadius}px !important;
-          box-shadow: ${codeSettings.boxShadow !== 'none' ? codeSettings.boxShadow : 'none'} !important;
+          box-shadow: ${codeSettings.boxShadow !== "none" ? codeSettings.boxShadow : "none"} !important;
         }
 
         /* 代码块内容 */
@@ -783,12 +854,16 @@ export class GeneralSettings {
           background-color: ${codeSettings.lineNumberBackground} !important;
         }
 
-        ${codeSettings.showLineNumber ? '' : `
+        ${
+					codeSettings.showLineNumber
+						? ""
+						: `
         /* 隐藏行号 */
         .protyle-wysiwyg .code-block .hljs .ln {
           display: none !important;
         }
-        `}
+        `
+				}
 
         /* 代码高亮颜色 */
         .protyle-wysiwyg .code-block .hljs-keyword,
@@ -837,314 +912,329 @@ export class GeneralSettings {
 
         /* 暗色主题适配 */
         :root[data-theme-mode="dark"] .protyle-wysiwyg .code-block {
-          box-shadow: ${codeSettings.boxShadow !== 'none' ? '0 2px 8px rgba(0, 0, 0, 0.3)' : 'none'} !important;
+          box-shadow: ${codeSettings.boxShadow !== "none" ? "0 2px 8px rgba(0, 0, 0, 0.3)" : "none"} !important;
         }
       `;
 
-      document.head.appendChild(style);
-    } catch (error) {
-      console.error('应用代码块增强样式失败:', error);
-    }
-  }
+			document.head.appendChild(style);
+		} catch (error) {
+			console.error("应用代码块增强样式失败:", error);
+		}
+	}
 
-  private observeContentChanges() {
-    try {
-      const observer = new MutationObserver((mutations) => {
-        let shouldReapplyStyles = false;
+	private observeContentChanges() {
+		try {
+			const observer = new MutationObserver((mutations) => {
+				let shouldReapplyStyles = false;
 
-        mutations.forEach((mutation) => {
-          if (mutation.type === 'childList') {
-            mutation.addedNodes.forEach((node) => {
-              if (node.nodeType === Node.ELEMENT_NODE) {
-                const element = node as Element;
-                if (element.classList?.contains('protyle-wysiwyg') ||
-                    element.classList?.contains('b3-typography') ||
-                    element.querySelector?.('.protyle-wysiwyg') ||
-                    element.querySelector?.('.b3-typography')) {
-                  shouldReapplyStyles = true;
-                }
-              }
-            });
-          }
-        });
+				mutations.forEach((mutation) => {
+					if (mutation.type === "childList") {
+						mutation.addedNodes.forEach((node) => {
+							if (node.nodeType === Node.ELEMENT_NODE) {
+								const element = node as Element;
+								if (
+									element.classList?.contains("protyle-wysiwyg") ||
+									element.classList?.contains("b3-typography") ||
+									element.querySelector?.(".protyle-wysiwyg") ||
+									element.querySelector?.(".b3-typography")
+								) {
+									shouldReapplyStyles = true;
+								}
+							}
+						});
+					}
+				});
 
-        if (shouldReapplyStyles) {
-          setTimeout(async () => {
-            await this.applyHeadingStyle();
-          }, 100);
-        }
-      });
+				if (shouldReapplyStyles) {
+					setTimeout(async () => {
+						await this.applyHeadingStyle();
+					}, 100);
+				}
+			});
 
-      const observerOptions = {
-        childList: true,
-        subtree: true,
-        attributes: false
-      };
+			const observerOptions = {
+				childList: true,
+				subtree: true,
+				attributes: false,
+			};
 
-      observer.observe(document.body, observerOptions);
-      this.contentObserver = observer;
+			observer.observe(document.body, observerOptions);
+			this.contentObserver = observer;
+		} catch (error) {
+			console.error("启动内容变化观察器失败:", error);
+		}
+	}
 
-    } catch (error) {
-      console.error('启动内容变化观察器失败:', error);
-    }
-  }
+	private async initAutoBackup() {
+		try {
+			const data = await this.plugin.loadData("data-backup-settings");
 
-  private async initAutoBackup() {
-    try {
-      const data = await this.plugin.loadData('data-backup-settings');
+			if (data) {
+				this.workspacePath = data.workspacePath || "";
+				this.workspaceRoot = data.workspaceRoot || "";
+				this.lastBackupTimestamp = data.lastBackupTimestamp || 0;
+			}
 
-      if (data) {
-        this.workspacePath = data.workspacePath || '';
-        this.workspaceRoot = data.workspaceRoot || '';
-        this.lastBackupTimestamp = data.lastBackupTimestamp || 0;
-      }
+			const isMobile = checkIsMobile();
+			const autoBackupEnabled = data?.autoBackupEnabled ?? false;
+			const backupFrequency = data?.backupFrequency ?? "daily";
 
-      const isMobile = checkIsMobile();
-      const autoBackupEnabled = data?.autoBackupEnabled ?? false;
-      const backupFrequency = data?.backupFrequency ?? 'daily';
+			if (!isMobile && autoBackupEnabled) {
+				this.startAutoBackupTimer(backupFrequency);
+			}
+		} catch (error) {
+			console.error("初始化自动备份失败:", error);
+		}
+	}
 
-      if (!isMobile && autoBackupEnabled) {
-        this.startAutoBackupTimer(backupFrequency);
-      }
-    } catch (error) {
-      console.error('初始化自动备份失败:', error);
-    }
-  }
+	private startAutoBackupTimer(backupFrequency: string) {
+		this.stopAutoBackupTimer();
 
-  private startAutoBackupTimer(backupFrequency: string) {
-    this.stopAutoBackupTimer();
+		const interval = this.getBackupInterval(backupFrequency);
+		const checkAndBackup = async () => {
+			if (!this.workspacePath) {
+				await this.detectWorkspacePath();
+				if (!this.workspacePath) {
+					return;
+				}
+			}
 
-    const interval = this.getBackupInterval(backupFrequency);
-    const checkAndBackup = async () => {
-      if (!this.workspacePath) {
-        await this.detectWorkspacePath();
-        if (!this.workspacePath) {
-          return;
-        }
-      }
+			const now = new Date();
+			const currentTime = now.getTime();
+			const timeSinceLastBackup = currentTime - this.lastBackupTimestamp;
 
-      const now = new Date();
-      const currentTime = now.getTime();
-      const timeSinceLastBackup = currentTime - this.lastBackupTimestamp;
+			if (timeSinceLastBackup >= interval) {
+				await this.performAutoBackup(backupFrequency);
+			}
+		};
 
-      if (timeSinceLastBackup >= interval) {
-        await this.performAutoBackup(backupFrequency);
-      }
-    };
+		this.autoBackupTimer = window.setInterval(checkAndBackup, 60000);
+		checkAndBackup();
+	}
 
-    this.autoBackupTimer = window.setInterval(checkAndBackup, 60000);
-    checkAndBackup();
-  }
+	private stopAutoBackupTimer() {
+		if (this.autoBackupTimer) {
+			clearInterval(this.autoBackupTimer);
+			this.autoBackupTimer = null;
+		}
+	}
 
-  private stopAutoBackupTimer() {
-    if (this.autoBackupTimer) {
-      clearInterval(this.autoBackupTimer);
-      this.autoBackupTimer = null;
-    }
-  }
+	private async detectWorkspacePath(): Promise<boolean> {
+		if ((window as any).__SIYUAN_WS__ || (window as any).SIYUAN_WORKSPACE) {
+			const rootPath =
+				(window as any).__SIYUAN_WORKSPACE__ ||
+				(window as any).SIYUAN_WORKSPACE;
+			this.workspaceRoot = rootPath;
+			this.workspacePath = `${rootPath}/data`;
+			return true;
+		}
 
-  private async detectWorkspacePath(): Promise<boolean> {
-    if ((window as any).__SIYUAN_WS__ || (window as any).SIYUAN_WORKSPACE) {
-      const rootPath = (window as any).__SIYUAN_WORKSPACE__ || (window as any).SIYUAN_WORKSPACE;
-      this.workspaceRoot = rootPath;
-      this.workspacePath = `${rootPath}/data`;
-      return true;
-    }
+		const savedPath = localStorage.getItem("siyuan-workspace-path");
+		const savedRoot = localStorage.getItem("siyuan-workspace-root");
+		if (savedPath) {
+			this.workspacePath = savedPath;
+			this.workspaceRoot = savedRoot || savedPath.replace(/\/data$/, "");
+			return true;
+		}
 
-    const savedPath = localStorage.getItem('siyuan-workspace-path');
-    const savedRoot = localStorage.getItem('siyuan-workspace-root');
-    if (savedPath) {
-      this.workspacePath = savedPath;
-      this.workspaceRoot = savedRoot || savedPath.replace(/\/data$/, '');
-      return true;
-    }
+		if (this.plugin && (this.plugin as any).dataPath) {
+			this.workspaceRoot = (this.plugin as any).dataPath;
+			this.workspacePath = `${(this.plugin as any).dataPath}/data`;
+			return true;
+		}
 
-    if (this.plugin && (this.plugin as any).dataPath) {
-      this.workspaceRoot = (this.plugin as any).dataPath;
-      this.workspacePath = `${(this.plugin as any).dataPath}/data`;
-      return true;
-    }
+		try {
+			const response = await fetch("/api/system/getConf", {
+				method: "POST",
+			});
+			if (response.ok) {
+				const data = await response.json();
+				const wsPath = data?.data?.conf?.system?.workspaceDir;
+				if (wsPath) {
+					this.workspaceRoot = wsPath;
+					this.workspacePath = `${wsPath}/data`;
+					localStorage.setItem("siyuan-workspace-root", wsPath);
+					localStorage.setItem("siyuan-workspace-path", `${wsPath}/data`);
+					return true;
+				}
+			}
+		} catch (e) {
+			console.error("通过 API 获取工作区路径失败:", e);
+		}
 
-    try {
-      const response = await fetch('/api/system/getConf', {
-        method: 'POST'
-      });
-      if (response.ok) {
-        const data = await response.json();
-        const wsPath = data?.data?.conf?.system?.workspaceDir;
-        if (wsPath) {
-          this.workspaceRoot = wsPath;
-          this.workspacePath = `${wsPath}/data`;
-          localStorage.setItem('siyuan-workspace-root', wsPath);
-          localStorage.setItem('siyuan-workspace-path', `${wsPath}/data`);
-          return true;
-        }
-      }
-    } catch (e) {
-      console.error('通过 API 获取工作区路径失败:', e);
-    }
+		return false;
+	}
 
-    return false;
-  }
+	private getBackupInterval(backupFrequency: string): number {
+		switch (backupFrequency) {
+			case "minute":
+				return 60 * 1000;
+			case "hourly":
+				return 60 * 60 * 1000;
+			case "daily":
+				return 24 * 60 * 60 * 1000;
+			default:
+				return 24 * 60 * 60 * 1000;
+		}
+	}
 
-  private getBackupInterval(backupFrequency: string): number {
-    switch (backupFrequency) {
-      case 'minute':
-        return 60 * 1000;
-      case 'hourly':
-        return 60 * 60 * 1000;
-      case 'daily':
-        return 24 * 60 * 60 * 1000;
-      default:
-        return 24 * 60 * 60 * 1000;
-    }
-  }
+	private async performAutoBackup(backupFrequency: string) {
+		try {
+			if (typeof window.require !== "function") {
+				return;
+			}
 
-  private async performAutoBackup(backupFrequency: string) {
-    try {
-      if (typeof window.require !== 'function') {
-        return;
-      }
+			const fs = window.require("fs").promises;
+			const path = window.require("path");
 
-      const fs = window.require('fs').promises;
-      const path = window.require('path');
+			if (!this.workspacePath) {
+				await this.detectWorkspacePath();
+				if (!this.workspacePath) {
+					return;
+				}
+			}
 
-      if (!this.workspacePath) {
-        await this.detectWorkspacePath();
-        if (!this.workspacePath) {
-          return;
-        }
-      }
+			const data = await this.plugin.loadData("data-backup-settings");
+			const keepBackupCount = data?.keepBackupCount || 7;
+			const backupDir = `${this.workspaceRoot}/data-backup`;
 
-      const data = await this.plugin.loadData('data-backup-settings');
-      const keepBackupCount = data?.keepBackupCount || 7;
-      const backupDir = `${this.workspaceRoot}/data-backup`;
+			const now = new Date();
+			const year = now.getFullYear().toString().slice(-2);
+			const month = (now.getMonth() + 1).toString().padStart(2, "0");
+			const day = now.getDate().toString().padStart(2, "0");
+			const hour = now.getHours().toString().padStart(2, "0");
+			const minute = now.getMinutes().toString().padStart(2, "0");
+			const second = now.getSeconds().toString().padStart(2, "0");
+			const fileName = `data-${year}${month}${day}-${hour}${minute}${second}.zip`;
 
-      const now = new Date();
-      const year = now.getFullYear().toString().slice(-2);
-      const month = (now.getMonth() + 1).toString().padStart(2, '0');
-      const day = now.getDate().toString().padStart(2, '0');
-      const hour = now.getHours().toString().padStart(2, '0');
-      const minute = now.getMinutes().toString().padStart(2, '0');
-      const second = now.getSeconds().toString().padStart(2, '0');
-      const fileName = `data-${year}${month}${day}-${hour}${minute}${second}.zip`;
+			const dataPath = this.workspacePath;
+			try {
+				await fs.access(dataPath);
+			} catch {
+				return;
+			}
 
-      const dataPath = this.workspacePath;
-      try {
-        await fs.access(dataPath);
-      } catch {
-        return;
-      }
+			const zip = new JSZip();
+			await this.addDirectoryToZip(zip, dataPath, "", fs, path);
 
-      const zip = new JSZip();
-      await this.addDirectoryToZip(zip, dataPath, '', fs, path);
+			const backupData = {
+				timestamp: Date.now(),
+				backupTime: new Date().toISOString(),
+				version: "1.0",
+				workspaceRoot: this.workspaceRoot,
+				workspaceDataPath: this.workspacePath,
+				backupDir: backupDir,
+			};
+			zip.file("backup-info.json", JSON.stringify(backupData, null, 2));
 
-      const backupData = {
-        timestamp: Date.now(),
-        backupTime: new Date().toISOString(),
-        version: '1.0',
-        workspaceRoot: this.workspaceRoot,
-        workspaceDataPath: this.workspacePath,
-        backupDir: backupDir
-      };
-      zip.file('backup-info.json', JSON.stringify(backupData, null, 2));
+			const zipBuffer = await zip.generateAsync({
+				type: "uint8array",
+				compression: "DEFLATE",
+				compressionOptions: { level: 6 },
+			});
 
-      const zipBuffer = await zip.generateAsync({
-        type: 'uint8array',
-        compression: 'DEFLATE',
-        compressionOptions: { level: 6 }
-      });
+			await fs.mkdir(backupDir, { recursive: true });
+			const zipFilePath = path.join(backupDir, fileName);
+			await fs.writeFile(zipFilePath, zipBuffer);
 
-      await fs.mkdir(backupDir, { recursive: true });
-      const zipFilePath = path.join(backupDir, fileName);
-      await fs.writeFile(zipFilePath, zipBuffer);
+			this.lastBackupTimestamp = Date.now();
+			await this.plugin.saveData("data-backup-settings", {
+				...data,
+				lastBackupTimestamp: this.lastBackupTimestamp,
+				lastBackupTime: new Date().toLocaleString(),
+			});
 
-      this.lastBackupTimestamp = Date.now();
-      await this.plugin.saveData('data-backup-settings', {
-        ...data,
-        lastBackupTimestamp: this.lastBackupTimestamp,
-        lastBackupTime: new Date().toLocaleString()
-      });
+			await this.cleanOldBackups(backupDir, keepBackupCount, fs, path);
+		} catch (error) {
+			console.error("自动备份失败:", error);
+		}
+	}
 
-      await this.cleanOldBackups(backupDir, keepBackupCount, fs, path);
+	private async addDirectoryToZip(
+		zip: JSZip,
+		dirPath: string,
+		zipPath: string,
+		fs: any,
+		path: any,
+	) {
+		const entries = await fs.readdir(dirPath, { withFileTypes: true });
 
-    } catch (error) {
-      console.error('自动备份失败:', error);
-    }
-  }
+		for (const entry of entries) {
+			const fullPath = path.join(dirPath, entry.name);
+			const relativePath = zipPath ? `${zipPath}/${entry.name}` : entry.name;
 
-  private async addDirectoryToZip(zip: JSZip, dirPath: string, zipPath: string, fs: any, path: any) {
-    const entries = await fs.readdir(dirPath, { withFileTypes: true });
+			if (entry.isDirectory()) {
+				if (entry.name === "temp" || entry.name === ".recycle") {
+					continue;
+				}
+				await this.addDirectoryToZip(zip, fullPath, relativePath, fs, path);
+			} else if (entry.isFile()) {
+				try {
+					const content = await fs.readFile(fullPath);
+					zip.file(relativePath, content);
+				} catch (err) {
+					console.warn(`无法读取文件: ${fullPath}`, err);
+				}
+			}
+		}
+	}
 
-    for (const entry of entries) {
-      const fullPath = path.join(dirPath, entry.name);
-      const relativePath = zipPath ? `${zipPath}/${entry.name}` : entry.name;
+	private async cleanOldBackups(
+		backupDir: string,
+		keepCount: number,
+		fs: any,
+		path: any,
+	) {
+		try {
+			const files = await fs.readdir(backupDir);
+			const backupFiles = files
+				.filter(
+					(file: string) => file.startsWith("data-") && file.endsWith(".zip"),
+				)
+				.map((file: string) => ({
+					name: file,
+					path: path.join(backupDir, file),
+					time: fs.statSync(path.join(backupDir, file)).mtime.getTime(),
+				}))
+				.sort((a: any, b: any) => b.time - a.time);
 
-      if (entry.isDirectory()) {
-        if (entry.name === 'temp' || entry.name === '.recycle') {
-          continue;
-        }
-        await this.addDirectoryToZip(zip, fullPath, relativePath, fs, path);
-      } else if (entry.isFile()) {
-        try {
-          const content = await fs.readFile(fullPath);
-          zip.file(relativePath, content);
-        } catch (err) {
-          console.warn(`无法读取文件: ${fullPath}`, err);
-        }
-      }
-    }
-  }
+			if (backupFiles.length > keepCount) {
+				for (let i = keepCount; i < backupFiles.length; i++) {
+					try {
+						await fs.unlink(backupFiles[i].path);
+					} catch (e) {
+						console.warn(`删除旧备份失败: ${backupFiles[i].name}`, e);
+					}
+				}
+			}
+		} catch (error) {
+			console.error("清理旧备份失败:", error);
+		}
+	}
 
-  private async cleanOldBackups(backupDir: string, keepCount: number, fs: any, path: any) {
-    try {
-      const files = await fs.readdir(backupDir);
-      const backupFiles = files
-        .filter((file: string) => file.startsWith('data-') && file.endsWith('.zip'))
-        .map((file: string) => ({
-          name: file,
-          path: path.join(backupDir, file),
-          time: fs.statSync(path.join(backupDir, file)).mtime.getTime()
-        }))
-        .sort((a: any, b: any) => b.time - a.time);
+	public restartAutoBackupTimer(enabled: boolean, frequency: string) {
+		this.stopAutoBackupTimer();
+		if (enabled) {
+			this.startAutoBackupTimer(frequency);
+		}
+	}
 
-      if (backupFiles.length > keepCount) {
-        for (let i = keepCount; i < backupFiles.length; i++) {
-          try {
-            await fs.unlink(backupFiles[i].path);
-          } catch (e) {
-            console.warn(`删除旧备份失败: ${backupFiles[i].name}`, e);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('清理旧备份失败:', error);
-    }
-  }
-
-  public restartAutoBackupTimer(enabled: boolean, frequency: string) {
-    this.stopAutoBackupTimer();
-    if (enabled) {
-      this.startAutoBackupTimer(frequency);
-    }
-  }
-
-  public destroy() {
-    this.stopAutoBackupTimer();
-    if (this.contentObserver) {
-      this.contentObserver.disconnect();
-      this.contentObserver = null;
-    }
-    if (this.docCountManager) {
-      this.docCountManager.stop();
-      this.docCountManager = null;
-    }
-  }
+	public destroy() {
+		this.stopAutoBackupTimer();
+		if (this.contentObserver) {
+			this.contentObserver.disconnect();
+			this.contentObserver = null;
+		}
+		if (this.docCountManager) {
+			this.docCountManager.stop();
+			this.docCountManager = null;
+		}
+	}
 }
 
 export function registerGeneralSettings(plugin: Plugin) {
-  const settings = new GeneralSettings(plugin);
-  settings.init();
-  (plugin as any).__generalSettings = settings;
-  return settings;
+	const settings = new GeneralSettings(plugin);
+	settings.init();
+	(plugin as any).__generalSettings = settings;
+	return settings;
 }

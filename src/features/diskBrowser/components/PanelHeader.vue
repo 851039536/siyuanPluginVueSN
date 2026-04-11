@@ -26,20 +26,20 @@
 </template>
 
 <script setup lang="ts">
-import Button from '@/components/Button.vue'
-import Tag from '@/components/Tag.vue'
-import type { CacheStatus, DiskBrowserI18n } from '../types'
+import Button from "@/components/Button.vue";
+import Tag from "@/components/Tag.vue";
+import type { CacheStatus, DiskBrowserI18n } from "../types";
 
 interface Props {
-  i18n: DiskBrowserI18n
-  cacheStatus: CacheStatus
-  loading: boolean
+	i18n: DiskBrowserI18n;
+	cacheStatus: CacheStatus;
+	loading: boolean;
 }
 
-defineProps<Props>()
+defineProps<Props>();
 defineEmits<{
-  refresh: []
-}>()
+	refresh: [];
+}>();
 </script>
 
 <style scoped lang="scss">

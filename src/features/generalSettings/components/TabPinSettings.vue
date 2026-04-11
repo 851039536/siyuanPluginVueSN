@@ -125,176 +125,177 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
-import { saveTabPinSettings, loadTabPinSettings } from '@/config/settings'
+import { ref, watch, onMounted } from "vue";
+import { saveTabPinSettings, loadTabPinSettings } from "@/config/settings";
 
 interface Props {
-  i18n?: any
-  plugin?: any
+	i18n?: any;
+	plugin?: any;
 }
 
 interface Emits {
-  (e: 'change', settings: any): void
+	(e: "change", settings: any): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  i18n: () => ({}),
-  plugin: null
-})
+	i18n: () => ({}),
+	plugin: null,
+});
 
-const emit = defineEmits<Emits>()
+const emit = defineEmits<Emits>();
 
 // 默认值
-const defaultTextColor = 'inherit'
-const defaultBackgroundColor = 'rgba(var(--b3-theme-primary-rgb), 0.1)'
+const defaultTextColor = "inherit";
+const defaultBackgroundColor = "rgba(var(--b3-theme-primary-rgb), 0.1)";
 
 // 状态
-const enabled = ref(true)
-const displayMode = ref<'iconAndText' | 'textOnly'>('iconAndText')
-const textColor = ref(defaultTextColor)
-const backgroundColor = ref(defaultBackgroundColor)
+const enabled = ref(true);
+const displayMode = ref<"iconAndText" | "textOnly">("iconAndText");
+const textColor = ref(defaultTextColor);
+const backgroundColor = ref(defaultBackgroundColor);
 
 // 统一的设置变更处理函数
 function handleSettingsChange() {
-  applyToDocument()
-  autoSave()
+	applyToDocument();
+	autoSave();
 }
 
 // 应用到文档
 function applyToDocument() {
-  let style = document.getElementById('tab-pin-settings-style') as HTMLStyleElement | null
-  if (!style) {
-    style = document.createElement('style')
-    style.id = 'tab-pin-settings-style'
-    document.head.appendChild(style)
-  }
+	let style = document.getElementById(
+		"tab-pin-settings-style",
+	) as HTMLStyleElement | null;
+	if (!style) {
+		style = document.createElement("style");
+		style.id = "tab-pin-settings-style";
+		document.head.appendChild(style);
+	}
 
-  if (enabled.value) {
-    let css = `
+	if (enabled.value) {
+		let css = `
       /* 钉住页签：显示标题文本 */
       .layout-tab-bar .item.item--pin .item__text {
         width: auto !important;
         max-width: none !important;
         display: flex !important;
       }
-    `
+    `;
 
-    // 根据显示模式添加不同的样式
-    if (displayMode.value === 'textOnly') {
-      css += `
+		// 根据显示模式添加不同的样式
+		if (displayMode.value === "textOnly") {
+			css += `
         /* 仅显示标题：隐藏图标 */
         .layout-tab-bar .item.item--pin .item__icon {
           display: none !important;
         }
-      `
-    }
+      `;
+		}
 
-    css += `
+		css += `
       /* 钉住页签：应用自定义颜色 */
       .layout-tab-bar .item.item--pin {
-        ${textColor.value !== defaultTextColor ? `color: ${textColor.value} !important;` : ''}
-        ${backgroundColor.value !== defaultBackgroundColor ? `background: ${backgroundColor.value} !important;` : ''}
+        ${textColor.value !== defaultTextColor ? `color: ${textColor.value} !important;` : ""}
+        ${backgroundColor.value !== defaultBackgroundColor ? `background: ${backgroundColor.value} !important;` : ""}
       }
-    `
+    `;
 
-    style.textContent = css
-  } else {
-    // 禁用时移除所有样式
-    style.textContent = ''
-  }
+		style.textContent = css;
+	} else {
+		// 禁用时移除所有样式
+		style.textContent = "";
+	}
 }
 
 // 启用状态变化
 function onEnabledChange() {
-  handleSettingsChange()
+	handleSettingsChange();
 }
 
 // 显示模式变化
 function onDisplayModeChange() {
-  handleSettingsChange()
+	handleSettingsChange();
 }
 
 // 文字颜色变化
 function onTextColorChange() {
-  handleSettingsChange()
+	handleSettingsChange();
 }
 
 // 背景颜色变化
 function onBackgroundColorChange() {
-  handleSettingsChange()
+	handleSettingsChange();
 }
 
 // 重置文字颜色
 function resetTextColor() {
-  textColor.value = defaultTextColor
-  handleSettingsChange()
+	textColor.value = defaultTextColor;
+	handleSettingsChange();
 }
 
 // 重置背景颜色
 function resetBackgroundColor() {
-  backgroundColor.value = defaultBackgroundColor
-  handleSettingsChange()
+	backgroundColor.value = defaultBackgroundColor;
+	handleSettingsChange();
 }
 
 // 自动保存设置
 async function autoSave() {
-  if (!props.plugin) return
+	if (!props.plugin) return;
 
-  try {
-    const settingsToSave = {
-      enabled: enabled.value,
-      displayMode: displayMode.value,
-      textColor: textColor.value,
-      backgroundColor: backgroundColor.value
-    }
+	try {
+		const settingsToSave = {
+			enabled: enabled.value,
+			displayMode: displayMode.value,
+			textColor: textColor.value,
+			backgroundColor: backgroundColor.value,
+		};
 
-    await saveTabPinSettings(props.plugin, settingsToSave)
-    emit('change', settingsToSave)
-  } catch (error) {
-    console.error('保存钉住页签设置失败:', error)
-  }
+		await saveTabPinSettings(props.plugin, settingsToSave);
+		emit("change", settingsToSave);
+	} catch (error) {
+		console.error("保存钉住页签设置失败:", error);
+	}
 }
 
 // 加载保存的设置
 async function loadSettings() {
-  if (!props.plugin) {
-    console.warn('插件实例不可用，使用默认设置')
-    return
-  }
+	if (!props.plugin) {
+		console.warn("插件实例不可用，使用默认设置");
+		return;
+	}
 
-  try {
-    const settings = await loadTabPinSettings(props.plugin)
+	try {
+		const settings = await loadTabPinSettings(props.plugin);
 
-    enabled.value = settings.enabled ?? true
-    displayMode.value = settings.displayMode || 'iconAndText'
-    textColor.value = settings.textColor || defaultTextColor
-    backgroundColor.value = settings.backgroundColor || defaultBackgroundColor
-
-  } catch (error) {
-    console.error('加载钉住页签设置失败:', error)
-  }
+		enabled.value = settings.enabled ?? true;
+		displayMode.value = settings.displayMode || "iconAndText";
+		textColor.value = settings.textColor || defaultTextColor;
+		backgroundColor.value = settings.backgroundColor || defaultBackgroundColor;
+	} catch (error) {
+		console.error("加载钉住页签设置失败:", error);
+	}
 }
 
 // 初始化 - 在组件挂载后执行
 onMounted(async () => {
-  await loadSettings()
-  // 样式应用已移至 GeneralSettings.init() 中
-})
+	await loadSettings();
+	// 样式应用已移至 GeneralSettings.init() 中
+});
 
 // 监听变化，自动保存
-watch(enabled, handleSettingsChange)
-watch(displayMode, handleSettingsChange)
-watch(textColor, handleSettingsChange)
-watch(backgroundColor, handleSettingsChange)
+watch(enabled, handleSettingsChange);
+watch(displayMode, handleSettingsChange);
+watch(textColor, handleSettingsChange);
+watch(backgroundColor, handleSettingsChange);
 
 // 暴露方法
 defineExpose({
-  loadSettings,
-  enabled,
-  displayMode,
-  textColor,
-  backgroundColor
-})
+	loadSettings,
+	enabled,
+	displayMode,
+	textColor,
+	backgroundColor,
+});
 </script>
 
 <style scoped>

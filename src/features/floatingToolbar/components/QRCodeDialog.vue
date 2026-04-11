@@ -97,161 +97,187 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, computed } from 'vue'
-import QRCode from 'qrcode'
-import { showMessage } from 'siyuan'
-import Button from '@/components/Button.vue'
-import Textarea from '@/components/Textarea.vue'
-import Select, { type SelectOption } from '@/components/Select.vue'
-import Slider from '@/components/Slider.vue'
-import Label from '@/components/Label.vue'
+import { ref, watch, nextTick, computed } from "vue";
+import QRCode from "qrcode";
+import { showMessage } from "siyuan";
+import Button from "@/components/Button.vue";
+import Textarea from "@/components/Textarea.vue";
+import Select, { type SelectOption } from "@/components/Select.vue";
+import Slider from "@/components/Slider.vue";
+import Label from "@/components/Label.vue";
 
 interface Props {
-  visible: boolean
-  content?: string
-  i18n?: Record<string, any>
+	visible: boolean;
+	content?: string;
+	i18n?: Record<string, any>;
 }
 
 interface Emits {
-  (e: 'update:visible', value: boolean): void
-  (e: 'close'): void
+	(e: "update:visible", value: boolean): void;
+	(e: "close"): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  i18n: () => ({})
-})
+	i18n: () => ({}),
+});
 
-const emit = defineEmits<Emits>()
+const emit = defineEmits<Emits>();
 
 // 状态
-const inputContent = ref(props.content || '')
-const qrcodeSize = ref(180)
-const errorCorrection = ref<'L' | 'M' | 'Q' | 'H'>('M')
-const qrcodeContainer = ref<HTMLDivElement>()
-const isGenerating = ref(false)
-const errorMessage = ref('')
-let lastGeneratedContent = ''
+const inputContent = ref(props.content || "");
+const qrcodeSize = ref(180);
+const errorCorrection = ref<"L" | "M" | "Q" | "H">("M");
+const qrcodeContainer = ref<HTMLDivElement>();
+const isGenerating = ref(false);
+const errorMessage = ref("");
+let lastGeneratedContent = "";
 
 const errorCorrectionOptions = computed<SelectOption[]>(() => [
-  { value: 'L', label: 'L (7%)' },
-  { value: 'M', label: 'M (15%)' },
-  { value: 'Q', label: 'Q (25%)' },
-  { value: 'H', label: 'H (30%)' }
-])
+	{ value: "L", label: "L (7%)" },
+	{ value: "M", label: "M (15%)" },
+	{ value: "Q", label: "Q (25%)" },
+	{ value: "H", label: "H (30%)" },
+]);
 
 // 监听props变化
-watch(() => props.content, (newContent) => {
-  if (newContent && newContent !== lastGeneratedContent) {
-    inputContent.value = newContent
-    lastGeneratedContent = newContent
-    nextTick(() => {
-      regenerateQRCode()
-    })
-  }
-})
+watch(
+	() => props.content,
+	(newContent) => {
+		if (newContent && newContent !== lastGeneratedContent) {
+			inputContent.value = newContent;
+			lastGeneratedContent = newContent;
+			nextTick(() => {
+				regenerateQRCode();
+			});
+		}
+	},
+);
 
 // 生成二维码
 async function regenerateQRCode() {
-  if (!inputContent.value || !qrcodeContainer.value) return
+	if (!inputContent.value || !qrcodeContainer.value) return;
 
-  try {
-    isGenerating.value = true
-    errorMessage.value = ''
+	try {
+		isGenerating.value = true;
+		errorMessage.value = "";
 
-    // 清空容器
-    qrcodeContainer.value.innerHTML = ''
+		// 清空容器
+		qrcodeContainer.value.innerHTML = "";
 
-    // 生成二维码
-    const canvas = await QRCode.toCanvas(inputContent.value, {
-      width: qrcodeSize.value,
-      errorCorrectionLevel: errorCorrection.value,
-      margin: 2,
-      color: {
-        dark: '#000000',
-        light: '#ffffff'
-      }
-    })
+		// 生成二维码
+		const canvas = await QRCode.toCanvas(inputContent.value, {
+			width: qrcodeSize.value,
+			errorCorrectionLevel: errorCorrection.value,
+			margin: 2,
+			color: {
+				dark: "#000000",
+				light: "#ffffff",
+			},
+		});
 
-    qrcodeContainer.value.appendChild(canvas)
-    isGenerating.value = false
-  } catch (error) {
-    errorMessage.value = props.i18n.qrcodeGenerateFailed || '生成二维码失败'
-    showMessage(errorMessage.value, 3000, 'error')
-    isGenerating.value = false
-  }
+		qrcodeContainer.value.appendChild(canvas);
+		isGenerating.value = false;
+	} catch (error) {
+		errorMessage.value = props.i18n.qrcodeGenerateFailed || "生成二维码失败";
+		showMessage(errorMessage.value, 3000, "error");
+		isGenerating.value = false;
+	}
 }
 
 // 复制二维码到剪贴板
 async function copyQRCode() {
-  if (!qrcodeContainer.value) return
+	if (!qrcodeContainer.value) return;
 
-  try {
-    const canvas = qrcodeContainer.value.querySelector('canvas')
-    if (!canvas) {
-      showMessage(props.i18n.qrcodeNotGenerated || '请先生成二维码', 3000, 'info')
-      return
-    }
+	try {
+		const canvas = qrcodeContainer.value.querySelector("canvas");
+		if (!canvas) {
+			showMessage(
+				props.i18n.qrcodeNotGenerated || "请先生成二维码",
+				3000,
+				"info",
+			);
+			return;
+		}
 
-    canvas.toBlob((blob) => {
-      if (!blob) {
-        showMessage(props.i18n.qrcodeCopyFailed || '复制失败', 3000, 'error')
-        return
-      }
+		canvas.toBlob((blob) => {
+			if (!blob) {
+				showMessage(props.i18n.qrcodeCopyFailed || "复制失败", 3000, "error");
+				return;
+			}
 
-      try {
-        const item = new ClipboardItem({ 'image/png': blob })
-        navigator.clipboard.write([item]).then(() => {
-          showMessage(props.i18n.qrcodeCopied || '二维码已复制到剪贴板', 3000, 'info')
-        }).catch((err) => {
-          showMessage(props.i18n.qrcodeCopyFailed || '复制失败', 3000, 'error')
-        })
-      } catch (err) {
-        showMessage(props.i18n.qrcodeCopyFailed || '复制失败', 3000, 'error')
-      }
-    })
-  } catch (error) {
-    showMessage(props.i18n.qrcodeCopyFailed || '复制失败', 3000, 'error')
-  }
+			try {
+				const item = new ClipboardItem({ "image/png": blob });
+				navigator.clipboard
+					.write([item])
+					.then(() => {
+						showMessage(
+							props.i18n.qrcodeCopied || "二维码已复制到剪贴板",
+							3000,
+							"info",
+						);
+					})
+					.catch((err) => {
+						showMessage(
+							props.i18n.qrcodeCopyFailed || "复制失败",
+							3000,
+							"error",
+						);
+					});
+			} catch (err) {
+				showMessage(props.i18n.qrcodeCopyFailed || "复制失败", 3000, "error");
+			}
+		});
+	} catch (error) {
+		showMessage(props.i18n.qrcodeCopyFailed || "复制失败", 3000, "error");
+	}
 }
 
 // 下载二维码
 function downloadQRCode() {
-  if (!qrcodeContainer.value) return
+	if (!qrcodeContainer.value) return;
 
-  try {
-    const canvas = qrcodeContainer.value.querySelector('canvas')
-    if (!canvas) {
-      showMessage(props.i18n.qrcodeNotGenerated || '请先生成二维码', 3000, 'info')
-      return
-    }
+	try {
+		const canvas = qrcodeContainer.value.querySelector("canvas");
+		if (!canvas) {
+			showMessage(
+				props.i18n.qrcodeNotGenerated || "请先生成二维码",
+				3000,
+				"info",
+			);
+			return;
+		}
 
-    try {
-      const link = document.createElement('a')
-      const dataUrl = canvas.toDataURL('image/png')
+		try {
+			const link = document.createElement("a");
+			const dataUrl = canvas.toDataURL("image/png");
 
-      if (!dataUrl) {
-        showMessage(props.i18n.qrcodeDownloadFailed || '下载失败', 3000, 'error')
-        return
-      }
+			if (!dataUrl) {
+				showMessage(
+					props.i18n.qrcodeDownloadFailed || "下载失败",
+					3000,
+					"error",
+				);
+				return;
+			}
 
-      link.href = dataUrl
-      link.download = `qrcode-${Date.now()}.png`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      showMessage(props.i18n.qrcodeDownloaded || '二维码已下载', 3000, 'info')
-    } catch (downloadErr) {
-      showMessage(props.i18n.qrcodeDownloadFailed || '下载失败', 3000, 'error')
-    }
-  } catch (error) {
-    showMessage(props.i18n.qrcodeDownloadFailed || '下载失败', 3000, 'error')
-  }
+			link.href = dataUrl;
+			link.download = `qrcode-${Date.now()}.png`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			showMessage(props.i18n.qrcodeDownloaded || "二维码已下载", 3000, "info");
+		} catch (downloadErr) {
+			showMessage(props.i18n.qrcodeDownloadFailed || "下载失败", 3000, "error");
+		}
+	} catch (error) {
+		showMessage(props.i18n.qrcodeDownloadFailed || "下载失败", 3000, "error");
+	}
 }
 
 // 关闭对话框
 function closeDialog() {
-  emit('update:visible', false)
-  emit('close')
+	emit("update:visible", false);
+	emit("close");
 }
 </script>
 

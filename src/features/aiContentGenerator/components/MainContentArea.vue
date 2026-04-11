@@ -146,46 +146,46 @@
 </template>
 
 <script setup lang="ts">
-import { Diff } from 'vue-diff';
-import 'vue-diff/dist/index.css';
-import Button from '@/components/Button.vue';
+import { Diff } from "vue-diff";
+import "vue-diff/dist/index.css";
+import Button from "@/components/Button.vue";
 
 interface Props {
-  // 状态
-  isGenerating: boolean;
-  isApplying: boolean;
-  isUndoing: boolean;
-  isInsertingSubDoc: boolean;
-  errorMessage: string;
+	// 状态
+	isGenerating: boolean;
+	isApplying: boolean;
+	isUndoing: boolean;
+	isInsertingSubDoc: boolean;
+	errorMessage: string;
 
-  // 内容
-  displayedContent: string;
-  generatedContent: string;
-  originalContent: string;
-  renderedMarkdown: string;
+	// 内容
+	displayedContent: string;
+	generatedContent: string;
+	originalContent: string;
+	renderedMarkdown: string;
 
-  // 差异对比
-  showDiffMode: boolean;
-  diffMode: 'split' | 'unified';
+	// 差异对比
+	showDiffMode: boolean;
+	diffMode: "split" | "unified";
 
-  // 操作可用性
-  canApply: boolean;
-  canShowDiff: boolean;
-  canInsertSubDoc: boolean;
-  canUndo: boolean;
+	// 操作可用性
+	canApply: boolean;
+	canShowDiff: boolean;
+	canInsertSubDoc: boolean;
+	canUndo: boolean;
 }
 
 const props = defineProps<Props>();
 
 const emit = defineEmits<{
-  (e: 'stop'): void;
-  (e: 'apply-edit'): void;
-  (e: 'toggle-diff'): void;
-  (e: 'insert-subdoc'): void;
-  (e: 'undo-edit'): void;
-  (e: 'copy'): void;
-  (e: 'clear'): void;
-  (e: 'update:diffMode', value: 'split' | 'unified'): void;
+	(e: "stop"): void;
+	(e: "apply-edit"): void;
+	(e: "toggle-diff"): void;
+	(e: "insert-subdoc"): void;
+	(e: "undo-edit"): void;
+	(e: "copy"): void;
+	(e: "clear"): void;
+	(e: "update:diffMode", value: "split" | "unified"): void;
 }>();
 </script>
 

@@ -26,56 +26,61 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import IconWrapper from '@/components/IconWrapper.vue'
-import Button from '@/components/Button.vue'
+import { ref } from "vue";
+import IconWrapper from "@/components/IconWrapper.vue";
+import Button from "@/components/Button.vue";
 
 interface Props {
-  dragText: string
-  selectText: string
+	dragText: string;
+	selectText: string;
 }
 
-defineProps<Props>()
+defineProps<Props>();
 const emit = defineEmits<{
-  fileSelect: [file: File]
-}>()
+	fileSelect: [file: File];
+}>();
 
-const isDragOver = ref(false)
-const fileInput = ref<HTMLInputElement | null>(null)
+const isDragOver = ref(false);
+const fileInput = ref<HTMLInputElement | null>(null);
 
 const triggerFileSelect = () => {
-  fileInput.value?.click()
-}
+	fileInput.value?.click();
+};
 
 const handleFileSelect = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  const file = target.files?.[0]
-  if (file) {
-    emit('fileSelect', file)
-  }
-}
+	const target = event.target as HTMLInputElement;
+	const file = target.files?.[0];
+	if (file) {
+		emit("fileSelect", file);
+	}
+};
 
 const handleDragOver = (e: DragEvent) => {
-  e.preventDefault()
-  isDragOver.value = true
-}
+	e.preventDefault();
+	isDragOver.value = true;
+};
 
 const handleDragLeave = (e: DragEvent) => {
-  e.preventDefault()
-  const rect = (e.currentTarget as Element).getBoundingClientRect()
-  if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
-    isDragOver.value = false
-  }
-}
+	e.preventDefault();
+	const rect = (e.currentTarget as Element).getBoundingClientRect();
+	if (
+		e.clientX < rect.left ||
+		e.clientX > rect.right ||
+		e.clientY < rect.top ||
+		e.clientY > rect.bottom
+	) {
+		isDragOver.value = false;
+	}
+};
 
 const handleDrop = (e: DragEvent) => {
-  e.preventDefault()
-  isDragOver.value = false
-  const files = e.dataTransfer?.files
-  if (files?.length) {
-    emit('fileSelect', files[0])
-  }
-}
+	e.preventDefault();
+	isDragOver.value = false;
+	const files = e.dataTransfer?.files;
+	if (files?.length) {
+		emit("fileSelect", files[0]);
+	}
+};
 </script>
 
 <style scoped lang="scss">

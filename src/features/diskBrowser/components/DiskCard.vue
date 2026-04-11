@@ -37,21 +37,21 @@
 </template>
 
 <script setup lang="ts">
-import Card from '@/components/Card.vue'
-import IconWrapper from '@/components/IconWrapper.vue'
-import type { DiskInfo } from '../types'
-import { formatSize } from '../utils'
+import Card from "@/components/Card.vue";
+import IconWrapper from "@/components/IconWrapper.vue";
+import type { DiskInfo } from "../types";
+import { formatSize } from "../utils";
 
 interface Props {
-  disk: DiskInfo
-  selectedDisk: string
-  expandedDisk: string
+	disk: DiskInfo;
+	selectedDisk: string;
+	expandedDisk: string;
 }
 
-defineProps<Props>()
+defineProps<Props>();
 defineEmits<{
-  click: []
-}>()
+	click: [];
+}>();
 </script>
 
 <style scoped lang="scss">

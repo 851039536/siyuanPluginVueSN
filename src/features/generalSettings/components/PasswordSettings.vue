@@ -32,52 +32,51 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { usePlugin } from '@/main'
-import type PluginSample from '@/index'
+import { ref, onMounted } from "vue";
+import { usePlugin } from "@/main";
+import type PluginSample from "@/index";
 
 interface Props {
-  i18n?: any
+	i18n?: any;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  i18n: () => ({})
-})
+	i18n: () => ({}),
+});
 
-const plugin = usePlugin() as PluginSample
-const hasPassword = ref(false)
+const plugin = usePlugin() as PluginSample;
+const hasPassword = ref(false);
 
 // 检查是否已设置密码
 async function checkPassword() {
-  try {
-    const password = await plugin.loadData('global-password')
-    hasPassword.value = !!password
-  }
-  catch (error) {
-    console.error('检查密码失败:', error)
-    hasPassword.value = false
-  }
+	try {
+		const password = await plugin.loadData("global-password");
+		hasPassword.value = !!password;
+	} catch (error) {
+		console.error("检查密码失败:", error);
+		hasPassword.value = false;
+	}
 }
 
 // 打开密码设置对话框
 function openPasswordDialog() {
-  const event = new CustomEvent('open-password-dialog', {
-    detail: { hasPassword: hasPassword.value }
-  })
-  window.dispatchEvent(event)
+	const event = new CustomEvent("open-password-dialog", {
+		detail: { hasPassword: hasPassword.value },
+	});
+	window.dispatchEvent(event);
 }
 
 onMounted(() => {
-  checkPassword()
-  window.addEventListener('password-updated', () => {
-    checkPassword()
-  })
-})
+	checkPassword();
+	window.addEventListener("password-updated", () => {
+		checkPassword();
+	});
+});
 
 defineExpose({
-  checkPassword,
-  openPasswordDialog
-})
+	checkPassword,
+	openPasswordDialog,
+});
 </script>
 
 <style scoped>

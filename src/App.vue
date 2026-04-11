@@ -48,113 +48,117 @@
 </template>
 
 <script setup lang="ts">
-import { usePlugin } from '@/main'
-import { onMounted, ref } from 'vue'
-import ImageViewer from '@/features/imageCompressor/index.vue'
-import { QRCodeDialog, PronunciationDialog } from '@/features/floatingToolbar'
-import VideoManager from '@/features/video/index.vue'
-import EverythingSearchDialog from '@/features/everythingSearch/index.vue'
-import PasswordVaultDialog from '@/features/passwordVault/index.vue'
-import { everythingSearchVisible, hideEverythingSearch, passwordVaultVisible, hidePasswordVault } from '@/features'
-import type PluginSample from '@/index'
+import { usePlugin } from "@/main";
+import { onMounted, ref } from "vue";
+import ImageViewer from "@/features/imageCompressor/index.vue";
+import { QRCodeDialog, PronunciationDialog } from "@/features/floatingToolbar";
+import VideoManager from "@/features/video/index.vue";
+import EverythingSearchDialog from "@/features/everythingSearch/index.vue";
+import PasswordVaultDialog from "@/features/passwordVault/index.vue";
+import {
+	everythingSearchVisible,
+	hideEverythingSearch,
+	passwordVaultVisible,
+	hidePasswordVault,
+} from "@/features";
+import type PluginSample from "@/index";
 
-const plugin = usePlugin() as PluginSample
-const showImageViewer = ref(false)
-const showQRCodeDialog = ref(false)
-const showVideoManager = ref(false)
-const qrcodeContent = ref('')
-const showPronunciationDialog = ref(false)
-const pronunciationWord = ref('')
+const plugin = usePlugin() as PluginSample;
+const showImageViewer = ref(false);
+const showQRCodeDialog = ref(false);
+const showVideoManager = ref(false);
+const qrcodeContent = ref("");
+const showPronunciationDialog = ref(false);
+const pronunciationWord = ref("");
 
 // 打开图片压缩器
 const openImageCompressor = () => {
-  showImageViewer.value = true
-}
+	showImageViewer.value = true;
+};
 
 // 关闭图片压缩器
 const onCloseImageViewer = () => {
-  showImageViewer.value = false
-}
+	showImageViewer.value = false;
+};
 
 // 二维码对话框控制
 const onQRCodeDialogVisibleChange = (visible: boolean) => {
-  showQRCodeDialog.value = visible
-}
+	showQRCodeDialog.value = visible;
+};
 
 const onCloseQRCodeDialog = () => {
-  showQRCodeDialog.value = false
-}
+	showQRCodeDialog.value = false;
+};
 
 // 视频管理器控制
 const openVideoManager = () => {
-  showVideoManager.value = true
-}
+	showVideoManager.value = true;
+};
 
 const onCloseVideoManager = () => {
-  showVideoManager.value = false
-}
+	showVideoManager.value = false;
+};
 
 // 公开方法，纲projuct可以通过事件打开二维码对话框
 const openQRCodeDialog = (content: string) => {
-  qrcodeContent.value = content
-  showQRCodeDialog.value = true
-}
+	qrcodeContent.value = content;
+	showQRCodeDialog.value = true;
+};
 
 // 打开谐音翻译对话框
 const openPronunciationDialog = (word: string) => {
-  pronunciationWord.value = word
-  showPronunciationDialog.value = true
-}
+	pronunciationWord.value = word;
+	showPronunciationDialog.value = true;
+};
 
 // 谐音翻译对话框控制
 const onPronunciationDialogVisibleChange = (visible: boolean) => {
-  showPronunciationDialog.value = visible
-}
+	showPronunciationDialog.value = visible;
+};
 
 const onClosePronunciationDialog = () => {
-  showPronunciationDialog.value = false
-}
-
+	showPronunciationDialog.value = false;
+};
 
 onMounted(() => {
-  window._sy_plugin_sample = {}
-  window._sy_plugin_sample.openQRCodeDialog = openQRCodeDialog
-  window._sy_plugin_sample.openPronunciationDialog = openPronunciationDialog
+	window._sy_plugin_sample = {};
+	window._sy_plugin_sample.openQRCodeDialog = openQRCodeDialog;
+	window._sy_plugin_sample.openPronunciationDialog = openPronunciationDialog;
 
-  // 监听打开二维码对话框事件
-  window.addEventListener('openQRCodeDialog', ((event: any) => {
-    const content = event.detail?.content
-    if (content) {
-      qrcodeContent.value = content
-      showQRCodeDialog.value = true
-    }
-  }) as EventListener)
+	// 监听打开二维码对话框事件
+	window.addEventListener("openQRCodeDialog", ((event: any) => {
+		const content = event.detail?.content;
+		if (content) {
+			qrcodeContent.value = content;
+			showQRCodeDialog.value = true;
+		}
+	}) as EventListener);
 
-  // 监听打开谐音翻译对话框事件
-  window.addEventListener('openPronunciationDialog', ((event: any) => {
-    const content = event.detail?.content
-    if (content) {
-      pronunciationWord.value = content
-      showPronunciationDialog.value = true
-    }
-  }) as EventListener)
+	// 监听打开谐音翻译对话框事件
+	window.addEventListener("openPronunciationDialog", ((event: any) => {
+		const content = event.detail?.content;
+		if (content) {
+			pronunciationWord.value = content;
+			showPronunciationDialog.value = true;
+		}
+	}) as EventListener);
 
-  // 监听打开图片压缩器事件
-  window.addEventListener('openImageCompressor', openImageCompressor)
+	// 监听打开图片压缩器事件
+	window.addEventListener("openImageCompressor", openImageCompressor);
 
-  // 监听打开视频管理器事件
-  window.addEventListener('openVideoManager', openVideoManager)
+	// 监听打开视频管理器事件
+	window.addEventListener("openVideoManager", openVideoManager);
 
-  // 监听打开Everything搜索事件
-  window.addEventListener('openEverythingSearch', () => {
-    everythingSearchVisible.value = true
-  })
+	// 监听打开Everything搜索事件
+	window.addEventListener("openEverythingSearch", () => {
+		everythingSearchVisible.value = true;
+	});
 
-  // 监听打开密码箱事件
-  window.addEventListener('openPasswordVault', () => {
-    passwordVaultVisible.value = true
-  })
-})
+	// 监听打开密码箱事件
+	window.addEventListener("openPasswordVault", () => {
+		passwordVaultVisible.value = true;
+	});
+});
 </script>
 
 

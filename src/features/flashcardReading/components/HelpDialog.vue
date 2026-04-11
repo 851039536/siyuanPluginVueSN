@@ -53,15 +53,15 @@
 </template>
 
 <script setup lang="ts">
-import Button from '@/components/Button.vue'
-import type { I18n } from '../types'
+import Button from "@/components/Button.vue";
+import type { I18n } from "../types";
 
 defineProps<{
-  visible: boolean
-  i18n: I18n
-}>()
+	visible: boolean;
+	i18n: I18n;
+}>();
 
 defineEmits<{
-  close: []
-}>()
+	close: [];
+}>();
 </script>

@@ -197,318 +197,335 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, shallowRef, nextTick } from 'vue'
-import { showMessage } from 'siyuan'
-import type { ImageInfo, CompressOptions, CompressResult } from './types'
-import { scanAllAssets, batchGetImageDetails } from './services/scanner'
-import { batchCompressImages, batchReplaceImages, getCompressStats } from './services/compressor'
-import { formatFileSize } from './services/comparator'
-import CompressDialog from './components/CompressDialog.vue'
-import SiButton from '@/components/Button.vue'
-import SiSelect from '@/components/Select.vue'
-import * as api from '@/api'
+import { ref, computed, watch, shallowRef, nextTick } from "vue";
+import { showMessage } from "siyuan";
+import type { ImageInfo, CompressOptions, CompressResult } from "./types";
+import { scanAllAssets, batchGetImageDetails } from "./services/scanner";
+import {
+	batchCompressImages,
+	batchReplaceImages,
+	getCompressStats,
+} from "./services/compressor";
+import { formatFileSize } from "./services/comparator";
+import CompressDialog from "./components/CompressDialog.vue";
+import SiButton from "@/components/Button.vue";
+import SiSelect from "@/components/Select.vue";
+import * as api from "@/api";
 
 interface Props {
-  visible: boolean
-  i18n: any
+	visible: boolean;
+	i18n: any;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 const emit = defineEmits<{
-  (e: 'close'): void
-}>()
+	(e: "close"): void;
+}>();
 
 const visible = computed({
-  get: () => props.visible,
-  set: () => emit('close')
-})
-const images = shallowRef<ImageInfo[]>([])
-const selectedImages = ref<Set<string>>(new Set())
-const scanning = ref(false)
-const compressing = ref(false)
-const replacing = ref(false)
-const scanProgress = ref(0)
-const scanProgressText = ref('')
-const compressResults = shallowRef<CompressResult[]>([])
-const showCompressDialog = ref(false)
-const imageListRef = ref<HTMLElement | null>(null)
-const previewImageData = ref<ImageInfo | null>(null)
+	get: () => props.visible,
+	set: () => emit("close"),
+});
+const images = shallowRef<ImageInfo[]>([]);
+const selectedImages = ref<Set<string>>(new Set());
+const scanning = ref(false);
+const compressing = ref(false);
+const replacing = ref(false);
+const scanProgress = ref(0);
+const scanProgressText = ref("");
+const compressResults = shallowRef<CompressResult[]>([]);
+const showCompressDialog = ref(false);
+const imageListRef = ref<HTMLElement | null>(null);
+const previewImageData = ref<ImageInfo | null>(null);
 
-const currentPage = ref(1)
-const pageSize = ref(30)
+const currentPage = ref(1);
+const pageSize = ref(30);
 
-const minFileSize = ref(0)
-const scanMinFileSize = ref(0)  // 扫描时的大小筛选
+const minFileSize = ref(0);
+const scanMinFileSize = ref(0); // 扫描时的大小筛选
 
 const minFileSizeOptions = computed(() => [
-  { value: 0, label: '全部' },
-  { value: 100, label: '100 KB' },
-  { value: 200, label: '200 KB' },
-  { value: 500, label: '500 KB' },
-  { value: 1024, label: '1 MB' },
-  { value: 2048, label: '2 MB' },
-  { value: 5120, label: '5 MB' }
-])
+	{ value: 0, label: "全部" },
+	{ value: 100, label: "100 KB" },
+	{ value: 200, label: "200 KB" },
+	{ value: 500, label: "500 KB" },
+	{ value: 1024, label: "1 MB" },
+	{ value: 2048, label: "2 MB" },
+	{ value: 5120, label: "5 MB" },
+]);
 
 const pageSizeOptions = computed(() => [
-  { value: 20, label: '20/页' },
-  { value: 30, label: '30/页' },
-  { value: 50, label: '50/页' },
-  { value: 100, label: '100/页' }
-])
+	{ value: 20, label: "20/页" },
+	{ value: 30, label: "30/页" },
+	{ value: 50, label: "50/页" },
+	{ value: 100, label: "100/页" },
+]);
 
 const filteredImages = computed(() => {
-  if (minFileSize.value === 0) {
-    return images.value
-  }
-  const minBytes = minFileSize.value * 1024
-  return images.value.filter(img => img.size >= minBytes)
-})
+	if (minFileSize.value === 0) {
+		return images.value;
+	}
+	const minBytes = minFileSize.value * 1024;
+	return images.value.filter((img) => img.size >= minBytes);
+});
 
-const totalPages = computed(() => Math.ceil(filteredImages.value.length / pageSize.value))
+const totalPages = computed(() =>
+	Math.ceil(filteredImages.value.length / pageSize.value),
+);
 const paginatedImages = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  const end = start + pageSize.value
-  return filteredImages.value.slice(start, end)
-})
+	const start = (currentPage.value - 1) * pageSize.value;
+	const end = start + pageSize.value;
+	return filteredImages.value.slice(start, end);
+});
 
 const stats = computed(() => {
-  if (compressResults.value.length === 0) {
-    return {
-      total: 0,
-      success: 0,
-      failed: 0,
-      averageRatio: 0,
-      totalSavedMB: '0.00'
-    }
-  }
-  return getCompressStats(compressResults.value)
-})
+	if (compressResults.value.length === 0) {
+		return {
+			total: 0,
+			success: 0,
+			failed: 0,
+			averageRatio: 0,
+			totalSavedMB: "0.00",
+		};
+	}
+	return getCompressStats(compressResults.value);
+});
 
 watch(currentPage, () => {
-  nextTick(() => {
-    imageListRef.value?.scrollTo({ top: 0, behavior: 'smooth' })
-  })
-})
+	nextTick(() => {
+		imageListRef.value?.scrollTo({ top: 0, behavior: "smooth" });
+	});
+});
 
 watch(minFileSize, () => {
-  currentPage.value = 1
-})
+	currentPage.value = 1;
+});
 
-const showDelayedMessage = (message: string, duration: number, type: 'info' | 'error' = 'info') => {
-  setTimeout(() => showMessage(message, duration, type), 100)
-}
+const showDelayedMessage = (
+	message: string,
+	duration: number,
+	type: "info" | "error" = "info",
+) => {
+	setTimeout(() => showMessage(message, duration, type), 100);
+};
 
 const onScanImages = async () => {
-  scanning.value = true
-  scanProgress.value = 0
-  images.value = []
-  selectedImages.value.clear()
+	scanning.value = true;
+	scanProgress.value = 0;
+	images.value = [];
+	selectedImages.value.clear();
 
-  try {
-    const scannedImages = await scanAllAssets((progress) => {
-      scanProgress.value = Math.floor((progress.current / progress.total) * 50)
-      scanProgressText.value = `扫描中... ${progress.current}/${progress.total}`
-    })
+	try {
+		const scannedImages = await scanAllAssets((progress) => {
+			scanProgress.value = Math.floor((progress.current / progress.total) * 50);
+			scanProgressText.value = `扫描中... ${progress.current}/${progress.total}`;
+		});
 
-    scanProgressText.value = '正在获取图片详情...'
+		scanProgressText.value = "正在获取图片详情...";
 
-    const detailedImages = await batchGetImageDetails(
-      scannedImages,
-      (current, total) => {
-        scanProgress.value = 50 + Math.floor((current / total) * 50)
-        scanProgressText.value = `获取详情... ${current}/${total}`
-      },
-      scanMinFileSize.value
-    )
+		const detailedImages = await batchGetImageDetails(
+			scannedImages,
+			(current, total) => {
+				scanProgress.value = 50 + Math.floor((current / total) * 50);
+				scanProgressText.value = `获取详情... ${current}/${total}`;
+			},
+			scanMinFileSize.value,
+		);
 
-    images.value = detailedImages
-    currentPage.value = 1
+		images.value = detailedImages;
+		currentPage.value = 1;
 
-    const totalSize = detailedImages.reduce((sum, img) => sum + img.size, 0)
-    const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2)
-    
-    let message = `扫描完成: 共 ${detailedImages.length} 张图片, 总大小 ${totalSizeMB} MB`
-    if (scanMinFileSize.value > 0) {
-      message += ` (已筛选 ≥${scanMinFileSize.value}KB)`
-    }
-    showMessage(message, 3000, 'info')
-  } catch (error) {
-    console.error('扫描图片失败:', error)
-    showMessage('扫描图片失败: ' + error, 5000, 'error')
-  } finally {
-    scanning.value = false
-    scanProgress.value = 0
-  }
-}
+		const totalSize = detailedImages.reduce((sum, img) => sum + img.size, 0);
+		const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+
+		let message = `扫描完成: 共 ${detailedImages.length} 张图片, 总大小 ${totalSizeMB} MB`;
+		if (scanMinFileSize.value > 0) {
+			message += ` (已筛选 ≥${scanMinFileSize.value}KB)`;
+		}
+		showMessage(message, 3000, "info");
+	} catch (error) {
+		console.error("扫描图片失败:", error);
+		showMessage("扫描图片失败: " + error, 5000, "error");
+	} finally {
+		scanning.value = false;
+		scanProgress.value = 0;
+	}
+};
 
 const updateSelection = (operation: (set: Set<string>) => void) => {
-  operation(selectedImages.value)
-  selectedImages.value = new Set(selectedImages.value)
-}
+	operation(selectedImages.value);
+	selectedImages.value = new Set(selectedImages.value);
+};
 
 const toggleSelect = (path: string) => {
-  updateSelection(set => {
-    if (set.has(path)) {
-      set.delete(path)
-    } else {
-      set.add(path)
-    }
-  })
-}
+	updateSelection((set) => {
+		if (set.has(path)) {
+			set.delete(path);
+		} else {
+			set.add(path);
+		}
+	});
+};
 
 const onSelectAll = () => {
-  updateSelection(set => {
-    paginatedImages.value.forEach(img => set.add(img.path))
-  })
-}
+	updateSelection((set) => {
+		paginatedImages.value.forEach((img) => set.add(img.path));
+	});
+};
 
 const onDeselectAll = () => {
-  updateSelection(set => set.clear())
-}
+	updateSelection((set) => set.clear());
+};
 
 const onCompress = () => {
-  showCompressDialog.value = true
-}
+	showCompressDialog.value = true;
+};
 
 const onCompressConfirm = async (options: CompressOptions) => {
-  showCompressDialog.value = false
-  compressing.value = true
-  compressResults.value = []
+	showCompressDialog.value = false;
+	compressing.value = true;
+	compressResults.value = [];
 
-  try {
-    const selectedImageList = filteredImages.value.filter(img =>
-      selectedImages.value.has(img.path)
-    )
+	try {
+		const selectedImageList = filteredImages.value.filter((img) =>
+			selectedImages.value.has(img.path),
+		);
 
-    const results = await batchCompressImages(
-      selectedImageList,
-      options,
-      (current, total, imageName) => {
-        scanProgressText.value = `压缩中... ${current}/${total} - ${imageName}`
-      }
-    )
+		const results = await batchCompressImages(
+			selectedImageList,
+			options,
+			(current, total, imageName) => {
+				scanProgressText.value = `压缩中... ${current}/${total} - ${imageName}`;
+			},
+		);
 
-    compressResults.value = results
+		compressResults.value = results;
 
-    const successCount = results.filter(r => r.success).length
-    showDelayedMessage(`压缩完成! 成功 ${successCount}/${results.length} 张`, 3000, 'info')
-  } catch (error) {
-    console.error('压缩失败:', error)
-    showDelayedMessage('压缩失败: ' + error, 5000, 'error')
-  } finally {
-    compressing.value = false
-  }
-}
+		const successCount = results.filter((r) => r.success).length;
+		showDelayedMessage(
+			`压缩完成! 成功 ${successCount}/${results.length} 张`,
+			3000,
+			"info",
+		);
+	} catch (error) {
+		console.error("压缩失败:", error);
+		showDelayedMessage("压缩失败: " + error, 5000, "error");
+	} finally {
+		compressing.value = false;
+	}
+};
 
 const onReplaceImages = async () => {
-  if (!confirm('确定要替换原图吗? 此操作不可撤销!')) {
-    return
-  }
+	if (!confirm("确定要替换原图吗? 此操作不可撤销!")) {
+		return;
+	}
 
-  replacing.value = true
+	replacing.value = true;
 
-  try {
-    const { success, failed } = await batchReplaceImages(
-      compressResults.value,
-      (current, total) => {
-        scanProgressText.value = `替换中... ${current}/${total}`
-      }
-    )
+	try {
+		const { success, failed } = await batchReplaceImages(
+			compressResults.value,
+			(current, total) => {
+				scanProgressText.value = `替换中... ${current}/${total}`;
+			},
+		);
 
-    showDelayedMessage(
-      `替换完成! 成功 ${success} 张, 失败 ${failed} 张。如需查看最新状态，请手动点击"扫描图片"`,
-      5000,
-      success > 0 ? 'info' : 'error'
-    )
+		showDelayedMessage(
+			`替换完成! 成功 ${success} 张, 失败 ${failed} 张。如需查看最新状态，请手动点击"扫描图片"`,
+			5000,
+			success > 0 ? "info" : "error",
+		);
 
-    const successfulResults = compressResults.value.filter(r => r.success)
-    compressResults.value = []
+		const successfulResults = compressResults.value.filter((r) => r.success);
+		compressResults.value = [];
 
-    if (success > 0 && successfulResults.length > 0) {
-      const replacedPaths = new Set(successfulResults.map(r => r.originalFile.path))
-      images.value = images.value.filter(img => !replacedPaths.has(img.path))
-      updateSelection(set => {
-        replacedPaths.forEach(path => set.delete(path))
-      })
-    }
-  } catch (error) {
-    console.error('替换失败:', error)
-    showDelayedMessage('替换失败: ' + error, 5000, 'error')
-  } finally {
-    replacing.value = false
-  }
-}
+		if (success > 0 && successfulResults.length > 0) {
+			const replacedPaths = new Set(
+				successfulResults.map((r) => r.originalFile.path),
+			);
+			images.value = images.value.filter((img) => !replacedPaths.has(img.path));
+			updateSelection((set) => {
+				replacedPaths.forEach((path) => set.delete(path));
+			});
+		}
+	} catch (error) {
+		console.error("替换失败:", error);
+		showDelayedMessage("替换失败: " + error, 5000, "error");
+	} finally {
+		replacing.value = false;
+	}
+};
 
 const onImageError = (e: Event) => {
-  const img = e.target as HTMLImageElement
-  img.style.display = 'none'
-  const parent = img.parentElement
-  if (parent) {
-    parent.innerHTML = '<div class="image-placeholder"><svg class="icon"><use xlink:href="#iconImage"></use></svg><p>加载失败</p></div>'
-  }
-}
+	const img = e.target as HTMLImageElement;
+	img.style.display = "none";
+	const parent = img.parentElement;
+	if (parent) {
+		parent.innerHTML =
+			'<div class="image-placeholder"><svg class="icon"><use xlink:href="#iconImage"></use></svg><p>加载失败</p></div>';
+	}
+};
 
 const copyImageName = async (name: string) => {
-  try {
-    await navigator.clipboard.writeText(name)
-    showMessage('已复制图片名称', 2000, 'info')
-  } catch (error) {
-    console.error('复制失败:', error)
-    showMessage('复制失败', 2000, 'error')
-  }
-}
+	try {
+		await navigator.clipboard.writeText(name);
+		showMessage("已复制图片名称", 2000, "info");
+	} catch (error) {
+		console.error("复制失败:", error);
+		showMessage("复制失败", 2000, "error");
+	}
+};
 
 const extractDocIdFromImageName = (imageName: string): string | null => {
-  const match = imageName.match(/-([a-z0-9]{7})\.[^.]+$/)
-  return match ? match[1] : null
-}
+	const match = imageName.match(/-([a-z0-9]{7})\.[^.]+$/);
+	return match ? match[1] : null;
+};
 
 const openDoc = (docId: string) => {
-  window.open(`siyuan://blocks/${docId}`)
-}
+	window.open(`siyuan://blocks/${docId}`);
+};
 
 const navigateToDoc = async (image: ImageInfo) => {
-  try {
-    const docId = extractDocIdFromImageName(image.name)
-    if (docId && await api.getBlockByID(docId)) {
-      openDoc(docId)
-      return
-    }
+	try {
+		const docId = extractDocIdFromImageName(image.name);
+		if (docId && (await api.getBlockByID(docId))) {
+			openDoc(docId);
+			return;
+		}
 
-    const imagePath = image.path.replace('/data/', '')
-    const blocks = await api.sql(`
+		const imagePath = image.path.replace("/data/", "");
+		const blocks = await api.sql(`
       SELECT DISTINCT root_id, content, hpath
       FROM blocks
       WHERE markdown LIKE '%${imagePath}%'
       OR content LIKE '%${image.name}%'
       ORDER BY updated DESC
       LIMIT 5
-    `)
+    `);
 
-    if (blocks?.length) {
-      showMessage(`该图片在 ${blocks.length} 个文档中被引用`, 3000, 'info')
-      openDoc(blocks[0].root_id)
-    } else {
-      showMessage('未找到引用该图片的文档', 3000, 'info')
-    }
-  } catch (error) {
-    console.error('导航到文档失败:', error)
-    showMessage('导航失败: ' + error, 3000, 'error')
-  }
-}
+		if (blocks?.length) {
+			showMessage(`该图片在 ${blocks.length} 个文档中被引用`, 3000, "info");
+			openDoc(blocks[0].root_id);
+		} else {
+			showMessage("未找到引用该图片的文档", 3000, "info");
+		}
+	} catch (error) {
+		console.error("导航到文档失败:", error);
+		showMessage("导航失败: " + error, 3000, "error");
+	}
+};
 
 const previewImage = (image: ImageInfo) => {
-  previewImageData.value = image
-}
+	previewImageData.value = image;
+};
 
 const closePreview = () => {
-  previewImageData.value = null
-}
+	previewImageData.value = null;
+};
 
 const onClose = () => {
-  emit('close')
-}
+	emit("close");
+};
 </script>
 
 <style scoped lang="scss">

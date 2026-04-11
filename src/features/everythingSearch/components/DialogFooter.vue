@@ -27,30 +27,37 @@
 </template>
 
 <script setup lang="ts">
-import Input from '@/components/Input.vue'
-import type { EverythingConfig } from '../types'
+import Input from "@/components/Input.vue";
+import type { EverythingConfig } from "../types";
 
 interface Props {
-  /** 配置 */
-  config: EverythingConfig
-  /** 快捷键提示文本 */
-  shortcutHint?: string
+	/** 配置 */
+	config: EverythingConfig;
+	/** 快捷键提示文本 */
+	shortcutHint?: string;
 }
 
 interface Emits {
-  (e: 'update:config', key: keyof EverythingConfig, value: EverythingConfig[keyof EverythingConfig]): void
+	(
+		e: "update:config",
+		key: keyof EverythingConfig,
+		value: EverythingConfig[keyof EverythingConfig],
+	): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  shortcutHint: 'Esc 关闭 | Enter 搜索'
-})
+	shortcutHint: "Esc 关闭 | Enter 搜索",
+});
 
-const emit = defineEmits<Emits>()
+const emit = defineEmits<Emits>();
 
 /** 更新配置 */
-const updateConfig = (key: keyof EverythingConfig, value: EverythingConfig[keyof EverythingConfig]) => {
-  emit('update:config', key, value)
-}
+const updateConfig = (
+	key: keyof EverythingConfig,
+	value: EverythingConfig[keyof EverythingConfig],
+) => {
+	emit("update:config", key, value);
+};
 </script>
 
 <style scoped lang="scss">

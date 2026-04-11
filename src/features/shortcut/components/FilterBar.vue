@@ -50,21 +50,21 @@
 </template>
 
 <script setup lang="ts">
-import Button from '@/components/Button.vue'
-import type { QuickFilter, ViewMode } from '../types'
+import Button from "@/components/Button.vue";
+import type { QuickFilter, ViewMode } from "../types";
 
 interface Props {
-  activeFilter: string
-  viewMode: ViewMode
-  filters: QuickFilter[]
+	activeFilter: string;
+	viewMode: ViewMode;
+	filters: QuickFilter[];
 }
 
-defineProps<Props>()
+defineProps<Props>();
 
 defineEmits<{
-  'update:activeFilter': [value: string]
-  'update:viewMode': [value: ViewMode]
-}>()
+	"update:activeFilter": [value: string];
+	"update:viewMode": [value: ViewMode];
+}>();
 </script>
 
 <style scoped lang="scss">

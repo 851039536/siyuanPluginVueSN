@@ -63,20 +63,20 @@
 </template>
 
 <script setup lang="ts">
-import Card from '@/components/Card.vue'
-import Button from '@/components/Button.vue'
-import type { Flashcard, I18n } from '../types'
+import Card from "@/components/Card.vue";
+import Button from "@/components/Button.vue";
+import type { Flashcard, I18n } from "../types";
 
 defineProps<{
-  cards: Flashcard[]
-  i18n: I18n
-}>()
+	cards: Flashcard[];
+	i18n: I18n;
+}>();
 
 defineEmits<{
-  play: [card: Flashcard]
-  copyTitle: [card: Flashcard]
-  copyContent: [card: Flashcard]
-  edit: [card: Flashcard]
-  delete: [card: Flashcard]
-}>()
+	play: [card: Flashcard];
+	copyTitle: [card: Flashcard];
+	copyContent: [card: Flashcard];
+	edit: [card: Flashcard];
+	delete: [card: Flashcard];
+}>();
 </script>

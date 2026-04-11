@@ -15,18 +15,18 @@
 </template>
 
 <script setup lang="ts">
-import Button from '@/components/Button.vue';
+import Button from "@/components/Button.vue";
 
 interface Props {
-  title?: string;
+	title?: string;
 }
 
 withDefaults(defineProps<Props>(), {
-  title: 'AI信息生成'
+	title: "AI信息生成",
 });
 
 defineEmits<{
-  (e: 'toggle-settings'): void;
+	(e: "toggle-settings"): void;
 }>();
 </script>
 

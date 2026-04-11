@@ -81,67 +81,67 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { Icon } from '@iconify/vue'
-import type { WebDAVFile } from '../types'
-import { formatFileSize, getFileIcon, formatTime } from '../utils'
+import { ref } from "vue";
+import { Icon } from "@iconify/vue";
+import type { WebDAVFile } from "../types";
+import { formatFileSize, getFileIcon, formatTime } from "../utils";
 
 interface Props {
-  files: WebDAVFile[]
-  currentPath: string
-  loading: boolean
-  i18n: Record<string, any>
+	files: WebDAVFile[];
+	currentPath: string;
+	loading: boolean;
+	i18n: Record<string, any>;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
 interface Emits {
-  (e: 'refresh'): void
-  (e: 'navigate', path: string): void
-  (e: 'download', file: WebDAVFile): void
+	(e: "refresh"): void;
+	(e: "navigate", path: string): void;
+	(e: "download", file: WebDAVFile): void;
 }
 
-const emit = defineEmits<Emits>()
+const emit = defineEmits<Emits>();
 
-const selectedFile = ref<WebDAVFile | null>(null)
+const selectedFile = ref<WebDAVFile | null>(null);
 
 const onRefresh = () => {
-  emit('refresh')
-}
+	emit("refresh");
+};
 
 const onFileClick = (file: WebDAVFile) => {
-  if (selectedFile.value?.path === file.path) {
-    selectedFile.value = null
-  } else {
-    selectedFile.value = file
-  }
-}
+	if (selectedFile.value?.path === file.path) {
+		selectedFile.value = null;
+	} else {
+		selectedFile.value = file;
+	}
+};
 
 const onFileDoubleClick = (file: WebDAVFile) => {
-  if (file.isDirectory) {
-    emit('navigate', file.path)
-    selectedFile.value = null
-  } else {
-    emit('download', file)
-  }
-}
+	if (file.isDirectory) {
+		emit("navigate", file.path);
+		selectedFile.value = null;
+	} else {
+		emit("download", file);
+	}
+};
 
 const onGoBack = () => {
-  const path = props.currentPath
-  if (path === '/' || !path) return
+	const path = props.currentPath;
+	if (path === "/" || !path) return;
 
-  const parentPath = path.split('/').slice(0, -1).join('/') || '/'
-  emit('navigate', parentPath)
-}
+	const parentPath = path.split("/").slice(0, -1).join("/") || "/";
+	emit("navigate", parentPath);
+};
 
 const onOpenFolder = (file: WebDAVFile) => {
-  emit('navigate', file.path)
-  selectedFile.value = null
-}
+	emit("navigate", file.path);
+	selectedFile.value = null;
+};
 
 const onDownload = (file: WebDAVFile) => {
-  emit('download', file)
-}
+	emit("download", file);
+};
 </script>
 
 <style scoped lang="scss">

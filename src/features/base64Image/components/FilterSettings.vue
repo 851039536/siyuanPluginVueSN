@@ -30,37 +30,40 @@
 </template>
 
 <script setup lang="ts">
-import Button from '@/components/Button.vue'
+import Button from "@/components/Button.vue";
 
 export interface FilterSettings {
-  grayscale: number
-  blur: number
-  brightness: number
-  contrast: number
-  saturation: number
+	grayscale: number;
+	blur: number;
+	brightness: number;
+	contrast: number;
+	saturation: number;
 }
 
 interface Props {
-  modelValue: FilterSettings
-  title: string
-  grayscaleLabel: string
-  blurLabel: string
-  brightnessLabel: string
-  contrastLabel: string
-  saturationLabel: string
-  resetText: string
+	modelValue: FilterSettings;
+	title: string;
+	grayscaleLabel: string;
+	blurLabel: string;
+	brightnessLabel: string;
+	contrastLabel: string;
+	saturationLabel: string;
+	resetText: string;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 const emit = defineEmits<{
-  'update:modelValue': [value: FilterSettings]
-  reset: []
-}>()
+	"update:modelValue": [value: FilterSettings];
+	reset: [];
+}>();
 
 const update = (key: keyof FilterSettings, event: Event) => {
-  const target = event.target as HTMLInputElement
-  emit('update:modelValue', { ...props.modelValue, [key]: Number(target.value) })
-}
+	const target = event.target as HTMLInputElement;
+	emit("update:modelValue", {
+		...props.modelValue,
+		[key]: Number(target.value),
+	});
+};
 </script>
 
 <style scoped lang="scss">

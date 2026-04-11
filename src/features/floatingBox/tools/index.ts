@@ -1,6 +1,6 @@
-export { createSuperPanelTool } from './superPanel'
-export { createRefreshTool } from './refresh'
-export { createSkillsTool, skillsTool } from './skills'
-export { createTextDiffTool } from './textDiff'
-export { createPasswordVaultTool } from './passwordVault'
-export { createFlashcardReadingTool } from './flashcardReading'
+export { createSuperPanelTool } from "./superPanel";
+export { createRefreshTool } from "./refresh";
+export { createSkillsTool, skillsTool } from "./skills";
+export { createTextDiffTool } from "./textDiff";
+export { createPasswordVaultTool } from "./passwordVault";
+export { createFlashcardReadingTool } from "./flashcardReading";

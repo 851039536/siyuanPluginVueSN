@@ -1,144 +1,174 @@
-import { ref, computed, type Ref, type ComputedRef } from 'vue'
-import * as api from '@/api'
-import { DocNavigationCache, fetchDocHierarchy, fetchBreadcrumb, fetchSiblingDocs } from '../types/storage'
-import type { Block, ProtyleLike, TargetCacheItem, BreadcrumbItem, SiblingDocs } from '../types'
+import { ref, computed, type Ref, type ComputedRef } from "vue";
+import * as api from "@/api";
+import {
+	DocNavigationCache,
+	fetchDocHierarchy,
+	fetchBreadcrumb,
+	fetchSiblingDocs,
+} from "../types/storage";
+import type {
+	Block,
+	ProtyleLike,
+	TargetCacheItem,
+	BreadcrumbItem,
+	SiblingDocs,
+} from "../types";
 
 export interface UseDocNavigationReturn {
-  parentDoc: Ref<Block | null>
-  childDocs: Ref<Block[]>
-  breadcrumbs: Ref<BreadcrumbItem[]>
-  siblingDocs: Ref<SiblingDocs>
-  hasNavigation: ComputedRef<boolean>
-  hasBreadcrumbs: ComputedRef<boolean>
-  hasSiblings: ComputedRef<boolean>
-  isExpanded: Ref<boolean>
-  visibleChildren: ComputedRef<Block[]>
-  hiddenChildren: ComputedRef<Block[]>
-  loadHierarchy: (docId: string) => Promise<void>
-  toggleExpand: () => void
-  openDoc: (docId: string) => void
-  stripHtml: (html: string) => string
+	parentDoc: Ref<Block | null>;
+	childDocs: Ref<Block[]>;
+	breadcrumbs: Ref<BreadcrumbItem[]>;
+	siblingDocs: Ref<SiblingDocs>;
+	hasNavigation: ComputedRef<boolean>;
+	hasBreadcrumbs: ComputedRef<boolean>;
+	hasSiblings: ComputedRef<boolean>;
+	isExpanded: Ref<boolean>;
+	visibleChildren: ComputedRef<Block[]>;
+	hiddenChildren: ComputedRef<Block[]>;
+	loadHierarchy: (docId: string) => Promise<void>;
+	toggleExpand: () => void;
+	openDoc: (docId: string) => void;
+	stripHtml: (html: string) => string;
 }
 
-const cache = new DocNavigationCache()
-const targetCache = new WeakMap<any, TargetCacheItem>()
+const cache = new DocNavigationCache();
+const targetCache = new WeakMap<any, TargetCacheItem>();
 
 export function useDocNavigation(): UseDocNavigationReturn {
-  const parentDoc = ref<Block | null>(null)
-  const childDocs = ref<Block[]>([])
-  const breadcrumbs = ref<BreadcrumbItem[]>([])
-  const siblingDocs = ref<SiblingDocs>({ prev: null, next: null, siblings: [], currentIndex: -1 })
-  const isExpanded = ref(false)
+	const parentDoc = ref<Block | null>(null);
+	const childDocs = ref<Block[]>([]);
+	const breadcrumbs = ref<BreadcrumbItem[]>([]);
+	const siblingDocs = ref<SiblingDocs>({
+		prev: null,
+		next: null,
+		siblings: [],
+		currentIndex: -1,
+	});
+	const isExpanded = ref(false);
 
-  const hasNavigation = computed(() => {
-    return parentDoc.value !== null || childDocs.value.length > 0
-  })
+	const hasNavigation = computed(() => {
+		return parentDoc.value !== null || childDocs.value.length > 0;
+	});
 
-  const hasBreadcrumbs = computed(() => {
-    return breadcrumbs.value.length > 0
-  })
+	const hasBreadcrumbs = computed(() => {
+		return breadcrumbs.value.length > 0;
+	});
 
-  const hasSiblings = computed(() => {
-    return siblingDocs.value.siblings.length > 1
-  })
+	const hasSiblings = computed(() => {
+		return siblingDocs.value.siblings.length > 1;
+	});
 
-  const visibleChildren = computed(() => {
-    return childDocs.value.slice(0, 5)
-  })
+	const visibleChildren = computed(() => {
+		return childDocs.value.slice(0, 5);
+	});
 
-  const hiddenChildren = computed(() => {
-    return childDocs.value.slice(5)
-  })
+	const hiddenChildren = computed(() => {
+		return childDocs.value.slice(5);
+	});
 
-  async function loadHierarchy(docId: string): Promise<void> {
-    try {
-      const currentDoc = await api.getBlockByID(docId)
-      if (!currentDoc?.box || !currentDoc.hpath) {
-        parentDoc.value = null
-        childDocs.value = []
-        breadcrumbs.value = []
-        siblingDocs.value = { prev: null, next: null, siblings: [], currentIndex: -1 }
-        return
-      }
+	async function loadHierarchy(docId: string): Promise<void> {
+		try {
+			const currentDoc = await api.getBlockByID(docId);
+			if (!currentDoc?.box || !currentDoc.hpath) {
+				parentDoc.value = null;
+				childDocs.value = [];
+				breadcrumbs.value = [];
+				siblingDocs.value = {
+					prev: null,
+					next: null,
+					siblings: [],
+					currentIndex: -1,
+				};
+				return;
+			}
 
-      const [hierarchy, breadcrumbItems, siblings] = await Promise.all([
-        fetchDocHierarchy(currentDoc, cache),
-        fetchBreadcrumb(currentDoc, cache),
-        fetchSiblingDocs(currentDoc, cache),
-      ])
+			const [hierarchy, breadcrumbItems, siblings] = await Promise.all([
+				fetchDocHierarchy(currentDoc, cache),
+				fetchBreadcrumb(currentDoc, cache),
+				fetchSiblingDocs(currentDoc, cache),
+			]);
 
-      parentDoc.value = hierarchy.parent
-      childDocs.value = hierarchy.children
-      breadcrumbs.value = breadcrumbItems
-      siblingDocs.value = siblings
-    } catch (error) {
-      console.error('加载文档层级失败:', error)
-      parentDoc.value = null
-      childDocs.value = []
-      breadcrumbs.value = []
-      siblingDocs.value = { prev: null, next: null, siblings: [], currentIndex: -1 }
-    }
-  }
+			parentDoc.value = hierarchy.parent;
+			childDocs.value = hierarchy.children;
+			breadcrumbs.value = breadcrumbItems;
+			siblingDocs.value = siblings;
+		} catch (error) {
+			console.error("加载文档层级失败:", error);
+			parentDoc.value = null;
+			childDocs.value = [];
+			breadcrumbs.value = [];
+			siblingDocs.value = {
+				prev: null,
+				next: null,
+				siblings: [],
+				currentIndex: -1,
+			};
+		}
+	}
 
-  function toggleExpand(): void {
-    isExpanded.value = !isExpanded.value
-  }
+	function toggleExpand(): void {
+		isExpanded.value = !isExpanded.value;
+	}
 
-  function openDoc(docId: string): void {
-    if (docId) {
-      window.open(`siyuan://blocks/${docId}`)
-    }
-  }
+	function openDoc(docId: string): void {
+		if (docId) {
+			window.open(`siyuan://blocks/${docId}`);
+		}
+	}
 
-  function stripHtml(html: string): string {
-    return cache.stripHtml(html)
-  }
+	function stripHtml(html: string): string {
+		return cache.stripHtml(html);
+	}
 
-  return {
-    parentDoc,
-    childDocs,
-    breadcrumbs,
-    siblingDocs,
-    hasNavigation,
-    hasBreadcrumbs,
-    hasSiblings,
-    isExpanded,
-    visibleChildren,
-    hiddenChildren,
-    loadHierarchy,
-    toggleExpand,
-    openDoc,
-    stripHtml,
-  }
+	return {
+		parentDoc,
+		childDocs,
+		breadcrumbs,
+		siblingDocs,
+		hasNavigation,
+		hasBreadcrumbs,
+		hasSiblings,
+		isExpanded,
+		visibleChildren,
+		hiddenChildren,
+		loadHierarchy,
+		toggleExpand,
+		openDoc,
+		stripHtml,
+	};
 }
 
-export function findNavigationTarget(protyle: ProtyleLike): TargetCacheItem | null {
-  let cached = targetCache.get(protyle)
+export function findNavigationTarget(
+	protyle: ProtyleLike,
+): TargetCacheItem | null {
+	let cached = targetCache.get(protyle);
 
-  if (!cached && protyle.element) {
-    const target = protyle.element.querySelector('.protyle-title') ||
-                   protyle.element.querySelector('.protyle-wysiwyg')
-    if (!target) return null
+	if (!cached && protyle.element) {
+		const target =
+			protyle.element.querySelector(".protyle-title") ||
+			protyle.element.querySelector(".protyle-wysiwyg");
+		if (!target) return null;
 
-    cached = {
-      el: target,
-      method: target.classList.contains('protyle-title') ? 'after' : 'before'
-    }
-    targetCache.set(protyle, cached)
-  }
+		cached = {
+			el: target,
+			method: target.classList.contains("protyle-title") ? "after" : "before",
+		};
+		targetCache.set(protyle, cached);
+	}
 
-  return cached || null
+	return cached || null;
 }
 
 export function removeExistingNav(protyle: ProtyleLike): void {
-  const cached = targetCache.get(protyle)
-  if (!cached) return
+	const cached = targetCache.get(protyle);
+	if (!cached) return;
 
-  const sibling = cached.method === 'after'
-    ? cached.el.nextElementSibling
-    : cached.el.previousElementSibling
+	const sibling =
+		cached.method === "after"
+			? cached.el.nextElementSibling
+			: cached.el.previousElementSibling;
 
-  if (sibling?.classList.contains('doc-navigation-container')) {
-    sibling.remove()
-  }
+	if (sibling?.classList.contains("doc-navigation-container")) {
+		sibling.remove();
+	}
 }

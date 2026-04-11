@@ -76,9 +76,7 @@ interface Props {
 	height?: string | number;
 }
 
-interface Emits {
-	(e: "click", event: MouseEvent): void;
-}
+type Emits = (e: "click", event: MouseEvent) => void
 
 const props = withDefaults(defineProps<Props>(), {
 	variant: "bordered",

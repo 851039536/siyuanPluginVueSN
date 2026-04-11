@@ -50,9 +50,7 @@ interface Props {
 	maxTextLength?: number;
 }
 
-interface Emits {
-	(e: "click", event: MouseEvent): void;
-}
+type Emits = (e: "click", event: MouseEvent) => void
 
 const props = withDefaults(defineProps<Props>(), {
 	alt: "Avatar",

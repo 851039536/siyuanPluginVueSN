@@ -242,267 +242,305 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { formatNumber, formatShortNumber } from '../utils'
+import { computed } from "vue";
+import { formatNumber, formatShortNumber } from "../utils";
 
 interface HistoricalDataItem {
-
-  date: string
-  dateLabel: string
-  totalNotes: number
-  totalWords: number
-  todayCreated: number
-  todayModified: number
+	date: string;
+	dateLabel: string;
+	totalNotes: number;
+	totalWords: number;
+	todayCreated: number;
+	todayModified: number;
 }
 
 interface Props {
-  historicalData?: HistoricalDataItem[]
-  i18n?: {
-    title: string
-    notesGrowth: string
-    wordsGrowth: string
-    avgDailyCreated: string
-    avgDailyModified: string
-    historicalData: string
-    date: string
-    notes: string
-    words: string
-    created: string
-    modified: string
-    change: string
-    wordsUnit: string
-    notesUnit: string
-    dayOverDay: string
-    weekOverWeek: string
-    monthOverMonth: string
-  }
+	historicalData?: HistoricalDataItem[];
+	i18n?: {
+		title: string;
+		notesGrowth: string;
+		wordsGrowth: string;
+		avgDailyCreated: string;
+		avgDailyModified: string;
+		historicalData: string;
+		date: string;
+		notes: string;
+		words: string;
+		created: string;
+		modified: string;
+		change: string;
+		wordsUnit: string;
+		notesUnit: string;
+		dayOverDay: string;
+		weekOverWeek: string;
+		monthOverMonth: string;
+	};
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  historicalData: () => [],
-  i18n: () => ({
-    title: '趋势分析',
-    notesGrowth: '笔记增长',
-    wordsGrowth: '字数增长',
-    avgDailyCreated: '日均新增',
-    avgDailyModified: '日均修改',
-    historicalData: '历史数据',
-    date: '日期',
-    notes: '笔记',
-    words: '字数',
-    created: '新增',
-    modified: '修改',
-    change: '变化',
-    wordsUnit: '字',
-    notesUnit: '笔记',
-    dayOverDay: '日环比',
-    weekOverWeek: '周环比',
-    monthOverMonth: '月环比',
-  }),
-})
+	historicalData: () => [],
+	i18n: () => ({
+		title: "趋势分析",
+		notesGrowth: "笔记增长",
+		wordsGrowth: "字数增长",
+		avgDailyCreated: "日均新增",
+		avgDailyModified: "日均修改",
+		historicalData: "历史数据",
+		date: "日期",
+		notes: "笔记",
+		words: "字数",
+		created: "新增",
+		modified: "修改",
+		change: "变化",
+		wordsUnit: "字",
+		notesUnit: "笔记",
+		dayOverDay: "日环比",
+		weekOverWeek: "周环比",
+		monthOverMonth: "月环比",
+	}),
+});
 
 // 计算周期对比数据
 const comparisonStats = computed(() => {
-  if (props.historicalData.length === 0) return null
+	if (props.historicalData.length === 0) return null;
 
-  const today = new Date()
-  const todayStr = formatDate(today)
+	const today = new Date();
+	const todayStr = formatDate(today);
 
-  // 获取今日数据
-  const todayData = props.historicalData.find(item => item.date === todayStr)
+	// 获取今日数据
+	const todayData = props.historicalData.find((item) => item.date === todayStr);
 
-  // 获取昨日数据
-  const yesterday = new Date(today)
-  yesterday.setDate(yesterday.getDate() - 1)
-  const yesterdayStr = formatDate(yesterday)
-  const yesterdayData = props.historicalData.find(item => item.date === yesterdayStr)
+	// 获取昨日数据
+	const yesterday = new Date(today);
+	yesterday.setDate(yesterday.getDate() - 1);
+	const yesterdayStr = formatDate(yesterday);
+	const yesterdayData = props.historicalData.find(
+		(item) => item.date === yesterdayStr,
+	);
 
-  // 获取本周数据 (周一到今天)
-  const weekStart = new Date(today)
-  const dayOfWeek = weekStart.getDay() || 7 // 周日为0，转为7
-  weekStart.setDate(weekStart.getDate() - dayOfWeek + 1)
-  const thisWeekData = getRangeData(weekStart, today)
+	// 获取本周数据 (周一到今天)
+	const weekStart = new Date(today);
+	const dayOfWeek = weekStart.getDay() || 7; // 周日为0，转为7
+	weekStart.setDate(weekStart.getDate() - dayOfWeek + 1);
+	const thisWeekData = getRangeData(weekStart, today);
 
-  // 获取上周数据
-  const lastWeekEnd = new Date(weekStart)
-  lastWeekEnd.setDate(lastWeekEnd.getDate() - 1)
-  const lastWeekStart = new Date(lastWeekEnd)
-  lastWeekStart.setDate(lastWeekStart.getDate() - 6)
-  const lastWeekData = getRangeData(lastWeekStart, lastWeekEnd)
+	// 获取上周数据
+	const lastWeekEnd = new Date(weekStart);
+	lastWeekEnd.setDate(lastWeekEnd.getDate() - 1);
+	const lastWeekStart = new Date(lastWeekEnd);
+	lastWeekStart.setDate(lastWeekStart.getDate() - 6);
+	const lastWeekData = getRangeData(lastWeekStart, lastWeekEnd);
 
-  // 获取本月数据
-  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
-  const thisMonthData = getRangeData(monthStart, today)
+	// 获取本月数据
+	const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+	const thisMonthData = getRangeData(monthStart, today);
 
-  // 获取上月数据
-  const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0)
-  const lastMonthStart = new Date(lastMonthEnd.getFullYear(), lastMonthEnd.getMonth(), 1)
-  const lastMonthData = getRangeData(lastMonthStart, lastMonthEnd)
+	// 获取上月数据
+	const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+	const lastMonthStart = new Date(
+		lastMonthEnd.getFullYear(),
+		lastMonthEnd.getMonth(),
+		1,
+	);
+	const lastMonthData = getRangeData(lastMonthStart, lastMonthEnd);
 
-  return {
-    today: {
-      created: todayData?.todayCreated ?? 0,
-      modified: todayData?.todayModified ?? 0,
-      words: todayData?.totalWords ?? 0,
-    },
-    yesterday: {
-      created: yesterdayData?.todayCreated ?? 0,
-      modified: yesterdayData?.todayModified ?? 0,
-      words: yesterdayData?.totalWords ?? 0,
-    },
-    dayChange: {
-      created: calcChange(todayData?.todayCreated ?? 0, yesterdayData?.todayCreated ?? 0),
-      modified: calcChange(todayData?.todayModified ?? 0, yesterdayData?.todayModified ?? 0),
-      words: calcChange(todayData?.totalWords ?? 0, yesterdayData?.totalWords ?? 0),
-    },
-    thisWeek: {
-      created: thisWeekData.created,
-      modified: thisWeekData.modified,
-      words: thisWeekData.words,
-    },
-    lastWeek: {
-      created: lastWeekData.created,
-      modified: lastWeekData.modified,
-      words: lastWeekData.words,
-    },
-    weekChange: {
-      created: calcChange(thisWeekData.created, lastWeekData.created),
-      modified: calcChange(thisWeekData.modified, lastWeekData.modified),
-      words: calcChange(thisWeekData.words, lastWeekData.words),
-    },
-    thisMonth: {
-      created: thisMonthData.created,
-      modified: thisMonthData.modified,
-      words: thisMonthData.words,
-    },
-    lastMonth: {
-      created: lastMonthData.created,
-      modified: lastMonthData.modified,
-      words: lastMonthData.words,
-    },
-    monthChange: {
-      created: calcChange(thisMonthData.created, lastMonthData.created),
-      modified: calcChange(thisMonthData.modified, lastMonthData.modified),
-      words: calcChange(thisMonthData.words, lastMonthData.words),
-    },
-  }
-})
+	return {
+		today: {
+			created: todayData?.todayCreated ?? 0,
+			modified: todayData?.todayModified ?? 0,
+			words: todayData?.totalWords ?? 0,
+		},
+		yesterday: {
+			created: yesterdayData?.todayCreated ?? 0,
+			modified: yesterdayData?.todayModified ?? 0,
+			words: yesterdayData?.totalWords ?? 0,
+		},
+		dayChange: {
+			created: calcChange(
+				todayData?.todayCreated ?? 0,
+				yesterdayData?.todayCreated ?? 0,
+			),
+			modified: calcChange(
+				todayData?.todayModified ?? 0,
+				yesterdayData?.todayModified ?? 0,
+			),
+			words: calcChange(
+				todayData?.totalWords ?? 0,
+				yesterdayData?.totalWords ?? 0,
+			),
+		},
+		thisWeek: {
+			created: thisWeekData.created,
+			modified: thisWeekData.modified,
+			words: thisWeekData.words,
+		},
+		lastWeek: {
+			created: lastWeekData.created,
+			modified: lastWeekData.modified,
+			words: lastWeekData.words,
+		},
+		weekChange: {
+			created: calcChange(thisWeekData.created, lastWeekData.created),
+			modified: calcChange(thisWeekData.modified, lastWeekData.modified),
+			words: calcChange(thisWeekData.words, lastWeekData.words),
+		},
+		thisMonth: {
+			created: thisMonthData.created,
+			modified: thisMonthData.modified,
+			words: thisMonthData.words,
+		},
+		lastMonth: {
+			created: lastMonthData.created,
+			modified: lastMonthData.modified,
+			words: lastMonthData.words,
+		},
+		monthChange: {
+			created: calcChange(thisMonthData.created, lastMonthData.created),
+			modified: calcChange(thisMonthData.modified, lastMonthData.modified),
+			words: calcChange(thisMonthData.words, lastMonthData.words),
+		},
+	};
+});
 
 function formatDate(date: Date): string {
-  return `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())}`
+	return `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())}`;
 }
 
 function padZero(num: number): string {
-  return num < 10 ? '0' + num : String(num)
+	return num < 10 ? "0" + num : String(num);
 }
 
-function getRangeData(startDate: Date, endDate: Date): { created: number; modified: number; words: number } {
-  let created = 0
-  let modified = 0
-  let words = 0
+function getRangeData(
+	startDate: Date,
+	endDate: Date,
+): { created: number; modified: number; words: number } {
+	let created = 0;
+	let modified = 0;
+	let words = 0;
 
-  const startStr = formatDate(startDate)
-  const endStr = formatDate(endDate)
+	const startStr = formatDate(startDate);
+	const endStr = formatDate(endDate);
 
-  for (const item of props.historicalData) {
-    if (item.date >= startStr && item.date <= endStr) {
-      created += item.todayCreated
-      modified += item.todayModified
-      words = item.totalWords // 取最后一天的总字数
-    }
-  }
+	for (const item of props.historicalData) {
+		if (item.date >= startStr && item.date <= endStr) {
+			created += item.todayCreated;
+			modified += item.todayModified;
+			words = item.totalWords; // 取最后一天的总字数
+		}
+	}
 
-  return { created, modified, words }
+	return { created, modified, words };
 }
 
 function calcChange(current: number, previous: number): number | null {
-  if (previous === 0) {
-    return current > 0 ? 100 : null
-  }
-  return ((current - previous) / previous) * 100
+	if (previous === 0) {
+		return current > 0 ? 100 : null;
+	}
+	return ((current - previous) / previous) * 100;
 }
 
 function getChangeClass(change: number | null): string {
-  if (change === null || change === 0) return 'neutral'
-  return change > 0 ? 'positive' : 'negative'
+	if (change === null || change === 0) return "neutral";
+	return change > 0 ? "positive" : "negative";
 }
 
 function formatChange(change: number | null): string {
-  if (change === null) return '-'
-  const prefix = change > 0 ? '+' : ''
-  return `${prefix}${change.toFixed(1)}%`
+	if (change === null) return "-";
+	const prefix = change > 0 ? "+" : "";
+	return `${prefix}${change.toFixed(1)}%`;
 }
 
 const trendStats = computed(() => {
-  if (props.historicalData.length === 0) return null
+	if (props.historicalData.length === 0) return null;
 
-  const totalNotes = props.historicalData[props.historicalData.length - 1]?.totalNotes || 0
-  const firstNotes = props.historicalData[0]?.totalNotes || 0
-  const notesGrowth = totalNotes - firstNotes
+	const totalNotes =
+		props.historicalData[props.historicalData.length - 1]?.totalNotes || 0;
+	const firstNotes = props.historicalData[0]?.totalNotes || 0;
+	const notesGrowth = totalNotes - firstNotes;
 
-  const totalWords = props.historicalData[props.historicalData.length - 1]?.totalWords || 0
-  const firstWords = props.historicalData[0]?.totalWords || 0
-  const wordsGrowth = totalWords - firstWords
+	const totalWords =
+		props.historicalData[props.historicalData.length - 1]?.totalWords || 0;
+	const firstWords = props.historicalData[0]?.totalWords || 0;
+	const wordsGrowth = totalWords - firstWords;
 
-  const totalCreated = props.historicalData.reduce((sum, item) => sum + item.todayCreated, 0)
-  const totalModified = props.historicalData.reduce((sum, item) => sum + item.todayModified, 0)
+	const totalCreated = props.historicalData.reduce(
+		(sum, item) => sum + item.todayCreated,
+		0,
+	);
+	const totalModified = props.historicalData.reduce(
+		(sum, item) => sum + item.todayModified,
+		0,
+	);
 
-  return {
-    notesGrowth,
-    wordsGrowth,
-    totalCreated,
-    totalModified,
-    avgDailyCreated: Math.round(totalCreated / props.historicalData.length),
-    avgDailyModified: Math.round(totalModified / props.historicalData.length),
-  }
-})
+	return {
+		notesGrowth,
+		wordsGrowth,
+		totalCreated,
+		totalModified,
+		avgDailyCreated: Math.round(totalCreated / props.historicalData.length),
+		avgDailyModified: Math.round(totalModified / props.historicalData.length),
+	};
+});
 
 const historicalRows = computed(() => {
-  const today = new Date()
-  const todayStr = `${today.getFullYear()}-${padZero(today.getMonth() + 1)}-${padZero(today.getDate())}`
-  return props.historicalData.map((item, index) => {
-    const previous = props.historicalData[index + 1]
-    const wordDiff = previous ? getWordDiff(item, previous) : 0
-    const noteDiff = previous ? getNoteDiff(item, previous) : 0
-    return {
-      item,
-      wordDiff,
-      noteDiff,
-      hasPrevious: Boolean(previous),
-      isToday: item.date === todayStr,
-    }
-  })
-})
+	const today = new Date();
+	const todayStr = `${today.getFullYear()}-${padZero(today.getMonth() + 1)}-${padZero(today.getDate())}`;
+	return props.historicalData.map((item, index) => {
+		const previous = props.historicalData[index + 1];
+		const wordDiff = previous ? getWordDiff(item, previous) : 0;
+		const noteDiff = previous ? getNoteDiff(item, previous) : 0;
+		return {
+			item,
+			wordDiff,
+			noteDiff,
+			hasPrevious: Boolean(previous),
+			isToday: item.date === todayStr,
+		};
+	});
+});
 
+function getWordDiff(
+	current: HistoricalDataItem,
+	previous: HistoricalDataItem,
+): number {
+	if (!current || !previous) return 0;
 
-function getWordDiff(current: HistoricalDataItem, previous: HistoricalDataItem): number {
-  if (!current || !previous) return 0
+	if (
+		previous.todayCreated === 0 &&
+		previous.todayModified === 0 &&
+		current.totalWords > 0
+	) {
+		const diff = current.totalWords - previous.totalWords;
+		return diff > 0 ? diff : 0;
+	}
 
-  if (previous.todayCreated === 0 && previous.todayModified === 0 && current.totalWords > 0) {
-    const diff = current.totalWords - previous.totalWords
-    return diff > 0 ? diff : 0
-  }
+	if (previous.totalWords === 0 && current.totalWords > 0) {
+		return 0;
+	}
 
-  if (previous.totalWords === 0 && current.totalWords > 0) {
-    return 0
-  }
-
-  return current.totalWords - previous.totalWords
+	return current.totalWords - previous.totalWords;
 }
 
-function getNoteDiff(current: HistoricalDataItem, previous: HistoricalDataItem): number {
-  if (!current || !previous) return 0
+function getNoteDiff(
+	current: HistoricalDataItem,
+	previous: HistoricalDataItem,
+): number {
+	if (!current || !previous) return 0;
 
-  if (previous.todayCreated === 0 && previous.todayModified === 0 && current.totalNotes > 0) {
-    const diff = current.totalNotes - previous.totalNotes
-    return diff > 0 ? diff : 0
-  }
+	if (
+		previous.todayCreated === 0 &&
+		previous.todayModified === 0 &&
+		current.totalNotes > 0
+	) {
+		const diff = current.totalNotes - previous.totalNotes;
+		return diff > 0 ? diff : 0;
+	}
 
-  if (previous.totalNotes === 0 && current.totalNotes > 0) {
-    return 0
-  }
+	if (previous.totalNotes === 0 && current.totalNotes > 0) {
+		return 0;
+	}
 
-  return current.totalNotes - previous.totalNotes
+	return current.totalNotes - previous.totalNotes;
 }
 </script>
 

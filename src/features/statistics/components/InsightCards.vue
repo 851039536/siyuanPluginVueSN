@@ -12,8 +12,10 @@
           <div class="weekly-progress">
             <div class="progress-ring">
               <svg viewBox="0 0 36 36">
-                <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                <path class="ring-fill" :stroke-dasharray="`${weeklyProgress}, 100`" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <path class="ring-bg"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <path class="ring-fill" :stroke-dasharray="`${weeklyProgress}, 100`"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
               </svg>
               <span class="ring-text">{{ weeklyProgress.toFixed(0) }}%</span>
             </div>
@@ -35,12 +37,8 @@
           <!-- 本周趋势条形图 -->
           <div class="weekly-trend-chart">
             <div class="trend-bars">
-              <div
-                v-for="(day, idx) in weekDaysDetail"
-                :key="idx"
-                class="trend-bar-wrapper"
-                :class="{ today: day.isToday, best: day.isBest }"
-              >
+              <div v-for="(day, idx) in weekDaysDetail" :key="idx" class="trend-bar-wrapper"
+                :class="{ today: day.isToday, best: day.isBest }">
                 <div class="trend-bar" :style="{ height: day.barHeight + '%' }">
                   <span v-if="day.isBest" class="best-badge">👑</span>
                 </div>
@@ -50,11 +48,8 @@
           </div>
           <!-- 周日历标记 -->
           <div class="weekly-days">
-            <span
-              v-for="(day, idx) in weekDays"
-              :key="idx"
-              :class="{ active: day.active, today: day.isToday, best: day.isBest }"
-            >
+            <span v-for="(day, idx) in weekDays" :key="idx"
+              :class="{ active: day.active, today: day.isToday, best: day.isBest }">
               {{ day.label }}
               <span v-if="day.isBest && day.active" class="best-indicator">★</span>
             </span>
@@ -98,7 +93,8 @@
           </div>
           <div class="heatmap-legend">
             <span>{{ i18n.less }}</span>
-            <span class="level-0"></span><span class="level-1"></span><span class="level-2"></span><span class="level-3"></span><span class="level-4"></span>
+            <span class="level-0"></span><span class="level-1"></span><span class="level-2"></span><span
+              class="level-3"></span><span class="level-4"></span>
             <span>{{ i18n.more }}</span>
           </div>
           <div class="heatmap-summary">{{ i18n.last30Days }}: {{ activeDaysInMonth }} {{ i18n.activeDaysCount }}</div>
@@ -120,9 +116,12 @@
             <span class="wealth-unit">{{ i18n.gold }}</span>
           </div>
           <div class="wealth-breakdown">
-            <div class="breakdown-item"><span>📓</span><span>{{ i18n.fromNotes }}</span><span>+{{ formatNumber(knowledgeWealth.fromNotes) }}</span></div>
-            <div class="breakdown-item"><span>✍️</span><span>{{ i18n.fromWords }}</span><span>+{{ formatNumber(knowledgeWealth.fromWords) }}</span></div>
-            <div class="breakdown-item"><span>🔗</span><span>{{ i18n.fromLinks }}</span><span>+{{ formatNumber(knowledgeWealth.fromLinks) }}</span></div>
+            <div class="breakdown-item"><span>📓</span><span>{{ i18n.fromNotes }}</span><span>+{{
+              formatNumber(knowledgeWealth.fromNotes) }}</span></div>
+            <div class="breakdown-item"><span>✍️</span><span>{{ i18n.fromWords }}</span><span>+{{
+              formatNumber(knowledgeWealth.fromWords) }}</span></div>
+            <div class="breakdown-item"><span>🔗</span><span>{{ i18n.fromLinks }}</span><span>+{{
+              formatNumber(knowledgeWealth.fromLinks) }}</span></div>
           </div>
           <div class="wealth-rank">
             <span>{{ i18n.wealthRank }}:</span>
@@ -147,12 +146,7 @@
         </div>
         <div class="card-body scrollable">
           <div class="milestones-grid">
-            <div
-              v-for="m in visibleMilestones"
-              :key="m.id"
-              class="milestone-item"
-              :class="{ achieved: m.achieved }"
-            >
+            <div v-for="m in visibleMilestones" :key="m.id" class="milestone-item" :class="{ achieved: m.achieved }">
               <span class="milestone-icon">{{ m.achieved ? m.icon : '🔒' }}</span>
               <span class="milestone-text">{{ m.label }}</span>
               <div v-if="!m.achieved" class="mini-progress">
@@ -553,7 +547,11 @@ $gold: #f59e0b;
     overflow: hidden;
     background: var(--b3-theme-surface);
 
-    &.fixed-height { height: 180px; display: flex; flex-direction: column; }
+    &.fixed-height {
+      height: 180px;
+      display: flex;
+      flex-direction: column;
+    }
 
     .card-header {
       display: flex;
@@ -563,28 +561,97 @@ $gold: #f59e0b;
       background: rgba(var(--b3-theme-primary-rgb), 0.06);
       border-bottom: 1px solid var(--b3-border-color);
 
-      .card-icon { font-size: 14px; }
-      .card-title { flex: 1; font-size: 11px; font-weight: 700; color: var(--b3-theme-primary); }
-      .achieved-count { font-size: 10px; opacity: 0.6; }
+      .card-icon {
+        font-size: 14px;
+      }
+
+      .card-title {
+        flex: 1;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--b3-theme-primary);
+      }
+
+      .achieved-count {
+        font-size: 10px;
+        opacity: 0.6;
+      }
     }
 
-    .card-body { padding: 10px 12px; }
-    .card-body.scrollable { flex: 1; overflow: auto; }
+    .card-body {
+      padding: 10px 12px;
+    }
+
+    .card-body.scrollable {
+      flex: 1;
+      overflow: auto;
+    }
   }
 }
 
 // 本周目标
-.weekly-progress { display: flex; gap: 12px; margin-bottom: 10px; }
-.progress-ring { position: relative; width: 50px; height: 50px;
-  svg { transform: rotate(-90deg); width: 100%; height: 100%; }
-  .ring-bg { fill: none; stroke: rgba(var(--b3-theme-primary-rgb), 0.1); stroke-width: 3; }
-  .ring-fill { fill: none; stroke: var(--b3-theme-primary); stroke-width: 3; stroke-linecap: round; transition: stroke-dasharray 0.5s ease; }
-  .ring-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 10px; font-weight: 700; color: var(--b3-theme-primary); }
+.weekly-progress {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 10px;
 }
-.weekly-stats { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 4px;
-  .stat-row { display: flex; justify-content: space-between; font-size: 9px;
-    span:first-child { opacity: 0.6; }
-    span:last-child { font-weight: 600; color: var(--b3-theme-primary); }
+
+.progress-ring {
+  position: relative;
+  width: 50px;
+  height: 50px;
+
+  svg {
+    transform: rotate(-90deg);
+    width: 100%;
+    height: 100%;
+  }
+
+  .ring-bg {
+    fill: none;
+    stroke: rgba(var(--b3-theme-primary-rgb), 0.1);
+    stroke-width: 3;
+  }
+
+  .ring-fill {
+    fill: none;
+    stroke: var(--b3-theme-primary);
+    stroke-width: 3;
+    stroke-linecap: round;
+    transition: stroke-dasharray 0.5s ease;
+  }
+
+  .ring-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--b3-theme-primary);
+  }
+}
+
+.weekly-stats {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+
+    span:first-child {
+      opacity: 0.6;
+    }
+
+    span:last-child {
+      font-weight: 600;
+      color: var(--b3-theme-primary);
+    }
   }
 }
 
@@ -598,6 +665,7 @@ $gold: #f59e0b;
   padding: 2px 4px;
   border-radius: 4px;
   transition: all 0.2s ease;
+
   &:hover {
     opacity: 1;
     background: rgba(var(--b3-theme-primary-rgb), 0.1);
@@ -611,6 +679,7 @@ $gold: #f59e0b;
   background: rgba(var(--b3-theme-primary-rgb), 0.03);
   border-radius: 6px;
 }
+
 .trend-bars {
   display: flex;
   align-items: flex-end;
@@ -618,6 +687,7 @@ $gold: #f59e0b;
   height: 40px;
   gap: 4px;
 }
+
 .trend-bar-wrapper {
   flex: 1;
   display: flex;
@@ -625,12 +695,15 @@ $gold: #f59e0b;
   align-items: center;
   height: 100%;
   position: relative;
+
   &.today .trend-bar {
     background: linear-gradient(180deg, var(--b3-theme-primary), rgba(var(--b3-theme-primary-rgb), 0.6));
   }
+
   &.best .trend-bar {
     background: linear-gradient(180deg, $gold, #ff8c00);
   }
+
   .trend-bar {
     width: 100%;
     max-width: 16px;
@@ -640,11 +713,13 @@ $gold: #f59e0b;
     transition: height 0.3s ease;
     position: relative;
   }
+
   .best-badge {
     position: absolute;
     top: -14px;
     font-size: 10px;
   }
+
   .trend-label {
     font-size: 8px;
     opacity: 0.5;
@@ -653,12 +728,49 @@ $gold: #f59e0b;
 }
 
 // 周日历标记
-.weekly-days { display: flex; justify-content: space-between; padding: 6px 4px; background: rgba(var(--b3-theme-primary-rgb), 0.03); border-radius: 6px;
-  span { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 9px; border-radius: 50%; background: rgba(var(--b3-theme-on-surface-rgb), 0.05); opacity: 0.5; position: relative;
-    &.active { background: rgba($green, 0.2); color: $green; opacity: 1; }
-    &.today { border: 2px solid var(--b3-theme-primary); font-weight: 700; opacity: 1; }
-    &.best { background: rgba($gold, 0.3); color: color.adjust($gold, $lightness: -10%); opacity: 1;
-      .best-indicator { position: absolute; top: -4px; right: -4px; font-size: 8px; color: $gold; }
+.weekly-days {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 4px;
+  background: rgba(var(--b3-theme-primary-rgb), 0.03);
+  border-radius: 6px;
+
+  span {
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    border-radius: 50%;
+    background: rgba(var(--b3-theme-on-surface-rgb), 0.05);
+    opacity: 0.5;
+    position: relative;
+
+    &.active {
+      background: rgba($green, 0.2);
+      color: $green;
+      opacity: 1;
+    }
+
+    &.today {
+      border: 2px solid var(--b3-theme-primary);
+      font-weight: 700;
+      opacity: 1;
+    }
+
+    &.best {
+      background: rgba($gold, 0.3);
+      color: color.adjust($gold, $lightness: -10%);
+      opacity: 1;
+
+      .best-indicator {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        font-size: 8px;
+        color: $gold;
+      }
     }
   }
 }
@@ -676,12 +788,14 @@ $gold: #f59e0b;
   justify-content: center;
   z-index: 1000;
 }
+
 .goal-editor {
   background: var(--b3-theme-surface);
   border-radius: 12px;
   padding: 16px;
   min-width: 280px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+
   .editor-header {
     display: flex;
     justify-content: space-between;
@@ -689,29 +803,37 @@ $gold: #f59e0b;
     margin-bottom: 16px;
     font-weight: 600;
     font-size: 14px;
+
     .close-btn {
       background: none;
       border: none;
       font-size: 16px;
       cursor: pointer;
       opacity: 0.5;
-      &:hover { opacity: 1; }
+
+      &:hover {
+        opacity: 1;
+      }
     }
   }
+
   .editor-body {
     display: flex;
     flex-direction: column;
     gap: 12px;
   }
+
   .editor-field {
     display: flex;
     align-items: center;
     gap: 8px;
+
     label {
       flex: 1;
       font-size: 12px;
       opacity: 0.8;
     }
+
     input {
       width: 100px;
       padding: 6px 10px;
@@ -721,22 +843,26 @@ $gold: #f59e0b;
       color: var(--b3-theme-on-background);
       font-size: 12px;
       text-align: right;
+
       &:focus {
         outline: none;
         border-color: var(--b3-theme-primary);
       }
     }
+
     .unit {
       font-size: 11px;
       opacity: 0.6;
       width: 24px;
     }
   }
+
   .editor-footer {
     display: flex;
     justify-content: flex-end;
     gap: 8px;
     margin-top: 16px;
+
     button {
       padding: 6px 16px;
       border-radius: 6px;
@@ -745,75 +871,255 @@ $gold: #f59e0b;
       border: none;
       transition: all 0.2s ease;
     }
+
     .cancel-btn {
       background: rgba(var(--b3-theme-on-surface-rgb), 0.1);
       color: var(--b3-theme-on-surface);
-      &:hover { background: rgba(var(--b3-theme-on-surface-rgb), 0.15); }
+
+      &:hover {
+        background: rgba(var(--b3-theme-on-surface-rgb), 0.15);
+      }
     }
+
     .save-btn {
       background: var(--b3-theme-primary);
       color: white;
-      &:hover { opacity: 0.9; }
+
+      &:hover {
+        opacity: 0.9;
+      }
     }
   }
 }
 
 // 热力图
-.heatmap-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; margin-bottom: 8px;
-  div { aspect-ratio: 1; border-radius: 2px; transition: transform 0.2s ease; cursor: pointer;
-    &:hover { transform: scale(1.2); }
-    &.level-0 { background: rgba(var(--b3-theme-on-surface-rgb), 0.05); }
-    &.level-1 { background: rgba($green, 0.2); }
-    &.level-2 { background: rgba($green, 0.4); }
-    &.level-3 { background: rgba($green, 0.6); }
-    &.level-4 { background: $green; }
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 3px;
+  margin-bottom: 8px;
+
+  div {
+    aspect-ratio: 1;
+    border-radius: 2px;
+    transition: transform 0.2s ease;
+    cursor: pointer;
+
+    &:hover {
+      transform: scale(1.2);
+    }
+
+    &.level-0 {
+      background: rgba(var(--b3-theme-on-surface-rgb), 0.05);
+    }
+
+    &.level-1 {
+      background: rgba($green, 0.2);
+    }
+
+    &.level-2 {
+      background: rgba($green, 0.4);
+    }
+
+    &.level-3 {
+      background: rgba($green, 0.6);
+    }
+
+    &.level-4 {
+      background: $green;
+    }
   }
 }
-.heatmap-legend { display: flex; align-items: center; justify-content: flex-end; gap: 3px; margin-bottom: 6px; font-size: 8px; opacity: 0.5;
-  span:not(.level-0):not(.level-1):not(.level-2):not(.level-3):not(.level-4) { }
-  .level-0, .level-1, .level-2, .level-3, .level-4 { width: 8px; height: 8px; border-radius: 1px; }
-  .level-0 { background: rgba(var(--b3-theme-on-surface-rgb), 0.05); }
-  .level-1 { background: rgba($green, 0.2); }
-  .level-2 { background: rgba($green, 0.4); }
-  .level-3 { background: rgba($green, 0.6); }
-  .level-4 { background: $green; }
+
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  margin-bottom: 6px;
+  font-size: 8px;
+  opacity: 0.5;
+
+  span:not(.level-0):not(.level-1):not(.level-2):not(.level-3):not(.level-4) {}
+
+  .level-0,
+  .level-1,
+  .level-2,
+  .level-3,
+  .level-4 {
+    width: 8px;
+    height: 8px;
+    border-radius: 1px;
+  }
+
+  .level-0 {
+    background: rgba(var(--b3-theme-on-surface-rgb), 0.05);
+  }
+
+  .level-1 {
+    background: rgba($green, 0.2);
+  }
+
+  .level-2 {
+    background: rgba($green, 0.4);
+  }
+
+  .level-3 {
+    background: rgba($green, 0.6);
+  }
+
+  .level-4 {
+    background: $green;
+  }
 }
-.heatmap-summary { font-size: 9px; opacity: 0.6; text-align: center; }
+
+.heatmap-summary {
+  font-size: 9px;
+  opacity: 0.6;
+  text-align: center;
+}
 
 // 知识财富
-.wealth-main { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 10px;
-  .wealth-value { font-size: 24px; font-weight: 800; background: linear-gradient(135deg, $gold, #ff8c00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-  .wealth-unit { font-size: 10px; opacity: 0.6; }
-}
-.wealth-breakdown { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px;
-  .breakdown-item { display: flex; align-items: center; gap: 4px; font-size: 9px; padding: 4px 6px; background: rgba(var(--b3-theme-primary-rgb), 0.03); border-radius: 4px;
-    span:nth-child(2) { flex: 1; opacity: 0.6; }
-    span:last-child { font-weight: 600; color: $green; }
+.wealth-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 10px;
+
+  .wealth-value {
+    font-size: 24px;
+    font-weight: 800;
+    background: linear-gradient(135deg, $gold, #ff8c00);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .wealth-unit {
+    font-size: 10px;
+    opacity: 0.6;
   }
 }
-.wealth-rank { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--b3-border-color); font-size: 9px;
-  span:nth-child(2) { font-size: 11px; font-weight: 700; color: var(--b3-theme-primary); }
+
+.wealth-breakdown {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+
+  .breakdown-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 9px;
+    padding: 4px 6px;
+    background: rgba(var(--b3-theme-primary-rgb), 0.03);
+    border-radius: 4px;
+
+    span:nth-child(2) {
+      flex: 1;
+      opacity: 0.6;
+    }
+
+    span:last-child {
+      font-weight: 600;
+      color: $green;
+    }
+  }
 }
-.year-compare { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--b3-border-color); font-size: 10px;
-  .up { color: $green; font-weight: 600; }
-  .down { color: $red; font-weight: 600; }
+
+.wealth-rank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--b3-border-color);
+  font-size: 9px;
+
+  span:nth-child(2) {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--b3-theme-primary);
+  }
+}
+
+.year-compare {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--b3-border-color);
+  font-size: 10px;
+
+  .up {
+    color: $green;
+    font-weight: 600;
+  }
+
+  .down {
+    color: $red;
+    font-weight: 600;
+  }
 }
 
 // 里程碑
-.milestones-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
-.milestone-item { display: flex; flex-direction: column; align-items: center; padding: 8px 6px; background: rgba(var(--b3-theme-primary-rgb), 0.03); border-radius: 6px;
-  &.achieved { background: rgba($green, 0.1);
-    .milestone-text { color: $green; font-weight: 600; }
+.milestones-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.milestone-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 6px;
+  background: rgba(var(--b3-theme-primary-rgb), 0.03);
+  border-radius: 6px;
+
+  &.achieved {
+    background: rgba($green, 0.1);
+
+    .milestone-text {
+      color: $green;
+      font-weight: 600;
+    }
   }
-  &:not(.achieved) { opacity: 0.6; }
-  .milestone-icon { margin-bottom: 4px; }
-  .milestone-text { font-size: 9px; text-align: center; }
-  .mini-progress { width: 100%; height: 3px; background: rgba(var(--b3-theme-primary-rgb), 0.1); border-radius: 2px; margin-top: 4px; overflow: hidden;
-    .mini-fill { height: 100%; background: var(--b3-theme-primary); transition: width 0.3s ease; }
+
+  &:not(.achieved) {
+    opacity: 0.6;
+  }
+
+  .milestone-icon {
+    margin-bottom: 4px;
+  }
+
+  .milestone-text {
+    font-size: 9px;
+    text-align: center;
+  }
+
+  .mini-progress {
+    width: 100%;
+    height: 3px;
+    background: rgba(var(--b3-theme-primary-rgb), 0.1);
+    border-radius: 2px;
+    margin-top: 4px;
+    overflow: hidden;
+
+    .mini-fill {
+      height: 100%;
+      background: var(--b3-theme-primary);
+      transition: width 0.3s ease;
+    }
   }
 }
 
 @include tablet-only {
-  .insight-cards .insight-row { grid-template-columns: 1fr; }
+  .insight-cards .insight-row {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

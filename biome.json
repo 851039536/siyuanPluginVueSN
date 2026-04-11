@@ -10,17 +10,71 @@
 	},
 	"formatter": {
 		"enabled": true,
-		"indentStyle": "tab"
+		"indentStyle": "tab",
+		"lineWidth": 120,
+		"formatWithErrors": false
 	},
 	"linter": {
 		"enabled": true,
 		"rules": {
-			"recommended": true
+			"recommended": true,
+			"security": {
+				"noDangerouslySetInnerHtml": "error",
+				"noGlobalEval": "error"
+			},
+			"correctness": {
+				"noUnusedVariables": "warn",
+				"noUnusedImports": "warn",
+				"noEmptyBlock": "warn",
+				"noInnerDeclarations": "error",
+				"noInvalidBuiltinInstantiation": "error",
+				"noUndeclaredVariables": "error"
+			},
+			"complexity": {
+				"noBannedTypes": "error",
+				"noUselessUndefined": "warn",
+				"noUselessTypeConstraint": "warn",
+				"noForEach": "off",
+				"useSimplifiedLogicExpression": "warn"
+			},
+			"style": {
+				"noInferrableTypes": "warn",
+				"noNonNullAssertion": "off",
+				"useConst": "error",
+				"noVar": "error",
+				"useTemplate": "warn",
+				"useNumberNamespace": "error",
+				"useSelfClosingElements": "warn"
+			},
+			"suspicious": {
+				"noExplicitAny": "warn",
+				"noFallthroughSwitchClause": "error",
+				"noRedeclare": "error",
+				"noSelfCompare": "error",
+				"noDoubleEquals": "warn",
+				"noAssignInExpressions": "error"
+			},
+			"performance": {
+				"noAccumulatingSpread": "warn"
+			}
 		}
 	},
 	"javascript": {
 		"formatter": {
-			"quoteStyle": "double"
+			"quoteStyle": "double",
+			"semicolons": "always",
+			"trailingCommas": "all",
+			"arrowParentheses": "always"
+		}
+	},
+	"json": {
+		"formatter": {
+			"trailingCommas": "none"
+		}
+	},
+	"css": {
+		"formatter": {
+			"enabled": true
 		}
 	},
 	"assist": {

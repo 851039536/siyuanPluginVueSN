@@ -1,9 +1,5 @@
 <template>
-  <button
-    :class="buttonClasses"
-    :disabled="disabled || loading"
-    @click="handleClick"
-  >
+  <button :class="buttonClasses" :disabled="disabled || loading" @click="handleClick">
     <span v-if="loading" class="button-spinner"></span>
     <IconWrapper v-if="icon && !loading" :name="icon" :size="iconSize" :class="iconClass" />
     <span v-if="$slots.default" :class="textClass">

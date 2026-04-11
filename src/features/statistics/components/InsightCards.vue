@@ -270,11 +270,20 @@ const weeklyStats = computed(() => {
   let activeDays = 0
   const activeSet = new Set<string>()
 
-  for (const data of props.historicalData) {
+  // 按 date 排序，确保可以找到前一天的数据来计算字数差值
+  const sortedData = [...props.historicalData].sort((a, b) => a.date.localeCompare(b.date))
+
+  for (let i = 0; i < sortedData.length; i++) {
+    const data = sortedData[i]
     const dataDate = new Date(data.date)
     if (dataDate >= weekStart && dataDate <= now) {
       created += data.todayCreated
-      words += data.todayModified
+      // 通过相邻两天的 totalWords 差值计算当日写作字数
+      const prevData = i > 0 ? sortedData[i - 1] : null
+      if (prevData && prevData.totalWords > 0) {
+        const diff = data.totalWords - prevData.totalWords
+        words += diff > 0 ? diff : 0
+      }
       if (data.todayCreated > 0 || data.todayModified > 0) {
         activeSet.add(data.date)
         activeDays = activeSet.size

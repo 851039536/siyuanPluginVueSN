@@ -69,7 +69,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, useAttrs, nextTick } from "vue";
+import { computed, nextTick, ref, useAttrs, watch } from "vue";
 import IconWrapper from "@/components/IconWrapper.vue";
 import type { IconKey } from "@/config/icons";
 

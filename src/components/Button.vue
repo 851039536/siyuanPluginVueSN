@@ -70,7 +70,7 @@ const iconClass = computed(() => ({
 	"si-button__icon--right": props.iconPosition === "right",
 }));
 
-const textClass = computed(() => ({
+ const textClass = computed(() => ({
 	"si-button__text": true,
 }));
 

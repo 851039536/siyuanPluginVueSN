@@ -4,10 +4,7 @@
       <span class="label-icon">🖍️</span>
       {{ i18n?.enableHighlight || '双击高亮功能' }}
     </label>
-    <SiSwitch
-      v-model="enableHighlight"
-      @change="handleToggleChange"
-    />
+    <SiSwitch v-model="enableHighlight" @change="handleToggleChange" />
     <p class="toggle-description">
       {{ i18n?.highlightDescription || '双击选中文本自动高亮显示' }}
     </p>
@@ -29,8 +26,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
 import { showMessage } from "siyuan";
+import { onMounted, ref } from "vue";
 import SiSwitch from "@/components/Switch.vue";
 
 const props = defineProps<{

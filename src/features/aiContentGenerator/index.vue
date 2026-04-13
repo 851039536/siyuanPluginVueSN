@@ -119,6 +119,7 @@ import hljs from "highlight.js";
 import "highlight.js/styles/github-dark.css";
 import * as api from "@/api";
 import { AIGeneratorStorage, type AIPromptConfig } from "./types/storage";
+import type { GenerateOptions, SavedPrompt, TargetDoc } from "@/types/ai";
 import PanelHeader from "./components/PanelHeader.vue";
 import SettingsPanel from "./components/SettingsPanel.vue";
 import PlagiarismResultPanel from "./components/PlagiarismResultPanel.vue";
@@ -129,16 +130,6 @@ interface Props {
 	i18n: any;
 	plugin: any;
 	onGenerate: (options: GenerateOptions) => Promise<string>;
-}
-
-interface GenerateOptions {
-	userInput: string;
-	systemPrompt: string;
-	temperature: number;
-	maxTokens: number;
-	context?: string;
-	signal?: AbortSignal;
-	onChunk?: (chunk: string) => void; // 流式输出回调
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -163,12 +154,6 @@ const collapsedSections = ref({
 });
 
 // 编辑模式状态
-interface TargetDoc {
-	id: string;
-	title: string;
-	content: string;
-	isBlock?: boolean; // 是否为块内容（区别于整个文档）
-}
 const editTargetDoc = ref<TargetDoc | null>(null);
 const originalContent = ref(""); // 文档原始内容
 const isApplying = ref(false);
@@ -213,17 +198,7 @@ const contextMessageLimit = ref(1);
 
 // 上下文配置已删除
 const displayedContent = ref(""); // 用于打字机效果显示的内容
-// 提示词管理（与 AIPromptConfig 保持一致）
-interface SavedPrompt {
-	id: string;
-	name: string;
-	systemPrompt: string;
-	temperature: number;
-	maxTokens: number;
-	contextMessageLimit: number;
-	createdAt: number;
-}
-
+// 提示词管理
 const savedPrompts = ref<SavedPrompt[]>([]);
 const showPromptSelector = ref(false);
 const newPromptName = ref("");

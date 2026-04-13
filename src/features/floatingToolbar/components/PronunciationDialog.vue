@@ -184,6 +184,7 @@ import { showMessage } from "siyuan";
 import type PluginSample from "@/index";
 import { FlashcardStorage } from "@/features/flashcardReading/types/storage";
 import type { Flashcard } from "@/features/flashcardReading/types";
+import { callAI, getApiConfigFromPlugin } from "@/utils/aiApi";
 import Button from "@/components/Button.vue";
 import Input from "@/components/Input.vue";
 import Select, { type SelectOption } from "@/components/Select.vue";
@@ -251,7 +252,6 @@ watch(
 		if (newContent) {
 			inputWord.value = newContent;
 			generatedResult.value = "";
-			// 自动触发翻译
 			await nextTick();
 			await generatePronunciation();
 		}
@@ -274,20 +274,12 @@ function isChinese(text: string): boolean {
 	return /[\u4e00-\u9fa5]/.test(text);
 }
 
-// 获取API配置（从超级面板的统一配置中读取）
-function getApiConfig() {
-	const settings = (props.plugin as any)?.settings || {};
-	return {
-		provider: settings.aiApiProvider || "tongyi",
-		model: settings.aiModel || "qwen-plus",
-		apiKey: settings.aiApiKey || "",
-		customEndpoint: settings.aiCustomEndpoint || "",
-	};
-}
+// 谐音生成的系统提示词
+const PRONUNCIATION_SYSTEM_PROMPT =
+	"你是一个专业的英语教学助手，擅长用中文谐音帮助学习者记忆英语单词发音，也能准确翻译中文词语为英文。";
 
 // 构建提示词（根据输入语言自动选择）
 function buildPrompt(text: string): string {
-	// 检测是否为中文，如果是中文则翻译成英文并生成谐音
 	if (isChinese(text)) {
 		return `请将中文词语 "${text}" 翻译成英文，并为英文翻译生成谐音记忆，要求：
 
@@ -312,7 +304,6 @@ function buildPrompt(text: string): string {
 - 只输出格式化内容，不要有其他说明文字`;
 	}
 
-	// 英文单词生成谐音记忆
 	return `请为英文单词 "${text}" 生成谐音记忆，要求：
 
 1. 使用英式标准发音
@@ -333,7 +324,7 @@ function buildPrompt(text: string): string {
 - 只输出格式化内容，不要有其他说明文字`;
 }
 
-// 生成谐音翻译/中文翻译
+// 生成谐音翻译/中文翻译（使用统一 AI API 模块）
 async function generatePronunciation() {
 	if (!inputWord.value) {
 		showMessage("请输入内容", 3000, "error");
@@ -359,28 +350,15 @@ async function generatePronunciation() {
 			}
 		}
 
-		// 本地未找到，调用 API 生成
+		// 本地未找到，调用统一 AI API 生成
 		const prompt = buildPrompt(inputWord.value);
-		const config = getApiConfig();
+		const config = getApiConfigFromPlugin(props.plugin);
 
-		let result = "";
-
-		switch (config.provider) {
-			case "tongyi":
-				result = await callTongyiAPI(prompt, config);
-				break;
-			case "openai":
-				result = await callOpenAIAPI(prompt, config);
-				break;
-			case "deepseek":
-				result = await callDeepSeekAPI(prompt, config);
-				break;
-			case "custom":
-				result = await callCustomAPI(prompt, config);
-				break;
-			default:
-				throw new Error(`不支持的API供应商: ${config.provider}`);
-		}
+		const result = await callAI(prompt, config, {
+			systemPrompt: PRONUNCIATION_SYSTEM_PROMPT,
+			temperature: 0.7,
+			maxTokens: 800,
+		});
 
 		if (result) {
 			generatedResult.value = result;
@@ -400,14 +378,12 @@ async function generatePronunciation() {
 
 /**
  * 从本地 FlashcardStorage 查询单词
- * 仅按标题精确匹配
  */
 async function queryFromLocalStorage(word: string): Promise<Flashcard | null> {
 	if (!flashcardStorage) return null;
 
 	try {
 		const allCards = await flashcardStorage.getAllCards();
-
 		const exactMatch = allCards.find(
 			(card) => card.title.toLowerCase() === word.toLowerCase(),
 		);
@@ -422,7 +398,6 @@ async function queryFromLocalStorage(word: string): Promise<Flashcard | null> {
  * 打开添加到单词本对话框
  */
 function openAddToCardDialog() {
-	// 加载现有类别
 	loadCategories();
 	selectedCategory.value = "编程单词";
 	customCategoryInput.value = "";
@@ -455,7 +430,6 @@ async function loadCategories() {
 			"Rust",
 			...categories,
 		];
-		// 去重
 		availableCategories.value = Array.from(
 			new Set(availableCategories.value),
 		).sort();
@@ -473,7 +447,6 @@ async function addToFlashcard() {
 		return;
 	}
 
-	// 处理自定义类别
 	const categoryToUse =
 		selectedCategory.value === "__custom__"
 			? customCategoryInput.value.trim()
@@ -495,7 +468,6 @@ async function addToFlashcard() {
 		showAddToCardDialog.value = false;
 		showMessage("✓ 已添加到单词本", 2000, "info");
 
-		// 通知其他组件刷新数据
 		window.dispatchEvent(new CustomEvent("flashcardDataChanged"));
 	} catch (error: any) {
 		if (error.message === "Title already exists") {
@@ -506,231 +478,10 @@ async function addToFlashcard() {
 	}
 }
 
-// 调用通义千问API
-async function callTongyiAPI(prompt: string, config: any): Promise<string> {
-	if (!config.apiKey) {
-		throw new Error("请先在超级面板中配置API密钥");
-	}
-
-	const apiUrl =
-		"https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation";
-
-	const requestBody = {
-		model: config.model || "qwen-plus",
-		input: {
-			messages: [
-				{
-					role: "system",
-					content:
-						"你是一个专业的英语教学助手，擅长用中文谐音帮助学习者记忆英语单词发音，也能准确翻译中文词语为英文。",
-				},
-				{
-					role: "user",
-					content: prompt,
-				},
-			],
-		},
-		parameters: {
-			temperature: 0.7,
-			top_p: 0.8,
-			max_tokens: 800,
-		},
-	};
-
-	const response = await fetch(apiUrl, {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-			Authorization: `Bearer ${config.apiKey}`,
-		},
-		body: JSON.stringify(requestBody),
-	});
-
-	if (!response.ok) {
-		const errorText = await response.text();
-		throw new Error(`API请求失败: ${response.status} ${errorText}`);
-	}
-
-	const data = await response.json();
-
-	if (data.output && data.output.text) {
-		return data.output.text;
-	} else if (
-		data.output &&
-		data.output.choices &&
-		data.output.choices.length > 0
-	) {
-		return data.output.choices[0].message.content;
-	} else if (data.choices && data.choices.length > 0) {
-		return data.choices[0].message.content;
-	} else if (data.text) {
-		return data.text;
-	} else if (data.content) {
-		return data.content;
-	} else {
-		throw new Error(
-			`API返回数据格式错误，响应结构: ${JSON.stringify(Object.keys(data))}`,
-		);
-	}
-}
-
-// 调用OpenAI API
-async function callOpenAIAPI(prompt: string, config: any): Promise<string> {
-	if (!config.apiKey) {
-		throw new Error("请先在超级面板中配置API密钥");
-	}
-
-	const apiUrl = "https://api.openai.com/v1/chat/completions";
-
-	const requestBody = {
-		model: config.model || "gpt-3.5-turbo",
-		messages: [
-			{
-				role: "system",
-				content:
-					"你是一个专业的英语教学助手，擅长用中文谐音帮助学习者记忆英语单词发音，也能准确翻译中文词语为英文。",
-			},
-			{
-				role: "user",
-				content: prompt,
-			},
-		],
-		temperature: 0.7,
-		max_tokens: 800,
-	};
-
-	const response = await fetch(apiUrl, {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-			Authorization: `Bearer ${config.apiKey}`,
-		},
-		body: JSON.stringify(requestBody),
-	});
-
-	if (!response.ok) {
-		const errorText = await response.text();
-		throw new Error(`OpenAI API请求失败: ${response.status} ${errorText}`);
-	}
-
-	const data = await response.json();
-
-	if (data.choices && data.choices.length > 0) {
-		return data.choices[0].message.content;
-	} else {
-		throw new Error("OpenAI API返回数据格式错误");
-	}
-}
-
-// 调用DeepSeek API
-async function callDeepSeekAPI(prompt: string, config: any): Promise<string> {
-	if (!config.apiKey) {
-		throw new Error("请先在超级面板中配置API密钥");
-	}
-
-	const apiUrl = "https://api.deepseek.com/v1/chat/completions";
-
-	const requestBody = {
-		model: config.model || "deepseek-chat",
-		messages: [
-			{
-				role: "system",
-				content:
-					"你是一个专业的英语教学助手，擅长用中文谐音帮助学习者记忆英语单词发音，也能准确翻译中文词语为英文。",
-			},
-			{
-				role: "user",
-				content: prompt,
-			},
-		],
-		temperature: 0.7,
-		max_tokens: 800,
-	};
-
-	const response = await fetch(apiUrl, {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-			Authorization: `Bearer ${config.apiKey}`,
-		},
-		body: JSON.stringify(requestBody),
-	});
-
-	if (!response.ok) {
-		const errorText = await response.text();
-		throw new Error(`DeepSeek API请求失败: ${response.status} ${errorText}`);
-	}
-
-	const data = await response.json();
-
-	if (data.choices && data.choices.length > 0) {
-		return data.choices[0].message.content;
-	} else {
-		throw new Error("DeepSeek API返回数据格式错误");
-	}
-}
-
-// 调用自定义API
-async function callCustomAPI(prompt: string, config: any): Promise<string> {
-	if (!config.apiKey) {
-		throw new Error("请先在超级面板中配置API密钥");
-	}
-
-	if (!config.customEndpoint) {
-		throw new Error("请先在超级面板中配置自定义API端点");
-	}
-
-	const requestBody = {
-		model: config.model || "default",
-		messages: [
-			{
-				role: "system",
-				content:
-					"你是一个专业的英语教学助手，擅长用中文谐音帮助学习者记忆英语单词发音，也能准确翻译中文词语为英文。",
-			},
-			{
-				role: "user",
-				content: prompt,
-			},
-		],
-		temperature: 0.7,
-		max_tokens: 800,
-	};
-
-	const response = await fetch(config.customEndpoint, {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-			Authorization: `Bearer ${config.apiKey}`,
-		},
-		body: JSON.stringify(requestBody),
-	});
-
-	if (!response.ok) {
-		const errorText = await response.text();
-		throw new Error(`自定义API请求失败: ${response.status} ${errorText}`);
-	}
-
-	const data = await response.json();
-
-	if (data.choices && data.choices.length > 0) {
-		return data.choices[0].message.content;
-	} else if (data.output && data.output.text) {
-		return data.output.text;
-	} else if (data.text) {
-		return data.text;
-	} else if (data.content) {
-		return data.content;
-	} else {
-		throw new Error("自定义API返回数据格式错误");
-	}
-}
-
 // 格式化结果显示
 function formatResult(result: string): string {
-	// 将markdown格式转换为HTML，移除标题行
 	return result
-		.replace(/####\s+(.+)\n*/g, "") // 移除标题行
+		.replace(/####\s+(.+)\n*/g, "")
 		.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
 		.replace(/\n/g, "<br/>");
 }

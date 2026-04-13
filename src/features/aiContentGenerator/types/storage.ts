@@ -3,6 +3,7 @@
  */
 import { Plugin } from "siyuan";
 import { PluginStorage } from "@/utils/pluginStorage";
+import type { SavedPrompt } from "@/types/ai";
 
 /**
  * AI生成器设置接口
@@ -15,17 +16,9 @@ export interface AIGeneratorSettings {
 }
 
 /**
- * AI提示词配置接口
+ * AI提示词配置接口（向后兼容别名，实际类型来自统一定义）
  */
-export interface AIPromptConfig {
-	id: string;
-	name: string;
-	systemPrompt: string;
-	temperature: number;
-	maxTokens: number;
-	contextMessageLimit: number;
-	createdAt: number;
-}
+export type AIPromptConfig = SavedPrompt;
 
 /**
  * AI内容生成器存储管理器

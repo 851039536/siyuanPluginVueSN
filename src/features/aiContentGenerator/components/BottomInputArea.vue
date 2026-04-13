@@ -186,23 +186,7 @@ import { ref, computed } from "vue";
 import Button from "@/components/Button.vue";
 import Textarea from "@/components/Textarea.vue";
 import Tag from "@/components/Tag.vue";
-
-interface TargetDoc {
-	id: string;
-	title: string;
-	content: string;
-	isBlock?: boolean;
-}
-
-interface SavedPrompt {
-	id: string;
-	name: string;
-	systemPrompt: string;
-	temperature: number;
-	maxTokens: number;
-	contextMessageLimit: number;
-	createdAt: number;
-}
+import type { TargetDoc, SavedPrompt } from "@/types/ai";
 
 interface Props {
 	isGenerating: boolean;

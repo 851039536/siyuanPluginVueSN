@@ -14,8 +14,15 @@
       >
         <span v-if="selectedLabel" class="si-select__value">{{ selectedLabel }}</span>
         <span v-else class="si-select__placeholder">{{ placeholder }}</span>
+        <span
+          v-if="clearable && selectedOption && !disabled"
+          class="si-select__clear"
+          @click.stop="handleClear"
+        >
+          <IconWrapper :name="'x' as IconKey" :size="iconSize" />
+        </span>
         <IconWrapper
-          :name="(isOpen ? 'chevronUp' : 'chevronDown') as any"
+          :name="(isOpen ? 'chevronUp' : 'chevronDown') as IconKey"
           :size="iconSize"
           class="si-select__arrow"
         />
@@ -26,6 +33,7 @@
           v-if="isOpen && !disabled"
           class="si-select__dropdown"
           :class="dropdownClasses"
+          :style="dropdownStyle"
         >
           <div v-if="filterable && filteredOptions.length > 0" class="si-select__filter">
             <input
@@ -50,13 +58,13 @@
             <template v-for="(option, index) in filteredOptions" :key="getOptionKey(option, index)">
               <!-- 分组选项 -->
               <div
-                v-if="option.isGroup"
+                v-if="isGroupOption(option)"
                 class="si-select__group"
               >
                 <div class="si-select__group-label">{{ option.label }}</div>
                 <div
                   v-for="(groupOption, groupIndex) in option.options"
-                  :key="getOptionKey(groupOption, groupIndex as number)"
+                  :key="getOptionKey(groupOption, groupIndex)"
                   class="si-select__option"
                   :class="{
                     'si-select__option--selected': isSelected(groupOption.value),
@@ -64,7 +72,7 @@
                     'si-select__option--hovered': hoveredGroupKey === `${index}-${groupIndex}`
                   }"
                   @click.stop="selectOption(groupOption)"
-                  @mouseenter="setHoveredGroupOption(index, groupIndex as number)"
+                  @mouseenter="setHoveredGroupOption(index, groupIndex)"
                 >
                   <slot name="option" :option="groupOption">
                     {{ groupOption.label }}
@@ -77,15 +85,15 @@
                 v-else
                 class="si-select__option"
                 :class="{
-                  'si-select__option--selected': isSelected((option as SelectOption).value),
-                  'si-select__option--disabled': (option as SelectOption).disabled,
+                  'si-select__option--selected': isSelected(option.value),
+                  'si-select__option--disabled': option.disabled,
                   'si-select__option--hovered': hoveredIndex === index
                 }"
-                @click.stop="selectOption(option as SelectOption)"
+                @click.stop="selectOption(option)"
                 @mouseenter="setHoveredIndex(index)"
               >
                 <slot name="option" :option="option">
-                  {{ (option as SelectOption).label }}
+                  {{ option.label }}
                 </slot>
               </div>
             </template>
@@ -111,6 +119,7 @@ import {
 	useAttrs,
 } from "vue";
 import IconWrapper from "@/components/IconWrapper.vue";
+import type { IconKey } from "@/config/icons";
 
 type SelectSize = "small" | "medium" | "large";
 
@@ -165,7 +174,7 @@ interface Props {
 	maxHeight?: string | number;
 	/** 图标大小 */
 	iconSize?: number;
-	/** 是否清除 */
+	/** 是否可清除 */
 	clearable?: boolean;
 }
 
@@ -177,6 +186,7 @@ interface Emits {
 		option: SelectOption,
 	): void;
 	(e: "visible-change", visible: boolean): void;
+	(e: "clear"): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -208,6 +218,11 @@ const hoveredIndex = ref(-1);
 const hoveredGroupKey = ref<string | null>(null);
 const wrapperRef = ref<HTMLElement>();
 const filterInputRef = ref<HTMLInputElement>();
+const resolvedPlacement = ref<"top" | "bottom">("bottom");
+
+// 类型守卫
+const isGroupOption = (option: OptionType): option is SelectGroupOption =>
+	(option as SelectGroupOption).isGroup === true;
 
 // 计算属性
 const selectClasses = computed(() => [
@@ -215,31 +230,32 @@ const selectClasses = computed(() => [
 	`si-select--${props.size}`,
 	{
 		"si-select--disabled": props.disabled,
-		"si-select--labeled": props.label,
+		"si-select--labeled": !!props.label,
 	},
 ]);
 
 const dropdownClasses = computed(() => [
-	`si-select__dropdown--${props.placement}`,
+	`si-select__dropdown--${resolvedPlacement.value}`,
 ]);
 
-const selectedOption = computed(() => {
+const dropdownStyle = computed(() => ({
+	maxHeight: typeof props.maxHeight === "number" ? `${props.maxHeight}px` : props.maxHeight,
+}));
+
+const selectedOption = computed<SelectOption | null>(() => {
 	if (props.modelValue === null || props.modelValue === undefined) {
 		return null;
 	}
 
 	const findOption = (options: OptionType[]): SelectOption | null => {
 		for (const option of options) {
-			if ((option as SelectGroupOption).isGroup) {
-				const found = (option as SelectGroupOption).options.find(
+			if (isGroupOption(option)) {
+				const found = option.options.find(
 					(opt) => opt.value === props.modelValue,
 				);
 				if (found) return found;
-			} else if (
-				!(option as SelectGroupOption).isGroup &&
-				(option as SelectOption).value === props.modelValue
-			) {
-				return option as SelectOption;
+			} else if (option.value === props.modelValue) {
+				return option;
 			}
 		}
 		return null;
@@ -250,9 +266,7 @@ const selectedOption = computed(() => {
 
 const selectedLabel = computed(() => selectedOption.value?.label || "");
 
-const hasGroups = computed(() =>
-	props.options.some((option) => (option as SelectGroupOption).isGroup),
-);
+const hasGroups = computed(() => props.options.some(isGroupOption));
 
 const filteredOptions = computed(() => {
 	if (!props.filterable || !filterQuery.value) {
@@ -272,23 +286,39 @@ const filteredOptions = computed(() => {
 		option.label.toLowerCase().includes(query);
 
 	return props.options.reduce<OptionType[]>((acc, option) => {
-		if ((option as SelectGroupOption).isGroup) {
-			const filtered = filterGroup(option as SelectGroupOption);
+		if (isGroupOption(option)) {
+			const filtered = filterGroup(option);
 			if (filtered.options.length > 0) {
 				acc.push(filtered);
 			}
-		} else if (filterOption(option as SelectOption)) {
+		} else if (filterOption(option)) {
 			acc.push(option);
 		}
 		return acc;
 	}, []);
 });
 
-// 方法
-const isGroupOption = (option: OptionType): option is SelectGroupOption => {
-	return (option as SelectGroupOption).isGroup === true;
-};
+/** 展开所有分组，返回可导航的平铺选项列表 */
+const flatNavigableOptions = computed<Array<{ option: SelectOption; groupIndex: number; optionIndex: number } | null>>(() => {
+	const result: Array<{ option: SelectOption; groupIndex: number; optionIndex: number } | null> = [];
+	for (let i = 0; i < filteredOptions.value.length; i++) {
+		const opt = filteredOptions.value[i];
+		if (isGroupOption(opt)) {
+			for (let j = 0; j < opt.options.length; j++) {
+				result.push({ option: opt.options[j], groupIndex: i, optionIndex: j });
+			}
+		} else {
+			result.push(null); // null 表示非分组占位，对应 hoveredIndex
+		}
+	}
+	return result;
+});
 
+const totalNavigableCount = computed(() =>
+	flatNavigableOptions.value.filter(Boolean).length,
+);
+
+// 方法
 const getOptionKey = (
 	option: SelectOption | SelectGroupOption,
 	index: number,
@@ -317,23 +347,38 @@ const selectOption = (option: SelectOption) => {
 
 	emit("update:modelValue", option.value);
 	emit("change", option.value, option);
-	isOpen.value = false;
-	filterQuery.value = "";
+	closeDropdown();
+};
+
+const handleClear = () => {
+	emit("update:modelValue", null);
+	emit("clear");
+	closeDropdown();
 };
 
 const toggleDropdown = () => {
 	if (props.disabled) return;
 
-	isOpen.value = !isOpen.value;
-	emit("visible-change", isOpen.value);
-
 	if (isOpen.value) {
-		nextTick(() => {
-			if (props.filterable) {
-				filterInputRef.value?.focus();
-			}
-		});
+		closeDropdown();
+	} else {
+		openDropdown();
 	}
+};
+
+const openDropdown = () => {
+	isOpen.value = true;
+	hoveredIndex.value = -1;
+	hoveredGroupKey.value = null;
+	filterQuery.value = "";
+	emit("visible-change", true);
+
+	nextTick(() => {
+		resolvePlacement();
+		if (props.filterable) {
+			filterInputRef.value?.focus();
+		}
+	});
 };
 
 const closeDropdown = () => {
@@ -344,26 +389,72 @@ const closeDropdown = () => {
 	hoveredGroupKey.value = null;
 };
 
+const resolvePlacement = () => {
+	if (props.placement !== "auto" || !wrapperRef.value) {
+		resolvedPlacement.value = props.placement === "top" ? "top" : "bottom";
+		return;
+	}
+
+	const rect = wrapperRef.value.getBoundingClientRect();
+	const spaceBelow = window.innerHeight - rect.bottom;
+	const spaceAbove = rect.top;
+	resolvedPlacement.value = spaceBelow >= spaceAbove ? "bottom" : "top";
+};
+
+/** 获取第 flatIndex 个可导航选项并执行回调 */
+const navigateFlatOption = (flatIndex: number, callback: (opt: SelectOption) => void) => {
+	const navigable = flatNavigableOptions.value.filter(Boolean);
+	const item = navigable[flatIndex];
+	if (item) {
+		callback(item.option);
+	}
+};
+
+/** 同步 hover 状态到当前 flatIndex */
+const syncHoverState = (flatIndex: number) => {
+	const navigable = flatNavigableOptions.value.filter(Boolean);
+	const item = navigable[flatIndex];
+	if (!item) return;
+
+	if (hasGroups.value) {
+		hoveredIndex.value = -1;
+		hoveredGroupKey.value = `${item.groupIndex}-${item.optionIndex}`;
+	} else {
+		hoveredIndex.value = flatIndex;
+		hoveredGroupKey.value = null;
+	}
+};
+
+/** 追踪当前可导航 flat 索引 */
+const currentFlatHoverIndex = computed(() => {
+	if (!hasGroups.value) return hoveredIndex.value;
+
+	const navigable = flatNavigableOptions.value.filter(Boolean);
+	if (!hoveredGroupKey.value) return -1;
+
+	const [gi, oi] = hoveredGroupKey.value.split("-").map(Number);
+	return navigable.findIndex(
+		(item) => item && item.groupIndex === gi && item.optionIndex === oi,
+	);
+});
+
 const handleKeydown = (event: KeyboardEvent) => {
 	if (props.disabled) return;
 
 	switch (event.key) {
 		case "Enter":
-		case " ":
+		case " ": {
 			event.preventDefault();
-			if (isOpen.value && hoveredIndex.value >= 0) {
-				const option = filteredOptions.value[hoveredIndex.value];
-				if (
-					option &&
-					!isGroupOption(option) &&
-					!(option as SelectOption).disabled
-				) {
-					selectOption(option as SelectOption);
-				}
+			const idx = currentFlatHoverIndex.value;
+			if (isOpen.value && idx >= 0) {
+				navigateFlatOption(idx, (opt) => {
+					if (!opt.disabled) selectOption(opt);
+				});
 			} else {
 				toggleDropdown();
 			}
 			break;
+		}
 		case "Escape":
 			event.preventDefault();
 			closeDropdown();
@@ -371,18 +462,17 @@ const handleKeydown = (event: KeyboardEvent) => {
 		case "ArrowDown":
 			event.preventDefault();
 			if (!isOpen.value) {
-				toggleDropdown();
+				openDropdown();
 			} else {
-				hoveredIndex.value = Math.min(
-					hoveredIndex.value + 1,
-					filteredOptions.value.length - 1,
-				);
+				const next = Math.min(currentFlatHoverIndex.value + 1, totalNavigableCount.value - 1);
+				syncHoverState(next);
 			}
 			break;
 		case "ArrowUp":
 			event.preventDefault();
 			if (isOpen.value) {
-				hoveredIndex.value = Math.max(hoveredIndex.value - 1, 0);
+				const prev = Math.max(currentFlatHoverIndex.value - 1, 0);
+				syncHoverState(prev);
 			}
 			break;
 		case "Tab":
@@ -412,6 +502,14 @@ onMounted(() => {
 
 onUnmounted(() => {
 	document.removeEventListener("click", handleClickOutside);
+});
+
+// 暴露公共方法
+defineExpose({
+	focus: () => wrapperRef.value?.querySelector<HTMLDivElement>(".si-select__trigger")?.focus(),
+	blur: () => wrapperRef.value?.querySelector<HTMLDivElement>(".si-select__trigger")?.blur(),
+	open: openDropdown,
+	close: closeDropdown,
 });
 </script>
 
@@ -476,6 +574,21 @@ onUnmounted(() => {
   &__placeholder {
     flex: 1;
     color: var(--b3-theme-secondary);
+  }
+
+  &__clear {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--b3-theme-secondary);
+    border-radius: 4px;
+    padding: 2px;
+    transition: color 0.15s ease;
+
+    &:hover {
+      color: var(--b3-theme-on-background);
+    }
   }
 
   &__arrow {
@@ -545,7 +658,7 @@ onUnmounted(() => {
   }
 
   &__options {
-    max-height: var(--select-max-height, 200px);
+    max-height: inherit;
     overflow-y: auto;
     overflow-x: hidden;
 

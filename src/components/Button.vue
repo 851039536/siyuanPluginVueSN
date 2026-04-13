@@ -1,15 +1,15 @@
 <template>
-  <button :class="buttonClasses" :disabled="disabled || loading" @click="handleClick">
-    <span v-if="loading" class="button-spinner"></span>
-    <IconWrapper v-if="icon && !loading" :name="icon" :size="iconSize" :class="iconClass" />
-    <span v-if="$slots.default" :class="textClass">
+  <button ref="buttonRef" :class="buttonClasses" :disabled="disabled || loading" @click="handleClick">
+    <span v-if="loading" class="si-button__spinner"></span>
+    <IconWrapper v-if="icon && !loading" :name="icon" :size="iconSize" class="si-button__icon" />
+    <span v-if="$slots.default" class="si-button__text">
       <slot />
     </span>
   </button>
 </template>
 
 <script setup lang="ts">
-import { computed, useSlots } from "vue";
+import { computed, useSlots, ref } from "vue";
 import IconWrapper from "@/components/IconWrapper.vue";
 import type { IconKey } from "@/config/icons";
 
@@ -50,6 +50,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<Emits>();
 
 const slots = useSlots();
+const buttonRef = ref<HTMLButtonElement>();
 
 const buttonClasses = computed(() => [
 	"si-button",
@@ -64,25 +65,34 @@ const buttonClasses = computed(() => [
 	},
 ]);
 
-const iconClass = computed(() => ({
-	"si-button__icon": true,
-	"si-button__icon--left": props.iconPosition === "left",
-	"si-button__icon--right": props.iconPosition === "right",
-}));
-
- const textClass = computed(() => ({
-	"si-button__text": true,
-}));
-
 const handleClick = (event: MouseEvent) => {
 	if (!props.disabled && !props.loading) {
 		emit("click", event);
 	}
 };
+
+defineExpose({
+	focus: () => buttonRef.value?.focus(),
+	blur: () => buttonRef.value?.blur(),
+});
 </script>
 
 <style scoped lang="scss">
 @use '@/variables.scss' as *;
+
+// 公共 hover/active mixin
+@mixin interactive-raised($shadow-color: rgba(0, 0, 0, 0.2), $active-shadow-color: rgba(0, 0, 0, 0.15)) {
+  &:hover:not(.si-button--disabled):not(.si-button--loading) {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px $shadow-color;
+  }
+
+  &:active:not(.si-button--disabled):not(.si-button--loading) {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px $active-shadow-color;
+  }
+}
 
 .si-button {
   // 基础样式
@@ -124,56 +134,26 @@ const handleClick = (event: MouseEvent) => {
   &--primary {
     background: var(--b3-theme-primary, $brand-orange);
     color: var(--b3-theme-on-primary, $brand-light);
-
-    &:hover:not(.si-button--disabled):not(.si-button--loading) {
-      filter: brightness(1.1);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    }
-
-    &:active:not(.si-button--disabled):not(.si-button--loading) {
-      transform: translateY(0);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-    }
+    @include interactive-raised;
   }
 
   &--secondary {
     background: var(--b3-theme-background, $brand-blue);
     color: var(--b3-theme-on-background, $brand-light);
     border: 1px solid var(--b3-theme-border, rgba(0, 0, 0, 0.1));
-
-    &:hover:not(.si-button--disabled):not(.si-button--loading) {
-      filter: brightness(1.1);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    }
-
-    &:active:not(.si-button--disabled):not(.si-button--loading) {
-      transform: translateY(0);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-    }
+    @include interactive-raised;
   }
 
   &--success {
-    background: #10b981;
-    color: white;
-
-    &:hover:not(.si-button--disabled):not(.si-button--loading) {
-      filter: brightness(1.1);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-    }
-
-    &:active:not(.si-button--disabled):not(.si-button--loading) {
-      transform: translateY(0);
-      box-shadow: 0 2px 6px rgba(16, 185, 129, 0.2);
-    }
+    background: var(--b3-theme-success, #10b981);
+    color: var(--b3-theme-on-success, white);
+    @include interactive-raised(rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.2));
   }
 
   &--danger {
     background: transparent;
-    color: #ef4444;
-    border-color: #ef4444;
+    color: var(--b3-theme-error, #ef4444);
+    border-color: var(--b3-theme-error, #ef4444);
 
     &:hover:not(.si-button--disabled):not(.si-button--loading) {
       background: rgba(239, 68, 68, 0.1);
@@ -251,14 +231,6 @@ const handleClick = (event: MouseEvent) => {
   // 内部元素样式
   &__icon {
     flex-shrink: 0;
-
-    &--left {
-      // margin-right: 4px;
-    }
-
-    &--right {
-      // margin-left: 4px;
-    }
   }
 
   &__text {
@@ -267,21 +239,23 @@ const handleClick = (event: MouseEvent) => {
   }
 
   // 加载动画
-  .button-spinner {
+  &__spinner {
     position: absolute;
     left: 50%;
     top: 50%;
-    transform: translate(-50%, -50%);
     width: 16px;
     height: 16px;
     border: 2px solid currentColor;
     border-top-color: transparent;
     border-radius: 50%;
-    animation: spin 0.6s linear infinite;
+    animation: si-btn-spin 0.6s linear infinite;
   }
 }
 
-@keyframes spin {
+@keyframes si-btn-spin {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
   to {
     transform: translate(-50%, -50%) rotate(360deg);
   }

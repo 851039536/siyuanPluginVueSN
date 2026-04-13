@@ -1,11 +1,6 @@
-import { showMessage } from "siyuan";
+import { callAPI, type ApiConfig } from "./apiBase";
 
-export interface ApiConfig {
-	provider: string;
-	model: string;
-	apiKey: string;
-	customEndpoint: string;
-}
+export type { ApiConfig };
 
 // ========== 代码注释生成器 ==========
 
@@ -56,52 +51,6 @@ export interface CodeCommentResult {
 	suggestions: string[];
 }
 
-const API_PROVIDERS = {
-	tongyi: {
-		url: "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation",
-		buildRequest: (model: string, messages: any[]) => ({
-			model,
-			input: { messages },
-			parameters: { temperature: 0.3, top_p: 0.8, max_tokens: 2000 },
-		}),
-	},
-	deepseek: {
-		url: "https://api.deepseek.com/v1/chat/completions",
-		buildRequest: (model: string, messages: any[]) => ({
-			model,
-			messages,
-			temperature: 0.3,
-			max_tokens: 2000,
-		}),
-	},
-	openai: {
-		url: "https://api.openai.com/v1/chat/completions",
-		buildRequest: (model: string, messages: any[]) => ({
-			model,
-			messages,
-			temperature: 0.3,
-			max_tokens: 2000,
-		}),
-	},
-};
-
-function extractTextFromResponse(data: any): string {
-	const possiblePaths = [
-		() => data.output?.text,
-		() => data.output?.choices?.[0]?.message?.content,
-		() => data.choices?.[0]?.message?.content,
-		() => data.text,
-		() => data.content,
-	];
-
-	for (const getText of possiblePaths) {
-		const text = getText();
-		if (text) return text;
-	}
-
-	throw new Error("API返回数据格式错误");
-}
-
 function buildCommentPrompt(code: string, style: CommentStyle): string {
 	return `请为以下代码生成${style.label}风格的注释。
 
@@ -128,49 +77,12 @@ export async function generateCodeComments(
 		throw new Error("请输入代码内容");
 	}
 
-	if (!config.apiKey) {
-		throw new Error("请先在超级面板中配置API密钥");
-	}
-
-	const provider = API_PROVIDERS[config.provider as keyof typeof API_PROVIDERS];
-	if (!provider) {
-		throw new Error(`不支持的API供应商: ${config.provider}`);
-	}
-
-	const apiUrl =
-		config.provider === "custom" ? config.customEndpoint : provider.url;
-	if (!apiUrl) {
-		throw new Error("API端点未设置");
-	}
-
-	const model =
-		config.model ||
-		(config.provider === "tongyi" ? "qwen-plus" : "deepseek-chat");
-	const messages = [
-		{
-			role: "system",
-			content:
-				"你是一个专业的代码注释生成助手，擅长为各种编程语言生成清晰、准确的注释。",
-		},
-		{ role: "user", content: buildCommentPrompt(code, style) },
-	];
-
-	const response = await fetch(apiUrl, {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-			Authorization: `Bearer ${config.apiKey}`,
-		},
-		body: JSON.stringify(provider.buildRequest(model, messages)),
+	const text = await callAPI(buildCommentPrompt(code, style), config, {
+		systemPrompt:
+			"你是一个专业的代码注释生成助手，擅长为各种编程语言生成清晰、准确的注释。",
+		temperature: 0.3,
+		maxTokens: 2000,
 	});
-
-	if (!response.ok) {
-		const errorText = await response.text();
-		throw new Error(`API请求失败: ${response.status} ${errorText}`);
-	}
-
-	const data = await response.json();
-	const text = extractTextFromResponse(data);
 
 	return {
 		original: code,
@@ -223,49 +135,12 @@ export async function explainCode(
 		throw new Error("请输入代码内容");
 	}
 
-	if (!config.apiKey) {
-		throw new Error("请先在超级面板中配置API密钥");
-	}
-
-	const provider = API_PROVIDERS[config.provider as keyof typeof API_PROVIDERS];
-	if (!provider) {
-		throw new Error(`不支持的API供应商: ${config.provider}`);
-	}
-
-	const apiUrl =
-		config.provider === "custom" ? config.customEndpoint : provider.url;
-	if (!apiUrl) {
-		throw new Error("API端点未设置");
-	}
-
-	const model =
-		config.model ||
-		(config.provider === "tongyi" ? "qwen-plus" : "deepseek-chat");
-	const messages = [
-		{
-			role: "system",
-			content:
-				"你是一个专业的代码分析助手，擅长解释代码、分析复杂度和提供优化建议。",
-		},
-		{ role: "user", content: buildExplanationPrompt(code) },
-	];
-
-	const response = await fetch(apiUrl, {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-			Authorization: `Bearer ${config.apiKey}`,
-		},
-		body: JSON.stringify(provider.buildRequest(model, messages)),
+	const text = await callAPI(buildExplanationPrompt(code), config, {
+		systemPrompt:
+			"你是一个专业的代码分析助手，擅长解释代码、分析复杂度和提供优化建议。",
+		temperature: 0.3,
+		maxTokens: 2000,
 	});
-
-	if (!response.ok) {
-		const errorText = await response.text();
-		throw new Error(`API请求失败: ${response.status} ${errorText}`);
-	}
-
-	const data = await response.json();
-	const text = extractTextFromResponse(data);
 
 	// 尝试解析 JSON
 	try {
@@ -358,49 +233,12 @@ export async function generateRegex(
 		throw new Error("请输入正则描述或提供匹配示例");
 	}
 
-	if (!config.apiKey) {
-		throw new Error("请先在超级面板中配置API密钥");
-	}
-
-	const provider = API_PROVIDERS[config.provider as keyof typeof API_PROVIDERS];
-	if (!provider) {
-		throw new Error(`不支持的API供应商: ${config.provider}`);
-	}
-
-	const apiUrl =
-		config.provider === "custom" ? config.customEndpoint : provider.url;
-	if (!apiUrl) {
-		throw new Error("API端点未设置");
-	}
-
-	const model =
-		config.model ||
-		(config.provider === "tongyi" ? "qwen-plus" : "deepseek-chat");
-	const messages = [
-		{
-			role: "system",
-			content:
-				"你是一个专业的正则表达式生成助手，擅长根据用户描述生成精准的正则表达式。",
-		},
-		{ role: "user", content: buildRegexPrompt(description, examples) },
-	];
-
-	const response = await fetch(apiUrl, {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-			Authorization: `Bearer ${config.apiKey}`,
-		},
-		body: JSON.stringify(provider.buildRequest(model, messages)),
+	const text = await callAPI(buildRegexPrompt(description, examples), config, {
+		systemPrompt:
+			"你是一个专业的正则表达式生成助手，擅长根据用户描述生成精准的正则表达式。",
+		temperature: 0.3,
+		maxTokens: 2000,
 	});
-
-	if (!response.ok) {
-		const errorText = await response.text();
-		throw new Error(`API请求失败: ${response.status} ${errorText}`);
-	}
-
-	const data = await response.json();
-	const text = extractTextFromResponse(data);
 
 	// 尝试解析 JSON
 	try {

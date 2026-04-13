@@ -168,6 +168,7 @@ import {
 	type RegexExample,
 	type RegexResult,
 } from "../utils/codeUtils";
+import { getApiConfigFromPlugin } from "../utils/apiBase";
 
 interface Props {
 	i18n: any;
@@ -249,13 +250,7 @@ function handleClear() {
 }
 
 function getApiConfig() {
-	const settings = (props.plugin as any)?.settings || {};
-	return {
-		provider: settings.aiApiProvider || "tongyi",
-		model: settings.aiModel || "qwen-plus",
-		apiKey: settings.aiApiKey || "",
-		customEndpoint: settings.aiCustomEndpoint || "",
-	};
+	return getApiConfigFromPlugin(props.plugin);
 }
 
 function copyRegex() {

@@ -1,3 +1,7 @@
+import { callAPI, type ApiConfig } from "./apiBase";
+
+export type { ApiConfig };
+
 export interface NamingStyle {
 	id: string;
 	label: string;
@@ -45,35 +49,6 @@ export const NAMING_STYLES: NamingStyle[] = [
 	},
 ];
 
-const API_PROVIDERS = {
-	tongyi: {
-		url: "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation",
-		buildRequest: (model: string, messages: any[]) => ({
-			model,
-			input: { messages },
-			parameters: { temperature: 0.3, top_p: 0.8, max_tokens: 2000 },
-		}),
-	},
-	deepseek: {
-		url: "https://api.deepseek.com/v1/chat/completions",
-		buildRequest: (model: string, messages: any[]) => ({
-			model,
-			messages,
-			temperature: 0.3,
-			max_tokens: 2000,
-		}),
-	},
-	openai: {
-		url: "https://api.openai.com/v1/chat/completions",
-		buildRequest: (model: string, messages: any[]) => ({
-			model,
-			messages,
-			temperature: 0.3,
-			max_tokens: 2000,
-		}),
-	},
-};
-
 function buildPrompt(chinese: string, namingStyle: NamingStyle): string {
 	return `请将中文"${chinese}"翻译成英文，并按照${namingStyle.label}格式输出。
 
@@ -88,23 +63,6 @@ function buildPrompt(chinese: string, namingStyle: NamingStyle): string {
   "translated": "主要翻译结果",
   "suggestions": ["备选方案1", "备选方案2", "备选方案3"]
 }`;
-}
-
-function extractTextFromResponse(data: any): string {
-	const possiblePaths = [
-		() => data.output?.text,
-		() => data.output?.choices?.[0]?.message?.content,
-		() => data.choices?.[0]?.message?.content,
-		() => data.text,
-		() => data.content,
-	];
-
-	for (const getText of possiblePaths) {
-		const text = getText();
-		if (text) return text;
-	}
-
-	throw new Error("API返回数据格式错误");
 }
 
 function parseTranslationResult(text: string): {
@@ -135,60 +93,19 @@ function parseTranslationResult(text: string): {
 export async function translateCodeField(
 	chinese: string,
 	namingStyle: NamingStyle,
-	config: {
-		provider: string;
-		model: string;
-		apiKey: string;
-		customEndpoint: string;
-	},
+	config: ApiConfig,
 ): Promise<CodeTranslationResult> {
 	if (!chinese.trim()) {
 		throw new Error("请输入中文内容");
 	}
 
-	if (!config.apiKey) {
-		throw new Error("请先在超级面板中配置API密钥");
-	}
-
-	const provider = API_PROVIDERS[config.provider as keyof typeof API_PROVIDERS];
-	if (!provider) {
-		throw new Error(`不支持的API供应商: ${config.provider}`);
-	}
-
-	const apiUrl =
-		config.provider === "custom" ? config.customEndpoint : provider.url;
-	if (!apiUrl) {
-		throw new Error("API端点未设置");
-	}
-
-	const model =
-		config.model ||
-		(config.provider === "tongyi" ? "qwen-plus" : "deepseek-chat");
-	const messages = [
-		{
-			role: "system",
-			content:
-				"你是一个专业的编程翻译助手，擅长将中文翻译成符合编程命名规范的英文。",
-		},
-		{ role: "user", content: buildPrompt(chinese, namingStyle) },
-	];
-
-	const response = await fetch(apiUrl, {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-			Authorization: `Bearer ${config.apiKey}`,
-		},
-		body: JSON.stringify(provider.buildRequest(model, messages)),
+	const text = await callAPI(buildPrompt(chinese, namingStyle), config, {
+		systemPrompt:
+			"你是一个专业的编程翻译助手，擅长将中文翻译成符合编程命名规范的英文。",
+		temperature: 0.3,
+		maxTokens: 2000,
 	});
 
-	if (!response.ok) {
-		const errorText = await response.text();
-		throw new Error(`API请求失败: ${response.status} ${errorText}`);
-	}
-
-	const data = await response.json();
-	const text = extractTextFromResponse(data);
 	const parsed = parseTranslationResult(text);
 
 	return {

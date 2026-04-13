@@ -1,5 +1,5 @@
 <template>
-  <div :class="avatarClasses" :style="avatarStyle">
+  <div :class="avatarClasses" :style="avatarStyle" @click="handleClick">
     <img
       v-if="src && !hasError"
       :src="src"

@@ -8,7 +8,7 @@
     @click="handleClick"
     @keydown.enter.prevent="handleClick"
   >
-    <span class="si-switch__track">
+    <span class="si-switch__track" :style="trackStyle">
       <span v-if="loading" class="si-switch__loading"></span>
       <span v-else class="si-switch__thumb"></span>
     </span>
@@ -71,6 +71,17 @@ const switchClasses = computed(() => [
 		"si-switch--label-before": props.labelBefore,
 	},
 ]);
+
+const trackStyle = computed(() => {
+	const style: Record<string, string> = {};
+	if (checked.value && props.activeColor) {
+		style.backgroundColor = props.activeColor;
+	}
+	if (!checked.value && props.inactiveColor) {
+		style.backgroundColor = props.inactiveColor;
+	}
+	return style;
+});
 
 const handleClick = () => {
 	if (!props.disabled && !props.loading) {

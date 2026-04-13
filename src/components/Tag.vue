@@ -10,7 +10,7 @@
       class="si-tag__close"
       @click="handleClose"
     >
-      <IconWrapper name="iconClose" :size="closeIconSize" />
+      <IconWrapper name="close" :size="closeIconSize" />
     </button>
   </div>
 </template>

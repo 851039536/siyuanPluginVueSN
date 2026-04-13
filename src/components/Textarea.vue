@@ -263,7 +263,7 @@ const handleFocus = (event: FocusEvent) => {
 	emit("focus", event);
 };
 
-const handleBlur = (event: Event) => {
+const handleBlur = (event: FocusEvent) => {
 	emit("blur", event);
 };
 

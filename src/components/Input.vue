@@ -57,7 +57,7 @@
         @click="togglePasswordVisibility"
       >
         <IconWrapper
-          :name="(passwordVisible ? 'eye-off' : 'eye') as IconKey"
+          :name="(passwordVisible ? 'eyeOff' : 'eye') as IconKey"
           :size="iconSize"
         />
       </span>

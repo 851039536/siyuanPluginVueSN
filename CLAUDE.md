@@ -594,6 +594,48 @@ if (this.settings.enableMyFeature) {
 
 
 
+## AI API 统一模块规范（必须遵守）
+
+项目中所有 AI API 调用必须通过统一模块 `src/utils/aiApi.ts` 进行，**严禁**在功能模块中独立实现 API 调用逻辑。
+
+### 统一模块
+
+| 模块 | 路径 | 用途 |
+|------|------|------|
+| 类型定义 | `src/types/ai.ts` | `AiApiConfig`、`AiCallOptions`、`GenerateOptions`、`TargetDoc`、`SavedPrompt` |
+| API 调用 | `src/utils/aiApi.ts` | `callAI`(非流式)、`callAIStream`(流式)、`callAISmart`(智能选择)、`extractResponseText`、`getApiConfigFromPlugin` |
+
+### 使用方式
+
+```typescript
+import { callAI, callAIStream, callAISmart, getApiConfigFromPlugin } from '@/utils/aiApi'
+import type { AiApiConfig, GenerateOptions } from '@/types/ai'
+
+// 从插件实例获取 API 配置
+const config = getApiConfigFromPlugin(plugin)
+
+// 非流式调用
+const result = await callAI(prompt, config, { systemPrompt, temperature: 0.7, maxTokens: 800 })
+
+// 流式调用
+await callAIStream(prompt, config, { systemPrompt, onChunk: (text) => { /* 处理分块 */ } })
+
+// 智能调用（根据是否传入 onChunk 自动选择流式/非流式）
+const result = await callAISmart(prompt, config, { systemPrompt, onChunk, signal })
+```
+
+### 禁止事项
+
+- **禁止**在组件或功能模块中直接调用 fetch/axios 访问 AI API（通义、DeepSeek、OpenAI 等）
+- **禁止**重复定义 `ApiConfig`/`AiConfig` 等配置接口，统一使用 `AiApiConfig`（`src/types/ai.ts`）
+- **禁止**重复实现响应解析逻辑（`data.output.text` / `data.choices[0].message.content`），统一使用 `extractResponseText`
+- **禁止**重复定义 `GenerateOptions`、`SavedPrompt`、`TargetDoc` 等接口，统一从 `@/types/ai` 导入
+
+### 向后兼容
+
+- `src/features/wordQuery/utils/apiBase.ts` 已改为重新导出统一模块，现有 wordQuery 子模块无需修改
+- `AIPromptConfig`（storage.ts）已作为 `SavedPrompt` 的类型别名，保持向后兼容
+
 ## 依赖
 
 - Vue 3.3.8

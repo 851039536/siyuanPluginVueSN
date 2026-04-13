@@ -1,50 +1,42 @@
 /**
  * AI信息生成功能模块
  * 支持自定义对话配置、Markdown格式输出、上下文配置
+ * API 调用逻辑已迁移至 @/utils/aiApi 统一模块
  */
 import { Plugin, showMessage } from "siyuan";
 import { createApp, h } from "vue";
+import {
+	callAISmart,
+	getApiConfigFromPlugin,
+	type AiApiConfig,
+} from "@/utils/aiApi";
+import type { GenerateOptions } from "@/types/ai";
 // @ts-ignore
 import AIContentGeneratorPanel from "../index.vue";
 
 /**
- * 生成选项接口
- */
-export interface GenerateOptions {
-	userInput: string;
-	systemPrompt: string;
-	temperature: number;
-	maxTokens: number;
-	context?: string;
-	signal?: AbortSignal;
-	onChunk?: (chunk: string) => void; // 流式输出回调
-}
-
-/**
  * AI内容生成类
+ * 仅负责 Dock 注册和 UI 编排，API 调用使用统一模块
  */
 export class AIContentGenerator {
 	private plugin: Plugin;
-	private currentProvider: string = "tongyi";
-	private currentModel: string = "qwen-plus";
-	private apiKey: string = "";
+	private apiConfig: AiApiConfig;
 
 	constructor(plugin: Plugin) {
 		this.plugin = plugin;
-		// 从插件配置中初始化API配置
-		const settings = (plugin as any).settings;
-		this.currentProvider = settings.aiApiProvider || "tongyi";
-		this.currentModel = settings.aiModel || "qwen-plus";
-		this.apiKey = settings.aiApiKey || "";
+		this.apiConfig = getApiConfigFromPlugin(plugin);
 	}
 
 	/**
 	 * 更新API配置（由超级面板调用）
 	 */
 	public updateApiConfig(provider: string, model: string, apiKey: string) {
-		this.currentProvider = provider;
-		this.currentModel = model;
-		this.apiKey = apiKey;
+		this.apiConfig = {
+			...this.apiConfig,
+			provider: provider as AiApiConfig["provider"],
+			model,
+			apiKey,
+		};
 	}
 
 	/**
@@ -63,14 +55,13 @@ export class AIContentGenerator {
 			config: {
 				position: "RightTop",
 				size: { width: 400, height: 0 },
-				icon: "iconSparkles", // 使用思源内置的AI/魔法图标
+				icon: "iconSparkles",
 				title: "AI信息生成",
 				show: false,
 			},
 			data: {},
 			type: "ai-content-generator-dock",
 			init: (dock: any) => {
-				// 创建 Vue 应用
 				const container = document.createElement("div");
 				container.style.height = "100%";
 				container.style.overflow = "hidden";
@@ -91,7 +82,6 @@ export class AIContentGenerator {
 				app.mount(container);
 				dock.element?.appendChild(container);
 
-				// 保存应用引用，以便卸载时清理
 				dock.__app = app;
 				dock.__container = container;
 			},
@@ -108,14 +98,24 @@ export class AIContentGenerator {
 		}
 
 		try {
-			const response = await this.callAPI(options);
+			// 刷新配置（确保使用最新的 API 配置）
+			this.apiConfig = getApiConfigFromPlugin(this.plugin);
 
-			if (response) {
-				return response;
-			} else {
-				showMessage("生成失败，请重试", 3000, "error");
-				return "";
+			const fullPrompt = this.buildFullPrompt(options);
+
+			const result = await callAISmart(fullPrompt, this.apiConfig, {
+				systemPrompt: options.systemPrompt,
+				temperature: options.temperature,
+				maxTokens: options.maxTokens,
+				signal: options.signal,
+				onChunk: options.onChunk,
+			});
+
+			if (result) {
+				return result;
 			}
+			showMessage("生成失败，请重试", 3000, "error");
+			return "";
 		} catch (error) {
 			const errorMsg = (error as Error).message || "未知错误";
 			showMessage("🚫 生成失败: " + errorMsg, 5000, "error");
@@ -127,353 +127,15 @@ export class AIContentGenerator {
 	 * 构建完整的提示词
 	 */
 	private buildFullPrompt(options: GenerateOptions): string {
-		let fullPrompt = options.userInput;
-
-		// 如果有上下文，添加到提示词中
 		if (options.context) {
-			fullPrompt = `${options.context}
+			return `${options.context}
 
 ---
 
 用户要求:
 ${options.userInput}`;
-		} else {
 		}
-
-		return fullPrompt;
-	}
-
-	/**
-	 * 调用API
-	 */
-	private async callAPI(options: GenerateOptions): Promise<string> {
-		switch (this.currentProvider) {
-			case "tongyi":
-				return await this.callTongyiAPI(options);
-			case "deepseek":
-				return await this.callDeepSeekAPI(options);
-			default:
-				throw new Error(`不支持的API供应商: ${this.currentProvider}`);
-		}
-	}
-
-	/**
-	 * 调用通义千问API
-	 */
-	private async callTongyiAPI(options: GenerateOptions): Promise<string> {
-		if (!this.apiKey) {
-			throw new Error("请先在超级面板中配置API密钥");
-		}
-
-		const apiUrl =
-			"https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation";
-		const fullPrompt = this.buildFullPrompt(options);
-
-		const requestBody = {
-			model: this.currentModel || "qwen-plus",
-			input: {
-				messages: [
-					{
-						role: "system",
-						content: options.systemPrompt,
-					},
-					{
-						role: "user",
-						content: fullPrompt,
-					},
-				],
-			},
-			parameters: {
-				temperature: options.temperature,
-				top_p: 0.8,
-				max_tokens: options.maxTokens,
-				incremental_output: true, // 启用流式输出
-			},
-		};
-
-		// 如果有onChunk回调，使用流式输出
-		if (options.onChunk) {
-			return await this.callTongyiStreamAPI(
-				apiUrl,
-				this.apiKey,
-				requestBody,
-				options.onChunk,
-				options.signal,
-			);
-		}
-
-		// 否则使用普通请求
-		const response = await fetch(apiUrl, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				Authorization: `Bearer ${this.apiKey}`,
-			},
-			body: JSON.stringify(requestBody),
-			signal: options.signal,
-		});
-
-		if (!response.ok) {
-			const errorText = await response.text();
-			throw new Error(`通义千问API请求失败: ${response.status} ${errorText}`);
-		}
-
-		const data = await response.json();
-
-		// 解析响应
-		if (data.output && data.output.text) {
-			return data.output.text;
-		} else if (
-			data.output &&
-			data.output.choices &&
-			data.output.choices.length > 0
-		) {
-			return data.output.choices[0].message.content;
-		} else if (data.choices && data.choices.length > 0) {
-			return data.choices[0].message.content;
-		} else {
-			throw new Error("API返回数据格式错误");
-		}
-	}
-
-	/**
-	 * 调用通义千问流式API
-	 */
-	private async callTongyiStreamAPI(
-		apiUrl: string,
-		apiKey: string,
-		requestBody: any,
-		onChunk: (chunk: string) => void,
-		signal?: AbortSignal,
-	): Promise<string> {
-		// 添加SSE参数
-		const sseRequestBody = {
-			...requestBody,
-			parameters: {
-				...requestBody.parameters,
-				result_format: "message", // 使用message格式
-				incremental_output: true, // 启用增量输出（非常重要，修复问题2）
-			},
-		};
-
-		const response = await fetch(apiUrl, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				Authorization: `Bearer ${apiKey}`,
-				"X-DashScope-SSE": "enable", // 启用SSE
-			},
-			body: JSON.stringify(sseRequestBody),
-			signal,
-		});
-
-		if (!response.ok) {
-			const errorText = await response.text();
-			throw new Error(
-				`通义千问流式API请求失败: ${response.status} ${errorText}`,
-			);
-		}
-
-		const reader = response.body?.getReader();
-		if (!reader) {
-			throw new Error("无法读取响应流");
-		}
-
-		const decoder = new TextDecoder("utf-8");
-		let fullContent = "";
-		let buffer = "";
-
-		try {
-			while (true) {
-				const { done, value } = await reader.read();
-				if (done) break;
-
-				buffer += decoder.decode(value, { stream: true });
-				const lines = buffer.split("\n");
-				buffer = lines.pop() || ""; // 保留最后一行作为缓冲
-
-				for (const line of lines) {
-					if (!line.trim() || !line.startsWith("data:")) continue;
-
-					const data = line.slice(5).trim();
-					if (data === "[DONE]") continue;
-
-					try {
-						const json = JSON.parse(data);
-
-						let content = "";
-						if (json.output?.choices?.[0]?.message?.content) {
-							content = json.output.choices[0].message.content;
-						} else if (json.output?.text) {
-							content = json.output.text;
-						}
-
-						if (content) {
-							// 因为启用了incremental_output=true，每次返回的就是增量内容
-							onChunk(content);
-							fullContent += content;
-						}
-					} catch (e) {
-						console.error("解析SSE数据失败:", e, "line:", line);
-					}
-				}
-			}
-		} finally {
-			reader.releaseLock();
-		}
-
-		return fullContent;
-	}
-
-	/**
-	 * 调用DeepSeek API
-	 */
-	private async callDeepSeekAPI(options: GenerateOptions): Promise<string> {
-		if (!this.apiKey) {
-			throw new Error("请先在超级面板中配置API密钥");
-		}
-
-		const apiUrl = "https://api.deepseek.com/v1/chat/completions";
-		const fullPrompt = this.buildFullPrompt(options);
-
-		const requestBody: any = {
-			model: this.currentModel || "deepseek-chat",
-			messages: [
-				{
-					role: "system",
-					content: options.systemPrompt,
-				},
-				{
-					role: "user",
-					content: fullPrompt,
-				},
-			],
-			temperature: options.temperature,
-			max_tokens: options.maxTokens,
-		};
-
-		// 如果有onChunk回调，使用流式输出
-		if (options.onChunk) {
-			requestBody.stream = true;
-			return await this.callDeepSeekStreamAPI(
-				apiUrl,
-				this.apiKey,
-				requestBody,
-				options.onChunk,
-				options.signal,
-			);
-		}
-
-		const response = await fetch(apiUrl, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				Authorization: `Bearer ${this.apiKey}`,
-			},
-			body: JSON.stringify(requestBody),
-			signal: options.signal,
-		});
-
-		if (!response.ok) {
-			const errorText = await response.text();
-			throw new Error(`DeepSeek API请求失败: ${response.status} ${errorText}`);
-		}
-
-		const data = await response.json();
-
-		if (data.choices && data.choices.length > 0) {
-			return data.choices[0].message.content;
-		} else {
-			throw new Error("DeepSeek API返回数据格式错误");
-		}
-	}
-
-	/**
-	 * 调用DeepSeek流式API
-	 */
-	private async callDeepSeekStreamAPI(
-		apiUrl: string,
-		apiKey: string,
-		requestBody: any,
-		onChunk: (chunk: string) => void,
-		signal?: AbortSignal,
-	): Promise<string> {
-		const response = await fetch(apiUrl, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				Authorization: `Bearer ${apiKey}`,
-			},
-			body: JSON.stringify(requestBody),
-			signal,
-		});
-
-		if (!response.ok) {
-			const errorText = await response.text();
-			console.error("DeepSeek API错误:", response.status, errorText);
-			throw new Error(
-				`DeepSeek流式API请求失败: ${response.status} ${errorText}`,
-			);
-		}
-
-		const reader = response.body?.getReader();
-		if (!reader) {
-			throw new Error("无法读取响应流");
-		}
-
-		const decoder = new TextDecoder("utf-8");
-		let fullContent = "";
-		let buffer = "";
-		let chunkCount = 0;
-
-		try {
-			while (true) {
-				const { done, value } = await reader.read();
-				if (done) {
-					break;
-				}
-
-				buffer += decoder.decode(value, { stream: true });
-				const lines = buffer.split("\n");
-				buffer = lines.pop() || "";
-
-				for (const line of lines) {
-					if (!line.trim()) continue;
-
-					// DeepSeek可能不使用data:前缀，尝试直接解析
-					let dataStr = line;
-					if (line.startsWith("data:")) {
-						dataStr = line.slice(5).trim();
-					}
-
-					if (dataStr === "[DONE]") {
-						continue;
-					}
-
-					try {
-						const json = JSON.parse(dataStr);
-						const content = json.choices?.[0]?.delta?.content;
-
-						if (content) {
-							chunkCount++;
-							onChunk(content);
-							fullContent += content;
-						}
-					} catch (e) {
-						console.warn(
-							"解析DeepSeek SSE数据失败:",
-							e,
-							"line:",
-							line.substring(0, 100),
-						);
-					}
-				}
-			}
-		} finally {
-			reader.releaseLock();
-		}
-
-		return fullContent;
+		return options.userInput;
 	}
 
 	/**
@@ -489,8 +151,10 @@ export function registerAIContentGenerator(plugin: Plugin) {
 	const generator = new AIContentGenerator(plugin);
 	generator.init();
 
-	// 保存实例到插件对象中，以便在其他地方使用
 	(plugin as any).__aiContentGenerator = generator;
 
 	return generator;
 }
+
+// 重新导出类型，保持向后兼容
+export type { GenerateOptions } from "@/types/ai";

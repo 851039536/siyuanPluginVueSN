@@ -5,51 +5,7 @@
 import { Plugin } from "siyuan";
 import { ToolbarAction } from "../../types";
 import { showMessage, getSelectedBlockId, isEnglishText } from "../utils";
-
-/**
- * AI 配置接口
- */
-interface AiConfig {
-	provider: string;
-	model: string;
-	apiKey: string;
-	customEndpoint: string;
-}
-
-/**
- * API 提供商配置
- */
-const API_PROVIDERS = {
-	tongyi: {
-		url: "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation",
-		defaultModel: "qwen-plus",
-		formatRequest: (model: string, messages: any[]) => ({
-			model,
-			input: { messages },
-			parameters: { temperature: 0.3, top_p: 0.8, max_tokens: 2000 },
-		}),
-	},
-	deepseek: {
-		url: "https://api.deepseek.com/v1/chat/completions",
-		defaultModel: "deepseek-chat",
-		formatRequest: (model: string, messages: any[]) => ({
-			model,
-			messages,
-			temperature: 0.3,
-			max_tokens: 2000,
-		}),
-	},
-	custom: {
-		url: "",
-		defaultModel: "default",
-		formatRequest: (model: string, messages: any[]) => ({
-			model,
-			messages,
-			temperature: 0.3,
-			max_tokens: 2000,
-		}),
-	},
-};
+import { callAI, getApiConfigFromPlugin } from "@/utils/aiApi";
 
 /**
  * 创建翻译替换功能
@@ -71,8 +27,6 @@ export function createTranslateAction(plugin: Plugin): ToolbarAction {
 
 /**
  * 翻译并替换选中的文本
- * @param plugin 插件实例
- * @param text 选中的文本
  */
 async function translateAndReplace(plugin: Plugin, text: string) {
 	if (!text.trim()) {
@@ -83,7 +37,6 @@ async function translateAndReplace(plugin: Plugin, text: string) {
 		return;
 	}
 
-	// 检查是否为英文
 	if (!isEnglishText(text)) {
 		showMessage("请选择英文文本进行翻译", { timeout: 3000 });
 		return;
@@ -92,17 +45,19 @@ async function translateAndReplace(plugin: Plugin, text: string) {
 	try {
 		showMessage("正在翻译...", { timeout: 2000 });
 
-		// 获取 AI 配置
-		const aiConfig = getAiConfig(plugin);
+		const aiConfig = getApiConfigFromPlugin(plugin);
 
-		// 调用翻译 API
-		const translatedText = await callTranslateAPI(text, aiConfig);
+		const prompt = `请将以下英文文本翻译成中文，只输出翻译结果，不要有任何解释或说明：\n\n${text}`;
+
+		const translatedText = await callAI(prompt, aiConfig, {
+			systemPrompt: "你是一个专业的翻译助手，擅长将英文翻译成流畅的中文。",
+			temperature: 0.3,
+			maxTokens: 2000,
+		});
 
 		if (translatedText) {
-			// 获取当前选中的块 ID
 			const blockId = getSelectedBlockId();
 			if (blockId) {
-				// 使用思源 API 更新块内容
 				await updateBlockContent(blockId, translatedText);
 				showMessage("翻译完成", { timeout: 2000 });
 			} else {
@@ -116,87 +71,6 @@ async function translateAndReplace(plugin: Plugin, text: string) {
 		const errorMsg = (error as Error).message || "未知错误";
 		showMessage("翻译失败: " + errorMsg, { timeout: 5000 });
 	}
-}
-
-/**
- * 获取 AI 配置
- */
-function getAiConfig(plugin: Plugin): AiConfig {
-	const settings = (plugin as any).settings || {};
-	return {
-		provider: settings.aiApiProvider || "tongyi",
-		model: settings.aiModel || "qwen-plus",
-		apiKey: settings.aiApiKey || "",
-		customEndpoint: settings.aiCustomEndpoint || "",
-	};
-}
-
-/**
- * 调用翻译 API
- */
-async function callTranslateAPI(
-	text: string,
-	config: AiConfig,
-): Promise<string> {
-	const prompt = `请将以下英文文本翻译成中文，只输出翻译结果，不要有任何解释或说明：\n\n${text}`;
-
-	const provider = API_PROVIDERS[config.provider as keyof typeof API_PROVIDERS];
-	if (!provider) {
-		throw new Error(`不支持的API供应商: ${config.provider}`);
-	}
-
-	const apiUrl =
-		config.provider === "custom" ? config.customEndpoint : provider.url;
-	if (!apiUrl) {
-		throw new Error("自定义API端点未设置");
-	}
-
-	const model = config.model || provider.defaultModel;
-	const messages = [
-		{
-			role: "system",
-			content: "你是一个专业的翻译助手，擅长将英文翻译成流畅的中文。",
-		},
-		{
-			role: "user",
-			content: prompt,
-		},
-	];
-
-	const requestBody = provider.formatRequest(model, messages);
-
-	const response = await fetch(apiUrl, {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-			Authorization: `Bearer ${config.apiKey}`,
-		},
-		body: JSON.stringify(requestBody),
-	});
-
-	if (!response.ok) {
-		const errorText = await response.text();
-		throw new Error(`API请求失败: ${response.status} ${errorText}`);
-	}
-
-	const data = await response.json();
-	return extractTextFromResponse(data);
-}
-
-/**
- * 从 API 响应中提取文本内容
- */
-function extractTextFromResponse(data: any): string {
-	if (data.choices?.[0]?.message?.content) {
-		return data.choices[0].message.content.trim();
-	} else if (data.output?.text) {
-		return data.output.text.trim();
-	} else if (data.output?.choices?.[0]?.message?.content) {
-		return data.output.choices[0].message.content.trim();
-	} else if (data.text) {
-		return data.text.trim();
-	}
-	throw new Error("API返回数据格式错误");
 }
 
 /**

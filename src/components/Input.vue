@@ -11,7 +11,8 @@
         :size="iconSize"
         class="si-input__icon si-input__icon--prefix"
       />
-      <input
+      <component
+        :is="isTextarea ? 'textarea' : 'input'"
         ref="inputRef"
         :type="inputType"
         :value="modelValue"
@@ -22,12 +23,14 @@
         :minlength="minlength"
         :autocomplete="autocomplete"
         :pattern="pattern"
+        :name="name"
+        :form="form"
         class="si-input__field"
         :class="{
           'si-input__field--with-prefix': prefixIcon,
           'si-input__field--with-suffix': suffixIcon,
           'si-input__field--error': error,
-          'si-input__field--textarea': type === 'textarea'
+          'si-input__field--textarea': isTextarea
         }"
         @input="handleInput"
         @blur="handleBlur"
@@ -42,7 +45,7 @@
         class="si-input__icon si-input__icon--suffix"
       />
       <span
-        v-if="showClear && clearable && modelValue && !disabled && !readonly"
+        v-if="clearable && modelValue && !disabled && !readonly"
         class="si-input__clear"
         @click="handleClear"
       >
@@ -119,12 +122,10 @@ interface Props {
 	autocomplete?: string;
 	/** 正则验证模式 */
 	pattern?: string;
-	/** 是否可清空 */
+	/** 是否可清空（显示清除按钮） */
 	clearable?: boolean;
 	/** 是否显示密码切换 */
 	showPassword?: boolean;
-	/** 是否显示清除按钮 */
-	showClear?: boolean;
 	/** 是否显示字符计数 */
 	showCount?: boolean;
 	/** 是否自动获得焦点 */
@@ -156,7 +157,6 @@ const props = withDefaults(defineProps<Props>(), {
 	iconSize: 16,
 	clearable: false,
 	showPassword: false,
-	showClear: false,
 	showCount: false,
 	autofocus: false,
 	autocomplete: "off",
@@ -172,6 +172,8 @@ const containerAttrs = computed(() => {
 
 const inputRef = ref<HTMLInputElement | HTMLTextAreaElement>();
 const passwordVisible = ref(false);
+
+const isTextarea = computed(() => props.type === "textarea");
 
 const inputType = computed(() => {
 	if (props.type === "password" && passwordVisible.value) {
@@ -193,12 +195,11 @@ const inputClasses = computed(() => [
 	{
 		"si-input--disabled": props.disabled,
 		"si-input--readonly": props.readonly,
-		"si-input--labeled": props.label,
 		"si-input--error": props.error,
 		"si-input--with-prefix": props.prefixIcon,
 		"si-input--with-suffix":
 			props.suffixIcon ||
-			(props.showClear && props.clearable && props.modelValue) ||
+			(props.clearable && props.modelValue) ||
 			(props.showPassword && props.type === "password"),
 	},
 ]);
@@ -263,6 +264,7 @@ watch(
 			});
 		}
 	},
+	{ immediate: true },
 );
 
 defineExpose({
@@ -290,7 +292,6 @@ defineExpose({
     font-size: 13px;
     font-weight: 500;
     color: var(--b3-theme-on-background);
-    font-family: $font-heading;
   }
 
   &__required {
@@ -344,10 +345,6 @@ defineExpose({
 
     &--error {
       border-color: var(--b3-theme-error, $brand-orange) !important;
-
-      &:focus-within {
-        box-shadow: 0 0 0 3px rgba($brand-orange, 0.1) !important;
-      }
     }
 
     &--with-prefix {
@@ -415,15 +412,6 @@ defineExpose({
     color: var(--b3-theme-secondary, $brand-mid-gray);
   }
 
-  &__wrapper--disabled {
-    background: var(--b3-theme-surface, $brand-light-gray);
-    cursor: not-allowed;
-
-    .si-input__field {
-      cursor: not-allowed;
-    }
-  }
-
   // 尺寸变体
   &--small {
     .si-input__field {
@@ -479,10 +467,6 @@ defineExpose({
     .si-input__wrapper {
       border-color: var(--b3-theme-error, $brand-orange);
     }
-  }
-
-  &--labeled {
-    width: 100%;
   }
 }
 </style>

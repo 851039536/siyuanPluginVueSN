@@ -7,7 +7,6 @@
 
 // ========== Variables & Mixins ==========
 $stats-card-radius: 10px;
-$stats-card-padding: 12px;
 $stats-shadow-light: 0 2px 8px rgba(0, 0, 0, 0.04);
 $stats-shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.08);
 $stats-transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -40,13 +39,11 @@ $color-danger: #cf222e;
   }
 }
 
-
 @mixin stats-glass-effect {
   background: rgba(var(--b3-theme-surface-rgb), 0.7);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
-
 
 // ========== Shared Component Styles ==========
 .section-title {

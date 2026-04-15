@@ -264,9 +264,6 @@ function padZero(num: number): string {
 </script>
 
 <style scoped lang="scss">
-@use "@/variables" as *;
-@use "../../superPanel/styles/variables" as *;
-@use "../../superPanel/styles/mixins" as *;
 @use "../index.scss" as stats;
 
 .insight-cards {
@@ -274,7 +271,6 @@ function padZero(num: number): string {
 
   .insight-card {
     @include stats.stats-card-base;
-    border-radius: 8px;
 
     .card-header {
       display: flex;
@@ -326,12 +322,7 @@ function padZero(num: number): string {
   div {
     aspect-ratio: 1;
     border-radius: 2px;
-    transition: transform 0.2s ease;
     cursor: pointer;
-
-    &:hover {
-      transform: scale(1.3);
-    }
 
     @include stats.heatmap-level-colors;
   }
@@ -421,12 +412,6 @@ function padZero(num: number): string {
   min-width: 56px;
   background: rgba(var(--b3-theme-primary-rgb), 0.03);
   border-radius: 6px;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: rgba(var(--b3-theme-primary-rgb), 0.06);
-    transform: translateY(-1px);
-  }
 
   &.achieved {
     background: rgba(stats.$color-success, 0.1);
@@ -464,14 +449,7 @@ function padZero(num: number): string {
       height: 100%;
       background: var(--b3-theme-primary);
       border-radius: 1px;
-      transition: width 0.3s ease;
     }
-  }
-}
-
-@include tablet-only {
-  .milestones-grid {
-    flex-wrap: wrap;
   }
 }
 </style>

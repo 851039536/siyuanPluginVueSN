@@ -1,92 +1,22 @@
 <template>
   <div class="stats-grid">
-    <!-- 核心数据 -->
-    <div class="stat-item primary">
-      <span class="stat-icon">📓</span>
-      <div class="stat-data">
-        <span class="stat-value">{{ formatNumber(totalNotes) }}</span>
-        <span class="stat-label">{{ i18n.totalNotes }}</span>
-      </div>
-    </div>
-    <div class="stat-item primary">
-      <span class="stat-icon">✍️</span>
-      <div class="stat-data">
-        <span class="stat-value">{{ formatNumber(totalWords) }}</span>
-        <span class="stat-label">{{ i18n.totalWords }}</span>
-      </div>
-    </div>
-    <!-- 今日动态 -->
-    <div class="stat-item">
-      <span class="stat-icon">📅</span>
+    <div v-for="item in statsItems" :key="item.label" class="stat-item" :class="item.variant">
+      <span class="stat-icon">{{ item.icon }}</span>
       <div class="stat-data">
         <div class="value-row">
-          <span class="stat-value">{{ todayCreated }}</span>
-          <span v-if="createdChange !== null" class="change" :class="getChangeClass(createdChange)">
-            {{ getChangeArrow(createdChange) }}{{ formatPercent(createdChange) }}
+          <span class="stat-value">{{ item.value }}</span>
+          <span v-if="item.change !== null" class="change" :class="item.change > 0 ? 'up' : 'down'">
+            {{ formatChange(item.change) }}
           </span>
         </div>
-        <span class="stat-label">{{ i18n.todayCreated }}</span>
-      </div>
-    </div>
-    <div class="stat-item">
-      <span class="stat-icon">✏️</span>
-      <div class="stat-data">
-        <div class="value-row">
-          <span class="stat-value">{{ todayModified }}</span>
-          <span v-if="modifiedChange !== null" class="change" :class="getChangeClass(modifiedChange)">
-            {{ getChangeArrow(modifiedChange) }}{{ formatPercent(modifiedChange) }}
-          </span>
-        </div>
-        <span class="stat-label">{{ i18n.todayModified }}</span>
-      </div>
-    </div>
-    <div class="stat-item">
-      <span class="stat-icon">📊</span>
-      <div class="stat-data">
-        <span class="stat-value">{{ avgWordsPerDoc }}</span>
-        <span class="stat-label">{{ i18n.avgWordsPerDoc }}</span>
-      </div>
-    </div>
-    <!-- 次要统计 -->
-    <div class="stat-item secondary">
-      <span class="stat-icon">🧩</span>
-      <div class="stat-data">
-        <span class="stat-value">{{ formatShortNumber(totalBlocks) }}</span>
-        <span class="stat-label">{{ i18n.totalBlocks }}</span>
-      </div>
-    </div>
-    <div class="stat-item secondary">
-      <span class="stat-icon">📎</span>
-      <div class="stat-data">
-        <span class="stat-value">{{ formatShortNumber(totalAssets) }}</span>
-        <span class="stat-label">{{ i18n.totalAssets }}</span>
-      </div>
-    </div>
-    <div class="stat-item secondary">
-      <span class="stat-icon">🖼️</span>
-      <div class="stat-data">
-        <span class="stat-value">{{ formatShortNumber(totalImages) }}</span>
-        <span class="stat-label">{{ i18n.totalImages }}</span>
-      </div>
-    </div>
-    <div class="stat-item secondary">
-      <span class="stat-icon">🏷️</span>
-      <div class="stat-data">
-        <span class="stat-value">{{ formatShortNumber(totalTags) }}</span>
-        <span class="stat-label">{{ i18n.totalTags }}</span>
-      </div>
-    </div>
-    <div class="stat-item secondary">
-      <span class="stat-icon">🔗</span>
-      <div class="stat-data">
-        <span class="stat-value">{{ formatShortNumber(totalBacklinks) }}</span>
-        <span class="stat-label">{{ i18n.totalBacklinks }}</span>
+        <span class="stat-label">{{ item.label }}</span>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import { formatNumber, formatShortNumber } from "../utils";
 
 interface Props {
@@ -116,7 +46,7 @@ interface Props {
 	};
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
 	totalNotes: 0,
 	totalWords: 0,
 	totalBlocks: 0,
@@ -143,19 +73,22 @@ withDefaults(defineProps<Props>(), {
 	}),
 });
 
-function getChangeClass(change: number | null): string {
-	if (!change) return "";
-	return change > 0 ? "up" : "down";
-}
+const statsItems = computed(() => [
+	{ icon: "📓", value: formatNumber(props.totalNotes), label: props.i18n.totalNotes, variant: "primary" as const, change: null as number | null },
+	{ icon: "✍️", value: formatNumber(props.totalWords), label: props.i18n.totalWords, variant: "primary" as const, change: null },
+	{ icon: "📅", value: String(props.todayCreated), label: props.i18n.todayCreated, change: props.createdChange },
+	{ icon: "✏️", value: String(props.todayModified), label: props.i18n.todayModified, change: props.modifiedChange },
+	{ icon: "📊", value: String(props.avgWordsPerDoc), label: props.i18n.avgWordsPerDoc, change: null },
+	{ icon: "🧩", value: formatShortNumber(props.totalBlocks), label: props.i18n.totalBlocks, variant: "secondary" as const, change: null },
+	{ icon: "📎", value: formatShortNumber(props.totalAssets), label: props.i18n.totalAssets, variant: "secondary" as const, change: null },
+	{ icon: "🖼️", value: formatShortNumber(props.totalImages), label: props.i18n.totalImages, variant: "secondary" as const, change: null },
+	{ icon: "🏷️", value: formatShortNumber(props.totalTags), label: props.i18n.totalTags, variant: "secondary" as const, change: null },
+	{ icon: "🔗", value: formatShortNumber(props.totalBacklinks), label: props.i18n.totalBacklinks, variant: "secondary" as const, change: null },
+]);
 
-function getChangeArrow(change: number | null): string {
+function formatChange(change: number | null): string {
 	if (!change) return "";
-	return change > 0 ? "↑" : "↓";
-}
-
-function formatPercent(change: number | null): string {
-	if (change === null) return "";
-	return Math.abs(change).toFixed(0) + "%";
+	return (change > 0 ? "↑" : "↓") + Math.abs(change).toFixed(0) + "%";
 }
 </script>
 

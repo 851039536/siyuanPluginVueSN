@@ -2,7 +2,7 @@
   <div class="insight-cards">
     <!-- 热力图 + 里程碑 -->
     <div class="insight-row">
-      <div class="insight-card">
+      <div class="insight-card fixed-height">
         <div class="card-header">
           <span class="card-icon">📊</span>
           <span class="card-title">{{ i18n.activityHeatmap }}</span>

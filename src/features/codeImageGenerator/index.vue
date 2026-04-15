@@ -333,27 +333,31 @@ const previewCustomStyle = computed<CSSProperties>(() => ({
 	borderStyle: borderWidth.value > 0 ? "solid" : "none",
 }));
 
+// i18n 辅助：获取面板级文案的 fallback 值
+const panelMsg = (key: keyof I18nPanelKeys, fallback: string): string =>
+	i18nPanel.value[key] || fallback;
+
 // 生成画布的公共方法
 const generateCanvas = async (): Promise<HTMLCanvasElement> => {
 	if (!codePreview.value) {
 		throw new Error("Preview element not found");
 	}
 
+	const el = codePreview.value;
 	const dpr = window.devicePixelRatio ?? 1;
 	const scale = Math.max(dpr, DEFAULTS.scaleMultiplier);
-	const computedStyle = window.getComputedStyle(codePreview.value);
-	const bgColor = computedStyle.backgroundColor ?? "transparent";
+	const bgColor = window.getComputedStyle(el).backgroundColor ?? "transparent";
 
-	return await html2canvas(codePreview.value, {
+	return html2canvas(el, {
 		backgroundColor: bgColor,
 		scale,
 		logging: false,
 		useCORS: true,
 		allowTaint: true,
-		width: codePreview.value.scrollWidth,
-		height: codePreview.value.scrollHeight,
-		windowWidth: codePreview.value.scrollWidth,
-		windowHeight: codePreview.value.scrollHeight,
+		width: el.scrollWidth,
+		height: el.scrollHeight,
+		windowWidth: el.scrollWidth,
+		windowHeight: el.scrollHeight,
 		imageTimeout: 0,
 		removeContainer: true,
 	});
@@ -363,52 +367,30 @@ const generateCanvas = async (): Promise<HTMLCanvasElement> => {
 const createFilename = (): string =>
 	`${contentType.value === "code" ? `code-${selectedLanguage.value}` : "text"}-${Date.now()}.png`;
 
+// 生成图片 Blob
+const generateBlob = async (): Promise<Blob> => {
+	const canvas = await generateCanvas();
+	return new Promise<Blob>((resolve, reject) =>
+		canvas.toBlob(
+			(blob) => (blob ? resolve(blob) : reject(new Error("Blob generation failed"))),
+			"image/png",
+			1.0,
+		),
+	);
+};
+
 // 复制图片到剪贴板
 const copyImage = async (): Promise<void> => {
 	if (!codeContent.value) return;
 
 	try {
-		const canvas = await generateCanvas();
-
-		canvas.toBlob(
-			async (blob) => {
-				if (!blob) {
-					showMessage(
-						props.i18n?.codeImageGeneratorPanel?.copyFailed || "复制失败",
-						DEFAULTS.messageDuration,
-						"error",
-					);
-					return;
-				}
-
-				try {
-					const item = new ClipboardItem({ "image/png": blob });
-					await navigator.clipboard.write([item]);
-					showMessage(
-						props.i18n?.codeImageGeneratorPanel?.imageCopied ||
-							"图片已复制到剪贴板",
-						DEFAULTS.messageDuration,
-						"info",
-					);
-				} catch (err) {
-					console.error("复制失败:", getErrorMsg(err));
-					showMessage(
-						props.i18n?.codeImageGeneratorPanel?.copyFailed || "复制失败",
-						DEFAULTS.messageDuration,
-						"error",
-					);
-				}
-			},
-			"image/png",
-			1.0,
-		);
+		const blob = await generateBlob();
+		const item = new ClipboardItem({ "image/png": blob });
+		await navigator.clipboard.write([item]);
+		showMessage(panelMsg("imageCopied", "图片已复制到剪贴板"), DEFAULTS.messageDuration, "info");
 	} catch (error) {
-		console.error("生成图片失败:", getErrorMsg(error));
-		showMessage(
-			props.i18n?.codeImageGeneratorPanel?.generateFailed || "生成图片失败",
-			DEFAULTS.messageDuration,
-			"error",
-		);
+		console.error("复制失败:", getErrorMsg(error));
+		showMessage(panelMsg("copyFailed", "复制失败"), DEFAULTS.messageDuration, "error");
 	}
 };
 
@@ -422,19 +404,10 @@ const downloadImage = async (): Promise<void> => {
 		link.download = createFilename();
 		link.href = canvas.toDataURL("image/png", 1.0);
 		link.click();
-
-		showMessage(
-			props.i18n?.codeImageGeneratorPanel?.imageDownloaded || "图片已下载",
-			DEFAULTS.messageDuration,
-			"info",
-		);
+		showMessage(panelMsg("imageDownloaded", "图片已下载"), DEFAULTS.messageDuration, "info");
 	} catch (error) {
 		console.error("下载失败:", getErrorMsg(error));
-		showMessage(
-			props.i18n?.codeImageGeneratorPanel?.downloadFailed || "下载失败",
-			DEFAULTS.messageDuration,
-			"error",
-		);
+		showMessage(panelMsg("downloadFailed", "下载失败"), DEFAULTS.messageDuration, "error");
 	}
 };
 </script>

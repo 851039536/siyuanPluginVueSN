@@ -56,7 +56,6 @@
   letter-spacing: 0.5px;
 }
 
-
 .settings-section {
   display: flex;
   flex-direction: column;
@@ -84,22 +83,18 @@
   color: var(--b3-theme-on-surface);
 }
 
-// 通用滑块控制容器
-.size-control,
+// 装饰选项滑块控制容器
 .slider-control {
   display: flex;
   align-items: center;
-  gap: 8px;
-
-  &.slider-control {
-    flex: 1;
-    gap: 6px;
-  }
+  flex: 1;
+  gap: 6px;
 }
 
-// 通用滑块基础样式
-%slider-base {
+// 装饰选项原生滑块样式
+.mini-slider {
   flex: 1;
+  height: 14px;
   border-radius: 2px;
   background: transparent;
   outline: none;
@@ -107,20 +102,7 @@
   -webkit-appearance: none;
   appearance: none;
   touch-action: none;
-}
 
-// 滑块滑块样式
-@mixin slider-thumb($size, $shadow: 0 1px 3px rgba(0, 0, 0, 0.2)) {
-  width: $size;
-  height: $size;
-  border-radius: 50%;
-  background: var(--b3-theme-primary);
-  cursor: pointer;
-  box-shadow: $shadow;
-}
-
-// 滑块跨浏览器样式重置
-@mixin slider-reset {
   &::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
@@ -129,41 +111,6 @@
   &::-moz-range-thumb {
     border: none;
   }
-}
-
-.size-slider,
-.mini-slider {
-  @extend %slider-base;
-  @include slider-reset;
-}
-
-.size-slider {
-  height: 16px;
-
-  &::-webkit-slider-runnable-track {
-    height: 3px;
-    border-radius: 2px;
-    background: var(--b3-theme-surface-lighter);
-  }
-
-  &::-moz-range-track {
-    height: 3px;
-    border-radius: 2px;
-    background: var(--b3-theme-surface-lighter);
-  }
-
-  &::-webkit-slider-thumb,
-  &::-moz-range-thumb {
-    @include slider-thumb(14px, 0 2px 4px rgba(0, 0, 0, 0.2));
-  }
-
-  &::-webkit-slider-thumb {
-    margin-top: -5.5px;
-  }
-}
-
-.mini-slider {
-  height: 14px;
 
   &::-webkit-slider-runnable-track {
     height: 2px;
@@ -179,7 +126,12 @@
 
   &::-webkit-slider-thumb,
   &::-moz-range-thumb {
-    @include slider-thumb(10px);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--b3-theme-primary);
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   }
 
   &::-webkit-slider-thumb {
@@ -187,22 +139,13 @@
   }
 }
 
-// 通用滑块数值显示
-.size-value,
+// 装饰选项滑块数值显示
 .slider-value {
   color: var(--b3-theme-on-surface);
   text-align: right;
   font-weight: 600;
-
-  &.size-value {
-    font-size: 11px;
-    min-width: 40px;
-  }
-
-  &.slider-value {
-    font-size: 10px;
-    min-width: 36px;
-  }
+  font-size: 10px;
+  min-width: 36px;
 }
 
 .preview-container {

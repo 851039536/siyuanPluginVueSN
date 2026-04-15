@@ -18,6 +18,17 @@ export function formatShortNumber(num: number): string {
 	return String(num);
 }
 
+export function padZero(num: number): string {
+	return num < 10 ? "0" + num : String(num);
+}
+
+/**
+ * 格式化日期为 YYYY-MM-DD
+ */
+export function formatDate(date: Date): string {
+	return `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())}`;
+}
+
 /**
  * 判断日期是否为今天
  */
@@ -34,8 +45,4 @@ export function isToday(dateStr: string): boolean {
 		return dateStr === String(today.getFullYear());
 	}
 	return false;
-}
-
-function padZero(num: number): string {
-	return num < 10 ? "0" + num : String(num);
 }

@@ -122,8 +122,6 @@ interface Props {
 		last2Years: string;
 		last3Years: string;
 		trendTitle: string;
-		notesGrowth: string;
-		wordsGrowth: string;
 		avgDailyCreated: string;
 		avgDailyModified: string;
 		historicalData: string;
@@ -202,8 +200,6 @@ const props = withDefaults(defineProps<Props>(), {
 		last2Years: "最近两年",
 		last3Years: "最近三年",
 		trendTitle: "趋势分析",
-		notesGrowth: "笔记增长",
-		wordsGrowth: "字数增长",
 		avgDailyCreated: "日均新增",
 		avgDailyModified: "日均修改",
 		historicalData: "历史数据",

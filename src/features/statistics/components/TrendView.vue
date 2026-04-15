@@ -11,163 +11,25 @@
 
     <!-- 周期对比汇总 -->
     <div v-if="comparisonStats" class="comparison-section">
-      <div class="comparison-card">
+      <div v-for="card in comparisonCards" :key="card.title" class="comparison-card">
         <div class="comparison-header">
-          <span class="comparison-icon">📅</span>
-          <span class="comparison-title">{{ i18n.dayOverDay }}</span>
+          <span class="comparison-icon">{{ card.icon }}</span>
+          <span class="comparison-title">{{ card.title }}</span>
         </div>
         <div class="comparison-body">
-          <div class="comparison-item">
-            <span class="item-label">{{ i18n.created }}</span>
+          <div v-for="item in card.items" :key="item.label" class="comparison-item">
+            <span class="item-label">{{ item.label }}</span>
             <span class="item-values">
-              <span class="current-value">{{ comparisonStats.today.created }}</span>
+              <span class="current-value">{{ item.formatCurrent }}</span>
               <span class="vs-label">vs</span>
-              <span class="prev-value">{{ comparisonStats.yesterday.created }}</span>
+              <span class="prev-value">{{ item.formatPrev }}</span>
             </span>
             <span
-              v-if="comparisonStats.dayChange.created !== null"
+              v-if="item.change !== null"
               class="change-tag"
-              :class="getChangeClass(comparisonStats.dayChange.created)"
+              :class="getChangeClass(item.change)"
             >
-              {{ formatChange(comparisonStats.dayChange.created) }}
-            </span>
-          </div>
-          <div class="comparison-item">
-            <span class="item-label">{{ i18n.modified }}</span>
-            <span class="item-values">
-              <span class="current-value">{{ comparisonStats.today.modified }}</span>
-              <span class="vs-label">vs</span>
-              <span class="prev-value">{{ comparisonStats.yesterday.modified }}</span>
-            </span>
-            <span
-              v-if="comparisonStats.dayChange.modified !== null"
-              class="change-tag"
-              :class="getChangeClass(comparisonStats.dayChange.modified)"
-            >
-              {{ formatChange(comparisonStats.dayChange.modified) }}
-            </span>
-          </div>
-          <div class="comparison-item">
-            <span class="item-label">{{ i18n.words }}</span>
-            <span class="item-values">
-              <span class="current-value">{{ formatNumber(comparisonStats.today.words) }}</span>
-              <span class="vs-label">vs</span>
-              <span class="prev-value">{{ formatNumber(comparisonStats.yesterday.words) }}</span>
-            </span>
-            <span
-              v-if="comparisonStats.dayChange.words !== null"
-              class="change-tag"
-              :class="getChangeClass(comparisonStats.dayChange.words)"
-            >
-              {{ formatChange(comparisonStats.dayChange.words) }}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div class="comparison-card">
-        <div class="comparison-header">
-          <span class="comparison-icon">📆</span>
-          <span class="comparison-title">{{ i18n.weekOverWeek }}</span>
-        </div>
-        <div class="comparison-body">
-          <div class="comparison-item">
-            <span class="item-label">{{ i18n.created }}</span>
-            <span class="item-values">
-              <span class="current-value">{{ comparisonStats.thisWeek.created }}</span>
-              <span class="vs-label">vs</span>
-              <span class="prev-value">{{ comparisonStats.lastWeek.created }}</span>
-            </span>
-            <span
-              v-if="comparisonStats.weekChange.created !== null"
-              class="change-tag"
-              :class="getChangeClass(comparisonStats.weekChange.created)"
-            >
-              {{ formatChange(comparisonStats.weekChange.created) }}
-            </span>
-          </div>
-          <div class="comparison-item">
-            <span class="item-label">{{ i18n.modified }}</span>
-            <span class="item-values">
-              <span class="current-value">{{ comparisonStats.thisWeek.modified }}</span>
-              <span class="vs-label">vs</span>
-              <span class="prev-value">{{ comparisonStats.lastWeek.modified }}</span>
-            </span>
-            <span
-              v-if="comparisonStats.weekChange.modified !== null"
-              class="change-tag"
-              :class="getChangeClass(comparisonStats.weekChange.modified)"
-            >
-              {{ formatChange(comparisonStats.weekChange.modified) }}
-            </span>
-          </div>
-          <div class="comparison-item">
-            <span class="item-label">{{ i18n.words }}</span>
-            <span class="item-values">
-              <span class="current-value">{{ formatNumber(comparisonStats.thisWeek.words) }}</span>
-              <span class="vs-label">vs</span>
-              <span class="prev-value">{{ formatNumber(comparisonStats.lastWeek.words) }}</span>
-            </span>
-            <span
-              v-if="comparisonStats.weekChange.words !== null"
-              class="change-tag"
-              :class="getChangeClass(comparisonStats.weekChange.words)"
-            >
-              {{ formatChange(comparisonStats.weekChange.words) }}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div class="comparison-card">
-        <div class="comparison-header">
-          <span class="comparison-icon">🗓️</span>
-          <span class="comparison-title">{{ i18n.monthOverMonth }}</span>
-        </div>
-        <div class="comparison-body">
-          <div class="comparison-item">
-            <span class="item-label">{{ i18n.created }}</span>
-            <span class="item-values">
-              <span class="current-value">{{ comparisonStats.thisMonth.created }}</span>
-              <span class="vs-label">vs</span>
-              <span class="prev-value">{{ comparisonStats.lastMonth.created }}</span>
-            </span>
-            <span
-              v-if="comparisonStats.monthChange.created !== null"
-              class="change-tag"
-              :class="getChangeClass(comparisonStats.monthChange.created)"
-            >
-              {{ formatChange(comparisonStats.monthChange.created) }}
-            </span>
-          </div>
-          <div class="comparison-item">
-            <span class="item-label">{{ i18n.modified }}</span>
-            <span class="item-values">
-              <span class="current-value">{{ comparisonStats.thisMonth.modified }}</span>
-              <span class="vs-label">vs</span>
-              <span class="prev-value">{{ comparisonStats.lastMonth.modified }}</span>
-            </span>
-            <span
-              v-if="comparisonStats.monthChange.modified !== null"
-              class="change-tag"
-              :class="getChangeClass(comparisonStats.monthChange.modified)"
-            >
-              {{ formatChange(comparisonStats.monthChange.modified) }}
-            </span>
-          </div>
-          <div class="comparison-item">
-            <span class="item-label">{{ i18n.words }}</span>
-            <span class="item-values">
-              <span class="current-value">{{ formatNumber(comparisonStats.thisMonth.words) }}</span>
-              <span class="vs-label">vs</span>
-              <span class="prev-value">{{ formatNumber(comparisonStats.lastMonth.words) }}</span>
-            </span>
-            <span
-              v-if="comparisonStats.monthChange.words !== null"
-              class="change-tag"
-              :class="getChangeClass(comparisonStats.monthChange.words)"
-            >
-              {{ formatChange(comparisonStats.monthChange.words) }}
+              {{ formatChange(item.change) }}
             </span>
           </div>
         </div>
@@ -243,7 +105,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { formatNumber, formatShortNumber } from "../utils";
+import { formatDate, formatNumber, formatShortNumber } from "../utils";
 
 interface HistoricalDataItem {
 	date: string;
@@ -258,8 +120,6 @@ interface Props {
 	historicalData?: HistoricalDataItem[];
 	i18n?: {
 		title: string;
-		notesGrowth: string;
-		wordsGrowth: string;
 		avgDailyCreated: string;
 		avgDailyModified: string;
 		historicalData: string;
@@ -281,8 +141,6 @@ const props = withDefaults(defineProps<Props>(), {
 	historicalData: () => [],
 	i18n: () => ({
 		title: "趋势分析",
-		notesGrowth: "笔记增长",
-		wordsGrowth: "字数增长",
 		avgDailyCreated: "日均新增",
 		avgDailyModified: "日均修改",
 		historicalData: "历史数据",
@@ -402,13 +260,28 @@ const comparisonStats = computed(() => {
 	};
 });
 
-function formatDate(date: Date): string {
-	return `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())}`;
-}
-
-function padZero(num: number): string {
-	return num < 10 ? "0" + num : String(num);
-}
+// 对比卡片数据驱动
+const comparisonCards = computed(() => {
+	if (!comparisonStats.value) return [];
+	const stats = comparisonStats.value;
+	return [
+		{ icon: "📅", title: props.i18n.dayOverDay, current: stats.today, prev: stats.yesterday, change: stats.dayChange },
+		{ icon: "📆", title: props.i18n.weekOverWeek, current: stats.thisWeek, prev: stats.lastWeek, change: stats.weekChange },
+		{ icon: "🗓️", title: props.i18n.monthOverMonth, current: stats.thisMonth, prev: stats.lastMonth, change: stats.monthChange },
+	].map((card) => ({
+		...card,
+		items: ([
+			{ key: "created", label: props.i18n.created, useFormat: false },
+			{ key: "modified", label: props.i18n.modified, useFormat: false },
+			{ key: "words", label: props.i18n.words, useFormat: true },
+		] as const).map((m) => ({
+			label: m.label,
+			formatCurrent: m.useFormat ? formatNumber(card.current[m.key]) : String(card.current[m.key]),
+			formatPrev: m.useFormat ? formatNumber(card.prev[m.key]) : String(card.prev[m.key]),
+			change: card.change[m.key],
+		})),
+	}));
+});
 
 function getRangeData(
 	startDate: Date,
@@ -453,16 +326,6 @@ function formatChange(change: number | null): string {
 const trendStats = computed(() => {
 	if (props.historicalData.length === 0) return null;
 
-	const totalNotes =
-		props.historicalData[props.historicalData.length - 1]?.totalNotes || 0;
-	const firstNotes = props.historicalData[0]?.totalNotes || 0;
-	const notesGrowth = totalNotes - firstNotes;
-
-	const totalWords =
-		props.historicalData[props.historicalData.length - 1]?.totalWords || 0;
-	const firstWords = props.historicalData[0]?.totalWords || 0;
-	const wordsGrowth = totalWords - firstWords;
-
 	const totalCreated = props.historicalData.reduce(
 		(sum, item) => sum + item.todayCreated,
 		0,
@@ -473,8 +336,6 @@ const trendStats = computed(() => {
 	);
 
 	return {
-		notesGrowth,
-		wordsGrowth,
 		totalCreated,
 		totalModified,
 		avgDailyCreated: Math.round(totalCreated / props.historicalData.length),
@@ -484,63 +345,40 @@ const trendStats = computed(() => {
 
 const historicalRows = computed(() => {
 	const today = new Date();
-	const todayStr = `${today.getFullYear()}-${padZero(today.getMonth() + 1)}-${padZero(today.getDate())}`;
+	const todayStr = formatDate(today);
 	return props.historicalData.map((item, index) => {
 		const previous = props.historicalData[index + 1];
-		const wordDiff = previous ? getWordDiff(item, previous) : 0;
-		const noteDiff = previous ? getNoteDiff(item, previous) : 0;
 		return {
 			item,
-			wordDiff,
-			noteDiff,
+			wordDiff: previous ? getDiff(item, previous, "totalWords") : 0,
+			noteDiff: previous ? getDiff(item, previous, "totalNotes") : 0,
 			hasPrevious: Boolean(previous),
 			isToday: item.date === todayStr,
 		};
 	});
 });
 
-function getWordDiff(
+function getDiff(
 	current: HistoricalDataItem,
 	previous: HistoricalDataItem,
+	field: "totalWords" | "totalNotes",
 ): number {
 	if (!current || !previous) return 0;
 
 	if (
 		previous.todayCreated === 0 &&
 		previous.todayModified === 0 &&
-		current.totalWords > 0
+		current[field] > 0
 	) {
-		const diff = current.totalWords - previous.totalWords;
+		const diff = current[field] - previous[field];
 		return diff > 0 ? diff : 0;
 	}
 
-	if (previous.totalWords === 0 && current.totalWords > 0) {
+	if (previous[field] === 0 && current[field] > 0) {
 		return 0;
 	}
 
-	return current.totalWords - previous.totalWords;
-}
-
-function getNoteDiff(
-	current: HistoricalDataItem,
-	previous: HistoricalDataItem,
-): number {
-	if (!current || !previous) return 0;
-
-	if (
-		previous.todayCreated === 0 &&
-		previous.todayModified === 0 &&
-		current.totalNotes > 0
-	) {
-		const diff = current.totalNotes - previous.totalNotes;
-		return diff > 0 ? diff : 0;
-	}
-
-	if (previous.totalNotes === 0 && current.totalNotes > 0) {
-		return 0;
-	}
-
-	return current.totalNotes - previous.totalNotes;
+	return current[field] - previous[field];
 }
 </script>
 

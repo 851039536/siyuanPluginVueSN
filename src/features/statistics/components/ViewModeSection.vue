@@ -21,7 +21,7 @@
       </div>
       <div v-if="periodTotalWords > 0" class="period-stat-card">
         <span class="stat-value">{{ formatNumber(periodTotalWords) }} {{ i18n.wordsUnit }}</span>
-        <span class="stat-label">{{ periodTotalLabel }}</span>
+        <span class="stat-label">{{ i18n.totalLabel }}</span>
       </div>
     </div>
 
@@ -33,7 +33,7 @@
         :key="range.value"
         class="range-btn"
         :class="{ active: dayRange === range.value }"
-        @click="$emit('update:dayRange', range.value); $emit('refresh')"
+        @click="onRangeChange('day', range.value)"
       >
         {{ range.label }}
       </button>
@@ -46,7 +46,7 @@
         :key="range.value"
         class="range-btn"
         :class="{ active: monthYearRange === range.value }"
-        @click="$emit('update:monthYearRange', range.value); $emit('refresh')"
+        @click="onRangeChange('month', range.value)"
       >
         {{ range.label }}
       </button>
@@ -67,6 +67,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import { formatNumber } from "../utils";
 
 interface Props {
 	modelValue?: "day" | "week" | "month" | "year" | "trend";
@@ -135,7 +136,16 @@ const props = withDefaults(defineProps<Props>(), {
 	}),
 });
 
-defineEmits<Emits>();
+const emit = defineEmits<Emits>();
+
+function onRangeChange(mode: "day" | "month", value: number): void {
+	if (mode === "day") {
+		emit("update:dayRange", value as 7 | 15 | 30 | 90 | 180 | 365);
+	} else {
+		emit("update:monthYearRange", value as 1 | 2 | 3);
+	}
+	emit("refresh");
+}
 
 const viewModes = computed(() => [
 	{ value: "day" as const, label: props.i18n.day, icon: "📅" },
@@ -179,13 +189,7 @@ const periodAvgLabel = computed(() => {
 	return labels[props.modelValue] || props.i18n.avgLabel;
 });
 
-const periodTotalLabel = computed(() => {
-	return props.i18n.totalLabel;
-});
 
-function formatNumber(num: number): string {
-	return num.toLocaleString("zh-CN");
-}
 </script>
 
 <style scoped lang="scss">

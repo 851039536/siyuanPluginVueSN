@@ -101,11 +101,12 @@
 %slider-base {
   flex: 1;
   border-radius: 2px;
-  background: var(--b3-theme-surface-lighter);
+  background: transparent;
   outline: none;
   cursor: pointer;
   -webkit-appearance: none;
   appearance: none;
+  touch-action: none;
 }
 
 // 滑块滑块样式
@@ -137,20 +138,52 @@
 }
 
 .size-slider {
-  height: 3px;
+  height: 16px;
+
+  &::-webkit-slider-runnable-track {
+    height: 3px;
+    border-radius: 2px;
+    background: var(--b3-theme-surface-lighter);
+  }
+
+  &::-moz-range-track {
+    height: 3px;
+    border-radius: 2px;
+    background: var(--b3-theme-surface-lighter);
+  }
 
   &::-webkit-slider-thumb,
   &::-moz-range-thumb {
     @include slider-thumb(14px, 0 2px 4px rgba(0, 0, 0, 0.2));
   }
+
+  &::-webkit-slider-thumb {
+    margin-top: -5.5px;
+  }
 }
 
 .mini-slider {
-  height: 2px;
+  height: 14px;
+
+  &::-webkit-slider-runnable-track {
+    height: 2px;
+    border-radius: 2px;
+    background: var(--b3-theme-surface-lighter);
+  }
+
+  &::-moz-range-track {
+    height: 2px;
+    border-radius: 2px;
+    background: var(--b3-theme-surface-lighter);
+  }
 
   &::-webkit-slider-thumb,
   &::-moz-range-thumb {
     @include slider-thumb(10px);
+  }
+
+  &::-webkit-slider-thumb {
+    margin-top: -4px;
   }
 }
 

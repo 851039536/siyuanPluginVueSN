@@ -7,7 +7,7 @@
         <span class="header-sep">·</span>
         <span class="card-icon">🏆</span>
         <span class="card-title">{{ i18n.milestones }}</span>
-        <span class="achieved-count">{{ achievedMilestones.length }}/{{ allMilestones.length }}</span>
+        <span class="achieved-count">{{ achievedCount }}/{{ allMilestones.length }}</span>
       </div>
       <div class="card-body">
         <!-- 热力图区域 -->
@@ -64,7 +64,6 @@ interface Props {
 	historicalData?: HistoricalDataItem[];
 	totalNotes?: number;
 	totalWords?: number;
-	totalBacklinks?: number;
 	i18n?: Record<string, string>;
 }
 
@@ -72,7 +71,6 @@ const props = withDefaults(defineProps<Props>(), {
 	historicalData: () => [],
 	totalNotes: 0,
 	totalWords: 0,
-	totalBacklinks: 0,
 	i18n: () => ({
 		activityHeatmap: "活跃热力图",
 		less: "少",
@@ -88,6 +86,8 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 // ============ 热力日历 ============
+const LEVEL_THRESHOLDS = [0, 1, 6, 16, 31] as const;
+
 const heatmapCells = computed(() => {
 	const cells = [];
 	const now = new Date();
@@ -99,15 +99,14 @@ const heatmapCells = computed(() => {
 		const dayData = props.historicalData.find((d) => d.date === dateStr);
 
 		const activity = dayData ? dayData.todayCreated + dayData.todayModified : 0;
-		let level = "level-0";
-		if (activity > 0) level = "level-1";
-		if (activity > 5) level = "level-2";
-		if (activity > 15) level = "level-3";
-		if (activity > 30) level = "level-4";
+		let levelIdx = 0;
+		for (let t = LEVEL_THRESHOLDS.length - 1; t >= 0; t--) {
+			if (activity >= LEVEL_THRESHOLDS[t]) { levelIdx = t; break; }
+		}
 
 		cells.push({
 			date: dateStr,
-			level,
+			level: `level-${levelIdx}`,
 			tooltip: `${dateStr}: ${activity}次操作`,
 		});
 	}
@@ -237,11 +236,11 @@ const allMilestones = [
 	},
 ];
 
-const achievedMilestones = computed(() => {
+const achievedCount = computed(() => {
 	return allMilestones.filter((m) => {
 		const current = m.type === "notes" ? props.totalNotes : props.totalWords;
 		return current >= m.target;
-	});
+	}).length;
 });
 
 const visibleMilestones = computed(() => {

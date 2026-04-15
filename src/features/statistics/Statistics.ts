@@ -2,11 +2,6 @@ import { Plugin } from "siyuan";
 import { createApp, App as VueApp } from "vue";
 import StatisticsPanel from "./StatisticsPanel.vue";
 import { readDir } from "@/api";
-import {
-	WeeklyGoalSettings,
-	STATISTICS_STORAGE_KEYS,
-	DEFAULT_WEEKLY_GOAL,
-} from "./types";
 
 const DAY_PERIOD_MAP: Record<number, string> = {
 	7: "最近一周每日字数",
@@ -172,12 +167,6 @@ export class Statistics {
 			},
 			onGetHistoricalData: async (days?: number) => {
 				return await this.getHistoricalStatistics(days);
-			},
-			onGetWeeklyGoal: async () => {
-				return await this.getWeeklyGoal();
-			},
-			onSaveWeeklyGoal: async (goal: WeeklyGoalSettings) => {
-				return await this.saveWeeklyGoal(goal);
 			},
 		});
 
@@ -877,40 +866,6 @@ export class Statistics {
 		const month = this.padZero(date.getMonth() + 1);
 		const day = this.padZero(date.getDate());
 		return `${year}-${month}-${day}`;
-	}
-
-	/**
-	 * 获取周目标设置
-	 */
-	async getWeeklyGoal(): Promise<WeeklyGoalSettings> {
-		try {
-			const data = await this.plugin.loadData(
-				STATISTICS_STORAGE_KEYS.WEEKLY_GOAL,
-			);
-			if (data) {
-				return {
-					created: data.created ?? DEFAULT_WEEKLY_GOAL.created,
-					words: data.words ?? DEFAULT_WEEKLY_GOAL.words,
-				};
-			}
-			return { ...DEFAULT_WEEKLY_GOAL };
-		} catch (error) {
-			console.error("获取周目标设置失败:", error);
-			return { ...DEFAULT_WEEKLY_GOAL };
-		}
-	}
-
-	/**
-	 * 保存周目标设置
-	 */
-	async saveWeeklyGoal(goal: WeeklyGoalSettings): Promise<boolean> {
-		try {
-			await this.plugin.saveData(STATISTICS_STORAGE_KEYS.WEEKLY_GOAL, goal);
-			return true;
-		} catch (error) {
-			console.error("保存周目标设置失败:", error);
-			return false;
-		}
 	}
 
 	/**

@@ -38,9 +38,7 @@
         :total-notes="stats.totalNotes"
         :total-words="stats.totalWords"
         :total-backlinks="stats.totalBacklinks"
-        :weekly-goal="weeklyGoal"
         :i18n="insightCardsI18n"
-        @save-weekly-goal="handleSaveWeeklyGoal"
       />
 
       <ViewModeSection
@@ -91,11 +89,6 @@ interface Props {
 		selectedYear?: number;
 	}) => Promise<StatisticsData>;
 	onGetHistoricalData?: (days?: number) => Promise<any[]>;
-	onGetWeeklyGoal?: () => Promise<{ created: number; words: number }>;
-	onSaveWeeklyGoal?: (goal: {
-		created: number;
-		words: number;
-	}) => Promise<boolean>;
 	i18n?: {
 		loading: string;
 		refresh: string;
@@ -236,7 +229,6 @@ const selectedYear = ref<number>(new Date().getFullYear());
 const chartData = ref<DailyWordCount[]>([]);
 const historicalData = ref<any[]>([]);
 const updateInterval = ref(60);
-const weeklyGoal = ref({ created: 30, words: 100000 });
 
 const headerI18n = computed(() => props.i18n);
 const statsCardsI18n = computed(() => props.i18n);
@@ -252,37 +244,14 @@ const trendViewI18n = computed(() => ({
 }));
 
 const insightCardsI18n = computed(() => ({
-	writerLevel: "写作等级",
-	expProgress: "经验进度",
-	toNextLevel: "距离下一等级",
-	streakDays: "连续活跃",
-	daysStreak: "天连续记录",
-	maxStreak: "最长",
-	days: "天",
-	nextReward: "下个奖励",
-	weeklyGoal: "本周目标",
-	notesCreated: "新建笔记",
-	wordsWritten: "写作字数",
-	activeDays: "活跃天数",
 	activityHeatmap: "活跃热力图",
 	less: "少",
 	more: "多",
 	last30Days: "近30天",
 	activeDaysCount: "天活跃",
-	knowledgeWealth: "知识财富",
-	gold: "金币",
-	fromNotes: "笔记贡献",
-	fromWords: "字数贡献",
-	fromLinks: "双链贡献",
-	fromStreak: "连签奖励",
-	wealthRank: "财富等级",
 	milestones: "里程碑",
-	yearOverYear: "年同比",
 	notes: "笔记",
 	words: "字数",
-	editGoal: "编辑目标",
-	save: "保存",
-	cancel: "取消",
 	notesUnit: "篇",
 	wordsUnit: "字",
 }));
@@ -395,33 +364,8 @@ async function loadHistoricalData() {
 	}
 }
 
-async function loadWeeklyGoal() {
-	if (!props.onGetWeeklyGoal) return;
-	try {
-		const goal = await props.onGetWeeklyGoal();
-		if (goal) {
-			weeklyGoal.value = goal;
-		}
-	} catch (error) {
-		console.error("加载周目标失败:", error);
-	}
-}
-
-async function handleSaveWeeklyGoal(goal: { created: number; words: number }) {
-	if (!props.onSaveWeeklyGoal) return;
-	try {
-		const success = await props.onSaveWeeklyGoal(goal);
-		if (success) {
-			weeklyGoal.value = goal;
-		}
-	} catch (error) {
-		console.error("保存周目标失败:", error);
-	}
-}
-
 onMounted(() => {
 	loading.value = true;
-	loadWeeklyGoal();
 	refreshData();
 });
 

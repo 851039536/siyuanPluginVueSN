@@ -173,64 +173,76 @@ function formatPercent(change: number | null): string {
   border-radius: 8px;
   overflow: hidden;
   margin-bottom: 8px;
+}
 
-  .stat-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 12px;
-    background: var(--b3-theme-surface);
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--b3-theme-surface);
+}
 
-    &.primary {
-      background: linear-gradient(135deg, rgba(var(--b3-theme-primary-rgb), 0.08), rgba(var(--b3-theme-primary-rgb), 0.02));
+.stat-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
 
-      .stat-icon { font-size: 22px; }
-      .stat-value { font-size: 18px; }
-    }
+.stat-data {
+  flex: 1;
+  min-width: 0;
+}
 
-    &.secondary {
-      .stat-icon { font-size: 14px; opacity: 0.7; }
-      .stat-value { font-size: 13px; }
-      .stat-label { font-size: 9px; }
-    }
+.stat-value {
+  font-family: $font-heading;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--b3-theme-primary);
+  line-height: 1.2;
+}
 
-    .stat-icon { font-size: 18px; flex-shrink: 0; }
+.stat-label {
+  font-size: 10px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
+}
 
-    .stat-data {
-      flex: 1;
-      min-width: 0;
+.value-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 
-      .value-row {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-      }
+.change {
+  padding: 1px 4px;
+  border-radius: 6px;
+  font-size: 8px;
+  font-weight: 700;
+}
 
-      .stat-value {
-        font-family: $font-heading;
-        font-size: 15px;
-        font-weight: 700;
-        color: var(--b3-theme-primary);
-        line-height: 1.2;
-      }
+.change.up {
+  background: rgba(stats.$color-success, 0.15);
+  color: stats.$color-success;
+}
 
-      .stat-label {
-        font-size: 10px;
-        color: var(--b3-theme-on-surface);
-        opacity: 0.6;
-      }
+.change.down {
+  background: rgba(stats.$color-danger, 0.15);
+  color: stats.$color-danger;
+}
 
-      .change {
-        padding: 1px 4px;
-        border-radius: 6px;
-        font-size: 8px;
-        font-weight: 700;
+// 核心数据
+.stat-item.primary {
+  background: rgba(var(--b3-theme-primary-rgb), 0.06);
 
-        &.up { background: rgba(stats.$color-success, 0.15); color: stats.$color-success; }
-        &.down { background: rgba(stats.$color-danger, 0.15); color: stats.$color-danger; }
-      }
-    }
-  }
+  .stat-icon { font-size: 22px; }
+  .stat-value { font-size: 18px; }
+}
+
+// 次要统计
+.stat-item.secondary {
+  .stat-icon { font-size: 14px; opacity: 0.7; }
+  .stat-value { font-size: 13px; }
+  .stat-label { font-size: 9px; }
 }
 
 @include mobile-only {

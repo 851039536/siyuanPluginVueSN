@@ -547,15 +547,9 @@ function getNoteDiff(
 
 <style scoped lang="scss">
 @use "@/variables" as *;
-@use "@/_variables" as base;
 @use "../../superPanel/styles/variables" as *;
 @use "../../superPanel/styles/mixins" as *;
 @use "../index.scss" as stats;
-
-// 定义局部颜色变量，如果全局没有定义
-$github-green: #2da44e;
-$github-red: #cf222e;
-
 
 .trend-view {
   // 周期对比区域
@@ -567,10 +561,7 @@ $github-red: #cf222e;
 
     .comparison-card {
       @include stats.stats-card-base;
-      border: 1px solid var(--b3-border-color);
       border-radius: 8px;
-      overflow: hidden;
-      background: var(--b3-theme-surface);
 
       .comparison-header {
         display: flex;
@@ -643,13 +634,13 @@ $github-red: #cf222e;
             font-family: $font-heading;
 
             &.positive {
-              background: rgba($github-green, 0.15);
-              color: $github-green;
+              background: rgba(stats.$color-success, 0.15);
+              color: stats.$color-success;
             }
 
             &.negative {
-              background: rgba($github-red, 0.15);
-              color: $github-red;
+              background: rgba(stats.$color-danger, 0.15);
+              color: stats.$color-danger;
             }
 
             &.neutral {
@@ -796,13 +787,13 @@ $github-red: #cf222e;
                 font-family: $font-heading;
 
                 &.success {
-                  background: rgba($github-green, 0.12);
-                  color: $github-green;
+                  background: rgba(stats.$color-success, 0.12);
+                  color: stats.$color-success;
                 }
 
                 &.danger {
-                  background: rgba($github-red, 0.12);
-                  color: $github-red;
+                  background: rgba(stats.$color-danger, 0.12);
+                  color: stats.$color-danger;
                 }
 
                 &.secondary {
@@ -832,12 +823,6 @@ $github-red: #cf222e;
 
 @include mobile-only {
   .trend-view {
-    .comparison-section {
-      grid-template-columns: 1fr;
-      margin-left: 4px;
-      margin-right: 4px;
-    }
-
     .section-header {
       flex-direction: column;
       align-items: flex-start;

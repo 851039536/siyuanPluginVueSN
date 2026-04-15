@@ -15,6 +15,17 @@ $stats-transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 $gradient-primary: linear-gradient(135deg, var(--b3-theme-primary) 0%, var(--b3-theme-primary-light, #5d87ff) 100%);
 $gradient-surface: linear-gradient(180deg, var(--b3-theme-surface) 0%, var(--b3-theme-background) 100%);
 
+$color-success: #2da44e;
+$color-danger: #cf222e;
+
+@mixin heatmap-level-colors {
+  &.level-0 { background: rgba(var(--b3-theme-on-surface-rgb), 0.05); }
+  &.level-1 { background: rgba($color-success, 0.2); }
+  &.level-2 { background: rgba($color-success, 0.4); }
+  &.level-3 { background: rgba($color-success, 0.6); }
+  &.level-4 { background: $color-success; }
+}
+
 @mixin stats-card-base {
   background: var(--b3-theme-surface);
   border-radius: $stats-card-radius;
@@ -144,9 +155,7 @@ $gradient-surface: linear-gradient(180deg, var(--b3-theme-surface) 0%, var(--b3-
 
     .section-title {
       margin-bottom: 16px;
-      font-size: 14px;
       font-weight: 700;
-      color: var(--b3-theme-on-surface);
       display: flex;
       align-items: center;
       gap: 8px;

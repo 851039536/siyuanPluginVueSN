@@ -226,8 +226,8 @@ function formatPercent(change: number | null): string {
         font-size: 8px;
         font-weight: 700;
 
-        &.up { background: rgba(#2da44e, 0.15); color: #2da44e; }
-        &.down { background: rgba(#cf222e, 0.15); color: #cf222e; }
+        &.up { background: rgba(stats.$color-success, 0.15); color: stats.$color-success; }
+        &.down { background: rgba(stats.$color-danger, 0.15); color: stats.$color-danger; }
       }
     }
   }

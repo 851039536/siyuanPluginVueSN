@@ -259,13 +259,10 @@ function padZero(num: number): string {
 </script>
 
 <style scoped lang="scss">
-@use "sass:color";
 @use "@/variables" as *;
 @use "../../superPanel/styles/variables" as *;
 @use "../../superPanel/styles/mixins" as *;
 @use "../index.scss" as stats;
-
-$green: #2da44e;
 
 .insight-cards {
   display: flex;
@@ -281,10 +278,7 @@ $green: #2da44e;
 
   .insight-card {
     @include stats.stats-card-base;
-    border: 1px solid var(--b3-border-color);
     border-radius: 8px;
-    overflow: hidden;
-    background: var(--b3-theme-surface);
 
     &.fixed-height {
       height: 180px;
@@ -345,25 +339,7 @@ $green: #2da44e;
       transform: scale(1.2);
     }
 
-    &.level-0 {
-      background: rgba(var(--b3-theme-on-surface-rgb), 0.05);
-    }
-
-    &.level-1 {
-      background: rgba($green, 0.2);
-    }
-
-    &.level-2 {
-      background: rgba($green, 0.4);
-    }
-
-    &.level-3 {
-      background: rgba($green, 0.6);
-    }
-
-    &.level-4 {
-      background: $green;
-    }
+    @include stats.heatmap-level-colors;
   }
 }
 
@@ -388,25 +364,7 @@ $green: #2da44e;
     border-radius: 1px;
   }
 
-  .level-0 {
-    background: rgba(var(--b3-theme-on-surface-rgb), 0.05);
-  }
-
-  .level-1 {
-    background: rgba($green, 0.2);
-  }
-
-  .level-2 {
-    background: rgba($green, 0.4);
-  }
-
-  .level-3 {
-    background: rgba($green, 0.6);
-  }
-
-  .level-4 {
-    background: $green;
-  }
+  @include stats.heatmap-level-colors;
 }
 
 .heatmap-summary {
@@ -431,10 +389,10 @@ $green: #2da44e;
   border-radius: 6px;
 
   &.achieved {
-    background: rgba($green, 0.1);
+    background: rgba(stats.$color-success, 0.1);
 
-    .milestone-text {
-      color: $green;
+      .milestone-text {
+        color: stats.$color-success;
       font-weight: 600;
     }
   }

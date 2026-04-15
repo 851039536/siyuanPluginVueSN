@@ -13,7 +13,7 @@
         <!-- 热力图区域 -->
         <div class="heatmap-section">
           <div class="heatmap-grid">
-            <div v-for="(cell, idx) in heatmapCells" :key="idx" :class="cell.level" :title="cell.tooltip"></div>
+            <div v-for="(cell, idx) in heatmapCells" :key="idx" :class="cell.level" :title="cell.tooltip"><span v-if="cell.activity > 0">{{ cell.activity }}</span></div>
           </div>
           <div class="heatmap-footer">
             <span class="heatmap-summary">{{ i18n.last30Days }}: {{ activeDaysInMonth }} {{ i18n.activeDaysCount }}</span>
@@ -105,6 +105,7 @@ const heatmapCells = computed(() => {
 		}
 
 		cells.push({
+			activity,
 			date: dateStr,
 			level: `level-${levelIdx}`,
 			tooltip: `${dateStr}: ${activity}次操作`,
@@ -322,6 +323,15 @@ function padZero(num: number): string {
     aspect-ratio: 1;
     border-radius: 2px;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    span {
+      font-size: 8px;
+      line-height: 1;
+      color: inherit;
+    }
 
     @include stats.heatmap-level-colors;
   }

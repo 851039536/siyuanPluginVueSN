@@ -1,33 +1,38 @@
 <template>
   <div class="insight-cards">
-    <!-- 热力图 + 里程碑 -->
-    <div class="insight-row">
-      <div class="insight-card fixed-height">
-        <div class="card-header">
-          <span class="card-icon">📊</span>
-          <span class="card-title">{{ i18n.activityHeatmap }}</span>
-        </div>
-        <div class="card-body">
+    <div class="insight-card">
+      <div class="card-header">
+        <span class="card-icon">📊</span>
+        <span class="card-title">{{ i18n.activityHeatmap }}</span>
+        <span class="header-sep">·</span>
+        <span class="card-icon">🏆</span>
+        <span class="card-title">{{ i18n.milestones }}</span>
+        <span class="achieved-count">{{ achievedMilestones.length }}/{{ allMilestones.length }}</span>
+      </div>
+      <div class="card-body">
+        <!-- 热力图区域 -->
+        <div class="heatmap-section">
           <div class="heatmap-grid">
             <div v-for="(cell, idx) in heatmapCells" :key="idx" :class="cell.level" :title="cell.tooltip"></div>
           </div>
-          <div class="heatmap-legend">
-            <span>{{ i18n.less }}</span>
-            <span class="level-0"></span><span class="level-1"></span><span class="level-2"></span><span
-              class="level-3"></span><span class="level-4"></span>
-            <span>{{ i18n.more }}</span>
+          <div class="heatmap-footer">
+            <span class="heatmap-summary">{{ i18n.last30Days }}: {{ activeDaysInMonth }} {{ i18n.activeDaysCount }}</span>
+            <div class="heatmap-legend">
+              <span>{{ i18n.less }}</span>
+              <span class="level-0"></span><span class="level-1"></span><span class="level-2"></span><span
+                class="level-3"></span><span class="level-4"></span>
+              <span>{{ i18n.more }}</span>
+            </div>
           </div>
-          <div class="heatmap-summary">{{ i18n.last30Days }}: {{ activeDaysInMonth }} {{ i18n.activeDaysCount }}</div>
         </div>
-      </div>
 
-      <div class="insight-card fixed-height">
-        <div class="card-header">
-          <span class="card-icon">🏆</span>
-          <span class="card-title">{{ i18n.milestones }}</span>
-          <span class="achieved-count">{{ achievedMilestones.length }}/{{ allMilestones.length }}</span>
+        <!-- 分隔线 -->
+        <div class="section-divider">
+          <span class="divider-label">🏆 {{ i18n.milestones }}</span>
         </div>
-        <div class="card-body scrollable">
+
+        <!-- 里程碑区域 -->
+        <div class="milestones-section">
           <div class="milestones-grid">
             <div v-for="m in visibleMilestones" :key="m.id" class="milestone-item" :class="{ achieved: m.achieved }">
               <span class="milestone-icon">{{ m.achieved ? m.icon : '🔒' }}</span>
@@ -265,47 +270,37 @@ function padZero(num: number): string {
 @use "../index.scss" as stats;
 
 .insight-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
   margin-bottom: 8px;
-
-  .insight-row {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-  }
 
   .insight-card {
     @include stats.stats-card-base;
     border-radius: 8px;
 
-    &.fixed-height {
-      height: 180px;
-      display: flex;
-      flex-direction: column;
-    }
-
     .card-header {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       padding: 8px 12px;
       background: rgba(var(--b3-theme-primary-rgb), 0.06);
       border-bottom: 1px solid var(--b3-border-color);
 
       .card-icon {
-        font-size: 14px;
+        font-size: 13px;
       }
 
       .card-title {
-        flex: 1;
         font-size: 11px;
         font-weight: 700;
         color: var(--b3-theme-primary);
       }
 
+      .header-sep {
+        opacity: 0.3;
+        margin: 0 2px;
+      }
+
       .achieved-count {
+        margin-left: auto;
         font-size: 10px;
         opacity: 0.6;
       }
@@ -314,20 +309,19 @@ function padZero(num: number): string {
     .card-body {
       padding: 10px 12px;
     }
-
-    .card-body.scrollable {
-      flex: 1;
-      overflow: auto;
-    }
   }
 }
 
-// 热力图
+// 热力图区域
+.heatmap-section {
+  margin-bottom: 10px;
+}
+
 .heatmap-grid {
   display: grid;
-  grid-template-columns: repeat(10, 1fr);
-  gap: 3px;
-  margin-bottom: 8px;
+  grid-template-columns: repeat(15, 1fr);
+  gap: 2px;
+  margin-bottom: 6px;
 
   div {
     aspect-ratio: 1;
@@ -336,23 +330,30 @@ function padZero(num: number): string {
     cursor: pointer;
 
     &:hover {
-      transform: scale(1.2);
+      transform: scale(1.3);
     }
 
     @include stats.heatmap-level-colors;
   }
 }
 
+.heatmap-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.heatmap-summary {
+  font-size: 9px;
+  opacity: 0.5;
+}
+
 .heatmap-legend {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 3px;
-  margin-bottom: 6px;
+  gap: 2px;
   font-size: 8px;
-  opacity: 0.5;
-
-  span:not(.level-0):not(.level-1):not(.level-2):not(.level-3):not(.level-4) {}
+  opacity: 0.45;
 
   .level-0,
   .level-1,
@@ -367,68 +368,110 @@ function padZero(num: number): string {
   @include stats.heatmap-level-colors;
 }
 
-.heatmap-summary {
-  font-size: 9px;
-  opacity: 0.6;
-  text-align: center;
+// 分隔线
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--b3-border-color);
+  }
+
+  .divider-label {
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--b3-theme-primary);
+    opacity: 0.7;
+    white-space: nowrap;
+  }
 }
 
-// 里程碑
+// 里程碑区域
+.milestones-section {
+  overflow-x: auto;
+
+  &::-webkit-scrollbar {
+    height: 3px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--b3-border-color);
+    border-radius: 2px;
+  }
+}
+
 .milestones-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: flex;
+  flex-wrap: nowrap;
   gap: 6px;
 }
 
 .milestone-item {
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8px 6px;
+  justify-content: center;
+  padding: 6px 8px;
+  min-width: 56px;
   background: rgba(var(--b3-theme-primary-rgb), 0.03);
   border-radius: 6px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(var(--b3-theme-primary-rgb), 0.06);
+    transform: translateY(-1px);
+  }
 
   &.achieved {
     background: rgba(stats.$color-success, 0.1);
 
-      .milestone-text {
-        color: stats.$color-success;
+    .milestone-text {
+      color: stats.$color-success;
       font-weight: 600;
     }
   }
 
   &:not(.achieved) {
-    opacity: 0.6;
+    opacity: 0.5;
   }
 
   .milestone-icon {
-    margin-bottom: 4px;
+    font-size: 14px;
+    margin-bottom: 2px;
   }
 
   .milestone-text {
-    font-size: 9px;
+    font-size: 8px;
     text-align: center;
+    white-space: nowrap;
   }
 
   .mini-progress {
     width: 100%;
-    height: 3px;
+    height: 2px;
     background: rgba(var(--b3-theme-primary-rgb), 0.1);
-    border-radius: 2px;
-    margin-top: 4px;
+    border-radius: 1px;
+    margin-top: 3px;
     overflow: hidden;
 
     .mini-fill {
       height: 100%;
       background: var(--b3-theme-primary);
+      border-radius: 1px;
       transition: width 0.3s ease;
     }
   }
 }
 
 @include tablet-only {
-  .insight-cards .insight-row {
-    grid-template-columns: 1fr;
+  .milestones-grid {
+    flex-wrap: wrap;
   }
 }
 </style>

@@ -8,30 +8,6 @@
   color: var(--b3-theme-on-background);
   overflow: hidden;
   position: relative;
-
-  &.is-dragging {
-    outline: 2px dashed var(--b3-theme-primary);
-    outline-offset: -2px;
-  }
-}
-
-.drag-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(59, 130, 246, 0.95);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-
-  .drag-overlay-content {
-    text-align: center;
-    color: #fff;
-
-    svg { width: 48px; height: 48px; margin-bottom: 16px; }
-    .drag-text { font-size: 18px; font-weight: 600; margin: 0 0 8px; }
-    .drag-hint { font-size: 14px; margin: 0; opacity: 0.8; }
-  }
 }
 
 .panel-header {

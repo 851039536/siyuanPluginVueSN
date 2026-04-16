@@ -224,12 +224,7 @@ const resetAllGenerationStates = () => {
 	abortController.value = null;
 };
 
-/**
- * 结束生成内容的公共清理
- */
-const finishGeneration = () => {
-	resetAllGenerationStates();
-};
+
 
 /**
  * 处理生成过程中的错误
@@ -315,6 +310,12 @@ const removeHeadings = (content: string): string => {
 	return lines.slice(1).join("\n").trim();
 };
 
+// 配置 marked 选项（只需配置一次）
+marked.setOptions({
+	breaks: true,
+	gfm: true,
+});
+
 /**
  * 统一的 Markdown 渲染函数
  */
@@ -325,12 +326,6 @@ const renderMarkdown = (
 	if (!content) return "";
 
 	try {
-		// 配置 marked 选项（全局配置一次）
-		marked.setOptions({
-			breaks: true,
-			gfm: true,
-		});
-
 		let processedContent = content;
 
 		// 对特定关键词进行高亮标记
@@ -415,7 +410,8 @@ const safeStorageOperation = async <T>(
 const clearEditState = () => {
 	editTargetDoc.value = null;
 	originalContent.value = "";
-	resetEditRelatedState();
+	editCustomInput.value = "";
+	lastEditHistory.value = null;
 };
 
 // 停止生成
@@ -443,14 +439,10 @@ const processContent = (content: string): string => {
  * @returns 处理后的内容
  */
 const processContentByType = (content: string, isBlock: boolean): string => {
-	if (isBlock) {
-		// 块内容：只移除 frontmatter
-		const withoutFrontmatter = removeFrontmatter(content);
-		return convertToSiyuanMarkdown(withoutFrontmatter);
-	} else {
-		// 文档内容：移除 frontmatter 和标题
-		return processContent(content);
-	}
+	const processed = isBlock ? removeFrontmatter(content) : content;
+	return isBlock
+		? convertToSiyuanMarkdown(processed)
+		: processContent(content);
 };
 
 /**
@@ -549,14 +541,6 @@ const selectTargetDocument = async () => {
 };
 
 /**
- * 清理编辑模式相关的状态（通用清理函数）
- */
-const resetEditRelatedState = () => {
-	editCustomInput.value = "";
-	lastEditHistory.value = null;
-};
-
-/**
  * 设置目标文档状态
  */
 const setTargetDocState = (doc: TargetDoc, content: string) => {
@@ -564,7 +548,8 @@ const setTargetDocState = (doc: TargetDoc, content: string) => {
 	originalContent.value = content;
 	generatedContent.value = content;
 	displayedContent.value = content;
-	resetEditRelatedState();
+	editCustomInput.value = "";
+	lastEditHistory.value = null;
 };
 
 // 加载目标文档
@@ -716,7 +701,7 @@ const aiEditAction = async (
 	} catch (error) {
 		if (handleGenerationError(error as Error, "AI编辑")) return;
 	} finally {
-		finishGeneration();
+		resetAllGenerationStates();
 	}
 };
 
@@ -749,7 +734,6 @@ const handleCustomEdit = async () => {
 			if (currentPromptName.value) {
 				// 同时选择了提示词，使用选中的提示词配置
 				finalSystemPrompt = systemPrompt.value;
-			} else {
 			}
 
 			userInput = `请根据以下指令对文档进行编辑。保持Markdown格式，直接输出编辑后的完整文档内容：
@@ -779,7 +763,7 @@ ${editTargetDoc.value.content}`;
 	} catch (error) {
 		if (handleGenerationError(error as Error, "自定义编辑")) return;
 	} finally {
-		finishGeneration();
+		resetAllGenerationStates();
 	}
 };
 
@@ -1033,10 +1017,10 @@ const loadPromptsFromStorage = async () => {
 			savedPrompts.value = prompts;
 		}
 
-		const currentPromptName = await storage.loadCurrentPrompt();
-		if (currentPromptName) {
+		const loadedCurrentPromptName = await storage.loadCurrentPrompt();
+		if (loadedCurrentPromptName) {
 			const promptIndex = savedPrompts.value.findIndex(
-				(p) => p.name === currentPromptName,
+				(p) => p.name === loadedCurrentPromptName,
 			);
 			if (promptIndex !== -1) {
 				loadPrompt(promptIndex);

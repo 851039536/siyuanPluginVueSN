@@ -170,13 +170,11 @@ async function loadNotebooks() {
 }
 
 function toggleNotebook(notebookId: string) {
-	const next = new Set(selectedNotebooks.value);
-	if (next.has(notebookId)) {
-		next.delete(notebookId);
+	if (selectedNotebooks.value.has(notebookId)) {
+		selectedNotebooks.value.delete(notebookId);
 	} else {
-		next.add(notebookId);
+		selectedNotebooks.value.add(notebookId);
 	}
-	selectedNotebooks.value = next;
 }
 
 function selectAll() {
@@ -211,29 +209,9 @@ function triggerDownload(blob: Blob, filename: string) {
 	}, 100);
 }
 
-// 公共函数：导出 API 请求
-async function exportApiRequest(url: string, body: Record<string, unknown>) {
-	const response = await fetch(url, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify(body),
-	});
-
-	if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-	const result = await response.json();
-	if (result.code !== 0) throw new Error(result.msg || "导出失败");
-
-	const zipPath = result.data?.zip;
-	if (!zipPath) throw new Error("未获取到ZIP文件路径");
-
-	return zipPath;
-}
-
 // 公共函数：更新进度
 function updateProgress(current: number, total: number) {
 	exportProgress.value.current = current;
-	exportProgress.value.total = total;
 	exportProgress.value.percent = Math.round((current / total) * 100);
 }
 
@@ -255,7 +233,20 @@ async function exportAllNotebooks() {
 		try {
 			addLog("info", `正在导出: ${notebook.name}`);
 
-			const zipPath = await exportApiRequest("/api/export/exportNotebookMd", { notebook: notebook.id });
+			const response = await fetch("/api/export/exportNotebookMd", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ notebook: notebook.id }),
+			});
+
+			if (!response.ok)
+				throw new Error(`HTTP error! status: ${response.status}`);
+
+			const result = await response.json();
+			if (result.code !== 0) throw new Error(result.msg || "导出失败");
+
+			const zipPath = result.data?.zip;
+			if (!zipPath) throw new Error("未获取到ZIP文件路径");
 
 			// 下载并解压笔记本的 ZIP 文件
 			const zipBlob = await downloadZipBlob(zipPath);
@@ -326,7 +317,19 @@ async function exportAll() {
 	addLog("info", "开始导出整个工作空间...");
 
 	try {
-		const zipPath = await exportApiRequest("/api/export/exportData", {});
+		const response = await fetch("/api/export/exportData", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({}),
+		});
+
+		if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+		const result = await response.json();
+		if (result.code !== 0) throw new Error(result.msg || "导出失败");
+
+		const zipPath = result.data?.zip;
+		if (!zipPath) throw new Error("未获取到ZIP文件路径");
 
 		addLog("info", `正在下载: ${zipPath}`);
 		const blob = await downloadZipBlob(zipPath);
@@ -360,11 +363,10 @@ async function exportSelected() {
 		percent: 0,
 	};
 
-	const notebookMap = new Map(notebooks.value.map((nb) => [nb.id, nb]));
 	const errors: string[] = [];
 
 	for (const [index, notebookId] of selectedList.entries()) {
-		const notebook = notebookMap.get(notebookId);
+		const notebook = notebooks.value.find((nb) => nb.id === notebookId);
 
 		if (notebook) {
 			try {
@@ -394,7 +396,19 @@ async function exportNotebookMd(notebookId: string, notebookName: string) {
 	try {
 		addLog("info", `开始导出: ${notebookName}`);
 
-		const zipPath = await exportApiRequest("/api/export/exportNotebookMd", { notebook: notebookId });
+		const response = await fetch("/api/export/exportNotebookMd", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ notebook: notebookId }),
+		});
+
+		if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+		const result = await response.json();
+		if (result.code !== 0) throw new Error(result.msg || "导出失败");
+
+		const zipPath = result.data?.zip;
+		if (!zipPath) throw new Error("未获取到ZIP文件路径");
 
 		addLog("info", `正在下载: ${zipPath}`);
 		const blob = await downloadZipBlob(zipPath);

@@ -152,6 +152,68 @@ export async function getIDsByHPath(
 	return request(url, data);
 }
 
+export interface IFile {
+	id: string;
+	name: string;
+	icon: string;
+	path: string;
+	alias: string;
+	memo: string;
+	bookmark: string;
+	count: number;
+	size: number;
+	hSize: string;
+	mtime: number;
+	ctime: number;
+	hMtime: string;
+	hCtime: string;
+	subFileCount: number;
+}
+
+export interface IListDocsByPathResponse {
+	box: string;
+	path: string;
+	files: IFile[];
+}
+
+/**
+ * 列出指定路径下的文档
+ * @param notebook 笔记本 ID
+ * @param path 文档路径，根目录为 "/"
+ * @param sort 排序方式（默认 256 使用笔记本排序规则）
+ * @param maxListCount 最大列出文档数（≤0 无限制）
+ */
+export async function listDocsByPath(
+	notebook: NotebookId,
+	path: string,
+	sort: number = 256,
+	maxListCount: number = 0,
+): Promise<IListDocsByPathResponse> {
+	let data = {
+		notebook: notebook,
+		path: path,
+		sort: sort,
+		maxListCount: maxListCount,
+	};
+	let url = "/api/filetree/listDocsByPath";
+	return request(url, data);
+}
+
+/**
+ * 根据 ID 获取文档的存储路径
+ * @param id 块 ID
+ * @returns 包含 notebook（笔记本ID）和 path（文档路径）的对象
+ */
+export async function getPathByID(
+	id: BlockId,
+): Promise<{ notebook: string; path: string } | null> {
+	let data = {
+		id: id,
+	};
+	let url = "/api/filetree/getPathByID";
+	return request(url, data);
+}
+
 // **************************************** Asset Files ****************************************
 
 export async function upload(

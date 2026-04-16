@@ -23,6 +23,7 @@ export {
 	fetchBreadcrumb,
 	fetchSiblingDocs,
 } from "./types/storage";
+export type { DocPathInfo } from "./types/storage";
 export { useDocNavigation } from "./composables/useDocNavigation";
 
 import "./styles/index.scss";

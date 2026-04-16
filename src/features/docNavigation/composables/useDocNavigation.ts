@@ -5,6 +5,7 @@ import {
 	fetchDocHierarchy,
 	fetchBreadcrumb,
 	fetchSiblingDocs,
+	type DocPathInfo,
 } from "../types/storage";
 import type {
 	Block,
@@ -68,8 +69,9 @@ export function useDocNavigation(): UseDocNavigationReturn {
 
 	async function loadHierarchy(docId: string): Promise<void> {
 		try {
-			const currentDoc = await api.getBlockByID(docId);
-			if (!currentDoc?.box || !currentDoc.hpath) {
+			// 使用 getPathByID 官方 API 替代 getBlockByID (SQL)
+			const pathInfo = await api.getPathByID(docId);
+			if (!pathInfo?.notebook || !pathInfo.path) {
 				parentDoc.value = null;
 				childDocs.value = [];
 				breadcrumbs.value = [];
@@ -82,10 +84,24 @@ export function useDocNavigation(): UseDocNavigationReturn {
 				return;
 			}
 
+			// 构建 pathInfo 对象，传递给 fetch 函数避免重复 API 调用
+			const docPathInfo: DocPathInfo = {
+				notebook: pathInfo.notebook,
+				path: pathInfo.path,
+			};
+
+			// 构建 currentDoc 对象，用于缓存 key
+			const currentDoc: Block = {
+				id: docId,
+				content: "",
+				hpath: pathInfo.path,
+				box: pathInfo.notebook,
+			};
+
 			const [hierarchy, breadcrumbItems, siblings] = await Promise.all([
-				fetchDocHierarchy(currentDoc, cache),
-				fetchBreadcrumb(currentDoc, cache),
-				fetchSiblingDocs(currentDoc, cache),
+				fetchDocHierarchy(currentDoc, cache, docPathInfo),
+				fetchBreadcrumb(currentDoc, cache, docPathInfo),
+				fetchSiblingDocs(currentDoc, cache, docPathInfo),
 			]);
 
 			parentDoc.value = hierarchy.parent;

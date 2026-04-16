@@ -56,7 +56,6 @@ import { showPasswordVault } from "../passwordVault/types";
 
 const {
 	state,
-	monitorElement,
 	cpuUsageDisplay,
 	memoryUsageDisplay,
 	uptimeDisplay,

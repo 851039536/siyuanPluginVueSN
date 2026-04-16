@@ -1,5 +1,6 @@
 import { Plugin } from "siyuan";
 import { createApp, h } from "vue";
+import "./styles/index.scss";
 import DocNavContainer from "./components/DocNavContainer.vue";
 import {
 	findNavigationTarget,
@@ -8,32 +9,11 @@ import {
 import type { ProtyleLike } from "./types";
 import { DEFAULT_OPTIONS } from "./types";
 
-export type {
-	Block,
-	DocHierarchy,
-	DocNavigationOptions,
-	DocNavigationI18n,
-	ProtyleLike,
-	BreadcrumbItem,
-	SiblingDocs,
-} from "./types";
-export {
-	DocNavigationCache,
-	fetchDocHierarchy,
-	fetchBreadcrumb,
-	fetchSiblingDocs,
-} from "./types/storage";
-export type { DocPathInfo } from "./types/storage";
-export { useDocNavigation } from "./composables/useDocNavigation";
-
-import "./styles/index.scss";
-
 let updateTimer: ReturnType<typeof setTimeout> | null = null;
 
 export function registerDocNavigation(plugin: Plugin) {
 	const handleEvent = (e: CustomEvent) => {
 		updateDocNavigationDebounced(
-			plugin,
 			(e.detail as { protyle: ProtyleLike }).protyle,
 		);
 	};
@@ -45,17 +25,17 @@ export function registerDocNavigation(plugin: Plugin) {
 	);
 }
 
-function updateDocNavigationDebounced(plugin: Plugin, protyle: ProtyleLike) {
+function updateDocNavigationDebounced(protyle: ProtyleLike) {
 	if (!protyle?.block?.rootID) return;
 
 	updateTimer && clearTimeout(updateTimer);
 	updateTimer = setTimeout(
-		() => updateDocNavigation(plugin, protyle),
+		() => updateDocNavigation(protyle),
 		DEFAULT_OPTIONS.debounceDelay,
 	);
 }
 
-async function updateDocNavigation(plugin: Plugin, protyle: ProtyleLike) {
+async function updateDocNavigation(protyle: ProtyleLike) {
 	try {
 		const docId = protyle?.block?.rootID;
 		if (!docId) return;

@@ -3,7 +3,6 @@ export interface Block {
 	content: string;
 	hpath: string;
 	box?: string;
-	doc_type?: "parent" | "child" | "sibling" | "breadcrumb";
 }
 
 export interface DocHierarchy {
@@ -50,13 +49,6 @@ export interface DocNavigationOptions {
 	maxCacheSize?: number;
 	cacheTTL?: number;
 	debounceDelay?: number;
-}
-
-export interface DocNavigationI18n {
-	parentLabel?: string;
-	childrenLabel?: string;
-	expandTitle?: string;
-	collapseTitle?: string;
 }
 
 export const DEFAULT_OPTIONS: Required<DocNavigationOptions> = {

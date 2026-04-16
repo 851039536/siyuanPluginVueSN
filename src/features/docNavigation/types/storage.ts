@@ -16,6 +16,8 @@ export interface DocPathInfo {
 	path: string;
 }
 
+type CacheItem = { timestamp: number };
+
 export class DocNavigationCache {
 	private hierarchyCache = new Map<string, DocHierarchyCacheItem>();
 	private breadcrumbCache = new Map<string, BreadcrumbCacheItem>();
@@ -46,22 +48,37 @@ export class DocNavigationCache {
 		return `${box}:${docId}`;
 	}
 
-	getHierarchyCacheKey(box: string, docId: string): string {
-		return this.getCacheKey(box, docId);
+	private get<T extends CacheItem>(
+		cache: Map<string, T>,
+		box: string,
+		docId: string,
+	): T | null {
+		const cacheKey = this.getCacheKey(box, docId);
+		const cached = cache.get(cacheKey);
+		if (cached && Date.now() - cached.timestamp < this.cacheTTL) {
+			cache.delete(cacheKey);
+			cache.set(cacheKey, cached);
+			return cached;
+		}
+		return null;
+	}
+
+	private set<T>(
+		cache: Map<string, T & CacheItem>,
+		box: string,
+		docId: string,
+		value: T,
+	): void {
+		const cacheKey = this.getCacheKey(box, docId);
+		cache.set(cacheKey, { ...value, timestamp: Date.now() });
+		if (cache.size > this.maxCacheSize) {
+			const firstKey = cache.keys().next().value;
+			firstKey && cache.delete(firstKey);
+		}
 	}
 
 	getCachedHierarchy(box: string, docId: string): DocHierarchyCacheItem | null {
-		const cacheKey = this.getCacheKey(box, docId);
-		const cached = this.hierarchyCache.get(cacheKey);
-		const now = Date.now();
-
-		if (cached && now - cached.timestamp < this.cacheTTL) {
-			this.hierarchyCache.delete(cacheKey);
-			this.hierarchyCache.set(cacheKey, cached);
-			return cached;
-		}
-
-		return null;
+		return this.get(this.hierarchyCache, box, docId);
 	}
 
 	setCachedHierarchy(
@@ -69,33 +86,11 @@ export class DocNavigationCache {
 		docId: string,
 		hierarchy: DocHierarchy,
 	): void {
-		const cacheKey = this.getCacheKey(box, docId);
-		const now = Date.now();
-
-		this.hierarchyCache.set(cacheKey, {
-			parent: hierarchy.parent,
-			children: hierarchy.children,
-			timestamp: now,
-		});
-
-		if (this.hierarchyCache.size > this.maxCacheSize) {
-			const firstKey = this.hierarchyCache.keys().next().value;
-			firstKey && this.hierarchyCache.delete(firstKey);
-		}
+		this.set(this.hierarchyCache, box, docId, hierarchy);
 	}
 
 	getCachedBreadcrumb(box: string, docId: string): BreadcrumbCacheItem | null {
-		const cacheKey = this.getCacheKey(box, docId);
-		const cached = this.breadcrumbCache.get(cacheKey);
-		const now = Date.now();
-
-		if (cached && now - cached.timestamp < this.cacheTTL) {
-			this.breadcrumbCache.delete(cacheKey);
-			this.breadcrumbCache.set(cacheKey, cached);
-			return cached;
-		}
-
-		return null;
+		return this.get(this.breadcrumbCache, box, docId);
 	}
 
 	setCachedBreadcrumb(
@@ -103,32 +98,11 @@ export class DocNavigationCache {
 		docId: string,
 		items: BreadcrumbItem[],
 	): void {
-		const cacheKey = this.getCacheKey(box, docId);
-		const now = Date.now();
-
-		this.breadcrumbCache.set(cacheKey, {
-			items,
-			timestamp: now,
-		});
-
-		if (this.breadcrumbCache.size > this.maxCacheSize) {
-			const firstKey = this.breadcrumbCache.keys().next().value;
-			firstKey && this.breadcrumbCache.delete(firstKey);
-		}
+		this.set(this.breadcrumbCache, box, docId, { items } as BreadcrumbCacheItem);
 	}
 
 	getCachedSibling(box: string, docId: string): SiblingCacheItem | null {
-		const cacheKey = this.getCacheKey(box, docId);
-		const cached = this.siblingCache.get(cacheKey);
-		const now = Date.now();
-
-		if (cached && now - cached.timestamp < this.cacheTTL) {
-			this.siblingCache.delete(cacheKey);
-			this.siblingCache.set(cacheKey, cached);
-			return cached;
-		}
-
-		return null;
+		return this.get(this.siblingCache, box, docId);
 	}
 
 	setCachedSibling(
@@ -137,19 +111,7 @@ export class DocNavigationCache {
 		siblings: Block[],
 		currentIndex: number,
 	): void {
-		const cacheKey = this.getCacheKey(box, docId);
-		const now = Date.now();
-
-		this.siblingCache.set(cacheKey, {
-			siblings,
-			currentIndex,
-			timestamp: now,
-		});
-
-		if (this.siblingCache.size > this.maxCacheSize) {
-			const firstKey = this.siblingCache.keys().next().value;
-			firstKey && this.siblingCache.delete(firstKey);
-		}
+		this.set(this.siblingCache, box, docId, { siblings, currentIndex });
 	}
 
 	clearAll(): void {

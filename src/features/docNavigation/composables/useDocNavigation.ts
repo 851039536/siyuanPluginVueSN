@@ -34,17 +34,18 @@ export interface UseDocNavigationReturn {
 
 const cache = new DocNavigationCache();
 const targetCache = new WeakMap<any, TargetCacheItem>();
+const emptySiblings: SiblingDocs = {
+	prev: null,
+	next: null,
+	siblings: [],
+	currentIndex: -1,
+};
 
 export function useDocNavigation(): UseDocNavigationReturn {
 	const parentDoc = ref<Block | null>(null);
 	const childDocs = ref<Block[]>([]);
 	const breadcrumbs = ref<BreadcrumbItem[]>([]);
-	const siblingDocs = ref<SiblingDocs>({
-		prev: null,
-		next: null,
-		siblings: [],
-		currentIndex: -1,
-	});
+	const siblingDocs = ref<SiblingDocs>({ ...emptySiblings });
 	const isExpanded = ref(false);
 
 	const hasNavigation = computed(() => {
@@ -67,30 +68,26 @@ export function useDocNavigation(): UseDocNavigationReturn {
 		return childDocs.value.slice(5);
 	});
 
+	function resetState() {
+		parentDoc.value = null;
+		childDocs.value = [];
+		breadcrumbs.value = [];
+		siblingDocs.value = emptySiblings;
+	}
+
 	async function loadHierarchy(docId: string): Promise<void> {
 		try {
-			// 使用 getPathByID 官方 API 替代 getBlockByID (SQL)
 			const pathInfo = await api.getPathByID(docId);
 			if (!pathInfo?.notebook || !pathInfo.path) {
-				parentDoc.value = null;
-				childDocs.value = [];
-				breadcrumbs.value = [];
-				siblingDocs.value = {
-					prev: null,
-					next: null,
-					siblings: [],
-					currentIndex: -1,
-				};
+				resetState();
 				return;
 			}
 
-			// 构建 pathInfo 对象，传递给 fetch 函数避免重复 API 调用
 			const docPathInfo: DocPathInfo = {
 				notebook: pathInfo.notebook,
 				path: pathInfo.path,
 			};
 
-			// 构建 currentDoc 对象，用于缓存 key
 			const currentDoc: Block = {
 				id: docId,
 				content: "",
@@ -110,15 +107,7 @@ export function useDocNavigation(): UseDocNavigationReturn {
 			siblingDocs.value = siblings;
 		} catch (error) {
 			console.error("加载文档层级失败:", error);
-			parentDoc.value = null;
-			childDocs.value = [];
-			breadcrumbs.value = [];
-			siblingDocs.value = {
-				prev: null,
-				next: null,
-				siblings: [],
-				currentIndex: -1,
-			};
+			resetState();
 		}
 	}
 
@@ -172,7 +161,7 @@ export function findNavigationTarget(
 		targetCache.set(protyle, cached);
 	}
 
-	return cached || null;
+	return cached ?? null;
 }
 
 export function removeExistingNav(protyle: ProtyleLike): void {

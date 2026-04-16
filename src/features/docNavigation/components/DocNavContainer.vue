@@ -51,7 +51,7 @@
 
       <div v-if="childDocs.length" class="doc-nav-children">
         <IconWrapper name="docNavChildren" class="doc-nav-icon" size="18" :title="`下级文档 (${childDocs.length})`" />
-        <div class="doc-nav-children-list" :data-expanded="isExpanded">
+        <div class="doc-nav-children-list">
           <a
             v-for="doc in visibleChildren"
             :key="doc.id"

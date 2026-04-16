@@ -3,129 +3,79 @@
     <div class="settings-container">
       <!-- 启用钉住页签优化 -->
       <div class="setting-row">
-        <div class="setting-item">
-          <label class="setting-label">
-            <span class="label-icon">📌</span>
-            {{ i18n.enableTabPinOptimization || '钉住页签优化' }}
-          </label>
-          <div class="toggle-container">
-            <input
-              v-model="enabled"
-              type="checkbox"
-              class="toggle-checkbox"
-              @change="onEnabledChange"
-            />
-            <span class="toggle-label">{{ enabled ? (i18n.enabled || '已启用') : (i18n.disabled || '已禁用') }}</span>
-          </div>
+        <label class="setting-label">
+          <span class="label-icon">📌</span>
+          {{ i18n.enableTabPinOptimization || '钉住页签优化' }}
+        </label>
+        <div class="toggle-container">
+          <input v-model="enabled" type="checkbox" class="toggle-checkbox" />
+          <span class="toggle-label">{{ enabled ? (i18n.enabled || '已启用') : (i18n.disabled || '已禁用') }}</span>
         </div>
       </div>
 
-      <!-- 显示模式选项 -->
-      <div v-if="enabled" class="setting-row">
-        <div class="setting-item">
+      <template v-if="enabled">
+        <!-- 显示模式选项 -->
+        <div class="setting-row">
           <label class="setting-label">
             <span class="label-icon">👁️</span>
             {{ i18n.tabPinDisplayMode || '显示模式' }}
           </label>
           <div class="display-mode-options">
             <label class="radio-item">
-              <input
-                v-model="displayMode"
-                type="radio"
-                value="iconAndText"
-                @change="onDisplayModeChange"
-              />
+              <input v-model="displayMode" type="radio" value="iconAndText" />
               <span class="radio-label">{{ i18n.iconAndText || '图标 + 标题' }}</span>
             </label>
             <label class="radio-item">
-              <input
-                v-model="displayMode"
-                type="radio"
-                value="textOnly"
-                @change="onDisplayModeChange"
-              />
+              <input v-model="displayMode" type="radio" value="textOnly" />
               <span class="radio-label">{{ i18n.textOnly || '仅标题' }}</span>
             </label>
           </div>
         </div>
-      </div>
 
-      <!-- 页签设置选项 -->
-      <div v-if="enabled" class="setting-row">
-        <div class="setting-item">
+        <!-- 页签文字颜色 -->
+        <div class="setting-row">
           <label class="setting-label">
             <span class="label-icon">🎨</span>
             {{ i18n.tabPinTextColor || '页签文字颜色' }}
           </label>
           <div class="color-input-group">
-            <input
-              v-model="textColor"
-              type="color"
-              class="color-picker"
-              @change="onTextColorChange"
-            />
-            <input
-              v-model="textColor"
-              type="text"
-              class="color-text"
-              @change="onTextColorChange"
-            />
-            <button
-              v-if="textColor !== defaultTextColor"
-              class="reset-color-btn"
-              @click="resetTextColor"
-            >
+            <input v-model="textColor" type="color" class="color-picker" />
+            <input v-model="textColor" type="text" class="color-text" />
+            <button v-if="textColor !== defaultTextColor" class="reset-color-btn" @click="resetTextColor">
               {{ i18n.resetColor || '重置' }}
             </button>
           </div>
         </div>
-      </div>
 
-      <div v-if="enabled" class="setting-row">
-        <div class="setting-item">
+        <!-- 页签背景颜色 -->
+        <div class="setting-row">
           <label class="setting-label">
             <span class="label-icon">🖼️</span>
             {{ i18n.tabPinBackground || '页签背景颜色' }}
           </label>
           <div class="color-input-group">
-            <input
-              v-model="backgroundColor"
-              type="color"
-              class="color-picker"
-              @change="onBackgroundColorChange"
-            />
-            <input
-              v-model="backgroundColor"
-              type="text"
-              class="color-text"
-              @change="onBackgroundColorChange"
-            />
-            <button
-              v-if="backgroundColor !== defaultBackgroundColor"
-              class="reset-color-btn"
-              @click="resetBackgroundColor"
-            >
+            <input v-model="backgroundColor" type="color" class="color-picker" />
+            <input v-model="backgroundColor" type="text" class="color-text" />
+            <button v-if="backgroundColor !== defaultBackgroundColor" class="reset-color-btn" @click="resetBackgroundColor">
               {{ i18n.resetColor || '重置' }}
             </button>
           </div>
         </div>
-      </div>
 
-      <!-- 说明提示 -->
-      <div v-if="enabled" class="setting-row">
-        <div class="setting-item">
+        <!-- 说明提示 -->
+        <div class="setting-row">
           <div class="level-display-hint">
             <span class="hint-icon">ℹ️</span>
             <span class="hint-text">{{ i18n.tabPinHint || '钉住的页签将同时显示图标和标题，方便快速识别' }}</span>
           </div>
         </div>
-      </div>
+      </template>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from "vue";
+import { ref, onMounted, watchEffect } from "vue";
 import { saveTabPinSettings, loadTabPinSettings } from "@/config/settings";
 
 interface Props {
@@ -156,7 +106,6 @@ const backgroundColor = ref(defaultBackgroundColor);
 
 // 统一的设置变更处理函数
 function handleSettingsChange() {
-	applyToDocument();
 	autoSave();
 }
 
@@ -206,25 +155,15 @@ function applyToDocument() {
 	}
 }
 
-// 启用状态变化
-function onEnabledChange() {
-	handleSettingsChange();
-}
-
-// 显示模式变化
-function onDisplayModeChange() {
-	handleSettingsChange();
-}
-
-// 文字颜色变化
-function onTextColorChange() {
-	handleSettingsChange();
-}
-
-// 背景颜色变化
-function onBackgroundColorChange() {
-	handleSettingsChange();
-}
+// 统一监听所有响应式变化，自动应用样式并保存
+watchEffect(() => {
+	// 读取依赖触发追踪
+	enabled.value;
+	displayMode.value;
+	textColor.value;
+	backgroundColor.value;
+	applyToDocument();
+});
 
 // 重置文字颜色
 function resetTextColor() {
@@ -279,14 +218,7 @@ async function loadSettings() {
 // 初始化 - 在组件挂载后执行
 onMounted(async () => {
 	await loadSettings();
-	// 样式应用已移至 GeneralSettings.init() 中
 });
-
-// 监听变化，自动保存
-watch(enabled, handleSettingsChange);
-watch(displayMode, handleSettingsChange);
-watch(textColor, handleSettingsChange);
-watch(backgroundColor, handleSettingsChange);
 
 // 暴露方法
 defineExpose({
@@ -313,11 +245,6 @@ defineExpose({
 
 /* 设置行样式 */
 .setting-row {
-  display: flex;
-  width: 100%;
-}
-
-.setting-item {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -374,7 +301,7 @@ defineExpose({
   padding: 6px 10px;
   background: var(--b3-theme-surface-variant);
   border-radius: 6px;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease;
 }
 
 .radio-item:hover {
@@ -407,7 +334,7 @@ defineExpose({
   border: 2px solid var(--b3-theme-outline);
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: border-color 0.2s ease;
   background: transparent;
 }
 
@@ -425,7 +352,7 @@ defineExpose({
   color: var(--b3-theme-on-surface);
   font-size: 12px;
   text-transform: uppercase;
-  transition: all 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .color-text:focus {
@@ -442,7 +369,7 @@ defineExpose({
   color: var(--b3-theme-on-surface);
   font-size: 12px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
   white-space: nowrap;
 }
 

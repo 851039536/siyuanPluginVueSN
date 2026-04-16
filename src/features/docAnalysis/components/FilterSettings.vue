@@ -54,7 +54,7 @@
         @click="$emit('query')"
       >
         <Icon icon="mdi:magnify" class="btn-icon" />
-        {{ isQuerying ? '查询中...' : '查询' }}
+        {{ isQuerying ? '查询中...' : '查询文档' }}
       </button>
     </div>
   </div>

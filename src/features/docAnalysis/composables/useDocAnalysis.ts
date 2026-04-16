@@ -3,7 +3,7 @@
  */
 import { ref, reactive } from "vue";
 import { sql, lsNotebooks } from "@/api";
-import type { DocInfo, FilterOptions, QueryState } from "../types/index";
+import type { DocInfo, FilterOptions, QueryState, DocStats } from "../types/index";
 import { unitToBytes } from "../types/storage";
 import { DocAnalysisStorage, DEFAULT_FILTER_OPTIONS } from "../types/storage";
 import type { Plugin } from "siyuan";
@@ -13,6 +13,14 @@ interface NotebookInfo {
 	id: string;
 	name: string;
 }
+
+/** 子查询：统计每个文档的内容大小 */
+const SIZE_SUBQUERY = `
+	SELECT root_id, SUM(length) as total_size 
+	FROM blocks 
+	WHERE type != 'd'
+	GROUP BY root_id
+`;
 
 /**
  * 文档分析 composable
@@ -36,12 +44,6 @@ export function useDocAnalysis(plugin: Plugin) {
 	const filterOptions = reactive<FilterOptions>({ ...DEFAULT_FILTER_OPTIONS });
 
 	// 文档统计信息
-	interface DocStats {
-		totalDocs: number;
-		zeroByteDocs: number;
-		smallDocs: number; // < 1KB
-		mediumDocs: number; // 1KB ~ 10KB
-	}
 	const docStats = reactive<DocStats>({
 		totalDocs: 0,
 		zeroByteDocs: 0,
@@ -53,6 +55,89 @@ export function useDocAnalysis(plugin: Plugin) {
 
 	// 当前选中的统计类别过滤
 	const statsFilter = ref<string>(""); // "" | "0B" | "small" | "medium"
+
+	// ============================================================
+	// 公共辅助函数
+	// ============================================================
+
+	/** 构建笔记本过滤条件 */
+	function buildNotebookCondition(): string {
+		if (filterOptions.notebookId) {
+			return `AND b.box = '${filterOptions.notebookId}'`;
+		}
+		return "";
+	}
+
+	/** 构建笔记本名称映射 */
+	function buildNotebookMap(): Map<string, string> {
+		const map = new Map<string, string>();
+		for (const nb of notebooks.value) {
+			map.set(nb.id, nb.name);
+		}
+		return map;
+	}
+
+	/** 将 SQL 行映射为 DocInfo */
+	function mapRowsToDocs(rows: any[]): DocInfo[] {
+		const notebookMap = buildNotebookMap();
+		return rows.map((row: any) => ({
+			id: row.doc_id,
+			title: row.doc_title || "无标题",
+			hpath: row.doc_path || "",
+			notebookId: row.notebook_id || "",
+			notebookName: notebookMap.get(row.notebook_id) || "未知笔记本",
+			contentSize: row.content_size || 0,
+		}));
+	}
+
+	/** 查询文档列表（带大小条件），公共核心逻辑 */
+	async function fetchDocList(sizeCondition: string) {
+		queryState.status = "loading";
+		queryState.errorMessage = "";
+		queryState.hasQueried = true;
+
+		try {
+			const notebookCondition = buildNotebookCondition();
+
+			const sqlStmt = `
+				SELECT 
+					b.id as doc_id,
+					b.content as doc_title,
+					b.hpath as doc_path,
+					b.box as notebook_id,
+					COALESCE(s.total_size, 0) as content_size
+				FROM blocks b
+				LEFT JOIN (${SIZE_SUBQUERY}) s ON b.id = s.root_id
+				WHERE b.type = 'd' ${notebookCondition}
+				${sizeCondition}
+				ORDER BY content_size ASC
+				LIMIT 2000
+			`;
+
+			const rows = await sql(sqlStmt);
+
+			if (!rows || rows.length === 0) {
+				queryState.results = [];
+				queryState.status = "empty";
+				return;
+			}
+
+			const docs = mapRowsToDocs(rows);
+			const sortedDocs = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder);
+
+			queryState.results = sortedDocs;
+			queryState.status = "success";
+		} catch (error) {
+			console.error("查询文档列表失败:", error);
+			queryState.errorMessage = (error as Error).message || "查询失败";
+			queryState.status = "error";
+			queryState.results = [];
+		}
+	}
+
+	// ============================================================
+	// 业务操作
+	// ============================================================
 
 	/**
 	 * 加载笔记本列表
@@ -102,10 +187,7 @@ export function useDocAnalysis(plugin: Plugin) {
 	async function analyzeDocStats() {
 		statsLoading.value = true;
 		try {
-			let notebookCondition = "";
-			if (filterOptions.notebookId) {
-				notebookCondition = `AND b.box = '${filterOptions.notebookId}'`;
-			}
+			const notebookCondition = buildNotebookCondition();
 
 			const sqlStmt = `
 				SELECT 
@@ -114,12 +196,7 @@ export function useDocAnalysis(plugin: Plugin) {
 					SUM(CASE WHEN COALESCE(s.total_size, 0) > 0 AND COALESCE(s.total_size, 0) < 1024 THEN 1 ELSE 0 END) as small_count,
 					SUM(CASE WHEN COALESCE(s.total_size, 0) >= 1024 AND COALESCE(s.total_size, 0) < 10240 THEN 1 ELSE 0 END) as medium_count
 				FROM blocks b
-				LEFT JOIN (
-					SELECT root_id, SUM(length) as total_size 
-					FROM blocks 
-					WHERE type != 'd'
-					GROUP BY root_id
-				) s ON b.id = s.root_id
+				LEFT JOIN (${SIZE_SUBQUERY}) s ON b.id = s.root_id
 				WHERE b.type = 'd' ${notebookCondition}
 			`;
 
@@ -144,173 +221,38 @@ export function useDocAnalysis(plugin: Plugin) {
 	 */
 	async function queryByStatsCategory(category: string) {
 		if (statsFilter.value === category) {
-			// 再次点击取消过滤
+			// 再次点击取消过滤，清除列表
 			statsFilter.value = "";
+			queryState.hasQueried = false;
+			queryState.results = [];
+			queryState.status = "idle";
 			return;
 		}
 		statsFilter.value = category;
 
-		queryState.status = "loading";
-		queryState.errorMessage = "";
-		queryState.hasQueried = true;
+		const sizeConditions: Record<string, string> = {
+			"0B": "AND COALESCE(s.total_size, 0) = 0",
+			small: "AND COALESCE(s.total_size, 0) > 0 AND COALESCE(s.total_size, 0) < 1024",
+			medium: "AND COALESCE(s.total_size, 0) >= 1024 AND COALESCE(s.total_size, 0) < 10240",
+		};
 
-		try {
-			let notebookCondition = "";
-			if (filterOptions.notebookId) {
-				notebookCondition = `AND b.box = '${filterOptions.notebookId}'`;
-			}
-
-			let sizeCondition = "";
-			switch (category) {
-				case "0B":
-					sizeCondition = "AND COALESCE(s.total_size, 0) = 0";
-					break;
-				case "small":
-					sizeCondition = "AND COALESCE(s.total_size, 0) > 0 AND COALESCE(s.total_size, 0) < 1024";
-					break;
-				case "medium":
-					sizeCondition = "AND COALESCE(s.total_size, 0) >= 1024 AND COALESCE(s.total_size, 0) < 10240";
-					break;
-				default:
-					sizeCondition = "";
-			}
-
-			const sqlStmt = `
-				SELECT 
-					b.id as doc_id,
-					b.content as doc_title,
-					b.hpath as doc_path,
-					b.box as notebook_id,
-					COALESCE(s.total_size, 0) as content_size
-				FROM blocks b
-				LEFT JOIN (
-					SELECT root_id, SUM(length) as total_size 
-					FROM blocks 
-					WHERE type != 'd'
-					GROUP BY root_id
-				) s ON b.id = s.root_id
-				WHERE b.type = 'd' ${notebookCondition}
-				${sizeCondition}
-				ORDER BY content_size ASC
-				LIMIT 2000
-			`;
-
-			const rows = await sql(sqlStmt);
-
-			if (!rows || rows.length === 0) {
-				queryState.results = [];
-				queryState.status = "empty";
-				return;
-			}
-
-			const notebookMap = new Map<string, string>();
-			for (const nb of notebooks.value) {
-				notebookMap.set(nb.id, nb.name);
-			}
-
-			const docs: DocInfo[] = rows.map((row: any) => ({
-				id: row.doc_id,
-				title: row.doc_title || "无标题",
-				hpath: row.doc_path || "",
-				notebookId: row.notebook_id || "",
-				notebookName: notebookMap.get(row.notebook_id) || "未知笔记本",
-				contentSize: row.content_size || 0,
-			}));
-
-			const sortedDocs = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder);
-			queryState.results = sortedDocs;
-			queryState.status = "success";
-		} catch (error) {
-			console.error("查询文档列表失败:", error);
-			queryState.errorMessage = (error as Error).message || "查询失败";
-			queryState.status = "error";
-			queryState.results = [];
-		}
+		await fetchDocList(sizeConditions[category] || "");
 	}
 
 	/**
 	 * 执行查询 - 获取小文档列表
 	 */
 	async function querySmallDocs() {
-		queryState.status = "loading";
-		queryState.errorMessage = "";
-		queryState.hasQueried = true;
+		const thresholdBytes = unitToBytes(filterOptions.threshold, filterOptions.unit);
 
-		try {
-			// 计算字节数阈值
-			const thresholdBytes = unitToBytes(filterOptions.threshold, filterOptions.unit);
-
-			// 构建 SQL 查询条件
-			let notebookCondition = "";
-			if (filterOptions.notebookId) {
-				notebookCondition = `AND b.box = '${filterOptions.notebookId}'`;
-			}
-
-			let titleCondition = "";
-			if (filterOptions.titleKeyword.trim()) {
-				const keyword = filterOptions.titleKeyword.trim().replace(/'/g, "''");
-				titleCondition = "AND b.content LIKE '%" + keyword + "%'";
-			}
-
-			const sqlStmt = `
-				SELECT 
-					b.id as doc_id,
-					b.content as doc_title,
-					b.hpath as doc_path,
-					b.box as notebook_id,
-					COALESCE(s.total_size, 0) as content_size
-				FROM blocks b
-				LEFT JOIN (
-					SELECT root_id, SUM(length) as total_size 
-					FROM blocks 
-					WHERE type != 'd'
-					GROUP BY root_id
-				) s ON b.id = s.root_id
-				WHERE b.type = 'd' ${notebookCondition}
-				${titleCondition}
-				AND COALESCE(s.total_size, 0) < ${thresholdBytes}
-				ORDER BY content_size ASC
-				LIMIT 2000
-			`;
-
-			const rows = await sql(sqlStmt);
-
-			if (!rows || rows.length === 0) {
-				queryState.results = [];
-				queryState.status = "empty";
-				return;
-			}
-
-			// 构建笔记本名称映射
-			const notebookMap = new Map<string, string>();
-			for (const nb of notebooks.value) {
-				notebookMap.set(nb.id, nb.name);
-			}
-
-			// 转换结果
-			const docs: DocInfo[] = rows.map((row: any) => ({
-				id: row.doc_id,
-				title: row.doc_title || "无标题",
-				hpath: row.doc_path || "",
-				notebookId: row.notebook_id || "",
-				notebookName: notebookMap.get(row.notebook_id) || "未知笔记本",
-				contentSize: row.content_size || 0,
-			}));
-
-			// 排序
-			const sortedDocs = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder);
-
-			queryState.results = sortedDocs;
-			queryState.status = "success";
-
-			// 保存当前配置
-			await saveOptions();
-		} catch (error) {
-			console.error("查询小文档失败:", error);
-			queryState.errorMessage = (error as Error).message || "查询失败";
-			queryState.status = "error";
-			queryState.results = [];
+		let sizeCondition = `AND COALESCE(s.total_size, 0) < ${thresholdBytes}`;
+		if (filterOptions.titleKeyword.trim()) {
+			const keyword = filterOptions.titleKeyword.trim().replace(/'/g, "''");
+			sizeCondition += ` AND b.content LIKE '%${keyword}%'`;
 		}
+
+		await fetchDocList(sizeCondition);
+		await saveOptions();
 	}
 
 	/**
@@ -320,9 +262,6 @@ export function useDocAnalysis(plugin: Plugin) {
 		return [...docs].sort((a, b) => {
 			let compare = 0;
 			switch (field) {
-				case "size":
-					compare = a.contentSize - b.contentSize;
-					break;
 				case "title":
 					compare = a.title.localeCompare(b.title, "zh-CN");
 					break;

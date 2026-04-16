@@ -35,6 +35,25 @@ export function useDocAnalysis(plugin: Plugin) {
 	// 过滤选项
 	const filterOptions = reactive<FilterOptions>({ ...DEFAULT_FILTER_OPTIONS });
 
+	// 文档统计信息
+	interface DocStats {
+		totalDocs: number;
+		zeroByteDocs: number;
+		smallDocs: number; // < 1KB
+		mediumDocs: number; // 1KB ~ 10KB
+	}
+	const docStats = reactive<DocStats>({
+		totalDocs: 0,
+		zeroByteDocs: 0,
+		smallDocs: 0,
+		mediumDocs: 0,
+	});
+	const statsLoading = ref(false);
+	const hasAnalyzed = ref(false);
+
+	// 当前选中的统计类别过滤
+	const statsFilter = ref<string>(""); // "" | "0B" | "small" | "medium"
+
 	/**
 	 * 加载笔记本列表
 	 */
@@ -74,6 +93,138 @@ export function useDocAnalysis(plugin: Plugin) {
 			await storage.saveOptions({ ...filterOptions });
 		} catch (error) {
 			console.error("保存文档分析配置失败:", error);
+		}
+	}
+
+	/**
+	 * 执行分析 - 获取文档统计概览
+	 */
+	async function analyzeDocStats() {
+		statsLoading.value = true;
+		try {
+			let notebookCondition = "";
+			if (filterOptions.notebookId) {
+				notebookCondition = `AND b.box = '${filterOptions.notebookId}'`;
+			}
+
+			const sqlStmt = `
+				SELECT 
+					COUNT(*) as total,
+					SUM(CASE WHEN COALESCE(s.total_size, 0) = 0 THEN 1 ELSE 0 END) as zero_count,
+					SUM(CASE WHEN COALESCE(s.total_size, 0) > 0 AND COALESCE(s.total_size, 0) < 1024 THEN 1 ELSE 0 END) as small_count,
+					SUM(CASE WHEN COALESCE(s.total_size, 0) >= 1024 AND COALESCE(s.total_size, 0) < 10240 THEN 1 ELSE 0 END) as medium_count
+				FROM blocks b
+				LEFT JOIN (
+					SELECT root_id, SUM(length) as total_size 
+					FROM blocks 
+					WHERE type != 'd'
+					GROUP BY root_id
+				) s ON b.id = s.root_id
+				WHERE b.type = 'd' ${notebookCondition}
+			`;
+
+			const rows = await sql(sqlStmt);
+			if (rows && rows.length > 0) {
+				const row = rows[0];
+				docStats.totalDocs = row.total || 0;
+				docStats.zeroByteDocs = row.zero_count || 0;
+				docStats.smallDocs = row.small_count || 0;
+				docStats.mediumDocs = row.medium_count || 0;
+			}
+			hasAnalyzed.value = true;
+		} catch (error) {
+			console.error("分析文档统计失败:", error);
+		} finally {
+			statsLoading.value = false;
+		}
+	}
+
+	/**
+	 * 点击统计卡片 - 按类别查询文档列表
+	 */
+	async function queryByStatsCategory(category: string) {
+		if (statsFilter.value === category) {
+			// 再次点击取消过滤
+			statsFilter.value = "";
+			return;
+		}
+		statsFilter.value = category;
+
+		queryState.status = "loading";
+		queryState.errorMessage = "";
+		queryState.hasQueried = true;
+
+		try {
+			let notebookCondition = "";
+			if (filterOptions.notebookId) {
+				notebookCondition = `AND b.box = '${filterOptions.notebookId}'`;
+			}
+
+			let sizeCondition = "";
+			switch (category) {
+				case "0B":
+					sizeCondition = "AND COALESCE(s.total_size, 0) = 0";
+					break;
+				case "small":
+					sizeCondition = "AND COALESCE(s.total_size, 0) > 0 AND COALESCE(s.total_size, 0) < 1024";
+					break;
+				case "medium":
+					sizeCondition = "AND COALESCE(s.total_size, 0) >= 1024 AND COALESCE(s.total_size, 0) < 10240";
+					break;
+				default:
+					sizeCondition = "";
+			}
+
+			const sqlStmt = `
+				SELECT 
+					b.id as doc_id,
+					b.content as doc_title,
+					b.hpath as doc_path,
+					b.box as notebook_id,
+					COALESCE(s.total_size, 0) as content_size
+				FROM blocks b
+				LEFT JOIN (
+					SELECT root_id, SUM(length) as total_size 
+					FROM blocks 
+					WHERE type != 'd'
+					GROUP BY root_id
+				) s ON b.id = s.root_id
+				WHERE b.type = 'd' ${notebookCondition}
+				${sizeCondition}
+				ORDER BY content_size ASC
+				LIMIT 2000
+			`;
+
+			const rows = await sql(sqlStmt);
+
+			if (!rows || rows.length === 0) {
+				queryState.results = [];
+				queryState.status = "empty";
+				return;
+			}
+
+			const notebookMap = new Map<string, string>();
+			for (const nb of notebooks.value) {
+				notebookMap.set(nb.id, nb.name);
+			}
+
+			const docs: DocInfo[] = rows.map((row: any) => ({
+				id: row.doc_id,
+				title: row.doc_title || "无标题",
+				hpath: row.doc_path || "",
+				notebookId: row.notebook_id || "",
+				notebookName: notebookMap.get(row.notebook_id) || "未知笔记本",
+				contentSize: row.content_size || 0,
+			}));
+
+			const sortedDocs = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder);
+			queryState.results = sortedDocs;
+			queryState.status = "success";
+		} catch (error) {
+			console.error("查询文档列表失败:", error);
+			queryState.errorMessage = (error as Error).message || "查询失败";
+			queryState.status = "error";
+			queryState.results = [];
 		}
 	}
 
@@ -221,9 +372,15 @@ export function useDocAnalysis(plugin: Plugin) {
 		notebooks,
 		queryState,
 		filterOptions,
+		docStats,
+		statsLoading,
+		hasAnalyzed,
+		statsFilter,
 		loadNotebooks,
 		loadSavedOptions,
 		querySmallDocs,
+		analyzeDocStats,
+		queryByStatsCategory,
 		openDoc,
 		updateSort,
 		resetQuery,

@@ -79,7 +79,7 @@ import { marked } from "marked";
 import hljs from "highlight.js";
 import "highlight.js/styles/github-dark.css";
 import * as api from "@/api";
-import { AIGeneratorStorage, type AIPromptConfig } from "./types/storage";
+import { AIGeneratorStorage } from "./types/storage";
 import type { GenerateOptions, SavedPrompt, TargetDoc } from "@/types/ai";
 import PanelHeader from "./components/PanelHeader.vue";
 import SettingsPanel from "./components/SettingsPanel.vue";
@@ -843,7 +843,7 @@ const saveCurrentPrompt = async () => {
 		(p) => p.name === promptName,
 	);
 
-	const promptConfig: AIPromptConfig = {
+	const promptConfig: SavedPrompt = {
 		id:
 			existingIndex >= 0
 				? savedPrompts.value[existingIndex].id

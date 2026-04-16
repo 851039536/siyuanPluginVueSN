@@ -41,29 +41,20 @@
       background: var(--b3-theme-warning-lighter);
       .monitor-icon { opacity: 1; }
     }
-
-    &:not([data-level]) {
-      color: var(--b3-theme-on-surface);
-      opacity: 0.8;
-    }
   }
-
-  // 特定项目样式
-  .monitor-item:nth-child(1) { color: var(--b3-theme-primary); } // 文档数
-  .monitor-item:nth-child(2) { color: var(--b3-theme-secondary); } // 字数
-  .monitor-item:nth-child(3) { color: var(--b3-theme-primary); } // CPU
-  .monitor-item:nth-child(4) { color: var(--b3-theme-secondary); } // MEM
 
   // 统计项样式
   .statistics-item {
-    color: var(--b3-theme-on-surface);
     opacity: 0.7;
     cursor: default;
 
-    &:hover {
-      opacity: 1;
-    }
+    &:hover { opacity: 1; }
   }
+
+  .notes-item { color: var(--b3-theme-primary); }
+  .words-item { color: var(--b3-theme-secondary); }
+  .cpu-item { color: var(--b3-theme-primary); opacity: 0.8; }
+  .mem-item { color: var(--b3-theme-secondary); opacity: 0.8; }
 
   .uptime-item {
     color: var(--b3-theme-on-surface);
@@ -87,9 +78,7 @@
       background: var(--b3-theme-surface-lighter);
       opacity: 1;
 
-      .monitor-icon {
-        opacity: 1;
-      }
+      .monitor-icon { opacity: 1; }
     }
   }
 
@@ -114,7 +103,7 @@
 @media (max-width: 1024px) {
   .status__resUsage {
     gap: 4px;
-    .uptime-item { display: none; } // 中等屏幕隐藏运行时间
+    .uptime-item { display: none; }
   }
 }
 

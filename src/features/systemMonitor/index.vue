@@ -4,27 +4,19 @@
     class="status__resUsage"
     :title="systemInfoTooltip"
   >
-    <MonitorItem
-      icon="ph:file-text"
-      item-class="statistics-item"
-      :title="statisticsTooltip"
-    >
+    <MonitorItem icon="ph:file-text" item-class="statistics-item notes-item" :title="statisticsTooltip">
       {{ totalNotesDisplay }}
     </MonitorItem>
 
-    <MonitorItem
-      icon="ph:text-aa"
-      item-class="statistics-item"
-      :title="statisticsTooltip"
-    >
+    <MonitorItem icon="ph:text-aa" item-class="statistics-item words-item" :title="statisticsTooltip">
       {{ totalWordsDisplay }}
     </MonitorItem>
 
-    <MonitorItem icon="ph:cpu" :level="cpuLevel">
+    <MonitorItem icon="ph:cpu" item-class="cpu-item" :level="cpuLevel">
       {{ cpuUsageDisplay }}
     </MonitorItem>
 
-    <MonitorItem icon="ph:memory" :level="memLevel">
+    <MonitorItem icon="ph:memory" item-class="mem-item" :level="memLevel">
       {{ memoryUsageDisplay }}
     </MonitorItem>
 

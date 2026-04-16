@@ -32,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import { usePlugin } from "@/main";
 import type PluginSample from "@/index";
 
@@ -66,11 +66,15 @@ function openPasswordDialog() {
 	window.dispatchEvent(event);
 }
 
+const handlePasswordUpdated = () => checkPassword();
+
 onMounted(() => {
 	checkPassword();
-	window.addEventListener("password-updated", () => {
-		checkPassword();
-	});
+	window.addEventListener("password-updated", handlePasswordUpdated);
+});
+
+onUnmounted(() => {
+	window.removeEventListener("password-updated", handlePasswordUpdated);
 });
 
 defineExpose({
@@ -107,12 +111,22 @@ defineExpose({
   gap: 12px;
 }
 
-.status-card {
+.status-card,
+.info-card {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
   border-radius: 6px;
+}
+
+.info-card {
+  align-items: flex-start;
+  background: var(--b3-theme-surface-light);
+  border-left: 3px solid var(--b3-theme-primary);
+}
+
+.status-card {
   font-size: 13px;
   font-weight: 500;
 }
@@ -127,24 +141,18 @@ defineExpose({
   color: var(--b3-card-warning-color);
 }
 
-.status-icon {
-  font-size: 14px;
+.status-icon,
+.info-icon {
+  flex-shrink: 0;
 }
 
-.info-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 10px 12px;
-  background: var(--b3-theme-surface-light);
-  border-radius: 6px;
-  border-left: 3px solid var(--b3-theme-primary);
+.status-icon {
+  font-size: 14px;
 }
 
 .info-icon {
   font-size: 13px;
   color: var(--b3-theme-primary);
-  flex-shrink: 0;
 }
 
 .info-text {

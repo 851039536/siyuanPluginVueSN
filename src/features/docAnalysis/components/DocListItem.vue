@@ -49,10 +49,10 @@ const formatSize = computed(() => formatBytes(props.doc.contentSize));
   padding: 10px 16px;
   cursor: pointer;
   transition: background-color 0.15s;
-  border-bottom: 1px solid var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.04));
+  border-bottom: 1px solid var(--b3-border-color);
 
   &:hover {
-    background-color: var(--b3-theme-surface-light, rgba(0, 0, 0, 0.04));
+    background-color: var(--b3-list-hover);
   }
 
   .doc-info {
@@ -87,7 +87,7 @@ const formatSize = computed(() => formatBytes(props.doc.contentSize));
     gap: 8px;
     margin-top: 4px;
     font-size: 12px;
-    color: var(--b3-theme-on-surface-variant, rgba(0, 0, 0, 0.54));
+    color: var(--b3-theme-on-surface-variant);
 
     .meta-notebook {
       display: flex;
@@ -114,8 +114,8 @@ const formatSize = computed(() => formatBytes(props.doc.contentSize));
 
     .size-value {
       font-size: 12px;
-      color: var(--b3-theme-on-surface-variant, rgba(0, 0, 0, 0.54));
-      background: var(--b3-theme-surface-light, rgba(0, 0, 0, 0.06));
+      color: var(--b3-theme-on-surface-variant);
+      background: var(--b3-theme-surface-light);
       padding: 2px 8px;
       border-radius: 10px;
       white-space: nowrap;

@@ -80,7 +80,7 @@ function handleChange() {
 <style lang="scss" scoped>
 .doc-analysis-filter {
   padding: 12px 16px;
-  border-bottom: 1px solid var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.06));
+  border-bottom: 1px solid var(--b3-border-color);
 
   .filter-row {
     display: flex;
@@ -105,7 +105,7 @@ function handleChange() {
   .filter-input {
     width: 80px;
     padding: 4px 8px;
-    border: 1px solid var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.12));
+    border: 1px solid var(--b3-border-color);
     border-radius: 6px;
     background: var(--b3-theme-background);
     color: var(--b3-theme-on-background);
@@ -120,7 +120,7 @@ function handleChange() {
 
   .filter-select {
     padding: 4px 8px;
-    border: 1px solid var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.12));
+    border: 1px solid var(--b3-border-color);
     border-radius: 6px;
     background: var(--b3-theme-background);
     color: var(--b3-theme-on-background);

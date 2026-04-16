@@ -34,6 +34,14 @@
           <div class="stat-value medium">{{ stats.mediumDocs }}</div>
           <div class="stat-label">1~10KB</div>
         </div>
+        <div
+          class="stat-card"
+          :class="{ active: activeFilter === 'duplicate' }"
+          @click="$emit('select-category', 'duplicate')"
+        >
+          <div class="stat-value dup">{{ stats.duplicateNameDocs }}</div>
+          <div class="stat-label">重名 ({{ stats.duplicateNameGroups }}组)</div>
+        </div>
         <div class="stat-card total">
           <div class="stat-value">{{ stats.totalDocs }}</div>
           <div class="stat-label">总文档数</div>
@@ -120,7 +128,7 @@ defineEmits<{
 
 .stats-cards {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 8px;
 }
 
@@ -165,6 +173,10 @@ defineEmits<{
 
     &.medium {
       color: var(--b3-theme-info, #3b82f6);
+    }
+
+    &.dup {
+      color: #a855f7;
     }
   }
 

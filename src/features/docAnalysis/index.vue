@@ -153,6 +153,7 @@ function getCategoryLabel(category: string): string {
     case "0B": return "0B 空文档";
     case "small": return "< 1KB";
     case "medium": return "1~10KB";
+    case "duplicate": return "重名文档";
     default: return category;
   }
 }

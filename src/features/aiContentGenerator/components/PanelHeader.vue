@@ -22,7 +22,7 @@ interface Props {
 }
 
 withDefaults(defineProps<Props>(), {
-	title: "AI信息生成",
+	title: "信息生成",
 });
 
 defineEmits<{

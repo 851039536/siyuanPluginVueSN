@@ -9,11 +9,25 @@
       @update:options="handleOptionsUpdate"
     />
 
+    <!-- 统计概览区 -->
+    <StatsOverview
+      :stats="docStats"
+      :loading="statsLoading"
+      :has-analyzed="hasAnalyzed"
+      :active-filter="statsFilter"
+      @analyze="handleAnalyze"
+      @select-category="handleSelectCategory"
+    />
+
     <!-- 排序和结果数 -->
     <div class="result-bar" v-if="queryState.hasQueried">
       <div class="result-count">
         <span v-if="queryState.status === 'success'">
-          共找到 <strong>{{ queryState.results.length }}</strong> 个小文档
+          共找到 <strong>{{ queryState.results.length }}</strong> 个文档
+          <span v-if="statsFilter" class="filter-tag">
+            ({{ getCategoryLabel(statsFilter) }})
+            <button class="filter-tag-close" @click="clearStatsFilter">&times;</button>
+          </span>
         </span>
         <span v-else-if="queryState.status === 'empty'" class="empty-hint">
           未找到符合条件的文档
@@ -49,7 +63,7 @@
       <!-- 空状态 - 未查询 -->
       <div v-else-if="queryState.status === 'idle' && !queryState.hasQueried" class="empty-state">
         <Icon icon="mdi:file-document-multiple-outline" class="empty-icon" />
-        <p>设置筛选条件后点击查询</p>
+        <p>点击上方「分析」查看统计，或设置筛选条件后查询</p>
         <p class="empty-desc">查找内容量小于指定阈值的小文档</p>
       </div>
 
@@ -86,10 +100,11 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive } from "vue";
+import { onMounted } from "vue";
 import { Icon } from "@iconify/vue";
 import FilterSettings from "./components/FilterSettings.vue";
 import DocListItem from "./components/DocListItem.vue";
+import StatsOverview from "./components/StatsOverview.vue";
 import { useDocAnalysis } from "./composables/useDocAnalysis";
 import type { DocAnalysisStorage as DocAnalysisStorageType } from "./types/storage";
 
@@ -105,16 +120,51 @@ const {
   notebooks,
   queryState,
   filterOptions,
+  docStats,
+  statsLoading,
+  hasAnalyzed,
+  statsFilter,
   loadNotebooks,
   loadSavedOptions,
   querySmallDocs,
+  analyzeDocStats,
+  queryByStatsCategory,
   openDoc,
   updateSort,
 } = useDocAnalysis(props.plugin);
 
 /** 执行查询 */
 function handleQuery() {
+  statsFilter.value = "";
   querySmallDocs();
+}
+
+/** 执行分析 */
+function handleAnalyze() {
+  analyzeDocStats();
+}
+
+/** 点击统计卡片 */
+function handleSelectCategory(category: string) {
+  queryByStatsCategory(category);
+}
+
+/** 获取分类标签 */
+function getCategoryLabel(category: string): string {
+  switch (category) {
+    case "0B": return "0B 空文档";
+    case "small": return "< 1KB";
+    case "medium": return "1~10KB";
+    default: return category;
+  }
+}
+
+/** 清除统计过滤 */
+function clearStatsFilter() {
+  statsFilter.value = "";
+  queryState.hasQueried = false;
+  queryState.results = [];
+  queryState.status = "idle";
 }
 
 /** 更新过滤选项 */

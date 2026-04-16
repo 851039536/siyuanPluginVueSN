@@ -31,6 +31,39 @@
     .error-hint {
       color: var(--b3-theme-error, #ef4444);
     }
+
+    .filter-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      font-size: 12px;
+      background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.1));
+      color: var(--b3-theme-primary);
+      padding: 1px 6px;
+      border-radius: 10px;
+      margin-left: 4px;
+
+      .filter-tag-close {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 14px;
+        height: 14px;
+        border: none;
+        background: transparent;
+        color: var(--b3-theme-primary);
+        cursor: pointer;
+        font-size: 14px;
+        line-height: 1;
+        padding: 0;
+        border-radius: 50%;
+
+        &:hover {
+          background: var(--b3-theme-primary);
+          color: var(--b3-theme-on-primary);
+        }
+      }
+    }
   }
 
   .sort-controls {

@@ -3,7 +3,7 @@
     <!-- 加载状态（仅在没有内容时显示） -->
     <div v-if="isGenerating && !displayedContent && !generatedContent" class="loading-state">
       <div class="loading-spinner-large"></div>
-      <p>{{ 'AI正在思考...' }}</p>
+      <p>{{ '正在思考...' }}</p>
     </div>
 
     <!-- 错误提示 -->
@@ -87,7 +87,6 @@
         <use xlink:href="#iconFile"></use>
       </svg>
       <p class="empty-title">选择文档开始编辑</p>
-      <p class="empty-hint">点击下方"选择文档"或拖拽文档到此面板</p>
     </div>
   </div>
 </template>

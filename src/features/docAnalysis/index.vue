@@ -106,12 +106,10 @@ import FilterSettings from "./components/FilterSettings.vue";
 import DocListItem from "./components/DocListItem.vue";
 import StatsOverview from "./components/StatsOverview.vue";
 import { useDocAnalysis } from "./composables/useDocAnalysis";
-import type { DocAnalysisStorage as DocAnalysisStorageType } from "./types/storage";
 
 interface Props {
   i18n: any;
   plugin: any;
-  storage: DocAnalysisStorageType;
 }
 
 const props = defineProps<Props>();

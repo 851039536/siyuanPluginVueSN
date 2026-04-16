@@ -3,7 +3,7 @@
  */
 import { Plugin } from "siyuan";
 import { PluginStorage } from "@/utils/pluginStorage";
-import type { FilterOptions, SizeUnit, SortField, SortOrder } from "./index";
+import type { FilterOptions, SizeUnit } from "./index";
 
 /** 存储的设置数据 */
 export interface DocAnalysisSettings {

@@ -50,13 +50,7 @@
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
-
-interface DocStats {
-  totalDocs: number;
-  zeroByteDocs: number;
-  smallDocs: number;
-  mediumDocs: number;
-}
+import type { DocStats } from "../types/index";
 
 interface Props {
   stats: DocStats;

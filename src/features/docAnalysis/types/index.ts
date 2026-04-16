@@ -4,7 +4,6 @@
 import { Plugin } from "siyuan";
 import { createApp, h } from "vue";
 import DocAnalysisPanel from "../index.vue";
-import { DocAnalysisStorage } from "./storage";
 
 // ============================================================
 // 类型定义
@@ -64,6 +63,18 @@ export interface QueryState {
 	hasQueried: boolean;
 }
 
+/** 文档统计信息 */
+export interface DocStats {
+	/** 总文档数 */
+	totalDocs: number;
+	/** 0B 空文档数 */
+	zeroByteDocs: number;
+	/** < 1KB 文档数 */
+	smallDocs: number;
+	/** 1~10KB 文档数 */
+	mediumDocs: number;
+}
+
 // ============================================================
 // 注册函数
 // ============================================================
@@ -72,8 +83,6 @@ export interface QueryState {
  * 注册文档分析功能（Dock 侧边栏面板）
  */
 export function registerDocAnalysis(plugin: Plugin) {
-	const storage = new DocAnalysisStorage(plugin);
-
 	plugin.addDock({
 		config: {
 			position: "RightTop",
@@ -96,7 +105,6 @@ export function registerDocAnalysis(plugin: Plugin) {
 						h(DocAnalysisPanel, {
 							i18n: (plugin.i18n as any)?.docAnalysis || {},
 							plugin: plugin,
-							storage: storage,
 						});
 				},
 			});

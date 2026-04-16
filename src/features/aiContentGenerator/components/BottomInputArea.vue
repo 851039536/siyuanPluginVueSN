@@ -60,10 +60,6 @@
                 <svg width="14" height="14"><use xlink:href="#iconCheck"></use></svg>
                 <span>纠错</span>
               </div>
-              <div class="menu-item" @click="handleQuickAction('translate')">
-                <svg width="14" height="14"><use xlink:href="#iconLanguage"></use></svg>
-                <span>翻译</span>
-              </div>
               <div class="menu-item" @click="handleQuickAction('rewrite')">
                 <svg width="14" height="14"><use xlink:href="#iconRefresh"></use></svg>
                 <span>改写</span>
@@ -213,7 +209,6 @@ const emit = defineEmits<{
 			| "expand"
 			| "condense"
 			| "fix"
-			| "translate"
 			| "rewrite"
 			| "summary",
 	): void;

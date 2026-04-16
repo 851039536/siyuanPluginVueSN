@@ -829,7 +829,6 @@ const aiEditAction = async (
 		| "expand"
 		| "condense"
 		| "fix"
-		| "translate"
 		| "rewrite"
 		| "summary",
 ) => {
@@ -848,8 +847,6 @@ const aiEditAction = async (
 		condense:
 			"请对以下文档进行精简，去除冗余内容，保留核心要点，使表达更加简洁有力。保持Markdown格式，直接输出精简后的完整文档内容：",
 		fix: "请对以下文档进行错误检查和修正，包括拼写错误、语法错误、逻辑错误等。保持Markdown格式，直接输出修正后的完整文档内容：",
-		translate:
-			"请将以下文档翻译成中文（如果原文是中文则翻译成英文）。保持原有的Markdown格式和文档结构，只翻译文本内容。直接输出翻译后的完整文档内容：",
 		rewrite:
 			"请用不同的表达方式重写以下文档，保持核心意思不变，但使用全新的语言风格和句式结构。保持Markdown格式，直接输出改写后的完整文档内容：",
 		summary:

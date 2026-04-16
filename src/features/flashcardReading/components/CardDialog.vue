@@ -2,15 +2,15 @@
   <div class="dialog-overlay" v-if="visible" @click.self="$emit('close')">
     <div class="dialog" @click.stop>
       <div class="dialog-header">
-        <h4>{{ editingCard ? (i18n.editCard || '编辑卡片') : (i18n.addCard || '添加卡片') }}</h4>
+        <h4>{{ editingCard ? t.editCard : t.addCard }}</h4>
         <Button variant="ghost" size="small" icon="close" @click="$emit('close')" />
       </div>
       <div class="dialog-body">
         <Input
           :modelValue="localFormData.title"
-          @update:modelValue="updateField('title', String($event))"
-          :label="i18n.title || '标题'"
-          :placeholder="i18n.titlePlaceholder || '标题（不可重复）'"
+          @update:modelValue="updateField('title', $event)"
+          :label="t.title"
+          :placeholder="t.titlePlaceholder"
           :error="formErrors.title"
           @input="$emit('input:title')"
           @blur="$emit('validate:title')"
@@ -19,45 +19,41 @@
         <Textarea
           :modelValue="localFormData.content"
           @update:modelValue="updateField('content', $event)"
-          :label="i18n.content || '内容'"
-          :placeholder="i18n.contentPlaceholder || '内容'"
+          :label="t.content"
+          :placeholder="t.contentPlaceholder"
           :maxlength="1000"
           :showCount="true"
           :rows="8"
         />
         <div class="form-group">
-          <label>{{ i18n.category || '类别' }}</label>
+          <label>{{ t.category }}</label>
           <div class="category-input-group">
             <Select
               :modelValue="localFormData.category"
-              @update:modelValue="updateField('category', String($event))"
+              @update:modelValue="updateField('category', $event)"
               :options="categoryOptions"
               @change="$emit('change:category')"
             />
             <Input
               v-if="localFormData.category === '__custom__'"
               :modelValue="localCustomCategory"
-@update:modelValue="emit('update:customCategory', String($event))"
-              :placeholder="i18n.customCategoryPlaceholder || '输入自定义类别'"
+              @update:modelValue="emit('update:customCategory', String($event))"
+              :placeholder="t.customCategoryPlaceholder"
               class="custom-category-input"
             />
           </div>
         </div>
       </div>
       <div class="dialog-footer">
-        <Button variant="secondary" @click="$emit('close')">
-          {{ i18n.cancel || '取消' }}
-        </Button>
-        <Button variant="primary" @click="$emit('save')" :disabled="!isValid">
-          {{ i18n.save || '保存' }}
-        </Button>
+        <Button variant="secondary" @click="$emit('close')">{{ t.cancel }}</Button>
+        <Button variant="primary" @click="$emit('save')" :disabled="!isValid">{{ t.save }}</Button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import Button from "@/components/Button.vue";
 import Input from "@/components/Input.vue";
 import Textarea from "@/components/Textarea.vue";
@@ -86,27 +82,33 @@ const emit = defineEmits<{
 	"update:customCategory": [value: string];
 }>();
 
-const localFormData = ref<FormData>({ title: "", content: "", category: "" });
-const localCustomCategory = ref("");
+const defaults: I18n = {
+	editCard: "编辑卡片",
+	addCard: "添加卡片",
+	title: "标题",
+	titlePlaceholder: "标题（不可重复）",
+	content: "内容",
+	contentPlaceholder: "内容",
+	category: "类别",
+	customCategoryPlaceholder: "输入自定义类别",
+	cancel: "取消",
+	save: "保存",
+} as I18n;
+
+const t = computed(() => ({ ...defaults, ...props.i18n }) as Required<I18n>);
+
+const localFormData = ref<FormData>({ ...props.formData });
+const localCustomCategory = ref(props.customCategory);
 
 watch(
 	() => props.formData,
-	(newVal) => {
-		localFormData.value = { ...newVal };
-	},
-	{ immediate: true, deep: true },
+	(val) => { localFormData.value = { ...val }; },
+	{ deep: true },
 );
+watch(() => props.customCategory, (val) => { localCustomCategory.value = val; });
 
-watch(
-	() => props.customCategory,
-	(newVal) => {
-		localCustomCategory.value = newVal;
-	},
-	{ immediate: true },
-);
-
-const updateField = (field: keyof FormData, value: string) => {
-	localFormData.value[field] = value;
+const updateField = (field: keyof FormData, value: unknown) => {
+	localFormData.value[field] = String(value);
 	emit("update:formData", { ...localFormData.value });
 };
 </script>

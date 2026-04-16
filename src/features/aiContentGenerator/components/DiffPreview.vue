@@ -27,11 +27,11 @@
         </div>
       </div>
     </div>
-    <div class="diff-viewer-wrapper">
+    <div class="diff-viewer-wrapper" :class="{ 'is-dark': isDarkTheme }">
       <Diff
         class="diff-viewer"
         :mode="diffMode"
-        theme="light"
+        :theme="isDarkTheme ? 'dark' : 'light'"
         language="plaintext"
         :prev="originalContent"
         :current="newContent"
@@ -46,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { Diff } from "vue-diff";
 import "vue-diff/dist/index.css";
 import DiffMatchPatch from "diff-match-patch";
@@ -59,6 +59,31 @@ interface Props {
 const props = defineProps<Props>();
 
 const diffMode = ref<"split" | "unified">("unified");
+const isDarkTheme = ref(false);
+
+// 检测思源笔记当前是否为暗色主题
+const checkTheme = () => {
+  const html = document.documentElement;
+  isDarkTheme.value = html.getAttribute("data-theme") === "dark";
+};
+
+// 监听思源主题切换
+let observer: MutationObserver | null = null;
+
+onMounted(() => {
+  checkTheme();
+  observer = new MutationObserver(() => {
+    checkTheme();
+  });
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["data-theme", "class"],
+  });
+});
+
+onUnmounted(() => {
+  observer?.disconnect();
+});
 
 const dmp = new DiffMatchPatch();
 

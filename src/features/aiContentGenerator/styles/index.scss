@@ -503,15 +503,33 @@
     font-size: inherit !important;
   }
 
-  // 覆盖 vue-diff 默认颜色以适配主题
-  :deep(.d2h-del) {
-    background: rgba(239, 68, 68, 0.08) !important;
-    border-color: rgba(239, 68, 68, 0.15) !important;
+  // 覆盖 vue-diff 默认颜色以适配明暗主题
+  &.is-dark {
+    :deep(.d2h-del) {
+      background: rgba(239, 68, 68, 0.15) !important;
+      border-color: rgba(239, 68, 68, 0.2) !important;
+    }
+
+    :deep(.d2h-ins) {
+      background: rgba(34, 197, 94, 0.15) !important;
+      border-color: rgba(34, 197, 94, 0.2) !important;
+    }
+
+    :deep(.d2h-line-num) {
+      color: var(--b3-theme-on-surface-variant) !important;
+    }
   }
 
-  :deep(.d2h-ins) {
-    background: rgba(34, 197, 94, 0.08) !important;
-    border-color: rgba(34, 197, 94, 0.15) !important;
+  &:not(.is-dark) {
+    :deep(.d2h-del) {
+      background: rgba(239, 68, 68, 0.08) !important;
+      border-color: rgba(239, 68, 68, 0.15) !important;
+    }
+
+    :deep(.d2h-ins) {
+      background: rgba(34, 197, 94, 0.08) !important;
+      border-color: rgba(34, 197, 94, 0.15) !important;
+    }
   }
 
   :deep(.d2h-info) {

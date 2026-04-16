@@ -3,7 +3,7 @@
  */
 import { Plugin } from "siyuan";
 import { PluginStorage } from "@/utils/pluginStorage";
-import type { FilterOptions, SizeUnit } from "./index";
+import type { FilterOptions } from "./index";
 
 /** 存储的设置数据 */
 export interface DocAnalysisSettings {
@@ -12,12 +12,12 @@ export interface DocAnalysisSettings {
 
 /** 默认过滤选项 */
 export const DEFAULT_FILTER_OPTIONS: FilterOptions = {
-	threshold: 100,
-	unit: "B",
 	titleKeyword: "",
 	notebookId: "",
-	sortField: "size",
+	sortField: "wordCount",
 	sortOrder: "asc",
+	wordCountMin: 0,
+	wordCountMax: 30000,
 };
 
 /**
@@ -60,22 +60,6 @@ export class DocAnalysisStorage {
 // ============================================================
 
 /**
- * 将内容大小转换为字节数
- */
-export function unitToBytes(value: number, unit: SizeUnit): number {
-	switch (unit) {
-		case "B":
-			return value;
-		case "KB":
-			return value * 1024;
-		case "MB":
-			return value * 1024 * 1024;
-		default:
-			return value;
-	}
-}
-
-/**
  * 格式化字节数为可读字符串
  */
 export function formatBytes(bytes: number): string {
@@ -83,4 +67,13 @@ export function formatBytes(bytes: number): string {
 	if (bytes < 1024) return `${bytes} B`;
 	if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
 	return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+/**
+ * 格式化字数为可读字符串
+ */
+export function formatWordCount(count: number): string {
+	if (count === 0) return "0 字";
+	if (count < 10000) return `${count} 字`;
+	return `${(count / 10000).toFixed(1)} 万字`;
 }

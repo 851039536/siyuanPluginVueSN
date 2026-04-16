@@ -42,7 +42,7 @@
           class="sort-select"
           @change="handleSortChange"
         >
-          <option value="size">按大小</option>
+          <option value="wordCount">按字数</option>
           <option value="title">按标题</option>
           <option value="notebook">按笔记本</option>
         </select>
@@ -64,7 +64,7 @@
       <div v-else-if="queryState.status === 'idle' && !queryState.hasQueried" class="empty-state">
         <Icon icon="mdi:file-document-multiple-outline" class="empty-icon" />
         <p>点击上方「分析」查看统计，或设置筛选条件后查询</p>
-        <p class="empty-desc">查找内容量小于指定阈值的小文档</p>
+        <p class="empty-desc">按字数范围筛选文档</p>
       </div>
 
       <!-- 查询结果 -->
@@ -81,7 +81,7 @@
       <div v-else-if="queryState.status === 'empty'" class="empty-state">
         <Icon icon="mdi:file-check-outline" class="empty-icon" />
         <p>没有找到符合条件的文档</p>
-        <p class="empty-desc">尝试调整阈值或选择其他笔记本</p>
+        <p class="empty-desc">尝试调整字数范围或选择其他笔记本</p>
       </div>
 
       <!-- 错误状态 -->
@@ -124,7 +124,7 @@ const {
   statsFilter,
   loadNotebooks,
   loadSavedOptions,
-  querySmallDocs,
+  queryDocs,
   analyzeDocStats,
   queryByStatsCategory,
   openDoc,
@@ -134,7 +134,7 @@ const {
 /** 执行查询 */
 function handleQuery() {
   statsFilter.value = "";
-  querySmallDocs();
+  queryDocs();
 }
 
 /** 执行分析 */

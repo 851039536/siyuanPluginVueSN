@@ -11,25 +11,25 @@
           @input="handleTitleInput"
         />
       </div>
-      <div class="filter-item threshold-item">
-        <label class="filter-label">内容大小 &lt;</label>
+      <div class="filter-item wordcount-item">
+        <label class="filter-label">字数</label>
         <input
-          v-model.number="options.threshold"
+          v-model.number="options.wordCountMin"
           type="number"
-          class="filter-input"
+          class="filter-input wordcount-input"
           min="0"
-          placeholder="阈值"
+          placeholder="最小"
           @change="handleChange"
         />
-        <select
-          v-model="options.unit"
-          class="filter-select"
+        <span class="filter-separator">~</span>
+        <input
+          v-model.number="options.wordCountMax"
+          type="number"
+          class="filter-input wordcount-input"
+          min="0"
+          placeholder="最大"
           @change="handleChange"
-        >
-          <option value="B">B</option>
-          <option value="KB">KB</option>
-          <option value="MB">MB</option>
-        </select>
+        />
       </div>
       <div class="filter-item">
         <label class="filter-label">笔记本</label>
@@ -160,6 +160,19 @@ function handleTitleInput() {
 
   .title-input {
     width: 100px;
+  }
+
+  .wordcount-item {
+    gap: 4px;
+  }
+
+  .wordcount-input {
+    width: 60px;
+  }
+
+  .filter-separator {
+    font-size: 13px;
+    color: var(--b3-theme-on-surface-variant);
   }
 
   .query-btn {

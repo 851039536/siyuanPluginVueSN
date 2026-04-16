@@ -5,7 +5,6 @@ import { ref, reactive } from "vue";
 import { sql, lsNotebooks } from "@/api";
 import type { DocInfo, FilterOptions, QueryState, DocStats } from "../types/index";
 import type { DuplicateNameGroup } from "../types/index";
-import { unitToBytes } from "../types/storage";
 import { DocAnalysisStorage, DEFAULT_FILTER_OPTIONS } from "../types/storage";
 import type { Plugin } from "siyuan";
 
@@ -18,6 +17,14 @@ interface NotebookInfo {
 /** 子查询：统计每个文档的内容大小 */
 const SIZE_SUBQUERY = `
 	SELECT root_id, SUM(length) as total_size 
+	FROM blocks 
+	WHERE type != 'd'
+	GROUP BY root_id
+`;
+
+/** 子查询：统计每个文档的字数（非文档块的 content 字段长度之和） */
+const WORDCOUNT_SUBQUERY = `
+	SELECT root_id, SUM(LENGTH(content)) as total_word_count 
 	FROM blocks 
 	WHERE type != 'd'
 	GROUP BY root_id
@@ -93,11 +100,12 @@ export function useDocAnalysis(plugin: Plugin) {
 			notebookId: row.notebook_id || "",
 			notebookName: notebookMap.get(row.notebook_id) || "未知笔记本",
 			contentSize: row.content_size || 0,
+			wordCount: row.word_count || 0,
 		}));
 	}
 
-	/** 查询文档列表（带大小条件），公共核心逻辑 */
-	async function fetchDocList(sizeCondition: string) {
+	/** 查询文档列表（带条件），公共核心逻辑 */
+	async function fetchDocList(extraCondition: string) {
 		queryState.status = "loading";
 		queryState.errorMessage = "";
 		queryState.hasQueried = true;
@@ -111,12 +119,14 @@ export function useDocAnalysis(plugin: Plugin) {
 					b.content as doc_title,
 					b.hpath as doc_path,
 					b.box as notebook_id,
-					COALESCE(s.total_size, 0) as content_size
+					COALESCE(s.total_size, 0) as content_size,
+					COALESCE(w.total_word_count, 0) as word_count
 				FROM blocks b
 				LEFT JOIN (${SIZE_SUBQUERY}) s ON b.id = s.root_id
+				LEFT JOIN (${WORDCOUNT_SUBQUERY}) w ON b.id = w.root_id
 				WHERE b.type = 'd' ${notebookCondition}
-				${sizeCondition}
-				ORDER BY content_size ASC
+				${extraCondition}
+				ORDER BY word_count ASC
 				LIMIT 2000
 			`;
 
@@ -305,9 +315,11 @@ export function useDocAnalysis(plugin: Plugin) {
 					b.content as doc_title,
 					b.hpath as doc_path,
 					b.box as notebook_id,
-					COALESCE(s.total_size, 0) as content_size
+					COALESCE(s.total_size, 0) as content_size,
+					COALESCE(w.total_word_count, 0) as word_count
 				FROM blocks b
 				LEFT JOIN (${SIZE_SUBQUERY}) s ON b.id = s.root_id
+				LEFT JOIN (${WORDCOUNT_SUBQUERY}) w ON b.id = w.root_id
 				WHERE b.type = 'd' ${notebookCondition}
 				AND b.content IN (${titleList})
 				ORDER BY b.content ASC, content_size ASC
@@ -336,18 +348,24 @@ export function useDocAnalysis(plugin: Plugin) {
 	}
 
 	/**
-	 * 执行查询 - 获取小文档列表
+	 * 执行查询 - 按字数过滤文档列表
 	 */
-	async function querySmallDocs() {
-		const thresholdBytes = unitToBytes(filterOptions.threshold, filterOptions.unit);
-
-		let sizeCondition = `AND COALESCE(s.total_size, 0) < ${thresholdBytes}`;
-		if (filterOptions.titleKeyword.trim()) {
-			const keyword = filterOptions.titleKeyword.trim().replace(/'/g, "''");
-			sizeCondition += ` AND b.content LIKE '%${keyword}%'`;
+	async function queryDocs() {
+		let wordCountCondition = "";
+		if (filterOptions.wordCountMin > 0) {
+			wordCountCondition += `AND COALESCE(w.total_word_count, 0) >= ${filterOptions.wordCountMin}`;
+		}
+		if (filterOptions.wordCountMax > 0) {
+			wordCountCondition += `AND COALESCE(w.total_word_count, 0) <= ${filterOptions.wordCountMax}`;
 		}
 
-		await fetchDocList(sizeCondition);
+		let titleCondition = "";
+		if (filterOptions.titleKeyword.trim()) {
+			const keyword = filterOptions.titleKeyword.trim().replace(/'/g, "''");
+			titleCondition = ` AND b.content LIKE '%${keyword}%'`;
+		}
+
+		await fetchDocList(`${wordCountCondition}${titleCondition}`);
 		await saveOptions();
 	}
 
@@ -365,7 +383,7 @@ export function useDocAnalysis(plugin: Plugin) {
 					compare = a.notebookName.localeCompare(b.notebookName, "zh-CN");
 					break;
 				default:
-					compare = a.contentSize - b.contentSize;
+					compare = a.wordCount - b.wordCount;
 			}
 			return order === "desc" ? -compare : compare;
 		});
@@ -414,7 +432,7 @@ export function useDocAnalysis(plugin: Plugin) {
 		statsFilter,
 		loadNotebooks,
 		loadSavedOptions,
-		querySmallDocs,
+		queryDocs,
 		analyzeDocStats,
 		queryByStatsCategory,
 		openDoc,

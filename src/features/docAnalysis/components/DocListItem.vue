@@ -17,6 +17,7 @@
       </div>
     </div>
     <div class="doc-size">
+      <span class="wordcount-value" v-if="doc.wordCount > 0">{{ formatWords }}</span>
       <span class="size-value">{{ formatSize }}</span>
     </div>
   </div>
@@ -26,7 +27,7 @@
 import { computed } from "vue";
 import { Icon } from "@iconify/vue";
 import type { DocInfo } from "../types/index";
-import { formatBytes } from "../types/storage";
+import { formatBytes, formatWordCount } from "../types/storage";
 
 interface Props {
   doc: DocInfo;
@@ -39,6 +40,7 @@ defineEmits<{
 }>();
 
 const formatSize = computed(() => formatBytes(props.doc.contentSize));
+const formatWords = computed(() => formatWordCount(props.doc.wordCount));
 </script>
 
 <style lang="scss" scoped>
@@ -111,13 +113,24 @@ const formatSize = computed(() => formatBytes(props.doc.contentSize));
   .doc-size {
     flex-shrink: 0;
     margin-left: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
 
-    .size-value {
+    .wordcount-value {
       font-size: 12px;
       color: var(--b3-theme-on-surface-variant);
       background: var(--b3-theme-surface-light);
       padding: 2px 8px;
       border-radius: 10px;
+      white-space: nowrap;
+    }
+
+    .size-value {
+      font-size: 11px;
+      color: var(--b3-theme-on-surface-variant);
+      opacity: 0.7;
       white-space: nowrap;
     }
   }

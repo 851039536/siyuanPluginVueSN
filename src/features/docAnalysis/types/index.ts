@@ -23,13 +23,15 @@ export interface DocInfo {
 	notebookName: string;
 	/** 内容大小（字节） */
 	contentSize: number;
+	/** 字数 */
+	wordCount: number;
 }
 
-/** 内容大小单位 */
+/** 内容大小单位（统计概览内部使用） */
 export type SizeUnit = "B" | "KB" | "MB";
 
 /** 排序方式 */
-export type SortField = "size" | "title" | "notebook";
+export type SortField = "wordCount" | "title" | "notebook";
 export type SortOrder = "asc" | "desc";
 
 /** 查询状态 */
@@ -37,10 +39,6 @@ export type QueryStatus = "idle" | "loading" | "success" | "error" | "empty";
 
 /** 过滤选项 */
 export interface FilterOptions {
-	/** 内容大小阈值 */
-	threshold: number;
-	/** 阈值单位 */
-	unit: SizeUnit;
 	/** 标题模糊查询关键词 */
 	titleKeyword: string;
 	/** 选中的笔记本ID（空字符串表示全部） */
@@ -49,6 +47,10 @@ export interface FilterOptions {
 	sortField: SortField;
 	/** 排序方向 */
 	sortOrder: SortOrder;
+	/** 字数过滤最小值（0 表示不过滤） */
+	wordCountMin: number;
+	/** 字数过滤最大值（0 表示不过滤） */
+	wordCountMax: number;
 }
 
 /** 查询结果状态 */

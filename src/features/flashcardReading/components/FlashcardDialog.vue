@@ -38,7 +38,7 @@
               <Select
                 v-model="selectedCategory"
                 :options="categoryOptions"
-                @change="handleCategoryChange"
+                @change="currentIndex = 0"
               />
             </div>
 
@@ -122,13 +122,7 @@ const loadCards = async () => {
 	}
 };
 
-const handleCategoryChange = () => {
-	currentIndex.value = 0;
-};
-
-const playWord = async (card: Flashcard | null) => {
-	if (!card) return;
-
+const playWord = async (card: Flashcard) => {
 	try {
 		const utterance = new SpeechSynthesisUtterance(card.title);
 		utterance.lang = "en-US";
@@ -152,14 +146,14 @@ const playWord = async (card: Flashcard | null) => {
 const previousCard = () => {
 	if (currentIndex.value > 0) {
 		currentIndex.value--;
-		playAuto();
+		currentCard.value && playWord(currentCard.value);
 	}
 };
 
 const nextCard = () => {
 	if (currentIndex.value < filteredCards.value.length - 1) {
 		currentIndex.value++;
-		playAuto();
+		currentCard.value && playWord(currentCard.value);
 	}
 };
 
@@ -170,14 +164,7 @@ const randomCard = () => {
 		newIndex = Math.floor(Math.random() * filteredCards.value.length);
 	} while (newIndex === currentIndex.value && filteredCards.value.length > 1);
 	currentIndex.value = newIndex;
-	playAuto();
-};
-
-const playAuto = () => {
-	const card = currentCard.value;
-	if (card) {
-		playWord(card);
-	}
+	currentCard.value && playWord(currentCard.value);
 };
 
 const open = () => {
@@ -269,15 +256,6 @@ onUnmounted(() => {
 
   .flashcard-dialog {
     transform: scale(0.9) translateY(20px);
-  }
-}
-
-.dialog-enter-to,
-.dialog-leave-from {
-  opacity: 1;
-
-  .flashcard-dialog {
-    transform: scale(1) translateY(0);
   }
 }
 </style>

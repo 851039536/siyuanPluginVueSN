@@ -28,22 +28,16 @@
         :error-message="errorMessage"
         :displayed-content="displayedContent"
         :generated-content="generatedContent"
-        :original-content="originalContent"
         :rendered-markdown="renderedDisplayedMarkdown"
-        :show-diff-mode="showDiffMode"
-        :diff-mode="diffMode"
         :can-apply="!!editTargetDoc && !isApplying && !isGenerating"
-        :can-show-diff="!!editTargetDoc && !!originalContent && !!generatedContent && originalContent !== generatedContent"
         :can-insert-sub-doc="!!editTargetDoc && !isInsertingSubDoc && !isGenerating"
         :can-undo="!!lastEditHistory"
         @stop="handleStop"
         @apply-edit="applyEdit"
-        @toggle-diff="showDiffMode = !showDiffMode"
         @insert-subdoc="insertSubDocument"
         @undo-edit="undoEdit"
         @copy="copyContent"
         @clear="clearContent"
-        @update:diff-mode="diffMode = $event"
       />
     </div>
 
@@ -130,10 +124,6 @@ interface EditHistory {
 	timestamp: number;
 }
 const lastEditHistory = ref<EditHistory | null>(null);
-
-// 差异显示模式
-const showDiffMode = ref(false); // 是否显示差异对比模式
-const diffMode = ref<"split" | "unified">("split"); // 差异显示模式：分栏或统一
 
 // 对话设置
 const systemPrompt = ref(

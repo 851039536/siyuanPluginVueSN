@@ -361,39 +361,4 @@
 .empty-title { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
 .empty-hint { font-size: 12px; opacity: 0.6; }
 
-// 差异对比
-.diff-view-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-}
 
-.diff-view-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 4px 0;
-  margin-bottom: 6px;
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
-
-  .diff-mode-options { display: flex; gap: 2px; }
-  .diff-mode-btn {
-    padding: 4px 8px;
-    font-size: 11px;
-    border-radius: 4px;
-    &.active { background: var(--b3-theme-primary); color: var(--b3-theme-on-primary); }
-  }
-  .diff-label { font-size: 11px; opacity: 0.6; }
-}
-
-.diff-viewer-wrapper {
-  flex: 1;
-  overflow: auto;
-  min-height: 0;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 4px;
-
-  :deep(.vue-diff) { height: 100%; overflow: auto; }
-  :deep(.vue-diff *) { font-size: 12px !important; }
-}

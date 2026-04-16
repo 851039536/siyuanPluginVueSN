@@ -42,6 +42,8 @@ export interface FilterOptions {
 	threshold: number;
 	/** 阈值单位 */
 	unit: SizeUnit;
+	/** 标题模糊查询关键词 */
+	titleKeyword: string;
 	/** 选中的笔记本ID（空字符串表示全部） */
 	notebookId: string;
 	/** 排序字段 */

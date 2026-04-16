@@ -1,6 +1,16 @@
 <template>
   <div class="doc-analysis-filter">
     <div class="filter-row">
+      <div class="filter-item title-item">
+        <label class="filter-label">标题</label>
+        <input
+          v-model="options.titleKeyword"
+          type="text"
+          class="filter-input title-input"
+          placeholder="模糊搜索"
+          @change="handleChange"
+        />
+      </div>
       <div class="filter-item threshold-item">
         <label class="filter-label">内容大小 &lt;</label>
         <input
@@ -136,6 +146,10 @@ function handleChange() {
 
   .notebook-select {
     max-width: 160px;
+  }
+
+  .title-input {
+    width: 100px;
   }
 
   .query-btn {

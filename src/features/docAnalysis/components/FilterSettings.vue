@@ -8,7 +8,7 @@
           type="text"
           class="filter-input title-input"
           placeholder="模糊搜索"
-          @change="handleChange"
+          @input="handleTitleInput"
         />
       </div>
       <div class="filter-item threshold-item">
@@ -82,8 +82,18 @@ const emit = defineEmits<{
   (e: "update:options", options: FilterOptions): void;
 }>();
 
+let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
 function handleChange() {
   emit("update:options", { ...props.options });
+}
+
+function handleTitleInput() {
+  emit("update:options", { ...props.options });
+  if (debounceTimer) clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    emit("query");
+  }, 500);
 }
 </script>
 

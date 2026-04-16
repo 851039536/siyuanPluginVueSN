@@ -50,7 +50,6 @@ export interface DocCountSettings {
 export interface TabPinSettings {
 	enabled: boolean;
 	displayMode: "iconAndText" | "textOnly";
-	textColor: string;
 	backgroundColor: string;
 }
 

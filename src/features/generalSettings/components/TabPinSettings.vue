@@ -32,21 +32,6 @@
           </div>
         </div>
 
-        <!-- 页签文字颜色 -->
-        <div class="setting-row">
-          <label class="setting-label">
-            <span class="label-icon">🎨</span>
-            {{ i18n.tabPinTextColor || '页签文字颜色' }}
-          </label>
-          <div class="color-input-group">
-            <input v-model="textColor" type="color" class="color-picker" />
-            <input v-model="textColor" type="text" class="color-text" />
-            <button v-if="textColor !== defaultTextColor" class="reset-color-btn" @click="resetTextColor">
-              {{ i18n.resetColor || '重置' }}
-            </button>
-          </div>
-        </div>
-
         <!-- 页签背景颜色 -->
         <div class="setting-row">
           <label class="setting-label">
@@ -54,7 +39,7 @@
             {{ i18n.tabPinBackground || '页签背景颜色' }}
           </label>
           <div class="color-input-group">
-            <input v-model="backgroundColor" type="color" class="color-picker" />
+            <input :value="isValidColor(backgroundColor) ? backgroundColor : '#000000'" type="color" class="color-picker" @input="onColorPickerInput($event)" />
             <input v-model="backgroundColor" type="text" class="color-text" />
             <button v-if="backgroundColor !== defaultBackgroundColor" class="reset-color-btn" @click="resetBackgroundColor">
               {{ i18n.resetColor || '重置' }}
@@ -95,18 +80,26 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<Emits>();
 
 // 默认值
-const defaultTextColor = "inherit";
 const defaultBackgroundColor = "rgba(var(--b3-theme-primary-rgb), 0.1)";
+
+// 检查是否为有效 hex 颜色值
+function isValidColor(value: string): boolean {
+	return /^#[0-9a-fA-F]{6}$/.test(value);
+}
+
+// 颜色选择器输入处理（避免无效值回写）
+function onColorPickerInput(event: Event) {
+	backgroundColor.value = (event.target as HTMLInputElement).value;
+}
 
 // 状态
 const enabled = ref(true);
 const displayMode = ref<"iconAndText" | "textOnly">("iconAndText");
-const textColor = ref(defaultTextColor);
 const backgroundColor = ref(defaultBackgroundColor);
 let initialized = false;
 
 // 统一监听所有响应式变化，自动应用样式并保存
-watch([enabled, displayMode, textColor, backgroundColor], () => {
+watch([enabled, displayMode, backgroundColor], () => {
 	applyToDocument();
 	if (initialized) {
 		autoSave();
@@ -150,11 +143,7 @@ function applyToDocument() {
 		}
 
 		css += `
-      /* 钉住页签：应用自定义颜色 */
-      .layout-tab-bar .item.item--pin .item__text,
-      .layout-tab-bar .item.item--pin .item__icon {
-        ${textColor.value !== defaultTextColor ? `color: ${textColor.value} !important;` : ""}
-      }
+      /* 钉住页签：应用自定义背景颜色 */
       .layout-tab-bar .item.item--pin {
         ${backgroundColor.value !== defaultBackgroundColor ? `background: ${backgroundColor.value} !important;` : ""}
       }
@@ -165,14 +154,6 @@ function applyToDocument() {
 		// 禁用时移除所有样式
 		style.textContent = "";
 	}
-}
-
-// 重置文字颜色
-
-// 重置文字颜色
-function resetTextColor() {
-	textColor.value = defaultTextColor;
-	handleSettingsChange();
 }
 
 // 重置背景颜色
@@ -189,7 +170,6 @@ async function autoSave() {
 		const settingsToSave = {
 			enabled: enabled.value,
 			displayMode: displayMode.value,
-			textColor: textColor.value,
 			backgroundColor: backgroundColor.value,
 		};
 
@@ -212,7 +192,6 @@ async function loadSettings() {
 
 		enabled.value = settings.enabled ?? true;
 		displayMode.value = settings.displayMode || "iconAndText";
-		textColor.value = settings.textColor || defaultTextColor;
 		backgroundColor.value = settings.backgroundColor || defaultBackgroundColor;
 	} catch (error) {
 		console.error("加载钉住页签设置失败:", error);
@@ -230,7 +209,6 @@ defineExpose({
 	loadSettings,
 	enabled,
 	displayMode,
-	textColor,
 	backgroundColor,
 });
 </script>

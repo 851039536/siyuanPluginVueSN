@@ -528,7 +528,6 @@ export class GeneralSettings {
 			}
 
 			// 默认值
-			const defaultTextColor = "inherit";
 			const defaultBackgroundColor = "rgba(var(--b3-theme-primary-rgb), 0.1)";
 
 			// 创建新的样式元素
@@ -555,9 +554,8 @@ export class GeneralSettings {
 			}
 
 			css += `
-        /* 钉住页签：应用自定义颜色 */
+        /* 钉住页签：应用自定义背景颜色 */
         .layout-tab-bar .item.item--pin {
-          ${tabPinSettings.textColor !== defaultTextColor ? `color: ${tabPinSettings.textColor} !important;` : ""}
           ${tabPinSettings.backgroundColor !== defaultBackgroundColor ? `background: ${tabPinSettings.backgroundColor} !important;` : ""}
         }
       `;

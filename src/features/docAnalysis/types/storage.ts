@@ -14,6 +14,7 @@ export interface DocAnalysisSettings {
 export const DEFAULT_FILTER_OPTIONS: FilterOptions = {
 	threshold: 100,
 	unit: "B",
+	titleKeyword: "",
 	notebookId: "",
 	sortField: "size",
 	sortOrder: "asc",

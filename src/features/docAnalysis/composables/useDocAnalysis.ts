@@ -3,7 +3,7 @@
  */
 import { ref, reactive } from "vue";
 import { sql, lsNotebooks } from "@/api";
-import type { DocInfo, FilterOptions, QueryState, SizeUnit } from "../types/index";
+import type { DocInfo, FilterOptions, QueryState } from "../types/index";
 import { unitToBytes } from "../types/storage";
 import { DocAnalysisStorage, DEFAULT_FILTER_OPTIONS } from "../types/storage";
 import type { Plugin } from "siyuan";
@@ -89,11 +89,16 @@ export function useDocAnalysis(plugin: Plugin) {
 			// 计算字节数阈值
 			const thresholdBytes = unitToBytes(filterOptions.threshold, filterOptions.unit);
 
-			// 构建 SQL 查询
-			// 先获取所有文档块，然后按 root_id 分组计算内容大小
+			// 构建 SQL 查询条件
 			let notebookCondition = "";
 			if (filterOptions.notebookId) {
 				notebookCondition = `AND b.box = '${filterOptions.notebookId}'`;
+			}
+
+			let titleCondition = "";
+			if (filterOptions.titleKeyword.trim()) {
+				const keyword = filterOptions.titleKeyword.trim().replace(/'/g, "''");
+				titleCondition = "AND b.content LIKE '%" + keyword + "%'";
 			}
 
 			const sqlStmt = `
@@ -111,6 +116,7 @@ export function useDocAnalysis(plugin: Plugin) {
 					GROUP BY root_id
 				) s ON b.id = s.root_id
 				WHERE b.type = 'd' ${notebookCondition}
+				${titleCondition}
 				AND COALESCE(s.total_size, 0) < ${thresholdBytes}
 				ORDER BY content_size ASC
 				LIMIT 2000

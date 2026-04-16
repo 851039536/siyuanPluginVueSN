@@ -340,6 +340,18 @@ const features = computed<Feature[]>(() => [
 		enabled: props.settings.enableWebDAV,
 		actions: [{ key: "openWebDAV", label: "打开WebDAV", hotkey: "" }],
 	},
+	{
+		id: "docAnalysis",
+		iconKey: "docAnalysis",
+		title: props.i18n.docAnalysis?.title || "文档分析",
+		desc:
+			props.i18n.docAnalysis?.description ||
+			"分析文档内容大小，查找小文档",
+		enabled: props.settings.enableDocAnalysis,
+		actions: [
+			{ key: "openDocAnalysis", label: "打开文档分析", hotkey: "Ctrl+Alt+D" },
+		],
+	},
 ]);
 
 const handleClose = () => {

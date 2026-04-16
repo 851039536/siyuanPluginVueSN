@@ -31,6 +31,7 @@ import {
 	registerBase64Image,
 	registerFlashcardReading,
 	registerPasswordVault,
+	registerDocAnalysis,
 	registerWebDAV,
 } from "@/features";
 import {
@@ -230,6 +231,11 @@ export default class PluginSample extends Plugin {
 		// 注册密码箱功能
 		if (this.settings.enablePasswordVault) {
 			registerPasswordVault(this);
+		}
+
+		// 注册文档分析功能
+		if (this.settings.enableDocAnalysis) {
+			registerDocAnalysis(this);
 		}
 
 		// 注册 WebDAV 功能

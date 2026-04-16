@@ -42,4 +42,5 @@ export {
 	togglePasswordVault,
 	passwordVaultVisible,
 } from "./passwordVault/types";
+export { registerDocAnalysis } from "./docAnalysis/types";
 export { registerWebDAV } from "./webDAV";

@@ -1171,5 +1171,29 @@
 		"downloading": "正在下载",
 		"downloadComplete": "下载完成",
 		"downloadFailed": "下载失败"
+	},
+	"docAnalysis": {
+		"title": "文档分析",
+		"description": "分析文档内容大小，查找小文档",
+		"enableDocAnalysis": "启用文档分析功能",
+		"enableDocAnalysisDesc": "分析文档内容大小，筛选出内容量小于指定阈值的小文档",
+		"threshold": "内容大小阈值",
+		"thresholdDesc": "筛选内容大小低于此值的文档",
+		"notebookFilter": "笔记本筛选",
+		"allNotebooks": "全部笔记本",
+		"sortBySize": "按大小排序",
+		"sortByTitle": "按标题排序",
+		"sortByNotebook": "按笔记本排序",
+		"query": "查询",
+		"querying": "查询中...",
+		"resultCount": "共找到 {count} 个小文档",
+		"noResults": "未找到符合条件的文档",
+		"noResultsHint": "尝试调整阈值或选择其他笔记本",
+		"queryError": "查询出错",
+		"clickToOpen": "点击文档可在思源中打开",
+		"sizeUnit": "大小单位",
+		"sortOrder": "排序方向",
+		"ascending": "升序",
+		"descending": "降序"
 	}
 }

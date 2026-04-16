@@ -218,6 +218,12 @@ export const FEATURE_ICONS = {
 		color: "#3b82f6",
 	},
 
+	// 文档分析
+	docAnalysis: {
+		icon: "mdi:file-search",
+		color: "#14b8a6",
+	},
+
 	// 视频相关图标
 	play: {
 		icon: "mdi:play",

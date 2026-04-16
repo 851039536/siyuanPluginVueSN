@@ -34,6 +34,7 @@ export interface PluginSettings {
 	enableFlashcardQuery: boolean; // 是否启用查询单词功能
 	enableTranslate: boolean; // 是否启用翻译替换功能
 	enablePasswordVault: boolean; // 是否启用密码箱功能
+	enableDocAnalysis: boolean; // 是否启用文档分析功能
 	enableWebDAV: boolean; // 是否启用WebDAV功能
 	webdavConfig: WebDAVConfig; // WebDAV服务器配置
 	enableMarkdownExport: boolean; // 是否启用Markdown导出功能
@@ -111,6 +112,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	enableFlashcardQuery: true,
 	enableTranslate: true,
 	enablePasswordVault: true,
+	enableDocAnalysis: true,
 	enableWebDAV: true,
 	webdavConfig: {
 		serverUrl: "",

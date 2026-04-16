@@ -86,6 +86,7 @@ const FEATURE_SETTINGS_MAP: Record<string, string> = {
 	translate: "enableTranslate",
 	codeTranslation: "enableCodeTranslation",
 	webDAV: "enableWebDAV",
+	docAnalysis: "enableDocAnalysis",
 };
 
 /**
@@ -112,9 +113,10 @@ const SIMPLE_ACTION_EVENTS: Record<string, string> = {
  */
 const ACTION_SETTINGS_MAP: Record<
 	string,
-	{ event: string; settingKey: string }
+	{ event: string; settingKey: string; detail?: any }
 > = {
 	openStatistics: { event: "openStatistics", settingKey: "enableStatistics" },
+	openDocAnalysis: { event: "dock-click", settingKey: "enableDocAnalysis", detail: { dockId: "doc-analysis-dock" } },
 	openBase64Image: {
 		event: "openBase64Image",
 		settingKey: "enableBase64Image",
@@ -340,7 +342,10 @@ export class SuperPanelManager {
 		const actionConfig = ACTION_SETTINGS_MAP[action];
 		if (actionConfig) {
 			if ((this.plugin as any).settings[actionConfig.settingKey]) {
-				window.dispatchEvent(new CustomEvent(actionConfig.event));
+				const eventInit = actionConfig.detail
+					? { detail: actionConfig.detail }
+					: undefined;
+				window.dispatchEvent(new CustomEvent(actionConfig.event, eventInit));
 				this.close();
 			}
 			return;

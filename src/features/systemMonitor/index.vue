@@ -1,6 +1,6 @@
 <template>
   <div
-    v-if="state.showMonitor"
+    v-show="state.showMonitor"
     ref="monitorElement"
     class="status__resUsage"
     :title="systemInfoTooltip"

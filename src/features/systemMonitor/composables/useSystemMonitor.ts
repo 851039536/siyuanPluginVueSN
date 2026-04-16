@@ -160,28 +160,11 @@ export function useSystemMonitor() {
 		}
 	}
 
-	function tryInsertToStatusBar() {
-		const counter = document.querySelector("#status .status__counter");
-		if (!counter || !monitorElement.value) return false;
-
-		const existing = document.querySelector(".status__resUsage");
-		if (existing && existing !== monitorElement.value) {
-			existing.remove();
-		}
-
-		counter.parentNode?.insertBefore(monitorElement.value, counter);
-		return true;
-	}
-
 	onMounted(() => {
 		timeoutId = setTimeout(() => {
 			state.showMonitor = true;
-			requestAnimationFrame(() => {
-				if (tryInsertToStatusBar()) {
-					start();
-					startStatistics();
-				}
-			});
+			start();
+			startStatistics();
 		}, INITIAL_DELAY_MS);
 	});
 

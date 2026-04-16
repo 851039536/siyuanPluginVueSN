@@ -1,5 +1,5 @@
 .doc-navigation-container {
-  margin: 4px 0 12px;
+  margin: 2px 0 6px;
   display: flex;
   justify-content: center;
 }
@@ -7,10 +7,10 @@
 .doc-navigation {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 4px 0;
-  font-size: 13px;
-  line-height: 1.5;
+  gap: 8px;
+  padding: 2px 0;
+  font-size: 12px;
+  line-height: 1.4;
   max-width: 95%;
   flex-wrap: wrap;
 }
@@ -18,7 +18,7 @@
 .doc-nav-breadcrumb {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   flex-wrap: wrap;
   min-width: 0;
   max-width: 100%;
@@ -28,8 +28,8 @@
   color: var(--b3-theme-on-surface);
   text-decoration: none;
   cursor: pointer;
-  padding: 1px 6px;
-  border-radius: 4px;
+  padding: 1px 4px;
+  border-radius: 3px;
   white-space: nowrap;
   font-size: 12px;
   opacity: 0.7;
@@ -52,25 +52,25 @@
 .doc-nav-siblings {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   min-width: 0;
-  padding: 2px 8px;
+  padding: 1px 6px;
   background: var(--b3-theme-surface-lighter);
-  border-radius: 6px;
+  border-radius: 4px;
 }
 
 .doc-nav-sibling {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   color: var(--b3-theme-primary);
   text-decoration: none;
   cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 1px 4px;
+  border-radius: 3px;
   font-size: 12px;
   max-width: 150px;
-  min-width: 24px;
+  min-width: 20px;
 
   &:hover {
     background: var(--b3-theme-primary-lightest);
@@ -84,12 +84,9 @@
 }
 
 .doc-nav-sibling-disabled {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   color: var(--b3-theme-on-surface);
   opacity: 0.2;
-  min-width: 24px;
+  min-width: 20px;
 }
 
 .doc-nav-sibling-count {
@@ -97,14 +94,14 @@
   font-size: 11px;
   opacity: 0.5;
   white-space: nowrap;
-  padding: 0 4px;
+  padding: 0 2px;
 }
 
 .doc-nav-parent,
 .doc-nav-children {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   flex-wrap: wrap;
   min-width: 0;
 }
@@ -121,14 +118,14 @@
   color: var(--b3-theme-primary);
   text-decoration: none;
   cursor: pointer;
-  padding: 1px 6px;
-  border-radius: 4px;
+  padding: 1px 4px;
+  border-radius: 3px;
   white-space: nowrap;
   font-size: 12px;
   background: var(--b3-theme-surface-lighter);
   display: inline-flex;
   align-items: center;
-  max-width: 180px;
+  max-width: 160px;
   overflow: hidden;
   text-overflow: ellipsis;
 
@@ -140,7 +137,7 @@
 .doc-nav-children-list {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   flex-wrap: wrap;
   min-width: 0;
   flex: 1;
@@ -158,24 +155,18 @@
   color: var(--b3-theme-primary);
   background: transparent;
   border: none;
-  border-radius: 4px;
-  padding: 1px 6px;
+  border-radius: 3px;
+  padding: 1px 4px;
   cursor: pointer;
   font-size: 11px;
   font-weight: 500;
   display: inline-flex;
   align-items: center;
-  gap: 3px;
   flex-shrink: 0;
   opacity: 0.8;
 
   &:hover {
     opacity: 1;
     background: var(--b3-theme-surface-lighter);
-  }
-
-  .expand-icon {
-    width: 10px;
-    height: 10px;
   }
 }

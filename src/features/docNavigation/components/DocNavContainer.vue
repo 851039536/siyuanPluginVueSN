@@ -64,8 +64,7 @@
           </a>
 
           <template v-if="hiddenChildren.length">
-            <button class="doc-nav-expand" :title="expandTitle" @click="toggleExpand">
-              <svg class="expand-icon"><use :xlink:href="isExpanded ? '#iconContract' : '#iconExpand'"></use></svg>
+            <button class="doc-nav-expand" @click="toggleExpand">
               {{ isExpanded ? '收起' : `+${hiddenChildren.length}` }}
             </button>
             <a
@@ -87,7 +86,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from "vue";
+import { watch } from "vue";
 import IconWrapper from "@/components/IconWrapper.vue";
 import { useDocNavigation } from "../composables/useDocNavigation";
 
@@ -111,12 +110,6 @@ const {
 	openDoc,
 	stripHtml,
 } = useDocNavigation();
-
-const expandTitle = computed(() => {
-	return isExpanded.value
-		? "收起"
-		: `展开 ${hiddenChildren.value.length} 个文档`;
-});
 
 watch(
 	() => props.docId,

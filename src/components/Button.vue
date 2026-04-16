@@ -235,6 +235,9 @@ defineExpose({
 
   &__text {
     flex: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     line-height: 1.4;
   }
 

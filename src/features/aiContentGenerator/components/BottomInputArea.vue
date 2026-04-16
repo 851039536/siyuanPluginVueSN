@@ -86,6 +86,16 @@
             <span>{{ currentPromptName || '提示词' }}</span>
             <span v-if="savedPrompts.length > 0 && !currentPromptName" class="badge">{{ savedPrompts.length }}</span>
           </Button>
+          <Button
+            v-if="currentPromptName"
+            variant="ghost"
+            size="small"
+            class="clear-btn"
+            @click="$emit('clear-current-prompt')"
+            title="清除提示词"
+          >
+            <svg width="12" height="12"><use xlink:href="#iconClose"></use></svg>
+          </Button>
 
           <!-- 提示词选择面板 -->
           <div v-if="showPromptSelector" class="prompt-selector-panel">

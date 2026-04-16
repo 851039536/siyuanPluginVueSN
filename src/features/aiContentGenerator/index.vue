@@ -19,16 +19,6 @@
 
     <!-- 内容显示区域（移到上方） -->
     <div class="content-display-section">
-    <!-- AI查重结果面板 -->
-    <PlagiarismResultPanel
-      v-if="plagiarismResult"
-      :plagiarismResult="plagiarismResult"
-      :collapsed="collapsedSections.plagiarism"
-      :renderedHtml="renderPlagiarismMarkdown"
-      @toggle-collapse="toggleCollapse('plagiarism')"
-      @close="plagiarismResult = null"
-    />
-
       <!-- 主内容显示区域 -->
       <MainContentArea
         :is-generating="isGenerating"
@@ -60,7 +50,6 @@
     <!-- 底部输入区域 -->
     <BottomInputArea
       :is-generating="isGenerating"
-      :is-checking-plagiarism="isCheckingPlagiarism"
       :edit-target-doc="editTargetDoc"
       :show-prompt-selector="showPromptSelector"
       :current-prompt-name="currentPromptName"
@@ -72,7 +61,6 @@
       :total-pages="totalPages"
       :edit-custom-input="editCustomInput"
       @ai-edit="aiEditAction"
-      @check-plagiarism="checkPlagiarism"
       @stop="handleStop"
       @toggle-prompt-selector="showPromptSelector = !showPromptSelector"
       @clear-current-prompt="clearCurrentPrompt"
@@ -101,7 +89,6 @@ import { AIGeneratorStorage, type AIPromptConfig } from "./types/storage";
 import type { GenerateOptions, SavedPrompt, TargetDoc } from "@/types/ai";
 import PanelHeader from "./components/PanelHeader.vue";
 import SettingsPanel from "./components/SettingsPanel.vue";
-import PlagiarismResultPanel from "./components/PlagiarismResultPanel.vue";
 import MainContentArea from "./components/MainContentArea.vue";
 import BottomInputArea from "./components/BottomInputArea.vue";
 
@@ -125,12 +112,6 @@ const errorMessage = ref("");
 const showSettings = ref(false);
 const abortController = ref<AbortController | null>(null);
 
-// 折叠状态管理
-const collapsedSections = ref({
-	plagiarism: false,
-	promptSelector: false,
-});
-
 // 编辑模式状态
 const editTargetDoc = ref<TargetDoc | null>(null);
 const originalContent = ref(""); // 文档原始内容
@@ -138,14 +119,8 @@ const isApplying = ref(false);
 const isUndoing = ref(false);
 const isInsertingSubDoc = ref(false); // 插入子文档状态
 
-// AI智能编辑状态
-const isCheckingPlagiarism = ref(false);
-const plagiarismResult = ref<{
-	riskLevel: "low" | "medium" | "high";
-	similarityRate: number;
-	details: string;
-} | null>(null);
-const editCustomInput = ref(""); // 编辑模式自定义提问输入
+// 编辑模式自定义提问输入
+const editCustomInput = ref("");
 
 // 编辑历史（用于撤回/重做）
 interface EditHistory {
@@ -236,7 +211,6 @@ const startGeneration = () => {
 	generatedContent.value = "";
 	displayedContent.value = "";
 	errorMessage.value = "";
-	plagiarismResult.value = null;
 };
 
 /**
@@ -244,7 +218,6 @@ const startGeneration = () => {
  */
 const resetAllGenerationStates = () => {
 	isGenerating.value = false;
-	isCheckingPlagiarism.value = false;
 	isApplying.value = false;
 	isUndoing.value = false;
 	isInsertingSubDoc.value = false;
@@ -314,21 +287,6 @@ const loadDocument = async (
 const defaultOnChunk = (chunk: string) => {
 	displayedContent.value += chunk;
 	generatedContent.value += chunk;
-};
-
-/**
- * 创建带自定义处理的流式回调
- * @param onUpdate 自定义更新函数，接收累积的内容
- * @returns 流式输出回调函数
- */
-const createCustomStreamCallback = (
-	onUpdate: (accumulatedContent: string) => void,
-) => {
-	let accumulated = "";
-	return (chunk: string) => {
-		accumulated += chunk;
-		onUpdate(accumulated);
-	};
 };
 
 /**
@@ -414,20 +372,6 @@ const renderedDisplayedMarkdown = computed(() => {
 	return renderMarkdown(displayedContent.value);
 });
 
-// 渲染查重结果 Markdown（带关键词高亮）
-const renderPlagiarismMarkdown = computed(() => {
-	if (!plagiarismResult.value?.details) return "";
-	const highlightKeywords = [
-		"bold:重复",
-		"bold:相似",
-		"italic:原创",
-		"bold:建议",
-		"bold:位置",
-		"bold:风险",
-	];
-	return renderMarkdown(plagiarismResult.value.details, highlightKeywords);
-});
-
 /**
  * 统一的代码高亮应用函数
  */
@@ -446,20 +390,9 @@ watch(renderedDisplayedMarkdown, () =>
 	applyCodeHighlighting(".markdown-preview pre code"),
 );
 
-// 监听查重结果渲染，应用代码高亮
-watch(renderPlagiarismMarkdown, () =>
-	applyCodeHighlighting(".plagiarism-details .markdown-preview pre code"),
-);
-
 // 切换设置面板
 const toggleSettings = () => {
 	showSettings.value = !showSettings.value;
-};
-
-// 折叠切换函数
-const toggleCollapse = (section: keyof typeof collapsedSections.value) => {
-	collapsedSections.value[section] = !collapsedSections.value[section];
-	saveCollapsedSections();
 };
 
 /**
@@ -475,25 +408,6 @@ const safeStorageOperation = async <T>(
 	} catch (error) {
 		console.error(errorMessage, error);
 		return null;
-	}
-};
-
-// 保存折叠状态到本地存储
-const saveCollapsedSections = async () => {
-	await safeStorageOperation(
-		() => storage!.saveCollapsedSections(collapsedSections.value),
-		"保存折叠状态失败:",
-	);
-};
-
-// 从本地存储加载折叠状态
-const loadCollapsedSections = async () => {
-	const saved = await safeStorageOperation(
-		() => storage!.loadCollapsedSections(),
-		"加载折叠状态失败:",
-	);
-	if (saved) {
-		Object.assign(collapsedSections.value, saved);
 	}
 };
 
@@ -642,7 +556,6 @@ const selectTargetDocument = async () => {
  */
 const resetEditRelatedState = () => {
 	editCustomInput.value = "";
-	plagiarismResult.value = null;
 	lastEditHistory.value = null;
 };
 
@@ -871,127 +784,6 @@ ${editTargetDoc.value.content}`;
 	} finally {
 		finishGeneration();
 	}
-};
-
-/**
- * AI查重功能
- */
-const checkPlagiarism = async () => {
-	if (!editTargetDoc.value) {
-		showMessage("请先选择要查重的文档", 2000, "info");
-		return;
-	}
-
-	showSettings.value = false;
-	startGeneration();
-	isCheckingPlagiarism.value = true;
-	plagiarismResult.value = null;
-
-	try {
-		const options: GenerateOptions = {
-			userInput: `请对以下文档进行全面的原创性分析，重点关注以下方面：
-
-一、文档内部重复内容检测：
-1. 检查同一段落、句子或表述是否在文档中反复出现
-2. 识别重复的段落、章节或观点
-3. 检查相同内容是否用不同方式重复表达
-
-二、外部内容相似性检测：
-1. 识别可能与已知资料、公开内容相似的部分
-2. 评估语言表达和内容结构的原创性
-3. 检查是否存在常见的模板化或套话内容
-
-三、具体分析要求：
-- 指出具体重复或相似的位置（段落、行数等）
-- 给出相似度百分比评估（0-100%）
-- 评估整体风险等级：低风险/中风险/高风险
-- 提供明确的改进建议
-
-请使用Markdown格式返回分析结果，包括：
-- 使用标题组织内容
-- 使用列表列出问题和建议
-- 使用粗体标记重要内容
-- 使用斜体标记正面内容
-
-文档内容：
-${editTargetDoc.value.content}`,
-			systemPrompt:
-				"你是一个专业的查重分析专家，擅长识别文档中的重复内容和潜在抄袭。请以Markdown格式返回详细分析结果，使用标题、列表等Markdown语法让内容更加结构化和易读。",
-			temperature: 0.3,
-			maxTokens: 3000,
-			signal: abortController.value?.signal,
-			onChunk: createCustomStreamCallback((newContent) => {
-				// 简单分析文本内容，尝试提取风险等级和相似度
-				const riskLevel = detectRiskLevel(newContent);
-				const similarityRate = detectSimilarityRate(newContent);
-
-				plagiarismResult.value = {
-					riskLevel,
-					similarityRate,
-					details: newContent,
-				};
-			}),
-		};
-
-		await props.onGenerate(options);
-
-		// 确保至少返回基本结果
-		if (!plagiarismResult.value || !plagiarismResult.value.details) {
-			plagiarismResult.value = {
-				riskLevel: "low",
-				similarityRate: 0,
-				details:
-					"查重分析已完成，未发现明显的重复或抄袭内容。建议继续保持内容的原创性。",
-			};
-		}
-	} catch (error) {
-		if (handleGenerationError(error as Error, "查重分析", true)) {
-			resetAllGenerationStates();
-			return;
-		}
-		showMessage("查重分析失败: " + (error as Error).message, 3000, "error");
-	} finally {
-		if (abortController.value) {
-			resetAllGenerationStates();
-		}
-	}
-};
-
-/**
- * 检测风险等级
- */
-const detectRiskLevel = (text: string): "low" | "medium" | "high" => {
-	const lowerText = text.toLowerCase();
-
-	if (
-		lowerText.includes("高风险") ||
-		lowerText.includes("high risk") ||
-		lowerText.includes("严重重复") ||
-		lowerText.includes("大量相似")
-	) {
-		return "high";
-	} else if (
-		lowerText.includes("中风险") ||
-		lowerText.includes("medium risk") ||
-		lowerText.includes("部分重复") ||
-		lowerText.includes("中等相似")
-	) {
-		return "medium";
-	}
-
-	return "low";
-};
-
-/**
- * 检测相似度百分比
- */
-const detectSimilarityRate = (text: string): number => {
-	const match = text.match(/(\d+)%?/);
-	if (match) {
-		const num = parseInt(match[1]);
-		return Math.min(Math.max(num, 0), 100);
-	}
-	return 0;
 };
 
 /**
@@ -1266,7 +1058,6 @@ onMounted(async () => {
 		await storage.init();
 		await loadPromptsFromStorage();
 		await loadSettings();
-		await loadCollapsedSections();
 	}
 });
 

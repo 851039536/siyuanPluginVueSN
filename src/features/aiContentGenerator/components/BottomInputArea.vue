@@ -68,11 +68,6 @@
                 <svg width="14" height="14"><use xlink:href="#iconList"></use></svg>
                 <span>总结</span>
               </div>
-              <div class="menu-divider"></div>
-              <div class="menu-item" @click="handleQuickAction('plagiarism')">
-                <svg width="14" height="14"><use xlink:href="#iconSearch"></use></svg>
-                <span>查重</span>
-              </div>
             </div>
           </div>
         </div>
@@ -186,7 +181,6 @@ import type { TargetDoc, SavedPrompt } from "@/types/ai";
 
 interface Props {
 	isGenerating: boolean;
-	isCheckingPlagiarism: boolean;
 	editTargetDoc: TargetDoc | null;
 	showPromptSelector: boolean;
 	currentPromptName: string;
@@ -212,7 +206,6 @@ const emit = defineEmits<{
 			| "rewrite"
 			| "summary",
 	): void;
-	(e: "check-plagiarism"): void;
 	(e: "stop"): void;
 	(e: "toggle-prompt-selector"): void;
 	(e: "clear-current-prompt"): void;
@@ -250,11 +243,7 @@ const truncateTitle = (title: string, maxLen = 12) => {
 // 处理快捷操作
 const handleQuickAction = (action: string) => {
 	showQuickMenu.value = false;
-	if (action === "plagiarism") {
-		emit("check-plagiarism");
-	} else {
-		emit("ai-edit", action as any);
-	}
+	emit("ai-edit", action as any);
 };
 
 // 获取原始索引

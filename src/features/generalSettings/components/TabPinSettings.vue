@@ -75,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watchEffect } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { saveTabPinSettings, loadTabPinSettings } from "@/config/settings";
 
 interface Props {
@@ -103,6 +103,15 @@ const enabled = ref(true);
 const displayMode = ref<"iconAndText" | "textOnly">("iconAndText");
 const textColor = ref(defaultTextColor);
 const backgroundColor = ref(defaultBackgroundColor);
+let initialized = false;
+
+// 统一监听所有响应式变化，自动应用样式并保存
+watch([enabled, displayMode, textColor, backgroundColor], () => {
+	applyToDocument();
+	if (initialized) {
+		autoSave();
+	}
+});
 
 // 统一的设置变更处理函数
 function handleSettingsChange() {
@@ -142,8 +151,11 @@ function applyToDocument() {
 
 		css += `
       /* 钉住页签：应用自定义颜色 */
-      .layout-tab-bar .item.item--pin {
+      .layout-tab-bar .item.item--pin .item__text,
+      .layout-tab-bar .item.item--pin .item__icon {
         ${textColor.value !== defaultTextColor ? `color: ${textColor.value} !important;` : ""}
+      }
+      .layout-tab-bar .item.item--pin {
         ${backgroundColor.value !== defaultBackgroundColor ? `background: ${backgroundColor.value} !important;` : ""}
       }
     `;
@@ -155,15 +167,7 @@ function applyToDocument() {
 	}
 }
 
-// 统一监听所有响应式变化，自动应用样式并保存
-watchEffect(() => {
-	// 读取依赖触发追踪
-	enabled.value;
-	displayMode.value;
-	textColor.value;
-	backgroundColor.value;
-	applyToDocument();
-});
+// 重置文字颜色
 
 // 重置文字颜色
 function resetTextColor() {
@@ -218,6 +222,7 @@ async function loadSettings() {
 // 初始化 - 在组件挂载后执行
 onMounted(async () => {
 	await loadSettings();
+	initialized = true;
 });
 
 // 暴露方法

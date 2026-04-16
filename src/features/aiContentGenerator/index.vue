@@ -6,7 +6,6 @@
     <!-- 提示词配置面板 -->
     <SettingsPanel
       :showSettings="showSettings"
-      :collapsed="collapsedSections.settings"
       v-model:systemPrompt="systemPrompt"
       v-model:temperature="temperature"
       v-model:maxTokens="maxTokens"
@@ -14,7 +13,6 @@
       :currentPromptName="currentPromptName"
       v-model:newPromptName="newPromptName"
       @toggle-settings="toggleSettings"
-      @toggle-collapse="toggleCollapse('settings')"
       @save-current-prompt="saveCurrentPrompt"
       @on-prompt-name-focus="onPromptNameFocus"
     />
@@ -129,7 +127,6 @@ const abortController = ref<AbortController | null>(null);
 
 // 折叠状态管理
 const collapsedSections = ref({
-	settings: false,
 	plagiarism: false,
 	promptSelector: false,
 });
@@ -678,67 +675,6 @@ const loadTargetDocument = async (docId: string) => {
 		},
 		cleanContent,
 	);
-};
-
-/**
- * 加载目标块（用于拖拽块时只加载块内容）
- */
-const loadTargetBlock = async (blockId: string) => {
-	try {
-		// 获取块信息
-		const block = await api.getBlockByID(blockId);
-		if (!block) {
-			showMessage("无法获取块信息", 3000, "error");
-			return;
-		}
-
-		// 获取块的 Markdown 内容
-		let blockContent = await api.getBlockMarkdown(blockId);
-
-		// 备用方案：如果 getBlockMarkdown 失败，尝试使用 block.content
-		if (!blockContent && block.content) {
-			blockContent = block.content;
-
-			// 对于标题块，添加标题标记
-			if (block.type === "h") {
-				const level = (block as any).headingLevel || 1;
-				const headingPrefix = "#".repeat(level) + " ";
-				if (!blockContent.startsWith("#")) {
-					blockContent = headingPrefix + blockContent;
-				}
-			}
-		}
-
-		if (!blockContent) {
-			showMessage("无法获取块内容", 3000, "error");
-			return;
-		}
-
-		// 获取块所属文档的路径（用于显示）
-		const hPath = await api.getHPathByID(block.root_id || blockId);
-		const docName = hPath ? hPath.split("/").pop() : "未命名";
-
-		// 构建块标题
-		const blockTitle = block.content
-			? `${block.content.substring(0, 30)}${block.content.length > 30 ? "..." : ""}`
-			: "块内容";
-
-		// 移除 frontmatter
-		const cleanContent = removeFrontmatter(blockContent);
-
-		// 设置目标文档状态
-		setTargetDocState(
-			{
-				id: blockId,
-				title: `${blockTitle} (${docName})`,
-				content: cleanContent,
-				isBlock: true,
-			},
-			cleanContent,
-		);
-	} catch (error) {
-		showMessage("加载块失败: " + (error as Error).message, 3000, "error");
-	}
 };
 
 // 清除目标文档

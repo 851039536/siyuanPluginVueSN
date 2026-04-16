@@ -12,6 +12,7 @@ import {
 } from "@/config/settings";
 import { GeneralSettingsStorage } from "./storage";
 import { DocCountManager } from "../modules/DocCountManager";
+import { HighlightManager } from "../modules/HighlightManager";
 // @ts-ignore
 import GeneralSettingsPanel from "../index.vue";
 
@@ -72,6 +73,7 @@ export class GeneralSettings {
 	private storage: GeneralSettingsStorage;
 	private contentObserver: MutationObserver | null = null;
 	private docCountManager: DocCountManager | null = null;
+	private highlightManager: HighlightManager | null = null;
 
 	constructor(plugin: Plugin) {
 		this.plugin = plugin;
@@ -89,6 +91,7 @@ export class GeneralSettings {
 		await this.applyListStyleEnhanced();
 		await this.applyDocCountStyle();
 		await this.applyTabPinStyle();
+		await this.applyHighlightStyle();
 		this.observeContentChanges();
 		await this.initAutoBackup();
 	}
@@ -504,6 +507,18 @@ export class GeneralSettings {
 		}
 	}
 
+	public async applyHighlightStyle() {
+		try {
+			const settings = await this.storage.loadHighlightSettings();
+			if (settings && settings.enableHighlight) {
+				this.highlightManager = new HighlightManager();
+				this.highlightManager.enable();
+			}
+		} catch (error) {
+			console.error("应用双击高亮功能失败:", error);
+		}
+	}
+
 	public async applyTabPinStyle() {
 		try {
 			const settings = await this.storage.loadTabPinSettings();
@@ -512,6 +527,21 @@ export class GeneralSettings {
 			}
 		} catch (error) {
 			console.error("应用钉住页签样式失败:", error);
+		}
+	}
+
+	public getHighlightManager(): HighlightManager | null {
+		return this.highlightManager;
+	}
+
+	public updateHighlight(enabled: boolean) {
+		if (!this.highlightManager) {
+			this.highlightManager = new HighlightManager();
+		}
+		if (enabled) {
+			this.highlightManager.enable();
+		} else {
+			this.highlightManager.disable();
 		}
 	}
 
@@ -1226,6 +1256,10 @@ export class GeneralSettings {
 		if (this.docCountManager) {
 			this.docCountManager.stop();
 			this.docCountManager = null;
+		}
+		if (this.highlightManager) {
+			this.highlightManager.disable();
+			this.highlightManager = null;
 		}
 	}
 }

@@ -1,7 +1,7 @@
 <template>
   <div
     class="monitor-item"
-    :class="[itemClass, level ? `level-${level}` : '']"
+    :class="itemClass"
     :data-level="level"
     :title="title"
     @click="$emit('click', $event)"

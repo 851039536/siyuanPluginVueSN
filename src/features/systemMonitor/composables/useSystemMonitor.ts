@@ -1,4 +1,4 @@
-import { ref, computed, reactive, onMounted, onUnmounted } from "vue";
+import { computed, reactive, onMounted, onUnmounted } from "vue";
 import {
 	THRESHOLDS,
 	MONITOR_INTERVAL_MS,
@@ -29,7 +29,6 @@ export function useSystemMonitor() {
 		totalWords: 0,
 	});
 
-	const monitorElement = ref<HTMLElement | null>(null);
 	let intervalId: ReturnType<typeof setInterval> | null = null;
 	let timeoutId: ReturnType<typeof setTimeout> | null = null;
 	let lastCPU: NodeJS.CpuUsage | null = null;
@@ -175,7 +174,6 @@ export function useSystemMonitor() {
 
 	return {
 		state,
-		monitorElement,
 		cpuUsageDisplay,
 		memoryUsageDisplay,
 		uptimeDisplay,

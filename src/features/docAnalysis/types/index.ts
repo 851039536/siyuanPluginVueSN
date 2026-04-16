@@ -99,7 +99,7 @@ export function registerDocAnalysis(plugin: Plugin) {
 		config: {
 			position: "RightTop",
 			size: { width: 400, height: 0 },
-			icon: "iconAnalytics",
+			icon: "iconSearch",
 			title:
 				(plugin.i18n as any)?.docAnalysis?.title || "文档分析",
 			show: false,

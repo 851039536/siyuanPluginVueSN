@@ -183,8 +183,9 @@ export function useDocAnalysis(plugin: Plugin) {
 	 * 打开文档 - 在思源编辑器中打开
 	 */
 	function openDoc(docId: string) {
-		// 使用思源的内部 API 打开文档
-		window.open(`/blocks/${docId}`, "_blank");
+		if (docId) {
+			window.open(`siyuan://blocks/${docId}`);
+		}
 	}
 
 	/**

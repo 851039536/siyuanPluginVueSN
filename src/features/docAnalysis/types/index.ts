@@ -63,6 +63,14 @@ export interface QueryState {
 	hasQueried: boolean;
 }
 
+/** 重名文档组 */
+export interface DuplicateNameGroup {
+	/** 重复的文档标题 */
+	title: string;
+	/** 重复数量 */
+	count: number;
+}
+
 /** 文档统计信息 */
 export interface DocStats {
 	/** 总文档数 */
@@ -73,6 +81,10 @@ export interface DocStats {
 	smallDocs: number;
 	/** 1~10KB 文档数 */
 	mediumDocs: number;
+	/** 重名文档组数（有多少组同名文档） */
+	duplicateNameGroups: number;
+	/** 重名文档总数（所有重名组的文档数之和） */
+	duplicateNameDocs: number;
 }
 
 // ============================================================

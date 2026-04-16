@@ -4,6 +4,7 @@
 import { ref, reactive } from "vue";
 import { sql, lsNotebooks } from "@/api";
 import type { DocInfo, FilterOptions, QueryState, DocStats } from "../types/index";
+import type { DuplicateNameGroup } from "../types/index";
 import { unitToBytes } from "../types/storage";
 import { DocAnalysisStorage, DEFAULT_FILTER_OPTIONS } from "../types/storage";
 import type { Plugin } from "siyuan";
@@ -49,12 +50,17 @@ export function useDocAnalysis(plugin: Plugin) {
 		zeroByteDocs: 0,
 		smallDocs: 0,
 		mediumDocs: 0,
+		duplicateNameGroups: 0,
+		duplicateNameDocs: 0,
 	});
 	const statsLoading = ref(false);
 	const hasAnalyzed = ref(false);
 
+	// 重名文档详情（供列表展示）
+	const duplicateGroups = ref<DuplicateNameGroup[]>([]);
+
 	// 当前选中的统计类别过滤
-	const statsFilter = ref<string>(""); // "" | "0B" | "small" | "medium"
+	const statsFilter = ref<string>(""); // "" | "0B" | "small" | "medium" | "duplicate"
 
 	// ============================================================
 	// 公共辅助函数
@@ -189,7 +195,8 @@ export function useDocAnalysis(plugin: Plugin) {
 		try {
 			const notebookCondition = buildNotebookCondition();
 
-			const sqlStmt = `
+			// 大小统计
+			const sizeSql = `
 				SELECT 
 					COUNT(*) as total,
 					SUM(CASE WHEN COALESCE(s.total_size, 0) = 0 THEN 1 ELSE 0 END) as zero_count,
@@ -200,14 +207,40 @@ export function useDocAnalysis(plugin: Plugin) {
 				WHERE b.type = 'd' ${notebookCondition}
 			`;
 
-			const rows = await sql(sqlStmt);
-			if (rows && rows.length > 0) {
-				const row = rows[0];
+			const sizeRows = await sql(sizeSql);
+			if (sizeRows && sizeRows.length > 0) {
+				const row = sizeRows[0];
 				docStats.totalDocs = row.total || 0;
 				docStats.zeroByteDocs = row.zero_count || 0;
 				docStats.smallDocs = row.small_count || 0;
 				docStats.mediumDocs = row.medium_count || 0;
 			}
+
+			// 重名统计
+			const dupSql = `
+				SELECT b.content as doc_title, COUNT(*) as cnt
+				FROM blocks b
+				WHERE b.type = 'd' ${notebookCondition}
+				GROUP BY b.content
+				HAVING COUNT(*) > 1
+				ORDER BY cnt DESC
+				LIMIT 500
+			`;
+
+			const dupRows = await sql(dupSql);
+			if (dupRows && dupRows.length > 0) {
+				docStats.duplicateNameGroups = dupRows.length;
+				docStats.duplicateNameDocs = dupRows.reduce((sum: number, r: any) => sum + (r.cnt || 0), 0);
+				duplicateGroups.value = dupRows.map((r: any) => ({
+					title: r.doc_title || "无标题",
+					count: r.cnt || 0,
+				}));
+			} else {
+				docStats.duplicateNameGroups = 0;
+				docStats.duplicateNameDocs = 0;
+				duplicateGroups.value = [];
+			}
+
 			hasAnalyzed.value = true;
 		} catch (error) {
 			console.error("分析文档统计失败:", error);
@@ -230,6 +263,12 @@ export function useDocAnalysis(plugin: Plugin) {
 		}
 		statsFilter.value = category;
 
+		// 重名类别走独立查询逻辑
+		if (category === "duplicate") {
+			await fetchDuplicateDocs();
+			return;
+		}
+
 		const sizeConditions: Record<string, string> = {
 			"0B": "AND COALESCE(s.total_size, 0) = 0",
 			small: "AND COALESCE(s.total_size, 0) > 0 AND COALESCE(s.total_size, 0) < 1024",
@@ -237,6 +276,63 @@ export function useDocAnalysis(plugin: Plugin) {
 		};
 
 		await fetchDocList(sizeConditions[category] || "");
+	}
+
+	/**
+	 * 查询重名文档列表
+	 */
+	async function fetchDuplicateDocs() {
+		queryState.status = "loading";
+		queryState.errorMessage = "";
+		queryState.hasQueried = true;
+
+		try {
+			const notebookCondition = buildNotebookCondition();
+
+			// 获取所有重名标题
+			const dupTitles = duplicateGroups.value.map((g) => g.title);
+			if (dupTitles.length === 0) {
+				queryState.results = [];
+				queryState.status = "empty";
+				return;
+			}
+
+			const titleList = dupTitles.map((t) => `'${t.replace(/'/g, "''")}'`).join(",");
+
+			const sqlStmt = `
+				SELECT 
+					b.id as doc_id,
+					b.content as doc_title,
+					b.hpath as doc_path,
+					b.box as notebook_id,
+					COALESCE(s.total_size, 0) as content_size
+				FROM blocks b
+				LEFT JOIN (${SIZE_SUBQUERY}) s ON b.id = s.root_id
+				WHERE b.type = 'd' ${notebookCondition}
+				AND b.content IN (${titleList})
+				ORDER BY b.content ASC, content_size ASC
+				LIMIT 2000
+			`;
+
+			const rows = await sql(sqlStmt);
+
+			if (!rows || rows.length === 0) {
+				queryState.results = [];
+				queryState.status = "empty";
+				return;
+			}
+
+			const docs = mapRowsToDocs(rows);
+			const sortedDocs = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder);
+
+			queryState.results = sortedDocs;
+			queryState.status = "success";
+		} catch (error) {
+			console.error("查询重名文档失败:", error);
+			queryState.errorMessage = (error as Error).message || "查询失败";
+			queryState.status = "error";
+			queryState.results = [];
+		}
 	}
 
 	/**
@@ -312,6 +408,7 @@ export function useDocAnalysis(plugin: Plugin) {
 		queryState,
 		filterOptions,
 		docStats,
+		duplicateGroups,
 		statsLoading,
 		hasAnalyzed,
 		statsFilter,

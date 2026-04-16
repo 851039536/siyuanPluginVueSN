@@ -48,16 +48,6 @@
           </Button>
           <!-- 次要操作 -->
           <Button
-            v-if="canShowDiff"
-            @click="$emit('toggle-diff')"
-            :class="{ active: showDiffMode }"
-            :title="showDiffMode ? '返回预览' : '查看差异'"
-            variant="ghost"
-            size="small"
-          >
-            <svg width="14" height="14"><use xlink:href="#iconDiff"></use></svg>
-          </Button>
-          <Button
             @click="$emit('insert-subdoc')"
             :disabled="!canInsertSubDoc"
             title="插入为子文档"
@@ -87,50 +77,7 @@
         </div>
       </div>
       <div class="result-content">
-        <!-- 预览模式 -->
-        <div v-if="!showDiffMode" class="markdown-preview selectable-content" v-html="renderedMarkdown"></div>
-        <!-- 差异对比模式 -->
-        <div v-else class="diff-view-container">
-          <!-- 差异显示工具栏 -->
-          <div class="diff-view-toolbar">
-            <div class="diff-mode-options">
-              <Button
-                :class="['diff-mode-btn', { active: diffMode === 'split' }]"
-                @click="$emit('update:diffMode', 'split')"
-                title="分栏显示"
-                variant="ghost"
-                size="small"
-              >
-                分栏
-              </Button>
-              <Button
-                :class="['diff-mode-btn', { active: diffMode === 'unified' }]"
-                @click="$emit('update:diffMode', 'unified')"
-                title="统一显示"
-                variant="ghost"
-                size="small"
-              >
-                统一
-              </Button>
-            </div>
-            <span class="diff-label">原文 vs 生成</span>
-          </div>
-          <!-- 差异显示组件 -->
-          <div class="diff-viewer-wrapper">
-            <Diff
-              :mode="diffMode"
-              theme="dark"
-              language="markdown"
-              :prev="originalContent"
-              :current="generatedContent"
-              :folding="false"
-              :virtual-scroll="false"
-              :render-added="true"
-              :render-removed="true"
-              :hide-line-numbers="false"
-            />
-          </div>
-        </div>
+        <div class="markdown-preview selectable-content" v-html="renderedMarkdown"></div>
       </div>
     </div>
 
@@ -146,8 +93,6 @@
 </template>
 
 <script setup lang="ts">
-import { Diff } from "vue-diff";
-import "vue-diff/dist/index.css";
 import Button from "@/components/Button.vue";
 
 interface Props {
@@ -161,16 +106,10 @@ interface Props {
 	// 内容
 	displayedContent: string;
 	generatedContent: string;
-	originalContent: string;
 	renderedMarkdown: string;
-
-	// 差异对比
-	showDiffMode: boolean;
-	diffMode: "split" | "unified";
 
 	// 操作可用性
 	canApply: boolean;
-	canShowDiff: boolean;
 	canInsertSubDoc: boolean;
 	canUndo: boolean;
 }
@@ -180,12 +119,10 @@ const props = defineProps<Props>();
 const emit = defineEmits<{
 	(e: "stop"): void;
 	(e: "apply-edit"): void;
-	(e: "toggle-diff"): void;
 	(e: "insert-subdoc"): void;
 	(e: "undo-edit"): void;
 	(e: "copy"): void;
 	(e: "clear"): void;
-	(e: "update:diffMode", value: "split" | "unified"): void;
 }>();
 </script>
 

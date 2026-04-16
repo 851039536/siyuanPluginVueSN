@@ -25,7 +25,6 @@ import {
 	registerVideo,
 	registerEverythingSearch,
 	registerSystemMonitor,
-	registerHighlight,
 	registerFloatingToolbar,
 	registerFloatingBox,
 	registerTextDiff,
@@ -37,7 +36,6 @@ import {
 import {
 	loadSettings,
 	saveSettings,
-	loadHighlightSettings,
 	type PluginSettings,
 } from "@/config/settings";
 import { initCommands, destroyCommands } from "@/commands";
@@ -114,11 +112,6 @@ export default class PluginSample extends Plugin {
 		// 清理通用设置资源
 		if ((this as any).__generalSettings) {
 			(this as any).__generalSettings.destroy();
-		}
-
-		// 清理高亮功能资源
-		if ((this as any).__highlightManager) {
-			(this as any).__highlightManager.disable();
 		}
 
 		destroyCommands();
@@ -208,10 +201,6 @@ export default class PluginSample extends Plugin {
 		if (this.settings.enableSystemMonitor) {
 			registerSystemMonitor(this);
 		}
-
-		// 注册双击高亮功能（从数据库读取设置）
-		const highlightSettings = await loadHighlightSettings(this);
-		registerHighlight(this, highlightSettings.enableHighlight);
 
 		// 注册浮动工具栏功能
 		if (this.settings.enableFloatingToolbar) {

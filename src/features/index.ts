@@ -30,7 +30,6 @@ export {
 	everythingSearchVisible,
 } from "./everythingSearch/types";
 export { registerSystemMonitor } from "./systemMonitor";
-export { registerHighlight } from "./highlight";
 export { registerFloatingToolbar } from "./floatingToolbar";
 export { registerFloatingBox } from "./floatingBox";
 export { registerTextDiff } from "./textDiff/types";

@@ -470,11 +470,8 @@ const convertToSiyuanMarkdown = (content: string): string => {
 	converted = converted.replace(headingEnd, "$1\n\n$2");
 
 	// 2. 处理粗体格式
-	// 思源笔记在使用 markdown 模式时，粗体标记可能被解析但不显示效果
-	// 临时解决方案：移除粗体标记，保留文本内容
-	// TODO: 找到更好的方法让思源正确显示粗体
-	converted = converted.replace(/\*\*([^*]+?)\*\*/g, "$1"); // 移除粗体标记
-	converted = converted.replace(/__([^_]+?)__/g, "$1"); // 移除另一种粗体标记
+	// 思源笔记通过 updateBlock API 传入标准 Markdown 粗体语法 **text** 可正确渲染
+	// 无需移除粗体标记
 
 	// 3. 处理斜体格式（同样可能有显示问题，暂时保留）
 	// converted = converted.replace(/\*([^*]+?)\*/g, '$1'); // 如需移除斜体，取消注释

@@ -29,6 +29,7 @@
         :displayed-content="displayedContent"
         :generated-content="generatedContent"
         :rendered-markdown="renderedDisplayedMarkdown"
+        :original-content="originalContent"
         :can-apply="!!editTargetDoc && !isApplying && !isGenerating"
         :can-insert-sub-doc="!!editTargetDoc && !isInsertingSubDoc && !isGenerating"
         :can-undo="!!lastEditHistory"

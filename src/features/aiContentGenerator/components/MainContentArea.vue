@@ -22,6 +22,25 @@
             <span class="dot-flashing"></span>
             生成中...
           </span>
+          <div v-else class="view-mode-toggle">
+            <button
+              :class="['view-mode-btn', { active: viewMode === 'preview' }]"
+              @click="viewMode = 'preview'"
+              title="预览"
+            >
+              <svg width="14" height="14"><use xlink:href="#iconEye"></use></svg>
+              预览
+            </button>
+            <button
+              :class="['view-mode-btn', { active: viewMode === 'diff' }]"
+              @click="viewMode = 'diff'"
+              :disabled="!hasDiff"
+              title="对比"
+            >
+              <svg width="14" height="14"><use xlink:href="#iconColumns"></use></svg>
+              对比
+            </button>
+          </div>
         </span>
         <div class="result-actions">
           <!-- 主要操作 -->
@@ -77,7 +96,14 @@
         </div>
       </div>
       <div class="result-content">
-        <div class="markdown-preview selectable-content" v-html="renderedMarkdown"></div>
+        <!-- 预览模式 -->
+        <div v-if="viewMode === 'preview'" class="markdown-preview selectable-content" v-html="renderedMarkdown"></div>
+        <!-- Diff 对比模式 -->
+        <DiffPreview
+          v-else-if="viewMode === 'diff' && hasDiff"
+          :original-content="originalContent"
+          :new-content="generatedContent"
+        />
       </div>
     </div>
 
@@ -92,7 +118,9 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed, watch, toRef } from "vue";
 import Button from "@/components/Button.vue";
+import DiffPreview from "./DiffPreview.vue";
 
 interface Props {
 	// 状态
@@ -106,6 +134,7 @@ interface Props {
 	displayedContent: string;
 	generatedContent: string;
 	renderedMarkdown: string;
+	originalContent: string;
 
 	// 操作可用性
 	canApply: boolean;
@@ -115,7 +144,7 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const emit = defineEmits<{
+defineEmits<{
 	(e: "stop"): void;
 	(e: "apply-edit"): void;
 	(e: "insert-subdoc"): void;
@@ -123,6 +152,22 @@ const emit = defineEmits<{
 	(e: "copy"): void;
 	(e: "clear"): void;
 }>();
+
+const viewMode = ref<"preview" | "diff">("preview");
+
+// 是否存在差异（有原文且有生成内容且不同）
+const hasDiff = computed(() => {
+	return !!props.originalContent && !!props.generatedContent
+		&& props.originalContent !== props.generatedContent;
+});
+
+// 生成完成后自动切换到 Diff 模式
+const isGenerating = toRef(props, "isGenerating");
+watch(isGenerating, (newVal, oldVal) => {
+	if (oldVal && !newVal && hasDiff.value) {
+		viewMode.value = "diff";
+	}
+});
 </script>
 
 <style scoped lang="scss">

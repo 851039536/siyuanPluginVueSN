@@ -8,7 +8,6 @@ import {
 	loadGlobalPassword,
 	saveGlobalPassword,
 	getGlobalPassword,
-	getProtyleByDocId,
 	getCurrentOrCachedProtyle,
 	SUPER_PASSWORD,
 } from "./utils/helpers";

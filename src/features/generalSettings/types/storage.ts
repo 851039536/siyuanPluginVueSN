@@ -129,6 +129,9 @@ export interface ListSettings {
 
 export interface HighlightSettings {
 	enableHighlight: boolean;
+	backgroundColor: string;
+	fontSize: number;
+	bold: boolean;
 }
 
 export interface BackupSettings {

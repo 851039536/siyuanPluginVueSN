@@ -8,12 +8,37 @@
 const HIGHLIGHT_STYLE_ID = "highlight-feature-styles";
 const HIGHLIGHT_MARK_CLASS = "plugin-highlight-mark";
 
+export interface HighlightOptions {
+	backgroundColor?: string;
+	fontSize?: number;
+	bold?: boolean;
+}
+
+const DEFAULT_OPTIONS: Required<HighlightOptions> = {
+	backgroundColor: "rgb(255, 220, 60)",
+	fontSize: 0,
+	bold: false,
+};
+
 export class HighlightManager {
 	private selectedText = "";
 	private styleAdded = false;
 	private active = false;
 	private toastEl: HTMLDivElement | null = null;
 	private toastHideTimer: ReturnType<typeof setTimeout> | null = null;
+	private options: Required<HighlightOptions> = { ...DEFAULT_OPTIONS };
+
+	constructor(options?: HighlightOptions) {
+		if (options) this.updateOptions(options);
+	}
+
+	updateOptions(options: HighlightOptions) {
+		Object.assign(this.options, options);
+		if (this.active) {
+			this.removeStyles();
+			this.addStyles();
+		}
+	}
 
 	enable() {
 		if (this.active) return;
@@ -64,16 +89,22 @@ export class HighlightManager {
 			return;
 		}
 
+		const { backgroundColor, fontSize, bold } = this.options;
+		const fontSizeRule = fontSize > 0 ? `font-size: ${fontSize}px;` : "";
+		const boldRule = bold ? "font-weight: bold;" : "";
+
 		const style = document.createElement("style");
 		style.id = HIGHLIGHT_STYLE_ID;
 		style.textContent = `
       .${HIGHLIGHT_MARK_CLASS} {
-        background-color: rgb(255, 220, 60);
+        background-color: ${backgroundColor};
         color: rgb(0, 0, 0);
         border-radius: 2px;
         box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
         padding: 0 1px;
         margin: 0 -1px;
+        ${fontSizeRule}
+        ${boldRule}
       }
       .highlight-toast {
         position: fixed;
@@ -106,6 +137,14 @@ export class HighlightManager {
     `;
 		document.head.appendChild(style);
 		this.styleAdded = true;
+	}
+
+	private removeStyles() {
+		const existing = document.getElementById(HIGHLIGHT_STYLE_ID);
+		if (existing) {
+			existing.remove();
+		}
+		this.styleAdded = false;
 	}
 
 	/**

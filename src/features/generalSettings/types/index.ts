@@ -513,7 +513,10 @@ export class GeneralSettings {
 			if (settings && settings.enableHighlight === false) {
 				return;
 			}
-			this.highlightManager = new HighlightManager();
+			const options = settings
+				? { backgroundColor: settings.backgroundColor, fontSize: settings.fontSize, bold: settings.bold }
+				: undefined;
+			this.highlightManager = new HighlightManager(options);
 			this.highlightManager.enable();
 		} catch (error) {
 			console.error("应用双击高亮功能失败:", error);
@@ -535,7 +538,7 @@ export class GeneralSettings {
 		return this.highlightManager;
 	}
 
-	public updateHighlight(enabled: boolean) {
+	public async updateHighlight(enabled: boolean) {
 		if (!this.highlightManager) {
 			this.highlightManager = new HighlightManager();
 		}
@@ -544,7 +547,27 @@ export class GeneralSettings {
 		} else {
 			this.highlightManager.disable();
 		}
-		this.storage.saveHighlightSettings({ enableHighlight: enabled });
+		const current = await this.storage.loadHighlightSettings();
+		this.storage.saveHighlightSettings({
+			enableHighlight: enabled,
+			backgroundColor: current?.backgroundColor ?? "rgb(255, 220, 60)",
+			fontSize: current?.fontSize ?? 0,
+			bold: current?.bold ?? false,
+		});
+	}
+
+	public updateHighlightOptions(options: { backgroundColor?: string; fontSize?: number; bold?: boolean }) {
+		if (this.highlightManager) {
+			this.highlightManager.updateOptions(options);
+		}
+		this.storage.loadHighlightSettings().then((current) => {
+			this.storage.saveHighlightSettings({
+				enableHighlight: current?.enableHighlight ?? true,
+				backgroundColor: options.backgroundColor ?? current?.backgroundColor ?? "rgb(255, 220, 60)",
+				fontSize: options.fontSize ?? current?.fontSize ?? 0,
+				bold: options.bold ?? current?.bold ?? false,
+			});
+		});
 	}
 
 	private applyTabPinStyles(tabPinSettings: any) {

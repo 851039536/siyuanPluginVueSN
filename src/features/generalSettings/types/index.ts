@@ -143,11 +143,7 @@ export function applyCodeBlockCollapse(
         running = true;
         setTimeout(() => {running = false;}, 300);
         codeBlocks.forEach(async codeBlock => {
-          if(isCursorInCodeBlock(codeBlock)) {
-            const hljs = codeBlock.querySelector('.hljs');
-            if(hljs) hljs.style.maxHeight = 'none';
-            return;
-          }
+          if(isCursorInCodeBlock(codeBlock)) return;
           const hljs = await whenElementExist(() => codeBlock.querySelector('.hljs'));
           if(!hljs || hljs.scrollHeight <= codeMaxHeight) return;
           if(codeBlock.querySelector('.code-collapse-bar')) return;

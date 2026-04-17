@@ -1,8 +1,12 @@
 /**
  * 双击高亮管理器
  * 在文档编辑器中双击选中文本，自动高亮所有匹配内容
+ *
+ * 使用 DOM 标记（<mark> 标签）替代 CSS Custom Highlight API，
+ * 解决浏览器兼容性问题（Firefox 及旧版 Chromium 不支持 CSS.highlights）。
  */
 const HIGHLIGHT_STYLE_ID = "highlight-feature-styles";
+const HIGHLIGHT_MARK_CLASS = "plugin-highlight-mark";
 
 export class HighlightManager {
 	private selectedText = "";
@@ -10,6 +14,7 @@ export class HighlightManager {
 	private active = false;
 	private toastEl: HTMLDivElement | null = null;
 	private toastTimer: ReturnType<typeof setTimeout> | null = null;
+	private toastHideTimer: ReturnType<typeof setTimeout> | null = null;
 
 	enable() {
 		if (this.active) return;
@@ -24,7 +29,7 @@ export class HighlightManager {
 		this.active = false;
 		document.removeEventListener("mouseup", this.handleMouseUp);
 		document.removeEventListener("mousedown", this.handleMouseDown);
-		CSS.highlights?.delete("selected-results");
+		this.clearHighlights();
 		this.selectedText = "";
 		this.clearToast();
 	}
@@ -40,14 +45,17 @@ export class HighlightManager {
 		const target = event.target as HTMLElement;
 		if (!target.closest(".protyle-wysiwyg")) return;
 
+		// 如果点击的是已有高亮标记内的文本，不重新触发（避免闪烁）
+		if (target.closest(`.${HIGHLIGHT_MARK_CLASS}`)) return;
+
 		this.selectedText = selection;
 		const matchCount = this.highlightText(selection);
 		this.showToast(selection, matchCount);
 	};
 
 	private handleMouseDown = () => {
+		this.clearHighlights();
 		this.selectedText = "";
-		CSS.highlights?.delete("selected-results");
 	};
 
 	private addStyles() {
@@ -60,14 +68,13 @@ export class HighlightManager {
 		const style = document.createElement("style");
 		style.id = HIGHLIGHT_STYLE_ID;
 		style.textContent = `
-      ::highlight(selected-results) {
+      .${HIGHLIGHT_MARK_CLASS} {
         background-color: rgb(255, 220, 60);
         color: rgb(0, 0, 0);
         border-radius: 2px;
         box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
-      }
-      ::selection {
-        color: rgb(0, 0, 0);
+        padding: 0 1px;
+        margin: 0 -1px;
       }
       .highlight-toast {
         position: fixed;
@@ -102,78 +109,149 @@ export class HighlightManager {
 		this.styleAdded = true;
 	}
 
+	/**
+	 * 清除所有已有的高亮标记
+	 */
+	private clearHighlights() {
+		const marks = document.querySelectorAll(`.${HIGHLIGHT_MARK_CLASS}`);
+		for (const mark of marks) {
+			const parent = mark.parentNode;
+			if (!parent) continue;
+			// 将 <mark> 内的文本节点移出，替代 <mark> 自身
+			const frag = document.createDocumentFragment();
+			while (mark.firstChild) {
+				frag.appendChild(mark.firstChild);
+			}
+			parent.replaceChild(frag, mark);
+			// 合并相邻的文本节点，避免残留空白
+			parent.normalize();
+		}
+	}
+
+	/**
+	 * 在文本节点中插入 <mark> 高亮标记
+	 * 处理匹配跨节点边界的情况
+	 */
 	private highlightText(value: string): number {
+		this.clearHighlights();
+
 		const docRoot = document.querySelector(
 			".layout-tab-container > div:not(.fn__none) .protyle-wysiwyg",
 		);
 		if (!docRoot) return 0;
 
-		const str = value.trim().toLowerCase();
+		const str = value.trim();
 		if (!str) return 0;
 
-		const docText = docRoot.textContent?.toLowerCase() ?? "";
+		// 收集所有文本节点
 		const allTextNodes: Text[] = [];
-		const cumLengths: number[] = [];
-		let cumLen = 0;
-
 		const treeWalker = document.createTreeWalker(docRoot, NodeFilter.SHOW_TEXT);
 		let node: Node | null;
 		while ((node = treeWalker.nextNode())) {
 			allTextNodes.push(node as Text);
-			cumLen += node.textContent?.length ?? 0;
-			cumLengths.push(cumLen);
 		}
 
-		const ranges: Range[] = [];
-		let startIndex = 0;
-		const nodeCount = allTextNodes.length;
+		// 拼接纯文本并记录每个字符对应的节点索引
+		const textParts: { node: Text; start: number; length: number }[] = [];
+		let fullText = "";
+		for (const tn of allTextNodes) {
+			const text = tn.textContent ?? "";
+			if (text.length === 0) continue;
+			textParts.push({ node: tn, start: fullText.length, length: text.length });
+			fullText += text;
+		}
 
-		const findNodeIndex = (pos: number, startIdx: number): number => {
-			let left = startIdx;
-			let right = nodeCount - 1;
-			while (left < right) {
-				const mid = Math.floor((left + right + 1) / 2);
-				if (cumLengths[mid] <= pos) left = mid;
-				else right = mid - 1;
+		const lowerFull = fullText.toLowerCase();
+		const lowerStr = str.toLowerCase();
+		let matchCount = 0;
+		let searchFrom = 0;
+
+		while ((searchFrom = lowerFull.indexOf(lowerStr, searchFrom)) !== -1) {
+			const matchEnd = searchFrom + lowerStr.length;
+
+			// 找到匹配涉及的文本节点范围
+			let firstPartIdx = -1;
+			let lastPartIdx = -1;
+			for (let i = 0; i < textParts.length; i++) {
+				const p = textParts[i];
+				if (p.start + p.length > searchFrom && firstPartIdx === -1) {
+					firstPartIdx = i;
+				}
+				if (p.start < matchEnd) {
+					lastPartIdx = i;
+				}
+				if (p.start >= matchEnd) break;
 			}
-			return left;
-		};
 
-		let lastNodeIdx = 0;
-
-		while ((startIndex = docText.indexOf(str, startIndex)) !== -1) {
-			const endIndex = startIndex + str.length;
-			const range = document.createRange();
+			if (firstPartIdx === -1 || lastPartIdx === -1) {
+				searchFrom = matchEnd;
+				continue;
+			}
 
 			try {
-				lastNodeIdx = findNodeIndex(startIndex, lastNodeIdx);
-				const startNode = allTextNodes[lastNodeIdx];
-				const startOffset =
-					startIndex -
-					(cumLengths[lastNodeIdx] - startNode.textContent!.length);
-				range.setStart(startNode, startOffset);
-
-				const endNodeIdx = findNodeIndex(endIndex - 1, lastNodeIdx);
-				const endNode = allTextNodes[endNodeIdx];
-				const endOffset =
-					endIndex - (cumLengths[endNodeIdx] - endNode.textContent!.length);
-				range.setEnd(endNode, endOffset);
-
-				ranges.push(range);
+				this.wrapRange(
+					textParts,
+					firstPartIdx,
+					lastPartIdx,
+					searchFrom,
+					matchEnd,
+				);
+				matchCount++;
 			} catch {
-				// Skip invalid range
+				// 跳过无效范围
 			}
 
-			startIndex = endIndex;
+			searchFrom = matchEnd;
 		}
 
-		if (ranges.length > 0) {
-			CSS.highlights?.set("selected-results", new Highlight(...ranges));
-		} else {
-			CSS.highlights?.delete("selected-results");
-		}
+		return matchCount;
+	}
 
-		return ranges.length;
+	/**
+	 * 将匹配的文本范围用 <mark> 标签包裹
+	 */
+	private wrapRange(
+		textParts: { node: Text; start: number; length: number }[],
+		firstIdx: number,
+		lastIdx: number,
+		matchStart: number,
+		matchEnd: number,
+	) {
+		for (let i = firstIdx; i <= lastIdx; i++) {
+			const part = textParts[i];
+			const node = part.node;
+			const text = node.textContent ?? "";
+
+			// 计算在当前文本节点内的偏移
+			const localStart = Math.max(0, matchStart - part.start);
+			const localEnd = Math.min(part.length, matchEnd - part.start);
+
+			if (localStart >= localEnd) continue;
+
+			const before = text.slice(0, localStart);
+			const matched = text.slice(localStart, localEnd);
+			const after = text.slice(localEnd);
+
+			const mark = document.createElement("mark");
+			mark.className = HIGHLIGHT_MARK_CLASS;
+			mark.textContent = matched;
+
+			const parent = node.parentNode;
+			if (!parent) continue;
+
+			const frag = document.createDocumentFragment();
+			if (before) frag.appendChild(document.createTextNode(before));
+			frag.appendChild(mark);
+			if (after) frag.appendChild(document.createTextNode(after));
+
+			parent.replaceChild(frag, node);
+
+			// 后续节点不受影响，因为 textParts 已在循环外构建
+			// 但最后一个文本节点已被替换，如果还有后续节点需要更新引用
+			if (i === lastIdx && after) {
+				// after 变成了新的文本节点，不影响 textParts（因为循环结束）
+			}
+		}
 	}
 
 	private showToast(text: string, count: number) {
@@ -193,7 +271,10 @@ export class HighlightManager {
 
 		requestAnimationFrame(() => this.toastEl!.classList.add("show"));
 
-		this.toastTimer = setTimeout(() => {
+		if (this.toastHideTimer) {
+			clearTimeout(this.toastHideTimer);
+		}
+		this.toastHideTimer = setTimeout(() => {
 			if (this.toastEl) {
 				this.toastEl.classList.remove("show");
 				setTimeout(() => this.toastEl?.remove(), 200);
@@ -205,6 +286,10 @@ export class HighlightManager {
 		if (this.toastTimer) {
 			clearTimeout(this.toastTimer);
 			this.toastTimer = null;
+		}
+		if (this.toastHideTimer) {
+			clearTimeout(this.toastHideTimer);
+			this.toastHideTimer = null;
 		}
 		if (this.toastEl) {
 			this.toastEl.remove();

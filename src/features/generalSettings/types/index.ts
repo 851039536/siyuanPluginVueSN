@@ -510,10 +510,11 @@ export class GeneralSettings {
 	public async applyHighlightStyle() {
 		try {
 			const settings = await this.storage.loadHighlightSettings();
-			if (settings && settings.enableHighlight) {
-				this.highlightManager = new HighlightManager();
-				this.highlightManager.enable();
+			if (settings && settings.enableHighlight === false) {
+				return;
 			}
+			this.highlightManager = new HighlightManager();
+			this.highlightManager.enable();
 		} catch (error) {
 			console.error("应用双击高亮功能失败:", error);
 		}
@@ -543,6 +544,7 @@ export class GeneralSettings {
 		} else {
 			this.highlightManager.disable();
 		}
+		this.storage.saveHighlightSettings({ enableHighlight: enabled });
 	}
 
 	private applyTabPinStyles(tabPinSettings: any) {

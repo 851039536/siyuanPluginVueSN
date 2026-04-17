@@ -1,7 +1,7 @@
 <template>
   <div class="highlight-settings">
-    <label class="setting-label">
-      <span class="label-icon">🖍️</span>
+    <label class="section-header setting-label">
+      <span class="section-icon">🖍️</span>
       {{ i18n?.enableHighlight || '双击高亮功能' }}
     </label>
     <SiSwitch v-model="enableHighlight" @change="handleToggleChange" />
@@ -11,8 +11,8 @@
 
     <!-- 功能说明 -->
     <div class="feature-description">
-      <div class="description-title">
-        <span class="title-icon">💡</span>
+      <div class="section-header description-title">
+        <span class="section-icon">💡</span>
         {{ i18n?.featureDescription || '功能说明' }}
       </div>
       <ul class="description-list">
@@ -37,35 +37,25 @@ const enableHighlight = ref(true);
 const loadSettings = async () => {
 	try {
 		const settings = await props.plugin?.loadData("highlight-settings");
-		if (settings) enableHighlight.value = settings.enableHighlight ?? true;
-
-		// 从 GeneralSettings 共享实例获取当前高亮状态
-		const generalSettings = (props.plugin as any).__generalSettings;
-		if (generalSettings) {
-			const manager = generalSettings.getHighlightManager();
-			if (manager) {
-				enableHighlight.value = manager.isActive();
-			}
+		if (settings) {
+			enableHighlight.value = settings.enableHighlight ?? true;
 		}
 	} catch (e) {
 		console.error("加载高亮设置失败:", e);
 	}
 };
 
-const handleToggleChange = async () => {
+const handleToggleChange = () => {
 	try {
-		await props.plugin?.saveData("highlight-settings", {
-			enableHighlight: enableHighlight.value,
-		});
-
-		// 通过 GeneralSettings 共享实例更新高亮状态
 		const generalSettings = (props.plugin as any).__generalSettings;
 		if (generalSettings) {
 			generalSettings.updateHighlight(enableHighlight.value);
 		}
 
 		showMessage(
-			enableHighlight.value ? "双击高亮功能已启用" : "双击高亮功能已禁用",
+			enableHighlight.value
+				? (props.i18n?.highlightEnabled ?? "双击高亮功能已启用")
+				: (props.i18n?.highlightDisabled ?? "双击高亮功能已禁用"),
 			2000,
 			"info",
 		);
@@ -84,17 +74,24 @@ defineExpose({ loadSettings, enableHighlight });
   padding: 16px;
 }
 
-.setting-label {
+.section-header {
   display: flex;
   align-items: center;
   gap: 6px;
   font-size: 13px;
   font-weight: 600;
   color: var(--b3-theme-on-surface);
+}
+
+.setting-label {
   margin-bottom: 12px;
 }
 
-.label-icon {
+.description-title {
+  margin-bottom: 10px;
+}
+
+.section-icon {
   font-size: 14px;
   opacity: 0.8;
 }
@@ -114,20 +111,6 @@ defineExpose({ loadSettings, enableHighlight });
   border-radius: 8px;
 }
 
-.description-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--b3-theme-on-surface);
-  margin-bottom: 10px;
-}
-
-.title-icon {
-  font-size: 14px;
-}
-
 .description-list {
   margin: 0;
   padding-left: 18px;
@@ -136,11 +119,7 @@ defineExpose({ loadSettings, enableHighlight });
   line-height: 1.8;
 }
 
-.description-list li {
+.description-list li:not(:last-child) {
   margin-bottom: 4px;
-}
-
-.description-list li:last-child {
-  margin-bottom: 0;
 }
 </style>

@@ -90,19 +90,19 @@ export class HighlightManager {
 		}
 
 		const { backgroundColor, fontSize, bold } = this.options;
-		const fontSizeRule = fontSize > 0 ? `font-size: ${fontSize}px;` : "";
-		const boldRule = bold ? "font-weight: bold;" : "";
+		const fontSizeRule = fontSize > 0 ? `font-size: ${fontSize}px !important;` : "";
+		const boldRule = bold ? "font-weight: bold !important;" : "";
 
 		const style = document.createElement("style");
 		style.id = HIGHLIGHT_STYLE_ID;
 		style.textContent = `
       .${HIGHLIGHT_MARK_CLASS} {
-        background-color: ${backgroundColor};
-        color: rgb(0, 0, 0);
-        border-radius: 2px;
-        box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
-        padding: 0 1px;
-        margin: 0 -1px;
+        background-color: ${backgroundColor} !important;
+        color: rgb(0, 0, 0) !important;
+        border-radius: 2px !important;
+        box-shadow: 0 0 0 1px rgba(0,0,0,0.1) !important;
+        padding: 0 1px !important;
+        margin: 0 -1px !important;
         ${fontSizeRule}
         ${boldRule}
       }

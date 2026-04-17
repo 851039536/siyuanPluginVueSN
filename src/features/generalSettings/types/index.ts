@@ -64,6 +64,241 @@ export function applyCodeBlockStyle(style: CodeBlockStyle | string): void {
 	document.body.classList.add(`codeblock-style-${style}`);
 }
 
+export function applyCodeBlockCollapse(
+	enable: boolean,
+	height: number,
+): void {
+	// 移除现有的折叠样式和功能
+	const existingStyle = document.getElementById("codeblock-collapse-style");
+	if (existingStyle) {
+		existingStyle.remove();
+	}
+
+	const existingScript = document.getElementById("codeblock-collapse-script");
+	if (existingScript) {
+		existingScript.remove();
+	}
+
+	if (!enable) {
+		return;
+	}
+
+	// 添加折叠样式
+	const style = document.createElement("style");
+	style.id = "codeblock-collapse-style";
+	style.innerHTML = `
+    .code-block .code-collapse-bar {
+      display: flex;
+      justify-content: center;
+      padding: 4px 0;
+      background: var(--b3-theme-surface);
+      border-top: 1px solid var(--b3-border-color);
+    }
+
+    .code-block .code-collapse-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 10px;
+      background: none;
+      border: 1px solid var(--b3-border-color);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--b3-theme-on-surface);
+      line-height: 1.4;
+    }
+
+    .code-block .code-collapse-btn:hover {
+      background: var(--b3-theme-surface-variant);
+    }
+
+    .code-block .code-collapse-btn svg {
+      width: 12px;
+      height: 12px;
+      fill: currentColor;
+    }
+
+    .code-block .code-collapse-btn svg.collapsed {
+      transform: rotate(-90deg);
+    }
+  `;
+	document.head.appendChild(style);
+
+	// 添加折叠功能脚本
+	const script = document.createElement("script");
+	script.id = "codeblock-collapse-script";
+	script.innerHTML = `
+    (function() {
+      const codeMaxHeight = ${height};
+      let running = false;
+
+      function isMobile() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      }
+
+      function addCodeExtends(codeBlocks) {
+        if(codeBlocks.length === 0) return;
+        if(running) return;
+        running = true;
+        setTimeout(() => {running = false;}, 300);
+        codeBlocks.forEach(async codeBlock => {
+          if(isCursorInCodeBlock(codeBlock)) {
+            const hljs = codeBlock.querySelector('.hljs');
+            if(hljs) hljs.style.maxHeight = 'none';
+            return;
+          }
+          const hljs = await whenElementExist(() => codeBlock.querySelector('.hljs'));
+          if(!hljs || hljs.scrollHeight <= codeMaxHeight) return;
+          if(codeBlock.querySelector('.code-collapse-bar')) return;
+
+          let collapsed = false;
+          hljs.style.maxHeight = codeMaxHeight + 'px';
+          hljs.style.overflow = 'hidden';
+
+          const isZh = document.documentElement.lang === 'zh_CN';
+          const bar = document.createElement('div');
+          bar.className = 'code-collapse-bar protyle-custom';
+          bar.contentEditable = 'false';
+          bar.innerHTML = \`
+            <button class="code-collapse-btn" contenteditable="false">
+              <svg class="collapsed" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12.78 6.22a.75.75 0 010 1.06l-4.25 4.25a.75.75 0 01-1.06 0L3.22 7.28a.75.75 0 011.06-1.06L8 9.94l3.72-3.72a.75.75 0 011.06 0z"/>
+              </svg>
+              <span contenteditable="false">\${isZh ? '展开代码' : 'Expand'}</span>
+            </button>
+          \`;
+          codeBlock.appendChild(bar);
+
+          bar.querySelector('.code-collapse-btn').onclick = () => {
+            collapsed = !collapsed;
+            const svg = bar.querySelector('svg');
+            const label = bar.querySelector('.code-collapse-btn span');
+            if (collapsed) {
+              hljs.style.maxHeight = codeMaxHeight + 'px';
+              hljs.style.overflow = 'hidden';
+              svg.classList.add('collapsed');
+              label.textContent = isZh ? '展开代码' : 'Expand';
+            } else {
+              hljs.style.maxHeight = 'none';
+              hljs.style.overflow = '';
+              svg.classList.remove('collapsed');
+              label.textContent = isZh ? '收起代码' : 'Collapse';
+            }
+          };
+        });
+      }
+
+      function isCursorInCodeBlock(codeBlock) {
+        if(!codeBlock) return false;
+        let cursorEl = getCursorElement();
+        if(!cursorEl) return false;
+        cursorEl = cursorEl.closest('.code-block');
+        if(!cursorEl) return false;
+        return cursorEl === codeBlock;
+      }
+
+      function getCursorElement() {
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+          const range = selection.getRangeAt(0);
+          const startContainer = range.startContainer;
+          const cursorElement = startContainer.nodeType === Node.TEXT_NODE
+              ? startContainer.parentElement
+              : startContainer;
+          return cursorElement;
+        }
+        return null;
+      }
+
+      function whenElementExist(selector) {
+        return new Promise(resolve => {
+          const checkForElement = () => {
+            let element = null;
+            if (typeof selector === 'function') {
+              element = selector();
+            } else {
+              element = document.querySelector(selector);
+            }
+            if (element) {
+              resolve(element);
+            } else {
+              requestAnimationFrame(checkForElement);
+            }
+          };
+          checkForElement();
+        });
+      }
+
+      function observeProtyleAddition(el, callback) {
+        const config = { attributes: false, childList: true, subtree: true };
+        const observer = new MutationObserver((mutationsList) => {
+          mutationsList.forEach(mutation => {
+            if (mutation.type === 'childList') {
+              const protyles = Array.from(mutation.addedNodes).filter(node =>
+                node.nodeType === Node.ELEMENT_NODE &&
+                (node.classList.contains('protyle') || node.classList.contains('protyle-content'))
+              );
+              if (protyles.length > 0) {
+                callback(protyles);
+              }
+            }
+          });
+        });
+        observer.observe(el, config);
+        return () => {
+          observer.disconnect();
+        };
+      }
+
+      // 初始化代码块折叠功能
+      function initCodeBlockCollapse() {
+        whenElementExist('body').then(async el => {
+          let protyle;
+          await whenElementExist(() => {
+            protyle = el.querySelector('.protyle');
+            return protyle && protyle?.dataset?.loading === 'finished';
+          });
+          addCodeExtends(protyle.querySelectorAll('.code-block'));
+
+          let scrollContainer = isMobile() ? window : protyle.querySelector(".protyle-content");
+          let debounceTimer;
+          scrollContainer.addEventListener('scroll', () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+              addCodeExtends(protyle.querySelectorAll('.code-block'));
+            }, 100);
+          });
+
+          observeProtyleAddition(el, protyles => {
+            protyles.forEach(async protyle => {
+              if(!protyle.classList.contains('protyle')) {
+                protyle = protyle.closest('.protyle');
+              }
+              addCodeExtends(protyle.querySelectorAll('.code-block'));
+              let scrollContainer = isMobile() ? window : protyle.querySelector(".protyle-content");
+              scrollContainer.addEventListener('scroll', () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                  addCodeExtends(protyle.querySelectorAll('.code-block'));
+                }, 100);
+              });
+            });
+          });
+        });
+      }
+
+      // 如果页面已加载，立即初始化
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initCodeBlockCollapse);
+      } else {
+        initCodeBlockCollapse();
+      }
+    })();
+  `;
+	document.head.appendChild(script);
+}
+
 export class GeneralSettings {
 	private plugin: Plugin;
 	private autoBackupTimer: number | null = null;
@@ -850,6 +1085,12 @@ export class GeneralSettings {
 	private applyCodeBlockStyleFromSettings(settings: any) {
 		try {
 			applyCodeBlockStyle(settings.style || "default");
+
+			// 应用代码块折叠
+			applyCodeBlockCollapse(
+				settings.enableCollapse ?? true,
+				settings.collapseHeight ?? 400,
+			);
 
 			// 应用代码块样式增强
 			if (settings.enabled) {

@@ -132,6 +132,8 @@ export interface HighlightSettings {
 	backgroundColor: string;
 	fontSize: number;
 	bold: boolean;
+	minTextLength: number;
+	minLetterLength: number;
 }
 
 export interface BackupSettings {

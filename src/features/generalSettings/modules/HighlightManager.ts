@@ -12,12 +12,16 @@ export interface HighlightOptions {
 	backgroundColor?: string;
 	fontSize?: number;
 	bold?: boolean;
+	minTextLength?: number;
+	minLetterLength?: number;
 }
 
 const DEFAULT_OPTIONS: Required<HighlightOptions> = {
 	backgroundColor: "rgb(255, 220, 60)",
 	fontSize: 0,
 	bold: false,
+	minTextLength: 1,
+	minLetterLength: 1,
 };
 
 export class HighlightManager {
@@ -71,6 +75,12 @@ export class HighlightManager {
 
 		// 如果点击的是已有高亮标记内的文本，不重新触发（避免闪烁）
 		if (target.closest(`.${HIGHLIGHT_MARK_CLASS}`)) return;
+
+		// 检查长度限制：分离中文字符和字母字符
+		const textChars = selection.replace(/[a-zA-Z]/g, "");
+		const letterChars = selection.replace(/[^\x00-\x7F]|[^\a-zA-Z]/g, "");
+		if (textChars.length > 0 && textChars.length < this.options.minTextLength) return;
+		if (letterChars.length > 0 && letterChars.length < this.options.minLetterLength) return;
 
 		this.selectedText = selection;
 		const matchCount = this.highlightText(selection);

@@ -71,6 +71,34 @@
           </label>
           <SiSwitch v-model="bold" @change="handleStyleChange" />
         </div>
+
+        <div class="style-row">
+          <label class="style-label">
+            {{ i18n?.highlightMinTextLength || '最小文字长度' }}
+          </label>
+          <input
+            type="number"
+            v-model.number="minTextLength"
+            class="style-number"
+            min="1"
+            max="100"
+            @change="handleStyleChange"
+          />
+        </div>
+
+        <div class="style-row">
+          <label class="style-label">
+            {{ i18n?.highlightMinLetterLength || '最小字母长度' }}
+          </label>
+          <input
+            type="number"
+            v-model.number="minLetterLength"
+            class="style-number"
+            min="1"
+            max="100"
+            @change="handleStyleChange"
+          />
+        </div>
       </div>
     </template>
   </div>
@@ -90,6 +118,8 @@ const enableHighlight = ref(true);
 const backgroundColor = ref("rgb(255, 220, 60)");
 const fontSize = ref("0");
 const bold = ref(false);
+const minTextLength = ref(1);
+const minLetterLength = ref(1);
 
 const loadSettings = async () => {
 	try {
@@ -99,6 +129,8 @@ const loadSettings = async () => {
 			backgroundColor.value = settings.backgroundColor ?? "rgb(255, 220, 60)";
 			fontSize.value = settings.fontSize?.toString() ?? "0";
 			bold.value = settings.bold ?? false;
+			minTextLength.value = settings.minTextLength ?? 1;
+			minLetterLength.value = settings.minLetterLength ?? 1;
 		}
 	} catch (e) {
 		console.error("加载高亮设置失败:", e);
@@ -132,6 +164,8 @@ const handleStyleChange = () => {
 				backgroundColor: backgroundColor.value,
 				fontSize: Number(fontSize.value),
 				bold: bold.value,
+				minTextLength: minTextLength.value,
+				minLetterLength: minLetterLength.value,
 			});
 		}
 	} catch (e) {
@@ -263,5 +297,17 @@ defineExpose({ loadSettings, enableHighlight });
   color: var(--b3-theme-on-surface);
   outline: none;
   cursor: pointer;
+}
+
+.style-number {
+  width: 60px;
+  padding: 4px 8px;
+  font-size: 12px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  outline: none;
+  text-align: center;
 }
 </style>

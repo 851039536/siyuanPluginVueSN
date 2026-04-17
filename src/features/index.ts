@@ -29,7 +29,7 @@ export {
 	toggleEverythingSearch,
 	everythingSearchVisible,
 } from "./everythingSearch/types";
-export { registerSystemMonitor } from "./systemMonitor";
+export { registerStatusBar } from "./statusBar";
 export { registerFloatingToolbar } from "./floatingToolbar";
 export { registerFloatingBox } from "./floatingBox";
 export { registerTextDiff } from "./textDiff/types";

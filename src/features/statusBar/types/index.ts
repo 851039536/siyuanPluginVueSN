@@ -1,5 +1,5 @@
 /**
- * 系统监控类型定义和常量
+ * 状态栏类型定义和常量
  */
 
 // ============================================================
@@ -13,7 +13,7 @@ export interface Thresholds {
 	MEM: { HIGH: number; MEDIUM: number };
 }
 
-export interface SystemMonitorState {
+export interface StatusBarState {
 	cpuPercent: number;
 	memPercent: number;
 	uptimeSeconds: number;

@@ -42,7 +42,7 @@
 
 <script setup lang="ts">
 import MonitorItem from "./components/MonitorItem.vue";
-import { useSystemMonitor } from "./composables/useSystemMonitor";
+import { useStatusBar } from "./composables/useStatusBar";
 import { showPasswordVault } from "../passwordVault/types";
 
 const {
@@ -56,7 +56,7 @@ const {
 	totalNotesDisplay,
 	totalWordsDisplay,
 	statisticsTooltip,
-} = useSystemMonitor();
+} = useStatusBar();
 
 const handleOpenPasswordVault = () => {
 	showPasswordVault();

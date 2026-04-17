@@ -142,8 +142,8 @@ export const FEATURE_ICONS = {
 		color: "#3b82f6",
 	},
 
-	// 系统监控
-	systemMonitor: {
+	// 状态栏
+	statusBar: {
 		icon: "mdi:monitor-dashboard",
 		color: "#8b5cf6",
 	},

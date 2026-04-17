@@ -117,7 +117,7 @@ const toggleFavorite = () => {
 | `encryption`      | 锁               | #dc2626   |
 | `video`           | 视频             | #e11d48   |
 | `everythingSearch` | 文件搜索        | #3b82f6   |
-| `systemMonitor`   | 监控仪表盘       | #8b5cf6   |
+| `statusBar`      | 监控仪表盘       | #8b5cf6   |
 | `apiReference`    | API              | #0ea5e9   |
 | `floatingToolbar` | 文本格式         | #f97316   |
 | `floatingBox`     | 部件             | #8b5cf6   |

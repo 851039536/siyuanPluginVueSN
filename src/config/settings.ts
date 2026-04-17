@@ -24,7 +24,7 @@ export interface PluginSettings {
 	enableEncryption: boolean; // 是否启用内容加密功能
 	enableVideo: boolean; // 是否启用视频管理器功能
 	enableEverythingSearch: boolean; // 是否启用Everything本地搜索功能
-	enableSystemMonitor: boolean; // 是否启用系统监控功能
+	enableStatusBar: boolean; // 是否启用状态栏功能
 	enableFloatingToolbar: boolean; // 是否启用浮动工具栏功能
 	enableFloatingBox: boolean; // 是否启用悬浮框功能
 	enableSkills: boolean; // 是否启用技能库功能
@@ -102,7 +102,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	enableEncryption: true,
 	enableVideo: true,
 	enableEverythingSearch: true,
-	enableSystemMonitor: true,
+	enableStatusBar: true,
 	enableFloatingToolbar: true,
 	enableFloatingBox: true,
 	enableSkills: true,

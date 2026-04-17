@@ -17,9 +17,6 @@
       </div>
       <ul class="description-list">
         <li>{{ i18n?.highlightFeature1 || '在文档编辑器中双击选中文本，自动应用高亮样式' }}</li>
-        <li>{{ i18n?.highlightFeature2 || '支持多种高亮颜色，可在设置中自定义颜色主题' }}</li>
-        <li>{{ i18n?.highlightFeature3 || '高亮内容会在文档中持久保存，方便后续查阅' }}</li>
-        <li>{{ i18n?.highlightFeature4 || '配合搜索功能可快速定位高亮内容' }}</li>
       </ul>
     </div>
   </div>

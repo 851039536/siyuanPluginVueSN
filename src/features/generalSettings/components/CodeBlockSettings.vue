@@ -634,98 +634,44 @@ function applyCodeBlockCollapse(enable: boolean, height: number) {
 		return;
 	}
 
-	// 添加折叠样式 - GitHub 风格
+	// 添加折叠样式
 	const style = document.createElement("style");
 	style.id = "codeblock-collapse-style";
 	style.innerHTML = `
-    /* GitHub 风格折叠按钮 */
-    .code-block .code-expand-wrapper {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 70px;
+    .code-block .code-collapse-bar {
       display: flex;
-      align-items: center;
       justify-content: center;
-      pointer-events: none;
-      background: linear-gradient(to bottom,
-        transparent 0%,
-        rgba(var(--b3-theme-background-rgb, 255, 255, 255), 0.7) 30%,
-        rgba(var(--b3-theme-background-rgb, 255, 255, 255), 0.95) 70%,
-        rgba(var(--b3-theme-background-rgb, 255, 255, 255), 1) 100%
-      );
+      padding: 4px 0;
+      background: var(--b3-theme-surface);
+      border-top: 1px solid var(--b3-border-color);
     }
 
-    .code-block .code-expand-btn {
-      pointer-events: auto;
+    .code-block .code-collapse-btn {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 5px 14px;
-      background: var(--b3-theme-surface);
-      border: 1px solid rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.15);
-      border-radius: 6px;
+      gap: 4px;
+      padding: 2px 10px;
+      background: none;
+      border: 1px solid var(--b3-border-color);
+      border-radius: 4px;
       cursor: pointer;
       font-size: 12px;
-      font-weight: 500;
       color: var(--b3-theme-on-surface);
-      transition: all 0.15s ease;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-      line-height: 1.5;
+      line-height: 1.4;
     }
 
-    .code-block .code-expand-btn:hover {
+    .code-block .code-collapse-btn:hover {
       background: var(--b3-theme-surface-variant);
-      border-color: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.25);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
-    .code-block .code-expand-btn:active {
-      background: var(--b3-theme-outline);
-      transform: scale(0.98);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    }
-
-    .code-block .code-expand-icon {
-      width: 14px;
-      height: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .code-block .code-expand-icon svg {
-      width: 100%;
-      height: 100%;
+    .code-block .code-collapse-btn svg {
+      width: 12px;
+      height: 12px;
       fill: currentColor;
     }
 
-    /* 折叠状态下的代码块高度限制 */
-    div:not(#preview) > .protyle-wysiwyg .code-block .hljs {
-      max-height: ${height}px;
-    }
-
-    /* 深色主题适配 */
-    [data-theme-mode="dark"] .code-block .code-expand-wrapper {
-      background: linear-gradient(to bottom,
-        transparent 0%,
-        rgba(var(--b3-theme-background-rgb, 31, 31, 31), 0.7) 30%,
-        rgba(var(--b3-theme-background-rgb, 31, 31, 31), 0.95) 70%,
-        rgba(var(--b3-theme-background-rgb, 31, 31, 31), 1) 100%
-      );
-    }
-
-    /* 移动端适配 */
-    @media (max-width: 768px) {
-      .code-block .code-expand-btn {
-        padding: 8px 20px;
-        font-size: 13px;
-      }
-
-      .code-block .code-expand-wrapper {
-        height: 100px;
-      }
+    .code-block .code-collapse-btn svg.collapsed {
+      transform: rotate(-90deg);
     }
   `;
 	document.head.appendChild(style);
@@ -750,48 +696,45 @@ function applyCodeBlockCollapse(enable: boolean, height: number) {
         codeBlocks.forEach(async codeBlock => {
           if(isCursorInCodeBlock(codeBlock)) {
             const hljs = codeBlock.querySelector('.hljs');
-            if(hljs) hljs.style.maxHeight = '100%';
+            if(hljs) hljs.style.maxHeight = 'none';
             return;
           }
-          if(codeBlock.querySelector('.code-expand-wrapper')) return;
           const hljs = await whenElementExist(() => codeBlock.querySelector('.hljs'));
           if(!hljs || hljs.scrollHeight <= codeMaxHeight) return;
-          // 如果已经是展开状态（maxHeight 为 100% 或 none），则跳过
-          const currentMaxHeight = hljs.style.maxHeight;
-          if(currentMaxHeight === '100%' || currentMaxHeight === 'none' || currentMaxHeight === '') {
-            // maxHeight 为空说明是初始状态（CSS 控制），需要添加折叠
-            if(currentMaxHeight !== '') return;
-          }
-          const expandWrapper = document.createElement('div');
-          expandWrapper.className = 'code-expand-wrapper protyle-custom';
-          const expandText = document.documentElement.lang === 'zh_CN' ? '展开代码' : 'Expand Code';
-          expandWrapper.innerHTML = \`
-            <button class="code-expand-btn">
-              <span class="code-expand-icon">
-                <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12.78 6.22a.75.75 0 010 1.06l-4.25 4.25a.75.75 0 01-1.06 0L3.22 7.28a.75.75 0 011.06-1.06L8 9.94l3.72-3.72a.75.75 0 011.06 0z"/>
-                </svg>
-              </span>
-              <span>\${expandText}</span>
+          if(codeBlock.querySelector('.code-collapse-bar')) return;
+
+          let collapsed = false;
+          hljs.style.maxHeight = codeMaxHeight + 'px';
+          hljs.style.overflow = 'hidden';
+
+          const isZh = document.documentElement.lang === 'zh_CN';
+          const bar = document.createElement('div');
+          bar.className = 'code-collapse-bar protyle-custom';
+          bar.innerHTML = \`
+            <button class="code-collapse-btn">
+              <svg class="collapsed" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12.78 6.22a.75.75 0 010 1.06l-4.25 4.25a.75.75 0 01-1.06 0L3.22 7.28a.75.75 0 011.06-1.06L8 9.94l3.72-3.72a.75.75 0 011.06 0z"/>
+              </svg>
+              <span>\${isZh ? '展开代码' : 'Expand'}</span>
             </button>
           \`;
-          codeBlock.appendChild(expandWrapper);
-          hljs.style.maxHeight = codeMaxHeight + 'px';
+          codeBlock.appendChild(bar);
 
-          expandWrapper.querySelector('.code-expand-btn').onclick = () => {
-            // 添加展开动画
-            expandWrapper.style.transition = 'opacity 0.2s ease';
-            expandWrapper.style.opacity = '0';
-            expandWrapper.style.pointerEvents = 'none';
-
-            // 平滑展开代码块
-            hljs.style.transition = 'max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
-            hljs.style.maxHeight = hljs.scrollHeight + 'px';
-
-            setTimeout(() => {
+          bar.querySelector('.code-collapse-btn').onclick = () => {
+            collapsed = !collapsed;
+            const svg = bar.querySelector('svg');
+            const label = bar.querySelector('.code-collapse-btn span');
+            if (collapsed) {
+              hljs.style.maxHeight = codeMaxHeight + 'px';
+              hljs.style.overflow = 'hidden';
+              svg.classList.add('collapsed');
+              label.textContent = isZh ? '展开代码' : 'Expand';
+            } else {
               hljs.style.maxHeight = 'none';
-              expandWrapper.remove();
-            }, 400);
+              hljs.style.overflow = '';
+              svg.classList.remove('collapsed');
+              label.textContent = isZh ? '收起代码' : 'Collapse';
+            }
           };
         });
       }

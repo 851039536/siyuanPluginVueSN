@@ -851,7 +851,7 @@ export class GeneralSettings {
 				return;
 			}
 			const options = settings
-				? { backgroundColor: settings.backgroundColor, fontSize: settings.fontSize, bold: settings.bold }
+				? { backgroundColor: settings.backgroundColor, fontSize: settings.fontSize, bold: settings.bold, minTextLength: settings.minTextLength, minLetterLength: settings.minLetterLength }
 				: undefined;
 			this.highlightManager = new HighlightManager(options);
 			this.highlightManager.enable();
@@ -890,10 +890,12 @@ export class GeneralSettings {
 			backgroundColor: current?.backgroundColor ?? "rgb(255, 220, 60)",
 			fontSize: current?.fontSize ?? 0,
 			bold: current?.bold ?? false,
+			minTextLength: current?.minTextLength ?? 1,
+			minLetterLength: current?.minLetterLength ?? 1,
 		});
 	}
 
-	public updateHighlightOptions(options: { backgroundColor?: string; fontSize?: number; bold?: boolean }) {
+	public updateHighlightOptions(options: { backgroundColor?: string; fontSize?: number; bold?: boolean; minTextLength?: number; minLetterLength?: number }) {
 		if (this.highlightManager) {
 			this.highlightManager.updateOptions(options);
 		}
@@ -903,6 +905,8 @@ export class GeneralSettings {
 				backgroundColor: options.backgroundColor ?? current?.backgroundColor ?? "rgb(255, 220, 60)",
 				fontSize: options.fontSize ?? current?.fontSize ?? 0,
 				bold: options.bold ?? current?.bold ?? false,
+				minTextLength: options.minTextLength ?? current?.minTextLength ?? 1,
+				minLetterLength: options.minLetterLength ?? current?.minLetterLength ?? 1,
 			});
 		});
 	}

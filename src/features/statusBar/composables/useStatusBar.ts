@@ -19,6 +19,16 @@ function formatUptime(seconds: number): { hours: number; minutes: number } {
 	};
 }
 
+function formatCount(
+	count: number,
+	thresholds: [number, string][],
+): string {
+	for (const [threshold, suffix] of thresholds) {
+		if (count >= threshold) return `${(count / threshold).toFixed(1)}${suffix}`;
+	}
+	return String(count);
+}
+
 export function useStatusBar() {
 	const state = reactive<StatusBarState>({
 		cpuPercent: 0,
@@ -29,11 +39,10 @@ export function useStatusBar() {
 		totalWords: 0,
 	});
 
-	let intervalId: ReturnType<typeof setInterval> | null = null;
+	let intervalIds: ReturnType<typeof setInterval>[] = [];
 	let timeoutId: ReturnType<typeof setTimeout> | null = null;
 	let lastCPU: NodeJS.CpuUsage | null = null;
 	let lastTime: number | null = null;
-	let statisticsIntervalId: ReturnType<typeof setInterval> | null = null;
 
 	const cpuUsageDisplay = computed(() => `${Math.round(state.cpuPercent)}%`);
 
@@ -47,20 +56,20 @@ export function useStatusBar() {
 		return hours > 0 ? `${hours}h${minutes}m` : `${minutes}m`;
 	});
 
-	const totalNotesDisplay = computed(() => {
-		const count = state.totalNotes;
-		if (count >= 10000) return `${(count / 10000).toFixed(1)}w`;
-		if (count >= 1000) return `${(count / 1000).toFixed(1)}k`;
-		return String(count);
-	});
+	const totalNotesDisplay = computed(() =>
+		formatCount(state.totalNotes, [
+			[10000, "w"],
+			[1000, "k"],
+		]),
+	);
 
-	const totalWordsDisplay = computed(() => {
-		const count = state.totalWords;
-		if (count >= 100000000) return `${(count / 100000000).toFixed(1)}亿`;
-		if (count >= 10000) return `${(count / 10000).toFixed(1)}万`;
-		if (count >= 1000) return `${(count / 1000).toFixed(1)}k`;
-		return String(count);
-	});
+	const totalWordsDisplay = computed(() =>
+		formatCount(state.totalWords, [
+			[100000000, "亿"],
+			[10000, "万"],
+			[1000, "k"],
+		]),
+	);
 
 	const statisticsTooltip = computed(() => {
 		return `文档数: ${state.totalNotes} 篇\n总字数: ${state.totalWords.toLocaleString()} 字`;
@@ -137,33 +146,24 @@ export function useStatusBar() {
 	}
 
 	function start() {
-		if (intervalId) return;
+		if (intervalIds.length) return;
 		updateStats();
-		intervalId = setInterval(updateStats, MONITOR_INTERVAL_MS);
-	}
-
-	function startStatistics() {
-		if (statisticsIntervalId) return;
 		fetchStatistics();
-		statisticsIntervalId = setInterval(fetchStatistics, STATISTICS_INTERVAL_MS);
+		intervalIds = [
+			setInterval(updateStats, MONITOR_INTERVAL_MS),
+			setInterval(fetchStatistics, STATISTICS_INTERVAL_MS),
+		];
 	}
 
 	function stop() {
-		if (intervalId) {
-			clearInterval(intervalId);
-			intervalId = null;
-		}
-		if (statisticsIntervalId) {
-			clearInterval(statisticsIntervalId);
-			statisticsIntervalId = null;
-		}
+		intervalIds.forEach(clearInterval);
+		intervalIds = [];
 	}
 
 	onMounted(() => {
 		timeoutId = setTimeout(() => {
 			state.showMonitor = true;
 			start();
-			startStatistics();
 		}, INITIAL_DELAY_MS);
 	});
 

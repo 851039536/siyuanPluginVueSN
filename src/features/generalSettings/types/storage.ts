@@ -54,7 +54,7 @@ export interface TabPinSettings {
 }
 
 export interface CodeBlockSettings {
-	style: "default" | "github" | "mac" | "cartoon";
+	style: "default" | "github" | "mac";
 	enableCollapse: boolean;
 	collapseHeight: number;
 	// 样式增强

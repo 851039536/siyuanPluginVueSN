@@ -34,18 +34,18 @@
           <!-- 风格卡片选择器 -->
           <div class="style-cards">
             <div
-              v-for="style in (['default', 'github', 'mac', 'cartoon'] as const)"
+              v-for="style in (['default', 'github', 'mac'] as const)"
               :key="style"
               :class="['style-card', { active: settings.style === style }]"
-              @click="settings.style = style as 'default' | 'github' | 'mac' | 'cartoon'"
+              @click="settings.style = style as 'default' | 'github' | 'mac'"
             >
               <div class="style-card-icon">
                 <span v-if="style === 'default'">📄</span>
                 <span v-if="style === 'github'">🐙</span>
                 <span v-if="style === 'mac'">🍎</span>
-                <span v-if="style === 'cartoon'">🎨</span>
               </div>
               <div class="style-card-name">{{ getStyleName(style) }}</div>
+              <div class="style-card-desc">{{ getStyleDesc(style) }}</div>
               <div v-if="settings.style === style" class="style-card-check">✓</div>
             </div>
           </div>
@@ -376,7 +376,7 @@ import {
 import { applyCodeBlockStyle, applyCodeBlockCollapse, applyCodeBlockEnhancedStyles } from "../types";
 
 interface CodeBlockSettings {
-	style: "default" | "github" | "mac" | "cartoon";
+	style: "default" | "github" | "mac";
 	enableCollapse: boolean;
 	collapseHeight: number;
 	// 样式增强
@@ -519,9 +519,17 @@ function getStyleName(style: string): string {
 		default: props.i18n.defaultStyle || "默认风格",
 		github: props.i18n.githubStyle || "GitHub 风格",
 		mac: props.i18n.macStyle || "Mac 风格",
-		cartoon: props.i18n.cartoonStyle || "卡通风格",
 	};
 	return names[style] || style;
+}
+
+function getStyleDesc(style: string): string {
+	const descs: Record<string, string> = {
+		default: props.i18n.defaultStyleDesc || "思源原生外观",
+		github: props.i18n.githubStyleDesc || "GitHub 深色代码块",
+		mac: props.i18n.macStyleDesc || "macOS 窗口样式",
+	};
+	return descs[style] || "";
 }
 
 // 加载保存的设置

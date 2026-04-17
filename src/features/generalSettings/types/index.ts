@@ -182,6 +182,9 @@ export function applyCodeBlockCollapse(
 
 	const existingScript = document.getElementById("codeblock-collapse-script");
 	if (existingScript) {
+		// 清理滚动监听器
+		const cleanupEvent = new Event("codeblock-collapse-cleanup");
+		document.dispatchEvent(cleanupEvent);
 		existingScript.remove();
 	}
 
@@ -193,12 +196,41 @@ export function applyCodeBlockCollapse(
 	const style = document.createElement("style");
 	style.id = "codeblock-collapse-style";
 	style.innerHTML = `
+    .code-block.code-block-collapse-wrapper {
+      position: relative;
+    }
+
+    .code-block.code-block-collapse-wrapper .hljs {
+      transition: max-height 0.3s ease;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .code-block.code-block-collapse-wrapper .code-collapse-fade {
+      position: absolute;
+      bottom: 40px;
+      left: 0;
+      right: 0;
+      height: 40px;
+      background: linear-gradient(to bottom, transparent, var(--b3-theme-surface));
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 1;
+    }
+
+    .code-block.code-block-collapse-wrapper:not(.code-block-collapsed) .code-collapse-fade {
+      opacity: 0;
+    }
+
     .code-block .code-collapse-bar {
+      position: sticky;
+      bottom: 0;
       display: flex;
       justify-content: center;
       padding: 4px 0;
       background: var(--b3-theme-surface);
       border-top: 1px solid var(--b3-border-color);
+      z-index: 2;
     }
 
     .code-block .code-collapse-btn {
@@ -213,6 +245,7 @@ export function applyCodeBlockCollapse(
       font-size: 12px;
       color: var(--b3-theme-on-surface);
       line-height: 1.4;
+      transition: background 0.2s ease;
     }
 
     .code-block .code-collapse-btn:hover {
@@ -223,10 +256,18 @@ export function applyCodeBlockCollapse(
       width: 12px;
       height: 12px;
       fill: currentColor;
+      transition: transform 0.3s ease;
     }
 
     .code-block .code-collapse-btn svg.collapsed {
       transform: rotate(-90deg);
+    }
+
+    .code-block .code-collapse-line-info {
+      font-size: 11px;
+      color: var(--b3-theme-on-surface);
+      opacity: 0.6;
+      margin-left: 6px;
     }
   `;
 	document.head.appendChild(style);
@@ -238,9 +279,17 @@ export function applyCodeBlockCollapse(
     (function() {
       const codeMaxHeight = ${height};
       let running = false;
+      const scrollCleanupFns = [];
 
       function isMobile() {
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      }
+
+      function countLines(hljs) {
+        const codeEl = hljs.querySelector('code');
+        if (!codeEl) return 0;
+        const text = codeEl.textContent || '';
+        return text.split('\\n').length;
       }
 
       function addCodeExtends(codeBlocks) {
@@ -254,38 +303,50 @@ export function applyCodeBlockCollapse(
           if(!hljs || hljs.scrollHeight <= codeMaxHeight) return;
           if(codeBlock.querySelector('.code-collapse-bar')) return;
 
-          let collapsed = true;
+          codeBlock.classList.add('code-block-collapse-wrapper');
+          codeBlock.classList.add('code-block-collapsed');
           hljs.style.maxHeight = codeMaxHeight + 'px';
-          hljs.style.overflowY = 'auto';
-          hljs.style.overflowX = 'hidden';
 
+          const totalLines = countLines(hljs);
           const isZh = document.documentElement.lang === 'zh_CN';
+
+          // 渐变遮罩
+          const fade = document.createElement('div');
+          fade.className = 'code-collapse-fade protyle-custom';
+          fade.contentEditable = 'false';
+          codeBlock.appendChild(fade);
+
+          // 底部操作栏
           const bar = document.createElement('div');
           bar.className = 'code-collapse-bar protyle-custom';
           bar.contentEditable = 'false';
+          const lineInfo = totalLines > 0
+            ? '<span class=\"code-collapse-line-info\">(' + totalLines + ' ' + (isZh ? '行' : 'lines') + ')</span>'
+            : '';
           bar.innerHTML = \`
-            <button class="code-collapse-btn" contenteditable="false">
-              <svg class="collapsed" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12.78 6.22a.75.75 0 010 1.06l-4.25 4.25a.75.75 0 01-1.06 0L3.22 7.28a.75.75 0 011.06-1.06L8 9.94l3.72-3.72a.75.75 0 011.06 0z"/>
+            <button class=\"code-collapse-btn\" contenteditable=\"false\">
+              <svg class=\"collapsed\" viewBox=\"0 0 16 16\" xmlns=\"http://www.w3.org/2000/svg\">
+                <path d=\"M12.78 6.22a.75.75 0 010 1.06l-4.25 4.25a.75.75 0 01-1.06 0L3.22 7.28a.75.75 0 011.06-1.06L8 9.94l3.72-3.72a.75.75 0 011.06 0z\"/>
               </svg>
-              <span contenteditable="false">\${isZh ? '展开代码' : 'Expand'}</span>
+              <span contenteditable=\"false\">\${isZh ? '展开代码' : 'Expand'}</span>
             </button>
+            \${lineInfo}
           \`;
           codeBlock.appendChild(bar);
 
           bar.querySelector('.code-collapse-btn').onclick = () => {
-            collapsed = !collapsed;
+            const isCollapsed = codeBlock.classList.contains('code-block-collapsed');
             const svg = bar.querySelector('svg');
             const label = bar.querySelector('.code-collapse-btn span');
-            if (!collapsed) {
+            if (isCollapsed) {
+              codeBlock.classList.remove('code-block-collapsed');
               hljs.style.maxHeight = 'none';
-              hljs.style.overflow = '';
               svg.classList.remove('collapsed');
               label.textContent = isZh ? '收起代码' : 'Collapse';
             } else {
+              codeBlock.classList.add('code-block-collapsed');
               hljs.style.maxHeight = codeMaxHeight + 'px';
-              hljs.style.overflowY = 'auto';
-              hljs.style.overflowX = 'hidden';
+              hljs.scrollTop = 0;
               svg.classList.add('collapsed');
               label.textContent = isZh ? '展开代码' : 'Expand';
             }
@@ -367,12 +428,14 @@ export function applyCodeBlockCollapse(
 
           let scrollContainer = isMobile() ? window : protyle.querySelector(".protyle-content");
           let debounceTimer;
-          scrollContainer.addEventListener('scroll', () => {
+          const scrollHandler = () => {
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
               addCodeExtends(protyle.querySelectorAll('.code-block'));
             }, 100);
-          });
+          };
+          scrollContainer.addEventListener('scroll', scrollHandler);
+          scrollCleanupFns.push(() => scrollContainer.removeEventListener('scroll', scrollHandler));
 
           observeProtyleAddition(el, protyles => {
             protyles.forEach(async protyle => {
@@ -381,12 +444,14 @@ export function applyCodeBlockCollapse(
               }
               addCodeExtends(protyle.querySelectorAll('.code-block'));
               let scrollContainer = isMobile() ? window : protyle.querySelector(".protyle-content");
-              scrollContainer.addEventListener('scroll', () => {
+              const handler = () => {
                 clearTimeout(debounceTimer);
                 debounceTimer = setTimeout(() => {
                   addCodeExtends(protyle.querySelectorAll('.code-block'));
                 }, 100);
-              });
+              };
+              scrollContainer.addEventListener('scroll', handler);
+              scrollCleanupFns.push(() => scrollContainer.removeEventListener('scroll', handler));
             });
           });
         });
@@ -398,6 +463,12 @@ export function applyCodeBlockCollapse(
       } else {
         initCodeBlockCollapse();
       }
+
+      // 监听清理事件，移除所有滚动监听器
+      document.addEventListener('codeblock-collapse-cleanup', () => {
+        scrollCleanupFns.forEach(fn => fn());
+        scrollCleanupFns.length = 0;
+      });
     })();
   `;
 	document.head.appendChild(script);

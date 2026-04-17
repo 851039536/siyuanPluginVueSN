@@ -72,7 +72,7 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
 
 .floating-box-wrapper {
   position: fixed;
-  right: 10px;
+  right: 20px;
   top: 50%;
   transform: translateY(-50%);
   z-index: $floating-z-index;

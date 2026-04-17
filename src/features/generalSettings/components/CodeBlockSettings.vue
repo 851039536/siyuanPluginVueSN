@@ -768,6 +768,7 @@ function applyCodeBlockCollapse(enable: boolean, height: number) {
             return;
           }
           if(codeBlock.querySelector('.code-expand-wrapper')) return;
+          if(codeBlock.dataset.codeExpanded === 'true') return;
           const hljs = await whenElementExist(() => codeBlock.querySelector('.hljs'));
           if(hljs && hljs.scrollHeight > codeMaxHeight) {
             const expandWrapper = document.createElement('div');
@@ -787,6 +788,9 @@ function applyCodeBlockCollapse(enable: boolean, height: number) {
             hljs.style.maxHeight = codeMaxHeight + 'px';
 
             expandWrapper.querySelector('.code-expand-btn').onclick = () => {
+              // 标记为已展开，防止滚动时重新添加按钮
+              codeBlock.dataset.codeExpanded = 'true';
+
               // 添加展开动画
               expandWrapper.style.transition = 'opacity 0.2s ease';
               expandWrapper.style.opacity = '0';

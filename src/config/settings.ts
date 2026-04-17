@@ -348,7 +348,7 @@ export async function resetHeadingSettings(plugin: Plugin): Promise<boolean> {
  * 代码块设置接口
  */
 export interface CodeBlockSettings {
-	style: "default" | "github" | "mac" | "cartoon";
+	style: "default" | "github" | "mac";
 	enableCollapse: boolean;
 	collapseHeight: number;
 }

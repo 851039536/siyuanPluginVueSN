@@ -20,7 +20,6 @@ export const CODEBLOCK_STYLES = [
 	"default",
 	"github",
 	"mac",
-	"cartoon",
 ] as const;
 export type CodeBlockStyle = (typeof CODEBLOCK_STYLES)[number];
 

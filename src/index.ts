@@ -24,7 +24,7 @@ import {
 	registerEncryption,
 	registerVideo,
 	registerEverythingSearch,
-	registerSystemMonitor,
+	registerStatusBar,
 	registerFloatingToolbar,
 	registerFloatingBox,
 	registerTextDiff,
@@ -198,9 +198,9 @@ export default class PluginSample extends Plugin {
 			registerEverythingSearch(this);
 		}
 
-		// 注册系统监控功能
-		if (this.settings.enableSystemMonitor) {
-			registerSystemMonitor(this);
+		// 注册状态栏功能
+		if (this.settings.enableStatusBar) {
+			registerStatusBar(this);
 		}
 
 		// 注册浮动工具栏功能

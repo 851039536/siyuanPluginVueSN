@@ -259,13 +259,13 @@ const features = computed<Feature[]>(() => [
 		],
 	},
 	{
-		id: "systemMonitor",
-		iconKey: "systemMonitor",
-		title: props.i18n.systemMonitor?.title || "系统监控",
+		id: "statusBar",
+		iconKey: "statusBar",
+		title: props.i18n.statusBar?.title || "状态栏",
 		desc:
-			props.i18n.systemMonitor?.description ||
-			"在状态栏显示 CPU 和内存使用情况",
-		enabled: props.settings.enableSystemMonitor,
+			props.i18n.statusBar?.description ||
+			"在状态栏显示 CPU、内存使用情况及文档统计",
+		enabled: props.settings.enableStatusBar,
 		actions: [],
 	},
 	{

@@ -76,7 +76,7 @@ const FEATURE_SETTINGS_MAP: Record<string, string> = {
 	encryption: "enableEncryption",
 	video: "enableVideo",
 	everythingSearch: "enableEverythingSearch",
-	systemMonitor: "enableSystemMonitor",
+	statusBar: "enableStatusBar",
 	floatingToolbar: "enableFloatingToolbar",
 	floatingBox: "enableFloatingBox",
 	textDiff: "enableTextDiff",

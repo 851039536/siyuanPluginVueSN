@@ -6,7 +6,7 @@ import {
 	INITIAL_DELAY_MS,
 	DEFAULT_TOTAL_MEMORY_GB,
 	type ResourceLevel,
-	type SystemMonitorState,
+	type StatusBarState,
 } from "../types/index";
 
 const TOTAL_MEMORY_BYTES = DEFAULT_TOTAL_MEMORY_GB * 1024 * 1024 * 1024;
@@ -19,8 +19,8 @@ function formatUptime(seconds: number): { hours: number; minutes: number } {
 	};
 }
 
-export function useSystemMonitor() {
-	const state = reactive<SystemMonitorState>({
+export function useStatusBar() {
+	const state = reactive<StatusBarState>({
 		cpuPercent: 0,
 		memPercent: 0,
 		uptimeSeconds: 0,

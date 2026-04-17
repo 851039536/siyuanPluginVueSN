@@ -152,7 +152,7 @@ export function applyCodeBlockCollapse(
           if(!hljs || hljs.scrollHeight <= codeMaxHeight) return;
           if(codeBlock.querySelector('.code-collapse-bar')) return;
 
-          let collapsed = false;
+          let collapsed = true;
           hljs.style.maxHeight = codeMaxHeight + 'px';
           hljs.style.overflow = 'hidden';
 
@@ -174,16 +174,16 @@ export function applyCodeBlockCollapse(
             collapsed = !collapsed;
             const svg = bar.querySelector('svg');
             const label = bar.querySelector('.code-collapse-btn span');
-            if (collapsed) {
-              hljs.style.maxHeight = codeMaxHeight + 'px';
-              hljs.style.overflow = 'hidden';
-              svg.classList.add('collapsed');
-              label.textContent = isZh ? '展开代码' : 'Expand';
-            } else {
+            if (!collapsed) {
               hljs.style.maxHeight = 'none';
               hljs.style.overflow = '';
               svg.classList.remove('collapsed');
               label.textContent = isZh ? '收起代码' : 'Collapse';
+            } else {
+              hljs.style.maxHeight = codeMaxHeight + 'px';
+              hljs.style.overflow = 'hidden';
+              svg.classList.add('collapsed');
+              label.textContent = isZh ? '展开代码' : 'Expand';
             }
           };
         });

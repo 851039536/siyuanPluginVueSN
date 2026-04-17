@@ -768,44 +768,45 @@ function applyCodeBlockCollapse(enable: boolean, height: number) {
             return;
           }
           if(codeBlock.querySelector('.code-expand-wrapper')) return;
-          if(codeBlock.dataset.codeExpanded === 'true') return;
           const hljs = await whenElementExist(() => codeBlock.querySelector('.hljs'));
-          if(hljs && hljs.scrollHeight > codeMaxHeight) {
-            const expandWrapper = document.createElement('div');
-            expandWrapper.className = 'code-expand-wrapper protyle-custom';
-            const expandText = document.documentElement.lang === 'zh_CN' ? '展开代码' : 'Expand Code';
-            expandWrapper.innerHTML = \`
-              <button class="code-expand-btn">
-                <span class="code-expand-icon">
-                  <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12.78 6.22a.75.75 0 010 1.06l-4.25 4.25a.75.75 0 01-1.06 0L3.22 7.28a.75.75 0 011.06-1.06L8 9.94l3.72-3.72a.75.75 0 011.06 0z"/>
-                  </svg>
-                </span>
-                <span>\${expandText}</span>
-              </button>
-            \`;
-            codeBlock.appendChild(expandWrapper);
-            hljs.style.maxHeight = codeMaxHeight + 'px';
-
-            expandWrapper.querySelector('.code-expand-btn').onclick = () => {
-              // 标记为已展开，防止滚动时重新添加按钮
-              codeBlock.dataset.codeExpanded = 'true';
-
-              // 添加展开动画
-              expandWrapper.style.transition = 'opacity 0.2s ease';
-              expandWrapper.style.opacity = '0';
-              expandWrapper.style.pointerEvents = 'none';
-
-              // 平滑展开代码块
-              hljs.style.transition = 'max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
-              hljs.style.maxHeight = hljs.scrollHeight + 'px';
-
-              setTimeout(() => {
-                hljs.style.maxHeight = '100%';
-                expandWrapper.remove();
-              }, 400);
-            };
+          if(!hljs || hljs.scrollHeight <= codeMaxHeight) return;
+          // 如果已经是展开状态（maxHeight 为 100% 或 none），则跳过
+          const currentMaxHeight = hljs.style.maxHeight;
+          if(currentMaxHeight === '100%' || currentMaxHeight === 'none' || currentMaxHeight === '') {
+            // maxHeight 为空说明是初始状态（CSS 控制），需要添加折叠
+            if(currentMaxHeight !== '') return;
           }
+          const expandWrapper = document.createElement('div');
+          expandWrapper.className = 'code-expand-wrapper protyle-custom';
+          const expandText = document.documentElement.lang === 'zh_CN' ? '展开代码' : 'Expand Code';
+          expandWrapper.innerHTML = \`
+            <button class="code-expand-btn">
+              <span class="code-expand-icon">
+                <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12.78 6.22a.75.75 0 010 1.06l-4.25 4.25a.75.75 0 01-1.06 0L3.22 7.28a.75.75 0 011.06-1.06L8 9.94l3.72-3.72a.75.75 0 011.06 0z"/>
+                </svg>
+              </span>
+              <span>\${expandText}</span>
+            </button>
+          \`;
+          codeBlock.appendChild(expandWrapper);
+          hljs.style.maxHeight = codeMaxHeight + 'px';
+
+          expandWrapper.querySelector('.code-expand-btn').onclick = () => {
+            // 添加展开动画
+            expandWrapper.style.transition = 'opacity 0.2s ease';
+            expandWrapper.style.opacity = '0';
+            expandWrapper.style.pointerEvents = 'none';
+
+            // 平滑展开代码块
+            hljs.style.transition = 'max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+            hljs.style.maxHeight = hljs.scrollHeight + 'px';
+
+            setTimeout(() => {
+              hljs.style.maxHeight = 'none';
+              expandWrapper.remove();
+            }, 400);
+          };
         });
       }
 

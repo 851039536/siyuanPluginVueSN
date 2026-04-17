@@ -256,7 +256,8 @@ export function applyCodeBlockCollapse(
 
           let collapsed = true;
           hljs.style.maxHeight = codeMaxHeight + 'px';
-          hljs.style.overflow = 'hidden';
+          hljs.style.overflowY = 'auto';
+          hljs.style.overflowX = 'hidden';
 
           const isZh = document.documentElement.lang === 'zh_CN';
           const bar = document.createElement('div');
@@ -283,7 +284,8 @@ export function applyCodeBlockCollapse(
               label.textContent = isZh ? '收起代码' : 'Collapse';
             } else {
               hljs.style.maxHeight = codeMaxHeight + 'px';
-              hljs.style.overflow = 'hidden';
+              hljs.style.overflowY = 'auto';
+              hljs.style.overflowX = 'hidden';
               svg.classList.add('collapsed');
               label.textContent = isZh ? '展开代码' : 'Expand';
             }

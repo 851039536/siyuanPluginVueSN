@@ -112,7 +112,6 @@
                   max="5"
                   step="0.5"
                   class="range-slider"
-                  @change="applySettings"
                 />
                 <button class="slider-btn" @click="adjustValue('borderWidth', 0.5, 0, 5)">+</button>
                 <span class="slider-value">{{ settings.borderWidth }}px</span>
@@ -129,7 +128,6 @@
                   max="20"
                   step="1"
                   class="range-slider"
-                  @change="applySettings"
                 />
                 <button class="slider-btn" @click="adjustValue('borderRadius', 1, 0, 20)">+</button>
                 <span class="slider-value">{{ settings.borderRadius }}px</span>
@@ -171,7 +169,6 @@
                   type="text"
                   class="text-input font-input"
                   :placeholder="i18n.fontFamilyPlaceholder || '输入字体名称'"
-                  @input="applySettings"
                 />
                 <select v-model="presetCodeFont" class="font-select" @change="applyPresetCodeFont">
                   <option value="">{{ i18n.selectFont || '选择字体' }}</option>
@@ -195,7 +192,6 @@
                   max="20"
                   step="1"
                   class="range-slider"
-                  @input="applySettings"
                 />
                 <button class="slider-btn" @click="adjustValue('codeFontSize', 1, 10, 20)">+</button>
                 <span class="slider-value">{{ settings.codeFontSize }}px</span>
@@ -212,7 +208,6 @@
                   max="2.0"
                   step="0.1"
                   class="range-slider"
-                  @input="applySettings"
                 />
                 <button class="slider-btn" @click="adjustValue('codeLineHeight', 0.1, 1.2, 2.0)">+</button>
                 <span class="slider-value">{{ settings.codeLineHeight }}</span>
@@ -439,11 +434,6 @@ const props = withDefaults(defineProps<Props>(), {
 	}),
 });
 
-const emit = defineEmits<Emits>();
-
-const settings = ref<CodeBlockSettings>({ ...props.initialSettings });
-const presetCodeFont = ref("");
-
 const DEFAULT_SETTINGS: CodeBlockSettings = {
 	style: "default",
 	enableCollapse: true,
@@ -464,6 +454,11 @@ const DEFAULT_SETTINGS: CodeBlockSettings = {
 	functionColor: "#61afef",
 	numberColor: "#d19a66",
 };
+
+const emit = defineEmits<Emits>();
+
+const settings = ref<CodeBlockSettings>({ ...props.initialSettings });
+const presetCodeFont = ref("");
 
 const shadowOptions = [
 	{ label: props.i18n.noneShadow || "无阴影", value: "none" },
@@ -516,11 +511,6 @@ function applyPresetCodeFont() {
 	}
 }
 
-function applySettings() {
-	// 设置会通过 watch 自动应用和保存
-	// 这个函数只是为了显式触发更新
-}
-
 function adjustValue(
 	key: keyof CodeBlockSettings,
 	delta: number,
@@ -529,7 +519,7 @@ function adjustValue(
 ) {
 	const currentValue = settings.value[key] as number;
 	const newValue = Math.max(min, Math.min(max, currentValue + delta));
-	settings.value[key] = newValue as any;
+	(settings.value as Record<string, unknown>)[key] = newValue;
 }
 
 function applyCodeBlockEnhancedStyles(codeSettings: CodeBlockSettings) {
@@ -538,10 +528,6 @@ function applyCodeBlockEnhancedStyles(codeSettings: CodeBlockSettings) {
 		const existingStyle = document.getElementById("codeblock-enhanced-style");
 		if (existingStyle) {
 			existingStyle.remove();
-		}
-
-		if (!codeSettings.enabled) {
-			return;
 		}
 
 		// 创建新的样式元素
@@ -554,7 +540,7 @@ function applyCodeBlockEnhancedStyles(codeSettings: CodeBlockSettings) {
         background-color: ${codeSettings.backgroundColor} !important;
         border: ${codeSettings.borderWidth}px solid ${codeSettings.borderColor} !important;
         border-radius: ${codeSettings.borderRadius}px !important;
-        box-shadow: ${codeSettings.boxShadow !== "none" ? codeSettings.boxShadow : "none"} !important;
+        box-shadow: ${codeSettings.boxShadow} !important;
       }
 
       /* 代码块内容 */
@@ -853,7 +839,7 @@ function applyCodeBlockCollapse(enable: boolean, height: number) {
 
       function observeProtyleAddition(el, callback) {
         const config = { attributes: false, childList: true, subtree: true };
-        const observer = new MutationObserver((mutationsList, observer) => {
+        const observer = new MutationObserver((mutationsList) => {
           mutationsList.forEach(mutation => {
             if (mutation.type === 'childList') {
               const protyles = Array.from(mutation.addedNodes).filter(node =>
@@ -948,12 +934,6 @@ async function loadSettings() {
 // 初始化时加载设置并应用样式
 onMounted(async () => {
 	await loadSettings();
-	// 确保在页面加载时应用保存的样式
-	applyCodeBlockStyle(settings.value.style);
-	applyCodeBlockCollapse(
-		settings.value.enableCollapse,
-		settings.value.collapseHeight,
-	);
 });
 
 // 暴露方法

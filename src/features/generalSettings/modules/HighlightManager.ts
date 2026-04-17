@@ -13,7 +13,6 @@ export class HighlightManager {
 	private styleAdded = false;
 	private active = false;
 	private toastEl: HTMLDivElement | null = null;
-	private toastTimer: ReturnType<typeof setTimeout> | null = null;
 	private toastHideTimer: ReturnType<typeof setTimeout> | null = null;
 
 	enable() {
@@ -129,8 +128,7 @@ export class HighlightManager {
 	}
 
 	/**
-	 * 在文本节点中插入 <mark> 高亮标记
-	 * 处理匹配跨节点边界的情况
+	 * 在文本节点中插入 <mark> 高亮标记，处理匹配跨节点边界的情况
 	 */
 	private highlightText(value: string): number {
 		this.clearHighlights();
@@ -143,21 +141,15 @@ export class HighlightManager {
 		const str = value.trim();
 		if (!str) return 0;
 
-		// 收集所有文本节点
-		const allTextNodes: Text[] = [];
-		const treeWalker = document.createTreeWalker(docRoot, NodeFilter.SHOW_TEXT);
-		let node: Node | null;
-		while ((node = treeWalker.nextNode())) {
-			allTextNodes.push(node as Text);
-		}
-
-		// 拼接纯文本并记录每个字符对应的节点索引
+		// 收集文本节点并记录每个节点在拼接全文中的位置
 		const textParts: { node: Text; start: number; length: number }[] = [];
 		let fullText = "";
-		for (const tn of allTextNodes) {
-			const text = tn.textContent ?? "";
+		const treeWalker = document.createTreeWalker(docRoot, NodeFilter.SHOW_TEXT);
+		let walkerNode: Node | null;
+		while ((walkerNode = treeWalker.nextNode())) {
+			const text = (walkerNode as Text).textContent ?? "";
 			if (text.length === 0) continue;
-			textParts.push({ node: tn, start: fullText.length, length: text.length });
+			textParts.push({ node: walkerNode as Text, start: fullText.length, length: text.length });
 			fullText += text;
 		}
 
@@ -189,13 +181,28 @@ export class HighlightManager {
 			}
 
 			try {
-				this.wrapRange(
-					textParts,
-					firstPartIdx,
-					lastPartIdx,
-					searchFrom,
-					matchEnd,
-				);
+				// 在涉及的每个文本节点中插入 <mark> 标签
+				for (let i = firstPartIdx; i <= lastPartIdx; i++) {
+					const part = textParts[i];
+					const text = part.node.textContent ?? "";
+					const localStart = Math.max(0, searchFrom - part.start);
+					const localEnd = Math.min(part.length, matchEnd - part.start);
+
+					if (localStart >= localEnd) continue;
+
+					const mark = document.createElement("mark");
+					mark.className = HIGHLIGHT_MARK_CLASS;
+					mark.textContent = text.slice(localStart, localEnd);
+
+					const parent = part.node.parentNode;
+					if (!parent) continue;
+
+					const frag = document.createDocumentFragment();
+					if (localStart > 0) frag.appendChild(document.createTextNode(text.slice(0, localStart)));
+					frag.appendChild(mark);
+					if (localEnd < part.length) frag.appendChild(document.createTextNode(text.slice(localEnd)));
+					parent.replaceChild(frag, part.node);
+				}
 				matchCount++;
 			} catch {
 				// 跳过无效范围
@@ -205,53 +212,6 @@ export class HighlightManager {
 		}
 
 		return matchCount;
-	}
-
-	/**
-	 * 将匹配的文本范围用 <mark> 标签包裹
-	 */
-	private wrapRange(
-		textParts: { node: Text; start: number; length: number }[],
-		firstIdx: number,
-		lastIdx: number,
-		matchStart: number,
-		matchEnd: number,
-	) {
-		for (let i = firstIdx; i <= lastIdx; i++) {
-			const part = textParts[i];
-			const node = part.node;
-			const text = node.textContent ?? "";
-
-			// 计算在当前文本节点内的偏移
-			const localStart = Math.max(0, matchStart - part.start);
-			const localEnd = Math.min(part.length, matchEnd - part.start);
-
-			if (localStart >= localEnd) continue;
-
-			const before = text.slice(0, localStart);
-			const matched = text.slice(localStart, localEnd);
-			const after = text.slice(localEnd);
-
-			const mark = document.createElement("mark");
-			mark.className = HIGHLIGHT_MARK_CLASS;
-			mark.textContent = matched;
-
-			const parent = node.parentNode;
-			if (!parent) continue;
-
-			const frag = document.createDocumentFragment();
-			if (before) frag.appendChild(document.createTextNode(before));
-			frag.appendChild(mark);
-			if (after) frag.appendChild(document.createTextNode(after));
-
-			parent.replaceChild(frag, node);
-
-			// 后续节点不受影响，因为 textParts 已在循环外构建
-			// 但最后一个文本节点已被替换，如果还有后续节点需要更新引用
-			if (i === lastIdx && after) {
-				// after 变成了新的文本节点，不影响 textParts（因为循环结束）
-			}
-		}
 	}
 
 	private showToast(text: string, count: number) {
@@ -283,10 +243,6 @@ export class HighlightManager {
 	}
 
 	private clearToast() {
-		if (this.toastTimer) {
-			clearTimeout(this.toastTimer);
-			this.toastTimer = null;
-		}
 		if (this.toastHideTimer) {
 			clearTimeout(this.toastHideTimer);
 			this.toastHideTimer = null;

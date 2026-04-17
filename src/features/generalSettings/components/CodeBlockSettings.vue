@@ -373,7 +373,7 @@ import {
 	saveCodeBlockSettings,
 	loadCodeBlockSettings,
 } from "@/config/settings";
-import { applyCodeBlockStyle, applyCodeBlockCollapse } from "../types";
+import { applyCodeBlockStyle, applyCodeBlockCollapse, applyCodeBlockEnhancedStyles } from "../types";
 
 interface CodeBlockSettings {
 	style: "default" | "github" | "mac" | "cartoon";
@@ -485,15 +485,7 @@ watch(
 			newSettings.enableCollapse,
 			newSettings.collapseHeight,
 		);
-		if (newSettings.enabled) {
-			applyCodeBlockEnhancedStyles(newSettings);
-		} else {
-			// 移除增强样式
-			const existingStyle = document.getElementById("codeblock-enhanced-style");
-			if (existingStyle) {
-				existingStyle.remove();
-			}
-		}
+		applyCodeBlockEnhancedStyles(newSettings);
 		if (props.plugin) {
 			try {
 				await saveCodeBlockSettings(props.plugin, newSettings);
@@ -522,92 +514,6 @@ function adjustValue(
 	(settings.value as Record<string, unknown>)[key] = newValue;
 }
 
-function applyCodeBlockEnhancedStyles(codeSettings: CodeBlockSettings) {
-	try {
-		// 移除现有样式
-		const existingStyle = document.getElementById("codeblock-enhanced-style");
-		if (existingStyle) {
-			existingStyle.remove();
-		}
-
-		// 创建新的样式元素
-		const style = document.createElement("style");
-		style.id = "codeblock-enhanced-style";
-
-		style.textContent = `
-      /* 代码块基础样式 */
-      .protyle-wysiwyg .code-block {
-        background-color: ${codeSettings.backgroundColor} !important;
-        border: ${codeSettings.borderWidth}px solid ${codeSettings.borderColor} !important;
-        border-radius: ${codeSettings.borderRadius}px !important;
-        box-shadow: ${codeSettings.boxShadow} !important;
-      }
-
-      /* 代码块内容 */
-      .protyle-wysiwyg .code-block .hljs {
-        font-family: '${codeSettings.codeFontFamily}', monospace !important;
-        font-size: ${codeSettings.codeFontSize}px !important;
-        line-height: ${codeSettings.codeLineHeight} !important;
-        color: ${codeSettings.textColor} !important;
-      }
-
-      /* 代码高亮颜色 */
-      .protyle-wysiwyg .code-block .hljs-keyword,
-      .protyle-wysiwyg .code-block .hljs-selector-tag,
-      .protyle-wysiwyg .code-block .hljs-built_in,
-      .protyle-wysiwyg .code-block .hljs-name,
-      .protyle-wysiwyg .code-block .hljs-tag {
-        color: ${codeSettings.keywordColor} !important;
-      }
-
-      .protyle-wysiwyg .code-block .hljs-string,
-      .protyle-wysiwyg .code-block .hljs-title,
-      .protyle-wysiwyg .code-block .hljs-section,
-      .protyle-wysiwyg .code-block .hljs-attribute,
-      .protyle-wysiwyg .code-block .hljs-literal,
-      .protyle-wysiwyg .code-block .hljs-template-tag,
-      .protyle-wysiwyg .code-block .hljs-template-variable,
-      .protyle-wysiwyg .code-block .hljs-type {
-        color: ${codeSettings.stringColor} !important;
-      }
-
-      .protyle-wysiwyg .code-block .hljs-comment,
-      .protyle-wysiwyg .code-block .hljs-quote {
-        color: ${codeSettings.commentColor} !important;
-      }
-
-      .protyle-wysiwyg .code-block .hljs-function {
-        color: ${codeSettings.functionColor} !important;
-      }
-
-      .protyle-wysiwyg .code-block .hljs-number {
-        color: ${codeSettings.numberColor} !important;
-      }
-
-      /* 预览区域代码块 */
-      .b3-typography pre,
-      .b3-typography pre code {
-        font-family: '${codeSettings.codeFontFamily}', monospace !important;
-        font-size: ${codeSettings.codeFontSize}px !important;
-        line-height: ${codeSettings.codeLineHeight} !important;
-        background-color: ${codeSettings.backgroundColor} !important;
-        border: ${codeSettings.borderWidth}px solid ${codeSettings.borderColor} !important;
-        border-radius: ${codeSettings.borderRadius}px !important;
-        color: ${codeSettings.textColor} !important;
-      }
-
-      /* 暗色主题适配 */
-      :root[data-theme-mode="dark"] .protyle-wysiwyg .code-block {
-        box-shadow: ${codeSettings.boxShadow !== "none" ? "0 2px 8px rgba(0, 0, 0, 0.3)" : "none"} !important;
-      }
-    `;
-
-		document.head.appendChild(style);
-	} catch (error) {
-		console.error("应用代码块增强样式失败:", error);
-	}
-}
-
 function getStyleName(style: string): string {
 	const names: Record<string, string> = {
 		default: props.i18n.defaultStyle || "默认风格",
@@ -634,9 +540,7 @@ async function loadSettings() {
 			settings.value.enableCollapse,
 			settings.value.collapseHeight,
 		);
-		if (settings.value.enabled) {
-			applyCodeBlockEnhancedStyles(settings.value);
-		}
+		applyCodeBlockEnhancedStyles(settings.value);
 	} catch (error) {
 		console.error("加载设置失败:", error);
 		settings.value = { ...DEFAULT_SETTINGS };

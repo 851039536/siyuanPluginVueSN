@@ -134,6 +134,8 @@ export interface HighlightSettings {
 	bold: boolean;
 	minTextLength: number;
 	minLetterLength: number;
+	maxTextLength: number;
+	maxLetterLength: number;
 }
 
 export interface BackupSettings {

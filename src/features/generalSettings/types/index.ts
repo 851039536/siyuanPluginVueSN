@@ -924,7 +924,7 @@ export class GeneralSettings {
 				return;
 			}
 			const options = settings
-				? { backgroundColor: settings.backgroundColor, fontSize: settings.fontSize, bold: settings.bold, minTextLength: settings.minTextLength, minLetterLength: settings.minLetterLength }
+				? { backgroundColor: settings.backgroundColor, fontSize: settings.fontSize, bold: settings.bold, minTextLength: settings.minTextLength, minLetterLength: settings.minLetterLength, maxTextLength: settings.maxTextLength, maxLetterLength: settings.maxLetterLength }
 				: undefined;
 			this.highlightManager = new HighlightManager(options);
 			this.highlightManager.enable();
@@ -965,10 +965,12 @@ export class GeneralSettings {
 			bold: current?.bold ?? false,
 			minTextLength: current?.minTextLength ?? 1,
 			minLetterLength: current?.minLetterLength ?? 1,
+			maxTextLength: current?.maxTextLength ?? 50,
+			maxLetterLength: current?.maxLetterLength ?? 100,
 		});
 	}
 
-	public updateHighlightOptions(options: { backgroundColor?: string; fontSize?: number; bold?: boolean; minTextLength?: number; minLetterLength?: number }) {
+	public updateHighlightOptions(options: { backgroundColor?: string; fontSize?: number; bold?: boolean; minTextLength?: number; minLetterLength?: number; maxTextLength?: number; maxLetterLength?: number }) {
 		if (this.highlightManager) {
 			this.highlightManager.updateOptions(options);
 		}
@@ -980,6 +982,8 @@ export class GeneralSettings {
 				bold: options.bold ?? current?.bold ?? false,
 				minTextLength: options.minTextLength ?? current?.minTextLength ?? 1,
 				minLetterLength: options.minLetterLength ?? current?.minLetterLength ?? 1,
+				maxTextLength: options.maxTextLength ?? current?.maxTextLength ?? 50,
+				maxLetterLength: options.maxLetterLength ?? current?.maxLetterLength ?? 100,
 			});
 		});
 	}

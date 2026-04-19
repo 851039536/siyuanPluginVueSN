@@ -14,6 +14,8 @@ export interface HighlightOptions {
 	bold?: boolean;
 	minTextLength?: number;
 	minLetterLength?: number;
+	maxTextLength?: number;
+	maxLetterLength?: number;
 }
 
 const DEFAULT_OPTIONS: Required<HighlightOptions> = {
@@ -22,6 +24,8 @@ const DEFAULT_OPTIONS: Required<HighlightOptions> = {
 	bold: false,
 	minTextLength: 1,
 	minLetterLength: 1,
+	maxTextLength: 50,
+	maxLetterLength: 100,
 };
 
 export class HighlightManager {
@@ -81,6 +85,8 @@ export class HighlightManager {
 		const letterChars = selection.replace(/[^\x00-\x7F]|[^\a-zA-Z]/g, "");
 		if (textChars.length > 0 && textChars.length < this.options.minTextLength) return;
 		if (letterChars.length > 0 && letterChars.length < this.options.minLetterLength) return;
+		if (textChars.length > 0 && textChars.length > this.options.maxTextLength) return;
+		if (letterChars.length > 0 && letterChars.length > this.options.maxLetterLength) return;
 
 		this.selectedText = selection;
 		const matchCount = this.highlightText(selection);

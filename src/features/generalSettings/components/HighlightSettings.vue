@@ -99,6 +99,34 @@
             @change="handleStyleChange"
           />
         </div>
+
+        <div class="style-row">
+          <label class="style-label">
+            {{ i18n?.highlightMaxTextLength || '最大文字长度' }}
+          </label>
+          <input
+            type="number"
+            v-model.number="maxTextLength"
+            class="style-number"
+            min="1"
+            max="1000"
+            @change="handleStyleChange"
+          />
+        </div>
+
+        <div class="style-row">
+          <label class="style-label">
+            {{ i18n?.highlightMaxLetterLength || '最大字母长度' }}
+          </label>
+          <input
+            type="number"
+            v-model.number="maxLetterLength"
+            class="style-number"
+            min="1"
+            max="1000"
+            @change="handleStyleChange"
+          />
+        </div>
       </div>
     </template>
   </div>
@@ -120,6 +148,8 @@ const fontSize = ref("0");
 const bold = ref(false);
 const minTextLength = ref(1);
 const minLetterLength = ref(1);
+const maxTextLength = ref(50);
+const maxLetterLength = ref(100);
 
 const loadSettings = async () => {
 	try {
@@ -131,6 +161,8 @@ const loadSettings = async () => {
 			bold.value = settings.bold ?? false;
 			minTextLength.value = settings.minTextLength ?? 1;
 			minLetterLength.value = settings.minLetterLength ?? 1;
+			maxTextLength.value = settings.maxTextLength ?? 50;
+			maxLetterLength.value = settings.maxLetterLength ?? 100;
 		}
 	} catch (e) {
 		console.error("加载高亮设置失败:", e);
@@ -166,6 +198,8 @@ const handleStyleChange = () => {
 				bold: bold.value,
 				minTextLength: minTextLength.value,
 				minLetterLength: minLetterLength.value,
+				maxTextLength: maxTextLength.value,
+				maxLetterLength: maxLetterLength.value,
 			});
 		}
 	} catch (e) {

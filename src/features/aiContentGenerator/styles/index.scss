@@ -316,6 +316,7 @@
   min-height: 0;
   user-select: text;
   cursor: text;
+  font-size: 12px;
 
   :deep(h1), :deep(h2), :deep(h3), :deep(h4), :deep(h5), :deep(h6) {
     margin-top: 0.6em;
@@ -493,6 +494,7 @@
     overflow: auto;
     background: var(--b3-theme-background) !important;
     border: none !important;
+    font-size: 12px !important;
   }
 
   :deep(.vue-diff *),

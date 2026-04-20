@@ -105,3 +105,16 @@ const removeCount = computed(() => diffStats.value.removeCount);
 <style scoped lang="scss">
 @use "../styles/index.scss";
 </style>
+
+<style lang="scss">
+.diff-viewer-wrapper .diff-viewer,
+.diff-viewer-wrapper .diff-viewer *,
+.diff-viewer-wrapper .d2h-wrapper,
+.diff-viewer-wrapper .d2h-diff-table,
+.diff-viewer-wrapper .d2h-diff-row,
+.diff-viewer-wrapper .d2h-del,
+.diff-viewer-wrapper .d2h-ins,
+.diff-viewer-wrapper .d2h-line-num {
+  font-size: 12px !important;
+}
+</style>

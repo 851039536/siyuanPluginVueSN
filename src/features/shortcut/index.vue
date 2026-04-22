@@ -5,7 +5,6 @@
       v-model:search-keyword="searchKeyword"
       :placeholder="i18n.searchPlaceholder || '搜索快捷键...'"
       :add-title="i18n.addCustomShortcut || '添加快捷键'"
-      @refresh="refreshShortcuts"
       @export="showExportDialog"
       @import="showImportDialog"
       @add="showAddDialog"
@@ -87,7 +86,7 @@
     <ExportDialog
       :visible="showDialog && dialogType === 'export'"
       :count="filteredShortcuts.length"
-      :format="exportFormat"
+      :format="'json'"
       :title="i18n.exportShortcuts || '导出快捷键'"
       :format-label="i18n.exportFormat || '导出格式'"
       :json-option="i18n.jsonFormat || 'JSON 格式'"
@@ -165,7 +164,6 @@ const viewMode = ref<ViewMode>("grid");
 const categorySearch = ref("");
 const showDialog = ref(false);
 const dialogType = ref<DialogType>(null);
-const exportFormat = ref<"json" | "markdown">("json");
 const favorites = ref<Set<string>>(new Set());
 const recentUsed = ref<string[]>([]);
 
@@ -178,7 +176,7 @@ const formData = ref<ShortcutFormData>({
 	group: "自定义",
 });
 
-// 快捷筛选选项 - 使用常量
+// 快捷筛选选项
 const quickFilters = QUICK_FILTERS;
 
 // 获取快捷键管理器
@@ -383,11 +381,6 @@ async function deleteShortcut(id: string) {
 			}
 		}
 	}
-}
-
-// 刷新快捷键列表（当前数据已在 computed 中自动更新）
-function refreshShortcuts() {
-	// 快捷键数据通过 computed 自动更新，无需手动刷新
 }
 
 // 导出快捷键

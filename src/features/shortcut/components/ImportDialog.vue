@@ -156,7 +156,6 @@ async function handleFileChange(event: Event) {
   color: var(--b3-theme-on-background);
   font-size: 12px;
   cursor: pointer;
-  transition: border-color 0.2s;
 }
 
 .form-group input[type="file"]:hover {

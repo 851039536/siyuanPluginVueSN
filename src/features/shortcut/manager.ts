@@ -2,11 +2,7 @@
  * 快捷键模块 - 管理器
  * 负责快捷键数据的存储、查询和管理
  */
-import type {
-	ShortcutInfo,
-	ShortcutGroup,
-	ShortcutManagerConfig,
-} from "./types";
+import type { ShortcutInfo, ShortcutManagerConfig } from "./types";
 
 /**
  * 快捷键管理器
@@ -91,59 +87,6 @@ export class ShortcutManager {
 	}
 
 	/**
-	 * 获取分组后的快捷键
-	 */
-	getGrouped(): ShortcutGroup[] {
-		const groupMap = new Map<string, ShortcutInfo[]>();
-
-		this.shortcuts.forEach((shortcut) => {
-			const group = shortcut.group || "其他";
-			if (!groupMap.has(group)) {
-				groupMap.set(group, []);
-			}
-			groupMap.get(group)!.push(shortcut);
-		});
-
-		return Array.from(groupMap.entries()).map(([name, shortcuts]) => ({
-			name,
-			shortcuts,
-		}));
-	}
-
-	/**
-	 * 获取按分类分组的快捷键
-	 */
-	getGroupedByCategory(): Record<string, ShortcutGroup[]> {
-		const result: Record<string, ShortcutGroup[]> = {};
-
-		const categories = new Set(this.shortcuts.map((s) => s.category));
-
-		categories.forEach((category) => {
-			const categoryShortcuts = this.shortcuts.filter(
-				(s) => s.category === category,
-			);
-			const groupMap = new Map<string, ShortcutInfo[]>();
-
-			categoryShortcuts.forEach((shortcut) => {
-				const group = shortcut.group || "其他";
-				if (!groupMap.has(group)) {
-					groupMap.set(group, []);
-				}
-				groupMap.get(group)!.push(shortcut);
-			});
-
-			result[category] = Array.from(groupMap.entries()).map(
-				([name, shortcuts]) => ({
-					name,
-					shortcuts,
-				}),
-			);
-		});
-
-		return result;
-	}
-
-	/**
 	 * 按ID查询快捷键
 	 */
 	getById(id: string): ShortcutInfo | undefined {
@@ -198,11 +141,4 @@ export function getShortcutManager(): ShortcutManager {
 		globalManager = new ShortcutManager();
 	}
 	return globalManager;
-}
-
-/**
- * 重置全局快捷键管理器
- */
-export function resetShortcutManager(): void {
-	globalManager = null;
 }

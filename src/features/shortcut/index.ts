@@ -22,7 +22,7 @@ export async function registerShortcut(plugin: Plugin) {
 	await manager.addShortcuts(getSiyuanShortcuts());
 
 	// 添加当前项目的快捷键
-	await manager.addShortcuts(getPluginShortcuts(plugin));
+	await manager.addShortcuts(getPluginShortcuts());
 
 	// 添加Claude Code快捷键
 	await manager.addShortcuts(getClaudeShortcuts());
@@ -45,7 +45,7 @@ export async function registerShortcut(plugin: Plugin) {
 	});
 
 	// 添加右侧边栏 Dock
-	addShortcutDock(plugin, manager);
+	addShortcutDock(plugin);
 }
 
 /**
@@ -573,7 +573,7 @@ function getOpenSpecShortcuts(): ShortcutInfo[] {
 /**
  * 获取插件的快捷键
  */
-function getPluginShortcuts(plugin: Plugin): ShortcutInfo[] {
+function getPluginShortcuts(): ShortcutInfo[] {
 	return [
 		// 目录索引功能
 		{
@@ -1492,7 +1492,7 @@ function getToolShortcuts(): ShortcutInfo[] {
 /**
  * 添加快捷键 Dock 到右侧边栏
  */
-function addShortcutDock(plugin: Plugin, manager: ShortcutManager) {
+function addShortcutDock(plugin: Plugin) {
 	plugin.addDock({
 		config: {
 			position: "RightTop",

@@ -143,18 +143,6 @@ function handleConfirm() {
   max-height: 80vh;
   display: flex;
   flex-direction: column;
-  animation: dialogSlideIn 0.3s ease-out;
-}
-
-@keyframes dialogSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
 }
 
 .dialog-header {

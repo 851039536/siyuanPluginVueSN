@@ -205,7 +205,6 @@ const pathText = computed(() => {
   gap: 4px;
   flex-shrink: 0;
   opacity: 1;
-  transition: opacity 0.2s;
 }
 
 .shortcut-path {

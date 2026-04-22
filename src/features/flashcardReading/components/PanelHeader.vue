@@ -8,13 +8,6 @@
       <Button
         variant="ghost"
         size="small"
-        icon="help"
-        @click="$emit('showHelp')"
-        :title="i18n.usageGuide || '使用说明'"
-      />
-      <Button
-        variant="ghost"
-        size="small"
         icon="add"
         @click="$emit('addCard')"
         :title="i18n.addCard || '添加卡片'"

@@ -53,6 +53,10 @@
       </span>
     </div>
     <div class="shortcut-desc">{{ shortcut.description }}</div>
+    <div class="shortcut-path" :title="pathText">
+      <svg class="path-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M6.5 1L1 6l5.5 5L8 9.5 4 6l4-3.5L6.5 1zm3 0L8 2.5 12 6l-4 3.5L9.5 11 15 6 9.5 1zM1 13h14v2H1v-2z"/></svg>
+      <span class="path-text">{{ pathText }}</span>
+    </div>
   </Card>
 </template>
 
@@ -92,6 +96,14 @@ defineEmits<{
 
 const keyParts = computed(() => {
 	return props.shortcut.keys.split("+").map((k) => k.trim());
+});
+
+const pathText = computed(() => {
+	const parts = [props.categoryLabel];
+	if (props.shortcut.group) {
+		parts.push(props.shortcut.group);
+	}
+	return parts.join(" / ");
 });
 </script>
 
@@ -194,5 +206,32 @@ const keyParts = computed(() => {
   flex-shrink: 0;
   opacity: 1;
   transition: opacity 0.2s;
+}
+
+.shortcut-path {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--b3-theme-surface-lighter);
+  font-size: 10px;
+  color: var(--b3-theme-on-surface-variant);
+  opacity: 0.7;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.path-icon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.path-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>

@@ -15,7 +15,7 @@ export function usePlugin(pluginProps?: Plugin): Plugin {
 	return plugin as Plugin;
 }
 
-let app = null;
+let app: ReturnType<typeof createApp> | null = null;
 export function init(pluginInstance: Plugin) {
 	// bind plugin hook
 	usePlugin(pluginInstance);
@@ -36,7 +36,8 @@ export function init(pluginInstance: Plugin) {
 }
 
 export function destroy() {
-	app.unmount();
-	const div = document.getElementById(this.name);
-	document.body.removeChild(div);
+	app?.unmount();
+	app = null;
+	const div = document.getElementById(plugin?.name ?? "");
+	div?.remove();
 }

@@ -60,6 +60,23 @@
       @delete="deleteShortcut"
     />
 
+    <!-- 数据存储路径（底部折叠） -->
+    <div class="storage-path-footer" :class="{ expanded: showStoragePath }">
+      <button class="storage-path-toggle" @click="showStoragePath = !showStoragePath">
+        <svg class="toggle-arrow" viewBox="0 0 12 12" fill="currentColor"><path d="M2 4l4 4 4-4"/></svg>
+        <span>{{ i18n.dataPath || '数据路径' }}</span>
+      </button>
+      <div v-if="showStoragePath" class="storage-path-content">
+        <code
+          v-for="key in STORAGE_KEYS"
+          :key="key"
+          class="storage-file"
+          :title="storageDir + '/' + key + '.json'"
+          @click="copyStoragePath(storageDir + '/' + key + '.json')"
+        >{{ storageDir }}/<wbr>{{ key }}.json</code>
+      </div>
+    </div>
+
     <!-- 添加/编辑快捷键对话框 -->
     <ShortcutDialog
       :visible="showDialog && (dialogType === 'add' || dialogType === 'edit')"
@@ -178,6 +195,19 @@ const formData = ref<ShortcutFormData>({
 
 // 快捷筛选选项
 const quickFilters = QUICK_FILTERS;
+
+// 数据存储路径
+const STORAGE_KEYS = [
+	"plugin-shortcuts-custom",
+	"plugin-shortcuts-favorites",
+	"plugin-shortcuts-recent",
+];
+const storageDir = "data/storage/petals/siyuan-plugin-vite-vue-sn";
+const showStoragePath = ref(false);
+
+function copyStoragePath(path: string) {
+	navigator.clipboard.writeText(path).catch(() => {});
+}
 
 // 获取快捷键管理器
 const manager = getShortcutManager();

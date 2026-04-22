@@ -61,6 +61,68 @@
   color: var(--b3-theme-primary);
 }
 
+// 数据存储路径（底部折叠）
+.storage-path-footer {
+  border-top: 1px solid var(--b3-theme-surface-lighter);
+  background: var(--b3-theme-surface);
+}
+
+.storage-path-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 16px;
+  border: none;
+  background: none;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--b3-theme-on-surface-variant);
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.toggle-arrow {
+  width: 10px;
+  height: 10px;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.storage-path-footer.expanded .toggle-arrow {
+  transform: rotate(180deg);
+}
+
+.storage-path-content {
+  padding: 0 16px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.storage-file {
+  display: block;
+  font-size: 10px;
+  font-family: monospace;
+  color: var(--b3-theme-on-surface-variant);
+  background: var(--b3-theme-background);
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  word-break: break-all;
+  transition: background 0.2s, color 0.2s;
+
+  &:hover {
+    background: var(--b3-theme-primary-lightest);
+    color: var(--b3-theme-primary);
+  }
+}
+
 // 分类选择器
 .shortcut-category-selector {
   padding: 8px 16px;

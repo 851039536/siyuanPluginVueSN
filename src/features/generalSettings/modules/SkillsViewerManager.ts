@@ -10,6 +10,7 @@ export interface SkillInfo {
 	content: string;
 	filePath: string;
 	tool: AIToolType;
+	fileSize: number; // 字节数
 }
 
 export type AIToolType = "claude" | "codebuddy" | "qoder" | "trae";
@@ -162,6 +163,7 @@ export class SkillsViewerManager {
 					const mdExists = await this.fs.promises.access(skillMdPath).then(() => true).catch(() => false);
 					if (mdExists) {
 						const content = await this.fs.promises.readFile(skillMdPath, "utf-8");
+						const stat = await this.fs.promises.stat(skillMdPath);
 						const { name, description } = this.parseSkillMd(content, entry.name);
 						skills.push({
 							name,
@@ -169,6 +171,7 @@ export class SkillsViewerManager {
 							content,
 							filePath: skillMdPath,
 							tool: toolId,
+							fileSize: stat.size,
 						});
 					}
 				} catch {
@@ -185,7 +188,7 @@ export class SkillsViewerManager {
 	/**
 	 * 解析 skill.md 文件，提取名称和描述
 	 */
-	private parseSkillMd(
+	public parseSkillMd(
 		content: string,
 		fallbackName: string,
 	): { name: string; description: string } {
@@ -295,6 +298,44 @@ export class SkillsViewerManager {
 		} catch {
 			return false;
 		}
+	}
+
+	/**
+	 * 保存 Skill 内容到文件
+	 */
+	async saveSkillContent(filePath: string, content: string): Promise<boolean> {
+		if (!this.available) return false;
+		try {
+			await this.fs.promises.writeFile(filePath, content, "utf-8");
+			return true;
+		} catch {
+			return false;
+		}
+	}
+
+	/**
+	 * 删除 Skill 目录
+	 */
+	async deleteSkill(skillDirPath: string): Promise<boolean> {
+		if (!this.available) return false;
+		try {
+			await this.fs.promises.rm(skillDirPath, { recursive: true, force: true });
+			return true;
+		} catch {
+			return false;
+		}
+	}
+
+	/**
+	 * 格式化文件大小
+	 */
+	formatFileSize(bytes: number): string {
+		if (bytes === 0) return "0 B";
+		const units = ["B", "KB", "MB", "GB"];
+		const k = 1024;
+		const i = Math.floor(Math.log(bytes) / Math.log(k));
+		const size = bytes / Math.pow(k, i);
+		return `${size.toFixed(i > 0 ? 1 : 0)} ${units[i]}`;
 	}
 
 	destroy() {

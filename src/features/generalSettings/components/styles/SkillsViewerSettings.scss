@@ -189,11 +189,41 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     }
 
+    // 编辑模式高亮
+    &--editing {
+      border-color: var(--b3-theme-primary);
+      box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.15);
+    }
+
     .sv-skill-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 6px;
+
+      .sv-skill-header-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+        min-width: 0;
+
+        .sv-skill-name {
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--b3-theme-on-surface);
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      }
+
+      .sv-skill-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        flex-shrink: 0;
+      }
 
       .sv-skill-name {
         font-size: 13px;
@@ -206,6 +236,58 @@
         padding: 2px 8px;
         border-radius: 10px;
         font-weight: 500;
+        flex-shrink: 0;
+      }
+
+      .sv-skill-size {
+        font-size: 11px;
+        color: var(--b3-theme-on-surface-variant);
+        opacity: 0.6;
+        flex-shrink: 0;
+      }
+    }
+
+    // 操作按钮
+    .sv-skill-action-btn {
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      background: transparent;
+      transition: all 0.15s ease;
+
+      &--edit {
+        &:hover {
+          background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1);
+        }
+      }
+
+      &--save {
+        &:hover:not(:disabled) {
+          background: rgba(39, 174, 96, 0.1);
+        }
+
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      }
+
+      &--cancel {
+        &:hover {
+          background: rgba(0, 0, 0, 0.06);
+        }
+      }
+
+      &--delete {
+        &:hover {
+          background: rgba(217, 83, 79, 0.1);
+        }
       }
     }
 
@@ -243,19 +325,18 @@
       }
     }
 
+    // Markdown 渲染预览区
     .sv-skill-content {
       margin-top: 10px;
-      padding: 10px;
+      padding: 12px;
       background: var(--b3-theme-background);
       border: 1px solid var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.08));
       border-radius: 6px;
-      max-height: 300px;
+      max-height: 400px;
       overflow-y: auto;
-      font-size: 12px;
-      font-family: monospace;
-      line-height: 1.5;
+      font-size: 13px;
+      line-height: 1.6;
       color: var(--b3-theme-on-background);
-      white-space: pre-wrap;
       word-break: break-word;
 
       &::-webkit-scrollbar {
@@ -265,6 +346,150 @@
       &::-webkit-scrollbar-thumb {
         background: var(--b3-theme-surface-variant);
         border-radius: 2px;
+      }
+
+      // Markdown 排版样式
+      :deep(h1), :deep(h2), :deep(h3), :deep(h4), :deep(h5), :deep(h6) {
+        color: var(--b3-theme-on-surface);
+        margin: 12px 0 6px;
+        font-weight: 600;
+        line-height: 1.3;
+
+        &:first-child {
+          margin-top: 0;
+        }
+      }
+
+      :deep(h1) { font-size: 16px; }
+      :deep(h2) { font-size: 15px; }
+      :deep(h3) { font-size: 14px; }
+
+      :deep(p) {
+        margin: 6px 0;
+      }
+
+      :deep(ul), :deep(ol) {
+        margin: 6px 0;
+        padding-left: 20px;
+      }
+
+      :deep(li) {
+        margin: 3px 0;
+      }
+
+      :deep(code) {
+        font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+        font-size: 12px;
+        padding: 1px 5px;
+        border-radius: 3px;
+        background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.08);
+        color: var(--b3-theme-primary);
+      }
+
+      :deep(pre) {
+        margin: 8px 0;
+        padding: 10px 12px;
+        border-radius: 6px;
+        background: var(--b3-theme-surface);
+        border: 1px solid var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.08));
+        overflow-x: auto;
+
+        code {
+          padding: 0;
+          background: none;
+          color: var(--b3-theme-on-background);
+          font-size: 12px;
+        }
+      }
+
+      :deep(blockquote) {
+        margin: 8px 0;
+        padding: 4px 12px;
+        border-left: 3px solid var(--b3-theme-primary);
+        background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.04);
+        color: var(--b3-theme-on-surface-variant);
+      }
+
+      :deep(a) {
+        color: var(--b3-theme-primary);
+        text-decoration: none;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+
+      :deep(table) {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 8px 0;
+        font-size: 12px;
+
+        th, td {
+          padding: 6px 10px;
+          border: 1px solid var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.08));
+          text-align: left;
+        }
+
+        th {
+          background: var(--b3-theme-surface);
+          font-weight: 600;
+        }
+      }
+
+      :deep(hr) {
+        margin: 12px 0;
+        border: none;
+        border-top: 1px solid var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.08));
+      }
+
+      :deep(strong) {
+        font-weight: 600;
+        color: var(--b3-theme-on-surface);
+      }
+
+      :deep(em) {
+        font-style: italic;
+      }
+    }
+
+    // 编辑器
+    .sv-skill-editor {
+      margin-top: 10px;
+
+      .sv-skill-editor-textarea {
+        width: 100%;
+        min-height: 200px;
+        max-height: 400px;
+        padding: 10px 12px;
+        font-size: 12px;
+        font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+        line-height: 1.6;
+        color: var(--b3-theme-on-background);
+        background: var(--b3-theme-background);
+        border: 1px solid var(--b3-theme-primary);
+        border-radius: 6px;
+        outline: none;
+        resize: vertical;
+        box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1);
+
+        &::placeholder {
+          color: var(--b3-theme-on-surface-variant);
+          opacity: 0.5;
+        }
+      }
+
+      .sv-skill-editor-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 6px;
+
+        .sv-skill-editor-hint {
+          font-size: 11px;
+          color: var(--b3-theme-on-surface-variant);
+          opacity: 0.6;
+        }
       }
     }
   }
@@ -332,6 +557,77 @@
       font-size: 13px;
       color: var(--b3-theme-on-surface-variant);
       line-height: 1.5;
+    }
+  }
+}
+
+// 删除确认弹窗（Teleport to body，不嵌套在 .skills-viewer-settings 内）
+.sv-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(2px);
+
+  .sv-modal {
+    width: 380px;
+    max-width: 90vw;
+    background: var(--b3-theme-surface);
+    border: 1px solid var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.08));
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16);
+    overflow: hidden;
+
+    .sv-modal-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 18px 0;
+
+      .sv-modal-icon {
+        font-size: 18px;
+      }
+
+      .sv-modal-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--b3-theme-on-surface);
+      }
+    }
+
+    .sv-modal-body {
+      padding: 12px 18px;
+      font-size: 13px;
+      color: var(--b3-theme-on-surface-variant);
+      line-height: 1.5;
+
+      .sv-modal-skill-name {
+        margin-top: 8px;
+        font-weight: 600;
+        color: var(--b3-theme-on-surface);
+        font-size: 14px;
+      }
+
+      .sv-modal-skill-path {
+        margin-top: 4px;
+        font-family: monospace;
+        font-size: 11px;
+        opacity: 0.6;
+        word-break: break-all;
+      }
+    }
+
+    .sv-modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 12px 18px 16px;
     }
   }
 }

@@ -11,6 +11,11 @@
         {{ filter.label }}
       </Button>
     </div>
+    <div class="stats-group">
+      <span class="stat-chip">{{ totalLabel }} {{ totalCount }}</span>
+      <span class="stat-chip">{{ favoriteLabel }} {{ favoriteCount }}</span>
+      <span class="stat-chip">{{ customLabel }} {{ customCount }}</span>
+    </div>
     <div class="view-toggle">
       <Button
         :variant="viewMode === 'grid' ? 'primary' : 'ghost'"
@@ -19,18 +24,6 @@
         @click="$emit('update:viewMode', 'grid')"
       >
         <span class="grid-icon">
-          <span class="square"></span>
-          <span class="square"></span>
-        </span>
-      </Button>
-      <Button
-        :variant="viewMode === 'three-col' ? 'primary' : 'ghost'"
-        size="small"
-        title="三列视图"
-        @click="$emit('update:viewMode', 'three-col')"
-      >
-        <span class="three-col-icon">
-          <span class="square"></span>
           <span class="square"></span>
           <span class="square"></span>
         </span>
@@ -57,9 +50,22 @@ interface Props {
 	activeFilter: string;
 	viewMode: ViewMode;
 	filters: QuickFilter[];
+	totalCount?: number;
+	favoriteCount?: number;
+	customCount?: number;
+	totalLabel?: string;
+	favoriteLabel?: string;
+	customLabel?: string;
 }
 
-defineProps<Props>();
+withDefaults(defineProps<Props>(), {
+	totalCount: 0,
+	favoriteCount: 0,
+	customCount: 0,
+	totalLabel: "总计",
+	favoriteLabel: "收藏",
+	customLabel: "自定义",
+});
 
 defineEmits<{
 	"update:activeFilter": [value: string];
@@ -68,5 +74,65 @@ defineEmits<{
 </script>
 
 <style scoped lang="scss">
-// 样式已在 ../styles/index.scss 中定义
+.shortcut-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--b3-theme-surface);
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+}
+
+.filter-group {
+  display: flex;
+  gap: 4px;
+}
+
+.stats-group {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  justify-content: center;
+}
+
+.stat-chip {
+  font-size: 10px;
+  color: var(--b3-theme-on-surface-variant);
+  white-space: nowrap;
+
+  &::after {
+    content: attr(data-value);
+  }
+}
+
+.view-toggle {
+  display: flex;
+  gap: 3px;
+  background: var(--b3-theme-background);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.grid-icon,
+.list-icon {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.square {
+  width: 4px;
+  height: 4px;
+  background-color: currentColor;
+  border-radius: 1px;
+  display: inline-block;
+}
+
+.line {
+  width: 8px;
+  height: 4px;
+  background-color: currentColor;
+  border-radius: 1px;
+  display: inline-block;
+}
 </style>

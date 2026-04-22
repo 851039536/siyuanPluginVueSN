@@ -62,7 +62,7 @@ export type ViewMode = "grid" | "list" | "three-col";
 /**
  * 对话框类型
  */
-export type DialogType = "add" | "edit" | "export" | "import" | null;
+export type DialogType = "add" | "edit" | null;
 
 /**
  * 快捷筛选选项

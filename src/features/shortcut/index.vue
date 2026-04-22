@@ -5,13 +5,14 @@
       v-model:search-keyword="searchKeyword"
       :placeholder="i18n.searchPlaceholder || '搜索快捷键...'"
       :add-title="i18n.addCustomShortcut || '添加快捷键'"
-      @export="showExportDialog"
-      @import="showImportDialog"
       @add="showAddDialog"
     />
 
-    <!-- 统计信息栏 -->
-    <StatsBar
+    <!-- 统计 + 筛选 + 视图切换 -->
+    <FilterBar
+      v-model:active-filter="activeFilter"
+      v-model:view-mode="viewMode"
+      :filters="quickFilters"
       :total-count="totalCount"
       :favorite-count="favoriteCount"
       :custom-count="customCount"
@@ -30,13 +31,6 @@
       :category-label="i18n.category || '分类:'"
       :search-placeholder="i18n.searchCategory || '搜索分类...'"
       :no-result-hint="i18n.noCategoryFound || '未找到匹配的分类'"
-    />
-
-    <!-- 快捷筛选栏 -->
-    <FilterBar
-      v-model:active-filter="activeFilter"
-      v-model:view-mode="viewMode"
-      :filters="quickFilters"
     />
 
     <!-- 快捷键列表 -->
@@ -98,50 +92,16 @@
       @close="closeDialog"
       @confirm="addShortcut"
     />
-
-    <!-- 导出对话框 -->
-    <ExportDialog
-      :visible="showDialog && dialogType === 'export'"
-      :count="filteredShortcuts.length"
-      :format="'json'"
-      :title="i18n.exportShortcuts || '导出快捷键'"
-      :format-label="i18n.exportFormat || '导出格式'"
-      :json-option="i18n.jsonFormat || 'JSON 格式'"
-      :markdown-option="i18n.markdownFormat || 'Markdown 表格'"
-      :preview-text="i18n.willExport || '将导出'"
-      :preview-unit="i18n.shortcutsUnit || '个快捷键'"
-      :cancel-text="i18n.cancel || '取消'"
-      :export-text="i18n.export || '导出'"
-      @close="closeDialog"
-      @export="handleExport"
-    />
-
-    <!-- 导入对话框 -->
-    <ImportDialog
-      :visible="showDialog && dialogType === 'import'"
-      :title="i18n.importShortcuts || '导入快捷键'"
-      :file-label="i18n.selectJsonFile || '选择 JSON 文件'"
-      :hint-text="i18n.selectValidJson || '请选择符合格式的 JSON 文件'"
-      :close-text="i18n.close || '关闭'"
-      :format-error-text="i18n.formatError || '文件格式错误'"
-      :import-success-text="i18n.importSuccess || '成功导入'"
-      :import-error-text="i18n.importError || '导入失败，请检查文件格式'"
-      @close="closeDialog"
-      @import="handleImport"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import PanelHeader from "./components/PanelHeader.vue";
-import StatsBar from "./components/StatsBar.vue";
 import CategorySelector from "./components/CategorySelector.vue";
 import FilterBar from "./components/FilterBar.vue";
 import ShortcutGrid from "./components/ShortcutGrid.vue";
 import ShortcutDialog from "./components/ShortcutDialog.vue";
-import ExportDialog from "./components/ExportDialog.vue";
-import ImportDialog from "./components/ImportDialog.vue";
 import { getShortcutManager } from "./manager";
 import {
 	loadFavorites,
@@ -157,7 +117,6 @@ import type {
 	ShortcutFormData,
 } from "./types";
 
-// 快捷筛选选项 - 提取为常量避免重复创建
 const QUICK_FILTERS: QuickFilter[] = [
 	{ key: "all", label: "全部" },
 	{ key: "favorite", label: "收藏" },
@@ -193,7 +152,6 @@ const formData = ref<ShortcutFormData>({
 	group: "自定义",
 });
 
-// 快捷筛选选项
 const quickFilters = QUICK_FILTERS;
 
 // 数据存储路径
@@ -221,7 +179,6 @@ const customCount = computed(() => manager.getByCategory("custom").length);
 onMounted(async () => {
 	if (props.plugin) {
 		try {
-			// 并行加载收藏和最近使用数据
 			const [loadedFavorites, loadedRecent] = await Promise.all([
 				loadFavorites(props.plugin),
 				loadRecent(props.plugin),
@@ -243,13 +200,11 @@ const tabs = computed(() => {
 	return ["all", ...Array.from(categories).sort()];
 });
 
-// 获取分类数量
 function getTabCount(category: string): number {
 	if (category === "all") return totalCount.value;
 	return manager.getByCategory(category).length;
 }
 
-// 分类标签映射 - 使用 computed 缓存 i18n 映射
 const categoryLabels = computed(() => ({
 	all: props.i18n.allShortcuts || "全部",
 	siyuan: props.i18n.siyuanShortcuts || "思源笔记",
@@ -268,24 +223,20 @@ function getCategoryLabel(category: string): string {
 	return categoryLabels.value[category] || category;
 }
 
-// 是否显示工具徽章
 function showToolBadge(category: string): boolean {
 	return ["npm", "nvm", "cmd", "vscode", "visual-studio"].includes(category);
 }
 
-// 过滤快捷键 - 优化性能，减少不必要的调用
+// 过滤快捷键
 const filteredShortcuts = computed(() => {
-	// 先获取基础数据
 	let shortcuts = searchKeyword.value
 		? manager.search(searchKeyword.value)
 		: manager.getAllShortcuts();
 
-	// 按分类过滤（合并搜索和分类条件）
 	if (activeTab.value !== "all") {
 		shortcuts = shortcuts.filter((s) => s.category === activeTab.value);
 	}
 
-	// 按快捷筛选过滤
 	if (activeFilter.value === "favorite") {
 		shortcuts = shortcuts.filter((s) => favorites.value.has(s.id));
 	} else if (activeFilter.value === "recent") {
@@ -295,7 +246,6 @@ const filteredShortcuts = computed(() => {
 	return shortcuts;
 });
 
-// 收藏相关
 function isFavorite(id: string): boolean {
 	return favorites.value.has(id);
 }
@@ -316,7 +266,6 @@ async function toggleFavorite(id: string) {
 	}
 }
 
-// 最近使用
 function isRecent(id: string): boolean {
 	return recentUsed.value.includes(id);
 }
@@ -336,7 +285,6 @@ async function addToRecent(id: string) {
 	}
 }
 
-// 复制快捷键信息
 function copyShortcutInfo(shortcut: ShortcutInfo) {
 	const text = shortcut.copyContent || shortcut.keys;
 	navigator.clipboard
@@ -374,28 +322,16 @@ function editShortcut(shortcut: ShortcutInfo) {
 	showDialog.value = true;
 }
 
-function showExportDialog() {
-	dialogType.value = "export";
-	showDialog.value = true;
-}
-
-function showImportDialog() {
-	dialogType.value = "import";
-	showDialog.value = true;
-}
-
 function closeDialog() {
 	showDialog.value = false;
 	dialogType.value = null;
 }
 
-// 添加快捷键
 async function addShortcut(shortcut: ShortcutInfo) {
 	await manager.addShortcut(shortcut);
 	closeDialog();
 }
 
-// 删除快捷键
 async function deleteShortcut(id: string) {
 	if (confirm(props.i18n.confirmDelete || "确认删除此快捷键？")) {
 		await manager.removeShortcut(id);
@@ -411,72 +347,6 @@ async function deleteShortcut(id: string) {
 			}
 		}
 	}
-}
-
-// 导出快捷键
-function handleExport(format: "json" | "markdown") {
-	const shortcuts =
-		activeTab.value === "all"
-			? manager.getAllShortcuts()
-			: manager.getByCategory(activeTab.value);
-
-	if (format === "json") {
-		const json = JSON.stringify(shortcuts, null, 2);
-		downloadFile(json, "shortcuts.json", "application/json");
-	} else {
-		const markdown = generateMarkdown(shortcuts);
-		downloadFile(markdown, "shortcuts.md", "text/markdown");
-	}
-	closeDialog();
-}
-
-// 生成 Markdown
-function generateMarkdown(shortcuts: ShortcutInfo[]): string {
-	let md = "# 快捷键列表\n\n";
-	const grouped = groupShortcuts(shortcuts);
-
-	for (const group of grouped) {
-		md += `## ${group.name}\n\n`;
-		md += "| 名称 | 快捷键 | 描述 |\n";
-		md += "|------|---------|------|\n";
-		for (const s of group.shortcuts) {
-			md += `| ${s.name} | \`${s.keys}\` | ${s.description} |\n`;
-		}
-		md += "\n";
-	}
-
-	return md;
-}
-
-// 分组快捷键
-function groupShortcuts(shortcuts: ShortcutInfo[]) {
-	const groupMap = new Map<string, ShortcutInfo[]>();
-	shortcuts.forEach((shortcut) => {
-		const group = shortcut.group || "其他";
-		if (!groupMap.has(group)) groupMap.set(group, []);
-		groupMap.get(group)!.push(shortcut);
-	});
-	return Array.from(groupMap.entries()).map(([name, shortcuts]) => ({
-		name,
-		shortcuts,
-	}));
-}
-
-// 下载文件
-function downloadFile(content: string, filename: string, type: string) {
-	const blob = new Blob([content], { type });
-	const url = URL.createObjectURL(blob);
-	const a = document.createElement("a");
-	a.href = url;
-	a.download = filename;
-	a.click();
-	URL.revokeObjectURL(url);
-}
-
-// 导入快捷键
-async function handleImport(shortcuts: ShortcutInfo[]) {
-	await manager.addShortcuts(shortcuts);
-	closeDialog();
 }
 </script>
 

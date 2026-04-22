@@ -15,12 +15,10 @@
   .protyle-wysiwyg [data-node-id][data-type="NodeCodeBlock"],
   .b3-typography [data-node-id][data-type="NodeCodeBlock"] {
     overflow: hidden;
-    // margin: 0.5rem 0;
 
     .protyle-action {
       display: flex;
       align-items: center;
-      // gap: 0.5rem;
       min-height: 1.5rem;
       position: relative;
 
@@ -87,11 +85,6 @@
 
     .b3-dialog {
       padding: 0.5rem;
-    }
-
-    .b3-dialog__header {
-      padding: 0.5rem 0.75rem;
-      font-size: 0.875rem;
     }
 
     .b3-dialog__body {
@@ -206,7 +199,6 @@ html.siyuan-compact-mode {
   .li,
   .p {
     line-height: 1.4;
-    // margin: 0.25rem 0;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -227,8 +219,6 @@ html.siyuan-compact-mode {
   td, th {
     padding: 0.25rem 0.5rem;
   }
-
-
 
   // 应用响应式适配
   @include compact-responsive;
@@ -366,10 +356,6 @@ body.codeblock-style-default {
   .b3-typography [data-node-id][data-type="NodeCodeBlock"] {
     &:hover {
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .hljs {
-
     }
   }
 }

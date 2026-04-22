@@ -2,7 +2,6 @@
   <div class="flashcard-reading-panel">
     <PanelHeader
       :i18n="i18n"
-      @showHelp="showHelpDialog = true"
       @addCard="openCreateDialog"
       @refresh="loadCards"
     />
@@ -99,12 +98,6 @@
       </Button>
     </div>
 
-    <HelpDialog
-      :visible="showHelpDialog"
-      :i18n="i18n"
-      @close="showHelpDialog = false"
-    />
-
     <CardDialog
       :visible="showCreateDialog"
       :editingCard="editingCard"
@@ -139,7 +132,6 @@ import CategoryFilter from "./components/CategoryFilter.vue";
 import CardList from "./components/CardList.vue";
 import SingleCardView from "./components/SingleCardView.vue";
 import StatisticsView from "./components/StatisticsView.vue";
-import HelpDialog from "./components/HelpDialog.vue";
 import CardDialog from "./components/CardDialog.vue";
 
 import { FlashcardStorage } from "./types/storage";
@@ -180,7 +172,6 @@ const currentPage = ref(1);
 const currentIndex = ref(0);
 
 const showCreateDialog = ref(false);
-const showHelpDialog = ref(false);
 const editingCard = ref<Flashcard | null>(null);
 const formData = ref<CreateFlashcardDTO>({
 	title: "",

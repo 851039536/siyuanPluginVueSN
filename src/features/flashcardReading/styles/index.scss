@@ -672,48 +672,6 @@
     }
   }
 
-  .help-body {
-    max-height: 500px;
-    overflow-y: auto;
-  }
-
-  .help-section {
-    margin-bottom: 20px;
-
-    &:last-child { margin-bottom: 0; }
-
-    h5 {
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--b3-theme-on-background);
-      margin-bottom: 10px;
-      padding-bottom: 6px;
-      border-bottom: 1px solid var(--b3-theme-surface);
-    }
-
-    p {
-      font-size: 14px;
-      line-height: 1.6;
-      color: var(--b3-theme-on-background);
-      opacity: 0.9;
-    }
-
-    ul {
-      margin: 0;
-      padding-left: 20px;
-
-      li {
-        font-size: 14px;
-        line-height: 1.8;
-        color: var(--b3-theme-on-background);
-        opacity: 0.85;
-        margin-bottom: 4px;
-
-        &:last-child { margin-bottom: 0; }
-      }
-    }
-  }
-
   .form-group {
     display: flex;
     flex-direction: column;

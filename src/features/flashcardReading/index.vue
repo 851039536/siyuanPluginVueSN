@@ -299,7 +299,8 @@ const loadCards = async () => {
 
 const switchToSingleMode = () => {
 	viewMode.value = "single";
-	currentIndex.value = 0;
+	const len = filteredCards.value.length;
+	currentIndex.value = len > 0 ? Math.floor(Math.random() * len) : 0;
 };
 
 const playCurrentCard = () => {

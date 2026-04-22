@@ -8,7 +8,6 @@
       @update:model-value="$emit('update:searchKeyword', $event)"
     />
     <div class="header-actions">
-      <Button variant="ghost" size="small" icon="refresh" title="刷新" @click="$emit('refresh')" />
       <Button variant="ghost" size="small" icon="download" title="导出" @click="$emit('export')" />
       <Button variant="ghost" size="small" :icon="'file' as any" title="导入" @click="$emit('import')" />
       <Button variant="primary" size="small" icon="add" :title="addTitle" @click="$emit('add')" />
@@ -30,7 +29,6 @@ defineProps<Props>();
 
 defineEmits<{
 	"update:searchKeyword": [value: string];
-	refresh: [];
 	export: [];
 	import: [];
 	add: [];

@@ -61,6 +61,10 @@
         <div v-show="activeCategory === 'markdownExport'" class="content-section">
           <MarkdownExportSettings :i18n="i18n" :plugin="plugin" />
         </div>
+
+        <div v-show="activeCategory === 'skillsViewer'" class="content-section">
+          <SkillsViewerSettings :i18n="i18n" :plugin="plugin" />
+        </div>
       </div>
     </div>
   </div>
@@ -80,6 +84,7 @@ import ListStyleSettings from "./components/ListStyleSettings.vue";
 import TabPinSettings from "./components/TabPinSettings.vue";
 import DocCountSettings from "./components/DocCountSettings.vue";
 import MarkdownExportSettings from "./components/MarkdownExportSettings.vue";
+import SkillsViewerSettings from "./components/SkillsViewerSettings.vue";
 
 interface Props {
 	i18n?: any;
@@ -139,6 +144,10 @@ const categories = computed(() => [
 	{
 		id: "markdownExport",
 		label: "Markdown 导出",
+	},
+	{
+		id: "skillsViewer",
+		label: props.i18n.skillsViewerTitle || "Skills 查看器",
 	},
 ]);
 

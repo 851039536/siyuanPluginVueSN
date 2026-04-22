@@ -1133,5 +1133,23 @@
 		"sortOrder": "Sort Order",
 		"ascending": "Ascending",
 		"descending": "Descending"
-	}
+	},
+	"skillsViewerTitle": "Skills Viewer",
+	"skillsViewerDesc": "View and manage AI coding tools' Skills configuration files, compatible with Claude, CodeBuddy, Qoder, Trae",
+	"skillsViewerUnsupported": "Skills Viewer requires desktop Electron environment, not available in current environment",
+	"skillsUnit": " Skills",
+	"checking": "Checking...",
+	"noSkillsAllTools": "No Skills files found for any AI tool",
+	"noSkillsForTool": "No Skills files found for this tool",
+	"skillsPathHint": "Skills are typically stored in ~/.claude/skills/ or .claude/skills/ in project directory",
+	"projectPath": "Project Path",
+	"projectPathPlaceholder": "Enter project root directory path for scanning project-level Skills",
+	"refresh": "Refresh Scan",
+	"openDir": "Open Directory",
+	"openDirFailed": "Failed to open directory",
+	"scanning": "Scanning...",
+	"scanComplete": "Scan complete",
+	"scanFailed": "Scan failed",
+	"expand": "Expand",
+	"collapse": "Collapse"
 }

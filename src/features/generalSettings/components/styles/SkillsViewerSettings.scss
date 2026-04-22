@@ -1,0 +1,343 @@
+/**
+ * SkillsViewerSettings 样式
+ */
+
+.skills-viewer-settings {
+  padding: 16px;
+
+  .sv-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+
+    .sv-header-icon {
+      font-size: 18px;
+    }
+
+    .sv-header-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--b3-theme-on-surface);
+    }
+
+    .sv-header-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1);
+      color: var(--b3-theme-primary);
+      font-weight: 500;
+    }
+  }
+
+  .sv-description {
+    font-size: 12px;
+    color: var(--b3-theme-on-surface-variant);
+    line-height: 1.5;
+    margin-bottom: 20px;
+  }
+
+  // 工具选择卡片
+  .sv-tools-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+
+    .sv-tool-card {
+      padding: 12px;
+      border: 2px solid var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.08));
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: var(--b3-theme-surface);
+      position: relative;
+      overflow: hidden;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--tool-color, transparent);
+        opacity: 0;
+        transition: opacity 0.2s ease;
+      }
+
+      &:hover {
+        border-color: var(--tool-color, var(--b3-theme-primary));
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      }
+
+      &.active {
+        border-color: var(--tool-color, var(--b3-theme-primary));
+
+        &::before {
+          opacity: 1;
+        }
+      }
+
+      .sv-tool-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+
+        .sv-tool-icon {
+          font-size: 16px;
+        }
+
+        .sv-tool-name {
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--b3-theme-on-surface);
+        }
+      }
+
+      .sv-tool-status {
+        font-size: 11px;
+        color: var(--b3-theme-on-surface-variant);
+
+        .sv-count {
+          color: var(--tool-color, var(--b3-theme-primary));
+          font-weight: 600;
+        }
+      }
+    }
+  }
+
+  // 项目路径设置
+  .sv-project-path {
+    margin-bottom: 20px;
+    padding: 12px 14px;
+    background: var(--b3-theme-surface);
+    border: 1px solid var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.08));
+    border-radius: 8px;
+
+    .sv-path-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--b3-theme-on-surface);
+      margin-bottom: 8px;
+    }
+
+    .sv-path-input-row {
+      display: flex;
+      gap: 8px;
+
+      .sv-path-input {
+        flex: 1;
+        padding: 6px 10px;
+        font-size: 12px;
+        border: 1px solid var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.08));
+        border-radius: 6px;
+        background: var(--b3-theme-background);
+        color: var(--b3-theme-on-background);
+        outline: none;
+        font-family: monospace;
+
+        &:focus {
+          border-color: var(--b3-theme-primary);
+          box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1);
+        }
+      }
+    }
+  }
+
+  // 刷新按钮
+  .sv-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  // Skills 列表
+  .sv-skills-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .sv-skill-card {
+    padding: 14px;
+    background: var(--b3-theme-surface);
+    border: 1px solid var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.08));
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--tool-color, var(--b3-theme-primary));
+    }
+
+    &:hover {
+      border-color: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.2);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .sv-skill-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+
+      .sv-skill-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--b3-theme-on-surface);
+      }
+
+      .sv-skill-tool-badge {
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-weight: 500;
+      }
+    }
+
+    .sv-skill-desc {
+      font-size: 12px;
+      color: var(--b3-theme-on-surface-variant);
+      line-height: 1.4;
+      margin-bottom: 8px;
+    }
+
+    .sv-skill-path {
+      font-size: 11px;
+      color: var(--b3-theme-on-surface-variant);
+      opacity: 0.7;
+      font-family: monospace;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .sv-skill-expand-btn {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--b3-theme-primary);
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 4px 0;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+
+    .sv-skill-content {
+      margin-top: 10px;
+      padding: 10px;
+      background: var(--b3-theme-background);
+      border: 1px solid var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.08));
+      border-radius: 6px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-size: 12px;
+      font-family: monospace;
+      line-height: 1.5;
+      color: var(--b3-theme-on-background);
+      white-space: pre-wrap;
+      word-break: break-word;
+
+      &::-webkit-scrollbar {
+        width: 4px;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: var(--b3-theme-surface-variant);
+        border-radius: 2px;
+      }
+    }
+  }
+
+  // 空状态
+  .sv-empty {
+    text-align: center;
+    padding: 32px 16px;
+
+    .sv-empty-icon {
+      font-size: 36px;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    .sv-empty-text {
+      font-size: 13px;
+      color: var(--b3-theme-on-surface-variant);
+      line-height: 1.5;
+    }
+
+    .sv-empty-hint {
+      font-size: 12px;
+      color: var(--b3-theme-on-surface-variant);
+      opacity: 0.7;
+      margin-top: 8px;
+    }
+  }
+
+  // 加载状态
+  .sv-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    gap: 8px;
+
+    .sv-loading-spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--b3-theme-surface-variant);
+      border-top-color: var(--b3-theme-primary);
+      border-radius: 50%;
+      animation: sv-spin 0.6s linear infinite;
+    }
+
+    .sv-loading-text {
+      font-size: 13px;
+      color: var(--b3-theme-on-surface-variant);
+    }
+  }
+
+  // 不支持提示
+  .sv-unsupported {
+    padding: 20px;
+    text-align: center;
+
+    .sv-unsupported-icon {
+      font-size: 28px;
+      margin-bottom: 10px;
+      opacity: 0.5;
+    }
+
+    .sv-unsupported-text {
+      font-size: 13px;
+      color: var(--b3-theme-on-surface-variant);
+      line-height: 1.5;
+    }
+  }
+}
+
+@keyframes sv-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

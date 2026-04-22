@@ -13,6 +13,7 @@ import {
 import { GeneralSettingsStorage } from "./storage";
 import { DocCountManager } from "../modules/DocCountManager";
 import { HighlightManager } from "../modules/HighlightManager";
+import { SkillsViewerManager } from "../modules/SkillsViewerManager";
 // @ts-ignore
 import GeneralSettingsPanel from "../index.vue";
 
@@ -484,6 +485,7 @@ export class GeneralSettings {
 	private contentObserver: MutationObserver | null = null;
 	private docCountManager: DocCountManager | null = null;
 	private highlightManager: HighlightManager | null = null;
+	private skillsViewerManager: SkillsViewerManager | null = null;
 
 	constructor(plugin: Plugin) {
 		this.plugin = plugin;
@@ -502,6 +504,7 @@ export class GeneralSettings {
 		await this.applyDocCountStyle();
 		await this.applyTabPinStyle();
 		await this.applyHighlightStyle();
+		await this.applySkillsViewerStyle();
 		this.observeContentChanges();
 		await this.initAutoBackup();
 	}
@@ -930,6 +933,17 @@ export class GeneralSettings {
 			this.highlightManager.enable();
 		} catch (error) {
 			console.error("应用双击高亮功能失败:", error);
+		}
+	}
+
+	public async applySkillsViewerStyle() {
+		try {
+			const settings = await this.storage.loadSkillsViewerSettings();
+			if (settings && settings.enabled) {
+				this.skillsViewerManager = new SkillsViewerManager();
+			}
+		} catch (error) {
+			console.error("初始化 Skills 查看器失败:", error);
 		}
 	}
 
@@ -1592,6 +1606,10 @@ export class GeneralSettings {
 		if (this.highlightManager) {
 			this.highlightManager.disable();
 			this.highlightManager = null;
+		}
+		if (this.skillsViewerManager) {
+			this.skillsViewerManager.destroy();
+			this.skillsViewerManager = null;
 		}
 	}
 }

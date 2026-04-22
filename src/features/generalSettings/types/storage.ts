@@ -149,6 +149,12 @@ export interface BackupSettings {
 	workspaceRoot: string;
 }
 
+export interface SkillsViewerSettings {
+	enabled: boolean;
+	projectPath: string;
+	selectedTool: string;
+}
+
 export class GeneralSettingsStorage {
 	private storage: PluginStorage;
 
@@ -164,6 +170,7 @@ export class GeneralSettingsStorage {
 		LIST_STYLE: "list-style-settings",
 		DOC_COUNT: "doc-count-settings",
 		TAB_PIN: "tabpin-settings",
+		SKILLS_VIEWER: "skills-viewer-settings",
 	};
 
 	constructor(plugin: Plugin) {
@@ -268,6 +275,14 @@ export class GeneralSettingsStorage {
 
 	async loadTabPinSettings(): Promise<TabPinSettings | null> {
 		return this.storage.load<TabPinSettings>(this.KEYS.TAB_PIN);
+	}
+
+	async saveSkillsViewerSettings(settings: SkillsViewerSettings): Promise<boolean> {
+		return this.storage.save(this.KEYS.SKILLS_VIEWER, settings);
+	}
+
+	async loadSkillsViewerSettings(): Promise<SkillsViewerSettings | null> {
+		return this.storage.load<SkillsViewerSettings>(this.KEYS.SKILLS_VIEWER);
 	}
 
 	async clearAllSettings(): Promise<void> {

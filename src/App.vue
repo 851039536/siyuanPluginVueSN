@@ -4,15 +4,15 @@
     <ImageViewer
       :visible="showImageViewer"
       :i18n="(plugin.i18n as any).imageCompressor || {}"
-      @close="onCloseImageViewer"
+      @close="showImageViewer = false"
     />
     <!-- 二维码对话框 -->
     <QRCodeDialog
       :visible="showQRCodeDialog"
       :content="qrcodeContent"
       :i18n="plugin.i18n"
-      @update:visible="onQRCodeDialogVisibleChange"
-      @close="onCloseQRCodeDialog"
+      @update:visible="(v: boolean) => showQRCodeDialog = v"
+      @close="showQRCodeDialog = false"
     />
 
     <!-- 谐音翻译对话框 -->
@@ -21,14 +21,14 @@
       :content="pronunciationWord"
       :plugin="plugin"
       :i18n="plugin.i18n"
-      @update:visible="onPronunciationDialogVisibleChange"
-      @close="onClosePronunciationDialog"
+      @update:visible="(v: boolean) => showPronunciationDialog = v"
+      @close="showPronunciationDialog = false"
     />
 
     <!-- 视频管理器 -->
     <VideoManager
       :visible="showVideoManager"
-      @close="onCloseVideoManager"
+      @close="showVideoManager = false"
     />
 
     <!-- Everything搜索弹窗 -->
@@ -44,8 +44,6 @@
       @update:visible="(v) => passwordVaultVisible = v"
       @close="hidePasswordVault"
     />
-
-
   </div>
 </template>
 
@@ -73,35 +71,7 @@ const qrcodeContent = ref("");
 const showPronunciationDialog = ref(false);
 const pronunciationWord = ref("");
 
-// 打开图片压缩器
-const openImageCompressor = () => {
-	showImageViewer.value = true;
-};
-
-// 关闭图片压缩器
-const onCloseImageViewer = () => {
-	showImageViewer.value = false;
-};
-
-// 二维码对话框控制
-const onQRCodeDialogVisibleChange = (visible: boolean) => {
-	showQRCodeDialog.value = visible;
-};
-
-const onCloseQRCodeDialog = () => {
-	showQRCodeDialog.value = false;
-};
-
-// 视频管理器控制
-const openVideoManager = () => {
-	showVideoManager.value = true;
-};
-
-const onCloseVideoManager = () => {
-	showVideoManager.value = false;
-};
-
-// 公开方法，纲projuct可以通过事件打开二维码对话框
+// 打开二维码对话框
 const openQRCodeDialog = (content: string) => {
 	qrcodeContent.value = content;
 	showQRCodeDialog.value = true;
@@ -113,15 +83,6 @@ const openPronunciationDialog = (word: string) => {
 	showPronunciationDialog.value = true;
 };
 
-// 谐音翻译对话框控制
-const onPronunciationDialogVisibleChange = (visible: boolean) => {
-	showPronunciationDialog.value = visible;
-};
-
-const onClosePronunciationDialog = () => {
-	showPronunciationDialog.value = false;
-};
-
 onMounted(() => {
 	window._sy_plugin_sample = {};
 	window._sy_plugin_sample.openQRCodeDialog = openQRCodeDialog;
@@ -129,27 +90,23 @@ onMounted(() => {
 
 	// 监听打开二维码对话框事件
 	window.addEventListener("openQRCodeDialog", ((event: any) => {
-		const content = event.detail?.content;
-		if (content) {
-			qrcodeContent.value = content;
-			showQRCodeDialog.value = true;
-		}
+		if (event.detail?.content) openQRCodeDialog(event.detail.content);
 	}) as EventListener);
 
 	// 监听打开谐音翻译对话框事件
 	window.addEventListener("openPronunciationDialog", ((event: any) => {
-		const content = event.detail?.content;
-		if (content) {
-			pronunciationWord.value = content;
-			showPronunciationDialog.value = true;
-		}
+		if (event.detail?.content) openPronunciationDialog(event.detail.content);
 	}) as EventListener);
 
 	// 监听打开图片压缩器事件
-	window.addEventListener("openImageCompressor", openImageCompressor);
+	window.addEventListener("openImageCompressor", () => {
+		showImageViewer.value = true;
+	});
 
 	// 监听打开视频管理器事件
-	window.addEventListener("openVideoManager", openVideoManager);
+	window.addEventListener("openVideoManager", () => {
+		showVideoManager.value = true;
+	});
 
 	// 监听打开Everything搜索事件
 	window.addEventListener("openEverythingSearch", () => {
@@ -162,7 +119,6 @@ onMounted(() => {
 	});
 });
 </script>
-
 
 <!-- 局部样式 -->
 <style lang="scss" scoped>

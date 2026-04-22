@@ -7,7 +7,6 @@ import { createApp, reactive, type App as VueApp } from "vue";
 import SuperPanelPanel from "../index.vue";
 import { replaceTopBarIcon } from "@/utils/iconHelper";
 import { FEATURE_ICONS, type IconKey } from "@/config/icons";
-import { TextDiffManager } from "../../textDiff/types";
 import type { PluginSettings } from "@/config/settings";
 
 /**
@@ -95,32 +94,21 @@ const FEATURE_SETTINGS_MAP: Record<string, string> = {
 const ALL_FEATURE_SETTINGS = Object.values(FEATURE_SETTINGS_MAP);
 
 /**
- * 简单事件映射表：action -> CustomEvent 名称
+ * 统一 action 映射表：action -> 事件配置
+ * settingKey 可选，存在时需先检查功能是否启用
  */
-const SIMPLE_ACTION_EVENTS: Record<string, string> = {
-	insertIndex: "executeCommand",
-	insertOutline: "executeCommand",
-	insertRef: "executeCommand",
-	openCompressor: "openImageCompressor",
-	openVideoManager: "openVideoManager",
-	openEverythingSearch: "openEverythingSearch",
-	openFlashcardReading: "openFlashcardReading",
-	openWebDAV: "openWebDAV",
-};
-
-/**
- * 需要检查设置键的 action 映射
- */
-const ACTION_SETTINGS_MAP: Record<
+const ACTION_EVENT_MAP: Record<
 	string,
-	{ event: string; settingKey: string; detail?: any }
+	{ event: string; settingKey?: string; detail?: any }
 > = {
+	openCompressor: { event: "openImageCompressor" },
+	openVideoManager: { event: "openVideoManager" },
+	openEverythingSearch: { event: "openEverythingSearch" },
+	openFlashcardReading: { event: "openFlashcardReading" },
+	openWebDAV: { event: "openWebDAV" },
 	openStatistics: { event: "openStatistics", settingKey: "enableStatistics" },
 	openDocAnalysis: { event: "dock-click", settingKey: "enableDocAnalysis", detail: { dockId: "doc-analysis-dock" } },
-	openBase64Image: {
-		event: "openBase64Image",
-		settingKey: "enableBase64Image",
-	},
+	openBase64Image: { event: "openBase64Image", settingKey: "enableBase64Image" },
 };
 
 /**
@@ -315,49 +303,24 @@ export class SuperPanelManager {
 	}
 
 	private handleFeatureAction(action: string) {
-		// 处理带命令详情的事件
-		const commandDetails: Record<string, string> = {
-			insertIndex: "insertIndex",
-			insertOutline: "insertSubDocsWithOutline",
-			insertRef: "insertSubDocsRef",
-		};
-
-		// 处理简单事件
-		if (SIMPLE_ACTION_EVENTS[action]) {
-			const eventName = SIMPLE_ACTION_EVENTS[action];
-			if (commandDetails[action]) {
-				window.dispatchEvent(
-					new CustomEvent(eventName, {
-						detail: { command: commandDetails[action] },
-					}),
-				);
-			} else {
-				window.dispatchEvent(new CustomEvent(eventName));
+		// 处理统一 action 映射
+		const actionConfig = ACTION_EVENT_MAP[action];
+		if (actionConfig) {
+			if (actionConfig.settingKey && !(this.plugin as any).settings[actionConfig.settingKey]) {
+				return;
 			}
+			const eventInit = actionConfig.detail
+				? { detail: actionConfig.detail }
+				: undefined;
+			window.dispatchEvent(new CustomEvent(actionConfig.event, eventInit));
 			this.close();
 			return;
 		}
 
-		// 处理需要检查设置的事件
-		const actionConfig = ACTION_SETTINGS_MAP[action];
-		if (actionConfig) {
-			if ((this.plugin as any).settings[actionConfig.settingKey]) {
-				const eventInit = actionConfig.detail
-					? { detail: actionConfig.detail }
-					: undefined;
-				window.dispatchEvent(new CustomEvent(actionConfig.event, eventInit));
-				this.close();
-			}
-			return;
-		}
-
-		// 特殊处理：文本对比
+		// 特殊处理：文本对比（直接调用 manager，不走事件）
 		if (action === "openTextDiff") {
 			if ((this.plugin as any).settings.enableTextDiff) {
-				const manager = (this.plugin as any).__textDiff as TextDiffManager;
-				if (manager) {
-					manager.toggle();
-				}
+				(this.plugin as any).__textDiff?.toggle?.();
 				this.close();
 			}
 			return;

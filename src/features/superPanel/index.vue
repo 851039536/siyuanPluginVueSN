@@ -4,7 +4,7 @@
     <div
       v-if="visible"
       class="super-panel-overlay"
-      @click="handleClose"
+      @click="emit('close')"
     />
   </Transition>
 
@@ -15,10 +15,10 @@
       <SuperPanelHeader
         :title="i18n.title || '超级面板'"
         :i18n="i18n"
-        @toggle-all="handleToggleAll"
+        @toggle-all="(v: boolean) => emit('toggleAllFeatures', v)"
         @toggle-ai-settings="toggleAiSettings"
-        @refresh="handleRefresh"
-        @close="handleClose"
+        @refresh="emit('refresh')"
+        @close="emit('close')"
       />
 
       <!-- AI配置区域 -->
@@ -27,7 +27,7 @@
         :settings="aiSettings"
         :i18n="i18n"
         @close="toggleAiSettings"
-        @update:settings="handleUpdateAiSettings"
+        @update:settings="emit('updateAiSettings', $event)"
       />
 
       <!-- 内容区 -->
@@ -37,8 +37,8 @@
           :key="feature.id"
           :feature="feature"
           :i18n="i18n"
-          @action="handleFeatureAction"
-          @toggle="handleFeatureToggle"
+          @action="emit('action', $event)"
+          @toggle="(id: string, v: boolean) => emit('toggleFeature', id, v)"
         />
       </div>
     </div>
@@ -93,11 +93,6 @@ const aiSettings = computed<AiSettings>(() => ({
 // 切换AI配置面板
 const toggleAiSettings = () => {
 	showAiSettings.value = !showAiSettings.value;
-};
-
-// 更新AI配置
-const handleUpdateAiSettings = (settings: AiSettings) => {
-	emit("updateAiSettings", settings);
 };
 
 // 功能列表配置
@@ -353,26 +348,6 @@ const features = computed<Feature[]>(() => [
 		],
 	},
 ]);
-
-const handleClose = () => {
-	emit("close");
-};
-
-const handleRefresh = () => {
-	emit("refresh");
-};
-
-const handleFeatureAction = (action: string) => {
-	emit("action", action);
-};
-
-const handleFeatureToggle = (featureId: string, enabled: boolean) => {
-	emit("toggleFeature", featureId, enabled);
-};
-
-const handleToggleAll = (enabled: boolean) => {
-	emit("toggleAllFeatures", enabled);
-};
 </script>
 
 <style scoped lang="scss">

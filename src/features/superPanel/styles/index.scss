@@ -1,7 +1,4 @@
 // SuperPanelView 主样式
-@use 'sass:map';
-@use 'sass:string';
-
 // 引入模块专属文件（同时 forward 给导入者使用）
 @forward './variables';
 @use './variables' as *;

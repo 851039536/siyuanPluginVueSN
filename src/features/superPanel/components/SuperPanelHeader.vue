@@ -5,11 +5,13 @@
       <span>{{ title }}</span>
     </div>
     <div class="header-actions">
-      <ActionButton
+      <Button
         v-for="action in actions"
         :key="action.key"
+        variant="ghost"
+        size="small"
         :icon="action.icon"
-        :size="16"
+        :icon-size="16"
         :title="action.title"
         @click="action.handler"
       />
@@ -20,7 +22,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import IconWrapper from "@/components/IconWrapper.vue";
-import ActionButton from "./ActionButton.vue";
+import Button from "@/components/Button.vue";
 import type { IconKey } from "@/config/icons";
 
 interface HeaderAction {

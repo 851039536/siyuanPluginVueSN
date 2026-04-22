@@ -29,8 +29,8 @@
           :model-value="settings.model"
           :custom-model="settings.customModel"
           :i18n="i18n"
-          @update:model-value="handleModelChange"
-          @update:custom-model="handleCustomModelChange"
+          @update:model-value="(v: string) => updateSetting('model', v)"
+          @update:custom-model="(v: string) => updateSetting('customModel', v)"
         />
       </SettingGroup>
 
@@ -41,7 +41,7 @@
           :provider="settings.provider"
           :model-value="settings.apiKey"
           :i18n="i18n"
-          @update:model-value="handleApiKeyChange"
+          @update:model-value="(v: string) => updateSetting('apiKey', v)"
         />
       </SettingGroup>
 
@@ -51,7 +51,7 @@
         <TextInput
           :model-value="settings.customEndpoint"
           placeholder="https://api.example.com/v1/chat/completions"
-          @update:model-value="handleEndpointChange"
+          @update:model-value="(v: string) => updateSetting('customEndpoint', v)"
         />
         <div class="setting-desc">自定义API端点URL，用于连接自定义API服务</div>
       </SettingGroup>
@@ -98,6 +98,10 @@ const handleClose = () => {
 	emit("close");
 };
 
+const updateSetting = (field: keyof AiSettings, value: string) => {
+	emit("update:settings", { ...props.settings, [field]: value });
+};
+
 const handleProviderChange = async (provider: string) => {
 	const defaultModels: Record<string, string> = {
 		tongyi: "qwen-plus",
@@ -105,41 +109,9 @@ const handleProviderChange = async (provider: string) => {
 		deepseek: "deepseek-chat",
 		custom: "",
 	};
-
-	emit("update:settings", {
-		...props.settings,
-		provider,
-		model: defaultModels[provider] || "",
-	});
+	updateSetting("provider", provider);
+	updateSetting("model", defaultModels[provider] || "");
 	showMessage("供应商已更新", 2000, "info");
-};
-
-const handleModelChange = (model: string) => {
-	emit("update:settings", {
-		...props.settings,
-		model,
-	});
-};
-
-const handleCustomModelChange = (customModel: string) => {
-	emit("update:settings", {
-		...props.settings,
-		customModel,
-	});
-};
-
-const handleApiKeyChange = (apiKey: string) => {
-	emit("update:settings", {
-		...props.settings,
-		apiKey,
-	});
-};
-
-const handleEndpointChange = (customEndpoint: string) => {
-	emit("update:settings", {
-		...props.settings,
-		customEndpoint,
-	});
 };
 </script>
 

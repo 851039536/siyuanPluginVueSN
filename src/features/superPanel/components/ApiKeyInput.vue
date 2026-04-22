@@ -84,20 +84,4 @@ const handleInput = (value: string) => {
 
 <style scoped lang="scss">
 @use '../styles/index.scss';
-
-.setting-input-wrapper {
-  display: flex;
-  align-items: center;
-  position: relative;
-
-  .setting-input {
-    flex: 1;
-    border-radius: 6px 0 0 6px;
-    border-right: none;
-
-    &:focus {
-      z-index: 1;
-    }
-  }
-}
 </style>

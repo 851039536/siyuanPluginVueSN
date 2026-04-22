@@ -44,20 +44,6 @@ export interface UpdateFlashcardDTO {
 }
 
 /**
- * 类别筛选类型
- */
-export type CategoryFilter = string | "all";
-
-/**
- * 卡片列表结果（带分页）
- */
-export interface FlashcardListResult {
-	cards: Flashcard[];
-	total: number;
-	categories: string[];
-}
-
-/**
  * 视图模式类型
  */
 export type ViewMode = "list" | "single" | "statistics";
@@ -107,7 +93,6 @@ export interface I18n {
 	deleteCard?: string;
 	addCard?: string;
 	refresh?: string;
-	usageGuide?: string;
 	previous?: string;
 	next?: string;
 	randomCard?: string;

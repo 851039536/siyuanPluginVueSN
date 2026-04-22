@@ -33,7 +33,6 @@ defineProps<{
 }>();
 
 defineEmits<{
-	showHelp: [];
 	addCard: [];
 	refresh: [];
 }>();

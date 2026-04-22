@@ -51,31 +51,12 @@ export class FlashcardStorage {
 	}
 
 	/**
-	 * 按类别获取卡片
-	 */
-	async getCardsByCategory(category: string): Promise<Flashcard[]> {
-		const allCards = await this.getAllCards();
-		if (category === "all") {
-			return allCards;
-		}
-		return allCards.filter((card) => card.category === category);
-	}
-
-	/**
 	 * 获取所有唯一的类别列表
 	 */
 	async getCategories(): Promise<string[]> {
 		const cards = await this.getAllCards();
 		const categories = new Set(cards.map((card) => card.category));
 		return Array.from(categories).sort();
-	}
-
-	/**
-	 * 按ID获取卡片
-	 */
-	async getCardById(id: string): Promise<Flashcard | null> {
-		const cards = await this.getAllCards();
-		return cards.find((card) => card.id === id) || null;
 	}
 
 	/**
@@ -154,22 +135,6 @@ export class FlashcardStorage {
 
 		await this.storage.save(this.STORAGE_KEY, filteredCards);
 		return true;
-	}
-
-	/**
-	 * 批量删除卡片
-	 */
-	async deleteCards(ids: string[]): Promise<number> {
-		const cards = await this.getAllCards();
-		const idSet = new Set(ids);
-		const filteredCards = cards.filter((card) => !idSet.has(card.id));
-		const deletedCount = cards.length - filteredCards.length;
-
-		if (deletedCount > 0) {
-			await this.storage.save(this.STORAGE_KEY, filteredCards);
-		}
-
-		return deletedCount;
 	}
 
 	/**

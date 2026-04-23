@@ -9,12 +9,14 @@
       v-model:systemPrompt="systemPrompt"
       v-model:temperature="temperature"
       v-model:maxTokens="maxTokens"
-      v-model:contextMessageLimit="contextMessageLimit"
       :currentPromptName="currentPromptName"
       v-model:newPromptName="newPromptName"
+      :savedPrompts="savedPrompts"
       @toggle-settings="toggleSettings"
       @save-current-prompt="saveCurrentPrompt"
       @on-prompt-name-focus="onPromptNameFocus"
+      @load-prompt="loadPrompt"
+      @delete-prompt="deletePrompt"
     />
 
     <!-- 内容显示区域（移到上方） -->
@@ -32,7 +34,7 @@
         :original-content="originalContent"
         :can-apply="!!editTargetDoc && !isApplying && !isGenerating"
         :can-insert-sub-doc="!!editTargetDoc && !isInsertingSubDoc && !isGenerating"
-        :can-undo="!!lastEditHistory"
+        :can-undo="canUndoEdit"
         @stop="handleStop"
         @apply-edit="applyEdit"
         @insert-subdoc="insertSubDocument"
@@ -63,6 +65,7 @@
       @edit-prompt="editPrompt"
       @delete-prompt="deletePrompt"
       @select-target-doc="selectTargetDocument"
+      @select-target-block="selectTargetBlock"
       @clear-target-doc="clearTargetDocument"
       @custom-edit="handleCustomEdit"
       @update:prompt-search-query="promptSearchQuery = $event"
@@ -74,7 +77,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, nextTick } from "vue";
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from "vue";
 import { showMessage } from "siyuan";
 import { marked } from "marked";
 import hljs from "highlight.js";
@@ -124,7 +127,8 @@ interface EditHistory {
 	originalContent: string;
 	timestamp: number;
 }
-const lastEditHistory = ref<EditHistory | null>(null);
+const MAX_EDIT_HISTORY = 20; // 最大历史记录数
+const editHistoryStack = ref<EditHistory[]>([]);
 
 // 对话设置
 const systemPrompt = ref(
@@ -133,10 +137,6 @@ const systemPrompt = ref(
 const temperature = ref(0.7);
 const maxTokens = ref(10000);
 
-// 上下文消息数量配置
-const contextMessageLimit = ref(1);
-
-// 上下文配置已删除
 const displayedContent = ref(""); // 用于打字机效果显示的内容
 // 提示词管理
 const savedPrompts = ref<SavedPrompt[]>([]);
@@ -151,6 +151,9 @@ const currentPage = ref(1);
 // ============ 常量定义 ============
 const ITEMS_PER_PAGE = 10; // 每页显示数量
 const SETTINGS_SAVE_DEBOUNCE_MS = 300; // 设置保存防抖时间(毫秒)
+
+// 是否有可撤回的编辑历史
+const canUndoEdit = computed(() => editHistoryStack.value.length > 0);
 
 // 过滤后的提示词
 const filteredPrompts = computed(() => {
@@ -201,6 +204,11 @@ const startGeneration = () => {
 	isGenerating.value = true;
 	generatedContent.value = "";
 	displayedContent.value = "";
+	chunkBuffer = "";
+	if (rafId) {
+		cancelAnimationFrame(rafId);
+		rafId = null;
+	}
 	errorMessage.value = "";
 };
 
@@ -268,11 +276,29 @@ const loadDocument = async (
 };
 
 /**
- * 默认的流式输出回调（同时更新显示内容和生成内容）
+ * 流式输出缓冲区与节流渲染
+ * 使用 requestAnimationFrame 批量更新，避免高频 chunk 导致频繁 DOM 重渲染
+ */
+let chunkBuffer = "";
+let rafId: number | null = null;
+
+const flushChunkBuffer = () => {
+	if (chunkBuffer) {
+		displayedContent.value += chunkBuffer;
+		chunkBuffer = "";
+	}
+	rafId = null;
+};
+
+/**
+ * 默认的流式输出回调（节流更新显示内容，即时更新生成内容）
  */
 const defaultOnChunk = (chunk: string) => {
-	displayedContent.value += chunk;
 	generatedContent.value += chunk;
+	chunkBuffer += chunk;
+	if (!rafId) {
+		rafId = requestAnimationFrame(flushChunkBuffer);
+	}
 };
 
 /**
@@ -402,7 +428,7 @@ const clearEditState = () => {
 	editTargetDoc.value = null;
 	originalContent.value = "";
 	editCustomInput.value = "";
-	lastEditHistory.value = null;
+	editHistoryStack.value = [];
 };
 
 // 停止生成
@@ -531,6 +557,42 @@ const selectTargetDocument = async () => {
 	}
 };
 
+// 选择当前光标所在的块
+const selectTargetBlock = async () => {
+	try {
+		const blockId = getCurrentBlockId();
+		if (!blockId) {
+			showMessage("无法获取当前块，请将光标放在目标块中", 2000, "error");
+			return;
+		}
+
+		// 获取块的 Markdown 内容
+		const blockContent = await api.getBlockMarkdown(blockId);
+		if (!blockContent) {
+			showMessage("无法获取块内容", 2000, "error");
+			return;
+		}
+
+		// 获取块所属的文档信息（用于标题显示）
+		const blockInfo = await api.getBlockByID(blockId);
+		const docTitle = blockInfo?.content || "块内容";
+
+		// 设置目标文档状态（标记为块）
+		setTargetDocState(
+			{
+				id: blockId,
+				title: docTitle,
+				content: blockContent,
+				isBlock: true,
+			},
+			blockContent,
+		);
+	} catch (error) {
+		console.error("选择块失败:", error);
+		showMessage("选择块失败: " + (error as Error).message, 3000, "error");
+	}
+};
+
 /**
  * 设置目标文档状态
  */
@@ -540,7 +602,7 @@ const setTargetDocState = (doc: TargetDoc, content: string) => {
 	generatedContent.value = content;
 	displayedContent.value = content;
 	editCustomInput.value = "";
-	lastEditHistory.value = null;
+	editHistoryStack.value = [];
 };
 
 // 加载目标文档
@@ -577,12 +639,16 @@ const applyEdit = async () => {
 	isApplying.value = true;
 	try {
 		// 保存编辑历史（用于撤回）
-		lastEditHistory.value = {
+		editHistoryStack.value.push({
 			docId: editTargetDoc.value.id,
 			docTitle: editTargetDoc.value.title,
 			originalContent: originalContent.value,
 			timestamp: Date.now(),
-		};
+		});
+		// 限制历史记录数量
+		if (editHistoryStack.value.length > MAX_EDIT_HISTORY) {
+			editHistoryStack.value.shift();
+		}
 
 		// 区分文档和块的处理
 		const siyuanContent = processContentByType(
@@ -592,12 +658,8 @@ const applyEdit = async () => {
 
 		const docId = editTargetDoc.value.id;
 
-		if (!editTargetDoc.value.isBlock) {
-			// 文档块：先删除所有子块，确保完全替换，避免旧内容残留
-			await clearDocChildrenBlocks(docId);
-		}
-
 		// 使用updateBlock API更新文档内容
+		// 思源的 updateBlock 对文档块（根块）会替换全部子块，无需先清空
 		const result = await api.updateBlock("markdown", siyuanContent, docId);
 		if (!result) {
 			throw new Error("updateBlock API 返回为空，更新可能未生效");
@@ -614,37 +676,20 @@ const applyEdit = async () => {
 	}
 };
 
-/**
- * 删除文档的所有子块，确保 updateBlock 时不会残留旧内容
- */
-const clearDocChildrenBlocks = async (docId: string) => {
-	try {
-		const childBlocks = await api.getChildBlocks(docId);
-		if (childBlocks && childBlocks.length > 0) {
-			for (const block of childBlocks) {
-				await api.deleteBlock(block.id);
-			}
-		}
-	} catch (error) {
-		console.warn("清空文档子块失败，继续尝试更新:", error);
-	}
-};
-
 // 撤回编辑
 const undoEdit = async () => {
-	if (!lastEditHistory.value) return;
+	if (editHistoryStack.value.length === 0) return;
 
 	isUndoing.value = true;
 	try {
-		const historyDocId = lastEditHistory.value.docId;
+		// 从栈顶弹出最近的历史记录
+		const lastHistory = editHistoryStack.value.pop()!;
+		const historyDocId = lastHistory.docId;
 
-		// 先清空当前子块，确保完全替换
-		await clearDocChildrenBlocks(historyDocId);
-
-		// 恢复原始内容
+		// 恢复原始内容（updateBlock 对文档块会替换全部子块，无需先清空）
 		const result = await api.updateBlock(
 			"markdown",
-			lastEditHistory.value.originalContent,
+			lastHistory.originalContent,
 			historyDocId,
 		);
 		if (!result) {
@@ -652,7 +697,7 @@ const undoEdit = async () => {
 		}
 
 		showMessage(
-			`✓ 已撤回对文档的编辑: ${lastEditHistory.value.docTitle}`,
+			`✓ 已撤回对文档的编辑: ${lastHistory.docTitle}`,
 			2000,
 			"info",
 		);
@@ -660,16 +705,13 @@ const undoEdit = async () => {
 		// 如果当前编辑的是同一个文档，更新界面
 		if (
 			editTargetDoc.value &&
-			editTargetDoc.value.id === lastEditHistory.value.docId
+			editTargetDoc.value.id === lastHistory.docId
 		) {
-			generatedContent.value = lastEditHistory.value.originalContent;
-			displayedContent.value = lastEditHistory.value.originalContent;
-			originalContent.value = lastEditHistory.value.originalContent;
-			editTargetDoc.value.content = lastEditHistory.value.originalContent;
+			generatedContent.value = lastHistory.originalContent;
+			displayedContent.value = lastHistory.originalContent;
+			originalContent.value = lastHistory.originalContent;
+			editTargetDoc.value.content = lastHistory.originalContent;
 		}
-
-		// 清除历史记录
-		lastEditHistory.value = null;
 	} catch (error) {
 		console.error("撤回编辑失败:", error);
 	} finally {
@@ -888,7 +930,6 @@ const saveCurrentPrompt = async () => {
 		systemPrompt: systemPrompt.value,
 		temperature: temperature.value,
 		maxTokens: maxTokens.value,
-		contextMessageLimit: contextMessageLimit.value,
 		createdAt:
 			existingIndex >= 0
 				? savedPrompts.value[existingIndex].createdAt
@@ -983,7 +1024,6 @@ const applyPromptConfig = (prompt: SavedPrompt) => {
 	systemPrompt.value = prompt.systemPrompt;
 	temperature.value = prompt.temperature;
 	maxTokens.value = prompt.maxTokens;
-	contextMessageLimit.value = prompt.contextMessageLimit || 1;
 	currentPromptName.value = prompt.name;
 };
 
@@ -1068,6 +1108,14 @@ onMounted(async () => {
 	}
 });
 
+// 组件卸载时清理 RAF
+onUnmounted(() => {
+	if (rafId) {
+		cancelAnimationFrame(rafId);
+		rafId = null;
+	}
+});
+
 // 是否已完成初始设置加载（用于避免初始加载时触发保存）
 let isSettingsLoaded = false;
 
@@ -1079,7 +1127,6 @@ const saveSettings = async () => {
 		systemPrompt: systemPrompt.value,
 		temperature: temperature.value,
 		maxTokens: maxTokens.value,
-		contextMessageLimit: contextMessageLimit.value,
 	};
 
 	await safeStorageOperation(
@@ -1098,8 +1145,6 @@ const loadSettings = async () => {
 			systemPrompt.value = settings.systemPrompt || systemPrompt.value;
 			temperature.value = settings.temperature ?? temperature.value;
 			maxTokens.value = settings.maxTokens || maxTokens.value;
-			contextMessageLimit.value =
-				settings.contextMessageLimit ?? contextMessageLimit.value;
 		}
 		isSettingsLoaded = true;
 	} catch (error) {
@@ -1109,7 +1154,7 @@ const loadSettings = async () => {
 
 // 监听设置变化（使用 debounce 避免频繁保存）
 let settingsSaveTimer: number | null = null;
-watch([systemPrompt, temperature, maxTokens, contextMessageLimit], () => {
+watch([systemPrompt, temperature, maxTokens], () => {
 	if (settingsSaveTimer) {
 		clearTimeout(settingsSaveTimer);
 	}

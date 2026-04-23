@@ -1,21 +1,29 @@
 <template>
   <div class="bottom-input-section">
-    <!-- 简化的操作栏 -->
-    <div class="action-bar">
-      <!-- 左侧：文档选择 + 快捷操作 -->
-      <div class="left-actions">
-        <!-- 文档选择器 -->
+    <!-- 第一行：文档选择 + 提示词 -->
+    <div class="top-bar">
+      <div class="top-bar-left">
+        <!-- 文档/块选择器 -->
         <div class="doc-selector" :class="{ 'has-doc': editTargetDoc }">
           <Button
             variant="ghost"
             size="small"
             @click="$emit('select-target-doc')"
-            :title="editTargetDoc ? editTargetDoc.title : '选择文档'"
+            :title="editTargetDoc && !editTargetDoc.isBlock ? editTargetDoc.title : '选择文档'"
           >
             <svg width="14" height="14"><use xlink:href="#iconFile"></use></svg>
-            <span class="doc-name">{{ editTargetDoc ? truncateTitle(editTargetDoc.title) : '选择文档' }}</span>
-            <Tag v-if="editTargetDoc?.isBlock" size="small" variant="primary">块</Tag>
+            <span class="doc-name">{{ editTargetDoc && !editTargetDoc.isBlock ? truncateTitle(editTargetDoc.title) : '选择文档' }}</span>
           </Button>
+          <Button
+            variant="ghost"
+            size="small"
+            @click="$emit('select-target-block')"
+            :title="editTargetDoc?.isBlock ? editTargetDoc.title : '选择块'"
+          >
+            <svg width="14" height="14"><use xlink:href="#iconEdit"></use></svg>
+            <span class="doc-name">{{ editTargetDoc?.isBlock ? truncateTitle(editTargetDoc.title) : '选择块' }}</span>
+          </Button>
+          <Tag v-if="editTargetDoc?.isBlock" size="small" variant="primary">块</Tag>
           <Button
             v-if="editTargetDoc"
             variant="ghost"
@@ -27,54 +35,10 @@
             <svg width="12" height="12"><use xlink:href="#iconClose"></use></svg>
           </Button>
         </div>
-
-        <!-- 快捷操作下拉菜单（已选择文档时显示） -->
-        <div v-if="editTargetDoc" class="quick-actions">
-          <div class="dropdown-wrapper">
-            <Button
-              variant="ghost"
-              size="small"
-              @click="showQuickMenu = !showQuickMenu"
-              :disabled="isGenerating"
-            >
-              <svg width="14" height="14"><use xlink:href="#iconSparkles"></use></svg>
-              <span>AI操作</span>
-              <svg width="10" height="10" class="dropdown-arrow" :class="{ 'open': showQuickMenu }">
-                <use xlink:href="#iconDown"></use>
-              </svg>
-            </Button>
-            <div v-if="showQuickMenu" class="dropdown-menu">
-              <div class="menu-item" @click="handleQuickAction('polish')">
-                <svg width="14" height="14"><use xlink:href="#iconEdit"></use></svg>
-                <span>润色</span>
-              </div>
-              <div class="menu-item" @click="handleQuickAction('expand')">
-                <svg width="14" height="14"><use xlink:href="#iconAdd"></use></svg>
-                <span>扩写</span>
-              </div>
-              <div class="menu-item" @click="handleQuickAction('condense')">
-                <svg width="14" height="14"><use xlink:href="#iconMin"></use></svg>
-                <span>精简</span>
-              </div>
-              <div class="menu-item" @click="handleQuickAction('fix')">
-                <svg width="14" height="14"><use xlink:href="#iconCheck"></use></svg>
-                <span>纠错</span>
-              </div>
-              <div class="menu-item" @click="handleQuickAction('rewrite')">
-                <svg width="14" height="14"><use xlink:href="#iconRefresh"></use></svg>
-                <span>改写</span>
-              </div>
-              <div class="menu-item" @click="handleQuickAction('summary')">
-                <svg width="14" height="14"><use xlink:href="#iconList"></use></svg>
-                <span>总结</span>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
-      <!-- 右侧：提示词选择 -->
-      <div class="right-actions">
+      <!-- 提示词选择 -->
+      <div class="top-bar-right">
         <div class="prompt-selector-wrapper">
           <Button
             variant="ghost"
@@ -141,7 +105,23 @@
       </div>
     </div>
 
-    <!-- 输入区域（已选择文档时显示） -->
+    <!-- 第二行：AI 快捷操作（已选择文档时平铺显示） -->
+    <div v-if="editTargetDoc" class="quick-actions-bar">
+      <button
+        v-for="action in quickActions"
+        :key="action.key"
+        class="quick-action-btn"
+        :class="{ active: isGenerating }"
+        :disabled="isGenerating"
+        @click="$emit('ai-edit', action.key)"
+        :title="action.label"
+      >
+        <svg width="12" height="12"><use :xlink:href="action.icon"></use></svg>
+        <span>{{ action.label }}</span>
+      </button>
+    </div>
+
+    <!-- 第三行：输入框 + 执行按钮（已选择文档时显示） -->
     <div v-if="editTargetDoc" class="input-row">
       <Textarea
         :model-value="editCustomInput"
@@ -177,17 +157,32 @@
       </Button>
     </div>
 
-    <!-- 点击遮罩关闭下拉菜单 -->
-    <div v-if="showQuickMenu" class="dropdown-overlay" @click="showQuickMenu = false"></div>
+    <!-- 点击遮罩关闭提示词面板 -->
+    <div v-if="showPromptSelector" class="dropdown-overlay" @click="$emit('toggle-prompt-selector')"></div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { computed } from "vue";
 import Button from "@/components/Button.vue";
 import Textarea from "@/components/Textarea.vue";
 import Tag from "@/components/Tag.vue";
 import type { TargetDoc, SavedPrompt } from "@/types/ai";
+
+interface QuickAction {
+	key: "polish" | "expand" | "condense" | "fix" | "rewrite" | "summary";
+	label: string;
+	icon: string;
+}
+
+const quickActions: QuickAction[] = [
+	{ key: "polish", label: "润色", icon: "#iconEdit" },
+	{ key: "expand", label: "扩写", icon: "#iconAdd" },
+	{ key: "condense", label: "精简", icon: "#iconMin" },
+	{ key: "fix", label: "纠错", icon: "#iconCheck" },
+	{ key: "rewrite", label: "改写", icon: "#iconRefresh" },
+	{ key: "summary", label: "总结", icon: "#iconList" },
+];
 
 interface Props {
 	isGenerating: boolean;
@@ -223,15 +218,13 @@ const emit = defineEmits<{
 	(e: "edit-prompt", index: number): void;
 	(e: "delete-prompt", index: number): void;
 	(e: "select-target-doc"): void;
+	(e: "select-target-block"): void;
 	(e: "clear-target-doc"): void;
 	(e: "custom-edit"): void;
 	(e: "update:promptSearchQuery", value: string): void;
 	(e: "update:currentPage", value: number): void;
 	(e: "update:editCustomInput", value: string): void;
 }>();
-
-// 下拉菜单状态
-const showQuickMenu = ref(false);
 
 // 计算属性
 const canExecute = computed(() => {
@@ -248,12 +241,6 @@ const executeButtonTitle = computed(() => {
 const truncateTitle = (title: string, maxLen = 12) => {
 	if (title.length <= maxLen) return title;
 	return title.substring(0, maxLen) + "...";
-};
-
-// 处理快捷操作
-const handleQuickAction = (action: string) => {
-	showQuickMenu.value = false;
-	emit("ai-edit", action as any);
 };
 
 // 获取原始索引

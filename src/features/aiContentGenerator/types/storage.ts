@@ -25,7 +25,6 @@ export class AIGeneratorStorage {
 		systemPrompt: string;
 		temperature: number;
 		maxTokens: number;
-		contextMessageLimit: number;
 	}): Promise<boolean> {
 		return this.storage.save(this.SETTINGS_STORAGE_KEY, settings);
 	}
@@ -34,7 +33,6 @@ export class AIGeneratorStorage {
 		systemPrompt: string;
 		temperature: number;
 		maxTokens: number;
-		contextMessageLimit: number;
 	} | null> {
 		return this.storage.load(this.SETTINGS_STORAGE_KEY);
 	}
@@ -70,7 +68,6 @@ export class AIGeneratorStorage {
 					systemPrompt: "",
 					temperature: 0.7,
 					maxTokens: 10000,
-					contextMessageLimit: 5,
 				});
 			}
 

@@ -49,6 +49,5 @@ export interface SavedPrompt {
 	systemPrompt: string;
 	temperature: number;
 	maxTokens: number;
-	contextMessageLimit: number;
 	createdAt: number;
 }

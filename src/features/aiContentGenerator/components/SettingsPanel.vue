@@ -64,25 +64,10 @@
                   size="small"
                 />
               </div>
-
-              <div class="form-group">
-                <label class="form-label">
-                  <svg width="12" height="12"><use xlink:href="#iconList" /></svg>
-                  上下文消息
-                  <span class="label-value">{{ contextMessageLimit }}</span>
-                </label>
-                <Slider
-                  :model-value="contextMessageLimit"
-                  @update:model-value="$emit('update:contextMessageLimit', $event)"
-                  :min="1" :max="10" :step="1"
-                  size="small"
-                />
-                <div class="param-hint">1 ~ 10 条</div>
-              </div>
             </div>
           </section>
 
-          <!-- 保存配置 -->
+          <!-- 保存当前配置 -->
           <section class="form-section save-section">
             <label class="form-label">
               <svg width="13" height="13"><use xlink:href="#iconSave" /></svg>
@@ -108,6 +93,46 @@
               </Button>
             </div>
           </section>
+
+          <!-- 已保存的提示词管理 -->
+          <section v-if="savedPrompts.length > 0" class="form-section prompts-section">
+            <label class="form-label">
+              <svg width="13" height="13"><use xlink:href="#iconList" /></svg>
+              已保存配置
+              <span class="label-value">{{ savedPrompts.length }}</span>
+            </label>
+            <div class="prompts-list">
+              <div
+                v-for="(prompt, index) in savedPrompts"
+                :key="prompt.id || index"
+                class="prompt-manage-item"
+                :class="{ active: prompt.name === currentPromptName }"
+              >
+                <div class="prompt-manage-info" @click="$emit('load-prompt', index)">
+                  <span class="prompt-manage-name">{{ prompt.name }}</span>
+                  <span class="prompt-manage-preview">{{ getPromptPreview(prompt.systemPrompt) }}</span>
+                </div>
+                <div class="prompt-manage-actions">
+                  <Button
+                    @click.stop="$emit('load-prompt', index)"
+                    variant="ghost"
+                    size="small"
+                    title="应用"
+                  >
+                    <svg width="12" height="12"><use xlink:href="#iconCheck" /></svg>
+                  </Button>
+                  <Button
+                    @click.stop="$emit('delete-prompt', index)"
+                    variant="ghost"
+                    size="small"
+                    title="删除"
+                  >
+                    <svg width="12" height="12"><use xlink:href="#iconTrashcan" /></svg>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
     </div>
@@ -120,27 +145,35 @@ import Input from "@/components/Input.vue";
 import Textarea from "@/components/Textarea.vue";
 import Slider from "@/components/Slider.vue";
 import Tag from "@/components/Tag.vue";
+import type { SavedPrompt } from "@/types/ai";
 
 defineProps<{
 	showSettings: boolean;
 	systemPrompt: string;
 	temperature: number;
 	maxTokens: number;
-	contextMessageLimit: number;
 	currentPromptName: string;
 	newPromptName: string;
+	savedPrompts: SavedPrompt[];
 }>();
 
 defineEmits<{
 	"update:systemPrompt": [value: string];
 	"update:temperature": [value: number];
 	"update:maxTokens": [value: number];
-	"update:contextMessageLimit": [value: number];
 	"update:newPromptName": [value: string];
 	"toggle-settings": [];
 	"save-current-prompt": [];
 	"on-prompt-name-focus": [];
+	"load-prompt": [index: number];
+	"delete-prompt": [index: number];
 }>();
+
+const getPromptPreview = (text: string): string => {
+	const maxLength = 60;
+	if (text.length <= maxLength) return text;
+	return text.substring(0, maxLength) + "...";
+};
 </script>
 
 <style scoped lang="scss">
@@ -273,5 +306,76 @@ defineEmits<{
     flex: 1;
     min-width: 0;
   }
+}
+
+// ============ 提示词管理列表 ============
+.prompts-section {
+  border-top: 1px solid var(--b3-theme-surface-lighter);
+  padding-top: 14px;
+}
+
+.prompts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 2px;
+}
+
+.prompt-manage-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: var(--b3-theme-surface-light);
+  }
+
+  &.active {
+    background: var(--b3-theme-surface);
+    border-color: var(--b3-theme-primary);
+    opacity: 0.85;
+  }
+}
+
+.prompt-manage-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.prompt-manage-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--b3-theme-on-background);
+}
+
+.prompt-manage-preview {
+  font-size: 11px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.55;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prompt-manage-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.prompt-manage-item:hover .prompt-manage-actions {
+  opacity: 1;
 }
 </style>

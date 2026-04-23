@@ -126,6 +126,8 @@ interface EditHistory {
 	docTitle: string;
 	originalContent: string;
 	timestamp: number;
+	isBlock?: boolean;
+	insertedBlockIds?: string[]; // 块模式下通过 insertBlock 追加的块ID，撤回时需要删除
 }
 const MAX_EDIT_HISTORY = 20; // 最大历史记录数
 const editHistoryStack = ref<EditHistory[]>([]);
@@ -632,24 +634,55 @@ const clearTargetDocument = () => {
 	// showMessage('✓ 已清除目标文档', 1500, 'info');
 };
 
+/**
+ * 将Markdown内容按顶层块分割
+ * 思源笔记中，每个Markdown块（段落、标题、列表、代码块等）都是独立的
+ * 需要按双换行符分割，同时保留代码块等跨行结构不被错误分割
+ */
+const splitMarkdownBlocks = (content: string): string[] => {
+	if (!content.trim()) return [];
+
+	const blocks: string[] = [];
+	let currentBlock = "";
+	let inCodeBlock = false;
+
+	const lines = content.split("\n");
+
+	for (let i = 0; i < lines.length; i++) {
+		const line = lines[i];
+
+		// 跟踪代码块状态
+		if (line.trimStart().startsWith("```")) {
+			inCodeBlock = !inCodeBlock;
+		}
+
+		if (!inCodeBlock && line.trim() === "" && currentBlock.trim()) {
+			// 空行且不在代码块中，且当前块有内容，则分割
+			blocks.push(currentBlock.trim());
+			currentBlock = "";
+		} else {
+			currentBlock += (currentBlock ? "\n" : "") + line;
+		}
+	}
+
+	// 添加最后一个块
+	if (currentBlock.trim()) {
+		blocks.push(currentBlock.trim());
+	}
+
+	return blocks;
+};
+
 // 应用编辑
 const applyEdit = async () => {
 	if (!editTargetDoc.value) return;
 
 	isApplying.value = true;
-	try {
-		// 保存编辑历史（用于撤回）
-		editHistoryStack.value.push({
-			docId: editTargetDoc.value.id,
-			docTitle: editTargetDoc.value.title,
-			originalContent: originalContent.value,
-			timestamp: Date.now(),
-		});
-		// 限制历史记录数量
-		if (editHistoryStack.value.length > MAX_EDIT_HISTORY) {
-			editHistoryStack.value.shift();
-		}
 
+	// 用于记录块模式下追加的块ID
+	let insertedBlockIds: string[] = [];
+
+	try {
 		// 区分文档和块的处理
 		const siyuanContent = processContentByType(
 			generatedContent.value,
@@ -658,11 +691,63 @@ const applyEdit = async () => {
 
 		const docId = editTargetDoc.value.id;
 
-		// 使用updateBlock API更新文档内容
-		// 思源的 updateBlock 对文档块（根块）会替换全部子块，无需先清空
-		const result = await api.updateBlock("markdown", siyuanContent, docId);
-		if (!result) {
-			throw new Error("updateBlock API 返回为空，更新可能未生效");
+		if (editTargetDoc.value.isBlock) {
+			// 块模式：AI生成的内容可能包含多个Markdown块
+			// updateBlock 只能更新当前块，多余的内容需要用 insertBlock 追加
+			const blocks = splitMarkdownBlocks(siyuanContent);
+
+			if (blocks.length === 0) {
+				throw new Error("生成的内容为空");
+			}
+
+			// 第一个块：更新原始块
+			const firstBlock = blocks[0];
+			const result = await api.updateBlock("markdown", firstBlock, docId);
+			if (!result) {
+				throw new Error("updateBlock API 返回为空，更新可能未生效");
+			}
+
+			// 剩余块：逐个插入到当前块之后，确保正确记录每个插入块的ID
+			if (blocks.length > 1) {
+				let prevId = docId;
+				for (let i = 1; i < blocks.length; i++) {
+					const insertResult = await api.insertBlock(
+						"markdown",
+						blocks[i],
+						undefined, // nextID
+						prevId,    // previousID
+					);
+					if (!insertResult || insertResult.length === 0) {
+						throw new Error("insertBlock API 返回为空，追加内容可能未生效");
+					}
+					// 记录插入的块ID，用于撤回时删除
+					const newBlockId = insertResult[0]?.doOperations?.[0]?.id;
+					if (newBlockId) {
+						insertedBlockIds.push(newBlockId);
+						prevId = newBlockId;
+					}
+				}
+			}
+		} else {
+			// 文档模式：updateBlock 对文档块（根块）会替换全部子块
+			const result = await api.updateBlock("markdown", siyuanContent, docId);
+			if (!result) {
+				throw new Error("updateBlock API 返回为空，更新可能未生效");
+			}
+		}
+
+		// 保存编辑历史（用于撤回）- 在成功应用后保存，包含插入的块ID
+		editHistoryStack.value.push({
+			docId: editTargetDoc.value.id,
+			docTitle: editTargetDoc.value.title,
+			originalContent: originalContent.value,
+			timestamp: Date.now(),
+			isBlock: editTargetDoc.value.isBlock,
+			insertedBlockIds: insertedBlockIds.length > 0 ? insertedBlockIds : undefined,
+		});
+		// 限制历史记录数量
+		if (editHistoryStack.value.length > MAX_EDIT_HISTORY) {
+			editHistoryStack.value.shift();
 		}
 
 		// 更新原始内容为当前内容
@@ -686,7 +771,20 @@ const undoEdit = async () => {
 		const lastHistory = editHistoryStack.value.pop()!;
 		const historyDocId = lastHistory.docId;
 
-		// 恢复原始内容（updateBlock 对文档块会替换全部子块，无需先清空）
+		// 如果是块模式且有追加的块，先删除追加的块
+		if (lastHistory.isBlock && lastHistory.insertedBlockIds && lastHistory.insertedBlockIds.length > 0) {
+			for (const blockId of lastHistory.insertedBlockIds) {
+				try {
+					await api.deleteBlock(blockId);
+				} catch (e) {
+					console.warn("删除追加块失败，可能已被手动删除:", blockId, e);
+				}
+			}
+		}
+
+		// 恢复原始内容
+		// 对于文档模式：updateBlock 对文档块会替换全部子块
+		// 对于块模式：仅恢复原始块的内容（追加块已在上方删除）
 		const result = await api.updateBlock(
 			"markdown",
 			lastHistory.originalContent,

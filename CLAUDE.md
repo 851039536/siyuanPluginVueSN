@@ -149,10 +149,64 @@ import IconWrapper from '@/components/IconWrapper.vue'
 </template>
 ```
 
+## 思源内置图标参考
+
+思源笔记通过 SVG Sprite 提供内置图标，使用方式：
+
+```html
+<svg><use xlink:href="#iconName"></use></svg>
+```
+
+### 已验证可用的内置图标
+
+| 图标名称 | 语义 |
+|---------|------|
+| `iconAdd` | 添加 |
+| `iconAlignLeft` | 左对齐/最大长度 |
+| `iconBookmark` | 书签 |
+| `iconCheck` | 确认/完成 |
+| `iconClose` | 关闭 |
+| `iconCloseRound` | 圆形关闭/错误 |
+| `iconCode` | 代码 |
+| `iconColumns` | 列对比 |
+| `iconCopy` | 复制 |
+| `iconDatabase` | 数据库/统计 |
+| `iconDown` | 向下箭头 |
+| `iconEdit` | 编辑 |
+| `iconEye` | 预览/查看 |
+| `iconFile` | 文件 |
+| `iconFiles` | 文件管理 |
+| `iconFolder` | 文件夹 |
+| `iconGraph` | 关系图 |
+| `iconGlobalGraph` | 全局关系图 |
+| `iconHot` | 热门/创造性 |
+| `iconImage` | 图片 |
+| `iconInbox` | 收件箱 |
+| `iconKeymap` | 快捷键 |
+| `iconLanguage` | 语言/翻译 |
+| `iconLink` | 链接/反链 |
+| `iconList` | 列表 |
+| `iconMark` | 标记 |
+| `iconMenu` | 菜单 |
+| `iconMin` | 最小化 |
+| `iconMore` | 更多 |
+| `iconOpen` | 打开 |
+| `iconRefresh` | 刷新 |
+| `iconSave` | 保存 |
+| `iconSearch` | 搜索 |
+| `iconSettings` | 设置 |
+| `iconSparkles` | AI/魔法 |
+| `iconTags` | 标签 |
+| `iconTime` | 时间 |
+| `iconTrashcan` | 删除/垃圾桶 |
+| `iconUndo` | 撤销 |
+
+> **获取完整列表**：在思源笔记中按 `F12` 打开开发者工具，搜索隐藏的 `<svg style="display:none">` 元素中所有 `<symbol id="icon...">` 定义。完整图标源码：https://github.com/siyuan-note/siyuan/tree/master/app/src/assets/icons
+
 ## 必须严格执行的规范
 
 - 功能可见性：新功能必须在超级面板：SuperPanelView.vue 中提供开关设置
-- 不要直接使用 SVG 文件，可使用 @iconify/vue
+- 不要直接使用 SVG 文件，优先使用思源内置图标（见上方列表）或 @iconify/vue
 - 新功能必须使用技能： frontend-components 进行组件化。
 - 如果是全局样式index.scss：导入方式 @use "@/index.scss" as *;
 

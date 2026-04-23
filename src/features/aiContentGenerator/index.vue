@@ -215,17 +215,13 @@ const startGeneration = () => {
 };
 
 /**
- * 重置所有生成相关的状态
+ * 重置生成相关状态
+ * 仅重置 AI 生成流程的状态，不影响 apply/undo/insert 等操作状态
  */
 const resetAllGenerationStates = () => {
 	isGenerating.value = false;
-	isApplying.value = false;
-	isUndoing.value = false;
-	isInsertingSubDoc.value = false;
 	abortController.value = null;
 };
-
-
 
 /**
  * 处理生成过程中的错误
@@ -312,21 +308,6 @@ const removeFrontmatter = (content: string): string => {
 	// 匹配开头的 --- ... --- 格式的YAML frontmatter
 	const frontmatterRegex = /^---\s*\n[\s\S]*?\n---\s*\n/;
 	return content.replace(frontmatterRegex, "").trim();
-};
-
-/**
- * 移除Markdown内容中的标题
- * @param content 原始内容
- * @returns 移除标题后的内容
- */
-const removeHeadings = (content: string): string => {
-	// 移除第一行（通常是对应标题）
-	const lines = content.split("\n");
-	if (lines.length <= 1) {
-		return "";
-	}
-	// 移除第一行后返回剩余内容
-	return lines.slice(1).join("\n").trim();
 };
 
 // 配置 marked 选项（只需配置一次）
@@ -442,34 +423,24 @@ const handleStop = () => {
 };
 
 /**
- * 统一的内容处理函数
- * 移除 frontmatter 和标题，并转换为思源兼容格式
- */
-const processContent = (content: string): string => {
-	const withoutFrontmatter = removeFrontmatter(content);
-	const withoutHeadings = removeHeadings(withoutFrontmatter);
-	return convertToSiyuanMarkdown(withoutHeadings);
-};
-
-/**
  * 根据内容类型处理内容
- * @param content 原始内容
- * @param isBlock 是否为块内容
- * @returns 处理后的内容
+ * - 文档模式：移除 frontmatter 和标题，转换为思源兼容格式
+ * - 块模式：仅移除 frontmatter，转换为思源兼容格式
  */
 const processContentByType = (content: string, isBlock: boolean): string => {
-	const processed = isBlock ? removeFrontmatter(content) : content;
-	return isBlock
-		? convertToSiyuanMarkdown(processed)
-		: processContent(content);
+	const withoutFrontmatter = removeFrontmatter(content);
+	if (isBlock) {
+		return convertToSiyuanMarkdown(withoutFrontmatter);
+	}
+	// 文档模式：额外移除第一行标题
+	const lines = withoutFrontmatter.split("\n");
+	const withoutHeading = lines.length <= 1 ? "" : lines.slice(1).join("\n").trim();
+	return convertToSiyuanMarkdown(withoutHeading);
 };
 
 /**
  * 转换 Markdown 为思源兼容格式
- * 思源笔记对某些 Markdown 语法有特殊要求
- *
- * 注意：思源笔记在使用 markdown 模式时会解析 Markdown 语法
- * 但某些格式（如粗体）可能在某些情况下显示不正确
+ * 确保各语法块前后有空行，清理多余连续空行
  */
 const convertToSiyuanMarkdown = (content: string): string => {
 	let converted = content;
@@ -480,26 +451,19 @@ const convertToSiyuanMarkdown = (content: string): string => {
 	converted = converted.replace(headingStart, "$1\n\n$2");
 	converted = converted.replace(headingEnd, "$1\n\n$2");
 
-	// 2. 处理粗体格式
-	// 思源笔记通过 updateBlock API 传入标准 Markdown 粗体语法 **text** 可正确渲染
-	// 无需移除粗体标记
-
-	// 3. 处理斜体格式（同样可能有显示问题，暂时保留）
-	// converted = converted.replace(/\*([^*]+?)\*/g, '$1'); // 如需移除斜体，取消注释
-
-	// 4. 确保代码块前后有空行
+	// 2. 确保代码块前后有空行
 	const codeBlockStart = /([^\n])\n```/g;
 	const codeBlockEnd = /```\n([^\n])/g;
 	converted = converted.replace(codeBlockStart, "$1\n\n```");
 	converted = converted.replace(codeBlockEnd, "```\n\n$1");
 
-	// 5. 确保列表前后有空行
+	// 3. 确保列表前后有空行
 	const listUnordered = /([^\n])\n([-*+]\s)/g;
 	const listOrdered = /([^\n])\n(\d+\.\s)/g;
 	converted = converted.replace(listUnordered, "$1\n\n$2");
 	converted = converted.replace(listOrdered, "$1\n\n$2");
 
-	// 6. 清理多余的连续空行（最多保留两个换行符）
+	// 4. 清理多余的连续空行（最多保留两个换行符）
 	converted = converted.replace(/\n{3,}/g, "\n\n");
 
 	return converted;
@@ -958,8 +922,8 @@ const insertSubDocument = async () => {
 	isInsertingSubDoc.value = true;
 
 	try {
-		// 使用统一的内容处理函数
-		const siyuanContent = processContent(generatedContent.value);
+		// 使用统一的内容处理函数（插入子文档始终按文档模式处理）
+		const siyuanContent = processContentByType(generatedContent.value, false);
 
 		// 获取父文档信息
 		const parentDoc = await api.getBlockByID(editTargetDoc.value.id);

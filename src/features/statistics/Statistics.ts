@@ -1,7 +1,7 @@
 import { Plugin } from "siyuan";
 import { createApp, App as VueApp } from "vue";
 import StatisticsPanel from "./StatisticsPanel.vue";
-import { readDir } from "@/api";
+import { readDir, lsNotebooks } from "@/api";
 
 const DAY_PERIOD_MAP: Record<number, string> = {
 	7: "最近一周每日字数",
@@ -167,6 +167,9 @@ export class Statistics {
 			},
 			onGetHistoricalData: async (days?: number) => {
 				return await this.getHistoricalStatistics(days);
+			},
+			onGetNotebookDocStats: async () => {
+				return await this.getNotebookDocStats();
 			},
 		});
 
@@ -342,6 +345,60 @@ export class Statistics {
 		} catch (error) {
 			console.error("统计思源图片失败:", error);
 			return 0;
+		}
+	}
+
+	/**
+	 * 获取各笔记本文档数量统计
+	 * 使用 lsNotebooks API 获取所有笔记本，再通过 SQL 统计每个笔记本的文档数
+	 */
+	async getNotebookDocStats(): Promise<Array<{ name: string; count: number }>> {
+		try {
+			const data = await lsNotebooks();
+			if (!data || !data.notebooks) return [];
+
+			const openNotebooks = data.notebooks.filter((nb: any) => !nb.closed);
+			if (openNotebooks.length === 0) return [];
+
+			// 构建 SQL 查询：统计每个笔记本的文档数
+			const notebookIds = openNotebooks.map((nb: any) => `'${nb.id}'`).join(",");
+			const sqlStmt = `
+				SELECT box as notebook_id, COUNT(*) as doc_count
+				FROM blocks
+				WHERE type = 'd' AND box IN (${notebookIds})
+				GROUP BY box
+				ORDER BY doc_count DESC
+			`;
+
+			const rows = await this.executeSql(sqlStmt);
+
+			// 创建 notebook ID -> name 映射
+			const notebookMap = new Map<string, string>();
+			for (const nb of openNotebooks) {
+				notebookMap.set(nb.id, nb.name);
+			}
+
+			// 组装结果
+			const result: Array<{ name: string; count: number }> = [];
+
+			// 先添加有文档的笔记本
+			if (rows && rows.length > 0) {
+				for (const row of rows) {
+					const name = notebookMap.get(row.notebook_id) || "未知笔记本";
+					result.push({ name, count: row.doc_count || 0 });
+					notebookMap.delete(row.notebook_id);
+				}
+			}
+
+			// 再添加没有文档的笔记本（count = 0）
+			for (const [_, name] of notebookMap) {
+				result.push({ name, count: 0 });
+			}
+
+			return result;
+		} catch (error) {
+			console.error("获取笔记本文档统计失败:", error);
+			return [];
 		}
 	}
 

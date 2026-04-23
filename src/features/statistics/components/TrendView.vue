@@ -36,6 +36,110 @@
       </div>
     </div>
 
+    <!-- 趋势图表 -->
+    <div v-if="historicalData.length > 1" class="trend-chart-section">
+      <div class="chart-header">
+        <h4 class="subsection-title">{{ i18n.historicalData }}</h4>
+        <div class="chart-metric-tabs">
+          <button
+            v-for="tab in metricTabs"
+            :key="tab.key"
+            class="metric-tab"
+            :class="{ active: activeMetric === tab.key }"
+            @click="activeMetric = tab.key"
+          >
+            {{ tab.icon }} {{ tab.label }}
+          </button>
+        </div>
+      </div>
+      <div class="trend-chart-container">
+        <svg class="trend-chart-svg" :viewBox="`0 0 ${chartWidth} ${chartHeight}`" preserveAspectRatio="none">
+          <!-- 网格线 -->
+          <line
+            v-for="i in gridLines"
+            :key="'grid-' + i"
+            :x1="chartPaddingLeft"
+            :y1="i"
+            :x2="chartWidth - chartPaddingRight"
+            :y2="i"
+            class="chart-grid-line"
+          />
+          <!-- Y轴标签 -->
+          <text
+            v-for="(label, idx) in yAxisLabels"
+            :key="'ylabel-' + idx"
+            :x="chartPaddingLeft - 6"
+            :y="label.y"
+            class="chart-y-label"
+            text-anchor="end"
+          >{{ label.text }}</text>
+          <!-- 面积填充 -->
+          <path
+            :d="areaPath"
+            class="chart-area"
+          />
+          <!-- 折线 -->
+          <path
+            :d="linePath"
+            class="chart-line"
+            fill="none"
+          />
+          <!-- 数据点 -->
+          <circle
+            v-for="(pt, idx) in chartPoints"
+            :key="'pt-' + idx"
+            :cx="pt.x"
+            :cy="pt.y"
+            :r="isLastPoint(idx) ? 4 : 2.5"
+            :class="['chart-dot', { 'chart-dot-today': isLastPoint(idx) }]"
+          />
+          <!-- X轴日期标签 -->
+          <text
+            v-for="(pt, idx) in chartPoints"
+            :key="'xlabel-' + idx"
+            :x="pt.x"
+            :y="chartHeight - 4"
+            class="chart-x-label"
+            text-anchor="middle"
+          >{{ getXLabel(idx) }}</text>
+          <!-- Tooltip 悬浮 -->
+          <rect
+            v-for="(pt, idx) in chartPoints"
+            :key="'hover-' + idx"
+            :x="pt.x - hitWidth / 2"
+            :y="0"
+            :width="hitWidth"
+            :height="chartHeight - 20"
+            class="chart-hit-area"
+            @mouseenter="hoveredIndex = idx"
+            @mouseleave="hoveredIndex = -1"
+          />
+          <!-- Tooltip 竖线 -->
+          <line
+            v-if="hoveredIndex >= 0 && chartPoints[hoveredIndex]"
+            :x1="chartPoints[hoveredIndex].x"
+            :y1="chartPaddingTop"
+            :x2="chartPoints[hoveredIndex].x"
+            :y2="chartHeight - 20"
+            class="chart-hover-line"
+          />
+        </svg>
+        <!-- Tooltip 内容 -->
+        <div
+          v-if="hoveredIndex >= 0 && chartPoints[hoveredIndex]"
+          class="chart-tooltip"
+          :style="{ left: tooltipLeft, top: tooltipTop }"
+        >
+          <div class="tooltip-date">{{ historicalData[hoveredIndex]?.dateLabel || historicalData[hoveredIndex]?.date }}</div>
+          <div class="tooltip-value">
+            <span class="tooltip-metric-icon">{{ activeMetricObj.icon }}</span>
+            <strong>{{ formatNumber(chartPoints[hoveredIndex].value) }}</strong>
+            <span class="tooltip-unit">{{ activeMetricObj.unit }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 历史数据列表 -->
     <div class="historical-data-list">
       <h4 class="subsection-title">{{ i18n.historicalData }}</h4>
@@ -104,7 +208,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { formatDate, formatNumber, formatShortNumber } from "../utils";
 
 interface HistoricalDataItem {
@@ -156,6 +260,162 @@ const props = withDefaults(defineProps<Props>(), {
 		weekOverWeek: "周环比",
 		monthOverMonth: "月环比",
 	}),
+});
+
+// ===== 趋势图表状态 =====
+const activeMetric = ref<"totalWords" | "totalNotes" | "todayCreated" | "todayModified">("totalWords");
+const hoveredIndex = ref(-1);
+
+const metricTabs = computed(() => [
+	{ key: "totalWords" as const, icon: "✍️", label: props.i18n.words, unit: props.i18n.wordsUnit },
+	{ key: "totalNotes" as const, icon: "📓", label: props.i18n.notes, unit: props.i18n.notesUnit },
+	{ key: "todayCreated" as const, icon: "📅", label: props.i18n.created, unit: props.i18n.notesUnit },
+	{ key: "todayModified" as const, icon: "✏️", label: props.i18n.modified, unit: props.i18n.notesUnit },
+]);
+
+const activeMetricObj = computed(() => metricTabs.value.find((t) => t.key === activeMetric.value) || metricTabs.value[0]);
+
+// 图表尺寸参数
+const chartWidth = 600;
+const chartHeight = 200;
+const chartPaddingTop = 16;
+const chartPaddingBottom = 24;
+const chartPaddingLeft = 42;
+const chartPaddingRight = 10;
+const hitWidth = computed(() => {
+	const count = props.historicalData.length;
+	if (count <= 1) return 20;
+	const availWidth = chartWidth - chartPaddingLeft - chartPaddingRight;
+	return Math.max(10, availWidth / count);
+});
+
+// 从历史数据提取当前指标的值数组
+const chartValues = computed(() =>
+	props.historicalData.map((item) => item[activeMetric.value]),
+);
+
+const chartMin = computed(() => {
+	const vals = chartValues.value;
+	if (vals.length === 0) return 0;
+	const min = Math.min(...vals);
+	// 给一些底部留白
+	return Math.max(0, min - (Math.max(...vals) - min) * 0.1);
+});
+
+const chartMax = computed(() => {
+	const vals = chartValues.value;
+	if (vals.length === 0) return 100;
+	const max = Math.max(...vals);
+	const min = Math.min(...vals);
+	if (max === min) return max + 10;
+	return max + (max - min) * 0.1;
+});
+
+// 计算图表绘制区域
+const drawArea = computed(() => ({
+	x: chartPaddingLeft,
+	y: chartPaddingTop,
+	w: chartWidth - chartPaddingLeft - chartPaddingRight,
+	h: chartHeight - chartPaddingTop - chartPaddingBottom,
+}));
+
+// 计算每个数据点的坐标
+const chartPoints = computed(() => {
+	const data = props.historicalData;
+	if (data.length === 0) return [];
+
+	const { x: sx, y: sy, w, h } = drawArea.value;
+	const min = chartMin.value;
+	const max = chartMax.value;
+	const range = max - min || 1;
+
+	return data.map((item, idx) => {
+		const val = item[activeMetric.value];
+		const px = data.length === 1 ? sx + w / 2 : sx + (idx / (data.length - 1)) * w;
+		const py = sy + h - ((val - min) / range) * h;
+		return { x: px, y: py, value: val };
+	});
+});
+
+// 折线路径
+const linePath = computed(() => {
+	const pts = chartPoints.value;
+	if (pts.length === 0) return "";
+	return pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
+});
+
+// 面积路径（折线 + 底部封闭）
+const areaPath = computed(() => {
+	const pts = chartPoints.value;
+	if (pts.length === 0) return "";
+	const { y: sy, h } = drawArea.value;
+	const bottom = sy + h;
+	const line = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
+	return `${line} L${pts[pts.length - 1].x},${bottom} L${pts[0].x},${bottom} Z`;
+});
+
+// Y 轴刻度
+const yAxisLabels = computed(() => {
+	const { y: sy, h } = drawArea.value;
+	const min = chartMin.value;
+	const max = chartMax.value;
+	const steps = 4;
+	const labels = [];
+	for (let i = 0; i <= steps; i++) {
+		const val = min + ((max - min) * i) / steps;
+		const py = sy + h - (i / steps) * h;
+		labels.push({
+			text: formatShortNumber(Math.round(val)),
+			y: py + 3,
+		});
+	}
+	return labels;
+});
+
+// 网格线 Y 坐标
+const gridLines = computed(() => {
+	const { y: sy, h } = drawArea.value;
+	const steps = 4;
+	const lines = [];
+	for (let i = 0; i <= steps; i++) {
+		lines.push(sy + h - (i / steps) * h);
+	}
+	return lines;
+});
+
+// X 轴标签（稀疏显示，避免重叠）
+function getXLabel(idx: number): string {
+	const data = props.historicalData;
+	const total = data.length;
+	if (total <= 8) return data[idx]?.dateLabel?.split(" ")[0] || "";
+	// 间隔显示
+	const step = Math.ceil(total / 8);
+	if (idx % step === 0 || idx === total - 1) {
+		return data[idx]?.dateLabel?.split(" ")[0] || "";
+	}
+	return "";
+}
+
+function isLastPoint(idx: number): boolean {
+	return idx === props.historicalData.length - 1;
+}
+
+// Tooltip 定位
+const tooltipLeft = computed(() => {
+	if (hoveredIndex.value < 0 || !chartPoints.value[hoveredIndex.value]) return "0px";
+	const pt = chartPoints.value[hoveredIndex.value];
+	// SVG 用 viewBox 600，容器实际宽度由 CSS 控制，需要百分比换算
+	const pct = (pt.x / chartWidth) * 100;
+	// 如果 tooltip 在右侧，向左偏移
+	if (pct > 70) return `calc(${pct}% - 120px)`;
+	return `${pct}%`;
+});
+
+const tooltipTop = computed(() => {
+	if (hoveredIndex.value < 0 || !chartPoints.value[hoveredIndex.value]) return "0px";
+	const pt = chartPoints.value[hoveredIndex.value];
+	const pct = (pt.y / chartHeight) * 100;
+	return `calc(${pct}% - 40px)`;
 });
 
 // 计算周期对比数据
@@ -390,6 +650,172 @@ function getDiff(
 @use "../index.scss" as stats;
 
 .trend-view {
+  // ===== 趋势图表 =====
+  .trend-chart-section {
+    @include stats.stats-card-base;
+    border-radius: 8px;
+    margin-bottom: 12px;
+
+    .chart-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      background: rgba(var(--b3-theme-primary-rgb), 0.04);
+      border-bottom: 1px solid var(--b3-border-color);
+
+      .subsection-title {
+        margin: 0;
+      }
+    }
+
+    .chart-metric-tabs {
+      display: flex;
+      gap: 4px;
+
+      .metric-tab {
+        padding: 3px 8px;
+        border-radius: 4px;
+        border: 1px solid transparent;
+        background: transparent;
+        font-size: 10px;
+        font-family: $font-body;
+        color: var(--b3-theme-on-surface);
+        opacity: 0.55;
+        cursor: pointer;
+        transition: stats.$stats-transition;
+        white-space: nowrap;
+
+        &:hover {
+          opacity: 0.85;
+          background: rgba(var(--b3-theme-on-surface-rgb), 0.05);
+        }
+
+        &.active {
+          opacity: 1;
+          background: rgba(var(--b3-theme-primary-rgb), 0.1);
+          border-color: var(--b3-theme-primary);
+          color: var(--b3-theme-primary);
+          font-weight: 700;
+        }
+      }
+    }
+
+    .trend-chart-container {
+      position: relative;
+      padding: 8px 4px 4px;
+      overflow: hidden;
+
+      .trend-chart-svg {
+        width: 100%;
+        height: 160px;
+        display: block;
+
+        .chart-grid-line {
+          stroke: var(--b3-border-color);
+          stroke-width: 0.5;
+          stroke-dasharray: 3 3;
+          opacity: 0.5;
+        }
+
+        .chart-y-label {
+          font-size: 8px;
+          fill: var(--b3-theme-on-surface);
+          opacity: 0.45;
+          font-family: $font-heading;
+        }
+
+        .chart-x-label {
+          font-size: 7px;
+          fill: var(--b3-theme-on-surface);
+          opacity: 0.45;
+          font-family: $font-body;
+        }
+
+        .chart-area {
+          fill: rgba(var(--b3-theme-primary-rgb), 0.08);
+          transition: fill 0.3s ease;
+        }
+
+        .chart-line {
+          stroke: var(--b3-theme-primary);
+          stroke-width: 2;
+          stroke-linejoin: round;
+          stroke-linecap: round;
+          transition: stroke 0.3s ease;
+        }
+
+        .chart-dot {
+          fill: var(--b3-theme-primary);
+          stroke: var(--b3-theme-surface);
+          stroke-width: 1.5;
+          transition: all 0.2s ease;
+          opacity: 0.7;
+
+          &.chart-dot-today {
+            opacity: 1;
+            r: 4;
+            fill: var(--b3-theme-secondary);
+            stroke: var(--b3-theme-primary);
+            stroke-width: 2;
+          }
+        }
+
+        .chart-hit-area {
+          fill: transparent;
+          cursor: crosshair;
+        }
+
+        .chart-hover-line {
+          stroke: var(--b3-theme-primary);
+          stroke-width: 1;
+          stroke-dasharray: 4 3;
+          opacity: 0.5;
+        }
+      }
+
+      .chart-tooltip {
+        position: absolute;
+        padding: 6px 10px;
+        background: var(--b3-theme-surface);
+        border: 1px solid var(--b3-theme-primary);
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        font-size: 11px;
+        pointer-events: none;
+        z-index: 10;
+        min-width: 80px;
+        transition: left 0.1s ease, top 0.1s ease;
+
+        .tooltip-date {
+          font-size: 9px;
+          color: var(--b3-theme-on-surface);
+          opacity: 0.6;
+          margin-bottom: 2px;
+          font-family: $font-body;
+        }
+
+        .tooltip-value {
+          font-family: $font-heading;
+          font-weight: 700;
+          color: var(--b3-theme-primary);
+
+          .tooltip-metric-icon {
+            margin-right: 3px;
+          }
+
+          .tooltip-unit {
+            font-size: 9px;
+            font-weight: 400;
+            opacity: 0.6;
+            margin-left: 2px;
+          }
+        }
+      }
+    }
+  }
+
+
   // 周期对比区域
   .comparison-section {
     display: grid;
@@ -656,6 +1082,12 @@ function getDiff(
     .comparison-section {
       grid-template-columns: 1fr;
     }
+
+    .trend-chart-section {
+      .chart-metric-tabs {
+        flex-wrap: wrap;
+      }
+    }
   }
 }
 
@@ -670,6 +1102,23 @@ function getDiff(
     .historical-data-list {
       margin-left: 4px;
       margin-right: 4px;
+    }
+
+    .trend-chart-section {
+      .chart-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+
+      .chart-metric-tabs {
+        flex-wrap: wrap;
+
+        .metric-tab {
+          font-size: 9px;
+          padding: 2px 6px;
+        }
+      }
     }
   }
 }

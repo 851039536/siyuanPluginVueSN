@@ -13,6 +13,7 @@ export interface DocAnalysisSettings {
 /** 默认过滤选项 */
 export const DEFAULT_FILTER_OPTIONS: FilterOptions = {
 	titleKeyword: "",
+	contentKeyword: "",
 	notebookId: "",
 	sortField: "wordCount",
 	sortOrder: "asc",

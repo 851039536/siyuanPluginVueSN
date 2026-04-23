@@ -4,7 +4,7 @@
 import { ref, reactive } from "vue";
 import { sql, lsNotebooks } from "@/api";
 import type { DocInfo, FilterOptions, QueryState, DocStats } from "../types/index";
-import type { DuplicateNameGroup } from "../types/index";
+import type { DuplicateNameGroup, UpdateTimeStats, DepthStats, RefStats, ImageStats } from "../types/index";
 import { DocAnalysisStorage, DEFAULT_FILTER_OPTIONS } from "../types/storage";
 import type { Plugin } from "siyuan";
 
@@ -28,6 +28,30 @@ const WORDCOUNT_SUBQUERY = `
 	FROM blocks 
 	WHERE type != 'd'
 	GROUP BY root_id
+`;
+
+/** 子查询：统计每个文档的引用块数量（思源引用语法 ((id "标题")) 在 markdown 字段中） */
+const REF_SUBQUERY = `
+	SELECT root_id, COUNT(*) as ref_count
+	FROM blocks
+	WHERE type != 'd' AND markdown LIKE '%((%'
+	GROUP BY root_id
+`;
+
+/** 子查询：统计每个文档的图片/资源数量（markdown 语法中包含 ![ ） */
+const IMAGE_SUBQUERY = `
+	SELECT root_id, COUNT(*) as image_count
+	FROM blocks
+	WHERE type != 'd' AND markdown LIKE '%![%'
+	GROUP BY root_id
+`;
+
+/** 子查询：统计每个文档的深度（路径层级） */
+const DEPTH_SUBQUERY = `
+	SELECT id as root_id, 
+		LENGTH(hpath) - LENGTH(REPLACE(hpath, '/', '')) - 1 as depth
+	FROM blocks
+	WHERE type = 'd'
 `;
 
 /**
@@ -59,6 +83,16 @@ export function useDocAnalysis(plugin: Plugin) {
 		mediumDocs: 0,
 		duplicateNameGroups: 0,
 		duplicateNameDocs: 0,
+		updatedIn7Days: 0,
+		updatedIn30Days: 0,
+		updatedOverHalfYear: 0,
+		maxDepth: 0,
+		avgDepth: 0,
+		deepDocs: 0,
+		refDocs: 0,
+		totalRefs: 0,
+		imageDocs: 0,
+		totalImages: 0,
 	});
 	const statsLoading = ref(false);
 	const hasAnalyzed = ref(false);
@@ -66,8 +100,37 @@ export function useDocAnalysis(plugin: Plugin) {
 	// 重名文档详情（供列表展示）
 	const duplicateGroups = ref<DuplicateNameGroup[]>([]);
 
+	// 更新时间分析详情
+	const updateTimeStats = ref<UpdateTimeStats>({
+		in7Days: 0,
+		in30Days: 0,
+		inHalfYear: 0,
+		overHalfYear: 0,
+	});
+
+	// 深度分析详情
+	const depthStats = ref<DepthStats>({
+		depthDistribution: [],
+		maxDepth: 0,
+		avgDepth: 0,
+	});
+
+	// 引用分析详情
+	const refStats = ref<RefStats>({
+		topRefDocs: [],
+		refDocCount: 0,
+		totalRefCount: 0,
+	});
+
+	// 图片分析详情
+	const imageStats = ref<ImageStats>({
+		topImageDocs: [],
+		imageDocCount: 0,
+		totalImageCount: 0,
+	});
+
 	// 当前选中的统计类别过滤
-	const statsFilter = ref<string>(""); // "" | "0B" | "small" | "medium" | "duplicate"
+	const statsFilter = ref<string>("");
 
 	// ============================================================
 	// 公共辅助函数
@@ -90,7 +153,7 @@ export function useDocAnalysis(plugin: Plugin) {
 		return map;
 	}
 
-	/** 将 SQL 行映射为 DocInfo */
+	/** 将 SQL 行映射为 DocInfo（扩展版） */
 	function mapRowsToDocs(rows: any[]): DocInfo[] {
 		const notebookMap = buildNotebookMap();
 		return rows.map((row: any) => ({
@@ -101,10 +164,15 @@ export function useDocAnalysis(plugin: Plugin) {
 			notebookName: notebookMap.get(row.notebook_id) || "未知笔记本",
 			contentSize: row.content_size || 0,
 			wordCount: row.word_count || 0,
+			updated: row.doc_updated || undefined,
+			created: row.doc_created || undefined,
+			depth: row.doc_depth ?? undefined,
+			refCount: row.ref_count ?? undefined,
+			imageCount: row.image_count ?? undefined,
 		}));
 	}
 
-	/** 查询文档列表（带条件），公共核心逻辑 */
+	/** 查询文档列表（带条件），公共核心逻辑 - 仅 SIZE/WORDCOUNT/DEPTH 子查询 */
 	async function fetchDocList(extraCondition: string) {
 		queryState.status = "loading";
 		queryState.errorMessage = "";
@@ -119,8 +187,11 @@ export function useDocAnalysis(plugin: Plugin) {
 					b.content as doc_title,
 					b.hpath as doc_path,
 					b.box as notebook_id,
+					b.updated as doc_updated,
+					b.created as doc_created,
 					COALESCE(s.total_size, 0) as content_size,
-					COALESCE(w.total_word_count, 0) as word_count
+					COALESCE(w.total_word_count, 0) as word_count,
+					LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth
 				FROM blocks b
 				LEFT JOIN (${SIZE_SUBQUERY}) s ON b.id = s.root_id
 				LEFT JOIN (${WORDCOUNT_SUBQUERY}) w ON b.id = w.root_id
@@ -198,7 +269,7 @@ export function useDocAnalysis(plugin: Plugin) {
 	}
 
 	/**
-	 * 执行分析 - 获取文档统计概览
+	 * 执行分析 - 获取文档统计概览（含新增维度）
 	 */
 	async function analyzeDocStats() {
 		statsLoading.value = true;
@@ -251,6 +322,18 @@ export function useDocAnalysis(plugin: Plugin) {
 				duplicateGroups.value = [];
 			}
 
+			// 更新时间分析
+			await analyzeUpdateTime(notebookCondition);
+
+			// 文档深度分析
+			await analyzeDepth(notebookCondition);
+
+			// 引用分析
+			await analyzeRefs(notebookCondition);
+
+			// 图片/资源分析
+			await analyzeImages(notebookCondition);
+
 			hasAnalyzed.value = true;
 		} catch (error) {
 			console.error("分析文档统计失败:", error);
@@ -260,11 +343,210 @@ export function useDocAnalysis(plugin: Plugin) {
 	}
 
 	/**
+	 * 更新时间分析
+	 * 思源 blocks.updated 格式为 yyyyMMddHHmmss（14位字符串，如 "20210604222535"）
+	 */
+	async function analyzeUpdateTime(notebookCondition: string) {
+		try {
+			// 生成当前时间及各时间边界的 yyyyMMddHHmmss 格式字符串
+			const now = new Date();
+			const formatDt = (d: Date) => {
+				const pad = (n: number) => String(n).padStart(2, "0");
+				return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+			};
+			const daysAgo = (days: number) => {
+				const d = new Date(now.getTime() - days * 86400000);
+				return formatDt(d);
+			};
+
+			const ts7 = daysAgo(7);
+			const ts30 = daysAgo(30);
+			const ts180 = daysAgo(180);
+
+			const timeSql = `
+				SELECT
+					SUM(CASE WHEN b.updated >= '${ts7}' THEN 1 ELSE 0 END) as in_7_days,
+					SUM(CASE WHEN b.updated >= '${ts30}' AND b.updated < '${ts7}' THEN 1 ELSE 0 END) as in_30_days,
+					SUM(CASE WHEN b.updated >= '${ts180}' AND b.updated < '${ts30}' THEN 1 ELSE 0 END) as in_half_year,
+					SUM(CASE WHEN b.updated < '${ts180}' THEN 1 ELSE 0 END) as over_half_year
+				FROM blocks b
+				WHERE b.type = 'd' ${notebookCondition}
+			`;
+
+			const timeRows = await sql(timeSql);
+			if (timeRows && timeRows.length > 0) {
+				const row = timeRows[0];
+				updateTimeStats.value = {
+					in7Days: row.in_7_days || 0,
+					in30Days: row.in_30_days || 0,
+					inHalfYear: row.in_half_year || 0,
+					overHalfYear: row.over_half_year || 0,
+				};
+				docStats.updatedIn7Days = row.in_7_days || 0;
+				docStats.updatedIn30Days = row.in_30_days || 0;
+				docStats.updatedOverHalfYear = row.over_half_year || 0;
+			}
+		} catch (error) {
+			console.error("更新时间分析失败:", error);
+		}
+	}
+
+	/**
+	 * 文档深度/层级分析
+	 */
+	async function analyzeDepth(notebookCondition: string) {
+		try {
+			const depthSql = `
+				SELECT
+					COALESCE(LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1, 0) as depth,
+					COUNT(*) as cnt
+				FROM blocks b
+				WHERE b.type = 'd' ${notebookCondition}
+				GROUP BY depth
+				ORDER BY depth ASC
+			`;
+
+			const depthRows = await sql(depthSql);
+			if (depthRows && depthRows.length > 0) {
+				const distribution = depthRows.map((r: any) => ({
+					depth: r.depth || 0,
+					count: r.cnt || 0,
+				}));
+
+				const maxDepth = Math.max(...distribution.map((d) => d.depth));
+				const totalDocs = distribution.reduce((sum: number, d) => sum + d.count, 0);
+				const avgDepth = totalDocs > 0
+					? distribution.reduce((sum: number, d) => sum + d.depth * d.count, 0) / totalDocs
+					: 0;
+				const deepDocs = distribution
+					.filter((d) => d.depth >= 5)
+					.reduce((sum: number, d) => sum + d.count, 0);
+
+				depthStats.value = {
+					depthDistribution: distribution,
+					maxDepth,
+					avgDepth: Math.round(avgDepth * 10) / 10,
+				};
+				docStats.maxDepth = maxDepth;
+				docStats.avgDepth = Math.round(avgDepth * 10) / 10;
+				docStats.deepDocs = deepDocs;
+			}
+		} catch (error) {
+			console.error("文档深度分析失败:", error);
+		}
+	}
+
+	/**
+	 * 引用/嵌入块分析
+	 * 思源中引用语法 ((id "标题")) 存储在段落块(p)的 content 字段中
+	 */
+	async function analyzeRefs(notebookCondition: string) {
+		try {
+			// 引用统计概览
+			const refCountSql = `
+				SELECT
+					COUNT(DISTINCT root_id) as ref_doc_count,
+					COUNT(*) as total_ref_count
+				FROM blocks
+				WHERE type != 'd' AND markdown LIKE '%((%'
+			`;
+
+			const refCountRows = await sql(refCountSql);
+			if (refCountRows && refCountRows.length > 0) {
+				const row = refCountRows[0];
+				docStats.refDocs = row.ref_doc_count || 0;
+				docStats.totalRefs = row.total_ref_count || 0;
+				refStats.value.refDocCount = row.ref_doc_count || 0;
+				refStats.value.totalRefCount = row.total_ref_count || 0;
+			}
+
+			// 被引用最多的文档
+			const topRefSql = `
+				SELECT r.root_id as doc_id, b.content as doc_title, r.ref_count
+				FROM (
+					SELECT root_id, COUNT(*) as ref_count
+					FROM blocks
+					WHERE type != 'd' AND markdown LIKE '%((%'
+					GROUP BY root_id
+					ORDER BY ref_count DESC
+					LIMIT 20
+				) r
+				JOIN blocks b ON b.id = r.root_id AND b.type = 'd'
+				${notebookCondition ? `WHERE b.box = '${filterOptions.notebookId}'` : ""}
+				ORDER BY r.ref_count DESC
+			`;
+
+			const topRefRows = await sql(topRefSql);
+			if (topRefRows && topRefRows.length > 0) {
+				refStats.value.topRefDocs = topRefRows.map((r: any) => ({
+					docId: r.doc_id,
+					title: r.doc_title || "无标题",
+					refCount: r.ref_count || 0,
+				}));
+			}
+		} catch (error) {
+			console.error("引用分析失败:", error);
+		}
+	}
+
+	/**
+	 * 图片/资源使用分析
+	 * 思源中图片是内联元素，存储在段落块(p)中，通过 content 或 markdown 字段中包含 ![ 来识别
+	 */
+	async function analyzeImages(notebookCondition: string) {
+		try {
+			// 图片统计概览
+			const imgCountSql = `
+				SELECT
+					COUNT(DISTINCT root_id) as image_doc_count,
+					COUNT(*) as total_image_count
+				FROM blocks
+				WHERE type != 'd' AND markdown LIKE '%![%'
+			`;
+
+			const imgCountRows = await sql(imgCountSql);
+			if (imgCountRows && imgCountRows.length > 0) {
+				const row = imgCountRows[0];
+				docStats.imageDocs = row.image_doc_count || 0;
+				docStats.totalImages = row.total_image_count || 0;
+				imageStats.value.imageDocCount = row.image_doc_count || 0;
+				imageStats.value.totalImageCount = row.total_image_count || 0;
+			}
+
+			// 包含图片最多的文档
+			const topImgSql = `
+				SELECT img.root_id as doc_id, b.content as doc_title, img.image_count
+				FROM (
+					SELECT root_id, COUNT(*) as image_count
+					FROM blocks
+					WHERE type != 'd' AND markdown LIKE '%![%'
+					GROUP BY root_id
+					ORDER BY image_count DESC
+					LIMIT 20
+				) img
+				JOIN blocks b ON b.id = img.root_id AND b.type = 'd'
+				${notebookCondition ? `WHERE b.box = '${filterOptions.notebookId}'` : ""}
+				ORDER BY img.image_count DESC
+			`;
+
+			const topImgRows = await sql(topImgSql);
+			if (topImgRows && topImgRows.length > 0) {
+				imageStats.value.topImageDocs = topImgRows.map((r: any) => ({
+					docId: r.doc_id,
+					title: r.doc_title || "无标题",
+					imageCount: r.image_count || 0,
+				}));
+			}
+		} catch (error) {
+			console.error("图片分析失败:", error);
+		}
+	}
+
+	/**
 	 * 点击统计卡片 - 按类别查询文档列表
 	 */
 	async function queryByStatsCategory(category: string) {
 		if (statsFilter.value === category) {
-			// 再次点击取消过滤，清除列表
 			statsFilter.value = "";
 			queryState.hasQueried = false;
 			queryState.results = [];
@@ -279,13 +561,165 @@ export function useDocAnalysis(plugin: Plugin) {
 			return;
 		}
 
+		// 大小类别 - 使用通用查询（需要 size 子查询）
 		const sizeConditions: Record<string, string> = {
 			"0B": "AND COALESCE(s.total_size, 0) = 0",
 			small: "AND COALESCE(s.total_size, 0) > 0 AND COALESCE(s.total_size, 0) < 1024",
 			medium: "AND COALESCE(s.total_size, 0) >= 1024 AND COALESCE(s.total_size, 0) < 10240",
 		};
 
-		await fetchDocList(sizeConditions[category] || "");
+		if (sizeConditions[category]) {
+			await fetchDocList(sizeConditions[category]);
+			return;
+		}
+
+		// 新类别（时间/深度/引用/图片）使用轻量查询，不加载全部子查询
+		queryState.status = "loading";
+		queryState.errorMessage = "";
+		queryState.hasQueried = true;
+
+		try {
+			const notebookCondition = buildNotebookCondition();
+			let sqlStmt = "";
+
+			// 更新时间类别（updated 是 yyyyMMddHHmmss 格式字符串）
+			const timeCategories = ["7days", "30days", "halfYear"];
+			if (timeCategories.includes(category)) {
+				const now = new Date();
+				const daysAgo = (days: number) => {
+					const d = new Date(now.getTime() - days * 86400000);
+					const pad = (n: number) => String(n).padStart(2, "0");
+					return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+				};
+				const ts7 = daysAgo(7);
+				const ts30 = daysAgo(30);
+				const ts180 = daysAgo(180);
+
+				const timeConditions: Record<string, string> = {
+					"7days": `AND b.updated >= '${ts7}'`,
+					"30days": `AND b.updated >= '${ts30}' AND b.updated < '${ts7}'`,
+					"halfYear": `AND b.updated < '${ts180}'`,
+				};
+
+				sqlStmt = `
+					SELECT
+						b.id as doc_id,
+						b.content as doc_title,
+						b.hpath as doc_path,
+						b.box as notebook_id,
+						b.updated as doc_updated,
+						b.created as doc_created,
+						COALESCE(s.total_size, 0) as content_size,
+						COALESCE(w.total_word_count, 0) as word_count,
+						LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth,
+						0 as ref_count,
+						0 as image_count
+					FROM blocks b
+					LEFT JOIN (${SIZE_SUBQUERY}) s ON b.id = s.root_id
+					LEFT JOIN (${WORDCOUNT_SUBQUERY}) w ON b.id = w.root_id
+					WHERE b.type = 'd' ${notebookCondition}
+					${timeConditions[category]}
+					ORDER BY b.updated DESC
+					LIMIT 2000
+				`;
+			}
+			// 深度类别
+			else if (category === "deep") {
+				sqlStmt = `
+					SELECT
+						b.id as doc_id,
+						b.content as doc_title,
+						b.hpath as doc_path,
+						b.box as notebook_id,
+						b.updated as doc_updated,
+						b.created as doc_created,
+						COALESCE(s.total_size, 0) as content_size,
+						COALESCE(w.total_word_count, 0) as word_count,
+						LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth,
+						0 as ref_count,
+						0 as image_count
+					FROM blocks b
+					LEFT JOIN (${SIZE_SUBQUERY}) s ON b.id = s.root_id
+					LEFT JOIN (${WORDCOUNT_SUBQUERY}) w ON b.id = w.root_id
+					WHERE b.type = 'd' ${notebookCondition}
+					AND LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 >= 5
+					ORDER BY doc_depth DESC
+					LIMIT 2000
+				`;
+			}
+			// 引用类别 - 查找含有引用块的文档
+			else if (category === "hasRef") {
+				sqlStmt = `
+					SELECT
+						b.id as doc_id,
+						b.content as doc_title,
+						b.hpath as doc_path,
+						b.box as notebook_id,
+						b.updated as doc_updated,
+						b.created as doc_created,
+						COALESCE(s.total_size, 0) as content_size,
+						COALESCE(w.total_word_count, 0) as word_count,
+						LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth,
+						COALESCE(r.ref_count, 0) as ref_count,
+						0 as image_count
+					FROM blocks b
+					LEFT JOIN (${SIZE_SUBQUERY}) s ON b.id = s.root_id
+					LEFT JOIN (${WORDCOUNT_SUBQUERY}) w ON b.id = w.root_id
+					INNER JOIN (${REF_SUBQUERY}) r ON b.id = r.root_id
+					WHERE b.type = 'd' ${notebookCondition}
+					ORDER BY r.ref_count DESC
+					LIMIT 2000
+				`;
+			}
+			// 图片类别 - 查找含有图片的文档
+			else if (category === "hasImage") {
+				sqlStmt = `
+					SELECT
+						b.id as doc_id,
+						b.content as doc_title,
+						b.hpath as doc_path,
+						b.box as notebook_id,
+						b.updated as doc_updated,
+						b.created as doc_created,
+						COALESCE(s.total_size, 0) as content_size,
+						COALESCE(w.total_word_count, 0) as word_count,
+						LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth,
+						0 as ref_count,
+						COALESCE(img.image_count, 0) as image_count
+					FROM blocks b
+					LEFT JOIN (${SIZE_SUBQUERY}) s ON b.id = s.root_id
+					LEFT JOIN (${WORDCOUNT_SUBQUERY}) w ON b.id = w.root_id
+					INNER JOIN (${IMAGE_SUBQUERY}) img ON b.id = img.root_id
+					WHERE b.type = 'd' ${notebookCondition}
+					ORDER BY img.image_count DESC
+					LIMIT 2000
+				`;
+			}
+
+			if (!sqlStmt) {
+				queryState.status = "empty";
+				return;
+			}
+
+			const rows = await sql(sqlStmt);
+
+			if (!rows || rows.length === 0) {
+				queryState.results = [];
+				queryState.status = "empty";
+				return;
+			}
+
+			const docs = mapRowsToDocs(rows);
+			const sortedDocs = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder);
+
+			queryState.results = sortedDocs;
+			queryState.status = "success";
+		} catch (error) {
+			console.error("按类别查询文档失败:", error);
+			queryState.errorMessage = (error as Error).message || "查询失败";
+			queryState.status = "error";
+			queryState.results = [];
+		}
 	}
 
 	/**
@@ -299,7 +733,6 @@ export function useDocAnalysis(plugin: Plugin) {
 		try {
 			const notebookCondition = buildNotebookCondition();
 
-			// 获取所有重名标题
 			const dupTitles = duplicateGroups.value.map((g) => g.title);
 			if (dupTitles.length === 0) {
 				queryState.results = [];
@@ -315,8 +748,11 @@ export function useDocAnalysis(plugin: Plugin) {
 					b.content as doc_title,
 					b.hpath as doc_path,
 					b.box as notebook_id,
+					b.updated as doc_updated,
+					b.created as doc_created,
 					COALESCE(s.total_size, 0) as content_size,
-					COALESCE(w.total_word_count, 0) as word_count
+					COALESCE(w.total_word_count, 0) as word_count,
+					LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth
 				FROM blocks b
 				LEFT JOIN (${SIZE_SUBQUERY}) s ON b.id = s.root_id
 				LEFT JOIN (${WORDCOUNT_SUBQUERY}) w ON b.id = w.root_id
@@ -348,24 +784,33 @@ export function useDocAnalysis(plugin: Plugin) {
 	}
 
 	/**
-	 * 执行查询 - 按字数过滤文档列表
+	 * 执行查询 - 按字数和关键词过滤文档列表
 	 */
 	async function queryDocs() {
-		let wordCountCondition = "";
+		let conditions = "";
+
 		if (filterOptions.wordCountMin > 0) {
-			wordCountCondition += `AND COALESCE(w.total_word_count, 0) >= ${filterOptions.wordCountMin}`;
+			conditions += `AND COALESCE(w.total_word_count, 0) >= ${filterOptions.wordCountMin} `;
 		}
 		if (filterOptions.wordCountMax > 0) {
-			wordCountCondition += `AND COALESCE(w.total_word_count, 0) <= ${filterOptions.wordCountMax}`;
+			conditions += `AND COALESCE(w.total_word_count, 0) <= ${filterOptions.wordCountMax} `;
 		}
 
-		let titleCondition = "";
 		if (filterOptions.titleKeyword.trim()) {
 			const keyword = filterOptions.titleKeyword.trim().replace(/'/g, "''");
-			titleCondition = ` AND b.content LIKE '%${keyword}%'`;
+			conditions += `AND b.content LIKE '%${keyword}%' `;
 		}
 
-		await fetchDocList(`${wordCountCondition}${titleCondition}`);
+		// 全文内容搜索：查找内容块中包含关键词的文档
+		if (filterOptions.contentKeyword.trim()) {
+			const keyword = filterOptions.contentKeyword.trim().replace(/'/g, "''");
+			conditions += `AND b.id IN (
+				SELECT DISTINCT root_id FROM blocks 
+				WHERE content LIKE '%${keyword}%' AND type != 'd'
+			) `;
+		}
+
+		await fetchDocList(conditions);
 		await saveOptions();
 	}
 
@@ -381,6 +826,18 @@ export function useDocAnalysis(plugin: Plugin) {
 					break;
 				case "notebook":
 					compare = a.notebookName.localeCompare(b.notebookName, "zh-CN");
+					break;
+				case "updated":
+					compare = (a.updated || "").localeCompare(b.updated || "");
+					break;
+				case "depth":
+					compare = (a.depth || 0) - (b.depth || 0);
+					break;
+				case "refCount":
+					compare = (a.refCount || 0) - (b.refCount || 0);
+					break;
+				case "imageCount":
+					compare = (a.imageCount || 0) - (b.imageCount || 0);
 					break;
 				default:
 					compare = a.wordCount - b.wordCount;
@@ -427,6 +884,10 @@ export function useDocAnalysis(plugin: Plugin) {
 		filterOptions,
 		docStats,
 		duplicateGroups,
+		updateTimeStats,
+		depthStats,
+		refStats,
+		imageStats,
 		statsLoading,
 		hasAnalyzed,
 		statsFilter,

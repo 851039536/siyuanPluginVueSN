@@ -15,6 +15,7 @@
       :loading="statsLoading"
       :has-analyzed="hasAnalyzed"
       :active-filter="statsFilter"
+      :depth-stats="depthStats"
       @analyze="handleAnalyze"
       @select-category="handleSelectCategory"
     />
@@ -45,6 +46,10 @@
           <option value="wordCount">按字数</option>
           <option value="title">按标题</option>
           <option value="notebook">按笔记本</option>
+          <option value="updated">按更新时间</option>
+          <option value="depth">按深度</option>
+          <option value="refCount">按引用数</option>
+          <option value="imageCount">按图片数</option>
         </select>
         <button class="sort-order-btn" @click="toggleSortOrder">
           <Icon :icon="filterOptions.sortOrder === 'asc' ? 'mdi:sort-ascending' : 'mdi:sort-descending'" />
@@ -64,7 +69,7 @@
       <div v-else-if="queryState.status === 'idle' && !queryState.hasQueried" class="empty-state">
         <Icon icon="mdi:file-document-multiple-outline" class="empty-icon" />
         <p>点击上方「分析」查看统计，或设置筛选条件后查询</p>
-        <p class="empty-desc">按字数范围筛选文档</p>
+        <p class="empty-desc">支持标题搜索、全文搜索、字数范围筛选</p>
       </div>
 
       <!-- 查询结果 -->
@@ -81,7 +86,7 @@
       <div v-else-if="queryState.status === 'empty'" class="empty-state">
         <Icon icon="mdi:file-check-outline" class="empty-icon" />
         <p>没有找到符合条件的文档</p>
-        <p class="empty-desc">尝试调整字数范围或选择其他笔记本</p>
+        <p class="empty-desc">尝试调整搜索条件或选择其他笔记本</p>
       </div>
 
       <!-- 错误状态 -->
@@ -119,6 +124,7 @@ const {
   queryState,
   filterOptions,
   docStats,
+  depthStats,
   statsLoading,
   hasAnalyzed,
   statsFilter,
@@ -154,6 +160,12 @@ function getCategoryLabel(category: string): string {
     case "small": return "< 1KB";
     case "medium": return "1~10KB";
     case "duplicate": return "重名文档";
+    case "7days": return "7天内更新";
+    case "30days": return "7~30天更新";
+    case "halfYear": return "半年以上未更新";
+    case "deep": return "深层文档(≥5层)";
+    case "hasRef": return "含引用";
+    case "hasImage": return "含图片";
     default: return category;
   }
 }

@@ -590,16 +590,43 @@ const applyEdit = async () => {
 			editTargetDoc.value.isBlock,
 		);
 
+		const docId = editTargetDoc.value.id;
+
+		if (!editTargetDoc.value.isBlock) {
+			// 文档块：先删除所有子块，确保完全替换，避免旧内容残留
+			await clearDocChildrenBlocks(docId);
+		}
+
 		// 使用updateBlock API更新文档内容
-		await api.updateBlock("markdown", siyuanContent, editTargetDoc.value.id);
+		const result = await api.updateBlock("markdown", siyuanContent, docId);
+		if (!result) {
+			throw new Error("updateBlock API 返回为空，更新可能未生效");
+		}
 
 		// 更新原始内容为当前内容
 		originalContent.value = generatedContent.value;
 		editTargetDoc.value.content = generatedContent.value;
 	} catch (error) {
 		console.error("应用编辑失败:", error);
+		showMessage("应用编辑失败: " + (error as Error).message, 3000, "error");
 	} finally {
 		isApplying.value = false;
+	}
+};
+
+/**
+ * 删除文档的所有子块，确保 updateBlock 时不会残留旧内容
+ */
+const clearDocChildrenBlocks = async (docId: string) => {
+	try {
+		const childBlocks = await api.getChildBlocks(docId);
+		if (childBlocks && childBlocks.length > 0) {
+			for (const block of childBlocks) {
+				await api.deleteBlock(block.id);
+			}
+		}
+	} catch (error) {
+		console.warn("清空文档子块失败，继续尝试更新:", error);
 	}
 };
 
@@ -609,12 +636,20 @@ const undoEdit = async () => {
 
 	isUndoing.value = true;
 	try {
+		const historyDocId = lastEditHistory.value.docId;
+
+		// 先清空当前子块，确保完全替换
+		await clearDocChildrenBlocks(historyDocId);
+
 		// 恢复原始内容
-		await api.updateBlock(
+		const result = await api.updateBlock(
 			"markdown",
 			lastEditHistory.value.originalContent,
-			lastEditHistory.value.docId,
+			historyDocId,
 		);
+		if (!result) {
+			throw new Error("updateBlock API 返回为空，恢复可能未生效");
+		}
 
 		showMessage(
 			`✓ 已撤回对文档的编辑: ${lastEditHistory.value.docTitle}`,

@@ -6,6 +6,7 @@ import { Plugin } from "siyuan";
 import { ToolbarAction } from "../../types";
 import { showMessage, getSelectedBlockId, isEnglishText } from "../utils";
 import { callAI, getApiConfigFromPlugin } from "@/utils/aiApi";
+import * as api from "@/api";
 
 /**
  * 创建翻译替换功能
@@ -58,7 +59,7 @@ async function translateAndReplace(plugin: Plugin, text: string) {
 		if (translatedText) {
 			const blockId = getSelectedBlockId();
 			if (blockId) {
-				await updateBlockContent(blockId, translatedText);
+				await api.updateBlock("markdown", translatedText, blockId);
 				showMessage("翻译完成", { timeout: 2000 });
 			} else {
 				showMessage("无法获取当前块ID", { timeout: 3000 });
@@ -70,35 +71,5 @@ async function translateAndReplace(plugin: Plugin, text: string) {
 		console.error("Translation error:", error);
 		const errorMsg = (error as Error).message || "未知错误";
 		showMessage("翻译失败: " + errorMsg, { timeout: 5000 });
-	}
-}
-
-/**
- * 使用思源 API 更新块内容
- */
-async function updateBlockContent(
-	blockId: string,
-	content: string,
-): Promise<void> {
-	const response = await fetch("/api/block/updateBlock", {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-		},
-		body: JSON.stringify({
-			dataType: "markdown",
-			data: content,
-			id: blockId,
-		}),
-	});
-
-	if (!response.ok) {
-		const errorText = await response.text();
-		throw new Error(`更新块失败: ${response.status} ${errorText}`);
-	}
-
-	const result = await response.json();
-	if (result.code !== 0) {
-		throw new Error(`更新块失败: ${result.msg || "未知错误"}`);
 	}
 }

@@ -14,17 +14,11 @@ interface NotebookInfo {
 	name: string;
 }
 
-/** 子查询：统计每个文档的内容大小 */
-const SIZE_SUBQUERY = `
-	SELECT root_id, SUM(length) as total_size 
-	FROM blocks 
-	WHERE type != 'd'
-	GROUP BY root_id
-`;
-
-/** 子查询：统计每个文档的字数（非文档块的 content 字段长度之和） */
-const WORDCOUNT_SUBQUERY = `
-	SELECT root_id, SUM(LENGTH(content)) as total_word_count 
+/** 子查询：统计每个文档的内容大小和字数（合并减少扫描次数） */
+const SIZE_WORDCOUNT_SUBQUERY = `
+	SELECT root_id, 
+		SUM(length) as total_size,
+		SUM(LENGTH(content)) as total_word_count
 	FROM blocks 
 	WHERE type != 'd'
 	GROUP BY root_id
@@ -44,14 +38,6 @@ const IMAGE_SUBQUERY = `
 	FROM blocks
 	WHERE type != 'd' AND markdown LIKE '%![%'
 	GROUP BY root_id
-`;
-
-/** 子查询：统计每个文档的深度（路径层级） */
-const DEPTH_SUBQUERY = `
-	SELECT id as root_id, 
-		LENGTH(hpath) - LENGTH(REPLACE(hpath, '/', '')) - 1 as depth
-	FROM blocks
-	WHERE type = 'd'
 `;
 
 /**
@@ -189,12 +175,11 @@ export function useDocAnalysis(plugin: Plugin) {
 					b.box as notebook_id,
 					b.updated as doc_updated,
 					b.created as doc_created,
-					COALESCE(s.total_size, 0) as content_size,
-					COALESCE(w.total_word_count, 0) as word_count,
+					COALESCE(sw.total_size, 0) as content_size,
+					COALESCE(sw.total_word_count, 0) as word_count,
 					LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth
 				FROM blocks b
-				LEFT JOIN (${SIZE_SUBQUERY}) s ON b.id = s.root_id
-				LEFT JOIN (${WORDCOUNT_SUBQUERY}) w ON b.id = w.root_id
+				LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
 				WHERE b.type = 'd' ${notebookCondition}
 				${extraCondition}
 				ORDER BY word_count ASC
@@ -280,11 +265,11 @@ export function useDocAnalysis(plugin: Plugin) {
 			const sizeSql = `
 				SELECT 
 					COUNT(*) as total,
-					SUM(CASE WHEN COALESCE(s.total_size, 0) = 0 THEN 1 ELSE 0 END) as zero_count,
-					SUM(CASE WHEN COALESCE(s.total_size, 0) > 0 AND COALESCE(s.total_size, 0) < 1024 THEN 1 ELSE 0 END) as small_count,
-					SUM(CASE WHEN COALESCE(s.total_size, 0) >= 1024 AND COALESCE(s.total_size, 0) < 10240 THEN 1 ELSE 0 END) as medium_count
+					SUM(CASE WHEN COALESCE(sw.total_size, 0) = 0 THEN 1 ELSE 0 END) as zero_count,
+					SUM(CASE WHEN COALESCE(sw.total_size, 0) > 0 AND COALESCE(sw.total_size, 0) < 1024 THEN 1 ELSE 0 END) as small_count,
+					SUM(CASE WHEN COALESCE(sw.total_size, 0) >= 1024 AND COALESCE(sw.total_size, 0) < 10240 THEN 1 ELSE 0 END) as medium_count
 				FROM blocks b
-				LEFT JOIN (${SIZE_SUBQUERY}) s ON b.id = s.root_id
+				LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
 				WHERE b.type = 'd' ${notebookCondition}
 			`;
 
@@ -563,9 +548,9 @@ export function useDocAnalysis(plugin: Plugin) {
 
 		// 大小类别 - 使用通用查询（需要 size 子查询）
 		const sizeConditions: Record<string, string> = {
-			"0B": "AND COALESCE(s.total_size, 0) = 0",
-			small: "AND COALESCE(s.total_size, 0) > 0 AND COALESCE(s.total_size, 0) < 1024",
-			medium: "AND COALESCE(s.total_size, 0) >= 1024 AND COALESCE(s.total_size, 0) < 10240",
+			"0B": "AND COALESCE(sw.total_size, 0) = 0",
+			small: "AND COALESCE(sw.total_size, 0) > 0 AND COALESCE(sw.total_size, 0) < 1024",
+			medium: "AND COALESCE(sw.total_size, 0) >= 1024 AND COALESCE(sw.total_size, 0) < 10240",
 		};
 
 		if (sizeConditions[category]) {
@@ -609,14 +594,13 @@ export function useDocAnalysis(plugin: Plugin) {
 						b.box as notebook_id,
 						b.updated as doc_updated,
 						b.created as doc_created,
-						COALESCE(s.total_size, 0) as content_size,
-						COALESCE(w.total_word_count, 0) as word_count,
+						COALESCE(sw.total_size, 0) as content_size,
+						COALESCE(sw.total_word_count, 0) as word_count,
 						LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth,
 						0 as ref_count,
 						0 as image_count
 					FROM blocks b
-					LEFT JOIN (${SIZE_SUBQUERY}) s ON b.id = s.root_id
-					LEFT JOIN (${WORDCOUNT_SUBQUERY}) w ON b.id = w.root_id
+					LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
 					WHERE b.type = 'd' ${notebookCondition}
 					${timeConditions[category]}
 					ORDER BY b.updated DESC
@@ -633,14 +617,13 @@ export function useDocAnalysis(plugin: Plugin) {
 						b.box as notebook_id,
 						b.updated as doc_updated,
 						b.created as doc_created,
-						COALESCE(s.total_size, 0) as content_size,
-						COALESCE(w.total_word_count, 0) as word_count,
+						COALESCE(sw.total_size, 0) as content_size,
+						COALESCE(sw.total_word_count, 0) as word_count,
 						LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth,
 						0 as ref_count,
 						0 as image_count
 					FROM blocks b
-					LEFT JOIN (${SIZE_SUBQUERY}) s ON b.id = s.root_id
-					LEFT JOIN (${WORDCOUNT_SUBQUERY}) w ON b.id = w.root_id
+					LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
 					WHERE b.type = 'd' ${notebookCondition}
 					AND LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 >= 5
 					ORDER BY doc_depth DESC
@@ -657,14 +640,13 @@ export function useDocAnalysis(plugin: Plugin) {
 						b.box as notebook_id,
 						b.updated as doc_updated,
 						b.created as doc_created,
-						COALESCE(s.total_size, 0) as content_size,
-						COALESCE(w.total_word_count, 0) as word_count,
+						COALESCE(sw.total_size, 0) as content_size,
+						COALESCE(sw.total_word_count, 0) as word_count,
 						LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth,
 						COALESCE(r.ref_count, 0) as ref_count,
 						0 as image_count
 					FROM blocks b
-					LEFT JOIN (${SIZE_SUBQUERY}) s ON b.id = s.root_id
-					LEFT JOIN (${WORDCOUNT_SUBQUERY}) w ON b.id = w.root_id
+					LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
 					INNER JOIN (${REF_SUBQUERY}) r ON b.id = r.root_id
 					WHERE b.type = 'd' ${notebookCondition}
 					ORDER BY r.ref_count DESC
@@ -681,14 +663,13 @@ export function useDocAnalysis(plugin: Plugin) {
 						b.box as notebook_id,
 						b.updated as doc_updated,
 						b.created as doc_created,
-						COALESCE(s.total_size, 0) as content_size,
-						COALESCE(w.total_word_count, 0) as word_count,
+						COALESCE(sw.total_size, 0) as content_size,
+						COALESCE(sw.total_word_count, 0) as word_count,
 						LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth,
 						0 as ref_count,
 						COALESCE(img.image_count, 0) as image_count
 					FROM blocks b
-					LEFT JOIN (${SIZE_SUBQUERY}) s ON b.id = s.root_id
-					LEFT JOIN (${WORDCOUNT_SUBQUERY}) w ON b.id = w.root_id
+					LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
 					INNER JOIN (${IMAGE_SUBQUERY}) img ON b.id = img.root_id
 					WHERE b.type = 'd' ${notebookCondition}
 					ORDER BY img.image_count DESC
@@ -750,12 +731,11 @@ export function useDocAnalysis(plugin: Plugin) {
 					b.box as notebook_id,
 					b.updated as doc_updated,
 					b.created as doc_created,
-					COALESCE(s.total_size, 0) as content_size,
-					COALESCE(w.total_word_count, 0) as word_count,
+					COALESCE(sw.total_size, 0) as content_size,
+					COALESCE(sw.total_word_count, 0) as word_count,
 					LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth
 				FROM blocks b
-				LEFT JOIN (${SIZE_SUBQUERY}) s ON b.id = s.root_id
-				LEFT JOIN (${WORDCOUNT_SUBQUERY}) w ON b.id = w.root_id
+				LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
 				WHERE b.type = 'd' ${notebookCondition}
 				AND b.content IN (${titleList})
 				ORDER BY b.content ASC, content_size ASC
@@ -787,30 +767,103 @@ export function useDocAnalysis(plugin: Plugin) {
 	 * 执行查询 - 按字数和关键词过滤文档列表
 	 */
 	async function queryDocs() {
-		let conditions = "";
+		queryState.status = "loading";
+		queryState.errorMessage = "";
+		queryState.hasQueried = true;
 
-		if (filterOptions.wordCountMin > 0) {
-			conditions += `AND COALESCE(w.total_word_count, 0) >= ${filterOptions.wordCountMin} `;
-		}
-		if (filterOptions.wordCountMax > 0) {
-			conditions += `AND COALESCE(w.total_word_count, 0) <= ${filterOptions.wordCountMax} `;
+		try {
+			const notebookCondition = buildNotebookCondition();
+			const needWordCountFilter = filterOptions.wordCountMin > 0 || filterOptions.wordCountMax > 0;
+			let conditions = "";
+
+			if (filterOptions.titleKeyword.trim()) {
+				const keyword = filterOptions.titleKeyword.trim().replace(/'/g, "''");
+				conditions += `AND b.content LIKE '%${keyword}%' `;
+			}
+
+			// 全文内容搜索：查找内容块中包含关键词的文档
+			if (filterOptions.contentKeyword.trim()) {
+				const keyword = filterOptions.contentKeyword.trim().replace(/'/g, "''");
+				conditions += `AND b.id IN (
+					SELECT DISTINCT root_id FROM blocks 
+					WHERE content LIKE '%${keyword}%' AND type != 'd'
+				) `;
+			}
+
+			if (needWordCountFilter) {
+				// 需要字数过滤时才 JOIN 子查询
+				if (filterOptions.wordCountMin > 0) {
+					conditions += `AND COALESCE(sw.total_word_count, 0) >= ${filterOptions.wordCountMin} `;
+				}
+				if (filterOptions.wordCountMax > 0) {
+					conditions += `AND COALESCE(sw.total_word_count, 0) <= ${filterOptions.wordCountMax} `;
+				}
+
+				const sqlStmt = `
+					SELECT 
+						b.id as doc_id,
+						b.content as doc_title,
+						b.hpath as doc_path,
+						b.box as notebook_id,
+						b.updated as doc_updated,
+						b.created as doc_created,
+						COALESCE(sw.total_size, 0) as content_size,
+						COALESCE(sw.total_word_count, 0) as word_count,
+						LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth
+					FROM blocks b
+					LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
+					WHERE b.type = 'd' ${notebookCondition}
+					${conditions}
+					ORDER BY word_count ASC
+					LIMIT 2000
+				`;
+
+				const rows = await sql(sqlStmt);
+				if (!rows || rows.length === 0) {
+					queryState.results = [];
+					queryState.status = "empty";
+				} else {
+					const docs = mapRowsToDocs(rows);
+					queryState.results = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder);
+					queryState.status = "success";
+				}
+			} else {
+				// 不需要字数过滤时，轻量查询（不 JOIN 子查询）
+				const sqlStmt = `
+					SELECT 
+						b.id as doc_id,
+						b.content as doc_title,
+						b.hpath as doc_path,
+						b.box as notebook_id,
+						b.updated as doc_updated,
+						b.created as doc_created,
+						0 as content_size,
+						0 as word_count,
+						LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth
+					FROM blocks b
+					WHERE b.type = 'd' ${notebookCondition}
+					${conditions}
+					ORDER BY b.content ASC
+					LIMIT 2000
+				`;
+
+				const rows = await sql(sqlStmt);
+				if (!rows || rows.length === 0) {
+					queryState.results = [];
+					queryState.status = "empty";
+				} else {
+					const docs = mapRowsToDocs(rows);
+					queryState.results = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder);
+					queryState.status = "success";
+				}
+			}
+		} catch (error) {
+			console.error("查询文档列表失败:", error);
+			queryState.errorMessage = (error as Error).message || "查询失败";
+			queryState.status = "error";
+			queryState.results = [];
 		}
 
-		if (filterOptions.titleKeyword.trim()) {
-			const keyword = filterOptions.titleKeyword.trim().replace(/'/g, "''");
-			conditions += `AND b.content LIKE '%${keyword}%' `;
-		}
-
-		// 全文内容搜索：查找内容块中包含关键词的文档
-		if (filterOptions.contentKeyword.trim()) {
-			const keyword = filterOptions.contentKeyword.trim().replace(/'/g, "''");
-			conditions += `AND b.id IN (
-				SELECT DISTINCT root_id FROM blocks 
-				WHERE content LIKE '%${keyword}%' AND type != 'd'
-			) `;
-		}
-
-		await fetchDocList(conditions);
 		await saveOptions();
 	}
 

@@ -67,6 +67,16 @@
           :i18n="trendViewI18n"
         />
       </div>
+
+      <!-- 各笔记本文档数柱状图 -->
+      <div class="chart-section doc-chart-section">
+        <DocBarChart
+          :title="docBarChartTitle"
+          :chart-data="notebookDocStats"
+          :loading="docChartLoading"
+          :i18n="docBarChartI18n"
+        />
+      </div>
     </div>
 
   </div>
@@ -80,6 +90,7 @@ import InsightCards from "./components/InsightCards.vue";
 import ViewModeSection from "./components/ViewModeSection.vue";
 import BarChart from "./components/BarChart.vue";
 import TrendView from "./components/TrendView.vue";
+import DocBarChart from "./components/DocBarChart.vue";
 
 interface Props {
 	onRefresh?: (params: {
@@ -89,6 +100,7 @@ interface Props {
 		selectedYear?: number;
 	}) => Promise<StatisticsData>;
 	onGetHistoricalData?: (days?: number) => Promise<any[]>;
+	onGetNotebookDocStats?: () => Promise<Array<{ name: string; count: number }>>;
 	i18n?: {
 		loading: string;
 		refresh: string;
@@ -134,6 +146,7 @@ interface Props {
 		blocks: string;
 		assets: string;
 		changeLabel: string;
+		docBarChartTitle: string;
 	};
 }
 
@@ -212,6 +225,7 @@ const props = withDefaults(defineProps<Props>(), {
 		blocks: "块",
 		assets: "附件",
 		changeLabel: "变化",
+		docBarChartTitle: "各笔记本文档数",
 	}),
 });
 
@@ -225,6 +239,8 @@ const selectedYear = ref<number>(new Date().getFullYear());
 const chartData = ref<DailyWordCount[]>([]);
 const historicalData = ref<any[]>([]);
 const updateInterval = ref(60);
+const notebookDocStats = ref<Array<{ name: string; count: number }>>([]);
+const docChartLoading = ref(false);
 
 const headerI18n = computed(() => props.i18n);
 const statsCardsI18n = computed(() => props.i18n);
@@ -250,6 +266,12 @@ const insightCardsI18n = computed(() => ({
 	words: "字数",
 	notesUnit: "篇",
 	wordsUnit: "字",
+}));
+
+const docBarChartTitle = computed(() => props.i18n.docBarChartTitle || "各笔记本文档数");
+const docBarChartI18n = computed(() => ({
+	loading: props.i18n.loading || "加载中...",
+	docsUnit: props.i18n.notesUnit || "笔记",
 }));
 
 const chartTitle = computed(() => {
@@ -343,6 +365,9 @@ async function refreshData() {
 
 		// 始终加载历史数据，供 InsightCards 和 TrendView 使用
 		await loadHistoricalData();
+
+		// 加载笔记本文档统计
+		await loadNotebookDocStats();
 	} catch (error) {
 		console.error("刷新统计数据失败:", error);
 	} finally {
@@ -357,6 +382,18 @@ async function loadHistoricalData() {
 		historicalData.value = data.reverse();
 	} catch (error) {
 		console.error("加载历史数据失败:", error);
+	}
+}
+
+async function loadNotebookDocStats() {
+	if (!props.onGetNotebookDocStats) return;
+	docChartLoading.value = true;
+	try {
+		notebookDocStats.value = await props.onGetNotebookDocStats();
+	} catch (error) {
+		console.error("加载笔记本文档统计失败:", error);
+	} finally {
+		docChartLoading.value = false;
 	}
 }
 

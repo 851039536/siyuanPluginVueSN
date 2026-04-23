@@ -7,8 +7,18 @@
           v-model="options.titleKeyword"
           type="text"
           class="filter-input title-input"
-          placeholder="模糊搜索"
+          placeholder="标题搜索"
           @input="handleTitleInput"
+        />
+      </div>
+      <div class="filter-item content-item">
+        <label class="filter-label">全文</label>
+        <input
+          v-model="options.contentKeyword"
+          type="text"
+          class="filter-input content-input"
+          placeholder="内容搜索"
+          @input="handleContentInput"
         />
       </div>
       <div class="filter-item wordcount-item">
@@ -54,7 +64,7 @@
         @click="$emit('query')"
       >
         <Icon icon="mdi:magnify" class="btn-icon" />
-        {{ isQuerying ? '查询中...' : '查询文档' }}
+        {{ isQuerying ? '查询中...' : '查询' }}
       </button>
     </div>
   </div>
@@ -95,6 +105,14 @@ function handleTitleInput() {
     emit("query");
   }, 500);
 }
+
+function handleContentInput() {
+  emit("update:options", { ...props.options });
+  if (debounceTimer) clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    emit("query");
+  }, 500);
+}
 </script>
 
 <style lang="scss" scoped>
@@ -105,7 +123,7 @@ function handleTitleInput() {
   .filter-row {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     flex-wrap: wrap;
   }
 
@@ -155,11 +173,15 @@ function handleTitleInput() {
   }
 
   .notebook-select {
-    max-width: 160px;
+    max-width: 140px;
   }
 
   .title-input {
-    width: 100px;
+    width: 90px;
+  }
+
+  .content-input {
+    width: 90px;
   }
 
   .wordcount-item {
@@ -167,7 +189,7 @@ function handleTitleInput() {
   }
 
   .wordcount-input {
-    width: 60px;
+    width: 55px;
   }
 
   .filter-separator {

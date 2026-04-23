@@ -25,13 +25,65 @@ export interface DocInfo {
 	contentSize: number;
 	/** 字数 */
 	wordCount: number;
+	/** 最后更新时间（yyyyMMddHHmmss 格式字符串，如 "20210604222535"） */
+	updated?: string;
+	/** 创建时间（yyyyMMddHHmmss 格式字符串） */
+	created?: string;
+	/** 文档深度（路径层级数） */
+	depth?: number;
+	/** 引用块数量 */
+	refCount?: number;
+	/** 图片/资源数量 */
+	imageCount?: number;
+}
+
+/** 更新时间分析统计 */
+export interface UpdateTimeStats {
+	/** 7天内更新的文档数 */
+	in7Days: number;
+	/** 7~30天更新的文档数 */
+	in30Days: number;
+	/** 30天~半年更新的文档数 */
+	inHalfYear: number;
+	/** 半年以上未更新的文档数 */
+	overHalfYear: number;
+}
+
+/** 深度分析统计 */
+export interface DepthStats {
+	/** 各深度的文档数量 */
+	depthDistribution: { depth: number; count: number }[];
+	/** 最大深度 */
+	maxDepth: number;
+	/** 平均深度 */
+	avgDepth: number;
+}
+
+/** 引用分析统计 */
+export interface RefStats {
+	/** 被引用最多的文档 */
+	topRefDocs: { docId: string; title: string; refCount: number }[];
+	/** 包含引用的文档总数 */
+	refDocCount: number;
+	/** 引用块总数 */
+	totalRefCount: number;
+}
+
+/** 图片/资源分析统计 */
+export interface ImageStats {
+	/** 包含图片最多的文档 */
+	topImageDocs: { docId: string; title: string; imageCount: number }[];
+	/** 包含图片的文档总数 */
+	imageDocCount: number;
+	/** 图片/资源块总数 */
+	totalImageCount: number;
 }
 
 /** 内容大小单位（统计概览内部使用） */
 export type SizeUnit = "B" | "KB" | "MB";
 
 /** 排序方式 */
-export type SortField = "wordCount" | "title" | "notebook";
+export type SortField = "wordCount" | "title" | "notebook" | "updated" | "depth" | "refCount" | "imageCount";
 export type SortOrder = "asc" | "desc";
 
 /** 查询状态 */
@@ -41,6 +93,8 @@ export type QueryStatus = "idle" | "loading" | "success" | "error" | "empty";
 export interface FilterOptions {
 	/** 标题模糊查询关键词 */
 	titleKeyword: string;
+	/** 全文内容搜索关键词 */
+	contentKeyword: string;
 	/** 选中的笔记本ID（空字符串表示全部） */
 	notebookId: string;
 	/** 排序字段 */
@@ -87,6 +141,26 @@ export interface DocStats {
 	duplicateNameGroups: number;
 	/** 重名文档总数（所有重名组的文档数之和） */
 	duplicateNameDocs: number;
+	/** 7天内更新的文档数 */
+	updatedIn7Days: number;
+	/** 7~30天未更新的文档数 */
+	updatedIn30Days: number;
+	/** 半年以上未更新的文档数 */
+	updatedOverHalfYear: number;
+	/** 最大文档深度 */
+	maxDepth: number;
+	/** 平均文档深度 */
+	avgDepth: number;
+	/** 深层文档数（深度 >= 5） */
+	deepDocs: number;
+	/** 包含引用的文档数 */
+	refDocs: number;
+	/** 引用块总数 */
+	totalRefs: number;
+	/** 包含图片的文档数 */
+	imageDocs: number;
+	/** 图片/资源块总数 */
+	totalImages: number;
 }
 
 // ============================================================

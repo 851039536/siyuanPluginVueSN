@@ -16,7 +16,7 @@ export function createPronunciationAction(plugin: Plugin): ToolbarAction {
 		id: "pronunciation",
 		i18nKey: "pronunciation",
 		defaultMessage: "谐音翻译",
-		icon: `<svg><use xlink:href="#iconLanguage"></use></svg>`,
+		icon: `<svg><use xlink:href="#iconSparkles"></use></svg>`,
 		eventName: "openPronunciationDialog",
 	});
 }

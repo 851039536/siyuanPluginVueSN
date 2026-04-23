@@ -8,7 +8,7 @@
           type="text"
           class="filter-input title-input"
           placeholder="标题搜索"
-          @input="handleTitleInput"
+          @input="handleDebouncedInput"
         />
       </div>
       <div class="filter-item content-item">
@@ -18,7 +18,7 @@
           type="text"
           class="filter-input content-input"
           placeholder="内容搜索"
-          @input="handleContentInput"
+          @input="handleDebouncedInput"
         />
       </div>
       <div class="filter-item wordcount-item">
@@ -98,16 +98,9 @@ function handleChange() {
   emit("update:options", { ...props.options });
 }
 
-function handleTitleInput() {
-  emit("update:options", { ...props.options });
-  if (debounceTimer) clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => {
-    emit("query");
-  }, 500);
-}
-
-function handleContentInput() {
-  emit("update:options", { ...props.options });
+/** 标题/全文输入防抖查询 */
+function handleDebouncedInput() {
+  handleChange();
   if (debounceTimer) clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => {
     emit("query");

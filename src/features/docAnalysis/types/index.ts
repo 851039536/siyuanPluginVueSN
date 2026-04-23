@@ -79,9 +79,6 @@ export interface ImageStats {
 	totalImageCount: number;
 }
 
-/** 内容大小单位（统计概览内部使用） */
-export type SizeUnit = "B" | "KB" | "MB";
-
 /** 排序方式 */
 export type SortField = "wordCount" | "title" | "notebook" | "updated" | "depth" | "refCount" | "imageCount";
 export type SortOrder = "asc" | "desc";

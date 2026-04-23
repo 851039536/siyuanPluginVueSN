@@ -40,6 +40,13 @@ const IMAGE_SUBQUERY = `
 	GROUP BY root_id
 `;
 
+/** 生成 N 天前的 yyyyMMddHHmmss 格式字符串（思源 updated 字段格式） */
+function daysAgoStr(days: number): string {
+	const d = new Date(Date.now() - days * 86400000);
+	const pad = (n: number) => String(n).padStart(2, "0");
+	return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+}
+
 /**
  * 文档分析 composable
  */
@@ -158,7 +165,7 @@ export function useDocAnalysis(plugin: Plugin) {
 		}));
 	}
 
-	/** 查询文档列表（带条件），公共核心逻辑 - 仅 SIZE/WORDCOUNT/DEPTH 子查询 */
+	/** 查询文档列表（带条件），公共核心逻辑 */
 	async function fetchDocList(extraCondition: string) {
 		queryState.status = "loading";
 		queryState.errorMessage = "";
@@ -333,20 +340,9 @@ export function useDocAnalysis(plugin: Plugin) {
 	 */
 	async function analyzeUpdateTime(notebookCondition: string) {
 		try {
-			// 生成当前时间及各时间边界的 yyyyMMddHHmmss 格式字符串
-			const now = new Date();
-			const formatDt = (d: Date) => {
-				const pad = (n: number) => String(n).padStart(2, "0");
-				return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
-			};
-			const daysAgo = (days: number) => {
-				const d = new Date(now.getTime() - days * 86400000);
-				return formatDt(d);
-			};
-
-			const ts7 = daysAgo(7);
-			const ts30 = daysAgo(30);
-			const ts180 = daysAgo(180);
+			const ts7 = daysAgoStr(7);
+			const ts30 = daysAgoStr(30);
+			const ts180 = daysAgoStr(180);
 
 			const timeSql = `
 				SELECT
@@ -423,7 +419,7 @@ export function useDocAnalysis(plugin: Plugin) {
 
 	/**
 	 * 引用/嵌入块分析
-	 * 思源中引用语法 ((id "标题")) 存储在段落块(p)的 content 字段中
+	 * 思源中引用语法 ((id "标题")) 存储在 markdown 字段中
 	 */
 	async function analyzeRefs(notebookCondition: string) {
 		try {
@@ -476,7 +472,7 @@ export function useDocAnalysis(plugin: Plugin) {
 
 	/**
 	 * 图片/资源使用分析
-	 * 思源中图片是内联元素，存储在段落块(p)中，通过 content 或 markdown 字段中包含 ![ 来识别
+	 * 思源中图片是内联元素，通过 markdown 字段中包含 ![ 来识别
 	 */
 	async function analyzeImages(notebookCondition: string) {
 		try {
@@ -558,129 +554,71 @@ export function useDocAnalysis(plugin: Plugin) {
 			return;
 		}
 
-		// 新类别（时间/深度/引用/图片）使用轻量查询，不加载全部子查询
+		// 新类别（时间/深度/引用/图片）使用轻量查询
 		queryState.status = "loading";
 		queryState.errorMessage = "";
 		queryState.hasQueried = true;
 
 		try {
 			const notebookCondition = buildNotebookCondition();
-			let sqlStmt = "";
 
-			// 更新时间类别（updated 是 yyyyMMddHHmmss 格式字符串）
-			const timeCategories = ["7days", "30days", "halfYear"];
-			if (timeCategories.includes(category)) {
-				const now = new Date();
-				const daysAgo = (days: number) => {
-					const d = new Date(now.getTime() - days * 86400000);
-					const pad = (n: number) => String(n).padStart(2, "0");
-					return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
-				};
-				const ts7 = daysAgo(7);
-				const ts30 = daysAgo(30);
-				const ts180 = daysAgo(180);
+			// 根据类别确定额外条件、JOIN 和排序
+			let extraWhere = "";
+			let extraJoin = "";
+			let refCol = "0 as ref_count";
+			let imgCol = "0 as image_count";
+			let orderBy = "b.updated DESC";
 
-				const timeConditions: Record<string, string> = {
-					"7days": `AND b.updated >= '${ts7}'`,
-					"30days": `AND b.updated >= '${ts30}' AND b.updated < '${ts7}'`,
-					"halfYear": `AND b.updated < '${ts180}'`,
-				};
-
-				sqlStmt = `
-					SELECT
-						b.id as doc_id,
-						b.content as doc_title,
-						b.hpath as doc_path,
-						b.box as notebook_id,
-						b.updated as doc_updated,
-						b.created as doc_created,
-						COALESCE(sw.total_size, 0) as content_size,
-						COALESCE(sw.total_word_count, 0) as word_count,
-						LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth,
-						0 as ref_count,
-						0 as image_count
-					FROM blocks b
-					LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
-					WHERE b.type = 'd' ${notebookCondition}
-					${timeConditions[category]}
-					ORDER BY b.updated DESC
-					LIMIT 2000
-				`;
-			}
-			// 深度类别
-			else if (category === "deep") {
-				sqlStmt = `
-					SELECT
-						b.id as doc_id,
-						b.content as doc_title,
-						b.hpath as doc_path,
-						b.box as notebook_id,
-						b.updated as doc_updated,
-						b.created as doc_created,
-						COALESCE(sw.total_size, 0) as content_size,
-						COALESCE(sw.total_word_count, 0) as word_count,
-						LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth,
-						0 as ref_count,
-						0 as image_count
-					FROM blocks b
-					LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
-					WHERE b.type = 'd' ${notebookCondition}
-					AND LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 >= 5
-					ORDER BY doc_depth DESC
-					LIMIT 2000
-				`;
-			}
-			// 引用类别 - 查找含有引用块的文档
-			else if (category === "hasRef") {
-				sqlStmt = `
-					SELECT
-						b.id as doc_id,
-						b.content as doc_title,
-						b.hpath as doc_path,
-						b.box as notebook_id,
-						b.updated as doc_updated,
-						b.created as doc_created,
-						COALESCE(sw.total_size, 0) as content_size,
-						COALESCE(sw.total_word_count, 0) as word_count,
-						LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth,
-						COALESCE(r.ref_count, 0) as ref_count,
-						0 as image_count
-					FROM blocks b
-					LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
-					INNER JOIN (${REF_SUBQUERY}) r ON b.id = r.root_id
-					WHERE b.type = 'd' ${notebookCondition}
-					ORDER BY r.ref_count DESC
-					LIMIT 2000
-				`;
-			}
-			// 图片类别 - 查找含有图片的文档
-			else if (category === "hasImage") {
-				sqlStmt = `
-					SELECT
-						b.id as doc_id,
-						b.content as doc_title,
-						b.hpath as doc_path,
-						b.box as notebook_id,
-						b.updated as doc_updated,
-						b.created as doc_created,
-						COALESCE(sw.total_size, 0) as content_size,
-						COALESCE(sw.total_word_count, 0) as word_count,
-						LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth,
-						0 as ref_count,
-						COALESCE(img.image_count, 0) as image_count
-					FROM blocks b
-					LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
-					INNER JOIN (${IMAGE_SUBQUERY}) img ON b.id = img.root_id
-					WHERE b.type = 'd' ${notebookCondition}
-					ORDER BY img.image_count DESC
-					LIMIT 2000
-				`;
+			switch (category) {
+				case "7days":
+					extraWhere = `AND b.updated >= '${daysAgoStr(7)}'`;
+					break;
+				case "30days":
+					extraWhere = `AND b.updated >= '${daysAgoStr(30)}' AND b.updated < '${daysAgoStr(7)}'`;
+					break;
+				case "halfYear":
+					extraWhere = `AND b.updated < '${daysAgoStr(180)}'`;
+					break;
+				case "deep":
+					extraWhere = "AND LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 >= 5";
+					orderBy = "doc_depth DESC";
+					break;
+				case "hasRef":
+					extraJoin = `INNER JOIN (${REF_SUBQUERY}) r ON b.id = r.root_id`;
+					refCol = "COALESCE(r.ref_count, 0) as ref_count";
+					orderBy = "r.ref_count DESC";
+					break;
+				case "hasImage":
+					extraJoin = `INNER JOIN (${IMAGE_SUBQUERY}) img ON b.id = img.root_id`;
+					imgCol = "COALESCE(img.image_count, 0) as image_count";
+					orderBy = "img.image_count DESC";
+					break;
+				default:
+					queryState.status = "empty";
+					return;
 			}
 
-			if (!sqlStmt) {
-				queryState.status = "empty";
-				return;
-			}
+			const sqlStmt = `
+				SELECT
+					b.id as doc_id,
+					b.content as doc_title,
+					b.hpath as doc_path,
+					b.box as notebook_id,
+					b.updated as doc_updated,
+					b.created as doc_created,
+					COALESCE(sw.total_size, 0) as content_size,
+					COALESCE(sw.total_word_count, 0) as word_count,
+					LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth,
+					${refCol},
+					${imgCol}
+				FROM blocks b
+				LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
+				${extraJoin}
+				WHERE b.type = 'd' ${notebookCondition}
+				${extraWhere}
+				ORDER BY ${orderBy}
+				LIMIT 2000
+			`;
 
 			const rows = await sql(sqlStmt);
 
@@ -691,9 +629,7 @@ export function useDocAnalysis(plugin: Plugin) {
 			}
 
 			const docs = mapRowsToDocs(rows);
-			const sortedDocs = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder);
-
-			queryState.results = sortedDocs;
+			queryState.results = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder);
 			queryState.status = "success";
 		} catch (error) {
 			console.error("按类别查询文档失败:", error);
@@ -920,27 +856,12 @@ export function useDocAnalysis(plugin: Plugin) {
 		saveOptions();
 	}
 
-	/**
-	 * 重置查询
-	 */
-	function resetQuery() {
-		queryState.status = "idle";
-		queryState.results = [];
-		queryState.errorMessage = "";
-		queryState.hasQueried = false;
-		Object.assign(filterOptions, { ...DEFAULT_FILTER_OPTIONS });
-	}
-
 	return {
 		notebooks,
 		queryState,
 		filterOptions,
 		docStats,
-		duplicateGroups,
-		updateTimeStats,
 		depthStats,
-		refStats,
-		imageStats,
 		statsLoading,
 		hasAnalyzed,
 		statsFilter,
@@ -951,7 +872,6 @@ export function useDocAnalysis(plugin: Plugin) {
 		queryByStatsCategory,
 		openDoc,
 		updateSort,
-		resetQuery,
 		saveOptions,
 	};
 }

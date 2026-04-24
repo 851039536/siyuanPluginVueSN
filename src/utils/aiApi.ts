@@ -51,6 +51,8 @@ export function extractResponseText(data: any): string {
 		() => data.choices?.[0]?.message?.content,
 		() => data.text,
 		() => data.content,
+		// DeepSeek 思考模式：content 可能为空，此时取 reasoning_content
+		() => data.choices?.[0]?.message?.reasoning_content,
 	];
 
 	for (const getText of possiblePaths) {
@@ -436,7 +438,7 @@ export async function callAIStream(
 		response,
 		onChunk,
 		merged?.signal,
-		options?.onReasoningChunk,
+		merged?.onReasoningChunk,
 	);
 }
 
@@ -453,7 +455,8 @@ export async function callAISmart(
 		enableThinking: config.enableThinking ?? options?.enableThinking,
 	};
 	if (mergedOptions.onChunk) {
-		return callAIStream(prompt, config, mergedOptions.onChunk, mergedOptions);
+		const { onChunk, ...streamOptions } = mergedOptions;
+		return callAIStream(prompt, config, onChunk, streamOptions);
 	}
 	return callAI(prompt, config, mergedOptions);
 }

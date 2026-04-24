@@ -1,40 +1,34 @@
 <template>
   <div
     class="feature-card"
-    :class="{ 'enabled': feature.enabled, 'disabled': !feature.enabled }"
+    :class="{ enabled: feature.enabled, disabled: !feature.enabled }"
     @click="handleCardClick"
   >
-    <!-- 功能头部 -->
-    <div class="feature-header">
-      <div class="feature-icon">
-        <IconWrapper :name="feature.iconKey" :size="20" />
-      </div>
-      <div class="feature-info">
-        <div class="feature-title">{{ feature.title }}</div>
-        <div class="feature-desc">{{ feature.desc }}</div>
-      </div>
-      <div class="feature-toggle" @click.stop>
-        <Switch
-          :model-value="feature.enabled"
-          size="small"
-          @update:model-value="handleToggle"
-        />
-      </div>
+    <div class="feature-icon">
+      <IconWrapper :name="feature.iconKey" :size="16" />
     </div>
-
-    <!-- 功能操作按钮 -->
+    <div class="feature-info">
+      <span class="feature-title">{{ feature.title }}</span>
+      <span class="feature-desc">{{ feature.desc }}</span>
+    </div>
     <div v-if="feature.actions.length > 0 && feature.enabled" class="feature-actions">
       <Button
         v-for="action in feature.actions"
         :key="action.key"
         variant="ghost"
         size="small"
-        block
         @click.stop="handleAction(action.key)"
       >
-        <span>{{ action.label }}</span>
-        <span class="action-hotkey">{{ action.hotkey }}</span>
+        {{ action.label }}
+        <span v-if="action.hotkey" class="action-hotkey">{{ action.hotkey }}</span>
       </Button>
+    </div>
+    <div class="feature-toggle" @click.stop>
+      <Switch
+        :model-value="feature.enabled"
+        size="small"
+        @update:model-value="handleToggle"
+      />
     </div>
   </div>
 </template>
@@ -73,5 +67,3 @@ const handleAction = (actionKey: string) => {
 	emit("action", actionKey);
 };
 </script>
-
-

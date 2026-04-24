@@ -1,24 +1,10 @@
 // SuperPanel 模块专属 Mixins
 @use './variables' as *;
 
-// 按钮重置样式
-@mixin button-reset {
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  outline: none;
-  transition: all $transition-fast ease;
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-}
-
 // 滚动条样式
 @mixin scrollbar-thin {
   &::-webkit-scrollbar {
-    width: 6px;
+    width: 5px;
   }
 
   &::-webkit-scrollbar-track {
@@ -33,11 +19,6 @@
       background: var(--b3-theme-on-surface);
     }
   }
-}
-
-// 滑入动画
-@mixin slide-down-animation {
-  animation: slideDown $transition-normal ease-out;
 }
 
 // 响应式断点

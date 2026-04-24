@@ -1,127 +1,80 @@
-// 功能卡片样式
+// 功能卡片样式（列表行式）
 @use './variables' as *;
 @use './mixins' as *;
 
 .feature-card {
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 10px;
-  padding: $spacing-lg;
-  transition: all $transition-fast ease;
-  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: $spacing-sm $spacing-md;
+  border-radius: 6px;
+  cursor: default;
 
-  &.enabled:hover {
-    border-color: var(--b3-theme-primary-lighter);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    transform: translateY(-1px);
+  &.enabled {
+    cursor: pointer;
+
+    &:hover {
+      background: var(--b3-theme-surface-lighter);
+    }
   }
 
   &.disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+    opacity: 0.5;
   }
-
-  // 响应式调整
-  @include tablet-only {
-    padding: $spacing-md;
-  }
-
-  @include mobile-only {
-    padding: $spacing-sm;
-    margin-bottom: 8px;
-  }
-}
-
-.feature-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
 }
 
 .feature-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   background: var(--b3-theme-primary-lightest);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   color: var(--b3-theme-primary);
-  transition: all $transition-fast ease;
-
-  .feature-card:hover & {
-    transform: scale(1.05);
-  }
-
-  @include mobile-only {
-    width: 36px;
-    height: 36px;
-  }
 }
 
 .feature-info {
   flex: 1;
   min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
 }
 
 .feature-title {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--b3-theme-on-background);
-  margin-bottom: 4px;
-  @include text-ellipsis;
-
-  @include mobile-only {
-    font-size: 13px;
-  }
+  white-space: nowrap;
 }
 
 .feature-desc {
   font-size: 12px;
   color: var(--b3-theme-on-surface);
-  opacity: 0.7;
-  line-height: 1.4;
-  @include text-ellipsis-multiline(2);
-
-  @include mobile-only {
-    font-size: 11px;
-  }
+  opacity: 0.6;
+  @include text-ellipsis;
 }
 
 .feature-toggle {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
 }
 
 .feature-actions {
   display: flex;
-  flex-direction: column;
-  gap: $spacing-sm;
-  margin-top: $spacing-md;
-  padding-top: $spacing-md;
-  border-top: 1px solid var(--b3-theme-surface-lighter);
-
-  @include mobile-only {
-    margin-top: $spacing-sm;
-    padding-top: $spacing-sm;
-    gap: 6px;
-  }
+  align-items: center;
+  gap: $spacing-xs;
+  flex-shrink: 0;
 }
 
 .action-hotkey {
-  font-size: 11px;
-  opacity: 0.6;
+  font-size: 10px;
+  opacity: 0.5;
   background: var(--b3-theme-surface-lighter);
-  padding: 2px 6px;
+  padding: 1px 5px;
   border-radius: 3px;
-  transition: all $transition-fast ease;
-  margin-left: auto;
-
-  @include mobile-only {
-    font-size: 10px;
-    padding: 1px 4px;
-  }
+  margin-left: 4px;
 }

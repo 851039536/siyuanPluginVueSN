@@ -1,48 +1,44 @@
 <template>
   <!-- 遮罩层 -->
-  <Transition name="overlay">
-    <div
-      v-if="visible"
-      class="super-panel-overlay"
-      @click="emit('close')"
-    />
-  </Transition>
+  <div
+    v-if="visible"
+    class="super-panel-overlay"
+    @click="emit('close')"
+  />
 
   <!-- 面板容器 -->
-  <Transition name="panel">
-    <div v-if="visible" class="super-panel-container">
-      <!-- 头部 -->
-      <SuperPanelHeader
-        :title="i18n.title || '超级面板'"
-        :i18n="i18n"
-        @toggle-all="(v: boolean) => emit('toggleAllFeatures', v)"
-        @toggle-ai-settings="toggleAiSettings"
-        @refresh="emit('refresh')"
-        @close="emit('close')"
-      />
+  <div v-if="visible" class="super-panel-container">
+    <!-- 头部 -->
+    <SuperPanelHeader
+      :title="i18n.title || '超级面板'"
+      :i18n="i18n"
+      @toggle-all="(v: boolean) => emit('toggleAllFeatures', v)"
+      @toggle-ai-settings="toggleAiSettings"
+      @refresh="emit('refresh')"
+      @close="emit('close')"
+    />
 
-      <!-- AI配置区域 -->
-      <AiSettingsPanel
-        :visible="showAiSettings"
-        :settings="aiSettings"
-        :i18n="i18n"
-        @close="toggleAiSettings"
-        @update:settings="emit('updateAiSettings', $event)"
-      />
+    <!-- AI配置区域 -->
+    <AiSettingsPanel
+      :visible="showAiSettings"
+      :settings="aiSettings"
+      :i18n="i18n"
+      @close="toggleAiSettings"
+      @update:settings="emit('updateAiSettings', $event)"
+    />
 
-      <!-- 内容区 -->
-      <div class="super-panel-content">
-        <FeatureCard
-          v-for="feature in features"
-          :key="feature.id"
-          :feature="feature"
-          :i18n="i18n"
-          @action="emit('action', $event)"
-          @toggle="(id: string, v: boolean) => emit('toggleFeature', id, v)"
-        />
-      </div>
+    <!-- 内容区 -->
+    <div class="super-panel-content">
+      <FeatureCard
+        v-for="feature in features"
+        :key="feature.id"
+        :feature="feature"
+        :i18n="i18n"
+        @action="emit('action', $event)"
+        @toggle="(id: string, v: boolean) => emit('toggleFeature', id, v)"
+      />
     </div>
-  </Transition>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -97,14 +93,11 @@ interface FeatureConfigItem {
 	id: string;
 	defaultTitle: string;
 	defaultDesc: string;
-	/** 自定义标题 i18n key（支持嵌套如 "statusBar.title"），默认取 i18n[id] */
 	titleI18nKey?: string;
-	/** 自定义描述 i18n key（支持嵌套如 "statusBar.description"），默认取 i18n[id+"Desc"] */
 	descI18nKey?: string;
 	actions?: FeatureAction[];
 }
 
-/** 解析嵌套 i18n key（如 "statusBar.title" → i18n.statusBar.title） */
 const resolveI18n = (obj: Record<string, any>, key: string): any => {
 	if (!key.includes(".")) return obj[key];
 	return key.split(".").reduce((acc, k) => acc?.[k], obj);

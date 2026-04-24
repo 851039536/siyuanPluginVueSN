@@ -1,23 +1,12 @@
 // SuperPanel 模块专属变量
 
 // 面板尺寸
-$panel-width: 720px !default;
-$panel-header-height: 60px !default;
+$panel-width: 640px !default;
 $panel-border-radius: 8px !default;
-
-// 动画时长
-$transition-fast: 0.2s !default;
-$transition-normal: 0.3s !default;
-$transition-slow: 0.6s !default;
 
 // Z-index 层级
 $z-overlay: 9998 !default;
 $z-panel: 9999 !default;
-
-// 按钮尺寸
-$btn-size: 28px !default;
-$btn-size-mobile: 26px !default;
-$btn-size-small: 22px !default;
 
 // 间距规范
 $spacing-xs: 4px !default;

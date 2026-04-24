@@ -26,7 +26,7 @@ export interface BackupResult {
 }
 
 export interface RestoreProgress {
-	phase: "reading" | "extracting" | "verifying" | "writing";
+	phase: "reading" | "extracting" | "verifying" | "writing" | "swapping";
 	currentFile: string;
 	filesProcessed: number;
 	totalFiles: number;
@@ -486,6 +486,13 @@ export class BackupManager {
 
 		const fs = window.require("fs").promises;
 		const path = window.require("path");
+		const { onProgress } = options;
+
+		// 临时恢复目录（解压暂存区）
+		const restoreTmpDir = path.join(this.workspaceRoot, "data-restoring");
+
+		// 检查上次中断的恢复，清理残留
+		await this.recoverInterruptedRestore(fs, restoreTmpDir);
 
 		onProgress?.({
 			phase: "reading",
@@ -522,8 +529,7 @@ export class BackupManager {
 				throw new Error("增量备份缺少基础备份引用，无法恢复");
 			}
 			const basePath = path.join(this.backupDir, baseName);
-			const baseResult = await this.restoreBackup(basePath, options);
-			// 继续恢复增量部分
+			await this.restoreBackup(basePath, options);
 		}
 
 		// 提取所有文件（排除 backup-info.json）
@@ -536,42 +542,170 @@ export class BackupManager {
 
 		const totalFiles = files.length;
 		let restoredFiles = 0;
-		let skippedFiles = 0;
+		const failedFiles: string[] = [];
 
-		// 如果是全量恢复，先清空目标目录中的内容（保留 temp 和 .recycle）
-		if (!info.isIncremental) {
-			await this.clearDataDir(fs, path);
-		}
+		// ===== 阶段1：解压到临时目录（不触碰原始数据） =====
+		onProgress?.({
+			phase: "extracting",
+			currentFile: "",
+			filesProcessed: 0,
+			totalFiles,
+			percent: 15,
+		} as RestoreProgress);
+
+		// 确保临时目录干净
+		await fs.rm(restoreTmpDir, { recursive: true, force: true });
+		await fs.mkdir(restoreTmpDir, { recursive: true });
 
 		for (let i = 0; i < files.length; i++) {
-			const relativePath = files[i];
-			const targetPath = path.join(this.workspacePath, relativePath);
+			const relativePath = files[i].split("/").join(path.sep);
+			const targetPath = path.join(restoreTmpDir, relativePath);
+
+			onProgress?.({
+				phase: "extracting",
+				currentFile: relativePath,
+				filesProcessed: i + 1,
+				totalFiles,
+				percent: 15 + Math.round(((i + 1) / totalFiles) * 50),
+			} as RestoreProgress);
+
+			try {
+				const zipEntry = zip.file(files[i]);
+				const content = zipEntry ? await zipEntry.async("uint8array") : null;
+				if (content) {
+					await fs.mkdir(path.dirname(targetPath), { recursive: true });
+					await fs.writeFile(targetPath, content);
+					restoredFiles++;
+				} else {
+					failedFiles.push(files[i]);
+				}
+			} catch (err) {
+				console.error(`解压文件失败: ${files[i]}`, err);
+				failedFiles.push(files[i]);
+			}
+		}
+
+		if (failedFiles.length > 0) {
+			// 解压阶段就有失败，清理临时目录，不替换原始数据
+			await fs.rm(restoreTmpDir, { recursive: true, force: true });
+			console.error(`解压失败 ${failedFiles.length} 个文件，恢复中止:`, failedFiles);
+			return { success: false, restoredFiles: 0, skippedFiles: failedFiles.length };
+		}
+
+		// ===== 阶段2：将临时文件写入工作区 =====
+		// 使用逐文件复制而非 rename，避免 Windows 上 EPERM 错误
+		onProgress?.({
+			phase: "writing",
+			currentFile: "",
+			filesProcessed: 0,
+			totalFiles,
+			percent: 70,
+		} as RestoreProgress);
+
+		for (let i = 0; i < files.length; i++) {
+			const relativePath = files[i].split("/").join(path.sep);
+			const srcPath = path.join(restoreTmpDir, relativePath);
+			const destPath = path.join(this.workspacePath, relativePath);
 
 			onProgress?.({
 				phase: "writing",
 				currentFile: relativePath,
 				filesProcessed: i + 1,
 				totalFiles,
-				percent: 20 + Math.round(((i + 1) / totalFiles) * 80),
+				percent: 70 + Math.round(((i + 1) / totalFiles) * 20),
 			} as RestoreProgress);
 
 			try {
-				const content = await zip.file(relativePath)?.async("uint8array");
-				if (content) {
-					await fs.mkdir(path.dirname(targetPath), { recursive: true });
-					await fs.writeFile(targetPath, content);
-					restoredFiles++;
-				} else {
-					skippedFiles++;
-				}
+				await fs.mkdir(path.dirname(destPath), { recursive: true });
+				await fs.copyFile(srcPath, destPath);
 			} catch (err) {
-				console.warn(`恢复文件失败: ${relativePath}`, err);
-				skippedFiles++;
+				console.error(`写入文件失败: ${relativePath}`, err);
+				failedFiles.push(files[i]);
 			}
 		}
 
-		return { success: true, restoredFiles, skippedFiles };
+		// ===== 阶段3：全量恢复时清理多余的旧文件 =====
+		if (!info.isIncremental && failedFiles.length === 0) {
+			onProgress?.({
+				phase: "swapping",
+				currentFile: "",
+				filesProcessed: 0,
+				totalFiles: 0,
+				percent: 92,
+			} as RestoreProgress);
+
+			await this.removeExtraFiles(fs, path, restoreTmpDir, this.workspacePath);
+		}
+
+		// 清理临时目录
+		await fs.rm(restoreTmpDir, { recursive: true, force: true });
+
+		if (failedFiles.length > 0) {
+			console.error(`恢复完成，但有 ${failedFiles.length} 个文件失败:`, failedFiles);
+			return { success: false, restoredFiles: restoredFiles - failedFiles.length, skippedFiles: failedFiles.length };
+		}
+
+		return { success: true, restoredFiles, skippedFiles: 0 };
 	}
+
+	/** 清理工作区中不在备份中的多余文件（全量恢复用） */
+	private async removeExtraFiles(fs: any, path: any, backupDir: string, dataDir: string) {
+		const preserveNames = new Set(["temp", ".recycle"]);
+		// 也排除备份目录本身（如果在 workspace 下）
+		if (this.backupDir.startsWith(this.workspacePath)) {
+			const backupRelative = path.relative(this.workspacePath, this.backupDir);
+			if (backupRelative && !backupRelative.startsWith("..")) {
+				preserveNames.add(backupRelative.split(path.sep)[0]);
+			}
+		}
+
+		try {
+			const entries = await fs.readdir(dataDir, { withFileTypes: true });
+			for (const entry of entries) {
+				if (preserveNames.has(entry.name)) continue;
+				const dataPath = path.join(dataDir, entry.name);
+				const backupPath = path.join(backupDir, entry.name);
+				const existsInBackup = await this.existsPath(fs, backupPath);
+				if (!existsInBackup) {
+					await fs.rm(dataPath, { recursive: true, force: true });
+				}
+			}
+		} catch {
+			// 忽略清理错误
+		}
+	}
+
+	private async existsPath(fs: any, filePath: string): Promise<boolean> {
+		try {
+			await fs.access(filePath);
+			return true;
+		} catch {
+			return false;
+		}
+	}
+
+	/** 恢复中断的恢复操作：清理 data-restoring 残留 */
+	private async recoverInterruptedRestore(fs: any, restoreTmpDir: string) {
+		if (await this.existsDir(fs, restoreTmpDir)) {
+			console.warn("检测到上次恢复中断的临时文件，正在清理...");
+			try {
+				await fs.rm(restoreTmpDir, { recursive: true, force: true });
+			} catch {
+				// 清理失败也不阻塞后续操作
+			}
+		}
+	}
+
+	private async existsDir(fs: any, dirPath: string): Promise<boolean> {
+		try {
+			const stat = await fs.stat(dirPath);
+			return stat.isDirectory();
+		} catch {
+			return false;
+		}
+	}
+
+
 
 	// ========== 完整性校验 ==========
 
@@ -736,22 +870,7 @@ export class BackupManager {
 		}
 	}
 
-	private async clearDataDir(fs: any, path: any) {
-		try {
-			const entries = await fs.readdir(this.workspacePath, { withFileTypes: true });
-			for (const entry of entries) {
-				if (entry.name === "temp" || entry.name === ".recycle") continue;
-				const fullPath = path.join(this.workspacePath, entry.name);
-				try {
-					await fs.rm(fullPath, { recursive: true, force: true });
-				} catch {
-					// 忽略删除错误
-				}
-			}
-		} catch {
-			// 忽略错误
-		}
-	}
+
 
 	private async loadManifest(): Promise<void> {
 		if (this.manifest) return;

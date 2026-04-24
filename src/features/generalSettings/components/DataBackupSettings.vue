@@ -290,7 +290,7 @@ import { ref, onMounted, onUnmounted, watch, nextTick, computed } from "vue";
 import { showMessage } from "siyuan";
 import { checkIsMobile } from "../types";
 import { BackupManager } from "../modules/BackupManager";
-import type { BackupProgress, VerifyResult as VerifyResultType } from "../modules/BackupManager";
+import type { BackupProgress, VerifyResult as VerifyResultType, RestoreProgress } from "../modules/BackupManager";
 import { CloudBackupManager } from "../modules/CloudBackupManager";
 import type { CloudProviderConfig, CloudFileInfo } from "../modules/CloudBackupManager";
 
@@ -327,7 +327,7 @@ const backupList = ref<
 let lastBackupTimestamp = 0;
 
 // 备份进度
-const backupProgress = ref<BackupProgress & { isIncremental?: boolean }>({
+const backupProgress = ref<(BackupProgress | RestoreProgress) & { isIncremental?: boolean }>({
 	phase: "scanning",
 	currentFile: "",
 	filesProcessed: 0,
@@ -343,6 +343,10 @@ const phaseLabel = computed(() => {
 		saving: "保存备份",
 		verifying: "校验完整性",
 		uploading: "上传云端",
+		reading: "读取备份",
+		extracting: "解压文件",
+		writing: "写入文件",
+		swapping: "替换数据",
 	};
 	return labels[backupProgress.value.phase] || backupProgress.value.phase;
 });
@@ -426,6 +430,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
 	window.removeEventListener("autoBackupTrigger", handleAutoBackupTrigger);
+	window.removeEventListener("workspacePathDetected", handleWorkspacePathDetected);
 });
 
 async function handleAutoBackupTrigger() {
@@ -464,9 +469,6 @@ async function loadSettings() {
 				if (data.workspacePath) {
 					workspacePath.value = data.workspacePath;
 					workspaceRoot.value = data.workspaceRoot || data.workspacePath.replace(/\/data$/, "");
-				}
-				if (data.workspaceRoot) {
-					workspaceRoot.value = data.workspaceRoot;
 				}
 			}
 		}
@@ -523,11 +525,9 @@ async function detectWorkspacePath() {
 		return;
 	}
 
-	const savedPath = localStorage.getItem("siyuan-workspace-path");
 	const savedRoot = localStorage.getItem("siyuan-workspace-root");
-	if (savedPath) {
-		workspacePath.value = savedPath;
-		workspaceRoot.value = savedRoot || savedPath.replace(/\/data$/, "");
+	if (savedRoot) {
+		updateWorkspacePath(savedRoot);
 		return;
 	}
 
@@ -656,8 +656,8 @@ async function selectWorkspacePath() {
 
 // ========== 备份操作 ==========
 
-// 全量备份
-async function performFullBackup() {
+// 统一备份入口
+async function performBackup(incremental: boolean) {
 	if (isBackingUp.value || !backupManager) return;
 
 	if (!workspacePath.value) {
@@ -666,52 +666,34 @@ async function performFullBackup() {
 		if (!workspacePath.value) return;
 	}
 
+	const modeLabel = incremental ? "增量" : "全量";
 	isBackingUp.value = true;
-	backupProgress.value = { phase: "scanning", currentFile: "", filesProcessed: 0, totalFiles: 0, percent: 0, isIncremental: false };
+	backupProgress.value = { phase: "scanning", currentFile: "", filesProcessed: 0, totalFiles: 0, percent: 0, isIncremental: incremental };
 
 	try {
-		const result = await backupManager.performFullBackup({
-			onProgress: (p) => {
-				backupProgress.value = { ...p, isIncremental: false };
-			},
-		});
+		const result = incremental
+			? await backupManager.performIncrementalBackup({
+					onProgress: (p) => { backupProgress.value = { ...p, isIncremental: true }; },
+				})
+			: await backupManager.performFullBackup({
+					onProgress: (p) => { backupProgress.value = { ...p, isIncremental: false }; },
+				});
 
 		await onBackupComplete(result);
 	} catch (error: any) {
-		console.error("全量备份失败:", error);
+		console.error(`${modeLabel}备份失败:`, error);
 		showMessage(`${props.i18n.backupFailed || "备份失败"}: ${error.message}`, 5000, "error");
 	} finally {
 		isBackingUp.value = false;
 	}
 }
 
-// 增量备份
+async function performFullBackup() {
+	return performBackup(false);
+}
+
 async function performIncrementalBackup() {
-	if (isBackingUp.value || !backupManager) return;
-
-	if (!workspacePath.value) {
-		showMessage(props.i18n.pleaseSelectWorkspace || "请先选择工作区路径", 3000, "info");
-		await selectWorkspacePath();
-		if (!workspacePath.value) return;
-	}
-
-	isBackingUp.value = true;
-	backupProgress.value = { phase: "scanning", currentFile: "", filesProcessed: 0, totalFiles: 0, percent: 0, isIncremental: true };
-
-	try {
-		const result = await backupManager.performIncrementalBackup({
-			onProgress: (p) => {
-				backupProgress.value = { ...p, isIncremental: true };
-			},
-		});
-
-		await onBackupComplete(result);
-	} catch (error: any) {
-		console.error("增量备份失败:", error);
-		showMessage(`${props.i18n.backupFailed || "备份失败"}: ${error.message}`, 5000, "error");
-	} finally {
-		isBackingUp.value = false;
-	}
+	return performBackup(true);
 }
 
 // 备份完成后的统一处理
@@ -735,7 +717,7 @@ async function onBackupComplete(result: any) {
 		backupList.value = backupList.value.slice(0, keepBackupCount.value);
 	}
 
-	await props.plugin.saveData("backup-history", { list: backupList.value });
+	await props.plugin?.saveData("backup-history", { list: backupList.value });
 
 	const modeLabel = result.isIncremental ? "增量" : "全量";
 	showMessage(`${modeLabel}备份成功: ${result.fileName}（${result.changedFiles}/${result.totalFiles} 文件）`, 3000, "info");
@@ -766,16 +748,24 @@ async function restoreBackup(backup: { name: string; path: string }) {
 
 	try {
 		const result = await backupManager.restoreBackup(backup.path, {
-			onProgress: (p) => {
+			onProgress: (p: RestoreProgress) => {
 				backupProgress.value = { ...p, isIncremental: false };
 			},
 		});
 
-		showMessage(
-			`恢复成功！已恢复 ${result.restoredFiles} 个文件${result.skippedFiles > 0 ? `，跳过 ${result.skippedFiles} 个` : ""}`,
-			5000,
-			"info",
-		);
+		if (result.success) {
+			showMessage(
+				`恢复成功！已恢复 ${result.restoredFiles} 个文件`,
+				5000,
+				"info",
+			);
+		} else {
+			showMessage(
+				`恢复完成，但 ${result.skippedFiles} 个文件失败，请检查日志`,
+				5000,
+				"error",
+			);
+		}
 	} catch (error: any) {
 		console.error("恢复备份失败:", error);
 		showMessage(`恢复失败: ${error.message}`, 5000, "error");
@@ -857,8 +847,7 @@ async function downloadFromCloud(file: CloudFileInfo) {
 
 	isRestoring.value = true;
 	try {
-		const path = window.require("path");
-		const localPath = path.join(getBackupDir(), file.name);
+		const localPath = `${getBackupDir()}/${file.name}`;
 		await cloudBackupManager.download(file.key, localPath);
 		showMessage(`已下载 ${file.name}`, 2000, "info");
 		await loadBackupList();
@@ -895,7 +884,7 @@ function formatFileSize(bytes: number): string {
 }
 
 // 加载备份列表
-async function loadBackupList() {
+	async function loadBackupList() {
 	backupList.value = [];
 
 	try {
@@ -904,14 +893,14 @@ async function loadBackupList() {
 			const scanned = await backupManager.scanBackupDir();
 			if (scanned.length > 0) {
 				backupList.value = scanned;
-				await props.plugin.saveData("backup-history", { list: backupList.value });
+				await props.plugin?.saveData("backup-history", { list: backupList.value });
 				return;
 			}
 		}
 
 		// 降级到已保存的记录
-		const backupHistory = await props.plugin.loadData("backup-history");
-		if (backupHistory && backupHistory.list) {
+		const backupHistory = await props.plugin?.loadData("backup-history");
+		if (backupHistory?.list) {
 			backupList.value = backupHistory.list;
 		}
 	} catch (error) {
@@ -922,8 +911,11 @@ async function loadBackupList() {
 // 刷新备份列表
 async function refreshBackupList() {
 	isLoading.value = true;
-	await loadBackupList();
-	isLoading.value = false;
+	try {
+		await loadBackupList();
+	} finally {
+		isLoading.value = false;
+	}
 }
 
 // 删除备份

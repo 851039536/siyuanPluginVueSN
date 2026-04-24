@@ -3,10 +3,15 @@
  * 基于 wordQuery/utils/apiBase.ts 扩展，增加流式输出支持
  * 所有功能模块统一调用此模块，消除重复的 API 调用逻辑
  */
-import type { AiApiConfig, AiProvider, AiCallOptions } from "@/types/ai";
+import type {
+	AiApiConfig,
+	AiProvider,
+	AiCallOptions,
+	DeepSeekReasoningEffort,
+} from "@/types/ai";
 
 // 重新导出类型，方便外部直接从本模块导入
-export type { AiApiConfig, AiCallOptions } from "@/types/ai";
+export type { AiApiConfig, AiCallOptions, DeepSeekReasoningEffort } from "@/types/ai";
 
 // ============ Provider 配置 ============
 
@@ -26,7 +31,7 @@ const API_PROVIDERS: Record<AiProvider, ProviderConfig> = {
 	},
 	deepseek: {
 		url: "https://api.deepseek.com/v1/chat/completions",
-		defaultModel: "deepseek-chat",
+		defaultModel: "deepseek-v4-flash",
 	},
 	custom: {
 		url: "",
@@ -64,6 +69,16 @@ function resolveProvider(provider: AiProvider): AiProvider {
 }
 
 /**
+ * 判断模型是否支持思考模式（V4 系列均支持）
+ */
+function supportsThinkingMode(model: string): boolean {
+	return (
+		model === "deepseek-reasoner" ||
+		model.startsWith("deepseek-v4-")
+	);
+}
+
+/**
  * 获取 API URL
  */
 function getApiUrl(config: AiApiConfig, providerConfig: ProviderConfig): string {
@@ -85,6 +100,7 @@ function buildRequestBody(
 	temperature: number,
 	maxTokens: number,
 	stream: boolean = false,
+	options?: AiCallOptions,
 ): any {
 	const resolvedProvider = resolveProvider(provider);
 
@@ -103,7 +119,26 @@ function buildRequestBody(
 		};
 	}
 
-	// OpenAI / DeepSeek / Custom 格式
+	// DeepSeek 思考模式处理
+	const deepseekThinking =
+		resolvedProvider === "deepseek" &&
+		supportsThinkingMode(model) &&
+		options?.enableThinking !== false;
+
+	if (deepseekThinking) {
+		const reasoningEffort: DeepSeekReasoningEffort =
+			(options?.reasoningEffort as DeepSeekReasoningEffort) || "high";
+		return {
+			model,
+			messages,
+			max_tokens: maxTokens,
+			thinking: { type: "enabled" },
+			reasoning_effort: reasoningEffort,
+			...(stream ? { stream: true } : {}),
+		};
+	}
+
+	// OpenAI / DeepSeek（非思考）/ Custom 格式
 	return {
 		model,
 		messages,
@@ -200,6 +235,7 @@ async function parseOpenAIStream(
 	response: Response,
 	onChunk: (chunk: string) => void,
 	signal?: AbortSignal,
+	onReasoningChunk?: (chunk: string) => void,
 ): Promise<string> {
 	const reader = response.body?.getReader();
 	if (!reader) throw new Error("无法读取响应流");
@@ -231,8 +267,13 @@ async function parseOpenAIStream(
 
 				try {
 					const json = JSON.parse(dataStr);
-					const content = json.choices?.[0]?.delta?.content;
+					const delta = json.choices?.[0]?.delta;
+					const reasoningContent = delta?.reasoning_content;
+					const content = delta?.content;
 
+					if (reasoningContent) {
+						onReasoningChunk?.(reasoningContent);
+					}
 					if (content) {
 						onChunk(content);
 						fullContent += content;
@@ -250,6 +291,22 @@ async function parseOpenAIStream(
 }
 
 // ============ 核心调用函数 ============
+
+/**
+ * 合并 config 和 options 中的 enableThinking
+ */
+function mergeOptions(
+	config: AiApiConfig,
+	options?: AiCallOptions,
+): AiCallOptions | undefined {
+	if (options === undefined && config.enableThinking === undefined) {
+		return options;
+	}
+	return {
+		...options,
+		enableThinking: config.enableThinking ?? options?.enableThinking,
+	};
+}
 
 /**
  * 统一 AI API 调用（非流式）
@@ -282,12 +339,16 @@ export async function callAI(
 		{ role: "user", content: prompt },
 	];
 
+	const merged = mergeOptions(config, options);
+
 	const requestBody = buildRequestBody(
 		config.provider,
 		model,
 		messages,
 		temperature,
 		maxTokens,
+		false,
+		merged,
 	);
 
 	const headers = buildHeaders(config.apiKey, config.provider);
@@ -296,7 +357,7 @@ export async function callAI(
 		method: "POST",
 		headers,
 		body: JSON.stringify(requestBody),
-		signal: options?.signal,
+		signal: merged?.signal,
 	});
 
 	if (!response.ok) {
@@ -340,6 +401,8 @@ export async function callAIStream(
 		{ role: "user", content: prompt },
 	];
 
+	const merged = mergeOptions(config, options);
+
 	const requestBody = buildRequestBody(
 		config.provider,
 		model,
@@ -347,6 +410,7 @@ export async function callAIStream(
 		temperature,
 		maxTokens,
 		true, // stream
+		merged,
 	);
 
 	const headers = buildHeaders(config.apiKey, config.provider, true);
@@ -355,7 +419,7 @@ export async function callAIStream(
 		method: "POST",
 		headers,
 		body: JSON.stringify(requestBody),
-		signal: options?.signal,
+		signal: merged?.signal,
 	});
 
 	if (!response.ok) {
@@ -366,9 +430,14 @@ export async function callAIStream(
 	// 根据 provider 类型选择不同的流解析器
 	const resolvedProvider = resolveProvider(config.provider);
 	if (resolvedProvider === "tongyi") {
-		return parseTongyiStream(response, onChunk, options?.signal);
+		return parseTongyiStream(response, onChunk, merged?.signal);
 	}
-	return parseOpenAIStream(response, onChunk, options?.signal);
+	return parseOpenAIStream(
+		response,
+		onChunk,
+		merged?.signal,
+		options?.onReasoningChunk,
+	);
 }
 
 /**
@@ -379,15 +448,14 @@ export async function callAISmart(
 	config: AiApiConfig,
 	options?: AiCallOptions,
 ): Promise<string> {
-	if (options?.onChunk) {
-		return callAIStream(prompt, config, options.onChunk, {
-			systemPrompt: options.systemPrompt,
-			temperature: options.temperature,
-			maxTokens: options.maxTokens,
-			signal: options.signal,
-		});
+	const mergedOptions: AiCallOptions = {
+		...options,
+		enableThinking: config.enableThinking ?? options?.enableThinking,
+	};
+	if (mergedOptions.onChunk) {
+		return callAIStream(prompt, config, mergedOptions.onChunk, mergedOptions);
 	}
-	return callAI(prompt, config, options);
+	return callAI(prompt, config, mergedOptions);
 }
 
 /**
@@ -406,5 +474,6 @@ export function getApiConfigFromPlugin(plugin: any): AiApiConfig {
 		model,
 		apiKey: settings.aiApiKey || "",
 		customEndpoint: settings.aiCustomEndpoint || "",
+		enableThinking: settings.aiEnableThinking ?? false,
 	};
 }

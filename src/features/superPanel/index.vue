@@ -88,6 +88,7 @@ const aiSettings = computed<AiSettings>(() => ({
 	customModel: props.settings.aiCustomModel || "",
 	apiKey: props.settings.aiApiKey || "",
 	customEndpoint: props.settings.aiCustomEndpoint || "",
+	enableThinking: props.settings.aiEnableThinking ?? false,
 }));
 
 // 切换AI配置面板

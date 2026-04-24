@@ -34,6 +34,21 @@
         />
       </SettingGroup>
 
+      <!-- 思考模式开关（仅DeepSeek显示） -->
+      <SettingGroup v-if="settings.provider === 'deepseek'">
+        <div class="thinking-toggle-row">
+          <label class="thinking-toggle-label">{{ i18n.thinkingMode || '思考模式' }}</label>
+          <button
+            class="thinking-toggle-btn"
+            :class="{ active: settings.enableThinking }"
+            @click="updateSetting('enableThinking', !settings.enableThinking)"
+          >
+            {{ settings.enableThinking ? (i18n.thinkingOn || '已开启') : (i18n.thinkingOff || '已关闭') }}
+          </button>
+        </div>
+        <div class="setting-desc">{{ i18n.thinkingDesc || '开启后模型会先进行深度思考再回答，适合复杂推理任务' }}</div>
+      </SettingGroup>
+
       <!-- API密钥输入 -->
       <SettingGroup>
         <template #label>{{ i18n.apiKey || 'API密钥' }}</template>
@@ -98,7 +113,7 @@ const handleClose = () => {
 	emit("close");
 };
 
-const updateSetting = (field: keyof AiSettings, value: string) => {
+const updateSetting = (field: keyof AiSettings, value: string | boolean) => {
 	emit("update:settings", { ...props.settings, [field]: value });
 };
 
@@ -106,7 +121,7 @@ const handleProviderChange = async (provider: string) => {
 	const defaultModels: Record<string, string> = {
 		tongyi: "qwen-plus",
 		openai: "gpt-3.5-turbo",
-		deepseek: "deepseek-chat",
+		deepseek: "deepseek-v4-flash",
 		custom: "",
 	};
 	updateSetting("provider", provider);
@@ -117,4 +132,34 @@ const handleProviderChange = async (provider: string) => {
 
 <style scoped lang="scss">
 @use '../styles/index.scss';
+
+.thinking-toggle-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+}
+
+.thinking-toggle-label {
+	font-size: 12px;
+	color: var(--b3-theme-on-surface);
+	white-space: nowrap;
+}
+
+.thinking-toggle-btn {
+	font-size: 11px;
+	padding: 2px 10px;
+	border-radius: 4px;
+	border: 1px solid var(--b3-border-color);
+	background: var(--b3-theme-surface);
+	color: var(--b3-theme-on-surface);
+	cursor: pointer;
+	transition: all 0.2s ease;
+
+	&.active {
+		background: var(--b3-theme-primary);
+		color: #fff;
+		border-color: var(--b3-theme-primary);
+	}
+}
 </style>

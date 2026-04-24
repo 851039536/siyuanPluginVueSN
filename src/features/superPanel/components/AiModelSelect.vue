@@ -82,11 +82,14 @@ const AI_MODELS_CONFIG: Record<string, ProviderModels> = {
 	},
 	deepseek: {
 		common: [
-			{ value: "deepseek-chat", label: "DeepSeek Chat (推荐)" },
-			{ value: "deepseek-coder", label: "DeepSeek Coder (代码)" },
-			{ value: "deepseek-reasoner", label: "DeepSeek Reasoner (思考)" },
+			{ value: "deepseek-v4-flash", label: "V4 Flash (快速)" },
+			{ value: "deepseek-v4-pro", label: "V4 Pro (最强)" },
 		],
-		all: [],
+		all: [
+			{ value: "deepseek-chat", label: "Chat (旧版，将停用)" },
+			{ value: "deepseek-reasoner", label: "Reasoner (旧版思考，将停用)" },
+			{ value: "deepseek-coder", label: "Coder (代码)" },
+		],
 	},
 	custom: {
 		common: [],

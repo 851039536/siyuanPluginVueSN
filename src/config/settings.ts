@@ -48,6 +48,7 @@ export interface PluginSettings {
 	aiCustomModel: string; // 自定义模型名称
 	aiApiKey: string; // AI API密钥
 	aiCustomEndpoint: string; // 自定义API端点(仅在provider为custom时使用)
+	aiEnableThinking: boolean; // DeepSeek思考模式开关
 }
 
 /**
@@ -134,6 +135,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	aiCustomModel: "",
 	aiApiKey: "sk-fae27cc50015409fb2524b0970d3f0b0",
 	aiCustomEndpoint: "",
+	aiEnableThinking: false,
 };
 
 /**

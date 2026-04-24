@@ -3,7 +3,6 @@
     <div class="settings-container">
       <!-- 工作区信息 -->
       <div class="info-section">
-        <!-- 移动端提示 -->
         <div v-if="isMobile" class="mobile-warning">
           <span class="warning-icon">📱</span>
           <span class="warning-text">{{ i18n.mobileBackupDisabled || '检测到移动端环境，备份功能已自动禁用以节省流量和存储空间' }}</span>
@@ -39,21 +38,43 @@
         </div>
       </div>
 
+      <!-- 备份进度 -->
+      <div v-if="isBackingUp || isRestoring" class="progress-section">
+        <div class="section-header">
+          <span class="section-icon">{{ isRestoring ? '🔄' : '📊' }}</span>
+          <h4>{{ isRestoring ? '恢复进度' : '备份进度' }}</h4>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar" :style="{ width: `${backupProgress.percent}%` }"></div>
+        </div>
+        <div class="progress-info">
+          <span class="progress-phase">{{ phaseLabel }}</span>
+          <span class="progress-percent">{{ backupProgress.percent }}%</span>
+        </div>
+        <div v-if="backupProgress.currentFile" class="progress-current-file">
+          {{ backupProgress.currentFile }}
+        </div>
+      </div>
+
       <!-- 手动备份 -->
       <div class="backup-section">
         <div class="section-header">
           <span class="section-icon">📦</span>
           <h4>{{ i18n.manualBackup || '手动备份' }}</h4>
         </div>
-        <button
-          @click="performBackup"
-          class="backup-btn primary"
-          :disabled="isBackingUp"
-        >
-          <span v-if="isBackingUp" class="loading-spinner"></span>
-          <span v-else>📀</span>
-          <span>{{ i18n.backupNow || '立即备份' }}</span>
-        </button>
+        <div class="backup-actions-row">
+          <button @click="performFullBackup" class="backup-btn primary" :disabled="isBackingUp || isRestoring">
+            <span v-if="isBackingUp && !backupProgress.isIncremental" class="loading-spinner"></span>
+            <span v-else>📀</span>
+            <span>全量备份</span>
+          </button>
+          <button @click="performIncrementalBackup" class="backup-btn secondary" :disabled="isBackingUp || isRestoring">
+            <span v-if="isBackingUp && backupProgress.isIncremental" class="loading-spinner"></span>
+            <span v-else>⚡</span>
+            <span>增量备份</span>
+          </button>
+        </div>
+        <p class="backup-hint">全量备份包含所有文件；增量备份仅包含自上次备份后变更的文件（变更超过80%自动转为全量）</p>
       </div>
 
       <!-- 自动备份设置 -->
@@ -73,6 +94,14 @@
 
           <template v-if="autoBackupEnabled">
             <div class="form-row">
+              <label class="form-label">备份模式</label>
+              <select v-model="backupMode" class="form-select" @change="saveSettings">
+                <option value="full">全量备份</option>
+                <option value="incremental">增量备份</option>
+              </select>
+            </div>
+
+            <div class="form-row">
               <label class="form-label">{{ i18n.backupFrequency || '备份频率' }}</label>
               <select v-model="backupFrequency" class="form-select" @change="saveSettings">
                 <option value="minute">{{ i18n.everyMinute || '每分钟' }}</option>
@@ -83,26 +112,87 @@
 
             <div v-if="backupFrequency === 'daily'" class="form-row">
               <label class="form-label">{{ i18n.backupTime || '备份时间' }}</label>
-              <input
-                type="time"
-                v-model="backupTime"
-                class="form-input"
-                @change="saveSettings"
-              />
+              <input type="time" v-model="backupTime" class="form-input" @change="saveSettings" />
             </div>
 
             <div class="form-row">
               <label class="form-label">{{ i18n.keepBackups || '保留备份数' }}</label>
-              <input
-                type="number"
-                v-model="keepBackupCount"
-                class="form-input small"
-                min="1"
-                max="30"
-                @change="saveSettings"
-              />
+              <input type="number" v-model="keepBackupCount" class="form-input small" min="1" max="30" @change="saveSettings" />
+            </div>
+
+            <div class="form-row">
+              <label class="form-label">云同步</label>
+              <select v-model="cloudSyncEnabled" class="form-select" @change="saveSettings">
+                <option :value="false">禁用</option>
+                <option :value="true">启用</option>
+              </select>
             </div>
           </template>
+        </div>
+      </div>
+
+      <!-- 云备份设置 -->
+      <div v-if="cloudSyncEnabled" class="cloud-backup-section">
+        <div class="section-header">
+          <span class="section-icon">☁️</span>
+          <h4>云备份设置</h4>
+        </div>
+        <div class="settings-form">
+          <div class="form-row">
+            <label class="form-label">云服务商</label>
+            <select v-model="cloudConfig.type" class="form-select" @change="saveCloudConfig">
+              <option value="qiniu">七牛云</option>
+              <option value="alibaba">阿里云 OSS</option>
+              <option value="tencent">腾讯云 COS</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label class="form-label">AccessKey</label>
+            <input type="password" v-model="cloudConfig.accessKey" class="form-input" @change="saveCloudConfig" />
+          </div>
+          <div class="form-row">
+            <label class="form-label">SecretKey</label>
+            <input type="password" v-model="cloudConfig.secretKey" class="form-input" @change="saveCloudConfig" />
+          </div>
+          <div class="form-row">
+            <label class="form-label">Bucket</label>
+            <input type="text" v-model="cloudConfig.bucket" class="form-input" @change="saveCloudConfig" />
+          </div>
+          <div class="form-row">
+            <label class="form-label">Region</label>
+            <input type="text" v-model="cloudConfig.region" class="form-input" placeholder="如 oss-cn-hangzhou / ap-guangzhou" @change="saveCloudConfig" />
+          </div>
+          <div class="form-row">
+            <label class="form-label">存储路径</label>
+            <input type="text" v-model="cloudConfig.prefix" class="form-input" placeholder="siyuan-backup/" @change="saveCloudConfig" />
+          </div>
+          <div class="cloud-actions">
+            <button @click="testCloudConnection" class="backup-btn secondary" :disabled="isTestingCloud">
+              {{ isTestingCloud ? '测试中...' : '测试连接' }}
+            </button>
+          </div>
+          <div v-if="cloudTestResult" class="cloud-test-result" :class="{ success: cloudTestResult.success, error: !cloudTestResult.success }">
+            {{ cloudTestResult.message }}
+          </div>
+
+          <!-- 云端备份列表 -->
+          <div v-if="cloudBackupList.length > 0" class="cloud-backup-list">
+            <div class="section-header" style="margin-top: 0.5rem;">
+              <h4>云端备份</h4>
+              <button @click="loadCloudBackups" class="refresh-btn">刷新</button>
+            </div>
+            <div v-for="file in cloudBackupList" :key="file.key" class="backup-item">
+              <div class="backup-info">
+                <span class="backup-name">{{ file.name }}</span>
+                <span class="backup-time">{{ file.lastModified }}</span>
+                <span class="backup-size">{{ formatFileSize(file.size) }}</span>
+              </div>
+              <div class="backup-actions">
+                <button @click="downloadFromCloud(file)" class="action-btn restore" :disabled="isRestoring">下载</button>
+                <button @click="deleteFromCloud(file)" class="action-btn delete">删除</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -116,26 +206,51 @@
           </button>
         </div>
         <div class="backup-list" v-if="backupList.length > 0">
-          <div
-            v-for="(backup, index) in backupList"
-            :key="index"
-            class="backup-item"
-          >
+          <div v-for="(backup, index) in backupList" :key="index" class="backup-item">
             <div class="backup-info">
-              <span class="backup-name">{{ backup.name }}</span>
+              <span class="backup-name">
+                {{ backup.name }}
+                <span v-if="backup.isIncremental" class="badge incremental">增量</span>
+              </span>
               <span class="backup-time">{{ backup.time }}</span>
               <span class="backup-size">{{ backup.size }}</span>
             </div>
             <div class="backup-actions">
-              <button @click="deleteBackup(backup)" class="action-btn delete">
-                {{ i18n.delete || '删除' }}
-              </button>
+              <button @click="verifyBackup(backup)" class="action-btn verify" :disabled="isVerifying">校验</button>
+              <button @click="restoreBackup(backup)" class="action-btn restore" :disabled="isRestoring">恢复</button>
+              <button @click="uploadToCloud(backup)" class="action-btn cloud" :disabled="!cloudSyncEnabled">☁️</button>
+              <button @click="deleteBackup(backup)" class="action-btn delete">{{ i18n.delete || '删除' }}</button>
             </div>
           </div>
         </div>
         <div v-else class="empty-state">
           <span class="empty-icon">📭</span>
           <p>{{ i18n.noBackups || '暂无备份记录' }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 校验结果对话框 -->
+    <div v-if="verifyResult" class="input-dialog-overlay" @click.self="verifyResult = null">
+      <div class="input-dialog">
+        <div class="input-dialog-header">
+          <h4>备份校验结果</h4>
+        </div>
+        <div class="input-dialog-body verify-result-body">
+          <div class="verify-status" :class="{ valid: verifyResult.valid, invalid: !verifyResult.valid }">
+            <span class="verify-icon">{{ verifyResult.valid ? '✅' : '❌' }}</span>
+            <span>{{ verifyResult.valid ? '校验通过' : '校验失败' }}</span>
+          </div>
+          <div class="verify-details">
+            <div class="verify-row"><span>文件数:</span><span>{{ verifyResult.fileCount }}</span></div>
+            <div class="verify-row"><span>文件大小:</span><span>{{ formatFileSize(verifyResult.totalSize) }}</span></div>
+            <div class="verify-row"><span>实际校验和:</span><span class="checksum">{{ verifyResult.checksum.slice(0, 16) }}...</span></div>
+            <div class="verify-row"><span>预期校验和:</span><span class="checksum">{{ verifyResult.expectedChecksum.slice(0, 16) }}...</span></div>
+            <div v-if="verifyResult.error" class="verify-row error"><span>错误:</span><span>{{ verifyResult.error }}</span></div>
+          </div>
+        </div>
+        <div class="input-dialog-footer">
+          <button @click="verifyResult = null" class="input-dialog-btn confirm">关闭</button>
         </div>
       </div>
     </div>
@@ -171,10 +286,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
+import { ref, onMounted, onUnmounted, watch, nextTick, computed } from "vue";
 import { showMessage } from "siyuan";
 import { checkIsMobile } from "../types";
-import JSZip from "jszip";
+import { BackupManager } from "../modules/BackupManager";
+import type { BackupProgress, VerifyResult as VerifyResultType } from "../modules/BackupManager";
+import { CloudBackupManager } from "../modules/CloudBackupManager";
+import type { CloudProviderConfig, CloudFileInfo } from "../modules/CloudBackupManager";
 
 interface Props {
 	i18n?: any;
@@ -186,22 +304,74 @@ const props = withDefaults(defineProps<Props>(), {
 	plugin: null,
 });
 
-// 响应式数据
+// 基础状态
 const workspacePath = ref("");
 const workspaceRoot = ref("");
 const isBackingUp = ref(false);
+const isRestoring = ref(false);
+const isVerifying = ref(false);
 const isLoading = ref(false);
+const isTestingCloud = ref(false);
 const lastBackupTime = ref("");
 const autoBackupEnabled = ref(false);
 const isMobile = ref(false);
 const backupFrequency = ref("daily");
 const backupTime = ref("03:00");
+const backupMode = ref<"full" | "incremental">("full");
 const keepBackupCount = ref(7);
+const cloudSyncEnabled = ref(false);
 const backupList = ref<
-	Array<{ name: string; path: string; time: string; size: string }>
+	Array<{ name: string; path: string; time: string; size: string; isIncremental?: boolean }>
 >([]);
 
 let lastBackupTimestamp = 0;
+
+// 备份进度
+const backupProgress = ref<BackupProgress & { isIncremental?: boolean }>({
+	phase: "scanning",
+	currentFile: "",
+	filesProcessed: 0,
+	totalFiles: 0,
+	percent: 0,
+});
+
+const phaseLabel = computed(() => {
+	const labels: Record<string, string> = {
+		scanning: "扫描文件",
+		packing: "打包文件",
+		compressing: "压缩数据",
+		saving: "保存备份",
+		verifying: "校验完整性",
+		uploading: "上传云端",
+	};
+	return labels[backupProgress.value.phase] || backupProgress.value.phase;
+});
+
+// 校验结果
+const verifyResult = ref<VerifyResultType | null>(null);
+
+// 云备份
+const cloudConfig = ref<CloudProviderConfig>({
+	type: "qiniu",
+	accessKey: "",
+	secretKey: "",
+	bucket: "",
+	region: "",
+	prefix: "siyuan-backup/",
+});
+const cloudTestResult = ref<{ success: boolean; message: string } | null>(null);
+const cloudBackupList = ref<CloudFileInfo[]>([]);
+
+// Manager 实例
+let backupManager: BackupManager | null = null;
+let cloudBackupManager: CloudBackupManager | null = null;
+
+// 初始化 Manager
+function initManagers() {
+	backupManager = new BackupManager(props.plugin, workspacePath.value, workspaceRoot.value);
+	backupManager.setLastBackupTimestamp(lastBackupTimestamp);
+	cloudBackupManager = new CloudBackupManager(props.plugin);
+}
 
 // 获取备份目录路径
 function getBackupDir(): string {
@@ -214,12 +384,15 @@ function updateWorkspacePath(root: string, shouldSave = false) {
 	workspacePath.value = `${root}/data`;
 	localStorage.setItem("siyuan-workspace-root", root);
 	localStorage.setItem("siyuan-workspace-path", `${root}/data`);
+	if (backupManager) {
+		backupManager.updateWorkspacePaths(workspacePath.value, workspaceRoot.value);
+	}
 	if (shouldSave) {
 		saveSettings();
 	}
 }
 
-// 通过 API 获取工作区路径（提取为独立方法避免重复）
+// 通过 API 获取工作区路径
 async function fetchWorkspacePath(): Promise<string | null> {
 	try {
 		const response = await fetch("/api/system/getConf", { method: "POST" });
@@ -233,7 +406,7 @@ async function fetchWorkspacePath(): Promise<string | null> {
 	return null;
 }
 
-// 初始化 - 仅加载设置和 UI 数据（自动备份定时器由 GeneralSettings.init() 在插件启动时初始化）
+// 初始化
 onMounted(async () => {
 	isMobile.value = checkIsMobile();
 	await loadSettings();
@@ -244,7 +417,9 @@ onMounted(async () => {
 	}
 
 	await detectWorkspacePath();
+	initManagers();
 	await loadBackupList();
+	await loadCloudConfig();
 
 	window.addEventListener("autoBackupTrigger", handleAutoBackupTrigger);
 });
@@ -254,10 +429,14 @@ onUnmounted(() => {
 });
 
 async function handleAutoBackupTrigger() {
-	await performBackup();
+	if (backupMode.value === "incremental") {
+		await performIncrementalBackup();
+	} else {
+		await performFullBackup();
+	}
 }
 
-// 统一处理定时器重启逻辑（委托给 GeneralSettings）
+// 定时器重启逻辑（委托给 GeneralSettings）
 function handleTimerRestart(enabled: boolean) {
 	const generalSettings = props.plugin?.__generalSettings;
 	if (generalSettings && typeof generalSettings.restartAutoBackupTimer === "function") {
@@ -265,10 +444,7 @@ function handleTimerRestart(enabled: boolean) {
 	}
 }
 
-// 监听备份频率变化
 watch(backupFrequency, () => handleTimerRestart(autoBackupEnabled.value));
-
-// 监听自动备份启用状态
 watch(autoBackupEnabled, (enabled) => handleTimerRestart(enabled));
 
 // 加载设置
@@ -281,12 +457,13 @@ async function loadSettings() {
 				backupFrequency.value = data.backupFrequency ?? "daily";
 				backupTime.value = data.backupTime ?? "03:00";
 				keepBackupCount.value = data.keepBackupCount ?? 7;
+				backupMode.value = data.backupMode ?? "full";
+				cloudSyncEnabled.value = data.cloudSyncEnabled ?? false;
 				lastBackupTime.value = data.lastBackupTime ?? "";
 				lastBackupTimestamp = data.lastBackupTimestamp ?? 0;
 				if (data.workspacePath) {
 					workspacePath.value = data.workspacePath;
-					workspaceRoot.value =
-						data.workspaceRoot || data.workspacePath.replace(/\/data$/, "");
+					workspaceRoot.value = data.workspaceRoot || data.workspacePath.replace(/\/data$/, "");
 				}
 				if (data.workspaceRoot) {
 					workspaceRoot.value = data.workspaceRoot;
@@ -307,6 +484,8 @@ async function saveSettings() {
 				backupFrequency: backupFrequency.value,
 				backupTime: backupTime.value,
 				keepBackupCount: keepBackupCount.value,
+				backupMode: backupMode.value,
+				cloudSyncEnabled: cloudSyncEnabled.value,
 				lastBackupTime: lastBackupTime.value,
 				lastBackupTimestamp,
 				workspacePath: workspacePath.value,
@@ -318,17 +497,32 @@ async function saveSettings() {
 	}
 }
 
+// 加载云备份配置
+async function loadCloudConfig() {
+	if (!cloudBackupManager) return;
+	const config = await cloudBackupManager.loadConfig();
+	if (config) {
+		cloudConfig.value = config;
+	}
+	if (cloudSyncEnabled.value) {
+		await loadCloudBackups();
+	}
+}
+
+// 保存云备份配置
+async function saveCloudConfig() {
+	if (!cloudBackupManager) return;
+	await cloudBackupManager.saveConfig(cloudConfig.value);
+}
+
 // 检测工作区路径
 async function detectWorkspacePath() {
-	// 方式1: 检查环境变量
-	const envRoot =
-		(window as any).__SIYUAN_WORKSPACE__ || (window as any).SIYUAN_WORKSPACE;
+	const envRoot = (window as any).__SIYUAN_WORKSPACE__ || (window as any).SIYUAN_WORKSPACE;
 	if (envRoot) {
 		updateWorkspacePath(envRoot);
 		return;
 	}
 
-	// 方式2: 从 localStorage 获取
 	const savedPath = localStorage.getItem("siyuan-workspace-path");
 	const savedRoot = localStorage.getItem("siyuan-workspace-root");
 	if (savedPath) {
@@ -337,7 +531,6 @@ async function detectWorkspacePath() {
 		return;
 	}
 
-	// 方式3: 从插件配置获取
 	try {
 		if (props.plugin?.dataPath) {
 			updateWorkspacePath(props.plugin.dataPath);
@@ -347,14 +540,12 @@ async function detectWorkspacePath() {
 		/* 忽略错误 */
 	}
 
-	// 方式4: 通过 API 获取
 	const apiPath = await fetchWorkspacePath();
 	if (apiPath) {
 		updateWorkspacePath(apiPath);
 		return;
 	}
 
-	// 方式5: 监听事件
 	window.addEventListener("workspacePathDetected", handleWorkspacePathDetected);
 }
 
@@ -362,7 +553,7 @@ function handleWorkspacePathDetected(event: CustomEvent) {
 	updateWorkspacePath(event.detail.path);
 }
 
-// 输入对话框相关
+// 输入对话框
 const showInputDialog = ref(false);
 const inputDialogValue = ref("");
 const inputDialogPlaceholder = ref("");
@@ -398,16 +589,10 @@ function cancelInputDialog() {
 // 打开工作区文件夹
 async function openWorkspaceFolder() {
 	if (!workspaceRoot.value) {
-		showMessage(
-			props.i18n.pleaseSelectWorkspace || "请先选择工作区路径",
-			3000,
-			"info",
-		);
+		showMessage(props.i18n.pleaseSelectWorkspace || "请先选择工作区路径", 3000, "info");
 		return;
 	}
-
 	try {
-		// 桌面版：使用 Electron shell 打开文件夹
 		if (typeof window.require === "function") {
 			const electron = window.require("electron");
 			const shell = electron.shell || electron.remote?.shell;
@@ -416,30 +601,19 @@ async function openWorkspaceFolder() {
 				return;
 			}
 		}
-
-		// Web 版：尝试使用思源 API
 		const response = await fetch("/api/file/getFile", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ path: workspaceRoot.value }),
 		});
-
 		if (response.ok) {
 			showMessage(props.i18n.folderOpened || "已在浏览器中打开", 2000, "info");
 		} else {
-			showMessage(
-				props.i18n.openFolderFailed || "打开文件夹失败，请手动访问路径",
-				3000,
-				"error",
-			);
+			showMessage(props.i18n.openFolderFailed || "打开文件夹失败", 3000, "error");
 		}
 	} catch (error) {
 		console.error("打开工作区文件夹失败:", error);
-		showMessage(
-			props.i18n.openFolderFailed || "打开文件夹失败，请手动访问路径",
-			3000,
-			"error",
-		);
+		showMessage(props.i18n.openFolderFailed || "打开文件夹失败", 3000, "error");
 	}
 }
 
@@ -449,16 +623,10 @@ async function selectWorkspacePath() {
 		const wsPath = await fetchWorkspacePath();
 		if (wsPath) {
 			updateWorkspacePath(wsPath, true);
-			showMessage(
-				props.i18n.workspacePathSet || "工作区路径已自动获取",
-				2000,
-				"info",
-			);
+			showMessage(props.i18n.workspacePathSet || "工作区路径已自动获取", 2000, "info");
 			return;
 		}
 	}
-
-	// 使用 Electron dialog
 	if (typeof window.require === "function") {
 		try {
 			const electron = window.require("electron");
@@ -471,11 +639,7 @@ async function selectWorkspacePath() {
 				});
 				if (!result.canceled && result.filePaths[0]) {
 					updateWorkspacePath(result.filePaths[0], true);
-					showMessage(
-						props.i18n.workspacePathSet || "工作区路径已设置",
-						2000,
-						"info",
-					);
+					showMessage(props.i18n.workspacePathSet || "工作区路径已设置", 2000, "info");
 					return;
 				}
 			}
@@ -483,146 +647,241 @@ async function selectWorkspacePath() {
 			console.warn("Electron dialog 不可用:", error);
 		}
 	}
-
-	// 手动输入
-	const inputPath = await showInputDialogHelper(
-		props.i18n.enterWorkspacePath || "请输入思源工作区路径:",
-	);
+	const inputPath = await showInputDialogHelper(props.i18n.enterWorkspacePath || "请输入思源工作区路径:");
 	if (inputPath) {
 		updateWorkspacePath(inputPath, true);
-		showMessage(
-			props.i18n.workspacePathSet || "工作区路径已设置",
-			2000,
-			"info",
-		);
+		showMessage(props.i18n.workspacePathSet || "工作区路径已设置", 2000, "info");
 	}
 }
 
-// 手动备份
-async function performBackup() {
-	if (isBackingUp.value) return;
+// ========== 备份操作 ==========
+
+// 全量备份
+async function performFullBackup() {
+	if (isBackingUp.value || !backupManager) return;
 
 	if (!workspacePath.value) {
-		showMessage(
-			props.i18n.pleaseSelectWorkspace || "请先选择工作区路径",
-			3000,
-			"info",
-		);
+		showMessage(props.i18n.pleaseSelectWorkspace || "请先选择工作区路径", 3000, "info");
 		await selectWorkspacePath();
 		if (!workspacePath.value) return;
 	}
 
 	isBackingUp.value = true;
+	backupProgress.value = { phase: "scanning", currentFile: "", filesProcessed: 0, totalFiles: 0, percent: 0, isIncremental: false };
 
 	try {
-		const now = new Date();
-		const year = now.getFullYear().toString().slice(-2);
-		const month = (now.getMonth() + 1).toString().padStart(2, "0");
-		const day = now.getDate().toString().padStart(2, "0");
-		const hour = now.getHours().toString().padStart(2, "0");
-		const minute = now.getMinutes().toString().padStart(2, "0");
-		const second = now.getSeconds().toString().padStart(2, "0");
-		const fileName = `data-${year}${month}${day}-${hour}${minute}${second}.zip`;
-		const backupDir = getBackupDir();
-
-		if (typeof window.require !== "function") {
-			throw new Error("无法访问文件系统，请使用桌面版思源笔记");
-		}
-
-		const fs = window.require("fs").promises;
-		const path = window.require("path");
-
-		try {
-			await fs.access(workspacePath.value);
-		} catch {
-			throw new Error(`data 目录不存在: ${workspacePath.value}`);
-		}
-
-		const zip = new JSZip();
-		const skipDirs = new Set(["temp", ".recycle"]);
-
-		async function addDirectoryToZip(dirPath: string, zipPath: string) {
-			const entries = await fs.readdir(dirPath, { withFileTypes: true });
-			for (const entry of entries) {
-				const fullPath = path.join(dirPath, entry.name);
-				const relativePath = zipPath ? `${zipPath}/${entry.name}` : entry.name;
-				if (entry.isDirectory()) {
-					if (skipDirs.has(entry.name)) continue;
-					await addDirectoryToZip(fullPath, relativePath);
-				} else if (entry.isFile()) {
-					try {
-						zip.file(relativePath, await fs.readFile(fullPath));
-					} catch (err) {
-						console.warn(`无法读取文件: ${fullPath}`, err);
-					}
-				}
-			}
-		}
-
-		await addDirectoryToZip(workspacePath.value, "");
-
-		zip.file(
-			"backup-info.json",
-			JSON.stringify(
-				{
-					timestamp: Date.now(),
-					backupTime: new Date().toISOString(),
-					version: "1.0",
-					workspaceRoot: workspaceRoot.value,
-					workspaceDataPath: workspacePath.value,
-					backupDir,
-				},
-				null,
-				2,
-			),
-		);
-
-		//开始压缩
-		const zipBuffer = await zip.generateAsync({
-			type: "uint8array",
-			compression: "DEFLATE",
-			compressionOptions: { level: 6 },
+		const result = await backupManager.performFullBackup({
+			onProgress: (p) => {
+				backupProgress.value = { ...p, isIncremental: false };
+			},
 		});
 
-		await fs.mkdir(backupDir, { recursive: true });
-		const zipFilePath = path.join(backupDir, fileName);
-		await fs.writeFile(zipFilePath, zipBuffer);
-
-		lastBackupTime.value = new Date().toLocaleString();
-		lastBackupTimestamp = Date.now();
-		await saveSettings();
-
-		props.plugin?.__generalSettings?.updateLastBackupTime?.(
-			lastBackupTimestamp,
-		);
-
-		const stats = await fs.stat(zipFilePath);
-		backupList.value.unshift({
-			name: fileName,
-			path: zipFilePath,
-			time: lastBackupTime.value,
-			size: formatFileSize(stats.size),
-		});
-
-		if (backupList.value.length > keepBackupCount.value) {
-			backupList.value = backupList.value.slice(0, keepBackupCount.value);
-		}
-
-		await props.plugin.saveData("backup-history", { list: backupList.value });
-		showMessage(
-			props.i18n.backupSuccess || `备份成功: ${fileName}`,
-			3000,
-			"info",
-		);
-	} catch (error) {
-		console.error("备份过程出错:", error);
-		showMessage(
-			`${props.i18n.backupFailed || "备份失败"}: ${error.message}`,
-			5000,
-			"error",
-		);
+		await onBackupComplete(result);
+	} catch (error: any) {
+		console.error("全量备份失败:", error);
+		showMessage(`${props.i18n.backupFailed || "备份失败"}: ${error.message}`, 5000, "error");
 	} finally {
 		isBackingUp.value = false;
+	}
+}
+
+// 增量备份
+async function performIncrementalBackup() {
+	if (isBackingUp.value || !backupManager) return;
+
+	if (!workspacePath.value) {
+		showMessage(props.i18n.pleaseSelectWorkspace || "请先选择工作区路径", 3000, "info");
+		await selectWorkspacePath();
+		if (!workspacePath.value) return;
+	}
+
+	isBackingUp.value = true;
+	backupProgress.value = { phase: "scanning", currentFile: "", filesProcessed: 0, totalFiles: 0, percent: 0, isIncremental: true };
+
+	try {
+		const result = await backupManager.performIncrementalBackup({
+			onProgress: (p) => {
+				backupProgress.value = { ...p, isIncremental: true };
+			},
+		});
+
+		await onBackupComplete(result);
+	} catch (error: any) {
+		console.error("增量备份失败:", error);
+		showMessage(`${props.i18n.backupFailed || "备份失败"}: ${error.message}`, 5000, "error");
+	} finally {
+		isBackingUp.value = false;
+	}
+}
+
+// 备份完成后的统一处理
+async function onBackupComplete(result: any) {
+	lastBackupTime.value = new Date().toLocaleString();
+	lastBackupTimestamp = Date.now();
+	await saveSettings();
+
+	props.plugin?.__generalSettings?.updateLastBackupTime?.(lastBackupTimestamp);
+
+	// 更新备份列表
+	backupList.value.unshift({
+		name: result.fileName,
+		path: result.filePath,
+		time: lastBackupTime.value,
+		size: formatFileSize(result.size),
+		isIncremental: result.isIncremental,
+	});
+
+	if (backupList.value.length > keepBackupCount.value) {
+		backupList.value = backupList.value.slice(0, keepBackupCount.value);
+	}
+
+	await props.plugin.saveData("backup-history", { list: backupList.value });
+
+	const modeLabel = result.isIncremental ? "增量" : "全量";
+	showMessage(`${modeLabel}备份成功: ${result.fileName}（${result.changedFiles}/${result.totalFiles} 文件）`, 3000, "info");
+
+	// 自动云同步
+	if (cloudSyncEnabled.value && cloudBackupManager) {
+		try {
+			await cloudBackupManager.upload(result.filePath);
+			showMessage("已同步至云端", 2000, "info");
+		} catch (err: any) {
+			console.error("自动云同步失败:", err);
+			showMessage(`云同步失败: ${err.message}`, 3000, "error");
+		}
+	}
+}
+
+// 恢复备份
+async function restoreBackup(backup: { name: string; path: string }) {
+	if (isRestoring.value || !backupManager) return;
+
+	const confirmRestore = confirm(
+		`确定要从备份 "${backup.name}" 恢复吗？\n\n⚠️ 此操作将覆盖当前工作区数据，请确保已做好其他备份！`,
+	);
+	if (!confirmRestore) return;
+
+	isRestoring.value = true;
+	backupProgress.value = { phase: "reading", currentFile: "", filesProcessed: 0, totalFiles: 0, percent: 0 };
+
+	try {
+		const result = await backupManager.restoreBackup(backup.path, {
+			onProgress: (p) => {
+				backupProgress.value = { ...p, isIncremental: false };
+			},
+		});
+
+		showMessage(
+			`恢复成功！已恢复 ${result.restoredFiles} 个文件${result.skippedFiles > 0 ? `，跳过 ${result.skippedFiles} 个` : ""}`,
+			5000,
+			"info",
+		);
+	} catch (error: any) {
+		console.error("恢复备份失败:", error);
+		showMessage(`恢复失败: ${error.message}`, 5000, "error");
+	} finally {
+		isRestoring.value = false;
+	}
+}
+
+// 校验备份
+async function verifyBackup(backup: { name: string; path: string }) {
+	if (isVerifying.value || !backupManager) return;
+
+	isVerifying.value = true;
+	verifyResult.value = null;
+
+	try {
+		const result = await backupManager.verifyBackup(backup.path);
+		verifyResult.value = result;
+	} catch (error: any) {
+		verifyResult.value = {
+			valid: false,
+			checksum: "",
+			expectedChecksum: "",
+			fileCount: 0,
+			totalSize: 0,
+			error: error.message,
+		};
+	} finally {
+		isVerifying.value = false;
+	}
+}
+
+// 上传到云端
+async function uploadToCloud(backup: { name: string; path: string }) {
+	if (!cloudBackupManager) return;
+
+	try {
+		await cloudBackupManager.upload(backup.path);
+		showMessage(`已上传 ${backup.name} 至云端`, 2000, "info");
+		await loadCloudBackups();
+	} catch (error: any) {
+		console.error("云上传失败:", error);
+		showMessage(`上传失败: ${error.message}`, 3000, "error");
+	}
+}
+
+// 测试云连接
+async function testCloudConnection() {
+	if (!cloudBackupManager) return;
+
+	isTestingCloud.value = true;
+	cloudTestResult.value = null;
+
+	try {
+		await saveCloudConfig();
+		cloudTestResult.value = await cloudBackupManager.testConnection(cloudConfig.value);
+	} catch (error: any) {
+		cloudTestResult.value = { success: false, message: error.message };
+	} finally {
+		isTestingCloud.value = false;
+	}
+}
+
+// 加载云端备份列表
+async function loadCloudBackups() {
+	if (!cloudBackupManager) return;
+
+	try {
+		cloudBackupList.value = await cloudBackupManager.listBackups();
+	} catch (error) {
+		console.error("加载云端备份列表失败:", error);
+		cloudBackupList.value = [];
+	}
+}
+
+// 从云端下载
+async function downloadFromCloud(file: CloudFileInfo) {
+	if (!cloudBackupManager || isRestoring.value) return;
+
+	isRestoring.value = true;
+	try {
+		const path = window.require("path");
+		const localPath = path.join(getBackupDir(), file.name);
+		await cloudBackupManager.download(file.key, localPath);
+		showMessage(`已下载 ${file.name}`, 2000, "info");
+		await loadBackupList();
+	} catch (error: any) {
+		showMessage(`下载失败: ${error.message}`, 3000, "error");
+	} finally {
+		isRestoring.value = false;
+	}
+}
+
+// 删除云端备份
+async function deleteFromCloud(file: CloudFileInfo) {
+	if (!cloudBackupManager) return;
+
+	const confirmDelete = confirm(`确定要删除云端备份 "${file.name}" 吗？`);
+	if (!confirmDelete) return;
+
+	try {
+		await cloudBackupManager.deleteBackup(file.key);
+		showMessage("云端备份已删除", 2000, "info");
+		await loadCloudBackups();
+	} catch (error: any) {
+		showMessage(`删除失败: ${error.message}`, 3000, "error");
 	}
 }
 
@@ -640,7 +899,17 @@ async function loadBackupList() {
 	backupList.value = [];
 
 	try {
-		// 检查是否有保存的备份记录
+		// 优先从文件系统扫描（获取最新的 isIncremental 信息）
+		if (backupManager) {
+			const scanned = await backupManager.scanBackupDir();
+			if (scanned.length > 0) {
+				backupList.value = scanned;
+				await props.plugin.saveData("backup-history", { list: backupList.value });
+				return;
+			}
+		}
+
+		// 降级到已保存的记录
 		const backupHistory = await props.plugin.loadData("backup-history");
 		if (backupHistory && backupHistory.list) {
 			backupList.value = backupHistory.list;
@@ -660,15 +929,15 @@ async function refreshBackupList() {
 // 删除备份
 async function deleteBackup(backup: { name: string; path: string }) {
 	try {
-		const confirmDelete = confirm(
-			props.i18n.confirmDelete || "确定要删除此备份吗？",
-		);
+		const confirmDelete = confirm(props.i18n.confirmDelete || "确定要删除此备份吗？");
 		if (!confirmDelete) return;
 
-		// 从列表中移除
-		backupList.value = backupList.value.filter((b) => b.name !== backup.name);
+		// 从文件系统删除
+		if (backupManager) {
+			await backupManager.deleteBackupFile(backup.path);
+		}
 
-		// 保存更新后的列表
+		backupList.value = backupList.value.filter((b) => b.name !== backup.name);
 		await props.plugin.saveData("backup-history", { list: backupList.value });
 
 		showMessage(props.i18n.deleteSuccess || "删除成功", 2000, "info");
@@ -678,11 +947,11 @@ async function deleteBackup(backup: { name: string; path: string }) {
 	}
 }
 
-// 暴露方法给父组件
 defineExpose({
 	loadSettings,
 	saveSettings,
-	performBackup,
+	performFullBackup,
+	performIncrementalBackup,
 	refreshBackupList,
 });
 </script>

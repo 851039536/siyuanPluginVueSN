@@ -213,7 +213,7 @@
                 <span v-if="backup.isIncremental" class="badge incremental">增量</span>
               </span>
               <span class="backup-time">{{ backup.time }}</span>
-              <span class="backup-size">{{ backup.size }}</span>
+              <span class="backup-size">{{ formatFileSize(backup.size) }}</span>
             </div>
             <div class="backup-actions">
               <button @click="verifyBackup(backup)" class="action-btn verify" :disabled="isVerifying">校验</button>
@@ -321,7 +321,7 @@ const backupMode = ref<"full" | "incremental">("full");
 const keepBackupCount = ref(7);
 const cloudSyncEnabled = ref(false);
 const backupList = ref<
-	Array<{ name: string; path: string; time: string; size: string; isIncremental?: boolean }>
+	Array<{ name: string; path: string; time: string; size: number; isIncremental?: boolean }>
 >([]);
 
 let lastBackupTimestamp = 0;
@@ -373,7 +373,6 @@ let cloudBackupManager: CloudBackupManager | null = null;
 // 初始化 Manager
 function initManagers() {
 	backupManager = new BackupManager(props.plugin, workspacePath.value, workspaceRoot.value);
-	backupManager.setLastBackupTimestamp(lastBackupTimestamp);
 	cloudBackupManager = new CloudBackupManager(props.plugin);
 }
 
@@ -709,7 +708,7 @@ async function onBackupComplete(result: any) {
 		name: result.fileName,
 		path: result.filePath,
 		time: lastBackupTime.value,
-		size: formatFileSize(result.size),
+		size: result.size,
 		isIncremental: result.isIncremental,
 	});
 

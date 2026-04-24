@@ -64,17 +64,12 @@
         </div>
         <div class="backup-actions-row">
           <button @click="performFullBackup" class="backup-btn primary" :disabled="isBackingUp || isRestoring">
-            <span v-if="isBackingUp && !backupProgress.isIncremental" class="loading-spinner"></span>
+            <span v-if="isBackingUp" class="loading-spinner"></span>
             <span v-else>📀</span>
             <span>全量备份</span>
           </button>
-          <button @click="performIncrementalBackup" class="backup-btn secondary" :disabled="isBackingUp || isRestoring">
-            <span v-if="isBackingUp && backupProgress.isIncremental" class="loading-spinner"></span>
-            <span v-else>⚡</span>
-            <span>增量备份</span>
-          </button>
         </div>
-        <p class="backup-hint">全量备份包含所有文件；增量备份仅包含自上次备份后变更的文件（变更超过80%自动转为全量）</p>
+        <p class="backup-hint">全量备份包含工作区所有文件</p>
       </div>
 
       <!-- 自动备份设置 -->
@@ -93,14 +88,6 @@
           </div>
 
           <template v-if="autoBackupEnabled">
-            <div class="form-row">
-              <label class="form-label">备份模式</label>
-              <select v-model="backupMode" class="form-select" @change="saveSettings">
-                <option value="full">全量备份</option>
-                <option value="incremental">增量备份</option>
-              </select>
-            </div>
-
             <div class="form-row">
               <label class="form-label">{{ i18n.backupFrequency || '备份频率' }}</label>
               <select v-model="backupFrequency" class="form-select" @change="saveSettings">
@@ -208,10 +195,7 @@
         <div class="backup-list" v-if="backupList.length > 0">
           <div v-for="(backup, index) in backupList" :key="index" class="backup-item">
             <div class="backup-info">
-              <span class="backup-name">
-                {{ backup.name }}
-                <span v-if="backup.isIncremental" class="badge incremental">增量</span>
-              </span>
+              <span class="backup-name">{{ backup.name }}</span>
               <span class="backup-time">{{ backup.time }}</span>
               <span class="backup-size">{{ formatFileSize(backup.size) }}</span>
             </div>
@@ -317,17 +301,16 @@ const autoBackupEnabled = ref(false);
 const isMobile = ref(false);
 const backupFrequency = ref("daily");
 const backupTime = ref("03:00");
-const backupMode = ref<"full" | "incremental">("full");
 const keepBackupCount = ref(7);
 const cloudSyncEnabled = ref(false);
 const backupList = ref<
-	Array<{ name: string; path: string; time: string; size: number; isIncremental?: boolean }>
+	Array<{ name: string; path: string; time: string; size: number }>
 >([]);
 
 let lastBackupTimestamp = 0;
 
 // 备份进度
-const backupProgress = ref<(BackupProgress | RestoreProgress) & { isIncremental?: boolean }>({
+const backupProgress = ref<BackupProgress | RestoreProgress>({
 	phase: "scanning",
 	currentFile: "",
 	filesProcessed: 0,
@@ -433,11 +416,7 @@ onUnmounted(() => {
 });
 
 async function handleAutoBackupTrigger() {
-	if (backupMode.value === "incremental") {
-		await performIncrementalBackup();
-	} else {
-		await performFullBackup();
-	}
+	await performFullBackup();
 }
 
 // 定时器重启逻辑（委托给 GeneralSettings）
@@ -461,7 +440,6 @@ async function loadSettings() {
 				backupFrequency.value = data.backupFrequency ?? "daily";
 				backupTime.value = data.backupTime ?? "03:00";
 				keepBackupCount.value = data.keepBackupCount ?? 7;
-				backupMode.value = data.backupMode ?? "full";
 				cloudSyncEnabled.value = data.cloudSyncEnabled ?? false;
 				lastBackupTime.value = data.lastBackupTime ?? "";
 				lastBackupTimestamp = data.lastBackupTimestamp ?? 0;
@@ -485,7 +463,6 @@ async function saveSettings() {
 				backupFrequency: backupFrequency.value,
 				backupTime: backupTime.value,
 				keepBackupCount: keepBackupCount.value,
-				backupMode: backupMode.value,
 				cloudSyncEnabled: cloudSyncEnabled.value,
 				lastBackupTime: lastBackupTime.value,
 				lastBackupTimestamp,
@@ -655,8 +632,7 @@ async function selectWorkspacePath() {
 
 // ========== 备份操作 ==========
 
-// 统一备份入口
-async function performBackup(incremental: boolean) {
+async function performFullBackup() {
 	if (isBackingUp.value || !backupManager) return;
 
 	if (!workspacePath.value) {
@@ -665,34 +641,21 @@ async function performBackup(incremental: boolean) {
 		if (!workspacePath.value) return;
 	}
 
-	const modeLabel = incremental ? "增量" : "全量";
 	isBackingUp.value = true;
-	backupProgress.value = { phase: "scanning", currentFile: "", filesProcessed: 0, totalFiles: 0, percent: 0, isIncremental: incremental };
+	backupProgress.value = { phase: "scanning", currentFile: "", filesProcessed: 0, totalFiles: 0, percent: 0 };
 
 	try {
-		const result = incremental
-			? await backupManager.performIncrementalBackup({
-					onProgress: (p) => { backupProgress.value = { ...p, isIncremental: true }; },
-				})
-			: await backupManager.performFullBackup({
-					onProgress: (p) => { backupProgress.value = { ...p, isIncremental: false }; },
-				});
+		const result = await backupManager.performFullBackup({
+			onProgress: (p) => { backupProgress.value = { ...p }; },
+		});
 
 		await onBackupComplete(result);
 	} catch (error: any) {
-		console.error(`${modeLabel}备份失败:`, error);
+		console.error("备份失败:", error);
 		showMessage(`${props.i18n.backupFailed || "备份失败"}: ${error.message}`, 5000, "error");
 	} finally {
 		isBackingUp.value = false;
 	}
-}
-
-async function performFullBackup() {
-	return performBackup(false);
-}
-
-async function performIncrementalBackup() {
-	return performBackup(true);
 }
 
 // 备份完成后的统一处理
@@ -709,7 +672,6 @@ async function onBackupComplete(result: any) {
 		path: result.filePath,
 		time: lastBackupTime.value,
 		size: result.size,
-		isIncremental: result.isIncremental,
 	});
 
 	if (backupList.value.length > keepBackupCount.value) {
@@ -718,8 +680,7 @@ async function onBackupComplete(result: any) {
 
 	await props.plugin?.saveData("backup-history", { list: backupList.value });
 
-	const modeLabel = result.isIncremental ? "增量" : "全量";
-	showMessage(`${modeLabel}备份成功: ${result.fileName}（${result.changedFiles}/${result.totalFiles} 文件）`, 3000, "info");
+	showMessage(`备份成功: ${result.fileName}（${result.totalFiles} 文件）`, 3000, "info");
 
 	// 自动云同步
 	if (cloudSyncEnabled.value && cloudBackupManager) {
@@ -748,7 +709,7 @@ async function restoreBackup(backup: { name: string; path: string }) {
 	try {
 		const result = await backupManager.restoreBackup(backup.path, {
 			onProgress: (p: RestoreProgress) => {
-				backupProgress.value = { ...p, isIncremental: false };
+				backupProgress.value = { ...p };
 			},
 		});
 
@@ -887,7 +848,7 @@ function formatFileSize(bytes: number): string {
 	backupList.value = [];
 
 	try {
-		// 优先从文件系统扫描（获取最新的 isIncremental 信息）
+		// 优先从文件系统扫描
 		if (backupManager) {
 			const scanned = await backupManager.scanBackupDir();
 			if (scanned.length > 0) {
@@ -942,7 +903,6 @@ defineExpose({
 	loadSettings,
 	saveSettings,
 	performFullBackup,
-	performIncrementalBackup,
 	refreshBackupList,
 });
 </script>

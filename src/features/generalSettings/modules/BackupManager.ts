@@ -1,6 +1,6 @@
 /**
  * 数据备份管理器
- * 支持：全量/增量备份、备份恢复、完整性校验（SHA256）、进度回调
+ * 支持：全量备份、备份恢复、完整性校验（SHA256）、进度回调
  */
 import JSZip from "jszip";
 
@@ -20,8 +20,6 @@ export interface BackupResult {
 	filePath: string;
 	size: number;
 	checksum: string;
-	isIncremental: boolean;
-	changedFiles: number;
 	totalFiles: number;
 }
 
@@ -48,16 +46,7 @@ export interface VerifyResult {
 	error?: string;
 }
 
-export interface BackupManifest {
-	version: string;
-	timestamp: number;
-	isIncremental: boolean;
-	baseBackup?: string;
-	files: Record<string, { mtime: number; size: number }>;
-}
-
 export interface BackupOptions {
-	incremental?: boolean;
 	compressionLevel?: number;
 	excludeDirs?: string[];
 	onProgress?: (progress: BackupProgress) => void;
@@ -75,9 +64,6 @@ export interface BackupInfo {
 	workspaceDataPath: string;
 	backupDir: string;
 	checksum: string;
-	isIncremental: boolean;
-	baseBackup?: string;
-	changedFiles: number;
 	totalFiles: number;
 }
 
@@ -116,7 +102,6 @@ async function computeSHA256(buffer: Uint8Array): Promise<string> {
 export class BackupManager {
 	private workspacePath: string;
 	private workspaceRoot: string;
-	private manifest: BackupManifest | null = null;
 
 	constructor(_plugin: any, workspacePath: string, workspaceRoot: string) {
 		this.workspacePath = workspacePath;
@@ -139,7 +124,6 @@ export class BackupManager {
 		this.ensureFileSystem();
 
 		const fs = window.require("fs").promises;
-		const path = window.require("path");
 
 		await this.validateWorkspace(fs);
 
@@ -153,7 +137,6 @@ export class BackupManager {
 		await this.scanDirectory(this.workspacePath, "", skipDirs, allFiles, onProgress);
 
 		const totalFiles = allFiles.length;
-		const fileManifest: BackupManifest["files"] = {};
 
 		// 阶段2：打包文件
 		for (let i = 0; i < allFiles.length; i++) {
@@ -162,7 +145,6 @@ export class BackupManager {
 			try {
 				const content = await fs.readFile(file.fullPath);
 				zip.file(file.relativePath, content);
-				fileManifest[file.relativePath] = { mtime: file.mtime, size: file.size };
 			} catch (err) {
 				console.warn(`无法读取文件: ${file.fullPath}`, err);
 			}
@@ -176,95 +158,16 @@ export class BackupManager {
 			workspaceDataPath: this.workspacePath,
 			backupDir: this.backupDir,
 			checksum: "",
-			isIncremental: false,
-			changedFiles: totalFiles,
 			totalFiles,
 		};
 
-		return this.finalizeAndSaveBackup(zip, backupInfo, fileManifest, false, totalFiles, totalFiles, compressionLevel, onProgress);
-	}
-
-	// ========== 增量备份 ==========
-
-	async performIncrementalBackup(options: BackupOptions = {}): Promise<BackupResult> {
-		const { compressionLevel = 6, excludeDirs = [], onProgress } = options;
-		this.ensureFileSystem();
-
-		const fs = window.require("fs").promises;
-
-		// 加载 manifest
-		await this.loadManifest();
-		if (!this.manifest) {
-			return this.performFullBackup(options);
-		}
-
-		await this.validateWorkspace(fs);
-
-		const skipDirs = new Set(["temp", ".recycle", ...excludeDirs]);
-		const zip = new JSZip();
-
-		// 扫描文件
-		onProgress?.({ phase: "scanning", currentFile: "", filesProcessed: 0, totalFiles: 0, percent: 0 });
-
-		const allFiles: { fullPath: string; relativePath: string; mtime: number; size: number }[] = [];
-		await this.scanDirectory(this.workspacePath, "", skipDirs, allFiles, onProgress);
-
-		// 筛选变更文件
-		const changedFilesList: typeof allFiles = [];
-		const newManifest: BackupManifest["files"] = [];
-
-		for (const file of allFiles) {
-			const old = this.manifest.files[file.relativePath];
-			if (!old || old.mtime !== file.mtime || old.size !== file.size) {
-				changedFilesList.push(file);
-			}
-			newManifest[file.relativePath] = { mtime: file.mtime, size: file.size };
-		}
-
-		const totalFiles = allFiles.length;
-		const changedCount = changedFilesList.length;
-
-		// 如果变更文件超过 80%，自动转为全量备份
-		if (changedCount / totalFiles > 0.8) {
-			return this.performFullBackup(options);
-		}
-
-		// 打包变更文件
-		for (let i = 0; i < changedFilesList.length; i++) {
-			const file = changedFilesList[i];
-			onProgress?.({ phase: "packing", currentFile: file.relativePath, filesProcessed: i + 1, totalFiles: changedCount, percent: Math.round(((i + 1) / changedCount) * 70) });
-			try {
-				const content = await fs.readFile(file.fullPath);
-				zip.file(file.relativePath, content);
-			} catch (err) {
-				console.warn(`无法读取文件: ${file.fullPath}`, err);
-			}
-		}
-
-		const backupInfo: BackupInfo = {
-			timestamp: Date.now(),
-			backupTime: new Date().toISOString(),
-			version: "2.0",
-			workspaceRoot: this.workspaceRoot,
-			workspaceDataPath: this.workspacePath,
-			backupDir: this.backupDir,
-			checksum: "",
-			isIncremental: true,
-			baseBackup: await this.findLastFullBackupName(),
-			changedFiles: changedCount,
-			totalFiles,
-		};
-
-		return this.finalizeAndSaveBackup(zip, backupInfo, newManifest, true, changedCount, totalFiles, compressionLevel, onProgress);
+		return this.finalizeAndSaveBackup(zip, backupInfo, totalFiles, compressionLevel, onProgress);
 	}
 
 	/** 压缩、校验、保存备份（公共逻辑） */
 	private async finalizeAndSaveBackup(
 		zip: JSZip,
 		backupInfo: BackupInfo,
-		fileManifest: BackupManifest["files"],
-		isIncremental: boolean,
-		progressFileCount: number,
 		totalFiles: number,
 		compressionLevel: number,
 		onProgress?: (progress: BackupProgress) => void,
@@ -275,17 +178,17 @@ export class BackupManager {
 		zip.file("backup-info.json", JSON.stringify(backupInfo, null, 2));
 
 		// 阶段3：压缩
-		onProgress?.({ phase: "compressing", currentFile: "", filesProcessed: progressFileCount, totalFiles: progressFileCount, percent: 75 });
+		onProgress?.({ phase: "compressing", currentFile: "", filesProcessed: totalFiles, totalFiles, percent: 75 });
 
 		const zipBuffer = await zip.generateAsync(
 			{ type: "uint8array", compression: "DEFLATE", compressionOptions: { level: compressionLevel } },
 			(metadata) => {
-				onProgress?.({ phase: "compressing", currentFile: "", filesProcessed: progressFileCount, totalFiles: progressFileCount, percent: 75 + Math.round(metadata.percent * 0.15) });
+				onProgress?.({ phase: "compressing", currentFile: "", filesProcessed: totalFiles, totalFiles, percent: 75 + Math.round(metadata.percent * 0.15) });
 			},
 		);
 
 		// 阶段4：计算校验和
-		onProgress?.({ phase: "verifying", currentFile: "", filesProcessed: progressFileCount, totalFiles: progressFileCount, percent: 92 });
+		onProgress?.({ phase: "verifying", currentFile: "", filesProcessed: totalFiles, totalFiles, percent: 92 });
 
 		const checksum = await computeSHA256(zipBuffer);
 		backupInfo.checksum = checksum;
@@ -298,26 +201,16 @@ export class BackupManager {
 		});
 
 		// 阶段5：保存文件
-		onProgress?.({ phase: "saving", currentFile: "", filesProcessed: progressFileCount, totalFiles: progressFileCount, percent: 95 });
+		onProgress?.({ phase: "saving", currentFile: "", filesProcessed: totalFiles, totalFiles, percent: 95 });
 
 		await fs.mkdir(this.backupDir, { recursive: true });
 		const fileName = formatTimestamp(new Date());
 		const zipFilePath = path.join(this.backupDir, fileName);
 		await fs.writeFile(zipFilePath, finalBuffer);
 
-		// 更新 manifest
-		this.manifest = {
-			version: "2.0",
-			timestamp: Date.now(),
-			isIncremental,
-			baseBackup: isIncremental ? await this.findLastFullBackupName() : undefined,
-			files: fileManifest,
-		};
-		await this.saveManifest();
-
 		const stats = await fs.stat(zipFilePath);
 
-		onProgress?.({ phase: "saving", currentFile: "", filesProcessed: progressFileCount, totalFiles: progressFileCount, percent: 100 });
+		onProgress?.({ phase: "saving", currentFile: "", filesProcessed: totalFiles, totalFiles, percent: 100 });
 
 		return {
 			success: true,
@@ -325,8 +218,6 @@ export class BackupManager {
 			filePath: zipFilePath,
 			size: stats.size,
 			checksum,
-			isIncremental,
-			changedFiles: isIncremental ? progressFileCount : totalFiles,
 			totalFiles,
 		};
 	}
@@ -361,12 +252,11 @@ export class BackupManager {
 		const zipData = await fs.readFile(backupFilePath);
 		const zip = await JSZip.loadAsync(zipData);
 
-		// 读取 backup-info
+		// 校验备份文件有效性
 		const infoRaw = await zip.file("backup-info.json")?.async("string");
 		if (!infoRaw) {
 			throw new Error("无效的备份文件：缺少 backup-info.json");
 		}
-		const info: BackupInfo = JSON.parse(infoRaw);
 
 		// 校验完整性
 		onProgress?.({
@@ -376,16 +266,6 @@ export class BackupManager {
 			totalFiles: 0,
 			percent: 10,
 		} as RestoreProgress);
-
-		if (info.isIncremental) {
-			// 增量备份需要先恢复基础全量备份
-			const baseName = info.baseBackup;
-			if (!baseName) {
-				throw new Error("增量备份缺少基础备份引用，无法恢复");
-			}
-			const basePath = path.join(this.backupDir, baseName);
-			await this.restoreBackup(basePath, options);
-		}
 
 		// 提取所有文件（排除 backup-info.json）
 		const files: string[] = [];
@@ -478,8 +358,8 @@ export class BackupManager {
 			}
 		}
 
-		// ===== 阶段3：全量恢复时清理多余的旧文件 =====
-		if (!info.isIncremental && failedFiles.length === 0) {
+		// ===== 阶段3：清理多余的旧文件 =====
+		if (failedFiles.length === 0) {
 			onProgress?.({
 				phase: "swapping",
 				currentFile: "",
@@ -599,13 +479,13 @@ export class BackupManager {
 	// ========== 扫描文件系统中的备份列表 ==========
 
 	async scanBackupDir(): Promise<
-		Array<{ name: string; path: string; time: string; size: number; isIncremental?: boolean }>
+		Array<{ name: string; path: string; time: string; size: number }>
 	> {
 		this.ensureFileSystem();
 
 		const fs = window.require("fs").promises;
 		const path = window.require("path");
-		const result: Array<{ name: string; path: string; time: string; size: number; isIncremental?: boolean }> = [];
+		const result: Array<{ name: string; path: string; time: string; size: number }> = [];
 
 		try {
 			await fs.access(this.backupDir);
@@ -623,27 +503,11 @@ export class BackupManager {
 			const filePath = path.join(this.backupDir, name);
 			try {
 				const stats = await fs.stat(filePath);
-				let isIncremental = false;
-
-				// 尝试读取 backup-info 判断是否增量
-				try {
-					const zipData = await fs.readFile(filePath);
-					const zip = await JSZip.loadAsync(zipData);
-					const infoRaw = await zip.file("backup-info.json")?.async("string");
-					if (infoRaw) {
-						const info = JSON.parse(infoRaw);
-						isIncremental = info.isIncremental ?? false;
-					}
-				} catch {
-					// 忽略读取错误
-				}
-
 				result.push({
 					name,
 					path: filePath,
 					time: stats.mtime.toLocaleString(),
 					size: stats.size,
-					isIncremental,
 				});
 			} catch {
 				// 跳过无法读取的文件
@@ -711,71 +575,5 @@ export class BackupManager {
 
 
 
-	private async loadManifest(): Promise<void> {
-		if (this.manifest) return;
-
-		try {
-			this.ensureFileSystem();
-			const fs = window.require("fs").promises;
-			const path = window.require("path");
-			const manifestPath = path.join(this.backupDir, "backup-manifest.json");
-			const data = await fs.readFile(manifestPath, "utf-8");
-			this.manifest = JSON.parse(data);
-		} catch {
-			this.manifest = null;
-		}
-	}
-
-	private async saveManifest(): Promise<void> {
-		if (!this.manifest) return;
-
-		try {
-			this.ensureFileSystem();
-			const fs = window.require("fs").promises;
-			const path = window.require("path");
-			const manifestPath = path.join(this.backupDir, "backup-manifest.json");
-			await fs.mkdir(this.backupDir, { recursive: true });
-			await fs.writeFile(manifestPath, JSON.stringify(this.manifest, null, 2));
-		} catch (err) {
-			console.error("保存备份清单失败:", err);
-		}
-	}
-
-	private async findLastFullBackupName(): Promise<string | undefined> {
-		this.ensureFileSystem();
-		const fs = window.require("fs").promises;
-		const path = window.require("path");
-
-		try {
-			await fs.access(this.backupDir);
-		} catch {
-			return undefined;
-		}
-
-		const files = await fs.readdir(this.backupDir);
-		const zipFiles = files
-			.filter((f: string) => f.startsWith("data-") && f.endsWith(".zip"))
-			.sort()
-			.reverse();
-
-		for (const name of zipFiles) {
-			try {
-				const filePath = path.join(this.backupDir, name);
-				const zipData = await fs.readFile(filePath);
-				const zip = await JSZip.loadAsync(zipData);
-				const infoRaw = await zip.file("backup-info.json")?.async("string");
-				if (infoRaw) {
-					const info = JSON.parse(infoRaw);
-					if (!info.isIncremental) {
-						return name;
-					}
-				}
-			} catch {
-				// 跳过无法读取的文件
-			}
-		}
-
-		return undefined;
-	}
-
 }
+

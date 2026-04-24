@@ -319,35 +319,11 @@ marked.setOptions({
 /**
  * 统一的 Markdown 渲染函数
  */
-const renderMarkdown = (
-	content: string,
-	highlightKeywords: string[] = [],
-): string => {
+const renderMarkdown = (content: string): string => {
 	if (!content) return "";
 
 	try {
 		let processedContent = content;
-
-		// 对特定关键词进行高亮标记
-		const boldKeywords = highlightKeywords
-			.filter((k) => k.startsWith("bold:"))
-			.map((k) => k.slice(6));
-		const italicKeywords = highlightKeywords
-			.filter((k) => k.startsWith("italic:"))
-			.map((k) => k.slice(8));
-
-		boldKeywords.forEach((keyword) => {
-			processedContent = processedContent.replace(
-				new RegExp(keyword, "gi"),
-				`**${keyword}**`,
-			);
-		});
-		italicKeywords.forEach((keyword) => {
-			processedContent = processedContent.replace(
-				new RegExp(keyword, "gi"),
-				`*${keyword}*`,
-			);
-		});
 
 		// 移除标题中的粗体标记（对主内容）
 		processedContent = processedContent.replace(
@@ -477,7 +453,6 @@ const copyContent = async () => {
 		// 转换为思源兼容的 Markdown 格式
 		const siyuanContent = convertToSiyuanMarkdown(generatedContent.value);
 		await navigator.clipboard.writeText(siyuanContent);
-		// showMessage('✓ 已复制Markdown到剪贴板', 2000, 'info');
 	} catch (error) {
 		console.error("复制失败:", error);
 		showMessage("复制失败", 2000, "error");
@@ -595,7 +570,6 @@ const loadTargetDocument = async (docId: string) => {
 const clearTargetDocument = () => {
 	clearEditState();
 	clearContent();
-	// showMessage('✓ 已清除目标文档', 1500, 'info');
 };
 
 /**
@@ -1006,10 +980,7 @@ const saveCurrentPrompt = async () => {
 		savedPrompts.value.push(promptConfig);
 	}
 
-	await safeStorageOperation(
-		() => storage!.savePrompts(savedPrompts.value),
-		"保存提示词配置失败:",
-	);
+	await savePromptsToStorage();
 
 	newPromptName.value = "";
 	currentPromptName.value = promptName;

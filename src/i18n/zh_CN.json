@@ -429,7 +429,11 @@
 		"shortcuts": "快捷键面板",
 		"shortcutsDesc": "查看和管理快捷键",
 		"diskBrowser": "本地磁盘",
-		"diskBrowserDesc": "浏览本地磁盘和文件夹"
+		"diskBrowserDesc": "浏览本地磁盘和文件夹",
+		"thinkingMode": "思考模式",
+		"thinkingOn": "已开启",
+		"thinkingOff": "已关闭",
+		"thinkingDesc": "开启后模型会先进行深度思考再回答，适合复杂推理任务"
 	},
 	"wordQuery": {
 		"title": "单词查询",

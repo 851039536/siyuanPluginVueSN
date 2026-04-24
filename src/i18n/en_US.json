@@ -420,7 +420,11 @@
 		"shortcuts": "Shortcut Panel",
 		"shortcutsDesc": "View and manage shortcuts",
 		"diskBrowser": "Local Disk",
-		"diskBrowserDesc": "Browse local disks and folders"
+		"diskBrowserDesc": "Browse local disks and folders",
+		"thinkingMode": "Thinking Mode",
+		"thinkingOn": "On",
+		"thinkingOff": "Off",
+		"thinkingDesc": "Enable deep thinking before answering, ideal for complex reasoning tasks"
 	},
 	"wordQuery": {
 		"title": "Word Query",

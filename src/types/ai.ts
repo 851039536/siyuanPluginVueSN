@@ -12,7 +12,11 @@ export interface AiApiConfig {
 	model: string;
 	apiKey: string;
 	customEndpoint: string;
+	enableThinking?: boolean;
 }
+
+/** DeepSeek 思考强度 */
+export type DeepSeekReasoningEffort = "high" | "max";
 
 /** AI API 调用选项 */
 export interface AiCallOptions {
@@ -21,6 +25,9 @@ export interface AiCallOptions {
 	maxTokens?: number;
 	signal?: AbortSignal;
 	onChunk?: (chunk: string) => void;
+	onReasoningChunk?: (chunk: string) => void;
+	enableThinking?: boolean;
+	reasoningEffort?: DeepSeekReasoningEffort;
 }
 
 /** AI 生成选项接口（用于 AIContentGenerator） */

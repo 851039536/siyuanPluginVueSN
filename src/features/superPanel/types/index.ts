@@ -48,6 +48,7 @@ export interface AiSettings {
 	customModel: string;
 	apiKey: string;
 	customEndpoint: string;
+	enableThinking: boolean;
 }
 
 let vueApp: VueApp | null = null;
@@ -345,6 +346,7 @@ export class SuperPanelManager {
 			aiCustomModel: aiSettings.customModel,
 			aiApiKey: aiSettings.apiKey,
 			aiCustomEndpoint: aiSettings.customEndpoint,
+			aiEnableThinking: aiSettings.enableThinking,
 		};
 
 		const success = await pluginSample.updateSettings(newSettings);
@@ -356,6 +358,7 @@ export class SuperPanelManager {
 				reactiveSettings.aiCustomModel = aiSettings.customModel;
 				reactiveSettings.aiApiKey = aiSettings.apiKey;
 				reactiveSettings.aiCustomEndpoint = aiSettings.customEndpoint;
+				reactiveSettings.aiEnableThinking = aiSettings.enableThinking;
 			}
 			// 通知相关功能模块更新配置
 			if (pluginSample.__wordQuery) {

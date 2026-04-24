@@ -346,8 +346,8 @@ export class BackupManager {
 		// 临时恢复目录（解压暂存区）
 		const restoreTmpDir = path.join(this.workspaceRoot, "data-restoring");
 
-		// 检查上次中断的恢复，清理残留
-		await this.recoverInterruptedRestore(fs, restoreTmpDir);
+		// 每次恢复前，先清理 data-restoring 残留（含上次中断的恢复）
+		await fs.rm(restoreTmpDir, { recursive: true, force: true });
 
 		onProgress?.({
 			phase: "reading",
@@ -408,8 +408,7 @@ export class BackupManager {
 			percent: 15,
 		} as RestoreProgress);
 
-		// 确保临时目录干净
-		await fs.rm(restoreTmpDir, { recursive: true, force: true });
+		// 创建干净的临时目录
 		await fs.mkdir(restoreTmpDir, { recursive: true });
 
 		for (let i = 0; i < files.length; i++) {
@@ -536,18 +535,6 @@ export class BackupManager {
 			return true;
 		} catch {
 			return false;
-		}
-	}
-
-	/** 恢复中断的恢复操作：清理 data-restoring 残留 */
-	private async recoverInterruptedRestore(fs: any, restoreTmpDir: string) {
-		if (await this.existsPath(fs, restoreTmpDir)) {
-			console.warn("检测到上次恢复中断的临时文件，正在清理...");
-			try {
-				await fs.rm(restoreTmpDir, { recursive: true, force: true });
-			} catch {
-				// 清理失败也不阻塞后续操作
-			}
 		}
 	}
 

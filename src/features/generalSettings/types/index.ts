@@ -1341,30 +1341,73 @@ export class GeneralSettings {
 			const isMobile = checkIsMobile();
 			const autoBackupEnabled = data?.autoBackupEnabled ?? false;
 			const backupFrequency = data?.backupFrequency ?? "daily";
+			const backupTime = data?.backupTime ?? "03:00";
 
 			if (!isMobile && autoBackupEnabled) {
-				this.startAutoBackupTimer(backupFrequency);
+				this.startAutoBackupTimer(backupFrequency, backupTime);
 			}
 		} catch (error) {
 			console.error("初始化自动备份失败:", error);
 		}
 	}
 
-	private startAutoBackupTimer(backupFrequency: string) {
+	private startAutoBackupTimer(backupFrequency: string, backupTime: string) {
 		this.stopAutoBackupTimer();
 
-		const interval = this.getBackupInterval(backupFrequency);
 		// 记录定时器启动时间，防止重启后立即触发备份
 		const timerStartTime = Date.now();
+		// 用于防止同一时间点重复触发
+		let lastExecutedHour = -1;
+		let lastExecutedDateStr = "";
+
 		const checkAndBackup = async () => {
 			const now = new Date();
 			const currentTime = now.getTime();
-			const timeSinceLastBackup = currentTime - this.lastBackupTimestamp;
+			const currentHour = now.getHours();
+			const currentMinute = now.getMinutes();
+			const currentDateStr = now.toDateString();
 			const timeSinceTimerStart = currentTime - timerStartTime;
+			const timeSinceLastBackup = currentTime - this.lastBackupTimestamp;
 
-			// 跳过启动后首个周期，避免程序重启后立刻触发备份
-			if (timeSinceLastBackup >= interval && timeSinceTimerStart >= interval) {
-				// 通过事件通知 DataBackupSettings 组件执行备份
+			let shouldBackup = false;
+
+			switch (backupFrequency) {
+				case "minute":
+					// 每分钟：间隔触发，跳过启动后首个周期
+					if (timeSinceLastBackup >= 60 * 1000 && timeSinceTimerStart >= 60 * 1000) {
+						shouldBackup = true;
+					}
+					break;
+
+				case "hourly":
+					// 每小时：整点触发（分钟数为0时），跳过启动后首个周期
+					if (
+						currentMinute === 0 &&
+						lastExecutedHour !== currentHour &&
+						timeSinceTimerStart >= 60 * 1000
+					) {
+						shouldBackup = true;
+						lastExecutedHour = currentHour;
+					}
+					break;
+
+				case "daily": {
+					// 每天：在用户指定的时间点触发，跳过启动后首个周期
+					const [targetHour, targetMinute] = backupTime.split(":").map(Number);
+					if (
+						currentHour === targetHour &&
+						currentMinute === targetMinute &&
+						lastExecutedDateStr !== currentDateStr &&
+						timeSinceTimerStart >= 60 * 1000
+					) {
+						shouldBackup = true;
+						lastExecutedDateStr = currentDateStr;
+					}
+					break;
+				}
+			}
+
+			if (shouldBackup) {
 				window.dispatchEvent(new CustomEvent("autoBackupTrigger"));
 			}
 		};
@@ -1379,27 +1422,14 @@ export class GeneralSettings {
 		}
 	}
 
-	private getBackupInterval(backupFrequency: string): number {
-		switch (backupFrequency) {
-			case "minute":
-				return 60 * 1000;
-			case "hourly":
-				return 60 * 60 * 1000;
-			case "daily":
-				return 24 * 60 * 60 * 1000;
-			default:
-				return 24 * 60 * 60 * 1000;
-		}
-	}
-
 	public updateLastBackupTime(timestamp: number) {
 		this.lastBackupTimestamp = timestamp;
 	}
 
-	public restartAutoBackupTimer(enabled: boolean, frequency: string) {
+	public restartAutoBackupTimer(enabled: boolean, frequency: string, backupTime: string = "03:00") {
 		this.stopAutoBackupTimer();
 		if (enabled) {
-			this.startAutoBackupTimer(frequency);
+			this.startAutoBackupTimer(frequency, backupTime);
 		}
 	}
 

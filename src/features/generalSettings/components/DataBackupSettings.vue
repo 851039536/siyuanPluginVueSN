@@ -261,7 +261,7 @@ async function handleAutoBackupTrigger() {
 function handleTimerRestart(enabled: boolean) {
 	const generalSettings = props.plugin?.__generalSettings;
 	if (generalSettings && typeof generalSettings.restartAutoBackupTimer === "function") {
-		generalSettings.restartAutoBackupTimer(enabled, backupFrequency.value);
+		generalSettings.restartAutoBackupTimer(enabled, backupFrequency.value, backupTime.value);
 	}
 }
 

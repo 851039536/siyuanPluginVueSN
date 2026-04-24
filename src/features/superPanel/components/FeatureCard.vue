@@ -74,7 +74,4 @@ const handleAction = (actionKey: string) => {
 };
 </script>
 
-<style scoped lang="scss">
-// 引入模块样式
-@use '../styles/index.scss';
-</style>
+

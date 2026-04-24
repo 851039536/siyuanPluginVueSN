@@ -88,6 +88,3 @@ const actions = computed<HeaderAction[]>(() => [
 ]);
 </script>
 
-<style scoped lang="scss">
-@use '../styles/index.scss';
-</style>

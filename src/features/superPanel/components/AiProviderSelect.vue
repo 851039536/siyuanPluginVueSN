@@ -32,6 +32,4 @@ const handleChange = (event: Event) => {
 };
 </script>
 
-<style scoped lang="scss">
-@use '../styles/index.scss';
-</style>
+

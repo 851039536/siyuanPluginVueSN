@@ -131,8 +131,6 @@ const handleProviderChange = async (provider: string) => {
 </script>
 
 <style scoped lang="scss">
-@use '../styles/index.scss';
-
 .thinking-toggle-row {
 	display: flex;
 	align-items: center;

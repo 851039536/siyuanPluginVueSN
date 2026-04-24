@@ -82,6 +82,4 @@ const handleInput = (value: string) => {
 };
 </script>
 
-<style scoped lang="scss">
-@use '../styles/index.scss';
-</style>
+

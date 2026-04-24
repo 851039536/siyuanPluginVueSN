@@ -58,7 +58,7 @@ let reactiveSettings: PluginSettings | null = null;
 /**
  * 功能ID到设置键的映射表（单一数据源）
  */
-const FEATURE_SETTINGS_MAP: Record<string, string> = {
+export const FEATURE_SETTINGS_MAP: Record<string, string> = {
 	tableOfContents: "enableTableOfContents",
 	imageCompressor: "enableImageCompressor",
 	docNavigation: "enableDocNavigation",

@@ -19,6 +19,4 @@ interface Props {
 withDefaults(defineProps<Props>(), {});
 </script>
 
-<style scoped lang="scss">
-@use '../styles/index.scss';
-</style>
+

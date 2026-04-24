@@ -395,9 +395,15 @@ export async function callAISmart(
  */
 export function getApiConfigFromPlugin(plugin: any): AiApiConfig {
 	const settings = plugin?.settings || {};
+	const rawModel = settings.aiModel || "qwen-plus";
+	// 解析实际模型名称：如果选择的是"自定义模型"，使用用户输入的 customModel
+	const model =
+		rawModel === "custom"
+			? settings.aiCustomModel || "qwen-plus"
+			: rawModel;
 	return {
 		provider: settings.aiApiProvider || "tongyi",
-		model: settings.aiModel || "qwen-plus",
+		model,
 		apiKey: settings.aiApiKey || "",
 		customEndpoint: settings.aiCustomEndpoint || "",
 	};

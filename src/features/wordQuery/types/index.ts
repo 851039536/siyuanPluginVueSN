@@ -21,7 +21,11 @@ export class WordQueryManager {
 		this.plugin = plugin;
 		const settings = (plugin as any).settings;
 		this.currentProvider = settings.aiApiProvider || "tongyi";
-		this.currentModel = settings.aiModel || "qwen-plus";
+		const rawModel = settings.aiModel || "qwen-plus";
+		this.currentModel =
+			rawModel === "custom"
+				? settings.aiCustomModel || "qwen-plus"
+				: rawModel;
 		this.apiKey = settings.aiApiKey || "";
 		this.customApiEndpoint = settings.aiCustomEndpoint || "";
 	}

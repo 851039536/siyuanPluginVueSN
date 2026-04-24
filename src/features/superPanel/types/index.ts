@@ -332,10 +332,17 @@ export class SuperPanelManager {
 	private async handleUpdateAiSettings(aiSettings: AiSettings) {
 		const pluginSample = this.plugin as any;
 
+		// 解析实际模型名称：如果选择的是"自定义模型"，使用用户输入的 customModel
+		const resolvedModel =
+			aiSettings.model === "custom"
+				? aiSettings.customModel || "qwen-plus"
+				: aiSettings.model;
+
 		const newSettings = {
 			...pluginSample.settings,
 			aiApiProvider: aiSettings.provider,
 			aiModel: aiSettings.model,
+			aiCustomModel: aiSettings.customModel,
 			aiApiKey: aiSettings.apiKey,
 			aiCustomEndpoint: aiSettings.customEndpoint,
 		};
@@ -346,6 +353,7 @@ export class SuperPanelManager {
 			if (reactiveSettings) {
 				reactiveSettings.aiApiProvider = aiSettings.provider;
 				reactiveSettings.aiModel = aiSettings.model;
+				reactiveSettings.aiCustomModel = aiSettings.customModel;
 				reactiveSettings.aiApiKey = aiSettings.apiKey;
 				reactiveSettings.aiCustomEndpoint = aiSettings.customEndpoint;
 			}
@@ -353,7 +361,7 @@ export class SuperPanelManager {
 			if (pluginSample.__wordQuery) {
 				pluginSample.__wordQuery.updateApiConfig(
 					aiSettings.provider,
-					aiSettings.model,
+					resolvedModel,
 					aiSettings.apiKey,
 					aiSettings.customEndpoint,
 				);
@@ -361,9 +369,8 @@ export class SuperPanelManager {
 			if (pluginSample.__aiContentGenerator) {
 				pluginSample.__aiContentGenerator.updateApiConfig(
 					aiSettings.provider,
-					aiSettings.model,
+					resolvedModel,
 					aiSettings.apiKey,
-					aiSettings.customEndpoint,
 				);
 			}
 			showMessage("AI配置已保存", 2000, "info");

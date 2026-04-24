@@ -668,10 +668,9 @@ async function loadSettings() {
 	}
 }
 
-// 初始化 - 在组件挂载后执行
+// 初始化 - 仅加载设置填充表单（样式由 GeneralSettings.init() 在插件启动时应用）
 onMounted(async () => {
 	await loadSettings();
-	applyToDocument();
 });
 
 // 监听颜色变化，自动保存

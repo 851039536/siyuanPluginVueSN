@@ -234,7 +234,7 @@ async function fetchWorkspacePath(): Promise<string | null> {
 	return null;
 }
 
-// 初始化
+// 初始化 - 仅加载设置和 UI 数据（自动备份定时器由 GeneralSettings.init() 在插件启动时初始化）
 onMounted(async () => {
 	isMobile.value = checkIsMobile();
 	await loadSettings();
@@ -248,15 +248,9 @@ onMounted(async () => {
 	await loadBackupList();
 
 	window.addEventListener("autoBackupTrigger", handleAutoBackupTrigger);
-
-	const generalSettings = props.plugin?.__generalSettings;
-	if (!generalSettings) {
-		startAutoBackupTimer();
-	}
 });
 
 onUnmounted(() => {
-	stopAutoBackupTimer();
 	window.removeEventListener("autoBackupTrigger", handleAutoBackupTrigger);
 });
 

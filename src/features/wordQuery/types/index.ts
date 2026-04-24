@@ -2,32 +2,27 @@ import { Plugin } from "siyuan";
 import { createApp, h } from "vue";
 import WordQueryPanel from "../index.vue";
 import { callWordQueryAPI } from "../utils/api";
-
-export interface WordQueryOptions {
-	provider: string;
-	model: string;
-	apiKey: string;
-	customEndpoint: string;
-}
+import type { AiApiConfig } from "@/types/ai";
 
 export class WordQueryManager {
 	private plugin: Plugin;
-	private currentProvider: string = "tongyi";
-	private currentModel: string = "qwen-plus";
-	private apiKey: string = "";
-	private customApiEndpoint: string = "";
+	private apiConfig: AiApiConfig;
 
 	constructor(plugin: Plugin) {
 		this.plugin = plugin;
 		const settings = (plugin as any).settings;
-		this.currentProvider = settings.aiApiProvider || "tongyi";
 		const rawModel = settings.aiModel || "qwen-plus";
-		this.currentModel =
+		const model =
 			rawModel === "custom"
 				? settings.aiCustomModel || "qwen-plus"
 				: rawModel;
-		this.apiKey = settings.aiApiKey || "";
-		this.customApiEndpoint = settings.aiCustomEndpoint || "";
+		this.apiConfig = {
+			provider: settings.aiApiProvider || "tongyi",
+			model,
+			apiKey: settings.aiApiKey || "",
+			customEndpoint: settings.aiCustomEndpoint || "",
+			enableThinking: settings.aiEnableThinking ?? false,
+		};
 	}
 
 	public updateApiConfig(
@@ -36,19 +31,17 @@ export class WordQueryManager {
 		apiKey: string,
 		customEndpoint: string,
 	) {
-		this.currentProvider = provider;
-		this.currentModel = model;
-		this.apiKey = apiKey;
-		this.customApiEndpoint = customEndpoint;
+		this.apiConfig = {
+			...this.apiConfig,
+			provider,
+			model,
+			apiKey,
+			customEndpoint,
+		};
 	}
 
-	public getApiConfig(): WordQueryOptions {
-		return {
-			provider: this.currentProvider,
-			model: this.currentModel,
-			apiKey: this.apiKey,
-			customEndpoint: this.customApiEndpoint,
-		};
+	public getApiConfig(): AiApiConfig {
+		return this.apiConfig;
 	}
 
 	public init() {

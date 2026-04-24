@@ -310,14 +310,24 @@ function mergeOptions(
 	};
 }
 
+/** prepareRequest 返回值 */
+interface PreparedRequest {
+	apiUrl: string;
+	model: string;
+	messages: Array<{ role: string; content: string }>;
+	temperature: number;
+	maxTokens: number;
+	merged: AiCallOptions | undefined;
+}
+
 /**
- * 统一 AI API 调用（非流式）
+ * 公共前置逻辑：校验、参数构建、options 合并
  */
-export async function callAI(
+function prepareRequest(
 	prompt: string,
 	config: AiApiConfig,
 	options?: AiCallOptions,
-): Promise<string> {
+): PreparedRequest {
 	const providerConfig = API_PROVIDERS[config.provider];
 	if (!providerConfig) {
 		throw new Error(`不支持的API供应商: ${config.provider}`);
@@ -342,6 +352,20 @@ export async function callAI(
 	];
 
 	const merged = mergeOptions(config, options);
+
+	return { apiUrl, model, messages, temperature, maxTokens, merged };
+}
+
+/**
+ * 统一 AI API 调用（非流式）
+ */
+export async function callAI(
+	prompt: string,
+	config: AiApiConfig,
+	options?: AiCallOptions,
+): Promise<string> {
+	const { apiUrl, model, messages, temperature, maxTokens, merged } =
+		prepareRequest(prompt, config, options);
 
 	const requestBody = buildRequestBody(
 		config.provider,
@@ -380,30 +404,8 @@ export async function callAIStream(
 	onChunk: (chunk: string) => void,
 	options?: Omit<AiCallOptions, "onChunk">,
 ): Promise<string> {
-	const providerConfig = API_PROVIDERS[config.provider];
-	if (!providerConfig) {
-		throw new Error(`不支持的API供应商: ${config.provider}`);
-	}
-
-	const apiUrl = getApiUrl(config, providerConfig);
-
-	if (!config.apiKey) {
-		throw new Error("请先在超级面板中配置API密钥");
-	}
-
-	const model = config.model || providerConfig.defaultModel;
-	const temperature = options?.temperature ?? 0.7;
-	const maxTokens = options?.maxTokens ?? 800;
-
-	const messages = [
-		{
-			role: "system",
-			content: options?.systemPrompt || "你是一个专业的AI助手。",
-		},
-		{ role: "user", content: prompt },
-	];
-
-	const merged = mergeOptions(config, options);
+	const { apiUrl, model, messages, temperature, maxTokens, merged } =
+		prepareRequest(prompt, config, options);
 
 	const requestBody = buildRequestBody(
 		config.provider,
@@ -450,15 +452,11 @@ export async function callAISmart(
 	config: AiApiConfig,
 	options?: AiCallOptions,
 ): Promise<string> {
-	const mergedOptions: AiCallOptions = {
-		...options,
-		enableThinking: config.enableThinking ?? options?.enableThinking,
-	};
-	if (mergedOptions.onChunk) {
-		const { onChunk, ...streamOptions } = mergedOptions;
+	if (options?.onChunk) {
+		const { onChunk, ...streamOptions } = options;
 		return callAIStream(prompt, config, onChunk, streamOptions);
 	}
-	return callAI(prompt, config, mergedOptions);
+	return callAI(prompt, config, options);
 }
 
 /**

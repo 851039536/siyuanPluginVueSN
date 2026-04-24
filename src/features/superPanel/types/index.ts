@@ -339,8 +339,7 @@ export class SuperPanelManager {
 				? aiSettings.customModel || "qwen-plus"
 				: aiSettings.model;
 
-		const newSettings = {
-			...pluginSample.settings,
+		const aiSettingFields: Record<string, any> = {
 			aiApiProvider: aiSettings.provider,
 			aiModel: aiSettings.model,
 			aiCustomModel: aiSettings.customModel,
@@ -349,16 +348,16 @@ export class SuperPanelManager {
 			aiEnableThinking: aiSettings.enableThinking,
 		};
 
+		const newSettings = {
+			...pluginSample.settings,
+			...aiSettingFields,
+		};
+
 		const success = await pluginSample.updateSettings(newSettings);
 		if (success) {
 			// 更新响应式 settings 对象
 			if (reactiveSettings) {
-				reactiveSettings.aiApiProvider = aiSettings.provider;
-				reactiveSettings.aiModel = aiSettings.model;
-				reactiveSettings.aiCustomModel = aiSettings.customModel;
-				reactiveSettings.aiApiKey = aiSettings.apiKey;
-				reactiveSettings.aiCustomEndpoint = aiSettings.customEndpoint;
-				reactiveSettings.aiEnableThinking = aiSettings.enableThinking;
+				Object.assign(reactiveSettings, aiSettingFields);
 			}
 			// 通知相关功能模块更新配置
 			if (pluginSample.__wordQuery) {

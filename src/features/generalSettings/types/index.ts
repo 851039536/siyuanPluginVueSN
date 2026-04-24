@@ -4,7 +4,6 @@
  */
 import { Plugin } from "siyuan";
 import { createApp, h } from "vue";
-import JSZip from "jszip";
 import {
 	loadCodeBlockSettings,
 	loadListSettingsFromDB,
@@ -36,11 +35,6 @@ export const HEADING_LEVEL_MAPPINGS: Record<string, string[]> = {
 	tag: ["H1", "H2", "H3", "H4", "H5", "H6"],
 	bracket: ["[1]", "[2]", "[3]", "[4]", "[5]", "[6]"],
 };
-
-export interface GeneralSettingsOptions {
-	autoBackupEnabled?: boolean;
-	backupFrequency?: string;
-}
 
 export function checkIsMobile(): boolean {
 	const userAgent = navigator.userAgent.toLowerCase();
@@ -479,8 +473,6 @@ export class GeneralSettings {
 	private plugin: Plugin;
 	private autoBackupTimer: number | null = null;
 	private lastBackupTimestamp = 0;
-	private workspacePath = "";
-	private workspaceRoot = "";
 	private storage: GeneralSettingsStorage;
 	private contentObserver: MutationObserver | null = null;
 	private docCountManager: DocCountManager | null = null;
@@ -1342,10 +1334,7 @@ export class GeneralSettings {
 	private async initAutoBackup() {
 		try {
 			const data = await this.plugin.loadData("data-backup-settings");
-
 			if (data) {
-				this.workspacePath = data.workspacePath || "";
-				this.workspaceRoot = data.workspaceRoot || "";
 				this.lastBackupTimestamp = data.lastBackupTimestamp || 0;
 			}
 
@@ -1365,25 +1354,22 @@ export class GeneralSettings {
 		this.stopAutoBackupTimer();
 
 		const interval = this.getBackupInterval(backupFrequency);
+		// 记录定时器启动时间，防止重启后立即触发备份
+		const timerStartTime = Date.now();
 		const checkAndBackup = async () => {
-			if (!this.workspacePath) {
-				await this.detectWorkspacePath();
-				if (!this.workspacePath) {
-					return;
-				}
-			}
-
 			const now = new Date();
 			const currentTime = now.getTime();
 			const timeSinceLastBackup = currentTime - this.lastBackupTimestamp;
+			const timeSinceTimerStart = currentTime - timerStartTime;
 
-			if (timeSinceLastBackup >= interval) {
-				await this.performAutoBackup(backupFrequency);
+			// 跳过启动后首个周期，避免程序重启后立刻触发备份
+			if (timeSinceLastBackup >= interval && timeSinceTimerStart >= interval) {
+				// 通过事件通知 DataBackupSettings 组件执行备份
+				window.dispatchEvent(new CustomEvent("autoBackupTrigger"));
 			}
 		};
 
 		this.autoBackupTimer = window.setInterval(checkAndBackup, 60000);
-		checkAndBackup();
 	}
 
 	private stopAutoBackupTimer() {
@@ -1391,52 +1377,6 @@ export class GeneralSettings {
 			clearInterval(this.autoBackupTimer);
 			this.autoBackupTimer = null;
 		}
-	}
-
-	private async detectWorkspacePath(): Promise<boolean> {
-		if ((window as any).__SIYUAN_WS__ || (window as any).SIYUAN_WORKSPACE) {
-			const rootPath =
-				(window as any).__SIYUAN_WORKSPACE__ ||
-				(window as any).SIYUAN_WORKSPACE;
-			this.workspaceRoot = rootPath;
-			this.workspacePath = `${rootPath}/data`;
-			return true;
-		}
-
-		const savedPath = localStorage.getItem("siyuan-workspace-path");
-		const savedRoot = localStorage.getItem("siyuan-workspace-root");
-		if (savedPath) {
-			this.workspacePath = savedPath;
-			this.workspaceRoot = savedRoot || savedPath.replace(/\/data$/, "");
-			return true;
-		}
-
-		if (this.plugin && (this.plugin as any).dataPath) {
-			this.workspaceRoot = (this.plugin as any).dataPath;
-			this.workspacePath = `${(this.plugin as any).dataPath}/data`;
-			return true;
-		}
-
-		try {
-			const response = await fetch("/api/system/getConf", {
-				method: "POST",
-			});
-			if (response.ok) {
-				const data = await response.json();
-				const wsPath = data?.data?.conf?.system?.workspaceDir;
-				if (wsPath) {
-					this.workspaceRoot = wsPath;
-					this.workspacePath = `${wsPath}/data`;
-					localStorage.setItem("siyuan-workspace-root", wsPath);
-					localStorage.setItem("siyuan-workspace-path", `${wsPath}/data`);
-					return true;
-				}
-			}
-		} catch (e) {
-			console.error("通过 API 获取工作区路径失败:", e);
-		}
-
-		return false;
 	}
 
 	private getBackupInterval(backupFrequency: string): number {
@@ -1452,138 +1392,8 @@ export class GeneralSettings {
 		}
 	}
 
-	private async performAutoBackup(backupFrequency: string) {
-		try {
-			if (typeof window.require !== "function") {
-				return;
-			}
-
-			const fs = window.require("fs").promises;
-			const path = window.require("path");
-
-			if (!this.workspacePath) {
-				await this.detectWorkspacePath();
-				if (!this.workspacePath) {
-					return;
-				}
-			}
-
-			const data = await this.plugin.loadData("data-backup-settings");
-			const keepBackupCount = data?.keepBackupCount || 7;
-			const backupDir = `${this.workspaceRoot}/data-backup`;
-
-			const now = new Date();
-			const year = now.getFullYear().toString().slice(-2);
-			const month = (now.getMonth() + 1).toString().padStart(2, "0");
-			const day = now.getDate().toString().padStart(2, "0");
-			const hour = now.getHours().toString().padStart(2, "0");
-			const minute = now.getMinutes().toString().padStart(2, "0");
-			const second = now.getSeconds().toString().padStart(2, "0");
-			const fileName = `data-${year}${month}${day}-${hour}${minute}${second}.zip`;
-
-			const dataPath = this.workspacePath;
-			try {
-				await fs.access(dataPath);
-			} catch {
-				return;
-			}
-
-			const zip = new JSZip();
-			await this.addDirectoryToZip(zip, dataPath, "", fs, path);
-
-			const backupData = {
-				timestamp: Date.now(),
-				backupTime: new Date().toISOString(),
-				version: "1.0",
-				workspaceRoot: this.workspaceRoot,
-				workspaceDataPath: this.workspacePath,
-				backupDir: backupDir,
-			};
-			zip.file("backup-info.json", JSON.stringify(backupData, null, 2));
-
-			const zipBuffer = await zip.generateAsync({
-				type: "uint8array",
-				compression: "DEFLATE",
-				compressionOptions: { level: 6 },
-			});
-
-			await fs.mkdir(backupDir, { recursive: true });
-			const zipFilePath = path.join(backupDir, fileName);
-			await fs.writeFile(zipFilePath, zipBuffer);
-
-			this.lastBackupTimestamp = Date.now();
-			await this.plugin.saveData("data-backup-settings", {
-				...data,
-				lastBackupTimestamp: this.lastBackupTimestamp,
-				lastBackupTime: new Date().toLocaleString(),
-			});
-
-			await this.cleanOldBackups(backupDir, keepBackupCount, fs, path);
-		} catch (error) {
-			console.error("自动备份失败:", error);
-		}
-	}
-
-	private async addDirectoryToZip(
-		zip: JSZip,
-		dirPath: string,
-		zipPath: string,
-		fs: any,
-		path: any,
-	) {
-		const entries = await fs.readdir(dirPath, { withFileTypes: true });
-
-		for (const entry of entries) {
-			const fullPath = path.join(dirPath, entry.name);
-			const relativePath = zipPath ? `${zipPath}/${entry.name}` : entry.name;
-
-			if (entry.isDirectory()) {
-				if (entry.name === "temp" || entry.name === ".recycle") {
-					continue;
-				}
-				await this.addDirectoryToZip(zip, fullPath, relativePath, fs, path);
-			} else if (entry.isFile()) {
-				try {
-					const content = await fs.readFile(fullPath);
-					zip.file(relativePath, content);
-				} catch (err) {
-					console.warn(`无法读取文件: ${fullPath}`, err);
-				}
-			}
-		}
-	}
-
-	private async cleanOldBackups(
-		backupDir: string,
-		keepCount: number,
-		fs: any,
-		path: any,
-	) {
-		try {
-			const files = await fs.readdir(backupDir);
-			const backupFiles = files
-				.filter(
-					(file: string) => file.startsWith("data-") && file.endsWith(".zip"),
-				)
-				.map((file: string) => ({
-					name: file,
-					path: path.join(backupDir, file),
-					time: fs.statSync(path.join(backupDir, file)).mtime.getTime(),
-				}))
-				.sort((a: any, b: any) => b.time - a.time);
-
-			if (backupFiles.length > keepCount) {
-				for (let i = keepCount; i < backupFiles.length; i++) {
-					try {
-						await fs.unlink(backupFiles[i].path);
-					} catch (e) {
-						console.warn(`删除旧备份失败: ${backupFiles[i].name}`, e);
-					}
-				}
-			}
-		} catch (error) {
-			console.error("清理旧备份失败:", error);
-		}
+	public updateLastBackupTime(timestamp: number) {
+		this.lastBackupTimestamp = timestamp;
 	}
 
 	public restartAutoBackupTimer(enabled: boolean, frequency: string) {

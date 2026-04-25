@@ -676,6 +676,39 @@ $transition: all 0.15s ease;
   min-width: 16rem;
 }
 
+// ========== 恢复完成提示 ==========
+.restore-script-section {
+  background: rgba(76, 175, 80, 0.06);
+  border: 1px solid rgba(76, 175, 80, 0.25);
+  border-radius: $radius-md;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+
+  .section-header {
+    margin-bottom: 0.5rem;
+  }
+}
+
+.restore-script-steps {
+  .step {
+    margin: 0.375rem 0;
+    font-size: 0.8125rem;
+    color: var(--b3-theme-on-surface);
+    line-height: 1.5;
+  }
+
+  .inline-code {
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.75rem;
+    background: var(--b3-theme-surface);
+    border: 1px solid var(--b3-theme-surface-variant);
+    border-radius: $radius-sm;
+    padding: 0.125rem 0.375rem;
+    color: var(--b3-theme-primary);
+    word-break: break-all;
+  }
+}
+
 .verify-status {
   display: flex;
   align-items: center;

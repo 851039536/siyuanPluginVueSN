@@ -56,6 +56,17 @@
         </div>
       </div>
 
+      <!-- 恢复完成提示 -->
+      <div v-if="restoreCompleted && !isRestoring" class="restore-script-section">
+        <div class="section-header">
+          <span class="section-icon">✅</span>
+          <h4>备份已恢复</h4>
+        </div>
+        <div class="restore-script-steps">
+          <p class="step">数据已通过思源API导入，请 <strong>重启思源笔记</strong> 以使更改生效。</p>
+        </div>
+      </div>
+
       <!-- 手动备份 -->
       <div class="backup-section">
         <div class="section-header">
@@ -297,6 +308,7 @@ const isVerifying = ref(false);
 const isLoading = ref(false);
 const isTestingCloud = ref(false);
 const lastBackupTime = ref("");
+const restoreCompleted = ref(false);
 const autoBackupEnabled = ref(false);
 const isMobile = ref(false);
 const backupFrequency = ref("daily");
@@ -699,11 +711,12 @@ async function restoreBackup(backup: { name: string; path: string }) {
 	if (isRestoring.value || !backupManager) return;
 
 	const confirmRestore = confirm(
-		`确定要从备份 "${backup.name}" 恢复吗？\n\n⚠️ 此操作将覆盖当前工作区数据，请确保已做好其他备份！`,
+		`确定要从备份 "${backup.name}" 恢复吗？\n\n⚠️ 此操作将覆盖当前工作区数据，恢复后需重启思源笔记！`,
 	);
 	if (!confirmRestore) return;
 
 	isRestoring.value = true;
+	restoreCompleted.value = false;
 	backupProgress.value = { phase: "reading", currentFile: "", filesProcessed: 0, totalFiles: 0, percent: 0 };
 
 	try {
@@ -713,7 +726,14 @@ async function restoreBackup(backup: { name: string; path: string }) {
 			},
 		});
 
-		if (result.success) {
+		if (result.needRestart) {
+			restoreCompleted.value = true;
+			showMessage(
+				`恢复完成（${result.restoredFiles} 个文件已通过思源API导入），请重启思源笔记以使更改生效`,
+				10000,
+				"info",
+			);
+		} else if (result.success) {
 			showMessage(
 				`恢复成功！已恢复 ${result.restoredFiles} 个文件`,
 				5000,
@@ -721,7 +741,7 @@ async function restoreBackup(backup: { name: string; path: string }) {
 			);
 		} else {
 			showMessage(
-				`恢复完成，但 ${result.skippedFiles} 个文件失败，请检查日志`,
+				`恢复失败，${result.skippedFiles} 个文件未能恢复`,
 				5000,
 				"error",
 			);

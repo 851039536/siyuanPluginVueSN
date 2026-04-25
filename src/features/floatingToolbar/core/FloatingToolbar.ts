@@ -379,7 +379,6 @@ export class FloatingToolbar {
 		style.textContent = `
             /* 自定义浮动工具栏按钮样式 */
             .custom-toolbar-button {
-                transition: background-color 0.15s ease;
             }
 
             .custom-toolbar-button:hover {

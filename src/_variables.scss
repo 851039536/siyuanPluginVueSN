@@ -157,11 +157,7 @@ $spacing-10: 2.5rem;    // 40px
 $spacing-12: 3rem;      // 48px
 $spacing-16: 4rem;      // 64px
 
-// ========== 过渡和动画 ==========
 
-$transition-base: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
-$transition-fast: all 100ms cubic-bezier(0.4, 0, 0.2, 1);
-$transition-slow: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
 
 // ========== 响应式断点 ==========
 $mobile-breakpoint: 768px;
@@ -178,7 +174,7 @@ $compact-font-size-reduction: 0.9;
 $codeblock-padding: 4px;
 $codeblock-font-size: 13px;
 $codeblock-border-radius: 8px;
-$codeblock-transition: all 0.2s ease;
+
 $codeblock-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 
 // ========== HSL 转 RGB 辅助函数 ==========

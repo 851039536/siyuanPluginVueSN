@@ -142,7 +142,6 @@ const handleClick = (event: MouseEvent) => {
   font-family: $font-body;
   font-weight: 500;
   user-select: none;
-  transition: $transition-base;
 
   // 尺寸变体
   &--xsmall {

@@ -129,7 +129,6 @@ function handleDecrypt() {
   border-radius: var(--b3-border-radius);
   padding: 12px;
   cursor: pointer;
-  transition: all 0.2s ease;
   display: flex;
   flex-direction: column;
   gap: 10px;

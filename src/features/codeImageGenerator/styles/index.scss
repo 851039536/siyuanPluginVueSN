@@ -632,7 +632,6 @@
   justify-content: space-between;
   align-items: center;
   user-select: none;
-  transition: background 0.2s;
 
   &:hover {
     background: var(--b3-theme-surface-lighter);
@@ -648,7 +647,6 @@
 .decoration-toggle {
   width: 14px;
   height: 14px;
-  transition: transform 0.2s;
   color: var(--b3-theme-on-surface);
 
   &.expanded {
@@ -679,7 +677,6 @@
   color: var(--b3-theme-on-background);
   font-size: 11px;
   outline: none;
-  transition: border-color 0.2s;
 
   &:focus {
     border-color: var(--b3-theme-primary);

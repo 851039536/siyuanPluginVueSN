@@ -182,7 +182,6 @@ const onThemeChange = (value: string) => emit("update:selectedTheme", value);
   color: var(--b3-theme-on-surface);
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 0.15s;
 
   &:hover {
     background: var(--b3-theme-surface-lighter);
@@ -231,7 +230,6 @@ const onThemeChange = (value: string) => emit("update:selectedTheme", value);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   transform: translateX(-50%);
   pointer-events: none;
-  transition: box-shadow 0.15s;
 }
 
 .size-value {

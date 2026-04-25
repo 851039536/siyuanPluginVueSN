@@ -176,7 +176,6 @@ async function handleSavePassword() {
   font-size: 13px;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
-  transition: border-color 0.2s;
 }
 
 .form-group input:focus {
@@ -193,7 +192,6 @@ async function handleSavePassword() {
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
-  transition: opacity 0.2s;
 }
 
 .save-btn:hover {

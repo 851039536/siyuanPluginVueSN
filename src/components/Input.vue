@@ -306,7 +306,6 @@ defineExpose({
     background: var(--b3-theme-background, $brand-light);
     border: 1px solid var(--b3-border-color, $brand-subtle-gray);
     border-radius: 6px;
-    transition: all 0.2s ease;
     outline: none;
 
     &:hover:not(.si-input__wrapper--disabled) {
@@ -365,7 +364,6 @@ defineExpose({
   &__icon {
     flex-shrink: 0;
     color: var(--b3-theme-secondary, $brand-mid-gray);
-    transition: color 0.2s ease;
 
     &--prefix {
       margin-left: 12px;
@@ -386,7 +384,6 @@ defineExpose({
     color: var(--b3-theme-secondary, $brand-mid-gray);
     cursor: pointer;
     border-radius: 4px;
-    transition: all 0.2s ease;
 
     &:hover {
       color: var(--b3-theme-on-background, $brand-dark);

@@ -213,7 +213,6 @@ function getBarHeight(count: number): number {
     color: var(--b3-theme-on-primary);
     font-size: 13px;
     cursor: pointer;
-    transition: opacity 0.15s;
 
     &:hover:not(:disabled) {
       opacity: 0.85;
@@ -272,7 +271,6 @@ function getBarHeight(count: number): number {
   border-radius: 8px;
   background: var(--b3-theme-surface-light);
   cursor: pointer;
-  transition: all 0.15s;
   border: 2px solid transparent;
   flex: 1;
   min-width: 60px;
@@ -369,7 +367,6 @@ function getBarHeight(count: number): number {
     background: var(--b3-theme-primary);
     opacity: 0.6;
     border-radius: 2px 2px 0 0;
-    transition: height 0.2s;
 
     &:hover {
       opacity: 1;

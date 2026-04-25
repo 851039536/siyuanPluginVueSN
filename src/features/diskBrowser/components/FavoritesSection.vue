@@ -92,7 +92,6 @@ defineEmits<{
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-theme-surface-lighter);
   cursor: pointer;
-  transition: all 0.2s ease;
   flex-shrink: 0;
   @include card-hover-effect(-1px);
   @include gpu-accelerate;
@@ -123,7 +122,6 @@ defineEmits<{
 
 .favorite-remove-btn {
   opacity: 0;
-  transition: all 0.2s ease;
   flex-shrink: 0;
 
   &:hover {

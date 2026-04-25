@@ -4,7 +4,6 @@
 $radius-sm: 0.25rem;
 $radius-md: 0.375rem;
 $radius-lg: 0.5rem;
-$transition: all 0.15s ease;
 
 // 根容器
 .data-backup-settings {
@@ -143,7 +142,6 @@ $transition: all 0.15s ease;
   border-radius: $radius-sm;
   font-size: 0.75rem;
   cursor: pointer;
-  transition: $transition;
   white-space: nowrap;
 }
 
@@ -199,11 +197,6 @@ $transition: all 0.15s ease;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-top-color: #fff;
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 
 // 表单样式
@@ -245,7 +238,6 @@ $transition: all 0.15s ease;
   color: var(--b3-theme-on-background);
   font-size: 0.8125rem;
   outline: none;
-  transition: border-color 0.15s ease;
 
   &:focus {
     border-color: var(--b3-theme-primary);
@@ -494,7 +486,6 @@ $transition: all 0.15s ease;
   height: 100%;
   background: linear-gradient(90deg, var(--b3-theme-primary), var(--b3-theme-primary-light));
   border-radius: 0.25rem;
-  transition: width 0.3s ease;
 }
 
 .progress-info {
@@ -540,7 +531,6 @@ $transition: all 0.15s ease;
   font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
-  transition: $transition;
   flex: 1;
 
   &.primary {
@@ -548,7 +538,6 @@ $transition: all 0.15s ease;
     color: #fff;
 
     &:hover:not(:disabled) {
-      transform: translateY(-1px);
       box-shadow: 0 0.125rem 0.5rem rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.3);
     }
   }

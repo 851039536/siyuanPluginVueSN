@@ -98,7 +98,6 @@ const forAttr = computed(() => (props.tag === "label" ? props.for : undefined));
   font-weight: 500;
   line-height: 1.5;
   user-select: none;
-  transition: $transition-base;
   white-space: nowrap;
 
   // 尺寸变体

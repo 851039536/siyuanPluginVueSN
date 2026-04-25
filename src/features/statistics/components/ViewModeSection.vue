@@ -224,7 +224,6 @@ const periodAvgLabel = computed(() => {
     justify-content: center;
     gap: 4px;
     border-radius: 5px;
-    transition: stats.$stats-transition;
     white-space: nowrap;
 
     &:hover {
@@ -257,7 +256,6 @@ const periodAvgLabel = computed(() => {
     font-size: 10px;
     font-weight: 600;
     border-radius: 15px;
-    transition: stats.$stats-transition;
 
     &:hover {
       border-color: var(--b3-theme-primary);
@@ -287,7 +285,6 @@ const periodAvgLabel = computed(() => {
       font-weight: 600;
       cursor: pointer;
       outline: none;
-      transition: stats.$stats-transition;
 
       &:focus {
         border-color: var(--b3-theme-primary);

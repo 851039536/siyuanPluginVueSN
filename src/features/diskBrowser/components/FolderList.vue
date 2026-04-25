@@ -217,7 +217,6 @@ function isFavorite(path: string): boolean {
   border-radius: 6px;
   background: var(--b3-theme-surface);
   cursor: pointer;
-  transition: all 0.2s ease;
   @include gpu-accelerate;
 
   &:hover {
@@ -276,7 +275,6 @@ function isFavorite(path: string): boolean {
   @include flex-align-center;
   gap: 4px;
   opacity: 0;
-  transition: opacity 0.2s ease;
 }
 
 .folder-action-btn {

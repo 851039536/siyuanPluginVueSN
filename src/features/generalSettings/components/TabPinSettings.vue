@@ -284,7 +284,6 @@ defineExpose({
   padding: 6px 10px;
   background: var(--b3-theme-surface-variant);
   border-radius: 6px;
-  transition: background-color 0.2s ease;
 }
 
 .radio-item:hover {
@@ -317,7 +316,6 @@ defineExpose({
   border: 2px solid var(--b3-theme-outline);
   border-radius: 6px;
   cursor: pointer;
-  transition: border-color 0.2s ease;
   background: transparent;
 }
 
@@ -335,7 +333,6 @@ defineExpose({
   color: var(--b3-theme-on-surface);
   font-size: 12px;
   text-transform: uppercase;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .color-text:focus {
@@ -352,7 +349,6 @@ defineExpose({
   color: var(--b3-theme-on-surface);
   font-size: 12px;
   cursor: pointer;
-  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
   white-space: nowrap;
 }
 

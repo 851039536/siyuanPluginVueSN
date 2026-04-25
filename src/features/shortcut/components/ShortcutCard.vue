@@ -176,7 +176,6 @@ const pathText = computed(() => {
   gap: 4px;
   flex-wrap: wrap;
   cursor: pointer;
-  transition: opacity 0.2s;
 }
 
 .shortcut-keys:hover {

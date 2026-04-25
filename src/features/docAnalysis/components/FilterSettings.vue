@@ -142,7 +142,6 @@ function handleDebouncedInput() {
     color: var(--b3-theme-on-background);
     font-size: 13px;
     outline: none;
-    transition: border-color 0.15s;
 
     &:focus {
       border-color: var(--b3-theme-primary);
@@ -158,7 +157,6 @@ function handleDebouncedInput() {
     font-size: 13px;
     outline: none;
     cursor: pointer;
-    transition: border-color 0.15s;
 
     &:focus {
       border-color: var(--b3-theme-primary);
@@ -201,7 +199,6 @@ function handleDebouncedInput() {
     color: var(--b3-theme-on-primary);
     font-size: 13px;
     cursor: pointer;
-    transition: opacity 0.15s;
 
     &:hover:not(:disabled) {
       opacity: 0.85;

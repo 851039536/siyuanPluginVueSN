@@ -95,7 +95,6 @@
     color: var(--b3-theme-on-surface-variant);
     cursor: pointer;
     font-size: 18px;
-    transition: background-color 0.15s;
 
     &:hover {
       background: var(--b3-list-hover);
@@ -136,12 +135,6 @@
   .loading-icon {
     font-size: 32px;
     color: var(--b3-theme-primary);
-    animation: spin 1s linear infinite;
-  }
-
-  @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
   }
 
   .empty-icon {
@@ -174,7 +167,6 @@
   .loading-icon {
     font-size: 18px;
     color: var(--b3-theme-primary);
-    animation: spin 1s linear infinite;
   }
 
   .load-more-text {

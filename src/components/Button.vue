@@ -106,7 +106,6 @@ defineExpose({
   font-weight: 500;
   cursor: pointer;
   outline: none;
-  transition: all 0.2s ease;
   white-space: nowrap;
   user-select: none;
   position: relative;

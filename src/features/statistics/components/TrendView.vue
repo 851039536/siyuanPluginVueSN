@@ -683,7 +683,6 @@ function getDiff(
         color: var(--b3-theme-on-surface);
         opacity: 0.55;
         cursor: pointer;
-        transition: stats.$stats-transition;
         white-space: nowrap;
 
         &:hover {
@@ -734,7 +733,6 @@ function getDiff(
 
         .chart-area {
           fill: rgba(var(--b3-theme-primary-rgb), 0.08);
-          transition: fill 0.3s ease;
         }
 
         .chart-line {
@@ -742,14 +740,12 @@ function getDiff(
           stroke-width: 2;
           stroke-linejoin: round;
           stroke-linecap: round;
-          transition: stroke 0.3s ease;
         }
 
         .chart-dot {
           fill: var(--b3-theme-primary);
           stroke: var(--b3-theme-surface);
           stroke-width: 1.5;
-          transition: all 0.2s ease;
           opacity: 0.7;
 
           &.chart-dot-today {
@@ -785,7 +781,6 @@ function getDiff(
         pointer-events: none;
         z-index: 10;
         min-width: 80px;
-        transition: left 0.1s ease, top 0.1s ease;
 
         .tooltip-date {
           font-size: 9px;

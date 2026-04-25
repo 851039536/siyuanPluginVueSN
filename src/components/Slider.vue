@@ -199,7 +199,6 @@ defineExpose({
     cursor: pointer;
     appearance: none;
     -webkit-appearance: none;
-    transition: background 0.2s ease;
 
     // Webkit (Chrome, Safari, Edge) 滑块样式
     &::-webkit-slider-thumb {
@@ -210,7 +209,6 @@ defineExpose({
       background: var(--b3-theme-primary, $brand-orange);
       border-radius: 50%;
       cursor: grab;
-      transition: all 0.2s ease;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
       &:hover {
@@ -232,7 +230,6 @@ defineExpose({
       border: none;
       border-radius: 50%;
       cursor: grab;
-      transition: all 0.2s ease;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
       &:hover {

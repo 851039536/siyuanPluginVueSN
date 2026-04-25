@@ -149,7 +149,6 @@ watch(
   .icon-btn {
     cursor: pointer;
     color: var(--b3-theme-on-surface-light);
-    transition: color 0.2s ease;
 
     &:hover {
       color: var(--b3-theme-on-background);

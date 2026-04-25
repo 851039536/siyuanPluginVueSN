@@ -118,7 +118,6 @@ const displayContent = computed(() => {
     white-space: nowrap;
     font-family: $font-body;
     font-weight: 500;
-    transition: $transition-base;
     z-index: 10;
 
     // 尺寸变体

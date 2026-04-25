@@ -125,7 +125,6 @@ const handleClose = (event: MouseEvent) => {
   line-height: 1.5;
   white-space: nowrap;
   user-select: none;
-  transition: $transition-base;
   cursor: default;
 
   // 尺寸变体
@@ -238,7 +237,6 @@ const handleClose = (event: MouseEvent) => {
     margin-left: 2px;
     color: inherit;
     opacity: 0.6;
-    transition: $transition-fast;
     border-radius: $radius-sm;
 
     &:hover {

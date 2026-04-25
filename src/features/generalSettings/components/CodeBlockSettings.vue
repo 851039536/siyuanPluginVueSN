@@ -372,32 +372,10 @@ import { ref, watch, onMounted } from "vue";
 import {
 	saveCodeBlockSettings,
 	loadCodeBlockSettings,
+	DEFAULT_CODEBLOCK_SETTINGS,
+	type CodeBlockSettings,
 } from "@/features/generalSettings/types/storage";
 import { applyCodeBlockStyle, applyCodeBlockCollapse, applyCodeBlockEnhancedStyles } from "../types";
-
-interface CodeBlockSettings {
-	style: "default" | "github" | "mac";
-	enableCollapse: boolean;
-	collapseHeight: number;
-	// 样式增强
-	enabled: boolean;
-	backgroundColor: string;
-	borderColor: string;
-	borderWidth: number;
-	borderRadius: number;
-	boxShadow: string;
-	// 代码字体
-	codeFontFamily: string;
-	codeFontSize: number;
-	codeLineHeight: number;
-	// 代码颜色
-	textColor: string;
-	keywordColor: string;
-	stringColor: string;
-	commentColor: string;
-	functionColor: string;
-	numberColor: string;
-}
 
 interface Props {
 	i18n?: any;
@@ -412,48 +390,8 @@ interface Emits {
 const props = withDefaults(defineProps<Props>(), {
 	i18n: () => ({}),
 	plugin: null,
-	initialSettings: () => ({
-		style: "default",
-		enableCollapse: true,
-		collapseHeight: 400,
-		enabled: false,
-		backgroundColor: "#282c34",
-		borderColor: "#3e4451",
-		borderWidth: 1,
-		borderRadius: 6,
-		boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-		codeFontFamily: "Consolas",
-		codeFontSize: 14,
-		codeLineHeight: 1.6,
-		textColor: "#abb2bf",
-		keywordColor: "#c678dd",
-		stringColor: "#98c379",
-		commentColor: "#5c6370",
-		functionColor: "#61afef",
-		numberColor: "#d19a66",
-	}),
+	initialSettings: () => ({ ...DEFAULT_CODEBLOCK_SETTINGS }),
 });
-
-const DEFAULT_SETTINGS: CodeBlockSettings = {
-	style: "default",
-	enableCollapse: true,
-	collapseHeight: 400,
-	enabled: false,
-	backgroundColor: "#282c34",
-	borderColor: "#3e4451",
-	borderWidth: 1,
-	borderRadius: 6,
-	boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-	codeFontFamily: "Consolas",
-	codeFontSize: 14,
-	codeLineHeight: 1.6,
-	textColor: "#abb2bf",
-	keywordColor: "#c678dd",
-	stringColor: "#98c379",
-	commentColor: "#5c6370",
-	functionColor: "#61afef",
-	numberColor: "#d19a66",
-};
 
 const emit = defineEmits<Emits>();
 
@@ -536,13 +474,13 @@ function getStyleDesc(style: string): string {
 async function loadSettings() {
 	if (!props.plugin) {
 		console.warn("插件实例不可用，使用默认设置");
-		settings.value = { ...DEFAULT_SETTINGS };
+		settings.value = { ...DEFAULT_CODEBLOCK_SETTINGS };
 		return;
 	}
 
 	try {
 		const loadedSettings = await loadCodeBlockSettings(props.plugin);
-		settings.value = { ...DEFAULT_SETTINGS, ...loadedSettings };
+		settings.value = { ...DEFAULT_CODEBLOCK_SETTINGS, ...loadedSettings };
 		applyCodeBlockStyle(settings.value.style);
 		applyCodeBlockCollapse(
 			settings.value.enableCollapse,
@@ -551,7 +489,7 @@ async function loadSettings() {
 		applyCodeBlockEnhancedStyles(settings.value);
 	} catch (error) {
 		console.error("加载设置失败:", error);
-		settings.value = { ...DEFAULT_SETTINGS };
+		settings.value = { ...DEFAULT_CODEBLOCK_SETTINGS };
 	}
 }
 

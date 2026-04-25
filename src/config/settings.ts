@@ -2,9 +2,9 @@
  * 插件配置管理模块
  *
  * 注意：FontSettings、HeadingSettings、CodeBlockSettings、ListSettings、
- * HighlightSettings、TabPinSettings 等类型及其 load/save 函数
- * 已统一迁移至 @/features/generalSettings/types/storage.ts，
- * 此处仅保留插件全局配置（PluginSettings）及非通用设置。
+ * HighlightSettings、TabPinSettings、TextDiffSettings 等类型及其默认值
+ * 已统一迁移至各 feature 的 types/storage.ts，
+ * 此处仅保留插件全局配置（PluginSettings）及 WebDAVConfig。
  */
 import { Plugin } from "siyuan";
 
@@ -38,6 +38,10 @@ export {
 	loadTabPinSettings,
 	saveTabPinSettings,
 } from "@/features/generalSettings/types/storage";
+
+// TextDiffSettings 也从 feature 规范位置 re-export
+export type { TextDiffSettings } from "@/features/textDiff/types/storage";
+export { DEFAULT_TEXTDIFF_SETTINGS } from "@/features/textDiff/types/storage";
 
 /**
  * 插件配置接口
@@ -85,15 +89,6 @@ export interface PluginSettings {
 	aiApiKey: string; // AI API密钥
 	aiCustomEndpoint: string; // 自定义API端点(仅在provider为custom时使用)
 	aiEnableThinking: boolean; // DeepSeek思考模式开关
-}
-
-/**
- * 文本对比设置接口
- */
-export interface TextDiffSettings {
-	fontSize: number; // 字体大小
-	diffMode: "split" | "unified"; // 显示模式：分栏或统一
-	theme: "light" | "dark"; // 主题：浅色或深色
 }
 
 /**
@@ -166,15 +161,6 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 };
 
 /**
- * 默认文本对比设置
- */
-export const DEFAULT_TEXTDIFF_SETTINGS: TextDiffSettings = {
-	fontSize: 14,
-	diffMode: "split",
-	theme: "light",
-};
-
-/**
  * 配置存储键
  */
 const SETTINGS_KEY = "plugin-settings";
@@ -212,41 +198,4 @@ export async function saveSettings(
 	}
 }
 
-/**
- * 文本对比设置存储键
- */
-const TEXTDIFF_SETTINGS_KEY = "textdiff-settings";
 
-/**
- * 从数据库加载文本对比设置
- */
-export async function loadTextDiffSettings(
-	plugin: Plugin,
-): Promise<TextDiffSettings> {
-	try {
-		const data = await plugin.loadData(TEXTDIFF_SETTINGS_KEY);
-		if (!data) {
-			return { ...DEFAULT_TEXTDIFF_SETTINGS };
-		}
-		return { ...DEFAULT_TEXTDIFF_SETTINGS, ...data };
-	} catch (error) {
-		console.error("加载文本对比设置失败:", error);
-		return { ...DEFAULT_TEXTDIFF_SETTINGS };
-	}
-}
-
-/**
- * 保存文本对比设置到数据库
- */
-export async function saveTextDiffSettings(
-	plugin: Plugin,
-	settings: TextDiffSettings,
-): Promise<boolean> {
-	try {
-		await plugin.saveData(TEXTDIFF_SETTINGS_KEY, settings);
-		return true;
-	} catch (error) {
-		console.error("保存文本对比设置失败:", error);
-		return false;
-	}
-}

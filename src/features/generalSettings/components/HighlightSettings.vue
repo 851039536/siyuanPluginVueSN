@@ -136,6 +136,7 @@
 import { showMessage } from "siyuan";
 import { onMounted, ref } from "vue";
 import SiSwitch from "@/components/Switch.vue";
+import { loadHighlightSettings } from "@/features/generalSettings/types/storage";
 
 const props = defineProps<{
 	i18n?: Record<string, string>;
@@ -153,7 +154,7 @@ const maxLetterLength = ref(100);
 
 const loadSettings = async () => {
 	try {
-		const settings = await props.plugin?.loadData("highlight-settings");
+		const settings = await loadHighlightSettings(props.plugin);
 		if (settings) {
 			enableHighlight.value = settings.enableHighlight ?? true;
 			backgroundColor.value = settings.backgroundColor ?? "rgb(255, 220, 60)";

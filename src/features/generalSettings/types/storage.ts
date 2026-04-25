@@ -159,7 +159,7 @@ export class GeneralSettingsStorage {
 	private storage: PluginStorage;
 
 	private readonly KEYS = {
-		FONT: "general-font-settings",
+		FONT: "font-settings",
 		CODEBLOCK: "codeblock-settings",
 		HEADING: "heading-settings",
 		LIST: "list-settings",
@@ -178,20 +178,11 @@ export class GeneralSettingsStorage {
 	}
 
 	async saveFontSettings(settings: FontSettings): Promise<boolean> {
-		localStorage.setItem(this.KEYS.FONT, JSON.stringify(settings));
-		return true;
+		return this.storage.save(this.KEYS.FONT, settings);
 	}
 
 	async loadFontSettings(): Promise<FontSettings | null> {
-		const saved = localStorage.getItem(this.KEYS.FONT);
-		if (saved) {
-			try {
-				return JSON.parse(saved);
-			} catch {
-				return null;
-			}
-		}
-		return null;
+		return this.storage.load<FontSettings>(this.KEYS.FONT);
 	}
 
 	async saveCodeBlockSettings(settings: CodeBlockSettings): Promise<boolean> {
@@ -211,7 +202,6 @@ export class GeneralSettingsStorage {
 	}
 
 	async saveListSettings(settings: ListSettings): Promise<boolean> {
-		localStorage.setItem(this.KEYS.LIST, JSON.stringify(settings));
 		return this.storage.save(this.KEYS.LIST, settings);
 	}
 
@@ -286,11 +276,210 @@ export class GeneralSettingsStorage {
 	}
 
 	async clearAllSettings(): Promise<void> {
-		localStorage.removeItem(this.KEYS.FONT);
-		localStorage.removeItem(this.KEYS.LIST);
-		await this.storage.remove(this.KEYS.CODEBLOCK);
-		await this.storage.remove(this.KEYS.HEADING);
-		await this.storage.remove(this.KEYS.HIGHLIGHT);
-		await this.storage.remove(this.KEYS.BACKUP);
+		await Promise.all([
+			this.storage.remove(this.KEYS.FONT),
+			this.storage.remove(this.KEYS.CODEBLOCK),
+			this.storage.remove(this.KEYS.HEADING),
+			this.storage.remove(this.KEYS.LIST),
+			this.storage.remove(this.KEYS.HIGHLIGHT),
+			this.storage.remove(this.KEYS.BACKUP),
+			this.storage.remove(this.KEYS.DOCUMENT_FONT),
+			this.storage.remove(this.KEYS.TABLE_STYLE),
+			this.storage.remove(this.KEYS.LIST_STYLE),
+			this.storage.remove(this.KEYS.DOC_COUNT),
+			this.storage.remove(this.KEYS.TAB_PIN),
+			this.storage.remove(this.KEYS.SKILLS_VIEWER),
+		]);
 	}
+}
+
+/**
+ * 存储键常量（外部模块可直接引用，避免硬编码字符串）
+ */
+export const STORAGE_KEYS = {
+	FONT: "font-settings",
+	CODEBLOCK: "codeblock-settings",
+	HEADING: "heading-settings",
+	LIST: "list-settings",
+	HIGHLIGHT: "highlight-settings",
+	BACKUP: "data-backup-settings",
+	DOCUMENT_FONT: "document-font-settings",
+	TABLE_STYLE: "table-style-settings",
+	LIST_STYLE: "list-style-settings",
+	DOC_COUNT: "doc-count-settings",
+	TAB_PIN: "tabpin-settings",
+	SKILLS_VIEWER: "skills-viewer-settings",
+} as const;
+
+// ============================================================
+// 独立函数：提供与 config/settings.ts 相同的函数签名，便于迁移
+// ============================================================
+
+import type { Plugin } from "siyuan";
+
+/** 默认字体设置 */
+export const DEFAULT_FONT_SETTINGS: FontSettings = {
+	fontFamily: "",
+	fontSize: 14,
+	fontWeight: "normal",
+	lineHeight: 1.6,
+};
+
+/** 默认代码块设置 */
+export const DEFAULT_CODEBLOCK_SETTINGS: CodeBlockSettings = {
+	style: "default",
+	enableCollapse: true,
+	collapseHeight: 400,
+	enabled: false,
+	backgroundColor: "#282c34",
+	borderColor: "#3e4451",
+	borderWidth: 1,
+	borderRadius: 6,
+	boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+	lineNumberColor: "#495162",
+	lineNumberBackground: "#21252b",
+	showLineNumber: true,
+	codeFontFamily: "Consolas",
+	codeFontSize: 14,
+	codeLineHeight: 1.6,
+	textColor: "#abb2bf",
+	keywordColor: "#c678dd",
+	stringColor: "#98c379",
+	commentColor: "#5c6370",
+	functionColor: "#61afef",
+	numberColor: "#d19a66",
+};
+
+/** 默认标题设置 */
+export const DEFAULT_HEADING_SETTINGS: HeadingSettings = {
+	colors: {
+		h1: "#F39A94",
+		h2: "#F8D694",
+		h3: "#B1DCB9",
+		h4: "#AAD2FC",
+		h5: "#AC9DC0",
+		h6: "#D7D7D7",
+	},
+	fontSizes: {
+		h1: 28,
+		h2: 24,
+		h3: 20,
+		h4: 18,
+		h5: 16,
+		h6: 14,
+	},
+	levelDisplay: "none",
+	customMarkers: ["1", "2", "3", "4", "5", "6"],
+	titleCenterAlign: false,
+	titleColor: "#2C3E50",
+	titleFontSize: 24,
+};
+
+/** 默认列表设置 */
+export const DEFAULT_LIST_SETTINGS: ListSettings = {
+	enableCustomUnorderedList: false,
+	enableCustomOrderedList: false,
+	firstLevelSymbol: "▪",
+	secondLevelSymbol: "•",
+	thirdLevelSymbol: "◦",
+	customFirstLevelSymbol: "",
+	customSecondLevelSymbol: "",
+	customThirdLevelSymbol: "",
+	symbolSize: 1.5,
+	symbolMarginLeft: 13,
+	numberFormat: "decimal",
+	applyToListBlocks: true,
+	applyToEmbedBlocks: true,
+	applyToFloatWindows: true,
+};
+
+/** 默认高亮设置 */
+export const DEFAULT_HIGHLIGHT_SETTINGS: HighlightSettings = {
+	enableHighlight: true,
+	backgroundColor: "rgb(255, 220, 60)",
+	fontSize: 0,
+	bold: false,
+	minTextLength: 1,
+	minLetterLength: 1,
+	maxTextLength: 50,
+	maxLetterLength: 100,
+};
+
+/** 默认钉住页签设置 */
+export const DEFAULT_TABPIN_SETTINGS: TabPinSettings = {
+	enabled: true,
+	displayMode: "iconAndText",
+	backgroundColor: "rgba(var(--b3-theme-primary-rgb), 0.1)",
+};
+
+export async function loadFontSettings(plugin: Plugin): Promise<FontSettings> {
+	const storage = new GeneralSettingsStorage(plugin);
+	const data = await storage.loadFontSettings();
+	return { ...DEFAULT_FONT_SETTINGS, ...data };
+}
+
+export async function saveFontSettings(plugin: Plugin, settings: FontSettings): Promise<boolean> {
+	const storage = new GeneralSettingsStorage(plugin);
+	return storage.saveFontSettings(settings);
+}
+
+export async function loadCodeBlockSettings(plugin: Plugin): Promise<CodeBlockSettings> {
+	const storage = new GeneralSettingsStorage(plugin);
+	const data = await storage.loadCodeBlockSettings();
+	return { ...DEFAULT_CODEBLOCK_SETTINGS, ...data };
+}
+
+export async function saveCodeBlockSettings(plugin: Plugin, settings: CodeBlockSettings): Promise<boolean> {
+	const storage = new GeneralSettingsStorage(plugin);
+	return storage.saveCodeBlockSettings(settings);
+}
+
+export async function loadHeadingSettings(plugin: Plugin): Promise<HeadingSettings> {
+	const storage = new GeneralSettingsStorage(plugin);
+	const data = await storage.loadHeadingSettings();
+	if (!data) return { ...DEFAULT_HEADING_SETTINGS };
+	return {
+		...DEFAULT_HEADING_SETTINGS,
+		...data,
+		colors: { ...DEFAULT_HEADING_SETTINGS.colors, ...data.colors },
+		fontSizes: { ...DEFAULT_HEADING_SETTINGS.fontSizes, ...data.fontSizes },
+	};
+}
+
+export async function saveHeadingSettings(plugin: Plugin, settings: HeadingSettings): Promise<boolean> {
+	const storage = new GeneralSettingsStorage(plugin);
+	return storage.saveHeadingSettings(settings);
+}
+
+export async function loadListSettings(plugin: Plugin): Promise<ListSettings> {
+	const storage = new GeneralSettingsStorage(plugin);
+	const data = await storage.loadListSettings();
+	return { ...DEFAULT_LIST_SETTINGS, ...data };
+}
+
+export async function saveListSettings(plugin: Plugin, settings: ListSettings): Promise<boolean> {
+	const storage = new GeneralSettingsStorage(plugin);
+	return storage.saveListSettings(settings);
+}
+
+export async function loadHighlightSettings(plugin: Plugin): Promise<HighlightSettings> {
+	const storage = new GeneralSettingsStorage(plugin);
+	const data = await storage.loadHighlightSettings();
+	return { ...DEFAULT_HIGHLIGHT_SETTINGS, ...data };
+}
+
+export async function saveHighlightSettings(plugin: Plugin, settings: HighlightSettings): Promise<boolean> {
+	const storage = new GeneralSettingsStorage(plugin);
+	return storage.saveHighlightSettings(settings);
+}
+
+export async function loadTabPinSettings(plugin: Plugin): Promise<TabPinSettings> {
+	const storage = new GeneralSettingsStorage(plugin);
+	const data = await storage.loadTabPinSettings();
+	return { ...DEFAULT_TABPIN_SETTINGS, ...data };
+}
+
+export async function saveTabPinSettings(plugin: Plugin, settings: TabPinSettings): Promise<boolean> {
+	const storage = new GeneralSettingsStorage(plugin);
+	return storage.saveTabPinSettings(settings);
 }

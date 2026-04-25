@@ -6,9 +6,9 @@ import { Plugin } from "siyuan";
 import { createApp, h } from "vue";
 import {
 	loadCodeBlockSettings,
-	loadListSettingsFromDB,
+	loadListSettings,
 	loadHeadingSettings,
-} from "@/config/settings";
+} from "@/features/generalSettings/types/storage";
 import { GeneralSettingsStorage } from "./storage";
 import { DocCountManager } from "../modules/DocCountManager";
 import { HighlightManager } from "../modules/HighlightManager";
@@ -478,6 +478,12 @@ export class GeneralSettings {
 	private docCountManager: DocCountManager | null = null;
 	private highlightManager: HighlightManager | null = null;
 	private skillsViewerManager: SkillsViewerManager | null = null;
+	private _cachedFontSettings: any = {
+		fontFamily: "",
+		fontSize: 14,
+		fontWeight: "normal",
+		lineHeight: 1.6,
+	};
 
 	constructor(plugin: Plugin) {
 		this.plugin = plugin;
@@ -628,10 +634,8 @@ export class GeneralSettings {
 
 	public getCurrentFontSettings(): any {
 		try {
-			const saved = localStorage.getItem("general-font-settings");
-			if (saved) {
-				return JSON.parse(saved);
-			}
+			// 同步读取：返回内存中缓存的字体设置（由 applySavedSettings 预加载）
+			return this._cachedFontSettings;
 		} catch (error) {
 			console.error("获取字体设置失败:", error);
 		}
@@ -644,9 +648,15 @@ export class GeneralSettings {
 		};
 	}
 
-	public applySavedSettings() {
-		const settings = this.getCurrentFontSettings();
-		this.applyGlobalFontStyles(settings);
+	public async applySavedSettings() {
+		const settings = await this.storage.loadFontSettings();
+		this._cachedFontSettings = settings ?? {
+			fontFamily: "",
+			fontSize: 14,
+			fontWeight: "normal",
+			lineHeight: 1.6,
+		};
+		this.applyGlobalFontStyles(this._cachedFontSettings);
 	}
 
 	public async applyCodeBlockStyle() {
@@ -660,7 +670,7 @@ export class GeneralSettings {
 
 	public async applyListStyle() {
 		try {
-			const settings = await loadListSettingsFromDB(this.plugin);
+			const settings = await loadListSettings(this.plugin);
 			this.applyListStyles(settings);
 		} catch (error) {
 			console.error("应用列表样式失败:", error);
@@ -1238,8 +1248,6 @@ export class GeneralSettings {
 
 	private applyListStyles(settings: any) {
 		try {
-			localStorage.setItem("general-list-settings", JSON.stringify(settings));
-
 			if (settings.css) {
 				this.applyListCSS(settings.css);
 			} else {

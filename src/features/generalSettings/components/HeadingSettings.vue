@@ -323,7 +323,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted } from "vue";
-import { saveHeadingSettings, loadHeadingSettings } from "@/config/settings";
+import { saveHeadingSettings, loadHeadingSettings } from "@/features/generalSettings/types/storage";
 
 interface HeadingColors {
 	h1: string;

@@ -372,7 +372,7 @@ import { ref, watch, onMounted } from "vue";
 import {
 	saveCodeBlockSettings,
 	loadCodeBlockSettings,
-} from "@/config/settings";
+} from "@/features/generalSettings/types/storage";
 import { applyCodeBlockStyle, applyCodeBlockCollapse, applyCodeBlockEnhancedStyles } from "../types";
 
 interface CodeBlockSettings {

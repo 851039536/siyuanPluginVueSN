@@ -61,7 +61,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from "vue";
-import { saveTabPinSettings, loadTabPinSettings } from "@/config/settings";
+import { saveTabPinSettings, loadTabPinSettings } from "@/features/generalSettings/types/storage";
 
 interface Props {
 	i18n?: any;

@@ -278,26 +278,26 @@ export class BackupManager {
 			percent: 20,
 		});
 
-		// 重新打包：去掉 backup-info.json，生成与思源"导出数据"格式一致的 zip
+		// 重新打包：去掉 backup-info.json，将文件放入 data/ 目录下
+		// 思源 importData API 要求：解压后顶层恰好 1 个目录（data/），且无 */*.sy 文件
 		const cleanZip = new JSZip();
+		const dataFolder = cleanZip.folder("data");
 		const fileEntries: { path: string; entry: JSZip.JSZipObject }[] = [];
 		zip.forEach((relativePath, file) => {
 			if (!file.dir && relativePath !== "backup-info.json") {
 				fileEntries.push({ path: relativePath, entry: file });
-			} else if (file.dir) {
-				cleanZip.folder(relativePath);
 			}
 		});
 
 		let processed = 0;
-		for (const { path, entry } of fileEntries) {
+		for (const { path: filePath, entry } of fileEntries) {
 			const content = await entry.async("uint8array");
-			cleanZip.file(path, content);
+			dataFolder.file(filePath, content);
 			processed++;
 			if (processed % 50 === 0 || processed === fileEntries.length) {
 				onProgress?.({
 					phase: "extracting",
-					currentFile: path,
+					currentFile: filePath,
 					filesProcessed: processed,
 					totalFiles,
 					percent: 20 + Math.round((processed / totalFiles) * 30),

@@ -114,7 +114,6 @@ function formatChartLabel(label: string): string {
       align-items: center;
       min-width: 32px;
       position: relative;
-      transition: stats.$stats-transition;
 
       &:hover {
         .bar {
@@ -138,7 +137,6 @@ function formatChartLabel(label: string): string {
         transform: translateX(-50%);
         left: 50%;
         opacity: 0.6;
-        transition: stats.$stats-transition;
       }
 
       .bar {
@@ -147,7 +145,6 @@ function formatChartLabel(label: string): string {
         background: stats.$gradient-primary;
         border-radius: 4px 4px 1px 1px;
         cursor: pointer;
-        transition: stats.$stats-transition;
 
         &.today {
           background: var(--b3-theme-secondary);
@@ -168,7 +165,6 @@ function formatChartLabel(label: string): string {
         transform-origin: top left;
         white-space: nowrap;
         left: 50%;
-        transition: stats.$stats-transition;
 
         &.today {
           color: var(--b3-theme-primary);
@@ -192,7 +188,6 @@ function formatChartLabel(label: string): string {
     background: var(--b3-theme-background);
     border-radius: 6px;
     border: 1px solid var(--b3-border-color);
-    transition: stats.$stats-transition;
 
     &:hover {
       border-color: var(--b3-theme-primary);

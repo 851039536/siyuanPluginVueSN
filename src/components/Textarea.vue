@@ -409,7 +409,6 @@ defineExpose({
     background: var(--b3-theme-background, $brand-light);
     border: 1px solid var(--b3-border-color, $brand-subtle-gray);
     border-radius: 6px;
-    transition: all 0.2s ease;
     outline: none;
 
     &:hover:not(.si-textarea__wrapper--disabled) {
@@ -486,7 +485,6 @@ defineExpose({
     color: var(--b3-theme-secondary, $brand-mid-gray);
     cursor: pointer;
     border-radius: 4px;
-    transition: all 0.2s ease;
     background: var(--b3-theme-background, $brand-light);
 
     &:hover {
@@ -503,7 +501,6 @@ defineExpose({
     height: 16px;
     cursor: ns-resize;
     border-radius: 4px;
-    transition: all 0.2s ease;
 
     // 使用伪元素创建手柄条纹效果
     &::before {
@@ -521,7 +518,6 @@ defineExpose({
         transparent 4px
       );
       border-radius: 1px;
-      transition: all 0.2s ease;
     }
 
     &::after {
@@ -539,7 +535,6 @@ defineExpose({
         transparent 4px
       );
       border-radius: 1px;
-      transition: all 0.2s ease;
     }
 
     &:hover::before,

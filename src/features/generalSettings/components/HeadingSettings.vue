@@ -776,7 +776,6 @@ defineExpose({
   color: var(--b3-theme-on-surface);
   font-size: 13px;
   cursor: pointer;
-  transition: all 0.2s ease;
 }
 
 .style-select:focus {
@@ -800,7 +799,6 @@ defineExpose({
   padding: 8px;
   background: var(--b3-theme-surface-variant);
   border-radius: 6px;
-  transition: all 0.2s ease;
 
   &:hover {
     background: rgba(var(--b3-theme-primary-rgb), 0.08);
@@ -834,7 +832,6 @@ defineExpose({
   border: 2px solid var(--b3-theme-outline);
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s ease;
   background: transparent;
   flex-shrink: 0;
 
@@ -854,7 +851,6 @@ defineExpose({
   font-size: 11px;
   font-weight: 500;
   text-transform: uppercase;
-  transition: all 0.2s ease;
 
   &:focus {
     outline: none;
@@ -884,7 +880,6 @@ defineExpose({
   border: 2px solid var(--b3-theme-outline);
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s ease;
   background: transparent;
 }
 
@@ -905,7 +900,6 @@ defineExpose({
   color: var(--b3-theme-on-surface);
   font-size: 12px;
   text-transform: uppercase;
-  transition: all 0.2s ease;
 }
 
 .color-text:focus,
@@ -973,7 +967,6 @@ defineExpose({
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   font-size: 13px;
-  transition: all 0.2s ease;
 }
 
 .custom-level-input:focus {
@@ -1035,7 +1028,6 @@ defineExpose({
   color: var(--b3-theme-on-surface);
   font-size: 12px;
   cursor: pointer;
-  transition: all 0.2s ease;
   white-space: nowrap;
 }
 
@@ -1096,7 +1088,6 @@ defineExpose({
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-theme-outline);
   border-radius: 6px;
-  transition: all 0.2s ease;
 }
 
 .font-size-row:hover {
@@ -1160,7 +1151,6 @@ defineExpose({
   color: var(--b3-theme-on-surface);
   font-weight: 600;
   text-align: center;
-  transition: all 0.2s ease;
 }
 
 .number-input {

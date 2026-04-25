@@ -110,7 +110,6 @@ defineEmits<{
   flex-shrink: 0;
   @include flex-center;
   color: var(--b3-theme-on-surface-light);
-  transition: all 0.2s ease;
 }
 
 .disk-card-body {
@@ -130,7 +129,6 @@ defineEmits<{
 .usage-fill {
   height: 100%;
   background: var(--b3-theme-primary);
-  transition: width 0.3s ease;
 }
 
 .disk-space {

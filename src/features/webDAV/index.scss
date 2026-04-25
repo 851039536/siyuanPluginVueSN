@@ -2,8 +2,6 @@
 // 只导入变量，不导入全局样式（全局样式已在 index.ts 中导入）
 @use "@/variables" as *;
 
-$button-transition: all 0.2s ease;
-
 // ========== 自定义按钮组件 ==========
 .btn {
   display: inline-flex;
@@ -17,7 +15,6 @@ $button-transition: all 0.2s ease;
   font-weight: 500;
   font-family: $font-body;
   cursor: pointer;
-  transition: $button-transition;
   white-space: nowrap;
   background: transparent;
   color: var(--text-color, #1f2937);
@@ -73,7 +70,7 @@ $button-transition: all 0.2s ease;
     }
 
     &:active:not(:disabled) {
-      transform: translateY(0);
+      transform: none;
     }
   }
 
@@ -101,18 +98,9 @@ $button-transition: all 0.2s ease;
     }
   }
 
-  // 旋转动画（用于加载状态）
+  // 加载状态图标
   .spin-icon {
-    animation: spin 1s linear infinite;
-  }
-
-  @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
+    display: inline-block;
   }
 }
 
@@ -240,7 +228,6 @@ $button-transition: all 0.2s ease;
     border-radius: 6px;
     background: var(--input-background, #ffffff);
     color: var(--text-color, #1f2937);
-    transition: border-color 0.2s, box-shadow 0.2s;
 
     &:focus {
       outline: none;
@@ -453,7 +440,6 @@ $button-transition: all 0.2s ease;
     gap: 12px;
     padding: 10px 16px;
     border-bottom: 1px solid var(--border-color, #e5e7eb);
-    transition: background-color 0.2s;
 
     &:last-child {
       border-bottom: none;

@@ -246,7 +246,6 @@
     .progress-fill {
       height: 100%;
       background: var(--b3-theme-primary);
-      transition: width 0.3s ease;
     }
   }
 
@@ -315,7 +314,6 @@
     padding: 8px 12px;
     border-bottom: 1px solid var(--b3-border-color);
     cursor: pointer;
-    transition: background 0.2s ease;
 
     &:last-child {
       border-bottom: none;
@@ -360,7 +358,6 @@
     cursor: pointer;
     padding: 6px 8px;
     border-radius: 4px;
-    transition: background 0.2s ease;
 
     &:hover {
       background: var(--b3-theme-primary-lightest);

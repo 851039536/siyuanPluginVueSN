@@ -50,7 +50,6 @@
       border: 2px solid var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.08));
       border-radius: 10px;
       cursor: pointer;
-      transition: all 0.2s ease;
       background: var(--b3-theme-surface);
       position: relative;
       overflow: hidden;
@@ -64,12 +63,10 @@
         height: 3px;
         background: var(--tool-color, transparent);
         opacity: 0;
-        transition: opacity 0.2s ease;
       }
 
       &:hover {
         border-color: var(--tool-color, var(--b3-theme-primary));
-        transform: translateY(-1px);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
       }
 
@@ -170,7 +167,6 @@
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.08));
     border-radius: 8px;
-    transition: all 0.2s ease;
     position: relative;
     overflow: hidden;
 
@@ -259,7 +255,6 @@
       cursor: pointer;
       font-size: 13px;
       background: transparent;
-      transition: all 0.15s ease;
 
       &--edit {
         &:hover {
@@ -533,7 +528,6 @@
       border: 2px solid var(--b3-theme-surface-variant);
       border-top-color: var(--b3-theme-primary);
       border-radius: 50%;
-      animation: sv-spin 0.6s linear infinite;
     }
 
     .sv-loading-text {
@@ -629,11 +623,5 @@
       gap: 8px;
       padding: 12px 18px 16px;
     }
-  }
-}
-
-@keyframes sv-spin {
-  to {
-    transform: rotate(360deg);
   }
 }

@@ -522,7 +522,6 @@ function addLog(type: ExportLog["type"], message: string) {
   border: 1px solid var(--b3-border-color);
   border-radius: 4px;
   cursor: pointer;
-  transition: all 0.2s;
 
   &:hover {
     background: var(--b3-theme-surface-light);
@@ -570,7 +569,6 @@ function addLog(type: ExportLog["type"], message: string) {
   .progress-fill {
     height: 100%;
     background: var(--b3-theme-primary);
-    transition: width 0.3s;
   }
 
   .progress-text {

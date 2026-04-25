@@ -143,7 +143,6 @@ const handleClick = (event: MouseEvent) => {
   background: var(--b3-theme-background, $brand-light);
   font-family: $font-body;
   overflow: hidden;
-  transition: all 0.2s ease;
 
   // 变体样式
   &--bordered {
@@ -325,7 +324,6 @@ const handleClick = (event: MouseEvent) => {
       width: 100%;
       height: 100%;
       object-fit: contain;
-      transition: transform 0.3s ease;
 
       &--cover {
         object-fit: cover;

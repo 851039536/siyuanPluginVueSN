@@ -160,7 +160,6 @@ const onDownload = (file: WebDAVFile) => {
   border-radius: 4px;
   background: transparent;
   cursor: pointer;
-  transition: all 0.2s ease;
   color: var(--text-secondary, #6b7280);
 
   svg {
@@ -261,7 +260,6 @@ const onDownload = (file: WebDAVFile) => {
     gap: 12px;
     padding: 10px 16px;
     border-bottom: 1px solid var(--border-color, #e5e7eb);
-    transition: background-color 0.2s;
     cursor: pointer;
 
     &:last-child {

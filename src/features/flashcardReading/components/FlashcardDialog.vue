@@ -245,10 +245,6 @@ onUnmounted(() => {
   text-align: center;
 }
 
-.dialog-enter-active,
-.dialog-leave-active {
-  transition: all 0.3s ease;
-}
 
 .dialog-enter-from,
 .dialog-leave-to {

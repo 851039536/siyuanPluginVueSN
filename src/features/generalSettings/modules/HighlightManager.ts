@@ -136,7 +136,6 @@ export class HighlightManager {
         pointer-events: none;
         opacity: 0;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        transition: opacity 0.2s, transform 0.2s;
         display: flex;
         align-items: center;
         gap: 8px;

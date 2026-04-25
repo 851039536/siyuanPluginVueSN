@@ -152,7 +152,6 @@ const handleProviderChange = async (provider: string) => {
 	background: var(--b3-theme-surface);
 	color: var(--b3-theme-on-surface);
 	cursor: pointer;
-	transition: all 0.2s ease;
 
 	&.active {
 		background: var(--b3-theme-primary);

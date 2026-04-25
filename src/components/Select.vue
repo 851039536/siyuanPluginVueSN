@@ -549,7 +549,6 @@ defineExpose({
     border: 1px solid var(--b3-border-color);
     border-radius: 6px;
     cursor: pointer;
-    transition: all 0.2s ease;
     outline: none;
     user-select: none;
 
@@ -584,7 +583,6 @@ defineExpose({
     color: var(--b3-theme-secondary);
     border-radius: 4px;
     padding: 2px;
-    transition: color 0.15s ease;
 
     &:hover {
       color: var(--b3-theme-on-background);
@@ -594,7 +592,6 @@ defineExpose({
   &__arrow {
     flex-shrink: 0;
     color: var(--b3-theme-secondary);
-    transition: transform 0.2s ease;
   }
 
   &__trigger--disabled {
@@ -700,7 +697,6 @@ defineExpose({
     font-size: 14px;
     color: var(--b3-theme-on-background);
     cursor: pointer;
-    transition: all 0.15s ease;
     user-select: none;
 
     &:hover,
@@ -765,7 +761,6 @@ defineExpose({
 // 下拉动画
 .si-select-dropdown-enter-active,
 .si-select-dropdown-leave-active {
-  transition: all 0.2s ease;
   transform-origin: top;
 }
 

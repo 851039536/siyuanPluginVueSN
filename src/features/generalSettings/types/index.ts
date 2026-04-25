@@ -196,7 +196,6 @@ export function applyCodeBlockCollapse(
     }
 
     .code-block.code-block-collapse-wrapper .hljs {
-      transition: max-height 0.3s ease;
       overflow-y: auto;
       overflow-x: hidden;
     }
@@ -209,7 +208,6 @@ export function applyCodeBlockCollapse(
       height: 40px;
       background: linear-gradient(to bottom, transparent, var(--b3-theme-surface));
       pointer-events: none;
-      transition: opacity 0.3s ease;
       z-index: 1;
     }
 
@@ -240,7 +238,6 @@ export function applyCodeBlockCollapse(
       font-size: 12px;
       color: var(--b3-theme-on-surface);
       line-height: 1.4;
-      transition: background 0.2s ease;
     }
 
     .code-block .code-collapse-btn:hover {
@@ -251,7 +248,6 @@ export function applyCodeBlockCollapse(
       width: 12px;
       height: 12px;
       fill: currentColor;
-      transition: transform 0.3s ease;
     }
 
     .code-block .code-collapse-btn svg.collapsed {

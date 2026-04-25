@@ -42,7 +42,6 @@
   border-radius: 6px;
   cursor: pointer;
   @include flex-center;
-  transition: $transition-base;
 }
 
 @mixin input-base {
@@ -53,7 +52,6 @@
   font-size: 14px;
   color: var(--b3-theme-on-background);
   outline: none;
-  transition: border-color $transition-base;
 
   &:focus {
     border-color: var(--b3-theme-primary);
@@ -68,7 +66,6 @@
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
   border-radius: 10px;
-  transition: $transition-base;
 }
 
 @mixin heading-style {
@@ -97,34 +94,9 @@
 // 过渡动画
 // ============================================================
 
-@mixin fade-transition {
-  &-enter-active,
-  &-leave-active {
-    transition: opacity $transition-base ease;
-  }
-
-  &-enter-from,
-  &-leave-to {
-    opacity: 0;
-  }
-}
-
-@mixin scale-transition {
-  &-enter-active,
-  &-leave-active {
-    transition: all $transition-base ease;
-  }
-
-  &-enter-from,
-  &-leave-to {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-}
-
 // 使用示例:
-// .fade { @include fade-transition; }
-// .scale { @include scale-transition; }
+// .fade { }
+// .scale { }
 
 // ============================================================
 // 对话框头部 Mixin

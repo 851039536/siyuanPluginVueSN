@@ -169,7 +169,6 @@
   color: var(--b3-theme-on-background);
   font-size: 14px;
   outline: none;
-  transition: border-color $transition-base;
 
   &:focus {
     border-color: var(--b3-theme-primary);
@@ -200,14 +199,12 @@
   cursor: pointer;
   @include flex-center;
   gap: 6px;
-  transition: all $transition-base;
   box-shadow: $shadow-sm;
 
   &:hover:not(:disabled) {
     background: var(--b3-theme-primary);
     color: var(--b3-theme-on-primary);
     border-color: var(--b3-theme-primary);
-    transform: translateY(-1px);
   }
 
   &:disabled {
@@ -224,7 +221,6 @@
   box-shadow: $shadow-primary;
 
   &:hover:not(:disabled) {
-    transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(66, 133, 244, 0.3);
   }
 }
@@ -238,7 +234,6 @@
   background: transparent;
   color: var(--b3-theme-on-surface-variant);
   cursor: pointer;
-  transition: all $transition-base;
 
   &:hover {
     background: var(--b3-theme-surface-lighter);
@@ -259,7 +254,6 @@
 
     &:hover {
       background: rgba(255, 255, 255, 0.3);
-      transform: scale(1.1);
     }
   }
 
@@ -308,27 +302,5 @@
 
   @media (max-width: $breakpoint-sm) {
     padding: 24px 16px;
-  }
-}
-
-@mixin loading-spinner($size: 32px) {
-  width: $size;
-  height: $size;
-  border: 3px solid var(--b3-theme-surface-lighter);
-  border-top: 3px solid var(--b3-theme-primary);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-// ========================================
-// 动画关键帧
-// ========================================
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
   }
 }

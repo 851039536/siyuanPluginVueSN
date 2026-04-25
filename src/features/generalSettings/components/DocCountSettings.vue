@@ -353,7 +353,6 @@ defineExpose({ loadSettings, enableDocCount });
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
   cursor: pointer;
-  transition: all 0.2s;
 }
 
 .interval-select:hover {
@@ -409,7 +408,6 @@ defineExpose({ loadSettings, enableDocCount });
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
   cursor: pointer;
-  transition: all 0.2s;
 }
 
 .style-select:hover {
@@ -456,7 +454,6 @@ defineExpose({ loadSettings, enableDocCount });
   border-radius: 6px;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
-  transition: all 0.2s;
 }
 
 .color-text:hover {

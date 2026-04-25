@@ -22966,7 +22966,6 @@ const items: ListItem[] = [
   padding: 12px;
   border-radius: 8px;
   cursor: pointer;
-  transition: background 0.2s;
 }
 
 .list-item:hover {
@@ -23028,7 +23027,6 @@ const activeTab = ref('general')
   border: none;
   background: transparent;
   cursor: pointer;
-  transition: all 0.2s;
 }
 
 .tab.active {
@@ -31270,7 +31268,6 @@ const handleAction = (actionKey: string) => {
   border-radius: 10px;
   padding: 16px;
   margin-bottom: 12px;
-  transition: all 0.2s;
 
   &.enabled:hover {
     border-color: var(--b3-theme-primary-lighter);
@@ -31347,7 +31344,6 @@ const handleAction = (actionKey: string) => {
   cursor: pointer;
   font-size: 13px;
   color: var(--b3-theme-on-background);
-  transition: all 0.2s;
 
   &:hover {
     background: var(--b3-theme-primary);
@@ -35014,7 +35010,6 @@ const tabs = [
       cursor: pointer;
       border-radius: 4px 4px 0 0;
       font-size: 12px;
-      transition: all 0.2s ease;
 
       &:hover {
         background: var(--b3-theme-surface);
@@ -36480,7 +36475,6 @@ body.codeblock-style-github {
     overflow: hidden;
     margin: 12px 0;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    transition: all 0.2s ease;
 
     &:hover {
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -36512,7 +36506,6 @@ body.codeblock-style-github {
         margin-left: auto;
         color: var(--b3-theme-on-surface-variant);
         opacity: 0.7;
-        transition: opacity 0.2s ease;
         
         &:hover {
           opacity: 1;
@@ -36557,7 +36550,6 @@ body.codeblock-style-mac {
     overflow: hidden;
     box-shadow: 0 3px 12px rgba(0, 0, 0, 0.25);
     margin: 12px 0;
-    transition: all 0.2s ease;
 
     &:hover {
       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
@@ -36586,7 +36578,6 @@ body.codeblock-style-mac {
           18px 0 0 1px #dea123,
           36px 0 0 0 #27c93f,
           36px 0 0 1px #1aab29;
-        transition: all 0.2s ease;
       }
 
       &:hover::before {
@@ -36607,7 +36598,6 @@ body.codeblock-style-mac {
         margin-left: auto;
         color: var(--b3-theme-on-surface-variant);
         opacity: 0.7;
-        transition: opacity 0.2s ease;
         
         &:hover {
           opacity: 1;
@@ -36652,7 +36642,6 @@ body.codeblock-style-default {
   .protyle-wysiwyg [data-node-id][data-type="NodeCodeBlock"],
   .b3-typography [data-node-id][data-type="NodeCodeBlock"] {
     /* 使用思源默认样式，添加微妙的过渡效果 */
-    transition: all 0.2s ease;
     
     &:hover {
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -36677,7 +36666,6 @@ body.codeblock-style-cartoon {
     overflow: hidden;
     box-shadow: 0 3px 12px rgba(255, 107, 157, 0.25);
     margin: 12px 0;
-    transition: all 0.3s ease;
     animation: cartoonGlow 3s ease-in-out infinite;
 
     &:hover {
@@ -36721,7 +36709,6 @@ body.codeblock-style-cartoon {
       .protyle-icon {
         color: var(--b3-theme-on-surface-variant);
         opacity: 0.7;
-        transition: all 0.2s ease;
         
         &:hover {
           opacity: 1;
@@ -36787,7 +36774,6 @@ body[class*="codeblock-style-"] {
     /* 代码块复制按钮优化 */
     .protyle-action__copy {
       opacity: 0;
-      transition: opacity 0.2s ease;
     }
     
     &:hover .protyle-action__copy {
@@ -36799,7 +36785,6 @@ body[class*="codeblock-style-"] {
       padding: 2px 8px;
       border-radius: 4px;
       background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1);
-      transition: all 0.2s ease;
       
       &:hover {
         background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.2);
@@ -41215,7 +41200,6 @@ function closeDialog() {
   align-items: center;
   justify-content: center;
   border-radius: 4px;
-  transition: all 0.2s;
 
   &:hover {
     background: var(--b3-theme-surface-lighter);
@@ -41265,7 +41249,6 @@ function closeDialog() {
   line-height: 1.4;
   resize: vertical;
   outline: none;
-  transition: border-color 0.2s;
 
   &:focus {
     border-color: var(--b3-theme-primary);
@@ -41384,7 +41367,6 @@ function closeDialog() {
   font-size: 11px;
   cursor: pointer;
   outline: none;
-  transition: border-color 0.2s;
 
   &:focus {
     border-color: var(--b3-theme-primary);
@@ -41421,7 +41403,6 @@ function closeDialog() {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  transition: all 0.2s ease;
 
   &:hover:not(:disabled) {
     background: var(--b3-theme-primary);
@@ -41863,7 +41844,6 @@ function applyCodeBlockCollapse(enable: boolean, height: number) {
       font-size: 12px;
       font-weight: 500;
       color: var(--b3-theme-on-surface);
-      transition: all 0.15s ease;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
       line-height: 1.5;
     }
@@ -42313,7 +42293,6 @@ async function handleSavePassword() {
   font-size: 13px;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
-  transition: border-color 0.2s;
 }
 
 .form-group input:focus {
@@ -42330,7 +42309,6 @@ async function handleSavePassword() {
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
-  transition: opacity 0.2s;
 }
 
 .save-btn:hover {
@@ -42586,7 +42564,6 @@ defineExpose({
   overflow: hidden;
   background: var(--b3-theme-surface);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
 }
 
 .action-section:hover,

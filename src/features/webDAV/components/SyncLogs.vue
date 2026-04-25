@@ -80,7 +80,6 @@ const onClear = () => {
       font-weight: 500;
       font-family: $font-body;
       color: var(--text-secondary, #6b7280);
-      transition: all 0.2s ease;
 
       &:hover {
         background: var(--background-hover, #f3f4f6);

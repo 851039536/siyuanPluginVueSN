@@ -129,7 +129,6 @@ const handleClick = () => {
     display: inline-block;
     background: var(--b3-theme-surface-lighter, #e5e5e5);
     border-radius: $radius-full;
-    transition: $transition-base;
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
 
     // 尺寸变体
@@ -162,7 +161,6 @@ const handleClick = () => {
     background: white;
     border-radius: $radius-full;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-    transition: $transition-base;
 
     // 尺寸变体
     .si-switch--small & {

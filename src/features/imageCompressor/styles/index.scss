@@ -29,7 +29,6 @@
   color: var(--b3-theme-on-background);
   opacity: 0.6;
   border-radius: 4px;
-  transition: opacity 0.2s, background 0.2s;
 
   &:hover {
     opacity: 1;
@@ -204,7 +203,6 @@
   .progress-fill {
     height: 100%;
     background: linear-gradient(90deg, var(--b3-theme-primary), var(--b3-theme-primary-light));
-    transition: width 0.3s ease;
   }
 
   .progress-text {
@@ -250,7 +248,6 @@
   border-radius: 8px;
   overflow: hidden;
   border: 2px solid transparent;
-  transition: all 0.2s ease;
   min-height: 300px;
 
   &:hover {
@@ -290,11 +287,9 @@
     width: auto;
     height: auto;
     object-fit: contain;
-    transition: transform 0.3s ease;
   }
 
   &:hover img {
-    transform: scale(1.05);
   }
 
   .preview-hint {
@@ -308,7 +303,6 @@
     border-radius: 4px;
     font-size: 12px;
     opacity: 0;
-    transition: opacity 0.2s ease;
     @include flex-center;
     gap: 4px;
 
@@ -369,7 +363,6 @@
   font-size: 12px;
   color: var(--b3-theme-on-background);
   cursor: pointer;
-  transition: all 0.2s ease;
 
   &:hover {
     background: var(--b3-theme-surface-lighter);

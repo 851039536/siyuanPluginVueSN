@@ -107,7 +107,6 @@ function formatTime(ts: string): string {
   justify-content: space-between;
   padding: 10px 16px;
   cursor: pointer;
-  transition: background-color 0.15s;
   border-bottom: 1px solid var(--b3-border-color);
 
   &:hover {

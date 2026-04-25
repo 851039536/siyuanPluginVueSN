@@ -39,11 +39,7 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
 @mixin card-hover {
-  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     border-color: var(--b3-theme-primary);
 
     &::before {
@@ -61,7 +57,6 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
   color: var(--b3-theme-on-background);
   font-size: 14px;
   font-family: inherit;
-  transition: border-color 0.2s, box-shadow 0.2s;
 
   &:focus {
     outline: none;
@@ -79,7 +74,6 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
   gap: $toolbar-gap;
-  transition: opacity 0.3s ease;
 
   &.collapsed {
     opacity: 0.35;
@@ -102,17 +96,15 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
   justify-content: center;
   cursor: pointer;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(10px);
 
   &:hover {
-    transform: scale($trigger-hover-scale);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     background: var(--b3-theme-primary-light);
   }
 
   &:active {
-    transform: scale($trigger-active-scale);
+    transform: none;
   }
 
   &.expanded {
@@ -121,7 +113,6 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
 .trigger-icon {
-  transition: transform 0.3s ease;
 }
 
 .floating-toolbar {
@@ -145,19 +136,13 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
   padding: 4px 8px;
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   min-width: 80px;
 
   &:hover {
     background: var(--b3-list-hover);
-
-    .tool-icon {
-      transform: scale(1.08) rotate(5deg);
-    }
   }
 
   &:active {
-    transform: scale(0.98);
     background: var(--b3-list-hover);
   }
 }
@@ -171,7 +156,6 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
   justify-content: center;
   color: #fff;
   flex-shrink: 0;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
@@ -182,15 +166,10 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
   white-space: nowrap;
 }
 
-.toolbar-enter-active,
-.toolbar-leave-active {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
 
 .toolbar-enter-from,
 .toolbar-leave-to {
   opacity: 0;
-  transform: translateX(12px) scale(0.95);
 }
 
 @media (max-width: 768px) {
@@ -300,7 +279,6 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
 
     .chip-dot {
       width: 8px;
@@ -381,7 +359,6 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
     height: 100%;
     background: var(--b3-theme-primary);
     opacity: 0;
-    transition: opacity 0.2s;
   }
 }
 
@@ -462,7 +439,6 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
     border-radius: 6px;
     padding: 8px;
     cursor: pointer;
-    transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
 
     &:hover {
       border-color: $brand-orange;
@@ -490,7 +466,6 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
       justify-content: flex-end;
       gap: 4px;
       opacity: 0.7;
-      transition: opacity 0.2s;
 
       svg {
         flex-shrink: 0;
@@ -607,12 +582,10 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
     border-radius: 6px;
-    transition: all 0.2s ease;
 
     &:hover {
-      background: var(--b3-list-hover);
-      border-color: $brand-orange;
-    }
+    background: var(--b3-list-hover);
+  }
 
     .category-dot {
       width: 12px;

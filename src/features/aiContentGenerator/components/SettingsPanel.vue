@@ -330,7 +330,6 @@ const getPromptPreview = (text: string): string => {
   padding: 8px 10px;
   border-radius: 6px;
   border: 1px solid transparent;
-  transition: all 0.15s ease;
 
   &:hover {
     background: var(--b3-theme-surface-light);
@@ -372,7 +371,6 @@ const getPromptPreview = (text: string): string => {
   gap: 2px;
   flex-shrink: 0;
   opacity: 0;
-  transition: opacity 0.15s ease;
 }
 
 .prompt-manage-item:hover .prompt-manage-actions {

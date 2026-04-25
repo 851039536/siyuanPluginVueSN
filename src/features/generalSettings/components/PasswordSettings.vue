@@ -170,7 +170,6 @@ defineExpose({
   border-radius: 6px;
   background: var(--b3-theme-background);
   cursor: pointer;
-  transition: all 0.2s ease;
 }
 
 .action-btn:hover {
@@ -193,7 +192,6 @@ defineExpose({
 .btn-arrow {
   font-size: 14px;
   color: var(--b3-theme-on-surface-light);
-  transition: transform 0.2s ease;
 }
 
 .action-btn:hover .btn-arrow {

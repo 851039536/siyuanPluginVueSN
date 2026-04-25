@@ -179,7 +179,6 @@
 
 .range-slider::-webkit-slider-thumb:hover,
 .range-slider::-moz-range-thumb:hover {
-  transform: scale(1.1);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
@@ -225,12 +224,10 @@
 }
 
 .toggle-arrow.expanded {
-  transform: rotate(180deg);
 }
 
 .preview-expand-enter-active,
 .preview-expand-leave-active {
-  transition: all 0.3s ease;
   overflow: hidden;
 }
 
@@ -343,12 +340,9 @@
     inset: 0;
     border-radius: 50%;
     opacity: 0;
-    transition: opacity 0.2s ease;
   }
 
   &:hover {
-    transform: scale(1.1);
-
     &::after {
       opacity: 1;
     }
@@ -547,7 +541,6 @@
 }
 
 .toggle-input:checked + .toggle-slider::before {
-  transform: translateX(20px);
   background-color: var(--b3-theme-on-primary);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 }

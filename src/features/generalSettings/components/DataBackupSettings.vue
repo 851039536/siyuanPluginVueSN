@@ -259,7 +259,7 @@ import { ref, onMounted, onUnmounted, watch, nextTick, computed } from "vue";
 import { showMessage } from "siyuan";
 import { checkIsMobile } from "../types";
 import { BackupManager } from "../modules/BackupManager";
-import type { BackupProgress, RestoreProgress } from "../modules/BackupManager";
+import type { BackupProgress, BackupResult, RestoreProgress } from "../modules/BackupManager";
 import { CloudBackupManager } from "../modules/CloudBackupManager";
 import type { CloudProviderConfig, CloudFileInfo } from "../modules/CloudBackupManager";
 
@@ -335,13 +335,8 @@ let cloudBackupManager: CloudBackupManager | null = null;
 
 // 初始化 Manager
 function initManagers() {
-	backupManager = new BackupManager(props.plugin, workspacePath.value, workspaceRoot.value);
+	backupManager = new BackupManager(workspacePath.value, workspaceRoot.value);
 	cloudBackupManager = new CloudBackupManager(props.plugin);
-}
-
-// 获取备份目录路径
-function getBackupDir(): string {
-	return `${workspaceRoot.value}/data-backup`;
 }
 
 // 统一更新工作区路径并持久化
@@ -639,7 +634,7 @@ async function performFullBackup() {
 }
 
 // 备份完成后的统一处理
-async function onBackupComplete(result: any) {
+async function onBackupComplete(result: BackupResult) {
 	lastBackupTime.value = new Date().toLocaleString();
 	lastBackupTimestamp = Date.now();
 	await saveSettings();
@@ -771,7 +766,7 @@ async function downloadFromCloud(file: CloudFileInfo) {
 
 	isRestoring.value = true;
 	try {
-		const localPath = `${getBackupDir()}/${file.name}`;
+		const localPath = `${workspaceRoot.value}/data-backup/${file.name}`;
 		await cloudBackupManager.download(file.key, localPath);
 		showMessage(`已下载 ${file.name}`, 2000, "info");
 		await loadBackupList();

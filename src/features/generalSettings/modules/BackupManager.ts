@@ -75,7 +75,7 @@ export class BackupManager {
 	private workspacePath: string;
 	private workspaceRoot: string;
 
-	constructor(_plugin: any, workspacePath: string, workspaceRoot: string) {
+	constructor(workspacePath: string, workspaceRoot: string) {
 		this.workspacePath = workspacePath;
 		this.workspaceRoot = workspaceRoot;
 	}
@@ -420,8 +420,6 @@ export class BackupManager {
 			}
 		}
 	}
-
-
-
 }
+
 

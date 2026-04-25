@@ -60,10 +60,15 @@ export function useDocAnalysis(plugin: Plugin) {
 	// 查询状态
 	const queryState = reactive<QueryState>({
 		status: "idle",
-		results: [],
+		results: [] as DocInfo[],
 		errorMessage: "",
 		hasQueried: false,
 	});
+
+	/** 统一设置结果，确保触发响应式更新 */
+	function setResults(docs: DocInfo[]) {
+		queryState.results = docs;
+	}
 
 	// 过滤选项
 	const filterOptions = reactive<FilterOptions>({ ...DEFAULT_FILTER_OPTIONS });
@@ -196,7 +201,7 @@ export function useDocAnalysis(plugin: Plugin) {
 			const rows = await sql(sqlStmt);
 
 			if (!rows || rows.length === 0) {
-				queryState.results = [];
+				setResults([]);
 				queryState.status = "empty";
 				return;
 			}
@@ -204,13 +209,13 @@ export function useDocAnalysis(plugin: Plugin) {
 			const docs = mapRowsToDocs(rows);
 			const sortedDocs = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder);
 
-			queryState.results = sortedDocs;
+			setResults(sortedDocs);
 			queryState.status = "success";
 		} catch (error) {
 			console.error("查询文档列表失败:", error);
 			queryState.errorMessage = (error as Error).message || "查询失败";
 			queryState.status = "error";
-			queryState.results = [];
+			setResults([]);
 		}
 	}
 
@@ -530,7 +535,7 @@ export function useDocAnalysis(plugin: Plugin) {
 		if (statsFilter.value === category) {
 			statsFilter.value = "";
 			queryState.hasQueried = false;
-			queryState.results = [];
+			setResults([]);
 			queryState.status = "idle";
 			return;
 		}
@@ -623,19 +628,19 @@ export function useDocAnalysis(plugin: Plugin) {
 			const rows = await sql(sqlStmt);
 
 			if (!rows || rows.length === 0) {
-				queryState.results = [];
+				setResults([]);
 				queryState.status = "empty";
 				return;
 			}
 
 			const docs = mapRowsToDocs(rows);
-			queryState.results = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder);
+			setResults(sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder));
 			queryState.status = "success";
 		} catch (error) {
 			console.error("按类别查询文档失败:", error);
 			queryState.errorMessage = (error as Error).message || "查询失败";
 			queryState.status = "error";
-			queryState.results = [];
+			setResults([]);
 		}
 	}
 
@@ -652,7 +657,7 @@ export function useDocAnalysis(plugin: Plugin) {
 
 			const dupTitles = duplicateGroups.value.map((g) => g.title);
 			if (dupTitles.length === 0) {
-				queryState.results = [];
+				setResults([]);
 				queryState.status = "empty";
 				return;
 			}
@@ -681,7 +686,7 @@ export function useDocAnalysis(plugin: Plugin) {
 			const rows = await sql(sqlStmt);
 
 			if (!rows || rows.length === 0) {
-				queryState.results = [];
+				setResults([]);
 				queryState.status = "empty";
 				return;
 			}
@@ -689,13 +694,13 @@ export function useDocAnalysis(plugin: Plugin) {
 			const docs = mapRowsToDocs(rows);
 			const sortedDocs = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder);
 
-			queryState.results = sortedDocs;
+			setResults(sortedDocs);
 			queryState.status = "success";
 		} catch (error) {
 			console.error("查询重名文档失败:", error);
 			queryState.errorMessage = (error as Error).message || "查询失败";
 			queryState.status = "error";
-			queryState.results = [];
+			setResults([]);
 		}
 	}
 
@@ -756,11 +761,11 @@ export function useDocAnalysis(plugin: Plugin) {
 
 				const rows = await sql(sqlStmt);
 				if (!rows || rows.length === 0) {
-					queryState.results = [];
+					setResults([]);
 					queryState.status = "empty";
 				} else {
 					const docs = mapRowsToDocs(rows);
-					queryState.results = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder);
+					setResults(sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder));
 					queryState.status = "success";
 				}
 			} else {
@@ -785,11 +790,11 @@ export function useDocAnalysis(plugin: Plugin) {
 
 				const rows = await sql(sqlStmt);
 				if (!rows || rows.length === 0) {
-					queryState.results = [];
+					setResults([]);
 					queryState.status = "empty";
 				} else {
 					const docs = mapRowsToDocs(rows);
-					queryState.results = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder);
+					setResults(sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder));
 					queryState.status = "success";
 				}
 			}
@@ -797,7 +802,7 @@ export function useDocAnalysis(plugin: Plugin) {
 			console.error("查询文档列表失败:", error);
 			queryState.errorMessage = (error as Error).message || "查询失败";
 			queryState.status = "error";
-			queryState.results = [];
+			setResults([]);
 		}
 
 		await saveOptions();
@@ -851,9 +856,14 @@ export function useDocAnalysis(plugin: Plugin) {
 		filterOptions.sortField = field as any;
 		filterOptions.sortOrder = order as any;
 		if (queryState.results.length > 0) {
-			queryState.results = sortDocs(queryState.results, field, order);
+			setResults(sortDocs(queryState.results, field, order));
 		}
 		saveOptions();
+	}
+
+	/** 清空查询结果 */
+	function clearResults() {
+		setResults([]);
 	}
 
 	return {
@@ -873,5 +883,6 @@ export function useDocAnalysis(plugin: Plugin) {
 		openDoc,
 		updateSort,
 		saveOptions,
+		clearResults,
 	};
 }

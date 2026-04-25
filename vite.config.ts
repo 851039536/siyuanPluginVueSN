@@ -11,7 +11,7 @@ import {
 import { viteStaticCopy } from "vite-plugin-static-copy"
 import zipPack from "vite-plugin-zip-pack"
 
-const pluginInfo = require("./plugin.json")
+import pluginInfo from "./plugin.json"
 
 export default defineConfig(({
   mode,

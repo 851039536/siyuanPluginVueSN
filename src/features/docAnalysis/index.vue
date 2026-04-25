@@ -75,11 +75,20 @@
       <!-- 查询结果 -->
       <template v-else-if="queryState.results.length > 0">
         <DocListItem
-          v-for="doc in queryState.results"
+          v-for="doc in visibleDocs"
           :key="doc.id"
           :doc="doc"
+          v-memo="[doc.id, doc.title, doc.wordCount, doc.contentSize, doc.updated, doc.depth, doc.refCount, doc.imageCount]"
           @open="openDoc"
         />
+        <div
+          v-if="hasMoreDocs"
+          ref="sentinelRef"
+          class="load-more-sentinel"
+        >
+          <Icon icon="mdi:loading" class="loading-icon" v-if="isLoadingMore" />
+          <span v-else class="load-more-text">滚动加载更多 ({{ visibleCount }}/{{ queryState.results.length }})</span>
+        </div>
       </template>
 
       <!-- 无结果 -->
@@ -105,7 +114,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from "vue";
+import { onMounted, ref, computed, watch, onBeforeUnmount } from "vue";
 import { Icon } from "@iconify/vue";
 import FilterSettings from "./components/FilterSettings.vue";
 import DocListItem from "./components/DocListItem.vue";
@@ -135,7 +144,66 @@ const {
   queryByStatsCategory,
   openDoc,
   updateSort,
+  clearResults,
 } = useDocAnalysis(props.plugin);
+
+// ============================================================
+// 分批渲染：避免一次渲染上千个 DocListItem 导致卡顿
+// ============================================================
+const PAGE_SIZE = 50;
+const visibleCount = ref(PAGE_SIZE);
+const isLoadingMore = ref(false);
+const sentinelRef = ref<HTMLElement | null>(null);
+let observer: IntersectionObserver | null = null;
+
+const visibleDocs = computed(() => queryState.results.slice(0, visibleCount.value));
+const hasMoreDocs = computed(() => visibleCount.value < queryState.results.length);
+
+function loadMore() {
+  if (hasMoreDocs.value && !isLoadingMore.value) {
+    isLoadingMore.value = true;
+    // 用 requestAnimationFrame 避免阻塞主线程
+    requestAnimationFrame(() => {
+      visibleCount.value = Math.min(visibleCount.value + PAGE_SIZE, queryState.results.length);
+      isLoadingMore.value = false;
+    });
+  }
+}
+
+// 当查询结果变化时重置可见数量
+watch(() => queryState.results, () => {
+  visibleCount.value = PAGE_SIZE;
+});
+
+function setupObserver() {
+  if (observer) observer.disconnect();
+  observer = new IntersectionObserver(
+    (entries) => {
+      if (entries[0]?.isIntersecting) {
+        loadMore();
+      }
+    },
+    { rootMargin: "200px" }
+  );
+  // 延迟观察，等 DOM 更新
+  requestAnimationFrame(() => {
+    if (sentinelRef.value && observer) {
+      observer.observe(sentinelRef.value);
+    }
+  });
+}
+
+// 哨兵元素挂载后启动观察
+watch(sentinelRef, (el) => {
+  if (el) setupObserver();
+});
+
+onBeforeUnmount(() => {
+  if (observer) {
+    observer.disconnect();
+    observer = null;
+  }
+});
 
 /** 执行查询 */
 function handleQuery() {
@@ -174,7 +242,7 @@ function getCategoryLabel(category: string): string {
 function clearStatsFilter() {
   statsFilter.value = "";
   queryState.hasQueried = false;
-  queryState.results = [];
+  clearResults();
   queryState.status = "idle";
 }
 

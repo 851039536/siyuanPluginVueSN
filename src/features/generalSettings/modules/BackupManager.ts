@@ -35,6 +35,8 @@ export interface RestoreResult {
 	success: boolean;
 	restoredFiles: number;
 	skippedFiles: number;
+	needRestart: boolean;
+	scriptPath?: string;
 }
 
 export interface VerifyResult {
@@ -231,14 +233,7 @@ export class BackupManager {
 		this.ensureFileSystem();
 
 		const fs = window.require("fs").promises;
-		const path = window.require("path");
 		const { onProgress } = options;
-
-		// 临时恢复目录（解压暂存区）
-		const restoreTmpDir = path.join(this.workspaceRoot, "data-restoring");
-
-		// 每次恢复前，先清理 data-restoring 残留（含上次中断的恢复）
-		await fs.rm(restoreTmpDir, { recursive: true, force: true });
 
 		onProgress?.({
 			phase: "reading",
@@ -246,176 +241,133 @@ export class BackupManager {
 			filesProcessed: 0,
 			totalFiles: 0,
 			percent: 0,
-		} as RestoreProgress);
+		});
 
-		// 读取 zip 文件
+		// 读取备份 zip 文件
 		const zipData = await fs.readFile(backupFilePath);
-		const zip = await JSZip.loadAsync(zipData);
 
 		// 校验备份文件有效性
-		const infoRaw = await zip.file("backup-info.json")?.async("string");
-		if (!infoRaw) {
-			throw new Error("无效的备份文件：缺少 backup-info.json");
-		}
-
-		// 校验完整性
 		onProgress?.({
 			phase: "verifying",
 			currentFile: "",
 			filesProcessed: 0,
 			totalFiles: 0,
 			percent: 10,
-		} as RestoreProgress);
+		});
 
-		// 提取所有文件（排除 backup-info.json）
-		const files: string[] = [];
+		const zip = await JSZip.loadAsync(zipData);
+		const infoRaw = await zip.file("backup-info.json")?.async("string");
+		if (!infoRaw) {
+			throw new Error("无效的备份文件：缺少 backup-info.json");
+		}
+
+		// 统计文件数
+		let totalFiles = 0;
 		zip.forEach((relativePath, file) => {
 			if (!file.dir && relativePath !== "backup-info.json") {
-				files.push(relativePath);
+				totalFiles++;
 			}
 		});
 
-		const totalFiles = files.length;
-		let restoredFiles = 0;
-		const failedFiles: string[] = [];
-
-		// ===== 阶段1：解压到临时目录（不触碰原始数据） =====
+		// ===== 通过思源 /api/import/importData API 恢复 =====
 		onProgress?.({
 			phase: "extracting",
 			currentFile: "",
 			filesProcessed: 0,
 			totalFiles,
-			percent: 15,
-		} as RestoreProgress);
+			percent: 20,
+		});
 
-		// 创建干净的临时目录
-		await fs.mkdir(restoreTmpDir, { recursive: true });
+		// 重新打包：去掉 backup-info.json，生成与思源"导出数据"格式一致的 zip
+		const cleanZip = new JSZip();
+		const fileEntries: { path: string; entry: JSZip.JSZipObject }[] = [];
+		zip.forEach((relativePath, file) => {
+			if (!file.dir && relativePath !== "backup-info.json") {
+				fileEntries.push({ path: relativePath, entry: file });
+			} else if (file.dir) {
+				cleanZip.folder(relativePath);
+			}
+		});
 
-		for (let i = 0; i < files.length; i++) {
-			const relativePath = files[i].split("/").join(path.sep);
-			const targetPath = path.join(restoreTmpDir, relativePath);
-
-			onProgress?.({
-				phase: "extracting",
-				currentFile: relativePath,
-				filesProcessed: i + 1,
-				totalFiles,
-				percent: 15 + Math.round(((i + 1) / totalFiles) * 50),
-			} as RestoreProgress);
-
-			try {
-				const zipEntry = zip.file(files[i]);
-				const content = zipEntry ? await zipEntry.async("uint8array") : null;
-				if (content) {
-					await fs.mkdir(path.dirname(targetPath), { recursive: true });
-					await fs.writeFile(targetPath, content);
-					restoredFiles++;
-				} else {
-					failedFiles.push(files[i]);
-				}
-			} catch (err) {
-				console.error(`解压文件失败: ${files[i]}`, err);
-				failedFiles.push(files[i]);
+		let processed = 0;
+		for (const { path, entry } of fileEntries) {
+			const content = await entry.async("uint8array");
+			cleanZip.file(path, content);
+			processed++;
+			if (processed % 50 === 0 || processed === fileEntries.length) {
+				onProgress?.({
+					phase: "extracting",
+					currentFile: path,
+					filesProcessed: processed,
+					totalFiles,
+					percent: 20 + Math.round((processed / totalFiles) * 30),
+				});
 			}
 		}
 
-		if (failedFiles.length > 0) {
-			// 解压阶段就有失败，清理临时目录，不替换原始数据
-			await fs.rm(restoreTmpDir, { recursive: true, force: true });
-			console.error(`解压失败 ${failedFiles.length} 个文件，恢复中止:`, failedFiles);
-			return { success: false, restoredFiles: 0, skippedFiles: failedFiles.length };
-		}
+		const cleanZipBuffer = await cleanZip.generateAsync(
+			{ type: "uint8array", compression: "DEFLATE", compressionOptions: { level: 6 } },
+			(metadata) => {
+				onProgress?.({
+					phase: "compressing",
+					currentFile: "",
+					filesProcessed: totalFiles,
+					totalFiles,
+					percent: 50 + Math.round(metadata.percent * 0.2),
+				});
+			},
+		);
 
-		// ===== 阶段2：将临时文件写入工作区 =====
-		// 使用逐文件复制而非 rename，避免 Windows 上 EPERM 错误
+		// 调用思源 API 恢复数据
 		onProgress?.({
-			phase: "writing",
+			phase: "swapping",
 			currentFile: "",
-			filesProcessed: 0,
+			filesProcessed: totalFiles,
 			totalFiles,
 			percent: 70,
-		} as RestoreProgress);
+		});
 
-		for (let i = 0; i < files.length; i++) {
-			const relativePath = files[i].split("/").join(path.sep);
-			const srcPath = path.join(restoreTmpDir, relativePath);
-			const destPath = path.join(this.workspacePath, relativePath);
+		const formData = new FormData();
+		const blob = new Blob([cleanZipBuffer], { type: "application/zip" });
+		formData.append("file", blob, "data.zip");
 
-			onProgress?.({
-				phase: "writing",
-				currentFile: relativePath,
-				filesProcessed: i + 1,
-				totalFiles,
-				percent: 70 + Math.round(((i + 1) / totalFiles) * 20),
-			} as RestoreProgress);
+		const response = await fetch("/api/import/importData", {
+			method: "POST",
+			body: formData,
+		});
 
-			try {
-				await fs.mkdir(path.dirname(destPath), { recursive: true });
-				await fs.copyFile(srcPath, destPath);
-			} catch (err) {
-				console.error(`写入文件失败: ${relativePath}`, err);
-				failedFiles.push(files[i]);
-			}
+		const result = await response.json();
+
+		if (result.code !== 0) {
+			throw new Error(result.msg || "导入数据失败");
 		}
 
-		// ===== 阶段3：清理多余的旧文件 =====
-		if (failedFiles.length === 0) {
-			onProgress?.({
-				phase: "swapping",
-				currentFile: "",
-				filesProcessed: 0,
-				totalFiles: 0,
-				percent: 92,
-			} as RestoreProgress);
-
-			await this.removeExtraFiles(fs, path, restoreTmpDir, this.workspacePath);
-		}
-
-		// 清理临时目录
-		await fs.rm(restoreTmpDir, { recursive: true, force: true });
-
-		if (failedFiles.length > 0) {
-			console.error(`恢复完成，但有 ${failedFiles.length} 个文件失败:`, failedFiles);
-			return { success: false, restoredFiles: restoredFiles - failedFiles.length, skippedFiles: failedFiles.length };
-		}
-
-		return { success: true, restoredFiles, skippedFiles: 0 };
-	}
-
-	/** 清理工作区中不在备份中的多余文件（全量恢复用） */
-	private async removeExtraFiles(fs: any, path: any, backupDir: string, dataDir: string) {
-		const preserveNames = new Set(["temp", ".recycle"]);
-		// 也排除备份目录本身（如果在 workspace 下）
-		if (this.backupDir.startsWith(this.workspacePath)) {
-			const backupRelative = path.relative(this.workspacePath, this.backupDir);
-			if (backupRelative && !backupRelative.startsWith("..")) {
-				preserveNames.add(backupRelative.split(path.sep)[0]);
-			}
-		}
-
+		// 清理残留的 data-restoring 临时目录（兼容旧版本恢复残留）
 		try {
-			const entries = await fs.readdir(dataDir, { withFileTypes: true });
-			for (const entry of entries) {
-				if (preserveNames.has(entry.name)) continue;
-				const dataPath = path.join(dataDir, entry.name);
-				const backupPath = path.join(backupDir, entry.name);
-				const existsInBackup = await this.existsPath(fs, backupPath);
-				if (!existsInBackup) {
-					await fs.rm(dataPath, { recursive: true, force: true });
-				}
-			}
+			const path = window.require("path");
+			const restoreTmpDir = path.join(this.workspaceRoot, "data-restoring");
+			await fs.rm(restoreTmpDir, { recursive: true, force: true });
+			// 清理旧版 Python 脚本残留
+			const scriptPath = path.join(this.workspaceRoot, "restore-backup.py");
+			await fs.unlink(scriptPath).catch(() => {});
 		} catch {
-			// 忽略清理错误
+			// 清理失败不影响恢复结果
 		}
-	}
 
-	private async existsPath(fs: any, filePath: string): Promise<boolean> {
-		try {
-			await fs.access(filePath);
-			return true;
-		} catch {
-			return false;
-		}
+		onProgress?.({
+			phase: "swapping",
+			currentFile: "",
+			filesProcessed: totalFiles,
+			totalFiles,
+			percent: 100,
+		});
+
+		return {
+			success: true,
+			restoredFiles: totalFiles,
+			skippedFiles: 0,
+			needRestart: true,
+		};
 	}
 
 	// ========== 完整性校验 ==========

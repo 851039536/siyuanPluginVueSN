@@ -1,13 +1,13 @@
 /**
  * 数据备份管理器
- * 支持：全量备份、备份恢复、完整性校验（SHA256）、进度回调
+ * 支持：全量备份、备份恢复、进度回调
  */
 import JSZip from "jszip";
 
 // ========== 类型定义 ==========
 
 export interface BackupProgress {
-	phase: "scanning" | "packing" | "compressing" | "saving" | "verifying";
+	phase: "scanning" | "packing" | "compressing" | "saving";
 	currentFile: string;
 	filesProcessed: number;
 	totalFiles: number;
@@ -19,12 +19,11 @@ export interface BackupResult {
 	fileName: string;
 	filePath: string;
 	size: number;
-	checksum: string;
 	totalFiles: number;
 }
 
 export interface RestoreProgress {
-	phase: "reading" | "extracting" | "verifying" | "writing" | "swapping";
+	phase: "reading" | "extracting" | "compressing" | "swapping";
 	currentFile: string;
 	filesProcessed: number;
 	totalFiles: number;
@@ -36,16 +35,6 @@ export interface RestoreResult {
 	restoredFiles: number;
 	skippedFiles: number;
 	needRestart: boolean;
-	scriptPath?: string;
-}
-
-export interface VerifyResult {
-	valid: boolean;
-	checksum: string;
-	expectedChecksum: string;
-	fileCount: number;
-	totalSize: number;
-	error?: string;
 }
 
 export interface BackupOptions {
@@ -65,7 +54,6 @@ export interface BackupInfo {
 	workspaceRoot: string;
 	workspaceDataPath: string;
 	backupDir: string;
-	checksum: string;
 	totalFiles: number;
 }
 
@@ -79,24 +67,6 @@ function formatTimestamp(now: Date): string {
 	const minute = now.getMinutes().toString().padStart(2, "0");
 	const second = now.getSeconds().toString().padStart(2, "0");
 	return `data-${year}${month}${day}-${hour}${minute}${second}.zip`;
-}
-
-async function computeSHA256(buffer: Uint8Array): Promise<string> {
-	try {
-		// Electron 环境：使用 Node crypto
-		if (typeof window.require === "function") {
-			const crypto = window.require("crypto");
-			const hash = crypto.createHash("sha256");
-			hash.update(Buffer.from(buffer));
-			return hash.digest("hex");
-		}
-	} catch {
-		// 降级到 Web Crypto API
-	}
-	// Web Crypto API 降级方案
-	const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
-	const hashArray = Array.from(new Uint8Array(hashBuffer));
-	return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 // ========== BackupManager ==========
@@ -159,14 +129,13 @@ export class BackupManager {
 			workspaceRoot: this.workspaceRoot,
 			workspaceDataPath: this.workspacePath,
 			backupDir: this.backupDir,
-			checksum: "",
 			totalFiles,
 		};
 
 		return this.finalizeAndSaveBackup(zip, backupInfo, totalFiles, compressionLevel, onProgress);
 	}
 
-	/** 压缩、校验、保存备份（公共逻辑） */
+	/** 压缩、保存备份（公共逻辑） */
 	private async finalizeAndSaveBackup(
 		zip: JSZip,
 		backupInfo: BackupInfo,
@@ -185,30 +154,17 @@ export class BackupManager {
 		const zipBuffer = await zip.generateAsync(
 			{ type: "uint8array", compression: "DEFLATE", compressionOptions: { level: compressionLevel } },
 			(metadata) => {
-				onProgress?.({ phase: "compressing", currentFile: "", filesProcessed: totalFiles, totalFiles, percent: 75 + Math.round(metadata.percent * 0.15) });
+				onProgress?.({ phase: "compressing", currentFile: "", filesProcessed: totalFiles, totalFiles, percent: 75 + Math.round(metadata.percent * 0.2) });
 			},
 		);
 
-		// 阶段4：计算校验和
-		onProgress?.({ phase: "verifying", currentFile: "", filesProcessed: totalFiles, totalFiles, percent: 92 });
-
-		const checksum = await computeSHA256(zipBuffer);
-		backupInfo.checksum = checksum;
-		zip.file("backup-info.json", JSON.stringify(backupInfo, null, 2));
-
-		const finalBuffer = await zip.generateAsync({
-			type: "uint8array",
-			compression: "DEFLATE",
-			compressionOptions: { level: compressionLevel },
-		});
-
-		// 阶段5：保存文件
+		// 阶段4：保存文件
 		onProgress?.({ phase: "saving", currentFile: "", filesProcessed: totalFiles, totalFiles, percent: 95 });
 
 		await fs.mkdir(this.backupDir, { recursive: true });
 		const fileName = formatTimestamp(new Date());
 		const zipFilePath = path.join(this.backupDir, fileName);
-		await fs.writeFile(zipFilePath, finalBuffer);
+		await fs.writeFile(zipFilePath, zipBuffer);
 
 		const stats = await fs.stat(zipFilePath);
 
@@ -219,7 +175,6 @@ export class BackupManager {
 			fileName,
 			filePath: zipFilePath,
 			size: stats.size,
-			checksum,
 			totalFiles,
 		};
 	}
@@ -245,15 +200,6 @@ export class BackupManager {
 
 		// 读取备份 zip 文件
 		const zipData = await fs.readFile(backupFilePath);
-
-		// 校验备份文件有效性
-		onProgress?.({
-			phase: "verifying",
-			currentFile: "",
-			filesProcessed: 0,
-			totalFiles: 0,
-			percent: 10,
-		});
 
 		const zip = await JSZip.loadAsync(zipData);
 		const infoRaw = await zip.file("backup-info.json")?.async("string");
@@ -367,56 +313,6 @@ export class BackupManager {
 			restoredFiles: totalFiles,
 			skippedFiles: 0,
 			needRestart: true,
-		};
-	}
-
-	// ========== 完整性校验 ==========
-
-	async verifyBackup(backupFilePath: string): Promise<VerifyResult> {
-		this.ensureFileSystem();
-
-		const fs = window.require("fs").promises;
-
-		// 读取文件
-		const zipData = await fs.readFile(backupFilePath);
-		const actualChecksum = await computeSHA256(zipData);
-
-		// 读取 backup-info 中的预期校验和
-		const zip = await JSZip.loadAsync(zipData);
-		const infoRaw = await zip.file("backup-info.json")?.async("string");
-
-		if (!infoRaw) {
-			return {
-				valid: false,
-				checksum: actualChecksum,
-				expectedChecksum: "",
-				fileCount: 0,
-				totalSize: zipData.length,
-				error: "缺少 backup-info.json",
-			};
-		}
-
-		const info: BackupInfo = JSON.parse(infoRaw);
-		let fileCount = 0;
-		zip.forEach(() => { fileCount++; });
-
-		// v1 备份没有 checksum 字段，跳过校验
-		if (!info.checksum) {
-			return {
-				valid: true,
-				checksum: actualChecksum,
-				expectedChecksum: "(v1 备份，无校验和)",
-				fileCount,
-				totalSize: zipData.length,
-			};
-		}
-
-		return {
-			valid: actualChecksum === info.checksum,
-			checksum: actualChecksum,
-			expectedChecksum: info.checksum,
-			fileCount,
-			totalSize: zipData.length,
 		};
 	}
 

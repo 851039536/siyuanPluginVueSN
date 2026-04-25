@@ -211,7 +211,6 @@
               <span class="backup-size">{{ formatFileSize(backup.size) }}</span>
             </div>
             <div class="backup-actions">
-              <button @click="verifyBackup(backup)" class="action-btn verify" :disabled="isVerifying">校验</button>
               <button @click="restoreBackup(backup)" class="action-btn restore" :disabled="isRestoring">恢复</button>
               <button @click="uploadToCloud(backup)" class="action-btn cloud" :disabled="!cloudSyncEnabled">☁️</button>
               <button @click="deleteBackup(backup)" class="action-btn delete">{{ i18n.delete || '删除' }}</button>
@@ -221,31 +220,6 @@
         <div v-else class="empty-state">
           <span class="empty-icon">📭</span>
           <p>{{ i18n.noBackups || '暂无备份记录' }}</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- 校验结果对话框 -->
-    <div v-if="verifyResult" class="input-dialog-overlay" @click.self="verifyResult = null">
-      <div class="input-dialog">
-        <div class="input-dialog-header">
-          <h4>备份校验结果</h4>
-        </div>
-        <div class="input-dialog-body verify-result-body">
-          <div class="verify-status" :class="{ valid: verifyResult.valid, invalid: !verifyResult.valid }">
-            <span class="verify-icon">{{ verifyResult.valid ? '✅' : '❌' }}</span>
-            <span>{{ verifyResult.valid ? '校验通过' : '校验失败' }}</span>
-          </div>
-          <div class="verify-details">
-            <div class="verify-row"><span>文件数:</span><span>{{ verifyResult.fileCount }}</span></div>
-            <div class="verify-row"><span>文件大小:</span><span>{{ formatFileSize(verifyResult.totalSize) }}</span></div>
-            <div class="verify-row"><span>实际校验和:</span><span class="checksum">{{ verifyResult.checksum.slice(0, 16) }}...</span></div>
-            <div class="verify-row"><span>预期校验和:</span><span class="checksum">{{ verifyResult.expectedChecksum.slice(0, 16) }}...</span></div>
-            <div v-if="verifyResult.error" class="verify-row error"><span>错误:</span><span>{{ verifyResult.error }}</span></div>
-          </div>
-        </div>
-        <div class="input-dialog-footer">
-          <button @click="verifyResult = null" class="input-dialog-btn confirm">关闭</button>
         </div>
       </div>
     </div>
@@ -285,7 +259,7 @@ import { ref, onMounted, onUnmounted, watch, nextTick, computed } from "vue";
 import { showMessage } from "siyuan";
 import { checkIsMobile } from "../types";
 import { BackupManager } from "../modules/BackupManager";
-import type { BackupProgress, VerifyResult as VerifyResultType, RestoreProgress } from "../modules/BackupManager";
+import type { BackupProgress, RestoreProgress } from "../modules/BackupManager";
 import { CloudBackupManager } from "../modules/CloudBackupManager";
 import type { CloudProviderConfig, CloudFileInfo } from "../modules/CloudBackupManager";
 
@@ -304,7 +278,6 @@ const workspacePath = ref("");
 const workspaceRoot = ref("");
 const isBackingUp = ref(false);
 const isRestoring = ref(false);
-const isVerifying = ref(false);
 const isLoading = ref(false);
 const isTestingCloud = ref(false);
 const lastBackupTime = ref("");
@@ -336,18 +309,13 @@ const phaseLabel = computed(() => {
 		packing: "打包文件",
 		compressing: "压缩数据",
 		saving: "保存备份",
-		verifying: "校验完整性",
 		uploading: "上传云端",
 		reading: "读取备份",
 		extracting: "解压文件",
-		writing: "写入文件",
 		swapping: "替换数据",
 	};
 	return labels[backupProgress.value.phase] || backupProgress.value.phase;
 });
-
-// 校验结果
-const verifyResult = ref<VerifyResultType | null>(null);
 
 // 云备份
 const cloudConfig = ref<CloudProviderConfig>({
@@ -751,30 +719,6 @@ async function restoreBackup(backup: { name: string; path: string }) {
 		showMessage(`恢复失败: ${error.message}`, 5000, "error");
 	} finally {
 		isRestoring.value = false;
-	}
-}
-
-// 校验备份
-async function verifyBackup(backup: { name: string; path: string }) {
-	if (isVerifying.value || !backupManager) return;
-
-	isVerifying.value = true;
-	verifyResult.value = null;
-
-	try {
-		const result = await backupManager.verifyBackup(backup.path);
-		verifyResult.value = result;
-	} catch (error: any) {
-		verifyResult.value = {
-			valid: false,
-			checksum: "",
-			expectedChecksum: "",
-			fileCount: 0,
-			totalSize: 0,
-			error: error.message,
-		};
-	} finally {
-		isVerifying.value = false;
 	}
 }
 

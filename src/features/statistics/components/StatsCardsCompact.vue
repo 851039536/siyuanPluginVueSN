@@ -96,7 +96,7 @@ function formatChange(change: number | null): string {
 @use "@/variables" as *;
 @use "../../superPanel/styles/variables" as *;
 @use "../../superPanel/styles/mixins" as *;
-@use "../index.scss" as stats;
+@use "../styles/index.scss" as stats;
 
 .stats-grid {
   display: grid;

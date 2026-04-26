@@ -1,6 +1,6 @@
 import { Plugin } from "siyuan";
 import { createApp, App as VueApp } from "vue";
-import StatisticsPanel from "./StatisticsPanel.vue";
+import StatisticsPanel from "./index.vue";
 import { readDir, lsNotebooks } from "@/api";
 
 const DAY_PERIOD_MAP: Record<number, string> = {

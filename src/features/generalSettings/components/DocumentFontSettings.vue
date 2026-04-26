@@ -494,5 +494,5 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
-@use "./styles/DocumentFontSettings.scss";
+@use "../styles/DocumentFontSettings.scss";
 </style>

@@ -3,7 +3,7 @@
  * 替代原有的硬编码样式注入，使用 CSS 变量实现动态样式
  */
 
-import { HEADING_LEVEL_MAPPINGS } from "../../types";
+import { HEADING_LEVEL_MAPPINGS } from "../types";
 
 export interface HeadingSettingsStyleVars {
 	// 标题颜色

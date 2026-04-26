@@ -507,5 +507,5 @@ function closeDialog() {
 </script>
 
 <style scoped lang="scss">
-@use "./styles/pronunciation.scss";
+@use "../styles/pronunciation.scss";
 </style>

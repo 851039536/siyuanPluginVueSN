@@ -430,5 +430,5 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
-@use "./styles/TableStyleSettings.scss";
+@use "../styles/TableStyleSettings.scss";
 </style>

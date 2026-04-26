@@ -465,5 +465,5 @@ defineExpose({ refreshSkills, loadSettings });
 </script>
 
 <style scoped lang="scss">
-@use './styles/SkillsViewerSettings.scss';
+@use '../styles/SkillsViewerSettings.scss';
 </style>

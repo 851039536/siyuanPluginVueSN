@@ -867,5 +867,5 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
-@use './styles/DataBackupSettings.scss';
+@use '../styles/DataBackupSettings.scss';
 </style>

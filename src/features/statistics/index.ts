@@ -2,7 +2,7 @@
  * 数据统计功能模块
  */
 import { Plugin } from "siyuan";
-import { Statistics } from "./Statistics";
+import { Statistics } from "./core";
 
 let statisticsInstance: Statistics | null = null;
 

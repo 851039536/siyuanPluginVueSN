@@ -647,7 +647,7 @@ function getDiff(
 @use "@/variables" as *;
 @use "../../superPanel/styles/variables" as *;
 @use "../../superPanel/styles/mixins" as *;
-@use "../index.scss" as stats;
+@use "../styles/index.scss" as stats;
 
 .trend-view {
   // ===== 趋势图表 =====

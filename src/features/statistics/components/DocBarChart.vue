@@ -118,7 +118,7 @@ function truncateName(name: string): string {
 @use "@/variables" as *;
 @use "../../superPanel/styles/variables" as *;
 @use "../../superPanel/styles/mixins" as *;
-@use "../index.scss" as stats;
+@use "../styles/index.scss" as stats;
 
 .doc-bar-chart-section {
   .loading-state {

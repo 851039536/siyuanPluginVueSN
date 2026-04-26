@@ -86,7 +86,7 @@ function formatChartLabel(label: string): string {
 @use "@/variables" as *;
 @use "../../superPanel/styles/variables" as *;
 @use "../../superPanel/styles/mixins" as *;
-@use "../index.scss" as stats;
+@use "../styles/index.scss" as stats;
 
 .bar-chart-section {
   .bar-chart-container {

@@ -264,7 +264,7 @@ function padZero(num: number): string {
 </script>
 
 <style scoped lang="scss">
-@use "../index.scss" as stats;
+@use "../styles/index.scss" as stats;
 
 .insight-cards {
   margin-bottom: 8px;

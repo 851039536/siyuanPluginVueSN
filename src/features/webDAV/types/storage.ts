@@ -1,8 +1,9 @@
 /**
  * WebDAV数据存储模块
- * 使用思源API进行数据持久化
+ * 使用 PluginStorage 进行数据持久化
  */
 import { Plugin } from "siyuan";
+import { PluginStorage } from "@/utils/pluginStorage";
 import type { WebDAVConfig } from "@/config/settings";
 
 const WEBDAV_CONFIG_KEY = "webdav-config";
@@ -18,56 +19,6 @@ const DEFAULT_WEBDAV_CONFIG: WebDAVConfig = {
 };
 
 /**
- * 加载WebDAV配置
- */
-export async function loadWebDAVConfig(plugin: Plugin): Promise<WebDAVConfig> {
-	try {
-		const data = await plugin.loadData(WEBDAV_CONFIG_KEY);
-		if (!data) {
-			return { ...DEFAULT_WEBDAV_CONFIG };
-		}
-		return { ...DEFAULT_WEBDAV_CONFIG, ...data };
-	} catch (error) {
-		console.error("加载WebDAV配置失败:", error);
-		return { ...DEFAULT_WEBDAV_CONFIG };
-	}
-}
-
-/**
- * 保存WebDAV配置
- */
-export async function saveWebDAVConfig(
-	plugin: Plugin,
-	config: WebDAVConfig,
-): Promise<boolean> {
-	try {
-		await plugin.saveData(WEBDAV_CONFIG_KEY, config);
-		return true;
-	} catch (error) {
-		console.error("保存WebDAV配置失败:", error);
-		return false;
-	}
-}
-
-/**
- * 重置WebDAV配置
- */
-export async function resetWebDAVConfig(plugin: Plugin): Promise<boolean> {
-	try {
-		await plugin.saveData(WEBDAV_CONFIG_KEY, DEFAULT_WEBDAV_CONFIG);
-		return true;
-	} catch (error) {
-		console.error("重置WebDAV配置失败:", error);
-		return false;
-	}
-}
-
-/**
- * 同步状态存储键
- */
-const SYNC_STATUS_KEY = "webdav-sync-status";
-
-/**
  * 同步状态接口
  */
 export interface SyncStatus {
@@ -77,9 +28,8 @@ export interface SyncStatus {
 	syncedFiles: number;
 }
 
-/**
- * 默认同步状态
- */
+const SYNC_STATUS_KEY = "webdav-sync-status";
+
 const DEFAULT_SYNC_STATUS: SyncStatus = {
 	lastSyncTime: "",
 	lastSyncResult: "none",
@@ -88,33 +38,55 @@ const DEFAULT_SYNC_STATUS: SyncStatus = {
 };
 
 /**
- * 加载同步状态
+ * WebDAV存储管理类
  */
-export async function loadSyncStatus(plugin: Plugin): Promise<SyncStatus> {
-	try {
-		const data = await plugin.loadData(SYNC_STATUS_KEY);
+export class WebDAVStorage {
+	private storage: PluginStorage;
+
+	constructor(plugin: Plugin) {
+		this.storage = new PluginStorage(plugin);
+	}
+
+	/**
+	 * 加载WebDAV配置
+	 */
+	async loadConfig(): Promise<WebDAVConfig> {
+		const data = await this.storage.load<WebDAVConfig>(WEBDAV_CONFIG_KEY);
+		if (!data) {
+			return { ...DEFAULT_WEBDAV_CONFIG };
+		}
+		return { ...DEFAULT_WEBDAV_CONFIG, ...data };
+	}
+
+	/**
+	 * 保存WebDAV配置
+	 */
+	async saveConfig(config: WebDAVConfig): Promise<boolean> {
+		return this.storage.save(WEBDAV_CONFIG_KEY, config);
+	}
+
+	/**
+	 * 重置WebDAV配置
+	 */
+	async resetConfig(): Promise<boolean> {
+		return this.storage.save(WEBDAV_CONFIG_KEY, DEFAULT_WEBDAV_CONFIG);
+	}
+
+	/**
+	 * 加载同步状态
+	 */
+	async loadSyncStatus(): Promise<SyncStatus> {
+		const data = await this.storage.load<SyncStatus>(SYNC_STATUS_KEY);
 		if (!data) {
 			return { ...DEFAULT_SYNC_STATUS };
 		}
 		return { ...DEFAULT_SYNC_STATUS, ...data };
-	} catch (error) {
-		console.error("加载同步状态失败:", error);
-		return { ...DEFAULT_SYNC_STATUS };
 	}
-}
 
-/**
- * 保存同步状态
- */
-export async function saveSyncStatus(
-	plugin: Plugin,
-	status: SyncStatus,
-): Promise<boolean> {
-	try {
-		await plugin.saveData(SYNC_STATUS_KEY, status);
-		return true;
-	} catch (error) {
-		console.error("保存同步状态失败:", error);
-		return false;
+	/**
+	 * 保存同步状态
+	 */
+	async saveSyncStatus(status: SyncStatus): Promise<boolean> {
+		return this.storage.save(SYNC_STATUS_KEY, status);
 	}
 }

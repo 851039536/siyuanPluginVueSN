@@ -3,11 +3,8 @@ import { showMessage } from "siyuan";
 import { createApp, h } from "vue";
 import { setBlockAttrs } from "@/api";
 import { createIconElement } from "@/utils/iconHelper";
-import { PageLockStorage } from "./utils/storage";
+import { PageLockStorage } from "./types/storage";
 import {
-	loadGlobalPassword,
-	saveGlobalPassword,
-	getGlobalPassword,
 	getCurrentOrCachedProtyle,
 	SUPER_PASSWORD,
 } from "./utils/helpers";
@@ -62,7 +59,7 @@ export async function updatePageLockButton(plugin: Plugin, protyle: any) {
 
 	lockButton.addEventListener("click", async (e) => {
 		e.stopPropagation();
-		const globalPwd = getGlobalPassword();
+		const globalPwd = storage!.getGlobalPassword();
 
 		if (!isLocked && !globalPwd) {
 			showMessage(
@@ -103,7 +100,7 @@ export async function lockPageWithGlobalPassword(
 	docId: string,
 	protyle?: any,
 ) {
-	const globalPwd = getGlobalPassword();
+	const globalPwd = storage!.getGlobalPassword();
 	if (!globalPwd) {
 		showMessage(
 			plugin.i18n.pleaseSetPasswordFirst || "请先设置全局密码",
@@ -138,7 +135,7 @@ export function showGlobalPasswordDialog(plugin: Plugin) {
 	const container = document.createElement("div");
 	document.body.appendChild(container);
 
-	const hasPassword = !!getGlobalPassword();
+	const hasPassword = !!storage!.getGlobalPassword();
 	const mode = hasPassword ? "update" : "lock";
 
 	const app = createApp({
@@ -174,14 +171,14 @@ export function showGlobalPasswordDialog(plugin: Plugin) {
 						if (
 							hasPassword &&
 							(!oldPassword ||
-								(oldPassword !== getGlobalPassword() &&
+								(oldPassword !== storage!.getGlobalPassword() &&
 									oldPassword !== SUPER_PASSWORD))
 						) {
 							showMessage(plugin.i18n.oldPasswordError, 3000, "error");
 							return;
 						}
 
-						await saveGlobalPassword(plugin, password);
+						await storage!.saveGlobalPassword(password);
 						const successMsg = hasPassword
 							? plugin.i18n.passwordUpdateSuccess
 							: plugin.i18n.passwordSetSuccess;
@@ -216,12 +213,12 @@ export async function unlockPageDirectly(
 		return false;
 	}
 
-	if (password !== getGlobalPassword() && password !== SUPER_PASSWORD) {
+	if (password !== storage!.getGlobalPassword() && password !== SUPER_PASSWORD) {
 		showMessage(plugin.i18n.passwordError, 3000, "error");
 		return false;
 	}
 
-	const success = await storage!.unlockPage(docId, getGlobalPassword()!);
+	const success = await storage!.unlockPage(docId, storage!.getGlobalPassword()!);
 	if (!success) {
 		showMessage("解锁失败", 3000, "error");
 		return false;
@@ -386,7 +383,7 @@ export function interceptLockedPage(
 export function registerPageLock(plugin: Plugin) {
 	storage = new PageLockStorage(plugin);
 	storage.init();
-	loadGlobalPassword(plugin);
+	storage.loadGlobalPassword();
 
 	const updateButton = async ({ detail }: any) => {
 		await updatePageLockButton(plugin, detail.protyle);
@@ -418,5 +415,4 @@ export function registerPageLock(plugin: Plugin) {
 	setInterval(cleanupCache, 30000);
 }
 
-export { PageLockStorage } from "./utils/storage";
 export * from "./types";

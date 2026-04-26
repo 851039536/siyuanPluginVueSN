@@ -1,29 +1,47 @@
-import type { Plugin } from "siyuan";
-import { hashPassword, verifyPassword } from "./crypto";
-import type { PageLockInfo } from "../types";
+import { Plugin } from "siyuan";
+import { PluginStorage } from "@/utils/pluginStorage";
+import { hashPassword, verifyPassword } from "../utils/crypto";
 
+/**
+ * 页面锁定信息
+ */
+export interface PageLockInfo {
+	docId: string;
+	passwordHash: string;
+	locked: boolean;
+	createdAt: number;
+	updatedAt: number;
+}
+
+const STORAGE_KEY = "page-lock-data";
+const GLOBAL_PASSWORD_KEY = "global-password";
+
+/**
+ * 页面锁定存储管理类
+ */
 export class PageLockStorage {
-	private plugin: Plugin;
-	private readonly STORAGE_KEY = "page-lock-data";
+	private storage: PluginStorage;
 
 	constructor(plugin: Plugin) {
-		this.plugin = plugin;
+		this.storage = new PluginStorage(plugin);
 	}
 
-	async init() {
-		const data = await this.plugin.loadData(this.STORAGE_KEY);
+	async init(): Promise<void> {
+		const data = await this.storage.load(STORAGE_KEY);
 		if (!data) {
-			await this.plugin.saveData(this.STORAGE_KEY, {});
+			await this.storage.save(STORAGE_KEY, {});
 		}
 	}
 
 	private async getAllLocks(): Promise<Record<string, PageLockInfo>> {
-		const data = await this.plugin.loadData(this.STORAGE_KEY);
+		const data = await this.storage.load<Record<string, PageLockInfo>>(
+			STORAGE_KEY,
+		);
 		return data || {};
 	}
 
-	private async saveAllLocks(locks: Record<string, PageLockInfo>) {
-		await this.plugin.saveData(this.STORAGE_KEY, locks);
+	private async saveAllLocks(locks: Record<string, PageLockInfo>): Promise<boolean> {
+		return this.storage.save(STORAGE_KEY, locks);
 	}
 
 	async lockPage(docId: string, password: string): Promise<boolean> {
@@ -39,8 +57,7 @@ export class PageLockStorage {
 				updatedAt: Date.now(),
 			};
 
-			await this.saveAllLocks(locks);
-			return true;
+			return await this.saveAllLocks(locks);
 		} catch (error) {
 			console.error("锁定页面失败:", error);
 			return false;
@@ -59,8 +76,7 @@ export class PageLockStorage {
 			const isValid = await verifyPassword(password, lockInfo.passwordHash);
 			if (isValid) {
 				delete locks[docId];
-				await this.saveAllLocks(locks);
-				return true;
+				return await this.saveAllLocks(locks);
 			}
 
 			return false;
@@ -75,7 +91,10 @@ export class PageLockStorage {
 		return !!locks[docId]?.locked;
 	}
 
-	async verifyPagePassword(docId: string, password: string): Promise<boolean> {
+	async verifyPagePassword(
+		docId: string,
+		password: string,
+	): Promise<boolean> {
 		try {
 			const locks = await this.getAllLocks();
 			const lockInfo = locks[docId];
@@ -109,7 +128,10 @@ export class PageLockStorage {
 				return false;
 			}
 
-			const isValid = await verifyPassword(oldPassword, lockInfo.passwordHash);
+			const isValid = await verifyPassword(
+				oldPassword,
+				lockInfo.passwordHash,
+			);
 			if (!isValid) {
 				return false;
 			}
@@ -121,11 +143,41 @@ export class PageLockStorage {
 				updatedAt: Date.now(),
 			};
 
-			await this.saveAllLocks(locks);
-			return true;
+			return await this.saveAllLocks(locks);
 		} catch (error) {
 			console.error("修改密码失败:", error);
 			return false;
 		}
+	}
+
+	// ==================== 全局密码管理 ====================
+
+	private globalPassword: string | null = null;
+
+	async loadGlobalPassword(): Promise<void> {
+		try {
+			this.globalPassword = await this.storage.load<string>(
+				GLOBAL_PASSWORD_KEY,
+			);
+		} catch (error) {
+			console.error("加载全局密码失败:", error);
+		}
+	}
+
+	async saveGlobalPassword(password: string): Promise<boolean> {
+		try {
+			const success = await this.storage.save(GLOBAL_PASSWORD_KEY, password);
+			if (success) {
+				this.globalPassword = password;
+			}
+			return success;
+		} catch (error) {
+			console.error("保存全局密码失败:", error);
+			return false;
+		}
+	}
+
+	getGlobalPassword(): string | null {
+		return this.globalPassword;
 	}
 }

@@ -1,10 +1,4 @@
-export interface PageLockInfo {
-	docId: string;
-	passwordHash: string;
-	locked: boolean;
-	createdAt: number;
-	updatedAt: number;
-}
+export * from "./storage";
 
 export interface PageLockI18n {
 	lockPage?: string;

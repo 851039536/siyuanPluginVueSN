@@ -127,9 +127,4 @@ export class ImageCompressorManager {
 	public destroy() {}
 }
 
-export function registerImageCompressor(plugin: Plugin) {
-	const manager = new ImageCompressorManager(plugin);
-	manager.init();
-	(plugin as any).__imageCompressor = manager;
-	return manager;
-}
+

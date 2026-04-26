@@ -144,17 +144,5 @@ ${options.userInput}`;
 	public destroy() {}
 }
 
-/**
- * 注册AI内容生成模块
- */
-export function registerAIContentGenerator(plugin: Plugin) {
-	const generator = new AIContentGenerator(plugin);
-	generator.init();
-
-	(plugin as any).__aiContentGenerator = generator;
-
-	return generator;
-}
-
 // 重新导出类型，保持向后兼容
 export type { GenerateOptions } from "@/types/ai";

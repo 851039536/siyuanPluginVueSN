@@ -1457,10 +1457,3 @@ export class GeneralSettings {
 		}
 	}
 }
-
-export function registerGeneralSettings(plugin: Plugin) {
-	const settings = new GeneralSettings(plugin);
-	settings.init();
-	(plugin as any).__generalSettings = settings;
-	return settings;
-}

@@ -1,5 +1,5 @@
 /**
- * 目录索引插件 - 类型定义和注册函数
+ * 目录索引插件 - 类型定义
  * 参考: https://github.com/TinkMingKing/siyuan-plugins-index
  */
 import { Plugin } from "siyuan";
@@ -345,14 +345,4 @@ export class TableOfContentsManager {
 	public destroy() {
 		// 清理逻辑（如需要）
 	}
-}
-
-/**
- * 注册目录索引插件功能
- */
-export function registerTableOfContents(plugin: Plugin) {
-	const manager = new TableOfContentsManager(plugin);
-	manager.init();
-	(plugin as any).__tableOfContents = manager;
-	return manager;
 }

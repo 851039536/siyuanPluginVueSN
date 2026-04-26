@@ -120,9 +120,10 @@ const result = await callAI(prompt, config, options)
 
 ```
 src/features/myFeature/
+├── index.ts               # 注册函数 + 重新导出类型
 ├── index.vue              # 主面板
 ├── types/
-│   ├── index.ts           # 注册函数
+│   ├── index.ts           # 类型定义（仅类型，不含注册逻辑）
 │   └── storage.ts         # 数据存储
 ├── components/            # 子组件
 └── styles/
@@ -130,11 +131,12 @@ src/features/myFeature/
 ```
 
 注册步骤：
-1. 实现 `types/index.ts` 导出 `registerMyFeature()`
-2. `src/features/index.ts` 中导出
-3. `src/index.ts` 中条件注册
-4. `src/i18n/zh_CN.json` 添加翻译
-5. `SuperPanelView.vue` 添加开关
+1. 实现 `index.ts` 导出 `registerMyFeature()`，从 `./types` 导入所需类/函数
+2. `types/index.ts` 仅放类型定义和 Manager 类，不放 `register*()` 函数
+3. `src/features/index.ts` 中从 `"./myFeature"` 导出（非 `"./myFeature/types"`）
+4. `src/index.ts` 中条件注册
+5. `src/i18n/zh_CN.json` 添加翻译
+6. `SuperPanelView.vue` 添加开关
 
 ### 简单功能
 

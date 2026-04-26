@@ -2,7 +2,7 @@
  * 功能模块统一导出
  */
 export { registerPageLock } from "./pageLock";
-export { registerTableOfContents } from "./tableOfContents/types";
+export { registerTableOfContents } from "./tableOfContents";
 export { registerImageCompressor } from "./imageCompressor";
 export { registerDocNavigation } from "./docNavigation";
 export {
@@ -12,35 +12,35 @@ export {
 	getShortcutManager,
 	type ShortcutInfo,
 } from "./shortcut";
-export { registerWordQuery } from "./wordQuery/types";
-export { registerGeneralSettings } from "./generalSettings/types";
-export { registerUnitConverter } from "./unitConverter/types";
-export { registerSuperPanel } from "./superPanel/types";
+export { registerWordQuery } from "./wordQuery";
+export { registerGeneralSettings } from "./generalSettings";
+export { registerUnitConverter } from "./unitConverter";
+export { registerSuperPanel } from "./superPanel";
 export { registerDiskBrowser } from "./diskBrowser";
-export { registerCodeImageGenerator } from "./codeImageGenerator/types";
-export { registerAIContentGenerator } from "./aiContentGenerator/types";
+export { registerCodeImageGenerator } from "./codeImageGenerator";
+export { registerAIContentGenerator } from "./aiContentGenerator";
 export { registerStatistics } from "./statistics";
 export { registerEncryption } from "./encryption";
-export { registerVideo } from "./video/types";
+export { registerVideo } from "./video";
 export {
 	registerEverythingSearch,
 	showEverythingSearch,
 	hideEverythingSearch,
 	toggleEverythingSearch,
 	everythingSearchVisible,
-} from "./everythingSearch/types";
+} from "./everythingSearch";
 export { registerStatusBar } from "./statusBar";
 export { registerFloatingToolbar } from "./floatingToolbar";
 export { registerFloatingBox } from "./floatingBox";
-export { registerTextDiff } from "./textDiff/types";
-export { registerBase64Image } from "./base64Image/types";
-export { registerFlashcardReading } from "./flashcardReading/types";
+export { registerTextDiff } from "./textDiff";
+export { registerBase64Image } from "./base64Image";
+export { registerFlashcardReading } from "./flashcardReading";
 export {
 	registerPasswordVault,
 	showPasswordVault,
 	hidePasswordVault,
 	togglePasswordVault,
 	passwordVaultVisible,
-} from "./passwordVault/types";
-export { registerDocAnalysis } from "./docAnalysis/types";
+} from "./passwordVault";
+export { registerDocAnalysis } from "./docAnalysis";
 export { registerWebDAV } from "./webDAV";

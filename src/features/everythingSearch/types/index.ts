@@ -1,7 +1,6 @@
 /**
- * Everything本地搜索功能 - 类型定义和注册函数
+ * Everything本地搜索功能 - 类型定义
  */
-import { Plugin } from "siyuan";
 import { ref } from "vue";
 
 // ============================================================
@@ -83,19 +82,4 @@ export function hideEverythingSearch() {
  */
 export function toggleEverythingSearch() {
 	everythingSearchVisible.value = !everythingSearchVisible.value;
-}
-
-/**
- * 注册Everything搜索功能
- */
-export function registerEverythingSearch(plugin: Plugin) {
-	// 注册快捷键命令
-	plugin.addCommand({
-		langKey: "everythingSearch",
-		langText: "Everything本地搜索",
-		hotkey: "⌃⌥E", // Ctrl+Alt+E
-		callback: () => {
-			showEverythingSearch();
-		},
-	});
 }

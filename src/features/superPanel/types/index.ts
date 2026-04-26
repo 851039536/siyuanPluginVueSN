@@ -1,5 +1,5 @@
 /**
- * 超级面板 - 类型定义和注册函数
+ * 超级面板 - 类型定义
  */
 import { Plugin, showMessage } from "siyuan";
 import { createApp, reactive, type App as VueApp } from "vue";
@@ -389,14 +389,4 @@ export class SuperPanelManager {
 		this.close();
 		window.removeEventListener("toggleSuperPanel", this.boundToggleHandler);
 	}
-}
-
-/**
- * 注册超级面板功能
- */
-export function registerSuperPanel(plugin: Plugin) {
-	const manager = new SuperPanelManager(plugin);
-	manager.init();
-	(plugin as any).__superPanel = manager;
-	return manager;
 }

@@ -1,8 +1,7 @@
 /**
- * 视频管理器模块 - 类型定义和注册函数
+ * 视频管理器模块 - 类型定义
  */
 import { Plugin } from "siyuan";
-import { createApp, h } from "vue";
 // @ts-ignore
 import VideoManagerPanel from "../index.vue";
 
@@ -119,16 +118,6 @@ export class VideoManager {
 	public destroy() {
 		// 清理逻辑
 	}
-}
-
-/**
- * 注册视频管理器功能
- */
-export function registerVideo(plugin: Plugin) {
-	const manager = new VideoManager(plugin);
-	manager.init();
-	(plugin as any).__videoManager = manager;
-	return manager;
 }
 
 // 重新导出子模块

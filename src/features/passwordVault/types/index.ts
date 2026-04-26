@@ -1,7 +1,6 @@
 /**
- * 密码箱类型定义和注册函数
+ * 密码箱类型定义
  */
-import { Plugin } from "siyuan";
 import { ref } from "vue";
 
 // ============================================================
@@ -81,25 +80,6 @@ export function hidePasswordVault() {
  */
 export function togglePasswordVault() {
 	passwordVaultVisible.value = !passwordVaultVisible.value;
-}
-
-// ============================================================
-// 注册函数
-// ============================================================
-
-/**
- * 注册密码箱功能
- */
-export function registerPasswordVault(plugin: Plugin) {
-	// 注册快捷键命令
-	plugin.addCommand({
-		langKey: "passwordVault",
-		langText: "密码箱",
-		hotkey: "⌃⌥W", // Ctrl+Alt+W
-		callback: () => {
-			showPasswordVault();
-		},
-	});
 }
 
 // 导出存储管理

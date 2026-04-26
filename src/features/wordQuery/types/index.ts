@@ -177,10 +177,3 @@ ${
 
 	public destroy() {}
 }
-
-export function registerWordQuery(plugin: Plugin) {
-	const manager = new WordQueryManager(plugin);
-	manager.init();
-	(plugin as any).__wordQuery = manager;
-	return manager;
-}

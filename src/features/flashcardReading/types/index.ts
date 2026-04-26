@@ -241,12 +241,3 @@ export class FlashcardReading {
 
 	public destroy() {}
 }
-
-export function registerFlashcardReading(plugin: Plugin) {
-	const flashcardReading = new FlashcardReading(plugin);
-	flashcardReading.init();
-
-	(plugin as any).__flashcardReading = flashcardReading;
-
-	return flashcardReading;
-}

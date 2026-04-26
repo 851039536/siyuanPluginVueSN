@@ -8,6 +8,8 @@ export interface WebDAVConfig {
 	lastSyncTime: string;
 }
 
+export * from "./storage";
+
 export interface WebDAVFile {
 	name: string;
 	path: string;

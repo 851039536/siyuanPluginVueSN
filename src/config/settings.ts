@@ -71,13 +71,11 @@ export interface PluginSettings {
 	enableTextDiff: boolean; // 是否启用文本对比功能
 	enableBase64Image: boolean; // 是否启用 Base64 图片转换器功能
 	enableFlashcardReading: boolean; // 是否启用单词阅读功能
-	enableFlashcardQuery: boolean; // 是否启用查询单词功能
 	enableTranslate: boolean; // 是否启用翻译替换功能
 	enablePasswordVault: boolean; // 是否启用密码箱功能
 	enableDocAnalysis: boolean; // 是否启用文档分析功能
 	enableWebDAV: boolean; // 是否启用WebDAV功能
 	webdavConfig: WebDAVConfig; // WebDAV服务器配置
-	enableMarkdownExport: boolean; // 是否启用Markdown导出功能
 	videoCategories?: string[]; // 视频分类列表
 	compactMode: boolean; // 是否启用全局紧洛模式
 	statisticsTheme: "default" | "github"; // 统计面板主题风格
@@ -132,7 +130,6 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	enableTextDiff: true,
 	enableBase64Image: true,
 	enableFlashcardReading: true,
-	enableFlashcardQuery: true,
 	enableTranslate: true,
 	enablePasswordVault: true,
 	enableDocAnalysis: true,
@@ -146,7 +143,6 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 		syncInterval: 30,
 		lastSyncTime: "",
 	},
-	enableMarkdownExport: true,
 	videoCategories: ["默认分类", "教程", "演示", "其他"],
 	compactMode: true,
 	statisticsTheme: "default",
@@ -155,7 +151,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	aiApiProvider: "tongyi",
 	aiModel: "qwen-plus",
 	aiCustomModel: "",
-	aiApiKey: "sk-fae27cc50015409fb2524b0970d3f0b0",
+	aiApiKey: "",
 	aiCustomEndpoint: "",
 	aiEnableThinking: false,
 };

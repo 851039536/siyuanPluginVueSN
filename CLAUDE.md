@@ -23,39 +23,55 @@ pnpm release:major   # 0.0.1 -> 1.0.0
 
 ```
 src/
-├── features/          # 功能模块
-│   ├── superPanel/    # 统一入口面板
-│   ├── tableOfContents/
-│   ├── docNavigation/
-│   ├── wordQuery/
-│   ├── generalSettings/
-│   └── aiContentGenerator/
-├── components/        # 共享组件
-├── config/            # 配置管理
-├── commands/          # 斜杠命令
-├── api.ts             # Siyuan API 封装
-├── index.ts           # 插件入口
-└── main.ts            # Vue 初始化
+├── features/                    # 功能模块（共25个）
+│   ├── superPanel/              # 统一入口面板
+│   ├── pageLock/                # 页面锁定
+│   ├── tableOfContents/         # 目录生成
+│   ├── imageCompressor/         # 图片压缩
+│   ├── docNavigation/           # 文档层级导航
+│   ├── shortcut/                # 快捷键面板
+│   ├── wordQuery/               # 单词查询
+│   ├── generalSettings/         # 通用设置（含字体/标题/代码块/列表/高亮/标签钉等）
+│   ├── qrCode/                  # 二维码生成
+│   ├── unitConverter/           # 单位转换
+│   ├── diskBrowser/             # 本地磁盘浏览器
+│   ├── codeImageGenerator/      # 代码图片生成器
+│   ├── aiContentGenerator/      # AI内容生成
+│   ├── statistics/              # 数据统计
+│   ├── pronunciation/           # 谐音翻译
+│   ├── encryption/              # 内容加密
+│   ├── video/                   # 视频管理器
+│   ├── everythingSearch/        # Everything本地搜索
+│   ├── statusBar/               # 状态栏
+│   ├── floatingToolbar/         # 浮动工具栏
+│   ├── floatingBox/             # 悬浮框
+│   ├── textDiff/                # 文本对比
+│   ├── base64Image/             # Base64图片转换
+│   ├── flashcardReading/        # 单词阅读
+│   ├── passwordVault/           # 密码箱
+│   ├── docAnalysis/             # 文档分析
+│   ├── webDAV/                  # WebDAV同步
+│   └── markdownExport/          # Markdown导出
+├── components/                  # 共享组件
+├── config/                      # 配置管理
+├── commands/                    # 斜杠命令
+├── utils/                       # 工具模块（aiApi、pluginStorage等）
+├── api.ts                       # Siyuan API 封装
+├── index.ts                     # 插件入口
+└── main.ts                      # Vue 初始化
 ```
 
 ## 开发规范
 
 ### 必须遵守
 
-- 新功能必须在 `SuperPanelView.vue` 提供开关
+- 新功能必须在 `src/features/superPanel/index.vue` 提供开关
 - 优先使用思源内置图标（见下方列表）或 @iconify/vue
 - 全局样式导入：`@use "@/index.scss" as *;`
 
 ### 共享组件
 
-位置：`src/components/`
-
-| 组件 | 说明 |
-|------|------|
-| `Button` | 按钮，支持 variant/size/loading |
-| `IconWrapper` | Iconify 图标包装器 |
-| `Select` | 下拉选择 |
-| `Input` | 输入框 |
+位置：`src/components/`（项目使用 shadcn-vue 组件系统，具体可用组件请直接查看目录）
 
 ### 思源内置图标
 
@@ -136,7 +152,7 @@ src/features/myFeature/
 3. `src/features/index.ts` 中从 `"./myFeature"` 导出（非 `"./myFeature/types"`）
 4. `src/index.ts` 中条件注册
 5. `src/i18n/zh_CN.json` 添加翻译
-6. `SuperPanelView.vue` 添加开关
+6. `src/features/superPanel/index.vue` 添加开关
 
 ### 简单功能
 

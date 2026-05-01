@@ -1,27 +1,19 @@
 /**
- * 加密/解密功能模块
- * 支持选中文本的加密和解密操作
- * 使用 AES-256-GCM 加密算法
+ * 加密/解密功能模块（注册入口）
+ * 支持选中文本的加密和解密操作，使用 AES-256-GCM 加密算法
  */
 import { Plugin, showMessage } from "siyuan";
-
-// 常量定义
-const CONSTANTS = {
-	STORAGE_KEY: "encryption_password.json",
-	ENCRYPTED_PATTERN: /^\[encrypted\](.*)\[\/encrypted\]$/,
-	ENCRYPTED_WRAPPER: (text: string) => `[encrypted]${text}[/encrypted]`,
-	SALT: "siyuan-encryption-salt-v1",
-	IV_LENGTH: 12,
-	PBKDF2_ITERATIONS: 100000,
-	KEY_LENGTH: 256,
-} as const;
+import {
+	CONSTANTS,
+	deriveKey,
+	encryptText,
+	decryptText,
+} from "./types";
 
 export class Encryption {
 	private plugin: Plugin;
 	private password: string = "";
 	private cachedKey: CryptoKey | null = null;
-	private textEncoder = new TextEncoder();
-	private textDecoder = new TextDecoder();
 
 	constructor(plugin: Plugin) {
 		this.plugin = plugin;
@@ -31,7 +23,6 @@ export class Encryption {
 	 * 初始化加密模块
 	 */
 	async init() {
-		// 从存储中加载密码
 		await this.loadPassword();
 		this.registerContextMenu();
 	}
@@ -57,9 +48,7 @@ export class Encryption {
 		const menu = event.detail.menu;
 		const selectedText = window.getSelection()?.toString().trim();
 
-		// 只在有选中文本时添加加密/解密菜单项
 		if (selectedText) {
-			// 检查是否是加密文本
 			const isEncrypted = /^\[encrypted\].*\[\/encrypted\]$/.test(selectedText);
 
 			if (isEncrypted) {
@@ -116,7 +105,8 @@ export class Encryption {
 		}
 
 		try {
-			const encrypted = await this.encrypt(validation.text, this.password);
+			const key = await this.getOrDeriveKey(this.password);
+			const encrypted = await encryptText(validation.text, key);
 			const replacedText = CONSTANTS.ENCRYPTED_WRAPPER(encrypted);
 
 			const currentSelection = window.getSelection();
@@ -127,7 +117,7 @@ export class Encryption {
 
 			await this.replaceSelectedText(replacedText);
 			showMessage(this.plugin.i18n.encryptSuccess, 2000, "info");
-		} catch (error) {
+		} catch (_error) {
 			await this.showError(this.plugin.i18n.encryptFailed);
 		}
 	}
@@ -161,25 +151,20 @@ export class Encryption {
 		}
 
 		const range = selection.getRangeAt(0);
-
-		// 获取编辑器元素
 		const editableElement =
 			range.commonAncestorContainer.parentElement?.closest(
 				'[contenteditable="true"]',
 			);
 
-		// 删除选中内容并插入新文本
 		range.deleteContents();
 		const textNode = document.createTextNode(newText);
 		range.insertNode(textNode);
 
-		// 移动光标到插入文本之后
 		range.setStartAfter(textNode);
 		range.setEndAfter(textNode);
 		selection.removeAllRanges();
 		selection.addRange(range);
 
-		// 触发输入事件，让思源保存更改
 		if (editableElement) {
 			const inputEvent = new InputEvent("input", {
 				bubbles: true,
@@ -189,7 +174,6 @@ export class Encryption {
 			});
 			editableElement.dispatchEvent(inputEvent);
 
-			// 额外触发一个change事件确保保存
 			const changeEvent = new Event("change", { bubbles: true });
 			editableElement.dispatchEvent(changeEvent);
 		}
@@ -202,103 +186,9 @@ export class Encryption {
 		if (this.cachedKey) {
 			return this.cachedKey;
 		}
-
-		const key = await this.deriveKey(password);
+		const key = await deriveKey(password);
 		this.cachedKey = key;
 		return key;
-	}
-
-	/**
-	 * 使用 AES-256-GCM 加密算法加密文本
-	 */
-	private async encrypt(text: string, password: string): Promise<string> {
-		if (!password) {
-			throw new Error("密码不能为空");
-		}
-
-		try {
-			const key = await this.getOrDeriveKey(password);
-			const iv = crypto.getRandomValues(new Uint8Array(CONSTANTS.IV_LENGTH));
-			const data = this.textEncoder.encode(text);
-
-			const encryptedData = await crypto.subtle.encrypt(
-				{ name: "AES-GCM", iv },
-				key,
-				data,
-			);
-
-			const combined = new Uint8Array(iv.length + encryptedData.byteLength);
-			combined.set(iv, 0);
-			combined.set(new Uint8Array(encryptedData), iv.length);
-
-			return btoa(String.fromCharCode(...combined));
-		} catch (error) {
-			throw new Error("加密失败：" + (error as Error).message);
-		}
-	}
-
-	/**
-	 * 使用 AES-256-GCM 加密算法解密文本
-	 */
-	private async decrypt(
-		encryptedText: string,
-		password: string,
-	): Promise<string> {
-		if (!password) {
-			throw new Error("密码不能为空");
-		}
-
-		try {
-			const key = await this.getOrDeriveKey(password);
-			const binary = atob(encryptedText);
-			const combined = new Uint8Array(binary.length);
-			for (let i = 0; i < binary.length; i++) {
-				combined[i] = binary.charCodeAt(i);
-			}
-
-			const iv = combined.slice(0, CONSTANTS.IV_LENGTH);
-			const encryptedData = combined.slice(CONSTANTS.IV_LENGTH);
-
-			const decryptedData = await crypto.subtle.decrypt(
-				{ name: "AES-GCM", iv },
-				key,
-				encryptedData,
-			);
-
-			return this.textDecoder.decode(decryptedData);
-		} catch (error) {
-			throw new Error("解密失败：密码错误或数据损坏");
-		}
-	}
-
-	/**
-	 * 从密码派生加密密钥
-	 */
-	private async deriveKey(password: string): Promise<CryptoKey> {
-		const passwordData = this.textEncoder.encode(password);
-
-		const keyMaterial = await crypto.subtle.importKey(
-			"raw",
-			passwordData,
-			{ name: "PBKDF2" },
-			false,
-			["deriveKey"],
-		);
-
-		const salt = this.textEncoder.encode(CONSTANTS.SALT);
-
-		return await crypto.subtle.deriveKey(
-			{
-				name: "PBKDF2",
-				salt,
-				iterations: CONSTANTS.PBKDF2_ITERATIONS,
-				hash: "SHA-256",
-			},
-			keyMaterial,
-			{ name: "AES-GCM", length: CONSTANTS.KEY_LENGTH },
-			false,
-			["encrypt", "decrypt"],
-		);
 	}
 
 	/**
@@ -324,7 +214,6 @@ export class Encryption {
 			dialog.style.cssText =
 				"background: var(--b3-theme-background); border-radius: 8px; padding: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;";
 
-			// 初始状态：输入密码
 			dialog.innerHTML = `
         <div id="decryptContent">
           <div style="margin-bottom: 20px;">
@@ -375,13 +264,11 @@ export class Encryption {
 
 			const handleClose = () => cleanup();
 
-			// 取消按钮
 			cancelBtn.addEventListener("click", handleClose);
 			container.addEventListener("click", (e) => {
 				if (e.target === container) handleClose();
 			});
 
-			// 解密按钮
 			const handleDecrypt = async () => {
 				const password = passwordInput.value.trim();
 				if (!password) {
@@ -391,18 +278,15 @@ export class Encryption {
 				}
 
 				try {
-					// 显示加载状态
 					decryptBtn.disabled = true;
 					decryptBtn.textContent = this.plugin.i18n.decrypting || "解密中...";
 					errorMsg.style.display = "none";
 
-					// 执行解密
-					const decrypted = await this.decrypt(encryptedText, password);
+					const key = await deriveKey(password);
+					const decrypted = await decryptText(encryptedText, key);
 
-					// 显示解密结果
 					this.showDecryptResult(dialog, decrypted, savedRange, cleanup);
-				} catch (error) {
-					// 显示错误
+				} catch (_error) {
 					errorMsg.textContent = this.plugin.i18n.decryptFailed;
 					errorMsg.style.display = "block";
 					decryptBtn.disabled = false;
@@ -476,10 +360,8 @@ export class Encryption {
 			"#decryptedText",
 		) as HTMLTextAreaElement;
 
-		// 关闭按钮
 		closeBtn.addEventListener("click", cleanup);
 
-		// 复制按钮
 		copyBtn.addEventListener("click", async () => {
 			try {
 				await navigator.clipboard.writeText(decryptedText);
@@ -488,22 +370,18 @@ export class Encryption {
 					copyBtn.innerHTML = `📋 ${this.plugin.i18n.copyContent || "复制内容"}`;
 				}, 2000);
 				showMessage(this.plugin.i18n.copySuccess, 2000, "info");
-			} catch (error) {
+			} catch (_error) {
 				showMessage(this.plugin.i18n.copyFailed, 2000, "error");
 			}
 		});
 
-		// 替换按钮
 		replaceBtn.addEventListener("click", async () => {
 			try {
-				// 恢复选区
 				const currentSelection = window.getSelection();
 				if (currentSelection) {
 					currentSelection.removeAllRanges();
 					currentSelection.addRange(savedRange);
 				}
-
-				// 替换文本
 				await this.replaceSelectedText(decryptedText);
 				showMessage(
 					this.plugin.i18n.replaceSuccess || "替换成功",
@@ -511,7 +389,7 @@ export class Encryption {
 					"info",
 				);
 				cleanup();
-			} catch (error) {
+			} catch (_error) {
 				showMessage(
 					this.plugin.i18n.replaceFailed || "替换失败",
 					2000,
@@ -520,7 +398,6 @@ export class Encryption {
 			}
 		});
 
-		// 自动选中文本
 		textarea.select();
 	}
 

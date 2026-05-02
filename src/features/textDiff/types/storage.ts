@@ -1,5 +1,6 @@
 import { Plugin } from "siyuan";
 import { PluginStorage } from "@/utils/pluginStorage";
+import { TypedStorage } from "@/utils/typedStorage";
 
 /**
  * 文本对比设置接口
@@ -23,27 +24,10 @@ export const DEFAULT_TEXTDIFF_SETTINGS: TextDiffSettings = {
  * 文本对比存储管理类
  */
 export class TextDiffStorage {
-	private storage: PluginStorage;
-	private readonly SETTINGS_KEY = "textdiff-settings";
+	readonly settings: TypedStorage<TextDiffSettings>;
 
 	constructor(plugin: Plugin) {
-		this.storage = new PluginStorage(plugin);
-	}
-
-	/**
-	 * 保存设置
-	 */
-	async saveSettings(settings: TextDiffSettings): Promise<boolean> {
-		return this.storage.save(this.SETTINGS_KEY, settings);
-	}
-
-	/**
-	 * 加载设置
-	 */
-	async loadSettings(): Promise<TextDiffSettings> {
-		const settings = await this.storage.load<TextDiffSettings>(
-			this.SETTINGS_KEY,
-		);
-		return { ...DEFAULT_TEXTDIFF_SETTINGS, ...settings };
+		const storage = new PluginStorage(plugin);
+		this.settings = new TypedStorage(storage, "textdiff-settings", DEFAULT_TEXTDIFF_SETTINGS);
 	}
 }

@@ -524,13 +524,13 @@ const advancedOptionsData = computed(() => ({
 
 const saveAdvancedOptions = async () => {
 	if (storage) {
-		await storage.saveSettings(advancedOptionsData.value);
+		await storage.settings.save(advancedOptionsData.value);
 	}
 };
 
 const loadAdvancedOptions = async () => {
 	if (storage) {
-		const settings = await storage.loadSettings();
+		const settings = await storage.settings.loadOrDefault();
 		pronunciationType.value = settings.pronunciationType;
 		autoPlayPronunciation.value = settings.autoPlayPronunciation;
 		showRelatedWords.value = settings.showRelatedWords;

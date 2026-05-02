@@ -3,77 +3,48 @@
  */
 import { Plugin } from "siyuan";
 import { PluginStorage } from "@/utils/pluginStorage";
+import { TypedStorage } from "@/utils/typedStorage";
 import type { SavedPrompt } from "@/types/ai";
 
 export type { SavedPrompt };
+
+export interface AISettings {
+	systemPrompt: string;
+	temperature: number;
+	maxTokens: number;
+}
+
+const DEFAULT_AI_SETTINGS: AISettings = {
+	systemPrompt: "",
+	temperature: 0.7,
+	maxTokens: 10000,
+};
 
 /**
  * AI内容生成器存储管理器
  */
 export class AIGeneratorStorage {
-	private storage: PluginStorage;
-	private readonly SETTINGS_STORAGE_KEY = "ai-content-generator-settings";
-	private readonly PROMPTS_STORAGE_KEY = "ai-content-generator-prompts";
-	private readonly CURRENT_PROMPT_STORAGE_KEY =
-		"ai-content-generator-current-prompt";
+	readonly settings: TypedStorage<AISettings>;
+	readonly prompts: TypedStorage<SavedPrompt[]>;
+	readonly currentPrompt: TypedStorage<string>;
 
 	constructor(plugin: Plugin) {
-		this.storage = new PluginStorage(plugin);
-	}
-
-	async saveSettings(settings: {
-		systemPrompt: string;
-		temperature: number;
-		maxTokens: number;
-	}): Promise<boolean> {
-		return this.storage.save(this.SETTINGS_STORAGE_KEY, settings);
-	}
-
-	async loadSettings(): Promise<{
-		systemPrompt: string;
-		temperature: number;
-		maxTokens: number;
-	} | null> {
-		return this.storage.load(this.SETTINGS_STORAGE_KEY);
-	}
-
-	async savePrompts(prompts: SavedPrompt[]): Promise<boolean> {
-		return this.storage.save(this.PROMPTS_STORAGE_KEY, prompts);
-	}
-
-	async loadPrompts(): Promise<SavedPrompt[]> {
-		return this.storage.loadWithDefault<SavedPrompt[]>(
-			this.PROMPTS_STORAGE_KEY,
-			[],
-		);
-	}
-
-	async saveCurrentPrompt(promptName: string): Promise<boolean> {
-		return this.storage.save(this.CURRENT_PROMPT_STORAGE_KEY, promptName);
-	}
-
-	async loadCurrentPrompt(): Promise<string | null> {
-		return this.storage.load<string>(this.CURRENT_PROMPT_STORAGE_KEY);
-	}
-
-	async clearCurrentPrompt(): Promise<boolean> {
-		return this.storage.remove(this.CURRENT_PROMPT_STORAGE_KEY);
+		const storage = new PluginStorage(plugin);
+		this.settings = new TypedStorage(storage, "ai-content-generator-settings", DEFAULT_AI_SETTINGS);
+		this.prompts = new TypedStorage(storage, "ai-content-generator-prompts", []);
+		this.currentPrompt = new TypedStorage(storage, "ai-content-generator-current-prompt");
 	}
 
 	async init(): Promise<void> {
 		try {
-			const settings = await this.loadSettings();
+			const settings = await this.settings.load();
 			if (!settings) {
-				await this.saveSettings({
-					systemPrompt: "",
-					temperature: 0.7,
-					maxTokens: 10000,
-				});
+				await this.settings.save(DEFAULT_AI_SETTINGS);
 			}
 
-			const prompts = await this.loadPrompts();
+			const prompts = await this.prompts.load();
 			if (!prompts) {
-				await this.savePrompts([]);
+				await this.prompts.save([]);
 			}
 		} catch (error) {
 			console.error("初始化AI生成器存储失败:", error);

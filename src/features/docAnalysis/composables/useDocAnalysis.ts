@@ -247,7 +247,7 @@ export function useDocAnalysis(plugin: Plugin) {
 	 */
 	async function loadSavedOptions() {
 		try {
-			const saved = await storage.loadOptions();
+			const saved = await storage.options.loadOrDefault();
 			Object.assign(filterOptions, saved);
 		} catch (error) {
 			console.error("加载文档分析配置失败:", error);
@@ -259,7 +259,7 @@ export function useDocAnalysis(plugin: Plugin) {
 	 */
 	async function saveOptions() {
 		try {
-			await storage.saveOptions({ ...filterOptions });
+			await storage.options.save({ ...filterOptions });
 		} catch (error) {
 			console.error("保存文档分析配置失败:", error);
 		}

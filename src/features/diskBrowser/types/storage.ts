@@ -1,43 +1,34 @@
 import { Plugin } from "siyuan";
 import { PluginStorage } from "@/utils/pluginStorage";
+import { TypedStorage } from "@/utils/typedStorage";
 import { DiskBrowserSettings, STORAGE_KEY } from "./index";
 
+const DEFAULT_SETTINGS: DiskBrowserSettings = {
+	favoriteFolders: [],
+};
+
 export class DiskBrowserStorage {
-	private storage: PluginStorage;
+	readonly settings: TypedStorage<DiskBrowserSettings>;
 
 	constructor(plugin: Plugin) {
-		this.storage = new PluginStorage(plugin);
-	}
-
-	async saveSettings(settings: DiskBrowserSettings): Promise<boolean> {
-		return this.storage.save(STORAGE_KEY, settings);
-	}
-
-	async loadSettings(): Promise<DiskBrowserSettings | null> {
-		return this.storage.load<DiskBrowserSettings>(STORAGE_KEY);
+		const storage = new PluginStorage(plugin);
+		this.settings = new TypedStorage(storage, STORAGE_KEY, DEFAULT_SETTINGS);
 	}
 
 	async loadFavorites(): Promise<string[]> {
-		const settings = await this.storage.loadWithDefault<DiskBrowserSettings>(
-			STORAGE_KEY,
-			{ favoriteFolders: [] },
-		);
-		return settings.favoriteFolders;
+		const data = await this.settings.loadOrDefault();
+		return data.favoriteFolders;
 	}
 
 	async saveFavorites(favorites: string[]): Promise<boolean> {
-		const settings: DiskBrowserSettings = { favoriteFolders: favorites };
-		return this.storage.save(STORAGE_KEY, settings);
+		return this.settings.save({ favoriteFolders: favorites });
 	}
 
 	async init(): Promise<void> {
 		try {
-			const settings = await this.loadSettings();
+			const settings = await this.settings.load();
 			if (!settings) {
-				const defaultSettings: DiskBrowserSettings = {
-					favoriteFolders: [],
-				};
-				await this.saveSettings(defaultSettings);
+				await this.settings.save(DEFAULT_SETTINGS);
 			}
 		} catch (error) {
 			console.error("初始化磁盘浏览器存储失败:", error);

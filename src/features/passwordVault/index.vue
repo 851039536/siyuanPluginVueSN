@@ -513,8 +513,8 @@ async function handleLogin(inputPassword: string, hint?: string) {
 		await loadCategories();
 	} else {
 		// 验证密码 - 获取保存的盐值
-		const verifySalt = await storage.loadVerifySalt();
-		const encryptSalt = await storage.loadEncryptionSalt();
+		const verifySalt = await storage.verifySalt.load();
+		const encryptSalt = await storage.encryptionSalt.load();
 
 		if (!verifySalt || !encryptSalt) {
 			loginError.value = "数据损坏，请联系开发者";
@@ -639,7 +639,7 @@ async function handleChangePassword() {
 
 	try {
 		// 获取当前验证盐值
-		const verifySalt = await storage.loadVerifySalt();
+		const verifySalt = await storage.verifySalt.load();
 		if (!verifySalt) {
 			changePasswordError.value = "数据损坏";
 			return;
@@ -684,10 +684,10 @@ async function handleChangePassword() {
 
 		// 保存所有新数据
 		await Promise.all([
-			storage.saveMasterPasswordHash(newHash),
-			storage.saveVerifySalt(newVerifySalt),
-			storage.saveEncryptionSalt(newEncryptSalt),
-			storage.saveEntries(reEncryptedEntries),
+			storage.masterPassword.save(newHash),
+			storage.verifySalt.save(newVerifySalt),
+			storage.encryptionSalt.save(newEncryptSalt),
+			storage.entries.save(reEncryptedEntries),
 		]);
 
 		// 更新状态
@@ -706,7 +706,7 @@ async function handleChangePassword() {
 // 加载条目（解密密码）
 async function loadEntries() {
 	try {
-		const stored = await storage.loadEntries();
+		const stored = await storage.entries.load();
 		if (stored && encryptionKey.value) {
 			// 解密所有条目的密码
 			entries.value = await Promise.all(
@@ -731,7 +731,7 @@ async function loadEntries() {
 // 加载分类
 async function loadCategories() {
 	try {
-		const stored = await storage.loadCategories();
+		const stored = await storage.categories.load();
 		if (stored) {
 			categories.value = stored;
 		}
@@ -767,7 +767,7 @@ async function saveEntries() {
 				};
 			}),
 		);
-		await storage.saveEntries(storedEntries);
+		await storage.entries.save(storedEntries);
 	} catch (error) {
 		console.error("Failed to save entries:", error);
 	}
@@ -776,7 +776,7 @@ async function saveEntries() {
 // 保存分类
 async function saveCategories() {
 	try {
-		await storage.saveCategories(categories.value);
+		await storage.categories.save(categories.value);
 	} catch (error) {
 		console.error("Failed to save categories:", error);
 	}

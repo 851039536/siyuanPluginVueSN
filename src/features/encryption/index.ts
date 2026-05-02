@@ -7,13 +7,14 @@ import {
 	CONSTANTS,
 	deriveKey,
 	encryptText,
-	decryptText,
 } from "./types";
+import { emitCustomEvent } from "@/utils/eventBus";
 
 export class Encryption {
 	private plugin: Plugin;
 	private password: string = "";
 	private cachedKey: CryptoKey | null = null;
+	private pendingRange: Range | null = null;
 
 	constructor(plugin: Plugin) {
 		this.plugin = plugin;
@@ -199,206 +200,43 @@ export class Encryption {
 	}
 
 	/**
-	 * 显示解密对话框
+	 * 显示解密对话框（通过 Vue 组件）
 	 */
 	private async showDecryptDialog(
 		encryptedText: string,
 		savedRange: Range,
 	): Promise<void> {
-		return new Promise((resolve) => {
-			const container = document.createElement("div");
-			container.style.cssText =
-				"position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;";
-
-			const dialog = document.createElement("div");
-			dialog.style.cssText =
-				"background: var(--b3-theme-background); border-radius: 8px; padding: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;";
-
-			dialog.innerHTML = `
-        <div id="decryptContent">
-          <div style="margin-bottom: 20px;">
-            <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: var(--b3-theme-on-background); display: flex; align-items: center; gap: 8px;">
-              🔓 ${this.plugin.i18n.decryptText}
-            </h3>
-            <p style="margin: 0; font-size: 13px; color: var(--b3-theme-on-surface-light);">
-              ${this.plugin.i18n.enterPasswordToDecrypt || "请输入密码以解密内容"}
-            </p>
-          </div>
-
-          <div style="margin-bottom: 20px;">
-            <label style="display: block; margin-bottom: 8px; font-size: 13px; font-weight: 500; color: var(--b3-theme-on-background);">
-              ${this.plugin.i18n.decryptPassword}
-            </label>
-            <input type="password" id="passwordInput" placeholder="${this.plugin.i18n.enterPassword}"
-              style="width: 100%; padding: 10px 12px; border: 1px solid var(--b3-theme-surface-lighter); border-radius: 6px; box-sizing: border-box; font-size: 14px; background: var(--b3-theme-surface); color: var(--b3-theme-on-background);" />
-            <div id="errorMsg" style="margin-top: 8px; color: var(--b3-card-error-color); font-size: 12px; display: none;"></div>
-          </div>
-
-          <div style="display: flex; gap: 8px; justify-content: flex-end;">
-            <button id="cancelBtn" style="padding: 10px 20px; border: 1px solid var(--b3-theme-surface-lighter); background: var(--b3-theme-surface); color: var(--b3-theme-on-surface); border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500;">
-              ${this.plugin.i18n.cancel}
-            </button>
-            <button id="decryptBtn" style="padding: 10px 20px; border: none; background: var(--b3-theme-primary); color: var(--b3-theme-on-primary); border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500;">
-              ${this.plugin.i18n.decrypt || "解密"}
-            </button>
-          </div>
-        </div>
-      `;
-
-			container.appendChild(dialog);
-			document.body.appendChild(container);
-
-			const passwordInput = dialog.querySelector(
-				"#passwordInput",
-			) as HTMLInputElement;
-			const cancelBtn = dialog.querySelector("#cancelBtn") as HTMLButtonElement;
-			const decryptBtn = dialog.querySelector(
-				"#decryptBtn",
-			) as HTMLButtonElement;
-			const errorMsg = dialog.querySelector("#errorMsg") as HTMLDivElement;
-
-			const cleanup = () => {
-				container.remove();
-				resolve();
-			};
-
-			const handleClose = () => cleanup();
-
-			cancelBtn.addEventListener("click", handleClose);
-			container.addEventListener("click", (e) => {
-				if (e.target === container) handleClose();
-			});
-
-			const handleDecrypt = async () => {
-				const password = passwordInput.value.trim();
-				if (!password) {
-					errorMsg.textContent = this.plugin.i18n.passwordEmpty;
-					errorMsg.style.display = "block";
-					return;
-				}
-
-				try {
-					decryptBtn.disabled = true;
-					decryptBtn.textContent = this.plugin.i18n.decrypting || "解密中...";
-					errorMsg.style.display = "none";
-
-					const key = await deriveKey(password);
-					const decrypted = await decryptText(encryptedText, key);
-
-					this.showDecryptResult(dialog, decrypted, savedRange, cleanup);
-				} catch (_error) {
-					errorMsg.textContent = this.plugin.i18n.decryptFailed;
-					errorMsg.style.display = "block";
-					decryptBtn.disabled = false;
-					decryptBtn.textContent = this.plugin.i18n.decrypt || "解密";
-				}
-			};
-
-			decryptBtn.addEventListener("click", handleDecrypt);
-			passwordInput.addEventListener("keydown", (e) => {
-				if (e.key === "Enter") {
-					handleDecrypt();
-				}
-			});
-
-			passwordInput.focus();
-		});
+		this.pendingRange = savedRange;
+		emitCustomEvent("openDecryptDialog", { encryptedText });
 	}
 
 	/**
-	 * 显示解密结果
+	 * 替换选中的加密文本为解密后的明文
 	 */
-	private showDecryptResult(
-		dialog: HTMLElement,
-		decryptedText: string,
-		savedRange: Range,
-		cleanup: () => void,
-	) {
-		const contentDiv = dialog.querySelector("#decryptContent");
-		if (!contentDiv) return;
+	public async replaceCurrentText(decryptedText: string) {
+		if (!this.pendingRange) return;
 
-		contentDiv.innerHTML = `
-      <div style="margin-bottom: 20px;">
-        <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: var(--b3-theme-on-background); display: flex; align-items: center; gap: 8px;">
-          ✅ ${this.plugin.i18n.decryptSuccess}
-        </h3>
-        <p style="margin: 0; font-size: 13px; color: var(--b3-theme-on-surface-light);">
-          ${this.plugin.i18n.decryptResultHint || "解密成功，您可以复制内容或替换原文"}
-        </p>
-      </div>
-
-      <div style="margin-bottom: 20px;">
-        <label style="display: block; margin-bottom: 8px; font-size: 13px; font-weight: 500; color: var(--b3-theme-on-background);">
-          ${this.plugin.i18n.decryptedContent || "解密内容"}
-        </label>
-        <div style="position: relative;">
-          <textarea id="decryptedText" readonly
-            style="width: 100%; min-height: 150px; max-height: 300px; padding: 12px; border: 1px solid var(--b3-theme-surface-lighter); border-radius: 6px; box-sizing: border-box; font-size: 14px; background: var(--b3-theme-surface); color: var(--b3-theme-on-background); font-family: var(--b3-font-family-code); line-height: 1.6; resize: vertical;"
-          >${decryptedText}</textarea>
-        </div>
-      </div>
-
-      <div style="display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap;">
-        <button id="closeBtn" style="padding: 10px 20px; border: 1px solid var(--b3-theme-surface-lighter); background: var(--b3-theme-surface); color: var(--b3-theme-on-surface); border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500;">
-          ${this.plugin.i18n.close}
-        </button>
-        <button id="copyBtn" style="padding: 10px 20px; border: 1px solid var(--b3-theme-primary); background: transparent; color: var(--b3-theme-primary); border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 6px;">
-          📋 ${this.plugin.i18n.copyContent || "复制内容"}
-        </button>
-        <button id="replaceBtn" style="padding: 10px 20px; border: none; background: var(--b3-theme-primary); color: var(--b3-theme-on-primary); border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 6px;">
-          🔄 ${this.plugin.i18n.replaceEncrypted || "替换加密文本"}
-        </button>
-      </div>
-    `;
-
-		const closeBtn = contentDiv.querySelector("#closeBtn") as HTMLButtonElement;
-		const copyBtn = contentDiv.querySelector("#copyBtn") as HTMLButtonElement;
-		const replaceBtn = contentDiv.querySelector(
-			"#replaceBtn",
-		) as HTMLButtonElement;
-		const textarea = contentDiv.querySelector(
-			"#decryptedText",
-		) as HTMLTextAreaElement;
-
-		closeBtn.addEventListener("click", cleanup);
-
-		copyBtn.addEventListener("click", async () => {
-			try {
-				await navigator.clipboard.writeText(decryptedText);
-				copyBtn.innerHTML = `✅ ${this.plugin.i18n.copied || "已复制"}`;
-				setTimeout(() => {
-					copyBtn.innerHTML = `📋 ${this.plugin.i18n.copyContent || "复制内容"}`;
-				}, 2000);
-				showMessage(this.plugin.i18n.copySuccess, 2000, "info");
-			} catch (_error) {
-				showMessage(this.plugin.i18n.copyFailed, 2000, "error");
+		try {
+			const currentSelection = window.getSelection();
+			if (currentSelection) {
+				currentSelection.removeAllRanges();
+				currentSelection.addRange(this.pendingRange);
 			}
-		});
-
-		replaceBtn.addEventListener("click", async () => {
-			try {
-				const currentSelection = window.getSelection();
-				if (currentSelection) {
-					currentSelection.removeAllRanges();
-					currentSelection.addRange(savedRange);
-				}
-				await this.replaceSelectedText(decryptedText);
-				showMessage(
-					this.plugin.i18n.replaceSuccess || "替换成功",
-					2000,
-					"info",
-				);
-				cleanup();
-			} catch (_error) {
-				showMessage(
-					this.plugin.i18n.replaceFailed || "替换失败",
-					2000,
-					"error",
-				);
-			}
-		});
-
-		textarea.select();
+			await this.replaceSelectedText(decryptedText);
+			showMessage(
+				this.plugin.i18n.replaceSuccess || "替换成功",
+				2000,
+				"info",
+			);
+		} catch (_error) {
+			showMessage(
+				this.plugin.i18n.replaceFailed || "替换失败",
+				2000,
+				"error",
+			);
+		} finally {
+			this.pendingRange = null;
+		}
 	}
 
 	/**

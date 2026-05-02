@@ -8,7 +8,7 @@ import { createApp, h } from "vue";
 // @ts-ignore
 import ShortcutPanel from "./index.vue";
 import { ShortcutManager, getShortcutManager } from "./manager";
-import { loadCustomShortcuts, saveCustomShortcuts } from "./types/storage";
+import { ShortcutStorage } from "./types/storage";
 import type { ShortcutInfo } from "./types";
 
 /**
@@ -34,14 +34,14 @@ export async function registerShortcut(plugin: Plugin) {
 	await manager.addShortcuts(getToolShortcuts());
 
 	// 加载自定义快捷键从数据库
-	const customShortcuts = await loadCustomShortcuts(plugin);
+	const customShortcuts = await new ShortcutStorage(plugin).loadCustomShortcuts();
 	if (customShortcuts.length > 0) {
 		await manager.addShortcuts(customShortcuts);
 	}
 
 	// 设置保存回调
 	manager.setSaveCallback(async (shortcuts: ShortcutInfo[]) => {
-		await saveCustomShortcuts(plugin, shortcuts);
+		await new ShortcutStorage(plugin).saveCustomShortcuts(shortcuts);
 	});
 
 	// 添加右侧边栏 Dock

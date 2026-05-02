@@ -103,12 +103,7 @@ import FilterBar from "./components/FilterBar.vue";
 import ShortcutGrid from "./components/ShortcutGrid.vue";
 import ShortcutDialog from "./components/ShortcutDialog.vue";
 import { getShortcutManager } from "./manager";
-import {
-	loadFavorites,
-	saveFavorites,
-	loadRecent,
-	saveRecent,
-} from "./types/storage";
+import { ShortcutStorage } from "./types/storage";
 import type {
 	ShortcutInfo,
 	ViewMode,
@@ -179,9 +174,10 @@ const customCount = computed(() => manager.getByCategory("custom").length);
 onMounted(async () => {
 	if (props.plugin) {
 		try {
+			const storage = new ShortcutStorage(props.plugin);
 			const [loadedFavorites, loadedRecent] = await Promise.all([
-				loadFavorites(props.plugin),
-				loadRecent(props.plugin),
+				storage.loadFavorites(),
+				storage.loadRecent(),
 			]);
 			favorites.value = new Set(loadedFavorites);
 			recentUsed.value = loadedRecent;
@@ -259,7 +255,7 @@ async function toggleFavorite(id: string) {
 
 	if (props.plugin) {
 		try {
-			await saveFavorites(props.plugin, Array.from(favorites.value));
+			await new ShortcutStorage(props.plugin).saveFavorites(Array.from(favorites.value));
 		} catch (error) {
 			console.error("保存收藏状态失败:", error);
 		}
@@ -278,7 +274,7 @@ async function addToRecent(id: string) {
 
 	if (props.plugin) {
 		try {
-			await saveRecent(props.plugin, recentUsed.value);
+			await new ShortcutStorage(props.plugin).saveRecent(recentUsed.value);
 		} catch (error) {
 			console.error("保存最近使用失败:", error);
 		}
@@ -341,7 +337,7 @@ async function deleteShortcut(id: string) {
 
 		if (props.plugin) {
 			try {
-				await saveFavorites(props.plugin, Array.from(favorites.value));
+				await new ShortcutStorage(props.plugin).saveFavorites(Array.from(favorites.value));
 			} catch (error) {
 				console.error("更新收藏数据失败:", error);
 			}

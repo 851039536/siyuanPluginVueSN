@@ -58,9 +58,17 @@ let panelContainer: HTMLElement | null = null;
 let reactiveSettings: PluginSettings | null = null;
 
 /**
- * 功能ID到设置键的映射表（单一数据源）
+ * PluginSettings 中类型为 boolean 的属性键
  */
-export const FEATURE_SETTINGS_MAP: Record<FeatureId, string> = {
+type BooleanSettingsKeys = {
+	[K in keyof PluginSettings]: PluginSettings[K] extends boolean ? K : never;
+}[keyof PluginSettings];
+
+/**
+ * 功能ID到设置键的映射表（单一数据源）
+ * key 受 FeatureId 约束，value 受 PluginSettings 的布尔属性键约束
+ */
+export const FEATURE_SETTINGS_MAP: Record<FeatureId, BooleanSettingsKeys> = {
 	tableOfContents: "enableTableOfContents",
 	imageCompressor: "enableImageCompressor",
 	docNavigation: "enableDocNavigation",

@@ -253,7 +253,12 @@ export function applyCodeBlockCollapse(
       const scrollCleanupFns = [];
 
       function isMobile() {
-        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        var ua = navigator.userAgent.toLowerCase();
+        var mobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile|tablet/i.test(ua);
+        var screenWidth = window.innerWidth <= 768;
+        var hasTouchScreen = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+        var isSiyuanMobile = window._siyuan_mobile === true;
+        return mobileUA || screenWidth || (hasTouchScreen && mobileUA) || isSiyuanMobile;
       }
 
       function countLines(hljs) {

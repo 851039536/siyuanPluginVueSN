@@ -48,10 +48,14 @@ const props = withDefaults(defineProps<Props>(), {
 const plugin = usePlugin() as PluginSample;
 const hasPassword = ref(false);
 
+import { GeneralSettingsStorage } from "../types/storage";
+
+const gsStorage = new GeneralSettingsStorage(plugin);
+
 // 检查是否已设置密码
 async function checkPassword() {
 	try {
-		const password = await plugin.loadData("global-password");
+		const password = await gsStorage.password.load();
 		hasPassword.value = !!password;
 	} catch (error) {
 		console.error("检查密码失败:", error);

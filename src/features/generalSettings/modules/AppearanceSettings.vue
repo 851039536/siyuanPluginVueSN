@@ -41,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from "vue";
+import { ref, watch, computed, onMounted } from "vue";
 import { showMessage } from "siyuan";
 import SiButton from "@/components/Button.vue";
 import SiSwitch from "@/components/Switch.vue";
@@ -88,15 +88,19 @@ watch([themeMode, interfaceScale, showSidebar], () => {
 	});
 });
 
+import { GeneralSettingsStorage } from "../types/storage";
+
+const gsStorage = computed(() => props.plugin ? new GeneralSettingsStorage(props.plugin) : null);
+
 function save() {
 	const settings = {
 		themeMode: themeMode.value,
 		interfaceScale: interfaceScale.value,
 		showSidebar: showSidebar.value,
 	};
-	if (props.plugin) {
+	if (gsStorage.value) {
 		try {
-			props.plugin.saveData("appearance-settings", settings);
+			gsStorage.value.appearance.save(settings);
 			showMessage(props.i18n.settingsSaved || "已保存", 3000, "info");
 		} catch (error) {
 			showMessage(props.i18n.saveFailed || "保存失败", 3000, "error");
@@ -111,9 +115,9 @@ function reset() {
 	interfaceScale.value = DEFAULT_SETTINGS.interfaceScale;
 	showSidebar.value = DEFAULT_SETTINGS.showSidebar;
 
-	if (props.plugin) {
+	if (gsStorage.value) {
 		try {
-			props.plugin.saveData("appearance-settings", DEFAULT_SETTINGS);
+			gsStorage.value.appearance.save(DEFAULT_SETTINGS);
 			showMessage(props.i18n.settingsReset || "已重置", 3000, "info");
 		} catch (error) {
 			console.error("重置失败:", error);
@@ -124,9 +128,9 @@ function reset() {
 }
 
 async function loadSettings() {
-	if (props.plugin) {
+	if (gsStorage.value) {
 		try {
-			const saved = await props.plugin.loadData("appearance-settings");
+			const saved = await gsStorage.value.appearance.load();
 			if (saved) {
 				themeMode.value = saved.themeMode || DEFAULT_SETTINGS.themeMode;
 				interfaceScale.value =

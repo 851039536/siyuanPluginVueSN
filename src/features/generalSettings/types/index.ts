@@ -882,15 +882,13 @@ export class GeneralSettings {
 
 	private async initAutoBackup() {
 		try {
-			const data = await this.plugin.loadData("data-backup-settings");
-			if (data) {
-				this.lastBackupTimestamp = data.lastBackupTimestamp || 0;
-			}
+			const data = await this.storage.backup.loadOrDefault();
+			this.lastBackupTimestamp = data.lastBackupTimestamp || 0;
 
 			const isMobile = checkIsMobile();
-			const autoBackupEnabled = data?.autoBackupEnabled ?? false;
-			const backupFrequency = data?.backupFrequency ?? "daily";
-			const backupTime = data?.backupTime ?? "03:00";
+			const autoBackupEnabled = data.autoBackupEnabled ?? false;
+			const backupFrequency = data.backupFrequency ?? "daily";
+			const backupTime = data.backupTime ?? "03:00";
 
 			if (!isMobile && autoBackupEnabled) {
 				this.startAutoBackupTimer(backupFrequency, backupTime);

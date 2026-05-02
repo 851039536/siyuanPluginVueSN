@@ -455,13 +455,17 @@ function applyDocumentFontStyles(fontSettings: DocumentFontSettingsData) {
 	}
 }
 
+import { GeneralSettingsStorage } from "../types/storage";
+
+const gsStorage = computed(() => props.plugin ? new GeneralSettingsStorage(props.plugin) : null);
+
 async function loadSettings() {
-	if (!props.plugin) {
+	if (!gsStorage.value) {
 		return;
 	}
 
 	try {
-		const data = await props.plugin.loadData("document-font-settings");
+		const data = await gsStorage.value.documentFont.load();
 		if (data) {
 			settings.value = { ...DEFAULT_SETTINGS, ...data };
 			applySettings();
@@ -472,12 +476,12 @@ async function loadSettings() {
 }
 
 async function saveSettings() {
-	if (!props.plugin) {
+	if (!gsStorage.value) {
 		return;
 	}
 
 	try {
-		await props.plugin.saveData("document-font-settings", settings.value);
+		await gsStorage.value.documentFont.save(settings.value);
 	} catch (error) {
 		console.error("保存文档字体设置失败:", error);
 	}

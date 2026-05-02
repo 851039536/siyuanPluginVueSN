@@ -440,10 +440,14 @@ async function handlePathChange() {
   await refreshSkills();
 }
 
+import { GeneralSettingsStorage } from "../types/storage";
+
+const gsStorage = computed(() => props.plugin ? new GeneralSettingsStorage(props.plugin) : null);
+
 async function loadSettings() {
-  if (!props.plugin) return;
+  if (!gsStorage.value) return;
   try {
-    const data = await props.plugin.loadData("skills-viewer-settings");
+    const data = await gsStorage.value.skillsViewer.load();
     if (data) {
       projectPath.value = data.projectPath || "";
       selectedTool.value = data.selectedTool || "all";

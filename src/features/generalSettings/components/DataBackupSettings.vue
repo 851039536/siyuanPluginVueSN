@@ -262,6 +262,7 @@ import { BackupManager } from "../modules/BackupManager";
 import type { BackupProgress, BackupResult, RestoreProgress } from "../modules/BackupManager";
 import { CloudBackupManager } from "../modules/CloudBackupManager";
 import type { CloudProviderConfig, CloudFileInfo } from "../modules/CloudBackupManager";
+import { GeneralSettingsStorage } from "../types/storage";
 
 interface Props {
 	i18n?: any;
@@ -272,6 +273,8 @@ const props = withDefaults(defineProps<Props>(), {
 	i18n: () => ({}),
 	plugin: null,
 });
+
+const gsStorage = computed(() => props.plugin ? new GeneralSettingsStorage(props.plugin) : null);
 
 // 基础状态
 const workspacePath = ref("");
@@ -408,20 +411,18 @@ watch(autoBackupEnabled, (enabled) => handleTimerRestart(enabled));
 // 加载设置
 async function loadSettings() {
 	try {
-		if (props.plugin) {
-			const data = await props.plugin.loadData("data-backup-settings");
-			if (data) {
-				autoBackupEnabled.value = data.autoBackupEnabled ?? false;
-				backupFrequency.value = data.backupFrequency ?? "daily";
-				backupTime.value = data.backupTime ?? "03:00";
-				keepBackupCount.value = data.keepBackupCount ?? 7;
-				cloudSyncEnabled.value = data.cloudSyncEnabled ?? false;
-				lastBackupTime.value = data.lastBackupTime ?? "";
-				lastBackupTimestamp = data.lastBackupTimestamp ?? 0;
-				if (data.workspacePath) {
-					workspacePath.value = data.workspacePath;
-					workspaceRoot.value = data.workspaceRoot || data.workspacePath.replace(/\/data$/, "");
-				}
+		if (gsStorage.value) {
+			const data = await gsStorage.value.backup.loadOrDefault();
+			autoBackupEnabled.value = data.autoBackupEnabled ?? false;
+			backupFrequency.value = data.backupFrequency ?? "daily";
+			backupTime.value = data.backupTime ?? "03:00";
+			keepBackupCount.value = data.keepBackupCount ?? 7;
+			cloudSyncEnabled.value = data.cloudSyncEnabled ?? false;
+			lastBackupTime.value = data.lastBackupTime ?? "";
+			lastBackupTimestamp = data.lastBackupTimestamp ?? 0;
+			if (data.workspacePath) {
+				workspacePath.value = data.workspacePath;
+				workspaceRoot.value = data.workspaceRoot || data.workspacePath.replace(/\/data$/, "");
 			}
 		}
 	} catch (error) {
@@ -432,8 +433,8 @@ async function loadSettings() {
 // 保存设置
 async function saveSettings() {
 	try {
-		if (props.plugin) {
-			await props.plugin.saveData("data-backup-settings", {
+		if (gsStorage.value) {
+			await gsStorage.value.backup.save({
 				autoBackupEnabled: autoBackupEnabled.value,
 				backupFrequency: backupFrequency.value,
 				backupTime: backupTime.value,
@@ -653,7 +654,7 @@ async function onBackupComplete(result: BackupResult) {
 		backupList.value = backupList.value.slice(0, keepBackupCount.value);
 	}
 
-	await props.plugin?.saveData("backup-history", { list: backupList.value });
+	await gsStorage.value?.backupHistory.save({ list: backupList.value });
 
 	showMessage(`备份成功: ${result.fileName}（${result.totalFiles} 文件）`, 3000, "info");
 
@@ -812,13 +813,13 @@ function formatFileSize(bytes: number): string {
 			const scanned = await backupManager.scanBackupDir();
 			if (scanned.length > 0) {
 				backupList.value = scanned;
-				await props.plugin?.saveData("backup-history", { list: backupList.value });
+				await gsStorage.value?.backupHistory.save({ list: backupList.value });
 				return;
 			}
 		}
 
 		// 降级到已保存的记录
-		const backupHistory = await props.plugin?.loadData("backup-history");
+		const backupHistory = await gsStorage.value?.backupHistory.load();
 		if (backupHistory?.list) {
 			backupList.value = backupHistory.list;
 		}
@@ -849,7 +850,7 @@ async function deleteBackup(backup: { name: string; path: string }) {
 		}
 
 		backupList.value = backupList.value.filter((b) => b.name !== backup.name);
-		await props.plugin.saveData("backup-history", { list: backupList.value });
+		await gsStorage.value?.backupHistory.save({ list: backupList.value });
 
 		showMessage(props.i18n.deleteSuccess || "删除成功", 2000, "info");
 	} catch (error) {

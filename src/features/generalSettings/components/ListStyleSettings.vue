@@ -170,7 +170,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from "vue";
+import { ref, watch, computed, onMounted } from "vue";
 import { Plugin } from "siyuan";
 
 export interface ListStyleSettingsData {
@@ -315,13 +315,17 @@ function applyListStyles(listSettings: ListStyleSettingsData) {
 	}
 }
 
+import { GeneralSettingsStorage } from "../types/storage";
+
+const gsStorage = computed(() => props.plugin ? new GeneralSettingsStorage(props.plugin) : null);
+
 async function loadSettings() {
-	if (!props.plugin) {
+	if (!gsStorage.value) {
 		return;
 	}
 
 	try {
-		const data = await props.plugin.loadData("list-style-settings");
+		const data = await gsStorage.value.listStyle.load();
 		if (data) {
 			settings.value = { ...DEFAULT_SETTINGS, ...data };
 			applySettings();
@@ -332,12 +336,12 @@ async function loadSettings() {
 }
 
 async function saveSettings() {
-	if (!props.plugin) {
+	if (!gsStorage.value) {
 		return;
 	}
 
 	try {
-		await props.plugin.saveData("list-style-settings", settings.value);
+		await gsStorage.value.listStyle.save(settings.value);
 	} catch (error) {
 		console.error("保存列表样式设置失败:", error);
 	}

@@ -391,13 +391,17 @@ function applyTableStyles(tableSettings: TableStyleSettingsData) {
 	}
 }
 
+import { GeneralSettingsStorage } from "../types/storage";
+
+const gsStorage = computed(() => props.plugin ? new GeneralSettingsStorage(props.plugin) : null);
+
 async function loadSettings() {
-	if (!props.plugin) {
+	if (!gsStorage.value) {
 		return;
 	}
 
 	try {
-		const data = await props.plugin.loadData("table-style-settings");
+		const data = await gsStorage.value.tableStyle.load();
 		if (data) {
 			settings.value = { ...DEFAULT_SETTINGS, ...data };
 			applySettings();
@@ -408,12 +412,12 @@ async function loadSettings() {
 }
 
 async function saveSettings() {
-	if (!props.plugin) {
+	if (!gsStorage.value) {
 		return;
 	}
 
 	try {
-		await props.plugin.saveData("table-style-settings", settings.value);
+		await gsStorage.value.tableStyle.save(settings.value);
 	} catch (error) {
 		console.error("保存表格样式设置失败:", error);
 	}

@@ -114,7 +114,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { showMessage } from "siyuan";
 import SiSwitch from "@/components/Switch.vue";
 import { DocCountManager } from "../modules/DocCountManager";
@@ -142,9 +142,18 @@ const getDocCountManager = (): DocCountManager | null => {
 	return generalSettings?.docCountManager || null;
 };
 
+import { GeneralSettingsStorage } from "../types/storage";
+
+const gsStorage = computed(() => props.plugin ? new GeneralSettingsStorage(props.plugin) : null);
+
+const ensureStorage = (): GeneralSettingsStorage => {
+	if (!gsStorage.value) throw new Error("插件实例不可用");
+	return gsStorage.value;
+};
+
 const loadSettings = async () => {
 	try {
-		const data = await props.plugin?.loadData("doc-count-settings");
+		const data = gsStorage.value ? await gsStorage.value.docCount.load() : null;
 		if (data) {
 			enableDocCount.value = data.enableDocCount ?? true;
 			updateInterval.value = data.updateInterval || "3600000";
@@ -159,7 +168,7 @@ const loadSettings = async () => {
 
 const handleToggleChange = async () => {
 	try {
-		await props.plugin?.saveData("doc-count-settings", {
+		await ensureStorage().docCount.save({
 			enableDocCount: enableDocCount.value,
 			updateInterval: updateInterval.value,
 			fontSize: fontSize.value,
@@ -210,7 +219,7 @@ const handleToggleChange = async () => {
 
 const handleIntervalChange = async () => {
 	try {
-		await props.plugin?.saveData("doc-count-settings", {
+		await ensureStorage().docCount.save({
 			enableDocCount: enableDocCount.value,
 			updateInterval: updateInterval.value,
 			fontSize: fontSize.value,
@@ -229,7 +238,7 @@ const handleIntervalChange = async () => {
 
 const handleFontStyleChange = async () => {
 	try {
-		await props.plugin?.saveData("doc-count-settings", {
+		await ensureStorage().docCount.save({
 			enableDocCount: enableDocCount.value,
 			updateInterval: updateInterval.value,
 			fontSize: fontSize.value,

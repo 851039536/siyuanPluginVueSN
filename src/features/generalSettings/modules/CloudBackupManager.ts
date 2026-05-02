@@ -517,12 +517,16 @@ class TencentProvider {
 
 // ========== CloudBackupManager ==========
 
+import { PluginStorage } from "@/utils/pluginStorage";
+
 export class CloudBackupManager {
 	private config: CloudProviderConfig | null = null;
 	private plugin: any;
+	private storage: PluginStorage;
 
 	constructor(plugin: any) {
 		this.plugin = plugin;
+		this.storage = new PluginStorage(plugin);
 	}
 
 	/**
@@ -530,7 +534,7 @@ export class CloudBackupManager {
 	 */
 	async loadConfig(): Promise<CloudProviderConfig | null> {
 		try {
-			const data = await this.plugin.loadData("cloud-backup-config");
+			const data = await this.storage.load<CloudProviderConfig>("cloud-backup-config");
 			if (data) {
 				this.config = data;
 				return data;
@@ -546,7 +550,7 @@ export class CloudBackupManager {
 	 */
 	async saveConfig(config: CloudProviderConfig): Promise<void> {
 		this.config = config;
-		await this.plugin.saveData("cloud-backup-config", config);
+		await this.storage.save("cloud-backup-config", config);
 	}
 
 	/**

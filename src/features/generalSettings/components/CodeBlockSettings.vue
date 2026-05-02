@@ -374,7 +374,7 @@ import {
 	DEFAULT_CODEBLOCK_SETTINGS,
 	type CodeBlockSettings,
 } from "@/features/generalSettings/types/storage";
-import { applyCodeBlockStyle, applyCodeBlockCollapse, applyCodeBlockEnhancedStyles } from "../types";
+import { applyCodeBlockStyle, applyCodeBlockCollapse, applyCodeBlockEnhancedStyles } from "../utils/styles";
 
 interface Props {
 	i18n?: any;

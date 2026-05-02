@@ -15,3 +15,4 @@ export function registerGeneralSettings(plugin: Plugin) {
 }
 
 export * from "./types";
+export { CODEBLOCK_STYLES, type CodeBlockStyle, HEADING_LEVEL_MAPPINGS, checkIsMobile, applyCodeBlockStyle, applyCodeBlockEnhancedStyles, applyCodeBlockCollapse } from "./utils/styles";

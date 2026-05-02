@@ -19,7 +19,7 @@ import {
 	applyCodeBlockCollapse,
 } from "../utils/styles";
 
-export { CODEBLOCK_STYLES, type CodeBlockStyle, HEADING_LEVEL_MAPPINGS, checkIsMobile, applyCodeBlockStyle, applyCodeBlockEnhancedStyles, applyCodeBlockCollapse } from "../utils/styles";
+
 
 export class GeneralSettings {
 	private plugin: Plugin;

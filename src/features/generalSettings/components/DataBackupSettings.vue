@@ -257,7 +257,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, nextTick, computed } from "vue";
 import { showMessage } from "siyuan";
-import { checkIsMobile } from "../types";
+import { checkIsMobile } from "../utils/styles";
 import { BackupManager } from "../modules/BackupManager";
 import type { BackupProgress, BackupResult, RestoreProgress } from "../modules/BackupManager";
 import { CloudBackupManager } from "../modules/CloudBackupManager";

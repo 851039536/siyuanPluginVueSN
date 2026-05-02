@@ -136,7 +136,7 @@
 import { showMessage } from "siyuan";
 import { onMounted, ref } from "vue";
 import SiSwitch from "@/components/Switch.vue";
-import { loadHighlightSettings } from "@/features/generalSettings/types/storage";
+import { GeneralSettingsStorage } from "@/features/generalSettings/types/storage";
 
 const props = defineProps<{
 	i18n?: Record<string, string>;
@@ -151,10 +151,12 @@ const minTextLength = ref(1);
 const minLetterLength = ref(1);
 const maxTextLength = ref(50);
 const maxLetterLength = ref(100);
+const storage = ref<GeneralSettingsStorage | null>(null);
 
 const loadSettings = async () => {
+	if (!storage.value) return;
 	try {
-		const settings = await loadHighlightSettings(props.plugin);
+		const settings = await storage.value.highlight.loadOrDefault();
 		if (settings) {
 			enableHighlight.value = settings.enableHighlight ?? true;
 			backgroundColor.value = settings.backgroundColor ?? "rgb(255, 220, 60)";
@@ -208,7 +210,12 @@ const handleStyleChange = () => {
 	}
 };
 
-onMounted(loadSettings);
+onMounted(() => {
+	if (props.plugin) {
+		storage.value = new GeneralSettingsStorage(props.plugin);
+	}
+	loadSettings();
+});
 
 defineExpose({ loadSettings, enableHighlight });
 </script>

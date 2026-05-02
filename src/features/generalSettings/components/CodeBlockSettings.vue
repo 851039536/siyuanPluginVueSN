@@ -370,8 +370,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from "vue";
 import {
-	saveCodeBlockSettings,
-	loadCodeBlockSettings,
+	GeneralSettingsStorage,
 	DEFAULT_CODEBLOCK_SETTINGS,
 	type CodeBlockSettings,
 } from "@/features/generalSettings/types/storage";
@@ -397,6 +396,8 @@ const emit = defineEmits<Emits>();
 
 const settings = ref<CodeBlockSettings>({ ...props.initialSettings });
 const presetCodeFont = ref("");
+const storage = ref<GeneralSettingsStorage | null>(null);
+
 
 const shadowOptions = [
 	{ label: props.i18n.noneShadow || "无阴影", value: "none" },
@@ -424,9 +425,9 @@ watch(
 			newSettings.collapseHeight,
 		);
 		applyCodeBlockEnhancedStyles(newSettings);
-		if (props.plugin) {
+		if (storage.value) {
 			try {
-				await saveCodeBlockSettings(props.plugin, newSettings);
+				await storage.value.codeblock.save(newSettings);
 			} catch (error) {
 				console.error("自动保存失败:", error);
 			}
@@ -479,7 +480,7 @@ async function loadSettings() {
 	}
 
 	try {
-		const loadedSettings = await loadCodeBlockSettings(props.plugin);
+		const loadedSettings = await storage.value!.codeblock.loadOrDefault();
 		settings.value = { ...DEFAULT_CODEBLOCK_SETTINGS, ...loadedSettings };
 		applyCodeBlockStyle(settings.value.style);
 		applyCodeBlockCollapse(
@@ -495,6 +496,9 @@ async function loadSettings() {
 
 // 初始化时加载设置并应用样式
 onMounted(async () => {
+	if (props.plugin) {
+		storage.value = new GeneralSettingsStorage(props.plugin);
+	}
 	await loadSettings();
 });
 

@@ -61,7 +61,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from "vue";
-import { saveTabPinSettings, loadTabPinSettings } from "@/features/generalSettings/types/storage";
+import { GeneralSettingsStorage } from "@/features/generalSettings/types/storage";
 
 interface Props {
 	i18n?: any;
@@ -97,6 +97,7 @@ const enabled = ref(true);
 const displayMode = ref<"iconAndText" | "textOnly">("iconAndText");
 const backgroundColor = ref(defaultBackgroundColor);
 let initialized = false;
+const storage = ref<GeneralSettingsStorage | null>(null);
 
 // 统一监听所有响应式变化，自动应用样式并保存
 watch([enabled, displayMode, backgroundColor], () => {
@@ -173,7 +174,7 @@ async function autoSave() {
 			backgroundColor: backgroundColor.value,
 		};
 
-		await saveTabPinSettings(props.plugin, settingsToSave);
+		await storage.value!.tabPin.save(settingsToSave);
 		emit("change", settingsToSave);
 	} catch (error) {
 		console.error("保存钉住页签设置失败:", error);
@@ -188,7 +189,7 @@ async function loadSettings() {
 	}
 
 	try {
-		const settings = await loadTabPinSettings(props.plugin);
+		const settings = await storage.value!.tabPin.loadOrDefault();
 
 		enabled.value = settings.enabled ?? true;
 		displayMode.value = settings.displayMode || "iconAndText";
@@ -200,6 +201,9 @@ async function loadSettings() {
 
 // 初始化 - 在组件挂载后执行
 onMounted(async () => {
+	if (props.plugin) {
+		storage.value = new GeneralSettingsStorage(props.plugin);
+	}
 	await loadSettings();
 	initialized = true;
 });

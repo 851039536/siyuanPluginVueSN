@@ -4,11 +4,6 @@
  */
 import { Plugin } from "siyuan";
 import { createApp, h } from "vue";
-import {
-	loadCodeBlockSettings,
-	loadListSettings,
-	loadHeadingSettings,
-} from "@/features/generalSettings/types/storage";
 import { GeneralSettingsStorage } from "./storage";
 import { DocCountManager } from "../modules/DocCountManager";
 import { HighlightManager } from "../modules/HighlightManager";
@@ -217,7 +212,7 @@ export class GeneralSettings {
 
 	public async applyCodeBlockStyle() {
 		try {
-			const settings = await loadCodeBlockSettings(this.plugin);
+			const settings = await this.storage.codeblock.loadOrDefault();
 			this.applyCodeBlockStyleFromSettings(settings);
 		} catch (error) {
 			console.error("应用代码块样式失败:", error);
@@ -226,7 +221,7 @@ export class GeneralSettings {
 
 	public async applyListStyle() {
 		try {
-			const settings = await loadListSettings(this.plugin);
+			const settings = await this.storage.list.loadOrDefault();
 			this.applyListStyles(settings);
 		} catch (error) {
 			console.error("应用列表样式失败:", error);
@@ -235,7 +230,7 @@ export class GeneralSettings {
 
 	public async applyHeadingStyle() {
 		try {
-			const settings = await loadHeadingSettings(this.plugin);
+			const settings = await this.storage.loadHeadingOrDefault();
 
 			if (document.readyState === "loading") {
 				document.addEventListener("DOMContentLoaded", () => {

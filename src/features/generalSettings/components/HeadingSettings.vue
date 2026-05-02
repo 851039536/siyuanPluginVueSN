@@ -323,7 +323,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted } from "vue";
-import { saveHeadingSettings, loadHeadingSettings } from "@/features/generalSettings/types/storage";
+import { GeneralSettingsStorage } from "@/features/generalSettings/types/storage";
 
 interface HeadingColors {
 	h1: string;
@@ -386,6 +386,7 @@ const titleColor = ref("#2C3E50");
 const defaultTitleColor = "#2C3E50";
 const headingSizes = ref<HeadingSizes>({ ...props.initialFontSizes });
 const titleFontSize = ref(24);
+const storage = ref<GeneralSettingsStorage | null>(null);
 
 // 预设风格
 const styles: Record<string, HeadingColors> = {
@@ -631,7 +632,7 @@ async function autoSave() {
 			titleFontSize: titleFontSize.value,
 		};
 
-		await saveHeadingSettings(props.plugin, settingsToSave);
+		await storage.value!.heading.save(settingsToSave);
 	} catch (error) {
 		console.error("保存失败:", error);
 	}
@@ -645,8 +646,7 @@ async function loadSettings() {
 	}
 
 	try {
-		// 使用插件的数据存储 API
-		const settings = await loadHeadingSettings(props.plugin);
+		const settings = await storage.value!.loadHeadingOrDefault();
 
 		selectedStyle.value = settings.style || "default";
 		headingColors.value = { ...styles.default, ...settings.colors };
@@ -670,6 +670,9 @@ async function loadSettings() {
 
 // 初始化 - 仅加载设置填充表单（样式由 GeneralSettings.init() 在插件启动时应用）
 onMounted(async () => {
+	if (props.plugin) {
+		storage.value = new GeneralSettingsStorage(props.plugin);
+	}
 	await loadSettings();
 });
 

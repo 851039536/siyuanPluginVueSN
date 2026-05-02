@@ -25,18 +25,6 @@ export {
 	DEFAULT_LIST_SETTINGS,
 	DEFAULT_HIGHLIGHT_SETTINGS,
 	DEFAULT_TABPIN_SETTINGS,
-	loadFontSettings,
-	saveFontSettings,
-	loadHeadingSettings,
-	saveHeadingSettings,
-	loadCodeBlockSettings,
-	saveCodeBlockSettings,
-	loadListSettings,
-	saveListSettings,
-	loadHighlightSettings,
-	saveHighlightSettings,
-	loadTabPinSettings,
-	saveTabPinSettings,
 } from "@/features/generalSettings/types/storage";
 
 // TextDiffSettings 也从 feature 规范位置 re-export

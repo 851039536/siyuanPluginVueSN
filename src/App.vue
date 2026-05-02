@@ -44,6 +44,16 @@
       @update:visible="(v) => passwordVaultVisible = v"
       @close="hidePasswordVault"
     />
+
+    <!-- 解密对话框 -->
+    <DecryptDialog
+      :visible="showDecryptDialog"
+      :encrypted-text="pendingEncryptedText"
+      :i18n="plugin.i18n"
+      @update:visible="(v) => showDecryptDialog = v"
+      @close="showDecryptDialog = false"
+      @replace="handleDecryptReplace"
+    />
   </div>
 </template>
 
@@ -55,6 +65,8 @@ import { QRCodeDialog, PronunciationDialog } from "@/features/floatingToolbar";
 import VideoManager from "@/features/video/index.vue";
 import EverythingSearchDialog from "@/features/everythingSearch/index.vue";
 import PasswordVaultDialog from "@/features/passwordVault/index.vue";
+import DecryptDialog from "@/features/encryption/components/DecryptDialog.vue";
+import { getEncryptionInstance } from "@/features/encryption/index";
 import {
 	everythingSearchVisible,
 	hideEverythingSearch,
@@ -70,6 +82,8 @@ const showVideoManager = ref(false);
 const qrcodeContent = ref("");
 const showPronunciationDialog = ref(false);
 const pronunciationWord = ref("");
+const showDecryptDialog = ref(false);
+const pendingEncryptedText = ref("");
 
 // 打开二维码对话框
 const openQRCodeDialog = (content: string) => {
@@ -81,6 +95,20 @@ const openQRCodeDialog = (content: string) => {
 const openPronunciationDialog = (word: string) => {
 	pronunciationWord.value = word;
 	showPronunciationDialog.value = true;
+};
+
+// 打开解密对话框
+const openDecryptDialogAction = (encryptedText: string) => {
+	pendingEncryptedText.value = encryptedText;
+	showDecryptDialog.value = true;
+};
+
+// 替换加密文本为解密后内容
+const handleDecryptReplace = (decryptedText: string) => {
+	const instance = getEncryptionInstance();
+	if (instance) {
+		instance.replaceCurrentText(decryptedText);
+	}
 };
 
 onMounted(() => {
@@ -117,6 +145,12 @@ onMounted(() => {
 	window.addEventListener("openPasswordVault", () => {
 		passwordVaultVisible.value = true;
 	});
+
+	// 监听打开解密对话框事件
+	window.addEventListener("openDecryptDialog", ((event: any) => {
+		if (event.detail?.encryptedText)
+			openDecryptDialogAction(event.detail.encryptedText);
+	}) as EventListener);
 });
 </script>
 

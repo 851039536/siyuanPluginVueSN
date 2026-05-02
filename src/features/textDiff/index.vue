@@ -217,7 +217,7 @@ const setFontSize = (size: number) => {
 const loadSettings = async () => {
 	if (!storage) return;
 	try {
-		const settings = await storage.loadSettings();
+		const settings = await storage.settings.loadOrDefault();
 		diffMode.value = settings.diffMode;
 		fontSize.value = settings.fontSize;
 		setFontSize(settings.fontSize);
@@ -235,7 +235,7 @@ const saveSettings = async () => {
 			diffMode: diffMode.value,
 			theme: "light",
 		};
-		await storage.saveSettings(settings);
+		await storage.settings.save(settings);
 	} catch (error) {
 		console.error("保存设置失败:", error);
 	}

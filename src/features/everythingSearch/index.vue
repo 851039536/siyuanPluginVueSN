@@ -146,8 +146,8 @@ const saveConfigToPlugin = async () => {
 	// 延迟保存，避免频繁写入
 	saveConfigTimer.value = window.setTimeout(async () => {
 		try {
-			await storage.saveConfig(config);
-			await storage.saveOptions(options);
+			await storage.config.save(config);
+			await storage.options.save(options);
 		} catch (error) {
 			console.error("保存配置到插件存储失败:", error);
 		}

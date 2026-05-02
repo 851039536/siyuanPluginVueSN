@@ -3,6 +3,7 @@
  */
 import { Plugin } from "siyuan";
 import { PluginStorage } from "@/utils/pluginStorage";
+import { TypedStorage } from "@/utils/typedStorage";
 import type { FilterOptions } from "./index";
 
 /** 存储的设置数据 */
@@ -25,33 +26,18 @@ export const DEFAULT_FILTER_OPTIONS: FilterOptions = {
  * 文档分析存储管理类
  */
 export class DocAnalysisStorage {
-	private storage: PluginStorage;
-	private readonly OPTIONS_KEY = "doc-analysis-options";
+	readonly options: TypedStorage<FilterOptions>;
 
 	constructor(plugin: Plugin) {
-		this.storage = new PluginStorage(plugin);
-	}
-
-	/**
-	 * 保存过滤选项
-	 */
-	async saveOptions(options: FilterOptions): Promise<boolean> {
-		return this.storage.save(this.OPTIONS_KEY, { ...options });
-	}
-
-	/**
-	 * 加载过滤选项
-	 */
-	async loadOptions(): Promise<FilterOptions> {
-		const data = await this.storage.load<FilterOptions>(this.OPTIONS_KEY);
-		return data ? { ...DEFAULT_FILTER_OPTIONS, ...data } : { ...DEFAULT_FILTER_OPTIONS };
+		const storage = new PluginStorage(plugin);
+		this.options = new TypedStorage(storage, "doc-analysis-options", DEFAULT_FILTER_OPTIONS);
 	}
 
 	/**
 	 * 初始化存储（加载或使用默认值）
 	 */
 	async init(): Promise<{ filterOptions: FilterOptions }> {
-		const filterOptions = await this.loadOptions();
+		const filterOptions = await this.options.loadOrDefault();
 		return { filterOptions };
 	}
 }

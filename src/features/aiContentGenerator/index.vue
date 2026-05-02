@@ -990,7 +990,7 @@ const saveCurrentPrompt = async () => {
 const clearCurrentPrompt = async () => {
 	currentPromptName.value = "";
 	await safeStorageOperation(
-		() => storage!.clearCurrentPrompt(),
+		() => storage!.currentPrompt.remove(),
 		"清除当前提示词失败:",
 	);
 };
@@ -1070,7 +1070,7 @@ const loadPrompt = async (index: number) => {
 
 	// 保存当前选中的提示词到存储
 	await safeStorageOperation(
-		() => storage!.saveCurrentPrompt(prompt.name),
+		() => storage!.currentPrompt.save(prompt.name),
 		"保存当前提示词失败:",
 	);
 };
@@ -1101,7 +1101,7 @@ const deletePrompt = (index: number) => {
 // 保存提示词到存储
 const savePromptsToStorage = async () => {
 	await safeStorageOperation(
-		() => storage!.savePrompts(savedPrompts.value),
+		() => storage!.prompts.save(savedPrompts.value),
 		"保存提示词配置失败:",
 	);
 };
@@ -1111,12 +1111,12 @@ const loadPromptsFromStorage = async () => {
 	if (!storage) return;
 
 	try {
-		const prompts = await storage.loadPrompts();
+		const prompts = await storage.prompts.loadOrDefault();
 		if (prompts) {
 			savedPrompts.value = prompts;
 		}
 
-		const loadedCurrentPromptName = await storage.loadCurrentPrompt();
+		const loadedCurrentPromptName = await storage.currentPrompt.load();
 		if (loadedCurrentPromptName) {
 			const promptIndex = savedPrompts.value.findIndex(
 				(p) => p.name === loadedCurrentPromptName,
@@ -1163,7 +1163,7 @@ const saveSettings = async () => {
 	};
 
 	await safeStorageOperation(
-		() => storage!.saveSettings(settings),
+		() => storage!.settings.save(settings),
 		"保存设置失败:",
 	);
 };
@@ -1173,7 +1173,7 @@ const loadSettings = async () => {
 	if (!storage) return;
 
 	try {
-		const settings = await storage.loadSettings();
+		const settings = await storage.settings.load();
 		if (settings) {
 			systemPrompt.value = settings.systemPrompt || systemPrompt.value;
 			temperature.value = settings.temperature ?? temperature.value;

@@ -55,7 +55,7 @@ src/
 ├── components/                  # 共享组件
 ├── config/                      # 配置管理
 ├── commands/                    # 斜杠命令
-├── utils/                       # 工具模块（aiApi、pluginStorage等）
+├── utils/                       # 工具模块（aiApi、pluginStorage、typedStorage等）
 ├── api.ts                       # Siyuan API 封装
 ├── index.ts                     # 插件入口
 └── main.ts                      # Vue 初始化
@@ -103,7 +103,7 @@ src/
 
 ## API 参考
 
-### PluginStorage（推荐）
+### PluginStorage（底层）
 
 ```typescript
 import { PluginStorage } from '@/utils/pluginStorage'
@@ -113,6 +113,39 @@ await storage.save('key', data)
 const data = await storage.load<Type>('key')
 const data = await storage.loadWithDefault('key', defaultValue)
 ```
+
+### TypedStorage\<T\>（推荐）
+
+所有功能模块的 `storage.ts` 均使用 `TypedStorage<T>` 封装，避免重复的 save/load 模板代码：
+
+```typescript
+import { TypedStorage } from '@/utils/typedStorage'
+import { PluginStorage } from '@/utils/pluginStorage'
+
+export class MyFeatureStorage {
+  readonly settings = new TypedStorage<Settings>(this.storage, 'myFeature-settings', defaultSettings);
+  readonly options = new TypedStorage<Options>(this.storage, 'myFeature-options');  // 无默认值时 load() 返回 null
+
+  constructor(private storage: PluginStorage) {}
+
+  // 如需初始化时批量加载，可添加 init() 方法
+  async init() {
+    const [settings, options] = await Promise.all([
+      this.settings.loadOrDefault(),
+      this.options.loadOrDefault(),
+    ]);
+    return { settings, options };
+  }
+}
+```
+
+**API**：
+- `save(value: T): Promise<boolean>` — 保存数据
+- `load(): Promise<T | null>` — 加载数据，无数据返回 `null`
+- `loadOrDefault(): Promise<T>` — 加载数据，无数据返回构造时的默认值（须提供默认值）
+- `remove(): Promise<boolean>` — 删除数据
+
+**使用方调用**：`storage.settings.save(data)` / `storage.settings.loadOrDefault()`
 
 ### AI API 统一模块
 
@@ -140,10 +173,26 @@ src/features/myFeature/
 ├── index.vue              # 主面板
 ├── types/
 │   ├── index.ts           # 类型定义（仅类型，不含注册逻辑）
-│   └── storage.ts         # 数据存储
+│   └── storage.ts         # 数据存储（使用 TypedStorage<T>）
 ├── components/            # 子组件
 └── styles/
     └── index.scss
+```
+
+`storage.ts` 模板：
+
+```typescript
+import { TypedStorage } from '@/utils/typedStorage'
+import { PluginStorage } from '@/utils/pluginStorage'
+import type { Plugin } from 'siyuan'
+
+export class MyFeatureStorage {
+  readonly settings = new TypedStorage<MySettings>(this.storage, 'myFeature-settings', defaultSettings);
+
+  constructor(plugin: Plugin) {
+    this.storage = new PluginStorage(plugin);
+  }
+}
 ```
 
 注册步骤：

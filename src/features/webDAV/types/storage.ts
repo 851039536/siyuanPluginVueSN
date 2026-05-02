@@ -4,9 +4,8 @@
  */
 import { Plugin } from "siyuan";
 import { PluginStorage } from "@/utils/pluginStorage";
+import { TypedStorage } from "@/utils/typedStorage";
 import type { WebDAVConfig } from "@/config/settings";
-
-const WEBDAV_CONFIG_KEY = "webdav-config";
 
 const DEFAULT_WEBDAV_CONFIG: WebDAVConfig = {
 	serverUrl: "",
@@ -28,8 +27,6 @@ export interface SyncStatus {
 	syncedFiles: number;
 }
 
-const SYNC_STATUS_KEY = "webdav-sync-status";
-
 const DEFAULT_SYNC_STATUS: SyncStatus = {
 	lastSyncTime: "",
 	lastSyncResult: "none",
@@ -41,52 +38,19 @@ const DEFAULT_SYNC_STATUS: SyncStatus = {
  * WebDAV存储管理类
  */
 export class WebDAVStorage {
-	private storage: PluginStorage;
+	readonly config: TypedStorage<WebDAVConfig>;
+	readonly syncStatus: TypedStorage<SyncStatus>;
 
 	constructor(plugin: Plugin) {
-		this.storage = new PluginStorage(plugin);
-	}
-
-	/**
-	 * 加载WebDAV配置
-	 */
-	async loadConfig(): Promise<WebDAVConfig> {
-		const data = await this.storage.load<WebDAVConfig>(WEBDAV_CONFIG_KEY);
-		if (!data) {
-			return { ...DEFAULT_WEBDAV_CONFIG };
-		}
-		return { ...DEFAULT_WEBDAV_CONFIG, ...data };
-	}
-
-	/**
-	 * 保存WebDAV配置
-	 */
-	async saveConfig(config: WebDAVConfig): Promise<boolean> {
-		return this.storage.save(WEBDAV_CONFIG_KEY, config);
+		const storage = new PluginStorage(plugin);
+		this.config = new TypedStorage(storage, "webdav-config", DEFAULT_WEBDAV_CONFIG);
+		this.syncStatus = new TypedStorage(storage, "webdav-sync-status", DEFAULT_SYNC_STATUS);
 	}
 
 	/**
 	 * 重置WebDAV配置
 	 */
 	async resetConfig(): Promise<boolean> {
-		return this.storage.save(WEBDAV_CONFIG_KEY, DEFAULT_WEBDAV_CONFIG);
-	}
-
-	/**
-	 * 加载同步状态
-	 */
-	async loadSyncStatus(): Promise<SyncStatus> {
-		const data = await this.storage.load<SyncStatus>(SYNC_STATUS_KEY);
-		if (!data) {
-			return { ...DEFAULT_SYNC_STATUS };
-		}
-		return { ...DEFAULT_SYNC_STATUS, ...data };
-	}
-
-	/**
-	 * 保存同步状态
-	 */
-	async saveSyncStatus(status: SyncStatus): Promise<boolean> {
-		return this.storage.save(SYNC_STATUS_KEY, status);
+		return this.config.save(DEFAULT_WEBDAV_CONFIG);
 	}
 }

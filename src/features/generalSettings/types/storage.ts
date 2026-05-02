@@ -3,6 +3,7 @@
  */
 import { Plugin } from "siyuan";
 import { PluginStorage } from "@/utils/pluginStorage";
+import { TypedStorage } from "@/utils/typedStorage";
 
 export interface FontSettings {
 	fontFamily: string;
@@ -155,167 +156,9 @@ export interface SkillsViewerSettings {
 	selectedTool: string;
 }
 
-export class GeneralSettingsStorage {
-	private storage: PluginStorage;
-
-	private readonly KEYS = {
-		FONT: "font-settings",
-		CODEBLOCK: "codeblock-settings",
-		HEADING: "heading-settings",
-		LIST: "list-settings",
-		HIGHLIGHT: "highlight-settings",
-		BACKUP: "data-backup-settings",
-		DOCUMENT_FONT: "document-font-settings",
-		TABLE_STYLE: "table-style-settings",
-		LIST_STYLE: "list-style-settings",
-		DOC_COUNT: "doc-count-settings",
-		TAB_PIN: "tabpin-settings",
-		SKILLS_VIEWER: "skills-viewer-settings",
-	};
-
-	constructor(plugin: Plugin) {
-		this.storage = new PluginStorage(plugin);
-	}
-
-	async saveFontSettings(settings: FontSettings): Promise<boolean> {
-		return this.storage.save(this.KEYS.FONT, settings);
-	}
-
-	async loadFontSettings(): Promise<FontSettings | null> {
-		return this.storage.load<FontSettings>(this.KEYS.FONT);
-	}
-
-	async saveCodeBlockSettings(settings: CodeBlockSettings): Promise<boolean> {
-		return this.storage.save(this.KEYS.CODEBLOCK, settings);
-	}
-
-	async loadCodeBlockSettings(): Promise<CodeBlockSettings | null> {
-		return this.storage.load<CodeBlockSettings>(this.KEYS.CODEBLOCK);
-	}
-
-	async saveHeadingSettings(settings: HeadingSettings): Promise<boolean> {
-		return this.storage.save(this.KEYS.HEADING, settings);
-	}
-
-	async loadHeadingSettings(): Promise<HeadingSettings | null> {
-		return this.storage.load<HeadingSettings>(this.KEYS.HEADING);
-	}
-
-	async saveListSettings(settings: ListSettings): Promise<boolean> {
-		return this.storage.save(this.KEYS.LIST, settings);
-	}
-
-	async loadListSettings(): Promise<ListSettings | null> {
-		return this.storage.load<ListSettings>(this.KEYS.LIST);
-	}
-
-	async saveHighlightSettings(settings: HighlightSettings): Promise<boolean> {
-		return this.storage.save(this.KEYS.HIGHLIGHT, settings);
-	}
-
-	async loadHighlightSettings(): Promise<HighlightSettings | null> {
-		return this.storage.load<HighlightSettings>(this.KEYS.HIGHLIGHT);
-	}
-
-	async saveBackupSettings(settings: BackupSettings): Promise<boolean> {
-		return this.storage.save(this.KEYS.BACKUP, settings);
-	}
-
-	async loadBackupSettings(): Promise<BackupSettings | null> {
-		return this.storage.load<BackupSettings>(this.KEYS.BACKUP);
-	}
-
-	async saveDocumentFontSettings(
-		settings: DocumentFontSettings,
-	): Promise<boolean> {
-		return this.storage.save(this.KEYS.DOCUMENT_FONT, settings);
-	}
-
-	async loadDocumentFontSettings(): Promise<DocumentFontSettings | null> {
-		return this.storage.load<DocumentFontSettings>(this.KEYS.DOCUMENT_FONT);
-	}
-
-	async saveTableStyleSettings(settings: TableStyleSettings): Promise<boolean> {
-		return this.storage.save(this.KEYS.TABLE_STYLE, settings);
-	}
-
-	async loadTableStyleSettings(): Promise<TableStyleSettings | null> {
-		return this.storage.load<TableStyleSettings>(this.KEYS.TABLE_STYLE);
-	}
-
-	async saveListStyleSettings(settings: ListStyleSettings): Promise<boolean> {
-		return this.storage.save(this.KEYS.LIST_STYLE, settings);
-	}
-
-	async loadListStyleSettings(): Promise<ListStyleSettings | null> {
-		return this.storage.load<ListStyleSettings>(this.KEYS.LIST_STYLE);
-	}
-
-	async saveDocCountSettings(settings: DocCountSettings): Promise<boolean> {
-		return this.storage.save(this.KEYS.DOC_COUNT, settings);
-	}
-
-	async loadDocCountSettings(): Promise<DocCountSettings | null> {
-		return this.storage.load<DocCountSettings>(this.KEYS.DOC_COUNT);
-	}
-
-	async saveTabPinSettings(settings: TabPinSettings): Promise<boolean> {
-		return this.storage.save(this.KEYS.TAB_PIN, settings);
-	}
-
-	async loadTabPinSettings(): Promise<TabPinSettings | null> {
-		return this.storage.load<TabPinSettings>(this.KEYS.TAB_PIN);
-	}
-
-	async saveSkillsViewerSettings(settings: SkillsViewerSettings): Promise<boolean> {
-		return this.storage.save(this.KEYS.SKILLS_VIEWER, settings);
-	}
-
-	async loadSkillsViewerSettings(): Promise<SkillsViewerSettings | null> {
-		return this.storage.load<SkillsViewerSettings>(this.KEYS.SKILLS_VIEWER);
-	}
-
-	async clearAllSettings(): Promise<void> {
-		await Promise.all([
-			this.storage.remove(this.KEYS.FONT),
-			this.storage.remove(this.KEYS.CODEBLOCK),
-			this.storage.remove(this.KEYS.HEADING),
-			this.storage.remove(this.KEYS.LIST),
-			this.storage.remove(this.KEYS.HIGHLIGHT),
-			this.storage.remove(this.KEYS.BACKUP),
-			this.storage.remove(this.KEYS.DOCUMENT_FONT),
-			this.storage.remove(this.KEYS.TABLE_STYLE),
-			this.storage.remove(this.KEYS.LIST_STYLE),
-			this.storage.remove(this.KEYS.DOC_COUNT),
-			this.storage.remove(this.KEYS.TAB_PIN),
-			this.storage.remove(this.KEYS.SKILLS_VIEWER),
-		]);
-	}
-}
-
-/**
- * 存储键常量（外部模块可直接引用，避免硬编码字符串）
- */
-export const STORAGE_KEYS = {
-	FONT: "font-settings",
-	CODEBLOCK: "codeblock-settings",
-	HEADING: "heading-settings",
-	LIST: "list-settings",
-	HIGHLIGHT: "highlight-settings",
-	BACKUP: "data-backup-settings",
-	DOCUMENT_FONT: "document-font-settings",
-	TABLE_STYLE: "table-style-settings",
-	LIST_STYLE: "list-style-settings",
-	DOC_COUNT: "doc-count-settings",
-	TAB_PIN: "tabpin-settings",
-	SKILLS_VIEWER: "skills-viewer-settings",
-} as const;
-
 // ============================================================
-// 独立函数：提供与 config/settings.ts 相同的函数签名，便于迁移
+// 默认值
 // ============================================================
-
-import type { Plugin } from "siyuan";
 
 /** 默认字体设置 */
 export const DEFAULT_FONT_SETTINGS: FontSettings = {
@@ -412,31 +255,105 @@ export const DEFAULT_TABPIN_SETTINGS: TabPinSettings = {
 	backgroundColor: "rgba(var(--b3-theme-primary-rgb), 0.1)",
 };
 
+// ============================================================
+// 存储类
+// ============================================================
+
+export class GeneralSettingsStorage {
+	readonly font: TypedStorage<FontSettings>;
+	readonly codeblock: TypedStorage<CodeBlockSettings>;
+	readonly heading: TypedStorage<HeadingSettings>;
+	readonly list: TypedStorage<ListSettings>;
+	readonly highlight: TypedStorage<HighlightSettings>;
+	readonly backup: TypedStorage<BackupSettings>;
+	readonly documentFont: TypedStorage<DocumentFontSettings>;
+	readonly tableStyle: TypedStorage<TableStyleSettings>;
+	readonly listStyle: TypedStorage<ListStyleSettings>;
+	readonly docCount: TypedStorage<DocCountSettings>;
+	readonly tabPin: TypedStorage<TabPinSettings>;
+	readonly skillsViewer: TypedStorage<SkillsViewerSettings>;
+
+	constructor(plugin: Plugin) {
+		const storage = new PluginStorage(plugin);
+		this.font = new TypedStorage(storage, "font-settings", DEFAULT_FONT_SETTINGS);
+		this.codeblock = new TypedStorage(storage, "codeblock-settings", DEFAULT_CODEBLOCK_SETTINGS);
+		this.heading = new TypedStorage(storage, "heading-settings", DEFAULT_HEADING_SETTINGS);
+		this.list = new TypedStorage(storage, "list-settings", DEFAULT_LIST_SETTINGS);
+		this.highlight = new TypedStorage(storage, "highlight-settings", DEFAULT_HIGHLIGHT_SETTINGS);
+		this.backup = new TypedStorage(storage, "data-backup-settings");
+		this.documentFont = new TypedStorage(storage, "document-font-settings");
+		this.tableStyle = new TypedStorage(storage, "table-style-settings");
+		this.listStyle = new TypedStorage(storage, "list-style-settings");
+		this.docCount = new TypedStorage(storage, "doc-count-settings");
+		this.tabPin = new TypedStorage(storage, "tabpin-settings", DEFAULT_TABPIN_SETTINGS);
+		this.skillsViewer = new TypedStorage(storage, "skills-viewer-settings");
+	}
+
+	async clearAllSettings(): Promise<void> {
+		await Promise.all([
+			this.font.remove(),
+			this.codeblock.remove(),
+			this.heading.remove(),
+			this.list.remove(),
+			this.highlight.remove(),
+			this.backup.remove(),
+			this.documentFont.remove(),
+			this.tableStyle.remove(),
+			this.listStyle.remove(),
+			this.docCount.remove(),
+			this.tabPin.remove(),
+			this.skillsViewer.remove(),
+		]);
+	}
+}
+
+/**
+ * 存储键常量（外部模块可直接引用，避免硬编码字符串）
+ */
+export const STORAGE_KEYS = {
+	FONT: "font-settings",
+	CODEBLOCK: "codeblock-settings",
+	HEADING: "heading-settings",
+	LIST: "list-settings",
+	HIGHLIGHT: "highlight-settings",
+	BACKUP: "data-backup-settings",
+	DOCUMENT_FONT: "document-font-settings",
+	TABLE_STYLE: "table-style-settings",
+	LIST_STYLE: "list-style-settings",
+	DOC_COUNT: "doc-count-settings",
+	TAB_PIN: "tabpin-settings",
+	SKILLS_VIEWER: "skills-viewer-settings",
+} as const;
+
+// ============================================================
+// 独立函数：提供与 config/settings.ts 相同的函数签名，便于迁移
+// ============================================================
+
+import type { Plugin } from "siyuan";
+
 export async function loadFontSettings(plugin: Plugin): Promise<FontSettings> {
 	const storage = new GeneralSettingsStorage(plugin);
-	const data = await storage.loadFontSettings();
-	return { ...DEFAULT_FONT_SETTINGS, ...data };
+	return storage.font.loadOrDefault();
 }
 
 export async function saveFontSettings(plugin: Plugin, settings: FontSettings): Promise<boolean> {
 	const storage = new GeneralSettingsStorage(plugin);
-	return storage.saveFontSettings(settings);
+	return storage.font.save(settings);
 }
 
 export async function loadCodeBlockSettings(plugin: Plugin): Promise<CodeBlockSettings> {
 	const storage = new GeneralSettingsStorage(plugin);
-	const data = await storage.loadCodeBlockSettings();
-	return { ...DEFAULT_CODEBLOCK_SETTINGS, ...data };
+	return storage.codeblock.loadOrDefault();
 }
 
 export async function saveCodeBlockSettings(plugin: Plugin, settings: CodeBlockSettings): Promise<boolean> {
 	const storage = new GeneralSettingsStorage(plugin);
-	return storage.saveCodeBlockSettings(settings);
+	return storage.codeblock.save(settings);
 }
 
 export async function loadHeadingSettings(plugin: Plugin): Promise<HeadingSettings> {
 	const storage = new GeneralSettingsStorage(plugin);
-	const data = await storage.loadHeadingSettings();
+	const data = await storage.heading.load();
 	if (!data) return { ...DEFAULT_HEADING_SETTINGS };
 	return {
 		...DEFAULT_HEADING_SETTINGS,
@@ -448,38 +365,35 @@ export async function loadHeadingSettings(plugin: Plugin): Promise<HeadingSettin
 
 export async function saveHeadingSettings(plugin: Plugin, settings: HeadingSettings): Promise<boolean> {
 	const storage = new GeneralSettingsStorage(plugin);
-	return storage.saveHeadingSettings(settings);
+	return storage.heading.save(settings);
 }
 
 export async function loadListSettings(plugin: Plugin): Promise<ListSettings> {
 	const storage = new GeneralSettingsStorage(plugin);
-	const data = await storage.loadListSettings();
-	return { ...DEFAULT_LIST_SETTINGS, ...data };
+	return storage.list.loadOrDefault();
 }
 
 export async function saveListSettings(plugin: Plugin, settings: ListSettings): Promise<boolean> {
 	const storage = new GeneralSettingsStorage(plugin);
-	return storage.saveListSettings(settings);
+	return storage.list.save(settings);
 }
 
 export async function loadHighlightSettings(plugin: Plugin): Promise<HighlightSettings> {
 	const storage = new GeneralSettingsStorage(plugin);
-	const data = await storage.loadHighlightSettings();
-	return { ...DEFAULT_HIGHLIGHT_SETTINGS, ...data };
+	return storage.highlight.loadOrDefault();
 }
 
 export async function saveHighlightSettings(plugin: Plugin, settings: HighlightSettings): Promise<boolean> {
 	const storage = new GeneralSettingsStorage(plugin);
-	return storage.saveHighlightSettings(settings);
+	return storage.highlight.save(settings);
 }
 
 export async function loadTabPinSettings(plugin: Plugin): Promise<TabPinSettings> {
 	const storage = new GeneralSettingsStorage(plugin);
-	const data = await storage.loadTabPinSettings();
-	return { ...DEFAULT_TABPIN_SETTINGS, ...data };
+	return storage.tabPin.loadOrDefault();
 }
 
 export async function saveTabPinSettings(plugin: Plugin, settings: TabPinSettings): Promise<boolean> {
 	const storage = new GeneralSettingsStorage(plugin);
-	return storage.saveTabPinSettings(settings);
+	return storage.tabPin.save(settings);
 }

@@ -1,5 +1,6 @@
 import { Plugin } from "siyuan";
 import { PluginStorage } from "@/utils/pluginStorage";
+import { TypedStorage } from "@/utils/typedStorage";
 
 export interface WordQuerySettings {
 	pronunciationType: "uk" | "us";
@@ -14,26 +15,17 @@ const DEFAULT_SETTINGS: WordQuerySettings = {
 };
 
 export class WordQueryStorage {
-	private storage: PluginStorage;
-	private readonly SETTINGS_KEY = "word-query-settings";
+	readonly settings: TypedStorage<WordQuerySettings>;
 
 	constructor(plugin: Plugin) {
-		this.storage = new PluginStorage(plugin);
-	}
-
-	async saveSettings(settings: WordQuerySettings): Promise<boolean> {
-		return this.storage.save(this.SETTINGS_KEY, settings);
-	}
-
-	async loadSettings(): Promise<WordQuerySettings> {
-		const saved = await this.storage.load<WordQuerySettings>(this.SETTINGS_KEY);
-		return saved || DEFAULT_SETTINGS;
+		const storage = new PluginStorage(plugin);
+		this.settings = new TypedStorage(storage, "word-query-settings", DEFAULT_SETTINGS);
 	}
 
 	async init(): Promise<void> {
-		const settings = await this.loadSettings();
-		if (!settings) {
-			await this.saveSettings(DEFAULT_SETTINGS);
+		const data = await this.settings.load();
+		if (!data) {
+			await this.settings.save(DEFAULT_SETTINGS);
 		}
 	}
 }

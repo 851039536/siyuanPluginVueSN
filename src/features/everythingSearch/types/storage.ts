@@ -3,6 +3,7 @@
  */
 import { Plugin } from "siyuan";
 import { PluginStorage } from "@/utils/pluginStorage";
+import { TypedStorage } from "@/utils/typedStorage";
 import type { SearchOptions, EverythingConfig } from "./index";
 
 /** 存储的设置数据 */
@@ -35,53 +36,23 @@ export const DEFAULT_OPTIONS: SearchOptions = {
  * Everything搜索存储管理类
  */
 export class EverythingSearchStorage {
-	private storage: PluginStorage;
-	private readonly CONFIG_KEY = "everything-search-config";
-	private readonly OPTIONS_KEY = "everything-search-options";
+	readonly config: TypedStorage<EverythingConfig>;
+	readonly options: TypedStorage<SearchOptions>;
 
 	constructor(plugin: Plugin) {
-		this.storage = new PluginStorage(plugin);
-	}
-
-	/**
-	 * 保存服务配置
-	 */
-	async saveConfig(config: EverythingConfig): Promise<boolean> {
-		return this.storage.save(this.CONFIG_KEY, {
-			host: config.host || "localhost",
-			port: config.port || 80,
-		});
-	}
-
-	/**
-	 * 加载服务配置
-	 */
-	async loadConfig(): Promise<EverythingConfig> {
-		const data = await this.storage.load<EverythingConfig>(this.CONFIG_KEY);
-		return data || { ...DEFAULT_CONFIG };
-	}
-
-	/**
-	 * 保存搜索选项
-	 */
-	async saveOptions(options: SearchOptions): Promise<boolean> {
-		return this.storage.save(this.OPTIONS_KEY, { ...options });
-	}
-
-	/**
-	 * 加载搜索选项
-	 */
-	async loadOptions(): Promise<SearchOptions> {
-		const data = await this.storage.load<SearchOptions>(this.OPTIONS_KEY);
-		return data ? { ...DEFAULT_OPTIONS, ...data } : { ...DEFAULT_OPTIONS };
+		const storage = new PluginStorage(plugin);
+		this.config = new TypedStorage(storage, "everything-search-config", DEFAULT_CONFIG);
+		this.options = new TypedStorage(storage, "everything-search-options", DEFAULT_OPTIONS);
 	}
 
 	/**
 	 * 初始化存储（加载或使用默认值）
 	 */
 	async init(): Promise<{ config: EverythingConfig; options: SearchOptions }> {
-		const config = await this.loadConfig();
-		const options = await this.loadOptions();
+		const [config, options] = await Promise.all([
+			this.config.loadOrDefault(),
+			this.options.loadOrDefault(),
+		]);
 		return { config, options };
 	}
 }

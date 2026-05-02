@@ -205,7 +205,7 @@ export class GeneralSettings {
 	}
 
 	public async applySavedSettings() {
-		const settings = await this.storage.loadFontSettings();
+		const settings = await this.storage.font.load();
 		this._cachedFontSettings = settings ?? {
 			fontFamily: "",
 			fontSize: 14,
@@ -255,7 +255,7 @@ export class GeneralSettings {
 
 	public async applyDocumentFontStyle() {
 		try {
-			const settings = await this.storage.loadDocumentFontSettings();
+			const settings = await this.storage.documentFont.load();
 			if (settings) {
 				this.applyDocumentFontStyles(settings);
 			}
@@ -370,7 +370,7 @@ export class GeneralSettings {
 
 	public async applyTableStyle() {
 		try {
-			const settings = await this.storage.loadTableStyleSettings();
+			const settings = await this.storage.tableStyle.load();
 			if (settings) {
 				this.applyTableStyles(settings);
 			}
@@ -448,7 +448,7 @@ export class GeneralSettings {
 
 	public async applyListStyleEnhanced() {
 		try {
-			const settings = await this.storage.loadListStyleSettings();
+			const settings = await this.storage.listStyle.load();
 			if (settings) {
 				this.applyListStylesEnhanced(settings);
 			}
@@ -459,7 +459,7 @@ export class GeneralSettings {
 
 	public async applyDocCountStyle() {
 		try {
-			const settings = await this.storage.loadDocCountSettings();
+			const settings = await this.storage.docCount.load();
 			if (settings && settings.enableDocCount) {
 				// 如果功能已启用,启动管理器
 				this.docCountManager = new DocCountManager();
@@ -480,7 +480,7 @@ export class GeneralSettings {
 
 	public async applyHighlightStyle() {
 		try {
-			const settings = await this.storage.loadHighlightSettings();
+			const settings = await this.storage.highlight.load();
 			if (settings && settings.enableHighlight === false) {
 				return;
 			}
@@ -496,7 +496,7 @@ export class GeneralSettings {
 
 	public async applySkillsViewerStyle() {
 		try {
-			const settings = await this.storage.loadSkillsViewerSettings();
+			const settings = await this.storage.skillsViewer.load();
 			if (settings && settings.enabled) {
 				this.skillsViewerManager = new SkillsViewerManager();
 			}
@@ -507,7 +507,7 @@ export class GeneralSettings {
 
 	public async applyTabPinStyle() {
 		try {
-			const settings = await this.storage.loadTabPinSettings();
+			const settings = await this.storage.tabPin.load();
 			if (settings) {
 				this.applyTabPinStyles(settings);
 			}
@@ -529,8 +529,8 @@ export class GeneralSettings {
 		} else {
 			this.highlightManager.disable();
 		}
-		const current = await this.storage.loadHighlightSettings();
-		this.storage.saveHighlightSettings({
+		const current = await this.storage.highlight.load();
+		this.storage.highlight.save({
 			enableHighlight: enabled,
 			backgroundColor: current?.backgroundColor ?? "rgb(255, 220, 60)",
 			fontSize: current?.fontSize ?? 0,
@@ -546,8 +546,8 @@ export class GeneralSettings {
 		if (this.highlightManager) {
 			this.highlightManager.updateOptions(options);
 		}
-		this.storage.loadHighlightSettings().then((current) => {
-			this.storage.saveHighlightSettings({
+		this.storage.highlight.load().then((current) => {
+			this.storage.highlight.save({
 				enableHighlight: current?.enableHighlight ?? true,
 				backgroundColor: options.backgroundColor ?? current?.backgroundColor ?? "rgb(255, 220, 60)",
 				fontSize: options.fontSize ?? current?.fontSize ?? 0,

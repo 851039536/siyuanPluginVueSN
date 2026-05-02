@@ -3,6 +3,7 @@
  */
 import { Plugin } from "siyuan";
 import { PluginStorage } from "@/utils/pluginStorage";
+import { TypedStorage } from "@/utils/typedStorage";
 import type { PasswordCategory, StoredPasswordEntry } from "./index";
 
 /**
@@ -33,94 +34,23 @@ export const STORAGE_KEYS = {
  * 密码箱存储管理类
  */
 export class PasswordVaultStorage {
+	readonly masterPassword: TypedStorage<string>;
+	readonly verifySalt: TypedStorage<string>;
+	readonly encryptionSalt: TypedStorage<string>;
+	readonly passwordHint: TypedStorage<string>;
+	readonly entries: TypedStorage<StoredPasswordEntry[]>;
+	readonly categories: TypedStorage<PasswordCategory[]>;
+
 	private storage: PluginStorage;
 
 	constructor(plugin: Plugin) {
 		this.storage = new PluginStorage(plugin);
-	}
-
-	/**
-	 * 保存主密码哈希
-	 */
-	async saveMasterPasswordHash(hash: string): Promise<boolean> {
-		return this.storage.save(STORAGE_KEYS.MASTER_PASSWORD, hash);
-	}
-
-	/**
-	 * 加载主密码哈希
-	 */
-	async loadMasterPasswordHash(): Promise<string | null> {
-		return this.storage.load<string>(STORAGE_KEYS.MASTER_PASSWORD);
-	}
-
-	/**
-	 * 保存验证盐值
-	 */
-	async saveVerifySalt(salt: string): Promise<boolean> {
-		return this.storage.save(STORAGE_KEYS.VERIFY_SALT, salt);
-	}
-
-	/**
-	 * 加载验证盐值
-	 */
-	async loadVerifySalt(): Promise<string | null> {
-		return this.storage.load<string>(STORAGE_KEYS.VERIFY_SALT);
-	}
-
-	/**
-	 * 保存加密盐值
-	 */
-	async saveEncryptionSalt(salt: string): Promise<boolean> {
-		return this.storage.save(STORAGE_KEYS.ENCRYPTION_SALT, salt);
-	}
-
-	/**
-	 * 加载加密盐值
-	 */
-	async loadEncryptionSalt(): Promise<string | null> {
-		return this.storage.load<string>(STORAGE_KEYS.ENCRYPTION_SALT);
-	}
-
-	/**
-	 * 保存密码提示
-	 */
-	async savePasswordHint(hint: string): Promise<boolean> {
-		return this.storage.save(STORAGE_KEYS.PASSWORD_HINT, hint);
-	}
-
-	/**
-	 * 加载密码提示
-	 */
-	async loadPasswordHint(): Promise<string | null> {
-		return this.storage.load<string>(STORAGE_KEYS.PASSWORD_HINT);
-	}
-
-	/**
-	 * 保存密码条目
-	 */
-	async saveEntries(entries: StoredPasswordEntry[]): Promise<boolean> {
-		return this.storage.save(STORAGE_KEYS.ENTRIES, entries);
-	}
-
-	/**
-	 * 加载密码条目
-	 */
-	async loadEntries(): Promise<StoredPasswordEntry[] | null> {
-		return this.storage.load<StoredPasswordEntry[]>(STORAGE_KEYS.ENTRIES);
-	}
-
-	/**
-	 * 保存分类
-	 */
-	async saveCategories(categories: PasswordCategory[]): Promise<boolean> {
-		return this.storage.save(STORAGE_KEYS.CATEGORIES, categories);
-	}
-
-	/**
-	 * 加载分类
-	 */
-	async loadCategories(): Promise<PasswordCategory[] | null> {
-		return this.storage.load<PasswordCategory[]>(STORAGE_KEYS.CATEGORIES);
+		this.masterPassword = new TypedStorage(this.storage, STORAGE_KEYS.MASTER_PASSWORD);
+		this.verifySalt = new TypedStorage(this.storage, STORAGE_KEYS.VERIFY_SALT);
+		this.encryptionSalt = new TypedStorage(this.storage, STORAGE_KEYS.ENCRYPTION_SALT);
+		this.passwordHint = new TypedStorage(this.storage, STORAGE_KEYS.PASSWORD_HINT);
+		this.entries = new TypedStorage(this.storage, STORAGE_KEYS.ENTRIES);
+		this.categories = new TypedStorage(this.storage, STORAGE_KEYS.CATEGORIES);
 	}
 
 	/**
@@ -133,10 +63,10 @@ export class PasswordVaultStorage {
 		hint?: string;
 	}): Promise<void> {
 		await Promise.all([
-			this.saveMasterPasswordHash(data.hash),
-			this.saveVerifySalt(data.verifySalt),
-			this.saveEncryptionSalt(data.encryptionSalt),
-			data.hint ? this.savePasswordHint(data.hint) : Promise.resolve(true),
+			this.masterPassword.save(data.hash),
+			this.verifySalt.save(data.verifySalt),
+			this.encryptionSalt.save(data.encryptionSalt),
+			data.hint ? this.passwordHint.save(data.hint) : Promise.resolve(true),
 		]);
 	}
 
@@ -150,10 +80,10 @@ export class PasswordVaultStorage {
 		hint: string | null;
 	}> {
 		const [hash, verifySalt, encryptionSalt, hint] = await Promise.all([
-			this.loadMasterPasswordHash(),
-			this.loadVerifySalt(),
-			this.loadEncryptionSalt(),
-			this.loadPasswordHint(),
+			this.masterPassword.load(),
+			this.verifySalt.load(),
+			this.encryptionSalt.load(),
+			this.passwordHint.load(),
 		]);
 
 		return { hash, verifySalt, encryptionSalt, hint };
@@ -163,7 +93,7 @@ export class PasswordVaultStorage {
 	 * 检查是否已设置主密码
 	 */
 	async hasMasterPassword(): Promise<boolean> {
-		const hash = await this.loadMasterPasswordHash();
+		const hash = await this.masterPassword.load();
 		return !!hash;
 	}
 
@@ -172,12 +102,12 @@ export class PasswordVaultStorage {
 	 */
 	async clearAll(): Promise<void> {
 		await Promise.all([
-			this.storage.remove(STORAGE_KEYS.MASTER_PASSWORD),
-			this.storage.remove(STORAGE_KEYS.VERIFY_SALT),
-			this.storage.remove(STORAGE_KEYS.ENCRYPTION_SALT),
-			this.storage.remove(STORAGE_KEYS.ENTRIES),
-			this.storage.remove(STORAGE_KEYS.CATEGORIES),
-			this.storage.remove(STORAGE_KEYS.PASSWORD_HINT),
+			this.masterPassword.remove(),
+			this.verifySalt.remove(),
+			this.encryptionSalt.remove(),
+			this.entries.remove(),
+			this.categories.remove(),
+			this.passwordHint.remove(),
 		]);
 	}
 }

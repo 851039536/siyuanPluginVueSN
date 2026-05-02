@@ -3,6 +3,7 @@ import { createApp, App as VueApp } from "vue";
 import StatisticsPanel from "./index.vue";
 import { readDir, lsNotebooks } from "@/api";
 import { emitCustomEvent } from "@/utils/eventBus";
+import { StatisticsStorage } from "./types/storage";
 
 const DAY_PERIOD_MAP: Record<number, string> = {
 	7: "最近一周每日字数",
@@ -60,6 +61,7 @@ interface DailyWordCount {
  */
 export class Statistics {
 	private plugin: Plugin;
+	private storage: StatisticsStorage;
 	private dockElement: HTMLElement | null = null;
 	private vueApp: VueApp | null = null;
 	private viewMode: "day" | "week" | "month" | "year" | "trend" = "day"; // 当前查看模式
@@ -71,6 +73,7 @@ export class Statistics {
 
 	constructor(plugin: Plugin) {
 		this.plugin = plugin;
+		this.storage = new StatisticsStorage(plugin);
 	}
 
 	/**
@@ -79,11 +82,9 @@ export class Statistics {
 	async init() {
 		// 加载保存的更新间隔
 		try {
-			const settings = await this.plugin.loadData("plugin-settings");
-			if (settings) {
-				if (settings.statisticsUpdateInterval) {
-					this.updateInterval = settings.statisticsUpdateInterval;
-				}
+			const settings = await this.storage.loadSettings();
+			if (settings.statisticsUpdateInterval) {
+				this.updateInterval = settings.statisticsUpdateInterval;
 			}
 		} catch (error) {
 			console.error("加载设置失败:", error);
@@ -717,8 +718,7 @@ export class Statistics {
 			// 保存到数据库（按日期）
 			const today = new Date();
 			const dateKey = this.formatDateKey(today);
-			const existingData =
-				(await this.plugin.loadData("statistics-history")) || {};
+			const existingData = await this.storage.loadHistory();
 
 			// 更新当日数据
 			existingData[dateKey] = {
@@ -739,7 +739,7 @@ export class Statistics {
 				});
 			}
 
-			await this.plugin.saveData("statistics-history", existingData);
+			await this.storage.saveHistory(existingData);
 			this.lastUpdateTime = now;
 		} catch (error) {
 			console.error("收集统计数据失败:", error);
@@ -774,8 +774,7 @@ export class Statistics {
 	 */
 	async getHistoricalStatistics(days?: number): Promise<any[]> {
 		try {
-			const historyData =
-				(await this.plugin.loadData("statistics-history")) || {};
+			const historyData = await this.storage.loadHistory();
 			const today = new Date();
 			const result = [];
 			let lastKnownStats: {
@@ -889,9 +888,9 @@ export class Statistics {
 		this.updateInterval = interval;
 		// 保存到设置
 		try {
-			const settings = (await this.plugin.loadData("plugin-settings")) || {};
+			const settings = await this.storage.loadSettings();
 			settings.statisticsUpdateInterval = interval;
-			await this.plugin.saveData("plugin-settings", settings);
+			await this.storage.saveSettings(settings);
 		} catch (error) {
 			console.error("保存更新间隔设置失败:", error);
 		}

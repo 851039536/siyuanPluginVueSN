@@ -8,16 +8,19 @@ import {
 	deriveKey,
 	encryptText,
 } from "./types";
+import { EncryptionStorage } from "./types/storage";
 import { emitCustomEvent } from "@/utils/eventBus";
 
 export class Encryption {
 	private plugin: Plugin;
+	private storage: EncryptionStorage;
 	private password: string = "";
 	private cachedKey: CryptoKey | null = null;
 	private pendingRange: Range | null = null;
 
 	constructor(plugin: Plugin) {
 		this.plugin = plugin;
+		this.storage = new EncryptionStorage(plugin);
 	}
 
 	/**
@@ -259,9 +262,7 @@ export class Encryption {
 	 */
 	public async savePassword() {
 		try {
-			await this.plugin.saveData(CONSTANTS.STORAGE_KEY, {
-				password: this.password,
-			});
+			await this.storage.save(this.password);
 		} catch (error) {
 			console.error("保存密码失败:", error);
 		}
@@ -272,9 +273,9 @@ export class Encryption {
 	 */
 	private async loadPassword() {
 		try {
-			const data = await this.plugin.loadData(CONSTANTS.STORAGE_KEY);
-			if (data?.password) {
-				this.password = data.password;
+			const password = await this.storage.load();
+			if (password) {
+				this.password = password;
 			}
 		} catch (error) {
 			console.error("加载密码失败:", error);

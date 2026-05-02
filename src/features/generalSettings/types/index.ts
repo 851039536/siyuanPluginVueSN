@@ -8,6 +8,7 @@ import { GeneralSettingsStorage } from "./storage";
 import { DocCountManager } from "../modules/DocCountManager";
 import { HighlightManager } from "../modules/HighlightManager";
 import { SkillsViewerManager } from "../modules/SkillsViewerManager";
+import { emitCustomEvent } from "@/utils/eventBus";
 // @ts-ignore
 import GeneralSettingsPanel from "../index.vue";
 import {
@@ -113,7 +114,7 @@ export class GeneralSettings {
 		} else if (settings.moduleId === "tabPin") {
 			this.applyTabPinStyles(settings.settings);
 		}
-		this.dispatchEvent("general-settings-changed", settings);
+		emitCustomEvent("general-settings-changed", settings);
 	}
 
 	private applyGlobalFontStyles(fontSettings: any) {
@@ -170,18 +171,7 @@ export class GeneralSettings {
 		}
 	}
 
-	private dispatchEvent(eventType: string, data: any) {
-		try {
-			const event = new CustomEvent(eventType, {
-				detail: data,
-				bubbles: true,
-				cancelable: true,
-			});
-			document.dispatchEvent(event);
-		} catch (error) {
-			console.error("发送事件失败:", error);
-		}
-	}
+
 
 	public getCurrentFontSettings(): any {
 		try {
@@ -967,7 +957,7 @@ export class GeneralSettings {
 			}
 
 			if (shouldBackup) {
-				window.dispatchEvent(new CustomEvent("autoBackupTrigger"));
+				emitCustomEvent("autoBackupTrigger");
 			}
 		};
 

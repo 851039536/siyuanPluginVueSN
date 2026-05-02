@@ -6,6 +6,7 @@ import { createApp, reactive, type App as VueApp } from "vue";
 // @ts-ignore
 import SuperPanelPanel from "../index.vue";
 import { replaceTopBarIcon } from "@/utils/iconHelper";
+import { emitCustomEvent } from "@/utils/eventBus";
 import { FEATURE_ICONS, type IconKey } from "@/config/icons";
 import type { PluginSettings } from "@/config/settings";
 
@@ -310,10 +311,7 @@ export class SuperPanelManager {
 			if (actionConfig.settingKey && !(this.plugin as any).settings[actionConfig.settingKey]) {
 				return;
 			}
-			const eventInit = actionConfig.detail
-				? { detail: actionConfig.detail }
-				: undefined;
-			window.dispatchEvent(new CustomEvent(actionConfig.event, eventInit));
+			emitCustomEvent(actionConfig.event, actionConfig.detail);
 			this.close();
 			return;
 		}

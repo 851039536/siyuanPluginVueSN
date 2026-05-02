@@ -4,6 +4,7 @@
 import { Plugin } from "siyuan";
 import { createApp, h } from "vue";
 import DocAnalysisPanel from "./index.vue";
+import { emitCustomEvent } from "@/utils/eventBus";
 
 /**
  * 注册文档分析功能（Dock 侧边栏面板）
@@ -49,10 +50,7 @@ export function registerDocAnalysis(plugin: Plugin) {
 		langText: "文档分析",
 		hotkey: "⌃⌥D",
 		callback: () => {
-			const dockEvent = new CustomEvent("dock-click", {
-				detail: { dockId: "doc-analysis-dock" },
-			});
-			window.dispatchEvent(dockEvent);
+			emitCustomEvent("dock-click", { dockId: "doc-analysis-dock" });
 		},
 	});
 }

@@ -34,6 +34,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from "vue";
 import { usePlugin } from "@/main";
+import { emitCustomEvent } from "@/utils/eventBus";
 import type PluginSample from "@/index";
 
 interface Props {
@@ -60,10 +61,7 @@ async function checkPassword() {
 
 // 打开密码设置对话框
 function openPasswordDialog() {
-	const event = new CustomEvent("open-password-dialog", {
-		detail: { hasPassword: hasPassword.value },
-	});
-	window.dispatchEvent(event);
+	emitCustomEvent("open-password-dialog", { hasPassword: hasPassword.value });
 }
 
 const handlePasswordUpdated = () => checkPassword();

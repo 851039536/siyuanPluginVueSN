@@ -44,6 +44,7 @@
 import MonitorItem from "./components/MonitorItem.vue";
 import { useStatusBar } from "./composables/useStatusBar";
 import { showPasswordVault } from "../passwordVault/types";
+import { emitCustomEvent } from "@/utils/eventBus";
 
 const {
 	state,
@@ -63,6 +64,6 @@ const handleOpenPasswordVault = () => {
 };
 
 const handleOpenVideoManager = () => {
-	window.dispatchEvent(new CustomEvent("openVideoManager"));
+	emitCustomEvent("openVideoManager");
 };
 </script>

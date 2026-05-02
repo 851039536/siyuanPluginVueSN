@@ -78,6 +78,7 @@ src/
 - 新功能必须在 `src/features/superPanel/index.vue` 提供开关
 - 优先使用思源内置图标（见下方列表）或 @iconify/vue
 - 全局样式导入：`@use "@/index.scss" as *;`
+- **存储统一**：所有功能模块必须通过 `PluginStorage`（或 `TypedStorage`）进行数据持久化，禁止直接调用 `plugin.loadData/saveData`
 
 ### 共享组件
 
@@ -113,7 +114,9 @@ src/
 
 ## API 参考
 
-### PluginStorage（底层）
+### PluginStorage（统一存储层）
+
+所有功能模块通过 `PluginStorage` 进行数据持久化（禁止直接调用 `plugin.loadData/saveData`）：
 
 ```typescript
 import { PluginStorage } from '@/utils/pluginStorage'

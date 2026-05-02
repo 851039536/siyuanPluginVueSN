@@ -262,6 +262,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeMount, onUnmounted } from "vue";
 import type { Skill, SkillCategory } from "../types";
+import { FloatingBoxStorage } from "../types/storage";
 import Button from "@/components/Button.vue";
 import IconWrapper from "@/components/IconWrapper.vue";
 
@@ -293,6 +294,11 @@ const showCategoryManage = ref(false);
 const editingSkill = ref<Skill | null>(null);
 const searchQuery = ref("");
 const selectedCategory = ref<string>("all");
+
+const storage = computed(() => {
+	if (!props.plugin) return null;
+	return new FloatingBoxStorage(props.plugin);
+});
 
 const skillForm = ref({
 	title: "",
@@ -356,57 +362,32 @@ const selectCategory = (categoryId: string) => {
 };
 
 async function loadSkills() {
-	if (!props.plugin) return;
-	try {
-		const stored = await props.plugin.loadData("siyuan-skills");
-		if (stored && Array.isArray(stored)) {
-			skills.value = stored as Skill[];
-		} else {
-			skills.value = [];
-		}
-	} catch (error) {
-		console.error("Failed to load skills:", error);
-		skills.value = [];
-	}
+	if (!storage.value) return;
+	const loaded = await storage.value.skills.loadOrDefault();
+	skills.value = Array.isArray(loaded) ? loaded : [];
 }
 
 async function loadCategories() {
-	if (!props.plugin) return;
-	try {
-		const stored = await props.plugin.loadData("siyuan-categories");
-		if (stored && Array.isArray(stored)) {
-			categories.value = stored as SkillCategory[];
-			categories.value = categories.value.map((cat) => ({
-				...cat,
-				color: cat.color || "#d97757",
-			}));
-		} else {
-			categories.value = [{ id: "default", name: "默认", color: "#d97757" }];
-		}
-	} catch (error) {
-		console.error("Failed to load categories:", error);
+	if (!storage.value) return;
+	const loaded = await storage.value.categories.loadOrDefault();
+	if (Array.isArray(loaded) && loaded.length > 0) {
+		categories.value = loaded.map((cat) => ({
+			...cat,
+			color: cat.color || "#d97757",
+		}));
+	} else {
 		categories.value = [{ id: "default", name: "默认", color: "#d97757" }];
 	}
 }
 
 async function saveCategories() {
-	if (!props.plugin) return;
-	try {
-		await props.plugin.saveData("siyuan-categories", categories.value);
-	} catch (error) {
-		console.error("Failed to save categories:", error);
-		throw error;
-	}
+	if (!storage.value) return;
+	await storage.value.categories.save(categories.value);
 }
 
 async function saveSkills() {
-	if (!props.plugin) return;
-	try {
-		await props.plugin.saveData("siyuan-skills", skills.value);
-	} catch (error) {
-		console.error("Failed to save skills:", error);
-		throw error;
-	}
+	if (!storage.value) return;
+	await storage.value.skills.save(skills.value);
 }
 
 function openAddModal() {

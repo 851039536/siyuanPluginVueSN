@@ -59,6 +59,7 @@ export const FEATURE_CONFIG = [
   { id: "textDiff", defaultTitle: "文本对比", defaultDesc: "提供文本差异对比功能，支持字符、词语、行和补丁模式对比",
     titleI18nKey: "textDiff.title", descI18nKey: "enableTextDiffDesc" },
   { id: "base64Image", defaultTitle: "Base64图片转换", defaultDesc: "图片与Base64编码相互转换" },
+  { id: "passwordVault", defaultTitle: "密码箱", defaultDesc: "加密存储和管理密码条目，支持分类和搜索" },
   { id: "skills", defaultTitle: "技能库", defaultDesc: "管理常用的Claude技能和模板",
     titleI18nKey: "skills.title", descI18nKey: "skills.description" },
   { id: "flashcardReading", defaultTitle: "单词阅读", defaultDesc: "闪卡式阅读工具，支持分类和翻转",

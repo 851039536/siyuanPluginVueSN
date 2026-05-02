@@ -87,6 +87,7 @@ export const FEATURE_SETTINGS_MAP: Record<FeatureId, string> = {
 	flashcardReading: "enableFlashcardReading",
 	translate: "enableTranslate",
 	webDAV: "enableWebDAV",
+	passwordVault: "enablePasswordVault",
 	docAnalysis: "enableDocAnalysis",
 };
 

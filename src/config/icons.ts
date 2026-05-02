@@ -218,6 +218,12 @@ export const FEATURE_ICONS = {
 		color: "#3b82f6",
 	},
 
+	// 密码箱
+	passwordVault: {
+		icon: "mdi:shield-key",
+		color: "#dc2626",
+	},
+
 	// 文档分析
 	docAnalysis: {
 		icon: "mdi:file-search",

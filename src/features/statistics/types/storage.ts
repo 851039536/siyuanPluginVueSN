@@ -1,28 +1,57 @@
 /**
- * 统计模块存储类型定义
+ * 统计模块存储管理
+ * 使用 PluginStorage 统一存储模式
  */
+import { Plugin } from "siyuan";
+import { PluginStorage } from "@/utils/pluginStorage";
 
-/**
- * 周目标设置
- */
-export interface WeeklyGoalSettings {
-	/** 目标新建笔记数 */
-	created: number;
-	/** 目标写作字数 */
-	words: number;
-}
-
-/**
- * 统计设置存储键
- */
+/** 存储键常量 */
 export const STATISTICS_STORAGE_KEYS = {
-	WEEKLY_GOAL: "statistics-weekly-goal",
+	HISTORY: "statistics-history",
+	SETTINGS: "plugin-settings",
 } as const;
 
 /**
- * 默认周目标设置
+ * 统计存储管理类
  */
-export const DEFAULT_WEEKLY_GOAL: WeeklyGoalSettings = {
-	created: 30,
-	words: 100000,
-};
+export class StatisticsStorage {
+	private storage: PluginStorage;
+
+	constructor(plugin: Plugin) {
+		this.storage = new PluginStorage(plugin);
+	}
+
+	/**
+	 * 加载历史统计数据
+	 */
+	async loadHistory(): Promise<Record<string, any>> {
+		const data = await this.storage.load<Record<string, any>>(
+			STATISTICS_STORAGE_KEYS.HISTORY,
+		);
+		return data || {};
+	}
+
+	/**
+	 * 保存历史统计数据
+	 */
+	async saveHistory(data: Record<string, any>): Promise<boolean> {
+		return this.storage.save(STATISTICS_STORAGE_KEYS.HISTORY, data);
+	}
+
+	/**
+	 * 加载统计设置（如更新间隔）
+	 */
+	async loadSettings(): Promise<Record<string, any>> {
+		const data = await this.storage.load<Record<string, any>>(
+			STATISTICS_STORAGE_KEYS.SETTINGS,
+		);
+		return data || {};
+	}
+
+	/**
+	 * 保存统计设置
+	 */
+	async saveSettings(settings: Record<string, any>): Promise<boolean> {
+		return this.storage.save(STATISTICS_STORAGE_KEYS.SETTINGS, settings);
+	}
+}

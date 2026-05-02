@@ -4,6 +4,7 @@
 import { Plugin } from "siyuan";
 // @ts-ignore
 import VideoManagerPanel from "../index.vue";
+import { emitCustomEvent } from "@/utils/eventBus";
 
 /**
  * 视频文件信息
@@ -106,7 +107,7 @@ export class VideoManager {
 	 */
 	public openVideoManager() {
 		// 触发全局事件，由主插件处理
-		window.dispatchEvent(new CustomEvent("openVideoManager"));
+		emitCustomEvent("openVideoManager");
 		import("siyuan").then(({ showMessage }) => {
 			showMessage("打开视频管理器", 2000, "info");
 		});

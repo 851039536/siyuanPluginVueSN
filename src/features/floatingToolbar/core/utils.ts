@@ -1,5 +1,6 @@
 import type { Plugin } from "siyuan";
 import type { ToolbarAction } from "../types";
+import { emitCustomEvent } from "@/utils/eventBus";
 
 /**
  * 防抖函数
@@ -86,15 +87,7 @@ export function showI18nMessage(
  * @param content 对话框内容
  */
 export function dispatchDialogEvent(eventName: string, content: string): void {
-	// 使用微任务确保在当前执行栈完成后派发事件
-	Promise.resolve().then(() => {
-		const event = new CustomEvent(eventName, {
-			detail: { content },
-			bubbles: true,
-			cancelable: true,
-		});
-		window.dispatchEvent(event);
-	});
+	emitCustomEvent(eventName, { content }, { useMicrotask: true });
 }
 
 /**

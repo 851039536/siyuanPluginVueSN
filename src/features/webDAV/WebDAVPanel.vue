@@ -155,6 +155,7 @@ import { ref, watch, onMounted, onUnmounted } from "vue";
 import { Icon } from "@iconify/vue";
 import type { WebDAVConfig } from "@/config/settings";
 import { showMessage } from "siyuan";
+import { emitCustomEvent } from "@/utils/eventBus";
 import { useWebDAV } from "./composables";
 import { webDAVService } from "./services/webDAVService";
 import { ConnectionStatus, FileList, SyncLogs } from "./components";
@@ -202,11 +203,7 @@ const debouncedSave = () => {
 };
 
 const saveConfig = () => {
-	window.dispatchEvent(
-		new CustomEvent("updateWebDAVConfig", {
-			detail: { config: localConfig.value },
-		}),
-	);
+	emitCustomEvent("updateWebDAVConfig", { config: localConfig.value });
 };
 
 const handleTestConnection = async () => {
@@ -255,7 +252,7 @@ const handleDownload = async (file: any) => {
 };
 
 const closePanel = () => {
-	window.dispatchEvent(new CustomEvent("closeWebDAV"));
+	emitCustomEvent("closeWebDAV");
 };
 
 watch(

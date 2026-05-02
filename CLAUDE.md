@@ -55,7 +55,7 @@ src/
 ├── components/                  # 共享组件
 ├── config/                      # 配置管理
 ├── commands/                    # 斜杠命令
-├── utils/                       # 工具模块（aiApi、pluginStorage、typedStorage等）
+├── utils/                       # 工具模块（aiApi、eventBus、pluginStorage、typedStorage等）
 ├── api.ts                       # Siyuan API 封装
 ├── index.ts                     # 插件入口
 └── main.ts                      # Vue 初始化
@@ -160,6 +160,33 @@ const result = await callAI(prompt, config, options)
 ```
 
 **禁止**：在功能模块中直接调用 fetch/axios 访问 AI API。
+
+### 统一事件触发（emitCustomEvent）
+
+所有自定义事件派发必须通过 `src/utils/eventBus.ts`，禁止直接使用 `window.dispatchEvent(new CustomEvent(...))` 或 `document.dispatchEvent(...)`：
+
+```typescript
+import { emitCustomEvent } from '@/utils/eventBus'
+
+// 无 detail
+emitCustomEvent("toggleSuperPanel")
+
+// 带 detail
+emitCustomEvent("dock-click", { dockId: "statistics-dock" })
+
+// 在 document 上派发
+emitCustomEvent("codeblock-collapse-cleanup", undefined, { target: document })
+
+// 使用微任务（当前执行栈完成后派发）
+emitCustomEvent("openDialog", { content }, { useMicrotask: true })
+```
+
+**参数说明**：
+- `eventName: string` — 事件名称
+- `detail?: T` — 可选的事件负载数据
+- `options?: { bubbles?, cancelable?, target?, useMicrotask? }` — 可选配置，默认 `{ target: window, bubbles: true, cancelable: true }`
+
+**禁止**：在功能模块中直接编写 `new CustomEvent(...)` / `window.dispatchEvent(...)`。
 
 ## 添加新功能
 

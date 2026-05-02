@@ -2,6 +2,7 @@ import { Plugin } from "siyuan";
 import { createApp, App as VueApp } from "vue";
 import StatisticsPanel from "./index.vue";
 import { readDir, lsNotebooks } from "@/api";
+import { emitCustomEvent } from "@/utils/eventBus";
 
 const DAY_PERIOD_MAP: Record<number, string> = {
 	7: "最近一周每日字数",
@@ -104,10 +105,7 @@ export class Statistics {
 	private bindEvents(): void {
 		window.addEventListener("openStatistics", () => {
 			// 触发Dock显示
-			const dockEvent = new CustomEvent("dock-click", {
-				detail: { dockId: "statistics-dock" },
-			});
-			window.dispatchEvent(dockEvent);
+			emitCustomEvent("dock-click", { dockId: "statistics-dock" });
 		});
 	}
 

@@ -1,6 +1,7 @@
 /**
  * 通用设置 - 样式工具函数
  */
+import { emitCustomEvent } from "@/utils/eventBus";
 
 export const CODEBLOCK_STYLES = [
 	"default",
@@ -160,8 +161,7 @@ export function applyCodeBlockCollapse(
 
 	const existingScript = document.getElementById("codeblock-collapse-script");
 	if (existingScript) {
-		const cleanupEvent = new Event("codeblock-collapse-cleanup");
-		document.dispatchEvent(cleanupEvent);
+		emitCustomEvent("codeblock-collapse-cleanup", undefined, { target: document });
 		existingScript.remove();
 	}
 

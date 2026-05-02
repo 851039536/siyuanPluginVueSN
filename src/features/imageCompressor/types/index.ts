@@ -1,6 +1,7 @@
 import { Plugin } from "siyuan";
 import { createApp, h, ref } from "vue";
 import ImageCompressorPanel from "../index.vue";
+import { emitCustomEvent } from "@/utils/eventBus";
 
 export interface ImageInfo {
 	path: string;
@@ -121,7 +122,7 @@ export class ImageCompressorManager {
 	}
 
 	private openImageCompressor() {
-		window.dispatchEvent(new CustomEvent("openImageCompressor"));
+		emitCustomEvent("openImageCompressor");
 	}
 
 	public destroy() {}

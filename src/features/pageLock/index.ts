@@ -3,6 +3,7 @@ import { showMessage } from "siyuan";
 import { createApp, h } from "vue";
 import { setBlockAttrs } from "@/api";
 import { createIconElement } from "@/utils/iconHelper";
+import { emitCustomEvent } from "@/utils/eventBus";
 import { PageLockStorage } from "./types/storage";
 import {
 	getCurrentOrCachedProtyle,
@@ -184,7 +185,7 @@ export function showGlobalPasswordDialog(plugin: Plugin) {
 							: plugin.i18n.passwordSetSuccess;
 						showMessage(successMsg || "密码设置成功", 3000, "info");
 
-						window.dispatchEvent(new CustomEvent("password-updated"));
+						emitCustomEvent("password-updated");
 						cleanup();
 					},
 					onClose: () => {

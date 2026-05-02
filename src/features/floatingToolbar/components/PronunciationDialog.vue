@@ -185,6 +185,7 @@ import type PluginSample from "@/index";
 import { FlashcardStorage } from "@/features/flashcardReading/types/storage";
 import type { Flashcard } from "@/features/flashcardReading/types";
 import { callAI, getApiConfigFromPlugin } from "@/utils/aiApi";
+import { emitCustomEvent } from "@/utils/eventBus";
 import Button from "@/components/Button.vue";
 import Input from "@/components/Input.vue";
 import Select, { type SelectOption } from "@/components/Select.vue";
@@ -468,7 +469,7 @@ async function addToFlashcard() {
 		showAddToCardDialog.value = false;
 		showMessage("✓ 已添加到单词本", 2000, "info");
 
-		window.dispatchEvent(new CustomEvent("flashcardDataChanged"));
+		emitCustomEvent("flashcardDataChanged");
 	} catch (error: any) {
 		if (error.message === "Title already exists") {
 			showMessage("该单词已存在于单词本中", 3000, "error");

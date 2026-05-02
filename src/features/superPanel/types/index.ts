@@ -9,6 +9,7 @@ import { replaceTopBarIcon } from "@/utils/iconHelper";
 import { emitCustomEvent } from "@/utils/eventBus";
 import { FEATURE_ICONS, type IconKey } from "@/config/icons";
 import type { PluginSettings } from "@/config/settings";
+import type { FeatureId } from "@/features/config";
 
 /**
  * 功能操作
@@ -59,7 +60,7 @@ let reactiveSettings: PluginSettings | null = null;
 /**
  * 功能ID到设置键的映射表（单一数据源）
  */
-export const FEATURE_SETTINGS_MAP: Record<string, string> = {
+export const FEATURE_SETTINGS_MAP: Record<FeatureId, string> = {
 	tableOfContents: "enableTableOfContents",
 	imageCompressor: "enableImageCompressor",
 	docNavigation: "enableDocNavigation",
@@ -85,7 +86,6 @@ export const FEATURE_SETTINGS_MAP: Record<string, string> = {
 	skills: "enableSkills",
 	flashcardReading: "enableFlashcardReading",
 	translate: "enableTranslate",
-	codeTranslation: "enableCodeTranslation",
 	webDAV: "enableWebDAV",
 	docAnalysis: "enableDocAnalysis",
 };

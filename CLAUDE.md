@@ -23,7 +23,9 @@ pnpm release:major   # 0.0.1 -> 1.0.0
 
 ```
 src/
-├── features/                    # 功能模块（共25个）
+├── features/                    # 功能模块（共27个）
+│   ├── config.ts                # 单一数据源：所有功能元数据 + FeatureId 类型
+│   ├── index.ts                 # 功能注册函数统一导出
 │   ├── superPanel/              # 统一入口面板
 │   ├── pageLock/                # 页面锁定
 │   ├── tableOfContents/         # 目录生成
@@ -60,6 +62,14 @@ src/
 ├── index.ts                     # 插件入口
 └── main.ts                      # Vue 初始化
 ```
+
+### 编译时验证链
+
+`config.ts`（FEATURE_CONFIG）→ `FeatureId` 类型 → `FEATURE_SETTINGS_MAP`（Record<FeatureId, string>）
+
+添加/删除功能时，只需修改 `config.ts` 的 `FEATURE_CONFIG` 数组，TypeScript 将：
+- 自动检查 `FEATURE_SETTINGS_MAP` 是否有遗漏或多余的键
+- 通过 `FeatureId` 类型确保所有地方的引用一致性
 
 ## 开发规范
 
@@ -228,7 +238,9 @@ export class MyFeatureStorage {
 3. `src/features/index.ts` 中从 `"./myFeature"` 导出（非 `"./myFeature/types"`）
 4. `src/index.ts` 中条件注册
 5. `src/i18n/zh_CN.json` 添加翻译
-6. `src/features/superPanel/index.vue` 添加开关
+6. `src/features/config.ts` 的 `FEATURE_CONFIG` 中添加条目（自动推导 `FeatureId` 类型）
+7. `src/features/superPanel/types/index.ts` 的 `FEATURE_SETTINGS_MAP` 中添加设置键映射
+   （TypeScript 会检查遗漏，`Record<FeatureId, string>` 保证编译时验证）
 
 ### 简单功能
 

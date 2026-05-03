@@ -1,12 +1,23 @@
 {
   "name": "siyuan-plugin-vite-vue-sn",
-  "version": "0.0.1",
+  "version": "1.0.1",
   "type": "module",
-  "description": "This is a sample plugin based on vite and vue for Siyuan (https://b3log.org/siyuan)",
-  "author": "",
+  "description": "SN plugin collection for SiYuan Note, providing 25+ practical features including table of contents, image compression, word query, AI content generation, and more",
+  "author": "sn",
   "license": "MIT",
-  "homepage": "",
-  "repository": "",
+  "homepage": "https://gitee.com/kaiouyang-sn/siyuan-plugin-vite-vue-sn",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/kaiouyang-sn/siyuan-plugin-vite-vue-sn.git"
+  },
+  "keywords": [
+    "siyuan",
+    "plugin",
+    "vite",
+    "vue3",
+    "typescript",
+    "siyuan-note"
+  ],
   "scripts": {
     "dev": "vite build --watch",
     "release": "node ./release.js",

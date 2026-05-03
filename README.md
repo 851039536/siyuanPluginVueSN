@@ -25,18 +25,17 @@
 | 视频管理 | 本地视频管理与播放 | ✅ |
 | Everything 搜索 | 快速搜索本地文件 | ✅ |
 | 状态栏 | 实时显示系统资源及文档统计 | ✅ |
-| API 参考 | 思源 API 文档速查 | ✅ |
-| 高亮标记 | 快速标记重要内容 | ✅ |
 | 浮动工具栏 | 快捷工具栏集成 | ✅ |
 | 悬浮框 | 可拖拽的快捷工具箱 | ✅ |
 | 文本对比 | 文本差异对比工具 | ✅ |
 | Base64 图片 | 图片 Base64 转换 | ✅ |
 | 单词阅读 | 间隔重复记忆单词 | ✅ |
 | 密码箱 | 安全存储敏感信息 | ✅ |
+| 文档分析 | 对文档内容进行分析统计 | ✅ |
+| WebDAV | WebDAV 同步与备份 | ✅ |
 
 ### 辅助功能
 
-- 二维码生成
 - 谐音翻译
 - 技能库
 
@@ -90,18 +89,30 @@ siyuan-plugin-vite-vue-sn/
 │   ├── commands/            # 斜杠命令
 │   │   ├── DateTime.ts      # 日期时间命令
 │   │   └── index.ts         # 命令入口
-│   ├── components/          # Vue 组件
+│   ├── components/          # Vue 组件（自建 shadcn-vue 风格组件库）
+│   │   ├── Button.vue       # 按钮组件
+│   │   ├── Input.vue        # 输入框组件
+│   │   ├── Select.vue       # 选择器组件
+│   │   ├── Switch.vue       # 开关组件
+│   │   ├── Badge.vue        # 徽标组件
+│   │   ├── Tag.vue          # 标签组件
+│   │   ├── Card.vue         # 卡片组件
+│   │   ├── Slider.vue       # 滑块组件
+│   │   ├── Textarea.vue     # 文本域组件
+│   │   ├── Label.vue        # 标签文字组件
+│   │   ├── Chart.vue        # 图表组件
 │   │   ├── IconWrapper.vue  # 图标包装器
-│   │   └── OfflineIcon.vue  # 离线图标
+│   │   └── Avatar.vue       # 头像组件
 │   ├── config/              # 配置管理
 │   │   ├── icons.ts         # 图标配置
-│   │   └── settings.ts      # 插件配置
+│   │   ├── settings.ts      # 插件配置
+│   │   └── features.ts      # 功能注册表
 │   ├── features/            # 功能模块
 │   │   ├── aiContentGenerator/     # AI 内容生成
-│   │   ├── apiReference/           # API 参考面板
 │   │   ├── base64Image/            # Base64 图片转换
 │   │   ├── codeImageGenerator/     # 代码截图生成器
 │   │   ├── diskBrowser/            # 磁盘浏览器
+│   │   ├── docAnalysis/            # 文档分析
 │   │   ├── docNavigation/          # 文档导航
 │   │   ├── encryption/             # 内容加密
 │   │   ├── everythingSearch/       # Everything 搜索
@@ -109,35 +120,46 @@ siyuan-plugin-vite-vue-sn/
 │   │   ├── floatingBox/            # 悬浮框
 │   │   ├── floatingToolbar/        # 浮动工具栏
 │   │   ├── generalSettings/        # 通用设置
-│   │   ├── highlight/              # 高亮标记
 │   │   ├── imageCompressor/        # 图片压缩
 │   │   ├── pageLock/               # 页面锁定
 │   │   ├── passwordVault/          # 密码箱
 │   │   ├── shortcut/               # 快捷键管理
 │   │   ├── statistics/             # 数据统计
+│   │   ├── statusBar/              # 状态栏
 │   │   ├── superPanel/             # 超级面板
-│   │   ├── systemMonitor/          # 系统监控
 │   │   ├── tableOfContents/        # 文档目录
 │   │   ├── textDiff/               # 文本对比
 │   │   ├── unitConverter/          # 单位转换
 │   │   ├── video/                  # 视频管理
+│   │   ├── webDAV/                 # WebDAV 同步
 │   │   ├── wordQuery/              # 单词查询
 │   │   └── index.ts                # 功能导出
 │   ├── i18n/               # 国际化
 │   │   ├── en_US.json      # 英文
 │   │   └── zh_CN.json      # 中文
 │   ├── types/              # TypeScript 类型
+│   │   ├── api.d.ts        # API 类型
+│   │   ├── vue.d.ts        # Vue 类型
+│   │   └── ...
 │   ├── utils/              # 工具函数
+│   │   ├── eventBus.ts     # 事件总线
+│   │   ├── pluginStorage.ts# 插件存储
+│   │   └── ...
 │   ├── App.vue             # 主应用组件
 │   ├── api.ts              # API 封装
 │   ├── index.ts            # 插件入口
 │   ├── index.scss          # 全局样式
+│   ├── _variables.scss     # 样式变量
 │   └── main.ts             # Vue 初始化
+├── scripts/
+│   └── validate-icons.mjs  # 图标校验脚本
+├── docs/                   # 开发文档
 ├── .env.example            # 环境变量示例
 ├── plugin.json             # 插件元数据
 ├── vite.config.ts          # Vite 配置
 ├── tsconfig.json           # TypeScript 配置
 ├── package.json            # 项目配置
+├── eslint.config.mjs       # ESLint 配置
 └── README.md               # 项目文档
 ```
 
@@ -258,16 +280,18 @@ export async function updateBlock(id: string, data: string) {
 | 构建工具 | Vite 6.2.1 |
 | 语言 | TypeScript 5.0.4 |
 | 样式 | Sass 1.62.1 |
-| UI 组件 | PrimeVue 4.5.4 |
+| UI 组件 | 自建 shadcn-vue 风格组件库（Button, Input, Select, Switch 等） |
 | 图标 | @iconify/vue 5.0.0 |
-| Markdown | markdown-it 14.1.0 |
+| Markdown 渲染 | marked 17.0.1 |
 | 视频播放器 | video.js 8.23.4 |
 | 代码高亮 | highlight.js 11.9.0 |
 | 二维码 | qrcode 1.5.4 |
-| 差异对比 | vue-diff 1.2.4 |
+| 差异对比 | vue-diff 1.2.4 / diff-match-patch |
 | 图片压缩 | browser-image-compression 2.0.2 |
+| 图片截取 | html2canvas |
+| 压缩打包 | jszip |
 | SDK | siyuan 1.1.0 |
-| 代码规范 | ESLint 9.22.0 |
+| 代码规范 | ESLint 9.22.0 + @antfu/eslint-config |
 
 ## 常用命令
 
@@ -283,6 +307,10 @@ pnpm build
 
 # 代码检查
 pnpm lint
+pnpm lint:fix        # 自动修复
+
+# 图标校验
+pnpm validate:icons
 
 # 发布版本
 pnpm release:patch   # 0.0.1 -> 0.0.2

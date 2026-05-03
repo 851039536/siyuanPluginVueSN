@@ -56,7 +56,41 @@ export { registerDocAnalysis } from "./docAnalysis";
 export { registerWebDAV } from "./webDAV";
 
 // ========== 编译时验证 ==========
-// 导入 FeatureId 确保本文件感知到 config.ts 中注册的所有功能 ID
-// 如果 config.ts 新增了功能而 features/index.ts 遗漏了对应的 register 导出，
-// 开发者需要在此手动补全导入；反之亦然。
-import type {} from "./config";
+// 验证链在 config.ts（FEATURE_CONFIG → FeatureId）、FEATURE_SETTINGS_MAP（Record<FeatureId, string>）
+// 以及本文件之间建立三重校验：
+
+import type { FeatureId } from "./config";
+
+/**
+ * 白名单：仅用于 UI 配置展示、不需要 register 函数的功能
+ * 当 config.ts 新增此类功能时，必须在此添加 ID
+ */
+type _ConfigOnly = "qrCode" | "pronunciation" | "skills" | "translate";
+
+/**
+ * 需要 register 导出的功能列表（必须与本文件 export 行一一对应）
+ */
+type _Registered =
+  | "pageLock" | "tableOfContents" | "imageCompressor" | "docNavigation"
+  | "shortcuts" | "wordQuery" | "generalSettings" | "unitConverter"
+  | "superPanel" | "diskBrowser" | "codeImageGenerator" | "aiContentGenerator"
+  | "statistics" | "encryption" | "video" | "everythingSearch"
+  | "statusBar" | "floatingToolbar" | "floatingBox" | "textDiff"
+  | "base64Image" | "flashcardReading" | "passwordVault" | "docAnalysis"
+  | "webDAV";
+
+// --- 编译时断言辅助 ---
+// 利用泛型接口约束 T extends true 产生 TypeScript 编译错误，无运行时开销
+interface _AssertTrue<T extends true> {}
+
+// ① 正向校验：_Registered 中的每个 ID 必须是有效的 FeatureId
+// 当 config.ts 删除了某功能但这里未同步移除时 → ❌ 编译报错
+type _AssertRegisteredInConfig = _AssertTrue<
+  _Registered extends FeatureId ? true : false
+>;
+
+// ② 反向校验：每个需要 register 的 FeatureId 都在 _Registered 中
+// 当 config.ts 新增了功能但这里未同步添加时 → ❌ 编译报错
+type _AssertAllCovered = _AssertTrue<
+  Exclude<FeatureId, _ConfigOnly> extends _Registered ? true : false
+>;

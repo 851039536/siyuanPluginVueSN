@@ -40,7 +40,7 @@ export default antfu(
 
       'eqeqeq': 'off',
 
-      'no-console': 'off',
+      'no-console': 'warn',
       'no-empty': 'off',
 
       'object-curly-newline': ['error', {
@@ -65,8 +65,12 @@ export default antfu(
       'style/padded-blocks': 'off',
       'style/quotes': 'off',
 
-      'ts/consistent-type-imports': 'off',
-      'ts/explicit-function-return-type': 'off',
+      'ts/consistent-type-imports': 'error',
+      'ts/explicit-function-return-type': ['warn', {
+        allowExpressions: true,
+        allowTypedFunctionExpressions: true,
+        allowHigherOrderFunctions: true,
+      }],
       'ts/no-require-imports': 'off',
       'ts/no-use-before-define': 'warn',
       'ts/prefer-literal-enum-member': 'off',

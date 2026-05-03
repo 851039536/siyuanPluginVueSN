@@ -27,6 +27,8 @@
     "checkJs": true,
     /* Linting */
     "strict": false,
+    "strictNullChecks": true,
+    "noImplicitAny": true,
     "noFallthroughCasesInSwitch": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,

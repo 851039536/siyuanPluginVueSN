@@ -17,34 +17,34 @@ type ButtonVariant = "primary" | "secondary" | "success" | "danger" | "ghost";
 type ButtonSize = "small" | "medium" | "large";
 
 interface Props {
-	/** 按钮变体 */
-	variant?: ButtonVariant;
-	/** 按钮尺寸 */
-	size?: ButtonSize;
-	/** 图标名称 */
-	icon?: IconKey;
-	/** 图标大小 */
-	iconSize?: number;
-	/** 禁用状态 */
-	disabled?: boolean;
-	/** 加载状态 */
-	loading?: boolean;
-	/** 图标位置 */
-	iconPosition?: "left" | "right";
-	/** 是否为块级按钮 */
-	block?: boolean;
+  /** 按钮变体 */
+  variant?: ButtonVariant;
+  /** 按钮尺寸 */
+  size?: ButtonSize;
+  /** 图标名称 */
+  icon?: IconKey;
+  /** 图标大小 */
+  iconSize?: number;
+  /** 禁用状态 */
+  disabled?: boolean;
+  /** 加载状态 */
+  loading?: boolean;
+  /** 图标位置 */
+  iconPosition?: "left" | "right";
+  /** 是否为块级按钮 */
+  block?: boolean;
 }
 
 type Emits = (e: "click", event: MouseEvent) => void;
 
 const props = withDefaults(defineProps<Props>(), {
-	variant: "primary",
-	size: "medium",
-	iconSize: 16,
-	iconPosition: "left",
-	disabled: false,
-	loading: false,
-	block: false,
+  variant: "primary",
+  size: "medium",
+  iconSize: 16,
+  iconPosition: "left",
+  disabled: false,
+  loading: false,
+  block: false,
 });
 
 const emit = defineEmits<Emits>();
@@ -53,27 +53,27 @@ const slots = useSlots();
 const buttonRef = ref<HTMLButtonElement>();
 
 const buttonClasses = computed(() => [
-	"si-button",
-	`si-button--${props.variant}`,
-	`si-button--${props.size}`,
-	{
-		"si-button--disabled": props.disabled || props.loading,
-		"si-button--loading": props.loading,
-		"si-button--icon-only": !slots.default && props.icon,
-		"si-button--block": props.block,
-		"si-button--icon-right": props.iconPosition === "right",
-	},
+  "si-button",
+  `si-button--${props.variant}`,
+  `si-button--${props.size}`,
+  {
+    "si-button--disabled": props.disabled || props.loading,
+    "si-button--loading": props.loading,
+    "si-button--icon-only": !slots.default && props.icon,
+    "si-button--block": props.block,
+    "si-button--icon-right": props.iconPosition === "right",
+  },
 ]);
 
 const handleClick = (event: MouseEvent) => {
-	if (!props.disabled && !props.loading) {
-		emit("click", event);
-	}
+  if (!props.disabled && !props.loading) {
+    emit("click", event);
+  }
 };
 
 defineExpose({
-	focus: () => buttonRef.value?.focus(),
-	blur: () => buttonRef.value?.blur(),
+  focus: () => buttonRef.value?.focus(),
+  blur: () => buttonRef.value?.blur(),
 });
 </script>
 

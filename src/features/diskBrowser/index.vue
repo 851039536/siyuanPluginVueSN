@@ -69,39 +69,39 @@ import { useDiskBrowser } from "./composables/useDiskBrowser";
 import type { DiskBrowserI18n, DiskInfo, FolderInfo } from "./types";
 
 interface Props {
-	i18n: DiskBrowserI18n;
-	plugin: Plugin;
+  i18n: DiskBrowserI18n;
+  plugin: Plugin;
 }
 
 const props = defineProps<Props>();
 
 const {
-	disks,
-	selectedDisk,
-	expandedDisk,
-	folders,
-	loading,
-	loadingFolders,
-	currentPath,
-	favoriteFolders,
-	pathSegments,
-	currentDisplayPath,
-	cacheStatus,
-	currentFolderCache,
-	toggleFavorite,
-	fetchDisks,
-	toggleDisk,
-	openPath,
-	refreshDisks,
-	refreshCurrentFolder,
-	handleItemDoubleClick,
-	navigateIntoFolder,
-	navigateBack,
-	navigateToRoot,
-	navigateToPath,
-	navigateToFavorite,
-	copyPathToClipboard,
-	formatDate,
+  disks,
+  selectedDisk,
+  expandedDisk,
+  folders,
+  loading,
+  loadingFolders,
+  currentPath,
+  favoriteFolders,
+  pathSegments,
+  currentDisplayPath,
+  cacheStatus,
+  currentFolderCache,
+  toggleFavorite,
+  fetchDisks,
+  toggleDisk,
+  openPath,
+  refreshDisks,
+  refreshCurrentFolder,
+  handleItemDoubleClick,
+  navigateIntoFolder,
+  navigateBack,
+  navigateToRoot,
+  navigateToPath,
+  navigateToFavorite,
+  copyPathToClipboard,
+  formatDate,
 } = useDiskBrowser(props.plugin, props.i18n);
 </script>
 

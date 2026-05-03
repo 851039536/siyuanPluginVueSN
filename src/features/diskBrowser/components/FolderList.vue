@@ -135,30 +135,30 @@ import type { FolderInfo, CacheStatus, DiskBrowserI18n } from "../types";
 import { formatSize } from "../utils";
 
 interface Props {
-	folders: FolderInfo[];
-	currentPath: string;
-	expandedDisk: string;
-	currentDisplayPath: string;
-	loadingFolders: boolean;
-	currentFolderCache: CacheStatus;
-	favoriteFolders: string[];
-	i18n: DiskBrowserI18n;
-	formatDate: (date: string) => string;
+  folders: FolderInfo[];
+  currentPath: string;
+  expandedDisk: string;
+  currentDisplayPath: string;
+  loadingFolders: boolean;
+  currentFolderCache: CacheStatus;
+  favoriteFolders: string[];
+  i18n: DiskBrowserI18n;
+  formatDate: (date: string) => string;
 }
 
 const props = defineProps<Props>();
 defineEmits<{
-	back: [];
-	refresh: [];
-	open: [path: string];
-	"copy-path": [path: string];
-	"item-dblclick": [item: FolderInfo];
-	"toggle-favorite": [path: string];
-	navigate: [item: FolderInfo];
+  back: [];
+  refresh: [];
+  open: [path: string];
+  "copy-path": [path: string];
+  "item-dblclick": [item: FolderInfo];
+  "toggle-favorite": [path: string];
+  navigate: [item: FolderInfo];
 }>();
 
 function isFavorite(path: string): boolean {
-	return props.favoriteFolders.includes(path);
+  return props.favoriteFolders.includes(path);
 }
 </script>
 

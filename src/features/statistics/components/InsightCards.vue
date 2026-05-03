@@ -52,214 +52,214 @@
 import { computed } from "vue";
 
 interface HistoricalDataItem {
-	date: string;
-	dateLabel: string;
-	totalNotes: number;
-	totalWords: number;
-	todayCreated: number;
-	todayModified: number;
+  date: string;
+  dateLabel: string;
+  totalNotes: number;
+  totalWords: number;
+  todayCreated: number;
+  todayModified: number;
 }
 
 interface Props {
-	historicalData?: HistoricalDataItem[];
-	totalNotes?: number;
-	totalWords?: number;
-	i18n?: Record<string, string>;
+  historicalData?: HistoricalDataItem[];
+  totalNotes?: number;
+  totalWords?: number;
+  i18n?: Record<string, string>;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-	historicalData: () => [],
-	totalNotes: 0,
-	totalWords: 0,
-	i18n: () => ({
-		activityHeatmap: "活跃热力图",
-		less: "少",
-		more: "多",
-		last30Days: "近30天",
-		activeDaysCount: "天活跃",
-		milestones: "里程碑",
-		notes: "笔记",
-		words: "字数",
-		notesUnit: "篇",
-		wordsUnit: "字",
-	}),
+  historicalData: () => [],
+  totalNotes: 0,
+  totalWords: 0,
+  i18n: () => ({
+    activityHeatmap: "活跃热力图",
+    less: "少",
+    more: "多",
+    last30Days: "近30天",
+    activeDaysCount: "天活跃",
+    milestones: "里程碑",
+    notes: "笔记",
+    words: "字数",
+    notesUnit: "篇",
+    wordsUnit: "字",
+  }),
 });
 
 // ============ 热力日历 ============
 const LEVEL_THRESHOLDS = [0, 1, 6, 16, 31] as const;
 
 const heatmapCells = computed(() => {
-	const cells = [];
-	const now = new Date();
+  const cells = [];
+  const now = new Date();
 
-	for (let i = 29; i >= 0; i--) {
-		const date = new Date(now);
-		date.setDate(date.getDate() - i);
-		const dateStr = formatDate(date);
-		const dayData = props.historicalData.find((d) => d.date === dateStr);
+  for (let i = 29; i >= 0; i--) {
+    const date = new Date(now);
+    date.setDate(date.getDate() - i);
+    const dateStr = formatDate(date);
+    const dayData = props.historicalData.find((d) => d.date === dateStr);
 
-		const activity = dayData ? dayData.todayCreated + dayData.todayModified : 0;
-		let levelIdx = 0;
-		for (let t = LEVEL_THRESHOLDS.length - 1; t >= 0; t--) {
-			if (activity >= LEVEL_THRESHOLDS[t]) { levelIdx = t; break; }
-		}
+    const activity = dayData ? dayData.todayCreated + dayData.todayModified : 0;
+    let levelIdx = 0;
+    for (let t = LEVEL_THRESHOLDS.length - 1; t >= 0; t--) {
+      if (activity >= LEVEL_THRESHOLDS[t]) { levelIdx = t; break; }
+    }
 
-		cells.push({
-			activity,
-			date: dateStr,
-			level: `level-${levelIdx}`,
-			tooltip: `${dateStr}: ${activity}次操作`,
-		});
-	}
+    cells.push({
+      activity,
+      date: dateStr,
+      level: `level-${levelIdx}`,
+      tooltip: `${dateStr}: ${activity}次操作`,
+    });
+  }
 
-	return cells;
+  return cells;
 });
 
 const activeDaysInMonth = computed(() => {
-	return heatmapCells.value.filter((c) => c.level !== "level-0").length;
+  return heatmapCells.value.filter((c) => c.level !== "level-0").length;
 });
 
 // ============ 里程碑 ============
 const allMilestones = [
-	// 笔记里程碑：500篇起
-	{
-		id: "notes-500",
-		icon: "🌱",
-		label: "500篇笔记",
-		target: 500,
-		type: "notes",
-	},
-	{
-		id: "notes-1500",
-		icon: "🌿",
-		label: "1500篇笔记",
-		target: 1500,
-		type: "notes",
-	},
-	{
-		id: "notes-3000",
-		icon: "🌳",
-		label: "3000篇笔记",
-		target: 3000,
-		type: "notes",
-	},
-	{
-		id: "notes-3500",
-		icon: "🌲",
-		label: "3500篇笔记",
-		target: 3500,
-		type: "notes",
-	},
-	{
-		id: "notes-4000",
-		icon: "🏔️",
-		label: "4000篇笔记",
-		target: 4000,
-		type: "notes",
-	},
-	{
-		id: "notes-5000",
-		icon: "⛰️",
-		label: "5000篇笔记",
-		target: 5000,
-		type: "notes",
-	},
-	{
-		id: "notes-7500",
-		icon: "🗻",
-		label: "7500篇笔记",
-		target: 7500,
-		type: "notes",
-	},
-	{
-		id: "notes-10000",
-		icon: "🏔️",
-		label: "1万篇笔记",
-		target: 10000,
-		type: "notes",
-	},
-	// 字数里程碑：50万字起
-	{
-		id: "words-50w",
-		icon: "📚",
-		label: "50万字",
-		target: 500000,
-		type: "words",
-	},
-	{
-		id: "words-100w",
-		icon: "🎓",
-		label: "100万字",
-		target: 1000000,
-		type: "words",
-	},
-	{
-		id: "words-200w",
-		icon: "📖",
-		label: "200万字",
-		target: 2000000,
-		type: "words",
-	},
-	{
-		id: "words-300w",
-		icon: "📜",
-		label: "300万字",
-		target: 3000000,
-		type: "words",
-	},
-	{
-		id: "words-500w",
-		icon: "🏆",
-		label: "500万字",
-		target: 5000000,
-		type: "words",
-	},
-	{
-		id: "words-1000w",
-		icon: "👑",
-		label: "1000万字",
-		target: 10000000,
-		type: "words",
-	},
-	{
-		id: "words-5000w",
-		icon: "💎",
-		label: "5000万字",
-		target: 50000000,
-		type: "words",
-	},
-	{
-		id: "words-1yi",
-		icon: "🌟",
-		label: "1亿字",
-		target: 100000000,
-		type: "words",
-	},
+  // 笔记里程碑：500篇起
+  {
+    id: "notes-500",
+    icon: "🌱",
+    label: "500篇笔记",
+    target: 500,
+    type: "notes",
+  },
+  {
+    id: "notes-1500",
+    icon: "🌿",
+    label: "1500篇笔记",
+    target: 1500,
+    type: "notes",
+  },
+  {
+    id: "notes-3000",
+    icon: "🌳",
+    label: "3000篇笔记",
+    target: 3000,
+    type: "notes",
+  },
+  {
+    id: "notes-3500",
+    icon: "🌲",
+    label: "3500篇笔记",
+    target: 3500,
+    type: "notes",
+  },
+  {
+    id: "notes-4000",
+    icon: "🏔️",
+    label: "4000篇笔记",
+    target: 4000,
+    type: "notes",
+  },
+  {
+    id: "notes-5000",
+    icon: "⛰️",
+    label: "5000篇笔记",
+    target: 5000,
+    type: "notes",
+  },
+  {
+    id: "notes-7500",
+    icon: "🗻",
+    label: "7500篇笔记",
+    target: 7500,
+    type: "notes",
+  },
+  {
+    id: "notes-10000",
+    icon: "🏔️",
+    label: "1万篇笔记",
+    target: 10000,
+    type: "notes",
+  },
+  // 字数里程碑：50万字起
+  {
+    id: "words-50w",
+    icon: "📚",
+    label: "50万字",
+    target: 500000,
+    type: "words",
+  },
+  {
+    id: "words-100w",
+    icon: "🎓",
+    label: "100万字",
+    target: 1000000,
+    type: "words",
+  },
+  {
+    id: "words-200w",
+    icon: "📖",
+    label: "200万字",
+    target: 2000000,
+    type: "words",
+  },
+  {
+    id: "words-300w",
+    icon: "📜",
+    label: "300万字",
+    target: 3000000,
+    type: "words",
+  },
+  {
+    id: "words-500w",
+    icon: "🏆",
+    label: "500万字",
+    target: 5000000,
+    type: "words",
+  },
+  {
+    id: "words-1000w",
+    icon: "👑",
+    label: "1000万字",
+    target: 10000000,
+    type: "words",
+  },
+  {
+    id: "words-5000w",
+    icon: "💎",
+    label: "5000万字",
+    target: 50000000,
+    type: "words",
+  },
+  {
+    id: "words-1yi",
+    icon: "🌟",
+    label: "1亿字",
+    target: 100000000,
+    type: "words",
+  },
 ];
 
 const achievedCount = computed(() => {
-	return allMilestones.filter((m) => {
-		const current = m.type === "notes" ? props.totalNotes : props.totalWords;
-		return current >= m.target;
-	}).length;
+  return allMilestones.filter((m) => {
+    const current = m.type === "notes" ? props.totalNotes : props.totalWords;
+    return current >= m.target;
+  }).length;
 });
 
 const visibleMilestones = computed(() => {
-	return allMilestones.map((m) => {
-		const current = m.type === "notes" ? props.totalNotes : props.totalWords;
-		const achieved = current >= m.target;
-		const progress = achieved ? 100 : Math.min((current / m.target) * 100, 100);
-		return { ...m, achieved, progress };
-	});
+  return allMilestones.map((m) => {
+    const current = m.type === "notes" ? props.totalNotes : props.totalWords;
+    const achieved = current >= m.target;
+    const progress = achieved ? 100 : Math.min((current / m.target) * 100, 100);
+    return { ...m, achieved, progress };
+  });
 });
 
 // ============ 工具函数 ============
 function formatDate(date: Date): string {
-	return `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())}`;
+  return `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())}`;
 }
 
 function padZero(num: number): string {
-	return num < 10 ? "0" + num : String(num);
+  return num < 10 ? "0" + num : String(num);
 }
 </script>
 

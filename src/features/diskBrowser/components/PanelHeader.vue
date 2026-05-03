@@ -31,14 +31,14 @@ import Tag from "@/components/Tag.vue";
 import type { CacheStatus, DiskBrowserI18n } from "../types";
 
 interface Props {
-	i18n: DiskBrowserI18n;
-	cacheStatus: CacheStatus;
-	loading: boolean;
+  i18n: DiskBrowserI18n;
+  cacheStatus: CacheStatus;
+  loading: boolean;
 }
 
 defineProps<Props>();
 defineEmits<{
-	refresh: [];
+  refresh: [];
 }>();
 </script>
 

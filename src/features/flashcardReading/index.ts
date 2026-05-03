@@ -8,12 +8,12 @@ import { FlashcardReading } from "./types";
  * 注册单词阅读功能
  */
 export function registerFlashcardReading(plugin: Plugin) {
-	const flashcardReading = new FlashcardReading(plugin);
-	flashcardReading.init();
+  const flashcardReading = new FlashcardReading(plugin);
+  flashcardReading.init();
 
-	(plugin as any).__flashcardReading = flashcardReading;
+  (plugin as any).__flashcardReading = flashcardReading;
 
-	return flashcardReading;
+  return flashcardReading;
 }
 
 export * from "./types";

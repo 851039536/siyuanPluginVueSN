@@ -47,29 +47,29 @@ import Button from "@/components/Button.vue";
 import type { QuickFilter, ViewMode } from "../types";
 
 interface Props {
-	activeFilter: string;
-	viewMode: ViewMode;
-	filters: QuickFilter[];
-	totalCount?: number;
-	favoriteCount?: number;
-	customCount?: number;
-	totalLabel?: string;
-	favoriteLabel?: string;
-	customLabel?: string;
+  activeFilter: string;
+  viewMode: ViewMode;
+  filters: QuickFilter[];
+  totalCount?: number;
+  favoriteCount?: number;
+  customCount?: number;
+  totalLabel?: string;
+  favoriteLabel?: string;
+  customLabel?: string;
 }
 
 withDefaults(defineProps<Props>(), {
-	totalCount: 0,
-	favoriteCount: 0,
-	customCount: 0,
-	totalLabel: "总计",
-	favoriteLabel: "收藏",
-	customLabel: "自定义",
+  totalCount: 0,
+  favoriteCount: 0,
+  customCount: 0,
+  totalLabel: "总计",
+  favoriteLabel: "收藏",
+  customLabel: "自定义",
 });
 
 defineEmits<{
-	"update:activeFilter": [value: string];
-	"update:viewMode": [value: ViewMode];
+  "update:activeFilter": [value: string];
+  "update:viewMode": [value: ViewMode];
 }>();
 </script>
 

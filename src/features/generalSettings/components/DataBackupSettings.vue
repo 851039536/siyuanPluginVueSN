@@ -265,13 +265,13 @@ import type { CloudProviderConfig, CloudFileInfo } from "../modules/CloudBackupM
 import { GeneralSettingsStorage } from "../types/storage";
 
 interface Props {
-	i18n?: any;
-	plugin?: any;
+  i18n?: any;
+  plugin?: any;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-	i18n: () => ({}),
-	plugin: null,
+  i18n: () => ({}),
+  plugin: null,
 });
 
 const gsStorage = computed(() => props.plugin ? new GeneralSettingsStorage(props.plugin) : null);
@@ -292,42 +292,42 @@ const backupTime = ref("03:00");
 const keepBackupCount = ref(7);
 const cloudSyncEnabled = ref(false);
 const backupList = ref<
-	Array<{ name: string; path: string; time: string; size: number }>
+  Array<{ name: string; path: string; time: string; size: number }>
 >([]);
 
 let lastBackupTimestamp = 0;
 
 // 备份进度
 const backupProgress = ref<BackupProgress | RestoreProgress>({
-	phase: "scanning",
-	currentFile: "",
-	filesProcessed: 0,
-	totalFiles: 0,
-	percent: 0,
+  phase: "scanning",
+  currentFile: "",
+  filesProcessed: 0,
+  totalFiles: 0,
+  percent: 0,
 });
 
 const phaseLabel = computed(() => {
-	const labels: Record<string, string> = {
-		scanning: "扫描文件",
-		packing: "打包文件",
-		compressing: "压缩数据",
-		saving: "保存备份",
-		uploading: "上传云端",
-		reading: "读取备份",
-		extracting: "解压文件",
-		swapping: "替换数据",
-	};
-	return labels[backupProgress.value.phase] || backupProgress.value.phase;
+  const labels: Record<string, string> = {
+    scanning: "扫描文件",
+    packing: "打包文件",
+    compressing: "压缩数据",
+    saving: "保存备份",
+    uploading: "上传云端",
+    reading: "读取备份",
+    extracting: "解压文件",
+    swapping: "替换数据",
+  };
+  return labels[backupProgress.value.phase] || backupProgress.value.phase;
 });
 
 // 云备份
 const cloudConfig = ref<CloudProviderConfig>({
-	type: "qiniu",
-	accessKey: "",
-	secretKey: "",
-	bucket: "",
-	region: "",
-	prefix: "siyuan-backup/",
+  type: "qiniu",
+  accessKey: "",
+  secretKey: "",
+  bucket: "",
+  region: "",
+  prefix: "siyuan-backup/",
 });
 const cloudTestResult = ref<{ success: boolean; message: string } | null>(null);
 const cloudBackupList = ref<CloudFileInfo[]>([]);
@@ -338,71 +338,71 @@ let cloudBackupManager: CloudBackupManager | null = null;
 
 // 初始化 Manager
 function initManagers() {
-	backupManager = new BackupManager(workspacePath.value, workspaceRoot.value);
-	cloudBackupManager = new CloudBackupManager(props.plugin);
+  backupManager = new BackupManager(workspacePath.value, workspaceRoot.value);
+  cloudBackupManager = new CloudBackupManager(props.plugin);
 }
 
 // 统一更新工作区路径并持久化
 function updateWorkspacePath(root: string, shouldSave = false) {
-	workspaceRoot.value = root;
-	workspacePath.value = `${root}/data`;
-	localStorage.setItem("siyuan-workspace-root", root);
-	localStorage.setItem("siyuan-workspace-path", `${root}/data`);
-	if (backupManager) {
-		backupManager.updateWorkspacePaths(workspacePath.value, workspaceRoot.value);
-	}
-	if (shouldSave) {
-		saveSettings();
-	}
+  workspaceRoot.value = root;
+  workspacePath.value = `${root}/data`;
+  localStorage.setItem("siyuan-workspace-root", root);
+  localStorage.setItem("siyuan-workspace-path", `${root}/data`);
+  if (backupManager) {
+    backupManager.updateWorkspacePaths(workspacePath.value, workspaceRoot.value);
+  }
+  if (shouldSave) {
+    saveSettings();
+  }
 }
 
 // 通过 API 获取工作区路径
 async function fetchWorkspacePath(): Promise<string | null> {
-	try {
-		const response = await fetch("/api/system/getConf", { method: "POST" });
-		if (response.ok) {
-			const data = await response.json();
-			return data?.data?.conf?.system?.workspaceDir || null;
-		}
-	} catch (e) {
-		console.error("通过 API 获取工作区路径失败:", e);
-	}
-	return null;
+  try {
+    const response = await fetch("/api/system/getConf", { method: "POST" });
+    if (response.ok) {
+      const data = await response.json();
+      return data?.data?.conf?.system?.workspaceDir || null;
+    }
+  } catch (e) {
+    console.error("通过 API 获取工作区路径失败:", e);
+  }
+  return null;
 }
 
 // 初始化
 onMounted(async () => {
-	isMobile.value = checkIsMobile();
-	await loadSettings();
+  isMobile.value = checkIsMobile();
+  await loadSettings();
 
-	if (isMobile.value && autoBackupEnabled.value) {
-		autoBackupEnabled.value = false;
-		await saveSettings();
-	}
+  if (isMobile.value && autoBackupEnabled.value) {
+    autoBackupEnabled.value = false;
+    await saveSettings();
+  }
 
-	await detectWorkspacePath();
-	initManagers();
-	await loadBackupList();
-	await loadCloudConfig();
+  await detectWorkspacePath();
+  initManagers();
+  await loadBackupList();
+  await loadCloudConfig();
 
-	window.addEventListener("autoBackupTrigger", handleAutoBackupTrigger);
+  window.addEventListener("autoBackupTrigger", handleAutoBackupTrigger);
 });
 
 onUnmounted(() => {
-	window.removeEventListener("autoBackupTrigger", handleAutoBackupTrigger);
-	window.removeEventListener("workspacePathDetected", handleWorkspacePathDetected);
+  window.removeEventListener("autoBackupTrigger", handleAutoBackupTrigger);
+  window.removeEventListener("workspacePathDetected", handleWorkspacePathDetected);
 });
 
 async function handleAutoBackupTrigger() {
-	await performFullBackup();
+  await performFullBackup();
 }
 
 // 定时器重启逻辑（委托给 GeneralSettings）
 function handleTimerRestart(enabled: boolean) {
-	const generalSettings = props.plugin?.__generalSettings;
-	if (generalSettings && typeof generalSettings.restartAutoBackupTimer === "function") {
-		generalSettings.restartAutoBackupTimer(enabled, backupFrequency.value, backupTime.value);
-	}
+  const generalSettings = props.plugin?.__generalSettings;
+  if (generalSettings && typeof generalSettings.restartAutoBackupTimer === "function") {
+    generalSettings.restartAutoBackupTimer(enabled, backupFrequency.value, backupTime.value);
+  }
 }
 
 watch(backupFrequency, () => handleTimerRestart(autoBackupEnabled.value));
@@ -410,99 +410,99 @@ watch(autoBackupEnabled, (enabled) => handleTimerRestart(enabled));
 
 // 加载设置
 async function loadSettings() {
-	try {
-		if (gsStorage.value) {
-			const data = await gsStorage.value.backup.loadOrDefault();
-			autoBackupEnabled.value = data.autoBackupEnabled ?? false;
-			backupFrequency.value = data.backupFrequency ?? "daily";
-			backupTime.value = data.backupTime ?? "03:00";
-			keepBackupCount.value = data.keepBackupCount ?? 7;
-			cloudSyncEnabled.value = data.cloudSyncEnabled ?? false;
-			lastBackupTime.value = data.lastBackupTime ?? "";
-			lastBackupTimestamp = data.lastBackupTimestamp ?? 0;
-			if (data.workspacePath) {
-				workspacePath.value = data.workspacePath;
-				workspaceRoot.value = data.workspaceRoot || data.workspacePath.replace(/\/data$/, "");
-			}
-		}
-	} catch (error) {
-		console.error("加载备份设置失败:", error);
-	}
+  try {
+    if (gsStorage.value) {
+      const data = await gsStorage.value.backup.loadOrDefault();
+      autoBackupEnabled.value = data.autoBackupEnabled ?? false;
+      backupFrequency.value = data.backupFrequency ?? "daily";
+      backupTime.value = data.backupTime ?? "03:00";
+      keepBackupCount.value = data.keepBackupCount ?? 7;
+      cloudSyncEnabled.value = data.cloudSyncEnabled ?? false;
+      lastBackupTime.value = data.lastBackupTime ?? "";
+      lastBackupTimestamp = data.lastBackupTimestamp ?? 0;
+      if (data.workspacePath) {
+        workspacePath.value = data.workspacePath;
+        workspaceRoot.value = data.workspaceRoot || data.workspacePath.replace(/\/data$/, "");
+      }
+    }
+  } catch (error) {
+    console.error("加载备份设置失败:", error);
+  }
 }
 
 // 保存设置
 async function saveSettings() {
-	try {
-		if (gsStorage.value) {
-			await gsStorage.value.backup.save({
-				autoBackupEnabled: autoBackupEnabled.value,
-				backupFrequency: backupFrequency.value,
-				backupTime: backupTime.value,
-				keepBackupCount: keepBackupCount.value,
-				cloudSyncEnabled: cloudSyncEnabled.value,
-				lastBackupTime: lastBackupTime.value,
-				lastBackupTimestamp,
-				workspacePath: workspacePath.value,
-				workspaceRoot: workspaceRoot.value,
-			});
-		}
-	} catch (error) {
-		console.error("保存备份设置失败:", error);
-	}
+  try {
+    if (gsStorage.value) {
+      await gsStorage.value.backup.save({
+        autoBackupEnabled: autoBackupEnabled.value,
+        backupFrequency: backupFrequency.value,
+        backupTime: backupTime.value,
+        keepBackupCount: keepBackupCount.value,
+        cloudSyncEnabled: cloudSyncEnabled.value,
+        lastBackupTime: lastBackupTime.value,
+        lastBackupTimestamp,
+        workspacePath: workspacePath.value,
+        workspaceRoot: workspaceRoot.value,
+      });
+    }
+  } catch (error) {
+    console.error("保存备份设置失败:", error);
+  }
 }
 
 // 加载云备份配置
 async function loadCloudConfig() {
-	if (!cloudBackupManager) return;
-	const config = await cloudBackupManager.loadConfig();
-	if (config) {
-		cloudConfig.value = config;
-	}
-	if (cloudSyncEnabled.value) {
-		await loadCloudBackups();
-	}
+  if (!cloudBackupManager) return;
+  const config = await cloudBackupManager.loadConfig();
+  if (config) {
+    cloudConfig.value = config;
+  }
+  if (cloudSyncEnabled.value) {
+    await loadCloudBackups();
+  }
 }
 
 // 保存云备份配置
 async function saveCloudConfig() {
-	if (!cloudBackupManager) return;
-	await cloudBackupManager.saveConfig(cloudConfig.value);
+  if (!cloudBackupManager) return;
+  await cloudBackupManager.saveConfig(cloudConfig.value);
 }
 
 // 检测工作区路径
 async function detectWorkspacePath() {
-	const envRoot = (window as any).__SIYUAN_WORKSPACE__ || (window as any).SIYUAN_WORKSPACE;
-	if (envRoot) {
-		updateWorkspacePath(envRoot);
-		return;
-	}
+  const envRoot = (window as any).__SIYUAN_WORKSPACE__ || (window as any).SIYUAN_WORKSPACE;
+  if (envRoot) {
+    updateWorkspacePath(envRoot);
+    return;
+  }
 
-	const savedRoot = localStorage.getItem("siyuan-workspace-root");
-	if (savedRoot) {
-		updateWorkspacePath(savedRoot);
-		return;
-	}
+  const savedRoot = localStorage.getItem("siyuan-workspace-root");
+  if (savedRoot) {
+    updateWorkspacePath(savedRoot);
+    return;
+  }
 
-	try {
-		if (props.plugin?.dataPath) {
-			updateWorkspacePath(props.plugin.dataPath);
-			return;
-		}
-	} catch {
-		/* 忽略错误 */
-	}
+  try {
+    if (props.plugin?.dataPath) {
+      updateWorkspacePath(props.plugin.dataPath);
+      return;
+    }
+  } catch {
+    /* 忽略错误 */
+  }
 
-	const apiPath = await fetchWorkspacePath();
-	if (apiPath) {
-		updateWorkspacePath(apiPath);
-		return;
-	}
+  const apiPath = await fetchWorkspacePath();
+  if (apiPath) {
+    updateWorkspacePath(apiPath);
+    return;
+  }
 
-	window.addEventListener("workspacePathDetected", handleWorkspacePathDetected);
+  window.addEventListener("workspacePathDetected", handleWorkspacePathDetected);
 }
 
 function handleWorkspacePathDetected(event: CustomEvent) {
-	updateWorkspacePath(event.detail.path);
+  updateWorkspacePath(event.detail.path);
 }
 
 // 输入对话框
@@ -513,357 +513,357 @@ const inputDialogResolve = ref<((value: string | null) => void) | null>(null);
 const dialogInputRef = ref<HTMLInputElement | null>(null);
 
 function showInputDialogHelper(placeholder: string): Promise<string | null> {
-	return new Promise((resolve) => {
-		inputDialogPlaceholder.value = placeholder;
-		inputDialogValue.value = workspaceRoot.value || "";
-		inputDialogResolve.value = resolve;
-		showInputDialog.value = true;
-		nextTick(() => {
-			dialogInputRef.value?.focus();
-			dialogInputRef.value?.select();
-		});
-	});
+  return new Promise((resolve) => {
+    inputDialogPlaceholder.value = placeholder;
+    inputDialogValue.value = workspaceRoot.value || "";
+    inputDialogResolve.value = resolve;
+    showInputDialog.value = true;
+    nextTick(() => {
+      dialogInputRef.value?.focus();
+      dialogInputRef.value?.select();
+    });
+  });
 }
 
 function confirmInputDialog() {
-	const value = inputDialogValue.value.trim();
-	showInputDialog.value = false;
-	inputDialogResolve.value?.(value || null);
-	inputDialogResolve.value = null;
+  const value = inputDialogValue.value.trim();
+  showInputDialog.value = false;
+  inputDialogResolve.value?.(value || null);
+  inputDialogResolve.value = null;
 }
 
 function cancelInputDialog() {
-	showInputDialog.value = false;
-	inputDialogResolve.value?.(null);
-	inputDialogResolve.value = null;
+  showInputDialog.value = false;
+  inputDialogResolve.value?.(null);
+  inputDialogResolve.value = null;
 }
 
 // 打开工作区文件夹
 async function openWorkspaceFolder() {
-	if (!workspaceRoot.value) {
-		showMessage(props.i18n.pleaseSelectWorkspace || "请先选择工作区路径", 3000, "info");
-		return;
-	}
-	try {
-		if (typeof window.require === "function") {
-			const electron = window.require("electron");
-			const shell = electron.shell || electron.remote?.shell;
-			if (shell?.openPath) {
-				await shell.openPath(workspaceRoot.value);
-				return;
-			}
-		}
-		const response = await fetch("/api/file/getFile", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ path: workspaceRoot.value }),
-		});
-		if (response.ok) {
-			showMessage(props.i18n.folderOpened || "已在浏览器中打开", 2000, "info");
-		} else {
-			showMessage(props.i18n.openFolderFailed || "打开文件夹失败", 3000, "error");
-		}
-	} catch (error) {
-		console.error("打开工作区文件夹失败:", error);
-		showMessage(props.i18n.openFolderFailed || "打开文件夹失败", 3000, "error");
-	}
+  if (!workspaceRoot.value) {
+    showMessage(props.i18n.pleaseSelectWorkspace || "请先选择工作区路径", 3000, "info");
+    return;
+  }
+  try {
+    if (typeof window.require === "function") {
+      const electron = window.require("electron");
+      const shell = electron.shell || electron.remote?.shell;
+      if (shell?.openPath) {
+        await shell.openPath(workspaceRoot.value);
+        return;
+      }
+    }
+    const response = await fetch("/api/file/getFile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: workspaceRoot.value }),
+    });
+    if (response.ok) {
+      showMessage(props.i18n.folderOpened || "已在浏览器中打开", 2000, "info");
+    } else {
+      showMessage(props.i18n.openFolderFailed || "打开文件夹失败", 3000, "error");
+    }
+  } catch (error) {
+    console.error("打开工作区文件夹失败:", error);
+    showMessage(props.i18n.openFolderFailed || "打开文件夹失败", 3000, "error");
+  }
 }
 
 // 选择工作区路径
 async function selectWorkspacePath() {
-	if (!workspaceRoot.value) {
-		const wsPath = await fetchWorkspacePath();
-		if (wsPath) {
-			updateWorkspacePath(wsPath, true);
-			showMessage(props.i18n.workspacePathSet || "工作区路径已自动获取", 2000, "info");
-			return;
-		}
-	}
-	if (typeof window.require === "function") {
-		try {
-			const electron = window.require("electron");
-			const remote = electron.remote || electron;
-			if (remote?.dialog?.showOpenDialog) {
-				const result = await remote.dialog.showOpenDialog({
-					properties: ["openDirectory"],
-					title: props.i18n.selectWorkspace || "选择思源工作区",
-					defaultPath: workspaceRoot.value || undefined,
-				});
-				if (!result.canceled && result.filePaths[0]) {
-					updateWorkspacePath(result.filePaths[0], true);
-					showMessage(props.i18n.workspacePathSet || "工作区路径已设置", 2000, "info");
-					return;
-				}
-			}
-		} catch (error) {
-			console.warn("Electron dialog 不可用:", error);
-		}
-	}
-	const inputPath = await showInputDialogHelper(props.i18n.enterWorkspacePath || "请输入思源工作区路径:");
-	if (inputPath) {
-		updateWorkspacePath(inputPath, true);
-		showMessage(props.i18n.workspacePathSet || "工作区路径已设置", 2000, "info");
-	}
+  if (!workspaceRoot.value) {
+    const wsPath = await fetchWorkspacePath();
+    if (wsPath) {
+      updateWorkspacePath(wsPath, true);
+      showMessage(props.i18n.workspacePathSet || "工作区路径已自动获取", 2000, "info");
+      return;
+    }
+  }
+  if (typeof window.require === "function") {
+    try {
+      const electron = window.require("electron");
+      const remote = electron.remote || electron;
+      if (remote?.dialog?.showOpenDialog) {
+        const result = await remote.dialog.showOpenDialog({
+          properties: ["openDirectory"],
+          title: props.i18n.selectWorkspace || "选择思源工作区",
+          defaultPath: workspaceRoot.value || undefined,
+        });
+        if (!result.canceled && result.filePaths[0]) {
+          updateWorkspacePath(result.filePaths[0], true);
+          showMessage(props.i18n.workspacePathSet || "工作区路径已设置", 2000, "info");
+          return;
+        }
+      }
+    } catch (error) {
+      console.warn("Electron dialog 不可用:", error);
+    }
+  }
+  const inputPath = await showInputDialogHelper(props.i18n.enterWorkspacePath || "请输入思源工作区路径:");
+  if (inputPath) {
+    updateWorkspacePath(inputPath, true);
+    showMessage(props.i18n.workspacePathSet || "工作区路径已设置", 2000, "info");
+  }
 }
 
 // ========== 备份操作 ==========
 
 async function performFullBackup() {
-	if (isBackingUp.value || !backupManager) return;
+  if (isBackingUp.value || !backupManager) return;
 
-	if (!workspacePath.value) {
-		showMessage(props.i18n.pleaseSelectWorkspace || "请先选择工作区路径", 3000, "info");
-		await selectWorkspacePath();
-		if (!workspacePath.value) return;
-	}
+  if (!workspacePath.value) {
+    showMessage(props.i18n.pleaseSelectWorkspace || "请先选择工作区路径", 3000, "info");
+    await selectWorkspacePath();
+    if (!workspacePath.value) return;
+  }
 
-	isBackingUp.value = true;
-	backupProgress.value = { phase: "scanning", currentFile: "", filesProcessed: 0, totalFiles: 0, percent: 0 };
+  isBackingUp.value = true;
+  backupProgress.value = { phase: "scanning", currentFile: "", filesProcessed: 0, totalFiles: 0, percent: 0 };
 
-	try {
-		const result = await backupManager.performFullBackup({
-			onProgress: (p) => { backupProgress.value = { ...p }; },
-		});
+  try {
+    const result = await backupManager.performFullBackup({
+      onProgress: (p) => { backupProgress.value = { ...p }; },
+    });
 
-		await onBackupComplete(result);
-	} catch (error: any) {
-		console.error("备份失败:", error);
-		showMessage(`${props.i18n.backupFailed || "备份失败"}: ${error.message}`, 5000, "error");
-	} finally {
-		isBackingUp.value = false;
-	}
+    await onBackupComplete(result);
+  } catch (error: any) {
+    console.error("备份失败:", error);
+    showMessage(`${props.i18n.backupFailed || "备份失败"}: ${error.message}`, 5000, "error");
+  } finally {
+    isBackingUp.value = false;
+  }
 }
 
 // 备份完成后的统一处理
 async function onBackupComplete(result: BackupResult) {
-	lastBackupTime.value = new Date().toLocaleString();
-	lastBackupTimestamp = Date.now();
-	await saveSettings();
+  lastBackupTime.value = new Date().toLocaleString();
+  lastBackupTimestamp = Date.now();
+  await saveSettings();
 
-	props.plugin?.__generalSettings?.updateLastBackupTime?.(lastBackupTimestamp);
+  props.plugin?.__generalSettings?.updateLastBackupTime?.(lastBackupTimestamp);
 
-	// 更新备份列表
-	backupList.value.unshift({
-		name: result.fileName,
-		path: result.filePath,
-		time: lastBackupTime.value,
-		size: result.size,
-	});
+  // 更新备份列表
+  backupList.value.unshift({
+    name: result.fileName,
+    path: result.filePath,
+    time: lastBackupTime.value,
+    size: result.size,
+  });
 
-	if (backupList.value.length > keepBackupCount.value) {
-		backupList.value = backupList.value.slice(0, keepBackupCount.value);
-	}
+  if (backupList.value.length > keepBackupCount.value) {
+    backupList.value = backupList.value.slice(0, keepBackupCount.value);
+  }
 
-	await gsStorage.value?.backupHistory.save({ list: backupList.value });
+  await gsStorage.value?.backupHistory.save({ list: backupList.value });
 
-	showMessage(`备份成功: ${result.fileName}（${result.totalFiles} 文件）`, 3000, "info");
+  showMessage(`备份成功: ${result.fileName}（${result.totalFiles} 文件）`, 3000, "info");
 
-	// 自动云同步
-	if (cloudSyncEnabled.value && cloudBackupManager) {
-		try {
-			await cloudBackupManager.upload(result.filePath);
-			showMessage("已同步至云端", 2000, "info");
-		} catch (err: any) {
-			console.error("自动云同步失败:", err);
-			showMessage(`云同步失败: ${err.message}`, 3000, "error");
-		}
-	}
+  // 自动云同步
+  if (cloudSyncEnabled.value && cloudBackupManager) {
+    try {
+      await cloudBackupManager.upload(result.filePath);
+      showMessage("已同步至云端", 2000, "info");
+    } catch (err: any) {
+      console.error("自动云同步失败:", err);
+      showMessage(`云同步失败: ${err.message}`, 3000, "error");
+    }
+  }
 }
 
 // 恢复备份
 async function restoreBackup(backup: { name: string; path: string }) {
-	if (isRestoring.value || !backupManager) return;
+  if (isRestoring.value || !backupManager) return;
 
-	const confirmRestore = confirm(
-		`确定要从备份 "${backup.name}" 恢复吗？\n\n⚠️ 此操作将覆盖当前工作区数据，恢复后需重启思源笔记！`,
-	);
-	if (!confirmRestore) return;
+  const confirmRestore = confirm(
+    `确定要从备份 "${backup.name}" 恢复吗？\n\n⚠️ 此操作将覆盖当前工作区数据，恢复后需重启思源笔记！`,
+  );
+  if (!confirmRestore) return;
 
-	isRestoring.value = true;
-	restoreCompleted.value = false;
-	backupProgress.value = { phase: "reading", currentFile: "", filesProcessed: 0, totalFiles: 0, percent: 0 };
+  isRestoring.value = true;
+  restoreCompleted.value = false;
+  backupProgress.value = { phase: "reading", currentFile: "", filesProcessed: 0, totalFiles: 0, percent: 0 };
 
-	try {
-		const result = await backupManager.restoreBackup(backup.path, {
-			onProgress: (p: RestoreProgress) => {
-				backupProgress.value = { ...p };
-			},
-		});
+  try {
+    const result = await backupManager.restoreBackup(backup.path, {
+      onProgress: (p: RestoreProgress) => {
+        backupProgress.value = { ...p };
+      },
+    });
 
-		if (result.needRestart) {
-			restoreCompleted.value = true;
-			showMessage(
-				`恢复完成（${result.restoredFiles} 个文件已通过思源API导入），请重启思源笔记以使更改生效`,
-				10000,
-				"info",
-			);
-		} else if (result.success) {
-			showMessage(
-				`恢复成功！已恢复 ${result.restoredFiles} 个文件`,
-				5000,
-				"info",
-			);
-		} else {
-			showMessage(
-				`恢复失败，${result.skippedFiles} 个文件未能恢复`,
-				5000,
-				"error",
-			);
-		}
-	} catch (error: any) {
-		console.error("恢复备份失败:", error);
-		showMessage(`恢复失败: ${error.message}`, 5000, "error");
-	} finally {
-		isRestoring.value = false;
-	}
+    if (result.needRestart) {
+      restoreCompleted.value = true;
+      showMessage(
+        `恢复完成（${result.restoredFiles} 个文件已通过思源API导入），请重启思源笔记以使更改生效`,
+        10000,
+        "info",
+      );
+    } else if (result.success) {
+      showMessage(
+        `恢复成功！已恢复 ${result.restoredFiles} 个文件`,
+        5000,
+        "info",
+      );
+    } else {
+      showMessage(
+        `恢复失败，${result.skippedFiles} 个文件未能恢复`,
+        5000,
+        "error",
+      );
+    }
+  } catch (error: any) {
+    console.error("恢复备份失败:", error);
+    showMessage(`恢复失败: ${error.message}`, 5000, "error");
+  } finally {
+    isRestoring.value = false;
+  }
 }
 
 // 上传到云端
 async function uploadToCloud(backup: { name: string; path: string }) {
-	if (!cloudBackupManager) return;
+  if (!cloudBackupManager) return;
 
-	try {
-		await cloudBackupManager.upload(backup.path);
-		showMessage(`已上传 ${backup.name} 至云端`, 2000, "info");
-		await loadCloudBackups();
-	} catch (error: any) {
-		console.error("云上传失败:", error);
-		showMessage(`上传失败: ${error.message}`, 3000, "error");
-	}
+  try {
+    await cloudBackupManager.upload(backup.path);
+    showMessage(`已上传 ${backup.name} 至云端`, 2000, "info");
+    await loadCloudBackups();
+  } catch (error: any) {
+    console.error("云上传失败:", error);
+    showMessage(`上传失败: ${error.message}`, 3000, "error");
+  }
 }
 
 // 测试云连接
 async function testCloudConnection() {
-	if (!cloudBackupManager) return;
+  if (!cloudBackupManager) return;
 
-	isTestingCloud.value = true;
-	cloudTestResult.value = null;
+  isTestingCloud.value = true;
+  cloudTestResult.value = null;
 
-	try {
-		await saveCloudConfig();
-		cloudTestResult.value = await cloudBackupManager.testConnection(cloudConfig.value);
-	} catch (error: any) {
-		cloudTestResult.value = { success: false, message: error.message };
-	} finally {
-		isTestingCloud.value = false;
-	}
+  try {
+    await saveCloudConfig();
+    cloudTestResult.value = await cloudBackupManager.testConnection(cloudConfig.value);
+  } catch (error: any) {
+    cloudTestResult.value = { success: false, message: error.message };
+  } finally {
+    isTestingCloud.value = false;
+  }
 }
 
 // 加载云端备份列表
 async function loadCloudBackups() {
-	if (!cloudBackupManager) return;
+  if (!cloudBackupManager) return;
 
-	try {
-		cloudBackupList.value = await cloudBackupManager.listBackups();
-	} catch (error) {
-		console.error("加载云端备份列表失败:", error);
-		cloudBackupList.value = [];
-	}
+  try {
+    cloudBackupList.value = await cloudBackupManager.listBackups();
+  } catch (error) {
+    console.error("加载云端备份列表失败:", error);
+    cloudBackupList.value = [];
+  }
 }
 
 // 从云端下载
 async function downloadFromCloud(file: CloudFileInfo) {
-	if (!cloudBackupManager || isRestoring.value) return;
+  if (!cloudBackupManager || isRestoring.value) return;
 
-	isRestoring.value = true;
-	try {
-		const localPath = `${workspaceRoot.value}/data-backup/${file.name}`;
-		await cloudBackupManager.download(file.key, localPath);
-		showMessage(`已下载 ${file.name}`, 2000, "info");
-		await loadBackupList();
-	} catch (error: any) {
-		showMessage(`下载失败: ${error.message}`, 3000, "error");
-	} finally {
-		isRestoring.value = false;
-	}
+  isRestoring.value = true;
+  try {
+    const localPath = `${workspaceRoot.value}/data-backup/${file.name}`;
+    await cloudBackupManager.download(file.key, localPath);
+    showMessage(`已下载 ${file.name}`, 2000, "info");
+    await loadBackupList();
+  } catch (error: any) {
+    showMessage(`下载失败: ${error.message}`, 3000, "error");
+  } finally {
+    isRestoring.value = false;
+  }
 }
 
 // 删除云端备份
 async function deleteFromCloud(file: CloudFileInfo) {
-	if (!cloudBackupManager) return;
+  if (!cloudBackupManager) return;
 
-	const confirmDelete = confirm(`确定要删除云端备份 "${file.name}" 吗？`);
-	if (!confirmDelete) return;
+  const confirmDelete = confirm(`确定要删除云端备份 "${file.name}" 吗？`);
+  if (!confirmDelete) return;
 
-	try {
-		await cloudBackupManager.deleteBackup(file.key);
-		showMessage("云端备份已删除", 2000, "info");
-		await loadCloudBackups();
-	} catch (error: any) {
-		showMessage(`删除失败: ${error.message}`, 3000, "error");
-	}
+  try {
+    await cloudBackupManager.deleteBackup(file.key);
+    showMessage("云端备份已删除", 2000, "info");
+    await loadCloudBackups();
+  } catch (error: any) {
+    showMessage(`删除失败: ${error.message}`, 3000, "error");
+  }
 }
 
 // 格式化文件大小
 function formatFileSize(bytes: number): string {
-	if (bytes === 0) return "0 B";
-	const k = 1024;
-	const sizes = ["B", "KB", "MB", "GB"];
-	const i = Math.floor(Math.log(bytes) / Math.log(k));
-	return (bytes / Math.pow(k, i)).toFixed(2) + " " + sizes[i];
+  if (bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return (bytes / Math.pow(k, i)).toFixed(2) + " " + sizes[i];
 }
 
 // 加载备份列表
-	async function loadBackupList() {
-	backupList.value = [];
+  async function loadBackupList() {
+  backupList.value = [];
 
-	try {
-		// 优先从文件系统扫描
-		if (backupManager) {
-			const scanned = await backupManager.scanBackupDir();
-			if (scanned.length > 0) {
-				backupList.value = scanned;
-				await gsStorage.value?.backupHistory.save({ list: backupList.value });
-				return;
-			}
-		}
+  try {
+    // 优先从文件系统扫描
+    if (backupManager) {
+      const scanned = await backupManager.scanBackupDir();
+      if (scanned.length > 0) {
+        backupList.value = scanned;
+        await gsStorage.value?.backupHistory.save({ list: backupList.value });
+        return;
+      }
+    }
 
-		// 降级到已保存的记录
-		const backupHistory = await gsStorage.value?.backupHistory.load();
-		if (backupHistory?.list) {
-			backupList.value = backupHistory.list;
-		}
-	} catch (error) {
-		console.error("加载备份列表失败:", error);
-	}
+    // 降级到已保存的记录
+    const backupHistory = await gsStorage.value?.backupHistory.load();
+    if (backupHistory?.list) {
+      backupList.value = backupHistory.list;
+    }
+  } catch (error) {
+    console.error("加载备份列表失败:", error);
+  }
 }
 
 // 刷新备份列表
 async function refreshBackupList() {
-	isLoading.value = true;
-	try {
-		await loadBackupList();
-	} finally {
-		isLoading.value = false;
-	}
+  isLoading.value = true;
+  try {
+    await loadBackupList();
+  } finally {
+    isLoading.value = false;
+  }
 }
 
 // 删除备份
 async function deleteBackup(backup: { name: string; path: string }) {
-	try {
-		const confirmDelete = confirm(props.i18n.confirmDelete || "确定要删除此备份吗？");
-		if (!confirmDelete) return;
+  try {
+    const confirmDelete = confirm(props.i18n.confirmDelete || "确定要删除此备份吗？");
+    if (!confirmDelete) return;
 
-		// 从文件系统删除
-		if (backupManager) {
-			await backupManager.deleteBackupFile(backup.path);
-		}
+    // 从文件系统删除
+    if (backupManager) {
+      await backupManager.deleteBackupFile(backup.path);
+    }
 
-		backupList.value = backupList.value.filter((b) => b.name !== backup.name);
-		await gsStorage.value?.backupHistory.save({ list: backupList.value });
+    backupList.value = backupList.value.filter((b) => b.name !== backup.name);
+    await gsStorage.value?.backupHistory.save({ list: backupList.value });
 
-		showMessage(props.i18n.deleteSuccess || "删除成功", 2000, "info");
-	} catch (error) {
-		console.error("删除备份失败:", error);
-		showMessage(props.i18n.deleteFailed || "删除失败", 3000, "error");
-	}
+    showMessage(props.i18n.deleteSuccess || "删除成功", 2000, "info");
+  } catch (error) {
+    console.error("删除备份失败:", error);
+    showMessage(props.i18n.deleteFailed || "删除失败", 3000, "error");
+  }
 }
 
 defineExpose({
-	loadSettings,
-	saveSettings,
-	performFullBackup,
-	refreshBackupList,
+  loadSettings,
+  saveSettings,
+  performFullBackup,
+  refreshBackupList,
 });
 </script>
 

@@ -67,43 +67,43 @@ import Button from "@/components/Button.vue";
 import type { ShortcutInfo } from "../types";
 
 interface Props {
-	shortcut: ShortcutInfo;
-	isFavorite: boolean;
-	isRecent: boolean;
-	categoryLabel: string;
-	showToolBadge: boolean;
-	favoriteTitle?: string;
-	unFavoriteTitle?: string;
-	copyTitle?: string;
-	editTitle?: string;
-	deleteTitle?: string;
+  shortcut: ShortcutInfo;
+  isFavorite: boolean;
+  isRecent: boolean;
+  categoryLabel: string;
+  showToolBadge: boolean;
+  favoriteTitle?: string;
+  unFavoriteTitle?: string;
+  copyTitle?: string;
+  editTitle?: string;
+  deleteTitle?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-	favoriteTitle: "收藏",
-	unFavoriteTitle: "取消收藏",
-	copyTitle: "复制",
-	editTitle: "编辑",
-	deleteTitle: "删除",
+  favoriteTitle: "收藏",
+  unFavoriteTitle: "取消收藏",
+  copyTitle: "复制",
+  editTitle: "编辑",
+  deleteTitle: "删除",
 });
 
 defineEmits<{
-	toggleFavorite: [id: string];
-	copy: [shortcut: ShortcutInfo];
-	edit: [shortcut: ShortcutInfo];
-	delete: [id: string];
+  toggleFavorite: [id: string];
+  copy: [shortcut: ShortcutInfo];
+  edit: [shortcut: ShortcutInfo];
+  delete: [id: string];
 }>();
 
 const keyParts = computed(() => {
-	return props.shortcut.keys.split("+").map((k) => k.trim());
+  return props.shortcut.keys.split("+").map((k) => k.trim());
 });
 
 const pathText = computed(() => {
-	const parts = [props.categoryLabel];
-	if (props.shortcut.group) {
-		parts.push(props.shortcut.group);
-	}
-	return parts.join(" / ");
+  const parts = [props.categoryLabel];
+  if (props.shortcut.group) {
+    parts.push(props.shortcut.group);
+  }
+  return parts.join(" / ");
 });
 </script>
 

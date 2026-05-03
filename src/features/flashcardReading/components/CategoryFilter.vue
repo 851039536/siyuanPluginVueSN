@@ -34,16 +34,16 @@ import type { SelectOption } from "@/components/Select.vue";
 import type { I18n } from "../types";
 
 defineProps<{
-	i18n: I18n;
-	selectedCategory: string;
-	searchQuery: string;
-	categoryOptions: SelectOption[];
-	totalCards: number;
-	filteredCount: number;
+  i18n: I18n;
+  selectedCategory: string;
+  searchQuery: string;
+  categoryOptions: SelectOption[];
+  totalCards: number;
+  filteredCount: number;
 }>();
 
 defineEmits<{
-	"update:selectedCategory": [value: string];
-	"update:searchQuery": [value: string];
+  "update:selectedCategory": [value: string];
+  "update:searchQuery": [value: string];
 }>();
 </script>

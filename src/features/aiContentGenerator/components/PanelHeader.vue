@@ -18,15 +18,15 @@
 import Button from "@/components/Button.vue";
 
 interface Props {
-	title?: string;
+  title?: string;
 }
 
 withDefaults(defineProps<Props>(), {
-	title: "信息生成",
+  title: "信息生成",
 });
 
 defineEmits<{
-	(e: "toggle-settings"): void;
+  (e: "toggle-settings"): void;
 }>();
 </script>
 

@@ -62,37 +62,37 @@ import type { SelectOption } from "@/components/Select.vue";
 import type { Flashcard, FormData, FormErrors, I18n } from "../types";
 
 const props = defineProps<{
-	visible: boolean;
-	editingCard: Flashcard | null;
-	formData: FormData;
-	formErrors: FormErrors;
-	customCategory: string;
-	categoryOptions: SelectOption[];
-	isValid: boolean;
-	i18n: I18n;
+  visible: boolean;
+  editingCard: Flashcard | null;
+  formData: FormData;
+  formErrors: FormErrors;
+  customCategory: string;
+  categoryOptions: SelectOption[];
+  isValid: boolean;
+  i18n: I18n;
 }>();
 
 const emit = defineEmits<{
-	close: [];
-	save: [];
-	"input:title": [];
-	"validate:title": [];
-	"change:category": [];
-	"update:formData": [value: FormData];
-	"update:customCategory": [value: string];
+  close: [];
+  save: [];
+  "input:title": [];
+  "validate:title": [];
+  "change:category": [];
+  "update:formData": [value: FormData];
+  "update:customCategory": [value: string];
 }>();
 
 const defaults: I18n = {
-	editCard: "编辑卡片",
-	addCard: "添加卡片",
-	title: "标题",
-	titlePlaceholder: "标题（不可重复）",
-	content: "内容",
-	contentPlaceholder: "内容",
-	category: "类别",
-	customCategoryPlaceholder: "输入自定义类别",
-	cancel: "取消",
-	save: "保存",
+  editCard: "编辑卡片",
+  addCard: "添加卡片",
+  title: "标题",
+  titlePlaceholder: "标题（不可重复）",
+  content: "内容",
+  contentPlaceholder: "内容",
+  category: "类别",
+  customCategoryPlaceholder: "输入自定义类别",
+  cancel: "取消",
+  save: "保存",
 } as I18n;
 
 const t = computed(() => ({ ...defaults, ...props.i18n }) as Required<I18n>);
@@ -101,14 +101,14 @@ const localFormData = ref<FormData>({ ...props.formData });
 const localCustomCategory = ref(props.customCategory);
 
 watch(
-	() => props.formData,
-	(val) => { localFormData.value = { ...val }; },
-	{ deep: true },
+  () => props.formData,
+  (val) => { localFormData.value = { ...val }; },
+  { deep: true },
 );
 watch(() => props.customCategory, (val) => { localCustomCategory.value = val; });
 
 const updateField = (field: keyof FormData, value: unknown) => {
-	localFormData.value[field] = String(value);
-	emit("update:formData", { ...localFormData.value });
+  localFormData.value[field] = String(value);
+  emit("update:formData", { ...localFormData.value });
 };
 </script>

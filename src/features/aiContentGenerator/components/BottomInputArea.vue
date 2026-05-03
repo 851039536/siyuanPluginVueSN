@@ -170,89 +170,89 @@ import Tag from "@/components/Tag.vue";
 import type { TargetDoc, SavedPrompt } from "@/types/ai";
 
 interface QuickAction {
-	key: "polish" | "expand" | "condense" | "fix" | "rewrite" | "summary";
-	label: string;
-	icon: string;
+  key: "polish" | "expand" | "condense" | "fix" | "rewrite" | "summary";
+  label: string;
+  icon: string;
 }
 
 const quickActions: QuickAction[] = [
-	{ key: "polish", label: "润色", icon: "#iconEdit" },
-	{ key: "expand", label: "扩写", icon: "#iconAdd" },
-	{ key: "condense", label: "精简", icon: "#iconMin" },
-	{ key: "fix", label: "纠错", icon: "#iconCheck" },
-	{ key: "rewrite", label: "改写", icon: "#iconRefresh" },
-	{ key: "summary", label: "总结", icon: "#iconList" },
+  { key: "polish", label: "润色", icon: "#iconEdit" },
+  { key: "expand", label: "扩写", icon: "#iconAdd" },
+  { key: "condense", label: "精简", icon: "#iconMin" },
+  { key: "fix", label: "纠错", icon: "#iconCheck" },
+  { key: "rewrite", label: "改写", icon: "#iconRefresh" },
+  { key: "summary", label: "总结", icon: "#iconList" },
 ];
 
 interface Props {
-	isGenerating: boolean;
-	editTargetDoc: TargetDoc | null;
-	showPromptSelector: boolean;
-	currentPromptName: string;
-	savedPrompts: SavedPrompt[];
-	filteredPrompts: SavedPrompt[];
-	paginatedPrompts: SavedPrompt[];
-	promptSearchQuery: string;
-	currentPage: number;
-	totalPages: number;
-	editCustomInput: string;
+  isGenerating: boolean;
+  editTargetDoc: TargetDoc | null;
+  showPromptSelector: boolean;
+  currentPromptName: string;
+  savedPrompts: SavedPrompt[];
+  filteredPrompts: SavedPrompt[];
+  paginatedPrompts: SavedPrompt[];
+  promptSearchQuery: string;
+  currentPage: number;
+  totalPages: number;
+  editCustomInput: string;
 }
 
 const props = defineProps<Props>();
 
 const emit = defineEmits<{
-	(
-		e: "ai-edit",
-		action:
-			| "polish"
-			| "expand"
-			| "condense"
-			| "fix"
-			| "rewrite"
-			| "summary",
-	): void;
-	(e: "stop"): void;
-	(e: "toggle-prompt-selector"): void;
-	(e: "clear-current-prompt"): void;
-	(e: "load-prompt", index: number): void;
-	(e: "edit-prompt", index: number): void;
-	(e: "delete-prompt", index: number): void;
-	(e: "select-target-doc"): void;
-	(e: "select-target-block"): void;
-	(e: "clear-target-doc"): void;
-	(e: "custom-edit"): void;
-	(e: "update:promptSearchQuery", value: string): void;
-	(e: "update:currentPage", value: number): void;
-	(e: "update:editCustomInput", value: string): void;
+  (
+    e: "ai-edit",
+    action:
+      | "polish"
+      | "expand"
+      | "condense"
+      | "fix"
+      | "rewrite"
+      | "summary",
+  ): void;
+  (e: "stop"): void;
+  (e: "toggle-prompt-selector"): void;
+  (e: "clear-current-prompt"): void;
+  (e: "load-prompt", index: number): void;
+  (e: "edit-prompt", index: number): void;
+  (e: "delete-prompt", index: number): void;
+  (e: "select-target-doc"): void;
+  (e: "select-target-block"): void;
+  (e: "clear-target-doc"): void;
+  (e: "custom-edit"): void;
+  (e: "update:promptSearchQuery", value: string): void;
+  (e: "update:currentPage", value: number): void;
+  (e: "update:editCustomInput", value: string): void;
 }>();
 
 // 计算属性
 const canExecute = computed(() => {
-	return props.editCustomInput.trim() || props.currentPromptName;
+  return props.editCustomInput.trim() || props.currentPromptName;
 });
 
 const executeButtonTitle = computed(() => {
-	return !props.editCustomInput.trim() && props.currentPromptName
-		? "使用当前提示词生成"
-		: "执行";
+  return !props.editCustomInput.trim() && props.currentPromptName
+    ? "使用当前提示词生成"
+    : "执行";
 });
 
 // 截断标题
 const truncateTitle = (title: string, maxLen = 12) => {
-	if (title.length <= maxLen) return title;
-	return title.substring(0, maxLen) + "...";
+  if (title.length <= maxLen) return title;
+  return title.substring(0, maxLen) + "...";
 };
 
 // 获取原始索引
 const getOriginalIndex = (prompt: SavedPrompt) => {
-	return props.savedPrompts.findIndex((p) => p.id === prompt.id);
+  return props.savedPrompts.findIndex((p) => p.id === prompt.id);
 };
 
 // 获取提示词预览
 const getPromptPreview = (text: string): string => {
-	const maxLength = 50;
-	if (text.length <= maxLength) return text;
-	return text.substring(0, maxLength) + "...";
+  const maxLength = 50;
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength) + "...";
 };
 </script>
 

@@ -43,34 +43,34 @@ import Select from "@/components/Select.vue";
 import type { SelectOption } from "@/components/Select.vue";
 
 export interface WatermarkSettings {
-	enabled: boolean;
-	text: string;
-	position: string;
-	opacity: number;
-	fontSize: number;
+  enabled: boolean;
+  text: string;
+  position: string;
+  opacity: number;
+  fontSize: number;
 }
 
 interface Props {
-	modelValue: WatermarkSettings;
-	title: string;
-	enableText: string;
-	textPlaceholder: string;
-	positionLabel: string;
-	positionOptions: SelectOption[];
-	opacityLabel: string;
-	fontSizeLabel: string;
+  modelValue: WatermarkSettings;
+  title: string;
+  enableText: string;
+  textPlaceholder: string;
+  positionLabel: string;
+  positionOptions: SelectOption[];
+  opacityLabel: string;
+  fontSizeLabel: string;
 }
 
 const props = defineProps<Props>();
 const emit = defineEmits<{
-	"update:modelValue": [value: WatermarkSettings];
+  "update:modelValue": [value: WatermarkSettings];
 }>();
 
 const update = (
-	key: keyof WatermarkSettings,
-	value: string | number | boolean,
+  key: keyof WatermarkSettings,
+  value: string | number | boolean,
 ) => {
-	emit("update:modelValue", { ...props.modelValue, [key]: value });
+  emit("update:modelValue", { ...props.modelValue, [key]: value });
 };
 </script>
 

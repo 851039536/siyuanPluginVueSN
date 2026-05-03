@@ -192,19 +192,19 @@ import Select, { type SelectOption } from "@/components/Select.vue";
 import Label from "@/components/Label.vue";
 
 interface Props {
-	visible: boolean;
-	content?: string;
-	plugin?: PluginSample;
-	i18n?: Record<string, any>;
+  visible: boolean;
+  content?: string;
+  plugin?: PluginSample;
+  i18n?: Record<string, any>;
 }
 
 interface Emits {
-	(e: "update:visible", value: boolean): void;
-	(e: "close"): void;
+  (e: "update:visible", value: boolean): void;
+  (e: "close"): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-	i18n: () => ({}),
+  i18n: () => ({}),
 });
 
 const emit = defineEmits<Emits>();
@@ -219,70 +219,70 @@ const showAddToCardDialog = ref(false);
 const selectedCategory = ref("");
 const customCategoryInput = ref("");
 const availableCategories = ref<string[]>([
-	"C#",
-	"编程单词",
-	"JavaScript",
-	"TypeScript",
-	"Vue",
-	"Rust",
+  "C#",
+  "编程单词",
+  "JavaScript",
+  "TypeScript",
+  "Vue",
+  "Rust",
 ]);
 
 const categoryOptions = computed<SelectOption[]>(() => {
-	const options: SelectOption[] = [
-		{ value: "", label: "请选择类别" },
-		{ value: "__custom__", label: "自定义..." },
-	];
-	availableCategories.value.forEach((cat) => {
-		options.push({ value: cat, label: cat });
-	});
-	return options;
+  const options: SelectOption[] = [
+    { value: "", label: "请选择类别" },
+    { value: "__custom__", label: "自定义..." },
+  ];
+  availableCategories.value.forEach((cat) => {
+    options.push({ value: cat, label: cat });
+  });
+  return options;
 });
 
 // 初始化 FlashcardStorage
 const flashcardStorage = props.plugin
-	? new FlashcardStorage(props.plugin)
-	: null;
+  ? new FlashcardStorage(props.plugin)
+  : null;
 
 // 检查结果是否已在单词本中
 const isInFlashcard = computed(() => resultSource.value === "local");
 
 // 监听props变化，自动触发翻译
 watch(
-	() => props.content,
-	async (newContent) => {
-		if (newContent) {
-			inputWord.value = newContent;
-			generatedResult.value = "";
-			await nextTick();
-			await generatePronunciation();
-		}
-	},
+  () => props.content,
+  async (newContent) => {
+    if (newContent) {
+      inputWord.value = newContent;
+      generatedResult.value = "";
+      await nextTick();
+      await generatePronunciation();
+    }
+  },
 );
 
 // 监听visible变化，弹窗打开时自动触发翻译
 watch(
-	() => props.visible,
-	async (newVisible) => {
-		if (newVisible && inputWord.value) {
-			await nextTick();
-			await generatePronunciation();
-		}
-	},
+  () => props.visible,
+  async (newVisible) => {
+    if (newVisible && inputWord.value) {
+      await nextTick();
+      await generatePronunciation();
+    }
+  },
 );
 
 // 检测是否为中文
 function isChinese(text: string): boolean {
-	return /[\u4e00-\u9fa5]/.test(text);
+  return /[\u4e00-\u9fa5]/.test(text);
 }
 
 // 谐音生成的系统提示词
 const PRONUNCIATION_SYSTEM_PROMPT =
-	"你是一个专业的英语教学助手，擅长用中文谐音帮助学习者记忆英语单词发音，也能准确翻译中文词语为英文。";
+  "你是一个专业的英语教学助手，擅长用中文谐音帮助学习者记忆英语单词发音，也能准确翻译中文词语为英文。";
 
 // 构建提示词（根据输入语言自动选择）
 function buildPrompt(text: string): string {
-	if (isChinese(text)) {
-		return `请将中文词语 "${text}" 翻译成英文，并为英文翻译生成谐音记忆，要求：
+  if (isChinese(text)) {
+    return `请将中文词语 "${text}" 翻译成英文，并为英文翻译生成谐音记忆，要求：
 
 1. 提供准确的英文翻译
 2. 提供英式音标
@@ -303,9 +303,9 @@ function buildPrompt(text: string): string {
 - 拼音必须带声调
 - 发音说明要包含音节、重音、元音特点等
 - 只输出格式化内容，不要有其他说明文字`;
-	}
+  }
 
-	return `请为英文单词 "${text}" 生成谐音记忆，要求：
+  return `请为英文单词 "${text}" 生成谐音记忆，要求：
 
 1. 使用英式标准发音
 2. 谐音使用带声调的拼音标注
@@ -327,183 +327,183 @@ function buildPrompt(text: string): string {
 
 // 生成谐音翻译/中文翻译（使用统一 AI API 模块）
 async function generatePronunciation() {
-	if (!inputWord.value) {
-		showMessage("请输入内容", 3000, "error");
-		return;
-	}
+  if (!inputWord.value) {
+    showMessage("请输入内容", 3000, "error");
+    return;
+  }
 
-	isGenerating.value = true;
-	generatedResult.value = "";
-	resultSource.value = "";
-	matchedCard.value = null;
+  isGenerating.value = true;
+  generatedResult.value = "";
+  resultSource.value = "";
+  matchedCard.value = null;
 
-	try {
-		// 优先从本地 FlashcardStorage 查询
-		if (flashcardStorage) {
-			const localResult = await queryFromLocalStorage(inputWord.value);
-			if (localResult) {
-				generatedResult.value = localResult.content;
-				resultSource.value = "local";
-				matchedCard.value = localResult;
-				showMessage("📚 从单词本加载", 2000, "info");
-				isGenerating.value = false;
-				return;
-			}
-		}
+  try {
+    // 优先从本地 FlashcardStorage 查询
+    if (flashcardStorage) {
+      const localResult = await queryFromLocalStorage(inputWord.value);
+      if (localResult) {
+        generatedResult.value = localResult.content;
+        resultSource.value = "local";
+        matchedCard.value = localResult;
+        showMessage("📚 从单词本加载", 2000, "info");
+        isGenerating.value = false;
+        return;
+      }
+    }
 
-		// 本地未找到，调用统一 AI API 生成
-		const prompt = buildPrompt(inputWord.value);
-		const config = getApiConfigFromPlugin(props.plugin);
+    // 本地未找到，调用统一 AI API 生成
+    const prompt = buildPrompt(inputWord.value);
+    const config = getApiConfigFromPlugin(props.plugin);
 
-		const result = await callAI(prompt, config, {
-			systemPrompt: PRONUNCIATION_SYSTEM_PROMPT,
-			temperature: 0.7,
-			maxTokens: 800,
-		});
+    const result = await callAI(prompt, config, {
+      systemPrompt: PRONUNCIATION_SYSTEM_PROMPT,
+      temperature: 0.7,
+      maxTokens: 800,
+    });
 
-		if (result) {
-			generatedResult.value = result;
-			resultSource.value = "api";
-			showMessage("✓ 谐音记忆已生成", 2000, "info");
-		} else {
-			showMessage("生成失败，请重试", 3000, "error");
-		}
-	} catch (error) {
-		console.error("Pronunciation generation error:", error);
-		const errorMsg = (error as Error).message || "未知错误";
-		showMessage("🚫 生成失败: " + errorMsg, 5000, "error");
-	} finally {
-		isGenerating.value = false;
-	}
+    if (result) {
+      generatedResult.value = result;
+      resultSource.value = "api";
+      showMessage("✓ 谐音记忆已生成", 2000, "info");
+    } else {
+      showMessage("生成失败，请重试", 3000, "error");
+    }
+  } catch (error) {
+    console.error("Pronunciation generation error:", error);
+    const errorMsg = (error as Error).message || "未知错误";
+    showMessage("🚫 生成失败: " + errorMsg, 5000, "error");
+  } finally {
+    isGenerating.value = false;
+  }
 }
 
 /**
  * 从本地 FlashcardStorage 查询单词
  */
 async function queryFromLocalStorage(word: string): Promise<Flashcard | null> {
-	if (!flashcardStorage) return null;
+  if (!flashcardStorage) return null;
 
-	try {
-		const allCards = await flashcardStorage.getAllCards();
-		const exactMatch = allCards.find(
-			(card) => card.title.toLowerCase() === word.toLowerCase(),
-		);
-		return exactMatch || null;
-	} catch (error) {
-		console.error("Query from local storage error:", error);
-		return null;
-	}
+  try {
+    const allCards = await flashcardStorage.getAllCards();
+    const exactMatch = allCards.find(
+      (card) => card.title.toLowerCase() === word.toLowerCase(),
+    );
+    return exactMatch || null;
+  } catch (error) {
+    console.error("Query from local storage error:", error);
+    return null;
+  }
 }
 
 /**
  * 打开添加到单词本对话框
  */
 function openAddToCardDialog() {
-	loadCategories();
-	selectedCategory.value = "编程单词";
-	customCategoryInput.value = "";
-	showAddToCardDialog.value = true;
+  loadCategories();
+  selectedCategory.value = "编程单词";
+  customCategoryInput.value = "";
+  showAddToCardDialog.value = true;
 }
 
 /**
  * 处理类别选择
  */
 function handleCategorySelect() {
-	if (selectedCategory.value === "__custom__") {
-		customCategoryInput.value = "";
-	}
+  if (selectedCategory.value === "__custom__") {
+    customCategoryInput.value = "";
+  }
 }
 
 /**
  * 加载单词本中的类别
  */
 async function loadCategories() {
-	if (!flashcardStorage) return;
+  if (!flashcardStorage) return;
 
-	try {
-		const categories = await flashcardStorage.getCategories();
-		availableCategories.value = [
-			"C#",
-			"编程单词",
-			"JavaScript",
-			"TypeScript",
-			"Vue",
-			"Rust",
-			...categories,
-		];
-		availableCategories.value = Array.from(
-			new Set(availableCategories.value),
-		).sort();
-	} catch (error) {
-		console.error("Failed to load categories:", error);
-	}
+  try {
+    const categories = await flashcardStorage.getCategories();
+    availableCategories.value = [
+      "C#",
+      "编程单词",
+      "JavaScript",
+      "TypeScript",
+      "Vue",
+      "Rust",
+      ...categories,
+    ];
+    availableCategories.value = Array.from(
+      new Set(availableCategories.value),
+    ).sort();
+  } catch (error) {
+    console.error("Failed to load categories:", error);
+  }
 }
 
 /**
  * 添加到单词本
  */
 async function addToFlashcard() {
-	if (!flashcardStorage || !inputWord.value || !generatedResult.value) {
-		showMessage("数据不完整", 2000, "error");
-		return;
-	}
+  if (!flashcardStorage || !inputWord.value || !generatedResult.value) {
+    showMessage("数据不完整", 2000, "error");
+    return;
+  }
 
-	const categoryToUse =
-		selectedCategory.value === "__custom__"
-			? customCategoryInput.value.trim()
-			: selectedCategory.value;
+  const categoryToUse =
+    selectedCategory.value === "__custom__"
+      ? customCategoryInput.value.trim()
+      : selectedCategory.value;
 
-	if (!categoryToUse) {
-		showMessage("请选择类别", 2000, "error");
-		return;
-	}
+  if (!categoryToUse) {
+    showMessage("请选择类别", 2000, "error");
+    return;
+  }
 
-	try {
-		await flashcardStorage.createCard({
-			title: inputWord.value,
-			content: generatedResult.value,
-			category: categoryToUse,
-		});
+  try {
+    await flashcardStorage.createCard({
+      title: inputWord.value,
+      content: generatedResult.value,
+      category: categoryToUse,
+    });
 
-		resultSource.value = "local";
-		showAddToCardDialog.value = false;
-		showMessage("✓ 已添加到单词本", 2000, "info");
+    resultSource.value = "local";
+    showAddToCardDialog.value = false;
+    showMessage("✓ 已添加到单词本", 2000, "info");
 
-		emitCustomEvent("flashcardDataChanged");
-	} catch (error: any) {
-		if (error.message === "Title already exists") {
-			showMessage("该单词已存在于单词本中", 3000, "error");
-		} else {
-			showMessage("添加失败: " + (error.message || "未知错误"), 3000, "error");
-		}
-	}
+    emitCustomEvent("flashcardDataChanged");
+  } catch (error: any) {
+    if (error.message === "Title already exists") {
+      showMessage("该单词已存在于单词本中", 3000, "error");
+    } else {
+      showMessage("添加失败: " + (error.message || "未知错误"), 3000, "error");
+    }
+  }
 }
 
 // 格式化结果显示
 function formatResult(result: string): string {
-	return result
-		.replace(/####\s+(.+)\n*/g, "")
-		.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-		.replace(/\n/g, "<br/>");
+  return result
+    .replace(/####\s+(.+)\n*/g, "")
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\n/g, "<br/>");
 }
 
 // 复制结果到剪贴板
 async function copyResult() {
-	if (!generatedResult.value) return;
+  if (!generatedResult.value) return;
 
-	try {
-		await navigator.clipboard.writeText(generatedResult.value);
-		showMessage("📋 已复制到剪贴板", 2000, "info");
-	} catch (error) {
-		console.error("复制失败:", error);
-		showMessage("复制失败", 3000, "error");
-	}
+  try {
+    await navigator.clipboard.writeText(generatedResult.value);
+    showMessage("📋 已复制到剪贴板", 2000, "info");
+  } catch (error) {
+    console.error("复制失败:", error);
+    showMessage("复制失败", 3000, "error");
+  }
 }
 
 // 关闭对话框
 function closeDialog() {
-	emit("update:visible", false);
-	emit("close");
+  emit("update:visible", false);
+  emit("close");
 }
 </script>
 

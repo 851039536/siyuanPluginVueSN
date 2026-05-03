@@ -1,77 +1,77 @@
 import { Plugin } from "siyuan";
 
 export interface DiskInfo {
-	drive: string;
-	label?: string;
-	total?: number;
-	used?: number;
-	usagePercent?: number;
+  drive: string;
+  label?: string;
+  total?: number;
+  used?: number;
+  usagePercent?: number;
 }
 
 export interface FolderInfo {
-	name: string;
-	path: string;
-	isFile?: boolean;
-	size?: number;
-	modifiedTime?: string;
+  name: string;
+  path: string;
+  isFile?: boolean;
+  size?: number;
+  modifiedTime?: string;
 }
 
 export interface CacheData<T> {
-	data: T;
-	timestamp: number;
+  data: T;
+  timestamp: number;
 }
 
 export interface CacheStatus {
-	text: string;
-	isExpired: boolean;
-	tooltip: string;
+  text: string;
+  isExpired: boolean;
+  tooltip: string;
 }
 
 export interface DiskBrowserSettings {
-	favoriteFolders: string[];
+  favoriteFolders: string[];
 }
 
 export interface DiskBrowserI18n {
-	panelTitle?: string;
-	refreshing?: string;
-	favorites?: string;
-	removeFavorite?: string;
-	addFavorite?: string;
-	favoriteRemoved?: string;
-	favoriteAdded?: string;
-	backToRoot?: string;
-	back?: string;
-	items?: string;
-	openInExplorer?: string;
-	copyPath?: string;
-	browse?: string;
-	open?: string;
-	emptyFolder?: string;
-	loading?: string;
-	cacheExpired?: string;
-	cacheExpiredTooltip?: string;
-	cacheValidTooltip?: string;
-	minutesRemaining?: string;
-	expired?: string;
-	min?: string;
-	loadDisksFailed?: string;
-	loadFoldersFailed?: string;
-	opened?: string;
-	openDiskNotSupported?: string;
-	openDiskFailed?: string;
-	invalidPath?: string;
-	navigatedToFavorite?: string;
-	navigationFailed?: string;
-	pathCopied?: string;
-	copyFailed?: string;
-	today?: string;
-	yesterday?: string;
-	daysAgo?: string;
+  panelTitle?: string;
+  refreshing?: string;
+  favorites?: string;
+  removeFavorite?: string;
+  addFavorite?: string;
+  favoriteRemoved?: string;
+  favoriteAdded?: string;
+  backToRoot?: string;
+  back?: string;
+  items?: string;
+  openInExplorer?: string;
+  copyPath?: string;
+  browse?: string;
+  open?: string;
+  emptyFolder?: string;
+  loading?: string;
+  cacheExpired?: string;
+  cacheExpiredTooltip?: string;
+  cacheValidTooltip?: string;
+  minutesRemaining?: string;
+  expired?: string;
+  min?: string;
+  loadDisksFailed?: string;
+  loadFoldersFailed?: string;
+  opened?: string;
+  openDiskNotSupported?: string;
+  openDiskFailed?: string;
+  invalidPath?: string;
+  navigatedToFavorite?: string;
+  navigationFailed?: string;
+  pathCopied?: string;
+  copyFailed?: string;
+  today?: string;
+  yesterday?: string;
+  daysAgo?: string;
 }
 
 export interface DiskBrowserProps {
-	i18n: DiskBrowserI18n;
-	plugin: Plugin;
+  i18n: DiskBrowserI18n;
+  plugin: Plugin;
 }
 
 export const STORAGE_KEY = "disk-browser-settings";
@@ -79,5 +79,5 @@ export const STORAGE_KEY = "disk-browser-settings";
 export const DEFAULT_DISKS = ["C:", "D:", "E:", "F:", "G:", "H:"];
 
 export function getDefaultDisks(): DiskInfo[] {
-	return DEFAULT_DISKS.map((drive) => ({ drive }));
+  return DEFAULT_DISKS.map((drive) => ({ drive }));
 }

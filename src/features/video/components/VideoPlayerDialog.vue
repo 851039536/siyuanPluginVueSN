@@ -41,51 +41,51 @@ import { formatFileSize } from "../utils/utils";
  * 视频数据接口
  */
 export interface VideoData {
-	name: string;
-	path: string;
-	size: number;
-	modTime: number;
-	category: string;
+  name: string;
+  path: string;
+  size: number;
+  modTime: number;
+  category: string;
 }
 
 /**
  * 组件 Props
  */
 export interface VideoPlayerDialogProps {
-	/** 是否显示对话框 */
-	visible?: boolean;
-	/** 视频数据 */
-	video?: VideoData | null;
-	/** 视频 URL */
-	videoUrl?: string;
-	/** 对话框标题 */
-	title?: string;
-	/** 播放器宽度（默认 800） */
-	playerWidth?: number;
-	/** 播放器高度（默认 450） */
-	playerHeight?: number;
-	/** 是否自适应 */
-	fluid?: boolean;
+  /** 是否显示对话框 */
+  visible?: boolean;
+  /** 视频数据 */
+  video?: VideoData | null;
+  /** 视频 URL */
+  videoUrl?: string;
+  /** 对话框标题 */
+  title?: string;
+  /** 播放器宽度（默认 800） */
+  playerWidth?: number;
+  /** 播放器高度（默认 450） */
+  playerHeight?: number;
+  /** 是否自适应 */
+  fluid?: boolean;
 }
 
 /**
  * 组件事件
  */
 export interface VideoPlayerDialogEmits {
-	/** 关闭对话框 */
-	(e: "close"): void;
-	/** 播放器初始化完成 */
-	(e: "ready", player: Player): void;
-	/** 播放器错误 */
-	(e: "error", error: any): void;
+  /** 关闭对话框 */
+  (e: "close"): void;
+  /** 播放器初始化完成 */
+  (e: "ready", player: Player): void;
+  /** 播放器错误 */
+  (e: "error", error: any): void;
 }
 
 const props = withDefaults(defineProps<VideoPlayerDialogProps>(), {
-	visible: false,
-	title: "视频播放",
-	playerWidth: 800,
-	playerHeight: 450,
-	fluid: false,
+  visible: false,
+  title: "视频播放",
+  playerWidth: 800,
+  playerHeight: 450,
+  fluid: false,
 });
 
 const emit = defineEmits<VideoPlayerDialogEmits>();
@@ -98,46 +98,46 @@ let playerInstance: Player | null = null;
 
 // 处理关闭
 function handleClose() {
-	// 销毁播放器
-	if (playerInstance) {
-		playerInstance.dispose();
-		playerInstance = null;
-	}
+  // 销毁播放器
+  if (playerInstance) {
+    playerInstance.dispose();
+    playerInstance = null;
+  }
 
-	// 释放 Blob URL
-	if (currentVideoUrl.value && currentVideoUrl.value.startsWith("blob:")) {
-		URL.revokeObjectURL(currentVideoUrl.value);
-	}
+  // 释放 Blob URL
+  if (currentVideoUrl.value && currentVideoUrl.value.startsWith("blob:")) {
+    URL.revokeObjectURL(currentVideoUrl.value);
+  }
 
-	emit("close");
+  emit("close");
 }
 
 // 处理播放器就绪
 function handlePlayerReady(player: Player) {
-	playerInstance = player;
-	emit("ready", player);
+  playerInstance = player;
+  emit("ready", player);
 }
 
 // 处理播放器错误
 function handlePlayerError(error: any) {
-	console.error("Video player error:", error);
-	emit("error", error);
+  console.error("Video player error:", error);
+  emit("error", error);
 }
 
 // 格式化日期
 function formatDate(timestamp?: number): string {
-	if (!timestamp) return "";
-	return new Date(timestamp).toLocaleDateString();
+  if (!timestamp) return "";
+  return new Date(timestamp).toLocaleDateString();
 }
 
 // 监听 visible 变化，自动清理
 watch(
-	() => props.visible,
-	(newVal) => {
-		if (!newVal) {
-			handleClose();
-		}
-	},
+  () => props.visible,
+  (newVal) => {
+    if (!newVal) {
+      handleClose();
+    }
+  },
 );
 </script>
 

@@ -8,10 +8,10 @@ import { TableOfContentsManager } from "./types";
  * 注册目录索引插件功能
  */
 export function registerTableOfContents(plugin: Plugin) {
-	const manager = new TableOfContentsManager(plugin);
-	manager.init();
-	(plugin as any).__tableOfContents = manager;
-	return manager;
+  const manager = new TableOfContentsManager(plugin);
+  manager.init();
+  (plugin as any).__tableOfContents = manager;
+  return manager;
 }
 
 export * from "./types";

@@ -11,7 +11,7 @@
 import IconWrapper from "@/components/IconWrapper.vue";
 
 interface Props {
-	title: string;
+  title: string;
 }
 
 defineProps<Props>();

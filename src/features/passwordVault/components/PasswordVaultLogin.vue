@@ -83,14 +83,14 @@ import Input from "@/components/Input.vue";
 // ============================================================
 
 interface Props {
-	isFirstTime: boolean;
-	passwordHint?: string;
-	loginError?: string;
+  isFirstTime: boolean;
+  passwordHint?: string;
+  loginError?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-	passwordHint: "",
-	loginError: "",
+  passwordHint: "",
+  loginError: "",
 });
 
 // ============================================================
@@ -98,9 +98,9 @@ const props = withDefaults(defineProps<Props>(), {
 // ============================================================
 
 interface Emits {
-	(e: "login", password: string, hint?: string): void;
-	(e: "close"): void;
-	(e: "forgotPassword"): void;
+  (e: "login", password: string, hint?: string): void;
+  (e: "close"): void;
+  (e: "forgotPassword"): void;
 }
 
 const emit = defineEmits<Emits>();
@@ -120,13 +120,13 @@ const inputRef = ref<HTMLInputElement | null>(null);
 // ============================================================
 
 const handleSubmit = () => {
-	if (!password.value.trim()) return;
-	// 发送登录事件
-	emit(
-		"login",
-		password.value.trim(),
-		props.isFirstTime ? hint.value.trim() : undefined,
-	);
+  if (!password.value.trim()) return;
+  // 发送登录事件
+  emit(
+    "login",
+    password.value.trim(),
+    props.isFirstTime ? hint.value.trim() : undefined,
+  );
 };
 
 // ============================================================
@@ -135,19 +135,19 @@ const handleSubmit = () => {
 
 // 监听首次使用状态变化，重置表单并自动聚焦
 watch(
-	() => props.isFirstTime,
-	async () => {
-		// 重置表单
-		password.value = "";
-		hint.value = "";
-		showHintInput.value = false;
-		showPassword.value = false;
+  () => props.isFirstTime,
+  async () => {
+    // 重置表单
+    password.value = "";
+    hint.value = "";
+    showHintInput.value = false;
+    showPassword.value = false;
 
-		// 自动聚焦输入框
-		await nextTick();
-		inputRef.value?.focus();
-	},
-	{ immediate: true },
+    // 自动聚焦输入框
+    await nextTick();
+    inputRef.value?.focus();
+  },
+  { immediate: true },
 );
 </script>
 

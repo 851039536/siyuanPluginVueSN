@@ -3,31 +3,31 @@
  */
 
 export interface FloatingTool {
-	id: string;
-	label: string;
-	title: string;
-	icon: string;
-	bgColor: string;
-	action: (plugin?: any) => void;
+  id: string;
+  label: string;
+  title: string;
+  icon: string;
+  bgColor: string;
+  action: (plugin?: any) => void;
 }
 
 export interface Skill {
-	id: string;
-	title: string;
-	description: string;
-	content: string;
-	content2?: string;
-	content3?: string;
-	category: string;
+  id: string;
+  title: string;
+  description: string;
+  content: string;
+  content2?: string;
+  content3?: string;
+  category: string;
 }
 
 export interface SkillCategory {
-	id: string;
-	name: string;
-	color: string;
+  id: string;
+  name: string;
+  color: string;
 }
 
 export interface FloatingBoxOptions {
-	position?: "left" | "right";
-	offset?: number;
+  position?: "left" | "right";
+  offset?: number;
 }

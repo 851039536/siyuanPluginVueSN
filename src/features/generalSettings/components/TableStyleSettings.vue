@@ -257,90 +257,90 @@ import { ref, watch, computed, onMounted } from "vue";
 import { Plugin } from "siyuan";
 
 export interface TableStyleSettingsData {
-	enabled: boolean;
-	borderColor: string;
-	cellBorderColor: string;
-	headerBackground: string;
-	oddRowBackground: string;
-	evenRowBackground: string;
-	textColor: string;
-	borderRadius: number;
+  enabled: boolean;
+  borderColor: string;
+  cellBorderColor: string;
+  headerBackground: string;
+  oddRowBackground: string;
+  evenRowBackground: string;
+  textColor: string;
+  borderRadius: number;
 }
 
 interface Props {
-	i18n?: any;
-	plugin?: Plugin;
+  i18n?: any;
+  plugin?: Plugin;
 }
 
 interface Emits {
-	(e: "change", settings: TableStyleSettingsData): void;
+  (e: "change", settings: TableStyleSettingsData): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-	i18n: () => ({}),
-	plugin: null,
+  i18n: () => ({}),
+  plugin: null,
 });
 
 const emit = defineEmits<Emits>();
 
 const DEFAULT_SETTINGS: TableStyleSettingsData = {
-	enabled: false,
-	borderColor: "rgba(0, 0, 0, 0.623)",
-	cellBorderColor: "rgba(0, 0, 0, 0.171)",
-	headerBackground: "#e0ffd6",
-	oddRowBackground: "#ffffff",
-	evenRowBackground: "#f8f8f8",
-	textColor: "#000000",
-	borderRadius: 6,
+  enabled: false,
+  borderColor: "rgba(0, 0, 0, 0.623)",
+  cellBorderColor: "rgba(0, 0, 0, 0.171)",
+  headerBackground: "#e0ffd6",
+  oddRowBackground: "#ffffff",
+  evenRowBackground: "#f8f8f8",
+  textColor: "#000000",
+  borderRadius: 6,
 };
 
 const settings = ref<TableStyleSettingsData>({ ...DEFAULT_SETTINGS });
 const showPreview = ref(true);
 
 const previewTableStyle = computed(() => ({
-	borderRadius: `${settings.value.borderRadius}px`,
+  borderRadius: `${settings.value.borderRadius}px`,
 }));
 
 watch(
-	settings,
-	(newSettings) => {
-		emit("change", newSettings);
-		saveSettings();
-		applySettings();
-	},
-	{ deep: true },
+  settings,
+  (newSettings) => {
+    emit("change", newSettings);
+    saveSettings();
+    applySettings();
+  },
+  { deep: true },
 );
 
 function togglePreview() {
-	showPreview.value = !showPreview.value;
+  showPreview.value = !showPreview.value;
 }
 
 function resetSettings() {
-	settings.value = { ...DEFAULT_SETTINGS };
-	applySettings();
+  settings.value = { ...DEFAULT_SETTINGS };
+  applySettings();
 }
 
 function applySettings() {
-	applyTableStyles(settings.value);
+  applyTableStyles(settings.value);
 }
 
 function applyTableStyles(tableSettings: TableStyleSettingsData) {
-	try {
-		// 移除现有样式
-		const existingStyle = document.getElementById("table-style-settings");
-		if (existingStyle) {
-			existingStyle.remove();
-		}
+  try {
+    // 移除现有样式
+    const existingStyle = document.getElementById("table-style-settings");
+    if (existingStyle) {
+      existingStyle.remove();
+    }
 
-		if (!tableSettings.enabled) {
-			return;
-		}
+    if (!tableSettings.enabled) {
+      return;
+    }
 
-		// 创建新的样式元素
-		const style = document.createElement("style");
-		style.id = "table-style-settings";
+    // 创建新的样式元素
+    const style = document.createElement("style");
+    style.id = "table-style-settings";
 
-		style.textContent = `
+    style.textContent = `
       /* 表格整体外框 */
       .protyle-wysiwyg table {
         border-collapse: collapse !important;
@@ -385,10 +385,10 @@ function applyTableStyles(tableSettings: TableStyleSettingsData) {
       }
     `;
 
-		document.head.appendChild(style);
-	} catch (error) {
-		console.error("应用表格样式失败:", error);
-	}
+    document.head.appendChild(style);
+  } catch (error) {
+    console.error("应用表格样式失败:", error);
+  }
 }
 
 import { GeneralSettingsStorage } from "../types/storage";
@@ -396,40 +396,40 @@ import { GeneralSettingsStorage } from "../types/storage";
 const gsStorage = computed(() => props.plugin ? new GeneralSettingsStorage(props.plugin) : null);
 
 async function loadSettings() {
-	if (!gsStorage.value) {
-		return;
-	}
+  if (!gsStorage.value) {
+    return;
+  }
 
-	try {
-		const data = await gsStorage.value.tableStyle.load();
-		if (data) {
-			settings.value = { ...DEFAULT_SETTINGS, ...data };
-			applySettings();
-		}
-	} catch (error) {
-		console.error("加载表格样式设置失败:", error);
-	}
+  try {
+    const data = await gsStorage.value.tableStyle.load();
+    if (data) {
+      settings.value = { ...DEFAULT_SETTINGS, ...data };
+      applySettings();
+    }
+  } catch (error) {
+    console.error("加载表格样式设置失败:", error);
+  }
 }
 
 async function saveSettings() {
-	if (!gsStorage.value) {
-		return;
-	}
+  if (!gsStorage.value) {
+    return;
+  }
 
-	try {
-		await gsStorage.value.tableStyle.save(settings.value);
-	} catch (error) {
-		console.error("保存表格样式设置失败:", error);
-	}
+  try {
+    await gsStorage.value.tableStyle.save(settings.value);
+  } catch (error) {
+    console.error("保存表格样式设置失败:", error);
+  }
 }
 
 onMounted(async () => {
-	await loadSettings();
+  await loadSettings();
 });
 
 defineExpose({
-	settings,
-	loadSettings,
+  settings,
+  loadSettings,
 });
 </script>
 

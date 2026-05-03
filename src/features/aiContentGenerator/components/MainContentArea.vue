@@ -137,50 +137,50 @@ import Button from "@/components/Button.vue";
 import DiffPreview from "./DiffPreview.vue";
 
 interface Props {
-	// 状态
-	isGenerating: boolean;
-	isApplying: boolean;
-	isUndoing: boolean;
-	isInsertingSubDoc: boolean;
-	errorMessage: string;
+  // 状态
+  isGenerating: boolean;
+  isApplying: boolean;
+  isUndoing: boolean;
+  isInsertingSubDoc: boolean;
+  errorMessage: string;
 
-	// 内容
-	displayedContent: string;
-	generatedContent: string;
-	renderedMarkdown: string;
-	originalContent: string;
+  // 内容
+  displayedContent: string;
+  generatedContent: string;
+  renderedMarkdown: string;
+  originalContent: string;
 
-	// 操作可用性
-	canApply: boolean;
-	canInsertSubDoc: boolean;
-	canUndo: boolean;
+  // 操作可用性
+  canApply: boolean;
+  canInsertSubDoc: boolean;
+  canUndo: boolean;
 }
 
 const props = defineProps<Props>();
 
 defineEmits<{
-	(e: "stop"): void;
-	(e: "apply-edit"): void;
-	(e: "insert-subdoc"): void;
-	(e: "undo-edit"): void;
-	(e: "copy"): void;
-	(e: "clear"): void;
+  (e: "stop"): void;
+  (e: "apply-edit"): void;
+  (e: "insert-subdoc"): void;
+  (e: "undo-edit"): void;
+  (e: "copy"): void;
+  (e: "clear"): void;
 }>();
 
 const viewMode = ref<"preview" | "diff">("preview");
 
 // 是否存在差异（有原文且有生成内容且不同）
 const hasDiff = computed(() => {
-	return !!props.originalContent && !!props.generatedContent
-		&& props.originalContent !== props.generatedContent;
+  return !!props.originalContent && !!props.generatedContent
+    && props.originalContent !== props.generatedContent;
 });
 
 // 生成完成后自动切换到 Diff 模式
 const isGenerating = toRef(props, "isGenerating");
 watch(isGenerating, (newVal, oldVal) => {
-	if (oldVal && !newVal && hasDiff.value) {
-		viewMode.value = "diff";
-	}
+  if (oldVal && !newVal && hasDiff.value) {
+    viewMode.value = "diff";
+  }
 });
 </script>
 

@@ -105,26 +105,26 @@ import ShortcutDialog from "./components/ShortcutDialog.vue";
 import { getShortcutManager } from "./manager";
 import { ShortcutStorage } from "./types/storage";
 import type {
-	ShortcutInfo,
-	ViewMode,
-	DialogType,
-	QuickFilter,
-	ShortcutFormData,
+  ShortcutInfo,
+  ViewMode,
+  DialogType,
+  QuickFilter,
+  ShortcutFormData,
 } from "./types";
 
 const QUICK_FILTERS: QuickFilter[] = [
-	{ key: "all", label: "全部" },
-	{ key: "favorite", label: "收藏" },
-	{ key: "recent", label: "最近使用" },
+  { key: "all", label: "全部" },
+  { key: "favorite", label: "收藏" },
+  { key: "recent", label: "最近使用" },
 ];
 
 interface Props {
-	i18n?: Record<string, any>;
-	plugin?: any;
+  i18n?: Record<string, any>;
+  plugin?: any;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-	i18n: () => ({}),
+  i18n: () => ({}),
 });
 
 // 状态
@@ -140,26 +140,26 @@ const recentUsed = ref<string[]>([]);
 
 // 表单数据
 const formData = ref<ShortcutFormData>({
-	id: "",
-	name: "",
-	description: "",
-	keys: "",
-	group: "自定义",
+  id: "",
+  name: "",
+  description: "",
+  keys: "",
+  group: "自定义",
 });
 
 const quickFilters = QUICK_FILTERS;
 
 // 数据存储路径
 const STORAGE_KEYS = [
-	"plugin-shortcuts-custom",
-	"plugin-shortcuts-favorites",
-	"plugin-shortcuts-recent",
+  "plugin-shortcuts-custom",
+  "plugin-shortcuts-favorites",
+  "plugin-shortcuts-recent",
 ];
 const storageDir = "data/storage/petals/siyuan-plugin-vite-vue-sn";
 const showStoragePath = ref(false);
 
 function copyStoragePath(path: string) {
-	navigator.clipboard.writeText(path).catch(() => {});
+  navigator.clipboard.writeText(path).catch(() => {});
 }
 
 // 获取快捷键管理器
@@ -172,177 +172,177 @@ const customCount = computed(() => manager.getByCategory("custom").length);
 
 // 初始化
 onMounted(async () => {
-	if (props.plugin) {
-		try {
-			const storage = new ShortcutStorage(props.plugin);
-			const [loadedFavorites, loadedRecent] = await Promise.all([
-				storage.loadFavorites(),
-				storage.loadRecent(),
-			]);
-			favorites.value = new Set(loadedFavorites);
-			recentUsed.value = loadedRecent;
-		} catch (error) {
-			console.error("初始化数据失败:", error);
-			favorites.value = new Set();
-			recentUsed.value = [];
-		}
-	}
+  if (props.plugin) {
+    try {
+      const storage = new ShortcutStorage(props.plugin);
+      const [loadedFavorites, loadedRecent] = await Promise.all([
+        storage.loadFavorites(),
+        storage.loadRecent(),
+      ]);
+      favorites.value = new Set(loadedFavorites);
+      recentUsed.value = loadedRecent;
+    } catch (error) {
+      console.error("初始化数据失败:", error);
+      favorites.value = new Set();
+      recentUsed.value = [];
+    }
+  }
 });
 
 // 获取所有分类
 const tabs = computed(() => {
-	const allShortcuts = manager.getAllShortcuts();
-	const categories = new Set(allShortcuts.map((s) => s.category));
-	return ["all", ...Array.from(categories).sort()];
+  const allShortcuts = manager.getAllShortcuts();
+  const categories = new Set(allShortcuts.map((s) => s.category));
+  return ["all", ...Array.from(categories).sort()];
 });
 
 function getTabCount(category: string): number {
-	if (category === "all") return totalCount.value;
-	return manager.getByCategory(category).length;
+  if (category === "all") return totalCount.value;
+  return manager.getByCategory(category).length;
 }
 
 const categoryLabels = computed(() => ({
-	all: props.i18n.allShortcuts || "全部",
-	siyuan: props.i18n.siyuanShortcuts || "思源笔记",
-	plugin: props.i18n.pluginShortcuts || "插件快捷键",
-	claude: props.i18n.claudeShortcuts || "Claude Code",
-	openspec: props.i18n.openspecShortcuts || "OpenSpec",
-	npm: props.i18n.npmShortcuts || "NPM",
-	nvm: props.i18n.nvmShortcuts || "NVM",
-	cmd: props.i18n.cmdShortcuts || "Windows CMD",
-	vscode: props.i18n.vscodeShortcuts || "VS Code",
-	"visual-studio": props.i18n.visualStudioShortcuts || "Visual Studio",
-	custom: props.i18n.customShortcuts || "自定义",
+  all: props.i18n.allShortcuts || "全部",
+  siyuan: props.i18n.siyuanShortcuts || "思源笔记",
+  plugin: props.i18n.pluginShortcuts || "插件快捷键",
+  claude: props.i18n.claudeShortcuts || "Claude Code",
+  openspec: props.i18n.openspecShortcuts || "OpenSpec",
+  npm: props.i18n.npmShortcuts || "NPM",
+  nvm: props.i18n.nvmShortcuts || "NVM",
+  cmd: props.i18n.cmdShortcuts || "Windows CMD",
+  vscode: props.i18n.vscodeShortcuts || "VS Code",
+  "visual-studio": props.i18n.visualStudioShortcuts || "Visual Studio",
+  custom: props.i18n.customShortcuts || "自定义",
 }));
 
 function getCategoryLabel(category: string): string {
-	return categoryLabels.value[category] || category;
+  return categoryLabels.value[category] || category;
 }
 
 function showToolBadge(category: string): boolean {
-	return ["npm", "nvm", "cmd", "vscode", "visual-studio"].includes(category);
+  return ["npm", "nvm", "cmd", "vscode", "visual-studio"].includes(category);
 }
 
 // 过滤快捷键
 const filteredShortcuts = computed(() => {
-	let shortcuts = searchKeyword.value
-		? manager.search(searchKeyword.value)
-		: manager.getAllShortcuts();
+  let shortcuts = searchKeyword.value
+    ? manager.search(searchKeyword.value)
+    : manager.getAllShortcuts();
 
-	if (activeTab.value !== "all") {
-		shortcuts = shortcuts.filter((s) => s.category === activeTab.value);
-	}
+  if (activeTab.value !== "all") {
+    shortcuts = shortcuts.filter((s) => s.category === activeTab.value);
+  }
 
-	if (activeFilter.value === "favorite") {
-		shortcuts = shortcuts.filter((s) => favorites.value.has(s.id));
-	} else if (activeFilter.value === "recent") {
-		shortcuts = shortcuts.filter((s) => recentUsed.value.includes(s.id));
-	}
+  if (activeFilter.value === "favorite") {
+    shortcuts = shortcuts.filter((s) => favorites.value.has(s.id));
+  } else if (activeFilter.value === "recent") {
+    shortcuts = shortcuts.filter((s) => recentUsed.value.includes(s.id));
+  }
 
-	return shortcuts;
+  return shortcuts;
 });
 
 function isFavorite(id: string): boolean {
-	return favorites.value.has(id);
+  return favorites.value.has(id);
 }
 
 async function toggleFavorite(id: string) {
-	if (favorites.value.has(id)) {
-		favorites.value.delete(id);
-	} else {
-		favorites.value.add(id);
-	}
+  if (favorites.value.has(id)) {
+    favorites.value.delete(id);
+  } else {
+    favorites.value.add(id);
+  }
 
-	if (props.plugin) {
-		try {
-			await new ShortcutStorage(props.plugin).saveFavorites(Array.from(favorites.value));
-		} catch (error) {
-			console.error("保存收藏状态失败:", error);
-		}
-	}
+  if (props.plugin) {
+    try {
+      await new ShortcutStorage(props.plugin).saveFavorites(Array.from(favorites.value));
+    } catch (error) {
+      console.error("保存收藏状态失败:", error);
+    }
+  }
 }
 
 function isRecent(id: string): boolean {
-	return recentUsed.value.includes(id);
+  return recentUsed.value.includes(id);
 }
 
 async function addToRecent(id: string) {
-	const index = recentUsed.value.indexOf(id);
-	if (index > -1) recentUsed.value.splice(index, 1);
-	recentUsed.value.unshift(id);
-	if (recentUsed.value.length > 10) recentUsed.value.pop();
+  const index = recentUsed.value.indexOf(id);
+  if (index > -1) recentUsed.value.splice(index, 1);
+  recentUsed.value.unshift(id);
+  if (recentUsed.value.length > 10) recentUsed.value.pop();
 
-	if (props.plugin) {
-		try {
-			await new ShortcutStorage(props.plugin).saveRecent(recentUsed.value);
-		} catch (error) {
-			console.error("保存最近使用失败:", error);
-		}
-	}
+  if (props.plugin) {
+    try {
+      await new ShortcutStorage(props.plugin).saveRecent(recentUsed.value);
+    } catch (error) {
+      console.error("保存最近使用失败:", error);
+    }
+  }
 }
 
 function copyShortcutInfo(shortcut: ShortcutInfo) {
-	const text = shortcut.copyContent || shortcut.keys;
-	navigator.clipboard
-		.writeText(text)
-		.then(() => {
-			addToRecent(shortcut.id);
-		})
-		.catch((err) => {
-			console.error("复制失败:", err);
-		});
+  const text = shortcut.copyContent || shortcut.keys;
+  navigator.clipboard
+    .writeText(text)
+    .then(() => {
+      addToRecent(shortcut.id);
+    })
+    .catch((err) => {
+      console.error("复制失败:", err);
+    });
 }
 
 // 对话框操作
 function showAddDialog() {
-	dialogType.value = "add";
-	formData.value = {
-		id: "",
-		name: "",
-		description: "",
-		keys: "",
-		group: "自定义",
-	};
-	showDialog.value = true;
+  dialogType.value = "add";
+  formData.value = {
+    id: "",
+    name: "",
+    description: "",
+    keys: "",
+    group: "自定义",
+  };
+  showDialog.value = true;
 }
 
 function editShortcut(shortcut: ShortcutInfo) {
-	dialogType.value = "edit";
-	formData.value = {
-		id: shortcut.id,
-		name: shortcut.name,
-		description: shortcut.description,
-		keys: shortcut.keys,
-		group: shortcut.group || "自定义",
-	};
-	showDialog.value = true;
+  dialogType.value = "edit";
+  formData.value = {
+    id: shortcut.id,
+    name: shortcut.name,
+    description: shortcut.description,
+    keys: shortcut.keys,
+    group: shortcut.group || "自定义",
+  };
+  showDialog.value = true;
 }
 
 function closeDialog() {
-	showDialog.value = false;
-	dialogType.value = null;
+  showDialog.value = false;
+  dialogType.value = null;
 }
 
 async function addShortcut(shortcut: ShortcutInfo) {
-	await manager.addShortcut(shortcut);
-	closeDialog();
+  await manager.addShortcut(shortcut);
+  closeDialog();
 }
 
 async function deleteShortcut(id: string) {
-	if (confirm(props.i18n.confirmDelete || "确认删除此快捷键？")) {
-		await manager.removeShortcut(id);
-		favorites.value.delete(id);
-		const index = recentUsed.value.indexOf(id);
-		if (index > -1) recentUsed.value.splice(index, 1);
+  if (confirm(props.i18n.confirmDelete || "确认删除此快捷键？")) {
+    await manager.removeShortcut(id);
+    favorites.value.delete(id);
+    const index = recentUsed.value.indexOf(id);
+    if (index > -1) recentUsed.value.splice(index, 1);
 
-		if (props.plugin) {
-			try {
-				await new ShortcutStorage(props.plugin).saveFavorites(Array.from(favorites.value));
-			} catch (error) {
-				console.error("更新收藏数据失败:", error);
-			}
-		}
-	}
+    if (props.plugin) {
+      try {
+        await new ShortcutStorage(props.plugin).saveFavorites(Array.from(favorites.value));
+      } catch (error) {
+        console.error("更新收藏数据失败:", error);
+      }
+    }
+  }
 }
 </script>
 

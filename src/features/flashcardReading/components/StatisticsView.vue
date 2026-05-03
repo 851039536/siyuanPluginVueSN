@@ -112,18 +112,18 @@ import IconWrapper from "@/components/IconWrapper.vue";
 import type { StatisticsData, I18n } from "../types";
 
 const props = defineProps<{
-	statistics: StatisticsData;
-	i18n: I18n;
+  statistics: StatisticsData;
+  i18n: I18n;
 }>();
 
 const masteryPercent = computed(() =>
-	props.statistics.totalCards > 0
-		? Math.round(props.statistics.practicedCards / props.statistics.totalCards * 100)
-		: 0,
+  props.statistics.totalCards > 0
+    ? Math.round(props.statistics.practicedCards / props.statistics.totalCards * 100)
+    : 0,
 );
 
 const categoryPercent = (count: number) =>
-	props.statistics.totalPractice > 0
-		? Math.round(count / props.statistics.totalPractice * 100)
-		: 0;
+  props.statistics.totalPractice > 0
+    ? Math.round(count / props.statistics.totalPractice * 100)
+    : 0;
 </script>

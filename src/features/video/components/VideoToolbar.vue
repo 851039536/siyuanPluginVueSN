@@ -125,121 +125,121 @@ import Select from "@/components/Select.vue";
  * 工具栏按钮配置
  */
 export interface ToolbarButton {
-	/** 按钮标识 */
-	key: string;
-	/** 按钮文本 */
-	label: string;
-	/** 图标名称 */
-	icon: string;
-	/** 是否禁用 */
-	disabled?: boolean;
-	/** 按钮样式类型 */
-	variant?: "default" | "primary" | "encrypt" | "decrypt" | "ffmpeg";
+  /** 按钮标识 */
+  key: string;
+  /** 按钮文本 */
+  label: string;
+  /** 图标名称 */
+  icon: string;
+  /** 是否禁用 */
+  disabled?: boolean;
+  /** 按钮样式类型 */
+  variant?: "default" | "primary" | "encrypt" | "decrypt" | "ffmpeg";
 }
 
 /**
  * 组件 Props
  */
 export interface VideoToolbarProps {
-	/** 分类列表 */
-	categories?: string[];
-	/** 当前选中的分类 */
-	selectedCategory?: string;
-	/** 是否显示加密按钮 */
-	showEncryptBtn?: boolean;
-	/** 是否显示解密按钮 */
-	showDecryptBtn?: boolean;
-	/** 是否显示 FFmpeg 工具 */
-	showFFmpegTools?: boolean;
-	/** FFmpeg 是否可用 */
-	hasFFmpeg?: boolean;
-	/** FFmpeg 路径 */
-	ffmpegPath?: string;
+  /** 分类列表 */
+  categories?: string[];
+  /** 当前选中的分类 */
+  selectedCategory?: string;
+  /** 是否显示加密按钮 */
+  showEncryptBtn?: boolean;
+  /** 是否显示解密按钮 */
+  showDecryptBtn?: boolean;
+  /** 是否显示 FFmpeg 工具 */
+  showFFmpegTools?: boolean;
+  /** FFmpeg 是否可用 */
+  hasFFmpeg?: boolean;
+  /** FFmpeg 路径 */
+  ffmpegPath?: string;
 }
 
 /**
  * 组件事件
  */
 export interface VideoToolbarEmits {
-	/** 刷新列表 */
-	(e: "refresh"): void;
-	/** 打开文件夹 */
-	(e: "openFolder"): void;
-	/** 批量加密 */
-	(e: "batchEncrypt"): void;
-	/** 批量解密 */
-	(e: "batchDecrypt"): void;
-	/** 下载视频 */
-	(e: "downloadVideo"): void;
-	/** 视频合并 */
-	(e: "mergeVideos"): void;
-	/** 视频音频合并 */
-	(e: "mergeAudio"): void;
-	/** 视频压缩 */
-	(e: "compress"): void;
-	/** FFmpeg 设置 */
-	(e: "ffmpegSettings"): void;
-	/** 分类变化 */
-	(e: "categoryChange", category: string): void;
+  /** 刷新列表 */
+  (e: "refresh"): void;
+  /** 打开文件夹 */
+  (e: "openFolder"): void;
+  /** 批量加密 */
+  (e: "batchEncrypt"): void;
+  /** 批量解密 */
+  (e: "batchDecrypt"): void;
+  /** 下载视频 */
+  (e: "downloadVideo"): void;
+  /** 视频合并 */
+  (e: "mergeVideos"): void;
+  /** 视频音频合并 */
+  (e: "mergeAudio"): void;
+  /** 视频压缩 */
+  (e: "compress"): void;
+  /** FFmpeg 设置 */
+  (e: "ffmpegSettings"): void;
+  /** 分类变化 */
+  (e: "categoryChange", category: string): void;
 }
 
 const props = withDefaults(defineProps<VideoToolbarProps>(), {
-	categories: () => [],
-	selectedCategory: "",
-	showEncryptBtn: false,
-	showDecryptBtn: false,
-	showFFmpegTools: false,
-	hasFFmpeg: false,
-	ffmpegPath: "",
+  categories: () => [],
+  selectedCategory: "",
+  showEncryptBtn: false,
+  showDecryptBtn: false,
+  showFFmpegTools: false,
+  hasFFmpeg: false,
+  ffmpegPath: "",
 });
 
 const emit = defineEmits<VideoToolbarEmits>();
 
 // 分类选项
 const categoryOptions = computed(() => [
-	{ value: "", label: "全部" },
-	...props.categories.map((cat) => ({ value: cat, label: cat })),
+  { value: "", label: "全部" },
+  ...props.categories.map((cat) => ({ value: cat, label: cat })),
 ]);
 
 // 事件处理方法
 function handleRefresh() {
-	emit("refresh");
+  emit("refresh");
 }
 
 function handleOpenFolder() {
-	emit("openFolder");
+  emit("openFolder");
 }
 
 function handleBatchEncrypt() {
-	emit("batchEncrypt");
+  emit("batchEncrypt");
 }
 
 function handleBatchDecrypt() {
-	emit("batchDecrypt");
+  emit("batchDecrypt");
 }
 
 function handleDownloadVideo() {
-	emit("downloadVideo");
+  emit("downloadVideo");
 }
 
 function handleMergeVideos() {
-	emit("mergeVideos");
+  emit("mergeVideos");
 }
 
 function handleMergeAudio() {
-	emit("mergeAudio");
+  emit("mergeAudio");
 }
 
 function handleCompress() {
-	emit("compress");
+  emit("compress");
 }
 
 function handleFFmpegSettings() {
-	emit("ffmpegSettings");
+  emit("ffmpegSettings");
 }
 
 function handleCategoryChange(value: string) {
-	emit("categoryChange", value);
+  emit("categoryChange", value);
 }
 </script>
 

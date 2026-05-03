@@ -94,16 +94,16 @@ import IconWrapper from "@/components/IconWrapper.vue";
 import Button from "@/components/Button.vue";
 import Textarea from "@/components/Textarea.vue";
 import {
-	generateCodeComments,
-	COMMENT_STYLES,
-	type CommentStyle,
-	type CodeCommentResult,
+  generateCodeComments,
+  COMMENT_STYLES,
+  type CommentStyle,
+  type CodeCommentResult,
 } from "../utils/codeUtils";
 import { getApiConfigFromPlugin } from "../utils/apiBase";
 
 interface Props {
-	i18n: any;
-	plugin?: any;
+  i18n: any;
+  plugin?: any;
 }
 
 const props = defineProps<Props>();
@@ -117,65 +117,65 @@ const errorMessage = ref("");
 const commentStyles = COMMENT_STYLES;
 
 function selectStyle(style: CommentStyle) {
-	selectedStyle.value = style;
+  selectedStyle.value = style;
 }
 
 function handleInput() {
-	errorMessage.value = "";
+  errorMessage.value = "";
 }
 
 async function handleGenerate() {
-	if (!codeInput.value.trim()) {
-		errorMessage.value = props.i18n.enterCode || "请输入代码内容";
-		return;
-	}
+  if (!codeInput.value.trim()) {
+    errorMessage.value = props.i18n.enterCode || "请输入代码内容";
+    return;
+  }
 
-	isGenerating.value = true;
-	errorMessage.value = "";
+  isGenerating.value = true;
+  errorMessage.value = "";
 
-	try {
-		const config = getApiConfig();
-		const res = await generateCodeComments(
-			codeInput.value.trim(),
-			selectedStyle.value,
-			config,
-		);
-		result.value = res;
-	} catch (error) {
-		console.error("生成注释失败:", error);
-		errorMessage.value =
-			(error as Error).message ||
-			props.i18n.generateFailed ||
-			"生成失败，请重试";
-	} finally {
-		isGenerating.value = false;
-	}
+  try {
+    const config = getApiConfig();
+    const res = await generateCodeComments(
+      codeInput.value.trim(),
+      selectedStyle.value,
+      config,
+    );
+    result.value = res;
+  } catch (error) {
+    console.error("生成注释失败:", error);
+    errorMessage.value =
+      (error as Error).message ||
+      props.i18n.generateFailed ||
+      "生成失败，请重试";
+  } finally {
+    isGenerating.value = false;
+  }
 }
 
 function handleClear() {
-	codeInput.value = "";
-	result.value = null;
-	errorMessage.value = "";
+  codeInput.value = "";
+  result.value = null;
+  errorMessage.value = "";
 }
 
 function getApiConfig() {
-	return getApiConfigFromPlugin(props.plugin);
+  return getApiConfigFromPlugin(props.plugin);
 }
 
 function copyResult() {
-	if (result.value) {
-		navigator.clipboard.writeText(result.value.commented);
-		showMessage(props.i18n.copied || "已复制", 1500, "info");
-	}
+  if (result.value) {
+    navigator.clipboard.writeText(result.value.commented);
+    showMessage(props.i18n.copied || "已复制", 1500, "info");
+  }
 }
 
 watch(
-	() => codeInput.value,
-	() => {
-		if (errorMessage.value) {
-			errorMessage.value = "";
-		}
-	},
+  () => codeInput.value,
+  () => {
+    if (errorMessage.value) {
+      errorMessage.value = "";
+    }
+  },
 );
 </script>
 

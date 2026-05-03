@@ -30,56 +30,56 @@ import Select from "@/components/Select.vue";
 import type { SelectOption } from "@/components/Select.vue";
 
 interface Props {
-	activeTab: string;
-	categorySearch: string;
-	tabs: string[];
-	getCategoryLabel: (category: string) => string;
-	getTabCount: (category: string) => number;
-	categoryLabel?: string;
-	searchPlaceholder?: string;
-	noResultHint?: string;
+  activeTab: string;
+  categorySearch: string;
+  tabs: string[];
+  getCategoryLabel: (category: string) => string;
+  getTabCount: (category: string) => number;
+  categoryLabel?: string;
+  searchPlaceholder?: string;
+  noResultHint?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-	categoryLabel: "分类:",
-	searchPlaceholder: "搜索分类...",
-	noResultHint: "未找到匹配的分类",
+  categoryLabel: "分类:",
+  searchPlaceholder: "搜索分类...",
+  noResultHint: "未找到匹配的分类",
 });
 
 const emit = defineEmits<{
-	"update:activeTab": [value: string];
-	"update:categorySearch": [value: string];
+  "update:activeTab": [value: string];
+  "update:categorySearch": [value: string];
 }>();
 
 const localCategorySearch = ref(props.categorySearch);
 
 watch(localCategorySearch, (val) => {
-	emit("update:categorySearch", val);
+  emit("update:categorySearch", val);
 });
 
 watch(
-	() => props.categorySearch,
-	(val) => {
-		localCategorySearch.value = val;
-	},
+  () => props.categorySearch,
+  (val) => {
+    localCategorySearch.value = val;
+  },
 );
 
 const filteredTabs = computed(() => {
-	const allTabs = props.tabs;
-	if (!localCategorySearch.value) {
-		return allTabs;
-	}
-	return allTabs.filter((tab) => {
-		const label = props.getCategoryLabel(tab).toLowerCase();
-		return label.includes(localCategorySearch.value.toLowerCase());
-	});
+  const allTabs = props.tabs;
+  if (!localCategorySearch.value) {
+    return allTabs;
+  }
+  return allTabs.filter((tab) => {
+    const label = props.getCategoryLabel(tab).toLowerCase();
+    return label.includes(localCategorySearch.value.toLowerCase());
+  });
 });
 
 const selectOptions = computed((): SelectOption[] => {
-	return filteredTabs.value.map((tab) => ({
-		value: tab,
-		label: `${props.getCategoryLabel(tab)} (${props.getTabCount(tab)})`,
-	}));
+  return filteredTabs.value.map((tab) => ({
+    value: tab,
+    label: `${props.getCategoryLabel(tab)} (${props.getTabCount(tab)})`,
+  }));
 });
 </script>
 

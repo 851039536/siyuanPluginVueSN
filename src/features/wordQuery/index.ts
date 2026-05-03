@@ -8,10 +8,10 @@ import { WordQueryManager } from "./types";
  * 注册单词查询功能
  */
 export function registerWordQuery(plugin: Plugin) {
-	const manager = new WordQueryManager(plugin);
-	manager.init();
-	(plugin as any).__wordQuery = manager;
-	return manager;
+  const manager = new WordQueryManager(plugin);
+  manager.init();
+  (plugin as any).__wordQuery = manager;
+  return manager;
 }
 
 export * from "./types";

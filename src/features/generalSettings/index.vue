@@ -87,74 +87,74 @@ import MarkdownExportSettings from "./components/MarkdownExportSettings.vue";
 import SkillsViewerSettings from "./components/SkillsViewerSettings.vue";
 
 interface Props {
-	i18n?: any;
-	plugin?: any;
-	onSettingsChange?: (settings: any) => void;
+  i18n?: any;
+  plugin?: any;
+  onSettingsChange?: (settings: any) => void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-	i18n: () => ({}),
-	plugin: null,
-	onSettingsChange: () => {},
+  i18n: () => ({}),
+  plugin: null,
+  onSettingsChange: () => {},
 });
 
 const activeCategory = ref("highlight");
 
 const categories = computed(() => [
-	{
-		id: "highlight",
-		label: props.i18n.enableHighlight || "高亮设置",
-	},
-	{
-		id: "codeblock",
-		label: props.i18n.codeBlockSettings || "代码块美化",
-	},
-	{
-		id: "heading",
-		label: props.i18n.headingSettings || "标题配置",
-	},
-	{
-		id: "documentFont",
-		label: props.i18n.documentFontSettings || "文档字体",
-	},
-	{
-		id: "tableStyle",
-		label: props.i18n.tableStyleSettings || "表格样式",
-	},
-	{
-		id: "listStyle",
-		label: props.i18n.listStyleSettings || "列表样式",
-	},
-	{
-		id: "tabPin",
-		label: props.i18n.tabPinSettings || "钉住页签",
-	},
-	{
-		id: "encryption",
-		label: props.i18n.encryptionSettings || "加密设置",
-	},
-	{
-		id: "backup",
-		label: props.i18n.dataBackup || "数据备份",
-	},
-	{
-		id: "docCount",
-		label: props.i18n.docCountSettings || "文档数统计",
-	},
-	{
-		id: "markdownExport",
-		label: "Markdown 导出",
-	},
-	{
-		id: "skillsViewer",
-		label: props.i18n.skillsViewerTitle || "Skills 查看器",
-	},
+  {
+    id: "highlight",
+    label: props.i18n.enableHighlight || "高亮设置",
+  },
+  {
+    id: "codeblock",
+    label: props.i18n.codeBlockSettings || "代码块美化",
+  },
+  {
+    id: "heading",
+    label: props.i18n.headingSettings || "标题配置",
+  },
+  {
+    id: "documentFont",
+    label: props.i18n.documentFontSettings || "文档字体",
+  },
+  {
+    id: "tableStyle",
+    label: props.i18n.tableStyleSettings || "表格样式",
+  },
+  {
+    id: "listStyle",
+    label: props.i18n.listStyleSettings || "列表样式",
+  },
+  {
+    id: "tabPin",
+    label: props.i18n.tabPinSettings || "钉住页签",
+  },
+  {
+    id: "encryption",
+    label: props.i18n.encryptionSettings || "加密设置",
+  },
+  {
+    id: "backup",
+    label: props.i18n.dataBackup || "数据备份",
+  },
+  {
+    id: "docCount",
+    label: props.i18n.docCountSettings || "文档数统计",
+  },
+  {
+    id: "markdownExport",
+    label: "Markdown 导出",
+  },
+  {
+    id: "skillsViewer",
+    label: props.i18n.skillsViewerTitle || "Skills 查看器",
+  },
 ]);
 
 function createSettingsHandler(moduleId: string) {
-	return (settings: any) => {
-		props.onSettingsChange?.({ moduleId, settings });
-	};
+  return (settings: any) => {
+    props.onSettingsChange?.({ moduleId, settings });
+  };
 }
 
 const handleCodeBlockChange = createSettingsHandler("codeblock");
@@ -167,14 +167,14 @@ const handleTabPinChange = createSettingsHandler("tabPin");
 const handleDocCountChange = createSettingsHandler("docCount");
 
 defineExpose({
-	handleCodeBlockChange,
-	handleHeadingChange,
-	handleBackupChange,
-	handleDocumentFontChange,
-	handleTableStyleChange,
-	handleListStyleChange,
-	handleTabPinChange,
-	handleDocCountChange,
+  handleCodeBlockChange,
+  handleHeadingChange,
+  handleBackupChange,
+  handleDocumentFontChange,
+  handleTableStyleChange,
+  handleListStyleChange,
+  handleTabPinChange,
+  handleDocCountChange,
 });
 </script>
 

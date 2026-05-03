@@ -34,50 +34,50 @@ import { computed } from "vue";
 import { formatNumber, formatShortNumber, isToday } from "../utils";
 
 interface ChartDataItem {
-	date: string;
-	words: number;
-	dateLabel: string;
+  date: string;
+  words: number;
+  dateLabel: string;
 }
 
 interface Props {
-	title?: string;
-	chartData?: ChartDataItem[];
-	i18n?: {
-		wordsUnit: string;
-	};
+  title?: string;
+  chartData?: ChartDataItem[];
+  i18n?: {
+    wordsUnit: string;
+  };
 }
 
 const props = withDefaults(defineProps<Props>(), {
-	title: "",
-	chartData: () => [],
-	i18n: () => ({
-		wordsUnit: "字",
-	}),
+  title: "",
+  chartData: () => [],
+  i18n: () => ({
+    wordsUnit: "字",
+  }),
 });
 
 const maxWords = computed(() => {
-	if (!props.chartData.length) return 0;
-	return Math.max(...props.chartData.map((item) => item.words));
+  if (!props.chartData.length) return 0;
+  return Math.max(...props.chartData.map((item) => item.words));
 });
 
 function getBarHeight(words: number): number {
-	const max = maxWords.value;
-	if (max === 0) return 0;
-	const maxHeight = 150;
-	const height = (words / max) * maxHeight;
-	return Math.max(height, words > 0 ? 5 : 0);
+  const max = maxWords.value;
+  if (max === 0) return 0;
+  const maxHeight = 150;
+  const height = (words / max) * maxHeight;
+  return Math.max(height, words > 0 ? 5 : 0);
 }
 
 function formatChartLabel(label: string): string {
-	// 可以根据需要自定义标签格式化逻辑
-	// 简化处理：如果是月份格式，只显示月
-	if (label.includes(" ")) {
-		return label.split(" ")[1] || label;
-	}
-	if (label.includes("/")) {
-		return label.split("/")[1] || label;
-	}
-	return label;
+  // 可以根据需要自定义标签格式化逻辑
+  // 简化处理：如果是月份格式，只显示月
+  if (label.includes(" ")) {
+    return label.split(" ")[1] || label;
+  }
+  if (label.includes("/")) {
+    return label.split("/")[1] || label;
+  }
+  return label;
 }
 </script>
 

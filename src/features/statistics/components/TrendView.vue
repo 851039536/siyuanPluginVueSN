@@ -212,54 +212,54 @@ import { computed, ref } from "vue";
 import { formatDate, formatNumber, formatShortNumber } from "../utils";
 
 interface HistoricalDataItem {
-	date: string;
-	dateLabel: string;
-	totalNotes: number;
-	totalWords: number;
-	todayCreated: number;
-	todayModified: number;
+  date: string;
+  dateLabel: string;
+  totalNotes: number;
+  totalWords: number;
+  todayCreated: number;
+  todayModified: number;
 }
 
 interface Props {
-	historicalData?: HistoricalDataItem[];
-	i18n?: {
-		title: string;
-		avgDailyCreated: string;
-		avgDailyModified: string;
-		historicalData: string;
-		date: string;
-		notes: string;
-		words: string;
-		created: string;
-		modified: string;
-		change: string;
-		wordsUnit: string;
-		notesUnit: string;
-		dayOverDay: string;
-		weekOverWeek: string;
-		monthOverMonth: string;
-	};
+  historicalData?: HistoricalDataItem[];
+  i18n?: {
+    title: string;
+    avgDailyCreated: string;
+    avgDailyModified: string;
+    historicalData: string;
+    date: string;
+    notes: string;
+    words: string;
+    created: string;
+    modified: string;
+    change: string;
+    wordsUnit: string;
+    notesUnit: string;
+    dayOverDay: string;
+    weekOverWeek: string;
+    monthOverMonth: string;
+  };
 }
 
 const props = withDefaults(defineProps<Props>(), {
-	historicalData: () => [],
-	i18n: () => ({
-		title: "趋势分析",
-		avgDailyCreated: "日均新增",
-		avgDailyModified: "日均修改",
-		historicalData: "历史数据",
-		date: "日期",
-		notes: "笔记",
-		words: "字数",
-		created: "新增",
-		modified: "修改",
-		change: "变化",
-		wordsUnit: "字",
-		notesUnit: "笔记",
-		dayOverDay: "日环比",
-		weekOverWeek: "周环比",
-		monthOverMonth: "月环比",
-	}),
+  historicalData: () => [],
+  i18n: () => ({
+    title: "趋势分析",
+    avgDailyCreated: "日均新增",
+    avgDailyModified: "日均修改",
+    historicalData: "历史数据",
+    date: "日期",
+    notes: "笔记",
+    words: "字数",
+    created: "新增",
+    modified: "修改",
+    change: "变化",
+    wordsUnit: "字",
+    notesUnit: "笔记",
+    dayOverDay: "日环比",
+    weekOverWeek: "周环比",
+    monthOverMonth: "月环比",
+  }),
 });
 
 // ===== 趋势图表状态 =====
@@ -267,10 +267,10 @@ const activeMetric = ref<"totalWords" | "totalNotes" | "todayCreated" | "todayMo
 const hoveredIndex = ref(-1);
 
 const metricTabs = computed(() => [
-	{ key: "totalWords" as const, icon: "✍️", label: props.i18n.words, unit: props.i18n.wordsUnit },
-	{ key: "totalNotes" as const, icon: "📓", label: props.i18n.notes, unit: props.i18n.notesUnit },
-	{ key: "todayCreated" as const, icon: "📅", label: props.i18n.created, unit: props.i18n.notesUnit },
-	{ key: "todayModified" as const, icon: "✏️", label: props.i18n.modified, unit: props.i18n.notesUnit },
+  { key: "totalWords" as const, icon: "✍️", label: props.i18n.words, unit: props.i18n.wordsUnit },
+  { key: "totalNotes" as const, icon: "📓", label: props.i18n.notes, unit: props.i18n.notesUnit },
+  { key: "todayCreated" as const, icon: "📅", label: props.i18n.created, unit: props.i18n.notesUnit },
+  { key: "todayModified" as const, icon: "✏️", label: props.i18n.modified, unit: props.i18n.notesUnit },
 ]);
 
 const activeMetricObj = computed(() => metricTabs.value.find((t) => t.key === activeMetric.value) || metricTabs.value[0]);
@@ -283,362 +283,362 @@ const chartPaddingBottom = 24;
 const chartPaddingLeft = 42;
 const chartPaddingRight = 10;
 const hitWidth = computed(() => {
-	const count = props.historicalData.length;
-	if (count <= 1) return 20;
-	const availWidth = chartWidth - chartPaddingLeft - chartPaddingRight;
-	return Math.max(10, availWidth / count);
+  const count = props.historicalData.length;
+  if (count <= 1) return 20;
+  const availWidth = chartWidth - chartPaddingLeft - chartPaddingRight;
+  return Math.max(10, availWidth / count);
 });
 
 // 从历史数据提取当前指标的值数组
 const chartValues = computed(() =>
-	props.historicalData.map((item) => item[activeMetric.value]),
+  props.historicalData.map((item) => item[activeMetric.value]),
 );
 
 const chartMin = computed(() => {
-	const vals = chartValues.value;
-	if (vals.length === 0) return 0;
-	const min = Math.min(...vals);
-	// 给一些底部留白
-	return Math.max(0, min - (Math.max(...vals) - min) * 0.1);
+  const vals = chartValues.value;
+  if (vals.length === 0) return 0;
+  const min = Math.min(...vals);
+  // 给一些底部留白
+  return Math.max(0, min - (Math.max(...vals) - min) * 0.1);
 });
 
 const chartMax = computed(() => {
-	const vals = chartValues.value;
-	if (vals.length === 0) return 100;
-	const max = Math.max(...vals);
-	const min = Math.min(...vals);
-	if (max === min) return max + 10;
-	return max + (max - min) * 0.1;
+  const vals = chartValues.value;
+  if (vals.length === 0) return 100;
+  const max = Math.max(...vals);
+  const min = Math.min(...vals);
+  if (max === min) return max + 10;
+  return max + (max - min) * 0.1;
 });
 
 // 计算图表绘制区域
 const drawArea = computed(() => ({
-	x: chartPaddingLeft,
-	y: chartPaddingTop,
-	w: chartWidth - chartPaddingLeft - chartPaddingRight,
-	h: chartHeight - chartPaddingTop - chartPaddingBottom,
+  x: chartPaddingLeft,
+  y: chartPaddingTop,
+  w: chartWidth - chartPaddingLeft - chartPaddingRight,
+  h: chartHeight - chartPaddingTop - chartPaddingBottom,
 }));
 
 // 计算每个数据点的坐标
 const chartPoints = computed(() => {
-	const data = props.historicalData;
-	if (data.length === 0) return [];
+  const data = props.historicalData;
+  if (data.length === 0) return [];
 
-	const { x: sx, y: sy, w, h } = drawArea.value;
-	const min = chartMin.value;
-	const max = chartMax.value;
-	const range = max - min || 1;
+  const { x: sx, y: sy, w, h } = drawArea.value;
+  const min = chartMin.value;
+  const max = chartMax.value;
+  const range = max - min || 1;
 
-	return data.map((item, idx) => {
-		const val = item[activeMetric.value];
-		const px = data.length === 1 ? sx + w / 2 : sx + (idx / (data.length - 1)) * w;
-		const py = sy + h - ((val - min) / range) * h;
-		return { x: px, y: py, value: val };
-	});
+  return data.map((item, idx) => {
+    const val = item[activeMetric.value];
+    const px = data.length === 1 ? sx + w / 2 : sx + (idx / (data.length - 1)) * w;
+    const py = sy + h - ((val - min) / range) * h;
+    return { x: px, y: py, value: val };
+  });
 });
 
 // 折线路径
 const linePath = computed(() => {
-	const pts = chartPoints.value;
-	if (pts.length === 0) return "";
-	return pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
+  const pts = chartPoints.value;
+  if (pts.length === 0) return "";
+  return pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
 });
 
 // 面积路径（折线 + 底部封闭）
 const areaPath = computed(() => {
-	const pts = chartPoints.value;
-	if (pts.length === 0) return "";
-	const { y: sy, h } = drawArea.value;
-	const bottom = sy + h;
-	const line = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
-	return `${line} L${pts[pts.length - 1].x},${bottom} L${pts[0].x},${bottom} Z`;
+  const pts = chartPoints.value;
+  if (pts.length === 0) return "";
+  const { y: sy, h } = drawArea.value;
+  const bottom = sy + h;
+  const line = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
+  return `${line} L${pts[pts.length - 1].x},${bottom} L${pts[0].x},${bottom} Z`;
 });
 
 // Y 轴刻度
 const yAxisLabels = computed(() => {
-	const { y: sy, h } = drawArea.value;
-	const min = chartMin.value;
-	const max = chartMax.value;
-	const steps = 4;
-	const labels = [];
-	for (let i = 0; i <= steps; i++) {
-		const val = min + ((max - min) * i) / steps;
-		const py = sy + h - (i / steps) * h;
-		labels.push({
-			text: formatShortNumber(Math.round(val)),
-			y: py + 3,
-		});
-	}
-	return labels;
+  const { y: sy, h } = drawArea.value;
+  const min = chartMin.value;
+  const max = chartMax.value;
+  const steps = 4;
+  const labels = [];
+  for (let i = 0; i <= steps; i++) {
+    const val = min + ((max - min) * i) / steps;
+    const py = sy + h - (i / steps) * h;
+    labels.push({
+      text: formatShortNumber(Math.round(val)),
+      y: py + 3,
+    });
+  }
+  return labels;
 });
 
 // 网格线 Y 坐标
 const gridLines = computed(() => {
-	const { y: sy, h } = drawArea.value;
-	const steps = 4;
-	const lines = [];
-	for (let i = 0; i <= steps; i++) {
-		lines.push(sy + h - (i / steps) * h);
-	}
-	return lines;
+  const { y: sy, h } = drawArea.value;
+  const steps = 4;
+  const lines = [];
+  for (let i = 0; i <= steps; i++) {
+    lines.push(sy + h - (i / steps) * h);
+  }
+  return lines;
 });
 
 // X 轴标签（稀疏显示，避免重叠）
 function getXLabel(idx: number): string {
-	const data = props.historicalData;
-	const total = data.length;
-	if (total <= 8) return data[idx]?.dateLabel?.split(" ")[0] || "";
-	// 间隔显示
-	const step = Math.ceil(total / 8);
-	if (idx % step === 0 || idx === total - 1) {
-		return data[idx]?.dateLabel?.split(" ")[0] || "";
-	}
-	return "";
+  const data = props.historicalData;
+  const total = data.length;
+  if (total <= 8) return data[idx]?.dateLabel?.split(" ")[0] || "";
+  // 间隔显示
+  const step = Math.ceil(total / 8);
+  if (idx % step === 0 || idx === total - 1) {
+    return data[idx]?.dateLabel?.split(" ")[0] || "";
+  }
+  return "";
 }
 
 function isLastPoint(idx: number): boolean {
-	return idx === props.historicalData.length - 1;
+  return idx === props.historicalData.length - 1;
 }
 
 // Tooltip 定位
 const tooltipLeft = computed(() => {
-	if (hoveredIndex.value < 0 || !chartPoints.value[hoveredIndex.value]) return "0px";
-	const pt = chartPoints.value[hoveredIndex.value];
-	// SVG 用 viewBox 600，容器实际宽度由 CSS 控制，需要百分比换算
-	const pct = (pt.x / chartWidth) * 100;
-	// 如果 tooltip 在右侧，向左偏移
-	if (pct > 70) return `calc(${pct}% - 120px)`;
-	return `${pct}%`;
+  if (hoveredIndex.value < 0 || !chartPoints.value[hoveredIndex.value]) return "0px";
+  const pt = chartPoints.value[hoveredIndex.value];
+  // SVG 用 viewBox 600，容器实际宽度由 CSS 控制，需要百分比换算
+  const pct = (pt.x / chartWidth) * 100;
+  // 如果 tooltip 在右侧，向左偏移
+  if (pct > 70) return `calc(${pct}% - 120px)`;
+  return `${pct}%`;
 });
 
 const tooltipTop = computed(() => {
-	if (hoveredIndex.value < 0 || !chartPoints.value[hoveredIndex.value]) return "0px";
-	const pt = chartPoints.value[hoveredIndex.value];
-	const pct = (pt.y / chartHeight) * 100;
-	return `calc(${pct}% - 40px)`;
+  if (hoveredIndex.value < 0 || !chartPoints.value[hoveredIndex.value]) return "0px";
+  const pt = chartPoints.value[hoveredIndex.value];
+  const pct = (pt.y / chartHeight) * 100;
+  return `calc(${pct}% - 40px)`;
 });
 
 // 计算周期对比数据
 const comparisonStats = computed(() => {
-	if (props.historicalData.length === 0) return null;
+  if (props.historicalData.length === 0) return null;
 
-	const today = new Date();
-	const todayStr = formatDate(today);
+  const today = new Date();
+  const todayStr = formatDate(today);
 
-	// 获取今日数据
-	const todayData = props.historicalData.find((item) => item.date === todayStr);
+  // 获取今日数据
+  const todayData = props.historicalData.find((item) => item.date === todayStr);
 
-	// 获取昨日数据
-	const yesterday = new Date(today);
-	yesterday.setDate(yesterday.getDate() - 1);
-	const yesterdayStr = formatDate(yesterday);
-	const yesterdayData = props.historicalData.find(
-		(item) => item.date === yesterdayStr,
-	);
+  // 获取昨日数据
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = formatDate(yesterday);
+  const yesterdayData = props.historicalData.find(
+    (item) => item.date === yesterdayStr,
+  );
 
-	// 获取本周数据 (周一到今天)
-	const weekStart = new Date(today);
-	const dayOfWeek = weekStart.getDay() || 7; // 周日为0，转为7
-	weekStart.setDate(weekStart.getDate() - dayOfWeek + 1);
-	const thisWeekData = getRangeData(weekStart, today);
+  // 获取本周数据 (周一到今天)
+  const weekStart = new Date(today);
+  const dayOfWeek = weekStart.getDay() || 7; // 周日为0，转为7
+  weekStart.setDate(weekStart.getDate() - dayOfWeek + 1);
+  const thisWeekData = getRangeData(weekStart, today);
 
-	// 获取上周数据
-	const lastWeekEnd = new Date(weekStart);
-	lastWeekEnd.setDate(lastWeekEnd.getDate() - 1);
-	const lastWeekStart = new Date(lastWeekEnd);
-	lastWeekStart.setDate(lastWeekStart.getDate() - 6);
-	const lastWeekData = getRangeData(lastWeekStart, lastWeekEnd);
+  // 获取上周数据
+  const lastWeekEnd = new Date(weekStart);
+  lastWeekEnd.setDate(lastWeekEnd.getDate() - 1);
+  const lastWeekStart = new Date(lastWeekEnd);
+  lastWeekStart.setDate(lastWeekStart.getDate() - 6);
+  const lastWeekData = getRangeData(lastWeekStart, lastWeekEnd);
 
-	// 获取本月数据
-	const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-	const thisMonthData = getRangeData(monthStart, today);
+  // 获取本月数据
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  const thisMonthData = getRangeData(monthStart, today);
 
-	// 获取上月数据
-	const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
-	const lastMonthStart = new Date(
-		lastMonthEnd.getFullYear(),
-		lastMonthEnd.getMonth(),
-		1,
-	);
-	const lastMonthData = getRangeData(lastMonthStart, lastMonthEnd);
+  // 获取上月数据
+  const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+  const lastMonthStart = new Date(
+    lastMonthEnd.getFullYear(),
+    lastMonthEnd.getMonth(),
+    1,
+  );
+  const lastMonthData = getRangeData(lastMonthStart, lastMonthEnd);
 
-	return {
-		today: {
-			created: todayData?.todayCreated ?? 0,
-			modified: todayData?.todayModified ?? 0,
-			words: todayData?.totalWords ?? 0,
-		},
-		yesterday: {
-			created: yesterdayData?.todayCreated ?? 0,
-			modified: yesterdayData?.todayModified ?? 0,
-			words: yesterdayData?.totalWords ?? 0,
-		},
-		dayChange: {
-			created: calcChange(
-				todayData?.todayCreated ?? 0,
-				yesterdayData?.todayCreated ?? 0,
-			),
-			modified: calcChange(
-				todayData?.todayModified ?? 0,
-				yesterdayData?.todayModified ?? 0,
-			),
-			words: calcChange(
-				todayData?.totalWords ?? 0,
-				yesterdayData?.totalWords ?? 0,
-			),
-		},
-		thisWeek: {
-			created: thisWeekData.created,
-			modified: thisWeekData.modified,
-			words: thisWeekData.words,
-		},
-		lastWeek: {
-			created: lastWeekData.created,
-			modified: lastWeekData.modified,
-			words: lastWeekData.words,
-		},
-		weekChange: {
-			created: calcChange(thisWeekData.created, lastWeekData.created),
-			modified: calcChange(thisWeekData.modified, lastWeekData.modified),
-			words: calcChange(thisWeekData.words, lastWeekData.words),
-		},
-		thisMonth: {
-			created: thisMonthData.created,
-			modified: thisMonthData.modified,
-			words: thisMonthData.words,
-		},
-		lastMonth: {
-			created: lastMonthData.created,
-			modified: lastMonthData.modified,
-			words: lastMonthData.words,
-		},
-		monthChange: {
-			created: calcChange(thisMonthData.created, lastMonthData.created),
-			modified: calcChange(thisMonthData.modified, lastMonthData.modified),
-			words: calcChange(thisMonthData.words, lastMonthData.words),
-		},
-	};
+  return {
+    today: {
+      created: todayData?.todayCreated ?? 0,
+      modified: todayData?.todayModified ?? 0,
+      words: todayData?.totalWords ?? 0,
+    },
+    yesterday: {
+      created: yesterdayData?.todayCreated ?? 0,
+      modified: yesterdayData?.todayModified ?? 0,
+      words: yesterdayData?.totalWords ?? 0,
+    },
+    dayChange: {
+      created: calcChange(
+        todayData?.todayCreated ?? 0,
+        yesterdayData?.todayCreated ?? 0,
+      ),
+      modified: calcChange(
+        todayData?.todayModified ?? 0,
+        yesterdayData?.todayModified ?? 0,
+      ),
+      words: calcChange(
+        todayData?.totalWords ?? 0,
+        yesterdayData?.totalWords ?? 0,
+      ),
+    },
+    thisWeek: {
+      created: thisWeekData.created,
+      modified: thisWeekData.modified,
+      words: thisWeekData.words,
+    },
+    lastWeek: {
+      created: lastWeekData.created,
+      modified: lastWeekData.modified,
+      words: lastWeekData.words,
+    },
+    weekChange: {
+      created: calcChange(thisWeekData.created, lastWeekData.created),
+      modified: calcChange(thisWeekData.modified, lastWeekData.modified),
+      words: calcChange(thisWeekData.words, lastWeekData.words),
+    },
+    thisMonth: {
+      created: thisMonthData.created,
+      modified: thisMonthData.modified,
+      words: thisMonthData.words,
+    },
+    lastMonth: {
+      created: lastMonthData.created,
+      modified: lastMonthData.modified,
+      words: lastMonthData.words,
+    },
+    monthChange: {
+      created: calcChange(thisMonthData.created, lastMonthData.created),
+      modified: calcChange(thisMonthData.modified, lastMonthData.modified),
+      words: calcChange(thisMonthData.words, lastMonthData.words),
+    },
+  };
 });
 
 // 对比卡片数据驱动
 const comparisonCards = computed(() => {
-	if (!comparisonStats.value) return [];
-	const stats = comparisonStats.value;
-	return [
-		{ icon: "📅", title: props.i18n.dayOverDay, current: stats.today, prev: stats.yesterday, change: stats.dayChange },
-		{ icon: "📆", title: props.i18n.weekOverWeek, current: stats.thisWeek, prev: stats.lastWeek, change: stats.weekChange },
-		{ icon: "🗓️", title: props.i18n.monthOverMonth, current: stats.thisMonth, prev: stats.lastMonth, change: stats.monthChange },
-	].map((card) => ({
-		...card,
-		items: ([
-			{ key: "created", label: props.i18n.created, useFormat: false },
-			{ key: "modified", label: props.i18n.modified, useFormat: false },
-			{ key: "words", label: props.i18n.words, useFormat: true },
-		] as const).map((m) => ({
-			label: m.label,
-			formatCurrent: m.useFormat ? formatNumber(card.current[m.key]) : String(card.current[m.key]),
-			formatPrev: m.useFormat ? formatNumber(card.prev[m.key]) : String(card.prev[m.key]),
-			change: card.change[m.key],
-		})),
-	}));
+  if (!comparisonStats.value) return [];
+  const stats = comparisonStats.value;
+  return [
+    { icon: "📅", title: props.i18n.dayOverDay, current: stats.today, prev: stats.yesterday, change: stats.dayChange },
+    { icon: "📆", title: props.i18n.weekOverWeek, current: stats.thisWeek, prev: stats.lastWeek, change: stats.weekChange },
+    { icon: "🗓️", title: props.i18n.monthOverMonth, current: stats.thisMonth, prev: stats.lastMonth, change: stats.monthChange },
+  ].map((card) => ({
+    ...card,
+    items: ([
+      { key: "created", label: props.i18n.created, useFormat: false },
+      { key: "modified", label: props.i18n.modified, useFormat: false },
+      { key: "words", label: props.i18n.words, useFormat: true },
+    ] as const).map((m) => ({
+      label: m.label,
+      formatCurrent: m.useFormat ? formatNumber(card.current[m.key]) : String(card.current[m.key]),
+      formatPrev: m.useFormat ? formatNumber(card.prev[m.key]) : String(card.prev[m.key]),
+      change: card.change[m.key],
+    })),
+  }));
 });
 
 function getRangeData(
-	startDate: Date,
-	endDate: Date,
+  startDate: Date,
+  endDate: Date,
 ): { created: number; modified: number; words: number } {
-	let created = 0;
-	let modified = 0;
-	let words = 0;
+  let created = 0;
+  let modified = 0;
+  let words = 0;
 
-	const startStr = formatDate(startDate);
-	const endStr = formatDate(endDate);
+  const startStr = formatDate(startDate);
+  const endStr = formatDate(endDate);
 
-	for (const item of props.historicalData) {
-		if (item.date >= startStr && item.date <= endStr) {
-			created += item.todayCreated;
-			modified += item.todayModified;
-			words = item.totalWords; // 取最后一天的总字数
-		}
-	}
+  for (const item of props.historicalData) {
+    if (item.date >= startStr && item.date <= endStr) {
+      created += item.todayCreated;
+      modified += item.todayModified;
+      words = item.totalWords; // 取最后一天的总字数
+    }
+  }
 
-	return { created, modified, words };
+  return { created, modified, words };
 }
 
 function calcChange(current: number, previous: number): number | null {
-	if (previous === 0) {
-		return current > 0 ? 100 : null;
-	}
-	return ((current - previous) / previous) * 100;
+  if (previous === 0) {
+    return current > 0 ? 100 : null;
+  }
+  return ((current - previous) / previous) * 100;
 }
 
 function getChangeClass(change: number | null): string {
-	if (change === null || change === 0) return "neutral";
-	return change > 0 ? "positive" : "negative";
+  if (change === null || change === 0) return "neutral";
+  return change > 0 ? "positive" : "negative";
 }
 
 function formatChange(change: number | null): string {
-	if (change === null) return "-";
-	const prefix = change > 0 ? "+" : "";
-	return `${prefix}${change.toFixed(1)}%`;
+  if (change === null) return "-";
+  const prefix = change > 0 ? "+" : "";
+  return `${prefix}${change.toFixed(1)}%`;
 }
 
 const trendStats = computed(() => {
-	if (props.historicalData.length === 0) return null;
+  if (props.historicalData.length === 0) return null;
 
-	const totalCreated = props.historicalData.reduce(
-		(sum, item) => sum + item.todayCreated,
-		0,
-	);
-	const totalModified = props.historicalData.reduce(
-		(sum, item) => sum + item.todayModified,
-		0,
-	);
+  const totalCreated = props.historicalData.reduce(
+    (sum, item) => sum + item.todayCreated,
+    0,
+  );
+  const totalModified = props.historicalData.reduce(
+    (sum, item) => sum + item.todayModified,
+    0,
+  );
 
-	return {
-		totalCreated,
-		totalModified,
-		avgDailyCreated: Math.round(totalCreated / props.historicalData.length),
-		avgDailyModified: Math.round(totalModified / props.historicalData.length),
-	};
+  return {
+    totalCreated,
+    totalModified,
+    avgDailyCreated: Math.round(totalCreated / props.historicalData.length),
+    avgDailyModified: Math.round(totalModified / props.historicalData.length),
+  };
 });
 
 const historicalRows = computed(() => {
-	const today = new Date();
-	const todayStr = formatDate(today);
-	return props.historicalData.map((item, index) => {
-		const previous = props.historicalData[index + 1];
-		return {
-			item,
-			wordDiff: previous ? getDiff(item, previous, "totalWords") : 0,
-			noteDiff: previous ? getDiff(item, previous, "totalNotes") : 0,
-			hasPrevious: Boolean(previous),
-			isToday: item.date === todayStr,
-		};
-	});
+  const today = new Date();
+  const todayStr = formatDate(today);
+  return props.historicalData.map((item, index) => {
+    const previous = props.historicalData[index + 1];
+    return {
+      item,
+      wordDiff: previous ? getDiff(item, previous, "totalWords") : 0,
+      noteDiff: previous ? getDiff(item, previous, "totalNotes") : 0,
+      hasPrevious: Boolean(previous),
+      isToday: item.date === todayStr,
+    };
+  });
 });
 
 function getDiff(
-	current: HistoricalDataItem,
-	previous: HistoricalDataItem,
-	field: "totalWords" | "totalNotes",
+  current: HistoricalDataItem,
+  previous: HistoricalDataItem,
+  field: "totalWords" | "totalNotes",
 ): number {
-	if (!current || !previous) return 0;
+  if (!current || !previous) return 0;
 
-	if (
-		previous.todayCreated === 0 &&
-		previous.todayModified === 0 &&
-		current[field] > 0
-	) {
-		const diff = current[field] - previous[field];
-		return diff > 0 ? diff : 0;
-	}
+  if (
+    previous.todayCreated === 0 &&
+    previous.todayModified === 0 &&
+    current[field] > 0
+  ) {
+    const diff = current[field] - previous[field];
+    return diff > 0 ? diff : 0;
+  }
 
-	if (previous[field] === 0 && current[field] > 0) {
-		return 0;
-	}
+  if (previous[field] === 0 && current[field] > 0) {
+    return 0;
+  }
 
-	return current[field] - previous[field];
+  return current[field] - previous[field];
 }
 </script>
 

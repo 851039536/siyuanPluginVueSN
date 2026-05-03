@@ -38,28 +38,28 @@ import Button from "@/components/Button.vue";
 import type { I18n } from "../types";
 
 defineProps<{
-	i18n: I18n;
+  i18n: I18n;
 }>();
 
 defineEmits<{
-	addCard: [];
-	refresh: [];
+  addCard: [];
+  refresh: [];
 }>();
 
 const storagePath = computed(() => {
-	const base = (window as any).siyuan?.config?.system?.dataDir || "";
-	const key = "flashcard-cards";
-	return base
-		? `${base.replace(/\/$/, "")}/storage/petal/siyuan-plugin-vite-vue-sn/${key}.json`
-		: `storage/petal/siyuan-plugin-vite-vue-sn/${key}.json`;
+  const base = (window as any).siyuan?.config?.system?.dataDir || "";
+  const key = "flashcard-cards";
+  return base
+    ? `${base.replace(/\/$/, "")}/storage/petal/siyuan-plugin-vite-vue-sn/${key}.json`
+    : `storage/petal/siyuan-plugin-vite-vue-sn/${key}.json`;
 });
 
 const copyPath = async () => {
-	try {
-		await navigator.clipboard.writeText(storagePath.value);
-		showMessage("已复制存储路径", 2000, "info");
-	} catch {
-		showMessage("复制失败", 2000, "error");
-	}
+  try {
+    await navigator.clipboard.writeText(storagePath.value);
+    showMessage("已复制存储路径", 2000, "info");
+  } catch {
+    showMessage("复制失败", 2000, "error");
+  }
 };
 </script>

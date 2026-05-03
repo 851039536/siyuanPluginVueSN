@@ -85,78 +85,78 @@ import TextInput from "./TextInput.vue";
 import type { AiSettings } from "../types";
 
 interface Props {
-	visible: boolean;
-	settings: AiSettings;
-	i18n: {
-		aiSettings?: string;
-		apiProvider?: string;
-		aiModel?: string;
-		apiKey?: string;
-		customEndpoint?: string;
-		tongyiQianwen?: string;
-		openAI?: string;
-		deepSeek?: string;
-		customApi?: string;
-		[key: string]: any;
-	};
+  visible: boolean;
+  settings: AiSettings;
+  i18n: {
+    aiSettings?: string;
+    apiProvider?: string;
+    aiModel?: string;
+    apiKey?: string;
+    customEndpoint?: string;
+    tongyiQianwen?: string;
+    openAI?: string;
+    deepSeek?: string;
+    customApi?: string;
+    [key: string]: any;
+  };
 }
 
 interface Emits {
-	(e: "close"): void;
-	(e: "update:settings", settings: AiSettings): void;
+  (e: "close"): void;
+  (e: "update:settings", settings: AiSettings): void;
 }
 
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 const handleClose = () => {
-	emit("close");
+  emit("close");
 };
 
 const updateSetting = (field: keyof AiSettings, value: string | boolean) => {
-	emit("update:settings", { ...props.settings, [field]: value });
+  emit("update:settings", { ...props.settings, [field]: value });
 };
 
 const handleProviderChange = async (provider: string) => {
-	const defaultModels: Record<string, string> = {
-		tongyi: "qwen-plus",
-		openai: "gpt-3.5-turbo",
-		deepseek: "deepseek-v4-flash",
-		custom: "",
-	};
-	updateSetting("provider", provider);
-	updateSetting("model", defaultModels[provider] || "");
-	showMessage("供应商已更新", 2000, "info");
+  const defaultModels: Record<string, string> = {
+    tongyi: "qwen-plus",
+    openai: "gpt-3.5-turbo",
+    deepseek: "deepseek-v4-flash",
+    custom: "",
+  };
+  updateSetting("provider", provider);
+  updateSetting("model", defaultModels[provider] || "");
+  showMessage("供应商已更新", 2000, "info");
 };
 </script>
 
 <style scoped lang="scss">
 .thinking-toggle-row {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
 }
 
 .thinking-toggle-label {
-	font-size: 12px;
-	color: var(--b3-theme-on-surface);
-	white-space: nowrap;
+  font-size: 12px;
+  color: var(--b3-theme-on-surface);
+  white-space: nowrap;
 }
 
 .thinking-toggle-btn {
-	font-size: 11px;
-	padding: 2px 10px;
-	border-radius: 4px;
-	border: 1px solid var(--b3-border-color);
-	background: var(--b3-theme-surface);
-	color: var(--b3-theme-on-surface);
-	cursor: pointer;
+  font-size: 11px;
+  padding: 2px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--b3-border-color);
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
 
-	&.active {
-		background: var(--b3-theme-primary);
-		color: #fff;
-		border-color: var(--b3-theme-primary);
-	}
+  &.active {
+    background: var(--b3-theme-primary);
+    color: #fff;
+    border-color: var(--b3-theme-primary);
+  }
 }
 </style>

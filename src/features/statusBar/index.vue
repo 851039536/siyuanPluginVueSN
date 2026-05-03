@@ -47,23 +47,23 @@ import { showPasswordVault } from "../passwordVault/types";
 import { emitCustomEvent } from "@/utils/eventBus";
 
 const {
-	state,
-	cpuUsageDisplay,
-	memoryUsageDisplay,
-	uptimeDisplay,
-	systemInfoTooltip,
-	cpuLevel,
-	memLevel,
-	totalNotesDisplay,
-	totalWordsDisplay,
-	statisticsTooltip,
+  state,
+  cpuUsageDisplay,
+  memoryUsageDisplay,
+  uptimeDisplay,
+  systemInfoTooltip,
+  cpuLevel,
+  memLevel,
+  totalNotesDisplay,
+  totalWordsDisplay,
+  statisticsTooltip,
 } = useStatusBar();
 
 const handleOpenPasswordVault = () => {
-	showPasswordVault();
+  showPasswordVault();
 };
 
 const handleOpenVideoManager = () => {
-	emitCustomEvent("openVideoManager");
+  emitCustomEvent("openVideoManager");
 };
 </script>

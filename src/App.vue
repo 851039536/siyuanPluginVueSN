@@ -68,10 +68,10 @@ import PasswordVaultDialog from "@/features/passwordVault/index.vue";
 import DecryptDialog from "@/features/encryption/components/DecryptDialog.vue";
 import { getEncryptionInstance } from "@/features/encryption/index";
 import {
-	everythingSearchVisible,
-	hideEverythingSearch,
-	passwordVaultVisible,
-	hidePasswordVault,
+  everythingSearchVisible,
+  hideEverythingSearch,
+  passwordVaultVisible,
+  hidePasswordVault,
 } from "@/features";
 import type PluginSample from "@/index";
 
@@ -87,70 +87,70 @@ const pendingEncryptedText = ref("");
 
 // 打开二维码对话框
 const openQRCodeDialog = (content: string) => {
-	qrcodeContent.value = content;
-	showQRCodeDialog.value = true;
+  qrcodeContent.value = content;
+  showQRCodeDialog.value = true;
 };
 
 // 打开谐音翻译对话框
 const openPronunciationDialog = (word: string) => {
-	pronunciationWord.value = word;
-	showPronunciationDialog.value = true;
+  pronunciationWord.value = word;
+  showPronunciationDialog.value = true;
 };
 
 // 打开解密对话框
 const openDecryptDialogAction = (encryptedText: string) => {
-	pendingEncryptedText.value = encryptedText;
-	showDecryptDialog.value = true;
+  pendingEncryptedText.value = encryptedText;
+  showDecryptDialog.value = true;
 };
 
 // 替换加密文本为解密后内容
 const handleDecryptReplace = (decryptedText: string) => {
-	const instance = getEncryptionInstance();
-	if (instance) {
-		instance.replaceCurrentText(decryptedText);
-	}
+  const instance = getEncryptionInstance();
+  if (instance) {
+    instance.replaceCurrentText(decryptedText);
+  }
 };
 
 onMounted(() => {
-	window._sy_plugin_sample = {};
-	window._sy_plugin_sample.openQRCodeDialog = openQRCodeDialog;
-	window._sy_plugin_sample.openPronunciationDialog = openPronunciationDialog;
+  window._sy_plugin_sample = {};
+  window._sy_plugin_sample.openQRCodeDialog = openQRCodeDialog;
+  window._sy_plugin_sample.openPronunciationDialog = openPronunciationDialog;
 
-	// 监听打开二维码对话框事件
-	window.addEventListener("openQRCodeDialog", ((event: any) => {
-		if (event.detail?.content) openQRCodeDialog(event.detail.content);
-	}) as EventListener);
+  // 监听打开二维码对话框事件
+  window.addEventListener("openQRCodeDialog", ((event: any) => {
+    if (event.detail?.content) openQRCodeDialog(event.detail.content);
+  }) as EventListener);
 
-	// 监听打开谐音翻译对话框事件
-	window.addEventListener("openPronunciationDialog", ((event: any) => {
-		if (event.detail?.content) openPronunciationDialog(event.detail.content);
-	}) as EventListener);
+  // 监听打开谐音翻译对话框事件
+  window.addEventListener("openPronunciationDialog", ((event: any) => {
+    if (event.detail?.content) openPronunciationDialog(event.detail.content);
+  }) as EventListener);
 
-	// 监听打开图片压缩器事件
-	window.addEventListener("openImageCompressor", () => {
-		showImageViewer.value = true;
-	});
+  // 监听打开图片压缩器事件
+  window.addEventListener("openImageCompressor", () => {
+    showImageViewer.value = true;
+  });
 
-	// 监听打开视频管理器事件
-	window.addEventListener("openVideoManager", () => {
-		showVideoManager.value = true;
-	});
+  // 监听打开视频管理器事件
+  window.addEventListener("openVideoManager", () => {
+    showVideoManager.value = true;
+  });
 
-	// 监听打开Everything搜索事件
-	window.addEventListener("openEverythingSearch", () => {
-		everythingSearchVisible.value = true;
-	});
+  // 监听打开Everything搜索事件
+  window.addEventListener("openEverythingSearch", () => {
+    everythingSearchVisible.value = true;
+  });
 
-	// 监听打开密码箱事件
-	window.addEventListener("openPasswordVault", () => {
-		passwordVaultVisible.value = true;
-	});
+  // 监听打开密码箱事件
+  window.addEventListener("openPasswordVault", () => {
+    passwordVaultVisible.value = true;
+  });
 
-	// 监听打开解密对话框事件
-	window.addEventListener("openDecryptDialog", ((event: any) => {
-		if (event.detail?.encryptedText)
-			openDecryptDialogAction(event.detail.encryptedText);
-	}) as EventListener);
+  // 监听打开解密对话框事件
+  window.addEventListener("openDecryptDialog", ((event: any) => {
+    if (event.detail?.encryptedText)
+      openDecryptDialogAction(event.detail.encryptedText);
+  }) as EventListener);
 });
 </script>
 

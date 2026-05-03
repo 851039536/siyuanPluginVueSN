@@ -8,17 +8,17 @@
  * @returns 格式化后的字符串，如 "1.5 MB"
  */
 export function formatFileSize(bytes?: number): string {
-	if (!bytes || bytes === 0) return "0 B";
-	const units = ["B", "KB", "MB", "GB"];
-	let size = bytes;
-	let unitIndex = 0;
+  if (!bytes || bytes === 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB"];
+  let size = bytes;
+  let unitIndex = 0;
 
-	while (size >= 1024 && unitIndex < units.length - 1) {
-		size /= 1024;
-		unitIndex++;
-	}
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex++;
+  }
 
-	return `${size.toFixed(1)} ${units[unitIndex]}`;
+  return `${size.toFixed(1)} ${units[unitIndex]}`;
 }
 
 /**
@@ -28,12 +28,12 @@ export function formatFileSize(bytes?: number): string {
  * @returns 压缩率字符串，如 "45.5%"
  */
 export function calculateCompressionRate(
-	originalSize: number,
-	compressedSize: number,
+  originalSize: number,
+  compressedSize: number,
 ): string {
-	if (originalSize === 0) return "0%";
-	const rate = ((originalSize - compressedSize) / originalSize) * 100;
-	return rate.toFixed(1) + "%";
+  if (originalSize === 0) return "0%";
+  const rate = ((originalSize - compressedSize) / originalSize) * 100;
+  return rate.toFixed(1) + "%";
 }
 
 /**
@@ -41,19 +41,19 @@ export function calculateCompressionRate(
  * @returns 工作区路径
  */
 export async function getWorkspacePath(): Promise<string> {
-	try {
-		const response = await fetch("/api/system/getConf", {
-			method: "POST",
-		});
+  try {
+    const response = await fetch("/api/system/getConf", {
+      method: "POST",
+    });
 
-		if (response.ok) {
-			const data = await response.json();
-			return data?.data?.conf?.system?.workspaceDir || "";
-		}
-	} catch (error) {
-		console.error("获取工作区路径失败:", error);
-	}
-	return "";
+    if (response.ok) {
+      const data = await response.json();
+      return data?.data?.conf?.system?.workspaceDir || "";
+    }
+  } catch (error) {
+    console.error("获取工作区路径失败:", error);
+  }
+  return "";
 }
 
 /**
@@ -64,18 +64,18 @@ export async function getWorkspacePath(): Promise<string> {
  * @returns 转义后的路径
  */
 export function escapeFilePathForCmd(filePath: string): string {
-	// 检测是否在 Electron 环境中
-	if (typeof window !== "undefined" && (window as any).require) {
-		const platform = (window as any).require("os").platform();
+  // 检测是否在 Electron 环境中
+  if (typeof window !== "undefined" && (window as any).require) {
+    const platform = (window as any).require("os").platform();
 
-		if (platform === "win32") {
-			// Windows: 使用双引号包裹，转义内部双引号
-			return `"${filePath.replace(/"/g, '\\"')}"`;
-		} else {
-			// Unix/Linux/macOS: 使用单引号包裹，转义单引号
-			return `'${filePath.replace(/'/g, "'\\''")}'`;
-		}
-	}
-	// 非 Electron 环境，返回原路径
-	return filePath;
+    if (platform === "win32") {
+      // Windows: 使用双引号包裹，转义内部双引号
+      return `"${filePath.replace(/"/g, '\\"')}"`;
+    } else {
+      // Unix/Linux/macOS: 使用单引号包裹，转义单引号
+      return `'${filePath.replace(/'/g, "'\\''")}'`;
+    }
+  }
+  // 非 Electron 环境，返回原路径
+  return filePath;
 }

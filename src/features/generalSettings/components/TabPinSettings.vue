@@ -64,17 +64,17 @@ import { ref, onMounted, watch } from "vue";
 import { GeneralSettingsStorage } from "@/features/generalSettings/types/storage";
 
 interface Props {
-	i18n?: any;
-	plugin?: any;
+  i18n?: any;
+  plugin?: any;
 }
 
 interface Emits {
-	(e: "change", settings: any): void;
+  (e: "change", settings: any): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-	i18n: () => ({}),
-	plugin: null,
+  i18n: () => ({}),
+  plugin: null,
 });
 
 const emit = defineEmits<Emits>();
@@ -84,12 +84,12 @@ const defaultBackgroundColor = "rgba(var(--b3-theme-primary-rgb), 0.1)";
 
 // 检查是否为有效 hex 颜色值
 function isValidColor(value: string): boolean {
-	return /^#[0-9a-fA-F]{6}$/.test(value);
+  return /^#[0-9a-fA-F]{6}$/.test(value);
 }
 
 // 颜色选择器输入处理（避免无效值回写）
 function onColorPickerInput(event: Event) {
-	backgroundColor.value = (event.target as HTMLInputElement).value;
+  backgroundColor.value = (event.target as HTMLInputElement).value;
 }
 
 // 状态
@@ -101,30 +101,30 @@ const storage = ref<GeneralSettingsStorage | null>(null);
 
 // 统一监听所有响应式变化，自动应用样式并保存
 watch([enabled, displayMode, backgroundColor], () => {
-	applyToDocument();
-	if (initialized) {
-		autoSave();
-	}
+  applyToDocument();
+  if (initialized) {
+    autoSave();
+  }
 });
 
 // 统一的设置变更处理函数
 function handleSettingsChange() {
-	autoSave();
+  autoSave();
 }
 
 // 应用到文档
 function applyToDocument() {
-	let style = document.getElementById(
-		"tab-pin-settings-style",
-	) as HTMLStyleElement | null;
-	if (!style) {
-		style = document.createElement("style");
-		style.id = "tab-pin-settings-style";
-		document.head.appendChild(style);
-	}
+  let style = document.getElementById(
+    "tab-pin-settings-style",
+  ) as HTMLStyleElement | null;
+  if (!style) {
+    style = document.createElement("style");
+    style.id = "tab-pin-settings-style";
+    document.head.appendChild(style);
+  }
 
-	if (enabled.value) {
-		let css = `
+  if (enabled.value) {
+    let css = `
       /* 钉住页签：显示标题文本 */
       .layout-tab-bar .item.item--pin .item__text {
         width: auto !important;
@@ -133,87 +133,87 @@ function applyToDocument() {
       }
     `;
 
-		// 根据显示模式添加不同的样式
-		if (displayMode.value === "textOnly") {
-			css += `
+    // 根据显示模式添加不同的样式
+    if (displayMode.value === "textOnly") {
+      css += `
         /* 仅显示标题：隐藏图标 */
         .layout-tab-bar .item.item--pin .item__icon {
           display: none !important;
         }
       `;
-		}
+    }
 
-		css += `
+    css += `
       /* 钉住页签：应用自定义背景颜色 */
       .layout-tab-bar .item.item--pin {
         ${backgroundColor.value !== defaultBackgroundColor ? `background: ${backgroundColor.value} !important;` : ""}
       }
     `;
 
-		style.textContent = css;
-	} else {
-		// 禁用时移除所有样式
-		style.textContent = "";
-	}
+    style.textContent = css;
+  } else {
+    // 禁用时移除所有样式
+    style.textContent = "";
+  }
 }
 
 // 重置背景颜色
 function resetBackgroundColor() {
-	backgroundColor.value = defaultBackgroundColor;
-	handleSettingsChange();
+  backgroundColor.value = defaultBackgroundColor;
+  handleSettingsChange();
 }
 
 // 自动保存设置
 async function autoSave() {
-	if (!props.plugin) return;
+  if (!props.plugin) return;
 
-	try {
-		const settingsToSave = {
-			enabled: enabled.value,
-			displayMode: displayMode.value,
-			backgroundColor: backgroundColor.value,
-		};
+  try {
+    const settingsToSave = {
+      enabled: enabled.value,
+      displayMode: displayMode.value,
+      backgroundColor: backgroundColor.value,
+    };
 
-		await storage.value!.tabPin.save(settingsToSave);
-		emit("change", settingsToSave);
-	} catch (error) {
-		console.error("保存钉住页签设置失败:", error);
-	}
+    await storage.value!.tabPin.save(settingsToSave);
+    emit("change", settingsToSave);
+  } catch (error) {
+    console.error("保存钉住页签设置失败:", error);
+  }
 }
 
 // 加载保存的设置
 async function loadSettings() {
-	if (!props.plugin) {
-		console.warn("插件实例不可用，使用默认设置");
-		return;
-	}
+  if (!props.plugin) {
+    console.warn("插件实例不可用，使用默认设置");
+    return;
+  }
 
-	try {
-		const settings = await storage.value!.tabPin.loadOrDefault();
+  try {
+    const settings = await storage.value!.tabPin.loadOrDefault();
 
-		enabled.value = settings.enabled ?? true;
-		displayMode.value = settings.displayMode || "iconAndText";
-		backgroundColor.value = settings.backgroundColor || defaultBackgroundColor;
-	} catch (error) {
-		console.error("加载钉住页签设置失败:", error);
-	}
+    enabled.value = settings.enabled ?? true;
+    displayMode.value = settings.displayMode || "iconAndText";
+    backgroundColor.value = settings.backgroundColor || defaultBackgroundColor;
+  } catch (error) {
+    console.error("加载钉住页签设置失败:", error);
+  }
 }
 
 // 初始化 - 在组件挂载后执行
 onMounted(async () => {
-	if (props.plugin) {
-		storage.value = new GeneralSettingsStorage(props.plugin);
-	}
-	await loadSettings();
-	initialized = true;
+  if (props.plugin) {
+    storage.value = new GeneralSettingsStorage(props.plugin);
+  }
+  await loadSettings();
+  initialized = true;
 });
 
 // 暴露方法
 defineExpose({
-	loadSettings,
-	enabled,
-	displayMode,
-	backgroundColor,
+  loadSettings,
+  enabled,
+  displayMode,
+  backgroundColor,
 });
 </script>
 

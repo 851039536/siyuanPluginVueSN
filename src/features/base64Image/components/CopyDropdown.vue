@@ -17,29 +17,29 @@ import { ref } from "vue";
 import Button from "@/components/Button.vue";
 
 interface CopyOption {
-	value: string;
-	label: string;
+  value: string;
+  label: string;
 }
 
 interface Props {
-	buttonText: string;
-	options: CopyOption[];
+  buttonText: string;
+  options: CopyOption[];
 }
 
 defineProps<Props>();
 const emit = defineEmits<{
-	select: [value: string];
+  select: [value: string];
 }>();
 
 const isOpen = ref(false);
 
 const toggle = () => {
-	isOpen.value = !isOpen.value;
+  isOpen.value = !isOpen.value;
 };
 
 const select = (value: string) => {
-	emit("select", value);
-	isOpen.value = false;
+  emit("select", value);
+  isOpen.value = false;
 };
 </script>
 

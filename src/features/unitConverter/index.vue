@@ -37,12 +37,12 @@ import BaseConverter from "./components/BaseConverter.vue";
 import ASCIIConverter from "./components/ASCIIConverter.vue";
 
 interface I18n {
-	unitConverterTitle?: string;
+  unitConverterTitle?: string;
 }
 
 interface Props {
-	i18n?: I18n;
-	plugin?: any;
+  i18n?: I18n;
+  plugin?: any;
 }
 
 defineProps<Props>();
@@ -50,29 +50,29 @@ defineProps<Props>();
 const activeTab = ref("length");
 
 const tabs = [
-	{ key: "length", name: "长度" },
-	{ key: "area", name: "面积" },
-	{ key: "volume", name: "体积" },
-	{ key: "mass", name: "质量" },
-	{ key: "power", name: "功率" },
-	{ key: "time", name: "时间" },
-	{ key: "speed", name: "速度" },
-	{ key: "data", name: "数据" },
-	{ key: "base", name: "进制" },
-	{ key: "ascii", name: "ASCII" },
+  { key: "length", name: "长度" },
+  { key: "area", name: "面积" },
+  { key: "volume", name: "体积" },
+  { key: "mass", name: "质量" },
+  { key: "power", name: "功率" },
+  { key: "time", name: "时间" },
+  { key: "speed", name: "速度" },
+  { key: "data", name: "数据" },
+  { key: "base", name: "进制" },
+  { key: "ascii", name: "ASCII" },
 ];
 
 const componentMap: Record<string, any> = {
-	length: LengthConverter,
-	area: AreaConverter,
-	volume: VolumeConverter,
-	mass: MassConverter,
-	power: PowerConverter,
-	time: TimeConverter,
-	speed: SpeedConverter,
-	data: DataConverter,
-	base: BaseConverter,
-	ascii: ASCIIConverter,
+  length: LengthConverter,
+  area: AreaConverter,
+  volume: VolumeConverter,
+  mass: MassConverter,
+  power: PowerConverter,
+  time: TimeConverter,
+  speed: SpeedConverter,
+  data: DataConverter,
+  base: BaseConverter,
+  ascii: ASCIIConverter,
 };
 
 const currentComponent = computed(() => componentMap[activeTab.value]);

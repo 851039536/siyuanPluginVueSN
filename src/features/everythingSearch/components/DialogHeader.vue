@@ -19,23 +19,23 @@
 import Button from "@/components/Button.vue";
 
 interface Props {
-	/** 标题文本 */
-	title?: string;
+  /** 标题文本 */
+  title?: string;
 }
 
 interface Emits {
-	(e: "close"): void;
+  (e: "close"): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-	title: "Everything 本地搜索",
+  title: "Everything 本地搜索",
 });
 
 const emit = defineEmits<Emits>();
 
 /** 处理关闭 */
 const handleClose = () => {
-	emit("close");
+  emit("close");
 };
 </script>
 

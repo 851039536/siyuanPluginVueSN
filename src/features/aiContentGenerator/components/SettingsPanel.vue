@@ -148,31 +148,31 @@ import Tag from "@/components/Tag.vue";
 import type { SavedPrompt } from "@/types/ai";
 
 defineProps<{
-	showSettings: boolean;
-	systemPrompt: string;
-	temperature: number;
-	maxTokens: number;
-	currentPromptName: string;
-	newPromptName: string;
-	savedPrompts: SavedPrompt[];
+  showSettings: boolean;
+  systemPrompt: string;
+  temperature: number;
+  maxTokens: number;
+  currentPromptName: string;
+  newPromptName: string;
+  savedPrompts: SavedPrompt[];
 }>();
 
 defineEmits<{
-	"update:systemPrompt": [value: string];
-	"update:temperature": [value: number];
-	"update:maxTokens": [value: number];
-	"update:newPromptName": [value: string];
-	"toggle-settings": [];
-	"save-current-prompt": [];
-	"on-prompt-name-focus": [];
-	"load-prompt": [index: number];
-	"delete-prompt": [index: number];
+  "update:systemPrompt": [value: string];
+  "update:temperature": [value: number];
+  "update:maxTokens": [value: number];
+  "update:newPromptName": [value: string];
+  "toggle-settings": [];
+  "save-current-prompt": [];
+  "on-prompt-name-focus": [];
+  "load-prompt": [index: number];
+  "delete-prompt": [index: number];
 }>();
 
 const getPromptPreview = (text: string): string => {
-	const maxLength = 60;
-	if (text.length <= maxLength) return text;
-	return text.substring(0, maxLength) + "...";
+  const maxLength = 60;
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength) + "...";
 };
 </script>
 

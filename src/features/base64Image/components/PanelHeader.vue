@@ -22,13 +22,13 @@ import IconWrapper from "@/components/IconWrapper.vue";
 import Button from "@/components/Button.vue";
 
 interface Props {
-	title: string;
-	clearTitle: string;
+  title: string;
+  clearTitle: string;
 }
 
 defineProps<Props>();
 defineEmits<{
-	clear: [];
+  clear: [];
 }>();
 </script>
 

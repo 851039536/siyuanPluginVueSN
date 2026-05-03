@@ -17,11 +17,11 @@ const QRCODE_ICON = `<svg viewBox="0 0 24 24" width="14" height="14">
  * @returns 二维码工具栏功能
  */
 export function createQRCodeAction(plugin: Plugin): ToolbarAction {
-	return createDialogAction(plugin, {
-		id: "qrcode",
-		i18nKey: "qrcode",
-		defaultMessage: "生成二维码",
-		icon: QRCODE_ICON,
-		eventName: "openQRCodeDialog",
-	});
+  return createDialogAction(plugin, {
+    id: "qrcode",
+    i18nKey: "qrcode",
+    defaultMessage: "生成二维码",
+    icon: QRCODE_ICON,
+    eventName: "openQRCodeDialog",
+  });
 }

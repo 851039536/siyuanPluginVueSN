@@ -9,17 +9,17 @@
 export type ResourceLevel = "normal" | "medium" | "high";
 
 export interface Thresholds {
-	CPU: { HIGH: number; MEDIUM: number };
-	MEM: { HIGH: number; MEDIUM: number };
+  CPU: { HIGH: number; MEDIUM: number };
+  MEM: { HIGH: number; MEDIUM: number };
 }
 
 export interface StatusBarState {
-	cpuPercent: number;
-	memPercent: number;
-	uptimeSeconds: number;
-	showMonitor: boolean;
-	totalNotes: number;
-	totalWords: number;
+  cpuPercent: number;
+  memPercent: number;
+  uptimeSeconds: number;
+  showMonitor: boolean;
+  totalNotes: number;
+  totalWords: number;
 }
 
 // ============================================================
@@ -27,8 +27,8 @@ export interface StatusBarState {
 // ============================================================
 
 export const THRESHOLDS: Thresholds = {
-	CPU: { HIGH: 80, MEDIUM: 60 },
-	MEM: { HIGH: 85, MEDIUM: 70 },
+  CPU: { HIGH: 80, MEDIUM: 60 },
+  MEM: { HIGH: 85, MEDIUM: 70 },
 };
 
 export const MONITOR_INTERVAL_MS = 3000;

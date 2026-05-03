@@ -39,14 +39,14 @@ import type { DiskBrowserI18n } from "../types";
 import { getFolderName } from "../utils";
 
 interface Props {
-	favoriteFolders: string[];
-	i18n: DiskBrowserI18n;
+  favoriteFolders: string[];
+  i18n: DiskBrowserI18n;
 }
 
 defineProps<Props>();
 defineEmits<{
-	navigate: [path: string];
-	remove: [path: string];
+  navigate: [path: string];
+  remove: [path: string];
 }>();
 </script>
 

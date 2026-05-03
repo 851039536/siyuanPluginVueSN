@@ -41,29 +41,29 @@ import Button from "@/components/Button.vue";
 import type { Feature } from "../types";
 
 interface Props {
-	feature: Feature;
-	i18n: any;
+  feature: Feature;
+  i18n: any;
 }
 
 interface Emits {
-	(e: "action", action: string): void;
-	(e: "toggle", featureId: string, enabled: boolean): void;
+  (e: "action", action: string): void;
+  (e: "toggle", featureId: string, enabled: boolean): void;
 }
 
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 const handleCardClick = () => {
-	if (!props.feature.enabled) {
-		showMessage(props.i18n.featureDisabled || "该功能未启用", 2000, "info");
-	}
+  if (!props.feature.enabled) {
+    showMessage(props.i18n.featureDisabled || "该功能未启用", 2000, "info");
+  }
 };
 
 const handleToggle = (newValue: boolean) => {
-	emit("toggle", props.feature.id, newValue);
+  emit("toggle", props.feature.id, newValue);
 };
 
 const handleAction = (actionKey: string) => {
-	emit("action", actionKey);
+  emit("action", actionKey);
 };
 </script>

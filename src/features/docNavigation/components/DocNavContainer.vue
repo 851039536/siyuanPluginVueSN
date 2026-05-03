@@ -91,34 +91,34 @@ import IconWrapper from "@/components/IconWrapper.vue";
 import { useDocNavigation } from "../composables/useDocNavigation";
 
 const props = defineProps<{
-	docId: string;
+  docId: string;
 }>();
 
 const {
-	parentDoc,
-	childDocs,
-	breadcrumbs,
-	siblingDocs,
-	hasNavigation,
-	hasBreadcrumbs,
-	hasSiblings,
-	isExpanded,
-	visibleChildren,
-	hiddenChildren,
-	loadHierarchy,
-	toggleExpand,
-	openDoc,
-	stripHtml,
+  parentDoc,
+  childDocs,
+  breadcrumbs,
+  siblingDocs,
+  hasNavigation,
+  hasBreadcrumbs,
+  hasSiblings,
+  isExpanded,
+  visibleChildren,
+  hiddenChildren,
+  loadHierarchy,
+  toggleExpand,
+  openDoc,
+  stripHtml,
 } = useDocNavigation();
 
 watch(
-	() => props.docId,
-	(newDocId) => {
-		if (newDocId) {
-			loadHierarchy(newDocId);
-		}
-	},
-	{ immediate: true },
+  () => props.docId,
+  (newDocId) => {
+    if (newDocId) {
+      loadHierarchy(newDocId);
+    }
+  },
+  { immediate: true },
 );
 </script>
 

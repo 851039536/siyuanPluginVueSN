@@ -162,8 +162,8 @@ import { ConnectionStatus, FileList, SyncLogs } from "./components";
 import { formatTime } from "./utils";
 
 interface Props {
-	config: WebDAVConfig;
-	i18n: Record<string, any>;
+  config: WebDAVConfig;
+  i18n: Record<string, any>;
 }
 
 const props = defineProps<Props>();
@@ -171,118 +171,118 @@ const props = defineProps<Props>();
 const localConfig = ref<WebDAVConfig>({ ...props.config });
 const i18nRef = ref({ value: props.i18n });
 const {
-	state,
-	testingConnection,
-	syncing,
-	passwordVisible,
-	isConfigured,
-	statusText,
-	testConnection,
-	fetchFileList,
-	syncNow,
-	clearLogs: clearLogsAction,
+  state,
+  testingConnection,
+  syncing,
+  passwordVisible,
+  isConfigured,
+  statusText,
+  testConnection,
+  fetchFileList,
+  syncNow,
+  clearLogs: clearLogsAction,
 } = useWebDAV(i18nRef);
 
 watch(
-	() => props.i18n,
-	(newI18n) => {
-		i18nRef.value.value = newI18n;
-	},
-	{ deep: true },
+  () => props.i18n,
+  (newI18n) => {
+    i18nRef.value.value = newI18n;
+  },
+  { deep: true },
 );
 
 let saveTimeout: ReturnType<typeof setTimeout> | null = null;
 
 const debouncedSave = () => {
-	if (saveTimeout) {
-		clearTimeout(saveTimeout);
-	}
-	saveTimeout = setTimeout(() => {
-		saveConfig();
-	}, 500);
+  if (saveTimeout) {
+    clearTimeout(saveTimeout);
+  }
+  saveTimeout = setTimeout(() => {
+    saveConfig();
+  }, 500);
 };
 
 const saveConfig = () => {
-	emitCustomEvent("updateWebDAVConfig", { config: localConfig.value });
+  emitCustomEvent("updateWebDAVConfig", { config: localConfig.value });
 };
 
 const handleTestConnection = async () => {
-	if (!localConfig.value.serverUrl) {
-		showMessage(
-			props.i18n.pleaseEnterServerUrl || "请输入服务器地址",
-			3000,
-			"error",
-		);
-		return;
-	}
-	await testConnection(localConfig.value);
-	if (state.connectionStatus === "connected") {
-		showMessage(props.i18n.connectionSuccess || "连接成功", 3000, "info");
-	}
+  if (!localConfig.value.serverUrl) {
+    showMessage(
+      props.i18n.pleaseEnterServerUrl || "请输入服务器地址",
+      3000,
+      "error",
+    );
+    return;
+  }
+  await testConnection(localConfig.value);
+  if (state.connectionStatus === "connected") {
+    showMessage(props.i18n.connectionSuccess || "连接成功", 3000, "info");
+  }
 };
 
 const handleSyncNow = async () => {
-	const success = await syncNow(localConfig.value);
-	if (success) {
-		// showMessage(props.i18n.syncCompleted || '同步完成', 3000, 'success')
-	}
+  const success = await syncNow(localConfig.value);
+  if (success) {
+    // showMessage(props.i18n.syncCompleted || '同步完成', 3000, 'success')
+  }
 };
 
 const handleRefreshFileList = async () => {
-	await fetchFileList(localConfig.value);
+  await fetchFileList(localConfig.value);
 };
 
 const handleNavigate = async (path: string) => {
-	await fetchFileList(localConfig.value, path);
+  await fetchFileList(localConfig.value, path);
 };
 
 const handleDownload = async (file: any) => {
-	try {
-		const blob = await webDAVService.downloadFile(localConfig.value, file);
+  try {
+    const blob = await webDAVService.downloadFile(localConfig.value, file);
 
-		if (blob) {
-			webDAVService.downloadBlob(blob, file.name);
-		} else {
-			showMessage(props.i18n.downloadFailed || "下载失败", 3000, "error");
-		}
-	} catch (error) {
-		console.error("[WebDAV] 下载错误:", error);
-		showMessage(props.i18n.downloadFailed || "下载失败", 3000, "error");
-	}
+    if (blob) {
+      webDAVService.downloadBlob(blob, file.name);
+    } else {
+      showMessage(props.i18n.downloadFailed || "下载失败", 3000, "error");
+    }
+  } catch (error) {
+    console.error("[WebDAV] 下载错误:", error);
+    showMessage(props.i18n.downloadFailed || "下载失败", 3000, "error");
+  }
 };
 
 const closePanel = () => {
-	emitCustomEvent("closeWebDAV");
+  emitCustomEvent("closeWebDAV");
 };
 
 watch(
-	() => props.config,
-	(newConfig) => {
-		localConfig.value = { ...newConfig };
-	},
-	{ deep: true },
+  () => props.config,
+  (newConfig) => {
+    localConfig.value = { ...newConfig };
+  },
+  { deep: true },
 );
 
 onMounted(() => {
-	state.connectionStatus = "unknown";
-	state.fileList = [];
-	state.currentPath = "";
-	state.syncLogs = [];
-	window.addEventListener("webDAVConfigUpdated", handleConfigUpdate);
+  state.connectionStatus = "unknown";
+  state.fileList = [];
+  state.currentPath = "";
+  state.syncLogs = [];
+  window.addEventListener("webDAVConfigUpdated", handleConfigUpdate);
 });
 
 onUnmounted(() => {
-	window.removeEventListener("webDAVConfigUpdated", handleConfigUpdate);
-	if (saveTimeout) {
-		clearTimeout(saveTimeout);
-	}
+  window.removeEventListener("webDAVConfigUpdated", handleConfigUpdate);
+  if (saveTimeout) {
+    clearTimeout(saveTimeout);
+  }
 });
 
 const handleConfigUpdate = (event: CustomEvent) => {
-	const { config } = event.detail;
-	if (config) {
-		localConfig.value = { ...config };
-	}
+  const { config } = event.detail;
+  if (config) {
+    localConfig.value = { ...config };
+  }
 };
 </script>
 

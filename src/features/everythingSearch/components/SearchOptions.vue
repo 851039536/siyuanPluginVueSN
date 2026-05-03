@@ -119,20 +119,20 @@ import Button from "@/components/Button.vue";
 import type { SearchOptions } from "../types";
 
 interface Props {
-	/** 搜索选项 */
-	options: SearchOptions;
-	/** 可用盘符列表 */
-	availableDrives: string[];
+  /** 搜索选项 */
+  options: SearchOptions;
+  /** 可用盘符列表 */
+  availableDrives: string[];
 }
 
 interface Emits {
-	(
-		e: "update:options",
-		key: keyof SearchOptions,
-		value: SearchOptions[keyof SearchOptions],
-	): void;
-	(e: "driveChange", drive: string): void;
-	(e: "refreshDrives"): void;
+  (
+    e: "update:options",
+    key: keyof SearchOptions,
+    value: SearchOptions[keyof SearchOptions],
+  ): void;
+  (e: "driveChange", drive: string): void;
+  (e: "refreshDrives"): void;
 }
 
 const props = defineProps<Props>();
@@ -140,49 +140,49 @@ const emit = defineEmits<Emits>();
 
 /** 最大结果选项 */
 const maxResultsOptions = computed(() => [
-	{ value: 50, label: "50" },
-	{ value: 100, label: "100" },
-	{ value: 200, label: "200" },
-	{ value: 500, label: "500" },
+  { value: 50, label: "50" },
+  { value: 100, label: "100" },
+  { value: 200, label: "200" },
+  { value: 500, label: "500" },
 ]);
 
 /** 防抖延迟选项 */
 const debounceOptions = computed(() => [
-	{ value: 200, label: "200ms" },
-	{ value: 500, label: "500ms" },
-	{ value: 1000, label: "1s" },
+  { value: 200, label: "200ms" },
+  { value: 500, label: "500ms" },
+  { value: 1000, label: "1s" },
 ]);
 
 /** 排序选项 */
 const sortOptions = computed(() => [
-	{ value: "date_modified", label: "修改时间" },
-	{ value: "name", label: "名称" },
-	{ value: "path", label: "路径" },
-	{ value: "size", label: "大小" },
+  { value: "date_modified", label: "修改时间" },
+  { value: "name", label: "名称" },
+  { value: "path", label: "路径" },
+  { value: "size", label: "大小" },
 ]);
 
 /** 盘符选项 */
 const driveOptions = computed(() => [
-	{ value: "", label: "所有盘符" },
-	...props.availableDrives.map((drive) => ({ value: drive, label: drive })),
+  { value: "", label: "所有盘符" },
+  ...props.availableDrives.map((drive) => ({ value: drive, label: drive })),
 ]);
 
 /** 更新选项 */
 const updateOption = (
-	key: keyof SearchOptions,
-	value: SearchOptions[keyof SearchOptions],
+  key: keyof SearchOptions,
+  value: SearchOptions[keyof SearchOptions],
 ) => {
-	emit("update:options", key, value);
+  emit("update:options", key, value);
 };
 
 /** 处理盘符变化 */
 const handleDriveChange = (value: string | number | boolean | null) => {
-	emit("driveChange", String(value || ""));
+  emit("driveChange", String(value || ""));
 };
 
 /** 处理刷新盘符 */
 const handleRefreshDrives = () => {
-	emit("refreshDrives");
+  emit("refreshDrives");
 };
 </script>
 

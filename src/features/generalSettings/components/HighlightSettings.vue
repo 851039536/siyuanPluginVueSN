@@ -139,8 +139,8 @@ import SiSwitch from "@/components/Switch.vue";
 import { GeneralSettingsStorage } from "@/features/generalSettings/types/storage";
 
 const props = defineProps<{
-	i18n?: Record<string, string>;
-	plugin?: any;
+  i18n?: Record<string, string>;
+  plugin?: any;
 }>();
 
 const enableHighlight = ref(true);
@@ -154,67 +154,67 @@ const maxLetterLength = ref(100);
 const storage = ref<GeneralSettingsStorage | null>(null);
 
 const loadSettings = async () => {
-	if (!storage.value) return;
-	try {
-		const settings = await storage.value.highlight.loadOrDefault();
-		if (settings) {
-			enableHighlight.value = settings.enableHighlight ?? true;
-			backgroundColor.value = settings.backgroundColor ?? "rgb(255, 220, 60)";
-			fontSize.value = settings.fontSize?.toString() ?? "0";
-			bold.value = settings.bold ?? false;
-			minTextLength.value = settings.minTextLength ?? 1;
-			minLetterLength.value = settings.minLetterLength ?? 1;
-			maxTextLength.value = settings.maxTextLength ?? 50;
-			maxLetterLength.value = settings.maxLetterLength ?? 100;
-		}
-	} catch (e) {
-		console.error("加载高亮设置失败:", e);
-	}
+  if (!storage.value) return;
+  try {
+    const settings = await storage.value.highlight.loadOrDefault();
+    if (settings) {
+      enableHighlight.value = settings.enableHighlight ?? true;
+      backgroundColor.value = settings.backgroundColor ?? "rgb(255, 220, 60)";
+      fontSize.value = settings.fontSize?.toString() ?? "0";
+      bold.value = settings.bold ?? false;
+      minTextLength.value = settings.minTextLength ?? 1;
+      minLetterLength.value = settings.minLetterLength ?? 1;
+      maxTextLength.value = settings.maxTextLength ?? 50;
+      maxLetterLength.value = settings.maxLetterLength ?? 100;
+    }
+  } catch (e) {
+    console.error("加载高亮设置失败:", e);
+  }
 };
 
 const handleToggleChange = () => {
-	try {
-		const generalSettings = (props.plugin as any).__generalSettings;
-		if (generalSettings) {
-			generalSettings.updateHighlight(enableHighlight.value);
-		}
+  try {
+    const generalSettings = (props.plugin as any).__generalSettings;
+    if (generalSettings) {
+      generalSettings.updateHighlight(enableHighlight.value);
+    }
 
-		showMessage(
-			enableHighlight.value
-				? (props.i18n?.highlightEnabled ?? "双击高亮功能已启用")
-				: (props.i18n?.highlightDisabled ?? "双击高亮功能已禁用"),
-			2000,
-			"info",
-		);
-	} catch (e) {
-		console.error("保存高亮设置失败:", e);
-	}
+    showMessage(
+      enableHighlight.value
+        ? (props.i18n?.highlightEnabled ?? "双击高亮功能已启用")
+        : (props.i18n?.highlightDisabled ?? "双击高亮功能已禁用"),
+      2000,
+      "info",
+    );
+  } catch (e) {
+    console.error("保存高亮设置失败:", e);
+  }
 };
 
 const handleStyleChange = () => {
-	try {
-		const generalSettings = (props.plugin as any).__generalSettings;
-		if (generalSettings) {
-			generalSettings.updateHighlightOptions({
-				backgroundColor: backgroundColor.value,
-				fontSize: Number(fontSize.value),
-				bold: bold.value,
-				minTextLength: minTextLength.value,
-				minLetterLength: minLetterLength.value,
-				maxTextLength: maxTextLength.value,
-				maxLetterLength: maxLetterLength.value,
-			});
-		}
-	} catch (e) {
-		console.error("更新高亮样式失败:", e);
-	}
+  try {
+    const generalSettings = (props.plugin as any).__generalSettings;
+    if (generalSettings) {
+      generalSettings.updateHighlightOptions({
+        backgroundColor: backgroundColor.value,
+        fontSize: Number(fontSize.value),
+        bold: bold.value,
+        minTextLength: minTextLength.value,
+        minLetterLength: minLetterLength.value,
+        maxTextLength: maxTextLength.value,
+        maxLetterLength: maxLetterLength.value,
+      });
+    }
+  } catch (e) {
+    console.error("更新高亮样式失败:", e);
+  }
 };
 
 onMounted(() => {
-	if (props.plugin) {
-		storage.value = new GeneralSettingsStorage(props.plugin);
-	}
-	loadSettings();
+  if (props.plugin) {
+    storage.value = new GeneralSettingsStorage(props.plugin);
+  }
+  loadSettings();
 });
 
 defineExpose({ loadSettings, enableHighlight });

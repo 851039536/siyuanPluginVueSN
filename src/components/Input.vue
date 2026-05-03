@@ -77,97 +77,97 @@ import IconWrapper from "@/components/IconWrapper.vue";
 import type { IconKey } from "@/config/icons";
 
 type InputType =
-	| "text"
-	| "password"
-	| "email"
-	| "number"
-	| "tel"
-	| "url"
-	| "search"
-	| "textarea";
+  | "text"
+  | "password"
+  | "email"
+  | "number"
+  | "tel"
+  | "url"
+  | "search"
+  | "textarea";
 type InputSize = "small" | "medium" | "large";
 
 interface Props {
-	/** 绑定值 */
-	modelValue?: string | number | null;
-	/** 输入框类型 */
-	type?: InputType;
-	/** 尺寸 */
-	size?: InputSize;
-	/** 占位文本 */
-	placeholder?: string;
-	/** 禁用状态 */
-	disabled?: boolean;
-	/** 只读状态 */
-	readonly?: boolean;
-	/** 标签文本 */
-	label?: string;
-	/** 是否必填 */
-	required?: boolean;
-	/** 提示文本 */
-	hint?: string;
-	/** 错误文本 */
-	error?: string;
-	/** 前缀图标 */
-	prefixIcon?: IconKey;
-	/** 后缀图标 */
-	suffixIcon?: IconKey;
-	/** 图标大小 */
-	iconSize?: number;
-	/** 最大长度 */
-	maxlength?: number;
-	/** 最小长度 */
-	minlength?: number;
-	/** 自动完成 */
-	autocomplete?: string;
-	/** 正则验证模式 */
-	pattern?: string;
-	/** 是否可清空（显示清除按钮） */
-	clearable?: boolean;
-	/** 是否显示密码切换 */
-	showPassword?: boolean;
-	/** 是否显示字符计数 */
-	showCount?: boolean;
-	/** 是否自动获得焦点 */
-	autofocus?: boolean;
-	/** 原生 name 属性 */
-	name?: string;
-	/** 原生 form 属性 */
-	form?: string;
+  /** 绑定值 */
+  modelValue?: string | number | null;
+  /** 输入框类型 */
+  type?: InputType;
+  /** 尺寸 */
+  size?: InputSize;
+  /** 占位文本 */
+  placeholder?: string;
+  /** 禁用状态 */
+  disabled?: boolean;
+  /** 只读状态 */
+  readonly?: boolean;
+  /** 标签文本 */
+  label?: string;
+  /** 是否必填 */
+  required?: boolean;
+  /** 提示文本 */
+  hint?: string;
+  /** 错误文本 */
+  error?: string;
+  /** 前缀图标 */
+  prefixIcon?: IconKey;
+  /** 后缀图标 */
+  suffixIcon?: IconKey;
+  /** 图标大小 */
+  iconSize?: number;
+  /** 最大长度 */
+  maxlength?: number;
+  /** 最小长度 */
+  minlength?: number;
+  /** 自动完成 */
+  autocomplete?: string;
+  /** 正则验证模式 */
+  pattern?: string;
+  /** 是否可清空（显示清除按钮） */
+  clearable?: boolean;
+  /** 是否显示密码切换 */
+  showPassword?: boolean;
+  /** 是否显示字符计数 */
+  showCount?: boolean;
+  /** 是否自动获得焦点 */
+  autofocus?: boolean;
+  /** 原生 name 属性 */
+  name?: string;
+  /** 原生 form 属性 */
+  form?: string;
 }
 
 interface Emits {
-	(e: "update:modelValue", value: string | number | null): void;
-	(e: "input", value: string | number, event: Event): void;
-	(e: "change", value: string | number, event: Event): void;
-	(e: "focus", event: FocusEvent): void;
-	(e: "blur", event: FocusEvent): void;
-	(e: "clear"): void;
-	(e: "keydown", event: KeyboardEvent): void;
+  (e: "update:modelValue", value: string | number | null): void;
+  (e: "input", value: string | number, event: Event): void;
+  (e: "change", value: string | number, event: Event): void;
+  (e: "focus", event: FocusEvent): void;
+  (e: "blur", event: FocusEvent): void;
+  (e: "clear"): void;
+  (e: "keydown", event: KeyboardEvent): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-	type: "text",
-	size: "medium",
-	placeholder: "",
-	disabled: false,
-	readonly: false,
-	modelValue: null,
-	required: false,
-	iconSize: 16,
-	clearable: false,
-	showPassword: false,
-	showCount: false,
-	autofocus: false,
-	autocomplete: "off",
+  type: "text",
+  size: "medium",
+  placeholder: "",
+  disabled: false,
+  readonly: false,
+  modelValue: null,
+  required: false,
+  iconSize: 16,
+  clearable: false,
+  showPassword: false,
+  showCount: false,
+  autofocus: false,
+  autocomplete: "off",
 });
 
 const emit = defineEmits<Emits>();
 const attrs = useAttrs();
 
 const containerAttrs = computed(() => {
-	const { class: className, style, ...rest } = attrs;
-	return rest;
+  const { class: className, style, ...rest } = attrs;
+  return rest;
 });
 
 const inputRef = ref<HTMLInputElement | HTMLTextAreaElement>();
@@ -176,102 +176,102 @@ const passwordVisible = ref(false);
 const isTextarea = computed(() => props.type === "textarea");
 
 const inputType = computed(() => {
-	if (props.type === "password" && passwordVisible.value) {
-		return "text";
-	}
-	return props.type;
+  if (props.type === "password" && passwordVisible.value) {
+    return "text";
+  }
+  return props.type;
 });
 
 const currentLength = computed(() => {
-	if (props.modelValue === null || props.modelValue === undefined) {
-		return 0;
-	}
-	return String(props.modelValue).length;
+  if (props.modelValue === null || props.modelValue === undefined) {
+    return 0;
+  }
+  return String(props.modelValue).length;
 });
 
 const inputClasses = computed(() => [
-	"si-input",
-	`si-input--${props.size}`,
-	{
-		"si-input--disabled": props.disabled,
-		"si-input--readonly": props.readonly,
-		"si-input--error": props.error,
-		"si-input--with-prefix": props.prefixIcon,
-		"si-input--with-suffix":
-			props.suffixIcon ||
-			(props.clearable && props.modelValue) ||
-			(props.showPassword && props.type === "password"),
-	},
+  "si-input",
+  `si-input--${props.size}`,
+  {
+    "si-input--disabled": props.disabled,
+    "si-input--readonly": props.readonly,
+    "si-input--error": props.error,
+    "si-input--with-prefix": props.prefixIcon,
+    "si-input--with-suffix":
+      props.suffixIcon ||
+      (props.clearable && props.modelValue) ||
+      (props.showPassword && props.type === "password"),
+  },
 ]);
 
 const handleInput = (event: Event) => {
-	const target = event.target as HTMLInputElement | HTMLTextAreaElement;
-	const value = target.value;
-	emit("update:modelValue", value);
-	emit("input", value, event);
+  const target = event.target as HTMLInputElement | HTMLTextAreaElement;
+  const value = target.value;
+  emit("update:modelValue", value);
+  emit("input", value, event);
 };
 
 const handleChange = (event: Event) => {
-	const target = event.target as HTMLInputElement | HTMLTextAreaElement;
-	emit("change", target.value, event);
+  const target = event.target as HTMLInputElement | HTMLTextAreaElement;
+  emit("change", target.value, event);
 };
 
 const handleFocus = (event: FocusEvent) => {
-	emit("focus", event);
+  emit("focus", event);
 };
 
 const handleBlur = (event: FocusEvent) => {
-	emit("blur", event);
+  emit("blur", event);
 };
 
 const handleKeydown = (event: KeyboardEvent) => {
-	emit("keydown", event);
+  emit("keydown", event);
 };
 
 const handleClear = () => {
-	emit("update:modelValue", "");
-	emit("clear");
+  emit("update:modelValue", "");
+  emit("clear");
 };
 
 const togglePasswordVisibility = () => {
-	passwordVisible.value = !passwordVisible.value;
+  passwordVisible.value = !passwordVisible.value;
 };
 
 const focus = () => {
-	nextTick(() => {
-		inputRef.value?.focus();
-	});
+  nextTick(() => {
+    inputRef.value?.focus();
+  });
 };
 
 const blur = () => {
-	nextTick(() => {
-		inputRef.value?.blur();
-	});
+  nextTick(() => {
+    inputRef.value?.blur();
+  });
 };
 
 const select = () => {
-	nextTick(() => {
-		inputRef.value?.select();
-	});
+  nextTick(() => {
+    inputRef.value?.select();
+  });
 };
 
 watch(
-	() => props.autofocus,
-	(newVal) => {
-		if (newVal) {
-			nextTick(() => {
-				inputRef.value?.focus();
-			});
-		}
-	},
-	{ immediate: true },
+  () => props.autofocus,
+  (newVal) => {
+    if (newVal) {
+      nextTick(() => {
+        inputRef.value?.focus();
+      });
+    }
+  },
+  { immediate: true },
 );
 
 defineExpose({
-	focus,
-	blur,
-	select,
-	inputElement: inputRef,
+  focus,
+  blur,
+  select,
+  inputElement: inputRef,
 });
 </script>
 

@@ -42,81 +42,81 @@ import Input from "@/components/Input.vue";
 import type { ShortcutFormData, ShortcutInfo } from "../types";
 
 interface Props {
-	visible: boolean;
-	isEdit: boolean;
-	formData: ShortcutFormData;
-	titleLabel?: string;
-	editTitleLabel?: string;
-	nameLabel?: string;
-	namePlaceholder?: string;
-	descLabel?: string;
-	descPlaceholder?: string;
-	keysLabel?: string;
-	keysPlaceholder?: string;
-	groupLabel?: string;
-	groupPlaceholder?: string;
-	cancelText?: string;
-	confirmText?: string;
-	fillRequiredText?: string;
+  visible: boolean;
+  isEdit: boolean;
+  formData: ShortcutFormData;
+  titleLabel?: string;
+  editTitleLabel?: string;
+  nameLabel?: string;
+  namePlaceholder?: string;
+  descLabel?: string;
+  descPlaceholder?: string;
+  keysLabel?: string;
+  keysPlaceholder?: string;
+  groupLabel?: string;
+  groupPlaceholder?: string;
+  cancelText?: string;
+  confirmText?: string;
+  fillRequiredText?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-	titleLabel: "添加快捷键",
-	editTitleLabel: "编辑快捷键",
-	nameLabel: "快捷键名称",
-	namePlaceholder: "输入快捷键名称",
-	descLabel: "描述",
-	descPlaceholder: "输入功能描述",
-	keysLabel: "快捷键",
-	keysPlaceholder: "例如: Ctrl+K",
-	groupLabel: "分组",
-	groupPlaceholder: "输入分组名称",
-	cancelText: "取消",
-	confirmText: "确认",
-	fillRequiredText: "请填写必填项",
+  titleLabel: "添加快捷键",
+  editTitleLabel: "编辑快捷键",
+  nameLabel: "快捷键名称",
+  namePlaceholder: "输入快捷键名称",
+  descLabel: "描述",
+  descPlaceholder: "输入功能描述",
+  keysLabel: "快捷键",
+  keysPlaceholder: "例如: Ctrl+K",
+  groupLabel: "分组",
+  groupPlaceholder: "输入分组名称",
+  cancelText: "取消",
+  confirmText: "确认",
+  fillRequiredText: "请填写必填项",
 });
 
 const emit = defineEmits<{
-	close: [];
-	confirm: [shortcut: ShortcutInfo];
+  close: [];
+  confirm: [shortcut: ShortcutInfo];
 }>();
 
 const localFormData = ref<ShortcutFormData>({
-	id: "",
-	name: "",
-	description: "",
-	keys: "",
-	group: "自定义",
+  id: "",
+  name: "",
+  description: "",
+  keys: "",
+  group: "自定义",
 });
 
 watch(
-	() => props.formData,
-	(val) => {
-		localFormData.value = { ...val };
-	},
-	{ immediate: true, deep: true },
+  () => props.formData,
+  (val) => {
+    localFormData.value = { ...val };
+  },
+  { immediate: true, deep: true },
 );
 
 const title = computed(() =>
-	props.isEdit ? props.editTitleLabel : props.titleLabel,
+  props.isEdit ? props.editTitleLabel : props.titleLabel,
 );
 
 function handleConfirm() {
-	if (!localFormData.value.name || !localFormData.value.keys) {
-		alert(props.fillRequiredText);
-		return;
-	}
+  if (!localFormData.value.name || !localFormData.value.keys) {
+    alert(props.fillRequiredText);
+    return;
+  }
 
-	const shortcut: ShortcutInfo = {
-		id: localFormData.value.id || `custom_${Date.now()}`,
-		name: localFormData.value.name,
-		description: localFormData.value.description,
-		keys: localFormData.value.keys,
-		category: "custom",
-		group: localFormData.value.group || "自定义",
-	};
+  const shortcut: ShortcutInfo = {
+    id: localFormData.value.id || `custom_${Date.now()}`,
+    name: localFormData.value.name,
+    description: localFormData.value.description,
+    keys: localFormData.value.keys,
+    category: "custom",
+    group: localFormData.value.group || "自定义",
+  };
 
-	emit("confirm", shortcut);
+  emit("confirm", shortcut);
 }
 </script>
 

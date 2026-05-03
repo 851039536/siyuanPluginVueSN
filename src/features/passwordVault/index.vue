@@ -355,31 +355,31 @@ import Select from "@/components/Select.vue";
 import PasswordVaultLogin from "./components/PasswordVaultLogin.vue";
 import HelpDialog from "./components/HelpDialog.vue";
 import type {
-	PasswordEntry,
-	PasswordCategory,
-	StoredPasswordEntry,
+  PasswordEntry,
+  PasswordCategory,
+  StoredPasswordEntry,
 } from "./types";
 import { PasswordVaultStorage, STORAGE_KEYS } from "./types/storage";
 import { usePlugin } from "@/main";
 import {
-	deriveKey,
-	encryptPassword,
-	decryptPassword,
-	hashMasterPassword,
-	generateVerifySalt,
+  deriveKey,
+  encryptPassword,
+  decryptPassword,
+  hashMasterPassword,
+  generateVerifySalt,
 } from "./utils/crypto";
 
 // Props
 interface Props {
-	visible: boolean;
+  visible: boolean;
 }
 
 const props = defineProps<Props>();
 
 // Emits
 const emit = defineEmits<{
-	(e: "update:visible", value: boolean): void;
-	(e: "close"): void;
+  (e: "update:visible", value: boolean): void;
+  (e: "close"): void;
 }>();
 
 // 获取插件实例
@@ -417,571 +417,571 @@ const showHelpDialog = ref(false);
 
 const entries = ref<PasswordEntry[]>([]);
 const categories = ref<PasswordCategory[]>([
-	{ id: "default", name: "默认", color: "#b0aea5" }, // 使用品牌中灰色
+  { id: "default", name: "默认", color: "#b0aea5" }, // 使用品牌中灰色
 ]);
 
 const entryForm = reactive({
-	category: "",
-	name: "",
-	account: "",
-	password: "",
-	description: "",
+  category: "",
+  name: "",
+  account: "",
+  password: "",
+  description: "",
 });
 
 // 类别管理
 const showCategoryManager = ref(false);
 const newCategory = reactive({
-	name: "",
-	color: "#d97757", // 使用品牌橙色作为默认
+  name: "",
+  color: "#d97757", // 使用品牌橙色作为默认
 });
 
 // 预设颜色 (Anthropic 品牌色)
 const presetColors = [
-	"#d97757", // 橙色 - Primary accent
-	"#6a9bcc", // 蓝色 - Secondary accent
-	"#788c5d", // 绿色 - Tertiary accent
-	"#b0aea5", // 中灰 - Secondary
-	"#141413", // 深色 - Primary text
-	"#e8e6dc", // 浅灰 - Subtle backgrounds
+  "#d97757", // 橙色 - Primary accent
+  "#6a9bcc", // 蓝色 - Secondary accent
+  "#788c5d", // 绿色 - Tertiary accent
+  "#b0aea5", // 中灰 - Secondary
+  "#141413", // 深色 - Primary text
+  "#e8e6dc", // 浅灰 - Subtle backgrounds
 ];
 
 // 使用 Map 缓存类别查找，优化性能 (O(n) -> O(1))
 const categoriesMap = computed(() => {
-	const map = new Map<string, PasswordCategory>();
-	for (const cat of categories.value) {
-		map.set(cat.id, cat);
-	}
-	return map;
+  const map = new Map<string, PasswordCategory>();
+  for (const cat of categories.value) {
+    map.set(cat.id, cat);
+  }
+  return map;
 });
 
 // 加载保存的密码验证信息
 async function loadMasterPasswordHash() {
-	try {
-		const {
-			hash,
-			verifySalt,
-			encryptionSalt: encSalt,
-			hint,
-		} = await storage.loadVerificationData();
+  try {
+    const {
+      hash,
+      verifySalt,
+      encryptionSalt: encSalt,
+      hint,
+    } = await storage.loadVerificationData();
 
-		if (hash && verifySalt && encSalt) {
-			savedHash.value = hash;
-			passwordHint.value = hint || "";
-			encryptionSalt.value = encSalt;
-			isFirstTime.value = false;
-		} else {
-			isFirstTime.value = true;
-		}
-	} catch (error) {
-		console.error("Failed to load master password:", error);
-		isFirstTime.value = true;
-	}
+    if (hash && verifySalt && encSalt) {
+      savedHash.value = hash;
+      passwordHint.value = hint || "";
+      encryptionSalt.value = encSalt;
+      isFirstTime.value = false;
+    } else {
+      isFirstTime.value = true;
+    }
+  } catch (error) {
+    console.error("Failed to load master password:", error);
+    isFirstTime.value = true;
+  }
 }
 
 // 处理登录
 async function handleLogin(inputPassword: string, hint?: string) {
-	if (!inputPassword.trim()) return;
+  if (!inputPassword.trim()) return;
 
-	if (isFirstTime.value) {
-		// 首次创建密码 - 生成盐值并保存
-		const verifySalt = generateVerifySalt();
-		const encryptSalt = generateVerifySalt();
-		const hash = await hashMasterPassword(inputPassword, verifySalt);
+  if (isFirstTime.value) {
+    // 首次创建密码 - 生成盐值并保存
+    const verifySalt = generateVerifySalt();
+    const encryptSalt = generateVerifySalt();
+    const hash = await hashMasterPassword(inputPassword, verifySalt);
 
-		// 更新密码提示
-		if (hint) {
-			passwordHint.value = hint;
-		}
+    // 更新密码提示
+    if (hint) {
+      passwordHint.value = hint;
+    }
 
-		// 保存验证信息和加密盐值
-		await storage.saveInitData({
-			hash,
-			verifySalt,
-			encryptionSalt: encryptSalt,
-			hint: passwordHint.value,
-		});
+    // 保存验证信息和加密盐值
+    await storage.saveInitData({
+      hash,
+      verifySalt,
+      encryptionSalt: encryptSalt,
+      hint: passwordHint.value,
+    });
 
-		savedHash.value = hash;
-		encryptionSalt.value = encryptSalt;
-		isFirstTime.value = false;
-		isLoggedIn.value = true;
+    savedHash.value = hash;
+    encryptionSalt.value = encryptSalt;
+    isFirstTime.value = false;
+    isLoggedIn.value = true;
 
-		// 派生加密密钥
-		encryptionKey.value = await deriveKey(inputPassword, encryptSalt);
+    // 派生加密密钥
+    encryptionKey.value = await deriveKey(inputPassword, encryptSalt);
 
-		await loadEntries();
-		await loadCategories();
-	} else {
-		// 验证密码 - 获取保存的盐值
-		const verifySalt = await storage.verifySalt.load();
-		const encryptSalt = await storage.encryptionSalt.load();
+    await loadEntries();
+    await loadCategories();
+  } else {
+    // 验证密码 - 获取保存的盐值
+    const verifySalt = await storage.verifySalt.load();
+    const encryptSalt = await storage.encryptionSalt.load();
 
-		if (!verifySalt || !encryptSalt) {
-			loginError.value = "数据损坏，请联系开发者";
-			return;
-		}
+    if (!verifySalt || !encryptSalt) {
+      loginError.value = "数据损坏，请联系开发者";
+      return;
+    }
 
-		const hash = await hashMasterPassword(inputPassword, verifySalt);
+    const hash = await hashMasterPassword(inputPassword, verifySalt);
 
-		if (hash === savedHash.value) {
-			isLoggedIn.value = true;
-			loginError.value = "";
-			encryptionSalt.value = encryptSalt;
+    if (hash === savedHash.value) {
+      isLoggedIn.value = true;
+      loginError.value = "";
+      encryptionSalt.value = encryptSalt;
 
-			// 派生加密密钥
-			encryptionKey.value = await deriveKey(inputPassword, encryptSalt);
+      // 派生加密密钥
+      encryptionKey.value = await deriveKey(inputPassword, encryptSalt);
 
-			await loadEntries();
-			await loadCategories();
-		} else {
-			loginError.value = "密码错误，请重试";
-		}
-	}
+      await loadEntries();
+      await loadCategories();
+    } else {
+      loginError.value = "密码错误，请重试";
+    }
+  }
 }
 
 // 显示忘记密码选项
 async function showForgotPasswordOptions() {
-	// 直接显示密码提示
-	if (passwordHint.value) {
-		showMessage(`密码提示：${passwordHint.value}`, 5000, "info");
-	} else {
-		showMessage(
-			"未设置密码提示。如需重置，请联系开发者或查看插件数据目录手动删除数据",
-			5000,
-			"info",
-		);
-	}
+  // 直接显示密码提示
+  if (passwordHint.value) {
+    showMessage(`密码提示：${passwordHint.value}`, 5000, "info");
+  } else {
+    showMessage(
+      "未设置密码提示。如需重置，请联系开发者或查看插件数据目录手动删除数据",
+      5000,
+      "info",
+    );
+  }
 }
 
 // 导出所有数据（JSON格式，明文）
 async function exportAllData() {
-	if (!entries.value.length) {
-		showMessage("没有数据可导出", 2000, "info");
-		return;
-	}
+  if (!entries.value.length) {
+    showMessage("没有数据可导出", 2000, "info");
+    return;
+  }
 
-	try {
-		const exportData = {
-			version: "1.0",
-			exportDate: new Date().toISOString(),
-			entries: entries.value,
-			categories: categories.value,
-		};
+  try {
+    const exportData = {
+      version: "1.0",
+      exportDate: new Date().toISOString(),
+      entries: entries.value,
+      categories: categories.value,
+    };
 
-		const json = JSON.stringify(exportData, null, 2);
-		const blob = new Blob([json], { type: "application/json" });
-		const url = URL.createObjectURL(blob);
+    const json = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
 
-		const a = document.createElement("a");
-		a.href = url;
-		a.download = `password-vault-backup-${new Date().toISOString().split("T")[0]}.json`;
-		document.body.appendChild(a);
-		a.click();
-		document.body.removeChild(a);
-		URL.revokeObjectURL(url);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `password-vault-backup-${new Date().toISOString().split("T")[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 
-		showMessage("数据已导出，请妥善保管", 3000, "info");
-	} catch (error) {
-		console.error("Export failed:", error);
-		showMessage("导出失败", 2000, "error");
-	}
+    showMessage("数据已导出，请妥善保管", 3000, "info");
+  } catch (error) {
+    console.error("Export failed:", error);
+    showMessage("导出失败", 2000, "error");
+  }
 }
 
 // 打开修改密码弹窗
 function openChangePasswordModal() {
-	oldPassword.value = "";
-	newPassword.value = "";
-	confirmPassword.value = "";
-	showOldPassword.value = false;
-	showNewPassword.value = false;
-	showConfirmPassword.value = false;
-	changePasswordError.value = "";
-	showChangePasswordModal.value = true;
+  oldPassword.value = "";
+  newPassword.value = "";
+  confirmPassword.value = "";
+  showOldPassword.value = false;
+  showNewPassword.value = false;
+  showConfirmPassword.value = false;
+  changePasswordError.value = "";
+  showChangePasswordModal.value = true;
 }
 
 // 关闭修改密码弹窗
 function closeChangePasswordModal() {
-	showChangePasswordModal.value = false;
-	oldPassword.value = "";
-	newPassword.value = "";
-	confirmPassword.value = "";
-	changePasswordError.value = "";
+  showChangePasswordModal.value = false;
+  oldPassword.value = "";
+  newPassword.value = "";
+  confirmPassword.value = "";
+  changePasswordError.value = "";
 }
 
 // 处理修改密码
 async function handleChangePassword() {
-	changePasswordError.value = "";
+  changePasswordError.value = "";
 
-	// 验证输入
-	if (
-		!oldPassword.value.trim() ||
-		!newPassword.value.trim() ||
-		!confirmPassword.value.trim()
-	) {
-		changePasswordError.value = "请填写所有字段";
-		return;
-	}
+  // 验证输入
+  if (
+    !oldPassword.value.trim() ||
+    !newPassword.value.trim() ||
+    !confirmPassword.value.trim()
+  ) {
+    changePasswordError.value = "请填写所有字段";
+    return;
+  }
 
-	if (newPassword.value !== confirmPassword.value) {
-		changePasswordError.value = "两次输入的新密码不一致";
-		return;
-	}
+  if (newPassword.value !== confirmPassword.value) {
+    changePasswordError.value = "两次输入的新密码不一致";
+    return;
+  }
 
-	if (newPassword.value.length < 6) {
-		changePasswordError.value = "新密码至少需要6个字符";
-		return;
-	}
+  if (newPassword.value.length < 6) {
+    changePasswordError.value = "新密码至少需要6个字符";
+    return;
+  }
 
-	if (oldPassword.value === newPassword.value) {
-		changePasswordError.value = "新密码不能与当前密码相同";
-		return;
-	}
+  if (oldPassword.value === newPassword.value) {
+    changePasswordError.value = "新密码不能与当前密码相同";
+    return;
+  }
 
-	try {
-		// 获取当前验证盐值
-		const verifySalt = await storage.verifySalt.load();
-		if (!verifySalt) {
-			changePasswordError.value = "数据损坏";
-			return;
-		}
+  try {
+    // 获取当前验证盐值
+    const verifySalt = await storage.verifySalt.load();
+    if (!verifySalt) {
+      changePasswordError.value = "数据损坏";
+      return;
+    }
 
-		const oldHash = await hashMasterPassword(oldPassword.value, verifySalt);
+    const oldHash = await hashMasterPassword(oldPassword.value, verifySalt);
 
-		// 验证旧密码
-		if (oldHash !== savedHash.value) {
-			changePasswordError.value = "当前密码错误";
-			return;
-		}
+    // 验证旧密码
+    if (oldHash !== savedHash.value) {
+      changePasswordError.value = "当前密码错误";
+      return;
+    }
 
-		// 生成新的盐值和哈希
-		const newVerifySalt = generateVerifySalt();
-		const newEncryptSalt = generateVerifySalt();
-		const newHash = await hashMasterPassword(newPassword.value, newVerifySalt);
+    // 生成新的盐值和哈希
+    const newVerifySalt = generateVerifySalt();
+    const newEncryptSalt = generateVerifySalt();
+    const newHash = await hashMasterPassword(newPassword.value, newVerifySalt);
 
-		// 使用新密码派生新密钥
-		const newKey = await deriveKey(newPassword.value, newEncryptSalt);
+    // 使用新密码派生新密钥
+    const newKey = await deriveKey(newPassword.value, newEncryptSalt);
 
-		// 使用新密钥重新加密所有条目
-		const reEncryptedEntries: StoredPasswordEntry[] = await Promise.all(
-			entries.value.map(async (entry) => {
-				const { encryptedData, iv } = await encryptPassword(
-					entry.password,
-					newKey,
-				);
-				return {
-					id: entry.id,
-					category: entry.category,
-					name: entry.name,
-					account: entry.account,
-					encryptedPassword: encryptedData,
-					iv: iv,
-					description: entry.description,
-					createdAt: entry.createdAt,
-					updatedAt: Date.now(),
-				};
-			}),
-		);
+    // 使用新密钥重新加密所有条目
+    const reEncryptedEntries: StoredPasswordEntry[] = await Promise.all(
+      entries.value.map(async (entry) => {
+        const { encryptedData, iv } = await encryptPassword(
+          entry.password,
+          newKey,
+        );
+        return {
+          id: entry.id,
+          category: entry.category,
+          name: entry.name,
+          account: entry.account,
+          encryptedPassword: encryptedData,
+          iv: iv,
+          description: entry.description,
+          createdAt: entry.createdAt,
+          updatedAt: Date.now(),
+        };
+      }),
+    );
 
-		// 保存所有新数据
-		await Promise.all([
-			storage.masterPassword.save(newHash),
-			storage.verifySalt.save(newVerifySalt),
-			storage.encryptionSalt.save(newEncryptSalt),
-			storage.entries.save(reEncryptedEntries),
-		]);
+    // 保存所有新数据
+    await Promise.all([
+      storage.masterPassword.save(newHash),
+      storage.verifySalt.save(newVerifySalt),
+      storage.encryptionSalt.save(newEncryptSalt),
+      storage.entries.save(reEncryptedEntries),
+    ]);
 
-		// 更新状态
-		savedHash.value = newHash;
-		encryptionSalt.value = newEncryptSalt;
-		encryptionKey.value = newKey;
+    // 更新状态
+    savedHash.value = newHash;
+    encryptionSalt.value = newEncryptSalt;
+    encryptionKey.value = newKey;
 
-		showMessage("密码修改成功，请记住新密码", 3000, "info");
-		closeChangePasswordModal();
-	} catch (error) {
-		console.error("Change password failed:", error);
-		changePasswordError.value = "密码修改失败，请重试";
-	}
+    showMessage("密码修改成功，请记住新密码", 3000, "info");
+    closeChangePasswordModal();
+  } catch (error) {
+    console.error("Change password failed:", error);
+    changePasswordError.value = "密码修改失败，请重试";
+  }
 }
 
 // 加载条目（解密密码）
 async function loadEntries() {
-	try {
-		const stored = await storage.entries.load();
-		if (stored && encryptionKey.value) {
-			// 解密所有条目的密码
-			entries.value = await Promise.all(
-				stored.map(async (entry) => ({
-					...entry,
-					password: await decryptPassword(
-						entry.encryptedPassword,
-						entry.iv,
-						encryptionKey.value!,
-					),
-				})),
-			);
-		} else {
-			entries.value = [];
-		}
-	} catch (error) {
-		console.error("Failed to load entries:", error);
-		entries.value = [];
-	}
+  try {
+    const stored = await storage.entries.load();
+    if (stored && encryptionKey.value) {
+      // 解密所有条目的密码
+      entries.value = await Promise.all(
+        stored.map(async (entry) => ({
+          ...entry,
+          password: await decryptPassword(
+            entry.encryptedPassword,
+            entry.iv,
+            encryptionKey.value!,
+          ),
+        })),
+      );
+    } else {
+      entries.value = [];
+    }
+  } catch (error) {
+    console.error("Failed to load entries:", error);
+    entries.value = [];
+  }
 }
 
 // 加载分类
 async function loadCategories() {
-	try {
-		const stored = await storage.categories.load();
-		if (stored) {
-			categories.value = stored;
-		}
-	} catch (error) {
-		console.error("Failed to load categories:", error);
-	}
+  try {
+    const stored = await storage.categories.load();
+    if (stored) {
+      categories.value = stored;
+    }
+  } catch (error) {
+    console.error("Failed to load categories:", error);
+  }
 }
 
 // 保存条目（加密密码）
 async function saveEntries() {
-	if (!encryptionKey.value) {
-		console.error("No encryption key available");
-		return;
-	}
-	try {
-		// 加密所有条目的密码后存储
-		const storedEntries: StoredPasswordEntry[] = await Promise.all(
-			entries.value.map(async (entry) => {
-				const { encryptedData, iv } = await encryptPassword(
-					entry.password,
-					encryptionKey.value!,
-				);
-				return {
-					id: entry.id,
-					category: entry.category,
-					name: entry.name,
-					account: entry.account,
-					encryptedPassword: encryptedData,
-					iv: iv,
-					description: entry.description,
-					createdAt: entry.createdAt,
-					updatedAt: entry.updatedAt,
-				};
-			}),
-		);
-		await storage.entries.save(storedEntries);
-	} catch (error) {
-		console.error("Failed to save entries:", error);
-	}
+  if (!encryptionKey.value) {
+    console.error("No encryption key available");
+    return;
+  }
+  try {
+    // 加密所有条目的密码后存储
+    const storedEntries: StoredPasswordEntry[] = await Promise.all(
+      entries.value.map(async (entry) => {
+        const { encryptedData, iv } = await encryptPassword(
+          entry.password,
+          encryptionKey.value!,
+        );
+        return {
+          id: entry.id,
+          category: entry.category,
+          name: entry.name,
+          account: entry.account,
+          encryptedPassword: encryptedData,
+          iv: iv,
+          description: entry.description,
+          createdAt: entry.createdAt,
+          updatedAt: entry.updatedAt,
+        };
+      }),
+    );
+    await storage.entries.save(storedEntries);
+  } catch (error) {
+    console.error("Failed to save entries:", error);
+  }
 }
 
 // 保存分类
 async function saveCategories() {
-	try {
-		await storage.categories.save(categories.value);
-	} catch (error) {
-		console.error("Failed to save categories:", error);
-	}
+  try {
+    await storage.categories.save(categories.value);
+  } catch (error) {
+    console.error("Failed to save categories:", error);
+  }
 }
 
 // 过滤条目 - 使用缓存策略优化性能
 const filteredEntries = computed(() => {
-	const allEntries = entries.value;
-	const category = selectedCategory.value;
-	const query = searchQuery.value;
+  const allEntries = entries.value;
+  const category = selectedCategory.value;
+  const query = searchQuery.value;
 
-	// 无过滤条件时直接返回原数组，避免创建新数组
-	if (category === "all" && !query) {
-		return allEntries;
-	}
+  // 无过滤条件时直接返回原数组，避免创建新数组
+  if (category === "all" && !query) {
+    return allEntries;
+  }
 
-	let result = allEntries;
+  let result = allEntries;
 
-	// 先按分类过滤
-	if (category !== "all") {
-		result = result.filter((entry) => entry.category === category);
-	}
+  // 先按分类过滤
+  if (category !== "all") {
+    result = result.filter((entry) => entry.category === category);
+  }
 
-	// 再按搜索词过滤
-	if (query) {
-		const lowerQuery = query.toLowerCase();
-		result = result.filter(
-			(entry) =>
-				entry.name.toLowerCase().includes(lowerQuery) ||
-				entry.account.toLowerCase().includes(lowerQuery) ||
-				entry.description.toLowerCase().includes(lowerQuery),
-		);
-	}
+  // 再按搜索词过滤
+  if (query) {
+    const lowerQuery = query.toLowerCase();
+    result = result.filter(
+      (entry) =>
+        entry.name.toLowerCase().includes(lowerQuery) ||
+        entry.account.toLowerCase().includes(lowerQuery) ||
+        entry.description.toLowerCase().includes(lowerQuery),
+    );
+  }
 
-	return result;
+  return result;
 });
 
 // 获取分类对象 - 使用 Map 缓存实现 O(1) 查找
 const getCategoryById = (id: string): PasswordCategory | undefined => {
-	return categoriesMap.value.get(id);
+  return categoriesMap.value.get(id);
 };
 
 // 打开添加弹窗
 const openAddModal = () => {
-	editingEntry.value = null;
-	entryForm.category = categories.value[0]?.id || "";
-	entryForm.name = "";
-	entryForm.account = "";
-	entryForm.password = "";
-	entryForm.description = "";
-	showFormPassword.value = false;
-	showAddModal.value = true;
+  editingEntry.value = null;
+  entryForm.category = categories.value[0]?.id || "";
+  entryForm.name = "";
+  entryForm.account = "";
+  entryForm.password = "";
+  entryForm.description = "";
+  showFormPassword.value = false;
+  showAddModal.value = true;
 };
 
 // 编辑条目
 const editEntry = (entry: PasswordEntry) => {
-	editingEntry.value = entry;
-	entryForm.category = entry.category;
-	entryForm.name = entry.name;
-	entryForm.account = entry.account;
-	entryForm.password = entry.password;
-	entryForm.description = entry.description;
-	showFormPassword.value = false;
-	showAddModal.value = true;
+  editingEntry.value = entry;
+  entryForm.category = entry.category;
+  entryForm.name = entry.name;
+  entryForm.account = entry.account;
+  entryForm.password = entry.password;
+  entryForm.description = entry.description;
+  showFormPassword.value = false;
+  showAddModal.value = true;
 };
 
 // 关闭添加弹窗
 const closeAddModal = () => {
-	showAddModal.value = false;
-	editingEntry.value = null;
+  showAddModal.value = false;
+  editingEntry.value = null;
 };
 
 // 类别管理方法
 const openCategoryManager = () => {
-	showCategoryManager.value = true;
+  showCategoryManager.value = true;
 };
 
 const closeCategoryManager = () => {
-	showCategoryManager.value = false;
-	newCategory.name = "";
-	newCategory.color = "#3b82f6";
+  showCategoryManager.value = false;
+  newCategory.name = "";
+  newCategory.color = "#3b82f6";
 };
 
 const addCategory = async () => {
-	if (!newCategory.name.trim()) return;
+  if (!newCategory.name.trim()) return;
 
-	// 检查是否已存在同名类别
-	if (categories.value.some((c) => c.name === newCategory.name.trim())) {
-		showMessage("类别已存在", 2000, "error");
-		return;
-	}
+  // 检查是否已存在同名类别
+  if (categories.value.some((c) => c.name === newCategory.name.trim())) {
+    showMessage("类别已存在", 2000, "error");
+    return;
+  }
 
-	const category: PasswordCategory = {
-		id: Date.now().toString(),
-		name: newCategory.name.trim(),
-		color: newCategory.color,
-	};
+  const category: PasswordCategory = {
+    id: Date.now().toString(),
+    name: newCategory.name.trim(),
+    color: newCategory.color,
+  };
 
-	categories.value.push(category);
-	await saveCategories();
+  categories.value.push(category);
+  await saveCategories();
 
-	// 重置表单
-	newCategory.name = "";
-	newCategory.color = presetColors[0];
+  // 重置表单
+  newCategory.name = "";
+  newCategory.color = presetColors[0];
 
-	showMessage("类别已添加", 2000, "info");
+  showMessage("类别已添加", 2000, "info");
 };
 
 const deleteCategory = async (categoryId: string) => {
-	if (categoryId === "default") {
-		showMessage("默认类别不能删除", 2000, "error");
-		return;
-	}
+  if (categoryId === "default") {
+    showMessage("默认类别不能删除", 2000, "error");
+    return;
+  }
 
-	// 检查是否有条目使用该类别
-	const hasEntries = entries.value.some((e) => e.category === categoryId);
-	if (hasEntries) {
-		showMessage("该类别下有密码条目，无法删除", 2000, "error");
-		return;
-	}
+  // 检查是否有条目使用该类别
+  const hasEntries = entries.value.some((e) => e.category === categoryId);
+  if (hasEntries) {
+    showMessage("该类别下有密码条目，无法删除", 2000, "error");
+    return;
+  }
 
-	categories.value = categories.value.filter((c) => c.id !== categoryId);
-	await saveCategories();
+  categories.value = categories.value.filter((c) => c.id !== categoryId);
+  await saveCategories();
 
-	// 如果当前选中的是被删除的类别，重置为全部
-	if (selectedCategory.value === categoryId) {
-		selectedCategory.value = "all";
-	}
+  // 如果当前选中的是被删除的类别，重置为全部
+  if (selectedCategory.value === categoryId) {
+    selectedCategory.value = "all";
+  }
 
-	showMessage("类别已删除", 2000, "info");
+  showMessage("类别已删除", 2000, "info");
 };
 
 // 保存条目
 async function saveEntry() {
-	try {
-		if (editingEntry.value) {
-			// 更新
-			const index = entries.value.findIndex(
-				(e) => e.id === editingEntry.value!.id,
-			);
-			if (index !== -1) {
-				entries.value[index] = {
-					...entries.value[index],
-					category: entryForm.category,
-					name: entryForm.name,
-					account: entryForm.account,
-					password: entryForm.password,
-					description: entryForm.description,
-					updatedAt: Date.now(),
-				};
-			}
-		} else {
-			// 新增
-			const newEntry: PasswordEntry = {
-				id: Date.now().toString(),
-				category: entryForm.category,
-				name: entryForm.name,
-				account: entryForm.account,
-				password: entryForm.password,
-				description: entryForm.description,
-				createdAt: Date.now(),
-				updatedAt: Date.now(),
-			};
-			entries.value.push(newEntry);
-		}
+  try {
+    if (editingEntry.value) {
+      // 更新
+      const index = entries.value.findIndex(
+        (e) => e.id === editingEntry.value!.id,
+      );
+      if (index !== -1) {
+        entries.value[index] = {
+          ...entries.value[index],
+          category: entryForm.category,
+          name: entryForm.name,
+          account: entryForm.account,
+          password: entryForm.password,
+          description: entryForm.description,
+          updatedAt: Date.now(),
+        };
+      }
+    } else {
+      // 新增
+      const newEntry: PasswordEntry = {
+        id: Date.now().toString(),
+        category: entryForm.category,
+        name: entryForm.name,
+        account: entryForm.account,
+        password: entryForm.password,
+        description: entryForm.description,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+      entries.value.push(newEntry);
+    }
 
-		await saveEntries();
-		closeAddModal();
-	} catch (error) {
-		console.error("Failed to save entry:", error);
-	}
+    await saveEntries();
+    closeAddModal();
+  } catch (error) {
+    console.error("Failed to save entry:", error);
+  }
 }
 
 // 删除条目
 async function deleteEntry(id: string) {
-	const entry = entries.value.find((e) => e.id === id);
-	if (!entry) return;
+  const entry = entries.value.find((e) => e.id === id);
+  if (!entry) return;
 
-	const confirmed = window.confirm(
-		`确定要删除密码条目「${entry.name}」吗？此操作不可恢复。`,
-	);
-	if (!confirmed) return;
+  const confirmed = window.confirm(
+    `确定要删除密码条目「${entry.name}」吗？此操作不可恢复。`,
+  );
+  if (!confirmed) return;
 
-	entries.value = entries.value.filter((e) => e.id !== id);
-	// 清理密码可见性状态，避免内存泄漏
-	if (id in showPasswords.value) {
-		delete showPasswords.value[id];
-	}
-	await saveEntries();
-	showMessage("密码条目已删除", 2000, "info");
+  entries.value = entries.value.filter((e) => e.id !== id);
+  // 清理密码可见性状态，避免内存泄漏
+  if (id in showPasswords.value) {
+    delete showPasswords.value[id];
+  }
+  await saveEntries();
+  showMessage("密码条目已删除", 2000, "info");
 }
 
 // 切换密码可见性
 const togglePasswordVisibility = (id: string) => {
-	showPasswords.value[id] = !showPasswords.value[id];
+  showPasswords.value[id] = !showPasswords.value[id];
 };
 
 // 通用复制函数
 const copyToClipboard = async (text: string, label: string) => {
-	try {
-		await navigator.clipboard.writeText(text);
-		showMessage(`${label}已复制`, 2000, "info");
-	} catch {
-		showMessage("复制失败", 2000, "error");
-	}
+  try {
+    await navigator.clipboard.writeText(text);
+    showMessage(`${label}已复制`, 2000, "info");
+  } catch {
+    showMessage("复制失败", 2000, "error");
+  }
 };
 
 // 复制账号
@@ -992,59 +992,59 @@ const copyPassword = (password: string) => copyToClipboard(password, "密码");
 
 // 关闭弹窗
 const closeDialog = () => {
-	isLoggedIn.value = false;
-	loginError.value = "";
-	// 清除加密密钥和解密后的数据（安全措施）
-	encryptionKey.value = null;
-	encryptionSalt.value = "";
-	entries.value = [];
-	// 清理密码可见性状态，防止内存泄漏
-	Object.keys(showPasswords.value).forEach((key) => {
-		delete showPasswords.value[key];
-	});
-	emit("update:visible", false);
-	emit("close");
+  isLoggedIn.value = false;
+  loginError.value = "";
+  // 清除加密密钥和解密后的数据（安全措施）
+  encryptionKey.value = null;
+  encryptionSalt.value = "";
+  entries.value = [];
+  // 清理密码可见性状态，防止内存泄漏
+  Object.keys(showPasswords.value).forEach((key) => {
+    delete showPasswords.value[key];
+  });
+  emit("update:visible", false);
+  emit("close");
 };
 
 // 键盘事件
 const handleKeyDown = (event: KeyboardEvent) => {
-	if (!props.visible) return;
+  if (!props.visible) return;
 
-	if (event.key === "Escape") {
-		if (showCategoryManager.value) {
-			closeCategoryManager();
-		} else if (showAddModal.value) {
-			closeAddModal();
-		} else {
-			closeDialog();
-		}
-	}
+  if (event.key === "Escape") {
+    if (showCategoryManager.value) {
+      closeCategoryManager();
+    } else if (showAddModal.value) {
+      closeAddModal();
+    } else {
+      closeDialog();
+    }
+  }
 
-	// Ctrl+K 搜索
-	if ((event.ctrlKey || event.metaKey) && event.key === "k") {
-		event.preventDefault();
-		if (isLoggedIn.value) {
-			// 聚焦搜索框
-		}
-	}
+  // Ctrl+K 搜索
+  if ((event.ctrlKey || event.metaKey) && event.key === "k") {
+    event.preventDefault();
+    if (isLoggedIn.value) {
+      // 聚焦搜索框
+    }
+  }
 };
 
 // 监听 visible 变化
 watch(
-	() => props.visible,
-	async (newVal) => {
-		if (newVal) {
-			await loadMasterPasswordHash();
-		}
-	},
+  () => props.visible,
+  async (newVal) => {
+    if (newVal) {
+      await loadMasterPasswordHash();
+    }
+  },
 );
 
 onMounted(() => {
-	document.addEventListener("keydown", handleKeyDown);
+  document.addEventListener("keydown", handleKeyDown);
 });
 
 onUnmounted(() => {
-	document.removeEventListener("keydown", handleKeyDown);
+  document.removeEventListener("keydown", handleKeyDown);
 });
 </script>
 

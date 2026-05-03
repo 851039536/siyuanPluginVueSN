@@ -43,14 +43,14 @@ import type { DiskInfo } from "../types";
 import { formatSize } from "../utils";
 
 interface Props {
-	disk: DiskInfo;
-	selectedDisk: string;
-	expandedDisk: string;
+  disk: DiskInfo;
+  selectedDisk: string;
+  expandedDisk: string;
 }
 
 defineProps<Props>();
 defineEmits<{
-	click: [];
+  click: [];
 }>();
 </script>
 

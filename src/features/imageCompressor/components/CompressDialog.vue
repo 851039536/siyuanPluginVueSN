@@ -92,48 +92,48 @@ import SiSlider from "@/components/Slider.vue";
 import SiSwitch from "@/components/Switch.vue";
 
 interface Props {
-	i18n: any;
-	selectedCount: number;
+  i18n: any;
+  selectedCount: number;
 }
 
 interface Emits {
-	(e: "confirm", options: CompressOptions): void;
-	(e: "cancel"): void;
+  (e: "confirm", options: CompressOptions): void;
+  (e: "cancel"): void;
 }
 
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 const options = ref<CompressOptions>({
-	...DEFAULT_COMPRESS_OPTIONS,
+  ...DEFAULT_COMPRESS_OPTIONS,
 });
 
 const estimatedTime = computed(() => {
-	if (props.selectedCount === 0) return "0秒";
-	const seconds = props.selectedCount * 1.5;
-	if (seconds < 60) return `约 ${Math.ceil(seconds)} 秒`;
-	const minutes = Math.ceil(seconds / 60);
-	return `约 ${minutes} 分钟`;
+  if (props.selectedCount === 0) return "0秒";
+  const seconds = props.selectedCount * 1.5;
+  if (seconds < 60) return `约 ${Math.ceil(seconds)} 秒`;
+  const minutes = Math.ceil(seconds / 60);
+  return `约 ${minutes} 分钟`;
 });
 
 const formatQuality = (value: number): string => {
-	return `${(value * 100).toFixed(0)}%`;
+  return `${(value * 100).toFixed(0)}%`;
 };
 
 const formatMaxSize = (value: number): string => {
-	return `${value} MB`;
+  return `${value} MB`;
 };
 
 const formatMaxDimension = (value: number): string => {
-	return `${value} px`;
+  return `${value} px`;
 };
 
 const onConfirm = () => {
-	emit("confirm", options.value);
+  emit("confirm", options.value);
 };
 
 const onCancel = () => {
-	emit("cancel");
+  emit("cancel");
 };
 </script>
 

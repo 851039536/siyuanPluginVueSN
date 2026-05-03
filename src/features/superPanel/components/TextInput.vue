@@ -10,24 +10,24 @@
 
 <script setup lang="ts">
 interface Props {
-	modelValue: string;
-	type?: "text" | "password";
-	placeholder?: string;
+  modelValue: string;
+  type?: "text" | "password";
+  placeholder?: string;
 }
 
 interface Emits {
-	(e: "update:modelValue", value: string): void;
+  (e: "update:modelValue", value: string): void;
 }
 
 withDefaults(defineProps<Props>(), {
-	type: "text",
+  type: "text",
 });
 
 const emit = defineEmits<Emits>();
 
 const handleInput = (event: Event) => {
-	const target = event.target as HTMLInputElement;
-	emit("update:modelValue", target.value);
+  const target = event.target as HTMLInputElement;
+  emit("update:modelValue", target.value);
 };
 </script>
 

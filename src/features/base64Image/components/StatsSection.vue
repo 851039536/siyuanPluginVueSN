@@ -22,34 +22,34 @@
 import { computed } from "vue";
 
 interface Props {
-	title: string;
-	originalLabel: string;
-	outputLabel: string;
-	ratioLabel: string;
-	originalSize: number;
-	outputSize: number;
+  title: string;
+  originalLabel: string;
+  outputLabel: string;
+  ratioLabel: string;
+  originalSize: number;
+  outputSize: number;
 }
 
 const props = defineProps<Props>();
 
 const ratio = computed(() => {
-	if (props.originalSize === 0) return 0;
-	return Math.round((1 - props.outputSize / props.originalSize) * 100);
+  if (props.originalSize === 0) return 0;
+  return Math.round((1 - props.outputSize / props.originalSize) * 100);
 });
 
 const ratioClass = computed(() => {
-	const r = ratio.value;
-	if (r > 0) return "positive";
-	if (r < 0) return "negative";
-	return "neutral";
+  const r = ratio.value;
+  if (r > 0) return "positive";
+  if (r < 0) return "negative";
+  return "neutral";
 });
 
 const formatFileSize = (bytes: number): string => {
-	if (bytes === 0) return "0 Bytes";
-	const k = 1024;
-	const sizes = ["Bytes", "KB", "MB", "GB"];
-	const i = Math.floor(Math.log(bytes) / Math.log(k));
-	return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
+  if (bytes === 0) return "0 Bytes";
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
 };
 </script>
 

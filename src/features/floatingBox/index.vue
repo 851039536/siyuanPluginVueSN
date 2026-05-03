@@ -33,17 +33,17 @@
 import { ref, onMounted, onUnmounted, computed } from "vue";
 import ToolItem from "./components/ToolItem.vue";
 import {
-	createSuperPanelTool,
-	createRefreshTool,
-	skillsTool,
-	createTextDiffTool,
-	createPasswordVaultTool,
-	createFlashcardReadingTool,
+  createSuperPanelTool,
+  createRefreshTool,
+  skillsTool,
+  createTextDiffTool,
+  createPasswordVaultTool,
+  createFlashcardReadingTool,
 } from "./tools";
 import type { FloatingTool } from "./types";
 
 const props = defineProps<{
-	plugin?: any;
+  plugin?: any;
 }>();
 
 const isExpanded = ref(false);
@@ -53,60 +53,60 @@ const MOBILE_BREAKPOINT = 768;
 let resizeTimer: ReturnType<typeof setTimeout> | null = null;
 
 const tools = computed<FloatingTool[]>(() => {
-	const baseTools: FloatingTool[] = [
-		createSuperPanelTool(props.plugin),
-		createRefreshTool(props.plugin),
-	];
+  const baseTools: FloatingTool[] = [
+    createSuperPanelTool(props.plugin),
+    createRefreshTool(props.plugin),
+  ];
 
-	if (isMobile.value) {
-		return [
-			...baseTools,
-			createPasswordVaultTool(props.plugin),
-			createFlashcardReadingTool(props.plugin),
-		];
-	}
+  if (isMobile.value) {
+    return [
+      ...baseTools,
+      createPasswordVaultTool(props.plugin),
+      createFlashcardReadingTool(props.plugin),
+    ];
+  }
 
-	const desktopTools: FloatingTool[] = [
-		...baseTools,
-		createTextDiffTool(props.plugin),
-	];
+  const desktopTools: FloatingTool[] = [
+    ...baseTools,
+    createTextDiffTool(props.plugin),
+  ];
 
-	if (props.plugin?.settings?.enableSkills !== false) {
-		desktopTools.push(skillsTool(props.plugin));
-	}
+  if (props.plugin?.settings?.enableSkills !== false) {
+    desktopTools.push(skillsTool(props.plugin));
+  }
 
-	return desktopTools;
+  return desktopTools;
 });
 
 const checkMobile = () => {
-	isMobile.value = window.innerWidth <= MOBILE_BREAKPOINT;
+  isMobile.value = window.innerWidth <= MOBILE_BREAKPOINT;
 };
 
 const debouncedCheckMobile = () => {
-	if (resizeTimer) clearTimeout(resizeTimer);
-	resizeTimer = setTimeout(checkMobile, 150);
+  if (resizeTimer) clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(checkMobile, 150);
 };
 
 onMounted(() => {
-	checkMobile();
-	window.addEventListener("resize", debouncedCheckMobile);
+  checkMobile();
+  window.addEventListener("resize", debouncedCheckMobile);
 });
 
 onUnmounted(() => {
-	window.removeEventListener("resize", debouncedCheckMobile);
-	if (resizeTimer) clearTimeout(resizeTimer);
+  window.removeEventListener("resize", debouncedCheckMobile);
+  if (resizeTimer) clearTimeout(resizeTimer);
 });
 
 const handleMouseEnter = () => {
-	if (!isMobile.value) isExpanded.value = true;
+  if (!isMobile.value) isExpanded.value = true;
 };
 
 const handleMouseLeave = () => {
-	if (!isMobile.value) isExpanded.value = false;
+  if (!isMobile.value) isExpanded.value = false;
 };
 
 const toggleExpanded = () => {
-	isExpanded.value = !isExpanded.value;
+  isExpanded.value = !isExpanded.value;
 };
 </script>
 

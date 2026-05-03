@@ -326,53 +326,53 @@ import { ref, watch, onMounted } from "vue";
 import { GeneralSettingsStorage } from "@/features/generalSettings/types/storage";
 
 interface HeadingColors {
-	h1: string;
-	h2: string;
-	h3: string;
-	h4: string;
-	h5: string;
-	h6: string;
+  h1: string;
+  h2: string;
+  h3: string;
+  h4: string;
+  h5: string;
+  h6: string;
 }
 
 interface HeadingSizes {
-	h1: number;
-	h2: number;
-	h3: number;
-	h4: number;
-	h5: number;
-	h6: number;
+  h1: number;
+  h2: number;
+  h3: number;
+  h4: number;
+  h5: number;
+  h6: number;
 }
 
 interface Props {
-	i18n?: any;
-	plugin?: any;
-	initialSettings?: HeadingColors;
-	initialFontSizes?: HeadingSizes;
+  i18n?: any;
+  plugin?: any;
+  initialSettings?: HeadingColors;
+  initialFontSizes?: HeadingSizes;
 }
 
 interface Emits {
-	(e: "change", settings: HeadingColors): void;
+  (e: "change", settings: HeadingColors): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-	i18n: () => ({}),
-	plugin: null,
-	initialSettings: () => ({
-		h1: "#F39A94",
-		h2: "#F8D694",
-		h3: "#B1DCB9",
-		h4: "#AAD2FC",
-		h5: "#AC9DC0",
-		h6: "#D7D7D7",
-	}),
-	initialFontSizes: () => ({
-		h1: 28,
-		h2: 24,
-		h3: 20,
-		h4: 18,
-		h5: 16,
-		h6: 14,
-	}),
+  i18n: () => ({}),
+  plugin: null,
+  initialSettings: () => ({
+    h1: "#F39A94",
+    h2: "#F8D694",
+    h3: "#B1DCB9",
+    h4: "#AAD2FC",
+    h5: "#AC9DC0",
+    h6: "#D7D7D7",
+  }),
+  initialFontSizes: () => ({
+    h1: 28,
+    h2: 24,
+    h3: 20,
+    h4: 18,
+    h5: 16,
+    h6: 14,
+  }),
 });
 
 const emit = defineEmits<Emits>();
@@ -390,132 +390,132 @@ const storage = ref<GeneralSettingsStorage | null>(null);
 
 // 预设风格
 const styles: Record<string, HeadingColors> = {
-	default: {
-		h1: "#F39A94",
-		h2: "#F8D694",
-		h3: "#B1DCB9",
-		h4: "#AAD2FC",
-		h5: "#AC9DC0",
-		h6: "#D7D7D7",
-	},
-	github: {
-		h1: "#0969DA",
-		h2: "#1F883D",
-		h3: "#9A6700",
-		h4: "#8250DF",
-		h5: "#CF222E",
-		h6: "#57606A",
-	},
-	mac: {
-		h1: "#007AFF",
-		h2: "#34C759",
-		h3: "#FF9500",
-		h4: "#FF3B30",
-		h5: "#AF52DE",
-		h6: "#8E8E93",
-	},
-	cartoon: {
-		h1: "#FF6B9D",
-		h2: "#FFA07A",
-		h3: "#FFD700",
-		h4: "#98D8C8",
-		h5: "#87CEFA",
-		h6: "#DDA0DD",
-	},
-	rainbow: {
-		h1: "#FF6B6B",
-		h2: "#FFA500",
-		h3: "#FFD700",
-		h4: "#90EE90",
-		h5: "#87CEEB",
-		h6: "#DA70D6",
-	},
-	monochrome: {
-		h1: "#2C3E50",
-		h2: "#34495E",
-		h3: "#546E7A",
-		h4: "#607D8B",
-		h5: "#90A4AE",
-		h6: "#B0BEC5",
-	},
-	warm: {
-		h1: "#FF6B6B",
-		h2: "#FF8E53",
-		h3: "#FFAB73",
-		h4: "#FFC299",
-		h5: "#FFD4B3",
-		h6: "#FFE4CC",
-	},
-	cool: {
-		h1: "#667EEA",
-		h2: "#64B5F6",
-		h3: "#4FC3F7",
-		h4: "#4DD0E1",
-		h5: "#4DB6AC",
-		h6: "#81C784",
-	},
-	gradient: {
-		h1: "#667EEA",
-		h2: "#7E57C2",
-		h3: "#AB47BC",
-		h4: "#EC407A",
-		h5: "#EF5350",
-		h6: "#FF7043",
-	},
+  default: {
+    h1: "#F39A94",
+    h2: "#F8D694",
+    h3: "#B1DCB9",
+    h4: "#AAD2FC",
+    h5: "#AC9DC0",
+    h6: "#D7D7D7",
+  },
+  github: {
+    h1: "#0969DA",
+    h2: "#1F883D",
+    h3: "#9A6700",
+    h4: "#8250DF",
+    h5: "#CF222E",
+    h6: "#57606A",
+  },
+  mac: {
+    h1: "#007AFF",
+    h2: "#34C759",
+    h3: "#FF9500",
+    h4: "#FF3B30",
+    h5: "#AF52DE",
+    h6: "#8E8E93",
+  },
+  cartoon: {
+    h1: "#FF6B9D",
+    h2: "#FFA07A",
+    h3: "#FFD700",
+    h4: "#98D8C8",
+    h5: "#87CEFA",
+    h6: "#DDA0DD",
+  },
+  rainbow: {
+    h1: "#FF6B6B",
+    h2: "#FFA500",
+    h3: "#FFD700",
+    h4: "#90EE90",
+    h5: "#87CEEB",
+    h6: "#DA70D6",
+  },
+  monochrome: {
+    h1: "#2C3E50",
+    h2: "#34495E",
+    h3: "#546E7A",
+    h4: "#607D8B",
+    h5: "#90A4AE",
+    h6: "#B0BEC5",
+  },
+  warm: {
+    h1: "#FF6B6B",
+    h2: "#FF8E53",
+    h3: "#FFAB73",
+    h4: "#FFC299",
+    h5: "#FFD4B3",
+    h6: "#FFE4CC",
+  },
+  cool: {
+    h1: "#667EEA",
+    h2: "#64B5F6",
+    h3: "#4FC3F7",
+    h4: "#4DD0E1",
+    h5: "#4DB6AC",
+    h6: "#81C784",
+  },
+  gradient: {
+    h1: "#667EEA",
+    h2: "#7E57C2",
+    h3: "#AB47BC",
+    h4: "#EC407A",
+    h5: "#EF5350",
+    h6: "#FF7043",
+  },
 };
 
 // 应用风格
 function applyStyle() {
-	if (selectedStyle.value !== "custom" && styles[selectedStyle.value]) {
-		headingColors.value = { ...styles[selectedStyle.value] };
-		onColorChange();
-	}
+  if (selectedStyle.value !== "custom" && styles[selectedStyle.value]) {
+    headingColors.value = { ...styles[selectedStyle.value] };
+    onColorChange();
+  }
 }
 
 // 统一的设置变更处理函数
 function handleSettingsChange() {
-	applyToDocument();
-	autoSave();
+  applyToDocument();
+  autoSave();
 }
 
 // 颜色变化时检测是否为自定义
 function onColorChange() {
-	let isCustom = true;
-	for (const [styleName, styleColors] of Object.entries(styles)) {
-		const matches = Object.entries(styleColors).every(
-			([key, value]) =>
-				headingColors.value[key as keyof HeadingColors].toUpperCase() ===
-				value.toUpperCase(),
-		);
-		if (matches) {
-			selectedStyle.value = styleName;
-			isCustom = false;
-			break;
-		}
-	}
-	if (isCustom) {
-		selectedStyle.value = "custom";
-	}
-	emit("change", headingColors.value);
-	handleSettingsChange();
+  let isCustom = true;
+  for (const [styleName, styleColors] of Object.entries(styles)) {
+    const matches = Object.entries(styleColors).every(
+      ([key, value]) =>
+        headingColors.value[key as keyof HeadingColors].toUpperCase() ===
+        value.toUpperCase(),
+    );
+    if (matches) {
+      selectedStyle.value = styleName;
+      isCustom = false;
+      break;
+    }
+  }
+  if (isCustom) {
+    selectedStyle.value = "custom";
+  }
+  emit("change", headingColors.value);
+  handleSettingsChange();
 }
 
 // 应用到文档
 function applyToDocument() {
-	let style = document.getElementById(
-		"heading-colors-style",
-	) as HTMLStyleElement | null;
-	if (!style) {
-		style = document.createElement("style");
-		style.id = "heading-colors-style";
-		document.head.appendChild(style);
-	}
+  let style = document.getElementById(
+    "heading-colors-style",
+  ) as HTMLStyleElement | null;
+  if (!style) {
+    style = document.createElement("style");
+    style.id = "heading-colors-style";
+    document.head.appendChild(style);
+  }
 
-	// 颜色和字体大小样式合并生成
-	const headingStyles = Object.entries(headingColors.value)
-		.map(([level, color]) => {
-			const size = headingSizes.value[level as keyof HeadingSizes];
-			return `
+  // 颜色和字体大小样式合并生成
+  const headingStyles = Object.entries(headingColors.value)
+    .map(([level, color]) => {
+      const size = headingSizes.value[level as keyof HeadingSizes];
+      return `
         .protyle-wysiwyg [data-node-id].${level},
         .protyle-wysiwyg .${level},
         .b3-typography .${level} {
@@ -523,17 +523,17 @@ function applyToDocument() {
           font-size: ${size}px !important;
         }
       `;
-		})
-		.join("\n");
+    })
+    .join("\n");
 
-	// 层级显示样式
-	const levelCss =
-		levelDisplayStyle.value !== "none"
-			? generateLevelDisplayCss(levelDisplayStyle.value)
-			: "";
+  // 层级显示样式
+  const levelCss =
+    levelDisplayStyle.value !== "none"
+      ? generateLevelDisplayCss(levelDisplayStyle.value)
+      : "";
 
-	// 文档标题样式（合并居中、颜色、字体大小）
-	const titleStyles = `
+  // 文档标题样式（合并居中、颜色、字体大小）
+  const titleStyles = `
     .protyle-title__input {
       ${titleCenterAlign.value ? "text-align: center !important;" : ""}
       ${titleColor.value ? `color: ${titleColor.value} !important;` : ""}
@@ -541,36 +541,36 @@ function applyToDocument() {
     }
   `;
 
-	style.textContent = headingStyles + "\n" + levelCss + "\n" + titleStyles;
+  style.textContent = headingStyles + "\n" + levelCss + "\n" + titleStyles;
 }
 
 // 生成层级显示 CSS
 function generateLevelDisplayCss(style: string): string {
-	const levelMappings: Record<string, string[]> = {
-		number: ["1", "2", "3", "4", "5", "6"],
-		roman: ["I", "II", "III", "IV", "V", "VI"],
-		chinese: ["一", "二", "三", "四", "五", "六"],
-		chineseUpper: ["壹", "贰", "叁", "肆", "伍", "陆"],
-		dots: ["•", "••", "•••", "••••", "•••••", "••••••"],
-		emoji: ["😀", "😁", "😂", "🤣", "😊", "😎"],
-		star: ["⭐", "⭐⭐", "⭐⭐⭐", "⭐⭐⭐⭐", "⭐⭐⭐⭐⭐", "⭐⭐⭐⭐⭐⭐"],
-		arrow: ["→", "→→", "→→→", "→→→→", "→→→→→", "→→→→→→"],
-		tag: ["H1", "H2", "H3", "H4", "H5", "H6"],
-		bracket: ["[1]", "[2]", "[3]", "[4]", "[5]", "[6]"],
-		custom: customLevelMarkers.value,
-	};
+  const levelMappings: Record<string, string[]> = {
+    number: ["1", "2", "3", "4", "5", "6"],
+    roman: ["I", "II", "III", "IV", "V", "VI"],
+    chinese: ["一", "二", "三", "四", "五", "六"],
+    chineseUpper: ["壹", "贰", "叁", "肆", "伍", "陆"],
+    dots: ["•", "••", "•••", "••••", "•••••", "••••••"],
+    emoji: ["😀", "😁", "😂", "🤣", "😊", "😎"],
+    star: ["⭐", "⭐⭐", "⭐⭐⭐", "⭐⭐⭐⭐", "⭐⭐⭐⭐⭐", "⭐⭐⭐⭐⭐⭐"],
+    arrow: ["→", "→→", "→→→", "→→→→", "→→→→→", "→→→→→→"],
+    tag: ["H1", "H2", "H3", "H4", "H5", "H6"],
+    bracket: ["[1]", "[2]", "[3]", "[4]", "[5]", "[6]"],
+    custom: customLevelMarkers.value,
+  };
 
-	const levels = levelMappings[style] || levelMappings.number;
+  const levels = levelMappings[style] || levelMappings.number;
 
-	return levels
-		.map((label, index) => {
-			const level = index + 1;
-			const tagStyles =
-				style === "tag"
-					? "background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.15); padding: 2px 6px; border-radius: 4px; font-weight: 600; opacity: 0.7;"
-					: "";
+  return levels
+    .map((label, index) => {
+      const level = index + 1;
+      const tagStyles =
+        style === "tag"
+          ? "background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.15); padding: 2px 6px; border-radius: 4px; font-weight: 600; opacity: 0.7;"
+          : "";
 
-			return `
+      return `
       .protyle-wysiwyg div[data-subtype="h${level}"][data-node-id]:not([type]) > div[contenteditable]:first-child::after,
       .protyle-wysiwyg div[data-subtype="h${level}"][data-node-id] > div.h${level}[contenteditable]::after {
         content: "  ${label}";
@@ -581,109 +581,109 @@ function generateLevelDisplayCss(style: string): string {
         ${tagStyles}
       }
     `;
-		})
-		.join("\n");
+    })
+    .join("\n");
 }
 
 // 应用层级显示
 function applyLevelDisplay() {
-	handleSettingsChange();
+  handleSettingsChange();
 }
 
 // 应用标题居中
 function applyTitleCenterAlign() {
-	handleSettingsChange();
+  handleSettingsChange();
 }
 
 // 标题颜色变化处理
 function onTitleColorChange() {
-	handleSettingsChange();
+  handleSettingsChange();
 }
 
 // 标题字体大小变化处理
 function onTitleFontSizeChange() {
-	handleSettingsChange();
+  handleSettingsChange();
 }
 
 // H1-H6 标题字体大小变化处理
 function onFontSizeChange() {
-	handleSettingsChange();
+  handleSettingsChange();
 }
 
 // 重置标题颜色
 function resetTitleColor() {
-	titleColor.value = defaultTitleColor;
-	handleSettingsChange();
+  titleColor.value = defaultTitleColor;
+  handleSettingsChange();
 }
 
 // 自动保存设置
 async function autoSave() {
-	if (!props.plugin) return;
+  if (!props.plugin) return;
 
-	try {
-		const settingsToSave = {
-			style: selectedStyle.value,
-			colors: headingColors.value,
-			fontSizes: headingSizes.value,
-			levelDisplay: levelDisplayStyle.value,
-			customMarkers: customLevelMarkers.value,
-			titleCenterAlign: titleCenterAlign.value,
-			titleColor: titleColor.value,
-			titleFontSize: titleFontSize.value,
-		};
+  try {
+    const settingsToSave = {
+      style: selectedStyle.value,
+      colors: headingColors.value,
+      fontSizes: headingSizes.value,
+      levelDisplay: levelDisplayStyle.value,
+      customMarkers: customLevelMarkers.value,
+      titleCenterAlign: titleCenterAlign.value,
+      titleColor: titleColor.value,
+      titleFontSize: titleFontSize.value,
+    };
 
-		await storage.value!.heading.save(settingsToSave);
-	} catch (error) {
-		console.error("保存失败:", error);
-	}
+    await storage.value!.heading.save(settingsToSave);
+  } catch (error) {
+    console.error("保存失败:", error);
+  }
 }
 
 // 加载保存的设置
 async function loadSettings() {
-	if (!props.plugin) {
-		console.warn("插件实例不可用，使用默认设置");
-		return;
-	}
+  if (!props.plugin) {
+    console.warn("插件实例不可用，使用默认设置");
+    return;
+  }
 
-	try {
-		const settings = await storage.value!.loadHeadingOrDefault();
+  try {
+    const settings = await storage.value!.loadHeadingOrDefault();
 
-		selectedStyle.value = settings.style || "default";
-		headingColors.value = { ...styles.default, ...settings.colors };
-		headingSizes.value = { ...props.initialFontSizes, ...settings.fontSizes };
-		levelDisplayStyle.value = settings.levelDisplay || "none";
-		customLevelMarkers.value = settings.customMarkers || [
-			"1",
-			"2",
-			"3",
-			"4",
-			"5",
-			"6",
-		];
-		titleCenterAlign.value = settings.titleCenterAlign ?? false;
-		titleColor.value = settings.titleColor || defaultTitleColor;
-		titleFontSize.value = settings.titleFontSize || 24;
-	} catch (error) {
-		console.error("加载设置失败:", error);
-	}
+    selectedStyle.value = settings.style || "default";
+    headingColors.value = { ...styles.default, ...settings.colors };
+    headingSizes.value = { ...props.initialFontSizes, ...settings.fontSizes };
+    levelDisplayStyle.value = settings.levelDisplay || "none";
+    customLevelMarkers.value = settings.customMarkers || [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+    ];
+    titleCenterAlign.value = settings.titleCenterAlign ?? false;
+    titleColor.value = settings.titleColor || defaultTitleColor;
+    titleFontSize.value = settings.titleFontSize || 24;
+  } catch (error) {
+    console.error("加载设置失败:", error);
+  }
 }
 
 // 初始化 - 仅加载设置填充表单（样式由 GeneralSettings.init() 在插件启动时应用）
 onMounted(async () => {
-	if (props.plugin) {
-		storage.value = new GeneralSettingsStorage(props.plugin);
-	}
-	await loadSettings();
+  if (props.plugin) {
+    storage.value = new GeneralSettingsStorage(props.plugin);
+  }
+  await loadSettings();
 });
 
 // 监听颜色变化，自动保存
 watch(
-	headingColors,
-	(newColors) => {
-		emit("change", newColors);
-		autoSave();
-	},
-	{ deep: true },
+  headingColors,
+  (newColors) => {
+    emit("change", newColors);
+    autoSave();
+  },
+  { deep: true },
 );
 
 // 监听风格变化,自动保存
@@ -697,11 +697,11 @@ watch(titleCenterAlign, handleSettingsChange);
 
 // 监听标题颜色变化
 watch(titleColor, (newValue) => {
-	if (titleCenterAlign.value) {
-		handleSettingsChange();
-	} else {
-		autoSave();
-	}
+  if (titleCenterAlign.value) {
+    handleSettingsChange();
+  } else {
+    autoSave();
+  }
 });
 
 // 监听字体大小变化
@@ -712,9 +712,9 @@ watch(titleFontSize, handleSettingsChange);
 
 // 暴露方法
 defineExpose({
-	loadSettings,
-	headingColors,
-	selectedStyle,
+  loadSettings,
+  headingColors,
+  selectedStyle,
 });
 </script>
 

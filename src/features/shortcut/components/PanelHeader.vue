@@ -16,16 +16,16 @@ import Button from "@/components/Button.vue";
 import Input from "@/components/Input.vue";
 
 interface Props {
-	searchKeyword: string;
-	placeholder: string;
-	addTitle: string;
+  searchKeyword: string;
+  placeholder: string;
+  addTitle: string;
 }
 
 defineProps<Props>();
 
 defineEmits<{
-	"update:searchKeyword": [value: string];
-	add: [];
+  "update:searchKeyword": [value: string];
+  add: [];
 }>();
 </script>
 

@@ -48,24 +48,24 @@ import { ref, computed, shallowRef } from "vue";
 import Input from "@/components/Input.vue";
 import Select from "@/components/Select.vue";
 import {
-	type UnitDefinition,
-	formatResult,
-	createUnitLookup,
-	convertUnit,
-	generateUnitOptions,
+  type UnitDefinition,
+  formatResult,
+  createUnitLookup,
+  convertUnit,
+  generateUnitOptions,
 } from "../utils/converter";
 
 interface Props {
-	units: UnitDefinition[];
-	defaultFrom?: string;
-	defaultTo?: string;
-	showQuickResults?: boolean;
+  units: UnitDefinition[];
+  defaultFrom?: string;
+  defaultTo?: string;
+  showQuickResults?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-	defaultFrom: "",
-	defaultTo: "",
-	showQuickResults: true,
+  defaultFrom: "",
+  defaultTo: "",
+  showQuickResults: true,
 });
 
 // 使用 shallowRef 优化性能，单位数组不需要深层响应式
@@ -83,7 +83,7 @@ const unitOptions = computed(() => generateUnitOptions(unitsRef.value));
 
 // 过滤后的单位列表（排除当前源单位）
 const filteredUnits = computed(() =>
-	unitsRef.value.filter((u) => u.key !== fromUnit.value),
+  unitsRef.value.filter((u) => u.key !== fromUnit.value),
 );
 
 // 转换结果
@@ -91,14 +91,14 @@ const result = computed(() => convertToUnit(toUnit.value));
 
 // 转换到指定单位
 function convertToUnit(targetUnit: string): string {
-	const value = parseFloat(inputValue.value);
-	if (isNaN(value)) return "0";
+  const value = parseFloat(inputValue.value);
+  if (isNaN(value)) return "0";
 
-	const fromFactor = lookup.value.getFactor(fromUnit.value);
-	const toFactor = lookup.value.getFactor(targetUnit);
-	const converted = convertUnit(value, fromFactor, toFactor);
+  const fromFactor = lookup.value.getFactor(fromUnit.value);
+  const toFactor = lookup.value.getFactor(targetUnit);
+  const converted = convertUnit(value, fromFactor, toFactor);
 
-	return formatResult(converted);
+  return formatResult(converted);
 }
 </script>
 

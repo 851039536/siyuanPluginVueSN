@@ -306,66 +306,66 @@ import RegexGenerator from "./components/RegexGenerator.vue";
 import { WordQueryStorage } from "./types/storage";
 
 interface Props {
-	i18n: any;
-	plugin?: any;
-	onQuery: (word: string) => Promise<string>;
-	onTranslate?: (
-		text: string,
-		sourceLang: string,
-		targetLang: string,
-	) => Promise<string>;
+  i18n: any;
+  plugin?: any;
+  onQuery: (word: string) => Promise<string>;
+  onTranslate?: (
+    text: string,
+    sourceLang: string,
+    targetLang: string,
+  ) => Promise<string>;
 }
 
 const LANGUAGE_OPTIONS = [
-	{ value: "auto", label: "自动检测" },
-	{ value: "zh", label: "中文" },
-	{ value: "en", label: "英文" },
-	{ value: "ja", label: "日文" },
-	{ value: "ko", label: "韩文" },
-	{ value: "fr", label: "法文" },
-	{ value: "de", label: "德文" },
-	{ value: "es", label: "西班牙文" },
+  { value: "auto", label: "自动检测" },
+  { value: "zh", label: "中文" },
+  { value: "en", label: "英文" },
+  { value: "ja", label: "日文" },
+  { value: "ko", label: "韩文" },
+  { value: "fr", label: "法文" },
+  { value: "de", label: "德文" },
+  { value: "es", label: "西班牙文" },
 ];
 
 const LANGUAGE_NAMES = Object.fromEntries(
-	LANGUAGE_OPTIONS.map((opt) => [opt.value, opt.label]),
+  LANGUAGE_OPTIONS.map((opt) => [opt.value, opt.label]),
 ) as Record<string, string>;
 
 const TARGET_LANGUAGE_OPTIONS = LANGUAGE_OPTIONS.filter(
-	(opt) => opt.value !== "auto",
+  (opt) => opt.value !== "auto",
 );
 
 const AUTO_OPERATION_DELAY = 2000;
 const WORD_PATTERN =
-	/^[a-zA-Z0-9\s\-.,;:!?'"()（）【】《》《""''\u4e00-\u9fa5\u3000-\u303F\uFF00-\uFFEF]+$/;
+  /^[a-zA-Z0-9\s\-.,;:!?'"()（）【】《》《""''\u4e00-\u9fa5\u3000-\u303F\uFF00-\uFFEF]+$/;
 
 const FIELD_MAPPINGS = [
-	{ pattern: /(单词|词语)：/, class: "word-section", label: "$1：" },
-	{ pattern: /(拼音|音标)：/, class: "phonetic-section", label: "$1：" },
-	{ pattern: /(英文)：/, class: "english-section", label: "$1：" },
-	{ pattern: /(释义)：/, class: "meaning-section", label: "$1：" },
-	{ pattern: /(谐音)：/, class: "pronunciation-section", label: "$1：" },
-	{ pattern: /(发音)：/, class: "tip-section", label: "$1：" },
-	{ pattern: /(例句)：/, class: "example-section", label: "$1：" },
+  { pattern: /(单词|词语)：/, class: "word-section", label: "$1：" },
+  { pattern: /(拼音|音标)：/, class: "phonetic-section", label: "$1：" },
+  { pattern: /(英文)：/, class: "english-section", label: "$1：" },
+  { pattern: /(释义)：/, class: "meaning-section", label: "$1：" },
+  { pattern: /(谐音)：/, class: "pronunciation-section", label: "$1：" },
+  { pattern: /(发音)：/, class: "tip-section", label: "$1：" },
+  { pattern: /(例句)：/, class: "example-section", label: "$1：" },
 ];
 
 const CONTENT_PATTERNS = {
-	phonetic: [/音标：[^\n]+/, /拼音：[^\n]+/],
-	meaning: [/释义：[^\n]+/],
-	english: [/英文：[^\n]+/],
-	pronunciation: [/谐音：[^\n]+/],
-	example: [/例句：[\s\S]+/],
+  phonetic: [/音标：[^\n]+/, /拼音：[^\n]+/],
+  meaning: [/释义：[^\n]+/],
+  english: [/英文：[^\n]+/],
+  pronunciation: [/谐音：[^\n]+/],
+  example: [/例句：[\s\S]+/],
 };
 
 const props = defineProps<Props>();
 
 const currentMode = ref<
-	| "word"
-	| "translate"
-	| "codeTranslation"
-	| "codeComment"
-	| "codeExplain"
-	| "regex"
+  | "word"
+  | "translate"
+  | "codeTranslation"
+  | "codeComment"
+  | "codeExplain"
+  | "regex"
 >("word");
 const searchWord = ref("");
 const queryResult = ref("");
@@ -391,397 +391,397 @@ const autoTranslateTimer = ref<NodeJS.Timeout | null>(null);
 let storage: WordQueryStorage | null = null;
 
 const formattedResult = computed(() => {
-	if (!queryResult.value) return "";
+  if (!queryResult.value) return "";
 
-	let html = queryResult.value;
-	html = html.replace(/^#### (.+)$/gm, '<h4 class="result-title">$1</h4>');
-	html = html.replace(/\n/g, "<br>");
+  let html = queryResult.value;
+  html = html.replace(/^#### (.+)$/gm, '<h4 class="result-title">$1</h4>');
+  html = html.replace(/\n/g, "<br>");
 
-	const firstField = FIELD_MAPPINGS.find((m) => m.pattern.test(html));
-	let sectionClass = "result-section";
-	let labelReplacement = "";
+  const firstField = FIELD_MAPPINGS.find((m) => m.pattern.test(html));
+  let sectionClass = "result-section";
+  let labelReplacement = "";
 
-	if (firstField) {
-		sectionClass = `result-section ${firstField.class}`;
-		labelReplacement = `<div class="${sectionClass}"><span class="result-label">${firstField.label}`;
-	}
+  if (firstField) {
+    sectionClass = `result-section ${firstField.class}`;
+    labelReplacement = `<div class="${sectionClass}"><span class="result-label">${firstField.label}`;
+  }
 
-	FIELD_MAPPINGS.forEach((mapping, index) => {
-		if (index === 0 && firstField) return;
-		html = html.replace(
-			mapping.pattern,
-			`</div><div class="result-section ${mapping.class}"><span class="result-label">${mapping.label}`,
-		);
-	});
+  FIELD_MAPPINGS.forEach((mapping, index) => {
+    if (index === 0 && firstField) return;
+    html = html.replace(
+      mapping.pattern,
+      `</div><div class="result-section ${mapping.class}"><span class="result-label">${mapping.label}`,
+    );
+  });
 
-	if (firstField) {
-		html = html.replace(firstField.pattern, labelReplacement);
-	}
+  if (firstField) {
+    html = html.replace(firstField.pattern, labelReplacement);
+  }
 
-	html = '<div class="result-wrapper">' + html + "</div>";
-	html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  html = '<div class="result-wrapper">' + html + "</div>";
+  html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
 
-	return html;
+  return html;
 });
 
 const extractContentParts = computed(() => {
-	if (!queryResult.value) return {};
+  if (!queryResult.value) return {};
 
-	const content = queryResult.value;
-	const parts: any = {};
+  const content = queryResult.value;
+  const parts: any = {};
 
-	Object.entries(CONTENT_PATTERNS).forEach(([key, patterns]) => {
-		for (const pattern of patterns) {
-			const match = content.match(pattern);
-			if (match) {
-				const label = match[0].split("：")[0];
-				parts[key] = match[0].replace(`${label}：`, "").trim();
-				break;
-			}
-		}
-	});
+  Object.entries(CONTENT_PATTERNS).forEach(([key, patterns]) => {
+    for (const pattern of patterns) {
+      const match = content.match(pattern);
+      if (match) {
+        const label = match[0].split("：")[0];
+        parts[key] = match[0].replace(`${label}：`, "").trim();
+        break;
+      }
+    }
+  });
 
-	parts.all = content;
-	return parts;
+  parts.all = content;
+  return parts;
 });
 
 const validateInput = (input: string, type: "word" | "text" = "word") => {
-	if (!input.trim()) {
-		return type === "word" ? "请输入单词" : "请输入文本";
-	}
+  if (!input.trim()) {
+    return type === "word" ? "请输入单词" : "请输入文本";
+  }
 
-	if (type === "word" && !WORD_PATTERN.test(input)) {
-		return "请输入有效的单词或词语";
-	}
+  if (type === "word" && !WORD_PATTERN.test(input)) {
+    return "请输入有效的单词或词语";
+  }
 
-	return null;
+  return null;
 };
 
 const handleQuery = async () => {
-	const word = searchWord.value.trim();
-	const error = validateInput(word, "word");
-	if (error) {
-		errorMessage.value = error;
-		return;
-	}
+  const word = searchWord.value.trim();
+  const error = validateInput(word, "word");
+  if (error) {
+    errorMessage.value = error;
+    return;
+  }
 
-	isLoading.value = true;
-	errorMessage.value = "";
+  isLoading.value = true;
+  errorMessage.value = "";
 
-	try {
-		const result = await props.onQuery(word);
-		if (result) {
-			queryResult.value = result;
-			if (autoPlayPronunciation.value) {
-				playPronunciation(word);
-			}
-		} else {
-			errorMessage.value =
-				props.i18n.wordQuery?.queryFailed || "查询失败,请重试";
-		}
-	} catch (error) {
-		console.error("Query error:", error);
-		errorMessage.value =
-			(error as Error).message ||
-			props.i18n.wordQuery?.unknownError ||
-			"未知错误";
-	} finally {
-		isLoading.value = false;
-	}
+  try {
+    const result = await props.onQuery(word);
+    if (result) {
+      queryResult.value = result;
+      if (autoPlayPronunciation.value) {
+        playPronunciation(word);
+      }
+    } else {
+      errorMessage.value =
+        props.i18n.wordQuery?.queryFailed || "查询失败,请重试";
+    }
+  } catch (error) {
+    console.error("Query error:", error);
+    errorMessage.value =
+      (error as Error).message ||
+      props.i18n.wordQuery?.unknownError ||
+      "未知错误";
+  } finally {
+    isLoading.value = false;
+  }
 };
 
 const togglePanel = (panelKey: string | null) => {
-	activePanel.value = activePanel.value === panelKey ? null : panelKey;
+  activePanel.value = activePanel.value === panelKey ? null : panelKey;
 };
 
 const playPronunciation = (word: string) => {
-	try {
-		const utterance = new SpeechSynthesisUtterance(word);
-		utterance.lang = pronunciationType.value === "uk" ? "en-GB" : "en-US";
-		utterance.rate = 0.8;
-		speechSynthesis.speak(utterance);
-	} catch (error) {
-		console.error("Failed to play pronunciation:", error);
-	}
+  try {
+    const utterance = new SpeechSynthesisUtterance(word);
+    utterance.lang = pronunciationType.value === "uk" ? "en-GB" : "en-US";
+    utterance.rate = 0.8;
+    speechSynthesis.speak(utterance);
+  } catch (error) {
+    console.error("Failed to play pronunciation:", error);
+  }
 };
 
 const exportToSiyuan = async () => {
-	if (!queryResult.value) {
-		showMessage("没有可导出的内容", 2000, "error");
-		return;
-	}
+  if (!queryResult.value) {
+    showMessage("没有可导出的内容", 2000, "error");
+    return;
+  }
 
-	const word = searchWord.value.trim();
-	const content = `## ${word}\n\n${queryResult.value}`;
-	copyToClipboard(content, props.i18n.wordQuery?.exportFailed || "导出失败");
+  const word = searchWord.value.trim();
+  const content = `## ${word}\n\n${queryResult.value}`;
+  copyToClipboard(content, props.i18n.wordQuery?.exportFailed || "导出失败");
 };
 
 const advancedOptionsData = computed(() => ({
-	pronunciationType: pronunciationType.value,
-	autoPlayPronunciation: autoPlayPronunciation.value,
-	showRelatedWords: showRelatedWords.value,
+  pronunciationType: pronunciationType.value,
+  autoPlayPronunciation: autoPlayPronunciation.value,
+  showRelatedWords: showRelatedWords.value,
 }));
 
 const saveAdvancedOptions = async () => {
-	if (storage) {
-		await storage.settings.save(advancedOptionsData.value);
-	}
+  if (storage) {
+    await storage.settings.save(advancedOptionsData.value);
+  }
 };
 
 const loadAdvancedOptions = async () => {
-	if (storage) {
-		const settings = await storage.settings.loadOrDefault();
-		pronunciationType.value = settings.pronunciationType;
-		autoPlayPronunciation.value = settings.autoPlayPronunciation;
-		showRelatedWords.value = settings.showRelatedWords;
-	}
+  if (storage) {
+    const settings = await storage.settings.loadOrDefault();
+    pronunciationType.value = settings.pronunciationType;
+    autoPlayPronunciation.value = settings.autoPlayPronunciation;
+    showRelatedWords.value = settings.showRelatedWords;
+  }
 };
 
 const clearTimer = (timerRef: Ref<NodeJS.Timeout | null>) => {
-	if (timerRef.value) {
-		clearTimeout(timerRef.value);
-		timerRef.value = null;
-	}
+  if (timerRef.value) {
+    clearTimeout(timerRef.value);
+    timerRef.value = null;
+  }
 };
 
 const setupAutoQuery = () => {
-	clearTimer(autoQueryTimer);
+  clearTimer(autoQueryTimer);
 
-	const word = searchWord.value.trim();
-	if (word && WORD_PATTERN.test(word)) {
-		autoQueryTimer.value = setTimeout(() => {
-			handleQuery();
-		}, AUTO_OPERATION_DELAY);
-	}
+  const word = searchWord.value.trim();
+  if (word && WORD_PATTERN.test(word)) {
+    autoQueryTimer.value = setTimeout(() => {
+      handleQuery();
+    }, AUTO_OPERATION_DELAY);
+  }
 };
 
 const setupAutoTranslate = () => {
-	clearTimer(autoTranslateTimer);
+  clearTimer(autoTranslateTimer);
 
-	const text = translateText.value.trim();
-	if (text && !isTranslating.value) {
-		autoTranslateTimer.value = setTimeout(() => {
-			handleTranslate();
-		}, AUTO_OPERATION_DELAY);
-	}
+  const text = translateText.value.trim();
+  if (text && !isTranslating.value) {
+    autoTranslateTimer.value = setTimeout(() => {
+      handleTranslate();
+    }, AUTO_OPERATION_DELAY);
+  }
 };
 
 const toggleCopyOptions = () => {
-	showCopyOptions.value = !showCopyOptions.value;
+  showCopyOptions.value = !showCopyOptions.value;
 };
 
 const copyResult = async (type: string = "all") => {
-	let textToCopy = "";
-	let hasContent = false;
+  let textToCopy = "";
+  let hasContent = false;
 
-	if (type === "all") {
-		textToCopy = extractContentParts.value.all || queryResult.value;
-		hasContent = !!textToCopy;
-	} else {
-		textToCopy = extractContentParts.value[type] || "";
-		hasContent = !!textToCopy;
-	}
+  if (type === "all") {
+    textToCopy = extractContentParts.value.all || queryResult.value;
+    hasContent = !!textToCopy;
+  } else {
+    textToCopy = extractContentParts.value[type] || "";
+    hasContent = !!textToCopy;
+  }
 
-	if (!hasContent) {
-		showMessage("没有找到要复制的内容", 2000, "error");
-		return;
-	}
+  if (!hasContent) {
+    showMessage("没有找到要复制的内容", 2000, "error");
+    return;
+  }
 
-	if (
-		copyToClipboard(textToCopy, props.i18n.wordQuery?.copyFailed || "复制失败")
-	) {
-		showCopyOptions.value = false;
-	}
+  if (
+    copyToClipboard(textToCopy, props.i18n.wordQuery?.copyFailed || "复制失败")
+  ) {
+    showCopyOptions.value = false;
+  }
 };
 
 const clearResult = () => {
-	queryResult.value = "";
-	errorMessage.value = "";
+  queryResult.value = "";
+  errorMessage.value = "";
 };
 
 const switchMode = (
-	mode:
-		| "word"
-		| "translate"
-		| "codeTranslation"
-		| "codeComment"
-		| "codeExplain"
-		| "regex",
+  mode:
+    | "word"
+    | "translate"
+    | "codeTranslation"
+    | "codeComment"
+    | "codeExplain"
+    | "regex",
 ) => {
-	currentMode.value = mode;
-	activePanel.value = null;
+  currentMode.value = mode;
+  activePanel.value = null;
 };
 
 const handleTranslate = async () => {
-	const text = translateText.value.trim();
-	const error = validateInput(text, "text");
-	if (error) {
-		showMessage(error, 2000, "error");
-		return;
-	}
+  const text = translateText.value.trim();
+  const error = validateInput(text, "text");
+  if (error) {
+    showMessage(error, 2000, "error");
+    return;
+  }
 
-	isTranslating.value = true;
-	translateResult.value = "";
+  isTranslating.value = true;
+  translateResult.value = "";
 
-	try {
-		if (props.onTranslate) {
-			const result = await props.onTranslate(
-				text,
-				sourceLanguage.value,
-				targetLanguage.value,
-			);
-			translateResult.value = result;
-		} else {
-			const prompt = `请将以下${sourceLanguage.value === "auto" ? "" : getLanguageName(sourceLanguage.value)}文本翻译成${getLanguageName(targetLanguage.value)}，只输出翻译结果，不要有其他说明：\n\n${text}`;
-			const result = await props.onQuery(prompt);
-			translateResult.value = result;
-		}
-	} catch (error) {
-		console.error("Translation error:", error);
-		showMessage("翻译失败: " + (error as Error).message, 3000, "error");
-	} finally {
-		isTranslating.value = false;
-	}
+  try {
+    if (props.onTranslate) {
+      const result = await props.onTranslate(
+        text,
+        sourceLanguage.value,
+        targetLanguage.value,
+      );
+      translateResult.value = result;
+    } else {
+      const prompt = `请将以下${sourceLanguage.value === "auto" ? "" : getLanguageName(sourceLanguage.value)}文本翻译成${getLanguageName(targetLanguage.value)}，只输出翻译结果，不要有其他说明：\n\n${text}`;
+      const result = await props.onQuery(prompt);
+      translateResult.value = result;
+    }
+  } catch (error) {
+    console.error("Translation error:", error);
+    showMessage("翻译失败: " + (error as Error).message, 3000, "error");
+  } finally {
+    isTranslating.value = false;
+  }
 };
 
 const PANEL_CONFIG = {
-	advanced: {
-		icon: "⚙️",
-		title: props.i18n.wordQuery?.advancedOptions || "高级选项",
-	},
+  advanced: {
+    icon: "⚙️",
+    title: props.i18n.wordQuery?.advancedOptions || "高级选项",
+  },
 } as const;
 
 const getPanelConfig = (panel: string) => {
-	return (
-		PANEL_CONFIG[panel as keyof typeof PANEL_CONFIG] || { icon: "", title: "" }
-	);
+  return (
+    PANEL_CONFIG[panel as keyof typeof PANEL_CONFIG] || { icon: "", title: "" }
+  );
 };
 
 const getLanguageName = (code: string): string => {
-	return LANGUAGE_NAMES[code] || code;
+  return LANGUAGE_NAMES[code] || code;
 };
 
 const swapLanguages = () => {
-	if (sourceLanguage.value === "auto") {
-		showMessage("自动检测模式无法交换", 2000, "info");
-		return;
-	}
-	const temp = sourceLanguage.value;
-	sourceLanguage.value = targetLanguage.value;
-	targetLanguage.value = temp;
+  if (sourceLanguage.value === "auto") {
+    showMessage("自动检测模式无法交换", 2000, "info");
+    return;
+  }
+  const temp = sourceLanguage.value;
+  sourceLanguage.value = targetLanguage.value;
+  targetLanguage.value = temp;
 
-	const tempText = translateText.value;
-	translateText.value = translateResult.value;
-	translateResult.value = tempText;
+  const tempText = translateText.value;
+  translateText.value = translateResult.value;
+  translateResult.value = tempText;
 };
 
 const clearTranslateInput = () => {
-	translateText.value = "";
-	translateResult.value = "";
+  translateText.value = "";
+  translateResult.value = "";
 };
 
 const copyTranslation = async () => {
-	if (!translateResult.value) {
-		showMessage("没有可复制的内容", 2000, "error");
-		return;
-	}
-	copyToClipboard(translateResult.value, "复制失败");
+  if (!translateResult.value) {
+    showMessage("没有可复制的内容", 2000, "error");
+    return;
+  }
+  copyToClipboard(translateResult.value, "复制失败");
 };
 
 const exportTranslation = async () => {
-	if (!translateResult.value) {
-		showMessage("没有可导出的内容", 2000, "error");
-		return;
-	}
+  if (!translateResult.value) {
+    showMessage("没有可导出的内容", 2000, "error");
+    return;
+  }
 
-	const content = `## 翻译结果\n\n### 原文 (${getLanguageName(sourceLanguage.value)})\n${translateText.value}\n\n### 译文 (${getLanguageName(targetLanguage.value)})\n${translateResult.value}`;
-	copyToClipboard(content, "导出失败");
+  const content = `## 翻译结果\n\n### 原文 (${getLanguageName(sourceLanguage.value)})\n${translateText.value}\n\n### 译文 (${getLanguageName(targetLanguage.value)})\n${translateResult.value}`;
+  copyToClipboard(content, "导出失败");
 };
 
 const handleKeyDown = (event: KeyboardEvent) => {
-	if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
-		if (currentMode.value === "word") {
-			handleQuery();
-		} else {
-			handleTranslate();
-		}
-	}
-	if (event.key === "Escape") {
-		clearResult();
-		showCopyOptions.value = false;
-	}
+  if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+    if (currentMode.value === "word") {
+      handleQuery();
+    } else {
+      handleTranslate();
+    }
+  }
+  if (event.key === "Escape") {
+    clearResult();
+    showCopyOptions.value = false;
+  }
 };
 
 const handleClickOutside = (event: Event) => {
-	const target = event.target as HTMLElement;
-	if (!target.closest(".dropdown")) {
-		showCopyOptions.value = false;
-	}
+  const target = event.target as HTMLElement;
+  if (!target.closest(".dropdown")) {
+    showCopyOptions.value = false;
+  }
 };
 
 const copyToClipboard = async (text: string, errorMessage?: string) => {
-	if (!text) return false;
-	try {
-		await navigator.clipboard.writeText(text);
-		return true;
-	} catch (error) {
-		console.error("Copy failed:", error);
-		if (errorMessage) showMessage(errorMessage, 3000, "error");
-		return false;
-	}
+  if (!text) return false;
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (error) {
+    console.error("Copy failed:", error);
+    if (errorMessage) showMessage(errorMessage, 3000, "error");
+    return false;
+  }
 };
 
 watch(searchWord, () => {
-	setupAutoQuery();
+  setupAutoQuery();
 });
 
 watch(translateText, () => {
-	setupAutoTranslate();
+  setupAutoTranslate();
 });
 
 watch(
-	[pronunciationType, autoPlayPronunciation, showRelatedWords],
-	async () => {
-		await saveAdvancedOptions();
-	},
+  [pronunciationType, autoPlayPronunciation, showRelatedWords],
+  async () => {
+    await saveAdvancedOptions();
+  },
 );
 
 const waitForPlugin = async (maxRetries = 20) => {
-	for (let i = 0; i < maxRetries; i++) {
-		if (props.plugin) return true;
-		await new Promise((resolve) => setTimeout(resolve, 100));
-	}
-	return false;
+  for (let i = 0; i < maxRetries; i++) {
+    if (props.plugin) return true;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  return false;
 };
 
 const initializeData = async () => {
-	const pluginReady = await waitForPlugin();
-	if (!pluginReady) return;
+  const pluginReady = await waitForPlugin();
+  if (!pluginReady) return;
 
-	try {
-		if (props.plugin) {
-			storage = new WordQueryStorage(props.plugin);
-			await storage.init();
-			await loadAdvancedOptions();
-		}
-	} catch (error) {
-		console.error("[WordQuery] Failed to load data:", error);
-	}
+  try {
+    if (props.plugin) {
+      storage = new WordQueryStorage(props.plugin);
+      await storage.init();
+      await loadAdvancedOptions();
+    }
+  } catch (error) {
+    console.error("[WordQuery] Failed to load data:", error);
+  }
 };
 
 onMounted(async () => {
-	document.addEventListener("keydown", handleKeyDown);
-	document.addEventListener("click", handleClickOutside);
+  document.addEventListener("keydown", handleKeyDown);
+  document.addEventListener("click", handleClickOutside);
 
-	setTimeout(initializeData, 100);
+  setTimeout(initializeData, 100);
 });
 
 onUnmounted(() => {
-	document.removeEventListener("keydown", handleKeyDown);
-	document.removeEventListener("click", handleClickOutside);
+  document.removeEventListener("keydown", handleKeyDown);
+  document.removeEventListener("click", handleClickOutside);
 
-	autoQueryTimer.value && clearTimeout(autoQueryTimer.value);
-	autoTranslateTimer.value && clearTimeout(autoTranslateTimer.value);
+  autoQueryTimer.value && clearTimeout(autoQueryTimer.value);
+  autoTranslateTimer.value && clearTimeout(autoTranslateTimer.value);
 });
 </script>
 

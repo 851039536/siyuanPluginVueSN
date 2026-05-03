@@ -38,16 +38,16 @@ import type { EverythingSearchResult } from "../types";
 import { formatFileSize, getFileIconType } from "../api";
 
 interface Props {
-	/** 搜索结果项 */
-	item: EverythingSearchResult;
+  /** 搜索结果项 */
+  item: EverythingSearchResult;
 }
 
 interface Emits {
-	(e: "click", item: EverythingSearchResult): void;
-	(e: "dblClick", item: EverythingSearchResult): void;
-	(e: "open", item: EverythingSearchResult): void;
-	(e: "showInFolder", item: EverythingSearchResult): void;
-	(e: "copyPath", item: EverythingSearchResult): void;
+  (e: "click", item: EverythingSearchResult): void;
+  (e: "dblClick", item: EverythingSearchResult): void;
+  (e: "open", item: EverythingSearchResult): void;
+  (e: "showInFolder", item: EverythingSearchResult): void;
+  (e: "copyPath", item: EverythingSearchResult): void;
 }
 
 const props = defineProps<Props>();
@@ -55,9 +55,9 @@ const emit = defineEmits<Emits>();
 
 /** 完整路径 */
 const fullPath = computed(() => {
-	return props.item.path
-		? `${props.item.path}\\${props.item.name}`
-		: props.item.name;
+  return props.item.path
+    ? `${props.item.path}\\${props.item.name}`
+    : props.item.name;
 });
 
 /** 格式化大小 */
@@ -65,62 +65,62 @@ const formattedSize = computed(() => formatFileSize(props.item.size));
 
 /** 图标类 */
 const iconClass = computed(
-	() =>
-		`icon-${getFileIconType(props.item.name, props.item.type === "folder")}`,
+  () =>
+    `icon-${getFileIconType(props.item.name, props.item.type === "folder")}`,
 );
 
 /** 图标 emoji */
 const iconEmoji = computed(() => {
-	if (props.item.type === "folder") return "📁";
+  if (props.item.type === "folder") return "📁";
 
-	const iconType = getFileIconType(props.item.name, false);
-	const emojiMap: Record<string, string> = {
-		pdf: "📕",
-		word: "📘",
-		excel: "📗",
-		ppt: "📙",
-		text: "📄",
-		markdown: "📝",
-		image: "🖼️",
-		video: "🎬",
-		audio: "🎵",
-		archive: "📦",
-		code: "💻",
-		executable: "⚙️",
-		siyuan: "📔",
-		file: "📄",
-	};
-	return emojiMap[iconType] || "📄";
+  const iconType = getFileIconType(props.item.name, false);
+  const emojiMap: Record<string, string> = {
+    pdf: "📕",
+    word: "📘",
+    excel: "📗",
+    ppt: "📙",
+    text: "📄",
+    markdown: "📝",
+    image: "🖼️",
+    video: "🎬",
+    audio: "🎵",
+    archive: "📦",
+    code: "💻",
+    executable: "⚙️",
+    siyuan: "📔",
+    file: "📄",
+  };
+  return emojiMap[iconType] || "📄";
 });
 
 /** 打开按钮标题 */
 const openButtonTitle = computed(() => {
-	return props.item.type === "folder" ? "打开文件夹" : "打开文件";
+  return props.item.type === "folder" ? "打开文件夹" : "打开文件";
 });
 
 /** 处理点击 */
 const handleClick = () => {
-	emit("click", props.item);
+  emit("click", props.item);
 };
 
 /** 处理双击 */
 const handleDblClick = () => {
-	emit("dblClick", props.item);
+  emit("dblClick", props.item);
 };
 
 /** 处理打开 */
 const handleOpen = () => {
-	emit("open", props.item);
+  emit("open", props.item);
 };
 
 /** 处理在文件夹中显示 */
 const handleShowInFolder = () => {
-	emit("showInFolder", props.item);
+  emit("showInFolder", props.item);
 };
 
 /** 处理复制路径 */
 const handleCopyPath = () => {
-	emit("copyPath", props.item);
+  emit("copyPath", props.item);
 };
 </script>
 

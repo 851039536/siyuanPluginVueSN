@@ -8,51 +8,51 @@ import type { SearchOptions, EverythingConfig } from "./index";
 
 /** 存储的设置数据 */
 export interface EverythingSearchSettings {
-	config: EverythingConfig;
-	options: SearchOptions;
+  config: EverythingConfig;
+  options: SearchOptions;
 }
 
 /** 默认配置 */
 export const DEFAULT_CONFIG: EverythingConfig = {
-	host: "localhost",
-	port: 80,
+  host: "localhost",
+  port: 80,
 };
 
 /** 默认搜索选项 */
 export const DEFAULT_OPTIONS: SearchOptions = {
-	matchCase: false,
-	matchWholeWord: false,
-	matchPath: false,
-	regex: false,
-	maxResults: 100,
-	autoSearch: true,
-	debounceDelay: 500,
-	sort: "date_modified",
-	ascending: false,
-	selectedDrive: "",
+  matchCase: false,
+  matchWholeWord: false,
+  matchPath: false,
+  regex: false,
+  maxResults: 100,
+  autoSearch: true,
+  debounceDelay: 500,
+  sort: "date_modified",
+  ascending: false,
+  selectedDrive: "",
 };
 
 /**
  * Everything搜索存储管理类
  */
 export class EverythingSearchStorage {
-	readonly config: TypedStorage<EverythingConfig>;
-	readonly options: TypedStorage<SearchOptions>;
+  readonly config: TypedStorage<EverythingConfig>;
+  readonly options: TypedStorage<SearchOptions>;
 
-	constructor(plugin: Plugin) {
-		const storage = new PluginStorage(plugin);
-		this.config = new TypedStorage(storage, "everything-search-config", DEFAULT_CONFIG);
-		this.options = new TypedStorage(storage, "everything-search-options", DEFAULT_OPTIONS);
-	}
+  constructor(plugin: Plugin) {
+    const storage = new PluginStorage(plugin);
+    this.config = new TypedStorage(storage, "everything-search-config", DEFAULT_CONFIG);
+    this.options = new TypedStorage(storage, "everything-search-options", DEFAULT_OPTIONS);
+  }
 
-	/**
-	 * 初始化存储（加载或使用默认值）
-	 */
-	async init(): Promise<{ config: EverythingConfig; options: SearchOptions }> {
-		const [config, options] = await Promise.all([
-			this.config.loadOrDefault(),
-			this.options.loadOrDefault(),
-		]);
-		return { config, options };
-	}
+  /**
+   * 初始化存储（加载或使用默认值）
+   */
+  async init(): Promise<{ config: EverythingConfig; options: SearchOptions }> {
+    const [config, options] = await Promise.all([
+      this.config.loadOrDefault(),
+      this.options.loadOrDefault(),
+    ]);
+    return { config, options };
+  }
 }

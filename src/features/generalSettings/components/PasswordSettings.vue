@@ -38,11 +38,11 @@ import { emitCustomEvent } from "@/utils/eventBus";
 import type PluginSample from "@/index";
 
 interface Props {
-	i18n?: any;
+  i18n?: any;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-	i18n: () => ({}),
+  i18n: () => ({}),
 });
 
 const plugin = usePlugin() as PluginSample;
@@ -54,34 +54,34 @@ const gsStorage = new GeneralSettingsStorage(plugin);
 
 // 检查是否已设置密码
 async function checkPassword() {
-	try {
-		const password = await gsStorage.password.load();
-		hasPassword.value = !!password;
-	} catch (error) {
-		console.error("检查密码失败:", error);
-		hasPassword.value = false;
-	}
+  try {
+    const password = await gsStorage.password.load();
+    hasPassword.value = !!password;
+  } catch (error) {
+    console.error("检查密码失败:", error);
+    hasPassword.value = false;
+  }
 }
 
 // 打开密码设置对话框
 function openPasswordDialog() {
-	emitCustomEvent("open-password-dialog", { hasPassword: hasPassword.value });
+  emitCustomEvent("open-password-dialog", { hasPassword: hasPassword.value });
 }
 
 const handlePasswordUpdated = () => checkPassword();
 
 onMounted(() => {
-	checkPassword();
-	window.addEventListener("password-updated", handlePasswordUpdated);
+  checkPassword();
+  window.addEventListener("password-updated", handlePasswordUpdated);
 });
 
 onUnmounted(() => {
-	window.removeEventListener("password-updated", handlePasswordUpdated);
+  window.removeEventListener("password-updated", handlePasswordUpdated);
 });
 
 defineExpose({
-	checkPassword,
-	openPasswordDialog,
+  checkPassword,
+  openPasswordDialog,
 });
 </script>
 

@@ -12,11 +12,11 @@ import { createDialogAction } from "../utils";
  * @returns 谐音翻译工具栏功能
  */
 export function createPronunciationAction(plugin: Plugin): ToolbarAction {
-	return createDialogAction(plugin, {
-		id: "pronunciation",
-		i18nKey: "pronunciation",
-		defaultMessage: "谐音翻译",
-		icon: `<svg><use xlink:href="#iconSparkles"></use></svg>`,
-		eventName: "openPronunciationDialog",
-	});
+  return createDialogAction(plugin, {
+    id: "pronunciation",
+    i18nKey: "pronunciation",
+    defaultMessage: "谐音翻译",
+    icon: `<svg><use xlink:href="#iconSparkles"></use></svg>`,
+    eventName: "openPronunciationDialog",
+  });
 }

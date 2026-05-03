@@ -370,26 +370,26 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from "vue";
 import {
-	GeneralSettingsStorage,
-	DEFAULT_CODEBLOCK_SETTINGS,
-	type CodeBlockSettings,
+  GeneralSettingsStorage,
+  DEFAULT_CODEBLOCK_SETTINGS,
+  type CodeBlockSettings,
 } from "@/features/generalSettings/types/storage";
 import { applyCodeBlockStyle, applyCodeBlockCollapse, applyCodeBlockEnhancedStyles } from "../utils/styles";
 
 interface Props {
-	i18n?: any;
-	plugin?: any;
-	initialSettings?: CodeBlockSettings;
+  i18n?: any;
+  plugin?: any;
+  initialSettings?: CodeBlockSettings;
 }
 
 interface Emits {
-	(e: "change", settings: CodeBlockSettings): void;
+  (e: "change", settings: CodeBlockSettings): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-	i18n: () => ({}),
-	plugin: null,
-	initialSettings: () => ({ ...DEFAULT_CODEBLOCK_SETTINGS }),
+  i18n: () => ({}),
+  plugin: null,
+  initialSettings: () => ({ ...DEFAULT_CODEBLOCK_SETTINGS }),
 });
 
 const emit = defineEmits<Emits>();
@@ -400,112 +400,112 @@ const storage = ref<GeneralSettingsStorage | null>(null);
 
 
 const shadowOptions = [
-	{ label: props.i18n.noneShadow || "无阴影", value: "none" },
-	{
-		label: props.i18n.lightShadow || "轻阴影",
-		value: "0 2px 8px rgba(0, 0, 0, 0.1)",
-	},
-	{
-		label: props.i18n.mediumShadow || "中阴影",
-		value: "0 4px 12px rgba(0, 0, 0, 0.15)",
-	},
-	{
-		label: props.i18n.heavyShadow || "重阴影",
-		value: "0 8px 24px rgba(0, 0, 0, 0.2)",
-	},
+  { label: props.i18n.noneShadow || "无阴影", value: "none" },
+  {
+    label: props.i18n.lightShadow || "轻阴影",
+    value: "0 2px 8px rgba(0, 0, 0, 0.1)",
+  },
+  {
+    label: props.i18n.mediumShadow || "中阴影",
+    value: "0 4px 12px rgba(0, 0, 0, 0.15)",
+  },
+  {
+    label: props.i18n.heavyShadow || "重阴影",
+    value: "0 8px 24px rgba(0, 0, 0, 0.2)",
+  },
 ];
 
 watch(
-	settings,
-	async (newSettings) => {
-		emit("change", newSettings);
-		applyCodeBlockStyle(newSettings.style);
-		applyCodeBlockCollapse(
-			newSettings.enableCollapse,
-			newSettings.collapseHeight,
-		);
-		applyCodeBlockEnhancedStyles(newSettings);
-		if (storage.value) {
-			try {
-				await storage.value.codeblock.save(newSettings);
-			} catch (error) {
-				console.error("自动保存失败:", error);
-			}
-		}
-	},
-	{ deep: true, immediate: false },
+  settings,
+  async (newSettings) => {
+    emit("change", newSettings);
+    applyCodeBlockStyle(newSettings.style);
+    applyCodeBlockCollapse(
+      newSettings.enableCollapse,
+      newSettings.collapseHeight,
+    );
+    applyCodeBlockEnhancedStyles(newSettings);
+    if (storage.value) {
+      try {
+        await storage.value.codeblock.save(newSettings);
+      } catch (error) {
+        console.error("自动保存失败:", error);
+      }
+    }
+  },
+  { deep: true, immediate: false },
 );
 
 function applyPresetCodeFont() {
-	if (presetCodeFont.value) {
-		settings.value.codeFontFamily = presetCodeFont.value;
-	}
+  if (presetCodeFont.value) {
+    settings.value.codeFontFamily = presetCodeFont.value;
+  }
 }
 
 function adjustValue(
-	key: keyof CodeBlockSettings,
-	delta: number,
-	min: number,
-	max: number,
+  key: keyof CodeBlockSettings,
+  delta: number,
+  min: number,
+  max: number,
 ) {
-	const currentValue = settings.value[key] as number;
-	const newValue = Math.max(min, Math.min(max, currentValue + delta));
-	(settings.value as Record<string, unknown>)[key] = newValue;
+  const currentValue = settings.value[key] as number;
+  const newValue = Math.max(min, Math.min(max, currentValue + delta));
+  (settings.value as Record<string, unknown>)[key] = newValue;
 }
 
 function getStyleName(style: string): string {
-	const names: Record<string, string> = {
-		default: props.i18n.defaultStyle || "默认风格",
-		github: props.i18n.githubStyle || "GitHub 风格",
-		mac: props.i18n.macStyle || "Mac 风格",
-	};
-	return names[style] || style;
+  const names: Record<string, string> = {
+    default: props.i18n.defaultStyle || "默认风格",
+    github: props.i18n.githubStyle || "GitHub 风格",
+    mac: props.i18n.macStyle || "Mac 风格",
+  };
+  return names[style] || style;
 }
 
 function getStyleDesc(style: string): string {
-	const descs: Record<string, string> = {
-		default: props.i18n.defaultStyleDesc || "思源原生外观",
-		github: props.i18n.githubStyleDesc || "GitHub 深色代码块",
-		mac: props.i18n.macStyleDesc || "macOS 窗口样式",
-	};
-	return descs[style] || "";
+  const descs: Record<string, string> = {
+    default: props.i18n.defaultStyleDesc || "思源原生外观",
+    github: props.i18n.githubStyleDesc || "GitHub 深色代码块",
+    mac: props.i18n.macStyleDesc || "macOS 窗口样式",
+  };
+  return descs[style] || "";
 }
 
 // 加载保存的设置
 async function loadSettings() {
-	if (!props.plugin) {
-		console.warn("插件实例不可用，使用默认设置");
-		settings.value = { ...DEFAULT_CODEBLOCK_SETTINGS };
-		return;
-	}
+  if (!props.plugin) {
+    console.warn("插件实例不可用，使用默认设置");
+    settings.value = { ...DEFAULT_CODEBLOCK_SETTINGS };
+    return;
+  }
 
-	try {
-		const loadedSettings = await storage.value!.codeblock.loadOrDefault();
-		settings.value = { ...DEFAULT_CODEBLOCK_SETTINGS, ...loadedSettings };
-		applyCodeBlockStyle(settings.value.style);
-		applyCodeBlockCollapse(
-			settings.value.enableCollapse,
-			settings.value.collapseHeight,
-		);
-		applyCodeBlockEnhancedStyles(settings.value);
-	} catch (error) {
-		console.error("加载设置失败:", error);
-		settings.value = { ...DEFAULT_CODEBLOCK_SETTINGS };
-	}
+  try {
+    const loadedSettings = await storage.value!.codeblock.loadOrDefault();
+    settings.value = { ...DEFAULT_CODEBLOCK_SETTINGS, ...loadedSettings };
+    applyCodeBlockStyle(settings.value.style);
+    applyCodeBlockCollapse(
+      settings.value.enableCollapse,
+      settings.value.collapseHeight,
+    );
+    applyCodeBlockEnhancedStyles(settings.value);
+  } catch (error) {
+    console.error("加载设置失败:", error);
+    settings.value = { ...DEFAULT_CODEBLOCK_SETTINGS };
+  }
 }
 
 // 初始化时加载设置并应用样式
 onMounted(async () => {
-	if (props.plugin) {
-		storage.value = new GeneralSettingsStorage(props.plugin);
-	}
-	await loadSettings();
+  if (props.plugin) {
+    storage.value = new GeneralSettingsStorage(props.plugin);
+  }
+  await loadSettings();
 });
 
 // 暴露方法
 defineExpose({
-	loadSettings,
-	settings,
+  loadSettings,
+  settings,
 });
 </script>
 

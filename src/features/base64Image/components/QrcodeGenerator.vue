@@ -56,29 +56,29 @@ import Button from "@/components/Button.vue";
 import Textarea from "@/components/Textarea.vue";
 
 interface Props {
-	content: string;
-	size: number;
-	darkMode: boolean;
-	output: string;
-	inputTitle: string;
-	placeholder: string;
-	sizeLabel: string;
-	darkModeLabel: string;
-	generateText: string;
-	previewTitle: string;
-	downloadText: string;
-	copyText: string;
-	contentLabel: string;
+  content: string;
+  size: number;
+  darkMode: boolean;
+  output: string;
+  inputTitle: string;
+  placeholder: string;
+  sizeLabel: string;
+  darkModeLabel: string;
+  generateText: string;
+  previewTitle: string;
+  downloadText: string;
+  copyText: string;
+  contentLabel: string;
 }
 
 defineProps<Props>();
 defineEmits<{
-	"update:content": [value: string];
-	"update:size": [value: number];
-	"update:darkMode": [value: boolean];
-	generate: [];
-	download: [];
-	copy: [];
+  "update:content": [value: string];
+  "update:size": [value: number];
+  "update:darkMode": [value: boolean];
+  generate: [];
+  download: [];
+  copy: [];
 }>();
 </script>
 

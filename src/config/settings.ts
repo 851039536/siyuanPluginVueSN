@@ -7,6 +7,10 @@
  * 此处仅保留插件全局配置（PluginSettings）及 WebDAVConfig。
  */
 import { Plugin } from "siyuan";
+import {
+  encryptSetting,
+  decryptSetting,
+} from "@/utils/settingsCrypto";
 
 // 从规范位置 re-export，保持向后兼容
 export type {
@@ -150,6 +154,36 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 const SETTINGS_KEY = "plugin-settings";
 
 /**
+ * 对 settings 中的敏感字段执行加密（保存前调用）
+ */
+async function encryptSensitiveFields(
+  settings: PluginSettings,
+): Promise<PluginSettings> {
+  const encrypted = { ...settings };
+  encrypted.aiApiKey = await encryptSetting(settings.aiApiKey);
+  encrypted.webdavConfig = {
+    ...settings.webdavConfig,
+    password: await encryptSetting(settings.webdavConfig.password),
+  };
+  return encrypted;
+}
+
+/**
+ * 对 settings 中的敏感字段执行解密（加载后调用）
+ */
+async function decryptSensitiveFields(
+  settings: PluginSettings,
+): Promise<PluginSettings> {
+  const decrypted = { ...settings };
+  decrypted.aiApiKey = await decryptSetting(settings.aiApiKey);
+  decrypted.webdavConfig = {
+    ...settings.webdavConfig,
+    password: await decryptSetting(settings.webdavConfig.password),
+  };
+  return decrypted;
+}
+
+/**
  * 加载插件配置
  */
 export async function loadSettings(plugin: Plugin): Promise<PluginSettings> {
@@ -159,7 +193,9 @@ export async function loadSettings(plugin: Plugin): Promise<PluginSettings> {
       return { ...DEFAULT_SETTINGS };
     }
     // 合并默认配置和已保存的配置
-    return { ...DEFAULT_SETTINGS, ...data };
+    const merged = { ...DEFAULT_SETTINGS, ...data };
+    // 解密敏感字段
+    return await decryptSensitiveFields(merged);
   } catch (error) {
     console.error("加载配置失败:", error);
     return { ...DEFAULT_SETTINGS };
@@ -168,18 +204,27 @@ export async function loadSettings(plugin: Plugin): Promise<PluginSettings> {
 
 /**
  * 保存插件配置
+ *
+ * 敏感字段 (aiApiKey, webdavConfig.password) 在保存前
+ * 会使用 AES-GCM 加密，防止明文泄漏。
  */
 export async function saveSettings(
   plugin: Plugin,
   settings: PluginSettings,
 ): Promise<boolean> {
   try {
-    await plugin.saveData(SETTINGS_KEY, settings);
+    const encrypted = await encryptSensitiveFields(settings);
+    await plugin.saveData(SETTINGS_KEY, encrypted);
     return true;
   } catch (error) {
     console.error("保存配置失败:", error);
     return false;
   }
 }
+
+/**
+ * 清除加密密钥缓存（在插件卸载时调用，内存安全）
+ */
+export { clearCachedKey } from "@/utils/settingsCrypto";
 
 

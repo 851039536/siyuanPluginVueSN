@@ -37,6 +37,7 @@ import {
 import {
   loadSettings,
   saveSettings,
+  clearCachedKey,
   type PluginSettings,
 } from "@/config/settings";
 import { initCommands, destroyCommands } from "@/commands";
@@ -95,6 +96,9 @@ export default class PluginSample extends Plugin {
   }
 
   onunload() {
+    // 清除缓存的加密密钥（内存安全）
+    clearCachedKey();
+
     // 清理单词阅读资源
     if ((this as any).__flashcardReading) {
       (this as any).__flashcardReading.destroy();

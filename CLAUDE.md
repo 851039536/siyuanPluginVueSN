@@ -68,6 +68,7 @@ src/
 │   ├── eventBus.ts              # 统一事件总线（emitCustomEvent）
 │   ├── pluginStorage.ts         # 存储抽象层（PluginStorage）
 │   ├── typedStorage.ts          # 类型安全存储槽（TypedStorage<T>）
+│   ├── settingsCrypto.ts        # 敏感配置加密（AES-GCM + PBKDF2，用于 aiApiKey / WebDAV 密码）
 │   └── iconHelper.ts            # 图标操作工具（replaceTopBarIcon/createIconElement）
 ├── i18n/                        # 国际化（zh_CN.json, en_US.json）
 ├── api.ts                       # Siyuan API 封装
@@ -216,11 +217,16 @@ export class MyFeatureStorage {
 
 全局插件设置使用 `PluginSettings` 接口 + `DEFAULT_SETTINGS` + 直接 `loadData/saveData` 方式（这是整个项目中唯一允许直接调用 `plugin.loadData/saveData` 的例外）。
 
+**敏感字段加密**：`aiApiKey` 和 `webdavConfig.password` 在保存时自动使用 Web Crypto API（AES-GCM）加密，加载时自动解密，磁盘上不会明文存储。加密工具在 `src/utils/settingsCrypto.ts`。
+
 ```typescript
-import { loadSettings, saveSettings, type PluginSettings } from '@/config/settings'
+import { loadSettings, saveSettings, clearCachedKey, type PluginSettings } from '@/config/settings'
 
 const settings = await loadSettings(plugin)
 await saveSettings(plugin, newSettings)
+
+// 插件卸载时清除加密密钥缓存（内存安全）
+clearCachedKey()
 ```
 
 ### 图标配置系统（src/config/icons.ts）
@@ -278,6 +284,27 @@ emitCustomEvent("openDialog", { content }, { useMicrotask: true })
 | `options.useMicrotask` | `boolean` | 默认 false，为 true 则使用微任务延迟派发 |
 
 **禁止**：在功能模块中直接编写 `new CustomEvent(...)` / `window.dispatchEvent(...)`。
+
+### 配置加密（settingsCrypto）
+
+`src/utils/settingsCrypto.ts` — 使用 Web Crypto API（AES-GCM + PBKDF2）对 `PluginSettings` 中的敏感字段进行透明加解密。
+
+```typescript
+import { encryptSetting, decryptSetting, clearCachedKey } from '@/utils/settingsCrypto'
+
+// 加密：enc:base64IV.base64Ciphertext 格式
+const encrypted = await encryptSetting('my-api-key')
+
+// 解密：自动识别 enc: 前缀，旧数据直接返回
+const plaintext = await decryptSetting(encrypted)
+
+// 清除内存中的派生密钥
+clearCachedKey()
+```
+
+**算法**：PBKDF2（SHA-256, 100000 轮）派生 256 位 AES-GCM 密钥，每次加密使用随机 12 字节 IV。密钥缓存在内存中，插件卸载时清除。
+
+**安全边界**：防止磁盘明文泄漏（如他人访问工作区文件）。不防御源码反编译攻击。如需更高保护等级，可扩展集成 OS 凭据管理器（keytar）。
 
 ## 国际化（i18n）
 

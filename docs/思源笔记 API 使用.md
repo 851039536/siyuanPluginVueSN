@@ -38,7 +38,7 @@
     "data": {
       "notebooks": [
         {
-          "id": "20210817205410-2kvfpfn", 
+          "id": "20210817205410-2kvfpfn",
           "name": "测试笔记本",
           "icon": "1f41b",
           "sort": 0,
@@ -125,13 +125,13 @@
   {
     "notebook": "20210817205410-2kvfpfn",
     "conf": {
-        "name": "测试笔记本",
-        "closed": false,
-        "refCreateSavePath": "",
-        "createDocNameTemplate": "",
-        "dailyNoteSavePath": "/daily note/{{now | date \"2006/01\"}}/{{now | date \"2006-01-02\"}}",
-        "dailyNoteTemplatePath": ""
-      }
+      "name": "测试笔记本",
+      "closed": false,
+      "refCreateSavePath": "",
+      "createDocNameTemplate": "",
+      "dailyNoteSavePath": "/daily note/{{now | date \"2006/01\"}}/{{now | date \"2006-01-02\"}}",
+      "dailyNoteTemplatePath": ""
+    }
   }
   ```
 
@@ -250,8 +250,8 @@
     "code": 0,
     "msg": "",
     "data": {
-    "notebook": "20210808180117-czj9bvb",
-    "path": "/20200812220555-lj3enxa/20210808180320-fqgskfj.sy"
+      "notebook": "20210808180117-czj9bvb",
+      "path": "/20200812220555-lj3enxa/20210808180320-fqgskfj.sy"
     }
   }
   ```
@@ -267,7 +267,7 @@
     "code": 0,
     "msg": "",
     "data": [
-        "20200813004931-q4cu8na"
+      "20200813004931-q4cu8na"
     ]
   }
   ```
@@ -414,8 +414,8 @@
             "parentID": "",
             "previousID": "",
             "retData": null
-            }
-          ],
+          }
+        ],
         "undoOperations": null
       }
     ]
@@ -444,7 +444,7 @@
             "retData": null
           }
         ],
-       "undoOperations": null
+        "undoOperations": null
       }
     ]
   }
@@ -461,23 +461,23 @@
     "code": 0,
     "msg": "",
     "data": [
-        {
-            "doOperations": [
-                {
-                    "action": "move",
-                    "data": null,
-                    "id": "20230406180530-3o1rqkc",
-                    "parentID": "20230404183855-woe52ko",
-                    "previousID": "20230406152734-if5kyx6",
-                    "nextID": "",
-                    "retData": null,
-                    "srcIDs": null,
-                    "name": "",
-                    "type": ""
-                }
-            ],
-            "undoOperations": null
-        }
+      {
+        "doOperations": [
+          {
+            "action": "move",
+            "data": null,
+            "id": "20230406180530-3o1rqkc",
+            "parentID": "20230404183855-woe52ko",
+            "previousID": "20230406152734-if5kyx6",
+            "nextID": "",
+            "retData": null,
+            "srcIDs": null,
+            "name": "",
+            "type": ""
+          }
+        ],
+        "undoOperations": null
+      }
     ]
   }
   ```
@@ -774,10 +774,12 @@
   {
     "dir": "test",
     "args": [
-      "--to", "markdown_strict-raw_html",
+      "--to",
+      "markdown_strict-raw_html",
       "foo.epub",
-      "-o", "foo.md"
-   ]
+      "-o",
+      "foo.md"
+    ]
   }
   ```
 
@@ -789,7 +791,7 @@
   "code": 0,
   "msg": "",
   "data": {
-     "path": "/temp/convert/pandoc/test"
+    "path": "/temp/convert/pandoc/test"
   }
 }
 ```
@@ -809,7 +811,7 @@
     "code": 0,
     "msg": "",
     "data": {
-        "id": "62jtmqi"
+      "id": "62jtmqi"
     }
   }
   ```
@@ -825,7 +827,7 @@
     "code": 0,
     "msg": "",
     "data": {
-        "id": "qc9znut"
+      "id": "qc9znut"
     }
   }
   ```
@@ -844,9 +846,9 @@
     "timeout": 7000,
     "contentType": "text/html",
     "headers": [
-        {
-            "Cookie": ""
-        }
+      {
+        "Cookie": ""
+      }
     ],
     "payload": {},
     "payloadEncoding": "text",

@@ -12,31 +12,36 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch } from "vue";
-import videojs from "video.js";
-import type Player from "video.js/dist/types/player";
-import "video.js/dist/video-js.css";
+import type Player from "video.js/dist/types/player"
+import videojs from "video.js"
+import {
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch,
+} from "vue"
+import "video.js/dist/video-js.css"
 
 /**
  * 视频播放器配置选项
  */
 export interface VideoPlayerOptions {
   /** 视频源 URL */
-  src: string;
+  src: string
   /** 视频类型（默认 video/mp4） */
-  type?: string;
+  type?: string
   /** 是否自动播放（默认 false） */
-  autoplay?: boolean;
+  autoplay?: boolean
   /** 预加载策略（默认 auto） */
-  preload?: "none" | "metadata" | "auto";
+  preload?: "none" | "metadata" | "auto"
   /** 播放器宽度（默认 800） */
-  width?: number;
+  width?: number
   /** 播放器高度（默认 450） */
-  height?: number;
+  height?: number
   /** 是否自适应（默认 false） */
-  fluid?: boolean;
+  fluid?: boolean
   /** 播放速度选项 */
-  playbackRates?: number[];
+  playbackRates?: number[]
 }
 
 /**
@@ -44,15 +49,15 @@ export interface VideoPlayerOptions {
  */
 export interface VideoPlayerEmits {
   /** 播放器初始化完成 */
-  (e: "ready", player: Player): void;
+  (e: "ready", player: Player): void
   /** 视频开始播放 */
-  (e: "play"): void;
+  (e: "play"): void
   /** 视频暂停 */
-  (e: "pause"): void;
+  (e: "pause"): void
   /** 视频播放结束 */
-  (e: "ended"): void;
+  (e: "ended"): void
   /** 发生错误 */
-  (e: "error", error: any): void;
+  (e: "error", error: any): void
 }
 
 const props = withDefaults(defineProps<VideoPlayerOptions>(), {
@@ -63,22 +68,22 @@ const props = withDefaults(defineProps<VideoPlayerOptions>(), {
   height: 450,
   fluid: false,
   playbackRates: () => [0.5, 1, 1.5, 2],
-});
+})
 
-const emit = defineEmits<VideoPlayerEmits>();
+const emit = defineEmits<VideoPlayerEmits>()
 
 // Refs
-const videoElement = ref<HTMLVideoElement>();
-let player: Player | null = null;
+const videoElement = ref<HTMLVideoElement>()
+let player: Player | null = null
 
 // 初始化播放器
 function initPlayer() {
-  if (!videoElement.value) return;
+  if (!videoElement.value) return
 
   // 销毁旧实例
   if (player) {
-    player.dispose();
-    player = null;
+    player.dispose()
+    player = null
   }
 
   // 创建新播放器实例
@@ -103,23 +108,23 @@ function initPlayer() {
         "fullscreenToggle",
       ],
     },
-  });
+  })
 
   // 设置视频源
   player.src({
     src: props.src,
     type: props.type,
-  });
+  })
 
   // 绑定事件
   player.ready(() => {
-    emit("ready", player!);
-  });
+    emit("ready", player!)
+  })
 
-  player.on("play", () => emit("play"));
-  player.on("pause", () => emit("pause"));
-  player.on("ended", () => emit("ended"));
-  player.on("error", (error) => emit("error", error));
+  player.on("play", () => emit("play"))
+  player.on("pause", () => emit("pause"))
+  player.on("ended", () => emit("ended"))
+  player.on("error", (error) => emit("error", error))
 }
 
 // 监听视频源变化
@@ -130,10 +135,10 @@ watch(
       player.src({
         src: props.src,
         type: props.type,
-      });
+      })
     }
   },
-);
+)
 
 // 暴露方法供父组件调用
 defineExpose({
@@ -144,24 +149,24 @@ defineExpose({
   /** 销毁播放器 */
   dispose: () => {
     if (player) {
-      player.dispose();
-      player = null;
+      player.dispose()
+      player = null
     }
   },
   /** 获取播放器实例 */
   getPlayer: () => player,
-});
+})
 
 onMounted(() => {
-  initPlayer();
-});
+  initPlayer()
+})
 
 onBeforeUnmount(() => {
   if (player) {
-    player.dispose();
-    player = null;
+    player.dispose()
+    player = null
   }
-});
+})
 </script>
 
 <style scoped lang="scss">

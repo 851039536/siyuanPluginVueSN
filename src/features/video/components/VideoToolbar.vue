@@ -1,15 +1,29 @@
 <template>
   <div class="video-toolbar">
     <!-- 主要操作按钮 -->
-    <Button variant="primary" size="small" @click="handleRefresh">
+    <Button
+      variant="primary"
+      size="small"
+      @click="handleRefresh"
+    >
       <template #icon>
-        <IconWrapper name="refresh" :size="14" />
+        <IconWrapper
+          name="refresh"
+          :size="14"
+        />
       </template>
       <span>刷新列表</span>
     </Button>
-    <Button variant="secondary" size="small" @click="handleOpenFolder">
+    <Button
+      variant="secondary"
+      size="small"
+      @click="handleOpenFolder"
+    >
       <template #icon>
-        <IconWrapper name="folder" :size="14" />
+        <IconWrapper
+          name="folder"
+          :size="14"
+        />
       </template>
       <span>打开文件夹</span>
     </Button>
@@ -23,7 +37,10 @@
       @click="handleBatchEncrypt"
     >
       <template #icon>
-        <IconWrapper name="encryption" :size="14" />
+        <IconWrapper
+          name="encryption"
+          :size="14"
+        />
       </template>
       <span>批量加密</span>
     </Button>
@@ -35,7 +52,10 @@
       @click="handleBatchDecrypt"
     >
       <template #icon>
-        <IconWrapper name="encryption" :size="14" />
+        <IconWrapper
+          name="encryption"
+          :size="14"
+        />
       </template>
       <span>批量解密</span>
     </Button>
@@ -46,11 +66,14 @@
         variant="ghost"
         size="small"
         class="btn-ffmpeg"
-        @click="handleDownloadVideo"
         title="下载视频"
+        @click="handleDownloadVideo"
       >
         <template #icon>
-          <IconWrapper name="download" :size="14" />
+          <IconWrapper
+            name="download"
+            :size="14"
+          />
         </template>
         <span>下载视频</span>
       </Button>
@@ -58,11 +81,14 @@
         variant="ghost"
         size="small"
         class="btn-ffmpeg"
-        @click="handleMergeVideos"
         title="视频合并"
+        @click="handleMergeVideos"
       >
         <template #icon>
-          <IconWrapper name="merge" :size="14" />
+          <IconWrapper
+            name="merge"
+            :size="14"
+          />
         </template>
         <span>视频合并</span>
       </Button>
@@ -70,11 +96,14 @@
         variant="ghost"
         size="small"
         class="btn-ffmpeg"
-        @click="handleMergeAudio"
         title="视频音频合并"
+        @click="handleMergeAudio"
       >
         <template #icon>
-          <IconWrapper name="merge" :size="14" />
+          <IconWrapper
+            name="merge"
+            :size="14"
+          />
         </template>
         <span>视频音频合并</span>
       </Button>
@@ -82,18 +111,24 @@
         variant="ghost"
         size="small"
         class="btn-ffmpeg"
-        @click="handleCompress"
         title="视频压缩"
+        @click="handleCompress"
       >
         <template #icon>
-          <IconWrapper name="video" :size="14" />
+          <IconWrapper
+            name="video"
+            :size="14"
+          />
         </template>
         <span>视频压缩</span>
       </Button>
     </div>
 
     <!-- 分类筛选 -->
-    <div v-if="categories.length > 0" class="category-filter">
+    <div
+      v-if="categories.length > 0"
+      class="category-filter"
+    >
       <label>分类:</label>
       <Select
         :model-value="selectedCategory"
@@ -104,9 +139,16 @@
     </div>
 
     <!-- FFmpeg 设置按钮 -->
-    <Button variant="ghost" size="small" @click="handleFFmpegSettings">
+    <Button
+      variant="ghost"
+      size="small"
+      @click="handleFFmpegSettings"
+    >
       <template #icon>
-        <IconWrapper name="settings" :size="14" />
+        <IconWrapper
+          name="settings"
+          :size="14"
+        />
       </template>
       <span>FFmpeg设置</span>
     </Button>
@@ -116,25 +158,25 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-import IconWrapper from "@/components/IconWrapper.vue";
-import Button from "@/components/Button.vue";
-import Select from "@/components/Select.vue";
+import { computed } from "vue"
+import Button from "@/components/Button.vue"
+import IconWrapper from "@/components/IconWrapper.vue"
+import Select from "@/components/Select.vue"
 
 /**
  * 工具栏按钮配置
  */
 export interface ToolbarButton {
   /** 按钮标识 */
-  key: string;
+  key: string
   /** 按钮文本 */
-  label: string;
+  label: string
   /** 图标名称 */
-  icon: string;
+  icon: string
   /** 是否禁用 */
-  disabled?: boolean;
+  disabled?: boolean
   /** 按钮样式类型 */
-  variant?: "default" | "primary" | "encrypt" | "decrypt" | "ffmpeg";
+  variant?: "default" | "primary" | "encrypt" | "decrypt" | "ffmpeg"
 }
 
 /**
@@ -142,19 +184,19 @@ export interface ToolbarButton {
  */
 export interface VideoToolbarProps {
   /** 分类列表 */
-  categories?: string[];
+  categories?: string[]
   /** 当前选中的分类 */
-  selectedCategory?: string;
+  selectedCategory?: string
   /** 是否显示加密按钮 */
-  showEncryptBtn?: boolean;
+  showEncryptBtn?: boolean
   /** 是否显示解密按钮 */
-  showDecryptBtn?: boolean;
+  showDecryptBtn?: boolean
   /** 是否显示 FFmpeg 工具 */
-  showFFmpegTools?: boolean;
+  showFFmpegTools?: boolean
   /** FFmpeg 是否可用 */
-  hasFFmpeg?: boolean;
+  hasFFmpeg?: boolean
   /** FFmpeg 路径 */
-  ffmpegPath?: string;
+  ffmpegPath?: string
 }
 
 /**
@@ -162,25 +204,25 @@ export interface VideoToolbarProps {
  */
 export interface VideoToolbarEmits {
   /** 刷新列表 */
-  (e: "refresh"): void;
+  (e: "refresh"): void
   /** 打开文件夹 */
-  (e: "openFolder"): void;
+  (e: "openFolder"): void
   /** 批量加密 */
-  (e: "batchEncrypt"): void;
+  (e: "batchEncrypt"): void
   /** 批量解密 */
-  (e: "batchDecrypt"): void;
+  (e: "batchDecrypt"): void
   /** 下载视频 */
-  (e: "downloadVideo"): void;
+  (e: "downloadVideo"): void
   /** 视频合并 */
-  (e: "mergeVideos"): void;
+  (e: "mergeVideos"): void
   /** 视频音频合并 */
-  (e: "mergeAudio"): void;
+  (e: "mergeAudio"): void
   /** 视频压缩 */
-  (e: "compress"): void;
+  (e: "compress"): void
   /** FFmpeg 设置 */
-  (e: "ffmpegSettings"): void;
+  (e: "ffmpegSettings"): void
   /** 分类变化 */
-  (e: "categoryChange", category: string): void;
+  (e: "categoryChange", category: string): void
 }
 
 const props = withDefaults(defineProps<VideoToolbarProps>(), {
@@ -191,55 +233,61 @@ const props = withDefaults(defineProps<VideoToolbarProps>(), {
   showFFmpegTools: false,
   hasFFmpeg: false,
   ffmpegPath: "",
-});
+})
 
-const emit = defineEmits<VideoToolbarEmits>();
+const emit = defineEmits<VideoToolbarEmits>()
 
 // 分类选项
 const categoryOptions = computed(() => [
-  { value: "", label: "全部" },
-  ...props.categories.map((cat) => ({ value: cat, label: cat })),
-]);
+  {
+    value: "",
+    label: "全部",
+  },
+  ...props.categories.map((cat) => ({
+    value: cat,
+    label: cat,
+  })),
+])
 
 // 事件处理方法
 function handleRefresh() {
-  emit("refresh");
+  emit("refresh")
 }
 
 function handleOpenFolder() {
-  emit("openFolder");
+  emit("openFolder")
 }
 
 function handleBatchEncrypt() {
-  emit("batchEncrypt");
+  emit("batchEncrypt")
 }
 
 function handleBatchDecrypt() {
-  emit("batchDecrypt");
+  emit("batchDecrypt")
 }
 
 function handleDownloadVideo() {
-  emit("downloadVideo");
+  emit("downloadVideo")
 }
 
 function handleMergeVideos() {
-  emit("mergeVideos");
+  emit("mergeVideos")
 }
 
 function handleMergeAudio() {
-  emit("mergeAudio");
+  emit("mergeAudio")
 }
 
 function handleCompress() {
-  emit("compress");
+  emit("compress")
 }
 
 function handleFFmpegSettings() {
-  emit("ffmpegSettings");
+  emit("ffmpegSettings")
 }
 
 function handleCategoryChange(value: string) {
-  emit("categoryChange", value);
+  emit("categoryChange", value)
 }
 </script>
 

@@ -4,23 +4,42 @@
     class="status__resUsage"
     :title="systemInfoTooltip"
   >
-    <MonitorItem icon="ph:file-text" item-class="statistics-item notes-item" :title="statisticsTooltip">
+    <MonitorItem
+      icon="ph:file-text"
+      item-class="statistics-item notes-item"
+      :title="statisticsTooltip"
+    >
       {{ totalNotesDisplay }}
     </MonitorItem>
 
-    <MonitorItem icon="ph:text-aa" item-class="statistics-item words-item" :title="statisticsTooltip">
+    <MonitorItem
+      icon="ph:text-aa"
+      item-class="statistics-item words-item"
+      :title="statisticsTooltip"
+    >
       {{ totalWordsDisplay }}
     </MonitorItem>
 
-    <MonitorItem icon="ph:cpu" item-class="cpu-item" :level="cpuLevel">
+    <MonitorItem
+      icon="ph:cpu"
+      item-class="cpu-item"
+      :level="cpuLevel"
+    >
       {{ cpuUsageDisplay }}
     </MonitorItem>
 
-    <MonitorItem icon="ph:memory" item-class="mem-item" :level="memLevel">
+    <MonitorItem
+      icon="ph:memory"
+      item-class="mem-item"
+      :level="memLevel"
+    >
       {{ memoryUsageDisplay }}
     </MonitorItem>
 
-    <MonitorItem icon="ph:timer" item-class="uptime-item">
+    <MonitorItem
+      icon="ph:timer"
+      item-class="uptime-item"
+    >
       {{ uptimeDisplay }}
     </MonitorItem>
 
@@ -41,10 +60,10 @@
 </template>
 
 <script setup lang="ts">
-import MonitorItem from "./components/MonitorItem.vue";
-import { useStatusBar } from "./composables/useStatusBar";
-import { showPasswordVault } from "../passwordVault/types";
-import { emitCustomEvent } from "@/utils/eventBus";
+import { emitCustomEvent } from "@/utils/eventBus"
+import { showPasswordVault } from "../passwordVault/types"
+import MonitorItem from "./components/MonitorItem.vue"
+import { useStatusBar } from "./composables/useStatusBar"
 
 const {
   state,
@@ -57,13 +76,13 @@ const {
   totalNotesDisplay,
   totalWordsDisplay,
   statisticsTooltip,
-} = useStatusBar();
+} = useStatusBar()
 
 const handleOpenPasswordVault = () => {
-  showPasswordVault();
-};
+  showPasswordVault()
+}
 
 const handleOpenVideoManager = () => {
-  emitCustomEvent("openVideoManager");
-};
+  emitCustomEvent("openVideoManager")
+}
 </script>

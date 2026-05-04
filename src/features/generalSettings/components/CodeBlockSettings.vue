@@ -11,8 +11,8 @@
           <div class="toggle-container">
             <label class="toggle-switch">
               <input
-                type="checkbox"
                 v-model="settings.enabled"
+                type="checkbox"
                 class="toggle-input"
               />
               <span class="toggle-slider"></span>
@@ -25,7 +25,10 @@
       </div>
 
       <!-- 代码块风格选择 -->
-      <div v-if="settings.enabled" class="setting-row">
+      <div
+        v-if="settings.enabled"
+        class="setting-row"
+      >
         <div class="setting-item">
           <label class="setting-label">
             <span class="label-icon">🎨</span>
@@ -36,7 +39,8 @@
             <div
               v-for="style in (['default', 'github', 'mac'] as const)"
               :key="style"
-              :class="['style-card', { active: settings.style === style }]"
+              class="style-card"
+              :class="[{ active: settings.style === style }]"
               @click="settings.style = style as 'default' | 'github' | 'mac'"
             >
               <div class="style-card-icon">
@@ -44,15 +48,27 @@
                 <span v-if="style === 'github'">🐙</span>
                 <span v-if="style === 'mac'">🍎</span>
               </div>
-              <div class="style-card-name">{{ getStyleName(style) }}</div>
-              <div class="style-card-desc">{{ getStyleDesc(style) }}</div>
-              <div v-if="settings.style === style" class="style-card-check">✓</div>
+              <div class="style-card-name">
+                {{ getStyleName(style) }}
+              </div>
+              <div class="style-card-desc">
+                {{ getStyleDesc(style) }}
+              </div>
+              <div
+                v-if="settings.style === style"
+                class="style-card-check"
+              >
+                ✓
+              </div>
             </div>
           </div>
         </div>
       </div>
       <!-- 高级设置 -->
-      <div v-if="settings.enabled" class="advanced-settings">
+      <div
+        v-if="settings.enabled"
+        class="advanced-settings"
+      >
         <div class="setting-header">
           <span class="label-icon">⚙️</span>
           <span>{{ i18n.advancedSettings || '高级设置' }}</span>
@@ -104,7 +120,12 @@
             <div class="border-row">
               <label>{{ i18n.borderWidth || '边框宽度' }}</label>
               <div class="slider-container small">
-                <button class="slider-btn" @click="adjustValue('borderWidth', -0.5, 0, 5)">−</button>
+                <button
+                  class="slider-btn"
+                  @click="adjustValue('borderWidth', -0.5, 0, 5)"
+                >
+                  −
+                </button>
                 <input
                   v-model.number="settings.borderWidth"
                   type="range"
@@ -113,14 +134,24 @@
                   step="0.5"
                   class="range-slider"
                 />
-                <button class="slider-btn" @click="adjustValue('borderWidth', 0.5, 0, 5)">+</button>
+                <button
+                  class="slider-btn"
+                  @click="adjustValue('borderWidth', 0.5, 0, 5)"
+                >
+                  +
+                </button>
                 <span class="slider-value">{{ settings.borderWidth }}px</span>
               </div>
             </div>
             <div class="border-row">
               <label>{{ i18n.borderRadius || '圆角' }}</label>
               <div class="slider-container small">
-                <button class="slider-btn" @click="adjustValue('borderRadius', -1, 0, 20)">−</button>
+                <button
+                  class="slider-btn"
+                  @click="adjustValue('borderRadius', -1, 0, 20)"
+                >
+                  −
+                </button>
                 <input
                   v-model.number="settings.borderRadius"
                   type="range"
@@ -129,7 +160,12 @@
                   step="1"
                   class="range-slider"
                 />
-                <button class="slider-btn" @click="adjustValue('borderRadius', 1, 0, 20)">+</button>
+                <button
+                  class="slider-btn"
+                  @click="adjustValue('borderRadius', 1, 0, 20)"
+                >
+                  +
+                </button>
                 <span class="slider-value">{{ settings.borderRadius }}px</span>
               </div>
             </div>
@@ -146,7 +182,8 @@
             <button
               v-for="shadow in shadowOptions"
               :key="shadow.value"
-              :class="['shadow-btn', { active: settings.boxShadow === shadow.value }]"
+              class="shadow-btn"
+              :class="[{ active: settings.boxShadow === shadow.value }]"
               @click="settings.boxShadow = shadow.value"
             >
               {{ shadow.label }}
@@ -170,21 +207,44 @@
                   class="text-input font-input"
                   :placeholder="i18n.fontFamilyPlaceholder || '输入字体名称'"
                 />
-                <select v-model="presetCodeFont" class="font-select" @change="applyPresetCodeFont">
-                  <option value="">{{ i18n.selectFont || '选择字体' }}</option>
-                  <option value="Consolas">Consolas</option>
-                  <option value="Monaco">Monaco</option>
-                  <option value="Courier New">Courier New</option>
-                  <option value="Fira Code">Fira Code</option>
-                  <option value="Source Code Pro">Source Code Pro</option>
-                  <option value="JetBrains Mono">JetBrains Mono</option>
+                <select
+                  v-model="presetCodeFont"
+                  class="font-select"
+                  @change="applyPresetCodeFont"
+                >
+                  <option value="">
+                    {{ i18n.selectFont || '选择字体' }}
+                  </option>
+                  <option value="Consolas">
+                    Consolas
+                  </option>
+                  <option value="Monaco">
+                    Monaco
+                  </option>
+                  <option value="Courier New">
+                    Courier New
+                  </option>
+                  <option value="Fira Code">
+                    Fira Code
+                  </option>
+                  <option value="Source Code Pro">
+                    Source Code Pro
+                  </option>
+                  <option value="JetBrains Mono">
+                    JetBrains Mono
+                  </option>
                 </select>
               </div>
             </div>
             <div class="font-row">
               <label>{{ i18n.fontSize || '字体大小' }}</label>
               <div class="slider-container small">
-                <button class="slider-btn" @click="adjustValue('codeFontSize', -1, 10, 20)">−</button>
+                <button
+                  class="slider-btn"
+                  @click="adjustValue('codeFontSize', -1, 10, 20)"
+                >
+                  −
+                </button>
                 <input
                   v-model.number="settings.codeFontSize"
                   type="range"
@@ -193,14 +253,24 @@
                   step="1"
                   class="range-slider"
                 />
-                <button class="slider-btn" @click="adjustValue('codeFontSize', 1, 10, 20)">+</button>
+                <button
+                  class="slider-btn"
+                  @click="adjustValue('codeFontSize', 1, 10, 20)"
+                >
+                  +
+                </button>
                 <span class="slider-value">{{ settings.codeFontSize }}px</span>
               </div>
             </div>
             <div class="font-row">
               <label>{{ i18n.lineHeight || '行高' }}</label>
               <div class="slider-container small">
-                <button class="slider-btn" @click="adjustValue('codeLineHeight', -0.1, 1.2, 2.0)">−</button>
+                <button
+                  class="slider-btn"
+                  @click="adjustValue('codeLineHeight', -0.1, 1.2, 2.0)"
+                >
+                  −
+                </button>
                 <input
                   v-model.number="settings.codeLineHeight"
                   type="range"
@@ -209,7 +279,12 @@
                   step="0.1"
                   class="range-slider"
                 />
-                <button class="slider-btn" @click="adjustValue('codeLineHeight', 0.1, 1.2, 2.0)">+</button>
+                <button
+                  class="slider-btn"
+                  @click="adjustValue('codeLineHeight', 0.1, 1.2, 2.0)"
+                >
+                  +
+                </button>
                 <span class="slider-value">{{ settings.codeLineHeight }}</span>
               </div>
             </div>
@@ -325,8 +400,8 @@
           <div class="toggle-container">
             <label class="toggle-switch">
               <input
-                type="checkbox"
                 v-model="settings.enableCollapse"
+                type="checkbox"
                 class="toggle-input"
               />
               <span class="toggle-slider"></span>
@@ -337,7 +412,10 @@
           </div>
         </div>
         <!-- 折叠高度设置 -->
-        <div v-if="settings.enableCollapse" class="setting-item">
+        <div
+          v-if="settings.enableCollapse"
+          class="setting-item"
+        >
           <label class="setting-label">
             <span class="label-icon">📏</span>
             {{ i18n.collapseHeight || '折叠高度' }}
@@ -345,7 +423,12 @@
           </label>
           <div class="slider-container">
             <div class="slider-row">
-              <button class="slider-btn" @click="adjustValue('collapseHeight', -50, 200, 800)">−</button>
+              <button
+                class="slider-btn"
+                @click="adjustValue('collapseHeight', -50, 200, 800)"
+              >
+                −
+              </button>
               <input
                 v-model.number="settings.collapseHeight"
                 type="range"
@@ -354,7 +437,12 @@
                 step="50"
                 class="range-slider"
               />
-              <button class="slider-btn" @click="adjustValue('collapseHeight', 50, 200, 800)">+</button>
+              <button
+                class="slider-btn"
+                @click="adjustValue('collapseHeight', 50, 200, 800)"
+              >
+                +
+              </button>
             </div>
             <div class="slider-labels">
               <span>200px</span>
@@ -368,39 +456,51 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from "vue";
+import type { CodeBlockSettings } from "@/features/generalSettings/types/storage"
 import {
-  GeneralSettingsStorage,
+  onMounted,
+  ref,
+  watch,
+} from "vue"
+import {
+
   DEFAULT_CODEBLOCK_SETTINGS,
-  type CodeBlockSettings,
-} from "@/features/generalSettings/types/storage";
-import { applyCodeBlockStyle, applyCodeBlockCollapse, applyCodeBlockEnhancedStyles } from "../utils/styles";
+  GeneralSettingsStorage,
+} from "@/features/generalSettings/types/storage"
+import {
+  applyCodeBlockCollapse,
+  applyCodeBlockEnhancedStyles,
+  applyCodeBlockStyle,
+} from "../utils/styles"
 
 interface Props {
-  i18n?: any;
-  plugin?: any;
-  initialSettings?: CodeBlockSettings;
+  i18n?: any
+  plugin?: any
+  initialSettings?: CodeBlockSettings
 }
 
 interface Emits {
-  (e: "change", settings: CodeBlockSettings): void;
+  (e: "change", settings: CodeBlockSettings): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
   i18n: () => ({}),
   plugin: null,
   initialSettings: () => ({ ...DEFAULT_CODEBLOCK_SETTINGS }),
-});
+})
 
-const emit = defineEmits<Emits>();
+const emit = defineEmits<Emits>()
 
-const settings = ref<CodeBlockSettings>({ ...props.initialSettings });
-const presetCodeFont = ref("");
-const storage = ref<GeneralSettingsStorage | null>(null);
+const settings = ref<CodeBlockSettings>({ ...props.initialSettings })
+const presetCodeFont = ref("")
+const storage = ref<GeneralSettingsStorage | null>(null)
 
 
 const shadowOptions = [
-  { label: props.i18n.noneShadow || "无阴影", value: "none" },
+  {
+    label: props.i18n.noneShadow || "无阴影",
+    value: "none",
+  },
   {
     label: props.i18n.lightShadow || "轻阴影",
     value: "0 2px 8px rgba(0, 0, 0, 0.1)",
@@ -413,32 +513,35 @@ const shadowOptions = [
     label: props.i18n.heavyShadow || "重阴影",
     value: "0 8px 24px rgba(0, 0, 0, 0.2)",
   },
-];
+]
 
 watch(
   settings,
   async (newSettings) => {
-    emit("change", newSettings);
-    applyCodeBlockStyle(newSettings.style);
+    emit("change", newSettings)
+    applyCodeBlockStyle(newSettings.style)
     applyCodeBlockCollapse(
       newSettings.enableCollapse,
       newSettings.collapseHeight,
-    );
-    applyCodeBlockEnhancedStyles(newSettings);
+    )
+    applyCodeBlockEnhancedStyles(newSettings)
     if (storage.value) {
       try {
-        await storage.value.codeblock.save(newSettings);
+        await storage.value.codeblock.save(newSettings)
       } catch (error) {
-        console.error("自动保存失败:", error);
+        console.error("自动保存失败:", error)
       }
     }
   },
-  { deep: true, immediate: false },
-);
+  {
+    deep: true,
+    immediate: false,
+  },
+)
 
 function applyPresetCodeFont() {
   if (presetCodeFont.value) {
-    settings.value.codeFontFamily = presetCodeFont.value;
+    settings.value.codeFontFamily = presetCodeFont.value
   }
 }
 
@@ -448,9 +551,9 @@ function adjustValue(
   min: number,
   max: number,
 ) {
-  const currentValue = settings.value[key] as number;
+  const currentValue = settings.value[key] as number
   const newValue = Math.max(min, Math.min(max, currentValue + delta));
-  (settings.value as Record<string, unknown>)[key] = newValue;
+  (settings.value as Record<string, unknown>)[key] = newValue
 }
 
 function getStyleName(style: string): string {
@@ -458,8 +561,8 @@ function getStyleName(style: string): string {
     default: props.i18n.defaultStyle || "默认风格",
     github: props.i18n.githubStyle || "GitHub 风格",
     mac: props.i18n.macStyle || "Mac 风格",
-  };
-  return names[style] || style;
+  }
+  return names[style] || style
 }
 
 function getStyleDesc(style: string): string {
@@ -467,46 +570,49 @@ function getStyleDesc(style: string): string {
     default: props.i18n.defaultStyleDesc || "思源原生外观",
     github: props.i18n.githubStyleDesc || "GitHub 深色代码块",
     mac: props.i18n.macStyleDesc || "macOS 窗口样式",
-  };
-  return descs[style] || "";
+  }
+  return descs[style] || ""
 }
 
 // 加载保存的设置
 async function loadSettings() {
   if (!props.plugin) {
-    console.warn("插件实例不可用，使用默认设置");
-    settings.value = { ...DEFAULT_CODEBLOCK_SETTINGS };
-    return;
+    console.warn("插件实例不可用，使用默认设置")
+    settings.value = { ...DEFAULT_CODEBLOCK_SETTINGS }
+    return
   }
 
   try {
-    const loadedSettings = await storage.value!.codeblock.loadOrDefault();
-    settings.value = { ...DEFAULT_CODEBLOCK_SETTINGS, ...loadedSettings };
-    applyCodeBlockStyle(settings.value.style);
+    const loadedSettings = await storage.value!.codeblock.loadOrDefault()
+    settings.value = {
+      ...DEFAULT_CODEBLOCK_SETTINGS,
+      ...loadedSettings,
+    }
+    applyCodeBlockStyle(settings.value.style)
     applyCodeBlockCollapse(
       settings.value.enableCollapse,
       settings.value.collapseHeight,
-    );
-    applyCodeBlockEnhancedStyles(settings.value);
+    )
+    applyCodeBlockEnhancedStyles(settings.value)
   } catch (error) {
-    console.error("加载设置失败:", error);
-    settings.value = { ...DEFAULT_CODEBLOCK_SETTINGS };
+    console.error("加载设置失败:", error)
+    settings.value = { ...DEFAULT_CODEBLOCK_SETTINGS }
   }
 }
 
 // 初始化时加载设置并应用样式
 onMounted(async () => {
   if (props.plugin) {
-    storage.value = new GeneralSettingsStorage(props.plugin);
+    storage.value = new GeneralSettingsStorage(props.plugin)
   }
-  await loadSettings();
-});
+  await loadSettings()
+})
 
 // 暴露方法
 defineExpose({
   loadSettings,
   settings,
-});
+})
 </script>
 
 <style scoped lang="scss">

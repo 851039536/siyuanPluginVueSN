@@ -46,9 +46,15 @@ npm install vue@^3.5.0
 
 **Step 2: Use numeric depth**
 ```typescript
-import { watch, ref } from 'vue'
+import {
+  ref,
+  watch,
+} from 'vue'
 
-const items = ref([{ id: 1, data: { nested: 'value' } }])
+const items = ref([{
+  id: 1,
+  data: { nested: 'value' },
+}])
 
 // Watch array mutations only (push, pop, etc.)
 watch(items, (newItems) => {

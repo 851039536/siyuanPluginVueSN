@@ -4,7 +4,10 @@
       <span class="section-icon">🖍️</span>
       {{ i18n?.enableHighlight || '双击高亮功能' }}
     </label>
-    <SiSwitch v-model="enableHighlight" @change="handleToggleChange" />
+    <SiSwitch
+      v-model="enableHighlight"
+      @change="handleToggleChange"
+    />
     <p class="toggle-description">
       {{ i18n?.highlightDescription || '双击选中文本自动高亮显示' }}
     </p>
@@ -34,17 +37,17 @@
           </label>
           <div class="color-input-wrapper">
             <input
-              type="color"
               v-model="backgroundColor"
+              type="color"
               class="color-picker"
               @input="handleStyleChange"
             />
             <input
-              type="text"
               v-model="backgroundColor"
+              type="text"
               class="color-text"
-              @change="handleStyleChange"
               placeholder="rgb(255, 220, 60)"
+              @change="handleStyleChange"
             />
           </div>
         </div>
@@ -53,15 +56,35 @@
           <label class="style-label">
             {{ i18n?.highlightFontSize || '字体大小' }}
           </label>
-          <select v-model="fontSize" class="style-select" @change="handleStyleChange">
-            <option value="0">跟随原文</option>
-            <option value="12">12px</option>
-            <option value="13">13px</option>
-            <option value="14">14px</option>
-            <option value="15">15px</option>
-            <option value="16">16px</option>
-            <option value="18">18px</option>
-            <option value="20">20px</option>
+          <select
+            v-model="fontSize"
+            class="style-select"
+            @change="handleStyleChange"
+          >
+            <option value="0">
+              跟随原文
+            </option>
+            <option value="12">
+              12px
+            </option>
+            <option value="13">
+              13px
+            </option>
+            <option value="14">
+              14px
+            </option>
+            <option value="15">
+              15px
+            </option>
+            <option value="16">
+              16px
+            </option>
+            <option value="18">
+              18px
+            </option>
+            <option value="20">
+              20px
+            </option>
           </select>
         </div>
 
@@ -69,7 +92,10 @@
           <label class="style-label">
             {{ i18n?.highlightBold || '加粗显示' }}
           </label>
-          <SiSwitch v-model="bold" @change="handleStyleChange" />
+          <SiSwitch
+            v-model="bold"
+            @change="handleStyleChange"
+          />
         </div>
 
         <div class="style-row">
@@ -77,8 +103,8 @@
             {{ i18n?.highlightMinTextLength || '最小文字长度' }}
           </label>
           <input
-            type="number"
             v-model.number="minTextLength"
+            type="number"
             class="style-number"
             min="1"
             max="100"
@@ -91,8 +117,8 @@
             {{ i18n?.highlightMinLetterLength || '最小字母长度' }}
           </label>
           <input
-            type="number"
             v-model.number="minLetterLength"
+            type="number"
             class="style-number"
             min="1"
             max="100"
@@ -105,8 +131,8 @@
             {{ i18n?.highlightMaxTextLength || '最大文字长度' }}
           </label>
           <input
-            type="number"
             v-model.number="maxTextLength"
+            type="number"
             class="style-number"
             min="1"
             max="1000"
@@ -119,8 +145,8 @@
             {{ i18n?.highlightMaxLetterLength || '最大字母长度' }}
           </label>
           <input
-            type="number"
             v-model.number="maxLetterLength"
+            type="number"
             class="style-number"
             min="1"
             max="1000"
@@ -133,50 +159,53 @@
 </template>
 
 <script setup lang="ts">
-import { showMessage } from "siyuan";
-import { onMounted, ref } from "vue";
-import SiSwitch from "@/components/Switch.vue";
-import { GeneralSettingsStorage } from "@/features/generalSettings/types/storage";
+import { showMessage } from "siyuan"
+import {
+  onMounted,
+  ref,
+} from "vue"
+import SiSwitch from "@/components/Switch.vue"
+import { GeneralSettingsStorage } from "@/features/generalSettings/types/storage"
 
 const props = defineProps<{
-  i18n?: Record<string, string>;
-  plugin?: any;
-}>();
+  i18n?: Record<string, string>
+  plugin?: any
+}>()
 
-const enableHighlight = ref(true);
-const backgroundColor = ref("rgb(255, 220, 60)");
-const fontSize = ref("0");
-const bold = ref(false);
-const minTextLength = ref(1);
-const minLetterLength = ref(1);
-const maxTextLength = ref(50);
-const maxLetterLength = ref(100);
-const storage = ref<GeneralSettingsStorage | null>(null);
+const enableHighlight = ref(true)
+const backgroundColor = ref("rgb(255, 220, 60)")
+const fontSize = ref("0")
+const bold = ref(false)
+const minTextLength = ref(1)
+const minLetterLength = ref(1)
+const maxTextLength = ref(50)
+const maxLetterLength = ref(100)
+const storage = ref<GeneralSettingsStorage | null>(null)
 
 const loadSettings = async () => {
-  if (!storage.value) return;
+  if (!storage.value) return
   try {
-    const settings = await storage.value.highlight.loadOrDefault();
+    const settings = await storage.value.highlight.loadOrDefault()
     if (settings) {
-      enableHighlight.value = settings.enableHighlight ?? true;
-      backgroundColor.value = settings.backgroundColor ?? "rgb(255, 220, 60)";
-      fontSize.value = settings.fontSize?.toString() ?? "0";
-      bold.value = settings.bold ?? false;
-      minTextLength.value = settings.minTextLength ?? 1;
-      minLetterLength.value = settings.minLetterLength ?? 1;
-      maxTextLength.value = settings.maxTextLength ?? 50;
-      maxLetterLength.value = settings.maxLetterLength ?? 100;
+      enableHighlight.value = settings.enableHighlight ?? true
+      backgroundColor.value = settings.backgroundColor ?? "rgb(255, 220, 60)"
+      fontSize.value = settings.fontSize?.toString() ?? "0"
+      bold.value = settings.bold ?? false
+      minTextLength.value = settings.minTextLength ?? 1
+      minLetterLength.value = settings.minLetterLength ?? 1
+      maxTextLength.value = settings.maxTextLength ?? 50
+      maxLetterLength.value = settings.maxLetterLength ?? 100
     }
   } catch (e) {
-    console.error("加载高亮设置失败:", e);
+    console.error("加载高亮设置失败:", e)
   }
-};
+}
 
 const handleToggleChange = () => {
   try {
-    const generalSettings = (props.plugin as any).__generalSettings;
+    const generalSettings = (props.plugin as any).__generalSettings
     if (generalSettings) {
-      generalSettings.updateHighlight(enableHighlight.value);
+      generalSettings.updateHighlight(enableHighlight.value)
     }
 
     showMessage(
@@ -185,15 +214,15 @@ const handleToggleChange = () => {
         : (props.i18n?.highlightDisabled ?? "双击高亮功能已禁用"),
       2000,
       "info",
-    );
+    )
   } catch (e) {
-    console.error("保存高亮设置失败:", e);
+    console.error("保存高亮设置失败:", e)
   }
-};
+}
 
 const handleStyleChange = () => {
   try {
-    const generalSettings = (props.plugin as any).__generalSettings;
+    const generalSettings = (props.plugin as any).__generalSettings
     if (generalSettings) {
       generalSettings.updateHighlightOptions({
         backgroundColor: backgroundColor.value,
@@ -203,21 +232,24 @@ const handleStyleChange = () => {
         minLetterLength: minLetterLength.value,
         maxTextLength: maxTextLength.value,
         maxLetterLength: maxLetterLength.value,
-      });
+      })
     }
   } catch (e) {
-    console.error("更新高亮样式失败:", e);
+    console.error("更新高亮样式失败:", e)
   }
-};
+}
 
 onMounted(() => {
   if (props.plugin) {
-    storage.value = new GeneralSettingsStorage(props.plugin);
+    storage.value = new GeneralSettingsStorage(props.plugin)
   }
-  loadSettings();
-});
+  loadSettings()
+})
 
-defineExpose({ loadSettings, enableHighlight });
+defineExpose({
+  loadSettings,
+  enableHighlight,
+})
 </script>
 
 <style scoped>

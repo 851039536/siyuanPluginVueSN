@@ -8,7 +8,8 @@
           <button
             v-for="mode in modeOptions"
             :key="mode.value"
-            :class="['toggle-btn', { active: diffMode === mode.value }]"
+            class="toggle-btn"
+            :class="[{ active: diffMode === mode.value }]"
             @click="updateMode(mode.value)"
           >
             {{ mode.label }}
@@ -17,8 +18,16 @@
 
         <div class="option-group">
           <span class="option-label">{{ $t('fontSize') }}</span>
-          <select class="font-select" :value="fontSize" @change="updateFontSize(Number(($event.target as HTMLSelectElement).value))">
-            <option v-for="opt in FONT_SIZE_OPTIONS" :key="opt.value" :value="opt.value">
+          <select
+            class="font-select"
+            :value="fontSize"
+            @change="updateFontSize(Number(($event.target as HTMLSelectElement).value))"
+          >
+            <option
+              v-for="opt in FONT_SIZE_OPTIONS"
+              :key="opt.value"
+              :value="opt.value"
+            >
               {{ opt.label }}
             </option>
           </select>
@@ -26,15 +35,33 @@
       </div>
 
       <div class="toolbar-right">
-        <button class="action-btn" @click="clearAll" :title="$t('clear')">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+        <button
+          class="action-btn"
+          :title="$t('clear')"
+          @click="clearAll"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            fill="currentColor"
+          >
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
           </svg>
           <span>{{ $t('clear') }}</span>
         </button>
-        <button class="action-btn" @click="swapTexts" :title="$t('swap')">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-            <path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/>
+        <button
+          class="action-btn"
+          :title="$t('swap')"
+          @click="swapTexts"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            fill="currentColor"
+          >
+            <path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z" />
           </svg>
           <span>{{ $t('swap') }}</span>
         </button>
@@ -46,7 +73,7 @@
       <!-- 输入区域 -->
       <div class="input-section">
         <!-- 原文本面板 -->
-        <div 
+        <div
           class="input-panel"
           :class="{ 'drag-over': dragState.original }"
           @dragover.prevent="handleDragOver('original', $event)"
@@ -56,13 +83,25 @@
           <div class="panel-header">
             <div class="header-left">
               <span class="panel-title">{{ $t('original') }}</span>
-              <span v-if="originalFileName" class="file-name">{{ originalFileName }}</span>
+              <span
+                v-if="originalFileName"
+                class="file-name"
+              >{{ originalFileName }}</span>
             </div>
             <div class="header-right">
               <span class="char-count">{{ originalText.length }} {{ $t('chars') }}</span>
-              <button class="file-btn" @click="triggerFileInput('original')" :title="$t('selectFile')">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                  <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>
+              <button
+                class="file-btn"
+                :title="$t('selectFile')"
+                @click="triggerFileInput('original')"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="14"
+                  height="14"
+                  fill="currentColor"
+                >
+                  <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z" />
                 </svg>
               </button>
             </div>
@@ -73,16 +112,24 @@
             class="input-textarea"
           ></textarea>
           <!-- 拖拽提示层 -->
-          <div v-if="dragState.original" class="drag-overlay">
-            <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
-              <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
+          <div
+            v-if="dragState.original"
+            class="drag-overlay"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="32"
+              height="32"
+              fill="currentColor"
+            >
+              <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" />
             </svg>
             <span>{{ $t('dropFile') }}</span>
           </div>
         </div>
 
         <!-- 修改后文本面板 -->
-        <div 
+        <div
           class="input-panel"
           :class="{ 'drag-over': dragState.modified }"
           @dragover.prevent="handleDragOver('modified', $event)"
@@ -92,13 +139,25 @@
           <div class="panel-header">
             <div class="header-left">
               <span class="panel-title">{{ $t('modified') }}</span>
-              <span v-if="modifiedFileName" class="file-name">{{ modifiedFileName }}</span>
+              <span
+                v-if="modifiedFileName"
+                class="file-name"
+              >{{ modifiedFileName }}</span>
             </div>
             <div class="header-right">
               <span class="char-count">{{ modifiedText.length }} {{ $t('chars') }}</span>
-              <button class="file-btn" @click="triggerFileInput('modified')" :title="$t('selectFile')">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                  <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>
+              <button
+                class="file-btn"
+                :title="$t('selectFile')"
+                @click="triggerFileInput('modified')"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="14"
+                  height="14"
+                  fill="currentColor"
+                >
+                  <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z" />
                 </svg>
               </button>
             </div>
@@ -109,9 +168,17 @@
             class="input-textarea"
           ></textarea>
           <!-- 拖拽提示层 -->
-          <div v-if="dragState.modified" class="drag-overlay">
-            <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
-              <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
+          <div
+            v-if="dragState.modified"
+            class="drag-overlay"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="32"
+              height="32"
+              fill="currentColor"
+            >
+              <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" />
             </svg>
             <span>{{ $t('dropFile') }}</span>
           </div>
@@ -128,8 +195,13 @@
 
       <!-- 分割线 -->
       <div class="divider">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-          <path d="M7 10l5 5 5-5z"/>
+        <svg
+          viewBox="0 0 24 24"
+          width="18"
+          height="18"
+          fill="currentColor"
+        >
+          <path d="M7 10l5 5 5-5z" />
         </svg>
       </div>
 
@@ -157,178 +229,211 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from "vue";
-import { Diff } from "vue-diff";
-import "vue-diff/dist/index.css";
-import type { Plugin } from "siyuan";
-import { TextDiffStorage, type TextDiffSettings } from "./types/storage";
+import type { Plugin } from "siyuan"
+import type { TextDiffSettings } from "./types/storage"
+import {
+  computed,
+  onMounted,
+  reactive,
+  ref,
+} from "vue"
+import { Diff } from "vue-diff"
+import {
+
+  TextDiffStorage,
+} from "./types/storage"
+import "vue-diff/dist/index.css"
 
 const props = defineProps<{
-  onClose?: () => void;
-  i18n?: any;
-  plugin?: Plugin;
-}>();
+  onClose?: () => void
+  i18n?: any
+  plugin?: Plugin
+}>()
 
 // 存储管理
-const storage = props.plugin ? new TextDiffStorage(props.plugin) : null;
+const storage = props.plugin ? new TextDiffStorage(props.plugin) : null
 
 // 文件输入引用
-const fileInputRef = ref<HTMLInputElement | null>(null);
-const currentInputTarget = ref<"original" | "modified">("original");
+const fileInputRef = ref<HTMLInputElement | null>(null)
+const currentInputTarget = ref<"original" | "modified">("original")
 
 // 响应式数据
-const originalText = ref("");
-const modifiedText = ref("");
-const originalFileName = ref("");
-const modifiedFileName = ref("");
-const diffMode = ref<"split" | "unified">("split");
-const fontSize = ref<number>(14);
+const originalText = ref("")
+const modifiedText = ref("")
+const originalFileName = ref("")
+const modifiedFileName = ref("")
+const diffMode = ref<"split" | "unified">("split")
+const fontSize = ref<number>(14)
 
 // 拖拽状态
 const dragState = reactive({
   original: false,
   modified: false,
-});
+})
 
 // 固定使用浅色主题
-const diffTheme = "light";
+const diffTheme = "light"
 
 // 选项数据
 const FONT_SIZE_OPTIONS = [
-  { value: 12, label: "12px" },
-  { value: 14, label: "14px" },
-  { value: 16, label: "16px" },
-  { value: 18, label: "18px" },
-  { value: 20, label: "20px" },
-  { value: 24, label: "24px" },
-];
+  {
+    value: 12,
+    label: "12px",
+  },
+  {
+    value: 14,
+    label: "14px",
+  },
+  {
+    value: 16,
+    label: "16px",
+  },
+  {
+    value: 18,
+    label: "18px",
+  },
+  {
+    value: 20,
+    label: "20px",
+  },
+  {
+    value: 24,
+    label: "24px",
+  },
+]
 
 const modeOptions = computed(() => [
-  { value: "split" as const, label: $t("splitMode") },
-  { value: "unified" as const, label: $t("unifiedMode") },
-]);
+  {
+    value: "split" as const,
+    label: $t("splitMode"),
+  },
+  {
+    value: "unified" as const,
+    label: $t("unifiedMode"),
+  },
+])
 
 // 设置字体大小
 const setFontSize = (size: number) => {
-  document.documentElement.style.setProperty("--diff-font-size", `${size}px`);
-};
+  document.documentElement.style.setProperty("--diff-font-size", `${size}px`)
+}
 
 // 加载设置
 const loadSettings = async () => {
-  if (!storage) return;
+  if (!storage) return
   try {
-    const settings = await storage.settings.loadOrDefault();
-    diffMode.value = settings.diffMode;
-    fontSize.value = settings.fontSize;
-    setFontSize(settings.fontSize);
+    const settings = await storage.settings.loadOrDefault()
+    diffMode.value = settings.diffMode
+    fontSize.value = settings.fontSize
+    setFontSize(settings.fontSize)
   } catch (error) {
-    console.error("加载设置失败:", error);
+    console.error("加载设置失败:", error)
   }
-};
+}
 
 // 保存设置
 const saveSettings = async () => {
-  if (!storage) return;
+  if (!storage) return
   try {
     const settings: TextDiffSettings = {
       fontSize: fontSize.value,
       diffMode: diffMode.value,
       theme: "light",
-    };
-    await storage.settings.save(settings);
+    }
+    await storage.settings.save(settings)
   } catch (error) {
-    console.error("保存设置失败:", error);
+    console.error("保存设置失败:", error)
   }
-};
+}
 
 const updateMode = (mode: "split" | "unified") => {
-  diffMode.value = mode;
-  saveSettings();
-};
+  diffMode.value = mode
+  saveSettings()
+}
 
 const updateFontSize = (size: number) => {
-  fontSize.value = size;
-  setFontSize(size);
-  saveSettings();
-};
+  fontSize.value = size
+  setFontSize(size)
+  saveSettings()
+}
 
 const clearAll = () => {
-  originalText.value = "";
-  modifiedText.value = "";
-  originalFileName.value = "";
-  modifiedFileName.value = "";
-};
+  originalText.value = ""
+  modifiedText.value = ""
+  originalFileName.value = ""
+  modifiedFileName.value = ""
+}
 
 const swapTexts = () => {
-  const tempText = originalText.value;
-  const tempName = originalFileName.value;
-  originalText.value = modifiedText.value;
-  originalFileName.value = modifiedFileName.value;
-  modifiedText.value = tempText;
-  modifiedFileName.value = tempName;
-};
+  const tempText = originalText.value
+  const tempName = originalFileName.value
+  originalText.value = modifiedText.value
+  originalFileName.value = modifiedFileName.value
+  modifiedText.value = tempText
+  modifiedFileName.value = tempName
+}
 
 // 触发文件选择
 const triggerFileInput = (target: "original" | "modified") => {
-  currentInputTarget.value = target;
-  fileInputRef.value?.click();
-};
+  currentInputTarget.value = target
+  fileInputRef.value?.click()
+}
 
 // 处理文件选择
 const handleFileSelect = (event: Event) => {
-  const input = event.target as HTMLInputElement;
-  const file = input.files?.[0];
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
   if (file) {
-    readFile(file, currentInputTarget.value);
+    readFile(file, currentInputTarget.value)
   }
   // 重置 input 以允许再次选择同一文件
-  input.value = "";
-};
+  input.value = ""
+}
 
 // 处理拖拽进入
 const handleDragOver = (target: "original" | "modified", event: DragEvent) => {
   if (event.dataTransfer?.types.includes("Files")) {
-    dragState[target] = true;
+    dragState[target] = true
   }
-};
+}
 
 // 处理拖拽离开
 const handleDragLeave = (target: "original" | "modified") => {
-  dragState[target] = false;
-};
+  dragState[target] = false
+}
 
 // 处理文件放置
 const handleDrop = (target: "original" | "modified", event: DragEvent) => {
-  dragState[target] = false;
-  const file = event.dataTransfer?.files?.[0];
+  dragState[target] = false
+  const file = event.dataTransfer?.files?.[0]
   if (file) {
-    readFile(file, target);
+    readFile(file, target)
   }
-};
+}
 
 // 读取文件内容
 const readFile = (file: File, target: "original" | "modified") => {
-  const reader = new FileReader();
+  const reader = new FileReader()
   reader.onload = () => {
-    const content = reader.result as string;
+    const content = reader.result as string
     if (target === "original") {
-      originalText.value = content;
-      originalFileName.value = file.name;
+      originalText.value = content
+      originalFileName.value = file.name
     } else {
-      modifiedText.value = content;
-      modifiedFileName.value = file.name;
+      modifiedText.value = content
+      modifiedFileName.value = file.name
     }
-  };
+  }
   reader.onerror = () => {
-    console.error("读取文件失败:", file.name);
-  };
-  reader.readAsText(file);
-};
+    console.error("读取文件失败:", file.name)
+  }
+  reader.readAsText(file)
+}
 
 // 国际化
 const $t = (key: string): string => {
   if (props.i18n?.textDiff?.[key]) {
-    return props.i18n.textDiff[key];
+    return props.i18n.textDiff[key]
   }
   const translations: Record<string, string> = {
     clear: "清空",
@@ -345,14 +450,14 @@ const $t = (key: string): string => {
     fontSize: "字体",
     selectFile: "选择文件",
     dropFile: "释放文件以导入",
-  };
-  return translations[key] || key;
-};
+  }
+  return translations[key] || key
+}
 
 onMounted(() => {
-  loadSettings();
-  setFontSize(fontSize.value);
-});
+  loadSettings()
+  setFontSize(fontSize.value)
+})
 </script>
 
 <style scoped lang="scss">

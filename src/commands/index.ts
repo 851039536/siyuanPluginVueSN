@@ -1,15 +1,15 @@
-import { Plugin } from "siyuan";
-import { DateTime } from "./DateTime";
+import { Plugin } from "siyuan"
+import { DateTime } from "./DateTime"
 
-let dateTimeInstance: DateTime | null = null;
+let dateTimeInstance: DateTime | null = null
 
 /**
  * 初始化所有斜杠命令
  */
 export function initCommands(plugin: Plugin) {
   // 初始化日期时间插入命令
-  dateTimeInstance = new DateTime(plugin);
-  dateTimeInstance.init();
+  dateTimeInstance = new DateTime(plugin)
+  dateTimeInstance.init()
 }
 
 /**
@@ -17,7 +17,7 @@ export function initCommands(plugin: Plugin) {
  */
 export function destroyCommands() {
   if (dateTimeInstance) {
-    dateTimeInstance.destroy();
-    dateTimeInstance = null;
+    dateTimeInstance.destroy()
+    dateTimeInstance = null
   }
 }

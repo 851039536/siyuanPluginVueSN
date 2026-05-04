@@ -205,7 +205,7 @@ export function registerMyFeature(plugin: Plugin) {
     title: plugin.i18n.myFeature.title,
     callback: () => {
       // 功能逻辑
-    }
+    },
   })
 }
 ```
@@ -261,7 +261,7 @@ export async function updateBlock(id: string, data: string) {
   return await fetchSyncPost('/api/block/updateBlock', {
     id,
     data,
-    dataType: 'markdown'
+    dataType: 'markdown',
   })
 }
 ```

@@ -1,8 +1,17 @@
 <template>
-  <div :class="inputClasses" v-bind="containerAttrs">
-    <label v-if="label" class="si-input__label">
+  <div
+    :class="inputClasses"
+    v-bind="containerAttrs"
+  >
+    <label
+      v-if="label"
+      class="si-input__label"
+    >
       {{ label }}
-      <span v-if="required" class="si-input__required">*</span>
+      <span
+        v-if="required"
+        class="si-input__required"
+      >*</span>
     </label>
     <div class="si-input__wrapper">
       <IconWrapper
@@ -30,7 +39,7 @@
           'si-input__field--with-prefix': prefixIcon,
           'si-input__field--with-suffix': suffixIcon,
           'si-input__field--error': error,
-          'si-input__field--textarea': isTextarea
+          'si-input__field--textarea': isTextarea,
         }"
         @input="handleInput"
         @blur="handleBlur"
@@ -49,7 +58,10 @@
         class="si-input__clear"
         @click="handleClear"
       >
-        <IconWrapper :name="'x' as IconKey" :size="iconSize" />
+        <IconWrapper
+          :name="'x' as IconKey"
+          :size="iconSize"
+        />
       </span>
       <span
         v-if="showPassword && type === 'password' && !disabled && !readonly"
@@ -62,19 +74,32 @@
         />
       </span>
     </div>
-    <div v-if="hint || error" class="si-input__hint" :class="{ 'si-input__hint--error': error }">
+    <div
+      v-if="hint || error"
+      class="si-input__hint"
+      :class="{ 'si-input__hint--error': error }"
+    >
       {{ error || hint }}
     </div>
-    <div v-if="showCount && (type === 'text' || type === 'textarea') && maxlength" class="si-input__count">
+    <div
+      v-if="showCount && (type === 'text' || type === 'textarea') && maxlength"
+      class="si-input__count"
+    >
       {{ currentLength }} / {{ maxlength }}
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, useAttrs, watch } from "vue";
-import IconWrapper from "@/components/IconWrapper.vue";
-import type { IconKey } from "@/config/icons";
+import type { IconKey } from "@/config/icons"
+import {
+  computed,
+  nextTick,
+  ref,
+  useAttrs,
+  watch,
+} from "vue"
+import IconWrapper from "@/components/IconWrapper.vue"
 
 type InputType =
   | "text"
@@ -84,66 +109,66 @@ type InputType =
   | "tel"
   | "url"
   | "search"
-  | "textarea";
-type InputSize = "small" | "medium" | "large";
+  | "textarea"
+type InputSize = "small" | "medium" | "large"
 
 interface Props {
   /** 绑定值 */
-  modelValue?: string | number | null;
+  modelValue?: string | number | null
   /** 输入框类型 */
-  type?: InputType;
+  type?: InputType
   /** 尺寸 */
-  size?: InputSize;
+  size?: InputSize
   /** 占位文本 */
-  placeholder?: string;
+  placeholder?: string
   /** 禁用状态 */
-  disabled?: boolean;
+  disabled?: boolean
   /** 只读状态 */
-  readonly?: boolean;
+  readonly?: boolean
   /** 标签文本 */
-  label?: string;
+  label?: string
   /** 是否必填 */
-  required?: boolean;
+  required?: boolean
   /** 提示文本 */
-  hint?: string;
+  hint?: string
   /** 错误文本 */
-  error?: string;
+  error?: string
   /** 前缀图标 */
-  prefixIcon?: IconKey;
+  prefixIcon?: IconKey
   /** 后缀图标 */
-  suffixIcon?: IconKey;
+  suffixIcon?: IconKey
   /** 图标大小 */
-  iconSize?: number;
+  iconSize?: number
   /** 最大长度 */
-  maxlength?: number;
+  maxlength?: number
   /** 最小长度 */
-  minlength?: number;
+  minlength?: number
   /** 自动完成 */
-  autocomplete?: string;
+  autocomplete?: string
   /** 正则验证模式 */
-  pattern?: string;
+  pattern?: string
   /** 是否可清空（显示清除按钮） */
-  clearable?: boolean;
+  clearable?: boolean
   /** 是否显示密码切换 */
-  showPassword?: boolean;
+  showPassword?: boolean
   /** 是否显示字符计数 */
-  showCount?: boolean;
+  showCount?: boolean
   /** 是否自动获得焦点 */
-  autofocus?: boolean;
+  autofocus?: boolean
   /** 原生 name 属性 */
-  name?: string;
+  name?: string
   /** 原生 form 属性 */
-  form?: string;
+  form?: string
 }
 
 interface Emits {
-  (e: "update:modelValue", value: string | number | null): void;
-  (e: "input", value: string | number, event: Event): void;
-  (e: "change", value: string | number, event: Event): void;
-  (e: "focus", event: FocusEvent): void;
-  (e: "blur", event: FocusEvent): void;
-  (e: "clear"): void;
-  (e: "keydown", event: KeyboardEvent): void;
+  (e: "update:modelValue", value: string | number | null): void
+  (e: "input", value: string | number, event: Event): void
+  (e: "change", value: string | number, event: Event): void
+  (e: "focus", event: FocusEvent): void
+  (e: "blur", event: FocusEvent): void
+  (e: "clear"): void
+  (e: "keydown", event: KeyboardEvent): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -160,34 +185,38 @@ const props = withDefaults(defineProps<Props>(), {
   showCount: false,
   autofocus: false,
   autocomplete: "off",
-});
+})
 
-const emit = defineEmits<Emits>();
-const attrs = useAttrs();
+const emit = defineEmits<Emits>()
+const attrs = useAttrs()
 
 const containerAttrs = computed(() => {
-  const { class: className, style, ...rest } = attrs;
-  return rest;
-});
+  const {
+    class: className,
+    style,
+    ...rest
+  } = attrs
+  return rest
+})
 
-const inputRef = ref<HTMLInputElement | HTMLTextAreaElement>();
-const passwordVisible = ref(false);
+const inputRef = ref<HTMLInputElement | HTMLTextAreaElement>()
+const passwordVisible = ref(false)
 
-const isTextarea = computed(() => props.type === "textarea");
+const isTextarea = computed(() => props.type === "textarea")
 
 const inputType = computed(() => {
   if (props.type === "password" && passwordVisible.value) {
-    return "text";
+    return "text"
   }
-  return props.type;
-});
+  return props.type
+})
 
 const currentLength = computed(() => {
   if (props.modelValue === null || props.modelValue === undefined) {
-    return 0;
+    return 0
   }
-  return String(props.modelValue).length;
-});
+  return String(props.modelValue).length
+})
 
 const inputClasses = computed(() => [
   "si-input",
@@ -198,81 +227,81 @@ const inputClasses = computed(() => [
     "si-input--error": props.error,
     "si-input--with-prefix": props.prefixIcon,
     "si-input--with-suffix":
-      props.suffixIcon ||
-      (props.clearable && props.modelValue) ||
-      (props.showPassword && props.type === "password"),
+      props.suffixIcon
+      || (props.clearable && props.modelValue)
+      || (props.showPassword && props.type === "password"),
   },
-]);
+])
 
 const handleInput = (event: Event) => {
-  const target = event.target as HTMLInputElement | HTMLTextAreaElement;
-  const value = target.value;
-  emit("update:modelValue", value);
-  emit("input", value, event);
-};
+  const target = event.target as HTMLInputElement | HTMLTextAreaElement
+  const value = target.value
+  emit("update:modelValue", value)
+  emit("input", value, event)
+}
 
 const handleChange = (event: Event) => {
-  const target = event.target as HTMLInputElement | HTMLTextAreaElement;
-  emit("change", target.value, event);
-};
+  const target = event.target as HTMLInputElement | HTMLTextAreaElement
+  emit("change", target.value, event)
+}
 
 const handleFocus = (event: FocusEvent) => {
-  emit("focus", event);
-};
+  emit("focus", event)
+}
 
 const handleBlur = (event: FocusEvent) => {
-  emit("blur", event);
-};
+  emit("blur", event)
+}
 
 const handleKeydown = (event: KeyboardEvent) => {
-  emit("keydown", event);
-};
+  emit("keydown", event)
+}
 
 const handleClear = () => {
-  emit("update:modelValue", "");
-  emit("clear");
-};
+  emit("update:modelValue", "")
+  emit("clear")
+}
 
 const togglePasswordVisibility = () => {
-  passwordVisible.value = !passwordVisible.value;
-};
+  passwordVisible.value = !passwordVisible.value
+}
 
 const focus = () => {
   nextTick(() => {
-    inputRef.value?.focus();
-  });
-};
+    inputRef.value?.focus()
+  })
+}
 
 const blur = () => {
   nextTick(() => {
-    inputRef.value?.blur();
-  });
-};
+    inputRef.value?.blur()
+  })
+}
 
 const select = () => {
   nextTick(() => {
-    inputRef.value?.select();
-  });
-};
+    inputRef.value?.select()
+  })
+}
 
 watch(
   () => props.autofocus,
   (newVal) => {
     if (newVal) {
       nextTick(() => {
-        inputRef.value?.focus();
-      });
+        inputRef.value?.focus()
+      })
     }
   },
   { immediate: true },
-);
+)
 
 defineExpose({
   focus,
   blur,
   select,
   inputElement: inputRef,
-});
+})
 </script>
 
 <style scoped lang="scss">

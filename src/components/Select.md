@@ -18,13 +18,22 @@
 
 ```vue
 <script setup lang="ts">
-import Select from '@/components/Select.vue'
 import type { SelectOption } from '@/components/Select.vue'
+import Select from '@/components/Select.vue'
 
 const options: SelectOption[] = [
-  { value: 'apple', label: '苹果' },
-  { value: 'banana', label: '香蕉' },
-  { value: 'orange', label: '橙子' }
+  {
+    value: 'apple',
+    label: '苹果',
+  },
+  {
+    value: 'banana',
+    label: '香蕉',
+  },
+  {
+    value: 'orange',
+    label: '橙子',
+  },
 ]
 </script>
 ```
@@ -118,55 +127,89 @@ const options: SelectOption[] = [
 ### 分组选项
 
 ```vue
+<template>
+  <Select
+    v-model="selectedValue"
+    :options="groupedOptions"
+  />
+</template>
+
 <script setup lang="ts">
-import type { SelectOption, SelectGroupOption } from '@/components/Select.vue'
+import type {
+  SelectGroupOption,
+  SelectOption,
+} from '@/components/Select.vue'
 
 const groupedOptions = [
   {
     isGroup: true,
     label: '热带水果',
     options: [
-      { value: 'banana', label: '香蕉' },
-      { value: 'mango', label: '芒果' }
-    ]
+      {
+        value: 'banana',
+        label: '香蕉',
+      },
+      {
+        value: 'mango',
+        label: '芒果',
+      },
+    ],
   },
   {
     isGroup: true,
     label: '温带水果',
     options: [
-      { value: 'apple', label: '苹果' },
-      { value: 'orange', label: '橙子' }
-    ]
-  }
+      {
+        value: 'apple',
+        label: '苹果',
+      },
+      {
+        value: 'orange',
+        label: '橙子',
+      },
+    ],
+  },
 ]
 </script>
-
-<template>
-  <Select v-model="selectedValue" :options="groupedOptions" />
-</template>
 ```
 
 ### 禁用选项
 
 ```vue
+<template>
+  <Select
+    v-model="selectedValue"
+    :options="options"
+  />
+</template>
+
 <script setup lang="ts">
 const options = [
-  { value: 'apple', label: '苹果' },
-  { value: 'banana', label: '香蕉', disabled: true },
-  { value: 'orange', label: '橙子' }
+  {
+    value: 'apple',
+    label: '苹果',
+  },
+  {
+    value: 'banana',
+    label: '香蕉',
+    disabled: true,
+  },
+  {
+    value: 'orange',
+    label: '橙子',
+  },
 ]
 </script>
-
-<template>
-  <Select v-model="selectedValue" :options="options" />
-</template>
 ```
 
 ### 自定义选项渲染
 
 ```vue
 <template>
-  <Select v-model="selectedValue" :options="options">
+  <Select
+    v-model="selectedValue"
+    :options="options"
+  >
     <template #option="{ option }">
       <div style="display: flex; align-items: center; gap: 8px;">
         <span>{{ option.icon }}</span>
@@ -181,12 +224,6 @@ const options = [
 ### 监听变化
 
 ```vue
-<script setup lang="ts">
-const handleChange = (value: string, option: SelectOption) => {
-  console.log('选择了:', value, option)
-}
-</script>
-
 <template>
   <Select
     v-model="selectedValue"
@@ -194,6 +231,12 @@ const handleChange = (value: string, option: SelectOption) => {
     @change="handleChange"
   />
 </template>
+
+<script setup lang="ts">
+const handleChange = (value: string, option: SelectOption) => {
+  console.log('选择了:', value, option)
+}
+</script>
 ```
 
 ### 带提示信息
@@ -226,9 +269,21 @@ const handleChange = (value: string, option: SelectOption) => {
 
 ```vue
 <template>
-  <Select size="small" v-model="value1" :options="options" />
-  <Select size="medium" v-model="value2" :options="options" />
-  <Select size="large" v-model="value3" :options="options" />
+  <Select
+    v-model="value1"
+    size="small"
+    :options="options"
+  />
+  <Select
+    v-model="value2"
+    size="medium"
+    :options="options"
+  />
+  <Select
+    v-model="value3"
+    size="large"
+    :options="options"
+  />
 </template>
 ```
 
@@ -284,45 +339,6 @@ type OptionType = SelectOption | SelectGroupOption
 ## 完整示例
 
 ```vue
-<script setup lang="ts">
-import { ref } from 'vue'
-import Select from '@/components/Select.vue'
-import type { SelectOption } from '@/components/Select.vue'
-
-const selectedFruit = ref<string>('')
-const selectedCategory = ref<string>('')
-
-const fruits: SelectOption[] = [
-  { value: 'apple', label: '苹果' },
-  { value: 'banana', label: '香蕉', disabled: true },
-  { value: 'orange', label: '橙子' },
-  { value: 'grape', label: '葡萄' }
-]
-
-const categories = [
-  {
-    isGroup: true,
-    label: '水果类',
-    options: [
-      { value: 'apple', label: '苹果', count: 10 },
-      { value: 'banana', label: '香蕉', count: 15 }
-    ]
-  },
-  {
-    isGroup: true,
-    label: '蔬菜类',
-    options: [
-      { value: 'carrot', label: '胡萝卜', count: 8 },
-      { value: 'tomato', label: '西红柿', count: 12 }
-    ]
-  }
-]
-
-const handleCategoryChange = (value: string, option: SelectOption) => {
-  console.log('选择了分类:', value, option)
-}
-</script>
-
 <template>
   <div style="display: flex; flex-direction: column; gap: 16px;">
     <!-- 基础用法 -->
@@ -351,4 +367,72 @@ const handleCategoryChange = (value: string, option: SelectOption) => {
     </Select>
   </div>
 </template>
+
+<script setup lang="ts">
+import type { SelectOption } from '@/components/Select.vue'
+import { ref } from 'vue'
+import Select from '@/components/Select.vue'
+
+const selectedFruit = ref<string>('')
+const selectedCategory = ref<string>('')
+
+const fruits: SelectOption[] = [
+  {
+    value: 'apple',
+    label: '苹果',
+  },
+  {
+    value: 'banana',
+    label: '香蕉',
+    disabled: true,
+  },
+  {
+    value: 'orange',
+    label: '橙子',
+  },
+  {
+    value: 'grape',
+    label: '葡萄',
+  },
+]
+
+const categories = [
+  {
+    isGroup: true,
+    label: '水果类',
+    options: [
+      {
+        value: 'apple',
+        label: '苹果',
+        count: 10,
+      },
+      {
+        value: 'banana',
+        label: '香蕉',
+        count: 15,
+      },
+    ],
+  },
+  {
+    isGroup: true,
+    label: '蔬菜类',
+    options: [
+      {
+        value: 'carrot',
+        label: '胡萝卜',
+        count: 8,
+      },
+      {
+        value: 'tomato',
+        label: '西红柿',
+        count: 12,
+      },
+    ],
+  },
+]
+
+const handleCategoryChange = (value: string, option: SelectOption) => {
+  console.log('选择了分类:', value, option)
+}
+</script>
 ```

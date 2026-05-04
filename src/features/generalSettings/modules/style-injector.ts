@@ -3,39 +3,39 @@
  * 替代原有的硬编码样式注入，使用 CSS 变量实现动态样式
  */
 
-import { HEADING_LEVEL_MAPPINGS } from "../utils/styles";
+import { HEADING_LEVEL_MAPPINGS } from "../utils/styles"
 
 export interface HeadingSettingsStyleVars {
   // 标题颜色
-  "--hs-heading-h1-color"?: string;
-  "--hs-heading-h2-color"?: string;
-  "--hs-heading-h3-color"?: string;
-  "--hs-heading-h4-color"?: string;
-  "--hs-heading-h5-color"?: string;
-  "--hs-heading-h6-color"?: string;
+  "--hs-heading-h1-color"?: string
+  "--hs-heading-h2-color"?: string
+  "--hs-heading-h3-color"?: string
+  "--hs-heading-h4-color"?: string
+  "--hs-heading-h5-color"?: string
+  "--hs-heading-h6-color"?: string
 
   // 标题字体大小
-  "--hs-h1-size"?: string;
-  "--hs-h2-size"?: string;
-  "--hs-h3-size"?: string;
-  "--hs-h4-size"?: string;
-  "--hs-h5-size"?: string;
-  "--hs-h6-size"?: string;
+  "--hs-h1-size"?: string
+  "--hs-h2-size"?: string
+  "--hs-h3-size"?: string
+  "--hs-h4-size"?: string
+  "--hs-h5-size"?: string
+  "--hs-h6-size"?: string
 
   // 文档标题设置
-  "--hs-title-color"?: string;
-  "--hs-title-font-size"?: string;
+  "--hs-title-color"?: string
+  "--hs-title-font-size"?: string
 
   // 层级显示标记
-  "--hs-level-h1"?: string;
-  "--hs-level-h2"?: string;
-  "--hs-level-h3"?: string;
-  "--hs-level-h4"?: string;
-  "--hs-level-h5"?: string;
-  "--hs-level-h6"?: string;
+  "--hs-level-h1"?: string
+  "--hs-level-h2"?: string
+  "--hs-level-h3"?: string
+  "--hs-level-h4"?: string
+  "--hs-level-h5"?: string
+  "--hs-level-h6"?: string
 
   // 布局和尺寸
-  "--hs-title-align"?: "left" | "center" | "right";
+  "--hs-title-align"?: "left" | "center" | "right"
 }
 
 /**
@@ -49,9 +49,9 @@ export function applyCSSVariables(
 ): void {
   Object.entries(vars).forEach(([key, value]) => {
     if (value) {
-      container.style.setProperty(key, value);
+      container.style.setProperty(key, value)
     }
-  });
+  })
 }
 
 /**
@@ -64,15 +64,15 @@ export function getLevelDisplayVars(
   const levels =
     style === "custom"
       ? customMarkers
-      : HEADING_LEVEL_MAPPINGS[style] || HEADING_LEVEL_MAPPINGS.number;
-  const vars: Record<string, string> = {};
+      : HEADING_LEVEL_MAPPINGS[style] || HEADING_LEVEL_MAPPINGS.number
+  const vars: Record<string, string> = {}
 
   levels.forEach((label, index) => {
-    const level = index + 1;
-    vars[`--hs-level-h${level}`] = label;
-  });
+    const level = index + 1
+    vars[`--hs-level-h${level}`] = label
+  })
 
-  return vars;
+  return vars
 }
 
 /**
@@ -83,12 +83,12 @@ export function getLevelDisplayCSS(
   style: string,
   customMarkers: string[] = ["1", "2", "3", "4", "5", "6"],
 ): string {
-  const vars = getLevelDisplayVars(style, customMarkers);
+  const vars = getLevelDisplayVars(style, customMarkers)
 
   // 生成 CSS 变量定义
   const varDefinitions = Object.entries(vars)
     .map(([key, value]) => `${key}: "${value}";`)
-    .join("\n  ");
+    .join("\n  ")
 
   // 使用 CSS 变量的样式规则
   return `
@@ -149,7 +149,7 @@ ${varDefinitions ? `[data-level-style="${style}"] {\n  ${varDefinitions}\n}` : "
   margin-left: 6px;
   vertical-align: middle;
 }
-`.trim();
+`.trim()
 }
 
 /**
@@ -162,32 +162,32 @@ export function updateDocumentVariables(
   titleColor: string,
   titleFontSize: number,
 ): void {
-  const root = document.documentElement;
+  const root = document.documentElement
 
   // 设置颜色变量（使用透明度和混合以兼容主题）
   Object.entries(colors).forEach(([key, value]) => {
-    root.style.setProperty(`--hs-heading-${key}-color`, value);
-  });
+    root.style.setProperty(`--hs-heading-${key}-color`, value)
+  })
 
   // 设置字体大小变量
   Object.entries(sizes).forEach(([key, value]) => {
-    root.style.setProperty(`--hs-${key}-size`, `${value}px`);
-  });
+    root.style.setProperty(`--hs-${key}-size`, `${value}px`)
+  })
 
   // 文档标题设置
-  root.style.setProperty("--hs-title-color", titleColor);
-  root.style.setProperty("--hs-title-font-size", `${titleFontSize}px`);
+  root.style.setProperty("--hs-title-color", titleColor)
+  root.style.setProperty("--hs-title-font-size", `${titleFontSize}px`)
   root.style.setProperty(
     "--hs-title-align",
     titleCenterAlign ? "center" : "left",
-  );
+  )
 }
 
 /**
  * 清理文档变量
  */
 export function clearDocumentVariables(): void {
-  const root = document.documentElement;
+  const root = document.documentElement
   const vars = [
     "--hs-heading-h1-color",
     "--hs-heading-h2-color",
@@ -204,9 +204,9 @@ export function clearDocumentVariables(): void {
     "--hs-title-color",
     "--hs-title-font-size",
     "--hs-title-align",
-  ];
+  ]
 
-  vars.forEach((v) => root.style.removeProperty(v));
+  vars.forEach((v) => root.style.removeProperty(v))
 }
 
 /**
@@ -221,11 +221,11 @@ export function generateDynamicStyles(
 ): string {
   const cssColorVars = Object.entries(colors)
     .map(([key, value]) => `--hs-${key}-color: ${value};`)
-    .join("\n    ");
+    .join("\n    ")
 
   const cssSizeVars = Object.entries(sizes)
     .map(([key, value]) => `--hs-${key}-size: ${value}px;`)
-    .join("\n    ");
+    .join("\n    ")
 
   const titleCss = titleCenterAlign
     ? `
@@ -238,7 +238,7 @@ export function generateDynamicStyles(
     .protyle-title__input {
       color: var(--hs-title-color, ${titleColor}) !important;
       font-size: var(--hs-title-font-size, ${titleFontSize}px) !important;
-    }`;
+    }`
 
   // 使用 CSS 变量的新样式系统
   return `
@@ -308,5 +308,5 @@ ${titleCss}
     print-color-adjust: exact;
   }
 }
-`.trim();
+`.trim()
 }

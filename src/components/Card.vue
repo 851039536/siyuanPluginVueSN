@@ -1,18 +1,42 @@
 <template>
-  <div :class="cardClasses" :style="cardStyle" v-bind="containerAttrs" @click="handleClick">
-    <div v-if="$slots.header || title" class="si-card__header">
+  <div
+    :class="cardClasses"
+    :style="cardStyle"
+    v-bind="containerAttrs"
+    @click="handleClick"
+  >
+    <div
+      v-if="$slots.header || title"
+      class="si-card__header"
+    >
       <div class="si-card__header-content">
         <slot name="header">
-          <h3 v-if="title" class="si-card__title">{{ title }}</h3>
-          <p v-if="subtitle" class="si-card__subtitle">{{ subtitle }}</p>
+          <h3
+            v-if="title"
+            class="si-card__title"
+          >
+            {{ title }}
+          </h3>
+          <p
+            v-if="subtitle"
+            class="si-card__subtitle"
+          >
+            {{ subtitle }}
+          </p>
         </slot>
       </div>
-      <div v-if="$slots['header-extra']" class="si-card__header-extra">
+      <div
+        v-if="$slots['header-extra']"
+        class="si-card__header-extra"
+      >
         <slot name="header-extra" />
       </div>
     </div>
 
-    <div v-if="$slots.cover || cover" class="si-card__cover">
+    <div
+      v-if="$slots.cover || cover"
+      class="si-card__cover"
+    >
       <img
         v-if="cover"
         :src="cover"
@@ -23,57 +47,70 @@
       <slot name="cover" />
     </div>
 
-    <div class="si-card__body" :class="{ 'si-card__body--no-padding': bodyNoPadding }">
+    <div
+      class="si-card__body"
+      :class="{ 'si-card__body--no-padding': bodyNoPadding }"
+    >
       <slot />
     </div>
 
-    <div v-if="$slots.footer" class="si-card__footer">
+    <div
+      v-if="$slots.footer"
+      class="si-card__footer"
+    >
       <slot name="footer" />
     </div>
 
-    <div v-if="loading" class="si-card__loading-overlay">
+    <div
+      v-if="loading"
+      class="si-card__loading-overlay"
+    >
       <div class="si-card__loading-spinner" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, useAttrs, useSlots } from "vue";
+import {
+  computed,
+  useAttrs,
+  useSlots,
+} from "vue"
 
-type CardVariant = "bordered" | "elevated" | "flat" | "outlined";
-type CardSize = "small" | "medium" | "large";
+type CardVariant = "bordered" | "elevated" | "flat" | "outlined"
+type CardSize = "small" | "medium" | "large"
 
 interface Props {
   /** 卡片标题 */
-  title?: string;
+  title?: string
   /** 卡片副标题 */
-  subtitle?: string;
+  subtitle?: string
   /** 封面图片 */
-  cover?: string;
+  cover?: string
   /** 封面图片 alt */
-  coverAlt?: string;
+  coverAlt?: string
   /** 封面适配方式 */
-  coverFit?: "contain" | "cover" | "fill";
+  coverFit?: "contain" | "cover" | "fill"
   /** 卡片变体 */
-  variant?: CardVariant;
+  variant?: CardVariant
   /** 卡片尺寸 */
-  size?: CardSize;
+  size?: CardSize
   /** 是否可点击 */
-  clickable?: boolean;
+  clickable?: boolean
   /** 激活状态 */
-  active?: boolean;
+  active?: boolean
   /** 禁用状态 */
-  disabled?: boolean;
+  disabled?: boolean
   /** 加载状态 */
-  loading?: boolean;
+  loading?: boolean
   /** 是否圆角 */
-  rounded?: boolean;
+  rounded?: boolean
   /** 主体内容是否无内边距 */
-  bodyNoPadding?: boolean;
+  bodyNoPadding?: boolean
   /** 宽度 */
-  width?: string | number;
+  width?: string | number
   /** 高度 */
-  height?: string | number;
+  height?: string | number
 }
 
 type Emits = (e: "click", event: MouseEvent) => void
@@ -88,16 +125,20 @@ const props = withDefaults(defineProps<Props>(), {
   loading: false,
   rounded: true,
   bodyNoPadding: false,
-});
+})
 
-const emit = defineEmits<Emits>();
-const attrs = useAttrs();
-const slots = useSlots();
+const emit = defineEmits<Emits>()
+const attrs = useAttrs()
+const slots = useSlots()
 
 const containerAttrs = computed(() => {
-  const { class: className, style, ...rest } = attrs;
-  return rest;
-});
+  const {
+    class: className,
+    style,
+    ...rest
+  } = attrs
+  return rest
+})
 
 const cardClasses = computed(() => [
   "si-card",
@@ -111,26 +152,26 @@ const cardClasses = computed(() => [
     "si-card--rounded": props.rounded,
     "si-card--has-cover": props.cover || slots.cover,
   },
-]);
+])
 
 const cardStyle = computed(() => {
-  const style: Record<string, string | number> = {};
+  const style: Record<string, string | number> = {}
   if (props.width) {
     style.width =
-      typeof props.width === "number" ? `${props.width}px` : props.width;
+      typeof props.width === "number" ? `${props.width}px` : props.width
   }
   if (props.height) {
     style.height =
-      typeof props.height === "number" ? `${props.height}px` : props.height;
+      typeof props.height === "number" ? `${props.height}px` : props.height
   }
-  return style;
-});
+  return style
+})
 
 const handleClick = (event: MouseEvent) => {
   if (props.clickable && !props.disabled && !props.loading) {
-    emit("click", event);
+    emit("click", event)
   }
-};
+}
 </script>
 
 <style scoped lang="scss">

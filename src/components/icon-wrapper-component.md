@@ -45,11 +45,11 @@ export interface IconConfig {
 export const FEATURE_ICONS = {
   superPanel: {
     icon: 'mdi:view-dashboard',
-    color: '#3b82f6'
+    color: '#3b82f6',
   },
   tableOfContents: {
     icon: 'mdi:format-list-bulleted-square',
-    color: '#10b981'
+    color: '#10b981',
   },
   // ... 更多图标
 } as const
@@ -79,9 +79,10 @@ export const COMMON_ICONS = {
 </template>
 
 <script setup lang="ts">
+import type { IconKey } from '@/config/icons'
 import { Icon } from '@iconify/vue'
 import { computed } from 'vue'
-import { getIconConfig, type IconKey } from '@/config/icons'
+import { getIconConfig } from '@/config/icons'
 
 interface Props {
   /** 图标键名 */
@@ -125,8 +126,14 @@ const iconStyle = computed(() => {
 <template>
   <div>
     <IconWrapper name="superPanel" />
-    <IconWrapper name="close" size="20px" />
-    <IconWrapper name="settings" color="#ff0000" />
+    <IconWrapper
+      name="close"
+      size="20px"
+    />
+    <IconWrapper
+      name="settings"
+      color="#ff0000"
+    />
   </div>
 </template>
 ```

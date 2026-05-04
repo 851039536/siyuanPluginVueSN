@@ -1,31 +1,67 @@
 <template>
-  <div class="result-item" @click="handleClick" @dblclick="handleDblClick">
+  <div
+    class="result-item"
+    @click="handleClick"
+    @dblclick="handleDblClick"
+  >
     <!-- 图标 -->
-    <div class="item-icon" :class="iconClass" :aria-label="item.type">
+    <div
+      class="item-icon"
+      :class="iconClass"
+      :aria-label="item.type"
+    >
       {{ iconEmoji }}
     </div>
 
     <!-- 文件信息 -->
     <div class="item-info">
-      <div class="item-name" :title="item.name">{{ item.name }}</div>
-      <div class="item-path" :title="fullPath">{{ item.path }}</div>
+      <div
+        class="item-name"
+        :title="item.name"
+      >
+        {{ item.name }}
+      </div>
+      <div
+        class="item-path"
+        :title="fullPath"
+      >
+        {{ item.path }}
+      </div>
     </div>
 
     <!-- 元数据 -->
     <div class="item-meta">
-      <span v-if="item.type === 'file'" class="item-size">{{ formattedSize }}</span>
+      <span
+        v-if="item.type === 'file'"
+        class="item-size"
+      >{{ formattedSize }}</span>
       <span class="item-date">{{ item.dateModified }}</span>
     </div>
 
     <!-- 操作按钮 -->
     <div class="item-actions">
-      <button class="action-btn" @click.stop="handleOpen" :title="openButtonTitle" :aria-label="openButtonTitle">
+      <button
+        class="action-btn"
+        :title="openButtonTitle"
+        :aria-label="openButtonTitle"
+        @click.stop="handleOpen"
+      >
         <svg class="action-icon"><use xlink:href="#iconOpen"></use></svg>
       </button>
-      <button class="action-btn" @click.stop="handleShowInFolder" title="在资源管理器中显示" aria-label="在资源管理器中显示">
+      <button
+        class="action-btn"
+        title="在资源管理器中显示"
+        aria-label="在资源管理器中显示"
+        @click.stop="handleShowInFolder"
+      >
         <svg class="action-icon"><use xlink:href="#iconFolder"></use></svg>
       </button>
-      <button class="action-btn" @click.stop="handleCopyPath" title="复制路径" aria-label="复制路径">
+      <button
+        class="action-btn"
+        title="复制路径"
+        aria-label="复制路径"
+        @click.stop="handleCopyPath"
+      >
         <svg class="action-icon"><use xlink:href="#iconCopy"></use></svg>
       </button>
     </div>
@@ -33,47 +69,50 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-import type { EverythingSearchResult } from "../types";
-import { formatFileSize, getFileIconType } from "../api";
+import type { EverythingSearchResult } from "../types"
+import { computed } from "vue"
+import {
+  formatFileSize,
+  getFileIconType,
+} from "../api"
 
 interface Props {
   /** 搜索结果项 */
-  item: EverythingSearchResult;
+  item: EverythingSearchResult
 }
 
 interface Emits {
-  (e: "click", item: EverythingSearchResult): void;
-  (e: "dblClick", item: EverythingSearchResult): void;
-  (e: "open", item: EverythingSearchResult): void;
-  (e: "showInFolder", item: EverythingSearchResult): void;
-  (e: "copyPath", item: EverythingSearchResult): void;
+  (e: "click", item: EverythingSearchResult): void
+  (e: "dblClick", item: EverythingSearchResult): void
+  (e: "open", item: EverythingSearchResult): void
+  (e: "showInFolder", item: EverythingSearchResult): void
+  (e: "copyPath", item: EverythingSearchResult): void
 }
 
-const props = defineProps<Props>();
-const emit = defineEmits<Emits>();
+const props = defineProps<Props>()
+const emit = defineEmits<Emits>()
 
 /** 完整路径 */
 const fullPath = computed(() => {
   return props.item.path
     ? `${props.item.path}\\${props.item.name}`
-    : props.item.name;
-});
+    : props.item.name
+})
 
 /** 格式化大小 */
-const formattedSize = computed(() => formatFileSize(props.item.size));
+const formattedSize = computed(() => formatFileSize(props.item.size))
 
 /** 图标类 */
 const iconClass = computed(
   () =>
     `icon-${getFileIconType(props.item.name, props.item.type === "folder")}`,
-);
+)
 
 /** 图标 emoji */
 const iconEmoji = computed(() => {
-  if (props.item.type === "folder") return "📁";
+  if (props.item.type === "folder") return "📁"
 
-  const iconType = getFileIconType(props.item.name, false);
+  const iconType = getFileIconType(props.item.name, false)
   const emojiMap: Record<string, string> = {
     pdf: "📕",
     word: "📘",
@@ -89,39 +128,39 @@ const iconEmoji = computed(() => {
     executable: "⚙️",
     siyuan: "📔",
     file: "📄",
-  };
-  return emojiMap[iconType] || "📄";
-});
+  }
+  return emojiMap[iconType] || "📄"
+})
 
 /** 打开按钮标题 */
 const openButtonTitle = computed(() => {
-  return props.item.type === "folder" ? "打开文件夹" : "打开文件";
-});
+  return props.item.type === "folder" ? "打开文件夹" : "打开文件"
+})
 
 /** 处理点击 */
 const handleClick = () => {
-  emit("click", props.item);
-};
+  emit("click", props.item)
+}
 
 /** 处理双击 */
 const handleDblClick = () => {
-  emit("dblClick", props.item);
-};
+  emit("dblClick", props.item)
+}
 
 /** 处理打开 */
 const handleOpen = () => {
-  emit("open", props.item);
-};
+  emit("open", props.item)
+}
 
 /** 处理在文件夹中显示 */
 const handleShowInFolder = () => {
-  emit("showInFolder", props.item);
-};
+  emit("showInFolder", props.item)
+}
 
 /** 处理复制路径 */
 const handleCopyPath = () => {
-  emit("copyPath", props.item);
-};
+  emit("copyPath", props.item)
+}
 </script>
 
 <style scoped lang="scss">

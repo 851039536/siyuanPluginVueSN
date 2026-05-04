@@ -34,18 +34,18 @@
       >
         <template #decorations>
           <DecorationSettings
-            :expanded="showDecorations"
-            @toggle="showDecorations = !showDecorations"
-            :title="i18nPanel.decorations || '装饰选项'"
-            :metadata-title="i18nPanel.metadataOptions || '信息标签'"
-            :advanced-style-title="i18nPanel.advancedStyle || '高级样式'"
             v-model:enable-watermark="enableWatermark"
             v-model:watermark-text="watermarkText"
             v-model:enable-author="enableAuthor"
+            :expanded="showDecorations"
             v-model:author-name="authorName"
+            :title="i18nPanel.decorations || '装饰选项'"
             v-model:enable-timestamp="enableTimestamp"
+            :metadata-title="i18nPanel.metadataOptions || '信息标签'"
             v-model:border-width="borderWidth"
+            :advanced-style-title="i18nPanel.advancedStyle || '高级样式'"
             v-model:border-radius="borderRadius"
+            @toggle="showDecorations = !showDecorations"
             v-model:padding-size="paddingSize"
             v-model:background-opacity="backgroundOpacity"
             v-model:shadow-intensity="shadowIntensity"
@@ -88,10 +88,20 @@
 
     <!-- 底部操作 -->
     <div class="panel-footer">
-      <Button variant="secondary" @click="copyImage" :disabled="!codeContent" icon="contentCopy">
+      <Button
+        variant="secondary"
+        :disabled="!codeContent"
+        icon="contentCopy"
+        @click="copyImage"
+      >
         {{ i18nPanel.copyImage || '复制图片' }}
       </Button>
-      <Button variant="primary" @click="downloadImage" :disabled="!codeContent" icon="download">
+      <Button
+        variant="primary"
+        :disabled="!codeContent"
+        icon="download"
+        @click="downloadImage"
+      >
         {{ i18nPanel.downloadImage || '下载图片' }}
       </Button>
     </div>
@@ -99,24 +109,34 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
-import type { CSSProperties } from "vue";
-import { showMessage } from "siyuan";
-import html2canvas from "html2canvas";
-import hljs from "highlight.js";
-import "highlight.js/styles/github.css";
-import "highlight.js/styles/github-dark.css";
-import Button from "@/components/Button.vue";
-import type { SelectOption } from "@/components/Select.vue";
-import PanelHeader from "./components/PanelHeader.vue";
-import ContentInput from "./components/ContentInput.vue";
-import SettingsSection from "./components/SettingsSection.vue";
-import DecorationSettings from "./components/DecorationSettings.vue";
-import PreviewArea from "./components/PreviewArea.vue";
+import type { CSSProperties } from "vue"
+import type { SelectOption } from "@/components/Select.vue"
+import hljs from "highlight.js"
+import html2canvas from "html2canvas"
+import { showMessage } from "siyuan"
+import {
+  computed,
+  ref,
+  watch,
+} from "vue"
+import Button from "@/components/Button.vue"
+import ContentInput from "./components/ContentInput.vue"
+import DecorationSettings from "./components/DecorationSettings.vue"
+import PanelHeader from "./components/PanelHeader.vue"
+import PreviewArea from "./components/PreviewArea.vue"
+import SettingsSection from "./components/SettingsSection.vue"
+import "highlight.js/styles/github.css"
+import "highlight.js/styles/github-dark.css"
+
+const props = withDefaults(defineProps<Props>(), {
+  content: "",
+  i18n: () => ({}),
+  plugin: undefined,
+})
 
 // 错误消息工具函数
 const getErrorMsg = (error: unknown): string =>
-  error instanceof Error ? error.message : String(error);
+  error instanceof Error ? error.message : String(error)
 
 // 语言配置（统一管理，避免重复）
 const LANGUAGE_MAP = Object.freeze({
@@ -140,104 +160,155 @@ const LANGUAGE_MAP = Object.freeze({
   markdown: "Markdown",
   sql: "SQL",
   bash: "Bash",
-} as const);
+} as const)
 
 // Select 组件选项数据（从语言配置生成）
 const contentTypeOptions: SelectOption[] = [
-  { value: "code", label: "代码" },
-  { value: "text", label: "文字" },
-];
+  {
+    value: "code",
+    label: "代码",
+  },
+  {
+    value: "text",
+    label: "文字",
+  },
+]
 
 const languageOptions: SelectOption[] = Object.entries(LANGUAGE_MAP).map(
-  ([value, label]) => ({ value, label }),
-);
+  ([value, label]) => ({
+    value,
+    label,
+  }),
+)
 
 const codeStyleOptions: SelectOption[] = [
-  { value: "github", label: "GitHub" },
-  { value: "mac", label: "Mac" },
-  { value: "cartoon", label: "卡通" },
-  { value: "wave", label: "波浪渐变" },
-  { value: "glass", label: "玻璃拟态" },
-  { value: "neon", label: "霓虹灯" },
-  { value: "3d", label: "3D立体" },
-];
+  {
+    value: "github",
+    label: "GitHub",
+  },
+  {
+    value: "mac",
+    label: "Mac",
+  },
+  {
+    value: "cartoon",
+    label: "卡通",
+  },
+  {
+    value: "wave",
+    label: "波浪渐变",
+  },
+  {
+    value: "glass",
+    label: "玻璃拟态",
+  },
+  {
+    value: "neon",
+    label: "霓虹灯",
+  },
+  {
+    value: "3d",
+    label: "3D立体",
+  },
+]
 
 const textStyleOptions: SelectOption[] = [
-  { value: "quote", label: "名人名言" },
-  { value: "poetry", label: "诗词意境" },
-  { value: "note", label: "手写便签" },
-  { value: "poster", label: "激励海报" },
-  { value: "card", label: "引用卡片" },
-  { value: "newspaper", label: "复古报纸" },
-  { value: "gradient", label: "渐变文字" },
-];
+  {
+    value: "quote",
+    label: "名人名言",
+  },
+  {
+    value: "poetry",
+    label: "诗词意境",
+  },
+  {
+    value: "note",
+    label: "手写便签",
+  },
+  {
+    value: "poster",
+    label: "激励海报",
+  },
+  {
+    value: "card",
+    label: "引用卡片",
+  },
+  {
+    value: "newspaper",
+    label: "复古报纸",
+  },
+  {
+    value: "gradient",
+    label: "渐变文字",
+  },
+]
 
 const themeOptions: SelectOption[] = [
-  { value: "light", label: "浅色" },
-  { value: "dark", label: "深色" },
-];
+  {
+    value: "light",
+    label: "浅色",
+  },
+  {
+    value: "dark",
+    label: "深色",
+  },
+]
 
 interface I18nPanelKeys {
-  contentType?: string;
-  codeContent?: string;
-  textContent?: string;
-  codeContentPlaceholder?: string;
-  textContentPlaceholder?: string;
-  codeLanguage?: string;
-  codeStyle?: string;
-  codeTheme?: string;
-  lightTheme?: string;
-  darkTheme?: string;
-  fontSize?: string;
-  decorations?: string;
-  metadataOptions?: string;
-  advancedStyle?: string;
-  enableWatermark?: string;
-  watermarkPlaceholder?: string;
-  enableAuthor?: string;
-  authorPlaceholder?: string;
-  enableTimestamp?: string;
-  borderWidth?: string;
-  borderRadius?: string;
-  paddingSize?: string;
-  backgroundOpacity?: string;
-  shadowIntensity?: string;
-  preview?: string;
-  copyImage?: string;
-  downloadImage?: string;
-  imageCopied?: string;
-  imageDownloaded?: string;
-  generateFailed?: string;
-  copyFailed?: string;
-  downloadFailed?: string;
+  contentType?: string
+  codeContent?: string
+  textContent?: string
+  codeContentPlaceholder?: string
+  textContentPlaceholder?: string
+  codeLanguage?: string
+  codeStyle?: string
+  codeTheme?: string
+  lightTheme?: string
+  darkTheme?: string
+  fontSize?: string
+  decorations?: string
+  metadataOptions?: string
+  advancedStyle?: string
+  enableWatermark?: string
+  watermarkPlaceholder?: string
+  enableAuthor?: string
+  authorPlaceholder?: string
+  enableTimestamp?: string
+  borderWidth?: string
+  borderRadius?: string
+  paddingSize?: string
+  backgroundOpacity?: string
+  shadowIntensity?: string
+  preview?: string
+  copyImage?: string
+  downloadImage?: string
+  imageCopied?: string
+  imageDownloaded?: string
+  generateFailed?: string
+  copyFailed?: string
+  downloadFailed?: string
 }
 
 interface I18nKeys {
-  codeImageGenerator?: string;
-  codeImageGeneratorPanel?: I18nPanelKeys;
+  codeImageGenerator?: string
+  codeImageGeneratorPanel?: I18nPanelKeys
 }
 
 interface Props {
-  content?: string;
-  i18n?: I18nKeys;
-  plugin?: any;
+  content?: string
+  i18n?: I18nKeys
+  plugin?: any
 }
-
-const props = withDefaults(defineProps<Props>(), {
-  content: "",
-  i18n: () => ({}),
-  plugin: undefined,
-});
 
 // 计算属性：简化 i18n 访问
 const i18nPanel = computed<I18nPanelKeys>(
   () => props.i18n?.codeImageGeneratorPanel || {},
-);
+)
 
 // 计算属性：根据内容类型返回对应的风格选项
 const currentStyleOptions = computed<SelectOption[]>(() => {
-  return contentType.value === "code" ? codeStyleOptions : textStyleOptions;
-});
+  return contentType.value === "code" ? codeStyleOptions : textStyleOptions
+})
 
 // 常量定义
 const DEFAULTS = Object.freeze({
@@ -253,75 +324,75 @@ const DEFAULTS = Object.freeze({
   selectedTheme: "light" as const,
   scaleMultiplier: 3,
   messageDuration: 3000,
-});
+})
 
 // 状态
-const contentType = ref<"code" | "text">("code");
-const codeContent = ref<string>(props.content || "");
-const selectedLanguage = ref<string>(DEFAULTS.selectedLanguage);
-const selectedStyle = ref<string>(DEFAULTS.selectedStyle);
-const selectedTheme = ref<string>(DEFAULTS.selectedTheme);
-const fontSize = ref<number>(DEFAULTS.fontSize);
-const codePreview = ref<HTMLDivElement>();
+const contentType = ref<"code" | "text">("code")
+const codeContent = ref<string>(props.content || "")
+const selectedLanguage = ref<string>(DEFAULTS.selectedLanguage)
+const selectedStyle = ref<string>(DEFAULTS.selectedStyle)
+const selectedTheme = ref<string>(DEFAULTS.selectedTheme)
+const fontSize = ref<number>(DEFAULTS.fontSize)
+const codePreview = ref<HTMLDivElement>()
 
 // 装饰选项
-const showDecorations = ref<boolean>(false);
-const enableWatermark = ref<boolean>(false);
-const watermarkText = ref<string>(DEFAULTS.watermarkText);
-const enableAuthor = ref<boolean>(false);
-const authorName = ref<string>("");
-const enableTimestamp = ref<boolean>(false);
+const showDecorations = ref<boolean>(false)
+const enableWatermark = ref<boolean>(false)
+const watermarkText = ref<string>(DEFAULTS.watermarkText)
+const enableAuthor = ref<boolean>(false)
+const authorName = ref<string>("")
+const enableTimestamp = ref<boolean>(false)
 
 // 高级装饰选项
-const borderWidth = ref<number>(DEFAULTS.borderWidth);
-const borderRadius = ref<number>(DEFAULTS.borderRadius);
-const paddingSize = ref<number>(DEFAULTS.paddingSize);
-const backgroundOpacity = ref<number>(DEFAULTS.backgroundOpacity);
-const shadowIntensity = ref<number>(DEFAULTS.shadowIntensity);
+const borderWidth = ref<number>(DEFAULTS.borderWidth)
+const borderRadius = ref<number>(DEFAULTS.borderRadius)
+const paddingSize = ref<number>(DEFAULTS.paddingSize)
+const backgroundOpacity = ref<number>(DEFAULTS.backgroundOpacity)
+const shadowIntensity = ref<number>(DEFAULTS.shadowIntensity)
 
 // 监听props变化
 watch(
   () => props.content,
   (newContent) => {
     if (newContent) {
-      codeContent.value = newContent;
+      codeContent.value = newContent
     }
   },
-);
+)
 
 // 高亮代码
 const highlightedCode = computed<string>(() => {
   if (!codeContent.value) {
-    return '<span style="color: #999;">在这里输入代码...</span>';
+    return '<span style="color: #999;">在这里输入代码...</span>'
   }
 
   try {
     const result = hljs.highlight(codeContent.value, {
       language: selectedLanguage.value,
-    });
-    return result.value;
+    })
+    return result.value
   } catch (error) {
-    console.error("代码高亮失败:", getErrorMsg(error));
-    return codeContent.value;
+    console.error("代码高亮失败:", getErrorMsg(error))
+    return codeContent.value
   }
-});
+})
 
 // 获取语言显示名称
 const getLanguageDisplay = (): string =>
-  LANGUAGE_MAP[selectedLanguage.value as keyof typeof LANGUAGE_MAP] ??
-  selectedLanguage.value;
+  LANGUAGE_MAP[selectedLanguage.value as keyof typeof LANGUAGE_MAP]
+  ?? selectedLanguage.value
 
 // 当前时间
 const currentTime = computed<string>(() => {
-  const now = new Date();
+  const now = new Date()
   return now.toLocaleString("zh-CN", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
-  });
-});
+  })
+})
 
 // 预览自定义样式
 const previewCustomStyle = computed<CSSProperties>(() => ({
@@ -331,22 +402,22 @@ const previewCustomStyle = computed<CSSProperties>(() => ({
   boxShadow: `0 ${4 + shadowIntensity.value / 10}px ${12 + shadowIntensity.value / 5}px rgba(0, 0, 0, ${0.1 + shadowIntensity.value * 0.003})`,
   borderWidth: borderWidth.value > 0 ? `${borderWidth.value}px` : "0",
   borderStyle: borderWidth.value > 0 ? "solid" : "none",
-}));
+}))
 
 // i18n 辅助：获取面板级文案的 fallback 值
 const panelMsg = (key: keyof I18nPanelKeys, fallback: string): string =>
-  i18nPanel.value[key] || fallback;
+  i18nPanel.value[key] || fallback
 
 // 生成画布的公共方法
 const generateCanvas = async (): Promise<HTMLCanvasElement> => {
   if (!codePreview.value) {
-    throw new Error("Preview element not found");
+    throw new Error("Preview element not found")
   }
 
-  const el = codePreview.value;
-  const dpr = window.devicePixelRatio ?? 1;
-  const scale = Math.max(dpr, DEFAULTS.scaleMultiplier);
-  const bgColor = window.getComputedStyle(el).backgroundColor ?? "transparent";
+  const el = codePreview.value
+  const dpr = window.devicePixelRatio ?? 1
+  const scale = Math.max(dpr, DEFAULTS.scaleMultiplier)
+  const bgColor = window.getComputedStyle(el).backgroundColor ?? "transparent"
 
   return html2canvas(el, {
     backgroundColor: bgColor,
@@ -360,56 +431,56 @@ const generateCanvas = async (): Promise<HTMLCanvasElement> => {
     windowHeight: el.scrollHeight,
     imageTimeout: 0,
     removeContainer: true,
-  });
-};
+  })
+}
 
 // 生成文件名
 const createFilename = (): string =>
-  `${contentType.value === "code" ? `code-${selectedLanguage.value}` : "text"}-${Date.now()}.png`;
+  `${contentType.value === "code" ? `code-${selectedLanguage.value}` : "text"}-${Date.now()}.png`
 
 // 生成图片 Blob
 const generateBlob = async (): Promise<Blob> => {
-  const canvas = await generateCanvas();
+  const canvas = await generateCanvas()
   return new Promise<Blob>((resolve, reject) =>
     canvas.toBlob(
       (blob) => (blob ? resolve(blob) : reject(new Error("Blob generation failed"))),
       "image/png",
       1.0,
     ),
-  );
-};
+  )
+}
 
 // 复制图片到剪贴板
 const copyImage = async (): Promise<void> => {
-  if (!codeContent.value) return;
+  if (!codeContent.value) return
 
   try {
-    const blob = await generateBlob();
-    const item = new ClipboardItem({ "image/png": blob });
-    await navigator.clipboard.write([item]);
-    showMessage(panelMsg("imageCopied", "图片已复制到剪贴板"), DEFAULTS.messageDuration, "info");
+    const blob = await generateBlob()
+    const item = new ClipboardItem({ "image/png": blob })
+    await navigator.clipboard.write([item])
+    showMessage(panelMsg("imageCopied", "图片已复制到剪贴板"), DEFAULTS.messageDuration, "info")
   } catch (error) {
-    console.error("复制失败:", getErrorMsg(error));
-    showMessage(panelMsg("copyFailed", "复制失败"), DEFAULTS.messageDuration, "error");
+    console.error("复制失败:", getErrorMsg(error))
+    showMessage(panelMsg("copyFailed", "复制失败"), DEFAULTS.messageDuration, "error")
   }
-};
+}
 
 // 下载图片
 const downloadImage = async (): Promise<void> => {
-  if (!codeContent.value) return;
+  if (!codeContent.value) return
 
   try {
-    const canvas = await generateCanvas();
-    const link = document.createElement("a");
-    link.download = createFilename();
-    link.href = canvas.toDataURL("image/png", 1.0);
-    link.click();
-    showMessage(panelMsg("imageDownloaded", "图片已下载"), DEFAULTS.messageDuration, "info");
+    const canvas = await generateCanvas()
+    const link = document.createElement("a")
+    link.download = createFilename()
+    link.href = canvas.toDataURL("image/png", 1.0)
+    link.click()
+    showMessage(panelMsg("imageDownloaded", "图片已下载"), DEFAULTS.messageDuration, "info")
   } catch (error) {
-    console.error("下载失败:", getErrorMsg(error));
-    showMessage(panelMsg("downloadFailed", "下载失败"), DEFAULTS.messageDuration, "error");
+    console.error("下载失败:", getErrorMsg(error))
+    showMessage(panelMsg("downloadFailed", "下载失败"), DEFAULTS.messageDuration, "error")
   }
-};
+}
 </script>
 
 <style scoped lang="scss">

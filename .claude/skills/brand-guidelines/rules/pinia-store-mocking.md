@@ -25,24 +25,24 @@ Developers struggle to properly mock Pinia stores: `createTestingPinia` requires
 
 **Pattern 1: Basic setup with createTestingPinia**
 ```typescript
-import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
+import { mount } from '@vue/test-utils'
 import { vi } from 'vitest'
-import MyComponent from './MyComponent.vue'
 import { useCounterStore } from '@/stores/counter'
+import MyComponent from './MyComponent.vue'
 
 test('component uses store', async () => {
   const wrapper = mount(MyComponent, {
     global: {
       plugins: [
         createTestingPinia({
-          createSpy: vi.fn,  // REQUIRED in @pinia/testing 1.0+
+          createSpy: vi.fn, // REQUIRED in @pinia/testing 1.0+
           initialState: {
-            counter: { count: 10 }  // Set initial state
-          }
-        })
-      ]
-    }
+            counter: { count: 10 }, // Set initial state
+          },
+        }),
+      ],
+    },
   })
 
   // Get the store instance AFTER mounting
@@ -62,10 +62,10 @@ test('component handles async action', async () => {
       plugins: [
         createTestingPinia({
           createSpy: vi.fn,
-          stubActions: false  // Don't stub, use real actions
-        })
-      ]
-    }
+          stubActions: false, // Don't stub, use real actions
+        }),
+      ],
+    },
   })
 
   const store = useCounterStore()
@@ -80,7 +80,10 @@ test('component handles async action', async () => {
 
 **Pattern 3: Testing store directly**
 ```typescript
-import { setActivePinia, createPinia } from 'pinia'
+import {
+  createPinia,
+  setActivePinia,
+} from 'pinia'
 import { useCounterStore } from '@/stores/counter'
 
 describe('Counter Store', () => {
@@ -110,7 +113,11 @@ export const useCounterStore = defineStore('counter', () => {
     count.value++
   }
 
-  return { count, doubleCount, increment }
+  return {
+    count,
+    doubleCount,
+    increment,
+  }
 })
 
 // Test file
@@ -118,12 +125,12 @@ test('setup store works', async () => {
   const pinia = createTestingPinia({
     createSpy: vi.fn,
     initialState: {
-      counter: { count: 5 }
-    }
+      counter: { count: 5 },
+    },
   })
 
   const wrapper = mount(MyComponent, {
-    global: { plugins: [pinia] }
+    global: { plugins: [pinia] },
   })
 
   const store = useCounterStore()
@@ -140,7 +147,7 @@ describe('Store Tests', () => {
 
   beforeEach(() => {
     pinia = createTestingPinia({
-      createSpy: vi.fn
+      createSpy: vi.fn,
     })
   })
 

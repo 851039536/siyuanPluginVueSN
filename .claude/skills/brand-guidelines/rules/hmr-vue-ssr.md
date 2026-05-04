@@ -27,16 +27,16 @@ SSR mode has a different transformation pipeline. The Vue plugin's HMR boundary 
 
 **Step 1: Ensure correct SSR plugin configuration**
 ```typescript
+import vue from '@vitejs/plugin-vue'
 // vite.config.ts
 import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
   plugins: [vue()],
   ssr: {
     // Don't externalize these for HMR to work
-    noExternal: ['vue', '@vue/runtime-core', '@vue/runtime-dom']
-  }
+    noExternal: ['vue', '@vue/runtime-core', '@vue/runtime-dom'],
+  },
 })
 ```
 
@@ -47,7 +47,7 @@ import { createServer } from 'vite'
 
 const vite = await createServer({
   server: { middlewareMode: true },
-  appType: 'custom'
+  appType: 'custom',
 })
 
 // Use vite.ssrLoadModule for server-side imports
@@ -105,10 +105,10 @@ Enable verbose HMR logging:
 export default defineConfig({
   server: {
     hmr: {
-      overlay: true
-    }
+      overlay: true,
+    },
   },
-  logLevel: 'info'  // Shows HMR updates
+  logLevel: 'info', // Shows HMR updates
 })
 ```
 

@@ -1,10 +1,22 @@
 <template>
-  <div :class="selectClasses" v-bind="containerAttrs">
-    <label v-if="label" class="si-select__label">
+  <div
+    :class="selectClasses"
+    v-bind="containerAttrs"
+  >
+    <label
+      v-if="label"
+      class="si-select__label"
+    >
       {{ label }}
-      <span v-if="required" class="si-select__required">*</span>
+      <span
+        v-if="required"
+        class="si-select__required"
+      >*</span>
     </label>
-    <div class="si-select__wrapper" ref="wrapperRef">
+    <div
+      ref="wrapperRef"
+      class="si-select__wrapper"
+    >
       <div
         class="si-select__trigger"
         :class="{ 'si-select__trigger--disabled': disabled }"
@@ -12,14 +24,23 @@
         @click="toggleDropdown"
         @keydown="handleKeydown"
       >
-        <span v-if="selectedLabel" class="si-select__value">{{ selectedLabel }}</span>
-        <span v-else class="si-select__placeholder">{{ placeholder }}</span>
+        <span
+          v-if="selectedLabel"
+          class="si-select__value"
+        >{{ selectedLabel }}</span>
+        <span
+          v-else
+          class="si-select__placeholder"
+        >{{ placeholder }}</span>
         <span
           v-if="clearable && selectedOption && !disabled"
           class="si-select__clear"
           @click.stop="handleClear"
         >
-          <IconWrapper :name="'x' as IconKey" :size="iconSize" />
+          <IconWrapper
+            :name="'x' as IconKey"
+            :size="iconSize"
+          />
         </span>
         <IconWrapper
           :name="(isOpen ? 'chevronUp' : 'chevronDown') as IconKey"
@@ -35,7 +56,10 @@
           :class="dropdownClasses"
           :style="dropdownStyle"
         >
-          <div v-if="filterable && filteredOptions.length > 0" class="si-select__filter">
+          <div
+            v-if="filterable && filteredOptions.length > 0"
+            class="si-select__filter"
+          >
             <input
               ref="filterInputRef"
               v-model="filterQuery"
@@ -46,7 +70,10 @@
             />
           </div>
 
-          <div v-if="filteredOptions.length === 0" class="si-select__empty">
+          <div
+            v-if="filteredOptions.length === 0"
+            class="si-select__empty"
+          >
             {{ emptyText }}
           </div>
 
@@ -55,13 +82,18 @@
             class="si-select__options"
             :class="{ 'si-select__options--grouped': hasGroups }"
           >
-            <template v-for="(option, index) in filteredOptions" :key="getOptionKey(option, index)">
+            <template
+              v-for="(option, index) in filteredOptions"
+              :key="getOptionKey(option, index)"
+            >
               <!-- 分组选项 -->
               <div
                 v-if="isGroupOption(option)"
                 class="si-select__group"
               >
-                <div class="si-select__group-label">{{ option.label }}</div>
+                <div class="si-select__group-label">
+                  {{ option.label }}
+                </div>
                 <div
                   v-for="(groupOption, groupIndex) in option.options"
                   :key="getOptionKey(groupOption, groupIndex)"
@@ -69,12 +101,15 @@
                   :class="{
                     'si-select__option--selected': isSelected(groupOption.value),
                     'si-select__option--disabled': groupOption.disabled,
-                    'si-select__option--hovered': hoveredGroupKey === `${index}-${groupIndex}`
+                    'si-select__option--hovered': hoveredGroupKey === `${index}-${groupIndex}`,
                   }"
                   @click.stop="selectOption(groupOption)"
                   @mouseenter="setHoveredGroupOption(index, groupIndex)"
                 >
-                  <slot name="option" :option="groupOption">
+                  <slot
+                    name="option"
+                    :option="groupOption"
+                  >
                     {{ groupOption.label }}
                   </slot>
                 </div>
@@ -87,12 +122,15 @@
                 :class="{
                   'si-select__option--selected': isSelected(option.value),
                   'si-select__option--disabled': option.disabled,
-                  'si-select__option--hovered': hoveredIndex === index
+                  'si-select__option--hovered': hoveredIndex === index,
                 }"
                 @click.stop="selectOption(option)"
                 @mouseenter="setHoveredIndex(index)"
               >
-                <slot name="option" :option="option">
+                <slot
+                  name="option"
+                  :option="option"
+                >
                   {{ option.label }}
                 </slot>
               </div>
@@ -102,91 +140,94 @@
       </Transition>
     </div>
 
-    <div v-if="hint" class="si-select__hint">
+    <div
+      v-if="hint"
+      class="si-select__hint"
+    >
       {{ hint }}
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { IconKey } from "@/config/icons"
 import {
-  ref,
   computed,
-  watch,
+  nextTick,
   onMounted,
   onUnmounted,
-  nextTick,
+  ref,
   useAttrs,
-} from "vue";
-import IconWrapper from "@/components/IconWrapper.vue";
-import type { IconKey } from "@/config/icons";
+  watch,
+} from "vue"
+import IconWrapper from "@/components/IconWrapper.vue"
 
-type SelectSize = "small" | "medium" | "large";
+type SelectSize = "small" | "medium" | "large"
 
 export interface SelectOption {
   /** 选项值 */
-  value: string | number | boolean;
+  value: string | number | boolean
   /** 显示标签 */
-  label: string;
+  label: string
   /** 是否禁用 */
-  disabled?: boolean;
+  disabled?: boolean
   /** 自定义数据 */
-  [key: string]: any;
+  [key: string]: any
 }
 
 export interface SelectGroupOption {
   /** 分组标识 */
-  isGroup: true;
+  isGroup: true
   /** 分组标签 */
-  label: string;
+  label: string
   /** 分组选项 */
-  options: SelectOption[];
+  options: SelectOption[]
 }
 
-type OptionType = SelectOption | SelectGroupOption;
+type OptionType = SelectOption | SelectGroupOption
 
 interface Props {
   /** 选项数据 */
-  options: OptionType[];
+  options: OptionType[]
   /** 绑定值 */
-  modelValue?: string | number | boolean | null;
+  modelValue?: string | number | boolean | null
   /** 占位文本 */
-  placeholder?: string;
+  placeholder?: string
   /** 禁用状态 */
-  disabled?: boolean;
+  disabled?: boolean
   /** 尺寸 */
-  size?: SelectSize;
+  size?: SelectSize
   /** 标签文本 */
-  label?: string;
+  label?: string
   /** 是否必填 */
-  required?: boolean;
+  required?: boolean
   /** 提示文本 */
-  hint?: string;
+  hint?: string
   /** 是否可筛选 */
-  filterable?: boolean;
+  filterable?: boolean
   /** 筛选占位文本 */
-  filterPlaceholder?: string;
+  filterPlaceholder?: string
   /** 空状态文本 */
-  emptyText?: string;
+  emptyText?: string
   /** 下拉框位置 */
-  placement?: "top" | "bottom" | "auto";
+  placement?: "top" | "bottom" | "auto"
   /** 下拉框最大高度 */
-  maxHeight?: string | number;
+  maxHeight?: string | number
   /** 图标大小 */
-  iconSize?: number;
+  iconSize?: number
   /** 是否可清除 */
-  clearable?: boolean;
+  clearable?: boolean
 }
 
 interface Emits {
-  (e: "update:modelValue", value: string | number | boolean | null): void;
+  (e: "update:modelValue", value: string | number | boolean | null): void
   (
     e: "change",
     value: string | number | boolean | null,
     option: SelectOption,
-  ): void;
-  (e: "visible-change", visible: boolean): void;
-  (e: "clear"): void;
+  ): void
+  (e: "visible-change", visible: boolean): void
+  (e: "clear"): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -201,28 +242,32 @@ const props = withDefaults(defineProps<Props>(), {
   maxHeight: 200,
   iconSize: 14,
   clearable: false,
-});
+})
 
-const emit = defineEmits<Emits>();
-const attrs = useAttrs();
+const emit = defineEmits<Emits>()
+const attrs = useAttrs()
 
 const containerAttrs = computed(() => {
-  const { class: className, style, ...rest } = attrs;
-  return rest;
-});
+  const {
+    class: className,
+    style,
+    ...rest
+  } = attrs
+  return rest
+})
 
 // 状态
-const isOpen = ref(false);
-const filterQuery = ref("");
-const hoveredIndex = ref(-1);
-const hoveredGroupKey = ref<string | null>(null);
-const wrapperRef = ref<HTMLElement>();
-const filterInputRef = ref<HTMLInputElement>();
-const resolvedPlacement = ref<"top" | "bottom">("bottom");
+const isOpen = ref(false)
+const filterQuery = ref("")
+const hoveredIndex = ref(-1)
+const hoveredGroupKey = ref<string | null>(null)
+const wrapperRef = ref<HTMLElement>()
+const filterInputRef = ref<HTMLInputElement>()
+const resolvedPlacement = ref<"top" | "bottom">("bottom")
 
 // 类型守卫
 const isGroupOption = (option: OptionType): option is SelectGroupOption =>
-  (option as SelectGroupOption).isGroup === true;
+  (option as SelectGroupOption).isGroup === true
 
 // 计算属性
 const selectClasses = computed(() => [
@@ -232,19 +277,19 @@ const selectClasses = computed(() => [
     "si-select--disabled": props.disabled,
     "si-select--labeled": !!props.label,
   },
-]);
+])
 
 const dropdownClasses = computed(() => [
   `si-select__dropdown--${resolvedPlacement.value}`,
-]);
+])
 
 const dropdownStyle = computed(() => ({
   maxHeight: typeof props.maxHeight === "number" ? `${props.maxHeight}px` : props.maxHeight,
-}));
+}))
 
 const selectedOption = computed<SelectOption | null>(() => {
   if (props.modelValue === null || props.modelValue === undefined) {
-    return null;
+    return null
   }
 
   const findOption = (options: OptionType[]): SelectOption | null => {
@@ -252,71 +297,75 @@ const selectedOption = computed<SelectOption | null>(() => {
       if (isGroupOption(option)) {
         const found = option.options.find(
           (opt) => opt.value === props.modelValue,
-        );
-        if (found) return found;
+        )
+        if (found) return found
       } else if (option.value === props.modelValue) {
-        return option;
+        return option
       }
     }
-    return null;
-  };
+    return null
+  }
 
-  return findOption(props.options);
-});
+  return findOption(props.options)
+})
 
-const selectedLabel = computed(() => selectedOption.value?.label || "");
+const selectedLabel = computed(() => selectedOption.value?.label || "")
 
-const hasGroups = computed(() => props.options.some(isGroupOption));
+const hasGroups = computed(() => props.options.some(isGroupOption))
 
 const filteredOptions = computed(() => {
   if (!props.filterable || !filterQuery.value) {
-    return props.options;
+    return props.options
   }
 
-  const query = filterQuery.value.toLowerCase();
+  const query = filterQuery.value.toLowerCase()
 
   const filterGroup = (group: SelectGroupOption): SelectGroupOption => ({
     ...group,
     options: group.options.filter((opt) =>
       opt.label.toLowerCase().includes(query),
     ),
-  });
+  })
 
   const filterOption = (option: SelectOption): boolean =>
-    option.label.toLowerCase().includes(query);
+    option.label.toLowerCase().includes(query)
 
   return props.options.reduce<OptionType[]>((acc, option) => {
     if (isGroupOption(option)) {
-      const filtered = filterGroup(option);
+      const filtered = filterGroup(option)
       if (filtered.options.length > 0) {
-        acc.push(filtered);
+        acc.push(filtered)
       }
     } else if (filterOption(option)) {
-      acc.push(option);
+      acc.push(option)
     }
-    return acc;
-  }, []);
-});
+    return acc
+  }, [])
+})
 
 /** 展开所有分组，返回可导航的平铺选项列表 */
-const flatNavigableOptions = computed<Array<{ option: SelectOption; groupIndex: number; optionIndex: number } | null>>(() => {
-  const result: Array<{ option: SelectOption; groupIndex: number; optionIndex: number } | null> = [];
+const flatNavigableOptions = computed<Array<{ option: SelectOption, groupIndex: number, optionIndex: number } | null>>(() => {
+  const result: Array<{ option: SelectOption, groupIndex: number, optionIndex: number } | null> = []
   for (let i = 0; i < filteredOptions.value.length; i++) {
-    const opt = filteredOptions.value[i];
+    const opt = filteredOptions.value[i]
     if (isGroupOption(opt)) {
       for (let j = 0; j < opt.options.length; j++) {
-        result.push({ option: opt.options[j], groupIndex: i, optionIndex: j });
+        result.push({
+          option: opt.options[j],
+          groupIndex: i,
+          optionIndex: j,
+        })
       }
     } else {
-      result.push(null); // null 表示非分组占位，对应 hoveredIndex
+      result.push(null) // null 表示非分组占位，对应 hoveredIndex
     }
   }
-  return result;
-});
+  return result
+})
 
 const totalNavigableCount = computed(() =>
   flatNavigableOptions.value.filter(Boolean).length,
-);
+)
 
 // 方法
 const getOptionKey = (
@@ -324,185 +373,185 @@ const getOptionKey = (
   index: number,
 ): string => {
   if (isGroupOption(option)) {
-    return `group-${option.label}-${index}`;
+    return `group-${option.label}-${index}`
   }
-  return `option-${option.value}-${index}`;
-};
+  return `option-${option.value}-${index}`
+}
 
 const isSelected = (value: string | number | boolean) =>
-  value === props.modelValue;
+  value === props.modelValue
 
 const setHoveredIndex = (index: number) => {
-  hoveredIndex.value = index;
-  hoveredGroupKey.value = null;
-};
+  hoveredIndex.value = index
+  hoveredGroupKey.value = null
+}
 
 const setHoveredGroupOption = (groupIndex: number, optionIndex: number) => {
-  hoveredIndex.value = -1;
-  hoveredGroupKey.value = `${groupIndex}-${optionIndex}`;
-};
+  hoveredIndex.value = -1
+  hoveredGroupKey.value = `${groupIndex}-${optionIndex}`
+}
 
 const selectOption = (option: SelectOption) => {
-  if (option.disabled) return;
+  if (option.disabled) return
 
-  emit("update:modelValue", option.value);
-  emit("change", option.value, option);
-  closeDropdown();
-};
+  emit("update:modelValue", option.value)
+  emit("change", option.value, option)
+  closeDropdown()
+}
 
 const handleClear = () => {
-  emit("update:modelValue", null);
-  emit("clear");
-  closeDropdown();
-};
+  emit("update:modelValue", null)
+  emit("clear")
+  closeDropdown()
+}
 
 const toggleDropdown = () => {
-  if (props.disabled) return;
+  if (props.disabled) return
 
   if (isOpen.value) {
-    closeDropdown();
+    closeDropdown()
   } else {
-    openDropdown();
+    openDropdown()
   }
-};
+}
 
 const openDropdown = () => {
-  isOpen.value = true;
-  hoveredIndex.value = -1;
-  hoveredGroupKey.value = null;
-  filterQuery.value = "";
-  emit("visible-change", true);
+  isOpen.value = true
+  hoveredIndex.value = -1
+  hoveredGroupKey.value = null
+  filterQuery.value = ""
+  emit("visible-change", true)
 
   nextTick(() => {
-    resolvePlacement();
+    resolvePlacement()
     if (props.filterable) {
-      filterInputRef.value?.focus();
+      filterInputRef.value?.focus()
     }
-  });
-};
+  })
+}
 
 const closeDropdown = () => {
-  isOpen.value = false;
-  emit("visible-change", false);
-  filterQuery.value = "";
-  hoveredIndex.value = -1;
-  hoveredGroupKey.value = null;
-};
+  isOpen.value = false
+  emit("visible-change", false)
+  filterQuery.value = ""
+  hoveredIndex.value = -1
+  hoveredGroupKey.value = null
+}
 
 const resolvePlacement = () => {
   if (props.placement !== "auto" || !wrapperRef.value) {
-    resolvedPlacement.value = props.placement === "top" ? "top" : "bottom";
-    return;
+    resolvedPlacement.value = props.placement === "top" ? "top" : "bottom"
+    return
   }
 
-  const rect = wrapperRef.value.getBoundingClientRect();
-  const spaceBelow = window.innerHeight - rect.bottom;
-  const spaceAbove = rect.top;
-  resolvedPlacement.value = spaceBelow >= spaceAbove ? "bottom" : "top";
-};
+  const rect = wrapperRef.value.getBoundingClientRect()
+  const spaceBelow = window.innerHeight - rect.bottom
+  const spaceAbove = rect.top
+  resolvedPlacement.value = spaceBelow >= spaceAbove ? "bottom" : "top"
+}
 
 /** 获取第 flatIndex 个可导航选项并执行回调 */
 const navigateFlatOption = (flatIndex: number, callback: (opt: SelectOption) => void) => {
-  const navigable = flatNavigableOptions.value.filter(Boolean);
-  const item = navigable[flatIndex];
+  const navigable = flatNavigableOptions.value.filter(Boolean)
+  const item = navigable[flatIndex]
   if (item) {
-    callback(item.option);
+    callback(item.option)
   }
-};
+}
 
 /** 同步 hover 状态到当前 flatIndex */
 const syncHoverState = (flatIndex: number) => {
-  const navigable = flatNavigableOptions.value.filter(Boolean);
-  const item = navigable[flatIndex];
-  if (!item) return;
+  const navigable = flatNavigableOptions.value.filter(Boolean)
+  const item = navigable[flatIndex]
+  if (!item) return
 
   if (hasGroups.value) {
-    hoveredIndex.value = -1;
-    hoveredGroupKey.value = `${item.groupIndex}-${item.optionIndex}`;
+    hoveredIndex.value = -1
+    hoveredGroupKey.value = `${item.groupIndex}-${item.optionIndex}`
   } else {
-    hoveredIndex.value = flatIndex;
-    hoveredGroupKey.value = null;
+    hoveredIndex.value = flatIndex
+    hoveredGroupKey.value = null
   }
-};
+}
 
 /** 追踪当前可导航 flat 索引 */
 const currentFlatHoverIndex = computed(() => {
-  if (!hasGroups.value) return hoveredIndex.value;
+  if (!hasGroups.value) return hoveredIndex.value
 
-  const navigable = flatNavigableOptions.value.filter(Boolean);
-  if (!hoveredGroupKey.value) return -1;
+  const navigable = flatNavigableOptions.value.filter(Boolean)
+  if (!hoveredGroupKey.value) return -1
 
-  const [gi, oi] = hoveredGroupKey.value.split("-").map(Number);
+  const [gi, oi] = hoveredGroupKey.value.split("-").map(Number)
   return navigable.findIndex(
     (item) => item && item.groupIndex === gi && item.optionIndex === oi,
-  );
-});
+  )
+})
 
 const handleKeydown = (event: KeyboardEvent) => {
-  if (props.disabled) return;
+  if (props.disabled) return
 
   switch (event.key) {
     case "Enter":
     case " ": {
-      event.preventDefault();
-      const idx = currentFlatHoverIndex.value;
+      event.preventDefault()
+      const idx = currentFlatHoverIndex.value
       if (isOpen.value && idx >= 0) {
         navigateFlatOption(idx, (opt) => {
-          if (!opt.disabled) selectOption(opt);
-        });
+          if (!opt.disabled) selectOption(opt)
+        })
       } else {
-        toggleDropdown();
+        toggleDropdown()
       }
-      break;
+      break
     }
     case "Escape":
-      event.preventDefault();
-      closeDropdown();
-      break;
+      event.preventDefault()
+      closeDropdown()
+      break
     case "ArrowDown":
-      event.preventDefault();
+      event.preventDefault()
       if (!isOpen.value) {
-        openDropdown();
+        openDropdown()
       } else {
-        const next = Math.min(currentFlatHoverIndex.value + 1, totalNavigableCount.value - 1);
-        syncHoverState(next);
+        const next = Math.min(currentFlatHoverIndex.value + 1, totalNavigableCount.value - 1)
+        syncHoverState(next)
       }
-      break;
+      break
     case "ArrowUp":
-      event.preventDefault();
+      event.preventDefault()
       if (isOpen.value) {
-        const prev = Math.max(currentFlatHoverIndex.value - 1, 0);
-        syncHoverState(prev);
+        const prev = Math.max(currentFlatHoverIndex.value - 1, 0)
+        syncHoverState(prev)
       }
-      break;
+      break
     case "Tab":
-      closeDropdown();
-      break;
+      closeDropdown()
+      break
   }
-};
+}
 
 const handleClickOutside = (event: MouseEvent) => {
   if (wrapperRef.value && !wrapperRef.value.contains(event.target as Node)) {
-    closeDropdown();
+    closeDropdown()
   }
-};
+}
 
 // 监听
 watch(
   () => props.modelValue,
   () => {
-    filterQuery.value = "";
+    filterQuery.value = ""
   },
-);
+)
 
 // 生命周期
 onMounted(() => {
-  document.addEventListener("click", handleClickOutside);
-});
+  document.addEventListener("click", handleClickOutside)
+})
 
 onUnmounted(() => {
-  document.removeEventListener("click", handleClickOutside);
-});
+  document.removeEventListener("click", handleClickOutside)
+})
 
 // 暴露公共方法
 defineExpose({
@@ -510,7 +559,7 @@ defineExpose({
   blur: () => wrapperRef.value?.querySelector<HTMLDivElement>(".si-select__trigger")?.blur(),
   open: openDropdown,
   close: closeDropdown,
-});
+})
 </script>
 
 <style scoped lang="scss">

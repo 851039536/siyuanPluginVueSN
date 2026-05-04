@@ -8,7 +8,9 @@
             <span class="label-icon">📝</span>
             {{ i18n.listStyleSettings || '列表样式设置' }}
           </label>
-          <p class="setting-description">{{ i18n.listStyleSettingsDesc || '自定义有序列表和无序列表的颜色和样式' }}</p>
+          <p class="setting-description">
+            {{ i18n.listStyleSettingsDesc || '自定义有序列表和无序列表的颜色和样式' }}
+          </p>
         </div>
       </div>
 
@@ -22,8 +24,8 @@
           <div class="toggle-container">
             <label class="toggle-switch">
               <input
-                type="checkbox"
                 v-model="settings.enabled"
+                type="checkbox"
                 class="toggle-input"
               />
               <span class="toggle-slider"></span>
@@ -42,9 +44,13 @@
             <span class="section-icon">🔢</span>
             <span class="section-title">{{ i18n.orderedListColors || '有序列表颜色' }}</span>
           </div>
-          
+
           <div class="color-grid">
-            <div v-for="(color, index) in settings.orderedListColors" :key="'o-'+index" class="color-item">
+            <div
+              v-for="(color, index) in settings.orderedListColors"
+              :key="`o-${index}`"
+              class="color-item"
+            >
               <label class="color-label">层级 {{ index + 1 }}</label>
               <div class="color-input-group">
                 <input
@@ -68,9 +74,13 @@
             <span class="section-icon">•</span>
             <span class="section-title">{{ i18n.unorderedListColors || '无序列表颜色' }}</span>
           </div>
-          
+
           <div class="color-grid">
-            <div v-for="(color, index) in settings.unorderedListColors" :key="'u-'+index" class="color-item">
+            <div
+              v-for="(color, index) in settings.unorderedListColors"
+              :key="`u-${index}`"
+              class="color-item"
+            >
               <label class="color-label">层级 {{ index + 1 }}</label>
               <div class="color-input-group">
                 <input
@@ -115,14 +125,25 @@
 
         <!-- 预览区域 -->
         <div class="preview-section">
-          <div class="preview-toggle" @click="togglePreview">
+          <div
+            class="preview-toggle"
+            @click="togglePreview"
+          >
             <span class="preview-icon">{{ showPreview ? '👁️' : '👁️‍🗨️' }}</span>
             <span>{{ i18n.preview || '预览效果' }}</span>
-            <span class="toggle-arrow" :class="{ expanded: showPreview }">▼</span>
+            <span
+              class="toggle-arrow"
+              :class="{ expanded: showPreview }"
+            >▼</span>
           </div>
           <transition name="preview-expand">
-            <div v-show="showPreview" class="preview-content">
-              <div class="preview-section-title">{{ i18n.orderedList || '有序列表' }}</div>
+            <div
+              v-show="showPreview"
+              class="preview-content"
+            >
+              <div class="preview-section-title">
+                {{ i18n.orderedList || '有序列表' }}
+              </div>
               <ol class="preview-list">
                 <li>
                   第一层级项目
@@ -137,7 +158,9 @@
                 </li>
               </ol>
 
-              <div class="preview-section-title">{{ i18n.unorderedList || '无序列表' }}</div>
+              <div class="preview-section-title">
+                {{ i18n.unorderedList || '无序列表' }}
+              </div>
               <ul class="preview-list">
                 <li>
                   第一层级项目
@@ -159,7 +182,10 @@
       <!-- 重置按钮 -->
       <div class="setting-row">
         <div class="setting-item">
-          <button class="reset-btn" @click="resetSettings">
+          <button
+            class="reset-btn"
+            @click="resetSettings"
+          >
             <span class="btn-icon">🔄</span>
             {{ i18n.resetToDefault || '恢复默认设置' }}
           </button>
@@ -170,31 +196,38 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, onMounted } from "vue";
-import { Plugin } from "siyuan";
+import { Plugin } from "siyuan"
+import {
+  computed,
+  onMounted,
+  ref,
+  watch,
+} from "vue"
+
+import { GeneralSettingsStorage } from "../types/storage"
 
 export interface ListStyleSettingsData {
-  enabled: boolean;
-  orderedListColors: string[];
-  unorderedListColors: string[];
-  symbolSize: number;
+  enabled: boolean
+  orderedListColors: string[]
+  unorderedListColors: string[]
+  symbolSize: number
 }
 
 interface Props {
-  i18n?: any;
-  plugin?: Plugin;
+  i18n?: any
+  plugin?: Plugin
 }
 
 interface Emits {
-  (e: "change", settings: ListStyleSettingsData): void;
+  (e: "change", settings: ListStyleSettingsData): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
   i18n: () => ({}),
   plugin: null,
-});
+})
 
-const emit = defineEmits<Emits>();
+const emit = defineEmits<Emits>()
 
 const DEFAULT_SETTINGS: ListStyleSettingsData = {
   enabled: false,
@@ -215,68 +248,68 @@ const DEFAULT_SETTINGS: ListStyleSettingsData = {
     "#888888",
   ],
   symbolSize: 1.6,
-};
+}
 
-const settings = ref<ListStyleSettingsData>({ ...DEFAULT_SETTINGS });
-const showPreview = ref(true);
+const settings = ref<ListStyleSettingsData>({ ...DEFAULT_SETTINGS })
+const showPreview = ref(true)
 
 watch(
   settings,
   (newSettings) => {
-    emit("change", newSettings);
-    saveSettings();
-    applySettings();
+    emit("change", newSettings)
+    saveSettings()
+    applySettings()
   },
   { deep: true },
-);
+)
 
 function togglePreview() {
-  showPreview.value = !showPreview.value;
+  showPreview.value = !showPreview.value
 }
 
 function resetSettings() {
-  settings.value = { ...DEFAULT_SETTINGS };
-  applySettings();
+  settings.value = { ...DEFAULT_SETTINGS }
+  applySettings()
 }
 
 function applySettings() {
-  applyListStyles(settings.value);
+  applyListStyles(settings.value)
 }
 
 function applyListStyles(listSettings: ListStyleSettingsData) {
   try {
     // 移除现有样式
-    const existingStyle = document.getElementById("list-style-settings");
+    const existingStyle = document.getElementById("list-style-settings")
     if (existingStyle) {
-      existingStyle.remove();
+      existingStyle.remove()
     }
 
     if (!listSettings.enabled) {
-      return;
+      return
     }
 
     // 创建新的样式元素
-    const style = document.createElement("style");
-    style.id = "list-style-settings";
+    const style = document.createElement("style")
+    style.id = "list-style-settings"
 
     // 有序列表颜色
     const orderedListCss = listSettings.orderedListColors
       .map((color, index) => {
-        const depth = '.li[data-subtype="o"] '.repeat(index);
+        const depth = '.li[data-subtype="o"] '.repeat(index)
         return `
         ${depth}.li[data-subtype="o"] > .protyle-action--order {
           color: ${color} !important;
           font-weight: bold !important;
         }
-      `;
+      `
       })
-      .join("\n");
+      .join("\n")
 
     // 无序列表颜色和符号
     const unorderedListCss = listSettings.unorderedListColors
       .map((color, index) => {
-        const depth = '[data-subtype="u"] > '.repeat(index);
-        const symbol = index % 2 === 0 ? "•" : "▪";
+        const depth = '[data-subtype="u"] > '.repeat(index)
+        const symbol = index % 2 === 0 ? "•" : "▪"
         return `
         ${depth}.li[data-subtype="u"] > .protyle-action::before {
           content: "${symbol}";
@@ -286,9 +319,9 @@ function applyListStyles(listSettings: ListStyleSettingsData) {
           position: absolute;
           color: ${color} !important;
         }
-      `;
+      `
       })
-      .join("\n");
+      .join("\n")
 
     style.textContent = `
       /* 有序列表样式 */
@@ -307,54 +340,55 @@ function applyListStyles(listSettings: ListStyleSettingsData) {
       :root[data-theme-mode="dark"] .li[data-subtype="u"] > .protyle-action::before {
         opacity: 0.9;
       }
-    `;
+    `
 
-    document.head.appendChild(style);
+    document.head.appendChild(style)
   } catch (error) {
-    console.error("应用列表样式失败:", error);
+    console.error("应用列表样式失败:", error)
   }
 }
 
-import { GeneralSettingsStorage } from "../types/storage";
-
-const gsStorage = computed(() => props.plugin ? new GeneralSettingsStorage(props.plugin) : null);
+const gsStorage = computed(() => props.plugin ? new GeneralSettingsStorage(props.plugin) : null)
 
 async function loadSettings() {
   if (!gsStorage.value) {
-    return;
+    return
   }
 
   try {
-    const data = await gsStorage.value.listStyle.load();
+    const data = await gsStorage.value.listStyle.load()
     if (data) {
-      settings.value = { ...DEFAULT_SETTINGS, ...data };
-      applySettings();
+      settings.value = {
+        ...DEFAULT_SETTINGS,
+        ...data,
+      }
+      applySettings()
     }
   } catch (error) {
-    console.error("加载列表样式设置失败:", error);
+    console.error("加载列表样式设置失败:", error)
   }
 }
 
 async function saveSettings() {
   if (!gsStorage.value) {
-    return;
+    return
   }
 
   try {
-    await gsStorage.value.listStyle.save(settings.value);
+    await gsStorage.value.listStyle.save(settings.value)
   } catch (error) {
-    console.error("保存列表样式设置失败:", error);
+    console.error("保存列表样式设置失败:", error)
   }
 }
 
 onMounted(async () => {
-  await loadSettings();
-});
+  await loadSettings()
+})
 
 defineExpose({
   settings,
   loadSettings,
-});
+})
 </script>
 
 <style scoped lang="scss">

@@ -8,9 +8,14 @@
         placeholder="请输入要转换的文本"
         :rows="3"
       />
-      <div class="output-group" v-if="asciiResult">
+      <div
+        v-if="asciiResult"
+        class="output-group"
+      >
         <label>ASCII结果</label>
-        <div class="ascii-output">{{ asciiResult }}</div>
+        <div class="ascii-output">
+          {{ asciiResult }}
+        </div>
       </div>
     </div>
 
@@ -22,9 +27,14 @@
         placeholder="请输入ASCII码，用空格或逗号分隔"
         :rows="3"
       />
-      <div class="output-group" v-if="textResult">
+      <div
+        v-if="textResult"
+        class="output-group"
+      >
         <label>文本结果</label>
-        <div class="text-output">{{ textResult }}</div>
+        <div class="text-output">
+          {{ textResult }}
+        </div>
       </div>
     </div>
 
@@ -80,14 +90,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import Input from "@/components/Input.vue";
-import Textarea from "@/components/Textarea.vue";
+import {
+  computed,
+  ref,
+} from "vue"
+import Input from "@/components/Input.vue"
+import Textarea from "@/components/Textarea.vue"
 
-const textInput = ref("");
-const asciiInput = ref("");
-const tableStart = ref(32);
-const tableEnd = ref(126);
+const textInput = ref("")
+const asciiInput = ref("")
+const tableStart = ref(32)
+const tableEnd = ref(126)
 
 // 控制字符名称映射（常量）
 const CONTROL_CHARS = [
@@ -123,53 +136,53 @@ const CONTROL_CHARS = [
   "GS",
   "RS",
   "US",
-];
+]
 
 // 文本转ASCII（计算属性，自动响应）
 const asciiResult = computed(() => {
-  if (!textInput.value) return "";
+  if (!textInput.value) return ""
   return Array.from(textInput.value)
     .map((char) => char.charCodeAt(0))
-    .join(" ");
-});
+    .join(" ")
+})
 
 // ASCII转文本（计算属性，自动响应）
 const textResult = computed(() => {
-  if (!asciiInput.value) return "";
+  if (!asciiInput.value) return ""
 
   try {
     const codes = asciiInput.value
       .split(/[\s,]+/)
       .filter((code) => code.trim())
-      .map((code) => parseInt(code.trim()))
-      .filter((code) => !isNaN(code) && code >= 0 && code <= 127);
+      .map((code) => Number.parseInt(code.trim()))
+      .filter((code) => !isNaN(code) && code >= 0 && code <= 127)
 
-    return String.fromCharCode(...codes);
+    return String.fromCharCode(...codes)
   } catch {
-    return "无效的ASCII码";
+    return "无效的ASCII码"
   }
-});
+})
 
 // ASCII码表数据
 const asciiTableData = computed(() => {
-  const start = Math.max(0, Math.min(127, tableStart.value));
-  const end = Math.max(start, Math.min(127, tableEnd.value));
+  const start = Math.max(0, Math.min(127, tableStart.value))
+  const end = Math.max(start, Math.min(127, tableEnd.value))
 
   return Array.from({ length: end - start + 1 }, (_, i) => {
-    const code = start + i;
+    const code = start + i
     return {
       dec: code,
       hex: code.toString(16).toUpperCase(),
       bin: code.toString(2).padStart(8, "0"),
       char: getCharForDisplay(code),
-    };
-  });
-});
+    }
+  })
+})
 
 function getCharForDisplay(code: number): string {
-  if (code < 32) return CONTROL_CHARS[code] || "";
-  if (code === 127) return "DEL";
-  return String.fromCharCode(code);
+  if (code < 32) return CONTROL_CHARS[code] || ""
+  if (code === 127) return "DEL"
+  return String.fromCharCode(code)
 }
 </script>
 

@@ -1,7 +1,10 @@
 <template>
   <div class="dialog-header">
     <div class="header-title">
-      <span class="title-icon" aria-hidden="true">🔍</span>
+      <span
+        class="title-icon"
+        aria-hidden="true"
+      >🔍</span>
       <span>{{ title }}</span>
     </div>
     <Button
@@ -16,27 +19,27 @@
 </template>
 
 <script setup lang="ts">
-import Button from "@/components/Button.vue";
+import Button from "@/components/Button.vue"
 
 interface Props {
   /** 标题文本 */
-  title?: string;
+  title?: string
 }
 
 interface Emits {
-  (e: "close"): void;
+  (e: "close"): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
   title: "Everything 本地搜索",
-});
+})
 
-const emit = defineEmits<Emits>();
+const emit = defineEmits<Emits>()
 
 /** 处理关闭 */
 const handleClose = () => {
-  emit("close");
-};
+  emit("close")
+}
 </script>
 
 <style scoped lang="scss">

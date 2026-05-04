@@ -1,7 +1,10 @@
 <template>
   <Card
     class="disk-card"
-    :class="{ active: selectedDisk === disk.drive, expanded: expandedDisk === disk.drive }"
+    :class="{
+      active: selectedDisk === disk.drive,
+      expanded: expandedDisk === disk.drive,
+    }"
     variant="flat"
     size="small"
     :clickable="true"
@@ -11,10 +14,15 @@
     <template #header>
       <div class="disk-card-header">
         <div class="disk-icon">
-          <IconWrapper name="diskBrowser" :size="20" />
+          <IconWrapper
+            name="diskBrowser"
+            :size="20"
+          />
         </div>
         <div class="disk-info">
-          <div class="disk-name">{{ disk.drive }}</div>
+          <div class="disk-name">
+            {{ disk.drive }}
+          </div>
         </div>
         <div class="expand-indicator">
           <IconWrapper
@@ -25,11 +33,25 @@
       </div>
     </template>
     <div class="disk-card-body">
-      <div class="disk-label" v-if="disk.label">{{ disk.label }}</div>
-      <div class="disk-usage-bar" v-if="disk.total">
-        <div class="usage-fill" :style="{ width: disk.usagePercent + '%' }"></div>
+      <div
+        v-if="disk.label"
+        class="disk-label"
+      >
+        {{ disk.label }}
       </div>
-      <div class="disk-space" v-if="disk.total">
+      <div
+        v-if="disk.total"
+        class="disk-usage-bar"
+      >
+        <div
+          class="usage-fill"
+          :style="{ width: `${disk.usagePercent}%` }"
+        ></div>
+      </div>
+      <div
+        v-if="disk.total"
+        class="disk-space"
+      >
         {{ formatSize(disk.used) }} / {{ formatSize(disk.total) }}
       </div>
     </div>
@@ -37,21 +59,21 @@
 </template>
 
 <script setup lang="ts">
-import Card from "@/components/Card.vue";
-import IconWrapper from "@/components/IconWrapper.vue";
-import type { DiskInfo } from "../types";
-import { formatSize } from "../utils";
+import type { DiskInfo } from "../types"
+import Card from "@/components/Card.vue"
+import IconWrapper from "@/components/IconWrapper.vue"
+import { formatSize } from "../utils"
 
 interface Props {
-  disk: DiskInfo;
-  selectedDisk: string;
-  expandedDisk: string;
+  disk: DiskInfo
+  selectedDisk: string
+  expandedDisk: string
 }
 
-defineProps<Props>();
+defineProps<Props>()
 defineEmits<{
-  click: [];
-}>();
+  click: []
+}>()
 </script>
 
 <style scoped lang="scss">

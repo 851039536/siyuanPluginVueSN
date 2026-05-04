@@ -5,11 +5,11 @@
 
 export interface IconConfig {
   /** 图标名称（Iconify 格式：collection:icon-name） */
-  icon: string;
+  icon: string
   /** 图标颜色（可选，默认继承主题色） */
-  color?: string;
+  color?: string
   /** 图标大小（可选，默认继承父元素） */
-  size?: string | number;
+  size?: string | number
 }
 
 /**
@@ -247,7 +247,7 @@ export const FEATURE_ICONS = {
     icon: "mdi:merge",
     color: "#8b5cf6",
   },
-} as const;
+} as const
 
 /**
  * 通用图标配置
@@ -421,7 +421,7 @@ export const COMMON_ICONS = {
     icon: "mdi:auto-fix",
     color: "#a855f7",
   },
-} as const;
+} as const
 
 /**
  * 获取图标配置
@@ -430,14 +430,14 @@ export function getIconConfig(
   key: keyof typeof FEATURE_ICONS | keyof typeof COMMON_ICONS,
 ): IconConfig {
   return (
-    (FEATURE_ICONS as any)[key] ||
-    (COMMON_ICONS as any)[key] || { icon: "mdi:help-circle" }
-  );
+    (FEATURE_ICONS as any)[key]
+    || (COMMON_ICONS as any)[key] || { icon: "mdi:help-circle" }
+  )
 }
 
 /**
  * 图标类型定义
  */
-export type FeatureIconKey = keyof typeof FEATURE_ICONS;
-export type CommonIconKey = keyof typeof COMMON_ICONS;
-export type IconKey = FeatureIconKey | CommonIconKey;
+export type FeatureIconKey = keyof typeof FEATURE_ICONS
+export type CommonIconKey = keyof typeof COMMON_ICONS
+export type IconKey = FeatureIconKey | CommonIconKey

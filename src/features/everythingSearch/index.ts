@@ -1,8 +1,8 @@
 /**
  * Everything本地搜索功能模块
  */
-import { Plugin } from "siyuan";
-import { showEverythingSearch } from "./types";
+import { Plugin } from "siyuan"
+import { showEverythingSearch } from "./types"
 
 /**
  * 注册Everything搜索功能
@@ -14,15 +14,15 @@ export function registerEverythingSearch(plugin: Plugin) {
     langText: "Everything本地搜索",
     hotkey: "⌃⌥E", // Ctrl+Alt+E
     callback: () => {
-      showEverythingSearch();
+      showEverythingSearch()
     },
-  });
+  })
 }
 
 export {
-  showEverythingSearch,
-  hideEverythingSearch,
-  toggleEverythingSearch,
   everythingSearchVisible,
-} from "./types";
-export * from "./types";
+  hideEverythingSearch,
+  showEverythingSearch,
+  toggleEverythingSearch,
+} from "./types"
+export * from "./types"

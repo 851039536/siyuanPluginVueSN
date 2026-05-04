@@ -115,12 +115,12 @@ interface _AssertTrue<T extends true> {}
 // 正向：_Registered 中每个 ID 都必须是有效 FeatureId
 type _AssertRegisteredInConfig = _AssertTrue<
   _Registered extends FeatureId ? true : false
->;
+>
 
 // 反向：每个需要 register 的 FeatureId 都在 _Registered 中
 type _AssertAllCovered = _AssertTrue<
   Exclude<FeatureId, _ConfigOnly> extends _Registered ? true : false
->;
+>
 ```
 
 `_ConfigOnly` 白名单列出了不需要 register 函数的纯配置功能（`qrCode`, `pronunciation`, `skills`, `translate`）。`_Registered` 需手动与 `features/index.ts` 的 export 行保持同步。
@@ -229,12 +229,12 @@ const data = await storage.loadWithDefault('key', defaultValue)
 `src/utils/typedStorage.ts` — 类型安全存储槽，推荐用于所有功能模块。
 
 ```typescript
-import { TypedStorage } from '@/utils/typedStorage'
 import { PluginStorage } from '@/utils/pluginStorage'
+import { TypedStorage } from '@/utils/typedStorage'
 
 export class MyFeatureStorage {
-  readonly settings = new TypedStorage<Settings>(this.storage, 'myFeature-settings', defaultSettings);
-  readonly options = new TypedStorage<Options>(this.storage, 'myFeature-options');
+  readonly settings = new TypedStorage<Settings>(this.storage, 'myFeature-settings', defaultSettings)
+  readonly options = new TypedStorage<Options>(this.storage, 'myFeature-options')
 
   constructor(private storage: PluginStorage) {}
 
@@ -242,8 +242,11 @@ export class MyFeatureStorage {
     const [settings, options] = await Promise.all([
       this.settings.loadOrDefault(),
       this.options.loadOrDefault(),
-    ]);
-    return { settings, options };
+    ])
+    return {
+      settings,
+      options,
+    }
   }
 }
 ```
@@ -263,7 +266,13 @@ export class MyFeatureStorage {
 **敏感字段加密**：`aiApiKey` 和 `webdavConfig.password` 在保存时自动使用 Web Crypto API（AES-GCM）加密，加载时自动解密，磁盘上不会明文存储。加密工具在 `src/utils/settingsCrypto.ts`。
 
 ```typescript
-import { loadSettings, saveSettings, clearCachedKey, type PluginSettings } from '@/config/settings'
+import type { PluginSettings } from '@/config/settings'
+import {
+  clearCachedKey,
+  loadSettings,
+
+  saveSettings,
+} from '@/config/settings'
 
 const settings = await loadSettings(plugin)
 await saveSettings(plugin, newSettings)
@@ -277,14 +286,18 @@ clearCachedKey()
 所有功能图标集中管理，支持验证：
 
 ```typescript
-import { FEATURE_ICONS, COMMON_ICONS, getIconConfig } from '@/config/icons'
+import {
+  COMMON_ICONS,
+  FEATURE_ICONS,
+  getIconConfig,
+} from '@/config/icons'
 
 // 获取功能图标配置
 const iconConfig = getIconConfig('statistics') // => { icon: 'iconBarChart', iconClass: 'sn-icon' }
 
 // 公共图标常量
-COMMON_ICONS.SETTINGS  // iconSettings
-COMMON_ICONS.CLOSE     // iconClose
+COMMON_ICONS.SETTINGS // iconSettings
+COMMON_ICONS.CLOSE // iconClose
 ```
 
 ### AI API 统一模块
@@ -292,8 +305,16 @@ COMMON_ICONS.CLOSE     // iconClose
 `src/utils/aiApi.ts` — 所有 AI 调用的唯一入口。
 
 ```typescript
-import { callAI, callAIStream, callAISmart, getApiConfigFromPlugin } from '@/utils/aiApi'
-import type { AiApiConfig, GenerateOptions } from '@/types/ai'
+import type {
+  AiApiConfig,
+  GenerateOptions,
+} from '@/types/ai'
+import {
+  callAI,
+  callAISmart,
+  callAIStream,
+  getApiConfigFromPlugin,
+} from '@/utils/aiApi'
 
 const config = getApiConfigFromPlugin(plugin)
 const result = await callAI(prompt, config, options)
@@ -333,7 +354,11 @@ emitCustomEvent("openDialog", { content }, { useMicrotask: true })
 `src/utils/settingsCrypto.ts` — 使用 Web Crypto API（AES-GCM + PBKDF2）对 `PluginSettings` 中的敏感字段进行透明加解密。
 
 ```typescript
-import { encryptSetting, decryptSetting, clearCachedKey } from '@/utils/settingsCrypto'
+import {
+  clearCachedKey,
+  decryptSetting,
+  encryptSetting,
+} from '@/utils/settingsCrypto'
 
 // 加密：enc:base64IV.base64Ciphertext 格式
 const encrypted = await encryptSetting('my-api-key')
@@ -358,8 +383,8 @@ clearCachedKey()
 plugin.i18n.myFeature.title
 
 // 翻译文件位置
-src/i18n/zh_CN.json
-src/i18n/en_US.json
+src / i18n / zh_CN.json
+src / i18n / en_US.json
 ```
 
 ## 添加新功能
@@ -383,15 +408,15 @@ src/features/myFeature/
 `storage.ts` 模板：
 
 ```typescript
-import { TypedStorage } from '@/utils/typedStorage'
-import { PluginStorage } from '@/utils/pluginStorage'
 import type { Plugin } from 'siyuan'
+import { PluginStorage } from '@/utils/pluginStorage'
+import { TypedStorage } from '@/utils/typedStorage'
 
 export class MyFeatureStorage {
-  readonly settings = new TypedStorage<MySettings>(this.storage, 'myFeature-settings', defaultSettings);
+  readonly settings = new TypedStorage<MySettings>(this.storage, 'myFeature-settings', defaultSettings)
 
   constructor(plugin: Plugin) {
-    this.storage = new PluginStorage(plugin);
+    this.storage = new PluginStorage(plugin)
   }
 }
 ```
@@ -417,7 +442,7 @@ export function registerMyFeature(plugin: Plugin) {
   plugin.addTopBar({
     icon: 'iconSettings',
     title: plugin.i18n.myFeature.title,
-    callback: () => { /* 逻辑 */ }
+    callback: () => { /* 逻辑 */ },
   })
 }
 ```

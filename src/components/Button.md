@@ -25,7 +25,9 @@ import Button from '@/components/Button.vue'
 
 ```vue
 <template>
-  <Button @click="handleClick">点击我</Button>
+  <Button @click="handleClick">
+    点击我
+  </Button>
 </template>
 ```
 
@@ -34,12 +36,19 @@ import Button from '@/components/Button.vue'
 ```vue
 <template>
   <!-- 左侧图标 -->
-  <Button icon="iconSettings" @click="handleClick">
+  <Button
+    icon="iconSettings"
+    @click="handleClick"
+  >
     设置
   </Button>
 
   <!-- 右侧图标 -->
-  <Button icon="iconDown" icon-position="right" @click="handleClick">
+  <Button
+    icon="iconDown"
+    icon-position="right"
+    @click="handleClick"
+  >
     更多
   </Button>
 </template>
@@ -49,7 +58,11 @@ import Button from '@/components/Button.vue'
 
 ```vue
 <template>
-  <Button icon="iconClose" size="small" @click="handleClose" />
+  <Button
+    icon="iconClose"
+    size="small"
+    @click="handleClose"
+  />
 </template>
 ```
 
@@ -78,7 +91,9 @@ import Button from '@/components/Button.vue'
 
 ```vue
 <template>
-  <Button variant="primary">主按钮</Button>
+  <Button variant="primary">
+    主按钮
+  </Button>
 </template>
 ```
 
@@ -88,7 +103,9 @@ import Button from '@/components/Button.vue'
 
 ```vue
 <template>
-  <Button variant="secondary">次要按钮</Button>
+  <Button variant="secondary">
+    次要按钮
+  </Button>
 </template>
 ```
 
@@ -98,7 +115,9 @@ import Button from '@/components/Button.vue'
 
 ```vue
 <template>
-  <Button variant="success">成功</Button>
+  <Button variant="success">
+    成功
+  </Button>
 </template>
 ```
 
@@ -108,7 +127,9 @@ import Button from '@/components/Button.vue'
 
 ```vue
 <template>
-  <Button variant="danger">删除</Button>
+  <Button variant="danger">
+    删除
+  </Button>
 </template>
 ```
 
@@ -118,7 +139,9 @@ import Button from '@/components/Button.vue'
 
 ```vue
 <template>
-  <Button variant="ghost">幽灵按钮</Button>
+  <Button variant="ghost">
+    幽灵按钮
+  </Button>
 </template>
 ```
 
@@ -128,9 +151,15 @@ import Button from '@/components/Button.vue'
 
 ```vue
 <template>
-  <Button size="small">小按钮</Button>
-  <Button size="medium">中按钮</Button>
-  <Button size="large">大按钮</Button>
+  <Button size="small">
+    小按钮
+  </Button>
+  <Button size="medium">
+    中按钮
+  </Button>
+  <Button size="large">
+    大按钮
+  </Button>
 </template>
 ```
 
@@ -140,7 +169,9 @@ import Button from '@/components/Button.vue'
 
 ```vue
 <template>
-  <Button disabled>禁用按钮</Button>
+  <Button disabled>
+    禁用按钮
+  </Button>
 </template>
 ```
 
@@ -148,7 +179,9 @@ import Button from '@/components/Button.vue'
 
 ```vue
 <template>
-  <Button loading>加载中...</Button>
+  <Button loading>
+    加载中...
+  </Button>
 </template>
 ```
 
@@ -174,10 +207,19 @@ import Button from '@/components/Button.vue'
 ```vue
 <template>
   <div class="button-group">
-    <Button variant="secondary" icon="iconLeft" @click="handleBack">
+    <Button
+      variant="secondary"
+      icon="iconLeft"
+      @click="handleBack"
+    >
       返回
     </Button>
-    <Button variant="primary" icon="iconRight" icon-position="right" @click="handleNext">
+    <Button
+      variant="primary"
+      icon="iconRight"
+      icon-position="right"
+      @click="handleNext"
+    >
       下一步
     </Button>
   </div>
@@ -197,10 +239,16 @@ import Button from '@/components/Button.vue'
 ```vue
 <template>
   <div class="form-actions">
-    <Button variant="ghost" @click="handleCancel">
+    <Button
+      variant="ghost"
+      @click="handleCancel"
+    >
       取消
     </Button>
-    <Button variant="danger" @click="handleDelete">
+    <Button
+      variant="danger"
+      @click="handleDelete"
+    >
       删除
     </Button>
     <Button
@@ -234,7 +282,11 @@ const handleSubmit = async () => {
 
 ```vue
 <template>
-  <Button variant="primary" block size="large">
+  <Button
+    variant="primary"
+    block
+    size="large"
+  >
     完整宽度按钮
   </Button>
 </template>
@@ -245,9 +297,24 @@ const handleSubmit = async () => {
 ```vue
 <template>
   <div class="toolbar">
-    <Button icon="iconBold" variant="ghost" size="small" title="加粗" />
-    <Button icon="iconItalic" variant="ghost" size="small" title="斜体" />
-    <Button icon="iconUnderline" variant="ghost" size="small" title="下划线" />
+    <Button
+      icon="iconBold"
+      variant="ghost"
+      size="small"
+      title="加粗"
+    />
+    <Button
+      icon="iconItalic"
+      variant="ghost"
+      size="small"
+      title="斜体"
+    />
+    <Button
+      icon="iconUnderline"
+      variant="ghost"
+      size="small"
+      title="下划线"
+    />
   </div>
 </template>
 ```
@@ -260,7 +327,9 @@ const handleSubmit = async () => {
 
 ```vue
 <template>
-  <Button class="custom-button">自定义按钮</Button>
+  <Button class="custom-button">
+    自定义按钮
+  </Button>
 </template>
 
 <style scoped>
@@ -275,7 +344,9 @@ const handleSubmit = async () => {
 
 ```vue
 <template>
-  <Button class="custom-button">自定义按钮</Button>
+  <Button class="custom-button">
+    自定义按钮
+  </Button>
 </template>
 
 <style scoped>

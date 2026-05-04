@@ -1,32 +1,49 @@
 <template>
   <div class="results-area">
     <!-- 加载状态 -->
-    <div v-if="state.status === 'loading'" class="loading-state">
+    <div
+      v-if="state.status === 'loading'"
+      class="loading-state"
+    >
       <div class="loading-spinner-large"></div>
       <p>正在搜索...</p>
     </div>
 
     <!-- 错误状态 -->
-    <div v-else-if="state.status === 'error'" class="error-state">
+    <div
+      v-else-if="state.status === 'error'"
+      class="error-state"
+    >
       <span class="error-icon">❌</span>
       <p>{{ state.errorMessage }}</p>
     </div>
 
     <!-- 空状态（未搜索） -->
-    <div v-else-if="state.status === 'idle'" class="empty-state">
+    <div
+      v-else-if="state.status === 'idle'"
+      class="empty-state"
+    >
       <span class="empty-icon">📁</span>
       <p>{{ emptyHintText }}</p>
-      <p class="hint">支持通配符: * 匹配任意字符, ? 匹配单个字符</p>
+      <p class="hint">
+        支持通配符: * 匹配任意字符, ? 匹配单个字符
+      </p>
     </div>
 
     <!-- 无结果 -->
-    <div v-else-if="state.status === 'empty'" class="empty-state">
+    <div
+      v-else-if="state.status === 'empty'"
+      class="empty-state"
+    >
       <span class="empty-icon">🔍</span>
       <p>未找到匹配的文件</p>
     </div>
 
     <!-- 结果列表 -->
-    <div v-else class="results-list">
+    <div
+      v-else
+      class="results-list"
+    >
       <div class="results-header">
         <span class="results-count-text">找到 {{ state.results.length }} 个结果</span>
       </div>
@@ -47,62 +64,65 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-import ResultItem from "./ResultItem.vue";
-import type { EverythingSearchResult, SearchState } from "../types";
+import type {
+  EverythingSearchResult,
+  SearchState,
+} from "../types"
+import { computed } from "vue"
+import ResultItem from "./ResultItem.vue"
 
 interface Props {
   /** 搜索状态 */
-  state: SearchState;
+  state: SearchState
   /** 是否启用自动搜索 */
-  autoSearch?: boolean;
+  autoSearch?: boolean
 }
 
 interface Emits {
-  (e: "itemClick", item: EverythingSearchResult): void;
-  (e: "itemDblClick", item: EverythingSearchResult): void;
-  (e: "itemOpen", item: EverythingSearchResult): void;
-  (e: "itemShowInFolder", item: EverythingSearchResult): void;
-  (e: "itemCopyPath", item: EverythingSearchResult): void;
+  (e: "itemClick", item: EverythingSearchResult): void
+  (e: "itemDblClick", item: EverythingSearchResult): void
+  (e: "itemOpen", item: EverythingSearchResult): void
+  (e: "itemShowInFolder", item: EverythingSearchResult): void
+  (e: "itemCopyPath", item: EverythingSearchResult): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
   autoSearch: true,
-});
+})
 
-const emit = defineEmits<Emits>();
+const emit = defineEmits<Emits>()
 
 /** 空状态提示文本 */
 const emptyHintText = computed(() => {
   return props.autoSearch
     ? "输入关键词自动搜索本地文件"
-    : "输入关键词点击搜索按钮搜索本地文件";
-});
+    : "输入关键词点击搜索按钮搜索本地文件"
+})
 
 /** 处理项目点击 */
 const handleItemClick = (item: EverythingSearchResult) => {
-  emit("itemClick", item);
-};
+  emit("itemClick", item)
+}
 
 /** 处理项目双击 */
 const handleItemDblClick = (item: EverythingSearchResult) => {
-  emit("itemDblClick", item);
-};
+  emit("itemDblClick", item)
+}
 
 /** 处理项目打开 */
 const handleItemOpen = (item: EverythingSearchResult) => {
-  emit("itemOpen", item);
-};
+  emit("itemOpen", item)
+}
 
 /** 处理在文件夹中显示 */
 const handleItemShowInFolder = (item: EverythingSearchResult) => {
-  emit("itemShowInFolder", item);
-};
+  emit("itemShowInFolder", item)
+}
 
 /** 处理复制路径 */
 const handleItemCopyPath = (item: EverythingSearchResult) => {
-  emit("itemCopyPath", item);
-};
+  emit("itemCopyPath", item)
+}
 </script>
 
 <style lang="scss">

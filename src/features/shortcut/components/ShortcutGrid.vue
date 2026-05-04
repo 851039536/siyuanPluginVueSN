@@ -1,16 +1,26 @@
 <template>
   <div class="shortcut-content">
-    <div v-if="shortcuts.length === 0" class="shortcut-empty">
+    <div
+      v-if="shortcuts.length === 0"
+      class="shortcut-empty"
+    >
       <svg class="empty-icon"><use xlink:href="#iconSearch"></use></svg>
       <p>{{ emptyText }}</p>
     </div>
 
-    <div v-for="group in groupedShortcuts" :key="group.name" class="shortcut-group">
+    <div
+      v-for="group in groupedShortcuts"
+      :key="group.name"
+      class="shortcut-group"
+    >
       <div class="group-header">
         <span class="group-name">{{ group.name }}</span>
         <span class="group-count">{{ group.shortcuts.length }}</span>
       </div>
-      <div class="shortcut-grid" :class="gridClass">
+      <div
+        class="shortcut-grid"
+        :class="gridClass"
+      >
         <ShortcutCard
           v-for="shortcut in group.shortcuts"
           :key="shortcut.id"
@@ -35,24 +45,28 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-import ShortcutCard from "./ShortcutCard.vue";
-import type { ShortcutInfo, ShortcutGroup, ViewMode } from "../types";
+import type {
+  ShortcutGroup,
+  ShortcutInfo,
+  ViewMode,
+} from "../types"
+import { computed } from "vue"
+import ShortcutCard from "./ShortcutCard.vue"
 
 interface Props {
-  shortcuts: ShortcutInfo[];
-  viewMode: ViewMode;
-  isFavorite: (id: string) => boolean;
-  isRecent: (id: string) => boolean;
-  getCategoryLabel: (category: string) => string;
-  showToolBadge: (category: string) => boolean;
-  emptyText?: string;
-  favoriteTitle?: string;
-  unFavoriteTitle?: string;
-  copyTitle?: string;
-  editTitle?: string;
-  deleteTitle?: string;
-  otherGroupLabel?: string;
+  shortcuts: ShortcutInfo[]
+  viewMode: ViewMode
+  isFavorite: (id: string) => boolean
+  isRecent: (id: string) => boolean
+  getCategoryLabel: (category: string) => string
+  showToolBadge: (category: string) => boolean
+  emptyText?: string
+  favoriteTitle?: string
+  unFavoriteTitle?: string
+  copyTitle?: string
+  editTitle?: string
+  deleteTitle?: string
+  otherGroupLabel?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -63,36 +77,36 @@ const props = withDefaults(defineProps<Props>(), {
   editTitle: "编辑",
   deleteTitle: "删除",
   otherGroupLabel: "其他",
-});
+})
 
 defineEmits<{
-  toggleFavorite: [id: string];
-  copy: [shortcut: ShortcutInfo];
-  edit: [shortcut: ShortcutInfo];
-  delete: [id: string];
-}>();
+  toggleFavorite: [id: string]
+  copy: [shortcut: ShortcutInfo]
+  edit: [shortcut: ShortcutInfo]
+  delete: [id: string]
+}>()
 
 const gridClass = computed(() => ({
   "list-view": props.viewMode === "list",
   "three-col-view": props.viewMode === "three-col",
-}));
+}))
 
 const groupedShortcuts = computed((): ShortcutGroup[] => {
-  const groupMap = new Map<string, ShortcutInfo[]>();
+  const groupMap = new Map<string, ShortcutInfo[]>()
 
   props.shortcuts.forEach((shortcut) => {
-    const group = shortcut.group || props.otherGroupLabel;
+    const group = shortcut.group || props.otherGroupLabel
     if (!groupMap.has(group)) {
-      groupMap.set(group, []);
+      groupMap.set(group, [])
     }
-    groupMap.get(group)!.push(shortcut);
-  });
+    groupMap.get(group)!.push(shortcut)
+  })
 
   return Array.from(groupMap.entries()).map(([name, shortcuts]) => ({
     name,
     shortcuts,
-  }));
-});
+  }))
+})
 </script>
 
 <style scoped lang="scss">

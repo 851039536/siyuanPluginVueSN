@@ -1,8 +1,8 @@
 <template>
   <div
+    ref="wrapperRef"
     class="floating-box-wrapper"
     :class="{ collapsed: !isExpanded }"
-    ref="wrapperRef"
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"
   >
@@ -11,13 +11,24 @@
       :class="{ expanded: isExpanded }"
       @click="isMobile && toggleExpanded()"
     >
-      <svg class="trigger-icon" viewBox="0 0 24 24" width="16" height="16">
-        <path fill="currentColor" d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/>
+      <svg
+        class="trigger-icon"
+        viewBox="0 0 24 24"
+        width="16"
+        height="16"
+      >
+        <path
+          fill="currentColor"
+          d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"
+        />
       </svg>
     </div>
 
     <Transition name="toolbar">
-      <div v-if="isExpanded" class="floating-toolbar">
+      <div
+        v-if="isExpanded"
+        class="floating-toolbar"
+      >
         <ToolItem
           v-for="tool in tools"
           :key="tool.id"
@@ -30,84 +41,89 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from "vue";
-import ToolItem from "./components/ToolItem.vue";
+import type { FloatingTool } from "./types"
 import {
-  createSuperPanelTool,
-  createRefreshTool,
-  skillsTool,
-  createTextDiffTool,
-  createPasswordVaultTool,
+  computed,
+  onMounted,
+  onUnmounted,
+  ref,
+} from "vue"
+import ToolItem from "./components/ToolItem.vue"
+import {
   createFlashcardReadingTool,
-} from "./tools";
-import type { FloatingTool } from "./types";
+  createPasswordVaultTool,
+  createRefreshTool,
+  createSuperPanelTool,
+  createTextDiffTool,
+  skillsTool,
+} from "./tools"
 
 const props = defineProps<{
-  plugin?: any;
-}>();
+  plugin?: any
+}>()
 
-const isExpanded = ref(false);
-const isMobile = ref(false);
+const isExpanded = ref(false)
+const isMobile = ref(false)
 
-const MOBILE_BREAKPOINT = 768;
-let resizeTimer: ReturnType<typeof setTimeout> | null = null;
+const MOBILE_BREAKPOINT = 768
+let resizeTimer: ReturnType<typeof setTimeout> | null = null
 
 const tools = computed<FloatingTool[]>(() => {
   const baseTools: FloatingTool[] = [
     createSuperPanelTool(props.plugin),
     createRefreshTool(props.plugin),
-  ];
+  ]
 
   if (isMobile.value) {
     return [
       ...baseTools,
       createPasswordVaultTool(props.plugin),
       createFlashcardReadingTool(props.plugin),
-    ];
+    ]
   }
 
   const desktopTools: FloatingTool[] = [
     ...baseTools,
     createTextDiffTool(props.plugin),
-  ];
+  ]
 
   if (props.plugin?.settings?.enableSkills !== false) {
-    desktopTools.push(skillsTool(props.plugin));
+    desktopTools.push(skillsTool(props.plugin))
   }
 
-  return desktopTools;
-});
+  return desktopTools
+})
 
 const checkMobile = () => {
-  isMobile.value = window.innerWidth <= MOBILE_BREAKPOINT;
-};
+  isMobile.value = window.innerWidth <= MOBILE_BREAKPOINT
+}
 
 const debouncedCheckMobile = () => {
-  if (resizeTimer) clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(checkMobile, 150);
-};
+  if (resizeTimer) clearTimeout(resizeTimer)
+  resizeTimer = setTimeout(checkMobile, 150)
+}
 
 onMounted(() => {
-  checkMobile();
-  window.addEventListener("resize", debouncedCheckMobile);
-});
+  checkMobile()
+  window.addEventListener("resize", debouncedCheckMobile)
+})
 
 onUnmounted(() => {
-  window.removeEventListener("resize", debouncedCheckMobile);
-  if (resizeTimer) clearTimeout(resizeTimer);
-});
+  window.removeEventListener("resize", debouncedCheckMobile)
+  if (resizeTimer) clearTimeout(resizeTimer)
+})
 
 const handleMouseEnter = () => {
-  if (!isMobile.value) isExpanded.value = true;
-};
+  if (!isMobile.value) isExpanded.value = true
+}
 
 const handleMouseLeave = () => {
-  if (!isMobile.value) isExpanded.value = false;
-};
+  if (!isMobile.value) isExpanded.value = false
+}
 
 const toggleExpanded = () => {
-  isExpanded.value = !isExpanded.value;
-};
+  isExpanded.value = !isExpanded.value
+}
 </script>
 
 <style scoped lang="scss">

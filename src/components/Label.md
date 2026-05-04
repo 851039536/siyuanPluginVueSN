@@ -7,25 +7,35 @@
 ### 表单标签
 
 ```vue
-<script setup lang="ts">
-import Label from '@/components/Label.vue'
-import Input from '@/components/Input.vue'
-</script>
-
 <template>
   <div>
     <Label for="username">用户名</Label>
-    <Input id="username" placeholder="请输入用户名" />
+    <Input
+      id="username"
+      placeholder="请输入用户名"
+    />
   </div>
 </template>
+
+<script setup lang="ts">
+import Input from '@/components/Input.vue'
+import Label from '@/components/Label.vue'
+</script>
 ```
 
 ### 必填标记
 
 ```vue
 <template>
-  <Label for="email" required>邮箱地址</Label>
-  <Input id="email" type="email" placeholder="请输入邮箱" />
+  <Label
+    for="email"
+    required
+  >邮箱地址</Label>
+  <Input
+    id="email"
+    type="email"
+    placeholder="请输入邮箱"
+  />
 </template>
 ```
 
@@ -33,11 +43,21 @@ import Input from '@/components/Input.vue'
 
 ```vue
 <template>
-  <Label icon="iconEmail" for="email">邮箱</Label>
+  <Label
+    icon="iconEmail"
+    for="email"
+  >邮箱</Label>
   <Input id="email" />
 
-  <Label icon="iconLock" icon-position="right" for="password">密码</Label>
-  <Input id="password" type="password" />
+  <Label
+    icon="iconLock"
+    icon-position="right"
+    for="password"
+  >密码</Label>
+  <Input
+    id="password"
+    type="password"
+  />
 </template>
 ```
 
@@ -71,29 +91,44 @@ import Input from '@/components/Input.vue'
 使用 `tag` 属性改为非 label 元素，可作为独立的状态标签使用。
 
 ```vue
-<script setup lang="ts">
-import Label from '@/components/Label.vue'
-</script>
-
 <template>
   <!-- 默认样式 -->
   <Label tag="span">默认</Label>
 
   <!-- 主要色 -->
-  <Label tag="span" variant="primary">主要</Label>
+  <Label
+    tag="span"
+    variant="primary"
+  >主要</Label>
 
   <!-- 成功色 -->
-  <Label tag="span" variant="success">成功</Label>
+  <Label
+    tag="span"
+    variant="success"
+  >成功</Label>
 
   <!-- 警告色 -->
-  <Label tag="span" variant="warning">警告</Label>
+  <Label
+    tag="span"
+    variant="warning"
+  >警告</Label>
 
   <!-- 危险色 -->
-  <Label tag="span" variant="danger">危险</Label>
+  <Label
+    tag="span"
+    variant="danger"
+  >危险</Label>
 
   <!-- 信息色 -->
-  <Label tag="span" variant="info">信息</Label>
+  <Label
+    tag="span"
+    variant="info"
+  >信息</Label>
 </template>
+
+<script setup lang="ts">
+import Label from '@/components/Label.vue'
+</script>
 ```
 
 ## 图标
@@ -101,10 +136,18 @@ import Label from '@/components/Label.vue'
 ```vue
 <template>
   <!-- 图标在左侧 -->
-  <Label icon="iconCheck" tag="span" variant="success">已完成</Label>
+  <Label
+    icon="iconCheck"
+    tag="span"
+    variant="success"
+  >已完成</Label>
 
   <!-- 图标在右侧 -->
-  <Label icon="iconDown" icon-position="right" tag="span">
+  <Label
+    icon="iconDown"
+    icon-position="right"
+    tag="span"
+  >
     下拉菜单
   </Label>
 </template>
@@ -122,9 +165,18 @@ import Label from '@/components/Label.vue'
 
 ```vue
 <template>
-  <Label width="200px" align="left">左对齐</Label>
-  <Label width="200px" align="center">居中对齐</Label>
-  <Label width="200px" align="right">右对齐</Label>
+  <Label
+    width="200px"
+    align="left"
+  >左对齐</Label>
+  <Label
+    width="200px"
+    align="center"
+  >居中对齐</Label>
+  <Label
+    width="200px"
+    align="right"
+  >右对齐</Label>
 </template>
 ```
 
@@ -147,37 +199,63 @@ import Label from '@/components/Label.vue'
 ### 表单组
 
 ```vue
+<template>
+  <div class="form-group">
+    <div class="form-item">
+      <Label
+        for="username"
+        required
+        icon="iconUser"
+      >用户名</Label>
+      <Input
+        id="username"
+        v-model="formData.username"
+        placeholder="请输入用户名"
+      />
+    </div>
+
+    <div class="form-item">
+      <Label
+        for="email"
+        required
+        icon="iconEmail"
+      >邮箱地址</Label>
+      <Input
+        id="email"
+        v-model="formData.email"
+        type="email"
+        placeholder="请输入邮箱"
+      />
+    </div>
+
+    <div class="form-item">
+      <Label
+        for="password"
+        required
+        icon="iconLock"
+      >密码</Label>
+      <Input
+        id="password"
+        v-model="formData.password"
+        type="password"
+        placeholder="请输入密码"
+      />
+    </div>
+  </div>
+</template>
+
 <script setup lang="ts">
 import { ref } from 'vue'
-import Label from '@/components/Label.vue'
-import Input from '@/components/Input.vue'
 import Button from '@/components/Button.vue'
+import Input from '@/components/Input.vue'
+import Label from '@/components/Label.vue'
 
 const formData = ref({
   username: '',
   email: '',
-  password: ''
+  password: '',
 })
 </script>
-
-<template>
-  <div class="form-group">
-    <div class="form-item">
-      <Label for="username" required icon="iconUser">用户名</Label>
-      <Input id="username" v-model="formData.username" placeholder="请输入用户名" />
-    </div>
-
-    <div class="form-item">
-      <Label for="email" required icon="iconEmail">邮箱地址</Label>
-      <Input id="email" v-model="formData.email" type="email" placeholder="请输入邮箱" />
-    </div>
-
-    <div class="form-item">
-      <Label for="password" required icon="iconLock">密码</Label>
-      <Input id="password" v-model="formData.password" type="password" placeholder="请输入密码" />
-    </div>
-  </div>
-</template>
 
 <style scoped>
 .form-item {
@@ -189,15 +267,6 @@ const formData = ref({
 ### 错误提示
 
 ```vue
-<script setup lang="ts">
-import { ref } from 'vue'
-import Label from '@/components/Label.vue'
-import Input from '@/components/Input.vue'
-
-const email = ref('')
-const error = ref('')
-</script>
-
 <template>
   <div>
     <Label
@@ -213,9 +282,23 @@ const error = ref('')
       placeholder="请输入邮箱"
       @blur="validateEmail"
     />
-    <p v-if="error" class="error-text">{{ error }}</p>
+    <p
+      v-if="error"
+      class="error-text"
+    >
+      {{ error }}
+    </p>
   </div>
 </template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import Input from '@/components/Input.vue'
+import Label from '@/components/Label.vue'
+
+const email = ref('')
+const error = ref('')
+</script>
 
 <style scoped>
 .error-text {
@@ -229,27 +312,13 @@ const error = ref('')
 ### 状态标签组
 
 ```vue
-<script setup lang="ts">
-import Label from '@/components/Label.vue'
-
-const tasks = [
-  { title: '设计稿', status: 'completed' },
-  { title: '前端开发', status: 'in-progress' },
-  { title: '后端接口', status: 'pending' },
-  { title: '测试', status: 'error' }
-]
-
-const statusConfig = {
-  completed: { variant: 'success', label: '已完成' },
-  'in-progress': { variant: 'primary', label: '进行中' },
-  pending: { variant: 'default', label: '待处理' },
-  error: { variant: 'danger', label: '失败' }
-}
-</script>
-
 <template>
   <div class="task-list">
-    <div v-for="task in tasks" :key="task.title" class="task-item">
+    <div
+      v-for="task in tasks"
+      :key="task.title"
+      class="task-item"
+    >
       <span>{{ task.title }}</span>
       <Label
         tag="span"
@@ -261,6 +330,48 @@ const statusConfig = {
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import Label from '@/components/Label.vue'
+
+const tasks = [
+  {
+    title: '设计稿',
+    status: 'completed',
+  },
+  {
+    title: '前端开发',
+    status: 'in-progress',
+  },
+  {
+    title: '后端接口',
+    status: 'pending',
+  },
+  {
+    title: '测试',
+    status: 'error',
+  },
+]
+
+const statusConfig = {
+  "completed": {
+    variant: 'success',
+    label: '已完成',
+  },
+  'in-progress': {
+    variant: 'primary',
+    label: '进行中',
+  },
+  "pending": {
+    variant: 'default',
+    label: '待处理',
+  },
+  "error": {
+    variant: 'danger',
+    label: '失败',
+  },
+}
+</script>
 
 <style scoped>
 .task-list {
@@ -283,6 +394,19 @@ const statusConfig = {
 ### 标签云
 
 ```vue
+<template>
+  <div class="tag-cloud">
+    <Label
+      v-for="tag in tags"
+      :key="tag"
+      tag="span"
+      variant="info"
+    >
+      {{ tag }}
+    </Label>
+  </div>
+</template>
+
 <script setup lang="ts">
 import Label from '@/components/Label.vue'
 
@@ -294,17 +418,9 @@ const tags = [
   'CSS',
   'JavaScript',
   'HTML',
-  'Node.js'
+  'Node.js',
 ]
 </script>
-
-<template>
-  <div class="tag-cloud">
-    <Label v-for="tag in tags" :key="tag" tag="span" variant="info">
-      {{ tag }}
-    </Label>
-  </div>
-</template>
 
 <style scoped>
 .tag-cloud {
@@ -318,22 +434,6 @@ const tags = [
 ### 表格状态列
 
 ```vue
-<script setup lang="ts">
-import Label from '@/components/Label.vue'
-
-const users = [
-  { name: '张三', status: 'active' },
-  { name: '李四', status: 'inactive' },
-  { name: '王五', status: 'pending' }
-]
-
-const statusConfig = {
-  active: { variant: 'success', label: '活跃' },
-  inactive: { variant: 'default', label: '离线' },
-  pending: { variant: 'warning', label: '待激活' }
-}
-</script>
-
 <template>
   <table class="user-table">
     <thead>
@@ -343,7 +443,10 @@ const statusConfig = {
       </tr>
     </thead>
     <tbody>
-      <tr v-for="user in users" :key="user.name">
+      <tr
+        v-for="user in users"
+        :key="user.name"
+      >
         <td>{{ user.name }}</td>
         <td>
           <Label
@@ -358,6 +461,40 @@ const statusConfig = {
     </tbody>
   </table>
 </template>
+
+<script setup lang="ts">
+import Label from '@/components/Label.vue'
+
+const users = [
+  {
+    name: '张三',
+    status: 'active',
+  },
+  {
+    name: '李四',
+    status: 'inactive',
+  },
+  {
+    name: '王五',
+    status: 'pending',
+  },
+]
+
+const statusConfig = {
+  active: {
+    variant: 'success',
+    label: '活跃',
+  },
+  inactive: {
+    variant: 'default',
+    label: '离线',
+  },
+  pending: {
+    variant: 'warning',
+    label: '待激活',
+  },
+}
+</script>
 
 <style scoped>
 .user-table {

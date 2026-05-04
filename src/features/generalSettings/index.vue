@@ -9,7 +9,8 @@
         <div
           v-for="category in categories"
           :key="category.id"
-          :class="['sidebar-item', { active: activeCategory === category.id }]"
+          class="sidebar-item"
+          :class="[{ active: activeCategory === category.id }]"
           @click="activeCategory = category.id"
         >
           <span class="sidebar-title">{{ category.label }}</span>
@@ -17,53 +18,130 @@
       </div>
 
       <div class="settings-content">
-        <div v-show="activeCategory === 'highlight'" class="content-section">
-          <HighlightSettings :i18n="i18n" :plugin="plugin" />
+        <div
+          v-show="activeCategory === 'highlight'"
+          class="content-section"
+        >
+          <HighlightSettings
+            :i18n="i18n"
+            :plugin="plugin"
+          />
         </div>
 
-        <div v-show="activeCategory === 'codeblock'" class="content-section">
-          <CodeBlockSettings :i18n="i18n" :plugin="plugin" @change="handleCodeBlockChange" />
+        <div
+          v-show="activeCategory === 'codeblock'"
+          class="content-section"
+        >
+          <CodeBlockSettings
+            :i18n="i18n"
+            :plugin="plugin"
+            @change="handleCodeBlockChange"
+          />
         </div>
 
-        <div v-show="activeCategory === 'heading'" class="content-section">
-          <HeadingSettings :i18n="i18n" :plugin="plugin" @change="handleHeadingChange" />
+        <div
+          v-show="activeCategory === 'heading'"
+          class="content-section"
+        >
+          <HeadingSettings
+            :i18n="i18n"
+            :plugin="plugin"
+            @change="handleHeadingChange"
+          />
         </div>
 
-        <div v-show="activeCategory === 'encryption'" class="content-section">
+        <div
+          v-show="activeCategory === 'encryption'"
+          class="content-section"
+        >
           <PasswordSettings :i18n="i18n" />
           <EncryptionSettings :plugin="plugin" />
         </div>
 
-        <div v-show="activeCategory === 'backup'" class="content-section">
-          <DataBackupSettings :i18n="i18n" :plugin="plugin" @change="handleBackupChange" />
+        <div
+          v-show="activeCategory === 'backup'"
+          class="content-section"
+        >
+          <DataBackupSettings
+            :i18n="i18n"
+            :plugin="plugin"
+            @change="handleBackupChange"
+          />
         </div>
 
-        <div v-show="activeCategory === 'documentFont'" class="content-section">
-          <DocumentFontSettings :i18n="i18n" :plugin="plugin" @change="handleDocumentFontChange" />
+        <div
+          v-show="activeCategory === 'documentFont'"
+          class="content-section"
+        >
+          <DocumentFontSettings
+            :i18n="i18n"
+            :plugin="plugin"
+            @change="handleDocumentFontChange"
+          />
         </div>
 
-        <div v-show="activeCategory === 'tableStyle'" class="content-section">
-          <TableStyleSettings :i18n="i18n" :plugin="plugin" @change="handleTableStyleChange" />
+        <div
+          v-show="activeCategory === 'tableStyle'"
+          class="content-section"
+        >
+          <TableStyleSettings
+            :i18n="i18n"
+            :plugin="plugin"
+            @change="handleTableStyleChange"
+          />
         </div>
 
-        <div v-show="activeCategory === 'listStyle'" class="content-section">
-          <ListStyleSettings :i18n="i18n" :plugin="plugin" @change="handleListStyleChange" />
+        <div
+          v-show="activeCategory === 'listStyle'"
+          class="content-section"
+        >
+          <ListStyleSettings
+            :i18n="i18n"
+            :plugin="plugin"
+            @change="handleListStyleChange"
+          />
         </div>
 
-        <div v-show="activeCategory === 'tabPin'" class="content-section">
-          <TabPinSettings :i18n="i18n" :plugin="plugin" @change="handleTabPinChange" />
+        <div
+          v-show="activeCategory === 'tabPin'"
+          class="content-section"
+        >
+          <TabPinSettings
+            :i18n="i18n"
+            :plugin="plugin"
+            @change="handleTabPinChange"
+          />
         </div>
 
-        <div v-show="activeCategory === 'docCount'" class="content-section">
-          <DocCountSettings :i18n="i18n" :plugin="plugin" @change="handleDocCountChange" />
+        <div
+          v-show="activeCategory === 'docCount'"
+          class="content-section"
+        >
+          <DocCountSettings
+            :i18n="i18n"
+            :plugin="plugin"
+            @change="handleDocCountChange"
+          />
         </div>
 
-        <div v-show="activeCategory === 'markdownExport'" class="content-section">
-          <MarkdownExportSettings :i18n="i18n" :plugin="plugin" />
+        <div
+          v-show="activeCategory === 'markdownExport'"
+          class="content-section"
+        >
+          <MarkdownExportSettings
+            :i18n="i18n"
+            :plugin="plugin"
+          />
         </div>
 
-        <div v-show="activeCategory === 'skillsViewer'" class="content-section">
-          <SkillsViewerSettings :i18n="i18n" :plugin="plugin" />
+        <div
+          v-show="activeCategory === 'skillsViewer'"
+          class="content-section"
+        >
+          <SkillsViewerSettings
+            :i18n="i18n"
+            :plugin="plugin"
+          />
         </div>
       </div>
     </div>
@@ -71,34 +149,37 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import PasswordSettings from "./components/PasswordSettings.vue";
-import CodeBlockSettings from "./components/CodeBlockSettings.vue";
-import HeadingSettings from "./components/HeadingSettings.vue";
-import EncryptionSettings from "./components/EncryptionSettings.vue";
-import HighlightSettings from "./components/HighlightSettings.vue";
-import DataBackupSettings from "./components/DataBackupSettings.vue";
-import DocumentFontSettings from "./components/DocumentFontSettings.vue";
-import TableStyleSettings from "./components/TableStyleSettings.vue";
-import ListStyleSettings from "./components/ListStyleSettings.vue";
-import TabPinSettings from "./components/TabPinSettings.vue";
-import DocCountSettings from "./components/DocCountSettings.vue";
-import MarkdownExportSettings from "./components/MarkdownExportSettings.vue";
-import SkillsViewerSettings from "./components/SkillsViewerSettings.vue";
+import {
+  computed,
+  ref,
+} from "vue"
+import CodeBlockSettings from "./components/CodeBlockSettings.vue"
+import DataBackupSettings from "./components/DataBackupSettings.vue"
+import DocCountSettings from "./components/DocCountSettings.vue"
+import DocumentFontSettings from "./components/DocumentFontSettings.vue"
+import EncryptionSettings from "./components/EncryptionSettings.vue"
+import HeadingSettings from "./components/HeadingSettings.vue"
+import HighlightSettings from "./components/HighlightSettings.vue"
+import ListStyleSettings from "./components/ListStyleSettings.vue"
+import MarkdownExportSettings from "./components/MarkdownExportSettings.vue"
+import PasswordSettings from "./components/PasswordSettings.vue"
+import SkillsViewerSettings from "./components/SkillsViewerSettings.vue"
+import TableStyleSettings from "./components/TableStyleSettings.vue"
+import TabPinSettings from "./components/TabPinSettings.vue"
 
 interface Props {
-  i18n?: any;
-  plugin?: any;
-  onSettingsChange?: (settings: any) => void;
+  i18n?: any
+  plugin?: any
+  onSettingsChange?: (settings: any) => void
 }
 
 const props = withDefaults(defineProps<Props>(), {
   i18n: () => ({}),
   plugin: null,
   onSettingsChange: () => {},
-});
+})
 
-const activeCategory = ref("highlight");
+const activeCategory = ref("highlight")
 
 const categories = computed(() => [
   {
@@ -149,22 +230,25 @@ const categories = computed(() => [
     id: "skillsViewer",
     label: props.i18n.skillsViewerTitle || "Skills 查看器",
   },
-]);
+])
 
 function createSettingsHandler(moduleId: string) {
   return (settings: any) => {
-    props.onSettingsChange?.({ moduleId, settings });
-  };
+    props.onSettingsChange?.({
+      moduleId,
+      settings,
+    })
+  }
 }
 
-const handleCodeBlockChange = createSettingsHandler("codeblock");
-const handleHeadingChange = createSettingsHandler("heading");
-const handleBackupChange = createSettingsHandler("backup");
-const handleDocumentFontChange = createSettingsHandler("documentFont");
-const handleTableStyleChange = createSettingsHandler("tableStyle");
-const handleListStyleChange = createSettingsHandler("listStyle");
-const handleTabPinChange = createSettingsHandler("tabPin");
-const handleDocCountChange = createSettingsHandler("docCount");
+const handleCodeBlockChange = createSettingsHandler("codeblock")
+const handleHeadingChange = createSettingsHandler("heading")
+const handleBackupChange = createSettingsHandler("backup")
+const handleDocumentFontChange = createSettingsHandler("documentFont")
+const handleTableStyleChange = createSettingsHandler("tableStyle")
+const handleListStyleChange = createSettingsHandler("listStyle")
+const handleTabPinChange = createSettingsHandler("tabPin")
+const handleDocCountChange = createSettingsHandler("docCount")
 
 defineExpose({
   handleCodeBlockChange,
@@ -175,7 +259,7 @@ defineExpose({
   handleListStyleChange,
   handleTabPinChange,
   handleDocCountChange,
-});
+})
 </script>
 
 <style scoped lang="scss">

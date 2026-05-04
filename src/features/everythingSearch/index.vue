@@ -1,118 +1,135 @@
 <template>
   <Teleport to="body">
-    <div v-if="visible" class="everything-search-overlay" @click.self="closeDialog">
-      <div v-if="visible" class="everything-search-dialog">
-            <!-- 头部 -->
-            <DialogHeader @close="closeDialog" />
+    <div
+      v-if="visible"
+      class="everything-search-overlay"
+      @click.self="closeDialog"
+    >
+      <div
+        v-if="visible"
+        class="everything-search-dialog"
+      >
+        <!-- 头部 -->
+        <DialogHeader @close="closeDialog" />
 
-            <!-- 搜索栏 -->
-            <SearchBar
-              v-model="searchQuery"
-              :is-searching="searchState.status === 'loading'"
-              :auto-search="options.autoSearch"
-              @search="handleSearch"
-              @clear="handleClear"
-              @escape="closeDialog"
-              ref="searchBarRef"
-            />
+        <!-- 搜索栏 -->
+        <SearchBar
+          ref="searchBarRef"
+          v-model="searchQuery"
+          :is-searching="searchState.status === 'loading'"
+          :auto-search="options.autoSearch"
+          @search="handleSearch"
+          @clear="handleClear"
+          @escape="closeDialog"
+        />
 
-            <!-- 搜索选项 -->
-            <SearchOptionsPanel
-              :options="options"
-              :available-drives="availableDrives"
-              @update:options="handleOptionUpdate"
-              @drive-change="handleDriveChange"
-              @refresh-drives="refreshDrives"
-            />
+        <!-- 搜索选项 -->
+        <SearchOptionsPanel
+          :options="options"
+          :available-drives="availableDrives"
+          @update:options="handleOptionUpdate"
+          @drive-change="handleDriveChange"
+          @refresh-drives="refreshDrives"
+        />
 
-            <!-- 服务状态提示 -->
-            <ServiceWarning v-if="!serviceAvailable" @retry="checkService" />
+        <!-- 服务状态提示 -->
+        <ServiceWarning
+          v-if="!serviceAvailable"
+          @retry="checkService"
+        />
 
-            <!-- 结果区域 -->
-            <SearchResults
-              :state="searchState"
-              :auto-search="options.autoSearch"
-              @item-click="handleItemClick"
-              @item-dbl-click="handleItemDblClick"
-              @item-open="handleItemOpen"
-              @item-show-in-folder="handleItemShowInFolder"
-              @item-copy-path="handleItemCopyPath"
-            />
+        <!-- 结果区域 -->
+        <SearchResults
+          :state="searchState"
+          :auto-search="options.autoSearch"
+          @item-click="handleItemClick"
+          @item-dbl-click="handleItemDblClick"
+          @item-open="handleItemOpen"
+          @item-show-in-folder="handleItemShowInFolder"
+          @item-copy-path="handleItemCopyPath"
+        />
 
-            <!-- 底部配置 -->
-            <DialogFooter
-              :config="config"
-              @update:config="handleConfigUpdate"
-            />
-          </div>
+        <!-- 底部配置 -->
+        <DialogFooter
+          :config="config"
+          @update:config="handleConfigUpdate"
+        />
       </div>
+    </div>
   </Teleport>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted, watch, nextTick } from "vue";
-import { showMessage } from "siyuan";
-import {
-  searchFiles,
-  checkEverythingService,
-  openFile,
-  showInExplorer,
-} from "./api";
-import { usePlugin } from "@/main";
 import type {
+  EverythingConfig,
+  EverythingSearchResult,
   SearchOptions as SearchOptionsType,
   SearchState,
-  EverythingSearchResult,
-  EverythingConfig,
-} from "./types";
+} from "./types"
+import { showMessage } from "siyuan"
 import {
-  EverythingSearchStorage,
-  DEFAULT_CONFIG,
-  DEFAULT_OPTIONS,
-} from "./types/storage";
+  nextTick,
+  onMounted,
+  onUnmounted,
+  reactive,
+  ref,
+  watch,
+} from "vue"
+import { usePlugin } from "@/main"
+import {
+  checkEverythingService,
+  openFile,
+  searchFiles,
+  showInExplorer,
+} from "./api"
+import DialogFooter from "./components/DialogFooter.vue"
 
 // 子组件
-import DialogHeader from "./components/DialogHeader.vue";
-import SearchBar from "./components/SearchBar.vue";
-import SearchOptionsPanel from "./components/SearchOptions.vue";
-import SearchResults from "./components/SearchResults.vue";
-import ServiceWarning from "./components/ServiceWarning.vue";
-import DialogFooter from "./components/DialogFooter.vue";
+import DialogHeader from "./components/DialogHeader.vue"
+import SearchBar from "./components/SearchBar.vue"
+import SearchOptionsPanel from "./components/SearchOptions.vue"
+import SearchResults from "./components/SearchResults.vue"
+import ServiceWarning from "./components/ServiceWarning.vue"
+import {
+  DEFAULT_CONFIG,
+  DEFAULT_OPTIONS,
+  EverythingSearchStorage,
+} from "./types/storage"
 
 // Props
 interface Props {
-  visible: boolean;
+  visible: boolean
 }
 
-const props = defineProps<Props>();
+const props = defineProps<Props>()
 
 // Emits
 const emit = defineEmits<{
-  (e: "update:visible", value: boolean): void;
-  (e: "close"): void;
-}>();
+  (e: "update:visible", value: boolean): void
+  (e: "close"): void
+}>()
 
 // Refs
-const searchBarRef = ref<InstanceType<typeof SearchBar> | null>(null);
+const searchBarRef = ref<InstanceType<typeof SearchBar> | null>(null)
 
 // 获取插件实例
-const plugin = usePlugin();
+const plugin = usePlugin()
 
 // 存储管理
-const storage = new EverythingSearchStorage(plugin);
+const storage = new EverythingSearchStorage(plugin)
 
 // 状态
-const searchQuery = ref("");
-const serviceAvailable = ref(true);
-const availableDrives = ref<string[]>([]);
-const debounceTimer = ref<number | null>(null);
-const saveConfigTimer = ref<number | null>(null);
+const searchQuery = ref("")
+const serviceAvailable = ref(true)
+const availableDrives = ref<string[]>([])
+const debounceTimer = ref<number | null>(null)
+const saveConfigTimer = ref<number | null>(null)
 
 // 配置
-const config = reactive<EverythingConfig>({ ...DEFAULT_CONFIG });
+const config = reactive<EverythingConfig>({ ...DEFAULT_CONFIG })
 
 // 搜索选项
-const options = reactive<SearchOptionsType>({ ...DEFAULT_OPTIONS });
+const options = reactive<SearchOptionsType>({ ...DEFAULT_OPTIONS })
 
 // 搜索状态
 const searchState = reactive<SearchState>({
@@ -120,44 +137,44 @@ const searchState = reactive<SearchState>({
   results: [],
   errorMessage: "",
   hasSearched: false,
-});
+})
 
 /** 从插件存储加载配置 */
 const loadConfigFromPlugin = async () => {
   try {
-    const savedData = await storage.init();
-    Object.assign(config, savedData.config);
-    Object.assign(options, savedData.options);
+    const savedData = await storage.init()
+    Object.assign(config, savedData.config)
+    Object.assign(options, savedData.options)
     if (typeof options.selectedDrive === "undefined") {
-      options.selectedDrive = "";
+      options.selectedDrive = ""
     }
   } catch (error) {
-    console.error("从插件存储加载配置失败:", error);
+    console.error("从插件存储加载配置失败:", error)
   }
-};
+}
 
 /** 保存配置到插件存储（带防抖） */
 const saveConfigToPlugin = async () => {
   // 清除之前的定时器
   if (saveConfigTimer.value) {
-    clearTimeout(saveConfigTimer.value);
+    clearTimeout(saveConfigTimer.value)
   }
 
   // 延迟保存，避免频繁写入
   saveConfigTimer.value = window.setTimeout(async () => {
     try {
-      await storage.config.save(config);
-      await storage.options.save(options);
+      await storage.config.save(config)
+      await storage.options.save(options)
     } catch (error) {
-      console.error("保存配置到插件存储失败:", error);
+      console.error("保存配置到插件存储失败:", error)
     }
-  }, 500);
-};
+  }, 500)
+}
 
 /** 检查服务 */
 const checkService = async () => {
-  serviceAvailable.value = await checkEverythingService(config);
-};
+  serviceAvailable.value = await checkEverythingService(config)
+}
 
 /** 检测系统盘符 */
 const detectDrives = async () => {
@@ -187,46 +204,46 @@ const detectDrives = async () => {
       "X:",
       "Y:",
       "Z:",
-    ];
-    availableDrives.value = commonDrives;
+    ]
+    availableDrives.value = commonDrives
   } catch (error) {
-    console.error("检测盘符失败:", error);
-    availableDrives.value = ["C:", "D:", "E:", "F:", "G:", "H:", "I:", "J:"];
+    console.error("检测盘符失败:", error)
+    availableDrives.value = ["C:", "D:", "E:", "F:", "G:", "H:", "I:", "J:"]
   }
-};
+}
 
 /** 刷新盘符列表 */
 const refreshDrives = () => {
-  detectDrives();
-};
+  detectDrives()
+}
 
 /** 处理盘符变化 */
 const handleDriveChange = () => {
   if (options.autoSearch && searchQuery.value.trim()) {
-    debouncedSearch();
+    debouncedSearch()
   }
-};
+}
 
 /** 搜索 */
 const handleSearch = async () => {
-  const query = searchQuery.value.trim();
-  if (!query) return;
+  const query = searchQuery.value.trim()
+  if (!query) return
 
   // 取消之前的防抖定时器
   if (debounceTimer.value) {
-    clearTimeout(debounceTimer.value);
-    debounceTimer.value = null;
+    clearTimeout(debounceTimer.value)
+    debounceTimer.value = null
   }
 
   // 构建最终查询
-  let finalQuery = query;
+  let finalQuery = query
   if (options.selectedDrive) {
-    finalQuery = `${options.selectedDrive}\\ ${query}`;
+    finalQuery = `${options.selectedDrive}\\ ${query}`
   }
 
-  searchState.status = "loading";
-  searchState.errorMessage = "";
-  searchState.hasSearched = true;
+  searchState.status = "loading"
+  searchState.errorMessage = ""
+  searchState.hasSearched = true
 
   try {
     const results = await searchFiles(
@@ -241,177 +258,177 @@ const handleSearch = async () => {
         ascending: options.ascending,
       },
       config,
-    );
+    )
 
-    searchState.results = results;
-    searchState.status = results.length === 0 ? "empty" : "success";
+    searchState.results = results
+    searchState.status = results.length === 0 ? "empty" : "success"
   } catch (error) {
-    searchState.errorMessage = (error as Error).message || "搜索失败";
-    searchState.status = "error";
-    searchState.results = [];
+    searchState.errorMessage = (error as Error).message || "搜索失败"
+    searchState.status = "error"
+    searchState.results = []
   }
-};
+}
 
 /** 防抖搜索 */
 const debouncedSearch = () => {
   if (debounceTimer.value) {
-    clearTimeout(debounceTimer.value);
+    clearTimeout(debounceTimer.value)
   }
 
   if (!options.autoSearch) {
-    return;
+    return
   }
 
-  const query = searchQuery.value.trim();
+  const query = searchQuery.value.trim()
   if (!query) {
-    searchState.results = [];
-    searchState.status = "idle";
-    searchState.hasSearched = false;
-    searchState.errorMessage = "";
-    return;
+    searchState.results = []
+    searchState.status = "idle"
+    searchState.hasSearched = false
+    searchState.errorMessage = ""
+    return
   }
 
   debounceTimer.value = window.setTimeout(() => {
-    handleSearch();
-  }, options.debounceDelay);
-};
+    handleSearch()
+  }, options.debounceDelay)
+}
 
 /** 清除搜索 */
 const handleClear = () => {
-  searchQuery.value = "";
-  searchState.results = [];
-  searchState.status = "idle";
-  searchState.hasSearched = false;
-  searchState.errorMessage = "";
-  searchBarRef.value?.focus();
-};
+  searchQuery.value = ""
+  searchState.results = []
+  searchState.status = "idle"
+  searchState.hasSearched = false
+  searchState.errorMessage = ""
+  searchBarRef.value?.focus()
+}
 
 /** 关闭弹窗 */
 const closeDialog = () => {
-  emit("update:visible", false);
-  emit("close");
-};
+  emit("update:visible", false)
+  emit("close")
+}
 
 /** 处理选项更新 */
 const handleOptionUpdate = (
   key: keyof SearchOptionsType,
   value: SearchOptionsType[keyof SearchOptionsType],
 ) => {
-  (options as any)[key] = value;
-};
+  (options as any)[key] = value
+}
 
 /** 处理配置更新 */
 const handleConfigUpdate = (
   key: keyof EverythingConfig,
   value: EverythingConfig[keyof EverythingConfig],
 ) => {
-  Object.assign(config, { [key]: value });
-};
+  Object.assign(config, { [key]: value })
+}
 
 /** 获取完整路径 */
 const getFullPath = (item: EverythingSearchResult) => {
-  return item.path ? `${item.path}\\${item.name}` : item.name;
-};
+  return item.path ? `${item.path}\\${item.name}` : item.name
+}
 
 /** 点击项目 */
 const handleItemClick = () => {
   // 单击选中（预留）
-};
+}
 
 /** 打开项目 */
 const handleItemDblClick = async (item: EverythingSearchResult) => {
-  await handleItemOpen(item);
-};
+  await handleItemOpen(item)
+}
 
 /** 打开项目 */
 const handleItemOpen = async (item: EverythingSearchResult) => {
   try {
-    await openFile(getFullPath(item));
+    await openFile(getFullPath(item))
   } catch (error) {
-    showMessage("打开失败: " + (error as Error).message, 3000, "error");
+    showMessage(`打开失败: ${(error as Error).message}`, 3000, "error")
   }
-};
+}
 
 /** 在文件夹中显示 */
 const handleItemShowInFolder = async (item: EverythingSearchResult) => {
   try {
-    await showInExplorer(getFullPath(item));
+    await showInExplorer(getFullPath(item))
   } catch (error) {
-    showMessage("操作失败: " + (error as Error).message, 3000, "error");
+    showMessage(`操作失败: ${(error as Error).message}`, 3000, "error")
   }
-};
+}
 
 /** 复制路径 */
 const handleItemCopyPath = async (item: EverythingSearchResult) => {
   try {
-    await navigator.clipboard.writeText(getFullPath(item));
-    showMessage("路径已复制", 2000, "info");
+    await navigator.clipboard.writeText(getFullPath(item))
+    showMessage("路径已复制", 2000, "info")
   } catch (error) {
-    showMessage("复制失败", 2000, "error");
+    showMessage("复制失败", 2000, "error")
   }
-};
+}
 
 /** 键盘事件 */
 const handleKeyDown = (event: KeyboardEvent) => {
-  if (!props.visible) return;
+  if (!props.visible) return
   if (event.key === "Escape") {
-    closeDialog();
+    closeDialog()
   }
-};
+}
 
 /** 监听 visible 变化 */
 watch(
   () => props.visible,
   async (newVal) => {
     if (newVal) {
-      await nextTick();
-      await loadConfig();
-      searchBarRef.value?.focus();
-      checkService();
+      await nextTick()
+      await loadConfig()
+      searchBarRef.value?.focus()
+      checkService()
     }
   },
-);
+)
 
 /** 监听搜索查询变化 */
 watch(searchQuery, () => {
-  debouncedSearch();
-});
+  debouncedSearch()
+})
 
 /** 监听配置变化 */
 watch(
   [config, options],
   () => {
     saveConfigToPlugin().catch((error) => {
-      console.error("保存配置时出错:", error);
-    });
+      console.error("保存配置时出错:", error)
+    })
   },
   { deep: true },
-);
+)
 
 onMounted(async () => {
-  document.addEventListener("keydown", handleKeyDown);
-  await loadConfig();
-  await detectDrives();
-});
+  document.addEventListener("keydown", handleKeyDown)
+  await loadConfig()
+  await detectDrives()
+})
 
 onUnmounted(() => {
-  document.removeEventListener("keydown", handleKeyDown);
+  document.removeEventListener("keydown", handleKeyDown)
   if (debounceTimer.value) {
-    clearTimeout(debounceTimer.value);
+    clearTimeout(debounceTimer.value)
   }
   if (saveConfigTimer.value) {
-    clearTimeout(saveConfigTimer.value);
+    clearTimeout(saveConfigTimer.value)
   }
-});
+})
 
 /** 加载配置 */
 const loadConfig = async () => {
   try {
-    await loadConfigFromPlugin();
+    await loadConfigFromPlugin()
   } catch (error) {
-    console.error("加载配置失败:", error);
+    console.error("加载配置失败:", error)
   }
-};
+}
 </script>
 
 <style scoped lang="scss">

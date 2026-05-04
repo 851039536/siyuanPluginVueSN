@@ -7,26 +7,32 @@
       size="medium"
       @update:model-value="$emit('update:searchKeyword', $event)"
     />
-    <Button variant="primary" size="small" icon="add" :title="addTitle" @click="$emit('add')" />
+    <Button
+      variant="primary"
+      size="small"
+      icon="add"
+      :title="addTitle"
+      @click="$emit('add')"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import Button from "@/components/Button.vue";
-import Input from "@/components/Input.vue";
+import Button from "@/components/Button.vue"
+import Input from "@/components/Input.vue"
 
 interface Props {
-  searchKeyword: string;
-  placeholder: string;
-  addTitle: string;
+  searchKeyword: string
+  placeholder: string
+  addTitle: string
 }
 
-defineProps<Props>();
+defineProps<Props>()
 
 defineEmits<{
-  "update:searchKeyword": [value: string];
-  add: [];
-}>();
+  "update:searchKeyword": [value: string]
+  "add": []
+}>()
 </script>
 
 <style scoped lang="scss">

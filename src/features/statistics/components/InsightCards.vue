@@ -13,14 +13,22 @@
         <!-- 热力图区域 -->
         <div class="heatmap-section">
           <div class="heatmap-grid">
-            <div v-for="(cell, idx) in heatmapCells" :key="idx" :class="cell.level" :title="cell.tooltip"><span v-if="cell.activity > 0">{{ cell.activity }}</span></div>
+            <div
+              v-for="(cell, idx) in heatmapCells"
+              :key="idx"
+              :class="cell.level"
+              :title="cell.tooltip"
+            >
+              <span v-if="cell.activity > 0">{{ cell.activity }}</span>
+            </div>
           </div>
           <div class="heatmap-footer">
             <span class="heatmap-summary">{{ i18n.last30Days }}: {{ activeDaysInMonth }} {{ i18n.activeDaysCount }}</span>
             <div class="heatmap-legend">
               <span>{{ i18n.less }}</span>
               <span class="level-0"></span><span class="level-1"></span><span class="level-2"></span><span
-                class="level-3"></span><span class="level-4"></span>
+                class="level-3"
+              ></span><span class="level-4"></span>
               <span>{{ i18n.more }}</span>
             </div>
           </div>
@@ -34,11 +42,22 @@
         <!-- 里程碑区域 -->
         <div class="milestones-section">
           <div class="milestones-grid">
-            <div v-for="m in visibleMilestones" :key="m.id" class="milestone-item" :class="{ achieved: m.achieved }">
+            <div
+              v-for="m in visibleMilestones"
+              :key="m.id"
+              class="milestone-item"
+              :class="{ achieved: m.achieved }"
+            >
               <span class="milestone-icon">{{ m.achieved ? m.icon : '🔒' }}</span>
               <span class="milestone-text">{{ m.label }}</span>
-              <div v-if="!m.achieved" class="mini-progress">
-                <div class="mini-fill" :style="{ width: m.progress + '%' }"></div>
+              <div
+                v-if="!m.achieved"
+                class="mini-progress"
+              >
+                <div
+                  class="mini-fill"
+                  :style="{ width: `${m.progress}%` }"
+                ></div>
               </div>
             </div>
           </div>
@@ -49,22 +68,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed } from "vue"
 
 interface HistoricalDataItem {
-  date: string;
-  dateLabel: string;
-  totalNotes: number;
-  totalWords: number;
-  todayCreated: number;
-  todayModified: number;
+  date: string
+  dateLabel: string
+  totalNotes: number
+  totalWords: number
+  todayCreated: number
+  todayModified: number
 }
 
 interface Props {
-  historicalData?: HistoricalDataItem[];
-  totalNotes?: number;
-  totalWords?: number;
-  i18n?: Record<string, string>;
+  historicalData?: HistoricalDataItem[]
+  totalNotes?: number
+  totalWords?: number
+  i18n?: Record<string, string>
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -83,25 +102,25 @@ const props = withDefaults(defineProps<Props>(), {
     notesUnit: "篇",
     wordsUnit: "字",
   }),
-});
+})
 
 // ============ 热力日历 ============
-const LEVEL_THRESHOLDS = [0, 1, 6, 16, 31] as const;
+const LEVEL_THRESHOLDS = [0, 1, 6, 16, 31] as const
 
 const heatmapCells = computed(() => {
-  const cells = [];
-  const now = new Date();
+  const cells = []
+  const now = new Date()
 
   for (let i = 29; i >= 0; i--) {
-    const date = new Date(now);
-    date.setDate(date.getDate() - i);
-    const dateStr = formatDate(date);
-    const dayData = props.historicalData.find((d) => d.date === dateStr);
+    const date = new Date(now)
+    date.setDate(date.getDate() - i)
+    const dateStr = formatDate(date)
+    const dayData = props.historicalData.find((d) => d.date === dateStr)
 
-    const activity = dayData ? dayData.todayCreated + dayData.todayModified : 0;
-    let levelIdx = 0;
+    const activity = dayData ? dayData.todayCreated + dayData.todayModified : 0
+    let levelIdx = 0
     for (let t = LEVEL_THRESHOLDS.length - 1; t >= 0; t--) {
-      if (activity >= LEVEL_THRESHOLDS[t]) { levelIdx = t; break; }
+      if (activity >= LEVEL_THRESHOLDS[t]) { levelIdx = t; break }
     }
 
     cells.push({
@@ -109,15 +128,15 @@ const heatmapCells = computed(() => {
       date: dateStr,
       level: `level-${levelIdx}`,
       tooltip: `${dateStr}: ${activity}次操作`,
-    });
+    })
   }
 
-  return cells;
-});
+  return cells
+})
 
 const activeDaysInMonth = computed(() => {
-  return heatmapCells.value.filter((c) => c.level !== "level-0").length;
-});
+  return heatmapCells.value.filter((c) => c.level !== "level-0").length
+})
 
 // ============ 里程碑 ============
 const allMilestones = [
@@ -235,31 +254,35 @@ const allMilestones = [
     target: 100000000,
     type: "words",
   },
-];
+]
 
 const achievedCount = computed(() => {
   return allMilestones.filter((m) => {
-    const current = m.type === "notes" ? props.totalNotes : props.totalWords;
-    return current >= m.target;
-  }).length;
-});
+    const current = m.type === "notes" ? props.totalNotes : props.totalWords
+    return current >= m.target
+  }).length
+})
 
 const visibleMilestones = computed(() => {
   return allMilestones.map((m) => {
-    const current = m.type === "notes" ? props.totalNotes : props.totalWords;
-    const achieved = current >= m.target;
-    const progress = achieved ? 100 : Math.min((current / m.target) * 100, 100);
-    return { ...m, achieved, progress };
-  });
-});
+    const current = m.type === "notes" ? props.totalNotes : props.totalWords
+    const achieved = current >= m.target
+    const progress = achieved ? 100 : Math.min((current / m.target) * 100, 100)
+    return {
+      ...m,
+      achieved,
+      progress,
+    }
+  })
+})
 
 // ============ 工具函数 ============
 function formatDate(date: Date): string {
-  return `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())}`;
+  return `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())}`
 }
 
 function padZero(num: number): string {
-  return num < 10 ? "0" + num : String(num);
+  return num < 10 ? `0${num}` : String(num)
 }
 </script>
 

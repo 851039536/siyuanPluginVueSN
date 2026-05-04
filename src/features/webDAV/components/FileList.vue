@@ -17,7 +17,10 @@
           :disabled="loading"
           @click="onRefresh"
         >
-          <Icon icon="mdi:refresh" :class="{ 'spin-icon': loading }" />
+          <Icon
+            icon="mdi:refresh"
+            :class="{ 'spin-icon': loading }"
+          />
         </button>
       </div>
     </div>
@@ -27,24 +30,40 @@
       <span class="path-value">{{ currentPath || '/' }}</span>
     </div>
 
-    <div class="file-list" v-if="files.length > 0">
+    <div
+      v-if="files.length > 0"
+      class="file-list"
+    >
       <div
-        class="file-item"
         v-for="file in files"
         :key="file.path"
+        class="file-item"
         :class="{ 'is-directory': file.isDirectory }"
         @click="onFileClick(file)"
         @dblclick="onFileDoubleClick(file)"
       >
-        <div class="file-icon">{{ getFileIcon(file) }}</div>
+        <div class="file-icon">
+          {{ getFileIcon(file) }}
+        </div>
         <div class="file-info">
-          <div class="file-name">{{ file.name }}</div>
+          <div class="file-name">
+            {{ file.name }}
+          </div>
           <div class="file-meta">
-            <span class="file-size" v-if="!file.isDirectory">{{ formatFileSize(file.size) }}</span>
-            <span class="file-date" v-if="file.lastModified">{{ formatTime(file.lastModified) }}</span>
+            <span
+              v-if="!file.isDirectory"
+              class="file-size"
+            >{{ formatFileSize(file.size) }}</span>
+            <span
+              v-if="file.lastModified"
+              class="file-date"
+            >{{ formatTime(file.lastModified) }}</span>
           </div>
         </div>
-        <div class="file-actions" v-if="selectedFile?.path === file.path">
+        <div
+          v-if="selectedFile?.path === file.path"
+          class="file-actions"
+        >
           <button
             v-if="file.isDirectory"
             class="btn-icon-small btn-primary"
@@ -62,86 +81,106 @@
             <Icon icon="mdi:download" />
           </button>
         </div>
-        <div class="file-type-badge" :class="{ directory: file.isDirectory }">
+        <div
+          class="file-type-badge"
+          :class="{ directory: file.isDirectory }"
+        >
           {{ file.isDirectory ? (i18n.folder || '文件夹') : (i18n.file || '文件') }}
         </div>
       </div>
     </div>
 
-    <div class="empty-files" v-else-if="!loading">
-      <div class="empty-icon">📂</div>
-      <div class="empty-text">{{ i18n.noFiles || '暂无文件' }}</div>
+    <div
+      v-else-if="!loading"
+      class="empty-files"
+    >
+      <div class="empty-icon">
+        📂
+      </div>
+      <div class="empty-text">
+        {{ i18n.noFiles || '暂无文件' }}
+      </div>
     </div>
 
-    <div class="loading-files" v-else>
-      <Icon icon="mdi:loading" class="spin-icon" />
+    <div
+      v-else
+      class="loading-files"
+    >
+      <Icon
+        icon="mdi:loading"
+        class="spin-icon"
+      />
       <span>{{ i18n.loadingFiles || '正在加载文件列表...' }}</span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import { Icon } from "@iconify/vue";
-import type { WebDAVFile } from "../types";
-import { formatFileSize, getFileIcon, formatTime } from "../utils";
+import type { WebDAVFile } from "../types"
+import { Icon } from "@iconify/vue"
+import { ref } from "vue"
+import {
+  formatFileSize,
+  formatTime,
+  getFileIcon,
+} from "../utils"
 
 interface Props {
-  files: WebDAVFile[];
-  currentPath: string;
-  loading: boolean;
-  i18n: Record<string, any>;
+  files: WebDAVFile[]
+  currentPath: string
+  loading: boolean
+  i18n: Record<string, any>
 }
 
-const props = defineProps<Props>();
+const props = defineProps<Props>()
+
+const emit = defineEmits<Emits>()
 
 interface Emits {
-  (e: "refresh"): void;
-  (e: "navigate", path: string): void;
-  (e: "download", file: WebDAVFile): void;
+  (e: "refresh"): void
+  (e: "navigate", path: string): void
+  (e: "download", file: WebDAVFile): void
 }
 
-const emit = defineEmits<Emits>();
-
-const selectedFile = ref<WebDAVFile | null>(null);
+const selectedFile = ref<WebDAVFile | null>(null)
 
 const onRefresh = () => {
-  emit("refresh");
-};
+  emit("refresh")
+}
 
 const onFileClick = (file: WebDAVFile) => {
   if (selectedFile.value?.path === file.path) {
-    selectedFile.value = null;
+    selectedFile.value = null
   } else {
-    selectedFile.value = file;
+    selectedFile.value = file
   }
-};
+}
 
 const onFileDoubleClick = (file: WebDAVFile) => {
   if (file.isDirectory) {
-    emit("navigate", file.path);
-    selectedFile.value = null;
+    emit("navigate", file.path)
+    selectedFile.value = null
   } else {
-    emit("download", file);
+    emit("download", file)
   }
-};
+}
 
 const onGoBack = () => {
-  const path = props.currentPath;
-  if (path === "/" || !path) return;
+  const path = props.currentPath
+  if (path === "/" || !path) return
 
-  const parentPath = path.split("/").slice(0, -1).join("/") || "/";
-  emit("navigate", parentPath);
-};
+  const parentPath = path.split("/").slice(0, -1).join("/") || "/"
+  emit("navigate", parentPath)
+}
 
 const onOpenFolder = (file: WebDAVFile) => {
-  emit("navigate", file.path);
-  selectedFile.value = null;
-};
+  emit("navigate", file.path)
+  selectedFile.value = null
+}
 
 const onDownload = (file: WebDAVFile) => {
-  emit("download", file);
-};
+  emit("download", file)
+}
 </script>
 
 <style scoped lang="scss">

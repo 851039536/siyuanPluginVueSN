@@ -15,7 +15,12 @@
         <span>{{ currentDisplayPath }}</span>
       </div>
       <div class="folder-header-actions">
-        <Tag v-if="folders.length > 0" size="small" variant="default" class="item-count">
+        <Tag
+          v-if="folders.length > 0"
+          size="small"
+          variant="default"
+          class="item-count"
+        >
           {{ folders.length }} {{ i18n.items || '项' }}
         </Tag>
         <Tag
@@ -55,7 +60,10 @@
       </div>
     </div>
 
-    <div class="folder-items" v-if="!loadingFolders">
+    <div
+      v-if="!loadingFolders"
+      class="folder-items"
+    >
       <div
         v-for="item in folders"
         :key="item.path"
@@ -64,13 +72,30 @@
         @dblclick="$emit('item-dblclick', item)"
       >
         <div class="folder-icon">
-          <IconWrapper :name="item.isFile ? 'file' : 'folder'" :size="20" />
+          <IconWrapper
+            :name="item.isFile ? 'file' : 'folder'"
+            :size="20"
+          />
         </div>
         <div class="folder-info">
-          <div class="folder-name" :title="item.name">{{ item.name }}</div>
-          <div class="folder-meta" v-if="item.size !== undefined || item.modifiedTime">
-            <span v-if="item.isFile && item.size !== undefined" class="file-size">{{ formatSize(item.size) }}</span>
-            <span v-if="item.modifiedTime" class="modified-time">{{ formatDate(item.modifiedTime) }}</span>
+          <div
+            class="folder-name"
+            :title="item.name"
+          >
+            {{ item.name }}
+          </div>
+          <div
+            v-if="item.size !== undefined || item.modifiedTime"
+            class="folder-meta"
+          >
+            <span
+              v-if="item.isFile && item.size !== undefined"
+              class="file-size"
+            >{{ formatSize(item.size) }}</span>
+            <span
+              v-if="item.modifiedTime"
+              class="modified-time"
+            >{{ formatDate(item.modifiedTime) }}</span>
           </div>
         </div>
         <div class="folder-actions">
@@ -115,12 +140,22 @@
           />
         </div>
       </div>
-      <div v-if="folders.length === 0" class="empty-state">
-        <IconWrapper name="folder" :size="48" color="var(--b3-theme-on-surface-light)" />
+      <div
+        v-if="folders.length === 0"
+        class="empty-state"
+      >
+        <IconWrapper
+          name="folder"
+          :size="48"
+          color="var(--b3-theme-on-surface-light)"
+        />
         <p>{{ i18n.emptyFolder || '此文件夹为空' }}</p>
       </div>
     </div>
-    <div class="loading-state" v-else>
+    <div
+      v-else
+      class="loading-state"
+    >
       <div class="loading-spinner"></div>
       <span>{{ i18n.loading || '加载中...' }}</span>
     </div>
@@ -128,37 +163,41 @@
 </template>
 
 <script setup lang="ts">
-import Button from "@/components/Button.vue";
-import IconWrapper from "@/components/IconWrapper.vue";
-import Tag from "@/components/Tag.vue";
-import type { FolderInfo, CacheStatus, DiskBrowserI18n } from "../types";
-import { formatSize } from "../utils";
+import type {
+  CacheStatus,
+  DiskBrowserI18n,
+  FolderInfo,
+} from "../types"
+import Button from "@/components/Button.vue"
+import IconWrapper from "@/components/IconWrapper.vue"
+import Tag from "@/components/Tag.vue"
+import { formatSize } from "../utils"
 
 interface Props {
-  folders: FolderInfo[];
-  currentPath: string;
-  expandedDisk: string;
-  currentDisplayPath: string;
-  loadingFolders: boolean;
-  currentFolderCache: CacheStatus;
-  favoriteFolders: string[];
-  i18n: DiskBrowserI18n;
-  formatDate: (date: string) => string;
+  folders: FolderInfo[]
+  currentPath: string
+  expandedDisk: string
+  currentDisplayPath: string
+  loadingFolders: boolean
+  currentFolderCache: CacheStatus
+  favoriteFolders: string[]
+  i18n: DiskBrowserI18n
+  formatDate: (date: string) => string
 }
 
-const props = defineProps<Props>();
+const props = defineProps<Props>()
 defineEmits<{
-  back: [];
-  refresh: [];
-  open: [path: string];
-  "copy-path": [path: string];
-  "item-dblclick": [item: FolderInfo];
-  "toggle-favorite": [path: string];
-  navigate: [item: FolderInfo];
-}>();
+  "back": []
+  "refresh": []
+  "open": [path: string]
+  "copy-path": [path: string]
+  "item-dblclick": [item: FolderInfo]
+  "toggle-favorite": [path: string]
+  "navigate": [item: FolderInfo]
+}>()
 
 function isFavorite(path: string): boolean {
-  return props.favoriteFolders.includes(path);
+  return props.favoriteFolders.includes(path)
 }
 </script>
 

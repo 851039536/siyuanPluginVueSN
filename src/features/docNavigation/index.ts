@@ -1,80 +1,83 @@
-import { Plugin } from "siyuan";
-import { createApp, h } from "vue";
-import "./styles/index.scss";
-import DocNavContainer from "./components/DocNavContainer.vue";
+import type { ProtyleLike } from "./types"
+import { Plugin } from "siyuan"
+import {
+  createApp,
+  h,
+} from "vue"
+import DocNavContainer from "./components/DocNavContainer.vue"
 import {
   findNavigationTarget,
   removeExistingNav,
-} from "./composables/useDocNavigation";
-import type { ProtyleLike } from "./types";
-import { DEFAULT_OPTIONS } from "./types";
+} from "./composables/useDocNavigation"
+import { DEFAULT_OPTIONS } from "./types"
+import "./styles/index.scss"
 
-let updateTimer: ReturnType<typeof setTimeout> | null = null;
+let updateTimer: ReturnType<typeof setTimeout> | null = null
 
 export function registerDocNavigation(plugin: Plugin) {
   const handleEvent = (e: CustomEvent) => {
     updateDocNavigationDebounced(
       (e.detail as { protyle: ProtyleLike }).protyle,
-    );
+    )
   };
 
   ["switch-protyle", "loaded-protyle-dynamic", "loaded-protyle-static"].forEach(
     (event) => {
-      plugin.eventBus.on(event as any, handleEvent);
+      plugin.eventBus.on(event as any, handleEvent)
     },
-  );
+  )
 }
 
 function updateDocNavigationDebounced(protyle: ProtyleLike) {
-  if (!protyle?.block?.rootID) return;
+  if (!protyle?.block?.rootID) return
 
-  updateTimer && clearTimeout(updateTimer);
+  updateTimer && clearTimeout(updateTimer)
   updateTimer = setTimeout(
     () => updateDocNavigation(protyle),
     DEFAULT_OPTIONS.debounceDelay,
-  );
+  )
 }
 
 async function updateDocNavigation(protyle: ProtyleLike) {
   try {
-    const docId = protyle?.block?.rootID;
-    if (!docId) return;
+    const docId = protyle?.block?.rootID
+    if (!docId) return
 
-    const target = findNavigationTarget(protyle);
-    if (!target) return;
+    const target = findNavigationTarget(protyle)
+    if (!target) return
 
-    removeExistingNav(protyle);
+    removeExistingNav(protyle)
 
-    const protyleRef = protyle as any;
+    const protyleRef = protyle as any
     if (protyleRef.__docNavApp) {
-      protyleRef.__docNavApp.unmount();
-      protyleRef.__docNavApp = null;
+      protyleRef.__docNavApp.unmount()
+      protyleRef.__docNavApp = null
     }
 
-    let container = protyleRef.__docNavContainer;
+    let container = protyleRef.__docNavContainer
     if (!container) {
-      container = document.createElement("div");
-      protyleRef.__docNavContainer = container;
+      container = document.createElement("div")
+      protyleRef.__docNavContainer = container
     }
 
     const app = createApp({
       setup() {
         return () =>
           h(DocNavContainer, {
-            docId: docId,
-          });
+            docId,
+          })
       },
-    });
+    })
 
-    app.mount(container);
-    protyleRef.__docNavApp = app;
+    app.mount(container)
+    protyleRef.__docNavApp = app
 
     if (target.method === "after") {
-      target.el.after(container);
+      target.el.after(container)
     } else {
-      target.el.before(container);
+      target.el.before(container)
     }
   } catch (error) {
-    console.error("更新文档层级导航失败:", error);
+    console.error("更新文档层级导航失败:", error)
   }
 }

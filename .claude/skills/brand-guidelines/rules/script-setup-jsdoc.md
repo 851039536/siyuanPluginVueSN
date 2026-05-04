@@ -46,7 +46,6 @@ Use both `<script>` and `<script setup>` blocks:
  *
  * @component
  */
-export default {}
 </script>
 
 <script setup lang="ts">
@@ -61,6 +60,8 @@ const emit = defineEmits<{
   /** Emitted when counter value changes */
   update: [value: number]
 }>()
+
+export default {}
 
 const count = ref(props.initial ?? 0)
 </script>

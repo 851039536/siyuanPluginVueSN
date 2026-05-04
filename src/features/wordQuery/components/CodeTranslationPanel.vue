@@ -2,7 +2,10 @@
   <div class="code-translation-panel">
     <div class="translation-header">
       <h3 class="panel-title">
-        <IconWrapper name="code" :size="18" />
+        <IconWrapper
+          name="code"
+          :size="18"
+        />
         {{ i18n.codeTranslation || '编程字段翻译' }}
       </h3>
     </div>
@@ -10,7 +13,10 @@
     <div class="translation-content">
       <div class="input-section">
         <div class="input-label">
-          <IconWrapper name="translate" :size="14" />
+          <IconWrapper
+            name="translate"
+            :size="14"
+          />
           {{ i18n.enterChinese || '输入中文' }}
         </div>
         <Textarea
@@ -24,7 +30,10 @@
 
       <div class="style-section">
         <div class="style-label">
-          <IconWrapper name="format" :size="14" />
+          <IconWrapper
+            name="format"
+            :size="14"
+          />
           {{ i18n.namingStyle || '命名风格' }}
         </div>
         <div class="style-options">
@@ -35,8 +44,12 @@
             :class="{ active: selectedStyle.id === style.id }"
             @click="selectStyle(style)"
           >
-            <div class="style-name">{{ style.label }}</div>
-            <div class="style-example">{{ style.example }}</div>
+            <div class="style-name">
+              {{ style.label }}
+            </div>
+            <div class="style-example">
+              {{ style.example }}
+            </div>
           </div>
         </div>
       </div>
@@ -45,32 +58,51 @@
         <Button
           variant="primary"
           size="small"
-          @click="handleTranslate"
           :disabled="isTranslating || !chineseInput.trim()"
           :loading="isTranslating"
+          @click="handleTranslate"
         >
-          <IconWrapper name="translate" :size="16" />
+          <IconWrapper
+            name="translate"
+            :size="16"
+          />
           {{ isTranslating ? (i18n.translating || '翻译中...') : (i18n.translate || '翻译') }}
         </Button>
         <Button
           variant="ghost"
           size="small"
-          @click="handleClear"
           :disabled="!chineseInput.trim() && !translationResult"
+          @click="handleClear"
         >
-          <IconWrapper name="delete" :size="16" />
+          <IconWrapper
+            name="delete"
+            :size="16"
+          />
           {{ i18n.clear || '清除' }}
         </Button>
       </div>
 
-      <div v-if="translationResult" class="result-section">
+      <div
+        v-if="translationResult"
+        class="result-section"
+      >
         <div class="result-header">
           <span class="result-label">
-            <IconWrapper name="success" :size="14" />
+            <IconWrapper
+              name="success"
+              :size="14"
+            />
             {{ i18n.translationResult || '翻译结果' }}
           </span>
-          <Button variant="ghost" size="small" @click="copyResult">
-            <IconWrapper name="contentCopy" :size="14" />
+          <Button
+            variant="ghost"
+            size="small"
+            @click="copyResult"
+          >
+            <IconWrapper
+              name="contentCopy"
+              :size="14"
+            />
             {{ i18n.copy || '复制' }}
           </Button>
         </div>
@@ -86,8 +118,15 @@
             </div>
             <div class="result-item">
               <span class="result-key">{{ i18n.abbreviation || '缩写' }}:</span>
-              <span class="result-value abbreviation" @click="copyAbbreviation">{{ generateAbbreviation(translationResult.translated) }}</span>
-              <IconWrapper name="contentCopy" :size="12" class="copy-icon" />
+              <span
+                class="result-value abbreviation"
+                @click="copyAbbreviation"
+              >{{ generateAbbreviation(translationResult.translated) }}</span>
+              <IconWrapper
+                name="contentCopy"
+                :size="12"
+                class="copy-icon"
+              />
             </div>
             <div class="result-item">
               <span class="result-key">{{ i18n.style || '风格' }}:</span>
@@ -95,9 +134,15 @@
             </div>
           </div>
 
-          <div v-if="translationResult.suggestions.length > 0" class="suggestions">
+          <div
+            v-if="translationResult.suggestions.length > 0"
+            class="suggestions"
+          >
             <div class="suggestions-title">
-              <IconWrapper name="lightbulb" :size="14" />
+              <IconWrapper
+                name="lightbulb"
+                :size="14"
+              />
               {{ i18n.suggestions || '备选方案' }}
             </div>
             <div class="suggestions-list">
@@ -108,15 +153,24 @@
                 @click="copySuggestion(suggestion)"
               >
                 {{ suggestion }}
-                <IconWrapper name="contentCopy" :size="12" />
+                <IconWrapper
+                  name="contentCopy"
+                  :size="12"
+                />
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div v-if="errorMessage" class="error-section">
-        <IconWrapper name="error" :size="16" />
+      <div
+        v-if="errorMessage"
+        class="error-section"
+      >
+        <IconWrapper
+          name="error"
+          :size="16"
+        />
         {{ errorMessage }}
       </div>
     </div>
@@ -124,90 +178,97 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
-import { showMessage } from "siyuan";
-import IconWrapper from "@/components/IconWrapper.vue";
-import Button from "@/components/Button.vue";
-import Textarea from "@/components/Textarea.vue";
+import type {
+  CodeTranslationResult,
+  NamingStyle,
+} from "../utils/codeTranslation"
+import { showMessage } from "siyuan"
 import {
-  translateCodeField,
+  ref,
+  watch,
+} from "vue"
+import Button from "@/components/Button.vue"
+import IconWrapper from "@/components/IconWrapper.vue"
+import Textarea from "@/components/Textarea.vue"
+import { getApiConfigFromPlugin } from "../utils/apiBase"
+import {
+
   NAMING_STYLES,
-  type NamingStyle,
-  type CodeTranslationResult,
-} from "../utils/codeTranslation";
-import { getApiConfigFromPlugin } from "../utils/apiBase";
+
+  translateCodeField,
+} from "../utils/codeTranslation"
 
 interface Props {
-  i18n: any;
-  plugin?: any;
+  i18n: any
+  plugin?: any
 }
 
-const props = defineProps<Props>();
+const props = defineProps<Props>()
 
-const chineseInput = ref("");
-const selectedStyle = ref<NamingStyle>(NAMING_STYLES[0]);
-const translationResult = ref<CodeTranslationResult | null>(null);
-const isTranslating = ref(false);
-const errorMessage = ref("");
+const chineseInput = ref("")
+const selectedStyle = ref<NamingStyle>(NAMING_STYLES[0])
+const translationResult = ref<CodeTranslationResult | null>(null)
+const isTranslating = ref(false)
+const errorMessage = ref("")
 
-const namingStyles = NAMING_STYLES;
+const namingStyles = NAMING_STYLES
 
 function selectStyle(style: NamingStyle) {
-  selectedStyle.value = style;
+  selectedStyle.value = style
 }
 
 function handleInput() {
-  errorMessage.value = "";
+  errorMessage.value = ""
 }
 
 async function handleTranslate() {
   if (!chineseInput.value.trim()) {
-    errorMessage.value = props.i18n.enterChinese || "请输入中文内容";
-    return;
+    errorMessage.value = props.i18n.enterChinese || "请输入中文内容"
+    return
   }
 
-  isTranslating.value = true;
-  errorMessage.value = "";
+  isTranslating.value = true
+  errorMessage.value = ""
 
   try {
-    const config = getApiConfig();
+    const config = getApiConfig()
     const result = await translateCodeField(
       chineseInput.value.trim(),
       selectedStyle.value,
       config,
-    );
-    translationResult.value = result;
+    )
+    translationResult.value = result
   } catch (error) {
-    console.error("翻译失败:", error);
+    console.error("翻译失败:", error)
     errorMessage.value =
-      (error as Error).message ||
-      props.i18n.translationFailed ||
-      "翻译失败，请重试";
+      (error as Error).message
+      || props.i18n.translationFailed
+      || "翻译失败，请重试"
   } finally {
-    isTranslating.value = false;
+    isTranslating.value = false
   }
 }
 
 function handleClear() {
-  chineseInput.value = "";
-  translationResult.value = null;
-  errorMessage.value = "";
+  chineseInput.value = ""
+  translationResult.value = null
+  errorMessage.value = ""
 }
 
 function getApiConfig() {
-  return getApiConfigFromPlugin(props.plugin);
+  return getApiConfigFromPlugin(props.plugin)
 }
 
 function copyResult() {
   if (translationResult.value) {
-    navigator.clipboard.writeText(translationResult.value.translated);
-    showMessage(props.i18n.copied || "已复制", 1500, "info");
+    navigator.clipboard.writeText(translationResult.value.translated)
+    showMessage(props.i18n.copied || "已复制", 1500, "info")
   }
 }
 
 function copySuggestion(suggestion: string) {
-  navigator.clipboard.writeText(suggestion);
-  showMessage(props.i18n.copied || "已复制", 1500, "info");
+  navigator.clipboard.writeText(suggestion)
+  showMessage(props.i18n.copied || "已复制", 1500, "info")
 }
 
 /**
@@ -215,32 +276,32 @@ function copySuggestion(suggestion: string) {
  * 例如: getUserInfo -> GUI, get_user_info -> GUI
  */
 function generateAbbreviation(text: string): string {
-  if (!text) return "";
+  if (!text) return ""
 
-  let words: string[] = [];
+  let words: string[] = []
 
   // 根据命名风格分割单词
   if (text.includes("_")) {
     // snake_case 或 SCREAMING_SNAKE_CASE
-    words = text.split("_").filter((w) => w.length > 0);
+    words = text.split("_").filter((w) => w.length > 0)
   } else if (text.includes("-")) {
     // kebab-case
-    words = text.split("-").filter((w) => w.length > 0);
+    words = text.split("-").filter((w) => w.length > 0)
   } else {
     // camelCase 或 PascalCase - 按大写字母分割
-    const matches = text.match(/[A-Z]?[a-z]+|[A-Z]+(?=[A-Z][a-z]|\b)/g);
-    words = matches || [text];
+    const matches = text.match(/[A-Z]?[a-z]+|[A-Z]+(?=[A-Z][a-z]|\b)/g)
+    words = matches || [text]
   }
 
   // 取每个单词的首字母并转为大写
-  return words.map((w) => w.charAt(0).toUpperCase()).join("");
+  return words.map((w) => w.charAt(0).toUpperCase()).join("")
 }
 
 function copyAbbreviation() {
   if (translationResult.value) {
-    const abbr = generateAbbreviation(translationResult.value.translated);
-    navigator.clipboard.writeText(abbr);
-    showMessage(props.i18n.copied || "已复制", 1500, "info");
+    const abbr = generateAbbreviation(translationResult.value.translated)
+    navigator.clipboard.writeText(abbr)
+    showMessage(props.i18n.copied || "已复制", 1500, "info")
   }
 }
 
@@ -248,10 +309,10 @@ watch(
   () => chineseInput.value,
   () => {
     if (errorMessage.value) {
-      errorMessage.value = "";
+      errorMessage.value = ""
     }
   },
-);
+)
 </script>
 
 <style scoped lang="scss">

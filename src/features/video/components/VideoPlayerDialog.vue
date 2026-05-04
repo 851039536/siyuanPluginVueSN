@@ -1,9 +1,21 @@
 <template>
-  <div class="dialog-overlay" v-if="visible" @click="handleClose">
-    <div class="dialog dialog-large" @click.stop>
+  <div
+    v-if="visible"
+    class="dialog-overlay"
+    @click="handleClose"
+  >
+    <div
+      class="dialog dialog-large"
+      @click.stop
+    >
       <div class="dialog-header">
         <h3>{{ title }}</h3>
-        <IconWrapper name="close" :size="14" class="icon-btn" @click="handleClose" />
+        <IconWrapper
+          name="close"
+          :size="14"
+          class="icon-btn"
+          @click="handleClose"
+        />
       </div>
       <div class="dialog-body">
         <div class="video-player-container">
@@ -16,7 +28,10 @@
             @ready="handlePlayerReady"
             @error="handlePlayerError"
           />
-          <div class="video-details" v-if="video">
+          <div
+            v-if="video"
+            class="video-details"
+          >
             <h4>{{ video.name }}</h4>
             <div class="video-meta">
               <span class="video-category">{{ video.category }}</span>
@@ -31,21 +46,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from "vue";
-import type Player from "video.js/dist/types/player";
-import IconWrapper from "@/components/IconWrapper.vue";
-import VideoPlayer from "./VideoPlayer.vue";
-import { formatFileSize } from "../utils/utils";
+import type Player from "video.js/dist/types/player"
+import {
+  computed,
+  watch,
+} from "vue"
+import IconWrapper from "@/components/IconWrapper.vue"
+import { formatFileSize } from "../utils/utils"
+import VideoPlayer from "./VideoPlayer.vue"
 
 /**
  * 视频数据接口
  */
 export interface VideoData {
-  name: string;
-  path: string;
-  size: number;
-  modTime: number;
-  category: string;
+  name: string
+  path: string
+  size: number
+  modTime: number
+  category: string
 }
 
 /**
@@ -53,19 +71,19 @@ export interface VideoData {
  */
 export interface VideoPlayerDialogProps {
   /** 是否显示对话框 */
-  visible?: boolean;
+  visible?: boolean
   /** 视频数据 */
-  video?: VideoData | null;
+  video?: VideoData | null
   /** 视频 URL */
-  videoUrl?: string;
+  videoUrl?: string
   /** 对话框标题 */
-  title?: string;
+  title?: string
   /** 播放器宽度（默认 800） */
-  playerWidth?: number;
+  playerWidth?: number
   /** 播放器高度（默认 450） */
-  playerHeight?: number;
+  playerHeight?: number
   /** 是否自适应 */
-  fluid?: boolean;
+  fluid?: boolean
 }
 
 /**
@@ -73,11 +91,11 @@ export interface VideoPlayerDialogProps {
  */
 export interface VideoPlayerDialogEmits {
   /** 关闭对话框 */
-  (e: "close"): void;
+  (e: "close"): void
   /** 播放器初始化完成 */
-  (e: "ready", player: Player): void;
+  (e: "ready", player: Player): void
   /** 播放器错误 */
-  (e: "error", error: any): void;
+  (e: "error", error: any): void
 }
 
 const props = withDefaults(defineProps<VideoPlayerDialogProps>(), {
@@ -86,48 +104,48 @@ const props = withDefaults(defineProps<VideoPlayerDialogProps>(), {
   playerWidth: 800,
   playerHeight: 450,
   fluid: false,
-});
+})
 
-const emit = defineEmits<VideoPlayerDialogEmits>();
+const emit = defineEmits<VideoPlayerDialogEmits>()
 
 // 当前视频 URL（处理 Blob URL 释放）
-const currentVideoUrl = computed(() => props.videoUrl || "");
+const currentVideoUrl = computed(() => props.videoUrl || "")
 
 // 播放器实例引用
-let playerInstance: Player | null = null;
+let playerInstance: Player | null = null
 
 // 处理关闭
 function handleClose() {
   // 销毁播放器
   if (playerInstance) {
-    playerInstance.dispose();
-    playerInstance = null;
+    playerInstance.dispose()
+    playerInstance = null
   }
 
   // 释放 Blob URL
   if (currentVideoUrl.value && currentVideoUrl.value.startsWith("blob:")) {
-    URL.revokeObjectURL(currentVideoUrl.value);
+    URL.revokeObjectURL(currentVideoUrl.value)
   }
 
-  emit("close");
+  emit("close")
 }
 
 // 处理播放器就绪
 function handlePlayerReady(player: Player) {
-  playerInstance = player;
-  emit("ready", player);
+  playerInstance = player
+  emit("ready", player)
 }
 
 // 处理播放器错误
 function handlePlayerError(error: any) {
-  console.error("Video player error:", error);
-  emit("error", error);
+  console.error("Video player error:", error)
+  emit("error", error)
 }
 
 // 格式化日期
 function formatDate(timestamp?: number): string {
-  if (!timestamp) return "";
-  return new Date(timestamp).toLocaleDateString();
+  if (!timestamp) return ""
+  return new Date(timestamp).toLocaleDateString()
 }
 
 // 监听 visible 变化，自动清理
@@ -135,10 +153,10 @@ watch(
   () => props.visible,
   (newVal) => {
     if (!newVal) {
-      handleClose();
+      handleClose()
     }
   },
-);
+)
 </script>
 
 <style scoped lang="scss">

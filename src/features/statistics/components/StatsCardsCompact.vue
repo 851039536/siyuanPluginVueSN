@@ -1,11 +1,20 @@
 <template>
   <div class="stats-grid">
-    <div v-for="item in statsItems" :key="item.label" class="stat-item" :class="item.variant">
+    <div
+      v-for="item in statsItems"
+      :key="item.label"
+      class="stat-item"
+      :class="item.variant"
+    >
       <span class="stat-icon">{{ item.icon }}</span>
       <div class="stat-data">
         <div class="value-row">
           <span class="stat-value">{{ item.value }}</span>
-          <span v-if="item.change !== null" class="change" :class="item.change > 0 ? 'up' : 'down'">
+          <span
+            v-if="item.change !== null"
+            class="change"
+            :class="item.change > 0 ? 'up' : 'down'"
+          >
             {{ formatChange(item.change) }}
           </span>
         </div>
@@ -16,34 +25,37 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-import { formatNumber, formatShortNumber } from "../utils";
+import { computed } from "vue"
+import {
+  formatNumber,
+  formatShortNumber,
+} from "../utils"
 
 interface Props {
-  totalNotes?: number;
-  totalWords?: number;
-  totalBlocks?: number;
-  totalAssets?: number;
-  totalImages?: number;
-  totalTags?: number;
-  totalBacklinks?: number;
-  todayCreated?: number;
-  todayModified?: number;
-  avgWordsPerDoc?: number;
-  createdChange?: number | null;
-  modifiedChange?: number | null;
+  totalNotes?: number
+  totalWords?: number
+  totalBlocks?: number
+  totalAssets?: number
+  totalImages?: number
+  totalTags?: number
+  totalBacklinks?: number
+  todayCreated?: number
+  todayModified?: number
+  avgWordsPerDoc?: number
+  createdChange?: number | null
+  modifiedChange?: number | null
   i18n?: {
-    totalNotes: string;
-    totalWords: string;
-    totalBlocks: string;
-    totalAssets: string;
-    totalImages: string;
-    totalTags: string;
-    totalBacklinks: string;
-    todayCreated: string;
-    todayModified: string;
-    avgWordsPerDoc: string;
-  };
+    totalNotes: string
+    totalWords: string
+    totalBlocks: string
+    totalAssets: string
+    totalImages: string
+    totalTags: string
+    totalBacklinks: string
+    todayCreated: string
+    todayModified: string
+    avgWordsPerDoc: string
+  }
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -71,24 +83,81 @@ const props = withDefaults(defineProps<Props>(), {
     todayModified: "今日修改",
     avgWordsPerDoc: "平均字数",
   }),
-});
+})
 
 const statsItems = computed(() => [
-  { icon: "📓", value: formatNumber(props.totalNotes), label: props.i18n.totalNotes, variant: "primary" as const, change: null as number | null },
-  { icon: "✍️", value: formatNumber(props.totalWords), label: props.i18n.totalWords, variant: "primary" as const, change: null },
-  { icon: "📅", value: String(props.todayCreated), label: props.i18n.todayCreated, change: props.createdChange },
-  { icon: "✏️", value: String(props.todayModified), label: props.i18n.todayModified, change: props.modifiedChange },
-  { icon: "📊", value: String(props.avgWordsPerDoc), label: props.i18n.avgWordsPerDoc, change: null },
-  { icon: "🧩", value: formatShortNumber(props.totalBlocks), label: props.i18n.totalBlocks, variant: "secondary" as const, change: null },
-  { icon: "📎", value: formatShortNumber(props.totalAssets), label: props.i18n.totalAssets, variant: "secondary" as const, change: null },
-  { icon: "🖼️", value: formatShortNumber(props.totalImages), label: props.i18n.totalImages, variant: "secondary" as const, change: null },
-  { icon: "🏷️", value: formatShortNumber(props.totalTags), label: props.i18n.totalTags, variant: "secondary" as const, change: null },
-  { icon: "🔗", value: formatShortNumber(props.totalBacklinks), label: props.i18n.totalBacklinks, variant: "secondary" as const, change: null },
-]);
+  {
+    icon: "📓",
+    value: formatNumber(props.totalNotes),
+    label: props.i18n.totalNotes,
+    variant: "primary" as const,
+    change: null as number | null,
+  },
+  {
+    icon: "✍️",
+    value: formatNumber(props.totalWords),
+    label: props.i18n.totalWords,
+    variant: "primary" as const,
+    change: null,
+  },
+  {
+    icon: "📅",
+    value: String(props.todayCreated),
+    label: props.i18n.todayCreated,
+    change: props.createdChange,
+  },
+  {
+    icon: "✏️",
+    value: String(props.todayModified),
+    label: props.i18n.todayModified,
+    change: props.modifiedChange,
+  },
+  {
+    icon: "📊",
+    value: String(props.avgWordsPerDoc),
+    label: props.i18n.avgWordsPerDoc,
+    change: null,
+  },
+  {
+    icon: "🧩",
+    value: formatShortNumber(props.totalBlocks),
+    label: props.i18n.totalBlocks,
+    variant: "secondary" as const,
+    change: null,
+  },
+  {
+    icon: "📎",
+    value: formatShortNumber(props.totalAssets),
+    label: props.i18n.totalAssets,
+    variant: "secondary" as const,
+    change: null,
+  },
+  {
+    icon: "🖼️",
+    value: formatShortNumber(props.totalImages),
+    label: props.i18n.totalImages,
+    variant: "secondary" as const,
+    change: null,
+  },
+  {
+    icon: "🏷️",
+    value: formatShortNumber(props.totalTags),
+    label: props.i18n.totalTags,
+    variant: "secondary" as const,
+    change: null,
+  },
+  {
+    icon: "🔗",
+    value: formatShortNumber(props.totalBacklinks),
+    label: props.i18n.totalBacklinks,
+    variant: "secondary" as const,
+    change: null,
+  },
+])
 
 function formatChange(change: number | null): string {
-  if (!change) return "";
-  return (change > 0 ? "↑" : "↓") + Math.abs(change).toFixed(0) + "%";
+  if (!change) return ""
+  return `${(change > 0 ? "↑" : "↓") + Math.abs(change).toFixed(0)}%`
 }
 </script>
 

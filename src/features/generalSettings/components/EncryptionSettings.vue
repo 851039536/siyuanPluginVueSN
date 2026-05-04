@@ -6,7 +6,10 @@
 
     <div class="section-content">
       <!-- 密码状态 -->
-      <div class="status-card" :class="{ 'has-password': hasPassword }">
+      <div
+        class="status-card"
+        :class="{ 'has-password': hasPassword }"
+      >
         <span class="status-icon">{{ hasPassword ? '✓' : '⚠' }}</span>
         <span class="status-text">
           {{ hasPassword ? plugin.i18n.passwordSet : plugin.i18n.passwordNotSetYet }}
@@ -35,7 +38,10 @@
       </div>
 
       <!-- 保存按钮 -->
-      <button class="save-btn" @click="handleSavePassword">
+      <button
+        class="save-btn"
+        @click="handleSavePassword"
+      >
         {{ hasPassword ? plugin.i18n.changePassword : plugin.i18n.save }}
       </button>
 
@@ -52,55 +58,63 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onActivated } from "vue";
-import { showMessage, type Plugin } from "siyuan";
-import { getEncryptionInstance } from "../../encryption";
+import type { Plugin } from "siyuan"
+import {
+
+  showMessage,
+} from "siyuan"
+import {
+  onActivated,
+  onMounted,
+  ref,
+} from "vue"
+import { getEncryptionInstance } from "../../encryption"
 
 const props = defineProps<{
-  plugin: Plugin;
-}>();
+  plugin: Plugin
+}>()
 
-const newPassword = ref("");
-const confirmPassword = ref("");
-const hasPassword = ref(false);
+const newPassword = ref("")
+const confirmPassword = ref("")
+const hasPassword = ref(false)
 
 onMounted(() => {
-  checkPasswordStatus();
-});
+  checkPasswordStatus()
+})
 
 onActivated(() => {
-  checkPasswordStatus();
-});
+  checkPasswordStatus()
+})
 
 function checkPasswordStatus() {
-  const encryption = getEncryptionInstance();
+  const encryption = getEncryptionInstance()
   if (encryption) {
-    hasPassword.value = encryption.hasPassword();
+    hasPassword.value = encryption.hasPassword()
   }
 }
 
 async function handleSavePassword() {
-  const pwd1 = newPassword.value.trim();
-  const pwd2 = confirmPassword.value.trim();
+  const pwd1 = newPassword.value.trim()
+  const pwd2 = confirmPassword.value.trim()
 
   if (!pwd1) {
-    showMessage(props.plugin.i18n.passwordEmpty, 3000, "error");
-    return;
+    showMessage(props.plugin.i18n.passwordEmpty, 3000, "error")
+    return
   }
 
   if (pwd1 !== pwd2) {
-    showMessage(props.plugin.i18n.passwordMismatch, 3000, "error");
-    return;
+    showMessage(props.plugin.i18n.passwordMismatch, 3000, "error")
+    return
   }
 
-  const encryption = getEncryptionInstance();
+  const encryption = getEncryptionInstance()
   if (encryption) {
-    encryption.setPassword(pwd1);
-    await encryption.savePassword();
-    showMessage(props.plugin.i18n.passwordSetSuccess, 2000, "info");
-    newPassword.value = "";
-    confirmPassword.value = "";
-    checkPasswordStatus();
+    encryption.setPassword(pwd1)
+    await encryption.savePassword()
+    showMessage(props.plugin.i18n.passwordSetSuccess, 2000, "info")
+    newPassword.value = ""
+    confirmPassword.value = ""
+    checkPasswordStatus()
   }
 }
 </script>

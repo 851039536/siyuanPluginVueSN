@@ -2,7 +2,10 @@
   <div class="code-comment-panel">
     <div class="panel-header">
       <h3 class="panel-title">
-        <IconWrapper name="code" :size="18" />
+        <IconWrapper
+          name="code"
+          :size="18"
+        />
         {{ i18n.codeCommentGenerator || '代码注释生成' }}
       </h3>
     </div>
@@ -10,7 +13,10 @@
     <div class="panel-content">
       <div class="input-section">
         <div class="input-label">
-          <IconWrapper name="code" :size="14" />
+          <IconWrapper
+            name="code"
+            :size="14"
+          />
           {{ i18n.enterCode || '输入代码' }}
         </div>
         <Textarea
@@ -24,7 +30,10 @@
 
       <div class="style-section">
         <div class="style-label">
-          <IconWrapper name="format" :size="14" />
+          <IconWrapper
+            name="format"
+            :size="14"
+          />
           {{ i18n.commentStyle || '注释风格' }}
         </div>
         <div class="style-options">
@@ -35,8 +44,12 @@
             :class="{ active: selectedStyle.id === style.id }"
             @click="selectStyle(style)"
           >
-            <div class="style-name">{{ style.label }}</div>
-            <div class="style-example">{{ style.example }}</div>
+            <div class="style-name">
+              {{ style.label }}
+            </div>
+            <div class="style-example">
+              {{ style.example }}
+            </div>
           </div>
         </div>
       </div>
@@ -45,32 +58,51 @@
         <Button
           variant="primary"
           size="small"
-          @click="handleGenerate"
           :disabled="isGenerating || !codeInput.trim()"
           :loading="isGenerating"
+          @click="handleGenerate"
         >
-          <IconWrapper name="sparkles" :size="16" />
+          <IconWrapper
+            name="sparkles"
+            :size="16"
+          />
           {{ isGenerating ? (i18n.generating || '生成中...') : (i18n.generate || '生成注释') }}
         </Button>
         <Button
           variant="ghost"
           size="small"
-          @click="handleClear"
           :disabled="!codeInput.trim() && !result"
+          @click="handleClear"
         >
-          <IconWrapper name="delete" :size="16" />
+          <IconWrapper
+            name="delete"
+            :size="16"
+          />
           {{ i18n.clear || '清除' }}
         </Button>
       </div>
 
-      <div v-if="result" class="result-section">
+      <div
+        v-if="result"
+        class="result-section"
+      >
         <div class="result-header">
           <span class="result-label">
-            <IconWrapper name="success" :size="14" />
+            <IconWrapper
+              name="success"
+              :size="14"
+            />
             {{ i18n.generatedResult || '生成结果' }}
           </span>
-          <Button variant="ghost" size="small" @click="copyResult">
-            <IconWrapper name="contentCopy" :size="14" />
+          <Button
+            variant="ghost"
+            size="small"
+            @click="copyResult"
+          >
+            <IconWrapper
+              name="contentCopy"
+              :size="14"
+            />
             {{ i18n.copy || '复制' }}
           </Button>
         </div>
@@ -79,8 +111,14 @@
         </div>
       </div>
 
-      <div v-if="errorMessage" class="error-section">
-        <IconWrapper name="error" :size="16" />
+      <div
+        v-if="errorMessage"
+        class="error-section"
+      >
+        <IconWrapper
+          name="error"
+          :size="16"
+        />
         {{ errorMessage }}
       </div>
     </div>
@@ -88,84 +126,91 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
-import { showMessage } from "siyuan";
-import IconWrapper from "@/components/IconWrapper.vue";
-import Button from "@/components/Button.vue";
-import Textarea from "@/components/Textarea.vue";
+import type {
+  CodeCommentResult,
+  CommentStyle,
+} from "../utils/codeUtils"
+import { showMessage } from "siyuan"
 import {
-  generateCodeComments,
+  ref,
+  watch,
+} from "vue"
+import Button from "@/components/Button.vue"
+import IconWrapper from "@/components/IconWrapper.vue"
+import Textarea from "@/components/Textarea.vue"
+import { getApiConfigFromPlugin } from "../utils/apiBase"
+import {
+
   COMMENT_STYLES,
-  type CommentStyle,
-  type CodeCommentResult,
-} from "../utils/codeUtils";
-import { getApiConfigFromPlugin } from "../utils/apiBase";
+
+  generateCodeComments,
+} from "../utils/codeUtils"
 
 interface Props {
-  i18n: any;
-  plugin?: any;
+  i18n: any
+  plugin?: any
 }
 
-const props = defineProps<Props>();
+const props = defineProps<Props>()
 
-const codeInput = ref("");
-const selectedStyle = ref<CommentStyle>(COMMENT_STYLES[0]);
-const result = ref<CodeCommentResult | null>(null);
-const isGenerating = ref(false);
-const errorMessage = ref("");
+const codeInput = ref("")
+const selectedStyle = ref<CommentStyle>(COMMENT_STYLES[0])
+const result = ref<CodeCommentResult | null>(null)
+const isGenerating = ref(false)
+const errorMessage = ref("")
 
-const commentStyles = COMMENT_STYLES;
+const commentStyles = COMMENT_STYLES
 
 function selectStyle(style: CommentStyle) {
-  selectedStyle.value = style;
+  selectedStyle.value = style
 }
 
 function handleInput() {
-  errorMessage.value = "";
+  errorMessage.value = ""
 }
 
 async function handleGenerate() {
   if (!codeInput.value.trim()) {
-    errorMessage.value = props.i18n.enterCode || "请输入代码内容";
-    return;
+    errorMessage.value = props.i18n.enterCode || "请输入代码内容"
+    return
   }
 
-  isGenerating.value = true;
-  errorMessage.value = "";
+  isGenerating.value = true
+  errorMessage.value = ""
 
   try {
-    const config = getApiConfig();
+    const config = getApiConfig()
     const res = await generateCodeComments(
       codeInput.value.trim(),
       selectedStyle.value,
       config,
-    );
-    result.value = res;
+    )
+    result.value = res
   } catch (error) {
-    console.error("生成注释失败:", error);
+    console.error("生成注释失败:", error)
     errorMessage.value =
-      (error as Error).message ||
-      props.i18n.generateFailed ||
-      "生成失败，请重试";
+      (error as Error).message
+      || props.i18n.generateFailed
+      || "生成失败，请重试"
   } finally {
-    isGenerating.value = false;
+    isGenerating.value = false
   }
 }
 
 function handleClear() {
-  codeInput.value = "";
-  result.value = null;
-  errorMessage.value = "";
+  codeInput.value = ""
+  result.value = null
+  errorMessage.value = ""
 }
 
 function getApiConfig() {
-  return getApiConfigFromPlugin(props.plugin);
+  return getApiConfigFromPlugin(props.plugin)
 }
 
 function copyResult() {
   if (result.value) {
-    navigator.clipboard.writeText(result.value.commented);
-    showMessage(props.i18n.copied || "已复制", 1500, "info");
+    navigator.clipboard.writeText(result.value.commented)
+    showMessage(props.i18n.copied || "已复制", 1500, "info")
   }
 }
 
@@ -173,10 +218,10 @@ watch(
   () => codeInput.value,
   () => {
     if (errorMessage.value) {
-      errorMessage.value = "";
+      errorMessage.value = ""
     }
   },
-);
+)
 </script>
 
 <style scoped lang="scss">

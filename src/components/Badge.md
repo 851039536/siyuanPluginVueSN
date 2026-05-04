@@ -7,11 +7,6 @@
 ### 数量徽标
 
 ```vue
-<script setup lang="ts">
-import Badge from '@/components/Badge.vue'
-import Button from '@/components/Button.vue'
-</script>
-
 <template>
   <Badge :content="5">
     <Button>消息</Button>
@@ -21,6 +16,11 @@ import Button from '@/components/Button.vue'
     <Button>通知</Button>
   </Badge>
 </template>
+
+<script setup lang="ts">
+import Badge from '@/components/Badge.vue'
+import Button from '@/components/Button.vue'
+</script>
 ```
 
 ### 最大值限制
@@ -28,12 +28,18 @@ import Button from '@/components/Button.vue'
 ```vue
 <template>
   <!-- 超过 max 显示 "99+" -->
-  <Badge :content="100" :max="99">
+  <Badge
+    :content="100"
+    :max="99"
+  >
     <Button>消息</Button>
   </Badge>
 
   <!-- 自定义最大值 -->
-  <Badge :content="1000" :max="999">
+  <Badge
+    :content="1000"
+    :max="999"
+  >
     <Button>通知</Button>
   </Badge>
 </template>
@@ -73,27 +79,45 @@ import Button from '@/components/Button.vue'
 
 ```vue
 <template>
-  <Badge variant="default" content="默认">
+  <Badge
+    variant="default"
+    content="默认"
+  >
     <Button>默认</Button>
   </Badge>
 
-  <Badge variant="primary" content="主要">
+  <Badge
+    variant="primary"
+    content="主要"
+  >
     <Button>主要</Button>
   </Badge>
 
-  <Badge variant="success" content="成功">
+  <Badge
+    variant="success"
+    content="成功"
+  >
     <Button>成功</Button>
   </Badge>
 
-  <Badge variant="warning" content="警告">
+  <Badge
+    variant="warning"
+    content="警告"
+  >
     <Button>警告</Button>
   </Badge>
 
-  <Badge variant="danger" content="危险">
+  <Badge
+    variant="danger"
+    content="危险"
+  >
     <Button>危险</Button>
   </Badge>
 
-  <Badge variant="info" content="信息">
+  <Badge
+    variant="info"
+    content="信息"
+  >
     <Button>信息</Button>
   </Badge>
 </template>
@@ -103,15 +127,24 @@ import Button from '@/components/Button.vue'
 
 ```vue
 <template>
-  <Badge color="#8b5cf6" content="自定义">
+  <Badge
+    color="#8b5cf6"
+    content="自定义"
+  >
     <Button>紫色</Button>
   </Badge>
 
-  <Badge color="#ec4899" content="自定义">
+  <Badge
+    color="#ec4899"
+    content="自定义"
+  >
     <Button>粉色</Button>
   </Badge>
 
-  <Badge color="#14b8a6" dot>
+  <Badge
+    color="#14b8a6"
+    dot
+  >
     <Button>青色圆点</Button>
   </Badge>
 </template>
@@ -123,16 +156,31 @@ import Button from '@/components/Button.vue'
 
 ```vue
 <template>
-  <Badge size="small" :content="99">
-    <Button size="small">小</Button>
+  <Badge
+    size="small"
+    :content="99"
+  >
+    <Button size="small">
+      小
+    </Button>
   </Badge>
 
-  <Badge size="medium" :content="99">
-    <Button size="medium">中</Button>
+  <Badge
+    size="medium"
+    :content="99"
+  >
+    <Button size="medium">
+      中
+    </Button>
   </Badge>
 
-  <Badge size="large" :content="99">
-    <Button size="large">大</Button>
+  <Badge
+    size="large"
+    :content="99"
+  >
+    <Button size="large">
+      大
+    </Button>
   </Badge>
 </template>
 ```
@@ -143,19 +191,31 @@ import Button from '@/components/Button.vue'
 
 ```vue
 <template>
-  <Badge position="top-right" content="右上">
+  <Badge
+    position="top-right"
+    content="右上"
+  >
     <Button>右上</Button>
   </Badge>
 
-  <Badge position="top-left" content="左上">
+  <Badge
+    position="top-left"
+    content="左上"
+  >
     <Button>左上</Button>
   </Badge>
 
-  <Badge position="bottom-right" content="右下">
+  <Badge
+    position="bottom-right"
+    content="右下"
+  >
     <Button>右下</Button>
   </Badge>
 
-  <Badge position="bottom-left" content="左下">
+  <Badge
+    position="bottom-left"
+    content="左下"
+  >
     <Button>左下</Button>
   </Badge>
 </template>
@@ -166,11 +226,18 @@ import Button from '@/components/Button.vue'
 ```vue
 <template>
   <!-- [x, y] 偏移量（像素） -->
-  <Badge :offset="[10, 10]" content="偏移">
+  <Badge
+    :offset="[10, 10]"
+    content="偏移"
+  >
     <Button>偏移</Button>
   </Badge>
 
-  <Badge position="bottom-right" :offset="[5, 5]" dot>
+  <Badge
+    position="bottom-right"
+    :offset="[5, 5]"
+    dot
+  >
     <Button>右下偏移</Button>
   </Badge>
 </template>
@@ -179,6 +246,24 @@ import Button from '@/components/Button.vue'
 ## 隐藏徽标
 
 ```vue
+<template>
+  <!-- 隐藏徽标 -->
+  <Badge
+    :hidden="!hasNotification"
+    :content="5"
+  >
+    <Button>消息</Button>
+  </Badge>
+
+  <!-- 条件隐藏 -->
+  <Badge
+    :content="0"
+    :show-zero="false"
+  >
+    <Button>通知</Button>
+  </Badge>
+</template>
+
 <script setup lang="ts">
 import { ref } from 'vue'
 import Badge from '@/components/Badge.vue'
@@ -186,18 +271,6 @@ import Button from '@/components/Button.vue'
 
 const hasNotification = ref(true)
 </script>
-
-<template>
-  <!-- 隐藏徽标 -->
-  <Badge :hidden="!hasNotification" :content="5">
-    <Button>消息</Button>
-  </Badge>
-
-  <!-- 条件隐藏 -->
-  <Badge :content="0" :show-zero="false">
-    <Button>通知</Button>
-  </Badge>
-</template>
 ```
 
 ## 独立使用
@@ -216,6 +289,32 @@ const hasNotification = ref(true)
 ### 通知中心
 
 ```vue
+<template>
+  <div class="notification-center">
+    <Badge
+      :content="unreadCount"
+      :max="99"
+    >
+      <Button icon="iconBell">
+        消息
+      </Button>
+    </Badge>
+
+    <Badge dot>
+      <Button icon="iconSettings">
+        设置
+      </Button>
+    </Badge>
+
+    <Badge
+      variant="success"
+      content="NEW"
+    >
+      <Button>更新</Button>
+    </Badge>
+  </div>
+</template>
+
 <script setup lang="ts">
 import { ref } from 'vue'
 import Badge from '@/components/Badge.vue'
@@ -225,22 +324,6 @@ import IconWrapper from '@/components/IconWrapper.vue'
 const unreadCount = ref(5)
 const hasUpdate = ref(true)
 </script>
-
-<template>
-  <div class="notification-center">
-    <Badge :content="unreadCount" :max="99">
-      <Button icon="iconBell">消息</Button>
-    </Badge>
-
-    <Badge dot>
-      <Button icon="iconSettings">设置</Button>
-    </Badge>
-
-    <Badge variant="success" content="NEW">
-      <Button>更新</Button>
-    </Badge>
-  </div>
-</template>
 
 <style scoped>
 .notification-center {
@@ -253,26 +336,40 @@ const hasUpdate = ref(true)
 ### 用户状态
 
 ```vue
-<script setup lang="ts">
-import Badge from '@/components/Badge.vue'
-import Avatar from '@/components/Avatar.vue'
-</script>
-
 <template>
   <div class="user-status">
-    <Badge dot color="#10b981" position="bottom-right">
-      <Avatar src="avatar.jpg" size="large" />
+    <Badge
+      dot
+      color="#10b981"
+      position="bottom-right"
+    >
+      <Avatar
+        src="avatar.jpg"
+        size="large"
+      />
     </Badge>
     <span>在线</span>
   </div>
 
   <div class="user-status">
-    <Badge dot color="#ef4444" position="bottom-right">
-      <Avatar src="avatar2.jpg" size="large" />
+    <Badge
+      dot
+      color="#ef4444"
+      position="bottom-right"
+    >
+      <Avatar
+        src="avatar2.jpg"
+        size="large"
+      />
     </Badge>
     <span>忙碌</span>
   </div>
 </template>
+
+<script setup lang="ts">
+import Avatar from '@/components/Avatar.vue'
+import Badge from '@/components/Badge.vue'
+</script>
 
 <style scoped>
 .user-status {
@@ -286,26 +383,37 @@ import Avatar from '@/components/Avatar.vue'
 ### 菜单项
 
 ```vue
-<script setup lang="ts">
-import Badge from '@/components/Badge.vue'
-</script>
-
 <template>
   <div class="menu-item">
     <span>收件箱</span>
-    <Badge :content="12" size="small" />
+    <Badge
+      :content="12"
+      size="small"
+    />
   </div>
 
   <div class="menu-item">
     <span>草稿箱</span>
-    <Badge :content="3" size="small" variant="warning" />
+    <Badge
+      :content="3"
+      size="small"
+      variant="warning"
+    />
   </div>
 
   <div class="menu-item">
     <span>已发送</span>
-    <Badge content="NEW" size="small" variant="success" />
+    <Badge
+      content="NEW"
+      size="small"
+      variant="success"
+    />
   </div>
 </template>
+
+<script setup lang="ts">
+import Badge from '@/components/Badge.vue'
+</script>
 
 <style scoped>
 .menu-item {

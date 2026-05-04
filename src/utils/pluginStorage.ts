@@ -2,17 +2,17 @@
  * 插件存储通用工具类
  * 封装思源插件的 saveData 和 loadData 方法
  */
-import { Plugin } from "siyuan";
+import { Plugin } from "siyuan"
 
 /**
  * 插件存储管理器
  * 提供类型安全的数据存储和加载功能
  */
 export class PluginStorage {
-  private plugin: Plugin;
+  private plugin: Plugin
 
   constructor(plugin: Plugin) {
-    this.plugin = plugin;
+    this.plugin = plugin
   }
 
   /**
@@ -23,11 +23,11 @@ export class PluginStorage {
    */
   async save<T>(key: string, data: T): Promise<boolean> {
     try {
-      await this.plugin.saveData(key, data);
-      return true;
+      await this.plugin.saveData(key, data)
+      return true
     } catch (error) {
-      console.error(`保存数据失败 [${key}]:`, error);
-      return false;
+      console.error(`保存数据失败 [${key}]:`, error)
+      return false
     }
   }
 
@@ -38,11 +38,11 @@ export class PluginStorage {
    */
   async load<T>(key: string): Promise<T | null> {
     try {
-      const data = await this.plugin.loadData(key);
-      return data as T;
+      const data = await this.plugin.loadData(key)
+      return data as T
     } catch (error) {
-      console.error(`加载数据失败 [${key}]:`, error);
-      return null;
+      console.error(`加载数据失败 [${key}]:`, error)
+      return null
     }
   }
 
@@ -53,8 +53,8 @@ export class PluginStorage {
    * @returns 加载的数据，失败或不存在时返回默认值
    */
   async loadWithDefault<T>(key: string, defaultValue: T): Promise<T> {
-    const data = await this.load<T>(key);
-    return data ?? defaultValue;
+    const data = await this.load<T>(key)
+    return data ?? defaultValue
   }
 
   /**
@@ -64,11 +64,11 @@ export class PluginStorage {
    */
   async remove(key: string): Promise<boolean> {
     try {
-      await this.plugin.saveData(key, "");
-      return true;
+      await this.plugin.saveData(key, "")
+      return true
     } catch (error) {
-      console.error(`删除数据失败 [${key}]:`, error);
-      return false;
+      console.error(`删除数据失败 [${key}]:`, error)
+      return false
     }
   }
 
@@ -78,8 +78,8 @@ export class PluginStorage {
    * @returns 数据是否存在
    */
   async exists(key: string): Promise<boolean> {
-    const data = await this.load(key);
-    return data !== null && data !== undefined && data !== "";
+    const data = await this.load(key)
+    return data !== null && data !== undefined && data !== ""
   }
 }
 
@@ -89,5 +89,5 @@ export class PluginStorage {
  * @returns PluginStorage 实例
  */
 export function createPluginStorage(plugin: Plugin): PluginStorage {
-  return new PluginStorage(plugin);
+  return new PluginStorage(plugin)
 }

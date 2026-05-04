@@ -1,54 +1,75 @@
 <template>
-  <component :is="tag" :class="labelClasses" :for="forAttr" :style="labelStyle">
-    <IconWrapper v-if="icon && iconPosition === 'left'" :name="icon" :size="iconSize" class="si-label__icon" />
-    <span v-if="$slots.default" class="si-label__text">
+  <component
+    :is="tag"
+    :class="labelClasses"
+    :for="forAttr"
+    :style="labelStyle"
+  >
+    <IconWrapper
+      v-if="icon && iconPosition === 'left'"
+      :name="icon"
+      :size="iconSize"
+      class="si-label__icon"
+    />
+    <span
+      v-if="$slots.default"
+      class="si-label__text"
+    >
       <slot />
     </span>
-    <IconWrapper v-if="icon && iconPosition === 'right'" :name="icon" :size="iconSize" class="si-label__icon" />
-    <span v-if="required" class="si-label__required">*</span>
+    <IconWrapper
+      v-if="icon && iconPosition === 'right'"
+      :name="icon"
+      :size="iconSize"
+      class="si-label__icon"
+    />
+    <span
+      v-if="required"
+      class="si-label__required"
+    >*</span>
   </component>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-import IconWrapper from "@/components/IconWrapper.vue";
-import type { IconKey } from "@/config/icons";
+import type { IconKey } from "@/config/icons"
+import { computed } from "vue"
+import IconWrapper from "@/components/IconWrapper.vue"
 
-type LabelSize = "small" | "medium" | "large";
+type LabelSize = "small" | "medium" | "large"
 type LabelVariant =
   | "default"
   | "primary"
   | "success"
   | "warning"
   | "danger"
-  | "info";
-type LabelState = "default" | "error" | "success" | "warning";
+  | "info"
+type LabelState = "default" | "error" | "success" | "warning"
 
 interface Props {
   /** 是否必填 */
-  required?: boolean;
+  required?: boolean
   /** 标签尺寸 */
-  size?: LabelSize;
+  size?: LabelSize
   /** 标签变体（用于独立展示） */
-  variant?: LabelVariant;
+  variant?: LabelVariant
   /** 状态 */
-  state?: LabelState;
+  state?: LabelState
   /** 图标名称 */
-  icon?: IconKey;
+  icon?: IconKey
   /** 图标大小 */
-  iconSize?: number;
+  iconSize?: number
   /** 图标位置 */
-  iconPosition?: "left" | "right";
+  iconPosition?: "left" | "right"
   /** HTML 标签类型 */
-  tag?: "label" | "span" | "div";
+  tag?: "label" | "span" | "div"
   /** 关联的表单元素 id（仅当 tag="label" 时有效） */
-  for?: string;
+  for?: string
   /** 是否禁用 */
-  disabled?: boolean;
+  disabled?: boolean
   /** 自定义宽度 */
-  width?: string | number;
+  width?: string | number
   /** 文本对齐 */
-  align?: "left" | "center" | "right";
+  align?: "left" | "center" | "right"
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -60,7 +81,7 @@ const props = withDefaults(defineProps<Props>(), {
   tag: "label",
   disabled: false,
   align: "left",
-});
+})
 
 const labelClasses = computed(() => [
   "si-label",
@@ -73,18 +94,18 @@ const labelClasses = computed(() => [
     "si-label--has-icon": !!props.icon,
     "si-label--inline": props.tag !== "label",
   },
-]);
+])
 
 const labelStyle = computed(() => {
-  const style: Record<string, string> = {};
+  const style: Record<string, string> = {}
   if (props.width) {
     style.width =
-      typeof props.width === "number" ? `${props.width}px` : props.width;
+      typeof props.width === "number" ? `${props.width}px` : props.width
   }
-  return style;
-});
+  return style
+})
 
-const forAttr = computed(() => (props.tag === "label" ? props.for : undefined));
+const forAttr = computed(() => (props.tag === "label" ? props.for : undefined))
 </script>
 
 <style scoped lang="scss">

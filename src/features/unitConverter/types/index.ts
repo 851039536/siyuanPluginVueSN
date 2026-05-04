@@ -1,44 +1,50 @@
-import { createApp, h } from "vue";
-import type PluginSample from "@/index";
+import type PluginSample from "@/index"
+import {
+  createApp,
+  h,
+} from "vue"
 // @ts-ignore
-import UnitConverterPanel from "../index.vue";
+import UnitConverterPanel from "../index.vue"
 
 /**
  * 转换器类型定义
  */
 export interface ConverterTab {
-  key: string;
-  name: string;
-  i18nKey?: string;
+  key: string
+  name: string
+  i18nKey?: string
 }
 
 /**
  * 单位转换器配置
  */
 export interface UnitConverterOptions {
-  defaultTab?: string;
+  defaultTab?: string
 }
 
 /**
  * 单位转换器管理类
  */
 export class UnitConverterManager {
-  private plugin: PluginSample;
+  private plugin: PluginSample
 
   constructor(plugin: PluginSample) {
-    this.plugin = plugin;
+    this.plugin = plugin
   }
 
   public init() {
-    this.addDock();
+    this.addDock()
   }
 
   private addDock() {
-    const self = this;
+    const self = this
     this.plugin.addDock({
       config: {
         position: "RightTop",
-        size: { width: 360, height: 0 },
+        size: {
+          width: 360,
+          height: 0,
+        },
         icon: "iconList",
         title: this.plugin.i18n.unitConverter || "单位转换",
         show: false,
@@ -46,9 +52,9 @@ export class UnitConverterManager {
       data: {},
       type: "unit-converter-dock",
       init: (dock: any) => {
-        const container = document.createElement("div");
-        container.style.height = "100%";
-        container.style.overflow = "hidden";
+        const container = document.createElement("div")
+        container.style.height = "100%"
+        container.style.overflow = "hidden"
 
         const app = createApp({
           setup() {
@@ -56,17 +62,17 @@ export class UnitConverterManager {
               h(UnitConverterPanel, {
                 i18n: self.plugin.i18n || {},
                 plugin: self.plugin,
-              });
+              })
           },
-        });
+        })
 
-        app.mount(container);
-        dock.element?.appendChild(container);
+        app.mount(container)
+        dock.element?.appendChild(container)
 
-        dock.__app = app;
-        dock.__container = container;
+        dock.__app = app
+        dock.__container = container
       },
-    });
+    })
   }
 
   public destroy() {

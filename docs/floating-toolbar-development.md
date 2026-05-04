@@ -41,16 +41,16 @@ src/features/floatingToolbar/
 
 ```typescript
 interface ToolbarAction {
-    /** 功能唯一标识符 */
-    id: string
-    /** 功能显示名称 */
-    name: string
-    /** 功能图标 SVG 字符串 */
-    icon: string
-    /** 可选的快捷键 */
-    hotkey?: string
-    /** 功能处理函数 */
-    handler: (selectedText: string) => Promise<void> | void
+  /** 功能唯一标识符 */
+  id: string
+  /** 功能显示名称 */
+  name: string
+  /** 功能图标 SVG 字符串 */
+  icon: string
+  /** 可选的快捷键 */
+  hotkey?: string
+  /** 功能处理函数 */
+  handler: (selectedText: string) => Promise<void> | void
 }
 ```
 
@@ -59,28 +59,31 @@ interface ToolbarAction {
 ### 1. 创建一个简单的功能
 
 ```typescript
-import { ToolbarAction, ToolbarActionFactory } from './actions'
+import {
+  ToolbarAction,
+  ToolbarActionFactory,
+} from './actions'
 
 // 使用工厂函数创建
 const myAction = ToolbarActionFactory.createSimpleAction(
-    'my-action',                    // ID
-    '我的功能',                      // 名称
-    'Settings',                     // 图标名称（SiYuan 内置）
-    async (selectedText) => {       // 处理函数
-        console.log('选中的文本:', selectedText)
-        // 实现你的功能逻辑
-    }
+  'my-action', // ID
+  '我的功能', // 名称
+  'Settings', // 图标名称（SiYuan 内置）
+  async (selectedText) => { // 处理函数
+    console.log('选中的文本:', selectedText)
+    // 实现你的功能逻辑
+  },
 )
 
 // 或者直接创建对象
 const myAction: ToolbarAction = {
-    id: 'my-action',
-    name: '我的功能',
-    icon: '<svg><use xlink:href="#iconSettings"></use></svg>',
-    hotkey: 'Ctrl+Alt+M',
-    handler: async (selectedText) => {
-        // 处理逻辑
-    }
+  id: 'my-action',
+  name: '我的功能',
+  icon: '<svg><use xlink:href="#iconSettings"></use></svg>',
+  hotkey: 'Ctrl+Alt+M',
+  handler: async (selectedText) => {
+    // 处理逻辑
+  },
 }
 ```
 
@@ -101,16 +104,16 @@ floatingToolbar.registerAction(myAction)
 
 ```typescript
 const searchAction: ToolbarAction = {
-    id: 'search',
-    name: '搜索',
-    icon: '<svg><use xlink:href="#iconSearch"></use></svg>',
-    handler: async (selectedText) => {
-        if (!selectedText) return
+  id: 'search',
+  name: '搜索',
+  icon: '<svg><use xlink:href="#iconSearch"></use></svg>',
+  handler: async (selectedText) => {
+    if (!selectedText) return
 
-        // 在思源笔记内搜索
-        const searchUrl = `/search?q=${encodeURIComponent(selectedText)}`
-        window.open(searchUrl, '_blank')
-    }
+    // 在思源笔记内搜索
+    const searchUrl = `/search?q=${encodeURIComponent(selectedText)}`
+    window.open(searchUrl, '_blank')
+  },
 }
 ```
 
@@ -120,57 +123,57 @@ const searchAction: ToolbarAction = {
 
 ```typescript
 const highlightAction: ToolbarAction = {
-    id: 'highlight',
-    name: '高亮',
-    icon: '<svg><use xlink:href="#iconMark"></use></svg>',
-    handler: async (selectedText) => {
-        // 获取当前块 ID
-        const blockId = await getCurrentBlockId()
-        if (!blockId) {
-            showMessage(plugin, '无法获取当前块ID')
-            return
-        }
-
-        // 使用思源 API
-        const response = await fetch('/api/block/updateBlock', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                id: blockId,
-                dataType: 'markdown',
-                data: `==${selectedText}==`  // 添加高亮标记
-            })
-        })
-
-        if (response.ok) {
-            showMessage(plugin, '已添加高亮')
-        }
+  id: 'highlight',
+  name: '高亮',
+  icon: '<svg><use xlink:href="#iconMark"></use></svg>',
+  handler: async (selectedText) => {
+    // 获取当前块 ID
+    const blockId = await getCurrentBlockId()
+    if (!blockId) {
+      showMessage(plugin, '无法获取当前块ID')
+      return
     }
+
+    // 使用思源 API
+    const response = await fetch('/api/block/updateBlock', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: blockId,
+        dataType: 'markdown',
+        data: `==${selectedText}==`, // 添加高亮标记
+      }),
+    })
+
+    if (response.ok) {
+      showMessage(plugin, '已添加高亮')
+    }
+  },
 }
 
 // 辅助函数
 async function getCurrentBlockId(): Promise<string | null> {
-    const selection = window.getSelection()
-    if (selection && selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0)
-        const element = range.startContainer.parentElement
-        const blockElement = element?.closest('[data-node-id]')
-        return blockElement?.getAttribute('data-node-id')
-    }
-    return null
+  const selection = window.getSelection()
+  if (selection && selection.rangeCount > 0) {
+    const range = selection.getRangeAt(0)
+    const element = range.startContainer.parentElement
+    const blockElement = element?.closest('[data-node-id]')
+    return blockElement?.getAttribute('data-node-id')
+  }
+  return null
 }
 
 function showMessage(plugin: Plugin, message: string) {
-    fetch('/api/notification/pushMsg', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            msg: message,
-            timeout: 7000
-        })
-    })
+  fetch('/api/notification/pushMsg', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      msg: message,
+      timeout: 7000,
+    }),
+  })
 }
 ```
 
@@ -178,28 +181,28 @@ function showMessage(plugin: Plugin, message: string) {
 
 ```typescript
 const processAction: ToolbarAction = {
-    id: 'process',
-    name: '处理文本',
-    icon: '<svg><use xlink:href="#iconSparkles"></use></svg>',
-    handler: async (selectedText) => {
-        // 显示处理中消息
-        showMessage(plugin, '正在处理文本...')
+  id: 'process',
+  name: '处理文本',
+  icon: '<svg><use xlink:href="#iconSparkles"></use></svg>',
+  handler: async (selectedText) => {
+    // 显示处理中消息
+    showMessage(plugin, '正在处理文本...')
 
-        try {
-            // 模拟异步处理
-            await new Promise(resolve => setTimeout(resolve, 1000))
+    try {
+      // 模拟异步处理
+      await new Promise((resolve) => setTimeout(resolve, 1000))
 
-            // 执行实际处理
-            const result = await processText(selectedText)
+      // 执行实际处理
+      const result = await processText(selectedText)
 
-            // 复制结果
-            await navigator.clipboard.writeText(result)
-            showMessage(plugin, '处理完成并已复制')
-        } catch (error) {
-            console.error('处理失败:', error)
-            showMessage(plugin, '处理失败')
-        }
+      // 复制结果
+      await navigator.clipboard.writeText(result)
+      showMessage(plugin, '处理完成并已复制')
+    } catch (error) {
+      console.error('处理失败:', error)
+      showMessage(plugin, '处理失败')
     }
+  },
 }
 ```
 
@@ -221,19 +224,19 @@ const processAction: ToolbarAction = {
 
 ```typescript
 const actionWithHandler: ToolbarAction = {
-    id: 'my-action',
-    name: '我的功能',
-    icon: '<svg><use xlink:href="#iconSettings"></use></svg>',
-    handler: async (selectedText) => {
-        try {
-            // 主要逻辑
-            await doSomething(selectedText)
-            showMessage(plugin, '操作成功')
-        } catch (error) {
-            console.error('操作失败:', error)
-            showMessage(plugin, '操作失败，请查看控制台')
-        }
+  id: 'my-action',
+  name: '我的功能',
+  icon: '<svg><use xlink:href="#iconSettings"></use></svg>',
+  handler: async (selectedText) => {
+    try {
+      // 主要逻辑
+      await doSomething(selectedText)
+      showMessage(plugin, '操作成功')
+    } catch (error) {
+      console.error('操作失败:', error)
+      showMessage(plugin, '操作失败，请查看控制台')
     }
+  },
 }
 ```
 
@@ -262,11 +265,11 @@ const action: ToolbarAction = {
 ```typescript
 // 批量注册功能
 const actions = [action1, action2, action3]
-actions.forEach(action => floatingToolbar.registerAction(action))
+actions.forEach((action) => floatingToolbar.registerAction(action))
 
 // 条件注册
 if (this.settings.enableAdvancedFeatures) {
-    floatingToolbar.registerAction(advancedAction)
+  floatingToolbar.registerAction(advancedAction)
 }
 
 // 动态移除功能
@@ -313,7 +316,7 @@ A: 功能处理函数会自动传入选中的文本作为参数：
 
 ```typescript
 handler: async (selectedText: string) => {
-    console.log('用户选中的文本:', selectedText)
+  console.log('用户选中的文本:', selectedText)
 }
 ```
 
@@ -332,11 +335,11 @@ A: 在功能定义中添加 `hotkey` 属性：
 
 ```typescript
 const action: ToolbarAction = {
-    id: 'my-action',
-    name: '我的功能',
-    icon: '...',
-    hotkey: 'Ctrl+Alt+M',  // 添加快捷键
-    handler: myHandler
+  id: 'my-action',
+  name: '我的功能',
+  icon: '...',
+  hotkey: 'Ctrl+Alt+M', // 添加快捷键
+  handler: myHandler,
 }
 ```
 
@@ -346,7 +349,7 @@ A: 在注册时检查设置：
 
 ```typescript
 if (plugin.settings.enableMyFeature) {
-    floatingToolbar.registerAction(myAction)
+  floatingToolbar.registerAction(myAction)
 }
 ```
 

@@ -59,21 +59,25 @@
 </template>
 
 <script setup lang="ts">
-import { Plugin } from "siyuan";
-import PanelHeader from "./components/PanelHeader.vue";
-import DiskCard from "./components/DiskCard.vue";
-import FavoritesSection from "./components/FavoritesSection.vue";
-import BreadcrumbNav from "./components/BreadcrumbNav.vue";
-import FolderList from "./components/FolderList.vue";
-import { useDiskBrowser } from "./composables/useDiskBrowser";
-import type { DiskBrowserI18n, DiskInfo, FolderInfo } from "./types";
+import type {
+  DiskBrowserI18n,
+  DiskInfo,
+  FolderInfo,
+} from "./types"
+import { Plugin } from "siyuan"
+import BreadcrumbNav from "./components/BreadcrumbNav.vue"
+import DiskCard from "./components/DiskCard.vue"
+import FavoritesSection from "./components/FavoritesSection.vue"
+import FolderList from "./components/FolderList.vue"
+import PanelHeader from "./components/PanelHeader.vue"
+import { useDiskBrowser } from "./composables/useDiskBrowser"
 
 interface Props {
-  i18n: DiskBrowserI18n;
-  plugin: Plugin;
+  i18n: DiskBrowserI18n
+  plugin: Plugin
 }
 
-const props = defineProps<Props>();
+const props = defineProps<Props>()
 
 const {
   disks,
@@ -102,7 +106,7 @@ const {
   navigateToFavorite,
   copyPathToClipboard,
   formatDate,
-} = useDiskBrowser(props.plugin, props.i18n);
+} = useDiskBrowser(props.plugin, props.i18n)
 </script>
 
 <style scoped lang="scss">

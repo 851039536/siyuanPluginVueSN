@@ -1,6 +1,6 @@
 import type {
-  ComputedRef, 
-Ref
+  ComputedRef,
+  Ref,
 } from "vue"
 import type {
   Block,

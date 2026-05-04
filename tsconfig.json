@@ -28,8 +28,8 @@
     /* Linting */
     "strict": false,
     "strictNullChecks": true,
-    "noImplicitAny": true,
     "noFallthroughCasesInSwitch": true,
+    "noImplicitAny": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "importHelpers": true,

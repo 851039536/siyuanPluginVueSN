@@ -34,16 +34,16 @@ import { useRoute } from 'vue-router/auto'
 const route = useRoute('/users/[id]')
 
 // Now properly typed as { id: string }
-console.log(route.params.id)  // string, not string | undefined
+console.log(route.params.id) // string, not string | undefined
 ```
 
 **Option 2: Type assertion with specific route**
 ```typescript
-import { useRoute } from 'vue-router'
 import type { RouteLocationNormalized } from 'vue-router/auto-routes'
+import { useRoute } from 'vue-router'
 
 const route = useRoute() as RouteLocationNormalized<'/users/[id]'>
-route.params.id  // Properly typed
+route.params.id // Properly typed
 ```
 
 **Option 3: Define route-specific param type**

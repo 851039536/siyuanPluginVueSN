@@ -43,19 +43,22 @@
 </template>
 
 <script setup lang="ts">
-import Button from "@/components/Button.vue";
-import type { QuickFilter, ViewMode } from "../types";
+import type {
+  QuickFilter,
+  ViewMode,
+} from "../types"
+import Button from "@/components/Button.vue"
 
 interface Props {
-  activeFilter: string;
-  viewMode: ViewMode;
-  filters: QuickFilter[];
-  totalCount?: number;
-  favoriteCount?: number;
-  customCount?: number;
-  totalLabel?: string;
-  favoriteLabel?: string;
-  customLabel?: string;
+  activeFilter: string
+  viewMode: ViewMode
+  filters: QuickFilter[]
+  totalCount?: number
+  favoriteCount?: number
+  customCount?: number
+  totalLabel?: string
+  favoriteLabel?: string
+  customLabel?: string
 }
 
 withDefaults(defineProps<Props>(), {
@@ -65,12 +68,12 @@ withDefaults(defineProps<Props>(), {
   totalLabel: "总计",
   favoriteLabel: "收藏",
   customLabel: "自定义",
-});
+})
 
 defineEmits<{
-  "update:activeFilter": [value: string];
-  "update:viewMode": [value: ViewMode];
-}>();
+  "update:activeFilter": [value: string]
+  "update:viewMode": [value: ViewMode]
+}>()
 </script>
 
 <style scoped lang="scss">

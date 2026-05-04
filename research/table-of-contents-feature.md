@@ -122,7 +122,7 @@ function registerCommands(plugin: Plugin) {
     hotkey: '⌃⌥I',
     callback: () => {
       insertIndex(plugin)
-    }
+    },
   })
 
   // CTRL + ALT + O: 插入子文档及其大纲
@@ -131,7 +131,7 @@ function registerCommands(plugin: Plugin) {
     hotkey: '⌃⌥O',
     callback: () => {
       insertSubDocsWithOutline(plugin)
-    }
+    },
   })
 
   // CTRL + ALT + R: 插入子文档引用列表
@@ -140,7 +140,7 @@ function registerCommands(plugin: Plugin) {
     hotkey: '⌃⌥R',
     callback: () => {
       insertSubDocsRef(plugin)
-    }
+    },
   })
 }
 ```
@@ -298,7 +298,7 @@ async function insertContent(plugin: Plugin, content: string, indexType: string)
         if (newBlockId) {
           await api.setBlockAttrs(newBlockId, {
             'custom-toc-type': indexType,
-            'custom-toc-generated': 'true'
+            'custom-toc-generated': 'true',
           })
         }
       }
@@ -485,7 +485,7 @@ async function insertIndex(plugin: Plugin) {
 
 ```typescript
 for (const heading of headings) {
-  const level = parseInt(heading.subtype.replace('h', ''))
+  const level = Number.parseInt(heading.subtype.replace('h', ''))
   const indent = '  '.repeat(level - 1)
   const headingContent = heading.content.replace(/<[^>]*>/g, '')
   content += `${indent}- ((${heading.id} "${headingContent}"))\n`
@@ -591,7 +591,7 @@ const headingContent = heading.content.replace(/<[^>]*>/g, '')
 plugin.addCommand({
   langKey: '...',
   hotkey: '...',
-  callback: () => { /* 执行逻辑 */ }
+  callback: () => { /* 执行逻辑 */ },
 })
 ```
 
@@ -622,7 +622,7 @@ try {
 } catch (error) {
   console.error('操作失败:', error)
   const errorMsg = error?.message || String(error)
-  showMessage('操作失败: ' + errorMsg, 3000, 'error')
+  showMessage(`操作失败: ${errorMsg}`, 3000, 'error')
 }
 ```
 

@@ -45,7 +45,10 @@ Skip type checking for an entire block:
   <!-- @vue-skip -->
   <div>
     <!-- Everything in here is not type-checked -->
-    <LegacyComponent :any="props" :go="here" />
+    <LegacyComponent
+      :any="props"
+      :go="here"
+    />
   </div>
 </template>
 ```

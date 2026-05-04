@@ -10,13 +10,19 @@
     />
 
     <!-- 加载状态 -->
-    <div v-if="loading && !stats" class="loading-state">
+    <div
+      v-if="loading && !stats"
+      class="loading-state"
+    >
       <div class="loading-spinner"></div>
       <p>{{ i18n.loading }}</p>
     </div>
 
     <!-- 主要内容 -->
-    <div v-else-if="stats" class="statistics-content">
+    <div
+      v-else-if="stats"
+      class="statistics-content"
+    >
       <StatsCardsCompact
         :total-notes="stats.totalNotes"
         :total-words="stats.totalWords"
@@ -53,7 +59,12 @@
       />
 
       <div class="chart-section">
-        <h3 v-if="viewMode !== 'trend'" class="section-title">{{ chartTitle }}</h3>
+        <h3
+          v-if="viewMode !== 'trend'"
+          class="section-title"
+        >
+          {{ chartTitle }}
+        </h3>
         <BarChart
           v-if="viewMode !== 'trend'"
           :title="chartTitle"
@@ -83,100 +94,105 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from "vue";
-import StatisticsHeader from "./components/StatisticsHeader.vue";
-import StatsCardsCompact from "./components/StatsCardsCompact.vue";
-import InsightCards from "./components/InsightCards.vue";
-import ViewModeSection from "./components/ViewModeSection.vue";
-import BarChart from "./components/BarChart.vue";
-import TrendView from "./components/TrendView.vue";
-import DocBarChart from "./components/DocBarChart.vue";
+import {
+  computed,
+  onMounted,
+  ref,
+  watch,
+} from "vue"
+import BarChart from "./components/BarChart.vue"
+import DocBarChart from "./components/DocBarChart.vue"
+import InsightCards from "./components/InsightCards.vue"
+import StatisticsHeader from "./components/StatisticsHeader.vue"
+import StatsCardsCompact from "./components/StatsCardsCompact.vue"
+import TrendView from "./components/TrendView.vue"
+import ViewModeSection from "./components/ViewModeSection.vue"
 
 interface Props {
   onRefresh?: (params: {
-    viewMode: "day" | "week" | "month" | "year" | "trend";
-    dayRange?: 7 | 15 | 30 | 90 | 180 | 365;
-    monthYearRange?: 1 | 2 | 3;
-    selectedYear?: number;
-  }) => Promise<StatisticsData>;
-  onGetHistoricalData?: (days?: number) => Promise<any[]>;
-  onGetNotebookDocStats?: () => Promise<Array<{ name: string; count: number }>>;
+    viewMode: "day" | "week" | "month" | "year" | "trend"
+    dayRange?: 7 | 15 | 30 | 90 | 180 | 365
+    monthYearRange?: 1 | 2 | 3
+    selectedYear?: number
+  }) => Promise<StatisticsData>
+  onGetHistoricalData?: (days?: number) => Promise<any[]>
+  onGetNotebookDocStats?: () => Promise<Array<{ name: string, count: number }>>
   i18n?: {
-    loading: string;
-    refresh: string;
-    lastUpdate: string;
-    totalNotes: string;
-    totalWords: string;
-    totalBlocks: string;
-    totalAssets: string;
-    totalImages: string;
-    totalTags: string;
-    totalBacklinks: string;
-    todayCreated: string;
-    todayModified: string;
-    avgWordsPerDoc: string;
-    day: string;
-    week: string;
-    month: string;
-    year: string;
-    trend: string;
-    avgLabel: string;
-    totalLabel: string;
-    wordsUnit: string;
-    notesUnit: string;
-    days7: string;
-    days15: string;
-    days30: string;
-    quarter: string;
-    halfYear: string;
-    fullYear: string;
-    last1Year: string;
-    last2Years: string;
-    last3Years: string;
-    trendTitle: string;
-    avgDailyCreated: string;
-    avgDailyModified: string;
-    historicalData: string;
-    date: string;
-    notes: string;
-    words: string;
-    created: string;
-    modified: string;
-    change: string;
-    blocks: string;
-    assets: string;
-    changeLabel: string;
-    docBarChartTitle: string;
-  };
+    loading: string
+    refresh: string
+    lastUpdate: string
+    totalNotes: string
+    totalWords: string
+    totalBlocks: string
+    totalAssets: string
+    totalImages: string
+    totalTags: string
+    totalBacklinks: string
+    todayCreated: string
+    todayModified: string
+    avgWordsPerDoc: string
+    day: string
+    week: string
+    month: string
+    year: string
+    trend: string
+    avgLabel: string
+    totalLabel: string
+    wordsUnit: string
+    notesUnit: string
+    days7: string
+    days15: string
+    days30: string
+    quarter: string
+    halfYear: string
+    fullYear: string
+    last1Year: string
+    last2Years: string
+    last3Years: string
+    trendTitle: string
+    avgDailyCreated: string
+    avgDailyModified: string
+    historicalData: string
+    date: string
+    notes: string
+    words: string
+    created: string
+    modified: string
+    change: string
+    blocks: string
+    assets: string
+    changeLabel: string
+    docBarChartTitle: string
+  }
 }
 
 interface StatisticsData {
-  totalNotes: number;
-  totalWords: number;
-  totalBlocks: number;
-  totalAssets: number;
-  totalImages: number;
-  totalTags: number;
-  totalBacklinks: number;
-  todayCreated: number;
-  todayModified: number;
-  avgWordsPerDoc: number;
-  dailyStats: DailyWordCount[];
-  currentPeriod: string;
-  periodTotalWords: number;
-  topTags: Array<{ name: string; count: number }>;
+  totalNotes: number
+  totalWords: number
+  totalBlocks: number
+  totalAssets: number
+  totalImages: number
+  totalTags: number
+  totalBacklinks: number
+  todayCreated: number
+  todayModified: number
+  avgWordsPerDoc: number
+  dailyStats: DailyWordCount[]
+  currentPeriod: string
+  periodTotalWords: number
+  topTags: Array<{ name: string, count: number }>
   recentDocs: Array<{
-    id: string;
-    title: string;
-    updated: string;
-    words: number;
-  }>;
+    id: string
+    title: string
+    updated: string
+    words: number
+  }>
 }
 
 interface DailyWordCount {
-  date: string;
-  words: number;
-  dateLabel: string;
+  date: string
+  words: number
+  dateLabel: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -227,25 +243,25 @@ const props = withDefaults(defineProps<Props>(), {
     changeLabel: "变化",
     docBarChartTitle: "各笔记本文档数",
   }),
-});
+})
 
-const loading = ref(false);
-const stats = ref<StatisticsData | null>(null);
-const lastUpdateTime = ref("");
-const viewMode = ref<"day" | "week" | "month" | "year" | "trend">("day");
-const dayRange = ref<7 | 15 | 30 | 90 | 180 | 365>(7);
-const monthYearRange = ref<1 | 2 | 3>(1);
-const selectedYear = ref<number>(new Date().getFullYear());
-const chartData = ref<DailyWordCount[]>([]);
-const historicalData = ref<any[]>([]);
-const updateInterval = ref(60);
-const notebookDocStats = ref<Array<{ name: string; count: number }>>([]);
-const docChartLoading = ref(false);
+const loading = ref(false)
+const stats = ref<StatisticsData | null>(null)
+const lastUpdateTime = ref("")
+const viewMode = ref<"day" | "week" | "month" | "year" | "trend">("day")
+const dayRange = ref<7 | 15 | 30 | 90 | 180 | 365>(7)
+const monthYearRange = ref<1 | 2 | 3>(1)
+const selectedYear = ref<number>(new Date().getFullYear())
+const chartData = ref<DailyWordCount[]>([])
+const historicalData = ref<any[]>([])
+const updateInterval = ref(60)
+const notebookDocStats = ref<Array<{ name: string, count: number }>>([])
+const docChartLoading = ref(false)
 
-const headerI18n = computed(() => props.i18n);
-const statsCardsI18n = computed(() => props.i18n);
-const barChartI18n = computed(() => props.i18n);
-const viewModeI18n = computed(() => props.i18n);
+const headerI18n = computed(() => props.i18n)
+const statsCardsI18n = computed(() => props.i18n)
+const barChartI18n = computed(() => props.i18n)
+const viewModeI18n = computed(() => props.i18n)
 
 const trendViewI18n = computed(() => ({
   ...props.i18n,
@@ -253,7 +269,7 @@ const trendViewI18n = computed(() => ({
   dayOverDay: "日环比",
   weekOverWeek: "周环比",
   monthOverMonth: "月环比",
-}));
+}))
 
 const insightCardsI18n = computed(() => ({
   activityHeatmap: "活跃热力图",
@@ -266,145 +282,145 @@ const insightCardsI18n = computed(() => ({
   words: "字数",
   notesUnit: "篇",
   wordsUnit: "字",
-}));
+}))
 
-const docBarChartTitle = computed(() => props.i18n.docBarChartTitle || "各笔记本文档数");
+const docBarChartTitle = computed(() => props.i18n.docBarChartTitle || "各笔记本文档数")
 const docBarChartI18n = computed(() => ({
   loading: props.i18n.loading || "加载中...",
   docsUnit: props.i18n.notesUnit || "笔记",
-}));
+}))
 
 const chartTitle = computed(() => {
-  return stats.value?.currentPeriod || "";
-});
+  return stats.value?.currentPeriod || ""
+})
 
 const periodAvgWords = computed(() => {
-  if (!chartData.value || chartData.value.length === 0) return 0;
+  if (!chartData.value || chartData.value.length === 0) return 0
 
-  const totalWords = chartData.value.reduce((sum, item) => sum + item.words, 0);
-  const days = chartData.value.length;
+  const totalWords = chartData.value.reduce((sum, item) => sum + item.words, 0)
+  const days = chartData.value.length
 
-  return days > 0 ? Math.round(totalWords / days) : 0;
-});
+  return days > 0 ? Math.round(totalWords / days) : 0
+})
 
 // 计算昨日数据
 const yesterdayCreated = computed(() => {
-  if (!historicalData.value || historicalData.value.length < 2) return null;
+  if (!historicalData.value || historicalData.value.length < 2) return null
   // historicalData 是按日期倒序排列的，第一个是最新
   // 我们需要找到昨天的数据
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = `${yesterday.getFullYear()}-${padZero(yesterday.getMonth() + 1)}-${padZero(yesterday.getDate())}`;
+  const today = new Date()
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+  const yesterdayStr = `${yesterday.getFullYear()}-${padZero(yesterday.getMonth() + 1)}-${padZero(yesterday.getDate())}`
 
   const yesterdayData = historicalData.value.find(
     (item) => item.date === yesterdayStr,
-  );
-  return yesterdayData?.todayCreated ?? null;
-});
+  )
+  return yesterdayData?.todayCreated ?? null
+})
 
 const yesterdayModified = computed(() => {
-  if (!historicalData.value || historicalData.value.length < 2) return null;
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = `${yesterday.getFullYear()}-${padZero(yesterday.getMonth() + 1)}-${padZero(yesterday.getDate())}`;
+  if (!historicalData.value || historicalData.value.length < 2) return null
+  const today = new Date()
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+  const yesterdayStr = `${yesterday.getFullYear()}-${padZero(yesterday.getMonth() + 1)}-${padZero(yesterday.getDate())}`
 
   const yesterdayData = historicalData.value.find(
     (item) => item.date === yesterdayStr,
-  );
-  return yesterdayData?.todayModified ?? null;
-});
+  )
+  return yesterdayData?.todayModified ?? null
+})
 
 // 计算变化百分比
 const createdChange = computed(() => {
   if (yesterdayCreated.value === null || yesterdayCreated.value === 0) {
-    return stats.value?.todayCreated ? 100 : null; // 如果昨天为0，今天有数据则显示100%
+    return stats.value?.todayCreated ? 100 : null // 如果昨天为0，今天有数据则显示100%
   }
-  if (stats.value?.todayCreated === undefined) return null;
+  if (stats.value?.todayCreated === undefined) return null
   return (
-    ((stats.value.todayCreated - yesterdayCreated.value) /
-      yesterdayCreated.value) *
-    100
-  );
-});
+    ((stats.value.todayCreated - yesterdayCreated.value)
+      / yesterdayCreated.value)
+    * 100
+  )
+})
 
 const modifiedChange = computed(() => {
   if (yesterdayModified.value === null || yesterdayModified.value === 0) {
-    return stats.value?.todayModified ? 100 : null;
+    return stats.value?.todayModified ? 100 : null
   }
-  if (stats.value?.todayModified === undefined) return null;
+  if (stats.value?.todayModified === undefined) return null
   return (
-    ((stats.value.todayModified - yesterdayModified.value) /
-      yesterdayModified.value) *
-    100
-  );
-});
+    ((stats.value.todayModified - yesterdayModified.value)
+      / yesterdayModified.value)
+    * 100
+  )
+})
 
 function padZero(num: number): string {
-  return num < 10 ? "0" + num : String(num);
+  return num < 10 ? `0${num}` : String(num)
 }
 
 watch(viewMode, () => {
-  refreshData();
-});
+  refreshData()
+})
 
 async function refreshData() {
-  if (!props.onRefresh) return;
+  if (!props.onRefresh) return
 
-  loading.value = true;
+  loading.value = true
   try {
     stats.value = await props.onRefresh({
       viewMode: viewMode.value,
       dayRange: dayRange.value,
       monthYearRange: monthYearRange.value,
       selectedYear: selectedYear.value,
-    });
-    chartData.value = stats.value.dailyStats || [];
-    lastUpdateTime.value = new Date().toLocaleString("zh-CN");
+    })
+    chartData.value = stats.value.dailyStats || []
+    lastUpdateTime.value = new Date().toLocaleString("zh-CN")
 
     // 始终加载历史数据，供 InsightCards 和 TrendView 使用
-    await loadHistoricalData();
+    await loadHistoricalData()
 
     // 加载笔记本文档统计
-    await loadNotebookDocStats();
+    await loadNotebookDocStats()
   } catch (error) {
-    console.error("刷新统计数据失败:", error);
+    console.error("刷新统计数据失败:", error)
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 
 async function loadHistoricalData() {
-  if (!props.onGetHistoricalData) return;
+  if (!props.onGetHistoricalData) return
   try {
-    const data = await props.onGetHistoricalData();
-    historicalData.value = data.reverse();
+    const data = await props.onGetHistoricalData()
+    historicalData.value = data.reverse()
   } catch (error) {
-    console.error("加载历史数据失败:", error);
+    console.error("加载历史数据失败:", error)
   }
 }
 
 async function loadNotebookDocStats() {
-  if (!props.onGetNotebookDocStats) return;
-  docChartLoading.value = true;
+  if (!props.onGetNotebookDocStats) return
+  docChartLoading.value = true
   try {
-    notebookDocStats.value = await props.onGetNotebookDocStats();
+    notebookDocStats.value = await props.onGetNotebookDocStats()
   } catch (error) {
-    console.error("加载笔记本文档统计失败:", error);
+    console.error("加载笔记本文档统计失败:", error)
   } finally {
-    docChartLoading.value = false;
+    docChartLoading.value = false
   }
 }
 
 onMounted(() => {
-  loading.value = true;
-  refreshData();
-});
+  loading.value = true
+  refreshData()
+})
 
 defineExpose({
   refreshData,
-});
+})
 </script>
 
 <style scoped lang="scss">

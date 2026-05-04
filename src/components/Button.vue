@@ -1,41 +1,61 @@
 <template>
-  <button ref="buttonRef" :class="buttonClasses" :disabled="disabled || loading" @click="handleClick">
-    <span v-if="loading" class="si-button__spinner"></span>
-    <IconWrapper v-if="icon && !loading" :name="icon" :size="iconSize" class="si-button__icon" />
-    <span v-if="$slots.default" class="si-button__text">
+  <button
+    ref="buttonRef"
+    :class="buttonClasses"
+    :disabled="disabled || loading"
+    @click="handleClick"
+  >
+    <span
+      v-if="loading"
+      class="si-button__spinner"
+    ></span>
+    <IconWrapper
+      v-if="icon && !loading"
+      :name="icon"
+      :size="iconSize"
+      class="si-button__icon"
+    />
+    <span
+      v-if="$slots.default"
+      class="si-button__text"
+    >
       <slot />
     </span>
   </button>
 </template>
 
 <script setup lang="ts">
-import { computed, useSlots, ref } from "vue";
-import IconWrapper from "@/components/IconWrapper.vue";
-import type { IconKey } from "@/config/icons";
+import type { IconKey } from "@/config/icons"
+import {
+  computed,
+  ref,
+  useSlots,
+} from "vue"
+import IconWrapper from "@/components/IconWrapper.vue"
 
-type ButtonVariant = "primary" | "secondary" | "success" | "danger" | "ghost";
-type ButtonSize = "small" | "medium" | "large";
+type ButtonVariant = "primary" | "secondary" | "success" | "danger" | "ghost"
+type ButtonSize = "small" | "medium" | "large"
 
 interface Props {
   /** 按钮变体 */
-  variant?: ButtonVariant;
+  variant?: ButtonVariant
   /** 按钮尺寸 */
-  size?: ButtonSize;
+  size?: ButtonSize
   /** 图标名称 */
-  icon?: IconKey;
+  icon?: IconKey
   /** 图标大小 */
-  iconSize?: number;
+  iconSize?: number
   /** 禁用状态 */
-  disabled?: boolean;
+  disabled?: boolean
   /** 加载状态 */
-  loading?: boolean;
+  loading?: boolean
   /** 图标位置 */
-  iconPosition?: "left" | "right";
+  iconPosition?: "left" | "right"
   /** 是否为块级按钮 */
-  block?: boolean;
+  block?: boolean
 }
 
-type Emits = (e: "click", event: MouseEvent) => void;
+type Emits = (e: "click", event: MouseEvent) => void
 
 const props = withDefaults(defineProps<Props>(), {
   variant: "primary",
@@ -45,12 +65,12 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   loading: false,
   block: false,
-});
+})
 
-const emit = defineEmits<Emits>();
+const emit = defineEmits<Emits>()
 
-const slots = useSlots();
-const buttonRef = ref<HTMLButtonElement>();
+const slots = useSlots()
+const buttonRef = ref<HTMLButtonElement>()
 
 const buttonClasses = computed(() => [
   "si-button",
@@ -63,18 +83,18 @@ const buttonClasses = computed(() => [
     "si-button--block": props.block,
     "si-button--icon-right": props.iconPosition === "right",
   },
-]);
+])
 
 const handleClick = (event: MouseEvent) => {
   if (!props.disabled && !props.loading) {
-    emit("click", event);
+    emit("click", event)
   }
-};
+}
 
 defineExpose({
   focus: () => buttonRef.value?.focus(),
   blur: () => buttonRef.value?.blur(),
-});
+})
 </script>
 
 <style scoped lang="scss">

@@ -2,69 +2,75 @@
  * 通用设置功能模块
  * 提供模块化的通用配置功能，包括字体设置、外观设置等
  */
-import { Plugin } from "siyuan";
-import { createApp, h } from "vue";
-import { GeneralSettingsStorage } from "./storage";
-import { DocCountManager } from "../modules/DocCountManager";
-import { HighlightManager } from "../modules/HighlightManager";
-import { SkillsViewerManager } from "../modules/SkillsViewerManager";
-import { emitCustomEvent } from "@/utils/eventBus";
-// @ts-ignore
-import GeneralSettingsPanel from "../index.vue";
+import { Plugin } from "siyuan"
 import {
-  HEADING_LEVEL_MAPPINGS,
-  checkIsMobile,
-  applyCodeBlockStyle,
-  applyCodeBlockEnhancedStyles,
+  createApp,
+  h,
+} from "vue"
+import { emitCustomEvent } from "@/utils/eventBus"
+// @ts-ignore
+import GeneralSettingsPanel from "../index.vue"
+import { DocCountManager } from "../modules/DocCountManager"
+import { HighlightManager } from "../modules/HighlightManager"
+import { SkillsViewerManager } from "../modules/SkillsViewerManager"
+import {
   applyCodeBlockCollapse,
-} from "../utils/styles";
+  applyCodeBlockEnhancedStyles,
+  applyCodeBlockStyle,
+  checkIsMobile,
+  HEADING_LEVEL_MAPPINGS,
+} from "../utils/styles"
+import { GeneralSettingsStorage } from "./storage"
 
 
 
 export class GeneralSettings {
-  private plugin: Plugin;
-  private autoBackupTimer: number | null = null;
-  private lastBackupTimestamp = 0;
-  private storage: GeneralSettingsStorage;
-  private contentObserver: MutationObserver | null = null;
-  private docCountManager: DocCountManager | null = null;
-  private highlightManager: HighlightManager | null = null;
-  private skillsViewerManager: SkillsViewerManager | null = null;
+  private plugin: Plugin
+  private autoBackupTimer: number | null = null
+  private lastBackupTimestamp = 0
+  private storage: GeneralSettingsStorage
+  private contentObserver: MutationObserver | null = null
+  private docCountManager: DocCountManager | null = null
+  private highlightManager: HighlightManager | null = null
+  private skillsViewerManager: SkillsViewerManager | null = null
   private _cachedFontSettings: any = {
     fontFamily: "",
     fontSize: 14,
     fontWeight: "normal",
     lineHeight: 1.6,
-  };
+  }
 
   constructor(plugin: Plugin) {
-    this.plugin = plugin;
-    this.storage = new GeneralSettingsStorage(plugin);
+    this.plugin = plugin
+    this.storage = new GeneralSettingsStorage(plugin)
   }
 
   public async init() {
-    this.addDock();
-    this.applySavedSettings();
-    await this.applyCodeBlockStyle();
-    await this.applyListStyle();
-    await this.applyHeadingStyle();
-    await this.applyDocumentFontStyle();
-    await this.applyTableStyle();
-    await this.applyListStyleEnhanced();
-    await this.applyDocCountStyle();
-    await this.applyTabPinStyle();
-    await this.applyHighlightStyle();
-    await this.applySkillsViewerStyle();
-    this.observeContentChanges();
-    await this.initAutoBackup();
+    this.addDock()
+    this.applySavedSettings()
+    await this.applyCodeBlockStyle()
+    await this.applyListStyle()
+    await this.applyHeadingStyle()
+    await this.applyDocumentFontStyle()
+    await this.applyTableStyle()
+    await this.applyListStyleEnhanced()
+    await this.applyDocCountStyle()
+    await this.applyTabPinStyle()
+    await this.applyHighlightStyle()
+    await this.applySkillsViewerStyle()
+    this.observeContentChanges()
+    await this.initAutoBackup()
   }
 
   private addDock() {
-    const self = this;
+    const self = this
     this.plugin.addDock({
       config: {
         position: "RightTop",
-        size: { width: 360, height: 0 },
+        size: {
+          width: 360,
+          height: 0,
+        },
         icon: "iconSettings",
         title: this.plugin.i18n.generalSettings || "通用设置",
         show: false,
@@ -72,9 +78,9 @@ export class GeneralSettings {
       data: {},
       type: "general-settings-dock",
       init: (dock: any) => {
-        const container = document.createElement("div");
-        container.style.height = "100%";
-        container.style.overflow = "hidden";
+        const container = document.createElement("div")
+        container.style.height = "100%"
+        container.style.overflow = "hidden"
 
         const app = createApp({
           setup() {
@@ -83,71 +89,71 @@ export class GeneralSettings {
                 i18n: self.plugin.i18n,
                 plugin: self.plugin,
                 onSettingsChange: (settings: any) => {
-                  self.handleSettingsChange(settings);
+                  self.handleSettingsChange(settings)
                 },
-              });
+              })
           },
-        });
+        })
 
-        app.mount(container);
-        dock.element?.appendChild(container);
+        app.mount(container)
+        dock.element?.appendChild(container)
 
-        dock.__app = app;
-        dock.__container = container;
+        dock.__app = app
+        dock.__container = container
       },
-    });
+    })
   }
 
   private handleSettingsChange(settings: any) {
     if (settings.moduleId === "font") {
-      this.applyGlobalFontStyles(settings.settings);
+      this.applyGlobalFontStyles(settings.settings)
     } else if (settings.moduleId === "codeblock") {
-      this.applyCodeBlockStyleFromSettings(settings.settings);
+      this.applyCodeBlockStyleFromSettings(settings.settings)
     } else if (settings.moduleId === "list") {
-      this.applyListStyles(settings.settings);
+      this.applyListStyles(settings.settings)
     } else if (settings.moduleId === "documentFont") {
-      this.applyDocumentFontStyles(settings.settings);
+      this.applyDocumentFontStyles(settings.settings)
     } else if (settings.moduleId === "tableStyle") {
-      this.applyTableStyles(settings.settings);
+      this.applyTableStyles(settings.settings)
     } else if (settings.moduleId === "listStyle") {
-      this.applyListStylesEnhanced(settings.settings);
+      this.applyListStylesEnhanced(settings.settings)
     } else if (settings.moduleId === "tabPin") {
-      this.applyTabPinStyles(settings.settings);
+      this.applyTabPinStyles(settings.settings)
     }
-    emitCustomEvent("general-settings-changed", settings);
+    emitCustomEvent("general-settings-changed", settings)
   }
 
   private applyGlobalFontStyles(fontSettings: any) {
     try {
-      const root = document.documentElement;
+      const root = document.documentElement
 
       if (fontSettings.fontFamily) {
         root.style.setProperty(
           "--general-font-family",
           fontSettings.fontFamily,
-        );
-        this.applyToSiyuanElements("font-family", fontSettings.fontFamily);
+        )
+        this.applyToSiyuanElements("font-family", fontSettings.fontFamily)
       }
 
       root.style.setProperty(
         "--general-font-size",
         `${fontSettings.fontSize}px`,
-      );
-      this.applyToSiyuanElements("font-size", `${fontSettings.fontSize}px`);
+      )
+      this.applyToSiyuanElements("font-size", `${fontSettings.fontSize}px`)
 
-      root.style.setProperty("--general-font-weight", fontSettings.fontWeight);
-      this.applyToSiyuanElements("font-weight", fontSettings.fontWeight);
+      root.style.setProperty("--general-font-weight", fontSettings.fontWeight)
+      this.applyToSiyuanElements("font-weight", fontSettings.fontWeight)
 
       root.style.setProperty(
         "--general-line-height",
         fontSettings.lineHeight.toString(),
-      );
+      )
       this.applyToSiyuanElements(
         "line-height",
         fontSettings.lineHeight.toString(),
-      );
+      )
     } catch (error) {
-      console.error("应用全局字体样式失败:", error);
+      console.error("应用全局字体样式失败:", error)
     }
   }
 
@@ -155,19 +161,19 @@ export class GeneralSettings {
     try {
       const editorElements = document.querySelectorAll(
         ".protyle-content, .protyle-wysiwyg",
-      );
+      )
       editorElements.forEach((el: any) => {
-        el.style[property as any] = value;
-      });
+        el.style[property as any] = value
+      })
 
       const contentElements = document.querySelectorAll(
         ".b3-typography, .render-node",
-      );
+      )
       contentElements.forEach((el: any) => {
-        el.style[property as any] = value;
-      });
+        el.style[property as any] = value
+      })
     } catch (error) {
-      console.error(`应用字体样式到思源元素失败:`, error);
+      console.error(`应用字体样式到思源元素失败:`, error)
     }
   }
 
@@ -176,9 +182,9 @@ export class GeneralSettings {
   public getCurrentFontSettings(): any {
     try {
       // 同步读取：返回内存中缓存的字体设置（由 applySavedSettings 预加载）
-      return this._cachedFontSettings;
+      return this._cachedFontSettings
     } catch (error) {
-      console.error("获取字体设置失败:", error);
+      console.error("获取字体设置失败:", error)
     }
 
     return {
@@ -186,88 +192,88 @@ export class GeneralSettings {
       fontSize: 14,
       fontWeight: "normal",
       lineHeight: 1.6,
-    };
+    }
   }
 
   public async applySavedSettings() {
-    const settings = await this.storage.font.load();
+    const settings = await this.storage.font.load()
     this._cachedFontSettings = settings ?? {
       fontFamily: "",
       fontSize: 14,
       fontWeight: "normal",
       lineHeight: 1.6,
-    };
-    this.applyGlobalFontStyles(this._cachedFontSettings);
+    }
+    this.applyGlobalFontStyles(this._cachedFontSettings)
   }
 
   public async applyCodeBlockStyle() {
     try {
-      const settings = await this.storage.codeblock.loadOrDefault();
-      this.applyCodeBlockStyleFromSettings(settings);
+      const settings = await this.storage.codeblock.loadOrDefault()
+      this.applyCodeBlockStyleFromSettings(settings)
     } catch (error) {
-      console.error("应用代码块样式失败:", error);
+      console.error("应用代码块样式失败:", error)
     }
   }
 
   public async applyListStyle() {
     try {
-      const settings = await this.storage.list.loadOrDefault();
-      this.applyListStyles(settings);
+      const settings = await this.storage.list.loadOrDefault()
+      this.applyListStyles(settings)
     } catch (error) {
-      console.error("应用列表样式失败:", error);
+      console.error("应用列表样式失败:", error)
     }
   }
 
   public async applyHeadingStyle() {
     try {
-      const settings = await this.storage.loadHeadingOrDefault();
+      const settings = await this.storage.loadHeadingOrDefault()
 
       if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", () => {
           setTimeout(() => {
-            this.applyHeadingStyles(settings);
-          }, 200);
-        });
+            this.applyHeadingStyles(settings)
+          }, 200)
+        })
       } else {
         setTimeout(() => {
-          this.applyHeadingStyles(settings);
-        }, 200);
+          this.applyHeadingStyles(settings)
+        }, 200)
       }
     } catch (error) {
-      console.error("应用标题样式失败:", error);
+      console.error("应用标题样式失败:", error)
     }
   }
 
   public async applyDocumentFontStyle() {
     try {
-      const settings = await this.storage.documentFont.load();
+      const settings = await this.storage.documentFont.load()
       if (settings) {
-        this.applyDocumentFontStyles(settings);
+        this.applyDocumentFontStyles(settings)
       }
     } catch (error) {
-      console.error("应用文档字体样式失败:", error);
+      console.error("应用文档字体样式失败:", error)
     }
   }
 
   private applyDocumentFontStyles(fontSettings: any) {
     try {
       // 移除现有样式
-      const existingStyle = document.getElementById("document-font-settings");
+      const existingStyle = document.getElementById("document-font-settings")
       if (existingStyle) {
-        existingStyle.remove();
+        existingStyle.remove()
       }
 
       if (!fontSettings.enabled) {
-        return;
+        return
       }
 
       // 创建新的样式元素
-      const style = document.createElement("style");
-      style.id = "document-font-settings";
+      const style = document.createElement("style")
+      style.id = "document-font-settings"
 
       const fontFamily = fontSettings.fontFamily
         ? `'${fontSettings.fontFamily}', `
-        : "";
+        : ""
 
       style.textContent = `
         /* 编辑器内容区域 - 基础样式 */
@@ -345,40 +351,40 @@ export class GeneralSettings {
           font-family: var(--b3-font-family-code) !important;
           line-height: 1.5 !important;
         }
-      `;
+      `
 
-      document.head.appendChild(style);
+      document.head.appendChild(style)
     } catch (error) {
-      console.error("应用文档字体样式失败:", error);
+      console.error("应用文档字体样式失败:", error)
     }
   }
 
   public async applyTableStyle() {
     try {
-      const settings = await this.storage.tableStyle.load();
+      const settings = await this.storage.tableStyle.load()
       if (settings) {
-        this.applyTableStyles(settings);
+        this.applyTableStyles(settings)
       }
     } catch (error) {
-      console.error("应用表格样式失败:", error);
+      console.error("应用表格样式失败:", error)
     }
   }
 
   private applyTableStyles(tableSettings: any) {
     try {
       // 移除现有样式
-      const existingStyle = document.getElementById("table-style-settings");
+      const existingStyle = document.getElementById("table-style-settings")
       if (existingStyle) {
-        existingStyle.remove();
+        existingStyle.remove()
       }
 
       if (!tableSettings.enabled) {
-        return;
+        return
       }
 
       // 创建新的样式元素
-      const style = document.createElement("style");
-      style.id = "table-style-settings";
+      const style = document.createElement("style")
+      style.id = "table-style-settings"
 
       style.textContent = `
         /* 表格整体外框 */
@@ -423,98 +429,106 @@ export class GeneralSettings {
         :root[data-theme-mode="dark"] .protyle-wysiwyg table tr:nth-child(even) {
           color: #ffffff;
         }
-      `;
+      `
 
-      document.head.appendChild(style);
+      document.head.appendChild(style)
     } catch (error) {
-      console.error("应用表格样式失败:", error);
+      console.error("应用表格样式失败:", error)
     }
   }
 
   public async applyListStyleEnhanced() {
     try {
-      const settings = await this.storage.listStyle.load();
+      const settings = await this.storage.listStyle.load()
       if (settings) {
-        this.applyListStylesEnhanced(settings);
+        this.applyListStylesEnhanced(settings)
       }
     } catch (error) {
-      console.error("应用列表样式失败:", error);
+      console.error("应用列表样式失败:", error)
     }
   }
 
   public async applyDocCountStyle() {
     try {
-      const settings = await this.storage.docCount.load();
+      const settings = await this.storage.docCount.load()
       if (settings && settings.enableDocCount) {
         // 如果功能已启用,启动管理器
-        this.docCountManager = new DocCountManager();
-        this.docCountManager.start();
+        this.docCountManager = new DocCountManager()
+        this.docCountManager.start()
         this.docCountManager.setUpdateInterval(
-          parseInt(settings.updateInterval),
-        );
+          Number.parseInt(settings.updateInterval),
+        )
         this.docCountManager.setFontStyle({
           fontSize: settings.fontSize,
           color: settings.fontColor,
           fontWeight: settings.fontWeight,
-        });
+        })
       }
     } catch (error) {
-      console.error("应用文档数统计样式失败:", error);
+      console.error("应用文档数统计样式失败:", error)
     }
   }
 
   public async applyHighlightStyle() {
     try {
-      const settings = await this.storage.highlight.load();
+      const settings = await this.storage.highlight.load()
       if (settings && settings.enableHighlight === false) {
-        return;
+        return
       }
       const options = settings
-        ? { backgroundColor: settings.backgroundColor, fontSize: settings.fontSize, bold: settings.bold, minTextLength: settings.minTextLength, minLetterLength: settings.minLetterLength, maxTextLength: settings.maxTextLength, maxLetterLength: settings.maxLetterLength }
-        : undefined;
-      this.highlightManager = new HighlightManager(options);
-      this.highlightManager.enable();
+        ? {
+            backgroundColor: settings.backgroundColor,
+            fontSize: settings.fontSize,
+            bold: settings.bold,
+            minTextLength: settings.minTextLength,
+            minLetterLength: settings.minLetterLength,
+            maxTextLength: settings.maxTextLength,
+            maxLetterLength: settings.maxLetterLength,
+          }
+        : undefined
+      this.highlightManager = new HighlightManager(options)
+      this.highlightManager.enable()
     } catch (error) {
-      console.error("应用双击高亮功能失败:", error);
+      console.error("应用双击高亮功能失败:", error)
     }
   }
 
   public async applySkillsViewerStyle() {
     try {
-      const settings = await this.storage.skillsViewer.load();
+      const settings = await this.storage.skillsViewer.load()
       if (settings && settings.enabled) {
-        this.skillsViewerManager = new SkillsViewerManager();
+        this.skillsViewerManager = new SkillsViewerManager()
       }
     } catch (error) {
-      console.error("初始化 Skills 查看器失败:", error);
+      console.error("初始化 Skills 查看器失败:", error)
     }
   }
 
   public async applyTabPinStyle() {
     try {
-      const settings = await this.storage.tabPin.load();
+      const settings = await this.storage.tabPin.load()
       if (settings) {
-        this.applyTabPinStyles(settings);
+        this.applyTabPinStyles(settings)
       }
     } catch (error) {
-      console.error("应用钉住页签样式失败:", error);
+      console.error("应用钉住页签样式失败:", error)
     }
   }
 
   public getHighlightManager(): HighlightManager | null {
-    return this.highlightManager;
+    return this.highlightManager
   }
 
   public async updateHighlight(enabled: boolean) {
     if (!this.highlightManager) {
-      this.highlightManager = new HighlightManager();
+      this.highlightManager = new HighlightManager()
     }
     if (enabled) {
-      this.highlightManager.enable();
+      this.highlightManager.enable()
     } else {
-      this.highlightManager.disable();
+      this.highlightManager.disable()
     }
-    const current = await this.storage.highlight.load();
+    const current = await this.storage.highlight.load()
     this.storage.highlight.save({
       enableHighlight: enabled,
       backgroundColor: current?.backgroundColor ?? "rgb(255, 220, 60)",
@@ -524,12 +538,12 @@ export class GeneralSettings {
       minLetterLength: current?.minLetterLength ?? 1,
       maxTextLength: current?.maxTextLength ?? 50,
       maxLetterLength: current?.maxLetterLength ?? 100,
-    });
+    })
   }
 
-  public updateHighlightOptions(options: { backgroundColor?: string; fontSize?: number; bold?: boolean; minTextLength?: number; minLetterLength?: number; maxTextLength?: number; maxLetterLength?: number }) {
+  public updateHighlightOptions(options: { backgroundColor?: string, fontSize?: number, bold?: boolean, minTextLength?: number, minLetterLength?: number, maxTextLength?: number, maxLetterLength?: number }) {
     if (this.highlightManager) {
-      this.highlightManager.updateOptions(options);
+      this.highlightManager.updateOptions(options)
     }
     this.storage.highlight.load().then((current) => {
       this.storage.highlight.save({
@@ -541,28 +555,28 @@ export class GeneralSettings {
         minLetterLength: options.minLetterLength ?? current?.minLetterLength ?? 1,
         maxTextLength: options.maxTextLength ?? current?.maxTextLength ?? 50,
         maxLetterLength: options.maxLetterLength ?? current?.maxLetterLength ?? 100,
-      });
-    });
+      })
+    })
   }
 
   private applyTabPinStyles(tabPinSettings: any) {
     try {
       // 移除现有样式
-      const existingStyle = document.getElementById("tab-pin-settings-style");
+      const existingStyle = document.getElementById("tab-pin-settings-style")
       if (existingStyle) {
-        existingStyle.remove();
+        existingStyle.remove()
       }
 
       if (!tabPinSettings.enabled) {
-        return;
+        return
       }
 
       // 默认值
-      const defaultBackgroundColor = "rgba(var(--b3-theme-primary-rgb), 0.1)";
+      const defaultBackgroundColor = "rgba(var(--b3-theme-primary-rgb), 0.1)"
 
       // 创建新的样式元素
-      const style = document.createElement("style");
-      style.id = "tab-pin-settings-style";
+      const style = document.createElement("style")
+      style.id = "tab-pin-settings-style"
 
       let css = `
         /* 钉住页签：显示标题文本 */
@@ -571,7 +585,7 @@ export class GeneralSettings {
           max-width: none !important;
           display: flex !important;
         }
-      `;
+      `
 
       // 根据显示模式添加不同的样式
       if (tabPinSettings.displayMode === "textOnly") {
@@ -580,7 +594,7 @@ export class GeneralSettings {
           .layout-tab-bar .item.item--pin .item__icon {
             display: none !important;
           }
-        `;
+        `
       }
 
       css += `
@@ -588,49 +602,49 @@ export class GeneralSettings {
         .layout-tab-bar .item.item--pin {
           ${tabPinSettings.backgroundColor !== defaultBackgroundColor ? `background: ${tabPinSettings.backgroundColor} !important;` : ""}
         }
-      `;
+      `
 
-      style.textContent = css;
-      document.head.appendChild(style);
+      style.textContent = css
+      document.head.appendChild(style)
     } catch (error) {
-      console.error("应用钉住页签样式失败:", error);
+      console.error("应用钉住页签样式失败:", error)
     }
   }
 
   private applyListStylesEnhanced(listSettings: any) {
     try {
       // 移除现有样式
-      const existingStyle = document.getElementById("list-style-settings");
+      const existingStyle = document.getElementById("list-style-settings")
       if (existingStyle) {
-        existingStyle.remove();
+        existingStyle.remove()
       }
 
       if (!listSettings.enabled) {
-        return;
+        return
       }
 
       // 创建新的样式元素
-      const style = document.createElement("style");
-      style.id = "list-style-settings";
+      const style = document.createElement("style")
+      style.id = "list-style-settings"
 
       // 有序列表颜色
       const orderedListCss = listSettings.orderedListColors
         .map((color: string, index: number) => {
-          const depth = '.li[data-subtype="o"] '.repeat(index);
+          const depth = '.li[data-subtype="o"] '.repeat(index)
           return `
           ${depth}.li[data-subtype="o"] > .protyle-action--order {
             color: ${color} !important;
             font-weight: bold !important;
           }
-        `;
+        `
         })
-        .join("\n");
+        .join("\n")
 
       // 无序列表颜色和符号
       const unorderedListCss = listSettings.unorderedListColors
         .map((color: string, index: number) => {
-          const depth = '[data-subtype="u"] > '.repeat(index);
-          const symbol = index % 2 === 0 ? "•" : "▪";
+          const depth = '[data-subtype="u"] > '.repeat(index)
+          const symbol = index % 2 === 0 ? "•" : "▪"
           return `
           ${depth}.li[data-subtype="u"] > .protyle-action::before {
             content: "${symbol}";
@@ -640,9 +654,9 @@ export class GeneralSettings {
             position: absolute;
             color: ${color} !important;
           }
-        `;
+        `
         })
-        .join("\n");
+        .join("\n")
 
       style.textContent = `
         /* 有序列表样式 */
@@ -661,22 +675,22 @@ export class GeneralSettings {
         :root[data-theme-mode="dark"] .li[data-subtype="u"] > .protyle-action::before {
           opacity: 0.9;
         }
-      `;
+      `
 
-      document.head.appendChild(style);
+      document.head.appendChild(style)
     } catch (error) {
-      console.error("应用列表样式失败:", error);
+      console.error("应用列表样式失败:", error)
     }
   }
 
   private applyHeadingStyles(settings: any) {
     try {
       const style =
-        document.getElementById("heading-colors-style") ||
-        document.createElement("style");
-      style.id = "heading-colors-style";
+        document.getElementById("heading-colors-style")
+        || document.createElement("style")
+      style.id = "heading-colors-style"
 
-      const colors = settings.colors || {};
+      const colors = settings.colors || {}
       const colorCss = Object.entries(colors)
         .map(([level, color]) => {
           return `
@@ -685,11 +699,11 @@ export class GeneralSettings {
             .b3-typography .${level} {
               color: ${color} !important;
             }
-          `;
+          `
         })
-        .join("\n");
+        .join("\n")
 
-      const fontSizes = settings.fontSizes || {};
+      const fontSizes = settings.fontSizes || {}
       const fontSizeCss = Object.entries(fontSizes)
         .map(
           ([level, size]) => `
@@ -700,14 +714,14 @@ export class GeneralSettings {
           }
         `,
         )
-        .join("\n");
+        .join("\n")
 
-      let levelCss = "";
+      let levelCss = ""
       if (settings.levelDisplay && settings.levelDisplay !== "none") {
         levelCss = this.generateLevelDisplayCss(
           settings.levelDisplay,
           settings.customMarkers || [],
-        );
+        )
       }
 
       const centerAlignCss = settings.titleCenterAlign
@@ -716,7 +730,7 @@ export class GeneralSettings {
           text-align: center !important;
         }
       `
-        : "";
+        : ""
 
       const titleColorCss = settings.titleColor
         ? `
@@ -724,7 +738,7 @@ export class GeneralSettings {
           color: ${settings.titleColor} !important;
         }
       `
-        : "";
+        : ""
 
       const titleFontSizeCss = settings.titleFontSize
         ? `
@@ -732,26 +746,26 @@ export class GeneralSettings {
           font-size: ${settings.titleFontSize}px !important;
         }
       `
-        : "";
+        : ""
 
       style.textContent =
-        colorCss +
-        "\n" +
-        fontSizeCss +
-        "\n" +
-        levelCss +
-        "\n" +
-        centerAlignCss +
-        "\n" +
-        titleColorCss +
-        "\n" +
-        titleFontSizeCss;
+        `${colorCss
+        }\n${
+          fontSizeCss
+        }\n${
+          levelCss
+        }\n${
+          centerAlignCss
+        }\n${
+          titleColorCss
+        }\n${
+          titleFontSizeCss}`
 
       if (!style.parentElement) {
-        document.head.appendChild(style);
+        document.head.appendChild(style)
       }
     } catch (error) {
-      console.error("应用标题样式失败:", error);
+      console.error("应用标题样式失败:", error)
     }
   }
 
@@ -762,15 +776,15 @@ export class GeneralSettings {
     const levels =
       style === "custom"
         ? customMarkers
-        : HEADING_LEVEL_MAPPINGS[style] || HEADING_LEVEL_MAPPINGS.number;
+        : HEADING_LEVEL_MAPPINGS[style] || HEADING_LEVEL_MAPPINGS.number
 
     return levels
       .map((label, index) => {
-        const level = index + 1;
+        const level = index + 1
         const tagStyles =
           style === "tag"
             ? "background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.15); padding: 2px 6px; border-radius: 4px; font-weight: 600; opacity: 0.7;"
-            : "";
+            : ""
 
         return `
         .protyle-wysiwyg div[data-subtype="h${level}"][data-node-id]:not([type]) > div[contenteditable]:first-child::after,
@@ -782,221 +796,221 @@ export class GeneralSettings {
           vertical-align: middle;
           ${tagStyles}
         }
-      `;
+      `
       })
-      .join("\n");
+      .join("\n")
   }
 
   private applyListStyles(settings: any) {
     try {
       if (settings.css) {
-        this.applyListCSS(settings.css);
+        this.applyListCSS(settings.css)
       } else {
-        this.removeExistingListStyles();
+        this.removeExistingListStyles()
       }
     } catch (error) {
-      console.error("应用列表样式失败:", error);
+      console.error("应用列表样式失败:", error)
     }
   }
 
   private applyListCSS(css: string) {
     if (!css) {
-      this.removeExistingListStyles();
-      return;
+      this.removeExistingListStyles()
+      return
     }
 
-    this.removeExistingListStyles();
+    this.removeExistingListStyles()
 
-    const styleElement = document.createElement("style");
-    styleElement.id = "custom-list-styles";
-    styleElement.textContent = css;
-    document.head.appendChild(styleElement);
+    const styleElement = document.createElement("style")
+    styleElement.id = "custom-list-styles"
+    styleElement.textContent = css
+    document.head.appendChild(styleElement)
   }
 
   private removeExistingListStyles() {
-    const existingStyle = document.getElementById("custom-list-styles");
+    const existingStyle = document.getElementById("custom-list-styles")
     if (existingStyle) {
-      existingStyle.remove();
+      existingStyle.remove()
     }
   }
 
   private applyCodeBlockStyleFromSettings(settings: any) {
     try {
-      applyCodeBlockStyle(settings.style || "default");
+      applyCodeBlockStyle(settings.style || "default")
 
       // 应用代码块折叠
       applyCodeBlockCollapse(
         settings.enableCollapse ?? true,
         settings.collapseHeight ?? 400,
-      );
+      )
 
       // 应用代码块样式增强
-      applyCodeBlockEnhancedStyles(settings);
+      applyCodeBlockEnhancedStyles(settings)
     } catch (error) {
-      console.error("应用代码块样式失败:", error);
+      console.error("应用代码块样式失败:", error)
     }
   }
 
   private observeContentChanges() {
     try {
       const observer = new MutationObserver((mutations) => {
-        let shouldReapplyStyles = false;
+        let shouldReapplyStyles = false
 
         mutations.forEach((mutation) => {
           if (mutation.type === "childList") {
             mutation.addedNodes.forEach((node) => {
               if (node.nodeType === Node.ELEMENT_NODE) {
-                const element = node as Element;
+                const element = node as Element
                 if (
-                  element.classList?.contains("protyle-wysiwyg") ||
-                  element.classList?.contains("b3-typography") ||
-                  element.querySelector?.(".protyle-wysiwyg") ||
-                  element.querySelector?.(".b3-typography")
+                  element.classList?.contains("protyle-wysiwyg")
+                  || element.classList?.contains("b3-typography")
+                  || element.querySelector?.(".protyle-wysiwyg")
+                  || element.querySelector?.(".b3-typography")
                 ) {
-                  shouldReapplyStyles = true;
+                  shouldReapplyStyles = true
                 }
               }
-            });
+            })
           }
-        });
+        })
 
         if (shouldReapplyStyles) {
           setTimeout(async () => {
-            await this.applyHeadingStyle();
-          }, 100);
+            await this.applyHeadingStyle()
+          }, 100)
         }
-      });
+      })
 
       const observerOptions = {
         childList: true,
         subtree: true,
         attributes: false,
-      };
+      }
 
-      observer.observe(document.body, observerOptions);
-      this.contentObserver = observer;
+      observer.observe(document.body, observerOptions)
+      this.contentObserver = observer
     } catch (error) {
-      console.error("启动内容变化观察器失败:", error);
+      console.error("启动内容变化观察器失败:", error)
     }
   }
 
   private async initAutoBackup() {
     try {
-      const data = await this.storage.backup.loadOrDefault();
-      this.lastBackupTimestamp = data.lastBackupTimestamp || 0;
+      const data = await this.storage.backup.loadOrDefault()
+      this.lastBackupTimestamp = data.lastBackupTimestamp || 0
 
-      const isMobile = checkIsMobile();
-      const autoBackupEnabled = data.autoBackupEnabled ?? false;
-      const backupFrequency = data.backupFrequency ?? "daily";
-      const backupTime = data.backupTime ?? "03:00";
+      const isMobile = checkIsMobile()
+      const autoBackupEnabled = data.autoBackupEnabled ?? false
+      const backupFrequency = data.backupFrequency ?? "daily"
+      const backupTime = data.backupTime ?? "03:00"
 
       if (!isMobile && autoBackupEnabled) {
-        this.startAutoBackupTimer(backupFrequency, backupTime);
+        this.startAutoBackupTimer(backupFrequency, backupTime)
       }
     } catch (error) {
-      console.error("初始化自动备份失败:", error);
+      console.error("初始化自动备份失败:", error)
     }
   }
 
   private startAutoBackupTimer(backupFrequency: string, backupTime: string) {
-    this.stopAutoBackupTimer();
+    this.stopAutoBackupTimer()
 
     // 记录定时器启动时间，防止重启后立即触发备份
-    const timerStartTime = Date.now();
+    const timerStartTime = Date.now()
     // 用于防止同一时间点重复触发
-    let lastExecutedHour = -1;
-    let lastExecutedDateStr = "";
+    let lastExecutedHour = -1
+    let lastExecutedDateStr = ""
 
     const checkAndBackup = async () => {
-      const now = new Date();
-      const currentTime = now.getTime();
-      const currentHour = now.getHours();
-      const currentMinute = now.getMinutes();
-      const currentDateStr = now.toDateString();
-      const timeSinceTimerStart = currentTime - timerStartTime;
-      const timeSinceLastBackup = currentTime - this.lastBackupTimestamp;
+      const now = new Date()
+      const currentTime = now.getTime()
+      const currentHour = now.getHours()
+      const currentMinute = now.getMinutes()
+      const currentDateStr = now.toDateString()
+      const timeSinceTimerStart = currentTime - timerStartTime
+      const timeSinceLastBackup = currentTime - this.lastBackupTimestamp
 
-      let shouldBackup = false;
+      let shouldBackup = false
 
       switch (backupFrequency) {
         case "minute":
           // 每分钟：间隔触发，跳过启动后首个周期
           if (timeSinceLastBackup >= 60 * 1000 && timeSinceTimerStart >= 60 * 1000) {
-            shouldBackup = true;
+            shouldBackup = true
           }
-          break;
+          break
 
         case "hourly":
           // 每小时：整点触发（分钟数为0时），跳过启动后首个周期
           if (
-            currentMinute === 0 &&
-            lastExecutedHour !== currentHour &&
-            timeSinceTimerStart >= 60 * 1000
+            currentMinute === 0
+            && lastExecutedHour !== currentHour
+            && timeSinceTimerStart >= 60 * 1000
           ) {
-            shouldBackup = true;
-            lastExecutedHour = currentHour;
+            shouldBackup = true
+            lastExecutedHour = currentHour
           }
-          break;
+          break
 
         case "daily": {
           // 每天：在用户指定的时间点触发，跳过启动后首个周期
-          const [targetHour, targetMinute] = backupTime.split(":").map(Number);
+          const [targetHour, targetMinute] = backupTime.split(":").map(Number)
           if (
-            currentHour === targetHour &&
-            currentMinute === targetMinute &&
-            lastExecutedDateStr !== currentDateStr &&
-            timeSinceTimerStart >= 60 * 1000
+            currentHour === targetHour
+            && currentMinute === targetMinute
+            && lastExecutedDateStr !== currentDateStr
+            && timeSinceTimerStart >= 60 * 1000
           ) {
-            shouldBackup = true;
-            lastExecutedDateStr = currentDateStr;
+            shouldBackup = true
+            lastExecutedDateStr = currentDateStr
           }
-          break;
+          break
         }
       }
 
       if (shouldBackup) {
-        emitCustomEvent("autoBackupTrigger");
+        emitCustomEvent("autoBackupTrigger")
       }
-    };
+    }
 
-    this.autoBackupTimer = window.setInterval(checkAndBackup, 60000);
+    this.autoBackupTimer = window.setInterval(checkAndBackup, 60000)
   }
 
   private stopAutoBackupTimer() {
     if (this.autoBackupTimer) {
-      clearInterval(this.autoBackupTimer);
-      this.autoBackupTimer = null;
+      clearInterval(this.autoBackupTimer)
+      this.autoBackupTimer = null
     }
   }
 
   public updateLastBackupTime(timestamp: number) {
-    this.lastBackupTimestamp = timestamp;
+    this.lastBackupTimestamp = timestamp
   }
 
   public restartAutoBackupTimer(enabled: boolean, frequency: string, backupTime: string = "03:00") {
-    this.stopAutoBackupTimer();
+    this.stopAutoBackupTimer()
     if (enabled) {
-      this.startAutoBackupTimer(frequency, backupTime);
+      this.startAutoBackupTimer(frequency, backupTime)
     }
   }
 
   public destroy() {
-    this.stopAutoBackupTimer();
+    this.stopAutoBackupTimer()
     if (this.contentObserver) {
-      this.contentObserver.disconnect();
-      this.contentObserver = null;
+      this.contentObserver.disconnect()
+      this.contentObserver = null
     }
     if (this.docCountManager) {
-      this.docCountManager.stop();
-      this.docCountManager = null;
+      this.docCountManager.stop()
+      this.docCountManager = null
     }
     if (this.highlightManager) {
-      this.highlightManager.disable();
-      this.highlightManager = null;
+      this.highlightManager.disable()
+      this.highlightManager = null
     }
     if (this.skillsViewerManager) {
-      this.skillsViewerManager.destroy();
-      this.skillsViewerManager = null;
+      this.skillsViewerManager.destroy()
+      this.skillsViewerManager = null
     }
   }
 }

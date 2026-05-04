@@ -1,5 +1,8 @@
 <template>
-  <div class="breadcrumb-nav" v-if="currentPath">
+  <div
+    v-if="currentPath"
+    class="breadcrumb-nav"
+  >
     <Button
       variant="ghost"
       size="small"
@@ -11,8 +14,15 @@
     >
       {{ expandedDisk }}
     </Button>
-    <span v-for="(segment, index) in pathSegments" :key="index" class="breadcrumb-segment">
-      <IconWrapper name="chevronRight" :size="10" />
+    <span
+      v-for="(segment, index) in pathSegments"
+      :key="index"
+      class="breadcrumb-segment"
+    >
+      <IconWrapper
+        name="chevronRight"
+        :size="10"
+      />
       <Button
         variant="ghost"
         size="small"
@@ -27,22 +37,22 @@
 </template>
 
 <script setup lang="ts">
-import Button from "@/components/Button.vue";
-import IconWrapper from "@/components/IconWrapper.vue";
-import type { DiskBrowserI18n } from "../types";
+import type { DiskBrowserI18n } from "../types"
+import Button from "@/components/Button.vue"
+import IconWrapper from "@/components/IconWrapper.vue"
 
 interface Props {
-  currentPath: string;
-  expandedDisk: string;
-  pathSegments: string[];
-  i18n: DiskBrowserI18n;
+  currentPath: string
+  expandedDisk: string
+  pathSegments: string[]
+  i18n: DiskBrowserI18n
 }
 
-defineProps<Props>();
+defineProps<Props>()
 defineEmits<{
-  "navigate-root": [];
-  "navigate-path": [index: number];
-}>();
+  "navigate-root": []
+  "navigate-path": [index: number]
+}>()
 </script>
 
 <style scoped lang="scss">

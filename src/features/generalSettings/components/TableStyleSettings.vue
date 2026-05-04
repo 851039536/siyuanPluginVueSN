@@ -8,7 +8,9 @@
             <span class="label-icon">📊</span>
             {{ i18n.tableStyleSettings || '表格样式设置' }}
           </label>
-          <p class="setting-description">{{ i18n.tableStyleSettingsDesc || '自定义表格的边框、背景、颜色等样式' }}</p>
+          <p class="setting-description">
+            {{ i18n.tableStyleSettingsDesc || '自定义表格的边框、背景、颜色等样式' }}
+          </p>
         </div>
       </div>
 
@@ -22,8 +24,8 @@
           <div class="toggle-container">
             <label class="toggle-switch">
               <input
-                type="checkbox"
                 v-model="settings.enabled"
+                type="checkbox"
                 class="toggle-input"
               />
               <span class="toggle-slider"></span>
@@ -201,14 +203,26 @@
 
         <!-- 预览区域 -->
         <div class="preview-section">
-          <div class="preview-toggle" @click="togglePreview">
+          <div
+            class="preview-toggle"
+            @click="togglePreview"
+          >
             <span class="preview-icon">{{ showPreview ? '👁️' : '👁️‍🗨️' }}</span>
             <span>{{ i18n.preview || '预览效果' }}</span>
-            <span class="toggle-arrow" :class="{ expanded: showPreview }">▼</span>
+            <span
+              class="toggle-arrow"
+              :class="{ expanded: showPreview }"
+            >▼</span>
           </div>
           <transition name="preview-expand">
-            <div v-show="showPreview" class="preview-content">
-              <table class="preview-table" :style="previewTableStyle">
+            <div
+              v-show="showPreview"
+              class="preview-content"
+            >
+              <table
+                class="preview-table"
+                :style="previewTableStyle"
+              >
                 <thead>
                   <tr>
                     <th>标题 1</th>
@@ -242,7 +256,10 @@
       <!-- 重置按钮 -->
       <div class="setting-row">
         <div class="setting-item">
-          <button class="reset-btn" @click="resetSettings">
+          <button
+            class="reset-btn"
+            @click="resetSettings"
+          >
             <span class="btn-icon">🔄</span>
             {{ i18n.resetToDefault || '恢复默认设置' }}
           </button>
@@ -253,35 +270,42 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, onMounted } from "vue";
-import { Plugin } from "siyuan";
+import { Plugin } from "siyuan"
+import {
+  computed,
+  onMounted,
+  ref,
+  watch,
+} from "vue"
+
+import { GeneralSettingsStorage } from "../types/storage"
 
 export interface TableStyleSettingsData {
-  enabled: boolean;
-  borderColor: string;
-  cellBorderColor: string;
-  headerBackground: string;
-  oddRowBackground: string;
-  evenRowBackground: string;
-  textColor: string;
-  borderRadius: number;
+  enabled: boolean
+  borderColor: string
+  cellBorderColor: string
+  headerBackground: string
+  oddRowBackground: string
+  evenRowBackground: string
+  textColor: string
+  borderRadius: number
 }
 
 interface Props {
-  i18n?: any;
-  plugin?: Plugin;
+  i18n?: any
+  plugin?: Plugin
 }
 
 interface Emits {
-  (e: "change", settings: TableStyleSettingsData): void;
+  (e: "change", settings: TableStyleSettingsData): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
   i18n: () => ({}),
   plugin: null,
-});
+})
 
-const emit = defineEmits<Emits>();
+const emit = defineEmits<Emits>()
 
 const DEFAULT_SETTINGS: TableStyleSettingsData = {
   enabled: false,
@@ -292,53 +316,53 @@ const DEFAULT_SETTINGS: TableStyleSettingsData = {
   evenRowBackground: "#f8f8f8",
   textColor: "#000000",
   borderRadius: 6,
-};
+}
 
-const settings = ref<TableStyleSettingsData>({ ...DEFAULT_SETTINGS });
-const showPreview = ref(true);
+const settings = ref<TableStyleSettingsData>({ ...DEFAULT_SETTINGS })
+const showPreview = ref(true)
 
 const previewTableStyle = computed(() => ({
   borderRadius: `${settings.value.borderRadius}px`,
-}));
+}))
 
 watch(
   settings,
   (newSettings) => {
-    emit("change", newSettings);
-    saveSettings();
-    applySettings();
+    emit("change", newSettings)
+    saveSettings()
+    applySettings()
   },
   { deep: true },
-);
+)
 
 function togglePreview() {
-  showPreview.value = !showPreview.value;
+  showPreview.value = !showPreview.value
 }
 
 function resetSettings() {
-  settings.value = { ...DEFAULT_SETTINGS };
-  applySettings();
+  settings.value = { ...DEFAULT_SETTINGS }
+  applySettings()
 }
 
 function applySettings() {
-  applyTableStyles(settings.value);
+  applyTableStyles(settings.value)
 }
 
 function applyTableStyles(tableSettings: TableStyleSettingsData) {
   try {
     // 移除现有样式
-    const existingStyle = document.getElementById("table-style-settings");
+    const existingStyle = document.getElementById("table-style-settings")
     if (existingStyle) {
-      existingStyle.remove();
+      existingStyle.remove()
     }
 
     if (!tableSettings.enabled) {
-      return;
+      return
     }
 
     // 创建新的样式元素
-    const style = document.createElement("style");
-    style.id = "table-style-settings";
+    const style = document.createElement("style")
+    style.id = "table-style-settings"
 
     style.textContent = `
       /* 表格整体外框 */
@@ -383,54 +407,55 @@ function applyTableStyles(tableSettings: TableStyleSettingsData) {
       :root[data-theme-mode="dark"] .protyle-wysiwyg table tr:nth-child(even) {
         color: #ffffff;
       }
-    `;
+    `
 
-    document.head.appendChild(style);
+    document.head.appendChild(style)
   } catch (error) {
-    console.error("应用表格样式失败:", error);
+    console.error("应用表格样式失败:", error)
   }
 }
 
-import { GeneralSettingsStorage } from "../types/storage";
-
-const gsStorage = computed(() => props.plugin ? new GeneralSettingsStorage(props.plugin) : null);
+const gsStorage = computed(() => props.plugin ? new GeneralSettingsStorage(props.plugin) : null)
 
 async function loadSettings() {
   if (!gsStorage.value) {
-    return;
+    return
   }
 
   try {
-    const data = await gsStorage.value.tableStyle.load();
+    const data = await gsStorage.value.tableStyle.load()
     if (data) {
-      settings.value = { ...DEFAULT_SETTINGS, ...data };
-      applySettings();
+      settings.value = {
+        ...DEFAULT_SETTINGS,
+        ...data,
+      }
+      applySettings()
     }
   } catch (error) {
-    console.error("加载表格样式设置失败:", error);
+    console.error("加载表格样式设置失败:", error)
   }
 }
 
 async function saveSettings() {
   if (!gsStorage.value) {
-    return;
+    return
   }
 
   try {
-    await gsStorage.value.tableStyle.save(settings.value);
+    await gsStorage.value.tableStyle.save(settings.value)
   } catch (error) {
-    console.error("保存表格样式设置失败:", error);
+    console.error("保存表格样式设置失败:", error)
   }
 }
 
 onMounted(async () => {
-  await loadSettings();
-});
+  await loadSettings()
+})
 
 defineExpose({
   settings,
   loadSettings,
-});
+})
 </script>
 
 <style scoped lang="scss">

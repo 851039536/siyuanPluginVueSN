@@ -1,7 +1,11 @@
 <template>
   <Teleport to="body">
     <Transition name="dialog">
-      <div v-if="visible" class="flashcard-dialog-overlay" @click.self="close">
+      <div
+        v-if="visible"
+        class="flashcard-dialog-overlay"
+        @click.self="close"
+      >
         <div class="flashcard-dialog">
           <Button
             variant="ghost"
@@ -11,15 +15,25 @@
             @click="close"
           />
 
-          <div v-if="filteredCards.length === 0" class="empty-state">
-            <IconWrapper name="file" :size="64" />
+          <div
+            v-if="filteredCards.length === 0"
+            class="empty-state"
+          >
+            <IconWrapper
+              name="file"
+              :size="64"
+            />
             <p>{{ i18n.noCards || '暂无卡片' }}</p>
           </div>
 
           <template v-else>
             <div class="flashcard-large">
-              <div class="card-title-large">{{ currentCard?.title }}</div>
-              <div class="card-content-large">{{ currentCard?.content }}</div>
+              <div class="card-title-large">
+                {{ currentCard?.title }}
+              </div>
+              <div class="card-content-large">
+                {{ currentCard?.content }}
+              </div>
               <div class="card-meta-large">
                 <span class="card-category-large">{{ currentCard?.category }}</span>
                 <span class="practice-count">{{ i18n.practiceCount || '练习次数' }}: {{ currentCard?.practiceCount || 0 }}</span>
@@ -72,129 +86,144 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, shallowRef } from "vue";
-import { showMessage } from "siyuan";
+import type { Plugin } from "siyuan"
+import type {
+  Flashcard,
+  I18n,
+} from "../types"
 
-import IconWrapper from "@/components/IconWrapper.vue";
-import Button from "@/components/Button.vue";
-import Select from "@/components/Select.vue";
-import type { SelectOption } from "@/components/Select.vue";
-import type { Plugin } from "siyuan";
+import type { SelectOption } from "@/components/Select.vue"
+import { showMessage } from "siyuan"
+import {
+  computed,
+  onMounted,
+  onUnmounted,
+  ref,
+  shallowRef,
+} from "vue"
+import Button from "@/components/Button.vue"
+import IconWrapper from "@/components/IconWrapper.vue"
 
-import { FlashcardStorage } from "../types/storage";
-import type { Flashcard, I18n } from "../types";
+import Select from "@/components/Select.vue"
+import { FlashcardStorage } from "../types/storage"
 
 interface Props {
-  i18n: I18n;
-  plugin: Plugin;
+  i18n: I18n
+  plugin: Plugin
 }
 
-const props = defineProps<Props>();
+const props = defineProps<Props>()
 
-const visible = ref(false);
-const storage = new FlashcardStorage(props.plugin);
-const cards = shallowRef<Flashcard[]>([]);
-const categories = shallowRef<string[]>([]);
-const selectedCategory = ref<string>("all");
-const currentIndex = ref(0);
+const visible = ref(false)
+const storage = new FlashcardStorage(props.plugin)
+const cards = shallowRef<Flashcard[]>([])
+const categories = shallowRef<string[]>([])
+const selectedCategory = ref<string>("all")
+const currentIndex = ref(0)
 
 const filteredCards = computed(() => {
   if (selectedCategory.value === "all") {
-    return cards.value;
+    return cards.value
   }
-  return cards.value.filter((card) => card.category === selectedCategory.value);
-});
+  return cards.value.filter((card) => card.category === selectedCategory.value)
+})
 
-const currentCard = computed(() => filteredCards.value[currentIndex.value]);
+const currentCard = computed(() => filteredCards.value[currentIndex.value])
 
 const categoryOptions = computed<SelectOption[]>(() => [
-  { value: "all", label: props.i18n.allCategories || "全部" },
-  ...categories.value.map((cat) => ({ value: cat, label: cat })),
-]);
+  {
+    value: "all",
+    label: props.i18n.allCategories || "全部",
+  },
+  ...categories.value.map((cat) => ({
+    value: cat,
+    label: cat,
+  })),
+])
 
 const loadCards = async () => {
   try {
-    cards.value = await storage.getAllCards();
-    categories.value = await storage.getCategories();
-    currentIndex.value = 0;
+    cards.value = await storage.getAllCards()
+    categories.value = await storage.getCategories()
+    currentIndex.value = 0
   } catch (error) {
-    console.error("Failed to load cards:", error);
+    console.error("Failed to load cards:", error)
   }
-};
+}
 
 const playWord = async (card: Flashcard) => {
   try {
-    const utterance = new SpeechSynthesisUtterance(card.title);
-    utterance.lang = "en-US";
-    utterance.rate = 0.8;
+    const utterance = new SpeechSynthesisUtterance(card.title)
+    utterance.lang = "en-US"
+    utterance.rate = 0.8
 
     utterance.onend = async () => {
-      await storage.incrementPracticeCount(card.id);
-      const index = cards.value.findIndex((c) => c.id === card.id);
+      await storage.incrementPracticeCount(card.id)
+      const index = cards.value.findIndex((c) => c.id === card.id)
       if (index !== -1) {
         cards.value[index].practiceCount =
-          (cards.value[index].practiceCount || 0) + 1;
+          (cards.value[index].practiceCount || 0) + 1
       }
-    };
+    }
 
-    speechSynthesis.speak(utterance);
+    speechSynthesis.speak(utterance)
   } catch (error) {
-    showMessage(props.i18n.playFailed || "播放失败", 2000, "error");
+    showMessage(props.i18n.playFailed || "播放失败", 2000, "error")
   }
-};
+}
 
 const previousCard = () => {
   if (currentIndex.value > 0) {
-    currentIndex.value--;
-    currentCard.value && playWord(currentCard.value);
+    currentIndex.value--
+    currentCard.value && playWord(currentCard.value)
   }
-};
+}
 
 const nextCard = () => {
   if (currentIndex.value < filteredCards.value.length - 1) {
-    currentIndex.value++;
-    currentCard.value && playWord(currentCard.value);
+    currentIndex.value++
+    currentCard.value && playWord(currentCard.value)
   }
-};
+}
 
 const randomCard = () => {
-  if (filteredCards.value.length <= 1) return;
-  let newIndex: number;
+  if (filteredCards.value.length <= 1) return
+  let newIndex: number
   do {
-    newIndex = Math.floor(Math.random() * filteredCards.value.length);
-  } while (newIndex === currentIndex.value && filteredCards.value.length > 1);
-  currentIndex.value = newIndex;
-  currentCard.value && playWord(currentCard.value);
-};
+    newIndex = Math.floor(Math.random() * filteredCards.value.length)
+  } while (newIndex === currentIndex.value && filteredCards.value.length > 1)
+  currentIndex.value = newIndex
+  currentCard.value && playWord(currentCard.value)
+}
 
 const open = () => {
-  visible.value = true;
-  loadCards();
-};
+  visible.value = true
+  loadCards()
+}
 
 const close = () => {
-  visible.value = false;
-};
+  visible.value = false
+}
 
 defineExpose({
   open,
   close,
   visible,
-});
+})
 
-let dataChangeHandler: (() => void) | null = null;
+let dataChangeHandler: (() => void) | null = null
 
 onMounted(() => {
-  dataChangeHandler = () => loadCards();
-  window.addEventListener("flashcardDataChanged", dataChangeHandler);
-});
+  dataChangeHandler = () => loadCards()
+  window.addEventListener("flashcardDataChanged", dataChangeHandler)
+})
 
 onUnmounted(() => {
   if (dataChangeHandler) {
-    window.removeEventListener("flashcardDataChanged", dataChangeHandler);
-    dataChangeHandler = null;
+    window.removeEventListener("flashcardDataChanged", dataChangeHandler)
+    dataChangeHandler = null
   }
-});
+})
 </script>
 
 <style scoped lang="scss">

@@ -1,22 +1,38 @@
 <template>
-  <div class="favorites-section" v-if="favoriteFolders.length > 0">
+  <div
+    v-if="favoriteFolders.length > 0"
+    class="favorites-section"
+  >
     <div class="favorites-header">
-      <IconWrapper name="star" :size="14" color="#f97316" />
+      <IconWrapper
+        name="star"
+        :size="14"
+        color="#f97316"
+      />
       <span>{{ i18n.favorites || '收藏夹' }}</span>
-      <Badge :content="favoriteFolders.length" variant="primary" size="small" />
+      <Badge
+        :content="favoriteFolders.length"
+        variant="primary"
+        size="small"
+      />
     </div>
     <div class="favorites-list-horizontal">
       <div
         v-for="path in favoriteFolders"
         :key="path"
         class="favorite-card"
-        @click="$emit('navigate', path)"
         :title="path"
+        @click="$emit('navigate', path)"
       >
         <div class="favorite-icon">
-          <IconWrapper name="folder" :size="16" />
+          <IconWrapper
+            name="folder"
+            :size="16"
+          />
         </div>
-        <div class="favorite-name">{{ getFolderName(path) }}</div>
+        <div class="favorite-name">
+          {{ getFolderName(path) }}
+        </div>
         <Button
           variant="ghost"
           size="small"
@@ -32,22 +48,22 @@
 </template>
 
 <script setup lang="ts">
-import Button from "@/components/Button.vue";
-import IconWrapper from "@/components/IconWrapper.vue";
-import Badge from "@/components/Badge.vue";
-import type { DiskBrowserI18n } from "../types";
-import { getFolderName } from "../utils";
+import type { DiskBrowserI18n } from "../types"
+import Badge from "@/components/Badge.vue"
+import Button from "@/components/Button.vue"
+import IconWrapper from "@/components/IconWrapper.vue"
+import { getFolderName } from "../utils"
 
 interface Props {
-  favoriteFolders: string[];
-  i18n: DiskBrowserI18n;
+  favoriteFolders: string[]
+  i18n: DiskBrowserI18n
 }
 
-defineProps<Props>();
+defineProps<Props>()
 defineEmits<{
-  navigate: [path: string];
-  remove: [path: string];
-}>();
+  navigate: [path: string]
+  remove: [path: string]
+}>()
 </script>
 
 <style scoped lang="scss">

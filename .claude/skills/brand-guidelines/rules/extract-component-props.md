@@ -17,7 +17,12 @@ npm install -D vue-component-type-helpers
 ```
 
 ```typescript
-import type { ComponentProps, ComponentEmit, ComponentSlots, ComponentExposed } from 'vue-component-type-helpers'
+import type {
+  ComponentEmit,
+  ComponentExposed,
+  ComponentProps,
+  ComponentSlots,
+} from 'vue-component-type-helpers'
 import MyButton from './MyButton.vue'
 
 type Props = ComponentProps<typeof MyButton>

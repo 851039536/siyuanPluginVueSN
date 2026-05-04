@@ -8,17 +8,41 @@
             <span class="label-icon">🎨</span>
             {{ i18n.headingStyle || '标题风格' }}
           </label>
-          <select v-model="selectedStyle" class="style-select" @change="applyStyle">
-            <option value="default">{{ i18n.defaultHeadingStyle || '默认风格' }}</option>
-            <option value="github">{{ i18n.githubStyle || 'GitHub 风格' }}</option>
-            <option value="mac">{{ i18n.macStyle || 'Mac 风格' }}</option>
-            <option value="cartoon">{{ i18n.cartoonStyle || '卡通风格' }}</option>
-            <option value="rainbow">{{ i18n.rainbowStyle || '彩虹风格' }}</option>
-            <option value="monochrome">{{ i18n.monochromeStyle || '单色风格' }}</option>
-            <option value="warm">{{ i18n.warmStyle || '暖色风格' }}</option>
-            <option value="cool">{{ i18n.coolStyle || '冷色风格' }}</option>
-            <option value="gradient">{{ i18n.gradientStyle || '渐变风格' }}</option>
-            <option value="custom">{{ i18n.customStyle || '自定义' }}</option>
+          <select
+            v-model="selectedStyle"
+            class="style-select"
+            @change="applyStyle"
+          >
+            <option value="default">
+              {{ i18n.defaultHeadingStyle || '默认风格' }}
+            </option>
+            <option value="github">
+              {{ i18n.githubStyle || 'GitHub 风格' }}
+            </option>
+            <option value="mac">
+              {{ i18n.macStyle || 'Mac 风格' }}
+            </option>
+            <option value="cartoon">
+              {{ i18n.cartoonStyle || '卡通风格' }}
+            </option>
+            <option value="rainbow">
+              {{ i18n.rainbowStyle || '彩虹风格' }}
+            </option>
+            <option value="monochrome">
+              {{ i18n.monochromeStyle || '单色风格' }}
+            </option>
+            <option value="warm">
+              {{ i18n.warmStyle || '暖色风格' }}
+            </option>
+            <option value="cool">
+              {{ i18n.coolStyle || '冷色风格' }}
+            </option>
+            <option value="gradient">
+              {{ i18n.gradientStyle || '渐变风格' }}
+            </option>
+            <option value="custom">
+              {{ i18n.customStyle || '自定义' }}
+            </option>
           </select>
         </div>
       </div>
@@ -30,21 +54,52 @@
             <span class="label-icon">🔢</span>
             {{ i18n.headingLevelDisplay || '标题层级显示' }}
           </label>
-          <select v-model="levelDisplayStyle" class="style-select" @change="applyLevelDisplay">
-            <option value="none">{{ i18n.levelDisplayNone || '不显示' }}</option>
-            <option value="number">{{ i18n.levelDisplayNumber || '数字标记 (1-6)' }}</option>
-            <option value="roman">{{ i18n.levelDisplayRoman || '罗马数字 (I-VI)' }}</option>
-            <option value="chinese">{{ i18n.levelDisplayChinese || '中文数字 (一-六)' }}</option>
-            <option value="chineseUpper">{{ i18n.levelDisplayChineseUpper || '中文大写 (壹-陆)' }}</option>
-            <option value="dots">{{ i18n.levelDisplayDots || '圆点标记 (•)' }}</option>
-            <option value="emoji">{{ i18n.levelDisplayEmoji || '表情符号 (😀-😎)' }}</option>
-            <option value="star">{{ i18n.levelDisplayStar || '星级标记 (⭐)' }}</option>
-            <option value="arrow">{{ i18n.levelDisplayArrow || '箭头标记 (→)' }}</option>
-            <option value="tag">{{ i18n.levelDisplayTag || '标签样式 (H1-H6)' }}</option>
-            <option value="bracket">{{ i18n.levelDisplayBracket || '括号标记 [1-6]' }}</option>
-            <option value="custom">{{ i18n.levelDisplayCustom || '自定义...' }}</option>
+          <select
+            v-model="levelDisplayStyle"
+            class="style-select"
+            @change="applyLevelDisplay"
+          >
+            <option value="none">
+              {{ i18n.levelDisplayNone || '不显示' }}
+            </option>
+            <option value="number">
+              {{ i18n.levelDisplayNumber || '数字标记 (1-6)' }}
+            </option>
+            <option value="roman">
+              {{ i18n.levelDisplayRoman || '罗马数字 (I-VI)' }}
+            </option>
+            <option value="chinese">
+              {{ i18n.levelDisplayChinese || '中文数字 (一-六)' }}
+            </option>
+            <option value="chineseUpper">
+              {{ i18n.levelDisplayChineseUpper || '中文大写 (壹-陆)' }}
+            </option>
+            <option value="dots">
+              {{ i18n.levelDisplayDots || '圆点标记 (•)' }}
+            </option>
+            <option value="emoji">
+              {{ i18n.levelDisplayEmoji || '表情符号 (😀-😎)' }}
+            </option>
+            <option value="star">
+              {{ i18n.levelDisplayStar || '星级标记 (⭐)' }}
+            </option>
+            <option value="arrow">
+              {{ i18n.levelDisplayArrow || '箭头标记 (→)' }}
+            </option>
+            <option value="tag">
+              {{ i18n.levelDisplayTag || '标签样式 (H1-H6)' }}
+            </option>
+            <option value="bracket">
+              {{ i18n.levelDisplayBracket || '括号标记 [1-6]' }}
+            </option>
+            <option value="custom">
+              {{ i18n.levelDisplayCustom || '自定义...' }}
+            </option>
           </select>
-          <div v-if="levelDisplayStyle !== 'none'" class="level-display-hint">
+          <div
+            v-if="levelDisplayStyle !== 'none'"
+            class="level-display-hint"
+          >
             <span class="hint-icon">ℹ️</span>
             <span class="hint-text">{{ i18n.levelDisplayHint || '注意:第三方主题可能会影响显示效果' }}</span>
           </div>
@@ -71,7 +126,10 @@
       </div>
 
       <!-- 文档标题颜色设置 -->
-      <div v-if="titleCenterAlign" class="setting-row">
+      <div
+        v-if="titleCenterAlign"
+        class="setting-row"
+      >
         <div class="setting-item">
           <label class="setting-label">
             <span class="label-icon">🎨</span>
@@ -128,14 +186,21 @@
       </div>
 
       <!-- 自定义层级标记设置 -->
-      <div v-if="levelDisplayStyle === 'custom'" class="setting-row">
+      <div
+        v-if="levelDisplayStyle === 'custom'"
+        class="setting-row"
+      >
         <div class="setting-item">
           <label class="setting-label">
             <span class="label-icon">✏️</span>
             {{ i18n.customLevelMarkers || '自定义标记' }}
           </label>
           <div class="custom-level-inputs">
-            <div v-for="level in 6" :key="level" class="custom-level-item">
+            <div
+              v-for="level in 6"
+              :key="level"
+              class="custom-level-item"
+            >
               <label class="custom-level-label">H{{ level }}</label>
               <input
                 v-model="customLevelMarkers[level - 1]"
@@ -297,8 +362,15 @@
             {{ i18n.headingColors || '标题颜色' }}
           </label>
           <div class="heading-colors">
-            <div v-for="level in 6" :key="level" class="color-item-compact">
-              <span class="heading-badge" :class="`heading-badge-h${level}`">H{{ level }}</span>
+            <div
+              v-for="level in 6"
+              :key="level"
+              class="color-item-compact"
+            >
+              <span
+                class="heading-badge"
+                :class="`heading-badge-h${level}`"
+              >H{{ level }}</span>
               <input
                 v-model="headingColors[`h${level}`]"
                 type="color"
@@ -322,36 +394,40 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from "vue";
-import { GeneralSettingsStorage } from "@/features/generalSettings/types/storage";
+import {
+  onMounted,
+  ref,
+  watch,
+} from "vue"
+import { GeneralSettingsStorage } from "@/features/generalSettings/types/storage"
 
 interface HeadingColors {
-  h1: string;
-  h2: string;
-  h3: string;
-  h4: string;
-  h5: string;
-  h6: string;
+  h1: string
+  h2: string
+  h3: string
+  h4: string
+  h5: string
+  h6: string
 }
 
 interface HeadingSizes {
-  h1: number;
-  h2: number;
-  h3: number;
-  h4: number;
-  h5: number;
-  h6: number;
+  h1: number
+  h2: number
+  h3: number
+  h4: number
+  h5: number
+  h6: number
 }
 
 interface Props {
-  i18n?: any;
-  plugin?: any;
-  initialSettings?: HeadingColors;
-  initialFontSizes?: HeadingSizes;
+  i18n?: any
+  plugin?: any
+  initialSettings?: HeadingColors
+  initialFontSizes?: HeadingSizes
 }
 
 interface Emits {
-  (e: "change", settings: HeadingColors): void;
+  (e: "change", settings: HeadingColors): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -373,20 +449,20 @@ const props = withDefaults(defineProps<Props>(), {
     h5: 16,
     h6: 14,
   }),
-});
+})
 
-const emit = defineEmits<Emits>();
+const emit = defineEmits<Emits>()
 
-const selectedStyle = ref("default");
-const headingColors = ref<HeadingColors>({ ...props.initialSettings });
-const levelDisplayStyle = ref("none");
-const customLevelMarkers = ref<string[]>(["1", "2", "3", "4", "5", "6"]);
-const titleCenterAlign = ref(false);
-const titleColor = ref("#2C3E50");
-const defaultTitleColor = "#2C3E50";
-const headingSizes = ref<HeadingSizes>({ ...props.initialFontSizes });
-const titleFontSize = ref(24);
-const storage = ref<GeneralSettingsStorage | null>(null);
+const selectedStyle = ref("default")
+const headingColors = ref<HeadingColors>({ ...props.initialSettings })
+const levelDisplayStyle = ref("none")
+const customLevelMarkers = ref<string[]>(["1", "2", "3", "4", "5", "6"])
+const titleCenterAlign = ref(false)
+const titleColor = ref("#2C3E50")
+const defaultTitleColor = "#2C3E50"
+const headingSizes = ref<HeadingSizes>({ ...props.initialFontSizes })
+const titleFontSize = ref(24)
+const storage = ref<GeneralSettingsStorage | null>(null)
 
 // 预设风格
 const styles: Record<string, HeadingColors> = {
@@ -462,59 +538,59 @@ const styles: Record<string, HeadingColors> = {
     h5: "#EF5350",
     h6: "#FF7043",
   },
-};
+}
 
 // 应用风格
 function applyStyle() {
   if (selectedStyle.value !== "custom" && styles[selectedStyle.value]) {
-    headingColors.value = { ...styles[selectedStyle.value] };
-    onColorChange();
+    headingColors.value = { ...styles[selectedStyle.value] }
+    onColorChange()
   }
 }
 
 // 统一的设置变更处理函数
 function handleSettingsChange() {
-  applyToDocument();
-  autoSave();
+  applyToDocument()
+  autoSave()
 }
 
 // 颜色变化时检测是否为自定义
 function onColorChange() {
-  let isCustom = true;
+  let isCustom = true
   for (const [styleName, styleColors] of Object.entries(styles)) {
     const matches = Object.entries(styleColors).every(
       ([key, value]) =>
-        headingColors.value[key as keyof HeadingColors].toUpperCase() ===
-        value.toUpperCase(),
-    );
+        headingColors.value[key as keyof HeadingColors].toUpperCase()
+        === value.toUpperCase(),
+    )
     if (matches) {
-      selectedStyle.value = styleName;
-      isCustom = false;
-      break;
+      selectedStyle.value = styleName
+      isCustom = false
+      break
     }
   }
   if (isCustom) {
-    selectedStyle.value = "custom";
+    selectedStyle.value = "custom"
   }
-  emit("change", headingColors.value);
-  handleSettingsChange();
+  emit("change", headingColors.value)
+  handleSettingsChange()
 }
 
 // 应用到文档
 function applyToDocument() {
   let style = document.getElementById(
     "heading-colors-style",
-  ) as HTMLStyleElement | null;
+  ) as HTMLStyleElement | null
   if (!style) {
-    style = document.createElement("style");
-    style.id = "heading-colors-style";
-    document.head.appendChild(style);
+    style = document.createElement("style")
+    style.id = "heading-colors-style"
+    document.head.appendChild(style)
   }
 
   // 颜色和字体大小样式合并生成
   const headingStyles = Object.entries(headingColors.value)
     .map(([level, color]) => {
-      const size = headingSizes.value[level as keyof HeadingSizes];
+      const size = headingSizes.value[level as keyof HeadingSizes]
       return `
         .protyle-wysiwyg [data-node-id].${level},
         .protyle-wysiwyg .${level},
@@ -522,15 +598,15 @@ function applyToDocument() {
           color: ${color} !important;
           font-size: ${size}px !important;
         }
-      `;
+      `
     })
-    .join("\n");
+    .join("\n")
 
   // 层级显示样式
   const levelCss =
     levelDisplayStyle.value !== "none"
       ? generateLevelDisplayCss(levelDisplayStyle.value)
-      : "";
+      : ""
 
   // 文档标题样式（合并居中、颜色、字体大小）
   const titleStyles = `
@@ -539,9 +615,9 @@ function applyToDocument() {
       ${titleColor.value ? `color: ${titleColor.value} !important;` : ""}
       font-size: ${titleFontSize.value}px !important;
     }
-  `;
+  `
 
-  style.textContent = headingStyles + "\n" + levelCss + "\n" + titleStyles;
+  style.textContent = `${headingStyles}\n${levelCss}\n${titleStyles}`
 }
 
 // 生成层级显示 CSS
@@ -558,17 +634,17 @@ function generateLevelDisplayCss(style: string): string {
     tag: ["H1", "H2", "H3", "H4", "H5", "H6"],
     bracket: ["[1]", "[2]", "[3]", "[4]", "[5]", "[6]"],
     custom: customLevelMarkers.value,
-  };
+  }
 
-  const levels = levelMappings[style] || levelMappings.number;
+  const levels = levelMappings[style] || levelMappings.number
 
   return levels
     .map((label, index) => {
-      const level = index + 1;
+      const level = index + 1
       const tagStyles =
         style === "tag"
           ? "background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.15); padding: 2px 6px; border-radius: 4px; font-weight: 600; opacity: 0.7;"
-          : "";
+          : ""
 
       return `
       .protyle-wysiwyg div[data-subtype="h${level}"][data-node-id]:not([type]) > div[contenteditable]:first-child::after,
@@ -580,45 +656,45 @@ function generateLevelDisplayCss(style: string): string {
         vertical-align: middle;
         ${tagStyles}
       }
-    `;
+    `
     })
-    .join("\n");
+    .join("\n")
 }
 
 // 应用层级显示
 function applyLevelDisplay() {
-  handleSettingsChange();
+  handleSettingsChange()
 }
 
 // 应用标题居中
 function applyTitleCenterAlign() {
-  handleSettingsChange();
+  handleSettingsChange()
 }
 
 // 标题颜色变化处理
 function onTitleColorChange() {
-  handleSettingsChange();
+  handleSettingsChange()
 }
 
 // 标题字体大小变化处理
 function onTitleFontSizeChange() {
-  handleSettingsChange();
+  handleSettingsChange()
 }
 
 // H1-H6 标题字体大小变化处理
 function onFontSizeChange() {
-  handleSettingsChange();
+  handleSettingsChange()
 }
 
 // 重置标题颜色
 function resetTitleColor() {
-  titleColor.value = defaultTitleColor;
-  handleSettingsChange();
+  titleColor.value = defaultTitleColor
+  handleSettingsChange()
 }
 
 // 自动保存设置
 async function autoSave() {
-  if (!props.plugin) return;
+  if (!props.plugin) return
 
   try {
     const settingsToSave = {
@@ -630,28 +706,34 @@ async function autoSave() {
       titleCenterAlign: titleCenterAlign.value,
       titleColor: titleColor.value,
       titleFontSize: titleFontSize.value,
-    };
+    }
 
-    await storage.value!.heading.save(settingsToSave);
+    await storage.value!.heading.save(settingsToSave)
   } catch (error) {
-    console.error("保存失败:", error);
+    console.error("保存失败:", error)
   }
 }
 
 // 加载保存的设置
 async function loadSettings() {
   if (!props.plugin) {
-    console.warn("插件实例不可用，使用默认设置");
-    return;
+    console.warn("插件实例不可用，使用默认设置")
+    return
   }
 
   try {
-    const settings = await storage.value!.loadHeadingOrDefault();
+    const settings = await storage.value!.loadHeadingOrDefault()
 
-    selectedStyle.value = settings.style || "default";
-    headingColors.value = { ...styles.default, ...settings.colors };
-    headingSizes.value = { ...props.initialFontSizes, ...settings.fontSizes };
-    levelDisplayStyle.value = settings.levelDisplay || "none";
+    selectedStyle.value = settings.style || "default"
+    headingColors.value = {
+      ...styles.default,
+      ...settings.colors,
+    }
+    headingSizes.value = {
+      ...props.initialFontSizes,
+      ...settings.fontSizes,
+    }
+    levelDisplayStyle.value = settings.levelDisplay || "none"
     customLevelMarkers.value = settings.customMarkers || [
       "1",
       "2",
@@ -659,63 +741,63 @@ async function loadSettings() {
       "4",
       "5",
       "6",
-    ];
-    titleCenterAlign.value = settings.titleCenterAlign ?? false;
-    titleColor.value = settings.titleColor || defaultTitleColor;
-    titleFontSize.value = settings.titleFontSize || 24;
+    ]
+    titleCenterAlign.value = settings.titleCenterAlign ?? false
+    titleColor.value = settings.titleColor || defaultTitleColor
+    titleFontSize.value = settings.titleFontSize || 24
   } catch (error) {
-    console.error("加载设置失败:", error);
+    console.error("加载设置失败:", error)
   }
 }
 
 // 初始化 - 仅加载设置填充表单（样式由 GeneralSettings.init() 在插件启动时应用）
 onMounted(async () => {
   if (props.plugin) {
-    storage.value = new GeneralSettingsStorage(props.plugin);
+    storage.value = new GeneralSettingsStorage(props.plugin)
   }
-  await loadSettings();
-});
+  await loadSettings()
+})
 
 // 监听颜色变化，自动保存
 watch(
   headingColors,
   (newColors) => {
-    emit("change", newColors);
-    autoSave();
+    emit("change", newColors)
+    autoSave()
   },
   { deep: true },
-);
+)
 
 // 监听风格变化,自动保存
-watch(selectedStyle, autoSave);
+watch(selectedStyle, autoSave)
 
 // 监听层级显示变化
-watch(levelDisplayStyle, handleSettingsChange);
+watch(levelDisplayStyle, handleSettingsChange)
 
 // 监听标题居中变化
-watch(titleCenterAlign, handleSettingsChange);
+watch(titleCenterAlign, handleSettingsChange)
 
 // 监听标题颜色变化
 watch(titleColor, (newValue) => {
   if (titleCenterAlign.value) {
-    handleSettingsChange();
+    handleSettingsChange()
   } else {
-    autoSave();
+    autoSave()
   }
-});
+})
 
 // 监听字体大小变化
-watch(headingSizes, handleSettingsChange, { deep: true });
+watch(headingSizes, handleSettingsChange, { deep: true })
 
 // 监听标题字体大小变化
-watch(titleFontSize, handleSettingsChange);
+watch(titleFontSize, handleSettingsChange)
 
 // 暴露方法
 defineExpose({
   loadSettings,
   headingColors,
   selectedStyle,
-});
+})
 </script>
 
 <style scoped>

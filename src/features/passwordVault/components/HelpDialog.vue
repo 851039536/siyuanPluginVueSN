@@ -1,11 +1,24 @@
 <template>
   <Teleport to="body">
     <Transition name="fade">
-      <div v-if="visible" class="help-dialog-overlay" @click.self="close">
-        <div class="help-dialog" @click.stop>
+      <div
+        v-if="visible"
+        class="help-dialog-overlay"
+        @click.self="close"
+      >
+        <div
+          class="help-dialog"
+          @click.stop
+        >
           <div class="help-dialog-header">
             <h3>使用说明</h3>
-            <Button class="help-close-btn" icon="close" variant="ghost" size="small" @click="close" />
+            <Button
+              class="help-close-btn"
+              icon="close"
+              variant="ghost"
+              size="small"
+              @click="close"
+            />
           </div>
           <div class="help-dialog-body">
             <div class="help-section">
@@ -65,7 +78,11 @@
             </div>
           </div>
           <div class="help-dialog-footer">
-            <Button variant="primary" @click="close" block>
+            <Button
+              variant="primary"
+              block
+              @click="close"
+            >
               我知道了
             </Button>
           </div>
@@ -76,21 +93,21 @@
 </template>
 
 <script setup lang="ts">
-import Button from "@/components/Button.vue";
+import Button from "@/components/Button.vue"
 
 interface Props {
-  visible: boolean;
+  visible: boolean
 }
 
-defineProps<Props>();
+defineProps<Props>()
 
 const emit = defineEmits<{
-  (e: "close"): void;
-}>();
+  (e: "close"): void
+}>()
 
 const close = () => {
-  emit("close");
-};
+  emit("close")
+}
 </script>
 
 <style lang="scss" scoped>

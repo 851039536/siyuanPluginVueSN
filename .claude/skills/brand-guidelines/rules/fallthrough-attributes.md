@@ -19,7 +19,9 @@ Wrapper components that pass attributes to child elements can benefit from type-
 ```vue
 <!-- MyButton.vue - wrapper around native button -->
 <template>
-  <button v-bind="$attrs"><slot /></button>
+  <button v-bind="$attrs">
+    <slot />
+  </button>
 </template>
 ```
 

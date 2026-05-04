@@ -40,14 +40,14 @@ export interface PluginSettings {
   enablePageLock: boolean
   enableWordCount: boolean
   enableTableOfContents: boolean
-  enableYourNewFeature: boolean  // 👈 添加新功能的配置项
+  enableYourNewFeature: boolean // 👈 添加新功能的配置项
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
   enablePageLock: true,
   enableWordCount: true,
   enableTableOfContents: true,
-  enableYourNewFeature: true,  // 👈 设置默认值（true=默认启用）
+  enableYourNewFeature: true, // 👈 设置默认值（true=默认启用）
 }
 ```
 
@@ -72,6 +72,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
       v-model="localSettings.enableYourNewFeature"
     />
   </div>
+
   <div class="b3-label__text">{{ i18n.enableYourNewFeatureDesc }}</div>
 </div>
 ```
@@ -109,7 +110,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 ```typescript
 private registerFeatures() {
   // ... 现有功能 ...
-  
+
   if (this.settings.enableYourNewFeature) {
     console.log('注册新功能')
     registerYourNewFeature(this)  // 调用功能注册函数
@@ -129,7 +130,7 @@ import { Plugin } from 'siyuan'
 export function registerYourNewFeature(plugin: Plugin) {
   // 实现你的功能逻辑
   console.log('新功能已注册')
-  
+
   // 例如: 添加菜单、监听事件等
   plugin.eventBus.on('some-event', () => {
     // 处理事件
@@ -158,14 +159,14 @@ export interface PluginSettings {
   enablePageLock: boolean
   enableWordCount: boolean
   enableTableOfContents: boolean
-  enableAutoSave: boolean  // 新增
+  enableAutoSave: boolean // 新增
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
   enablePageLock: true,
   enableWordCount: true,
   enableTableOfContents: true,
-  enableAutoSave: false,  // 默认关闭
+  enableAutoSave: false, // 默认关闭
 }
 ```
 
@@ -184,6 +185,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
       v-model="localSettings.enableAutoSave"
     />
   </div>
+
   <div class="b3-label__text">{{ i18n.enableAutoSaveDesc }}</div>
 </div>
 ```
@@ -234,12 +236,12 @@ import { Plugin } from 'siyuan'
 
 export function registerAutoSave(plugin: Plugin) {
   let autoSaveTimer: NodeJS.Timeout | null = null
-  
+
   plugin.eventBus.on('input-protyle', () => {
     if (autoSaveTimer) {
       clearTimeout(autoSaveTimer)
     }
-    
+
     autoSaveTimer = setTimeout(() => {
       console.log('自动保存...')
       // 执行保存逻辑

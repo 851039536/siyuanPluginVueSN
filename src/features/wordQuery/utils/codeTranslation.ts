@@ -1,19 +1,23 @@
-import { callAPI, type ApiConfig } from "./apiBase";
+import type { ApiConfig } from "./apiBase"
+import {
 
-export type { ApiConfig };
+  callAPI,
+} from "./apiBase"
+
+export type { ApiConfig }
 
 export interface NamingStyle {
-  id: string;
-  label: string;
-  description: string;
-  example: string;
+  id: string
+  label: string
+  description: string
+  example: string
 }
 
 export interface CodeTranslationResult {
-  original: string;
-  translated: string;
-  namingStyle: string;
-  suggestions: string[];
+  original: string
+  translated: string
+  namingStyle: string
+  suggestions: string[]
 }
 
 export const NAMING_STYLES: NamingStyle[] = [
@@ -47,7 +51,7 @@ export const NAMING_STYLES: NamingStyle[] = [
     description: "单词间用下划线连接，全大写",
     example: "GET_USER_INFO",
   },
-];
+]
 
 function buildPrompt(chinese: string, namingStyle: NamingStyle): string {
   return `请将中文"${chinese}"翻译成英文，并按照${namingStyle.label}格式输出。
@@ -62,32 +66,32 @@ function buildPrompt(chinese: string, namingStyle: NamingStyle): string {
 {
   "translated": "主要翻译结果",
   "suggestions": ["备选方案1", "备选方案2", "备选方案3"]
-}`;
+}`
 }
 
 function parseTranslationResult(text: string): {
-  translated: string;
-  suggestions: string[];
+  translated: string
+  suggestions: string[]
 } {
   try {
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (jsonMatch) {
-      const result = JSON.parse(jsonMatch[0]);
+      const result = JSON.parse(jsonMatch[0])
       return {
         translated: result.translated || "",
         suggestions: Array.isArray(result.suggestions)
           ? result.suggestions
           : [],
-      };
+      }
     }
   } catch (error) {
-    console.error("解析翻译结果失败:", error);
+    console.error("解析翻译结果失败:", error)
   }
 
   return {
     translated: text.split("\n")[0] || text,
     suggestions: [],
-  };
+  }
 }
 
 export async function translateCodeField(
@@ -96,7 +100,7 @@ export async function translateCodeField(
   config: ApiConfig,
 ): Promise<CodeTranslationResult> {
   if (!chinese.trim()) {
-    throw new Error("请输入中文内容");
+    throw new Error("请输入中文内容")
   }
 
   const text = await callAPI(buildPrompt(chinese, namingStyle), config, {
@@ -104,14 +108,14 @@ export async function translateCodeField(
       "你是一个专业的编程翻译助手，擅长将中文翻译成符合编程命名规范的英文。",
     temperature: 0.3,
     maxTokens: 2000,
-  });
+  })
 
-  const parsed = parseTranslationResult(text);
+  const parsed = parseTranslationResult(text)
 
   return {
     original: chinese,
     translated: parsed.translated,
     namingStyle: namingStyle.id,
     suggestions: parsed.suggestions,
-  };
+  }
 }

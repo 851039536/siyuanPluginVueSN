@@ -22,7 +22,10 @@
     </div>
 
     <!-- 图片转Base64模式 -->
-    <div v-if="currentMode === 'encode'" class="mode-content">
+    <div
+      v-if="currentMode === 'encode'"
+      class="mode-content"
+    >
       <UploadArea
         :drag-text="props.i18n.base64Image_dragImageHere || '拖拽图片到此处，或'"
         :select-text="props.i18n.base64Image_selectFile || '选择文件'"
@@ -30,11 +33,20 @@
       />
 
       <!-- 图片预览和Base64输出 -->
-      <div v-if="selectedFile" class="result-section">
+      <div
+        v-if="selectedFile"
+        class="result-section"
+      >
         <div class="preview-section">
           <h4>{{ props.i18n.imagePreview || '图片预览' }}</h4>
-          <div class="image-preview" :style="previewFilterStyle">
-            <img :src="imagePreviewUrl" alt="Preview" />
+          <div
+            class="image-preview"
+            :style="previewFilterStyle"
+          >
+            <img
+              :src="imagePreviewUrl"
+              alt="Preview"
+            />
           </div>
           <div class="file-info">
             <p><strong>{{ props.i18n.base64Image_fileName || '文件名' }}:</strong> {{ selectedFile.name }}</p>
@@ -49,24 +61,44 @@
             <h4>{{ props.i18n.base64Image_compressionSettings || '压缩设置' }}</h4>
             <div class="setting-group">
               <Select
+                v-model="outputFormat"
                 :label="props.i18n.base64Image_outputFormat || '输出格式'"
                 :options="formatOptions"
-                v-model="outputFormat"
                 size="small"
                 @change="processImage"
               />
             </div>
             <div class="setting-group">
               <label>{{ props.i18n.base64Image_quality || '图片质量' }}: {{ compressionQuality }}%</label>
-              <input type="range" v-model="compressionQuality" min="10" max="100" step="5" class="quality-slider" @change="processImage" />
+              <input
+                v-model="compressionQuality"
+                type="range"
+                min="10"
+                max="100"
+                step="5"
+                class="quality-slider"
+                @change="processImage"
+              />
             </div>
             <div class="setting-group">
               <label>{{ props.i18n.base64Image_maxWidth || '最大宽度' }}: {{ maxWidth }}px</label>
-              <input type="range" v-model="maxWidth" min="100" max="2000" step="50" class="width-slider" @change="processImage" />
+              <input
+                v-model="maxWidth"
+                type="range"
+                min="100"
+                max="2000"
+                step="50"
+                class="width-slider"
+                @change="processImage"
+              />
             </div>
             <div class="setting-group">
               <label class="checkbox-label">
-                <input type="checkbox" v-model="maintainAspectRatio" @change="processImage" />
+                <input
+                  v-model="maintainAspectRatio"
+                  type="checkbox"
+                  @change="processImage"
+                />
                 {{ props.i18n.base64Image_maintainAspectRatio || '保持纵横比' }}
               </label>
             </div>
@@ -106,7 +138,11 @@
               :options="copyOptions"
               @select="handleCopySelect"
             />
-            <Button variant="primary" size="small" @click="downloadBase64">
+            <Button
+              variant="primary"
+              size="small"
+              @click="downloadBase64"
+            >
               {{ props.i18n.base64Image_download || '下载' }}
             </Button>
           </div>
@@ -132,7 +168,10 @@
     </div>
 
     <!-- Base64转图片模式 -->
-    <div v-if="currentMode === 'decode'" class="mode-content">
+    <div
+      v-if="currentMode === 'decode'"
+      class="mode-content"
+    >
       <div class="input-section">
         <h4>{{ props.i18n.base64Image_base64Input || 'Base64输入' }}</h4>
         <Textarea
@@ -143,20 +182,36 @@
         />
       </div>
 
-      <div v-if="decodedImageUrl" class="result-section">
+      <div
+        v-if="decodedImageUrl"
+        class="result-section"
+      >
         <div class="preview-section">
           <h4>{{ props.i18n.base64Image_imagePreview || '图片预览' }}</h4>
           <div class="image-preview">
-            <img :src="decodedImageUrl" alt="Decoded Image" />
+            <img
+              :src="decodedImageUrl"
+              alt="Decoded Image"
+            />
           </div>
         </div>
 
         <div class="output-section">
           <div class="output-controls">
-            <Button variant="primary" size="small" @click="downloadDecodedImage">
+            <Button
+              variant="primary"
+              size="small"
+              @click="downloadDecodedImage"
+            >
               {{ props.i18n.base64Image_downloadImage || '下载图片' }}
             </Button>
-            <Button variant="ghost" size="small" icon="contentCopy" :icon-size="14" @click="copyDecodedImageUrl">
+            <Button
+              variant="ghost"
+              size="small"
+              icon="contentCopy"
+              :icon-size="14"
+              @click="copyDecodedImageUrl"
+            >
               {{ props.i18n.base64Image_copyUrl || '复制URL' }}
             </Button>
           </div>
@@ -168,25 +223,40 @@
     </div>
 
     <!-- URL转Base64模式 -->
-    <div v-if="currentMode === 'url'" class="mode-content">
+    <div
+      v-if="currentMode === 'url'"
+      class="mode-content"
+    >
       <div class="input-section">
         <h4>{{ props.i18n.base64Image_urlInput || 'URL输入' }}</h4>
         <input
-          type="text"
           v-model="imageUrlInput"
+          type="text"
           class="text-input url-input"
           :placeholder="props.i18n.base64Image_urlPlaceholder || '请输入图片URL地址...'"
         />
-        <Button variant="primary" @click="fetchUrlToBase64" :loading="isFetchingUrl" :disabled="!imageUrlInput || isFetchingUrl" class="fetch-btn">
+        <Button
+          variant="primary"
+          :loading="isFetchingUrl"
+          :disabled="!imageUrlInput || isFetchingUrl"
+          class="fetch-btn"
+          @click="fetchUrlToBase64"
+        >
           {{ props.i18n.base64Image_fetch || '获取并转换' }}
         </Button>
       </div>
 
-      <div v-if="urlBase64Output" class="result-section">
+      <div
+        v-if="urlBase64Output"
+        class="result-section"
+      >
         <div class="preview-section">
           <h4>{{ props.i18n.base64Image_imagePreview || '图片预览' }}</h4>
           <div class="image-preview">
-            <img :src="urlBase64Output" alt="URL Preview" />
+            <img
+              :src="urlBase64Output"
+              alt="URL Preview"
+            />
           </div>
         </div>
 
@@ -197,11 +267,20 @@
               :options="urlCopyOptions"
               @select="handleUrlCopySelect"
             />
-            <Button variant="primary" size="small" @click="downloadUrlBase64">
+            <Button
+              variant="primary"
+              size="small"
+              @click="downloadUrlBase64"
+            >
               {{ props.i18n.base64Image_download || '下载' }}
             </Button>
           </div>
-          <Textarea v-model="urlBase64Output" class="output-textarea" :readonly="true" :rows="6" />
+          <Textarea
+            v-model="urlBase64Output"
+            class="output-textarea"
+            :readonly="true"
+            :rows="6"
+          />
           <div class="output-info">
             <p><strong>{{ props.i18n.base64Image_outputSize || '输出大小' }}:</strong> {{ formatFileSize(urlBase64Output.length) }}</p>
           </div>
@@ -210,7 +289,10 @@
     </div>
 
     <!-- 二维码生成模式 -->
-    <div v-if="currentMode === 'qrcode'" class="mode-content">
+    <div
+      v-if="currentMode === 'qrcode'"
+      class="mode-content"
+    >
       <QrcodeGenerator
         v-model:content="qrcodeInput"
         v-model:size="qrcodeSize"
@@ -232,8 +314,17 @@
     </div>
 
     <!-- 转换按钮（解码模式） -->
-    <div v-if="currentMode === 'decode' && base64Input" class="action-section">
-      <Button class="convert-btn" variant="primary" @click="decodeBase64" :loading="isDecoding" :disabled="isDecoding">
+    <div
+      v-if="currentMode === 'decode' && base64Input"
+      class="action-section"
+    >
+      <Button
+        class="convert-btn"
+        variant="primary"
+        :loading="isDecoding"
+        :disabled="isDecoding"
+        @click="decodeBase64"
+      >
         🔄 {{ props.i18n.base64Image_decode || '解码' }}
       </Button>
     </div>
@@ -241,30 +332,36 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, onMounted, onUnmounted } from "vue";
-import QRCode from "qrcode";
-import PanelHeader from "./components/PanelHeader.vue";
-import UploadArea from "./components/UploadArea.vue";
-import FilterSettings from "./components/FilterSettings.vue";
-import WatermarkSettings from "./components/WatermarkSettings.vue";
-import StatsSection from "./components/StatsSection.vue";
-import CopyDropdown from "./components/CopyDropdown.vue";
-import QrcodeGenerator from "./components/QrcodeGenerator.vue";
-import Button from "@/components/Button.vue";
-import Select from "@/components/Select.vue";
-import Textarea from "@/components/Textarea.vue";
-import type { SelectOption } from "@/components/Select.vue";
-import { showMessage } from "siyuan";
+import type { SelectOption } from "@/components/Select.vue"
+import QRCode from "qrcode"
+import { showMessage } from "siyuan"
+import {
+  computed,
+  onMounted,
+  onUnmounted,
+  ref,
+  watch,
+} from "vue"
+import Button from "@/components/Button.vue"
+import Select from "@/components/Select.vue"
+import Textarea from "@/components/Textarea.vue"
+import CopyDropdown from "./components/CopyDropdown.vue"
+import FilterSettings from "./components/FilterSettings.vue"
+import PanelHeader from "./components/PanelHeader.vue"
+import QrcodeGenerator from "./components/QrcodeGenerator.vue"
+import StatsSection from "./components/StatsSection.vue"
+import UploadArea from "./components/UploadArea.vue"
+import WatermarkSettings from "./components/WatermarkSettings.vue"
 
 interface Props {
-  i18n: any;
-  plugin: any;
+  i18n: any
+  plugin: any
 }
 
-const props = defineProps<Props>();
+const props = defineProps<Props>()
 
 // 模式选项
-type Mode = "encode" | "decode" | "url" | "qrcode";
+type Mode = "encode" | "decode" | "url" | "qrcode"
 const modes = computed(() => [
   {
     value: "encode" as Mode,
@@ -274,39 +371,45 @@ const modes = computed(() => [
     value: "decode" as Mode,
     label: props.i18n.base64Image_decode || "Base64转图片",
   },
-  { value: "url" as Mode, label: "URL" },
-  { value: "qrcode" as Mode, label: props.i18n.base64Image_qrcode || "二维码" },
-]);
+  {
+    value: "url" as Mode,
+    label: "URL",
+  },
+  {
+    value: "qrcode" as Mode,
+    label: props.i18n.base64Image_qrcode || "二维码",
+  },
+])
 
-const currentMode = ref<Mode>("encode");
+const currentMode = ref<Mode>("encode")
 
 // 编码模式相关
-const selectedFile = ref<File | null>(null);
-const imagePreviewUrl = ref("");
-const base64Output = ref("");
-const originalSize = ref(0);
+const selectedFile = ref<File | null>(null)
+const imagePreviewUrl = ref("")
+const base64Output = ref("")
+const originalSize = ref(0)
 
 // 解码模式相关
-const base64Input = ref("");
-const decodedImageUrl = ref("");
-const decodedImageSize = ref("");
+const base64Input = ref("")
+const decodedImageUrl = ref("")
+const decodedImageSize = ref("")
 
 // URL模式相关
-const imageUrlInput = ref("");
-const urlBase64Output = ref("");
-const isFetchingUrl = ref(false);
+const imageUrlInput = ref("")
+const urlBase64Output = ref("")
+const isFetchingUrl = ref(false)
 
 // 二维码模式相关
-const qrcodeInput = ref("");
-const qrcodeOutput = ref("");
-const qrcodeSize = ref(200);
-const qrcodeDarkMode = ref(false);
+const qrcodeInput = ref("")
+const qrcodeOutput = ref("")
+const qrcodeSize = ref(200)
+const qrcodeDarkMode = ref(false)
 
 // 压缩设置
-const outputFormat = ref("image/png");
-const compressionQuality = ref(80);
-const maxWidth = ref(1920);
-const maintainAspectRatio = ref(true);
+const outputFormat = ref("image/png")
+const compressionQuality = ref(80)
+const maxWidth = ref(1920)
+const maintainAspectRatio = ref(true)
 
 // 滤镜设置
 const filterSettings = ref({
@@ -315,7 +418,7 @@ const filterSettings = ref({
   brightness: 100,
   contrast: 100,
   saturation: 100,
-});
+})
 
 // 水印设置
 const watermarkSettings = ref({
@@ -324,28 +427,58 @@ const watermarkSettings = ref({
   position: "bottom-right",
   opacity: 50,
   fontSize: 24,
-});
+})
 
 // 格式选项
 const formatOptions: SelectOption[] = [
-  { value: "image/jpeg", label: "JPEG" },
-  { value: "image/png", label: "PNG" },
-  { value: "image/webp", label: "WebP" },
-  { value: "image/gif", label: "GIF" },
-];
+  {
+    value: "image/jpeg",
+    label: "JPEG",
+  },
+  {
+    value: "image/png",
+    label: "PNG",
+  },
+  {
+    value: "image/webp",
+    label: "WebP",
+  },
+  {
+    value: "image/gif",
+    label: "GIF",
+  },
+]
 
 // 水印位置选项
 const watermarkPositionOptions: SelectOption[] = [
-  { value: "top-left", label: "左上角" },
-  { value: "top-right", label: "右上角" },
-  { value: "bottom-left", label: "左下角" },
-  { value: "bottom-right", label: "右下角" },
-  { value: "center", label: "居中" },
-];
+  {
+    value: "top-left",
+    label: "左上角",
+  },
+  {
+    value: "top-right",
+    label: "右上角",
+  },
+  {
+    value: "bottom-left",
+    label: "左下角",
+  },
+  {
+    value: "bottom-right",
+    label: "右下角",
+  },
+  {
+    value: "center",
+    label: "居中",
+  },
+]
 
 // 复制选项
 const copyOptions = [
-  { value: "base64", label: props.i18n.base64Image_copyBase64 || "纯Base64" },
+  {
+    value: "base64",
+    label: props.i18n.base64Image_copyBase64 || "纯Base64",
+  },
   {
     value: "html",
     label: props.i18n.base64Image_copyHtml || "HTML <img> 标签",
@@ -354,11 +487,17 @@ const copyOptions = [
     value: "markdown",
     label: props.i18n.base64Image_copyMarkdown || "Markdown 图片语法",
   },
-  { value: "css", label: props.i18n.base64Image_copyCss || "CSS 背景图片语法" },
-];
+  {
+    value: "css",
+    label: props.i18n.base64Image_copyCss || "CSS 背景图片语法",
+  },
+]
 
 const urlCopyOptions = [
-  { value: "base64", label: props.i18n.base64Image_copyBase64 || "纯Base64" },
+  {
+    value: "base64",
+    label: props.i18n.base64Image_copyBase64 || "纯Base64",
+  },
   {
     value: "html",
     label: props.i18n.base64Image_copyHtml || "HTML <img> 标签",
@@ -367,25 +506,31 @@ const urlCopyOptions = [
     value: "markdown",
     label: props.i18n.base64Image_copyMarkdown || "Markdown",
   },
-];
+]
 
 // UI状态
-const isDecoding = ref(false);
+const isDecoding = ref(false)
 
 // 预览滤镜样式
 const previewFilterStyle = computed(() => {
-  const { grayscale, blur, brightness, contrast, saturation } =
-    filterSettings.value;
+  const {
+    grayscale,
+    blur,
+    brightness,
+    contrast,
+    saturation,
+  } =
+    filterSettings.value
   return {
     filter: `grayscale(${grayscale}%) blur(${blur}px) brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`,
-  };
-});
+  }
+})
 
 // 切换模式
 const switchMode = (mode: Mode) => {
-  currentMode.value = mode;
-  clearAll();
-};
+  currentMode.value = mode
+  clearAll()
+}
 
 // 处理文件
 const handleFile = (file: File) => {
@@ -394,84 +539,98 @@ const handleFile = (file: File) => {
       props.i18n.base64Image_pleaseSelectImage || "请选择图片文件",
       3000,
       "error",
-    );
-    return;
+    )
+    return
   }
-  selectedFile.value = file;
-  originalSize.value = file.size;
-  imagePreviewUrl.value = URL.createObjectURL(file);
-  processImage();
-};
+  selectedFile.value = file
+  originalSize.value = file.size
+  imagePreviewUrl.value = URL.createObjectURL(file)
+  processImage()
+}
 
 // 处理图片
 const processImage = () => {
-  if (!selectedFile.value) return;
+  if (!selectedFile.value) return
 
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-  const img = new Image();
-  const objectUrl = URL.createObjectURL(selectedFile.value);
+  const canvas = document.createElement("canvas")
+  const ctx = canvas.getContext("2d")
+  const img = new Image()
+  const objectUrl = URL.createObjectURL(selectedFile.value)
 
   img.onload = () => {
-    let { width, height } = img;
+    let {
+      width,
+      height,
+    } = img
 
     if (maintainAspectRatio.value && width > maxWidth.value) {
-      height = (height * maxWidth.value) / width;
-      width = maxWidth.value;
+      height = (height * maxWidth.value) / width
+      width = maxWidth.value
     }
 
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = width
+    canvas.height = height
 
-    const { grayscale, blur, brightness, contrast, saturation } =
-      filterSettings.value;
-    ctx!.filter = `grayscale(${grayscale}%) blur(${blur}px) brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`;
-    ctx?.drawImage(img, 0, 0, width, height);
-    ctx!.filter = "none";
+    const {
+      grayscale,
+      blur,
+      brightness,
+      contrast,
+      saturation,
+    } =
+      filterSettings.value
+    ctx!.filter = `grayscale(${grayscale}%) blur(${blur}px) brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`
+    ctx?.drawImage(img, 0, 0, width, height)
+    ctx!.filter = "none"
 
     // 添加水印
     if (watermarkSettings.value.enabled && watermarkSettings.value.text) {
-      const { text, position, opacity, fontSize } = watermarkSettings.value;
-      ctx!.globalAlpha = opacity / 100;
-      ctx!.font = `${fontSize}px Arial`;
-      ctx!.fillStyle = "rgba(255, 255, 255, 0.8)";
-      ctx!.strokeStyle = "rgba(0, 0, 0, 0.5)";
-      ctx!.lineWidth = 1;
+      const {
+        text,
+        position,
+        opacity,
+        fontSize,
+      } = watermarkSettings.value
+      ctx!.globalAlpha = opacity / 100
+      ctx!.font = `${fontSize}px Arial`
+      ctx!.fillStyle = "rgba(255, 255, 255, 0.8)"
+      ctx!.strokeStyle = "rgba(0, 0, 0, 0.5)"
+      ctx!.lineWidth = 1
 
-      const textWidth = ctx!.measureText(text).width;
-      const padding = 10;
-      let x = padding;
-      let y = padding + fontSize;
+      const textWidth = ctx!.measureText(text).width
+      const padding = 10
+      let x = padding
+      let y = padding + fontSize
 
       switch (position) {
         case "top-right":
-          x = width - textWidth - padding;
-          break;
+          x = width - textWidth - padding
+          break
         case "bottom-left":
-          y = height - padding;
-          break;
+          y = height - padding
+          break
         case "bottom-right":
-          x = width - textWidth - padding;
-          y = height - padding;
-          break;
+          x = width - textWidth - padding
+          y = height - padding
+          break
         case "center":
-          x = (width - textWidth) / 2;
-          y = height / 2;
-          break;
+          x = (width - textWidth) / 2
+          y = height / 2
+          break
       }
 
-      ctx!.strokeText(text, x, y);
-      ctx!.fillText(text, x, y);
-      ctx!.globalAlpha = 1;
+      ctx!.strokeText(text, x, y)
+      ctx!.fillText(text, x, y)
+      ctx!.globalAlpha = 1
     }
 
-    const quality = compressionQuality.value / 100;
-    base64Output.value = canvas.toDataURL(outputFormat.value, quality);
-    URL.revokeObjectURL(objectUrl);
-  };
+    const quality = compressionQuality.value / 100
+    base64Output.value = canvas.toDataURL(outputFormat.value, quality)
+    URL.revokeObjectURL(objectUrl)
+  }
 
-  img.src = objectUrl;
-};
+  img.src = objectUrl
+}
 
 // 重置滤镜
 const resetFilters = () => {
@@ -481,52 +640,52 @@ const resetFilters = () => {
     brightness: 100,
     contrast: 100,
     saturation: 100,
-  };
-  processImage();
-};
+  }
+  processImage()
+}
 
 // URL转Base64
 const fetchUrlToBase64 = async () => {
-  if (!imageUrlInput.value) return;
-  isFetchingUrl.value = true;
+  if (!imageUrlInput.value) return
+  isFetchingUrl.value = true
 
   try {
-    const response = await fetch(imageUrlInput.value);
-    const blob = await response.blob();
+    const response = await fetch(imageUrlInput.value)
+    const blob = await response.blob()
 
     if (!blob.type.startsWith("image/")) {
       showMessage(
         props.i18n.base64Image_pleaseSelectImage || "请选择图片文件",
         3000,
         "error",
-      );
-      return;
+      )
+      return
     }
 
-    const reader = new FileReader();
+    const reader = new FileReader()
     reader.onload = () => {
-      urlBase64Output.value = reader.result as string;
+      urlBase64Output.value = reader.result as string
       showMessage(
         props.i18n.base64Image_decodeSuccess || "转换成功",
         2000,
         "info",
-      );
-    };
-    reader.readAsDataURL(blob);
+      )
+    }
+    reader.readAsDataURL(blob)
   } catch {
     showMessage(
       props.i18n.base64Image_fetchFailed || "获取图片失败",
       3000,
       "error",
-    );
+    )
   } finally {
-    isFetchingUrl.value = false;
+    isFetchingUrl.value = false
   }
-};
+}
 
 // 生成二维码
 const generateQrcode = async () => {
-  if (!qrcodeInput.value) return;
+  if (!qrcodeInput.value) return
 
   try {
     const options: QRCode.QRCodeToStringOptions = {
@@ -536,16 +695,16 @@ const generateQrcode = async () => {
         dark: qrcodeDarkMode.value ? "#ffffff" : "#000000",
         light: qrcodeDarkMode.value ? "#000000" : "#ffffff",
       },
-    };
-    qrcodeOutput.value = await QRCode.toDataURL(qrcodeInput.value, options);
+    }
+    qrcodeOutput.value = await QRCode.toDataURL(qrcodeInput.value, options)
   } catch {
     showMessage(
       props.i18n.base64Image_qrcodeFailed || "生成二维码失败",
       3000,
       "error",
-    );
+    )
   }
-};
+}
 
 // 解码Base64
 const decodeBase64 = () => {
@@ -554,191 +713,191 @@ const decodeBase64 = () => {
       props.i18n.base64Image_pleaseInputBase64 || "请输入Base64编码",
       3000,
       "error",
-    );
-    return;
+    )
+    return
   }
 
-  isDecoding.value = true;
+  isDecoding.value = true
 
   try {
-    let base64 = base64Input.value.trim();
+    let base64 = base64Input.value.trim()
     if (!base64.startsWith("data:image/")) {
-      base64 = `data:image/png;base64,${base64}`;
+      base64 = `data:image/png;base64,${base64}`
     }
 
-    decodedImageUrl.value = base64;
+    decodedImageUrl.value = base64
 
-    const img = new Image();
+    const img = new Image()
     img.onload = () => {
-      decodedImageSize.value = `${img.width} × ${img.height}px`;
-    };
-    img.src = base64;
+      decodedImageSize.value = `${img.width} × ${img.height}px`
+    }
+    img.src = base64
 
     showMessage(
       props.i18n.base64Image_decodeSuccess || "解码成功",
       2000,
       "info",
-    );
+    )
   } catch {
     showMessage(
       props.i18n.base64Image_decodeFailed || "解码失败",
       3000,
       "error",
-    );
+    )
   } finally {
-    isDecoding.value = false;
+    isDecoding.value = false
   }
-};
+}
 
 // 处理复制选择
 const handleCopySelect = (type: string) => {
-  const altText = selectedFile.value?.name || "image";
-  let content = "";
+  const altText = selectedFile.value?.name || "image"
+  let content = ""
 
   switch (type) {
     case "base64":
-      content = base64Output.value.replace(/^data:image\/.*;base64,/, "");
-      break;
+      content = base64Output.value.replace(/^data:image\/.*;base64,/, "")
+      break
     case "html":
-      content = `<img src="${base64Output.value}" alt="${altText}">`;
-      break;
+      content = `<img src="${base64Output.value}" alt="${altText}">`
+      break
     case "markdown":
-      content = `![${altText}](${base64Output.value})`;
-      break;
+      content = `![${altText}](${base64Output.value})`
+      break
     case "css":
-      content = `background-image: url('${base64Output.value}');`;
-      break;
+      content = `background-image: url('${base64Output.value}');`
+      break
   }
 
-  copyToClipboard(content);
-};
+  copyToClipboard(content)
+}
 
 const handleUrlCopySelect = (type: string) => {
-  let content = "";
+  let content = ""
 
   switch (type) {
     case "base64":
-      content = urlBase64Output.value.replace(/^data:image\/.*;base64,/, "");
-      break;
+      content = urlBase64Output.value.replace(/^data:image\/.*;base64,/, "")
+      break
     case "html":
-      content = `<img src="${urlBase64Output.value}" alt="image">`;
-      break;
+      content = `<img src="${urlBase64Output.value}" alt="image">`
+      break
     case "markdown":
-      content = `![image](${urlBase64Output.value})`;
-      break;
+      content = `![image](${urlBase64Output.value})`
+      break
   }
 
-  copyToClipboard(content);
-};
+  copyToClipboard(content)
+}
 
 // 复制函数
 const copyToClipboard = async (content: string) => {
   try {
-    await navigator.clipboard.writeText(content);
-    showMessage(props.i18n.base64Image_copySuccess || "复制成功", 2000, "info");
+    await navigator.clipboard.writeText(content)
+    showMessage(props.i18n.base64Image_copySuccess || "复制成功", 2000, "info")
   } catch {
-    showMessage(props.i18n.base64Image_copyFailed || "复制失败", 3000, "error");
+    showMessage(props.i18n.base64Image_copyFailed || "复制失败", 3000, "error")
   }
-};
+}
 
-const copyDecodedImageUrl = () => copyToClipboard(decodedImageUrl.value);
+const copyDecodedImageUrl = () => copyToClipboard(decodedImageUrl.value)
 const copyQrcodeBase64 = () =>
-  copyToClipboard(qrcodeOutput.value.replace(/^data:image\/.*;base64,/, ""));
+  copyToClipboard(qrcodeOutput.value.replace(/^data:image\/.*;base64,/, ""))
 
 // 下载函数
 const downloadFile = (url: string, filename: string) => {
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-};
+  const a = document.createElement("a")
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+}
 
 const downloadBase64 = () => {
-  const blob = new Blob([base64Output.value], { type: "text/plain" });
-  const url = URL.createObjectURL(blob);
-  downloadFile(url, `${selectedFile.value?.name || "base64"}.txt`);
-  URL.revokeObjectURL(url);
-};
+  const blob = new Blob([base64Output.value], { type: "text/plain" })
+  const url = URL.createObjectURL(blob)
+  downloadFile(url, `${selectedFile.value?.name || "base64"}.txt`)
+  URL.revokeObjectURL(url)
+}
 
 const downloadDecodedImage = () =>
-  downloadFile(decodedImageUrl.value, "decoded-image.png");
+  downloadFile(decodedImageUrl.value, "decoded-image.png")
 const downloadUrlBase64 = () => {
-  const blob = new Blob([urlBase64Output.value], { type: "text/plain" });
-  const url = URL.createObjectURL(blob);
-  downloadFile(url, "url-base64.txt");
-  URL.revokeObjectURL(url);
-};
-const downloadQrcode = () => downloadFile(qrcodeOutput.value, "qrcode.png");
+  const blob = new Blob([urlBase64Output.value], { type: "text/plain" })
+  const url = URL.createObjectURL(blob)
+  downloadFile(url, "url-base64.txt")
+  URL.revokeObjectURL(url)
+}
+const downloadQrcode = () => downloadFile(qrcodeOutput.value, "qrcode.png")
 
 // 清空所有
 const clearAll = () => {
-  selectedFile.value = null;
-  imagePreviewUrl.value = "";
-  base64Output.value = "";
-  originalSize.value = 0;
-  base64Input.value = "";
-  decodedImageUrl.value = "";
-  decodedImageSize.value = "";
-  imageUrlInput.value = "";
-  urlBase64Output.value = "";
-  qrcodeInput.value = "";
-  qrcodeOutput.value = "";
-};
+  selectedFile.value = null
+  imagePreviewUrl.value = ""
+  base64Output.value = ""
+  originalSize.value = 0
+  base64Input.value = ""
+  decodedImageUrl.value = ""
+  decodedImageSize.value = ""
+  imageUrlInput.value = ""
+  urlBase64Output.value = ""
+  qrcodeInput.value = ""
+  qrcodeOutput.value = ""
+}
 
 // 格式化文件大小
 const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return "0 Bytes";
-  const k = 1024;
-  const sizes = ["Bytes", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
-};
+  if (bytes === 0) return "0 Bytes"
+  const k = 1024
+  const sizes = ["Bytes", "KB", "MB", "GB"]
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return `${Math.round((bytes / k ** i) * 100) / 100} ${sizes[i]}`
+}
 
 // 处理粘贴事件
 const handlePaste = (e: ClipboardEvent) => {
-  const items = e.clipboardData?.items;
-  if (!items) return;
+  const items = e.clipboardData?.items
+  if (!items) return
 
   const imageItem = Array.from(items).find((item) =>
     item.type.startsWith("image/"),
-  );
-  const file = imageItem?.getAsFile();
+  )
+  const file = imageItem?.getAsFile()
 
   if (file && currentMode.value === "encode") {
     showMessage(
       props.i18n.base64Image_pasteSuccess || "粘贴图片成功",
       2000,
       "info",
-    );
-    handleFile(file);
+    )
+    handleFile(file)
   }
-};
+}
 
 // 监听Base64输入变化
-let decodeTimer: ReturnType<typeof setTimeout> | null = null;
+let decodeTimer: ReturnType<typeof setTimeout> | null = null
 
 watch(base64Input, (newValue) => {
   if (decodeTimer) {
-    clearTimeout(decodeTimer);
-    decodeTimer = null;
+    clearTimeout(decodeTimer)
+    decodeTimer = null
   }
   if (newValue && currentMode.value === "decode") {
-    decodeTimer = setTimeout(decodeBase64, 500);
+    decodeTimer = setTimeout(decodeBase64, 500)
   }
-});
+})
 
 // 监听二维码输入变化
 watch(qrcodeInput, (newValue) => {
   if (newValue && currentMode.value === "qrcode") {
-    generateQrcode();
+    generateQrcode()
   }
-});
+})
 
 // 生命周期
-onMounted(() => document.addEventListener("paste", handlePaste));
-onUnmounted(() => document.removeEventListener("paste", handlePaste));
+onMounted(() => document.addEventListener("paste", handlePaste))
+onUnmounted(() => document.removeEventListener("paste", handlePaste))
 </script>
 
 <style scoped lang="scss">

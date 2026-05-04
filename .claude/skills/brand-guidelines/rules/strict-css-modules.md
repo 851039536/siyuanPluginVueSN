@@ -17,13 +17,15 @@ When using CSS modules with `<style module>`, Vue doesn't validate class names b
 CSS module class name errors go undetected:
 
 ```vue
+<template>
+  <div :class="$style.buttn">
+    Click me
+  </div>
+</template>
+
 <script setup lang="ts">
 // No error for typo in class name
 </script>
-
-<template>
-  <div :class="$style.buttn">Click me</div>
-</template>
 
 <style module>
 .button {

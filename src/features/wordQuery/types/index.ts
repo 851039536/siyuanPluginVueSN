@@ -1,28 +1,31 @@
-import { Plugin } from "siyuan";
-import { createApp, h } from "vue";
-import WordQueryPanel from "../index.vue";
-import { callWordQueryAPI } from "../utils/api";
-import type { AiApiConfig } from "@/types/ai";
+import type { AiApiConfig } from "@/types/ai"
+import { Plugin } from "siyuan"
+import {
+  createApp,
+  h,
+} from "vue"
+import WordQueryPanel from "../index.vue"
+import { callWordQueryAPI } from "../utils/api"
 
 export class WordQueryManager {
-  private plugin: Plugin;
-  private apiConfig: AiApiConfig;
+  private plugin: Plugin
+  private apiConfig: AiApiConfig
 
   constructor(plugin: Plugin) {
-    this.plugin = plugin;
-    const settings = (plugin as any).settings;
-    const rawModel = settings.aiModel || "qwen-plus";
+    this.plugin = plugin
+    const settings = (plugin as any).settings
+    const rawModel = settings.aiModel || "qwen-plus"
     const model =
       rawModel === "custom"
         ? settings.aiCustomModel || "qwen-plus"
-        : rawModel;
+        : rawModel
     this.apiConfig = {
       provider: settings.aiApiProvider || "tongyi",
       model,
       apiKey: settings.aiApiKey || "",
       customEndpoint: settings.aiCustomEndpoint || "",
       enableThinking: settings.aiEnableThinking ?? false,
-    };
+    }
   }
 
   public updateApiConfig(
@@ -37,23 +40,26 @@ export class WordQueryManager {
       model,
       apiKey,
       customEndpoint,
-    };
+    }
   }
 
   public getApiConfig(): AiApiConfig {
-    return this.apiConfig;
+    return this.apiConfig
   }
 
   public init() {
-    this.addDock();
+    this.addDock()
   }
 
   private addDock() {
-    const self = this;
+    const self = this
     this.plugin.addDock({
       config: {
         position: "RightTop",
-        size: { width: 360, height: 0 },
+        size: {
+          width: 360,
+          height: 0,
+        },
         icon: "iconLanguage",
         title: (this.plugin.i18n as any).wordQuery?.title || "单词查询",
         show: false,
@@ -61,9 +67,9 @@ export class WordQueryManager {
       data: {},
       type: "wordquery-dock",
       init: (dock: any) => {
-        const container = document.createElement("div");
-        container.style.height = "100%";
-        container.style.overflow = "hidden";
+        const container = document.createElement("div")
+        container.style.height = "100%"
+        container.style.overflow = "hidden"
 
         const app = createApp({
           setup() {
@@ -72,47 +78,47 @@ export class WordQueryManager {
                 i18n: self.plugin.i18n,
                 plugin: self.plugin,
                 onQuery: async (word: string) => {
-                  return await self.queryWord(word);
+                  return await self.queryWord(word)
                 },
                 onTranslate: async (
                   text: string,
                   sourceLang: string,
                   targetLang: string,
                 ) => {
-                  return await self.translateText(text, sourceLang, targetLang);
+                  return await self.translateText(text, sourceLang, targetLang)
                 },
-              });
+              })
           },
-        });
+        })
 
-        app.mount(container);
-        dock.element?.appendChild(container);
+        app.mount(container)
+        dock.element?.appendChild(container)
 
-        dock.__app = app;
-        dock.__container = container;
+        dock.__app = app
+        dock.__container = container
       },
-    });
+    })
   }
 
   private isEnglishWord(text: string): boolean {
-    return /^[a-zA-Z\s-]+$/.test(text);
+    return /^[a-z\s-]+$/i.test(text)
   }
 
   private isChinese(text: string): boolean {
-    return /^[\u4e00-\u9fa5\u3000-\u303F\uFF00-\uFFEF\s\-.,;:!?'"()（）【】《》《""'']+$/.test(
+    return /^[\u4E00-\u9FA5\u3000-\u303F\uFF00-\uFFEF\s\-.,;:!?'"()]+$/.test(
       text,
-    );
+    )
   }
 
   public async queryWord(word: string): Promise<string> {
-    if (!word) return "";
+    if (!word) return ""
 
-    const prompt = this.buildPrompt(word);
-    return await callWordQueryAPI(prompt, this.getApiConfig());
+    const prompt = this.buildPrompt(word)
+    return await callWordQueryAPI(prompt, this.getApiConfig())
   }
 
   private buildPrompt(word: string): string {
-    const isEnglish = this.isEnglishWord(word);
+    const isEnglish = this.isEnglishWord(word)
 
     return `请为${isEnglish ? "英文单词" : "中文词语"} "${word}" 生成详细信息，要求：
 
@@ -143,7 +149,7 @@ ${
 - 拼音必须带声调
 - 发音说明要包含音节、重音、元音特点等
 - 提供常用例句
-- 只输出格式化内容，不要有其他说明文字`;
+- 只输出格式化内容，不要有其他说明文字`
   }
 
   public async translateText(
@@ -151,7 +157,7 @@ ${
     sourceLang: string,
     targetLang: string,
   ): Promise<string> {
-    if (!text) return "";
+    if (!text) return ""
 
     const langNames: Record<string, string> = {
       auto: "自动检测",
@@ -162,17 +168,17 @@ ${
       fr: "法文",
       de: "德文",
       es: "西班牙文",
-    };
+    }
 
-    const sourceName = langNames[sourceLang] || sourceLang;
-    const targetName = langNames[targetLang] || targetLang;
+    const sourceName = langNames[sourceLang] || sourceLang
+    const targetName = langNames[targetLang] || targetLang
 
     const prompt =
       sourceLang === "auto"
         ? `请将以下文本翻译成${targetName}，保持原文的格式和语气，只输出翻译结果，不要有任何解释或说明：\n\n${text}`
-        : `请将以下${sourceName}文本翻译成${targetName}，保持原文的格式和语气，只输出翻译结果，不要有任何解释或说明：\n\n${text}`;
+        : `请将以下${sourceName}文本翻译成${targetName}，保持原文的格式和语气，只输出翻译结果，不要有任何解释或说明：\n\n${text}`
 
-    return await callWordQueryAPI(prompt, this.getApiConfig());
+    return await callWordQueryAPI(prompt, this.getApiConfig())
   }
 
   public destroy() {}

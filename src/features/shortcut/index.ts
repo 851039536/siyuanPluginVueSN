@@ -1,51 +1,57 @@
+import type { ShortcutInfo } from "./types"
 /**
  * 快捷键模块
  * 功能：在右侧边栏显示思源笔记和插件的快捷键信息
  * 侧边栏图标：iconKeymap（快捷键图标）
  */
-import { Plugin } from "siyuan";
-import { createApp, h } from "vue";
+import { Plugin } from "siyuan"
+import {
+  createApp,
+  h,
+} from "vue"
 // @ts-ignore
-import ShortcutPanel from "./index.vue";
-import { ShortcutManager, getShortcutManager } from "./manager";
-import { ShortcutStorage } from "./types/storage";
-import type { ShortcutInfo } from "./types";
+import ShortcutPanel from "./index.vue"
+import {
+  getShortcutManager,
+  ShortcutManager,
+} from "./manager"
+import { ShortcutStorage } from "./types/storage"
 
 /**
  * 注册快捷键模块
  */
 export async function registerShortcut(plugin: Plugin) {
   // 初始化快捷键管理器
-  const manager = getShortcutManager();
+  const manager = getShortcutManager()
 
   // 添加思源笔记常用快捷键
-  await manager.addShortcuts(getSiyuanShortcuts());
+  await manager.addShortcuts(getSiyuanShortcuts())
 
   // 添加当前项目的快捷键
-  await manager.addShortcuts(getPluginShortcuts());
+  await manager.addShortcuts(getPluginShortcuts())
 
   // 添加Claude Code快捷键
-  await manager.addShortcuts(getClaudeShortcuts());
+  await manager.addShortcuts(getClaudeShortcuts())
 
   // 添加OpenSpec快捷键
-  await manager.addShortcuts(getOpenSpecShortcuts());
+  await manager.addShortcuts(getOpenSpecShortcuts())
 
   // 添加工具快捷键 (npm, nvm, cmd, vscode, Visual Studio)
-  await manager.addShortcuts(getToolShortcuts());
+  await manager.addShortcuts(getToolShortcuts())
 
   // 加载自定义快捷键从数据库
-  const customShortcuts = await new ShortcutStorage(plugin).loadCustomShortcuts();
+  const customShortcuts = await new ShortcutStorage(plugin).loadCustomShortcuts()
   if (customShortcuts.length > 0) {
-    await manager.addShortcuts(customShortcuts);
+    await manager.addShortcuts(customShortcuts)
   }
 
   // 设置保存回调
   manager.setSaveCallback(async (shortcuts: ShortcutInfo[]) => {
-    await new ShortcutStorage(plugin).saveCustomShortcuts(shortcuts);
-  });
+    await new ShortcutStorage(plugin).saveCustomShortcuts(shortcuts)
+  })
 
   // 添加右侧边栏 Dock
-  addShortcutDock(plugin);
+  addShortcutDock(plugin)
 }
 
 /**
@@ -214,7 +220,7 @@ function getSiyuanShortcuts(): ShortcutInfo[] {
       category: "siyuan",
       group: "编辑操作",
     },
-  ];
+  ]
 }
 
 /**
@@ -498,7 +504,7 @@ function getClaudeShortcuts(): ShortcutInfo[] {
       category: "claude",
       group: "快捷键",
     },
-  ];
+  ]
 }
 
 /**
@@ -567,7 +573,7 @@ function getOpenSpecShortcuts(): ShortcutInfo[] {
       group: "文档结构说明",
       copyContent: "",
     },
-  ];
+  ]
 }
 
 /**
@@ -618,7 +624,7 @@ function getPluginShortcuts(): ShortcutInfo[] {
       category: "plugin",
       group: "图片压缩",
     },
-  ];
+  ]
 }
 
 /**
@@ -1486,7 +1492,7 @@ function getToolShortcuts(): ShortcutInfo[] {
       group: "Visual Studio",
       copyContent: "Ctrl+H",
     },
-  ];
+  ]
 }
 
 /**
@@ -1496,7 +1502,10 @@ function addShortcutDock(plugin: Plugin) {
   plugin.addDock({
     config: {
       position: "RightTop",
-      size: { width: 480, height: 0 },
+      size: {
+        width: 480,
+        height: 0,
+      },
       icon: "iconKeymap",
       title: plugin.i18n.shortcuts || "快捷键",
       show: false,
@@ -1505,59 +1514,62 @@ function addShortcutDock(plugin: Plugin) {
     type: "shortcut-panel-dock",
     init(dock: any) {
       // 创建 Vue 应用
-      const container = document.createElement("div");
-      container.style.height = "100%";
-      container.style.overflow = "hidden";
+      const container = document.createElement("div")
+      container.style.height = "100%"
+      container.style.overflow = "hidden"
 
       const app = createApp({
         setup() {
           return () =>
             h(ShortcutPanel, {
               i18n: plugin.i18n,
-              plugin: plugin,
-            });
+              plugin,
+            })
         },
-      });
+      })
 
-      app.mount(container);
-      dock.element?.appendChild(container);
+      app.mount(container)
+      dock.element?.appendChild(container)
 
       // 保存应用引用，以便卸载时清理
-      dock.__app = app;
-      dock.__container = container;
+      dock.__app = app
+      dock.__container = container
     },
-  });
+  })
 }
 
 /**
  * 导出公共接口供用户自定义添加快捷键
  */
 export async function addCustomShortcut(shortcut: ShortcutInfo) {
-  const manager = getShortcutManager();
-  await manager.addShortcut(shortcut);
+  const manager = getShortcutManager()
+  await manager.addShortcut(shortcut)
 }
 
 /**
  * 批量添加自定义快捷键
  */
 export async function addCustomShortcuts(shortcuts: ShortcutInfo[]) {
-  const manager = getShortcutManager();
-  await manager.addShortcuts(shortcuts);
+  const manager = getShortcutManager()
+  await manager.addShortcuts(shortcuts)
 }
 
 /**
  * 获取快捷键管理器
  */
-export { getShortcutManager, ShortcutManager };
+export {
+  getShortcutManager,
+  ShortcutManager,
+}
 
 /**
  * 导出类型
  */
 export type {
-  ShortcutInfo,
-  ShortcutGroup,
-  ViewMode,
   DialogType,
   QuickFilter,
   ShortcutFormData,
-} from "./types";
+  ShortcutGroup,
+  ShortcutInfo,
+  ViewMode,
+} from "./types"

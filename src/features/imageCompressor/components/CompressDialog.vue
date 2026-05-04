@@ -1,9 +1,18 @@
 <template>
-  <div class="compress-dialog-overlay" @click="onCancel">
-    <div class="compress-dialog" @click.stop>
+  <div
+    class="compress-dialog-overlay"
+    @click="onCancel"
+  >
+    <div
+      class="compress-dialog"
+      @click.stop
+    >
       <div class="dialog-header">
         <h3>{{ i18n.compress }}</h3>
-        <button class="close-btn" @click="onCancel">
+        <button
+          class="close-btn"
+          @click="onCancel"
+        >
           <svg class="icon"><use xlink:href="#iconClose"></use></svg>
         </button>
       </div>
@@ -56,10 +65,15 @@
             v-model="options.useWebWorker"
             label="使用 Web Worker (推荐)"
           />
-          <div class="hint-text">在后台线程处理，不阻塞界面</div>
+          <div class="hint-text">
+            在后台线程处理，不阻塞界面
+          </div>
         </div>
 
-        <div class="statistics-preview" v-if="selectedCount > 0">
+        <div
+          v-if="selectedCount > 0"
+          class="statistics-preview"
+        >
           <div class="stat-row">
             <span>已选择图片:</span>
             <span class="stat-value">{{ selectedCount }} 张</span>
@@ -72,7 +86,10 @@
       </div>
 
       <div class="dialog-footer">
-        <SiButton variant="secondary" @click="onCancel">
+        <SiButton
+          variant="secondary"
+          @click="onCancel"
+        >
           {{ i18n.cancel }}
         </SiButton>
         <SiButton @click="onConfirm">
@@ -84,57 +101,60 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import type { CompressOptions } from "../types";
-import { DEFAULT_COMPRESS_OPTIONS } from "../services/compressor";
-import SiButton from "@/components/Button.vue";
-import SiSlider from "@/components/Slider.vue";
-import SiSwitch from "@/components/Switch.vue";
+import type { CompressOptions } from "../types"
+import {
+  computed,
+  ref,
+} from "vue"
+import SiButton from "@/components/Button.vue"
+import SiSlider from "@/components/Slider.vue"
+import SiSwitch from "@/components/Switch.vue"
+import { DEFAULT_COMPRESS_OPTIONS } from "../services/compressor"
 
 interface Props {
-  i18n: any;
-  selectedCount: number;
+  i18n: any
+  selectedCount: number
 }
 
 interface Emits {
-  (e: "confirm", options: CompressOptions): void;
-  (e: "cancel"): void;
+  (e: "confirm", options: CompressOptions): void
+  (e: "cancel"): void
 }
 
-const props = defineProps<Props>();
-const emit = defineEmits<Emits>();
+const props = defineProps<Props>()
+const emit = defineEmits<Emits>()
 
 const options = ref<CompressOptions>({
   ...DEFAULT_COMPRESS_OPTIONS,
-});
+})
 
 const estimatedTime = computed(() => {
-  if (props.selectedCount === 0) return "0秒";
-  const seconds = props.selectedCount * 1.5;
-  if (seconds < 60) return `约 ${Math.ceil(seconds)} 秒`;
-  const minutes = Math.ceil(seconds / 60);
-  return `约 ${minutes} 分钟`;
-});
+  if (props.selectedCount === 0) return "0秒"
+  const seconds = props.selectedCount * 1.5
+  if (seconds < 60) return `约 ${Math.ceil(seconds)} 秒`
+  const minutes = Math.ceil(seconds / 60)
+  return `约 ${minutes} 分钟`
+})
 
 const formatQuality = (value: number): string => {
-  return `${(value * 100).toFixed(0)}%`;
-};
+  return `${(value * 100).toFixed(0)}%`
+}
 
 const formatMaxSize = (value: number): string => {
-  return `${value} MB`;
-};
+  return `${value} MB`
+}
 
 const formatMaxDimension = (value: number): string => {
-  return `${value} px`;
-};
+  return `${value} px`
+}
 
 const onConfirm = () => {
-  emit("confirm", options.value);
-};
+  emit("confirm", options.value)
+}
 
 const onCancel = () => {
-  emit("cancel");
-};
+  emit("cancel")
+}
 </script>
 
 <style scoped lang="scss">

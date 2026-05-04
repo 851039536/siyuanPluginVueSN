@@ -1,33 +1,49 @@
 <template>
   <div class="doc-bar-chart-section">
-    <div class="section-title">{{ title }}</div>
+    <div class="section-title">
+      {{ title }}
+    </div>
 
     <!-- 加载中 -->
-    <div v-if="loading" class="loading-state">
+    <div
+      v-if="loading"
+      class="loading-state"
+    >
       <div class="loading-spinner"></div>
       <p>{{ i18n.loading || '加载中...' }}</p>
     </div>
 
     <!-- 空状态 -->
-    <div v-else-if="!chartData || chartData.length === 0" class="empty-hint">
+    <div
+      v-else-if="!chartData || chartData.length === 0"
+      class="empty-hint"
+    >
       暂无数据
     </div>
 
     <!-- 柱状图 -->
-    <div v-else class="bar-chart-container">
+    <div
+      v-else
+      class="bar-chart-container"
+    >
       <div class="chart-viewport">
         <div
           v-for="item in sortedData"
           :key="item.name"
           class="bar-item"
         >
-          <div class="bar-value">{{ formatShortNumber(item.count) }}</div>
+          <div class="bar-value">
+            {{ formatShortNumber(item.count) }}
+          </div>
           <div
             class="bar"
-            :style="{ height: getBarHeight(item.count) + 'px' }"
+            :style="{ height: `${getBarHeight(item.count)}px` }"
             :title="`${item.name}: ${formatNumber(item.count)} ${i18n.docsUnit || '篇'}`"
           ></div>
-          <div class="bar-label" :title="item.name">
+          <div
+            class="bar-label"
+            :title="item.name"
+          >
             {{ truncateName(item.name) }}
           </div>
         </div>
@@ -40,7 +56,10 @@
           :key="item.name"
           class="data-item"
         >
-          <span class="data-name" :title="item.name">{{ item.name }}</span>
+          <span
+            class="data-name"
+            :title="item.name"
+          >{{ item.name }}</span>
           <span class="data-value">{{ formatNumber(item.count) }}</span>
         </div>
       </div>
@@ -49,24 +68,27 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-import { formatNumber, formatShortNumber } from "../utils";
+import { computed } from "vue"
+import {
+  formatNumber,
+  formatShortNumber,
+} from "../utils"
 
 interface NotebookDocCount {
-  name: string;
-  count: number;
+  name: string
+  count: number
 }
 
 interface Props {
-  title?: string;
-  chartData?: NotebookDocCount[];
-  loading?: boolean;
-  sortBy?: "count" | "name";
-  sortOrder?: "asc" | "desc";
+  title?: string
+  chartData?: NotebookDocCount[]
+  loading?: boolean
+  sortBy?: "count" | "name"
+  sortOrder?: "asc" | "desc"
   i18n?: {
-    loading?: string;
-    docsUnit?: string;
-  };
+    loading?: string
+    docsUnit?: string
+  }
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -79,38 +101,38 @@ const props = withDefaults(defineProps<Props>(), {
     loading: "加载中...",
     docsUnit: "篇",
   }),
-});
+})
 
 const maxCount = computed(() => {
-  if (!props.chartData.length) return 0;
-  return Math.max(...props.chartData.map((item) => item.count));
-});
+  if (!props.chartData.length) return 0
+  return Math.max(...props.chartData.map((item) => item.count))
+})
 
 const sortedData = computed(() => {
-  const data = [...props.chartData];
+  const data = [...props.chartData]
   data.sort((a, b) => {
     if (props.sortBy === "name") {
-      const compare = a.name.localeCompare(b.name, "zh-CN");
-      return props.sortOrder === "asc" ? compare : -compare;
+      const compare = a.name.localeCompare(b.name, "zh-CN")
+      return props.sortOrder === "asc" ? compare : -compare
     }
     return props.sortOrder === "asc"
       ? a.count - b.count
-      : b.count - a.count;
-  });
-  return data;
-});
+      : b.count - a.count
+  })
+  return data
+})
 
 function getBarHeight(count: number): number {
-  const max = maxCount.value;
-  if (max === 0) return 0;
-  const maxHeight = 120;
-  const height = (count / max) * maxHeight;
-  return Math.max(height, count > 0 ? 4 : 0);
+  const max = maxCount.value
+  if (max === 0) return 0
+  const maxHeight = 120
+  const height = (count / max) * maxHeight
+  return Math.max(height, count > 0 ? 4 : 0)
 }
 
 function truncateName(name: string): string {
-  if (name.length <= 5) return name;
-  return name.substring(0, 4) + "…";
+  if (name.length <= 5) return name
+  return `${name.substring(0, 4)}…`
 }
 </script>
 

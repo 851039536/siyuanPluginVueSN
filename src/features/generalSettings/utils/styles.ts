@@ -1,14 +1,14 @@
 /**
  * 通用设置 - 样式工具函数
  */
-import { emitCustomEvent } from "@/utils/eventBus";
+import { emitCustomEvent } from "@/utils/eventBus"
 
 export const CODEBLOCK_STYLES = [
   "default",
   "github",
   "mac",
-] as const;
-export type CodeBlockStyle = (typeof CODEBLOCK_STYLES)[number];
+] as const
+export type CodeBlockStyle = (typeof CODEBLOCK_STYLES)[number]
 
 export const HEADING_LEVEL_MAPPINGS: Record<string, string[]> = {
   number: ["1", "2", "3", "4", "5", "6"],
@@ -21,43 +21,43 @@ export const HEADING_LEVEL_MAPPINGS: Record<string, string[]> = {
   arrow: ["→", "→→", "→→→", "→→→→", "→→→→→", "→→→→→→"],
   tag: ["H1", "H2", "H3", "H4", "H5", "H6"],
   bracket: ["[1]", "[2]", "[3]", "[4]", "[5]", "[6]"],
-};
+}
 
 export function checkIsMobile(): boolean {
-  const userAgent = navigator.userAgent.toLowerCase();
+  const userAgent = navigator.userAgent.toLowerCase()
   const mobileUA =
     /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile|tablet/i.test(
       userAgent,
-    );
-  const screenWidth = window.innerWidth <= 768;
+    )
+  const screenWidth = window.innerWidth <= 768
   const hasTouchScreen =
-    "ontouchstart" in window || navigator.maxTouchPoints > 0;
-  const isSiyuanMobile = (window as any)._siyuan_mobile === true;
+    "ontouchstart" in window || navigator.maxTouchPoints > 0
+  const isSiyuanMobile = (window as any)._siyuan_mobile === true
   return (
     mobileUA || screenWidth || (hasTouchScreen && mobileUA) || isSiyuanMobile
-  );
+  )
 }
 
 export function applyCodeBlockStyle(style: CodeBlockStyle | string): void {
   CODEBLOCK_STYLES.forEach((s) =>
     document.body.classList.remove(`codeblock-style-${s}`),
-  );
-  document.body.classList.add(`codeblock-style-${style}`);
+  )
+  document.body.classList.add(`codeblock-style-${style}`)
 }
 
 export function applyCodeBlockEnhancedStyles(codeSettings: any): void {
   try {
-    const existingStyle = document.getElementById("codeblock-enhanced-style");
+    const existingStyle = document.getElementById("codeblock-enhanced-style")
     if (existingStyle) {
-      existingStyle.remove();
+      existingStyle.remove()
     }
 
     if (!codeSettings.enabled) {
-      return;
+      return
     }
 
-    const style = document.createElement("style");
-    style.id = "codeblock-enhanced-style";
+    const style = document.createElement("style")
+    style.id = "codeblock-enhanced-style"
 
     style.textContent = `
       /* 代码块基础样式 */
@@ -83,15 +83,15 @@ export function applyCodeBlockEnhancedStyles(codeSettings: any): void {
       }
 
       ${
-      codeSettings.showLineNumber
-        ? ""
-        : `
+        codeSettings.showLineNumber
+          ? ""
+          : `
       /* 隐藏行号 */
       .protyle-wysiwyg .code-block .hljs .ln {
         display: none !important;
       }
       `
-    }
+      }
 
       /* 代码高亮颜色 */
       .protyle-wysiwyg .code-block .hljs-keyword,
@@ -142,11 +142,11 @@ export function applyCodeBlockEnhancedStyles(codeSettings: any): void {
       :root[data-theme-mode="dark"] .protyle-wysiwyg .code-block {
         box-shadow: ${codeSettings.boxShadow !== "none" ? "0 2px 8px rgba(0, 0, 0, 0.3)" : "none"} !important;
       }
-    `;
+    `
 
-    document.head.appendChild(style);
+    document.head.appendChild(style)
   } catch (error) {
-    console.error("应用代码块增强样式失败:", error);
+    console.error("应用代码块增强样式失败:", error)
   }
 }
 
@@ -154,23 +154,23 @@ export function applyCodeBlockCollapse(
   enable: boolean,
   height: number,
 ): void {
-  const existingStyle = document.getElementById("codeblock-collapse-style");
+  const existingStyle = document.getElementById("codeblock-collapse-style")
   if (existingStyle) {
-    existingStyle.remove();
+    existingStyle.remove()
   }
 
-  const existingScript = document.getElementById("codeblock-collapse-script");
+  const existingScript = document.getElementById("codeblock-collapse-script")
   if (existingScript) {
-    emitCustomEvent("codeblock-collapse-cleanup", undefined, { target: document });
-    existingScript.remove();
+    emitCustomEvent("codeblock-collapse-cleanup", undefined, { target: document })
+    existingScript.remove()
   }
 
   if (!enable) {
-    return;
+    return
   }
 
-  const style = document.createElement("style");
-  style.id = "codeblock-collapse-style";
+  const style = document.createElement("style")
+  style.id = "codeblock-collapse-style"
   style.innerHTML = `
     .code-block.code-block-collapse-wrapper {
       position: relative;
@@ -241,11 +241,11 @@ export function applyCodeBlockCollapse(
       opacity: 0.6;
       margin-left: 6px;
     }
-  `;
-  document.head.appendChild(style);
+  `
+  document.head.appendChild(style)
 
-  const script = document.createElement("script");
-  script.id = "codeblock-collapse-script";
+  const script = document.createElement("script")
+  script.id = "codeblock-collapse-script"
   script.innerHTML = `
     (function() {
       const codeMaxHeight = ${height};
@@ -441,6 +441,6 @@ export function applyCodeBlockCollapse(
         scrollCleanupFns.length = 0;
       });
     })();
-  `;
-  document.head.appendChild(script);
+  `
+  document.head.appendChild(script)
 }

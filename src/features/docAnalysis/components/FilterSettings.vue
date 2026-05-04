@@ -48,7 +48,9 @@
           class="filter-select notebook-select"
           @change="handleChange"
         >
-          <option value="">全部笔记本</option>
+          <option value="">
+            全部笔记本
+          </option>
           <option
             v-for="nb in notebooks"
             :key="nb.id"
@@ -63,7 +65,10 @@
         :disabled="isQuerying"
         @click="$emit('query')"
       >
-        <Icon icon="mdi:magnify" class="btn-icon" />
+        <Icon
+          icon="mdi:magnify"
+          class="btn-icon"
+        />
         {{ isQuerying ? '查询中...' : '查询' }}
       </button>
     </div>
@@ -71,40 +76,40 @@
 </template>
 
 <script setup lang="ts">
-import { Icon } from "@iconify/vue";
-import type { FilterOptions } from "../types/index";
+import type { FilterOptions } from "../types/index"
+import { Icon } from "@iconify/vue"
 
 interface NotebookInfo {
-  id: string;
-  name: string;
+  id: string
+  name: string
 }
 
 interface Props {
-  options: FilterOptions;
-  notebooks: NotebookInfo[];
-  isQuerying: boolean;
+  options: FilterOptions
+  notebooks: NotebookInfo[]
+  isQuerying: boolean
 }
 
-const props = defineProps<Props>();
+const props = defineProps<Props>()
 
 const emit = defineEmits<{
-  (e: "query"): void;
-  (e: "update:options", options: FilterOptions): void;
-}>();
+  (e: "query"): void
+  (e: "update:options", options: FilterOptions): void
+}>()
 
-let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
 function handleChange() {
-  emit("update:options", { ...props.options });
+  emit("update:options", { ...props.options })
 }
 
 /** 标题/全文输入防抖查询 */
 function handleDebouncedInput() {
-  handleChange();
-  if (debounceTimer) clearTimeout(debounceTimer);
+  handleChange()
+  if (debounceTimer) clearTimeout(debounceTimer)
   debounceTimer = setTimeout(() => {
-    emit("query");
-  }, 500);
+    emit("query")
+  }, 500)
 }
 </script>
 

@@ -5,16 +5,19 @@
 ## 基础用法
 
 ```vue
+<template>
+  <Textarea
+    v-model="content"
+    placeholder="请输入内容..."
+  />
+</template>
+
 <script setup lang="ts">
 import { ref } from 'vue'
 import Textarea from '@/components/Textarea.vue'
 
 const content = ref('')
 </script>
-
-<template>
-  <Textarea v-model="content" placeholder="请输入内容..." />
-</template>
 ```
 
 ## 带标签
@@ -35,9 +38,21 @@ const content = ref('')
 
 ```vue
 <template>
-  <Textarea v-model="content" size="small" placeholder="小尺寸" />
-  <Textarea v-model="content" size="medium" placeholder="默认尺寸" />
-  <Textarea v-model="content" size="large" placeholder="大尺寸" />
+  <Textarea
+    v-model="content"
+    size="small"
+    placeholder="小尺寸"
+  />
+  <Textarea
+    v-model="content"
+    size="medium"
+    placeholder="默认尺寸"
+  />
+  <Textarea
+    v-model="content"
+    size="large"
+    placeholder="大尺寸"
+  />
 </template>
 ```
 
@@ -97,8 +112,16 @@ const content = ref('')
 
 ```vue
 <template>
-  <Textarea v-model="content" disabled placeholder="禁用状态" />
-  <Textarea v-model="content" readonly placeholder="只读状态" />
+  <Textarea
+    v-model="content"
+    disabled
+    placeholder="禁用状态"
+  />
+  <Textarea
+    v-model="content"
+    readonly
+    placeholder="只读状态"
+  />
 </template>
 ```
 
@@ -119,13 +142,22 @@ const content = ref('')
 ```vue
 <template>
   <!-- 禁止调整大小 -->
-  <Textarea v-model="content" resize="none" />
+  <Textarea
+    v-model="content"
+    resize="none"
+  />
 
   <!-- 水平调整 -->
-  <Textarea v-model="content" resize="horizontal" />
+  <Textarea
+    v-model="content"
+    resize="horizontal"
+  />
 
   <!-- 垂直调整（默认） -->
-  <Textarea v-model="content" resize="vertical" />
+  <Textarea
+    v-model="content"
+    resize="vertical"
+  />
 
   <!-- 自定义调整手柄 -->
   <Textarea
@@ -141,6 +173,19 @@ const content = ref('')
 通过 ref 可以调用组件方法：
 
 ```vue
+<template>
+  <Textarea
+    ref="textareaRef"
+    v-model="content"
+  />
+  <button @click="focusTextarea">
+    聚焦
+  </button>
+  <button @click="selectAll">
+    全选
+  </button>
+</template>
+
 <script setup lang="ts">
 import { ref } from 'vue'
 import Textarea from '@/components/Textarea.vue'
@@ -156,12 +201,6 @@ const selectAll = () => {
   textareaRef.value?.select()
 }
 </script>
-
-<template>
-  <Textarea ref="textareaRef" v-model="content" />
-  <button @click="focusTextarea">聚焦</button>
-  <button @click="selectAll">全选</button>
-</template>
 ```
 
 ### 可用方法

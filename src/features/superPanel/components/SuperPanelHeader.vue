@@ -1,7 +1,10 @@
 <template>
   <div class="super-panel-header">
     <div class="super-panel-title">
-      <IconWrapper name="superPanel" :size="20" />
+      <IconWrapper
+        name="superPanel"
+        :size="20"
+      />
       <span>{{ title }}</span>
     </div>
     <div class="header-actions">
@@ -20,39 +23,39 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-import IconWrapper from "@/components/IconWrapper.vue";
-import Button from "@/components/Button.vue";
-import type { IconKey } from "@/config/icons";
+import type { IconKey } from "@/config/icons"
+import { computed } from "vue"
+import Button from "@/components/Button.vue"
+import IconWrapper from "@/components/IconWrapper.vue"
 
 interface HeaderAction {
-  key: string;
-  icon: IconKey;
-  title: string;
-  handler: () => void;
+  key: string
+  icon: IconKey
+  title: string
+  handler: () => void
 }
 
 interface Props {
-  title?: string;
+  title?: string
   i18n: {
-    title?: string;
-    enableAll?: string;
-    disableAll?: string;
-    aiSettings?: string;
-    refresh?: string;
-    close?: string;
-  };
+    title?: string
+    enableAll?: string
+    disableAll?: string
+    aiSettings?: string
+    refresh?: string
+    close?: string
+  }
 }
 
 interface Emits {
-  (e: "toggleAll", enabled: boolean): void;
-  (e: "toggleAiSettings"): void;
-  (e: "refresh"): void;
-  (e: "close"): void;
+  (e: "toggleAll", enabled: boolean): void
+  (e: "toggleAiSettings"): void
+  (e: "refresh"): void
+  (e: "close"): void
 }
 
-const props = defineProps<Props>();
-const emit = defineEmits<Emits>();
+const props = defineProps<Props>()
+const emit = defineEmits<Emits>()
 
 const actions = computed<HeaderAction[]>(() => [
   {
@@ -85,6 +88,6 @@ const actions = computed<HeaderAction[]>(() => [
     title: props.i18n.close || "关闭",
     handler: () => emit("close"),
   },
-]);
+])
 </script>
 

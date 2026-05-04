@@ -1,14 +1,18 @@
-import { callAPI, type ApiConfig } from "./apiBase";
+import type { ApiConfig } from "./apiBase"
+import {
 
-export type { ApiConfig };
+  callAPI,
+} from "./apiBase"
+
+export type { ApiConfig }
 
 // ========== 代码注释生成器 ==========
 
 export interface CommentStyle {
-  id: string;
-  label: string;
-  description: string;
-  example: string;
+  id: string
+  label: string
+  description: string
+  example: string
 }
 
 export const COMMENT_STYLES: CommentStyle[] = [
@@ -42,13 +46,13 @@ export const COMMENT_STYLES: CommentStyle[] = [
     description: "Java 标准文档注释",
     example: "/** ... */",
   },
-];
+]
 
 export interface CodeCommentResult {
-  original: string;
-  commented: string;
-  style: string;
-  suggestions: string[];
+  original: string
+  commented: string
+  style: string
+  suggestions: string[]
 }
 
 function buildCommentPrompt(code: string, style: CommentStyle): string {
@@ -65,7 +69,7 @@ function buildCommentPrompt(code: string, style: CommentStyle): string {
 \`\`\`
 ${code}
 \`\`\`
-`;
+`
 }
 
 export async function generateCodeComments(
@@ -74,7 +78,7 @@ export async function generateCodeComments(
   config: ApiConfig,
 ): Promise<CodeCommentResult> {
   if (!code.trim()) {
-    throw new Error("请输入代码内容");
+    throw new Error("请输入代码内容")
   }
 
   const text = await callAPI(buildCommentPrompt(code, style), config, {
@@ -82,24 +86,24 @@ export async function generateCodeComments(
       "你是一个专业的代码注释生成助手，擅长为各种编程语言生成清晰、准确的注释。",
     temperature: 0.3,
     maxTokens: 2000,
-  });
+  })
 
   return {
     original: code,
     commented: text,
     style: style.id,
     suggestions: [],
-  };
+  }
 }
 
 // ========== 代码解释器 ==========
 
 export interface CodeExplanationResult {
-  code: string;
-  explanation: string;
-  language: string;
-  complexity: string;
-  suggestions: string[];
+  code: string
+  explanation: string
+  language: string
+  complexity: string
+  suggestions: string[]
 }
 
 function buildExplanationPrompt(code: string): string {
@@ -124,7 +128,7 @@ ${code}
   "complexity": "时间复杂度分析",
   "suggestions": ["优化建议1", "优化建议2"]
 }
-`;
+`
 }
 
 export async function explainCode(
@@ -132,7 +136,7 @@ export async function explainCode(
   config: ApiConfig,
 ): Promise<CodeExplanationResult> {
   if (!code.trim()) {
-    throw new Error("请输入代码内容");
+    throw new Error("请输入代码内容")
   }
 
   const text = await callAPI(buildExplanationPrompt(code), config, {
@@ -140,13 +144,13 @@ export async function explainCode(
       "你是一个专业的代码分析助手，擅长解释代码、分析复杂度和提供优化建议。",
     temperature: 0.3,
     maxTokens: 2000,
-  });
+  })
 
   // 尝试解析 JSON
   try {
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
+      const parsed = JSON.parse(jsonMatch[0])
       return {
         code,
         explanation: parsed.explanation || text,
@@ -155,10 +159,10 @@ export async function explainCode(
         suggestions: Array.isArray(parsed.suggestions)
           ? parsed.suggestions
           : [],
-      };
+      }
     }
   } catch (error) {
-    console.error("解析解释结果失败:", error);
+    console.error("解析解释结果失败:", error)
   }
 
   return {
@@ -167,21 +171,21 @@ export async function explainCode(
     language: "未知",
     complexity: "未分析",
     suggestions: [],
-  };
+  }
 }
 
 // ========== 正则生成器 ==========
 
 export interface RegexExample {
-  match: string;
-  notMatch?: string;
+  match: string
+  notMatch?: string
 }
 
 export interface RegexResult {
-  description: string;
-  regex: string;
-  examples: string[];
-  explanation: string;
+  description: string
+  regex: string
+  examples: string[]
+  explanation: string
 }
 
 function buildRegexPrompt(
@@ -192,18 +196,18 @@ function buildRegexPrompt(
 
 描述：${description}
 
-`;
+`
 
   if (examples.length > 0) {
     prompt += `示例匹配：
-`;
+`
     examples.forEach((ex, i) => {
-      prompt += `${i + 1}. 匹配: "${ex.match}"`;
+      prompt += `${i + 1}. 匹配: "${ex.match}"`
       if (ex.notMatch) {
-        prompt += ` | 不匹配: "${ex.notMatch}"`;
+        prompt += ` | 不匹配: "${ex.notMatch}"`
       }
-      prompt += "\n";
-    });
+      prompt += "\n"
+    })
   }
 
   prompt += `
@@ -219,9 +223,9 @@ function buildRegexPrompt(
   "examples": ["匹配示例1", "匹配示例2", "匹配示例3"],
   "explanation": "正则表达式各部分的解释"
 }
-`;
+`
 
-  return prompt;
+  return prompt
 }
 
 export async function generateRegex(
@@ -230,7 +234,7 @@ export async function generateRegex(
   config: ApiConfig,
 ): Promise<RegexResult> {
   if (!description.trim() && examples.length === 0) {
-    throw new Error("请输入正则描述或提供匹配示例");
+    throw new Error("请输入正则描述或提供匹配示例")
   }
 
   const text = await callAPI(buildRegexPrompt(description, examples), config, {
@@ -238,33 +242,33 @@ export async function generateRegex(
       "你是一个专业的正则表达式生成助手，擅长根据用户描述生成精准的正则表达式。",
     temperature: 0.3,
     maxTokens: 2000,
-  });
+  })
 
   // 尝试解析 JSON
   try {
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
+      const parsed = JSON.parse(jsonMatch[0])
       return {
         description,
         regex: parsed.regex || "",
         examples: Array.isArray(parsed.examples) ? parsed.examples : [],
         explanation: parsed.explanation || "",
-      };
+      }
     }
   } catch (error) {
-    console.error("解析正则结果失败:", error);
+    console.error("解析正则结果失败:", error)
   }
 
   // 如果解析失败，尝试从文本中提取正则
-  const regexMatch = text.match(/\/(.+?)\/[gimsu]*/);
+  const regexMatch = text.match(/\/(.+?)\/[gimsu]*/)
   if (regexMatch) {
     return {
       description,
       regex: regexMatch[1],
       examples: [],
       explanation: text,
-    };
+    }
   }
 
   return {
@@ -272,7 +276,7 @@ export async function generateRegex(
     regex: text,
     examples: [],
     explanation: "",
-  };
+  }
 }
 
 // ========== 测试正则表达式 ==========
@@ -281,22 +285,22 @@ export function testRegex(
   pattern: string,
   testString: string,
 ): {
-  matches: string[];
-  isValid: boolean;
-  error?: string;
+  matches: string[]
+  isValid: boolean
+  error?: string
 } {
   try {
-    const regex = new RegExp(pattern, "g");
-    const matches = testString.match(regex) || [];
+    const regex = new RegExp(pattern, "g")
+    const matches = testString.match(regex) || []
     return {
       matches,
       isValid: true,
-    };
+    }
   } catch (error) {
     return {
       matches: [],
       isValid: false,
       error: (error as Error).message,
-    };
+    }
   }
 }

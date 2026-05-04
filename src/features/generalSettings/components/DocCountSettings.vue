@@ -30,11 +30,23 @@
       <label class="interval-label">
         {{ i18n?.updateInterval || '更新间隔' }}
       </label>
-      <select v-model="updateInterval" class="interval-select" @change="handleIntervalChange">
-        <option value="1800000">{{ i18n?.interval30min || '30分钟' }}</option>
-        <option value="3600000">{{ i18n?.interval1hour || '1小时' }}</option>
-        <option value="7200000">{{ i18n?.interval2hour || '2小时' }}</option>
-        <option value="14400000">{{ i18n?.interval4hour || '4小时' }}</option>
+      <select
+        v-model="updateInterval"
+        class="interval-select"
+        @change="handleIntervalChange"
+      >
+        <option value="1800000">
+          {{ i18n?.interval30min || '30分钟' }}
+        </option>
+        <option value="3600000">
+          {{ i18n?.interval1hour || '1小时' }}
+        </option>
+        <option value="7200000">
+          {{ i18n?.interval2hour || '2小时' }}
+        </option>
+        <option value="14400000">
+          {{ i18n?.interval4hour || '4小时' }}
+        </option>
       </select>
     </div>
 
@@ -49,14 +61,32 @@
         <label class="style-label">
           {{ i18n?.fontSize || '字体大小' }}
         </label>
-        <select v-model="fontSize" class="style-select" @change="handleFontStyleChange">
-          <option value="10px">10px</option>
-          <option value="11px">11px</option>
-          <option value="12px">12px</option>
-          <option value="13px">13px</option>
-          <option value="14px">14px</option>
-          <option value="15px">15px</option>
-          <option value="16px">16px</option>
+        <select
+          v-model="fontSize"
+          class="style-select"
+          @change="handleFontStyleChange"
+        >
+          <option value="10px">
+            10px
+          </option>
+          <option value="11px">
+            11px
+          </option>
+          <option value="12px">
+            12px
+          </option>
+          <option value="13px">
+            13px
+          </option>
+          <option value="14px">
+            14px
+          </option>
+          <option value="15px">
+            15px
+          </option>
+          <option value="16px">
+            16px
+          </option>
         </select>
       </div>
 
@@ -66,17 +96,17 @@
         </label>
         <div class="color-input-wrapper">
           <input
-            type="color"
             v-model="fontColor"
+            type="color"
             class="color-picker"
             @input="handleFontStyleChange"
           />
           <input
-            type="text"
             v-model="fontColor"
+            type="text"
             class="color-text"
-            @change="handleFontStyleChange"
             placeholder="#8c8c8c"
+            @change="handleFontStyleChange"
           />
         </div>
       </div>
@@ -85,10 +115,20 @@
         <label class="style-label">
           {{ i18n?.fontWeight || '字体粗细' }}
         </label>
-        <select v-model="fontWeight" class="style-select" @change="handleFontStyleChange">
-          <option value="normal">{{ i18n?.fontWeightNormal || '正常' }}</option>
-          <option value="bold">{{ i18n?.fontWeightBold || '粗体' }}</option>
-          <option value="lighter">{{ i18n?.fontWeightLighter || '细体' }}</option>
+        <select
+          v-model="fontWeight"
+          class="style-select"
+          @change="handleFontStyleChange"
+        >
+          <option value="normal">
+            {{ i18n?.fontWeightNormal || '正常' }}
+          </option>
+          <option value="bold">
+            {{ i18n?.fontWeightBold || '粗体' }}
+          </option>
+          <option value="lighter">
+            {{ i18n?.fontWeightLighter || '细体' }}
+          </option>
         </select>
       </div>
 
@@ -102,9 +142,9 @@
           <span
             class="preview-count"
             :style="{
-              fontSize: fontSize,
+              fontSize,
               color: fontColor,
-              fontWeight: fontWeight
+              fontWeight,
             }"
           >(123)</span>
         </div>
@@ -114,57 +154,62 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
-import { showMessage } from "siyuan";
-import SiSwitch from "@/components/Switch.vue";
-import { DocCountManager } from "../modules/DocCountManager";
+import { showMessage } from "siyuan"
+import {
+  computed,
+  onMounted,
+  onUnmounted,
+  ref,
+} from "vue"
+import SiSwitch from "@/components/Switch.vue"
+import { DocCountManager } from "../modules/DocCountManager"
+
+import { GeneralSettingsStorage } from "../types/storage"
 
 const props = defineProps<{
-  i18n?: Record<string, string>;
-  plugin?: any;
-}>();
+  i18n?: Record<string, string>
+  plugin?: any
+}>()
 
 const emit = defineEmits<{
-  change: [settings: any];
-}>();
+  change: [settings: any]
+}>()
 
-const enableDocCount = ref(true);
-const updateInterval = ref("3600000");
-const fontSize = ref("12px");
-const fontColor = ref("#8c8c8c");
-const fontWeight = ref("normal");
+const enableDocCount = ref(true)
+const updateInterval = ref("3600000")
+const fontSize = ref("12px")
+const fontColor = ref("#8c8c8c")
+const fontWeight = ref("normal")
 
 /**
  * 获取 GeneralSettings 实例中的 DocCountManager
  */
 const getDocCountManager = (): DocCountManager | null => {
-  const generalSettings = props.plugin?.__generalSettings;
-  return generalSettings?.docCountManager || null;
-};
+  const generalSettings = props.plugin?.__generalSettings
+  return generalSettings?.docCountManager || null
+}
 
-import { GeneralSettingsStorage } from "../types/storage";
-
-const gsStorage = computed(() => props.plugin ? new GeneralSettingsStorage(props.plugin) : null);
+const gsStorage = computed(() => props.plugin ? new GeneralSettingsStorage(props.plugin) : null)
 
 const ensureStorage = (): GeneralSettingsStorage => {
-  if (!gsStorage.value) throw new Error("插件实例不可用");
-  return gsStorage.value;
-};
+  if (!gsStorage.value) throw new Error("插件实例不可用")
+  return gsStorage.value
+}
 
 const loadSettings = async () => {
   try {
-    const data = gsStorage.value ? await gsStorage.value.docCount.load() : null;
+    const data = gsStorage.value ? await gsStorage.value.docCount.load() : null
     if (data) {
-      enableDocCount.value = data.enableDocCount ?? true;
-      updateInterval.value = data.updateInterval || "3600000";
-      fontSize.value = data.fontSize || "12px";
-      fontColor.value = data.fontColor || "#8c8c8c";
-      fontWeight.value = data.fontWeight || "normal";
+      enableDocCount.value = data.enableDocCount ?? true
+      updateInterval.value = data.updateInterval || "3600000"
+      fontSize.value = data.fontSize || "12px"
+      fontColor.value = data.fontColor || "#8c8c8c"
+      fontWeight.value = data.fontWeight || "normal"
     }
   } catch (e) {
-    console.error("加载文档数统计设置失败:", e);
+    console.error("加载文档数统计设置失败:", e)
   }
-};
+}
 
 const handleToggleChange = async () => {
   try {
@@ -174,27 +219,27 @@ const handleToggleChange = async () => {
       fontSize: fontSize.value,
       fontColor: fontColor.value,
       fontWeight: fontWeight.value,
-    });
+    })
 
-    const manager = getDocCountManager();
+    const manager = getDocCountManager()
     if (enableDocCount.value) {
       // 如果启用但管理器不存在,创建并启动
       if (!manager && props.plugin?.__generalSettings) {
-        props.plugin.__generalSettings.docCountManager = new DocCountManager();
-        const newManager = getDocCountManager();
-        newManager?.start();
-        newManager?.setUpdateInterval(parseInt(updateInterval.value));
+        props.plugin.__generalSettings.docCountManager = new DocCountManager()
+        const newManager = getDocCountManager()
+        newManager?.start()
+        newManager?.setUpdateInterval(Number.parseInt(updateInterval.value))
         newManager?.setFontStyle({
           fontSize: fontSize.value,
           color: fontColor.value,
           fontWeight: fontWeight.value,
-        });
+        })
       } else {
-        manager?.start();
+        manager?.start()
       }
     } else {
       // 如果禁用,停止管理器
-      manager?.stop();
+      manager?.stop()
     }
 
     showMessage(
@@ -203,7 +248,7 @@ const handleToggleChange = async () => {
         : "笔记本文档数统计已禁用",
       2000,
       "info",
-    );
+    )
 
     emit("change", {
       enableDocCount: enableDocCount.value,
@@ -211,11 +256,11 @@ const handleToggleChange = async () => {
       fontSize: fontSize.value,
       fontColor: fontColor.value,
       fontWeight: fontWeight.value,
-    });
+    })
   } catch (e) {
-    console.error("保存文档数统计设置失败:", e);
+    console.error("保存文档数统计设置失败:", e)
   }
-};
+}
 
 const handleIntervalChange = async () => {
   try {
@@ -225,16 +270,16 @@ const handleIntervalChange = async () => {
       fontSize: fontSize.value,
       fontColor: fontColor.value,
       fontWeight: fontWeight.value,
-    });
+    })
 
-    const manager = getDocCountManager();
-    manager?.setUpdateInterval(parseInt(updateInterval.value));
+    const manager = getDocCountManager()
+    manager?.setUpdateInterval(Number.parseInt(updateInterval.value))
 
-    showMessage("更新间隔已修改", 2000, "info");
+    showMessage("更新间隔已修改", 2000, "info")
   } catch (e) {
-    console.error("保存更新间隔失败:", e);
+    console.error("保存更新间隔失败:", e)
   }
-};
+}
 
 const handleFontStyleChange = async () => {
   try {
@@ -244,32 +289,35 @@ const handleFontStyleChange = async () => {
       fontSize: fontSize.value,
       fontColor: fontColor.value,
       fontWeight: fontWeight.value,
-    });
+    })
 
-    const manager = getDocCountManager();
+    const manager = getDocCountManager()
     manager?.setFontStyle({
       fontSize: fontSize.value,
       color: fontColor.value,
       fontWeight: fontWeight.value,
-    });
+    })
 
-    showMessage("字体样式已修改", 2000, "info");
+    showMessage("字体样式已修改", 2000, "info")
   } catch (e) {
-    console.error("保存字体样式失败:", e);
+    console.error("保存字体样式失败:", e)
   }
-};
+}
 
 onMounted(async () => {
-  await loadSettings();
+  await loadSettings()
   // 注意:不再在这里创建和启动 DocCountManager
   // 它由 GeneralSettings 在插件启动时统一管理
-});
+})
 
 onUnmounted(() => {
   // 清理工作由 GeneralSettings 统一处理
-});
+})
 
-defineExpose({ loadSettings, enableDocCount });
+defineExpose({
+  loadSettings,
+  enableDocCount,
+})
 </script>
 
 <style scoped>

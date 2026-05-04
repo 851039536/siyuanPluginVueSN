@@ -5,16 +5,20 @@
 ## 基础用法
 
 ```vue
+<template>
+  <Slider
+    v-model="value"
+    :min="0"
+    :max="100"
+  />
+</template>
+
 <script setup lang="ts">
-import Slider from '@/components/Slider.vue'
 import { ref } from 'vue'
+import Slider from '@/components/Slider.vue'
 
 const value = ref(50)
 </script>
-
-<template>
-  <Slider v-model="value" :min="0" :max="100" />
-</template>
 ```
 
 ## 显示当前值
@@ -78,7 +82,9 @@ const value = ref(50)
 
 ```vue
 <Slider size="small" v-model="value" />
+
 <Slider size="medium" v-model="value" />
+
 <Slider size="large" v-model="value" />
 ```
 

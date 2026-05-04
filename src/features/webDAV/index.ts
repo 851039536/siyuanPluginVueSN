@@ -1,30 +1,31 @@
+import type { App as VueApp } from "vue"
+import type { WebDAVConfig } from "@/config/settings"
 /**
  * WebDAV功能模块
  * 提供WebDAV服务器连接和数据同步功能
  */
-import { Plugin } from "siyuan";
-import WebDAVPanel from "./WebDAVPanel.vue";
-import { createApp, type App as VueApp } from "vue";
-import type { WebDAVConfig } from "@/config/settings";
+import { Plugin } from "siyuan"
+import { createApp } from "vue"
+import WebDAVPanel from "./WebDAVPanel.vue"
 
-let webdavApp: VueApp | null = null;
-let panelContainer: HTMLElement | null = null;
+let webdavApp: VueApp | null = null
+let panelContainer: HTMLElement | null = null
 
 /**
  * 注册WebDAV功能
  */
 export function registerWebDAV(plugin: Plugin) {
   window.addEventListener("openWebDAV", () => {
-    openWebDAVPanel(plugin);
-  });
+    openWebDAVPanel(plugin)
+  })
 
   window.addEventListener("closeWebDAV", () => {
-    closeWebDAVPanel();
-  });
+    closeWebDAVPanel()
+  })
 
   window.addEventListener("updateWebDAVConfig", async (event: CustomEvent) => {
-    await handleUpdateConfig(plugin, event.detail.config);
-  });
+    await handleUpdateConfig(plugin, event.detail.config)
+  })
 }
 
 /**
@@ -32,23 +33,23 @@ export function registerWebDAV(plugin: Plugin) {
  */
 function openWebDAVPanel(plugin: Plugin) {
   if (webdavApp && panelContainer) {
-    closeWebDAVPanel();
-    return;
+    closeWebDAVPanel()
+    return
   }
 
-  panelContainer = document.createElement("div");
-  panelContainer.id = "webdav-panel-container";
-  document.body.appendChild(panelContainer);
+  panelContainer = document.createElement("div")
+  panelContainer.id = "webdav-panel-container"
+  document.body.appendChild(panelContainer)
 
-  const pluginSample = plugin as any;
-  const i18n = (plugin.i18n as any).webDAV || {};
+  const pluginSample = plugin as any
+  const i18n = (plugin.i18n as any).webDAV || {}
 
   webdavApp = createApp(WebDAVPanel, {
     config: pluginSample.settings.webdavConfig || getDefaultConfig(),
     i18n,
-  });
+  })
 
-  webdavApp.mount(panelContainer);
+  webdavApp.mount(panelContainer)
 }
 
 /**
@@ -56,10 +57,10 @@ function openWebDAVPanel(plugin: Plugin) {
  */
 function closeWebDAVPanel() {
   if (webdavApp && panelContainer) {
-    webdavApp.unmount();
-    panelContainer.remove();
-    webdavApp = null;
-    panelContainer = null;
+    webdavApp.unmount()
+    panelContainer.remove()
+    webdavApp = null
+    panelContainer = null
   }
 }
 
@@ -75,21 +76,21 @@ function getDefaultConfig(): WebDAVConfig {
     autoSync: false,
     syncInterval: 30,
     lastSyncTime: "",
-  };
+  }
 }
 
 /**
  * 处理配置更新
  */
 async function handleUpdateConfig(plugin: Plugin, config: WebDAVConfig) {
-  const pluginSample = plugin as any;
+  const pluginSample = plugin as any
 
   const newSettings = {
     ...pluginSample.settings,
     webdavConfig: config,
-  };
+  }
 
-  await pluginSample.updateSettings(newSettings);
+  await pluginSample.updateSettings(newSettings)
 }
 
 /**
@@ -101,23 +102,23 @@ export async function testWebDAVConnection(
   password: string,
 ): Promise<boolean> {
   if (!serverUrl) {
-    return false;
+    return false
   }
 
   try {
-    const url = new URL(serverUrl);
+    const url = new URL(serverUrl)
     const response = await fetch(url.toString(), {
       method: "PROPFIND",
       headers: {
-        Authorization: "Basic " + btoa(`${username}:${password}`),
-        Depth: "0",
+        "Authorization": `Basic ${btoa(`${username}:${password}`)}`,
+        "Depth": "0",
         "Content-Type": "application/xml",
       },
-    });
+    })
 
-    return response.ok || response.status === 207;
+    return response.ok || response.status === 207
   } catch {
-    return false;
+    return false
   }
 }
 
@@ -129,31 +130,40 @@ export async function performWebDAVSync(
   username: string,
   password: string,
   _basePath: string = "/",
-): Promise<{ success: boolean; message: string }> {
+): Promise<{ success: boolean, message: string }> {
   if (!serverUrl || !username) {
-    return { success: false, message: "请先配置WebDAV服务器" };
+    return {
+      success: false,
+      message: "请先配置WebDAV服务器",
+    }
   }
 
   try {
-    const url = new URL(serverUrl);
+    const url = new URL(serverUrl)
     const response = await fetch(url.toString(), {
       method: "PROPFIND",
       headers: {
-        Authorization: "Basic " + btoa(`${username}:${password}`),
-        Depth: "1",
+        "Authorization": `Basic ${btoa(`${username}:${password}`)}`,
+        "Depth": "1",
         "Content-Type": "application/xml",
       },
-    });
+    })
 
     if (response.ok || response.status === 207) {
-      return { success: true, message: "同步成功" };
+      return {
+        success: true,
+        message: "同步成功",
+      }
     } else {
-      return { success: false, message: `同步失败: ${response.status}` };
+      return {
+        success: false,
+        message: `同步失败: ${response.status}`,
+      }
     }
   } catch (error) {
     return {
       success: false,
       message: error instanceof Error ? error.message : "同步失败",
-    };
+    }
   }
 }

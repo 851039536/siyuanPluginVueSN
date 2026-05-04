@@ -1,30 +1,37 @@
+import type { GenerateOptions } from "@/types/ai"
+import type { AiApiConfig } from "@/utils/aiApi"
 /**
  * AI信息生成功能模块
  * 支持自定义对话配置、Markdown格式输出、上下文配置
  * API 调用逻辑已迁移至 @/utils/aiApi 统一模块
  */
-import { Plugin, showMessage } from "siyuan";
-import { createApp, h } from "vue";
 import {
+  Plugin,
+  showMessage,
+} from "siyuan"
+import {
+  createApp,
+  h,
+} from "vue"
+import {
+
   callAISmart,
   getApiConfigFromPlugin,
-  type AiApiConfig,
-} from "@/utils/aiApi";
-import type { GenerateOptions } from "@/types/ai";
+} from "@/utils/aiApi"
 // @ts-ignore
-import AIContentGeneratorPanel from "../index.vue";
+import AIContentGeneratorPanel from "../index.vue"
 
 /**
  * AI内容生成类
  * 仅负责 Dock 注册和 UI 编排，API 调用使用统一模块
  */
 export class AIContentGenerator {
-  private plugin: Plugin;
-  private apiConfig: AiApiConfig;
+  private plugin: Plugin
+  private apiConfig: AiApiConfig
 
   constructor(plugin: Plugin) {
-    this.plugin = plugin;
-    this.apiConfig = getApiConfigFromPlugin(plugin);
+    this.plugin = plugin
+    this.apiConfig = getApiConfigFromPlugin(plugin)
   }
 
   /**
@@ -36,25 +43,28 @@ export class AIContentGenerator {
       provider: provider as AiApiConfig["provider"],
       model,
       apiKey,
-    };
+    }
   }
 
   /**
    * 初始化AI内容生成功能
    */
   public init() {
-    this.addDock();
+    this.addDock()
   }
 
   /**
    * 添加AI内容生成 Dock 到右侧边栏
    */
   private addDock() {
-    const self = this;
+    const self = this
     this.plugin.addDock({
       config: {
         position: "RightTop",
-        size: { width: 400, height: 0 },
+        size: {
+          width: 400,
+          height: 0,
+        },
         icon: "iconSparkles",
         title: "AI信息生成",
         show: false,
@@ -62,9 +72,9 @@ export class AIContentGenerator {
       data: {},
       type: "ai-content-generator-dock",
       init: (dock: any) => {
-        const container = document.createElement("div");
-        container.style.height = "100%";
-        container.style.overflow = "hidden";
+        const container = document.createElement("div")
+        container.style.height = "100%"
+        container.style.overflow = "hidden"
 
         const app = createApp({
           setup() {
@@ -73,19 +83,19 @@ export class AIContentGenerator {
                 i18n: self.plugin.i18n,
                 plugin: self.plugin,
                 onGenerate: async (options: GenerateOptions) => {
-                  return await self.generateContent(options);
+                  return await self.generateContent(options)
                 },
-              });
+              })
           },
-        });
+        })
 
-        app.mount(container);
-        dock.element?.appendChild(container);
+        app.mount(container)
+        dock.element?.appendChild(container)
 
-        dock.__app = app;
-        dock.__container = container;
+        dock.__app = app
+        dock.__container = container
       },
-    });
+    })
   }
 
   /**
@@ -93,15 +103,15 @@ export class AIContentGenerator {
    */
   public async generateContent(options: GenerateOptions): Promise<string> {
     if (!options.userInput) {
-      showMessage("请输入内容", 3000, "error");
-      return "";
+      showMessage("请输入内容", 3000, "error")
+      return ""
     }
 
     try {
       // 刷新配置（确保使用最新的 API 配置）
-      this.apiConfig = getApiConfigFromPlugin(this.plugin);
+      this.apiConfig = getApiConfigFromPlugin(this.plugin)
 
-      const fullPrompt = this.buildFullPrompt(options);
+      const fullPrompt = this.buildFullPrompt(options)
 
       const result = await callAISmart(fullPrompt, this.apiConfig, {
         systemPrompt: options.systemPrompt,
@@ -109,17 +119,17 @@ export class AIContentGenerator {
         maxTokens: options.maxTokens,
         signal: options.signal,
         onChunk: options.onChunk,
-      });
+      })
 
       if (result) {
-        return result;
+        return result
       }
-      showMessage("生成失败，请重试", 3000, "error");
-      return "";
+      showMessage("生成失败，请重试", 3000, "error")
+      return ""
     } catch (error) {
-      const errorMsg = (error as Error).message || "未知错误";
-      showMessage("🚫 生成失败: " + errorMsg, 5000, "error");
-      throw error;
+      const errorMsg = (error as Error).message || "未知错误"
+      showMessage(`🚫 生成失败: ${errorMsg}`, 5000, "error")
+      throw error
     }
   }
 
@@ -133,9 +143,9 @@ export class AIContentGenerator {
 ---
 
 用户要求:
-${options.userInput}`;
+${options.userInput}`
     }
-    return options.userInput;
+    return options.userInput
   }
 
   /**
@@ -145,4 +155,4 @@ ${options.userInput}`;
 }
 
 // 重新导出类型，保持向后兼容
-export type { GenerateOptions } from "@/types/ai";
+export type { GenerateOptions } from "@/types/ai"

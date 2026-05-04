@@ -1,28 +1,34 @@
-import { Plugin } from "siyuan";
-import { ToolbarAction, ToolbarActionManager } from "../types";
-import { showI18nMessage, debounce } from "./utils";
+import { Plugin } from "siyuan"
+import {
+  ToolbarAction,
+  ToolbarActionManager,
+} from "../types"
+import {
+  debounce,
+  showI18nMessage,
+} from "./utils"
 
 /**
  * 浮动工具栏增强类
  * 为思源笔记的原生浮动工具栏添加自定义功能按钮
  */
 export class FloatingToolbar {
-  private plugin: Plugin;
-  private actionManager: ToolbarActionManager;
-  private lastSelectionText: string = "";
-  private observers: Map<HTMLElement, MutationObserver> = new Map();
-  private isProcessing: boolean = false;
-  private readonly debouncedHandleMouseUp: () => void;
-  private readonly styleId = "floating-toolbar-enhanced-styles";
+  private plugin: Plugin
+  private actionManager: ToolbarActionManager
+  private lastSelectionText: string = ""
+  private observers: Map<HTMLElement, MutationObserver> = new Map()
+  private isProcessing: boolean = false
+  private readonly debouncedHandleMouseUp: () => void
+  private readonly styleId = "floating-toolbar-enhanced-styles"
 
   constructor(plugin: Plugin) {
-    this.plugin = plugin;
-    this.actionManager = new ToolbarActionManager();
+    this.plugin = plugin
+    this.actionManager = new ToolbarActionManager()
     // 防抖处理选择事件，避免频繁触发
     this.debouncedHandleMouseUp = debounce(
       this.handleSelectionChange.bind(this),
       300,
-    );
+    )
   }
 
   /**
@@ -30,11 +36,11 @@ export class FloatingToolbar {
    */
   init(): void {
     // 注册所有内置功能
-    this.registerBuiltinActions();
+    this.registerBuiltinActions()
     // 绑定事件监听器
-    this.bindEvents();
+    this.bindEvents()
     // 添加样式（仅添加一次）
-    this.ensureStyles();
+    this.ensureStyles()
   }
 
   /**
@@ -48,21 +54,21 @@ export class FloatingToolbar {
       icon: '<svg><use xlink:href="#iconCopy"></use></svg>',
       hotkey: undefined,
       handler: this.copyText.bind(this),
-    });
+    })
   }
 
   /**
    * 注册新功能（供外部使用）
    */
   registerAction(action: ToolbarAction) {
-    this.actionManager.registerAction(action);
+    this.actionManager.registerAction(action)
   }
 
   /**
    * 移除功能
    */
   unregisterAction(actionId: string) {
-    this.actionManager.unregisterAction(actionId);
+    this.actionManager.unregisterAction(actionId)
   }
 
   /**
@@ -72,7 +78,7 @@ export class FloatingToolbar {
   private bindEvents() {
     document.addEventListener("mouseup", this.handleDocumentMouseUp, {
       passive: true,
-    });
+    })
   }
 
   /**
@@ -81,34 +87,34 @@ export class FloatingToolbar {
    */
   private handleDocumentMouseUp = () => {
     // 获取当前选择
-    const selection = window.getSelection();
-    const selectedText = selection?.toString().trim() || "";
+    const selection = window.getSelection()
+    const selectedText = selection?.toString().trim() || ""
 
     // 记录当前选择内容用于防抖比较
-    this.lastSelectionText = selectedText;
+    this.lastSelectionText = selectedText
 
     // 选择为空时清理工具栏
     if (!selectedText) {
-      this.cleanupAllToolbars();
-      return;
+      this.cleanupAllToolbars()
+      return
     }
 
     // 使用防抖处理
-    this.debouncedHandleMouseUp();
-  };
+    this.debouncedHandleMouseUp()
+  }
 
   /**
    * 处理选择变化（防抖后调用）
    */
   private handleSelectionChange() {
     // 防止重复处理
-    if (this.isProcessing) return;
+    if (this.isProcessing) return
 
-    const selectedText = this.lastSelectionText;
+    const selectedText = this.lastSelectionText
 
     // 选择内容与上次一致且有效，开始处理
     if (selectedText) {
-      this.processSelection();
+      this.processSelection()
     }
   }
 
@@ -116,28 +122,28 @@ export class FloatingToolbar {
    * 处理选择状态
    */
   private processSelection() {
-    if (this.isProcessing) return;
-    this.isProcessing = true;
+    if (this.isProcessing) return
+    this.isProcessing = true
 
     try {
-      const selection = window.getSelection();
+      const selection = window.getSelection()
 
       if (!selection?.rangeCount) {
-        return;
+        return
       }
 
       // 查找选择范围内的 protyle 容器
-      const range = selection.getRangeAt(0);
-      const protyle = this.findProtyleContainer(range.commonAncestorContainer);
+      const range = selection.getRangeAt(0)
+      const protyle = this.findProtyleContainer(range.commonAncestorContainer)
 
       if (protyle) {
-        this.processToolbar(protyle);
+        this.processToolbar(protyle)
       }
     } finally {
       // 使用 requestAnimationFrame 延迟重置处理状态
       requestAnimationFrame(() => {
-        this.isProcessing = false;
-      });
+        this.isProcessing = false
+      })
     }
   }
 
@@ -149,33 +155,33 @@ export class FloatingToolbar {
   private findProtyleContainer(startNode: Node): Element | null {
     // 对于 Element，使用 closest
     if (startNode instanceof Element) {
-      const protyle = startNode.closest(".protyle");
-      if (protyle) return protyle;
+      const protyle = startNode.closest(".protyle")
+      if (protyle) return protyle
     }
 
     // 尝试通过 parentNode 查找（对于文本节点）
-    let node: Node | null = startNode;
+    let node: Node | null = startNode
     while (node) {
       if (node instanceof Element && node.classList.contains("protyle")) {
-        return node;
+        return node
       }
-      node = node.parentNode;
+      node = node.parentNode
     }
 
-    return null;
+    return null
   }
 
   /**
    * 处理单个工具栏
    */
   private processToolbar(protyle: Element) {
-    const toolbar = protyle.querySelector(".protyle-toolbar") as HTMLElement;
-    if (!toolbar || toolbar.dataset.customButtonsAdded === "true") return;
+    const toolbar = protyle.querySelector(".protyle-toolbar") as HTMLElement
+    if (!toolbar || toolbar.dataset.customButtonsAdded === "true") return
 
     // 使用 requestAnimationFrame 在下一帧添加按钮
     requestAnimationFrame(() => {
-      this.addCustomButtons(toolbar, protyle);
-    });
+      this.addCustomButtons(toolbar, protyle)
+    })
   }
 
   /**
@@ -184,15 +190,15 @@ export class FloatingToolbar {
   private cleanupAllToolbars() {
     const toolbars = document.querySelectorAll(
       '[data-custom-buttons-added="true"]',
-    );
+    )
     toolbars.forEach((toolbar) => {
-      toolbar.removeAttribute("data-custom-buttons-added");
-    });
+      toolbar.removeAttribute("data-custom-buttons-added")
+    })
     // 清理 observers
     this.observers.forEach((observer) => {
-      observer.disconnect();
-    });
-    this.observers.clear();
+      observer.disconnect()
+    })
+    this.observers.clear()
   }
 
   /**
@@ -200,36 +206,36 @@ export class FloatingToolbar {
    */
   private addCustomButtons(toolbar: HTMLElement, protyle: Element) {
     // 防止重复添加
-    if (toolbar.dataset.customButtonsAdded === "true") return;
-    toolbar.dataset.customButtonsAdded = "true";
+    if (toolbar.dataset.customButtonsAdded === "true") return
+    toolbar.dataset.customButtonsAdded = "true"
 
     // 获取所有已注册的功能
-    const actions = this.actionManager.getAllActions();
+    const actions = this.actionManager.getAllActions()
 
     // 反转数组并添加按钮（以便按注册顺序显示）
     // 使用 DocumentFragment 批量添加，减少重排
-    const fragment = document.createDocumentFragment();
+    const fragment = document.createDocumentFragment()
 
     actions.reverse().forEach((action) => {
       // 检查按钮是否已存在
-      if (toolbar.querySelector(`button[data-type="${action.id}"]`)) return;
+      if (toolbar.querySelector(`button[data-type="${action.id}"]`)) return
 
       // 创建按钮元素（而不是使用 insertAdjacentHTML）
-      const button = this.createActionButton(action, toolbar, protyle);
+      const button = this.createActionButton(action, toolbar, protyle)
       if (button) {
-        fragment.appendChild(button);
+        fragment.appendChild(button)
       }
-    });
+    })
 
     // 在工具栏开头批量插入按钮
     if (toolbar.firstChild) {
-      toolbar.insertBefore(fragment, toolbar.firstChild);
+      toolbar.insertBefore(fragment, toolbar.firstChild)
     } else {
-      toolbar.appendChild(fragment);
+      toolbar.appendChild(fragment)
     }
 
     // 监听工具栏隐藏事件，移除标记
-    this.setupToolbarObserver(toolbar);
+    this.setupToolbarObserver(toolbar)
   }
 
   /**
@@ -240,38 +246,38 @@ export class FloatingToolbar {
     toolbar: HTMLElement,
     protyle: Element,
   ): HTMLButtonElement | null {
-    const button = document.createElement("button");
+    const button = document.createElement("button")
     button.className =
-      "protyle-toolbar__item b3-tooltips b3-tooltips__ne custom-toolbar-button";
-    button.dataset.type = action.id;
-    button.setAttribute("aria-label", action.name);
-    button.style.cssText = "font-size:14px;";
-    button.innerHTML = action.icon;
+      "protyle-toolbar__item b3-tooltips b3-tooltips__ne custom-toolbar-button"
+    button.dataset.type = action.id
+    button.setAttribute("aria-label", action.name)
+    button.style.cssText = "font-size:14px;"
+    button.innerHTML = action.icon
 
     if (action.hotkey) {
-      button.setAttribute("data-hotkey", action.hotkey);
+      button.setAttribute("data-hotkey", action.hotkey)
     }
 
     // 使用一次性事件监听器，避免内存泄漏
     button.addEventListener(
       "click",
       async (clickEvent) => {
-        clickEvent.stopPropagation();
+        clickEvent.stopPropagation()
         // 隐藏工具栏
-        toolbar.classList.add("fn__none");
+        toolbar.classList.add("fn__none")
         // 获取选中的文本
-        const selectedText = this.getSelection(protyle);
+        const selectedText = this.getSelection(protyle)
         // 执行按钮功能
         try {
-          await action.handler(selectedText);
+          await action.handler(selectedText)
         } catch (error) {
-          console.error(`Action ${action.id} failed:`, error);
+          console.error(`Action ${action.id} failed:`, error)
         }
       },
       { once: false },
-    );
+    )
 
-    return button;
+    return button
   }
 
   /**
@@ -279,50 +285,50 @@ export class FloatingToolbar {
    */
   private setupToolbarObserver(toolbar: HTMLElement) {
     // 清理旧的 observer
-    const existingObserver = this.observers.get(toolbar);
+    const existingObserver = this.observers.get(toolbar)
     if (existingObserver) {
-      existingObserver.disconnect();
+      existingObserver.disconnect()
     }
 
     const observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
         if (
-          mutation.type === "attributes" &&
-          mutation.attributeName === "class" &&
-          toolbar.classList.contains("fn__none")
+          mutation.type === "attributes"
+          && mutation.attributeName === "class"
+          && toolbar.classList.contains("fn__none")
         ) {
-          toolbar.removeAttribute("data-custom-buttons-added");
-          observer.disconnect();
-          this.observers.delete(toolbar);
-          break;
+          toolbar.removeAttribute("data-custom-buttons-added")
+          observer.disconnect()
+          this.observers.delete(toolbar)
+          break
         }
       }
-    });
+    })
 
     observer.observe(toolbar, {
       attributes: true,
       attributeFilter: ["class"],
-    });
+    })
 
-    this.observers.set(toolbar, observer);
+    this.observers.set(toolbar, observer)
   }
 
   /**
    * 获取选中的文本
    */
   private getSelection(protyle: Element): string {
-    const selection = window.getSelection().toString().trim();
-    if (selection) return selection;
+    const selection = window.getSelection().toString().trim()
+    if (selection) return selection
 
     // 处理多选块
-    const selects = protyle.querySelectorAll(".protyle-wysiwyg--select");
+    const selects = protyle.querySelectorAll(".protyle-wysiwyg--select")
     if (selects.length > 0) {
       return Array.from(selects)
         .map((block) => block.textContent || "")
-        .join("\n");
+        .join("\n")
     }
 
-    return "";
+    return ""
   }
 
   /**
@@ -330,16 +336,16 @@ export class FloatingToolbar {
    */
   private async copyText(text: string) {
     if (!text) {
-      showI18nMessage(this.plugin, "noTextSelected", "未选中文本");
-      return;
+      showI18nMessage(this.plugin, "noTextSelected", "未选中文本")
+      return
     }
 
     try {
-      await navigator.clipboard.writeText(text);
-      showI18nMessage(this.plugin, "copySuccess", "已复制到剪贴板");
+      await navigator.clipboard.writeText(text)
+      showI18nMessage(this.plugin, "copySuccess", "已复制到剪贴板")
     } catch (error) {
       // 降级方案
-      this.fallbackCopy(text);
+      this.fallbackCopy(text)
     }
   }
 
@@ -347,24 +353,24 @@ export class FloatingToolbar {
    * 降级复制方案
    */
   private fallbackCopy(text: string) {
-    const textarea = document.createElement("textarea");
-    textarea.value = text;
-    textarea.style.cssText = "position:fixed;left:-9999px;opacity:0;";
-    document.body.appendChild(textarea);
+    const textarea = document.createElement("textarea")
+    textarea.value = text
+    textarea.style.cssText = "position:fixed;left:-9999px;opacity:0;"
+    document.body.appendChild(textarea)
 
     try {
-      textarea.select();
-      const success = document.execCommand("copy");
+      textarea.select()
+      const success = document.execCommand("copy")
       if (success) {
-        showI18nMessage(this.plugin, "copySuccess", "已复制到剪贴板");
+        showI18nMessage(this.plugin, "copySuccess", "已复制到剪贴板")
       } else {
-        showI18nMessage(this.plugin, "copyFailed", "复制失败");
+        showI18nMessage(this.plugin, "copyFailed", "复制失败")
       }
     } catch (e) {
-      console.error("Fallback copy failed:", e);
-      showI18nMessage(this.plugin, "copyFailed", "复制失败");
+      console.error("Fallback copy failed:", e)
+      showI18nMessage(this.plugin, "copyFailed", "复制失败")
     } finally {
-      document.body.removeChild(textarea);
+      document.body.removeChild(textarea)
     }
   }
 
@@ -372,10 +378,10 @@ export class FloatingToolbar {
    * 确保样式已添加（单例模式）
    */
   private ensureStyles() {
-    if (document.getElementById(this.styleId)) return;
+    if (document.getElementById(this.styleId)) return
 
-    const style = document.createElement("style");
-    style.id = this.styleId;
+    const style = document.createElement("style")
+    style.id = this.styleId
     style.textContent = `
             /* 自定义浮动工具栏按钮样式 */
             .custom-toolbar-button {
@@ -388,8 +394,8 @@ export class FloatingToolbar {
             .custom-toolbar-button:active {
                 background-color: var(--b3-theme-surface);
             }
-        `;
-    document.head.appendChild(style);
+        `
+    document.head.appendChild(style)
   }
 
   /**
@@ -397,30 +403,30 @@ export class FloatingToolbar {
    */
   destroy() {
     // 移除事件监听
-    document.removeEventListener("mouseup", this.handleDocumentMouseUp);
+    document.removeEventListener("mouseup", this.handleDocumentMouseUp)
 
     // 断开所有 observers
     this.observers.forEach((observer) => {
-      observer.disconnect();
-    });
-    this.observers.clear();
+      observer.disconnect()
+    })
+    this.observers.clear()
 
     // 移除所有自定义按钮
     document.querySelectorAll(".custom-toolbar-button").forEach((button) => {
-      button.remove();
-    });
+      button.remove()
+    })
 
     // 清理标记
     document
       .querySelectorAll("[data-custom-buttons-added]")
       .forEach((toolbar) => {
-        toolbar.removeAttribute("data-custom-buttons-added");
-      });
+        toolbar.removeAttribute("data-custom-buttons-added")
+      })
 
     // 移除样式
-    document.getElementById(this.styleId)?.remove();
+    document.getElementById(this.styleId)?.remove()
 
     // 清理功能管理器
-    this.actionManager.clear();
+    this.actionManager.clear()
   }
 }

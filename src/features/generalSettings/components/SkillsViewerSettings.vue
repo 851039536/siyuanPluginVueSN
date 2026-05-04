@@ -3,7 +3,10 @@
     <div class="sv-header">
       <span class="sv-header-icon">🧩</span>
       <span class="sv-header-title">{{ i18n?.skillsViewerTitle || 'Skills 查看器' }}</span>
-      <span v-if="skills.length > 0" class="sv-header-badge">{{ skills.length }} Skills</span>
+      <span
+        v-if="skills.length > 0"
+        class="sv-header-badge"
+      >{{ skills.length }} Skills</span>
     </div>
 
     <p class="sv-description">
@@ -11,8 +14,13 @@
     </p>
 
     <!-- 不支持提示 -->
-    <div v-if="!managerAvailable" class="sv-unsupported">
-      <div class="sv-unsupported-icon">⚠️</div>
+    <div
+      v-if="!managerAvailable"
+      class="sv-unsupported"
+    >
+      <div class="sv-unsupported-icon">
+        ⚠️
+      </div>
       <div class="sv-unsupported-text">
         {{ i18n?.skillsViewerUnsupported || 'Skills 查看器需要桌面端 Electron 环境支持，当前环境不可用' }}
       </div>
@@ -65,22 +73,37 @@
 
       <!-- 操作按钮 -->
       <div class="sv-actions">
-        <SiButton variant="primary" size="small" :loading="loading" @click="refreshSkills">
+        <SiButton
+          variant="primary"
+          size="small"
+          :loading="loading"
+          @click="refreshSkills"
+        >
           {{ i18n?.refresh || '刷新扫描' }}
         </SiButton>
-        <SiButton variant="ghost" size="small" @click="openCurrentToolDir">
+        <SiButton
+          variant="ghost"
+          size="small"
+          @click="openCurrentToolDir"
+        >
           {{ i18n?.openDir || '打开目录' }}
         </SiButton>
       </div>
 
       <!-- 加载状态 -->
-      <div v-if="loading" class="sv-loading">
+      <div
+        v-if="loading"
+        class="sv-loading"
+      >
         <div class="sv-loading-spinner"></div>
         <span class="sv-loading-text">{{ i18n?.scanning || '正在扫描...' }}</span>
       </div>
 
       <!-- Skills 列表 -->
-      <div v-else-if="filteredSkills.length > 0" class="sv-skills-list">
+      <div
+        v-else-if="filteredSkills.length > 0"
+        class="sv-skills-list"
+      >
         <div
           v-for="(skill, index) in filteredSkills"
           :key="index"
@@ -94,7 +117,7 @@
               <span
                 class="sv-skill-tool-badge"
                 :style="{
-                  background: getToolColor(skill.tool) + '15',
+                  background: `${getToolColor(skill.tool)}15`,
                   color: getToolColor(skill.tool),
                 }"
               >
@@ -138,8 +161,18 @@
               </button>
             </div>
           </div>
-          <div v-if="skill.description" class="sv-skill-desc">{{ skill.description }}</div>
-          <div class="sv-skill-path" :title="skill.filePath">{{ skill.filePath }}</div>
+          <div
+            v-if="skill.description"
+            class="sv-skill-desc"
+          >
+            {{ skill.description }}
+          </div>
+          <div
+            class="sv-skill-path"
+            :title="skill.filePath"
+          >
+            {{ skill.filePath }}
+          </div>
 
           <!-- 编辑模式 -->
           <template v-if="editingSkill === index">
@@ -158,18 +191,30 @@
 
           <!-- 预览模式 -->
           <template v-else>
-            <button class="sv-skill-expand-btn" @click="toggleExpand(index)">
+            <button
+              class="sv-skill-expand-btn"
+              @click="toggleExpand(index)"
+            >
               {{ expandedSkills.has(index) ? (i18n?.collapse || '收起') : (i18n?.expand || '展开内容') }}
               {{ expandedSkills.has(index) ? '▲' : '▼' }}
             </button>
-            <div v-if="expandedSkills.has(index)" class="sv-skill-content" v-html="renderMarkdown(skill.content)"></div>
+            <div
+              v-if="expandedSkills.has(index)"
+              class="sv-skill-content"
+              v-html="renderMarkdown(skill.content)"
+            ></div>
           </template>
         </div>
       </div>
 
       <!-- 空状态 -->
-      <div v-else class="sv-empty">
-        <div class="sv-empty-icon">🔍</div>
+      <div
+        v-else
+        class="sv-empty"
+      >
+        <div class="sv-empty-icon">
+          🔍
+        </div>
         <div class="sv-empty-text">
           {{ selectedTool === 'all'
             ? (i18n?.noSkillsAllTools || '未发现任何 AI 工具的 Skills 文件')
@@ -184,7 +229,11 @@
 
     <!-- 删除确认弹窗 -->
     <Teleport to="body">
-      <div v-if="deleteConfirmVisible" class="sv-modal-overlay" @click.self="cancelDeleteSkill">
+      <div
+        v-if="deleteConfirmVisible"
+        class="sv-modal-overlay"
+        @click.self="cancelDeleteSkill"
+      >
         <div class="sv-modal">
           <div class="sv-modal-header">
             <span class="sv-modal-icon">⚠️</span>
@@ -192,14 +241,27 @@
           </div>
           <div class="sv-modal-body">
             <p>{{ i18n?.deleteSkillConfirm || '确定要删除以下 Skill 吗？此操作不可恢复。' }}</p>
-            <p class="sv-modal-skill-name">{{ deleteTargetSkill?.name }}</p>
-            <p class="sv-modal-skill-path">{{ deleteTargetSkill?.filePath }}</p>
+            <p class="sv-modal-skill-name">
+              {{ deleteTargetSkill?.name }}
+            </p>
+            <p class="sv-modal-skill-path">
+              {{ deleteTargetSkill?.filePath }}
+            </p>
           </div>
           <div class="sv-modal-footer">
-            <SiButton variant="ghost" size="small" @click="cancelDeleteSkill">
+            <SiButton
+              variant="ghost"
+              size="small"
+              @click="cancelDeleteSkill"
+            >
               {{ i18n?.cancel || '取消' }}
             </SiButton>
-            <SiButton variant="danger" size="small" :loading="deletingSkill" @click="executeDeleteSkill">
+            <SiButton
+              variant="danger"
+              size="small"
+              :loading="deletingSkill"
+              @click="executeDeleteSkill"
+            >
               {{ i18n?.confirmDelete || '确认删除' }}
             </SiButton>
           </div>
@@ -210,262 +272,277 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from "vue";
-import { showMessage } from "siyuan";
-import { marked } from "marked";
-import SiButton from "@/components/Button.vue";
+import type {
+  AIToolType,
+  SkillInfo,
+} from "../modules/SkillsViewerManager"
+import { marked } from "marked"
+import { showMessage } from "siyuan"
 import {
-  SkillsViewerManager,
+  computed,
+  onMounted,
+  reactive,
+  ref,
+} from "vue"
+import SiButton from "@/components/Button.vue"
+import {
   AI_TOOLS,
-  type AIToolType,
-  type SkillInfo,
-} from "../modules/SkillsViewerManager";
+
+
+  SkillsViewerManager,
+} from "../modules/SkillsViewerManager"
+
+import { GeneralSettingsStorage } from "../types/storage"
 
 interface Props {
-  i18n?: Record<string, string>;
-  plugin?: any;
+  i18n?: Record<string, string>
+  plugin?: any
 }
 
 const props = withDefaults(defineProps<Props>(), {
   i18n: () => ({}),
   plugin: null,
-});
+})
 
-const manager = new SkillsViewerManager();
-const managerAvailable = manager.isAvailable();
-const aiTools = AI_TOOLS;
+const manager = new SkillsViewerManager()
+const managerAvailable = manager.isAvailable()
+const aiTools = AI_TOOLS
 
-const selectedTool = ref<string>("all");
-const projectPath = ref("");
-const skills = ref<SkillInfo[]>([]);
-const loading = ref(false);
-const expandedSkills = reactive(new Set<number>());
+const selectedTool = ref<string>("all")
+const projectPath = ref("")
+const skills = ref<SkillInfo[]>([])
+const loading = ref(false)
+const expandedSkills = reactive(new Set<number>())
 
 // 编辑相关状态
-const editingSkill = ref<number | null>(null);
-const editContent = ref("");
-const savingSkill = ref(false);
+const editingSkill = ref<number | null>(null)
+const editContent = ref("")
+const savingSkill = ref(false)
 
 // 删除相关状态
-const deleteConfirmVisible = ref(false);
-const deleteTargetIndex = ref<number | null>(null);
-const deletingSkill = ref(false);
+const deleteConfirmVisible = ref(false)
+const deleteTargetIndex = ref<number | null>(null)
+const deletingSkill = ref(false)
 
 const deleteTargetSkill = computed(() => {
-  if (deleteTargetIndex.value === null) return null;
-  return filteredSkills.value[deleteTargetIndex.value] || null;
-});
+  if (deleteTargetIndex.value === null) return null
+  return filteredSkills.value[deleteTargetIndex.value] || null
+})
 
 const toolStatuses = reactive<Record<string, {
-  global: boolean;
-  project: boolean;
-  globalCount: number;
-  projectCount: number;
-}>>({});
+  global: boolean
+  project: boolean
+  globalCount: number
+  projectCount: number
+}>>({})
 
 const filteredSkills = computed(() => {
-  if (selectedTool.value === "all") return skills.value;
-  return skills.value.filter((s) => s.tool === selectedTool.value);
-});
+  if (selectedTool.value === "all") return skills.value
+  return skills.value.filter((s) => s.tool === selectedTool.value)
+})
 
 // Markdown 渲染器配置
-marked.use({ breaks: true, gfm: true });
+marked.use({
+  breaks: true,
+  gfm: true,
+})
 
 function renderMarkdown(content: string): string {
   try {
-    return marked.parse(content) as string;
+    return marked.parse(content) as string
   } catch {
-    return content;
+    return content
   }
 }
 
 function selectTool(toolId: string) {
-  selectedTool.value = toolId;
+  selectedTool.value = toolId
 }
 
 function getToolColor(toolId: AIToolType): string {
-  return AI_TOOLS.find((t) => t.id === toolId)?.color || "#999";
+  return AI_TOOLS.find((t) => t.id === toolId)?.color || "#999"
 }
 
 function getToolName(toolId: AIToolType): string {
-  return AI_TOOLS.find((t) => t.id === toolId)?.name || toolId;
+  return AI_TOOLS.find((t) => t.id === toolId)?.name || toolId
 }
 
 function toggleExpand(index: number) {
   if (expandedSkills.has(index)) {
-    expandedSkills.delete(index);
+    expandedSkills.delete(index)
   } else {
-    expandedSkills.add(index);
+    expandedSkills.add(index)
   }
 }
 
 // 编辑功能
 function startEdit(index: number) {
-  editingSkill.value = index;
-  editContent.value = filteredSkills.value[index].content;
+  editingSkill.value = index
+  editContent.value = filteredSkills.value[index].content
 }
 
 function cancelEdit() {
-  editingSkill.value = null;
-  editContent.value = "";
+  editingSkill.value = null
+  editContent.value = ""
 }
 
 async function saveEdit(index: number) {
-  const skill = filteredSkills.value[index];
-  if (!skill || savingSkill.value) return;
+  const skill = filteredSkills.value[index]
+  if (!skill || savingSkill.value) return
 
-  savingSkill.value = true;
+  savingSkill.value = true
   try {
-    const success = await manager.saveSkillContent(skill.filePath, editContent.value);
+    const success = await manager.saveSkillContent(skill.filePath, editContent.value)
     if (success) {
       // 更新内存中的数据
-      const originalIndex = skills.value.findIndex((s) => s.filePath === skill.filePath);
+      const originalIndex = skills.value.findIndex((s) => s.filePath === skill.filePath)
       if (originalIndex !== -1) {
-        skills.value[originalIndex].content = editContent.value;
+        skills.value[originalIndex].content = editContent.value
         // 重新解析名称和描述
-        const dirName = skill.filePath.split(/[\\/]/).slice(-2, -1)[0];
-        const parsed = manager.parseSkillMd(editContent.value, dirName);
-        skills.value[originalIndex].name = parsed.name;
-        skills.value[originalIndex].description = parsed.description;
+        const dirName = skill.filePath.split(/[\\/]/).slice(-2, -1)[0]
+        const parsed = manager.parseSkillMd(editContent.value, dirName)
+        skills.value[originalIndex].name = parsed.name
+        skills.value[originalIndex].description = parsed.description
       }
-      editingSkill.value = null;
-      editContent.value = "";
-      showMessage(props.i18n?.saveSkillSuccess || "保存成功", 2000, "info");
+      editingSkill.value = null
+      editContent.value = ""
+      showMessage(props.i18n?.saveSkillSuccess || "保存成功", 2000, "info")
     } else {
-      showMessage(props.i18n?.saveSkillFailed || "保存失败", 2000, "error");
+      showMessage(props.i18n?.saveSkillFailed || "保存失败", 2000, "error")
     }
   } catch (e) {
-    console.error("保存 Skill 失败:", e);
-    showMessage(props.i18n?.saveSkillFailed || "保存失败", 2000, "error");
+    console.error("保存 Skill 失败:", e)
+    showMessage(props.i18n?.saveSkillFailed || "保存失败", 2000, "error")
   } finally {
-    savingSkill.value = false;
+    savingSkill.value = false
   }
 }
 
 // 删除功能
 function confirmDeleteSkill(index: number) {
-  deleteTargetIndex.value = index;
-  deleteConfirmVisible.value = true;
+  deleteTargetIndex.value = index
+  deleteConfirmVisible.value = true
 }
 
 function cancelDeleteSkill() {
-  deleteConfirmVisible.value = false;
-  deleteTargetIndex.value = null;
+  deleteConfirmVisible.value = false
+  deleteTargetIndex.value = null
 }
 
 async function executeDeleteSkill() {
-  if (deleteTargetIndex.value === null) return;
-  const skill = filteredSkills.value[deleteTargetIndex.value];
-  if (!skill || deletingSkill.value) return;
+  if (deleteTargetIndex.value === null) return
+  const skill = filteredSkills.value[deleteTargetIndex.value]
+  if (!skill || deletingSkill.value) return
 
-  deletingSkill.value = true;
+  deletingSkill.value = true
   try {
     // 获取 skill 目录路径（filePath 是 skill.md，目录是其父目录）
-    const nodePath = window.require("path");
-    const skillDir = nodePath.dirname(skill.filePath);
-    const success = await manager.deleteSkill(skillDir);
+    const nodePath = window.require("path")
+    const skillDir = nodePath.dirname(skill.filePath)
+    const success = await manager.deleteSkill(skillDir)
     if (success) {
       // 从列表中移除
-      const originalIndex = skills.value.findIndex((s) => s.filePath === skill.filePath);
+      const originalIndex = skills.value.findIndex((s) => s.filePath === skill.filePath)
       if (originalIndex !== -1) {
-        skills.value.splice(originalIndex, 1);
+        skills.value.splice(originalIndex, 1)
       }
-      deleteConfirmVisible.value = false;
-      deleteTargetIndex.value = null;
-      showMessage(props.i18n?.deleteSkillSuccess || "删除成功", 2000, "info");
+      deleteConfirmVisible.value = false
+      deleteTargetIndex.value = null
+      showMessage(props.i18n?.deleteSkillSuccess || "删除成功", 2000, "info")
     } else {
-      showMessage(props.i18n?.deleteSkillFailed || "删除失败", 2000, "error");
+      showMessage(props.i18n?.deleteSkillFailed || "删除失败", 2000, "error")
     }
   } catch (e) {
-    console.error("删除 Skill 失败:", e);
-    showMessage(props.i18n?.deleteSkillFailed || "删除失败", 2000, "error");
+    console.error("删除 Skill 失败:", e)
+    showMessage(props.i18n?.deleteSkillFailed || "删除失败", 2000, "error")
   } finally {
-    deletingSkill.value = false;
+    deletingSkill.value = false
   }
 }
 
 async function checkAllToolStatuses() {
   for (const tool of AI_TOOLS) {
-    toolStatuses[tool.id] = await manager.checkToolExists(tool, projectPath.value || undefined);
+    toolStatuses[tool.id] = await manager.checkToolExists(tool, projectPath.value || undefined)
   }
 }
 
 async function refreshSkills() {
-  if (!managerAvailable) return;
-  loading.value = true;
-  expandedSkills.clear();
-  editingSkill.value = null;
+  if (!managerAvailable) return
+  loading.value = true
+  expandedSkills.clear()
+  editingSkill.value = null
 
   try {
-    skills.value = await manager.scanAllSkills(projectPath.value || undefined);
-    await checkAllToolStatuses();
+    skills.value = await manager.scanAllSkills(projectPath.value || undefined)
+    await checkAllToolStatuses()
     showMessage(
       skills.value.length > 0
         ? `${props.i18n?.scanComplete || '扫描完成'}：${skills.value.length} ${props.i18n?.skillsUnit || '个 Skills'}`
         : (props.i18n?.noSkillsFound || '未发现 Skills 文件'),
       2000,
       "info",
-    );
+    )
   } catch (e) {
-    console.error("扫描 Skills 失败:", e);
-    showMessage(props.i18n?.scanFailed || "扫描失败", 2000, "error");
+    console.error("扫描 Skills 失败:", e)
+    showMessage(props.i18n?.scanFailed || "扫描失败", 2000, "error")
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 
 async function openCurrentToolDir() {
-  if (!managerAvailable) return;
+  if (!managerAvailable) return
 
-  let dirPath = "";
+  let dirPath = ""
   if (selectedTool.value === "all") {
-    dirPath = manager.getHomeDir();
+    dirPath = manager.getHomeDir()
   } else {
-    const tool = AI_TOOLS.find((t) => t.id === selectedTool.value);
+    const tool = AI_TOOLS.find((t) => t.id === selectedTool.value)
     if (tool && tool.skillPaths.length > 0) {
-      const nodePath = window.require("path");
-      dirPath = nodePath.join(manager.getHomeDir(), tool.skillPaths[0]);
+      const nodePath = window.require("path")
+      dirPath = nodePath.join(manager.getHomeDir(), tool.skillPaths[0])
     }
   }
 
   if (dirPath) {
-    const success = await manager.openInFileManager(dirPath);
+    const success = await manager.openInFileManager(dirPath)
     if (!success) {
-      showMessage(props.i18n?.openDirFailed || "打开目录失败", 2000, "error");
+      showMessage(props.i18n?.openDirFailed || "打开目录失败", 2000, "error")
     }
   }
 }
 
 async function handlePathChange() {
-  await refreshSkills();
+  await refreshSkills()
 }
 
-import { GeneralSettingsStorage } from "../types/storage";
-
-const gsStorage = computed(() => props.plugin ? new GeneralSettingsStorage(props.plugin) : null);
+const gsStorage = computed(() => props.plugin ? new GeneralSettingsStorage(props.plugin) : null)
 
 async function loadSettings() {
-  if (!gsStorage.value) return;
+  if (!gsStorage.value) return
   try {
-    const data = await gsStorage.value.skillsViewer.load();
+    const data = await gsStorage.value.skillsViewer.load()
     if (data) {
-      projectPath.value = data.projectPath || "";
-      selectedTool.value = data.selectedTool || "all";
+      projectPath.value = data.projectPath || ""
+      selectedTool.value = data.selectedTool || "all"
     }
   } catch (e) {
-    console.error("加载 Skills 查看器设置失败:", e);
+    console.error("加载 Skills 查看器设置失败:", e)
   }
 }
 
 onMounted(async () => {
-  await loadSettings();
+  await loadSettings()
   if (managerAvailable) {
-    await checkAllToolStatuses();
-    await refreshSkills();
+    await checkAllToolStatuses()
+    await refreshSkills()
   }
-});
+})
 
-defineExpose({ refreshSkills, loadSettings });
+defineExpose({
+  refreshSkills,
+  loadSettings,
+})
 </script>
 
 <style scoped lang="scss">

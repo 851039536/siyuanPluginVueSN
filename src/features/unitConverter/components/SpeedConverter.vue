@@ -7,6 +7,6 @@
 </template>
 
 <script setup lang="ts">
-import BaseUnitConverter from "./BaseUnitConverter.vue";
-import { SPEED_UNITS } from "../utils/units";
+import { SPEED_UNITS } from "../utils/units"
+import BaseUnitConverter from "./BaseUnitConverter.vue"
 </script>

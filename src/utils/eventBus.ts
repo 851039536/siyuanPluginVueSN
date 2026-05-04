@@ -18,26 +18,35 @@ export function emitCustomEvent<T = any>(
   eventName: string,
   detail?: T,
   options?: {
-    bubbles?: boolean;
-    cancelable?: boolean;
-    target?: EventTarget;
-    useMicrotask?: boolean;
+    bubbles?: boolean
+    cancelable?: boolean
+    target?: EventTarget
+    useMicrotask?: boolean
   },
 ): void {
-  const { bubbles = true, cancelable = true, target = window, useMicrotask = false } = options || {};
+  const {
+    bubbles = true,
+    cancelable = true,
+    target = window,
+    useMicrotask = false,
+  } = options || {}
 
   const dispatch = () => {
     try {
-      const event = new CustomEvent(eventName, { detail, bubbles, cancelable });
-      target.dispatchEvent(event);
+      const event = new CustomEvent(eventName, {
+        detail,
+        bubbles,
+        cancelable,
+      })
+      target.dispatchEvent(event)
     } catch (error) {
-      console.error(`发送事件失败 [${eventName}]:`, error);
+      console.error(`发送事件失败 [${eventName}]:`, error)
     }
-  };
+  }
 
   if (useMicrotask) {
-    Promise.resolve().then(dispatch);
+    Promise.resolve().then(dispatch)
   } else {
-    dispatch();
+    dispatch()
   }
 }

@@ -1,9 +1,23 @@
 <template>
-  <div v-if="visible" class="shortcut-dialog-overlay" @click="$emit('close')">
-    <div class="shortcut-dialog" @click.stop>
+  <div
+    v-if="visible"
+    class="shortcut-dialog-overlay"
+    @click="$emit('close')"
+  >
+    <div
+      class="shortcut-dialog"
+      @click.stop
+    >
       <div class="dialog-header">
-        <div class="dialog-title">{{ title }}</div>
-        <Button variant="ghost" size="small" icon="close" @click="$emit('close')" />
+        <div class="dialog-title">
+          {{ title }}
+        </div>
+        <Button
+          variant="ghost"
+          size="small"
+          icon="close"
+          @click="$emit('close')"
+        />
       </div>
       <div class="dialog-body">
         <Input
@@ -28,36 +42,53 @@
         />
       </div>
       <div class="dialog-footer">
-        <Button variant="secondary" @click="$emit('close')">{{ cancelText }}</Button>
-        <Button variant="primary" @click="handleConfirm">{{ confirmText }}</Button>
+        <Button
+          variant="secondary"
+          @click="$emit('close')"
+        >
+          {{ cancelText }}
+        </Button>
+        <Button
+          variant="primary"
+          @click="handleConfirm"
+        >
+          {{ confirmText }}
+        </Button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from "vue";
-import Button from "@/components/Button.vue";
-import Input from "@/components/Input.vue";
-import type { ShortcutFormData, ShortcutInfo } from "../types";
+import type {
+  ShortcutFormData,
+  ShortcutInfo,
+} from "../types"
+import {
+  computed,
+  ref,
+  watch,
+} from "vue"
+import Button from "@/components/Button.vue"
+import Input from "@/components/Input.vue"
 
 interface Props {
-  visible: boolean;
-  isEdit: boolean;
-  formData: ShortcutFormData;
-  titleLabel?: string;
-  editTitleLabel?: string;
-  nameLabel?: string;
-  namePlaceholder?: string;
-  descLabel?: string;
-  descPlaceholder?: string;
-  keysLabel?: string;
-  keysPlaceholder?: string;
-  groupLabel?: string;
-  groupPlaceholder?: string;
-  cancelText?: string;
-  confirmText?: string;
-  fillRequiredText?: string;
+  visible: boolean
+  isEdit: boolean
+  formData: ShortcutFormData
+  titleLabel?: string
+  editTitleLabel?: string
+  nameLabel?: string
+  namePlaceholder?: string
+  descLabel?: string
+  descPlaceholder?: string
+  keysLabel?: string
+  keysPlaceholder?: string
+  groupLabel?: string
+  groupPlaceholder?: string
+  cancelText?: string
+  confirmText?: string
+  fillRequiredText?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -74,12 +105,12 @@ const props = withDefaults(defineProps<Props>(), {
   cancelText: "取消",
   confirmText: "确认",
   fillRequiredText: "请填写必填项",
-});
+})
 
 const emit = defineEmits<{
-  close: [];
-  confirm: [shortcut: ShortcutInfo];
-}>();
+  close: []
+  confirm: [shortcut: ShortcutInfo]
+}>()
 
 const localFormData = ref<ShortcutFormData>({
   id: "",
@@ -87,24 +118,27 @@ const localFormData = ref<ShortcutFormData>({
   description: "",
   keys: "",
   group: "自定义",
-});
+})
 
 watch(
   () => props.formData,
   (val) => {
-    localFormData.value = { ...val };
+    localFormData.value = { ...val }
   },
-  { immediate: true, deep: true },
-);
+  {
+    immediate: true,
+    deep: true,
+  },
+)
 
 const title = computed(() =>
   props.isEdit ? props.editTitleLabel : props.titleLabel,
-);
+)
 
 function handleConfirm() {
   if (!localFormData.value.name || !localFormData.value.keys) {
-    alert(props.fillRequiredText);
-    return;
+    alert(props.fillRequiredText)
+    return
   }
 
   const shortcut: ShortcutInfo = {
@@ -114,9 +148,9 @@ function handleConfirm() {
     keys: localFormData.value.keys,
     category: "custom",
     group: localFormData.value.group || "自定义",
-  };
+  }
 
-  emit("confirm", shortcut);
+  emit("confirm", shortcut)
 }
 </script>
 

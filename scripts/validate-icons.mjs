@@ -5,8 +5,8 @@
  */
 
 import { promises as fs } from 'node:fs'
-import path from 'node:path'
 import { createRequire } from 'node:module'
+import path from 'node:path'
 
 const require = createRequire(import.meta.url)
 
@@ -19,7 +19,7 @@ async function validateIcons() {
   try {
     // 读取图标数据
     const iconsData = JSON.parse(
-      await fs.readFile(ICONS_DATA_PATH, 'utf-8')
+      await fs.readFile(ICONS_DATA_PATH, 'utf-8'),
     )
 
     const availableIcons = new Set(Object.keys(iconsData.icons))
@@ -48,7 +48,7 @@ async function validateIcons() {
     // 显示结果
     if (invalidIcons.length > 0) {
       console.log('❌ 发现无效图标:\n')
-      invalidIcons.forEach(icon => {
+      invalidIcons.forEach((icon) => {
         console.log(`  - ${icon}`)
       })
       console.log(`\n⚠️  共 ${invalidIcons.length} 个无效图标`)
@@ -60,7 +60,7 @@ async function validateIcons() {
       console.log('✅ 所有图标都有效!')
       console.log(`\n共验证 ${validIcons.length} 个图标`)
       console.log('\n常用图标列表:')
-      validIcons.slice(0, 10).forEach(icon => {
+      validIcons.slice(0, 10).forEach((icon) => {
         console.log(`  - ${icon}`)
       })
       if (validIcons.length > 10) {

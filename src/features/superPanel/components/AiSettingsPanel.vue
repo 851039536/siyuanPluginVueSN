@@ -1,5 +1,8 @@
 <template>
-  <div class="ai-settings-panel" v-if="visible">
+  <div
+    v-if="visible"
+    class="ai-settings-panel"
+  >
     <div class="ai-settings-header">
       <span>{{ i18n.aiSettings || 'AI大模型配置' }}</span>
       <Button
@@ -13,7 +16,9 @@
     <div class="ai-settings-content">
       <!-- API供应商选择 -->
       <SettingGroup>
-        <template #label>{{ i18n.apiProvider || 'API供应商' }}</template>
+        <template #label>
+          {{ i18n.apiProvider || 'API供应商' }}
+        </template>
         <AiProviderSelect
           :model-value="settings.provider"
           :i18n="i18n"
@@ -23,7 +28,9 @@
 
       <!-- 模型选择 -->
       <SettingGroup v-if="settings.provider !== 'custom'">
-        <template #label>{{ i18n.aiModel || '模型' }}</template>
+        <template #label>
+          {{ i18n.aiModel || '模型' }}
+        </template>
         <AiModelSelect
           :provider="settings.provider"
           :model-value="settings.model"
@@ -46,12 +53,16 @@
             {{ settings.enableThinking ? (i18n.thinkingOn || '已开启') : (i18n.thinkingOff || '已关闭') }}
           </button>
         </div>
-        <div class="setting-desc">{{ i18n.thinkingDesc || '开启后模型会先进行深度思考再回答，适合复杂推理任务' }}</div>
+        <div class="setting-desc">
+          {{ i18n.thinkingDesc || '开启后模型会先进行深度思考再回答，适合复杂推理任务' }}
+        </div>
       </SettingGroup>
 
       <!-- API密钥输入 -->
       <SettingGroup>
-        <template #label>{{ i18n.apiKey || 'API密钥' }}</template>
+        <template #label>
+          {{ i18n.apiKey || 'API密钥' }}
+        </template>
         <ApiKeyInput
           :provider="settings.provider"
           :model-value="settings.apiKey"
@@ -62,60 +73,67 @@
 
       <!-- 自定义API端点 -->
       <SettingGroup v-if="settings.provider === 'custom'">
-        <template #label>{{ i18n.customEndpoint || 'API端点' }}</template>
+        <template #label>
+          {{ i18n.customEndpoint || 'API端点' }}
+        </template>
         <TextInput
           :model-value="settings.customEndpoint"
           placeholder="https://api.example.com/v1/chat/completions"
           @update:model-value="(v: string) => updateSetting('customEndpoint', v)"
         />
-        <div class="setting-desc">自定义API端点URL，用于连接自定义API服务</div>
+        <div class="setting-desc">
+          自定义API端点URL，用于连接自定义API服务
+        </div>
       </SettingGroup>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { showMessage } from "siyuan";
-import Button from "@/components/Button.vue";
-import AiProviderSelect from "./AiProviderSelect.vue";
-import AiModelSelect from "./AiModelSelect.vue";
-import ApiKeyInput from "./ApiKeyInput.vue";
-import SettingGroup from "./SettingGroup.vue";
-import TextInput from "./TextInput.vue";
-import type { AiSettings } from "../types";
+import type { AiSettings } from "../types"
+import { showMessage } from "siyuan"
+import Button from "@/components/Button.vue"
+import AiModelSelect from "./AiModelSelect.vue"
+import AiProviderSelect from "./AiProviderSelect.vue"
+import ApiKeyInput from "./ApiKeyInput.vue"
+import SettingGroup from "./SettingGroup.vue"
+import TextInput from "./TextInput.vue"
 
 interface Props {
-  visible: boolean;
-  settings: AiSettings;
+  visible: boolean
+  settings: AiSettings
   i18n: {
-    aiSettings?: string;
-    apiProvider?: string;
-    aiModel?: string;
-    apiKey?: string;
-    customEndpoint?: string;
-    tongyiQianwen?: string;
-    openAI?: string;
-    deepSeek?: string;
-    customApi?: string;
-    [key: string]: any;
-  };
+    aiSettings?: string
+    apiProvider?: string
+    aiModel?: string
+    apiKey?: string
+    customEndpoint?: string
+    tongyiQianwen?: string
+    openAI?: string
+    deepSeek?: string
+    customApi?: string
+    [key: string]: any
+  }
 }
 
 interface Emits {
-  (e: "close"): void;
-  (e: "update:settings", settings: AiSettings): void;
+  (e: "close"): void
+  (e: "update:settings", settings: AiSettings): void
 }
 
-const props = defineProps<Props>();
-const emit = defineEmits<Emits>();
+const props = defineProps<Props>()
+const emit = defineEmits<Emits>()
 
 const handleClose = () => {
-  emit("close");
-};
+  emit("close")
+}
 
 const updateSetting = (field: keyof AiSettings, value: string | boolean) => {
-  emit("update:settings", { ...props.settings, [field]: value });
-};
+  emit("update:settings", {
+    ...props.settings,
+    [field]: value,
+  })
+}
 
 const handleProviderChange = async (provider: string) => {
   const defaultModels: Record<string, string> = {
@@ -123,11 +141,11 @@ const handleProviderChange = async (provider: string) => {
     openai: "gpt-3.5-turbo",
     deepseek: "deepseek-v4-flash",
     custom: "",
-  };
-  updateSetting("provider", provider);
-  updateSetting("model", defaultModels[provider] || "");
-  showMessage("供应商已更新", 2000, "info");
-};
+  }
+  updateSetting("provider", provider)
+  updateSetting("model", defaultModels[provider] || "")
+  showMessage("供应商已更新", 2000, "info")
+}
 </script>
 
 <style scoped lang="scss">

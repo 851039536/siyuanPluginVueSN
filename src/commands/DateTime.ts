@@ -1,14 +1,14 @@
-import { Plugin } from "siyuan";
+import { Plugin } from "siyuan"
 
 /**
  * 日期时间插入功能模块
  * 提供多种快捷指令插入当前日期、时间或日期时间
  */
 export class DateTime {
-  private plugin: Plugin;
+  private plugin: Plugin
 
   constructor(plugin: Plugin) {
-    this.plugin = plugin;
+    this.plugin = plugin
   }
 
   /**
@@ -16,7 +16,7 @@ export class DateTime {
    * 注册斜杠命令
    */
   init() {
-    this.registerSlashCommands();
+    this.registerSlashCommands()
   }
 
   /**
@@ -29,9 +29,9 @@ export class DateTime {
       html: "插入当前时间 （2024-11-24 18:59:41）",
       id: "insertDateTime_xz",
       callback: (protyle) => {
-        this.insertDateTime(protyle);
+        this.insertDateTime(protyle)
       },
-    });
+    })
 
     // 注册完整日期时间命令 /now
     this.plugin.protyleSlash.push({
@@ -39,9 +39,9 @@ export class DateTime {
       html: "current date time (e.g: 2024-11-24 18:59:41)",
       id: "insertDateTime_now",
       callback: (protyle) => {
-        this.insertDateTime(protyle);
+        this.insertDateTime(protyle)
       },
-    });
+    })
 
     // 注册仅时间命令 /sj
     this.plugin.protyleSlash.push({
@@ -49,9 +49,9 @@ export class DateTime {
       html: "当前时间 (如: 18:59:41)",
       id: "insertTime_sj",
       callback: (protyle) => {
-        this.insertTime(protyle);
+        this.insertTime(protyle)
       },
-    });
+    })
 
     // 注册仅时间命令 /time
     this.plugin.protyleSlash.push({
@@ -59,9 +59,9 @@ export class DateTime {
       html: "current time (e.g: 18:59:41)",
       id: "insertTime_time",
       callback: (protyle) => {
-        this.insertTime(protyle);
+        this.insertTime(protyle)
       },
-    });
+    })
 
     // 注册仅日期命令 /rq
     this.plugin.protyleSlash.push({
@@ -69,9 +69,9 @@ export class DateTime {
       html: "当前日期 (如: 2024-11-24)",
       id: "insertDate_rq",
       callback: (protyle) => {
-        this.insertDate(protyle);
+        this.insertDate(protyle)
       },
-    });
+    })
 
     // 注册仅日期命令 /date
     this.plugin.protyleSlash.push({
@@ -79,9 +79,9 @@ export class DateTime {
       html: "current date (e.g: 2024-11-24)",
       id: "insertDate_date",
       callback: (protyle) => {
-        this.insertDate(protyle);
+        this.insertDate(protyle)
       },
-    });
+    })
 
     // 注册仅日期命令 /jt
     this.plugin.protyleSlash.push({
@@ -89,9 +89,9 @@ export class DateTime {
       html: "今天日期 (如: 2024-11-24)",
       id: "insertDate_jt",
       callback: (protyle) => {
-        this.insertDate(protyle);
+        this.insertDate(protyle)
       },
-    });
+    })
 
     // 注册仅日期命令 /today
     this.plugin.protyleSlash.push({
@@ -99,30 +99,30 @@ export class DateTime {
       html: "today date (e.g: 2024-11-24)",
       id: "insertDate_today",
       callback: (protyle) => {
-        this.insertDate(protyle);
+        this.insertDate(protyle)
       },
-    });
+    })
   }
 
   /**
    * 插入日期时间
    */
   private insertDateTime(protyle: any) {
-    protyle.insert(this.getCurrentDateTime(), false);
+    protyle.insert(this.getCurrentDateTime(), false)
   }
 
   /**
    * 插入时间
    */
   private insertTime(protyle: any) {
-    protyle.insert(this.getCurrentTime(), false);
+    protyle.insert(this.getCurrentTime(), false)
   }
 
   /**
    * 插入日期
    */
   private insertDate(protyle: any) {
-    protyle.insert(this.getCurrentDate(), false);
+    protyle.insert(this.getCurrentDate(), false)
   }
 
   /**
@@ -130,8 +130,8 @@ export class DateTime {
    * 格式: YYYY-MM-DD HH:mm:ss
    */
   private getCurrentDateTime(): string {
-    const now = new Date();
-    return this.formatDateTime(now);
+    const now = new Date()
+    return this.formatDateTime(now)
   }
 
   /**
@@ -139,8 +139,8 @@ export class DateTime {
    * 格式: HH:mm:ss
    */
   private getCurrentTime(): string {
-    const now = new Date();
-    return this.formatTime(now);
+    const now = new Date()
+    return this.formatTime(now)
   }
 
   /**
@@ -148,35 +148,35 @@ export class DateTime {
    * 格式: YYYY-MM-DD
    */
   private getCurrentDate(): string {
-    const now = new Date();
-    return this.formatDate(now);
+    const now = new Date()
+    return this.formatDate(now)
   }
 
   /**
    * 格式化日期时间
    */
   private formatDateTime(date: Date): string {
-    return `${this.formatDate(date)} ${this.formatTime(date)}`;
+    return `${this.formatDate(date)} ${this.formatTime(date)}`
   }
 
   /**
    * 格式化日期
    */
   private formatDate(date: Date): string {
-    const year = date.getFullYear();
-    const month = ("0" + (date.getMonth() + 1)).slice(-2);
-    const day = ("0" + date.getDate()).slice(-2);
-    return `${year}-${month}-${day}`;
+    const year = date.getFullYear()
+    const month = (`0${date.getMonth() + 1}`).slice(-2)
+    const day = (`0${date.getDate()}`).slice(-2)
+    return `${year}-${month}-${day}`
   }
 
   /**
    * 格式化时间
    */
   private formatTime(date: Date): string {
-    const hours = ("0" + date.getHours()).slice(-2);
-    const minutes = ("0" + date.getMinutes()).slice(-2);
-    const seconds = ("0" + date.getSeconds()).slice(-2);
-    return `${hours}:${minutes}:${seconds}`;
+    const hours = (`0${date.getHours()}`).slice(-2)
+    const minutes = (`0${date.getMinutes()}`).slice(-2)
+    const seconds = (`0${date.getSeconds()}`).slice(-2)
+    return `${hours}:${minutes}:${seconds}`
   }
 
   /**

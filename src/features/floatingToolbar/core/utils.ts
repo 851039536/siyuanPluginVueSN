@@ -1,6 +1,6 @@
-import type { Plugin } from "siyuan";
-import type { ToolbarAction } from "../types";
-import { emitCustomEvent } from "@/utils/eventBus";
+import type { Plugin } from "siyuan"
+import type { ToolbarAction } from "../types"
+import { emitCustomEvent } from "@/utils/eventBus"
 
 /**
  * 防抖函数
@@ -12,24 +12,24 @@ export function debounce<T extends (...args: any[]) => void>(
   fn: T,
   delay: number,
 ): (...args: Parameters<T>) => void {
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null
   return (...args: Parameters<T>) => {
     if (timeoutId) {
-      clearTimeout(timeoutId);
+      clearTimeout(timeoutId)
     }
     timeoutId = setTimeout(() => {
-      fn(...args);
-      timeoutId = null;
-    }, delay);
-  };
+      fn(...args)
+      timeoutId = null
+    }, delay)
+  }
 }
 
 /**
  * 通知消息选项
  */
 interface MessageOptions {
-  timeout?: number;
-  type?: "info" | "error" | "success";
+  timeout?: number
+  type?: "info" | "error" | "success"
 }
 
 /**
@@ -41,7 +41,10 @@ export function showMessage(
   message: string,
   options: MessageOptions = {},
 ): void {
-  const { timeout = 3000, type = "info" } = options;
+  const {
+    timeout = 3000,
+    type = "info",
+  } = options
 
   fetch("/api/notification/pushMsg", {
     method: "POST",
@@ -54,8 +57,8 @@ export function showMessage(
       type,
     }),
   }).catch((error) => {
-    console.error("Failed to show message:", error);
-  });
+    console.error("Failed to show message:", error)
+  })
 }
 
 /**
@@ -72,13 +75,13 @@ export function showI18nMessage(
   timeout?: number,
 ): void {
   // 安全地访问嵌套属性
-  const i18n = plugin.i18n as Record<string, unknown> | undefined;
+  const i18n = plugin.i18n as Record<string, unknown> | undefined
   const floatingToolbar = i18n?.floatingToolbar as
     | Record<string, string>
-    | undefined;
-  const message = floatingToolbar?.[key] || defaultMessage;
+    | undefined
+  const message = floatingToolbar?.[key] || defaultMessage
 
-  showMessage(message, { timeout });
+  showMessage(message, { timeout })
 }
 
 /**
@@ -87,7 +90,7 @@ export function showI18nMessage(
  * @param content 对话框内容
  */
 export function dispatchDialogEvent(eventName: string, content: string): void {
-  emitCustomEvent(eventName, { content }, { useMicrotask: true });
+  emitCustomEvent(eventName, { content }, { useMicrotask: true })
 }
 
 /**
@@ -98,41 +101,41 @@ export function getSelectedBlockId(): string | null {
   // 策略1: 获取多选块
   const selectedBlock = document.querySelector(
     ".protyle-wysiwyg--select[data-node-id]",
-  );
+  )
   if (selectedBlock) {
-    return selectedBlock.getAttribute("data-node-id");
+    return selectedBlock.getAttribute("data-node-id")
   }
 
   // 策略2: 获取聚焦块
   const focusedBlock = document.querySelector(
     ".protyle-wysiwyg [data-node-id].protyle-wysiwyg--focus",
-  );
+  )
   if (focusedBlock) {
-    return focusedBlock.getAttribute("data-node-id");
+    return focusedBlock.getAttribute("data-node-id")
   }
 
   // 策略3: 通过选择范围精确查找
-  const selection = window.getSelection();
+  const selection = window.getSelection()
   if (!selection?.rangeCount) {
-    return null;
+    return null
   }
 
-  const range = selection.getRangeAt(0);
-  let node: Node | null = range.startContainer;
+  const range = selection.getRangeAt(0)
+  let node: Node | null = range.startContainer
 
   while (node) {
     if (node instanceof Element) {
-      const nodeId = node.getAttribute("data-node-id");
-      const dataType = node.getAttribute("data-type");
+      const nodeId = node.getAttribute("data-node-id")
+      const dataType = node.getAttribute("data-type")
 
       if (nodeId && dataType) {
-        return nodeId;
+        return nodeId
       }
     }
-    node = node.parentNode;
+    node = node.parentNode
   }
 
-  return null;
+  return null
 }
 
 /**
@@ -142,18 +145,18 @@ export function getSelectedBlockId(): string | null {
  */
 export function isEnglishText(text: string): boolean {
   if (!text || typeof text !== "string") {
-    return false;
+    return false
   }
 
-  const trimmedText = text.trim();
+  const trimmedText = text.trim()
   if (!trimmedText) {
-    return false;
+    return false
   }
 
-  const englishChars = trimmedText.match(/[a-zA-Z]/g);
-  const totalChars = trimmedText.replace(/\s/g, "").length;
+  const englishChars = trimmedText.match(/[a-z]/gi)
+  const totalChars = trimmedText.replace(/\s/g, "").length
 
-  return englishChars !== null && englishChars.length > totalChars * 0.5;
+  return englishChars !== null && englishChars.length > totalChars * 0.5
 }
 
 /**
@@ -169,21 +172,21 @@ export function getI18nText(
   defaultValue: string,
 ): string {
   if (!plugin?.i18n) {
-    return defaultValue;
+    return defaultValue
   }
 
-  const keys = path.split(".");
-  let value: unknown = plugin.i18n;
+  const keys = path.split(".")
+  let value: unknown = plugin.i18n
 
   for (const key of keys) {
     if (value && typeof value === "object" && key in value) {
-      value = (value as Record<string, unknown>)[key];
+      value = (value as Record<string, unknown>)[key]
     } else {
-      return defaultValue;
+      return defaultValue
     }
   }
 
-  return typeof value === "string" ? value : defaultValue;
+  return typeof value === "string" ? value : defaultValue
 }
 
 /**
@@ -191,15 +194,15 @@ export function getI18nText(
  */
 export interface DialogActionConfig {
   /** 功能唯一标识符 */
-  id: string;
+  id: string
   /** 国际化键名 */
-  i18nKey: string;
+  i18nKey: string
   /** 默认名称 */
-  defaultMessage: string;
+  defaultMessage: string
   /** SVG 图标 */
-  icon: string;
+  icon: string
   /** 要派发的事件名称 */
-  eventName: string;
+  eventName: string
 }
 
 /**
@@ -213,20 +216,26 @@ export function createDialogAction(
   plugin: Plugin,
   config: DialogActionConfig,
 ): ToolbarAction {
-  const { id, i18nKey, defaultMessage, icon, eventName } = config;
+  const {
+    id,
+    i18nKey,
+    defaultMessage,
+    icon,
+    eventName,
+  } = config
 
   return {
     id,
     name:
-      (plugin.i18n as Record<string, any>)?.floatingToolbar?.[i18nKey] ||
-      defaultMessage,
+      (plugin.i18n as Record<string, any>)?.floatingToolbar?.[i18nKey]
+      || defaultMessage,
     icon,
     handler: async (selectedText: string) => {
       if (!selectedText) {
-        showI18nMessage(plugin, "noTextSelected", "未选中文本");
-        return;
+        showI18nMessage(plugin, "noTextSelected", "未选中文本")
+        return
       }
-      dispatchDialogEvent(eventName, selectedText);
+      dispatchDialogEvent(eventName, selectedText)
     },
-  };
+  }
 }

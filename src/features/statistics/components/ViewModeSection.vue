@@ -14,12 +14,21 @@
     </div>
 
     <!-- 时段统计卡片 -->
-    <div v-if="periodAvgWords > 0 || periodTotalWords > 0" class="period-stats-cards">
-      <div v-if="periodAvgWords > 0" class="period-stat-card">
+    <div
+      v-if="periodAvgWords > 0 || periodTotalWords > 0"
+      class="period-stats-cards"
+    >
+      <div
+        v-if="periodAvgWords > 0"
+        class="period-stat-card"
+      >
         <span class="stat-value">{{ formatNumber(periodAvgWords) }} {{ i18n.wordsUnit }}</span>
         <span class="stat-label">{{ periodAvgLabel }}</span>
       </div>
-      <div v-if="periodTotalWords > 0" class="period-stat-card">
+      <div
+        v-if="periodTotalWords > 0"
+        class="period-stat-card"
+      >
         <span class="stat-value">{{ formatNumber(periodTotalWords) }} {{ i18n.wordsUnit }}</span>
         <span class="stat-label">{{ i18n.totalLabel }}</span>
       </div>
@@ -27,7 +36,10 @@
 
 
     <!-- 日视图范围选择 -->
-    <div v-if="modelValue === 'day'" class="range-selector">
+    <div
+      v-if="modelValue === 'day'"
+      class="range-selector"
+    >
       <button
         v-for="range in dayRanges"
         :key="range.value"
@@ -40,7 +52,10 @@
     </div>
 
     <!-- 月视图范围选择 -->
-    <div v-if="modelValue === 'month'" class="range-selector">
+    <div
+      v-if="modelValue === 'month'"
+      class="range-selector"
+    >
       <button
         v-for="range in monthRanges"
         :key="range.value"
@@ -53,59 +68,68 @@
     </div>
 
     <!-- 年视图选择 -->
-    <div v-if="modelValue === 'year'" class="year-selector">
+    <div
+      v-if="modelValue === 'year'"
+      class="year-selector"
+    >
       <select
         :value="selectedYear"
-        @change="$emit('update:selectedYear', Number(($event.target as HTMLSelectElement).value)); $emit('refresh')"
         class="year-select"
+        @change="$emit('update:selectedYear', Number(($event.target as HTMLSelectElement).value)); $emit('refresh')"
       >
-        <option v-for="year in availableYears" :key="year" :value="year">{{ year }}</option>
+        <option
+          v-for="year in availableYears"
+          :key="year"
+          :value="year"
+        >
+          {{ year }}
+        </option>
       </select>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-import { formatNumber } from "../utils";
+import { computed } from "vue"
+import { formatNumber } from "../utils"
 
 interface Props {
-  modelValue?: "day" | "week" | "month" | "year" | "trend";
-  dayRange?: 7 | 15 | 30 | 90 | 180 | 365;
-  monthYearRange?: 1 | 2 | 3;
-  selectedYear?: number;
-  periodAvgWords?: number;
-  periodTotalWords?: number;
+  modelValue?: "day" | "week" | "month" | "year" | "trend"
+  dayRange?: 7 | 15 | 30 | 90 | 180 | 365
+  monthYearRange?: 1 | 2 | 3
+  selectedYear?: number
+  periodAvgWords?: number
+  periodTotalWords?: number
   i18n?: {
-    day: string;
-    week: string;
-    month: string;
-    year: string;
-    trend: string;
-    avgLabel: string;
-    totalLabel: string;
-    wordsUnit: string;
-    days7: string;
-    days15: string;
-    days30: string;
-    quarter: string;
-    halfYear: string;
-    fullYear: string;
-    last1Year: string;
-    last2Years: string;
-    last3Years: string;
-  };
+    day: string
+    week: string
+    month: string
+    year: string
+    trend: string
+    avgLabel: string
+    totalLabel: string
+    wordsUnit: string
+    days7: string
+    days15: string
+    days30: string
+    quarter: string
+    halfYear: string
+    fullYear: string
+    last1Year: string
+    last2Years: string
+    last3Years: string
+  }
 }
 
 interface Emits {
   (
     e: "update:modelValue",
     value: "day" | "week" | "month" | "year" | "trend",
-  ): void;
-  (e: "update:dayRange", value: 7 | 15 | 30 | 90 | 180 | 365): void;
-  (e: "update:monthYearRange", value: 1 | 2 | 3): void;
-  (e: "update:selectedYear", value: number): void;
-  (e: "refresh"): void;
+  ): void
+  (e: "update:dayRange", value: 7 | 15 | 30 | 90 | 180 | 365): void
+  (e: "update:monthYearRange", value: 1 | 2 | 3): void
+  (e: "update:selectedYear", value: number): void
+  (e: "refresh"): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -134,50 +158,97 @@ const props = withDefaults(defineProps<Props>(), {
     last2Years: "最近两年",
     last3Years: "最近三年",
   }),
-});
+})
 
-const emit = defineEmits<Emits>();
+const emit = defineEmits<Emits>()
 
 function onRangeChange(mode: "day" | "month", value: number): void {
   if (mode === "day") {
-    emit("update:dayRange", value as 7 | 15 | 30 | 90 | 180 | 365);
+    emit("update:dayRange", value as 7 | 15 | 30 | 90 | 180 | 365)
   } else {
-    emit("update:monthYearRange", value as 1 | 2 | 3);
+    emit("update:monthYearRange", value as 1 | 2 | 3)
   }
-  emit("refresh");
+  emit("refresh")
 }
 
 const viewModes = computed(() => [
-  { value: "day" as const, label: props.i18n.day, icon: "📅" },
-  { value: "week" as const, label: props.i18n.week, icon: "📊" },
-  { value: "month" as const, label: props.i18n.month, icon: "📆" },
-  { value: "year" as const, label: props.i18n.year, icon: "📈" },
-  { value: "trend" as const, label: props.i18n.trend, icon: "📈" },
-]);
+  {
+    value: "day" as const,
+    label: props.i18n.day,
+    icon: "📅",
+  },
+  {
+    value: "week" as const,
+    label: props.i18n.week,
+    icon: "📊",
+  },
+  {
+    value: "month" as const,
+    label: props.i18n.month,
+    icon: "📆",
+  },
+  {
+    value: "year" as const,
+    label: props.i18n.year,
+    icon: "📈",
+  },
+  {
+    value: "trend" as const,
+    label: props.i18n.trend,
+    icon: "📈",
+  },
+])
 
 const dayRanges = computed(() => [
-  { value: 7 as const, label: props.i18n.days7 },
-  { value: 15 as const, label: props.i18n.days15 },
-  { value: 30 as const, label: props.i18n.days30 },
-  { value: 90 as const, label: props.i18n.quarter },
-  { value: 180 as const, label: props.i18n.halfYear },
-  { value: 365 as const, label: props.i18n.fullYear },
-]);
+  {
+    value: 7 as const,
+    label: props.i18n.days7,
+  },
+  {
+    value: 15 as const,
+    label: props.i18n.days15,
+  },
+  {
+    value: 30 as const,
+    label: props.i18n.days30,
+  },
+  {
+    value: 90 as const,
+    label: props.i18n.quarter,
+  },
+  {
+    value: 180 as const,
+    label: props.i18n.halfYear,
+  },
+  {
+    value: 365 as const,
+    label: props.i18n.fullYear,
+  },
+])
 
 const monthRanges = computed(() => [
-  { value: 1 as const, label: props.i18n.last1Year },
-  { value: 2 as const, label: props.i18n.last2Years },
-  { value: 3 as const, label: props.i18n.last3Years },
-]);
+  {
+    value: 1 as const,
+    label: props.i18n.last1Year,
+  },
+  {
+    value: 2 as const,
+    label: props.i18n.last2Years,
+  },
+  {
+    value: 3 as const,
+    label: props.i18n.last3Years,
+  },
+])
 
 const availableYears = computed(() => {
-  const currentYear = new Date().getFullYear();
-  const years = [];
+  const currentYear = new Date().getFullYear()
+  const years = []
   for (let year = currentYear; year >= 2020; year--) {
-    years.push(year);
+    years.push(year)
   }
-  return years;
-});
+  return years
+})
 
 const periodAvgLabel = computed(() => {
   const labels: Record<string, string> = {
@@ -185,9 +256,9 @@ const periodAvgLabel = computed(() => {
     week: "周均字数",
     month: "月均字数",
     year: "年均字数",
-  };
-  return labels[props.modelValue] || props.i18n.avgLabel;
-});
+  }
+  return labels[props.modelValue] || props.i18n.avgLabel
+})
 
 
 </script>
@@ -335,7 +406,7 @@ const periodAvgLabel = computed(() => {
     .mode-tabs {
       overflow-x: auto;
       padding-bottom: 4px;
-      
+
       &::-webkit-scrollbar {
         display: none;
       }

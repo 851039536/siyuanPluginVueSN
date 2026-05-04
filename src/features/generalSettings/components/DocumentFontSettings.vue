@@ -8,7 +8,9 @@
             <span class="label-icon">🔤</span>
             {{ i18n.documentFont || '文档字体设置' }}
           </label>
-          <p class="setting-description">{{ i18n.documentFontDesc || '设置文档内容的字体、字号、行距等样式' }}</p>
+          <p class="setting-description">
+            {{ i18n.documentFontDesc || '设置文档内容的字体、字号、行距等样式' }}
+          </p>
         </div>
       </div>
 
@@ -22,8 +24,8 @@
           <div class="toggle-container">
             <label class="toggle-switch">
               <input
-                type="checkbox"
                 v-model="settings.enabled"
+                type="checkbox"
                 class="toggle-input"
               />
               <span class="toggle-slider"></span>
@@ -36,7 +38,10 @@
       </div>
 
       <!-- 字体族 -->
-      <div v-if="settings.enabled" class="setting-row">
+      <div
+        v-if="settings.enabled"
+        class="setting-row"
+      >
         <div class="setting-item">
           <label class="setting-label">
             <span class="label-icon">Aa</span>
@@ -50,26 +55,57 @@
               :placeholder="i18n.fontFamilyPlaceholder || '输入字体名称，如: Microsoft YaHei, Arial'"
               @input="applySettings"
             />
-            <select v-model="presetFont" class="font-select" @change="applyPresetFont">
-              <option value="">{{ i18n.selectFont || '选择字体' }}</option>
-              <option value="Microsoft YaHei">微软雅黑</option>
-              <option value="Microsoft YaHei Light">微软雅黑 Light</option>
-              <option value="Segoe UI">Segoe UI</option>
-              <option value="等线">等线 (DengXian)</option>
-              <option value="仿宋">仿宋</option>
-              <option value="华文细黑">华文细黑</option>
-              <option value="华文黑体">华文黑体</option>
-              <option value="华文楷体">华文楷体</option>
-              <option value="华文宋体">华文宋体</option>
-              <option value="黑体">黑体</option>
-              <option value="system-ui">系统默认</option>
+            <select
+              v-model="presetFont"
+              class="font-select"
+              @change="applyPresetFont"
+            >
+              <option value="">
+                {{ i18n.selectFont || '选择字体' }}
+              </option>
+              <option value="Microsoft YaHei">
+                微软雅黑
+              </option>
+              <option value="Microsoft YaHei Light">
+                微软雅黑 Light
+              </option>
+              <option value="Segoe UI">
+                Segoe UI
+              </option>
+              <option value="等线">
+                等线 (DengXian)
+              </option>
+              <option value="仿宋">
+                仿宋
+              </option>
+              <option value="华文细黑">
+                华文细黑
+              </option>
+              <option value="华文黑体">
+                华文黑体
+              </option>
+              <option value="华文楷体">
+                华文楷体
+              </option>
+              <option value="华文宋体">
+                华文宋体
+              </option>
+              <option value="黑体">
+                黑体
+              </option>
+              <option value="system-ui">
+                系统默认
+              </option>
             </select>
           </div>
         </div>
       </div>
 
       <!-- 字体大小 -->
-      <div v-if="settings.enabled" class="setting-row">
+      <div
+        v-if="settings.enabled"
+        class="setting-row"
+      >
         <div class="setting-item">
           <label class="setting-label">
             <span class="label-icon">📏</span>
@@ -95,7 +131,8 @@
             <button
               v-for="size in presetFontSizes"
               :key="size"
-              :class="['preset-btn', { active: settings.fontSize === size }]"
+              class="preset-btn"
+              :class="[{ active: settings.fontSize === size }]"
               @click="setFontSize(size)"
             >
               {{ size }}px
@@ -105,7 +142,10 @@
       </div>
 
       <!-- 行高 -->
-      <div v-if="settings.enabled" class="setting-row">
+      <div
+        v-if="settings.enabled"
+        class="setting-row"
+      >
         <div class="setting-item">
           <label class="setting-label">
             <span class="label-icon">↕️</span>
@@ -131,7 +171,8 @@
             <button
               v-for="lh in presetLineHeights"
               :key="lh"
-              :class="['preset-btn', { active: Math.abs(settings.lineHeight - lh) < 0.01 }]"
+              class="preset-btn"
+              :class="[{ active: Math.abs(settings.lineHeight - lh) < 0.01 }]"
               @click="setLineHeight(lh)"
             >
               {{ lh }}
@@ -141,7 +182,10 @@
       </div>
 
       <!-- 字间距 -->
-      <div v-if="settings.enabled" class="setting-row">
+      <div
+        v-if="settings.enabled"
+        class="setting-row"
+      >
         <div class="setting-item">
           <label class="setting-label">
             <span class="label-icon">↔️</span>
@@ -167,7 +211,10 @@
       </div>
 
       <!-- 段落间距 -->
-      <div v-if="settings.enabled" class="setting-row">
+      <div
+        v-if="settings.enabled"
+        class="setting-row"
+      >
         <div class="setting-item">
           <label class="setting-label">
             <span class="label-icon">¶</span>
@@ -193,7 +240,10 @@
       </div>
 
       <!-- 字重 -->
-      <div v-if="settings.enabled" class="setting-row">
+      <div
+        v-if="settings.enabled"
+        class="setting-row"
+      >
         <div class="setting-item">
           <label class="setting-label">
             <span class="label-icon">𝐁</span>
@@ -203,7 +253,8 @@
             <button
               v-for="weight in fontWeights"
               :key="weight.value"
-              :class="['weight-btn', { active: settings.fontWeight === weight.value }]"
+              class="weight-btn"
+              :class="[{ active: settings.fontWeight === weight.value }]"
               @click="setFontWeight(weight.value)"
             >
               {{ weight.label }}
@@ -213,14 +264,27 @@
       </div>
 
       <!-- 预览区域 -->
-      <div v-if="settings.enabled" class="preview-section">
-        <div class="preview-toggle" @click="togglePreview">
+      <div
+        v-if="settings.enabled"
+        class="preview-section"
+      >
+        <div
+          class="preview-toggle"
+          @click="togglePreview"
+        >
           <span class="preview-icon">{{ showPreview ? '👁️' : '👁️‍🗨️' }}</span>
           <span>{{ i18n.preview || '预览效果' }}</span>
-          <span class="toggle-arrow" :class="{ expanded: showPreview }">▼</span>
+          <span
+            class="toggle-arrow"
+            :class="{ expanded: showPreview }"
+          >▼</span>
         </div>
         <transition name="preview-expand">
-          <div v-show="showPreview" class="preview-content" :style="previewStyle">
+          <div
+            v-show="showPreview"
+            class="preview-content"
+            :style="previewStyle"
+          >
             <h2>示例标题</h2>
             <p>这是一段示例文本,用于预览文档字体设置效果。The quick brown fox jumps over the lazy dog.</p>
             <p>思源笔记是一款本地优先的个人知识管理系统,支持块级引用和双向链接。它可以帮助您构建个人知识图谱,让知识之间的关联更加清晰。</p>
@@ -232,7 +296,10 @@
       <!-- 重置按钮 -->
       <div class="setting-row">
         <div class="setting-item">
-          <button class="reset-btn" @click="resetSettings">
+          <button
+            class="reset-btn"
+            @click="resetSettings"
+          >
             <span class="btn-icon">🔄</span>
             {{ i18n.resetToDefault || '恢复默认设置' }}
           </button>
@@ -243,34 +310,41 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, onMounted } from "vue";
-import { Plugin } from "siyuan";
+import { Plugin } from "siyuan"
+import {
+  computed,
+  onMounted,
+  ref,
+  watch,
+} from "vue"
+
+import { GeneralSettingsStorage } from "../types/storage"
 
 export interface DocumentFontSettingsData {
-  enabled: boolean;
-  fontFamily: string;
-  fontSize: number;
-  lineHeight: number;
-  letterSpacing: number;
-  paragraphSpacing: number;
-  fontWeight: string;
+  enabled: boolean
+  fontFamily: string
+  fontSize: number
+  lineHeight: number
+  letterSpacing: number
+  paragraphSpacing: number
+  fontWeight: string
 }
 
 interface Props {
-  i18n?: any;
-  plugin?: Plugin;
+  i18n?: any
+  plugin?: Plugin
 }
 
 interface Emits {
-  (e: "change", settings: DocumentFontSettingsData): void;
+  (e: "change", settings: DocumentFontSettingsData): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
   i18n: () => ({}),
   plugin: null,
-});
+})
 
-const emit = defineEmits<Emits>();
+const emit = defineEmits<Emits>()
 
 const DEFAULT_SETTINGS: DocumentFontSettingsData = {
   enabled: false,
@@ -280,20 +354,29 @@ const DEFAULT_SETTINGS: DocumentFontSettingsData = {
   letterSpacing: 0,
   paragraphSpacing: 8,
   fontWeight: "normal",
-};
+}
 
-const settings = ref<DocumentFontSettingsData>({ ...DEFAULT_SETTINGS });
-const showPreview = ref(true);
-const presetFont = ref("");
+const settings = ref<DocumentFontSettingsData>({ ...DEFAULT_SETTINGS })
+const showPreview = ref(true)
+const presetFont = ref("")
 
-const presetFontSizes = [12, 14, 16, 18];
-const presetLineHeights = [1.4, 1.6, 1.8, 2.0];
+const presetFontSizes = [12, 14, 16, 18]
+const presetLineHeights = [1.4, 1.6, 1.8, 2.0]
 
 const fontWeights = [
-  { label: "细体", value: "lighter" },
-  { label: "正常", value: "normal" },
-  { label: "粗体", value: "bold" },
-];
+  {
+    label: "细体",
+    value: "lighter",
+  },
+  {
+    label: "正常",
+    value: "normal",
+  },
+  {
+    label: "粗体",
+    value: "bold",
+  },
+]
 
 const previewStyle = computed(() => ({
   fontFamily: settings.value.fontFamily || "inherit",
@@ -301,74 +384,74 @@ const previewStyle = computed(() => ({
   lineHeight: settings.value.lineHeight,
   letterSpacing: `${settings.value.letterSpacing}px`,
   fontWeight: settings.value.fontWeight,
-}));
+}))
 
 watch(
   settings,
   (newSettings) => {
-    emit("change", newSettings);
-    saveSettings();
+    emit("change", newSettings)
+    saveSettings()
   },
   { deep: true },
-);
+)
 
 function applySettings() {
-  applyDocumentFontStyles(settings.value);
+  applyDocumentFontStyles(settings.value)
 }
 
 function applyPresetFont() {
   if (presetFont.value) {
-    settings.value.fontFamily = presetFont.value;
-    applySettings();
+    settings.value.fontFamily = presetFont.value
+    applySettings()
   }
 }
 
 function setFontSize(size: number) {
-  settings.value.fontSize = size;
-  applySettings();
+  settings.value.fontSize = size
+  applySettings()
 }
 
 function setLineHeight(lh: number) {
-  settings.value.lineHeight = lh;
-  applySettings();
+  settings.value.lineHeight = lh
+  applySettings()
 }
 
 function setFontWeight(weight: string) {
-  settings.value.fontWeight = weight;
-  applySettings();
+  settings.value.fontWeight = weight
+  applySettings()
 }
 
 function togglePreview() {
-  showPreview.value = !showPreview.value;
+  showPreview.value = !showPreview.value
 }
 
 function resetSettings() {
-  settings.value = { ...DEFAULT_SETTINGS };
-  presetFont.value = "";
-  applySettings();
+  settings.value = { ...DEFAULT_SETTINGS }
+  presetFont.value = ""
+  applySettings()
 }
 
 function applyDocumentFontStyles(fontSettings: DocumentFontSettingsData) {
   try {
     // 移除现有样式
-    const existingStyle = document.getElementById("document-font-settings");
+    const existingStyle = document.getElementById("document-font-settings")
     if (existingStyle) {
-      existingStyle.remove();
+      existingStyle.remove()
     }
 
     if (!fontSettings.enabled) {
-      return;
+      return
     }
 
     // 创建新的样式元素
-    const style = document.createElement("style");
-    style.id = "document-font-settings";
+    const style = document.createElement("style")
+    style.id = "document-font-settings"
 
     // 处理字体族：如果包含逗号则直接使用，否则加引号
-    let fontFamily = "";
+    let fontFamily = ""
     if (fontSettings.fontFamily) {
-      const fonts = fontSettings.fontFamily.split(",").map((f) => f.trim());
-      fontFamily = fonts.map((f) => `'${f}'`).join(", ") + ", ";
+      const fonts = fontSettings.fontFamily.split(",").map((f) => f.trim())
+      fontFamily = `${fonts.map((f) => `'${f}'`).join(", ")}, `
     }
 
     style.textContent = `
@@ -447,54 +530,55 @@ function applyDocumentFontStyles(fontSettings: DocumentFontSettingsData) {
         font-family: var(--b3-font-family-code) !important;
         line-height: 1.5 !important;
       }
-    `;
+    `
 
-    document.head.appendChild(style);
+    document.head.appendChild(style)
   } catch (error) {
-    console.error("应用文档字体样式失败:", error);
+    console.error("应用文档字体样式失败:", error)
   }
 }
 
-import { GeneralSettingsStorage } from "../types/storage";
-
-const gsStorage = computed(() => props.plugin ? new GeneralSettingsStorage(props.plugin) : null);
+const gsStorage = computed(() => props.plugin ? new GeneralSettingsStorage(props.plugin) : null)
 
 async function loadSettings() {
   if (!gsStorage.value) {
-    return;
+    return
   }
 
   try {
-    const data = await gsStorage.value.documentFont.load();
+    const data = await gsStorage.value.documentFont.load()
     if (data) {
-      settings.value = { ...DEFAULT_SETTINGS, ...data };
-      applySettings();
+      settings.value = {
+        ...DEFAULT_SETTINGS,
+        ...data,
+      }
+      applySettings()
     }
   } catch (error) {
-    console.error("加载文档字体设置失败:", error);
+    console.error("加载文档字体设置失败:", error)
   }
 }
 
 async function saveSettings() {
   if (!gsStorage.value) {
-    return;
+    return
   }
 
   try {
-    await gsStorage.value.documentFont.save(settings.value);
+    await gsStorage.value.documentFont.save(settings.value)
   } catch (error) {
-    console.error("保存文档字体设置失败:", error);
+    console.error("保存文档字体设置失败:", error)
   }
 }
 
 onMounted(async () => {
-  await loadSettings();
-});
+  await loadSettings()
+})
 
 defineExpose({
   settings,
   loadSettings,
-});
+})
 </script>
 
 <style scoped lang="scss">

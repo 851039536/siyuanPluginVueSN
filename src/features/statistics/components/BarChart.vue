@@ -3,14 +3,29 @@
     <div class="bar-chart-container">
 
       <div class="chart-viewport">
-        <div v-for="item in chartData" :key="item.date" class="bar-item"
-          :style="{ flex: chartData.length > 12 ? '0 0 auto' : '1' }">
-          <div v-if="item.words > 0" class="bar-value" :style="{ bottom: getBarHeight(item.words) + 'px' }">
+        <div
+          v-for="item in chartData"
+          :key="item.date"
+          class="bar-item"
+          :style="{ flex: chartData.length > 12 ? '0 0 auto' : '1' }"
+        >
+          <div
+            v-if="item.words > 0"
+            class="bar-value"
+            :style="{ bottom: `${getBarHeight(item.words)}px` }"
+          >
             {{ formatShortNumber(item.words) }}
           </div>
-          <div class="bar" :class="{ today: isToday(item.date) }" :style="{ height: getBarHeight(item.words) + 'px' }"
-            :title="`${item.dateLabel}: ${formatNumber(item.words)} ${i18n.wordsUnit}`"></div>
-          <div class="bar-label" :class="{ today: isToday(item.date) }">
+          <div
+            class="bar"
+            :class="{ today: isToday(item.date) }"
+            :style="{ height: `${getBarHeight(item.words)}px` }"
+            :title="`${item.dateLabel}: ${formatNumber(item.words)} ${i18n.wordsUnit}`"
+          ></div>
+          <div
+            class="bar-label"
+            :class="{ today: isToday(item.date) }"
+          >
             {{ formatChartLabel(item.dateLabel) }}
           </div>
         </div>
@@ -20,8 +35,15 @@
 
     <!-- 数据列表 -->
     <div class="data-list">
-      <div v-for="item in chartData" :key="item.date" class="data-item"
-        :class="{ active: item.words > 0, today: isToday(item.date) }">
+      <div
+        v-for="item in chartData"
+        :key="item.date"
+        class="data-item"
+        :class="{
+          active: item.words > 0,
+          today: isToday(item.date),
+        }"
+      >
         <span class="data-date">{{ item.dateLabel }}</span>
         <span class="data-value">{{ formatNumber(item.words) }}</span>
       </div>
@@ -30,21 +52,25 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-import { formatNumber, formatShortNumber, isToday } from "../utils";
+import { computed } from "vue"
+import {
+  formatNumber,
+  formatShortNumber,
+  isToday,
+} from "../utils"
 
 interface ChartDataItem {
-  date: string;
-  words: number;
-  dateLabel: string;
+  date: string
+  words: number
+  dateLabel: string
 }
 
 interface Props {
-  title?: string;
-  chartData?: ChartDataItem[];
+  title?: string
+  chartData?: ChartDataItem[]
   i18n?: {
-    wordsUnit: string;
-  };
+    wordsUnit: string
+  }
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -53,31 +79,31 @@ const props = withDefaults(defineProps<Props>(), {
   i18n: () => ({
     wordsUnit: "字",
   }),
-});
+})
 
 const maxWords = computed(() => {
-  if (!props.chartData.length) return 0;
-  return Math.max(...props.chartData.map((item) => item.words));
-});
+  if (!props.chartData.length) return 0
+  return Math.max(...props.chartData.map((item) => item.words))
+})
 
 function getBarHeight(words: number): number {
-  const max = maxWords.value;
-  if (max === 0) return 0;
-  const maxHeight = 150;
-  const height = (words / max) * maxHeight;
-  return Math.max(height, words > 0 ? 5 : 0);
+  const max = maxWords.value
+  if (max === 0) return 0
+  const maxHeight = 150
+  const height = (words / max) * maxHeight
+  return Math.max(height, words > 0 ? 5 : 0)
 }
 
 function formatChartLabel(label: string): string {
   // 可以根据需要自定义标签格式化逻辑
   // 简化处理：如果是月份格式，只显示月
   if (label.includes(" ")) {
-    return label.split(" ")[1] || label;
+    return label.split(" ")[1] || label
   }
   if (label.includes("/")) {
-    return label.split("/")[1] || label;
+    return label.split("/")[1] || label
   }
-  return label;
+  return label
 }
 </script>
 

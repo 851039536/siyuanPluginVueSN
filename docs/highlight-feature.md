@@ -106,10 +106,10 @@ registerHighlight(plugin, true)
 
 ```vue
 <template>
-  <HighlightSettings 
-    :i18n="i18n" 
-    :plugin="plugin" 
+  <HighlightSettings
     ref="highlightSettingsRef"
+    :i18n="i18n"
+    :plugin="plugin"
   />
 </template>
 

@@ -1,5 +1,5 @@
-import { reloadUI } from "@/api";
-import type { FloatingTool } from "../types";
+import type { FloatingTool } from "../types"
+import { reloadUI } from "@/api"
 
 export function createRefreshTool(plugin?: any): FloatingTool {
   return {
@@ -10,10 +10,10 @@ export function createRefreshTool(plugin?: any): FloatingTool {
     bgColor: "linear-gradient(135deg, #4ade80 0%, #16a34a 100%)",
     action: async () => {
       try {
-        await reloadUI();
+        await reloadUI()
       } catch (error) {
-        console.error("刷新界面失败:", error);
+        console.error("刷新界面失败:", error)
       }
     },
-  };
+  }
 }

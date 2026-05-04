@@ -7,15 +7,15 @@
  */
 export interface ToolbarAction {
   /** 功能唯一标识符 */
-  id: string;
+  id: string
   /** 功能显示名称 */
-  name: string;
+  name: string
   /** 功能图标 SVG 字符串 */
-  icon: string;
+  icon: string
   /** 可选的快捷键 */
-  hotkey?: string;
+  hotkey?: string
   /** 功能处理函数 */
-  handler: (selectedText: string) => Promise<void> | void;
+  handler: (selectedText: string) => Promise<void> | void
 }
 
 /**
@@ -23,7 +23,7 @@ export interface ToolbarAction {
  * 负责管理所有注册的浮动工具栏功能
  */
 export class ToolbarActionManager {
-  private actions: Map<string, ToolbarAction> = new Map();
+  private actions: Map<string, ToolbarAction> = new Map()
 
   /**
    * 注册新功能
@@ -33,10 +33,10 @@ export class ToolbarActionManager {
     if (this.actions.has(action.id)) {
       console.warn(
         `[FloatingToolbar] Action with id "${action.id}" already registered`,
-      );
-      return;
+      )
+      return
     }
-    this.actions.set(action.id, action);
+    this.actions.set(action.id, action)
   }
 
   /**
@@ -44,7 +44,7 @@ export class ToolbarActionManager {
    * @param actionId 要移除的功能 ID
    */
   unregisterAction(actionId: string): void {
-    this.actions.delete(actionId);
+    this.actions.delete(actionId)
   }
 
   /**
@@ -53,7 +53,7 @@ export class ToolbarActionManager {
    * @returns 功能定义或 undefined
    */
   getAction(actionId: string): ToolbarAction | undefined {
-    return this.actions.get(actionId);
+    return this.actions.get(actionId)
   }
 
   /**
@@ -61,7 +61,7 @@ export class ToolbarActionManager {
    * @returns 功能数组
    */
   getAllActions(): ToolbarAction[] {
-    return Array.from(this.actions.values());
+    return Array.from(this.actions.values())
   }
 
   /**
@@ -70,14 +70,14 @@ export class ToolbarActionManager {
    * @returns 是否已注册
    */
   hasAction(actionId: string): boolean {
-    return this.actions.has(actionId);
+    return this.actions.has(actionId)
   }
 
   /**
    * 清除所有已注册的功能
    */
   clear(): void {
-    this.actions.clear();
+    this.actions.clear()
   }
 
   /**
@@ -85,7 +85,7 @@ export class ToolbarActionManager {
    * @returns 功能数量
    */
   getActionCount(): number {
-    return this.actions.size;
+    return this.actions.size
   }
 
   /**
@@ -94,7 +94,7 @@ export class ToolbarActionManager {
    */
   registerActions(actions: ToolbarAction[]): void {
     for (const action of actions) {
-      this.registerAction(action);
+      this.registerAction(action)
     }
   }
 }
@@ -125,7 +125,7 @@ export class ToolbarActionFactory {
       icon: `<svg><use xlink:href="#icon${iconName}"></use></svg>`,
       handler,
       ...(hotkey && { hotkey }),
-    };
+    }
   }
 
   /**
@@ -150,7 +150,7 @@ export class ToolbarActionFactory {
       icon: svg,
       handler,
       ...(hotkey && { hotkey }),
-    };
+    }
   }
 }
 
@@ -159,15 +159,15 @@ export class ToolbarActionFactory {
  */
 export function isToolbarAction(obj: unknown): obj is ToolbarAction {
   return (
-    typeof obj === "object" &&
-    obj !== null &&
-    "id" in obj &&
-    "name" in obj &&
-    "icon" in obj &&
-    "handler" in obj &&
-    typeof (obj as ToolbarAction).id === "string" &&
-    typeof (obj as ToolbarAction).name === "string" &&
-    typeof (obj as ToolbarAction).icon === "string" &&
-    typeof (obj as ToolbarAction).handler === "function"
-  );
+    typeof obj === "object"
+    && obj !== null
+    && "id" in obj
+    && "name" in obj
+    && "icon" in obj
+    && "handler" in obj
+    && typeof (obj as ToolbarAction).id === "string"
+    && typeof (obj as ToolbarAction).name === "string"
+    && typeof (obj as ToolbarAction).icon === "string"
+    && typeof (obj as ToolbarAction).handler === "function"
+  )
 }

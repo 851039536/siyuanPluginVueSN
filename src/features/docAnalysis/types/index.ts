@@ -9,151 +9,151 @@
 /** 文档信息 */
 export interface DocInfo {
   /** 文档ID */
-  id: string;
+  id: string
   /** 文档标题 */
-  title: string;
+  title: string
   /** 文档路径（人类可读） */
-  hpath: string;
+  hpath: string
   /** 笔记本ID */
-  notebookId: string;
+  notebookId: string
   /** 笔记本名称 */
-  notebookName: string;
+  notebookName: string
   /** 内容大小（字节） */
-  contentSize: number;
+  contentSize: number
   /** 字数 */
-  wordCount: number;
+  wordCount: number
   /** 最后更新时间（yyyyMMddHHmmss 格式字符串，如 "20210604222535"） */
-  updated?: string;
+  updated?: string
   /** 创建时间（yyyyMMddHHmmss 格式字符串） */
-  created?: string;
+  created?: string
   /** 文档深度（路径层级数） */
-  depth?: number;
+  depth?: number
   /** 引用块数量 */
-  refCount?: number;
+  refCount?: number
   /** 图片/资源数量 */
-  imageCount?: number;
+  imageCount?: number
 }
 
 /** 更新时间分析统计 */
 export interface UpdateTimeStats {
   /** 7天内更新的文档数 */
-  in7Days: number;
+  in7Days: number
   /** 7~30天更新的文档数 */
-  in30Days: number;
+  in30Days: number
   /** 30天~半年更新的文档数 */
-  inHalfYear: number;
+  inHalfYear: number
   /** 半年以上未更新的文档数 */
-  overHalfYear: number;
+  overHalfYear: number
 }
 
 /** 深度分析统计 */
 export interface DepthStats {
   /** 各深度的文档数量 */
-  depthDistribution: { depth: number; count: number }[];
+  depthDistribution: { depth: number, count: number }[]
   /** 最大深度 */
-  maxDepth: number;
+  maxDepth: number
   /** 平均深度 */
-  avgDepth: number;
+  avgDepth: number
 }
 
 /** 引用分析统计 */
 export interface RefStats {
   /** 被引用最多的文档 */
-  topRefDocs: { docId: string; title: string; refCount: number }[];
+  topRefDocs: { docId: string, title: string, refCount: number }[]
   /** 包含引用的文档总数 */
-  refDocCount: number;
+  refDocCount: number
   /** 引用块总数 */
-  totalRefCount: number;
+  totalRefCount: number
 }
 
 /** 图片/资源分析统计 */
 export interface ImageStats {
   /** 包含图片最多的文档 */
-  topImageDocs: { docId: string; title: string; imageCount: number }[];
+  topImageDocs: { docId: string, title: string, imageCount: number }[]
   /** 包含图片的文档总数 */
-  imageDocCount: number;
+  imageDocCount: number
   /** 图片/资源块总数 */
-  totalImageCount: number;
+  totalImageCount: number
 }
 
 /** 排序方式 */
-export type SortField = "wordCount" | "title" | "notebook" | "updated" | "depth" | "refCount" | "imageCount";
-export type SortOrder = "asc" | "desc";
+export type SortField = "wordCount" | "title" | "notebook" | "updated" | "depth" | "refCount" | "imageCount"
+export type SortOrder = "asc" | "desc"
 
 /** 查询状态 */
-export type QueryStatus = "idle" | "loading" | "success" | "error" | "empty";
+export type QueryStatus = "idle" | "loading" | "success" | "error" | "empty"
 
 /** 过滤选项 */
 export interface FilterOptions {
   /** 标题模糊查询关键词 */
-  titleKeyword: string;
+  titleKeyword: string
   /** 全文内容搜索关键词 */
-  contentKeyword: string;
+  contentKeyword: string
   /** 选中的笔记本ID（空字符串表示全部） */
-  notebookId: string;
+  notebookId: string
   /** 排序字段 */
-  sortField: SortField;
+  sortField: SortField
   /** 排序方向 */
-  sortOrder: SortOrder;
+  sortOrder: SortOrder
   /** 字数过滤最小值（0 表示不过滤） */
-  wordCountMin: number;
+  wordCountMin: number
   /** 字数过滤最大值（0 表示不过滤） */
-  wordCountMax: number;
+  wordCountMax: number
 }
 
 /** 查询结果状态 */
 export interface QueryState {
   /** 状态 */
-  status: QueryStatus;
+  status: QueryStatus
   /** 结果列表 */
-  results: DocInfo[];
+  results: DocInfo[]
   /** 错误信息 */
-  errorMessage: string;
+  errorMessage: string
   /** 是否已查询过 */
-  hasQueried: boolean;
+  hasQueried: boolean
 }
 
 /** 重名文档组 */
 export interface DuplicateNameGroup {
   /** 重复的文档标题 */
-  title: string;
+  title: string
   /** 重复数量 */
-  count: number;
+  count: number
 }
 
 /** 文档统计信息 */
 export interface DocStats {
   /** 总文档数 */
-  totalDocs: number;
+  totalDocs: number
   /** 0B 空文档数 */
-  zeroByteDocs: number;
+  zeroByteDocs: number
   /** < 1KB 文档数 */
-  smallDocs: number;
+  smallDocs: number
   /** 1~10KB 文档数 */
-  mediumDocs: number;
+  mediumDocs: number
   /** 重名文档组数（有多少组同名文档） */
-  duplicateNameGroups: number;
+  duplicateNameGroups: number
   /** 重名文档总数（所有重名组的文档数之和） */
-  duplicateNameDocs: number;
+  duplicateNameDocs: number
   /** 7天内更新的文档数 */
-  updatedIn7Days: number;
+  updatedIn7Days: number
   /** 7~30天未更新的文档数 */
-  updatedIn30Days: number;
+  updatedIn30Days: number
   /** 半年以上未更新的文档数 */
-  updatedOverHalfYear: number;
+  updatedOverHalfYear: number
   /** 最大文档深度 */
-  maxDepth: number;
+  maxDepth: number
   /** 平均文档深度 */
-  avgDepth: number;
+  avgDepth: number
   /** 深层文档数（深度 >= 5） */
-  deepDocs: number;
+  deepDocs: number
   /** 包含引用的文档数 */
-  refDocs: number;
+  refDocs: number
   /** 引用块总数 */
-  totalRefs: number;
+  totalRefs: number
   /** 包含图片的文档数 */
-  imageDocs: number;
+  imageDocs: number
   /** 图片/资源块总数 */
-  totalImages: number;
+  totalImages: number
 }
 

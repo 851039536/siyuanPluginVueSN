@@ -7,24 +7,27 @@
 ### v-model 绑定
 
 ```vue
+<template>
+  <Switch v-model="enabled" />
+  <p>当前状态: {{ enabled ? '开' : '关' }}</p>
+</template>
+
 <script setup lang="ts">
 import { ref } from 'vue'
 import Switch from '@/components/Switch.vue'
 
 const enabled = ref(false)
 </script>
-
-<template>
-  <Switch v-model="enabled" />
-  <p>当前状态: {{ enabled ? '开' : '关' }}</p>
-</template>
 ```
 
 ### 带标签
 
 ```vue
 <template>
-  <Switch v-model="enabled" label="启用通知" />
+  <Switch
+    v-model="enabled"
+    label="启用通知"
+  />
 </template>
 ```
 
@@ -32,7 +35,11 @@ const enabled = ref(false)
 
 ```vue
 <template>
-  <Switch v-model="enabled" label="夜间模式" label-before />
+  <Switch
+    v-model="enabled"
+    label="夜间模式"
+    label-before
+  />
 </template>
 ```
 
@@ -42,9 +49,18 @@ const enabled = ref(false)
 
 ```vue
 <template>
-  <Switch v-model="enabled" size="small" />
-  <Switch v-model="enabled" size="medium" />
-  <Switch v-model="enabled" size="large" />
+  <Switch
+    v-model="enabled"
+    size="small"
+  />
+  <Switch
+    v-model="enabled"
+    size="medium"
+  />
+  <Switch
+    v-model="enabled"
+    size="large"
+  />
 </template>
 ```
 
@@ -52,14 +68,30 @@ const enabled = ref(false)
 
 ```vue
 <template>
-  <Switch v-model="enabled" disabled />
-  <Switch v-model="enabled" :disabled="true" label="禁用状态" />
+  <Switch
+    v-model="enabled"
+    disabled
+  />
+  <Switch
+    v-model="enabled"
+    :disabled="true"
+    label="禁用状态"
+  />
 </template>
 ```
 
 ## 加载状态
 
 ```vue
+<template>
+  <Switch
+    v-model="enabled"
+    :loading="loading"
+    label="加载中..."
+    @change="handleChange"
+  />
+</template>
+
 <script setup lang="ts">
 import { ref } from 'vue'
 import Switch from '@/components/Switch.vue'
@@ -70,20 +102,11 @@ const enabled = ref(false)
 const handleChange = async (value: boolean) => {
   loading.value = true
   // 模拟异步操作
-  await new Promise(resolve => setTimeout(resolve, 2000))
+  await new Promise((resolve) => setTimeout(resolve, 2000))
   loading.value = false
   console.log('切换到:', value)
 }
 </script>
-
-<template>
-  <Switch
-    v-model="enabled"
-    :loading="loading"
-    label="加载中..."
-    @change="handleChange"
-  />
-</template>
 ```
 
 ## 自定义颜色
@@ -103,42 +126,63 @@ const handleChange = async (value: boolean) => {
 ### 设置面板
 
 ```vue
+<template>
+  <div class="settings-panel">
+    <div class="setting-item">
+      <Switch
+        v-model="settings.notifications"
+        label="启用通知"
+      />
+      <p class="setting-desc">
+        接收推送通知
+      </p>
+    </div>
+
+    <div class="setting-item">
+      <Switch
+        v-model="settings.emailAlerts"
+        label="邮件提醒"
+      />
+      <p class="setting-desc">
+        发送邮件通知
+      </p>
+    </div>
+
+    <div class="setting-item">
+      <Switch
+        v-model="settings.autoUpdate"
+        label="自动更新"
+      />
+      <p class="setting-desc">
+        自动检查更新
+      </p>
+    </div>
+
+    <div class="setting-item">
+      <Switch
+        v-model="settings.darkMode"
+        label="深色模式"
+        label-before
+      />
+      <p class="setting-desc">
+        切换深色主题
+      </p>
+    </div>
+  </div>
+</template>
+
 <script setup lang="ts">
 import { ref } from 'vue'
-import Switch from '@/components/Switch.vue'
 import Label from '@/components/Label.vue'
+import Switch from '@/components/Switch.vue'
 
 const settings = ref({
   notifications: true,
   emailAlerts: false,
   autoUpdate: true,
-  darkMode: false
+  darkMode: false,
 })
 </script>
-
-<template>
-  <div class="settings-panel">
-    <div class="setting-item">
-      <Switch v-model="settings.notifications" label="启用通知" />
-      <p class="setting-desc">接收推送通知</p>
-    </div>
-
-    <div class="setting-item">
-      <Switch v-model="settings.emailAlerts" label="邮件提醒" />
-      <p class="setting-desc">发送邮件通知</p>
-    </div>
-
-    <div class="setting-item">
-      <Switch v-model="settings.autoUpdate" label="自动更新" />
-      <p class="setting-desc">自动检查更新</p>
-    </div>
-
-    <div class="setting-item">
-      <Switch v-model="settings.darkMode" label="深色模式" label-before />
-      <p class="setting-desc">切换深色主题</p>
-    </div>
-  </div>
-</template>
 
 <style scoped>
 .settings-panel {
@@ -164,42 +208,54 @@ const settings = ref({
 ### 权限开关
 
 ```vue
+<template>
+  <div class="permissions">
+    <div class="permission-item">
+      <Label>读取权限</Label>
+      <Switch
+        v-model="permissions.read"
+        size="small"
+      />
+    </div>
+
+    <div class="permission-item">
+      <Label>写入权限</Label>
+      <Switch
+        v-model="permissions.write"
+        size="small"
+      />
+    </div>
+
+    <div class="permission-item">
+      <Label>删除权限</Label>
+      <Switch
+        v-model="permissions.delete"
+        size="small"
+      />
+    </div>
+
+    <div class="permission-item">
+      <Label>管理员</Label>
+      <Switch
+        v-model="permissions.admin"
+        size="small"
+      />
+    </div>
+  </div>
+</template>
+
 <script setup lang="ts">
 import { ref } from 'vue'
-import Switch from '@/components/Switch.vue'
 import Label from '@/components/Label.vue'
+import Switch from '@/components/Switch.vue'
 
 const permissions = ref({
   read: true,
   write: true,
   delete: false,
-  admin: false
+  admin: false,
 })
 </script>
-
-<template>
-  <div class="permissions">
-    <div class="permission-item">
-      <Label>读取权限</Label>
-      <Switch v-model="permissions.read" size="small" />
-    </div>
-
-    <div class="permission-item">
-      <Label>写入权限</Label>
-      <Switch v-model="permissions.write" size="small" />
-    </div>
-
-    <div class="permission-item">
-      <Label>删除权限</Label>
-      <Switch v-model="permissions.delete" size="small" />
-    </div>
-
-    <div class="permission-item">
-      <Label>管理员</Label>
-      <Switch v-model="permissions.admin" size="small" />
-    </div>
-  </div>
-</template>
 
 <style scoped>
 .permissions {

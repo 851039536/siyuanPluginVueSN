@@ -5,18 +5,28 @@
 ## 基础用法
 
 ```vue
+<template>
+  <Tag>默认标签</Tag>
+  <Tag variant="primary">
+    主要
+  </Tag>
+  <Tag variant="success">
+    成功
+  </Tag>
+  <Tag variant="warning">
+    警告
+  </Tag>
+  <Tag variant="danger">
+    危险
+  </Tag>
+  <Tag variant="info">
+    信息
+  </Tag>
+</template>
+
 <script setup lang="ts">
 import Tag from '@/components/Tag.vue'
 </script>
-
-<template>
-  <Tag>默认标签</Tag>
-  <Tag variant="primary">主要</Tag>
-  <Tag variant="success">成功</Tag>
-  <Tag variant="warning">警告</Tag>
-  <Tag variant="danger">危险</Tag>
-  <Tag variant="info">信息</Tag>
-</template>
 ```
 
 ## 尺寸
@@ -25,9 +35,15 @@ import Tag from '@/components/Tag.vue'
 
 ```vue
 <template>
-  <Tag size="small">小标签</Tag>
-  <Tag size="medium">中标签</Tag>
-  <Tag size="large">大标签</Tag>
+  <Tag size="small">
+    小标签
+  </Tag>
+  <Tag size="medium">
+    中标签
+  </Tag>
+  <Tag size="large">
+    大标签
+  </Tag>
 </template>
 ```
 
@@ -37,26 +53,21 @@ import Tag from '@/components/Tag.vue'
 
 ```vue
 <template>
-  <Tag shape="rounded">圆角</Tag>
-  <Tag shape="square">方角</Tag>
-  <Tag shape="circle">完全圆角</Tag>
+  <Tag shape="rounded">
+    圆角
+  </Tag>
+  <Tag shape="square">
+    方角
+  </Tag>
+  <Tag shape="circle">
+    完全圆角
+  </Tag>
 </template>
 ```
 
 ## 可关闭
 
 ```vue
-<script setup lang="ts">
-import { ref } from 'vue'
-import Tag from '@/components/Tag.vue'
-
-const tags = ref(['Vue.js', 'React', 'TypeScript'])
-
-const handleClose = (tag: string) => {
-  tags.value = tags.value.filter(t => t !== tag)
-}
-</script>
-
 <template>
   <div class="tags">
     <Tag
@@ -69,16 +80,47 @@ const handleClose = (tag: string) => {
     </Tag>
   </div>
 </template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import Tag from '@/components/Tag.vue'
+
+const tags = ref(['Vue.js', 'React', 'TypeScript'])
+
+const handleClose = (tag: string) => {
+  tags.value = tags.value.filter((t) => t !== tag)
+}
+</script>
 ```
 
 ## 带图标
 
 ```vue
 <template>
-  <Tag icon="iconCheck" variant="success">已完成</Tag>
-  <Tag icon="iconTime" variant="warning">处理中</Tag>
-  <Tag icon="iconClose" variant="danger">已拒绝</Tag>
-  <Tag icon="iconInfo" variant="info">信息</Tag>
+  <Tag
+    icon="iconCheck"
+    variant="success"
+  >
+    已完成
+  </Tag>
+  <Tag
+    icon="iconTime"
+    variant="warning"
+  >
+    处理中
+  </Tag>
+  <Tag
+    icon="iconClose"
+    variant="danger"
+  >
+    已拒绝
+  </Tag>
+  <Tag
+    icon="iconInfo"
+    variant="info"
+  >
+    信息
+  </Tag>
 </template>
 ```
 
@@ -86,8 +128,15 @@ const handleClose = (tag: string) => {
 
 ```vue
 <template>
-  <Tag disabled>禁用标签</Tag>
-  <Tag closable disabled>禁用可关闭</Tag>
+  <Tag disabled>
+    禁用标签
+  </Tag>
+  <Tag
+    closable
+    disabled
+  >
+    禁用可关闭
+  </Tag>
 </template>
 ```
 
@@ -96,7 +145,12 @@ const handleClose = (tag: string) => {
 ```vue
 <template>
   <!-- 自定义背景色 -->
-  <Tag color="#8b5cf6" textColor="#ffffff">紫色</Tag>
+  <Tag
+    color="#8b5cf6"
+    textColor="#ffffff"
+  >
+    紫色
+  </Tag>
 
   <!-- 自定义背景和边框色 -->
   <Tag
@@ -114,22 +168,6 @@ const handleClose = (tag: string) => {
 ### 标签列表
 
 ```vue
-<script setup lang="ts">
-import { ref } from 'vue'
-import Tag from '@/components/Tag.vue'
-
-const tags = ref([
-  { name: 'Vue.js', type: 'primary' },
-  { name: 'React', type: 'primary' },
-  { name: 'TypeScript', type: 'success' },
-  { name: 'Vite', type: 'info' }
-])
-
-const removeTag = (index: number) => {
-  tags.value.splice(index, 1)
-}
-</script>
-
 <template>
   <div class="tag-list">
     <Tag
@@ -144,6 +182,34 @@ const removeTag = (index: number) => {
   </div>
 </template>
 
+<script setup lang="ts">
+import { ref } from 'vue'
+import Tag from '@/components/Tag.vue'
+
+const tags = ref([
+  {
+    name: 'Vue.js',
+    type: 'primary',
+  },
+  {
+    name: 'React',
+    type: 'primary',
+  },
+  {
+    name: 'TypeScript',
+    type: 'success',
+  },
+  {
+    name: 'Vite',
+    type: 'info',
+  },
+])
+
+const removeTag = (index: number) => {
+  tags.value.splice(index, 1)
+}
+</script>
+
 <style scoped>
 .tag-list {
   display: flex;
@@ -156,12 +222,6 @@ const removeTag = (index: number) => {
 ### 文章标签
 
 ```vue
-<script setup lang="ts">
-import Tag from '@/components/Tag.vue'
-
-const articleTags = ['前端开发', 'Vue.js', 'TypeScript', '最佳实践']
-</script>
-
 <template>
   <div class="article-tags">
     <h4>文章标签</h4>
@@ -178,6 +238,12 @@ const articleTags = ['前端开发', 'Vue.js', 'TypeScript', '最佳实践']
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import Tag from '@/components/Tag.vue'
+
+const articleTags = ['前端开发', 'Vue.js', 'TypeScript', '最佳实践']
+</script>
 
 <style scoped>
 .article-tags h4 {
@@ -197,27 +263,13 @@ const articleTags = ['前端开发', 'Vue.js', 'TypeScript', '最佳实践']
 ### 状态标签
 
 ```vue
-<script setup lang="ts">
-import Tag from '@/components/Tag.vue'
-
-const tasks = [
-  { title: '设计稿', status: 'completed' },
-  { title: '前端开发', status: 'in-progress' },
-  { title: '后端接口', status: 'pending' },
-  { title: '测试', status: 'error' }
-]
-
-const statusConfig = {
-  completed: { variant: 'success', label: '已完成', icon: 'iconCheck' },
-  'in-progress': { variant: 'primary', label: '进行中', icon: 'iconTime' },
-  pending: { variant: 'default', label: '待处理', icon: 'iconMore' },
-  error: { variant: 'danger', label: '失败', icon: 'iconClose' }
-}
-</script>
-
 <template>
   <div class="task-list">
-    <div v-for="task in tasks" :key="task.title" class="task-item">
+    <div
+      v-for="task in tasks"
+      :key="task.title"
+      class="task-item"
+    >
       <span>{{ task.title }}</span>
       <Tag
         :variant="statusConfig[task.status].variant"
@@ -230,6 +282,52 @@ const statusConfig = {
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import Tag from '@/components/Tag.vue'
+
+const tasks = [
+  {
+    title: '设计稿',
+    status: 'completed',
+  },
+  {
+    title: '前端开发',
+    status: 'in-progress',
+  },
+  {
+    title: '后端接口',
+    status: 'pending',
+  },
+  {
+    title: '测试',
+    status: 'error',
+  },
+]
+
+const statusConfig = {
+  "completed": {
+    variant: 'success',
+    label: '已完成',
+    icon: 'iconCheck',
+  },
+  'in-progress': {
+    variant: 'primary',
+    label: '进行中',
+    icon: 'iconTime',
+  },
+  "pending": {
+    variant: 'default',
+    label: '待处理',
+    icon: 'iconMore',
+  },
+  "error": {
+    variant: 'danger',
+    label: '失败',
+    icon: 'iconClose',
+  },
+}
+</script>
 
 <style scoped>
 .task-list {
@@ -252,32 +350,6 @@ const statusConfig = {
 ### 动态标签输入
 
 ```vue
-<script setup lang="ts">
-import { ref } from 'vue'
-import Tag from '@/components/Tag.vue'
-import Input from '@/components/Input.vue'
-
-const tags = ref(['Vue.js', 'React'])
-const inputVisible = ref(false)
-const inputValue = ref('')
-
-const handleClose = (tag: string) => {
-  tags.value = tags.value.filter(t => t !== tag)
-}
-
-const handleInputConfirm = () => {
-  if (inputValue.value && !tags.value.includes(inputValue.value)) {
-    tags.value.push(inputValue.value)
-  }
-  inputVisible.value = false
-  inputValue.value = ''
-}
-
-const showInput = () => {
-  inputVisible.value = true
-}
-</script>
-
 <template>
   <div class="tag-input">
     <Tag
@@ -301,13 +373,39 @@ const showInput = () => {
     <Tag
       v-else
       variant="default"
-      @click="showInput"
       style="cursor: pointer"
+      @click="showInput"
     >
       + 新标签
     </Tag>
   </div>
 </template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import Input from '@/components/Input.vue'
+import Tag from '@/components/Tag.vue'
+
+const tags = ref(['Vue.js', 'React'])
+const inputVisible = ref(false)
+const inputValue = ref('')
+
+const handleClose = (tag: string) => {
+  tags.value = tags.value.filter((t) => t !== tag)
+}
+
+const handleInputConfirm = () => {
+  if (inputValue.value && !tags.value.includes(inputValue.value)) {
+    tags.value.push(inputValue.value)
+  }
+  inputVisible.value = false
+  inputValue.value = ''
+}
+
+const showInput = () => {
+  inputVisible.value = true
+}
+</script>
 
 <style scoped>
 .tag-input {
@@ -322,19 +420,6 @@ const showInput = () => {
 ### 标签云
 
 ```vue
-<script setup lang="ts">
-import Tag from '@/components/Tag.vue'
-
-const hotTopics = [
-  { name: 'Vue.js', weight: 100 },
-  { name: 'React', weight: 95 },
-  { name: 'TypeScript', weight: 90 },
-  { name: 'Vite', weight: 85 },
-  { name: '前端', weight: 80 },
-  { name: 'JavaScript', weight: 75 }
-]
-</script>
-
 <template>
   <div class="tag-cloud">
     <Tag
@@ -347,6 +432,37 @@ const hotTopics = [
     </Tag>
   </div>
 </template>
+
+<script setup lang="ts">
+import Tag from '@/components/Tag.vue'
+
+const hotTopics = [
+  {
+    name: 'Vue.js',
+    weight: 100,
+  },
+  {
+    name: 'React',
+    weight: 95,
+  },
+  {
+    name: 'TypeScript',
+    weight: 90,
+  },
+  {
+    name: 'Vite',
+    weight: 85,
+  },
+  {
+    name: '前端',
+    weight: 80,
+  },
+  {
+    name: 'JavaScript',
+    weight: 75,
+  },
+]
+</script>
 
 <style scoped>
 .tag-cloud {

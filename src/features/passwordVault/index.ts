@@ -1,8 +1,8 @@
 /**
  * 密码箱功能模块
  */
-import { Plugin } from "siyuan";
-import { showPasswordVault } from "./types";
+import { Plugin } from "siyuan"
+import { showPasswordVault } from "./types"
 
 /**
  * 注册密码箱功能
@@ -14,15 +14,15 @@ export function registerPasswordVault(plugin: Plugin) {
     langText: "密码箱",
     hotkey: "⌃⌥W", // Ctrl+Alt+W
     callback: () => {
-      showPasswordVault();
+      showPasswordVault()
     },
-  });
+  })
 }
 
 export {
-  showPasswordVault,
   hidePasswordVault,
-  togglePasswordVault,
   passwordVaultVisible,
-} from "./types";
-export * from "./types";
+  showPasswordVault,
+  togglePasswordVault,
+} from "./types"
+export * from "./types"

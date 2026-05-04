@@ -1,17 +1,37 @@
+import type { Plugin } from "siyuan"
+import type {
+  DepthStats,
+  DocInfo,
+  DocStats,
+  DuplicateNameGroup,
+  FilterOptions,
+  ImageStats,
+  QueryState,
+  RefStats,
+  UpdateTimeStats,
+
+} from "../types/index"
+
 /**
  * 文档分析功能 - 核心业务逻辑
  */
-import { ref, reactive } from "vue";
-import { sql, lsNotebooks } from "@/api";
-import type { DocInfo, FilterOptions, QueryState, DocStats } from "../types/index";
-import type { DuplicateNameGroup, UpdateTimeStats, DepthStats, RefStats, ImageStats } from "../types/index";
-import { DocAnalysisStorage, DEFAULT_FILTER_OPTIONS } from "../types/storage";
-import type { Plugin } from "siyuan";
+import {
+  reactive,
+  ref,
+} from "vue"
+import {
+  lsNotebooks,
+  sql,
+} from "@/api"
+import {
+  DEFAULT_FILTER_OPTIONS,
+  DocAnalysisStorage,
+} from "../types/storage"
 
 /** 笔记本信息 */
 interface NotebookInfo {
-  id: string;
-  name: string;
+  id: string
+  name: string
 }
 
 /** 子查询：统计每个文档的内容大小和字数（合并减少扫描次数） */
@@ -22,7 +42,7 @@ const SIZE_WORDCOUNT_SUBQUERY = `
   FROM blocks 
   WHERE type != 'd'
   GROUP BY root_id
-`;
+`
 
 /** 子查询：统计每个文档的引用块数量（思源引用语法 ((id "标题")) 在 markdown 字段中） */
 const REF_SUBQUERY = `
@@ -30,7 +50,7 @@ const REF_SUBQUERY = `
   FROM blocks
   WHERE type != 'd' AND markdown LIKE '%((%'
   GROUP BY root_id
-`;
+`
 
 /** 子查询：统计每个文档的图片/资源数量（markdown 语法中包含 ![ ） */
 const IMAGE_SUBQUERY = `
@@ -38,13 +58,13 @@ const IMAGE_SUBQUERY = `
   FROM blocks
   WHERE type != 'd' AND markdown LIKE '%![%'
   GROUP BY root_id
-`;
+`
 
 /** 生成 N 天前的 yyyyMMddHHmmss 格式字符串（思源 updated 字段格式） */
 function daysAgoStr(days: number): string {
-  const d = new Date(Date.now() - days * 86400000);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+  const d = new Date(Date.now() - days * 86400000)
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`
 }
 
 /**
@@ -52,10 +72,10 @@ function daysAgoStr(days: number): string {
  */
 export function useDocAnalysis(plugin: Plugin) {
   // 存储管理
-  const storage = new DocAnalysisStorage(plugin);
+  const storage = new DocAnalysisStorage(plugin)
 
   // 笔记本列表
-  const notebooks = ref<NotebookInfo[]>([]);
+  const notebooks = ref<NotebookInfo[]>([])
 
   // 查询状态
   const queryState = reactive<QueryState>({
@@ -63,15 +83,15 @@ export function useDocAnalysis(plugin: Plugin) {
     results: [] as DocInfo[],
     errorMessage: "",
     hasQueried: false,
-  });
+  })
 
   /** 统一设置结果，确保触发响应式更新 */
   function setResults(docs: DocInfo[]) {
-    queryState.results = docs;
+    queryState.results = docs
   }
 
   // 过滤选项
-  const filterOptions = reactive<FilterOptions>({ ...DEFAULT_FILTER_OPTIONS });
+  const filterOptions = reactive<FilterOptions>({ ...DEFAULT_FILTER_OPTIONS })
 
   // 文档统计信息
   const docStats = reactive<DocStats>({
@@ -91,12 +111,12 @@ export function useDocAnalysis(plugin: Plugin) {
     totalRefs: 0,
     imageDocs: 0,
     totalImages: 0,
-  });
-  const statsLoading = ref(false);
-  const hasAnalyzed = ref(false);
+  })
+  const statsLoading = ref(false)
+  const hasAnalyzed = ref(false)
 
   // 重名文档详情（供列表展示）
-  const duplicateGroups = ref<DuplicateNameGroup[]>([]);
+  const duplicateGroups = ref<DuplicateNameGroup[]>([])
 
   // 更新时间分析详情
   const updateTimeStats = ref<UpdateTimeStats>({
@@ -104,31 +124,31 @@ export function useDocAnalysis(plugin: Plugin) {
     in30Days: 0,
     inHalfYear: 0,
     overHalfYear: 0,
-  });
+  })
 
   // 深度分析详情
   const depthStats = ref<DepthStats>({
     depthDistribution: [],
     maxDepth: 0,
     avgDepth: 0,
-  });
+  })
 
   // 引用分析详情
   const refStats = ref<RefStats>({
     topRefDocs: [],
     refDocCount: 0,
     totalRefCount: 0,
-  });
+  })
 
   // 图片分析详情
   const imageStats = ref<ImageStats>({
     topImageDocs: [],
     imageDocCount: 0,
     totalImageCount: 0,
-  });
+  })
 
   // 当前选中的统计类别过滤
-  const statsFilter = ref<string>("");
+  const statsFilter = ref<string>("")
 
   // ============================================================
   // 公共辅助函数
@@ -137,23 +157,23 @@ export function useDocAnalysis(plugin: Plugin) {
   /** 构建笔记本过滤条件 */
   function buildNotebookCondition(): string {
     if (filterOptions.notebookId) {
-      return `AND b.box = '${filterOptions.notebookId}'`;
+      return `AND b.box = '${filterOptions.notebookId}'`
     }
-    return "";
+    return ""
   }
 
   /** 构建笔记本名称映射 */
   function buildNotebookMap(): Map<string, string> {
-    const map = new Map<string, string>();
+    const map = new Map<string, string>()
     for (const nb of notebooks.value) {
-      map.set(nb.id, nb.name);
+      map.set(nb.id, nb.name)
     }
-    return map;
+    return map
   }
 
   /** 将 SQL 行映射为 DocInfo（扩展版） */
   function mapRowsToDocs(rows: any[]): DocInfo[] {
-    const notebookMap = buildNotebookMap();
+    const notebookMap = buildNotebookMap()
     return rows.map((row: any) => ({
       id: row.doc_id,
       title: row.doc_title || "无标题",
@@ -167,17 +187,17 @@ export function useDocAnalysis(plugin: Plugin) {
       depth: row.doc_depth ?? undefined,
       refCount: row.ref_count ?? undefined,
       imageCount: row.image_count ?? undefined,
-    }));
+    }))
   }
 
   /** 查询文档列表（带条件），公共核心逻辑 */
   async function fetchDocList(extraCondition: string) {
-    queryState.status = "loading";
-    queryState.errorMessage = "";
-    queryState.hasQueried = true;
+    queryState.status = "loading"
+    queryState.errorMessage = ""
+    queryState.hasQueried = true
 
     try {
-      const notebookCondition = buildNotebookCondition();
+      const notebookCondition = buildNotebookCondition()
 
       const sqlStmt = `
         SELECT 
@@ -196,26 +216,26 @@ export function useDocAnalysis(plugin: Plugin) {
         ${extraCondition}
         ORDER BY word_count ASC
         LIMIT 2000
-      `;
+      `
 
-      const rows = await sql(sqlStmt);
+      const rows = await sql(sqlStmt)
 
       if (!rows || rows.length === 0) {
-        setResults([]);
-        queryState.status = "empty";
-        return;
+        setResults([])
+        queryState.status = "empty"
+        return
       }
 
-      const docs = mapRowsToDocs(rows);
-      const sortedDocs = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder);
+      const docs = mapRowsToDocs(rows)
+      const sortedDocs = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder)
 
-      setResults(sortedDocs);
-      queryState.status = "success";
+      setResults(sortedDocs)
+      queryState.status = "success"
     } catch (error) {
-      console.error("查询文档列表失败:", error);
-      queryState.errorMessage = (error as Error).message || "查询失败";
-      queryState.status = "error";
-      setResults([]);
+      console.error("查询文档列表失败:", error)
+      queryState.errorMessage = (error as Error).message || "查询失败"
+      queryState.status = "error"
+      setResults([])
     }
   }
 
@@ -228,17 +248,17 @@ export function useDocAnalysis(plugin: Plugin) {
    */
   async function loadNotebooks() {
     try {
-      const data = await lsNotebooks();
+      const data = await lsNotebooks()
       if (data && data.notebooks) {
         notebooks.value = data.notebooks
           .filter((nb: any) => !nb.closed)
           .map((nb: any) => ({
             id: nb.id,
             name: nb.name,
-          }));
+          }))
       }
     } catch (error) {
-      console.error("加载笔记本列表失败:", error);
+      console.error("加载笔记本列表失败:", error)
     }
   }
 
@@ -247,10 +267,10 @@ export function useDocAnalysis(plugin: Plugin) {
    */
   async function loadSavedOptions() {
     try {
-      const saved = await storage.options.loadOrDefault();
-      Object.assign(filterOptions, saved);
+      const saved = await storage.options.loadOrDefault()
+      Object.assign(filterOptions, saved)
     } catch (error) {
-      console.error("加载文档分析配置失败:", error);
+      console.error("加载文档分析配置失败:", error)
     }
   }
 
@@ -259,9 +279,9 @@ export function useDocAnalysis(plugin: Plugin) {
    */
   async function saveOptions() {
     try {
-      await storage.options.save({ ...filterOptions });
+      await storage.options.save({ ...filterOptions })
     } catch (error) {
-      console.error("保存文档分析配置失败:", error);
+      console.error("保存文档分析配置失败:", error)
     }
   }
 
@@ -269,9 +289,9 @@ export function useDocAnalysis(plugin: Plugin) {
    * 执行分析 - 获取文档统计概览（含新增维度）
    */
   async function analyzeDocStats() {
-    statsLoading.value = true;
+    statsLoading.value = true
     try {
-      const notebookCondition = buildNotebookCondition();
+      const notebookCondition = buildNotebookCondition()
 
       // 大小统计
       const sizeSql = `
@@ -283,15 +303,15 @@ export function useDocAnalysis(plugin: Plugin) {
         FROM blocks b
         LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
         WHERE b.type = 'd' ${notebookCondition}
-      `;
+      `
 
-      const sizeRows = await sql(sizeSql);
+      const sizeRows = await sql(sizeSql)
       if (sizeRows && sizeRows.length > 0) {
-        const row = sizeRows[0];
-        docStats.totalDocs = row.total || 0;
-        docStats.zeroByteDocs = row.zero_count || 0;
-        docStats.smallDocs = row.small_count || 0;
-        docStats.mediumDocs = row.medium_count || 0;
+        const row = sizeRows[0]
+        docStats.totalDocs = row.total || 0
+        docStats.zeroByteDocs = row.zero_count || 0
+        docStats.smallDocs = row.small_count || 0
+        docStats.mediumDocs = row.medium_count || 0
       }
 
       // 重名统计
@@ -303,39 +323,39 @@ export function useDocAnalysis(plugin: Plugin) {
         HAVING COUNT(*) > 1
         ORDER BY cnt DESC
         LIMIT 500
-      `;
+      `
 
-      const dupRows = await sql(dupSql);
+      const dupRows = await sql(dupSql)
       if (dupRows && dupRows.length > 0) {
-        docStats.duplicateNameGroups = dupRows.length;
-        docStats.duplicateNameDocs = dupRows.reduce((sum: number, r: any) => sum + (r.cnt || 0), 0);
+        docStats.duplicateNameGroups = dupRows.length
+        docStats.duplicateNameDocs = dupRows.reduce((sum: number, r: any) => sum + (r.cnt || 0), 0)
         duplicateGroups.value = dupRows.map((r: any) => ({
           title: r.doc_title || "无标题",
           count: r.cnt || 0,
-        }));
+        }))
       } else {
-        docStats.duplicateNameGroups = 0;
-        docStats.duplicateNameDocs = 0;
-        duplicateGroups.value = [];
+        docStats.duplicateNameGroups = 0
+        docStats.duplicateNameDocs = 0
+        duplicateGroups.value = []
       }
 
       // 更新时间分析
-      await analyzeUpdateTime(notebookCondition);
+      await analyzeUpdateTime(notebookCondition)
 
       // 文档深度分析
-      await analyzeDepth(notebookCondition);
+      await analyzeDepth(notebookCondition)
 
       // 引用分析
-      await analyzeRefs(notebookCondition);
+      await analyzeRefs(notebookCondition)
 
       // 图片/资源分析
-      await analyzeImages(notebookCondition);
+      await analyzeImages(notebookCondition)
 
-      hasAnalyzed.value = true;
+      hasAnalyzed.value = true
     } catch (error) {
-      console.error("分析文档统计失败:", error);
+      console.error("分析文档统计失败:", error)
     } finally {
-      statsLoading.value = false;
+      statsLoading.value = false
     }
   }
 
@@ -345,9 +365,9 @@ export function useDocAnalysis(plugin: Plugin) {
    */
   async function analyzeUpdateTime(notebookCondition: string) {
     try {
-      const ts7 = daysAgoStr(7);
-      const ts30 = daysAgoStr(30);
-      const ts180 = daysAgoStr(180);
+      const ts7 = daysAgoStr(7)
+      const ts30 = daysAgoStr(30)
+      const ts180 = daysAgoStr(180)
 
       const timeSql = `
         SELECT
@@ -357,23 +377,23 @@ export function useDocAnalysis(plugin: Plugin) {
           SUM(CASE WHEN b.updated < '${ts180}' THEN 1 ELSE 0 END) as over_half_year
         FROM blocks b
         WHERE b.type = 'd' ${notebookCondition}
-      `;
+      `
 
-      const timeRows = await sql(timeSql);
+      const timeRows = await sql(timeSql)
       if (timeRows && timeRows.length > 0) {
-        const row = timeRows[0];
+        const row = timeRows[0]
         updateTimeStats.value = {
           in7Days: row.in_7_days || 0,
           in30Days: row.in_30_days || 0,
           inHalfYear: row.in_half_year || 0,
           overHalfYear: row.over_half_year || 0,
-        };
-        docStats.updatedIn7Days = row.in_7_days || 0;
-        docStats.updatedIn30Days = row.in_30_days || 0;
-        docStats.updatedOverHalfYear = row.over_half_year || 0;
+        }
+        docStats.updatedIn7Days = row.in_7_days || 0
+        docStats.updatedIn30Days = row.in_30_days || 0
+        docStats.updatedOverHalfYear = row.over_half_year || 0
       }
     } catch (error) {
-      console.error("更新时间分析失败:", error);
+      console.error("更新时间分析失败:", error)
     }
   }
 
@@ -390,35 +410,35 @@ export function useDocAnalysis(plugin: Plugin) {
         WHERE b.type = 'd' ${notebookCondition}
         GROUP BY depth
         ORDER BY depth ASC
-      `;
+      `
 
-      const depthRows = await sql(depthSql);
+      const depthRows = await sql(depthSql)
       if (depthRows && depthRows.length > 0) {
         const distribution = depthRows.map((r: any) => ({
           depth: r.depth || 0,
           count: r.cnt || 0,
-        }));
+        }))
 
-        const maxDepth = Math.max(...distribution.map((d) => d.depth));
-        const totalDocs = distribution.reduce((sum: number, d) => sum + d.count, 0);
+        const maxDepth = Math.max(...distribution.map((d) => d.depth))
+        const totalDocs = distribution.reduce((sum: number, d) => sum + d.count, 0)
         const avgDepth = totalDocs > 0
           ? distribution.reduce((sum: number, d) => sum + d.depth * d.count, 0) / totalDocs
-          : 0;
+          : 0
         const deepDocs = distribution
           .filter((d) => d.depth >= 5)
-          .reduce((sum: number, d) => sum + d.count, 0);
+          .reduce((sum: number, d) => sum + d.count, 0)
 
         depthStats.value = {
           depthDistribution: distribution,
           maxDepth,
           avgDepth: Math.round(avgDepth * 10) / 10,
-        };
-        docStats.maxDepth = maxDepth;
-        docStats.avgDepth = Math.round(avgDepth * 10) / 10;
-        docStats.deepDocs = deepDocs;
+        }
+        docStats.maxDepth = maxDepth
+        docStats.avgDepth = Math.round(avgDepth * 10) / 10
+        docStats.deepDocs = deepDocs
       }
     } catch (error) {
-      console.error("文档深度分析失败:", error);
+      console.error("文档深度分析失败:", error)
     }
   }
 
@@ -435,15 +455,15 @@ export function useDocAnalysis(plugin: Plugin) {
           COUNT(*) as total_ref_count
         FROM blocks
         WHERE type != 'd' AND markdown LIKE '%((%'
-      `;
+      `
 
-      const refCountRows = await sql(refCountSql);
+      const refCountRows = await sql(refCountSql)
       if (refCountRows && refCountRows.length > 0) {
-        const row = refCountRows[0];
-        docStats.refDocs = row.ref_doc_count || 0;
-        docStats.totalRefs = row.total_ref_count || 0;
-        refStats.value.refDocCount = row.ref_doc_count || 0;
-        refStats.value.totalRefCount = row.total_ref_count || 0;
+        const row = refCountRows[0]
+        docStats.refDocs = row.ref_doc_count || 0
+        docStats.totalRefs = row.total_ref_count || 0
+        refStats.value.refDocCount = row.ref_doc_count || 0
+        refStats.value.totalRefCount = row.total_ref_count || 0
       }
 
       // 被引用最多的文档
@@ -460,18 +480,18 @@ export function useDocAnalysis(plugin: Plugin) {
         JOIN blocks b ON b.id = r.root_id AND b.type = 'd'
         ${notebookCondition ? `WHERE b.box = '${filterOptions.notebookId}'` : ""}
         ORDER BY r.ref_count DESC
-      `;
+      `
 
-      const topRefRows = await sql(topRefSql);
+      const topRefRows = await sql(topRefSql)
       if (topRefRows && topRefRows.length > 0) {
         refStats.value.topRefDocs = topRefRows.map((r: any) => ({
           docId: r.doc_id,
           title: r.doc_title || "无标题",
           refCount: r.ref_count || 0,
-        }));
+        }))
       }
     } catch (error) {
-      console.error("引用分析失败:", error);
+      console.error("引用分析失败:", error)
     }
   }
 
@@ -488,15 +508,15 @@ export function useDocAnalysis(plugin: Plugin) {
           COUNT(*) as total_image_count
         FROM blocks
         WHERE type != 'd' AND markdown LIKE '%![%'
-      `;
+      `
 
-      const imgCountRows = await sql(imgCountSql);
+      const imgCountRows = await sql(imgCountSql)
       if (imgCountRows && imgCountRows.length > 0) {
-        const row = imgCountRows[0];
-        docStats.imageDocs = row.image_doc_count || 0;
-        docStats.totalImages = row.total_image_count || 0;
-        imageStats.value.imageDocCount = row.image_doc_count || 0;
-        imageStats.value.totalImageCount = row.total_image_count || 0;
+        const row = imgCountRows[0]
+        docStats.imageDocs = row.image_doc_count || 0
+        docStats.totalImages = row.total_image_count || 0
+        imageStats.value.imageDocCount = row.image_doc_count || 0
+        imageStats.value.totalImageCount = row.total_image_count || 0
       }
 
       // 包含图片最多的文档
@@ -513,18 +533,18 @@ export function useDocAnalysis(plugin: Plugin) {
         JOIN blocks b ON b.id = img.root_id AND b.type = 'd'
         ${notebookCondition ? `WHERE b.box = '${filterOptions.notebookId}'` : ""}
         ORDER BY img.image_count DESC
-      `;
+      `
 
-      const topImgRows = await sql(topImgSql);
+      const topImgRows = await sql(topImgSql)
       if (topImgRows && topImgRows.length > 0) {
         imageStats.value.topImageDocs = topImgRows.map((r: any) => ({
           docId: r.doc_id,
           title: r.doc_title || "无标题",
           imageCount: r.image_count || 0,
-        }));
+        }))
       }
     } catch (error) {
-      console.error("图片分析失败:", error);
+      console.error("图片分析失败:", error)
     }
   }
 
@@ -533,74 +553,74 @@ export function useDocAnalysis(plugin: Plugin) {
    */
   async function queryByStatsCategory(category: string) {
     if (statsFilter.value === category) {
-      statsFilter.value = "";
-      queryState.hasQueried = false;
-      setResults([]);
-      queryState.status = "idle";
-      return;
+      statsFilter.value = ""
+      queryState.hasQueried = false
+      setResults([])
+      queryState.status = "idle"
+      return
     }
-    statsFilter.value = category;
+    statsFilter.value = category
 
     // 重名类别走独立查询逻辑
     if (category === "duplicate") {
-      await fetchDuplicateDocs();
-      return;
+      await fetchDuplicateDocs()
+      return
     }
 
     // 大小类别 - 使用通用查询（需要 size 子查询）
     const sizeConditions: Record<string, string> = {
       "0B": "AND COALESCE(sw.total_size, 0) = 0",
-      small: "AND COALESCE(sw.total_size, 0) > 0 AND COALESCE(sw.total_size, 0) < 1024",
-      medium: "AND COALESCE(sw.total_size, 0) >= 1024 AND COALESCE(sw.total_size, 0) < 10240",
-    };
+      "small": "AND COALESCE(sw.total_size, 0) > 0 AND COALESCE(sw.total_size, 0) < 1024",
+      "medium": "AND COALESCE(sw.total_size, 0) >= 1024 AND COALESCE(sw.total_size, 0) < 10240",
+    }
 
     if (sizeConditions[category]) {
-      await fetchDocList(sizeConditions[category]);
-      return;
+      await fetchDocList(sizeConditions[category])
+      return
     }
 
     // 新类别（时间/深度/引用/图片）使用轻量查询
-    queryState.status = "loading";
-    queryState.errorMessage = "";
-    queryState.hasQueried = true;
+    queryState.status = "loading"
+    queryState.errorMessage = ""
+    queryState.hasQueried = true
 
     try {
-      const notebookCondition = buildNotebookCondition();
+      const notebookCondition = buildNotebookCondition()
 
       // 根据类别确定额外条件、JOIN 和排序
-      let extraWhere = "";
-      let extraJoin = "";
-      let refCol = "0 as ref_count";
-      let imgCol = "0 as image_count";
-      let orderBy = "b.updated DESC";
+      let extraWhere = ""
+      let extraJoin = ""
+      let refCol = "0 as ref_count"
+      let imgCol = "0 as image_count"
+      let orderBy = "b.updated DESC"
 
       switch (category) {
         case "7days":
-          extraWhere = `AND b.updated >= '${daysAgoStr(7)}'`;
-          break;
+          extraWhere = `AND b.updated >= '${daysAgoStr(7)}'`
+          break
         case "30days":
-          extraWhere = `AND b.updated >= '${daysAgoStr(30)}' AND b.updated < '${daysAgoStr(7)}'`;
-          break;
+          extraWhere = `AND b.updated >= '${daysAgoStr(30)}' AND b.updated < '${daysAgoStr(7)}'`
+          break
         case "halfYear":
-          extraWhere = `AND b.updated < '${daysAgoStr(180)}'`;
-          break;
+          extraWhere = `AND b.updated < '${daysAgoStr(180)}'`
+          break
         case "deep":
-          extraWhere = "AND LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 >= 5";
-          orderBy = "doc_depth DESC";
-          break;
+          extraWhere = "AND LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 >= 5"
+          orderBy = "doc_depth DESC"
+          break
         case "hasRef":
-          extraJoin = `INNER JOIN (${REF_SUBQUERY}) r ON b.id = r.root_id`;
-          refCol = "COALESCE(r.ref_count, 0) as ref_count";
-          orderBy = "r.ref_count DESC";
-          break;
+          extraJoin = `INNER JOIN (${REF_SUBQUERY}) r ON b.id = r.root_id`
+          refCol = "COALESCE(r.ref_count, 0) as ref_count"
+          orderBy = "r.ref_count DESC"
+          break
         case "hasImage":
-          extraJoin = `INNER JOIN (${IMAGE_SUBQUERY}) img ON b.id = img.root_id`;
-          imgCol = "COALESCE(img.image_count, 0) as image_count";
-          orderBy = "img.image_count DESC";
-          break;
+          extraJoin = `INNER JOIN (${IMAGE_SUBQUERY}) img ON b.id = img.root_id`
+          imgCol = "COALESCE(img.image_count, 0) as image_count"
+          orderBy = "img.image_count DESC"
+          break
         default:
-          queryState.status = "empty";
-          return;
+          queryState.status = "empty"
+          return
       }
 
       const sqlStmt = `
@@ -623,24 +643,24 @@ export function useDocAnalysis(plugin: Plugin) {
         ${extraWhere}
         ORDER BY ${orderBy}
         LIMIT 2000
-      `;
+      `
 
-      const rows = await sql(sqlStmt);
+      const rows = await sql(sqlStmt)
 
       if (!rows || rows.length === 0) {
-        setResults([]);
-        queryState.status = "empty";
-        return;
+        setResults([])
+        queryState.status = "empty"
+        return
       }
 
-      const docs = mapRowsToDocs(rows);
-      setResults(sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder));
-      queryState.status = "success";
+      const docs = mapRowsToDocs(rows)
+      setResults(sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder))
+      queryState.status = "success"
     } catch (error) {
-      console.error("按类别查询文档失败:", error);
-      queryState.errorMessage = (error as Error).message || "查询失败";
-      queryState.status = "error";
-      setResults([]);
+      console.error("按类别查询文档失败:", error)
+      queryState.errorMessage = (error as Error).message || "查询失败"
+      queryState.status = "error"
+      setResults([])
     }
   }
 
@@ -648,21 +668,21 @@ export function useDocAnalysis(plugin: Plugin) {
    * 查询重名文档列表
    */
   async function fetchDuplicateDocs() {
-    queryState.status = "loading";
-    queryState.errorMessage = "";
-    queryState.hasQueried = true;
+    queryState.status = "loading"
+    queryState.errorMessage = ""
+    queryState.hasQueried = true
 
     try {
-      const notebookCondition = buildNotebookCondition();
+      const notebookCondition = buildNotebookCondition()
 
-      const dupTitles = duplicateGroups.value.map((g) => g.title);
+      const dupTitles = duplicateGroups.value.map((g) => g.title)
       if (dupTitles.length === 0) {
-        setResults([]);
-        queryState.status = "empty";
-        return;
+        setResults([])
+        queryState.status = "empty"
+        return
       }
 
-      const titleList = dupTitles.map((t) => `'${t.replace(/'/g, "''")}'`).join(",");
+      const titleList = dupTitles.map((t) => `'${t.replace(/'/g, "''")}'`).join(",")
 
       const sqlStmt = `
         SELECT 
@@ -681,26 +701,26 @@ export function useDocAnalysis(plugin: Plugin) {
         AND b.content IN (${titleList})
         ORDER BY b.content ASC, content_size ASC
         LIMIT 2000
-      `;
+      `
 
-      const rows = await sql(sqlStmt);
+      const rows = await sql(sqlStmt)
 
       if (!rows || rows.length === 0) {
-        setResults([]);
-        queryState.status = "empty";
-        return;
+        setResults([])
+        queryState.status = "empty"
+        return
       }
 
-      const docs = mapRowsToDocs(rows);
-      const sortedDocs = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder);
+      const docs = mapRowsToDocs(rows)
+      const sortedDocs = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder)
 
-      setResults(sortedDocs);
-      queryState.status = "success";
+      setResults(sortedDocs)
+      queryState.status = "success"
     } catch (error) {
-      console.error("查询重名文档失败:", error);
-      queryState.errorMessage = (error as Error).message || "查询失败";
-      queryState.status = "error";
-      setResults([]);
+      console.error("查询重名文档失败:", error)
+      queryState.errorMessage = (error as Error).message || "查询失败"
+      queryState.status = "error"
+      setResults([])
     }
   }
 
@@ -708,36 +728,36 @@ export function useDocAnalysis(plugin: Plugin) {
    * 执行查询 - 按字数和关键词过滤文档列表
    */
   async function queryDocs() {
-    queryState.status = "loading";
-    queryState.errorMessage = "";
-    queryState.hasQueried = true;
+    queryState.status = "loading"
+    queryState.errorMessage = ""
+    queryState.hasQueried = true
 
     try {
-      const notebookCondition = buildNotebookCondition();
-      const needWordCountFilter = filterOptions.wordCountMin > 0 || filterOptions.wordCountMax > 0;
-      let conditions = "";
+      const notebookCondition = buildNotebookCondition()
+      const needWordCountFilter = filterOptions.wordCountMin > 0 || filterOptions.wordCountMax > 0
+      let conditions = ""
 
       if (filterOptions.titleKeyword.trim()) {
-        const keyword = filterOptions.titleKeyword.trim().replace(/'/g, "''");
-        conditions += `AND b.content LIKE '%${keyword}%' `;
+        const keyword = filterOptions.titleKeyword.trim().replace(/'/g, "''")
+        conditions += `AND b.content LIKE '%${keyword}%' `
       }
 
       // 全文内容搜索：查找内容块中包含关键词的文档
       if (filterOptions.contentKeyword.trim()) {
-        const keyword = filterOptions.contentKeyword.trim().replace(/'/g, "''");
+        const keyword = filterOptions.contentKeyword.trim().replace(/'/g, "''")
         conditions += `AND b.id IN (
           SELECT DISTINCT root_id FROM blocks 
           WHERE content LIKE '%${keyword}%' AND type != 'd'
-        ) `;
+        ) `
       }
 
       if (needWordCountFilter) {
         // 需要字数过滤时才 JOIN 子查询
         if (filterOptions.wordCountMin > 0) {
-          conditions += `AND COALESCE(sw.total_word_count, 0) >= ${filterOptions.wordCountMin} `;
+          conditions += `AND COALESCE(sw.total_word_count, 0) >= ${filterOptions.wordCountMin} `
         }
         if (filterOptions.wordCountMax > 0) {
-          conditions += `AND COALESCE(sw.total_word_count, 0) <= ${filterOptions.wordCountMax} `;
+          conditions += `AND COALESCE(sw.total_word_count, 0) <= ${filterOptions.wordCountMax} `
         }
 
         const sqlStmt = `
@@ -757,16 +777,16 @@ export function useDocAnalysis(plugin: Plugin) {
           ${conditions}
           ORDER BY word_count ASC
           LIMIT 2000
-        `;
+        `
 
-        const rows = await sql(sqlStmt);
+        const rows = await sql(sqlStmt)
         if (!rows || rows.length === 0) {
-          setResults([]);
-          queryState.status = "empty";
+          setResults([])
+          queryState.status = "empty"
         } else {
-          const docs = mapRowsToDocs(rows);
-          setResults(sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder));
-          queryState.status = "success";
+          const docs = mapRowsToDocs(rows)
+          setResults(sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder))
+          queryState.status = "success"
         }
       } else {
         // 不需要字数过滤时，轻量查询（不 JOIN 子查询）
@@ -786,26 +806,26 @@ export function useDocAnalysis(plugin: Plugin) {
           ${conditions}
           ORDER BY b.content ASC
           LIMIT 2000
-        `;
+        `
 
-        const rows = await sql(sqlStmt);
+        const rows = await sql(sqlStmt)
         if (!rows || rows.length === 0) {
-          setResults([]);
-          queryState.status = "empty";
+          setResults([])
+          queryState.status = "empty"
         } else {
-          const docs = mapRowsToDocs(rows);
-          setResults(sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder));
-          queryState.status = "success";
+          const docs = mapRowsToDocs(rows)
+          setResults(sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder))
+          queryState.status = "success"
         }
       }
     } catch (error) {
-      console.error("查询文档列表失败:", error);
-      queryState.errorMessage = (error as Error).message || "查询失败";
-      queryState.status = "error";
-      setResults([]);
+      console.error("查询文档列表失败:", error)
+      queryState.errorMessage = (error as Error).message || "查询失败"
+      queryState.status = "error"
+      setResults([])
     }
 
-    await saveOptions();
+    await saveOptions()
   }
 
   /**
@@ -813,31 +833,31 @@ export function useDocAnalysis(plugin: Plugin) {
    */
   function sortDocs(docs: DocInfo[], field: string, order: string): DocInfo[] {
     return [...docs].sort((a, b) => {
-      let compare = 0;
+      let compare = 0
       switch (field) {
         case "title":
-          compare = a.title.localeCompare(b.title, "zh-CN");
-          break;
+          compare = a.title.localeCompare(b.title, "zh-CN")
+          break
         case "notebook":
-          compare = a.notebookName.localeCompare(b.notebookName, "zh-CN");
-          break;
+          compare = a.notebookName.localeCompare(b.notebookName, "zh-CN")
+          break
         case "updated":
-          compare = (a.updated || "").localeCompare(b.updated || "");
-          break;
+          compare = (a.updated || "").localeCompare(b.updated || "")
+          break
         case "depth":
-          compare = (a.depth || 0) - (b.depth || 0);
-          break;
+          compare = (a.depth || 0) - (b.depth || 0)
+          break
         case "refCount":
-          compare = (a.refCount || 0) - (b.refCount || 0);
-          break;
+          compare = (a.refCount || 0) - (b.refCount || 0)
+          break
         case "imageCount":
-          compare = (a.imageCount || 0) - (b.imageCount || 0);
-          break;
+          compare = (a.imageCount || 0) - (b.imageCount || 0)
+          break
         default:
-          compare = a.wordCount - b.wordCount;
+          compare = a.wordCount - b.wordCount
       }
-      return order === "desc" ? -compare : compare;
-    });
+      return order === "desc" ? -compare : compare
+    })
   }
 
   /**
@@ -845,7 +865,7 @@ export function useDocAnalysis(plugin: Plugin) {
    */
   function openDoc(docId: string) {
     if (docId) {
-      window.open(`siyuan://blocks/${docId}`);
+      window.open(`siyuan://blocks/${docId}`)
     }
   }
 
@@ -853,17 +873,17 @@ export function useDocAnalysis(plugin: Plugin) {
    * 更新排序
    */
   function updateSort(field: string, order: string) {
-    filterOptions.sortField = field as any;
-    filterOptions.sortOrder = order as any;
+    filterOptions.sortField = field as any
+    filterOptions.sortOrder = order as any
     if (queryState.results.length > 0) {
-      setResults(sortDocs(queryState.results, field, order));
+      setResults(sortDocs(queryState.results, field, order))
     }
-    saveOptions();
+    saveOptions()
   }
 
   /** 清空查询结果 */
   function clearResults() {
-    setResults([]);
+    setResults([])
   }
 
   return {
@@ -884,5 +904,5 @@ export function useDocAnalysis(plugin: Plugin) {
     updateSort,
     saveOptions,
     clearResults,
-  };
+  }
 }

@@ -1,64 +1,64 @@
-export * from "./storage";
+export * from "./storage"
 
 export interface PageLockI18n {
-  lockPage?: string;
-  unlockPage?: string;
-  pageLocked?: string;
-  pleaseUnlock?: string;
-  passwordPlaceholder?: string;
-  confirmPasswordPlaceholder?: string;
-  oldPasswordPlaceholder?: string;
-  newPasswordPlaceholder?: string;
-  setPassword?: string;
-  enterPassword?: string;
-  updatePassword?: string;
-  setPasswordHint?: string;
-  unlockHint?: string;
-  updatePasswordHint?: string;
-  passwordEmpty?: string;
-  passwordMismatch?: string;
-  passwordError?: string;
-  oldPasswordError?: string;
-  lockSuccess?: string;
-  unlockSuccess?: string;
-  passwordSetSuccess?: string;
-  passwordUpdateSuccess?: string;
-  pleaseSetPasswordFirst?: string;
-  confirm?: string;
-  cancel?: string;
+  lockPage?: string
+  unlockPage?: string
+  pageLocked?: string
+  pleaseUnlock?: string
+  passwordPlaceholder?: string
+  confirmPasswordPlaceholder?: string
+  oldPasswordPlaceholder?: string
+  newPasswordPlaceholder?: string
+  setPassword?: string
+  enterPassword?: string
+  updatePassword?: string
+  setPasswordHint?: string
+  unlockHint?: string
+  updatePasswordHint?: string
+  passwordEmpty?: string
+  passwordMismatch?: string
+  passwordError?: string
+  oldPasswordError?: string
+  lockSuccess?: string
+  unlockSuccess?: string
+  passwordSetSuccess?: string
+  passwordUpdateSuccess?: string
+  pleaseSetPasswordFirst?: string
+  confirm?: string
+  cancel?: string
 }
 
 export interface LockDialogProps {
-  visible: boolean;
-  mode: "lock" | "unlock" | "update";
-  i18n: PageLockI18n;
+  visible: boolean
+  mode: "lock" | "unlock" | "update"
+  i18n: PageLockI18n
 }
 
 export interface LockDialogEmits {
-  (e: "update:visible", value: boolean): void;
+  (e: "update:visible", value: boolean): void
   (
     e: "confirm",
     password: string,
     confirmPassword?: string,
     oldPassword?: string,
-  ): void;
-  (e: "close"): void;
+  ): void
+  (e: "close"): void
 }
 
 export interface PageLockOptions {
-  cacheExpireTime?: number;
-  maxCacheSize?: number;
-  cacheCleanupInterval?: number;
+  cacheExpireTime?: number
+  maxCacheSize?: number
+  cacheCleanupInterval?: number
 }
 
 export const DEFAULT_OPTIONS: Required<PageLockOptions> = {
   cacheExpireTime: 60000,
   maxCacheSize: 20,
   cacheCleanupInterval: 30000,
-};
+}
 
-export type ProtyleLike = {
-  block?: { rootID: string };
-  element?: Element;
-  wysiwyg?: { element?: Element };
-};
+export interface ProtyleLike {
+  block?: { rootID: string }
+  element?: Element
+  wysiwyg?: { element?: Element }
+}

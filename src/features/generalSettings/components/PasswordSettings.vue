@@ -6,7 +6,10 @@
 
     <div class="section-content">
       <!-- 密码状态显示 -->
-      <div class="status-card" :class="{ 'has-password': hasPassword }">
+      <div
+        class="status-card"
+        :class="{ 'has-password': hasPassword }"
+      >
         <span class="status-icon">{{ hasPassword ? '✓' : '⚠' }}</span>
         <span class="status-text">
           {{ hasPassword ? (i18n.passwordSet || '密码已设置') : (i18n.passwordNotSet || '尚未设置密码') }}
@@ -20,7 +23,10 @@
       </div>
 
       <!-- 设置/更新密码按钮 -->
-      <button class="action-btn" @click="openPasswordDialog">
+      <button
+        class="action-btn"
+        @click="openPasswordDialog"
+      >
         <span class="btn-icon">🔑</span>
         <span class="btn-text">
           {{ hasPassword ? (i18n.updatePassword || '更新密码') : (i18n.setPassword || '设置密码') }}
@@ -32,57 +38,61 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
-import { usePlugin } from "@/main";
-import { emitCustomEvent } from "@/utils/eventBus";
-import type PluginSample from "@/index";
+import type PluginSample from "@/index"
+import {
+  onMounted,
+  onUnmounted,
+  ref,
+} from "vue"
+import { usePlugin } from "@/main"
+import { emitCustomEvent } from "@/utils/eventBus"
+
+import { GeneralSettingsStorage } from "../types/storage"
 
 interface Props {
-  i18n?: any;
+  i18n?: any
 }
 
 const props = withDefaults(defineProps<Props>(), {
   i18n: () => ({}),
-});
+})
 
-const plugin = usePlugin() as PluginSample;
-const hasPassword = ref(false);
+const plugin = usePlugin() as PluginSample
+const hasPassword = ref(false)
 
-import { GeneralSettingsStorage } from "../types/storage";
-
-const gsStorage = new GeneralSettingsStorage(plugin);
+const gsStorage = new GeneralSettingsStorage(plugin)
 
 // 检查是否已设置密码
 async function checkPassword() {
   try {
-    const password = await gsStorage.password.load();
-    hasPassword.value = !!password;
+    const password = await gsStorage.password.load()
+    hasPassword.value = !!password
   } catch (error) {
-    console.error("检查密码失败:", error);
-    hasPassword.value = false;
+    console.error("检查密码失败:", error)
+    hasPassword.value = false
   }
 }
 
 // 打开密码设置对话框
 function openPasswordDialog() {
-  emitCustomEvent("open-password-dialog", { hasPassword: hasPassword.value });
+  emitCustomEvent("open-password-dialog", { hasPassword: hasPassword.value })
 }
 
-const handlePasswordUpdated = () => checkPassword();
+const handlePasswordUpdated = () => checkPassword()
 
 onMounted(() => {
-  checkPassword();
-  window.addEventListener("password-updated", handlePasswordUpdated);
-});
+  checkPassword()
+  window.addEventListener("password-updated", handlePasswordUpdated)
+})
 
 onUnmounted(() => {
-  window.removeEventListener("password-updated", handlePasswordUpdated);
-});
+  window.removeEventListener("password-updated", handlePasswordUpdated)
+})
 
 defineExpose({
   checkPassword,
   openPasswordDialog,
-});
+})
 </script>
 
 <style scoped>

@@ -39,7 +39,9 @@ import IconWrapper from '@/components/IconWrapper.vue'
 ```vue
 <!-- 使用配置中的图标，保持默认样式 -->
 <IconWrapper name="star" />
+
 <IconWrapper name="settings" />
+
 <IconWrapper name="image" />
 ```
 
@@ -48,10 +50,12 @@ import IconWrapper from '@/components/IconWrapper.vue'
 ```vue
 <!-- 数字自动转换为 px -->
 <IconWrapper name="image" :size="20" />
+
 <IconWrapper name="trash" :size="16" />
 
 <!-- 字符串直接使用 -->
 <IconWrapper name="image" size="2rem" />
+
 <IconWrapper name="image" size="24px" />
 ```
 
@@ -60,6 +64,7 @@ import IconWrapper from '@/components/IconWrapper.vue'
 ```vue
 <!-- 覆盖配置中的颜色 -->
 <IconWrapper name="star" color="#fbbf24" />
+
 <IconWrapper name="error" color="red" />
 ```
 
@@ -79,7 +84,10 @@ import IconWrapper from '@/components/IconWrapper.vue'
 ```vue
 <template>
   <button @click="toggleFavorite">
-    <IconWrapper :name="isFavorited ? 'star' : 'starOutline'" :size="16" />
+    <IconWrapper
+      :name="isFavorited ? 'star' : 'starOutline'"
+      :size="16"
+    />
   </button>
 </template>
 
@@ -202,8 +210,8 @@ export const FEATURE_ICONS = {
 
   // 添加新功能图标
   myNewFeature: {
-    icon: 'mdi:icon-name',  // Iconify 格式
-    color: '#3b82f6'        // 可选颜色
+    icon: 'mdi:icon-name', // Iconify 格式
+    color: '#3b82f6', // 可选颜色
   },
 } as const
 

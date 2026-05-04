@@ -1,28 +1,29 @@
-import { Plugin } from "siyuan";
-import { createApp, type App as VueApp } from "vue";
-import Skills from "../components/SkillsModal.vue";
-import type { FloatingTool } from "../types";
+import type { App as VueApp } from "vue"
+import type { FloatingTool } from "../types"
+import { Plugin } from "siyuan"
+import { createApp } from "vue"
+import Skills from "../components/SkillsModal.vue"
 
-let vueApp: VueApp | null = null;
-let container: HTMLElement | null = null;
+let vueApp: VueApp | null = null
+let container: HTMLElement | null = null
 
 const CONTAINER_SELECTORS = [
   "#workspace",
   "body",
   ".layout__center",
   ".fn__flex-1",
-];
+]
 
 function findContainer(): HTMLElement {
   for (const selector of CONTAINER_SELECTORS) {
-    const target = document.querySelector(selector);
-    if (target) return target as HTMLElement;
+    const target = document.querySelector(selector)
+    if (target) return target as HTMLElement
   }
-  return document.body;
+  return document.body
 }
 
 function getI18nMap(plugin: Plugin) {
-  const m = (plugin.i18n?.skills as unknown as Record<string, any>) || {};
+  const m = (plugin.i18n?.skills as unknown as Record<string, any>) || {}
   return {
     skillsTitle: m.modal?.title || "技能库",
     close: m.modal?.close || "关闭",
@@ -49,56 +50,56 @@ function getI18nMap(plugin: Plugin) {
     manageCategories: m.modal?.manageCategories || "管理分类",
     add: m.modal?.add || "添加",
     categoryName: m.modal?.categoryName || "分类名称",
-  };
+  }
 }
 
 function closeSkillsModal() {
   if (container) {
-    container.remove();
-    vueApp?.unmount();
-    vueApp = null;
-    container = null;
+    container.remove()
+    vueApp?.unmount()
+    vueApp = null
+    container = null
   }
 }
 
 function showSkillsModal(plugin: Plugin) {
   if (container) {
-    container.remove();
-    vueApp?.unmount();
-    vueApp = null;
-    container = null;
+    container.remove()
+    vueApp?.unmount()
+    vueApp = null
+    container = null
   }
 
-  container = document.createElement("div");
-  container.id = "skills-modal-container";
-  findContainer().appendChild(container);
+  container = document.createElement("div")
+  container.id = "skills-modal-container"
+  findContainer().appendChild(container)
 
   vueApp = createApp(Skills, {
     i18n: getI18nMap(plugin),
     plugin,
-  });
+  })
 
   try {
-    vueApp.mount(container);
+    vueApp.mount(container)
   } catch (error) {
-    console.error("Failed to mount skills modal:", error);
+    console.error("Failed to mount skills modal:", error)
   }
 
   const handleEscape = (e: KeyboardEvent) => {
-    if (e.key === "Escape" && container) closeSkillsModal();
-  };
+    if (e.key === "Escape" && container) closeSkillsModal()
+  }
   document.addEventListener("keydown", handleEscape);
 
   (plugin as any).__skillsModal = {
     destroy: () => {
-      document.removeEventListener("keydown", handleEscape);
-      closeSkillsModal();
+      document.removeEventListener("keydown", handleEscape)
+      closeSkillsModal()
     },
-  };
+  }
 }
 
 export function createSkillsTool(plugin: Plugin): FloatingTool {
-  const m = (plugin.i18n?.skills as unknown as Record<string, any>) || {};
+  const m = (plugin.i18n?.skills as unknown as Record<string, any>) || {}
   return {
     id: "skills",
     label: m.label || "Skills",
@@ -106,9 +107,9 @@ export function createSkillsTool(plugin: Plugin): FloatingTool {
     icon: `<path fill="currentColor" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/><circle cx="12" cy="12" r="3.2"/>`,
     bgColor: "#667eea",
     action: () => showSkillsModal(plugin),
-  };
+  }
 }
 
 export function skillsTool(plugin: Plugin): FloatingTool {
-  return createSkillsTool(plugin);
+  return createSkillsTool(plugin)
 }

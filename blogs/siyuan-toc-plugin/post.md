@@ -209,8 +209,9 @@ const normalizedNew = content.replace(/\r\n/g, '\n').trim()
 
 if (normalizedExisting === normalizedNew) {
   showMessage('内容无变化,无需更新', 2000, 'info')
-  return
+
 }
+
 ```
 
 **为什么需要规范化？**
@@ -228,8 +229,8 @@ if (normalizedExisting === normalizedNew) {
 
 ```typescript
 for (const heading of headings) {
-  const level = parseInt(heading.subtype.replace('h', ''))
-  const indent = '  '.repeat(level - 1)  // 每级缩进 2 个空格
+  const level = Number.parseInt(heading.subtype.replace('h', ''))
+  const indent = '  '.repeat(level - 1) // 每级缩进 2 个空格
   const headingContent = heading.content.replace(/<[^>]*>/g, '')
   content += `${indent}- ((${heading.id} "${headingContent}"))\n`
 }
@@ -324,19 +325,19 @@ function registerCommands(plugin: Plugin) {
   plugin.addCommand({
     langKey: 'insertIndex',
     hotkey: '⌃⌥I',
-    callback: () => insertIndex(plugin)
+    callback: () => insertIndex(plugin),
   })
 
   plugin.addCommand({
     langKey: 'insertSubDocsWithOutline',
     hotkey: '⌃⌥O',
-    callback: () => insertSubDocsWithOutline(plugin)
+    callback: () => insertSubDocsWithOutline(plugin),
   })
 
   plugin.addCommand({
     langKey: 'insertSubDocsRef',
     hotkey: '⌃⌥R',
-    callback: () => insertSubDocsRef(plugin)
+    callback: () => insertSubDocsRef(plugin),
   })
 }
 ```
@@ -369,7 +370,7 @@ if (this.settings.enableTableOfContents) {
 ```typescript
 function escapeSqlString(str: string): string {
   if (!str) return ''
-  return str.replace(/'/g, "''")  // SQL 单引号转义
+  return str.replace(/'/g, "''") // SQL 单引号转义
 }
 ```
 
@@ -450,7 +451,7 @@ async function getCurrentBlockIdWithRetry(retries = 3): Promise<string | null> {
   for (let i = 0; i < retries; i++) {
     const blockId = getCurrentBlockId()
     if (blockId) return blockId
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await new Promise((resolve) => setTimeout(resolve, 100))
   }
   return null
 }
@@ -503,11 +504,11 @@ pnpm install
 
 ```typescript
 export interface PluginSettings {
-  enableTableOfContents: boolean  // 默认为 true
+  enableTableOfContents: boolean // 默认为 true
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
-  enableTableOfContents: true
+  enableTableOfContents: true,
 }
 ```
 

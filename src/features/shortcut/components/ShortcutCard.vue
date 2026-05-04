@@ -4,14 +4,20 @@
     size="small"
     :class="{
       'is-favorite': isFavorite,
-      'is-recent': isRecent
+      'is-recent': isRecent,
     }"
   >
     <div class="card-header">
       <div class="shortcut-name">
         <span class="name-text">{{ shortcut.name }}</span>
-        <span v-if="shortcut.platform" class="platform-badge">{{ shortcut.platform }}</span>
-        <span v-if="showToolBadge" class="tool-badge">{{ categoryLabel }}</span>
+        <span
+          v-if="shortcut.platform"
+          class="platform-badge"
+        >{{ shortcut.platform }}</span>
+        <span
+          v-if="showToolBadge"
+          class="tool-badge"
+        >{{ categoryLabel }}</span>
       </div>
       <div class="shortcut-actions">
         <Button
@@ -47,36 +53,53 @@
         />
       </div>
     </div>
-    <div class="shortcut-keys" :title="copyTitle" @click="$emit('copy', shortcut)">
-      <span v-for="key in keyParts" :key="key" class="key-badge">
+    <div
+      class="shortcut-keys"
+      :title="copyTitle"
+      @click="$emit('copy', shortcut)"
+    >
+      <span
+        v-for="key in keyParts"
+        :key="key"
+        class="key-badge"
+      >
         {{ key }}
       </span>
     </div>
-    <div class="shortcut-desc">{{ shortcut.description }}</div>
-    <div class="shortcut-path" :title="pathText">
-      <svg class="path-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M6.5 1L1 6l5.5 5L8 9.5 4 6l4-3.5L6.5 1zm3 0L8 2.5 12 6l-4 3.5L9.5 11 15 6 9.5 1zM1 13h14v2H1v-2z"/></svg>
+    <div class="shortcut-desc">
+      {{ shortcut.description }}
+    </div>
+    <div
+      class="shortcut-path"
+      :title="pathText"
+    >
+      <svg
+        class="path-icon"
+        viewBox="0 0 16 16"
+        fill="currentColor"
+      ><path d="M6.5 1L1 6l5.5 5L8 9.5 4 6l4-3.5L6.5 1zm3 0L8 2.5 12 6l-4 3.5L9.5 11 15 6 9.5 1zM1 13h14v2H1v-2z" /></svg>
       <span class="path-text">{{ pathText }}</span>
     </div>
   </Card>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-import Card from "@/components/Card.vue";
-import Button from "@/components/Button.vue";
-import type { ShortcutInfo } from "../types";
+import type { ShortcutInfo } from "../types"
+import { computed } from "vue"
+import Button from "@/components/Button.vue"
+import Card from "@/components/Card.vue"
 
 interface Props {
-  shortcut: ShortcutInfo;
-  isFavorite: boolean;
-  isRecent: boolean;
-  categoryLabel: string;
-  showToolBadge: boolean;
-  favoriteTitle?: string;
-  unFavoriteTitle?: string;
-  copyTitle?: string;
-  editTitle?: string;
-  deleteTitle?: string;
+  shortcut: ShortcutInfo
+  isFavorite: boolean
+  isRecent: boolean
+  categoryLabel: string
+  showToolBadge: boolean
+  favoriteTitle?: string
+  unFavoriteTitle?: string
+  copyTitle?: string
+  editTitle?: string
+  deleteTitle?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -85,26 +108,26 @@ const props = withDefaults(defineProps<Props>(), {
   copyTitle: "复制",
   editTitle: "编辑",
   deleteTitle: "删除",
-});
+})
 
 defineEmits<{
-  toggleFavorite: [id: string];
-  copy: [shortcut: ShortcutInfo];
-  edit: [shortcut: ShortcutInfo];
-  delete: [id: string];
-}>();
+  toggleFavorite: [id: string]
+  copy: [shortcut: ShortcutInfo]
+  edit: [shortcut: ShortcutInfo]
+  delete: [id: string]
+}>()
 
 const keyParts = computed(() => {
-  return props.shortcut.keys.split("+").map((k) => k.trim());
-});
+  return props.shortcut.keys.split("+").map((k) => k.trim())
+})
 
 const pathText = computed(() => {
-  const parts = [props.categoryLabel];
+  const parts = [props.categoryLabel]
   if (props.shortcut.group) {
-    parts.push(props.shortcut.group);
+    parts.push(props.shortcut.group)
   }
-  return parts.join(" / ");
-});
+  return parts.join(" / ")
+})
 </script>
 
 <style scoped lang="scss">

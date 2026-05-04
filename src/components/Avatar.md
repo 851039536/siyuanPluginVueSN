@@ -7,14 +7,17 @@
 ### 图片头像
 
 ```vue
+<template>
+  <!-- 基础图片头像 -->
+  <Avatar
+    src="https://example.com/avatar.jpg"
+    alt="User Avatar"
+  />
+</template>
+
 <script setup lang="ts">
 import Avatar from '@/components/Avatar.vue'
 </script>
-
-<template>
-  <!-- 基础图片头像 -->
-  <Avatar src="https://example.com/avatar.jpg" alt="User Avatar" />
-</template>
 ```
 
 ### 文本头像
@@ -31,15 +34,15 @@ import Avatar from '@/components/Avatar.vue'
 ### 图标头像
 
 ```vue
-<script setup lang="ts">
-import Avatar from '@/components/Avatar.vue'
-</script>
-
 <template>
   <!-- 使用图标 -->
   <Avatar icon="iconSettings" />
   <Avatar icon="iconClose" />
 </template>
+
+<script setup lang="ts">
+import Avatar from '@/components/Avatar.vue'
+</script>
 ```
 
 ### 默认插槽
@@ -59,11 +62,26 @@ import Avatar from '@/components/Avatar.vue'
 
 ```vue
 <template>
-  <Avatar size="xsmall" text="AB" />
-  <Avatar size="small" text="AB" />
-  <Avatar size="medium" text="AB" />
-  <Avatar size="large" text="AB" />
-  <Avatar size="xlarge" text="AB" />
+  <Avatar
+    size="xsmall"
+    text="AB"
+  />
+  <Avatar
+    size="small"
+    text="AB"
+  />
+  <Avatar
+    size="medium"
+    text="AB"
+  />
+  <Avatar
+    size="large"
+    text="AB"
+  />
+  <Avatar
+    size="xlarge"
+    text="AB"
+  />
 </template>
 ```
 
@@ -73,8 +91,14 @@ import Avatar from '@/components/Avatar.vue'
 
 ```vue
 <template>
-  <Avatar shape="circle" src="avatar.jpg" />
-  <Avatar shape="square" src="avatar.jpg" />
+  <Avatar
+    shape="circle"
+    src="avatar.jpg"
+  />
+  <Avatar
+    shape="square"
+    src="avatar.jpg"
+  />
 </template>
 ```
 
@@ -83,8 +107,14 @@ import Avatar from '@/components/Avatar.vue'
 ```vue
 <template>
   <!-- 自定义像素尺寸 -->
-  <Avatar :customSize="60" text="AB" />
-  <Avatar :customSize="80" text="AB" />
+  <Avatar
+    :customSize="60"
+    text="AB"
+  />
+  <Avatar
+    :customSize="80"
+    text="AB"
+  />
 </template>
 ```
 
@@ -93,6 +123,14 @@ import Avatar from '@/components/Avatar.vue'
 ### 可点击
 
 ```vue
+<template>
+  <Avatar
+    clickable
+    text="AB"
+    @click="handleClick"
+  />
+</template>
+
 <script setup lang="ts">
 import Avatar from '@/components/Avatar.vue'
 
@@ -100,17 +138,16 @@ const handleClick = () => {
   console.log('Avatar clicked')
 }
 </script>
-
-<template>
-  <Avatar clickable text="AB" @click="handleClick" />
-</template>
 ```
 
 ### 激活状态
 
 ```vue
 <template>
-  <Avatar active text="AB" />
+  <Avatar
+    active
+    text="AB"
+  />
 </template>
 ```
 
@@ -118,7 +155,10 @@ const handleClick = () => {
 
 ```vue
 <template>
-  <Avatar disabled text="AB" />
+  <Avatar
+    disabled
+    text="AB"
+  />
 </template>
 ```
 
@@ -127,9 +167,21 @@ const handleClick = () => {
 ```vue
 <template>
   <!-- 自定义背景色 -->
-  <Avatar color="#3b82f6" text="AB" textColor="#ffffff" />
-  <Avatar color="#10b981" text="CD" textColor="#ffffff" />
-  <Avatar color="#f59e0b" text="EF" textColor="#ffffff" />
+  <Avatar
+    color="#3b82f6"
+    text="AB"
+    textColor="#ffffff"
+  />
+  <Avatar
+    color="#10b981"
+    text="CD"
+    textColor="#ffffff"
+  />
+  <Avatar
+    color="#f59e0b"
+    text="EF"
+    textColor="#ffffff"
+  />
 </template>
 ```
 
@@ -138,13 +190,22 @@ const handleClick = () => {
 ```vue
 <template>
   <!-- 默认显示最后 2 个字符 -->
-  <Avatar text="John Doe" :maxTextLength="2" />
+  <Avatar
+    text="John Doe"
+    :maxTextLength="2"
+  />
 
   <!-- 显示最后 1 个字符 -->
-  <Avatar text="John Doe" :maxTextLength="1" />
+  <Avatar
+    text="John Doe"
+    :maxTextLength="1"
+  />
 
   <!-- 显示最后 3 个字符 -->
-  <Avatar text="John Doe" :maxTextLength="3" />
+  <Avatar
+    text="John Doe"
+    :maxTextLength="3"
+  />
 </template>
 ```
 
@@ -153,19 +214,13 @@ const handleClick = () => {
 ### 用户列表
 
 ```vue
-<script setup lang="ts">
-import Avatar from '@/components/Avatar.vue'
-
-const users = [
-  { name: 'Alice', avatar: 'https://example.com/alice.jpg' },
-  { name: 'Bob', avatar: null },
-  { name: 'Charlie', avatar: null }
-]
-</script>
-
 <template>
   <div class="user-list">
-    <div v-for="user in users" :key="user.name" class="user-item">
+    <div
+      v-for="user in users"
+      :key="user.name"
+      class="user-item"
+    >
       <Avatar
         v-if="user.avatar"
         :src="user.avatar"
@@ -181,6 +236,25 @@ const users = [
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import Avatar from '@/components/Avatar.vue'
+
+const users = [
+  {
+    name: 'Alice',
+    avatar: 'https://example.com/alice.jpg',
+  },
+  {
+    name: 'Bob',
+    avatar: null,
+  },
+  {
+    name: 'Charlie',
+    avatar: null,
+  },
+]
+</script>
 
 <style scoped>
 .user-list {
@@ -199,17 +273,6 @@ const users = [
 ### 头像组
 
 ```vue
-<script setup lang="ts">
-import Avatar from '@/components/Avatar.vue'
-
-const avatars = [
-  { src: 'avatar1.jpg', alt: 'User 1' },
-  { src: 'avatar2.jpg', alt: 'User 2' },
-  { src: 'avatar3.jpg', alt: 'User 3' },
-  { text: '+5' }
-]
-</script>
-
 <template>
   <div class="avatar-group">
     <Avatar
@@ -221,6 +284,26 @@ const avatars = [
     />
   </div>
 </template>
+
+<script setup lang="ts">
+import Avatar from '@/components/Avatar.vue'
+
+const avatars = [
+  {
+    src: 'avatar1.jpg',
+    alt: 'User 1',
+  },
+  {
+    src: 'avatar2.jpg',
+    alt: 'User 2',
+  },
+  {
+    src: 'avatar3.jpg',
+    alt: 'User 3',
+  },
+  { text: '+5' },
+]
+</script>
 
 <style scoped>
 .avatar-group {

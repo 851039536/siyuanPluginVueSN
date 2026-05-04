@@ -141,7 +141,7 @@ export class WebDAVService {
             size = Number.parseInt(contentLength.textContent || "0", 10)
           }
           if (lastModifiedEl) {
-            lastModified = lastModified.textContent || ""
+            lastModified = lastModifiedEl.textContent || ""
           }
           if (resourceType) {
             // 检查是否是 collection（目录）

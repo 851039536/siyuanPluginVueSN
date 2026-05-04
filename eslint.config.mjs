@@ -17,6 +17,7 @@ export default antfu(
     ignores: [
       'dist',
       'node_modules',
+      '.agents',
     ],
   },
   {
@@ -65,7 +66,7 @@ export default antfu(
       'style/padded-blocks': 'off',
       'style/quotes': 'off',
 
-      'ts/consistent-type-imports': 'error',
+      'ts/consistent-type-imports': 'off',
       'ts/explicit-function-return-type': ['warn', {
         allowExpressions: true,
         allowTypedFunctionExpressions: true,
@@ -124,7 +125,6 @@ export default antfu(
       }],
       'vue/object-property-newline': ['error', {
         allowAllPropertiesOnSameLine: false,
-        allowMultiplePropertiesPerLine: true,
       }],
     },
   },

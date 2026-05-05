@@ -86,7 +86,10 @@ export class Statistics {
    * 初始化统计模块
    */
   async init() {
-    // 加载保存的更新间隔
+    // 先同步注册 Dock，确保侧边栏图标在 onload 阶段就出现
+    this.registerDock()
+
+    // 异步加载保存的更新间隔
     try {
       const settings = await this.storage.loadSettings()
       if (settings.statisticsUpdateInterval) {
@@ -98,9 +101,6 @@ export class Statistics {
 
     // 启动定时任务
     this.startUpdateTimer()
-
-    // 注册Dock
-    this.registerDock()
 
     // 监听超级面板打开统计面板事件
     this.bindEvents()

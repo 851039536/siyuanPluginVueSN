@@ -1,4 +1,5 @@
 import type { PluginSettings } from "@/config/settings"
+import { DEFAULT_SETTINGS } from "@/config/settings"
 
 import {
   getFrontend,
@@ -76,7 +77,7 @@ export default class PluginSample extends Plugin {
   // 插件配置
   public settings: PluginSettings
 
-  async onload() {
+  onload() {
     const frontEnd = getFrontend()
     this.platform = frontEnd as SyFrontendTypes
     this.isMobile = frontEnd === "mobile" || frontEnd === "browser-mobile"
@@ -93,16 +94,25 @@ export default class PluginSample extends Plugin {
       this.isElectron = false
     }
 
-    // 加载配置
-    this.settings = await loadSettings(this)
-
-    // 注册功能模块
-    await this.registerFeatures()
+    // 关键：先用默认配置同步注册所有 Dock，
+    // 确保 addDock() 在 onload 同步阶段完成（思源框架不等待异步 onload）
+    this.settings = { ...DEFAULT_SETTINGS }
+    this.registerFeatures()
 
     // 初始化斜杠命令
     initCommands(this)
 
     init(this)
+
+    // 异步加载真实配置并更新
+    this.loadAndApplySettings()
+  }
+
+  /**
+   * 异步加载真实配置，覆盖默认值
+   */
+  private async loadAndApplySettings() {
+    this.settings = await loadSettings(this)
   }
 
   onunload() {
@@ -134,9 +144,9 @@ export default class PluginSample extends Plugin {
   }
 
   /**
-   * 注册所有功能模块
+   * 注册所有功能模块（必须同步调用，addDock 需在 onload 同步阶段完成）
    */
-  private async registerFeatures() {
+  private registerFeatures() {
     // 注册超级面板（统一入口，始终启用）
     registerSuperPanel(this)
 
@@ -160,9 +170,9 @@ export default class PluginSample extends Plugin {
       registerDocNavigation(this)
     }
 
-    // 注册快捷键模块
+    // 注册快捷键模块（addDock 已调整为同步优先，异步部分在后台完成）
     if (this.settings.enableShortcuts) {
-      await registerShortcut(this)
+      registerShortcut(this)
     }
 
     // 注册单词查询功能
@@ -199,9 +209,9 @@ export default class PluginSample extends Plugin {
       registerStatistics(this)
     }
 
-    // 注册内容加密功能
+    // 注册内容加密功能（addDock 不受异步影响，后台初始化即可）
     if (this.settings.enableEncryption) {
-      await registerEncryption(this)
+      registerEncryption(this)
     }
     // 注册视频播放功能
     if (this.settings.enableVideo) {

@@ -21,7 +21,10 @@ import { ShortcutStorage } from "./types/storage"
  * 注册快捷键模块
  */
 export async function registerShortcut(plugin: Plugin) {
-  // 初始化快捷键管理器
+  // 先同步注册 Dock，确保侧边栏图标在 onload 阶段就出现
+  addShortcutDock(plugin)
+
+  // 异步初始化快捷键数据
   const manager = getShortcutManager()
 
   // 添加思源笔记常用快捷键
@@ -49,9 +52,6 @@ export async function registerShortcut(plugin: Plugin) {
   manager.setSaveCallback(async (shortcuts: ShortcutInfo[]) => {
     await new ShortcutStorage(plugin).saveCustomShortcuts(shortcuts)
   })
-
-  // 添加右侧边栏 Dock
-  addShortcutDock(plugin)
 }
 
 /**

@@ -113,6 +113,14 @@ export default class PluginSample extends Plugin {
    */
   private async loadAndApplySettings() {
     this.settings = await loadSettings(this)
+    // 根据真实配置同步紧凑模式 CSS 类
+    // （init() 时基于 DEFAULT_SETTINGS.compactMode=true 已添加，
+    //   这里需要按真实配置修正）
+    if (this.settings.compactMode) {
+      document.documentElement.classList.add("siyuan-compact-mode")
+    } else {
+      document.documentElement.classList.remove("siyuan-compact-mode")
+    }
   }
 
   onunload() {

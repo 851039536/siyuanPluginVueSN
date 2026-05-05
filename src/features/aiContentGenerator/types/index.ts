@@ -152,7 +152,7 @@ ${options.userInput}`
   }
 
   /**
-   * 智能体问答：发送多轮对话消息
+   * 技能问答：发送多轮对话消息
    * @param messages 完整的对话消息数组（包含 system prompt 和历史记录）
    * @param options 调用选项（temperature, maxTokens, signal, onChunk）
    */
@@ -190,4 +190,4 @@ ${options.userInput}`
 }
 
 // 重新导出类型，保持向后兼容
-export type { GenerateOptions, ChatOptions } from "@/types/ai"
+

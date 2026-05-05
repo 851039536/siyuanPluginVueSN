@@ -237,7 +237,7 @@ const startNewConversation = () => {
 const renderMessage = (content: string): string => {
   if (!content) return ""
   try {
-    return marked.parse(content, { breaks: true }) as string
+    return marked.parse(content) as string
   } catch {
     return `<pre>${content}</pre>`
   }

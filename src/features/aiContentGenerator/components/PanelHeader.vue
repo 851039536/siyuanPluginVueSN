@@ -48,7 +48,7 @@ interface Props {
 withDefaults(defineProps<Props>(), {
   title: "信息生成",
   generatorTitle: "生成器",
-  chatTitle: "智能体问答",
+  chatTitle: "技能问答",
 })
 
 defineEmits<{

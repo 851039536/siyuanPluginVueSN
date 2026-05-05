@@ -59,7 +59,7 @@ export interface SavedPrompt {
   createdAt: number
 }
 
-// ============ 智能体问答相关类型 ============
+// ============ 技能问答相关类型 ============
 
 /** 聊天消息 */
 export interface ChatMessage {
@@ -67,28 +67,6 @@ export interface ChatMessage {
   content: string
   timestamp: number
   isStreaming?: boolean // 正在流式输出中的消息
-}
-
-/** 智能体角色定义 */
-export interface AgentRole {
-  id: string
-  name: string
-  avatar: string // svg icon name
-  description: string
-  systemPrompt: string
-  temperature: number
-  maxTokens: number
-  greeting: string // 首次对话欢迎语
-}
-
-/** 对话记录 */
-export interface Conversation {
-  id: string
-  title: string
-  agentId: string
-  messages: ChatMessage[]
-  createdAt: number
-  updatedAt: number
 }
 
 /** 聊天选项（用于 AIContentGenerator.sendChatMessage） */

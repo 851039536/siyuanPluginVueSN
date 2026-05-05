@@ -482,6 +482,102 @@ export async function callAIStream(
 }
 
 /**
+ * 多轮对话 AI API 调用（接收完整 messages 数组）
+ * 适合智能体问答等需要传递对话历史的场景
+ */
+async function callChatStream(
+  messages: Array<{ role: string, content: string }>,
+  config: AiApiConfig,
+  onChunk: (chunk: string) => void,
+  options?: Omit<AiCallOptions, "onChunk" | "systemPrompt">,
+): Promise<string>
+async function callChatStream(
+  messages: Array<{ role: string, content: string }>,
+  config: AiApiConfig,
+  onChunk?: undefined,
+  options?: Omit<AiCallOptions, "onChunk" | "systemPrompt">,
+): Promise<string>
+async function callChatStream(
+  messages: Array<{ role: string, content: string }>,
+  config: AiApiConfig,
+  onChunk?: ((chunk: string) => void) | undefined,
+  options?: Omit<AiCallOptions, "onChunk" | "systemPrompt">,
+): Promise<string> {
+  const providerConfig = API_PROVIDERS[config.provider]
+  if (!providerConfig) {
+    throw new Error(`不支持的API供应商: ${config.provider}`)
+  }
+
+  const apiUrl = getApiUrl(config, providerConfig)
+
+  if (!config.apiKey) {
+    throw new Error("请先在超级面板中配置API密钥")
+  }
+
+  const model = config.model || providerConfig.defaultModel
+  const temperature = options?.temperature ?? 0.7
+  const maxTokens = options?.maxTokens ?? 800
+  const isStream = !!onChunk
+  const merged = mergeOptions(config, options)
+
+  const requestBody = buildRequestBody(
+    config.provider,
+    model,
+    messages,
+    temperature,
+    maxTokens,
+    isStream,
+    merged,
+  )
+
+  const headers = buildHeaders(config.apiKey, config.provider, isStream)
+
+  const response = await fetch(apiUrl, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(requestBody),
+    signal: merged?.signal,
+  })
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    throw new Error(`API请求失败: ${response.status} ${errorText}`)
+  }
+
+  if (isStream) {
+    const resolvedProvider = resolveProvider(config.provider)
+    if (resolvedProvider === "tongyi") {
+      return parseTongyiStream(response, onChunk!, merged?.signal)
+    }
+    return parseOpenAIStream(
+      response,
+      onChunk!,
+      merged?.signal,
+      merged?.onReasoningChunk,
+    )
+  }
+
+  const data = await response.json()
+  return extractResponseText(data)
+}
+
+/**
+ * 多轮对话 AI API 调用（接收完整 messages 数组）
+ * 适合智能体问答等需要传递对话历史的场景
+ */
+export async function callAIChat(
+  messages: Array<{ role: string, content: string }>,
+  config: AiApiConfig,
+  options?: AiCallOptions,
+): Promise<string> {
+  if (options?.onChunk) {
+    const { onChunk, ...rest } = options
+    return callChatStream(messages, config, onChunk, rest)
+  }
+  return callChatStream(messages, config, undefined, options)
+}
+
+/**
  * 智能调用 AI API：有 onChunk 回调时使用流式，否则使用非流式
  */
 export async function callAISmart(

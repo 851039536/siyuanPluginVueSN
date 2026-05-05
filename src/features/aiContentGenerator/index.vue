@@ -1,76 +1,91 @@
 <template>
   <div class="ai-content-panel">
-    <!-- 顶部工具栏 -->
-    <PanelHeader @toggle-settings="toggleSettings" />
-
-    <!-- 提示词配置面板 -->
-    <SettingsPanel
-      :showSettings="showSettings"
-      v-model:systemPrompt="systemPrompt"
-      v-model:temperature="temperature"
-      v-model:maxTokens="maxTokens"
-      :currentPromptName="currentPromptName"
-      v-model:newPromptName="newPromptName"
-      :savedPrompts="savedPrompts"
+    <!-- 顶部工具栏（含模式切换） -->
+    <PanelHeader
+      :activeMode="activeMode"
+      @update:activeMode="activeMode = $event"
       @toggle-settings="toggleSettings"
-      @save-current-prompt="saveCurrentPrompt"
-      @on-prompt-name-focus="onPromptNameFocus"
-      @load-prompt="loadPrompt"
-      @delete-prompt="deletePrompt"
     />
 
-    <!-- 内容显示区域（移到上方） -->
-    <div class="content-display-section">
-      <!-- 主内容显示区域 -->
-      <MainContentArea
-        :is-generating="isGenerating"
-        :is-applying="isApplying"
-        :is-undoing="isUndoing"
-        :is-inserting-sub-doc="isInsertingSubDoc"
-        :error-message="errorMessage"
-        :displayed-content="displayedContent"
-        :generated-content="generatedContent"
-        :rendered-markdown="renderedDisplayedMarkdown"
-        :original-content="originalContent"
-        :can-apply="!!editTargetDoc && !isApplying && !isGenerating"
-        :can-insert-sub-doc="!!editTargetDoc && !isInsertingSubDoc && !isGenerating"
-        :can-undo="canUndoEdit"
-        @stop="handleStop"
-        @apply-edit="applyEdit"
-        @insert-subdoc="insertSubDocument"
-        @undo-edit="undoEdit"
-        @copy="copyContent"
-        @clear="clearContent"
+    <!-- ====== 生成器模式 ====== -->
+    <template v-if="activeMode === 'generator'">
+      <!-- 提示词配置面板 -->
+      <SettingsPanel
+        :showSettings="showSettings"
+        v-model:systemPrompt="systemPrompt"
+        v-model:temperature="temperature"
+        v-model:maxTokens="maxTokens"
+        :currentPromptName="currentPromptName"
+        v-model:newPromptName="newPromptName"
+        :savedPrompts="savedPrompts"
+        @toggle-settings="toggleSettings"
+        @save-current-prompt="saveCurrentPrompt"
+        @on-prompt-name-focus="onPromptNameFocus"
+        @load-prompt="loadPrompt"
+        @delete-prompt="deletePrompt"
       />
-    </div>
 
-    <!-- 底部输入区域 -->
-    <BottomInputArea
-      :is-generating="isGenerating"
-      :edit-target-doc="editTargetDoc"
-      :show-prompt-selector="showPromptSelector"
-      :current-prompt-name="currentPromptName"
-      :saved-prompts="savedPrompts"
-      :filtered-prompts="filteredPrompts"
-      :paginated-prompts="paginatedPrompts"
-      :prompt-search-query="promptSearchQuery"
-      :current-page="currentPage"
-      :total-pages="totalPages"
-      :edit-custom-input="editCustomInput"
-      @ai-edit="aiEditAction"
-      @stop="handleStop"
-      @toggle-prompt-selector="showPromptSelector = !showPromptSelector"
-      @clear-current-prompt="clearCurrentPrompt"
-      @load-prompt="loadPrompt"
-      @edit-prompt="editPrompt"
-      @delete-prompt="deletePrompt"
-      @select-target-doc="selectTargetDocument"
-      @select-target-block="selectTargetBlock"
-      @clear-target-doc="clearTargetDocument"
-      @custom-edit="handleCustomEdit"
-      @update:prompt-search-query="promptSearchQuery = $event"
-      @update:current-page="currentPage = $event"
-      @update:edit-custom-input="editCustomInput = $event"
+      <!-- 内容显示区域 -->
+      <div class="content-display-section">
+        <MainContentArea
+          :is-generating="isGenerating"
+          :is-applying="isApplying"
+          :is-undoing="isUndoing"
+          :is-inserting-sub-doc="isInsertingSubDoc"
+          :error-message="errorMessage"
+          :displayed-content="displayedContent"
+          :generated-content="generatedContent"
+          :rendered-markdown="renderedDisplayedMarkdown"
+          :original-content="originalContent"
+          :can-apply="!!editTargetDoc && !isApplying && !isGenerating"
+          :can-insert-sub-doc="!!editTargetDoc && !isInsertingSubDoc && !isGenerating"
+          :can-undo="canUndoEdit"
+          @stop="handleStop"
+          @apply-edit="applyEdit"
+          @insert-subdoc="insertSubDocument"
+          @undo-edit="undoEdit"
+          @copy="copyContent"
+          @clear="clearContent"
+        />
+      </div>
+
+      <!-- 底部输入区域 -->
+      <BottomInputArea
+        :is-generating="isGenerating"
+        :edit-target-doc="editTargetDoc"
+        :show-prompt-selector="showPromptSelector"
+        :current-prompt-name="currentPromptName"
+        :saved-prompts="savedPrompts"
+        :filtered-prompts="filteredPrompts"
+        :paginated-prompts="paginatedPrompts"
+        :prompt-search-query="promptSearchQuery"
+        :current-page="currentPage"
+        :total-pages="totalPages"
+        :edit-custom-input="editCustomInput"
+        @ai-edit="aiEditAction"
+        @stop="handleStop"
+        @toggle-prompt-selector="showPromptSelector = !showPromptSelector"
+        @clear-current-prompt="clearCurrentPrompt"
+        @load-prompt="loadPrompt"
+        @edit-prompt="editPrompt"
+        @delete-prompt="deletePrompt"
+        @select-target-doc="selectTargetDocument"
+        @select-target-block="selectTargetBlock"
+        @clear-target-doc="clearTargetDocument"
+        @custom-edit="handleCustomEdit"
+        @update:prompt-search-query="promptSearchQuery = $event"
+        @update:current-page="currentPage = $event"
+        @update:edit-custom-input="editCustomInput = $event"
+      />
+    </template>
+
+    <!-- ====== 智能体问答模式 ====== -->
+    <ChatView
+      v-if="activeMode === 'chat'"
+      ref="chatViewRef"
+      :plugin="plugin"
+      :on-chat="props.onChat"
+      @stop-generation="handleChatStop"
     />
 
   </div>
@@ -84,16 +99,18 @@ import hljs from "highlight.js";
 import "highlight.js/styles/github-dark.css";
 import * as api from "@/api";
 import { AIGeneratorStorage } from "./types/storage";
-import type { GenerateOptions, SavedPrompt, TargetDoc } from "@/types/ai";
+import type { GenerateOptions, SavedPrompt, TargetDoc, ChatOptions } from "@/types/ai";
 import PanelHeader from "./components/PanelHeader.vue";
 import SettingsPanel from "./components/SettingsPanel.vue";
 import MainContentArea from "./components/MainContentArea.vue";
 import BottomInputArea from "./components/BottomInputArea.vue";
+import ChatView from "./components/ChatView.vue";
 
 interface Props {
   i18n: any;
   plugin: any;
   onGenerate: (options: GenerateOptions) => Promise<string>;
+  onChat?: (messages: Array<{ role: string; content: string }>, options: ChatOptions) => Promise<string>;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -109,6 +126,10 @@ const isGenerating = ref(false);
 const errorMessage = ref("");
 const showSettings = ref(false);
 const abortController = ref<AbortController | null>(null);
+
+// 模式切换
+const activeMode = ref<"generator" | "chat">("generator");
+const chatViewRef = ref<InstanceType<typeof ChatView> | null>(null);
 
 // 编辑模式状态
 const editTargetDoc = ref<TargetDoc | null>(null);
@@ -193,6 +214,16 @@ watch(showPromptSelector, (newVal) => {
   if (newVal) {
     promptSearchQuery.value = "";
     currentPage.value = 1;
+  }
+});
+
+// 切换到聊天模式时，重置生成器状态
+watch(activeMode, (newMode) => {
+  if (newMode === "chat") {
+    // 清理生成器状态
+    if (isGenerating.value) {
+      handleStop()
+    }
   }
 });
 
@@ -390,12 +421,17 @@ const clearEditState = () => {
   editHistoryStack.value = [];
 };
 
-// 停止生成
+// 停止生成（生成器模式）
 const handleStop = () => {
   if (abortController.value) {
     abortController.value.abort();
   }
   resetAllGenerationStates();
+};
+
+// 停止生成（聊天模式）
+const handleChatStop = () => {
+  chatViewRef.value?.stopGeneration();
 };
 
 /**

@@ -1,4 +1,4 @@
-import type { GenerateOptions } from "@/types/ai"
+import type { GenerateOptions, ChatOptions } from "@/types/ai"
 import type { AiApiConfig } from "@/utils/aiApi"
 /**
  * AI信息生成功能模块
@@ -14,8 +14,8 @@ import {
   h,
 } from "vue"
 import {
-
   callAISmart,
+  callAIChat,
   getApiConfigFromPlugin,
 } from "@/utils/aiApi"
 // @ts-ignore
@@ -85,6 +85,9 @@ export class AIContentGenerator {
                 onGenerate: async (options: GenerateOptions) => {
                   return await self.generateContent(options)
                 },
+                onChat: async (messages: Array<{ role: string, content: string }>, options: ChatOptions) => {
+                  return await self.sendChatMessage(messages, options)
+                },
               })
           },
         })
@@ -149,10 +152,42 @@ ${options.userInput}`
   }
 
   /**
+   * 智能体问答：发送多轮对话消息
+   * @param messages 完整的对话消息数组（包含 system prompt 和历史记录）
+   * @param options 调用选项（temperature, maxTokens, signal, onChunk）
+   */
+  public async sendChatMessage(
+    messages: Array<{ role: string, content: string }>,
+    options: ChatOptions,
+  ): Promise<string> {
+    try {
+      // 刷新配置（确保使用最新的 API 配置）
+      this.apiConfig = getApiConfigFromPlugin(this.plugin)
+
+      const result = await callAIChat(messages, this.apiConfig, {
+        temperature: options.temperature,
+        maxTokens: options.maxTokens,
+        signal: options.signal,
+        onChunk: options.onChunk,
+      })
+
+      if (result !== undefined && result !== null) {
+        return result
+      }
+      showMessage("生成失败，请重试", 3000, "error")
+      return ""
+    } catch (error) {
+      const errorMsg = (error as Error).message || "未知错误"
+      showMessage(`🚫 生成失败: ${errorMsg}`, 5000, "error")
+      throw error
+    }
+  }
+
+  /**
    * 销毁功能
    */
   public destroy() {}
 }
 
 // 重新导出类型，保持向后兼容
-export type { GenerateOptions } from "@/types/ai"
+export type { GenerateOptions, ChatOptions } from "@/types/ai"

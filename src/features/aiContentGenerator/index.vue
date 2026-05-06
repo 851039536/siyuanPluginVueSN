@@ -56,15 +56,10 @@
         :show-prompt-selector="showPromptSelector"
         :current-prompt-name="currentPromptName"
         :saved-prompts="savedPrompts"
-        :filtered-prompts="filteredPrompts"
         :paginated-prompts="paginatedPrompts"
-        :prompt-search-query="promptSearchQuery"
-        :current-page="currentPage"
-        :total-pages="totalPages"
         :edit-custom-input="editCustomInput"
         :skills="skills"
         :current-skill-id="currentSkillId"
-        :manager-available="managerAvailable"
         @ai-edit="aiEditAction"
         @stop="handleStop"
         @toggle-prompt-selector="showPromptSelector = !showPromptSelector"
@@ -76,8 +71,6 @@
         @select-target-block="selectTargetBlock"
         @clear-target-doc="clearTargetDocument"
         @custom-edit="handleCustomEdit"
-        @update:prompt-search-query="promptSearchQuery = $event"
-        @update:current-page="currentPage = $event"
         @update:edit-custom-input="editCustomInput = $event"
         @update:current-skill-id="currentSkillId = $event"
       />
@@ -98,14 +91,13 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from "vue";
 import { showMessage } from "siyuan";
-import { marked } from "marked";
 import hljs from "highlight.js";
-import "highlight.js/styles/github-dark.css";
+import "highlight.js/styles/github.css";
 import * as api from "@/api";
 import { AIGeneratorStorage } from "./types/storage";
 import type { GenerateOptions, SavedPrompt, TargetDoc, ChatOptions } from "@/types/ai";
-import { SkillsViewerManager } from "@/features/generalSettings/modules/SkillsViewerManager";
-import type { SkillInfo, AIToolType } from "@/features/generalSettings/modules/SkillsViewerManager";
+import { useSkillsLoader } from "./composables/useSkillsLoader";
+import { renderMarkdown } from "./utils";
 import PanelHeader from "./components/PanelHeader.vue";
 import SettingsPanel from "./components/SettingsPanel.vue";
 import MainContentArea from "./components/MainContentArea.vue";
@@ -138,49 +130,7 @@ const activeMode = ref<"generator" | "chat">("generator");
 const chatViewRef = ref<InstanceType<typeof ChatView> | null>(null);
 
 // ============ 技能系统 ============
-interface SkillItem {
-  id: string
-  name: string
-  description: string
-  content: string
-  tool: AIToolType
-}
-const skills = ref<SkillItem[]>([])
-const currentSkillId = ref("")
-const managerAvailable = ref(true)
-
-const currentSkill = computed(() => {
-  return skills.value.find((s) => s.id === currentSkillId.value) || null
-})
-
-/** 扫描加载 AI 技能 */
-async function loadSkills() {
-  try {
-    const manager = new SkillsViewerManager()
-    if (!manager.isAvailable()) {
-      managerAvailable.value = false
-      return
-    }
-    let projectPath = ""
-    try {
-      if ((props.plugin as any)?.dataPath) {
-        projectPath = (props.plugin as any).dataPath.replace(/\/data$/, "").replace(/\\data$/, "")
-      }
-    } catch { /* 忽略 */ }
-
-    const skillInfos = await manager.scanAllSkills(projectPath || undefined)
-    skills.value = skillInfos.map((s: SkillInfo) => ({
-      id: s.filePath,
-      name: s.name,
-      description: s.description,
-      content: s.content,
-      tool: s.tool,
-    }))
-  } catch (err) {
-    console.error("扫描技能失败:", err)
-    managerAvailable.value = false
-  }
-}
+const { skills, currentSkillId, currentSkill, managerAvailable, loadSkills } = useSkillsLoader(props.plugin)
 
 // 编辑模式状态
 const editTargetDoc = ref<TargetDoc | null>(null);
@@ -390,34 +340,6 @@ const removeFrontmatter = (content: string): string => {
   // 匹配开头的 --- ... --- 格式的YAML frontmatter
   const frontmatterRegex = /^---\s*\n[\s\S]*?\n---\s*\n/;
   return content.replace(frontmatterRegex, "").trim();
-};
-
-// 配置 marked 选项（只需配置一次）
-marked.setOptions({
-  breaks: true,
-  gfm: true,
-});
-
-/**
- * 统一的 Markdown 渲染函数
- */
-const renderMarkdown = (content: string): string => {
-  if (!content) return "";
-
-  try {
-    let processedContent = content;
-
-    // 移除标题中的粗体标记（对主内容）
-    processedContent = processedContent.replace(
-      /^(#{1,6})\s+\*\*(.+?)\*\*\s*$/gm,
-      "$1 $2",
-    );
-
-    return marked.parse(processedContent) as string;
-  } catch (error) {
-    console.error("Markdown渲染失败:", error);
-    return `<pre>${content}</pre>`;
-  }
 };
 
 // 渲染主内容 Markdown

@@ -3,11 +3,11 @@
     <!-- 顶部操作栏 -->
     <div class="chat-toolbar">
       <div class="skill-selector">
-        <select v-model="currentSkillId" class="skill-select" @change="onSkillChange">
+        <select v-model="currentSkillIndex" class="skill-select" @change="onSkillChange">
           <option
-            v-for="skill in skills"
+            v-for="(skill, index) in skills"
             :key="skill.id"
-            :value="skill.id"
+            :value="index"
           >
             {{ skill.name }} ({{ getToolName(skill.tool) }})
           </option>
@@ -152,7 +152,7 @@ function getToolName(toolId: AIToolType): string {
 }
 
 // ============ 状态 ============
-const { skills, currentSkillId, currentSkill, managerAvailable, loadSkills } = useSkillsLoader(props.plugin)
+const { skills, currentSkillIndex, currentSkill, managerAvailable, loadSkills } = useSkillsLoader(props.plugin)
 const messages = ref<ChatMessage[]>([])
 const inputText = ref("")
 const isStreaming = ref(false)

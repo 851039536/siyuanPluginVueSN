@@ -59,16 +59,16 @@
       <div class="top-bar-center">
         <div class="skill-selector-wrapper">
           <select
-            :value="currentSkillId"
+            :value="currentSkillIndex"
             class="skill-select"
             title="选择预设技能作为系统指令"
-            @change="$emit('update:currentSkillId', ($event.target as HTMLSelectElement).value)"
+            @change="onSkillChange(($event.target as HTMLSelectElement).value)"
           >
-            <option value="">🧠 {{ $t('noSkill') }}</option>
+            <option value="-1">🧠 {{ $t('noSkill') }}</option>
             <option
-              v-for="skill in skills"
+              v-for="(skill, index) in skills"
               :key="skill.id"
-              :value="skill.id"
+              :value="index"
             >
               {{ skill.name }}
             </option>
@@ -195,7 +195,7 @@
 
     <!-- 第三行：输入框 + 执行按钮（已选择文档或技能时显示） -->
     <div
-      v-if="editTargetDoc || currentSkillId"
+      v-if="editTargetDoc || currentSkillIndex >= 0"
       class="input-row"
     >
       <Textarea
@@ -289,7 +289,7 @@ const emit = defineEmits<{
   (e: "clear-target-doc"): void
   (e: "custom-edit"): void
   (e: "update:editCustomInput", value: string): void
-  (e: "update:currentSkillId", value: string): void
+  (e: "update:currentSkillIndex", value: number): void
 }>()
 
 const quickActions: QuickAction[] = [
@@ -334,13 +334,13 @@ interface Props {
   paginatedPrompts: SavedPrompt[]
   editCustomInput: string
   skills: SkillItem[]
-  currentSkillId: string
+  currentSkillIndex: number
 }
 
 // 计算属性
 const canExecute = computed(() => {
   // 选了技能即允许发送（技能作为系统指令，内容可来自输入或文档）
-  if (props.currentSkillId) {
+  if (props.currentSkillIndex >= 0) {
     return true
   }
   if (props.editTargetDoc) {
@@ -350,7 +350,7 @@ const canExecute = computed(() => {
 })
 
 const executeButtonTitle = computed(() => {
-  if (!props.editTargetDoc && props.currentSkillId) {
+  if (!props.editTargetDoc && props.currentSkillIndex >= 0) {
     return "发送提问"
   }
   return !props.editCustomInput.trim() && props.currentPromptName
@@ -359,11 +359,17 @@ const executeButtonTitle = computed(() => {
 })
 
 const inputPlaceholder = computed(() => {
-  if (!props.editTargetDoc && props.currentSkillId) {
+  if (!props.editTargetDoc && props.currentSkillIndex >= 0) {
     return "输入你的问题..."
   }
   return "输入编辑指令，或选择AI快捷操作..."
 })
+
+// 技能选择变化
+const onSkillChange = (value: string) => {
+  const index = parseInt(value, 10)
+  emit("update:currentSkillIndex", isNaN(index) ? -1 : index)
+}
 
 // 国际化
 function $t(key: string): string {

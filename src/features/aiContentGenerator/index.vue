@@ -821,51 +821,66 @@ const aiEditAction = async (
 
 /**
  * 编辑模式：自定义提问处理
+ * 支持两种模式：
+ * 1. 有目标文档：编辑指令 + 文档内容
+ * 2. 无文档但选了技能：直接向技能提问
  */
 const handleCustomEdit = async () => {
-  if (!editTargetDoc.value) {
-    showMessage("请先选择要编辑的文档", 2000, "info");
+  // 无文档且无技能时，提示选择
+  if (!editTargetDoc.value && !currentSkill.value) {
+    showMessage("请先选择要编辑的文档或选择技能", 2000, "info");
     return;
   }
 
-  // 如果既没有自定义输入，又没有选择提示词，则提示用户
-  if (!editCustomInput.value.trim() && !currentPromptName.value) {
-    showMessage("请输入编辑指令或选择提示词", 2000, "info");
-    return;
+  // 无输入时，必须有技能+文档 或 提示词+文档 才能继续
+  if (!editCustomInput.value.trim()) {
+    // 有文档+技能：直接用技能处理文档，无需输入
+    if (editTargetDoc.value && currentSkill.value) {
+      // 允许继续
+    } else if (editTargetDoc.value && currentPromptName.value) {
+      // 有文档+提示词，允许继续
+    } else {
+      showMessage("请输入提问内容", 2000, "info");
+      return;
+    }
   }
 
   showSettings.value = false;
   startGeneration();
 
   try {
-    // 根据是否选择提示词来决定系统提示词
-    let baseSystemPrompt =
-      "你是一个专业的文档编辑助手，擅长根据用户指令优化Markdown文档。请直接输出编辑后的完整文档，不要添加任何解释性文字。";
+    let finalSystemPrompt: string;
     let userInput: string;
 
-    if (editCustomInput.value.trim()) {
-      // 用户有自定义输入，使用自定义输入
-      if (currentPromptName.value) {
-        // 同时选择了提示词，使用选中的提示词配置
-        baseSystemPrompt = systemPrompt.value;
-      }
+    if (!editTargetDoc.value) {
+      // 无文档模式：技能直接提问
+      finalSystemPrompt = currentSkill.value!.content;
+      userInput = editCustomInput.value;
+    } else {
+      // 有文档模式：编辑指令 + 文档内容
+      let baseSystemPrompt =
+        "你是一个专业的文档编辑助手，擅长根据用户指令优化Markdown文档。请直接输出编辑后的完整文档，不要添加任何解释性文字。";
 
-      userInput = `请根据以下指令对文档进行编辑。保持Markdown格式，直接输出编辑后的完整文档内容：
+      if (editCustomInput.value.trim()) {
+        if (currentPromptName.value) {
+          baseSystemPrompt = systemPrompt.value;
+        }
+
+        userInput = `请根据以下指令对文档进行编辑。保持Markdown格式，直接输出编辑后的完整文档内容：
 
 编辑指令：${editCustomInput.value}
 
 原文档：
 ${editTargetDoc.value.content}`;
-    } else {
-      // 没有自定义输入，但选择了提示词，使用提示词配置直接生成
-      baseSystemPrompt = systemPrompt.value;
-      userInput = `${editTargetDoc.value.content}`;
-    }
+      } else {
+        baseSystemPrompt = systemPrompt.value;
+        userInput = `${editTargetDoc.value.content}`;
+      }
 
-    // 如果选择了技能，将技能内容前置作为附加指令
-    const finalSystemPrompt = currentSkill.value
-      ? `${currentSkill.value.content}\n\n${baseSystemPrompt}`
-      : baseSystemPrompt
+      finalSystemPrompt = currentSkill.value
+        ? `${currentSkill.value.content}\n\n${baseSystemPrompt}`
+        : baseSystemPrompt;
+    }
 
     const options: GenerateOptions = {
       userInput,

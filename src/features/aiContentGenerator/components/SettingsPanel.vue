@@ -200,6 +200,7 @@ import Input from "@/components/Input.vue"
 import Slider from "@/components/Slider.vue"
 import Tag from "@/components/Tag.vue"
 import Textarea from "@/components/Textarea.vue"
+import { getPromptPreview } from "../utils"
 
 defineProps<{
   showSettings: boolean
@@ -223,11 +224,6 @@ defineEmits<{
   "delete-prompt": [index: number]
 }>()
 
-const getPromptPreview = (text: string): string => {
-  const maxLength = 60
-  if (text.length <= maxLength) return text
-  return `${text.substring(0, maxLength)}...`
-}
 </script>
 
 <style scoped lang="scss">

@@ -251,11 +251,13 @@
 import type {
   SavedPrompt,
   TargetDoc,
+  SkillItem,
 } from "@/types/ai"
 import { computed } from "vue"
 import Button from "@/components/Button.vue"
 import Tag from "@/components/Tag.vue"
 import Textarea from "@/components/Textarea.vue"
+import { getPromptPreview } from "../utils"
 
 interface QuickAction {
   key: "polish" | "expand" | "condense" | "fix" | "rewrite" | "summary"
@@ -286,8 +288,6 @@ const emit = defineEmits<{
   (e: "select-target-block"): void
   (e: "clear-target-doc"): void
   (e: "custom-edit"): void
-  (e: "update:promptSearchQuery", value: string): void
-  (e: "update:currentPage", value: number): void
   (e: "update:editCustomInput", value: string): void
   (e: "update:currentSkillId", value: string): void
 }>()
@@ -325,29 +325,16 @@ const quickActions: QuickAction[] = [
   },
 ]
 
-interface SkillItem {
-  id: string
-  name: string
-  description: string
-  content: string
-  tool: string
-}
-
 interface Props {
   isGenerating: boolean
   editTargetDoc: TargetDoc | null
   showPromptSelector: boolean
   currentPromptName: string
   savedPrompts: SavedPrompt[]
-  filteredPrompts: SavedPrompt[]
   paginatedPrompts: SavedPrompt[]
-  promptSearchQuery: string
-  currentPage: number
-  totalPages: number
   editCustomInput: string
   skills: SkillItem[]
   currentSkillId: string
-  managerAvailable: boolean
 }
 
 // 计算属性
@@ -380,12 +367,6 @@ const getOriginalIndex = (prompt: SavedPrompt) => {
   return props.savedPrompts.findIndex((p) => p.id === prompt.id)
 }
 
-// 获取提示词预览
-const getPromptPreview = (text: string): string => {
-  const maxLength = 50
-  if (text.length <= maxLength) return text
-  return `${text.substring(0, maxLength)}...`
-}
 </script>
 
 <style scoped lang="scss">
@@ -397,23 +378,5 @@ const getPromptPreview = (text: string): string => {
   align-items: center;
   min-width: 0;
   flex-shrink: 1;
-}
-
-.skill-select {
-  width: 100%;
-  min-width: 80px;
-  max-width: 180px;
-  padding: 4px 6px;
-  font-size: 11px;
-  color: var(--b3-theme-on-background);
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 5px;
-  outline: none;
-  cursor: pointer;
-
-  &:focus {
-    border-color: var(--b3-theme-primary);
-  }
 }
 </style>

@@ -128,20 +128,12 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from "vue"
-import { marked } from "marked"
 import type { ChatMessage, ChatOptions } from "@/types/ai"
-import { SkillsViewerManager, AI_TOOLS } from "@/features/generalSettings/modules/SkillsViewerManager"
-import type { SkillInfo, AIToolType } from "@/features/generalSettings/modules/SkillsViewerManager"
+import { AI_TOOLS } from "@/features/generalSettings/modules/SkillsViewerManager"
+import type { AIToolType } from "@/features/generalSettings/modules/SkillsViewerManager"
+import { useSkillsLoader } from "../composables/useSkillsLoader"
+import { renderMarkdown } from "../utils"
 import { showMessage } from "siyuan"
-
-/** 本地技能展示类型 */
-interface SkillItem {
-  id: string
-  name: string
-  description: string
-  content: string
-  tool: AIToolType
-}
 
 interface Props {
   plugin: any
@@ -160,9 +152,7 @@ function getToolName(toolId: AIToolType): string {
 }
 
 // ============ 状态 ============
-const skills = ref<SkillItem[]>([])
-const currentSkillId = ref("")
-const managerAvailable = ref(true)
+const { skills, currentSkillId, currentSkill, managerAvailable, loadSkills } = useSkillsLoader(props.plugin)
 const messages = ref<ChatMessage[]>([])
 const inputText = ref("")
 const isStreaming = ref(false)
@@ -170,49 +160,6 @@ const error = ref("")
 const messageListRef = ref<HTMLElement | null>(null)
 const inputRef = ref<HTMLTextAreaElement | null>(null)
 let abortController: AbortController | null = null
-
-// ============ 计算属性 ============
-const currentSkill = computed(() => {
-  return skills.value.find((s) => s.id === currentSkillId.value) || null
-})
-
-// ============ 加载技能（从 AI 工具目录扫描） ============
-async function loadSkills() {
-  try {
-    const manager = new SkillsViewerManager()
-    if (!manager.isAvailable()) {
-      managerAvailable.value = false
-      return
-    }
-
-    // 尝试从插件获取工作区根路径（用于扫描项目级技能）
-    let projectPath = ""
-    try {
-      if (props.plugin?.dataPath) {
-        // SiYuan 的 dataPath 是 workspace/data/，/data 截掉即为工作区根目录
-        projectPath = props.plugin.dataPath.replace(/\/data$/, "").replace(/\\data$/, "")
-      }
-    } catch {
-      // 忽略，只扫全局
-    }
-
-    const skillInfos = await manager.scanAllSkills(projectPath || undefined)
-    skills.value = skillInfos.map((s: SkillInfo) => ({
-      id: s.filePath,
-      name: s.name,
-      description: s.description,
-      content: s.content,
-      tool: s.tool,
-    }))
-
-    if (skills.value.length > 0 && !currentSkillId.value) {
-      currentSkillId.value = skills.value[0].id
-    }
-  } catch (err) {
-    console.error("扫描技能失败:", err)
-    managerAvailable.value = false
-  }
-}
 
 // ============ 方法 ============
 
@@ -233,14 +180,9 @@ const startNewConversation = () => {
   }
 }
 
-/** 渲染 Markdown */
+/** 渲染 Markdown（使用共享工具函数，Chat 模式不移除标题粗体） */
 const renderMessage = (content: string): string => {
-  if (!content) return ""
-  try {
-    return marked.parse(content) as string
-  } catch {
-    return `<pre>${content}</pre>`
-  }
+  return renderMarkdown(content, false)
 }
 
 /** 复制消息内容 */
@@ -398,6 +340,8 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
+@use "../styles/index.scss";
+
 .chat-view {
   display: flex;
   flex-direction: column;
@@ -422,19 +366,8 @@ defineExpose({
 }
 
 .skill-select {
-  width: 100%;
   padding: 4px 8px;
   font-size: 12px;
-  color: var(--b3-theme-on-background);
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 5px;
-  outline: none;
-  cursor: pointer;
-
-  &:focus {
-    border-color: var(--b3-theme-primary);
-  }
 }
 
 .new-chat-btn {

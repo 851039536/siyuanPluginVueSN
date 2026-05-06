@@ -76,3 +76,12 @@ export interface ChatOptions {
   signal?: AbortSignal
   onChunk?: (chunk: string) => void
 }
+
+/** AI 技能展示类型（统一，消除多处重复定义） */
+export interface SkillItem {
+  id: string
+  name: string
+  description: string
+  content: string
+  tool: string
+}

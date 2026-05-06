@@ -64,6 +64,15 @@
   min-width: 0;
 }
 
+.top-bar-center {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 1;
+  min-width: 0;
+  max-width: 200px;
+}
+
 .top-bar-right {
   display: flex;
   align-items: center;

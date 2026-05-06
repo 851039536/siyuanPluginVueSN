@@ -55,6 +55,27 @@
         </div>
       </div>
 
+      <!-- 技能选择 -->
+      <div class="top-bar-center">
+        <div class="skill-selector-wrapper">
+          <select
+            :value="currentSkillId"
+            class="skill-select"
+            title="选择预设技能作为系统指令"
+            @change="$emit('update:currentSkillId', ($event.target as HTMLSelectElement).value)"
+          >
+            <option value="">🧠 {{ $t('noSkill') }}</option>
+            <option
+              v-for="skill in skills"
+              :key="skill.id"
+              :value="skill.id"
+            >
+              {{ skill.name }}
+            </option>
+          </select>
+        </div>
+      </div>
+
       <!-- 提示词选择 -->
       <div class="top-bar-right">
         <div class="prompt-selector-wrapper">
@@ -268,6 +289,7 @@ const emit = defineEmits<{
   (e: "update:promptSearchQuery", value: string): void
   (e: "update:currentPage", value: number): void
   (e: "update:editCustomInput", value: string): void
+  (e: "update:currentSkillId", value: string): void
 }>()
 
 const quickActions: QuickAction[] = [
@@ -303,6 +325,14 @@ const quickActions: QuickAction[] = [
   },
 ]
 
+interface SkillItem {
+  id: string
+  name: string
+  description: string
+  content: string
+  tool: string
+}
+
 interface Props {
   isGenerating: boolean
   editTargetDoc: TargetDoc | null
@@ -315,6 +345,9 @@ interface Props {
   currentPage: number
   totalPages: number
   editCustomInput: string
+  skills: SkillItem[]
+  currentSkillId: string
+  managerAvailable: boolean
 }
 
 // 计算属性
@@ -327,6 +360,14 @@ const executeButtonTitle = computed(() => {
     ? "使用当前提示词生成"
     : "执行"
 })
+
+// 国际化
+function $t(key: string): string {
+  const translations: Record<string, string> = {
+    noSkill: "无技能",
+  }
+  return translations[key] || key
+}
 
 // 截断标题
 const truncateTitle = (title: string, maxLen = 12) => {
@@ -349,4 +390,30 @@ const getPromptPreview = (text: string): string => {
 
 <style scoped lang="scss">
 @use "../styles/index.scss";
+
+// ============ 技能选择器 ============
+.skill-selector-wrapper {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.skill-select {
+  width: 100%;
+  min-width: 80px;
+  max-width: 180px;
+  padding: 4px 6px;
+  font-size: 11px;
+  color: var(--b3-theme-on-background);
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 5px;
+  outline: none;
+  cursor: pointer;
+
+  &:focus {
+    border-color: var(--b3-theme-primary);
+  }
+}
 </style>

@@ -59,7 +59,7 @@
         :paginated-prompts="paginatedPrompts"
         :edit-custom-input="editCustomInput"
         :skills="skills"
-        :current-skill-id="currentSkillId"
+        :current-skill-index="currentSkillIndex"
         @ai-edit="aiEditAction"
         @stop="handleStop"
         @toggle-prompt-selector="showPromptSelector = !showPromptSelector"
@@ -72,7 +72,7 @@
         @clear-target-doc="clearTargetDocument"
         @custom-edit="handleCustomEdit"
         @update:edit-custom-input="editCustomInput = $event"
-        @update:current-skill-id="currentSkillId = $event"
+        @update:current-skill-index="currentSkillIndex = $event"
       />
     </template>
 
@@ -130,7 +130,7 @@ const activeMode = ref<"generator" | "chat">("generator");
 const chatViewRef = ref<InstanceType<typeof ChatView> | null>(null);
 
 // ============ 技能系统 ============
-const { skills, currentSkillId, currentSkill, managerAvailable, loadSkills } = useSkillsLoader(props.plugin)
+const { skills, currentSkillIndex, currentSkill, managerAvailable, loadSkills } = useSkillsLoader(props.plugin)
 
 // 编辑模式状态
 const editTargetDoc = ref<TargetDoc | null>(null);
@@ -858,14 +858,18 @@ const handleCustomEdit = async () => {
       userInput = editCustomInput.value;
     } else {
       // 有文档模式：编辑指令 + 文档内容
-      let baseSystemPrompt =
-        "你是一个专业的文档编辑助手，擅长根据用户指令优化Markdown文档。请直接输出编辑后的完整文档，不要添加任何解释性文字。";
+      let baseSystemPrompt: string;
+
+      if (currentSkill.value) {
+        // 选了技能，以技能内容为主
+        baseSystemPrompt = currentSkill.value.content;
+      } else if (currentPromptName.value) {
+        baseSystemPrompt = systemPrompt.value;
+      } else {
+        baseSystemPrompt = "你是一个专业的文档编辑助手，擅长根据用户指令优化Markdown文档。请直接输出编辑后的完整文档，不要添加任何解释性文字。";
+      }
 
       if (editCustomInput.value.trim()) {
-        if (currentPromptName.value) {
-          baseSystemPrompt = systemPrompt.value;
-        }
-
         userInput = `请根据以下指令对文档进行编辑。保持Markdown格式，直接输出编辑后的完整文档内容：
 
 编辑指令：${editCustomInput.value}
@@ -873,13 +877,10 @@ const handleCustomEdit = async () => {
 原文档：
 ${editTargetDoc.value.content}`;
       } else {
-        baseSystemPrompt = systemPrompt.value;
         userInput = `${editTargetDoc.value.content}`;
       }
 
-      finalSystemPrompt = currentSkill.value
-        ? `${currentSkill.value.content}\n\n${baseSystemPrompt}`
-        : baseSystemPrompt;
+      finalSystemPrompt = baseSystemPrompt;
     }
 
     const options: GenerateOptions = {

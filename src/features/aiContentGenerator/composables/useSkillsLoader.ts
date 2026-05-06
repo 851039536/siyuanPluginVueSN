@@ -9,11 +9,14 @@ import type { SkillItem } from "@/types/ai"
 
 export function useSkillsLoader(plugin: any) {
   const skills = ref<SkillItem[]>([])
-  const currentSkillId = ref("")
+  const currentSkillIndex = ref(-1)
   const managerAvailable = ref(true)
 
   const currentSkill = computed(() => {
-    return skills.value.find((s) => s.id === currentSkillId.value) || null
+    if (currentSkillIndex.value < 0 || currentSkillIndex.value >= skills.value.length) {
+      return null
+    }
+    return skills.value[currentSkillIndex.value]
   })
 
   /** 扫描加载 AI 技能 */
@@ -42,8 +45,8 @@ export function useSkillsLoader(plugin: any) {
       }))
 
       // 首次加载时自动选中第一个技能
-      if (skills.value.length > 0 && !currentSkillId.value) {
-        currentSkillId.value = skills.value[0].id
+      if (skills.value.length > 0 && currentSkillIndex.value < 0) {
+        currentSkillIndex.value = 0
       }
     } catch (err) {
       console.error("扫描技能失败:", err)
@@ -53,7 +56,7 @@ export function useSkillsLoader(plugin: any) {
 
   return {
     skills,
-    currentSkillId,
+    currentSkillIndex,
     currentSkill,
     managerAvailable,
     loadSkills,

@@ -193,14 +193,14 @@
       </button>
     </div>
 
-    <!-- 第三行：输入框 + 执行按钮（已选择文档时显示） -->
+    <!-- 第三行：输入框 + 执行按钮（已选择文档或技能时显示） -->
     <div
-      v-if="editTargetDoc"
+      v-if="editTargetDoc || currentSkillId"
       class="input-row"
     >
       <Textarea
         :model-value="editCustomInput"
-        placeholder="输入编辑指令，或选择AI快捷操作..."
+        :placeholder="inputPlaceholder"
         :rows="1"
         :autosize="true"
         :disabled="isGenerating"
@@ -339,13 +339,30 @@ interface Props {
 
 // 计算属性
 const canExecute = computed(() => {
-  return props.editCustomInput.trim() || props.currentPromptName
+  // 选了技能即允许发送（技能作为系统指令，内容可来自输入或文档）
+  if (props.currentSkillId) {
+    return true
+  }
+  if (props.editTargetDoc) {
+    return props.editCustomInput.trim() || props.currentPromptName
+  }
+  return false
 })
 
 const executeButtonTitle = computed(() => {
+  if (!props.editTargetDoc && props.currentSkillId) {
+    return "发送提问"
+  }
   return !props.editCustomInput.trim() && props.currentPromptName
     ? "使用当前提示词生成"
     : "执行"
+})
+
+const inputPlaceholder = computed(() => {
+  if (!props.editTargetDoc && props.currentSkillId) {
+    return "输入你的问题..."
+  }
+  return "输入编辑指令，或选择AI快捷操作..."
 })
 
 // 国际化

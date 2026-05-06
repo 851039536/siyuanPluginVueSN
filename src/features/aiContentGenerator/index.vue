@@ -62,6 +62,9 @@
         :current-page="currentPage"
         :total-pages="totalPages"
         :edit-custom-input="editCustomInput"
+        :skills="skills"
+        :current-skill-id="currentSkillId"
+        :manager-available="managerAvailable"
         @ai-edit="aiEditAction"
         @stop="handleStop"
         @toggle-prompt-selector="showPromptSelector = !showPromptSelector"
@@ -76,6 +79,7 @@
         @update:prompt-search-query="promptSearchQuery = $event"
         @update:current-page="currentPage = $event"
         @update:edit-custom-input="editCustomInput = $event"
+        @update:current-skill-id="currentSkillId = $event"
       />
     </template>
 
@@ -100,6 +104,8 @@ import "highlight.js/styles/github-dark.css";
 import * as api from "@/api";
 import { AIGeneratorStorage } from "./types/storage";
 import type { GenerateOptions, SavedPrompt, TargetDoc, ChatOptions } from "@/types/ai";
+import { SkillsViewerManager } from "@/features/generalSettings/modules/SkillsViewerManager";
+import type { SkillInfo, AIToolType } from "@/features/generalSettings/modules/SkillsViewerManager";
 import PanelHeader from "./components/PanelHeader.vue";
 import SettingsPanel from "./components/SettingsPanel.vue";
 import MainContentArea from "./components/MainContentArea.vue";
@@ -130,6 +136,51 @@ const abortController = ref<AbortController | null>(null);
 // 模式切换
 const activeMode = ref<"generator" | "chat">("generator");
 const chatViewRef = ref<InstanceType<typeof ChatView> | null>(null);
+
+// ============ 技能系统 ============
+interface SkillItem {
+  id: string
+  name: string
+  description: string
+  content: string
+  tool: AIToolType
+}
+const skills = ref<SkillItem[]>([])
+const currentSkillId = ref("")
+const managerAvailable = ref(true)
+
+const currentSkill = computed(() => {
+  return skills.value.find((s) => s.id === currentSkillId.value) || null
+})
+
+/** 扫描加载 AI 技能 */
+async function loadSkills() {
+  try {
+    const manager = new SkillsViewerManager()
+    if (!manager.isAvailable()) {
+      managerAvailable.value = false
+      return
+    }
+    let projectPath = ""
+    try {
+      if ((props.plugin as any)?.dataPath) {
+        projectPath = (props.plugin as any).dataPath.replace(/\/data$/, "").replace(/\\data$/, "")
+      }
+    } catch { /* 忽略 */ }
+
+    const skillInfos = await manager.scanAllSkills(projectPath || undefined)
+    skills.value = skillInfos.map((s: SkillInfo) => ({
+      id: s.filePath,
+      name: s.name,
+      description: s.description,
+      content: s.content,
+      tool: s.tool,
+    }))
+  } catch (err) {
+    console.error("扫描技能失败:", err)
+    managerAvailable.value = false
+  }
+}
 
 // 编辑模式状态
 const editTargetDoc = ref<TargetDoc | null>(null);
@@ -827,11 +878,12 @@ const aiEditAction = async (
   startGeneration();
 
   try {
+    const skillSystemPrompt = currentSkill.value
+      ? `${currentSkill.value.content}\n\n你是一个专业的文档编辑助手，擅长优化Markdown文档。请直接输出优化后的完整文档，不要添加任何解释性文字。`
+      : "你是一个专业的文档编辑助手，擅长优化Markdown文档。请直接输出优化后的完整文档，不要添加任何解释性文字。"
     const options: GenerateOptions = {
       userInput: `${actionPrompts[action]}\n\n${editTargetDoc.value.content}`,
-      systemPrompt:
-        "你是一个专业的文档编辑助手，擅长优化Markdown文档。请直接输出优化后的完整文档，不要添加任何解释性文字。",
-      temperature: 0.3,
+      systemPrompt: skillSystemPrompt,
       maxTokens: maxTokens.value,
       signal: abortController.value?.signal,
       onChunk: defaultOnChunk,
@@ -865,7 +917,7 @@ const handleCustomEdit = async () => {
 
   try {
     // 根据是否选择提示词来决定系统提示词
-    let finalSystemPrompt =
+    let baseSystemPrompt =
       "你是一个专业的文档编辑助手，擅长根据用户指令优化Markdown文档。请直接输出编辑后的完整文档，不要添加任何解释性文字。";
     let userInput: string;
 
@@ -873,7 +925,7 @@ const handleCustomEdit = async () => {
       // 用户有自定义输入，使用自定义输入
       if (currentPromptName.value) {
         // 同时选择了提示词，使用选中的提示词配置
-        finalSystemPrompt = systemPrompt.value;
+        baseSystemPrompt = systemPrompt.value;
       }
 
       userInput = `请根据以下指令对文档进行编辑。保持Markdown格式，直接输出编辑后的完整文档内容：
@@ -884,9 +936,14 @@ const handleCustomEdit = async () => {
 ${editTargetDoc.value.content}`;
     } else {
       // 没有自定义输入，但选择了提示词，使用提示词配置直接生成
-      finalSystemPrompt = systemPrompt.value;
+      baseSystemPrompt = systemPrompt.value;
       userInput = `${editTargetDoc.value.content}`;
     }
+
+    // 如果选择了技能，将技能内容前置作为附加指令
+    const finalSystemPrompt = currentSkill.value
+      ? `${currentSkill.value.content}\n\n${baseSystemPrompt}`
+      : baseSystemPrompt
 
     const options: GenerateOptions = {
       userInput,
@@ -1166,7 +1223,7 @@ const loadPromptsFromStorage = async () => {
   }
 };
 
-// 组件挂载时加载保存的提示词
+// 组件挂载时加载保存的提示词和技能
 onMounted(async () => {
   // 初始化存储实例
   if (props.plugin) {
@@ -1175,6 +1232,8 @@ onMounted(async () => {
     await loadPromptsFromStorage();
     await loadSettings();
   }
+  // 异步加载技能
+  loadSkills();
 });
 
 // 组件卸载时清理 RAF

@@ -60,6 +60,12 @@ export interface AiSettings {
   apiKey: string
   customEndpoint: string
   enableThinking: boolean
+  /** 搜索引擎供应商 */
+  searchProvider: string
+  /** 博查 API Key */
+  searchBochaApiKey: string
+  /** SearXNG 实例地址 */
+  searchSearxngUrl: string
 }
 
 let vueApp: VueApp | null = null
@@ -372,6 +378,9 @@ export class SuperPanelManager {
       aiApiKey: aiSettings.apiKey,
       aiCustomEndpoint: aiSettings.customEndpoint,
       aiEnableThinking: aiSettings.enableThinking,
+      searchProvider: aiSettings.searchProvider || "jina",
+      searchBochaApiKey: aiSettings.searchBochaApiKey || "",
+      searchSearxngUrl: aiSettings.searchSearxngUrl || "",
     }
 
     const newSettings = {

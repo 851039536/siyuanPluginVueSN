@@ -79,6 +79,10 @@ export interface PluginSettings {
   aiApiKey: string // AI API密钥
   aiCustomEndpoint: string // 自定义API端点(仅在provider为custom时使用)
   aiEnableThinking: boolean // DeepSeek思考模式开关
+  // 联网搜索配置（RAG 模式）
+  searchProvider: string // 搜索引擎供应商: 'jina' | 'bocha' | 'searxng'
+  searchBochaApiKey: string // 博查搜索 API Key
+  searchSearxngUrl: string // SearXNG 实例地址
 }
 
 /**
@@ -146,6 +150,10 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   aiApiKey: "",
   aiCustomEndpoint: "",
   aiEnableThinking: false,
+  // 联网搜索默认值
+  searchProvider: "jina",
+  searchBochaApiKey: "",
+  searchSearxngUrl: "",
 }
 
 /**
@@ -161,6 +169,7 @@ async function encryptSensitiveFields(
 ): Promise<PluginSettings> {
   const encrypted = { ...settings }
   encrypted.aiApiKey = await encryptSetting(settings.aiApiKey)
+  encrypted.searchBochaApiKey = await encryptSetting(settings.searchBochaApiKey)
   encrypted.webdavConfig = {
     ...settings.webdavConfig,
     password: await encryptSetting(settings.webdavConfig.password),
@@ -176,6 +185,7 @@ async function decryptSensitiveFields(
 ): Promise<PluginSettings> {
   const decrypted = { ...settings }
   decrypted.aiApiKey = await decryptSetting(settings.aiApiKey)
+  decrypted.searchBochaApiKey = await decryptSetting(settings.searchBochaApiKey)
   decrypted.webdavConfig = {
     ...settings.webdavConfig,
     password: await decryptSetting(settings.webdavConfig.password),

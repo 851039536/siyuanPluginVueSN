@@ -13,6 +13,8 @@ export interface AiApiConfig {
   apiKey: string
   customEndpoint: string
   enableThinking?: boolean
+  /** 联网搜索配置（RAG 模式） */
+  searchConfig?: SearchApiConfig
 }
 
 /** DeepSeek 思考强度 */
@@ -28,7 +30,7 @@ export interface AiCallOptions {
   onReasoningChunk?: (chunk: string) => void
   enableThinking?: boolean
   reasoningEffort?: DeepSeekReasoningEffort
-  /** DeepSeek 联网搜索 */
+  /** 联网搜索（RAG 模式：先搜后答，所有 provider 通用） */
   webSearch?: boolean
 }
 
@@ -41,7 +43,7 @@ export interface GenerateOptions {
   context?: string
   signal?: AbortSignal
   onChunk?: (chunk: string) => void
-  /** DeepSeek 联网搜索 */
+  /** 联网搜索（RAG 模式：先搜后答，所有 provider 通用） */
   webSearch?: boolean
 }
 
@@ -127,6 +129,29 @@ export interface AutomationTask {
   temperature: number
   /** 最大 token 数 */
   maxTokens: number
-  /** 是否启用联网搜索（仅 DeepSeek） */
+  /** 是否启用联网搜索（RAG 模式：先搜后答，所有 provider 通用） */
   webSearch?: boolean
+}
+
+// ============ 联网搜索相关类型 ============
+
+/** 搜索引擎类型（均为国内可用） */
+export type SearchProvider = "bocha" | "jina" | "searxng"
+
+/** 搜索结果条目 */
+export interface SearchResult {
+  title: string
+  url: string
+  content: string
+  score?: number
+}
+
+/** 搜索 API 配置 */
+export interface SearchApiConfig {
+  /** 搜索引擎供应商 */
+  searchProvider: SearchProvider
+  /** 博查 API Key（searchProvider 为 bocha 时必填，注册 https://open.bochaai.com 获取） */
+  bochaApiKey: string
+  /** SearXNG 实例地址（searchProvider 为 searxng 时必填，如 http://localhost:8080） */
+  searxngUrl: string
 }

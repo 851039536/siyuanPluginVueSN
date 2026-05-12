@@ -2,19 +2,25 @@
  * 统一 AI API 模块
  * 基于 wordQuery/utils/apiBase.ts 扩展，增加流式输出支持
  * 所有功能模块统一调用此模块，消除重复的 API 调用逻辑
+ *
+ * 联网搜索采用 RAG 模式：先搜后答
+ * 用户开启 webSearch → 调用搜索 API 获取真实数据 → 注入 system prompt → LLM 基于真实数据回答
  */
 import type {
   AiApiConfig,
   AiCallOptions,
   AiProvider,
   DeepSeekReasoningEffort,
+  SearchApiConfig,
 } from "@/types/ai"
+import { searchWeb, formatSearchResults } from "@/utils/webSearch"
 
 // 重新导出类型，方便外部直接从本模块导入
 export type {
   AiApiConfig,
   AiCallOptions,
   DeepSeekReasoningEffort,
+  SearchApiConfig,
 } from "@/types/ai"
 
 // ============ Provider 配置 ============
@@ -128,12 +134,6 @@ function buildRequestBody(
     }
   }
 
-  // DeepSeek 联网搜索（思考模式和普通模式均可使用）
-  const webSearchOptions =
-    resolvedProvider === "deepseek" && options?.webSearch
-      ? { web_search_options: { search_mode: "auto", search_context: "high" } }
-      : undefined
-
   // DeepSeek 思考模式处理
   const deepseekThinking =
     resolvedProvider === "deepseek"
@@ -149,7 +149,6 @@ function buildRequestBody(
       max_tokens: maxTokens,
       thinking: { type: "enabled" },
       reasoning_effort: reasoningEffort,
-      ...webSearchOptions,
       ...(stream ? { stream: true } : {}),
     }
   }
@@ -160,7 +159,6 @@ function buildRequestBody(
     messages,
     temperature,
     max_tokens: maxTokens,
-    ...webSearchOptions,
     ...(stream ? { stream: true } : {}),
   }
 }
@@ -343,12 +341,14 @@ interface PreparedRequest {
 
 /**
  * 公共前置逻辑：校验、参数构建、options 合并
+ * 当 options.webSearch 为 true 时，先调用搜索 API 获取真实数据（RAG），
+ * 再将搜索结果注入 system prompt，让 LLM 基于真实数据回答
  */
-function prepareRequest(
+async function prepareRequest(
   prompt: string,
   config: AiApiConfig,
   options?: AiCallOptions,
-): PreparedRequest {
+): Promise<PreparedRequest> {
   const providerConfig = API_PROVIDERS[config.provider]
   if (!providerConfig) {
     throw new Error(`不支持的API供应商: ${config.provider}`)
@@ -364,16 +364,31 @@ function prepareRequest(
   const temperature = options?.temperature ?? 0.7
   const maxTokens = options?.maxTokens ?? 800
 
-  // 联网搜索时自动注入当天日期提示，确保获取最新信息
-  const webSearchPromptSuffix =
-    config.provider === "deepseek" && options?.webSearch
-      ? `\n\n[当前日期: ${new Date().toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric", weekday: "long" })}]\n请优先通过联网搜索获取最新、当天的信息，并在回答中注明信息来源和时间。`
-      : ""
+  // ============ RAG 联网搜索：先搜后答 ============
+  let searchContext = ""
+  if (options?.webSearch && config.searchConfig) {
+    try {
+      // 从用户提示词中提取搜索关键词（直接用原文搜索效果最好）
+      const searchQuery = extractSearchQuery(prompt)
+      const searchResults = await searchWeb(searchQuery, config.searchConfig)
+      searchContext = formatSearchResults(searchResults)
+    } catch (error) {
+      // 搜索失败不应阻断 AI 回答，但需提醒用户
+      console.warn("联网搜索失败，将不带搜索结果继续生成:", error)
+      searchContext = `\n[注意：联网搜索失败 - ${(error as Error).message}，以下回答可能不包含最新信息]`
+    }
+  }
+
+  // 构建系统提示词
+  let systemContent = options?.systemPrompt || "你是一个专业的AI助手。"
+  if (searchContext) {
+    systemContent += `\n\n${searchContext}`
+  }
 
   const messages = [
     {
       role: "system",
-      content: (options?.systemPrompt || "你是一个专业的AI助手。") + webSearchPromptSuffix,
+      content: systemContent,
     },
     {
       role: "user",
@@ -394,6 +409,23 @@ function prepareRequest(
 }
 
 /**
+ * 从用户提示词中提取搜索关键词
+ * 如果提示词过长，截取关键部分以获得更好的搜索效果
+ */
+function extractSearchQuery(prompt: string): string {
+  // 去掉 markdown 格式内容和过长文本，保留核心意图
+  const cleaned = prompt
+    .replace(/```[\s\S]*?```/g, "") // 去掉代码块
+    .replace(/#{1,6}\s/g, "")       // 去掉标题标记
+    .replace(/\*\*|__/g, "")        // 去掉加粗标记
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1") // 链接只保留文本
+    .trim()
+
+  // 搜索 query 不宜过长，截取前 200 字
+  return cleaned.length > 200 ? cleaned.slice(0, 200) : cleaned
+}
+
+/**
  * 统一 AI API 调用（非流式）
  */
 export async function callAI(
@@ -409,7 +441,7 @@ export async function callAI(
     maxTokens,
     merged,
   } =
-    prepareRequest(prompt, config, options)
+    await prepareRequest(prompt, config, options)
 
   const requestBody = buildRequestBody(
     config.provider,
@@ -456,7 +488,7 @@ export async function callAIStream(
     maxTokens,
     merged,
   } =
-    prepareRequest(prompt, config, options)
+    await prepareRequest(prompt, config, options)
 
   const requestBody = buildRequestBody(
     config.provider,
@@ -620,11 +652,21 @@ export function getApiConfigFromPlugin(plugin: any): AiApiConfig {
     rawModel === "custom"
       ? settings.aiCustomModel || "qwen-plus"
       : rawModel
+
+  // 构建搜索配置
+  const searchProvider = settings.searchProvider || "jina"
+  const searchConfig: SearchApiConfig = {
+    searchProvider: searchProvider as SearchApiConfig["searchProvider"],
+    bochaApiKey: settings.searchBochaApiKey || "",
+    searxngUrl: settings.searchSearxngUrl || "",
+  }
+
   return {
     provider: settings.aiApiProvider || "tongyi",
     model,
     apiKey: settings.aiApiKey || "",
     customEndpoint: settings.aiCustomEndpoint || "",
     enableThinking: settings.aiEnableThinking ?? false,
+    searchConfig,
   }
 }

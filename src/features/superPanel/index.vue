@@ -90,6 +90,9 @@ const aiSettings = computed<AiSettings>(() => ({
   apiKey: props.settings.aiApiKey || "",
   customEndpoint: props.settings.aiCustomEndpoint || "",
   enableThinking: props.settings.aiEnableThinking ?? false,
+  searchProvider: props.settings.searchProvider || "jina",
+  searchBochaApiKey: props.settings.searchBochaApiKey || "",
+  searchSearxngUrl: props.settings.searchSearxngUrl || "",
 }))
 
 // 切换AI配置面板

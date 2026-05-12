@@ -28,6 +28,8 @@ export interface AiCallOptions {
   onReasoningChunk?: (chunk: string) => void
   enableThinking?: boolean
   reasoningEffort?: DeepSeekReasoningEffort
+  /** DeepSeek 联网搜索 */
+  webSearch?: boolean
 }
 
 /** AI 生成选项接口（用于 AIContentGenerator） */
@@ -39,6 +41,8 @@ export interface GenerateOptions {
   context?: string
   signal?: AbortSignal
   onChunk?: (chunk: string) => void
+  /** DeepSeek 联网搜索 */
+  webSearch?: boolean
 }
 
 /** 目标文档接口 */
@@ -123,4 +127,6 @@ export interface AutomationTask {
   temperature: number
   /** 最大 token 数 */
   maxTokens: number
+  /** 是否启用联网搜索（仅 DeepSeek） */
+  webSearch?: boolean
 }

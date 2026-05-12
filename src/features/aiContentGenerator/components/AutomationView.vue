@@ -31,7 +31,7 @@
             <div class="task-card-info">
               <span class="task-name">{{ task.name }}</span>
               <span class="task-frequency-badge">{{ frequencyLabel(task) }}</span>
-              <span v-if="task.webSearch" class="task-websearch-badge">联网</span>
+              <span v-if="task.webSearch" class="task-websearch-badge">RAG联网</span>
             </div>
             <label class="toggle-switch" @click.stop>
               <input
@@ -240,7 +240,7 @@
                   />
                 </div>
                 <div class="form-group form-row-inline">
-                  <label class="form-label">联网搜索（仅 DeepSeek）</label>
+                  <label class="form-label">联网搜索（RAG 先搜后答，所有模型通用）</label>
                   <label class="toggle-switch" @click.stop>
                     <input
                       type="checkbox"
@@ -704,8 +704,8 @@ onMounted(async () => {
   padding: 1px 6px;
   font-size: 10px;
   font-weight: 500;
-  color: #10b981;
-  background: rgba(16, 185, 129, 0.1);
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
   border-radius: 3px;
   white-space: nowrap;
   flex-shrink: 0;

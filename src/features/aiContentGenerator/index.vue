@@ -85,6 +85,13 @@
       @stop-generation="handleChatStop"
     />
 
+    <!-- ====== 自动化任务模式 ====== -->
+    <AutomationView
+      v-if="activeMode === 'automation'"
+      :plugin="plugin"
+      :on-generate="props.onGenerate"
+    />
+
   </div>
 </template>
 
@@ -103,6 +110,7 @@ import SettingsPanel from "./components/SettingsPanel.vue";
 import MainContentArea from "./components/MainContentArea.vue";
 import BottomInputArea from "./components/BottomInputArea.vue";
 import ChatView from "./components/ChatView.vue";
+import AutomationView from "./components/AutomationView.vue";
 
 interface Props {
   i18n: any;
@@ -126,7 +134,7 @@ const showSettings = ref(false);
 const abortController = ref<AbortController | null>(null);
 
 // 模式切换
-const activeMode = ref<"generator" | "chat">("generator");
+const activeMode = ref<"generator" | "chat" | "automation">("generator");
 const chatViewRef = ref<InstanceType<typeof ChatView> | null>(null);
 
 // ============ 技能系统 ============

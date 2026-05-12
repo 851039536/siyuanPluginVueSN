@@ -11,6 +11,14 @@
       </button>
       <button
         class="mode-tab"
+        :class="{ active: activeMode === 'automation' }"
+        @click="$emit('update:activeMode', 'automation')"
+      >
+        <svg width="14" height="14"><use xlink:href="#iconRefresh" /></svg>
+        <span>{{ automationTitle }}</span>
+      </button>
+      <button
+        class="mode-tab"
         :class="{ active: activeMode === 'chat' }"
         @click="$emit('update:activeMode', 'chat')"
       >
@@ -40,20 +48,22 @@ import Button from "@/components/Button.vue"
 
 interface Props {
   title?: string
-  activeMode: "generator" | "chat"
+  activeMode: "generator" | "automation" | "chat"
   generatorTitle?: string
+  automationTitle?: string
   chatTitle?: string
 }
 
 withDefaults(defineProps<Props>(), {
   title: "信息生成",
   generatorTitle: "生成器",
+  automationTitle: "自动化",
   chatTitle: "技能问答",
 })
 
 defineEmits<{
   (e: "toggle-settings"): void
-  (e: "update:activeMode", mode: "generator" | "chat"): void
+  (e: "update:activeMode", mode: "generator" | "automation" | "chat"): void
 }>()
 </script>
 

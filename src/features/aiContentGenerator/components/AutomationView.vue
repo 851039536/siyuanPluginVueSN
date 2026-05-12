@@ -33,14 +33,7 @@
               <span class="task-frequency-badge">{{ frequencyLabel(task) }}</span>
               <span v-if="task.webSearch" class="task-websearch-badge">RAG联网</span>
             </div>
-            <label class="toggle-switch" @click.stop>
-              <input
-                type="checkbox"
-                :checked="task.enabled"
-                @change="toggleTask(task)"
-              />
-              <span class="toggle-slider"></span>
-            </label>
+            <Switch v-model="task.enabled" size="small" @change="saveTasksToStorage" />
           </div>
           <div class="task-card-body">
             <p class="task-prompt-preview">{{ task.prompt }}</p>
@@ -241,13 +234,7 @@
                 </div>
                 <div class="form-group form-row-inline">
                   <label class="form-label">联网搜索（RAG 先搜后答，所有模型通用）</label>
-                  <label class="toggle-switch" @click.stop>
-                    <input
-                      type="checkbox"
-                      v-model="form.webSearch"
-                    />
-                    <span class="toggle-slider"></span>
-                  </label>
+                  <Switch v-model="form.webSearch" size="small" />
                 </div>
               </div>
             </details>
@@ -299,11 +286,11 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue"
 import { showMessage } from "siyuan"
-import type { AutomationTask, AutomationFrequency } from "@/types/ai"
-import type { GenerateOptions } from "@/types/ai"
+import type { AutomationTask, AutomationFrequency, GenerateOptions } from "@/types/ai"
 import { AIGeneratorStorage } from "../types/storage"
 import { renderMarkdown } from "../utils"
 import * as api from "@/api"
+import Switch from "@/components/Switch.vue"
 
 interface Props {
   plugin: any
@@ -371,26 +358,9 @@ const formatTime = (ts: number): string => {
 
 const openEditor = (task: AutomationTask | null) => {
   editingTask.value = task
-  if (task) {
-    form.value = {
-      name: task.name,
-      prompt: task.prompt,
-      systemPrompt: task.systemPrompt,
-      frequency: task.frequency,
-      customCron: task.customCron || "",
-      intervalMinutes: task.intervalMinutes ?? 60,
-      weekDay: task.weekDay ?? 1,
-      monthDay: task.monthDay ?? 1,
-      executeTime: task.executeTime || "09:00",
-      enabled: task.enabled,
-      targetDocId: task.targetDocId || "",
-      temperature: task.temperature,
-      maxTokens: task.maxTokens,
-      webSearch: task.webSearch ?? false,
-    }
-  } else {
-    form.value = defaultForm()
-  }
+  form.value = task
+    ? { ...defaultForm(), ...task, customCron: task.customCron ?? "", targetDocId: task.targetDocId ?? "" }
+    : defaultForm()
   showEditor.value = true
 }
 
@@ -409,23 +379,22 @@ const saveTask = async () => {
     return
   }
 
+  const taskData = {
+    ...form.value,
+    customCron: form.value.frequency === "custom" ? form.value.customCron : undefined,
+    targetDocId: form.value.targetDocId || undefined,
+  }
+
   if (editingTask.value) {
     const idx = tasks.value.findIndex((t: AutomationTask) => t.id === editingTask.value!.id)
     if (idx !== -1) {
-      tasks.value[idx] = {
-        ...editingTask.value,
-        ...form.value,
-        customCron: form.value.frequency === "custom" ? form.value.customCron : undefined,
-        targetDocId: form.value.targetDocId || undefined,
-      }
+      tasks.value[idx] = { ...editingTask.value, ...taskData }
     }
   } else {
     const newTask: AutomationTask = {
       id: Date.now().toString(),
       createdAt: Date.now(),
-      ...form.value,
-      customCron: form.value.frequency === "custom" ? form.value.customCron : undefined,
-      targetDocId: form.value.targetDocId || undefined,
+      ...taskData,
     }
     tasks.value.push(newTask)
   }
@@ -435,10 +404,6 @@ const saveTask = async () => {
   closeEditor()
 }
 
-const toggleTask = async (task: AutomationTask) => {
-  task.enabled = !task.enabled
-  await saveTasksToStorage()
-}
 
 const deleteTask = async (task: AutomationTask) => {
   if (!confirm(`确定删除任务「${task.name}」？`)) return
@@ -685,74 +650,27 @@ onMounted(async () => {
   white-space: nowrap;
 }
 
-.task-frequency-badge {
+.task-badge {
   display: inline-flex;
   align-items: center;
   padding: 1px 6px;
   font-size: 10px;
   font-weight: 500;
-  color: var(--b3-theme-primary);
-  background: rgba(var(--b3-theme-primary-rgb), 0.1);
   border-radius: 3px;
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+.task-frequency-badge {
+  @extend .task-badge;
+  color: var(--b3-theme-primary);
+  background: rgba(var(--b3-theme-primary-rgb), 0.1);
 }
 
 .task-websearch-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 1px 6px;
-  font-size: 10px;
-  font-weight: 500;
+  @extend .task-badge;
   color: #3b82f6;
   background: rgba(59, 130, 246, 0.1);
-  border-radius: 3px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-// ============ 开关 ============
-.toggle-switch {
-  position: relative;
-  display: inline-block;
-  width: 32px;
-  height: 18px;
-  flex-shrink: 0;
-  cursor: pointer;
-
-  input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
-}
-
-.toggle-slider {
-  position: absolute;
-  inset: 0;
-  background: var(--b3-theme-surface-lighter);
-  border-radius: 9px;
-  transition: background 0.2s;
-
-  &::before {
-    content: "";
-    position: absolute;
-    left: 2px;
-    top: 2px;
-    width: 14px;
-    height: 14px;
-    background: white;
-    border-radius: 50%;
-    transition: transform 0.2s;
-  }
-}
-
-.toggle-switch input:checked + .toggle-slider {
-  background: var(--b3-theme-primary);
-
-  &::before {
-    transform: translateX(14px);
-  }
 }
 
 .task-card-body {

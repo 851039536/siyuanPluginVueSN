@@ -232,7 +232,7 @@
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">目标文档ID（可选，留空则仅生成不写入）</label>
+                  <label class="form-label">目标文档ID（可选，留空则仅生成；填写后在其下新建子文档写入）</label>
                   <input
                     v-model="form.targetDocId"
                     class="form-input"
@@ -466,9 +466,9 @@ const runTaskNow = async (task: AutomationTask) => {
     if (result) {
       resultContent.value = result
 
-      // 如果有目标文档ID，自动写入
+      // 如果有目标文档ID，在其下新建子文档写入
       if (task.targetDocId) {
-        await writeResultToDoc(task.targetDocId, result)
+        await writeResultToDoc(task.targetDocId, result, task.name)
       }
 
       task.lastExecutedAt = Date.now()
@@ -487,10 +487,26 @@ const runTaskNow = async (task: AutomationTask) => {
   }
 }
 
-const writeResultToDoc = async (docId: string, content: string) => {
+const writeResultToDoc = async (docId: string, content: string, taskName: string) => {
   try {
-    await api.updateBlock("markdown", content, docId)
-    showMessage(`已写入目标文档`, 2000, "info")
+    // 获取目标文档的笔记本和路径信息
+    const pathInfo = await api.getPathByID(docId)
+    if (!pathInfo) {
+      showMessage("无法获取目标文档路径信息", 3000, "error")
+      return
+    }
+
+    // 生成子文档名称：任务名 + 时间戳
+    const now = new Date()
+    const timeStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}_${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`
+    const docName = `${taskName}_${timeStr}`
+
+    // 在目标文档路径下创建子文档
+    const parentPath = pathInfo.path.replace(/\.sy$/, "")
+    const childPath = `${parentPath}/${docName}`
+
+    await api.createDocWithMd(pathInfo.notebook, childPath, content)
+    showMessage(`已在目标文档下创建子文档「${docName}」`, 2000, "info")
   } catch (error) {
     console.error("写入文档失败:", error)
     showMessage("写入文档失败: " + (error as Error).message, 3000, "error")

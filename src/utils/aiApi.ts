@@ -128,6 +128,12 @@ function buildRequestBody(
     }
   }
 
+  // DeepSeek 联网搜索（思考模式和普通模式均可使用）
+  const webSearchOptions =
+    resolvedProvider === "deepseek" && options?.webSearch
+      ? { web_search_options: { search_mode: "auto", search_context: "high" } }
+      : undefined
+
   // DeepSeek 思考模式处理
   const deepseekThinking =
     resolvedProvider === "deepseek"
@@ -143,6 +149,7 @@ function buildRequestBody(
       max_tokens: maxTokens,
       thinking: { type: "enabled" },
       reasoning_effort: reasoningEffort,
+      ...webSearchOptions,
       ...(stream ? { stream: true } : {}),
     }
   }
@@ -153,6 +160,7 @@ function buildRequestBody(
     messages,
     temperature,
     max_tokens: maxTokens,
+    ...webSearchOptions,
     ...(stream ? { stream: true } : {}),
   }
 }
@@ -356,10 +364,16 @@ function prepareRequest(
   const temperature = options?.temperature ?? 0.7
   const maxTokens = options?.maxTokens ?? 800
 
+  // 联网搜索时自动注入当天日期提示，确保获取最新信息
+  const webSearchPromptSuffix =
+    config.provider === "deepseek" && options?.webSearch
+      ? `\n\n[当前日期: ${new Date().toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric", weekday: "long" })}]\n请优先通过联网搜索获取最新、当天的信息，并在回答中注明信息来源和时间。`
+      : ""
+
   const messages = [
     {
       role: "system",
-      content: options?.systemPrompt || "你是一个专业的AI助手。",
+      content: (options?.systemPrompt || "你是一个专业的AI助手。") + webSearchPromptSuffix,
     },
     {
       role: "user",

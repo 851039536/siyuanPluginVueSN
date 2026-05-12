@@ -122,6 +122,7 @@ export class AIContentGenerator {
         maxTokens: options.maxTokens,
         signal: options.signal,
         onChunk: options.onChunk,
+        webSearch: options.webSearch,
       })
 
       if (result) {

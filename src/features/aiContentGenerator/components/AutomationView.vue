@@ -31,6 +31,7 @@
             <div class="task-card-info">
               <span class="task-name">{{ task.name }}</span>
               <span class="task-frequency-badge">{{ frequencyLabel(task) }}</span>
+              <span v-if="task.webSearch" class="task-websearch-badge">联网</span>
             </div>
             <label class="toggle-switch" @click.stop>
               <input
@@ -238,6 +239,16 @@
                     placeholder="思源文档ID"
                   />
                 </div>
+                <div class="form-group form-row-inline">
+                  <label class="form-label">联网搜索（仅 DeepSeek）</label>
+                  <label class="toggle-switch" @click.stop>
+                    <input
+                      type="checkbox"
+                      v-model="form.webSearch"
+                    />
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
               </div>
             </details>
           </div>
@@ -337,6 +348,7 @@ const defaultForm = (): Omit<AutomationTask, "id" | "createdAt"> => ({
   targetDocId: "",
   temperature: 0.7,
   maxTokens: 10000,
+  webSearch: false,
 })
 
 const form = ref(defaultForm())
@@ -374,6 +386,7 @@ const openEditor = (task: AutomationTask | null) => {
       targetDocId: task.targetDocId || "",
       temperature: task.temperature,
       maxTokens: task.maxTokens,
+      webSearch: task.webSearch ?? false,
     }
   } else {
     form.value = defaultForm()
@@ -445,6 +458,7 @@ const runTaskNow = async (task: AutomationTask) => {
       systemPrompt: task.systemPrompt,
       temperature: task.temperature,
       maxTokens: task.maxTokens,
+      webSearch: task.webSearch,
     }
 
     const result = await props.onGenerate(options)
@@ -663,6 +677,19 @@ onMounted(async () => {
   font-weight: 500;
   color: var(--b3-theme-primary);
   background: rgba(var(--b3-theme-primary-rgb), 0.1);
+  border-radius: 3px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.task-websearch-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 500;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
   border-radius: 3px;
   white-space: nowrap;
   flex-shrink: 0;
@@ -922,6 +949,12 @@ onMounted(async () => {
   font-size: 10px;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
+}
+
+.form-row-inline {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
 }
 
 // ============ 频率选择 ============

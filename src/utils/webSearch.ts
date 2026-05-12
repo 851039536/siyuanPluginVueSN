@@ -39,7 +39,7 @@ async function searchBocha(
     body: JSON.stringify({
       query,
       count: maxResults,
-      freshness: "oneDay", // 优先最新结果
+      freshness: "oneWeek", // 优先一周内的结果
       summary: true, // 返回摘要
     }),
   })

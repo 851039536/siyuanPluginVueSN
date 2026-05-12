@@ -4,15 +4,15 @@
  * 搜索结果将注入 system prompt，让 LLM 基于真实数据回答，大幅降低幻觉
  */
 import type {
-  SearchResult,
   SearchApiConfig,
+  SearchResult,
 } from "@/types/ai"
 
 // 重新导出类型
 export type {
+  SearchApiConfig,
   SearchProvider,
   SearchResult,
-  SearchApiConfig,
 } from "@/types/ai"
 
 /** 默认搜索条数 */
@@ -39,7 +39,7 @@ async function searchBocha(
     body: JSON.stringify({
       query,
       count: maxResults,
-      freshness: "oneWeek", // 优先一周内的结果
+      freshness: "oneWeek", // 优先一周内的结果 oneMonth - 一个月内
       summary: true, // 返回摘要
     }),
   })

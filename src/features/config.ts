@@ -221,7 +221,7 @@ export const FEATURE_CONFIG = [
     actions: [{
       key: "openFormatAssistant",
       label: "打开排版助手",
-      hotkey: "Ctrl+Alt+F",
+      hotkey: "Ctrl+Alt+G",
     }],
   },
 ] as const

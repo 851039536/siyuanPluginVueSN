@@ -365,6 +365,18 @@ watch(viewMode, () => {
   refreshData()
 })
 
+watch(dayRange, () => {
+  refreshData()
+})
+
+watch(monthYearRange, () => {
+  refreshData()
+})
+
+watch(selectedYear, () => {
+  refreshData()
+})
+
 async function refreshData() {
   if (!props.onRefresh) return
 
@@ -395,7 +407,7 @@ async function loadHistoricalData() {
   if (!props.onGetHistoricalData) return
   try {
     const data = await props.onGetHistoricalData()
-    historicalData.value = data.reverse()
+    historicalData.value = [...data].reverse()
   } catch (error) {
     console.error("加载历史数据失败:", error)
   }
@@ -414,7 +426,6 @@ async function loadNotebookDocStats() {
 }
 
 onMounted(() => {
-  loading.value = true
   refreshData()
 })
 

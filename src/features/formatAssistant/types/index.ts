@@ -1,5 +1,6 @@
 import type { App as VueApp } from "vue"
 import type { Plugin } from "siyuan"
+import { createIconElement } from "@/utils/iconHelper"
 import { createApp, h } from "vue"
 import FormatAssistantPanel from "../index.vue"
 
@@ -12,10 +13,12 @@ export class FormatAssistantManager {
   private plugin: Plugin
   private app: VueApp | null = null
   private container: HTMLElement | null = null
+  private statusBarElement: HTMLElement | null = null
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
     this.addCommand()
+    this.addStatusBar()
   }
 
   /**
@@ -25,10 +28,32 @@ export class FormatAssistantManager {
     this.plugin.addCommand({
       command: "openFormatAssistant",
       title: "打开排版助手",
-      hotkey: "Ctrl+Alt+F",
+      hotkey: "⌃⌥G",
       callback: () => {
         this.open()
       },
+    })
+  }
+
+  /**
+   * 添加底部状态栏图标
+   */
+  private addStatusBar() {
+    const iconElement = createIconElement("mdi:format-align-left", 16, "#07c160")
+    iconElement.style.cursor = "pointer"
+    iconElement.style.height = "29px"
+    iconElement.style.display = "inline-flex"
+    iconElement.style.alignItems = "center"
+    iconElement.style.justifyContent = "center"
+    iconElement.style.padding = "0 4px"
+    iconElement.title = "排版助手"
+    iconElement.addEventListener("click", () => {
+      this.open()
+    })
+
+    this.statusBarElement = this.plugin.addStatusBar({
+      element: iconElement,
+      position: "right",
     })
   }
 
@@ -129,5 +154,9 @@ export class FormatAssistantManager {
    */
   public destroy() {
     this.close()
+    if (this.statusBarElement) {
+      this.statusBarElement.remove()
+      this.statusBarElement = null
+    }
   }
 }

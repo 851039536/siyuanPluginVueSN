@@ -690,16 +690,19 @@ export class Statistics {
 
   /**
    * 启动定时更新任务
+   * @param immediate 是否立即执行一次，默认为 true
    */
-  private startUpdateTimer(): void {
+  private startUpdateTimer(immediate: boolean = true): void {
     // 清除现有定时器
     if (this.updateTimer) {
       clearInterval(this.updateTimer)
       this.updateTimer = null
     }
 
-    // 立即执行一次
-    this.collectAndStoreStatistics()
+    // 按需立即执行一次
+    if (immediate) {
+      this.collectAndStoreStatistics()
+    }
 
     // 设置定时任务
     this.updateTimer = setInterval(() => {
@@ -910,8 +913,8 @@ export class Statistics {
       console.error("保存更新间隔设置失败:", error)
     }
 
-    // 重新启动定时器
-    this.startUpdateTimer()
+    // 重新启动定时器（不触发即时数据采集）
+    this.startUpdateTimer(false)
   }
 
   /**

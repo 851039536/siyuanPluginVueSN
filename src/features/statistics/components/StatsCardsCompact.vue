@@ -156,8 +156,10 @@ const statsItems = computed(() => [
 ])
 
 function formatChange(change: number | null): string {
-  if (!change) return ""
-  return `${(change > 0 ? "↑" : "↓") + Math.abs(change).toFixed(0)}%`
+  if (change === null) return ""
+  const prefix = change > 0 ? "↑" : "↓"
+  const absVal = Math.abs(change)
+  return `${prefix}${absVal.toFixed(0)}%`
 }
 </script>
 

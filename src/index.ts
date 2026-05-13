@@ -29,6 +29,7 @@ import {
   registerFlashcardReading,
   registerFloatingBox,
   registerFloatingToolbar,
+  registerFormatAssistant,
   registerGeneralSettings,
   registerImageCompressor,
   registerPageLock,
@@ -145,6 +146,11 @@ export default class PluginSample extends Plugin {
     // 清理通用设置资源
     if ((this as any).__generalSettings) {
       (this as any).__generalSettings.destroy()
+    }
+
+    // 清理排版助手资源
+    if ((this as any).__formatAssistant) {
+      (this as any).__formatAssistant.destroy()
     }
 
     destroyCommands()
@@ -273,6 +279,11 @@ export default class PluginSample extends Plugin {
     // 注册 WebDAV 功能
     if (this.settings.enableWebDAV) {
       registerWebDAV(this)
+    }
+
+    // 注册排版助手功能
+    if (this.settings.enableFormatAssistant) {
+      registerFormatAssistant(this)
     }
   }
 

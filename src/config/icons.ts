@@ -230,6 +230,12 @@ export const FEATURE_ICONS = {
     color: "#14b8a6",
   },
 
+  // 排版助手
+  formatAssistant: {
+    icon: "mdi:format-align-left",
+    color: "#07c160",
+  },
+
   // 视频相关图标
   play: {
     icon: "mdi:play",

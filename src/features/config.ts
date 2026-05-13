@@ -214,6 +214,16 @@ export const FEATURE_CONFIG = [
       hotkey: "Ctrl+Alt+D",
     }],
   },
+  {
+    id: "formatAssistant",
+    defaultTitle: "排版助手",
+    defaultDesc: "将Markdown文档转换为微信公众号等平台的富文本格式",
+    actions: [{
+      key: "openFormatAssistant",
+      label: "打开排版助手",
+      hotkey: "Ctrl+Alt+F",
+    }],
+  },
 ] as const
 
 /**

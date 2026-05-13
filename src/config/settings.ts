@@ -67,6 +67,7 @@ export interface PluginSettings {
   enablePasswordVault: boolean // 是否启用密码箱功能
   enableDocAnalysis: boolean // 是否启用文档分析功能
   enableWebDAV: boolean // 是否启用WebDAV功能
+  enableFormatAssistant: boolean // 是否启用排版助手功能
   webdavConfig: WebDAVConfig // WebDAV服务器配置
   videoCategories?: string[] // 视频分类列表
   compactMode: boolean // 是否启用全局紧洛模式
@@ -130,6 +131,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enablePasswordVault: true,
   enableDocAnalysis: true,
   enableWebDAV: true,
+  enableFormatAssistant: true,
   webdavConfig: {
     serverUrl: "",
     username: "",

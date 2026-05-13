@@ -112,6 +112,7 @@ export const FEATURE_SETTINGS_MAP: Record<FeatureId, BooleanSettingsKeys> = {
   webDAV: "enableWebDAV",
   passwordVault: "enablePasswordVault",
   docAnalysis: "enableDocAnalysis",
+  formatAssistant: "enableFormatAssistant",
 }
 
 /**
@@ -144,6 +145,10 @@ const ACTION_EVENT_MAP: Record<
   openBase64Image: {
     event: "openBase64Image",
     settingKey: "enableBase64Image",
+  },
+  openFormatAssistant: {
+    event: "openFormatAssistant",
+    settingKey: "enableFormatAssistant",
   },
 }
 

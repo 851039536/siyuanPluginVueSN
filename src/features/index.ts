@@ -9,6 +9,7 @@ export { registerBase64Image } from "./base64Image"
 export { registerCodeImageGenerator } from "./codeImageGenerator"
 export { registerDiskBrowser } from "./diskBrowser"
 export { registerDocAnalysis } from "./docAnalysis"
+export { registerFormatAssistant } from "./formatAssistant"
 export { registerDocNavigation } from "./docNavigation"
 export { registerEncryption } from "./encryption"
 export {
@@ -77,7 +78,7 @@ type _Registered =
   | "statistics" | "encryption" | "video" | "everythingSearch"
   | "statusBar" | "floatingToolbar" | "floatingBox" | "textDiff"
   | "base64Image" | "flashcardReading" | "passwordVault" | "docAnalysis"
-  | "webDAV"
+  | "webDAV" | "formatAssistant"
 
 // --- 编译时断言辅助 ---
 // 利用泛型接口约束 T extends true 产生 TypeScript 编译错误，无运行时开销

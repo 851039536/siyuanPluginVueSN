@@ -157,6 +157,14 @@ onMounted(() => {
     if (event.detail?.encryptedText)
       openDecryptDialogAction(event.detail.encryptedText)
   }) as EventListener)
+
+  // 监听打开排版助手事件
+  window.addEventListener("openFormatAssistant", () => {
+    const pluginInstance = plugin as any
+    if (pluginInstance.__formatAssistant) {
+      pluginInstance.__formatAssistant.open()
+    }
+  })
 })
 </script>
 

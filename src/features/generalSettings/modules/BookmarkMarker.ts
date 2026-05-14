@@ -23,6 +23,8 @@
  * 因此需要 MutationObserver 监听 DOM 变化，动态应用标记。
  */
 const BOOKMARK_MARKER_CLASS = "bookmark-marker-tag"
+/** 文章展开页面（protyle）书签标记的 CSS 类名 */
+const BOOKMARK_PROTYLE_CLASS = "bookmark-marker-protyle"
 const BOOKMARK_MARKER_STYLE_ID = "bookmark-marker-styles"
 
 export interface BookmarkMarkerOptions {
@@ -59,8 +61,12 @@ export class BookmarkMarker {
   private styleAdded = false
   /** 文件树 DOM 变动观察器 */
   private fileTreeObserver: MutationObserver | null = null
+  /** 文章展开页面（protyle）DOM 变动观察器 */
+  private protyleObserver: MutationObserver | null = null
   /** 防抖定时器 */
   private debounceTimer: number | null = null
+  /** protyle 防抖定时器 */
+  private protyleDebounceTimer: number | null = null
   /** 缓存：文档 ID → 书签名称 */
   private bookmarkCache = new Map<string, string>()
   /** 缓存是否已加载 */
@@ -92,12 +98,16 @@ export class BookmarkMarker {
     this.applyMarkers()
     this.startAutoUpdate()
     this.startObserving()
+    this.startObservingProtyle()
+    this.startProtyleRetry()
   }
 
   stop(): void {
     if (!this.active) return
     this.active = false
     this.stopObserving()
+    this.stopObservingProtyle()
+    this.stopProtyleRetry()
     this.stopAutoUpdate()
     this.clearAllMarkers()
     this.removeStyles()
@@ -142,7 +152,7 @@ export class BookmarkMarker {
   // ============================================================
 
   /**
-   * 在文件树中应用书签标记（完整流程：查库 + 标记 DOM）
+   * 在所有位置应用书签标记（完整流程：查库 + 标记 DOM）
    */
   private async applyMarkers(): Promise<void> {
     if (!this.active) return
@@ -151,6 +161,7 @@ export class BookmarkMarker {
 
     if (this.bookmarkCache.size) {
       this.applyMarkersToDOM()
+      this.applyMarkersToProtyle()
     }
   }
 
@@ -252,11 +263,13 @@ export class BookmarkMarker {
   }
 
   /**
-   * 清除所有书签标记
+   * 清除所有书签标记（包括文件树和 protyle 标题区）
    */
   private clearAllMarkers(): void {
     const markers = document.querySelectorAll(`.${BOOKMARK_MARKER_CLASS}`)
     markers.forEach((m) => m.remove())
+    const protyleMarkers = document.querySelectorAll(`.${BOOKMARK_PROTYLE_CLASS}`)
+    protyleMarkers.forEach((m) => m.remove())
   }
 
   // ============================================================
@@ -364,6 +377,232 @@ export class BookmarkMarker {
   }
 
   // ============================================================
+  // 文章展开页面（protyle）标记
+  // ============================================================
+
+  /**
+   * 在文章展开页面标题区应用书签标记
+   *
+   * 思源笔记中，文章展开时会在编辑器视图创建 protyle 区域：
+   *   div.protyle-title[data-node-id]          ← 文档标题容器（本功能标记这里）
+   *     div.protyle-title__input                 ← 文档标题（可编辑）
+   *       Document Title
+   *     span.bookmark-marker-protyle             ← 书签标记（由本功能插入）
+   *
+   * 参考：HeadingSettings 通过 .protyle-title__input 选择器来设置文档标题样式
+   */
+  private applyMarkersToProtyle(): void {
+    if (!this.active || !this.cacheLoaded) return
+
+    const protyleTitles = document.querySelectorAll(".protyle-title[data-node-id]")
+
+    for (const title of protyleTitles) {
+      const htmlTitle = title as HTMLElement
+      const nodeId = htmlTitle.dataset.nodeId
+      if (!nodeId) continue
+
+      const bookmarkName = this.bookmarkCache.get(nodeId)
+      if (!bookmarkName) {
+        this.removeMarkerFromProtyle(htmlTitle)
+        continue
+      }
+
+      const rule = this.options.rules.find(
+        (r) => r.bookmarkName === bookmarkName,
+      )
+
+      if (rule) {
+        this.applyMarkerToProtyle(htmlTitle, bookmarkName, rule)
+      } else {
+        this.removeMarkerFromProtyle(htmlTitle)
+      }
+    }
+  }
+
+  /**
+   * 给文章展开页面的文档标题容器添加书签标记
+   * 标记插入到 .protyle-title 末尾（在标题输入框后面），
+   * 根据 displayMode 支持三种显示模式：
+   *   bg      — 文字标签（默认）：背景色 + 文字名称
+   *   icon    — 仅图标：透明背景 + 仅显示 emoji 图标
+   *   icon-bg — 图标+背景：背景色 + 仅显示 emoji 图标
+   */
+  private applyMarkerToProtyle(
+    title: HTMLElement,
+    bookmarkName: string,
+    rule: BookmarkRule,
+  ): void {
+    // 检查是否已存在相同书签的标记
+    const existingMarker = title.querySelector(`.${BOOKMARK_PROTYLE_CLASS}`)
+    if (existingMarker && (existingMarker as HTMLElement).dataset.bookmark === bookmarkName) {
+      return
+    }
+
+    // 移除旧标记
+    if (existingMarker) existingMarker.remove()
+
+    // 创建标记元素
+    const marker = document.createElement("span")
+    marker.className = BOOKMARK_PROTYLE_CLASS
+    marker.dataset.bookmark = bookmarkName
+
+    const mode = rule.displayMode || "bg"
+
+    if (mode === "icon" && rule.icon) {
+      // 仅图标模式：无背景色，只显示图标
+      marker.style.backgroundColor = "transparent"
+      marker.textContent = rule.icon
+    } else if (mode === "icon-bg" && rule.icon) {
+      // 图标+背景模式
+      marker.style.backgroundColor = rule.backgroundColor
+      marker.textContent = rule.icon
+    } else {
+      // 文字标签模式（默认）：显示书签名称，带背景
+      marker.style.backgroundColor = rule.backgroundColor
+      marker.textContent = rule.icon ? `${rule.icon} ${bookmarkName}` : bookmarkName
+    }
+
+    marker.style.color = rule.color
+    title.appendChild(marker)
+  }
+
+  /**
+   * 移除文章展开页面标题区的书签标记
+   */
+  private removeMarkerFromProtyle(title: HTMLElement): void {
+    const oldMarker = title.querySelector(`.${BOOKMARK_PROTYLE_CLASS}`)
+    if (oldMarker) oldMarker.remove()
+  }
+
+  // ============================================================
+  // MutationObserver — 监听文章展开页面 DOM 变化
+  // ============================================================
+
+  /**
+   * 启动文章展开页面 DOM 监听
+   * 当用户点击文档时，思源会动态创建或复用 protyle 编辑器实例，
+   * 需要监听 DOM 变化以及时为新出现的文档标题添加书签标记
+   *
+   * 注意两个关键场景：
+   * 1. 新增元素：protyle-title 刚添加到 DOM 时可能还没有 data-node-id，
+   *    因此匹配条件不能要求 [data-node-id]
+   * 2. 复用编辑器：思源会复用现有 protyle 元素，只修改 data-node-id 属性，
+   *    因此需要监听 attributes 类型的变更
+   */
+  private startObservingProtyle(): void {
+    if (this.protyleObserver) return
+
+    this.protyleObserver = new MutationObserver((mutations) => {
+      let hasNewProtyle = false
+
+      for (const mutation of mutations) {
+        if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
+          for (const node of mutation.addedNodes) {
+            if (node instanceof HTMLElement) {
+              // 不要求 [data-node-id]，因为该属性可能在添加后才异步设置
+              if (
+                node.matches(".protyle-title")
+                || node.querySelector(".protyle-title")
+              ) {
+                hasNewProtyle = true
+                break
+              }
+            }
+          }
+        }
+
+        // 捕获 protyle 复用场景：data-node-id 属性变更
+        if (
+          !hasNewProtyle
+          && mutation.type === "attributes"
+          && mutation.attributeName === "data-node-id"
+        ) {
+          const target = mutation.target as HTMLElement
+          if (target.matches(".protyle-title")) {
+            hasNewProtyle = true
+          }
+        }
+
+        if (hasNewProtyle) break
+      }
+
+      if (hasNewProtyle) {
+        this.debouncedApplyMarkersToProtyle()
+      }
+    })
+
+    // 监听整个 body 下的节点变化
+    this.protyleObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+      // 监听 data-node-id 属性变化，以覆盖思源复用 protyle 编辑器的场景
+      attributes: true,
+      attributeFilter: ["data-node-id"],
+    })
+  }
+
+  /**
+   * 在启动初期短时轮询 protyle 标记
+   * 某些场景下 data-node-id 可能在 DOM 插入后延迟较久才设置，
+   * MutationObserver 可能在第一次匹配后就不再触发，
+   * 用短时轮询兜底确保标记不遗漏。
+   */
+  private protyleRetryCount = 0
+  private protyleRetryTimer: number | null = null
+
+  private startProtyleRetry(): void {
+    if (this.protyleRetryTimer) return
+    this.protyleRetryCount = 0
+
+    this.protyleRetryTimer = window.setInterval(() => {
+      if (!this.active) {
+        this.stopProtyleRetry()
+        return
+      }
+
+      this.protyleRetryCount++
+      this.applyMarkersToProtyle()
+
+      // 轮询 15 次后停止（约 12 秒）
+      if (this.protyleRetryCount >= 15) {
+        this.stopProtyleRetry()
+      }
+    }, 800)
+  }
+
+  private stopProtyleRetry(): void {
+    if (this.protyleRetryTimer) {
+      clearInterval(this.protyleRetryTimer)
+      this.protyleRetryTimer = null
+    }
+    this.protyleRetryCount = 0
+  }
+
+  private stopObservingProtyle(): void {
+    if (this.protyleObserver) {
+      this.protyleObserver.disconnect()
+      this.protyleObserver = null
+    }
+    if (this.protyleDebounceTimer) {
+      clearTimeout(this.protyleDebounceTimer)
+      this.protyleDebounceTimer = null
+    }
+  }
+
+  /**
+   * 防抖应用 protyle 标记
+   */
+  private debouncedApplyMarkersToProtyle(): void {
+    if (this.protyleDebounceTimer) {
+      clearTimeout(this.protyleDebounceTimer)
+    }
+    this.protyleDebounceTimer = window.setTimeout(() => {
+      if (!this.active) return
+      this.applyMarkersToProtyle()
+    }, 300)
+  }
+
+  // ============================================================
   // 样式管理
   // ============================================================
 
@@ -388,6 +627,22 @@ export class BookmarkMarker {
         vertical-align: middle;
         white-space: nowrap;
         letter-spacing: 0.5px;
+      }
+
+      .${BOOKMARK_PROTYLE_CLASS} {
+        display: inline-block;
+        font-size: 11px;
+        line-height: 1;
+        padding: 3px 8px;
+        margin-left: 8px;
+        border-radius: 4px;
+        font-weight: 500;
+        vertical-align: middle;
+        white-space: nowrap;
+        letter-spacing: 0.5px;
+        position: relative;
+        top: -1px;
+        cursor: default;
       }
     `
     document.head.appendChild(style)

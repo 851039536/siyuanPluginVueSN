@@ -77,8 +77,6 @@ export class BookmarkMarker {
     Object.assign(this.options, options)
     this.cacheLoaded = false
     if (this.active) {
-      this.removeStyles()
-      this.addStyles()
       this.applyMarkers()
     }
   }

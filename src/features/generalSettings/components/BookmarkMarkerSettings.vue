@@ -225,12 +225,12 @@ const handleToggleChange = async () => {
 
     const marker = getBookmarkMarker()
     if (enableBookmarkMarker.value) {
-      if (!marker && props.plugin?.__generalSettings) {
-        props.plugin.__generalSettings.bookmarkMarker = new BookmarkMarker()
-        const newMarker = getBookmarkMarker()
-        newMarker?.start()
-        newMarker?.setUpdateInterval(Number.parseInt(updateInterval.value))
-        newMarker?.updateOptions({ rules: rules.value })
+      if (!marker) {
+        props.plugin.__generalSettings.bookmarkMarker = new BookmarkMarker({
+          rules: rules.value,
+          updateInterval: Number.parseInt(updateInterval.value),
+        })
+        getBookmarkMarker()?.start()
       } else {
         marker?.start()
       }
@@ -307,8 +307,7 @@ const handleRefresh = async () => {
   try {
     const marker = getBookmarkMarker()
     if (marker) {
-      // 强制刷新缓存并重新应用标记
-      marker.updateOptions({ rules: JSON.parse(JSON.stringify(rules.value)) })
+      marker.updateOptions({ rules: rules.value })
       showMessage("书签标记已刷新", 2000, "info")
     } else {
       showMessage("书签标记功能未启动", 2000, "warning")
@@ -507,16 +506,6 @@ defineExpose({
   color: var(--b3-theme-on-background);
 }
 
-.rule-input:hover {
-  border-color: var(--b3-theme-primary);
-}
-
-.rule-input:focus {
-  outline: none;
-  border-color: var(--b3-theme-primary);
-  box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.1);
-}
-
 .color-input-wrapper {
   display: flex;
   gap: 8px;
@@ -554,11 +543,15 @@ defineExpose({
   color: var(--b3-theme-on-background);
 }
 
-.color-text:hover {
+.rule-input:hover,
+.color-text:hover,
+.interval-select:hover {
   border-color: var(--b3-theme-primary);
 }
 
-.color-text:focus {
+.rule-input:focus,
+.color-text:focus,
+.interval-select:focus {
   outline: none;
   border-color: var(--b3-theme-primary);
   box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.1);

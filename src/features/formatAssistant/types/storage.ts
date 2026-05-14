@@ -5,12 +5,17 @@ import { TypedStorage } from "@/utils/typedStorage"
 /**
  * 排版助手输出目标类型
  */
-export type FormatTarget = "wechat"
+export type FormatTarget = "wechat" | "bilibili"
 
 /**
  * 微信公众号主题
  */
 export type WechatTheme = "default" | "green" | "orange" | "purple" | "blue"
+
+/**
+ * 哔哩哔哩专栏主题
+ */
+export type BilibiliTheme = "default" | "pink" | "dark" | "mint"
 
 /**
  * 排版助手设置接口
@@ -20,6 +25,8 @@ export interface FormatAssistantSettings {
   target: FormatTarget
   /** 微信公众号主题 */
   wechatTheme: WechatTheme
+  /** 哔哩哔哩专栏主题 */
+  bilibiliTheme: BilibiliTheme
   /** 字体大小(px) */
   fontSize: number
   /** 行高倍数 */
@@ -34,6 +41,7 @@ export interface FormatAssistantSettings {
 export const DEFAULT_FORMAT_ASSISTANT_SETTINGS: FormatAssistantSettings = {
   target: "wechat",
   wechatTheme: "default",
+  bilibiliTheme: "default",
   fontSize: 15,
   lineHeight: 1.75,
   codeHighlight: true,

@@ -35,6 +35,25 @@
             </button>
           </div>
         </div>
+        <div v-if="target === 'bilibili'" class="option-group">
+          <span class="option-label">{{ $t('theme') }}</span>
+          <div class="theme-selector">
+            <button
+              v-for="t in bilibiliThemes"
+              :key="t.value"
+              class="theme-btn"
+              :class="{ active: bilibiliTheme === t.value }"
+              :title="t.label"
+              @click="bilibiliTheme = t.value"
+            >
+              <span
+                class="theme-dot"
+                :style="{ background: t.color }"
+              ></span>
+              <span class="theme-label">{{ t.label }}</span>
+            </button>
+          </div>
+        </div>
         <div class="option-group">
           <span class="option-label">{{ $t('fontSize') }}</span>
           <select
@@ -171,8 +190,9 @@
 
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
-import type { FormatAssistantSettings, WechatTheme } from "./types/storage"
+import type { FormatAssistantSettings, BilibiliTheme, WechatTheme } from "./types/storage"
 import { FormatAssistantStorage } from "./types/storage"
+import { convertMdToBilibili, getBilibiliThemes } from "./utils/mdToBilibili"
 import { convertMdToWechat, getWechatThemes } from "./utils/mdToWechat"
 import { ref, watch } from "vue"
 
@@ -192,8 +212,9 @@ const storage = props.plugin ? new FormatAssistantStorage(props.plugin) : null
 // 响应式状态
 const inputMd = ref("")
 const outputHtml = ref("")
-const target = ref<"wechat">("wechat")
+const target = ref<"wechat" | "bilibili">("wechat")
 const wechatTheme = ref<WechatTheme>("default")
+const bilibiliTheme = ref<BilibiliTheme>("default")
 const fontSize = ref(15)
 const lineHeight = ref(1.75)
 const codeHighlight = ref(true)
@@ -202,11 +223,13 @@ const copyBtnText = ref("复制HTML")
 // 选项数据
 const targetOptions = [
   { value: "wechat" as const, label: "微信公众号" },
+  { value: "bilibili" as const, label: "哔哩哔哩" },
 ]
 
 const fontSizeOptions = [13, 14, 15, 16, 17, 18]
 const lineHeightOptions = [1.5, 1.6, 1.75, 1.8, 2.0]
 const wechatThemes = getWechatThemes()
+const bilibiliThemes = getBilibiliThemes()
 
 // 自动转换（带防抖）
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
@@ -228,6 +251,13 @@ const convertAndPreview = async () => {
     if (target.value === "wechat") {
       outputHtml.value = await convertMdToWechat(inputMd.value, {
         theme: wechatTheme.value,
+        fontSize: fontSize.value,
+        lineHeight: lineHeight.value,
+        codeHighlight: codeHighlight.value,
+      })
+    } else if (target.value === "bilibili") {
+      outputHtml.value = await convertMdToBilibili(inputMd.value, {
+        theme: bilibiliTheme.value,
         fontSize: fontSize.value,
         lineHeight: lineHeight.value,
         codeHighlight: codeHighlight.value,
@@ -277,6 +307,7 @@ const loadSettings = async () => {
     const settings = await storage.settings.loadOrDefault()
     target.value = settings.target
     wechatTheme.value = settings.wechatTheme
+    bilibiliTheme.value = settings.bilibiliTheme ?? "default"
     fontSize.value = settings.fontSize
     lineHeight.value = settings.lineHeight
     codeHighlight.value = settings.codeHighlight
@@ -292,6 +323,7 @@ const saveSettings = async () => {
     const settings: FormatAssistantSettings = {
       target: target.value,
       wechatTheme: wechatTheme.value,
+      bilibiliTheme: bilibiliTheme.value,
       fontSize: fontSize.value,
       lineHeight: lineHeight.value,
       codeHighlight: codeHighlight.value,
@@ -303,7 +335,7 @@ const saveSettings = async () => {
 }
 
 // 设置变更时自动保存并重新转换
-watch([target, wechatTheme, fontSize, lineHeight, codeHighlight], () => {
+watch([target, wechatTheme, bilibiliTheme, fontSize, lineHeight, codeHighlight], () => {
   saveSettings()
   convertAndPreview()
 })

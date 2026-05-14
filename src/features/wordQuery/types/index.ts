@@ -1,50 +1,24 @@
-import type { AiApiConfig } from "@/types/ai"
 import { Plugin } from "siyuan"
 import {
   createApp,
   h,
 } from "vue"
+import { getApiConfigFromPlugin } from "@/utils/aiApi"
 import WordQueryPanel from "../index.vue"
 import { callWordQueryAPI } from "../utils/api"
 
 export class WordQueryManager {
   private plugin: Plugin
-  private apiConfig: AiApiConfig
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
-    const settings = (plugin as any).settings
-    const rawModel = settings.aiModel || "qwen-plus"
-    const model =
-      rawModel === "custom"
-        ? settings.aiCustomModel || "qwen-plus"
-        : rawModel
-    this.apiConfig = {
-      provider: settings.aiApiProvider || "tongyi",
-      model,
-      apiKey: settings.aiApiKey || "",
-      customEndpoint: settings.aiCustomEndpoint || "",
-      enableThinking: settings.aiEnableThinking ?? false,
-    }
   }
 
-  public updateApiConfig(
-    provider: string,
-    model: string,
-    apiKey: string,
-    customEndpoint: string,
-  ) {
-    this.apiConfig = {
-      ...this.apiConfig,
-      provider,
-      model,
-      apiKey,
-      customEndpoint,
-    }
-  }
-
-  public getApiConfig(): AiApiConfig {
-    return this.apiConfig
+  /**
+   * 动态获取最新的 API 配置，确保用户修改设置后立即生效
+   */
+  public getApiConfig() {
+    return getApiConfigFromPlugin(this.plugin)
   }
 
   public init() {

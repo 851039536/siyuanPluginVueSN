@@ -1,11 +1,21 @@
 <template>
   <div class="stats-overview">
-    <div class="stats-header">
-      <span class="stats-title">文档统计概览</span>
+    <div
+      class="stats-header"
+      :class="{ collapsed: isCollapsed }"
+      @click="toggleCollapse"
+    >
+      <div class="header-left">
+        <Icon
+          :icon="isCollapsed ? 'mdi:chevron-right' : 'mdi:chevron-down'"
+          class="collapse-icon"
+        />
+        <span class="stats-title">文档统计概览</span>
+      </div>
       <button
         class="analyze-btn"
         :disabled="loading"
-        @click="$emit('analyze')"
+        @click.stop="$emit('analyze')"
       >
         <Icon
           :icon="loading ? 'mdi:loading' : 'mdi:chart-bar'"
@@ -15,7 +25,7 @@
       </button>
     </div>
 
-    <template v-if="hasAnalyzed">
+    <template v-if="hasAnalyzed && !isCollapsed">
       <!-- 大小统计 -->
       <div class="stats-section">
         <div class="section-label">
@@ -256,7 +266,10 @@ import type {
   DocStats,
 } from "../types/index"
 import { Icon } from "@iconify/vue"
-import { computed } from "vue"
+import {
+  computed,
+  ref,
+} from "vue"
 
 interface Props {
   stats: DocStats
@@ -272,6 +285,13 @@ defineEmits<{
   (e: "analyze"): void
   (e: "select-category", category: string): void
 }>()
+
+/** 折叠状态 */
+const isCollapsed = ref(false)
+
+function toggleCollapse() {
+  isCollapsed.value = !isCollapsed.value
+}
 
 /** 计算深度分布柱状图高度 */
 const maxCount = computed(() => {
@@ -295,6 +315,25 @@ function getBarHeight(count: number): number {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 10px;
+  cursor: pointer;
+  user-select: none;
+
+  &.collapsed {
+    margin-bottom: 0;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .collapse-icon {
+    font-size: 16px;
+    color: var(--b3-theme-on-surface-variant);
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+  }
 
   .stats-title {
     font-size: 14px;

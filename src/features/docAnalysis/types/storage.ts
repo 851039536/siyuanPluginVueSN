@@ -20,6 +20,7 @@ export const DEFAULT_FILTER_OPTIONS: FilterOptions = {
   sortOrder: "asc",
   wordCountMin: 0,
   wordCountMax: 30000,
+  bookmarkName: "",
 }
 
 /**

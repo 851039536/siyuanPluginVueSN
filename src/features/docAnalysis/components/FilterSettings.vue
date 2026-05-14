@@ -60,6 +60,16 @@
           </option>
         </select>
       </div>
+      <div class="filter-item bookmark-item">
+        <label class="filter-label">书签</label>
+        <input
+          v-model="options.bookmarkName"
+          type="text"
+          class="filter-input bookmark-input"
+          placeholder="书签名称"
+          @input="handleDebouncedInput"
+        />
+      </div>
       <button
         class="query-btn"
         :disabled="isQuerying"
@@ -186,6 +196,10 @@ function handleDebouncedInput() {
 
   .wordcount-input {
     width: 55px;
+  }
+
+  .bookmark-input {
+    width: 80px;
   }
 
   .filter-separator {

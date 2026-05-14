@@ -44,6 +44,13 @@ const SIZE_WORDCOUNT_SUBQUERY = `
   GROUP BY root_id
 `
 
+/** 子查询：获取每个文档的书签名称（思源书签存储在 attributes 表中） */
+const BOOKMARK_SUBQUERY = `
+  SELECT block_id, value as bookmark
+  FROM attributes
+  WHERE name = 'bookmark'
+`
+
 /** 子查询：统计每个文档的引用块数量（思源引用语法 ((id "标题")) 在 markdown 字段中） */
 const REF_SUBQUERY = `
   SELECT root_id, COUNT(*) as ref_count
@@ -111,6 +118,7 @@ export function useDocAnalysis(plugin: Plugin) {
     totalRefs: 0,
     imageDocs: 0,
     totalImages: 0,
+    bookmarkedDocs: 0,
   })
   const statsLoading = ref(false)
   const hasAnalyzed = ref(false)
@@ -187,6 +195,7 @@ export function useDocAnalysis(plugin: Plugin) {
       depth: row.doc_depth ?? undefined,
       refCount: row.ref_count ?? undefined,
       imageCount: row.image_count ?? undefined,
+      bookmark: row.bookmark || undefined,
     }))
   }
 
@@ -209,9 +218,11 @@ export function useDocAnalysis(plugin: Plugin) {
           b.created as doc_created,
           COALESCE(sw.total_size, 0) as content_size,
           COALESCE(sw.total_word_count, 0) as word_count,
-          LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth
+          LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth,
+          COALESCE(bm.bookmark, '') as bookmark
         FROM blocks b
         LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
+        LEFT JOIN (${BOOKMARK_SUBQUERY}) bm ON b.id = bm.block_id
         WHERE b.type = 'd' ${notebookCondition}
         ${extraCondition}
         ORDER BY word_count ASC
@@ -350,6 +361,9 @@ export function useDocAnalysis(plugin: Plugin) {
 
       // 图片/资源分析
       await analyzeImages(notebookCondition)
+
+      // 书签统计
+      await analyzeBookmarks(notebookCondition)
 
       hasAnalyzed.value = true
     } catch (error) {
@@ -549,6 +563,30 @@ export function useDocAnalysis(plugin: Plugin) {
   }
 
   /**
+   * 书签使用分析
+   * 思源中书签存储在 attributes 表，name='bookmark'
+   */
+  async function analyzeBookmarks(notebookCondition: string) {
+    try {
+      const bmCountSql = `
+        SELECT COUNT(DISTINCT a.block_id) as bookmarked_docs
+        FROM attributes a
+        WHERE a.name = 'bookmark'
+        AND a.block_id IN (
+          SELECT b.id FROM blocks b WHERE b.type = 'd' ${notebookCondition}
+        )
+      `
+
+      const bmRows = await sql(bmCountSql)
+      if (bmRows && bmRows.length > 0) {
+        docStats.bookmarkedDocs = bmRows[0].bookmarked_docs || 0
+      }
+    } catch (error) {
+      console.error("书签分析失败:", error)
+    }
+  }
+
+  /**
    * 点击统计卡片 - 按类别查询文档列表
    */
   async function queryByStatsCategory(category: string) {
@@ -618,6 +656,10 @@ export function useDocAnalysis(plugin: Plugin) {
           imgCol = "COALESCE(img.image_count, 0) as image_count"
           orderBy = "img.image_count DESC"
           break
+        case "hasBookmark":
+          extraJoin = `INNER JOIN (${BOOKMARK_SUBQUERY}) bm ON b.id = bm.block_id`
+          orderBy = "bm.bookmark ASC"
+          break
         default:
           queryState.status = "empty"
           return
@@ -635,9 +677,11 @@ export function useDocAnalysis(plugin: Plugin) {
           COALESCE(sw.total_word_count, 0) as word_count,
           LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth,
           ${refCol},
-          ${imgCol}
+          ${imgCol},
+          COALESCE(bm_out.bookmark, '') as bookmark
         FROM blocks b
         LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
+        LEFT JOIN (${BOOKMARK_SUBQUERY}) bm_out ON b.id = bm_out.block_id
         ${extraJoin}
         WHERE b.type = 'd' ${notebookCondition}
         ${extraWhere}
@@ -694,9 +738,11 @@ export function useDocAnalysis(plugin: Plugin) {
           b.created as doc_created,
           COALESCE(sw.total_size, 0) as content_size,
           COALESCE(sw.total_word_count, 0) as word_count,
-          LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth
+          LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth,
+          COALESCE(bm.bookmark, '') as bookmark
         FROM blocks b
         LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
+        LEFT JOIN (${BOOKMARK_SUBQUERY}) bm ON b.id = bm.block_id
         WHERE b.type = 'd' ${notebookCondition}
         AND b.content IN (${titleList})
         ORDER BY b.content ASC, content_size ASC
@@ -751,6 +797,11 @@ export function useDocAnalysis(plugin: Plugin) {
         ) `
       }
 
+      if (filterOptions.bookmarkName.trim()) {
+        const bmName = filterOptions.bookmarkName.trim().replace(/'/g, "''")
+        conditions += `AND b.id IN (SELECT block_id FROM attributes WHERE name='bookmark' AND value='${bmName}') `
+      }
+
       if (needWordCountFilter) {
         // 需要字数过滤时才 JOIN 子查询
         if (filterOptions.wordCountMin > 0) {
@@ -770,9 +821,11 @@ export function useDocAnalysis(plugin: Plugin) {
             b.created as doc_created,
             COALESCE(sw.total_size, 0) as content_size,
             COALESCE(sw.total_word_count, 0) as word_count,
-            LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth
+            LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth,
+            COALESCE(bm.bookmark, '') as bookmark
           FROM blocks b
           LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
+          LEFT JOIN (${BOOKMARK_SUBQUERY}) bm ON b.id = bm.block_id
           WHERE b.type = 'd' ${notebookCondition}
           ${conditions}
           ORDER BY word_count ASC
@@ -800,8 +853,10 @@ export function useDocAnalysis(plugin: Plugin) {
             b.created as doc_created,
             0 as content_size,
             0 as word_count,
-            LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth
+            LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth,
+            COALESCE(bm.bookmark, '') as bookmark
           FROM blocks b
+          LEFT JOIN (${BOOKMARK_SUBQUERY}) bm ON b.id = bm.block_id
           WHERE b.type = 'd' ${notebookCondition}
           ${conditions}
           ORDER BY b.content ASC
@@ -852,6 +907,9 @@ export function useDocAnalysis(plugin: Plugin) {
           break
         case "imageCount":
           compare = (a.imageCount || 0) - (b.imageCount || 0)
+          break
+        case "bookmark":
+          compare = (a.bookmark || "").localeCompare(b.bookmark || "", "zh-CN")
           break
         default:
           compare = a.wordCount - b.wordCount

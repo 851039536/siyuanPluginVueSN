@@ -134,6 +134,31 @@
         </div>
       </div>
 
+      <!-- 书签统计 -->
+      <div class="stats-section">
+        <div class="section-label">
+          <Icon
+            icon="mdi:bookmark-outline"
+            class="section-icon"
+          />
+          书签
+        </div>
+        <div class="stats-cards">
+          <div
+            class="stat-card"
+            :class="{ active: activeFilter === 'hasBookmark' }"
+            @click="$emit('select-category', 'hasBookmark')"
+          >
+            <div class="stat-value bookmark-color">
+              {{ stats.bookmarkedDocs }}
+            </div>
+            <div class="stat-label">
+              有书签的文档
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 深度/引用/图片统计 -->
       <div class="stats-section">
         <div class="section-label">
@@ -408,6 +433,10 @@ function getBarHeight(count: number): number {
 
     &.img-color {
       color: #f97316;
+    }
+
+    &.bookmark-color {
+      color: #eab308;
     }
   }
 

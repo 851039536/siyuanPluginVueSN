@@ -67,6 +67,16 @@
         />
         {{ doc.imageCount }}
       </span>
+      <span
+        v-if="doc.bookmark"
+        class="badge bookmark-badge"
+      >
+        <Icon
+          icon="mdi:bookmark"
+          class="badge-icon"
+        />
+        {{ doc.bookmark }}
+      </span>
     </div>
     <div class="doc-size">
       <span
@@ -257,6 +267,11 @@ function formatTime(ts: string): string {
     &.img-badge {
       color: #f97316;
       background: rgba(249, 115, 22, 0.1);
+    }
+
+    &.bookmark-badge {
+      color: #eab308;
+      background: rgba(234, 179, 8, 0.1);
     }
   }
 

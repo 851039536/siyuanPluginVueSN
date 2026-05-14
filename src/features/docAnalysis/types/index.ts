@@ -32,6 +32,8 @@ export interface DocInfo {
   refCount?: number
   /** 图片/资源数量 */
   imageCount?: number
+  /** 书签名称（如果该文档有书签） */
+  bookmark?: string
 }
 
 /** 更新时间分析统计 */
@@ -77,7 +79,7 @@ export interface ImageStats {
 }
 
 /** 排序方式 */
-export type SortField = "wordCount" | "title" | "notebook" | "updated" | "depth" | "refCount" | "imageCount"
+export type SortField = "wordCount" | "title" | "notebook" | "updated" | "depth" | "refCount" | "imageCount" | "bookmark"
 export type SortOrder = "asc" | "desc"
 
 /** 查询状态 */
@@ -99,6 +101,8 @@ export interface FilterOptions {
   wordCountMin: number
   /** 字数过滤最大值（0 表示不过滤） */
   wordCountMax: number
+  /** 书签名称过滤（空字符串表示全部） */
+  bookmarkName: string
 }
 
 /** 查询结果状态 */
@@ -155,5 +159,7 @@ export interface DocStats {
   imageDocs: number
   /** 图片/资源块总数 */
   totalImages: number
+  /** 带有书签的文档数 */
+  bookmarkedDocs: number
 }
 

@@ -82,6 +82,9 @@
           <option value="imageCount">
             按图片数
           </option>
+          <option value="bookmark">
+            按书签
+          </option>
         </select>
         <button
           class="sort-order-btn"
@@ -117,7 +120,7 @@
         />
         <p>点击上方「分析」查看统计，或设置筛选条件后查询</p>
         <p class="empty-desc">
-          支持标题搜索、全文搜索、字数范围筛选
+          支持标题搜索、全文搜索、字数范围筛选、书签过滤
         </p>
       </div>
 
@@ -126,7 +129,7 @@
         <DocListItem
           v-for="doc in visibleDocs"
           :key="doc.id"
-          v-memo="[doc.id, doc.title, doc.wordCount, doc.contentSize, doc.updated, doc.depth, doc.refCount, doc.imageCount]"
+          v-memo="[doc.id, doc.title, doc.wordCount, doc.contentSize, doc.updated, doc.depth, doc.refCount, doc.imageCount, doc.bookmark]"
           :doc="doc"
           @open="openDoc"
         />
@@ -312,6 +315,7 @@ function getCategoryLabel(category: string): string {
     case "deep": return "深层文档(≥5层)"
     case "hasRef": return "含引用"
     case "hasImage": return "含图片"
+    case "hasBookmark": return "有书签"
     default: return category
   }
 }

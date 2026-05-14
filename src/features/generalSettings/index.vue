@@ -125,6 +125,17 @@
         </div>
 
         <div
+          v-show="activeCategory === 'bookmarkMarker'"
+          class="content-section"
+        >
+          <BookmarkMarkerSettings
+            :i18n="i18n"
+            :plugin="plugin"
+            @change="handleBookmarkMarkerChange"
+          />
+        </div>
+
+        <div
           v-show="activeCategory === 'markdownExport'"
           class="content-section"
         >
@@ -161,6 +172,7 @@ import EncryptionSettings from "./components/EncryptionSettings.vue"
 import HeadingSettings from "./components/HeadingSettings.vue"
 import HighlightSettings from "./components/HighlightSettings.vue"
 import ListStyleSettings from "./components/ListStyleSettings.vue"
+import BookmarkMarkerSettings from "./components/BookmarkMarkerSettings.vue"
 import MarkdownExportSettings from "./components/MarkdownExportSettings.vue"
 import PasswordSettings from "./components/PasswordSettings.vue"
 import SkillsViewerSettings from "./components/SkillsViewerSettings.vue"
@@ -223,6 +235,10 @@ const categories = computed(() => [
     label: props.i18n.docCountSettings || "文档数统计",
   },
   {
+    id: "bookmarkMarker",
+    label: props.i18n.bookmarkMarkerSettings || "书签标记",
+  },
+  {
     id: "markdownExport",
     label: "Markdown 导出",
   },
@@ -249,6 +265,7 @@ const handleTableStyleChange = createSettingsHandler("tableStyle")
 const handleListStyleChange = createSettingsHandler("listStyle")
 const handleTabPinChange = createSettingsHandler("tabPin")
 const handleDocCountChange = createSettingsHandler("docCount")
+const handleBookmarkMarkerChange = createSettingsHandler("bookmarkMarker")
 
 defineExpose({
   handleCodeBlockChange,

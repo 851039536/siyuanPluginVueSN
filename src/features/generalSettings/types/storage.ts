@@ -151,6 +151,21 @@ export interface BackupSettings {
   cloudSyncEnabled?: boolean
 }
 
+export interface BookmarkRule {
+  /** 书签名称 */
+  bookmarkName: string
+  /** 标记颜色 */
+  color: string
+  /** 标记背景色 */
+  backgroundColor: string
+}
+
+export interface BookmarkMarkerSettings {
+  enableBookmarkMarker: boolean
+  rules: BookmarkRule[]
+  updateInterval: number
+}
+
 export interface SkillsViewerSettings {
   enabled: boolean
   projectPath: string
@@ -256,6 +271,24 @@ export const DEFAULT_TABPIN_SETTINGS: TabPinSettings = {
   backgroundColor: "rgba(var(--b3-theme-primary-rgb), 0.1)",
 }
 
+/** 默认书签标记设置 */
+export const DEFAULT_BOOKMARK_MARKER_SETTINGS: BookmarkMarkerSettings = {
+  enableBookmarkMarker: true,
+  rules: [
+    {
+      bookmarkName: "已发布",
+      color: "#ffffff",
+      backgroundColor: "#52c41a",
+    },
+    {
+      bookmarkName: "待发布",
+      color: "#ffffff",
+      backgroundColor: "#faad14",
+    },
+  ],
+  updateInterval: 3600000,
+}
+
 // ============================================================
 // 存储类
 // ============================================================
@@ -272,6 +305,7 @@ export class GeneralSettingsStorage {
   readonly listStyle: TypedStorage<ListStyleSettings>
   readonly docCount: TypedStorage<DocCountSettings>
   readonly tabPin: TypedStorage<TabPinSettings>
+  readonly bookmarkMarker: TypedStorage<BookmarkMarkerSettings>
   readonly skillsViewer: TypedStorage<SkillsViewerSettings>
   readonly appearance: TypedStorage<Record<string, any>>
   readonly backupHistory: TypedStorage<Record<string, any>>
@@ -291,6 +325,7 @@ export class GeneralSettingsStorage {
     this.listStyle = new TypedStorage(storage, "list-style-settings")
     this.docCount = new TypedStorage(storage, "doc-count-settings")
     this.tabPin = new TypedStorage(storage, "tabpin-settings", DEFAULT_TABPIN_SETTINGS)
+    this.bookmarkMarker = new TypedStorage(storage, "bookmark-marker-settings", DEFAULT_BOOKMARK_MARKER_SETTINGS)
     this.skillsViewer = new TypedStorage(storage, "skills-viewer-settings")
     this.appearance = new TypedStorage(storage, "appearance-settings")
     this.backupHistory = new TypedStorage(storage, "backup-history")
@@ -329,6 +364,7 @@ export class GeneralSettingsStorage {
       this.listStyle.remove(),
       this.docCount.remove(),
       this.tabPin.remove(),
+      this.bookmarkMarker.remove(),
       this.skillsViewer.remove(),
       this.appearance.remove(),
       this.backupHistory.remove(),

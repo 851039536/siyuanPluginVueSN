@@ -1,0 +1,537 @@
+/**
+ * 书签标记管理器
+ * 根据文档的书签内容，在文件树中对文档名称进行颜色标记
+ *
+ * 重要：思源笔记中，书签 NOT stored in blocks.bookmark（该列不存在），
+ * 而是存储在 attributes 表中：name='bookmark', value='书签名'
+ *
+ * 正确的 SQL 查询：
+ *   SELECT block_id as id, value as bookmark
+ *   FROM attributes WHERE name = 'bookmark' AND block_id = root_id
+ *
+ * 思源文件树 DOM 结构（参考 DocCountManager）：
+ *   ul[data-url="notebookId"]               ← 笔记本容器
+ *     li[data-type="navigation-root"]         ← 笔记本标题（DocCountManager 标记这里）
+ *       span.b3-list-item__text              ← 笔记本名
+ *     ul                                     ← 文档列表
+ *       li[data-node-id][data-path]           ← 文档项（本功能标记这里）
+ *         span.b3-list-item__text             ← 文档名
+ *       li[data-node-id][data-path]           ← 子文档项
+ *         ...
+ *
+ * 文件树是懒加载的，子文档只在展开时才渲染到 DOM，
+ * 因此需要 MutationObserver 监听 DOM 变化，动态应用标记。
+ */
+const BOOKMARK_MARKER_CLASS = "bookmark-marker-tag"
+const BOOKMARK_MARKER_STYLE_ID = "bookmark-marker-styles"
+const DEBUG = true
+
+function log(...args: any[]) {
+  if (DEBUG) console.log("[BookmarkMarker]", ...args)
+}
+
+export interface BookmarkMarkerOptions {
+  enableBookmarkMarker: boolean
+  /** 书签名 → 颜色 的映射规则 */
+  rules: BookmarkRule[]
+  /** 更新间隔（毫秒） */
+  updateInterval: number
+}
+
+export interface BookmarkRule {
+  /** 书签名称（精确匹配） */
+  bookmarkName: string
+  /** 标记颜色 */
+  color: string
+  /** 标记背景色 */
+  backgroundColor: string
+}
+
+interface AttrRow {
+  /** 文档块 ID（= block_id） */
+  id: string
+  /** 书签名称（= value） */
+  bookmark: string
+}
+
+export class BookmarkMarker {
+  private updateTimer: number | null = null
+  private options: BookmarkMarkerOptions
+  private active = false
+  private styleAdded = false
+  /** 文件树 DOM 变动观察器 */
+  private fileTreeObserver: MutationObserver | null = null
+  /** 防抖定时器 */
+  private debounceTimer: number | null = null
+  /** 缓存：文档 ID → 书签名称 */
+  private bookmarkCache = new Map<string, string>()
+  /** 缓存是否已加载 */
+  private cacheLoaded = false
+
+  constructor(options: Partial<BookmarkMarkerOptions> = {}) {
+    this.options = {
+      enableBookmarkMarker: true,
+      rules: [
+        { bookmarkName: "已发布", color: "#ffffff", backgroundColor: "#52c41a" },
+        { bookmarkName: "待发布", color: "#ffffff", backgroundColor: "#faad14" },
+      ],
+      updateInterval: 3600000,
+      ...options,
+    }
+  }
+
+  updateOptions(options: Partial<BookmarkMarkerOptions>) {
+    Object.assign(this.options, options)
+    this.cacheLoaded = false
+    if (this.active) {
+      this.removeStyles()
+      this.addStyles()
+      this.applyMarkers()
+    }
+  }
+
+  start(): void {
+    if (this.active) return
+    this.active = true
+    log("启动书签标记")
+    this.addStyles()
+    this.applyMarkers()
+    this.startAutoUpdate()
+    this.startObserving()
+  }
+
+  stop(): void {
+    if (!this.active) return
+    this.active = false
+    log("停止书签标记")
+    this.stopObserving()
+    this.stopAutoUpdate()
+    this.clearAllMarkers()
+    this.removeStyles()
+    this.bookmarkCache.clear()
+    this.cacheLoaded = false
+  }
+
+  setUpdateInterval(interval: number): void {
+    this.options.updateInterval = interval
+    if (this.updateTimer) {
+      this.stopAutoUpdate()
+      this.startAutoUpdate()
+    }
+  }
+
+  isActive(): boolean {
+    return this.active
+  }
+
+  // ============================================================
+  // 书签数据查询 — 使用 attributes 表（而非 blocks.bookmark）
+  // ============================================================
+
+  /**
+   * 查询所有有书签的文档，并缓存结果
+   *
+   * 思源笔记中，书签存储在 attributes 表：
+   *   name = 'bookmark', value = '书签名称'
+   *   block_id = root_id 表示该属性属于文档级块（文档的 block_id 即为 root_id）
+   */
+  private async loadBookmarkCache(): Promise<void> {
+    // 关键修复：使用 attributes 表查询书签，而非 blocks.bookmark（不存在该列）
+    const sql = `SELECT block_id as id, value as bookmark FROM attributes WHERE name = 'bookmark' AND block_id = root_id`
+
+    log("执行 SQL:", sql)
+    const result = await this.query(sql)
+    this.bookmarkCache.clear()
+
+    if (!result || !result.length) {
+      log("查询结果为空，没有找到有书签的文档")
+      this.cacheLoaded = true
+      return
+    }
+
+    for (const row of result as AttrRow[]) {
+      this.bookmarkCache.set(row.id, row.bookmark)
+    }
+    log(`缓存了 ${this.bookmarkCache.size} 条书签数据:`, [...this.bookmarkCache.entries()])
+    this.cacheLoaded = true
+  }
+
+  // ============================================================
+  // DOM 标记应用
+  // ============================================================
+
+  /**
+   * 在文件树中应用书签标记（完整流程：查库 + 标记 DOM）
+   */
+  private async applyMarkers(): Promise<void> {
+    if (!this.active) return
+
+    await this.loadBookmarkCache()
+
+    if (!this.bookmarkCache.size) {
+      log("没有书签数据，跳过标记")
+      return
+    }
+
+    this.applyMarkersToDOM()
+  }
+
+  /**
+   * 仅对当前 DOM 中的文档项应用标记（不重新查询数据库）
+   * 用于 MutationObserver 触发的增量更新
+   */
+  private applyMarkersToDOM(): void {
+    if (!this.active || !this.cacheLoaded) return
+
+    // 策略：参考 DocCountManager，从 ul[data-url] 笔记本容器入手
+    // 找到每个笔记本容器下的所有 li[data-node-id] 文档项
+    const notebookContainers = document.querySelectorAll("ul[data-url]")
+    log(`找到 ${notebookContainers.length} 个笔记本容器`)
+
+    let totalDocItems = 0
+    let matchedItems = 0
+
+    for (const container of notebookContainers) {
+      // 在此笔记本容器下查找所有文档项
+      // 排除 li[data-type="navigation-root"]（笔记本标题项，DocCountManager 标记的）
+      const docItems = container.querySelectorAll('li[data-node-id]:not([data-type="navigation-root"])')
+
+      for (const item of docItems) {
+        totalDocItems++
+        const htmlItem = item as HTMLElement
+        const nodeId = htmlItem.dataset.nodeId
+        if (!nodeId) continue
+
+        const bookmarkName = this.bookmarkCache.get(nodeId)
+        if (!bookmarkName) {
+          // 没有书签，移除可能存在的标记
+          this.removeMarkerFromItem(htmlItem)
+          continue
+        }
+
+        // 查找匹配的规则
+        const rule = this.options.rules.find(
+          (r) => r.bookmarkName === bookmarkName,
+        )
+
+        if (rule) {
+          matchedItems++
+          this.applyMarkerToItem(htmlItem, bookmarkName, rule)
+        } else {
+          // 有书签但没有匹配规则
+          log(`文档 ${nodeId} 书签 "${bookmarkName}" 没有匹配规则`)
+          this.removeMarkerFromItem(htmlItem)
+        }
+      }
+    }
+
+    log(`DOM 扫描: ${totalDocItems} 个文档项, ${matchedItems} 个已标记`)
+
+    // 备用策略：如果通过 ul[data-url] 没找到任何文档项，
+    // 尝试更宽泛的选择器
+    if (totalDocItems === 0) {
+      this.applyMarkersFallback()
+    }
+  }
+
+  /**
+   * 备用 DOM 查找策略
+   * 在某些思源版本或布局模式下，文件树结构可能不同
+   */
+  private applyMarkersFallback(): void {
+    // 尝试更宽泛的选择器
+    const allDocItems = document.querySelectorAll(
+      '.file-tree li[data-node-id]:not([data-type="navigation-root"]),'
+      + '#fileTree li[data-node-id]:not([data-type="navigation-root"]),'
+      + 'li[data-path][data-node-id]',
+    )
+
+    log(`备用选择器找到 ${allDocItems.length} 个文档项`)
+
+    for (const item of allDocItems) {
+      const htmlItem = item as HTMLElement
+      const nodeId = htmlItem.dataset.nodeId
+      if (!nodeId) continue
+
+      const bookmarkName = this.bookmarkCache.get(nodeId)
+      if (!bookmarkName) {
+        this.removeMarkerFromItem(htmlItem)
+        continue
+      }
+
+      const rule = this.options.rules.find(
+        (r) => r.bookmarkName === bookmarkName,
+      )
+
+      if (rule) {
+        this.applyMarkerToItem(htmlItem, bookmarkName, rule)
+      } else {
+        this.removeMarkerFromItem(htmlItem)
+      }
+    }
+  }
+
+  /**
+   * 给文件树文档项添加书签标记
+   * 标记添加到 span.b3-list-item__text 内（与 DocCountManager 相同位置）
+   */
+  private applyMarkerToItem(
+    item: HTMLElement,
+    bookmarkName: string,
+    rule: BookmarkRule,
+  ): void {
+    // 找到文本元素（与 DocCountManager 相同的选择器）
+    const textEl = item.querySelector(".b3-list-item__text")
+    if (!textEl) {
+      log(`文档 ${item.dataset.nodeId} 找不到 .b3-list-item__text`)
+      return
+    }
+
+    // 检查是否已存在相同书签的标记
+    const existingMarker = textEl.querySelector(`.${BOOKMARK_MARKER_CLASS}`)
+    if (existingMarker && (existingMarker as HTMLElement).dataset.bookmark === bookmarkName) {
+      return
+    }
+
+    // 移除旧标记
+    if (existingMarker) existingMarker.remove()
+
+    // 创建标记元素
+    const marker = document.createElement("span")
+    marker.className = BOOKMARK_MARKER_CLASS
+    marker.textContent = bookmarkName
+    marker.dataset.bookmark = bookmarkName
+    marker.style.color = rule.color
+    marker.style.backgroundColor = rule.backgroundColor
+
+    textEl.appendChild(marker)
+  }
+
+  /**
+   * 移除文件树项的书签标记
+   */
+  private removeMarkerFromItem(item: HTMLElement): void {
+    const textEl = item.querySelector(".b3-list-item__text")
+    if (!textEl) return
+
+    const oldMarker = textEl.querySelector(`.${BOOKMARK_MARKER_CLASS}`)
+    if (oldMarker) oldMarker.remove()
+  }
+
+  /**
+   * 清除所有书签标记
+   */
+  private clearAllMarkers(): void {
+    const markers = document.querySelectorAll(`.${BOOKMARK_MARKER_CLASS}`)
+    markers.forEach((m) => m.remove())
+  }
+
+  // ============================================================
+  // MutationObserver — 监听文件树 DOM 变化
+  // ============================================================
+
+  /**
+   * 启动文件树 DOM 监听
+   * 文件树是懒加载的，子文档在展开时才渲染到 DOM，
+   * 需要监听 DOM 变化以及时为新出现的文档项添加标记
+   */
+  private startObserving(): void {
+    if (this.fileTreeObserver) return
+
+    const fileTreeEl = this.findFileTreeContainer()
+    if (!fileTreeEl) {
+      log("文件树容器未找到，3 秒后重试")
+      setTimeout(() => {
+        if (!this.active) return
+        const el = this.findFileTreeContainer()
+        if (el) {
+          log("延迟找到文件树容器")
+          this.attachObserver(el)
+        } else {
+          log("仍未找到文件树容器，放弃观察")
+        }
+      }, 3000)
+      return
+    }
+    log("找到文件树容器，启动 DOM 观察")
+    this.attachObserver(fileTreeEl)
+  }
+
+  private attachObserver(target: Element): void {
+    this.fileTreeObserver = new MutationObserver((mutations) => {
+      let hasRelevantChange = false
+      for (const mutation of mutations) {
+        if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
+          for (const node of mutation.addedNodes) {
+            if (node instanceof HTMLElement) {
+              // 检查新添加的节点是否包含文档项
+              if (
+                node.matches("li[data-node-id]")
+                || node.querySelector("li[data-node-id]")
+                || node.matches("ul[data-url]")
+              ) {
+                hasRelevantChange = true
+                break
+              }
+            }
+          }
+        }
+        if (hasRelevantChange) break
+      }
+
+      if (hasRelevantChange) {
+        this.debouncedApplyMarkersToDOM()
+      }
+    })
+
+    this.fileTreeObserver.observe(target, {
+      childList: true,
+      subtree: true,
+    })
+  }
+
+  private stopObserving(): void {
+    if (this.fileTreeObserver) {
+      this.fileTreeObserver.disconnect()
+      this.fileTreeObserver = null
+    }
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer)
+      this.debounceTimer = null
+    }
+  }
+
+  /**
+   * 查找文件树容器元素
+   * 参考思路：DocCountManager 用 ul[data-url] 找笔记本容器，
+   * 文件树外层容器应该在更上层
+   */
+  private findFileTreeContainer(): Element | null {
+    // 方式1: 通过 .file-tree 类（思源桌面端文件树面板）
+    const fileTree = document.querySelector(".file-tree")
+    if (fileTree) return fileTree
+
+    // 方式2: 通过 ul[data-url] 的父级向上查找
+    const notebookUl = document.querySelector("ul[data-url]")
+    if (notebookUl) {
+      // 向上找到包含所有笔记本的容器
+      return notebookUl.parentElement?.parentElement || notebookUl.parentElement || notebookUl
+    }
+
+    // 方式3: 其他常见选择器
+    return document.querySelector("#fileTree")
+      || document.querySelector(".layout__file")
+      || null
+  }
+
+  /**
+   * 防抖应用标记（避免 MutationObserver 频繁触发导致性能问题）
+   */
+  private debouncedApplyMarkersToDOM(): void {
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer)
+    }
+    this.debounceTimer = window.setTimeout(() => {
+      if (!this.active) return
+      this.applyMarkersToDOM()
+    }, 300)
+  }
+
+  // ============================================================
+  // 样式管理
+  // ============================================================
+
+  private addStyles(): void {
+    if (this.styleAdded) return
+    if (document.getElementById(BOOKMARK_MARKER_STYLE_ID)) {
+      this.styleAdded = true
+      return
+    }
+
+    const style = document.createElement("style")
+    style.id = BOOKMARK_MARKER_STYLE_ID
+    style.textContent = `
+      .${BOOKMARK_MARKER_CLASS} {
+        display: inline-block;
+        font-size: 10px;
+        line-height: 1;
+        padding: 2px 5px;
+        margin-left: 6px;
+        border-radius: 3px;
+        font-weight: 500;
+        vertical-align: middle;
+        white-space: nowrap;
+        letter-spacing: 0.5px;
+      }
+    `
+    document.head.appendChild(style)
+    this.styleAdded = true
+  }
+
+  private removeStyles(): void {
+    const existing = document.getElementById(BOOKMARK_MARKER_STYLE_ID)
+    if (existing) existing.remove()
+    this.styleAdded = false
+  }
+
+  // ============================================================
+  // 定时更新
+  // ============================================================
+
+  private startAutoUpdate(): void {
+    this.updateTimer = window.setInterval(() => {
+      this.applyMarkers()
+    }, this.options.updateInterval)
+  }
+
+  private stopAutoUpdate(): void {
+    if (this.updateTimer) {
+      clearInterval(this.updateTimer)
+      this.updateTimer = null
+    }
+  }
+
+  // ============================================================
+  // SQL 查询 — 使用 /api/query/sql
+  // ============================================================
+
+  private async query(sql: string): Promise<any[]> {
+    const result = await this.fetchSyncPost("/api/query/sql", { stmt: sql })
+    if (result.code !== 0) {
+      console.error("[BookmarkMarker] 查询数据库出错:", result.msg)
+      return []
+    }
+    return result.data
+  }
+
+  private async fetchSyncPost(
+    url: string,
+    data: any,
+    returnType: "json" | "text" = "json",
+  ): Promise<any> {
+    const init: RequestInit = {
+      method: "POST",
+    }
+    if (data) {
+      if (data instanceof FormData) {
+        init.body = data
+      } else {
+        init.body = JSON.stringify(data)
+      }
+    }
+    try {
+      const res = await fetch(url, init)
+      const res2 = returnType === "json" ? await res.json() : await res.text()
+      return res2
+    } catch (e: any) {
+      console.error("[BookmarkMarker] 请求失败:", e)
+      return returnType === "json"
+        ? {
+            code: e.code || 1,
+            msg: e.message || "",
+            data: null,
+          }
+        : ""
+    }
+  }
+}

@@ -166,6 +166,18 @@
               有书签的文档
             </div>
           </div>
+          <div
+            class="stat-card"
+            :class="{ active: activeFilter === 'noBookmark' }"
+            @click="$emit('select-category', 'noBookmark')"
+          >
+            <div class="stat-value no-bookmark-color">
+              {{ stats.noBookmarkDocs }}
+            </div>
+            <div class="stat-label">
+              无书签的文档
+            </div>
+          </div>
         </div>
       </div>
 
@@ -476,6 +488,10 @@ function getBarHeight(count: number): number {
 
     &.bookmark-color {
       color: #eab308;
+    }
+
+    &.no-bookmark-color {
+      color: #9ca3af;
     }
   }
 

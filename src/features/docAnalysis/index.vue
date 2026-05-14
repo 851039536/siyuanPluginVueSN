@@ -316,6 +316,7 @@ function getCategoryLabel(category: string): string {
     case "hasRef": return "含引用"
     case "hasImage": return "含图片"
     case "hasBookmark": return "有书签"
+    case "noBookmark": return "无书签"
     default: return category
   }
 }

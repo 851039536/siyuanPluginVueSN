@@ -27,23 +27,16 @@ import AIContentGeneratorPanel from "../index.vue"
  */
 export class AIContentGenerator {
   private plugin: Plugin
-  private apiConfig: AiApiConfig
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
-    this.apiConfig = getApiConfigFromPlugin(plugin)
   }
 
   /**
-   * 更新API配置（由超级面板调用）
+   * 获取最新的 API 配置（每次调用时动态读取，确保用户修改设置后立即生效）
    */
-  public updateApiConfig(provider: string, model: string, apiKey: string) {
-    this.apiConfig = {
-      ...this.apiConfig,
-      provider: provider as AiApiConfig["provider"],
-      model,
-      apiKey,
-    }
+  private getApiConfig(): AiApiConfig {
+    return getApiConfigFromPlugin(this.plugin)
   }
 
   /**
@@ -111,12 +104,9 @@ export class AIContentGenerator {
     }
 
     try {
-      // 刷新配置（确保使用最新的 API 配置）
-      this.apiConfig = getApiConfigFromPlugin(this.plugin)
-
       const fullPrompt = this.buildFullPrompt(options)
 
-      const result = await callAISmart(fullPrompt, this.apiConfig, {
+      const result = await callAISmart(fullPrompt, this.getApiConfig(), {
         systemPrompt: options.systemPrompt,
         temperature: options.temperature,
         maxTokens: options.maxTokens,
@@ -162,10 +152,7 @@ ${options.userInput}`
     options: ChatOptions,
   ): Promise<string> {
     try {
-      // 刷新配置（确保使用最新的 API 配置）
-      this.apiConfig = getApiConfigFromPlugin(this.plugin)
-
-      const result = await callAIChat(messages, this.apiConfig, {
+      const result = await callAIChat(messages, this.getApiConfig(), {
         temperature: options.temperature,
         maxTokens: options.maxTokens,
         signal: options.signal,

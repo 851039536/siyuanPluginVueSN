@@ -370,12 +370,6 @@ export class SuperPanelManager {
   private async handleUpdateAiSettings(aiSettings: AiSettings) {
     const pluginSample = this.plugin as any
 
-    // 解析实际模型名称：如果选择的是"自定义模型"，使用用户输入的 customModel
-    const resolvedModel =
-      aiSettings.model === "custom"
-        ? aiSettings.customModel || "qwen-plus"
-        : aiSettings.model
-
     const aiSettingFields: Record<string, any> = {
       aiApiProvider: aiSettings.provider,
       aiModel: aiSettings.model,
@@ -398,22 +392,6 @@ export class SuperPanelManager {
       // 更新响应式 settings 对象
       if (reactiveSettings) {
         Object.assign(reactiveSettings, aiSettingFields)
-      }
-      // 通知相关功能模块更新配置
-      if (pluginSample.__wordQuery) {
-        pluginSample.__wordQuery.updateApiConfig(
-          aiSettings.provider,
-          resolvedModel,
-          aiSettings.apiKey,
-          aiSettings.customEndpoint,
-        )
-      }
-      if (pluginSample.__aiContentGenerator) {
-        pluginSample.__aiContentGenerator.updateApiConfig(
-          aiSettings.provider,
-          resolvedModel,
-          aiSettings.apiKey,
-        )
       }
       showMessage("AI配置已保存", 2000, "info")
     } else {

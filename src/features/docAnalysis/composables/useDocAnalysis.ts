@@ -119,6 +119,7 @@ export function useDocAnalysis(plugin: Plugin) {
     imageDocs: 0,
     totalImages: 0,
     bookmarkedDocs: 0,
+    noBookmarkDocs: 0,
   })
   const statsLoading = ref(false)
   const hasAnalyzed = ref(false)
@@ -580,6 +581,7 @@ export function useDocAnalysis(plugin: Plugin) {
       const bmRows = await sql(bmCountSql)
       if (bmRows && bmRows.length > 0) {
         docStats.bookmarkedDocs = bmRows[0].bookmarked_docs || 0
+        docStats.noBookmarkDocs = Math.max(0, docStats.totalDocs - docStats.bookmarkedDocs)
       }
     } catch (error) {
       console.error("书签分析失败:", error)
@@ -659,6 +661,10 @@ export function useDocAnalysis(plugin: Plugin) {
         case "hasBookmark":
           extraJoin = `INNER JOIN (${BOOKMARK_SUBQUERY}) bm ON b.id = bm.block_id`
           orderBy = "bm.bookmark ASC"
+          break
+        case "noBookmark":
+          extraWhere = "AND b.id NOT IN (SELECT block_id FROM attributes WHERE name = 'bookmark')"
+          orderBy = "b.updated DESC"
           break
         default:
           queryState.status = "empty"

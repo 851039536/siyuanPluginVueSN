@@ -161,5 +161,7 @@ export interface DocStats {
   totalImages: number
   /** 带有书签的文档数 */
   bookmarkedDocs: number
+  /** 没有书签的文档数 */
+  noBookmarkDocs: number
 }
 

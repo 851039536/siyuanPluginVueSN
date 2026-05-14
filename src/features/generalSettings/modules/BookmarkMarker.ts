@@ -39,6 +39,10 @@ export interface BookmarkRule {
   color: string
   /** 标记背景色 */
   backgroundColor: string
+  /** 可选图标（emoji） */
+  icon?: string
+  /** 显示模式：bg=文字标签, icon=仅图标, icon-bg=图标+背景，默认为文字标签模式 */
+  displayMode?: "bg" | "icon" | "icon-bg"
 }
 
 interface AttrRow {
@@ -189,6 +193,10 @@ export class BookmarkMarker {
   /**
    * 给文件树文档项添加书签标记
    * 标记添加到 span.b3-list-item__text 内（与 DocCountManager 相同位置）
+   * 根据 displayMode 支持三种显示模式：
+   *   bg      — 文字标签（默认）：背景色 + 文字名称
+   *   icon    — 仅图标：透明背景 + 仅显示 emoji 图标
+   *   icon-bg — 图标+背景：背景色 + 仅显示 emoji 图标
    */
   private applyMarkerToItem(
     item: HTMLElement,
@@ -210,11 +218,25 @@ export class BookmarkMarker {
     // 创建标记元素
     const marker = document.createElement("span")
     marker.className = BOOKMARK_MARKER_CLASS
-    marker.textContent = bookmarkName
     marker.dataset.bookmark = bookmarkName
-    marker.style.color = rule.color
-    marker.style.backgroundColor = rule.backgroundColor
 
+    const mode = rule.displayMode || "bg"
+
+    if (mode === "icon" && rule.icon) {
+      // 仅图标模式：无背景色，只显示图标
+      marker.style.backgroundColor = "transparent"
+      marker.textContent = rule.icon
+    } else if (mode === "icon-bg" && rule.icon) {
+      // 图标+背景模式
+      marker.style.backgroundColor = rule.backgroundColor
+      marker.textContent = rule.icon
+    } else {
+      // 文字标签模式（默认）：显示书签名称，带背景
+      marker.style.backgroundColor = rule.backgroundColor
+      marker.textContent = rule.icon ? `${rule.icon} ${bookmarkName}` : bookmarkName
+    }
+
+    marker.style.color = rule.color
     textEl.appendChild(marker)
   }
 

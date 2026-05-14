@@ -69,6 +69,47 @@
             </div>
             <div class="rule-row">
               <label class="rule-label">
+                {{ i18n?.markerIcon || '图标' }}
+              </label>
+              <div class="icon-input-wrapper">
+                <input
+                  v-model="rule.icon"
+                  type="text"
+                  class="rule-input icon-input"
+                  :placeholder="i18n?.markerIconPlaceholder || '🔖 输入 emoji'"
+                  maxlength="2"
+                  @change="handleRulesChange"
+                />
+                <span
+                  v-if="rule.icon"
+                  class="icon-preview-tag"
+                  :style="{
+                    color: rule.color,
+                    backgroundColor: rule.backgroundColor,
+                  }"
+                >{{ rule.icon }}</span>
+              </div>
+            </div>
+            <!-- 预设图标选择器 -->
+            <div
+              v-if="rule.displayMode && rule.displayMode !== 'bg'"
+              class="rule-row icon-picker-row"
+            >
+              <label class="rule-label">
+                {{ i18n?.presetIcons || '预设图标' }}
+              </label>
+              <div class="icon-picker-grid">
+                <span
+                  v-for="icon in presetIcons"
+                  :key="icon"
+                  class="icon-option"
+                  :class="{ selected: rule.icon === icon }"
+                  @click="selectIcon(index, icon)"
+                >{{ icon }}</span>
+              </div>
+            </div>
+            <div class="rule-row">
+              <label class="rule-label">
                 {{ i18n?.markerTextColor || '文字颜色' }}
               </label>
               <div class="color-input-wrapper">
@@ -107,17 +148,58 @@
                 />
               </div>
             </div>
+            <!-- 显示模式 -->
+            <div class="rule-row">
+              <label class="rule-label">
+                {{ i18n?.displayMode || '显示模式' }}
+              </label>
+              <div class="display-mode-group">
+                <label
+                  class="mode-option"
+                  :class="{ active: rule.displayMode === 'bg' || !rule.displayMode }"
+                >
+                  <input
+                    type="radio"
+                    :value="'bg'"
+                    v-model="rule.displayMode"
+                    @change="handleRulesChange"
+                  />
+                  📄 {{ i18n?.modeTextLabel || '文字标签' }}
+                </label>
+                <label
+                  class="mode-option"
+                  :class="{ active: rule.displayMode === 'icon' }"
+                >
+                  <input
+                    type="radio"
+                    :value="'icon'"
+                    v-model="rule.displayMode"
+                    @change="handleRulesChange"
+                  />
+                  🎨 {{ i18n?.modeIconOnly || '仅图标' }}
+                </label>
+                <label
+                  class="mode-option"
+                  :class="{ active: rule.displayMode === 'icon-bg' }"
+                >
+                  <input
+                    type="radio"
+                    :value="'icon-bg'"
+                    v-model="rule.displayMode"
+                    @change="handleRulesChange"
+                  />
+                  🖼️ {{ i18n?.modeIconBg || '图标+背景' }}
+                </label>
+              </div>
+            </div>
           </div>
           <!-- 预览 -->
           <div class="rule-preview">
             <span class="preview-label-text">预览：</span>
             <span
               class="preview-tag"
-              :style="{
-                color: rule.color,
-                backgroundColor: rule.backgroundColor,
-              }"
-            >{{ rule.bookmarkName || '未命名' }}</span>
+              :style="getPreviewStyle(rule)"
+            >{{ getPreviewText(rule) }}</span>
           </div>
         </div>
 
@@ -184,6 +266,29 @@ const rules = ref<BookmarkRule[]>([
   { bookmarkName: "待发布", color: "#ffffff", backgroundColor: "#faad14" },
 ])
 const updateInterval = ref("3600000")
+
+const presetIcons = [
+  // 🔖 书签相关
+  "🔖", "🏷️", "📑", "📌", "📍",
+  // ✅ 状态标记
+  "✅", "❌", "⚠️", "🔄", "📝",
+  // ⭐ 评级/优先级
+  "⭐", "🌟", "💎", "🏆", "🎯",
+  // 🚀 进度/状态
+  "🚀", "🔥", "⚡", "🎉", "💡",
+  // 📋 文档/内容
+  "📋", "📄", "📊", "📈", "📁",
+  // 🖊️ 编辑/创作
+  "🖊️", "✏️", "📝", "📎", "🔗",
+  // 🎨 创意/设计
+  "🎨", "🌈", "✨", "💫", "🪄",
+  // 💬 沟通/评论
+  "💬", "💭", "🗨️", "💡", "🔔",
+  // 🔐 安全/权限
+  "🔐", "🔒", "🔑", "🛡️", "🔍",
+  // 📂 分类/整理
+  "📂", "🗂️", "📚", "📦", "🧩",
+]
 
 const getBookmarkMarker = (): BookmarkMarker | null => {
   const generalSettings = props.plugin?.__generalSettings
@@ -295,12 +400,44 @@ const addRule = () => {
     bookmarkName: "",
     color: "#ffffff",
     backgroundColor: "#1890ff",
+    icon: "",
+    displayMode: "bg",
   })
 }
 
 const removeRule = (index: number) => {
   rules.value.splice(index, 1)
   handleRulesChange()
+}
+
+const selectIcon = (index: number, icon: string) => {
+  const rule = rules.value[index]
+  if (rule.icon === icon) {
+    rule.icon = ""
+  } else {
+    rule.icon = icon
+  }
+  handleRulesChange()
+}
+
+const getPreviewStyle = (rule: BookmarkRule) => {
+  const mode = rule.displayMode || "bg"
+  if (mode === "icon" && rule.icon) {
+    return { color: rule.color, backgroundColor: "transparent" }
+  }
+  return { color: rule.color, backgroundColor: rule.backgroundColor }
+}
+
+const getPreviewText = (rule: BookmarkRule) => {
+  const mode = rule.displayMode || "bg"
+  const name = rule.bookmarkName || "未命名"
+  if (mode === "icon" && rule.icon) {
+    return rule.icon
+  }
+  if (mode === "icon-bg" && rule.icon) {
+    return rule.icon
+  }
+  return rule.icon ? `${rule.icon} ${name}` : name
 }
 
 const handleRefresh = async () => {
@@ -541,6 +678,108 @@ defineExpose({
   border-radius: 6px;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
+}
+
+.icon-input-wrapper {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex: 1;
+}
+
+.icon-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.icon-preview-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  font-size: 18px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+/* 预设图标选择器网格 */
+.icon-picker-row {
+  margin-top: 4px;
+}
+
+.icon-picker-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: 1;
+}
+
+.icon-option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  font-size: 17px;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: var(--b3-theme-background);
+  user-select: none;
+}
+
+.icon-option:hover {
+  border-color: var(--b3-theme-primary);
+  background: rgba(var(--b3-theme-primary-rgb), 0.08);
+  transform: scale(1.15);
+}
+
+.icon-option.selected {
+  border-color: var(--b3-theme-primary);
+  background: rgba(var(--b3-theme-primary-rgb), 0.15);
+  box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.2);
+}
+
+/* 显示模式选择器 */
+.display-mode-group {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.mode-option {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  font-size: 12px;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-surface-variant);
+  user-select: none;
+  white-space: nowrap;
+}
+
+.mode-option input {
+  display: none;
+}
+
+.mode-option:hover {
+  border-color: var(--b3-theme-primary);
+  color: var(--b3-theme-primary);
+}
+
+.mode-option.active {
+  border-color: var(--b3-theme-primary);
+  background: rgba(var(--b3-theme-primary-rgb), 0.1);
+  color: var(--b3-theme-primary);
+  font-weight: 600;
 }
 
 .rule-input:hover,

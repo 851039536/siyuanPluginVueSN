@@ -160,7 +160,6 @@
 <script setup lang="ts">
 import { showMessage } from "siyuan"
 import {
-  computed,
   onMounted,
   ref,
 } from "vue"
@@ -191,16 +190,18 @@ const getBookmarkMarker = (): BookmarkMarker | null => {
   return generalSettings?.bookmarkMarker || null
 }
 
-const gsStorage = computed(() => props.plugin ? new GeneralSettingsStorage(props.plugin) : null)
+const getStorage = () => props.plugin ? new GeneralSettingsStorage(props.plugin) : null
 
 const ensureStorage = (): GeneralSettingsStorage => {
-  if (!gsStorage.value) throw new Error("插件实例不可用")
-  return gsStorage.value
+  const storage = getStorage()
+  if (!storage) throw new Error("插件实例不可用")
+  return storage
 }
 
 const loadSettings = async () => {
   try {
-    const data = gsStorage.value ? await gsStorage.value.bookmarkMarker.load() : null
+    const storage = getStorage()
+    const data = storage ? await storage.bookmarkMarker.load() : null
     if (data) {
       enableBookmarkMarker.value = data.enableBookmarkMarker ?? true
       rules.value = data.rules?.length ? data.rules : [

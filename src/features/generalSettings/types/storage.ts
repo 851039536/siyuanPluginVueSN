@@ -4,6 +4,7 @@
 import { Plugin } from "siyuan"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
+import type { BookmarkRule } from "../modules/BookmarkMarker"
 
 export interface FontSettings {
   fontFamily: string
@@ -149,15 +150,6 @@ export interface BackupSettings {
   workspacePath: string
   workspaceRoot: string
   cloudSyncEnabled?: boolean
-}
-
-export interface BookmarkRule {
-  /** 书签名称 */
-  bookmarkName: string
-  /** 标记颜色 */
-  color: string
-  /** 标记背景色 */
-  backgroundColor: string
 }
 
 export interface BookmarkMarkerSettings {

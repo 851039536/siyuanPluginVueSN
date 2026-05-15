@@ -5,6 +5,14 @@
       :activeMode="activeMode"
       @update:activeMode="activeMode = $event"
       @toggle-settings="toggleSettings"
+      :selected-model="selectedModel"
+      :custom-model="customModel"
+      :enable-thinking="enableThinking"
+      :available-models="availableModels"
+      :supports-thinking="supportsThinking"
+      @update:selected-model="selectedModel = $event"
+      @update:custom-model="customModel = $event"
+      @update:enable-thinking="enableThinking = $event"
     />
 
     <!-- ====== 生成器模式 ====== -->
@@ -37,6 +45,9 @@
           :generated-content="generatedContent"
           :rendered-markdown="renderedDisplayedMarkdown"
           :original-content="originalContent"
+          :reasoning-content="reasoningContent"
+          :show-reasoning="showReasoning"
+          :generation-elapsed="generationElapsed"
           :can-apply="!!editTargetDoc && !isApplying && !isGenerating"
           :can-insert-sub-doc="!!editTargetDoc && !isInsertingSubDoc && !isGenerating"
           :can-undo="canUndoEdit"
@@ -46,6 +57,7 @@
           @undo-edit="undoEdit"
           @copy="copyContent"
           @clear="clearContent"
+          @toggle-reasoning="showReasoning = !showReasoning"
         />
       </div>
 
@@ -130,6 +142,8 @@ let storage: AIGeneratorStorage | null = null;
 const generatedContent = ref("");
 const isGenerating = ref(false);
 const errorMessage = ref("");
+const generationElapsed = ref(""); // 生成耗时显示（如 "3.2s"），空字符串表示不显示
+let generationStartTime = 0;       // 生成开始时间戳（非响应式）
 const showSettings = ref(false);
 const abortController = ref<AbortController | null>(null);
 
@@ -168,6 +182,16 @@ const systemPrompt = ref(
 );
 const temperature = ref(0.7);
 const maxTokens = ref(10000);
+
+// 模型选择状态
+const selectedModel = ref("");
+const customModel = ref("");
+const enableThinking = ref(false);
+
+// 思考过程状态
+const reasoningContent = ref("");  // 完整推理内容（汇总后）
+const showReasoning = ref(false);  // 是否展开显示思考过程
+let reasoningBuffer = "";           // 推理流式缓冲区（非响应式，避免频繁重渲染）
 
 const displayedContent = ref(""); // 用于打字机效果显示的内容
 // 提示词管理
@@ -213,6 +237,66 @@ const totalPages = computed(() => {
   return Math.ceil(filteredPrompts.value.length / ITEMS_PER_PAGE) || 1;
 });
 
+// ============ AI 模型配置 ============
+interface ModelOption { value: string; label: string }
+interface ProviderModels { common: ModelOption[]; all: ModelOption[] }
+
+const AI_MODELS_CONFIG: Record<string, ProviderModels> = {
+  tongyi: {
+    common: [
+      { value: "qwen-plus", label: "Qwen Plus (推荐)" },
+      { value: "qwen-turbo", label: "Qwen Turbo (快速)" },
+      { value: "qwen-max", label: "Qwen Max (最强)" },
+    ],
+    all: [
+      { value: "qwen-long", label: "Qwen Long (长文本)" },
+      { value: "qwen-vl-plus", label: "Qwen VL Plus (视觉)" },
+      { value: "qwen-vl-max", label: "Qwen VL Max (视觉最强)" },
+    ],
+  },
+  openai: {
+    common: [
+      { value: "gpt-3.5-turbo", label: "GPT-3.5 Turbo (推荐)" },
+      { value: "gpt-4", label: "GPT-4" },
+      { value: "gpt-4-turbo", label: "GPT-4 Turbo" },
+    ],
+    all: [
+      { value: "gpt-4o", label: "GPT-4o" },
+      { value: "gpt-4o-mini", label: "GPT-4o Mini" },
+    ],
+  },
+  deepseek: {
+    common: [
+      { value: "deepseek-v4-flash", label: "V4 Flash (快速)" },
+      { value: "deepseek-v4-pro", label: "V4 Pro (最强)" },
+    ],
+    all: [
+      { value: "deepseek-chat", label: "Chat" },
+      { value: "deepseek-reasoner", label: "Reasoner (思考)" },
+      { value: "deepseek-coder", label: "Coder (代码)" },
+    ],
+  },
+  custom: {
+    common: [],
+    all: [],
+  },
+}
+
+const currentProvider = computed(() => props.plugin?.settings?.aiApiProvider || "tongyi")
+
+const availableModels = computed(() => {
+  return AI_MODELS_CONFIG[currentProvider.value] || { common: [], all: [] }
+})
+
+const resolvedModel = computed(() =>
+  selectedModel.value === "custom" ? customModel.value : selectedModel.value
+)
+
+const supportsThinking = computed(() =>
+  currentProvider.value === "deepseek" &&
+  (selectedModel.value === "deepseek-reasoner" || selectedModel.value.startsWith("deepseek-v4-"))
+)
+
 // 监听搜索查询变化，重置页码
 watch(promptSearchQuery, () => {
   currentPage.value = 1;
@@ -242,11 +326,16 @@ watch(activeMode, (newMode) => {
  * 开始生成内容的公共初始化
  */
 const startGeneration = () => {
+  generationStartTime = performance.now();
+  generationElapsed.value = "";
   abortController.value = new AbortController();
   isGenerating.value = true;
   generatedContent.value = "";
   displayedContent.value = "";
+  reasoningContent.value = "";
+  showReasoning.value = false;
   chunkBuffer = "";
+  reasoningBuffer = "";
   if (rafId) {
     cancelAnimationFrame(rafId);
     rafId = null;
@@ -261,6 +350,20 @@ const startGeneration = () => {
 const resetAllGenerationStates = () => {
   isGenerating.value = false;
   abortController.value = null;
+};
+
+/**
+ * 记录生成耗时并格式化显示
+ */
+const recordGenerationElapsed = () => {
+  if (!generationStartTime) return;
+  const elapsed = performance.now() - generationStartTime;
+  if (elapsed >= 1000) {
+    generationElapsed.value = `${(elapsed / 1000).toFixed(1)}s`;
+  } else {
+    generationElapsed.value = `${Math.round(elapsed)}ms`;
+  }
+  generationStartTime = 0;
 };
 
 /**
@@ -325,6 +428,10 @@ const flushChunkBuffer = () => {
     displayedContent.value += chunkBuffer;
     chunkBuffer = "";
   }
+  if (reasoningBuffer) {
+    reasoningContent.value += reasoningBuffer;
+    reasoningBuffer = "";
+  }
   rafId = null;
 };
 
@@ -334,6 +441,16 @@ const flushChunkBuffer = () => {
 const defaultOnChunk = (chunk: string) => {
   generatedContent.value += chunk;
   chunkBuffer += chunk;
+  if (!rafId) {
+    rafId = requestAnimationFrame(flushChunkBuffer);
+  }
+};
+
+/**
+ * 思考过程回调（DeepSeek reasoning_content，与内容共用同一 RAF 节流）
+ */
+const defaultOnReasoningChunk = (chunk: string) => {
+  reasoningBuffer += chunk;
   if (!rafId) {
     rafId = requestAnimationFrame(flushChunkBuffer);
   }
@@ -408,6 +525,8 @@ const handleStop = () => {
     abortController.value.abort();
   }
   resetAllGenerationStates();
+  generationElapsed.value = "";
+  generationStartTime = 0;
 };
 
 // 停止生成（聊天模式）
@@ -481,6 +600,7 @@ const clearContent = () => {
   generatedContent.value = "";
   displayedContent.value = "";
   errorMessage.value = "";
+  generationElapsed.value = "";
 };
 
 // 选择目标文档
@@ -814,9 +934,13 @@ const aiEditAction = async (
     const options: GenerateOptions = {
       userInput: `${actionPrompts[action]}\n\n${editTargetDoc.value.content}`,
       systemPrompt: skillSystemPrompt,
+      temperature: temperature.value,
       maxTokens: maxTokens.value,
       signal: abortController.value?.signal,
       onChunk: defaultOnChunk,
+      ...(enableThinking.value ? { onReasoningChunk: defaultOnReasoningChunk } : {}),
+      model: resolvedModel.value || undefined,
+      enableThinking: enableThinking.value,
     };
 
     await props.onGenerate(options);
@@ -824,6 +948,7 @@ const aiEditAction = async (
     if (handleGenerationError(error as Error, "AI编辑")) return;
   } finally {
     resetAllGenerationStates();
+    recordGenerationElapsed();
   }
 };
 
@@ -898,6 +1023,9 @@ ${editTargetDoc.value.content}`;
       maxTokens: maxTokens.value,
       signal: abortController.value?.signal,
       onChunk: defaultOnChunk,
+      ...(enableThinking.value ? { onReasoningChunk: defaultOnReasoningChunk } : {}),
+      model: resolvedModel.value || undefined,
+      enableThinking: enableThinking.value,
     };
 
     await props.onGenerate(options);
@@ -907,6 +1035,7 @@ ${editTargetDoc.value.content}`;
     if (handleGenerationError(error as Error, "自定义编辑")) return;
   } finally {
     resetAllGenerationStates();
+    recordGenerationElapsed();
   }
 };
 
@@ -1201,6 +1330,9 @@ const saveSettings = async () => {
     systemPrompt: systemPrompt.value,
     temperature: temperature.value,
     maxTokens: maxTokens.value,
+    model: selectedModel.value,
+    customModel: customModel.value,
+    enableThinking: enableThinking.value,
   };
 
   await safeStorageOperation(
@@ -1219,6 +1351,9 @@ const loadSettings = async () => {
       systemPrompt.value = settings.systemPrompt || systemPrompt.value;
       temperature.value = settings.temperature ?? temperature.value;
       maxTokens.value = settings.maxTokens || maxTokens.value;
+      selectedModel.value = settings.model || "";
+      customModel.value = settings.customModel || "";
+      enableThinking.value = settings.enableThinking ?? false;
     }
     isSettingsLoaded = true;
   } catch (error) {
@@ -1228,7 +1363,7 @@ const loadSettings = async () => {
 
 // 监听设置变化（使用 debounce 避免频繁保存）
 let settingsSaveTimer: number | null = null;
-watch([systemPrompt, temperature, maxTokens], () => {
+watch([systemPrompt, temperature, maxTokens, selectedModel, customModel, enableThinking], () => {
   if (settingsSaveTimer) {
     clearTimeout(settingsSaveTimer);
   }

@@ -105,14 +105,22 @@ export class AIContentGenerator {
 
     try {
       const fullPrompt = this.buildFullPrompt(options)
+      const apiConfig = this.getApiConfig()
 
-      const result = await callAISmart(fullPrompt, this.getApiConfig(), {
+      // 如果 options 指定了 model，覆盖全局配置
+      if (options.model) {
+        apiConfig.model = options.model
+      }
+
+      const result = await callAISmart(fullPrompt, apiConfig, {
         systemPrompt: options.systemPrompt,
         temperature: options.temperature,
         maxTokens: options.maxTokens,
         signal: options.signal,
         onChunk: options.onChunk,
+        onReasoningChunk: options.onReasoningChunk,
         webSearch: options.webSearch,
+        enableThinking: options.enableThinking,
       })
 
       if (result) {

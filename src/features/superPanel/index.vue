@@ -35,7 +35,6 @@
         v-for="feature in features"
         :key="feature.id"
         :feature="feature"
-        :i18n="i18n"
         @action="emit('action', $event)"
       />
     </div>
@@ -116,7 +115,6 @@ const features = computed<Feature[]>(() =>
     iconKey: id as IconKey,
     title: (titleI18nKey ? resolveI18n(props.i18n, titleI18nKey) : props.i18n[id]) || defaultTitle,
     desc: (descI18nKey ? resolveI18n(props.i18n, descI18nKey) : props.i18n[`${id}Desc`]) || defaultDesc,
-    enabled: true,
     actions: actions || [],
   })),
 )

@@ -8,18 +8,10 @@
   gap: 10px;
   padding: $spacing-sm $spacing-md;
   border-radius: 6px;
-  cursor: default;
+  cursor: pointer;
 
-  &.enabled {
-    cursor: pointer;
-
-    &:hover {
-      background: var(--b3-theme-surface-lighter);
-    }
-  }
-
-  &.disabled {
-    opacity: 0.5;
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
   }
 }
 
@@ -55,12 +47,6 @@
   color: var(--b3-theme-on-surface);
   opacity: 0.6;
   @include text-ellipsis;
-}
-
-.feature-toggle {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
 }
 
 .feature-actions {

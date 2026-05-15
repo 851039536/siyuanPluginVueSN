@@ -1,6 +1,7 @@
 import type { App as VueApp } from "vue"
 import type { IconKey } from "@/config/icons"
 import type { PluginSettings } from "@/config/settings"
+import type { FeatureAction } from "@/features/config"
 /**
  * 超级面板 - 类型定义
  */
@@ -19,17 +20,7 @@ import { replaceTopBarIcon } from "@/utils/iconHelper"
 // @ts-ignore
 import SuperPanelPanel from "../index.vue"
 
-/**
- * 功能操作
- */
-export interface FeatureAction {
-  /** 操作键名 */
-  key: string
-  /** 操作标签 */
-  label: string
-  /** 快捷键 */
-  hotkey: string
-}
+export type { FeatureAction }
 
 /**
  * 功能配置
@@ -43,8 +34,6 @@ export interface Feature {
   title: string
   /** 功能描述 */
   desc: string
-  /** 是否启用（所有功能默认启用） */
-  enabled: boolean
   /** 操作列表 */
   actions: FeatureAction[]
 }

@@ -1,4 +1,5 @@
 // SuperPanel 模块专属 Mixins
+// 注意：tablet-only / mobile-only 被 statistics 模块通过 @use 引用，不可删除
 @use './variables' as *;
 
 // 滚动条样式
@@ -21,7 +22,14 @@
   }
 }
 
-// 响应式断点
+// 文本省略
+@mixin text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// 响应式断点（被 statistics 等模块通过 @use 引用）
 @mixin tablet-only {
   @media (max-width: 768px) {
     @content;
@@ -32,26 +40,4 @@
   @media (max-width: 480px) {
     @content;
   }
-}
-
-// 文本省略
-@mixin text-ellipsis {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-// 多行文本省略
-@mixin text-ellipsis-multiline($lines: 2) {
-  display: -webkit-box;
-  -webkit-line-clamp: $lines;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-// 居中flex
-@mixin flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }

@@ -143,7 +143,7 @@ function handleDebouncedInput() {
 
 <style lang="scss" scoped>
 .doc-analysis-filter {
-  padding: 12px 16px;
+  padding: 8px 14px;
   border-bottom: 1px solid var(--b3-border-color);
 
   .filter-row {

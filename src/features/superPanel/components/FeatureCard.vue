@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="feature-card"
-    @click="handleCardClick"
-  >
+  <div class="feature-card">
     <div class="feature-icon">
       <IconWrapper
         :name="feature.iconKey"
@@ -41,19 +38,14 @@ import IconWrapper from "@/components/IconWrapper.vue"
 
 interface Props {
   feature: Feature
-  i18n: any
 }
 
 interface Emits {
   (e: "action", action: string): void
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 const emit = defineEmits<Emits>()
-
-const handleCardClick = () => {
-  // 所有功能默认启用，无需检查
-}
 
 const handleAction = (actionKey: string) => {
   emit("action", actionKey)

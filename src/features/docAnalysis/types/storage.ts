@@ -21,6 +21,8 @@ export const DEFAULT_FILTER_OPTIONS: FilterOptions = {
   wordCountMin: 0,
   wordCountMax: 30000,
   bookmarkName: "",
+  updatedAfter: "",
+  updatedBefore: "",
 }
 
 /**

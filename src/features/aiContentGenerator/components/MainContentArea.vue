@@ -38,46 +38,45 @@
             <span class="dot-flashing"></span>
             生成中...
           </span>
-          <span
-            v-else-if="generationElapsed"
-            class="elapsed-badge"
-          >
-            <svg
-              width="11"
-              height="11"
-            ><use xlink:href="#iconTime"></use></svg>
-            {{ generationElapsed }}
-          </span>
-          <div
-            v-else
-            class="view-mode-toggle"
-          >
-            <button
-              class="view-mode-btn"
-              :class="[{ active: viewMode === 'preview' }]"
-              title="预览"
-              @click="viewMode = 'preview'"
+          <template v-else>
+            <span
+              v-if="generationElapsed"
+              class="elapsed-badge"
             >
               <svg
-                width="14"
-                height="14"
-              ><use xlink:href="#iconEye"></use></svg>
-              预览
-            </button>
-            <button
-              class="view-mode-btn"
-              :class="[{ active: viewMode === 'diff' }]"
-              :disabled="!hasDiff"
-              title="对比"
-              @click="viewMode = 'diff'"
-            >
-              <svg
-                width="14"
-                height="14"
-              ><use xlink:href="#iconColumns"></use></svg>
-              对比
-            </button>
-          </div>
+                width="11"
+                height="11"
+              ><use xlink:href="#iconTime"></use></svg>
+              {{ generationElapsed }}
+            </span>
+            <div class="view-mode-toggle">
+              <button
+                class="view-mode-btn"
+                :class="[{ active: viewMode === 'preview' }]"
+                title="预览"
+                @click="viewMode = 'preview'"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                ><use xlink:href="#iconEye"></use></svg>
+                预览
+              </button>
+              <button
+                class="view-mode-btn"
+                :class="[{ active: viewMode === 'diff' }]"
+                :disabled="!hasDiff"
+                title="对比"
+                @click="viewMode = 'diff'"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                ><use xlink:href="#iconColumns"></use></svg>
+                对比
+              </button>
+            </div>
+          </template>
         </span>
         <div class="result-actions">
           <!-- 主要操作 -->

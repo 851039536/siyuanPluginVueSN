@@ -52,7 +52,7 @@ import {
   computed,
   ref,
 } from "vue"
-import { FEATURE_CONFIG } from "@/features/config"
+import { FEATURE_CONFIG, type FeatureMeta } from "@/features/config"
 import AiSettingsPanel from "./components/AiSettingsPanel.vue"
 import FeatureCard from "./components/FeatureCard.vue"
 import SuperPanelHeader from "./components/SuperPanelHeader.vue"
@@ -103,7 +103,7 @@ const resolveI18n = (obj: Record<string, any>, key: string): any => {
 }
 
 const features = computed<Feature[]>(() =>
-  FEATURE_CONFIG.map(({
+  (FEATURE_CONFIG as unknown as FeatureMeta[]).map(({
     id,
     defaultTitle,
     defaultDesc,

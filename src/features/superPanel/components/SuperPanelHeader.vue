@@ -39,8 +39,6 @@ interface Props {
   title?: string
   i18n: {
     title?: string
-    enableAll?: string
-    disableAll?: string
     aiSettings?: string
     refresh?: string
     close?: string
@@ -48,7 +46,6 @@ interface Props {
 }
 
 interface Emits {
-  (e: "toggleAll", enabled: boolean): void
   (e: "toggleAiSettings"): void
   (e: "refresh"): void
   (e: "close"): void
@@ -58,18 +55,6 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const actions = computed<HeaderAction[]>(() => [
-  {
-    key: "enableAll",
-    icon: "success",
-    title: props.i18n.enableAll || "全部开启",
-    handler: () => emit("toggleAll", true),
-  },
-  {
-    key: "disableAll",
-    icon: "close",
-    title: props.i18n.disableAll || "全部关闭",
-    handler: () => emit("toggleAll", false),
-  },
   {
     key: "aiSettings",
     icon: "settings",
@@ -90,4 +75,3 @@ const actions = computed<HeaderAction[]>(() => [
   },
 ])
 </script>
-

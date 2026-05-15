@@ -1,10 +1,6 @@
 <template>
   <div
     class="feature-card"
-    :class="{
-      enabled: feature.enabled,
-      disabled: !feature.enabled,
-    }"
     @click="handleCardClick"
   >
     <div class="feature-icon">
@@ -18,7 +14,7 @@
       <span class="feature-desc">{{ feature.desc }}</span>
     </div>
     <div
-      v-if="feature.actions.length > 0 && feature.enabled"
+      v-if="feature.actions.length > 0"
       class="feature-actions"
     >
       <Button
@@ -35,25 +31,13 @@
         >{{ action.hotkey }}</span>
       </Button>
     </div>
-    <div
-      class="feature-toggle"
-      @click.stop
-    >
-      <Switch
-        :model-value="feature.enabled"
-        size="small"
-        @update:model-value="handleToggle"
-      />
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { Feature } from "../types"
-import { showMessage } from "siyuan"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import Switch from "@/components/Switch.vue"
 
 interface Props {
   feature: Feature
@@ -62,20 +46,13 @@ interface Props {
 
 interface Emits {
   (e: "action", action: string): void
-  (e: "toggle", featureId: string, enabled: boolean): void
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const handleCardClick = () => {
-  if (!props.feature.enabled) {
-    showMessage(props.i18n.featureDisabled || "该功能未启用", 2000, "info")
-  }
-}
-
-const handleToggle = (newValue: boolean) => {
-  emit("toggle", props.feature.id, newValue)
+  // 所有功能默认启用，无需检查
 }
 
 const handleAction = (actionKey: string) => {

@@ -15,7 +15,6 @@
     <SuperPanelHeader
       :title="i18n.title || '超级面板'"
       :i18n="i18n"
-      @toggle-all="(v: boolean) => emit('toggleAllFeatures', v)"
       @toggle-ai-settings="toggleAiSettings"
       @refresh="emit('refresh')"
       @close="emit('close')"
@@ -38,7 +37,6 @@
         :feature="feature"
         :i18n="i18n"
         @action="emit('action', $event)"
-        @toggle="(id: string, v: boolean) => emit('toggleFeature', id, v)"
       />
     </div>
   </div>
@@ -59,7 +57,6 @@ import { FEATURE_CONFIG } from "@/features/config"
 import AiSettingsPanel from "./components/AiSettingsPanel.vue"
 import FeatureCard from "./components/FeatureCard.vue"
 import SuperPanelHeader from "./components/SuperPanelHeader.vue"
-import { FEATURE_SETTINGS_MAP } from "./types"
 
 interface Props {
   visible: boolean
@@ -70,8 +67,6 @@ interface Props {
 interface Emits {
   (e: "close"): void
   (e: "action", action: string): void
-  (e: "toggleFeature", featureId: string, enabled: boolean): void
-  (e: "toggleAllFeatures", enabled: boolean): void
   (e: "refresh"): void
   (e: "updateAiSettings", settings: AiSettings): void
 }
@@ -121,7 +116,7 @@ const features = computed<Feature[]>(() =>
     iconKey: id as IconKey,
     title: (titleI18nKey ? resolveI18n(props.i18n, titleI18nKey) : props.i18n[id]) || defaultTitle,
     desc: (descI18nKey ? resolveI18n(props.i18n, descI18nKey) : props.i18n[`${id}Desc`]) || defaultDesc,
-    enabled: (props.settings as any)[FEATURE_SETTINGS_MAP[id]] ?? false,
+    enabled: true,
     actions: actions || [],
   })),
 )

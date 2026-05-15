@@ -159,132 +159,35 @@ export default class PluginSample extends Plugin {
 
   /**
    * 注册所有功能模块（必须同步调用，addDock 需在 onload 同步阶段完成）
+   * 所有功能默认启用，不再通过配置开关控制
    */
   private registerFeatures() {
-    // 注册超级面板（统一入口，始终启用）
     registerSuperPanel(this)
-
-    // 根据配置注册功能模块
-    if (this.settings.enablePageLock) {
-      registerPageLock(this)
-    }
-
-    // 注册目录插件功能
-    if (this.settings.enableTableOfContents) {
-      registerTableOfContents(this)
-    }
-
-    // 注册图片压缩功能
-    if (this.settings.enableImageCompressor) {
-      registerImageCompressor(this)
-    }
-
-    // 注册文档层级导航功能
-    if (this.settings.enableDocNavigation) {
-      registerDocNavigation(this)
-    }
-
-    // 注册快捷键模块（addDock 已调整为同步优先，异步部分在后台完成）
-    if (this.settings.enableShortcuts) {
-      registerShortcut(this)
-    }
-
-    // 注册单词查询功能
-    if (this.settings.enableWordQuery) {
-      registerWordQuery(this)
-    }
-    // 注册通用设置功能
-    if (this.settings.enableGeneralSettings) {
-      registerGeneralSettings(this)
-    }
-
-    // 注册单位转换功能
-    if (this.settings.enableUnitConverter) {
-      registerUnitConverter(this)
-    }
-
-    // 注册本地磁盘浏览器功能
-    if (this.settings.enableDiskBrowser) {
-      registerDiskBrowser(this)
-    }
-
-    // 注册代码图片生成器功能
-    if (this.settings.enableCodeImageGenerator) {
-      registerCodeImageGenerator(this)
-    }
-
-    // 注册AI信息生成功能
-    if (this.settings.enableAIContentGenerator) {
-      registerAIContentGenerator(this)
-    }
-
-    // 注册数据统计功能
-    if (this.settings.enableStatistics) {
-      registerStatistics(this)
-    }
-
-    // 注册内容加密功能（addDock 不受异步影响，后台初始化即可）
-    if (this.settings.enableEncryption) {
-      registerEncryption(this)
-    }
-    // 注册视频播放功能
-    if (this.settings.enableVideo) {
-      registerVideo(this)
-    }
-    // 注册全局搜索功能
-    if (this.settings.enableEverythingSearch) {
-      registerEverythingSearch(this)
-    }
-
-    // 注册状态栏功能
-    if (this.settings.enableStatusBar) {
-      registerStatusBar(this)
-    }
-
-    // 注册浮动工具栏功能
-    if (this.settings.enableFloatingToolbar) {
-      registerFloatingToolbar(this)
-    }
-
-    // 注册悬浮框功能
-    if (this.settings.enableFloatingBox) {
-      registerFloatingBox(this)
-    }
-
-    // 注册文本对比功能
-    if (this.settings.enableTextDiff) {
-      registerTextDiff(this)
-    }
-
-    // 注册 Base64 图片转换器功能
-    if (this.settings.enableBase64Image) {
-      registerBase64Image(this)
-    }
-
-    // 注册单词阅读功能
-    if (this.settings.enableFlashcardReading) {
-      registerFlashcardReading(this)
-    }
-
-    // 注册密码箱功能
-    if (this.settings.enablePasswordVault) {
-      registerPasswordVault(this)
-    }
-
-    // 注册文档分析功能
-    if (this.settings.enableDocAnalysis) {
-      registerDocAnalysis(this)
-    }
-
-    // 注册 WebDAV 功能
-    if (this.settings.enableWebDAV) {
-      registerWebDAV(this)
-    }
-
-    // 注册排版助手功能
-    if (this.settings.enableFormatAssistant) {
-      registerFormatAssistant(this)
-    }
+    registerPageLock(this)
+    registerTableOfContents(this)
+    registerImageCompressor(this)
+    registerDocNavigation(this)
+    registerShortcut(this)
+    registerWordQuery(this)
+    registerGeneralSettings(this)
+    registerUnitConverter(this)
+    registerDiskBrowser(this)
+    registerCodeImageGenerator(this)
+    registerAIContentGenerator(this)
+    registerStatistics(this)
+    registerEncryption(this)
+    registerVideo(this)
+    registerEverythingSearch(this)
+    registerStatusBar(this)
+    registerFloatingToolbar(this)
+    registerFloatingBox(this)
+    registerTextDiff(this)
+    registerBase64Image(this)
+    registerFlashcardReading(this)
+    registerPasswordVault(this)
+    registerDocAnalysis(this)
+    registerWebDAV(this)
+    registerFormatAssistant(this)
   }
 
   /**

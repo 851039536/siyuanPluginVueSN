@@ -1,7 +1,6 @@
 import type { App as VueApp } from "vue"
 import type { IconKey } from "@/config/icons"
 import type { PluginSettings } from "@/config/settings"
-import type { FeatureId } from "@/features/config"
 /**
  * 超级面板 - 类型定义
  */
@@ -44,7 +43,7 @@ export interface Feature {
   title: string
   /** 功能描述 */
   desc: string
-  /** 是否启用 */
+  /** 是否启用（所有功能默认启用） */
   enabled: boolean
   /** 操作列表 */
   actions: FeatureAction[]
@@ -73,83 +72,24 @@ let panelContainer: HTMLElement | null = null
 let reactiveSettings: PluginSettings | null = null
 
 /**
- * PluginSettings 中类型为 boolean 的属性键
- */
-type BooleanSettingsKeys = {
-  [K in keyof PluginSettings]: PluginSettings[K] extends boolean ? K : never;
-}[keyof PluginSettings]
-
-/**
- * 功能ID到设置键的映射表（单一数据源）
- * key 受 FeatureId 约束，value 受 PluginSettings 的布尔属性键约束
- */
-export const FEATURE_SETTINGS_MAP: Record<FeatureId, BooleanSettingsKeys> = {
-  tableOfContents: "enableTableOfContents",
-  imageCompressor: "enableImageCompressor",
-  docNavigation: "enableDocNavigation",
-  pageLock: "enablePageLock",
-  wordQuery: "enableWordQuery",
-  generalSettings: "enableGeneralSettings",
-  qrCode: "enableQRCode",
-  unitConverter: "enableUnitConverter",
-  shortcuts: "enableShortcuts",
-  diskBrowser: "enableDiskBrowser",
-  codeImageGenerator: "enableCodeImageGenerator",
-  aiContentGenerator: "enableAIContentGenerator",
-  statistics: "enableStatistics",
-  pronunciation: "enablePronunciation",
-  encryption: "enableEncryption",
-  video: "enableVideo",
-  everythingSearch: "enableEverythingSearch",
-  statusBar: "enableStatusBar",
-  floatingToolbar: "enableFloatingToolbar",
-  floatingBox: "enableFloatingBox",
-  textDiff: "enableTextDiff",
-  base64Image: "enableBase64Image",
-  skills: "enableSkills",
-  flashcardReading: "enableFlashcardReading",
-  translate: "enableTranslate",
-  webDAV: "enableWebDAV",
-  passwordVault: "enablePasswordVault",
-  docAnalysis: "enableDocAnalysis",
-  formatAssistant: "enableFormatAssistant",
-}
-
-/**
- * 所有功能的设置键列表（从映射表自动生成）
- */
-const ALL_FEATURE_SETTINGS = Object.values(FEATURE_SETTINGS_MAP)
-
-/**
  * 统一 action 映射表：action -> 事件配置
- * settingKey 可选，存在时需先检查功能是否启用
  */
 const ACTION_EVENT_MAP: Record<
   string,
-  { event: string, settingKey?: string, detail?: any }
+  { event: string, detail?: any }
 > = {
   openCompressor: { event: "openImageCompressor" },
   openVideoManager: { event: "openVideoManager" },
   openEverythingSearch: { event: "openEverythingSearch" },
   openFlashcardReading: { event: "openFlashcardReading" },
   openWebDAV: { event: "openWebDAV" },
-  openStatistics: {
-    event: "openStatistics",
-    settingKey: "enableStatistics",
-  },
+  openStatistics: { event: "openStatistics" },
   openDocAnalysis: {
     event: "dock-click",
-    settingKey: "enableDocAnalysis",
     detail: { dockId: "doc-analysis-dock" },
   },
-  openBase64Image: {
-    event: "openBase64Image",
-    settingKey: "enableBase64Image",
-  },
-  openFormatAssistant: {
-    event: "openFormatAssistant",
-    settingKey: "enableFormatAssistant",
-  },
+  openBase64Image: { event: "openBase64Image" },
+  openFormatAssistant: { event: "openFormatAssistant" },
 }
 
 /**
@@ -228,12 +168,6 @@ export class SuperPanelManager {
       onAction: (action: string) => {
         this.handleFeatureAction(action)
       },
-      onToggleFeature: async (featureId: string, enabled: boolean) => {
-        await this.handleFeatureToggle(featureId, enabled)
-      },
-      onToggleAllFeatures: async (enabled: boolean) => {
-        await this.handleToggleAllFeatures(enabled)
-      },
       onRefresh: async () => {
         await this.handleRefresh()
       },
@@ -276,80 +210,10 @@ export class SuperPanelManager {
     }
   }
 
-  private async handleFeatureToggle(featureId: string, enabled: boolean) {
-    const pluginSample = this.plugin as any
-    const settingKey = FEATURE_SETTINGS_MAP[featureId]
-    if (settingKey) {
-      const newSettings = {
-        ...pluginSample.settings,
-        [settingKey]: enabled,
-      }
-
-      const success = await pluginSample.updateSettings(newSettings)
-      if (success) {
-        // 更新响应式 settings 对象，触发 UI 实时更新
-        if (reactiveSettings) {
-          (reactiveSettings as any)[settingKey] = enabled
-        }
-        showMessage(
-          enabled
-            ? (this.plugin.i18n as any).featureEnabled || "功能已启用"
-            : (this.plugin.i18n as any).featureDisabled || "功能已禁用",
-          2000,
-          "info",
-        )
-      } else {
-        showMessage(
-          (this.plugin.i18n as any).saveFailed || "保存失败",
-          3000,
-          "error",
-        )
-      }
-    }
-  }
-
-  private async handleToggleAllFeatures(enabled: boolean) {
-    const pluginSample = this.plugin as any
-
-    // 构建新设置对象
-    const newSettings = { ...pluginSample.settings }
-    ALL_FEATURE_SETTINGS.forEach((key) => {
-      newSettings[key] = enabled
-    })
-
-    const success = await pluginSample.updateSettings(newSettings)
-    if (success) {
-      // 更新响应式 settings 对象，触发 UI 实时更新
-      if (reactiveSettings) {
-        ALL_FEATURE_SETTINGS.forEach((key) => {
-          (reactiveSettings as any)[key] = enabled
-        })
-      }
-      showMessage(
-        enabled
-          ? (this.plugin.i18n as any).superPanel?.allFeaturesEnabled
-          || "所有功能已开启"
-          : (this.plugin.i18n as any).superPanel?.allFeaturesDisabled
-            || "所有功能已关闭",
-        2000,
-        "info",
-      )
-    } else {
-      showMessage(
-        (this.plugin.i18n as any).saveFailed || "保存失败",
-        3000,
-        "error",
-      )
-    }
-  }
-
   private handleFeatureAction(action: string) {
     // 处理统一 action 映射
     const actionConfig = ACTION_EVENT_MAP[action]
     if (actionConfig) {
-      if (actionConfig.settingKey && !(this.plugin as any).settings[actionConfig.settingKey]) {
-        return
-      }
       emitCustomEvent(actionConfig.event, actionConfig.detail)
       this.close()
       return
@@ -357,10 +221,8 @@ export class SuperPanelManager {
 
     // 特殊处理：文本对比（直接调用 manager，不走事件）
     if (action === "openTextDiff") {
-      if ((this.plugin as any).settings.enableTextDiff) {
-        (this.plugin as any).__textDiff?.toggle?.()
-        this.close()
-      }
+      (this.plugin as any).__textDiff?.toggle?.()
+      this.close()
       return
     }
 

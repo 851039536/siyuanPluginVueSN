@@ -12,12 +12,18 @@ export interface AISettings {
   systemPrompt: string
   temperature: number
   maxTokens: number
+  model: string
+  customModel: string
+  enableThinking: boolean
 }
 
 const DEFAULT_AI_SETTINGS: AISettings = {
   systemPrompt: "",
   temperature: 0.7,
   maxTokens: 10000,
+  model: "",
+  customModel: "",
+  enableThinking: false,
 }
 
 /**

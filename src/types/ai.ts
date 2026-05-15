@@ -43,6 +43,12 @@ export interface GenerateOptions {
   context?: string
   signal?: AbortSignal
   onChunk?: (chunk: string) => void
+  /** AI 模型名称（覆盖全局设置） */
+  model?: string
+  /** 启用思考模式（覆盖全局设置） */
+  enableThinking?: boolean
+  /** 思考过程回调（DeepSeek reasoning_content） */
+  onReasoningChunk?: (chunk: string) => void
   /** 联网搜索（RAG 模式：先搜后答，所有 provider 通用） */
   webSearch?: boolean
 }
@@ -62,6 +68,10 @@ export interface SavedPrompt {
   systemPrompt: string
   temperature: number
   maxTokens: number
+  /** AI 模型名称 */
+  model?: string
+  /** 启用思考模式 */
+  enableThinking?: boolean
   createdAt: number
 }
 

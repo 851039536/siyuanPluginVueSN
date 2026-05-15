@@ -38,6 +38,16 @@
             <span class="dot-flashing"></span>
             生成中...
           </span>
+          <span
+            v-else-if="generationElapsed"
+            class="elapsed-badge"
+          >
+            <svg
+              width="11"
+              height="11"
+            ><use xlink:href="#iconTime"></use></svg>
+            {{ generationElapsed }}
+          </span>
           <div
             v-else
             class="view-mode-toggle"
@@ -162,6 +172,40 @@
           </Button>
         </div>
       </div>
+
+      <!-- 思考过程（可折叠） -->
+      <div
+        v-if="reasoningContent"
+        class="reasoning-section"
+      >
+        <button
+          class="reasoning-toggle"
+          @click="$emit('toggle-reasoning')"
+        >
+          <svg
+            width="12"
+            height="12"
+            class="reasoning-chevron"
+            :class="{ expanded: showReasoning }"
+          >
+            <use xlink:href="#iconRight"></use>
+          </svg>
+          <svg
+            width="14"
+            height="14"
+          ><use xlink:href="#iconSparkles"></use></svg>
+          <span>思考过程</span>
+          <span
+            v-if="isGenerating"
+            class="reasoning-dot"
+          ></span>
+        </button>
+        <div
+          v-if="showReasoning"
+          class="reasoning-content"
+        >{{ reasoningContent }}</div>
+      </div>
+
       <div class="result-content">
         <!-- 预览模式 -->
         <div
@@ -235,6 +279,13 @@ interface Props {
   renderedMarkdown: string
   originalContent: string
 
+  // 思考过程
+  reasoningContent?: string
+  showReasoning?: boolean
+
+  // 耗时
+  generationElapsed?: string
+
   // 操作可用性
   canApply: boolean
   canInsertSubDoc: boolean
@@ -250,6 +301,7 @@ defineEmits<{
   (e: "undo-edit"): void
   (e: "copy"): void
   (e: "clear"): void
+  (e: "toggle-reasoning"): void
 }>()
 
 const viewMode = ref<"preview" | "diff">("preview")
@@ -271,4 +323,90 @@ watch(isGenerating, (newVal, oldVal) => {
 
 <style scoped lang="scss">
 @use "../styles/index.scss";
+
+// ============ 思考过程 ============
+.reasoning-section {
+  margin: 0 14px;
+  border-radius: 6px;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  background: var(--b3-theme-surface);
+  overflow: hidden;
+}
+
+.reasoning-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--b3-theme-on-surface);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  user-select: none;
+
+  svg {
+    color: var(--b3-theme-primary);
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    background: var(--b3-theme-surface-light);
+  }
+}
+
+.reasoning-chevron {
+  transition: transform 0.2s;
+
+  &.expanded {
+    transform: rotate(90deg);
+  }
+}
+
+.reasoning-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--b3-theme-primary);
+  animation: reasoning-blink 1s ease-in-out infinite;
+}
+
+@keyframes reasoning-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.reasoning-content {
+  padding: 0 10px 10px;
+  font-size: 11px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 200px;
+  overflow-y: auto;
+  border-top: 1px solid var(--b3-theme-surface-lighter);
+  padding-top: 8px;
+  margin: 0 10px 8px;
+}
+
+// ============ 耗时徽章 ============
+.elapsed-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.55;
+  font-variant-numeric: tabular-nums;
+
+  svg {
+    color: var(--b3-theme-primary);
+    opacity: 0.65;
+  }
+}
 </style>

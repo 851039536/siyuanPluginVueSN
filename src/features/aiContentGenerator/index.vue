@@ -238,49 +238,7 @@ const totalPages = computed(() => {
 });
 
 // ============ AI 模型配置 ============
-interface ModelOption { value: string; label: string }
-interface ProviderModels { common: ModelOption[]; all: ModelOption[] }
-
-const AI_MODELS_CONFIG: Record<string, ProviderModels> = {
-  tongyi: {
-    common: [
-      { value: "qwen-plus", label: "Qwen Plus (推荐)" },
-      { value: "qwen-turbo", label: "Qwen Turbo (快速)" },
-      { value: "qwen-max", label: "Qwen Max (最强)" },
-    ],
-    all: [
-      { value: "qwen-long", label: "Qwen Long (长文本)" },
-      { value: "qwen-vl-plus", label: "Qwen VL Plus (视觉)" },
-      { value: "qwen-vl-max", label: "Qwen VL Max (视觉最强)" },
-    ],
-  },
-  openai: {
-    common: [
-      { value: "gpt-3.5-turbo", label: "GPT-3.5 Turbo (推荐)" },
-      { value: "gpt-4", label: "GPT-4" },
-      { value: "gpt-4-turbo", label: "GPT-4 Turbo" },
-    ],
-    all: [
-      { value: "gpt-4o", label: "GPT-4o" },
-      { value: "gpt-4o-mini", label: "GPT-4o Mini" },
-    ],
-  },
-  deepseek: {
-    common: [
-      { value: "deepseek-v4-flash", label: "V4 Flash (快速)" },
-      { value: "deepseek-v4-pro", label: "V4 Pro (最强)" },
-    ],
-    all: [
-      { value: "deepseek-chat", label: "Chat" },
-      { value: "deepseek-reasoner", label: "Reasoner (思考)" },
-      { value: "deepseek-coder", label: "Coder (代码)" },
-    ],
-  },
-  custom: {
-    common: [],
-    all: [],
-  },
-}
+import { AI_MODELS_CONFIG } from "./types/models";
 
 const currentProvider = computed(() => props.plugin?.settings?.aiApiProvider || "tongyi")
 
@@ -455,6 +413,21 @@ const defaultOnReasoningChunk = (chunk: string) => {
     rafId = requestAnimationFrame(flushChunkBuffer);
   }
 };
+
+/**
+ * 构建生成请求的公共 options，避免 aiEditAction / handleCustomEdit 重复
+ */
+const buildGenerateOptions = (userInput: string, systemPrompt: string): GenerateOptions => ({
+  userInput,
+  systemPrompt,
+  temperature: temperature.value,
+  maxTokens: maxTokens.value,
+  signal: abortController.value?.signal,
+  onChunk: defaultOnChunk,
+  ...(enableThinking.value ? { onReasoningChunk: defaultOnReasoningChunk } : {}),
+  model: resolvedModel.value || undefined,
+  enableThinking: enableThinking.value,
+})
 
 /**
  * 移除Markdown内容中的Frontmatter（YAML元数据）
@@ -931,17 +904,10 @@ const aiEditAction = async (
     const skillSystemPrompt = currentSkill.value
       ? `${currentSkill.value.content}\n\n你是一个专业的文档编辑助手，擅长优化Markdown文档。请直接输出优化后的完整文档，不要添加任何解释性文字。`
       : "你是一个专业的文档编辑助手，擅长优化Markdown文档。请直接输出优化后的完整文档，不要添加任何解释性文字。"
-    const options: GenerateOptions = {
-      userInput: `${actionPrompts[action]}\n\n${editTargetDoc.value.content}`,
-      systemPrompt: skillSystemPrompt,
-      temperature: temperature.value,
-      maxTokens: maxTokens.value,
-      signal: abortController.value?.signal,
-      onChunk: defaultOnChunk,
-      ...(enableThinking.value ? { onReasoningChunk: defaultOnReasoningChunk } : {}),
-      model: resolvedModel.value || undefined,
-      enableThinking: enableThinking.value,
-    };
+    const options = buildGenerateOptions(
+      `${actionPrompts[action]}\n\n${editTargetDoc.value.content}`,
+      skillSystemPrompt,
+    )
 
     await props.onGenerate(options);
   } catch (error) {
@@ -1016,17 +982,7 @@ ${editTargetDoc.value.content}`;
       finalSystemPrompt = baseSystemPrompt;
     }
 
-    const options: GenerateOptions = {
-      userInput,
-      systemPrompt: finalSystemPrompt,
-      temperature: temperature.value,
-      maxTokens: maxTokens.value,
-      signal: abortController.value?.signal,
-      onChunk: defaultOnChunk,
-      ...(enableThinking.value ? { onReasoningChunk: defaultOnReasoningChunk } : {}),
-      model: resolvedModel.value || undefined,
-      enableThinking: enableThinking.value,
-    };
+    const options = buildGenerateOptions(userInput, finalSystemPrompt)
 
     await props.onGenerate(options);
 

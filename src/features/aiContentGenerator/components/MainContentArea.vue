@@ -378,7 +378,7 @@ watch(isGenerating, (newVal, oldVal) => {
 }
 
 .reasoning-content {
-  padding: 0 10px 10px;
+  padding: 8px 10px 10px;
   font-size: 11px;
   color: var(--b3-theme-on-surface);
   opacity: 0.7;
@@ -388,7 +388,6 @@ watch(isGenerating, (newVal, oldVal) => {
   max-height: 200px;
   overflow-y: auto;
   border-top: 1px solid var(--b3-theme-surface-lighter);
-  padding-top: 8px;
   margin: 0 10px 8px;
 }
 

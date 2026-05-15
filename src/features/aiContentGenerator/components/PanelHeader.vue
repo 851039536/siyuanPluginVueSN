@@ -103,9 +103,7 @@
 
 <script setup lang="ts">
 import Button from "@/components/Button.vue"
-
-interface ModelOption { value: string; label: string }
-interface ProviderModels { common: ModelOption[]; all: ModelOption[] }
+import type { ProviderModels } from "../types/models"
 
 interface Props {
   title?: string
@@ -142,8 +140,6 @@ defineEmits<{
 </script>
 
 <style scoped lang="scss">
-@use "../styles/index.scss";
-
 // ============ 模式切换 Tab ============
 .header-mode-tabs {
   display: flex;
@@ -218,13 +214,21 @@ defineEmits<{
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-theme-surface-lighter);
   border-radius: 4px;
-  max-width: 100px;
   outline: none;
 
   &:hover,
   &:focus {
     border-color: var(--b3-theme-primary);
   }
+}
+
+.model-select {
+  cursor: pointer;
+  max-width: 120px;
+}
+
+.model-custom-input {
+  max-width: 100px;
 
   &::placeholder {
     color: var(--b3-theme-on-surface);

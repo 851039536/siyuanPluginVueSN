@@ -131,6 +131,30 @@
           </div>
           <div
             class="stat-card"
+            :class="{ active: activeFilter === '1to2month' }"
+            @click="$emit('select-category', '1to2month')"
+          >
+            <div class="stat-value time-cyan">
+              {{ stats.updatedIn1To2Months }}
+            </div>
+            <div class="stat-label">
+              1~2月
+            </div>
+          </div>
+          <div
+            class="stat-card"
+            :class="{ active: activeFilter === '2to3month' }"
+            @click="$emit('select-category', '2to3month')"
+          >
+            <div class="stat-value time-orange">
+              {{ stats.updatedIn2To3Months }}
+            </div>
+            <div class="stat-label">
+              2~3月
+            </div>
+          </div>
+          <div
+            class="stat-card"
             :class="{ active: activeFilter === 'halfYear' }"
             @click="$emit('select-category', 'halfYear')"
           >
@@ -139,6 +163,21 @@
             </div>
             <div class="stat-label">
               半年以上
+            </div>
+          </div>
+          <div
+            class="stat-card custom-time-card"
+            :class="{ active: activeFilter === 'customTime' }"
+            @click="$emit('select-category', 'customTime')"
+          >
+            <div class="stat-value time-purple">
+              <Icon
+                icon="mdi:calendar-range"
+                class="custom-time-icon"
+              />
+            </div>
+            <div class="stat-label">
+              自定义
             </div>
           </div>
         </div>
@@ -440,6 +479,14 @@ function getBarHeight(count: number): number {
     background: var(--b3-theme-surface);
   }
 
+  &.custom-time-card {
+    cursor: pointer;
+
+    .custom-time-icon {
+      font-size: 20px;
+    }
+  }
+
   .stat-value {
     font-size: 18px;
     font-weight: 700;
@@ -472,6 +519,18 @@ function getBarHeight(count: number): number {
 
     &.time-red {
       color: #ef4444;
+    }
+
+    &.time-cyan {
+      color: #06b6d4;
+    }
+
+    &.time-orange {
+      color: #f97316;
+    }
+
+    &.time-purple {
+      color: #a855f7;
     }
 
     &.depth-color {

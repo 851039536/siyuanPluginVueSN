@@ -42,7 +42,11 @@ export interface UpdateTimeStats {
   in7Days: number
   /** 7~30天更新的文档数 */
   in30Days: number
-  /** 30天~半年更新的文档数 */
+  /** 30天~2个月更新的文档数 */
+  in1To2Months: number
+  /** 2~3个月更新的文档数 */
+  in2To3Months: number
+  /** 3个月~半年更新的文档数 */
   inHalfYear: number
   /** 半年以上未更新的文档数 */
   overHalfYear: number
@@ -103,6 +107,10 @@ export interface FilterOptions {
   wordCountMax: number
   /** 书签名称过滤（空字符串表示全部） */
   bookmarkName: string
+  /** 自定义时间过滤 - 更新于此日期之后（yyyy-MM-dd 格式，空字符串表示不限制） */
+  updatedAfter: string
+  /** 自定义时间过滤 - 更新于此日期之前（yyyy-MM-dd 格式，空字符串表示不限制） */
+  updatedBefore: string
 }
 
 /** 查询结果状态 */
@@ -143,6 +151,10 @@ export interface DocStats {
   updatedIn7Days: number
   /** 7~30天未更新的文档数 */
   updatedIn30Days: number
+  /** 1~2个月更新的文档数 */
+  updatedIn1To2Months: number
+  /** 2~3个月更新的文档数 */
+  updatedIn2To3Months: number
   /** 半年以上未更新的文档数 */
   updatedOverHalfYear: number
   /** 最大文档深度 */

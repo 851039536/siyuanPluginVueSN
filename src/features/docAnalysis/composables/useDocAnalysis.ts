@@ -110,6 +110,8 @@ export function useDocAnalysis(plugin: Plugin) {
     duplicateNameDocs: 0,
     updatedIn7Days: 0,
     updatedIn30Days: 0,
+    updatedIn1To2Months: 0,
+    updatedIn2To3Months: 0,
     updatedOverHalfYear: 0,
     maxDepth: 0,
     avgDepth: 0,
@@ -131,6 +133,8 @@ export function useDocAnalysis(plugin: Plugin) {
   const updateTimeStats = ref<UpdateTimeStats>({
     in7Days: 0,
     in30Days: 0,
+    in1To2Months: 0,
+    in2To3Months: 0,
     inHalfYear: 0,
     overHalfYear: 0,
   })
@@ -382,13 +386,17 @@ export function useDocAnalysis(plugin: Plugin) {
     try {
       const ts7 = daysAgoStr(7)
       const ts30 = daysAgoStr(30)
+      const ts60 = daysAgoStr(60)
+      const ts90 = daysAgoStr(90)
       const ts180 = daysAgoStr(180)
 
       const timeSql = `
         SELECT
           SUM(CASE WHEN b.updated >= '${ts7}' THEN 1 ELSE 0 END) as in_7_days,
           SUM(CASE WHEN b.updated >= '${ts30}' AND b.updated < '${ts7}' THEN 1 ELSE 0 END) as in_30_days,
-          SUM(CASE WHEN b.updated >= '${ts180}' AND b.updated < '${ts30}' THEN 1 ELSE 0 END) as in_half_year,
+          SUM(CASE WHEN b.updated >= '${ts60}' AND b.updated < '${ts30}' THEN 1 ELSE 0 END) as in_1_to_2_months,
+          SUM(CASE WHEN b.updated >= '${ts90}' AND b.updated < '${ts60}' THEN 1 ELSE 0 END) as in_2_to_3_months,
+          SUM(CASE WHEN b.updated >= '${ts180}' AND b.updated < '${ts90}' THEN 1 ELSE 0 END) as in_half_year,
           SUM(CASE WHEN b.updated < '${ts180}' THEN 1 ELSE 0 END) as over_half_year
         FROM blocks b
         WHERE b.type = 'd' ${notebookCondition}
@@ -400,11 +408,15 @@ export function useDocAnalysis(plugin: Plugin) {
         updateTimeStats.value = {
           in7Days: row.in_7_days || 0,
           in30Days: row.in_30_days || 0,
+          in1To2Months: row.in_1_to_2_months || 0,
+          in2To3Months: row.in_2_to_3_months || 0,
           inHalfYear: row.in_half_year || 0,
           overHalfYear: row.over_half_year || 0,
         }
         docStats.updatedIn7Days = row.in_7_days || 0
         docStats.updatedIn30Days = row.in_30_days || 0
+        docStats.updatedIn1To2Months = row.in_1_to_2_months || 0
+        docStats.updatedIn2To3Months = row.in_2_to_3_months || 0
         docStats.updatedOverHalfYear = row.over_half_year || 0
       }
     } catch (error) {
@@ -641,9 +653,31 @@ export function useDocAnalysis(plugin: Plugin) {
         case "30days":
           extraWhere = `AND b.updated >= '${daysAgoStr(30)}' AND b.updated < '${daysAgoStr(7)}'`
           break
+        case "1to2month":
+          extraWhere = `AND b.updated >= '${daysAgoStr(60)}' AND b.updated < '${daysAgoStr(30)}'`
+          break
+        case "2to3month":
+          extraWhere = `AND b.updated >= '${daysAgoStr(90)}' AND b.updated < '${daysAgoStr(60)}'`
+          break
         case "halfYear":
           extraWhere = `AND b.updated < '${daysAgoStr(180)}'`
           break
+        case "customTime": {
+          // 使用自定义时间范围
+          if (filterOptions.updatedAfter) {
+            const afterStr = filterOptions.updatedAfter.replace(/-/g, "") + "000000"
+            extraWhere += `AND b.updated >= '${afterStr}' `
+          }
+          if (filterOptions.updatedBefore) {
+            const beforeStr = filterOptions.updatedBefore.replace(/-/g, "") + "235959"
+            extraWhere += `AND b.updated <= '${beforeStr}' `
+          }
+          if (!filterOptions.updatedAfter && !filterOptions.updatedBefore) {
+            queryState.status = "empty"
+            return
+          }
+          break
+        }
         case "deep":
           extraWhere = "AND LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 >= 5"
           orderBy = "doc_depth DESC"
@@ -806,6 +840,16 @@ export function useDocAnalysis(plugin: Plugin) {
       if (filterOptions.bookmarkName.trim()) {
         const bmName = filterOptions.bookmarkName.trim().replace(/'/g, "''")
         conditions += `AND b.id IN (SELECT block_id FROM attributes WHERE name='bookmark' AND value='${bmName}') `
+      }
+
+      // 自定义时间范围过滤
+      if (filterOptions.updatedAfter) {
+        const afterStr = filterOptions.updatedAfter.replace(/-/g, "") + "000000"
+        conditions += `AND b.updated >= '${afterStr}' `
+      }
+      if (filterOptions.updatedBefore) {
+        const beforeStr = filterOptions.updatedBefore.replace(/-/g, "") + "235959"
+        conditions += `AND b.updated <= '${beforeStr}' `
       }
 
       if (needWordCountFilter) {

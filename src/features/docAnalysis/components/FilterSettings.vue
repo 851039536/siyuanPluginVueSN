@@ -70,6 +70,24 @@
           @input="handleDebouncedInput"
         />
       </div>
+      <div class="filter-item time-item">
+        <label class="filter-label">时间</label>
+        <input
+          v-model="options.updatedAfter"
+          type="date"
+          class="filter-input date-input"
+          title="更新起始日期"
+          @change="handleChange"
+        />
+        <span class="filter-separator">~</span>
+        <input
+          v-model="options.updatedBefore"
+          type="date"
+          class="filter-input date-input"
+          title="更新截止日期"
+          @change="handleChange"
+        />
+      </div>
       <button
         class="query-btn"
         :disabled="isQuerying"
@@ -200,6 +218,21 @@ function handleDebouncedInput() {
 
   .bookmark-input {
     width: 80px;
+  }
+
+  .date-input {
+    width: 120px;
+    font-size: 11px;
+    padding: 3px 6px;
+
+    &::-webkit-calendar-picker-indicator {
+      filter: var(--b3-theme-on-surface-variant);
+      cursor: pointer;
+    }
+  }
+
+  .time-item {
+    gap: 4px;
   }
 
   .filter-separator {

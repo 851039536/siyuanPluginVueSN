@@ -175,5 +175,11 @@ export interface DocStats {
   bookmarkedDocs: number
   /** 没有书签的文档数 */
   noBookmarkDocs: number
+  /** 标记"待发布"的文档数 */
+  pendingPublishDocs: number
+  /** 标记"已发布"的文档数 */
+  publishedDocs: number
+  /** 标记"不使用"的文档数 */
+  unusedDocs: number
 }
 

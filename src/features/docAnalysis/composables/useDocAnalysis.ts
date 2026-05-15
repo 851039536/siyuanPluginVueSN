@@ -36,10 +36,10 @@ interface NotebookInfo {
 
 /** 子查询：统计每个文档的内容大小和字数（合并减少扫描次数） */
 const SIZE_WORDCOUNT_SUBQUERY = `
-  SELECT root_id, 
+  SELECT root_id,
     SUM(length) as total_size,
     SUM(LENGTH(content)) as total_word_count
-  FROM blocks 
+  FROM blocks
   WHERE type != 'd'
   GROUP BY root_id
 `
@@ -122,6 +122,9 @@ export function useDocAnalysis(plugin: Plugin) {
     totalImages: 0,
     bookmarkedDocs: 0,
     noBookmarkDocs: 0,
+    pendingPublishDocs: 0,
+    publishedDocs: 0,
+    unusedDocs: 0,
   })
   const statsLoading = ref(false)
   const hasAnalyzed = ref(false)
@@ -214,7 +217,7 @@ export function useDocAnalysis(plugin: Plugin) {
       const notebookCondition = buildNotebookCondition()
 
       const sqlStmt = `
-        SELECT 
+        SELECT
           b.id as doc_id,
           b.content as doc_title,
           b.hpath as doc_path,
@@ -311,7 +314,7 @@ export function useDocAnalysis(plugin: Plugin) {
 
       // 大小统计
       const sizeSql = `
-        SELECT 
+        SELECT
           COUNT(*) as total,
           SUM(CASE WHEN COALESCE(sw.total_size, 0) = 0 THEN 1 ELSE 0 END) as zero_count,
           SUM(CASE WHEN COALESCE(sw.total_size, 0) > 0 AND COALESCE(sw.total_size, 0) < 1024 THEN 1 ELSE 0 END) as small_count,
@@ -595,6 +598,27 @@ export function useDocAnalysis(plugin: Plugin) {
         docStats.bookmarkedDocs = bmRows[0].bookmarked_docs || 0
         docStats.noBookmarkDocs = Math.max(0, docStats.totalDocs - docStats.bookmarkedDocs)
       }
+
+      // 统计特定书签值：待发布、已发布、不使用
+      const bmValueSql = `
+        SELECT
+          SUM(CASE WHEN a.value = '待发布' THEN 1 ELSE 0 END) as pending_count,
+          SUM(CASE WHEN a.value = '已发布' THEN 1 ELSE 0 END) as published_count,
+          SUM(CASE WHEN a.value = '不使用' THEN 1 ELSE 0 END) as unused_count
+        FROM attributes a
+        WHERE a.name = 'bookmark'
+        AND a.block_id IN (
+          SELECT b.id FROM blocks b WHERE b.type = 'd' ${notebookCondition}
+        )
+      `
+
+      const bmValueRows = await sql(bmValueSql)
+      if (bmValueRows && bmValueRows.length > 0) {
+        const row = bmValueRows[0]
+        docStats.pendingPublishDocs = row.pending_count || 0
+        docStats.publishedDocs = row.published_count || 0
+        docStats.unusedDocs = row.unused_count || 0
+      }
     } catch (error) {
       console.error("书签分析失败:", error)
     }
@@ -700,6 +724,18 @@ export function useDocAnalysis(plugin: Plugin) {
           extraWhere = "AND b.id NOT IN (SELECT block_id FROM attributes WHERE name = 'bookmark')"
           orderBy = "b.updated DESC"
           break
+        case "pendingPublish":
+          extraWhere = "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'bookmark' AND a.value = '待发布' AND a.block_id = b.id)"
+          orderBy = "b.updated DESC"
+          break
+        case "published":
+          extraWhere = "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'bookmark' AND a.value = '已发布' AND a.block_id = b.id)"
+          orderBy = "b.updated DESC"
+          break
+        case "unused":
+          extraWhere = "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'bookmark' AND a.value = '不使用' AND a.block_id = b.id)"
+          orderBy = "b.updated DESC"
+          break
         default:
           queryState.status = "empty"
           return
@@ -769,7 +805,7 @@ export function useDocAnalysis(plugin: Plugin) {
       const titleList = dupTitles.map((t) => `'${t.replace(/'/g, "''")}'`).join(",")
 
       const sqlStmt = `
-        SELECT 
+        SELECT
           b.id as doc_id,
           b.content as doc_title,
           b.hpath as doc_path,
@@ -832,7 +868,7 @@ export function useDocAnalysis(plugin: Plugin) {
       if (filterOptions.contentKeyword.trim()) {
         const keyword = filterOptions.contentKeyword.trim().replace(/'/g, "''")
         conditions += `AND b.id IN (
-          SELECT DISTINCT root_id FROM blocks 
+          SELECT DISTINCT root_id FROM blocks
           WHERE content LIKE '%${keyword}%' AND type != 'd'
         ) `
       }
@@ -862,7 +898,7 @@ export function useDocAnalysis(plugin: Plugin) {
         }
 
         const sqlStmt = `
-          SELECT 
+          SELECT
             b.id as doc_id,
             b.content as doc_title,
             b.hpath as doc_path,
@@ -894,7 +930,7 @@ export function useDocAnalysis(plugin: Plugin) {
       } else {
         // 不需要字数过滤时，轻量查询（不 JOIN 子查询）
         const sqlStmt = `
-          SELECT 
+          SELECT
             b.id as doc_id,
             b.content as doc_title,
             b.hpath as doc_path,

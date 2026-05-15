@@ -320,6 +320,9 @@ function getCategoryLabel(category: string): string {
     case "hasImage": return "含图片"
     case "hasBookmark": return "有书签"
     case "noBookmark": return "无书签"
+    case "pendingPublish": return "待发布"
+    case "published": return "已发布"
+    case "unused": return "不使用"
     default: return category
   }
 }

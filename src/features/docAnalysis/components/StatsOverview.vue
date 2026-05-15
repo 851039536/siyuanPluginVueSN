@@ -195,6 +195,42 @@
         <div class="stats-cards">
           <div
             class="stat-card"
+            :class="{ active: activeFilter === 'pendingPublish' }"
+            @click="$emit('select-category', 'pendingPublish')"
+          >
+            <div class="stat-value pending-color">
+              {{ stats.pendingPublishDocs }}
+            </div>
+            <div class="stat-label">
+              待发布
+            </div>
+          </div>
+          <div
+            class="stat-card"
+            :class="{ active: activeFilter === 'published' }"
+            @click="$emit('select-category', 'published')"
+          >
+            <div class="stat-value published-color">
+              {{ stats.publishedDocs }}
+            </div>
+            <div class="stat-label">
+              已发布
+            </div>
+          </div>
+          <div
+            class="stat-card"
+            :class="{ active: activeFilter === 'unused' }"
+            @click="$emit('select-category', 'unused')"
+          >
+            <div class="stat-value unused-color">
+              {{ stats.unusedDocs }}
+            </div>
+            <div class="stat-label">
+              不使用
+            </div>
+          </div>
+          <div
+            class="stat-card"
             :class="{ active: activeFilter === 'hasBookmark' }"
             @click="$emit('select-category', 'hasBookmark')"
           >
@@ -202,7 +238,7 @@
               {{ stats.bookmarkedDocs }}
             </div>
             <div class="stat-label">
-              有书签的文档
+              有书签
             </div>
           </div>
           <div
@@ -214,7 +250,7 @@
               {{ stats.noBookmarkDocs }}
             </div>
             <div class="stat-label">
-              无书签的文档
+              无书签
             </div>
           </div>
         </div>
@@ -550,6 +586,18 @@ function getBarHeight(count: number): number {
     }
 
     &.no-bookmark-color {
+      color: #9ca3af;
+    }
+
+    &.pending-color {
+      color: #f59e0b;
+    }
+
+    &.published-color {
+      color: #22c55e;
+    }
+
+    &.unused-color {
       color: #9ca3af;
     }
   }

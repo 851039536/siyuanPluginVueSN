@@ -77,6 +77,16 @@ export const FEATURE_CONFIG = [
     defaultDesc: "查看和管理快捷键",
   },
   {
+    id: "superPanel",
+    defaultTitle: "超级面板",
+    defaultDesc: "统一的插件功能入口面板",
+    actions: [{
+      key: "openSuperPanel",
+      label: "打开超级面板",
+      hotkey: "Ctrl+Alt+P",
+    }],
+  },
+  {
     id: "diskBrowser",
     defaultTitle: "本地磁盘",
     defaultDesc: "浏览本地磁盘和文件夹",
@@ -222,6 +232,16 @@ export const FEATURE_CONFIG = [
       key: "openFormatAssistant",
       label: "打开排版助手",
       hotkey: "Ctrl+Alt+G",
+    }],
+  },
+  {
+    id: "htmlViewer",
+    defaultTitle: "HTML展示",
+    defaultDesc: "右键选中文本后以HTML方式预览，支持HTML片段的增删改查",
+    actions: [{
+      key: "openHtmlViewer",
+      label: "打开HTML展示",
+      hotkey: "",
     }],
   },
 ] as const

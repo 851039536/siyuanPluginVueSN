@@ -31,6 +31,7 @@ import {
   registerFloatingToolbar,
   registerFormatAssistant,
   registerGeneralSettings,
+  registerHtmlViewer,
   registerImageCompressor,
   registerPageLock,
   registerPasswordVault,
@@ -153,6 +154,11 @@ export default class PluginSample extends Plugin {
       (this as any).__formatAssistant.destroy()
     }
 
+    // 清理HTML展示资源
+    if ((this as any).__htmlViewer) {
+      (this as any).__htmlViewer.destroy()
+    }
+
     destroyCommands()
     destroy()
   }
@@ -188,6 +194,7 @@ export default class PluginSample extends Plugin {
     registerDocAnalysis(this)
     registerWebDAV(this)
     registerFormatAssistant(this)
+    registerHtmlViewer(this)
   }
 
   /**

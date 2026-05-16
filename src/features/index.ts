@@ -10,6 +10,13 @@ export { registerCodeImageGenerator } from "./codeImageGenerator"
 export { registerDiskBrowser } from "./diskBrowser"
 export { registerDocAnalysis } from "./docAnalysis"
 export { registerFormatAssistant } from "./formatAssistant"
+export { registerHtmlViewer } from "./htmlViewer"
+export {
+  hideHtmlViewer,
+  htmlViewerVisible,
+  showHtmlViewer,
+  toggleHtmlViewer,
+} from "./htmlViewer/types"
 export { registerDocNavigation } from "./docNavigation"
 export { registerEncryption } from "./encryption"
 export {
@@ -78,7 +85,7 @@ type _Registered =
   | "statistics" | "encryption" | "video" | "everythingSearch"
   | "statusBar" | "floatingToolbar" | "floatingBox" | "textDiff"
   | "base64Image" | "flashcardReading" | "passwordVault" | "docAnalysis"
-  | "webDAV" | "formatAssistant"
+  | "webDAV" | "formatAssistant" | "htmlViewer"
 
 // --- 编译时断言辅助 ---
 // 利用泛型接口约束 T extends true 产生 TypeScript 编译错误，无运行时开销

@@ -1178,5 +1178,8 @@
   "openDirFailed": "Failed to open directory",
   "refresh": "Refresh Scan",
   "openDir": "Open Directory",
-  "scanning": "Scanning..."
+  "scanning": "Scanning...",
+  "htmlViewer": "HTML Viewer",
+  "enableHtmlViewer": "Enable HTML Viewer",
+  "enableHtmlViewerDesc": "Preview selected text as HTML from right-click menu, with HTML snippet CRUD management"
 }

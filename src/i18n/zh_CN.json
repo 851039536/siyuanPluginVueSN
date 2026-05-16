@@ -1244,5 +1244,8 @@
   "openDirFailed": "打开目录失败",
   "refresh": "刷新扫描",
   "openDir": "打开目录",
-  "scanning": "正在扫描..."
+  "scanning": "正在扫描...",
+  "htmlViewer": "HTML展示",
+  "enableHtmlViewer": "启用HTML展示功能",
+  "enableHtmlViewerDesc": "右键选中文本后以HTML方式预览，支持HTML片段的增删改查"
 }

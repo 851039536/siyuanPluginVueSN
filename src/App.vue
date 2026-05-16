@@ -54,6 +54,13 @@
       @close="showDecryptDialog = false"
       @replace="handleDecryptReplace"
     />
+
+    <!-- HTML展示弹窗 -->
+    <HtmlViewerDialog
+      :visible="htmlViewerVisible"
+      @update:visible="(v) => htmlViewerVisible = v"
+      @close="htmlViewerVisible = false"
+    />
   </div>
 </template>
 
@@ -67,6 +74,7 @@ import {
   everythingSearchVisible,
   hideEverythingSearch,
   hidePasswordVault,
+  htmlViewerVisible,
   passwordVaultVisible,
 } from "@/features"
 import DecryptDialog from "@/features/encryption/components/DecryptDialog.vue"
@@ -78,6 +86,7 @@ import {
 } from "@/features/floatingToolbar"
 import ImageViewer from "@/features/imageCompressor/index.vue"
 import PasswordVaultDialog from "@/features/passwordVault/index.vue"
+import HtmlViewerDialog from "@/features/htmlViewer/index.vue"
 import VideoManager from "@/features/video/index.vue"
 import { usePlugin } from "@/main"
 
@@ -165,6 +174,11 @@ onMounted(() => {
       pluginInstance.__formatAssistant.open()
     }
   })
+
+  // 监听打开HTML展示事件
+  window.addEventListener("openHtmlViewer", ((event: any) => {
+    htmlViewerVisible.value = true
+  }) as EventListener)
 })
 </script>
 

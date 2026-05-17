@@ -185,13 +185,13 @@ function applyInlineStyles(html: string, colors: ThemeColors, fontSize: number, 
   // pre (代码块)
   result = result.replace(
     /<pre>/g,
-    `<pre style="margin: 16px 0; padding: 16px; background-color: ${colors.codeBgColor}; border-radius: 4px; overflow-x: auto; line-height: 1.6;">`,
+    `<pre style="margin: 16px 0; padding: 0; background-color: ${colors.codeBgColor}; border-radius: 4px; overflow-x: auto; line-height: 1.6;">`,
   )
 
   // code with class (代码块内的 code，如 <code class="language-javascript">)
   result = result.replace(
     /<code class="language-(\w+)">/g,
-    (_, lang) => `<code class="language-${lang}" style="font-family: 'Menlo', 'Monaco', 'Consolas', monospace; font-size: ${Math.round(fontSize * 0.85)}px; color: #333; background: none; padding: 0; border-radius: 0;">`,
+    (_, lang) => `<code class="language-${lang}" style="display: block; white-space: pre; overflow-x: auto; padding: 16px; font-family: 'Menlo', 'Monaco', 'Consolas', monospace; font-size: ${Math.round(fontSize * 0.85)}px; color: #333; background: none; border-radius: 0 0 4px 4px;">`,
   )
 
   // code (行内代码，不含 class 的)
@@ -285,7 +285,7 @@ export async function convertMdToWechat(
     renderer: {
       code({ text, lang }: { text: string, lang?: string }) {
         const langAttr = lang ? ` class="language-${lang}"` : ""
-        const langLabel = lang ? `<div style="font-size: 12px; color: #999; margin-bottom: 8px; text-align: right;">${lang}</div>` : ""
+        const langLabel = lang ? `<div style="font-size: 12px; color: #999; padding: 8px 16px 4px; text-align: right; background-color: ${colors.codeBgColor}; border-radius: 4px 4px 0 0;">${lang}</div>` : ""
         let highlighted: string
         if (codeHighlight && lang) {
           try {
@@ -298,7 +298,7 @@ export async function convertMdToWechat(
         } else {
           highlighted = escapeHtml(text)
         }
-        return `<pre><code${langAttr}>${langLabel}${highlighted}</code></pre>`
+        return `<pre>${langLabel}<code${langAttr}>${highlighted}</code></pre>`
       },
     },
   })

@@ -185,13 +185,13 @@ function applyInlineStyles(html: string, colors: BilibiliThemeColors, fontSize: 
   // pre (代码块)
   result = result.replace(
     /<pre>/g,
-    `<pre style="margin: 16px 0; padding: 0; background-color: ${colors.codeBgColor}; border-radius: 8px; overflow: hidden; line-height: 1.6;">`,
+    `<pre style="margin: 16px 0; padding: 0; background-color: ${colors.codeBgColor}; border-radius: 8px; overflow-x: auto; line-height: 1.6;">`,
   )
 
   // code with class (代码块内的 code)
   result = result.replace(
     /<code class="language-(\w+)">/g,
-    (_, lang) => `<code class="language-${lang}" style="font-family: 'Menlo', 'Monaco', 'Consolas', monospace; font-size: ${Math.round(fontSize * 0.85)}px; color: ${colors.textColor}; background: none; padding: 0; border-radius: 0;">`,
+    (_, lang) => `<code class="language-${lang}" style="display: block; white-space: pre; overflow-x: auto; padding: 16px; font-family: 'Menlo', 'Monaco', 'Consolas', monospace; font-size: ${Math.round(fontSize * 0.85)}px; color: ${colors.textColor}; background: none; border-radius: 0 0 8px 8px;">`,
   )
 
   // code (行内代码，不含 class 的)
@@ -286,7 +286,7 @@ export async function convertMdToBilibili(
       code({ text, lang }: { text: string, lang?: string }) {
         const langAttr = lang ? ` class="language-${lang}"` : ""
         const langLabel = lang
-          ? `<div style="font-size: 12px; color: ${colors.codeBlockHeaderColor}; background-color: ${colors.codeBlockHeaderBg}; padding: 6px 12px; border-bottom: 1px solid ${colors.hrColor}; text-transform: uppercase; letter-spacing: 0.5px;">${lang}</div>`
+          ? `<div style="font-size: 12px; color: ${colors.codeBlockHeaderColor}; background-color: ${colors.codeBlockHeaderBg}; padding: 6px 12px; border-bottom: 1px solid ${colors.hrColor}; text-transform: uppercase; letter-spacing: 0.5px; border-radius: 8px 8px 0 0;">${lang}</div>`
           : ""
         let highlighted: string
         if (codeHighlight && lang) {
@@ -300,7 +300,7 @@ export async function convertMdToBilibili(
         } else {
           highlighted = escapeHtml(text)
         }
-        return `<pre><code${langAttr}>${langLabel}${highlighted}</code></pre>`
+        return `<pre>${langLabel}<code${langAttr}>${highlighted}</code></pre>`
       },
     },
   })

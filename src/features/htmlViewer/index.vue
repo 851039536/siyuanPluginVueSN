@@ -96,6 +96,15 @@
                 >
                   <div class="panel-header">
                     <span>预览</span>
+                    <div class="panel-actions">
+                      <Button
+                        variant="ghost"
+                        size="small"
+                        icon="contentCopy"
+                        title="复制为图片"
+                        @click="copyAsImage"
+                      />
+                    </div>
                   </div>
                   <div class="html-preview-container">
                     <iframe
@@ -531,13 +540,14 @@
 <script setup lang="ts">
 import type { HtmlCategory, HtmlSnippet } from "./types"
 import { showMessage } from "siyuan"
-import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue"
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
 import { usePlugin } from "@/main"
 import { HtmlViewerStorage } from "./types/storage"
+import html2canvas from "html2canvas"
 
 // Props
 interface Props {
@@ -704,6 +714,57 @@ function formatHtml() {
     showMessage("格式化完成", 2000, "info")
   } catch {
     showMessage("格式化失败", 2000, "error")
+  }
+}
+
+// 复制预览为图片
+async function copyAsImage() {
+  const iframe = previewFrame.value
+  if (!iframe || !iframe.contentDocument?.body) {
+    showMessage("没有可复制的内容", 2000, "info")
+    return
+  }
+
+  try {
+    // 确保 iframe 内容已完成渲染
+    await nextTick()
+    const canvas = await html2canvas(iframe.contentDocument.body, {
+      useCORS: true,
+      scale: 2,
+      backgroundColor: "#ffffff",
+      logging: false,
+    })
+
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((b) => {
+        if (b) resolve(b)
+        else reject(new Error("Canvas toBlob 失败"))
+      }, "image/png")
+    })
+
+    await navigator.clipboard.write([
+      new ClipboardItem({ "image/png": blob }),
+    ])
+
+    showMessage("已复制为图片", 2000, "info")
+  } catch (error) {
+    console.error("复制为图片失败:", error)
+    // 兜底方案：下载图片
+    try {
+      const canvas = await html2canvas(iframe.contentDocument.body, {
+        useCORS: true,
+        scale: 2,
+        backgroundColor: "#ffffff",
+        logging: false,
+      })
+      const link = document.createElement("a")
+      link.download = `html-preview-${Date.now()}.png`
+      link.href = canvas.toDataURL("image/png")
+      link.click()
+      showMessage("已下载为图片（剪贴板不可用）", 2000, "info")
+    } catch {
+      showMessage("复制失败", 2000, "error")
+    }
   }
 }
 

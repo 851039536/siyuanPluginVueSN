@@ -50,11 +50,9 @@
 
   .notes-item { color: var(--b3-theme-primary); }
   .words-item { color: var(--b3-theme-secondary); }
-  .today-created-item { color: var(--b3-theme-success); }
-  .today-modified-item { color: var(--b3-theme-warning); }
-  .today-change-item {
-    color: var(--b3-theme-primary);
-    .monitor-value { font-size: 10px; }
+  .today-activity-item {
+    color: var(--b3-theme-success);
+    .monitor-value { font-size: 10px; min-width: 36px; }
   }
   .cpu-item { color: var(--b3-theme-primary); opacity: 0.8; }
   .mem-item { color: var(--b3-theme-secondary); opacity: 0.8; }

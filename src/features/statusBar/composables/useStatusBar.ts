@@ -88,25 +88,26 @@ export function useStatusBar() {
   )
 
   const statisticsTooltip = computed(() => {
-    const createdChange = state.yesterdayCreated > 0
-      ? (((state.todayCreated - state.yesterdayCreated) / state.yesterdayCreated) * 100).toFixed(1)
-      : (state.todayCreated > 0 ? "+100" : "0")
-    const modifiedChange = state.yesterdayModified > 0
-      ? (((state.todayModified - state.yesterdayModified) / state.yesterdayModified) * 100).toFixed(1)
-      : (state.todayModified > 0 ? "+100" : "0")
-    return `文档数: ${state.totalNotes} 篇\n总字数: ${state.totalWords.toLocaleString()} 字\n今日新增: ${state.todayCreated} (较昨日 ${createdChange}%)\n今日修改: ${state.todayModified} (较昨日 ${modifiedChange}%)`
+    return `文档数: ${state.totalNotes} 篇\n总字数: ${state.totalWords.toLocaleString()} 字`
   })
 
-  const todayCreatedDisplay = computed(() => String(state.todayCreated))
+  function calcChange(today: number, yesterday: number): string {
+    if (yesterday === 0) return today > 0 ? "+∞" : "0"
+    const val = ((today - yesterday) / yesterday * 100).toFixed(0)
+    return `${Number(val) >= 0 ? "+" : ""}${val}%`
+  }
 
-  const todayModifiedDisplay = computed(() => String(state.todayModified))
+  const todayActivityDisplay = computed(() => {
+    const trend = state.yesterdayCreated > 0
+      ? (state.todayCreated >= state.yesterdayCreated ? "↑" : "↓")
+      : (state.todayCreated > 0 ? "↑" : "")
+    return `${state.todayCreated}/${state.todayModified}${trend}`
+  })
 
-  const todayChangeDisplay = computed(() => {
-    if (state.yesterdayCreated === 0) {
-      return state.todayCreated > 0 ? "+100%" : "0%"
-    }
-    const change = ((state.todayCreated - state.yesterdayCreated) / state.yesterdayCreated * 100).toFixed(0)
-    return `${Number(change) >= 0 ? "+" : ""}${change}%`
+  const todayTooltip = computed(() => {
+    const cChg = calcChange(state.todayCreated, state.yesterdayCreated)
+    const mChg = calcChange(state.todayModified, state.yesterdayModified)
+    return `今日新增: ${state.todayCreated} (较昨日 ${cChg})\n今日修改: ${state.todayModified} (较昨日 ${mChg})`
   })
 
   const systemInfoTooltip = computed(() => {
@@ -237,8 +238,7 @@ export function useStatusBar() {
     totalNotesDisplay,
     totalWordsDisplay,
     statisticsTooltip,
-    todayCreatedDisplay,
-    todayModifiedDisplay,
-    todayChangeDisplay,
+    todayActivityDisplay,
+    todayTooltip,
   }
 }

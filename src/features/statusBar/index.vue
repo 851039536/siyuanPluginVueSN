@@ -21,27 +21,11 @@
     </MonitorItem>
 
     <MonitorItem
-      icon="ph:file-plus"
-      item-class="statistics-item today-created-item"
-      :title="statisticsTooltip"
+      icon="ph:chart-line-up"
+      item-class="statistics-item today-activity-item"
+      :title="todayTooltip"
     >
-      {{ todayCreatedDisplay }}
-    </MonitorItem>
-
-    <MonitorItem
-      icon="ph:pencil-simple"
-      item-class="statistics-item today-modified-item"
-      :title="statisticsTooltip"
-    >
-      {{ todayModifiedDisplay }}
-    </MonitorItem>
-
-    <MonitorItem
-      icon="ph:trend-up"
-      item-class="statistics-item today-change-item"
-      :title="statisticsTooltip"
-    >
-      {{ todayChangeDisplay }}
+      {{ todayActivityDisplay }}
     </MonitorItem>
 
     <MonitorItem
@@ -100,9 +84,8 @@ const {
   totalNotesDisplay,
   totalWordsDisplay,
   statisticsTooltip,
-  todayCreatedDisplay,
-  todayModifiedDisplay,
-  todayChangeDisplay,
+  todayActivityDisplay,
+  todayTooltip,
 } = useStatusBar()
 
 const handleOpenPasswordVault = () => {

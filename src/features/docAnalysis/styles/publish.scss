@@ -518,6 +518,12 @@
   &.test-btn:hover {
     color: var(--b3-theme-primary);
   }
+
+  &.test-btn.testing {
+    color: var(--b3-theme-primary);
+    opacity: 0.6;
+    pointer-events: none;
+  }
 }
 
 .platform-card-url {

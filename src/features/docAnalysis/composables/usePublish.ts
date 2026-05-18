@@ -33,6 +33,7 @@ import {
   PublishStorage,
 } from "../types/publishStorage"
 import { SY_ATTR_PUBLISH_DATA, SY_ATTR_PUBLISH_STATUS } from "../types/publish"
+import { marked } from "marked"
 
 /** 生成唯一 ID */
 function generateId(): string {
@@ -148,10 +149,12 @@ export function usePublish(plugin: Plugin) {
       await publishToPlatform(platform, {
         markdown: "# 测试发布\n\n这是一条测试消息，来自思源笔记文档分析插件。",
         fullMarkdown: "# 测试发布\n\n这是一条测试消息，来自思源笔记文档分析插件。",
+        htmlContent: "<h1>测试发布</h1>\n<p>这是一条测试消息，来自思源笔记文档分析插件。</p>",
         title: "测试发布",
         summary: "测试",
         tags: ["测试"],
         categories: [],
+        format: "markdown",
         frontMatter: {},
         images: new Map(),
       })
@@ -242,13 +245,22 @@ export function usePublish(plugin: Plugin) {
         })()
       : markdown
 
+    // 生成 HTML 内容（用于富文本发布）
+    let htmlContent: string | undefined
+    const format = options?.format || "markdown"
+    if (format === "richtext") {
+      htmlContent = marked.parse(markdown, { async: false }) as string
+    }
+
     return {
       markdown,
       fullMarkdown,
+      htmlContent,
       title: options?.customTitle || title,
       summary,
       tags,
       categories,
+      format,
       frontMatter: fm,
       images,
     }
@@ -476,6 +488,11 @@ export function usePublish(plugin: Plugin) {
     const username = cfg.username || ""
     const password = cfg.password || ""
 
+    // 按格式选择内容：富文本用 HTML，否则用 Markdown
+    const bodyContent = content.format === "richtext" && content.htmlContent
+      ? content.htmlContent
+      : content.fullMarkdown
+
     // 构建 XMLRPC 请求
     const xmlBody = `<?xml version="1.0"?>
 <methodCall>
@@ -486,7 +503,7 @@ export function usePublish(plugin: Plugin) {
     <param><value><string>${password}</string></value></param>
     <param><value><struct>
       <member><name>title</name><value><string>${escapeXml(content.title)}</string></value></member>
-      <member><name>description</name><value><string>${escapeXml(content.fullMarkdown)}</string></value></member>
+      <member><name>description</name><value><string>${escapeXml(bodyContent)}</string></value></member>
       <member><name>categories</name><value><array><data>${content.categories.map(c => `<value><string>${escapeXml(c)}</string></value>`).join("")}</data></array></value></member>
       <member><name>mt_keywords</name><value><string>${content.tags.join(",")}</string></value></member>
       <member><name>post_status</name><value><string>publish</string></value></member>
@@ -541,6 +558,11 @@ export function usePublish(plugin: Plugin) {
     const password = cfg.password || ""
     const apiUrl = platform.apiUrl.replace("{blogName}", blogName)
 
+    // 按格式选择内容
+    const bodyContent = content.format === "richtext" && content.htmlContent
+      ? content.htmlContent
+      : content.fullMarkdown
+
     // 构建 MetaWeblog XMLRPC 请求
     const xmlBody = `<?xml version="1.0"?>
 <methodCall>
@@ -551,7 +573,7 @@ export function usePublish(plugin: Plugin) {
     <param><value><string>${escapeXml(password)}</string></value></param>
     <param><value><struct>
       <member><name>title</name><value><string>${escapeXml(content.title)}</string></value></member>
-      <member><name>description</name><value><string>${escapeXml(content.fullMarkdown)}</string></value></member>
+      <member><name>description</name><value><string>${escapeXml(bodyContent)}</string></value></member>
       <member><name>categories</name><value><array><data>${content.categories.map(c => `<value><string>${escapeXml(c)}</string></value>`).join("")}</data></array></value></member>
       <member><name>mt_keywords</name><value><string>${content.tags.join(",")}</string></value></member>
     </struct></value></param>
@@ -618,7 +640,15 @@ export function usePublish(plugin: Plugin) {
           object: "block",
           type: "paragraph",
           paragraph: {
-            rich_text: [{ type: "text", text: { content: content.markdown.substring(0, 2000) } }],
+            rich_text: [{
+              type: "text",
+              text: {
+                content: (content.format === "richtext" && content.htmlContent
+                  ? content.htmlContent
+                  : content.markdown
+                ).substring(0, 2000),
+              },
+            }],
           },
         },
       ],
@@ -660,7 +690,7 @@ export function usePublish(plugin: Plugin) {
     const payload = {
       title: content.title,
       slug: slugify(content.title),
-      body: content.fullMarkdown,
+      body: content.format === "richtext" && content.htmlContent ? content.htmlContent : content.fullMarkdown,
       public: 1,
     }
 
@@ -698,8 +728,8 @@ export function usePublish(plugin: Plugin) {
       title: content.title,
       slug: slugify(content.title),
       content: {
-        content: content.fullMarkdown,
-        format: "MARKDOWN",
+        content: content.format === "richtext" && content.htmlContent ? content.htmlContent : content.fullMarkdown,
+        format: content.format === "richtext" ? "HTML" : "MARKDOWN",
       },
       categories: content.categories.map(c => ({ name: c, slug: slugify(c) })),
       tags: content.tags.map(t => ({ name: t, slug: slugify(t) })),
@@ -735,11 +765,17 @@ export function usePublish(plugin: Plugin) {
     const token = cfg.token || ""
 
     // 通用 Cookie 认证发布
+    // 按格式选择内容
+    const bodyContent = content.format === "richtext" && content.htmlContent
+      ? content.htmlContent
+      : content.fullMarkdown
+
     const payload = {
       title: content.title,
-      content: content.fullMarkdown,
+      content: bodyContent,
       markdown: content.markdown,
       summary: content.summary,
+      ...(content.format === "richtext" ? { format: "richtext" } : {}),
       tags: content.tags,
       categories: content.categories,
     }

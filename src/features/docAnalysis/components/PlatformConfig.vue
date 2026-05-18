@@ -225,6 +225,38 @@
             </div>
           </template>
 
+          <!-- 博客园额外配置 -->
+          <template v-if="formType === 'cnblogs'">
+            <div class="form-field">
+              <label>博客名称（Blog Name）*</label>
+              <input
+                v-model="formExtra.blogName"
+                type="text"
+                placeholder="你的博客子域名，如 https://www.cnblogs.com/xxx/ 中的 xxx"
+                class="form-input"
+              >
+              <span class="form-hint">即博客园个人主页 URL 中的名称，如：https://www.cnblogs.com/你的博客名/</span>
+            </div>
+            <div class="form-field">
+              <label>用户名 *</label>
+              <input
+                v-model="formExtra.username"
+                type="text"
+                placeholder="博客园登录用户名"
+                class="form-input"
+              >
+            </div>
+            <div class="form-field">
+              <label>密码 *</label>
+              <input
+                v-model="formExtra.password"
+                type="password"
+                placeholder="博客园登录密码"
+                class="form-input"
+              >
+            </div>
+          </template>
+
           <!-- Cookie 认证平台 -->
           <template v-if="isCookiePlatform">
             <div class="form-field">

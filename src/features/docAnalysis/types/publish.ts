@@ -145,6 +145,9 @@ export interface DocPublishState {
 // 发布选项
 // ============================================================
 
+/** 发布内容格式 */
+export type PublishFormat = "markdown" | "richtext"
+
 /** 单次发布选项 */
 export interface PublishOptions {
   /** 文档 ID */
@@ -161,6 +164,8 @@ export interface PublishOptions {
   categories?: string[]
   /** 是否发布为草稿 */
   asDraft?: boolean
+  /** 发布内容格式，默认 markdown */
+  format?: PublishFormat
   /** YAML Front Matter 配置 */
   frontMatter?: Record<string, any>
 }
@@ -229,6 +234,8 @@ export interface ExportContent {
   markdown: string
   /** 带 Front Matter 的完整 Markdown */
   fullMarkdown: string
+  /** 转换为 HTML 的内容（当 format=richtext 时使用） */
+  htmlContent?: string
   /** 标题 */
   title: string
   /** 摘要 */
@@ -237,6 +244,8 @@ export interface ExportContent {
   tags: string[]
   /** 分类列表 */
   categories: string[]
+  /** 发布内容格式 */
+  format: PublishFormat
   /** Front Matter 对象 */
   frontMatter: Record<string, any>
   /** 图片列表 (本地路径 -> 可访问 URL 映射) */

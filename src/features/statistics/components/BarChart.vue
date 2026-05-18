@@ -33,21 +33,7 @@
     </div>
 
 
-    <!-- 数据列表 -->
-    <div class="data-list">
-      <div
-        v-for="item in chartData"
-        :key="item.date"
-        class="data-item"
-        :class="{
-          active: item.words > 0,
-          today: isToday(item.date),
-        }"
-      >
-        <span class="data-date">{{ item.dateLabel }}</span>
-        <span class="data-value">{{ formatNumber(item.words) }}</span>
-      </div>
-    </div>
+
   </div>
 </template>
 
@@ -202,55 +188,6 @@ function formatChartLabel(label: string): string {
   }
 }
 
-.data-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 8px;
-
-  .data-item {
-    display: flex;
-    flex-direction: column;
-    padding: 8px 10px;
-    background: var(--b3-theme-background);
-    border-radius: 6px;
-    border: 1px solid var(--b3-border-color);
-
-    &:hover {
-      border-color: var(--b3-theme-primary);
-      transform: translateY(-1px);
-    }
-
-    &.active {
-      background: var(--b3-theme-surface-lighter, rgba(var(--b3-theme-primary-rgb), 0.03));
-    }
-
-    &.today {
-      border-color: var(--b3-theme-primary);
-      background: var(--b3-theme-primary-lighter, rgba(var(--b3-theme-primary-rgb), 0.08));
-
-      .data-value {
-        color: var(--b3-theme-primary);
-      }
-    }
-
-    .data-date {
-      font-family: $font-body;
-      font-size: 9px;
-      font-weight: 600;
-      color: var(--b3-theme-on-surface);
-      opacity: 0.5;
-      margin-bottom: 2px;
-      text-transform: uppercase;
-    }
-
-    .data-value {
-      font-family: $font-heading;
-      font-size: 14px;
-      font-weight: 800;
-      color: var(--b3-theme-on-surface);
-    }
-  }
-}
 
 
 // Responsive design

@@ -113,6 +113,34 @@
             发布选项
           </div>
           <div class="option-group">
+            <!-- 发布格式选择 -->
+            <div class="format-selector">
+              <span class="format-label">内容格式：</span>
+              <label
+                class="format-option"
+                :class="{ active: publishFormat === 'markdown' }"
+              >
+                <input
+                  v-model="publishFormat"
+                  type="radio"
+                  value="markdown"
+                >
+                <Icon icon="mdi:language-markdown" />
+                Markdown
+              </label>
+              <label
+                class="format-option"
+                :class="{ active: publishFormat === 'richtext' }"
+              >
+                <input
+                  v-model="publishFormat"
+                  type="radio"
+                  value="richtext"
+                >
+                <Icon icon="mdi:format-text" />
+                富文本
+              </label>
+            </div>
             <label class="option-label">
               <input
                 v-model="publishAsDraft"
@@ -295,6 +323,7 @@ const {
 
 const activeTab = ref<"publish" | "platforms" | "history">("publish")
 const selectedPlatforms = ref<string[]>([])
+const publishFormat = ref<"markdown" | "richtext">("markdown")
 const publishAsDraft = ref(false)
 const autoMarkPublished = ref(true)
 const customTitle = ref("")
@@ -340,6 +369,7 @@ async function handlePublish() {
     tags: tagsStr.value ? tagsStr.value.split(",").map(t => t.trim()).filter(Boolean) : undefined,
     categories: categoriesStr.value ? categoriesStr.value.split(",").map(c => c.trim()).filter(Boolean) : undefined,
     asDraft: publishAsDraft.value,
+    format: publishFormat.value,
   })
 
   if (autoMarkPublished.value && publishResult.value?.results.some(r => r.success)) {

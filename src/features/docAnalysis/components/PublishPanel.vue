@@ -234,10 +234,10 @@
       >
         <PlatformConfig
           :platforms="platforms"
+          :test-platform="testPlatform"
           @add="handleAddPlatform"
           @update="handleUpdatePlatform"
           @remove="handleRemovePlatform"
-          @test="handleTestPlatform"
         />
       </div>
 
@@ -365,9 +365,6 @@ async function handleRemovePlatform(id: string) {
   await removePlatform(id)
 }
 
-async function handleTestPlatform(id: string) {
-  return testPlatform(id)
-}
 </script>
 
 <style lang="scss" scoped>

@@ -45,8 +45,9 @@
         <div class="platform-card-actions">
           <button
             class="action-btn test-btn"
+            :class="{ testing: testingId === platform.id }"
             title="测试连通性"
-            @click="$emit('test', platform.id)"
+            @click="handleTest(platform.id)"
           >
             <Icon icon="mdi:lan-connect" />
           </button>
@@ -299,6 +300,7 @@ import { PLATFORM_TEMPLATES } from "../types/publish"
 
 interface Props {
   platforms: PlatformConfig[]
+  testPlatform?: (id: string) => Promise<{ success: boolean, message: string }>
 }
 
 const props = defineProps<Props>()
@@ -306,7 +308,6 @@ const emit = defineEmits<{
   (e: "add", platform: Omit<PlatformConfig, "id" | "createdAt" | "updatedAt">): void
   (e: "update", id: string, updates: Partial<PlatformConfig>): void
   (e: "remove", id: string): void
-  (e: "test", id: string): void
 }>()
 
 const showAddForm = ref(false)
@@ -399,6 +400,24 @@ function handleRemove(id: string) {
   if (confirm("确定删除此平台配置？")) {
     emit("remove", id)
   }
+}
+
+async function handleTest(id: string) {
+  if (!props.testPlatform) return
+  testingId.value = id
+  testResult.value = null
+  try {
+    testResult.value = await props.testPlatform(id)
+  } catch (err) {
+    testResult.value = { success: false, message: (err as Error).message || "测试失败" }
+  }
+  // 5 秒后自动清除结果
+  setTimeout(() => {
+    if (testingId.value === id) {
+      testingId.value = null
+      testResult.value = null
+    }
+  }, 5000)
 }
 </script>
 

@@ -7,20 +7,6 @@ import { createApp } from "vue"
 import StatusBarPanel from "./index.vue"
 import "./styles/index.scss"
 
-// 导出类型和常量
-export type {
-  ResourceLevel,
-  StatusBarState,
-  Thresholds,
-} from "./types"
-export {
-  DEFAULT_TOTAL_MEMORY_GB,
-  INITIAL_DELAY_MS,
-  MONITOR_INTERVAL_MS,
-  STATISTICS_INTERVAL_MS,
-  THRESHOLDS,
-} from "./types"
-
 // ============================================================
 // 注册函数
 // ============================================================

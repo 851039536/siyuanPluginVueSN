@@ -495,24 +495,41 @@ export function usePublish(plugin: Plugin) {
   </params>
 </methodCall>`
 
-    const response = await forwardProxy(
+    const resp = await forwardProxy(
       xmlrpcUrl,
       "POST",
       xmlBody,
       [{ name: "Content-Type", value: "text/xml" }],
       30000,
       "text/xml",
-    )
+    ) as any
 
-    if (!response) {
+    if (!resp) {
       throw new Error("WordPress XMLRPC 请求失败")
     }
+
+    // 检查 HTTP 状态码
+    if (resp.status < 200 || resp.status >= 300) {
+      throw new Error(`WordPress HTTP ${resp.status}: ${resp.body || "无响应体"}`)
+    }
+
+    const xmlBodyResp = resp.body || ""
+
+    // 检测 XMLRPC fault
+    const faultCodeMatch = xmlBodyResp.match(/<fault>[\s\S]*?<value>\s*<int>\s*(-?\d+)\s*<\/int>[\s\S]*?<value>\s*<string>\s*([\s\S]*?)\s*<\/string>[\s\S]*?<\/fault>/i)
+    if (faultCodeMatch) {
+      throw new Error(`WordPress 返回错误 [${faultCodeMatch[1]}]: ${decodeXmlEntities(faultCodeMatch[2])}`)
+    }
+
+    // 从 XML 响应中提取 postId
+    const postIdMatch = xmlBodyResp.match(/<string>\s*(\d+)\s*<\/string>/)
+    const remoteId = postIdMatch ? postIdMatch[1] : xmlBodyResp.substring(0, 100)
 
     return {
       platformId: platform.id,
       platformName: platform.name,
       success: true,
-      remoteId: String(response),
+      remoteId,
     }
   }
 
@@ -542,24 +559,41 @@ export function usePublish(plugin: Plugin) {
   </params>
 </methodCall>`
 
-    const response = await forwardProxy(
+    const resp = await forwardProxy(
       apiUrl,
       "POST",
       xmlBody,
       [{ name: "Content-Type", value: "text/xml" }],
       30000,
       "text/xml",
-    )
+    ) as any
 
-    if (!response) {
+    if (!resp) {
       throw new Error("博客园 XMLRPC 请求失败")
     }
+
+    // 检查 HTTP 状态码
+    if (resp.status < 200 || resp.status >= 300) {
+      throw new Error(`博客园 HTTP ${resp.status}: ${resp.body || "无响应体"}`)
+    }
+
+    const xmlBodyResp = resp.body || ""
+
+    // 检测 XMLRPC fault（正确请求也可能返回 fault）
+    const faultCodeMatch = xmlBodyResp.match(/<fault>[\s\S]*?<value>\s*<int>\s*(-?\d+)\s*<\/int>[\s\S]*?<value>\s*<string>\s*([\s\S]*?)\s*<\/string>[\s\S]*?<\/fault>/i)
+    if (faultCodeMatch) {
+      throw new Error(`博客园返回错误 [${faultCodeMatch[1]}]: ${decodeXmlEntities(faultCodeMatch[2])}`)
+    }
+
+    // 从 XML 响应中提取 postId
+    const postIdMatch = xmlBodyResp.match(/<string>\s*(\d+)\s*<\/string>/)
+    const remoteId = postIdMatch ? postIdMatch[1] : xmlBodyResp.substring(0, 100)
 
     return {
       platformId: platform.id,
       platformName: platform.name,
       success: true,
-      remoteId: String(response),
+      remoteId,
     }
   }
 
@@ -1022,4 +1056,15 @@ function escapeXml(str: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;")
+}
+
+/** XML 实体解码 */
+function decodeXmlEntities(str: string): string {
+  return str
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, "\"")
+    .replace(/&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_match, num) => String.fromCharCode(Number(num)))
 }

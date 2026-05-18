@@ -2,15 +2,22 @@
   <div class="view-mode-section">
     <!-- 视图模式切换 -->
     <div class="mode-tabs">
-      <button
-        v-for="mode in viewModes"
+      <template
+        v-for="(mode, idx) in viewModes"
         :key="mode.value"
-        class="mode-tab"
-        :class="{ active: modelValue === mode.value }"
-        @click="$emit('update:modelValue', mode.value)"
       >
-        {{ mode.icon }} {{ mode.label }}
-      </button>
+        <span
+          v-if="idx === periodModesCount"
+          class="mode-separator"
+        ></span>
+        <button
+          class="mode-tab"
+          :class="{ active: modelValue === mode.value, 'trend-tab': mode.value === 'trend' }"
+          @click="$emit('update:modelValue', mode.value)"
+        >
+          {{ mode.icon }} {{ mode.label }}
+        </button>
+      </template>
     </div>
 
     <!-- 时段统计卡片 -->
@@ -171,6 +178,8 @@ function onRangeChange(mode: "day" | "month", value: number): void {
   emit("refresh")
 }
 
+const periodModesCount = 4 // 日/周/月/年 为时段模式，趋势为独立分析模式
+
 const viewModes = computed(() => [
   {
     value: "day" as const,
@@ -195,7 +204,7 @@ const viewModes = computed(() => [
   {
     value: "trend" as const,
     label: props.i18n.trend,
-    icon: "📈",
+    icon: "📉",
   },
 ])
 
@@ -273,11 +282,19 @@ const periodAvgLabel = computed(() => {
   .mode-tabs {
     display: flex;
     gap: 4px;
-    // margin-bottom: 12px;
     padding: 3px;
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
     border-radius: 8px;
+    align-items: center;
+  }
+
+  .mode-separator {
+    width: 1px;
+    height: 16px;
+    background: var(--b3-border-color);
+    flex-shrink: 0;
+    margin: 0 2px;
   }
 
   .mode-tab {
@@ -306,6 +323,13 @@ const periodAvgLabel = computed(() => {
       background: var(--b3-theme-primary);
       color: var(--b3-theme-on-primary);
       box-shadow: 0 2px 8px rgba(var(--b3-theme-primary-rgb), 0.2);
+    }
+
+    &.trend-tab {
+      &.active {
+        background: var(--b3-theme-secondary);
+        box-shadow: 0 2px 8px rgba(var(--b3-theme-secondary-rgb), 0.2);
+      }
     }
   }
 

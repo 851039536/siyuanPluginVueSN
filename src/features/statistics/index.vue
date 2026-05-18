@@ -23,6 +23,7 @@
       v-else-if="stats"
       class="statistics-content"
     >
+      <!-- 核心指标横幅（常驻） -->
       <StatsCardsCompact
         :total-notes="stats.totalNotes"
         :total-words="stats.totalWords"
@@ -39,14 +40,7 @@
         :i18n="statsCardsI18n"
       />
 
-      <InsightCards
-        :historical-data="historicalData"
-        :total-notes="stats.totalNotes"
-        :total-words="stats.totalWords"
-        :total-backlinks="stats.totalBacklinks"
-        :i18n="insightCardsI18n"
-      />
-
+      <!-- 视图模式切换 + 时段统计 + 图表 -->
       <ViewModeSection
         v-model="viewMode"
         v-model:day-range="dayRange"
@@ -79,22 +73,37 @@
         />
       </div>
 
-      <!-- 字数排行 -->
-      <WordRanking
-        v-if="viewMode !== 'trend'"
-        :chart-data="chartData"
-        :i18n="wordRankingI18n"
+      <!-- 可折叠：热力图 + 里程碑 -->
+      <InsightCards
+        :historical-data="historicalData"
+        :total-notes="stats.totalNotes"
+        :total-words="stats.totalWords"
+        :total-backlinks="stats.totalBacklinks"
+        :i18n="insightCardsI18n"
       />
 
-      <!-- 各笔记本文档数柱状图 -->
-      <div class="chart-section doc-chart-section">
+      <!-- 可折叠：字数排行 -->
+      <CollapsibleSection
+        :title="`🏆 ${wordRankingI18n.title}`"
+      >
+        <WordRanking
+          v-if="viewMode !== 'trend'"
+          :chart-data="chartData"
+          :i18n="wordRankingI18n"
+        />
+      </CollapsibleSection>
+
+      <!-- 可折叠：各笔记本文档数 -->
+      <CollapsibleSection
+        :title="`📂 ${docBarChartTitle}`"
+      >
         <DocBarChart
           :title="docBarChartTitle"
           :chart-data="notebookDocStats"
           :loading="docChartLoading"
           :i18n="docBarChartI18n"
         />
-      </div>
+      </CollapsibleSection>
     </div>
 
   </div>
@@ -108,6 +117,7 @@ import {
   watch,
 } from "vue"
 import BarChart from "./components/BarChart.vue"
+import CollapsibleSection from "./components/CollapsibleSection.vue"
 import DocBarChart from "./components/DocBarChart.vue"
 import InsightCards from "./components/InsightCards.vue"
 import StatisticsHeader from "./components/StatisticsHeader.vue"
@@ -321,8 +331,6 @@ const periodAvgWords = computed(() => {
 // 计算昨日数据
 const yesterdayCreated = computed(() => {
   if (!historicalData.value || historicalData.value.length < 2) return null
-  // historicalData 是按日期倒序排列的，第一个是最新
-  // 我们需要找到昨天的数据
   const today = new Date()
   const yesterday = new Date(today)
   yesterday.setDate(yesterday.getDate() - 1)
@@ -350,7 +358,7 @@ const yesterdayModified = computed(() => {
 // 计算变化百分比
 const createdChange = computed(() => {
   if (yesterdayCreated.value === null || yesterdayCreated.value === 0) {
-    return stats.value?.todayCreated ? 100 : null // 如果昨天为0，今天有数据则显示100%
+    return stats.value?.todayCreated ? 100 : null
   }
   if (stats.value?.todayCreated === undefined) return null
   return (

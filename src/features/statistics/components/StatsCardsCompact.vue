@@ -1,26 +1,48 @@
 <template>
-  <div class="stats-grid">
-    <div
-      v-for="item in statsItems"
-      :key="item.label"
-      class="stat-item"
-      :class="item.variant"
-    >
-      <span class="stat-icon">{{ item.icon }}</span>
-      <div class="stat-data">
-        <div class="value-row">
-          <span class="stat-value">{{ item.value }}</span>
-          <span
-            v-if="item.change !== null"
-            class="change"
-            :class="item.change > 0 ? 'up' : 'down'"
-          >
-            {{ formatChange(item.change) }}
-          </span>
+  <div class="stats-cards-wrapper">
+    <!-- 核心指标横幅（常驻） -->
+    <div class="core-metrics">
+      <div
+        v-for="item in coreItems"
+        :key="item.label"
+        class="core-item"
+      >
+        <span class="core-icon">{{ item.icon }}</span>
+        <div class="core-data">
+          <span class="core-value">{{ item.value }}</span>
+          <span class="core-label">{{ item.label }}</span>
         </div>
-        <span class="stat-label">{{ item.label }}</span>
       </div>
     </div>
+
+    <!-- 次要指标（折叠） -->
+    <CollapsibleSection
+      :title="i18n.moreStats || '详细统计'"
+      :badge="`${secondaryItems.length}项`"
+    >
+      <div class="secondary-grid">
+        <div
+          v-for="item in secondaryItems"
+          :key="item.label"
+          class="stat-item secondary"
+        >
+          <span class="stat-icon">{{ item.icon }}</span>
+          <div class="stat-data">
+            <div class="value-row">
+              <span class="stat-value">{{ item.value }}</span>
+              <span
+                v-if="item.change !== null"
+                class="change"
+                :class="item.change > 0 ? 'up' : 'down'"
+              >
+                {{ formatChange(item.change) }}
+              </span>
+            </div>
+            <span class="stat-label">{{ item.label }}</span>
+          </div>
+        </div>
+      </div>
+    </CollapsibleSection>
   </div>
 </template>
 
@@ -30,6 +52,7 @@ import {
   formatNumber,
   formatShortNumber,
 } from "../utils"
+import CollapsibleSection from "./CollapsibleSection.vue"
 
 interface Props {
   totalNotes?: number
@@ -55,6 +78,7 @@ interface Props {
     todayCreated: string
     todayModified: string
     avgWordsPerDoc: string
+    moreStats?: string
   }
 }
 
@@ -82,24 +106,29 @@ const props = withDefaults(defineProps<Props>(), {
     todayCreated: "今日新增",
     todayModified: "今日修改",
     avgWordsPerDoc: "平均字数",
+    moreStats: "详细统计",
   }),
 })
 
-const statsItems = computed(() => [
+const coreItems = computed(() => [
   {
     icon: "📓",
     value: formatNumber(props.totalNotes),
     label: props.i18n.totalNotes,
-    variant: "primary" as const,
-    change: null as number | null,
   },
   {
     icon: "✍️",
-    value: formatNumber(props.totalWords),
+    value: formatShortNumber(props.totalWords),
     label: props.i18n.totalWords,
-    variant: "primary" as const,
-    change: null,
   },
+  {
+    icon: "📊",
+    value: String(props.avgWordsPerDoc),
+    label: props.i18n.avgWordsPerDoc,
+  },
+])
+
+const secondaryItems = computed(() => [
   {
     icon: "📅",
     value: String(props.todayCreated),
@@ -113,44 +142,33 @@ const statsItems = computed(() => [
     change: props.modifiedChange,
   },
   {
-    icon: "📊",
-    value: String(props.avgWordsPerDoc),
-    label: props.i18n.avgWordsPerDoc,
-    change: null,
-  },
-  {
     icon: "🧩",
     value: formatShortNumber(props.totalBlocks),
     label: props.i18n.totalBlocks,
-    variant: "secondary" as const,
-    change: null,
+    change: null as number | null,
   },
   {
     icon: "📎",
     value: formatShortNumber(props.totalAssets),
     label: props.i18n.totalAssets,
-    variant: "secondary" as const,
     change: null,
   },
   {
     icon: "🖼️",
     value: formatShortNumber(props.totalImages),
     label: props.i18n.totalImages,
-    variant: "secondary" as const,
     change: null,
   },
   {
     icon: "🏷️",
     value: formatShortNumber(props.totalTags),
     label: props.i18n.totalTags,
-    variant: "secondary" as const,
     change: null,
   },
   {
     icon: "🔗",
     value: formatShortNumber(props.totalBacklinks),
     label: props.i18n.totalBacklinks,
-    variant: "secondary" as const,
     change: null,
   },
 ])
@@ -169,27 +187,82 @@ function formatChange(change: number | null): string {
 @use "../../superPanel/styles/mixins" as *;
 @use "../styles/index.scss" as stats;
 
-.stats-grid {
+.stats-cards-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+// 核心指标横幅
+.core-metrics {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.core-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: 8px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
+}
+
+.core-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.core-data {
+  flex: 1;
+  min-width: 0;
+}
+
+.core-value {
+  font-family: $font-heading;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--b3-theme-primary);
+  line-height: 1.2;
+  display: block;
+}
+
+.core-label {
+  font-size: 10px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
+}
+
+// 次要指标
+.secondary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 1px;
   background: var(--b3-border-color);
   border-radius: 8px;
   overflow: hidden;
-  margin-bottom: 8px;
 }
 
 .stat-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 12px;
+  padding: 8px 10px;
   background: var(--b3-theme-surface);
 }
 
 .stat-icon {
-  font-size: 18px;
+  font-size: 14px;
   flex-shrink: 0;
+  opacity: 0.7;
 }
 
 .stat-data {
@@ -199,16 +272,16 @@ function formatChange(change: number | null): string {
 
 .stat-value {
   font-family: $font-heading;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
-  color: var(--b3-theme-primary);
+  color: var(--b3-theme-on-surface);
   line-height: 1.2;
 }
 
 .stat-label {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--b3-theme-on-surface);
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
 .value-row {
@@ -234,27 +307,13 @@ function formatChange(change: number | null): string {
   color: stats.$color-danger;
 }
 
-// 核心数据
-.stat-item.primary {
-  background: rgba(var(--b3-theme-primary-rgb), 0.06);
-
-  .stat-icon { font-size: 22px; }
-  .stat-value { font-size: 18px; }
-}
-
-// 次要统计
-.stat-item.secondary {
-  .stat-icon { font-size: 14px; opacity: 0.7; }
-  .stat-value { font-size: 13px; }
-  .stat-label { font-size: 9px; }
-}
-
 @include mobile-only {
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .core-metrics {
+    grid-template-columns: 1fr;
+  }
 
-    .stat-item.primary { grid-column: span 2; }
-    .stat-item.secondary:nth-child(10) { grid-column: span 2; }
+  .secondary-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

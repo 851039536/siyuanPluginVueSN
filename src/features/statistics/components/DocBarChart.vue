@@ -49,20 +49,7 @@
         </div>
       </div>
 
-      <!-- 数据列表 -->
-      <div class="data-list">
-        <div
-          v-for="item in sortedData"
-          :key="item.name"
-          class="data-item"
-        >
-          <span
-            class="data-name"
-            :title="item.name"
-          >{{ item.name }}</span>
-          <span class="data-value">{{ formatNumber(item.count) }}</span>
-        </div>
-      </div>
+
     </div>
   </div>
 </template>
@@ -237,40 +224,6 @@ function truncateName(name: string): string {
   to { transform: rotate(360deg); }
 }
 
-.data-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 6px;
-  margin-top: 10px;
-
-  .data-item {
-    display: flex;
-    flex-direction: column;
-    padding: 6px 8px;
-    background: var(--b3-theme-background);
-    border-radius: 6px;
-    border: 1px solid var(--b3-border-color);
-
-    .data-name {
-      font-family: $font-body;
-      font-size: 10px;
-      font-weight: 500;
-      color: var(--b3-theme-on-surface);
-      opacity: 0.5;
-      margin-bottom: 1px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .data-value {
-      font-family: $font-heading;
-      font-size: 14px;
-      font-weight: 800;
-      color: var(--b3-theme-on-surface);
-    }
-  }
-}
 
 @include mobile-only {
   .doc-bar-chart-section {

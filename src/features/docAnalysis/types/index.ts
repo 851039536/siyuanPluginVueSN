@@ -34,6 +34,10 @@ export interface DocInfo {
   imageCount?: number
   /** 书签名称（如果该文档有书签） */
   bookmark?: string
+  /** 发布状态 (idle/published) */
+  publishStatus?: string
+  /** 已发布平台数量 */
+  publishedPlatformCount?: number
 }
 
 /** 更新时间分析统计 */

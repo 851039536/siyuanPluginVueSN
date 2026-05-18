@@ -27,6 +27,16 @@
     </div>
     <div class="doc-badges">
       <span
+        v-if="doc.publishStatus === 'published'"
+        class="badge publish-badge published"
+      >
+        <Icon
+          icon="mdi:check-circle"
+          class="badge-icon"
+        />
+        已发布{{ doc.publishedPlatformCount ? `(${doc.publishedPlatformCount})` : '' }}
+      </span>
+      <span
         v-if="doc.updated"
         class="badge time-badge"
         :class="timeClass"
@@ -78,6 +88,15 @@
         {{ doc.bookmark }}
       </span>
     </div>
+    <div class="doc-actions">
+      <button
+        class="publish-action-btn"
+        title="发布此文档"
+        @click.stop="$emit('publish', doc.id, doc.title)"
+      >
+        <Icon icon="mdi:publish" />
+      </button>
+    </div>
     <div class="doc-size">
       <span
         v-if="doc.wordCount > 0"
@@ -105,6 +124,7 @@ const props = defineProps<Props>()
 
 defineEmits<{
   (e: "open", docId: string): void
+  (e: "publish", docId: string, docTitle: string): void
 }>()
 
 const formatSize = computed(() => formatBytes(props.doc.contentSize))
@@ -272,6 +292,37 @@ function formatTime(ts: string): string {
     &.bookmark-badge {
       color: #eab308;
       background: rgba(234, 179, 8, 0.1);
+    }
+
+    &.publish-badge {
+      &.published {
+        color: #22c55e;
+        background: rgba(34, 197, 94, 0.1);
+      }
+    }
+  }
+
+  .doc-actions {
+    flex-shrink: 0;
+    margin-left: 4px;
+  }
+
+  .publish-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--b3-theme-on-surface-variant);
+    cursor: pointer;
+    font-size: 16px;
+
+    &:hover {
+      background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
+      color: var(--b3-theme-primary);
     }
   }
 

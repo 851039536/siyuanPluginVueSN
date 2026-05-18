@@ -135,7 +135,7 @@ export class BookmarkMarker {
    *   block_id = root_id 表示该属性属于文档级块（文档的 block_id 即为 root_id）
    */
   private async loadBookmarkCache(): Promise<void> {
-    const sql = `SELECT block_id as id, value as bookmark FROM attributes WHERE name = 'bookmark' AND block_id = root_id LIMIT 10240`
+    const sql = `SELECT block_id as id, value as bookmark FROM attributes WHERE name = 'bookmark' AND block_id = root_id LIMIT 999999`
     const result = await this.query(sql)
     this.bookmarkCache.clear()
 

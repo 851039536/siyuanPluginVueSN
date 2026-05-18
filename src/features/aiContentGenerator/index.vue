@@ -72,6 +72,8 @@
         :edit-custom-input="editCustomInput"
         :skills="skills"
         :current-skill-index="currentSkillIndex"
+        :filtered-skills="filteredSkills"
+        :skill-search-query="skillSearchQuery"
         @ai-edit="aiEditAction"
         @stop="handleStop"
         @toggle-prompt-selector="showPromptSelector = !showPromptSelector"
@@ -85,6 +87,7 @@
         @custom-edit="handleCustomEdit"
         @update:edit-custom-input="editCustomInput = $event"
         @update:current-skill-index="currentSkillIndex = $event"
+        @update:skill-search-query="skillSearchQuery = $event"
       />
     </template>
 
@@ -152,7 +155,7 @@ const activeMode = ref<"generator" | "chat" | "automation">("generator");
 const chatViewRef = ref<InstanceType<typeof ChatView> | null>(null);
 
 // ============ 技能系统 ============
-const { skills, currentSkillIndex, currentSkill, managerAvailable, loadSkills } = useSkillsLoader(props.plugin)
+const { skills, currentSkillIndex, currentSkill, managerAvailable, loadSkills, skillSearchQuery, filteredSkills } = useSkillsLoader(props.plugin)
 
 // 编辑模式状态
 const editTargetDoc = ref<TargetDoc | null>(null);

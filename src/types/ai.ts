@@ -93,6 +93,13 @@ export interface ChatOptions {
   onChunk?: (chunk: string) => void
 }
 
+/** AI 技能来源信息 */
+export interface SkillSource {
+  id: string      // 该来源的唯一ID（filePath）
+  tool: string    // 来源工具
+  content: string // 该来源的内容
+}
+
 /** AI 技能展示类型（统一，消除多处重复定义） */
 export interface SkillItem {
   id: string
@@ -100,6 +107,8 @@ export interface SkillItem {
   description: string
   content: string
   tool: string
+  /** 去重后的来源列表（同名技能来自多个工具时） */
+  sources: SkillSource[]
 }
 
 // ============ 自动化任务相关类型 ============

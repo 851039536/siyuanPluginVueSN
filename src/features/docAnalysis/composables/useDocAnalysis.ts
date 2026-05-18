@@ -204,6 +204,8 @@ export function useDocAnalysis(plugin: Plugin) {
       refCount: row.ref_count ?? undefined,
       imageCount: row.image_count ?? undefined,
       bookmark: row.bookmark || undefined,
+      publishStatus: row.publish_status || undefined,
+      publishedPlatformCount: row.published_platform_count ?? undefined,
     }))
   }
 

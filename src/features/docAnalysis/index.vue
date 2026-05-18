@@ -18,6 +18,7 @@
       :depth-stats="depthStats"
       @analyze="handleAnalyze"
       @select-category="handleSelectCategory"
+      @batch-publish="handleBatchPublish"
     />
 
     <!-- 排序和结果数 -->
@@ -92,6 +93,21 @@
         >
           <Icon :icon="filterOptions.sortOrder === 'asc' ? 'mdi:sort-ascending' : 'mdi:sort-descending'" />
         </button>
+        <!-- 批量操作按钮 -->
+        <button
+          class="batch-publish-btn"
+          title="批量发布当前结果"
+          @click="handleBatchPublishAll"
+        >
+          <Icon icon="mdi:publish" />
+        </button>
+        <button
+          class="batch-mark-btn"
+          title="批量标记为待发布"
+          @click="handleBatchMarkPending"
+        >
+          <Icon icon="mdi:bookmark-plus-outline" />
+        </button>
       </div>
     </div>
 
@@ -120,7 +136,7 @@
         />
         <p>点击上方「分析」查看统计，或设置筛选条件后查询</p>
         <p class="empty-desc">
-          支持标题搜索、全文搜索、字数范围筛选、书签过滤
+          支持标题搜索、全文搜索、字数范围筛选、书签过滤、多平台发布
         </p>
       </div>
 
@@ -129,9 +145,10 @@
         <DocListItem
           v-for="doc in visibleDocs"
           :key="doc.id"
-          v-memo="[doc.id, doc.title, doc.wordCount, doc.contentSize, doc.updated, doc.depth, doc.refCount, doc.imageCount, doc.bookmark]"
+          v-memo="[doc.id, doc.title, doc.wordCount, doc.contentSize, doc.updated, doc.depth, doc.refCount, doc.imageCount, doc.bookmark, doc.publishStatus]"
           :doc="doc"
           @open="openDoc"
+          @publish="handlePublishDoc"
         />
         <div
           v-if="hasMoreDocs"
@@ -183,8 +200,18 @@
 
     <!-- 底部信息 -->
     <div class="panel-footer">
-      <span class="footer-hint">点击文档可在思源中打开</span>
+      <span class="footer-hint">点击文档可在思源中打开 · 点击发布图标发布文档</span>
     </div>
+
+    <!-- 发布面板 -->
+    <PublishPanel
+      :visible="publishPanelVisible"
+      :doc-id="publishDocId"
+      :doc-title="publishDocTitle"
+      :plugin="plugin"
+      @close="publishPanelVisible = false"
+      @published="handlePublished"
+    />
   </div>
 </template>
 
@@ -199,8 +226,10 @@ import {
 } from "vue"
 import DocListItem from "./components/DocListItem.vue"
 import FilterSettings from "./components/FilterSettings.vue"
+import PublishPanel from "./components/PublishPanel.vue"
 import StatsOverview from "./components/StatsOverview.vue"
 import { useDocAnalysis } from "./composables/useDocAnalysis"
+import { usePublish } from "./composables/usePublish"
 
 interface Props {
   i18n: any
@@ -227,6 +256,66 @@ const {
   updateSort,
   clearResults,
 } = useDocAnalysis(props.plugin)
+
+const { markAsPending } = usePublish(props.plugin)
+
+// ============================================================
+// 发布面板状态
+// ============================================================
+const publishPanelVisible = ref(false)
+const publishDocId = ref("")
+const publishDocTitle = ref("")
+
+/** 打开单个文档发布面板 */
+function handlePublishDoc(docId: string, docTitle: string) {
+  publishDocId.value = docId
+  publishDocTitle.value = docTitle
+  publishPanelVisible.value = true
+}
+
+/** 发布完成回调 */
+function handlePublished() {
+  // 刷新列表以更新发布状态
+  if (queryState.hasQueried) {
+    queryDocs()
+  }
+}
+
+/** 批量发布 - 按统计类别 */
+async function handleBatchPublish(category: string) {
+  // 先查询该类别的文档
+  await queryByStatsCategory(category)
+
+  if (queryState.results.length === 0) {
+    return
+  }
+
+  // 打开批量发布面板（取第一个文档作为示例）
+  if (queryState.results.length > 0) {
+    publishDocId.value = queryState.results[0].id
+    publishDocTitle.value = `批量发布 (${queryState.results.length} 篇)`
+    publishPanelVisible.value = true
+  }
+}
+
+/** 批量发布全部当前结果 */
+function handleBatchPublishAll() {
+  if (queryState.results.length === 0) return
+  publishDocId.value = queryState.results[0].id
+  publishDocTitle.value = `批量发布当前结果 (${queryState.results.length} 篇)`
+  publishPanelVisible.value = true
+}
+
+/** 批量标记为待发布 */
+async function handleBatchMarkPending() {
+  if (queryState.results.length === 0) return
+  const docIds = queryState.results.map(d => d.id)
+  await markAsPending(docIds)
+  // 刷新列表
+  if (queryState.hasQueried) {
+    queryDocs()
+  }
+}
 
 // ============================================================
 // 分批渲染：避免一次渲染上千个 DocListItem 导致卡顿

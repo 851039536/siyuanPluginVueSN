@@ -92,6 +92,14 @@
             <div class="stat-card" :class="{ active: activeFilter === 'pendingPublish' }" @click="$emit('select-category', 'pendingPublish')">
               <span class="stat-value pending-color">{{ stats.pendingPublishDocs }}</span>
               <span class="stat-label">待发布</span>
+              <button
+                v-if="stats.pendingPublishDocs > 0"
+                class="stat-action-btn"
+                title="批量发布待发布文档"
+                @click.stop="$emit('batch-publish', 'pendingPublish')"
+              >
+                <Icon icon="mdi:publish" class="stat-action-icon" />
+              </button>
             </div>
             <div class="stat-card" :class="{ active: activeFilter === 'published' }" @click="$emit('select-category', 'published')">
               <span class="stat-value published-color">{{ stats.publishedDocs }}</span>
@@ -181,6 +189,7 @@ const props = defineProps<Props>()
 defineEmits<{
   (e: "analyze"): void
   (e: "select-category", category: string): void
+  (e: "batch-publish", category: string): void
 }>()
 
 /** 折叠状态 */
@@ -374,6 +383,29 @@ function getBarHeight(count: number): number {
     margin-top: 1px;
     white-space: nowrap;
     text-align: center;
+  }
+
+  .stat-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border: none;
+    border-radius: 50%;
+    background: var(--b3-theme-primary);
+    color: var(--b3-theme-on-primary);
+    cursor: pointer;
+    font-size: 10px;
+    margin-top: 2px;
+
+    &:hover {
+      opacity: 0.85;
+    }
+
+    .stat-action-icon {
+      font-size: 11px;
+    }
   }
 }
 

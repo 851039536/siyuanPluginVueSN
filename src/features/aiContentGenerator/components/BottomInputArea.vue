@@ -57,22 +57,82 @@
 
       <!-- 技能选择 -->
       <div class="top-bar-center">
-        <div class="skill-selector-wrapper">
-          <select
-            :value="currentSkillIndex"
-            class="skill-select"
+        <div
+          class="skill-selector-wrapper"
+          :class="{ open: showSkillDropdown }"
+        >
+          <div
+            class="skill-select-trigger"
             title="选择预设技能作为系统指令"
-            @change="onSkillChange(($event.target as HTMLSelectElement).value)"
+            @click="toggleSkillDropdown"
           >
-            <option value="-1">🧠 {{ $t('noSkill') }}</option>
-            <option
-              v-for="(skill, index) in skills"
-              :key="skill.id"
-              :value="index"
-            >
-              {{ skill.name }}
-            </option>
-          </select>
+            <span class="skill-select-value">
+              <template v-if="currentSkillIndex >= 0 && currentSkill">
+                {{ currentSkill.name }}
+                <span class="skill-source-hint">{{ getSourceHint(currentSkill) }}</span>
+              </template>
+              <template v-else>🧠 无技能</template>
+            </span>
+            <svg
+              class="skill-select-arrow"
+              width="10"
+              height="10"
+            ><use xlink:href="#iconDown"></use></svg>
+          </div>
+          <!-- 下拉面板 -->
+          <div
+            v-if="showSkillDropdown"
+            class="skill-dropdown"
+          >
+            <div class="skill-dropdown-search">
+              <svg
+                width="12"
+                height="12"
+              ><use xlink:href="#iconSearch"></use></svg>
+              <input
+                ref="skillSearchInputRef"
+                :value="skillSearchQuery"
+                type="text"
+                placeholder="搜索技能..."
+                class="skill-search-input"
+                @input="onSkillSearchInput($event)"
+                @keydown.escape.stop="showSkillDropdown = false"
+              />
+            </div>
+            <div class="skill-dropdown-list">
+              <div
+                class="skill-dropdown-item"
+                :class="{ active: currentSkillIndex === -1 }"
+                @click="selectSkill(-1)"
+              >
+                🧠 无技能
+              </div>
+              <div
+                v-for="skill in filteredSkills"
+                :key="skill.id"
+                class="skill-dropdown-item"
+                :class="{ active: currentSkill && currentSkill.id === skill.id }"
+                @click="selectSkillByItem(skill)"
+              >
+                <div class="skill-item-main">
+                  <span class="skill-item-name">{{ skill.name }}</span>
+                  <span class="skill-source-hint">{{ getSourceHint(skill) }}</span>
+                </div>
+                <div
+                  v-if="skill.description"
+                  class="skill-item-desc"
+                >
+                  {{ skill.description }}
+                </div>
+              </div>
+              <div
+                v-if="filteredSkills.length === 0"
+                class="skill-dropdown-empty"
+              >
+                无匹配技能
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -253,11 +313,12 @@ import type {
   TargetDoc,
   SkillItem,
 } from "@/types/ai"
-import { computed } from "vue"
+import { computed, ref, nextTick, onMounted, onUnmounted } from "vue"
 import Button from "@/components/Button.vue"
 import Tag from "@/components/Tag.vue"
 import Textarea from "@/components/Textarea.vue"
 import { getPromptPreview } from "../utils"
+import { AI_TOOLS } from "@/features/generalSettings/modules/SkillsViewerManager"
 
 interface QuickAction {
   key: "polish" | "expand" | "condense" | "fix" | "rewrite" | "summary"
@@ -290,6 +351,7 @@ const emit = defineEmits<{
   (e: "custom-edit"): void
   (e: "update:editCustomInput", value: string): void
   (e: "update:currentSkillIndex", value: number): void
+  (e: "update:skillSearchQuery", value: string): void
 }>()
 
 const quickActions: QuickAction[] = [
@@ -335,7 +397,71 @@ interface Props {
   editCustomInput: string
   skills: SkillItem[]
   currentSkillIndex: number
+  filteredSkills: SkillItem[]
+  skillSearchQuery: string
 }
+
+// 技能下拉面板状态
+const showSkillDropdown = ref(false)
+const skillSearchInputRef = ref<HTMLInputElement | null>(null)
+
+/** 当前选中的技能 */
+const currentSkill = computed(() => {
+  if (props.currentSkillIndex < 0 || props.currentSkillIndex >= props.skills.length) {
+    return null
+  }
+  return props.skills[props.currentSkillIndex]
+})
+
+const toggleSkillDropdown = () => {
+  showSkillDropdown.value = !showSkillDropdown.value
+  if (showSkillDropdown.value) {
+    nextTick(() => {
+      skillSearchInputRef.value?.focus()
+    })
+  }
+}
+
+const selectSkill = (index: number) => {
+  emit("update:currentSkillIndex", index)
+  showSkillDropdown.value = false
+}
+
+/** 通过技能对象选择（在 filteredSkills 中找到 skills 中的索引） */
+const selectSkillByItem = (skill: SkillItem) => {
+  const index = props.skills.findIndex((s) => s.id === skill.id)
+  emit("update:currentSkillIndex", index)
+  showSkillDropdown.value = false
+}
+
+/** 技能搜索输入 */
+const onSkillSearchInput = (e: Event) => {
+  const value = (e.target as HTMLInputElement).value
+  emit("update:skillSearchQuery", value)
+}
+
+/** 获取技能来源提示文字 */
+const getSourceHint = (skill: SkillItem): string => {
+  if (!skill.sources || skill.sources.length === 0) return ""
+  const toolNames = skill.sources.map((s) => {
+    const tool = AI_TOOLS.find((t) => t.id === s.tool)
+    return tool ? `${tool.icon} ${tool.name}` : s.tool
+  })
+  if (skill.sources.length === 1) {
+    return `(${toolNames[0]})`
+  }
+  return `(来自 ${toolNames.join("、")})`
+}
+
+// 点击外部关闭技能下拉
+const handleClickOutside = (e: MouseEvent) => {
+  const wrapper = document.querySelector(".skill-selector-wrapper")
+  if (wrapper && !wrapper.contains(e.target as Node)) {
+    showSkillDropdown.value = false
+  }
+}
+onMounted(() => document.addEventListener("click", handleClickOutside))
+onUnmounted(() => document.removeEventListener("click", handleClickOutside))
 
 // 计算属性
 const canExecute = computed(() => {
@@ -364,12 +490,6 @@ const inputPlaceholder = computed(() => {
   }
   return "输入编辑指令，或选择AI快捷操作..."
 })
-
-// 技能选择变化
-const onSkillChange = (value: string) => {
-  const index = parseInt(value, 10)
-  emit("update:currentSkillIndex", isNaN(index) ? -1 : index)
-}
 
 // 国际化
 function $t(key: string): string {
@@ -401,5 +521,151 @@ const getOriginalIndex = (prompt: SavedPrompt) => {
   align-items: center;
   min-width: 0;
   flex-shrink: 1;
+  position: relative;
+}
+
+.skill-select-trigger {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: var(--b3-theme-on-background);
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 5px;
+  cursor: pointer;
+  min-width: 80px;
+  max-width: 220px;
+  overflow: hidden;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+.skill-selector-wrapper.open .skill-select-trigger {
+  border-color: var(--b3-theme-primary);
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.skill-select-value {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.skill-source-hint {
+  font-size: 10px;
+  opacity: 0.6;
+  margin-left: 2px;
+}
+
+.skill-select-arrow {
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
+.skill-selector-wrapper.open .skill-select-arrow {
+  transform: rotate(180deg);
+}
+
+.skill-dropdown {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  min-width: 240px;
+  max-width: 320px;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-theme-primary);
+  border-bottom: none;
+  border-radius: 5px 5px 0 0;
+  z-index: 100;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.skill-dropdown-search {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  border-top: 1px solid var(--b3-theme-surface-lighter);
+}
+
+.skill-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 11px;
+  color: var(--b3-theme-on-background);
+
+  &::placeholder {
+    color: var(--b3-theme-on-surface);
+    opacity: 0.5;
+  }
+}
+
+.skill-dropdown-list {
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.skill-dropdown-item {
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--b3-theme-on-background);
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+  }
+
+  &.active {
+    background: var(--b3-theme-primary);
+    color: var(--b3-theme-on-primary);
+
+    .skill-source-hint {
+      opacity: 0.8;
+      color: var(--b3-theme-on-primary);
+    }
+
+    .skill-item-desc {
+      color: var(--b3-theme-on-primary);
+      opacity: 0.7;
+    }
+  }
+}
+
+.skill-item-main {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.skill-item-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.skill-item-desc {
+  font-size: 10px;
+  opacity: 0.6;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+
+.skill-dropdown-empty {
+  padding: 12px;
+  text-align: center;
+  font-size: 11px;
+  opacity: 0.5;
 }
 </style>

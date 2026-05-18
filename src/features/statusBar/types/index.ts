@@ -20,6 +20,10 @@ export interface StatusBarState {
   showMonitor: boolean
   totalNotes: number
   totalWords: number
+  todayCreated: number
+  todayModified: number
+  yesterdayCreated: number
+  yesterdayModified: number
 }
 
 // ============================================================

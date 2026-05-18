@@ -23,7 +23,6 @@
     .monitor-value {
       font-weight: 600;
       font-variant-numeric: tabular-nums;
-      min-width: 28px;
     }
 
     // 状态级别颜色
@@ -51,6 +50,12 @@
 
   .notes-item { color: var(--b3-theme-primary); }
   .words-item { color: var(--b3-theme-secondary); }
+  .today-created-item { color: var(--b3-theme-success); }
+  .today-modified-item { color: var(--b3-theme-warning); }
+  .today-change-item {
+    color: var(--b3-theme-primary);
+    .monitor-value { font-size: 10px; }
+  }
   .cpu-item { color: var(--b3-theme-primary); opacity: 0.8; }
   .mem-item { color: var(--b3-theme-secondary); opacity: 0.8; }
 
@@ -63,7 +68,6 @@
 
     .monitor-value {
       font-weight: 400;
-      min-width: 32px;
     }
   }
 
@@ -102,6 +106,5 @@
 @media (max-width: 768px) {
   .status__resUsage {
     padding: 0 4px;
-    .monitor-value { min-width: unset; }
   }
 }

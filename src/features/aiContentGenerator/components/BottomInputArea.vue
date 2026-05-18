@@ -519,8 +519,6 @@ const getOriginalIndex = (prompt: SavedPrompt) => {
 .skill-selector-wrapper {
   display: flex;
   align-items: center;
-  min-width: 0;
-  flex-shrink: 1;
   position: relative;
 }
 
@@ -535,9 +533,9 @@ const getOriginalIndex = (prompt: SavedPrompt) => {
   border: 1px solid var(--b3-theme-surface-lighter);
   border-radius: 5px;
   cursor: pointer;
-  min-width: 80px;
-  max-width: 220px;
+  max-width: 180px;
   overflow: hidden;
+  white-space: nowrap;
 
   &:hover {
     border-color: var(--b3-theme-primary);
@@ -575,10 +573,9 @@ const getOriginalIndex = (prompt: SavedPrompt) => {
 .skill-dropdown {
   position: absolute;
   bottom: 100%;
-  left: 0;
-  right: 0;
-  min-width: 240px;
-  max-width: 320px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 260px;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-theme-primary);
   border-bottom: none;

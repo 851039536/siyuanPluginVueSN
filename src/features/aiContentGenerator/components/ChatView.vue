@@ -487,9 +487,10 @@ defineExpose({
 }
 
 .skill-selector {
-  flex: 1;
-  min-width: 0;
   position: relative;
+  flex-shrink: 1;
+  min-width: 0;
+  max-width: 180px;
 }
 
 .skill-select-trigger {
@@ -505,6 +506,7 @@ defineExpose({
   cursor: pointer;
   width: 100%;
   overflow: hidden;
+  white-space: nowrap;
 
   &:hover {
     border-color: var(--b3-theme-primary);
@@ -542,10 +544,9 @@ defineExpose({
 .skill-dropdown {
   position: absolute;
   bottom: 100%;
-  left: 0;
-  right: 0;
-  min-width: 240px;
-  max-width: 340px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 260px;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-theme-primary);
   border-bottom: none;

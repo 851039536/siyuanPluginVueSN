@@ -68,9 +68,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  flex-shrink: 1;
-  min-width: 0;
-  max-width: 200px;
+  flex-shrink: 0;
 }
 
 .top-bar-right {

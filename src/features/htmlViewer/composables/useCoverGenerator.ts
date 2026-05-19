@@ -62,65 +62,57 @@ function buildCoverPrompt(config: CoverGenerationConfig): string {
   const hasTitle = !!config.title?.trim()
   const hasContent = !!config.content?.trim()
 
-  // 构建内容区域指令
+  // 构建内容区域指令（入口已裁剪到 150 字符）
   let contentSection = ""
   if (!hasContent && hasTitle) {
-    contentSection = `画面中仅展示主标题，请加入丰富的装饰元素（几何图形、线条、色块、图标等 CSS 绘制的装饰），让封面不空洞。`
+    contentSection = `画面仅展示标题，用 CSS 几何图形/线条/色块装饰，避免空洞。`
   } else if (contentLength <= 50) {
-    contentSection = `在标题下方展示这句副标题："${config.content}"，可用小号字或不同颜色呈现。`
-  } else if (contentLength <= 300) {
-    contentSection = `精炼以下内容要点，作为副标题或摘要展示在封面上（2-3行以内）：\n"""\n${config.content}\n"""`
+    contentSection = `副标题："${config.content}"（小号字或不同颜色）`
   } else {
-    // 长内容：提取关键词，裁剪到 500 字
-    const snippet = config.content.slice(0, 500).replace(/\s+/g, " ").trim()
-    contentSection = `以下是一段长文章的内容片段，请提取 3-5 个最核心的关键词/短语，以标签（tag）形式排列在封面上。内容片段：\n"""\n${snippet}\n"""`
+    contentSection = `主题参考："${config.content}"`
   }
 
-  // 风格特定的额外设计指引
   const styleGuide = getStyleDesignGuide(config.styleId)
 
-  return `你是一位资深平面设计师，请为以下文章创建一个精美的 HTML/CSS 文章封面。
+  return `你是一位平面设计师，为文章创建纯 HTML/CSS 封面。
 
-【文章信息】
+【信息】
 - 标题：${config.title || "无标题"}
 - 风格：${stylePreset?.label || "极简"}（${stylePreset?.description || "简洁风格"}）
 ${contentSection}
 
 【设计规范】
-- 封面尺寸：${config.width}px × ${config.height}px（固定，不可改变）
-- 主色调：${colors.titleColor}（标题文字颜色）
-- 辅助色：${colors.subtitleColor}（副标题/次要文字颜色）
-- 强调色：${colors.accent}、${colors.accentAlt}（标签、装饰、高亮元素）
+- 尺寸：${config.width}×${config.height}px 固定
 - 背景：${bgCSS}
-- 标题字号：≥ ${titleSize}px，加粗，视觉冲击力强
-- 副标题字号：≥ ${subtitleSize}px
-- 内边距：≥ ${padding}px
-- 字体栈：-apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif
+- 标题：≥${titleSize}px 加粗，色 ${colors.titleColor}
+- 副标题：≥${subtitleSize}px，色 ${colors.subtitleColor}
+- 强调：${colors.accent} / ${colors.accentAlt}
+- 内边距：≥${padding}px
+- 字体：-apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif
 ${styleGuide}
 
-【技术限制】
-1. 纯 HTML+CSS 实现，禁止使用 JavaScript、外部图片、CDN、web font
-2. 装饰元素必须用纯 CSS 实现（box-shadow、border、gradient、clip-path、::before/::after 伪元素等）
-3. body 必须设置 width:${config.width}px; height:${config.height}px; overflow:hidden; margin:0;
-4. 所有内容必须在 ${config.width}×${config.height} 画布内，不可溢出
-5. 建议使用绝对定位、flexbox、grid 等布局技巧创造层次感
+【约束】
+1. 纯 HTML+CSS，禁止 JS/外部图片/CDN/web font/CSS animation/transition
+2. 装饰用 CSS：box-shadow、border、gradient、clip-path、::before/::after
+3. body { width:${config.width}px; height:${config.height}px; overflow:hidden; margin:0; }
+4. 内容不溢出画布，用 flexbox/grid/absolute 布局
 
-⚠️ 只输出完整 HTML 代码，不要任何解释、说明或 Markdown 格式。第一个字符必须是 <，最后一个字符必须是 >。`
+⚠️ 只输出 HTML，不要解释。首字符 <，尾字符 >。`
 }
 
-/** 根据风格 ID 返回额外的设计指引 */
+/** 根据风格 ID 返回精简设计指引 */
 function getStyleDesignGuide(styleId: string): string {
   const guides: Record<string, string> = {
-    minimal: "- 大面积留白，字体排版为核心\n- 可用 1-2px 细线、微妙的阴影分隔层次\n- 一个强调色块或下划线突出重点",
-    gradient: "- 渐变背景要有层次感和流动感\n- 半透明玻璃态元素（backdrop-filter: blur）\n- 白色文字配合金色/亮色强调",
-    tech: "- 暗色背景 + 霓虹色发光效果（box-shadow 实现光晕）\n- 网格线、数据点、终端光标等科技感装饰\n- 使用等宽字体风格的数字或符号装饰",
-    nature: "- 柔和的渐变过渡，圆角元素\n- 绿色/青色调为主，有机曲线装饰\n- 可用 border-radius: 50% 创造气泡/叶子形态",
-    magazine: "- 大胆的字体排版，大号标题占主要视觉面积\n- 可尝试分栏布局、非对称设计\n- 使用衬线字体风格（Georgia, \"Noto Serif SC\" 备选）",
-    watercolor: "- 多色渐变叠加产生水彩晕染效果\n- 柔和的粉色、紫色、蓝色调\n- 用大半径 border-radius 和透明度创造柔和色块",
-    geometric: "- 大面积彩色几何色块拼接（用 clip-path 或 rotate 创造动感）\n- 强烈的色彩对比\n- 叠加文字在色块上方，创造层次",
-    chinese: "- 暖色宣纸底色，水墨风格\n- 竖排文字或毛笔字风格的标题布局（writing-mode: vertical-rl 可选）\n- 朱红印章效果、传统纹样装饰",
+    minimal: "大面积留白，细线分隔，一个强调色块突出",
+    gradient: "渐变层次，半透明玻璃态（blur），亮色强调",
+    tech: "暗底霓虹发光（box-shadow），网格线/终端感装饰",
+    nature: "柔和渐变圆角，有机曲线，气泡/叶子形态",
+    magazine: "大字排版占主视觉，分栏/非对称",
+    watercolor: "多色渐变叠加，大圆角色块，柔和粉紫蓝",
+    geometric: "色块拼接（clip-path/rotate），强对比",
+    chinese: "水墨风格，竖排可选，朱红点缀",
   }
-  return guides[styleId] ? `\n【风格化设计指引】\n${guides[styleId]}` : ""
+  return guides[styleId] ? `【风格指引】${guides[styleId]}` : ""
 }
 
 export function useCoverGenerator() {

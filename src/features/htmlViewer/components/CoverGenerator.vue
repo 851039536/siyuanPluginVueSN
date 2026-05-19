@@ -167,13 +167,20 @@
                     ref="previewWrapper"
                     class="preview-content"
                   >
-                    <!-- 生成中 -->
+                    <!-- 生成中：流式显示 AI 输出 -->
                     <div
                       v-if="generationStatus === 'generating'"
-                      class="preview-loading"
+                      class="preview-streaming"
                     >
-                      <div class="loading-spinner"></div>
-                      <span>AI 正在生成封面...</span>
+                      <div class="streaming-header">
+                        <div class="streaming-indicator"></div>
+                        <span>AI 正在生成封面...</span>
+                        <span class="streaming-count">{{ streamedText.length }} 字符</span>
+                      </div>
+                      <pre
+                        ref="streamPreviewEl"
+                        class="streaming-content"
+                      >{{ streamedText }}</pre>
                     </div>
 
                     <!-- 空状态 -->
@@ -256,6 +263,7 @@ const emit = defineEmits<{
 
 const {
   coverHtml,
+  streamedText,
   generationStatus,
   errorMessage,
   currentConfig: config,
@@ -268,6 +276,7 @@ const {
 const coverFrame = ref<HTMLIFrameElement | null>(null)
 const contentTextarea = ref<HTMLTextAreaElement | null>(null)
 const previewWrapper = ref<HTMLDivElement | null>(null)
+const streamPreviewEl = ref<HTMLPreElement | null>(null)
 const widthInput = ref(String(config.value.width))
 const heightInput = ref(String(config.value.height))
 const previewScale = ref(1)
@@ -394,6 +403,14 @@ watch(coverHtml, () => {
   if (coverHtml.value) {
     nextTick(() => updatePreviewScale())
   }
+})
+
+// 流式文本更新时自动滚动到底部
+watch(streamedText, () => {
+  nextTick(() => {
+    const el = streamPreviewEl.value
+    if (el) el.scrollTop = el.scrollHeight
+  })
 })
 
 // 自适应 textarea 高度

@@ -6,15 +6,12 @@ import { showMessage } from "siyuan"
 import {
   computed,
   ref,
-  watch,
 } from "vue"
 import type {
   RssFeed,
   RssItem,
   RssLoadingStatus,
   RssSettings,
-  RssSortOrder,
-  RssViewMode,
 } from "../types"
 import { DEFAULT_RSS_SETTINGS } from "../types"
 import { RssStorage } from "../types/storage"
@@ -30,7 +27,6 @@ export function useRssReader(plugin: Plugin) {
   const feeds = ref<RssFeed[]>([])
   const items = ref<RssItem[]>([])
   const loadingStatus = ref<RssLoadingStatus>("idle")
-  const errorMessage = ref("")
   const currentFeedFilter = ref<string>("all") // "all" 或 feedId
   const currentGroupFilter = ref<string>("all") // "all" 或 group名
   const searchKeyword = ref("")
@@ -190,7 +186,6 @@ export function useRssReader(plugin: Plugin) {
     }
 
     loadingStatus.value = "loading"
-    errorMessage.value = ""
 
     try {
       const response = await fetchRss(url)
@@ -233,8 +228,7 @@ export function useRssReader(plugin: Plugin) {
       return true
     } catch (err: any) {
       loadingStatus.value = "error"
-      errorMessage.value = err.message || "添加订阅源失败"
-      showMessage(errorMessage.value, 5000, "error")
+      showMessage(err.message || "添加订阅源失败", 5000, "error")
       return false
     }
   }
@@ -395,18 +389,6 @@ export function useRssReader(plugin: Plugin) {
   }
 
   // ========== 文章操作 ==========
-
-  /**
-   * 标记文章为已读
-   */
-  async function markAsRead(itemId: string) {
-    if (!Array.isArray(items.value)) return
-    const item = items.value.find(i => i.link === itemId || (i as any).id === itemId)
-    if (item && !item.read) {
-      item.read = true
-      await saveData()
-    }
-  }
 
   /**
    * 标记所有文章为已读
@@ -607,7 +589,7 @@ export function useRssReader(plugin: Plugin) {
     }
 
     const trimmedItems: RssItem[] = []
-    for (const [feedId, feedItems] of feedItemMap) {
+    for (const [, feedItems] of feedItemMap) {
       // 保留收藏的，从非收藏中截断
       const starred = feedItems.filter(i => i.starred)
       const unstarred = feedItems.filter(i => !i.starred)
@@ -642,7 +624,6 @@ export function useRssReader(plugin: Plugin) {
     feeds,
     items,
     loadingStatus,
-    errorMessage,
     currentFeedFilter,
     currentGroupFilter,
     searchKeyword,
@@ -668,7 +649,6 @@ export function useRssReader(plugin: Plugin) {
     refreshFeed,
     refreshAllFeeds,
     updateFeedGroup,
-    markAsRead,
     markAllAsRead,
     toggleStar,
     openItemDetail,

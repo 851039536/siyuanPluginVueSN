@@ -35,6 +35,7 @@ import {
   registerImageCompressor,
   registerPageLock,
   registerPasswordVault,
+  registerRssReader,
   registerShortcut,
   registerStatistics,
   registerStatusBar,
@@ -195,6 +196,7 @@ export default class PluginSample extends Plugin {
     registerWebDAV(this)
     registerFormatAssistant(this)
     registerHtmlViewer(this)
+    registerRssReader(this)
   }
 
   /**

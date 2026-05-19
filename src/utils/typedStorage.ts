@@ -34,26 +34,26 @@ export class TypedStorage<T> {
    * 加载数据，若不存在则返回默认值
    * 对象类型会与默认值进行浅合并（{ ...defaultValue, ...saved }），
    * 确保新增字段有默认值兜底
+   * 数组类型会校验返回值的类型，非数组时回退到默认值
    */
   async loadOrDefault(): Promise<T> {
     const data = await this._storage.load<T>(this._key)
+    // 数据不存在时返回默认值
     if (data === null || data === undefined) {
-      if (this._defaultValue !== undefined) {
-        if (
-          typeof this._defaultValue === "object"
-          && !Array.isArray(this._defaultValue)
-          && this._defaultValue !== null
-        ) {
-          return { ...this._defaultValue } as T
-        }
-        return this._defaultValue
-      }
-      return data as T
+      return this._getDefault()
     }
+    // 默认值是数组时，校验当前值是否为数组
+    if (this._defaultValue !== undefined && Array.isArray(this._defaultValue)) {
+      if (!Array.isArray(data)) {
+        console.warn(`[TypedStorage] key="${this._key}" 存储的数据不是数组，已回退到默认值`)
+        return this._defaultValue as T
+      }
+      return data
+    }
+    // 默认值是对象时，进行浅合并
     if (
       this._defaultValue !== undefined
       && typeof this._defaultValue === "object"
-      && !Array.isArray(this._defaultValue)
       && this._defaultValue !== null
     ) {
       return {
@@ -62,6 +62,20 @@ export class TypedStorage<T> {
       } as T
     }
     return data
+  }
+
+  /** 获取默认值的独立副本 */
+  private _getDefault(): T {
+    if (this._defaultValue === undefined) {
+      return undefined as unknown as T
+    }
+    if (Array.isArray(this._defaultValue)) {
+      return [] as unknown as T
+    }
+    if (typeof this._defaultValue === "object" && this._defaultValue !== null) {
+      return { ...this._defaultValue } as T
+    }
+    return this._defaultValue
   }
 
   /** 删除数据 */

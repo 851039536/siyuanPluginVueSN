@@ -241,6 +241,12 @@ export const FEATURE_ICONS = {
     icon: "mdi:play",
     color: "#10b981",
   },
+
+  // RSS订阅
+  rssReader: {
+    icon: "mdi:rss",
+    color: "#f97316",
+  },
   pause: {
     icon: "mdi:pause",
     color: "#f59e0b",

@@ -65,6 +65,7 @@ export { registerUnitConverter } from "./unitConverter"
 export { registerVideo } from "./video"
 export { registerWebDAV } from "./webDAV"
 export { registerWordQuery } from "./wordQuery"
+export { registerRssReader } from "./rssReader"
 
 /**
  * 白名单：仅用于 UI 配置展示、不需要 register 函数的功能
@@ -82,7 +83,7 @@ type _Registered =
   | "statistics" | "encryption" | "video" | "everythingSearch"
   | "statusBar" | "floatingToolbar" | "floatingBox" | "textDiff"
   | "base64Image" | "flashcardReading" | "passwordVault" | "docAnalysis"
-  | "webDAV" | "formatAssistant" | "htmlViewer"
+  | "webDAV" | "formatAssistant" | "htmlViewer" | "rssReader"
 
 // --- 编译时断言辅助 ---
 // 利用泛型接口约束 T extends true 产生 TypeScript 编译错误，无运行时开销

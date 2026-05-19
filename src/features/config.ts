@@ -244,6 +244,18 @@ export const FEATURE_CONFIG = [
       hotkey: "",
     }],
   },
+  {
+    id: "rssReader",
+    defaultTitle: "RSS订阅",
+    defaultDesc: "订阅和管理RSS/Atom源，在右侧边栏阅读文章",
+    titleI18nKey: "rssReader.title",
+    descI18nKey: "rssReader.description",
+    actions: [{
+      key: "openRssReader",
+      label: "打开RSS订阅",
+      hotkey: "",
+    }],
+  },
 ] as const
 
 /**

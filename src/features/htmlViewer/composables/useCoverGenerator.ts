@@ -5,7 +5,7 @@
 import type { AiApiConfig } from "@/types/ai"
 import type { CoverGenerationConfig, CoverGenerationStatus, CoverSizePreset, CoverStylePreset } from "../types"
 import { ref } from "vue"
-import { callAIStream, getApiConfigFromPlugin } from "@/utils/aiApi"
+import { callAI, callAIStream, getApiConfigFromPlugin } from "@/utils/aiApi"
 import { usePlugin } from "@/main"
 
 // 尺寸预设
@@ -207,7 +207,21 @@ export function useCoverGenerator() {
 
       const extracted = extractHtmlFromResponse(response)
       if (!extracted || !extracted.includes("<html")) {
-        throw new Error("AI 返回的内容不包含有效的 HTML 代码，请重试")
+        // 第一次提取失败 → 让 AI 修复格式（非流式，快速）
+        streamedText.value += "\n\n--- 格式修复中，请稍候... ---\n"
+        const fixPrompt = `你上一轮回复的内容不是完整的HTML文档。请把以下内容重新组织为纯HTML代码，不要任何解释，首字符必须是<：\n\n${response.slice(0, 3000)}`
+        const fixedResponse = await callAI(fixPrompt, aiConfig, {
+          temperature: 0.3,
+          maxTokens: 4000,
+          signal: abortController.signal,
+        })
+        const fixed = extractHtmlFromResponse(fixedResponse)
+        if (!fixed || !fixed.includes("<html")) {
+          throw new Error("AI 返回的内容不包含有效的 HTML 代码，请重试")
+        }
+        coverHtml.value = fixed
+        generationStatus.value = "done"
+        return
       }
 
       coverHtml.value = extracted

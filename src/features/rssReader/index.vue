@@ -11,8 +11,31 @@
           >
             <Icon icon="mdi:arrow-left" />
           </button>
+          <div class="detail-font-controls">
+            <button
+              class="font-btn"
+              title="缩小字体"
+              @click="changeDetailFontSize(-2)"
+            >
+              A<sup>-</sup>
+            </button>
+            <span class="font-size-label">{{ settings.detailFontSize }}</span>
+            <button
+              class="font-btn"
+              title="放大字体"
+              @click="changeDetailFontSize(2)"
+            >
+              A<sup>+</sup>
+            </button>
+          </div>
           <span style="flex:1" />
           <div class="detail-actions">
+            <button
+              :title="ttsPlaying ? (i18n.ttsStop || '停止朗读') : (i18n.ttsStart || '朗读')"
+              @click="speakArticle(selectedItem!)"
+            >
+              <Icon :icon="ttsPlaying ? 'mdi:stop-circle-outline' : 'mdi:volume-high'" />
+            </button>
             <button @click="toggleStar(selectedItem!.link)">
               <Icon :icon="selectedItem!.starred ? 'mdi:star' : 'mdi:star-outline'" />
             </button>
@@ -31,7 +54,8 @@
           </div>
           <div
             class="detail-body"
-            v-html="selectedItem!.content || selectedItem!.description || ''"
+            :style="{ fontSize: settings.detailFontSize + 'px' }"
+            v-html="processedDetailContent"
           />
         </div>
       </div>
@@ -141,6 +165,37 @@
               <option value="card">{{ i18n.cardView || '卡片' }}</option>
             </select>
           </div>
+          <div class="opml-section">
+            <div class="setting-label">{{ i18n.opmlExport || 'OPML 导出' }}</div>
+            <div class="setting-desc">{{ i18n.opmlExportDesc || '将当前订阅源列表导出为 OPML 文件，用于备份或迁移' }}</div>
+            <button
+              class="opml-btn"
+              @click="handleExportOpml"
+            >
+              <Icon icon="mdi:export-variant" />
+              {{ i18n.exportOpml || '导出订阅源列表' }}
+            </button>
+          </div>
+          <div class="opml-section">
+            <div class="setting-label">{{ i18n.opmlImport || 'OPML 导入' }}</div>
+            <div class="setting-desc">{{ i18n.opmlImportDesc || '从 OPML 文件导入订阅源（会逐个添加）' }}</div>
+            <div class="opml-import-row">
+              <input
+                ref="opmlFileInput"
+                type="file"
+                accept=".opml,.xml"
+                :disabled="importingOpml"
+                @change="handleOpmlFile"
+              >
+              <span
+                v-if="importingOpml"
+                class="opml-importing"
+              >
+                <Icon icon="mdi:loading" class="loading-icon" />
+                {{ i18n.importing || '导入中...' }}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </template>
@@ -176,6 +231,13 @@
           @click="showAddFeedDialog = true"
         >
           <Icon icon="mdi:plus" />
+        </button>
+        <button
+          class="rss-toolbar-btn"
+          :title="i18n.exportOpml || '导出OPML'"
+          @click="handleExportOpml"
+        >
+          <Icon icon="mdi:export-variant" />
         </button>
         <button
           class="rss-toolbar-btn"
@@ -387,7 +449,7 @@
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
-import { onMounted, ref } from "vue"
+import { computed, onMounted, ref } from "vue"
 import { useRssReader } from "./composables/useRssReader"
 
 interface Props {
@@ -429,8 +491,12 @@ const {
   updateSettings,
   setFeedFilter,
   setGroupFilter,
+  exportOpml,
+  importOpml,
+  changeDetailFontSize,
 } = useRssReader(props.plugin)
 
+// ===== 添加订阅源 =====
 const newFeedUrl = ref("")
 const newFeedGroup = ref("")
 const addingFeed = ref(false)
@@ -438,10 +504,7 @@ const addingFeed = ref(false)
 async function handleAddFeed() {
   if (!newFeedUrl.value.trim()) return
   addingFeed.value = true
-  // 安全超时：45 秒后强制重置添加状态
-  const timeoutId = setTimeout(() => {
-    addingFeed.value = false
-  }, 45000)
+  const timeoutId = setTimeout(() => { addingFeed.value = false }, 45000)
   try {
     const success = await addFeed(newFeedUrl.value, newFeedGroup.value || undefined)
     clearTimeout(timeoutId)
@@ -458,10 +521,77 @@ async function handleAddFeed() {
   }
 }
 
+// ===== 设置 =====
 function handleSettingChange(key: string, value: any) {
   updateSettings({ [key]: value })
 }
 
+// ===== OPML 导入导出 =====
+const opmlFileInput = ref<HTMLInputElement | null>(null)
+const importingOpml = ref(false)
+
+function handleExportOpml() {
+  const xml = exportOpml()
+  if (!xml) {
+    showMessage("暂无订阅源可导出", 2000, "info")
+    return
+  }
+  const blob = new Blob([xml], { type: "application/xml" })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = `rss-subscriptions-${new Date().toISOString().slice(0, 10)}.opml`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+async function handleOpmlFile(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  importingOpml.value = true
+  try {
+    const text = await file.text()
+    await importOpml(text)
+  } catch (err: any) {
+    showMessage(`OPML 导入失败: ${err.message}`, 5000, "error")
+  } finally {
+    importingOpml.value = false
+    if (opmlFileInput.value) opmlFileInput.value.value = ""
+  }
+}
+
+// ===== TTS 朗读 =====
+const ttsUtterance = ref<SpeechSynthesisUtterance | null>(null)
+const ttsPlaying = ref(false)
+
+function speakArticle(item: { title?: string; content?: string; description?: string }) {
+  if (ttsPlaying.value) {
+    window.speechSynthesis.cancel()
+    ttsPlaying.value = false
+    ttsUtterance.value = null
+    return
+  }
+  const text = [item.title, item.content || item.description].filter(Boolean).join(". ")
+  if (!text) return
+  const utterance = new SpeechSynthesisUtterance(text)
+  utterance.lang = "zh-CN"
+  utterance.rate = 1.0
+  utterance.onend = () => { ttsPlaying.value = false; ttsUtterance.value = null }
+  utterance.onerror = () => { ttsPlaying.value = false; ttsUtterance.value = null }
+  ttsUtterance.value = utterance
+  ttsPlaying.value = true
+  window.speechSynthesis.speak(utterance)
+}
+
+// ===== 文章详情内容处理（添加图片懒加载 + 为代码块添加复制按钮） =====
+const processedDetailContent = computed(() => {
+  const raw = selectedItem.value?.content || selectedItem.value?.description || ""
+  if (!raw) return ""
+  // 给所有 img 标签添加 loading="lazy"
+  return raw.replace(/<img\s+/gi, '<img loading="lazy" ')
+})
+
+// ===== 过滤与工具函数 =====
 function resetFilters() {
   currentFeedFilter.value = "all"
   currentGroupFilter.value = "all"
@@ -490,7 +620,6 @@ function formatDate(dateStr?: string): string {
     const diffMins = Math.floor(diffMs / 60000)
     const diffHours = Math.floor(diffMs / 3600000)
     const diffDays = Math.floor(diffMs / 86400000)
-
     if (diffMins < 1) return props.i18n.justNow || "刚刚"
     if (diffMins < 60) return `${diffMins}${props.i18n.minutesAgo || "分钟前"}`
     if (diffHours < 24) return `${diffHours}${props.i18n.hoursAgo || "小时前"}`

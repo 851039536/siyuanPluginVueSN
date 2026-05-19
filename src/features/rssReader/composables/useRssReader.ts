@@ -19,6 +19,7 @@ import type {
 import { DEFAULT_RSS_SETTINGS } from "../types"
 import { RssStorage } from "../types/storage"
 import { generateId, parseRssXml } from "../utils/parser"
+import { exportToOpml, parseOpml } from "../utils/opml"
 
 export function useRssReader(plugin: Plugin) {
   // ========== 存储 ==========
@@ -303,6 +304,54 @@ export function useRssReader(plugin: Plugin) {
     loadingStatus.value = "idle"
   }
 
+  // ========== OPML 导入导出 ==========
+
+  /**
+   * 导出 OPML 文件
+   */
+  function exportOpml(): string {
+    return exportToOpml(feeds.value)
+  }
+
+  /**
+   * 导入 OPML 文件
+   */
+  async function importOpml(xml: string): Promise<{ success: number; failed: number }> {
+    const outlines = parseOpml(xml)
+    if (outlines.length === 0) {
+      showMessage("未找到有效的 RSS 订阅源", 3000, "error")
+      return { success: 0, failed: 0 }
+    }
+
+    let success = 0
+    let failed = 0
+    for (const outline of outlines) {
+      try {
+        const ok = await addFeed(outline.url, outline.group)
+        if (ok) success++
+        else failed++
+      } catch {
+        failed++
+      }
+    }
+    showMessage(`OPML 导入完成: ${success} 个成功, ${failed} 个失败`, 4000, "info")
+    return { success, failed }
+  }
+
+  // ========== 文章详情操作 ==========
+
+  /**
+   * 增大/减小字体
+   */
+  function changeDetailFontSize(delta: number) {
+    const current = settings.value.detailFontSize
+    const newSize = Math.max(12, Math.min(24, current + delta))
+    if (newSize !== current) {
+      settings.value.detailFontSize = newSize
+      storage.settings.save(settings.value)
+    }
+  }
+
   /**
    * 更新订阅源分组
    */
@@ -548,5 +597,12 @@ export function useRssReader(plugin: Plugin) {
     updateSettings,
     setFeedFilter,
     setGroupFilter,
+
+    // OPML
+    exportOpml,
+    importOpml,
+
+    // 阅读体验
+    changeDetailFontSize,
   }
 }

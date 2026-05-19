@@ -643,10 +643,9 @@ const coverInitialTitle = computed(() => {
 const coverInitialContent = computed(() => {
   const content = htmlContent.value
   if (!content) return ""
-  // 提取纯文本内容，去除 HTML 标签
+  // 仅传前 150 字符作为主题参考，让 AI 快速生成
   const text = content.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()
-  // 传入更多内容（最多2000字），让 AI 能根据内容长短智能处理
-  return text.slice(0, 2000)
+  return text.slice(0, 150)
 })
 
 const presetColors = [

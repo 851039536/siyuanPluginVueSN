@@ -41,6 +41,7 @@ export function useRssReader(plugin: Plugin) {
   const showAddFeedDialog = ref(false)
   const showSettingsDialog = ref(false)
   const refreshingFeedIds = ref<Set<string>>(new Set())
+  const collapsedGroups = ref<Set<string>>(new Set())
 
   // ========== 计算属性 ==========
 
@@ -52,6 +53,36 @@ export function useRssReader(plugin: Plugin) {
       if (f.group) groupSet.add(f.group)
     })
     return Array.from(groupSet)
+  })
+
+  /** 按分组分类的订阅源（未分组的归入"未分组"） */
+  const groupedFeeds = computed(() => {
+    const arr = Array.isArray(feeds.value) ? feeds.value : []
+    const map = new Map<string, RssFeed[]>()
+
+    for (const feed of arr) {
+      const group = feed.group || ""
+      if (!map.has(group)) {
+        map.set(group, [])
+      }
+      map.get(group)!.push(feed)
+    }
+
+    const result: Array<{ group: string; label: string; feeds: RssFeed[] }> = []
+    // 有分组名称的排前面
+    const sortedKeys = Array.from(map.keys()).sort((a, b) => {
+      if (!a) return 1
+      if (!b) return -1
+      return a.localeCompare(b, "zh-CN")
+    })
+    for (const key of sortedKeys) {
+      result.push({
+        group: key,
+        label: key || "未分组",
+        feeds: map.get(key)!,
+      })
+    }
+    return result
   })
 
   /** 按当前过滤条件筛选的文章 */
@@ -450,6 +481,34 @@ export function useRssReader(plugin: Plugin) {
     currentFeedFilter.value = "all"
   }
 
+  function toggleGroupCollapse(group: string) {
+    if (collapsedGroups.value.has(group)) {
+      collapsedGroups.value.delete(group)
+    } else {
+      collapsedGroups.value.add(group)
+    }
+  }
+
+  /**
+   * 重命名分组（更新该分组下所有订阅源的 group 字段）
+   */
+  async function renameGroup(oldName: string, newName: string) {
+    if (!oldName || !newName.trim() || oldName === newName.trim()) return
+    const trimmed = newName.trim()
+    for (const feed of feeds.value) {
+      if (feed.group === oldName) {
+        feed.group = trimmed
+      }
+    }
+    // 同步折叠状态
+    if (collapsedGroups.value.has(oldName)) {
+      collapsedGroups.value.delete(oldName)
+      collapsedGroups.value.add(trimmed)
+    }
+    await saveData()
+    showMessage(`分组已重命名为: ${trimmed}`, 2000, "info")
+  }
+
   // ========== 内部方法 ==========
 
   /**
@@ -597,6 +656,7 @@ export function useRssReader(plugin: Plugin) {
 
     // 计算属性
     groups,
+    groupedFeeds,
     filteredItems,
     unreadCount,
     feedUnreadCounts,
@@ -617,6 +677,9 @@ export function useRssReader(plugin: Plugin) {
     updateSettings,
     setFeedFilter,
     setGroupFilter,
+    toggleGroupCollapse,
+    renameGroup,
+    collapsedGroups,
 
     // OPML
     exportOpml,

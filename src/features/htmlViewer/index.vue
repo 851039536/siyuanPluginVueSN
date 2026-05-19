@@ -42,6 +42,14 @@
                   保存片段
                 </Button>
                 <Button
+                  icon="image"
+                  variant="ghost"
+                  size="small"
+                  @click="showCoverGenerator = true"
+                >
+                  AI 封面
+                </Button>
+                <Button
                   icon="close"
                   variant="ghost"
                   size="small"
@@ -535,6 +543,14 @@
       </div>
     </Transition>
   </Teleport>
+
+  <!-- AI 封面生成器 -->
+  <CoverGenerator
+    v-model:visible="showCoverGenerator"
+    :initial-title="coverInitialTitle"
+    :initial-content="coverInitialContent"
+    @close="showCoverGenerator = false"
+  />
 </template>
 
 <script setup lang="ts">
@@ -547,6 +563,7 @@ import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
 import { usePlugin } from "@/main"
 import { HtmlViewerStorage } from "./types/storage"
+import CoverGenerator from "./components/CoverGenerator.vue"
 import html2canvas from "html2canvas"
 
 // Props
@@ -581,6 +598,7 @@ const showSaveModal = ref(false)
 const showSnippetLibrary = ref(false)
 const showEditModal = ref(false)
 const showCategoryManager = ref(false)
+const showCoverGenerator = ref(false)
 
 // 保存表单
 const saveForm = reactive({
@@ -610,6 +628,27 @@ const searchQuery = ref("")
 const newCategory = reactive({
   name: "",
   color: "#d97757",
+})
+
+// AI 封面：从 HTML 内容中提取标题和摘要
+const coverInitialTitle = computed(() => {
+  const content = htmlContent.value
+  if (!content) return ""
+  // 尝试从 HTML 中提取 <title> 或 <h1> 标签
+  const titleMatch = content.match(/<title[^>]*>([\s\S]*?)<\/title>/i)
+  if (titleMatch) return titleMatch[1].trim()
+  const h1Match = content.match(/<h[1-3][^>]*>([\s\S]*?)<\/h[1-3]>/i)
+  if (h1Match) return h1Match[1].replace(/<[^>]*>/g, "").trim()
+  return ""
+})
+
+const coverInitialContent = computed(() => {
+  const content = htmlContent.value
+  if (!content) return ""
+  // 提取纯文本内容，去除 HTML 标签
+  const text = content.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()
+  // 传入更多内容（最多2000字），让 AI 能根据内容长短智能处理
+  return text.slice(0, 2000)
 })
 
 const presetColors = [
@@ -961,7 +1000,9 @@ function closeDialog() {
 function handleKeyDown(event: KeyboardEvent) {
   if (!props.visible) return
   if (event.key === "Escape") {
-    if (showCategoryManager.value) {
+    if (showCoverGenerator.value) {
+      showCoverGenerator.value = false
+    } else if (showCategoryManager.value) {
       closeCategoryManager()
     } else if (showEditModal.value) {
       closeEditModal()

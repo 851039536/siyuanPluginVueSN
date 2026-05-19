@@ -296,50 +296,126 @@
         <template v-if="feeds.length > 0">
           <!-- 显示订阅源列表或文章列表 -->
           <template v-if="currentFeedFilter === 'all' && currentGroupFilter === 'all' && !searchKeyword && !showStarredOnly && !showUnreadOnly">
-            <!-- 订阅源概览模式 -->
+            <!-- 订阅源概览模式 - 按分组分类 -->
             <div class="rss-feed-list">
               <div
-                v-for="feed in feeds"
-                :key="feed.id"
-                class="feed-item"
-                @click="setFeedFilter(feed.id)"
+                v-for="groupItem in groupedFeeds"
+                :key="groupItem.group"
+                class="feed-group"
               >
-                <div class="feed-icon">
-                  <img
-                    v-if="feed.iconUrl"
-                    :src="feed.iconUrl"
-                    :alt="feed.title"
-                  >
+                <div
+                  class="feed-group-header"
+                  @click="toggleGroupCollapse(groupItem.group)"
+                >
                   <Icon
-                    v-else
-                    icon="mdi:rss"
+                    :icon="collapsedGroups.has(groupItem.group) ? 'mdi:chevron-right' : 'mdi:chevron-down'"
+                    class="group-collapse-icon"
                   />
-                </div>
-                <div class="feed-info">
-                  <div class="feed-title">{{ feed.title }}</div>
-                  <div class="feed-url">{{ feed.group || feed.url }}</div>
-                </div>
-                <span
-                  v-if="feedUnreadCounts[feed.id]"
-                  class="feed-unread"
-                >{{ feedUnreadCounts[feed.id] }}</span>
-                <div class="feed-actions">
+                  <template v-if="renamingGroupKey === groupItem.group">
+                    <input
+                      v-model="renamingGroupValue"
+                      class="group-rename-input"
+                      @click.stop
+                      @keydown.enter="confirmRenameGroup(groupItem.group)"
+                      @keydown.escape="cancelRenameGroup"
+                      @blur="confirmRenameGroup(groupItem.group)"
+                    >
+                  </template>
+                  <template v-else>
+                    <span class="group-label">{{ groupItem.label }}</span>
+                  </template>
+                  <span class="group-count">{{ groupItem.feeds.length }}</span>
+                  <span class="group-unread">{{ groupItem.feeds.reduce((sum, f) => sum + (feedUnreadCounts[f.id] || 0), 0) || '' }}</span>
                   <button
-                    :title="i18n.refresh || '刷新'"
-                    @click.stop="refreshFeed(feed.id)"
+                    v-if="groupItem.group"
+                    class="group-action-btn"
+                    title="重命名分组"
+                    @click.stop="startRenameGroup(groupItem.group, groupItem.label)"
                   >
-                    <Icon
-                      :icon="refreshingFeedIds.has(feed.id) ? 'mdi:loading' : 'mdi:refresh'"
-                      :class="{ 'loading-icon': refreshingFeedIds.has(feed.id) }"
-                    />
-                  </button>
-                  <button
-                    :title="i18n.delete || '删除'"
-                    @click.stop="removeFeed(feed.id)"
-                  >
-                    <Icon icon="mdi:delete-outline" />
+                    <Icon icon="mdi:pencil-outline" />
                   </button>
                 </div>
+                <template v-if="!collapsedGroups.has(groupItem.group)">
+                  <div
+                    v-for="feed in groupItem.feeds"
+                    :key="feed.id"
+                    class="feed-item"
+                    @click="setFeedFilter(feed.id)"
+                  >
+                    <div class="feed-icon">
+                      <img
+                        v-if="feed.iconUrl"
+                        :src="feed.iconUrl"
+                        :alt="feed.title"
+                      >
+                      <Icon
+                        v-else
+                        icon="mdi:rss"
+                      />
+                    </div>
+                    <div class="feed-info">
+                      <div class="feed-title">{{ feed.title }}</div>
+                      <div class="feed-url">{{ feed.url }}</div>
+                    </div>
+                    <span
+                      v-if="feedUnreadCounts[feed.id]"
+                      class="feed-unread"
+                    >{{ feedUnreadCounts[feed.id] }}</span>
+                    <div class="feed-actions">
+                      <button
+                        :title="i18n.refresh || '刷新'"
+                        @click.stop="refreshFeed(feed.id)"
+                      >
+                        <Icon
+                          :icon="refreshingFeedIds.has(feed.id) ? 'mdi:loading' : 'mdi:refresh'"
+                          :class="{ 'loading-icon': refreshingFeedIds.has(feed.id) }"
+                        />
+                      </button>
+                      <button
+                        title="移动到分组"
+                        @click.stop="toggleMoveMenu(feed.id)"
+                      >
+                        <Icon icon="mdi:folder-outline" />
+                      </button>
+                      <button
+                        :title="i18n.delete || '删除'"
+                        @click.stop="removeFeed(feed.id)"
+                      >
+                        <Icon icon="mdi:delete-outline" />
+                      </button>
+                    </div>
+                    <!-- 移动分组下拉 -->
+                    <div
+                      v-if="moveMenuFeedId === feed.id"
+                      class="move-group-menu"
+                      @click.stop
+                    >
+                      <div
+                        class="move-option"
+                        :class="{ active: !feed.group }"
+                        @click="handleMoveFeed(feed.id, '')"
+                      >
+                        未分组
+                      </div>
+                      <div
+                        v-for="g in groups"
+                        :key="g"
+                        class="move-option"
+                        :class="{ active: feed.group === g }"
+                        @click="handleMoveFeed(feed.id, g)"
+                      >
+                        {{ g }}
+                      </div>
+                      <div class="move-option new-group-option">
+                        <input
+                          v-model="newGroupOnMove"
+                          placeholder="新建分组..."
+                          @keydown.enter="handleMoveToNewGroup(feed.id)"
+                        >
+                      </div>
+                    </div>
+                  </div>
+                </template>
               </div>
             </div>
           </template>
@@ -449,7 +525,7 @@
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
-import { computed, onMounted, ref } from "vue"
+import { computed, onMounted, onBeforeUnmount, ref } from "vue"
 import { useRssReader } from "./composables/useRssReader"
 
 interface Props {
@@ -475,9 +551,11 @@ const {
   showSettingsDialog,
   refreshingFeedIds,
   groups,
+  groupedFeeds,
   filteredItems,
   unreadCount,
   feedUnreadCounts,
+  collapsedGroups,
   init,
   addFeed,
   removeFeed,
@@ -491,6 +569,9 @@ const {
   updateSettings,
   setFeedFilter,
   setGroupFilter,
+  toggleGroupCollapse,
+  renameGroup,
+  updateFeedGroup,
   exportOpml,
   importOpml,
   changeDetailFontSize,
@@ -500,6 +581,50 @@ const {
 const newFeedUrl = ref("")
 const newFeedGroup = ref("")
 const addingFeed = ref(false)
+
+// ===== 分组重命名 =====
+const renamingGroupKey = ref("")
+const renamingGroupValue = ref("")
+
+function startRenameGroup(groupKey: string, currentLabel: string) {
+  renamingGroupKey.value = groupKey
+  renamingGroupValue.value = currentLabel === "未分组" ? "" : currentLabel
+}
+
+function confirmRenameGroup(oldKey: string) {
+  if (renamingGroupKey.value && renamingGroupValue.value.trim()) {
+    renameGroup(oldKey, renamingGroupValue.value.trim())
+  }
+  renamingGroupKey.value = ""
+  renamingGroupValue.value = ""
+}
+
+function cancelRenameGroup() {
+  renamingGroupKey.value = ""
+  renamingGroupValue.value = ""
+}
+
+// ===== 移动订阅源到分组 =====
+const moveMenuFeedId = ref("")
+const newGroupOnMove = ref("")
+
+function toggleMoveMenu(feedId: string) {
+  moveMenuFeedId.value = moveMenuFeedId.value === feedId ? "" : feedId
+  newGroupOnMove.value = ""
+}
+
+async function handleMoveFeed(feedId: string, group: string) {
+  await updateFeedGroup(feedId, group)
+  moveMenuFeedId.value = ""
+}
+
+async function handleMoveToNewGroup(feedId: string) {
+  const g = newGroupOnMove.value.trim()
+  if (!g) return
+  await updateFeedGroup(feedId, g)
+  moveMenuFeedId.value = ""
+  newGroupOnMove.value = ""
+}
 
 async function handleAddFeed() {
   if (!newFeedUrl.value.trim()) return
@@ -632,7 +757,19 @@ function formatDate(dateStr?: string): string {
 
 onMounted(() => {
   init()
+  document.addEventListener("click", handleGlobalClick)
 })
+
+onBeforeUnmount(() => {
+  document.removeEventListener("click", handleGlobalClick)
+})
+
+function handleGlobalClick() {
+  if (moveMenuFeedId.value) {
+    moveMenuFeedId.value = ""
+    newGroupOnMove.value = ""
+  }
+}
 </script>
 
 <style lang="scss" scoped>

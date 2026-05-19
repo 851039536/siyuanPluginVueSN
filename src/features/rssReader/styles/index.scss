@@ -122,15 +122,115 @@
 
   // --- 订阅源列表 ---
   .rss-feed-list {
+    .feed-group {
+      border-bottom: 1px solid var(--b3-theme-surface-lighter);
+    }
+
+    .feed-group-header {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px $spacing-3;
+      background: var(--b3-theme-surface-lighter);
+      cursor: pointer;
+      user-select: none;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+
+      &:hover {
+        background: var(--b3-theme-surface-lighter);
+        opacity: 0.85;
+      }
+
+      .group-collapse-icon {
+        font-size: 16px;
+        color: var(--b3-theme-on-surface-muted);
+        flex-shrink: 0;
+      }
+
+      .group-label {
+        font-size: $font-size-xs;
+        font-weight: 600;
+        color: var(--b3-theme-on-surface);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .group-count {
+        font-size: 10px;
+        color: var(--b3-theme-on-surface-muted);
+        background: var(--b3-theme-background);
+        padding: 0 5px;
+        line-height: 14px;
+        border-radius: $radius-full;
+        flex-shrink: 0;
+      }
+
+      .group-unread {
+        font-size: 10px;
+        color: #fff;
+        background: #f97316;
+        padding: 0 5px;
+        line-height: 14px;
+        border-radius: $radius-full;
+        min-width: 14px;
+        text-align: center;
+        flex-shrink: 0;
+
+        &:empty { display: none; }
+      }
+
+      .group-rename-input {
+        flex: 1;
+        padding: 1px 6px;
+        border: 1px solid #f97316;
+        border-radius: $radius-sm;
+        background: var(--b3-theme-background);
+        color: var(--b3-theme-on-background);
+        font-size: $font-size-xs;
+        font-weight: 600;
+        outline: none;
+        min-width: 0;
+      }
+
+      .group-action-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        border: none;
+        border-radius: $radius-sm;
+        background: transparent;
+        color: var(--b3-theme-on-surface-muted);
+        cursor: pointer;
+        flex-shrink: 0;
+        opacity: 0;
+        transition: opacity 0.12s;
+
+        &:hover { background: var(--b3-theme-background); color: var(--b3-theme-on-surface); }
+      }
+
+      &:hover .group-action-btn { opacity: 1; }
+    }
+
     .feed-item {
       display: flex;
       align-items: center;
       gap: $spacing-2;
-      padding: $spacing-2 $spacing-3;
+      padding: $spacing-2 $spacing-3 $spacing-2 28px;
       cursor: pointer;
       border-bottom: 1px solid var(--b3-theme-surface-lighter);
       transition: background 0.12s;
       min-height: 40px;
+      position: relative;
+
+      &:last-child { border-bottom: none; }
 
       &:hover {
         background: var(--b3-theme-surface-lighter);
@@ -181,6 +281,51 @@
           background: transparent; cursor: pointer;
           color: var(--b3-theme-on-surface-muted);
           &:hover { background: var(--b3-theme-surface-lighter); color: var(--b3-theme-on-surface); }
+        }
+      }
+
+      .move-group-menu {
+        position: absolute;
+        right: 4px;
+        top: 100%;
+        z-index: 10;
+        background: var(--b3-theme-background);
+        border: 1px solid var(--b3-theme-surface-lighter);
+        border-radius: $radius-sm;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        min-width: 140px;
+        padding: 4px 0;
+
+        .move-option {
+          padding: 5px 12px;
+          font-size: $font-size-xs;
+          color: var(--b3-theme-on-surface);
+          cursor: pointer;
+          white-space: nowrap;
+
+          &:hover { background: var(--b3-theme-surface-lighter); }
+          &.active { color: #f97316; font-weight: 500; }
+        }
+
+        .new-group-option {
+          padding: 4px 8px;
+          border-top: 1px solid var(--b3-theme-surface-lighter);
+          margin-top: 2px;
+
+          input {
+            width: 100%;
+            padding: 2px 6px;
+            border: 1px solid var(--b3-theme-surface-lighter);
+            border-radius: $radius-sm;
+            background: var(--b3-theme-background);
+            color: var(--b3-theme-on-background);
+            font-size: $font-size-xs;
+            outline: none;
+            box-sizing: border-box;
+
+            &:focus { border-color: #f97316; }
+            &::placeholder { color: var(--b3-theme-on-surface-muted); }
+          }
         }
       }
     }

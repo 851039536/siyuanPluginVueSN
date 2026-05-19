@@ -5,7 +5,7 @@
 import type { AiApiConfig } from "@/types/ai"
 import type { CoverGenerationConfig, CoverGenerationStatus, CoverSizePreset, CoverStylePreset } from "../types"
 import { ref } from "vue"
-import { callAI, getApiConfigFromPlugin } from "@/utils/aiApi"
+import { callAIStream, getApiConfigFromPlugin } from "@/utils/aiApi"
 import { usePlugin } from "@/main"
 
 // 尺寸预设
@@ -119,6 +119,7 @@ export function useCoverGenerator() {
   const plugin = usePlugin()
 
   const coverHtml = ref("")
+  const streamedText = ref("")  // 流式生成过程中的原始文本
   const generationStatus = ref<CoverGenerationStatus>("idle")
   const errorMessage = ref("")
   const currentConfig = ref<CoverGenerationConfig>({
@@ -186,6 +187,7 @@ export function useCoverGenerator() {
 
     generationStatus.value = "generating"
     errorMessage.value = ""
+    streamedText.value = ""
 
     try {
       const aiConfig: AiApiConfig = getApiConfigFromPlugin(plugin)
@@ -195,7 +197,9 @@ export function useCoverGenerator() {
       }
 
       const prompt = buildCoverPrompt(currentConfig.value)
-      const response = await callAI(prompt, aiConfig, {
+      const response = await callAIStream(prompt, aiConfig, (chunk) => {
+        streamedText.value += chunk
+      }, {
         temperature: 0.7,
         maxTokens: 8000,
         signal: abortController.signal,
@@ -234,6 +238,7 @@ export function useCoverGenerator() {
   function reset(): void {
     cancelGeneration()
     coverHtml.value = ""
+    streamedText.value = ""
     currentConfig.value = {
       title: "",
       content: "",
@@ -245,6 +250,7 @@ export function useCoverGenerator() {
 
   return {
     coverHtml,
+    streamedText,
     generationStatus,
     errorMessage,
     currentConfig,

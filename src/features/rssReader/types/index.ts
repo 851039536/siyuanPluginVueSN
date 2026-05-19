@@ -66,6 +66,8 @@ export interface RssSettings {
   showDescription: boolean
   /** 文章排序方式 */
   sortOrder: RssSortOrder
+  /** 文章详情字体大小 (px) */
+  detailFontSize: number
 }
 
 /** 视图模式 */
@@ -84,4 +86,5 @@ export const DEFAULT_RSS_SETTINGS: RssSettings = {
   viewMode: "list",
   showDescription: true,
   sortOrder: "newest",
+  detailFontSize: 14,
 }

@@ -553,10 +553,29 @@ export function usePublish(plugin: Plugin) {
   /** 博客园 MetaWeblog 发布 */
   async function publishViaCnblogs(platform: PlatformConfig, content: ExportContent): Promise<PlatformPublishResult> {
     const cfg = platform.extraConfig as Record<string, any>
-    const blogName = cfg.blogName || ""
-    const username = cfg.username || ""
-    const password = cfg.password || ""
-    const apiUrl = platform.apiUrl.replace("{blogName}", blogName)
+    const blogName = (cfg.blogName || "").trim()
+    const username = (cfg.username || "").trim()
+    const password = (cfg.password || "").trim()
+
+    // 检查关键字段是否为空
+    if (!blogName) {
+      throw new Error(`博客园配置缺失: 博客名称(Blog Name) 为空，请检查平台配置中 "博客名称" 字段是否正确填写`)
+    }
+    if (!username) {
+      throw new Error(`博客园配置缺失: 用户名为空，请检查平台配置中 "用户名" 字段是否正确填写`)
+    }
+    if (!password) {
+      throw new Error(`博客园配置缺失: 密码为空，请检查平台配置中 "密码" 字段是否正确填写`)
+    }
+
+    // 构建 API URL：支持 {blogName} 模板替换，也支持直接使用完整 URL
+    let apiUrl = platform.apiUrl
+    if (apiUrl.includes("{blogName}")) {
+      apiUrl = apiUrl.replace("{blogName}", blogName)
+    } else if (!apiUrl.includes(blogName)) {
+      // 如果没有 blogName 占位符且 URL 中也不包含 blogName，则追加
+      apiUrl = `https://rpc.cnblogs.com/metaweblog/${blogName}`
+    }
 
     // 按格式选择内容
     const bodyContent = content.format === "richtext" && content.htmlContent
@@ -591,12 +610,12 @@ export function usePublish(plugin: Plugin) {
     ) as any
 
     if (!resp) {
-      throw new Error("博客园 XMLRPC 请求失败")
+      throw new Error(`博客园 XMLRPC 请求失败: 无响应（URL: ${apiUrl}，blogName: ${blogName}，username: ${username}）`)
     }
 
     // 检查 HTTP 状态码
     if (resp.status < 200 || resp.status >= 300) {
-      throw new Error(`博客园 HTTP ${resp.status}: ${resp.body || "无响应体"}`)
+      throw new Error(`博客园 HTTP ${resp.status}: ${resp.body || "无响应体"}（URL: ${apiUrl}，blogName: ${blogName}，username: ${username}）`)
     }
 
     const xmlBodyResp = resp.body || ""

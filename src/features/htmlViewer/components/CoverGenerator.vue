@@ -203,7 +203,7 @@
                           class="cover-preview-iframe"
                           :style="iframeStyle"
                           sandbox="allow-scripts allow-same-origin"
-                          :srcdoc="coverSrcdoc"
+                          :srcdoc="coverHtml"
                         ></iframe>
                       </div>
                     </div>
@@ -251,7 +251,6 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   (e: "update:visible", value: boolean): void
-  (e: "close"): void
   (e: "generated", html: string): void
 }>()
 
@@ -272,12 +271,6 @@ const previewWrapper = ref<HTMLDivElement | null>(null)
 const widthInput = ref(String(config.value.width))
 const heightInput = ref(String(config.value.height))
 const previewScale = ref(1)
-
-// 构建 srcdoc，注入缩放逻辑
-const coverSrcdoc = computed(() => {
-  if (!coverHtml.value) return ""
-  return coverHtml.value
-})
 
 // iframe 缩放样式：让封面按实际尺寸渲染，CSS 缩放适配预览区
 // 使用 center center 原点 + flex 父容器居中，无需负 margin 偏移
@@ -414,28 +407,33 @@ function autoResizeTextarea() {
   el.style.height = `${Math.min(Math.max(el.scrollHeight, minHeight), maxHeight)}px`
 }
 
+// 获取封面截图画布（共享 html2canvas 逻辑）
+async function captureCoverCanvas(): Promise<HTMLCanvasElement | null> {
+  const iframe = coverFrame.value
+  if (!iframe?.contentDocument?.body?.firstElementChild) return null
+
+  await nextTick()
+  const target = (iframe.contentDocument.body.firstElementChild as HTMLElement) ?? iframe.contentDocument.body
+  return html2canvas(target, {
+    useCORS: true,
+    scale: 2,
+    backgroundColor: "#ffffff",
+    logging: false,
+    width: config.value.width,
+    height: config.value.height,
+    windowWidth: config.value.width,
+    windowHeight: config.value.height,
+  })
+}
+
 // 复制为图片
 async function copyCoverAsImage() {
-  const iframe = coverFrame.value
-  if (!iframe?.contentDocument?.body?.firstElementChild) {
-    showMessage("没有可复制的内容", 2000, "info")
-    return
-  }
-
   try {
-    await nextTick()
-    // 优先截取 body 下第一个子元素（通常是封面容器），否则截取 body
-    const target = (iframe.contentDocument.body.firstElementChild as HTMLElement) ?? iframe.contentDocument.body
-    const canvas = await html2canvas(target, {
-      useCORS: true,
-      scale: 2,
-      backgroundColor: "#ffffff",
-      logging: false,
-      width: config.value.width,
-      height: config.value.height,
-      windowWidth: config.value.width,
-      windowHeight: config.value.height,
-    })
+    const canvas = await captureCoverCanvas()
+    if (!canvas) {
+      showMessage("没有可复制的内容", 2000, "info")
+      return
+    }
 
     const blob = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob((b) => {
@@ -453,22 +451,14 @@ async function copyCoverAsImage() {
     console.error("复制封面为图片失败:", error)
     // 兜底：下载图片
     try {
-      const target = (iframe.contentDocument!.body.firstElementChild as HTMLElement) ?? iframe.contentDocument!.body
-      const canvas = await html2canvas(target, {
-        useCORS: true,
-        scale: 2,
-        backgroundColor: "#ffffff",
-        logging: false,
-        width: config.value.width,
-        height: config.value.height,
-        windowWidth: config.value.width,
-        windowHeight: config.value.height,
-      })
-      const link = document.createElement("a")
-      link.download = `cover-${config.value.width}x${config.value.height}-${Date.now()}.png`
-      link.href = canvas.toDataURL("image/png")
-      link.click()
-      showMessage("已下载为图片（剪贴板不可用）", 2000, "info")
+      const canvas = await captureCoverCanvas()
+      if (canvas) {
+        const link = document.createElement("a")
+        link.download = `cover-${config.value.width}x${config.value.height}-${Date.now()}.png`
+        link.href = canvas.toDataURL("image/png")
+        link.click()
+        showMessage("已下载为图片（剪贴板不可用）", 2000, "info")
+      }
     } catch {
       showMessage("复制失败", 2000, "error")
     }
@@ -477,25 +467,12 @@ async function copyCoverAsImage() {
 
 // 下载为图片
 async function downloadCoverAsImage() {
-  const iframe = coverFrame.value
-  if (!iframe?.contentDocument?.body?.firstElementChild) {
-    showMessage("没有可下载的内容", 2000, "info")
-    return
-  }
-
   try {
-    await nextTick()
-    const target = (iframe.contentDocument.body.firstElementChild as HTMLElement) ?? iframe.contentDocument.body
-    const canvas = await html2canvas(target, {
-      useCORS: true,
-      scale: 2,
-      backgroundColor: "#ffffff",
-      logging: false,
-      width: config.value.width,
-      height: config.value.height,
-      windowWidth: config.value.width,
-      windowHeight: config.value.height,
-    })
+    const canvas = await captureCoverCanvas()
+    if (!canvas) {
+      showMessage("没有可下载的内容", 2000, "info")
+      return
+    }
 
     const link = document.createElement("a")
     link.download = `cover-${config.value.width}x${config.value.height}-${Date.now()}.png`
@@ -512,7 +489,6 @@ async function downloadCoverAsImage() {
 function close() {
   cancelGeneration()
   emit("update:visible", false)
-  emit("close")
 }
 </script>
 

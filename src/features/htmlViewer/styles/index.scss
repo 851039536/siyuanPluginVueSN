@@ -1,5 +1,4 @@
 // HTML展示功能样式
-@use '@/variables' as *;
 
 .html-viewer-overlay {
   position: fixed;
@@ -121,9 +120,6 @@
   border-radius: 8px;
   overflow: hidden;
 
-  &.split-mode {
-    flex: 1;
-  }
 }
 
 .panel-header {

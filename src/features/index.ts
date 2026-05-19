@@ -12,10 +12,7 @@ export { registerDocAnalysis } from "./docAnalysis"
 export { registerFormatAssistant } from "./formatAssistant"
 export { registerHtmlViewer } from "./htmlViewer"
 export {
-  hideHtmlViewer,
   htmlViewerVisible,
-  showHtmlViewer,
-  toggleHtmlViewer,
 } from "./htmlViewer/types"
 export { registerDocNavigation } from "./docNavigation"
 export { registerEncryption } from "./encryption"

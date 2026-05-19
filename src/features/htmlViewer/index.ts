@@ -9,15 +9,12 @@
  */
 import { Plugin, showMessage } from "siyuan"
 import { emitCustomEvent } from "@/utils/eventBus"
-import { HtmlViewerStorage } from "./types/storage"
 
 export class HtmlViewer {
   private plugin: Plugin
-  private storage: HtmlViewerStorage
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
-    this.storage = new HtmlViewerStorage(plugin)
   }
 
   /**
@@ -102,13 +99,6 @@ export class HtmlViewer {
   private showHtmlPreview(content: string) {
     emitCustomEvent("openHtmlViewer", { content })
   }
-
-  /**
-   * 获取存储实例（供Vue组件使用）
-   */
-  getStorage(): HtmlViewerStorage {
-    return this.storage
-  }
 }
 
 let htmlViewerInstance: HtmlViewer | null = null
@@ -122,9 +112,4 @@ export async function registerHtmlViewer(plugin: Plugin) {
   ;(plugin as any).__htmlViewer = htmlViewerInstance
 }
 
-/**
- * 获取HTML展示实例
- */
-export function getHtmlViewerInstance(): HtmlViewer | null {
-  return htmlViewerInstance
-}
+

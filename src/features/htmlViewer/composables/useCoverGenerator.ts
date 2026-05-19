@@ -228,11 +228,6 @@ export function useCoverGenerator() {
     }
   }
 
-  /** 重新生成 */
-  async function regenerate(): Promise<void> {
-    await generateCover()
-  }
-
   /** 取消生成 */
   function cancelGeneration(): void {
     if (abortController) {
@@ -262,7 +257,6 @@ export function useCoverGenerator() {
     errorMessage,
     currentConfig,
     generateCover,
-    regenerate,
     cancelGeneration,
     reset,
     COVER_SIZE_PRESETS,

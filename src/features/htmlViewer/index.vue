@@ -92,7 +92,6 @@
                     class="html-source-editor"
                     placeholder="在此输入或粘贴HTML代码..."
                     spellcheck="false"
-                    @input="onSourceChange"
                   ></textarea>
                 </div>
 
@@ -119,7 +118,7 @@
                       ref="previewFrame"
                       class="html-preview-iframe"
                       sandbox="allow-scripts allow-same-origin"
-                      :srcdoc="sanitizedHtml"
+                      :srcdoc="htmlContent"
                     ></iframe>
                   </div>
                 </div>
@@ -549,7 +548,6 @@
     v-model:visible="showCoverGenerator"
     :initial-title="coverInitialTitle"
     :initial-content="coverInitialContent"
-    @close="showCoverGenerator = false"
   />
 </template>
 
@@ -660,11 +658,6 @@ const presetColors = [
   "#9b6bb5",
 ]
 
-// 安全过滤后的HTML
-const sanitizedHtml = computed(() => {
-  return htmlContent.value
-})
-
 // 内容大小
 const contentSize = computed(() => {
   const bytes = new Blob([htmlContent.value]).size
@@ -712,11 +705,6 @@ function formatTime(timestamp: number): string {
 // 获取预览HTML（限制高度）
 function getPreviewHtml(content: string): string {
   return `<style>body{margin:0;padding:4px;overflow:hidden;pointer-events:none;font-size:12px;}</style>${content}`
-}
-
-// 源码变更
-function onSourceChange() {
-  // 实时同步到预览（通过 computed 自动更新 srcdoc）
 }
 
 // 复制源码

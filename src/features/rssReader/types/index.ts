@@ -60,8 +60,6 @@ export interface RssSettings {
   refreshInterval: number
   /** 最大保留文章数（每个订阅源） */
   maxItemsPerFeed: number
-  /** 默认视图模式 */
-  viewMode: RssViewMode
   /** 是否显示描述/摘要 */
   showDescription: boolean
   /** 文章排序方式 */
@@ -69,9 +67,6 @@ export interface RssSettings {
   /** 文章详情字体大小 (px) */
   detailFontSize: number
 }
-
-/** 视图模式 */
-export type RssViewMode = "list" | "card"
 
 /** 排序方式 */
 export type RssSortOrder = "newest" | "oldest"
@@ -83,7 +78,6 @@ export type RssLoadingStatus = "idle" | "loading" | "success" | "error"
 export const DEFAULT_RSS_SETTINGS: RssSettings = {
   refreshInterval: 30,
   maxItemsPerFeed: 100,
-  viewMode: "list",
   showDescription: true,
   sortOrder: "newest",
   detailFontSize: 14,

@@ -658,14 +658,6 @@
     }
   }
 
-  // --- 加载状态 ---
-  .rss-loading {
-    display: flex; align-items: center; justify-content: center;
-    padding: $spacing-4; gap: $spacing-2;
-    color: var(--b3-theme-on-surface-muted);
-    font-size: $font-size-sm;
-    .loading-icon { animation: spin 1s linear infinite; }
-  }
 }
 
 @keyframes spin {

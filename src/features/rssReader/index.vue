@@ -155,16 +155,6 @@
               <option value="oldest">{{ i18n.oldestFirst || '最早优先' }}</option>
             </select>
           </div>
-          <div class="setting-item">
-            <div class="setting-label">{{ i18n.viewMode || '视图模式' }}</div>
-            <select
-              :value="settings.viewMode"
-              @change="handleSettingChange('viewMode', ($event.target as HTMLSelectElement).value)"
-            >
-              <option value="list">{{ i18n.listView || '列表' }}</option>
-              <option value="card">{{ i18n.cardView || '卡片' }}</option>
-            </select>
-          </div>
           <div class="opml-section">
             <div class="setting-label">{{ i18n.opmlExport || 'OPML 导出' }}</div>
             <div class="setting-desc">{{ i18n.opmlExportDesc || '将当前订阅源列表导出为 OPML 文件，用于备份或迁移' }}</div>
@@ -538,7 +528,6 @@ const props = defineProps<Props>()
 const {
   settings,
   feeds,
-  items,
   loadingStatus,
   currentFeedFilter,
   currentGroupFilter,

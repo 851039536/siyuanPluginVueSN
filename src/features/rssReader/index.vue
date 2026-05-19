@@ -81,7 +81,7 @@
               :placeholder="i18n.feedUrlPlaceholder || '输入RSS/Atom订阅地址...'"
               @keydown.enter="handleAddFeed"
             >
-            <div class="hint">{{ i18n.feedUrlHint || '支持RSS 2.0和Atom格式的订阅地址' }}</div>
+            <div class="hint">{{ i18n.feedUrlHint || '支持RSS 2.0和Atom格式，例如 https://example.com/feed 或 https://example.com/rss' }}</div>
           </div>
           <div class="form-group">
             <label>{{ i18n.feedGroup || '分组' }}</label>

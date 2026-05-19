@@ -480,36 +480,56 @@ export function useRssReader(plugin: Plugin) {
   }
 
   /**
-   * 获取RSS内容
+   * 检测文本是否为有效 XML（以 < 开头）
+   */
+  function looksLikeXml(text: string): boolean {
+    return /^\s*</.test(text)
+  }
+
+  /**
+   * 获取RSS内容（多层 fallback：直连 → 多个代理 → 重试）
    */
   async function fetchRss(url: string): Promise<string> {
-    const proxyUrls = [
-      `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-      `https://corsproxy.io/?${encodeURIComponent(url)}`,
-    ]
-
-    // 先尝试直接请求
-    try {
-      const response = await fetchWithTimeout(url, {
-        method: "GET",
-        headers: { "Accept": "application/rss+xml, application/xml, text/xml, application/atom+xml" },
-      }, 8000)
-      if (response.ok) {
-        return await response.text()
-      }
-    } catch {}
-
-    // 直接请求失败，尝试代理
-    for (const proxyUrl of proxyUrls) {
-      try {
-        const response = await fetchWithTimeout(proxyUrl, {}, 12000)
-        if (response.ok) {
-          return await response.text()
-        }
-      } catch {}
+    // 浏览器模拟头（部分 CDN 屏蔽无 UA 的请求）
+    const browserHeaders: Record<string, string> = {
+      "Accept": "application/rss+xml, application/xml, text/xml, application/atom+xml, */*",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
     }
 
-    throw new Error("无法获取RSS内容，请检查网络连接或订阅地址是否正确")
+    // 尝试列表：直连 + 多个代理
+    const attempts: Array<{ url: string; label: string; timeout: number; useBrowserHeaders: boolean }> = [
+      { url, label: "直连", timeout: 15000, useBrowserHeaders: true },
+      { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`, label: "allorigins", timeout: 20000, useBrowserHeaders: false },
+      { url: `https://corsproxy.io/?${encodeURIComponent(url)}`, label: "corsproxy", timeout: 20000, useBrowserHeaders: false },
+      { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, label: "codetabs", timeout: 20000, useBrowserHeaders: false },
+    ]
+
+    // 收集失败原因
+    const errors: string[] = []
+
+    for (const attempt of attempts) {
+      try {
+        const headers = attempt.useBrowserHeaders ? browserHeaders : {}
+        const response = await fetchWithTimeout(attempt.url, { method: "GET", headers }, attempt.timeout)
+
+        if (response.ok) {
+          const text = await response.text()
+          // 检查是否为有效 XML（防止代理返回 HTML 错误页）
+          if (looksLikeXml(text)) {
+            return text
+          } else {
+            errors.push(`${attempt.label}: 返回内容不是 XML (可能被屏蔽)`)
+          }
+        } else {
+          errors.push(`${attempt.label}: HTTP ${response.status}`)
+        }
+      } catch (err: any) {
+        errors.push(`${attempt.label}: ${err.name || err.message || "超时/失败"}`)
+      }
+    }
+
+    throw new Error(`无法获取 RSS 内容。${errors.join("；")}`)
   }
 
   /**

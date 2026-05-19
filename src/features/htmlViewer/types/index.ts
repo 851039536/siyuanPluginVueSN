@@ -38,6 +38,41 @@ export interface HtmlCategory {
 }
 
 // ============================================================
+// AI 封面生成相关类型
+// ============================================================
+
+/** 封面尺寸预设 */
+export interface CoverSizePreset {
+  label: string
+  width: number
+  height: number
+}
+
+/** 封面风格预设 */
+export interface CoverStylePreset {
+  id: string
+  label: string
+  description: string
+}
+
+/** 封面生成状态 */
+export type CoverGenerationStatus = "idle" | "generating" | "done" | "error"
+
+/** 封面生成配置 */
+export interface CoverGenerationConfig {
+  /** 文档标题 */
+  title: string
+  /** 文档内容摘要 */
+  content: string
+  /** 封面宽度 */
+  width: number
+  /** 封面高度 */
+  height: number
+  /** 风格ID */
+  styleId: string
+}
+
+// ============================================================
 // 全局状态
 // ============================================================
 

@@ -13,6 +13,17 @@ import {
   getDocIdByBlockId,
 } from "../utils/helpers"
 
+/** 简单子文档描述，listDocsByPath 返回值的精简版 */
+interface SubDocInfo {
+  id: string
+  name: string
+}
+
+/** 去除 .sy 后缀 */
+function stripSySuffix(str: string): string {
+  return str.replace(/\.sy$/i, "")
+}
+
 /**
  * 索引类型枚举
  */
@@ -144,6 +155,26 @@ export class TableOfContentsManager {
   }
 
   /**
+   * 使用 listDocsByPath 获取当前文档的直接子文档
+   * 替代手写 SQL，更安全、语义化
+   */
+  private async getSubDocs(docId: string): Promise<SubDocInfo[]> {
+    try {
+      const pathInfo = await api.getPathByID(docId)
+      if (!pathInfo?.notebook || !pathInfo.path) return []
+
+      const result = await api.listDocsByPath(pathInfo.notebook, pathInfo.path)
+      return (result?.files || []).map((f) => ({
+        id: f.id,
+        name: stripSySuffix(f.name),
+      }))
+    } catch (error) {
+      console.error("获取子文档失败:", error)
+      return []
+    }
+  }
+
+  /**
    * 1. 插入索引(当前文档的子文档列表)
    * CTRL + ALT + I
    */
@@ -155,23 +186,7 @@ export class TableOfContentsManager {
         return
       }
 
-      // 获取当前文档信息
-      const currentDoc = await api.getBlockByID(docId)
-      if (!currentDoc || !currentDoc.box || !currentDoc.hpath) {
-        showMessage("无法获取当前文档信息", 3000, "error")
-        return
-      }
-
-      // 使用hpath查询子文档(人类可读路径)
-      const subDocs = await api.sql(`
-        SELECT id, content, hpath
-        FROM blocks
-        WHERE box = '${escapeSqlString(currentDoc.box)}'
-        AND type = 'd'
-        AND hpath LIKE '${escapeSqlString(currentDoc.hpath)}/%'
-        AND hpath NOT LIKE '${escapeSqlString(currentDoc.hpath)}/%/%'
-        ORDER BY hpath ASC
-      `)
+      const subDocs = await this.getSubDocs(docId)
 
       if (!subDocs || subDocs.length === 0) {
         showMessage(this.plugin.i18n.noSubDocuments, 3000, "info")
@@ -183,9 +198,8 @@ export class TableOfContentsManager {
 
       for (let i = 0; i < subDocs.length; i++) {
         const subDoc = subDocs[i]
-        const docName = subDoc.content.replace(/<[^>]*>/g, "")
         const index = String(i + 1).padStart(2, "0")
-        indexContent += `${index}. [${docName}](siyuan://blocks/${subDoc.id})\n`
+        indexContent += `${index}. [${subDoc.name}](siyuan://blocks/${subDoc.id})\n`
       }
 
       await this.insertContent(indexContent, "index")
@@ -208,23 +222,7 @@ export class TableOfContentsManager {
         return
       }
 
-      // 获取当前文档信息
-      const currentDoc = await api.getBlockByID(docId)
-      if (!currentDoc || !currentDoc.box || !currentDoc.hpath) {
-        showMessage("无法获取当前文档信息", 3000, "error")
-        return
-      }
-
-      // 使用hpath查询子文档(人类可读路径)
-      const subDocs = await api.sql(`
-        SELECT id, content, hpath
-        FROM blocks
-        WHERE box = '${escapeSqlString(currentDoc.box)}'
-        AND type = 'd'
-        AND hpath LIKE '${escapeSqlString(currentDoc.hpath)}/%'
-        AND hpath NOT LIKE '${escapeSqlString(currentDoc.hpath)}/%/%'
-        ORDER BY hpath ASC
-      `)
+      const subDocs = await this.getSubDocs(docId)
 
       if (!subDocs || subDocs.length === 0) {
         showMessage(this.plugin.i18n.noSubDocuments, 3000, "info")
@@ -237,9 +235,8 @@ export class TableOfContentsManager {
       for (let i = 0; i < subDocs.length; i++) {
         const subDoc = subDocs[i]
         // 使用引用块语法 ((id "锚文本"))
-        const docName = subDoc.content.replace(/<[^>]*>/g, "")
         const index = String(i + 1).padStart(2, "0")
-        refContent += `${index}. ((${subDoc.id} "${docName}"))\n`
+        refContent += `${index}. ((${subDoc.id} "${subDoc.name}"))\n`
       }
 
       await this.insertContent(refContent, "subdocs-ref")
@@ -262,23 +259,7 @@ export class TableOfContentsManager {
         return
       }
 
-      // 获取当前文档信息
-      const currentDoc = await api.getBlockByID(docId)
-      if (!currentDoc || !currentDoc.box || !currentDoc.hpath) {
-        showMessage("无法获取当前文档信息", 3000, "error")
-        return
-      }
-
-      // 使用hpath查询直接子文档
-      const subDocs = await api.sql(`
-        SELECT id, content, hpath
-        FROM blocks
-        WHERE box = '${escapeSqlString(currentDoc.box)}'
-        AND type = 'd'
-        AND hpath LIKE '${escapeSqlString(currentDoc.hpath)}/%'
-        AND hpath NOT LIKE '${escapeSqlString(currentDoc.hpath)}/%/%'
-        ORDER BY hpath ASC
-      `)
+      const subDocs = await this.getSubDocs(docId)
 
       if (!subDocs || subDocs.length === 0) {
         showMessage(this.plugin.i18n.noSubDocuments, 3000, "info")
@@ -311,10 +292,9 @@ export class TableOfContentsManager {
 
       for (let i = 0; i < subDocs.length; i++) {
         const subDoc = subDocs[i]
-        const docName = subDoc.content.replace(/<[^>]*>/g, "")
 
         // 使用引用块语法，添加图标美化
-        content += `### 📄 ((${subDoc.id} "${docName}"))\n\n`
+        content += `### 📄 ((${subDoc.id} "${subDoc.name}"))\n\n`
 
         // 从预查询结果中获取该子文档的标题
         const headings = headingMap.get(subDoc.id)

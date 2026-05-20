@@ -201,6 +201,42 @@
     <!-- 底部信息 -->
     <div class="panel-footer">
       <span class="footer-hint">点击文档可在思源中打开 · 点击发布图标发布文档</span>
+      <button
+        class="footer-toggle-tip"
+        @click="showPublishTip = !showPublishTip"
+      >
+        {{ showPublishTip ? '收起' : '发布标准' }}
+      </button>
+    </div>
+
+    <!-- 发布标准提示 -->
+    <div
+      v-if="showPublishTip"
+      class="publish-tip"
+    >
+      <h4>📋 发布标准</h4>
+      <ul>
+        <li>
+          <strong>待发布</strong>
+          <span>调整好的文章，等待发布</span>
+        </li>
+        <li>
+          <strong>已发布</strong>
+          <span>发布完成后需重新区分书签，如：已发布 → 改为 C#</span>
+        </li>
+        <li>
+          <strong>无</strong>
+          <span>无需理会操作</span>
+        </li>
+        <li>
+          <strong>不使用</strong>
+          <span>废弃文档（归档）</span>
+        </li>
+        <li>
+          <strong>其他描述</strong>
+          <span>如 JS、C#、API 等：属于已发布并已完成分类处理</span>
+        </li>
+      </ul>
     </div>
 
     <!-- 发布面板 -->
@@ -258,6 +294,8 @@ const {
 } = useDocAnalysis(props.plugin)
 
 const { markAsPending } = usePublish(props.plugin)
+
+const showPublishTip = ref(false)
 
 // ============================================================
 // 发布面板状态

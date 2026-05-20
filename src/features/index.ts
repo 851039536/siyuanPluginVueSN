@@ -59,7 +59,6 @@ export { registerTableOfContents } from "./tableOfContents"
 export { registerTextDiff } from "./textDiff"
 export { registerUnitConverter } from "./unitConverter"
 export { registerVideo } from "./video"
-export { registerWebDAV } from "./webDAV"
 export { registerWordQuery } from "./wordQuery"
 export { registerRssReader } from "./rssReader"
 
@@ -79,7 +78,7 @@ type _Registered =
   | "statistics" | "encryption" | "video" | "everythingSearch"
   | "statusBar" | "floatingToolbar" | "floatingBox" | "textDiff"
   | "base64Image" | "flashcardReading" | "passwordVault" | "docAnalysis"
-  | "webDAV" | "formatAssistant" | "htmlViewer" | "rssReader"
+  | "formatAssistant" | "htmlViewer" | "rssReader"
 
 // --- 编译时断言辅助 ---
 // 利用泛型接口约束 T extends true 产生 TypeScript 编译错误，无运行时开销

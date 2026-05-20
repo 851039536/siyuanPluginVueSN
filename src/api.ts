@@ -106,11 +106,32 @@ export async function renameDoc(
   return request(url, data)
 }
 
+/**
+ * 根据 ID 重命名文档
+ */
+export async function renameDocById(
+  id: DocumentId,
+  title: string,
+): Promise<DocumentId> {
+  let data = { id, title }
+  let url = "/api/filetree/renameDoc"
+  return request(url, data)
+}
+
 export async function removeDoc(notebook: NotebookId, path: string) {
   let data = {
     notebook,
     path,
   }
+  let url = "/api/filetree/removeDoc"
+  return request(url, data)
+}
+
+/**
+ * 根据 ID 删除文档
+ */
+export async function removeDocById(id: DocumentId) {
+  let data = { id }
   let url = "/api/filetree/removeDoc"
   return request(url, data)
 }
@@ -125,6 +146,18 @@ export async function moveDocs(
     toNotebook,
     toPath,
   }
+  let url = "/api/filetree/moveDocs"
+  return request(url, data)
+}
+
+/**
+ * 根据 ID 移动文档
+ */
+export async function moveDocsById(
+  fromIDs: DocumentId[],
+  toID: DocumentId,
+) {
+  let data = { fromIDs, toID }
   let url = "/api/filetree/moveDocs"
   return request(url, data)
 }
@@ -504,6 +537,15 @@ export async function removeFile(path: string) {
     path,
   }
   let url = "/api/file/removeFile"
+  return request(url, data)
+}
+
+/**
+ * 重命名文件
+ */
+export async function renameFile(path: string, newPath: string) {
+  let data = { path, newPath }
+  let url = "/api/file/renameFile"
   return request(url, data)
 }
 

@@ -4,7 +4,7 @@
  * 注意：FontSettings、HeadingSettings、CodeBlockSettings、ListSettings、
  * HighlightSettings、TabPinSettings、TextDiffSettings 等类型及其默认值
  * 已统一迁移至各 feature 的 types/storage.ts，
- * 此处仅保留插件全局配置（PluginSettings）及 WebDAVConfig。
+ * 此处仅保留插件全局配置（PluginSettings）。
  */
 import { Plugin } from "siyuan"
 import {
@@ -66,11 +66,9 @@ export interface PluginSettings {
   enableTranslate: boolean // 是否启用翻译替换功能
   enablePasswordVault: boolean // 是否启用密码箱功能
   enableDocAnalysis: boolean // 是否启用文档分析功能
-  enableWebDAV: boolean // 是否启用WebDAV功能
   enableFormatAssistant: boolean // 是否启用排版助手功能
   enableHtmlViewer: boolean // 是否启用HTML展示功能
   enableRssReader: boolean // 是否启用RSS订阅功能
-  webdavConfig: WebDAVConfig // WebDAV服务器配置
   videoCategories?: string[] // 视频分类列表
   compactMode: boolean // 是否启用全局紧洛模式
   statisticsTheme: "default" | "github" // 统计面板主题风格
@@ -86,19 +84,6 @@ export interface PluginSettings {
   searchProvider: string // 搜索引擎供应商: 'jina' | 'bocha' | 'searxng'
   searchBochaApiKey: string // 博查搜索 API Key
   searchSearxngUrl: string // SearXNG 实例地址
-}
-
-/**
- * WebDAV配置接口
- */
-export interface WebDAVConfig {
-  serverUrl: string // WebDAV服务器地址
-  username: string // 用户名
-  password: string // 密码
-  basePath: string // 基础路径
-  autoSync: boolean // 是否自动同步
-  syncInterval: number // 同步间隔(分钟)
-  lastSyncTime: string // 最后同步时间
 }
 
 /**
@@ -132,19 +117,9 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enableTranslate: true,
   enablePasswordVault: true,
   enableDocAnalysis: true,
-  enableWebDAV: true,
   enableFormatAssistant: true,
   enableHtmlViewer: true,
   enableRssReader: true,
-  webdavConfig: {
-    serverUrl: "",
-    username: "",
-    password: "",
-    basePath: "/",
-    autoSync: false,
-    syncInterval: 30,
-    lastSyncTime: "",
-  },
   videoCategories: ["默认分类", "教程", "演示", "其他"],
   compactMode: true,
   statisticsTheme: "default",
@@ -176,10 +151,6 @@ async function encryptSensitiveFields(
   const encrypted = { ...settings }
   encrypted.aiApiKey = await encryptSetting(settings.aiApiKey)
   encrypted.searchBochaApiKey = await encryptSetting(settings.searchBochaApiKey)
-  encrypted.webdavConfig = {
-    ...settings.webdavConfig,
-    password: await encryptSetting(settings.webdavConfig.password),
-  }
   return encrypted
 }
 
@@ -192,10 +163,6 @@ async function decryptSensitiveFields(
   const decrypted = { ...settings }
   decrypted.aiApiKey = await decryptSetting(settings.aiApiKey)
   decrypted.searchBochaApiKey = await decryptSetting(settings.searchBochaApiKey)
-  decrypted.webdavConfig = {
-    ...settings.webdavConfig,
-    password: await decryptSetting(settings.webdavConfig.password),
-  }
   return decrypted
 }
 
@@ -224,7 +191,7 @@ export async function loadSettings(plugin: Plugin): Promise<PluginSettings> {
 /**
  * 保存插件配置
  *
- * 敏感字段 (aiApiKey, webdavConfig.password) 在保存前
+ * 敏感字段 (aiApiKey) 在保存前
  * 会使用 AES-GCM 加密，防止明文泄漏。
  */
 export async function saveSettings(

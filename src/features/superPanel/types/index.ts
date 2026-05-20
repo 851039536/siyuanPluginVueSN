@@ -71,7 +71,6 @@ const ACTION_EVENT_MAP: Record<
   openVideoManager: { event: "openVideoManager" },
   openEverythingSearch: { event: "openEverythingSearch" },
   openFlashcardReading: { event: "openFlashcardReading" },
-  openWebDAV: { event: "openWebDAV" },
   openStatistics: { event: "openStatistics" },
   openDocAnalysis: {
     event: "dock-click",

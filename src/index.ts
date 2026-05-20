@@ -44,7 +44,6 @@ import {
   registerTextDiff,
   registerUnitConverter,
   registerVideo,
-  registerWebDAV,
   registerWordQuery,
 } from "@/features"
 import {
@@ -193,7 +192,6 @@ export default class PluginSample extends Plugin {
     registerFlashcardReading(this)
     registerPasswordVault(this)
     registerDocAnalysis(this)
-    registerWebDAV(this)
     registerFormatAssistant(this)
     registerHtmlViewer(this)
     registerRssReader(this)

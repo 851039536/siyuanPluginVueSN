@@ -87,25 +87,19 @@ src/
 #   - translate / 英译中替换
 ```
 
-### 编译时验证链（三重校验）
+### 编译时验证链（二重校验）
 
-验证链在 `config.ts`（`FEATURE_CONFIG` → `FeatureId`）、`superPanel/types/index.ts`（`FEATURE_SETTINGS_MAP`）以及 `features/index.ts` 之间建立三重校验：
+验证链在 `config.ts`（`FEATURE_CONFIG` → `FeatureId`）与 `features/index.ts` 之间建立二重编译时校验：
 
 ```
-config.ts                    superPanel/types/               features/index.ts
-  FEATURE_CONFIG                FEATURE_SETTINGS_MAP            _Registered / _ConfigOnly
-      │                              │                               │
-      ▼                              ▼                               ▼
-  FeatureId (联合类型)     Record<FeatureId, string>      _AssertTrue 双向断言
+config.ts                       features/index.ts
+  FEATURE_CONFIG                  _Registered / _ConfigOnly
+      │                                │
+      ▼                                ▼
+  FeatureId (联合类型)        _AssertTrue 双向断言
 ```
 
-**① `FEATURE_SETTINGS_MAP` 校验**（`superPanel/types/index.ts` 第 71 行）
-
-`FEATURE_SETTINGS_MAP` 的类型签名 `Record<FeatureId, string>` 自动保证：
-- `FeatureId` 新增时，`FEATURE_SETTINGS_MAP` 必须补充映射，否则 TS 报错
-- `FeatureId` 删除时，`FEATURE_SETTINGS_MAP` 中多余的键会被 TS 标记
-
-**② `features/index.ts` 双向断言**（第 84-96 行）
+**① `features/index.ts` 双向断言**（第 84-96 行）
 
 通过 `_AssertTrue<T extends true>` 泛型接口实现，零运行时开销：
 
@@ -128,9 +122,8 @@ type _AssertAllCovered = _AssertTrue<
 **效果**：
 | 场景 | 触发 | 结果 |
 |------|------|------|
-| `config.ts` 新增功能但 `index.ts` 漏导 | ② `_AssertAllCovered` 失败 | ❌ 编译报错 |
-| `config.ts` 删除功能但 `index.ts` 残留导出 | ① `_AssertRegisteredInConfig` 失败 | ❌ 编译报错 |
-| `FEATURE_SETTINGS_MAP` 键值不匹配 | `Record<FeatureId, string>` 约束 | ❌ 编译报错 |
+| `config.ts` 新增功能但 `index.ts` 漏导 | `_AssertAllCovered` 失败 | ❌ 编译报错 |
+| `config.ts` 删除功能但 `index.ts` 残留导出 | `_AssertRegisteredInConfig` 失败 | ❌ 编译报错 |
 
 ### 配置验证链
 
@@ -148,12 +141,11 @@ type _AssertAllCovered = _AssertTrue<
 - **AI 统一**：所有 AI API 调用必须通过 `src/utils/aiApi.ts`，禁止在功能模块中直接调用 fetch/axios
 - **事件统一**：所有自定义事件派发必须通过 `src/utils/eventBus.ts` 的 `emitCustomEvent` 函数，禁止直接使用 `window.dispatchEvent(new CustomEvent(...))` 或 `document.dispatchEvent(...)`
 - **图标注册**：新增功能需在 `src/config/icons.ts` 的 `FEATURE_ICONS` 中添加图标映射，并运行 `pnpm validate:icons` 验证
-- **功能注册完整性**：新功能必须同时在以下 5 处注册：
+- **功能注册完整性**：新功能必须同时在以下 4 处注册：
   1. `src/features/config.ts` → `FEATURE_CONFIG`
-  2. `src/features/superPanel/types/index.ts` → `FEATURE_SETTINGS_MAP`
-  3. `src/features/index.ts` → 导出注册函数 + 更新 `_Registered` 类型
-  4. `src/index.ts` → 条件注册调用
-  5. `src/config/icons.ts` → `FEATURE_ICONS` 中添加图标映射
+  2. `src/features/index.ts` → 导出注册函数 + 更新 `_Registered` 类型
+  3. `src/index.ts` → 条件注册调用
+  4. `src/config/icons.ts` → `FEATURE_ICONS` 中添加图标映射
 - **编辑器配置**：缩进使用 2 空格，文件编码 UTF-8，清理尾随空格（参见 `.editorconfig`）
 
 ### 代码风格
@@ -426,14 +418,12 @@ export class MyFeatureStorage {
 1. 实现 `index.ts` 导出 `registerMyFeature()`，从 `./types` 导入所需类/函数
 2. `types/index.ts` 仅放类型定义和 Manager 类，不放 `register*()` 函数
 3. `src/features/index.ts` 中从 `"./myFeature"` 导出（非 `"./myFeature/types"`）
-   → 同时更新 `_Registered` 类型添加新功能 ID（否则编译时断言 ① 会报错）
+   → 同时更新 `_Registered` 类型添加新功能 ID（否则编译时断言会报错）
 4. `src/index.ts` 中条件注册
 5. `src/i18n/zh_CN.json` 和 `src/i18n/en_US.json` 添加翻译条目
 6. `src/features/config.ts` 的 `FEATURE_CONFIG` 中添加条目（自动推导 `FeatureId` 类型）
    → 若功能为纯配置型（无 register 函数），须在 `_ConfigOnly` 白名单中添加
-7. `src/features/superPanel/types/index.ts` 的 `FEATURE_SETTINGS_MAP` 中添加设置键映射
-   （TypeScript 会检查遗漏，`Record<FeatureId, string>` 保证编译时验证）
-8. `src/config/icons.ts` 的 `FEATURE_ICONS` 中添加图标映射
+7. `src/config/icons.ts` 的 `FEATURE_ICONS` 中添加图标映射
 
 ### 简单功能（无面板，无存储）
 

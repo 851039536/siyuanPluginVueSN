@@ -12,6 +12,7 @@
 import hljs from "highlight.js"
 import { marked } from "marked"
 import type { WechatTheme } from "../types/storage"
+import { normalizeWidths } from "../../htmlViewer/utils/normalizeWidths"
 
 /**
  * 微信主题配色定义
@@ -308,8 +309,11 @@ export async function convertMdToWechat(
   // 添加内联样式
   const styledHtml = applyInlineStyles(html, colors, fontSize, lineHeight)
 
+  // 净化固定宽度，适配手机端发布
+  const normalizedHtml = normalizeWidths(styledHtml).html
+
   // 微信公众号需要完整的外层包裹
-  return `<section style="padding: 16px; max-width: 100%; box-sizing: border-box; word-wrap: break-word;">${styledHtml}</section>`
+  return `<section style="padding: 16px; max-width: 100%; box-sizing: border-box; word-wrap: break-word;">${normalizedHtml}</section>`
 }
 
 /**

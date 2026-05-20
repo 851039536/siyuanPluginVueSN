@@ -85,6 +85,13 @@
                         title="格式化"
                         @click="formatHtml"
                       />
+                      <Button
+                        variant="ghost"
+                        size="small"
+                        icon="regex"
+                        title="适配手机宽度"
+                        @click="normalizeContentWidths"
+                      />
                     </div>
                   </div>
                   <textarea
@@ -562,6 +569,7 @@ import Select from "@/components/Select.vue"
 import { usePlugin } from "@/main"
 import { HtmlViewerStorage } from "./types/storage"
 import CoverGenerator from "./components/CoverGenerator.vue"
+import { normalizeTableWidths, normalizeWidths } from "./utils/normalizeWidths"
 import html2canvas from "html2canvas"
 
 // Props
@@ -741,6 +749,32 @@ function formatHtml() {
   } catch {
     showMessage("格式化失败", 2000, "error")
   }
+}
+
+// 净化内容固定宽度（适配手机发布）
+function normalizeContentWidths() {
+  if (!htmlContent.value.trim()) {
+    showMessage("没有可处理的内容", 2000, "info")
+    return
+  }
+
+  const beforeContent = htmlContent.value
+  // 先处理表格列宽
+  let processed = normalizeTableWidths(beforeContent)
+  // 再处理元素内联固定宽度
+  const result = normalizeWidths(processed)
+
+  if (result.changedCount === 0 && processed === beforeContent) {
+    showMessage("未发现需修复的固定宽度", 2000, "info")
+    return
+  }
+
+  htmlContent.value = result.html
+  showMessage(
+    `已修复 ${result.changedCount} 处固定宽度，适配手机端`,
+    2500,
+    "info",
+  )
 }
 
 // 复制预览为图片

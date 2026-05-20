@@ -227,7 +227,7 @@ const targetOptions = [
 ]
 
 const fontSizeOptions = [13, 14, 15, 16, 17, 18]
-const lineHeightOptions = [1.5, 1.6, 1.75, 1.8, 2.0]
+const lineHeightOptions = [1.3, 1.5, 1.6, 1.75, 1.8, 2.0]
 const wechatThemes = getWechatThemes()
 const bilibiliThemes = getBilibiliThemes()
 

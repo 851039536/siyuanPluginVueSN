@@ -1,6 +1,5 @@
 // ========== 编译时验证 ==========
-// 验证链在 config.ts（FEATURE_CONFIG → FeatureId）、FEATURE_SETTINGS_MAP（Record<FeatureId, string>）
-// 以及本文件之间建立三重校验：
+// 验证链在 config.ts（FEATURE_CONFIG → FeatureId）与本文件之间建立二重校验：
 
 import type { FeatureId } from "./config"
 
@@ -32,13 +31,10 @@ export { registerImageCompressor } from "./imageCompressor"
  * 功能模块统一导出
  *
  * 功能注册表（registerXxx）与 UI 元数据（FEATURE_CONFIG）通过 FeatureId 类型关联。
- * 编译时验证链：
- *   config.ts（FEATURE_CONFIG）→ FeatureId 类型 → FEATURE_SETTINGS_MAP（Record<FeatureId, string>）
  *
  * 添加功能时：
  *   1. 在 config.ts 的 FEATURE_CONFIG 中添加条目（自动生成 FeatureId）
  *   2. 在 features/index.ts 中添加对应的 register 导出
- *   3. 在 FEATURE_SETTINGS_MAP 中添加设置键映射（TypeScript 会检查遗漏/多余）
  * 移除功能时：反向操作，TypeScript 同样会报错。
  */
 export { registerPageLock } from "./pageLock"

@@ -236,6 +236,12 @@ export const FEATURE_ICONS = {
     color: "#07c160",
   },
 
+  // HTML 展示
+  htmlViewer: {
+    icon: "mdi:code-tags",
+    color: "#0ea5e9",
+  },
+
   // 视频相关图标
   play: {
     icon: "mdi:play",

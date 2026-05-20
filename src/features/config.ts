@@ -3,7 +3,6 @@
  *
  * 所有功能在此注册，其他模块通过 FeatureId 类型获得编译时验证。
  * 添加/删除功能时，只需修改此文件，TypeScript 将自动检查：
- * - FEATURE_SETTINGS_MAP 是否有遗漏/多余的键（通过 Record<FeatureId, string>）
  * - features/index.ts 导出是否一致（通过 `_assertExtends` 编译时断言）
  */
 

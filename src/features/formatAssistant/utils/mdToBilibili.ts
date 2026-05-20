@@ -13,6 +13,7 @@
 import hljs from "highlight.js"
 import { marked } from "marked"
 import type { BilibiliTheme } from "../types/storage"
+import { normalizeWidths } from "../../htmlViewer/utils/normalizeWidths"
 
 /**
  * 哔哩哔哩主题配色定义
@@ -310,8 +311,11 @@ export async function convertMdToBilibili(
   // 添加内联样式
   const styledHtml = applyInlineStyles(html, colors, fontSize, lineHeight)
 
+  // 净化固定宽度，适配手机端发布
+  const normalizedHtml = normalizeWidths(styledHtml).html
+
   // 哔哩哔哩专栏需要完整的外层包裹
-  return `<section style="padding: 16px; max-width: 100%; box-sizing: border-box; word-wrap: break-word;">${styledHtml}</section>`
+  return `<section style="padding: 16px; max-width: 100%; box-sizing: border-box; word-wrap: break-word;">${normalizedHtml}</section>`
 }
 
 /**

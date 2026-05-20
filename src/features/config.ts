@@ -202,16 +202,6 @@ export const FEATURE_CONFIG = [
     titleI18nKey: "floatingToolbar.translate",
   },
   {
-    id: "webDAV",
-    defaultTitle: "WebDAV同步",
-    defaultDesc: "使用WebDAV协议同步数据到云存储",
-    actions: [{
-      key: "openWebDAV",
-      label: "打开WebDAV",
-      hotkey: "",
-    }],
-  },
-  {
     id: "docAnalysis",
     defaultTitle: "文档分析",
     defaultDesc: "分析文档内容大小，查找小文档",

@@ -212,12 +212,6 @@ export const FEATURE_ICONS = {
     color: "#8b5cf6",
   },
 
-  // WebDAV
-  webDAV: {
-    icon: "mdi:cloud-sync",
-    color: "#3b82f6",
-  },
-
   // 密码箱
   passwordVault: {
     icon: "mdi:shield-key",

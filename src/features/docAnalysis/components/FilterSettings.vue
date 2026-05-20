@@ -105,12 +105,8 @@
 
 <script setup lang="ts">
 import type { FilterOptions } from "../types/index"
+import type { NotebookInfo } from "../composables/useDocAnalysis"
 import { Icon } from "@iconify/vue"
-
-interface NotebookInfo {
-  id: string
-  name: string
-}
 
 interface Props {
   options: FilterOptions

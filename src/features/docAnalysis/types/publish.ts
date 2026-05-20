@@ -253,28 +253,6 @@ export interface ExportContent {
 }
 
 // ============================================================
-// UI 状态
-// ============================================================
-
-/** 发布面板状态 */
-export interface PublishPanelState {
-  /** 是否显示 */
-  visible: boolean
-  /** 当前操作的文档 ID */
-  docId: string
-  /** 当前操作的文档标题 */
-  docTitle: string
-  /** 选中的平台 ID 列表 */
-  selectedPlatforms: string[]
-  /** 是否正在发布 */
-  publishing: boolean
-  /** 发布进度 (0~100) */
-  progress: number
-  /** 发布结果 */
-  result?: BatchPublishResult
-}
-
-// ============================================================
 // 预定义平台模板
 // ============================================================
 

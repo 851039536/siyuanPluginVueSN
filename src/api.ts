@@ -654,11 +654,11 @@ export async function currentTime(): Promise<number> {
 
 /**
  * 重新加载 UI
- * 使用原生 fetch 调用系统 API 重载界面
+ * v3.7.0+ 适配：/api/system/reloadUI → /api/ui/reloadUI
  */
 export async function reloadUI(): Promise<void> {
   try {
-    await fetch(`${SIYUAN_API_BASE_URL}/api/system/reloadUI`, {
+    await fetch(`${SIYUAN_API_BASE_URL}/api/ui/reloadUI`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

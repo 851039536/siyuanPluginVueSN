@@ -569,7 +569,7 @@ import Select from "@/components/Select.vue"
 import { usePlugin } from "@/main"
 import { HtmlViewerStorage } from "./types/storage"
 import CoverGenerator from "./components/CoverGenerator.vue"
-import { normalizeTableWidths, normalizeWidths } from "./utils/normalizeWidths"
+import { normalizeWidths } from "./utils/normalizeWidths"
 import html2canvas from "html2canvas"
 
 // Props
@@ -758,13 +758,9 @@ function normalizeContentWidths() {
     return
   }
 
-  const beforeContent = htmlContent.value
-  // 先处理表格列宽
-  let processed = normalizeTableWidths(beforeContent)
-  // 再处理元素内联固定宽度
-  const result = normalizeWidths(processed)
+  const result = normalizeWidths(htmlContent.value)
 
-  if (result.changedCount === 0 && processed === beforeContent) {
+  if (result.changedCount === 0) {
     showMessage("未发现需修复的固定宽度", 2000, "info")
     return
   }

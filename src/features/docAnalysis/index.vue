@@ -214,27 +214,27 @@
       v-if="showPublishTip"
       class="publish-tip"
     >
-      <h4>📋 发布标准</h4>
+      <h4>📋 书签 · 发布标准</h4>
       <ul>
         <li>
-          <strong>待发布</strong>
+          <span class="tip-badge pending">待发布</span>
           <span>调整好的文章，等待发布</span>
         </li>
         <li>
-          <strong>已发布</strong>
-          <span>发布完成后需重新区分书签，如：已发布 → 改为 C#</span>
+          <span class="tip-badge published">已发布</span>
+          <span>发布完成后需重新区分书签，如：<code>已发布</code> → <code>C#</code></span>
         </li>
         <li>
-          <strong>无</strong>
+          <span class="tip-badge none">无</span>
           <span>无需理会操作</span>
         </li>
         <li>
-          <strong>不使用</strong>
+          <span class="tip-badge unused">不使用</span>
           <span>废弃文档（归档）</span>
         </li>
         <li>
-          <strong>其他描述</strong>
-          <span>如 JS、C#、API 等：属于已发布并已完成分类处理</span>
+          <span class="tip-badge category">其他描述</span>
+          <span>如 <code>JS</code>、<code>C#</code>、<code>API</code> 等：属于已发布并已完成分类处理</span>
         </li>
       </ul>
     </div>

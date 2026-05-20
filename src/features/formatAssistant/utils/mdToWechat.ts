@@ -135,16 +135,16 @@ function applyInlineStyles(html: string, colors: ThemeColors, fontSize: number, 
   // h1 - h6
   for (let i = 1; i <= 6; i++) {
     const size = Math.round(fontSize * (1 + (7 - i) * 0.15))
-    const marginTop = i <= 2 ? "30px" : "20px"
-    const borderStyle = i <= 2 ? `border-bottom: 1px solid ${colors.hrColor}; padding-bottom: 8px;` : ""
-    const style = `margin-top: ${marginTop}; margin-bottom: 10px; font-size: ${size}px; font-weight: bold; color: ${colors.headingColor}; line-height: ${lineHeight}; ${borderStyle}`
+    const marginTop = i <= 2 ? "24px" : "16px"
+    const borderStyle = i <= 2 ? `border-bottom: 1px solid ${colors.hrColor}; padding-bottom: 6px;` : ""
+    const style = `margin-top: ${marginTop}; margin-bottom: 8px; font-size: ${size}px; font-weight: bold; color: ${colors.headingColor}; line-height: ${lineHeight}; ${borderStyle}`
     result = result.replace(new RegExp(`<h${i}>`, "g"), `<h${i} style="${style}">`)
   }
 
   // p
   result = result.replace(
     /<p>/g,
-    `<p style="margin-top: 0; margin-bottom: 16px; font-size: ${fontSize}px; color: ${colors.textColor}; line-height: ${lineHeight}; letter-spacing: 0.5px;">`,
+    `<p style="margin-top: 0; margin-bottom: 12px; font-size: ${fontSize}px; color: ${colors.textColor}; line-height: ${lineHeight}; letter-spacing: 0.5px;">`,
   )
 
   // strong
@@ -174,25 +174,25 @@ function applyInlineStyles(html: string, colors: ThemeColors, fontSize: number, 
   // img
   result = result.replace(
     /<img src="([^"]*)" alt="([^"]*)"[^/]*\/?>/g,
-    `<img src="$1" alt="$2" style="max-width: 100%; border-radius: 4px; margin: 10px 0;" />`,
+    `<img src="$1" alt="$2" style="max-width: 100%; border-radius: 4px; margin: 8px 0;" />`,
   )
 
   // blockquote
   result = result.replace(
     /<blockquote>/g,
-    `<blockquote style="margin: 16px 0; padding: 10px 16px; border-left: 4px solid ${colors.quoteBorderColor}; background-color: ${colors.quoteBgColor}; color: ${colors.textColor}; font-size: ${fontSize}px; line-height: ${lineHeight};">`,
+    `<blockquote style="margin: 12px 0; padding: 8px 14px; border-left: 4px solid ${colors.quoteBorderColor}; background-color: ${colors.quoteBgColor}; color: ${colors.textColor}; font-size: ${fontSize}px; line-height: ${lineHeight};">`,
   )
 
   // pre (代码块)
   result = result.replace(
     /<pre>/g,
-    `<pre style="margin: 16px 0; padding: 0; background-color: ${colors.codeBgColor}; border-radius: 4px; overflow-x: auto; line-height: 1.6;">`,
+    `<pre style="margin: 12px 0; padding: 0; background-color: ${colors.codeBgColor}; border-radius: 4px; overflow-x: auto; line-height: 1.5;">`,
   )
 
   // code with class (代码块内的 code，如 <code class="language-javascript">)
   result = result.replace(
     /<code class="language-(\w+)">/g,
-    (_, lang) => `<code class="language-${lang}" style="display: block; white-space: pre; overflow-x: auto; padding: 16px; font-family: 'Menlo', 'Monaco', 'Consolas', monospace; font-size: ${Math.round(fontSize * 0.85)}px; color: #333; background: none; border-radius: 0 0 4px 4px;">`,
+    (_, lang) => `<code class="language-${lang}" style="display: block; white-space: pre; overflow-x: auto; padding: 14px; font-family: 'Menlo', 'Monaco', 'Consolas', monospace; font-size: ${Math.round(fontSize * 0.85)}px; color: #333; background: none; border-radius: 0 0 4px 4px;">`,
   )
 
   // code (行内代码，不含 class 的)
@@ -204,31 +204,31 @@ function applyInlineStyles(html: string, colors: ThemeColors, fontSize: number, 
   // hr
   result = result.replace(
     /<hr\s*\/?>/g,
-    `<hr style="border: none; border-top: 1px solid ${colors.hrColor}; margin: 24px 0;" />`,
+    `<hr style="border: none; border-top: 1px solid ${colors.hrColor}; margin: 18px 0;" />`,
   )
 
   // ul
   result = result.replace(
     /<ul>/g,
-    `<ul style="padding-left: 18px; margin: 10px 0; list-style-type: disc;">`,
+    `<ul style="padding-left: 18px; margin: 8px 0; list-style-type: disc;">`,
   )
 
   // ol
   result = result.replace(
     /<ol>/g,
-    `<ol style="padding-left: 24px; margin: 10px 0; list-style-type: decimal;">`,
+    `<ol style="padding-left: 24px; margin: 8px 0; list-style-type: decimal;">`,
   )
 
   // li
   result = result.replace(
     /<li>/g,
-    `<li style="margin-bottom: 6px; font-size: ${fontSize}px; color: ${colors.textColor}; line-height: ${lineHeight};">`,
+    `<li style="margin-bottom: 4px; font-size: ${fontSize}px; color: ${colors.textColor}; line-height: ${lineHeight};">`,
   )
 
   // table
   result = result.replace(
     /<table>/g,
-    `<table style="width: 100%; border-collapse: collapse; margin: 16px 0; font-size: ${fontSize}px;">`,
+    `<table style="width: 100%; border-collapse: collapse; margin: 12px 0; font-size: ${fontSize}px;">`,
   )
 
   // thead
@@ -313,7 +313,7 @@ export async function convertMdToWechat(
   const normalizedHtml = normalizeWidths(styledHtml).html
 
   // 微信公众号需要完整的外层包裹
-  return `<section style="padding: 16px; max-width: 100%; box-sizing: border-box; word-wrap: break-word;">${normalizedHtml}</section>`
+  return `<section style="padding: 14px; max-width: 100%; box-sizing: border-box; word-wrap: break-word;">${normalizedHtml}</section>`
 }
 
 /**

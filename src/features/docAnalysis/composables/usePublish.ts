@@ -70,8 +70,6 @@ export function usePublish(plugin: Plugin) {
   const platforms = ref<PlatformConfig[]>([])
   // 发布设置
   const publishSettings = reactive<PublishSettings>({ ...DEFAULT_PUBLISH_SETTINGS })
-  // 是否正在加载
-  const loading = ref(false)
   // 发布进度
   const publishing = ref(false)
 
@@ -1048,14 +1046,6 @@ export function usePublish(plugin: Plugin) {
     await pushMsg(`已标记 ${docIds.length} 篇文档为"已发布"`)
   }
 
-  /** 标记文档为"不使用" */
-  async function markAsUnused(docIds: string[]) {
-    for (const docId of docIds) {
-      await setBlockAttrs(docId, { bookmark: "不使用" })
-    }
-    await pushMsg(`已标记 ${docIds.length} 篇文档为"不使用"`)
-  }
-
   // ============================================================
   // 发布历史
   // ============================================================
@@ -1076,7 +1066,6 @@ export function usePublish(plugin: Plugin) {
     // 状态
     platforms,
     publishSettings,
-    loading,
     publishing,
     // 初始化
     loadPublishConfig,
@@ -1096,7 +1085,6 @@ export function usePublish(plugin: Plugin) {
     getDocPublishState,
     markAsPending,
     markAsPublished,
-    markAsUnused,
     // 发布历史
     getPublishHistory,
     clearPublishHistory,

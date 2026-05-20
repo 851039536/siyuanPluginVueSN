@@ -29,7 +29,7 @@ import {
 } from "../types/storage"
 
 /** 笔记本信息 */
-interface NotebookInfo {
+export interface NotebookInfo {
   id: string
   name: string
 }
@@ -1048,7 +1048,6 @@ export function useDocAnalysis(plugin: Plugin) {
     queryByStatsCategory,
     openDoc,
     updateSort,
-    saveOptions,
     clearResults,
   }
 }

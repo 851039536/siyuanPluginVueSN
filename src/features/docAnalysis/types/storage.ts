@@ -6,11 +6,6 @@ import { Plugin } from "siyuan"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
 
-/** 存储的设置数据 */
-export interface DocAnalysisSettings {
-  filterOptions: FilterOptions
-}
-
 /** 默认过滤选项 */
 export const DEFAULT_FILTER_OPTIONS: FilterOptions = {
   titleKeyword: "",

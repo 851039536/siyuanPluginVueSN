@@ -141,6 +141,9 @@ type _AssertAllCovered = _AssertTrue<
 - **AI 统一**：所有 AI API 调用必须通过 `src/utils/aiApi.ts`，禁止在功能模块中直接调用 fetch/axios
 - **事件统一**：所有自定义事件派发必须通过 `src/utils/eventBus.ts` 的 `emitCustomEvent` 函数，禁止直接使用 `window.dispatchEvent(new CustomEvent(...))` 或 `document.dispatchEvent(...)`
 - **图标注册**：新增功能需在 `src/config/icons.ts` 的 `FEATURE_ICONS` 中添加图标映射，并运行 `pnpm validate:icons` 验证
+- **类型安全**：Props 接口禁止使用 `any`，应使用具体类型（`Plugin`、`Record<string, string>`、`Partial<T>` 等）
+- **无死代码**：禁止保留未使用的函数、变量、接口、导出；composables 返回值只暴露外部实际使用的成员
+- **微信宽度规范**：发布到微信的内容必须通过 `normalizeWidths()` 净化固定像素宽度（`width: Npx` → `max-width: 100%; width: auto`），参见 `src/features/htmlViewer/utils/normalizeWidths.ts`
 - **功能注册完整性**：新功能必须同时在以下 4 处注册：
   1. `src/features/config.ts` → `FEATURE_CONFIG`
   2. `src/features/index.ts` → 导出注册函数 + 更新 `_Registered` 类型

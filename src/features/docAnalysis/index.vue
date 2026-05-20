@@ -267,9 +267,12 @@ import StatsOverview from "./components/StatsOverview.vue"
 import { useDocAnalysis } from "./composables/useDocAnalysis"
 import { usePublish } from "./composables/usePublish"
 
+import type { FilterOptions } from "./types/index"
+import type { Plugin } from "siyuan"
+
 interface Props {
-  i18n: any
-  plugin: any
+  i18n: Record<string, Record<string, string>>
+  plugin: Plugin
 }
 
 const props = defineProps<Props>()
@@ -463,7 +466,7 @@ function clearStatsFilter() {
 }
 
 /** 更新过滤选项 */
-function handleOptionsUpdate(newOptions: any) {
+function handleOptionsUpdate(newOptions: Partial<FilterOptions>) {
   Object.assign(filterOptions, newOptions)
 }
 

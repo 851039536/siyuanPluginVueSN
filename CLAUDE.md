@@ -140,6 +140,7 @@ type _AssertAllCovered = _AssertTrue<
 
 ### 必须遵守
 
+- 每个功能目录（`src/features/*/`）下必须有 `README.md`，简要描述该功能的作用
 - 新功能必须在 `src/features/superPanel/index.vue` 提供开关
 - 优先使用思源内置图标（见下方列表）或 @iconify/vue
 - 全局样式导入：`@use "@/index.scss" as *;`

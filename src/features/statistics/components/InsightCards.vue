@@ -62,7 +62,7 @@
         class="show-all-btn"
         @click="showAllMilestones = true"
       >
-        显示全部 {{ allMilestones.length }} 个里程碑
+        {{ showAllText }}
       </button>
     </CollapsibleSection>
   </div>
@@ -85,13 +85,28 @@ interface Props {
   historicalData?: HistoricalDataItem[]
   totalNotes?: number
   totalWords?: number
-  i18n?: Record<string, string>
+  totalBacklinks?: number
+  i18n?: {
+    activityHeatmap?: string
+    less?: string
+    more?: string
+    last30Days?: string
+    activeDaysCount?: string
+    milestones?: string
+    showAllMilestones?: string
+    notes?: string
+    words?: string
+    notesUnit?: string
+    wordsUnit?: string
+    backlinks?: string
+  }
 }
 
 const props = withDefaults(defineProps<Props>(), {
   historicalData: () => [],
   totalNotes: 0,
   totalWords: 0,
+  totalBacklinks: 0,
   i18n: () => ({
     activityHeatmap: "活跃热力图",
     less: "少",
@@ -99,14 +114,21 @@ const props = withDefaults(defineProps<Props>(), {
     last30Days: "近30天",
     activeDaysCount: "天活跃",
     milestones: "里程碑",
+    showAllMilestones: "显示全部 {count} 个里程碑",
     notes: "笔记",
     words: "字数",
     notesUnit: "篇",
     wordsUnit: "字",
+    backlinks: "双链",
   }),
 })
 
 const showAllMilestones = ref(false)
+
+const showAllText = computed(() =>
+  (props.i18n.showAllMilestones || "显示全部 {count} 个里程碑")
+    .replace("{count}", String(allMilestones.length))
+)
 
 // ============ 热力日历 ============
 const LEVEL_THRESHOLDS = [0, 1, 6, 16, 31] as const

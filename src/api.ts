@@ -669,3 +669,77 @@ export async function reloadUI(): Promise<void> {
     throw error
   }
 }
+
+/**
+ * 重载文件树
+ */
+export async function reloadFiletree(): Promise<void> {
+  try {
+    await fetch(`${SIYUAN_API_BASE_URL}/api/ui/reloadFiletree`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({}),
+    })
+  } catch (error) {
+    console.error("重载文件树失败:", error)
+    throw error
+  }
+}
+
+/**
+ * 重载标签树
+ */
+export async function reloadTag(): Promise<void> {
+  try {
+    await fetch(`${SIYUAN_API_BASE_URL}/api/ui/reloadTag`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({}),
+    })
+  } catch (error) {
+    console.error("重载标签树失败:", error)
+    throw error
+  }
+}
+
+/**
+ * 重载属性面板（需传入块 ID）
+ * @param blockId 块 ID
+ */
+export async function reloadAttributeView(blockId: string): Promise<void> {
+  try {
+    await fetch(`${SIYUAN_API_BASE_URL}/api/ui/reloadAttributeView`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ id: blockId }),
+    })
+  } catch (error) {
+    console.error("重载属性面板失败:", error)
+    throw error
+  }
+}
+
+/**
+ * 重载 Protyle 编辑器（需传入文档 ID 或块 ID）
+ * @param blockId 文档 ID 或块 ID
+ */
+export async function reloadProtyle(blockId: string): Promise<void> {
+  try {
+    await fetch(`${SIYUAN_API_BASE_URL}/api/ui/reloadProtyle`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ id: blockId }),
+    })
+  } catch (error) {
+    console.error("重载 Protyle 编辑器失败:", error)
+    throw error
+  }
+}

@@ -29,13 +29,13 @@ interface Props {
   defaultExpanded?: boolean
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   title: "",
   badge: "",
   defaultExpanded: false,
 })
 
-const expanded = ref(false)
+const expanded = ref(props.defaultExpanded)
 
 function toggle() {
   expanded.value = !expanded.value

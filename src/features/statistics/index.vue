@@ -253,6 +253,12 @@ import StatsCardsCompact from "./components/StatsCardsCompact.vue"
 import TrendView from "./components/TrendView.vue"
 import ViewModeSection from "./components/ViewModeSection.vue"
 import WordRanking from "./components/WordRanking.vue"
+import type {
+  ChangedDoc,
+  DailyWordCount,
+  RangeStatItem,
+  StatisticsData,
+} from "./types"
 
 interface Props {
   onRefresh?: (params: {
@@ -321,47 +327,6 @@ interface Props {
     days3: string
     oneMonth: string
   }
-}
-
-interface StatisticsData {
-  totalNotes: number
-  totalWords: number
-  totalBlocks: number
-  totalAssets: number
-  totalImages: number
-  totalTags: number
-  totalBacklinks: number
-  todayCreated: number
-  todayModified: number
-  avgWordsPerDoc: number
-  dailyStats: DailyWordCount[]
-  currentPeriod: string
-  periodTotalWords: number
-  topTags: Array<{ name: string, count: number }>
-  recentDocs: Array<{
-    id: string
-    title: string
-    updated: string
-    words: number
-  }>
-}
-
-interface DailyWordCount {
-  date: string
-  words: number
-  dateLabel: string
-}
-
-interface ChangedDoc {
-  id: string
-  title: string
-  updated?: string
-}
-
-interface RangeStatItem {
-  date: string
-  newCount: number
-  modifiedCount: number
 }
 
 function openDoc(docId: string) {
@@ -542,10 +507,11 @@ async function switchDocRange(range: DocRangeType) {
 
 /** 点击柱状图某一天 → 钻取该日文档列表 */
 async function drillIntoDate(dateStr: string) {
+  if (!props.onGetDateChangedDocs) return
   selectedChartDate.value = dateStr
   changedDocsLoading.value = true
   try {
-    changedDocs.value = await props.onGetDateChangedDocs!(dateStr)
+    changedDocs.value = await props.onGetDateChangedDocs(dateStr)
   } finally {
     changedDocsLoading.value = false
   }
@@ -684,19 +650,8 @@ function padZero(num: number): string {
   return num < 10 ? `0${num}` : String(num)
 }
 
-watch(viewMode, () => {
-  refreshData()
-})
-
-watch(dayRange, () => {
-  refreshData()
-})
-
-watch(monthYearRange, () => {
-  refreshData()
-})
-
-watch(selectedYear, () => {
+// 合并监听，避免多个状态同时变化时触发多次刷新
+watch([viewMode, dayRange, monthYearRange, selectedYear], () => {
   refreshData()
 })
 

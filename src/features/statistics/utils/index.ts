@@ -46,3 +46,10 @@ export function isToday(dateStr: string): boolean {
   }
   return false
 }
+
+/**
+ * 校验日期字符串是否为合法 yyyyMMdd 格式，防止 SQL 注入
+ */
+export function isValidDateStr(dateStr: string): boolean {
+  return /^\d{8}$/.test(dateStr)
+}

@@ -125,6 +125,9 @@ interface Props {
     last1Year: string
     last2Years: string
     last3Years: string
+    weekAvg?: string
+    monthAvg?: string
+    yearAvg?: string
   }
 }
 
@@ -164,6 +167,9 @@ const props = withDefaults(defineProps<Props>(), {
     last1Year: "最近一年",
     last2Years: "最近两年",
     last3Years: "最近三年",
+    weekAvg: "周均字数",
+    monthAvg: "月均字数",
+    yearAvg: "年均字数",
   }),
 })
 
@@ -262,9 +268,9 @@ const availableYears = computed(() => {
 const periodAvgLabel = computed(() => {
   const labels: Record<string, string> = {
     day: props.i18n.avgLabel,
-    week: "周均字数",
-    month: "月均字数",
-    year: "年均字数",
+    week: props.i18n.weekAvg || "周均字数",
+    month: props.i18n.monthAvg || "月均字数",
+    year: props.i18n.yearAvg || "年均字数",
   }
   return labels[props.modelValue] || props.i18n.avgLabel
 })

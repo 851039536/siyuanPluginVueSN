@@ -796,6 +796,8 @@ defineExpose({
   display: flex;
   flex-direction: column;
   gap: 2px;
+  max-height: 280px;
+  overflow-y: auto;
 }
 
 .range-chart-legend {

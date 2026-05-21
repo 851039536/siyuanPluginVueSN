@@ -81,13 +81,9 @@ function getBarHeight(words: number): number {
 }
 
 function formatChartLabel(label: string): string {
-  // 可以根据需要自定义标签格式化逻辑
-  // 简化处理：如果是月份格式，只显示月
+  // "5/21 周四" → "5/21"；纯 "/" 格式保留原样
   if (label.includes(" ")) {
-    return label.split(" ")[1] || label
-  }
-  if (label.includes("/")) {
-    return label.split("/")[1] || label
+    return label.split(" ")[0]
   }
   return label
 }
@@ -167,16 +163,15 @@ function formatChartLabel(label: string): string {
 
       .bar-label {
         position: absolute;
-        bottom: -25px;
+        bottom: -18px;
         font-family: $font-body;
         font-size: 10px;
         font-weight: 500;
         color: var(--b3-theme-on-surface);
         opacity: 0.5;
-        transform: rotate(-45deg);
-        transform-origin: top left;
         white-space: nowrap;
         left: 50%;
+        transform: translateX(-50%);
 
         &.today {
           color: var(--b3-theme-primary);

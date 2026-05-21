@@ -203,16 +203,15 @@ function truncateName(name: string): string {
 
       .bar-label {
         position: absolute;
-        bottom: -22px;
+        bottom: -16px;
         font-family: $font-body;
         font-size: 10px;
         font-weight: 500;
         color: var(--b3-theme-on-surface);
         opacity: 0.5;
-        transform: rotate(-45deg);
-        transform-origin: top left;
         white-space: nowrap;
         left: 50%;
+        transform: translateX(-50%);
         cursor: default;
       }
     }

@@ -40,46 +40,81 @@
         :i18n="statsCardsI18n"
       />
 
-      <!-- 今日文档变化详情 -->
+      <!-- 文档变化详情（可按日期查看） -->
       <CollapsibleSection
-        v-if="stats.todayNewDocs.length > 0 || stats.todayModifiedDocs.length > 0"
-        :title="`📋 ${i18n.todayChanges || '今日文档变化'}`"
+        :title="`📋 ${i18n.docChanges || '文档变化'} — ${formattedDocDate}`"
+        :badge="changedDocsCount > 0 ? `${changedDocsCount}` : ''"
       >
+        <div class="changed-date-picker">
+          <input
+            type="date"
+            :value="docChangeDate"
+            :max="todayDateStr"
+            class="changed-date-input"
+            @change="onDocDateChange"
+          >
+          <button
+            class="changed-date-today"
+            :class="{ active: docChangeDate === todayDateStr }"
+            @click="setDocDateToday"
+          >
+            {{ i18n.today || '今天' }}
+          </button>
+        </div>
+
         <div
-          v-if="stats.todayNewDocs.length > 0"
-          class="changed-docs-group"
+          v-if="changedDocsLoading"
+          class="changed-docs-loading"
         >
-          <div class="changed-docs-group-title">
-            🆕 {{ i18n.todayCreated || '今日新增' }}（{{ stats.todayNewDocs.length }}）
+          {{ i18n.loading || '加载中...' }}
+        </div>
+
+        <div
+          v-else-if="changedDocs.newDocs.length > 0 || changedDocs.modifiedDocs.length > 0"
+          class="changed-docs-content"
+        >
+          <div
+            v-if="changedDocs.newDocs.length > 0"
+            class="changed-docs-group"
+          >
+            <div class="changed-docs-group-title">
+              🆕 {{ i18n.todayCreated || '新增' }}（{{ changedDocs.newDocs.length }}）
+            </div>
+            <div
+              v-for="doc in changedDocs.newDocs"
+              :key="doc.id"
+              class="changed-doc-item new"
+              :title="`点击打开文档`"
+              @click="openDoc(doc.id)"
+            >
+              <span class="changed-doc-icon">+</span>
+              <span class="changed-doc-title">{{ doc.title || '无标题' }}</span>
+            </div>
           </div>
           <div
-            v-for="doc in stats.todayNewDocs"
-            :key="doc.id"
-            class="changed-doc-item new"
-            :title="`点击打开文档`"
-            @click="openDoc(doc.id)"
+            v-if="changedDocs.modifiedDocs.length > 0"
+            class="changed-docs-group"
           >
-            <span class="changed-doc-icon">+</span>
-            <span class="changed-doc-title">{{ doc.title || '无标题' }}</span>
+            <div class="changed-docs-group-title">
+              ✏️ {{ i18n.todayModified || '修改' }}（{{ changedDocs.modifiedDocs.length }}）
+            </div>
+            <div
+              v-for="doc in changedDocs.modifiedDocs"
+              :key="doc.id"
+              class="changed-doc-item modified"
+              :title="`点击打开文档`"
+              @click="openDoc(doc.id)"
+            >
+              <span class="changed-doc-icon">~</span>
+              <span class="changed-doc-title">{{ doc.title || '无标题' }}</span>
+            </div>
           </div>
         </div>
         <div
-          v-if="stats.todayModifiedDocs.length > 0"
-          class="changed-docs-group"
+          v-else
+          class="changed-docs-empty"
         >
-          <div class="changed-docs-group-title">
-            ✏️ {{ i18n.todayModified || '今日修改' }}（{{ stats.todayModifiedDocs.length }}）
-          </div>
-          <div
-            v-for="doc in stats.todayModifiedDocs"
-            :key="doc.id"
-            class="changed-doc-item modified"
-            :title="`点击打开文档`"
-            @click="openDoc(doc.id)"
-          >
-            <span class="changed-doc-icon">~</span>
-            <span class="changed-doc-title">{{ doc.title || '无标题' }}</span>
-          </div>
+          {{ i18n.noDocChanges || '当天无新增或修改' }}
         </div>
       </CollapsibleSection>
 
@@ -178,6 +213,10 @@ interface Props {
   }) => Promise<StatisticsData>
   onGetHistoricalData?: (days?: number) => Promise<any[]>
   onGetNotebookDocStats?: () => Promise<Array<{ name: string, count: number }>>
+  onGetDateChangedDocs?: (dateStr: string) => Promise<{
+    newDocs: ChangedDoc[]
+    modifiedDocs: ChangedDoc[]
+  }>
   i18n?: {
     loading: string
     refresh: string
@@ -225,6 +264,9 @@ interface Props {
     changeLabel: string
     docBarChartTitle: string
     todayChanges: string
+    docChanges: string
+    noDocChanges: string
+    today: string
   }
 }
 
@@ -249,8 +291,6 @@ interface StatisticsData {
     updated: string
     words: number
   }>
-  todayNewDocs: ChangedDoc[]
-  todayModifiedDocs: ChangedDoc[]
 }
 
 interface DailyWordCount {
@@ -319,6 +359,9 @@ const props = withDefaults(defineProps<Props>(), {
     changeLabel: "变化",
     docBarChartTitle: "各笔记本文档数",
     todayChanges: "今日文档变化",
+    docChanges: "文档变化",
+    noDocChanges: "当天无新增或修改",
+    today: "今天",
   }),
 })
 
@@ -334,6 +377,53 @@ const historicalData = ref<any[]>([])
 const updateInterval = ref(60)
 const notebookDocStats = ref<Array<{ name: string, count: number }>>([])
 const docChartLoading = ref(false)
+
+// 文档变化按日期查看
+const docChangeDate = ref(getTodayStr())
+const changedDocs = ref<{ newDocs: ChangedDoc[], modifiedDocs: ChangedDoc[] }>({ newDocs: [], modifiedDocs: [] })
+const changedDocsLoading = ref(false)
+
+const todayDateStr = computed(() => getTodayStr())
+
+const formattedDocDate = computed(() => {
+  const d = docChangeDate.value
+  return `${d.substring(0, 4)}-${d.substring(4, 6)}-${d.substring(6, 8)}`
+})
+
+const changedDocsCount = computed(() =>
+  changedDocs.value.newDocs.length + changedDocs.value.modifiedDocs.length
+)
+
+function getTodayStr(): string {
+  const d = new Date()
+  return `${d.getFullYear()}${padZero(d.getMonth() + 1)}${padZero(d.getDate())}`
+}
+
+async function loadDateChangedDocs(dateStr: string) {
+  if (!props.onGetDateChangedDocs) return
+  changedDocsLoading.value = true
+  try {
+    changedDocs.value = await props.onGetDateChangedDocs(dateStr)
+  } catch (error) {
+    console.error("加载文档变化失败:", error)
+    changedDocs.value = { newDocs: [], modifiedDocs: [] }
+  } finally {
+    changedDocsLoading.value = false
+  }
+}
+
+function onDocDateChange(e: Event) {
+  const input = e.target as HTMLInputElement
+  if (!input.value) return
+  // HTML date input returns yyyy-MM-dd, convert to yyyyMMdd
+  docChangeDate.value = input.value.replace(/-/g, "")
+  loadDateChangedDocs(docChangeDate.value)
+}
+
+function setDocDateToday() {
+  docChangeDate.value = getTodayStr()
+  loadDateChangedDocs(docChangeDate.value)
+}
 
 const headerI18n = computed(() => props.i18n)
 const statsCardsI18n = computed(() => props.i18n)
@@ -509,6 +599,7 @@ async function loadNotebookDocStats() {
 
 onMounted(() => {
   refreshData()
+  loadDateChangedDocs(docChangeDate.value)
 })
 
 defineExpose({
@@ -518,6 +609,65 @@ defineExpose({
 
 <style scoped lang="scss">
 @use "./styles/index.scss";
+
+.changed-date-picker {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.changed-date-input {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  font-size: 12px;
+}
+
+.changed-date-today {
+  padding: 4px 12px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+
+  &.active {
+    background: var(--b3-theme-primary-light);
+    color: var(--b3-theme-primary);
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+.changed-docs-loading {
+  text-align: center;
+  padding: 16px;
+  font-size: 12px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+}
+
+.changed-docs-empty {
+  text-align: center;
+  padding: 16px;
+  font-size: 12px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+}
+
+.changed-docs-content {
+  max-height: 240px;
+  overflow-y: auto;
+}
 
 .changed-docs-group {
   margin-bottom: 12px;

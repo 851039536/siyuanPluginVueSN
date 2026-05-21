@@ -40,6 +40,49 @@
         :i18n="statsCardsI18n"
       />
 
+      <!-- 今日文档变化详情 -->
+      <CollapsibleSection
+        v-if="stats.todayNewDocs.length > 0 || stats.todayModifiedDocs.length > 0"
+        :title="`📋 ${i18n.todayChanges || '今日文档变化'}`"
+      >
+        <div
+          v-if="stats.todayNewDocs.length > 0"
+          class="changed-docs-group"
+        >
+          <div class="changed-docs-group-title">
+            🆕 {{ i18n.todayCreated || '今日新增' }}（{{ stats.todayNewDocs.length }}）
+          </div>
+          <div
+            v-for="doc in stats.todayNewDocs"
+            :key="doc.id"
+            class="changed-doc-item new"
+            :title="`点击打开文档`"
+            @click="openDoc(doc.id)"
+          >
+            <span class="changed-doc-icon">+</span>
+            <span class="changed-doc-title">{{ doc.title || '无标题' }}</span>
+          </div>
+        </div>
+        <div
+          v-if="stats.todayModifiedDocs.length > 0"
+          class="changed-docs-group"
+        >
+          <div class="changed-docs-group-title">
+            ✏️ {{ i18n.todayModified || '今日修改' }}（{{ stats.todayModifiedDocs.length }}）
+          </div>
+          <div
+            v-for="doc in stats.todayModifiedDocs"
+            :key="doc.id"
+            class="changed-doc-item modified"
+            :title="`点击打开文档`"
+            @click="openDoc(doc.id)"
+          >
+            <span class="changed-doc-icon">~</span>
+            <span class="changed-doc-title">{{ doc.title || '无标题' }}</span>
+          </div>
+        </div>
+      </CollapsibleSection>
+
       <!-- 视图模式切换 + 时段统计 + 图表 -->
       <ViewModeSection
         v-model="viewMode"
@@ -181,6 +224,7 @@ interface Props {
     assets: string
     changeLabel: string
     docBarChartTitle: string
+    todayChanges: string
   }
 }
 
@@ -205,12 +249,26 @@ interface StatisticsData {
     updated: string
     words: number
   }>
+  todayNewDocs: ChangedDoc[]
+  todayModifiedDocs: ChangedDoc[]
 }
 
 interface DailyWordCount {
   date: string
   words: number
   dateLabel: string
+}
+
+interface ChangedDoc {
+  id: string
+  title: string
+  updated?: string
+}
+
+function openDoc(docId: string) {
+  if (docId) {
+    window.open(`siyuan://blocks/${docId}`)
+  }
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -260,6 +318,7 @@ const props = withDefaults(defineProps<Props>(), {
     assets: "附件",
     changeLabel: "变化",
     docBarChartTitle: "各笔记本文档数",
+    todayChanges: "今日文档变化",
   }),
 })
 
@@ -459,4 +518,65 @@ defineExpose({
 
 <style scoped lang="scss">
 @use "./styles/index.scss";
+
+.changed-docs-group {
+  margin-bottom: 12px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.changed-docs-group-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--b3-theme-on-surface);
+  margin-bottom: 6px;
+  padding: 0 4px;
+}
+
+.changed-doc-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--b3-theme-on-surface);
+  transition: background 0.15s;
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+
+  .changed-doc-icon {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  &.new .changed-doc-icon {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+  }
+
+  &.modified .changed-doc-icon {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+  }
+
+  .changed-doc-title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
 </style>

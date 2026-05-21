@@ -40,81 +40,131 @@
         :i18n="statsCardsI18n"
       />
 
-      <!-- 文档变化详情（可按日期查看） -->
+      <!-- 文档变化详情（日期范围 + 柱状图 + 详情列表） -->
       <CollapsibleSection
-        :title="`📋 ${i18n.docChanges || '文档变化'} — ${formattedDocDate}`"
-        :badge="changedDocsCount > 0 ? `${changedDocsCount}` : ''"
+        :title="`📋 ${i18n.docChanges || '文档变化'} — ${rangeLabel}`"
+        :badge="docRange !== 'today' && rangeStats.length > 0 ? `${rangeTotalChanges}` : changedDocsCount > 0 ? `${changedDocsCount}` : ''"
       >
-        <div class="changed-date-picker">
-          <input
-            type="date"
-            :value="docChangeDate"
-            :max="todayDateStr"
-            class="changed-date-input"
-            @change="onDocDateChange"
-          >
+        <!-- 范围选择按钮 -->
+        <div class="changed-range-picker">
           <button
-            class="changed-date-today"
-            :class="{ active: docChangeDate === todayDateStr }"
-            @click="setDocDateToday"
+            v-for="r in dateRangeOptions"
+            :key="r.value"
+            class="changed-range-btn"
+            :class="{ active: docRange === r.value }"
+            @click="switchDocRange(r.value)"
           >
-            {{ i18n.today || '今天' }}
+            {{ r.label }}
           </button>
         </div>
 
+        <!-- 范围模式：柱状图 -->
         <div
-          v-if="changedDocsLoading"
-          class="changed-docs-loading"
+          v-if="docRange !== 'today' && rangeStats.length > 0"
+          class="range-chart-section"
         >
-          {{ i18n.loading || '加载中...' }}
+          <div class="range-chart-bar-group">
+            <div class="range-chart-legend">
+              <span class="legend-dot new"></span>{{ i18n.todayCreated || '新增' }}
+              <span class="legend-dot modified"></span>{{ i18n.todayModified || '修改' }}
+            </div>
+            <div
+              v-for="item in sortByDate(rangeStats)"
+              :key="item.date"
+              class="range-chart-row"
+              :class="{ active: selectedChartDate === item.date }"
+              @click="drillIntoDate(item.date)"
+            >
+              <span class="range-chart-label">{{ formatChartDate(item.date) }}</span>
+              <div class="range-chart-bars">
+                <div
+                  v-if="item.newCount > 0"
+                  class="range-chart-bar new"
+                  :style="{ width: barWidth(item.newCount) }"
+                >
+                  {{ item.newCount }}
+                </div>
+                <div
+                  v-if="item.modifiedCount > 0"
+                  class="range-chart-bar modified"
+                  :style="{ width: barWidth(item.modifiedCount) }"
+                >
+                  {{ item.modifiedCount }}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div
-          v-else-if="changedDocs.newDocs.length > 0 || changedDocs.modifiedDocs.length > 0"
-          class="changed-docs-content"
-        >
-          <div
-            v-if="changedDocs.newDocs.length > 0"
-            class="changed-docs-group"
-          >
-            <div class="changed-docs-group-title">
-              🆕 {{ i18n.todayCreated || '新增' }}（{{ changedDocs.newDocs.length }}）
-            </div>
-            <div
-              v-for="doc in changedDocs.newDocs"
-              :key="doc.id"
-              class="changed-doc-item new"
-              :title="`点击打开文档`"
-              @click="openDoc(doc.id)"
+        <!-- 单日详情（date 模式钻取 或 today 模式） -->
+        <div v-if="selectedChartDate || docRange === 'today'">
+          <div class="changed-date-picker" v-if="docRange === 'today'">
+            <input
+              type="date"
+              :value="docChangeDate"
+              :max="todayDateStr"
+              class="changed-date-input"
+              @change="onDocDateChange"
             >
-              <span class="changed-doc-icon">+</span>
-              <span class="changed-doc-title">{{ doc.title || '无标题' }}</span>
+            <button
+              class="changed-date-today"
+              :class="{ active: docChangeDate === todayDateStr }"
+              @click="setDocDateToday"
+            >
+              {{ i18n.today || '今天' }}
+            </button>
+          </div>
+
+          <div v-if="changedDocsLoading" class="changed-docs-loading">
+            {{ i18n.loading || '加载中...' }}
+          </div>
+
+          <div
+            v-else-if="changedDocs.newDocs.length > 0 || changedDocs.modifiedDocs.length > 0"
+            class="changed-docs-content"
+          >
+            <div v-if="changedDocs.newDocs.length > 0" class="changed-docs-group">
+              <div class="changed-docs-group-title">
+                🆕 {{ i18n.todayCreated || '新增' }}（{{ changedDocs.newDocs.length }}）
+              </div>
+              <div
+                v-for="doc in changedDocs.newDocs"
+                :key="doc.id"
+                class="changed-doc-item new"
+                title="点击打开文档"
+                @click="openDoc(doc.id)"
+              >
+                <span class="changed-doc-icon">+</span>
+                <span class="changed-doc-title">{{ doc.title || '无标题' }}</span>
+              </div>
+            </div>
+            <div v-if="changedDocs.modifiedDocs.length > 0" class="changed-docs-group">
+              <div class="changed-docs-group-title">
+                ✏️ {{ i18n.todayModified || '修改' }}（{{ changedDocs.modifiedDocs.length }}）
+              </div>
+              <div
+                v-for="doc in changedDocs.modifiedDocs"
+                :key="doc.id"
+                class="changed-doc-item modified"
+                title="点击打开文档"
+                @click="openDoc(doc.id)"
+              >
+                <span class="changed-doc-icon">~</span>
+                <span class="changed-doc-title">{{ doc.title || '无标题' }}</span>
+              </div>
             </div>
           </div>
-          <div
-            v-if="changedDocs.modifiedDocs.length > 0"
-            class="changed-docs-group"
-          >
-            <div class="changed-docs-group-title">
-              ✏️ {{ i18n.todayModified || '修改' }}（{{ changedDocs.modifiedDocs.length }}）
-            </div>
-            <div
-              v-for="doc in changedDocs.modifiedDocs"
-              :key="doc.id"
-              class="changed-doc-item modified"
-              :title="`点击打开文档`"
-              @click="openDoc(doc.id)"
-            >
-              <span class="changed-doc-icon">~</span>
-              <span class="changed-doc-title">{{ doc.title || '无标题' }}</span>
-            </div>
+          <div v-else class="changed-docs-empty">
+            {{ i18n.noDocChanges || '当天无新增或修改' }}
           </div>
         </div>
+
+        <!-- 范围模式下无数据 或 尚未选择 -->
         <div
-          v-else
+          v-if="docRange !== 'today' && !selectedChartDate && rangeStats.length === 0"
           class="changed-docs-empty"
         >
-          {{ i18n.noDocChanges || '当天无新增或修改' }}
+          {{ rangeStatsLoading ? (i18n.loading || '加载中...') : (i18n.noDocChanges || '该范围无变更') }}
         </div>
       </CollapsibleSection>
 
@@ -217,6 +267,7 @@ interface Props {
     newDocs: ChangedDoc[]
     modifiedDocs: ChangedDoc[]
   }>
+  onGetDateRangeChangeStats?: (startStr: string, endStr: string) => Promise<RangeStatItem[]>
   i18n?: {
     loading: string
     refresh: string
@@ -267,6 +318,8 @@ interface Props {
     docChanges: string
     noDocChanges: string
     today: string
+    days3: string
+    oneMonth: string
   }
 }
 
@@ -303,6 +356,12 @@ interface ChangedDoc {
   id: string
   title: string
   updated?: string
+}
+
+interface RangeStatItem {
+  date: string
+  newCount: number
+  modifiedCount: number
 }
 
 function openDoc(docId: string) {
@@ -362,6 +421,8 @@ const props = withDefaults(defineProps<Props>(), {
     docChanges: "文档变化",
     noDocChanges: "当天无新增或修改",
     today: "今天",
+    days3: "近3天",
+    oneMonth: "近1月",
   }),
 })
 
@@ -383,7 +444,32 @@ const docChangeDate = ref(getTodayStr())
 const changedDocs = ref<{ newDocs: ChangedDoc[], modifiedDocs: ChangedDoc[] }>({ newDocs: [], modifiedDocs: [] })
 const changedDocsLoading = ref(false)
 
+// 范围选择
+type DocRangeType = 'today' | '3d' | '7d' | '1m' | '6m'
+const docRange = ref<DocRangeType>('today')
+const dateRangeOptions = computed<Array<{ value: DocRangeType, label: string }>>(() => [
+  { value: 'today', label: props.i18n.today || '今天' },
+  { value: '3d', label: props.i18n.days3 || '近3天' },
+  { value: '7d', label: props.i18n.days7 || '近7天' },
+  { value: '1m', label: props.i18n.oneMonth || '近1月' },
+  { value: '6m', label: props.i18n.halfYear || '近半年' },
+])
+
+// 范围柱状图数据
+const rangeStats = ref<RangeStatItem[]>([])
+const rangeStatsLoading = ref(false)
+const selectedChartDate = ref<string | null>(null)
+
 const todayDateStr = computed(() => getTodayStr())
+
+const rangeLabel = computed(() => {
+  if (docRange.value === 'today') return formattedDocDate.value
+  return dateRangeOptions.value.find(r => r.value === docRange.value)?.label || ''
+})
+
+const rangeTotalChanges = computed(() =>
+  rangeStats.value.reduce((s, i) => s + i.newCount + i.modifiedCount, 0)
+)
 
 const formattedDocDate = computed(() => {
   const d = docChangeDate.value
@@ -394,9 +480,75 @@ const changedDocsCount = computed(() =>
   changedDocs.value.newDocs.length + changedDocs.value.modifiedDocs.length
 )
 
+const maxBarCount = computed(() => {
+  let max = 1
+  for (const item of rangeStats.value) {
+    max = Math.max(max, item.newCount, item.modifiedCount)
+  }
+  return max
+})
+
 function getTodayStr(): string {
   const d = new Date()
   return `${d.getFullYear()}${padZero(d.getMonth() + 1)}${padZero(d.getDate())}`
+}
+
+function formatChartDate(dateStr: string): string {
+  return `${dateStr.substring(4, 6)}/${dateStr.substring(6, 8)}`
+}
+
+function barWidth(count: number): string {
+  return `${Math.max((count / maxBarCount.value) * 100, 4)}%`
+}
+
+function sortByDate(items: RangeStatItem[]) {
+  return [...items].sort((a, b) => a.date.localeCompare(b.date))
+}
+
+async function switchDocRange(range: DocRangeType) {
+  docRange.value = range
+  selectedChartDate.value = null
+  changedDocs.value = { newDocs: [], modifiedDocs: [] }
+
+  if (range === 'today') {
+    loadDateChangedDocs(docChangeDate.value)
+    return
+  }
+
+  // 计算范围的起止日期
+  const today = new Date()
+  const start = new Date(today)
+  const endStr = getTodayStr()
+
+  switch (range) {
+    case '3d': start.setDate(today.getDate() - 2); break
+    case '7d': start.setDate(today.getDate() - 6); break
+    case '1m': start.setMonth(today.getMonth() - 1); break
+    case '6m': start.setMonth(today.getMonth() - 6); break
+  }
+  const startStr = `${start.getFullYear()}${padZero(start.getMonth() + 1)}${padZero(start.getDate())}`
+
+  rangeStatsLoading.value = true
+  try {
+    rangeStats.value = props.onGetDateRangeChangeStats
+      ? await props.onGetDateRangeChangeStats(startStr, endStr)
+      : []
+  } catch (e) {
+    console.error("加载范围统计失败:", e)
+  } finally {
+    rangeStatsLoading.value = false
+  }
+}
+
+/** 点击柱状图某一天 → 钻取该日文档列表 */
+async function drillIntoDate(dateStr: string) {
+  selectedChartDate.value = dateStr
+  changedDocsLoading.value = true
+  try {
+    changedDocs.value = await props.onGetDateChangedDocs!(dateStr)
+  } finally {
+    changedDocsLoading.value = false
+  }
 }
 
 async function loadDateChangedDocs(dateStr: string) {
@@ -415,7 +567,6 @@ async function loadDateChangedDocs(dateStr: string) {
 function onDocDateChange(e: Event) {
   const input = e.target as HTMLInputElement
   if (!input.value) return
-  // HTML date input returns yyyy-MM-dd, convert to yyyyMMdd
   docChangeDate.value = input.value.replace(/-/g, "")
   loadDateChangedDocs(docChangeDate.value)
 }
@@ -609,6 +760,114 @@ defineExpose({
 
 <style scoped lang="scss">
 @use "./styles/index.scss";
+
+.changed-range-picker {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.changed-range-btn {
+  padding: 4px 10px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  font-size: 12px;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+
+  &.active {
+    background: var(--b3-theme-primary-light);
+    color: var(--b3-theme-primary);
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+.range-chart-section {
+  margin-bottom: 8px;
+}
+
+.range-chart-bar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.range-chart-legend {
+  display: flex;
+  gap: 12px;
+  padding: 2px 4px 6px;
+  font-size: 11px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  margin-right: 3px;
+  vertical-align: middle;
+
+  &.new { background: #22c55e; }
+  &.modified { background: #f59e0b; }
+}
+
+.range-chart-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+
+  &.active {
+    background: var(--b3-theme-primary-lightest, rgba(59, 130, 246, 0.08));
+  }
+}
+
+.range-chart-label {
+  width: 32px;
+  font-size: 11px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.range-chart-bars {
+  flex: 1;
+  display: flex;
+  gap: 2px;
+  align-items: center;
+  height: 18px;
+}
+
+.range-chart-bar {
+  height: 16px;
+  border-radius: 3px;
+  font-size: 10px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  padding-left: 4px;
+  min-width: 20px;
+  font-weight: 600;
+
+  &.new { background: #22c55e; }
+  &.modified { background: #f59e0b; }
+}
 
 .changed-date-picker {
   display: flex;

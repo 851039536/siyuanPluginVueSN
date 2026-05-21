@@ -21,35 +21,26 @@
       暂无数据
     </div>
 
-    <!-- 柱状图 -->
+    <!-- 水平条形图 -->
     <div
       v-else
-      class="bar-chart-container"
+      class="horizontal-chart"
     >
-      <div class="chart-viewport">
-        <div
-          v-for="item in sortedData"
-          :key="item.name"
-          class="bar-item"
-        >
-          <div class="bar-value">
-            {{ formatShortNumber(item.count) }}
-          </div>
+      <div
+        v-for="item in sortedData"
+        :key="item.name"
+        class="chart-row"
+        :title="`${item.name}: ${formatNumber(item.count)} ${i18n.docsUnit || '篇'}`"
+      >
+        <span class="row-label">{{ item.name }}</span>
+        <div class="row-bar-wrap">
           <div
-            class="bar"
-            :style="{ height: `${getBarHeight(item.count)}px` }"
-            :title="`${item.name}: ${formatNumber(item.count)} ${i18n.docsUnit || '篇'}`"
+            class="row-bar"
+            :style="{ width: getBarWidth(item.count) }"
           ></div>
-          <div
-            class="bar-label"
-            :title="item.name"
-          >
-            {{ truncateName(item.name) }}
-          </div>
         </div>
+        <span class="row-count">{{ formatShortNumber(item.count) }}</span>
       </div>
-
-
     </div>
   </div>
 </template>
@@ -109,17 +100,10 @@ const sortedData = computed(() => {
   return data
 })
 
-function getBarHeight(count: number): number {
+function getBarWidth(count: number): string {
   const max = maxCount.value
-  if (max === 0) return 0
-  const maxHeight = 120
-  const height = (count / max) * maxHeight
-  return Math.max(height, count > 0 ? 4 : 0)
-}
-
-function truncateName(name: string): string {
-  if (name.length <= 5) return name
-  return `${name.substring(0, 4)}…`
+  if (max === 0) return "0%"
+  return `${Math.max((count / max) * 100, count > 0 ? 1 : 0)}%`
 }
 </script>
 
@@ -159,60 +143,65 @@ function truncateName(name: string): string {
     font-size: 12px;
   }
 
-  .bar-chart-container {
-    overflow-x: auto;
+  .horizontal-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    max-height: 320px;
+    overflow-y: auto;
     @include scrollbar-thin;
 
-    &::-webkit-scrollbar {
-      height: 3px;
-    }
-  }
-
-  .chart-viewport {
-    display: flex;
-    align-items: flex-end;
-    gap: 6px;
-    min-height: 140px;
-    padding: 8px 4px 30px 4px;
-    position: relative;
-
-    .bar-item {
+    .chart-row {
       display: flex;
-      flex-direction: column;
       align-items: center;
-      min-width: 32px;
-      flex: 1;
-      max-width: 56px;
-      position: relative;
+      gap: 6px;
+      padding: 4px 6px;
+      border-radius: 4px;
+      transition: background 0.15s;
 
-      .bar-value {
+      &:hover {
+        background: var(--b3-list-hover);
+      }
+
+      .row-label {
+        flex-shrink: 0;
+        width: 80px;
+        font-family: $font-body;
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--b3-theme-on-surface);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-align: right;
+      }
+
+      .row-bar-wrap {
+        flex: 1;
+        height: 14px;
+        background: rgba(var(--b3-theme-on-surface-rgb), 0.06);
+        border-radius: 3px;
+        overflow: hidden;
+        min-width: 20px;
+
+        .row-bar {
+          height: 100%;
+          background: stats.$gradient-primary;
+          border-radius: 3px;
+          transition: width 0.3s ease;
+          min-width: 2px;
+        }
+      }
+
+      .row-count {
+        flex-shrink: 0;
+        width: 36px;
         font-family: $font-heading;
         font-size: 10px;
         font-weight: 700;
         color: var(--b3-theme-primary);
+        text-align: right;
         white-space: nowrap;
-        margin-bottom: 3px;
-      }
-
-      .bar {
-        width: 100%;
-        min-height: 2px;
-        background: stats.$gradient-primary;
-        border-radius: 3px 3px 1px 1px;
-      }
-
-      .bar-label {
-        position: absolute;
-        bottom: -16px;
-        font-family: $font-body;
-        font-size: 10px;
-        font-weight: 500;
-        color: var(--b3-theme-on-surface);
-        opacity: 0.5;
-        white-space: nowrap;
-        left: 50%;
-        transform: translateX(-50%);
-        cursor: default;
       }
     }
   }
@@ -221,14 +210,5 @@ function truncateName(name: string): string {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
-}
-
-
-@include mobile-only {
-  .doc-bar-chart-section {
-    .chart-viewport {
-      min-width: 400px;
-    }
-  }
 }
 </style>

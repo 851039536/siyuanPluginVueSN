@@ -50,6 +50,8 @@ interface StatisticsData {
     words: number
   }> // 最近活跃文档（已废弃，始终为空数组）
   totalImages: number // 思源图片总数（data/assets目录）
+  todayNewDocs: ChangedDoc[] // 今日新增文档列表
+  todayModifiedDocs: ChangedDoc[] // 今日修改文档列表
 }
 
 /**
@@ -59,6 +61,15 @@ interface DailyWordCount {
   date: string // 日期 YYYY-MM-DD
   words: number // 字数
   dateLabel: string // 日期显示标签
+}
+
+/**
+ * 变更文档详情
+ */
+interface ChangedDoc {
+  id: string
+  title: string
+  updated?: string
 }
 
 /**
@@ -204,10 +215,11 @@ export class Statistics {
           (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d' AND substr(updated, 1, 8) = '${todayStr}') as todayModified
       `
 
-      const [combinedResult, totalTags, totalImages] = await Promise.all([
+      const [combinedResult, totalTags, totalImages, changedDocs] = await Promise.all([
         this.executeSql(combinedSql),
         this.getTotalTags(),
         this.getTotalImages(),
+        this.getTodayChangedDocs(),
       ])
 
       const baseStats = combinedResult[0] || {}
@@ -270,6 +282,8 @@ export class Statistics {
         topTags: [],
         recentDocs: [],
         totalImages,
+        todayNewDocs: changedDocs.newDocs,
+        todayModifiedDocs: changedDocs.modifiedDocs,
       }
     } catch (error) {
       console.error("获取统计数据失败:", error)
@@ -289,7 +303,53 @@ export class Statistics {
         topTags: [],
         recentDocs: [],
         totalImages: 0,
+        todayNewDocs: [],
+        todayModifiedDocs: [],
       }
+    }
+  }
+
+  /**
+   * 获取今日新增/修改文档列表
+   * 使用 SQL 查询 blocks 表获取具体文档，排除已删除文档
+   */
+  private async getTodayChangedDocs(): Promise<{
+    newDocs: ChangedDoc[]
+    modifiedDocs: ChangedDoc[]
+  }> {
+    const today = new Date()
+    const todayStr = this.formatDate(today).substring(0, 8)
+
+    // 查询今日新增文档（created 日期 = 今天）
+    const newDocsSql = `
+      SELECT id, content FROM blocks
+      WHERE type = 'd' AND substr(created, 1, 8) = '${todayStr}'
+      ORDER BY created ASC
+    `
+    // 查询今日修改文档（updated 日期 = 今天，但不包括今日新增的）
+    const modifiedDocsSql = `
+      SELECT id, content, updated FROM blocks
+      WHERE type = 'd'
+        AND substr(updated, 1, 8) = '${todayStr}'
+        AND substr(created, 1, 8) != '${todayStr}'
+      ORDER BY updated DESC
+    `
+
+    const [newRows, modifiedRows] = await Promise.all([
+      this.executeSql(newDocsSql),
+      this.executeSql(modifiedDocsSql),
+    ])
+
+    return {
+      newDocs: (newRows || []).map((r: any) => ({
+        id: r.id,
+        title: (r.content || "").replace(/<[^>]*>/g, ""),
+      })),
+      modifiedDocs: (modifiedRows || []).map((r: any) => ({
+        id: r.id,
+        title: (r.content || "").replace(/<[^>]*>/g, ""),
+        updated: r.updated,
+      })),
     }
   }
 

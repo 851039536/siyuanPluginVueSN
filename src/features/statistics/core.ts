@@ -10,6 +10,12 @@ import {
 import { emitCustomEvent } from "@/utils/eventBus"
 import StatisticsPanel from "./index.vue"
 import { StatisticsStorage } from "./types/storage"
+import type {
+  ChangedDoc,
+  DailyWordCount,
+  StatisticsData,
+} from "./types"
+import { isValidDateStr } from "./utils"
 
 const DAY_PERIOD_MAP: Record<number, string> = {
   7: "最近一周每日字数",
@@ -27,50 +33,6 @@ const MONTH_PERIOD_MAP: Record<number, string> = {
 }
 
 /**
- * 统计数据接口
- */
-interface StatisticsData {
-  totalNotes: number // 总笔记数
-  totalWords: number // 总字数
-  totalBlocks: number // 总块数
-  totalAssets: number // 总附件数
-  totalTags: number // 总标签数
-  totalBacklinks: number // 总双链数
-  todayCreated: number // 今日新增文档数
-  todayModified: number // 今日修改文档数
-  avgWordsPerDoc: number // 平均每文档字数
-  dailyStats: DailyWordCount[] // 每日字数统计
-  currentPeriod: string // 当前统计周期
-  periodTotalWords: number // 当前时段总字数
-  topTags: Array<{ name: string, count: number }> // 热门标签（已废弃，始终为空数组）
-  recentDocs: Array<{
-    id: string
-    title: string
-    updated: string
-    words: number
-  }> // 最近活跃文档（已废弃，始终为空数组）
-  totalImages: number // 思源图片总数（data/assets目录）
-}
-
-/**
- * 每日字数统计
- */
-interface DailyWordCount {
-  date: string // 日期 YYYY-MM-DD
-  words: number // 字数
-  dateLabel: string // 日期显示标签
-}
-
-/**
- * 变更文档详情
- */
-interface ChangedDoc {
-  id: string
-  title: string
-  updated?: string
-}
-
-/**
  * 数据统计功能模块
  * 提供思源笔记的使用数据统计分析
  */
@@ -82,6 +44,7 @@ export class Statistics {
   private viewMode: "day" | "week" | "month" | "year" | "trend" = "day" // 当前查看模式
   private dayRange: 7 | 15 | 30 | 90 | 180 | 365 = 7 // 日视图的天数范围
   private monthYearRange: 1 | 2 | 3 = 1 // 月视图的年份范围
+  private selectedYear: number = new Date().getFullYear() // 年视图的选中年份
   private updateInterval: number = 60000 // 定时更新间隔（毫秒），默认1分钟
   private updateTimer: NodeJS.Timeout | null = null // 定时器实例
   private lastUpdateTime: number = 0 // 上次更新时间戳
@@ -178,7 +141,7 @@ export class Statistics {
         this.viewMode = params.viewMode
         if (params.dayRange) this.dayRange = params.dayRange
         if (params.monthYearRange) this.monthYearRange = params.monthYearRange
-        // selectedYear 由 getYearlyStats 方法内部使用，不需要存储
+        if (params.selectedYear !== undefined) this.selectedYear = params.selectedYear
 
         return await this.getStatistics()
       },
@@ -214,7 +177,7 @@ export class Statistics {
           (SELECT SUM(LENGTH(content)) FROM blocks WHERE type = 'p' AND content IS NOT NULL AND content != '') as totalWords,
           (SELECT COUNT(*) FROM blocks WHERE type IN ('p', 'h', 'l', 'i', 't', 'c', 'html', 'query_embed')) as totalBlocks,
           (SELECT COUNT(*) FROM blocks WHERE type IN ('img', 'audio', 'video', 'widget', 'iframe')) as totalAssets,
-          (SELECT COUNT(*) FROM refs) as totalBacklinks,
+          (SELECT COUNT(DISTINCT block_id) FROM refs) as totalBacklinks,
           (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d' AND substr(created, 1, 8) = '${todayStr}') as todayCreated,
           (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d' AND substr(updated, 1, 8) = '${todayStr}') as todayModified
       `
@@ -263,8 +226,8 @@ export class Statistics {
           periodTotalWords = sumWords(dailyStats)
           break
         case "year":
-          dailyStats = await this.getYearlyStats() // 最近5年
-          currentPeriod = "最近5年每年字数"
+          dailyStats = await this.getYearlyStats()
+          currentPeriod = `${this.selectedYear - 4} - ${this.selectedYear} 每年字数`
           periodTotalWords = sumWords(dailyStats)
           break
       }
@@ -282,8 +245,6 @@ export class Statistics {
         dailyStats,
         currentPeriod,
         periodTotalWords,
-        topTags: [],
-        recentDocs: [],
         totalImages,
       }
     } catch (error) {
@@ -301,8 +262,6 @@ export class Statistics {
         dailyStats: [],
         currentPeriod: "",
         periodTotalWords: 0,
-        topTags: [],
-        recentDocs: [],
         totalImages: 0,
       }
     }
@@ -317,6 +276,12 @@ export class Statistics {
     newDocs: ChangedDoc[]
     modifiedDocs: ChangedDoc[]
   }> {
+    // 参数校验：防止 SQL 注入
+    if (!isValidDateStr(dateStr)) {
+      console.warn("getDateChangedDocs: 无效的日期参数", dateStr)
+      return { newDocs: [], modifiedDocs: [] }
+    }
+
     // 查询指定日期新增的文档
     const newDocsSql = `
       SELECT id, content FROM blocks
@@ -358,6 +323,12 @@ export class Statistics {
   public async getDateRangeChangeStats(startStr: string, endStr: string): Promise<
     Array<{ date: string, newCount: number, modifiedCount: number }>
   > {
+    // 参数校验：防止 SQL 注入
+    if (!isValidDateStr(startStr) || !isValidDateStr(endStr)) {
+      console.warn("getDateRangeChangeStats: 无效的日期参数", { startStr, endStr })
+      return []
+    }
+
     // 每日新增数量
     const newSql = `
       SELECT substr(created, 1, 8) as date, COUNT(*) as cnt
@@ -433,7 +404,7 @@ export class Statistics {
       SELECT
         COALESCE((SELECT COUNT(DISTINCT content) FROM spans WHERE type='tag'), 0) +
         COALESCE((SELECT COUNT(DISTINCT value) FROM attributes WHERE name='tags' AND value IS NOT NULL AND value != ''), 0) +
-        COALESCE((SELECT COUNT(*) FROM blocks WHERE type='tag'), 0) as totalTags
+        COALESCE((SELECT COUNT(DISTINCT content) FROM blocks WHERE type='tag'), 0) as totalTags
     `
     const result = await this.executeSql(sql)
     return Number(result[0]?.totalTags || 0)
@@ -735,10 +706,10 @@ export class Statistics {
    * 获取每年统计（最近N年）- 使用 length 字段优化
    */
   private async getYearlyStats(): Promise<DailyWordCount[]> {
-    const currentYear = new Date().getFullYear()
-    const startYear = currentYear - 4
+    const baseYear = this.selectedYear
+    const startYear = baseYear - 4
     const startDate = `${startYear}0101000000`
-    const endDate = `${currentYear}1231235959`
+    const endDate = `${baseYear}1231235959`
 
     const queryResult = await this.getWordCountAggregation(
       startDate,
@@ -756,7 +727,7 @@ export class Statistics {
     // 生成5年的完整列表
     const result: DailyWordCount[] = []
     for (let i = 4; i >= 0; i--) {
-      const year = currentYear - i
+      const year = baseYear - i
       const words = yearMap.get(String(year)) || 0
 
       result.push({

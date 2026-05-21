@@ -8,7 +8,7 @@ import { PluginStorage } from "@/utils/pluginStorage"
 /** 存储键常量 */
 export const STATISTICS_STORAGE_KEYS = {
   HISTORY: "statistics-history",
-  SETTINGS: "plugin-settings",
+  SETTINGS: "statistics-settings",
 } as const
 
 /**

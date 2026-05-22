@@ -1185,7 +1185,6 @@
   "resourceManager": {
     "panelTitle": "Resource Manager",
     "description": "Manage Siyuan asset files: view, rename, insert, and clean up resources",
-    "currentDocAssets": "Current Doc Assets",
     "imageAssets": "Image Assets",
     "missingAssets": "Missing Assets",
     "unusedAssets": "Unused Assets",
@@ -1223,6 +1222,21 @@
     "assetPath": "Asset Path",
     "newPath": "New Path",
     "targetDocId": "Target Doc ID",
-    "selectFiles": "Select Files"
+    "selectFiles": "Select Files",
+    "allAssets": "All",
+    "currentDoc": "Current Doc",
+    "specifiedDoc": "Specified Doc",
+    "docIdPlaceholder": "Enter doc ID (e.g., 20231027130500-xxxx)",
+    "docIdRequired": "Please enter a doc ID",
+    "assetCount": "Asset Count",
+    "moveAsset": "Move",
+    "moveSuccess": "Move successful",
+    "moveFailed": "Move failed",
+    "movePathPlaceholder": "Enter new path, e.g., assets/category/xxx.png",
+    "currentPath": "Current Path",
+    "category": "Quick Category",
+    "confirmMove": "Confirm Move",
+    "cancel": "Cancel",
+    "loadFailed": "Load failed"
   }
 }

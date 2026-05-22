@@ -1251,7 +1251,6 @@
   "resourceManager": {
     "panelTitle": "资源管理",
     "description": "管理思源笔记资源文件：查看、重命名、插入、清理资源",
-    "currentDocAssets": "当前文档资源",
     "imageAssets": "图片资源",
     "missingAssets": "丢失资源",
     "unusedAssets": "未使用资源",
@@ -1289,6 +1288,21 @@
     "assetPath": "资源路径",
     "newPath": "新路径",
     "targetDocId": "目标文档ID",
-    "selectFiles": "选择文件"
+    "selectFiles": "选择文件",
+    "allAssets": "全部",
+    "currentDoc": "当前文档",
+    "specifiedDoc": "指定文档",
+    "docIdPlaceholder": "输入文档 ID（如 20231027130500-xxxx）",
+    "docIdRequired": "请输入文档 ID",
+    "assetCount": "资源数量",
+    "moveAsset": "移动",
+    "moveSuccess": "移动成功",
+    "moveFailed": "移动失败",
+    "movePathPlaceholder": "输入新路径，如 assets/分类/xxx.png",
+    "currentPath": "当前路径",
+    "category": "快速分类",
+    "confirmMove": "确认移动",
+    "cancel": "取消",
+    "loadFailed": "加载失败"
   }
 }

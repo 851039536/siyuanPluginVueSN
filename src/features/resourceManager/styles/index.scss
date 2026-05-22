@@ -137,6 +137,7 @@
     font-size: $font-size-xs;
     gap: $spacing-2;
     transition: background 0.12s;
+    flex-wrap: wrap;
 
     &:hover {
       background: var(--b3-list-hover);
@@ -200,6 +201,90 @@
       &::placeholder {
         color: var(--b3-theme-on-surface-light);
       }
+    }
+  }
+
+  // ── 过滤栏 ──
+  .rm-filter-bar {
+    display: flex;
+    gap: 4px;
+    margin-bottom: $spacing-2;
+    flex-wrap: wrap;
+
+    .rm-btn.active {
+      background: $brand-primary;
+      color: #fff;
+      border-color: $brand-primary;
+    }
+  }
+
+  // ── 资源统计 ──
+  .rm-asset-count {
+    font-size: 11px;
+    color: var(--b3-theme-on-surface-light);
+    margin-bottom: $spacing-2;
+    padding: 0 2px;
+  }
+
+  // ── 移动表单 ──
+  .rm-move-form {
+    width: 100%;
+    padding: 8px 6px;
+    margin-top: 4px;
+    background: var(--b3-theme-surface-light);
+    border-radius: $radius-sm;
+    border: 1px solid var(--b3-border-color);
+
+    &__row {
+      display: flex;
+      align-items: center;
+      gap: $spacing-2;
+      margin-bottom: 4px;
+      font-size: $font-size-xs;
+    }
+
+    &__label {
+      flex-shrink: 0;
+      min-width: 56px;
+      color: var(--b3-theme-on-surface-light);
+    }
+
+    &__path {
+      color: var(--b3-theme-on-surface);
+      word-break: break-all;
+      font-size: 11px;
+    }
+
+    &__input {
+      flex: 1;
+      padding: 4px 6px;
+      border: 1px solid var(--b3-border-color);
+      border-radius: $radius-sm;
+      font-size: $font-size-xs;
+      background: var(--b3-theme-surface);
+      color: var(--b3-theme-on-surface);
+      outline: none;
+      transition: border-color 0.15s;
+
+      &:focus {
+        border-color: $brand-primary;
+      }
+
+      &::placeholder {
+        color: var(--b3-theme-on-surface-light);
+      }
+    }
+
+    &__categories {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    &__actions {
+      display: flex;
+      gap: 4px;
+      margin-top: 4px;
     }
   }
 

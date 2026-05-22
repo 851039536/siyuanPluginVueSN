@@ -23,28 +23,46 @@
     </div>
 
     <div class="rm-content">
-      <!-- 当前文档资源 -->
-      <div v-if="activeTab === 'docAssets'" class="rm-section">
-        <div v-if="loading" class="rm-empty">{{ i18n.loading }}</div>
-        <div v-else-if="docAssets.length === 0" class="rm-empty">{{ i18n.noAssets }}</div>
-        <ul v-else class="rm-asset-list">
-          <li v-for="asset in docAssets" :key="asset.path" class="rm-asset-item">
-            <div class="rm-asset-item__info">
-              <div class="rm-asset-item__name" :title="asset.path">{{ asset.name }}</div>
-              <div class="rm-asset-item__meta">
-                {{ asset.type }} · {{ formatSize(asset.size) }}
-              </div>
-            </div>
-            <div class="rm-asset-item__actions">
-              <button class="rm-btn small" @click="copyPathToClipboard(asset.path)">{{ i18n.copyPath }}</button>
-              <button class="rm-btn small danger" @click="handleDeleteAsset(asset.path)">{{ i18n.deleteAsset }}</button>
-            </div>
-          </li>
-        </ul>
-      </div>
-
       <!-- 图片资源 -->
       <div v-if="activeTab === 'imageAssets'" class="rm-section">
+        <!-- 模式切换栏 -->
+        <div class="rm-filter-bar">
+          <button
+            class="rm-btn small"
+            :class="{ active: imageMode === 'all' }"
+            @click="imageMode = 'all'; loadImageAssets()"
+          >
+            {{ i18n.allAssets }}
+          </button>
+          <button
+            class="rm-btn small"
+            :class="{ active: imageMode === 'currentDoc' }"
+            @click="imageMode = 'currentDoc'; loadImageAssets()"
+          >
+            {{ i18n.currentDoc }}
+          </button>
+          <button
+            class="rm-btn small"
+            :class="{ active: imageMode === 'specifiedDoc' }"
+            @click="imageMode = 'specifiedDoc'"
+          >
+            {{ i18n.specifiedDoc }}
+          </button>
+        </div>
+        <!-- 指定文档输入 -->
+        <div v-if="imageMode === 'specifiedDoc'" class="rm-input-row">
+          <label>{{ i18n.targetDocId }}:</label>
+          <input
+            v-model="specifiedDocId"
+            :placeholder="i18n.docIdPlaceholder"
+            @keyup.enter="loadImageAssets"
+          />
+          <button class="rm-btn small primary" @click="loadImageAssets">{{ i18n.refresh }}</button>
+        </div>
+        <!-- 资源统计 -->
+        <div v-if="!loading && imageAssets.length > 0" class="rm-asset-count">
+          {{ i18n.assetCount }}: {{ imageAssets.length }}
+        </div>
         <div v-if="loading" class="rm-empty">{{ i18n.loading }}</div>
         <div v-else-if="imageAssets.length === 0" class="rm-empty">{{ i18n.noAssets }}</div>
         <ul v-else class="rm-asset-list">
@@ -54,7 +72,43 @@
             </div>
             <div class="rm-asset-item__actions">
               <button class="rm-btn small" @click="copyPathToClipboard(path)">{{ i18n.copyPath }}</button>
+              <button class="rm-btn small" @click="startMoveAsset(path)">{{ i18n.moveAsset }}</button>
               <button class="rm-btn small danger" @click="handleDeleteAsset(path)">{{ i18n.deleteAsset }}</button>
+            </div>
+            <!-- 移动表单 -->
+            <div v-if="movingAsset === path" class="rm-move-form">
+              <div class="rm-move-form__row">
+                <span class="rm-move-form__label">{{ i18n.currentPath }}:</span>
+                <span class="rm-move-form__path">{{ path }}</span>
+              </div>
+              <div class="rm-move-form__row">
+                <span class="rm-move-form__label">{{ i18n.newPath }}:</span>
+                <input
+                  v-model="moveNewPath"
+                  class="rm-move-form__input"
+                  :placeholder="i18n.movePathPlaceholder"
+                  @keyup.enter="handleMoveAsset(path)"
+                />
+              </div>
+              <div class="rm-move-form__row">
+                <span class="rm-move-form__label">{{ i18n.category }}:</span>
+                <div class="rm-move-form__categories">
+                  <button
+                    v-for="cat in quickCategories"
+                    :key="cat"
+                    class="rm-btn small"
+                    @click="applyCategory(path, cat)"
+                  >
+                    {{ cat }}
+                  </button>
+                </div>
+              </div>
+              <div class="rm-move-form__actions">
+                <button class="rm-btn small primary" :disabled="!moveNewPath" @click="handleMoveAsset(path)">
+                  {{ i18n.confirmMove }}
+                </button>
+                <button class="rm-btn small" @click="cancelMove">{{ i18n.cancel }}</button>
+              </div>
             </div>
           </li>
         </ul>
@@ -155,14 +209,12 @@
 
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
-import type { AssetInfo } from "@/api"
 import type { ResourceManagerI18n } from "./types"
 import IconWrapper from "@/components/IconWrapper.vue"
 import {
   appendBlock,
   fullReindexAssetContent,
   getBlockByID,
-  getDocAssets,
   getDocImageAssets,
   getMissingAssets,
   getUnusedAssets,
@@ -170,6 +222,7 @@ import {
   removeUnusedAssets,
   renameAsset,
   resolveAssetPath,
+  sql,
   upload,
 } from "@/api"
 import { showMessage } from "siyuan"
@@ -182,12 +235,20 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const activeTab = ref("docAssets")
+const activeTab = ref("imageAssets")
 const loading = ref(false)
-const docAssets = ref<AssetInfo[]>([])
 const imageAssets = ref<string[]>([])
 const missingAssets = ref<string[]>([])
 const unusedAssets = ref<string[]>([])
+
+// 图片资源模式
+const imageMode = ref<"all" | "currentDoc" | "specifiedDoc">("all")
+const specifiedDocId = ref("")
+
+// 移动资源
+const movingAsset = ref<string | null>(null)
+const moveNewPath = ref("")
+const quickCategories = ["图片", "截图", "图标", "背景", "头像", "其他"]
 
 // 重命名表单
 const renameForm = ref({ oldPath: "", newPath: "" })
@@ -208,7 +269,6 @@ const resolvePathResult = ref("")
 const rebuildResult = ref("")
 
 const tabs = [
-  { key: "docAssets", label: props.i18n.currentDocAssets || "当前文档资源" },
   { key: "imageAssets", label: props.i18n.imageAssets || "图片资源" },
   { key: "missingAssets", label: props.i18n.missingAssets || "丢失资源" },
   { key: "unusedAssets", label: props.i18n.unusedAssets || "未使用资源" },
@@ -240,7 +300,7 @@ onMounted(() => {
     if (docId) {
       savedDocId.value = docId
       // 如果初始加载因无 docId 而显示为空，现在补刷新
-      if (activeTab.value === "docAssets" || activeTab.value === "imageAssets") {
+      if (activeTab.value === "imageAssets") {
         refresh()
       }
     }
@@ -271,12 +331,6 @@ function findDocIdFromDom(): string | null {
 watch(activeTab, () => {
   refresh()
 }, { immediate: true })
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
 
 function showMsg(msg: string, timeout = 3000) {
   try {
@@ -312,10 +366,7 @@ async function copyPathToClipboard(path: string) {
 async function refresh() {
   loading.value = true
   try {
-    if (activeTab.value === "docAssets") {
-      await loadDocAssets()
-    }
-    else if (activeTab.value === "imageAssets") {
+    if (activeTab.value === "imageAssets") {
       await loadImageAssets()
     }
     else if (activeTab.value === "missingAssets") {
@@ -396,17 +447,27 @@ async function getCurrentDocId(): Promise<string | null> {
   return docId || null
 }
 
-async function loadDocAssets() {
-  const docId = await getCurrentDocId()
-  if (!docId) {
-    showMsg("无法获取当前文档 ID")
-    return
+async function loadImageAssets() {
+  if (imageMode.value === "all") {
+    await loadAllImageAssets()
   }
-  const result = await getDocAssets(docId)
-  docAssets.value = result?.assets || []
+  else if (imageMode.value === "currentDoc") {
+    await loadCurrentDocImageAssets()
+  }
+  else if (imageMode.value === "specifiedDoc") {
+    if (!specifiedDocId.value.trim()) {
+      showMsg(props.i18n.docIdRequired || "请输入文档 ID")
+      return
+    }
+    const result = await getDocImageAssets(specifiedDocId.value.trim())
+    imageAssets.value = result || []
+  }
 }
 
-async function loadImageAssets() {
+/**
+ * 加载当前文档的图片资源
+ */
+async function loadCurrentDocImageAssets() {
   const docId = await getCurrentDocId()
   if (!docId) {
     showMsg("无法获取当前文档 ID")
@@ -414,6 +475,33 @@ async function loadImageAssets() {
   }
   const result = await getDocImageAssets(docId)
   imageAssets.value = result || []
+}
+
+/**
+ * 加载全部图片资源（整个项目）
+ * 通过 SQL 查询已引用的资源 + 未使用资源 API 合并
+ */
+async function loadAllImageAssets() {
+  const IMAGE_EXT = /\.(png|jpg|jpeg|gif|svg|webp|bmp|ico|tiff|avif)$/i
+  try {
+    // 查询已引用的资源路径
+    const referenced = await sql("SELECT DISTINCT path FROM assets WHERE path LIKE 'assets/%'")
+    const refImagePaths = (referenced || [])
+      .map((r: any) => r.path as string)
+      .filter((p: string) => IMAGE_EXT.test(p))
+
+    // 查询未使用的资源（可能是只存在磁盘但未被索引的）
+    const unused = await getUnusedAssets()
+    const unusedImagePaths = (unused || []).filter((p: string) => IMAGE_EXT.test(p))
+
+    // 合并去重
+    const allPaths = [...new Set([...refImagePaths, ...unusedImagePaths])].sort()
+    imageAssets.value = allPaths
+  }
+  catch (e: any) {
+    console.error("加载全部图片资源失败:", e)
+    showMsg(props.i18n.loadFailed || "加载失败")
+  }
 }
 
 async function loadMissingAssets() {
@@ -454,12 +542,12 @@ async function handleDeleteAllUnused() {
  * 删除当前文档中的资源文件
  * @param path 资源相对路径（如 assets/xxx.png）
  *
- * 注意：docAssets / imageAssets 页签中的资源均被文档引用，
+ * 注意：imageAssets 页签中的资源均被文档引用，
  * removeUnusedAsset 仅处理无引用的资源，
  * 对于有引用的资源会失败，请先移除文档中的引用。
  */
 async function handleDeleteAsset(path: string) {
-  const isReferenced = activeTab.value === "docAssets" || activeTab.value === "imageAssets"
+  const isReferenced = activeTab.value === "imageAssets"
   const warning = isReferenced
     ? "\n\n⚠️ 警告：该资源当前被文档引用，删除后文档中将出现断链！"
     : ""
@@ -475,14 +563,55 @@ async function handleDeleteAsset(path: string) {
     showMsg(msg)
   }
   // 刷新当前页签数据
-  if (activeTab.value === "docAssets") {
-    await loadDocAssets()
-  }
-  else if (activeTab.value === "imageAssets") {
+  if (activeTab.value === "imageAssets") {
     await loadImageAssets()
   }
   else if (activeTab.value === "unusedAssets") {
     await loadUnusedAssets()
+  }
+}
+
+/**
+ * 开始移动资源：显示移动表单
+ */
+function startMoveAsset(path: string) {
+  movingAsset.value = path
+  moveNewPath.value = path
+}
+
+/**
+ * 取消移动
+ */
+function cancelMove() {
+  movingAsset.value = null
+  moveNewPath.value = ""
+}
+
+/**
+ * 快速分类：将资源移动到 assets/分类名/ 下
+ */
+function applyCategory(currentPath: string, category: string) {
+  const fileName = currentPath.split("/").pop() || currentPath
+  moveNewPath.value = `assets/${category}/${fileName}`
+}
+
+/**
+ * 确认移动资源（使用 renameAsset API，会自动更新所有引用）
+ */
+async function handleMoveAsset(oldPath: string) {
+  const newPath = moveNewPath.value.trim()
+  if (!newPath || newPath === oldPath) {
+    cancelMove()
+    return
+  }
+  try {
+    await renameAsset(oldPath, newPath)
+    showMsg(props.i18n.moveSuccess)
+    cancelMove()
+    await refresh()
+  }
+  catch (e: any) {
+    showMsg(`${props.i18n.moveFailed}: ${e?.message || e}`)
   }
 }
 

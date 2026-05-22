@@ -2,7 +2,6 @@
 export interface ResourceManagerI18n {
   panelTitle: string
   description: string
-  currentDocAssets: string
   imageAssets: string
   missingAssets: string
   unusedAssets: string
@@ -41,5 +40,22 @@ export interface ResourceManagerI18n {
   newPath: string
   targetDocId: string
   selectFiles: string
+  // 图片资源模式
+  allAssets: string
+  currentDoc: string
+  specifiedDoc: string
+  docIdPlaceholder: string
+  docIdRequired: string
+  assetCount: string
+  // 移动资源
+  moveAsset: string
+  moveSuccess: string
+  moveFailed: string
+  movePathPlaceholder: string
+  currentPath: string
+  category: string
+  confirmMove: string
+  cancel: string
+  loadFailed: string
   [key: string]: string
 }

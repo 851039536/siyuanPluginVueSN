@@ -35,6 +35,7 @@ import {
   registerImageCompressor,
   registerPageLock,
   registerPasswordVault,
+  registerResourceManager,
   registerRssReader,
   registerShortcut,
   registerStatistics,
@@ -194,6 +195,7 @@ export default class PluginSample extends Plugin {
     registerDocAnalysis(this)
     registerFormatAssistant(this)
     registerHtmlViewer(this)
+    registerResourceManager(this)
     registerRssReader(this)
   }
 

@@ -271,6 +271,114 @@ export async function upload(
   return request(url, form)
 }
 
+/**
+ * 全量重建资源内容索引
+ */
+export async function fullReindexAssetContent(): Promise<null> {
+  let url = "/api/asset/fullReindexAssetContent"
+  return request(url, {})
+}
+
+/**
+ * 解析资源路径为操作系统绝对路径
+ * @param path 资源相对路径（如 assets/xxx.png）
+ */
+export async function resolveAssetPath(path: string): Promise<string> {
+  let url = "/api/asset/resolveAssetPath"
+  return request(url, { path })
+}
+
+/** 资源文件信息 */
+export interface AssetInfo {
+  path: string
+  name: string
+  type: string
+  size: number
+  box: string
+  docpath: string
+  hash: string
+}
+
+/**
+ * 获取文档引用的所有资源文件列表
+ * @param id 文档块 ID
+ */
+export async function getDocAssets(id: string): Promise<{ assets: AssetInfo[] }> {
+  let url = "/api/asset/getDocAssets"
+  return request(url, { id })
+}
+
+/**
+ * 获取文档直接引用的图片资源路径列表
+ * @param id 文档块 ID
+ */
+export async function getDocImageAssets(id: string): Promise<string[]> {
+  let url = "/api/asset/getDocImageAssets"
+  return request(url, { id })
+}
+
+/**
+ * 重命名资源文件（自动更新所有引用）
+ * @param oldPath 旧路径
+ * @param newPath 新路径
+ */
+export async function renameAsset(oldPath: string, newPath: string): Promise<null> {
+  let url = "/api/asset/renameAsset"
+  return request(url, { oldPath, newPath })
+}
+
+/** 插入本地资源返回结果 */
+export interface InsertLocalAssetsResult {
+  succMap: Record<string, string>
+  errFiles: string[]
+}
+
+/**
+ * 插入本地资源文件到 assets 目录
+ * @param assetPaths 本地文件绝对路径列表
+ * @param id 目标文档块 ID
+ */
+export async function insertLocalAssets(
+  assetPaths: string[],
+  id: string,
+): Promise<InsertLocalAssetsResult> {
+  let url = "/api/asset/insertLocalAssets"
+  return request(url, { assetPaths, id })
+}
+
+/**
+ * 获取丢失资源列表（有引用但文件不存在）
+ */
+export async function getMissingAssets(): Promise<string[]> {
+  let url = "/api/asset/getMissingAssets"
+  return request(url, {})
+}
+
+/**
+ * 获取未使用资源列表（文件存在但无引用）
+ */
+export async function getUnusedAssets(): Promise<string[]> {
+  let url = "/api/asset/getUnusedAssets"
+  return request(url, {})
+}
+
+/**
+ * 删除单个未使用资源
+ * @param path 资源相对路径
+ */
+export async function removeUnusedAsset(path: string): Promise<null> {
+  let url = "/api/asset/removeUnusedAsset"
+  return request(url, { path })
+}
+
+/**
+ * 删除所有未使用资源
+ */
+export async function removeUnusedAssets(): Promise<null> {
+  let url = "/api/asset/removeUnusedAssets"
+  return request(url, {})
+}
+
 // **************************************** Block ****************************************
 type DataType = "markdown" | "dom"
 export async function insertBlock(

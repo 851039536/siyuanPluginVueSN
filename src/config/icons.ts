@@ -242,6 +242,12 @@ export const FEATURE_ICONS = {
     color: "#10b981",
   },
 
+  // 资源管理
+  resourceManager: {
+    icon: "mdi:folder-multiple-image",
+    color: "#06b6d4",
+  },
+
   // RSS订阅
   rssReader: {
     icon: "mdi:rss",

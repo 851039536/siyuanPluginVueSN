@@ -60,6 +60,7 @@ export { registerTextDiff } from "./textDiff"
 export { registerUnitConverter } from "./unitConverter"
 export { registerVideo } from "./video"
 export { registerWordQuery } from "./wordQuery"
+export { registerResourceManager } from "./resourceManager"
 export { registerRssReader } from "./rssReader"
 
 /**
@@ -78,7 +79,7 @@ type _Registered =
   | "statistics" | "encryption" | "video" | "everythingSearch"
   | "statusBar" | "floatingToolbar" | "floatingBox" | "textDiff"
   | "base64Image" | "flashcardReading" | "passwordVault" | "docAnalysis"
-  | "formatAssistant" | "htmlViewer" | "rssReader"
+  | "formatAssistant" | "htmlViewer" | "rssReader" | "resourceManager"
 
 // --- 编译时断言辅助 ---
 // 利用泛型接口约束 T extends true 产生 TypeScript 编译错误，无运行时开销

@@ -1,3 +1,8 @@
+import type {
+  ChangedDoc,
+  DailyWordCount,
+  StatisticsData,
+} from "./types"
 import { Plugin } from "siyuan"
 import {
   createApp,
@@ -6,15 +11,11 @@ import {
 import {
   lsNotebooks,
   readDir,
+  sql,
 } from "@/api"
 import { emitCustomEvent } from "@/utils/eventBus"
 import StatisticsPanel from "./index.vue"
 import { StatisticsStorage } from "./types/storage"
-import type {
-  ChangedDoc,
-  DailyWordCount,
-  StatisticsData,
-} from "./types"
 import { isValidDateStr } from "./utils"
 
 const DAY_PERIOD_MAP: Record<number, string> = {
@@ -279,7 +280,10 @@ export class Statistics {
     // 参数校验：防止 SQL 注入
     if (!isValidDateStr(dateStr)) {
       console.warn("getDateChangedDocs: 无效的日期参数", dateStr)
-      return { newDocs: [], modifiedDocs: [] }
+      return {
+        newDocs: [],
+        modifiedDocs: [],
+      }
     }
 
     // 查询指定日期新增的文档
@@ -325,7 +329,10 @@ export class Statistics {
   > {
     // 参数校验：防止 SQL 注入
     if (!isValidDateStr(startStr) || !isValidDateStr(endStr)) {
-      console.warn("getDateRangeChangeStats: 无效的日期参数", { startStr, endStr })
+      console.warn("getDateRangeChangeStats: 无效的日期参数", {
+        startStr,
+        endStr,
+      })
       return []
     }
 
@@ -761,25 +768,11 @@ export class Statistics {
   }
 
   /**
-   * 执行 SQL 查询
+   * 执行 SQL 查询（使用统一的 @/api sql() 封装）
    */
-  private async executeSql(sql: string): Promise<any[]> {
+  private async executeSql(stmt: string): Promise<any[]> {
     try {
-      const response = await fetch("/api/query/sql", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ stmt: sql }),
-      })
-
-      const data = await response.json()
-      if (data.code === 0) {
-        return data.data || []
-      } else {
-        console.error("SQL 查询失败:", data.msg)
-        return []
-      }
+      return (await sql(stmt)) || []
     } catch (error) {
       console.error("SQL 查询异常:", error)
       return []

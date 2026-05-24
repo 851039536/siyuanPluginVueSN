@@ -111,7 +111,6 @@ export function formatDate(dateString: string, i18n: DiskBrowserI18n): string {
 
 export async function copyToClipboard(
   text: string,
-  i18n: DiskBrowserI18n,
 ): Promise<boolean> {
   try {
     if (navigator.clipboard?.writeText) {

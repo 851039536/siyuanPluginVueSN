@@ -3,7 +3,7 @@
  */
 import { Plugin } from "siyuan"
 import { emitCustomEvent } from "@/utils/eventBus"
-// @ts-ignore
+// @ts-expect-error
 import VideoManagerPanel from "../index.vue"
 
 /**

@@ -8,11 +8,10 @@ import {
   h,
 } from "vue"
 import { emitCustomEvent } from "@/utils/eventBus"
-// @ts-ignore
 import GeneralSettingsPanel from "../index.vue"
+import { BookmarkMarker } from "../modules/BookmarkMarker"
 import { DocCountManager } from "../modules/DocCountManager"
 import { HighlightManager } from "../modules/HighlightManager"
-import { BookmarkMarker } from "../modules/BookmarkMarker"
 import { SkillsViewerManager } from "../modules/SkillsViewerManager"
 import {
   applyCodeBlockCollapse,
@@ -286,7 +285,7 @@ export class GeneralSettings {
           letter-spacing: ${fontSettings.letterSpacing}px !important;
           font-weight: ${fontSettings.fontWeight} !important;
         }
-        
+
         /* 行高 - 需要应用到具体元素 */
         .protyle-wysiwyg [data-node-id][data-type="NodeParagraph"],
         .protyle-wysiwyg [data-node-id][data-type="NodeParagraph"] p,
@@ -300,12 +299,12 @@ export class GeneralSettings {
         .protyle-wysiwyg [data-node-id][data-type="NodeBlockquote"] p {
           line-height: ${fontSettings.lineHeight} !important;
         }
-        
+
         /* 段落间距 */
         .protyle-wysiwyg [data-node-id][data-type="NodeParagraph"] {
           margin-bottom: ${fontSettings.paragraphSpacing}px !important;
         }
-        
+
         /* 预览区域 - 基础样式 */
         .b3-typography {
           font-family: ${fontFamily}var(--b3-font-family) !important;
@@ -313,7 +312,7 @@ export class GeneralSettings {
           letter-spacing: ${fontSettings.letterSpacing}px !important;
           font-weight: ${fontSettings.fontWeight} !important;
         }
-        
+
         /* 预览区域行高 */
         .b3-typography p,
         .b3-typography div,
@@ -326,11 +325,11 @@ export class GeneralSettings {
         .b3-typography h6 {
           line-height: ${fontSettings.lineHeight} !important;
         }
-        
+
         .b3-typography p {
           margin-bottom: ${fontSettings.paragraphSpacing}px !important;
         }
-        
+
         /* 导出预览 - 基础样式 */
         .render-node {
           font-family: ${fontFamily}var(--b3-font-family) !important;
@@ -338,14 +337,14 @@ export class GeneralSettings {
           letter-spacing: ${fontSettings.letterSpacing}px !important;
           font-weight: ${fontSettings.fontWeight} !important;
         }
-        
+
         /* 导出预览行高 */
         .render-node p,
         .render-node div,
         .render-node li {
           line-height: ${fontSettings.lineHeight} !important;
         }
-        
+
         /* 代码块保持原字体和行高 */
         .protyle-wysiwyg .code-block,
         .protyle-wysiwyg .code-block *,
@@ -398,36 +397,36 @@ export class GeneralSettings {
           overflow: hidden;
           box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
         }
-        
+
         /* 表格内部网格线 */
         .protyle-wysiwyg table th,
         .protyle-wysiwyg table td {
           border: 1.5px solid ${tableSettings.cellBorderColor} !important;
         }
-        
+
         /* 表头 */
         .protyle-wysiwyg table th {
           background-color: ${tableSettings.headerBackground} !important;
           color: ${tableSettings.textColor};
         }
-        
+
         /* 奇数行 */
         .protyle-wysiwyg table tr:nth-child(odd) {
           background-color: ${tableSettings.oddRowBackground} !important;
           color: ${tableSettings.textColor};
         }
-        
+
         /* 偶数行 */
         .protyle-wysiwyg table tr:nth-child(even) {
           background-color: ${tableSettings.evenRowBackground} !important;
           color: ${tableSettings.textColor};
         }
-        
+
         /* 暗色主题适配 */
         :root[data-theme-mode="dark"] .protyle-wysiwyg table th {
           color: #ffffff;
         }
-        
+
         :root[data-theme-mode="dark"] .protyle-wysiwyg table tr:nth-child(odd),
         :root[data-theme-mode="dark"] .protyle-wysiwyg table tr:nth-child(even) {
           color: #ffffff;
@@ -679,15 +678,15 @@ export class GeneralSettings {
       style.textContent = `
         /* 有序列表样式 */
         ${orderedListCss}
-        
+
         /* 无序列表样式 - 隐藏原始符号 */
         [data-subtype="u"] > .li[data-subtype="u"] > .protyle-action svg {
           color: transparent;
         }
-        
+
         /* 无序列表符号 */
         ${unorderedListCss}
-        
+
         /* 暗色主题适配 */
         :root[data-theme-mode="dark"] .li[data-subtype="o"] > .protyle-action--order,
         :root[data-theme-mode="dark"] .li[data-subtype="u"] > .protyle-action::before {

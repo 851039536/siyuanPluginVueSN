@@ -8,6 +8,7 @@ import {
   onUnmounted,
   reactive,
 } from "vue"
+import { sql } from "@/api"
 import {
   DEFAULT_TOTAL_MEMORY_GB,
   INITIAL_DELAY_MS,
@@ -146,7 +147,7 @@ export function useStatusBar() {
       yesterday.setDate(yesterday.getDate() - 1)
       const yesterdayStr = `${yesterday.getFullYear()}${String(yesterday.getMonth() + 1).padStart(2, "0")}${String(yesterday.getDate()).padStart(2, "0")}`
 
-      const sql = `
+      const queryStmt = `
         SELECT
           (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d') as totalNotes,
           (SELECT SUM(length) FROM blocks WHERE type = 'p' AND length > 0) as totalWords,
@@ -155,19 +156,14 @@ export function useStatusBar() {
           (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d' AND substr(created, 1, 8) = '${yesterdayStr}') as yesterdayCreated,
           (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d' AND substr(updated, 1, 8) = '${yesterdayStr}') as yesterdayModified
       `
-      const response = await fetch("/api/query/sql", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stmt: sql }),
-      })
-      const data = await response.json()
-      if (data.code === 0 && data.data?.[0]) {
-        state.totalNotes = Number(data.data[0].totalNotes || 0)
-        state.totalWords = Number(data.data[0].totalWords || 0)
-        state.todayCreated = Number(data.data[0].todayCreated || 0)
-        state.todayModified = Number(data.data[0].todayModified || 0)
-        state.yesterdayCreated = Number(data.data[0].yesterdayCreated || 0)
-        state.yesterdayModified = Number(data.data[0].yesterdayModified || 0)
+      const data = await sql(queryStmt)
+      if (data?.[0]) {
+        state.totalNotes = Number(data[0].totalNotes || 0)
+        state.totalWords = Number(data[0].totalWords || 0)
+        state.todayCreated = Number(data[0].todayCreated || 0)
+        state.todayModified = Number(data[0].todayModified || 0)
+        state.yesterdayCreated = Number(data[0].yesterdayCreated || 0)
+        state.yesterdayModified = Number(data[0].yesterdayModified || 0)
       }
     } catch (error) {
       console.error("获取统计数据失败:", error)

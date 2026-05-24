@@ -9,7 +9,6 @@ import {
   createApp,
   h,
 } from "vue"
-// @ts-ignore
 import ShortcutPanel from "./index.vue"
 import {
   getShortcutManager,

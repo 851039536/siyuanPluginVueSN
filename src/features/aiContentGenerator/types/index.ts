@@ -1,4 +1,7 @@
-import type { GenerateOptions, ChatOptions } from "@/types/ai"
+import type {
+  ChatOptions,
+  GenerateOptions,
+} from "@/types/ai"
 import type { AiApiConfig } from "@/utils/aiApi"
 /**
  * AI信息生成功能模块
@@ -14,11 +17,10 @@ import {
   h,
 } from "vue"
 import {
-  callAISmart,
   callAIChat,
+  callAISmart,
   getApiConfigFromPlugin,
 } from "@/utils/aiApi"
-// @ts-ignore
 import AIContentGeneratorPanel from "../index.vue"
 
 /**

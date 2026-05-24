@@ -39,6 +39,7 @@ import {
   registerRssReader,
   registerShortcut,
   registerStatistics,
+  getStatisticsInstance,
   registerStatusBar,
   registerSuperPanel,
   registerTableOfContents,
@@ -159,6 +160,9 @@ export default class PluginSample extends Plugin {
     if ((this as any).__htmlViewer) {
       (this as any).__htmlViewer.destroy()
     }
+
+    // 清理统计数据资源
+    getStatisticsInstance()?.destroy()
 
     destroyCommands()
     destroy()

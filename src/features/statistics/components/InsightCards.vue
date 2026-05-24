@@ -70,6 +70,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue"
+import { formatDate } from "../utils"
 import CollapsibleSection from "./CollapsibleSection.vue"
 
 interface HistoricalDataItem {
@@ -224,14 +225,8 @@ const hasHiddenMilestones = computed(() => {
   return achievedCount.value > 3 || allMilestones.length > visibleMilestones.value.length + 1
 })
 
-// ============ 工具函数 ============
-function formatDate(date: Date): string {
-  return `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())}`
-}
-
-function padZero(num: number): string {
-  return num < 10 ? `0${num}` : String(num)
-}
+// ============ 工具函数 ==========
+// formatDate 和 padZero 从 ../utils 导入
 </script>
 
 <style scoped lang="scss">

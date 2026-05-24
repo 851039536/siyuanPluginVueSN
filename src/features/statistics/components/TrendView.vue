@@ -753,20 +753,7 @@ function getDiff(
   field: "totalWords" | "totalNotes",
 ): number {
   if (!current || !previous) return 0
-
-  if (
-    previous.todayCreated === 0
-    && previous.todayModified === 0
-    && current[field] > 0
-  ) {
-    const diff = current[field] - previous[field]
-    return diff > 0 ? diff : 0
-  }
-
-  if (previous[field] === 0 && current[field] > 0) {
-    return 0
-  }
-
+  // 累计值的差值即为该周期内的净变化
   return current[field] - previous[field]
 }
 </script>

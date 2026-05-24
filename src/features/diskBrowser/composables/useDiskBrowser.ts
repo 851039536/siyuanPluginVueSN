@@ -264,7 +264,6 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
   function processFolderList(
     stdout: string,
     basePath: string,
-    includeFiles = false,
   ): FolderInfo[] {
     return (
       stdout
@@ -481,7 +480,7 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
   }
 
   async function copyPathToClipboard(path: string): Promise<void> {
-    const success = await copyToClipboard(path, i18n)
+    const success = await copyToClipboard(path)
     showMessage(
       success ? i18n.pathCopied || "路径已复制" : i18n.copyFailed || "复制失败",
       2000,

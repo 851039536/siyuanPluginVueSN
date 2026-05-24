@@ -1,12 +1,17 @@
+import type { SkillInfo } from "@/features/generalSettings/modules/SkillsViewerManager"
+import type {
+  SkillItem,
+} from "@/types/ai"
 /**
  * 技能加载 Composable
  * 统一 index.vue 和 ChatView.vue 中的 loadSkills 逻辑
  * 支持同名技能去重（合并来源提示）和搜索过滤
  */
-import { ref, computed } from "vue"
+import {
+  computed,
+  ref,
+} from "vue"
 import { SkillsViewerManager } from "@/features/generalSettings/modules/SkillsViewerManager"
-import type { SkillInfo } from "@/features/generalSettings/modules/SkillsViewerManager"
-import type { SkillItem, SkillSource } from "@/types/ai"
 
 export function useSkillsLoader(plugin: any) {
   /** 原始技能列表（去重前） */
@@ -33,9 +38,9 @@ export function useSkillsLoader(plugin: any) {
     const query = skillSearchQuery.value.toLowerCase().trim()
     return skills.value.filter(
       (s) =>
-        s.name.toLowerCase().includes(query) ||
-        s.description.toLowerCase().includes(query) ||
-        s.sources.some((src) => src.tool.toLowerCase().includes(query)),
+        s.name.toLowerCase().includes(query)
+        || s.description.toLowerCase().includes(query)
+        || s.sources.some((src) => src.tool.toLowerCase().includes(query)),
     )
   })
 
@@ -95,7 +100,11 @@ export function useSkillsLoader(plugin: any) {
         description: s.description,
         content: s.content,
         tool: s.tool,
-        sources: [{ id: s.filePath, tool: s.tool, content: s.content }],
+        sources: [{
+          id: s.filePath,
+          tool: s.tool,
+          content: s.content,
+        }],
       }))
 
       // 去重
@@ -113,7 +122,6 @@ export function useSkillsLoader(plugin: any) {
 
   return {
     skills,
-    rawSkills,
     currentSkillIndex,
     currentSkill,
     managerAvailable,

@@ -3,7 +3,6 @@ import {
   createApp,
   h,
 } from "vue"
-// @ts-ignore
 import UnitConverterPanel from "../index.vue"
 
 /**

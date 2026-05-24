@@ -17,7 +17,6 @@ import {
 import { FEATURE_ICONS } from "@/config/icons"
 import { emitCustomEvent } from "@/utils/eventBus"
 import { replaceTopBarIcon } from "@/utils/iconHelper"
-// @ts-ignore
 import SuperPanelPanel from "../index.vue"
 
 export type { FeatureAction }

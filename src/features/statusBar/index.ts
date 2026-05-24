@@ -3,7 +3,6 @@
  */
 import { Plugin } from "siyuan"
 import { createApp } from "vue"
-// @ts-ignore
 import StatusBarPanel from "./index.vue"
 import "./styles/index.scss"
 

@@ -74,7 +74,8 @@ src/
 │   ├── pluginStorage.ts         # 存储抽象层（PluginStorage）
 │   ├── typedStorage.ts          # 类型安全存储槽（TypedStorage<T>）
 │   ├── settingsCrypto.ts        # 敏感配置加密（AES-GCM + PBKDF2，用于 aiApiKey / WebDAV 密码）
-│   └── iconHelper.ts            # 图标操作工具（replaceTopBarIcon/createIconElement）
+│   ├── iconHelper.ts            # 图标操作工具（replaceTopBarIcon/createIconElement）
+│   └── vueAppHelper.ts          # Vue 应用挂载辅助（createVueDockApp/createModalVueApp）
 ├── i18n/                        # 国际化（zh_CN.json, en_US.json）
 ├── api.ts                       # Siyuan API 封装
 ├── index.ts                     # 插件入口（条件注册各功能模块）
@@ -140,6 +141,8 @@ type _AssertAllCovered = _AssertTrue<
 - **存储统一**：所有功能模块必须通过 `PluginStorage`（或 `TypedStorage`）进行数据持久化，禁止直接调用 `plugin.loadData/saveData`
 - **AI 统一**：所有 AI API 调用必须通过 `src/utils/aiApi.ts`，禁止在功能模块中直接调用 fetch/axios
 - **事件统一**：所有自定义事件派发必须通过 `src/utils/eventBus.ts` 的 `emitCustomEvent` 函数，禁止直接使用 `window.dispatchEvent(new CustomEvent(...))` 或 `document.dispatchEvent(...)`
+- **Dock/Modal 统一**：新建 Dock 侧边栏面板必须使用 `src/utils/vueAppHelper.ts` 的 `createVueDockApp()`，新建遮罩弹窗必须使用 `createModalVueApp()`，禁止在功能模块中直接编写 `createApp + mount + appendChild` 或 `mask + container + createApp` 样板代码
+- **SQL 统一**：所有 SQL 查询必须通过 `src/api.ts` 的 `sql()` 函数，禁止在功能模块中直接使用 `fetch("/api/query/sql", ...)`
 - **图标注册**：新增功能需在 `src/config/icons.ts` 的 `FEATURE_ICONS` 中添加图标映射，并运行 `pnpm validate:icons` 验证
 - **类型安全**：Props 接口禁止使用 `any`，应使用具体类型（`Plugin`、`Record<string, string>`、`Partial<T>` 等）
 - **无死代码**：禁止保留未使用的函数、变量、接口、导出；composables 返回值只暴露外部实际使用的成员
@@ -369,6 +372,72 @@ clearCachedKey()
 **算法**：PBKDF2（SHA-256, 100000 轮）派生 256 位 AES-GCM 密钥，每次加密使用随机 12 字节 IV。密钥缓存在内存中，插件卸载时清除。
 
 **安全边界**：防止磁盘明文泄漏（如他人访问工作区文件）。不防御源码反编译攻击。如需更高保护等级，可扩展集成 OS 凭据管理器（keytar）。
+
+### Vue 应用挂载辅助（vueAppHelper）
+
+`src/utils/vueAppHelper.ts` — 封装重复的 Vue 应用创建模式，所有 Dock 面板和 Modal 弹窗的入口。
+
+#### createVueDockApp — Dock 侧边栏面板
+
+```typescript
+import { createVueDockApp } from "@/utils/vueAppHelper"
+
+// 标准 Dock 面板注册（替代手工 createApp + mount + appendChild）
+createVueDockApp(plugin, MyPanel, {
+  icon: "iconSettings",
+  title: plugin.i18n.myFeature?.title || "我的功能",
+  type: "my-feature-dock",
+  width: 380,
+  i18n: plugin.i18n.myFeature || {},
+  // extraProps: { onCustom: handler }  // 可选的额外 props
+})
+```
+
+**参数**：
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `plugin` | `Plugin` | 思源插件实例 |
+| `component` | `Component` | Vue SFC 组件 |
+| `options.icon` | `string` | Dock 图标名 |
+| `options.title` | `string` | Dock 标题 |
+| `options.type` | `string` | Dock 类型标识 |
+| `options.width` | `number` | 面板宽度（默认 380） |
+| `options.i18n` | `Record<string, any>` | 传递给组件的 i18n 对象 |
+| `options.extraProps` | `Record<string, any>` | 额外的组件 props（含回调） |
+
+#### createModalVueApp — 遮罩弹窗
+
+```typescript
+import { createModalVueApp } from "@/utils/vueAppHelper"
+
+// 在 Manager 构造函数中创建弹窗实例
+this.modal = createModalVueApp(MyDialog, {
+  maskId: "my-feature-mask",
+  width: "90vw",
+  height: "85vh",
+  getCloseHandler: () => this.close.bind(this),
+  buildProps: () => ({
+    onClose: this.close.bind(this),
+    i18n: this.plugin.i18n,
+    plugin: this.plugin,
+  }),
+})
+
+// 使用 modal.open() / modal.close() 控制显隐
+this.modal.open()
+this.modal.close()
+
+// 判断是否已打开
+if (this.modal.app && this.modal.container) { ... }
+```
+
+**返回值 `ModalAppInstance`**：
+| 属性 | 类型 | 说明 |
+|------|------|------|
+| `app` | `VueApp \| null` | Vue 应用实例（关闭时为 null） |
+| `container` | `HTMLElement \| null` | DOM 容器元素（关闭时为 null） |
+| `open()` | `() => void` | 打开弹窗（已打开时先关闭再重建） |
+| `close()` | `() => void` | 关闭弹窗并清理 DOM |
 
 ## 国际化（i18n）
 

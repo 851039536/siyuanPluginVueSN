@@ -324,7 +324,11 @@ export async function getDocImageAssets(id: string): Promise<string[]> {
  */
 export async function renameAsset(oldPath: string, newPath: string): Promise<null> {
   let url = "/api/asset/renameAsset"
-  return request(url, { oldPath, newPath })
+  let response = await fetchSyncPost(url, { oldPath, newPath })
+  if (response.code !== 0) {
+    throw new Error(response.msg || `renameAsset failed (code: ${response.code})`)
+  }
+  return null
 }
 
 /** 插入本地资源返回结果 */

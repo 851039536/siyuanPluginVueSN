@@ -52,7 +52,7 @@ export {
   registerShortcut,
   type ShortcutInfo,
 } from "./shortcut"
-export { registerStatistics } from "./statistics"
+export { getStatisticsInstance, registerStatistics } from "./statistics"
 export { registerStatusBar } from "./statusBar"
 export { registerSuperPanel } from "./superPanel"
 export { registerTableOfContents } from "./tableOfContents"

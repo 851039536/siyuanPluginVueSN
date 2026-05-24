@@ -253,6 +253,7 @@ import StatsCardsCompact from "./components/StatsCardsCompact.vue"
 import TrendView from "./components/TrendView.vue"
 import ViewModeSection from "./components/ViewModeSection.vue"
 import WordRanking from "./components/WordRanking.vue"
+import { padZero } from "./utils"
 import type {
   ChangedDoc,
   DailyWordCount,
@@ -274,6 +275,7 @@ interface Props {
     modifiedDocs: ChangedDoc[]
   }>
   onGetDateRangeChangeStats?: (startStr: string, endStr: string) => Promise<RangeStatItem[]>
+  onRegisterRefresh?: (fn: () => Promise<void>) => void
   i18n?: {
     loading: string
     refresh: string
@@ -646,10 +648,6 @@ const modifiedChange = computed(() => {
   )
 })
 
-function padZero(num: number): string {
-  return num < 10 ? `0${num}` : String(num)
-}
-
 // 合并监听，避免多个状态同时变化时触发多次刷新
 watch([viewMode, dayRange, monthYearRange, selectedYear], () => {
   refreshData()
@@ -706,6 +704,8 @@ async function loadNotebookDocStats() {
 onMounted(() => {
   refreshData()
   loadDateChangedDocs(docChangeDate.value)
+  // 向父组件注册 refreshData 函数，供外部调用
+  props.onRegisterRefresh?.(refreshData)
 })
 
 defineExpose({
@@ -714,7 +714,7 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
-@use "./styles/index.scss";
+@use "./styles/index.scss" as stats;
 
 .changed-range-picker {
   display: flex;
@@ -724,23 +724,7 @@ defineExpose({
 }
 
 .changed-range-btn {
-  padding: 4px 10px;
-  border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-  font-size: 12px;
-  cursor: pointer;
-
-  &:hover {
-    background: var(--b3-list-hover);
-  }
-
-  &.active {
-    background: var(--b3-theme-primary-light);
-    color: var(--b3-theme-primary);
-    border-color: var(--b3-theme-primary);
-  }
+  @include stats.small-action-btn;
 }
 
 .range-chart-section {
@@ -844,24 +828,9 @@ defineExpose({
 }
 
 .changed-date-today {
-  padding: 4px 12px;
-  border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-  font-size: 12px;
-  cursor: pointer;
+  @include stats.small-action-btn;
   white-space: nowrap;
-
-  &:hover {
-    background: var(--b3-list-hover);
-  }
-
-  &.active {
-    background: var(--b3-theme-primary-light);
-    color: var(--b3-theme-primary);
-    border-color: var(--b3-theme-primary);
-  }
+  padding: 4px 12px;
 }
 
 .changed-docs-loading {

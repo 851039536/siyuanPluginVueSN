@@ -42,6 +42,7 @@ export class Statistics {
   private storage: StatisticsStorage
   private dockElement: HTMLElement | null = null
   private vueApp: VueApp | null = null
+  private panelRefreshFn: (() => Promise<void>) | null = null // Vue 组件的 refreshData 引用
   private viewMode: "day" | "week" | "month" | "year" | "trend" = "day" // 当前查看模式
   private dayRange: 7 | 15 | 30 | 90 | 180 | 365 = 7 // 日视图的天数范围
   private monthYearRange: 1 | 2 | 3 = 1 // 月视图的年份范围
@@ -49,6 +50,8 @@ export class Statistics {
   private updateInterval: number = 60000 // 定时更新间隔（毫秒），默认1分钟
   private updateTimer: NodeJS.Timeout | null = null // 定时器实例
   private lastUpdateTime: number = 0 // 上次更新时间戳
+  private isCollecting: boolean = false // 防止并发收集的标志
+  private handleOpenStatistics: (() => void) | null = null // 事件监听器引用
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
@@ -83,10 +86,11 @@ export class Statistics {
    * 绑定事件监听
    */
   private bindEvents(): void {
-    window.addEventListener("openStatistics", () => {
+    this.handleOpenStatistics = () => {
       // 触发Dock显示
       emitCustomEvent("dock-click", { dockId: "statistics-dock" })
-    })
+    }
+    window.addEventListener("openStatistics", this.handleOpenStatistics)
   }
 
   /**
@@ -157,6 +161,9 @@ export class Statistics {
       },
       onGetDateRangeChangeStats: async (startStr: string, endStr: string) => {
         return await this.getDateRangeChangeStats(startStr, endStr)
+      },
+      onRegisterRefresh: (fn: () => Promise<void>) => {
+        this.panelRefreshFn = fn
       },
     })
 
@@ -474,7 +481,7 @@ export class Statistics {
       if (openNotebooks.length === 0) return []
 
       // 构建 SQL 查询：统计每个笔记本的文档数
-      const notebookIds = openNotebooks.map((nb: any) => `'${nb.id}'`).join(",")
+      const notebookIds = openNotebooks.map((nb: any) => `'${(nb.id as string).replace(/'/g, "''")}'`).join(",")
       const sqlStmt = `
         SELECT box as notebook_id, COUNT(*) as doc_count
         FROM blocks
@@ -815,13 +822,15 @@ export class Statistics {
    * 收集并存储统计数据
    */
   private async collectAndStoreStatistics(): Promise<void> {
-    try {
-      const now = Date.now()
-      // 避免频繁执行（间隔小于30秒）
-      if (now - this.lastUpdateTime < 30000) {
-        return
-      }
+    // 防止并发收集
+    if (this.isCollecting) return
 
+    const now = Date.now()
+    // 避免频繁执行（间隔小于30秒）
+    if (now - this.lastUpdateTime < 30000) return
+
+    this.isCollecting = true
+    try {
       const stats = await this.getStatistics()
 
       // 保存到数据库（按日期）
@@ -829,16 +838,15 @@ export class Statistics {
       const dateKey = this.formatDateKey(today)
       const existingData = await this.storage.loadHistory()
 
-      // 更新当日数据
-      existingData[dateKey] = {
-        date: dateKey,
-        timestamp: now,
-        totalNotes: stats.totalNotes,
-        totalWords: stats.totalWords,
-        todayCreated: stats.todayCreated,
-        todayModified: stats.todayModified,
-        avgWordsPerDoc: stats.avgWordsPerDoc,
-      }
+      // 更新当日数据（使用统一的 createHistoryRecord）
+      existingData[dateKey] = this.createHistoryRecord(
+        today,
+        stats.totalNotes,
+        stats.totalWords,
+        stats.todayCreated,
+        stats.todayModified,
+        stats.avgWordsPerDoc,
+      )
 
       // 只保留最近365天的数据
       const keys = Object.keys(existingData).sort().reverse()
@@ -852,6 +860,8 @@ export class Statistics {
       this.lastUpdateTime = now
     } catch (error) {
       console.error("收集统计数据失败:", error)
+    } finally {
+      this.isCollecting = false
     }
   }
 
@@ -1014,10 +1024,9 @@ export class Statistics {
   async manualRefresh(): Promise<void> {
     await this.collectAndStoreStatistics()
 
-    // 如果面板已打开，刷新显示
-    if (this.vueApp) {
-      await this.getStatistics()
-      // 这里可以根据需要通知 Vue 组件更新
+    // 如果面板已打开，通知 Vue 组件刷新显示
+    if (this.panelRefreshFn) {
+      await this.panelRefreshFn()
     }
   }
 
@@ -1038,11 +1047,19 @@ export class Statistics {
     // 停止定时任务
     this.stopUpdateTimer()
 
+    // 移除事件监听器
+    if (this.handleOpenStatistics) {
+      window.removeEventListener("openStatistics", this.handleOpenStatistics)
+      this.handleOpenStatistics = null
+    }
+
     // 清理 Vue 实例
     if (this.vueApp) {
       this.vueApp.unmount()
       this.vueApp = null
     }
+    // 清理回调引用
+    this.panelRefreshFn = null
     // 清理资源
     this.dockElement = null
   }

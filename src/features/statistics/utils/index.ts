@@ -30,21 +30,13 @@ export function formatDate(date: Date): string {
 }
 
 /**
- * 判断日期是否为今天
+ * 判断日期字符串（格式 YYYY-MM-DD）是否为今天
  */
 export function isToday(dateStr: string): boolean {
   if (!dateStr) return false
   const today = new Date()
   const todayStr = `${today.getFullYear()}-${padZero(today.getMonth() + 1)}-${padZero(today.getDate())}`
-
-  if (dateStr.length === 10) {
-    return dateStr === todayStr
-  } else if (dateStr.length === 7) {
-    return dateStr === todayStr.substring(0, 7)
-  } else if (dateStr.length === 4) {
-    return dateStr === String(today.getFullYear())
-  }
-  return false
+  return dateStr === todayStr
 }
 
 /**

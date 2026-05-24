@@ -43,6 +43,31 @@ $color-danger: #cf222e;
   -webkit-backdrop-filter: blur(8px);
 }
 
+@mixin small-action-btn {
+  padding: 4px 10px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  font-size: 12px;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+
+  &.active {
+    background: var(--b3-theme-primary-light);
+    color: var(--b3-theme-primary);
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 // ========== Shared Component Styles ==========
 .section-title {
   margin: 0 0 12px 0;

@@ -87,7 +87,17 @@
 
         <!-- 书签 -->
         <div class="grid-section">
-          <span class="grid-section-label"><Icon icon="mdi:bookmark-outline" class="section-icon-sm" />书签</span>
+          <span class="grid-section-label">
+            <Icon icon="mdi:bookmark-outline" class="section-icon-sm" />书签
+            <button
+              class="bookmark-detail-btn"
+              title="查看全部书签"
+              @click.stop="$emit('show-bookmark-details')"
+            >
+              <Icon icon="mdi:format-list-bulleted" :size="12" />
+              详情
+            </button>
+          </span>
           <div class="stats-cards">
             <div class="stat-card" :class="{ active: activeFilter === 'pendingPublish' }" @click="$emit('select-category', 'pendingPublish')">
               <span class="stat-value pending-color">{{ stats.pendingPublishDocs }}</span>
@@ -167,10 +177,56 @@
       <p>点击「分析」查看文档统计</p>
     </div>
   </div>
+
+  <!-- 书签详情弹出面板 -->
+  <Teleport to="body">
+    <div
+      v-if="bookmarkDetailVisible"
+      class="bookmark-detail-overlay"
+      @click.self="closeBookmarkDetail"
+    >
+      <div class="bookmark-detail-panel">
+        <div class="bookmark-detail-header">
+          <span class="bookmark-detail-title">
+            <Icon icon="mdi:bookmark-outline" />
+            全部书签
+          </span>
+          <button class="close-btn" @click="closeBookmarkDetail">
+            <Icon icon="mdi:close" />
+          </button>
+        </div>
+        <div class="bookmark-detail-body">
+          <div v-if="bookmarkDetailLoading" class="bookmark-detail-loading">
+            <Icon icon="mdi:loading" class="spin-icon" />
+            加载中...
+          </div>
+          <div v-else-if="bookmarkDetails.length === 0" class="bookmark-detail-empty">
+            <Icon icon="mdi:bookmark-off-outline" class="empty-icon" />
+            <p>暂无书签数据</p>
+          </div>
+          <div v-else class="bookmark-detail-list">
+            <button
+              v-for="item in bookmarkDetails"
+              :key="item.value"
+              class="bookmark-detail-item"
+              @click="$emit('select-bookmark', item.value)"
+            >
+              <div class="bd-item-left">
+                <span class="bd-item-name" :title="item.value">{{ item.value || '(空值)' }}</span>
+              </div>
+              <span class="bd-item-count">{{ item.count }} 篇</span>
+              <Icon icon="mdi:chevron-right" class="bd-item-arrow" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
 import type {
+  BookmarkDetail,
   DepthStats,
   DocStats,
 } from "../types/index"
@@ -186,14 +242,19 @@ interface Props {
   hasAnalyzed: boolean
   activeFilter: string
   depthStats: DepthStats
+  bookmarkDetails: BookmarkDetail[]
+  bookmarkDetailVisible: boolean
+  bookmarkDetailLoading: boolean
 }
 
 const props = defineProps<Props>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: "analyze"): void
   (e: "select-category", category: string): void
   (e: "batch-publish", category: string): void
+  (e: "show-bookmark-details"): void
+  (e: "select-bookmark", bookmark: string): void
 }>()
 
 /** 折叠状态 */
@@ -201,6 +262,12 @@ const isCollapsed = ref(false)
 
 function toggleCollapse() {
   isCollapsed.value = !isCollapsed.value
+}
+
+function closeBookmarkDetail() {
+  // 通过再次触发相同事件来让 composable 关闭面板
+  // 此处通知父组件关闭，由 composable 的 bookmarkDetailVisible 控制
+  emit("show-bookmark-details")
 }
 
 /** 计算深度分布柱状图高度 */
@@ -478,6 +545,179 @@ function getBarHeight(count: number): number {
 
   p {
     margin: 0;
+  }
+}
+
+// ============ 书签详情按钮 ============
+.bookmark-detail-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 6px;
+  border: 1px solid var(--b3-theme-primary);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--b3-theme-primary);
+  font-size: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
+  }
+}
+
+// ============ 书签详情弹出面板 ============
+.bookmark-detail-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bookmark-detail-panel {
+  width: 400px;
+  max-width: 92vw;
+  max-height: 70vh;
+  background: var(--b3-theme-background);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.24);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.bookmark-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--b3-border-color);
+
+  .bookmark-detail-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--b3-theme-on-background);
+  }
+
+  .close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--b3-theme-on-surface-variant);
+    cursor: pointer;
+    font-size: 18px;
+
+    &:hover {
+      background: var(--b3-list-hover);
+    }
+  }
+}
+
+.bookmark-detail-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+
+  &::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--b3-scroll-color);
+    border-radius: 3px;
+  }
+}
+
+.bookmark-detail-loading,
+.bookmark-detail-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 30px;
+  color: var(--b3-theme-on-surface-variant);
+  font-size: 14px;
+
+  .empty-icon {
+    font-size: 36px;
+    opacity: 0.4;
+  }
+
+  .spin-icon {
+    font-size: 28px;
+    animation: spin 1s linear infinite;
+    color: var(--b3-theme-primary);
+  }
+}
+
+.bookmark-detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bookmark-detail-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-background);
+  cursor: pointer;
+  text-align: left;
+  font-size: 14px;
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+
+  .bd-item-left {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .bd-item-name {
+    font-weight: 500;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .bd-item-count {
+    font-size: 12px;
+    color: var(--b3-theme-on-surface-variant);
+    background: var(--b3-theme-surface-light);
+    padding: 2px 8px;
+    border-radius: 10px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .bd-item-arrow {
+    font-size: 16px;
+    color: var(--b3-theme-on-surface-variant);
+    opacity: 0.5;
+    flex-shrink: 0;
   }
 }
 </style>

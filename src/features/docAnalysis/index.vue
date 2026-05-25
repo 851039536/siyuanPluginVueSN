@@ -16,9 +16,14 @@
       :has-analyzed="hasAnalyzed"
       :active-filter="statsFilter"
       :depth-stats="depthStats"
+      :bookmark-details="bookmarkDetails"
+      :bookmark-detail-visible="bookmarkDetailVisible"
+      :bookmark-detail-loading="bookmarkDetailLoading"
       @analyze="handleAnalyze"
       @select-category="handleSelectCategory"
       @batch-publish="handleBatchPublish"
+      @show-bookmark-details="fetchBookmarkDetails"
+      @select-bookmark="queryByBookmark"
     />
 
     <!-- 排序和结果数 -->
@@ -290,11 +295,16 @@ const {
   statsLoading,
   hasAnalyzed,
   statsFilter,
+  bookmarkDetails,
+  bookmarkDetailVisible,
+  bookmarkDetailLoading,
   loadNotebooks,
   loadSavedOptions,
   queryDocs,
   analyzeDocStats,
   queryByStatsCategory,
+  fetchBookmarkDetails,
+  queryByBookmark,
   openDoc,
   updateSort,
   clearResults,

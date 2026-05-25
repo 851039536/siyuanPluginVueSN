@@ -181,5 +181,7 @@ export interface DocStats {
   publishedDocs: number
   /** 标记"不使用"的文档数 */
   unusedDocs: number
+  /** 标记"无"的文档数 */
+  noneBookmarkDocs: number
 }
 

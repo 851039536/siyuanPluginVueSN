@@ -142,16 +142,15 @@ type _AssertAllCovered = _AssertTrue<
 - **AI 统一**：所有 AI API 调用必须通过 `src/utils/aiApi.ts`，禁止在功能模块中直接调用 fetch/axios
 - **事件统一**：所有自定义事件派发必须通过 `src/utils/eventBus.ts` 的 `emitCustomEvent` 函数，禁止直接使用 `window.dispatchEvent(new CustomEvent(...))` 或 `document.dispatchEvent(...)`
 - **Dock/Modal 统一**：新建 Dock 侧边栏面板必须使用 `src/utils/vueAppHelper.ts` 的 `createVueDockApp()`，新建遮罩弹窗必须使用 `createModalVueApp()`，禁止在功能模块中直接编写 `createApp + mount + appendChild` 或 `mask + container + createApp` 样板代码
+- **Composable 复用**：当功能的 Dock 面板和浮动弹窗共享业务逻辑（数据加载、CRUD、导航、播放）时，必须将共享逻辑抽取到 `composables/use*.ts`，禁止在两个组件中各自实例化 `Storage` 并重复实现相同逻辑。参考 `src/features/flashcardReading/composables/`
+- **禁止访问全局 siyuan**：禁止通过 `(window as any).siyuan` 访问思源配置或数据。应通过 props 传入 `Plugin` 实例，使用 `plugin.getDataDir()` 等官方 API
+- **Vue 事件命名**：自定义 emit 事件名必须使用 camelCase（如 `inputTitle`、`validateTitle`），禁止使用 `kebab-case` 或带冒号的事件名（如 `input:title`），与 ESLint `vue/custom-event-name-casing` 规则一致
 - **SQL 统一**：所有 SQL 查询必须通过 `src/api.ts` 的 `sql()` 函数，禁止在功能模块中直接使用 `fetch("/api/query/sql", ...)`
 - **图标注册**：新增功能需在 `src/config/icons.ts` 的 `FEATURE_ICONS` 中添加图标映射，并运行 `pnpm validate:icons` 验证
 - **类型安全**：Props 接口禁止使用 `any`，应使用具体类型（`Plugin`、`Record<string, string>`、`Partial<T>` 等）
 - **无死代码**：禁止保留未使用的函数、变量、接口、导出；composables 返回值只暴露外部实际使用的成员
 - **微信宽度规范**：发布到微信的内容必须通过 `normalizeWidths()` 净化固定像素宽度（`width: Npx` → `max-width: 100%; width: auto`），参见 `src/features/htmlViewer/utils/normalizeWidths.ts`
-- **功能注册完整性**：新功能必须同时在以下 4 处注册：
-  1. `src/features/config.ts` → `FEATURE_CONFIG`
-  2. `src/features/index.ts` → 导出注册函数 + 更新 `_Registered` 类型
-  3. `src/index.ts` → 条件注册调用
-  4. `src/config/icons.ts` → `FEATURE_ICONS` 中添加图标映射
+- **功能注册完整性**：新功能必须完成 4 处注册 + 2 处 i18n（详见下方「添加新功能 → 注册步骤」）
 - **编辑器配置**：缩进使用 2 空格，文件编码 UTF-8，清理尾随空格（参见 `.editorconfig`）
 
 ### 代码风格
@@ -456,7 +455,7 @@ src / i18n / en_US.json
 
 ### 完整 Vue 功能（推荐）
 
-参考 `src/features/aiContentGenerator/` 或 `src/features/passwordVault/`：
+参考 `src/features/flashcardReading/` 或 `src/features/passwordVault/`：
 
 ```
 src/features/myFeature/
@@ -464,26 +463,33 @@ src/features/myFeature/
 ├── index.vue              # 主面板
 ├── types/
 │   ├── index.ts           # 类型定义（仅类型，不含注册逻辑）
-│   └── storage.ts         # 数据存储（使用 TypedStorage<T>）
+│   └── storage.ts         # 数据存储
+├── composables/           # 共享逻辑（面板与弹窗复用）
+│   └── useFeature.ts      # 组合式函数（存储、业务逻辑）
 ├── components/            # 子组件
 └── styles/
     └── index.scss
 ```
 
-`storage.ts` 模板：
+**Composable 模式示例**：
 
 ```typescript
-import type { Plugin } from 'siyuan'
-import { PluginStorage } from '@/utils/pluginStorage'
-import { TypedStorage } from '@/utils/typedStorage'
+// composables/useFeature.ts
+export function useFeature(plugin: Plugin) {
+  const storage = new FeatureStorage(plugin)
+  const data = shallowRef<Item[]>([])
 
-export class MyFeatureStorage {
-  readonly settings = new TypedStorage<MySettings>(this.storage, 'myFeature-settings', defaultSettings)
-
-  constructor(plugin: Plugin) {
-    this.storage = new PluginStorage(plugin)
+  const loadData = async () => {
+    data.value = await storage.getAll()
   }
+
+  onMounted(() => loadData())
+
+  return { storage, data, loadData }
 }
+
+// index.vue / Dialog.vue 中复用
+const { storage, data, loadData } = useFeature(props.plugin)
 ```
 
 **注册步骤（必须全部完成）**：

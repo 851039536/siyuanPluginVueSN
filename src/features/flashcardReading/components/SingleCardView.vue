@@ -3,6 +3,42 @@
     <div class="flashcard-large">
       <div class="card-title-large">
         {{ currentCard?.title }}
+        <div class="card-actions-single">
+          <Button
+            variant="ghost"
+            size="small"
+            icon="contentCopy"
+            :iconSize="14"
+            :title="i18n.copyTitle || '复制标题'"
+            @click.stop="$emit('copyTitle', currentCard)"
+          />
+          <Button
+            variant="ghost"
+            size="small"
+            icon="contentCopy"
+            :iconSize="14"
+            :title="i18n.copyContent || '复制内容'"
+            @click.stop="$emit('copyContent', currentCard)"
+          />
+          <Button
+            v-if="!hideActions"
+            variant="ghost"
+            size="small"
+            icon="edit"
+            :iconSize="14"
+            :title="i18n.editCard || '编辑'"
+            @click.stop="$emit('edit', currentCard)"
+          />
+          <Button
+            v-if="!hideActions"
+            variant="danger"
+            size="small"
+            icon="delete"
+            :iconSize="14"
+            :title="i18n.deleteCard || '删除'"
+            @click.stop="$emit('delete', currentCard)"
+          />
+        </div>
       </div>
       <div class="card-content-large">
         {{ currentCard?.content }}
@@ -64,10 +100,12 @@ withDefaults(
     totalCards: number
     i18n: I18n
     hideNavigation?: boolean
+    hideActions?: boolean
     variant?: "default" | "dialog"
   }>(),
   {
     hideNavigation: false,
+    hideActions: false,
     variant: "default",
   },
 )
@@ -77,5 +115,9 @@ defineEmits<{
   previous: []
   next: []
   random: []
+  copyTitle: [card: Flashcard | null]
+  copyContent: [card: Flashcard | null]
+  edit: [card: Flashcard | null]
+  delete: [card: Flashcard | null]
 }>()
 </script>

@@ -58,7 +58,10 @@
         {{ card.content }}
       </div>
       <template #footer>
-        <span class="tag tag-small">{{ card.category }}</span>
+        <div class="card-footer">
+          <span class="tag tag-small">{{ card.category }}</span>
+          <span class="tag tag-small tag-contrast">{{ i18n.practiceCount || '练习' }}: {{ card.practiceCount || 0 }}</span>
+        </div>
       </template>
     </Card>
   </div>

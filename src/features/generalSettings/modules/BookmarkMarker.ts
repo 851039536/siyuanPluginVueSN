@@ -2,28 +2,18 @@
  * 书签标记管理器
  * 根据文档的书签内容，在文件树中对文档名称进行颜色标记
  *
- * 重要：思源笔记中，书签 NOT stored in blocks.bookmark（该列不存在），
- * 而是存储在 attributes 表中：name='bookmark', value='书签名'
- *
- * 正确的 SQL 查询：
+ * 思源笔记中，书签存储在 attributes 表：name='bookmark', value='书签名'
  *   SELECT block_id as id, value as bookmark
  *   FROM attributes WHERE name = 'bookmark' AND block_id = root_id
  *
- * 思源文件树 DOM 结构（参考 DocCountManager）：
- *   ul[data-url="notebookId"]               ← 笔记本容器
- *     li[data-type="navigation-root"]         ← 笔记本标题（DocCountManager 标记这里）
- *       span.b3-list-item__text              ← 笔记本名
- *     ul                                     ← 文档列表
- *       li[data-node-id][data-path]           ← 文档项（本功能标记这里）
- *         span.b3-list-item__text             ← 文档名
- *       li[data-node-id][data-path]           ← 子文档项
- *         ...
+ * 文件树 DOM 结构：
+ *   ul[data-url] → li[data-type="navigation-root"] → span.b3-list-item__text
+ *                 → ul → li[data-node-id] → span.b3-list-item__text
  *
- * 文件树是懒加载的，子文档只在展开时才渲染到 DOM，
- * 因此需要 MutationObserver 监听 DOM 变化，动态应用标记。
+ * 文章标题 DOM 结构：
+ *   .protyle-title[data-node-id] → .protyle-title__input
  */
 const BOOKMARK_MARKER_CLASS = "bookmark-marker-tag"
-/** 文章展开页面（protyle）书签标记的 CSS 类名 */
 const BOOKMARK_PROTYLE_CLASS = "bookmark-marker-protyle"
 const BOOKMARK_MARKER_STYLE_ID = "bookmark-marker-styles"
 
@@ -35,30 +25,90 @@ function hexToRgba(hex: string, alpha: number): string {
 }
 
 export interface BookmarkMarkerOptions {
-  /** 书签名 → 颜色 的映射规则 */
   rules: BookmarkRule[]
-  /** 更新间隔（毫秒） */
   updateInterval: number
 }
 
 export interface BookmarkRule {
-  /** 书签名称列表（精确匹配任一即命中） */
   bookmarkNames: string[]
-  /** 标记颜色 */
   color: string
-  /** 标记背景色 */
   backgroundColor: string
-  /** 可选图标（emoji） */
   icon?: string
-  /** 显示模式：bg=文字标签, icon=仅图标, icon-bg=图标+背景, row=整行背景标记 */
   displayMode?: "bg" | "icon" | "icon-bg" | "row"
 }
 
 interface AttrRow {
-  /** 文档块 ID（= block_id） */
   id: string
-  /** 书签名称（= value） */
   bookmark: string
+}
+
+/** row 模式应用的样式集合 */
+interface RowStyleProps {
+  backgroundColor: string
+  color: string
+  borderRadius: string
+  padding: string
+}
+
+function resolveMode(rule: BookmarkRule): string {
+  return rule.displayMode || "bg"
+}
+
+function buildRowStyle(rule: BookmarkRule): RowStyleProps {
+  return {
+    backgroundColor: hexToRgba(rule.backgroundColor, 0.25),
+    color: rule.color,
+    borderRadius: "3px",
+    padding: "0 4px",
+  }
+}
+
+function applyRowStyle(el: HTMLElement, style: RowStyleProps, bookmarkName: string): void {
+  el.style.backgroundColor = style.backgroundColor
+  el.style.color = style.color
+  el.style.borderRadius = style.borderRadius
+  el.style.padding = style.padding
+  el.dataset.bookmarkRow = bookmarkName
+}
+
+function clearRowStyle(el: HTMLElement): void {
+  el.style.backgroundColor = ""
+  el.style.color = ""
+  el.style.borderRadius = ""
+  el.style.padding = ""
+  delete el.dataset.bookmarkRow
+}
+
+function clearAllRowMarkers(selector: string): void {
+  document.querySelectorAll(selector).forEach((el) => clearRowStyle(el as HTMLElement))
+}
+
+/**
+ * 创建书签标记 span 元素（文件树和 protyle 共用）
+ */
+function createMarkerElement(
+  className: string,
+  bookmarkName: string,
+  rule: BookmarkRule,
+): HTMLSpanElement {
+  const mode = resolveMode(rule)
+  const marker = document.createElement("span")
+  marker.className = className
+  marker.dataset.bookmark = bookmarkName
+  marker.style.color = rule.color
+
+  if (mode === "icon" && rule.icon) {
+    marker.style.backgroundColor = "transparent"
+    marker.textContent = rule.icon
+  } else if (mode === "icon-bg" && rule.icon) {
+    marker.style.backgroundColor = rule.backgroundColor
+    marker.textContent = rule.icon
+  } else {
+    marker.style.backgroundColor = hexToRgba(rule.backgroundColor, 0.25)
+    marker.textContent = rule.icon ? `${rule.icon} ${bookmarkName}` : bookmarkName
+  }
+
+  return marker
 }
 
 export class BookmarkMarker {
@@ -66,17 +116,11 @@ export class BookmarkMarker {
   private options: BookmarkMarkerOptions
   private active = false
   private styleAdded = false
-  /** 文件树 DOM 变动观察器 */
   private fileTreeObserver: MutationObserver | null = null
-  /** 文章展开页面（protyle）DOM 变动观察器 */
   private protyleObserver: MutationObserver | null = null
-  /** 防抖定时器 */
   private debounceTimer: number | null = null
-  /** protyle 防抖定时器 */
   private protyleDebounceTimer: number | null = null
-  /** 缓存：文档 ID → 书签名称 */
   private bookmarkCache = new Map<string, string>()
-  /** 缓存是否已加载 */
   private cacheLoaded = false
 
   constructor(options: Partial<BookmarkMarkerOptions> = {}) {
@@ -101,9 +145,7 @@ export class BookmarkMarker {
   updateOptions(options: Partial<BookmarkMarkerOptions>) {
     Object.assign(this.options, options)
     this.cacheLoaded = false
-    if (this.active) {
-      this.applyMarkers()
-    }
+    if (this.active) this.applyMarkers()
   }
 
   start(): void {
@@ -139,22 +181,15 @@ export class BookmarkMarker {
   }
 
   // ============================================================
-  // 书签数据查询 — 使用 attributes 表（而非 blocks.bookmark）
+  // 书签数据查询
   // ============================================================
 
-  /**
-   * 查询所有有书签的文档，并缓存结果
-   *
-   * 思源笔记中，书签存储在 attributes 表：
-   *   name = 'bookmark', value = '书签名称'
-   *   block_id = root_id 表示该属性属于文档级块（文档的 block_id 即为 root_id）
-   */
   private async loadBookmarkCache(): Promise<void> {
-    const sql = `SELECT block_id as id, value as bookmark FROM attributes WHERE name = 'bookmark' AND block_id = root_id LIMIT 999999`
-    const result = await this.query(sql)
+    const result = await this.query(
+      `SELECT block_id as id, value as bookmark FROM attributes WHERE name = 'bookmark' AND block_id = root_id LIMIT 999999`,
+    )
     this.bookmarkCache.clear()
-
-    if (result && result.length) {
+    if (result?.length) {
       for (const row of result as AttrRow[]) {
         this.bookmarkCache.set(row.id, row.bookmark)
       }
@@ -163,185 +198,150 @@ export class BookmarkMarker {
   }
 
   // ============================================================
-  // DOM 标记应用
+  // DOM 标记应用 — 文件树
   // ============================================================
 
-  /**
-   * 在所有位置应用书签标记（完整流程：查库 + 标记 DOM）
-   */
   private async applyMarkers(): Promise<void> {
     if (!this.active) return
-
     await this.loadBookmarkCache()
-
     if (this.bookmarkCache.size) {
       this.applyMarkersToDOM()
       this.applyMarkersToProtyle()
     }
   }
 
-  /**
-   * 仅对当前 DOM 中的文档项应用标记（不重新查询数据库）
-   * 用于 MutationObserver 触发的增量更新
-   */
   private applyMarkersToDOM(): void {
     if (!this.active || !this.cacheLoaded) return
 
-    const notebookContainers = document.querySelectorAll("ul[data-url]")
+    const findRule = (bookmark: string) =>
+      this.options.rules.find((r) => r.bookmarkNames.includes(bookmark))
 
-    for (const container of notebookContainers) {
-      const docItems = container.querySelectorAll('li[data-node-id]:not([data-type="navigation-root"])')
-
+    for (const container of document.querySelectorAll("ul[data-url]")) {
+      const docItems = container.querySelectorAll(
+        'li[data-node-id]:not([data-type="navigation-root"])',
+      )
       for (const item of docItems) {
-        const htmlItem = item as HTMLElement
-        const nodeId = htmlItem.dataset.nodeId
+        const el = item as HTMLElement
+        const nodeId = el.dataset.nodeId
         if (!nodeId) continue
 
         const bookmarkName = this.bookmarkCache.get(nodeId)
         if (!bookmarkName) {
-          this.removeMarkerFromItem(htmlItem)
+          this.removeMarkerFromItem(el)
           continue
         }
 
-        const rule = this.options.rules.find(
-          (r) => r.bookmarkNames.includes(bookmarkName),
-        )
-
+        const rule = findRule(bookmarkName)
         if (rule) {
-          this.applyMarkerToItem(htmlItem, bookmarkName, rule)
+          this.applyMarkerToItem(el, bookmarkName, rule)
         } else {
-          this.removeMarkerFromItem(htmlItem)
+          this.removeMarkerFromItem(el)
         }
       }
     }
   }
 
-  /**
-   * 给文件树文档项添加书签标记
-   * 标记添加到 span.b3-list-item__text 内（与 DocCountManager 相同位置）
-   * 根据 displayMode 支持四种显示模式：
-   *   bg      — 文字标签（默认）：背景色 + 文字名称
-   *   icon    — 仅图标：透明背景 + 仅显示 emoji 图标
-   *   icon-bg — 图标+背景：背景色 + 仅显示 emoji 图标
-   *   row     — 字体背景：对文档名设置背景色
-   */
-  private applyMarkerToItem(
-    item: HTMLElement,
-    bookmarkName: string,
-    rule: BookmarkRule,
-  ): void {
-    const mode = rule.displayMode || "bg"
-
-    const textEl = item.querySelector(".b3-list-item__text")
+  private applyMarkerToItem(item: HTMLElement, bookmarkName: string, rule: BookmarkRule): void {
+    const mode = resolveMode(rule)
+    const textEl = item.querySelector(".b3-list-item__text") as HTMLElement | null
+    if (!textEl) return
 
     if (mode === "row") {
-      if (!textEl) return
-      textEl.style.backgroundColor = hexToRgba(rule.backgroundColor, 0.25)
-      textEl.style.color = rule.color
-      textEl.style.borderRadius = "3px"
-      textEl.style.padding = "0 4px"
-      textEl.dataset.bookmarkRow = bookmarkName
+      applyRowStyle(textEl, buildRowStyle(rule), bookmarkName)
       return
     }
 
-    if (!textEl) return
+    // 非 row 模式：插入 span 标签
+    const existingMarker = textEl.querySelector(`.${BOOKMARK_MARKER_CLASS}`) as HTMLElement | null
+    if (existingMarker?.dataset.bookmark === bookmarkName) return
+    existingMarker?.remove()
 
-    // 检查是否已存在相同书签的标记
-    const existingMarker = textEl.querySelector(`.${BOOKMARK_MARKER_CLASS}`)
-    if (existingMarker && (existingMarker as HTMLElement).dataset.bookmark === bookmarkName) {
-      return
-    }
-
-    // 移除旧标记
-    if (existingMarker) existingMarker.remove()
-
-    // 创建标记元素
-    const marker = document.createElement("span")
-    marker.className = BOOKMARK_MARKER_CLASS
-    marker.dataset.bookmark = bookmarkName
-
-    if (mode === "icon" && rule.icon) {
-      marker.style.backgroundColor = "transparent"
-      marker.textContent = rule.icon
-    } else if (mode === "icon-bg" && rule.icon) {
-      marker.style.backgroundColor = rule.backgroundColor
-      marker.textContent = rule.icon
-    } else {
-      marker.style.backgroundColor = hexToRgba(rule.backgroundColor, 0.25)
-      marker.textContent = rule.icon ? `${rule.icon} ${bookmarkName}` : bookmarkName
-    }
-
-    marker.style.color = rule.color
-    textEl.appendChild(marker)
+    textEl.appendChild(createMarkerElement(BOOKMARK_MARKER_CLASS, bookmarkName, rule))
   }
 
-  /**
-   * 移除文件树项的书签标记
-   */
   private removeMarkerFromItem(item: HTMLElement): void {
     const textEl = item.querySelector(".b3-list-item__text") as HTMLElement | null
-
-    // 清理 row 模式：移除文字背景
-     if (textEl?.dataset.bookmarkRow) {
-       textEl.style.backgroundColor = ""
-       textEl.style.color = ""
-       textEl.style.borderRadius = ""
-       textEl.style.padding = ""
-       delete textEl.dataset.bookmarkRow
-     }
-
     if (!textEl) return
 
-    const oldMarker = textEl.querySelector(`.${BOOKMARK_MARKER_CLASS}`)
-    if (oldMarker) oldMarker.remove()
+    if (textEl.dataset.bookmarkRow) clearRowStyle(textEl)
+
+    textEl.querySelector(`.${BOOKMARK_MARKER_CLASS}`)?.remove()
   }
 
-  /**
-   * 清除所有书签标记（包括文件树和 protyle 标题区）
-   */
+  // ============================================================
+  // DOM 标记应用 — protyle 标题区
+  // ============================================================
+
+  private applyMarkersToProtyle(): void {
+    if (!this.active || !this.cacheLoaded) return
+
+    const findRule = (bookmark: string) =>
+      this.options.rules.find((r) => r.bookmarkNames.includes(bookmark))
+
+    for (const title of document.querySelectorAll(".protyle-title[data-node-id]")) {
+      const el = title as HTMLElement
+      const nodeId = el.dataset.nodeId
+      if (!nodeId) continue
+
+      const bookmarkName = this.bookmarkCache.get(nodeId)
+      if (!bookmarkName) {
+        this.removeMarkerFromProtyle(el)
+        continue
+      }
+
+      const rule = findRule(bookmarkName)
+      if (rule) {
+        this.applyMarkerToProtyle(el, bookmarkName, rule)
+      } else {
+        this.removeMarkerFromProtyle(el)
+      }
+    }
+  }
+
+  private applyMarkerToProtyle(title: HTMLElement, bookmarkName: string, rule: BookmarkRule): void {
+    const mode = resolveMode(rule)
+
+    if (mode === "row") {
+      const inputEl = title.querySelector(".protyle-title__input") as HTMLElement | null
+      if (!inputEl) return
+      applyRowStyle(inputEl, buildRowStyle(rule), bookmarkName)
+      return
+    }
+
+    const existingMarker = title.querySelector(`.${BOOKMARK_PROTYLE_CLASS}`) as HTMLElement | null
+    if (existingMarker?.dataset.bookmark === bookmarkName) return
+    existingMarker?.remove()
+
+    title.appendChild(createMarkerElement(BOOKMARK_PROTYLE_CLASS, bookmarkName, rule))
+  }
+
+  private removeMarkerFromProtyle(title: HTMLElement): void {
+    const inputEl = title.querySelector(".protyle-title__input") as HTMLElement | null
+    if (inputEl?.dataset.bookmarkRow) clearRowStyle(inputEl)
+
+    title.querySelector(`.${BOOKMARK_PROTYLE_CLASS}`)?.remove()
+  }
+
+  // ============================================================
+  // 清理
+  // ============================================================
+
   private clearAllMarkers(): void {
-    const markers = document.querySelectorAll(`.${BOOKMARK_MARKER_CLASS}`)
-    markers.forEach((m) => m.remove())
-    const protyleMarkers = document.querySelectorAll(`.${BOOKMARK_PROTYLE_CLASS}`)
-    protyleMarkers.forEach((m) => m.remove())
-
-    // 清理 row 模式：移除文件树文字背景
-    const rowTexts = document.querySelectorAll(".b3-list-item__text[data-bookmark-row]")
-    rowTexts.forEach((el) => {
-      const htmlEl = el as HTMLElement
-      htmlEl.style.backgroundColor = ""
-      htmlEl.style.color = ""
-      htmlEl.style.borderRadius = ""
-      htmlEl.style.padding = ""
-      delete htmlEl.dataset.bookmarkRow
-    })
-
-    // 清理 row 模式：移除 protyle 标题文字背景
-    const rowInputs = document.querySelectorAll(".protyle-title__input[data-bookmark-row]")
-    rowInputs.forEach((el) => {
-      const htmlEl = el as HTMLElement
-      htmlEl.style.backgroundColor = ""
-      htmlEl.style.color = ""
-      htmlEl.style.borderRadius = ""
-      htmlEl.style.padding = ""
-      delete htmlEl.dataset.bookmarkRow
-    })
+    document.querySelectorAll(`.${BOOKMARK_MARKER_CLASS}`).forEach((m) => m.remove())
+    document.querySelectorAll(`.${BOOKMARK_PROTYLE_CLASS}`).forEach((m) => m.remove())
+    clearAllRowMarkers(".b3-list-item__text[data-bookmark-row]")
+    clearAllRowMarkers(".protyle-title__input[data-bookmark-row]")
   }
 
   // ============================================================
-  // MutationObserver — 监听文件树 DOM 变化
+  // MutationObserver — 文件树
   // ============================================================
 
-  /**
-   * 启动文件树 DOM 监听
-   * 文件树是懒加载的，子文档在展开时才渲染到 DOM，
-   * 需要监听 DOM 变化以及时为新出现的文档项添加标记
-   */
   private startObserving(): void {
     if (this.fileTreeObserver) return
 
-    const fileTreeEl = this.findFileTreeContainer()
-    if (!fileTreeEl) {
+    const target = this.findFileTreeContainer()
+    if (!target) {
       setTimeout(() => {
         if (!this.active) return
         const el = this.findFileTreeContainer()
@@ -349,34 +349,18 @@ export class BookmarkMarker {
       }, 3000)
       return
     }
-    this.attachObserver(fileTreeEl)
+    this.attachObserver(target)
   }
 
   private attachObserver(target: Element): void {
     this.fileTreeObserver = new MutationObserver((mutations) => {
-      let hasRelevantChange = false
-      for (const mutation of mutations) {
-        if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
-          for (const node of mutation.addedNodes) {
-            if (node instanceof HTMLElement) {
-              // 检查新添加的节点是否包含文档项
-              if (
-                node.matches("li[data-node-id]")
-                || node.querySelector("li[data-node-id]")
-                || node.matches("ul[data-url]")
-              ) {
-                hasRelevantChange = true
-                break
-              }
-            }
-          }
-        }
-        if (hasRelevantChange) break
-      }
-
-      if (hasRelevantChange) {
-        this.debouncedApplyMarkersToDOM()
-      }
+      const relevant = mutations.some((m) => {
+        if (m.type !== "childList" || !m.addedNodes.length) return false
+        return Array.from(m.addedNodes).some(
+          (n) => n instanceof HTMLElement && (n.matches("li[data-node-id]") || n.querySelector("li[data-node-id]") || n.matches("ul[data-url]")),
+        )
+      })
+      if (relevant) this.debounce(() => this.applyMarkersToDOM(), this, "debounceTimer")
     })
 
     this.fileTreeObserver.observe(target, {
@@ -385,265 +369,92 @@ export class BookmarkMarker {
     })
   }
 
-  private stopObserving(): void {
-    if (this.fileTreeObserver) {
-      this.fileTreeObserver.disconnect()
-      this.fileTreeObserver = null
-    }
-    if (this.debounceTimer) {
-      clearTimeout(this.debounceTimer)
-      this.debounceTimer = null
-    }
-  }
-
-  /**
-   * 查找文件树容器元素
-   * 参考思路：DocCountManager 用 ul[data-url] 找笔记本容器，
-   * 文件树外层容器应该在更上层
-   */
   private findFileTreeContainer(): Element | null {
-    // 方式1: 通过 .file-tree 类（思源桌面端文件树面板）
-    const fileTree = document.querySelector(".file-tree")
-    if (fileTree) return fileTree
-
-    // 方式2: 通过 ul[data-url] 的父级向上查找
-    const notebookUl = document.querySelector("ul[data-url]")
-    if (notebookUl) {
-      // 向上找到包含所有笔记本的容器
-      return notebookUl.parentElement?.parentElement || notebookUl.parentElement || notebookUl
-    }
-
-    // 方式3: 其他常见选择器
-    return document.querySelector("#fileTree")
-      || document.querySelector(".layout__file")
-      || null
-  }
-
-  /**
-   * 防抖应用标记（避免 MutationObserver 频繁触发导致性能问题）
-   */
-  private debouncedApplyMarkersToDOM(): void {
-    if (this.debounceTimer) {
-      clearTimeout(this.debounceTimer)
-    }
-    this.debounceTimer = window.setTimeout(() => {
-      if (!this.active) return
-      this.applyMarkersToDOM()
-    }, 300)
+    return document.querySelector(".file-tree")
+      ?? document.querySelector("ul[data-url]")?.parentElement?.parentElement
+      ?? document.querySelector("#fileTree")
+      ?? document.querySelector(".layout__file")
+      ?? null
   }
 
   // ============================================================
-  // 文章展开页面（protyle）标记
+  // MutationObserver — protyle
   // ============================================================
 
-  /**
-   * 在文章展开页面标题区应用书签标记
-   *
-   * 思源笔记中，文章展开时会在编辑器视图创建 protyle 区域：
-   *   div.protyle-title[data-node-id]          ← 文档标题容器（本功能标记这里）
-   *     div.protyle-title__input                 ← 文档标题（可编辑）
-   *       Document Title
-   *     span.bookmark-marker-protyle             ← 书签标记（由本功能插入）
-   *
-   * 参考：HeadingSettings 通过 .protyle-title__input 选择器来设置文档标题样式
-   */
-  private applyMarkersToProtyle(): void {
-    if (!this.active || !this.cacheLoaded) return
-
-    const protyleTitles = document.querySelectorAll(".protyle-title[data-node-id]")
-
-    for (const title of protyleTitles) {
-      const htmlTitle = title as HTMLElement
-      const nodeId = htmlTitle.dataset.nodeId
-      if (!nodeId) continue
-
-      const bookmarkName = this.bookmarkCache.get(nodeId)
-      if (!bookmarkName) {
-        this.removeMarkerFromProtyle(htmlTitle)
-        continue
-      }
-
-      const rule = this.options.rules.find(
-        (r) => r.bookmarkNames.includes(bookmarkName),
-      )
-
-      if (rule) {
-        this.applyMarkerToProtyle(htmlTitle, bookmarkName, rule)
-      } else {
-        this.removeMarkerFromProtyle(htmlTitle)
-      }
-    }
-  }
-
-  /**
-   * 给文章展开页面的文档标题容器添加书签标记
-   * 标记插入到 .protyle-title 末尾（在标题输入框后面），
-   * 根据 displayMode 支持四种显示模式：
-   *   bg      — 文字标签（默认）：背景色 + 文字名称
-   *   icon    — 仅图标：透明背景 + 仅显示 emoji 图标
-   *   icon-bg — 图标+背景：背景色 + 仅显示 emoji 图标
-   *   row     — 字体背景：对标题文字设置背景色
-   */
-  private applyMarkerToProtyle(
-    title: HTMLElement,
-    bookmarkName: string,
-    rule: BookmarkRule,
-  ): void {
-    const mode = rule.displayMode || "bg"
-
-    if (mode === "row") {
-      const inputEl = title.querySelector(".protyle-title__input") as HTMLElement | null
-      if (!inputEl) return
-      inputEl.style.backgroundColor = hexToRgba(rule.backgroundColor, 0.25)
-      inputEl.style.color = rule.color
-      inputEl.style.borderRadius = "3px"
-      inputEl.style.padding = "0 4px"
-      inputEl.dataset.bookmarkRow = bookmarkName
-      return
-    }
-
-    // 检查是否已存在相同书签的标记
-    const existingMarker = title.querySelector(`.${BOOKMARK_PROTYLE_CLASS}`)
-    if (existingMarker && (existingMarker as HTMLElement).dataset.bookmark === bookmarkName) {
-      return
-    }
-
-    // 移除旧标记
-    if (existingMarker) existingMarker.remove()
-
-    // 创建标记元素
-    const marker = document.createElement("span")
-    marker.className = BOOKMARK_PROTYLE_CLASS
-    marker.dataset.bookmark = bookmarkName
-
-    if (mode === "icon" && rule.icon) {
-      marker.style.backgroundColor = "transparent"
-      marker.textContent = rule.icon
-    } else if (mode === "icon-bg" && rule.icon) {
-      // 图标+背景模式
-      marker.style.backgroundColor = rule.backgroundColor
-      marker.textContent = rule.icon
-    } else {
-      // 文字标签模式（默认）：显示书签名称，带半透明背景
-      marker.style.backgroundColor = hexToRgba(rule.backgroundColor, 0.25)
-      marker.textContent = rule.icon ? `${rule.icon} ${bookmarkName}` : bookmarkName
-    }
-
-    marker.style.color = rule.color
-    title.appendChild(marker)
-  }
-
-  /**
-   * 移除文章展开页面标题区的书签标记
-   */
-  private removeMarkerFromProtyle(title: HTMLElement): void {
-    // 清理 row 模式：移除标题文字背景
-     const inputEl = title.querySelector(".protyle-title__input") as HTMLElement | null
-     if (inputEl?.dataset.bookmarkRow) {
-       inputEl.style.backgroundColor = ""
-       inputEl.style.color = ""
-       inputEl.style.borderRadius = ""
-       inputEl.style.padding = ""
-       delete inputEl.dataset.bookmarkRow
-     }
-
-    const oldMarker = title.querySelector(`.${BOOKMARK_PROTYLE_CLASS}`)
-    if (oldMarker) oldMarker.remove()
-  }
-
-  // ============================================================
-  // MutationObserver — 监听文章展开页面 DOM 变化
-  // ============================================================
-
-  /**
-   * 启动文章展开页面 DOM 监听
-   * 当用户点击文档时，思源会动态创建或复用 protyle 编辑器实例，
-   * 需要监听 DOM 变化以及时为新出现的文档标题添加书签标记
-   *
-   * 注意两个关键场景：
-   * 1. 新增元素：protyle-title 刚添加到 DOM 时可能还没有 data-node-id，
-   *    因此匹配条件不能要求 [data-node-id]
-   * 2. 复用编辑器：思源会复用现有 protyle 元素，只修改 data-node-id 属性，
-   *    因此需要监听 attributes 类型的变更
-   */
   private startObservingProtyle(): void {
     if (this.protyleObserver) return
 
     this.protyleObserver = new MutationObserver((mutations) => {
-      let hasNewProtyle = false
-
-      for (const mutation of mutations) {
-        if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
-          for (const node of mutation.addedNodes) {
-            if (node instanceof HTMLElement) {
-              // 不要求 [data-node-id]，因为该属性可能在添加后才异步设置
-              if (
-                node.matches(".protyle-title")
-                || node.querySelector(".protyle-title")
-              ) {
-                hasNewProtyle = true
-                break
-              }
-            }
-          }
+      const hasNew = mutations.some((m) => {
+        if (m.type === "childList") {
+          return Array.from(m.addedNodes).some(
+            (n) => n instanceof HTMLElement && (n.matches(".protyle-title") || n.querySelector(".protyle-title")),
+          )
         }
-
-        // 捕获 protyle 复用场景：data-node-id 属性变更
-        if (
-          !hasNewProtyle
-          && mutation.type === "attributes"
-          && mutation.attributeName === "data-node-id"
-        ) {
-          const target = mutation.target as HTMLElement
-          if (target.matches(".protyle-title")) {
-            hasNewProtyle = true
-          }
-        }
-
-        if (hasNewProtyle) break
-      }
-
-      if (hasNewProtyle) {
-        this.debouncedApplyMarkersToProtyle()
-      }
+        return m.type === "attributes"
+          && m.attributeName === "data-node-id"
+          && (m.target as HTMLElement).matches(".protyle-title")
+      })
+      if (hasNew) this.debounce(() => this.applyMarkersToProtyle(), this, "protyleDebounceTimer")
     })
 
-    // 监听整个 body 下的节点变化
     this.protyleObserver.observe(document.body, {
       childList: true,
       subtree: true,
-      // 监听 data-node-id 属性变化，以覆盖思源复用 protyle 编辑器的场景
       attributes: true,
       attributeFilter: ["data-node-id"],
     })
   }
 
-  /**
-   * 在启动初期短时轮询 protyle 标记
-   * 某些场景下 data-node-id 可能在 DOM 插入后延迟较久才设置，
-   * MutationObserver 可能在第一次匹配后就不再触发，
-   * 用短时轮询兜底确保标记不遗漏。
-   */
+  // ============================================================
+  // 观察器生命周期
+  // ============================================================
+
+  private stopObserving(): void {
+    this.fileTreeObserver?.disconnect()
+    this.fileTreeObserver = null
+    this.clearDebounce("debounceTimer")
+  }
+
+  private stopObservingProtyle(): void {
+    this.protyleObserver?.disconnect()
+    this.protyleObserver = null
+    this.clearDebounce("protyleDebounceTimer")
+  }
+
+  // ============================================================
+  // 防抖 & 轮询
+  // ============================================================
+
+  private debounce(fn: () => void, scope: this, timerKey: "debounceTimer" | "protyleDebounceTimer"): void {
+    if (scope[timerKey]) clearTimeout(scope[timerKey] as number)
+    scope[timerKey] = window.setTimeout(() => {
+      if (!scope.active) return
+      fn()
+    }, 300)
+  }
+
+  private clearDebounce(timerKey: "debounceTimer" | "protyleDebounceTimer"): void {
+    if (this[timerKey]) {
+      clearTimeout(this[timerKey] as number)
+      this[timerKey] = null
+    }
+  }
+
   private protyleRetryCount = 0
   private protyleRetryTimer: number | null = null
 
   private startProtyleRetry(): void {
     if (this.protyleRetryTimer) return
     this.protyleRetryCount = 0
-
     this.protyleRetryTimer = window.setInterval(() => {
       if (!this.active) {
         this.stopProtyleRetry()
         return
       }
-
       this.protyleRetryCount++
       this.applyMarkersToProtyle()
-
-      // 轮询 15 次后停止（约 12 秒）
-      if (this.protyleRetryCount >= 15) {
-        this.stopProtyleRetry()
-      }
+      if (this.protyleRetryCount >= 15) this.stopProtyleRetry()
     }, 800)
   }
 
@@ -655,37 +466,12 @@ export class BookmarkMarker {
     this.protyleRetryCount = 0
   }
 
-  private stopObservingProtyle(): void {
-    if (this.protyleObserver) {
-      this.protyleObserver.disconnect()
-      this.protyleObserver = null
-    }
-    if (this.protyleDebounceTimer) {
-      clearTimeout(this.protyleDebounceTimer)
-      this.protyleDebounceTimer = null
-    }
-  }
-
-  /**
-   * 防抖应用 protyle 标记
-   */
-  private debouncedApplyMarkersToProtyle(): void {
-    if (this.protyleDebounceTimer) {
-      clearTimeout(this.protyleDebounceTimer)
-    }
-    this.protyleDebounceTimer = window.setTimeout(() => {
-      if (!this.active) return
-      this.applyMarkersToProtyle()
-    }, 300)
-  }
-
   // ============================================================
-  // 样式管理
+  // 样式注入
   // ============================================================
 
   private addStyles(): void {
-    if (this.styleAdded) return
-    if (document.getElementById(BOOKMARK_MARKER_STYLE_ID)) {
+    if (this.styleAdded || document.getElementById(BOOKMARK_MARKER_STYLE_ID)) {
       this.styleAdded = true
       return
     }
@@ -705,7 +491,6 @@ export class BookmarkMarker {
         white-space: nowrap;
         letter-spacing: 0.5px;
       }
-
       .${BOOKMARK_PROTYLE_CLASS} {
         display: inline-block;
         font-size: 11px;
@@ -727,8 +512,7 @@ export class BookmarkMarker {
   }
 
   private removeStyles(): void {
-    const existing = document.getElementById(BOOKMARK_MARKER_STYLE_ID)
-    if (existing) existing.remove()
+    document.getElementById(BOOKMARK_MARKER_STYLE_ID)?.remove()
     this.styleAdded = false
   }
 
@@ -737,9 +521,7 @@ export class BookmarkMarker {
   // ============================================================
 
   private startAutoUpdate(): void {
-    this.updateTimer = window.setInterval(() => {
-      this.applyMarkers()
-    }, this.options.updateInterval)
+    this.updateTimer = window.setInterval(() => this.applyMarkers(), this.options.updateInterval)
   }
 
   private stopAutoUpdate(): void {
@@ -750,11 +532,11 @@ export class BookmarkMarker {
   }
 
   // ============================================================
-  // SQL 查询 — 使用 /api/query/sql
+  // SQL 查询
   // ============================================================
 
   private async query(sql: string): Promise<any[]> {
-    const result = await this.fetchSyncPost("/api/query/sql", { stmt: sql })
+    const result = await this.fetchPost("/api/query/sql", { stmt: sql })
     if (result.code !== 0) {
       console.error("[BookmarkMarker] 查询数据库出错:", result.msg)
       return []
@@ -762,25 +544,13 @@ export class BookmarkMarker {
     return result.data
   }
 
-  private async fetchSyncPost(
-    url: string,
-    data: any,
-    returnType: "json" | "text" = "json",
-  ): Promise<any> {
-    const init: RequestInit = {
-      method: "POST",
-    }
-    if (data) {
-      if (data instanceof FormData) {
-        init.body = data
-      } else {
-        init.body = JSON.stringify(data)
-      }
-    }
+  private async fetchPost(url: string, data: unknown, returnType: "json" | "text" = "json"): Promise<any> {
+    const init: RequestInit = { method: "POST" }
+    if (data) init.body = data instanceof FormData ? data : JSON.stringify(data)
+
     try {
       const res = await fetch(url, init)
-      const res2 = returnType === "json" ? await res.json() : await res.text()
-      return res2
+      return returnType === "json" ? await res.json() : await res.text()
     } catch (e: any) {
       console.error("[BookmarkMarker] 请求失败:", e)
       return returnType === "json"

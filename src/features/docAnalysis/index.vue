@@ -233,6 +233,10 @@
           <span>废弃文档（归档）</span>
         </li>
         <li>
+          <span class="tip-badge none">无</span>
+          <span>暂未分类的文档，不计入统计数据</span>
+        </li>
+        <li>
           <span class="tip-badge category">其他描述</span>
           <span>如 <code>JS</code>、<code>C#</code>、<code>API</code> 等：属于已发布并已完成分类处理</span>
         </li>
@@ -453,6 +457,7 @@ function getCategoryLabel(category: string): string {
     case "pendingPublish": return "待发布"
     case "published": return "已发布"
     case "unused": return "不使用"
+    case "noneBookmark": return "书签「无」"
     default: return category
   }
 }

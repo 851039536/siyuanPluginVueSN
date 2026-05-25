@@ -109,6 +109,10 @@
               <span class="stat-value unused-color">{{ stats.unusedDocs }}</span>
               <span class="stat-label">不使用</span>
             </div>
+            <div class="stat-card" :class="{ active: activeFilter === 'noneBookmark' }" @click="$emit('select-category', 'noneBookmark')">
+              <span class="stat-value none-bookmark-color">{{ stats.noneBookmarkDocs }}</span>
+              <span class="stat-label">无</span>
+            </div>
             <div class="stat-card" :class="{ active: activeFilter === 'hasBookmark' }" @click="$emit('select-category', 'hasBookmark')">
               <span class="stat-value bookmark-color">{{ stats.bookmarkedDocs }}</span>
               <span class="stat-label">有书签</span>
@@ -372,6 +376,7 @@ function getBarHeight(count: number): number {
     &.img-color { color: #f97316; }
     &.bookmark-color { color: #eab308; }
     &.no-bookmark-color { color: #9ca3af; }
+    &.none-bookmark-color { color: #6b7280; }
     &.pending-color { color: #f59e0b; }
     &.published-color { color: #22c55e; }
     &.unused-color { color: #9ca3af; }

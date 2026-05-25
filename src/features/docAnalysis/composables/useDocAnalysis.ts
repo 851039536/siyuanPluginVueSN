@@ -119,6 +119,7 @@ export function useDocAnalysis(plugin: Plugin) {
     pendingPublishDocs: 0,
     publishedDocs: 0,
     unusedDocs: 0,
+    noneBookmarkDocs: 0,
   })
   const statsLoading = ref(false)
   const hasAnalyzed = ref(false)
@@ -540,15 +541,15 @@ export function useDocAnalysis(plugin: Plugin) {
       const bmRows = await sql(bmCountSql)
       if (bmRows && bmRows.length > 0) {
         docStats.bookmarkedDocs = bmRows[0].bookmarked_docs || 0
-        docStats.noBookmarkDocs = Math.max(0, docStats.totalDocs - docStats.bookmarkedDocs)
       }
 
-      // 统计特定书签值：待发布、已发布、不使用
+      // 统计特定书签值：待发布、已发布、不使用、无
       const bmValueSql = `
         SELECT
           SUM(CASE WHEN a.value = '待发布' THEN 1 ELSE 0 END) as pending_count,
           SUM(CASE WHEN a.value = '已发布' THEN 1 ELSE 0 END) as published_count,
-          SUM(CASE WHEN a.value = '不使用' THEN 1 ELSE 0 END) as unused_count
+          SUM(CASE WHEN a.value = '不使用' THEN 1 ELSE 0 END) as unused_count,
+          SUM(CASE WHEN a.value = '无' THEN 1 ELSE 0 END) as none_count
         FROM attributes a
         WHERE a.name = 'bookmark'
         AND a.block_id IN (
@@ -562,7 +563,13 @@ export function useDocAnalysis(plugin: Plugin) {
         docStats.pendingPublishDocs = row.pending_count || 0
         docStats.publishedDocs = row.published_count || 0
         docStats.unusedDocs = row.unused_count || 0
+        docStats.noneBookmarkDocs = row.none_count || 0
       }
+
+      // 重新计算：bookmarkedDocs 排除"无"，noBookmarkDocs 也排除"无"
+      const effectiveBookmarked = Math.max(0, docStats.bookmarkedDocs - docStats.noneBookmarkDocs)
+      docStats.bookmarkedDocs = effectiveBookmarked
+      docStats.noBookmarkDocs = Math.max(0, docStats.totalDocs - effectiveBookmarked - docStats.noneBookmarkDocs)
     } catch (error) {
       console.error("书签分析失败:", error)
     }
@@ -662,10 +669,15 @@ export function useDocAnalysis(plugin: Plugin) {
           break
         case "hasBookmark":
           extraJoin = `INNER JOIN (${BOOKMARK_SUBQUERY}) bm ON b.id = bm.block_id`
+          extraWhere = "AND bm.bookmark != '无'"
           orderBy = "bm.bookmark ASC"
           break
         case "noBookmark":
           extraWhere = "AND b.id NOT IN (SELECT block_id FROM attributes WHERE name = 'bookmark')"
+          orderBy = "b.updated DESC"
+          break
+        case "noneBookmark":
+          extraWhere = "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'bookmark' AND a.value = '无' AND a.block_id = b.id)"
           orderBy = "b.updated DESC"
           break
         case "pendingPublish":

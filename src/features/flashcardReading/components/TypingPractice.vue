@@ -7,7 +7,7 @@
     >
       <template #header>
         <div class="card-header">
-          <span class="card-title card-title--single">{{ currentCard?.content }}</span>
+          <span class="card-title">{{ currentCard?.content }}</span>
         </div>
       </template>
       <div class="typing-area">

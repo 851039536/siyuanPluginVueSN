@@ -34,7 +34,6 @@
               :i18n="i18n"
               hideNavigation
               hideActions
-              variant="dialog"
               @play="(card) => playWord(card)"
               @copyTitle="(card) => handleCopy(card?.title)"
               @copyContent="(card) => handleCopy(card?.content)"

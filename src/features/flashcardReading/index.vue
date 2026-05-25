@@ -33,14 +33,14 @@
 
       <SingleCardView
         v-else-if="viewMode === 'single'"
-        :currentCard="currentCard"
-        :currentIndex="currentIndex"
-        :totalCards="filteredCards.length"
+        :currentCard="typingQueue.currentCard.value"
+        :currentIndex="typingQueue.currentIndex.value"
+        :totalCards="typingQueue.queue.value.length"
         :i18n="i18n"
         @play="playWord"
-        @previous="previousCard"
-        @next="nextCard"
-        @random="randomCard"
+        @previous="typingPrevious"
+        @next="typingNext"
+        @random="typingRandom"
         @copyTitle="copyTitle"
         @copyContent="copyContent"
         @edit="editCard"
@@ -189,13 +189,12 @@ import PanelHeader from "./components/PanelHeader.vue"
 import SingleCardView from "./components/SingleCardView.vue"
 import StatisticsView from "./components/StatisticsView.vue"
 import TypingPractice from "./components/TypingPractice.vue"
-import { useCardNavigation } from "./composables/useCardNavigation"
-import { useTypingQueue } from "./composables/useTypingQueue"
 import {
   CARD_CONFIG,
   useFlashcardStorage,
 } from "./composables/useFlashcardStorage"
 import { usePlayWord } from "./composables/usePlayWord"
+import { useTypingQueue } from "./composables/useTypingQueue"
 
 interface Props {
   i18n: I18n
@@ -285,14 +284,6 @@ const filteredCards = computed(() => {
   return result
 })
 
-const {
-  currentIndex,
-  currentCard,
-  previous,
-  next,
-  random,
-} = useCardNavigation(filteredCards)
-
 const typingQueue = useTypingQueue(filteredCards)
 
 const totalPages = computed(() =>
@@ -381,8 +372,8 @@ const reloadAfterMutation = async () => {
 
 const switchToSingleMode = () => {
   viewMode.value = "single"
-  const len = filteredCards.value.length
-  currentIndex.value = len > 0 ? Math.floor(Math.random() * len) : 0
+  typingQueue.rebuild()
+  typingQueue.currentIndex.value = 0
 }
 
 const switchToTypingMode = () => {
@@ -404,21 +395,6 @@ const typingNext = () => {
 const typingRandom = () => {
   typingQueue.random()
   playWord(typingQueue.currentCard.value)
-}
-
-const previousCard = () => {
-  previous()
-  playWord(currentCard.value)
-}
-
-const nextCard = () => {
-  next()
-  playWord(currentCard.value)
-}
-
-const randomCard = () => {
-  random()
-  playWord(currentCard.value)
 }
 
 const handleTitleInput = () => {
@@ -580,12 +556,12 @@ const copyContent = async (card: Flashcard) => {
 
 watch(searchQuery, () => {
   currentPage.value = 1
-  currentIndex.value = 0
+  typingQueue.currentIndex.value = 0
 })
 
 watch(selectedCategory, () => {
   currentPage.value = 1
-  currentIndex.value = 0
+  typingQueue.currentIndex.value = 0
 })
 </script>
 

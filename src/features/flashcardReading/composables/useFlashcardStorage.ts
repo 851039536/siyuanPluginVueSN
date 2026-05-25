@@ -3,7 +3,7 @@ import type { Flashcard } from "../types"
 import {
   onMounted,
   onUnmounted,
-  shallowRef,
+  ref,
 } from "vue"
 import { FlashcardStorage } from "../types/storage"
 
@@ -21,8 +21,8 @@ export const CARD_CONFIG = {
 
 export function useFlashcardStorage(plugin: Plugin) {
   const storage = new FlashcardStorage(plugin)
-  const cards = shallowRef<Flashcard[]>([])
-  const categories = shallowRef<string[]>([])
+  const cards = ref<Flashcard[]>([])
+  const categories = ref<string[]>([])
 
   const loadCards = async () => {
     try {

@@ -24,11 +24,6 @@
     color: $brand-light;
   }
 
-  &.tag-success {
-    background: $brand-green;
-    color: $brand-light;
-  }
-
   &.tag-contrast {
     background: var(--b3-theme-on-background);
     color: var(--b3-theme-background);
@@ -217,25 +212,6 @@
     min-height: 0;
     overflow: hidden;
     padding: 8px 0;
-
-    > .flashcard-item {
-      flex: 1;
-      max-height: 350px;
-      display: flex;
-      flex-direction: column;
-
-      :deep(.si-card) {
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-      }
-
-      :deep(.si-card__body) {
-        flex: 1;
-        min-height: 0;
-        overflow-y: auto;
-      }
-    }
   }
 
   .flashcard-item--single {
@@ -258,12 +234,8 @@
     }
   }
 
+  .single-card-view,
   .typing-practice {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    overflow: hidden;
-
     > .flashcard-item {
       flex: 1;
       max-height: 350px;
@@ -282,6 +254,13 @@
         overflow-y: auto;
       }
     }
+  }
+
+  .typing-practice {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow: hidden;
 
     .typing-area {
       display: flex;

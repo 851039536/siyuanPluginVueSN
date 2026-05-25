@@ -161,10 +161,6 @@ export interface DocStats {
   updatedIn2To3Months: number
   /** 半年以上未更新的文档数 */
   updatedOverHalfYear: number
-  /** 最大文档深度 */
-  maxDepth: number
-  /** 平均文档深度 */
-  avgDepth: number
   /** 深层文档数（深度 >= 5） */
   deepDocs: number
   /** 包含引用的文档数 */

@@ -142,7 +142,7 @@
 
       <!-- 深度分布迷你图 -->
       <div v-if="depthStats.depthDistribution.length > 0" class="depth-chart-wrap">
-        <span class="depth-chart-label">深度分布（均 {{ stats.avgDepth }} 层，最深 {{ stats.maxDepth }} 层）</span>
+        <span class="depth-chart-label">深度分布（均 {{ depthStats.avgDepth }} 层，最深 {{ depthStats.maxDepth }} 层）</span>
         <div class="depth-chart">
           <div v-for="item in depthStats.depthDistribution" :key="item.depth" class="depth-bar-item">
             <div class="depth-bar" :style="{ height: `${getBarHeight(item.count)}%` }" :title="`${item.depth} 层: ${item.count} 篇`"></div>

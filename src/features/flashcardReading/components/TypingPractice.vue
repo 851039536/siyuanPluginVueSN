@@ -20,60 +20,7 @@
           </div>
         </div>
       </template>
-      <div class="typing-area">
-        <div class="typing-detail">{{ currentCard?.content }}</div>
-        <div class="typing-hint">
-          {{ i18n.typeTheWord || '请输入单词' }}:
-        </div>
-
-        <div class="typing-target">
-          <span
-            v-for="(char, i) in targetChars"
-            :key="i"
-            class="typing-char"
-            :class="charClass(i)"
-          >{{ char }}</span>
-        </div>
-
-        <div class="typing-input-wrapper">
-          <input
-            ref="inputEl"
-            v-model="typedWord"
-            class="typing-input"
-            :placeholder="typingPlaceholder"
-            autocomplete="off"
-            autocapitalize="off"
-            spellcheck="false"
-            @keydown="handleKeydown"
-            @focus="onFocus"
-          />
-        </div>
-
-        <div
-          v-if="resultState !== 'idle'"
-          class="typing-result"
-          :class="`typing-result--${resultState}`"
-        >
-          <template v-if="resultState === 'correct'">
-            <IconWrapper
-              name="success"
-              :size="20"
-            />
-            <span>{{ i18n.correct || '正确!' }}</span>
-          </template>
-          <template v-else-if="resultState === 'incorrect'">
-            <span>{{ typedWord }}</span>
-            <Button
-              variant="ghost"
-              size="small"
-              icon="refreshLeft"
-              :iconSize="14"
-              title="重新输入"
-              @click="resetTyping"
-            />
-          </template>
-        </div>
-      </div>
+      <div class="typing-detail">{{ currentCard?.content }}</div>
       <template #footer>
         <div class="card-footer card-footer--single">
           <div class="card-footer__meta">
@@ -83,6 +30,60 @@
         </div>
       </template>
     </Card>
+
+    <div class="typing-area">
+      <div class="typing-hint">
+        {{ i18n.typeTheWord || '请输入单词' }}:
+      </div>
+
+      <div class="typing-target">
+        <span
+          v-for="(char, i) in targetChars"
+          :key="i"
+          class="typing-char"
+          :class="charClass(i)"
+        >{{ char }}</span>
+      </div>
+
+      <div class="typing-input-wrapper">
+        <input
+          ref="inputEl"
+          v-model="typedWord"
+          class="typing-input"
+          :placeholder="typingPlaceholder"
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck="false"
+          @keydown="handleKeydown"
+          @focus="onFocus"
+        />
+      </div>
+
+      <div
+        v-if="resultState !== 'idle'"
+        class="typing-result"
+        :class="`typing-result--${resultState}`"
+      >
+        <template v-if="resultState === 'correct'">
+          <IconWrapper
+            name="success"
+            :size="20"
+          />
+          <span>{{ i18n.correct || '正确!' }}</span>
+        </template>
+        <template v-else-if="resultState === 'incorrect'">
+          <span>{{ typedWord }}</span>
+          <Button
+            variant="ghost"
+            size="small"
+            icon="refreshLeft"
+            :iconSize="14"
+            title="重新输入"
+            @click="resetTyping"
+          />
+        </template>
+      </div>
+    </div>
 
     <div class="card-navigation">
       <Button

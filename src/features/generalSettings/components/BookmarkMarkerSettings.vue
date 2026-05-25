@@ -206,6 +206,18 @@
                   />
                   🖼️ {{ i18n?.modeIconBg || '图标+背景' }}
                 </label>
+                <label
+                  class="mode-option"
+                  :class="{ active: rule.displayMode === 'row' }"
+                >
+                  <input
+                    v-model="rule.displayMode"
+                    type="radio"
+                    value="row"
+                    @change="handleRulesChange"
+                  />
+                  🎯 {{ i18n?.modeRow || '行背景' }}
+                </label>
               </div>
             </div>
           </div>
@@ -506,6 +518,14 @@ const getPreviewStyle = (rule: BookmarkRule) => {
       backgroundColor: "transparent",
     }
   }
+  if (mode === "row") {
+    return {
+      color: rule.color,
+      backgroundColor: rule.backgroundColor,
+      padding: "6px 12px",
+      borderRadius: "4px",
+    }
+  }
   return {
     color: rule.color,
     backgroundColor: rule.backgroundColor,
@@ -520,6 +540,9 @@ const getPreviewText = (rule: BookmarkRule) => {
   }
   if (mode === "icon-bg" && rule.icon) {
     return rule.icon
+  }
+  if (mode === "row") {
+    return rule.icon ? `${rule.icon} ${name}` : name
   }
   return rule.icon ? `${rule.icon} ${name}` : name
 }

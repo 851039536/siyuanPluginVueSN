@@ -185,3 +185,9 @@ export interface DocStats {
   noneBookmarkDocs: number
 }
 
+/** 书签详情项 */
+export interface BookmarkDetail {
+  value: string
+  count: number
+}
+

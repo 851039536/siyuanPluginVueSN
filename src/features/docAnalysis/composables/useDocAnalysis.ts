@@ -1,5 +1,6 @@
 import type { Plugin } from "siyuan"
 import type {
+  BookmarkDetail,
   DepthStats,
   DocInfo,
   DocStats,
@@ -136,6 +137,11 @@ export function useDocAnalysis(plugin: Plugin) {
 
   // 当前选中的统计类别过滤
   const statsFilter = ref<string>("")
+
+  // 书签详情
+  const bookmarkDetails = ref<BookmarkDetail[]>([])
+  const bookmarkDetailVisible = ref(false)
+  const bookmarkDetailLoading = ref(false)
 
   // ============================================================
   // 公共辅助函数
@@ -576,6 +582,98 @@ export function useDocAnalysis(plugin: Plugin) {
   }
 
   /**
+   * 查询所有书签详情（按值分组统计）
+   */
+  async function fetchBookmarkDetails() {
+    if (bookmarkDetailVisible.value) {
+      bookmarkDetailVisible.value = false
+      return
+    }
+    bookmarkDetailLoading.value = true
+    try {
+      const notebookCondition = buildNotebookCondition()
+      const sqlStmt = `
+        SELECT a.value as bookmark_value, COUNT(DISTINCT a.block_id) as doc_count
+        FROM attributes a
+        WHERE a.name = 'bookmark'
+        AND a.block_id IN (
+          SELECT b.id FROM blocks b WHERE b.type = 'd' ${notebookCondition}
+        )
+        GROUP BY a.value
+        ORDER BY doc_count DESC
+      `
+      const rows = await sql(sqlStmt)
+      if (rows) {
+        bookmarkDetails.value = rows.map((r: any) => ({
+          value: r.bookmark_value || "",
+          count: r.doc_count || 0,
+        }))
+      } else {
+        bookmarkDetails.value = []
+      }
+      bookmarkDetailVisible.value = true
+    } catch (error) {
+      console.error("查询书签详情失败:", error)
+      bookmarkDetails.value = []
+    } finally {
+      bookmarkDetailLoading.value = false
+    }
+  }
+
+  /**
+   * 按指定书签值查询文档列表
+   */
+  async function queryByBookmark(bookmarkValue: string) {
+    bookmarkDetailVisible.value = false
+    statsFilter.value = ""
+
+    queryState.status = "loading"
+    queryState.errorMessage = ""
+    queryState.hasQueried = true
+
+    try {
+      const notebookCondition = buildNotebookCondition()
+      const escaped = bookmarkValue.replace(/'/g, "''")
+
+      const sqlStmt = `
+        SELECT
+          b.id as doc_id,
+          b.content as doc_title,
+          b.hpath as doc_path,
+          b.box as notebook_id,
+          b.updated as doc_updated,
+          b.created as doc_created,
+          COALESCE(sw.total_size, 0) as content_size,
+          COALESCE(sw.total_word_count, 0) as word_count,
+          LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth,
+          COALESCE(bm.bookmark, '') as bookmark
+        FROM blocks b
+        LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
+        INNER JOIN (${BOOKMARK_SUBQUERY}) bm ON b.id = bm.block_id
+        WHERE b.type = 'd' ${notebookCondition}
+        AND bm.bookmark = '${escaped}'
+        ORDER BY b.updated DESC
+        LIMIT 2000
+      `
+
+      const rows = await sql(sqlStmt)
+      if (!rows || rows.length === 0) {
+        setResults([])
+        queryState.status = "empty"
+      } else {
+        const docs = mapRowsToDocs(rows)
+        setResults(sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder))
+        queryState.status = "success"
+      }
+    } catch (error) {
+      console.error("按书签查询文档失败:", error)
+      queryState.errorMessage = (error as Error).message || "查询失败"
+      queryState.status = "error"
+      setResults([])
+    }
+  }
+
+  /**
    * 点击统计卡片 - 按类别查询文档列表
    */
   async function queryByStatsCategory(category: string) {
@@ -995,11 +1093,16 @@ export function useDocAnalysis(plugin: Plugin) {
     statsLoading,
     hasAnalyzed,
     statsFilter,
+    bookmarkDetails,
+    bookmarkDetailVisible,
+    bookmarkDetailLoading,
     loadNotebooks,
     loadSavedOptions,
     queryDocs,
     analyzeDocStats,
     queryByStatsCategory,
+    fetchBookmarkDetails,
+    queryByBookmark,
     openDoc,
     updateSort,
     clearResults,

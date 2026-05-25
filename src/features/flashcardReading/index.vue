@@ -2,8 +2,9 @@
   <div class="flashcard-reading-panel">
     <PanelHeader
       :i18n="i18n"
+      :plugin="plugin"
       @addCard="openCreateDialog"
-      @refresh="loadCards"
+      @refresh="handleRefresh"
     />
 
     <CategoryFilter
@@ -128,9 +129,9 @@
       :i18n="i18n"
       @close="closeDialog"
       @save="saveCard"
-      @input:title="handleTitleInput"
-      @validate:title="validateTitle"
-      @change:category="handleCategorySelect"
+      @inputTitle="handleTitleInput"
+      @validateTitle="validateTitle"
+      @changeCategory="handleCategorySelect"
       @update:formData="formData = $event"
       @update:customCategory="customCategory = $event"
     />
@@ -151,51 +152,43 @@ import type { SelectOption } from "@/components/Select.vue"
 import { showMessage } from "siyuan"
 import {
   computed,
-  onMounted,
-  onUnmounted,
   ref,
-  shallowRef,
   watch,
 } from "vue"
 import Button from "@/components/Button.vue"
-
 import IconWrapper from "@/components/IconWrapper.vue"
 import CardDialog from "./components/CardDialog.vue"
 import CardList from "./components/CardList.vue"
 import CategoryFilter from "./components/CategoryFilter.vue"
 import PanelHeader from "./components/PanelHeader.vue"
 import SingleCardView from "./components/SingleCardView.vue"
-
 import StatisticsView from "./components/StatisticsView.vue"
-import { FlashcardStorage } from "./types/storage"
-
-const props = defineProps<Props>()
-
-const CONFIG = {
-  PAGE_SIZE: 10,
-  PRESET_CATEGORIES: [
-    "C#",
-    "编程单词",
-    "JavaScript",
-    "TypeScript",
-    "Vue",
-    "Rust",
-  ] as string[],
-}
+import { useCardNavigation } from "./composables/useCardNavigation"
+import {
+  CARD_CONFIG,
+  useFlashcardStorage,
+} from "./composables/useFlashcardStorage"
+import { usePlayWord } from "./composables/usePlayWord"
 
 interface Props {
   i18n: I18n
   plugin: Plugin
 }
 
-const storage = new FlashcardStorage(props.plugin)
-const cards = shallowRef<Flashcard[]>([])
-const categories = shallowRef<string[]>([])
+const props = defineProps<Props>()
+
+const {
+  storage,
+  cards,
+  categories,
+  loadCards,
+} = useFlashcardStorage(props.plugin)
+const { playWord } = usePlayWord(storage, cards, props.i18n)
+
 const selectedCategory = ref<string>("all")
 const searchQuery = ref<string>("")
 const viewMode = ref<ViewMode>("list")
 const currentPage = ref(1)
-const currentIndex = ref(0)
 
 const showCreateDialog = ref(false)
 const editingCard = ref<Flashcard | null>(null)
@@ -222,6 +215,14 @@ const categoryOptions = computed<SelectOption[]>(() => [
   })),
 ])
 
+const allCategories = computed(() => {
+  const uniqueCategories = new Set([
+    ...CARD_CONFIG.PRESET_CATEGORIES,
+    ...categories.value,
+  ])
+  return Array.from(uniqueCategories).sort()
+})
+
 const formCategoryOptions = computed<SelectOption[]>(() => [
   {
     value: "",
@@ -236,14 +237,6 @@ const formCategoryOptions = computed<SelectOption[]>(() => [
     label: cat,
   })),
 ])
-
-const allCategories = computed(() => {
-  const uniqueCategories = new Set([
-    ...CONFIG.PRESET_CATEGORIES,
-    ...categories.value,
-  ])
-  return Array.from(uniqueCategories).sort()
-})
 
 const filteredCards = computed(() => {
   let result = cards.value
@@ -265,15 +258,21 @@ const filteredCards = computed(() => {
   return result
 })
 
-const currentCard = computed(() => filteredCards.value[currentIndex.value])
+const {
+  currentIndex,
+  currentCard,
+  previous,
+  next,
+  random,
+} = useCardNavigation(filteredCards)
 
 const totalPages = computed(() =>
-  Math.ceil(filteredCards.value.length / CONFIG.PAGE_SIZE),
+  Math.ceil(filteredCards.value.length / CARD_CONFIG.PAGE_SIZE),
 )
 
 const paginatedCards = computed(() => {
-  const start = (currentPage.value - 1) * CONFIG.PAGE_SIZE
-  const end = start + CONFIG.PAGE_SIZE
+  const start = (currentPage.value - 1) * CARD_CONFIG.PAGE_SIZE
+  const end = start + CARD_CONFIG.PAGE_SIZE
   return filteredCards.value.slice(start, end)
 })
 
@@ -335,12 +334,18 @@ const statisticsData = computed<StatisticsData>(() => {
   }
 })
 
-const loadCards = async () => {
+const handleRefresh = async () => {
   try {
-    cards.value = await storage.getAllCards()
-    categories.value = await storage.getCategories()
-  } catch (error) {
-    console.error("Failed to load cards:", error)
+    await loadCards()
+  } catch {
+    showMessage(props.i18n.loadFailed || "加载卡片失败", 3000, "error")
+  }
+}
+
+const reloadAfterMutation = async () => {
+  try {
+    await loadCards()
+  } catch {
     showMessage(props.i18n.loadFailed || "加载卡片失败", 3000, "error")
   }
 }
@@ -351,37 +356,19 @@ const switchToSingleMode = () => {
   currentIndex.value = len > 0 ? Math.floor(Math.random() * len) : 0
 }
 
-const playCurrentCard = () => {
-  const card = currentCard.value
-  if (card) {
-    playWord(card)
-  }
-}
-
 const previousCard = () => {
-  if (currentIndex.value > 0) {
-    currentIndex.value--
-    playCurrentCard()
-  }
+  previous()
+  playWord(currentCard.value)
 }
 
 const nextCard = () => {
-  if (currentIndex.value < filteredCards.value.length - 1) {
-    currentIndex.value++
-    playCurrentCard()
-  }
+  next()
+  playWord(currentCard.value)
 }
 
 const randomCard = () => {
-  if (filteredCards.value.length <= 1) {
-    return
-  }
-  let newIndex: number
-  do {
-    newIndex = Math.floor(Math.random() * filteredCards.value.length)
-  } while (newIndex === currentIndex.value && filteredCards.value.length > 1)
-  currentIndex.value = newIndex
-  playCurrentCard()
+  random()
+  playWord(currentCard.value)
 }
 
 const handleTitleInput = () => {
@@ -417,6 +404,18 @@ const openCreateDialog = () => {
   showCreateDialog.value = true
 }
 
+const closeDialog = () => {
+  showCreateDialog.value = false
+  editingCard.value = null
+  formData.value = {
+    title: "",
+    content: "",
+    category: "",
+  }
+  formErrors.value = {}
+  customCategory.value = ""
+}
+
 const saveCard = async () => {
   await validateTitle()
 
@@ -449,7 +448,7 @@ const saveCard = async () => {
     }
 
     closeDialog()
-    await loadCards()
+    await reloadAfterMutation()
   } catch (error: any) {
     showMessage(
       error.message || props.i18n.saveFailed || "保存失败",
@@ -457,18 +456,6 @@ const saveCard = async () => {
       "error",
     )
   }
-}
-
-const closeDialog = () => {
-  showCreateDialog.value = false
-  editingCard.value = null
-  formData.value = {
-    title: "",
-    content: "",
-    category: "",
-  }
-  formErrors.value = {}
-  customCategory.value = ""
 }
 
 const handleCategorySelect = () => {
@@ -480,7 +467,7 @@ const handleCategorySelect = () => {
 const editCard = (card: Flashcard) => {
   editingCard.value = card
   const category = card.category
-  const isCustomCategory = !CONFIG.PRESET_CATEGORIES.includes(category)
+  const isCustomCategory = !CARD_CONFIG.PRESET_CATEGORIES.includes(category)
   formData.value = {
     title: card.title,
     content: card.content,
@@ -491,14 +478,15 @@ const editCard = (card: Flashcard) => {
 }
 
 const deleteCard = async (card: Flashcard) => {
-  if (!confirm(props.i18n.confirmDelete || "确定要删除这张卡片吗？")) {
+  // eslint-disable-next-line no-alert
+  if (!window.confirm(props.i18n.confirmDelete || "确定要删除这张卡片吗？")) {
     return
   }
 
   try {
     await storage.deleteCard(card.id)
     showMessage(props.i18n.deleteSuccess || "卡片已删除", 2000, "info")
-    await loadCards()
+    await reloadAfterMutation()
   } catch (error: any) {
     showMessage(
       error.message || props.i18n.deleteFailed || "删除失败",
@@ -508,41 +496,11 @@ const deleteCard = async (card: Flashcard) => {
   }
 }
 
-const playWord = async (wordOrCard: string | Flashcard | null) => {
-  if (!wordOrCard) return
-
-  const word = typeof wordOrCard === "string" ? wordOrCard : wordOrCard.title
-  const card = typeof wordOrCard === "string" ? null : wordOrCard
-
-  try {
-    const utterance = new SpeechSynthesisUtterance(word)
-    utterance.lang = "en-US"
-    utterance.rate = 0.8
-
-    if (card) {
-      utterance.onend = async () => {
-        await storage.incrementPracticeCount(card.id)
-        const index = cards.value.findIndex((c) => c.id === card.id)
-        if (index !== -1) {
-          cards.value[index].practiceCount =
-            (cards.value[index].practiceCount || 0) + 1
-        }
-      }
-    }
-
-    speechSynthesis.speak(utterance)
-  } catch (error) {
-    console.error("Failed to play pronunciation:", error)
-    showMessage(props.i18n.playFailed || "播放失败", 2000, "error")
-  }
-}
-
 const copyTitle = async (card: Flashcard) => {
   try {
     await navigator.clipboard.writeText(card.title)
     showMessage("已复制单词", 2000, "info")
-  } catch (error) {
-    console.error("Failed to copy title:", error)
+  } catch {
     showMessage("复制失败", 2000, "error")
   }
 }
@@ -551,27 +509,10 @@ const copyContent = async (card: Flashcard) => {
   try {
     await navigator.clipboard.writeText(card.content)
     showMessage("已复制内容", 2000, "info")
-  } catch (error) {
-    console.error("Failed to copy content:", error)
+  } catch {
     showMessage("复制失败", 2000, "error")
   }
 }
-
-let dataChangeHandler: (() => void) | null = null
-
-onMounted(() => {
-  loadCards()
-
-  dataChangeHandler = () => loadCards()
-  window.addEventListener("flashcardDataChanged", dataChangeHandler)
-})
-
-onUnmounted(() => {
-  if (dataChangeHandler) {
-    window.removeEventListener("flashcardDataChanged", dataChangeHandler)
-    dataChangeHandler = null
-  }
-})
 
 watch(searchQuery, () => {
   currentPage.value = 1

@@ -25,8 +25,8 @@
           :error="formErrors.title"
           required
           @update:modelValue="updateField('title', $event)"
-          @input="$emit('input:title')"
-          @blur="$emit('validate:title')"
+          @input="$emit('inputTitle')"
+          @blur="$emit('validateTitle')"
         />
         <Textarea
           :modelValue="localFormData.content"
@@ -44,7 +44,7 @@
               :modelValue="localFormData.category"
               :options="categoryOptions"
               @update:modelValue="updateField('category', $event)"
-              @change="$emit('change:category')"
+              @change="$emit('changeCategory')"
             />
             <Input
               v-if="localFormData.category === '__custom__'"
@@ -107,9 +107,9 @@ const props = defineProps<{
 const emit = defineEmits<{
   "close": []
   "save": []
-  "input:title": []
-  "validate:title": []
-  "change:category": []
+  "inputTitle": []
+  "validateTitle": []
+  "changeCategory": []
   "update:formData": [value: FormData]
   "update:customCategory": [value: string]
 }>()
@@ -140,7 +140,9 @@ watch(
   (val) => { localFormData.value = { ...val } },
   { deep: true },
 )
-watch(() => props.customCategory, (val) => { localCustomCategory.value = val })
+watch(() => props.customCategory, (val) => {
+  localCustomCategory.value = val
+})
 
 const updateField = (field: keyof FormData, value: unknown) => {
   localFormData.value[field] = String(value)

@@ -1,11 +1,12 @@
 /**
  * 单词阅读功能 - 类型定义和注册函数
  */
-import { Plugin } from "siyuan"
+import type { Plugin } from "siyuan"
 import {
   createApp,
   h,
 } from "vue"
+import { createVueDockApp } from "@/utils/vueAppHelper"
 import FlashcardDialog from "../components/FlashcardDialog.vue"
 import FlashcardReadingPanel from "../index.vue"
 import { FlashcardStorage } from "./storage"
@@ -200,44 +201,15 @@ export class FlashcardReading {
   }
 
   private addDock() {
-    const self = this
-
-    this.plugin.addDock({
-      config: {
-        position: "RightTop",
-        size: {
-          width: 400,
-          height: 0,
-        },
-        icon: "iconBookmark",
-        title:
-          (this.plugin.i18n as any)?.flashcardReading?.panelTitle || "单词阅读",
-        show: false,
-      },
-      data: {},
+    createVueDockApp(this.plugin, FlashcardReadingPanel, {
+      position: "RightTop",
+      width: 400,
+      icon: "iconBookmark",
+      title:
+        (this.plugin.i18n as any)?.flashcardReading?.panelTitle || "单词阅读",
       type: "flashcardreading-dock",
-      init: (dock: any) => {
-        const container = document.createElement("div")
-        container.style.height = "100%"
-        container.style.overflow = "hidden"
-
-        const app = createApp({
-          setup() {
-            return () =>
-              h(FlashcardReadingPanel, {
-                i18n:
-                  (self.plugin.i18n?.flashcardReading as I18n) || ({} as I18n),
-                plugin: self.plugin,
-              })
-          },
-        })
-
-        app.mount(container)
-        dock.element?.appendChild(container)
-
-        dock.__app = app
-        dock.__container = container
-      },
+      i18n:
+        (this.plugin.i18n?.flashcardReading as I18n) || ({} as I18n),
     })
   }
 

@@ -189,15 +189,6 @@
         }
       }
 
-      .card-content {
-        font-size: 14px;
-        line-height: 1.5;
-        color: var(--b3-theme-on-background);
-        opacity: 0.85;
-        word-wrap: break-word;
-        white-space: pre-wrap;
-      }
-
       .card-footer {
         display: flex;
         justify-content: space-between;
@@ -206,6 +197,15 @@
         width: 100%;
       }
     }
+  }
+
+  .flashcard-item .card-content {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--b3-theme-on-background);
+    opacity: 0.85;
+    word-wrap: break-word;
+    white-space: pre-wrap;
   }
 
   .single-card-view {
@@ -217,6 +217,19 @@
     min-height: 0;
     overflow-y: auto;
     padding: 8px 0;
+
+    > .flashcard-item {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+
+      :deep(.si-card__body) {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+      }
+    }
   }
 
   .pagination {

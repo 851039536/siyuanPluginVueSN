@@ -34,14 +34,16 @@
 </template>
 
 <script setup lang="ts">
+import type { Plugin } from "siyuan"
 import type { I18n } from "../types"
 import { showMessage } from "siyuan"
 import { computed } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 
-defineProps<{
+const props = defineProps<{
   i18n: I18n
+  plugin: Plugin
 }>()
 
 defineEmits<{
@@ -49,12 +51,13 @@ defineEmits<{
   refresh: []
 }>()
 
+const STORAGE_KEY = "flashcard-cards"
+
 const storagePath = computed(() => {
-  const base = (window as any).siyuan?.config?.system?.dataDir || ""
-  const key = "flashcard-cards"
+  const base = props.plugin.getDataDir?.() || ""
   return base
-    ? `${base.replace(/\/$/, "")}/storage/petal/siyuan-plugin-vite-vue-sn/${key}.json`
-    : `storage/petal/siyuan-plugin-vite-vue-sn/${key}.json`
+    ? `${base.replace(/\/$/, "")}/${STORAGE_KEY}.json`
+    : `storage/petal/siyuan-plugin-vite-vue-sn/${STORAGE_KEY}.json`
 })
 
 const copyPath = async () => {

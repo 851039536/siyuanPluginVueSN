@@ -12,7 +12,7 @@
         <span class="tag tag-success">{{ i18n.practiceCount || '练习次数' }}: {{ currentCard?.practiceCount || 0 }}</span>
       </div>
       <Button
-        variant="primary"
+        :variant="variant === 'dialog' ? 'success' : 'primary'"
         size="large"
         icon="play"
         @click="$emit('play', currentCard)"
@@ -21,7 +21,10 @@
       </Button>
     </div>
 
-    <div class="card-navigation">
+    <div
+      v-if="!hideNavigation"
+      class="card-navigation"
+    >
       <Button
         variant="ghost"
         icon="chevronLeft"
@@ -54,12 +57,20 @@ import type {
 } from "../types"
 import Button from "@/components/Button.vue"
 
-defineProps<{
-  currentCard: Flashcard | null
-  currentIndex: number
-  totalCards: number
-  i18n: I18n
-}>()
+withDefaults(
+  defineProps<{
+    currentCard: Flashcard | null
+    currentIndex: number
+    totalCards: number
+    i18n: I18n
+    hideNavigation?: boolean
+    variant?: "default" | "dialog"
+  }>(),
+  {
+    hideNavigation: false,
+    variant: "default",
+  },
+)
 
 defineEmits<{
   play: [card: Flashcard | null]

@@ -3,25 +3,17 @@
     <Card
       variant="bordered"
       size="medium"
-      class="flashcard-item"
+      class="flashcard-item flashcard-item--single"
     >
       <template #header>
         <div class="card-header">
-          <span class="card-title">{{ currentCard?.title }}</span>
+          <span class="card-title card-title--single">{{ currentCard?.title }}</span>
           <div class="card-actions">
             <Button
               variant="ghost"
               size="small"
-              icon="play"
-              :iconSize="14"
-              :title="i18n.play || '播放'"
-              @click="$emit('play', currentCard)"
-            />
-            <Button
-              variant="ghost"
-              size="small"
-              icon="contentCopy"
-              :iconSize="14"
+              icon="fileCopy"
+              :iconSize="16"
               :title="i18n.copyTitle || '复制标题'"
               @click="$emit('copyTitle', currentCard)"
             />
@@ -29,7 +21,7 @@
               variant="ghost"
               size="small"
               icon="contentCopy"
-              :iconSize="14"
+              :iconSize="16"
               :title="i18n.copyContent || '复制内容'"
               @click="$emit('copyContent', currentCard)"
             />
@@ -38,7 +30,7 @@
               variant="ghost"
               size="small"
               icon="edit"
-              :iconSize="14"
+              :iconSize="16"
               :title="i18n.editCard || '编辑'"
               @click="$emit('edit', currentCard)"
             />
@@ -47,7 +39,7 @@
               variant="danger"
               size="small"
               icon="delete"
-              :iconSize="14"
+              :iconSize="16"
               :title="i18n.deleteCard || '删除'"
               @click="$emit('delete', currentCard)"
             />
@@ -58,9 +50,21 @@
         {{ currentCard?.content }}
       </div>
       <template #footer>
-        <div class="card-footer">
-          <span class="tag tag-small">{{ currentCard?.category }}</span>
-          <span class="tag tag-small tag-contrast">{{ i18n.practiceCount || '练习' }}: {{ currentCard?.practiceCount || 0 }}</span>
+        <div class="card-footer card-footer--single">
+          <div class="card-footer__meta">
+            <span class="tag tag-small tag-info">{{ currentCard?.category }}</span>
+            <span class="tag tag-small tag-contrast">{{ i18n.practiceCount || '练习' }}: {{ currentCard?.practiceCount || 0 }}</span>
+          </div>
+          <Button
+            variant="primary"
+            size="small"
+            icon="play"
+            :iconSize="14"
+            :title="i18n.play || '播放'"
+            @click="$emit('play', currentCard)"
+          >
+            {{ i18n.play || '播放' }}
+          </Button>
         </div>
       </template>
     </Card>

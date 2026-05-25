@@ -164,6 +164,7 @@ import {
   computed,
   ref,
 } from "vue"
+import BookmarkMarkerSettings from "./components/BookmarkMarkerSettings.vue"
 import CodeBlockSettings from "./components/CodeBlockSettings.vue"
 import DataBackupSettings from "./components/DataBackupSettings.vue"
 import DocCountSettings from "./components/DocCountSettings.vue"
@@ -172,7 +173,6 @@ import EncryptionSettings from "./components/EncryptionSettings.vue"
 import HeadingSettings from "./components/HeadingSettings.vue"
 import HighlightSettings from "./components/HighlightSettings.vue"
 import ListStyleSettings from "./components/ListStyleSettings.vue"
-import BookmarkMarkerSettings from "./components/BookmarkMarkerSettings.vue"
 import MarkdownExportSettings from "./components/MarkdownExportSettings.vue"
 import PasswordSettings from "./components/PasswordSettings.vue"
 import SkillsViewerSettings from "./components/SkillsViewerSettings.vue"
@@ -267,18 +267,8 @@ const handleTabPinChange = createSettingsHandler("tabPin")
 const handleDocCountChange = createSettingsHandler("docCount")
 const handleBookmarkMarkerChange = createSettingsHandler("bookmarkMarker")
 
-defineExpose({
-  handleCodeBlockChange,
-  handleHeadingChange,
-  handleBackupChange,
-  handleDocumentFontChange,
-  handleTableStyleChange,
-  handleListStyleChange,
-  handleTabPinChange,
-  handleDocCountChange,
-})
 </script>
 
 <style scoped lang="scss">
-@use './styles/index.scss' as *;
+@use "./styles/index.scss" as *;
 </style>

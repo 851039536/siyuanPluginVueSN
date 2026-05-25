@@ -91,6 +91,7 @@ import {
   watch,
 } from "vue"
 import { GeneralSettingsStorage } from "@/features/generalSettings/types/storage"
+import { generateTabPinCSS } from "@/features/generalSettings/utils/styles"
 
 interface Props {
   i18n?: any
@@ -153,35 +154,12 @@ function applyToDocument() {
   }
 
   if (enabled.value) {
-    let css = `
-      /* 钉住页签：显示标题文本 */
-      .layout-tab-bar .item.item--pin .item__text {
-        width: auto !important;
-        max-width: none !important;
-        display: flex !important;
-      }
-    `
-
-    // 根据显示模式添加不同的样式
-    if (displayMode.value === "textOnly") {
-      css += `
-        /* 仅显示标题：隐藏图标 */
-        .layout-tab-bar .item.item--pin .item__icon {
-          display: none !important;
-        }
-      `
-    }
-
-    css += `
-      /* 钉住页签：应用自定义背景颜色 */
-      .layout-tab-bar .item.item--pin {
-        ${backgroundColor.value !== defaultBackgroundColor ? `background: ${backgroundColor.value} !important;` : ""}
-      }
-    `
-
-    style.textContent = css
+    style.textContent = generateTabPinCSS({
+      enabled: enabled.value,
+      displayMode: displayMode.value,
+      backgroundColor: backgroundColor.value,
+    })
   } else {
-    // 禁用时移除所有样式
     style.textContent = ""
   }
 }

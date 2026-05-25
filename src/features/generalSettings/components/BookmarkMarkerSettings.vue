@@ -216,7 +216,69 @@
                     value="row"
                     @change="handleRulesChange"
                   />
-                  🎯 {{ i18n?.modeRow || '行背景' }}
+                  🎯 {{ i18n?.modeRow || '字体背景' }}
+                </label>
+              </div>
+            </div>
+            <!-- 透明度 -->
+            <div class="rule-row">
+              <label class="rule-label">
+                {{ i18n?.bgAlpha || '背景透明度' }}
+              </label>
+              <div class="slider-container">
+                <input
+                  v-model.number="rule.alpha"
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  class="alpha-slider"
+                  @input="handleRulesChange"
+                />
+                <span class="alpha-value">{{ ((rule.alpha ?? 0.25) * 100).toFixed(0) }}%</span>
+              </div>
+            </div>
+            <!-- 匹配模式 -->
+            <div class="rule-row">
+              <label class="rule-label">
+                {{ i18n?.matchMode || '匹配模式' }}
+              </label>
+              <div class="match-mode-group">
+                <label
+                  class="mode-option"
+                  :class="{ active: !rule.matchMode || rule.matchMode === 'exact' }"
+                >
+                  <input
+                    v-model="rule.matchMode"
+                    type="radio"
+                    value="exact"
+                    @change="handleRulesChange"
+                  />
+                  🎯 {{ i18n?.matchExact || '精确' }}
+                </label>
+                <label
+                  class="mode-option"
+                  :class="{ active: rule.matchMode === 'prefix' }"
+                >
+                  <input
+                    v-model="rule.matchMode"
+                    type="radio"
+                    value="prefix"
+                    @change="handleRulesChange"
+                  />
+                  🔤 {{ i18n?.matchPrefix || '前缀' }}
+                </label>
+                <label
+                  class="mode-option"
+                  :class="{ active: rule.matchMode === 'contains' }"
+                >
+                  <input
+                    v-model="rule.matchMode"
+                    type="radio"
+                    value="contains"
+                    @change="handleRulesChange"
+                  />
+                  🔍 {{ i18n?.matchContains || '包含' }}
                 </label>
               </div>
             </div>
@@ -294,11 +356,15 @@ const rules = ref<BookmarkRule[]>([
     bookmarkNames: ["已发布"],
     color: "#ffffff",
     backgroundColor: "#52c41a",
+    alpha: 0.25,
+    matchMode: "exact",
   },
   {
     bookmarkNames: ["待发布"],
     color: "#ffffff",
     backgroundColor: "#faad14",
+    alpha: 0.25,
+    matchMode: "exact",
   },
 ])
 const updateInterval = ref("3600000")
@@ -396,11 +462,15 @@ const loadSettings = async () => {
               bookmarkNames: ["已发布"],
               color: "#ffffff",
               backgroundColor: "#52c41a",
+              alpha: 0.25,
+              matchMode: "exact",
             },
             {
               bookmarkNames: ["待发布"],
               color: "#ffffff",
               backgroundColor: "#faad14",
+              alpha: 0.25,
+              matchMode: "exact",
             },
           ]
       updateInterval.value = data.updateInterval?.toString() || "3600000"
@@ -492,6 +562,8 @@ const addRule = () => {
     backgroundColor: "#1890ff",
     icon: "",
     displayMode: "bg",
+    alpha: 0.25,
+    matchMode: "exact",
   })
 }
 
@@ -510,8 +582,16 @@ const selectIcon = (index: number, icon: string) => {
   handleRulesChange()
 }
 
+function previewHexToRgba(hex: string, alpha: number): string {
+  const r = Number.parseInt(hex.slice(1, 3), 16)
+  const g = Number.parseInt(hex.slice(3, 5), 16)
+  const b = Number.parseInt(hex.slice(5, 7), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
 const getPreviewStyle = (rule: BookmarkRule) => {
   const mode = rule.displayMode || "bg"
+  const alpha = rule.alpha ?? 0.25
   if (mode === "icon" && rule.icon) {
     return {
       color: rule.color,
@@ -521,14 +601,14 @@ const getPreviewStyle = (rule: BookmarkRule) => {
   if (mode === "row") {
     return {
       color: rule.color,
-      backgroundColor: rule.backgroundColor,
+      backgroundColor: previewHexToRgba(rule.backgroundColor, alpha),
       padding: "6px 12px",
       borderRadius: "4px",
     }
   }
   return {
     color: rule.color,
-    backgroundColor: rule.backgroundColor,
+    backgroundColor: previewHexToRgba(rule.backgroundColor, alpha),
   }
 }
 
@@ -984,6 +1064,37 @@ defineExpose({
   background: rgba(var(--b3-theme-primary-rgb), 0.1);
   color: var(--b3-theme-primary);
   font-weight: 600;
+}
+
+/* alpha slider */
+.slider-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.alpha-slider {
+  flex: 1;
+  height: 4px;
+  cursor: pointer;
+  accent-color: var(--b3-theme-primary);
+}
+
+.alpha-value {
+  font-size: 12px;
+  color: var(--b3-theme-primary);
+  font-weight: 600;
+  min-width: 36px;
+  text-align: right;
+}
+
+/* match mode group (reuses mode-option styles) */
+.match-mode-group {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+  flex-wrap: wrap;
 }
 
 .rule-input:hover,

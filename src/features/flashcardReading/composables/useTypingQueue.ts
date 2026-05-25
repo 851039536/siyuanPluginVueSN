@@ -1,6 +1,9 @@
 import type { Ref } from "vue"
 import type { Flashcard } from "../types"
-import { computed, ref } from "vue"
+import {
+  computed,
+  ref,
+} from "vue"
 
 export function useTypingQueue(cards: Ref<Flashcard[]>) {
   const currentIndex = ref(0)
@@ -11,7 +14,7 @@ export function useTypingQueue(cards: Ref<Flashcard[]>) {
 
     const maxCount = Math.max(...list.map((c) => c.practiceCount || 0), 0)
 
-    const weighted: Array<{ card: Flashcard; weight: number }> = list.map(
+    const weighted: Array<{ card: Flashcard, weight: number }> = list.map(
       (card) => ({
         card,
         weight: maxCount > 0 ? 1 + maxCount - (card.practiceCount || 0) : 1,
@@ -78,7 +81,15 @@ export function useTypingQueue(cards: Ref<Flashcard[]>) {
     currentIndex.value = newIndex
   }
 
-  return { queue, currentIndex, currentCard, previous, next, random, rebuild }
+  return {
+    queue,
+    currentIndex,
+    currentCard,
+    previous,
+    next,
+    random,
+    rebuild,
+  }
 }
 
 function weightedRandomIndex(cards: Flashcard[]): number {

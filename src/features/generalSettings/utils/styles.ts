@@ -444,3 +444,31 @@ export function applyCodeBlockCollapse(
   `
   document.head.appendChild(script)
 }
+
+export function generateTabPinCSS(settings: { enabled: boolean, displayMode: string, backgroundColor: string }): string {
+  const defaultBackgroundColor = "rgba(var(--b3-theme-primary-rgb), 0.1)"
+
+  let css = `
+    .layout-tab-bar .item.item--pin .item__text {
+      width: auto !important;
+      max-width: none !important;
+      display: flex !important;
+    }
+  `
+
+  if (settings.displayMode === "textOnly") {
+    css += `
+      .layout-tab-bar .item.item--pin .item__icon {
+        display: none !important;
+      }
+    `
+  }
+
+  css += `
+    .layout-tab-bar .item.item--pin {
+      ${settings.backgroundColor !== defaultBackgroundColor ? `background: ${settings.backgroundColor} !important;` : ""}
+    }
+  `
+
+  return css
+}

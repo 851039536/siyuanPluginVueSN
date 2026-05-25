@@ -2,7 +2,7 @@
  * 通用设置功能模块
  */
 import { Plugin } from "siyuan"
-import { GeneralSettings } from "./types"
+import { GeneralSettings } from "./GeneralSettings"
 
 /**
  * 注册通用设置功能
@@ -22,5 +22,6 @@ export {
   checkIsMobile,
   CODEBLOCK_STYLES,
   type CodeBlockStyle,
+  generateTabPinCSS,
   HEADING_LEVEL_MAPPINGS,
 } from "./utils/styles"

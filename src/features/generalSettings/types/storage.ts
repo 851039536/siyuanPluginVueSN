@@ -1,10 +1,10 @@
 /**
  * 通用设置数据存储管理
  */
+import type { BookmarkRule } from "../modules/BookmarkMarker"
 import { Plugin } from "siyuan"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
-import type { BookmarkRule } from "../modules/BookmarkMarker"
 
 export interface FontSettings {
   fontFamily: string

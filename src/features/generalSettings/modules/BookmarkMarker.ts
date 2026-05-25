@@ -267,7 +267,7 @@ export class BookmarkMarker {
       marker.style.backgroundColor = rule.backgroundColor
       marker.textContent = rule.icon
     } else {
-      marker.style.backgroundColor = rule.backgroundColor
+      marker.style.backgroundColor = hexToRgba(rule.backgroundColor, 0.25)
       marker.textContent = rule.icon ? `${rule.icon} ${bookmarkName}` : bookmarkName
     }
 
@@ -517,7 +517,6 @@ export class BookmarkMarker {
     marker.dataset.bookmark = bookmarkName
 
     if (mode === "icon" && rule.icon) {
-      // 仅图标模式：无背景色，只显示图标
       marker.style.backgroundColor = "transparent"
       marker.textContent = rule.icon
     } else if (mode === "icon-bg" && rule.icon) {
@@ -525,8 +524,8 @@ export class BookmarkMarker {
       marker.style.backgroundColor = rule.backgroundColor
       marker.textContent = rule.icon
     } else {
-      // 文字标签模式（默认）：显示书签名称，带背景
-      marker.style.backgroundColor = rule.backgroundColor
+      // 文字标签模式（默认）：显示书签名称，带半透明背景
+      marker.style.backgroundColor = hexToRgba(rule.backgroundColor, 0.25)
       marker.textContent = rule.icon ? `${rule.icon} ${bookmarkName}` : bookmarkName
     }
 

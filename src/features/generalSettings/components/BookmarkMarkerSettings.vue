@@ -59,13 +59,29 @@
               <label class="rule-label">
                 {{ i18n?.bookmarkName || '书签名称' }}
               </label>
-              <input
-                v-model="rule.bookmarkName"
-                type="text"
-                class="rule-input"
-                :placeholder="i18n?.bookmarkNamePlaceholder || '输入书签名称'"
-                @change="handleRulesChange"
-              />
+              <div class="tags-input-wrapper">
+                <div
+                  v-for="(tag, tagIndex) in rule.bookmarkNames"
+                  :key="tagIndex"
+                  class="tag-chip"
+                >
+                  <span class="tag-text">{{ tag }}</span>
+                  <span
+                    class="tag-remove"
+                    @click="removeTag(index, tagIndex)"
+                  >×</span>
+                </div>
+                <input
+                  :ref="(el) => { if (el) tagInputRefs[index] = el as HTMLInputElement }"
+                  type="text"
+                  class="tag-input"
+                  :placeholder="i18n?.bookmarkNamePlaceholder || '输入书签名，回车添加'"
+                  @keydown.enter.prevent="addTag(index, $event)"
+                  @keydown.,.prevent="addTag(index, $event)"
+                  @keydown.backspace="handleTagBackspace(index, $event)"
+                  @change="handleRulesChange"
+                />
+              </div>
             </div>
             <div class="rule-row">
               <label class="rule-label">
@@ -159,9 +175,9 @@
                   :class="{ active: rule.displayMode === 'bg' || !rule.displayMode }"
                 >
                   <input
-                    type="radio"
-                    :value="'bg'"
                     v-model="rule.displayMode"
+                    type="radio"
+                    value="bg"
                     @change="handleRulesChange"
                   />
                   📄 {{ i18n?.modeTextLabel || '文字标签' }}
@@ -171,9 +187,9 @@
                   :class="{ active: rule.displayMode === 'icon' }"
                 >
                   <input
-                    type="radio"
-                    :value="'icon'"
                     v-model="rule.displayMode"
+                    type="radio"
+                    value="icon"
                     @change="handleRulesChange"
                   />
                   🎨 {{ i18n?.modeIconOnly || '仅图标' }}
@@ -183,9 +199,9 @@
                   :class="{ active: rule.displayMode === 'icon-bg' }"
                 >
                   <input
-                    type="radio"
-                    :value="'icon-bg'"
                     v-model="rule.displayMode"
+                    type="radio"
+                    value="icon-bg"
                     @change="handleRulesChange"
                   />
                   🖼️ {{ i18n?.modeIconBg || '图标+背景' }}
@@ -240,6 +256,7 @@
 </template>
 
 <script setup lang="ts">
+import type { BookmarkRule } from "../modules/BookmarkMarker"
 import { showMessage } from "siyuan"
 import {
   onMounted,
@@ -247,7 +264,6 @@ import {
 } from "vue"
 import SiSwitch from "@/components/Switch.vue"
 import { BookmarkMarker } from "../modules/BookmarkMarker"
-import type { BookmarkRule } from "../modules/BookmarkMarker"
 
 import { GeneralSettingsStorage } from "../types/storage"
 
@@ -262,32 +278,81 @@ const emit = defineEmits<{
 
 const enableBookmarkMarker = ref(true)
 const rules = ref<BookmarkRule[]>([
-  { bookmarkName: "已发布", color: "#ffffff", backgroundColor: "#52c41a" },
-  { bookmarkName: "待发布", color: "#ffffff", backgroundColor: "#faad14" },
+  {
+    bookmarkNames: ["已发布"],
+    color: "#ffffff",
+    backgroundColor: "#52c41a",
+  },
+  {
+    bookmarkNames: ["待发布"],
+    color: "#ffffff",
+    backgroundColor: "#faad14",
+  },
 ])
 const updateInterval = ref("3600000")
+const tagInputRefs = ref<Record<number, HTMLInputElement | null>>({})
 
 const presetIcons = [
   // 🔖 书签相关
-  "🔖", "🏷️", "📑", "📌", "📍",
+  "🔖",
+  "🏷️",
+  "📑",
+  "📌",
+  "📍",
   // ✅ 状态标记
-  "✅", "❌", "⚠️", "🔄", "📝",
+  "✅",
+  "❌",
+  "⚠️",
+  "🔄",
+  "📝",
   // ⭐ 评级/优先级
-  "⭐", "🌟", "💎", "🏆", "🎯",
+  "⭐",
+  "🌟",
+  "💎",
+  "🏆",
+  "🎯",
   // 🚀 进度/状态
-  "🚀", "🔥", "⚡", "🎉", "💡",
+  "🚀",
+  "🔥",
+  "⚡",
+  "🎉",
+  "💡",
   // 📋 文档/内容
-  "📋", "📄", "📊", "📈", "📁",
+  "📋",
+  "📄",
+  "📊",
+  "📈",
+  "📁",
   // 🖊️ 编辑/创作
-  "🖊️", "✏️", "📝", "📎", "🔗",
+  "🖊️",
+  "✏️",
+  "📝",
+  "📎",
+  "🔗",
   // 🎨 创意/设计
-  "🎨", "🌈", "✨", "💫", "🪄",
+  "🎨",
+  "🌈",
+  "✨",
+  "💫",
+  "🪄",
   // 💬 沟通/评论
-  "💬", "💭", "🗨️", "💡", "🔔",
+  "💬",
+  "💭",
+  "🗨️",
+  "💡",
+  "🔔",
   // 🔐 安全/权限
-  "🔐", "🔒", "🔑", "🛡️", "🔍",
+  "🔐",
+  "🔒",
+  "🔑",
+  "🛡️",
+  "🔍",
   // 📂 分类/整理
-  "📂", "🗂️", "📚", "📦", "🧩",
+  "📂",
+  "🗂️",
+  "📚",
+  "📦",
+  "🧩",
 ]
 
 const getBookmarkMarker = (): BookmarkMarker | null => {
@@ -309,10 +374,23 @@ const loadSettings = async () => {
     const data = storage ? await storage.bookmarkMarker.load() : null
     if (data) {
       enableBookmarkMarker.value = data.enableBookmarkMarker ?? true
-      rules.value = data.rules?.length ? data.rules : [
-        { bookmarkName: "已发布", color: "#ffffff", backgroundColor: "#52c41a" },
-        { bookmarkName: "待发布", color: "#ffffff", backgroundColor: "#faad14" },
-      ]
+      rules.value = data.rules?.length
+        ? data.rules.map((r: any) => ({
+            ...r,
+            bookmarkNames: r.bookmarkNames || (r.bookmarkName ? [r.bookmarkName] : []),
+          }))
+        : [
+            {
+              bookmarkNames: ["已发布"],
+              color: "#ffffff",
+              backgroundColor: "#52c41a",
+            },
+            {
+              bookmarkNames: ["待发布"],
+              color: "#ffffff",
+              backgroundColor: "#faad14",
+            },
+          ]
       updateInterval.value = data.updateInterval?.toString() || "3600000"
     }
   } catch (e) {
@@ -397,7 +475,7 @@ const handleIntervalChange = async () => {
 
 const addRule = () => {
   rules.value.push({
-    bookmarkName: "",
+    bookmarkNames: [],
     color: "#ffffff",
     backgroundColor: "#1890ff",
     icon: "",
@@ -423,14 +501,20 @@ const selectIcon = (index: number, icon: string) => {
 const getPreviewStyle = (rule: BookmarkRule) => {
   const mode = rule.displayMode || "bg"
   if (mode === "icon" && rule.icon) {
-    return { color: rule.color, backgroundColor: "transparent" }
+    return {
+      color: rule.color,
+      backgroundColor: "transparent",
+    }
   }
-  return { color: rule.color, backgroundColor: rule.backgroundColor }
+  return {
+    color: rule.color,
+    backgroundColor: rule.backgroundColor,
+  }
 }
 
 const getPreviewText = (rule: BookmarkRule) => {
   const mode = rule.displayMode || "bg"
-  const name = rule.bookmarkName || "未命名"
+  const name = rule.bookmarkNames?.[0] || "未命名"
   if (mode === "icon" && rule.icon) {
     return rule.icon
   }
@@ -438,6 +522,34 @@ const getPreviewText = (rule: BookmarkRule) => {
     return rule.icon
   }
   return rule.icon ? `${rule.icon} ${name}` : name
+}
+
+const addTag = (ruleIndex: number, event: KeyboardEvent) => {
+  const input = event.target as HTMLInputElement
+  const value = input.value.trim()
+  if (!value) return
+  const rule = rules.value[ruleIndex]
+  if (!rule.bookmarkNames.includes(value)) {
+    rule.bookmarkNames.push(value)
+    input.value = ""
+    handleRulesChange()
+  }
+}
+
+const removeTag = (ruleIndex: number, tagIndex: number) => {
+  rules.value[ruleIndex].bookmarkNames.splice(tagIndex, 1)
+  handleRulesChange()
+}
+
+const handleTagBackspace = (ruleIndex: number, event: KeyboardEvent) => {
+  const input = event.target as HTMLInputElement
+  if (input.value === "") {
+    const tags = rules.value[ruleIndex].bookmarkNames
+    if (tags.length > 0) {
+      tags.pop()
+      handleRulesChange()
+    }
+  }
 }
 
 const handleRefresh = async () => {
@@ -641,6 +753,75 @@ defineExpose({
   border-radius: 6px;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-background);
+}
+
+/* 多标签输入 */
+.tags-input-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  flex: 1;
+  padding: 3px 6px;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 6px;
+  background: var(--b3-theme-surface);
+  min-height: 32px;
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 6px;
+  font-size: 11px;
+  background: rgba(var(--b3-theme-primary-rgb), 0.12);
+  color: var(--b3-theme-primary);
+  border-radius: 4px;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.tag-text {
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tag-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  font-size: 10px;
+  border-radius: 50%;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.tag-remove:hover {
+  opacity: 1;
+  background: rgba(var(--b3-theme-primary-rgb), 0.2);
+}
+
+.tag-input {
+  flex: 1;
+  min-width: 80px;
+  padding: 3px 4px;
+  font-size: 12px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--b3-theme-on-background);
+}
+
+.tag-input::placeholder {
+  color: var(--b3-theme-on-surface-variant);
+  opacity: 0.5;
 }
 
 .color-input-wrapper {

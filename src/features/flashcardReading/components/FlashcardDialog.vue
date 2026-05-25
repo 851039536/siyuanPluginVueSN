@@ -33,8 +33,11 @@
               :totalCards="filteredCards.length"
               :i18n="i18n"
               hideNavigation
+              hideActions
               variant="dialog"
               @play="(card) => playWord(card)"
+              @copyTitle="(card) => handleCopy(card?.title)"
+              @copyContent="(card) => handleCopy(card?.content)"
             />
 
             <div class="category-filter">
@@ -79,6 +82,7 @@
 import type { Plugin } from "siyuan"
 import type { I18n } from "../types"
 import type { SelectOption } from "@/components/Select.vue"
+import { showMessage } from "siyuan"
 import {
   computed,
   ref,
@@ -146,6 +150,16 @@ const nextCard = () => {
 const randomCard = () => {
   random()
   playWord(currentCard.value)
+}
+
+const handleCopy = async (text?: string) => {
+  if (!text) return
+  try {
+    await navigator.clipboard.writeText(text)
+    showMessage("已复制", 2000, "info")
+  } catch {
+    showMessage("复制失败", 2000, "error")
+  }
 }
 
 const open = () => {

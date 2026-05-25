@@ -41,6 +41,10 @@
         @previous="previousCard"
         @next="nextCard"
         @random="randomCard"
+        @copyTitle="copyTitle"
+        @copyContent="copyContent"
+        @edit="editCard"
+        @delete="deleteCard"
       />
 
       <StatisticsView

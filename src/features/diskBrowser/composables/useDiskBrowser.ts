@@ -20,9 +20,7 @@ import {
   computeCacheStatus,
   copyToClipboard,
   formatDate,
-  formatSize,
   getCacheExpiryTime,
-  getFolderName,
   isCacheValid,
 } from "../utils"
 
@@ -169,10 +167,6 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
       showMessage(i18n.favoriteAdded || "已添加收藏", 2000, "info")
     }
     saveFavorites()
-  }
-
-  function isFavorite(folderPath: string): boolean {
-    return favoriteFolders.value.includes(folderPath)
   }
 
   async function saveFavorites(): Promise<void> {
@@ -522,14 +516,11 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
     cacheStatus,
     currentFolderCache,
     toggleFavorite,
-    isFavorite,
     fetchDisks,
     toggleDisk,
-    loadFolders,
     openPath,
     refreshDisks,
     refreshCurrentFolder,
-    loadFoldersFromPath,
     handleItemDoubleClick,
     navigateIntoFolder,
     navigateBack,
@@ -538,7 +529,5 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
     navigateToFavorite,
     copyPathToClipboard,
     formatDate: formatDateWithI18n,
-    formatSize,
-    getFolderName,
   }
 }

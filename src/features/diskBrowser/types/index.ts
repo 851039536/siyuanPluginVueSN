@@ -1,5 +1,3 @@
-import { Plugin } from "siyuan"
-
 export interface DiskInfo {
   drive: string
   label?: string
@@ -67,11 +65,6 @@ export interface DiskBrowserI18n {
   today?: string
   yesterday?: string
   daysAgo?: string
-}
-
-export interface DiskBrowserProps {
-  i18n: DiskBrowserI18n
-  plugin: Plugin
 }
 
 export const STORAGE_KEY = "disk-browser-settings"

@@ -5,11 +5,7 @@ import type {
   DocStats,
   DuplicateNameGroup,
   FilterOptions,
-  ImageStats,
   QueryState,
-  RefStats,
-  UpdateTimeStats,
-
 } from "../types/index"
 
 /**
@@ -113,8 +109,6 @@ export function useDocAnalysis(plugin: Plugin) {
     updatedIn1To2Months: 0,
     updatedIn2To3Months: 0,
     updatedOverHalfYear: 0,
-    maxDepth: 0,
-    avgDepth: 0,
     deepDocs: 0,
     refDocs: 0,
     totalRefs: 0,
@@ -132,35 +126,11 @@ export function useDocAnalysis(plugin: Plugin) {
   // 重名文档详情（供列表展示）
   const duplicateGroups = ref<DuplicateNameGroup[]>([])
 
-  // 更新时间分析详情
-  const updateTimeStats = ref<UpdateTimeStats>({
-    in7Days: 0,
-    in30Days: 0,
-    in1To2Months: 0,
-    in2To3Months: 0,
-    inHalfYear: 0,
-    overHalfYear: 0,
-  })
-
   // 深度分析详情
   const depthStats = ref<DepthStats>({
     depthDistribution: [],
     maxDepth: 0,
     avgDepth: 0,
-  })
-
-  // 引用分析详情
-  const refStats = ref<RefStats>({
-    topRefDocs: [],
-    refDocCount: 0,
-    totalRefCount: 0,
-  })
-
-  // 图片分析详情
-  const imageStats = ref<ImageStats>({
-    topImageDocs: [],
-    imageDocCount: 0,
-    totalImageCount: 0,
   })
 
   // 当前选中的统计类别过滤
@@ -410,14 +380,6 @@ export function useDocAnalysis(plugin: Plugin) {
       const timeRows = await sql(timeSql)
       if (timeRows && timeRows.length > 0) {
         const row = timeRows[0]
-        updateTimeStats.value = {
-          in7Days: row.in_7_days || 0,
-          in30Days: row.in_30_days || 0,
-          in1To2Months: row.in_1_to_2_months || 0,
-          in2To3Months: row.in_2_to_3_months || 0,
-          inHalfYear: row.in_half_year || 0,
-          overHalfYear: row.over_half_year || 0,
-        }
         docStats.updatedIn7Days = row.in_7_days || 0
         docStats.updatedIn30Days = row.in_30_days || 0
         docStats.updatedIn1To2Months = row.in_1_to_2_months || 0
@@ -465,8 +427,6 @@ export function useDocAnalysis(plugin: Plugin) {
           maxDepth,
           avgDepth: Math.round(avgDepth * 10) / 10,
         }
-        docStats.maxDepth = maxDepth
-        docStats.avgDepth = Math.round(avgDepth * 10) / 10
         docStats.deepDocs = deepDocs
       }
     } catch (error) {
@@ -494,8 +454,6 @@ export function useDocAnalysis(plugin: Plugin) {
         const row = refCountRows[0]
         docStats.refDocs = row.ref_doc_count || 0
         docStats.totalRefs = row.total_ref_count || 0
-        refStats.value.refDocCount = row.ref_doc_count || 0
-        refStats.value.totalRefCount = row.total_ref_count || 0
       }
 
       // 被引用最多的文档
@@ -514,14 +472,7 @@ export function useDocAnalysis(plugin: Plugin) {
         ORDER BY r.ref_count DESC
       `
 
-      const topRefRows = await sql(topRefSql)
-      if (topRefRows && topRefRows.length > 0) {
-        refStats.value.topRefDocs = topRefRows.map((r: any) => ({
-          docId: r.doc_id,
-          title: r.doc_title || "无标题",
-          refCount: r.ref_count || 0,
-        }))
-      }
+      await sql(topRefSql)
     } catch (error) {
       console.error("引用分析失败:", error)
     }
@@ -547,8 +498,6 @@ export function useDocAnalysis(plugin: Plugin) {
         const row = imgCountRows[0]
         docStats.imageDocs = row.image_doc_count || 0
         docStats.totalImages = row.total_image_count || 0
-        imageStats.value.imageDocCount = row.image_doc_count || 0
-        imageStats.value.totalImageCount = row.total_image_count || 0
       }
 
       // 包含图片最多的文档
@@ -567,14 +516,7 @@ export function useDocAnalysis(plugin: Plugin) {
         ORDER BY img.image_count DESC
       `
 
-      const topImgRows = await sql(topImgSql)
-      if (topImgRows && topImgRows.length > 0) {
-        imageStats.value.topImageDocs = topImgRows.map((r: any) => ({
-          docId: r.doc_id,
-          title: r.doc_title || "无标题",
-          imageCount: r.image_count || 0,
-        }))
-      }
+      await sql(topImgSql)
     } catch (error) {
       console.error("图片分析失败:", error)
     }

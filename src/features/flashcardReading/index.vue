@@ -55,15 +55,15 @@
 
       <TypingPractice
         v-else-if="viewMode === 'typing'"
-        :currentCard="currentCard"
-        :currentIndex="currentIndex"
-        :totalCards="filteredCards.length"
+        :currentCard="typingQueue.currentCard.value"
+        :currentIndex="typingQueue.currentIndex.value"
+        :totalCards="typingQueue.queue.value.length"
         :i18n="i18n"
         @play="playWord"
-        @previous="previousCard"
-        @next="nextCard"
-        @random="randomCard"
-        @skip="nextCard"
+        @previous="typingPrevious"
+        @next="typingNext"
+        @random="typingRandom"
+        @skip="typingNext"
         @correct="onTypingCorrect"
       />
 
@@ -190,6 +190,7 @@ import SingleCardView from "./components/SingleCardView.vue"
 import StatisticsView from "./components/StatisticsView.vue"
 import TypingPractice from "./components/TypingPractice.vue"
 import { useCardNavigation } from "./composables/useCardNavigation"
+import { useTypingQueue } from "./composables/useTypingQueue"
 import {
   CARD_CONFIG,
   useFlashcardStorage,
@@ -292,6 +293,8 @@ const {
   random,
 } = useCardNavigation(filteredCards)
 
+const typingQueue = useTypingQueue(filteredCards)
+
 const totalPages = computed(() =>
   Math.ceil(filteredCards.value.length / CARD_CONFIG.PAGE_SIZE),
 )
@@ -384,7 +387,23 @@ const switchToSingleMode = () => {
 
 const switchToTypingMode = () => {
   viewMode.value = "typing"
-  currentIndex.value = 0
+  typingQueue.rebuild()
+  typingQueue.currentIndex.value = 0
+}
+
+const typingPrevious = () => {
+  typingQueue.previous()
+  playWord(typingQueue.currentCard.value)
+}
+
+const typingNext = () => {
+  typingQueue.next()
+  playWord(typingQueue.currentCard.value)
+}
+
+const typingRandom = () => {
+  typingQueue.random()
+  playWord(typingQueue.currentCard.value)
 }
 
 const previousCard = () => {

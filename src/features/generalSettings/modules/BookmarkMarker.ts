@@ -35,8 +35,8 @@ export interface BookmarkMarkerOptions {
 }
 
 export interface BookmarkRule {
-  /** 书签名称（精确匹配） */
-  bookmarkName: string
+  /** 书签名称列表（精确匹配任一即命中） */
+  bookmarkNames: string[]
   /** 标记颜色 */
   color: string
   /** 标记背景色 */
@@ -75,8 +75,16 @@ export class BookmarkMarker {
   constructor(options: Partial<BookmarkMarkerOptions> = {}) {
     this.options = {
       rules: [
-        { bookmarkName: "已发布", color: "#ffffff", backgroundColor: "#52c41a" },
-        { bookmarkName: "待发布", color: "#ffffff", backgroundColor: "#faad14" },
+        {
+          bookmarkNames: ["已发布"],
+          color: "#ffffff",
+          backgroundColor: "#52c41a",
+        },
+        {
+          bookmarkNames: ["待发布"],
+          color: "#ffffff",
+          backgroundColor: "#faad14",
+        },
       ],
       updateInterval: 3600000,
       ...options,
@@ -189,7 +197,7 @@ export class BookmarkMarker {
         }
 
         const rule = this.options.rules.find(
-          (r) => r.bookmarkName === bookmarkName,
+          (r) => r.bookmarkNames.includes(bookmarkName),
         )
 
         if (rule) {
@@ -234,15 +242,12 @@ export class BookmarkMarker {
     const mode = rule.displayMode || "bg"
 
     if (mode === "icon" && rule.icon) {
-      // 仅图标模式：无背景色，只显示图标
       marker.style.backgroundColor = "transparent"
       marker.textContent = rule.icon
     } else if (mode === "icon-bg" && rule.icon) {
-      // 图标+背景模式
       marker.style.backgroundColor = rule.backgroundColor
       marker.textContent = rule.icon
     } else {
-      // 文字标签模式（默认）：显示书签名称，带背景
       marker.style.backgroundColor = rule.backgroundColor
       marker.textContent = rule.icon ? `${rule.icon} ${bookmarkName}` : bookmarkName
     }
@@ -408,7 +413,7 @@ export class BookmarkMarker {
       }
 
       const rule = this.options.rules.find(
-        (r) => r.bookmarkName === bookmarkName,
+        (r) => r.bookmarkNames.includes(bookmarkName),
       )
 
       if (rule) {

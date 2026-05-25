@@ -268,12 +268,12 @@ export const DEFAULT_BOOKMARK_MARKER_SETTINGS: BookmarkMarkerSettings = {
   enableBookmarkMarker: true,
   rules: [
     {
-      bookmarkName: "已发布",
+      bookmarkNames: ["已发布"],
       color: "#ffffff",
       backgroundColor: "#52c41a",
     },
     {
-      bookmarkName: "待发布",
+      bookmarkNames: ["待发布"],
       color: "#ffffff",
       backgroundColor: "#faad14",
     },

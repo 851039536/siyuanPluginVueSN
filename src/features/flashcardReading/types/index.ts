@@ -50,7 +50,7 @@ export interface UpdateFlashcardDTO {
 /**
  * 视图模式类型
  */
-export type ViewMode = "list" | "single" | "statistics"
+export type ViewMode = "list" | "single" | "statistics" | "typing"
 
 /**
  * 统计数据类型
@@ -130,6 +130,11 @@ export interface I18n {
   practicedCards?: string
   totalCards?: string
   masteryProgress?: string
+  typingView?: string
+  typeTheWord?: string
+  clickToStartTyping?: string
+  correct?: string
+  skipCard?: string
 }
 
 export function showFlashcardDialog(plugin?: Plugin, i18n?: any) {

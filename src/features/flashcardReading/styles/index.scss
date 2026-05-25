@@ -252,6 +252,109 @@
     }
   }
 
+  .typing-practice {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    .typing-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 8px 0;
+    }
+
+    .typing-hint {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--b3-theme-secondary);
+    }
+
+    .typing-target {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      justify-content: center;
+
+      .typing-char {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 40px;
+        font-size: 20px;
+        font-weight: 600;
+        border-radius: 6px;
+        background: var(--b3-theme-surface);
+        color: var(--b3-theme-on-background);
+        border: 1px solid var(--b3-theme-surface-lighter);
+        transition: all 0.15s ease;
+
+        &--correct {
+          background: rgba($brand-success, 0.15);
+          border-color: $brand-success;
+          color: $brand-success;
+        }
+
+        &--incorrect {
+          background: rgba($brand-destructive, 0.1);
+          border-color: $brand-destructive;
+          color: $brand-destructive;
+        }
+      }
+    }
+
+    .typing-input-wrapper {
+      width: 100%;
+      max-width: 300px;
+    }
+
+    .typing-input {
+      width: 100%;
+      padding: 10px 14px;
+      font-size: 18px;
+      text-align: center;
+      letter-spacing: 4px;
+      border: 1px solid var(--b3-theme-surface-lighter);
+      border-radius: 8px;
+      background: var(--b3-theme-background);
+      color: var(--b3-theme-on-background);
+      outline: none;
+      transition: border-color 0.2s;
+
+      &:focus {
+        border-color: var(--b3-theme-primary);
+      }
+
+      &::placeholder {
+        color: var(--b3-theme-secondary);
+        font-size: 14px;
+        letter-spacing: normal;
+      }
+    }
+
+    .typing-result {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 6px 16px;
+      border-radius: 8px;
+
+      &--correct {
+        color: $brand-success;
+        background: rgba($brand-success, 0.08);
+      }
+
+      &--incorrect {
+        color: $brand-destructive;
+        background: rgba($brand-destructive, 0.08);
+      }
+    }
+  }
+
   .pagination {
     display: flex;
     justify-content: center;

@@ -1072,7 +1072,12 @@
     "totalCards": "总卡片数",
     "categoryStats": "类别统计",
     "topCards": "练习排行榜",
-    "noPracticeData": "暂无练习数据"
+    "noPracticeData": "暂无练习数据",
+    "typingView": "边学边写",
+    "typeTheWord": "请输入单词",
+    "clickToStartTyping": "点击开始输入...",
+    "correct": "正确!",
+    "skipCard": "跳过"
   },
   "video": {
     "title": "视频管理器",

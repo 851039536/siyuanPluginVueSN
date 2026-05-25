@@ -61,7 +61,6 @@
 <script setup lang="ts">
 import type {
   DiskBrowserI18n,
-  DiskInfo,
   FolderInfo,
 } from "./types"
 import { Plugin } from "siyuan"
@@ -93,7 +92,6 @@ const {
   cacheStatus,
   currentFolderCache,
   toggleFavorite,
-  fetchDisks,
   toggleDisk,
   openPath,
   refreshDisks,

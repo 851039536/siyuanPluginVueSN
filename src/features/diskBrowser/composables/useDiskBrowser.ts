@@ -197,7 +197,7 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
 
     loading.value = true
     try {
-      if (window.require) {
+      if (typeof window.require === "function") {
         try {
           const command = `powershell -NoProfile -ExecutionPolicy Bypass -Command "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-WmiObject Win32_LogicalDisk | Select-Object DeviceID, VolumeName, Size, FreeSpace | ConvertTo-Json -Compress"`
           const { stdout } = await retryExec(command, 2, 3000, "获取磁盘列表")
@@ -319,7 +319,7 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
     folders.value = []
 
     try {
-      if (window.require) {
+      if (typeof window.require === "function") {
         const command = `powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -Path '${drive}\\' -Directory -ErrorAction SilentlyContinue | Where-Object { -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) } | Select-Object -ExpandProperty Name | ForEach-Object { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Write-Output $_ }"`
         const { stdout } = await retryExec(command, 1, 5000, "获取文件夹列表")
 
@@ -384,7 +384,7 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
     folders.value = []
 
     try {
-      if (window.require) {
+      if (typeof window.require === "function") {
         const command = `powershell -NoProfile -ExecutionPolicy Bypass -Command "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-ChildItem -Path '${path}' -ErrorAction SilentlyContinue | Where-Object { -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) } | Select-Object Name, @{Name='IsFile';Expression={-not $_.PSIsContainer}}, Length, LastWriteTime | ConvertTo-Json -Compress"`
         const { stdout } = await retryExec(command, 1, 5000, "获取文件夹列表")
 

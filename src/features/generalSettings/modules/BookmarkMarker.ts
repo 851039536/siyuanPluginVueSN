@@ -35,6 +35,10 @@ export interface BookmarkRule {
   backgroundColor: string
   icon?: string
   displayMode?: "bg" | "icon" | "icon-bg" | "row"
+  /** 背景透明度 0~1，默认 0.25 */
+  alpha?: number
+  /** 匹配模式：exact=精确, prefix=前缀, contains=包含，默认 exact */
+  matchMode?: "exact" | "prefix" | "contains"
 }
 
 interface AttrRow {
@@ -54,9 +58,25 @@ function resolveMode(rule: BookmarkRule): string {
   return rule.displayMode || "bg"
 }
 
+function resolveAlpha(rule: BookmarkRule): number {
+  return rule.alpha ?? 0.25
+}
+
+/**
+ * 检查书签名是否匹配规则
+ */
+function matchesBookmarkName(bookmarkName: string, rule: BookmarkRule): boolean {
+  const mode = rule.matchMode || "exact"
+  return rule.bookmarkNames.some((name) => {
+    if (mode === "exact") return name === bookmarkName
+    if (mode === "prefix") return bookmarkName.startsWith(name)
+    return bookmarkName.includes(name)
+  })
+}
+
 function buildRowStyle(rule: BookmarkRule): RowStyleProps {
   return {
-    backgroundColor: hexToRgba(rule.backgroundColor, 0.25),
+    backgroundColor: hexToRgba(rule.backgroundColor, resolveAlpha(rule)),
     color: rule.color,
     borderRadius: "3px",
     padding: "0 4px",
@@ -104,7 +124,7 @@ function createMarkerElement(
     marker.style.backgroundColor = rule.backgroundColor
     marker.textContent = rule.icon
   } else {
-    marker.style.backgroundColor = hexToRgba(rule.backgroundColor, 0.25)
+    marker.style.backgroundColor = hexToRgba(rule.backgroundColor, resolveAlpha(rule))
     marker.textContent = rule.icon ? `${rule.icon} ${bookmarkName}` : bookmarkName
   }
 
@@ -130,11 +150,15 @@ export class BookmarkMarker {
           bookmarkNames: ["已发布"],
           color: "#ffffff",
           backgroundColor: "#52c41a",
+          alpha: 0.25,
+          matchMode: "exact",
         },
         {
           bookmarkNames: ["待发布"],
           color: "#ffffff",
           backgroundColor: "#faad14",
+          alpha: 0.25,
+          matchMode: "exact",
         },
       ],
       updateInterval: 3600000,
@@ -214,7 +238,7 @@ export class BookmarkMarker {
     if (!this.active || !this.cacheLoaded) return
 
     const findRule = (bookmark: string) =>
-      this.options.rules.find((r) => r.bookmarkNames.includes(bookmark))
+      this.options.rules.find((r) => matchesBookmarkName(bookmark, r))
 
     for (const container of document.querySelectorAll("ul[data-url]")) {
       const docItems = container.querySelectorAll(
@@ -276,7 +300,7 @@ export class BookmarkMarker {
     if (!this.active || !this.cacheLoaded) return
 
     const findRule = (bookmark: string) =>
-      this.options.rules.find((r) => r.bookmarkNames.includes(bookmark))
+      this.options.rules.find((r) => matchesBookmarkName(bookmark, r))
 
     for (const title of document.querySelectorAll(".protyle-title[data-node-id]")) {
       const el = title as HTMLElement

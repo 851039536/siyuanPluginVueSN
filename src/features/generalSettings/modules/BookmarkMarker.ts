@@ -27,6 +27,13 @@ const BOOKMARK_MARKER_CLASS = "bookmark-marker-tag"
 const BOOKMARK_PROTYLE_CLASS = "bookmark-marker-protyle"
 const BOOKMARK_MARKER_STYLE_ID = "bookmark-marker-styles"
 
+function hexToRgba(hex: string, alpha: number): string {
+  const r = Number.parseInt(hex.slice(1, 3), 16)
+  const g = Number.parseInt(hex.slice(3, 5), 16)
+  const b = Number.parseInt(hex.slice(5, 7), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
 export interface BookmarkMarkerOptions {
   /** 书签名 → 颜色 的映射规则 */
   rules: BookmarkRule[]
@@ -43,8 +50,8 @@ export interface BookmarkRule {
   backgroundColor: string
   /** 可选图标（emoji） */
   icon?: string
-  /** 显示模式：bg=文字标签, icon=仅图标, icon-bg=图标+背景，默认为文字标签模式 */
-  displayMode?: "bg" | "icon" | "icon-bg"
+  /** 显示模式：bg=文字标签, icon=仅图标, icon-bg=图标+背景, row=整行背景标记 */
+  displayMode?: "bg" | "icon" | "icon-bg" | "row"
 }
 
 interface AttrRow {
@@ -212,17 +219,31 @@ export class BookmarkMarker {
   /**
    * 给文件树文档项添加书签标记
    * 标记添加到 span.b3-list-item__text 内（与 DocCountManager 相同位置）
-   * 根据 displayMode 支持三种显示模式：
+   * 根据 displayMode 支持四种显示模式：
    *   bg      — 文字标签（默认）：背景色 + 文字名称
    *   icon    — 仅图标：透明背景 + 仅显示 emoji 图标
    *   icon-bg — 图标+背景：背景色 + 仅显示 emoji 图标
+   *   row     — 字体背景：对文档名设置背景色
    */
   private applyMarkerToItem(
     item: HTMLElement,
     bookmarkName: string,
     rule: BookmarkRule,
   ): void {
+    const mode = rule.displayMode || "bg"
+
     const textEl = item.querySelector(".b3-list-item__text")
+
+    if (mode === "row") {
+      if (!textEl) return
+      textEl.style.backgroundColor = hexToRgba(rule.backgroundColor, 0.25)
+      textEl.style.color = rule.color
+      textEl.style.borderRadius = "3px"
+      textEl.style.padding = "0 4px"
+      textEl.dataset.bookmarkRow = bookmarkName
+      return
+    }
+
     if (!textEl) return
 
     // 检查是否已存在相同书签的标记
@@ -238,8 +259,6 @@ export class BookmarkMarker {
     const marker = document.createElement("span")
     marker.className = BOOKMARK_MARKER_CLASS
     marker.dataset.bookmark = bookmarkName
-
-    const mode = rule.displayMode || "bg"
 
     if (mode === "icon" && rule.icon) {
       marker.style.backgroundColor = "transparent"
@@ -260,7 +279,17 @@ export class BookmarkMarker {
    * 移除文件树项的书签标记
    */
   private removeMarkerFromItem(item: HTMLElement): void {
-    const textEl = item.querySelector(".b3-list-item__text")
+    const textEl = item.querySelector(".b3-list-item__text") as HTMLElement | null
+
+    // 清理 row 模式：移除文字背景
+     if (textEl?.dataset.bookmarkRow) {
+       textEl.style.backgroundColor = ""
+       textEl.style.color = ""
+       textEl.style.borderRadius = ""
+       textEl.style.padding = ""
+       delete textEl.dataset.bookmarkRow
+     }
+
     if (!textEl) return
 
     const oldMarker = textEl.querySelector(`.${BOOKMARK_MARKER_CLASS}`)
@@ -275,6 +304,28 @@ export class BookmarkMarker {
     markers.forEach((m) => m.remove())
     const protyleMarkers = document.querySelectorAll(`.${BOOKMARK_PROTYLE_CLASS}`)
     protyleMarkers.forEach((m) => m.remove())
+
+    // 清理 row 模式：移除文件树文字背景
+    const rowTexts = document.querySelectorAll(".b3-list-item__text[data-bookmark-row]")
+    rowTexts.forEach((el) => {
+      const htmlEl = el as HTMLElement
+      htmlEl.style.backgroundColor = ""
+      htmlEl.style.color = ""
+      htmlEl.style.borderRadius = ""
+      htmlEl.style.padding = ""
+      delete htmlEl.dataset.bookmarkRow
+    })
+
+    // 清理 row 模式：移除 protyle 标题文字背景
+    const rowInputs = document.querySelectorAll(".protyle-title__input[data-bookmark-row]")
+    rowInputs.forEach((el) => {
+      const htmlEl = el as HTMLElement
+      htmlEl.style.backgroundColor = ""
+      htmlEl.style.color = ""
+      htmlEl.style.borderRadius = ""
+      htmlEl.style.padding = ""
+      delete htmlEl.dataset.bookmarkRow
+    })
   }
 
   // ============================================================
@@ -427,16 +478,30 @@ export class BookmarkMarker {
   /**
    * 给文章展开页面的文档标题容器添加书签标记
    * 标记插入到 .protyle-title 末尾（在标题输入框后面），
-   * 根据 displayMode 支持三种显示模式：
+   * 根据 displayMode 支持四种显示模式：
    *   bg      — 文字标签（默认）：背景色 + 文字名称
    *   icon    — 仅图标：透明背景 + 仅显示 emoji 图标
    *   icon-bg — 图标+背景：背景色 + 仅显示 emoji 图标
+   *   row     — 字体背景：对标题文字设置背景色
    */
   private applyMarkerToProtyle(
     title: HTMLElement,
     bookmarkName: string,
     rule: BookmarkRule,
   ): void {
+    const mode = rule.displayMode || "bg"
+
+    if (mode === "row") {
+      const inputEl = title.querySelector(".protyle-title__input") as HTMLElement | null
+      if (!inputEl) return
+      inputEl.style.backgroundColor = hexToRgba(rule.backgroundColor, 0.25)
+      inputEl.style.color = rule.color
+      inputEl.style.borderRadius = "3px"
+      inputEl.style.padding = "0 4px"
+      inputEl.dataset.bookmarkRow = bookmarkName
+      return
+    }
+
     // 检查是否已存在相同书签的标记
     const existingMarker = title.querySelector(`.${BOOKMARK_PROTYLE_CLASS}`)
     if (existingMarker && (existingMarker as HTMLElement).dataset.bookmark === bookmarkName) {
@@ -450,8 +515,6 @@ export class BookmarkMarker {
     const marker = document.createElement("span")
     marker.className = BOOKMARK_PROTYLE_CLASS
     marker.dataset.bookmark = bookmarkName
-
-    const mode = rule.displayMode || "bg"
 
     if (mode === "icon" && rule.icon) {
       // 仅图标模式：无背景色，只显示图标
@@ -475,6 +538,16 @@ export class BookmarkMarker {
    * 移除文章展开页面标题区的书签标记
    */
   private removeMarkerFromProtyle(title: HTMLElement): void {
+    // 清理 row 模式：移除标题文字背景
+     const inputEl = title.querySelector(".protyle-title__input") as HTMLElement | null
+     if (inputEl?.dataset.bookmarkRow) {
+       inputEl.style.backgroundColor = ""
+       inputEl.style.color = ""
+       inputEl.style.borderRadius = ""
+       inputEl.style.padding = ""
+       delete inputEl.dataset.bookmarkRow
+     }
+
     const oldMarker = title.querySelector(`.${BOOKMARK_PROTYLE_CLASS}`)
     if (oldMarker) oldMarker.remove()
   }

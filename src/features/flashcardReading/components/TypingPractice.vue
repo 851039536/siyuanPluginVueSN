@@ -7,10 +7,21 @@
     >
       <template #header>
         <div class="card-header">
-          <span class="card-title">{{ currentCard?.content }}</span>
+          <span class="card-title">{{ currentCard?.title }}</span>
+          <div class="card-actions">
+            <Button
+              variant="ghost"
+              size="small"
+              icon="play"
+              :iconSize="14"
+              :title="i18n.play || '播放'"
+              @click="$emit('play', currentCard)"
+            />
+          </div>
         </div>
       </template>
       <div class="typing-area">
+        <div class="typing-detail">{{ currentCard?.content }}</div>
         <div class="typing-hint">
           {{ i18n.typeTheWord || '请输入单词' }}:
         </div>
@@ -69,16 +80,6 @@
             <span class="tag tag-small tag-info">{{ currentCard?.category }}</span>
             <span class="tag tag-small tag-contrast">{{ i18n.practiceCount || '练习' }}: {{ currentCard?.practiceCount || 0 }}</span>
           </div>
-          <Button
-            variant="primary"
-            size="small"
-            icon="play"
-            :iconSize="14"
-            :title="i18n.play || '播放'"
-            @click="$emit('play', currentCard)"
-          >
-            {{ i18n.play || '播放' }}
-          </Button>
         </div>
       </template>
     </Card>

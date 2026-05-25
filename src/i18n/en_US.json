@@ -1050,7 +1050,12 @@
     "totalCards": "Total Cards",
     "categoryStats": "Category Statistics",
     "topCards": "Practice Rankings",
-    "noPracticeData": "No practice data yet"
+    "noPracticeData": "No practice data yet",
+    "typingView": "Learn & Type",
+    "typeTheWord": "Type the word",
+    "clickToStartTyping": "Click to start typing...",
+    "correct": "Correct!",
+    "skipCard": "Skip"
   },
   "floatingBox": {
     "title": "Floating Toolbox",

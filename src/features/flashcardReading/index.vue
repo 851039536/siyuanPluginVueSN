@@ -53,6 +53,20 @@
         :i18n="i18n"
       />
 
+      <TypingPractice
+        v-else-if="viewMode === 'typing'"
+        :currentCard="currentCard"
+        :currentIndex="currentIndex"
+        :totalCards="filteredCards.length"
+        :i18n="i18n"
+        @play="playWord"
+        @previous="previousCard"
+        @next="nextCard"
+        @random="randomCard"
+        @skip="nextCard"
+        @correct="onTypingCorrect"
+      />
+
       <div
         v-if="viewMode === 'list' && totalPages > 1"
         class="pagination"
@@ -120,6 +134,13 @@
       >
         {{ i18n.statisticsView || '统计' }}
       </Button>
+      <Button
+        :variant="viewMode === 'typing' ? 'primary' : 'secondary'"
+        size="small"
+        @click="switchToTypingMode"
+      >
+        {{ i18n.typingView || '边学边写' }}
+      </Button>
     </div>
 
     <CardDialog
@@ -167,6 +188,7 @@ import CategoryFilter from "./components/CategoryFilter.vue"
 import PanelHeader from "./components/PanelHeader.vue"
 import SingleCardView from "./components/SingleCardView.vue"
 import StatisticsView from "./components/StatisticsView.vue"
+import TypingPractice from "./components/TypingPractice.vue"
 import { useCardNavigation } from "./composables/useCardNavigation"
 import {
   CARD_CONFIG,
@@ -360,6 +382,11 @@ const switchToSingleMode = () => {
   currentIndex.value = len > 0 ? Math.floor(Math.random() * len) : 0
 }
 
+const switchToTypingMode = () => {
+  viewMode.value = "typing"
+  currentIndex.value = 0
+}
+
 const previousCard = () => {
   previous()
   playWord(currentCard.value)
@@ -506,6 +533,20 @@ const copyTitle = async (card: Flashcard) => {
     showMessage("已复制单词", 2000, "info")
   } catch {
     showMessage("复制失败", 2000, "error")
+  }
+}
+
+const onTypingCorrect = async (card: Flashcard | null) => {
+  if (!card) return
+  try {
+    await storage.incrementPracticeCount(card.id)
+    const index = cards.value.findIndex((c) => c.id === card.id)
+    if (index !== -1) {
+      cards.value[index].practiceCount =
+        (cards.value[index].practiceCount || 0) + 1
+    }
+  } catch {
+    // 静默处理
   }
 }
 

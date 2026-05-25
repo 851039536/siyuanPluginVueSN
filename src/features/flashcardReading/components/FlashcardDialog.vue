@@ -27,25 +27,15 @@
           </div>
 
           <template v-else>
-            <div class="flashcard-large">
-              <div class="card-title-large">
-                {{ currentCard?.title }}
-              </div>
-              <div class="card-content-large">
-                {{ currentCard?.content }}
-              </div>
-              <div class="card-meta-large">
-                <span class="card-category-large">{{ currentCard?.category }}</span>
-                <span class="practice-count">{{ i18n.practiceCount || '练习次数' }}: {{ currentCard?.practiceCount || 0 }}</span>
-              </div>
-              <Button
-                variant="success"
-                size="large"
-                @click="playWord(currentCard)"
-              >
-                {{ i18n.play || '播放' }}
-              </Button>
-            </div>
+            <SingleCardView
+              :currentCard="currentCard"
+              :currentIndex="currentIndex"
+              :totalCards="filteredCards.length"
+              :i18n="i18n"
+              hideNavigation
+              variant="dialog"
+              @play="(card) => playWord(card)"
+            />
 
             <div class="category-filter">
               <label>{{ i18n.category || '类别' }}:</label>
@@ -87,25 +77,19 @@
 
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
-import type {
-  Flashcard,
-  I18n,
-} from "../types"
-
+import type { I18n } from "../types"
 import type { SelectOption } from "@/components/Select.vue"
-import { showMessage } from "siyuan"
 import {
   computed,
-  onMounted,
-  onUnmounted,
   ref,
-  shallowRef,
 } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-
 import Select from "@/components/Select.vue"
-import { FlashcardStorage } from "../types/storage"
+import { useCardNavigation } from "../composables/useCardNavigation"
+import { useFlashcardStorage } from "../composables/useFlashcardStorage"
+import { usePlayWord } from "../composables/usePlayWord"
+import SingleCardView from "./SingleCardView.vue"
 
 interface Props {
   i18n: I18n
@@ -115,20 +99,28 @@ interface Props {
 const props = defineProps<Props>()
 
 const visible = ref(false)
-const storage = new FlashcardStorage(props.plugin)
-const cards = shallowRef<Flashcard[]>([])
-const categories = shallowRef<string[]>([])
 const selectedCategory = ref<string>("all")
-const currentIndex = ref(0)
+
+const {
+  storage,
+  cards,
+  categories,
+  loadCards,
+} = useFlashcardStorage(props.plugin)
+const { playWord } = usePlayWord(storage, cards, props.i18n)
 
 const filteredCards = computed(() => {
-  if (selectedCategory.value === "all") {
-    return cards.value
-  }
+  if (selectedCategory.value === "all") return cards.value
   return cards.value.filter((card) => card.category === selectedCategory.value)
 })
 
-const currentCard = computed(() => filteredCards.value[currentIndex.value])
+const {
+  currentIndex,
+  currentCard,
+  previous,
+  next,
+  random,
+} = useCardNavigation(filteredCards)
 
 const categoryOptions = computed<SelectOption[]>(() => [
   {
@@ -141,59 +133,19 @@ const categoryOptions = computed<SelectOption[]>(() => [
   })),
 ])
 
-const loadCards = async () => {
-  try {
-    cards.value = await storage.getAllCards()
-    categories.value = await storage.getCategories()
-    currentIndex.value = 0
-  } catch (error) {
-    console.error("Failed to load cards:", error)
-  }
-}
-
-const playWord = async (card: Flashcard) => {
-  try {
-    const utterance = new SpeechSynthesisUtterance(card.title)
-    utterance.lang = "en-US"
-    utterance.rate = 0.8
-
-    utterance.onend = async () => {
-      await storage.incrementPracticeCount(card.id)
-      const index = cards.value.findIndex((c) => c.id === card.id)
-      if (index !== -1) {
-        cards.value[index].practiceCount =
-          (cards.value[index].practiceCount || 0) + 1
-      }
-    }
-
-    speechSynthesis.speak(utterance)
-  } catch (error) {
-    showMessage(props.i18n.playFailed || "播放失败", 2000, "error")
-  }
-}
-
 const previousCard = () => {
-  if (currentIndex.value > 0) {
-    currentIndex.value--
-    currentCard.value && playWord(currentCard.value)
-  }
+  previous()
+  playWord(currentCard.value)
 }
 
 const nextCard = () => {
-  if (currentIndex.value < filteredCards.value.length - 1) {
-    currentIndex.value++
-    currentCard.value && playWord(currentCard.value)
-  }
+  next()
+  playWord(currentCard.value)
 }
 
 const randomCard = () => {
-  if (filteredCards.value.length <= 1) return
-  let newIndex: number
-  do {
-    newIndex = Math.floor(Math.random() * filteredCards.value.length)
-  } while (newIndex === currentIndex.value && filteredCards.value.length > 1)
-  currentIndex.value = newIndex
-  currentCard.value && playWord(currentCard.value)
+  random()
+  playWord(currentCard.value)
 }
 
 const open = () => {
@@ -209,20 +161,6 @@ defineExpose({
   open,
   close,
   visible,
-})
-
-let dataChangeHandler: (() => void) | null = null
-
-onMounted(() => {
-  dataChangeHandler = () => loadCards()
-  window.addEventListener("flashcardDataChanged", dataChangeHandler)
-})
-
-onUnmounted(() => {
-  if (dataChangeHandler) {
-    window.removeEventListener("flashcardDataChanged", dataChangeHandler)
-    dataChangeHandler = null
-  }
 })
 </script>
 
@@ -273,7 +211,6 @@ onUnmounted(() => {
   min-width: 60px;
   text-align: center;
 }
-
 
 .dialog-enter-from,
 .dialog-leave-to {

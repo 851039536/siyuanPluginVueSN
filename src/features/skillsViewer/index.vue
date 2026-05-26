@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <Teleport to="body">
     <Transition name="fade">
       <div
@@ -14,7 +14,7 @@
             <div class="skills-viewer-header">
               <div class="sv-header-left">
                 <span class="sv-header-icon">🧩</span>
-                <span class="sv-header-title">{{ i18n?.skillsViewerTitle || 'Skills 查看器' }}</span>
+                <span class="sv-header-title">{{ i18n.skillsViewerTitle || 'Skills 查看器' }}</span>
                 <span
                   v-if="skills.length > 0"
                   class="sv-header-badge"
@@ -30,7 +30,7 @@
 
             <div class="skills-viewer-body">
               <p class="sv-description">
-                {{ i18n?.skillsViewerDesc || '查看和管理 AI 编程工具的 Skills 配置文件，兼容 Claude、CodeBuddy、Qoder、Trae' }}
+                {{ i18n.skillsViewerDesc || '查看和管理 AI 编程工具的 Skills 配置文件，兼容 Claude、CodeBuddy、Qoder、Trae' }}
               </p>
 
               <div
@@ -41,7 +41,7 @@
                   ⚠️
                 </div>
                 <div class="sv-unsupported-text">
-                  {{ i18n?.skillsViewerUnsupported || 'Skills 查看器需要桌面端 Electron 环境支持，当前环境不可用' }}
+                  {{ i18n.skillsViewerUnsupported || 'Skills 查看器需要桌面端 Electron 环境支持，当前环境不可用' }}
                 </div>
               </div>
 
@@ -63,11 +63,11 @@
                       <template v-if="toolStatuses[tool.id]">
                         <span v-if="toolStatuses[tool.id].global || toolStatuses[tool.id].project">
                           <span class="sv-count">{{ (toolStatuses[tool.id].globalCount || 0) + (toolStatuses[tool.id].projectCount || 0) }}</span>
-                          {{ i18n?.skillsUnit || '个 Skills' }}
+                          {{ i18n.skillsUnit || '个 Skills' }}
                         </span>
-                        <span v-else>{{ i18n?.noSkillsFound || '未发现 Skills' }}</span>
+                        <span v-else>{{ i18n.noSkillsFound || '未发现 Skills' }}</span>
                       </template>
-                      <span v-else>{{ i18n?.checking || '检测中...' }}</span>
+                      <span v-else>{{ i18n.checking || '检测中...' }}</span>
                     </div>
                   </div>
                 </div>
@@ -75,14 +75,14 @@
                 <div class="sv-project-path">
                   <div class="sv-path-label">
                     <span>📁</span>
-                    {{ i18n?.projectPath || '项目路径' }}
+                    {{ i18n.projectPath || '项目路径' }}
                   </div>
                   <div class="sv-path-input-row">
                     <input
                       v-model="projectPath"
                       type="text"
                       class="sv-path-input"
-                      :placeholder="i18n?.projectPathPlaceholder || '输入项目根目录路径，用于扫描项目级 Skills'"
+                      :placeholder="i18n.projectPathPlaceholder || '输入项目根目录路径，用于扫描项目级 Skills'"
                       @change="handlePathChange"
                     />
                   </div>
@@ -95,14 +95,14 @@
                     :loading="loading"
                     @click="refreshSkills"
                   >
-                    {{ i18n?.refresh || '刷新扫描' }}
+                    {{ i18n.refresh || '刷新扫描' }}
                   </SiButton>
                   <SiButton
                     variant="ghost"
                     size="small"
                     @click="openCurrentToolDir"
                   >
-                    {{ i18n?.openDir || '打开目录' }}
+                    {{ i18n.openDir || '打开目录' }}
                   </SiButton>
                 </div>
 
@@ -111,7 +111,7 @@
                   class="sv-loading"
                 >
                   <div class="sv-loading-spinner"></div>
-                  <span class="sv-loading-text">{{ i18n?.scanning || '正在扫描...' }}</span>
+                  <span class="sv-loading-text">{{ i18n.scanning || '正在扫描...' }}</span>
                 </div>
 
                 <div
@@ -143,7 +143,7 @@
                         <button
                           v-if="editingSkill !== index"
                           class="sv-skill-action-btn sv-skill-action-btn--edit"
-                          :title="i18n?.editSkill || '编辑'"
+                          :title="i18n.editSkill || '编辑'"
                           @click="startEdit(index)"
                         >
                           ✏️
@@ -151,7 +151,7 @@
                         <template v-if="editingSkill === index">
                           <button
                             class="sv-skill-action-btn sv-skill-action-btn--save"
-                            :title="i18n?.saveSkill || '保存'"
+                            :title="i18n.saveSkill || '保存'"
                             :disabled="savingSkill"
                             @click="saveEdit(index)"
                           >
@@ -159,7 +159,7 @@
                           </button>
                           <button
                             class="sv-skill-action-btn sv-skill-action-btn--cancel"
-                            :title="i18n?.cancelEdit || '取消'"
+                            :title="i18n.cancelEdit || '取消'"
                             @click="cancelEdit"
                           >
                             ✖
@@ -168,7 +168,7 @@
                         <button
                           v-if="editingSkill !== index"
                           class="sv-skill-action-btn sv-skill-action-btn--delete"
-                          :title="i18n?.deleteSkill || '删除'"
+                          :title="i18n.deleteSkill || '删除'"
                           @click="confirmDeleteSkill(index)"
                         >
                           🗑️
@@ -193,11 +193,11 @@
                         <textarea
                           v-model="editContent"
                           class="sv-skill-editor-textarea"
-                          :placeholder="i18n?.editSkillPlaceholder || '编辑 Skill 内容...'"
+                          :placeholder="i18n.editSkillPlaceholder || '编辑 Skill 内容...'"
                           spellcheck="false"
                         ></textarea>
                         <div class="sv-skill-editor-footer">
-                          <span class="sv-skill-editor-hint">{{ i18n?.editSkillHint || '修改完成后点击保存按钮写入文件' }}</span>
+                          <span class="sv-skill-editor-hint">{{ i18n.editSkillHint || '修改完成后点击保存按钮写入文件' }}</span>
                         </div>
                       </div>
                     </template>
@@ -207,7 +207,7 @@
                         class="sv-skill-expand-btn"
                         @click="toggleExpand(index)"
                       >
-                        {{ expandedSkills.has(index) ? (i18n?.collapse || '收起') : (i18n?.expand || '展开内容') }}
+                        {{ expandedSkills.has(index) ? (i18n.collapse || '收起') : (i18n.expand || '展开内容') }}
                         {{ expandedSkills.has(index) ? '▲' : '▼' }}
                       </button>
                       <div
@@ -228,12 +228,12 @@
                   </div>
                   <div class="sv-empty-text">
                     {{ selectedTool === 'all'
-                      ? (i18n?.noSkillsAllTools || '未发现任何 AI 工具的 Skills 文件')
-                      : (i18n?.noSkillsForTool || '该工具下未发现 Skills 文件')
+                      ? (i18n.noSkillsAllTools || '未发现任何 AI 工具的 Skills 文件')
+                      : (i18n.noSkillsForTool || '该工具下未发现 Skills 文件')
                     }}
                   </div>
                   <div class="sv-empty-hint">
-                    {{ i18n?.skillsPathHint || 'Skills 通常存放在 ~/.claude/skills/ 或项目目录下的 .claude/skills/' }}
+                    {{ i18n.skillsPathHint || 'Skills 通常存放在 ~/.claude/skills/ 或项目目录下的 .claude/skills/' }}
                   </div>
                 </div>
               </template>
@@ -251,10 +251,10 @@
       <div class="sv-modal">
         <div class="sv-modal-header">
           <span class="sv-modal-icon">⚠️</span>
-          <span class="sv-modal-title">{{ i18n?.deleteSkillTitle || '确认删除 Skill' }}</span>
+          <span class="sv-modal-title">{{ i18n.deleteSkillTitle || '确认删除 Skill' }}</span>
         </div>
         <div class="sv-modal-body">
-          <p>{{ i18n?.deleteSkillConfirm || '确定要删除以下 Skill 吗？此操作不可恢复。' }}</p>
+          <p>{{ i18n.deleteSkillConfirm || '确定要删除以下 Skill 吗？此操作不可恢复。' }}</p>
           <p class="sv-modal-skill-name">
             {{ deleteTargetSkill?.name }}
           </p>
@@ -268,7 +268,7 @@
             size="small"
             @click="cancelDeleteSkill"
           >
-            {{ i18n?.cancel || '取消' }}
+            {{ i18n.cancel || '取消' }}
           </SiButton>
           <SiButton
             variant="danger"
@@ -276,7 +276,7 @@
             :loading="deletingSkill"
             @click="executeDeleteSkill"
           >
-            {{ i18n?.confirmDelete || '确认删除' }}
+            {{ i18n.confirmDelete || '确认删除' }}
           </SiButton>
         </div>
       </div>
@@ -321,7 +321,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
-const i18n = () => props.plugin?.i18n?.skillsViewer || {}
+const i18n = computed(() => props.plugin?.i18n?.skillsViewer || {})
 
 const manager = new SkillsViewerManager()
 const managerAvailable = manager.isAvailable()
@@ -419,13 +419,13 @@ async function saveEdit(index: number) {
       }
       editingSkill.value = null
       editContent.value = ""
-      showMessage((i18n() as any)?.saveSkillSuccess || "保存成功", 2000, "info")
+      showMessage(i18n.value.saveSkillSuccess || "保存成功", 2000, "info")
     } else {
-      showMessage((i18n() as any)?.saveSkillFailed || "保存失败", 2000, "error")
+      showMessage(i18n.value.saveSkillFailed || "保存失败", 2000, "error")
     }
   } catch (e) {
     console.error("保存 Skill 失败:", e)
-    showMessage((i18n() as any)?.saveSkillFailed || "保存失败", 2000, "error")
+    showMessage(i18n.value.saveSkillFailed || "保存失败", 2000, "error")
   } finally {
     savingSkill.value = false
   }
@@ -458,21 +458,30 @@ async function executeDeleteSkill() {
       }
       deleteConfirmVisible.value = false
       deleteTargetIndex.value = null
-      showMessage((i18n() as any)?.deleteSkillSuccess || "删除成功", 2000, "info")
+      showMessage(i18n.value.deleteSkillSuccess || "删除成功", 2000, "info")
     } else {
-      showMessage((i18n() as any)?.deleteSkillFailed || "删除失败", 2000, "error")
+      showMessage(i18n.value.deleteSkillFailed || "删除失败", 2000, "error")
     }
   } catch (e) {
     console.error("删除 Skill 失败:", e)
-    showMessage((i18n() as any)?.deleteSkillFailed || "删除失败", 2000, "error")
+    showMessage(i18n.value.deleteSkillFailed || "删除失败", 2000, "error")
   } finally {
     deletingSkill.value = false
   }
 }
 
 async function checkAllToolStatuses() {
-  for (const tool of AI_TOOLS) {
-    toolStatuses[tool.id] = await manager.checkToolExists(tool, projectPath.value || undefined)
+  const results = await Promise.all(
+    AI_TOOLS.map(async (tool) => {
+      const status = await manager.checkToolExists(
+        tool,
+        projectPath.value || undefined,
+      )
+      return { id: tool.id, status }
+    }),
+  )
+  for (const { id, status } of results) {
+    toolStatuses[id] = status
   }
 }
 
@@ -487,14 +496,14 @@ async function refreshSkills() {
     await checkAllToolStatuses()
     showMessage(
       skills.value.length > 0
-        ? `${(i18n() as any)?.scanComplete || '扫描完成'}：${skills.value.length} ${(i18n() as any)?.skillsUnit || '个 Skills'}`
-        : ((i18n() as any)?.noSkillsFound || '未发现 Skills 文件'),
+        ? `${i18n.value.scanComplete || '扫描完成'}：${skills.value.length} ${i18n.value.skillsUnit || '个 Skills'}`
+        : (i18n.value.noSkillsFound || '未发现 Skills 文件'),
       2000,
       "info",
     )
   } catch (e) {
     console.error("扫描 Skills 失败:", e)
-    showMessage((i18n() as any)?.scanFailed || "扫描失败", 2000, "error")
+    showMessage(i18n.value.scanFailed || "扫描失败", 2000, "error")
   } finally {
     loading.value = false
   }
@@ -517,7 +526,7 @@ async function openCurrentToolDir() {
   if (dirPath) {
     const success = await manager.openInFileManager(dirPath)
     if (!success) {
-      showMessage((i18n() as any)?.openDirFailed || "打开目录失败", 2000, "error")
+      showMessage(i18n.value.openDirFailed || "打开目录失败", 2000, "error")
     }
   }
 }

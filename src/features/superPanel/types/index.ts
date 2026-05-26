@@ -201,6 +201,33 @@ export class SuperPanelManager {
     }
   }
 
+  private async _updatePluginSettings(
+    fields: Partial<PluginSettings>,
+    successMsg?: string,
+  ): Promise<boolean> {
+    const pluginSample = this.plugin as any
+    const newSettings = {
+      ...pluginSample.settings,
+      ...fields,
+    }
+    const success = await pluginSample.updateSettings(newSettings)
+    if (success) {
+      if (reactiveSettings) {
+        Object.assign(reactiveSettings, fields)
+      }
+      if (successMsg) {
+        showMessage(successMsg, 2000, "info")
+      }
+    } else {
+      showMessage(
+        (this.plugin.i18n as any).saveFailed || "保存失败",
+        3000,
+        "error",
+      )
+    }
+    return success
+  }
+
   private handleFeatureAction(action: string) {
     // 处理统一 action 映射
     const actionConfig = ACTION_EVENT_MAP[action]
@@ -221,62 +248,27 @@ export class SuperPanelManager {
   }
 
   private async handleUpdateAiSettings(aiSettings: AiSettings) {
-    const pluginSample = this.plugin as any
-
-    const aiSettingFields: Record<string, any> = {
-      aiApiProvider: aiSettings.provider,
-      aiModel: aiSettings.model,
-      aiCustomModel: aiSettings.customModel,
-      aiApiKey: aiSettings.apiKey,
-      aiCustomEndpoint: aiSettings.customEndpoint,
-      aiEnableThinking: aiSettings.enableThinking,
-      searchProvider: aiSettings.searchProvider || "jina",
-      searchBochaApiKey: aiSettings.searchBochaApiKey || "",
-      searchSearxngUrl: aiSettings.searchSearxngUrl || "",
-    }
-
-    const newSettings = {
-      ...pluginSample.settings,
-      ...aiSettingFields,
-    }
-
-    const success = await pluginSample.updateSettings(newSettings)
-    if (success) {
-      // 更新响应式 settings 对象
-      if (reactiveSettings) {
-        Object.assign(reactiveSettings, aiSettingFields)
-      }
-      showMessage("AI配置已保存", 2000, "info")
-    } else {
-      showMessage(
-        (this.plugin.i18n as any).saveFailed || "保存失败",
-        3000,
-        "error",
-      )
-    }
+    await this._updatePluginSettings(
+      {
+        aiApiProvider: aiSettings.provider,
+        aiModel: aiSettings.model,
+        aiCustomModel: aiSettings.customModel,
+        aiApiKey: aiSettings.apiKey,
+        aiCustomEndpoint: aiSettings.customEndpoint,
+        aiEnableThinking: aiSettings.enableThinking,
+        searchProvider: aiSettings.searchProvider || "jina",
+        searchBochaApiKey: aiSettings.searchBochaApiKey || "",
+        searchSearxngUrl: aiSettings.searchSearxngUrl || "",
+      },
+      "AI配置已保存",
+    )
   }
 
   private async handleToggleFeature(featureId: string, enabled: boolean) {
-    const pluginSample = this.plugin as any
     const settingKey = featureIdToSettingKey(featureId)
-
-    const newSettings = {
-      ...pluginSample.settings,
+    await this._updatePluginSettings({
       [settingKey]: enabled,
-    }
-
-    const success = await pluginSample.updateSettings(newSettings)
-    if (success) {
-      if (reactiveSettings) {
-        (reactiveSettings as any)[settingKey] = enabled
-      }
-    } else {
-      showMessage(
-        (this.plugin.i18n as any).saveFailed || "保存失败",
-        3000,
-        "error",
-      )
-    }
+    } as Partial<PluginSettings>)
   }
 
   public destroy() {

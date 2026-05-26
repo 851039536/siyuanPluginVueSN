@@ -424,9 +424,7 @@ import type {
 } from "../types"
 import {
   computed,
-  onBeforeMount,
   onMounted,
-  onUnmounted,
   ref,
 } from "vue"
 import Button from "@/components/Button.vue"
@@ -442,18 +440,7 @@ const emit = defineEmits<{
   (e: "close"): void
 }>()
 
-onBeforeMount(() => {
-  document.documentElement.style.setProperty("--b3-theme-primary", "#d97757")
-  document.documentElement.style.setProperty(
-    "--b3-theme-primary-rgb",
-    "217, 119, 87",
-  )
-})
 
-onUnmounted(() => {
-  document.documentElement.style.removeProperty("--b3-theme-primary")
-  document.documentElement.style.removeProperty("--b3-theme-primary-rgb")
-})
 
 const showModal = ref(true)
 const showAddModal = ref(false)

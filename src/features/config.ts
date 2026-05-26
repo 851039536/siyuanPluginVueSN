@@ -76,16 +76,6 @@ export const FEATURE_CONFIG = [
     defaultDesc: "查看和管理快捷键",
   },
   {
-    id: "superPanel",
-    defaultTitle: "超级面板",
-    defaultDesc: "统一的插件功能入口面板",
-    actions: [{
-      key: "openSuperPanel",
-      label: "打开超级面板",
-      hotkey: "Ctrl+Alt+P",
-    }],
-  },
-  {
     id: "diskBrowser",
     defaultTitle: "本地磁盘",
     defaultDesc: "浏览本地磁盘和文件夹",
@@ -105,11 +95,6 @@ export const FEATURE_CONFIG = [
     id: "statistics",
     defaultTitle: "数据统计",
     defaultDesc: "显示笔记数据统计和分析",
-    actions: [{
-      key: "openStatistics",
-      label: "打开统计面板",
-      hotkey: "",
-    }],
   },
   {
     id: "pronunciation",
@@ -212,11 +197,6 @@ export const FEATURE_CONFIG = [
     defaultDesc: "分析文档内容大小，查找小文档",
     titleI18nKey: "docAnalysis.title",
     descI18nKey: "docAnalysis.description",
-    actions: [{
-      key: "openDocAnalysis",
-      label: "打开文档分析",
-      hotkey: "Ctrl+Alt+D",
-    }],
   },
   {
     id: "formatAssistant",
@@ -232,11 +212,6 @@ export const FEATURE_CONFIG = [
     id: "htmlViewer",
     defaultTitle: "HTML展示",
     defaultDesc: "右键选中文本后以HTML方式预览，支持HTML片段的增删改查",
-    actions: [{
-      key: "openHtmlViewer",
-      label: "打开HTML展示",
-      hotkey: "",
-    }],
   },
   {
     id: "rssReader",
@@ -244,11 +219,6 @@ export const FEATURE_CONFIG = [
     defaultDesc: "订阅和管理RSS/Atom源，在右侧边栏阅读文章",
     titleI18nKey: "rssReader.title",
     descI18nKey: "rssReader.description",
-    actions: [{
-      key: "openRssReader",
-      label: "打开RSS订阅",
-      hotkey: "",
-    }],
   },
   {
     id: "resourceManager",

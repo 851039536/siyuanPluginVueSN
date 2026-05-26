@@ -64,6 +64,7 @@
 
     <!-- Skills 查看器弹窗 -->
     <SkillsViewerDialog
+      v-if="skillsViewerEnabled"
       :visible="skillsViewerVisible"
       :plugin="plugin"
       @update:visible="(v) => skillsViewerVisible = v"
@@ -102,6 +103,7 @@ import VideoManager from "@/features/video/index.vue"
 import { usePlugin } from "@/main"
 
 const plugin = usePlugin() as PluginSample
+const skillsViewerEnabled = plugin.settings.enableSkillsViewer !== false
 const showImageViewer = ref(false)
 const showQRCodeDialog = ref(false)
 const showVideoManager = ref(false)

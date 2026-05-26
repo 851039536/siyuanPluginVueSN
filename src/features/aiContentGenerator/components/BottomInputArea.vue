@@ -265,7 +265,7 @@
         :autosize="true"
         :disabled="isGenerating"
         class="input-field"
-        @update:model-value="$emit('update:editCustomInput', $event)"
+        @update:model-value="onEditCustomInputChange"
         @keydown.ctrl.enter="$emit('custom-edit')"
       />
       <!-- 执行/停止按钮 -->
@@ -329,29 +329,20 @@ interface QuickAction {
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
-  (
-    e: "ai-edit",
-    action:
-      | "polish"
-      | "expand"
-      | "condense"
-      | "fix"
-      | "rewrite"
-      | "summary",
-  ): void
-  (e: "stop"): void
-  (e: "toggle-prompt-selector"): void
-  (e: "clear-current-prompt"): void
-  (e: "load-prompt", index: number): void
-  (e: "edit-prompt", index: number): void
-  (e: "delete-prompt", index: number): void
-  (e: "select-target-doc"): void
-  (e: "select-target-block"): void
-  (e: "clear-target-doc"): void
-  (e: "custom-edit"): void
-  (e: "update:editCustomInput", value: string): void
-  (e: "update:currentSkillIndex", value: number): void
-  (e: "update:skillSearchQuery", value: string): void
+  'ai-edit': [action: "polish" | "expand" | "condense" | "fix" | "rewrite" | "summary"]
+  'stop': []
+  'toggle-prompt-selector': []
+  'clear-current-prompt': []
+  'load-prompt': [index: number]
+  'edit-prompt': [index: number]
+  'delete-prompt': [index: number]
+  'select-target-doc': []
+  'select-target-block': []
+  'clear-target-doc': []
+  'custom-edit': []
+  'update:editCustomInput': [value: string]
+  'update:currentSkillIndex': [value: number]
+  'update:skillSearchQuery': [value: string]
 }>()
 
 const quickActions: QuickAction[] = [
@@ -440,6 +431,11 @@ const onSkillSearchInput = (e: Event) => {
   emit("update:skillSearchQuery", value)
 }
 
+/** 自定义编辑输入变更 */
+const onEditCustomInputChange = (value: string | null) => {
+  emit("update:editCustomInput", value ?? "")
+}
+
 /** 获取技能来源提示文字 */
 const getSourceHint = (skill: SkillItem): string => {
   if (!skill.sources || skill.sources.length === 0) return ""
@@ -491,13 +487,6 @@ const inputPlaceholder = computed(() => {
   return "输入编辑指令，或选择AI快捷操作..."
 })
 
-// 国际化
-function $t(key: string): string {
-  const translations: Record<string, string> = {
-    noSkill: "无技能",
-  }
-  return translations[key] || key
-}
 
 // 截断标题
 const truncateTitle = (title: string, maxLen = 12) => {

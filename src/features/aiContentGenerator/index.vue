@@ -155,7 +155,7 @@ const activeMode = ref<"generator" | "chat" | "automation">("generator");
 const chatViewRef = ref<InstanceType<typeof ChatView> | null>(null);
 
 // ============ 技能系统 ============
-const { skills, currentSkillIndex, currentSkill, managerAvailable, loadSkills, skillSearchQuery, filteredSkills } = useSkillsLoader(props.plugin)
+const { skills, currentSkillIndex, currentSkill, loadSkills, skillSearchQuery, filteredSkills } = useSkillsLoader(props.plugin)
 
 // 编辑模式状态
 const editTargetDoc = ref<TargetDoc | null>(null);
@@ -233,11 +233,6 @@ const paginatedPrompts = computed(() => {
   const start = (currentPage.value - 1) * ITEMS_PER_PAGE;
   const end = start + ITEMS_PER_PAGE;
   return filteredPrompts.value.slice(start, end);
-});
-
-// 总页数
-const totalPages = computed(() => {
-  return Math.ceil(filteredPrompts.value.length / ITEMS_PER_PAGE) || 1;
 });
 
 // ============ AI 模型配置 ============
@@ -737,7 +732,7 @@ const applyEdit = async () => {
     // 区分文档和块的处理
     const siyuanContent = processContentByType(
       generatedContent.value,
-      editTargetDoc.value.isBlock,
+      editTargetDoc.value.isBlock ?? false,
     );
 
     const docId = editTargetDoc.value.id;

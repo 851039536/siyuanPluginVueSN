@@ -428,7 +428,9 @@
     "resourceManager": "Resource Manager",
     "resourceManagerDesc": "Manage Siyuan asset files: view, rename, insert, and clean up resources",
     "heatmapMarker": "Heatmap Marker",
-    "heatmapMarkerDesc": "Automatically marks English words from the wordbook in documents, showing a heatmap gradient based on practice count"
+    "heatmapMarkerDesc": "Automatically marks English words from the wordbook in documents, showing a heatmap gradient based on practice count",
+    "skillsViewer": "Skills Viewer",
+    "skillsViewerDesc": "View and manage AI coding tools Skills configuration files"
   },
   "wordQuery": {
     "title": "Word Query",

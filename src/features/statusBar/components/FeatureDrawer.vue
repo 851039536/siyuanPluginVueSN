@@ -129,6 +129,12 @@ const featureList: FeatureItem[] = [
     color: "#22c55e",
     title: "密码箱",
   },
+  {
+    id: "skillsViewer",
+    icon: "mdi:puzzle",
+    color: "#f59e0b",
+    title: "Skills 查看器",
+  },
 ]
 
 const handleClick = (id: string) => {

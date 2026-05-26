@@ -61,6 +61,14 @@
       @update:visible="(v) => htmlViewerVisible = v"
       @close="htmlViewerVisible = false"
     />
+
+    <!-- Skills 查看器弹窗 -->
+    <SkillsViewerDialog
+      :visible="skillsViewerVisible"
+      :plugin="plugin"
+      @update:visible="(v) => skillsViewerVisible = v"
+      @close="hideSkillsViewer"
+    />
   </div>
 </template>
 
@@ -74,8 +82,10 @@ import {
   everythingSearchVisible,
   hideEverythingSearch,
   hidePasswordVault,
+  hideSkillsViewer,
   htmlViewerVisible,
   passwordVaultVisible,
+  skillsViewerVisible,
 } from "@/features"
 import DecryptDialog from "@/features/encryption/components/DecryptDialog.vue"
 import { getEncryptionInstance } from "@/features/encryption/index"
@@ -87,6 +97,7 @@ import {
 import HtmlViewerDialog from "@/features/htmlViewer/index.vue"
 import ImageViewer from "@/features/imageCompressor/index.vue"
 import PasswordVaultDialog from "@/features/passwordVault/index.vue"
+import SkillsViewerDialog from "@/features/skillsViewer/index.vue"
 import VideoManager from "@/features/video/index.vue"
 import { usePlugin } from "@/main"
 

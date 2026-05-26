@@ -42,6 +42,7 @@ import {
   registerResourceManager,
   registerRssReader,
   registerShortcut,
+  registerSkillsViewer,
   registerStatistics,
   registerStatusBar,
   registerSuperPanel,
@@ -211,6 +212,7 @@ export default class PluginSample extends Plugin {
     if (s.enableBase64Image) registerBase64Image(this)
     if (s.enableFlashcardReading) registerFlashcardReading(this)
     if (s.enablePasswordVault) registerPasswordVault(this)
+    if (s.enableSkillsViewer) registerSkillsViewer(this)
     if (s.enableDocAnalysis) registerDocAnalysis(this)
     if (s.enableFormatAssistant) registerFormatAssistant(this)
     if (s.enableHtmlViewer) registerHtmlViewer(this)

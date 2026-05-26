@@ -60,6 +60,7 @@ export interface PluginSettings {
   enableFloatingToolbar: boolean // 是否启用浮动工具栏功能
   enableFloatingBox: boolean // 是否启用悬浮框功能
   enableSkills: boolean // 是否启用技能库功能
+  enableSkillsViewer: boolean // 是否启用 Skills 查看器功能
   enableTextDiff: boolean // 是否启用文本对比功能
   enableBase64Image: boolean // 是否启用 Base64 图片转换器功能
   enableFlashcardReading: boolean // 是否启用单词阅读功能
@@ -113,6 +114,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enableFloatingToolbar: true,
   enableFloatingBox: true,
   enableSkills: true,
+  enableSkillsViewer: true,
   enableTextDiff: true,
   enableBase64Image: true,
   enableFlashcardReading: true,

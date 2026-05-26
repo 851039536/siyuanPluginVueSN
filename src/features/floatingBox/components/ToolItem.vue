@@ -49,7 +49,10 @@
 </template>
 
 <script setup lang="ts">
-import type { FloatingTool, FloatingToolChild } from "../types"
+import type {
+  FloatingTool,
+  FloatingToolChild,
+} from "../types"
 
 const props = defineProps<{
   tool: FloatingTool

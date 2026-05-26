@@ -278,16 +278,22 @@
                 v-model="formExtra.method"
                 class="form-select"
               >
-                <option value="POST">POST</option>
-                <option value="PUT">PUT</option>
-                <option value="PATCH">PATCH</option>
+                <option value="POST">
+                  POST
+                </option>
+                <option value="PUT">
+                  PUT
+                </option>
+                <option value="PATCH">
+                  PATCH
+                </option>
               </select>
             </div>
             <div class="form-field">
               <label>请求体模板</label>
               <textarea
                 v-model="formExtra.bodyTemplate"
-                placeholder='{"title":"{{title}}","content":"{{content}}"}'
+                placeholder="{&quot;title&quot;:&quot;{{title}}&quot;,&quot;content&quot;:&quot;{{content}}&quot;}"
                 class="form-textarea"
                 rows="4"
               />
@@ -296,7 +302,7 @@
               <label>自定义 Headers (JSON)</label>
               <textarea
                 v-model="formExtraHeadersStr"
-                placeholder='{"Content-Type": "application/json"}'
+                placeholder="{&quot;Content-Type&quot;: &quot;application/json&quot;}"
                 class="form-textarea"
                 rows="2"
               />
@@ -325,9 +331,16 @@
 </template>
 
 <script setup lang="ts">
-import type { PlatformConfig, PlatformType, PlatformTemplate } from "../types/publish"
+import type {
+  PlatformConfig,
+  PlatformTemplate,
+  PlatformType,
+} from "../types/publish"
 import { Icon } from "@iconify/vue"
-import { computed, ref } from "vue"
+import {
+  computed,
+  ref,
+} from "vue"
 import { PLATFORM_TEMPLATES } from "../types/publish"
 
 interface Props {
@@ -413,7 +426,7 @@ function handleSave() {
       extraConfig,
     })
   } else {
-    const tpl = PLATFORM_TEMPLATES.find(t => t.type === formType.value)
+    const tpl = PLATFORM_TEMPLATES.find((t) => t.type === formType.value)
     emit("add", {
       type: formType.value,
       name: formName.value,
@@ -441,7 +454,10 @@ async function handleTest(id: string) {
   try {
     testResult.value = await props.testPlatform(id)
   } catch (err) {
-    testResult.value = { success: false, message: (err as Error).message || "测试失败" }
+    testResult.value = {
+      success: false,
+      message: (err as Error).message || "测试失败",
+    }
   }
   // 5 秒后自动清除结果
   setTimeout(() => {

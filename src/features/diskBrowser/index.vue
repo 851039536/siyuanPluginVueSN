@@ -61,7 +61,6 @@
 <script setup lang="ts">
 import type {
   DiskBrowserI18n,
-  FolderInfo,
 } from "./types"
 import { Plugin } from "siyuan"
 import BreadcrumbNav from "./components/BreadcrumbNav.vue"

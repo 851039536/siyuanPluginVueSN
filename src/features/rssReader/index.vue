@@ -46,7 +46,9 @@
           </div>
         </div>
         <div class="detail-content">
-          <h2 class="detail-title">{{ selectedItem!.title }}</h2>
+          <h2 class="detail-title">
+            {{ selectedItem!.title }}
+          </h2>
           <div class="detail-meta">
             <span v-if="selectedItem!.feedTitle">{{ selectedItem!.feedTitle }}</span>
             <span v-if="selectedItem!.author">{{ i18n.author || '作者' }}: {{ selectedItem!.author }}</span>
@@ -54,7 +56,7 @@
           </div>
           <div
             class="detail-body"
-            :style="{ fontSize: settings.detailFontSize + 'px' }"
+            :style="{ fontSize: `${settings.detailFontSize}px` }"
             v-html="processedDetailContent"
           />
         </div>
@@ -81,7 +83,9 @@
               :placeholder="i18n.feedUrlPlaceholder || '输入RSS/Atom订阅地址...'"
               @keydown.enter="handleAddFeed"
             >
-            <div class="hint">{{ i18n.feedUrlHint || '支持RSS 2.0和Atom格式，例如 https://example.com/feed 或 https://example.com/rss' }}</div>
+            <div class="hint">
+              {{ i18n.feedUrlHint || '支持RSS 2.0和Atom格式，例如 https://example.com/feed 或 https://example.com/rss' }}
+            </div>
           </div>
           <div class="form-group">
             <label>{{ i18n.feedGroup || '分组' }}</label>
@@ -120,23 +124,43 @@
         </div>
         <div class="settings-body">
           <div class="setting-item">
-            <div class="setting-label">{{ i18n.refreshInterval || '自动刷新间隔' }}</div>
-            <div class="setting-desc">{{ i18n.refreshIntervalDesc || '0表示不自动刷新' }}</div>
+            <div class="setting-label">
+              {{ i18n.refreshInterval || '自动刷新间隔' }}
+            </div>
+            <div class="setting-desc">
+              {{ i18n.refreshIntervalDesc || '0表示不自动刷新' }}
+            </div>
             <select
               :value="settings.refreshInterval"
               @change="handleSettingChange('refreshInterval', Number(($event.target as HTMLSelectElement).value))"
             >
-              <option :value="0">{{ i18n.disabled || '禁用' }}</option>
-              <option :value="15">15 {{ i18n.minutes || '分钟' }}</option>
-              <option :value="30">30 {{ i18n.minutes || '分钟' }}</option>
-              <option :value="60">1 {{ i18n.hour || '小时' }}</option>
-              <option :value="120">2 {{ i18n.hours || '小时' }}</option>
-              <option :value="360">6 {{ i18n.hours || '小时' }}</option>
+              <option :value="0">
+                {{ i18n.disabled || '禁用' }}
+              </option>
+              <option :value="15">
+                15 {{ i18n.minutes || '分钟' }}
+              </option>
+              <option :value="30">
+                30 {{ i18n.minutes || '分钟' }}
+              </option>
+              <option :value="60">
+                1 {{ i18n.hour || '小时' }}
+              </option>
+              <option :value="120">
+                2 {{ i18n.hours || '小时' }}
+              </option>
+              <option :value="360">
+                6 {{ i18n.hours || '小时' }}
+              </option>
             </select>
           </div>
           <div class="setting-item">
-            <div class="setting-label">{{ i18n.maxItems || '每源最大文章数' }}</div>
-            <div class="setting-desc">{{ i18n.maxItemsDesc || '超过此数量将自动删除最旧的非收藏文章' }}</div>
+            <div class="setting-label">
+              {{ i18n.maxItems || '每源最大文章数' }}
+            </div>
+            <div class="setting-desc">
+              {{ i18n.maxItemsDesc || '超过此数量将自动删除最旧的非收藏文章' }}
+            </div>
             <input
               type="number"
               :value="settings.maxItemsPerFeed"
@@ -146,18 +170,28 @@
             >
           </div>
           <div class="setting-item">
-            <div class="setting-label">{{ i18n.sortOrder || '排序方式' }}</div>
+            <div class="setting-label">
+              {{ i18n.sortOrder || '排序方式' }}
+            </div>
             <select
               :value="settings.sortOrder"
               @change="handleSettingChange('sortOrder', ($event.target as HTMLSelectElement).value)"
             >
-              <option value="newest">{{ i18n.newestFirst || '最新优先' }}</option>
-              <option value="oldest">{{ i18n.oldestFirst || '最早优先' }}</option>
+              <option value="newest">
+                {{ i18n.newestFirst || '最新优先' }}
+              </option>
+              <option value="oldest">
+                {{ i18n.oldestFirst || '最早优先' }}
+              </option>
             </select>
           </div>
           <div class="opml-section">
-            <div class="setting-label">{{ i18n.opmlExport || 'OPML 导出' }}</div>
-            <div class="setting-desc">{{ i18n.opmlExportDesc || '将当前订阅源列表导出为 OPML 文件，用于备份或迁移' }}</div>
+            <div class="setting-label">
+              {{ i18n.opmlExport || 'OPML 导出' }}
+            </div>
+            <div class="setting-desc">
+              {{ i18n.opmlExportDesc || '将当前订阅源列表导出为 OPML 文件，用于备份或迁移' }}
+            </div>
             <button
               class="opml-btn"
               @click="handleExportOpml"
@@ -167,8 +201,12 @@
             </button>
           </div>
           <div class="opml-section">
-            <div class="setting-label">{{ i18n.opmlImport || 'OPML 导入' }}</div>
-            <div class="setting-desc">{{ i18n.opmlImportDesc || '从 OPML 文件导入订阅源（会逐个添加）' }}</div>
+            <div class="setting-label">
+              {{ i18n.opmlImport || 'OPML 导入' }}
+            </div>
+            <div class="setting-desc">
+              {{ i18n.opmlImportDesc || '从 OPML 文件导入订阅源（会逐个添加）' }}
+            </div>
             <div class="opml-import-row">
               <input
                 ref="opmlFileInput"
@@ -181,7 +219,10 @@
                 v-if="importingOpml"
                 class="opml-importing"
               >
-                <Icon icon="mdi:loading" class="loading-icon" />
+                <Icon
+                  icon="mdi:loading"
+                  class="loading-icon"
+                />
                 {{ i18n.importing || '导入中...' }}
               </span>
             </div>
@@ -269,7 +310,10 @@
         >
           {{ i18n.starred || '收藏' }}
         </button>
-        <template v-for="group in groups" :key="group">
+        <template
+          v-for="group in groups"
+          :key="group"
+        >
           <button
             class="filter-tag"
             :class="{ active: currentGroupFilter === group }"
@@ -344,8 +388,12 @@
                       />
                     </div>
                     <div class="feed-info">
-                      <div class="feed-title">{{ feed.title }}</div>
-                      <div class="feed-url">{{ feed.url }}</div>
+                      <div class="feed-title">
+                        {{ feed.title }}
+                      </div>
+                      <div class="feed-url">
+                        {{ feed.url }}
+                      </div>
                     </div>
                     <span
                       v-if="feedUnreadCounts[feed.id]"
@@ -515,7 +563,12 @@
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
-import { computed, onMounted, onBeforeUnmount, ref } from "vue"
+import {
+  computed,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+} from "vue"
 import { useRssReader } from "./composables/useRssReader"
 
 interface Props {
@@ -678,7 +731,7 @@ async function handleOpmlFile(e: Event) {
 const ttsUtterance = ref<SpeechSynthesisUtterance | null>(null)
 const ttsPlaying = ref(false)
 
-function speakArticle(item: { title?: string; content?: string; description?: string }) {
+function speakArticle(item: { title?: string, content?: string, description?: string }) {
   if (ttsPlaying.value) {
     window.speechSynthesis.cancel()
     ttsPlaying.value = false
@@ -719,7 +772,7 @@ function getFilterTitle(): string {
   if (showUnreadOnly.value) return props.i18n.unread || "未读"
   if (currentGroupFilter.value !== "all") return currentGroupFilter.value
   if (currentFeedFilter.value !== "all") {
-    const feed = feeds.value.find(f => f.id === currentFeedFilter.value)
+    const feed = feeds.value.find((f) => f.id === currentFeedFilter.value)
     return feed?.title || ""
   }
   return ""

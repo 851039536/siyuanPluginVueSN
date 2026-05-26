@@ -264,7 +264,6 @@ export class MyFeatureStorage {
 **敏感字段加密**：`aiApiKey` 和 `webdavConfig.password` 在保存时自动使用 Web Crypto API（AES-GCM）加密，加载时自动解密，磁盘上不会明文存储。加密工具在 `src/utils/settingsCrypto.ts`。
 
 ```typescript
-import type { PluginSettings } from '@/config/settings'
 import {
   clearCachedKey,
   loadSettings,
@@ -286,7 +285,6 @@ clearCachedKey()
 ```typescript
 import {
   COMMON_ICONS,
-  FEATURE_ICONS,
   getIconConfig,
 } from '@/config/icons'
 
@@ -303,14 +301,10 @@ COMMON_ICONS.CLOSE // iconClose
 `src/utils/aiApi.ts` — 所有 AI 调用的唯一入口。
 
 ```typescript
-import type {
-  AiApiConfig,
-  GenerateOptions,
-} from '@/types/ai'
+
+
 import {
   callAI,
-  callAISmart,
-  callAIStream,
   getApiConfigFromPlugin,
 } from '@/utils/aiApi'
 
@@ -485,11 +479,19 @@ export function useFeature(plugin: Plugin) {
 
   onMounted(() => loadData())
 
-  return { storage, data, loadData }
+  return {
+    storage,
+    data,
+    loadData,
+  }
 }
 
 // index.vue / Dialog.vue 中复用
-const { storage, data, loadData } = useFeature(props.plugin)
+const {
+  storage,
+  data,
+  loadData,
+} = useFeature(props.plugin)
 ```
 
 **注册步骤（必须全部完成）**：

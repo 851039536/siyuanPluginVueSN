@@ -193,7 +193,9 @@
                         :size="48"
                       />
                       <p>输入标题和内容，点击"生成封面"</p>
-                      <p class="preview-hint">AI 将根据文章信息生成 HTML 封面</p>
+                      <p class="preview-hint">
+                        AI 将根据文章信息生成 HTML 封面
+                      </p>
                     </div>
 
                     <!-- 预览封面 -->
@@ -235,9 +237,16 @@
 
 <script setup lang="ts">
 import type { CoverSizePreset } from "../types"
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue"
 import html2canvas from "html2canvas"
 import { showMessage } from "siyuan"
+import {
+  computed,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  ref,
+  watch,
+} from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"

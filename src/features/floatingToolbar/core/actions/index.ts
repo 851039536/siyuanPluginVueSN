@@ -1,5 +1,5 @@
-import { Plugin } from "siyuan"
 import type { ToolbarAction } from "../../types"
+import { Plugin } from "siyuan"
 import { createDialogAction } from "../utils"
 
 export { createTranslateAction } from "./translate"

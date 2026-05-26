@@ -246,7 +246,6 @@ import Label from '@/components/Label.vue'
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import Button from '@/components/Button.vue'
 import Input from '@/components/Input.vue'
 import Label from '@/components/Label.vue'
 

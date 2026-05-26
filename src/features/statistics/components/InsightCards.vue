@@ -42,7 +42,10 @@
           v-for="m in visibleMilestones"
           :key="m.id"
           class="milestone-item"
-          :class="{ achieved: m.achieved, locked: !m.achieved && !m.isNext }"
+          :class="{
+            achieved: m.achieved,
+            locked: !m.achieved && !m.isNext,
+          }"
         >
           <span class="milestone-icon">{{ m.achieved ? m.icon : (m.isNext ? '🎯' : '🔒') }}</span>
           <span class="milestone-text">{{ m.label }}</span>
@@ -69,7 +72,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue"
+import {
+  computed,
+  ref,
+} from "vue"
 import { formatDate } from "../utils"
 import CollapsibleSection from "./CollapsibleSection.vue"
 
@@ -128,7 +134,7 @@ const showAllMilestones = ref(false)
 
 const showAllText = computed(() =>
   (props.i18n.showAllMilestones || "显示全部 {count} 个里程碑")
-    .replace("{count}", String(allMilestones.length))
+    .replace("{count}", String(allMilestones.length)),
 )
 
 // ============ 热力日历 ============
@@ -167,22 +173,118 @@ const activeDaysInMonth = computed(() => {
 
 // ============ 里程碑 ============
 const allMilestones = [
-  { id: "notes-500", icon: "🌱", label: "500篇笔记", target: 500, type: "notes" },
-  { id: "notes-1500", icon: "🌿", label: "1500篇笔记", target: 1500, type: "notes" },
-  { id: "notes-3000", icon: "🌳", label: "3000篇笔记", target: 3000, type: "notes" },
-  { id: "notes-3500", icon: "🌲", label: "3500篇笔记", target: 3500, type: "notes" },
-  { id: "notes-4000", icon: "🏔️", label: "4000篇笔记", target: 4000, type: "notes" },
-  { id: "notes-5000", icon: "⛰️", label: "5000篇笔记", target: 5000, type: "notes" },
-  { id: "notes-7500", icon: "🗻", label: "7500篇笔记", target: 7500, type: "notes" },
-  { id: "notes-10000", icon: "🏔️", label: "1万篇笔记", target: 10000, type: "notes" },
-  { id: "words-50w", icon: "📚", label: "50万字", target: 500000, type: "words" },
-  { id: "words-100w", icon: "🎓", label: "100万字", target: 1000000, type: "words" },
-  { id: "words-200w", icon: "📖", label: "200万字", target: 2000000, type: "words" },
-  { id: "words-300w", icon: "📜", label: "300万字", target: 3000000, type: "words" },
-  { id: "words-500w", icon: "🏆", label: "500万字", target: 5000000, type: "words" },
-  { id: "words-1000w", icon: "👑", label: "1000万字", target: 10000000, type: "words" },
-  { id: "words-5000w", icon: "💎", label: "5000万字", target: 50000000, type: "words" },
-  { id: "words-1yi", icon: "🌟", label: "1亿字", target: 100000000, type: "words" },
+  {
+    id: "notes-500",
+    icon: "🌱",
+    label: "500篇笔记",
+    target: 500,
+    type: "notes",
+  },
+  {
+    id: "notes-1500",
+    icon: "🌿",
+    label: "1500篇笔记",
+    target: 1500,
+    type: "notes",
+  },
+  {
+    id: "notes-3000",
+    icon: "🌳",
+    label: "3000篇笔记",
+    target: 3000,
+    type: "notes",
+  },
+  {
+    id: "notes-3500",
+    icon: "🌲",
+    label: "3500篇笔记",
+    target: 3500,
+    type: "notes",
+  },
+  {
+    id: "notes-4000",
+    icon: "🏔️",
+    label: "4000篇笔记",
+    target: 4000,
+    type: "notes",
+  },
+  {
+    id: "notes-5000",
+    icon: "⛰️",
+    label: "5000篇笔记",
+    target: 5000,
+    type: "notes",
+  },
+  {
+    id: "notes-7500",
+    icon: "🗻",
+    label: "7500篇笔记",
+    target: 7500,
+    type: "notes",
+  },
+  {
+    id: "notes-10000",
+    icon: "🏔️",
+    label: "1万篇笔记",
+    target: 10000,
+    type: "notes",
+  },
+  {
+    id: "words-50w",
+    icon: "📚",
+    label: "50万字",
+    target: 500000,
+    type: "words",
+  },
+  {
+    id: "words-100w",
+    icon: "🎓",
+    label: "100万字",
+    target: 1000000,
+    type: "words",
+  },
+  {
+    id: "words-200w",
+    icon: "📖",
+    label: "200万字",
+    target: 2000000,
+    type: "words",
+  },
+  {
+    id: "words-300w",
+    icon: "📜",
+    label: "300万字",
+    target: 3000000,
+    type: "words",
+  },
+  {
+    id: "words-500w",
+    icon: "🏆",
+    label: "500万字",
+    target: 5000000,
+    type: "words",
+  },
+  {
+    id: "words-1000w",
+    icon: "👑",
+    label: "1000万字",
+    target: 10000000,
+    type: "words",
+  },
+  {
+    id: "words-5000w",
+    icon: "💎",
+    label: "5000万字",
+    target: 50000000,
+    type: "words",
+  },
+  {
+    id: "words-1yi",
+    icon: "🌟",
+    label: "1亿字",
+    target: 100000000,
+    type: "words",
+  },
 ]
 
 const achievedCount = computed(() => {
@@ -197,7 +299,12 @@ const visibleMilestones = computed(() => {
     const current = m.type === "notes" ? props.totalNotes : props.totalWords
     const achieved = current >= m.target
     const progress = achieved ? 100 : Math.min((current / m.target) * 100, 100)
-    return { ...m, achieved, progress, isNext: false as boolean }
+    return {
+      ...m,
+      achieved,
+      progress,
+      isNext: false as boolean,
+    }
   })
 
   if (showAllMilestones.value) {

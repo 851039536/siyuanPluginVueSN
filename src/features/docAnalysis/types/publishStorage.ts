@@ -1,3 +1,4 @@
+import type { Plugin } from "siyuan"
 /**
  * 文档分析 - 发布功能存储管理
  */
@@ -5,7 +6,6 @@ import type {
   DocPublishState,
   PlatformConfig,
 } from "./publish"
-import type { Plugin } from "siyuan"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
 
@@ -94,19 +94,19 @@ export class PublishStorage {
   /** 获取已配置的平台 */
   async getPlatforms(): Promise<PlatformConfig[]> {
     const settings = await this.loadSettings()
-    return settings.platforms.filter(p => p.enabled)
+    return settings.platforms.filter((p) => p.enabled)
   }
 
   /** 通过 ID 获取平台 */
   async getPlatformById(id: string): Promise<PlatformConfig | null> {
     const settings = await this.loadSettings()
-    return settings.platforms.find(p => p.id === id) || null
+    return settings.platforms.find((p) => p.id === id) || null
   }
 
   /** 添加或更新平台 */
   async savePlatform(platform: PlatformConfig): Promise<void> {
     const settings = await this.loadSettings()
-    const idx = settings.platforms.findIndex(p => p.id === platform.id)
+    const idx = settings.platforms.findIndex((p) => p.id === platform.id)
     if (idx >= 0) {
       settings.platforms[idx] = platform
     } else {
@@ -118,8 +118,8 @@ export class PublishStorage {
   /** 删除平台 */
   async removePlatform(id: string): Promise<void> {
     const settings = await this.loadSettings()
-    settings.platforms = settings.platforms.filter(p => p.id !== id)
-    settings.defaultPlatformIds = settings.defaultPlatformIds.filter(pid => pid !== id)
+    settings.platforms = settings.platforms.filter((p) => p.id !== id)
+    settings.defaultPlatformIds = settings.defaultPlatformIds.filter((pid) => pid !== id)
     await this.saveSettings(settings)
   }
 }

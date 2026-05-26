@@ -738,11 +738,11 @@ export function useDocAnalysis(plugin: Plugin) {
         case "customTime": {
           // 使用自定义时间范围
           if (filterOptions.updatedAfter) {
-            const afterStr = filterOptions.updatedAfter.replace(/-/g, "") + "000000"
+            const afterStr = `${filterOptions.updatedAfter.replace(/-/g, "")}000000`
             extraWhere += `AND b.updated >= '${afterStr}' `
           }
           if (filterOptions.updatedBefore) {
-            const beforeStr = filterOptions.updatedBefore.replace(/-/g, "") + "235959"
+            const beforeStr = `${filterOptions.updatedBefore.replace(/-/g, "")}235959`
             extraWhere += `AND b.updated <= '${beforeStr}' `
           }
           if (!filterOptions.updatedAfter && !filterOptions.updatedBefore) {
@@ -934,11 +934,11 @@ export function useDocAnalysis(plugin: Plugin) {
 
       // 自定义时间范围过滤
       if (filterOptions.updatedAfter) {
-        const afterStr = filterOptions.updatedAfter.replace(/-/g, "") + "000000"
+        const afterStr = `${filterOptions.updatedAfter.replace(/-/g, "")}000000`
         conditions += `AND b.updated >= '${afterStr}' `
       }
       if (filterOptions.updatedBefore) {
-        const beforeStr = filterOptions.updatedBefore.replace(/-/g, "") + "235959"
+        const beforeStr = `${filterOptions.updatedBefore.replace(/-/g, "")}235959`
         conditions += `AND b.updated <= '${beforeStr}' `
       }
 

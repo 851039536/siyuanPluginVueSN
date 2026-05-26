@@ -54,16 +54,17 @@ export function normalizeWidths(html: string): NormalizeResult {
 
   // ---- Pass 2: HTML width 属性（table/td/th/col/colgroup） ----
   result = result
-    .replace(/<(col|colgroup)([^>]*?)\bwidth\s*=\s*["']?\d+(\.\d+)?["']?([^>]*?)>/gi,
-      (_, tag, before, _v, after) => {
-        count++
-        return `<${tag}${before}${after}>`
-      })
-    .replace(/<(table|td|th)([^>]*?)\bwidth\s*=\s*["']?\d+(\.\d+)?["']?([^>]*?)>/gi,
-      (_, tag, before, _v, after) => {
-        count++
-        return `<${tag}${before}${after}>`
-      })
+    .replace(/<(col|colgroup)([^>]*?)\bwidth\s*=\s*["']?\d+(\.\d+)?["']?([^>]*)>/gi, (_, tag, before, _v, after) => {
+      count++
+      return `<${tag}${before}${after}>`
+    })
+    .replace(/<(table|td|th)([^>]*?)\bwidth\s*=\s*["']?\d+(\.\d+)?["']?([^>]*)>/gi, (_, tag, before, _v, after) => {
+      count++
+      return `<${tag}${before}${after}>`
+    })
 
-  return { html: result, changedCount: count }
+  return {
+    html: result,
+    changedCount: count,
+  }
 }

@@ -310,15 +310,21 @@
 <script setup lang="ts">
 import type {
   SavedPrompt,
-  TargetDoc,
   SkillItem,
+  TargetDoc,
 } from "@/types/ai"
-import { computed, ref, nextTick, onMounted, onUnmounted } from "vue"
+import {
+  computed,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  ref,
+} from "vue"
 import Button from "@/components/Button.vue"
 import Tag from "@/components/Tag.vue"
 import Textarea from "@/components/Textarea.vue"
-import { getPromptPreview } from "../utils"
 import { AI_TOOLS } from "@/features/generalSettings/modules/SkillsViewerManager"
+import { getPromptPreview } from "../utils"
 
 interface QuickAction {
   key: "polish" | "expand" | "condense" | "fix" | "rewrite" | "summary"

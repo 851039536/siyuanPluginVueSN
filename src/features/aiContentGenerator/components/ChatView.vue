@@ -76,39 +76,79 @@
           </div>
         </div>
       </div>
-      <button class="new-chat-btn" title="新建对话" @click="startNewConversation">
-        <svg width="14" height="14"><use xlink:href="#iconAdd" /></svg>
+      <button
+        class="new-chat-btn"
+        title="新建对话"
+        @click="startNewConversation"
+      >
+        <svg
+          width="14"
+          height="14"
+        ><use xlink:href="#iconAdd" /></svg>
         <span>新建</span>
       </button>
     </div>
 
     <!-- 消息列表 -->
-    <div ref="messageListRef" class="message-list">
+    <div
+      ref="messageListRef"
+      class="message-list"
+    >
       <!-- 环境不兼容 -->
-      <div v-if="!managerAvailable" class="chat-empty-state">
+      <div
+        v-if="!managerAvailable"
+        class="chat-empty-state"
+      >
         <div class="chat-empty-icon">
-          <svg width="48" height="48"><use xlink:href="#iconWarn" /></svg>
+          <svg
+            width="48"
+            height="48"
+          ><use xlink:href="#iconWarn" /></svg>
         </div>
-        <p class="chat-empty-title">当前环境不支持</p>
-        <p class="chat-empty-desc">技能问答需要桌面端 Electron 环境支持（需要扫描 .claude/skills、.codebuddy/skills 等目录）。</p>
+        <p class="chat-empty-title">
+          当前环境不支持
+        </p>
+        <p class="chat-empty-desc">
+          技能问答需要桌面端 Electron 环境支持（需要扫描 .claude/skills、.codebuddy/skills 等目录）。
+        </p>
       </div>
 
       <!-- 无技能提示 -->
-      <div v-else-if="skills.length === 0" class="chat-empty-state">
+      <div
+        v-else-if="skills.length === 0"
+        class="chat-empty-state"
+      >
         <div class="chat-empty-icon">
-          <svg width="48" height="48"><use xlink:href="#iconStar" /></svg>
+          <svg
+            width="48"
+            height="48"
+          ><use xlink:href="#iconStar" /></svg>
         </div>
-        <p class="chat-empty-title">未发现技能</p>
-        <p class="chat-empty-desc">未扫描到 AI 编程工具的技能文件。请在 Claude、CodeBuddy 等工具的 skills 目录下创建 skill.md 文件。</p>
+        <p class="chat-empty-title">
+          未发现技能
+        </p>
+        <p class="chat-empty-desc">
+          未扫描到 AI 编程工具的技能文件。请在 Claude、CodeBuddy 等工具的 skills 目录下创建 skill.md 文件。
+        </p>
       </div>
 
       <!-- 空状态（有技能但未开始对话） -->
-      <div v-else-if="messages.length === 0" class="chat-empty-state">
+      <div
+        v-else-if="messages.length === 0"
+        class="chat-empty-state"
+      >
         <div class="chat-empty-icon">
-          <svg width="48" height="48"><use xlink:href="#iconSparkles" /></svg>
+          <svg
+            width="48"
+            height="48"
+          ><use xlink:href="#iconSparkles" /></svg>
         </div>
-        <p class="chat-empty-title">{{ currentSkill ? currentSkill.description || '准备就绪' : '选择技能开始对话' }}</p>
-        <p class="chat-empty-desc">技能 "{{ currentSkill?.name }}"（来源：{{ currentSkill ? getSourceHintText(currentSkill) : '' }}）的内容将作为 AI 指令。开始提问吧！</p>
+        <p class="chat-empty-title">
+          {{ currentSkill ? currentSkill.description || '准备就绪' : '选择技能开始对话' }}
+        </p>
+        <p class="chat-empty-desc">
+          技能 "{{ currentSkill?.name }}"（来源：{{ currentSkill ? getSourceHintText(currentSkill) : '' }}）的内容将作为 AI 指令。开始提问吧！
+        </p>
       </div>
 
       <!-- 消息气泡 -->
@@ -116,23 +156,42 @@
         v-for="(msg, index) in messages"
         :key="index"
         class="message-bubble"
-        :class="[msg.role === 'user' ? 'user-message' : 'ai-message', { 'streaming': msg.isStreaming }]"
+        :class="[msg.role === 'user' ? 'user-message' : 'ai-message', { streaming: msg.isStreaming }]"
       >
         <div class="message-avatar">
-          <svg v-if="msg.role === 'assistant'" width="18" height="18"><use xlink:href="#iconSparkles" /></svg>
-          <svg v-else width="18" height="18"><use xlink:href="#iconUser" /></svg>
+          <svg
+            v-if="msg.role === 'assistant'"
+            width="18"
+            height="18"
+          ><use xlink:href="#iconSparkles" /></svg>
+          <svg
+            v-else
+            width="18"
+            height="18"
+          ><use xlink:href="#iconUser" /></svg>
         </div>
         <div class="message-content-wrapper">
-          <div class="message-role-label">{{ msg.role === 'user' ? '你' : (currentSkill?.name || 'AI') }}</div>
-          <div class="message-content markdown-body" v-html="renderMessage(msg.content)"></div>
-          <div v-if="msg.role === 'assistant' && index === messages.length - 1" class="message-actions">
+          <div class="message-role-label">
+            {{ msg.role === 'user' ? '你' : (currentSkill?.name || 'AI') }}
+          </div>
+          <div
+            class="message-content markdown-body"
+            v-html="renderMessage(msg.content)"
+          ></div>
+          <div
+            v-if="msg.role === 'assistant' && index === messages.length - 1"
+            class="message-actions"
+          >
             <button
               v-if="msg.isStreaming"
               class="stop-btn"
               title="停止生成"
               @click="$emit('stop-generation')"
             >
-              <svg width="14" height="14"><use xlink:href="#iconClose" /></svg>
+              <svg
+                width="14"
+                height="14"
+              ><use xlink:href="#iconClose" /></svg>
               停止
             </button>
             <button
@@ -141,15 +200,24 @@
               title="复制"
               @click="copyMessage(msg.content)"
             >
-              <svg width="14" height="14"><use xlink:href="#iconCopy" /></svg>
+              <svg
+                width="14"
+                height="14"
+              ><use xlink:href="#iconCopy" /></svg>
             </button>
           </div>
         </div>
       </div>
 
       <!-- 错误提示 -->
-      <div v-if="error" class="chat-error">
-        <svg width="14" height="14"><use xlink:href="#iconCloseRound" /></svg>
+      <div
+        v-if="error"
+        class="chat-error"
+      >
+        <svg
+          width="14"
+          height="14"
+        ><use xlink:href="#iconCloseRound" /></svg>
         <span>{{ error }}</span>
       </div>
     </div>
@@ -174,7 +242,10 @@
           title="发送"
           @click="onSendClick"
         >
-          <svg width="16" height="16"><use xlink:href="#iconSparkles" /></svg>
+          <svg
+            width="16"
+            height="16"
+          ><use xlink:href="#iconSparkles" /></svg>
         </button>
         <button
           v-else
@@ -182,7 +253,10 @@
           title="停止生成"
           @click="$emit('stop-generation')"
         >
-          <svg width="16" height="16"><use xlink:href="#iconClose" /></svg>
+          <svg
+            width="16"
+            height="16"
+          ><use xlink:href="#iconClose" /></svg>
         </button>
       </div>
     </div>
@@ -190,17 +264,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick, onMounted, onUnmounted } from "vue"
-import type { ChatMessage, ChatOptions, SkillItem } from "@/types/ai"
-import { AI_TOOLS } from "@/features/generalSettings/modules/SkillsViewerManager"
 import type { AIToolType } from "@/features/generalSettings/modules/SkillsViewerManager"
+import type {
+  ChatMessage,
+  ChatOptions,
+  SkillItem,
+} from "@/types/ai"
+import { showMessage } from "siyuan"
+import {
+  nextTick,
+  onMounted,
+  onUnmounted,
+  ref,
+  watch,
+} from "vue"
+import { AI_TOOLS } from "@/features/generalSettings/modules/SkillsViewerManager"
 import { useSkillsLoader } from "../composables/useSkillsLoader"
 import { renderMarkdown } from "../utils"
-import { showMessage } from "siyuan"
 
 interface Props {
   plugin: any
-  onChat?: (messages: Array<{ role: string; content: string }>, options: ChatOptions) => Promise<string>
+  onChat?: (messages: Array<{ role: string, content: string }>, options: ChatOptions) => Promise<string>
 }
 
 const props = defineProps<Props>()
@@ -215,7 +299,15 @@ function getToolName(toolId: AIToolType): string {
 }
 
 // ============ 状态 ============
-const { skills, currentSkillIndex, currentSkill, managerAvailable, loadSkills, skillSearchQuery, filteredSkills } = useSkillsLoader(props.plugin)
+const {
+  skills,
+  currentSkillIndex,
+  currentSkill,
+  managerAvailable,
+  loadSkills,
+  skillSearchQuery,
+  filteredSkills,
+} = useSkillsLoader(props.plugin)
 
 // 技能下拉面板状态
 const showSkillDropdown = ref(false)
@@ -326,7 +418,7 @@ const autoResizeTextarea = () => {
   const el = inputRef.value
   if (!el) return
   el.style.height = "auto"
-  el.style.height = el.scrollHeight + "px"
+  el.style.height = `${el.scrollHeight}px`
 }
 
 /** 发送消息 */
@@ -373,11 +465,17 @@ const sendMessage = async (text: string) => {
   await scrollToBottom()
 
   // 构建 messages 数组：system(技能内容) + 对话历史
-  const chatMessages: Array<{ role: string; content: string }> = [
-    { role: "system", content: skill.content },
+  const chatMessages: Array<{ role: string, content: string }> = [
+    {
+      role: "system",
+      content: skill.content,
+    },
     ...messages.value
       .slice(0, -1) // 排除当前正在流的 AI 消息
-      .map((m) => ({ role: m.role, content: m.content })),
+      .map((m) => ({
+        role: m.role,
+        content: m.content,
+      })),
   ]
 
   abortController = new AbortController()

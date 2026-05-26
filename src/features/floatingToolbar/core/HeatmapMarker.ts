@@ -6,7 +6,7 @@ const HEATMAP_WORD_CLASS = "heatmap-word"
 const HEATMAP_SCANNED_ATTR = "data-heatmap-scanned"
 const INITIAL_SCAN_DELAY_MS = 1500
 
-const ENGLISH_WORD_RE = /\b[a-zA-Z]{2,}\b/g
+const ENGLISH_WORD_RE = /\b[a-z]{2,}\b/gi
 
 function getHeatLevel(practiceCount: number): number {
   if (practiceCount <= 3) return 1
@@ -85,7 +85,7 @@ export class HeatmapMarker {
       this.wordHeatMap.clear()
       for (const card of cards) {
         const word = card.title.toLowerCase().trim()
-        if (word && /^[a-zA-Z]+$/.test(word)) {
+        if (word && /^[a-z]+$/i.test(word)) {
           const existing = this.wordHeatMap.get(word)
           if (existing === undefined || card.practiceCount > existing) {
             this.wordHeatMap.set(word, card.practiceCount)
@@ -120,6 +120,14 @@ export class HeatmapMarker {
       .${HEATMAP_WORD_CLASS}[data-heat="3"],
       .${HEATMAP_WORD_CLASS}[data-heat="4"] {
         color: rgba(255, 213, 79, 0.85);
+      }
+
+      .code-block .${HEATMAP_WORD_CLASS},
+      [data-type="NodeCodeBlock"] .${HEATMAP_WORD_CLASS},
+      .hljs .${HEATMAP_WORD_CLASS},
+      pre .${HEATMAP_WORD_CLASS},
+      code .${HEATMAP_WORD_CLASS} {
+        color: inherit !important;
       }
     `
     document.head.appendChild(style)
@@ -276,13 +284,16 @@ export class HeatmapMarker {
           || parent.closest("pre")
           || parent.closest("kbd")
           || parent.closest("var")
+          || parent.closest(".hljs")
+          || parent.closest(".code-block")
+          || parent.closest("[data-type='NodeCodeBlock']")
           || parent.closest(`.${HEATMAP_WORD_CLASS}`)
           || parent.closest("[data-type='NodeHeading']")
         ) {
           return NodeFilter.FILTER_REJECT
         }
         const text = node.textContent || ""
-        if (!/[a-zA-Z]{2,}/.test(text)) {
+        if (!/[a-z]{2,}/i.test(text)) {
           return NodeFilter.FILTER_REJECT
         }
         return NodeFilter.FILTER_ACCEPT

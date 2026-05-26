@@ -19,7 +19,6 @@
 ```vue
 <script setup lang="ts">
 import type { SelectOption } from '@/components/Select.vue'
-import Select from '@/components/Select.vue'
 
 const options: SelectOption[] = [
   {
@@ -135,10 +134,8 @@ const options: SelectOption[] = [
 </template>
 
 <script setup lang="ts">
-import type {
-  SelectGroupOption,
-  SelectOption,
-} from '@/components/Select.vue'
+
+
 
 const groupedOptions = [
   {

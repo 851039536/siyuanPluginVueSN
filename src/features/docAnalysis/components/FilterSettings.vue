@@ -104,8 +104,8 @@
 </template>
 
 <script setup lang="ts">
-import type { FilterOptions } from "../types/index"
 import type { NotebookInfo } from "../composables/useDocAnalysis"
+import type { FilterOptions } from "../types/index"
 import { Icon } from "@iconify/vue"
 
 interface Props {

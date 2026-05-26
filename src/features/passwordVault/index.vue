@@ -562,7 +562,6 @@ import HelpDialog from "./components/HelpDialog.vue"
 import PasswordVaultLogin from "./components/PasswordVaultLogin.vue"
 import {
   PasswordVaultStorage,
-  STORAGE_KEYS,
 } from "./types/storage"
 import {
   decryptPassword,

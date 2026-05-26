@@ -30,7 +30,6 @@
 
 ```vue
 <script setup lang="ts">
-import IconWrapper from '@/components/IconWrapper.vue'
 </script>
 ```
 

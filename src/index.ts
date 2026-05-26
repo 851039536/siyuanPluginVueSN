@@ -1,23 +1,24 @@
 import type { PluginSettings } from "@/config/settings"
-import { DEFAULT_SETTINGS } from "@/config/settings"
-
 import {
   getFrontend,
   Plugin,
 } from "siyuan"
 
 import PluginInfoString from "@/../plugin.json"
+
 import {
   destroyCommands,
   initCommands,
 } from "@/commands"
 import {
   clearCachedKey,
+  DEFAULT_SETTINGS,
   loadSettings,
-
   saveSettings,
 } from "@/config/settings"
+
 import {
+  getStatisticsInstance,
   registerAIContentGenerator,
   registerBase64Image,
   registerCodeImageGenerator,
@@ -39,7 +40,6 @@ import {
   registerRssReader,
   registerShortcut,
   registerStatistics,
-  getStatisticsInstance,
   registerStatusBar,
   registerSuperPanel,
   registerTableOfContents,

@@ -29,21 +29,40 @@
       <div class="stats-grid">
         <!-- 大小分布 -->
         <div class="grid-section">
-          <span class="grid-section-label"><Icon icon="mdi:harddisk" class="section-icon-sm" />大小分布</span>
+          <span class="grid-section-label"><Icon
+            icon="mdi:harddisk"
+            class="section-icon-sm"
+          />大小分布</span>
           <div class="stats-cards">
-            <div class="stat-card" :class="{ active: activeFilter === '0B' }" @click="$emit('select-category', '0B')">
+            <div
+              class="stat-card"
+              :class="{ active: activeFilter === '0B' }"
+              @click="$emit('select-category', '0B')"
+            >
               <span class="stat-value zero">{{ stats.zeroByteDocs }}</span>
               <span class="stat-label">0B空</span>
             </div>
-            <div class="stat-card" :class="{ active: activeFilter === 'small' }" @click="$emit('select-category', 'small')">
+            <div
+              class="stat-card"
+              :class="{ active: activeFilter === 'small' }"
+              @click="$emit('select-category', 'small')"
+            >
               <span class="stat-value small">{{ stats.smallDocs }}</span>
               <span class="stat-label">&lt;1KB</span>
             </div>
-            <div class="stat-card" :class="{ active: activeFilter === 'medium' }" @click="$emit('select-category', 'medium')">
+            <div
+              class="stat-card"
+              :class="{ active: activeFilter === 'medium' }"
+              @click="$emit('select-category', 'medium')"
+            >
               <span class="stat-value medium">{{ stats.mediumDocs }}</span>
               <span class="stat-label">1~10KB</span>
             </div>
-            <div class="stat-card" :class="{ active: activeFilter === 'duplicate' }" @click="$emit('select-category', 'duplicate')">
+            <div
+              class="stat-card"
+              :class="{ active: activeFilter === 'duplicate' }"
+              @click="$emit('select-category', 'duplicate')"
+            >
               <span class="stat-value dup">{{ stats.duplicateNameDocs }}</span>
               <span class="stat-label">重名({{ stats.duplicateNameGroups }})</span>
             </div>
@@ -56,30 +75,60 @@
 
         <!-- 更新时间 -->
         <div class="grid-section">
-          <span class="grid-section-label"><Icon icon="mdi:clock-outline" class="section-icon-sm" />更新时间</span>
+          <span class="grid-section-label"><Icon
+            icon="mdi:clock-outline"
+            class="section-icon-sm"
+          />更新时间</span>
           <div class="stats-cards">
-            <div class="stat-card" :class="{ active: activeFilter === '7days' }" @click="$emit('select-category', '7days')">
+            <div
+              class="stat-card"
+              :class="{ active: activeFilter === '7days' }"
+              @click="$emit('select-category', '7days')"
+            >
               <span class="stat-value time-green">{{ stats.updatedIn7Days }}</span>
               <span class="stat-label">7天内</span>
             </div>
-            <div class="stat-card" :class="{ active: activeFilter === '30days' }" @click="$emit('select-category', '30days')">
+            <div
+              class="stat-card"
+              :class="{ active: activeFilter === '30days' }"
+              @click="$emit('select-category', '30days')"
+            >
               <span class="stat-value time-yellow">{{ stats.updatedIn30Days }}</span>
               <span class="stat-label">7~30天</span>
             </div>
-            <div class="stat-card" :class="{ active: activeFilter === '1to2month' }" @click="$emit('select-category', '1to2month')">
+            <div
+              class="stat-card"
+              :class="{ active: activeFilter === '1to2month' }"
+              @click="$emit('select-category', '1to2month')"
+            >
               <span class="stat-value time-cyan">{{ stats.updatedIn1To2Months }}</span>
               <span class="stat-label">1~2月</span>
             </div>
-            <div class="stat-card" :class="{ active: activeFilter === '2to3month' }" @click="$emit('select-category', '2to3month')">
+            <div
+              class="stat-card"
+              :class="{ active: activeFilter === '2to3month' }"
+              @click="$emit('select-category', '2to3month')"
+            >
               <span class="stat-value time-orange">{{ stats.updatedIn2To3Months }}</span>
               <span class="stat-label">2~3月</span>
             </div>
-            <div class="stat-card" :class="{ active: activeFilter === 'halfYear' }" @click="$emit('select-category', 'halfYear')">
+            <div
+              class="stat-card"
+              :class="{ active: activeFilter === 'halfYear' }"
+              @click="$emit('select-category', 'halfYear')"
+            >
               <span class="stat-value time-red">{{ stats.updatedOverHalfYear }}</span>
               <span class="stat-label">半年+</span>
             </div>
-            <div class="stat-card custom-time-card" :class="{ active: activeFilter === 'customTime' }" @click="$emit('select-category', 'customTime')">
-              <span class="stat-value time-purple"><Icon icon="mdi:calendar-range" class="custom-time-icon" /></span>
+            <div
+              class="stat-card custom-time-card"
+              :class="{ active: activeFilter === 'customTime' }"
+              @click="$emit('select-category', 'customTime')"
+            >
+              <span class="stat-value time-purple"><Icon
+                icon="mdi:calendar-range"
+                class="custom-time-icon"
+              /></span>
               <span class="stat-label">自定义</span>
             </div>
           </div>
@@ -88,18 +137,28 @@
         <!-- 书签 -->
         <div class="grid-section">
           <span class="grid-section-label">
-            <Icon icon="mdi:bookmark-outline" class="section-icon-sm" />书签
+            <Icon
+              icon="mdi:bookmark-outline"
+              class="section-icon-sm"
+            />书签
             <button
               class="bookmark-detail-btn"
               title="查看全部书签"
               @click.stop="$emit('show-bookmark-details')"
             >
-              <Icon icon="mdi:format-list-bulleted" :size="12" />
+              <Icon
+                icon="mdi:format-list-bulleted"
+                :size="12"
+              />
               详情
             </button>
           </span>
           <div class="stats-cards">
-            <div class="stat-card" :class="{ active: activeFilter === 'pendingPublish' }" @click="$emit('select-category', 'pendingPublish')">
+            <div
+              class="stat-card"
+              :class="{ active: activeFilter === 'pendingPublish' }"
+              @click="$emit('select-category', 'pendingPublish')"
+            >
               <span class="stat-value pending-color">{{ stats.pendingPublishDocs }}</span>
               <span class="stat-label">待发布</span>
               <button
@@ -108,26 +167,49 @@
                 title="批量发布待发布文档"
                 @click.stop="$emit('batch-publish', 'pendingPublish')"
               >
-                <Icon icon="mdi:publish" class="stat-action-icon" />
+                <Icon
+                  icon="mdi:publish"
+                  class="stat-action-icon"
+                />
               </button>
             </div>
-            <div class="stat-card" :class="{ active: activeFilter === 'published' }" @click="$emit('select-category', 'published')">
+            <div
+              class="stat-card"
+              :class="{ active: activeFilter === 'published' }"
+              @click="$emit('select-category', 'published')"
+            >
               <span class="stat-value published-color">{{ stats.publishedDocs }}</span>
               <span class="stat-label">已发布</span>
             </div>
-            <div class="stat-card" :class="{ active: activeFilter === 'unused' }" @click="$emit('select-category', 'unused')">
+            <div
+              class="stat-card"
+              :class="{ active: activeFilter === 'unused' }"
+              @click="$emit('select-category', 'unused')"
+            >
               <span class="stat-value unused-color">{{ stats.unusedDocs }}</span>
               <span class="stat-label">不使用</span>
             </div>
-            <div class="stat-card" :class="{ active: activeFilter === 'noneBookmark' }" @click="$emit('select-category', 'noneBookmark')">
+            <div
+              class="stat-card"
+              :class="{ active: activeFilter === 'noneBookmark' }"
+              @click="$emit('select-category', 'noneBookmark')"
+            >
               <span class="stat-value none-bookmark-color">{{ stats.noneBookmarkDocs }}</span>
               <span class="stat-label">无</span>
             </div>
-            <div class="stat-card" :class="{ active: activeFilter === 'hasBookmark' }" @click="$emit('select-category', 'hasBookmark')">
+            <div
+              class="stat-card"
+              :class="{ active: activeFilter === 'hasBookmark' }"
+              @click="$emit('select-category', 'hasBookmark')"
+            >
               <span class="stat-value bookmark-color">{{ stats.bookmarkedDocs }}</span>
               <span class="stat-label">有书签</span>
             </div>
-            <div class="stat-card" :class="{ active: activeFilter === 'noBookmark' }" @click="$emit('select-category', 'noBookmark')">
+            <div
+              class="stat-card"
+              :class="{ active: activeFilter === 'noBookmark' }"
+              @click="$emit('select-category', 'noBookmark')"
+            >
               <span class="stat-value no-bookmark-color">{{ stats.noBookmarkDocs }}</span>
               <span class="stat-label">无书签</span>
             </div>
@@ -136,17 +218,32 @@
 
         <!-- 结构分析 -->
         <div class="grid-section">
-          <span class="grid-section-label"><Icon icon="mdi:sitemap-outline" class="section-icon-sm" />结构</span>
+          <span class="grid-section-label"><Icon
+            icon="mdi:sitemap-outline"
+            class="section-icon-sm"
+          />结构</span>
           <div class="stats-cards">
-            <div class="stat-card" :class="{ active: activeFilter === 'deep' }" @click="$emit('select-category', 'deep')">
+            <div
+              class="stat-card"
+              :class="{ active: activeFilter === 'deep' }"
+              @click="$emit('select-category', 'deep')"
+            >
               <span class="stat-value depth-color">{{ stats.deepDocs }}</span>
               <span class="stat-label">深层≥5</span>
             </div>
-            <div class="stat-card" :class="{ active: activeFilter === 'hasRef' }" @click="$emit('select-category', 'hasRef')">
+            <div
+              class="stat-card"
+              :class="{ active: activeFilter === 'hasRef' }"
+              @click="$emit('select-category', 'hasRef')"
+            >
               <span class="stat-value ref-color">{{ stats.refDocs }}</span>
               <span class="stat-label">引用({{ stats.totalRefs }})</span>
             </div>
-            <div class="stat-card" :class="{ active: activeFilter === 'hasImage' }" @click="$emit('select-category', 'hasImage')">
+            <div
+              class="stat-card"
+              :class="{ active: activeFilter === 'hasImage' }"
+              @click="$emit('select-category', 'hasImage')"
+            >
               <span class="stat-value img-color">{{ stats.imageDocs }}</span>
               <span class="stat-label">图片({{ stats.totalImages }})</span>
             </div>
@@ -155,11 +252,22 @@
       </div>
 
       <!-- 深度分布迷你图 -->
-      <div v-if="depthStats.depthDistribution.length > 0" class="depth-chart-wrap">
+      <div
+        v-if="depthStats.depthDistribution.length > 0"
+        class="depth-chart-wrap"
+      >
         <span class="depth-chart-label">深度分布（均 {{ depthStats.avgDepth }} 层，最深 {{ depthStats.maxDepth }} 层）</span>
         <div class="depth-chart">
-          <div v-for="item in depthStats.depthDistribution" :key="item.depth" class="depth-bar-item">
-            <div class="depth-bar" :style="{ height: `${getBarHeight(item.count)}%` }" :title="`${item.depth} 层: ${item.count} 篇`"></div>
+          <div
+            v-for="item in depthStats.depthDistribution"
+            :key="item.depth"
+            class="depth-bar-item"
+          >
+            <div
+              class="depth-bar"
+              :style="{ height: `${getBarHeight(item.count)}%` }"
+              :title="`${item.depth} 层: ${item.count} 篇`"
+            ></div>
             <span class="depth-label">{{ item.depth }}</span>
           </div>
         </div>
@@ -191,20 +299,38 @@
             <Icon icon="mdi:bookmark-outline" />
             全部书签
           </span>
-          <button class="close-btn" @click="closeBookmarkDetail">
+          <button
+            class="close-btn"
+            @click="closeBookmarkDetail"
+          >
             <Icon icon="mdi:close" />
           </button>
         </div>
         <div class="bookmark-detail-body">
-          <div v-if="bookmarkDetailLoading" class="bookmark-detail-loading">
-            <Icon icon="mdi:loading" class="spin-icon" />
+          <div
+            v-if="bookmarkDetailLoading"
+            class="bookmark-detail-loading"
+          >
+            <Icon
+              icon="mdi:loading"
+              class="spin-icon"
+            />
             加载中...
           </div>
-          <div v-else-if="bookmarkDetails.length === 0" class="bookmark-detail-empty">
-            <Icon icon="mdi:bookmark-off-outline" class="empty-icon" />
+          <div
+            v-else-if="bookmarkDetails.length === 0"
+            class="bookmark-detail-empty"
+          >
+            <Icon
+              icon="mdi:bookmark-off-outline"
+              class="empty-icon"
+            />
             <p>暂无书签数据</p>
           </div>
-          <div v-else class="bookmark-detail-list">
+          <div
+            v-else
+            class="bookmark-detail-list"
+          >
             <button
               v-for="item in bookmarkDetails"
               :key="item.value"
@@ -212,10 +338,16 @@
               @click="$emit('select-bookmark', item.value)"
             >
               <div class="bd-item-left">
-                <span class="bd-item-name" :title="item.value">{{ item.value || '(空值)' }}</span>
+                <span
+                  class="bd-item-name"
+                  :title="item.value"
+                >{{ item.value || '(空值)' }}</span>
               </div>
               <span class="bd-item-count">{{ item.count }} 篇</span>
-              <Icon icon="mdi:chevron-right" class="bd-item-arrow" />
+              <Icon
+                icon="mdi:chevron-right"
+                class="bd-item-arrow"
+              />
             </button>
           </div>
         </div>

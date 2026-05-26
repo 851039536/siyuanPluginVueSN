@@ -647,7 +647,7 @@ async function insertCustomIndex(plugin: Plugin) {
   const data = await api.sql(`...`)
 
   // 3. 生成内容
-  let content = '## 新索引\n\n'
+  const content = '## 新索引\n\n'
 
   // 4. 插入/更新
   await insertContent(plugin, content, 'custom-type')

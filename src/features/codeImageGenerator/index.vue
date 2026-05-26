@@ -55,10 +55,10 @@
             :timestamp-label="i18nPanel.enableTimestamp || '显示时间'"
             :border-width-label="i18nPanel.borderWidth || '边框宽度'"
             :border-radius-label="i18nPanel.borderRadius || '圆角大小'"
-            @toggle="showDecorations = !showDecorations"
             :padding-label="i18nPanel.paddingSize || '内边距'"
             :opacity-label="i18nPanel.backgroundOpacity || '背景透明度'"
             :shadow-label="i18nPanel.shadowIntensity || '阴影强度'"
+            @toggle="showDecorations = !showDecorations"
           />
         </template>
       </SettingsSection>

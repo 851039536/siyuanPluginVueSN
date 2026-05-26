@@ -173,7 +173,6 @@ const handleChange = async (value: boolean) => {
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import Label from '@/components/Label.vue'
 import Switch from '@/components/Switch.vue'
 
 const settings = ref({

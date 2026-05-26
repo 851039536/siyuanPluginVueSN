@@ -98,7 +98,10 @@
 
         <!-- 单日详情（date 模式钻取 或 today 模式） -->
         <div v-if="selectedChartDate || docRange === 'today'">
-          <div class="changed-date-picker" v-if="docRange === 'today'">
+          <div
+            v-if="docRange === 'today'"
+            class="changed-date-picker"
+          >
             <input
               type="date"
               :value="docChangeDate"
@@ -115,7 +118,10 @@
             </button>
           </div>
 
-          <div v-if="changedDocsLoading" class="changed-docs-loading">
+          <div
+            v-if="changedDocsLoading"
+            class="changed-docs-loading"
+          >
             {{ i18n.loading || '加载中...' }}
           </div>
 
@@ -123,7 +129,10 @@
             v-else-if="changedDocs.newDocs.length > 0 || changedDocs.modifiedDocs.length > 0"
             class="changed-docs-content"
           >
-            <div v-if="changedDocs.newDocs.length > 0" class="changed-docs-group">
+            <div
+              v-if="changedDocs.newDocs.length > 0"
+              class="changed-docs-group"
+            >
               <div class="changed-docs-group-title">
                 🆕 {{ i18n.todayCreated || '新增' }}（{{ changedDocs.newDocs.length }}）
               </div>
@@ -138,7 +147,10 @@
                 <span class="changed-doc-title">{{ doc.title || '无标题' }}</span>
               </div>
             </div>
-            <div v-if="changedDocs.modifiedDocs.length > 0" class="changed-docs-group">
+            <div
+              v-if="changedDocs.modifiedDocs.length > 0"
+              class="changed-docs-group"
+            >
               <div class="changed-docs-group-title">
                 ✏️ {{ i18n.todayModified || '修改' }}（{{ changedDocs.modifiedDocs.length }}）
               </div>
@@ -154,7 +166,10 @@
               </div>
             </div>
           </div>
-          <div v-else class="changed-docs-empty">
+          <div
+            v-else
+            class="changed-docs-empty"
+          >
             {{ i18n.noDocChanges || '当天无新增或修改' }}
           </div>
         </div>
@@ -238,6 +253,12 @@
 </template>
 
 <script setup lang="ts">
+import type {
+  ChangedDoc,
+  DailyWordCount,
+  RangeStatItem,
+  StatisticsData,
+} from "./types"
 import {
   computed,
   onMounted,
@@ -254,12 +275,6 @@ import TrendView from "./components/TrendView.vue"
 import ViewModeSection from "./components/ViewModeSection.vue"
 import WordRanking from "./components/WordRanking.vue"
 import { padZero } from "./utils"
-import type {
-  ChangedDoc,
-  DailyWordCount,
-  RangeStatItem,
-  StatisticsData,
-} from "./types"
 
 interface Props {
   onRefresh?: (params: {
@@ -331,12 +346,6 @@ interface Props {
   }
 }
 
-function openDoc(docId: string) {
-  if (docId) {
-    window.open(`siyuan://blocks/${docId}`)
-  }
-}
-
 const props = withDefaults(defineProps<Props>(), {
   i18n: () => ({
     loading: "加载中...",
@@ -393,6 +402,12 @@ const props = withDefaults(defineProps<Props>(), {
   }),
 })
 
+function openDoc(docId: string) {
+  if (docId) {
+    window.open(`siyuan://blocks/${docId}`)
+  }
+}
+
 const loading = ref(false)
 const stats = ref<StatisticsData | null>(null)
 const lastUpdateTime = ref("")
@@ -408,18 +423,36 @@ const docChartLoading = ref(false)
 
 // 文档变化按日期查看
 const docChangeDate = ref(getTodayStr())
-const changedDocs = ref<{ newDocs: ChangedDoc[], modifiedDocs: ChangedDoc[] }>({ newDocs: [], modifiedDocs: [] })
+const changedDocs = ref<{ newDocs: ChangedDoc[], modifiedDocs: ChangedDoc[] }>({
+  newDocs: [],
+  modifiedDocs: [],
+})
 const changedDocsLoading = ref(false)
 
 // 范围选择
 type DocRangeType = 'today' | '3d' | '7d' | '1m' | '6m'
 const docRange = ref<DocRangeType>('today')
 const dateRangeOptions = computed<Array<{ value: DocRangeType, label: string }>>(() => [
-  { value: 'today', label: props.i18n.today || '今天' },
-  { value: '3d', label: props.i18n.days3 || '近3天' },
-  { value: '7d', label: props.i18n.days7 || '近7天' },
-  { value: '1m', label: props.i18n.oneMonth || '近1月' },
-  { value: '6m', label: props.i18n.halfYear || '近半年' },
+  {
+    value: 'today',
+    label: props.i18n.today || '今天',
+  },
+  {
+    value: '3d',
+    label: props.i18n.days3 || '近3天',
+  },
+  {
+    value: '7d',
+    label: props.i18n.days7 || '近7天',
+  },
+  {
+    value: '1m',
+    label: props.i18n.oneMonth || '近1月',
+  },
+  {
+    value: '6m',
+    label: props.i18n.halfYear || '近半年',
+  },
 ])
 
 // 范围柱状图数据
@@ -431,11 +464,11 @@ const todayDateStr = computed(() => getTodayStr())
 
 const rangeLabel = computed(() => {
   if (docRange.value === 'today') return formattedDocDate.value
-  return dateRangeOptions.value.find(r => r.value === docRange.value)?.label || ''
+  return dateRangeOptions.value.find((r) => r.value === docRange.value)?.label || ''
 })
 
 const rangeTotalChanges = computed(() =>
-  rangeStats.value.reduce((s, i) => s + i.newCount + i.modifiedCount, 0)
+  rangeStats.value.reduce((s, i) => s + i.newCount + i.modifiedCount, 0),
 )
 
 const formattedDocDate = computed(() => {
@@ -444,7 +477,7 @@ const formattedDocDate = computed(() => {
 })
 
 const changedDocsCount = computed(() =>
-  changedDocs.value.newDocs.length + changedDocs.value.modifiedDocs.length
+  changedDocs.value.newDocs.length + changedDocs.value.modifiedDocs.length,
 )
 
 const maxBarCount = computed(() => {
@@ -475,7 +508,10 @@ function sortByDate(items: RangeStatItem[]) {
 async function switchDocRange(range: DocRangeType) {
   docRange.value = range
   selectedChartDate.value = null
-  changedDocs.value = { newDocs: [], modifiedDocs: [] }
+  changedDocs.value = {
+    newDocs: [],
+    modifiedDocs: [],
+  }
 
   if (range === 'today') {
     loadDateChangedDocs(docChangeDate.value)
@@ -526,7 +562,10 @@ async function loadDateChangedDocs(dateStr: string) {
     changedDocs.value = await props.onGetDateChangedDocs(dateStr)
   } catch (error) {
     console.error("加载文档变化失败:", error)
-    changedDocs.value = { newDocs: [], modifiedDocs: [] }
+    changedDocs.value = {
+      newDocs: [],
+      modifiedDocs: [],
+    }
   } finally {
     changedDocsLoading.value = false
   }

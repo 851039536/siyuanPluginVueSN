@@ -93,7 +93,9 @@
 
       <!-- 搜索引擎选择 -->
       <SettingGroup>
-        <template #label>搜索引擎</template>
+        <template #label>
+          搜索引擎
+        </template>
         <div class="search-provider-options">
           <button
             v-for="opt in searchProviderOptions"
@@ -109,7 +111,9 @@
 
       <!-- 博查 API Key（仅博查搜索时显示） -->
       <SettingGroup v-if="settings.searchProvider === 'bocha'">
-        <template #label>博查 API Key</template>
+        <template #label>
+          博查 API Key
+        </template>
         <TextInput
           :model-value="settings.searchBochaApiKey"
           type="password"
@@ -117,13 +121,19 @@
           @update:model-value="(v: string) => updateSetting('searchBochaApiKey', v)"
         />
         <div class="setting-desc">
-          注册 <a href="https://open.bochaai.com" target="_blank" class="setting-link">博查AI</a> 获取 API Key，免费额度 1000 次/月
+          注册 <a
+            href="https://open.bochaai.com"
+            target="_blank"
+            class="setting-link"
+          >博查AI</a> 获取 API Key，免费额度 1000 次/月
         </div>
       </SettingGroup>
 
       <!-- SearXNG 实例地址（仅 SearXNG 时显示） -->
       <SettingGroup v-if="settings.searchProvider === 'searxng'">
-        <template #label>SearXNG 实例地址</template>
+        <template #label>
+          SearXNG 实例地址
+        </template>
         <TextInput
           :model-value="settings.searchSearxngUrl"
           placeholder="http://localhost:8080"
@@ -150,7 +160,11 @@
         >
           {{ isTestingSearch ? '搜索中...' : '测试联网搜索' }}
         </button>
-        <div v-if="searchTestResult" class="setting-desc search-test-result" :class="{ error: searchTestError }">
+        <div
+          v-if="searchTestResult"
+          class="setting-desc search-test-result"
+          :class="{ error: searchTestError }"
+        >
           {{ searchTestResult }}
         </div>
       </SettingGroup>
@@ -160,11 +174,11 @@
 
 <script setup lang="ts">
 import type { AiSettings } from "../types"
-import { ref } from "vue"
-import { showMessage } from "siyuan"
-import { searchWeb } from "@/utils/webSearch"
 import type { SearchProvider } from "@/types/ai"
+import { showMessage } from "siyuan"
+import { ref } from "vue"
 import Button from "@/components/Button.vue"
+import { searchWeb } from "@/utils/webSearch"
 import AiModelSelect from "./AiModelSelect.vue"
 import AiProviderSelect from "./AiProviderSelect.vue"
 import ApiKeyInput from "./ApiKeyInput.vue"
@@ -197,9 +211,18 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const searchProviderOptions: { value: SearchProvider, label: string }[] = [
-  { value: "jina", label: "Jina（免费）" },
-  { value: "bocha", label: "博查搜索" },
-  { value: "searxng", label: "SearXNG（自建）" },
+  {
+    value: "jina",
+    label: "Jina（免费）",
+  },
+  {
+    value: "bocha",
+    label: "博查搜索",
+  },
+  {
+    value: "searxng",
+    label: "SearXNG（自建）",
+  },
 ]
 
 const isTestingSearch = ref(false)

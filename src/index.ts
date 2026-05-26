@@ -13,8 +13,11 @@ import {
 import {
   clearCachedKey,
   DEFAULT_SETTINGS,
+  loadFeatureFlagsSync,
   loadSettings,
+  saveFeatureFlagsSync,
   saveSettings,
+  setFeatureFlagsDir,
 } from "@/config/settings"
 
 import {
@@ -98,9 +101,16 @@ export default class PluginSample extends Plugin {
       this.isElectron = false
     }
 
-    // 关键：先用默认配置同步注册所有 Dock，
-    // 确保 addDock() 在 onload 同步阶段完成（思源框架不等待异步 onload）
-    this.settings = { ...DEFAULT_SETTINGS }
+    // 关键：初始化功能开关文件持久化目录（必须在 loadFeatureFlagsSync 之前）
+    setFeatureFlagsDir((this as any).dataDir)
+
+    // 同步读取功能开关（优先从文件，跨重启可靠）
+    // 因为 addDock() 必须在 onload 同步阶段完成，不能等异步 loadData
+    const savedFlags = loadFeatureFlagsSync()
+    this.settings = {
+      ...DEFAULT_SETTINGS,
+      ...savedFlags,
+    }
     this.registerFeatures()
 
     // 初始化斜杠命令
@@ -117,6 +127,8 @@ export default class PluginSample extends Plugin {
    */
   private async loadAndApplySettings() {
     this.settings = await loadSettings(this)
+    // 同步回文件缓存，确保下次 onload 同步阶段能读到最新开关
+    saveFeatureFlagsSync(this.settings)
     // 根据真实配置同步紧凑模式 CSS 类
     // （init() 时基于 DEFAULT_SETTINGS.compactMode=true 已添加，
     //   这里需要按真实配置修正）
@@ -170,37 +182,40 @@ export default class PluginSample extends Plugin {
 
   /**
    * 注册所有功能模块（必须同步调用，addDock 需在 onload 同步阶段完成）
-   * 所有功能默认启用，不再通过配置开关控制
+   * 根据 this.settings 中的 enable* 开关决定是否注册各功能
    */
   private registerFeatures() {
+    const s = this.settings
+
     registerSuperPanel(this)
-    registerPageLock(this)
-    registerTableOfContents(this)
-    registerImageCompressor(this)
-    registerDocNavigation(this)
-    registerShortcut(this)
-    registerWordQuery(this)
-    registerGeneralSettings(this)
-    registerUnitConverter(this)
-    registerDiskBrowser(this)
-    registerCodeImageGenerator(this)
-    registerAIContentGenerator(this)
-    registerStatistics(this)
-    registerEncryption(this)
-    registerVideo(this)
-    registerEverythingSearch(this)
-    registerStatusBar(this)
-    registerFloatingToolbar(this)
-    registerFloatingBox(this)
-    registerTextDiff(this)
-    registerBase64Image(this)
-    registerFlashcardReading(this)
-    registerPasswordVault(this)
-    registerDocAnalysis(this)
-    registerFormatAssistant(this)
-    registerHtmlViewer(this)
-    registerResourceManager(this)
-    registerRssReader(this)
+
+    if (s.enablePageLock) registerPageLock(this)
+    if (s.enableTableOfContents) registerTableOfContents(this)
+    if (s.enableImageCompressor) registerImageCompressor(this)
+    if (s.enableDocNavigation) registerDocNavigation(this)
+    if (s.enableShortcuts) registerShortcut(this)
+    if (s.enableWordQuery) registerWordQuery(this)
+    if (s.enableGeneralSettings) registerGeneralSettings(this)
+    if (s.enableUnitConverter) registerUnitConverter(this)
+    if (s.enableDiskBrowser) registerDiskBrowser(this)
+    if (s.enableCodeImageGenerator) registerCodeImageGenerator(this)
+    if (s.enableAIContentGenerator) registerAIContentGenerator(this)
+    if (s.enableStatistics) registerStatistics(this)
+    if (s.enableEncryption) registerEncryption(this)
+    if (s.enableVideo) registerVideo(this)
+    if (s.enableEverythingSearch) registerEverythingSearch(this)
+    if (s.enableStatusBar) registerStatusBar(this)
+    if (s.enableFloatingToolbar) registerFloatingToolbar(this)
+    if (s.enableFloatingBox) registerFloatingBox(this)
+    if (s.enableTextDiff) registerTextDiff(this)
+    if (s.enableBase64Image) registerBase64Image(this)
+    if (s.enableFlashcardReading) registerFlashcardReading(this)
+    if (s.enablePasswordVault) registerPasswordVault(this)
+    if (s.enableDocAnalysis) registerDocAnalysis(this)
+    if (s.enableFormatAssistant) registerFormatAssistant(this)
+    if (s.enableHtmlViewer) registerHtmlViewer(this)
+    if (s.enableResourceManager) registerResourceManager(this)
+    if (s.enableRssReader) registerRssReader(this)
   }
 
   /**

@@ -70,6 +70,7 @@ export interface PluginSettings {
   enableFormatAssistant: boolean // 是否启用排版助手功能
   enableHtmlViewer: boolean // 是否启用HTML展示功能
   enableRssReader: boolean // 是否启用RSS订阅功能
+  enableResourceManager: boolean // 是否启用资源管理功能
   videoCategories?: string[] // 视频分类列表
   compactMode: boolean // 是否启用全局紧洛模式
   statisticsTheme: "default" | "github" // 统计面板主题风格
@@ -122,6 +123,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enableFormatAssistant: true,
   enableHtmlViewer: true,
   enableRssReader: true,
+  enableResourceManager: true,
   videoCategories: ["默认分类", "教程", "演示", "其他"],
   compactMode: true,
   statisticsTheme: "default",
@@ -143,6 +145,126 @@ export const DEFAULT_SETTINGS: PluginSettings = {
  * 配置存储键
  */
 const SETTINGS_KEY = "plugin-settings"
+const FEATURE_FLAGS_FILE = "feature-flags.json"
+
+let _flagsDir: string | null = null
+
+/**
+ * 设置功能开关持久化目录
+ * 必须在 onload 中同步调用一次，后续 save/load 默认写入此目录
+ */
+export function setFeatureFlagsDir(dir: string): void {
+  _flagsDir = dir
+}
+
+/**
+ * 功能 ID → PluginSettings 键名映射
+ * 处理缩写词（如 QR、AI）的特殊大小写
+ */
+const FEATURE_ID_TO_KEY_MAP: Record<string, string> = {
+  qrCode: "enableQRCode",
+  aiContentGenerator: "enableAIContentGenerator",
+}
+
+export function featureIdToSettingKey(featureId: string): string {
+  if (FEATURE_ID_TO_KEY_MAP[featureId]) {
+    return FEATURE_ID_TO_KEY_MAP[featureId]
+  }
+  return `enable${featureId.charAt(0).toUpperCase() + featureId.slice(1)}`
+}
+
+/**
+ * 检查一个 key 是否是 enable* 开关字段
+ */
+function isEnableKey(key: string): boolean {
+  return key.startsWith("enable")
+}
+
+/**
+ * 获取 fs 和 path 模块（Electron 环境可用）
+ */
+function getNodeModules(): { fs: any, path: any } | null {
+  try {
+    const fs = require("node:fs")
+    const path = require("node:path")
+    return {
+      fs,
+      path,
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * 从完整 settings 中提取 enable* 开关并同步持久化
+ * 优先使用 fs.writeFileSync 写入文件，不支持时降级到 localStorage
+ */
+export function saveFeatureFlagsSync(settings: PluginSettings): void {
+  const flags: Record<string, boolean> = {}
+  for (const key of Object.keys(settings) as (keyof PluginSettings)[]) {
+    if (isEnableKey(key)) {
+      flags[key] = settings[key] as boolean
+    }
+  }
+  const json = JSON.stringify(flags)
+
+  // 优先使用文件持久化（跨重启可靠）
+  if (_flagsDir) {
+    const node = getNodeModules()
+    if (node) {
+      try {
+        node.fs.writeFileSync(node.path.join(_flagsDir, FEATURE_FLAGS_FILE), json, "utf-8")
+        return
+      } catch {
+        // 文件写入失败，降级到 localStorage
+      }
+    }
+  }
+
+  // 降级：localStorage
+  try {
+    localStorage.setItem("sn-plugin-feature-flags", json)
+  } catch {
+    // 静默失败
+  }
+}
+
+/**
+ * 同步加载 enable* 开关
+ * 优先从文件读取（跨重启可靠），不支持时降级到 localStorage
+ */
+export function loadFeatureFlagsSync(): Partial<PluginSettings> {
+  // 优先从文件读取
+  if (_flagsDir) {
+    const node = getNodeModules()
+    if (node) {
+      try {
+        const raw = node.fs.readFileSync(node.path.join(_flagsDir, FEATURE_FLAGS_FILE), "utf-8")
+        const flags = JSON.parse(raw)
+        if (flags && typeof flags === "object") {
+          return flags
+        }
+      } catch {
+        // 文件不存在或读取失败，降级到 localStorage
+      }
+    }
+  }
+
+  // 降级：localStorage
+  try {
+    const raw = localStorage.getItem("sn-plugin-feature-flags")
+    if (raw) {
+      const flags = JSON.parse(raw)
+      if (flags && typeof flags === "object") {
+        return flags
+      }
+    }
+  } catch {
+    // 静默失败
+  }
+  return {}
+}
 
 /**
  * 对 settings 中的敏感字段执行加密（保存前调用）
@@ -203,6 +325,7 @@ export async function saveSettings(
   try {
     const encrypted = await encryptSensitiveFields(settings)
     await plugin.saveData(SETTINGS_KEY, encrypted)
+    saveFeatureFlagsSync(settings)
     return true
   } catch (error) {
     console.error("保存配置失败:", error)

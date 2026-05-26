@@ -3,6 +3,8 @@
  * OPML 是 RSS 订阅源交换的标准 XML 格式
  */
 
+import { escapeXml } from "@/utils/stringUtils"
+
 export interface OpmlOutline {
   url: string
   title?: string
@@ -12,7 +14,7 @@ export interface OpmlOutline {
 /**
  * 将订阅源列表导出为 OPML XML 字符串
  */
-export function exportToOpml(feeds: { title: string; url: string; group?: string; siteUrl?: string }[]): string {
+export function exportToOpml(feeds: { title: string, url: string, group?: string, siteUrl?: string }[]): string {
   if (feeds.length === 0) return ""
 
   const outlines = feeds
@@ -30,15 +32,15 @@ export function exportToOpml(feeds: { title: string; url: string; group?: string
     .join("\n")
 
   return (
-    '<?xml version="1.0" encoding="UTF-8"?>\n'
-    + '<opml version="2.0">\n'
-    + "  <head>\n"
-    + "    <title>SiYuan RSS Subscriptions</title>\n"
-    + "  </head>\n"
-    + "  <body>\n"
-    + outlines
-    + "\n  </body>\n"
-    + "</opml>"
+    `<?xml version="1.0" encoding="UTF-8"?>\n`
+    + `<opml version="2.0">\n`
+    + `  <head>\n`
+    + `    <title>SiYuan RSS Subscriptions</title>\n`
+    + `  </head>\n`
+    + `  <body>\n${
+      outlines
+    }\n  </body>\n`
+    + `</opml>`
   )
 }
 
@@ -65,13 +67,4 @@ export function parseOpml(xml: string): OpmlOutline[] {
     }
   })
   return outlines
-}
-
-function escapeXml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;")
 }

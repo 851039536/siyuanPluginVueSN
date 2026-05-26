@@ -12,7 +12,10 @@
         ></span>
         <button
           class="mode-tab"
-          :class="{ active: modelValue === mode.value, 'trend-tab': mode.value === 'trend' }"
+          :class="{
+            'active': modelValue === mode.value,
+            'trend-tab': mode.value === 'trend',
+          }"
           @click="$emit('update:modelValue', mode.value)"
         >
           {{ mode.icon }} {{ mode.label }}
@@ -280,8 +283,7 @@ const periodAvgLabel = computed(() => {
 
 <style scoped lang="scss">
 @use "@/variables" as *;
-@use "../../superPanel/styles/variables" as *;
-@use "../../superPanel/styles/mixins" as *;
+@use "../../superPanel/styles/shared" as *;
 @use "../styles/index.scss" as stats;
 
 .view-mode-section {

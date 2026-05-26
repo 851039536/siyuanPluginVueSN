@@ -1,3 +1,4 @@
+import type { BilibiliTheme } from "../types/storage"
 /**
  * Markdown 转哔哩哔哩专栏格式转换器
  *
@@ -12,7 +13,7 @@
  */
 import hljs from "highlight.js"
 import { marked } from "marked"
-import type { BilibiliTheme } from "../types/storage"
+import { escapeHtml } from "@/utils/stringUtils"
 import { normalizeWidths } from "../../htmlViewer/utils/normalizeWidths"
 
 /**
@@ -108,18 +109,6 @@ const BILIBILI_THEMES: Record<BilibiliTheme, BilibiliThemeColors> = {
     codeBlockHeaderBg: "#e8f5e9",
     codeBlockHeaderColor: "#9499a0",
   },
-}
-
-/**
- * HTML 转义
- */
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;")
 }
 
 /**
@@ -276,7 +265,12 @@ export async function convertMdToBilibili(
     codeHighlight: boolean
   },
 ): Promise<string> {
-  const { theme, fontSize, lineHeight, codeHighlight } = options
+  const {
+    theme,
+    fontSize,
+    lineHeight,
+    codeHighlight,
+  } = options
   const colors = BILIBILI_THEMES[theme]
 
   // 使用 marked.use 配置代码高亮
@@ -284,7 +278,10 @@ export async function convertMdToBilibili(
     breaks: true,
     gfm: true,
     renderer: {
-      code({ text, lang }: { text: string, lang?: string }) {
+      code({
+        text,
+        lang,
+      }: { text: string, lang?: string }) {
         const langAttr = lang ? ` class="language-${lang}"` : ""
         const langLabel = lang
           ? `<div style="font-size: 12px; color: ${colors.codeBlockHeaderColor}; background-color: ${colors.codeBlockHeaderBg}; padding: 6px 12px; border-bottom: 1px solid ${colors.hrColor}; text-transform: uppercase; letter-spacing: 0.5px; border-radius: 8px 8px 0 0;">${lang}</div>`
@@ -321,11 +318,27 @@ export async function convertMdToBilibili(
 /**
  * 获取哔哩哔哩主题列表
  */
-export function getBilibiliThemes(): { value: BilibiliTheme; label: string; color: string }[] {
+export function getBilibiliThemes(): { value: BilibiliTheme, label: string, color: string }[] {
   return [
-    { value: "default", label: "哔哩蓝", color: "#00a1d6" },
-    { value: "pink", label: "少女粉", color: "#fb7299" },
-    { value: "dark", label: "暗夜黑", color: "#333333" },
-    { value: "mint", label: "薄荷绿", color: "#2db84b" },
+    {
+      value: "default",
+      label: "哔哩蓝",
+      color: "#00a1d6",
+    },
+    {
+      value: "pink",
+      label: "少女粉",
+      color: "#fb7299",
+    },
+    {
+      value: "dark",
+      label: "暗夜黑",
+      color: "#333333",
+    },
+    {
+      value: "mint",
+      label: "薄荷绿",
+      color: "#2db84b",
+    },
   ]
 }

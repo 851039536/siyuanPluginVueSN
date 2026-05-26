@@ -5,6 +5,8 @@
  * 参考 GitHub 浅色主题配色方案。
  */
 
+import { escapeHtmlFull } from "@/utils/stringUtils"
+
 // GitHub 浅色主题配色（公众号兼容，白底浅灰代码区）
 const LIGHT_COLORS = {
   background: "#f6f8fa",
@@ -29,22 +31,9 @@ export interface JsonFormatterResult {
   error?: string
 }
 
-const HTML_ESCAPE_MAP: Record<string, string> = {
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  '"': "&quot;",
-  "'": "&#039;",
-  "`": "&#96;",
-}
-
-function escapeHtml(str: string): string {
-  return str.replace(/[&<>"'`]/g, (ch) => HTML_ESCAPE_MAP[ch] || ch)
-}
-
 function wrapToken(text: string, color: string, bold = false): string {
   const fw = bold ? "font-weight: bold;" : ""
-  return `<span style="color: ${color};${fw}">${escapeHtml(text)}</span>`
+  return `<span style="color: ${color};${fw}">${escapeHtmlFull(text)}</span>`
 }
 
 /**

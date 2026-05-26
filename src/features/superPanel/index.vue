@@ -56,6 +56,7 @@ import {
   computed,
   ref,
 } from "vue"
+import { featureIdToSettingKey } from "@/config/settings"
 import { FEATURE_CONFIG } from "@/features/config"
 import AiSettingsPanel from "./components/AiSettingsPanel.vue"
 import FeatureCard from "./components/FeatureCard.vue"
@@ -124,12 +125,9 @@ const features = computed<Feature[]>(() =>
   })),
 )
 
-const toSettingKey = (featureId: string): string =>
-  `enable${featureId.charAt(0).toUpperCase() + featureId.slice(1)}`
-
 const getFeatureEnabled = (featureId: string): boolean => {
   if (featureId === "superPanel") return true
-  const key = toSettingKey(featureId)
+  const key = featureIdToSettingKey(featureId)
   return (props.settings as any)[key] ?? true
 }
 

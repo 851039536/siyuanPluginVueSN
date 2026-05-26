@@ -15,6 +15,7 @@ import {
 
 } from "vue"
 import { FEATURE_ICONS } from "@/config/icons"
+import { featureIdToSettingKey } from "@/config/settings"
 import { emitCustomEvent } from "@/utils/eventBus"
 import { replaceTopBarIcon } from "@/utils/iconHelper"
 import SuperPanelPanel from "../index.vue"
@@ -257,7 +258,7 @@ export class SuperPanelManager {
 
   private async handleToggleFeature(featureId: string, enabled: boolean) {
     const pluginSample = this.plugin as any
-    const settingKey = `enable${featureId.charAt(0).toUpperCase() + featureId.slice(1)}`
+    const settingKey = featureIdToSettingKey(featureId)
 
     const newSettings = {
       ...pluginSample.settings,

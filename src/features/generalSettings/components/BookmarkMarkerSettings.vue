@@ -662,7 +662,7 @@ const handleRefresh = async () => {
       marker.updateOptions({ rules: rules.value })
       showMessage("书签标记已刷新", 2000, "info")
     } else {
-      showMessage("书签标记功能未启动", 2000, "warning")
+      showMessage("书签标记功能未启动", 2000, "info")
     }
   } catch (e) {
     console.error("刷新书签标记失败:", e)

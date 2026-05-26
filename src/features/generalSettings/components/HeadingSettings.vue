@@ -372,13 +372,13 @@
                 :class="`heading-badge-h${level}`"
               >H{{ level }}</span>
               <input
-                v-model="headingColors[`h${level}`]"
+                v-model="headingColors[headingColorKey(level)]"
                 type="color"
                 class="color-picker-mini"
                 @change="onColorChange"
               />
               <input
-                v-model="headingColors[`h${level}`]"
+                v-model="headingColors[headingColorKey(level)]"
                 type="text"
                 class="color-text-mini"
                 @change="onColorChange"
@@ -463,6 +463,10 @@ const defaultTitleColor = "#2C3E50"
 const headingSizes = ref<HeadingSizes>({ ...props.initialFontSizes })
 const titleFontSize = ref(24)
 const storage = ref<GeneralSettingsStorage | null>(null)
+
+const headingColorKey = (level: number): keyof HeadingColors => {
+  return `h${level}` as keyof HeadingColors
+}
 
 // 预设风格
 const styles: Record<string, HeadingColors> = {
@@ -724,7 +728,7 @@ async function loadSettings() {
   try {
     const settings = await storage.value!.loadHeadingOrDefault()
 
-    selectedStyle.value = settings.style || "default"
+    selectedStyle.value = (settings as any).style || "default"
     headingColors.value = {
       ...styles.default,
       ...settings.colors,
@@ -778,7 +782,7 @@ watch(levelDisplayStyle, handleSettingsChange)
 watch(titleCenterAlign, handleSettingsChange)
 
 // 监听标题颜色变化
-watch(titleColor, (newValue) => {
+watch(titleColor, () => {
   if (titleCenterAlign.value) {
     handleSettingsChange()
   } else {

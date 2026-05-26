@@ -439,8 +439,9 @@ export class FloatingToolbar {
 
             /* 单词本词汇选中高亮 */
             body.word-from-notebook .protyle-wysiwyg ::selection {
-                background: rgba(255, 193, 7, 0.35) !important;
+                background: rgba(255, 193, 7, 0.5) !important;
                 color: var(--b3-protyle-color, inherit) !important;
+                text-shadow: 0 0 1px rgba(0, 0, 0, 0.1);
             }
         `
     document.head.appendChild(style)

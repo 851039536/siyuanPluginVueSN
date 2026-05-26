@@ -240,7 +240,7 @@ const updateSetting = (field: keyof AiSettings, value: string | boolean) => {
   })
 }
 
-const handleProviderChange = async (provider: string) => {
+const handleProviderChange = (provider: string) => {
   const defaultModels: Record<string, string> = {
     tongyi: "qwen-plus",
     openai: "gpt-3.5-turbo",

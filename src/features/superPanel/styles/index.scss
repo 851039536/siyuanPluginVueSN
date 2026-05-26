@@ -156,14 +156,14 @@
 
 // ==================== 响应式 ====================
 
-@media (max-width: 768px) {
+@include tablet-only {
   .super-panel-container {
     width: 92vw;
     max-height: 85vh;
   }
 }
 
-@media (max-width: 480px) {
+@include mobile-only {
   .super-panel-container {
     width: 96vw;
     max-height: 90vh;

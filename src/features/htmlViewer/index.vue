@@ -82,7 +82,7 @@
                         variant="ghost"
                         size="small"
                         icon="edit"
-                        title="格式化"
+                        title="格式化HTML"
                         @click="formatHtml"
                       />
                       <Button
@@ -92,6 +92,15 @@
                         title="适配手机宽度"
                         @click="normalizeContentWidths"
                       />
+                      <Button
+                        variant="ghost"
+                        size="small"
+                        :class="{ 'json-btn-active': isJsonFormatted }"
+                        title="格式化JSON（公众号浅色背景）"
+                        @click="formatJsonContent"
+                      >
+                        JSON
+                      </Button>
                     </div>
                   </div>
                   <textarea
@@ -112,6 +121,14 @@
                     <span>预览</span>
                     <div class="panel-actions">
                       <Button
+                        v-if="isJsonFormatted"
+                        variant="ghost"
+                        size="small"
+                        icon="contentCopy"
+                        title="复制格式化JSON HTML"
+                        @click="copyFormattedJsonHtml"
+                      />
+                      <Button
                         variant="ghost"
                         size="small"
                         icon="contentCopy"
@@ -120,12 +137,26 @@
                       />
                     </div>
                   </div>
+                  <div
+                    v-if="isJsonFormatted"
+                    class="json-format-badge"
+                  >
+                    <span class="json-badge-icon">{ }</span>
+                    <span>JSON 格式化 · GitHub浅色主题 · 公众号可用</span>
+                    <Button
+                      variant="ghost"
+                      size="small"
+                      @click="isJsonFormatted = false"
+                    >
+                      还原
+                    </Button>
+                  </div>
                   <div class="html-preview-container">
                     <iframe
                       ref="previewFrame"
                       class="html-preview-iframe"
                       sandbox="allow-scripts allow-same-origin"
-                      :srcdoc="htmlContent"
+                      :srcdoc="previewHtml"
                     ></iframe>
                   </div>
                 </div>
@@ -570,6 +601,7 @@ import { usePlugin } from "@/main"
 import { HtmlViewerStorage } from "./types/storage"
 import CoverGenerator from "./components/CoverGenerator.vue"
 import { normalizeWidths } from "./utils/normalizeWidths"
+import { jsonToHtml, isJsonString } from "./utils/jsonFormatter"
 import html2canvas from "html2canvas"
 
 // Props
@@ -635,6 +667,54 @@ const newCategory = reactive({
   name: "",
   color: "#d97757",
 })
+
+// JSON 格式化状态
+const isJsonFormatted = ref(false)
+
+// 预览HTML（带JSON格式化支持）
+const previewHtml = computed(() => {
+  if (isJsonFormatted.value && htmlContent.value.trim()) {
+    const result = jsonToHtml(htmlContent.value)
+    if (!result.error) {
+      return result.html
+    }
+  }
+  return htmlContent.value
+})
+
+// JSON格式化内容（公众号浅色背景主题）
+function formatJsonContent() {
+  if (!htmlContent.value.trim()) {
+    showMessage("没有可格式化的内容", 2000, "info")
+    return
+  }
+  if (isJsonFormatted.value) {
+    isJsonFormatted.value = false
+    showMessage("已还原为原始内容", 2000, "info")
+    return
+  }
+  if (!isJsonString(htmlContent.value)) {
+    showMessage("内容不是有效的JSON格式", 2000, "error")
+    return
+  }
+  isJsonFormatted.value = true
+  showMessage("JSON 已格式化 · GitHub浅色主题", 2000, "info")
+}
+
+// 复制格式化后的JSON HTML
+async function copyFormattedJsonHtml() {
+  const result = jsonToHtml(htmlContent.value)
+  if (result.error) {
+    showMessage(result.error, 2000, "error")
+    return
+  }
+  try {
+    await navigator.clipboard.writeText(result.html)
+    showMessage("格式化JSON HTML已复制，可直接粘贴到公众号", 2000, "info")
+  } catch {
+    showMessage("复制失败", 2000, "error")
+  }
+}
 
 // AI 封面：从 HTML 内容中提取标题和摘要
 const coverInitialTitle = computed(() => {

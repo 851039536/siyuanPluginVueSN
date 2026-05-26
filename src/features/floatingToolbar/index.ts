@@ -33,6 +33,12 @@ export function registerFloatingToolbar(plugin: Plugin): void {
   if (pluginInstance.settings?.enableTranslate) {
     floatingToolbar.registerAction(createTranslateAction(plugin))
   }
+
+  // 启用热力图标记功能（如果启用）
+  if (pluginInstance.settings?.enableHeatmapMarker) {
+    floatingToolbar.enableHeatmapMarker()
+  }
+
   // 将实例保存到插件对象中，以便在插件卸载时清理资源
   (plugin as any).__floatingToolbar = floatingToolbar
 }

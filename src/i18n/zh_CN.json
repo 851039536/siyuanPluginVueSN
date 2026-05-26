@@ -267,6 +267,12 @@
   "highlightDescription": "双击选中文本自动高亮显示",
   "enableFloatingToolbar": "浮动工具栏功能",
   "floatingToolbarDescription": "选中文字时显示包含多种操作的工具栏",
+  "enableHeatmapMarker": "热力图标记",
+  "heatmapMarkerDescription": "自动标记文档中来自单词本的英文词汇，根据练习次数显示热力渐变",
+  "heatmapMarker": {
+    "title": "热力图标记",
+    "description": "自动标记文档中来自单词本的英文词汇，根据练习次数显示热力渐变"
+  },
   "floatingToolbar": {
     "copy": "复制",
     "qrcode": "生成二维码",
@@ -435,7 +441,9 @@
     "thinkingOff": "已关闭",
     "thinkingDesc": "开启后模型会先进行深度思考再回答，适合复杂推理任务",
     "resourceManager": "资源管理",
-    "resourceManagerDesc": "管理思源笔记资源文件：查看、重命名、插入、清理资源"
+    "resourceManagerDesc": "管理思源笔记资源文件：查看、重命名、插入、清理资源",
+    "heatmapMarker": "热力图标记",
+    "heatmapMarkerDesc": "自动标记文档中来自单词本的英文词汇，根据练习次数显示热力渐变"
   },
   "wordQuery": {
     "title": "单词查询",

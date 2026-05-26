@@ -2,13 +2,13 @@
  * RSS订阅功能 - 数据存储
  */
 import type { Plugin } from "siyuan"
-import { PluginStorage } from "@/utils/pluginStorage"
-import { TypedStorage } from "@/utils/typedStorage"
 import type {
   RssFeed,
   RssItem,
   RssSettings,
 } from "./index"
+import { PluginStorage } from "@/utils/pluginStorage"
+import { TypedStorage } from "@/utils/typedStorage"
 import { DEFAULT_RSS_SETTINGS } from "./index"
 
 export class RssStorage {
@@ -43,6 +43,10 @@ export class RssStorage {
       this.feeds.loadOrDefault(),
       this.items.loadOrDefault(),
     ])
-    return { settings, feeds, items }
+    return {
+      settings,
+      feeds,
+      items,
+    }
   }
 }

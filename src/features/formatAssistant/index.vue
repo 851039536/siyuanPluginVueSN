@@ -3,7 +3,9 @@
     <!-- 顶部工具栏 -->
     <div class="fa-toolbar">
       <div class="toolbar-left">
-        <h3 class="toolbar-title">{{ $t('title') }}</h3>
+        <h3 class="toolbar-title">
+          {{ $t('title') }}
+        </h3>
         <div class="option-group">
           <span class="option-label">{{ $t('target') }}</span>
           <button
@@ -16,7 +18,10 @@
             {{ t.label }}
           </button>
         </div>
-        <div v-if="target === 'wechat'" class="option-group">
+        <div
+          v-if="target === 'wechat'"
+          class="option-group"
+        >
           <span class="option-label">{{ $t('theme') }}</span>
           <div class="theme-selector">
             <button
@@ -35,7 +40,10 @@
             </button>
           </div>
         </div>
-        <div v-if="target === 'bilibili'" class="option-group">
+        <div
+          v-if="target === 'bilibili'"
+          class="option-group"
+        >
           <span class="option-label">{{ $t('theme') }}</span>
           <div class="theme-selector">
             <button
@@ -190,11 +198,24 @@
 
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
-import type { FormatAssistantSettings, BilibiliTheme, WechatTheme } from "./types/storage"
+import type {
+  BilibiliTheme,
+  FormatAssistantSettings,
+  WechatTheme,
+} from "./types/storage"
+import {
+  ref,
+  watch,
+} from "vue"
 import { FormatAssistantStorage } from "./types/storage"
-import { convertMdToBilibili, getBilibiliThemes } from "./utils/mdToBilibili"
-import { convertMdToWechat, getWechatThemes } from "./utils/mdToWechat"
-import { ref, watch } from "vue"
+import {
+  convertMdToBilibili,
+  getBilibiliThemes,
+} from "./utils/mdToBilibili"
+import {
+  convertMdToWechat,
+  getWechatThemes,
+} from "./utils/mdToWechat"
 
 const props = defineProps<{
   onClose?: () => void
@@ -222,8 +243,14 @@ const copyBtnText = ref("复制HTML")
 
 // 选项数据
 const targetOptions = [
-  { value: "wechat" as const, label: "微信公众号" },
-  { value: "bilibili" as const, label: "哔哩哔哩" },
+  {
+    value: "wechat" as const,
+    label: "微信公众号",
+  },
+  {
+    value: "bilibili" as const,
+    label: "哔哩哔哩",
+  },
 ]
 
 const fontSizeOptions = [13, 14, 15, 16, 17, 18]

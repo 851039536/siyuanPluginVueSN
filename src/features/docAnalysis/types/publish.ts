@@ -9,24 +9,24 @@
 
 /** 平台类型枚举 */
 export type PlatformType =
-  | "webhook"       // 通用 Webhook
-  | "github"        // GitHub
-  | "gitlab"        // GitLab
-  | "wordpress"     // WordPress (XMLRPC)
-  | "halo"          // Halo
-  | "hexo"          // Hexo (Git 推送)
-  | "hugo"          // Hugo (Git 推送)
-  | "jekyll"        // Jekyll (Git 推送)
-  | "vuepress"      // VuePress (Git 推送)
-  | "vitepress"     // VitePress (Git 推送)
-  | "csdn"          // CSDN
-  | "zhihu"         // 知乎
-  | "yuque"         // 语雀
-  | "notion"        // Notion
-  | "juejin"        // 掘金
-  | "wechat"        // 微信公众号
-  | "cnblogs"       // 博客园
-  | "custom"        // 自定义平台
+  | "webhook" // 通用 Webhook
+  | "github" // GitHub
+  | "gitlab" // GitLab
+  | "wordpress" // WordPress (XMLRPC)
+  | "halo" // Halo
+  | "hexo" // Hexo (Git 推送)
+  | "hugo" // Hugo (Git 推送)
+  | "jekyll" // Jekyll (Git 推送)
+  | "vuepress" // VuePress (Git 推送)
+  | "vitepress" // VitePress (Git 推送)
+  | "csdn" // CSDN
+  | "zhihu" // 知乎
+  | "yuque" // 语雀
+  | "notion" // Notion
+  | "juejin" // 掘金
+  | "wechat" // 微信公众号
+  | "cnblogs" // 博客园
+  | "custom" // 自定义平台
 
 /** 平台配置 */
 export interface PlatformConfig {

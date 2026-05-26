@@ -84,9 +84,9 @@ import {
   PronunciationDialog,
   QRCodeDialog,
 } from "@/features/floatingToolbar"
+import HtmlViewerDialog from "@/features/htmlViewer/index.vue"
 import ImageViewer from "@/features/imageCompressor/index.vue"
 import PasswordVaultDialog from "@/features/passwordVault/index.vue"
-import HtmlViewerDialog from "@/features/htmlViewer/index.vue"
 import VideoManager from "@/features/video/index.vue"
 import { usePlugin } from "@/main"
 

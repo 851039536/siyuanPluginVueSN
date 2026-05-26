@@ -3,8 +3,14 @@
     <div class="rm-header">
       <span class="rm-header__title">{{ i18n.panelTitle }}</span>
       <div class="rm-header__actions">
-        <button class="rm-btn" @click="refresh">
-          <IconWrapper name="refresh" :size="14" />
+        <button
+          class="rm-btn"
+          @click="refresh"
+        >
+          <IconWrapper
+            name="refresh"
+            :size="14"
+          />
           {{ i18n.refresh }}
         </button>
       </div>
@@ -24,7 +30,10 @@
 
     <div class="rm-content">
       <!-- 图片资源 -->
-      <div v-if="activeTab === 'imageAssets'" class="rm-section">
+      <div
+        v-if="activeTab === 'imageAssets'"
+        class="rm-section"
+      >
         <!-- 模式切换栏 -->
         <div class="rm-filter-bar">
           <button
@@ -50,33 +59,84 @@
           </button>
         </div>
         <!-- 指定文档输入 -->
-        <div v-if="imageMode === 'specifiedDoc'" class="rm-input-row">
+        <div
+          v-if="imageMode === 'specifiedDoc'"
+          class="rm-input-row"
+        >
           <label>{{ i18n.targetDocId }}:</label>
           <input
             v-model="specifiedDocId"
             :placeholder="i18n.docIdPlaceholder"
             @keyup.enter="loadImageAssets"
           />
-          <button class="rm-btn small primary" @click="loadImageAssets">{{ i18n.refresh }}</button>
+          <button
+            class="rm-btn small primary"
+            @click="loadImageAssets"
+          >
+            {{ i18n.refresh }}
+          </button>
         </div>
         <!-- 资源统计 -->
-        <div v-if="!loading && imageAssets.length > 0" class="rm-asset-count">
+        <div
+          v-if="!loading && imageAssets.length > 0"
+          class="rm-asset-count"
+        >
           {{ i18n.assetCount }}: {{ imageAssets.length }}
         </div>
-        <div v-if="loading" class="rm-empty">{{ i18n.loading }}</div>
-        <div v-else-if="imageAssets.length === 0" class="rm-empty">{{ i18n.noAssets }}</div>
-        <ul v-else class="rm-asset-list">
-          <li v-for="path in imageAssets" :key="path" class="rm-asset-item">
+        <div
+          v-if="loading"
+          class="rm-empty"
+        >
+          {{ i18n.loading }}
+        </div>
+        <div
+          v-else-if="imageAssets.length === 0"
+          class="rm-empty"
+        >
+          {{ i18n.noAssets }}
+        </div>
+        <ul
+          v-else
+          class="rm-asset-list"
+        >
+          <li
+            v-for="path in imageAssets"
+            :key="path"
+            class="rm-asset-item"
+          >
             <div class="rm-asset-item__info">
-              <div class="rm-asset-item__name" :title="path">{{ path }}</div>
+              <div
+                class="rm-asset-item__name"
+                :title="path"
+              >
+                {{ path }}
+              </div>
             </div>
             <div class="rm-asset-item__actions">
-              <button class="rm-btn small" @click="copyPathToClipboard(path)">{{ i18n.copyPath }}</button>
-              <button class="rm-btn small" @click="startMoveAsset(path)">{{ i18n.moveAsset }}</button>
-              <button class="rm-btn small danger" @click="handleDeleteAsset(path)">{{ i18n.deleteAsset }}</button>
+              <button
+                class="rm-btn small"
+                @click="copyPathToClipboard(path)"
+              >
+                {{ i18n.copyPath }}
+              </button>
+              <button
+                class="rm-btn small"
+                @click="startMoveAsset(path)"
+              >
+                {{ i18n.moveAsset }}
+              </button>
+              <button
+                class="rm-btn small danger"
+                @click="handleDeleteAsset(path)"
+              >
+                {{ i18n.deleteAsset }}
+              </button>
             </div>
             <!-- 移动表单 -->
-            <div v-if="movingAsset === path" class="rm-move-form">
+            <div
+              v-if="movingAsset === path"
+              class="rm-move-form"
+            >
               <div class="rm-move-form__row">
                 <span class="rm-move-form__label">{{ i18n.currentPath }}:</span>
                 <span class="rm-move-form__path">{{ path }}</span>
@@ -104,10 +164,19 @@
                 </div>
               </div>
               <div class="rm-move-form__actions">
-                <button class="rm-btn small primary" :disabled="!moveNewPath" @click="handleMoveAsset(path)">
+                <button
+                  class="rm-btn small primary"
+                  :disabled="!moveNewPath"
+                  @click="handleMoveAsset(path)"
+                >
                   {{ i18n.confirmMove }}
                 </button>
-                <button class="rm-btn small" @click="cancelMove">{{ i18n.cancel }}</button>
+                <button
+                  class="rm-btn small"
+                  @click="cancelMove"
+                >
+                  {{ i18n.cancel }}
+                </button>
               </div>
             </div>
           </li>
@@ -115,19 +184,50 @@
       </div>
 
       <!-- 丢失资源 -->
-      <div v-if="activeTab === 'missingAssets'" class="rm-section">
-        <div v-if="loading" class="rm-empty">{{ i18n.loading }}</div>
-        <div v-else-if="missingAssets.length === 0" class="rm-empty">{{ i18n.noMissingAssets }}</div>
-        <ul v-else class="rm-asset-list">
-          <li v-for="path in missingAssets" :key="path" class="rm-asset-item">
-            <div class="rm-asset-item__name" :title="path">{{ path }}</div>
+      <div
+        v-if="activeTab === 'missingAssets'"
+        class="rm-section"
+      >
+        <div
+          v-if="loading"
+          class="rm-empty"
+        >
+          {{ i18n.loading }}
+        </div>
+        <div
+          v-else-if="missingAssets.length === 0"
+          class="rm-empty"
+        >
+          {{ i18n.noMissingAssets }}
+        </div>
+        <ul
+          v-else
+          class="rm-asset-list"
+        >
+          <li
+            v-for="path in missingAssets"
+            :key="path"
+            class="rm-asset-item"
+          >
+            <div
+              class="rm-asset-item__name"
+              :title="path"
+            >
+              {{ path }}
+            </div>
           </li>
         </ul>
       </div>
 
       <!-- 未使用资源 -->
-      <div v-if="activeTab === 'unusedAssets'" class="rm-section">
-        <div v-if="unusedAssets.length > 0 && !loading" class="rm-section__actions">
+      <div
+        v-if="activeTab === 'unusedAssets'"
+        class="rm-section"
+      >
+        <div
+          v-if="unusedAssets.length > 0 && !loading"
+          class="rm-section__actions"
+        >
           <button
             class="rm-btn danger small"
             :disabled="unusedAssets.length === 0"
@@ -136,38 +236,91 @@
             {{ i18n.deleteAllUnused }}
           </button>
         </div>
-        <div v-if="loading" class="rm-empty">{{ i18n.loading }}</div>
-        <div v-else-if="unusedAssets.length === 0" class="rm-empty">{{ i18n.noUnusedAssets }}</div>
-        <ul v-else class="rm-asset-list">
-          <li v-for="path in unusedAssets" :key="path" class="rm-asset-item">
+        <div
+          v-if="loading"
+          class="rm-empty"
+        >
+          {{ i18n.loading }}
+        </div>
+        <div
+          v-else-if="unusedAssets.length === 0"
+          class="rm-empty"
+        >
+          {{ i18n.noUnusedAssets }}
+        </div>
+        <ul
+          v-else
+          class="rm-asset-list"
+        >
+          <li
+            v-for="path in unusedAssets"
+            :key="path"
+            class="rm-asset-item"
+          >
             <div class="rm-asset-item__info">
-              <div class="rm-asset-item__name" :title="path">{{ path }}</div>
+              <div
+                class="rm-asset-item__name"
+                :title="path"
+              >
+                {{ path }}
+              </div>
             </div>
             <div class="rm-asset-item__actions">
-              <button class="rm-btn small danger" @click="handleDeleteUnused(path)">{{ i18n.deleteUnused }}</button>
+              <button
+                class="rm-btn small danger"
+                @click="handleDeleteUnused(path)"
+              >
+                {{ i18n.deleteUnused }}
+              </button>
             </div>
           </li>
         </ul>
       </div>
 
       <!-- 重命名资源 -->
-      <div v-if="activeTab === 'renameAsset'" class="rm-section">
-        <div class="rm-section__title">{{ i18n.renameAsset }}</div>
+      <div
+        v-if="activeTab === 'renameAsset'"
+        class="rm-section"
+      >
+        <div class="rm-section__title">
+          {{ i18n.renameAsset }}
+        </div>
         <div class="rm-input-row">
           <label>{{ i18n.assetPath }}:</label>
-          <input v-model="renameForm.oldPath" :placeholder="'assets/xxx.png'" />
+          <input
+            v-model="renameForm.oldPath"
+            placeholder="assets/xxx.png"
+          />
         </div>
         <div class="rm-input-row">
           <label>{{ i18n.newPath }}:</label>
-          <input v-model="renameForm.newPath" :placeholder="'assets/yyy.png'" />
+          <input
+            v-model="renameForm.newPath"
+            placeholder="assets/yyy.png"
+          />
         </div>
-        <button class="rm-btn primary" @click="handleRenameAsset">{{ i18n.renameAsset }}</button>
-        <div v-if="renameResult" class="rm-result">{{ renameResult }}</div>
+        <button
+          class="rm-btn primary"
+          @click="handleRenameAsset"
+        >
+          {{ i18n.renameAsset }}
+        </button>
+        <div
+          v-if="renameResult"
+          class="rm-result"
+        >
+          {{ renameResult }}
+        </div>
       </div>
 
       <!-- 上传本地资源 -->
-      <div v-if="activeTab === 'insertLocalAssets'" class="rm-section">
-        <div class="rm-section__title">{{ i18n.insertLocalAssets }}</div>
+      <div
+        v-if="activeTab === 'insertLocalAssets'"
+        class="rm-section"
+      >
+        <div class="rm-section__title">
+          {{ i18n.insertLocalAssets }}
+        </div>
         <div class="rm-input-row">
           <label>{{ i18n.selectFiles }}:</label>
           <input
@@ -178,30 +331,75 @@
         </div>
         <div class="rm-input-row">
           <label>{{ i18n.targetDocId }}:</label>
-          <input v-model="insertForm.targetId" placeholder="20231027130500-xxxx（可选，上传后自动插入文档）" />
+          <input
+            v-model="insertForm.targetId"
+            placeholder="20231027130500-xxxx（可选，上传后自动插入文档）"
+          />
         </div>
-        <button class="rm-btn primary" :disabled="insertForm.selectedFiles.length === 0" @click="handleInsertAssets">
+        <button
+          class="rm-btn primary"
+          :disabled="insertForm.selectedFiles.length === 0"
+          @click="handleInsertAssets"
+        >
           {{ i18n.insertLocalAssets }}
         </button>
-        <div v-if="insertResult" class="rm-result">{{ insertResult }}</div>
+        <div
+          v-if="insertResult"
+          class="rm-result"
+        >
+          {{ insertResult }}
+        </div>
       </div>
 
       <!-- 解析路径 -->
-      <div v-if="activeTab === 'resolvePath'" class="rm-section">
-        <div class="rm-section__title">{{ i18n.resolvePath }}</div>
+      <div
+        v-if="activeTab === 'resolvePath'"
+        class="rm-section"
+      >
+        <div class="rm-section__title">
+          {{ i18n.resolvePath }}
+        </div>
         <div class="rm-input-row">
           <label>{{ i18n.assetPath }}:</label>
-          <input v-model="resolvePathInput" :placeholder="'assets/xxx.png'" />
+          <input
+            v-model="resolvePathInput"
+            placeholder="assets/xxx.png"
+          />
         </div>
-        <button class="rm-btn primary" @click="handleResolvePath">{{ i18n.resolvePath }}</button>
-        <div v-if="resolvePathResult" class="rm-result">{{ resolvePathResult }}</div>
+        <button
+          class="rm-btn primary"
+          @click="handleResolvePath"
+        >
+          {{ i18n.resolvePath }}
+        </button>
+        <div
+          v-if="resolvePathResult"
+          class="rm-result"
+        >
+          {{ resolvePathResult }}
+        </div>
       </div>
 
       <!-- 重建索引 -->
-      <div v-if="activeTab === 'rebuildIndex'" class="rm-section">
-        <div class="rm-section__title">{{ i18n.rebuildIndex }}</div>
-        <button class="rm-btn primary" @click="handleRebuildIndex">{{ i18n.rebuildIndex }}</button>
-        <div v-if="rebuildResult" class="rm-result">{{ rebuildResult }}</div>
+      <div
+        v-if="activeTab === 'rebuildIndex'"
+        class="rm-section"
+      >
+        <div class="rm-section__title">
+          {{ i18n.rebuildIndex }}
+        </div>
+        <button
+          class="rm-btn primary"
+          @click="handleRebuildIndex"
+        >
+          {{ i18n.rebuildIndex }}
+        </button>
+        <div
+          v-if="rebuildResult"
+          class="rm-result"
+        >
+          {{ rebuildResult }}
+        </div>
       </div>
     </div>
   </div>
@@ -210,7 +408,13 @@
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
 import type { ResourceManagerI18n } from "./types"
-import IconWrapper from "@/components/IconWrapper.vue"
+import { showMessage } from "siyuan"
+import {
+  onMounted,
+  onUnmounted,
+  ref,
+  watch,
+} from "vue"
 import {
   appendBlock,
   fullReindexAssetContent,
@@ -225,8 +429,7 @@ import {
   sql,
   upload,
 } from "@/api"
-import { showMessage } from "siyuan"
-import { onMounted, onUnmounted, ref, watch } from "vue"
+import IconWrapper from "@/components/IconWrapper.vue"
 
 interface Props {
   i18n: ResourceManagerI18n
@@ -251,7 +454,10 @@ const moveNewPath = ref("")
 const quickCategories = ["图片", "截图", "图标", "背景", "头像", "其他"]
 
 // 重命名表单
-const renameForm = ref({ oldPath: "", newPath: "" })
+const renameForm = ref({
+  oldPath: "",
+  newPath: "",
+})
 const renameResult = ref("")
 
 // 插入资源表单
@@ -269,13 +475,34 @@ const resolvePathResult = ref("")
 const rebuildResult = ref("")
 
 const tabs = [
-  { key: "imageAssets", label: props.i18n.imageAssets || "图片资源" },
-  { key: "missingAssets", label: props.i18n.missingAssets || "丢失资源" },
-  { key: "unusedAssets", label: props.i18n.unusedAssets || "未使用资源" },
-  { key: "renameAsset", label: props.i18n.renameAsset || "重命名" },
-  { key: "insertLocalAssets", label: props.i18n.insertLocalAssets || "插入资源" },
-  { key: "resolvePath", label: props.i18n.resolvePath || "解析路径" },
-  { key: "rebuildIndex", label: props.i18n.rebuildIndex || "重建索引" },
+  {
+    key: "imageAssets",
+    label: props.i18n.imageAssets || "图片资源",
+  },
+  {
+    key: "missingAssets",
+    label: props.i18n.missingAssets || "丢失资源",
+  },
+  {
+    key: "unusedAssets",
+    label: props.i18n.unusedAssets || "未使用资源",
+  },
+  {
+    key: "renameAsset",
+    label: props.i18n.renameAsset || "重命名",
+  },
+  {
+    key: "insertLocalAssets",
+    label: props.i18n.insertLocalAssets || "插入资源",
+  },
+  {
+    key: "resolvePath",
+    label: props.i18n.resolvePath || "解析路径",
+  },
+  {
+    key: "rebuildIndex",
+    label: props.i18n.rebuildIndex || "重建索引",
+  },
 ]
 
 // 从 protyle 事件中缓存当前文档 ID（解决面板聚焦时无法获取当前文档的问题）

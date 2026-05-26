@@ -4,23 +4,45 @@
     <div class="automation-list">
       <div class="list-header">
         <span class="list-title">自动化任务</span>
-        <button class="add-task-btn" @click="openEditor(null)">
-          <svg width="14" height="14" viewBox="0 0 24 24"><use xlink:href="#iconAdd" /></svg>
+        <button
+          class="add-task-btn"
+          @click="openEditor(null)"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+          ><use xlink:href="#iconAdd" /></svg>
           <span>新建任务</span>
         </button>
       </div>
 
       <!-- 空状态 -->
-      <div v-if="tasks.length === 0" class="empty-state">
-        <svg width="40" height="40" viewBox="0 0 24 24" class="empty-icon">
+      <div
+        v-if="tasks.length === 0"
+        class="empty-state"
+      >
+        <svg
+          width="40"
+          height="40"
+          viewBox="0 0 24 24"
+          class="empty-icon"
+        >
           <use xlink:href="#iconRefresh" />
         </svg>
-        <p class="empty-text">暂无自动化任务</p>
-        <p class="empty-hint">点击上方「新建任务」创建定时执行的 AI 任务</p>
+        <p class="empty-text">
+          暂无自动化任务
+        </p>
+        <p class="empty-hint">
+          点击上方「新建任务」创建定时执行的 AI 任务
+        </p>
       </div>
 
       <!-- 任务卡片列表 -->
-      <div v-else class="task-cards">
+      <div
+        v-else
+        class="task-cards"
+      >
         <div
           v-for="task in tasks"
           :key="task.id"
@@ -31,27 +53,66 @@
             <div class="task-card-info">
               <span class="task-name">{{ task.name }}</span>
               <span class="task-frequency-badge">{{ frequencyLabel(task) }}</span>
-              <span v-if="task.webSearch" class="task-websearch-badge">RAG联网</span>
+              <span
+                v-if="task.webSearch"
+                class="task-websearch-badge"
+              >RAG联网</span>
             </div>
-            <Switch v-model="task.enabled" size="small" @change="saveTasksToStorage" />
+            <Switch
+              v-model="task.enabled"
+              size="small"
+              @change="saveTasksToStorage"
+            />
           </div>
           <div class="task-card-body">
-            <p class="task-prompt-preview">{{ task.prompt }}</p>
+            <p class="task-prompt-preview">
+              {{ task.prompt }}
+            </p>
           </div>
           <div class="task-card-footer">
-            <span v-if="task.lastExecutedAt" class="task-last-run">
+            <span
+              v-if="task.lastExecutedAt"
+              class="task-last-run"
+            >
               上次执行: {{ formatTime(task.lastExecutedAt) }}
             </span>
-            <span v-else class="task-last-run never">未执行</span>
+            <span
+              v-else
+              class="task-last-run never"
+            >未执行</span>
             <div class="task-actions">
-              <button class="task-action-btn" title="立即执行" @click="runTaskNow(task)">
-                <svg width="14" height="14" viewBox="0 0 24 24"><use xlink:href="#iconRefresh" /></svg>
+              <button
+                class="task-action-btn"
+                title="立即执行"
+                @click="runTaskNow(task)"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                ><use xlink:href="#iconRefresh" /></svg>
               </button>
-              <button class="task-action-btn" title="编辑" @click="openEditor(task)">
-                <svg width="14" height="14" viewBox="0 0 24 24"><use xlink:href="#iconEdit" /></svg>
+              <button
+                class="task-action-btn"
+                title="编辑"
+                @click="openEditor(task)"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                ><use xlink:href="#iconEdit" /></svg>
               </button>
-              <button class="task-action-btn danger" title="删除" @click="deleteTask(task)">
-                <svg width="14" height="14" viewBox="0 0 24 24"><use xlink:href="#iconTrashcan" /></svg>
+              <button
+                class="task-action-btn danger"
+                title="删除"
+                @click="deleteTask(task)"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                ><use xlink:href="#iconTrashcan" /></svg>
               </button>
             </div>
           </div>
@@ -61,12 +122,23 @@
 
     <!-- 编辑/新建弹窗 -->
     <Teleport to="body">
-      <div v-if="showEditor" class="automation-modal-overlay" @click.self="closeEditor">
+      <div
+        v-if="showEditor"
+        class="automation-modal-overlay"
+        @click.self="closeEditor"
+      >
         <div class="automation-modal">
           <div class="modal-header">
             <span class="modal-title">{{ editingTask ? '编辑任务' : '新建自动化任务' }}</span>
-            <button class="modal-close-btn" @click="closeEditor">
-              <svg width="16" height="16" viewBox="0 0 24 24"><use xlink:href="#iconClose" /></svg>
+            <button
+              class="modal-close-btn"
+              @click="closeEditor"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+              ><use xlink:href="#iconClose" /></svg>
             </button>
           </div>
 
@@ -120,7 +192,10 @@
             </div>
 
             <!-- 频率相关参数 -->
-            <div v-if="form.frequency === 'hourly'" class="form-group">
+            <div
+              v-if="form.frequency === 'hourly'"
+              class="form-group"
+            >
               <label class="form-label">间隔时间（分钟）</label>
               <input
                 v-model.number="form.intervalMinutes"
@@ -132,7 +207,10 @@
               />
             </div>
 
-            <div v-if="form.frequency === 'daily'" class="form-group">
+            <div
+              v-if="form.frequency === 'daily'"
+              class="form-group"
+            >
               <label class="form-label">执行时间</label>
               <input
                 v-model="form.executeTime"
@@ -141,17 +219,37 @@
               />
             </div>
 
-            <div v-if="form.frequency === 'weekly'" class="form-row">
+            <div
+              v-if="form.frequency === 'weekly'"
+              class="form-row"
+            >
               <div class="form-group flex-1">
                 <label class="form-label">执行日</label>
-                <select v-model.number="form.weekDay" class="form-select">
-                  <option :value="0">周日</option>
-                  <option :value="1">周一</option>
-                  <option :value="2">周二</option>
-                  <option :value="3">周三</option>
-                  <option :value="4">周四</option>
-                  <option :value="5">周五</option>
-                  <option :value="6">周六</option>
+                <select
+                  v-model.number="form.weekDay"
+                  class="form-select"
+                >
+                  <option :value="0">
+                    周日
+                  </option>
+                  <option :value="1">
+                    周一
+                  </option>
+                  <option :value="2">
+                    周二
+                  </option>
+                  <option :value="3">
+                    周三
+                  </option>
+                  <option :value="4">
+                    周四
+                  </option>
+                  <option :value="5">
+                    周五
+                  </option>
+                  <option :value="6">
+                    周六
+                  </option>
                 </select>
               </div>
               <div class="form-group flex-1">
@@ -164,7 +262,10 @@
               </div>
             </div>
 
-            <div v-if="form.frequency === 'monthly'" class="form-row">
+            <div
+              v-if="form.frequency === 'monthly'"
+              class="form-row"
+            >
               <div class="form-group flex-1">
                 <label class="form-label">每月几号</label>
                 <input
@@ -186,7 +287,10 @@
               </div>
             </div>
 
-            <div v-if="form.frequency === 'custom'" class="form-group">
+            <div
+              v-if="form.frequency === 'custom'"
+              class="form-group"
+            >
               <label class="form-label">Cron 表达式</label>
               <input
                 v-model="form.customCron"
@@ -198,7 +302,9 @@
 
             <!-- 高级参数 -->
             <details class="advanced-section">
-              <summary class="advanced-toggle">高级参数</summary>
+              <summary class="advanced-toggle">
+                高级参数
+              </summary>
               <div class="advanced-body">
                 <div class="form-row">
                   <div class="form-group flex-1">
@@ -234,15 +340,26 @@
                 </div>
                 <div class="form-group form-row-inline">
                   <label class="form-label">联网搜索（RAG 先搜后答，所有模型通用）</label>
-                  <Switch v-model="form.webSearch" size="small" />
+                  <Switch
+                    v-model="form.webSearch"
+                    size="small"
+                  />
                 </div>
               </div>
             </details>
           </div>
 
           <div class="modal-footer">
-            <button class="modal-btn cancel" @click="closeEditor">取消</button>
-            <button class="modal-btn confirm" @click="saveTask">
+            <button
+              class="modal-btn cancel"
+              @click="closeEditor"
+            >
+              取消
+            </button>
+            <button
+              class="modal-btn confirm"
+              @click="saveTask"
+            >
               {{ editingTask ? '保存' : '创建' }}
             </button>
           </div>
@@ -250,25 +367,48 @@
       </div>
 
       <!-- 执行结果弹窗 -->
-      <div v-if="showResult" class="automation-modal-overlay" @click.self="closeResult">
+      <div
+        v-if="showResult"
+        class="automation-modal-overlay"
+        @click.self="closeResult"
+      >
         <div class="automation-modal result-modal">
           <div class="modal-header">
             <span class="modal-title">执行结果: {{ resultTaskName }}</span>
-            <button class="modal-close-btn" @click="closeResult">
-              <svg width="16" height="16" viewBox="0 0 24 24"><use xlink:href="#iconClose" /></svg>
+            <button
+              class="modal-close-btn"
+              @click="closeResult"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+              ><use xlink:href="#iconClose" /></svg>
             </button>
           </div>
           <div class="modal-body">
             <!-- 加载中 -->
-            <div v-if="isRunning" class="result-loading">
+            <div
+              v-if="isRunning"
+              class="result-loading"
+            >
               <div class="loading-spinner-small"></div>
               <span>正在生成中...</span>
             </div>
             <!-- 结果内容 -->
-            <div v-else class="result-content markdown-preview" v-html="renderedResult"></div>
+            <div
+              v-else
+              class="result-content markdown-preview"
+              v-html="renderedResult"
+            ></div>
           </div>
           <div class="modal-footer">
-            <button class="modal-btn cancel" @click="closeResult">关闭</button>
+            <button
+              class="modal-btn cancel"
+              @click="closeResult"
+            >
+              关闭
+            </button>
             <button
               v-if="resultContent && !isRunning"
               class="modal-btn confirm"
@@ -284,13 +424,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue"
+import type {
+  AutomationFrequency,
+  AutomationTask,
+  GenerateOptions,
+} from "@/types/ai"
 import { showMessage } from "siyuan"
-import type { AutomationTask, AutomationFrequency, GenerateOptions } from "@/types/ai"
-import { AIGeneratorStorage } from "../types/storage"
-import { renderMarkdown } from "../utils"
+import {
+  computed,
+  onMounted,
+  ref,
+} from "vue"
 import * as api from "@/api"
 import Switch from "@/components/Switch.vue"
+import { AIGeneratorStorage } from "../types/storage"
+import { renderMarkdown } from "../utils"
 
 interface Props {
   plugin: any
@@ -313,12 +461,27 @@ const isRunning = ref(false)
 
 const renderedResult = computed(() => renderMarkdown(resultContent.value))
 
-const frequencyOptions: { value: AutomationFrequency; label: string }[] = [
-  { value: "hourly", label: "每小时" },
-  { value: "daily", label: "每天" },
-  { value: "weekly", label: "每周" },
-  { value: "monthly", label: "每月" },
-  { value: "custom", label: "自定义" },
+const frequencyOptions: { value: AutomationFrequency, label: string }[] = [
+  {
+    value: "hourly",
+    label: "每小时",
+  },
+  {
+    value: "daily",
+    label: "每天",
+  },
+  {
+    value: "weekly",
+    label: "每周",
+  },
+  {
+    value: "monthly",
+    label: "每月",
+  },
+  {
+    value: "custom",
+    label: "自定义",
+  },
 ]
 
 const defaultForm = (): Omit<AutomationTask, "id" | "createdAt"> => ({
@@ -359,7 +522,12 @@ const formatTime = (ts: number): string => {
 const openEditor = (task: AutomationTask | null) => {
   editingTask.value = task
   form.value = task
-    ? { ...defaultForm(), ...task, customCron: task.customCron ?? "", targetDocId: task.targetDocId ?? "" }
+    ? {
+        ...defaultForm(),
+        ...task,
+        customCron: task.customCron ?? "",
+        targetDocId: task.targetDocId ?? "",
+      }
     : defaultForm()
   showEditor.value = true
 }
@@ -388,7 +556,10 @@ const saveTask = async () => {
   if (editingTask.value) {
     const idx = tasks.value.findIndex((t: AutomationTask) => t.id === editingTask.value!.id)
     if (idx !== -1) {
-      tasks.value[idx] = { ...editingTask.value, ...taskData }
+      tasks.value[idx] = {
+        ...editingTask.value,
+        ...taskData,
+      }
     }
   } else {
     const newTask: AutomationTask = {
@@ -446,7 +617,7 @@ const runTaskNow = async (task: AutomationTask) => {
   } catch (error) {
     console.error("执行任务失败:", error)
     resultContent.value = `执行失败: ${(error as Error).message}`
-    showMessage("执行任务失败: " + (error as Error).message, 3000, "error")
+    showMessage(`执行任务失败: ${(error as Error).message}`, 3000, "error")
   } finally {
     isRunning.value = false
   }
@@ -474,7 +645,7 @@ const writeResultToDoc = async (docId: string, content: string, taskName: string
     showMessage(`已在目标文档下创建子文档「${docName}」`, 2000, "info")
   } catch (error) {
     console.error("写入文档失败:", error)
-    showMessage("写入文档失败: " + (error as Error).message, 3000, "error")
+    showMessage(`写入文档失败: ${(error as Error).message}`, 3000, "error")
   }
 }
 

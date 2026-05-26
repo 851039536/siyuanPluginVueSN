@@ -22,7 +22,7 @@ import {
 } from "./utils/helpers"
 
 let storage: PageLockStorage | null = null
-let currentUnlockedDocs: Set<string> = new Set()
+const currentUnlockedDocs: Set<string> = new Set()
 
 export async function updatePageLockButton(plugin: Plugin, protyle: any) {
   const docId = protyle?.block?.rootID

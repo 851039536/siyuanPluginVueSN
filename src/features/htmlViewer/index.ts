@@ -7,7 +7,10 @@
  * 2. 块引用上右键 → "HTML展示"
  * 3. HTML片段的增删改查
  */
-import { Plugin, showMessage } from "siyuan"
+import {
+  Plugin,
+  showMessage,
+} from "siyuan"
 import { emitCustomEvent } from "@/utils/eventBus"
 
 export class HtmlViewer {

@@ -236,7 +236,10 @@
               v-for="r in publishResult.results"
               :key="r.platformId"
               class="result-item"
-              :class="{ success: r.success, error: !r.success }"
+              :class="{
+                success: r.success,
+                error: !r.success,
+              }"
             >
               <Icon :icon="r.success ? 'mdi:check-circle' : 'mdi:close-circle'" />
               <span class="result-platform">{{ r.platformName }}</span>
@@ -274,18 +277,21 @@
         v-if="activeTab === 'history'"
         class="history-tab-content"
       >
-        <PublishHistory :doc-id="docId" :plugin="plugin" />
+        <PublishHistory
+          :doc-id="docId"
+          :plugin="plugin"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { Plugin } from "siyuan"
 import type {
   PlatformConfig as PublishPlatformConfig,
   PublishResult,
 } from "../types/publish"
-import type { Plugin } from "siyuan"
 import { Icon } from "@iconify/vue"
 import {
   computed,
@@ -332,8 +338,8 @@ const tagsStr = ref("")
 const categoriesStr = ref("")
 const publishResult = ref<PublishResult | null>(null)
 
-const enabledPlatforms = computed(() => platforms.value.filter(p => p.enabled))
-const hasPublishError = computed(() => publishResult.value?.results.some(r => !r.success) ?? false)
+const enabledPlatforms = computed(() => platforms.value.filter((p) => p.enabled))
+const hasPublishError = computed(() => publishResult.value?.results.some((r) => !r.success) ?? false)
 
 // 面板打开时加载配置
 watch(() => props.visible, async (val) => {
@@ -366,13 +372,13 @@ async function handlePublish() {
     platformIds: selectedPlatforms.value,
     customTitle: customTitle.value || undefined,
     customSummary: customSummary.value || undefined,
-    tags: tagsStr.value ? tagsStr.value.split(",").map(t => t.trim()).filter(Boolean) : undefined,
-    categories: categoriesStr.value ? categoriesStr.value.split(",").map(c => c.trim()).filter(Boolean) : undefined,
+    tags: tagsStr.value ? tagsStr.value.split(",").map((t) => t.trim()).filter(Boolean) : undefined,
+    categories: categoriesStr.value ? categoriesStr.value.split(",").map((c) => c.trim()).filter(Boolean) : undefined,
     asDraft: publishAsDraft.value,
     format: publishFormat.value,
   })
 
-  if (autoMarkPublished.value && publishResult.value?.results.some(r => r.success)) {
+  if (autoMarkPublished.value && publishResult.value?.results.some((r) => r.success)) {
     await markAsPublished([props.docId])
   }
 

@@ -2,21 +2,27 @@
  * RSS订阅功能 - 核心逻辑组合式函数
  */
 import type { Plugin } from "siyuan"
-import { showMessage } from "siyuan"
-import {
-  computed,
-  ref,
-} from "vue"
 import type {
   RssFeed,
   RssItem,
   RssLoadingStatus,
   RssSettings,
 } from "../types"
+import { showMessage } from "siyuan"
+import {
+  computed,
+  ref,
+} from "vue"
 import { DEFAULT_RSS_SETTINGS } from "../types"
 import { RssStorage } from "../types/storage"
-import { generateId, parseRssXml } from "../utils/parser"
-import { exportToOpml, parseOpml } from "../utils/opml"
+import {
+  exportToOpml,
+  parseOpml,
+} from "../utils/opml"
+import {
+  generateId,
+  parseRssXml,
+} from "../utils/parser"
 
 export function useRssReader(plugin: Plugin) {
   // ========== 存储 ==========
@@ -64,7 +70,7 @@ export function useRssReader(plugin: Plugin) {
       map.get(group)!.push(feed)
     }
 
-    const result: Array<{ group: string; label: string; feeds: RssFeed[] }> = []
+    const result: Array<{ group: string, label: string, feeds: RssFeed[] }> = []
     // 有分组名称的排前面
     const sortedKeys = Array.from(map.keys()).sort((a, b) => {
       if (!a) return 1
@@ -88,22 +94,22 @@ export function useRssReader(plugin: Plugin) {
 
     // 按订阅源过滤
     if (currentFeedFilter.value !== "all") {
-      result = result.filter(i => i.feedId === currentFeedFilter.value)
+      result = result.filter((i) => i.feedId === currentFeedFilter.value)
     }
 
     // 按分组过滤
     if (currentGroupFilter.value !== "all") {
       const feedIdsInGroup = feeds.value
-        .filter(f => f.group === currentGroupFilter.value)
-        .map(f => f.id)
-      result = result.filter(i => feedIdsInGroup.includes(i.feedId))
+        .filter((f) => f.group === currentGroupFilter.value)
+        .map((f) => f.id)
+      result = result.filter((i) => feedIdsInGroup.includes(i.feedId))
     }
 
     // 搜索关键词
     if (searchKeyword.value) {
       const kw = searchKeyword.value.toLowerCase()
       result = result.filter(
-        i =>
+        (i) =>
           i.title?.toLowerCase().includes(kw)
           || i.description?.toLowerCase().includes(kw),
       )
@@ -111,12 +117,12 @@ export function useRssReader(plugin: Plugin) {
 
     // 仅收藏
     if (showStarredOnly.value) {
-      result = result.filter(i => i.starred)
+      result = result.filter((i) => i.starred)
     }
 
     // 仅未读
     if (showUnreadOnly.value) {
-      result = result.filter(i => !i.read)
+      result = result.filter((i) => !i.read)
     }
 
     // 排序
@@ -134,7 +140,7 @@ export function useRssReader(plugin: Plugin) {
   /** 未读数统计 */
   const unreadCount = computed(() => {
     const arr = Array.isArray(items.value) ? items.value : []
-    return arr.filter(i => !i.read).length
+    return arr.filter((i) => !i.read).length
   })
 
   /** 每个订阅源的未读数 */
@@ -180,7 +186,7 @@ export function useRssReader(plugin: Plugin) {
     }
 
     // 检查重复
-    if (feeds.value.some(f => f.url === url)) {
+    if (feeds.value.some((f) => f.url === url)) {
       showMessage("该订阅源已存在", 3000, "error")
       return false
     }
@@ -189,7 +195,10 @@ export function useRssReader(plugin: Plugin) {
 
     try {
       const response = await fetchRss(url)
-      const { feed: feedInfo, items: parsedItems } = parseRssXml(response, url)
+      const {
+        feed: feedInfo,
+        items: parsedItems,
+      } = parseRssXml(response, url)
 
       const newFeed: RssFeed = {
         id: generateId(),
@@ -204,7 +213,7 @@ export function useRssReader(plugin: Plugin) {
         enabled: true,
       }
 
-      const newItems: RssItem[] = parsedItems.map(pi => ({
+      const newItems: RssItem[] = parsedItems.map((pi) => ({
         title: pi.title || "无标题",
         link: pi.link || "",
         description: pi.description,
@@ -237,8 +246,8 @@ export function useRssReader(plugin: Plugin) {
    * 删除订阅源
    */
   async function removeFeed(feedId: string) {
-    feeds.value = Array.isArray(feeds.value) ? feeds.value.filter(f => f.id !== feedId) : []
-    items.value = Array.isArray(items.value) ? items.value.filter(i => i.feedId !== feedId) : []
+    feeds.value = Array.isArray(feeds.value) ? feeds.value.filter((f) => f.id !== feedId) : []
+    items.value = Array.isArray(items.value) ? items.value.filter((i) => i.feedId !== feedId) : []
 
     if (currentFeedFilter.value === feedId) {
       currentFeedFilter.value = "all"
@@ -252,14 +261,17 @@ export function useRssReader(plugin: Plugin) {
    * 刷新单个订阅源
    */
   async function refreshFeed(feedId: string) {
-    const feed = feeds.value.find(f => f.id === feedId)
+    const feed = feeds.value.find((f) => f.id === feedId)
     if (!feed) return
 
     refreshingFeedIds.value.add(feedId)
 
     try {
       const response = await fetchRss(feed.url)
-      const { feed: feedInfo, items: parsedItems } = parseRssXml(response, feed.url)
+      const {
+        feed: feedInfo,
+        items: parsedItems,
+      } = parseRssXml(response, feed.url)
 
       // 更新订阅源信息
       if (feedInfo.title) feed.title = feedInfo.title
@@ -271,7 +283,7 @@ export function useRssReader(plugin: Plugin) {
       // 合并新文章（通过链接去重）
       const existingLinks = new Set(
         Array.isArray(items.value)
-          ? items.value.filter(i => i.feedId === feedId).map(i => i.link)
+          ? items.value.filter((i) => i.feedId === feedId).map((i) => i.link)
           : [],
       )
 
@@ -320,7 +332,7 @@ export function useRssReader(plugin: Plugin) {
    */
   async function refreshAllFeeds() {
     loadingStatus.value = "loading"
-    const enabledFeeds = feeds.value.filter(f => f.enabled)
+    const enabledFeeds = feeds.value.filter((f) => f.enabled)
 
     for (const feed of enabledFeeds) {
       await refreshFeed(feed.id)
@@ -341,11 +353,14 @@ export function useRssReader(plugin: Plugin) {
   /**
    * 导入 OPML 文件
    */
-  async function importOpml(xml: string): Promise<{ success: number; failed: number }> {
+  async function importOpml(xml: string): Promise<{ success: number, failed: number }> {
     const outlines = parseOpml(xml)
     if (outlines.length === 0) {
       showMessage("未找到有效的 RSS 订阅源", 3000, "error")
-      return { success: 0, failed: 0 }
+      return {
+        success: 0,
+        failed: 0,
+      }
     }
 
     let success = 0
@@ -360,7 +375,10 @@ export function useRssReader(plugin: Plugin) {
       }
     }
     showMessage(`OPML 导入完成: ${success} 个成功, ${failed} 个失败`, 4000, "info")
-    return { success, failed }
+    return {
+      success,
+      failed,
+    }
   }
 
   // ========== 文章详情操作 ==========
@@ -381,7 +399,7 @@ export function useRssReader(plugin: Plugin) {
    * 更新订阅源分组
    */
   async function updateFeedGroup(feedId: string, group: string) {
-    const feed = feeds.value.find(f => f.id === feedId)
+    const feed = feeds.value.find((f) => f.id === feedId)
     if (feed) {
       feed.group = group
       await saveData()
@@ -407,7 +425,7 @@ export function useRssReader(plugin: Plugin) {
    */
   async function toggleStar(itemId: string) {
     if (!Array.isArray(items.value)) return
-    const item = items.value.find(i => i.link === itemId || (i as any).id === itemId)
+    const item = items.value.find((i) => i.link === itemId || (i as any).id === itemId)
     if (item) {
       item.starred = !item.starred
       await saveData()
@@ -496,7 +514,7 @@ export function useRssReader(plugin: Plugin) {
   /**
    * 创建 AbortSignal（兼容旧版浏览器，手动管理超时）
    */
-  function createTimeoutSignal(ms: number): { signal: AbortSignal; clear: () => void } {
+  function createTimeoutSignal(ms: number): { signal: AbortSignal, clear: () => void } {
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), ms)
     return {
@@ -509,9 +527,15 @@ export function useRssReader(plugin: Plugin) {
    * 带超时的 fetch 封装
    */
   async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = 10000): Promise<Response> {
-    const { signal, clear } = createTimeoutSignal(timeoutMs)
+    const {
+      signal,
+      clear,
+    } = createTimeoutSignal(timeoutMs)
     try {
-      const response = await fetch(url, { ...options, signal })
+      const response = await fetch(url, {
+        ...options,
+        signal,
+      })
       clear()
       return response
     } catch (err) {
@@ -539,11 +563,31 @@ export function useRssReader(plugin: Plugin) {
     }
 
     // 尝试列表：直连 + 多个代理
-    const attempts: Array<{ url: string; label: string; timeout: number; useBrowserHeaders: boolean }> = [
-      { url, label: "直连", timeout: 15000, useBrowserHeaders: true },
-      { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`, label: "allorigins", timeout: 20000, useBrowserHeaders: false },
-      { url: `https://corsproxy.io/?${encodeURIComponent(url)}`, label: "corsproxy", timeout: 20000, useBrowserHeaders: false },
-      { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, label: "codetabs", timeout: 20000, useBrowserHeaders: false },
+    const attempts: Array<{ url: string, label: string, timeout: number, useBrowserHeaders: boolean }> = [
+      {
+        url,
+        label: "直连",
+        timeout: 15000,
+        useBrowserHeaders: true,
+      },
+      {
+        url: `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+        label: "allorigins",
+        timeout: 20000,
+        useBrowserHeaders: false,
+      },
+      {
+        url: `https://corsproxy.io/?${encodeURIComponent(url)}`,
+        label: "corsproxy",
+        timeout: 20000,
+        useBrowserHeaders: false,
+      },
+      {
+        url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+        label: "codetabs",
+        timeout: 20000,
+        useBrowserHeaders: false,
+      },
     ]
 
     // 收集失败原因
@@ -552,7 +596,10 @@ export function useRssReader(plugin: Plugin) {
     for (const attempt of attempts) {
       try {
         const headers = attempt.useBrowserHeaders ? browserHeaders : {}
-        const response = await fetchWithTimeout(attempt.url, { method: "GET", headers }, attempt.timeout)
+        const response = await fetchWithTimeout(attempt.url, {
+          method: "GET",
+          headers,
+        }, attempt.timeout)
 
         if (response.ok) {
           const text = await response.text()
@@ -591,8 +638,8 @@ export function useRssReader(plugin: Plugin) {
     const trimmedItems: RssItem[] = []
     for (const [, feedItems] of feedItemMap) {
       // 保留收藏的，从非收藏中截断
-      const starred = feedItems.filter(i => i.starred)
-      const unstarred = feedItems.filter(i => !i.starred)
+      const starred = feedItems.filter((i) => i.starred)
+      const unstarred = feedItems.filter((i) => !i.starred)
 
       // 按日期排序
       unstarred.sort((a, b) => {

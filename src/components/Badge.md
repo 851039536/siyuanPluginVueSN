@@ -319,7 +319,6 @@ const hasNotification = ref(true)
 import { ref } from 'vue'
 import Badge from '@/components/Badge.vue'
 import Button from '@/components/Button.vue'
-import IconWrapper from '@/components/IconWrapper.vue'
 
 const unreadCount = ref(5)
 const hasUpdate = ref(true)

@@ -295,7 +295,11 @@
               <div class="category-filter">
                 <div class="category-chips">
                   <button
-                    v-for="cat in [{ id: 'all', name: '全部', color: '#b0aea5' }, ...categories]"
+                    v-for="cat in [{
+                      id: 'all',
+                      name: '全部',
+                      color: '#b0aea5',
+                    }, ...categories]"
                     :key="cat.id"
                     class="category-chip"
                     :class="{ active: selectedCategory === cat.id }"
@@ -590,19 +594,33 @@
 </template>
 
 <script setup lang="ts">
-import type { HtmlCategory, HtmlSnippet } from "./types"
+import type {
+  HtmlCategory,
+  HtmlSnippet,
+} from "./types"
+import html2canvas from "html2canvas"
 import { showMessage } from "siyuan"
-import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from "vue"
+import {
+  computed,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  reactive,
+  ref,
+  watch,
+} from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
 import { usePlugin } from "@/main"
-import { HtmlViewerStorage } from "./types/storage"
 import CoverGenerator from "./components/CoverGenerator.vue"
+import { HtmlViewerStorage } from "./types/storage"
+import {
+  isJsonString,
+  jsonToHtml,
+} from "./utils/jsonFormatter"
 import { normalizeWidths } from "./utils/normalizeWidths"
-import { jsonToHtml, isJsonString } from "./utils/jsonFormatter"
-import html2canvas from "html2canvas"
 
 // Props
 interface Props {
@@ -621,9 +639,18 @@ const storage = new HtmlViewerStorage(plugin)
 
 // 视图模式
 const modes = [
-  { key: "preview" as const, label: "预览" },
-  { key: "source" as const, label: "源码" },
-  { key: "split" as const, label: "分栏" },
+  {
+    key: "preview" as const,
+    label: "预览",
+  },
+  {
+    key: "source" as const,
+    label: "源码",
+  },
+  {
+    key: "split" as const,
+    label: "分栏",
+  },
 ]
 const viewMode = ref<"preview" | "source" | "split">("preview")
 
@@ -655,9 +682,21 @@ const editingSnippet = ref<HtmlSnippet | null>(null)
 // 片段库状态
 const snippets = ref<HtmlSnippet[]>([])
 const categories = ref<HtmlCategory[]>([
-  { id: "default", name: "默认", color: "#d97757" },
-  { id: "template", name: "模板", color: "#6a9bcc" },
-  { id: "widget", name: "小组件", color: "#788c5d" },
+  {
+    id: "default",
+    name: "默认",
+    color: "#d97757",
+  },
+  {
+    id: "template",
+    name: "模板",
+    color: "#6a9bcc",
+  },
+  {
+    id: "widget",
+    name: "小组件",
+    color: "#788c5d",
+  },
 ])
 const selectedCategory = ref<string>("all")
 const searchQuery = ref("")
@@ -769,11 +808,11 @@ const categoriesMap = computed(() => {
 const filteredSnippets = computed(() => {
   let result = snippets.value
   if (selectedCategory.value !== "all") {
-    result = result.filter(s => s.category === selectedCategory.value)
+    result = result.filter((s) => s.category === selectedCategory.value)
   }
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase()
-    result = result.filter(s => s.name.toLowerCase().includes(q))
+    result = result.filter((s) => s.name.toLowerCase().includes(q))
   }
   return result
 })
@@ -786,7 +825,12 @@ const getCategoryById = (id: string): HtmlCategory | undefined => {
 // 格式化时间
 function formatTime(timestamp: number): string {
   const d = new Date(timestamp)
-  return d.toLocaleDateString("zh-CN", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
+  return d.toLocaleDateString("zh-CN", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  })
 }
 
 // 获取预览HTML（限制高度）
@@ -820,7 +864,7 @@ function formatHtml() {
         indent--
       }
       result.push("  ".repeat(indent) + line)
-      if (line.match(/^<([a-zA-Z][a-zA-Z0-9]*)([\s>])/) && !line.match(/\/>/) && !line.match(/^<(br|hr|img|input|meta|link)/i)) {
+      if (line.match(/^<([a-z][a-z0-9]*)([\s>])/i) && !line.match(/\/>/) && !line.match(/^<(br|hr|img|input|meta|link)/i)) {
         indent++
       }
     }
@@ -1002,7 +1046,7 @@ async function handleSaveEdit() {
 
 // 删除片段
 async function deleteSnippet(id: string) {
-  const snippet = snippets.value.find(s => s.id === id)
+  const snippet = snippets.value.find((s) => s.id === id)
   if (!snippet) return
   const confirmed = window.confirm(`确定要删除片段「${snippet.name}」吗？此操作不可恢复。`)
   if (!confirmed) return
@@ -1025,7 +1069,7 @@ function closeCategoryManager() {
 
 async function addCategory() {
   if (!newCategory.name.trim()) return
-  if (categories.value.some(c => c.name === newCategory.name.trim())) {
+  if (categories.value.some((c) => c.name === newCategory.name.trim())) {
     showMessage("分类已存在", 2000, "error")
     return
   }
@@ -1046,12 +1090,12 @@ async function deleteCategory(categoryId: string) {
     showMessage("默认分类不能删除", 2000, "error")
     return
   }
-  const hasSnippets = snippets.value.some(s => s.category === categoryId)
+  const hasSnippets = snippets.value.some((s) => s.category === categoryId)
   if (hasSnippets) {
     showMessage("该分类下有片段，无法删除", 2000, "error")
     return
   }
-  categories.value = categories.value.filter(c => c.id !== categoryId)
+  categories.value = categories.value.filter((c) => c.id !== categoryId)
   await saveCategories()
   if (selectedCategory.value === categoryId) {
     selectedCategory.value = "all"

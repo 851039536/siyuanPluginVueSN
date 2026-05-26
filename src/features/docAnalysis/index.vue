@@ -261,6 +261,8 @@
 </template>
 
 <script setup lang="ts">
+import type { Plugin } from "siyuan"
+import type { FilterOptions } from "./types/index"
 import { Icon } from "@iconify/vue"
 import {
   computed,
@@ -273,11 +275,9 @@ import DocListItem from "./components/DocListItem.vue"
 import FilterSettings from "./components/FilterSettings.vue"
 import PublishPanel from "./components/PublishPanel.vue"
 import StatsOverview from "./components/StatsOverview.vue"
+
 import { useDocAnalysis } from "./composables/useDocAnalysis"
 import { usePublish } from "./composables/usePublish"
-
-import type { FilterOptions } from "./types/index"
-import type { Plugin } from "siyuan"
 
 interface Props {
   i18n: Record<string, Record<string, string>>
@@ -364,7 +364,7 @@ function handleBatchPublishAll() {
 /** 批量标记为待发布 */
 async function handleBatchMarkPending() {
   if (queryState.results.length === 0) return
-  const docIds = queryState.results.map(d => d.id)
+  const docIds = queryState.results.map((d) => d.id)
   await markAsPending(docIds)
   // 刷新列表
   if (queryState.hasQueried) {

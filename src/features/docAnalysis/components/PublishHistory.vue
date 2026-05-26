@@ -35,10 +35,14 @@
         <div class="history-item-header">
           <Icon
             :icon="getStatusIcon(record.status)"
-            :class="['status-icon', record.status]"
+            class="status-icon"
+            :class="[record.status]"
           />
           <span class="platform-name">{{ getPlatformName(record.platformId) }}</span>
-          <span class="status-badge" :class="record.status">{{ getStatusText(record.status) }}</span>
+          <span
+            class="status-badge"
+            :class="record.status"
+          >{{ getStatusText(record.status) }}</span>
         </div>
         <div
           v-if="record.remoteUrl"
@@ -76,8 +80,11 @@
 </template>
 
 <script setup lang="ts">
-import type { DocPublishState, PublishRecord } from "../types/publish"
 import type { Plugin } from "siyuan"
+import type {
+  DocPublishState,
+  PublishRecord,
+} from "../types/publish"
 import { Icon } from "@iconify/vue"
 import {
   onMounted,
@@ -92,7 +99,11 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const { getDocPublishState, platforms, loadPublishConfig } = usePublish(props.plugin)
+const {
+  getDocPublishState,
+  platforms,
+  loadPublishConfig,
+} = usePublish(props.plugin)
 const records = ref<PublishRecord[]>([])
 const loading = ref(false)
 
@@ -112,7 +123,7 @@ onMounted(async () => {
 })
 
 function getPlatformName(platformId: string): string {
-  return platforms.value.find(p => p.id === platformId)?.name || "未知平台"
+  return platforms.value.find((p) => p.id === platformId)?.name || "未知平台"
 }
 
 function getStatusIcon(status: string): string {

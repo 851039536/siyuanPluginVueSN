@@ -1,4 +1,7 @@
-import type { SavedPrompt, AutomationTask } from "@/types/ai"
+import type {
+  AutomationTask,
+  SavedPrompt,
+} from "@/types/ai"
 /**
  * AI内容生成器数据存储管理
  */

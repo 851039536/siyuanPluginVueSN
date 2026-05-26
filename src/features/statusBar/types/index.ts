@@ -26,8 +26,14 @@ export interface StatusBarState {
 // ============================================================
 
 export const THRESHOLDS = {
-  CPU: { HIGH: 80, MEDIUM: 60 },
-  MEM: { HIGH: 85, MEDIUM: 70 },
+  CPU: {
+    HIGH: 80,
+    MEDIUM: 60,
+  },
+  MEM: {
+    HIGH: 85,
+    MEDIUM: 70,
+  },
 } as const
 
 export const MONITOR_INTERVAL_MS = 3000

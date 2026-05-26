@@ -1,10 +1,13 @@
-import type { FloatingTool, FloatingToolChild } from "../types"
+import type {
+  FloatingTool,
+  FloatingToolChild,
+} from "../types"
+import { showMessage } from "siyuan"
 import {
-  reloadUI,
   reloadFiletree,
   reloadTag,
+  reloadUI,
 } from "@/api"
-import { showMessage } from "siyuan"
 
 function makeChildren(plugin?: any): FloatingToolChild[] {
   return [

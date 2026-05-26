@@ -23,7 +23,6 @@
 </template>
 
 <script setup lang="ts">
-import type { IconKey } from "@/config/icons"
 import {
   computed,
   nextTick,

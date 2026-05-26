@@ -1,3 +1,4 @@
+import type { Plugin } from "siyuan"
 /**
  * 文档发布功能 - 核心业务逻辑
  * 参考 siyuan-plugin-publisher 的核心发布能力
@@ -14,7 +15,7 @@ import type {
   PublishResult,
 } from "../types/publish"
 import type { PublishSettings } from "../types/publishStorage"
-import type { Plugin } from "siyuan"
+import { marked } from "marked"
 import {
   reactive,
   ref,
@@ -29,12 +30,17 @@ import {
   sql,
 } from "@/api"
 import {
+  decodeXmlEntities,
+  escapeXml,
+} from "@/utils/stringUtils"
+import {
+  SY_ATTR_PUBLISH_DATA,
+  SY_ATTR_PUBLISH_STATUS,
+} from "../types/publish"
+import {
   DEFAULT_PUBLISH_SETTINGS,
   PublishStorage,
 } from "../types/publishStorage"
-import { decodeXmlEntities, escapeXml } from "@/utils/stringUtils"
-import { SY_ATTR_PUBLISH_DATA, SY_ATTR_PUBLISH_STATUS } from "../types/publish"
-import { marked } from "marked"
 
 /** 生成唯一 ID */
 function generateId(): string {
@@ -45,8 +51,8 @@ function generateId(): string {
 function slugify(title: string): string {
   return title
     .toLowerCase()
-    .replace(/[\s]+/g, "-")
-    .replace(/[^\w\u4e00-\u9fa5-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/[^\w\u4E00-\u9FA5-]/g, "")
     .substring(0, 80)
 }
 
@@ -119,7 +125,7 @@ export function usePublish(plugin: Plugin) {
 
   /** 更新平台 */
   async function updatePlatform(id: string, updates: Partial<PlatformConfig>): Promise<void> {
-    const idx = platforms.value.findIndex(p => p.id === id)
+    const idx = platforms.value.findIndex((p) => p.id === id)
     if (idx >= 0) {
       platforms.value[idx] = {
         ...platforms.value[idx],
@@ -132,16 +138,19 @@ export function usePublish(plugin: Plugin) {
 
   /** 删除平台 */
   async function removePlatform(id: string): Promise<void> {
-    platforms.value = platforms.value.filter(p => p.id !== id)
-    publishSettings.defaultPlatformIds = publishSettings.defaultPlatformIds.filter(pid => pid !== id)
+    platforms.value = platforms.value.filter((p) => p.id !== id)
+    publishSettings.defaultPlatformIds = publishSettings.defaultPlatformIds.filter((pid) => pid !== id)
     await savePublishConfig()
   }
 
   /** 测试平台连通性 */
   async function testPlatform(platformId: string): Promise<{ success: boolean, message: string }> {
-    const platform = platforms.value.find(p => p.id === platformId)
+    const platform = platforms.value.find((p) => p.id === platformId)
     if (!platform) {
-      return { success: false, message: "平台不存在" }
+      return {
+        success: false,
+        message: "平台不存在",
+      }
     }
 
     try {
@@ -157,9 +166,15 @@ export function usePublish(plugin: Plugin) {
         frontMatter: {},
         images: new Map(),
       })
-      return { success: true, message: "连接成功" }
+      return {
+        success: true,
+        message: "连接成功",
+      }
     } catch (error) {
-      return { success: false, message: (error as Error).message || "连接失败" }
+      return {
+        success: false,
+        message: (error as Error).message || "连接失败",
+      }
     }
   }
 
@@ -175,7 +190,7 @@ export function usePublish(plugin: Plugin) {
       throw new Error("获取文档内容失败")
     }
 
-    let markdown: string = mdData.content
+    const markdown: string = mdData.content
     let title: string = ""
 
     // 获取文档属性
@@ -240,7 +255,7 @@ export function usePublish(plugin: Plugin) {
             }
           }
           fmLines.push("---")
-          return fmLines.join("\n") + "\n\n" + markdown
+          return `${fmLines.join("\n")}\n\n${markdown}`
         })()
       : markdown
 
@@ -322,7 +337,7 @@ export function usePublish(plugin: Plugin) {
     const bodyTemplate = cfg.bodyTemplate || '{"title":"{{title}}","content":"{{content}}"}'
 
     // 替换模板变量
-    let body = bodyTemplate
+    const body = bodyTemplate
       .replace(/\{\{title\}\}/g, content.title)
       .replace(/\{\{content\}\}/g, content.fullMarkdown.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n"))
       .replace(/\{\{tags\}\}/g, JSON.stringify(content.tags))
@@ -333,7 +348,10 @@ export function usePublish(plugin: Plugin) {
     const method = cfg.method || "POST"
 
     // 使用 forwardProxy 发送请求
-    const headerList = Object.entries(headers).map(([key, value]) => ({ name: key, value: String(value) }))
+    const headerList = Object.entries(headers).map(([key, value]) => ({
+      name: key,
+      value: String(value),
+    }))
 
     let parsedBody: any
     try {
@@ -383,8 +401,13 @@ export function usePublish(plugin: Plugin) {
         `${apiBase}/repos/${owner}/${repo}/contents/${filePath}?ref=${branch}`,
         "GET",
         {},
-        [{ name: "Authorization", value: `token ${platform.token}` },
-         { name: "Accept", value: "application/vnd.github.v3+json" }],
+        [{
+          name: "Authorization",
+          value: `token ${platform.token}`,
+        }, {
+          name: "Accept",
+          value: "application/vnd.github.v3+json",
+        }],
         15000,
         "application/json",
       )
@@ -411,8 +434,13 @@ export function usePublish(plugin: Plugin) {
       `${apiBase}/repos/${owner}/${repo}/contents/${filePath}`,
       "PUT",
       payload,
-      [{ name: "Authorization", value: `token ${platform.token}` },
-       { name: "Accept", value: "application/vnd.github.v3+json" }],
+      [{
+        name: "Authorization",
+        value: `token ${platform.token}`,
+      }, {
+        name: "Accept",
+        value: "application/vnd.github.v3+json",
+      }],
       30000,
       "application/json",
     )
@@ -463,7 +491,10 @@ export function usePublish(plugin: Plugin) {
       `${apiBase}/projects/${projectId}/repository/files/${encodeURIComponent(filePath)}`,
       "POST",
       payload,
-      [{ name: "PRIVATE-TOKEN", value: platform.token }],
+      [{
+        name: "PRIVATE-TOKEN",
+        value: platform.token,
+      }],
       30000,
       "application/json",
     )
@@ -503,7 +534,7 @@ export function usePublish(plugin: Plugin) {
     <param><value><struct>
       <member><name>title</name><value><string>${escapeXml(content.title)}</string></value></member>
       <member><name>description</name><value><string>${escapeXml(bodyContent)}</string></value></member>
-      <member><name>categories</name><value><array><data>${content.categories.map(c => `<value><string>${escapeXml(c)}</string></value>`).join("")}</data></array></value></member>
+      <member><name>categories</name><value><array><data>${content.categories.map((c) => `<value><string>${escapeXml(c)}</string></value>`).join("")}</data></array></value></member>
       <member><name>mt_keywords</name><value><string>${content.tags.join(",")}</string></value></member>
       <member><name>post_status</name><value><string>publish</string></value></member>
     </struct></value></param>
@@ -515,7 +546,10 @@ export function usePublish(plugin: Plugin) {
       xmlrpcUrl,
       "POST",
       xmlBody,
-      [{ name: "Content-Type", value: "text/xml" }],
+      [{
+        name: "Content-Type",
+        value: "text/xml",
+      }],
       30000,
       "text/xml",
     ) as any
@@ -592,7 +626,7 @@ export function usePublish(plugin: Plugin) {
     <param><value><struct>
       <member><name>title</name><value><string>${escapeXml(content.title)}</string></value></member>
       <member><name>description</name><value><string>${escapeXml(bodyContent)}</string></value></member>
-      <member><name>categories</name><value><array><data>${content.categories.map(c => `<value><string>${escapeXml(c)}</string></value>`).join("")}</data></array></value></member>
+      <member><name>categories</name><value><array><data>${content.categories.map((c) => `<value><string>${escapeXml(c)}</string></value>`).join("")}</data></array></value></member>
       <member><name>mt_keywords</name><value><string>${content.tags.join(",")}</string></value></member>
     </struct></value></param>
     <param><value><boolean>1</boolean></value></param>
@@ -603,7 +637,10 @@ export function usePublish(plugin: Plugin) {
       apiUrl,
       "POST",
       xmlBody,
-      [{ name: "Content-Type", value: "text/xml" }],
+      [{
+        name: "Content-Type",
+        value: "text/xml",
+      }],
       30000,
       "text/xml",
     ) as any
@@ -677,9 +714,18 @@ export function usePublish(plugin: Plugin) {
       "POST",
       payload,
       [
-        { name: "Authorization", value: `Bearer ${platform.token}` },
-        { name: "Notion-Version", value: "2022-06-28" },
-        { name: "Content-Type", value: "application/json" },
+        {
+          name: "Authorization",
+          value: `Bearer ${platform.token}`,
+        },
+        {
+          name: "Notion-Version",
+          value: "2022-06-28",
+        },
+        {
+          name: "Content-Type",
+          value: "application/json",
+        },
       ],
       30000,
       "application/json",
@@ -717,8 +763,14 @@ export function usePublish(plugin: Plugin) {
       "POST",
       payload,
       [
-        { name: "X-Auth-Token", value: platform.token },
-        { name: "Content-Type", value: "application/json" },
+        {
+          name: "X-Auth-Token",
+          value: platform.token,
+        },
+        {
+          name: "Content-Type",
+          value: "application/json",
+        },
       ],
       30000,
       "application/json",
@@ -749,8 +801,14 @@ export function usePublish(plugin: Plugin) {
         content: content.format === "richtext" && content.htmlContent ? content.htmlContent : content.fullMarkdown,
         format: content.format === "richtext" ? "HTML" : "MARKDOWN",
       },
-      categories: content.categories.map(c => ({ name: c, slug: slugify(c) })),
-      tags: content.tags.map(t => ({ name: t, slug: slugify(t) })),
+      categories: content.categories.map((c) => ({
+        name: c,
+        slug: slugify(c),
+      })),
+      tags: content.tags.map((t) => ({
+        name: t,
+        slug: slugify(t),
+      })),
     }
 
     const response = await forwardProxy(
@@ -758,8 +816,14 @@ export function usePublish(plugin: Plugin) {
       "POST",
       payload,
       [
-        { name: "Authorization", value: `Bearer ${platform.token}` },
-        { name: "Content-Type", value: "application/json" },
+        {
+          name: "Authorization",
+          value: `Bearer ${platform.token}`,
+        },
+        {
+          name: "Content-Type",
+          value: "application/json",
+        },
       ],
       30000,
       "application/json",
@@ -799,11 +863,20 @@ export function usePublish(plugin: Plugin) {
     }
 
     const headers = [
-      { name: "Cookie", value: cookie },
-      { name: "Content-Type", value: "application/json" },
+      {
+        name: "Cookie",
+        value: cookie,
+      },
+      {
+        name: "Content-Type",
+        value: "application/json",
+      },
     ]
     if (token) {
-      headers.push({ name: "Authorization", value: `Bearer ${token}` })
+      headers.push({
+        name: "Authorization",
+        value: `Bearer ${token}`,
+      })
     }
 
     const response = await forwardProxy(
@@ -844,7 +917,7 @@ export function usePublish(plugin: Plugin) {
 
       // 逐个平台发布
       for (const platformId of options.platformIds) {
-        const platform = platforms.value.find(p => p.id === platformId)
+        const platform = platforms.value.find((p) => p.id === platformId)
         if (!platform || !platform.enabled) {
           results.push({
             platformId,
@@ -863,7 +936,7 @@ export function usePublish(plugin: Plugin) {
       }
 
       // 更新文档属性
-      const successPlatforms = results.filter(r => r.success)
+      const successPlatforms = results.filter((r) => r.success)
       if (successPlatforms.length > 0) {
         await updateDocPublishAttrs(options.docId, results)
 
@@ -918,9 +991,9 @@ export function usePublish(plugin: Plugin) {
         })
         allResults.push(result)
 
-        if (result.results.some(r => r.success)) {
+        if (result.results.some((r) => r.success)) {
           succeeded++
-        } else if (result.results.some(r => r.errorMessage?.includes("未配置"))) {
+        } else if (result.results.some((r) => r.errorMessage?.includes("未配置"))) {
           skipped++
         } else {
           failed++
@@ -945,7 +1018,7 @@ export function usePublish(plugin: Plugin) {
     const history = await storage.loadHistory()
     const docState = history[docId]
     if (docState) {
-      const record = docState.records.find(r => r.platformId === platformId)
+      const record = docState.records.find((r) => r.platformId === platformId)
       if (record) {
         record.status = "removed"
         record.updatedAt = nowISO()
@@ -971,10 +1044,13 @@ export function usePublish(plugin: Plugin) {
   ) {
     const history = await storage.loadHistory()
     if (!history[docId]) {
-      history[docId] = { docId, records: [] }
+      history[docId] = {
+        docId,
+        records: [],
+      }
     }
 
-    const existing = history[docId].records.find(r => r.platformId === platformId)
+    const existing = history[docId].records.find((r) => r.platformId === platformId)
     const now = nowISO()
 
     if (existing) {
@@ -1005,10 +1081,10 @@ export function usePublish(plugin: Plugin) {
   async function updateDocPublishAttrs(docId: string, results: PlatformPublishResult[]) {
     try {
       const publishData: Record<string, any> = {}
-      const successPlatforms = results.filter(r => r.success)
+      const successPlatforms = results.filter((r) => r.success)
 
       if (successPlatforms.length > 0) {
-        publishData.platforms = successPlatforms.map(r => ({
+        publishData.platforms = successPlatforms.map((r) => ({
           id: r.platformId,
           name: r.platformName,
           remoteId: r.remoteId,

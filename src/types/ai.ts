@@ -95,8 +95,8 @@ export interface ChatOptions {
 
 /** AI 技能来源信息 */
 export interface SkillSource {
-  id: string      // 该来源的唯一ID（filePath）
-  tool: string    // 来源工具
+  id: string // 该来源的唯一ID（filePath）
+  tool: string // 来源工具
   content: string // 该来源的内容
 }
 

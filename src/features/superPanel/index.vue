@@ -48,11 +48,12 @@ import type {
 } from "./types"
 import type { IconKey } from "@/config/icons"
 import type { PluginSettings } from "@/config/settings"
+import type { FeatureMeta } from "@/features/config"
 import {
   computed,
   ref,
 } from "vue"
-import { FEATURE_CONFIG, type FeatureMeta } from "@/features/config"
+import { FEATURE_CONFIG } from "@/features/config"
 import AiSettingsPanel from "./components/AiSettingsPanel.vue"
 import FeatureCard from "./components/FeatureCard.vue"
 import SuperPanelHeader from "./components/SuperPanelHeader.vue"

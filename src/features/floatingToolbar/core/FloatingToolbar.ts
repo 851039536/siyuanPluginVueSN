@@ -4,11 +4,11 @@ import {
   ToolbarAction,
   ToolbarActionManager,
 } from "../types"
+import { HeatmapMarker } from "./HeatmapMarker"
 import {
   debounce,
   showI18nMessage,
 } from "./utils"
-import { HeatmapMarker } from "./HeatmapMarker"
 
 /**
  * 浮动工具栏增强类
@@ -147,7 +147,7 @@ export class FloatingToolbar {
    * 仅当选中内容为纯英文字母时进行检测
    */
   private async checkAndHighlightWordInNotebook(selectedText: string) {
-    if (!/^[a-zA-Z]+$/.test(selectedText)) {
+    if (!/^[a-z]+$/i.test(selectedText)) {
       this.removeNotebookHighlight()
       return
     }

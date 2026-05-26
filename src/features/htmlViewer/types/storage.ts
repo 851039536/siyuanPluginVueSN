@@ -1,7 +1,10 @@
 /**
  * HTML展示功能存储管理
  */
-import type { HtmlCategory, HtmlSnippet } from "./index"
+import type {
+  HtmlCategory,
+  HtmlSnippet,
+} from "./index"
 import { Plugin } from "siyuan"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
@@ -18,9 +21,21 @@ export const STORAGE_KEYS = {
  * 默认分类
  */
 const DEFAULT_CATEGORIES: HtmlCategory[] = [
-  { id: "default", name: "默认", color: "#d97757" },
-  { id: "template", name: "模板", color: "#6a9bcc" },
-  { id: "widget", name: "小组件", color: "#788c5d" },
+  {
+    id: "default",
+    name: "默认",
+    color: "#d97757",
+  },
+  {
+    id: "template",
+    name: "模板",
+    color: "#6a9bcc",
+  },
+  {
+    id: "widget",
+    name: "小组件",
+    color: "#788c5d",
+  },
 ]
 
 /**
@@ -77,7 +92,7 @@ export class HtmlViewerStorage {
    */
   async updateSnippet(id: string, updates: Partial<Omit<HtmlSnippet, "id" | "createdAt">>): Promise<boolean> {
     const snippets = await this.loadSnippets()
-    const index = snippets.findIndex(s => s.id === id)
+    const index = snippets.findIndex((s) => s.id === id)
     if (index === -1) return false
 
     snippets[index] = {
@@ -93,7 +108,7 @@ export class HtmlViewerStorage {
    */
   async deleteSnippet(id: string): Promise<boolean> {
     const snippets = await this.loadSnippets()
-    const filtered = snippets.filter(s => s.id !== id)
+    const filtered = snippets.filter((s) => s.id !== id)
     if (filtered.length === snippets.length) return false
     return this.saveSnippets(filtered)
   }

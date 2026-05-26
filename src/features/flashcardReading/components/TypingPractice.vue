@@ -20,7 +20,9 @@
           </div>
         </div>
       </template>
-      <div class="typing-detail">{{ currentCard?.content }}</div>
+      <div class="typing-detail">
+        {{ currentCard?.content }}
+      </div>
       <template #footer>
         <div class="card-footer card-footer--single">
           <div class="card-footer__meta">

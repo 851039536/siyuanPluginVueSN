@@ -6,7 +6,10 @@
         :class="{ active: activeMode === 'generator' }"
         @click="$emit('update:activeMode', 'generator')"
       >
-        <svg width="14" height="14"><use xlink:href="#iconSparkles" /></svg>
+        <svg
+          width="14"
+          height="14"
+        ><use xlink:href="#iconSparkles" /></svg>
         <span>{{ generatorTitle }}</span>
       </button>
       <button
@@ -14,7 +17,10 @@
         :class="{ active: activeMode === 'automation' }"
         @click="$emit('update:activeMode', 'automation')"
       >
-        <svg width="14" height="14"><use xlink:href="#iconRefresh" /></svg>
+        <svg
+          width="14"
+          height="14"
+        ><use xlink:href="#iconRefresh" /></svg>
         <span>{{ automationTitle }}</span>
       </button>
       <button
@@ -22,7 +28,10 @@
         :class="{ active: activeMode === 'chat' }"
         @click="$emit('update:activeMode', 'chat')"
       >
-        <svg width="14" height="14"><use xlink:href="#iconHelp" /></svg>
+        <svg
+          width="14"
+          height="14"
+        ><use xlink:href="#iconHelp" /></svg>
         <span>{{ chatTitle }}</span>
       </button>
     </div>
@@ -44,7 +53,9 @@
           :value="selectedModel"
           @change="$emit('update:selected-model', ($event.target as HTMLSelectElement).value)"
         >
-          <option value="">默认模型</option>
+          <option value="">
+            默认模型
+          </option>
           <optgroup
             v-if="availableModels.common.length > 0"
             label="常用"
@@ -69,7 +80,9 @@
               {{ m.label }}
             </option>
           </optgroup>
-          <option value="custom">自定义...</option>
+          <option value="custom">
+            自定义...
+          </option>
         </select>
         <!-- 思考模式开关（仅 DeepSeek 思考模型显示） -->
         <label
@@ -93,7 +106,11 @@
         title="对话设置"
         @click="$emit('toggle-settings')"
       >
-        <svg width="18" height="16" viewBox="0 0 24 24">
+        <svg
+          width="18"
+          height="16"
+          viewBox="0 0 24 24"
+        >
           <use xlink:href="#iconSettings"></use>
         </svg>
       </Button>
@@ -102,8 +119,8 @@
 </template>
 
 <script setup lang="ts">
-import Button from "@/components/Button.vue"
 import type { ProviderModels } from "../types/models"
+import Button from "@/components/Button.vue"
 
 interface Props {
   title?: string
@@ -126,7 +143,10 @@ withDefaults(defineProps<Props>(), {
   selectedModel: "",
   customModel: "",
   enableThinking: false,
-  availableModels: () => ({ common: [], all: [] }),
+  availableModels: () => ({
+    common: [],
+    all: [],
+  }),
   supportsThinking: false,
 })
 

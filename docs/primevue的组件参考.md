@@ -3,8 +3,7 @@
 # Checkbox
 
 ```ts
-import Checkbox from 'primevue/checkbox'
-import CheckboxGroup from 'primevue/checkboxgroup'
+
 ```
 
 ## Basic
@@ -31,7 +30,7 @@ ColorPicker is an input component to select a color.
 ## Import
 
 ```ts
-import ColorPicker from 'primevue/colorpicker'
+
 ```
 
 ## Basic
@@ -58,7 +57,7 @@ DatePicker is a form component for date inputs.
 ## Import
 
 ```javascript
-import DatePicker from 'primevue/datepicker'
+
 ```
 
 ## Basic
@@ -86,7 +85,7 @@ Listbox is used to select one or more values from a list of items.
 
 ```javascript
 
-import Listbox from 'primevue/listbox'
+
 ```
 
 ## Basic
@@ -119,7 +118,7 @@ Password displays strength indicator for password fields.
 ## Import
 
 ```javascript
-import Password from 'primevue/password'
+
 ```
 
 ## Basic
@@ -145,8 +144,7 @@ RadioButton is an extension to standard radio button element with theming.
 ## Import
 
 ```javascript
-import RadioButton from 'primevue/radiobutton'
-import RadioButtonGroup from 'primevue/radiobuttongroup'
+
 ```
 
 ## Group
@@ -182,7 +180,7 @@ Rating component is a star based selection input.
 ## Import
 
 ```javascript
-import Rating from 'primevue/rating'
+
 ```
 
 ## Basic
@@ -210,7 +208,7 @@ Select is used to choose an item from a collection of options.
 ## Import
 
 ```javascript
-import Select from 'primevue/select'
+
 ```
 
 ## Basic
@@ -241,7 +239,7 @@ SelectButton is used to choose single or multiple items from a list using button
 ## Import
 
 ```javascript
-import SelectButton from 'primevue/selectbutton'
+
 ```
 
 ## Basic
@@ -270,7 +268,7 @@ Slider is a component to provide input with a drag handle.
 ## Import
 
 ```javascript
-import Slider from 'primevue/slider'
+
 ```
 
 ## Basic
@@ -296,7 +294,7 @@ Textarea adds styling and autoResize functionality to standard textarea element.
 ## Import
 
 ```javascript
-import Textarea from 'primevue/textarea'
+
 ```
 
 ## Basic
@@ -322,7 +320,7 @@ ToggleButton is used to select a boolean value using a button.
 ## Import
 
 ```javascript
-import ToggleButton from 'primevue/togglebutton'
+
 ```
 
 ## Basic
@@ -349,7 +347,7 @@ ToggleSwitch is used to select a boolean value.
 ## Import
 
 ```javascript
-import ToggleSwitch from 'primevue/toggleswitch'
+
 ```
 
 ## Basic
@@ -376,7 +374,7 @@ Button is an extension to standard input element with icons and theming.
 ## Import
 
 ```javascript
-import Button from 'primevue/button'
+
 ```
 
 ## Basic
@@ -400,7 +398,7 @@ When pressed, a floating action button can display multiple primary actions that
 ## Import
 
 ```javascript
-import SpeedDial from 'primevue/speeddial'
+
 ```
 
 ```ts
@@ -463,7 +461,7 @@ SplitButton groups a set of commands in an overlay with a default command.
 ## Import
 
 ```javascript
-import SplitButton from 'primevue/splitbutton'
+
 ```
 
 ## Basic
@@ -515,10 +513,8 @@ DataTable displays data in tabular format.
 ## Import
 
 ```javascript
-import Column from 'primevue/column'
-import ColumnGroup from 'primevue/columngroup' // optional
-import DataTable from 'primevue/datatable'
-import Row from 'primevue/row' // optional
+// optional
+// optional
 ```
 
 ## Basic
@@ -552,7 +548,7 @@ OrderList is used to sort a collection.
 ## Import
 
 ```javascript
-import OrderList from 'primevue/orderlist'
+
 ```
 
 ## Basic
@@ -589,7 +585,7 @@ OrganizationChart visualizes hierarchical organization data.
 ## Import
 
 ```javascript
-import OrganizationChart from 'primevue/organizationchart'
+
 ```
 
 ## Basic
@@ -647,7 +643,7 @@ Paginator displays data in paged format and provides navigation between pages.
 ## Import
 
 ```javascript
-import Paginator from 'primevue/paginator'
+
 ```
 
 ## Basic
@@ -672,7 +668,7 @@ Timeline visualizes a series of chained events.
 ## Import
 
 ```javascript
-import Timeline from 'primevue/timeline'
+
 ```
 
 ## Basic
@@ -708,7 +704,7 @@ Tree is used to display hierarchical data.
 ## Import
 
 ```javascript
-import Tree from 'primevue/tree'
+
 ```
 
 ## Basic
@@ -741,10 +737,7 @@ Accordion groups a collection of contents in panels.
 ## Import
 
 ```javascript
-import Accordion from 'primevue/accordion'
-import AccordionContent from 'primevue/accordioncontent'
-import AccordionHeader from 'primevue/accordionheader'
-import AccordionPanel from 'primevue/accordionpanel'
+
 ```
 
 ## Basic
@@ -795,7 +788,7 @@ Card is a flexible container component.
 
 ```javascript
 
-import Card from 'primevue/card'
+
 ```
 
 ## Basic
@@ -829,7 +822,7 @@ Fieldset is a grouping component with a content toggle feature.
 
 ```javascript
 
-import Fieldset from 'primevue/fieldset'
+
 
 ```
 
@@ -858,7 +851,7 @@ Panel is a grouping component providing with content toggle feature.
 ## Import
 
 ```javascript
-import Panel from 'primevue/panel'
+
 ```
 
 ## Basic
@@ -888,7 +881,7 @@ ScrollPanel is a cross browser, lightweight and skinnable alternative to native 
 ## Import
 
 ```javascript
-import ScrollPanel from 'primevue/scrollpanel'
+
 ```
 
 ## Basic
@@ -923,8 +916,7 @@ Splitter is utilized to separate and resize panels.
 ## Import
 
 ```javascript
-import Splitter from 'primevue/splitter'
-import SplitterPanel from 'primevue/splitterpanel'
+
 ```
 
 ## Horizontal
@@ -949,12 +941,8 @@ The Stepper component displays a wizard-like workflow by guiding users through t
 ## Import
 
 ```javascript
-import Step from 'primevue/step'
-import StepItem from 'primevue/stepitem'
-import StepList from 'primevue/steplist'
-import StepPanel from 'primevue/steppanel'
-import StepPanels from 'primevue/steppanels'
-import Stepper from 'primevue/stepper'
+
+
 ```
 
 ## Horizontal
@@ -1009,11 +997,8 @@ Tabs facilitates seamless switching between different views.
 ## Import
 
 ```javascript
-import Tab from 'primevue/tab'
-import TabList from 'primevue/tablist'
-import TabPanel from 'primevue/tabpanel'
-import TabPanels from 'primevue/tabpanels'
-import Tabs from 'primevue/tabs'
+
+
 ```
 
 ## Basic
@@ -1061,7 +1046,7 @@ Toolbar is a grouping component for buttons and other content.
 ## Import
 
 ```javascript
-import Toolbar from 'primevue/toolbar'
+
 ```
 
 ## Basic
@@ -1115,7 +1100,7 @@ ConfirmDialog uses a Dialog UI that is integrated with the Confirmation API.
 ## Import
 
 ```javascript
-import ConfirmDialog from 'primevue/confirmdialog'
+
 ```
 
 ## Service
@@ -1214,7 +1199,7 @@ Dialog is a container to display content in an overlay window.
 ## Import
 
 ```javascript
-import Dialog from 'primevue/dialog'
+
 ```
 
 ## Basic
@@ -1258,7 +1243,7 @@ Popover is a container component that can overlay other components on page.
 ## Import
 
 ```javascript
-import Popover from 'primevue/popover'
+
 ```
 
 ## Basic
@@ -1334,7 +1319,7 @@ FileUpload is an advanced uploader with dragdrop support, multi file uploads, au
 
 ```javascript
 
-import FileUpload from 'primevue/fileupload'
+
 
 ```
 
@@ -1376,7 +1361,7 @@ Dock is a navigation component consisting of menuitems.
 
 ```javascript
 
-import Dock from 'primevue/dock'
+
 
 ```
 
@@ -1462,7 +1447,7 @@ Menu displays a list of items in vertical orientation.
 ## Import
 
 ```javascript
-import Menu from 'primevue/menu'
+
 ```
 
 ## Basic
@@ -1493,7 +1478,7 @@ Menubar also known as Navbar, is a horizontal menu component.
 ## Import
 
 ```javascript
-import Menubar from 'primevue/menubar'
+
 ```
 
 ## Basic
@@ -1559,7 +1544,7 @@ MegaMenu is a navigation component that displays submenus and content in columns
 ## Import
 
 ```javascript
-import MegaMenu from 'primevue/megamenu'
+
 ```
 
 ## Basic
@@ -1684,7 +1669,7 @@ Chart components are based on Chart.js, an open source HTML5 based charting libr
 
 ```javascript
 
-import Chart from 'primevue/chart'
+
 
 ```
 
@@ -1780,7 +1765,7 @@ Message component is used to display inline messages.
 
 ```javascript
 
-import Message from 'primevue/message'
+
 
 ```
 
@@ -1809,7 +1794,7 @@ Toast is used to display messages in an overlay.
 
 ```javascript
 
-import Toast from 'primevue/toast'
+
 
 ```
 
@@ -1869,7 +1854,7 @@ Carousel is a content slider featuring various customization options.
 
 ```javascript
 
-import Carousel from 'primevue/carousel'
+
 
 ```
 
@@ -1964,8 +1949,7 @@ Avatar represents people using icons, labels and images.
 
 ```javascript
 
-import Avatar from 'primevue/avatar'
-import AvatarGroup from 'primevue/avatargroup' // Optional for grouping
+// Optional for grouping
 
 ```
 
@@ -2015,8 +1999,7 @@ Badge is a small status indicator for another element.
 ```javascript
 
 // import as component
-import Badge from 'primevue/badge'
-import OverlayBadge from 'primevue/overlaybadge'
+
 
 ```
 
@@ -2047,7 +2030,7 @@ Chip represents entities using icons, labels and images.
 
 ```javascript
 
-import Chip from 'primevue/chip'
+
 
 ```
 
@@ -2080,7 +2063,7 @@ MeterGroup displays scalar measurements within a known range.
 
 ```javascript
 
-import MeterGroup from 'primevue/metergroup'
+
 
 ```
 
@@ -2112,7 +2095,7 @@ ProgressBar is a process status indicator.
 
 ```javascript
 
-import ProgressBar from 'primevue/progressbar'
+
 
 ```
 
@@ -2142,7 +2125,7 @@ Tag component is used to categorize content.
 
 ```javascript
 
-import Tag from 'primevue/tag'
+
 
 ```
 
@@ -2172,8 +2155,7 @@ Terminal is a text based user interface.
 
 ```javascript
 
-import Terminal from 'primevue/terminal'
-import TerminalService from 'primevue/terminalservice'
+
 
 ```
 

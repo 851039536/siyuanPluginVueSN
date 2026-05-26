@@ -114,7 +114,7 @@ async function searchSearXNG(
   const response = await fetch(url, {
     method: "GET",
     headers: {
-      "Accept": "application/json",
+      Accept: "application/json",
     },
   })
 

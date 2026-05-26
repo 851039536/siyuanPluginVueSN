@@ -196,6 +196,11 @@ export const FEATURE_CONFIG = [
     descI18nKey: "flashcardReading.description",
   },
   {
+    id: "heatmapMarker",
+    defaultTitle: "热力图标记",
+    defaultDesc: "自动标记文档中来自单词本的英文词汇，根据练习次数显示热力渐变",
+  },
+  {
     id: "translate",
     defaultTitle: "英译中替换",
     defaultDesc: "在浮动工具栏中快速翻译英文并替换",

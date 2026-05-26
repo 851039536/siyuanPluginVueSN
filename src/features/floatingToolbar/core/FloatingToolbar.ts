@@ -8,6 +8,7 @@ import {
   debounce,
   showI18nMessage,
 } from "./utils"
+import { HeatmapMarker } from "./HeatmapMarker"
 
 /**
  * 浮动工具栏增强类
@@ -17,6 +18,7 @@ export class FloatingToolbar {
   private plugin: Plugin
   private actionManager: ToolbarActionManager
   private flashcardStorage: FlashcardStorage
+  private heatmapMarker: HeatmapMarker
   private lastSelectionText: string = ""
   private observers: Map<HTMLElement, MutationObserver> = new Map()
   private isProcessing: boolean = false
@@ -28,6 +30,7 @@ export class FloatingToolbar {
     this.plugin = plugin
     this.actionManager = new ToolbarActionManager()
     this.flashcardStorage = new FlashcardStorage(plugin)
+    this.heatmapMarker = new HeatmapMarker(plugin)
     // 防抖处理选择事件，避免频繁触发
     this.debouncedHandleMouseUp = debounce(
       this.handleSelectionChange.bind(this),
@@ -45,6 +48,20 @@ export class FloatingToolbar {
     this.bindEvents()
     // 添加样式（仅添加一次）
     this.ensureStyles()
+  }
+
+  /**
+   * 启用热力图标记功能
+   */
+  async enableHeatmapMarker(): Promise<void> {
+    await this.heatmapMarker.enable()
+  }
+
+  /**
+   * 禁用热力图标记功能
+   */
+  disableHeatmapMarker(): void {
+    this.heatmapMarker.disable()
   }
 
   /**
@@ -462,6 +479,9 @@ export class FloatingToolbar {
 
     // 移除单词本高亮
     this.removeNotebookHighlight()
+
+    // 销毁热力图标记
+    this.heatmapMarker.destroy()
 
     // 移除所有自定义按钮
     document.querySelectorAll(".custom-toolbar-button").forEach((button) => {

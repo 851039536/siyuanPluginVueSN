@@ -88,8 +88,9 @@ const emit = defineEmits<{
 
 const update = (
   key: keyof WatermarkSettings,
-  value: string | number | boolean,
+  value: string | number | boolean | null,
 ) => {
+  if (value === null) return
   emit("update:modelValue", {
     ...props.modelValue,
     [key]: value,

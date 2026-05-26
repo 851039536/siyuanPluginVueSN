@@ -8,7 +8,7 @@
       :placeholder="contentType === 'code' ? codePlaceholder : textPlaceholder"
       :rows="10"
       :spellcheck="false"
-      @update:model-value="$emit('update:modelValue', $event)"
+      @update:model-value="onInputChange"
     />
   </div>
 </template>
@@ -26,9 +26,13 @@ interface Props {
 }
 
 defineProps<Props>()
-defineEmits<{
+const emit = defineEmits<{
   "update:modelValue": [value: string]
 }>()
+
+const onInputChange = (value: string | null) => {
+  emit("update:modelValue", value ?? "")
+}
 </script>
 
 <style scoped lang="scss">

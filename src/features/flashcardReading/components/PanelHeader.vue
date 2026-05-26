@@ -54,7 +54,7 @@ defineEmits<{
 const STORAGE_KEY = "flashcard-cards"
 
 const storagePath = computed(() => {
-  const base = props.plugin.getDataDir?.() || ""
+  const base = (props.plugin as any).getDataDir?.() || ""
   return base
     ? `${base.replace(/\/$/, "")}/${STORAGE_KEY}.json`
     : `storage/petal/siyuan-plugin-vite-vue-sn/${STORAGE_KEY}.json`

@@ -7,7 +7,7 @@
         class="input-textarea"
         :placeholder="placeholder"
         :rows="4"
-        @update:model-value="$emit('update:content', $event)"
+        @update:model-value="onContentChange"
       />
       <div class="qrcode-settings">
         <div class="setting-group">
@@ -108,7 +108,7 @@ interface Props {
 }
 
 defineProps<Props>()
-defineEmits<{
+const emit = defineEmits<{
   "update:content": [value: string]
   "update:size": [value: number]
   "update:darkMode": [value: boolean]
@@ -116,6 +116,10 @@ defineEmits<{
   "download": []
   "copy": []
 }>()
+
+const onContentChange = (value: string | null) => {
+  emit("update:content", value ?? "")
+}
 </script>
 
 <style scoped lang="scss">

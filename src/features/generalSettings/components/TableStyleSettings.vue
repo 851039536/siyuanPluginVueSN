@@ -302,7 +302,7 @@ interface Emits {
 
 const props = withDefaults(defineProps<Props>(), {
   i18n: () => ({}),
-  plugin: null,
+  plugin: undefined,
 })
 
 const emit = defineEmits<Emits>()

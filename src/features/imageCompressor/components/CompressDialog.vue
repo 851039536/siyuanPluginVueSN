@@ -28,7 +28,7 @@
             :show-value="true"
             :format-value="formatQuality"
             hint="建议: 80% 可获得良好的压缩率和质量平衡"
-            @update:model-value="(v) => options.quality = v"
+            @update:model-value="(v) => { if (v !== null) options.quality = v }"
           />
         </div>
 
@@ -42,7 +42,7 @@
             :show-value="true"
             :format-value="formatMaxSize"
             hint="超过此大小的图片将被压缩"
-            @update:model-value="(v) => options.maxSizeMB = v"
+            @update:model-value="(v) => { if (v !== null) options.maxSizeMB = v }"
           />
         </div>
 
@@ -56,7 +56,7 @@
             :show-value="true"
             :format-value="formatMaxDimension"
             hint="超过此尺寸的图片将被等比缩放"
-            @update:model-value="(v) => options.maxWidthOrHeight = v"
+            @update:model-value="(v) => { if (v !== null) options.maxWidthOrHeight = v }"
           />
         </div>
 

@@ -62,6 +62,7 @@ src/
 ├── components/                  # 共享 shadcn-vue 组件（Avatar/Badge/Button/Card/Chart等）
 ├── config/                      # 配置管理
 │   ├── settings.ts              # 全局设置：PluginSettings 接口 + 默认值 + load/save
+│   │                              #   + 功能开关持久化（featureIdToSettingKey / saveFeatureFlagsSync / loadFeatureFlagsSync）
 │   └── icons.ts                 # 图标配置：FEATURE_ICONS + COMMON_ICONS + getIconConfig
 ├── commands/                    # 斜杠命令
 ├── types/                       # 全局类型定义
@@ -78,7 +79,7 @@ src/
 │   └── vueAppHelper.ts          # Vue 应用挂载辅助（createVueDockApp/createModalVueApp）
 ├── i18n/                        # 国际化（zh_CN.json, en_US.json）
 ├── api.ts                       # Siyuan API 封装
-├── index.ts                     # 插件入口（条件注册各功能模块）
+├── index.ts                     # 插件入口（同步读取开关 → 条件注册各功能模块）
 └── main.ts                      # Vue 初始化
 
 # 未实现（FEATURE_CONFIG 中已注册但无实现目录/注册函数）
@@ -151,6 +152,7 @@ type _AssertAllCovered = _AssertTrue<
 - **无死代码**：禁止保留未使用的函数、变量、接口、导出；composables 返回值只暴露外部实际使用的成员
 - **微信宽度规范**：发布到微信的内容必须通过 `normalizeWidths()` 净化固定像素宽度（`width: Npx` → `max-width: 100%; width: auto`），参见 `src/features/htmlViewer/utils/normalizeWidths.ts`
 - **功能注册完整性**：新功能必须完成 4 处注册 + 2 处 i18n（详见下方「添加新功能 → 注册步骤」）
+- **功能开关注册**：新功能需在 `PluginSettings` 中添加 `enableXxx` 字段、在 `DEFAULT_SETTINGS` 中添加默认值、在 `src/index.ts` 的 `registerFeatures()` 中添加条件注册。若功能 ID 含缩写词（如 `qrCode`、`aiContentGenerator`），需在 `FEATURE_ID_TO_KEY_MAP` 中添加映射
 - **编辑器配置**：缩进使用 2 空格，文件编码 UTF-8，清理尾随空格（参见 `.editorconfig`）
 
 ### 代码风格
@@ -276,6 +278,73 @@ await saveSettings(plugin, newSettings)
 
 // 插件卸载时清除加密密钥缓存（内存安全）
 clearCachedKey()
+```
+
+### 功能开关系统
+
+功能开关允许用户在超级面板中一键启用/禁用各功能模块。开关状态通过 `PluginSettings.enable*` 字段持久化，并在 `src/index.ts` 的 `registerFeatures()` 中控制功能的实际注册。
+
+#### 开关持久化机制
+
+思源 `loadData()` 是异步的，但 `addDock()` 等 API 必须在 `onload` 同步阶段完成。为此采用 **Node.js fs 同步文件 I/O** 做双通道持久化：
+
+```
+保存: fs.writeFileSync(文件) → 写入插件 data 目录 feature-flags.json
+loadAndApplySettings 异步加载完成后也调用 saveFeatureFlagsSync() 同步回写
+
+读取: fs.readFileSync(文件) → 跨重启可靠
+      ↓ 文件不存在/读取失败 → 降级到 localStorage → 降级到 DEFAULT_SETTINGS
+```
+
+#### 核心 API
+
+| 函数 | 说明 |
+|------|------|
+| `featureIdToSettingKey(featureId)` | 功能 ID → 配置键名映射（`qrCode` → `enableQRCode`，`aiContentGenerator` → `enableAIContentGenerator`） |
+| `setFeatureFlagsDir(dir)` | 初始化文件持久化目录，onload 中调用 `setFeatureFlagsDir((this as any).dataDir)` |
+| `saveFeatureFlagsSync(settings)` | 提取 `enable*` 字段同步写入磁盘 |
+| `loadFeatureFlagsSync()` | 同步读取开关配置，返回 `Partial<PluginSettings>` |
+
+```typescript
+import {
+  featureIdToSettingKey,
+  loadFeatureFlagsSync,
+  saveFeatureFlagsSync,
+  setFeatureFlagsDir,
+} from '@/config/settings'
+
+// onload 同步阶段读取
+setFeatureFlagsDir((this as any).dataDir)
+const savedFlags = loadFeatureFlagsSync()
+this.settings = { ...DEFAULT_SETTINGS, ...savedFlags }
+
+// 新增功能开关字段时，需在 FEATURE_ID_TO_KEY_MAP 中处理缩写词映射
+// 参见 src/config/settings.ts 中的 FEATURE_ID_TO_KEY_MAP
+```
+
+#### 条件注册（src/index.ts）
+
+```typescript
+private registerFeatures() {
+  const s = this.settings
+  registerSuperPanel(this)  // 超级面板不可关闭
+  if (s.enablePageLock) registerPageLock(this)
+  if (s.enableTableOfContents) registerTableOfContents(this)
+  // ... 每个功能对应一个 enable* 开关
+}
+```
+
+#### 开关 UI（超级面板）
+
+每个功能卡片右侧有一个 `Switch` 开关（超级面板自身不显示开关）。切换时通过 `handleToggleFeature()` 更新 `PluginSettings` 并持久化：
+
+```
+用户点击 Switch
+  → FeatureCard emit("toggle")
+    → index.vue emit("toggleFeature")
+      → SuperPanelManager.handleToggleFeature()
+        → plugin.updateSettings({ [enableXxx]: newValue })
+          → saveSettings() 异步持久化 + saveFeatureFlagsSync() 同步缓存
 ```
 
 ### 图标配置系统（src/config/icons.ts）
@@ -499,11 +568,13 @@ const {
 2. `types/index.ts` 仅放类型定义和 Manager 类，不放 `register*()` 函数
 3. `src/features/index.ts` 中从 `"./myFeature"` 导出（非 `"./myFeature/types"`）
    → 同时更新 `_Registered` 类型添加新功能 ID（否则编译时断言会报错）
-4. `src/index.ts` 中条件注册
-5. `src/i18n/zh_CN.json` 和 `src/i18n/en_US.json` 添加翻译条目
-6. `src/features/config.ts` 的 `FEATURE_CONFIG` 中添加条目（自动推导 `FeatureId` 类型）
+4. `src/index.ts` 中条件注册：导入 register 函数，并在 `registerFeatures()` 中添加 `if (s.enableXxx) registerMyFeature(this)`
+5. `src/config/settings.ts` 的 `PluginSettings` 接口中添加 `enableXxx: boolean`，`DEFAULT_SETTINGS` 中添加默认值
+   → 若功能 ID 含缩写词（如 `qrCode` → `enableQRCode`），须在 `FEATURE_ID_TO_KEY_MAP` 中添加映射
+6. `src/i18n/zh_CN.json` 和 `src/i18n/en_US.json` 添加翻译条目
+7. `src/features/config.ts` 的 `FEATURE_CONFIG` 中添加条目（自动推导 `FeatureId` 类型）
    → 若功能为纯配置型（无 register 函数），须在 `_ConfigOnly` 白名单中添加
-7. `src/config/icons.ts` 的 `FEATURE_ICONS` 中添加图标映射
+8. `src/config/icons.ts` 的 `FEATURE_ICONS` 中添加图标映射
 
 ### 简单功能（无面板，无存储）
 

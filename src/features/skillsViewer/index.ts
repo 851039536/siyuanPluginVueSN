@@ -8,6 +8,7 @@ export function registerSkillsViewer(plugin: Plugin) {
   plugin.addCommand({
     langKey: "skillsViewer",
     langText: "Skills 查看器",
+    hotkey: "",
     callback: () => {
       showSkillsViewer()
     },

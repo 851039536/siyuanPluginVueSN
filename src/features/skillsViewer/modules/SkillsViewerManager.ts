@@ -114,14 +114,19 @@ export class SkillsViewerManager {
   }
 
   async scanAllSkills(projectPath?: string): Promise<SkillInfo[]> {
-    const allSkills: SkillInfo[] = []
+    const results = await Promise.all(
+      AI_TOOLS.map((tool) => this.scanToolSkills(tool, projectPath)),
+    )
+    return results.flat()
+  }
 
-    for (const tool of AI_TOOLS) {
-      const skills = await this.scanToolSkills(tool, projectPath)
-      allSkills.push(...skills)
+  private async fileExists(filePath: string): Promise<boolean> {
+    try {
+      await this.fs.promises.access(filePath)
+      return true
+    } catch {
+      return false
     }
-
-    return allSkills
   }
 
   private async scanSkillDirectory(
@@ -131,8 +136,7 @@ export class SkillsViewerManager {
     const skills: SkillInfo[] = []
 
     try {
-      const exists = await this.fs.promises.access(dirPath).then(() => true).catch(() => false)
-      if (!exists) return []
+      if (!(await this.fileExists(dirPath))) return []
 
       const entries = await this.fs.promises.readdir(dirPath, {
         withFileTypes: true,
@@ -145,8 +149,7 @@ export class SkillsViewerManager {
         const skillMdPath = this.path.join(skillDir, "skill.md")
 
         try {
-          const mdExists = await this.fs.promises.access(skillMdPath).then(() => true).catch(() => false)
-          if (mdExists) {
+          if (await this.fileExists(skillMdPath)) {
             const content = await this.fs.promises.readFile(skillMdPath, "utf-8")
             const stat = await this.fs.promises.stat(skillMdPath)
             const {
@@ -176,14 +179,14 @@ export class SkillsViewerManager {
   public parseSkillMd(
     content: string,
     fallbackName: string,
-  ): { name: string, description: string } {
+  ): { name: string; description: string } {
     let name = fallbackName
     let description = ""
 
     const lines = content.split("\n")
     for (const line of lines) {
       const trimmed = line.trim()
-      if (!name || name === fallbackName) {
+      if (name === fallbackName) {
         const headingMatch = trimmed.match(/^#+\s+(.+)/)
         if (headingMatch) {
           name = headingMatch[1].trim()
@@ -206,52 +209,48 @@ export class SkillsViewerManager {
     }
   }
 
+  private async checkPathGroup(
+    basePath: string,
+    relPaths: string[],
+  ): Promise<{ exists: boolean; count: number }> {
+    let exists = false
+    let count = 0
+    for (const relPath of relPaths) {
+      const fullPath = this.path.join(basePath, relPath)
+      try {
+        if (await this.fileExists(fullPath)) {
+          exists = true
+          const entries = await this.fs.promises.readdir(fullPath, {
+            withFileTypes: true,
+          })
+          count += entries.filter((e: any) => e.isDirectory()).length
+        }
+      } catch {
+        // 忽略
+      }
+    }
+    return { exists, count }
+  }
+
   async checkToolExists(tool: AIToolConfig, projectPath?: string): Promise<{
     global: boolean
     project: boolean
     globalCount: number
     projectCount: number
   }> {
-    const result = {
-      global: false,
-      project: false,
-      globalCount: 0,
-      projectCount: 0,
+    if (!this.available) return { global: false, project: false, globalCount: 0, projectCount: 0 }
+
+    const globalResult = await this.checkPathGroup(this.homeDir, tool.skillPaths)
+    const projectResult = projectPath
+      ? await this.checkPathGroup(projectPath, tool.projectPaths)
+      : { exists: false, count: 0 }
+
+    return {
+      global: globalResult.exists,
+      project: projectResult.exists,
+      globalCount: globalResult.count,
+      projectCount: projectResult.count,
     }
-
-    if (!this.available) return result
-
-    for (const relPath of tool.skillPaths) {
-      const fullPath = this.path.join(this.homeDir, relPath)
-      try {
-        const exists = await this.fs.promises.access(fullPath).then(() => true).catch(() => false)
-        if (exists) {
-          result.global = true
-          const entries = await this.fs.promises.readdir(fullPath, { withFileTypes: true })
-          result.globalCount += entries.filter((e: any) => e.isDirectory()).length
-        }
-      } catch {
-        // 忽略
-      }
-    }
-
-    if (projectPath) {
-      for (const relPath of tool.projectPaths) {
-        const fullPath = this.path.join(projectPath, relPath)
-        try {
-          const exists = await this.fs.promises.access(fullPath).then(() => true).catch(() => false)
-          if (exists) {
-            result.project = true
-            const entries = await this.fs.promises.readdir(fullPath, { withFileTypes: true })
-            result.projectCount += entries.filter((e: any) => e.isDirectory()).length
-          }
-        } catch {
-          // 忽略
-        }
-      }
-    }
-
-    return result
   }
 
   async readSkillContent(filePath: string): Promise<string | null> {

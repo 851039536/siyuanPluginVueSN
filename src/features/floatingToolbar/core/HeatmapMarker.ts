@@ -19,12 +19,15 @@ export class HeatmapMarker {
   private flashcardStorage: FlashcardStorage
   private active = false
   private isScanning = false
+  private isMarking = false
   private styleAdded = false
   private wordHeatMap = new Map<string, number>()
   private bodyObserver: MutationObserver | null = null
   private contentObservers = new Map<Element, MutationObserver>()
   private scanTimer: ReturnType<typeof setTimeout> | null = null
-  private readonly SCAN_DEBOUNCE_MS = 800
+  private readonly SCAN_DEBOUNCE_MS = 2000
+  private lastScanTime = 0
+  private readonly MIN_SCAN_INTERVAL_MS = 3000
   private cacheTimestamp = 0
   private readonly CACHE_TTL_MS = 30000
 
@@ -179,7 +182,7 @@ export class HeatmapMarker {
     if (!wysiwyg) return
 
     const observer = new MutationObserver((mutations) => {
-      if (this.isScanning) return
+      if (this.isScanning || this.isMarking) return
 
       for (const m of mutations) {
         if (m.type === "childList") {
@@ -202,18 +205,18 @@ export class HeatmapMarker {
     observer.observe(wysiwyg, {
       childList: true,
       subtree: true,
-      characterData: true,
     })
 
     this.contentObservers.set(protyle, observer)
   }
 
   private debounceScan() {
-    if (this.isScanning) return
+    if (this.isScanning || this.isMarking) return
     if (this.scanTimer) clearTimeout(this.scanTimer)
     this.scanTimer = setTimeout(() => {
       this.scanTimer = null
-      if (!this.active) return
+      if (!this.active || this.isMarking) return
+      if (Date.now() - this.lastScanTime < this.MIN_SCAN_INTERVAL_MS) return
       if (this.wordHeatMap.size === 0) {
         this.refreshWordCache().then(() => {
           if (this.wordHeatMap.size > 0) {
@@ -237,6 +240,7 @@ export class HeatmapMarker {
     await this.ensureCacheFresh()
 
     this.isScanning = true
+    this.isMarking = true
 
     try {
       const documents = document.querySelectorAll<HTMLElement>(
@@ -266,6 +270,8 @@ export class HeatmapMarker {
       }
     } finally {
       this.isScanning = false
+      this.isMarking = false
+      this.lastScanTime = Date.now()
     }
   }
 

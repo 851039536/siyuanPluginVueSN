@@ -122,8 +122,8 @@ function parseAtom(doc: Document, feedUrl: string): {
     const content = getTextContent(entry, "content")
 
     let coverImage: string | undefined
-    if (summary || content) {
-      coverImage = extractFirstImage(content || summary)
+    if (content || summary) {
+      coverImage = extractFirstImage((content || summary)!)
     }
 
     items.push({

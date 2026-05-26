@@ -5,7 +5,7 @@
  * 参考 GitHub 浅色主题配色方案。
  */
 
-import { escapeHtmlFull } from "@/utils/stringUtils"
+import { escapeHtml, escapeHtmlFull } from "@/utils/stringUtils"
 
 // GitHub 浅色主题配色（公众号兼容，白底浅灰代码区）
 const LIGHT_COLORS = {

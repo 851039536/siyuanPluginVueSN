@@ -1,7 +1,11 @@
 /**
  * RSS解析工具 - 解析RSS/Atom XML格式
  */
-import type { RssFeed, RssItem } from "../types"
+import type {
+  RssFeed,
+  RssItem,
+} from "../types"
+import { stripHtml } from "@/utils/stringUtils"
 
 /**
  * 解析RSS/Atom XML文本为订阅源和条目
@@ -78,11 +82,14 @@ function parseRss(doc: Document, feedUrl: string): {
       author: getTextContent(item, "dc\\:creator") || getTextContent(item, "author"),
       content: content || description,
       coverImage,
-      categories: Array.from(item.querySelectorAll("category")).map(c => c.textContent || "").filter(Boolean),
+      categories: Array.from(item.querySelectorAll("category")).map((c) => c.textContent || "").filter(Boolean),
     })
   })
 
-  return { feed, items }
+  return {
+    feed,
+    items,
+  }
 }
 
 /**
@@ -127,11 +134,14 @@ function parseAtom(doc: Document, feedUrl: string): {
       author: getAttributeValue(entry, "author name", ""),
       content: content || summary,
       coverImage,
-      categories: Array.from(entry.querySelectorAll("category")).map(c => c.getAttribute("term") || "").filter(Boolean),
+      categories: Array.from(entry.querySelectorAll("category")).map((c) => c.getAttribute("term") || "").filter(Boolean),
     })
   })
 
-  return { feed, items }
+  return {
+    feed,
+    items,
+  }
 }
 
 // ========== 辅助函数 ==========
@@ -159,14 +169,6 @@ function getIconUrl(channel: Element): string | undefined {
 function extractFirstImage(html: string): string | undefined {
   const match = html.match(/<img[^>]+src=["']([^"']+)["']/)
   return match?.[1]
-}
-
-/**
- * 去除HTML标签
- */
-function stripHtml(html?: string): string | undefined {
-  if (!html) return undefined
-  return html.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim() || undefined
 }
 
 /**

@@ -1,3 +1,4 @@
+import type { WechatTheme } from "../types/storage"
 /**
  * Markdown 转微信公众号格式转换器
  *
@@ -11,7 +12,7 @@
  */
 import hljs from "highlight.js"
 import { marked } from "marked"
-import type { WechatTheme } from "../types/storage"
+import { escapeHtml } from "@/utils/stringUtils"
 import { normalizeWidths } from "../../htmlViewer/utils/normalizeWidths"
 
 /**
@@ -112,18 +113,6 @@ const WECHAT_THEMES: Record<WechatTheme, ThemeColors> = {
     tableBorderColor: "#91d5ff",
     strongColor: "#003a8c",
   },
-}
-
-/**
- * HTML 转义
- */
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;")
 }
 
 /**
@@ -276,7 +265,12 @@ export async function convertMdToWechat(
     codeHighlight: boolean
   },
 ): Promise<string> {
-  const { theme, fontSize, lineHeight, codeHighlight } = options
+  const {
+    theme,
+    fontSize,
+    lineHeight,
+    codeHighlight,
+  } = options
   const colors = WECHAT_THEMES[theme]
 
   // 使用 marked.use 配置代码高亮
@@ -284,7 +278,10 @@ export async function convertMdToWechat(
     breaks: true,
     gfm: true,
     renderer: {
-      code({ text, lang }: { text: string, lang?: string }) {
+      code({
+        text,
+        lang,
+      }: { text: string, lang?: string }) {
         const langAttr = lang ? ` class="language-${lang}"` : ""
         const langLabel = lang ? `<div style="font-size: 12px; color: #999; padding: 8px 16px 4px; text-align: right; background-color: ${colors.codeBgColor}; border-radius: 4px 4px 0 0;">${lang}</div>` : ""
         let highlighted: string
@@ -319,12 +316,32 @@ export async function convertMdToWechat(
 /**
  * 获取主题列表
  */
-export function getWechatThemes(): { value: WechatTheme; label: string; color: string }[] {
+export function getWechatThemes(): { value: WechatTheme, label: string, color: string }[] {
   return [
-    { value: "default", label: "微信绿", color: "#07c160" },
-    { value: "green", label: "清新绿", color: "#52c41a" },
-    { value: "orange", label: "活力橙", color: "#fa8c16" },
-    { value: "purple", label: "优雅紫", color: "#722ed1" },
-    { value: "blue", label: "科技蓝", color: "#1890ff" },
+    {
+      value: "default",
+      label: "微信绿",
+      color: "#07c160",
+    },
+    {
+      value: "green",
+      label: "清新绿",
+      color: "#52c41a",
+    },
+    {
+      value: "orange",
+      label: "活力橙",
+      color: "#fa8c16",
+    },
+    {
+      value: "purple",
+      label: "优雅紫",
+      color: "#722ed1",
+    },
+    {
+      value: "blue",
+      label: "科技蓝",
+      color: "#1890ff",
+    },
   ]
 }

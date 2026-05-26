@@ -44,8 +44,7 @@ function toggle() {
 
 <style scoped lang="scss">
 @use "@/variables" as *;
-@use "../../superPanel/styles/variables" as *;
-@use "../../superPanel/styles/mixins" as *;
+@use "../../superPanel/styles/shared" as *;
 @use "../styles/index.scss" as stats;
 
 .collapsible-section {

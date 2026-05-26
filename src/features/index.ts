@@ -8,11 +8,6 @@ export { registerBase64Image } from "./base64Image"
 export { registerCodeImageGenerator } from "./codeImageGenerator"
 export { registerDiskBrowser } from "./diskBrowser"
 export { registerDocAnalysis } from "./docAnalysis"
-export { registerFormatAssistant } from "./formatAssistant"
-export { registerHtmlViewer } from "./htmlViewer"
-export {
-  htmlViewerVisible,
-} from "./htmlViewer/types"
 export { registerDocNavigation } from "./docNavigation"
 export { registerEncryption } from "./encryption"
 export {
@@ -25,7 +20,12 @@ export {
 export { registerFlashcardReading } from "./flashcardReading"
 export { registerFloatingBox } from "./floatingBox"
 export { registerFloatingToolbar } from "./floatingToolbar"
+export { registerFormatAssistant } from "./formatAssistant"
 export { registerGeneralSettings } from "./generalSettings"
+export { registerHtmlViewer } from "./htmlViewer"
+export {
+  htmlViewerVisible,
+} from "./htmlViewer/state"
 export { registerImageCompressor } from "./imageCompressor"
 /**
  * 功能模块统一导出
@@ -45,6 +45,8 @@ export {
   showPasswordVault,
   togglePasswordVault,
 } from "./passwordVault"
+export { registerResourceManager } from "./resourceManager"
+export { registerRssReader } from "./rssReader"
 export {
   addCustomShortcut,
   addCustomShortcuts,
@@ -52,7 +54,10 @@ export {
   registerShortcut,
   type ShortcutInfo,
 } from "./shortcut"
-export { getStatisticsInstance, registerStatistics } from "./statistics"
+export {
+  getStatisticsInstance,
+  registerStatistics,
+} from "./statistics"
 export { registerStatusBar } from "./statusBar"
 export { registerSuperPanel } from "./superPanel"
 export { registerTableOfContents } from "./tableOfContents"
@@ -60,8 +65,6 @@ export { registerTextDiff } from "./textDiff"
 export { registerUnitConverter } from "./unitConverter"
 export { registerVideo } from "./video"
 export { registerWordQuery } from "./wordQuery"
-export { registerResourceManager } from "./resourceManager"
-export { registerRssReader } from "./rssReader"
 
 /**
  * 白名单：仅用于 UI 配置展示、不需要 register 函数的功能

@@ -426,7 +426,9 @@
     "thinkingOff": "Off",
     "thinkingDesc": "Enable deep thinking before answering, ideal for complex reasoning tasks",
     "resourceManager": "Resource Manager",
-    "resourceManagerDesc": "Manage Siyuan asset files: view, rename, insert, and clean up resources"
+    "resourceManagerDesc": "Manage Siyuan asset files: view, rename, insert, and clean up resources",
+    "heatmapMarker": "Heatmap Marker",
+    "heatmapMarkerDesc": "Automatically marks English words from the wordbook in documents, showing a heatmap gradient based on practice count"
   },
   "wordQuery": {
     "title": "Word Query",

@@ -250,7 +250,7 @@ async function copyQRCode() {
               "info",
             )
           })
-          .catch((err) => {
+          .catch(() => {
             showMessage(
               props.i18n.qrcodeCopyFailed || "复制失败",
               3000,

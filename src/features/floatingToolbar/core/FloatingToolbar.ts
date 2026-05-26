@@ -317,7 +317,7 @@ export class FloatingToolbar {
    * 获取选中的文本
    */
   private getSelection(protyle: Element): string {
-    const selection = window.getSelection().toString().trim()
+    const selection = window.getSelection()?.toString().trim()
     if (selection) return selection
 
     // 处理多选块

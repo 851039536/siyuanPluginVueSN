@@ -341,7 +341,7 @@ interface Emits {
 
 const props = withDefaults(defineProps<Props>(), {
   i18n: () => ({}),
-  plugin: null,
+  plugin: undefined,
 })
 
 const emit = defineEmits<Emits>()
@@ -462,7 +462,7 @@ function applyDocumentFontStyles(fontSettings: DocumentFontSettingsData) {
         letter-spacing: ${fontSettings.letterSpacing}px !important;
         font-weight: ${fontSettings.fontWeight} !important;
       }
-      
+
       /* 行高 - 需要应用到具体元素 */
       .protyle-wysiwyg [data-node-id][data-type="NodeParagraph"],
       .protyle-wysiwyg [data-node-id][data-type="NodeParagraph"] p,
@@ -476,12 +476,12 @@ function applyDocumentFontStyles(fontSettings: DocumentFontSettingsData) {
       .protyle-wysiwyg [data-node-id][data-type="NodeBlockquote"] p {
         line-height: ${fontSettings.lineHeight} !important;
       }
-      
+
       /* 段落间距 */
       .protyle-wysiwyg [data-node-id][data-type="NodeParagraph"] {
         margin-bottom: ${fontSettings.paragraphSpacing}px !important;
       }
-      
+
       /* 预览区域 - 基础样式 */
       .b3-typography {
         font-family: ${fontFamily}var(--b3-font-family) !important;
@@ -489,7 +489,7 @@ function applyDocumentFontStyles(fontSettings: DocumentFontSettingsData) {
         letter-spacing: ${fontSettings.letterSpacing}px !important;
         font-weight: ${fontSettings.fontWeight} !important;
       }
-      
+
       /* 预览区域行高 */
       .b3-typography p,
       .b3-typography div,
@@ -502,11 +502,11 @@ function applyDocumentFontStyles(fontSettings: DocumentFontSettingsData) {
       .b3-typography h6 {
         line-height: ${fontSettings.lineHeight} !important;
       }
-      
+
       .b3-typography p {
         margin-bottom: ${fontSettings.paragraphSpacing}px !important;
       }
-      
+
       /* 导出预览 - 基础样式 */
       .render-node {
         font-family: ${fontFamily}var(--b3-font-family) !important;
@@ -514,14 +514,14 @@ function applyDocumentFontStyles(fontSettings: DocumentFontSettingsData) {
         letter-spacing: ${fontSettings.letterSpacing}px !important;
         font-weight: ${fontSettings.fontWeight} !important;
       }
-      
+
       /* 导出预览行高 */
       .render-node p,
       .render-node div,
       .render-node li {
         line-height: ${fontSettings.lineHeight} !important;
       }
-      
+
       /* 代码块保持原字体和行高 */
       .protyle-wysiwyg .code-block,
       .protyle-wysiwyg .code-block *,

@@ -294,9 +294,9 @@ import { showMessage } from "siyuan"
 import {
   computed,
   onBeforeUnmount,
-  onMounted,
   reactive,
   ref,
+  watch,
 } from "vue"
 import SiButton from "@/components/Button.vue"
 import {
@@ -531,8 +531,11 @@ function closeDialog() {
   emit("close")
 }
 
-onMounted(async () => {
-  if (managerAvailable) {
+let hasInitialized = false
+
+watch(() => props.visible, async (v) => {
+  if (v && !hasInitialized && managerAvailable) {
+    hasInitialized = true
     await checkAllToolStatuses()
     await refreshSkills()
   }

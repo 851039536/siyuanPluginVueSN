@@ -227,6 +227,11 @@ export const FEATURE_CONFIG = [
     titleI18nKey: "resourceManager.panelTitle",
     descI18nKey: "resourceManager.description",
   },
+  {
+    id: "skillsViewer",
+    defaultTitle: "Skills 查看器",
+    defaultDesc: "查看和管理 AI 编程工具的 Skills 配置文件",
+  },
 ] as const
 
 /**

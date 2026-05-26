@@ -84,6 +84,7 @@
 import { ref } from "vue"
 import { emitCustomEvent } from "@/utils/eventBus"
 import { showPasswordVault } from "../passwordVault/types"
+import { showSkillsViewer } from "../skillsViewer/types"
 import FeatureDrawer from "./components/FeatureDrawer.vue"
 import MonitorItem from "./components/MonitorItem.vue"
 import { useStatusBar } from "./composables/useStatusBar"
@@ -128,6 +129,9 @@ const handleSelectFeature = (id: string) => {
       break
     case "passwordVault":
       showPasswordVault()
+      break
+    case "skillsViewer":
+      showSkillsViewer()
       break
   }
 }

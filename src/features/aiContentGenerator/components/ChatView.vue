@@ -264,7 +264,7 @@
 </template>
 
 <script setup lang="ts">
-import type { AIToolType } from "@/features/generalSettings/modules/SkillsViewerManager"
+import type { AIToolType } from "@/features/skillsViewer/modules/SkillsViewerManager"
 import type {
   ChatMessage,
   ChatOptions,
@@ -278,7 +278,7 @@ import {
   ref,
   watch,
 } from "vue"
-import { AI_TOOLS } from "@/features/generalSettings/modules/SkillsViewerManager"
+import { AI_TOOLS } from "@/features/skillsViewer/modules/SkillsViewerManager"
 import { useSkillsLoader } from "../composables/useSkillsLoader"
 import { renderMarkdown } from "../utils"
 

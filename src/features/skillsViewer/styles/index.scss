@@ -1,15 +1,46 @@
 /**
- * SkillsViewerSettings 样式
+ * SkillsViewer 样式
  */
 
-.skills-viewer-settings {
-  padding: 16px;
+.skills-viewer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(2px);
+}
 
-  .sv-header {
+.skills-viewer-dialog {
+  width: 720px;
+  max-width: 90vw;
+  max-height: 85vh;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.08));
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.skills-viewer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.08));
+  flex-shrink: 0;
+
+  .sv-header-left {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 16px;
 
     .sv-header-icon {
       font-size: 18px;
@@ -31,6 +62,39 @@
     }
   }
 
+  .sv-close-btn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background: transparent;
+    color: var(--b3-theme-on-surface-variant);
+    font-size: 16px;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.06);
+    }
+  }
+}
+
+.skills-viewer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--b3-theme-surface-variant);
+    border-radius: 2px;
+  }
+
   .sv-description {
     font-size: 12px;
     color: var(--b3-theme-on-surface-variant);
@@ -38,7 +102,6 @@
     margin-bottom: 20px;
   }
 
-  // 工具选择卡片
   .sv-tools-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -107,7 +170,6 @@
     }
   }
 
-  // 项目路径设置
   .sv-project-path {
     margin-bottom: 20px;
     padding: 12px 14px;
@@ -148,14 +210,12 @@
     }
   }
 
-  // 刷新按钮
   .sv-actions {
     display: flex;
     gap: 8px;
     margin-bottom: 16px;
   }
 
-  // Skills 列表
   .sv-skills-list {
     display: flex;
     flex-direction: column;
@@ -185,7 +245,6 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     }
 
-    // 编辑模式高亮
     &--editing {
       border-color: var(--b3-theme-primary);
       box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.15);
@@ -243,7 +302,6 @@
       }
     }
 
-    // 操作按钮
     .sv-skill-action-btn {
       width: 26px;
       height: 26px;
@@ -320,14 +378,13 @@
       }
     }
 
-    // Markdown 渲染预览区
     .sv-skill-content {
       margin-top: 10px;
       padding: 12px;
       background: var(--b3-theme-background);
       border: 1px solid var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.08));
       border-radius: 6px;
-      max-height: 400px;
+      max-height: 300px;
       overflow-y: auto;
       font-size: 13px;
       line-height: 1.6;
@@ -343,7 +400,6 @@
         border-radius: 2px;
       }
 
-      // Markdown 排版样式
       :deep(h1), :deep(h2), :deep(h3), :deep(h4), :deep(h5), :deep(h6) {
         color: var(--b3-theme-on-surface);
         margin: 12px 0 6px;
@@ -448,14 +504,13 @@
       }
     }
 
-    // 编辑器
     .sv-skill-editor {
       margin-top: 10px;
 
       .sv-skill-editor-textarea {
         width: 100%;
-        min-height: 200px;
-        max-height: 400px;
+        min-height: 150px;
+        max-height: 300px;
         padding: 10px 12px;
         font-size: 12px;
         font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
@@ -489,7 +544,6 @@
     }
   }
 
-  // 空状态
   .sv-empty {
     text-align: center;
     padding: 32px 16px;
@@ -514,7 +568,6 @@
     }
   }
 
-  // 加载状态
   .sv-loading {
     display: flex;
     align-items: center;
@@ -536,7 +589,6 @@
     }
   }
 
-  // 不支持提示
   .sv-unsupported {
     padding: 20px;
     text-align: center;
@@ -555,7 +607,6 @@
   }
 }
 
-// 删除确认弹窗（Teleport to body，不嵌套在 .skills-viewer-settings 内）
 .sv-modal-overlay {
   position: fixed;
   top: 0;
@@ -566,7 +617,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: 10000;
   backdrop-filter: blur(2px);
 
   .sv-modal {
@@ -599,21 +650,20 @@
       padding: 12px 18px;
       font-size: 13px;
       color: var(--b3-theme-on-surface-variant);
-      line-height: 1.5;
 
       .sv-modal-skill-name {
-        margin-top: 8px;
+        font-size: 14px;
         font-weight: 600;
         color: var(--b3-theme-on-surface);
-        font-size: 14px;
+        margin-top: 8px;
       }
 
       .sv-modal-skill-path {
-        margin-top: 4px;
-        font-family: monospace;
         font-size: 11px;
-        opacity: 0.6;
-        word-break: break-all;
+        color: var(--b3-theme-on-surface-variant);
+        opacity: 0.7;
+        font-family: monospace;
+        margin-top: 4px;
       }
     }
 
@@ -624,4 +674,29 @@
       padding: 12px 18px 16px;
     }
   }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.scale-enter-active,
+.scale-leave-active {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.scale-enter-from {
+  transform: scale(0.95);
+  opacity: 0;
+}
+
+.scale-leave-to {
+  transform: scale(0.95);
+  opacity: 0;
 }

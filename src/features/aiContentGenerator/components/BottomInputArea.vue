@@ -323,7 +323,7 @@ import {
 import Button from "@/components/Button.vue"
 import Tag from "@/components/Tag.vue"
 import Textarea from "@/components/Textarea.vue"
-import { AI_TOOLS } from "@/features/generalSettings/modules/SkillsViewerManager"
+import { AI_TOOLS } from "@/features/skillsViewer/modules/SkillsViewerManager"
 import { getPromptPreview } from "../utils"
 
 interface QuickAction {

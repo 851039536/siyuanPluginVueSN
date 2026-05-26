@@ -10,7 +10,7 @@ export interface SkillInfo {
   content: string
   filePath: string
   tool: AIToolType
-  fileSize: number // 字节数
+  fileSize: number
 }
 
 export type AIToolType = "claude" | "codebuddy" | "qoder" | "trae"
@@ -20,8 +20,8 @@ export interface AIToolConfig {
   name: string
   icon: string
   color: string
-  skillPaths: string[] // 相对于 home 目录的路径
-  projectPaths: string[] // 相对于项目目录的路径
+  skillPaths: string[]
+  projectPaths: string[]
 }
 
 export const AI_TOOLS: AIToolConfig[] = [
@@ -74,7 +74,6 @@ export class SkillsViewerManager {
       if (typeof window.require === "function") {
         this.fs = window.require("fs")
         this.path = window.require("path")
-        // 获取 home 目录
         const os = window.require("os")
         this.homeDir = os.homedir()
         this.available = true
@@ -88,29 +87,21 @@ export class SkillsViewerManager {
     return this.available
   }
 
-  /**
-   * 获取 home 目录
-   */
   getHomeDir(): string {
     return this.homeDir
   }
 
-  /**
-   * 扫描指定工具的所有 Skills
-   */
   async scanToolSkills(tool: AIToolConfig, projectPath?: string): Promise<SkillInfo[]> {
     if (!this.available) return []
 
     const skills: SkillInfo[] = []
 
-    // 扫描全局路径
     for (const relPath of tool.skillPaths) {
       const fullPath = this.path.join(this.homeDir, relPath)
       const found = await this.scanSkillDirectory(fullPath, tool.id)
       skills.push(...found)
     }
 
-    // 扫描项目路径
     if (projectPath) {
       for (const relPath of tool.projectPaths) {
         const fullPath = this.path.join(projectPath, relPath)
@@ -122,9 +113,6 @@ export class SkillsViewerManager {
     return skills
   }
 
-  /**
-   * 扫描所有工具的 Skills
-   */
   async scanAllSkills(projectPath?: string): Promise<SkillInfo[]> {
     const allSkills: SkillInfo[] = []
 
@@ -136,9 +124,6 @@ export class SkillsViewerManager {
     return allSkills
   }
 
-  /**
-   * 扫描单个目录下的 Skills
-   */
   private async scanSkillDirectory(
     dirPath: string,
     toolId: AIToolType,
@@ -188,9 +173,6 @@ export class SkillsViewerManager {
     return skills
   }
 
-  /**
-   * 解析 skill.md 文件，提取名称和描述
-   */
   public parseSkillMd(
     content: string,
     fallbackName: string,
@@ -201,7 +183,6 @@ export class SkillsViewerManager {
     const lines = content.split("\n")
     for (const line of lines) {
       const trimmed = line.trim()
-      // 提取第一个标题作为名称
       if (!name || name === fallbackName) {
         const headingMatch = trimmed.match(/^#+\s+(.+)/)
         if (headingMatch) {
@@ -209,14 +190,12 @@ export class SkillsViewerManager {
           continue
         }
       }
-      // 提取第一段非标题文本作为描述
       if (!description && trimmed && !trimmed.startsWith("#")) {
         description = trimmed
         break
       }
     }
 
-    // 截断描述
     if (description.length > 200) {
       description = `${description.slice(0, 200)}...`
     }
@@ -227,9 +206,6 @@ export class SkillsViewerManager {
     }
   }
 
-  /**
-   * 检查指定工具的 Skills 是否存在
-   */
   async checkToolExists(tool: AIToolConfig, projectPath?: string): Promise<{
     global: boolean
     project: boolean
@@ -245,7 +221,6 @@ export class SkillsViewerManager {
 
     if (!this.available) return result
 
-    // 检查全局路径
     for (const relPath of tool.skillPaths) {
       const fullPath = this.path.join(this.homeDir, relPath)
       try {
@@ -260,7 +235,6 @@ export class SkillsViewerManager {
       }
     }
 
-    // 检查项目路径
     if (projectPath) {
       for (const relPath of tool.projectPaths) {
         const fullPath = this.path.join(projectPath, relPath)
@@ -280,9 +254,6 @@ export class SkillsViewerManager {
     return result
   }
 
-  /**
-   * 获取 skill.md 文件内容
-   */
   async readSkillContent(filePath: string): Promise<string | null> {
     if (!this.available) return null
     try {
@@ -292,9 +263,6 @@ export class SkillsViewerManager {
     }
   }
 
-  /**
-   * 在文件管理器中打开 Skills 目录
-   */
   async openInFileManager(dirPath: string): Promise<boolean> {
     if (!this.available) return false
     try {
@@ -306,9 +274,6 @@ export class SkillsViewerManager {
     }
   }
 
-  /**
-   * 保存 Skill 内容到文件
-   */
   async saveSkillContent(filePath: string, content: string): Promise<boolean> {
     if (!this.available) return false
     try {
@@ -319,9 +284,6 @@ export class SkillsViewerManager {
     }
   }
 
-  /**
-   * 删除 Skill 目录
-   */
   async deleteSkill(skillDirPath: string): Promise<boolean> {
     if (!this.available) return false
     try {
@@ -335,9 +297,6 @@ export class SkillsViewerManager {
     }
   }
 
-  /**
-   * 格式化文件大小
-   */
   formatFileSize(bytes: number): string {
     if (bytes === 0) return "0 B"
     const units = ["B", "KB", "MB", "GB"]

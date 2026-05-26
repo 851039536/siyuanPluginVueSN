@@ -1,4 +1,4 @@
-import type { SkillInfo } from "@/features/generalSettings/modules/SkillsViewerManager"
+import type { SkillInfo } from "@/features/skillsViewer/modules/SkillsViewerManager"
 import type {
   SkillItem,
 } from "@/types/ai"
@@ -11,7 +11,7 @@ import {
   computed,
   ref,
 } from "vue"
-import { SkillsViewerManager } from "@/features/generalSettings/modules/SkillsViewerManager"
+import { SkillsViewerManager } from "@/features/skillsViewer/modules/SkillsViewerManager"
 
 export function useSkillsLoader(plugin: any) {
   /** 原始技能列表（去重前） */

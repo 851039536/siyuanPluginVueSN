@@ -55,6 +55,13 @@ export {
   type ShortcutInfo,
 } from "./shortcut"
 export {
+  hideSkillsViewer,
+  registerSkillsViewer,
+  showSkillsViewer,
+  skillsViewerVisible,
+  toggleSkillsViewer,
+} from "./skillsViewer"
+export {
   getStatisticsInstance,
   registerStatistics,
 } from "./statistics"
@@ -83,6 +90,7 @@ type _Registered =
   | "statusBar" | "floatingToolbar" | "floatingBox" | "textDiff"
   | "base64Image" | "flashcardReading" | "passwordVault" | "docAnalysis"
   | "formatAssistant" | "htmlViewer" | "rssReader" | "resourceManager"
+  | "skillsViewer"
 
 // --- 编译时断言辅助 ---
 // 利用泛型接口约束 T extends true 产生 TypeScript 编译错误，无运行时开销

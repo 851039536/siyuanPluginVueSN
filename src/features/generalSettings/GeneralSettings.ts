@@ -21,7 +21,6 @@ import GeneralSettingsPanel from "./index.vue"
 import { BookmarkMarker } from "./modules/BookmarkMarker"
 import { DocCountManager } from "./modules/DocCountManager"
 import { HighlightManager } from "./modules/HighlightManager"
-import { SkillsViewerManager } from "./modules/SkillsViewerManager"
 import { GeneralSettingsStorage } from "./types/storage"
 import {
   applyCodeBlockCollapse,
@@ -41,7 +40,6 @@ export class GeneralSettings {
   private docCountManager: DocCountManager | null = null
   private highlightManager: HighlightManager | null = null
   public bookmarkMarker: BookmarkMarker | null = null
-  private skillsViewerManager: SkillsViewerManager | null = null
   private _cachedFontSettings: FontSettings = {
     fontFamily: "",
     fontSize: 14,
@@ -67,7 +65,6 @@ export class GeneralSettings {
     await this.applyTabPinStyle()
     await this.applyBookmarkMarkerStyle()
     await this.applyHighlightStyle()
-    await this.applySkillsViewerStyle()
     this.observeContentChanges()
     await this.initAutoBackup()
   }
@@ -512,15 +509,8 @@ export class GeneralSettings {
     }
   }
 
-  public async applySkillsViewerStyle() {
-    try {
-      const settings = await this.storage.skillsViewer.load()
-      if (settings && settings.enabled) {
-        this.skillsViewerManager = new SkillsViewerManager()
-      }
-    } catch (error) {
-      console.error("初始化 Skills 查看器失败:", error)
-    }
+  public getHighlightManager(): HighlightManager | null {
+    return this.highlightManager
   }
 
   public async applyTabPinStyle() {
@@ -532,10 +522,6 @@ export class GeneralSettings {
     } catch (error) {
       console.error("应用钉住页签样式失败:", error)
     }
-  }
-
-  public getHighlightManager(): HighlightManager | null {
-    return this.highlightManager
   }
 
   public async updateHighlight(enabled: boolean) {
@@ -994,10 +980,6 @@ export class GeneralSettings {
     if (this.bookmarkMarker) {
       this.bookmarkMarker.stop()
       this.bookmarkMarker = null
-    }
-    if (this.skillsViewerManager) {
-      this.skillsViewerManager.destroy()
-      this.skillsViewerManager = null
     }
   }
 }

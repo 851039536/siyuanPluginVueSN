@@ -454,6 +454,35 @@
   }
 }
 
+// JSON 格式化
+.json-btn-active {
+  color: var(--b3-theme-primary) !important;
+  font-weight: 600 !important;
+}
+
+.json-format-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: #f0fff4;
+  border: 1px solid #b7eb8f;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #135200;
+  margin-bottom: 8px;
+
+  .json-badge-icon {
+    font-weight: 700;
+    font-size: 14px;
+    color: #52c41a;
+  }
+
+  span {
+    flex: 1;
+  }
+}
+
 // 过渡动画
 .fade-enter-active,
 .fade-leave-active {

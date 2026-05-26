@@ -49,6 +49,13 @@
   @include text-ellipsis;
 }
 
+.feature-right {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  flex-shrink: 0;
+}
+
 .feature-actions {
   display: flex;
   align-items: center;

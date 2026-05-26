@@ -161,6 +161,9 @@ export class SuperPanelManager {
       onUpdateAiSettings: async (aiSettings: AiSettings) => {
         await this.handleUpdateAiSettings(aiSettings)
       },
+      onToggleFeature: async (featureId: string, enabled: boolean) => {
+        await this.handleToggleFeature(featureId, enabled)
+      },
     })
 
     vueApp.mount(panelContainer)
@@ -243,6 +246,29 @@ export class SuperPanelManager {
         Object.assign(reactiveSettings, aiSettingFields)
       }
       showMessage("AI配置已保存", 2000, "info")
+    } else {
+      showMessage(
+        (this.plugin.i18n as any).saveFailed || "保存失败",
+        3000,
+        "error",
+      )
+    }
+  }
+
+  private async handleToggleFeature(featureId: string, enabled: boolean) {
+    const pluginSample = this.plugin as any
+    const settingKey = `enable${featureId.charAt(0).toUpperCase() + featureId.slice(1)}`
+
+    const newSettings = {
+      ...pluginSample.settings,
+      [settingKey]: enabled,
+    }
+
+    const success = await pluginSample.updateSettings(newSettings)
+    if (success) {
+      if (reactiveSettings) {
+        (reactiveSettings as any)[settingKey] = enabled
+      }
     } else {
       showMessage(
         (this.plugin.i18n as any).saveFailed || "保存失败",

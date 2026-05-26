@@ -224,7 +224,7 @@ interface Emits {
 
 const props = withDefaults(defineProps<Props>(), {
   i18n: () => ({}),
-  plugin: null,
+  plugin: undefined,
 })
 
 const emit = defineEmits<Emits>()
@@ -326,15 +326,15 @@ function applyListStyles(listSettings: ListStyleSettingsData) {
     style.textContent = `
       /* 有序列表样式 */
       ${orderedListCss}
-      
+
       /* 无序列表样式 - 隐藏原始符号 */
       [data-subtype="u"] > .li[data-subtype="u"] > .protyle-action svg {
         color: transparent;
       }
-      
+
       /* 无序列表符号 */
       ${unorderedListCss}
-      
+
       /* 暗色主题适配 */
       :root[data-theme-mode="dark"] .li[data-subtype="o"] > .protyle-action--order,
       :root[data-theme-mode="dark"] .li[data-subtype="u"] > .protyle-action::before {

@@ -5,7 +5,7 @@
       :placeholder="placeholder"
       prefix-icon="search"
       size="medium"
-      @update:model-value="$emit('update:searchKeyword', $event)"
+      @update:model-value="onSearchChange"
     />
     <Button
       variant="primary"
@@ -29,10 +29,14 @@ interface Props {
 
 defineProps<Props>()
 
-defineEmits<{
+const emit = defineEmits<{
   "update:searchKeyword": [value: string]
   "add": []
 }>()
+
+const onSearchChange = (value: string | number | null) => {
+  emit("update:searchKeyword", String(value ?? ""))
+}
 </script>
 
 <style scoped lang="scss">

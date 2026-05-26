@@ -288,7 +288,7 @@ export class BackupManager {
       entry,
     } of fileEntries) {
       const content = await entry.async("uint8array")
-      dataFolder.file(filePath, content)
+      dataFolder?.file(filePath, content)
       processed++
       if (processed % 50 === 0 || processed === fileEntries.length) {
         onProgress?.({

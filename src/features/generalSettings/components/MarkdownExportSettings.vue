@@ -146,7 +146,6 @@
 </template>
 
 <script setup lang="ts">
-// @ts-expect-error
 import JSZip from "jszip"
 import {
   computed,

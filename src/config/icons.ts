@@ -305,6 +305,9 @@ export const COMMON_ICONS = {
   refresh: {
     icon: "mdi:refresh",
   },
+  refreshLeft: {
+    icon: "mdi:undo",
+  },
   loading: {
     icon: "mdi:loading",
   },
@@ -359,6 +362,9 @@ export const COMMON_ICONS = {
   },
   shuffle: {
     icon: "mdi:shuffle-variant",
+  },
+  skipNext: {
+    icon: "mdi:skip-next",
   },
 
   // 文件类
@@ -416,6 +422,9 @@ export const COMMON_ICONS = {
   },
   download: {
     icon: "mdi:download",
+  },
+  fileCopy: {
+    icon: "mdi:file-document-multiple",
   },
   openInNew: {
     icon: "mdi:open-in-new",

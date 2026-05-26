@@ -35,7 +35,10 @@
         v-for="feature in features"
         :key="feature.id"
         :feature="feature"
+        :enabled="getFeatureEnabled(feature.id)"
+        :show-toggle="canToggle(feature.id)"
         @action="emit('action', $event)"
+        @toggle="handleToggle(feature.id, $event)"
       />
     </div>
   </div>
@@ -69,6 +72,7 @@ interface Emits {
   (e: "action", action: string): void
   (e: "refresh"): void
   (e: "updateAiSettings", settings: AiSettings): void
+  (e: "toggleFeature", featureId: string, enabled: boolean): void
 }
 
 const props = defineProps<Props>()
@@ -119,6 +123,21 @@ const features = computed<Feature[]>(() =>
     actions: actions || [],
   })),
 )
+
+const toSettingKey = (featureId: string): string =>
+  `enable${featureId.charAt(0).toUpperCase() + featureId.slice(1)}`
+
+const getFeatureEnabled = (featureId: string): boolean => {
+  if (featureId === "superPanel") return true
+  const key = toSettingKey(featureId)
+  return (props.settings as any)[key] ?? true
+}
+
+const canToggle = (featureId: string): boolean => featureId !== "superPanel"
+
+const handleToggle = (featureId: string, enabled: boolean) => {
+  emit("toggleFeature", featureId, enabled)
+}
 </script>
 
 <style lang="scss">

@@ -439,6 +439,9 @@ export const COMMON_ICONS = {
     icon: "mdi:auto-fix",
     color: "#a855f7",
   },
+  browser: {
+    icon: "mdi:web",
+  },
 } as const
 
 /**

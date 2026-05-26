@@ -64,12 +64,27 @@
       title="视频管理器"
       @click="handleOpenVideoManager"
     />
+
+    <MonitorItem
+      icon="ph:grid-four"
+      item-class="action-item feature-drawer-item"
+      title="功能列表"
+      @click="toggleFeatureDrawer"
+    />
+
+    <FeatureDrawer
+      :visible="showFeatureDrawer"
+      @close="showFeatureDrawer = false"
+      @select="handleSelectFeature"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue"
 import { emitCustomEvent } from "@/utils/eventBus"
 import { showPasswordVault } from "../passwordVault/types"
+import FeatureDrawer from "./components/FeatureDrawer.vue"
 import MonitorItem from "./components/MonitorItem.vue"
 import { useStatusBar } from "./composables/useStatusBar"
 
@@ -94,5 +109,26 @@ const handleOpenPasswordVault = () => {
 
 const handleOpenVideoManager = () => {
   emitCustomEvent("openVideoManager")
+}
+
+const showFeatureDrawer = ref(false)
+
+const toggleFeatureDrawer = () => {
+  showFeatureDrawer.value = !showFeatureDrawer.value
+}
+
+const handleSelectFeature = (id: string) => {
+  showFeatureDrawer.value = false
+  switch (id) {
+    case "superPanel":
+      emitCustomEvent("toggleSuperPanel")
+      break
+    case "video":
+      emitCustomEvent("openVideoManager")
+      break
+    case "passwordVault":
+      showPasswordVault()
+      break
+  }
 }
 </script>

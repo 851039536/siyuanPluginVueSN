@@ -106,3 +106,162 @@
     padding: 0 4px;
   }
 }
+
+// ==================== 功能抽屉（FeatureDrawer） ====================
+
+.feature-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9997;
+}
+
+.feature-drawer {
+  position: fixed;
+  right: 8px;
+  bottom: 36px;
+  width: 280px;
+  max-height: 260px;
+  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 8px;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12), 0 4px 20px rgba(0, 0, 0, 0.08);
+  z-index: 9998;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.feature-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  flex-shrink: 0;
+}
+
+.feature-drawer-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--b3-theme-on-background);
+}
+
+.feature-drawer-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.feature-drawer-view-btn {
+  @extend .feature-drawer-close;
+}
+
+.feature-drawer-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  opacity: 0.6;
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+    opacity: 1;
+  }
+}
+
+.feature-drawer-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 0;
+
+  // 列表模式
+  .feature-drawer-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--b3-theme-surface-lighter);
+    }
+  }
+
+  .feature-drawer-item-icon {
+    width: 25px;
+    height: 25px;
+    border-radius: 6px;
+    background: var(--b3-theme-surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .feature-drawer-item-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--b3-theme-on-background);
+  }
+
+  // 网格模式
+  &.grid-mode {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    padding: 6px;
+
+    .feature-drawer-item {
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 6px 4px;
+      border-radius: 6px;
+    }
+
+    .feature-drawer-item-icon {
+      width: 25px;
+      height: 25px;
+      border-radius: 6px;
+    }
+
+    .feature-drawer-item-title {
+      font-size: 10px;
+      text-align: center;
+    }
+  }
+}
+
+// 抽屉滑入动画
+.drawer-slide-enter-active {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.drawer-slide-leave-active {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.drawer-slide-enter-from {
+  opacity: 0;
+  transform: translateY(12px) scale(0.96);
+}
+
+.drawer-slide-leave-to {
+  opacity: 0;
+  transform: translateY(8px) scale(0.98);
+}
+
+// 响应式：小屏幕调整宽度
+@media (max-width: 540px) {
+  .feature-drawer {
+    right: 4px;
+    left: 4px;
+    width: auto;
+  }
+}

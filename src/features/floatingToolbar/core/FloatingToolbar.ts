@@ -1,4 +1,5 @@
 import { Plugin } from "siyuan"
+import { FlashcardStorage } from "@/features/flashcardReading/types/storage"
 import {
   ToolbarAction,
   ToolbarActionManager,
@@ -15,15 +16,18 @@ import {
 export class FloatingToolbar {
   private plugin: Plugin
   private actionManager: ToolbarActionManager
+  private flashcardStorage: FlashcardStorage
   private lastSelectionText: string = ""
   private observers: Map<HTMLElement, MutationObserver> = new Map()
   private isProcessing: boolean = false
   private readonly debouncedHandleMouseUp: () => void
   private readonly styleId = "floating-toolbar-enhanced-styles"
+  private readonly notebookHighlightClass = "word-from-notebook"
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
     this.actionManager = new ToolbarActionManager()
+    this.flashcardStorage = new FlashcardStorage(plugin)
     // 防抖处理选择事件，避免频繁触发
     this.debouncedHandleMouseUp = debounce(
       this.handleSelectionChange.bind(this),
@@ -99,6 +103,9 @@ export class FloatingToolbar {
       return
     }
 
+    // 检测是否为英文单词，并查询是否来自单词本
+    this.checkAndHighlightWordInNotebook(selectedText)
+
     // 使用防抖处理
     this.debouncedHandleMouseUp()
   }
@@ -116,6 +123,39 @@ export class FloatingToolbar {
     if (selectedText) {
       this.processSelection()
     }
+  }
+
+  /**
+   * 检测选中的英文单词是否来自单词本，并高亮背景
+   * 仅当选中内容为纯英文字母时进行检测
+   */
+  private async checkAndHighlightWordInNotebook(selectedText: string) {
+    if (!/^[a-zA-Z]+$/.test(selectedText)) {
+      this.removeNotebookHighlight()
+      return
+    }
+
+    try {
+      const allCards = await this.flashcardStorage.getAllCards()
+      const found = allCards.some(
+        (card) => card.title.toLowerCase() === selectedText.toLowerCase(),
+      )
+
+      if (found) {
+        document.body.classList.add(this.notebookHighlightClass)
+      } else {
+        this.removeNotebookHighlight()
+      }
+    } catch {
+      this.removeNotebookHighlight()
+    }
+  }
+
+  /**
+   * 移除单词本高亮标记
+   */
+  private removeNotebookHighlight() {
+    document.body.classList.remove(this.notebookHighlightClass)
   }
 
   /**
@@ -199,6 +239,8 @@ export class FloatingToolbar {
       observer.disconnect()
     })
     this.observers.clear()
+    // 移除单词本高亮
+    this.removeNotebookHighlight()
   }
 
   /**
@@ -394,6 +436,12 @@ export class FloatingToolbar {
             .custom-toolbar-button:active {
                 background-color: var(--b3-theme-surface);
             }
+
+            /* 单词本词汇选中高亮 */
+            body.word-from-notebook .protyle-wysiwyg ::selection {
+                background: rgba(255, 193, 7, 0.35) !important;
+                color: var(--b3-protyle-color, inherit) !important;
+            }
         `
     document.head.appendChild(style)
   }
@@ -410,6 +458,9 @@ export class FloatingToolbar {
       observer.disconnect()
     })
     this.observers.clear()
+
+    // 移除单词本高亮
+    this.removeNotebookHighlight()
 
     // 移除所有自定义按钮
     document.querySelectorAll(".custom-toolbar-button").forEach((button) => {

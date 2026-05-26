@@ -1,53 +1,180 @@
+import type {
+  CoverGenerationConfig,
+  CoverGenerationStatus,
+  CoverSizePreset,
+  CoverStylePreset,
+} from "../types"
 /**
  * AI 封面生成器 Composable
  * 根据文档标题/内容，通过 AI 生成 HTML 文章封面
  */
 import type { AiApiConfig } from "@/types/ai"
-import type { CoverGenerationConfig, CoverGenerationStatus, CoverSizePreset, CoverStylePreset } from "../types"
 import { ref } from "vue"
-import { callAI, callAIStream, getApiConfigFromPlugin } from "@/utils/aiApi"
 import { usePlugin } from "@/main"
+import {
+  callAI,
+  callAIStream,
+  getApiConfigFromPlugin,
+} from "@/utils/aiApi"
 
 // 尺寸预设
 export const COVER_SIZE_PRESETS: CoverSizePreset[] = [
-  { label: "微信公众号 (900×383)", width: 900, height: 383 },
-  { label: "头条封面 (1280×720)", width: 1280, height: 720 },
-  { label: "小红书 (1080×1440)", width: 1080, height: 1440 },
-  { label: "知乎 (1920×1080)", width: 1920, height: 1080 },
-  { label: "博客横幅 (1200×630)", width: 1200, height: 630 },
-  { label: "正方形 (1080×1080)", width: 1080, height: 1080 },
+  {
+    label: "微信公众号 (900×383)",
+    width: 900,
+    height: 383,
+  },
+  {
+    label: "头条封面 (1280×720)",
+    width: 1280,
+    height: 720,
+  },
+  {
+    label: "小红书 (1080×1440)",
+    width: 1080,
+    height: 1440,
+  },
+  {
+    label: "知乎 (1920×1080)",
+    width: 1920,
+    height: 1080,
+  },
+  {
+    label: "博客横幅 (1200×630)",
+    width: 1200,
+    height: 630,
+  },
+  {
+    label: "正方形 (1080×1080)",
+    width: 1080,
+    height: 1080,
+  },
 ]
 
 // 风格预设（含配色方案）
 export const COVER_STYLE_PRESETS: CoverStylePreset[] = [
-  { id: "minimal", label: "极简", description: "白底大字、黑色标题、简洁装饰线" },
-  { id: "gradient", label: "渐变", description: "紫蓝渐变背景、白色标题、金色强调" },
-  { id: "tech", label: "科技", description: "深色背景、霓虹线条、青色强调" },
-  { id: "nature", label: "自然", description: "绿蓝渐变、柔和圆角、有机形态" },
-  { id: "magazine", label: "杂志", description: "大标题排版、分栏布局、衬线字体" },
-  { id: "watercolor", label: "水彩", description: "粉色渐变晕染、淡雅柔和配色" },
-  { id: "geometric", label: "几何", description: "色块拼接、几何图形、强对比配色" },
-  { id: "chinese", label: "国风", description: "暖色宣纸底、水墨深色标题、朱红点缀" },
+  {
+    id: "minimal",
+    label: "极简",
+    description: "白底大字、黑色标题、简洁装饰线",
+  },
+  {
+    id: "gradient",
+    label: "渐变",
+    description: "紫蓝渐变背景、白色标题、金色强调",
+  },
+  {
+    id: "tech",
+    label: "科技",
+    description: "深色背景、霓虹线条、青色强调",
+  },
+  {
+    id: "nature",
+    label: "自然",
+    description: "绿蓝渐变、柔和圆角、有机形态",
+  },
+  {
+    id: "magazine",
+    label: "杂志",
+    description: "大标题排版、分栏布局、衬线字体",
+  },
+  {
+    id: "watercolor",
+    label: "水彩",
+    description: "粉色渐变晕染、淡雅柔和配色",
+  },
+  {
+    id: "geometric",
+    label: "几何",
+    description: "色块拼接、几何图形、强对比配色",
+  },
+  {
+    id: "chinese",
+    label: "国风",
+    description: "暖色宣纸底、水墨深色标题、朱红点缀",
+  },
 ]
 
+/** 风格配色方案缓存（模块级别，避免重复创建） */
+const STYLE_COLORS_MAP: Record<string, { bg: string, titleColor: string, subtitleColor: string, accent: string, accentAlt: string }> = {
+  minimal: {
+    bg: "#ffffff",
+    titleColor: "#1a1a1a",
+    subtitleColor: "#666666",
+    accent: "#e74c3c",
+    accentAlt: "#c0392b",
+  },
+  gradient: {
+    bg: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    titleColor: "#ffffff",
+    subtitleColor: "rgba(255,255,255,0.9)",
+    accent: "#ffd700",
+    accentAlt: "#ffed4e",
+  },
+  tech: {
+    bg: "#0a0a0a",
+    titleColor: "#ffffff",
+    subtitleColor: "#888888",
+    accent: "#00ffff",
+    accentAlt: "#00cc99",
+  },
+  nature: {
+    bg: "linear-gradient(135deg, #00b894 0%, #0984e3 100%)",
+    titleColor: "#ffffff",
+    subtitleColor: "rgba(255,255,255,0.9)",
+    accent: "#fdcb6e",
+    accentAlt: "#ffeaa7",
+  },
+  magazine: {
+    bg: "#faf8f5",
+    titleColor: "#1a1a1a",
+    subtitleColor: "#555555",
+    accent: "#c0392b",
+    accentAlt: "#e74c3c",
+  },
+  watercolor: {
+    bg: "linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)",
+    titleColor: "#2d3436",
+    subtitleColor: "#636e72",
+    accent: "#e17055",
+    accentAlt: "#fab1a0",
+  },
+  geometric: {
+    bg: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+    titleColor: "#ffffff",
+    subtitleColor: "rgba(255,255,255,0.9)",
+    accent: "#fdcb6e",
+    accentAlt: "#ffeaa7",
+  },
+  chinese: {
+    bg: "#f5e6d3",
+    titleColor: "#2c1810",
+    subtitleColor: "#5a3e2b",
+    accent: "#c0392b",
+    accentAlt: "#e74c3c",
+  },
+}
+
+/** 风格设计指引缓存 */
+const STYLE_DESIGN_GUIDES: Record<string, string> = {
+  minimal: "大面积留白，细线分隔，一个强调色块突出",
+  gradient: "渐变层次，半透明玻璃态（blur），亮色强调",
+  tech: "暗底霓虹发光（box-shadow），网格线/终端感装饰",
+  nature: "柔和渐变圆角，有机曲线，气泡/叶子形态",
+  magazine: "大字排版占主视觉，分栏/非对称",
+  watercolor: "多色渐变叠加，大圆角色块，柔和粉紫蓝",
+  geometric: "色块拼接（clip-path/rotate），强对比",
+  chinese: "水墨风格，竖排可选，朱红点缀",
+}
+
 /** 根据风格获取 CSS 变量配色方案 */
-function getStyleColors(styleId: string): { bg: string, titleColor: string, subtitleColor: string, accent: string, accentAlt: string } {
-  const map: Record<string, { bg: string, titleColor: string, subtitleColor: string, accent: string, accentAlt: string }> = {
-    minimal: { bg: "#ffffff", titleColor: "#1a1a1a", subtitleColor: "#666666", accent: "#e74c3c", accentAlt: "#c0392b" },
-    gradient: { bg: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", titleColor: "#ffffff", subtitleColor: "rgba(255,255,255,0.9)", accent: "#ffd700", accentAlt: "#ffed4e" },
-    tech: { bg: "#0a0a0a", titleColor: "#ffffff", subtitleColor: "#888888", accent: "#00ffff", accentAlt: "#00cc99" },
-    nature: { bg: "linear-gradient(135deg, #00b894 0%, #0984e3 100%)", titleColor: "#ffffff", subtitleColor: "rgba(255,255,255,0.9)", accent: "#fdcb6e", accentAlt: "#ffeaa7" },
-    magazine: { bg: "#faf8f5", titleColor: "#1a1a1a", subtitleColor: "#555555", accent: "#c0392b", accentAlt: "#e74c3c" },
-    watercolor: { bg: "linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)", titleColor: "#2d3436", subtitleColor: "#636e72", accent: "#e17055", accentAlt: "#fab1a0" },
-    geometric: { bg: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)", titleColor: "#ffffff", subtitleColor: "rgba(255,255,255,0.9)", accent: "#fdcb6e", accentAlt: "#ffeaa7" },
-    chinese: { bg: "#f5e6d3", titleColor: "#2c1810", subtitleColor: "#5a3e2b", accent: "#c0392b", accentAlt: "#e74c3c" },
-  }
-  return map[styleId] ?? map.minimal
+function getStyleColors(styleId: string) {
+  return STYLE_COLORS_MAP[styleId] ?? STYLE_COLORS_MAP.minimal
 }
 
 /** 构建生成封面的 AI prompt（设计规范驱动，非模板约束） */
 function buildCoverPrompt(config: CoverGenerationConfig): string {
-  const stylePreset = COVER_STYLE_PRESETS.find(s => s.id === config.styleId)
+  const stylePreset = COVER_STYLE_PRESETS.find((s) => s.id === config.styleId)
   const colors = getStyleColors(config.styleId)
   const titleSize = Math.max(48, Math.floor(config.width / 15))
   const subtitleSize = Math.max(20, Math.floor(config.width / 40))
@@ -102,24 +229,15 @@ ${styleGuide}
 
 /** 根据风格 ID 返回精简设计指引 */
 function getStyleDesignGuide(styleId: string): string {
-  const guides: Record<string, string> = {
-    minimal: "大面积留白，细线分隔，一个强调色块突出",
-    gradient: "渐变层次，半透明玻璃态（blur），亮色强调",
-    tech: "暗底霓虹发光（box-shadow），网格线/终端感装饰",
-    nature: "柔和渐变圆角，有机曲线，气泡/叶子形态",
-    magazine: "大字排版占主视觉，分栏/非对称",
-    watercolor: "多色渐变叠加，大圆角色块，柔和粉紫蓝",
-    geometric: "色块拼接（clip-path/rotate），强对比",
-    chinese: "水墨风格，竖排可选，朱红点缀",
-  }
-  return guides[styleId] ? `【风格指引】${guides[styleId]}` : ""
+  const guide = STYLE_DESIGN_GUIDES[styleId]
+  return guide ? `【风格指引】${guide}` : ""
 }
 
 export function useCoverGenerator() {
   const plugin = usePlugin()
 
   const coverHtml = ref("")
-  const streamedText = ref("")  // 流式生成过程中的原始文本
+  const streamedText = ref("") // 流式生成过程中的原始文本
   const generationStatus = ref<CoverGenerationStatus>("idle")
   const errorMessage = ref("")
   const currentConfig = ref<CoverGenerationConfig>({
@@ -136,7 +254,7 @@ export function useCoverGenerator() {
     let cleaned = response.trim()
 
     // 1. 提取最后一个 markdown 代码块（AI 思考后通常最终输出在最后）
-    const codeBlockMatches = [...cleaned.matchAll(/```(?:html|HTML)?\s*\n?([\s\S]*?)```/g)]
+    const codeBlockMatches = [...cleaned.matchAll(/```(?:html|HTML)?\s*([\s\S]*?)```/g)]
     if (codeBlockMatches.length > 0) {
       cleaned = codeBlockMatches[codeBlockMatches.length - 1][1].trim()
     }

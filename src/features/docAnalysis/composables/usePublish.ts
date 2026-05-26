@@ -32,6 +32,7 @@ import {
   DEFAULT_PUBLISH_SETTINGS,
   PublishStorage,
 } from "../types/publishStorage"
+import { decodeXmlEntities, escapeXml } from "@/utils/stringUtils"
 import { SY_ATTR_PUBLISH_DATA, SY_ATTR_PUBLISH_STATUS } from "../types/publish"
 import { marked } from "marked"
 
@@ -1089,25 +1090,4 @@ export function usePublish(plugin: Plugin) {
     getPublishHistory,
     clearPublishHistory,
   }
-}
-
-/** XML 转义 */
-function escapeXml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;")
-}
-
-/** XML 实体解码 */
-function decodeXmlEntities(str: string): string {
-  return str
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, "\"")
-    .replace(/&apos;/g, "'")
-    .replace(/&#(\d+);/g, (_match, num) => String.fromCharCode(Number(num)))
 }

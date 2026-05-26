@@ -56,7 +56,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue"
+import {
+  computed,
+  ref,
+} from "vue"
 import { formatNumber } from "../utils"
 
 interface DailyWordCount {
@@ -113,8 +116,7 @@ function getRankClass(index: number): string {
 
 <style scoped lang="scss">
 @use "@/variables" as *;
-@use "../../superPanel/styles/variables" as *;
-@use "../../superPanel/styles/mixins" as *;
+@use "../../superPanel/styles/shared" as *;
 @use "../styles/index.scss" as stats;
 
 .word-ranking-section {

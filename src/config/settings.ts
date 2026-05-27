@@ -82,7 +82,7 @@ export interface PluginSettings {
   aiApiProvider: string // AI API供应商: 'tongyi' | 'openai' | 'deepseek' | 'custom'
   aiModel: string // AI 模型名称
   aiCustomModel: string // 自定义模型名称
-  aiApiKey: string // AI API密钥
+  aiApiKeys: Record<string, string> // AI API密钥（按供应商存储）
   aiCustomEndpoint: string // 自定义API端点(仅在provider为custom时使用)
   aiEnableThinking: boolean // DeepSeek思考模式开关
   // 联网搜索配置（RAG 模式）
@@ -138,7 +138,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   aiApiProvider: "tongyi",
   aiModel: "qwen-plus",
   aiCustomModel: "",
-  aiApiKey: "",
+  aiApiKeys: {},
   aiCustomEndpoint: "",
   aiEnableThinking: false,
   // 联网搜索默认值
@@ -279,7 +279,13 @@ async function encryptSensitiveFields(
   settings: PluginSettings,
 ): Promise<PluginSettings> {
   const encrypted = { ...settings }
-  encrypted.aiApiKey = await encryptSetting(settings.aiApiKey)
+  // 按供应商加密 API 密钥
+  encrypted.aiApiKeys = {}
+  for (const [provider, key] of Object.entries(settings.aiApiKeys || {})) {
+    if (key) {
+      encrypted.aiApiKeys[provider] = await encryptSetting(key)
+    }
+  }
   encrypted.searchBochaApiKey = await encryptSetting(settings.searchBochaApiKey)
   return encrypted
 }
@@ -291,7 +297,13 @@ async function decryptSensitiveFields(
   settings: PluginSettings,
 ): Promise<PluginSettings> {
   const decrypted = { ...settings }
-  decrypted.aiApiKey = await decryptSetting(settings.aiApiKey)
+  // 按供应商解密 API 密钥
+  decrypted.aiApiKeys = {}
+  for (const [provider, key] of Object.entries(settings.aiApiKeys || {})) {
+    if (key) {
+      decrypted.aiApiKeys[provider] = await decryptSetting(key)
+    }
+  }
   decrypted.searchBochaApiKey = await decryptSetting(settings.searchBochaApiKey)
   return decrypted
 }
@@ -321,7 +333,7 @@ export async function loadSettings(plugin: Plugin): Promise<PluginSettings> {
 /**
  * 保存插件配置
  *
- * 敏感字段 (aiApiKey) 在保存前
+ * 敏感字段 (aiApiKeys, searchBochaApiKey) 在保存前
  * 会使用 AES-GCM 加密，防止明文泄漏。
  */
 export async function saveSettings(

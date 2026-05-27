@@ -197,6 +197,8 @@ interface Props {
     tongyiQianwen?: string
     openAI?: string
     deepSeek?: string
+    zhipuAI?: string
+    xiaomiMiMo?: string
     customApi?: string
     [key: string]: any
   }
@@ -245,12 +247,15 @@ const handleProviderChange = (provider: string) => {
     tongyi: "qwen-plus",
     openai: "gpt-3.5-turbo",
     deepseek: "deepseek-v4-flash",
+    zhipu: "glm-4-flash",
+    xiaomi: "mimo-v2-flash",
     custom: "",
   }
   emit("update:settings", {
     ...props.settings,
     provider,
     model: defaultModels[provider] || "",
+    apiKey: props.settings.apiKeys[provider] || "",
   })
   showMessage("供应商已更新", 2000, "info")
 }

@@ -32,6 +32,14 @@ export interface AiCallOptions {
   reasoningEffort?: DeepSeekReasoningEffort
   /** 联网搜索（RAG 模式：先搜后答，所有 provider 通用） */
   webSearch?: boolean
+  /** 显式搜索关键词（优先级高于自动提取） */
+  searchQuery?: string
+  /** 搜索开始时回调 */
+  onSearchStart?: () => void
+  /** 搜索结果回调（成功时返回搜索结果列表，带来源链接） */
+  onSearchResults?: (results: SearchResult[]) => void
+  /** 搜索失败回调（错误信息） */
+  onSearchError?: (error: string) => void
 }
 
 /** AI 生成选项接口（用于 AIContentGenerator） */
@@ -51,6 +59,14 @@ export interface GenerateOptions {
   onReasoningChunk?: (chunk: string) => void
   /** 联网搜索（RAG 模式：先搜后答，所有 provider 通用） */
   webSearch?: boolean
+  /** 显式搜索关键词（优先级高于自动提取） */
+  searchQuery?: string
+  /** 搜索开始时回调 */
+  onSearchStart?: () => void
+  /** 搜索结果回调（成功时返回搜索结果列表，带来源链接） */
+  onSearchResults?: (results: SearchResult[]) => void
+  /** 搜索失败回调（错误信息） */
+  onSearchError?: (error: string) => void
 }
 
 /** 目标文档接口 */

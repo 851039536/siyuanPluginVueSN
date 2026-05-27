@@ -45,6 +45,9 @@
           :generated-content="generatedContent"
           :rendered-markdown="renderedDisplayedMarkdown"
           :original-content="originalContent"
+          :search-results="searchResults"
+          :show-search-results="showSearchResults"
+          :search-status="searchStatus"
           :reasoning-content="reasoningContent"
           :show-reasoning="showReasoning"
           :generation-elapsed="generationElapsed"
@@ -193,6 +196,9 @@ const selectedModel = ref("");
 const customModel = ref("");
 const enableThinking = ref(false);
 const webSearch = ref(false);
+const searchStatus = ref(""); // 搜索状态文字（如"正在搜索..."）
+const searchResults = ref<Array<{ title: string; url: string; content: string; score?: number }>>([]);
+const showSearchResults = ref(false);
 
 // 思考过程状态
 const reasoningContent = ref("");  // 完整推理内容（汇总后）
@@ -300,6 +306,9 @@ const startGeneration = () => {
     rafId = null;
   }
   errorMessage.value = "";
+  searchStatus.value = "";
+  searchResults.value = [];
+  showSearchResults.value = false;
 };
 
 /**
@@ -418,7 +427,7 @@ const defaultOnReasoningChunk = (chunk: string) => {
 /**
  * 构建生成请求的公共 options，避免 aiEditAction / handleCustomEdit 重复
  */
-const buildGenerateOptions = (userInput: string, systemPrompt: string): GenerateOptions => ({
+const buildGenerateOptions = (userInput: string, systemPrompt: string, searchQueryOverride?: string): GenerateOptions => ({
   userInput,
   systemPrompt,
   temperature: temperature.value,
@@ -429,6 +438,19 @@ const buildGenerateOptions = (userInput: string, systemPrompt: string): Generate
   model: resolvedModel.value || undefined,
   enableThinking: enableThinking.value,
   webSearch: webSearch.value,
+  ...(searchQueryOverride ? { searchQuery: searchQueryOverride } : {}),
+  onSearchStart: () => {
+    searchStatus.value = "正在搜索网络...";
+  },
+  onSearchResults: (results) => {
+    searchResults.value = results;
+    showSearchResults.value = true;
+    searchStatus.value = `已获取 ${results.length} 条搜索结果`;
+  },
+  onSearchError: (error) => {
+    searchStatus.value = `搜索失败: ${error}`;
+    showMessage(`联网搜索失败: ${error}`, 3000, "warn");
+  },
 })
 
 /**
@@ -984,7 +1006,7 @@ ${editTargetDoc.value.content}`;
       finalSystemPrompt = baseSystemPrompt;
     }
 
-    const options = buildGenerateOptions(userInput, finalSystemPrompt)
+    const options = buildGenerateOptions(userInput, finalSystemPrompt, editCustomInput.value.trim() || undefined)
 
     await props.onGenerate(options);
 
@@ -1291,6 +1313,7 @@ const saveSettings = async () => {
     model: selectedModel.value,
     customModel: customModel.value,
     enableThinking: enableThinking.value,
+    webSearch: webSearch.value,
   };
 
   await safeStorageOperation(
@@ -1312,6 +1335,7 @@ const loadSettings = async () => {
       selectedModel.value = settings.model || "";
       customModel.value = settings.customModel || "";
       enableThinking.value = settings.enableThinking ?? false;
+      webSearch.value = settings.webSearch ?? false;
     }
     isSettingsLoaded = true;
   } catch (error) {
@@ -1321,7 +1345,7 @@ const loadSettings = async () => {
 
 // 监听设置变化（使用 debounce 避免频繁保存）
 let settingsSaveTimer: number | null = null;
-watch([systemPrompt, temperature, maxTokens, selectedModel, customModel, enableThinking], () => {
+watch([systemPrompt, temperature, maxTokens, selectedModel, customModel, enableThinking, webSearch], () => {
   if (settingsSaveTimer) {
     clearTimeout(settingsSaveTimer);
   }

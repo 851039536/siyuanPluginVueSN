@@ -12,6 +12,7 @@ import type {
   AiProvider,
   DeepSeekReasoningEffort,
   SearchApiConfig,
+  SearchResult,
 } from "@/types/ai"
 import {
   formatSearchResults,
@@ -370,15 +371,17 @@ async function prepareRequest(
   // ============ RAG 联网搜索：先搜后答 ============
   let searchContext = ""
   if (options?.webSearch && config.searchConfig) {
+    options?.onSearchStart?.()
     try {
-      // 从用户提示词中提取搜索关键词（直接用原文搜索效果最好）
-      const searchQuery = extractSearchQuery(prompt)
+      const searchQuery = options?.searchQuery || extractSearchQuery(prompt)
       const searchResults = await searchWeb(searchQuery, config.searchConfig)
+      options?.onSearchResults?.(searchResults)
       searchContext = formatSearchResults(searchResults)
     } catch (error) {
-      // 搜索失败不应阻断 AI 回答，但需提醒用户
+      const errorMsg = (error as Error).message
       console.warn("联网搜索失败，将不带搜索结果继续生成:", error)
-      searchContext = `\n[注意：联网搜索失败 - ${(error as Error).message}，以下回答可能不包含最新信息]`
+      options?.onSearchError?.(errorMsg)
+      searchContext = `\n[注意：联网搜索失败 - ${errorMsg}，以下回答可能不包含最新信息]`
     }
   }
 

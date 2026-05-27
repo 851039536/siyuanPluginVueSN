@@ -32,10 +32,14 @@ interface Props {
     tongyiQianwen?: string
     openAI?: string
     deepSeek?: string
+    zhipuAI?: string
+    xiaomiMiMo?: string
     customApi?: string
     tongyiQianwenPlaceholder?: string
     openAIPlaceholder?: string
     deepSeekPlaceholder?: string
+    zhipuAIPlaceholder?: string
+    xiaomiMiMoPlaceholder?: string
     customApiPlaceholder?: string
     [key: string]: any
   }
@@ -54,6 +58,8 @@ const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   tongyi: "通义千问",
   openai: "OpenAI",
   deepseek: "DeepSeek",
+  zhipu: "智谱AI",
+  xiaomi: "小米MiMo",
   custom: "自定义API",
 }
 
@@ -66,6 +72,8 @@ const getPlaceholder = () => {
     tongyi: props.i18n.tongyiQianwenPlaceholder,
     openai: props.i18n.openAIPlaceholder,
     deepseek: props.i18n.deepSeekPlaceholder,
+    zhipu: props.i18n.zhipuAIPlaceholder,
+    xiaomi: props.i18n.xiaomiMiMoPlaceholder,
     custom: props.i18n.customApiPlaceholder,
   }
   return i18nPlaceholders[props.provider]
@@ -77,6 +85,8 @@ const getDescription = () => {
     tongyi: props.i18n.tongyiQianwen || PROVIDER_DISPLAY_NAMES.tongyi,
     openai: props.i18n.openAI || PROVIDER_DISPLAY_NAMES.openai,
     deepseek: props.i18n.deepSeek || PROVIDER_DISPLAY_NAMES.deepseek,
+    zhipu: props.i18n.zhipuAI || PROVIDER_DISPLAY_NAMES.zhipu,
+    xiaomi: props.i18n.xiaomiMiMo || PROVIDER_DISPLAY_NAMES.xiaomi,
     custom: props.i18n.customApi || PROVIDER_DISPLAY_NAMES.custom,
   }
   return `${providerNames[props.provider]} API密钥，用于所有AI功能`

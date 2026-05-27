@@ -4,7 +4,7 @@
  */
 
 /** API 供应商类型 */
-export type AiProvider = "tongyi" | "openai" | "deepseek" | "custom"
+export type AiProvider = "tongyi" | "openai" | "deepseek" | "zhipu" | "xiaomi" | "custom"
 
 /** AI API 配置接口（统一） */
 export interface AiApiConfig {

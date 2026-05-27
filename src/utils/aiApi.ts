@@ -48,6 +48,14 @@ const API_PROVIDERS: Record<AiProvider, ProviderConfig> = {
     url: "https://api.deepseek.com/v1/chat/completions",
     defaultModel: "deepseek-v4-flash",
   },
+  zhipu: {
+    url: "https://open.bigmodel.cn/api/paas/v4/chat/completions",
+    defaultModel: "glm-4-flash",
+  },
+  xiaomi: {
+    url: "https://api.xiaomimimo.com/v1/chat/completions",
+    defaultModel: "mimo-v2-flash",
+  },
   custom: {
     url: "",
     defaultModel: "default",
@@ -687,7 +695,7 @@ export function getApiConfigFromPlugin(plugin: any): AiApiConfig {
   return {
     provider: settings.aiApiProvider || "tongyi",
     model,
-    apiKey: settings.aiApiKey || "",
+    apiKey: (settings.aiApiKeys?.[settings.aiApiProvider]) || settings.aiApiKey || "",
     customEndpoint: settings.aiCustomEndpoint || "",
     enableThinking: settings.aiEnableThinking ?? false,
     searchConfig,

@@ -45,7 +45,10 @@ export interface AiSettings {
   provider: string
   model: string
   customModel: string
+  /** 当前供应商的 API Key */
   apiKey: string
+  /** 所有供应商的 API Key 映射（切换供应商时读取对应 Key） */
+  apiKeys: Record<string, string>
   customEndpoint: string
   enableThinking: boolean
   /** 搜索引擎供应商 */
@@ -251,12 +254,20 @@ export class SuperPanelManager {
   }
 
   private async handleUpdateAiSettings(aiSettings: AiSettings) {
+    // 将当前供应商的 API Key 存入按供应商隔离的 KeyMap
+    const pluginSample = this.plugin as any
+    const currentKeys = { ...(pluginSample.settings?.aiApiKeys || {}) }
+    if (aiSettings.apiKey) {
+      currentKeys[aiSettings.provider] = aiSettings.apiKey
+    } else {
+      delete currentKeys[aiSettings.provider]
+    }
     await this._updatePluginSettings(
       {
         aiApiProvider: aiSettings.provider,
         aiModel: aiSettings.model,
         aiCustomModel: aiSettings.customModel,
-        aiApiKey: aiSettings.apiKey,
+        aiApiKeys: currentKeys,
         aiCustomEndpoint: aiSettings.customEndpoint,
         aiEnableThinking: aiSettings.enableThinking,
         searchProvider: aiSettings.searchProvider || "jina",

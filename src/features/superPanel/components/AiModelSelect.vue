@@ -163,6 +163,50 @@ const AI_MODELS_CONFIG: Record<string, ProviderModels> = {
       },
     ],
   },
+  zhipu: {
+    common: [
+      {
+        value: "glm-4-flash",
+        label: "GLM-4-Flash (推荐)",
+      },
+      {
+        value: "glm-4-air",
+        label: "GLM-4-Air",
+      },
+      {
+        value: "glm-4-plus",
+        label: "GLM-4-Plus",
+      },
+    ],
+    all: [
+      {
+        value: "glm-4-long",
+        label: "GLM-4-Long (长文本)",
+      },
+      {
+        value: "glm-4.5",
+        label: "GLM-4.5",
+      },
+      {
+        value: "glm-4.6",
+        label: "GLM-4.6",
+      },
+    ],
+  },
+  xiaomi: {
+    common: [
+      {
+        value: "mimo-v2-flash",
+        label: "MiMo-V2-Flash (推荐)",
+      },
+    ],
+    all: [
+      {
+        value: "mimo-v2-pro",
+        label: "MiMo-V2-Pro",
+      },
+    ],
+  },
   custom: {
     common: [],
     all: [],

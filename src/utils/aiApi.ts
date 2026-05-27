@@ -16,6 +16,7 @@ import type {
 } from "@/types/ai"
 import {
   formatSearchResults,
+  rerankResults,
   searchWeb,
 } from "@/utils/webSearch"
 
@@ -373,10 +374,20 @@ async function prepareRequest(
   if (options?.webSearch && config.searchConfig) {
     options?.onSearchStart?.()
     try {
-      const searchQuery = options?.searchQuery || extractSearchQuery(prompt)
-      const searchResults = await searchWeb(searchQuery, config.searchConfig)
-      options?.onSearchResults?.(searchResults)
-      searchContext = formatSearchResults(searchResults)
+      const rawQuery = options?.searchQuery || extractSearchQuery(prompt)
+      const searchQuery = rawQuery.length <= 50
+        ? `"${rawQuery.replace(/"/g, "")}"`
+        : rawQuery
+      const rawResults = await searchWeb(searchQuery, config.searchConfig)
+      // 通知 UI 原始搜索结果
+      options?.onSearchResults?.(rawResults)
+      // 语义重排序 + 低分截断（Perplexica 同款方案）
+      const ranked = await rerankResults(
+        searchQuery,
+        rawResults,
+        config.searchConfig.jinaApiKey,
+      )
+      searchContext = formatSearchResults(ranked)
     } catch (error) {
       const errorMsg = (error as Error).message
       console.warn("联网搜索失败，将不带搜索结果继续生成:", error)
@@ -669,6 +680,8 @@ export function getApiConfigFromPlugin(plugin: any): AiApiConfig {
     bochaApiKey: settings.searchBochaApiKey || "",
     searxngUrl: settings.searchSearxngUrl || "",
     searchLanguage: settings.searchLanguage || "auto",
+    searchFreshness: settings.searchFreshness || "noLimit",
+    jinaApiKey: settings.searchJinaApiKey || "",
   }
 
   return {

@@ -64,8 +64,12 @@
 
 .ai-settings-panel {
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
-  background: var(--b3-theme-surface-lighter);
+  background: var(--b3-theme-surface);
   flex-shrink: 0;
+  max-height: 80vh;
+  overflow-y: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
 }
 
 .ai-settings-header {

@@ -29,19 +29,24 @@ async function searchBocha(
   query: string,
   apiKey: string,
   maxResults: number = DEFAULT_MAX_RESULTS,
+  language?: string,
 ): Promise<SearchResult[]> {
+  const body: Record<string, any> = {
+    query,
+    count: maxResults,
+    freshness: "oneWeek",
+    summary: true,
+  }
+  if (language && language !== "auto") {
+    body.language = language
+  }
   const response = await fetch("https://api.bochaai.com/v1/web-search", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${apiKey}`,
     },
-    body: JSON.stringify({
-      query,
-      count: maxResults,
-      freshness: "oneWeek", // 优先一周内的结果 oneMonth - 一个月内
-      summary: true, // 返回摘要
-    }),
+    body: JSON.stringify(body),
   })
 
   if (!response.ok) {
@@ -71,13 +76,18 @@ async function searchBocha(
 async function searchJina(
   query: string,
   maxResults: number = DEFAULT_MAX_RESULTS,
+  language?: string,
 ): Promise<SearchResult[]> {
+  const headers: Record<string, string> = {
+    "Accept": "application/json",
+    "X-Return-Format": "search",
+  }
+  if (language && language !== "auto") {
+    headers["X-Language"] = language
+  }
   const response = await fetch(`https://s.jina.ai/${encodeURIComponent(query)}`, {
     method: "GET",
-    headers: {
-      "Accept": "application/json",
-      "X-Return-Format": "search", // 只返回搜索摘要，不需要全文
-    },
+    headers,
   })
 
   if (!response.ok) {
@@ -108,8 +118,12 @@ async function searchSearXNG(
   query: string,
   searxngUrl: string,
   maxResults: number = DEFAULT_MAX_RESULTS,
+  language?: string,
 ): Promise<SearchResult[]> {
-  const url = `${searxngUrl.replace(/\/$/, "")}/search?q=${encodeURIComponent(query)}&format=json&categories=general&language=zh-CN`
+  let url = `${searxngUrl.replace(/\/$/, "")}/search?q=${encodeURIComponent(query)}&format=json&categories=general`
+  if (language && language !== "auto") {
+    url += `&language=${encodeURIComponent(language)}`
+  }
 
   const response = await fetch(url, {
     method: "GET",
@@ -146,24 +160,24 @@ export async function searchWeb(
   config: SearchApiConfig,
   maxResults: number = DEFAULT_MAX_RESULTS,
 ): Promise<SearchResult[]> {
-  const { searchProvider } = config
+  const { searchProvider, searchLanguage } = config
 
   switch (searchProvider) {
     case "bocha": {
       if (!config.bochaApiKey) {
         throw new Error("博查搜索需要配置 API Key，请在超级面板中设置")
       }
-      return searchBocha(query, config.bochaApiKey, maxResults)
+      return searchBocha(query, config.bochaApiKey, maxResults, searchLanguage)
     }
 
     case "jina":
-      return searchJina(query, maxResults)
+      return searchJina(query, maxResults, searchLanguage)
 
     case "searxng": {
       if (!config.searxngUrl) {
         throw new Error("SearXNG 搜索需要配置实例地址，请在超级面板中设置")
       }
-      return searchSearXNG(query, config.searxngUrl, maxResults)
+      return searchSearXNG(query, config.searxngUrl, maxResults, searchLanguage)
     }
 
     default:
@@ -207,5 +221,6 @@ export function getSearchConfigFromPlugin(plugin: any): SearchApiConfig {
     searchProvider: settings.searchProvider || "jina",
     bochaApiKey: settings.searchBochaApiKey || "",
     searxngUrl: settings.searchSearxngUrl || "",
+    searchLanguage: settings.searchLanguage || "auto",
   }
 }

@@ -76,7 +76,6 @@ const STYLE_DECOR_CSS: Record<string, (c: StyleColors) => string> = {
     .decor-node.n1 { top:15%; left:15%; }
     .decor-node.n2 { top:22%; right:20%; width:5px; height:5px; }
     .decor-node.n3 { bottom:20%; left:25%; width:6px; height:6px; opacity:0.6; }
-    .style-badge { border-color:${c.accent} !important; color:${c.accent} !important; box-shadow:0 0 12px ${c.accent}30; }
     .tag { box-shadow:0 0 8px ${c.accent}30; }`,
 
   magazine: (c) => `
@@ -115,7 +114,6 @@ const STYLE_DECOR_CSS: Record<string, (c: StyleColors) => string> = {
     .decor-seal { position:absolute; right:12%; bottom:14%; width:50px; height:50px; border:2px solid ${c.accentAlt}50; color:${c.accentAlt}50; font-size:14px; display:flex; align-items:center; justify-content:center; transform:rotate(15deg); }
     .decor-ink { position:absolute; top:14%; right:18%; width:100px; height:100px; border-radius:50%; background:radial-gradient(ellipse at 40% 40%, ${c.accent}10, transparent 70%); }
     .decor-line-v { position:absolute; right:5%; top:25%; width:1px; height:50%; background:linear-gradient(to bottom, transparent, ${c.accent}15, transparent); }
-    .style-badge { font-family:"KaiTi","STKaiti","楷体",serif !important; letter-spacing:6px !important; }
     h1 { font-weight:900 !important; }
     .tag { font-family:"KaiTi","STKaiti","楷体",serif !important; border-radius:2px !important; }`,
 }
@@ -132,7 +130,6 @@ function buildCoverHtml(config: CoverGenerationConfig): string {
   const subtitleSize = Math.max(20, Math.floor(config.width / 40))
   const padding = Math.max(40, Math.floor(config.width / 20))
   const fontFamily = '-apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif'
-  const styleLabel = COVER_STYLE_PRESETS.find((s) => s.id === config.styleId)?.label || "极简"
   const titleText = config.title?.trim() || "无标题"
   const decorCss = STYLE_DECOR_CSS[config.styleId]?.(c) ?? STYLE_DECOR_CSS.minimal(c)
   const decorHtml = STYLE_DECOR_HTML[config.styleId] ?? ""
@@ -161,11 +158,6 @@ function buildCoverHtml(config: CoverGenerationConfig): string {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     height: 100%; text-align: center; padding: ${padding}px;
   }
-  .style-badge {
-    font-size: ${Math.max(14, subtitleSize - 6)}px; color: ${c.accent};
-    letter-spacing: 4px; margin-bottom: 16px;
-    border: 1px solid ${c.accent}; padding: 4px 16px; border-radius: 12px;
-  }
   h1 {
     font-size: ${titleSize}px; font-weight: 700; color: ${c.titleColor};
     line-height: 1.3; max-width: 90%;
@@ -192,7 +184,6 @@ function buildCoverHtml(config: CoverGenerationConfig): string {
 <body>
   <div class="decor-layer">${decorHtml}</div>
   <div class="content">
-    <span class="style-badge">${styleLabel}</span>
     <h1>${titleText}</h1>${tagsBlock}
   </div>
   <span class="watermark">${config.watermark || ""}</span>

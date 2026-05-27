@@ -89,6 +89,31 @@
   }
 }
 
+// 内容摘要 textarea
+.content-textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--b3-theme-background-light);
+  border-radius: 6px;
+  background: var(--b3-theme-surface, #ffffff);
+  color: var(--b3-theme-on-surface);
+  font-size: 13px;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 60px;
+
+  &::placeholder {
+    color: var(--b3-theme-on-surface);
+    opacity: 0.4;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--b3-theme-primary);
+  }
+}
+
 // 尺寸预设
 .size-presets {
   display: flex;

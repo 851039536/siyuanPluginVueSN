@@ -178,6 +178,11 @@ function buildCoverHtml(config: CoverGenerationConfig): string {
     display: inline-block; padding: 6px 18px; border-radius: 20px;
     background: ${c.accent}; color: #fff; font-size: ${subtitleSize}px;
   }
+  .watermark {
+    position: absolute; bottom: ${Math.max(16, Math.floor(padding / 3))}px; left: ${Math.max(16, Math.floor(padding / 3))}px;
+    font-size: ${Math.max(11, subtitleSize - 8)}px; color: ${c.subtitleColor}; opacity: 0.35;
+    z-index: 3; letter-spacing: 2px;
+  }
   .decor-layer { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
 
   /* === 风格装饰 === */
@@ -190,6 +195,7 @@ function buildCoverHtml(config: CoverGenerationConfig): string {
     <span class="style-badge">${styleLabel}</span>
     <h1>${titleText}</h1>${tagsBlock}
   </div>
+  <span class="watermark">${config.watermark || ""}</span>
 </body>
 </html>`
 }
@@ -201,6 +207,7 @@ export function useCoverGenerator() {
   const currentConfig = ref<CoverGenerationConfig>({
     title: "",
     keywords: "",
+    watermark: "叫我少年",
     width: 1200,
     height: 630,
     styleId: "minimal",
@@ -238,6 +245,7 @@ export function useCoverGenerator() {
     currentConfig.value = {
       title: "",
       keywords: "",
+      watermark: "叫我少年",
       width: 1200,
       height: 630,
       styleId: "minimal",

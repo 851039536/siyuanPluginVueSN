@@ -54,6 +54,16 @@
                     />
                   </div>
 
+                  <!-- 水印 -->
+                  <div class="config-section">
+                    <label class="config-label">水印 <span class="config-hint">（左下角显示）</span></label>
+                    <Input
+                      v-model="config.watermark"
+                      type="text"
+                      placeholder="叫我少年"
+                    />
+                  </div>
+
                   <!-- 尺寸选择 -->
                   <div class="config-section">
                     <label class="config-label">封面尺寸</label>

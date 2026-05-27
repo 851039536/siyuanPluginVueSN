@@ -59,19 +59,9 @@ export const COVER_STYLE_PRESETS: CoverStylePreset[] = [
     description: "白底大字、黑色标题、简洁装饰线",
   },
   {
-    id: "gradient",
-    label: "渐变",
-    description: "紫蓝渐变背景、白色标题、金色强调",
-  },
-  {
     id: "tech",
     label: "科技",
     description: "深色背景、霓虹线条、青色强调",
-  },
-  {
-    id: "nature",
-    label: "自然",
-    description: "绿蓝渐变、柔和圆角、有机形态",
   },
   {
     id: "magazine",
@@ -79,14 +69,9 @@ export const COVER_STYLE_PRESETS: CoverStylePreset[] = [
     description: "大标题排版、分栏布局、衬线字体",
   },
   {
-    id: "watercolor",
-    label: "水彩",
-    description: "粉色渐变晕染、淡雅柔和配色",
-  },
-  {
-    id: "geometric",
-    label: "几何",
-    description: "色块拼接、几何图形、强对比配色",
+    id: "drawio",
+    label: "导图",
+    description: "白底蓝边、网格辅助线、架构图风格",
   },
   {
     id: "chinese",
@@ -104,26 +89,12 @@ const STYLE_COLORS_MAP: Record<string, { bg: string, titleColor: string, subtitl
     accent: "#e74c3c",
     accentAlt: "#c0392b",
   },
-  gradient: {
-    bg: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    titleColor: "#ffffff",
-    subtitleColor: "rgba(255,255,255,0.9)",
-    accent: "#ffd700",
-    accentAlt: "#ffed4e",
-  },
   tech: {
     bg: "#0a0a0a",
     titleColor: "#ffffff",
     subtitleColor: "#888888",
     accent: "#00ffff",
     accentAlt: "#00cc99",
-  },
-  nature: {
-    bg: "linear-gradient(135deg, #00b894 0%, #0984e3 100%)",
-    titleColor: "#ffffff",
-    subtitleColor: "rgba(255,255,255,0.9)",
-    accent: "#fdcb6e",
-    accentAlt: "#ffeaa7",
   },
   magazine: {
     bg: "#faf8f5",
@@ -132,20 +103,6 @@ const STYLE_COLORS_MAP: Record<string, { bg: string, titleColor: string, subtitl
     accent: "#c0392b",
     accentAlt: "#e74c3c",
   },
-  watercolor: {
-    bg: "linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)",
-    titleColor: "#2d3436",
-    subtitleColor: "#636e72",
-    accent: "#e17055",
-    accentAlt: "#fab1a0",
-  },
-  geometric: {
-    bg: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-    titleColor: "#ffffff",
-    subtitleColor: "rgba(255,255,255,0.9)",
-    accent: "#fdcb6e",
-    accentAlt: "#ffeaa7",
-  },
   chinese: {
     bg: "#f5e6d3",
     titleColor: "#2c1810",
@@ -153,18 +110,22 @@ const STYLE_COLORS_MAP: Record<string, { bg: string, titleColor: string, subtitl
     accent: "#c0392b",
     accentAlt: "#e74c3c",
   },
+  drawio: {
+    bg: "#f5f6f8",
+    titleColor: "#1a1a2e",
+    subtitleColor: "#546e7a",
+    accent: "#1565c0",
+    accentAlt: "#0d47a1",
+  },
 }
 
 /** 风格设计指引缓存 */
 const STYLE_DESIGN_GUIDES: Record<string, string> = {
   minimal: "大面积留白，细线分隔，一个强调色块突出",
-  gradient: "渐变层次，半透明玻璃态（blur），亮色强调",
   tech: "暗底霓虹发光（box-shadow），网格线/终端感装饰",
-  nature: "柔和渐变圆角，有机曲线，气泡/叶子形态",
   magazine: "大字排版占主视觉，分栏/非对称",
-  watercolor: "多色渐变叠加，大圆角色块，柔和粉紫蓝",
-  geometric: "色块拼接（clip-path/rotate），强对比",
   chinese: "水墨风格，竖排可选，朱红点缀",
+  drawio: "浅灰画布、淡蓝网格/点阵底纹（radial-gradient）、蓝色边框卡片、结构化框图排版",
 }
 
 /** 根据风格获取 CSS 变量配色方案 */

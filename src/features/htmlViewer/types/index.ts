@@ -61,6 +61,8 @@ export type CoverGenerationStatus = "idle" | "generating" | "done" | "error"
 export interface CoverGenerationConfig {
   /** 文档标题 */
   title: string
+  /** 标题右侧分类挂饰 */
+  category: string
   /** 关键字（空格分隔） */
   keywords: string
   /** 左下角水印文字 */

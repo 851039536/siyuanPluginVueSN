@@ -4,8 +4,8 @@
       <div class="diff-toolbar-left">
         <span class="diff-toolbar-title">Diff 对比</span>
         <span class="diff-stats">
-          <span class="stat-added">+{{ addCount }}</span>
-          <span class="stat-removed">-{{ removeCount }}</span>
+          <span class="stat-added">+{{ diffStats.addCount }}</span>
+          <span class="stat-removed">-{{ diffStats.removeCount }}</span>
         </span>
       </div>
       <div class="diff-toolbar-right">
@@ -110,9 +110,6 @@ const diffStats = computed(() => {
     removeCount,
   }
 })
-
-const addCount = computed(() => diffStats.value.addCount)
-const removeCount = computed(() => diffStats.value.removeCount)
 </script>
 
 <style scoped lang="scss">

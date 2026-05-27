@@ -235,20 +235,12 @@ defineEmits<{
   border: 1px solid var(--b3-theme-surface-lighter);
   border-radius: 4px;
   outline: none;
+  max-width: 100px;
 
   &:hover,
   &:focus {
     border-color: var(--b3-theme-primary);
   }
-}
-
-.model-select {
-  cursor: pointer;
-  max-width: 120px;
-}
-
-.model-custom-input {
-  max-width: 100px;
 
   &::placeholder {
     color: var(--b3-theme-on-surface);

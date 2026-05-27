@@ -615,7 +615,7 @@ import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
 import { usePlugin } from "@/main"
 import CoverGenerator from "./components/CoverGenerator.vue"
-import { HtmlViewerStorage } from "./types/storage"
+import { DEFAULT_CATEGORIES, HtmlViewerStorage } from "./types/storage"
 import {
   isJsonString,
   jsonToHtml,
@@ -681,23 +681,7 @@ const editingSnippet = ref<HtmlSnippet | null>(null)
 
 // 片段库状态
 const snippets = ref<HtmlSnippet[]>([])
-const categories = ref<HtmlCategory[]>([
-  {
-    id: "default",
-    name: "默认",
-    color: "#d97757",
-  },
-  {
-    id: "template",
-    name: "模板",
-    color: "#6a9bcc",
-  },
-  {
-    id: "widget",
-    name: "小组件",
-    color: "#788c5d",
-  },
-])
+const categories = ref<HtmlCategory[]>([...DEFAULT_CATEGORIES])
 const selectedCategory = ref<string>("all")
 const searchQuery = ref("")
 
@@ -864,7 +848,7 @@ function formatHtml() {
         indent--
       }
       result.push("  ".repeat(indent) + line)
-      if (line.match(/^<([a-z][a-z0-9]*)([\s>])/i) && !line.match(/\/>/) && !line.match(/^<(br|hr|img|input|meta|link)/i)) {
+      if (line.match(/^<([a-z][a-z0-9]*)([\s>])/i) && !line.match(/\/>/) && !line.match(/^<(br|hr|img|input|meta|link)(?:\s|>|\/)/i)) {
         indent++
       }
     }
@@ -905,10 +889,10 @@ async function copyAsImage() {
     return
   }
 
+  let canvas: HTMLCanvasElement | null = null
   try {
-    // 确保 iframe 内容已完成渲染
     await nextTick()
-    const canvas = await html2canvas(iframe.contentDocument.body, {
+    canvas = await html2canvas(iframe.contentDocument.body, {
       useCORS: true,
       scale: 2,
       backgroundColor: "#ffffff",
@@ -916,7 +900,7 @@ async function copyAsImage() {
     })
 
     const blob = await new Promise<Blob>((resolve, reject) => {
-      canvas.toBlob((b) => {
+      canvas!.toBlob((b) => {
         if (b) resolve(b)
         else reject(new Error("Canvas toBlob 失败"))
       }, "image/png")
@@ -929,20 +913,14 @@ async function copyAsImage() {
     showMessage("已复制为图片", 2000, "info")
   } catch (error) {
     console.error("复制为图片失败:", error)
-    // 兜底方案：下载图片
-    try {
-      const canvas = await html2canvas(iframe.contentDocument.body, {
-        useCORS: true,
-        scale: 2,
-        backgroundColor: "#ffffff",
-        logging: false,
-      })
+    // 兜底：复用已渲染的 canvas 下载图片
+    if (canvas) {
       const link = document.createElement("a")
       link.download = `html-preview-${Date.now()}.png`
       link.href = canvas.toDataURL("image/png")
       link.click()
       showMessage("已下载为图片（剪贴板不可用）", 2000, "info")
-    } catch {
+    } else {
       showMessage("复制失败", 2000, "error")
     }
   }

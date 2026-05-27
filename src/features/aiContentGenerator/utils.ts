@@ -2,6 +2,8 @@
  * AI 内容生成器共享工具函数
  */
 import { marked } from "marked"
+import type { SkillItem } from "@/types/ai"
+import { AI_TOOLS } from "@/features/skillsViewer/modules/SkillsViewerManager"
 
 // 配置 marked 选项（只需配置一次）
 marked.setOptions({
@@ -44,4 +46,36 @@ export function renderMarkdown(content: string, stripHeadingBold = true): string
     console.error("Markdown渲染失败:", error)
     return `<pre>${content}</pre>`
   }
+}
+
+/** 截断标题用于UI显示 */
+export function truncateTitle(title: string, maxLen = 12): string {
+  if (title.length <= maxLen) return title
+  return `${title.substring(0, maxLen)}...`
+}
+
+/** 获取技能来源提示文字（带图标） */
+export function getSourceHint(skill: SkillItem): string {
+  if (!skill.sources || skill.sources.length === 0) return ""
+  const toolNames = skill.sources.map((s) => {
+    const tool = AI_TOOLS.find((t) => t.id === s.tool)
+    return tool ? `${tool.icon} ${tool.name}` : s.tool
+  })
+  if (skill.sources.length === 1) {
+    return `(${toolNames[0]})`
+  }
+  return `(来自 ${toolNames.join("、")})`
+}
+
+/** 获取技能来源提示文字（纯文本） */
+export function getSourceHintText(skill: SkillItem): string {
+  if (!skill.sources || skill.sources.length === 0) return ""
+  const toolNames = skill.sources.map((s) => {
+    const tool = AI_TOOLS.find((t) => t.id === s.tool)
+    return tool ? tool.name : s.tool
+  })
+  if (skill.sources.length === 1) {
+    return toolNames[0]
+  }
+  return toolNames.join("、")
 }

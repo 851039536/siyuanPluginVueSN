@@ -323,8 +323,7 @@ import {
 import Button from "@/components/Button.vue"
 import Tag from "@/components/Tag.vue"
 import Textarea from "@/components/Textarea.vue"
-import { AI_TOOLS } from "@/features/skillsViewer/modules/SkillsViewerManager"
-import { getPromptPreview } from "../utils"
+import { getPromptPreview, truncateTitle, getSourceHint } from "../utils"
 
 interface QuickAction {
   key: "polish" | "expand" | "condense" | "fix" | "rewrite" | "summary"
@@ -442,19 +441,6 @@ const onEditCustomInputChange = (value: string | null) => {
   emit("update:editCustomInput", value ?? "")
 }
 
-/** 获取技能来源提示文字 */
-const getSourceHint = (skill: SkillItem): string => {
-  if (!skill.sources || skill.sources.length === 0) return ""
-  const toolNames = skill.sources.map((s) => {
-    const tool = AI_TOOLS.find((t) => t.id === s.tool)
-    return tool ? `${tool.icon} ${tool.name}` : s.tool
-  })
-  if (skill.sources.length === 1) {
-    return `(${toolNames[0]})`
-  }
-  return `(来自 ${toolNames.join("、")})`
-}
-
 // 点击外部关闭技能下拉
 const handleClickOutside = (e: MouseEvent) => {
   const wrapper = document.querySelector(".skill-selector-wrapper")
@@ -493,12 +479,6 @@ const inputPlaceholder = computed(() => {
   return "输入编辑指令，或选择AI快捷操作..."
 })
 
-
-// 截断标题
-const truncateTitle = (title: string, maxLen = 12) => {
-  if (title.length <= maxLen) return title
-  return `${title.substring(0, maxLen)}...`
-}
 
 // 获取原始索引
 const getOriginalIndex = (prompt: SavedPrompt) => {
@@ -563,101 +543,5 @@ const getOriginalIndex = (prompt: SavedPrompt) => {
 
 .skill-selector-wrapper.open .skill-select-arrow {
   transform: rotate(180deg);
-}
-
-.skill-dropdown {
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 260px;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-primary);
-  border-bottom: none;
-  border-radius: 5px 5px 0 0;
-  z-index: 100;
-  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.skill-dropdown-search {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 8px;
-  border-top: 1px solid var(--b3-theme-surface-lighter);
-}
-
-.skill-search-input {
-  flex: 1;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-size: 11px;
-  color: var(--b3-theme-on-background);
-
-  &::placeholder {
-    color: var(--b3-theme-on-surface);
-    opacity: 0.5;
-  }
-}
-
-.skill-dropdown-list {
-  max-height: 240px;
-  overflow-y: auto;
-  padding: 4px 0;
-}
-
-.skill-dropdown-item {
-  padding: 6px 10px;
-  cursor: pointer;
-  font-size: 11px;
-  color: var(--b3-theme-on-background);
-
-  &:hover {
-    background: var(--b3-theme-surface-lighter);
-  }
-
-  &.active {
-    background: var(--b3-theme-primary);
-    color: var(--b3-theme-on-primary);
-
-    .skill-source-hint {
-      opacity: 0.8;
-      color: var(--b3-theme-on-primary);
-    }
-
-    .skill-item-desc {
-      color: var(--b3-theme-on-primary);
-      opacity: 0.7;
-    }
-  }
-}
-
-.skill-item-main {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.skill-item-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.skill-item-desc {
-  font-size: 10px;
-  opacity: 0.6;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  margin-top: 2px;
-}
-
-.skill-dropdown-empty {
-  padding: 12px;
-  text-align: center;
-  font-size: 11px;
-  opacity: 0.5;
 }
 </style>

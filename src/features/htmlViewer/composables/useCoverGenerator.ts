@@ -70,7 +70,11 @@ const STYLE_DECOR_CSS: Record<string, (c: StyleColors) => string> = {
     .decor-line-l { position:absolute; bottom:16%; left:5%; width:70px; height:1px; background:${c.accent}; opacity:0.25; }
     .decor-line-r { position:absolute; top:16%; right:5%; width:50px; height:1px; background:${c.accent}; opacity:0.2; }
     .decor-dots { position:absolute; bottom:12%; right:12%; width:60px; height:60px; background-image:radial-gradient(circle, ${c.accent}18 1.5px, transparent 1.5px); background-size:12px 12px; }
-    .tag { background:transparent !important; color:${c.accent} !important; border:1.5px solid ${c.accent}50; border-radius:4px !important; letter-spacing:1px; }
+    .tag { background:transparent !important; color:#e74c3c !important; border:1.5px solid #e74c3c50; border-radius:4px !important; letter-spacing:1px; }
+    .tag:nth-child(5n+2) { color:#27ae60 !important; border-color:#27ae6050; }
+    .tag:nth-child(5n+3) { color:#2980b9 !important; border-color:#2980b950; }
+    .tag:nth-child(5n+4) { color:#e67e22 !important; border-color:#e67e2250; }
+    .tag:nth-child(5n+5) { color:#8e44ad !important; border-color:#8e44ad50; border-style:dashed; }
     .category-badge { background:transparent !important; color:${c.accent} !important; border:1.5px solid ${c.accent}60; border-radius:4px !important; font-weight:500; }
     .title-sep { border-top-style:solid; border-top-color:${c.accent}18; width:60px; }`,
 
@@ -98,7 +102,11 @@ const STYLE_DECOR_CSS: Record<string, (c: StyleColors) => string> = {
     .decor-data-line { position:absolute; top:15%; bottom:15%; right:8%; width:1px; background:linear-gradient(to bottom, transparent, ${c.accent}12 20%, ${c.accent}12 80%, transparent); }
     .decor-data-line::before { content:""; position:absolute; top:20%; left:-2px; width:5px; height:5px; border-radius:50%; background:${c.accent}; box-shadow:0 0 6px ${c.accent}40; }
     .decor-data-line::after { content:""; position:absolute; bottom:25%; left:-2px; width:5px; height:5px; border-radius:50%; background:${c.accentAlt}; box-shadow:0 0 6px ${c.accentAlt}40; }
-    .tag { background:${c.accent}10 !important; color:${c.accent} !important; border:1px solid ${c.accent}40; border-radius:3px !important; box-shadow:0 0 12px ${c.accent}30, inset 0 0 6px ${c.accent}10; font-family:"SF Mono","Fira Code","Consolas",monospace; letter-spacing:1px; text-transform:uppercase; }
+    .tag { background:#e74c3c15 !important; color:#e74c3c !important; border:1px solid #e74c3c50; border-radius:3px !important; box-shadow:0 0 12px #e74c3c30, inset 0 0 6px #e74c3c10; letter-spacing:1px; text-transform:uppercase; }
+    .tag:nth-child(5n+2) { color:#27ae60 !important; border-color:#27ae6050; box-shadow:0 0 12px #27ae6030, inset 0 0 6px #27ae6010; background:#27ae6015 !important; }
+    .tag:nth-child(5n+3) { color:#2980b9 !important; border-color:#2980b950; box-shadow:0 0 12px #2980b930, inset 0 0 6px #2980b910; background:#2980b915 !important; }
+    .tag:nth-child(5n+4) { color:#e67e22 !important; border-color:#e67e2250; box-shadow:0 0 12px #e67e2230, inset 0 0 6px #e67e2210; background:#e67e2215 !important; }
+    .tag:nth-child(5n+5) { color:#8e44ad !important; border-color:#8e44ad50; box-shadow:0 0 12px #8e44ad30, inset 0 0 6px #8e44ad10; background:#8e44ad15 !important; }
     .category-badge { background:${c.accentAlt}18 !important; color:${c.accentAlt} !important; border:1px solid ${c.accentAlt}50; border-radius:3px !important; box-shadow:0 0 10px ${c.accentAlt}25; font-family:"SF Mono","Fira Code","Consolas",monospace; text-transform:uppercase; letter-spacing:2px; }
     .title-sep { border-top-color:${c.accent}35; width:100px; box-shadow:0 0 6px ${c.accent}20; }`,
 
@@ -118,7 +126,11 @@ const STYLE_DECOR_CSS: Record<string, (c: StyleColors) => string> = {
     .content { padding-left:46% !important; padding-right:12% !important; }
     h1 { font-family:"Georgia","Noto Serif SC",serif !important; letter-spacing:-0.5px; position:relative; }
     h1::before { content:""; position:absolute; top:-16px; left:0; width:30px; height:3px; background:${c.accent}; }
-    .tag { border-radius:2px !important; font-family:"Georgia","Noto Serif SC",serif; font-style:italic; background:transparent !important; color:${c.titleColor} !important; border-bottom:2px solid ${c.accent}; padding:4px 14px !important; letter-spacing:0.5px; }
+    .tag { border-radius:2px !important; font-style:italic; background:transparent !important; color:${c.titleColor} !important; border-bottom:2px solid #e74c3c; padding:4px 14px !important; letter-spacing:0.5px; }
+    .tag:nth-child(5n+2) { border-bottom-color:#27ae60; }
+    .tag:nth-child(5n+3) { border-bottom-color:#2980b9; border-bottom-width:3px; }
+    .tag:nth-child(5n+4) { border-bottom-color:#e67e22; }
+    .tag:nth-child(5n+5) { border-bottom-color:#8e44ad; border-bottom-style:dotted; }
     .category-badge { background:transparent !important; color:${c.accentAlt} !important; border:1px solid ${c.accentAlt}30; border-radius:2px !important; font-family:"Georgia","Noto Serif SC",serif; font-style:italic; letter-spacing:1px; }
     .title-sep { border-top-style:double; border-top-color:${c.accent}22; width:70px; }`,
 
@@ -144,7 +156,11 @@ const STYLE_DECOR_CSS: Record<string, (c: StyleColors) => string> = {
     .decor-crosshair::after { content:""; position:absolute; left:50%; top:0; bottom:0; width:1px; background:${c.accent}18; }
     .decor-label-box { position:absolute; top:12%; left:8%; padding:4px 10px; border:1px solid ${c.accent}20; border-radius:2px; }
     h1 { border-bottom:2px solid ${c.accent}22; padding-bottom:14px; }
-    .tag { border-radius:3px !important; background:${c.accent}08 !important; color:${c.titleColor} !important; border:1px solid ${c.accent}25; border-left:3px solid ${c.accent}; font-family:"SF Mono","Consolas",monospace; }
+    .tag { border-radius:3px !important; background:#e74c3c08 !important; color:${c.titleColor} !important; border:1px solid #e74c3c25; border-left:3px solid #e74c3c; }
+    .tag:nth-child(5n+2) { border-left-color:#27ae60; background:#27ae6008 !important; border-color:#27ae6025; }
+    .tag:nth-child(5n+3) { border-left-color:#2980b9; background:#2980b908 !important; border-color:#2980b925; }
+    .tag:nth-child(5n+4) { border-left-color:#e67e22; background:#e67e2208 !important; border-color:#e67e2225; }
+    .tag:nth-child(5n+5) { border-left-color:#8e44ad; background:#8e44ad08 !important; border-color:#8e44ad25; }
     .category-badge { background:${c.accent} !important; color:#fff !important; border-radius:3px !important; font-family:"SF Mono","Consolas",monospace; letter-spacing:1px; }
     .title-sep { border-top-style:solid; border-top-color:${c.accent}30; width:90px; height:1px; border-top-width:1px; }`,
 
@@ -170,7 +186,11 @@ const STYLE_DECOR_CSS: Record<string, (c: StyleColors) => string> = {
     .decor-cloud.c2 { top:8%; left:auto; right:20%; width:60px; height:16px; opacity:0.6; }
     .decor-cloud.c2::before { top:-7px; left:12px; width:20px; height:10px; }
     .decor-wave { position:absolute; bottom:20%; left:0; right:0; height:2px; background:repeating-linear-gradient(90deg, ${c.accent}10 0px, ${c.accent}10 8px, transparent 8px, transparent 16px); }
-    .tag { background:transparent !important; color:${c.accentAlt} !important; border:1px solid ${c.accentAlt}40; border-radius:3px !important; font-family:"KaiTi","STKaiti","楷体",serif; letter-spacing:2px; }
+    .tag { background:transparent !important; color:#e74c3c !important; border:1px solid #e74c3c50; border-radius:3px !important; letter-spacing:2px; }
+    .tag:nth-child(5n+2) { color:#27ae60 !important; border-color:#27ae6050; }
+    .tag:nth-child(5n+3) { color:#2980b9 !important; border-color:#2980b950; }
+    .tag:nth-child(5n+4) { color:#e67e22 !important; border-color:#e67e2250; border-style:dashed; }
+    .tag:nth-child(5n+5) { color:#8e44ad !important; border-color:#8e44ad50; font-weight:bold; }
     .category-badge { background:${c.accentAlt}15 !important; color:${c.accentAlt} !important; border:1px solid ${c.accentAlt}40; border-radius:3px !important; font-family:"KaiTi","STKaiti","楷体",serif; letter-spacing:3px; }
     .title-sep { border-top-color:${c.accentAlt}25; width:100px; height:1px; border-top-width:1px; }`,
 }

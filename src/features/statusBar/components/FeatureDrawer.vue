@@ -135,6 +135,12 @@ const featureList: FeatureItem[] = [
     color: "#f59e0b",
     title: "Skills 查看器",
   },
+  {
+    id: "htmlViewer",
+    icon: "mdi:language-html5",
+    color: "#e67e22",
+    title: "HTML 展示",
+  },
 ]
 
 const handleClick = (id: string) => {

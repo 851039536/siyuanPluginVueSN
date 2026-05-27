@@ -449,7 +449,7 @@ const buildGenerateOptions = (userInput: string, systemPrompt: string, searchQue
   },
   onSearchError: (error) => {
     searchStatus.value = `搜索失败: ${error}`;
-    showMessage(`联网搜索失败: ${error}`, 3000, "warn");
+    showMessage(`联网搜索失败: ${error}`, 3000, "info");
   },
 })
 

@@ -44,6 +44,16 @@
                     />
                   </div>
 
+                  <!-- 分类挂饰 -->
+                  <div class="config-section">
+                    <label class="config-label">分类挂饰 <span class="config-hint">（标题右侧，如：原创 · 技术 · 前端）</span></label>
+                    <Input
+                      v-model="config.category"
+                      type="text"
+                      placeholder="可选，如 原创·技术"
+                    />
+                  </div>
+
                   <!-- 关键字 -->
                   <div class="config-section">
                     <label class="config-label">关键字 <span class="config-hint">（空格分隔，如：Vue 3 响应式 原理）</span></label>
@@ -398,7 +408,7 @@ watch(coverHtml, () => {
 // 响应式自动生成：标题/关键字/风格/尺寸变化 → debounce 200ms → 自动生成
 let autoGenTimer: ReturnType<typeof setTimeout> | null = null
 watch(
-  () => [config.value.title, config.value.keywords, config.value.styleId, config.value.width, config.value.height],
+  () => [config.value.title, config.value.category, config.value.keywords, config.value.styleId, config.value.width, config.value.height],
   () => {
     if (autoGenTimer) clearTimeout(autoGenTimer)
     autoGenTimer = setTimeout(() => {

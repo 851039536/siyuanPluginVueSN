@@ -70,7 +70,9 @@ const STYLE_DECOR_CSS: Record<string, (c: StyleColors) => string> = {
     .decor-line-l { position:absolute; bottom:16%; left:5%; width:70px; height:1px; background:${c.accent}; opacity:0.25; }
     .decor-line-r { position:absolute; top:16%; right:5%; width:50px; height:1px; background:${c.accent}; opacity:0.2; }
     .decor-dots { position:absolute; bottom:12%; right:12%; width:60px; height:60px; background-image:radial-gradient(circle, ${c.accent}18 1.5px, transparent 1.5px); background-size:12px 12px; }
-    .tag { background:transparent !important; color:${c.accent} !important; border:1.5px solid ${c.accent}50; border-radius:4px !important; letter-spacing:1px; }`,
+    .tag { background:transparent !important; color:${c.accent} !important; border:1.5px solid ${c.accent}50; border-radius:4px !important; letter-spacing:1px; }
+    .category-badge { background:transparent !important; color:${c.accent} !important; border:1.5px solid ${c.accent}60; border-radius:4px !important; font-weight:500; }
+    .title-sep { border-top-style:solid; border-top-color:${c.accent}18; width:60px; }`,
 
   tech: (c) => `
     body { background-image: linear-gradient(rgba(0,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,255,0.03) 1px, transparent 1px); background-size:40px 40px; }
@@ -96,7 +98,9 @@ const STYLE_DECOR_CSS: Record<string, (c: StyleColors) => string> = {
     .decor-data-line { position:absolute; top:15%; bottom:15%; right:8%; width:1px; background:linear-gradient(to bottom, transparent, ${c.accent}12 20%, ${c.accent}12 80%, transparent); }
     .decor-data-line::before { content:""; position:absolute; top:20%; left:-2px; width:5px; height:5px; border-radius:50%; background:${c.accent}; box-shadow:0 0 6px ${c.accent}40; }
     .decor-data-line::after { content:""; position:absolute; bottom:25%; left:-2px; width:5px; height:5px; border-radius:50%; background:${c.accentAlt}; box-shadow:0 0 6px ${c.accentAlt}40; }
-    .tag { background:${c.accent}10 !important; color:${c.accent} !important; border:1px solid ${c.accent}40; border-radius:3px !important; box-shadow:0 0 12px ${c.accent}30, inset 0 0 6px ${c.accent}10; font-family:"SF Mono","Fira Code","Consolas",monospace; letter-spacing:1px; text-transform:uppercase; }`,
+    .tag { background:${c.accent}10 !important; color:${c.accent} !important; border:1px solid ${c.accent}40; border-radius:3px !important; box-shadow:0 0 12px ${c.accent}30, inset 0 0 6px ${c.accent}10; font-family:"SF Mono","Fira Code","Consolas",monospace; letter-spacing:1px; text-transform:uppercase; }
+    .category-badge { background:${c.accentAlt}18 !important; color:${c.accentAlt} !important; border:1px solid ${c.accentAlt}50; border-radius:3px !important; box-shadow:0 0 10px ${c.accentAlt}25; font-family:"SF Mono","Fira Code","Consolas",monospace; text-transform:uppercase; letter-spacing:2px; }
+    .title-sep { border-top-color:${c.accent}35; width:100px; box-shadow:0 0 6px ${c.accent}20; }`,
 
   magazine: (c) => `
     body::before { content:""; position:absolute; top:0; left:0; width:42%; height:100%; background:linear-gradient(180deg, ${c.accentAlt}05 0%, ${c.accent}03 100%); }
@@ -114,7 +118,9 @@ const STYLE_DECOR_CSS: Record<string, (c: StyleColors) => string> = {
     .content { padding-left:46% !important; padding-right:12% !important; }
     h1 { font-family:"Georgia","Noto Serif SC",serif !important; letter-spacing:-0.5px; position:relative; }
     h1::before { content:""; position:absolute; top:-16px; left:0; width:30px; height:3px; background:${c.accent}; }
-    .tag { border-radius:2px !important; font-family:"Georgia","Noto Serif SC",serif; font-style:italic; background:transparent !important; color:${c.titleColor} !important; border-bottom:2px solid ${c.accent}; padding:4px 14px !important; letter-spacing:0.5px; }`,
+    .tag { border-radius:2px !important; font-family:"Georgia","Noto Serif SC",serif; font-style:italic; background:transparent !important; color:${c.titleColor} !important; border-bottom:2px solid ${c.accent}; padding:4px 14px !important; letter-spacing:0.5px; }
+    .category-badge { background:transparent !important; color:${c.accentAlt} !important; border:1px solid ${c.accentAlt}30; border-radius:2px !important; font-family:"Georgia","Noto Serif SC",serif; font-style:italic; letter-spacing:1px; }
+    .title-sep { border-top-style:double; border-top-color:${c.accent}22; width:70px; }`,
 
   drawio: (c) => `
     body { background-image: radial-gradient(circle, ${c.accent}12 1px, transparent 1px); background-size:20px 20px; }
@@ -138,7 +144,9 @@ const STYLE_DECOR_CSS: Record<string, (c: StyleColors) => string> = {
     .decor-crosshair::after { content:""; position:absolute; left:50%; top:0; bottom:0; width:1px; background:${c.accent}18; }
     .decor-label-box { position:absolute; top:12%; left:8%; padding:4px 10px; border:1px solid ${c.accent}20; border-radius:2px; }
     h1 { border-bottom:2px solid ${c.accent}22; padding-bottom:14px; }
-    .tag { border-radius:3px !important; background:${c.accent}08 !important; color:${c.titleColor} !important; border:1px solid ${c.accent}25; border-left:3px solid ${c.accent}; font-family:"SF Mono","Consolas",monospace; }`,
+    .tag { border-radius:3px !important; background:${c.accent}08 !important; color:${c.titleColor} !important; border:1px solid ${c.accent}25; border-left:3px solid ${c.accent}; font-family:"SF Mono","Consolas",monospace; }
+    .category-badge { background:${c.accent} !important; color:#fff !important; border-radius:3px !important; font-family:"SF Mono","Consolas",monospace; letter-spacing:1px; }
+    .title-sep { border-top-style:solid; border-top-color:${c.accent}30; width:90px; height:1px; border-top-width:1px; }`,
 
   chinese: (c) => `
     body { background-color:#f5e6d3; background-image: linear-gradient(${c.accent}05 1px, transparent 1px), linear-gradient(90deg, ${c.accent}05 1px, transparent 1px); background-size:60px 60px; }
@@ -162,7 +170,9 @@ const STYLE_DECOR_CSS: Record<string, (c: StyleColors) => string> = {
     .decor-cloud.c2 { top:8%; left:auto; right:20%; width:60px; height:16px; opacity:0.6; }
     .decor-cloud.c2::before { top:-7px; left:12px; width:20px; height:10px; }
     .decor-wave { position:absolute; bottom:20%; left:0; right:0; height:2px; background:repeating-linear-gradient(90deg, ${c.accent}10 0px, ${c.accent}10 8px, transparent 8px, transparent 16px); }
-    .tag { background:transparent !important; color:${c.accentAlt} !important; border:1px solid ${c.accentAlt}40; border-radius:3px !important; font-family:"KaiTi","STKaiti","楷体",serif; letter-spacing:2px; }`,
+    .tag { background:transparent !important; color:${c.accentAlt} !important; border:1px solid ${c.accentAlt}40; border-radius:3px !important; font-family:"KaiTi","STKaiti","楷体",serif; letter-spacing:2px; }
+    .category-badge { background:${c.accentAlt}15 !important; color:${c.accentAlt} !important; border:1px solid ${c.accentAlt}40; border-radius:3px !important; font-family:"KaiTi","STKaiti","楷体",serif; letter-spacing:3px; }
+    .title-sep { border-top-color:${c.accentAlt}25; width:100px; height:1px; border-top-width:1px; }`,
 }
 
 function getStyleColors(styleId: string): StyleColors {
@@ -180,6 +190,11 @@ function buildCoverHtml(config: CoverGenerationConfig): string {
   const titleText = config.title?.trim() || "无标题"
   const decorCss = STYLE_DECOR_CSS[config.styleId]?.(c) ?? STYLE_DECOR_CSS.minimal(c)
   const decorHtml = STYLE_DECOR_HTML[config.styleId] ?? ""
+
+  // 分类挂饰
+  const categoryBadge = config.category?.trim()
+    ? `\n    <span class="category-badge">${config.category.trim()}</span>`
+    : ""
 
   // 关键字标签
   let tagsBlock = ""
@@ -209,8 +224,24 @@ function buildCoverHtml(config: CoverGenerationConfig): string {
     font-size: ${titleSize}px; font-weight: 700; color: ${c.titleColor};
     line-height: 1.3; max-width: 90%;
   }
+  .title-row {
+    display: flex; align-items: flex-start; justify-content: center;
+    flex-wrap: wrap; gap: 12px; max-width: 90%;
+  }
+  .title-row h1 { max-width: none; }
+  .category-badge {
+    display: inline-block; padding: 3px 12px; border-radius: 12px;
+    background: ${c.accent}; color: #fff; font-size: ${Math.max(13, subtitleSize - 4)}px;
+    letter-spacing: 2px; white-space: nowrap; flex-shrink: 0;
+    margin-top: ${Math.max(4, Math.floor(titleSize * 0.08))}px;
+  }
+  .title-sep {
+    width: 80px; height: 0;
+    margin: 18px auto 0 auto;
+    border-top: 2px dashed ${c.accent}30;
+  }
   .tags {
-    margin-top: 24px; display: flex; flex-wrap: wrap; justify-content: center;
+    margin-top: 18px; display: flex; flex-wrap: wrap; justify-content: center;
     max-width: 90%; gap: 6px;
   }
   .tag {
@@ -231,7 +262,10 @@ function buildCoverHtml(config: CoverGenerationConfig): string {
 <body>
   <div class="decor-layer">${decorHtml}</div>
   <div class="content">
-    <h1>${titleText}</h1>${tagsBlock}
+    <div class="title-row">
+      <h1>${titleText}</h1>${categoryBadge}
+    </div>
+    <div class="title-sep"></div>${tagsBlock}
   </div>
   <span class="watermark">${config.watermark || ""}</span>
 </body>
@@ -244,6 +278,7 @@ export function useCoverGenerator() {
   const errorMessage = ref("")
   const currentConfig = ref<CoverGenerationConfig>({
     title: "",
+    category: "",
     keywords: "",
     watermark: "叫我少年",
     width: 1200,
@@ -282,6 +317,7 @@ export function useCoverGenerator() {
     errorMessage.value = ""
     currentConfig.value = {
       title: "",
+      category: "",
       keywords: "",
       watermark: "叫我少年",
       width: 1200,

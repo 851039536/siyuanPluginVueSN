@@ -205,6 +205,56 @@
         >{{ reasoningContent }}</div>
       </div>
 
+      <!-- RAG 联网搜索结果（可折叠） -->
+      <div
+        v-if="searchStatus || searchResults.length > 0"
+        class="search-results-section"
+      >
+        <button
+          class="search-results-toggle"
+          @click="showSearchPanel = !showSearchPanel"
+        >
+          <svg
+            width="12"
+            height="12"
+            class="search-chevron"
+            :class="{ expanded: showSearchPanel }"
+          >
+            <use xlink:href="#iconRight"></use>
+          </svg>
+          <svg
+            width="14"
+            height="14"
+          ><use xlink:href="#iconSearch"></use></svg>
+          <span>搜索来源</span>
+          <span class="search-status-text">{{ searchStatus }}</span>
+        </button>
+        <div
+          v-if="showSearchPanel && searchResults.length > 0"
+          class="search-results-body"
+        >
+          <div
+            v-for="(result, idx) in searchResults"
+            :key="idx"
+            class="search-result-item"
+          >
+            <div class="search-result-header">
+              <span class="search-result-index">{{ idx + 1 }}.</span>
+              <a
+                :href="result.url"
+                class="search-result-link"
+                target="_blank"
+                :title="result.url"
+              >{{ result.title || result.url }}</a>
+            </div>
+            <div
+              v-if="result.content"
+              class="search-result-content"
+            >{{ result.content }}</div>
+          </div>
+        </div>
+      </div>
+
       <div class="result-content">
         <!-- 预览模式 -->
         <div
@@ -282,6 +332,11 @@ interface Props {
   reasoningContent?: string
   showReasoning?: boolean
 
+  // 搜索来源
+  searchResults?: Array<{ title: string; url: string; content: string; score?: number }>
+  showSearchResults?: boolean
+  searchStatus?: string
+
   // 耗时
   generationElapsed?: string
 
@@ -304,6 +359,7 @@ defineEmits<{
 }>()
 
 const viewMode = ref<"preview" | "diff">("preview")
+const showSearchPanel = ref(true)
 
 // 是否存在差异（有原文且有生成内容且不同）
 const hasDiff = computed(() => {
@@ -406,5 +462,111 @@ watch(isGenerating, (newVal, oldVal) => {
     color: var(--b3-theme-primary);
     opacity: 0.65;
   }
+}
+
+// ============ RAG 搜索来源 ============
+.search-results-section {
+  margin: 0 14px;
+  border-radius: 6px;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  background: var(--b3-theme-surface);
+  overflow: hidden;
+}
+
+.search-results-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--b3-theme-on-surface);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  user-select: none;
+
+  svg {
+    color: var(--b3-theme-primary);
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    background: var(--b3-theme-surface-light);
+  }
+}
+
+.search-chevron {
+  transition: transform 0.2s;
+
+  &.expanded {
+    transform: rotate(90deg);
+  }
+}
+
+.search-status-text {
+  font-size: 10px;
+  font-weight: 400;
+  opacity: 0.5;
+  margin-left: auto;
+}
+
+.search-results-body {
+  padding: 6px 10px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  border-top: 1px solid var(--b3-theme-surface-lighter);
+  margin: 0 10px 8px;
+}
+
+.search-result-item {
+  padding: 5px 0;
+
+  & + & {
+    border-top: 1px solid var(--b3-theme-surface-lighter);
+  }
+}
+
+.search-result-header {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.search-result-index {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--b3-theme-primary);
+  flex-shrink: 0;
+}
+
+.search-result-link {
+  font-size: 11px;
+  color: var(--b3-theme-primary);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.search-result-content {
+  margin-top: 3px;
+  font-size: 10px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.65;
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 </style>

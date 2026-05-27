@@ -122,6 +122,10 @@ export class AIContentGenerator {
         onChunk: options.onChunk,
         onReasoningChunk: options.onReasoningChunk,
         webSearch: options.webSearch,
+        searchQuery: options.searchQuery,
+        onSearchStart: options.onSearchStart,
+        onSearchResults: options.onSearchResults,
+        onSearchError: options.onSearchError,
         enableThinking: options.enableThinking,
       })
 

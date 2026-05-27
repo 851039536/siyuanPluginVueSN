@@ -18,6 +18,7 @@ export interface AISettings {
   model: string
   customModel: string
   enableThinking: boolean
+  webSearch: boolean
 }
 
 const DEFAULT_AI_SETTINGS: AISettings = {
@@ -27,6 +28,7 @@ const DEFAULT_AI_SETTINGS: AISettings = {
   model: "",
   customModel: "",
   enableThinking: false,
+  webSearch: false,
 }
 
 /**

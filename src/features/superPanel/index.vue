@@ -43,7 +43,6 @@
           class="search-input"
           type="text"
           :placeholder="i18n.searchPlaceholder || '搜索功能...'"
-          @input="onSearchInput"
         >
         <button
           v-if="searchQuery"
@@ -198,7 +197,6 @@ const filteredFeatures = computed<Feature[]>(() => {
   )
 })
 
-const onSearchInput = (): void => {}
 const clearSearch = (): void => {
   searchQuery.value = ""
   searchInputRef.value?.focus()

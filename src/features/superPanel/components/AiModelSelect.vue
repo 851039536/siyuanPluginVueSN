@@ -58,6 +58,24 @@ interface ProviderModels {
   all: ModelOption[]
 }
 
+interface Props {
+  provider: string
+  modelValue: string
+  customModel: string
+  i18n: {
+    commonModels?: string
+    allModels?: string
+    customModel?: string
+    customModelPlaceholder?: string
+    [key: string]: any
+  }
+}
+
+interface Emits {
+  (e: "update:modelValue", value: string): void
+  (e: "update:customModel", value: string): void
+}
+
 const props = defineProps<Props>()
 
 const emit = defineEmits<Emits>()
@@ -149,24 +167,6 @@ const AI_MODELS_CONFIG: Record<string, ProviderModels> = {
     common: [],
     all: [],
   },
-}
-
-interface Props {
-  provider: string
-  modelValue: string
-  customModel: string
-  i18n: {
-    commonModels?: string
-    allModels?: string
-    customModel?: string
-    customModelPlaceholder?: string
-    [key: string]: any
-  }
-}
-
-interface Emits {
-  (e: "update:modelValue", value: string): void
-  (e: "update:customModel", value: string): void
 }
 
 const showCustomInput = computed(() => props.modelValue === "custom")

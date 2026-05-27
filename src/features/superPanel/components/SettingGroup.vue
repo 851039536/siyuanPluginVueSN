@@ -24,7 +24,7 @@ interface Props {
   description?: string
 }
 
-withDefaults(defineProps<Props>(), {})
+defineProps<Props>()
 </script>
 
 

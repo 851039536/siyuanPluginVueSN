@@ -13,6 +13,10 @@
   &:hover {
     background: var(--b3-theme-surface-lighter);
   }
+
+  &--expandable {
+    align-items: flex-start;
+  }
 }
 
 .feature-icon {
@@ -25,11 +29,18 @@
   justify-content: center;
   flex-shrink: 0;
   color: var(--b3-theme-primary);
+  margin-top: 2px;
+}
+
+.feature-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .feature-info {
-  flex: 1;
-  min-width: 0;
   display: flex;
   align-items: baseline;
   gap: 8px;
@@ -49,11 +60,51 @@
   @include text-ellipsis;
 }
 
+.feature-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.theme-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--b3-border-color);
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  line-height: 1.6;
+
+  &:hover {
+    border-color: var(--chip-color, var(--b3-theme-primary));
+    background: var(--b3-theme-surface-lighter);
+  }
+
+  &.active {
+    background: var(--chip-color, var(--b3-theme-primary));
+    color: #fff;
+    border-color: var(--chip-color, var(--b3-theme-primary));
+  }
+}
+
+.theme-chip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 .feature-right {
   display: flex;
   align-items: center;
   gap: $spacing-sm;
   flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .feature-actions {

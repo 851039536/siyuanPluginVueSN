@@ -430,7 +430,9 @@
     "heatmapMarker": "Heatmap Marker",
     "heatmapMarkerDesc": "Automatically marks English words from the wordbook in documents, showing a heatmap gradient based on practice count",
     "skillsViewer": "Skills Viewer",
-    "skillsViewerDesc": "View and manage AI coding tools Skills configuration files"
+    "skillsViewerDesc": "View and manage AI coding tools Skills configuration files",
+    "themeColor": "Theme Color",
+    "themeColorDesc": "Apply warm orange global theme color"
   },
   "wordQuery": {
     "title": "Word Query",

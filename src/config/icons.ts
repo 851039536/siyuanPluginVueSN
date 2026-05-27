@@ -190,6 +190,12 @@ export const FEATURE_ICONS = {
     color: "#f59e0b",
   },
 
+  // 主题色
+  themeColor: {
+    icon: "mdi:palette",
+    color: "#d97757",
+  },
+
   // 单词阅读
   flashcardReading: {
     icon: "mdi:card-bulleted",

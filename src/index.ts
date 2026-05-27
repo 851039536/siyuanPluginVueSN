@@ -48,6 +48,7 @@ import {
   registerSuperPanel,
   registerTableOfContents,
   registerTextDiff,
+  registerThemeColor,
   registerUnitConverter,
   registerVideo,
   registerWordQuery,
@@ -174,6 +175,11 @@ export default class PluginSample extends Plugin {
       (this as any).__htmlViewer.destroy()
     }
 
+    // 清理主题色
+    if ((this as any).__themeColor) {
+      (this as any).__themeColor.destroy()
+    }
+
     // 清理统计数据资源
     getStatisticsInstance()?.destroy()
 
@@ -218,6 +224,9 @@ export default class PluginSample extends Plugin {
     if (s.enableHtmlViewer) registerHtmlViewer(this)
     if (s.enableResourceManager) registerResourceManager(this)
     if (s.enableRssReader) registerRssReader(this)
+    if (s.enableThemeColor) {
+      (this as any).__themeColor = registerThemeColor(this)
+    }
   }
 
   /**

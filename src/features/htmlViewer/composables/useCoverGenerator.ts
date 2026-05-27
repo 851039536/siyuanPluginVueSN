@@ -45,134 +45,79 @@ const STYLE_COLORS_MAP: Record<string, StyleColors> = {
   drawio: { bg: "#f5f6f8", titleColor: "#1a1a2e", subtitleColor: "#546e7a", accent: "#1565c0", accentAlt: "#0d47a1" },
 }
 
+/** 装饰层 HTML 片段（每个风格在 content 区域内的额外装饰元素） */
+const STYLE_DECOR_HTML: Record<string, string> = {
+  minimal: `<div class="decor-circle"></div><div class="decor-line-l"></div><div class="decor-line-r"></div>`,
+  tech: `<div class="decor-scan"></div><div class="decor-node n1"></div><div class="decor-node n2"></div><div class="decor-node n3"></div>`,
+  magazine: `<div class="decor-block"></div><div class="decor-ring"></div><div class="decor-bar"></div>`,
+  drawio: `<div class="decor-grid"></div><div class="decor-corner tl"></div><div class="decor-corner tr"></div><div class="decor-corner bl"></div><div class="decor-corner br"></div>`,
+  chinese: `<div class="decor-seal"></div><div class="decor-ink"></div><div class="decor-line-v"></div>`,
+}
+
 /** 每个风格的装饰 CSS（纯代码，无 AI） */
 const STYLE_DECOR_CSS: Record<string, (c: StyleColors) => string> = {
   minimal: (c) => `
-    body::before {
-      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px;
-      background: ${c.accent};
-    }
-    body::after {
-      content: ""; position: absolute; bottom: ${c.accentAlt === c.accent ? "40px" : "48px"};
-      left: 50%; transform: translateX(-50%);
-      width: 40px; height: 40px; border: 2px solid ${c.accent}; border-radius: 50%;
-    }
-    .content::before {
-      content: ""; position: absolute; top: 50%; left: 8%;
-      width: 2px; height: 30%; transform: translateY(-50%);
-      background: linear-gradient(to bottom, transparent, ${c.accent}33, transparent);
-    }
-    .content::after {
-      content: ""; position: absolute; top: 50%; right: 8%;
-      width: 2px; height: 30%; transform: translateY(-50%);
-      background: linear-gradient(to bottom, transparent, ${c.accent}33, transparent);
-    }`,
+    body::before { content:""; position:absolute; top:0; left:0; right:0; height:4px; background:${c.accent}; }
+    body::after { content:""; position:absolute; bottom:48px; left:50%; transform:translateX(-50%); width:40px; height:40px; border:2px solid ${c.accent}; border-radius:50%; }
+    .content::before { content:""; position:absolute; top:50%; left:8%; width:2px; height:30%; transform:translateY(-50%); background:linear-gradient(to bottom, transparent, ${c.accent}33, transparent); }
+    .content::after { content:""; position:absolute; top:50%; right:8%; width:2px; height:30%; transform:translateY(-50%); background:linear-gradient(to bottom, transparent, ${c.accent}33, transparent); }
+    .decor-circle { position:absolute; top:12%; right:10%; width:180px; height:180px; border-radius:50%; background:${c.accent}08; }
+    .decor-line-l { position:absolute; bottom:18%; left:6%; width:60px; height:1px; background:${c.accent}; opacity:0.3; }
+    .decor-line-r { position:absolute; top:18%; right:6%; width:40px; height:1px; background:${c.accent}; opacity:0.25; }`,
 
   tech: (c) => `
-    body {
-      background-image:
-        linear-gradient(rgba(0,255,255,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,255,255,0.03) 1px, transparent 1px);
-      background-size: 40px 40px;
-    }
-    body::before {
-      content: ""; position: absolute; top: 30px; left: 30px; right: 30px; bottom: 30px;
-      border: 1px solid rgba(0,255,255,0.15); border-radius: 2px;
-    }
-    body::after {
-      content: ""; position: absolute; top: 0; left: 0; width: 200px; height: 200px;
-      background: radial-gradient(circle, ${c.accent}20 0%, transparent 70%);
-    }
-    .content::before {
-      content: "「"; position: absolute; top: 8%; left: 10%;
-      font-size: 80px; color: ${c.accent}15; font-family: serif;
-    }
-    .content::after {
-      content: "」"; position: absolute; bottom: 8%; right: 10%;
-      font-size: 80px; color: ${c.accent}15; font-family: serif;
-    }
-    .style-badge {
-      border-color: ${c.accent} !important; color: ${c.accent} !important;
-      box-shadow: 0 0 12px ${c.accent}30;
-    }`,
+    body { background-image: linear-gradient(rgba(0,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,255,0.03) 1px, transparent 1px); background-size:40px 40px; }
+    body::before { content:""; position:absolute; top:30px; left:30px; right:30px; bottom:30px; border:1px solid rgba(0,255,255,0.12); }
+    body::after { content:""; position:absolute; top:0; right:0; width:300px; height:300px; background:radial-gradient(circle, ${c.accent}15 0%, transparent 70%); }
+    .content::before { content:"「"; position:absolute; top:6%; left:8%; font-size:80px; color:${c.accent}12; font-family:serif; }
+    .content::after { content:"」"; position:absolute; bottom:6%; right:8%; font-size:80px; color:${c.accent}12; font-family:serif; }
+    .decor-scan { position:absolute; top:30%; left:0; right:0; height:1px; background:linear-gradient(90deg, transparent, ${c.accent}20, transparent); }
+    .decor-node { position:absolute; width:8px; height:8px; border-radius:50%; background:${c.accent}; box-shadow:0 0 8px ${c.accent}60; }
+    .decor-node.n1 { top:15%; left:15%; }
+    .decor-node.n2 { top:22%; right:20%; width:5px; height:5px; }
+    .decor-node.n3 { bottom:20%; left:25%; width:6px; height:6px; opacity:0.6; }
+    .style-badge { border-color:${c.accent} !important; color:${c.accent} !important; box-shadow:0 0 12px ${c.accent}30; }
+    .tag { box-shadow:0 0 8px ${c.accent}30; }`,
 
   magazine: (c) => `
-    body::before {
-      content: ""; position: absolute; top: 0; left: 0;
-      width: 40%; height: 100%;
-      background: linear-gradient(180deg, ${c.accentAlt}08 0%, ${c.accent}05 100%);
-    }
-    body::after {
-      content: ""; position: absolute; bottom: 0; left: 40%; right: 0; height: 6px;
-      background: ${c.accent};
-    }
-    .content::before {
-      content: ""; position: absolute; top: 8%; right: 12%;
-      width: 120px; height: 120px; border: 3px solid ${c.accent}20; border-radius: 50%;
-    }
-    .content::after {
-      content: ""; position: absolute; bottom: 12%; left: 6%;
-      width: 80px; height: 2px; background: ${c.accentAlt};
-    }
-    .content { padding-left: 45% !important; padding-right: 12% !important; }`,
+    body::before { content:""; position:absolute; top:0; left:0; width:40%; height:100%; background:linear-gradient(180deg, ${c.accentAlt}06 0%, ${c.accent}04 100%); }
+    body::after { content:""; position:absolute; bottom:0; left:40%; right:0; height:6px; background:${c.accent}; }
+    .content::before { content:""; position:absolute; top:10%; right:10%; width:100px; height:100px; border:3px solid ${c.accent}18; border-radius:50%; }
+    .content::after { content:""; position:absolute; bottom:14%; left:5%; width:60px; height:2px; background:${c.accentAlt}; }
+    .decor-block { position:absolute; top:40%; left:5%; width:28%; height:20%; background:${c.accent}06; }
+    .decor-ring { position:absolute; bottom:8%; right:8%; width:70px; height:70px; border:2px solid ${c.accent}15; border-radius:50%; }
+    .decor-bar { position:absolute; top:5%; right:5%; width:4px; height:40%; background:linear-gradient(to bottom, ${c.accent}20, transparent); }
+    .content { padding-left:45% !important; padding-right:12% !important; }
+    h1 { font-family:"Georgia","Noto Serif SC",serif !important; letter-spacing:-0.5px; }
+    .tag { border-radius:2px !important; font-family:"Georgia",serif !important; font-style:italic; }`,
 
   drawio: (c) => `
-    body {
-      background-image: radial-gradient(circle, ${c.accent}18 1px, transparent 1px);
-      background-size: 24px 24px;
-    }
-    body::before {
-      content: ""; position: absolute; top: 16px; left: 16px; right: 16px; bottom: 16px;
-      border: 2px solid ${c.accent}25; border-radius: 4px;
-    }
-    body::after {
-      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-      background: linear-gradient(90deg, ${c.accent}, ${c.accentAlt}, ${c.accent});
-    }
-    .content::before {
-      content: ""; position: absolute; top: 10%; left: 6%;
-      width: 16px; height: 16px; border: 2px solid ${c.accent}40; border-radius: 2px;
-    }
-    .content::after {
-      content: ""; position: absolute; bottom: 10%; right: 6%;
-      width: 16px; height: 16px; border: 2px solid ${c.accent}40; border-radius: 2px;
-    }
-    .tag {
-      border-radius: 4px !important; background: ${c.accent} !important;
-      border-left: 3px solid ${c.accentAlt} !important;
-    }`,
+    body { background-image: radial-gradient(circle, ${c.accent}15 1px, transparent 1px); background-size:20px 20px; }
+    body::before { content:""; position:absolute; top:12px; left:12px; right:12px; bottom:12px; border:2px solid ${c.accent}20; border-radius:2px; }
+    body::after { content:""; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg, ${c.accent}, ${c.accentAlt}, ${c.accent}); }
+    .content::before { content:""; position:absolute; top:8%; left:5%; width:14px; height:14px; border:2px solid ${c.accent}35; border-radius:1px; }
+    .content::after { content:""; position:absolute; bottom:8%; right:5%; width:14px; height:14px; border:2px solid ${c.accent}35; border-radius:1px; }
+    .decor-corner { position:absolute; width:20px; height:20px; border-color:${c.accent}25; border-style:solid; }
+    .decor-corner.tl { top:20px; left:20px; border-width:1px 0 0 1px; }
+    .decor-corner.tr { top:20px; right:20px; border-width:1px 1px 0 0; }
+    .decor-corner.bl { bottom:20px; left:20px; border-width:0 0 1px 1px; }
+    .decor-corner.br { bottom:20px; right:20px; border-width:0 1px 1px 0; }
+    .decor-grid { position:absolute; inset:0; background-image:linear-gradient(${c.accent}06 1px, transparent 1px), linear-gradient(90deg, ${c.accent}06 1px, transparent 1px); background-size:60px 60px; }
+    .tag { border-radius:4px !important; background:${c.accent} !important; border-left:3px solid ${c.accentAlt} !important; }
+    h1 { border-bottom:2px solid ${c.accent}25; padding-bottom:12px; }`,
 
   chinese: (c) => `
-    body {
-      background-image:
-        linear-gradient(${c.accent}08 1px, transparent 1px),
-        linear-gradient(90deg, ${c.accent}08 1px, transparent 1px);
-      background-size: 60px 60px;
-    }
-    body::before {
-      content: ""; position: absolute; top: 20px; left: 20px;
-      width: 50px; height: 50px;
-      border-top: 2px solid ${c.accent}30; border-left: 2px solid ${c.accent}30;
-    }
-    body::after {
-      content: ""; position: absolute; bottom: 20px; right: 20px;
-      width: 50px; height: 50px;
-      border-bottom: 2px solid ${c.accent}30; border-right: 2px solid ${c.accent}30;
-    }
-    .content::before {
-      content: ""; position: absolute; right: 10%; top: 12%;
-      width: 40px; height: 40px; border: 1.5px solid ${c.accentAlt}50;
-      transform: rotate(45deg);
-    }
-    .content::after {
-      content: ""; position: absolute; left: 12%; bottom: 15%;
-      width: 100px; height: 1px; background: linear-gradient(90deg, ${c.accent}40, transparent);
-    }
-    .style-badge {
-      font-family: "KaiTi", "STKaiti", "楷体", serif !important;
-      letter-spacing: 6px !important;
-    }
-    h1 { font-weight: 900 !important; }`,
+    body { background-image: linear-gradient(${c.accent}06 1px, transparent 1px), linear-gradient(90deg, ${c.accent}06 1px, transparent 1px); background-size:60px 60px; }
+    body::before { content:""; position:absolute; top:16px; left:16px; width:40px; height:40px; border-top:2px solid ${c.accent}25; border-left:2px solid ${c.accent}25; }
+    body::after { content:""; position:absolute; bottom:16px; right:16px; width:40px; height:40px; border-bottom:2px solid ${c.accent}25; border-right:2px solid ${c.accent}25; }
+    .content::before { content:""; position:absolute; right:8%; top:10%; width:36px; height:36px; border:1.5px solid ${c.accentAlt}40; transform:rotate(45deg); }
+    .content::after { content:""; position:absolute; left:10%; bottom:12%; width:80px; height:1px; background:linear-gradient(90deg, ${c.accent}35, transparent); }
+    .decor-seal { position:absolute; right:12%; bottom:14%; width:50px; height:50px; border:2px solid ${c.accentAlt}50; color:${c.accentAlt}50; font-size:14px; display:flex; align-items:center; justify-content:center; transform:rotate(15deg); }
+    .decor-ink { position:absolute; top:14%; right:18%; width:100px; height:100px; border-radius:50%; background:radial-gradient(ellipse at 40% 40%, ${c.accent}10, transparent 70%); }
+    .decor-line-v { position:absolute; right:5%; top:25%; width:1px; height:50%; background:linear-gradient(to bottom, transparent, ${c.accent}15, transparent); }
+    .style-badge { font-family:"KaiTi","STKaiti","楷体",serif !important; letter-spacing:6px !important; }
+    h1 { font-weight:900 !important; }
+    .tag { font-family:"KaiTi","STKaiti","楷体",serif !important; border-radius:2px !important; }`,
 }
 
 function getStyleColors(styleId: string): StyleColors {
@@ -190,6 +135,7 @@ function buildCoverHtml(config: CoverGenerationConfig): string {
   const styleLabel = COVER_STYLE_PRESETS.find((s) => s.id === config.styleId)?.label || "极简"
   const titleText = config.title?.trim() || "无标题"
   const decorCss = STYLE_DECOR_CSS[config.styleId]?.(c) ?? STYLE_DECOR_CSS.minimal(c)
+  const decorHtml = STYLE_DECOR_HTML[config.styleId] ?? ""
 
   // 关键字标签
   let tagsBlock = ""
@@ -211,7 +157,7 @@ function buildCoverHtml(config: CoverGenerationConfig): string {
     position: relative;
   }
   .content {
-    position: relative; z-index: 1;
+    position: relative; z-index: 2;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     height: 100%; text-align: center; padding: ${padding}px;
   }
@@ -232,12 +178,14 @@ function buildCoverHtml(config: CoverGenerationConfig): string {
     display: inline-block; padding: 6px 18px; border-radius: 20px;
     background: ${c.accent}; color: #fff; font-size: ${subtitleSize}px;
   }
+  .decor-layer { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
 
   /* === 风格装饰 === */
   ${decorCss}
 </style>
 </head>
 <body>
+  <div class="decor-layer">${decorHtml}</div>
   <div class="content">
     <span class="style-badge">${styleLabel}</span>
     <h1>${titleText}</h1>${tagsBlock}

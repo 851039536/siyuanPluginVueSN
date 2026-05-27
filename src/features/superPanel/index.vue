@@ -37,8 +37,11 @@
         :feature="feature"
         :enabled="getFeatureEnabled(feature.id)"
         :show-toggle="canToggle(feature.id)"
+        :selector-options="getSelectorOptions(feature.id)"
+        :selected-option="getSelectedOption(feature.id)"
         @action="emit('action', $event)"
         @toggle="handleToggle(feature.id, $event)"
+        @select="handleSelect(feature.id, $event)"
       />
     </div>
   </div>
@@ -52,12 +55,14 @@ import type {
 import type { IconKey } from "@/config/icons"
 import type { PluginSettings } from "@/config/settings"
 import type { FeatureMeta } from "@/features/config"
+import type { SelectorOption } from "./components/FeatureCard.vue"
 import {
   computed,
   ref,
 } from "vue"
 import { featureIdToSettingKey } from "@/config/settings"
 import { FEATURE_CONFIG } from "@/features/config"
+import { THEMES } from "@/features/themeColor"
 import AiSettingsPanel from "./components/AiSettingsPanel.vue"
 import FeatureCard from "./components/FeatureCard.vue"
 import SuperPanelHeader from "./components/SuperPanelHeader.vue"
@@ -74,6 +79,7 @@ interface Emits {
   (e: "refresh"): void
   (e: "updateAiSettings", settings: AiSettings): void
   (e: "toggleFeature", featureId: string, enabled: boolean): void
+  (e: "selectFeature", featureId: string, value: string): void
 }
 
 const props = defineProps<Props>()
@@ -135,6 +141,28 @@ const canToggle = (featureId: string): boolean => featureId !== "superPanel"
 
 const handleToggle = (featureId: string, enabled: boolean) => {
   emit("toggleFeature", featureId, enabled)
+}
+
+const themeSchemeOptions = computed<SelectorOption[]>(() =>
+  Object.values(THEMES).map((t) => ({
+    value: t.id,
+    label: t.name,
+    color: t.primary,
+  })),
+)
+
+const getSelectorOptions = (featureId: string): SelectorOption[] => {
+  if (featureId === "themeColor") return themeSchemeOptions.value
+  return []
+}
+
+const getSelectedOption = (featureId: string): string => {
+  if (featureId === "themeColor") return props.settings.themeColorScheme || "orange"
+  return ""
+}
+
+const handleSelect = (featureId: string, value: string) => {
+  emit("selectFeature", featureId, value)
 }
 </script>
 

@@ -73,6 +73,7 @@ export interface PluginSettings {
   enableRssReader: boolean // 是否启用RSS订阅功能
   enableResourceManager: boolean // 是否启用资源管理功能
   enableThemeColor: boolean // 是否启用全局主题色功能
+  themeColorScheme: string // 主题色方案: 'orange' | 'github'
   videoCategories?: string[] // 视频分类列表
   compactMode: boolean // 是否启用全局紧洛模式
   statisticsTheme: "default" | "github" // 统计面板主题风格
@@ -128,6 +129,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enableRssReader: true,
   enableResourceManager: true,
   enableThemeColor: false,
+  themeColorScheme: "orange",
   videoCategories: ["默认分类", "教程", "演示", "其他"],
   compactMode: true,
   statisticsTheme: "default",

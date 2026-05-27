@@ -165,6 +165,9 @@ export class SuperPanelManager {
       onToggleFeature: async (featureId: string, enabled: boolean) => {
         await this.handleToggleFeature(featureId, enabled)
       },
+      onSelectFeature: async (featureId: string, value: string) => {
+        await this.handleSelectFeature(featureId, value)
+      },
     })
 
     vueApp.mount(panelContainer)
@@ -269,6 +272,14 @@ export class SuperPanelManager {
     await this._updatePluginSettings({
       [settingKey]: enabled,
     } as Partial<PluginSettings>)
+  }
+
+  private async handleSelectFeature(featureId: string, value: string) {
+    if (featureId === "themeColor") {
+      await this._updatePluginSettings({
+        themeColorScheme: value,
+      })
+    }
   }
 
   public destroy() {

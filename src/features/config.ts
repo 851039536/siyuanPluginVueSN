@@ -233,6 +233,13 @@ export const FEATURE_CONFIG = [
     defaultDesc: "查看和管理 AI 编程工具的 Skills 配置文件",
   },
   {
+    id: "superPanel",
+    defaultTitle: "超级面板（假）",
+    defaultDesc: "test",
+    titleI18nKey: "superPanel.title",
+    descI18nKey: "superPanel.description",
+  },
+  {
     id: "themeColor",
     defaultTitle: "主题色",
     defaultDesc: "应用暖橙色全局主题色",

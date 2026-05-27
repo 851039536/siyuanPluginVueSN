@@ -232,6 +232,11 @@ export const FEATURE_CONFIG = [
     defaultTitle: "Skills 查看器",
     defaultDesc: "查看和管理 AI 编程工具的 Skills 配置文件",
   },
+  {
+    id: "themeColor",
+    defaultTitle: "主题色",
+    defaultDesc: "应用暖橙色全局主题色",
+  },
 ] as const
 
 /**

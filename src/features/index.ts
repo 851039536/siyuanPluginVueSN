@@ -69,6 +69,7 @@ export { registerStatusBar } from "./statusBar"
 export { registerSuperPanel } from "./superPanel"
 export { registerTableOfContents } from "./tableOfContents"
 export { registerTextDiff } from "./textDiff"
+export { registerThemeColor } from "./themeColor"
 export { registerUnitConverter } from "./unitConverter"
 export { registerVideo } from "./video"
 export { registerWordQuery } from "./wordQuery"
@@ -90,7 +91,7 @@ type _Registered =
   | "statusBar" | "floatingToolbar" | "floatingBox" | "textDiff"
   | "base64Image" | "flashcardReading" | "passwordVault" | "docAnalysis"
   | "formatAssistant" | "htmlViewer" | "rssReader" | "resourceManager"
-  | "skillsViewer"
+  | "skillsViewer" | "themeColor"
 
 // --- 编译时断言辅助 ---
 // 利用泛型接口约束 T extends true 产生 TypeScript 编译错误，无运行时开销

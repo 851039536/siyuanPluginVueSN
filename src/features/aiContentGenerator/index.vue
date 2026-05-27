@@ -74,6 +74,7 @@
         :current-skill-index="currentSkillIndex"
         :filtered-skills="filteredSkills"
         :skill-search-query="skillSearchQuery"
+        :web-search="webSearch"
         @ai-edit="aiEditAction"
         @stop="handleStop"
         @toggle-prompt-selector="showPromptSelector = !showPromptSelector"
@@ -88,6 +89,7 @@
         @update:edit-custom-input="editCustomInput = $event"
         @update:current-skill-index="currentSkillIndex = $event"
         @update:skill-search-query="skillSearchQuery = $event"
+        @update:web-search="webSearch = $event"
       />
     </template>
 
@@ -190,6 +192,7 @@ const maxTokens = ref(10000);
 const selectedModel = ref("");
 const customModel = ref("");
 const enableThinking = ref(false);
+const webSearch = ref(false);
 
 // 思考过程状态
 const reasoningContent = ref("");  // 完整推理内容（汇总后）
@@ -425,6 +428,7 @@ const buildGenerateOptions = (userInput: string, systemPrompt: string): Generate
   ...(enableThinking.value ? { onReasoningChunk: defaultOnReasoningChunk } : {}),
   model: resolvedModel.value || undefined,
   enableThinking: enableThinking.value,
+  webSearch: webSearch.value,
 })
 
 /**

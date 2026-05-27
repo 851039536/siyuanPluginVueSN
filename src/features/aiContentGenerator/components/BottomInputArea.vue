@@ -138,6 +138,24 @@
 
       <!-- 提示词选择 -->
       <div class="top-bar-right">
+        <!-- RAG 联网搜索开关 -->
+        <label
+          class="rag-toggle"
+          :class="{ active: webSearch }"
+          title="RAG联网搜索：先搜后答，获取最新信息"
+        >
+          <svg
+            width="12"
+            height="12"
+          ><use xlink:href="#iconSearch"></use></svg>
+          <input
+            type="checkbox"
+            :checked="webSearch"
+            @change="$emit('update:webSearch', ($event.target as HTMLInputElement).checked)"
+          />
+          <span>联网</span>
+        </label>
+
         <div class="prompt-selector-wrapper">
           <Button
             variant="ghost"
@@ -348,6 +366,7 @@ const emit = defineEmits<{
   'update:editCustomInput': [value: string]
   'update:currentSkillIndex': [value: number]
   'update:skillSearchQuery': [value: string]
+  'update:webSearch': [value: boolean]
 }>()
 
 const quickActions: QuickAction[] = [
@@ -395,6 +414,7 @@ interface Props {
   currentSkillIndex: number
   filteredSkills: SkillItem[]
   skillSearchQuery: string
+  webSearch: boolean
 }
 
 // 技能下拉面板状态
@@ -489,6 +509,55 @@ const getOriginalIndex = (prompt: SavedPrompt) => {
 
 <style scoped lang="scss">
 @use "../styles/index.scss";
+
+// ============ RAG 联网搜索开关 ============
+.rag-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  font-size: 10px;
+  color: var(--b3-theme-on-surface);
+  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  svg {
+    opacity: 0.5;
+  }
+
+  input[type="checkbox"] {
+    display: none;
+  }
+
+  span {
+    opacity: 0.7;
+  }
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+  }
+
+  &.active {
+    color: var(--b3-theme-primary);
+    background: rgba(var(--b3-theme-primary-rgb, 53, 125, 221), 0.08);
+    border-color: var(--b3-theme-primary);
+
+    svg {
+      opacity: 1;
+      color: var(--b3-theme-primary);
+    }
+
+    span {
+      opacity: 1;
+      font-weight: 500;
+    }
+  }
+}
 
 // ============ 技能选择器 ============
 .skill-selector-wrapper {

@@ -176,7 +176,10 @@
 import type { AiSettings } from "../types"
 import type { SearchProvider } from "@/types/ai"
 import { showMessage } from "siyuan"
-import { ref } from "vue"
+import {
+  reactive,
+  ref,
+} from "vue"
 import Button from "@/components/Button.vue"
 import { searchWeb } from "@/utils/webSearch"
 import AiModelSelect from "./AiModelSelect.vue"
@@ -212,6 +215,9 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
+// 本地响应式副本，确保切换供应商时 UI 立即更新
+const settings = reactive<AiSettings>({ ...props.settings })
+
 const searchProviderOptions: { value: SearchProvider, label: string }[] = [
   {
     value: "jina",
@@ -236,10 +242,8 @@ const handleClose = () => {
 }
 
 const updateSetting = (field: keyof AiSettings, value: string | boolean) => {
-  emit("update:settings", {
-    ...props.settings,
-    [field]: value,
-  })
+  (settings as any)[field] = value
+  emit("update:settings", { ...settings })
 }
 
 const handleProviderChange = (provider: string) => {
@@ -251,12 +255,10 @@ const handleProviderChange = (provider: string) => {
     xiaomi: "mimo-v2-flash",
     custom: "",
   }
-  emit("update:settings", {
-    ...props.settings,
-    provider,
-    model: defaultModels[provider] || "",
-    apiKey: props.settings.apiKeys[provider] || "",
-  })
+  settings.provider = provider
+  settings.model = defaultModels[provider] || ""
+  settings.apiKey = settings.apiKeys[provider] || ""
+  emit("update:settings", { ...settings })
   showMessage("供应商已更新", 2000, "info")
 }
 
@@ -267,9 +269,9 @@ const testSearch = async () => {
 
   try {
     const results = await searchWeb("今天是几号 最新新闻", {
-      searchProvider: props.settings.searchProvider as SearchProvider,
-      bochaApiKey: props.settings.searchBochaApiKey || "",
-      searxngUrl: props.settings.searchSearxngUrl || "",
+      searchProvider: settings.searchProvider as SearchProvider,
+      bochaApiKey: settings.searchBochaApiKey || "",
+      searxngUrl: settings.searchSearxngUrl || "",
     })
 
     if (results.length > 0) {

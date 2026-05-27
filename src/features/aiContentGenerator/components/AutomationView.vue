@@ -387,6 +387,42 @@
             </button>
           </div>
           <div class="modal-body">
+            <!-- 搜索状态 -->
+            <div
+              v-if="searchStatus"
+              class="automation-search-status"
+            >
+              <svg
+                width="12"
+                height="12"
+              ><use xlink:href="#iconSearch"></use></svg>
+              <span>{{ searchStatus }}</span>
+              <button
+                v-if="searchResults.length > 0"
+                class="automation-search-toggle"
+                @click="showSearchResults = !showSearchResults"
+              >
+                {{ showSearchResults ? '收起来源' : `查看来源 (${searchResults.length})` }}
+              </button>
+            </div>
+            <!-- 搜索来源列表 -->
+            <div
+              v-if="showSearchResults && searchResults.length > 0"
+              class="automation-search-results"
+            >
+              <div
+                v-for="(result, idx) in searchResults"
+                :key="idx"
+                class="automation-search-item"
+              >
+                <span class="automation-search-index">{{ idx + 1 }}.</span>
+                <a
+                  :href="result.url"
+                  class="automation-search-link"
+                  target="_blank"
+                >{{ result.title || result.url }}</a>
+              </div>
+            </div>
             <!-- 加载中 -->
             <div
               v-if="isRunning"
@@ -428,6 +464,7 @@ import type {
   AutomationFrequency,
   AutomationTask,
   GenerateOptions,
+  SearchResult,
 } from "@/types/ai"
 import { showMessage } from "siyuan"
 import {
@@ -458,6 +495,9 @@ const showResult = ref(false)
 const resultTaskName = ref("")
 const resultContent = ref("")
 const isRunning = ref(false)
+const searchStatus = ref("")
+const searchResults = ref<SearchResult[]>([])
+const showSearchResults = ref(false)
 
 const renderedResult = computed(() => renderMarkdown(resultContent.value))
 
@@ -586,6 +626,9 @@ const runTaskNow = async (task: AutomationTask) => {
   isRunning.value = true
   resultTaskName.value = task.name
   resultContent.value = ""
+  searchStatus.value = ""
+  searchResults.value = []
+  showSearchResults.value = false
   showResult.value = true
 
   try {
@@ -595,6 +638,18 @@ const runTaskNow = async (task: AutomationTask) => {
       temperature: task.temperature,
       maxTokens: task.maxTokens,
       webSearch: task.webSearch,
+      searchQuery: task.prompt,
+      onSearchStart: () => {
+        searchStatus.value = "正在搜索网络..."
+      },
+      onSearchResults: (results: SearchResult[]) => {
+        searchResults.value = results
+        showSearchResults.value = true
+        searchStatus.value = `已获取 ${results.length} 条搜索结果`
+      },
+      onSearchError: (error: string) => {
+        searchStatus.value = `搜索失败: ${error}`
+      },
     }
 
     const result = await props.onGenerate(options)
@@ -1000,6 +1055,72 @@ onMounted(async () => {
     &:hover {
       filter: brightness(1.1);
     }
+  }
+}
+
+// ============ 搜索结果 ============
+.automation-search-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  font-size: 11px;
+  color: var(--b3-theme-on-surface);
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 4px;
+
+  svg {
+    color: var(--b3-theme-primary);
+    flex-shrink: 0;
+  }
+}
+
+.automation-search-toggle {
+  margin-left: auto;
+  padding: 2px 6px;
+  font-size: 10px;
+  color: var(--b3-theme-primary);
+  background: transparent;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 3px;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--b3-theme-surface-light);
+  }
+}
+
+.automation-search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.automation-search-item {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 10px;
+}
+
+.automation-search-index {
+  color: var(--b3-theme-primary);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.automation-search-link {
+  color: var(--b3-theme-primary);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &:hover {
+    text-decoration: underline;
   }
 }
 

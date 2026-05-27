@@ -63,7 +63,8 @@ const STYLE_DECOR_CSS: Record<string, (c: StyleColors) => string> = {
     .content::after { content:""; position:absolute; top:50%; right:8%; width:2px; height:30%; transform:translateY(-50%); background:linear-gradient(to bottom, transparent, ${c.accent}33, transparent); }
     .decor-circle { position:absolute; top:12%; right:10%; width:180px; height:180px; border-radius:50%; background:${c.accent}08; }
     .decor-line-l { position:absolute; bottom:18%; left:6%; width:60px; height:1px; background:${c.accent}; opacity:0.3; }
-    .decor-line-r { position:absolute; top:18%; right:6%; width:40px; height:1px; background:${c.accent}; opacity:0.25; }`,
+    .decor-line-r { position:absolute; top:18%; right:6%; width:40px; height:1px; background:${c.accent}; opacity:0.25; }
+    .tag { background:transparent !important; color:${c.accent} !important; border:1.5px solid ${c.accent}50; border-radius:4px !important; letter-spacing:1px; }`,
 
   tech: (c) => `
     body { background-image: linear-gradient(rgba(0,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,255,0.03) 1px, transparent 1px); background-size:40px 40px; }
@@ -76,7 +77,7 @@ const STYLE_DECOR_CSS: Record<string, (c: StyleColors) => string> = {
     .decor-node.n1 { top:15%; left:15%; }
     .decor-node.n2 { top:22%; right:20%; width:5px; height:5px; }
     .decor-node.n3 { bottom:20%; left:25%; width:6px; height:6px; opacity:0.6; }
-    .tag { box-shadow:0 0 8px ${c.accent}30; }`,
+    .tag { background:${c.accent}10 !important; color:${c.accent} !important; border:1px solid ${c.accent}40; border-radius:3px !important; box-shadow:0 0 12px ${c.accent}30, inset 0 0 6px ${c.accent}10; font-family:"SF Mono","Fira Code","Consolas",monospace; letter-spacing:1px; text-transform:uppercase; }`,
 
   magazine: (c) => `
     body::before { content:""; position:absolute; top:0; left:0; width:40%; height:100%; background:linear-gradient(180deg, ${c.accentAlt}06 0%, ${c.accent}04 100%); }
@@ -88,7 +89,7 @@ const STYLE_DECOR_CSS: Record<string, (c: StyleColors) => string> = {
     .decor-bar { position:absolute; top:5%; right:5%; width:4px; height:40%; background:linear-gradient(to bottom, ${c.accent}20, transparent); }
     .content { padding-left:45% !important; padding-right:12% !important; }
     h1 { font-family:"Georgia","Noto Serif SC",serif !important; letter-spacing:-0.5px; }
-    .tag { border-radius:2px !important; font-family:"Georgia",serif !important; font-style:italic; }`,
+    .tag { border-radius:2px !important; font-family:"Georgia","Noto Serif SC",serif; font-style:italic; background:transparent !important; color:${c.titleColor} !important; border-bottom:2px solid ${c.accent}; padding:4px 14px !important; letter-spacing:0.5px; }`,
 
   drawio: (c) => `
     body { background-image: radial-gradient(circle, ${c.accent}15 1px, transparent 1px); background-size:20px 20px; }
@@ -102,7 +103,7 @@ const STYLE_DECOR_CSS: Record<string, (c: StyleColors) => string> = {
     .decor-corner.bl { bottom:20px; left:20px; border-width:0 0 1px 1px; }
     .decor-corner.br { bottom:20px; right:20px; border-width:0 1px 1px 0; }
     .decor-grid { position:absolute; inset:0; background-image:linear-gradient(${c.accent}06 1px, transparent 1px), linear-gradient(90deg, ${c.accent}06 1px, transparent 1px); background-size:60px 60px; }
-    .tag { border-radius:4px !important; background:${c.accent} !important; border-left:3px solid ${c.accentAlt} !important; }
+    .tag { border-radius:3px !important; background:${c.accent}08 !important; color:${c.titleColor} !important; border:1px solid ${c.accent}25; border-left:3px solid ${c.accent}; font-family:"SF Mono","Consolas",monospace; }
     h1 { border-bottom:2px solid ${c.accent}25; padding-bottom:12px; }`,
 
   chinese: (c) => `
@@ -115,7 +116,7 @@ const STYLE_DECOR_CSS: Record<string, (c: StyleColors) => string> = {
     .decor-ink { position:absolute; top:14%; right:18%; width:100px; height:100px; border-radius:50%; background:radial-gradient(ellipse at 40% 40%, ${c.accent}10, transparent 70%); }
     .decor-line-v { position:absolute; right:5%; top:25%; width:1px; height:50%; background:linear-gradient(to bottom, transparent, ${c.accent}15, transparent); }
     h1 { font-weight:900 !important; }
-    .tag { font-family:"KaiTi","STKaiti","楷体",serif !important; border-radius:2px !important; }`,
+    .tag { background:transparent !important; color:${c.accentAlt} !important; border:1px solid ${c.accentAlt}40; border-radius:3px !important; font-family:"KaiTi","STKaiti","楷体",serif; letter-spacing:2px; }`,
 }
 
 function getStyleColors(styleId: string): StyleColors {

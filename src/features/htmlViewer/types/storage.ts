@@ -20,7 +20,7 @@ export const STORAGE_KEYS = {
 /**
  * 默认分类
  */
-const DEFAULT_CATEGORIES: HtmlCategory[] = [
+export const DEFAULT_CATEGORIES: HtmlCategory[] = [
   {
     id: "default",
     name: "默认",

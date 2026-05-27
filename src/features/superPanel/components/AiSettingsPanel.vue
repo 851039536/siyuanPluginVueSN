@@ -247,8 +247,11 @@ const handleProviderChange = (provider: string) => {
     deepseek: "deepseek-v4-flash",
     custom: "",
   }
-  updateSetting("provider", provider)
-  updateSetting("model", defaultModels[provider] || "")
+  emit("update:settings", {
+    ...props.settings,
+    provider,
+    model: defaultModels[provider] || "",
+  })
   showMessage("供应商已更新", 2000, "info")
 }
 

@@ -110,17 +110,9 @@
                   <!-- 操作按钮 -->
                   <div class="config-actions">
                     <Button
-                      v-if="generationStatus === 'generating'"
-                      variant="ghost"
-                      @click="cancelGeneration"
-                    >
-                      取消生成
-                    </Button>
-                    <Button
-                      v-else
                       variant="primary"
                       :disabled="!config.title.trim()"
-                      @click="handleGenerate"
+                      @click="generateCover()"
                     >
                       {{ generationStatus === 'done' ? '重新生成' : '生成封面' }}
                     </Button>
@@ -164,34 +156,18 @@
                     ref="previewWrapper"
                     class="preview-content"
                   >
-                    <!-- 生成中：流式显示 AI 输出 -->
-                    <div
-                      v-if="generationStatus === 'generating'"
-                      class="preview-streaming"
-                    >
-                      <div class="streaming-header">
-                        <div class="streaming-indicator"></div>
-                        <span>AI 正在生成封面...</span>
-                        <span class="streaming-count">{{ streamedText.length }} 字符</span>
-                      </div>
-                      <pre
-                        ref="streamPreviewEl"
-                        class="streaming-content"
-                      >{{ streamedText }}</pre>
-                    </div>
-
                     <!-- 空状态 -->
                     <div
-                      v-else-if="!coverHtml"
+                      v-if="!coverHtml"
                       class="preview-empty"
                     >
                       <IconWrapper
                         name="image"
                         :size="48"
                       />
-                      <p>输入标题和内容，点击"生成封面"</p>
+                      <p>输入标题和关键字，点击"生成封面"</p>
                       <p class="preview-hint">
-                        AI 将根据文章信息生成 HTML 封面
+                        根据风格和关键字直接生成 HTML 封面
                       </p>
                     </div>
 
@@ -269,19 +245,16 @@ const emit = defineEmits<{
 
 const {
   coverHtml,
-  streamedText,
   generationStatus,
   errorMessage,
   currentConfig: config,
   generateCover,
-  cancelGeneration,
   COVER_SIZE_PRESETS,
   COVER_STYLE_PRESETS,
 } = useCoverGenerator()
 
 const coverFrame = ref<HTMLIFrameElement | null>(null)
 const previewWrapper = ref<HTMLDivElement | null>(null)
-const streamPreviewEl = ref<HTMLPreElement | null>(null)
 const widthInput = ref(String(config.value.width))
 const heightInput = ref(String(config.value.height))
 const previewScale = ref(1)
@@ -396,25 +369,13 @@ function updateCustomSize() {
   }
 }
 
-// 生成封面
-async function handleGenerate() {
-  await generateCover()
-  nextTick(() => updatePreviewScale())
-}
+// 生成封面（generateCover 是同步的，通过 template 直接调用）
 
 // 监听 coverHtml 变化（生成完成后），重新计算缩放
 watch(coverHtml, () => {
   if (coverHtml.value) {
     nextTick(() => updatePreviewScale())
   }
-})
-
-// 流式文本更新时自动滚动到底部
-watch(streamedText, () => {
-  nextTick(() => {
-    const el = streamPreviewEl.value
-    if (el) el.scrollTop = el.scrollHeight
-  })
 })
 
 // 获取封面截图画布（共享 html2canvas 逻辑）
@@ -497,7 +458,6 @@ async function downloadCoverAsImage() {
 
 // 关闭
 function close() {
-  cancelGeneration()
   emit("update:visible", false)
 }
 </script>

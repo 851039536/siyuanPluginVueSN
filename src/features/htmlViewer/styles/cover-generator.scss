@@ -89,29 +89,6 @@
   }
 }
 
-.content-textarea {
-  width: 100%;
-  border: 1px solid var(--b3-theme-background-light);
-  border-radius: 6px;
-  padding: 8px 10px;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--b3-theme-on-surface);
-  background: var(--b3-theme-background);
-  resize: vertical;
-  outline: none;
-  font-family: inherit;
-
-  &:focus {
-    border-color: var(--b3-theme-primary);
-  }
-
-  &::placeholder {
-    color: var(--b3-theme-on-surface);
-    opacity: 0.4;
-  }
-}
-
 // 尺寸预设
 .size-presets {
   display: flex;

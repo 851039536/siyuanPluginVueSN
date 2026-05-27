@@ -589,7 +589,6 @@
   <CoverGenerator
     v-model:visible="showCoverGenerator"
     :initial-title="coverInitialTitle"
-    :initial-content="coverInitialContent"
   />
 </template>
 
@@ -739,7 +738,7 @@ async function copyFormattedJsonHtml() {
   }
 }
 
-// AI 封面：从 HTML 内容中提取标题和摘要
+// AI 封面：从 HTML 内容中提取文档标题
 const coverInitialTitle = computed(() => {
   const content = htmlContent.value
   if (!content) return ""
@@ -749,14 +748,6 @@ const coverInitialTitle = computed(() => {
   const h1Match = content.match(/<h[1-3][^>]*>([\s\S]*?)<\/h[1-3]>/i)
   if (h1Match) return h1Match[1].replace(/<[^>]*>/g, "").trim()
   return ""
-})
-
-const coverInitialContent = computed(() => {
-  const content = htmlContent.value
-  if (!content) return ""
-  // 仅传前 150 字符作为主题参考，让 AI 快速生成
-  const text = content.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()
-  return text.slice(0, 150)
 })
 
 const presetColors = [

@@ -44,17 +44,14 @@
                     />
                   </div>
 
-                  <!-- 内容摘要 -->
+                  <!-- 关键字 -->
                   <div class="config-section">
-                    <label class="config-label">内容摘要 <span class="config-hint">（简短一句话或完整文章均可）</span></label>
-                    <textarea
-                      ref="contentTextarea"
-                      v-model="config.content"
-                      class="content-textarea"
-                      placeholder="输入文章内容摘要，可以是简短一句话，也可以粘贴完整文章..."
-                      rows="3"
-                      @input="autoResizeTextarea"
-                    ></textarea>
+                    <label class="config-label">关键字 <span class="config-hint">（空格分隔，如：Vue 3 响应式 原理）</span></label>
+                    <Input
+                      v-model="config.keywords"
+                      type="text"
+                      placeholder="输入关键字，空格分隔..."
+                    />
                   </div>
 
                   <!-- 尺寸选择 -->
@@ -122,7 +119,7 @@
                     <Button
                       v-else
                       variant="primary"
-                      :disabled="!config.title.trim() && !config.content.trim()"
+                      :disabled="!config.title.trim()"
                       @click="handleGenerate"
                     >
                       {{ generationStatus === 'done' ? '重新生成' : '生成封面' }}
@@ -256,13 +253,13 @@ interface Props {
   visible: boolean
   /** 初始标题 */
   initialTitle?: string
-  /** 初始内容 */
-  initialContent?: string
+  /** 初始关键字 */
+  initialKeywords?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   initialTitle: "",
-  initialContent: "",
+  initialKeywords: "",
 })
 
 const emit = defineEmits<{
@@ -283,7 +280,6 @@ const {
 } = useCoverGenerator()
 
 const coverFrame = ref<HTMLIFrameElement | null>(null)
-const contentTextarea = ref<HTMLTextAreaElement | null>(null)
 const previewWrapper = ref<HTMLDivElement | null>(null)
 const streamPreviewEl = ref<HTMLPreElement | null>(null)
 const widthInput = ref(String(config.value.width))
@@ -359,14 +355,13 @@ watch(
       if (props.initialTitle && !config.value.title) {
         config.value.title = props.initialTitle
       }
-      if (props.initialContent && !config.value.content) {
-        config.value.content = props.initialContent
+      if (props.initialKeywords && !config.value.keywords) {
+        config.value.keywords = props.initialKeywords
       }
       widthInput.value = String(config.value.width)
       heightInput.value = String(config.value.height)
-      // 打开时自适应 textarea 高度 + 启动缩放监听
+      // 打开时启动缩放监听
       nextTick(() => {
-        autoResizeTextarea()
         updatePreviewScale()
         if (previewWrapper.value && resizeObserver) {
           resizeObserver.observe(previewWrapper.value)
@@ -421,17 +416,6 @@ watch(streamedText, () => {
     if (el) el.scrollTop = el.scrollHeight
   })
 })
-
-// 自适应 textarea 高度
-function autoResizeTextarea() {
-  const el = contentTextarea.value
-  if (!el) return
-  el.style.height = "auto"
-  // 最小3行高度，最大10行高度
-  const minHeight = 72
-  const maxHeight = 240
-  el.style.height = `${Math.min(Math.max(el.scrollHeight, minHeight), maxHeight)}px`
-}
 
 // 获取封面截图画布（共享 html2canvas 逻辑）
 async function captureCoverCanvas(): Promise<HTMLCanvasElement | null> {

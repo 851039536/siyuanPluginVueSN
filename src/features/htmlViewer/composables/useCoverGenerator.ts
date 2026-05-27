@@ -145,19 +145,17 @@ function buildCoverPrompt(config: CoverGenerationConfig): string {
   // 构建风格化的背景 CSS
   const bgCSS = bg.includes("gradient") ? bg : `background-color: ${bg};`
 
-  // 判断内容长度，给出不同的处理指引
-  const contentLength = config.content?.length ?? 0
   const hasTitle = !!config.title?.trim()
-  const hasContent = !!config.content?.trim()
+  const hasKeywords = !!config.keywords?.trim()
 
-  // 构建内容区域指令（入口已裁剪到 150 字符）
-  let contentSection = ""
-  if (!hasContent && hasTitle) {
-    contentSection = `画面仅展示标题，用 CSS 几何图形/线条/色块装饰，避免空洞。`
-  } else if (contentLength <= 50) {
-    contentSection = `副标题："${config.content}"（小号字或不同颜色）`
+  let keywordsSection = ""
+  if (hasKeywords) {
+    const keywords = config.keywords.trim().split(/\s+/).filter(Boolean).join("、")
+    keywordsSection = `- 关键字：${keywords}（将这些关键字作为视觉元素融入封面设计，如标签、关键词云、图标搭配文字等）`
+  } else if (!hasTitle) {
+    keywordsSection = ""
   } else {
-    contentSection = `主题参考："${config.content}"`
+    keywordsSection = `- 关键字：（无）画面用 CSS 几何图形/线条/色块装饰，避免空洞。`
   }
 
   const styleGuide = getStyleDesignGuide(config.styleId)
@@ -167,7 +165,7 @@ function buildCoverPrompt(config: CoverGenerationConfig): string {
 【信息】
 - 标题：${config.title || "无标题"}
 - 风格：${stylePreset?.label || "极简"}（${stylePreset?.description || "简洁风格"}）
-${contentSection}
+${keywordsSection}
 
 【设计规范】
 - 尺寸：${config.width}×${config.height}px 固定
@@ -203,7 +201,7 @@ export function useCoverGenerator() {
   const errorMessage = ref("")
   const currentConfig = ref<CoverGenerationConfig>({
     title: "",
-    content: "",
+    keywords: "",
     width: 1200,
     height: 630,
     styleId: "minimal",
@@ -253,8 +251,8 @@ export function useCoverGenerator() {
       Object.assign(currentConfig.value, config)
     }
 
-    if (!currentConfig.value.title.trim() && !currentConfig.value.content.trim()) {
-      errorMessage.value = "请输入标题或内容摘要"
+    if (!currentConfig.value.title.trim()) {
+      errorMessage.value = "请输入文章标题"
       generationStatus.value = "error"
       return
     }
@@ -334,7 +332,7 @@ export function useCoverGenerator() {
     streamedText.value = ""
     currentConfig.value = {
       title: "",
-      content: "",
+      keywords: "",
       width: 1200,
       height: 630,
       styleId: "minimal",

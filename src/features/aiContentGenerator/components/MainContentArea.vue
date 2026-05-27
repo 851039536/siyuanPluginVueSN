@@ -346,7 +346,13 @@ interface Props {
   canUndo: boolean
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  searchResults: () => [],
+  showReasoning: false,
+  searchStatus: "",
+  showSearchResults: false,
+  generationElapsed: "",
+})
 
 defineEmits<{
   (e: "stop"): void

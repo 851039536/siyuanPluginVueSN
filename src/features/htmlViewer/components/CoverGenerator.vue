@@ -54,6 +54,25 @@
                     />
                   </div>
 
+                  <!-- 内容摘要 AI提取关键字 -->
+                  <div class="config-section">
+                    <label class="config-label">内容摘要 <span class="config-hint">（AI 自动提取关键字）</span></label>
+                    <textarea
+                      v-model="contentText"
+                      class="content-textarea"
+                      placeholder="粘贴文章内容，AI 自动提取关键字..."
+                      rows="4"
+                    ></textarea>
+                    <Button
+                      variant="secondary"
+                      size="small"
+                      :disabled="!contentText.trim() || aiExtracting"
+                      @click="aiExtractKeywords"
+                    >
+                      {{ aiExtracting ? 'AI提取中...' : 'AI提取关键字' }}
+                    </Button>
+                  </div>
+
                   <!-- 关键字 -->
                   <div class="config-section">
                     <label class="config-label">关键字 <span class="config-hint">（空格分隔，如：Vue 3 响应式 原理）</span></label>
@@ -250,6 +269,8 @@ import {
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
+import { usePlugin } from "@/main"
+import { callAI, getApiConfigFromPlugin } from "@/utils/aiApi"
 import { useCoverGenerator } from "../composables/useCoverGenerator"
 
 interface Props {
@@ -285,6 +306,29 @@ const previewWrapper = ref<HTMLDivElement | null>(null)
 const widthInput = ref(String(config.value.width))
 const heightInput = ref(String(config.value.height))
 const previewScale = ref(1)
+
+// AI 关键字提取
+const contentText = ref("")
+const aiExtracting = ref(false)
+
+async function aiExtractKeywords() {
+  if (!contentText.value.trim() || aiExtracting.value) return
+  aiExtracting.value = true
+  try {
+    const plugin = usePlugin()
+    const apiConfig = getApiConfigFromPlugin(plugin)
+    const prompt = `从以下文章内容中提取 3-8 个核心关键字，以空格分隔，只返回关键字不要解释：\n\n${contentText.value.slice(0, 3000)}`
+    const result = await callAI(prompt, apiConfig)
+    const keywords = result.trim().replace(/[,，、\n]/g, " ").replace(/\s+/g, " ")
+    config.value.keywords = keywords
+    showMessage("关键字已提取", 2000, "info")
+  } catch (error) {
+    console.error("AI提取关键字失败:", error)
+    showMessage("AI提取失败，请检查 API 配置", 3000, "error")
+  } finally {
+    aiExtracting.value = false
+  }
+}
 
 // iframe 缩放样式：让封面按实际尺寸渲染，CSS 缩放适配预览区
 // 使用 center center 原点 + flex 父容器居中，无需负 margin 偏移

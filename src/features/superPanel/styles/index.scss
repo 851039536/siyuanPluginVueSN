@@ -22,7 +22,8 @@
   left: 50%;
   transform: translate(-50%, -50%);
   width: $panel-width;
-  max-height: 80vh;
+  height: 80vh;
+  max-height: 92vh;
   background: var(--b3-theme-background);
   border-radius: $panel-border-radius;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
@@ -283,14 +284,16 @@
 @include tablet-only {
   .super-panel-container {
     width: 92vw;
-    max-height: 85vh;
+    height: 85vh;
+    max-height: 90vh;
   }
 }
 
 @include mobile-only {
   .super-panel-container {
     width: 96vw;
-    max-height: 90vh;
+    height: 85vh;
+    max-height: 92vh;
   }
 
   .super-panel-header {

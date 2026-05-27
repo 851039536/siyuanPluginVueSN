@@ -191,4 +191,8 @@ export interface SearchApiConfig {
   searxngUrl: string
   /** 搜索语言偏好，如 "zh-CN"、"en"、"auto"，默认 "auto" 不限制语言 */
   searchLanguage?: string
+  /** 博查 freshness 参数，如 "noLimit"(默认)、"oneWeek"、"oneMonth" */
+  searchFreshness?: string
+  /** Jina API Key（用于 Reranker 重排序，注册 https://jina.ai 获取免费额度） */
+  jinaApiKey?: string
 }

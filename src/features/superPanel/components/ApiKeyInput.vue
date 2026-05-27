@@ -50,6 +50,13 @@ const emit = defineEmits<Emits>()
 
 const visible = ref(false)
 
+const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
+  tongyi: "通义千问",
+  openai: "OpenAI",
+  deepseek: "DeepSeek",
+  custom: "自定义API",
+}
+
 const toggleVisibility = () => {
   visible.value = !visible.value
 }
@@ -61,21 +68,17 @@ const getPlaceholder = () => {
     deepseek: props.i18n.deepSeekPlaceholder,
     custom: props.i18n.customApiPlaceholder,
   }
-
-  return (
-    i18nPlaceholders[props.provider]
-    || `请输入${props.provider === "tongyi" ? "通义千问" : props.provider === "openai" ? "OpenAI" : props.provider === "deepseek" ? "DeepSeek" : "自定义API"}API密钥`
-  )
+  return i18nPlaceholders[props.provider]
+    || `请输入${PROVIDER_DISPLAY_NAMES[props.provider]}API密钥`
 }
 
 const getDescription = () => {
   const providerNames: Record<string, string> = {
-    tongyi: props.i18n.tongyiQianwen || "通义千问",
-    openai: props.i18n.openAI || "OpenAI",
-    deepseek: props.i18n.deepSeek || "DeepSeek",
-    custom: props.i18n.customApi || "自定义API",
+    tongyi: props.i18n.tongyiQianwen || PROVIDER_DISPLAY_NAMES.tongyi,
+    openai: props.i18n.openAI || PROVIDER_DISPLAY_NAMES.openai,
+    deepseek: props.i18n.deepSeek || PROVIDER_DISPLAY_NAMES.deepseek,
+    custom: props.i18n.customApi || PROVIDER_DISPLAY_NAMES.custom,
   }
-
   return `${providerNames[props.provider]} API密钥，用于所有AI功能`
 }
 

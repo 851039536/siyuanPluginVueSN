@@ -29,25 +29,76 @@
       @update:settings="emit('updateAiSettings', $event)"
     />
 
+    <!-- 搜索栏 -->
+    <div class="super-panel-search">
+      <div class="search-input-wrapper">
+        <IconWrapper
+          name="search"
+          :size="15"
+          class="search-icon"
+        />
+        <input
+          ref="searchInputRef"
+          v-model="searchQuery"
+          class="search-input"
+          type="text"
+          :placeholder="i18n.searchPlaceholder || '搜索功能...'"
+          @input="onSearchInput"
+        >
+        <button
+          v-if="searchQuery"
+          class="search-clear"
+          @click="clearSearch"
+        >
+          <IconWrapper
+            name="close"
+            :size="13"
+          />
+        </button>
+      </div>
+      <span
+        v-if="searchQuery"
+        class="search-count"
+      >{{ filteredFeatures.length }}/{{ features.length }}</span>
+    </div>
+
     <!-- 内容区 -->
     <div class="super-panel-content">
-      <FeatureCard
-        v-for="feature in features"
-        :key="feature.id"
-        :feature="feature"
-        :enabled="getFeatureEnabled(feature.id)"
-        :show-toggle="canToggle(feature.id)"
-        :selector-options="getSelectorOptions(feature.id)"
-        :selected-option="getSelectedOption(feature.id)"
-        @action="emit('action', $event)"
-        @toggle="handleToggle(feature.id, $event)"
-        @select="handleSelect(feature.id, $event)"
-      />
+      <div
+        v-if="searchQuery && filteredFeatures.length === 0"
+        class="search-empty"
+      >
+        <IconWrapper
+          name="search"
+          :size="32"
+          class="search-empty-icon"
+        />
+        <span class="search-empty-text">{{ i18n.noResults || '未找到匹配的功能' }}</span>
+      </div>
+      <TransitionGroup
+        name="feature-list"
+        tag="div"
+        class="feature-list-inner"
+      >
+        <FeatureCard
+          v-for="feature in filteredFeatures"
+          :key="feature.id"
+          :feature="feature"
+          :enabled="getFeatureEnabled(feature.id)"
+          :show-toggle="canToggle(feature.id)"
+          :selector-options="getSelectorOptions(feature.id)"
+          :selected-option="getSelectedOption(feature.id)"
+          @action="emit('action', $event)"
+          @toggle="handleToggle(feature.id, $event)"
+          @select="handleSelect(feature.id, $event)"
+        />
+      </TransitionGroup>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { SelectorOption } from "./components/FeatureCard.vue"
 import type {
   AiSettings,
   Feature,
@@ -55,11 +106,13 @@ import type {
 import type { IconKey } from "@/config/icons"
 import type { PluginSettings } from "@/config/settings"
 import type { FeatureMeta } from "@/features/config"
-import type { SelectorOption } from "./components/FeatureCard.vue"
 import {
   computed,
+  nextTick,
+  onMounted,
   ref,
 } from "vue"
+import IconWrapper from "@/components/IconWrapper.vue"
 import { featureIdToSettingKey } from "@/config/settings"
 import { FEATURE_CONFIG } from "@/features/config"
 import { THEMES } from "@/features/themeColor"
@@ -85,6 +138,10 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
+// 搜索状态
+const searchQuery = ref("")
+const searchInputRef = ref<HTMLInputElement | null>(null)
+
 // AI配置状态
 const showAiSettings = ref(false)
 
@@ -102,7 +159,7 @@ const aiSettings = computed<AiSettings>(() => ({
 }))
 
 // 切换AI配置面板
-const toggleAiSettings = () => {
+const toggleAiSettings = (): void => {
   showAiSettings.value = !showAiSettings.value
 }
 
@@ -131,6 +188,26 @@ const features = computed<Feature[]>(() =>
   })),
 )
 
+const filteredFeatures = computed<Feature[]>(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  if (!q) return features.value
+  return features.value.filter(
+    (f) =>
+      f.title.toLowerCase().includes(q)
+      || f.desc.toLowerCase().includes(q),
+  )
+})
+
+const onSearchInput = (): void => {}
+const clearSearch = (): void => {
+  searchQuery.value = ""
+  searchInputRef.value?.focus()
+}
+
+onMounted(() => {
+  nextTick(() => searchInputRef.value?.focus())
+})
+
 const getFeatureEnabled = (featureId: string): boolean => {
   if (featureId === "superPanel") return true
   const key = featureIdToSettingKey(featureId)
@@ -139,7 +216,7 @@ const getFeatureEnabled = (featureId: string): boolean => {
 
 const canToggle = (featureId: string): boolean => featureId !== "superPanel"
 
-const handleToggle = (featureId: string, enabled: boolean) => {
+const handleToggle = (featureId: string, enabled: boolean): void => {
   emit("toggleFeature", featureId, enabled)
 }
 
@@ -161,7 +238,7 @@ const getSelectedOption = (featureId: string): string => {
   return ""
 }
 
-const handleSelect = (featureId: string, value: string) => {
+const handleSelect = (featureId: string, value: string): void => {
   emit("selectFeature", featureId, value)
 }
 </script>

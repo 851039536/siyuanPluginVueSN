@@ -142,16 +142,140 @@
   line-height: 1.4;
 }
 
+// ==================== 搜索栏 ====================
+
+.super-panel-search {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-sm $spacing-lg;
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  background: var(--b3-theme-surface);
+  flex-shrink: 0;
+}
+
+.search-input-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 6px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &:focus-within {
+    border-color: var(--b3-theme-primary);
+    box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.12);
+  }
+}
+
+.search-icon {
+  flex-shrink: 0;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.45;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 13px;
+  color: var(--b3-theme-on-background);
+  line-height: 1.4;
+
+  &::placeholder {
+    color: var(--b3-theme-on-surface);
+    opacity: 0.4;
+  }
+}
+
+.search-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  background: var(--b3-theme-surface-lighter);
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+  flex-shrink: 0;
+  padding: 0;
+
+  &:hover {
+    opacity: 0.8;
+    background: var(--b3-theme-surface-light);
+  }
+}
+
+.search-count {
+  font-size: 11px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 // ==================== 面板内容（列表式） ====================
 
 .super-panel-content {
   flex: 1;
   overflow-y: auto;
   padding: $spacing-md $spacing-lg;
+  @include scrollbar-thin;
+}
+
+.feature-list-inner {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  @include scrollbar-thin;
+}
+
+.search-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-sm;
+  padding: 32px 0;
+  color: var(--b3-theme-on-surface);
+}
+
+.search-empty-icon {
+  opacity: 0.2;
+}
+
+.search-empty-text {
+  font-size: 13px;
+  opacity: 0.5;
+}
+
+// 功能列表过渡动画
+.feature-list-enter-active {
+  transition: all 0.2s ease-out;
+}
+
+.feature-list-leave-active {
+  transition: all 0.15s ease-in;
+}
+
+.feature-list-enter-from {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+.feature-list-leave-to {
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+.feature-list-move {
+  transition: transform 0.2s ease;
 }
 
 // ==================== 响应式 ====================

@@ -147,43 +147,52 @@ function buildCoverPrompt(config: CoverGenerationConfig): string {
 
   const hasTitle = !!config.title?.trim()
   const hasKeywords = !!config.keywords?.trim()
+  const styleLabel = stylePreset?.label || "极简"
 
-  let keywordsSection = ""
+  // 构建固定内容区：风格标签（顶部居中）→ 标题 → 关键字（下方居中）
+  const titleText = config.title?.trim() || "无标题"
+  let contentHtml = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:${padding}px;box-sizing:border-box;">`
+  contentHtml += `\n  <span style="font-size:${Math.max(14, subtitleSize - 6)}px;color:${colors.accent};letter-spacing:4px;text-transform:uppercase;margin-bottom:16px;border:1px solid ${colors.accent};padding:4px 16px;border-radius:12px;">${styleLabel}</span>`
+  contentHtml += `\n  <h1 style="font-size:${titleSize}px;font-weight:700;color:${colors.titleColor};margin:0;line-height:1.3;max-width:90%;">${titleText}</h1>`
+
   if (hasKeywords) {
-    const keywords = config.keywords.trim().split(/\s+/).filter(Boolean).join("、")
-    keywordsSection = `- 关键字：${keywords}（将这些关键字作为视觉元素融入封面设计，如标签、关键词云、图标搭配文字等）`
-  } else if (!hasTitle) {
-    keywordsSection = ""
-  } else {
-    keywordsSection = `- 关键字：（无）画面用 CSS 几何图形/线条/色块装饰，避免空洞。`
+    const tagList = config.keywords.trim().split(/\s+/).filter(Boolean)
+    const tagsHtml = tagList.map((kw) =>
+      `<span style="display:inline-block;padding:6px 18px;margin:6px;border-radius:20px;background:${colors.accent};color:#fff;font-size:${subtitleSize}px;">${kw}</span>`,
+    ).join("")
+    contentHtml += `\n  <div style="margin-top:24px;display:flex;flex-wrap:wrap;justify-content:center;max-width:90%;">${tagsHtml}</div>`
+  } else if (hasTitle) {
+    contentHtml += `\n  <div style="margin-top:20px;width:60px;height:3px;background:${colors.accent};border-radius:2px;"></div>`
   }
+
+  contentHtml += `\n</div>`
 
   const styleGuide = getStyleDesignGuide(config.styleId)
 
-  return `你是一位平面设计师，为文章创建纯 HTML/CSS 封面。
+  return `你是一位平面设计师。以下内容已经直接写在 HTML 中，你**必须原样保留**，不得修改、删减或重写任何文字。
 
-【信息】
-- 标题：${config.title || "无标题"}
+【固定内容（已嵌入HTML，不可改动）】
+${contentHtml}
+
+【你的任务】
+围绕以上固定内容，用 CSS 构建符合风格的**装饰层**（背景、几何图形、线条、色块、纹理），让封面美观有设计感。
+
+【风格要求】
 - 风格：${stylePreset?.label || "极简"}（${stylePreset?.description || "简洁风格"}）
-${keywordsSection}
-
-【设计规范】
-- 尺寸：${config.width}×${config.height}px 固定
-- 背景：${bgCSS}
-- 标题：≥${titleSize}px 加粗，色 ${colors.titleColor}
-- 副标题：≥${subtitleSize}px，色 ${colors.subtitleColor}
-- 强调：${colors.accent} / ${colors.accentAlt}
-- 内边距：≥${padding}px
-- 字体：-apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif
 ${styleGuide}
+- 背景：${bgCSS}
+- 强调色：${colors.accent} / ${colors.accentAlt}
+- 整体内边距 ≥${padding}px
+- 字体：-apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif
 
 【约束】
-1. 纯 HTML+CSS，禁止 JS/外部图片/CDN/web font/CSS animation/transition
+1. 内容区（h1、标签）必须 100% 保留，连空格都不能改
 2. 装饰用 CSS：box-shadow、border、gradient、clip-path、::before/::after
 3. body { width:${config.width}px; height:${config.height}px; overflow:hidden; margin:0; }
-4. 内容不溢出画布，用 flexbox/grid/absolute 布局
+4. 纯 HTML+CSS，禁止 JS/外部图片/CDN/web font/CSS animation/transition
+5. 内容不溢出画布，用 flexbox/grid/absolute 布局
 
-⚠️ 只输出 HTML，不要解释。首字符 <，尾字符 >。`
+⚠️ 只输出完整 HTML。首字符 <，尾字符 >。`
 }
 
 /** 根据风格 ID 返回精简设计指引 */

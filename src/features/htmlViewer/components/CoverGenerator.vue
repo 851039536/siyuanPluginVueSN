@@ -114,7 +114,7 @@
                       :disabled="!config.title.trim()"
                       @click="generateCover()"
                     >
-                      {{ generationStatus === 'done' ? '重新生成' : '生成封面' }}
+                      {{ generationStatus === 'done' ? '刷新封面' : '生成封面' }}
                     </Button>
                   </div>
 
@@ -148,6 +148,13 @@
                         icon="download"
                         title="下载为图片"
                         @click="downloadCoverAsImage"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="small"
+                        icon="eye"
+                        title="全屏预览"
+                        @click="openFullscreen"
                       />
                     </div>
                   </div>
@@ -378,6 +385,20 @@ watch(coverHtml, () => {
   }
 })
 
+// 响应式自动生成：标题/关键字/风格/尺寸变化 → debounce 200ms → 自动生成
+let autoGenTimer: ReturnType<typeof setTimeout> | null = null
+watch(
+  () => [config.value.title, config.value.keywords, config.value.styleId, config.value.width, config.value.height],
+  () => {
+    if (autoGenTimer) clearTimeout(autoGenTimer)
+    autoGenTimer = setTimeout(() => {
+      if (config.value.title.trim()) {
+        generateCover()
+      }
+    }, 200)
+  },
+)
+
 // 获取封面截图画布（共享 html2canvas 逻辑）
 async function captureCoverCanvas(): Promise<HTMLCanvasElement | null> {
   const iframe = coverFrame.value
@@ -457,6 +478,13 @@ async function downloadCoverAsImage() {
 }
 
 // 关闭
+// 全屏预览
+function openFullscreen() {
+  if (!coverHtml.value) return
+  const blob = new Blob([coverHtml.value], { type: "text/html" })
+  window.open(URL.createObjectURL(blob), "_blank")
+}
+
 function close() {
   emit("update:visible", false)
 }

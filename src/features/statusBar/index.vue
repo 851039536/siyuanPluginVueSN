@@ -66,6 +66,13 @@
     />
 
     <MonitorItem
+      icon="ph:code"
+      item-class="action-item html-viewer-item"
+      title="HTML展示"
+      @click="handleOpenHtmlViewer"
+    />
+
+    <MonitorItem
       icon="ph:grid-four"
       item-class="action-item feature-drawer-item"
       title="功能列表"
@@ -112,6 +119,10 @@ const handleOpenVideoManager = () => {
   emitCustomEvent("openVideoManager")
 }
 
+const handleOpenHtmlViewer = () => {
+  emitCustomEvent("openHtmlViewer")
+}
+
 const showFeatureDrawer = ref(false)
 
 const toggleFeatureDrawer = () => {
@@ -132,6 +143,9 @@ const handleSelectFeature = (id: string) => {
       break
     case "skillsViewer":
       showSkillsViewer()
+      break
+    case "htmlViewer":
+      emitCustomEvent("openHtmlViewer")
       break
   }
 }

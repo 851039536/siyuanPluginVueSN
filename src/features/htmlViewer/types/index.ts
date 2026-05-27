@@ -63,6 +63,8 @@ export interface CoverGenerationConfig {
   title: string
   /** 关键字（空格分隔） */
   keywords: string
+  /** 左下角水印文字 */
+  watermark: string
   /** 封面宽度 */
   width: number
   /** 封面高度 */

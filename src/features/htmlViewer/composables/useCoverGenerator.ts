@@ -47,75 +47,121 @@ const STYLE_COLORS_MAP: Record<string, StyleColors> = {
 
 /** 装饰层 HTML 片段（每个风格在 content 区域内的额外装饰元素） */
 const STYLE_DECOR_HTML: Record<string, string> = {
-  minimal: `<div class="decor-circle"></div><div class="decor-line-l"></div><div class="decor-line-r"></div>`,
-  tech: `<div class="decor-scan"></div><div class="decor-node n1"></div><div class="decor-node n2"></div><div class="decor-node n3"></div>`,
-  magazine: `<div class="decor-block"></div><div class="decor-ring"></div><div class="decor-bar"></div>`,
-  drawio: `<div class="decor-grid"></div><div class="decor-corner tl"></div><div class="decor-corner tr"></div><div class="decor-corner bl"></div><div class="decor-corner br"></div>`,
-  chinese: `<div class="decor-seal"></div><div class="decor-ink"></div><div class="decor-line-v"></div>`,
+  minimal: `<div class="decor-diamond"></div><div class="decor-circle"></div><div class="decor-circle-sm"></div><div class="decor-line-l"></div><div class="decor-line-r"></div><div class="decor-dots"></div>`,
+  tech: `<div class="decor-scan"></div><div class="decor-scan s2"></div><div class="decor-corner tl"></div><div class="decor-corner tr"></div><div class="decor-corner bl"></div><div class="decor-corner br"></div><div class="decor-node n1"></div><div class="decor-node n2"></div><div class="decor-node n3"></div><div class="decor-node n4"></div><div class="decor-node n5"></div><div class="decor-data-line"></div>`,
+  magazine: `<div class="decor-topline"></div><div class="decor-block"></div><div class="decor-block b2"></div><div class="decor-ring"></div><div class="decor-ring r2"></div><div class="decor-bar"></div><div class="decor-pageno"></div><div class="decor-dot-row"></div>`,
+  drawio: `<div class="decor-grid"></div><div class="decor-corner tl"></div><div class="decor-corner tr"></div><div class="decor-corner bl"></div><div class="decor-corner br"></div><div class="decor-connector c1"></div><div class="decor-connector c2"></div><div class="decor-node-a"></div><div class="decor-node-b"></div><div class="decor-crosshair"></div><div class="decor-label-box"></div>`,
+  chinese: `<div class="decor-seal"></div><div class="decor-seal s2"></div><div class="decor-ink"></div><div class="decor-ink i2"></div><div class="decor-line-v"></div><div class="decor-line-v v2"></div><div class="decor-mountain"></div><div class="decor-cloud"></div><div class="decor-cloud c2"></div><div class="decor-wave"></div>`,
 }
 
 /** 每个风格的装饰 CSS（纯代码，无 AI） */
 const STYLE_DECOR_CSS: Record<string, (c: StyleColors) => string> = {
   minimal: (c) => `
-    body::before { content:""; position:absolute; top:0; left:0; right:0; height:4px; background:${c.accent}; }
-    body::after { content:""; position:absolute; bottom:48px; left:50%; transform:translateX(-50%); width:40px; height:40px; border:2px solid ${c.accent}; border-radius:50%; }
-    .content::before { content:""; position:absolute; top:50%; left:8%; width:2px; height:30%; transform:translateY(-50%); background:linear-gradient(to bottom, transparent, ${c.accent}33, transparent); }
-    .content::after { content:""; position:absolute; top:50%; right:8%; width:2px; height:30%; transform:translateY(-50%); background:linear-gradient(to bottom, transparent, ${c.accent}33, transparent); }
-    .decor-circle { position:absolute; top:12%; right:10%; width:180px; height:180px; border-radius:50%; background:${c.accent}08; }
-    .decor-line-l { position:absolute; bottom:18%; left:6%; width:60px; height:1px; background:${c.accent}; opacity:0.3; }
-    .decor-line-r { position:absolute; top:18%; right:6%; width:40px; height:1px; background:${c.accent}; opacity:0.25; }
+    body { background-image: radial-gradient(circle, ${c.accent}04 1px, transparent 1px); background-size:32px 32px; background-position: -16px -16px; }
+    body::before { content:""; position:absolute; top:0; left:0; right:0; height:5px; background:linear-gradient(90deg, ${c.accent}, ${c.accentAlt}, ${c.accent}); }
+    body::after { content:""; position:absolute; bottom:52px; left:50%; transform:translateX(-50%); width:48px; height:48px; border:2px solid ${c.accent}30; border-radius:50%; }
+    .content::before { content:""; position:absolute; top:50%; left:7%; width:2px; height:35%; transform:translateY(-50%); background:linear-gradient(to bottom, transparent, ${c.accent}25, transparent); }
+    .content::after { content:""; position:absolute; top:50%; right:7%; width:2px; height:35%; transform:translateY(-50%); background:linear-gradient(to bottom, transparent, ${c.accent}25, transparent); }
+    h1 { position:relative; padding-bottom:18px; }
+    h1::after { content:""; position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:50px; height:3px; background:${c.accent}; border-radius:2px; }
+    .decor-diamond { position:absolute; top:18%; right:16%; width:100px; height:100px; border:1.5px solid ${c.accent}12; transform:rotate(45deg); }
+    .decor-circle { position:absolute; top:10%; right:8%; width:200px; height:200px; border-radius:50%; background:radial-gradient(circle, ${c.accent}08 0%, transparent 70%); }
+    .decor-circle-sm { position:absolute; bottom:22%; left:10%; width:60px; height:60px; border-radius:50%; background:${c.accent}06; }
+    .decor-line-l { position:absolute; bottom:16%; left:5%; width:70px; height:1px; background:${c.accent}; opacity:0.25; }
+    .decor-line-r { position:absolute; top:16%; right:5%; width:50px; height:1px; background:${c.accent}; opacity:0.2; }
+    .decor-dots { position:absolute; bottom:12%; right:12%; width:60px; height:60px; background-image:radial-gradient(circle, ${c.accent}18 1.5px, transparent 1.5px); background-size:12px 12px; }
     .tag { background:transparent !important; color:${c.accent} !important; border:1.5px solid ${c.accent}50; border-radius:4px !important; letter-spacing:1px; }`,
 
   tech: (c) => `
     body { background-image: linear-gradient(rgba(0,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,255,0.03) 1px, transparent 1px); background-size:40px 40px; }
-    body::before { content:""; position:absolute; top:30px; left:30px; right:30px; bottom:30px; border:1px solid rgba(0,255,255,0.12); }
-    body::after { content:""; position:absolute; top:0; right:0; width:300px; height:300px; background:radial-gradient(circle, ${c.accent}15 0%, transparent 70%); }
-    .content::before { content:"「"; position:absolute; top:6%; left:8%; font-size:80px; color:${c.accent}12; font-family:serif; }
-    .content::after { content:"」"; position:absolute; bottom:6%; right:8%; font-size:80px; color:${c.accent}12; font-family:serif; }
-    .decor-scan { position:absolute; top:30%; left:0; right:0; height:1px; background:linear-gradient(90deg, transparent, ${c.accent}20, transparent); }
-    .decor-node { position:absolute; width:8px; height:8px; border-radius:50%; background:${c.accent}; box-shadow:0 0 8px ${c.accent}60; }
-    .decor-node.n1 { top:15%; left:15%; }
-    .decor-node.n2 { top:22%; right:20%; width:5px; height:5px; }
-    .decor-node.n3 { bottom:20%; left:25%; width:6px; height:6px; opacity:0.6; }
+    body::before { content:""; position:absolute; top:28px; left:28px; right:28px; bottom:28px; border:1px solid rgba(0,255,255,0.1); }
+    body::after { content:""; position:absolute; top:0; right:0; width:350px; height:350px; background:radial-gradient(circle, ${c.accent}12 0%, transparent 70%); }
+    .content::before { content:"/*"; position:absolute; top:8%; left:6%; font-size:48px; color:${c.accent}10; font-family:"SF Mono","Consolas",monospace; }
+    .content::after { content:"*/"; position:absolute; bottom:8%; right:6%; font-size:48px; color:${c.accent}10; font-family:"SF Mono","Consolas",monospace; }
+    h1 { text-shadow:0 0 40px ${c.accent}20; }
+    .decor-scan { position:absolute; left:0; right:0; height:1px; background:linear-gradient(90deg, transparent, ${c.accent}20, transparent); }
+    .decor-scan { top:28%; }
+    .decor-scan.s2 { top:68%; background:linear-gradient(90deg, transparent, ${c.accentAlt}15, transparent); }
+    .decor-corner { position:absolute; width:20px; height:20px; border-color:${c.accent}30; border-style:solid; }
+    .decor-corner.tl { top:36px; left:36px; border-width:1px 0 0 1px; }
+    .decor-corner.tr { top:36px; right:36px; border-width:1px 1px 0 0; }
+    .decor-corner.bl { bottom:36px; left:36px; border-width:0 0 1px 1px; }
+    .decor-corner.br { bottom:36px; right:36px; border-width:0 1px 1px 0; }
+    .decor-node { position:absolute; border-radius:50%; background:${c.accent}; box-shadow:0 0 8px ${c.accent}60; }
+    .decor-node.n1 { top:14%; left:14%; width:8px; height:8px; }
+    .decor-node.n2 { top:20%; right:18%; width:5px; height:5px; opacity:0.7; }
+    .decor-node.n3 { bottom:22%; left:22%; width:6px; height:6px; opacity:0.5; }
+    .decor-node.n4 { top:45%; right:10%; width:4px; height:4px; opacity:0.6; }
+    .decor-node.n5 { bottom:35%; left:12%; width:7px; height:7px; opacity:0.5; }
+    .decor-data-line { position:absolute; top:15%; bottom:15%; right:8%; width:1px; background:linear-gradient(to bottom, transparent, ${c.accent}12 20%, ${c.accent}12 80%, transparent); }
+    .decor-data-line::before { content:""; position:absolute; top:20%; left:-2px; width:5px; height:5px; border-radius:50%; background:${c.accent}; box-shadow:0 0 6px ${c.accent}40; }
+    .decor-data-line::after { content:""; position:absolute; bottom:25%; left:-2px; width:5px; height:5px; border-radius:50%; background:${c.accentAlt}; box-shadow:0 0 6px ${c.accentAlt}40; }
     .tag { background:${c.accent}10 !important; color:${c.accent} !important; border:1px solid ${c.accent}40; border-radius:3px !important; box-shadow:0 0 12px ${c.accent}30, inset 0 0 6px ${c.accent}10; font-family:"SF Mono","Fira Code","Consolas",monospace; letter-spacing:1px; text-transform:uppercase; }`,
 
   magazine: (c) => `
-    body::before { content:""; position:absolute; top:0; left:0; width:40%; height:100%; background:linear-gradient(180deg, ${c.accentAlt}06 0%, ${c.accent}04 100%); }
-    body::after { content:""; position:absolute; bottom:0; left:40%; right:0; height:6px; background:${c.accent}; }
-    .content::before { content:""; position:absolute; top:10%; right:10%; width:100px; height:100px; border:3px solid ${c.accent}18; border-radius:50%; }
-    .content::after { content:""; position:absolute; bottom:14%; left:5%; width:60px; height:2px; background:${c.accentAlt}; }
-    .decor-block { position:absolute; top:40%; left:5%; width:28%; height:20%; background:${c.accent}06; }
-    .decor-ring { position:absolute; bottom:8%; right:8%; width:70px; height:70px; border:2px solid ${c.accent}15; border-radius:50%; }
-    .decor-bar { position:absolute; top:5%; right:5%; width:4px; height:40%; background:linear-gradient(to bottom, ${c.accent}20, transparent); }
-    .content { padding-left:45% !important; padding-right:12% !important; }
-    h1 { font-family:"Georgia","Noto Serif SC",serif !important; letter-spacing:-0.5px; }
+    body::before { content:""; position:absolute; top:0; left:0; width:42%; height:100%; background:linear-gradient(180deg, ${c.accentAlt}05 0%, ${c.accent}03 100%); }
+    body::after { content:""; position:absolute; bottom:0; left:42%; right:0; height:6px; background:${c.accent}; }
+    .content::before { content:""; position:absolute; top:8%; right:8%; width:120px; height:120px; border:3px solid ${c.accent}15; border-radius:50%; }
+    .content::after { content:""; position:absolute; bottom:16%; left:3%; width:60px; height:2px; background:${c.accentAlt}; }
+    .decor-topline { position:absolute; top:0; left:42%; right:0; height:3px; background:linear-gradient(90deg, ${c.accent}, ${c.accentAlt}60, transparent); }
+    .decor-block { position:absolute; top:38%; left:3%; width:30%; height:24%; background:${c.accent}05; }
+    .decor-block.b2 { top:65%; left:6%; width:18%; height:8%; background:${c.accentAlt}06; }
+    .decor-ring { position:absolute; bottom:10%; right:6%; width:80px; height:80px; border:2px solid ${c.accent}12; border-radius:50%; }
+    .decor-ring.r2 { bottom:8%; right:14%; width:40px; height:40px; border-color:${c.accentAlt}15; }
+    .decor-bar { position:absolute; top:4%; right:4%; width:4px; height:45%; background:linear-gradient(to bottom, ${c.accent}18, transparent); }
+    .decor-pageno { position:absolute; bottom:28px; right:36px; width:32px; height:32px; border:1px solid ${c.accent}20; border-radius:50%; }
+    .decor-dot-row { position:absolute; top:46%; right:3%; width:6px; height:6px; border-radius:50%; background:${c.accent}18; box-shadow:0 14px 0 ${c.accent}12, 0 28px 0 ${c.accent}08; }
+    .content { padding-left:46% !important; padding-right:12% !important; }
+    h1 { font-family:"Georgia","Noto Serif SC",serif !important; letter-spacing:-0.5px; position:relative; }
+    h1::before { content:""; position:absolute; top:-16px; left:0; width:30px; height:3px; background:${c.accent}; }
     .tag { border-radius:2px !important; font-family:"Georgia","Noto Serif SC",serif; font-style:italic; background:transparent !important; color:${c.titleColor} !important; border-bottom:2px solid ${c.accent}; padding:4px 14px !important; letter-spacing:0.5px; }`,
 
   drawio: (c) => `
-    body { background-image: radial-gradient(circle, ${c.accent}15 1px, transparent 1px); background-size:20px 20px; }
-    body::before { content:""; position:absolute; top:12px; left:12px; right:12px; bottom:12px; border:2px solid ${c.accent}20; border-radius:2px; }
-    body::after { content:""; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg, ${c.accent}, ${c.accentAlt}, ${c.accent}); }
-    .content::before { content:""; position:absolute; top:8%; left:5%; width:14px; height:14px; border:2px solid ${c.accent}35; border-radius:1px; }
-    .content::after { content:""; position:absolute; bottom:8%; right:5%; width:14px; height:14px; border:2px solid ${c.accent}35; border-radius:1px; }
-    .decor-corner { position:absolute; width:20px; height:20px; border-color:${c.accent}25; border-style:solid; }
-    .decor-corner.tl { top:20px; left:20px; border-width:1px 0 0 1px; }
-    .decor-corner.tr { top:20px; right:20px; border-width:1px 1px 0 0; }
-    .decor-corner.bl { bottom:20px; left:20px; border-width:0 0 1px 1px; }
-    .decor-corner.br { bottom:20px; right:20px; border-width:0 1px 1px 0; }
-    .decor-grid { position:absolute; inset:0; background-image:linear-gradient(${c.accent}06 1px, transparent 1px), linear-gradient(90deg, ${c.accent}06 1px, transparent 1px); background-size:60px 60px; }
-    .tag { border-radius:3px !important; background:${c.accent}08 !important; color:${c.titleColor} !important; border:1px solid ${c.accent}25; border-left:3px solid ${c.accent}; font-family:"SF Mono","Consolas",monospace; }
-    h1 { border-bottom:2px solid ${c.accent}25; padding-bottom:12px; }`,
+    body { background-image: radial-gradient(circle, ${c.accent}12 1px, transparent 1px); background-size:20px 20px; }
+    body::before { content:""; position:absolute; top:10px; left:10px; right:10px; bottom:10px; border:2px solid ${c.accent}18; border-radius:2px; }
+    body::after { content:""; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg, ${c.accent}, ${c.accentAlt}80, ${c.accent}); }
+    .content::before { content:""; position:absolute; top:7%; left:4%; width:16px; height:16px; border:2px solid ${c.accent}30; border-radius:1px; }
+    .content::after { content:""; position:absolute; bottom:7%; right:4%; width:16px; height:16px; border:2px solid ${c.accent}30; border-radius:1px; }
+    .decor-corner { position:absolute; width:18px; height:18px; border-color:${c.accent}22; border-style:solid; }
+    .decor-corner.tl { top:18px; left:18px; border-width:1px 0 0 1px; }
+    .decor-corner.tr { top:18px; right:18px; border-width:1px 1px 0 0; }
+    .decor-corner.bl { bottom:18px; left:18px; border-width:0 0 1px 1px; }
+    .decor-corner.br { bottom:18px; right:18px; border-width:0 1px 1px 0; }
+    .decor-grid { position:absolute; inset:0; background-image:linear-gradient(${c.accent}05 1px, transparent 1px), linear-gradient(90deg, ${c.accent}05 1px, transparent 1px); background-size:60px 60px; }
+    .decor-connector { position:absolute; height:1px; background:${c.accent}20; transform-origin:left center; }
+    .decor-connector.c1 { top:25%; left:10%; width:120px; transform:rotate(-15deg); border-top:1px dashed ${c.accent}25; }
+    .decor-connector.c2 { top:60%; right:12%; width:90px; transform:rotate(12deg); border-top:1px dashed ${c.accent}20; }
+    .decor-node-a { position:absolute; top:18%; left:24%; width:10px; height:10px; border-radius:50%; background:${c.accent}20; border:2px solid ${c.accent}40; }
+    .decor-node-b { position:absolute; bottom:22%; right:20%; width:12px; height:12px; border-radius:2px; background:${c.accentAlt}15; border:1.5px solid ${c.accentAlt}35; }
+    .decor-crosshair { position:absolute; top:14%; right:18%; width:24px; height:24px; }
+    .decor-crosshair::before { content:""; position:absolute; top:50%; left:0; right:0; height:1px; background:${c.accent}18; }
+    .decor-crosshair::after { content:""; position:absolute; left:50%; top:0; bottom:0; width:1px; background:${c.accent}18; }
+    .decor-label-box { position:absolute; top:12%; left:8%; padding:4px 10px; border:1px solid ${c.accent}20; border-radius:2px; }
+    h1 { border-bottom:2px solid ${c.accent}22; padding-bottom:14px; }
+    .tag { border-radius:3px !important; background:${c.accent}08 !important; color:${c.titleColor} !important; border:1px solid ${c.accent}25; border-left:3px solid ${c.accent}; font-family:"SF Mono","Consolas",monospace; }`,
 
   chinese: (c) => `
-    body { background-image: linear-gradient(${c.accent}06 1px, transparent 1px), linear-gradient(90deg, ${c.accent}06 1px, transparent 1px); background-size:60px 60px; }
-    body::before { content:""; position:absolute; top:16px; left:16px; width:40px; height:40px; border-top:2px solid ${c.accent}25; border-left:2px solid ${c.accent}25; }
-    body::after { content:""; position:absolute; bottom:16px; right:16px; width:40px; height:40px; border-bottom:2px solid ${c.accent}25; border-right:2px solid ${c.accent}25; }
-    .content::before { content:""; position:absolute; right:8%; top:10%; width:36px; height:36px; border:1.5px solid ${c.accentAlt}40; transform:rotate(45deg); }
-    .content::after { content:""; position:absolute; left:10%; bottom:12%; width:80px; height:1px; background:linear-gradient(90deg, ${c.accent}35, transparent); }
-    .decor-seal { position:absolute; right:12%; bottom:14%; width:50px; height:50px; border:2px solid ${c.accentAlt}50; color:${c.accentAlt}50; font-size:14px; display:flex; align-items:center; justify-content:center; transform:rotate(15deg); }
-    .decor-ink { position:absolute; top:14%; right:18%; width:100px; height:100px; border-radius:50%; background:radial-gradient(ellipse at 40% 40%, ${c.accent}10, transparent 70%); }
-    .decor-line-v { position:absolute; right:5%; top:25%; width:1px; height:50%; background:linear-gradient(to bottom, transparent, ${c.accent}15, transparent); }
-    h1 { font-weight:900 !important; }
+    body { background-color:#f5e6d3; background-image: linear-gradient(${c.accent}05 1px, transparent 1px), linear-gradient(90deg, ${c.accent}05 1px, transparent 1px); background-size:60px 60px; }
+    body::before { content:""; position:absolute; top:14px; left:14px; width:44px; height:44px; border-top:2px solid ${c.accent}22; border-left:2px solid ${c.accent}22; }
+    body::after { content:""; position:absolute; bottom:14px; right:14px; width:44px; height:44px; border-bottom:2px solid ${c.accent}22; border-right:2px solid ${c.accent}22; }
+    .content::before { content:""; position:absolute; right:7%; top:8%; width:40px; height:40px; border:1.5px solid ${c.accentAlt}35; transform:rotate(45deg); }
+    .content::after { content:""; position:absolute; left:8%; bottom:10%; width:90px; height:1px; background:linear-gradient(90deg, ${c.accent}30, transparent); }
+    h1 { font-weight:900 !important; position:relative; }
+    h1::after { content:""; position:absolute; bottom:-8px; left:50%; transform:translateX(-50%); width:40px; height:2px; background:${c.accentAlt}30; border-radius:1px; }
+    .decor-seal { position:absolute; right:10%; bottom:12%; width:52px; height:52px; border:2px solid ${c.accentAlt}45; color:${c.accentAlt}45; font-size:14px; display:flex; align-items:center; justify-content:center; transform:rotate(15deg); }
+    .decor-seal::after { content:"印"; font-family:"KaiTi","STKaiti","楷体",serif; }
+    .decor-seal.s2 { right:7%; bottom:20%; width:32px; height:32px; border-color:${c.accentAlt}25; opacity:0.6; transform:rotate(-8deg); }
+    .decor-seal.s2::after { content:"鉴"; font-size:10px; }
+    .decor-ink { position:absolute; top:12%; right:16%; width:120px; height:120px; border-radius:50%; background:radial-gradient(ellipse at 40% 40%, ${c.accent}08, transparent 70%); }
+    .decor-ink.i2 { top:auto; bottom:8%; right:auto; left:10%; width:80px; height:80px; background:radial-gradient(ellipse at 50% 50%, ${c.accentAlt}06, transparent 65%); }
+    .decor-line-v { position:absolute; right:4%; top:22%; width:1px; height:54%; background:linear-gradient(to bottom, transparent, ${c.accent}12, transparent); }
+    .decor-line-v.v2 { right:auto; left:5%; top:20%; height:40%; background:linear-gradient(to bottom, transparent, ${c.accentAlt}10, transparent); }
+    .decor-mountain { position:absolute; bottom:0; left:0; right:0; height:28%; background:linear-gradient(135deg, transparent 25%, ${c.accent}04 25%, ${c.accent}04 35%, transparent 35%, transparent 55%, ${c.accentAlt}03 55%, ${c.accentAlt}03 65%, transparent 65%); clip-path:polygon(0% 100%, 15% 45%, 30% 70%, 45% 30%, 60% 60%, 75% 35%, 90% 55%, 100% 40%, 100% 100%); }
+    .decor-cloud { position:absolute; top:10%; left:12%; width:90px; height:24px; background:${c.accent}06; border-radius:12px; }
+    .decor-cloud::before { content:""; position:absolute; top:-10px; left:18px; width:30px; height:16px; background:${c.accent}05; border-radius:8px; }
+    .decor-cloud.c2 { top:8%; left:auto; right:20%; width:60px; height:16px; opacity:0.6; }
+    .decor-cloud.c2::before { top:-7px; left:12px; width:20px; height:10px; }
+    .decor-wave { position:absolute; bottom:20%; left:0; right:0; height:2px; background:repeating-linear-gradient(90deg, ${c.accent}10 0px, ${c.accent}10 8px, transparent 8px, transparent 16px); }
     .tag { background:transparent !important; color:${c.accentAlt} !important; border:1px solid ${c.accentAlt}40; border-radius:3px !important; font-family:"KaiTi","STKaiti","楷体",serif; letter-spacing:2px; }`,
 }
 

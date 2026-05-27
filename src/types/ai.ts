@@ -189,4 +189,6 @@ export interface SearchApiConfig {
   bochaApiKey: string
   /** SearXNG 实例地址（searchProvider 为 searxng 时必填，如 http://localhost:8080） */
   searxngUrl: string
+  /** 搜索语言偏好，如 "zh-CN"、"en"、"auto"，默认 "auto" 不限制语言 */
+  searchLanguage?: string
 }

@@ -422,7 +422,7 @@ function extractSearchQuery(prompt: string): string {
   // 去掉 markdown 格式内容和过长文本，保留核心意图
   const cleaned = prompt
     .replace(/```[\s\S]*?```/g, "") // 去掉代码块
-    .replace(/#{1,6}\s/g, "") // 去掉标题标记
+    .replace(/^#{1,6}\s/gm, "") // 去掉标题标记（仅行首 #，避免误删 C#、F# 等）
     .replace(/\*\*|__/g, "") // 去掉加粗标记
     .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1") // 链接只保留文本
     .trim()
@@ -668,6 +668,7 @@ export function getApiConfigFromPlugin(plugin: any): AiApiConfig {
     searchProvider: searchProvider as SearchApiConfig["searchProvider"],
     bochaApiKey: settings.searchBochaApiKey || "",
     searxngUrl: settings.searchSearxngUrl || "",
+    searchLanguage: settings.searchLanguage || "auto",
   }
 
   return {

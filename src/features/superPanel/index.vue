@@ -15,18 +15,9 @@
     <SuperPanelHeader
       :title="i18n.title || '超级面板'"
       :i18n="i18n"
-      @toggle-ai-settings="toggleAiSettings"
+      @toggle-ai-settings="props.onOpenAiSettings?.()"
       @refresh="emit('refresh')"
       @close="emit('close')"
-    />
-
-    <!-- AI配置区域 -->
-    <AiSettingsPanel
-      :visible="showAiSettings"
-      :settings="aiSettings"
-      :i18n="i18n"
-      @close="toggleAiSettings"
-      @update:settings="emit('updateAiSettings', $event)"
     />
 
     <!-- 搜索栏 -->
@@ -98,10 +89,7 @@
 
 <script setup lang="ts">
 import type { SelectorOption } from "./components/FeatureCard.vue"
-import type {
-  AiSettings,
-  Feature,
-} from "./types"
+import type { Feature } from "./types"
 import type { IconKey } from "@/config/icons"
 import type { PluginSettings } from "@/config/settings"
 import type { FeatureMeta } from "@/features/config"
@@ -115,7 +103,6 @@ import IconWrapper from "@/components/IconWrapper.vue"
 import { featureIdToSettingKey } from "@/config/settings"
 import { FEATURE_CONFIG } from "@/features/config"
 import { THEMES } from "@/features/themeColor"
-import AiSettingsPanel from "./components/AiSettingsPanel.vue"
 import FeatureCard from "./components/FeatureCard.vue"
 import SuperPanelHeader from "./components/SuperPanelHeader.vue"
 
@@ -123,13 +110,13 @@ interface Props {
   visible: boolean
   settings: PluginSettings
   i18n: Record<string, any>
+  onOpenAiSettings?: () => void
 }
 
 interface Emits {
   (e: "close"): void
   (e: "action", action: string): void
   (e: "refresh"): void
-  (e: "updateAiSettings", settings: AiSettings): void
   (e: "toggleFeature", featureId: string, enabled: boolean): void
   (e: "selectFeature", featureId: string, value: string): void
 }
@@ -140,28 +127,6 @@ const emit = defineEmits<Emits>()
 // 搜索状态
 const searchQuery = ref("")
 const searchInputRef = ref<HTMLInputElement | null>(null)
-
-// AI配置状态
-const showAiSettings = ref(false)
-
-// AI设置数据
-const aiSettings = computed<AiSettings>(() => ({
-  provider: props.settings.aiApiProvider || "tongyi",
-  model: props.settings.aiModel || "qwen-plus",
-  customModel: props.settings.aiCustomModel || "",
-  apiKey: props.settings.aiApiKeys?.[props.settings.aiApiProvider || "tongyi"] || "",
-  apiKeys: props.settings.aiApiKeys || {},
-  customEndpoint: props.settings.aiCustomEndpoint || "",
-  enableThinking: props.settings.aiEnableThinking ?? false,
-  searchProvider: props.settings.searchProvider || "jina",
-  searchBochaApiKey: props.settings.searchBochaApiKey || "",
-  searchSearxngUrl: props.settings.searchSearxngUrl || "",
-}))
-
-// 切换AI配置面板
-const toggleAiSettings = (): void => {
-  showAiSettings.value = !showAiSettings.value
-}
 
 // ==================== 功能列表配置 ====================
 // 元数据定义于 src/features/config.ts（单一数据源）

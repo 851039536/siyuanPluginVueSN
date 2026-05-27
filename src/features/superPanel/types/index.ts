@@ -2,6 +2,7 @@ import type { App as VueApp } from "vue"
 import type { IconKey } from "@/config/icons"
 import type { PluginSettings } from "@/config/settings"
 import type { FeatureAction } from "@/features/config"
+import type { ModalAppInstance } from "@/utils/vueAppHelper"
 /**
  * 超级面板 - 类型定义
  */
@@ -18,6 +19,8 @@ import { FEATURE_ICONS } from "@/config/icons"
 import { featureIdToSettingKey } from "@/config/settings"
 import { emitCustomEvent } from "@/utils/eventBus"
 import { replaceTopBarIcon } from "@/utils/iconHelper"
+import { createModalVueApp } from "@/utils/vueAppHelper"
+import AiSettingsPanel from "../components/AiSettingsPanel.vue"
 import SuperPanelPanel from "../index.vue"
 
 export type { FeatureAction }
@@ -89,11 +92,19 @@ const ACTION_EVENT_MAP: Record<
 export class SuperPanelManager {
   private plugin: Plugin
   private boundToggleHandler: () => void
+  private aiSettingsModal: ModalAppInstance
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
-    // 绑定事件处理器，确保 add/remove 使用同一引用
     this.boundToggleHandler = this.toggle.bind(this)
+
+    this.aiSettingsModal = createModalVueApp(AiSettingsPanel, {
+      maskId: "super-panel-ai-settings-mask",
+      width: "520px",
+      height: "auto",
+      getCloseHandler: () => this.closeAiSettings.bind(this),
+      buildProps: () => this.buildAiSettingsProps(),
+    })
   }
 
   public init() {
@@ -170,6 +181,9 @@ export class SuperPanelManager {
       },
       onSelectFeature: async (featureId: string, value: string) => {
         await this.handleSelectFeature(featureId, value)
+      },
+      onOpenAiSettings: () => {
+        this.openAiSettings()
       },
     })
 
@@ -293,8 +307,43 @@ export class SuperPanelManager {
     }
   }
 
+  public openAiSettings() {
+    this.aiSettingsModal.open()
+  }
+
+  public closeAiSettings() {
+    this.aiSettingsModal.close()
+  }
+
+  private buildAiSettingsProps(): Record<string, any> {
+    const s = (this.plugin as any).settings || {}
+    return {
+      "visible": true,
+      "settings": {
+        provider: s.aiApiProvider || "tongyi",
+        model: s.aiModel || "qwen-plus",
+        customModel: s.aiCustomModel || "",
+        apiKey: (s.aiApiKeys?.[s.aiApiProvider || "tongyi"]) || "",
+        apiKeys: s.aiApiKeys || {},
+        customEndpoint: s.aiCustomEndpoint || "",
+        enableThinking: s.aiEnableThinking ?? false,
+        searchProvider: s.searchProvider || "jina",
+        searchBochaApiKey: s.searchBochaApiKey || "",
+        searchSearxngUrl: s.searchSearxngUrl || "",
+      },
+      "i18n": (this.plugin.i18n as any).superPanel || {},
+      "onClose": () => {
+        this.closeAiSettings()
+      },
+      'onUpdate:settings': async (aiSettings: AiSettings) => {
+        await this.handleUpdateAiSettings(aiSettings)
+      },
+    }
+  }
+
   public destroy() {
     this.close()
+    this.closeAiSettings()
     window.removeEventListener("toggleSuperPanel", this.boundToggleHandler)
   }
 }

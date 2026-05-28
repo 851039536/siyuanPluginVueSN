@@ -6,7 +6,7 @@ const BOOKMARK_MARKER_CLASS = "bookmark-marker-tag"
 const BOOKMARK_PROTYLE_CLASS = "bookmark-marker-protyle"
 const BOOKMARK_MARKER_STYLE_ID = "bookmark-marker-styles"
 
-function hexToRgba(hex: string, alpha: number): string {
+export function hexToRgba(hex: string, alpha: number): string {
   const r = Number.parseInt(hex.slice(1, 3), 16)
   const g = Number.parseInt(hex.slice(3, 5), 16)
   const b = Number.parseInt(hex.slice(5, 7), 16)
@@ -129,27 +129,8 @@ export class BookmarkMarker {
   private bookmarkCache = new Map<string, string>()
   private cacheLoaded = false
 
-  constructor(options: Partial<BookmarkMarkerOptions> = {}) {
-    this.options = {
-      rules: [
-        {
-          bookmarkNames: ["已发布"],
-          color: "#ffffff",
-          backgroundColor: "#52c41a",
-          alpha: 0.25,
-          matchMode: "exact",
-        },
-        {
-          bookmarkNames: ["待发布"],
-          color: "#ffffff",
-          backgroundColor: "#faad14",
-          alpha: 0.25,
-          matchMode: "exact",
-        },
-      ],
-      updateInterval: 3600000,
-      ...options,
-    }
+  constructor(options: BookmarkMarkerOptions) {
+    this.options = { ...options }
   }
 
   updateOptions(options: Partial<BookmarkMarkerOptions>) {

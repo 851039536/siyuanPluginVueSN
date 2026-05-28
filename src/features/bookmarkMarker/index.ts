@@ -10,14 +10,14 @@ import { BookmarkMarker } from "./modules/BookmarkMarker"
 import { BookmarkMarkerStorage } from "./types/storage"
 
 class BookmarkMarkerManager {
-  private plugin: Plugin
   private storage: BookmarkMarkerStorage
   private bookmarkMarker: BookmarkMarker | null = null
   private modal: ModalAppInstance
 
   constructor(plugin: Plugin) {
-    this.plugin = plugin
     this.storage = new BookmarkMarkerStorage(plugin)
+
+    const i18n = (plugin.i18n?.bookmarkMarker as unknown as Record<string, any>) || {}
 
     this.modal = createModalVueApp(BookmarkMarkerPanel, {
       maskId: "bookmark-marker-mask",
@@ -27,8 +27,8 @@ class BookmarkMarkerManager {
       buildProps: () => ({
         onClose: this.close.bind(this),
         onBookmarkMarkerChange: this.handleChange.bind(this),
-        i18n: (this.plugin.i18n?.bookmarkMarker as unknown as Record<string, any>) || {},
-        plugin: this.plugin,
+        i18n,
+        plugin,
       }),
     })
   }
@@ -49,14 +49,6 @@ class BookmarkMarkerManager {
 
   close(): void {
     this.modal.close()
-  }
-
-  toggle(): void {
-    if (this.modal.app && this.modal.container) {
-      this.close()
-    } else {
-      this.open()
-    }
   }
 
   private async applySettings(): Promise<void> {
@@ -110,9 +102,4 @@ export function registerBookmarkMarker(plugin: Plugin) {
   const manager = new BookmarkMarkerManager(plugin)
   manager.init()
   ;(plugin as any).__bookmarkMarker = manager
-}
-
-export function unregisterBookmarkMarker(plugin: Plugin) {
-  const manager = (plugin as any).__bookmarkMarker as BookmarkMarkerManager | undefined
-  manager?.destroy()
 }

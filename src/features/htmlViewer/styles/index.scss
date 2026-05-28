@@ -1,3 +1,5 @@
+@use './transitions';
+
 // HTML展示功能样式
 
 .html-viewer-overlay {
@@ -481,5 +483,3 @@
     flex: 1;
   }
 }
-
-@import './transitions';

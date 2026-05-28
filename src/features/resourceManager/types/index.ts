@@ -65,6 +65,9 @@ export interface ResourceManagerI18n {
   categoryBackgrounds: string
   categoryAvatars: string
   categoryOther: string
+  // 自定义分类
+  customCategoryPlaceholder: string
+  apply: string
   // 图片定位和关联文档
   locateDoc: string
   referencingDocs: string

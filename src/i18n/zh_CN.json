@@ -1382,6 +1382,8 @@
     "categoryOther": "其他",
     "locateDoc": "定位",
     "referencingDocs": "关联文档",
-    "noReferencingDocs": "未找到关联文档"
+    "noReferencingDocs": "未找到关联文档",
+    "customCategoryPlaceholder": "自定义",
+    "apply": "应用"
   }
 }

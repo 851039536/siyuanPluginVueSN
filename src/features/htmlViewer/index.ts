@@ -114,5 +114,3 @@ export async function registerHtmlViewer(plugin: Plugin) {
   await htmlViewerInstance.init()
   ;(plugin as any).__htmlViewer = htmlViewerInstance
 }
-
-

@@ -1,3 +1,5 @@
+@use './transitions';
+
 // AI 封面生成器样式
 
 .cover-generator-overlay {
@@ -316,5 +318,3 @@
   border-top: 1px solid var(--b3-theme-background-light);
   flex-shrink: 0;
 }
-
-@import './transitions';

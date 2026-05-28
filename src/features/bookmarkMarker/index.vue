@@ -350,35 +350,22 @@ import {
   ref,
 } from "vue"
 import SiSwitch from "@/components/Switch.vue"
-import { BookmarkMarker } from "./modules/BookmarkMarker"
-import { BookmarkMarkerStorage } from "./types/storage"
+import { hexToRgba } from "./modules/BookmarkMarker"
+import {
+  BookmarkMarkerStorage,
+  DEFAULT_BOOKMARK_MARKER_SETTINGS,
+} from "./types/storage"
 
 const props = defineProps<{
   i18n?: Record<string, string>
   plugin?: any
-  bookmarkMarker?: BookmarkMarker
   onBookmarkMarkerChange?: (action: string, data?: any) => void
   onClose?: () => void
 }>()
 
 const enableBookmarkMarker = ref(true)
-const rules = ref<BookmarkRule[]>([
-  {
-    bookmarkNames: ["已发布"],
-    color: "#ffffff",
-    backgroundColor: "#52c41a",
-    alpha: 0.25,
-    matchMode: "exact",
-  },
-  {
-    bookmarkNames: ["待发布"],
-    color: "#ffffff",
-    backgroundColor: "#faad14",
-    alpha: 0.25,
-    matchMode: "exact",
-  },
-])
-const updateInterval = ref("3600000")
+const rules = ref<BookmarkRule[]>([...DEFAULT_BOOKMARK_MARKER_SETTINGS.rules])
+const updateInterval = ref(DEFAULT_BOOKMARK_MARKER_SETTINGS.updateInterval.toString())
 const tagInputRefs = ref<Record<number, HTMLInputElement | null>>({})
 
 const presetIcons = [
@@ -394,25 +381,23 @@ const presetIcons = [
   "📂", "🗂️", "📚", "📦", "🧩",
 ]
 
-const getStorage = () => props.plugin ? new BookmarkMarkerStorage(props.plugin) : null
+let _storage: BookmarkMarkerStorage | null = null
 
-const ensureStorage = (): BookmarkMarkerStorage => {
-  const storage = getStorage()
-  if (!storage) throw new Error("插件实例不可用")
-  return storage
+const getStorage = () => {
+  if (!_storage && props.plugin) {
+    _storage = new BookmarkMarkerStorage(props.plugin)
+  }
+  return _storage
 }
 
-const saveAndNotify = async () => {
+const saveSettings = async () => {
+  const storage = getStorage()
+  if (!storage) return
   try {
-    await ensureStorage().settings.save({
+    await storage.settings.save({
       enableBookmarkMarker: enableBookmarkMarker.value,
       rules: rules.value,
       updateInterval: Number(updateInterval.value),
-    })
-    props.onBookmarkMarkerChange?.("settingsChanged", {
-      enableBookmarkMarker: enableBookmarkMarker.value,
-      rules: rules.value,
-      updateInterval: updateInterval.value,
     })
   } catch (e) {
     console.error("保存书签标记设置失败:", e)
@@ -420,63 +405,45 @@ const saveAndNotify = async () => {
 }
 
 const loadSettings = async () => {
+  const storage = getStorage()
+  if (!storage) return
   try {
-    const storage = getStorage()
-    const data = storage ? await storage.settings.loadOrDefault() : null
-    if (data) {
-      enableBookmarkMarker.value = data.enableBookmarkMarker ?? true
-      rules.value = data.rules?.length
-        ? data.rules.map((r: any) => ({
-            ...r,
-            bookmarkNames: r.bookmarkNames || (r.bookmarkName ? [r.bookmarkName] : []),
-          }))
-        : [
-            {
-              bookmarkNames: ["已发布"],
-              color: "#ffffff",
-              backgroundColor: "#52c41a",
-              alpha: 0.25,
-              matchMode: "exact",
-            },
-            {
-              bookmarkNames: ["待发布"],
-              color: "#ffffff",
-              backgroundColor: "#faad14",
-              alpha: 0.25,
-              matchMode: "exact",
-            },
-          ]
-      updateInterval.value = data.updateInterval?.toString() || "3600000"
-    }
+    const data = await storage.settings.loadOrDefault()
+    enableBookmarkMarker.value = data.enableBookmarkMarker ?? true
+    rules.value = data.rules?.length
+      ? data.rules.map((r: any) => ({
+          ...r,
+          bookmarkNames: r.bookmarkNames || (r.bookmarkName ? [r.bookmarkName] : []),
+        }))
+      : [...DEFAULT_BOOKMARK_MARKER_SETTINGS.rules]
+    updateInterval.value = (data.updateInterval ?? DEFAULT_BOOKMARK_MARKER_SETTINGS.updateInterval).toString()
   } catch (e) {
     console.error("加载书签标记设置失败:", e)
   }
 }
 
 const handleToggleChange = async () => {
-  await saveAndNotify()
+  await saveSettings()
   props.onBookmarkMarkerChange?.("toggle", {
     enabled: enableBookmarkMarker.value,
     rules: rules.value,
     updateInterval: Number(updateInterval.value),
   })
   showMessage(
-    enableBookmarkMarker.value
-      ? "书签标记已启用"
-      : "书签标记已禁用",
+    enableBookmarkMarker.value ? "书签标记已启用" : "书签标记已禁用",
     2000,
     "info",
   )
 }
 
 const handleRulesChange = async () => {
-  await saveAndNotify()
+  await saveSettings()
   props.onBookmarkMarkerChange?.("rulesChanged", { rules: rules.value })
   showMessage("标记规则已更新", 2000, "info")
 }
 
 const handleIntervalChange = async () => {
-  await saveAndNotify()
+  await saveSettings()
   props.onBookmarkMarkerChange?.("intervalChanged", { updateInterval: Number(updateInterval.value) })
   showMessage("更新间隔已修改", 2000, "info")
 }
@@ -500,56 +467,34 @@ const removeRule = (index: number) => {
 
 const selectIcon = (index: number, icon: string) => {
   const rule = rules.value[index]
-  if (rule.icon === icon) {
-    rule.icon = ""
-  } else {
-    rule.icon = icon
-  }
+  rule.icon = rule.icon === icon ? "" : icon
   handleRulesChange()
-}
-
-function previewHexToRgba(hex: string, alpha: number): string {
-  const r = Number.parseInt(hex.slice(1, 3), 16)
-  const g = Number.parseInt(hex.slice(3, 5), 16)
-  const b = Number.parseInt(hex.slice(5, 7), 16)
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
 const getPreviewStyle = (rule: BookmarkRule) => {
   const mode = rule.displayMode || "bg"
   const alpha = rule.alpha ?? 0.25
   if (mode === "icon" && rule.icon) {
-    return {
-      color: rule.color,
-      backgroundColor: "transparent",
-    }
+    return { color: rule.color, backgroundColor: "transparent" }
   }
   if (mode === "row") {
     return {
       color: rule.color,
-      backgroundColor: previewHexToRgba(rule.backgroundColor, alpha),
+      backgroundColor: hexToRgba(rule.backgroundColor, alpha),
       padding: "6px 12px",
       borderRadius: "4px",
     }
   }
   return {
     color: rule.color,
-    backgroundColor: previewHexToRgba(rule.backgroundColor, alpha),
+    backgroundColor: hexToRgba(rule.backgroundColor, alpha),
   }
 }
 
 const getPreviewText = (rule: BookmarkRule) => {
   const mode = rule.displayMode || "bg"
   const name = rule.bookmarkNames?.[0] || "未命名"
-  if (mode === "icon" && rule.icon) {
-    return rule.icon
-  }
-  if (mode === "icon-bg" && rule.icon) {
-    return rule.icon
-  }
-  if (mode === "row") {
-    return rule.icon ? `${rule.icon} ${name}` : name
-  }
+  if ((mode === "icon" || mode === "icon-bg") && rule.icon) return rule.icon
   return rule.icon ? `${rule.icon} ${name}` : name
 }
 
@@ -588,11 +533,6 @@ const handleRefresh = () => {
 
 onMounted(async () => {
   await loadSettings()
-})
-
-defineExpose({
-  loadSettings,
-  enableBookmarkMarker,
 })
 </script>
 

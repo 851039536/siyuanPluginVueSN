@@ -1264,11 +1264,6 @@
     "insertFailed": "Insert failed",
     "copyPath": "Copy Path",
     "pathCopied": "Path copied",
-    "fileName": "File Name",
-    "fileType": "Type",
-    "fileSize": "Size",
-    "docPath": "Doc Path",
-    "actions": "Actions",
     "assetPath": "Asset Path",
     "newPath": "New Path",
     "targetDocId": "Target Doc ID",
@@ -1287,6 +1282,12 @@
     "category": "Quick Category",
     "confirmMove": "Confirm Move",
     "cancel": "Cancel",
-    "loadFailed": "Load failed"
+    "loadFailed": "Load failed",
+    "categoryImages": "Images",
+    "categoryScreenshots": "Screenshots",
+    "categoryIcons": "Icons",
+    "categoryBackgrounds": "Backgrounds",
+    "categoryAvatars": "Avatars",
+    "categoryOther": "Other"
   }
 }

@@ -155,11 +155,11 @@
                 <div class="rm-move-form__categories">
                   <button
                     v-for="cat in quickCategories"
-                    :key="cat"
+                    :key="cat.key"
                     class="rm-btn small"
-                    @click="applyCategory(path, cat)"
+                    @click="applyCategory(path, cat.key)"
                   >
-                    {{ cat }}
+                    {{ cat.label }}
                   </button>
                 </div>
               </div>
@@ -406,10 +406,14 @@
 </template>
 
 <script setup lang="ts">
-import type { Plugin } from "siyuan"
+import type {
+  IProtyle,
+  Plugin,
+} from "siyuan"
 import type { ResourceManagerI18n } from "./types"
 import { showMessage } from "siyuan"
 import {
+  computed,
   onMounted,
   onUnmounted,
   ref,
@@ -451,7 +455,32 @@ const specifiedDocId = ref("")
 // 移动资源
 const movingAsset = ref<string | null>(null)
 const moveNewPath = ref("")
-const quickCategories = ["图片", "截图", "图标", "背景", "头像", "其他"]
+const quickCategories = computed(() => [
+  {
+    key: "图片",
+    label: props.i18n.categoryImages || "图片",
+  },
+  {
+    key: "截图",
+    label: props.i18n.categoryScreenshots || "截图",
+  },
+  {
+    key: "图标",
+    label: props.i18n.categoryIcons || "图标",
+  },
+  {
+    key: "背景",
+    label: props.i18n.categoryBackgrounds || "背景",
+  },
+  {
+    key: "头像",
+    label: props.i18n.categoryAvatars || "头像",
+  },
+  {
+    key: "其他",
+    label: props.i18n.categoryOther || "其他",
+  },
+])
 
 // 重命名表单
 const renameForm = ref({
@@ -509,10 +538,10 @@ const tabs = [
 const savedDocId = ref<string | null>(null)
 
 // 监听 protyle 切换事件，更新缓存的当前文档 ID
-const onSwitchProtyle = ({ detail }: any) => {
-  const docId = detail?.protyle?.block?.rootID
-  if (docId) {
-    savedDocId.value = docId
+const onSwitchProtyle = (event: CustomEvent<{ protyle: IProtyle }>) => {
+  const rootID = event.detail.protyle.block.rootID
+  if (rootID) {
+    savedDocId.value = rootID
   }
 }
 
@@ -545,10 +574,9 @@ onUnmounted(() => {
  * 使用 SiYuan 标准方式：protyle DOM 元素的 .protyle 属性 → .block.rootID
  */
 function findDocIdFromDom(): string | null {
-  const protyleElements = document.querySelectorAll('.protyle:not(.fn__none)')
+  const protyleElements = document.querySelectorAll<HTMLElement & { protyle?: IProtyle }>('.protyle:not(.fn__none)')
   for (const el of protyleElements) {
-    const protyleInstance = (el as any).protyle
-    const rootId = protyleInstance?.block?.rootID
+    const rootId = el.protyle?.block?.rootID
     if (rootId) return rootId
   }
   return null
@@ -714,7 +742,7 @@ async function loadAllImageAssets() {
     // 查询已引用的资源路径
     const referenced = await sql("SELECT DISTINCT path FROM assets WHERE path LIKE 'assets/%'")
     const refImagePaths = (referenced || [])
-      .map((r: any) => r.path as string)
+      .map((r: { path: string }) => r.path)
       .filter((p: string) => IMAGE_EXT.test(p))
 
     // 查询未使用的资源（可能是只存在磁盘但未被索引的）
@@ -725,7 +753,7 @@ async function loadAllImageAssets() {
     const allPaths = [...new Set([...refImagePaths, ...unusedImagePaths])].sort()
     imageAssets.value = allPaths
   }
-  catch (e: any) {
+  catch (e: unknown) {
     console.error("加载全部图片资源失败:", e)
     showMsg(props.i18n.loadFailed || "加载失败")
   }
@@ -783,7 +811,7 @@ async function handleDeleteAsset(path: string) {
     await removeUnusedAsset(path)
     showMsg(props.i18n.deleteSuccess)
   }
-  catch (e: any) {
+  catch {
     const msg = isReferenced
       ? `${props.i18n.deleteFailed}（资源被引用时无法直接删除，请先移除文档中的引用）`
       : props.i18n.deleteFailed
@@ -837,8 +865,9 @@ async function handleMoveAsset(oldPath: string) {
     cancelMove()
     await refresh()
   }
-  catch (e: any) {
-    showMsg(`${props.i18n.moveFailed}: ${e?.message || e}`)
+  catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e)
+    showMsg(`${props.i18n.moveFailed}: ${msg}`)
   }
 }
 
@@ -879,8 +908,9 @@ async function handleInsertAssets() {
     insertResult.value = msg
     showMsg(msg)
   }
-  catch (e: any) {
-    insertResult.value = `${props.i18n.insertFailed}: ${e?.message || e}`
+  catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e)
+    insertResult.value = `${props.i18n.insertFailed}: ${msg}`
     showMsg(props.i18n.insertFailed)
   }
 }
@@ -902,8 +932,9 @@ async function handleResolvePath() {
       resolvePathResult.value = `${props.i18n.resolvePathResult}: 文件不存在或路径无效`
     }
   }
-  catch (e: any) {
-    resolvePathResult.value = `${props.i18n.resolvePathResult}: ${e?.message || "解析失败"}`
+  catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e)
+    resolvePathResult.value = `${props.i18n.resolvePathResult}: ${msg}`
   }
 }
 
@@ -914,8 +945,9 @@ async function handleRebuildIndex() {
     rebuildResult.value = props.i18n.rebuildIndexSuccess
     showMsg(props.i18n.rebuildIndexSuccess)
   }
-  catch (e: any) {
-    rebuildResult.value = `${props.i18n.rebuildIndexFailed}: ${e?.message || e}`
+  catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e)
+    rebuildResult.value = `${props.i18n.rebuildIndexFailed}: ${msg}`
     showMsg(props.i18n.rebuildIndexFailed)
   }
 }

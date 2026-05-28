@@ -31,11 +31,6 @@ export interface ResourceManagerI18n {
   insertFailed: string
   copyPath: string
   pathCopied: string
-  fileName: string
-  fileType: string
-  fileSize: string
-  docPath: string
-  actions: string
   assetPath: string
   newPath: string
   targetDocId: string
@@ -57,5 +52,11 @@ export interface ResourceManagerI18n {
   confirmMove: string
   cancel: string
   loadFailed: string
+  categoryImages: string
+  categoryScreenshots: string
+  categoryIcons: string
+  categoryBackgrounds: string
+  categoryAvatars: string
+  categoryOther: string
   [key: string]: string
 }

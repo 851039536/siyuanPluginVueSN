@@ -1336,11 +1336,6 @@
     "insertFailed": "插入失败",
     "copyPath": "复制路径",
     "pathCopied": "路径已复制",
-    "fileName": "文件名",
-    "fileType": "类型",
-    "fileSize": "大小",
-    "docPath": "文档路径",
-    "actions": "操作",
     "assetPath": "资源路径",
     "newPath": "新路径",
     "targetDocId": "目标文档ID",
@@ -1359,6 +1354,12 @@
     "category": "快速分类",
     "confirmMove": "确认移动",
     "cancel": "取消",
-    "loadFailed": "加载失败"
+    "loadFailed": "加载失败",
+    "categoryImages": "图片",
+    "categoryScreenshots": "截图",
+    "categoryIcons": "图标",
+    "categoryBackgrounds": "背景",
+    "categoryAvatars": "头像",
+    "categoryOther": "其他"
   }
 }

@@ -181,6 +181,19 @@
                   >
                     {{ cat.label }}
                   </button>
+                  <input
+                    v-model="customCategory"
+                    class="rm-move-form__category-input"
+                    :placeholder="i18n.customCategoryPlaceholder || '自定义'"
+                    @keyup.enter="applyCustomCategory(asset.path)"
+                  />
+                  <button
+                    class="rm-btn small"
+                    :disabled="!customCategory"
+                    @click="applyCustomCategory(asset.path)"
+                  >
+                    {{ i18n.apply || "应用" }}
+                  </button>
                 </div>
               </div>
               <div class="rm-move-form__actions">
@@ -434,7 +447,10 @@ import type {
   ImageAssetInfo,
   ResourceManagerI18n,
 } from "./types"
-import { showMessage } from "siyuan"
+import {
+  fetchSyncPost,
+  showMessage,
+} from "siyuan"
 import {
   computed,
   onMounted,
@@ -450,8 +466,6 @@ import {
   getFile,
   getMissingAssets,
   getUnusedAssets,
-  putFile,
-  removeFile,
   removeUnusedAsset,
   removeUnusedAssets,
   renameAsset,
@@ -482,30 +496,19 @@ const specifiedDocId = ref("")
 // 移动资源
 const movingAsset = ref<string | null>(null)
 const moveNewPath = ref("")
+const customCategory = ref("")
 const quickCategories = computed(() => [
   {
-    key: "图片",
+    key: "images",
     label: props.i18n.categoryImages || "图片",
   },
   {
-    key: "截图",
-    label: props.i18n.categoryScreenshots || "截图",
+    key: "csharp",
+    label: "csharp",
   },
   {
-    key: "图标",
-    label: props.i18n.categoryIcons || "图标",
-  },
-  {
-    key: "背景",
-    label: props.i18n.categoryBackgrounds || "背景",
-  },
-  {
-    key: "头像",
-    label: props.i18n.categoryAvatars || "头像",
-  },
-  {
-    key: "其他",
-    label: props.i18n.categoryOther || "其他",
+    key: "vue",
+    label: "vue",
   },
 ])
 
@@ -945,6 +948,7 @@ function startMoveAsset(path: string) {
 function cancelMove() {
   movingAsset.value = null
   moveNewPath.value = ""
+  customCategory.value = ""
 }
 
 /**
@@ -953,6 +957,14 @@ function cancelMove() {
 function applyCategory(currentPath: string, category: string) {
   const fileName = currentPath.split("/").pop() || currentPath
   moveNewPath.value = `assets/${category}/${fileName}`
+}
+
+/** 应用自定义分类 */
+function applyCustomCategory(currentPath: string) {
+  const cat = customCategory.value.trim()
+  if (!cat) return
+  applyCategory(currentPath, cat)
+  customCategory.value = ""
 }
 
 /**
@@ -966,7 +978,8 @@ function locateDoc(asset: ImageAssetInfo) {
 
 /**
  * 确认移动资源
- * 使用 copy + update references + delete 流程，绕过 renameAsset 跨目录限制
+ * 使用 upload API（资产上传接口，已验证支持 FormData）copy 文件，
+ * 再更新文档引用，最后清理旧文件
  */
 async function handleMoveAsset(oldPath: string) {
   const newPath = moveNewPath.value.trim()
@@ -975,18 +988,35 @@ async function handleMoveAsset(oldPath: string) {
     return
   }
   try {
-    // 1. 读取原文件内容（getFile 在 SiYuan Electron 中直接返回 Blob）
+    // 1. 读取原文件
     const fileData = await getFile(oldPath)
-    if (!fileData || !(fileData instanceof Blob)) {
+    if (!fileData || !(fileData instanceof Blob) || fileData.size === 0) {
       throw new Error("读取源文件失败")
     }
 
-    // 2. 写入到新位置（内核自动创建父目录）
+    // 2. 通过资产上传 API 写入目标目录
+    const targetDir = newPath.substring(0, newPath.lastIndexOf("/"))
     const fileName = newPath.split("/").pop() || "file"
     const fileObj = new File([fileData], fileName, { type: fileData.type || "image/png" })
-    await putFile(newPath, false, fileObj)
 
-    // 3. 更新所有文档中的引用
+    const uploadForm = new FormData()
+    uploadForm.append("assetsDirPath", targetDir)
+    uploadForm.append("file[]", fileObj)
+    const uploadResp = await fetchSyncPost("/api/asset/upload", uploadForm)
+
+    if (uploadResp.code !== 0 || !uploadResp.data) {
+      throw new Error(`上传失败: ${uploadResp.msg || `code ${uploadResp.code}`}`)
+    }
+
+    const succMap = (uploadResp.data as { succMap?: Record<string, string>, errFiles?: string[] }).succMap || {}
+    const errFiles = (uploadResp.data as { errFiles?: string[] }).errFiles || []
+    const actualNewPath = succMap[fileName]
+
+    if (errFiles.includes(fileName) || !actualNewPath) {
+      throw new Error("文件上传失败，目标目录可能不支持")
+    }
+
+    // 3. 更新文档引用（用上传返回的实际路径）
     const blocks = await sql(
       `SELECT id, markdown FROM blocks WHERE markdown LIKE '%${oldPath}%'`,
     ) as { id: string, markdown: string }[]
@@ -994,26 +1024,38 @@ async function handleMoveAsset(oldPath: string) {
     let updatedCount = 0
     for (const block of blocks) {
       try {
-        const newMarkdown = block.markdown.split(oldPath).join(newPath)
-        await updateBlock("markdown", newMarkdown, block.id)
-        updatedCount++
+        const newMarkdown = block.markdown.split(oldPath).join(actualNewPath)
+        if (newMarkdown !== block.markdown) {
+          await updateBlock("markdown", newMarkdown, block.id)
+          updatedCount++
+        }
       }
-      catch { /* 单个块更新失败不影响整体流程 */ }
+      catch { /* skip single block failure */ }
     }
 
-    // 4. 删除旧文件
-    await removeFile(oldPath)
+    // 4. 删除旧文件（优先 removeUnusedAsset，它能清理资产数据库）
+    try {
+      await removeUnusedAsset(oldPath)
+    }
+    catch {
+      try {
+        // 兜底：用内核 renameFile 把旧路径的文件 "覆盖" 到新路径（将触发删除）
+        await renameAsset(oldPath, actualNewPath)
+      }
+      catch { /* 忽略清理失败 */ }
+    }
 
     // 5. 重建资产索引
     try {
       await fullReindexAssetContent()
     }
-    catch { /* 索引重建失败不影响移动结果 */ }
+    catch { /* skip */ }
 
-    const msg = updatedCount > 0
-      ? `${props.i18n.moveSuccess}（已更新 ${updatedCount} 处引用）`
-      : props.i18n.moveSuccess
-    showMsg(msg)
+    showMsg(
+      updatedCount > 0
+        ? `${props.i18n.moveSuccess}（已更新 ${updatedCount} 处引用，新路径: ${actualNewPath}）`
+        : `${props.i18n.moveSuccess}（新路径: ${actualNewPath}）`,
+    )
     cancelMove()
     await refresh()
   }

@@ -653,16 +653,9 @@ export async function putFile(path: string, isDir: boolean, file: any): Promise<
   form.append("modTime", Math.floor(Date.now() / 1000).toString())
   form.append("file", file)
   const url = "/api/file/putFile"
-  // 使用原生 fetch 而非 fetchSyncPost，因为后者会将 Content-Type
-  // 强制设为 application/json，导致 FormData 请求失败
-  // 参见: https://github.com/siyuan-note/siyuan/issues/10715
-  const httpResp = await fetch(url, {
-    method: "POST",
-    body: form,
-  })
-  const result = await httpResp.json()
-  if (result.code !== 0) {
-    throw new Error(result.msg || `putFile failed (code: ${result.code})`)
+  const response = await fetchSyncPost(url, form)
+  if (response.code !== 0) {
+    throw new Error(response.msg || `putFile failed (code: ${response.code})`)
   }
   return null
 }

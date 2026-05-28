@@ -84,6 +84,7 @@ const ACTION_EVENT_MAP: Record<
   },
   openBase64Image: { event: "openBase64Image" },
   openFormatAssistant: { event: "openFormatAssistant" },
+  openBookmarkMarker: { event: "openBookmarkMarker" },
 }
 
 /**

@@ -3,7 +3,8 @@
  * 根据文档书签内容在文件树中显示颜色标记
  */
 import type { Plugin } from "siyuan"
-import { createVueDockApp } from "@/utils/vueAppHelper"
+import type { ModalAppInstance } from "@/utils/vueAppHelper"
+import { createModalVueApp } from "@/utils/vueAppHelper"
 import BookmarkMarkerPanel from "./index.vue"
 import { BookmarkMarker } from "./modules/BookmarkMarker"
 import { BookmarkMarkerStorage } from "./types/storage"
@@ -12,34 +13,50 @@ class BookmarkMarkerManager {
   private plugin: Plugin
   private storage: BookmarkMarkerStorage
   private bookmarkMarker: BookmarkMarker | null = null
+  private modal: ModalAppInstance
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
     this.storage = new BookmarkMarkerStorage(plugin)
+
+    this.modal = createModalVueApp(BookmarkMarkerPanel, {
+      maskId: "bookmark-marker-mask",
+      width: "644px",
+      height: "85vh",
+      getCloseHandler: () => this.close.bind(this),
+      buildProps: () => ({
+        onClose: this.close.bind(this),
+        onBookmarkMarkerChange: this.handleChange.bind(this),
+        i18n: (this.plugin.i18n?.bookmarkMarker as unknown as Record<string, any>) || {},
+        plugin: this.plugin,
+      }),
+    })
   }
 
   init(): void {
-    this.addDock()
     this.applySettings()
   }
 
   destroy(): void {
     this.bookmarkMarker?.stop()
     this.bookmarkMarker = null
+    this.modal.close()
   }
 
-  private addDock(): void {
-    const i18n = (this.plugin.i18n?.bookmarkMarker as unknown as Record<string, any>) || {}
-    createVueDockApp(this.plugin, BookmarkMarkerPanel, {
-      icon: "iconBookmark",
-      title: i18n.title || "书签标记",
-      type: "bookmark-marker-dock",
-      width: 380,
-      i18n,
-      extraProps: {
-        onBookmarkMarkerChange: this.handleChange.bind(this),
-      },
-    })
+  open(): void {
+    this.modal.open()
+  }
+
+  close(): void {
+    this.modal.close()
+  }
+
+  toggle(): void {
+    if (this.modal.app && this.modal.container) {
+      this.close()
+    } else {
+      this.open()
+    }
   }
 
   private async applySettings(): Promise<void> {

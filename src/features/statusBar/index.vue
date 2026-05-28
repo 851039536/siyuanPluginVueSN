@@ -59,20 +59,6 @@
     />
 
     <MonitorItem
-      icon="ph:video"
-      item-class="action-item video-manager-item"
-      title="视频管理器"
-      @click="handleOpenVideoManager"
-    />
-
-    <MonitorItem
-      icon="ph:code"
-      item-class="action-item html-viewer-item"
-      title="HTML展示"
-      @click="handleOpenHtmlViewer"
-    />
-
-    <MonitorItem
       icon="ph:grid-four"
       item-class="action-item feature-drawer-item"
       title="功能列表"
@@ -113,14 +99,6 @@ const {
 
 const handleOpenPasswordVault = () => {
   showPasswordVault()
-}
-
-const handleOpenVideoManager = () => {
-  emitCustomEvent("openVideoManager")
-}
-
-const handleOpenHtmlViewer = () => {
-  emitCustomEvent("openHtmlViewer")
 }
 
 const showFeatureDrawer = ref(false)

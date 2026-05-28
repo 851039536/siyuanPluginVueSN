@@ -117,8 +117,7 @@ export class HtmlViewerStorage {
    * 加载分类
    */
   async loadCategories(): Promise<HtmlCategory[]> {
-    const data = await this.categories.loadOrDefault()
-    return data || DEFAULT_CATEGORIES
+    return this.categories.loadOrDefault()
   }
 
   /**

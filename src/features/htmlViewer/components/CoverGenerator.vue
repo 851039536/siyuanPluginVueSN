@@ -291,6 +291,8 @@ const emit = defineEmits<{
   (e: "generated", html: string): void
 }>()
 
+const plugin = usePlugin()
+
 const {
   coverHtml,
   generationStatus,
@@ -315,7 +317,6 @@ async function aiExtractKeywords() {
   if (!contentText.value.trim() || aiExtracting.value) return
   aiExtracting.value = true
   try {
-    const plugin = usePlugin()
     const apiConfig = getApiConfigFromPlugin(plugin)
     const prompt = `从以下文章内容中提取 3-8 个核心关键字，以空格分隔，只返回关键字不要解释：\n\n${contentText.value.slice(0, 3000)}`
     const result = await callAI(prompt, apiConfig)
@@ -484,15 +485,16 @@ async function captureCoverCanvas(): Promise<HTMLCanvasElement | null> {
 
 // 复制为图片
 async function copyCoverAsImage() {
+  let canvas: HTMLCanvasElement | null = null
   try {
-    const canvas = await captureCoverCanvas()
+    canvas = await captureCoverCanvas()
     if (!canvas) {
       showMessage("没有可复制的内容", 2000, "info")
       return
     }
 
     const blob = await new Promise<Blob>((resolve, reject) => {
-      canvas.toBlob((b) => {
+      canvas!.toBlob((b) => {
         if (b) resolve(b)
         else reject(new Error("Canvas toBlob 失败"))
       }, "image/png")
@@ -505,17 +507,14 @@ async function copyCoverAsImage() {
     showMessage("封面已复制为图片", 2000, "info")
   } catch (error) {
     console.error("复制封面为图片失败:", error)
-    // 兜底：下载图片
-    try {
-      const canvas = await captureCoverCanvas()
-      if (canvas) {
-        const link = document.createElement("a")
-        link.download = `cover-${config.value.width}x${config.value.height}-${Date.now()}.png`
-        link.href = canvas.toDataURL("image/png")
-        link.click()
-        showMessage("已下载为图片（剪贴板不可用）", 2000, "info")
-      }
-    } catch {
+    // 兜底：下载图片（复用已捕获的 canvas）
+    if (canvas) {
+      const link = document.createElement("a")
+      link.download = `cover-${config.value.width}x${config.value.height}-${Date.now()}.png`
+      link.href = canvas.toDataURL("image/png")
+      link.click()
+      showMessage("已下载为图片（剪贴板不可用）", 2000, "info")
+    } else {
       showMessage("复制失败", 2000, "error")
     }
   }

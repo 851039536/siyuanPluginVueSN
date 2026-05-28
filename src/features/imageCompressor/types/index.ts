@@ -1,12 +1,3 @@
-import { Plugin } from "siyuan"
-import {
-  createApp,
-  h,
-  ref,
-} from "vue"
-import { emitCustomEvent } from "@/utils/eventBus"
-import ImageCompressorPanel from "../index.vue"
-
 export interface ImageInfo {
   path: string
   name: string
@@ -60,79 +51,44 @@ export interface CompressProgress {
   failed?: number
 }
 
-export class ImageCompressorManager {
-  private plugin: Plugin
-
-  constructor(plugin: Plugin) {
-    this.plugin = plugin
-  }
-
-  public init() {
-    this.addDock()
-    this.addCommand()
-  }
-
-  private addDock() {
-    const self = this
-    const visible = ref(false)
-
-    this.plugin.addDock({
-      config: {
-        position: "RightTop",
-        size: {
-          width: 400,
-          height: 0,
-        },
-        icon: "iconImage",
-        title: "图片压缩",
-        show: false,
-      },
-      data: {},
-      type: "image-compressor-dock",
-      init: (dock: any) => {
-        const container = document.createElement("div")
-        container.style.height = "100%"
-        container.style.overflow = "hidden"
-
-        const app = createApp({
-          setup() {
-            return () =>
-              h(ImageCompressorPanel, {
-                visible: visible.value,
-                i18n: self.plugin.i18n,
-                plugin: self.plugin,
-                onClose: () => {
-                  visible.value = false
-                },
-              })
-          },
-        })
-
-        app.mount(container)
-        dock.element?.appendChild(container)
-
-        dock.__app = app
-        dock.__container = container
-        dock.__visible = visible
-      },
-    })
-  }
-
-  private addCommand() {
-    this.plugin.addCommand({
-      langKey: "openImageCompressor",
-      hotkey: "⌃⌥C",
-      callback: () => {
-        this.openImageCompressor()
-      },
-    })
-  }
-
-  private openImageCompressor() {
-    emitCustomEvent("openImageCompressor")
-  }
-
-  public destroy() {}
+export interface ImageCompressorI18n {
+  title: string
+  scanImages: string
+  scanning: string
+  foundImages: string
+  selectAll: string
+  deselectAll: string
+  compress: string
+  compressing: string
+  replace: string
+  replacing: string
+  quality: string
+  maxSize: string
+  maxDimension: string
+  statistics: string
+  totalImages: string
+  successCount: string
+  failedCount: string
+  compressionRatio: string
+  totalSaved: string
+  cancel: string
+  firstPage: string
+  prevPage: string
+  nextPage: string
+  lastPage: string
+  loadingImage: string
+  metaDimensions: string
+  metaFileSize: string
+  startScan: string
+  clearResults: string
+  qualityHint: string
+  maxSizeHint: string
+  maxDimensionHint: string
+  webWorkerLabel: string
+  webWorkerHint: string
+  selectedImagesLabel: string
+  estimatedTimeLabel: string
+  second: string
+  minute: string
+  [key: string]: string
 }
-
-

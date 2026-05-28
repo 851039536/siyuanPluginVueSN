@@ -142,24 +142,6 @@ export async function batchReplaceImages(
   }
 }
 
-export async function backupImage(imagePath: string): Promise<boolean> {
-  try {
-    const fileData = await getFile(imagePath)
-
-    if (!fileData || !(fileData instanceof Blob)) {
-      return false
-    }
-
-    const backupPath = imagePath.replace(/(\.[^.]+)$/, ".backup$1")
-
-    await putFile(backupPath, false, fileData)
-    return true
-  } catch (error) {
-    console.error(`备份图片失败 ${imagePath}:`, error)
-    return false
-  }
-}
-
 export function getCompressStats(results: CompressResult[]) {
   const stats = {
     total: results.length,

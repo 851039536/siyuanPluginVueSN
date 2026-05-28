@@ -188,6 +188,14 @@ onMounted(() => {
     }
   })
 
+  // 监听打开书签标记设置事件
+  window.addEventListener("openBookmarkMarker", () => {
+    const pluginInstance = plugin as any
+    if (pluginInstance.__bookmarkMarker) {
+      pluginInstance.__bookmarkMarker.open()
+    }
+  })
+
   // 监听打开HTML展示事件
   window.addEventListener("openHtmlViewer", ((event: any) => {
     htmlViewerVisible.value = true

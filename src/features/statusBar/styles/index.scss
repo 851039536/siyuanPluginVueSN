@@ -99,6 +99,10 @@
   .skills-viewer-item {
     color: var(--b3-theme-warning);
   }
+
+  .format-assistant-item {
+    color: #07c160;
+  }
 }
 
 // 响应式调整
@@ -230,21 +234,18 @@
     background: transparent;
     color: var(--b3-theme-on-surface);
     cursor: pointer;
-    opacity: 0;
+    opacity: 0.35;
     flex-shrink: 0;
 
-    .feature-drawer-item:hover & {
-      opacity: 0.5;
-    }
-
     &:hover {
-      opacity: 1 !important;
+      opacity: 1;
       background: var(--b3-theme-surface-lighter);
     }
 
     &.pinned {
       opacity: 1;
       color: var(--b3-theme-primary);
+      background: var(--b3-theme-primary-lightest);
     }
   }
 

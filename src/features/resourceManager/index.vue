@@ -100,46 +100,66 @@
           class="rm-asset-list"
         >
           <li
-            v-for="path in imageAssets"
-            :key="path"
+            v-for="asset in imageAssets"
+            :key="asset.path"
             class="rm-asset-item"
           >
             <div class="rm-asset-item__info">
               <div
                 class="rm-asset-item__name"
-                :title="path"
+                :title="asset.path"
               >
-                {{ path }}
+                {{ asset.path }}
+              </div>
+              <div
+                v-if="asset.docNames.length > 0"
+                class="rm-asset-item__docs"
+              >
+                <span class="rm-asset-item__docs-label">{{ i18n.referencingDocs }}:</span>
+                <span class="rm-asset-item__docs-list">{{ asset.docNames.join("、") }}</span>
+              </div>
+              <div
+                v-else
+                class="rm-asset-item__docs rm-asset-item__docs--empty"
+              >
+                {{ i18n.noReferencingDocs }}
               </div>
             </div>
             <div class="rm-asset-item__actions">
               <button
                 class="rm-btn small"
-                @click="copyPathToClipboard(path)"
+                @click="copyPathToClipboard(asset.path)"
               >
                 {{ i18n.copyPath }}
               </button>
               <button
                 class="rm-btn small"
-                @click="startMoveAsset(path)"
+                @click="startMoveAsset(asset.path)"
               >
                 {{ i18n.moveAsset }}
               </button>
               <button
+                v-if="asset.docIds.length > 0"
+                class="rm-btn small"
+                @click="locateDoc(asset)"
+              >
+                {{ i18n.locateDoc }}
+              </button>
+              <button
                 class="rm-btn small danger"
-                @click="handleDeleteAsset(path)"
+                @click="handleDeleteAsset(asset.path)"
               >
                 {{ i18n.deleteAsset }}
               </button>
             </div>
             <!-- 移动表单 -->
             <div
-              v-if="movingAsset === path"
+              v-if="movingAsset === asset.path"
               class="rm-move-form"
             >
               <div class="rm-move-form__row">
                 <span class="rm-move-form__label">{{ i18n.currentPath }}:</span>
-                <span class="rm-move-form__path">{{ path }}</span>
+                <span class="rm-move-form__path">{{ asset.path }}</span>
               </div>
               <div class="rm-move-form__row">
                 <span class="rm-move-form__label">{{ i18n.newPath }}:</span>
@@ -147,7 +167,7 @@
                   v-model="moveNewPath"
                   class="rm-move-form__input"
                   :placeholder="i18n.movePathPlaceholder"
-                  @keyup.enter="handleMoveAsset(path)"
+                  @keyup.enter="handleMoveAsset(asset.path)"
                 />
               </div>
               <div class="rm-move-form__row">
@@ -157,7 +177,7 @@
                     v-for="cat in quickCategories"
                     :key="cat.key"
                     class="rm-btn small"
-                    @click="applyCategory(path, cat.key)"
+                    @click="applyCategory(asset.path, cat.key)"
                   >
                     {{ cat.label }}
                   </button>
@@ -167,7 +187,7 @@
                 <button
                   class="rm-btn small primary"
                   :disabled="!moveNewPath"
-                  @click="handleMoveAsset(path)"
+                  @click="handleMoveAsset(asset.path)"
                 >
                   {{ i18n.confirmMove }}
                 </button>
@@ -410,7 +430,10 @@ import type {
   IProtyle,
   Plugin,
 } from "siyuan"
-import type { ResourceManagerI18n } from "./types"
+import type {
+  ImageAssetInfo,
+  ResourceManagerI18n,
+} from "./types"
 import { showMessage } from "siyuan"
 import {
   computed,
@@ -444,7 +467,7 @@ const props = defineProps<Props>()
 
 const activeTab = ref("imageAssets")
 const loading = ref(false)
-const imageAssets = ref<string[]>([])
+const imageAssets = ref<ImageAssetInfo[]>([])
 const missingAssets = ref<string[]>([])
 const unusedAssets = ref<string[]>([])
 
@@ -714,8 +737,17 @@ async function loadImageAssets() {
       showMsg(props.i18n.docIdRequired || "请输入文档 ID")
       return
     }
-    const result = await getDocImageAssets(specifiedDocId.value.trim())
-    imageAssets.value = result || []
+    const paths = await getDocImageAssets(specifiedDocId.value.trim())
+    const pathList = paths || []
+    const docMap = await loadDocNamesForImages(pathList)
+    imageAssets.value = pathList.map((path) => {
+      const info = docMap.get(path)
+      return {
+        path,
+        docNames: info?.docNames || [],
+        docIds: info?.docIds || [],
+      }
+    })
   }
 }
 
@@ -728,8 +760,66 @@ async function loadCurrentDocImageAssets() {
     showMsg("无法获取当前文档 ID")
     return
   }
-  const result = await getDocImageAssets(docId)
-  imageAssets.value = result || []
+  const paths = await getDocImageAssets(docId)
+  const pathList = paths || []
+  const docMap = await loadDocNamesForImages(pathList)
+  imageAssets.value = pathList.map((path) => {
+    const info = docMap.get(path)
+    return {
+      path,
+      docNames: info?.docNames || [],
+      docIds: info?.docIds || [],
+    }
+  })
+}
+
+/**
+ * 批量查询图片资产的关联文档名称
+ * 使用受控并发（5 个一批）避免同时发送过多 SQL 请求
+ */
+async function loadDocNamesForImages(
+  paths: string[],
+): Promise<Map<string, { docNames: string[], docIds: string[] }>> {
+  const result = new Map<string, { docNames: string[], docIds: string[] }>()
+  const CONCURRENCY = 5
+
+  for (let i = 0; i < paths.length; i += CONCURRENCY) {
+    const batch = paths.slice(i, i + CONCURRENCY)
+    const batchResults = await Promise.all(batch.map(async (path) => {
+      const fileName = path.split("/").pop() || path
+      try {
+        const rows = await sql(
+          `SELECT DISTINCT b2.id, b2.content
+           FROM blocks b1
+           JOIN blocks b2 ON b1.root_id = b2.id
+           WHERE b2.type = 'd'
+           AND b1.markdown LIKE '%${fileName}%'
+           LIMIT 10`,
+        ) as { id: string, content: string }[]
+        const docNames = (rows || []).map((r) => r.content || "(无标题)")
+        const docIds = (rows || []).map((r) => r.id)
+        return {
+          path,
+          docNames,
+          docIds,
+        }
+      }
+      catch {
+        return {
+          path,
+          docNames: [] as string[],
+          docIds: [] as string[],
+        }
+      }
+    }))
+    for (const item of batchResults) {
+      result.set(item.path, {
+        docNames: item.docNames,
+        docIds: item.docIds,
+      })
+    }
+  }
+  return result
 }
 
 /**
@@ -751,7 +841,18 @@ async function loadAllImageAssets() {
 
     // 合并去重
     const allPaths = [...new Set([...refImagePaths, ...unusedImagePaths])].sort()
-    imageAssets.value = allPaths
+
+    // 批量查询关联文档
+    const docMap = await loadDocNamesForImages(allPaths)
+
+    imageAssets.value = allPaths.map((path) => {
+      const info = docMap.get(path)
+      return {
+        path,
+        docNames: info?.docNames || [],
+        docIds: info?.docIds || [],
+      }
+    })
   }
   catch (e: unknown) {
     console.error("加载全部图片资源失败:", e)
@@ -851,6 +952,15 @@ function applyCategory(currentPath: string, category: string) {
 }
 
 /**
+ * 定位到图片所在的文档
+ */
+function locateDoc(asset: ImageAssetInfo) {
+  if (asset.docIds.length > 0) {
+    window.open(`siyuan://blocks/${asset.docIds[0]}`)
+  }
+}
+
+/**
  * 确认移动资源（使用 renameAsset API，会自动更新所有引用）
  */
 async function handleMoveAsset(oldPath: string) {
@@ -861,6 +971,11 @@ async function handleMoveAsset(oldPath: string) {
   }
   try {
     await renameAsset(oldPath, newPath)
+    // 重建资产索引确保引用完全更新
+    try {
+      await fullReindexAssetContent()
+    }
+    catch { /* 索引重建失败不影响移动结果 */ }
     showMsg(props.i18n.moveSuccess)
     cancelMove()
     await refresh()

@@ -155,6 +155,26 @@
       line-height: 1.35;
     }
 
+    &__docs {
+      margin-top: 3px;
+      font-size: 11px;
+      color: var(--b3-theme-on-surface-light);
+      @include text-ellipsis;
+
+      &--empty {
+        font-style: italic;
+        opacity: 0.5;
+      }
+    }
+
+    &__docs-label {
+      font-weight: $font-weight-medium;
+    }
+
+    &__docs-list {
+      color: var(--b3-theme-on-surface);
+    }
+
     &__meta {
       color: var(--b3-theme-on-surface-light);
       font-size: 11px;

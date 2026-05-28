@@ -104,7 +104,9 @@
       "Bash(claude:*)",
       "WebFetch(domain:deepwiki.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "WebFetch(domain:liuyun.io)"
+      "WebFetch(domain:liuyun.io)",
+      "Bash(gh repo *)",
+      "WebFetch(domain:ld246.com)"
     ],
     "deny": [],
     "ask": []

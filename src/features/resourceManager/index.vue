@@ -310,42 +310,6 @@
         </ul>
       </div>
 
-      <!-- 重命名资源 -->
-      <div
-        v-if="activeTab === 'renameAsset'"
-        class="rm-section"
-      >
-        <div class="rm-section__title">
-          {{ i18n.renameAsset }}
-        </div>
-        <div class="rm-input-row">
-          <label>{{ i18n.assetPath }}:</label>
-          <input
-            v-model="renameForm.oldPath"
-            placeholder="assets/xxx.png"
-          />
-        </div>
-        <div class="rm-input-row">
-          <label>{{ i18n.newPath }}:</label>
-          <input
-            v-model="renameForm.newPath"
-            placeholder="assets/yyy.png"
-          />
-        </div>
-        <button
-          class="rm-btn primary"
-          @click="handleRenameAsset"
-        >
-          {{ i18n.renameAsset }}
-        </button>
-        <div
-          v-if="renameResult"
-          class="rm-result"
-        >
-          {{ renameResult }}
-        </div>
-      </div>
-
       <!-- 上传本地资源 -->
       <div
         v-if="activeTab === 'insertLocalAssets'"
@@ -448,7 +412,6 @@ import type {
   ResourceManagerI18n,
 } from "./types"
 import {
-  fetchSyncPost,
   showMessage,
 } from "siyuan"
 import {
@@ -463,12 +426,13 @@ import {
   fullReindexAssetContent,
   getBlockByID,
   getDocImageAssets,
-  getFile,
   getMissingAssets,
   getUnusedAssets,
+  putFile,
+  removeFile,
   removeUnusedAsset,
   removeUnusedAssets,
-  renameAsset,
+  renameFile,
   resolveAssetPath,
   sql,
   updateBlock,
@@ -512,13 +476,6 @@ const quickCategories = computed(() => [
   },
 ])
 
-// 重命名表单
-const renameForm = ref({
-  oldPath: "",
-  newPath: "",
-})
-const renameResult = ref("")
-
 // 插入资源表单
 const insertForm = ref({
   targetId: "",
@@ -545,10 +502,6 @@ const tabs = [
   {
     key: "unusedAssets",
     label: props.i18n.unusedAssets || "未使用资源",
-  },
-  {
-    key: "renameAsset",
-    label: props.i18n.renameAsset || "重命名",
   },
   {
     key: "insertLocalAssets",
@@ -744,29 +697,14 @@ async function loadImageAssets() {
       showMsg(props.i18n.docIdRequired || "请输入文档 ID")
       return
     }
-    const paths = await getDocImageAssets(specifiedDocId.value.trim())
-    const pathList = paths || []
-    const docMap = await loadDocNamesForImages(pathList)
-    imageAssets.value = pathList.map((path) => {
-      const info = docMap.get(path)
-      return {
-        path,
-        docNames: info?.docNames || [],
-        docIds: info?.docIds || [],
-      }
-    })
+    await loadDocImageAssets(specifiedDocId.value.trim())
   }
 }
 
 /**
- * 加载当前文档的图片资源
+ * 加载指定文档的图片资源（供 currentDoc / specifiedDoc 模式共用）
  */
-async function loadCurrentDocImageAssets() {
-  const docId = await getCurrentDocId()
-  if (!docId) {
-    showMsg("无法获取当前文档 ID")
-    return
-  }
+async function loadDocImageAssets(docId: string) {
   const paths = await getDocImageAssets(docId)
   const pathList = paths || []
   const docMap = await loadDocNamesForImages(pathList)
@@ -778,6 +716,18 @@ async function loadCurrentDocImageAssets() {
       docIds: info?.docIds || [],
     }
   })
+}
+
+/**
+ * 加载当前文档的图片资源
+ */
+async function loadCurrentDocImageAssets() {
+  const docId = await getCurrentDocId()
+  if (!docId) {
+    showMsg("无法获取当前文档 ID")
+    return
+  }
+  await loadDocImageAssets(docId)
 }
 
 /**
@@ -902,36 +852,34 @@ async function handleDeleteAllUnused() {
 }
 
 /**
- * 删除当前文档中的资源文件
- * @param path 资源相对路径（如 assets/xxx.png）
- *
- * 注意：imageAssets 页签中的资源均被文档引用，
- * removeUnusedAsset 仅处理无引用的资源，
- * 对于有引用的资源会失败，请先移除文档中的引用。
+ * 删除资源文件
+ * 对于有引用的资源，需先物理删除文件 + 重建索引使其变为丢失状态
+ * 对于无引用的资源，直接使用 removeUnusedAsset
  */
 async function handleDeleteAsset(path: string) {
   const isReferenced = activeTab.value === "imageAssets"
-  const warning = isReferenced
-    ? "\n\n⚠️ 警告：该资源当前被文档引用，删除后文档中将出现断链！"
-    : ""
-  if (!confirm(`${props.i18n.deleteAssetConfirm} ${path}?${warning}`)) return
-  try {
-    await removeUnusedAsset(path)
-    showMsg(props.i18n.deleteSuccess)
+  if (isReferenced) {
+    if (!confirm(`${props.i18n.deleteAssetConfirm} ${path}?\n\n⚠️ 警告：该资源当前被文档引用，删除后文档中将出现断链！`)) return
+    try {
+      await removeFile(`/data/${path}`)
+      try { await fullReindexAssetContent() } catch { /* ignore */ }
+      showMsg(props.i18n.deleteSuccess)
+    }
+    catch {
+      showMsg(`${props.i18n.deleteFailed}（文件删除失败）`)
+    }
   }
-  catch {
-    const msg = isReferenced
-      ? `${props.i18n.deleteFailed}（资源被引用时无法直接删除，请先移除文档中的引用）`
-      : props.i18n.deleteFailed
-    showMsg(msg)
+  else {
+    if (!confirm(`${props.i18n.deleteConfirm} ${path}?`)) return
+    try {
+      await removeUnusedAsset(path)
+      showMsg(props.i18n.deleteSuccess)
+    }
+    catch {
+      showMsg(props.i18n.deleteFailed)
+    }
   }
-  // 刷新当前页签数据
-  if (activeTab.value === "imageAssets") {
-    await loadImageAssets()
-  }
-  else if (activeTab.value === "unusedAssets") {
-    await loadUnusedAssets()
-  }
+  await refresh()
 }
 
 /**
@@ -978,8 +926,11 @@ function locateDoc(asset: ImageAssetInfo) {
 
 /**
  * 确认移动资源
- * 使用 upload API（资产上传接口，已验证支持 FormData）copy 文件，
- * 再更新文档引用，最后清理旧文件
+ * renameAsset 不做物理移动也不更新文档内容，因此需要：
+ * 1. 确保目标子目录存在（如 assets/csharp/）
+ * 2. renameFile 物理移动文件（路径格式 /data/assets/...）
+ * 3. 手动更新所有文档引用（SQL 查询 + updateBlock）
+ * 4. 重建资产索引
  */
 async function handleMoveAsset(oldPath: string) {
   const newPath = moveNewPath.value.trim()
@@ -988,35 +939,19 @@ async function handleMoveAsset(oldPath: string) {
     return
   }
   try {
-    // 1. 读取原文件
-    const fileData = await getFile(oldPath)
-    if (!fileData || !(fileData instanceof Blob) || fileData.size === 0) {
-      throw new Error("读取源文件失败")
+    // 1. 确保目标子目录存在
+    const dirPart = newPath.substring(0, newPath.lastIndexOf("/"))
+    if (dirPart && dirPart !== "assets") {
+      try {
+        await putFile(`/data/${dirPart}`, true, new File([], ""))
+      }
+      catch { /* 目录可能已存在，忽略 */ }
     }
 
-    // 2. 通过资产上传 API 写入目标目录
-    const targetDir = newPath.substring(0, newPath.lastIndexOf("/"))
-    const fileName = newPath.split("/").pop() || "file"
-    const fileObj = new File([fileData], fileName, { type: fileData.type || "image/png" })
+    // 2. 物理移动文件（路径需要 /data/ 前缀）
+    await renameFile(`/data/${oldPath}`, `/data/${newPath}`)
 
-    const uploadForm = new FormData()
-    uploadForm.append("assetsDirPath", targetDir)
-    uploadForm.append("file[]", fileObj)
-    const uploadResp = await fetchSyncPost("/api/asset/upload", uploadForm)
-
-    if (uploadResp.code !== 0 || !uploadResp.data) {
-      throw new Error(`上传失败: ${uploadResp.msg || `code ${uploadResp.code}`}`)
-    }
-
-    const succMap = (uploadResp.data as { succMap?: Record<string, string>, errFiles?: string[] }).succMap || {}
-    const errFiles = (uploadResp.data as { errFiles?: string[] }).errFiles || []
-    const actualNewPath = succMap[fileName]
-
-    if (errFiles.includes(fileName) || !actualNewPath) {
-      throw new Error("文件上传失败，目标目录可能不支持")
-    }
-
-    // 3. 更新文档引用（用上传返回的实际路径）
+    // 3. 更新所有文档引用
     const blocks = await sql(
       `SELECT id, markdown FROM blocks WHERE markdown LIKE '%${oldPath}%'`,
     ) as { id: string, markdown: string }[]
@@ -1024,7 +959,7 @@ async function handleMoveAsset(oldPath: string) {
     let updatedCount = 0
     for (const block of blocks) {
       try {
-        const newMarkdown = block.markdown.split(oldPath).join(actualNewPath)
+        const newMarkdown = block.markdown.split(oldPath).join(newPath)
         if (newMarkdown !== block.markdown) {
           await updateBlock("markdown", newMarkdown, block.id)
           updatedCount++
@@ -1033,28 +968,16 @@ async function handleMoveAsset(oldPath: string) {
       catch { /* skip single block failure */ }
     }
 
-    // 4. 删除旧文件（优先 removeUnusedAsset，它能清理资产数据库）
-    try {
-      await removeUnusedAsset(oldPath)
-    }
-    catch {
-      try {
-        // 兜底：用内核 renameFile 把旧路径的文件 "覆盖" 到新路径（将触发删除）
-        await renameAsset(oldPath, actualNewPath)
-      }
-      catch { /* 忽略清理失败 */ }
-    }
-
-    // 5. 重建资产索引
+    // 4. 重建资产索引，让资产数据库同步
     try {
       await fullReindexAssetContent()
     }
-    catch { /* skip */ }
+    catch { /* ignore */ }
 
     showMsg(
       updatedCount > 0
-        ? `${props.i18n.moveSuccess}（已更新 ${updatedCount} 处引用，新路径: ${actualNewPath}）`
-        : `${props.i18n.moveSuccess}（新路径: ${actualNewPath}）`,
+        ? `${props.i18n.moveSuccess}（已更新 ${updatedCount} 处引用，新路径: ${newPath}）`
+        : `${props.i18n.moveSuccess}（新路径: ${newPath}）`,
     )
     cancelMove()
     await refresh()
@@ -1062,19 +985,6 @@ async function handleMoveAsset(oldPath: string) {
   catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e)
     showMsg(`${props.i18n.moveFailed}: ${msg}`)
-  }
-}
-
-async function handleRenameAsset() {
-  if (!renameForm.value.oldPath || !renameForm.value.newPath) return
-  try {
-    await renameAsset(renameForm.value.oldPath, renameForm.value.newPath)
-    renameResult.value = props.i18n.renameSuccess
-    showMsg(props.i18n.renameSuccess)
-  }
-  catch {
-    renameResult.value = props.i18n.renameFailed
-    showMsg(props.i18n.renameFailed)
   }
 }
 

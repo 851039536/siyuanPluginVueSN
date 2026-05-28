@@ -73,7 +73,7 @@
               :disabled="currentPage === 1"
               @click="currentPage = 1"
             >
-              首页
+              {{ i18n.firstPage || "首页" }}
             </SiButton>
             <SiButton
               variant="ghost"
@@ -81,7 +81,7 @@
               :disabled="currentPage === 1"
               @click="currentPage--"
             >
-              上一页
+              {{ i18n.prevPage || "上一页" }}
             </SiButton>
             <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
             <SiButton
@@ -90,7 +90,7 @@
               :disabled="currentPage === totalPages"
               @click="currentPage++"
             >
-              下一页
+              {{ i18n.nextPage || "下一页" }}
             </SiButton>
             <SiButton
               variant="ghost"
@@ -98,7 +98,7 @@
               :disabled="currentPage === totalPages"
               @click="currentPage = totalPages"
             >
-              末页
+              {{ i18n.lastPage || "末页" }}
             </SiButton>
             <SiSelect
               :options="pageSizeOptions"
@@ -181,7 +181,7 @@
               class="image-placeholder"
             >
               <svg class="icon"><use xlink:href="#iconImage"></use></svg>
-              <p>加载中...</p>
+              <p>{{ i18n.loadingImage || "加载中..." }}</p>
             </div>
             <div class="preview-hint">
               <svg class="icon"><use xlink:href="#iconEye"></use></svg>
@@ -218,12 +218,12 @@
             </div>
             <div class="image-meta">
               <div class="meta-row">
-                <span class="meta-label">尺寸:</span>
+                <span class="meta-label">{{ i18n.metaDimensions || "尺寸:" }}</span>
                 <span v-if="image.width && image.height">{{ image.width }} × {{ image.height }}</span>
                 <span v-else>-</span>
               </div>
               <div class="meta-row">
-                <span class="meta-label">大小:</span>
+                <span class="meta-label">{{ i18n.metaFileSize || "大小:" }}</span>
                 <span class="meta-value">{{ formatFileSize(image.size) }}</span>
               </div>
             </div>
@@ -244,7 +244,7 @@
         <svg class="empty-icon"><use xlink:href="#iconImage"></use></svg>
         <p>{{ i18n.scanImages }}</p>
         <SiButton @click="onScanImages">
-          开始扫描
+          {{ i18n.startScan || "开始扫描" }}
         </SiButton>
       </div>
 
@@ -259,7 +259,7 @@
             size="small"
             @click="compressResults = []"
           >
-            清除结果
+            {{ i18n.clearResults || "清除结果" }}
           </SiButton>
         </div>
         <div class="results-stats">
@@ -308,8 +308,8 @@
           <div class="preview-title">
             <h3>{{ previewImageData.name }}</h3>
             <div class="preview-meta">
-              <span>尺寸: {{ previewImageData.width }} × {{ previewImageData.height }}</span>
-              <span>大小: {{ formatFileSize(previewImageData.size) }}</span>
+              <span>{{ i18n.metaDimensions || "尺寸:" }} {{ previewImageData.width }} × {{ previewImageData.height }}</span>
+              <span>{{ i18n.metaFileSize || "大小:" }} {{ formatFileSize(previewImageData.size) }}</span>
             </div>
           </div>
           <button
@@ -343,6 +343,7 @@
 import type {
   CompressOptions,
   CompressResult,
+  ImageCompressorI18n,
   ImageInfo,
 } from "./types"
 import { showMessage } from "siyuan"
@@ -370,7 +371,7 @@ import {
 
 interface Props {
   visible: boolean
-  i18n: any
+  i18n: ImageCompressorI18n
 }
 
 const props = defineProps<Props>()

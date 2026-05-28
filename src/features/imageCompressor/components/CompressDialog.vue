@@ -27,7 +27,7 @@
             :step="0.1"
             :show-value="true"
             :format-value="formatQuality"
-            hint="建议: 80% 可获得良好的压缩率和质量平衡"
+            :hint="i18n.qualityHint || '建议: 80% 可获得良好的压缩率和质量平衡'"
             @update:model-value="(v) => { if (v !== null) options.quality = v }"
           />
         </div>
@@ -41,7 +41,7 @@
             :step="0.1"
             :show-value="true"
             :format-value="formatMaxSize"
-            hint="超过此大小的图片将被压缩"
+            :hint="i18n.maxSizeHint || '超过此大小的图片将被压缩'"
             @update:model-value="(v) => { if (v !== null) options.maxSizeMB = v }"
           />
         </div>
@@ -55,7 +55,7 @@
             :step="100"
             :show-value="true"
             :format-value="formatMaxDimension"
-            hint="超过此尺寸的图片将被等比缩放"
+            :hint="i18n.maxDimensionHint || '超过此尺寸的图片将被等比缩放'"
             @update:model-value="(v) => { if (v !== null) options.maxWidthOrHeight = v }"
           />
         </div>
@@ -63,10 +63,10 @@
         <div class="setting-item">
           <SiSwitch
             v-model="options.useWebWorker"
-            label="使用 Web Worker (推荐)"
+            :label="i18n.webWorkerLabel || '使用 Web Worker (推荐)'"
           />
           <div class="hint-text">
-            在后台线程处理，不阻塞界面
+            {{ i18n.webWorkerHint || "在后台线程处理，不阻塞界面" }}
           </div>
         </div>
 
@@ -75,11 +75,11 @@
           class="statistics-preview"
         >
           <div class="stat-row">
-            <span>已选择图片:</span>
+            <span>{{ i18n.selectedImagesLabel || "已选择图片:" }}</span>
             <span class="stat-value">{{ selectedCount }} 张</span>
           </div>
           <div class="stat-row">
-            <span>预计压缩时间:</span>
+            <span>{{ i18n.estimatedTimeLabel || "预计压缩时间:" }}</span>
             <span class="stat-value">{{ estimatedTime }}</span>
           </div>
         </div>
@@ -101,7 +101,10 @@
 </template>
 
 <script setup lang="ts">
-import type { CompressOptions } from "../types"
+import type {
+  CompressOptions,
+  ImageCompressorI18n,
+} from "../types"
 import {
   computed,
   ref,
@@ -112,7 +115,7 @@ import SiSwitch from "@/components/Switch.vue"
 import { DEFAULT_COMPRESS_OPTIONS } from "../services/compressor"
 
 interface Props {
-  i18n: any
+  i18n: ImageCompressorI18n
   selectedCount: number
 }
 
@@ -129,11 +132,13 @@ const options = ref<CompressOptions>({
 })
 
 const estimatedTime = computed(() => {
-  if (props.selectedCount === 0) return "0秒"
+  const s = props.i18n.second || "秒"
+  const m = props.i18n.minute || "分钟"
+  if (props.selectedCount === 0) return `0${s}`
   const seconds = props.selectedCount * 1.5
-  if (seconds < 60) return `约 ${Math.ceil(seconds)} 秒`
+  if (seconds < 60) return `约 ${Math.ceil(seconds)} ${s}`
   const minutes = Math.ceil(seconds / 60)
-  return `约 ${minutes} 分钟`
+  return `约 ${minutes} ${m}`
 })
 
 const formatQuality = (value: number): string => {

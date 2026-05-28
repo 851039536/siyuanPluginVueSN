@@ -63,7 +63,7 @@
           :class="{ 'grid-mode': gridMode }"
         >
           <div
-            v-for="item in featureList"
+            v-for="item in items"
             :key="item.id"
             class="feature-drawer-item"
             @click="handleClick(item.id)"
@@ -78,6 +78,18 @@
               />
             </div>
             <span class="feature-drawer-item-title">{{ item.title }}</span>
+            <button
+              v-if="item.pinnable"
+              class="feature-drawer-item-pin"
+              :class="{ pinned: statusBarVisible.includes(item.id) }"
+              :title="statusBarVisible.includes(item.id) ? '取消固定' : '固定到状态栏'"
+              @click.stop="emit('toggleStatusBar', item.id)"
+            >
+              <Icon
+                :icon="statusBarVisible.includes(item.id) ? 'mdi:pin' : 'mdi:pin-off-outline'"
+                :width="14"
+              />
+            </button>
           </div>
         </div>
       </div>
@@ -89,59 +101,30 @@
 import { Icon } from "@iconify/vue"
 import { ref } from "vue"
 
-interface FeatureItem {
+export interface FeatureDrawerItem {
   id: string
   icon: string
   color: string
   title: string
+  pinnable: boolean
 }
 
 interface Props {
   visible: boolean
+  items: FeatureDrawerItem[]
+  statusBarVisible?: string[]
 }
 
 interface Emits {
   (e: "close"): void
   (e: "select", id: string): void
+  (e: "toggleStatusBar", id: string): void
 }
 
 defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const gridMode = ref(true)
-
-const featureList: FeatureItem[] = [
-  {
-    id: "superPanel",
-    icon: "mdi:view-dashboard",
-    color: "#3b82f6",
-    title: "超级面板",
-  },
-  {
-    id: "video",
-    icon: "mdi:video",
-    color: "#6366f1",
-    title: "视频管理器",
-  },
-  {
-    id: "passwordVault",
-    icon: "mdi:lock",
-    color: "#22c55e",
-    title: "密码箱",
-  },
-  {
-    id: "skillsViewer",
-    icon: "mdi:puzzle",
-    color: "#f59e0b",
-    title: "Skills 查看器",
-  },
-  {
-    id: "htmlViewer",
-    icon: "mdi:language-html5",
-    color: "#e67e22",
-    title: "HTML 展示",
-  },
-]
 
 const handleClick = (id: string) => {
   emit("select", id)

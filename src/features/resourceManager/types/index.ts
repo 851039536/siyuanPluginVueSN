@@ -1,3 +1,10 @@
+/** 图片资源信息 */
+export interface ImageAssetInfo {
+  path: string
+  docNames: string[]
+  docIds: string[]
+}
+
 /** 资源管理器国际化类型 */
 export interface ResourceManagerI18n {
   panelTitle: string
@@ -58,5 +65,9 @@ export interface ResourceManagerI18n {
   categoryBackgrounds: string
   categoryAvatars: string
   categoryOther: string
+  // 图片定位和关联文档
+  locateDoc: string
+  referencingDocs: string
+  noReferencingDocs: string
   [key: string]: string
 }

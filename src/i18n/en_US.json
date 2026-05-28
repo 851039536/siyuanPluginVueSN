@@ -1307,6 +1307,9 @@
     "categoryIcons": "Icons",
     "categoryBackgrounds": "Backgrounds",
     "categoryAvatars": "Avatars",
-    "categoryOther": "Other"
+    "categoryOther": "Other",
+    "locateDoc": "Locate",
+    "referencingDocs": "Referencing Docs",
+    "noReferencingDocs": "No referencing docs found"
   }
 }

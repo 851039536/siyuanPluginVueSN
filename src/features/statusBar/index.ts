@@ -1,7 +1,7 @@
 /**
  * 状态栏功能模块
  */
-import { Plugin } from "siyuan"
+import type { Plugin } from "siyuan"
 import { createApp } from "vue"
 import StatusBarPanel from "./index.vue"
 import "./styles/index.scss"
@@ -20,7 +20,7 @@ export function registerStatusBar(plugin: Plugin) {
   if (app) return // 避免重复注册
 
   const container = document.createElement("div")
-  app = createApp(StatusBarPanel)
+  app = createApp(StatusBarPanel, { plugin })
   app.mount(container)
 
   // 使用思源官方 API 将组件添加到状态栏

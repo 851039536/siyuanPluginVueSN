@@ -52,10 +52,12 @@
     </MonitorItem>
 
     <MonitorItem
-      icon="ph:lock-key"
-      item-class="action-item password-vault-item"
-      title="密码箱"
-      @click="handleOpenPasswordVault"
+      v-for="shortcut in visibleShortcuts"
+      :key="shortcut.id"
+      :icon="shortcut.icon"
+      :item-class="shortcut.itemClass"
+      :title="shortcut.title"
+      @click="shortcut.handler"
     />
 
     <MonitorItem
@@ -67,20 +69,32 @@
 
     <FeatureDrawer
       :visible="showFeatureDrawer"
+      :items="featureDrawerItems"
+      :status-bar-visible="statusBarShortcuts"
       @close="showFeatureDrawer = false"
       @select="handleSelectFeature"
+      @toggle-status-bar="handleToggleStatusBar"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue"
+import { computed, ref } from "vue"
+import type { Plugin } from "siyuan"
+import { PluginStorage } from "@/utils/pluginStorage"
 import { emitCustomEvent } from "@/utils/eventBus"
 import { showPasswordVault } from "../passwordVault/types"
 import { showSkillsViewer } from "../skillsViewer/types"
 import FeatureDrawer from "./components/FeatureDrawer.vue"
+import type { FeatureDrawerItem } from "./components/FeatureDrawer.vue"
 import MonitorItem from "./components/MonitorItem.vue"
 import { useStatusBar } from "./composables/useStatusBar"
+
+const props = defineProps<{
+  plugin: Plugin
+}>()
+
+const storage = new PluginStorage(props.plugin)
 
 const {
   state,
@@ -97,9 +111,80 @@ const {
   todayTooltip,
 } = useStatusBar()
 
-const handleOpenPasswordVault = () => {
-  showPasswordVault()
+const statusBarShortcuts = ref<string[]>([])
+
+const featureDrawerItems: FeatureDrawerItem[] = [
+  {
+    id: "superPanel",
+    icon: "mdi:view-dashboard",
+    color: "#3b82f6",
+    title: "超级面板",
+    pinnable: false,
+  },
+  {
+    id: "video",
+    icon: "mdi:video",
+    color: "#6366f1",
+    title: "视频管理器",
+    pinnable: true,
+  },
+  {
+    id: "passwordVault",
+    icon: "mdi:lock",
+    color: "#22c55e",
+    title: "密码箱",
+    pinnable: true,
+  },
+  {
+    id: "skillsViewer",
+    icon: "mdi:puzzle",
+    color: "#f59e0b",
+    title: "Skills 查看器",
+    pinnable: true,
+  },
+  {
+    id: "htmlViewer",
+    icon: "mdi:language-html5",
+    color: "#e67e22",
+    title: "HTML 展示",
+    pinnable: true,
+  },
+]
+
+interface ShortcutDisplay {
+  id: string
+  icon: string
+  title: string
+  itemClass: string
+  handler: () => void
 }
+
+const SHORTCUT_DISPLAY: Record<string, ShortcutDisplay> = {
+  passwordVault: { id: "passwordVault", icon: "ph:lock-key", title: "密码箱", itemClass: "action-item password-vault-item", handler: () => showPasswordVault() },
+  video: { id: "video", icon: "ph:video", title: "视频管理器", itemClass: "action-item video-manager-item", handler: () => emitCustomEvent("openVideoManager") },
+  htmlViewer: { id: "htmlViewer", icon: "ph:code", title: "HTML展示", itemClass: "action-item html-viewer-item", handler: () => emitCustomEvent("openHtmlViewer") },
+  skillsViewer: { id: "skillsViewer", icon: "ph:puzzle", title: "Skills查看器", itemClass: "action-item skills-viewer-item", handler: () => showSkillsViewer() },
+}
+
+const visibleShortcuts = computed(() =>
+  statusBarShortcuts.value
+    .filter(id => id in SHORTCUT_DISPLAY)
+    .map(id => SHORTCUT_DISPLAY[id]),
+)
+
+const handleToggleStatusBar = async (id: string) => {
+  const idx = statusBarShortcuts.value.indexOf(id)
+  if (idx === -1) {
+    statusBarShortcuts.value = [...statusBarShortcuts.value, id]
+  } else {
+    statusBarShortcuts.value = statusBarShortcuts.value.filter(s => s !== id)
+  }
+  await storage.save("statusBar-shortcuts", statusBarShortcuts.value)
+}
+
+storage.load<string[]>("statusBar-shortcuts").then((data) => {
+  if (data) statusBarShortcuts.value = data
+})
 
 const showFeatureDrawer = ref(false)
 
@@ -109,22 +194,12 @@ const toggleFeatureDrawer = () => {
 
 const handleSelectFeature = (id: string) => {
   showFeatureDrawer.value = false
-  switch (id) {
-    case "superPanel":
-      emitCustomEvent("toggleSuperPanel")
-      break
-    case "video":
-      emitCustomEvent("openVideoManager")
-      break
-    case "passwordVault":
-      showPasswordVault()
-      break
-    case "skillsViewer":
-      showSkillsViewer()
-      break
-    case "htmlViewer":
-      emitCustomEvent("openHtmlViewer")
-      break
+  if (id in SHORTCUT_DISPLAY) {
+    SHORTCUT_DISPLAY[id].handler()
+    return
+  }
+  if (id === "superPanel") {
+    emitCustomEvent("toggleSuperPanel")
   }
 }
 </script>

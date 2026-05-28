@@ -1,17 +1,6 @@
 /**
  * 书签标记管理器
  * 根据文档的书签内容，在文件树中对文档名称进行颜色标记
- *
- * 思源笔记中，书签存储在 attributes 表：name='bookmark', value='书签名'
- *   SELECT block_id as id, value as bookmark
- *   FROM attributes WHERE name = 'bookmark' AND block_id = root_id
- *
- * 文件树 DOM 结构：
- *   ul[data-url] → li[data-type="navigation-root"] → span.b3-list-item__text
- *                 → ul → li[data-node-id] → span.b3-list-item__text
- *
- * 文章标题 DOM 结构：
- *   .protyle-title[data-node-id] → .protyle-title__input
  */
 const BOOKMARK_MARKER_CLASS = "bookmark-marker-tag"
 const BOOKMARK_PROTYLE_CLASS = "bookmark-marker-protyle"
@@ -103,9 +92,6 @@ function clearAllRowMarkers(selector: string): void {
   document.querySelectorAll(selector).forEach((el) => clearRowStyle(el as HTMLElement))
 }
 
-/**
- * 创建书签标记 span 元素（文件树和 protyle 共用）
- */
 function createMarkerElement(
   className: string,
   bookmarkName: string,
@@ -172,11 +158,11 @@ export class BookmarkMarker {
     if (this.active) this.applyMarkers()
   }
 
-  start(): void {
+  async start(): Promise<void> {
     if (this.active) return
     this.active = true
     this.addStyles()
-    this.applyMarkers()
+    await this.applyMarkers()
     this.startAutoUpdate()
     this.startObserving()
     this.startObservingProtyle()
@@ -196,12 +182,24 @@ export class BookmarkMarker {
     this.cacheLoaded = false
   }
 
+  get isActive(): boolean {
+    return this.active
+  }
+
   setUpdateInterval(interval: number): void {
     this.options.updateInterval = interval
     if (this.updateTimer) {
       this.stopAutoUpdate()
       this.startAutoUpdate()
     }
+  }
+
+  getRules(): BookmarkRule[] {
+    return this.options.rules
+  }
+
+  getUpdateInterval(): number {
+    return this.options.updateInterval
   }
 
   // ============================================================
@@ -275,7 +273,6 @@ export class BookmarkMarker {
       return
     }
 
-    // 非 row 模式：插入 span 标签
     const existingMarker = textEl.querySelector(`.${BOOKMARK_MARKER_CLASS}`) as HTMLElement | null
     if (existingMarker?.dataset.bookmark === bookmarkName) return
     existingMarker?.remove()
@@ -369,7 +366,10 @@ export class BookmarkMarker {
       setTimeout(() => {
         if (!this.active) return
         const el = this.findFileTreeContainer()
-        if (el) this.attachObserver(el)
+        if (el) {
+          this.attachObserver(el)
+          this.applyMarkersToDOM()
+        }
       }, 3000)
       return
     }

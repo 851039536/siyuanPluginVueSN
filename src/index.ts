@@ -24,6 +24,7 @@ import {
   getStatisticsInstance,
   registerAIContentGenerator,
   registerBase64Image,
+  registerBookmarkMarker,
   registerCodeImageGenerator,
   registerDiskBrowser,
   registerDocAnalysis,
@@ -185,6 +186,11 @@ export default class PluginSample extends Plugin {
       (this as any).__themeColor.destroy()
     }
 
+    // 清理书签标记
+    if ((this as any).__bookmarkMarker) {
+      (this as any).__bookmarkMarker.destroy()
+    }
+
     // 清理统计数据资源
     getStatisticsInstance()?.destroy()
 
@@ -232,6 +238,7 @@ export default class PluginSample extends Plugin {
     if (s.enableThemeColor) {
       (this as any).__themeColor = registerThemeColor(this, s.themeColorScheme)
     }
+    if (s.enableBookmarkMarker) registerBookmarkMarker(this)
   }
 
   /**

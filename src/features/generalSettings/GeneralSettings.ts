@@ -18,7 +18,6 @@ import {
 } from "vue"
 import { emitCustomEvent } from "@/utils/eventBus"
 import GeneralSettingsPanel from "./index.vue"
-import { BookmarkMarker } from "./modules/BookmarkMarker"
 import { DocCountManager } from "./modules/DocCountManager"
 import { HighlightManager } from "./modules/HighlightManager"
 import { GeneralSettingsStorage } from "./types/storage"
@@ -39,7 +38,6 @@ export class GeneralSettings {
   private contentObserver: MutationObserver | null = null
   private docCountManager: DocCountManager | null = null
   private highlightManager: HighlightManager | null = null
-  public bookmarkMarker: BookmarkMarker | null = null
   private _cachedFontSettings: FontSettings = {
     fontFamily: "",
     fontSize: 14,
@@ -63,7 +61,6 @@ export class GeneralSettings {
     await this.applyListStyleEnhanced()
     await this.applyDocCountStyle()
     await this.applyTabPinStyle()
-    await this.applyBookmarkMarkerStyle()
     await this.applyHighlightStyle()
     this.observeContentChanges()
     await this.initAutoBackup()
@@ -467,21 +464,6 @@ export class GeneralSettings {
       }
     } catch (error) {
       console.error("应用文档数统计样式失败:", error)
-    }
-  }
-
-  public async applyBookmarkMarkerStyle() {
-    try {
-      const settings = await this.storage.bookmarkMarker.load()
-      if (settings && settings.enableBookmarkMarker) {
-        this.bookmarkMarker = new BookmarkMarker({
-          rules: settings.rules,
-          updateInterval: settings.updateInterval,
-        })
-        this.bookmarkMarker.start()
-      }
-    } catch (error) {
-      console.error("应用书签标记样式失败:", error)
     }
   }
 
@@ -976,10 +958,6 @@ export class GeneralSettings {
     if (this.highlightManager) {
       this.highlightManager.disable()
       this.highlightManager = null
-    }
-    if (this.bookmarkMarker) {
-      this.bookmarkMarker.stop()
-      this.bookmarkMarker = null
     }
   }
 }

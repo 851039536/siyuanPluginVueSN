@@ -1,7 +1,6 @@
 /**
  * 通用设置数据存储管理
  */
-import type { BookmarkRule } from "../modules/BookmarkMarker"
 import { Plugin } from "siyuan"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
@@ -152,12 +151,6 @@ export interface BackupSettings {
   cloudSyncEnabled?: boolean
 }
 
-export interface BookmarkMarkerSettings {
-  enableBookmarkMarker: boolean
-  rules: BookmarkRule[]
-  updateInterval: number
-}
-
 // ============================================================
 // 默认值
 // ============================================================
@@ -257,24 +250,6 @@ export const DEFAULT_TABPIN_SETTINGS: TabPinSettings = {
   backgroundColor: "rgba(var(--b3-theme-primary-rgb), 0.1)",
 }
 
-/** 默认书签标记设置 */
-export const DEFAULT_BOOKMARK_MARKER_SETTINGS: BookmarkMarkerSettings = {
-  enableBookmarkMarker: true,
-  rules: [
-    {
-      bookmarkNames: ["已发布"],
-      color: "#ffffff",
-      backgroundColor: "#52c41a",
-    },
-    {
-      bookmarkNames: ["待发布"],
-      color: "#ffffff",
-      backgroundColor: "#faad14",
-    },
-  ],
-  updateInterval: 3600000,
-}
-
 // ============================================================
 // 存储类
 // ============================================================
@@ -291,7 +266,6 @@ export class GeneralSettingsStorage {
   readonly listStyle: TypedStorage<ListStyleSettings>
   readonly docCount: TypedStorage<DocCountSettings>
   readonly tabPin: TypedStorage<TabPinSettings>
-  readonly bookmarkMarker: TypedStorage<BookmarkMarkerSettings>
   readonly appearance: TypedStorage<Record<string, any>>
   readonly backupHistory: TypedStorage<Record<string, any>>
   readonly cloudBackupConfig: TypedStorage<Record<string, any>>
@@ -310,7 +284,6 @@ export class GeneralSettingsStorage {
     this.listStyle = new TypedStorage(storage, "list-style-settings")
     this.docCount = new TypedStorage(storage, "doc-count-settings")
     this.tabPin = new TypedStorage(storage, "tabpin-settings", DEFAULT_TABPIN_SETTINGS)
-    this.bookmarkMarker = new TypedStorage(storage, "bookmark-marker-settings", DEFAULT_BOOKMARK_MARKER_SETTINGS)
     this.appearance = new TypedStorage(storage, "appearance-settings")
     this.backupHistory = new TypedStorage(storage, "backup-history")
     this.cloudBackupConfig = new TypedStorage(storage, "cloud-backup-config")
@@ -348,7 +321,6 @@ export class GeneralSettingsStorage {
       this.listStyle.remove(),
       this.docCount.remove(),
       this.tabPin.remove(),
-      this.bookmarkMarker.remove(),
       this.appearance.remove(),
       this.backupHistory.remove(),
       this.cloudBackupConfig.remove(),

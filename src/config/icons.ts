@@ -224,6 +224,12 @@ export const FEATURE_ICONS = {
     color: "#8b5cf6",
   },
 
+  // 书签标记
+  bookmarkMarker: {
+    icon: "mdi:bookmark-multiple",
+    color: "#10b981",
+  },
+
   // 密码箱
   passwordVault: {
     icon: "mdi:shield-key",

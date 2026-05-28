@@ -1310,6 +1310,8 @@
     "categoryOther": "Other",
     "locateDoc": "Locate",
     "referencingDocs": "Referencing Docs",
-    "noReferencingDocs": "No referencing docs found"
+    "noReferencingDocs": "No referencing docs found",
+    "customCategoryPlaceholder": "Custom",
+    "apply": "Apply"
   }
 }

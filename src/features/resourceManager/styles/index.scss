@@ -301,6 +301,21 @@
       flex-wrap: wrap;
     }
 
+    &__category-input {
+      width: 72px;
+      padding: 2px 4px;
+      border: 1px solid var(--b3-border-color);
+      border-radius: $radius-sm;
+      font-size: $font-size-xs;
+      background: var(--b3-theme-surface);
+      color: var(--b3-theme-on-surface);
+      outline: none;
+
+      &:focus {
+        border-color: $brand-primary;
+      }
+    }
+
     &__actions {
       display: flex;
       gap: 4px;

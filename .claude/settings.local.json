@@ -101,7 +101,9 @@
       "Bash(grep:*)",
       "Bash(for file in diskBrowser/index.scss wordQuery/index.scss codeImageGenerator/index.scss aiContentGenerator/index.scss passwordVault/PasswordVaultDialog.scss flashcardReading/index.scss apiReference/index.scss statistics/index.scss webDAV/index.scss)",
       "Bash(do echo \"=== Checking: $file ===\")",
-      "Bash(claude:*)"
+      "Bash(claude:*)",
+      "WebFetch(domain:deepwiki.com)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ],
     "deny": [],
     "ask": []

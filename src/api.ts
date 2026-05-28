@@ -632,9 +632,10 @@ export async function getFile(path: string): Promise<any> {
       return null
     }
 
-    // 直接返回 Blob
-    const blob = await response.blob()
-    return blob
+    // 使用 arrayBuffer 获取原始二进制，再创建 Blob
+    // Electron 环境下 response.blob() 可能返回无法正确序列化到 FormData 的伪 Blob
+    const arrayBuffer = await response.arrayBuffer()
+    return new Blob([arrayBuffer])
   } catch (error_msg) {
     console.error("getFile API error:", {
       path,
@@ -653,7 +654,13 @@ export async function putFile(path: string, isDir: boolean, file: any): Promise<
   form.append("modTime", Math.floor(Date.now() / 1000).toString())
   form.append("file", file)
   const url = "/api/file/putFile"
-  const response = await fetchSyncPost(url, form)
+  // 使用原生 fetch 而非 fetchSyncPost —— 后者可能强制 Content-Type: application/json，
+  // 导致 FormData 中的二进制文件数据在 JSON 序列化时丢失（文件仅剩 ~52 字节元数据）
+  const fetchResp = await fetch(url, {
+    method: "POST",
+    body: form,
+  })
+  const response = await fetchResp.json()
   if (response.code !== 0) {
     throw new Error(response.msg || `putFile failed (code: ${response.code})`)
   }

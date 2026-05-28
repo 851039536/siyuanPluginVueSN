@@ -230,10 +230,7 @@
                   <Select
                     v-model="saveForm.category"
                     label="分类"
-                    :options="categories.map(cat => ({
-                      value: cat.id,
-                      label: cat.name,
-                    }))"
+                    :options="categoryOptions"
                     required
                   />
                 </div>
@@ -454,10 +451,7 @@
                   <Select
                     v-model="editForm.category"
                     label="分类"
-                    :options="categories.map(cat => ({
-                      value: cat.id,
-                      label: cat.name,
-                    }))"
+                    :options="categoryOptions"
                     required
                   />
                 </div>
@@ -769,6 +763,11 @@ const contentSize = computed(() => {
 
 // 片段数量
 const snippetCount = computed(() => snippets.value.length)
+
+// 分类选项（供 Select 组件使用）
+const categoryOptions = computed(() =>
+  categories.value.map((cat) => ({ value: cat.id, label: cat.name })),
+)
 
 // 分类Map
 const categoriesMap = computed(() => {

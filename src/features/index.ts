@@ -5,6 +5,7 @@ import type { FeatureId } from "./config"
 
 export { registerAIContentGenerator } from "./aiContentGenerator"
 export { registerBase64Image } from "./base64Image"
+export { registerBookmarkMarker } from "./bookmarkMarker"
 export { registerCodeImageGenerator } from "./codeImageGenerator"
 export { registerDiskBrowser } from "./diskBrowser"
 export { registerDocAnalysis } from "./docAnalysis"
@@ -91,7 +92,7 @@ type _Registered =
   | "statusBar" | "floatingToolbar" | "floatingBox" | "textDiff"
   | "base64Image" | "flashcardReading" | "passwordVault" | "docAnalysis"
   | "formatAssistant" | "htmlViewer" | "rssReader" | "resourceManager"
-  | "skillsViewer" | "themeColor"
+  | "skillsViewer" | "themeColor" | "bookmarkMarker"
 
 // --- 编译时断言辅助 ---
 // 利用泛型接口约束 T extends true 产生 TypeScript 编译错误，无运行时开销

@@ -1,353 +1,357 @@
 <template>
-  <div class="bookmark-marker-settings">
-    <label class="setting-label">
-      <span class="label-icon">🔖</span>
-      {{ i18n?.enableBookmarkMarker || '书签标记' }}
-    </label>
-    <SiSwitch
-      v-model="enableBookmarkMarker"
-      @change="handleToggleChange"
-    />
-    <p class="toggle-description">
-      {{ i18n?.bookmarkMarkerDescription || '根据文档书签内容在文件树中显示颜色标记' }}
-    </p>
-
-    <!-- 功能说明 -->
-    <div class="feature-description">
-      <div class="description-title">
-        <span class="title-icon">💡</span>
-        {{ i18n?.featureDescription || '功能说明' }}
-      </div>
-      <ul class="description-list">
-        <li>{{ i18n?.bookmarkFeature1 || '在文件树中为有书签的文档显示颜色标签' }}</li>
-        <li>{{ i18n?.bookmarkFeature2 || '书签为空则不显示标记' }}</li>
-        <li>{{ i18n?.bookmarkFeature3 || '可自定义书签名称与对应颜色' }}</li>
-        <li>{{ i18n?.bookmarkFeature4 || '支持手机端和桌面端' }}</li>
-      </ul>
+  <div class="bookmark-marker-panel">
+    <div class="panel-header">
+      <h3 class="panel-title">🔖 {{ i18n?.title || '书签标记' }}</h3>
     </div>
 
-    <!-- 标记规则设置 -->
-    <template v-if="enableBookmarkMarker">
-      <div class="rules-settings">
-        <div class="settings-title">
-          <span class="title-icon">🏷️</span>
-          {{ i18n?.bookmarkRules || '标记规则' }}
-          <button
-            class="refresh-btn"
-            @click="handleRefresh"
+    <div class="panel-content">
+      <!-- 功能开关 -->
+      <label class="setting-label">
+        <span class="label-icon">🔖</span>
+        {{ i18n?.enableBookmarkMarker || '书签标记' }}
+      </label>
+      <SiSwitch
+        v-model="enableBookmarkMarker"
+        @change="handleToggleChange"
+      />
+      <p class="toggle-description">
+        {{ i18n?.bookmarkMarkerDescription || '根据文档书签内容在文件树中显示颜色标记' }}
+      </p>
+
+      <!-- 功能说明 -->
+      <div class="feature-description">
+        <div class="description-title">
+          <span class="title-icon">💡</span>
+          {{ i18n?.featureDescription || '功能说明' }}
+        </div>
+        <ul class="description-list">
+          <li>{{ i18n?.bookmarkFeature1 || '在文件树中为有书签的文档显示颜色标签' }}</li>
+          <li>{{ i18n?.bookmarkFeature2 || '书签为空则不显示标记' }}</li>
+          <li>{{ i18n?.bookmarkFeature3 || '可自定义书签名称与对应颜色' }}</li>
+          <li>{{ i18n?.bookmarkFeature4 || '支持手机端和桌面端' }}</li>
+        </ul>
+      </div>
+
+      <!-- 标记规则设置 -->
+      <template v-if="enableBookmarkMarker">
+        <div class="rules-settings">
+          <div class="settings-title">
+            <span class="title-icon">🏷️</span>
+            {{ i18n?.bookmarkRules || '标记规则' }}
+            <button
+              class="refresh-btn"
+              @click="handleRefresh"
+            >
+              🔄 {{ i18n?.refreshNow || '立即刷新' }}
+            </button>
+          </div>
+
+          <div
+            v-for="(rule, index) in rules"
+            :key="index"
+            class="rule-item"
           >
-            🔄 {{ i18n?.refreshNow || '立即刷新' }}
+            <div class="rule-header">
+              <span class="rule-index">#{{ index + 1 }}</span>
+              <button
+                class="rule-remove-btn"
+                @click="removeRule(index)"
+              >
+                ✕
+              </button>
+            </div>
+            <div class="rule-fields">
+              <div class="rule-row">
+                <label class="rule-label">
+                  {{ i18n?.bookmarkName || '书签名称' }}
+                </label>
+                <div class="tags-input-wrapper">
+                  <div
+                    v-for="(tag, tagIndex) in rule.bookmarkNames"
+                    :key="tagIndex"
+                    class="tag-chip"
+                  >
+                    <span class="tag-text">{{ tag }}</span>
+                    <span
+                      class="tag-remove"
+                      @click="removeTag(index, tagIndex)"
+                    >×</span>
+                  </div>
+                  <input
+                    :ref="(el) => { if (el) tagInputRefs[index] = el as HTMLInputElement }"
+                    type="text"
+                    class="tag-input"
+                    :placeholder="i18n?.bookmarkNamePlaceholder || '输入书签名，回车添加'"
+                    @keydown.enter.prevent="addTag(index, $event)"
+                    @keydown.,.prevent="addTag(index, $event)"
+                    @keydown.backspace="handleTagBackspace(index, $event)"
+                    @change="handleRulesChange"
+                  />
+                </div>
+              </div>
+              <div class="rule-row">
+                <label class="rule-label">
+                  {{ i18n?.markerIcon || '图标' }}
+                </label>
+                <div class="icon-input-wrapper">
+                  <input
+                    v-model="rule.icon"
+                    type="text"
+                    class="rule-input icon-input"
+                    :placeholder="i18n?.markerIconPlaceholder || '🔖 输入 emoji'"
+                    maxlength="2"
+                    @change="handleRulesChange"
+                  />
+                  <span
+                    v-if="rule.icon"
+                    class="icon-preview-tag"
+                    :style="{
+                      color: rule.color,
+                      backgroundColor: rule.backgroundColor,
+                    }"
+                  >{{ rule.icon }}</span>
+                </div>
+              </div>
+              <!-- 预设图标选择器 -->
+              <div
+                v-if="rule.displayMode && rule.displayMode !== 'bg'"
+                class="rule-row icon-picker-row"
+              >
+                <label class="rule-label">
+                  {{ i18n?.presetIcons || '预设图标' }}
+                </label>
+                <div class="icon-picker-grid">
+                  <span
+                    v-for="icon in presetIcons"
+                    :key="icon"
+                    class="icon-option"
+                    :class="{ selected: rule.icon === icon }"
+                    @click="selectIcon(index, icon)"
+                  >{{ icon }}</span>
+                </div>
+              </div>
+              <div class="rule-row">
+                <label class="rule-label">
+                  {{ i18n?.markerTextColor || '文字颜色' }}
+                </label>
+                <div class="color-input-wrapper">
+                  <input
+                    v-model="rule.color"
+                    type="color"
+                    class="color-picker"
+                    @input="handleRulesChange"
+                  />
+                  <input
+                    v-model="rule.color"
+                    type="text"
+                    class="color-text"
+                    placeholder="#ffffff"
+                    @change="handleRulesChange"
+                  />
+                </div>
+              </div>
+              <div class="rule-row">
+                <label class="rule-label">
+                  {{ i18n?.markerBgColor || '背景颜色' }}
+                </label>
+                <div class="color-input-wrapper">
+                  <input
+                    v-model="rule.backgroundColor"
+                    type="color"
+                    class="color-picker"
+                    @input="handleRulesChange"
+                  />
+                  <input
+                    v-model="rule.backgroundColor"
+                    type="text"
+                    class="color-text"
+                    placeholder="#52c41a"
+                    @change="handleRulesChange"
+                  />
+                </div>
+              </div>
+              <!-- 显示模式 -->
+              <div class="rule-row">
+                <label class="rule-label">
+                  {{ i18n?.displayMode || '显示模式' }}
+                </label>
+                <div class="display-mode-group">
+                  <label
+                    class="mode-option"
+                    :class="{ active: rule.displayMode === 'bg' || !rule.displayMode }"
+                  >
+                    <input
+                      v-model="rule.displayMode"
+                      type="radio"
+                      value="bg"
+                      @change="handleRulesChange"
+                    />
+                    📄 {{ i18n?.modeTextLabel || '文字标签' }}
+                  </label>
+                  <label
+                    class="mode-option"
+                    :class="{ active: rule.displayMode === 'icon' }"
+                  >
+                    <input
+                      v-model="rule.displayMode"
+                      type="radio"
+                      value="icon"
+                      @change="handleRulesChange"
+                    />
+                    🎨 {{ i18n?.modeIconOnly || '仅图标' }}
+                  </label>
+                  <label
+                    class="mode-option"
+                    :class="{ active: rule.displayMode === 'icon-bg' }"
+                  >
+                    <input
+                      v-model="rule.displayMode"
+                      type="radio"
+                      value="icon-bg"
+                      @change="handleRulesChange"
+                    />
+                    🖼️ {{ i18n?.modeIconBg || '图标+背景' }}
+                  </label>
+                  <label
+                    class="mode-option"
+                    :class="{ active: rule.displayMode === 'row' }"
+                  >
+                    <input
+                      v-model="rule.displayMode"
+                      type="radio"
+                      value="row"
+                      @change="handleRulesChange"
+                    />
+                    🎯 {{ i18n?.modeRow || '字体背景' }}
+                  </label>
+                </div>
+              </div>
+              <!-- 透明度 -->
+              <div class="rule-row">
+                <label class="rule-label">
+                  {{ i18n?.bgAlpha || '背景透明度' }}
+                </label>
+                <div class="slider-container">
+                  <input
+                    v-model.number="rule.alpha"
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    class="alpha-slider"
+                    @input="handleRulesChange"
+                  />
+                  <span class="alpha-value">{{ ((rule.alpha ?? 0.25) * 100).toFixed(0) }}%</span>
+                </div>
+              </div>
+              <!-- 匹配模式 -->
+              <div class="rule-row">
+                <label class="rule-label">
+                  {{ i18n?.matchMode || '匹配模式' }}
+                </label>
+                <div class="match-mode-group">
+                  <label
+                    class="mode-option"
+                    :class="{ active: !rule.matchMode || rule.matchMode === 'exact' }"
+                  >
+                    <input
+                      v-model="rule.matchMode"
+                      type="radio"
+                      value="exact"
+                      @change="handleRulesChange"
+                    />
+                    🎯 {{ i18n?.matchExact || '精确' }}
+                  </label>
+                  <label
+                    class="mode-option"
+                    :class="{ active: rule.matchMode === 'prefix' }"
+                  >
+                    <input
+                      v-model="rule.matchMode"
+                      type="radio"
+                      value="prefix"
+                      @change="handleRulesChange"
+                    />
+                    🔤 {{ i18n?.matchPrefix || '前缀' }}
+                  </label>
+                  <label
+                    class="mode-option"
+                    :class="{ active: rule.matchMode === 'contains' }"
+                  >
+                    <input
+                      v-model="rule.matchMode"
+                      type="radio"
+                      value="contains"
+                      @change="handleRulesChange"
+                    />
+                    🔍 {{ i18n?.matchContains || '包含' }}
+                  </label>
+                </div>
+              </div>
+            </div>
+            <!-- 预览 -->
+            <div class="rule-preview">
+              <span class="preview-label-text">预览：</span>
+              <span
+                class="preview-tag"
+                :style="getPreviewStyle(rule)"
+              >{{ getPreviewText(rule) }}</span>
+            </div>
+          </div>
+
+          <button
+            class="add-rule-btn"
+            @click="addRule"
+          >
+            + {{ i18n?.addRule || '添加规则' }}
           </button>
         </div>
 
-        <div
-          v-for="(rule, index) in rules"
-          :key="index"
-          class="rule-item"
-        >
-          <div class="rule-header">
-            <span class="rule-index">#{{ index + 1 }}</span>
-            <button
-              class="rule-remove-btn"
-              @click="removeRule(index)"
-            >
-              ✕
-            </button>
-          </div>
-          <div class="rule-fields">
-            <div class="rule-row">
-              <label class="rule-label">
-                {{ i18n?.bookmarkName || '书签名称' }}
-              </label>
-              <div class="tags-input-wrapper">
-                <div
-                  v-for="(tag, tagIndex) in rule.bookmarkNames"
-                  :key="tagIndex"
-                  class="tag-chip"
-                >
-                  <span class="tag-text">{{ tag }}</span>
-                  <span
-                    class="tag-remove"
-                    @click="removeTag(index, tagIndex)"
-                  >×</span>
-                </div>
-                <input
-                  :ref="(el) => { if (el) tagInputRefs[index] = el as HTMLInputElement }"
-                  type="text"
-                  class="tag-input"
-                  :placeholder="i18n?.bookmarkNamePlaceholder || '输入书签名，回车添加'"
-                  @keydown.enter.prevent="addTag(index, $event)"
-                  @keydown.,.prevent="addTag(index, $event)"
-                  @keydown.backspace="handleTagBackspace(index, $event)"
-                  @change="handleRulesChange"
-                />
-              </div>
-            </div>
-            <div class="rule-row">
-              <label class="rule-label">
-                {{ i18n?.markerIcon || '图标' }}
-              </label>
-              <div class="icon-input-wrapper">
-                <input
-                  v-model="rule.icon"
-                  type="text"
-                  class="rule-input icon-input"
-                  :placeholder="i18n?.markerIconPlaceholder || '🔖 输入 emoji'"
-                  maxlength="2"
-                  @change="handleRulesChange"
-                />
-                <span
-                  v-if="rule.icon"
-                  class="icon-preview-tag"
-                  :style="{
-                    color: rule.color,
-                    backgroundColor: rule.backgroundColor,
-                  }"
-                >{{ rule.icon }}</span>
-              </div>
-            </div>
-            <!-- 预设图标选择器 -->
-            <div
-              v-if="rule.displayMode && rule.displayMode !== 'bg'"
-              class="rule-row icon-picker-row"
-            >
-              <label class="rule-label">
-                {{ i18n?.presetIcons || '预设图标' }}
-              </label>
-              <div class="icon-picker-grid">
-                <span
-                  v-for="icon in presetIcons"
-                  :key="icon"
-                  class="icon-option"
-                  :class="{ selected: rule.icon === icon }"
-                  @click="selectIcon(index, icon)"
-                >{{ icon }}</span>
-              </div>
-            </div>
-            <div class="rule-row">
-              <label class="rule-label">
-                {{ i18n?.markerTextColor || '文字颜色' }}
-              </label>
-              <div class="color-input-wrapper">
-                <input
-                  v-model="rule.color"
-                  type="color"
-                  class="color-picker"
-                  @input="handleRulesChange"
-                />
-                <input
-                  v-model="rule.color"
-                  type="text"
-                  class="color-text"
-                  placeholder="#ffffff"
-                  @change="handleRulesChange"
-                />
-              </div>
-            </div>
-            <div class="rule-row">
-              <label class="rule-label">
-                {{ i18n?.markerBgColor || '背景颜色' }}
-              </label>
-              <div class="color-input-wrapper">
-                <input
-                  v-model="rule.backgroundColor"
-                  type="color"
-                  class="color-picker"
-                  @input="handleRulesChange"
-                />
-                <input
-                  v-model="rule.backgroundColor"
-                  type="text"
-                  class="color-text"
-                  placeholder="#52c41a"
-                  @change="handleRulesChange"
-                />
-              </div>
-            </div>
-            <!-- 显示模式 -->
-            <div class="rule-row">
-              <label class="rule-label">
-                {{ i18n?.displayMode || '显示模式' }}
-              </label>
-              <div class="display-mode-group">
-                <label
-                  class="mode-option"
-                  :class="{ active: rule.displayMode === 'bg' || !rule.displayMode }"
-                >
-                  <input
-                    v-model="rule.displayMode"
-                    type="radio"
-                    value="bg"
-                    @change="handleRulesChange"
-                  />
-                  📄 {{ i18n?.modeTextLabel || '文字标签' }}
-                </label>
-                <label
-                  class="mode-option"
-                  :class="{ active: rule.displayMode === 'icon' }"
-                >
-                  <input
-                    v-model="rule.displayMode"
-                    type="radio"
-                    value="icon"
-                    @change="handleRulesChange"
-                  />
-                  🎨 {{ i18n?.modeIconOnly || '仅图标' }}
-                </label>
-                <label
-                  class="mode-option"
-                  :class="{ active: rule.displayMode === 'icon-bg' }"
-                >
-                  <input
-                    v-model="rule.displayMode"
-                    type="radio"
-                    value="icon-bg"
-                    @change="handleRulesChange"
-                  />
-                  🖼️ {{ i18n?.modeIconBg || '图标+背景' }}
-                </label>
-                <label
-                  class="mode-option"
-                  :class="{ active: rule.displayMode === 'row' }"
-                >
-                  <input
-                    v-model="rule.displayMode"
-                    type="radio"
-                    value="row"
-                    @change="handleRulesChange"
-                  />
-                  🎯 {{ i18n?.modeRow || '字体背景' }}
-                </label>
-              </div>
-            </div>
-            <!-- 透明度 -->
-            <div class="rule-row">
-              <label class="rule-label">
-                {{ i18n?.bgAlpha || '背景透明度' }}
-              </label>
-              <div class="slider-container">
-                <input
-                  v-model.number="rule.alpha"
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.05"
-                  class="alpha-slider"
-                  @input="handleRulesChange"
-                />
-                <span class="alpha-value">{{ ((rule.alpha ?? 0.25) * 100).toFixed(0) }}%</span>
-              </div>
-            </div>
-            <!-- 匹配模式 -->
-            <div class="rule-row">
-              <label class="rule-label">
-                {{ i18n?.matchMode || '匹配模式' }}
-              </label>
-              <div class="match-mode-group">
-                <label
-                  class="mode-option"
-                  :class="{ active: !rule.matchMode || rule.matchMode === 'exact' }"
-                >
-                  <input
-                    v-model="rule.matchMode"
-                    type="radio"
-                    value="exact"
-                    @change="handleRulesChange"
-                  />
-                  🎯 {{ i18n?.matchExact || '精确' }}
-                </label>
-                <label
-                  class="mode-option"
-                  :class="{ active: rule.matchMode === 'prefix' }"
-                >
-                  <input
-                    v-model="rule.matchMode"
-                    type="radio"
-                    value="prefix"
-                    @change="handleRulesChange"
-                  />
-                  🔤 {{ i18n?.matchPrefix || '前缀' }}
-                </label>
-                <label
-                  class="mode-option"
-                  :class="{ active: rule.matchMode === 'contains' }"
-                >
-                  <input
-                    v-model="rule.matchMode"
-                    type="radio"
-                    value="contains"
-                    @change="handleRulesChange"
-                  />
-                  🔍 {{ i18n?.matchContains || '包含' }}
-                </label>
-              </div>
-            </div>
-          </div>
-          <!-- 预览 -->
-          <div class="rule-preview">
-            <span class="preview-label-text">预览：</span>
-            <span
-              class="preview-tag"
-              :style="getPreviewStyle(rule)"
-            >{{ getPreviewText(rule) }}</span>
-          </div>
+        <!-- 更新间隔设置 -->
+        <div class="update-interval">
+          <label class="interval-label">
+            {{ i18n?.updateInterval || '更新间隔' }}
+          </label>
+          <select
+            v-model="updateInterval"
+            class="interval-select"
+            @change="handleIntervalChange"
+          >
+            <option value="1800000">
+              {{ i18n?.interval30min || '30分钟' }}
+            </option>
+            <option value="3600000">
+              {{ i18n?.interval1hour || '1小时' }}
+            </option>
+            <option value="7200000">
+              {{ i18n?.interval2hour || '2小时' }}
+            </option>
+            <option value="14400000">
+              {{ i18n?.interval4hour || '4小时' }}
+            </option>
+          </select>
         </div>
-
-        <button
-          class="add-rule-btn"
-          @click="addRule"
-        >
-          + {{ i18n?.addRule || '添加规则' }}
-        </button>
-      </div>
-
-      <!-- 更新间隔设置 -->
-      <div class="update-interval">
-        <label class="interval-label">
-          {{ i18n?.updateInterval || '更新间隔' }}
-        </label>
-        <select
-          v-model="updateInterval"
-          class="interval-select"
-          @change="handleIntervalChange"
-        >
-          <option value="1800000">
-            {{ i18n?.interval30min || '30分钟' }}
-          </option>
-          <option value="3600000">
-            {{ i18n?.interval1hour || '1小时' }}
-          </option>
-          <option value="7200000">
-            {{ i18n?.interval2hour || '2小时' }}
-          </option>
-          <option value="14400000">
-            {{ i18n?.interval4hour || '4小时' }}
-          </option>
-        </select>
-      </div>
-    </template>
+      </template>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { BookmarkRule } from "../modules/BookmarkMarker"
+import type { BookmarkRule } from "./modules/BookmarkMarker"
 import { showMessage } from "siyuan"
 import {
   onMounted,
   ref,
 } from "vue"
 import SiSwitch from "@/components/Switch.vue"
-import { BookmarkMarker } from "../modules/BookmarkMarker"
-
-import { GeneralSettingsStorage } from "../types/storage"
+import { BookmarkMarker } from "./modules/BookmarkMarker"
+import { BookmarkMarkerStorage } from "./types/storage"
 
 const props = defineProps<{
   i18n?: Record<string, string>
   plugin?: any
-}>()
-
-const emit = defineEmits<{
-  change: [settings: any]
+  bookmarkMarker?: BookmarkMarker
+  onBookmarkMarkerChange?: (action: string, data?: any) => void
 }>()
 
 const enableBookmarkMarker = ref(true)
@@ -371,85 +375,47 @@ const updateInterval = ref("3600000")
 const tagInputRefs = ref<Record<number, HTMLInputElement | null>>({})
 
 const presetIcons = [
-  // 🔖 书签相关
-  "🔖",
-  "🏷️",
-  "📑",
-  "📌",
-  "📍",
-  // ✅ 状态标记
-  "✅",
-  "❌",
-  "⚠️",
-  "🔄",
-  "📝",
-  // ⭐ 评级/优先级
-  "⭐",
-  "🌟",
-  "💎",
-  "🏆",
-  "🎯",
-  // 🚀 进度/状态
-  "🚀",
-  "🔥",
-  "⚡",
-  "🎉",
-  "💡",
-  // 📋 文档/内容
-  "📋",
-  "📄",
-  "📊",
-  "📈",
-  "📁",
-  // 🖊️ 编辑/创作
-  "🖊️",
-  "✏️",
-  "📝",
-  "📎",
-  "🔗",
-  // 🎨 创意/设计
-  "🎨",
-  "🌈",
-  "✨",
-  "💫",
-  "🪄",
-  // 💬 沟通/评论
-  "💬",
-  "💭",
-  "🗨️",
-  "💡",
-  "🔔",
-  // 🔐 安全/权限
-  "🔐",
-  "🔒",
-  "🔑",
-  "🛡️",
-  "🔍",
-  // 📂 分类/整理
-  "📂",
-  "🗂️",
-  "📚",
-  "📦",
-  "🧩",
+  "🔖", "🏷️", "📑", "📌", "📍",
+  "✅", "❌", "⚠️", "🔄", "📝",
+  "⭐", "🌟", "💎", "🏆", "🎯",
+  "🚀", "🔥", "⚡", "🎉", "💡",
+  "📋", "📄", "📊", "📈", "📁",
+  "🖊️", "✏️", "📝", "📎", "🔗",
+  "🎨", "🌈", "✨", "💫", "🪄",
+  "💬", "💭", "🗨️", "💡", "🔔",
+  "🔐", "🔒", "🔑", "🛡️", "🔍",
+  "📂", "🗂️", "📚", "📦", "🧩",
 ]
 
-const getBookmarkMarker = (): BookmarkMarker | null => {
-  const generalSettings = props.plugin?.__generalSettings
-  return generalSettings?.bookmarkMarker || null
-}
+const getStorage = () => props.plugin ? new BookmarkMarkerStorage(props.plugin) : null
 
-const getStorage = () => props.plugin ? new GeneralSettingsStorage(props.plugin) : null
-
-const ensureStorage = (): GeneralSettingsStorage => {
+const ensureStorage = (): BookmarkMarkerStorage => {
   const storage = getStorage()
   if (!storage) throw new Error("插件实例不可用")
   return storage
 }
 
+const saveAndNotify = async () => {
+  try {
+    await ensureStorage().settings.save({
+      enableBookmarkMarker: enableBookmarkMarker.value,
+      rules: rules.value,
+      updateInterval: Number(updateInterval.value),
+    })
+    props.onBookmarkMarkerChange?.("settingsChanged", {
+      enableBookmarkMarker: enableBookmarkMarker.value,
+      rules: rules.value,
+      updateInterval: updateInterval.value,
+    })
+  } catch (e) {
+    console.error("保存书签标记设置失败:", e)
+  }
+}
+
 const loadSettings = async () => {
   try {
     const storage = getStorage()
-    const data = storage ? await storage.bookmarkMarker.load() : null
+    const data = storage ? await storage.settings.loadOrDefault() : null
     if (data) {
       enableBookmarkMarker.value = data.enableBookmarkMarker ?? true
       rules.value = data.rules?.length
@@ -481,78 +447,31 @@ const loadSettings = async () => {
 }
 
 const handleToggleChange = async () => {
-  try {
-    await ensureStorage().bookmarkMarker.save({
-      enableBookmarkMarker: enableBookmarkMarker.value,
-      rules: rules.value,
-      updateInterval: Number(updateInterval.value),
-    })
-
-    const marker = getBookmarkMarker()
-    if (enableBookmarkMarker.value) {
-      if (!marker) {
-        props.plugin.__generalSettings.bookmarkMarker = new BookmarkMarker({
-          rules: rules.value,
-          updateInterval: Number.parseInt(updateInterval.value),
-        })
-        getBookmarkMarker()?.start()
-      } else {
-        marker?.start()
-      }
-    } else {
-      marker?.stop()
-    }
-
-    showMessage(
-      enableBookmarkMarker.value
-        ? "书签标记已启用"
-        : "书签标记已禁用",
-      2000,
-      "info",
-    )
-
-    emit("change", {
-      enableBookmarkMarker: enableBookmarkMarker.value,
-      rules: rules.value,
-      updateInterval: updateInterval.value,
-    })
-  } catch (e) {
-    console.error("保存书签标记设置失败:", e)
-  }
+  await saveAndNotify()
+  props.onBookmarkMarkerChange?.("toggle", {
+    enabled: enableBookmarkMarker.value,
+    rules: rules.value,
+    updateInterval: Number(updateInterval.value),
+  })
+  showMessage(
+    enableBookmarkMarker.value
+      ? "书签标记已启用"
+      : "书签标记已禁用",
+    2000,
+    "info",
+  )
 }
 
 const handleRulesChange = async () => {
-  try {
-    await ensureStorage().bookmarkMarker.save({
-      enableBookmarkMarker: enableBookmarkMarker.value,
-      rules: rules.value,
-      updateInterval: Number(updateInterval.value),
-    })
-
-    const marker = getBookmarkMarker()
-    marker?.updateOptions({ rules: rules.value })
-
-    showMessage("标记规则已更新", 2000, "info")
-  } catch (e) {
-    console.error("保存标记规则失败:", e)
-  }
+  await saveAndNotify()
+  props.onBookmarkMarkerChange?.("rulesChanged", { rules: rules.value })
+  showMessage("标记规则已更新", 2000, "info")
 }
 
 const handleIntervalChange = async () => {
-  try {
-    await ensureStorage().bookmarkMarker.save({
-      enableBookmarkMarker: enableBookmarkMarker.value,
-      rules: rules.value,
-      updateInterval: Number(updateInterval.value),
-    })
-
-    const marker = getBookmarkMarker()
-    marker?.setUpdateInterval(Number.parseInt(updateInterval.value))
-
-    showMessage("更新间隔已修改", 2000, "info")
-  } catch (e) {
-    console.error("保存更新间隔失败:", e)
-  }
+  await saveAndNotify()
+  props.onBookmarkMarkerChange?.("intervalChanged", { updateInterval: Number(updateInterval.value) })
+  showMessage("更新间隔已修改", 2000, "info")
 }
 
 const addRule = () => {
@@ -655,18 +574,9 @@ const handleTagBackspace = (ruleIndex: number, event: KeyboardEvent) => {
   }
 }
 
-const handleRefresh = async () => {
-  try {
-    const marker = getBookmarkMarker()
-    if (marker) {
-      marker.updateOptions({ rules: rules.value })
-      showMessage("书签标记已刷新", 2000, "info")
-    } else {
-      showMessage("书签标记功能未启动", 2000, "info")
-    }
-  } catch (e) {
-    console.error("刷新书签标记失败:", e)
-  }
+const handleRefresh = () => {
+  props.onBookmarkMarkerChange?.("refresh")
+  showMessage("书签标记已刷新", 2000, "info")
 }
 
 onMounted(async () => {
@@ -680,7 +590,29 @@ defineExpose({
 </script>
 
 <style scoped>
-.bookmark-marker-settings {
+.bookmark-marker-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  flex-shrink: 0;
+}
+
+.panel-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--b3-theme-on-surface);
+}
+
+.panel-content {
+  flex: 1;
+  overflow-y: auto;
   padding: 16px;
 }
 
@@ -858,7 +790,6 @@ defineExpose({
   color: var(--b3-theme-on-background);
 }
 
-/* 多标签输入 */
 .tags-input-wrapper {
   display: flex;
   flex-wrap: wrap;
@@ -987,7 +918,6 @@ defineExpose({
   flex-shrink: 0;
 }
 
-/* 预设图标选择器网格 */
 .icon-picker-row {
   margin-top: 4px;
 }
@@ -1026,7 +956,6 @@ defineExpose({
   box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.2);
 }
 
-/* 显示模式选择器 */
 .display-mode-group {
   display: flex;
   gap: 6px;
@@ -1066,7 +995,6 @@ defineExpose({
   font-weight: 600;
 }
 
-/* alpha slider */
 .slider-container {
   display: flex;
   align-items: center;
@@ -1089,7 +1017,6 @@ defineExpose({
   text-align: right;
 }
 
-/* match mode group (reuses mode-option styles) */
 .match-mode-group {
   display: flex;
   gap: 6px;

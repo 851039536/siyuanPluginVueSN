@@ -244,6 +244,11 @@ export const FEATURE_CONFIG = [
     defaultTitle: "主题色",
     defaultDesc: "应用暖橙色全局主题色",
   },
+  {
+    id: "bookmarkMarker",
+    defaultTitle: "书签标记",
+    defaultDesc: "根据文档书签内容在文件树中显示颜色标记",
+  },
 ] as const
 
 /**

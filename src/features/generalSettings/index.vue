@@ -125,17 +125,6 @@
         </div>
 
         <div
-          v-show="activeCategory === 'bookmarkMarker'"
-          class="content-section"
-        >
-          <BookmarkMarkerSettings
-            :i18n="i18n"
-            :plugin="plugin"
-            @change="handleBookmarkMarkerChange"
-          />
-        </div>
-
-        <div
           v-show="activeCategory === 'markdownExport'"
           class="content-section"
         >
@@ -154,7 +143,6 @@ import {
   computed,
   ref,
 } from "vue"
-import BookmarkMarkerSettings from "./components/BookmarkMarkerSettings.vue"
 import CodeBlockSettings from "./components/CodeBlockSettings.vue"
 import DataBackupSettings from "./components/DataBackupSettings.vue"
 import DocCountSettings from "./components/DocCountSettings.vue"
@@ -224,10 +212,6 @@ const categories = computed(() => [
     label: props.i18n.docCountSettings || "文档数统计",
   },
   {
-    id: "bookmarkMarker",
-    label: props.i18n.bookmarkMarkerSettings || "书签标记",
-  },
-  {
     id: "markdownExport",
     label: "Markdown 导出",
   },
@@ -250,7 +234,6 @@ const handleTableStyleChange = createSettingsHandler("tableStyle")
 const handleListStyleChange = createSettingsHandler("listStyle")
 const handleTabPinChange = createSettingsHandler("tabPin")
 const handleDocCountChange = createSettingsHandler("docCount")
-const handleBookmarkMarkerChange = createSettingsHandler("bookmarkMarker")
 
 </script>
 

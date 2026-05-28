@@ -447,13 +447,17 @@ import {
   fullReindexAssetContent,
   getBlockByID,
   getDocImageAssets,
+  getFile,
   getMissingAssets,
   getUnusedAssets,
+  putFile,
+  removeFile,
   removeUnusedAsset,
   removeUnusedAssets,
   renameAsset,
   resolveAssetPath,
   sql,
+  updateBlock,
   upload,
 } from "@/api"
 import IconWrapper from "@/components/IconWrapper.vue"
@@ -961,7 +965,8 @@ function locateDoc(asset: ImageAssetInfo) {
 }
 
 /**
- * 确认移动资源（使用 renameAsset API，会自动更新所有引用）
+ * 确认移动资源
+ * 使用 copy + update references + delete 流程，绕过 renameAsset 跨目录限制
  */
 async function handleMoveAsset(oldPath: string) {
   const newPath = moveNewPath.value.trim()
@@ -970,13 +975,45 @@ async function handleMoveAsset(oldPath: string) {
     return
   }
   try {
-    await renameAsset(oldPath, newPath)
-    // 重建资产索引确保引用完全更新
+    // 1. 读取原文件内容（getFile 在 SiYuan Electron 中直接返回 Blob）
+    const fileData = await getFile(oldPath)
+    if (!fileData || !(fileData instanceof Blob)) {
+      throw new Error("读取源文件失败")
+    }
+
+    // 2. 写入到新位置（内核自动创建父目录）
+    const fileName = newPath.split("/").pop() || "file"
+    const fileObj = new File([fileData], fileName, { type: fileData.type || "image/png" })
+    await putFile(newPath, false, fileObj)
+
+    // 3. 更新所有文档中的引用
+    const blocks = await sql(
+      `SELECT id, markdown FROM blocks WHERE markdown LIKE '%${oldPath}%'`,
+    ) as { id: string, markdown: string }[]
+
+    let updatedCount = 0
+    for (const block of blocks) {
+      try {
+        const newMarkdown = block.markdown.split(oldPath).join(newPath)
+        await updateBlock("markdown", newMarkdown, block.id)
+        updatedCount++
+      }
+      catch { /* 单个块更新失败不影响整体流程 */ }
+    }
+
+    // 4. 删除旧文件
+    await removeFile(oldPath)
+
+    // 5. 重建资产索引
     try {
       await fullReindexAssetContent()
     }
     catch { /* 索引重建失败不影响移动结果 */ }
-    showMsg(props.i18n.moveSuccess)
+
+    const msg = updatedCount > 0
+      ? `${props.i18n.moveSuccess}（已更新 ${updatedCount} 处引用）`
+      : props.i18n.moveSuccess
+    showMsg(msg)
     cancelMove()
     await refresh()
   }

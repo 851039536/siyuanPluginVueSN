@@ -644,7 +644,7 @@ export async function getFile(path: string): Promise<any> {
   }
 }
 
-export async function putFile(path: string, isDir: boolean, file: any) {
+export async function putFile(path: string, isDir: boolean, file: any): Promise<null> {
   const form = new FormData()
   form.append("path", path)
   form.append("isDir", isDir.toString())
@@ -653,27 +653,43 @@ export async function putFile(path: string, isDir: boolean, file: any) {
   form.append("modTime", Math.floor(Date.now() / 1000).toString())
   form.append("file", file)
   const url = "/api/file/putFile"
-  return request(url, form)
+  // 使用原生 fetch 而非 fetchSyncPost，因为后者会将 Content-Type
+  // 强制设为 application/json，导致 FormData 请求失败
+  // 参见: https://github.com/siyuan-note/siyuan/issues/10715
+  const httpResp = await fetch(url, {
+    method: "POST",
+    body: form,
+  })
+  const result = await httpResp.json()
+  if (result.code !== 0) {
+    throw new Error(result.msg || `putFile failed (code: ${result.code})`)
+  }
+  return null
 }
 
-export async function removeFile(path: string) {
-  const data = {
-    path,
-  }
+export async function removeFile(path: string): Promise<null> {
   const url = "/api/file/removeFile"
-  return request(url, data)
+  const response = await fetchSyncPost(url, { path })
+  if (response.code !== 0) {
+    throw new Error(response.msg || `removeFile failed (code: ${response.code})`)
+  }
+  return null
 }
 
 /**
- * 重命名文件
+ * 重命名/移动文件（底层文件操作，不更新文档引用）
+ * 与 renameAsset 不同，此 API 直接操作文件系统
  */
-export async function renameFile(path: string, newPath: string) {
-  const data = {
+export async function renameFile(path: string, newPath: string): Promise<null> {
+  const url = "/api/file/renameFile"
+  const response = await fetchSyncPost(url, {
     path,
     newPath,
+  })
+  if (response.code !== 0) {
+    throw new Error(response.msg || `renameFile failed (code: ${response.code})`)
   }
-  const url = "/api/file/renameFile"
-  return request(url, data)
+  return null
 }
 
 export async function readDir(path: string): Promise<IResReadDir> {

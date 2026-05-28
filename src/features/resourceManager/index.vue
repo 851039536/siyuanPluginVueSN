@@ -145,12 +145,6 @@
               >
                 {{ i18n.locateDoc }}
               </button>
-              <button
-                class="rm-btn small danger"
-                @click="handleDeleteAsset(asset.path)"
-              >
-                {{ i18n.deleteAsset }}
-              </button>
             </div>
             <!-- 移动表单 -->
             <div
@@ -310,73 +304,6 @@
         </ul>
       </div>
 
-      <!-- 上传本地资源 -->
-      <div
-        v-if="activeTab === 'insertLocalAssets'"
-        class="rm-section"
-      >
-        <div class="rm-section__title">
-          {{ i18n.insertLocalAssets }}
-        </div>
-        <div class="rm-input-row">
-          <label>{{ i18n.selectFiles }}:</label>
-          <input
-            type="file"
-            multiple
-            @change="handleFileSelect"
-          />
-        </div>
-        <div class="rm-input-row">
-          <label>{{ i18n.targetDocId }}:</label>
-          <input
-            v-model="insertForm.targetId"
-            placeholder="20231027130500-xxxx（可选，上传后自动插入文档）"
-          />
-        </div>
-        <button
-          class="rm-btn primary"
-          :disabled="insertForm.selectedFiles.length === 0"
-          @click="handleInsertAssets"
-        >
-          {{ i18n.insertLocalAssets }}
-        </button>
-        <div
-          v-if="insertResult"
-          class="rm-result"
-        >
-          {{ insertResult }}
-        </div>
-      </div>
-
-      <!-- 解析路径 -->
-      <div
-        v-if="activeTab === 'resolvePath'"
-        class="rm-section"
-      >
-        <div class="rm-section__title">
-          {{ i18n.resolvePath }}
-        </div>
-        <div class="rm-input-row">
-          <label>{{ i18n.assetPath }}:</label>
-          <input
-            v-model="resolvePathInput"
-            placeholder="assets/xxx.png"
-          />
-        </div>
-        <button
-          class="rm-btn primary"
-          @click="handleResolvePath"
-        >
-          {{ i18n.resolvePath }}
-        </button>
-        <div
-          v-if="resolvePathResult"
-          class="rm-result"
-        >
-          {{ resolvePathResult }}
-        </div>
-      </div>
-
       <!-- 重建索引 -->
       <div
         v-if="activeTab === 'rebuildIndex'"
@@ -422,21 +349,17 @@ import {
   watch,
 } from "vue"
 import {
-  appendBlock,
   fullReindexAssetContent,
   getBlockByID,
   getDocImageAssets,
   getMissingAssets,
   getUnusedAssets,
   putFile,
-  removeFile,
   removeUnusedAsset,
   removeUnusedAssets,
   renameFile,
-  resolveAssetPath,
   sql,
   updateBlock,
-  upload,
 } from "@/api"
 import IconWrapper from "@/components/IconWrapper.vue"
 
@@ -476,19 +399,7 @@ const quickCategories = computed(() => [
   },
 ])
 
-// 插入资源表单
-const insertForm = ref({
-  targetId: "",
-  selectedFiles: [] as File[],
-})
-const insertResult = ref("")
-
-// 解析路径
-const resolvePathInput = ref("")
-const resolvePathResult = ref("")
-
-// 重建索引
-const rebuildResult = ref("")
+// 从 protyle 事件中缓存当前文档 ID
 
 const tabs = [
   {
@@ -504,18 +415,13 @@ const tabs = [
     label: props.i18n.unusedAssets || "未使用资源",
   },
   {
-    key: "insertLocalAssets",
-    label: props.i18n.insertLocalAssets || "插入资源",
-  },
-  {
-    key: "resolvePath",
-    label: props.i18n.resolvePath || "解析路径",
-  },
-  {
     key: "rebuildIndex",
     label: props.i18n.rebuildIndex || "重建索引",
   },
 ]
+
+// 重建索引
+const rebuildResult = ref("")
 
 // 从 protyle 事件中缓存当前文档 ID（解决面板聚焦时无法获取当前文档的问题）
 const savedDocId = ref<string | null>(null)
@@ -852,37 +758,6 @@ async function handleDeleteAllUnused() {
 }
 
 /**
- * 删除资源文件
- * 对于有引用的资源，需先物理删除文件 + 重建索引使其变为丢失状态
- * 对于无引用的资源，直接使用 removeUnusedAsset
- */
-async function handleDeleteAsset(path: string) {
-  const isReferenced = activeTab.value === "imageAssets"
-  if (isReferenced) {
-    if (!confirm(`${props.i18n.deleteAssetConfirm} ${path}?\n\n⚠️ 警告：该资源当前被文档引用，删除后文档中将出现断链！`)) return
-    try {
-      await removeFile(`/data/${path}`)
-      try { await fullReindexAssetContent() } catch { /* ignore */ }
-      showMsg(props.i18n.deleteSuccess)
-    }
-    catch {
-      showMsg(`${props.i18n.deleteFailed}（文件删除失败）`)
-    }
-  }
-  else {
-    if (!confirm(`${props.i18n.deleteConfirm} ${path}?`)) return
-    try {
-      await removeUnusedAsset(path)
-      showMsg(props.i18n.deleteSuccess)
-    }
-    catch {
-      showMsg(props.i18n.deleteFailed)
-    }
-  }
-  await refresh()
-}
-
-/**
  * 开始移动资源：显示移动表单
  */
 function startMoveAsset(path: string) {
@@ -985,60 +860,6 @@ async function handleMoveAsset(oldPath: string) {
   catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e)
     showMsg(`${props.i18n.moveFailed}: ${msg}`)
-  }
-}
-
-async function handleInsertAssets() {
-  if (insertForm.value.selectedFiles.length === 0) return
-  try {
-    // 使用 upload API（multipart form 上传），兼容 HTML <input type="file"> 的 File 对象
-    const result = await upload("/assets/", insertForm.value.selectedFiles)
-    const succMap = result?.succMap || {}
-    const errFiles = result?.errFiles || []
-    const successCount = Object.keys(succMap).length
-    const failCount = errFiles.length
-    let msg = `${props.i18n.insertSuccess}: ${successCount} 成功, ${failCount} 失败`
-
-    // 如果指定了目标文档 ID，将上传的资源引用插入文档尾部
-    if (insertForm.value.targetId && successCount > 0) {
-      for (const assetPath of Object.values(succMap)) {
-        try {
-          await appendBlock("markdown", `![](${assetPath})`, insertForm.value.targetId)
-        } catch { /* 跳过单个插入失败 */ }
-      }
-      msg += "，已插入到文档"
-    }
-
-    insertResult.value = msg
-    showMsg(msg)
-  }
-  catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e)
-    insertResult.value = `${props.i18n.insertFailed}: ${msg}`
-    showMsg(props.i18n.insertFailed)
-  }
-}
-
-function handleFileSelect(event: Event) {
-  const input = event.target as HTMLInputElement
-  if (input.files) {
-    insertForm.value.selectedFiles = Array.from(input.files)
-  }
-}
-
-async function handleResolvePath() {
-  if (!resolvePathInput.value) return
-  try {
-    const result = await resolveAssetPath(resolvePathInput.value)
-    if (result) {
-      resolvePathResult.value = `${props.i18n.resolvePathResult}: ${result}`
-    } else {
-      resolvePathResult.value = `${props.i18n.resolvePathResult}: 文件不存在或路径无效`
-    }
-  }
-  catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e)
-    resolvePathResult.value = `${props.i18n.resolvePathResult}: ${msg}`
   }
 }
 

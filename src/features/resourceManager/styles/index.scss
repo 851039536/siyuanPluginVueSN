@@ -67,7 +67,7 @@
       font-size: $font-size-xs;
       cursor: pointer;
       white-space: nowrap;
-      color: var(--b3-theme-on-surface-light);
+      color: var(--b3-theme-on-surface);
       border-bottom: 2px solid transparent;
       transition: color 0.15s, border-color 0.15s, background 0.15s;
       user-select: none;
@@ -78,8 +78,8 @@
       }
 
       &.active {
-        color: $brand-primary;
-        border-bottom-color: $brand-primary;
+        color: var(--b3-theme-primary);
+        border-bottom-color: var(--b3-theme-primary);
         font-weight: $font-weight-medium;
       }
     }

@@ -2,6 +2,12 @@
   <div class="bookmark-marker-panel">
     <div class="panel-header">
       <h3 class="panel-title">🔖 {{ i18n?.title || '书签标记' }}</h3>
+      <button
+        class="close-btn"
+        @click="props.onClose?.()"
+      >
+        ✕
+      </button>
     </div>
 
     <div class="panel-content">
@@ -352,6 +358,7 @@ const props = defineProps<{
   plugin?: any
   bookmarkMarker?: BookmarkMarker
   onBookmarkMarkerChange?: (action: string, data?: any) => void
+  onClose?: () => void
 }>()
 
 const enableBookmarkMarker = ref(true)
@@ -598,6 +605,9 @@ defineExpose({
 }
 
 .panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 12px 16px;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
   flex-shrink: 0;
@@ -607,6 +617,27 @@ defineExpose({
   margin: 0;
   font-size: 15px;
   font-weight: 600;
+  color: var(--b3-theme-on-surface);
+}
+
+.close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--b3-theme-on-surface-variant);
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.15s;
+}
+
+.close-btn:hover {
+  background: var(--b3-theme-surface-lighter);
   color: var(--b3-theme-on-surface);
 }
 

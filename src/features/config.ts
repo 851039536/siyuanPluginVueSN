@@ -248,6 +248,10 @@ export const FEATURE_CONFIG = [
     id: "bookmarkMarker",
     defaultTitle: "书签标记",
     defaultDesc: "根据文档书签内容在文件树中显示颜色标记",
+    actions: [{
+      key: "openBookmarkMarker",
+      label: "⚙️ 设置",
+    }],
   },
 ] as const
 

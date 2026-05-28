@@ -149,6 +149,13 @@ const featureDrawerItems: FeatureDrawerItem[] = [
     title: "HTML 展示",
     pinnable: true,
   },
+  {
+    id: "formatAssistant",
+    icon: "mdi:format-align-left",
+    color: "#07c160",
+    title: "排版助手",
+    pinnable: true,
+  },
 ]
 
 interface ShortcutDisplay {
@@ -163,7 +170,8 @@ const SHORTCUT_DISPLAY: Record<string, ShortcutDisplay> = {
   passwordVault: { id: "passwordVault", icon: "ph:lock-key", title: "密码箱", itemClass: "action-item password-vault-item", handler: () => showPasswordVault() },
   video: { id: "video", icon: "ph:video", title: "视频管理器", itemClass: "action-item video-manager-item", handler: () => emitCustomEvent("openVideoManager") },
   htmlViewer: { id: "htmlViewer", icon: "ph:code", title: "HTML展示", itemClass: "action-item html-viewer-item", handler: () => emitCustomEvent("openHtmlViewer") },
-  skillsViewer: { id: "skillsViewer", icon: "ph:puzzle", title: "Skills查看器", itemClass: "action-item skills-viewer-item", handler: () => showSkillsViewer() },
+  skillsViewer: { id: "skillsViewer", icon: "ph:puzzle-piece", title: "Skills查看器", itemClass: "action-item skills-viewer-item", handler: () => showSkillsViewer() },
+  formatAssistant: { id: "formatAssistant", icon: "ph:text-align-left", title: "排版助手", itemClass: "action-item format-assistant-item", handler: () => emitCustomEvent("openFormatAssistant") },
 }
 
 const visibleShortcuts = computed(() =>

@@ -45,6 +45,7 @@ export interface ResourceManagerI18n {
   selectFiles: string
   // 图片资源模式
   allAssets: string
+  allCategories: string
   currentDoc: string
   specifiedDoc: string
   docIdPlaceholder: string

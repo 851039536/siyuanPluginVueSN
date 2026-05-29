@@ -1289,6 +1289,7 @@
     "targetDocId": "Target Doc ID",
     "selectFiles": "Select Files",
     "allAssets": "All",
+    "allCategories": "All Categories",
     "currentDoc": "Current Doc",
     "specifiedDoc": "Specified Doc",
     "docIdPlaceholder": "Enter doc ID (e.g., 20231027130500-xxxx)",

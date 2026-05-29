@@ -236,6 +236,20 @@
       color: #fff;
       border-color: $brand-primary;
     }
+
+    &--category {
+      margin-top: -4px;
+
+      .rm-btn {
+        font-size: 11px;
+        padding: 1px 6px;
+        opacity: 0.8;
+      }
+
+      .rm-btn.active {
+        opacity: 1;
+      }
+    }
   }
 
   // ── 资源统计 ──

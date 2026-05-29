@@ -839,6 +839,29 @@ function locateDoc(asset: ImageAssetInfo) {
 }
 
 /**
+ * 移动成功后原地更新资源列表，避免全量刷新重新扫描
+ */
+function updateAssetItemAfterMove(oldPath: string, newPath: string) {
+  const target = activeTab.value === "fileAssets" ? fileAssets : imageAssets
+  const idx = target.value.findIndex(item => item.path === oldPath)
+  if (idx === -1) return
+
+  const moved = target.value[idx]
+  const updated: ImageAssetInfo = { ...moved, path: newPath }
+
+  // 新路径不在当前分类筛选范围内则移除，否则原地替换
+  if (categoryFilter.value && !newPath.startsWith(`assets/${categoryFilter.value}/`)) {
+    target.value = target.value.filter(item => item.path !== oldPath)
+  }
+  else {
+    const next = [...target.value]
+    next.splice(idx, 1, updated)
+    next.sort((a, b) => a.path.localeCompare(b.path))
+    target.value = next
+  }
+}
+
+/**
  * 确认移动资源
  * renameAsset 不做物理移动也不更新文档内容，因此需要：
  * 1. 确保目标子目录存在（如 assets/csharp/）
@@ -895,8 +918,8 @@ async function handleMoveAsset(oldPath: string) {
         ? `${props.i18n.moveSuccess}（已更新 ${updatedCount} 处引用，新路径: ${newPath}）`
         : `${props.i18n.moveSuccess}（新路径: ${newPath}）`,
     )
+    updateAssetItemAfterMove(oldPath, newPath)
     cancelMove()
-    await refresh()
   }
   catch (e: unknown) {
     if (isMounted.value) {

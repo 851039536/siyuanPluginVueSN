@@ -109,7 +109,8 @@
       "WebFetch(domain:ld246.com)",
       "WebFetch(domain:cdn.jsdelivr.net)",
       "Bash(gh api *)",
-      "Bash(where gh *)"
+      "Bash(where gh *)",
+      "Bash(pnpm lint:fix)"
     ],
     "deny": [],
     "ask": []

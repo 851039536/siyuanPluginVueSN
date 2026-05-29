@@ -201,6 +201,9 @@ async function markAsPublished(platformId: string) {
   const config = PLATFORM_CONFIGS.find(c => c.id === platformId)
   if (!config) return
 
+  // eslint-disable-next-line no-alert
+  if (!confirm(`确认将「${props.attrs.title || props.docId}」标记为已在 ${config.name} 发布？`)) return
+
   markingPlatform.value = platformId
 
   try {

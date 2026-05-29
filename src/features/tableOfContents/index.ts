@@ -221,7 +221,7 @@ export class TableOfContentsManager {
         headingMap.get(h.root_id)!.push(h)
       }
 
-      let content = "## 📋 子文档大纲\n\n"
+      let content = "## 📑 子文档大纲\n\n"
       for (const subDoc of subDocs) {
         content += `### 📄 ((${subDoc.id} "${subDoc.name}"))\n\n`
 

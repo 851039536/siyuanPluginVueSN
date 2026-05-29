@@ -605,16 +605,17 @@ export function useDocAnalysis(plugin: Plugin) {
       const platformSql = `
         SELECT
           b.id as doc_id,
-          MAX(CASE WHEN a.name LIKE '%csdn%' AND a.name LIKE '%yaml%' THEN 1 ELSE 0 END) as has_csdn,
-          MAX(CASE WHEN a.name LIKE '%zhihu%' AND a.name LIKE '%yaml%' THEN 1 ELSE 0 END) as has_zhihu,
-          MAX(CASE WHEN a.name LIKE '%juejin%' AND a.name LIKE '%yaml%' THEN 1 ELSE 0 END) as has_juejin,
-          MAX(CASE WHEN (a.name LIKE '%cnblogs%' OR a.name LIKE '%blog%') AND a.name LIKE '%yaml%' THEN 1 ELSE 0 END) as has_blog,
-          MAX(CASE WHEN (a.name LIKE '%bili%' OR a.name LIKE '%bibi%') AND a.name LIKE '%yaml%' THEN 1 ELSE 0 END) as has_bibi,
-          MAX(CASE WHEN a.name LIKE '%gzh%' AND a.name LIKE '%yaml%' THEN 1 ELSE 0 END) as has_gzh
+          MAX(CASE WHEN a.name LIKE '%csdn%' AND a.name LIKE '%yaml%' AND a.value != '' THEN 1 ELSE 0 END) as has_csdn,
+          MAX(CASE WHEN a.name LIKE '%zhihu%' AND a.name LIKE '%yaml%' AND a.value != '' THEN 1 ELSE 0 END) as has_zhihu,
+          MAX(CASE WHEN a.name LIKE '%juejin%' AND a.name LIKE '%yaml%' AND a.value != '' THEN 1 ELSE 0 END) as has_juejin,
+          MAX(CASE WHEN (a.name LIKE '%cnblogs%' OR a.name LIKE '%blog%') AND a.name LIKE '%yaml%' AND a.value != '' THEN 1 ELSE 0 END) as has_blog,
+          MAX(CASE WHEN (a.name LIKE '%bili%' OR a.name LIKE '%bibi%') AND a.name LIKE '%yaml%' AND a.value != '' THEN 1 ELSE 0 END) as has_bibi,
+          MAX(CASE WHEN a.name LIKE '%gzh%' AND a.name LIKE '%yaml%' AND a.value != '' THEN 1 ELSE 0 END) as has_gzh
         FROM blocks b
         LEFT JOIN attributes a ON a.block_id = b.id
         WHERE b.type = 'd' ${notebookCondition}
         GROUP BY b.id
+        LIMIT 10000
       `
 
       const rows = await sql(platformSql)

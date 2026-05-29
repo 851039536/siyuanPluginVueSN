@@ -248,36 +248,6 @@
               <span class="stat-label">未发布</span>
             </div>
           </div>
-          <div
-            v-if="stats.platformPublishGap"
-            class="platform-gap-row"
-          >
-            <span class="gap-label">未发布平台：</span>
-            <span
-              v-if="stats.platformPublishGap.csdn > 0"
-              class="gap-item"
-            >CSDN {{ stats.platformPublishGap.csdn }}</span>
-            <span
-              v-if="stats.platformPublishGap.zhihu > 0"
-              class="gap-item"
-            >知乎 {{ stats.platformPublishGap.zhihu }}</span>
-            <span
-              v-if="stats.platformPublishGap.juejin > 0"
-              class="gap-item"
-            >掘金 {{ stats.platformPublishGap.juejin }}</span>
-            <span
-              v-if="stats.platformPublishGap.blog > 0"
-              class="gap-item"
-            >博客园 {{ stats.platformPublishGap.blog }}</span>
-            <span
-              v-if="stats.platformPublishGap.bibi > 0"
-              class="gap-item"
-            >B站 {{ stats.platformPublishGap.bibi }}</span>
-            <span
-              v-if="stats.platformPublishGap.gzh > 0"
-              class="gap-item"
-            >公众号 {{ stats.platformPublishGap.gzh }}</span>
-          </div>
         </div>
 
         <!-- 结构分析 -->

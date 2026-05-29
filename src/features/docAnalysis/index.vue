@@ -154,6 +154,7 @@
           :doc="doc"
           @open="openDoc"
           @publish="handlePublishDoc"
+          @attrs="handleShowAttrs"
         />
         <div
           v-if="hasMoreDocs"
@@ -248,6 +249,16 @@
       </ul>
     </div>
 
+    <!-- 属性面板 -->
+    <AttrsPanel
+      :visible="attrsPanelVisible"
+      :doc-id="attrsPanelDocId"
+      :attrs="attrsData"
+      :loading="attrsLoading"
+      :error="attrsError"
+      @close="handleCloseAttrs"
+    />
+
     <!-- 发布面板 -->
     <PublishPanel
       :visible="publishPanelVisible"
@@ -275,7 +286,9 @@ import DocListItem from "./components/DocListItem.vue"
 import FilterSettings from "./components/FilterSettings.vue"
 import PublishPanel from "./components/PublishPanel.vue"
 import StatsOverview from "./components/StatsOverview.vue"
+import AttrsPanel from "./components/AttrsPanel.vue"
 
+import { getBlockAttrs } from "@/api"
 import { useDocAnalysis } from "./composables/useDocAnalysis"
 import { usePublish } from "./composables/usePublish"
 
@@ -334,6 +347,40 @@ function handlePublished() {
   if (queryState.hasQueried) {
     queryDocs()
   }
+}
+
+// ============================================================
+// 属性面板状态
+// ============================================================
+const attrsPanelVisible = ref(false)
+const attrsPanelDocId = ref("")
+const attrsData = ref<Record<string, string> | null>(null)
+const attrsLoading = ref(false)
+const attrsError = ref("")
+
+async function handleShowAttrs(docId: string) {
+  attrsPanelDocId.value = docId
+  attrsPanelVisible.value = true
+  attrsData.value = null
+  attrsError.value = ""
+  attrsLoading.value = true
+
+  try {
+    const data = await getBlockAttrs(docId)
+    attrsData.value = data
+  }
+  catch (e: unknown) {
+    attrsError.value = e instanceof Error ? e.message : "加载属性失败"
+  }
+  finally {
+    attrsLoading.value = false
+  }
+}
+
+function handleCloseAttrs() {
+  attrsPanelVisible.value = false
+  attrsData.value = null
+  attrsError.value = ""
 }
 
 /** 批量发布 - 按统计类别 */

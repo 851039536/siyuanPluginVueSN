@@ -123,10 +123,8 @@ export async function findExistingIndexBlockIds(
     const rows = await api.sql(`
       SELECT b.id
       FROM blocks b
-      JOIN attributes a ON b.id = a.block_id
-        AND a.name = 'custom-toc-type'
-        AND a.value = '${escapeSqlString(indexType)}'
       WHERE b.root_id = '${escapeSqlString(docId)}'
+      AND b.ial LIKE '%custom-toc-type="${escapeSqlString(indexType)}"%'
       ORDER BY b.sort ASC
     `)
     return (rows || []).map((r: any) => r.id)

@@ -1,5 +1,37 @@
 <template>
   <div class="doc-analysis-panel">
+    <!-- Tab 切换栏 -->
+    <div class="tab-bar">
+      <button
+        class="tab-btn"
+        :class="{ active: activeTab === 'stats' }"
+        @click="activeTab = 'stats'"
+      >
+        <Icon icon="mdi:chart-bar" />
+        统计
+      </button>
+      <button
+        class="tab-btn"
+        :class="{ active: activeTab === 'list' }"
+        @click="activeTab = 'list'"
+      >
+        <Icon icon="mdi:format-list-bulleted" />
+        文档列表
+      </button>
+      <div class="tab-bar-spacer" />
+      <button
+        class="analyze-btn"
+        :disabled="statsLoading"
+        @click="handleAnalyze"
+      >
+        <Icon
+          :icon="statsLoading ? 'mdi:loading' : 'mdi:chart-bar'"
+          :class="{ 'spin-icon': statsLoading }"
+        />
+        {{ statsLoading ? '分析中...' : '分析' }}
+      </button>
+    </div>
+
     <!-- 过滤设置区 -->
     <FilterSettings
       :options="filterOptions"
@@ -9,198 +41,204 @@
       @update:options="handleOptionsUpdate"
     />
 
-    <!-- 统计概览区 -->
-    <StatsOverview
-      :stats="docStats"
-      :loading="statsLoading"
-      :has-analyzed="hasAnalyzed"
-      :active-filter="statsFilter"
-      :depth-stats="depthStats"
-      :bookmark-details="bookmarkDetails"
-      :bookmark-detail-visible="bookmarkDetailVisible"
-      :bookmark-detail-loading="bookmarkDetailLoading"
-      @analyze="handleAnalyze"
-      @select-category="handleSelectCategory"
-      @batch-publish="handleBatchPublish"
-      @show-bookmark-details="fetchBookmarkDetails"
-      @select-bookmark="queryByBookmark"
-    />
-
-    <!-- 排序和结果数 -->
+    <!-- 统计面板 -->
     <div
-      v-if="queryState.hasQueried"
-      class="result-bar"
+      v-show="activeTab === 'stats'"
+      class="tab-panel"
     >
-      <div class="result-count">
-        <span v-if="queryState.status === 'success'">
-          共找到 <strong>{{ queryState.results.length }}</strong> 个文档
-          <span
-            v-if="statsFilter"
-            class="filter-tag"
-          >
-            ({{ getCategoryLabel(statsFilter) }})
-            <button
-              class="filter-tag-close"
-              @click="clearStatsFilter"
-            >&times;</button>
-          </span>
-        </span>
-        <span
-          v-else-if="queryState.status === 'empty'"
-          class="empty-hint"
-        >
-          未找到符合条件的文档
-        </span>
-        <span
-          v-else-if="queryState.status === 'error'"
-          class="error-hint"
-        >
-          {{ queryState.errorMessage }}
-        </span>
-      </div>
-      <div
-        v-if="queryState.results.length > 0"
-        class="sort-controls"
-      >
-        <select
-          :value="filterOptions.sortField"
-          class="sort-select"
-          @change="handleSortChange"
-        >
-          <option value="wordCount">
-            按字数
-          </option>
-          <option value="title">
-            按标题
-          </option>
-          <option value="notebook">
-            按笔记本
-          </option>
-          <option value="updated">
-            按更新时间
-          </option>
-          <option value="depth">
-            按深度
-          </option>
-          <option value="refCount">
-            按引用数
-          </option>
-          <option value="imageCount">
-            按图片数
-          </option>
-          <option value="bookmark">
-            按书签
-          </option>
-        </select>
-        <button
-          class="sort-order-btn"
-          @click="toggleSortOrder"
-        >
-          <Icon :icon="filterOptions.sortOrder === 'asc' ? 'mdi:sort-ascending' : 'mdi:sort-descending'" />
-        </button>
-        <!-- 批量操作按钮 -->
-        <button
-          class="batch-publish-btn"
-          title="批量发布当前结果"
-          @click="handleBatchPublishAll"
-        >
-          <Icon icon="mdi:publish" />
-        </button>
-        <button
-          class="batch-mark-btn"
-          title="批量标记为待发布"
-          @click="handleBatchMarkPending"
-        >
-          <Icon icon="mdi:bookmark-plus-outline" />
-        </button>
-      </div>
+      <StatsOverview
+        :stats="docStats"
+        :loading="statsLoading"
+        :has-analyzed="hasAnalyzed"
+        :active-filter="statsFilter"
+        :depth-stats="depthStats"
+        :bookmark-details="bookmarkDetails"
+        :bookmark-detail-visible="bookmarkDetailVisible"
+        :bookmark-detail-loading="bookmarkDetailLoading"
+        :collapsible="false"
+        @analyze="handleAnalyze"
+        @select-category="handleSelectCategory"
+        @batch-publish="handleBatchPublish"
+        @show-bookmark-details="fetchBookmarkDetails"
+        @select-bookmark="queryByBookmark"
+      />
     </div>
 
-    <!-- 文档列表区 -->
-    <div class="doc-list-container">
-      <!-- 加载中 -->
+    <!-- 文档列表面板 -->
+    <div
+      v-show="activeTab === 'list'"
+      class="tab-panel doc-list-panel"
+    >
+      <!-- 排序和结果数 -->
       <div
-        v-if="queryState.status === 'loading'"
-        class="loading-state"
+        v-if="queryState.hasQueried"
+        class="result-bar"
       >
-        <Icon
-          icon="mdi:loading"
-          class="loading-icon"
-        />
-        <span>正在查询文档...</span>
-      </div>
-
-      <!-- 空状态 - 未查询 -->
-      <div
-        v-else-if="queryState.status === 'idle' && !queryState.hasQueried"
-        class="empty-state"
-      >
-        <Icon
-          icon="mdi:file-document-multiple-outline"
-          class="empty-icon"
-        />
-        <p>点击上方「分析」查看统计，或设置筛选条件后查询</p>
-        <p class="empty-desc">
-          支持标题搜索、全文搜索、字数范围筛选、书签过滤、多平台发布
-        </p>
-      </div>
-
-      <!-- 查询结果 -->
-      <template v-else-if="queryState.results.length > 0">
-        <DocListItem
-          v-for="doc in visibleDocs"
-          :key="doc.id"
-          v-memo="[doc.id, doc.title, doc.wordCount, doc.contentSize, doc.updated, doc.depth, doc.refCount, doc.imageCount, doc.bookmark, doc.publishStatus]"
-          :doc="doc"
-          @open="openDoc"
-          @publish="handlePublishDoc"
-          @attrs="handleShowAttrs"
-        />
+        <div class="result-count">
+          <span v-if="queryState.status === 'success'">
+            共找到 <strong>{{ queryState.results.length }}</strong> 个文档
+            <span
+              v-if="statsFilter"
+              class="filter-tag"
+            >
+              ({{ getCategoryLabel(statsFilter) }})
+              <button
+                class="filter-tag-close"
+                @click="clearStatsFilter"
+              >&times;</button>
+            </span>
+          </span>
+          <span
+            v-else-if="queryState.status === 'empty'"
+            class="empty-hint"
+          >
+            未找到符合条件的文档
+          </span>
+          <span
+            v-else-if="queryState.status === 'error'"
+            class="error-hint"
+          >
+            {{ queryState.errorMessage }}
+          </span>
+        </div>
         <div
-          v-if="hasMoreDocs"
-          ref="sentinelRef"
-          class="load-more-sentinel"
+          v-if="queryState.results.length > 0"
+          class="sort-controls"
+        >
+          <select
+            :value="filterOptions.sortField"
+            class="sort-select"
+            @change="handleSortChange"
+          >
+            <option value="wordCount">
+              按字数
+            </option>
+            <option value="title">
+              按标题
+            </option>
+            <option value="notebook">
+              按笔记本
+            </option>
+            <option value="updated">
+              按更新时间
+            </option>
+            <option value="depth">
+              按深度
+            </option>
+            <option value="refCount">
+              按引用数
+            </option>
+            <option value="imageCount">
+              按图片数
+            </option>
+            <option value="bookmark">
+              按书签
+            </option>
+          </select>
+          <button
+            class="sort-order-btn"
+            @click="toggleSortOrder"
+          >
+            <Icon :icon="filterOptions.sortOrder === 'asc' ? 'mdi:sort-ascending' : 'mdi:sort-descending'" />
+          </button>
+          <button
+            class="batch-publish-btn"
+            title="批量发布当前结果"
+            @click="handleBatchPublishAll"
+          >
+            <Icon icon="mdi:publish" />
+          </button>
+          <button
+            class="batch-mark-btn"
+            title="批量标记为待发布"
+            @click="handleBatchMarkPending"
+          >
+            <Icon icon="mdi:bookmark-plus-outline" />
+          </button>
+        </div>
+      </div>
+
+      <!-- 文档列表 -->
+      <div class="doc-list-container">
+        <div
+          v-if="queryState.status === 'loading'"
+          class="loading-state"
         >
           <Icon
-            v-if="isLoadingMore"
             icon="mdi:loading"
             class="loading-icon"
           />
-          <span
-            v-else
-            class="load-more-text"
-          >滚动加载更多 ({{ visibleCount }}/{{ queryState.results.length }})</span>
+          <span>正在查询文档...</span>
         </div>
-      </template>
 
-      <!-- 无结果 -->
-      <div
-        v-else-if="queryState.status === 'empty'"
-        class="empty-state"
-      >
-        <Icon
-          icon="mdi:file-check-outline"
-          class="empty-icon"
-        />
-        <p>没有找到符合条件的文档</p>
-        <p class="empty-desc">
-          尝试调整搜索条件或选择其他笔记本
-        </p>
-      </div>
+        <div
+          v-else-if="queryState.status === 'idle' && !queryState.hasQueried"
+          class="empty-state"
+        >
+          <Icon
+            icon="mdi:file-document-multiple-outline"
+            class="empty-icon"
+          />
+          <p>设置筛选条件后点击查询，或从统计面板点击卡片查看</p>
+          <p class="empty-desc">
+            支持标题搜索、全文搜索、字数范围筛选、书签过滤、多平台发布
+          </p>
+        </div>
 
-      <!-- 错误状态 -->
-      <div
-        v-else-if="queryState.status === 'error'"
-        class="empty-state"
-      >
-        <Icon
-          icon="mdi:alert-circle-outline"
-          class="empty-icon error"
-        />
-        <p>查询出错</p>
-        <p class="empty-desc">
-          {{ queryState.errorMessage }}
-        </p>
+        <template v-else-if="queryState.results.length > 0">
+          <DocListItem
+            v-for="doc in visibleDocs"
+            :key="doc.id"
+            v-memo="[doc.id, doc.title, doc.wordCount, doc.contentSize, doc.updated, doc.depth, doc.refCount, doc.imageCount, doc.bookmark, doc.publishStatus]"
+            :doc="doc"
+            @open="openDoc"
+            @publish="handlePublishDoc"
+            @attrs="handleShowAttrs"
+          />
+          <div
+            v-if="hasMoreDocs"
+            ref="sentinelRef"
+            class="load-more-sentinel"
+          >
+            <Icon
+              v-if="isLoadingMore"
+              icon="mdi:loading"
+              class="loading-icon"
+            />
+            <span
+              v-else
+              class="load-more-text"
+            >滚动加载更多 ({{ visibleCount }}/{{ queryState.results.length }})</span>
+          </div>
+        </template>
+
+        <div
+          v-else-if="queryState.status === 'empty'"
+          class="empty-state"
+        >
+          <Icon
+            icon="mdi:file-check-outline"
+            class="empty-icon"
+          />
+          <p>没有找到符合条件的文档</p>
+          <p class="empty-desc">
+            尝试调整搜索条件或选择其他笔记本
+          </p>
+        </div>
+
+        <div
+          v-else-if="queryState.status === 'error'"
+          class="empty-state"
+        >
+          <Icon
+            icon="mdi:alert-circle-outline"
+            class="empty-icon error"
+          />
+          <p>查询出错</p>
+          <p class="empty-desc">
+            {{ queryState.errorMessage }}
+          </p>
+        </div>
       </div>
     </div>
 
@@ -327,6 +365,11 @@ const {
 const { markAsPending } = usePublish(props.plugin)
 
 const showPublishTip = ref(false)
+
+// ============================================================
+// Tab 切换
+// ============================================================
+const activeTab = ref<"stats" | "list">("stats")
 
 // ============================================================
 // 发布面板状态
@@ -497,16 +540,19 @@ onBeforeUnmount(() => {
 function handleQuery() {
   statsFilter.value = ""
   queryDocs()
+  activeTab.value = "list"
 }
 
 /** 执行分析 */
 function handleAnalyze() {
   analyzeDocStats()
+  activeTab.value = "stats"
 }
 
 /** 点击统计卡片 */
 function handleSelectCategory(category: string) {
   queryByStatsCategory(category)
+  activeTab.value = "list"
 }
 
 /** 获取分类标签 */

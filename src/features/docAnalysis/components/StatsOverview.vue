@@ -1,6 +1,7 @@
 <template>
   <div class="stats-overview">
     <div
+      v-if="collapsible"
       class="stats-header"
       :class="{ collapsed: isCollapsed }"
       @click="toggleCollapse"
@@ -25,284 +26,175 @@
       </button>
     </div>
 
-    <template v-if="hasAnalyzed && !isCollapsed">
-      <div class="stats-grid">
-        <!-- 大小分布 -->
-        <div class="grid-section">
-          <span class="grid-section-label"><Icon
-            icon="mdi:harddisk"
-            class="section-icon-sm"
-          />大小分布</span>
-          <div class="stats-cards">
-            <div
-              class="stat-card"
-              :class="{ active: activeFilter === '0B' }"
-              @click="$emit('select-category', '0B')"
-            >
-              <span class="stat-value zero">{{ stats.zeroByteDocs }}</span>
-              <span class="stat-label">0B空</span>
-            </div>
-            <div
-              class="stat-card"
-              :class="{ active: activeFilter === 'small' }"
-              @click="$emit('select-category', 'small')"
-            >
-              <span class="stat-value small">{{ stats.smallDocs }}</span>
-              <span class="stat-label">&lt;1KB</span>
-            </div>
-            <div
-              class="stat-card"
-              :class="{ active: activeFilter === 'medium' }"
-              @click="$emit('select-category', 'medium')"
-            >
-              <span class="stat-value medium">{{ stats.mediumDocs }}</span>
-              <span class="stat-label">1~10KB</span>
-            </div>
-            <div
-              class="stat-card"
-              :class="{ active: activeFilter === 'duplicate' }"
-              @click="$emit('select-category', 'duplicate')"
-            >
-              <span class="stat-value dup">{{ stats.duplicateNameDocs }}</span>
-              <span class="stat-label">重名({{ stats.duplicateNameGroups }})</span>
-            </div>
-            <div class="stat-card total">
-              <span class="stat-value">{{ stats.totalDocs }}</span>
-              <span class="stat-label">总文档</span>
-            </div>
-          </div>
+    <template v-if="hasAnalyzed && (!isCollapsed || !collapsible)">
+      <!-- 总览概览条 -->
+      <div class="summary-bar">
+        <div class="summary-item">
+          <span class="summary-value">{{ stats.totalDocs }}</span>
+          <span class="summary-unit">总文档</span>
         </div>
-
-        <!-- 更新时间 -->
-        <div class="grid-section">
-          <span class="grid-section-label"><Icon
-            icon="mdi:clock-outline"
-            class="section-icon-sm"
-          />更新时间</span>
-          <div class="stats-cards">
-            <div
-              class="stat-card"
-              :class="{ active: activeFilter === '7days' }"
-              @click="$emit('select-category', '7days')"
-            >
-              <span class="stat-value time-green">{{ stats.updatedIn7Days }}</span>
-              <span class="stat-label">7天内</span>
-            </div>
-            <div
-              class="stat-card"
-              :class="{ active: activeFilter === '30days' }"
-              @click="$emit('select-category', '30days')"
-            >
-              <span class="stat-value time-yellow">{{ stats.updatedIn30Days }}</span>
-              <span class="stat-label">7~30天</span>
-            </div>
-            <div
-              class="stat-card"
-              :class="{ active: activeFilter === '1to2month' }"
-              @click="$emit('select-category', '1to2month')"
-            >
-              <span class="stat-value time-cyan">{{ stats.updatedIn1To2Months }}</span>
-              <span class="stat-label">1~2月</span>
-            </div>
-            <div
-              class="stat-card"
-              :class="{ active: activeFilter === '2to3month' }"
-              @click="$emit('select-category', '2to3month')"
-            >
-              <span class="stat-value time-orange">{{ stats.updatedIn2To3Months }}</span>
-              <span class="stat-label">2~3月</span>
-            </div>
-            <div
-              class="stat-card"
-              :class="{ active: activeFilter === 'halfYear' }"
-              @click="$emit('select-category', 'halfYear')"
-            >
-              <span class="stat-value time-red">{{ stats.updatedOverHalfYear }}</span>
-              <span class="stat-label">半年+</span>
-            </div>
-            <div
-              class="stat-card custom-time-card"
-              :class="{ active: activeFilter === 'customTime' }"
-              @click="$emit('select-category', 'customTime')"
-            >
-              <span class="stat-value time-purple"><Icon
-                icon="mdi:calendar-range"
-                class="custom-time-icon"
-              /></span>
-              <span class="stat-label">自定义</span>
-            </div>
-          </div>
+        <div class="summary-item warn">
+          <span class="summary-value">{{ stats.zeroByteDocs }}</span>
+          <span class="summary-unit">0B空</span>
         </div>
-
-        <!-- 书签 -->
-        <div class="grid-section">
-          <span class="grid-section-label">
-            <Icon
-              icon="mdi:bookmark-outline"
-              class="section-icon-sm"
-            />书签
-            <button
-              class="bookmark-detail-btn"
-              title="查看全部书签"
-              @click.stop="$emit('show-bookmark-details')"
-            >
-              <Icon
-                icon="mdi:format-list-bulleted"
-                :size="12"
-              />
-              详情
-            </button>
-          </span>
-          <div class="stats-cards">
-            <div
-              class="stat-card"
-              :class="{ active: activeFilter === 'pendingPublish' }"
-              @click="$emit('select-category', 'pendingPublish')"
-            >
-              <span class="stat-value pending-color">{{ stats.pendingPublishDocs }}</span>
-              <span class="stat-label">待发布</span>
-              <button
-                v-if="stats.pendingPublishDocs > 0"
-                class="stat-action-btn"
-                title="批量发布待发布文档"
-                @click.stop="$emit('batch-publish', 'pendingPublish')"
-              >
-                <Icon
-                  icon="mdi:publish"
-                  class="stat-action-icon"
-                />
-              </button>
-            </div>
-            <div
-              class="stat-card"
-              :class="{ active: activeFilter === 'published' }"
-              @click="$emit('select-category', 'published')"
-            >
-              <span class="stat-value published-color">{{ stats.publishedDocs }}</span>
-              <span class="stat-label">已发布</span>
-            </div>
-            <div
-              class="stat-card"
-              :class="{ active: activeFilter === 'unused' }"
-              @click="$emit('select-category', 'unused')"
-            >
-              <span class="stat-value unused-color">{{ stats.unusedDocs }}</span>
-              <span class="stat-label">不使用</span>
-            </div>
-            <div
-              class="stat-card"
-              :class="{ active: activeFilter === 'noneBookmark' }"
-              @click="$emit('select-category', 'noneBookmark')"
-            >
-              <span class="stat-value none-bookmark-color">{{ stats.noneBookmarkDocs }}</span>
-              <span class="stat-label">无</span>
-            </div>
-            <div
-              class="stat-card"
-              :class="{ active: activeFilter === 'hasBookmark' }"
-              @click="$emit('select-category', 'hasBookmark')"
-            >
-              <span class="stat-value bookmark-color">{{ stats.bookmarkedDocs }}</span>
-              <span class="stat-label">有书签</span>
-            </div>
-            <div
-              class="stat-card"
-              :class="{ active: activeFilter === 'noBookmark' }"
-              @click="$emit('select-category', 'noBookmark')"
-            >
-              <span class="stat-value no-bookmark-color">{{ stats.noBookmarkDocs }}</span>
-              <span class="stat-label">无书签</span>
-            </div>
-          </div>
+        <div class="summary-item accent">
+          <span class="summary-value">{{ stats.duplicateNameDocs }}</span>
+          <span class="summary-unit">重名</span>
         </div>
-
-        <!-- 发布状态 -->
-        <div class="grid-section">
-          <span class="grid-section-label"><Icon
-            icon="mdi:cloud-check-outline"
-            class="section-icon-sm"
-          />发布状态</span>
-          <div class="stats-cards">
-            <div
-              class="stat-card"
-              :class="{ active: activeFilter === 'fullPublish' }"
-              @click="$emit('select-category', 'fullPublish')"
-            >
-              <span class="stat-value full-publish-color">{{ stats.fullPublishDocs }}</span>
-              <span class="stat-label">完整发布</span>
-            </div>
-            <div
-              class="stat-card"
-              :class="{ active: activeFilter === 'partialPublish' }"
-              @click="$emit('select-category', 'partialPublish')"
-            >
-              <span class="stat-value partial-publish-color">{{ stats.partialPublishDocs }}</span>
-              <span class="stat-label">部分发布</span>
-            </div>
-            <div
-              class="stat-card"
-              :class="{ active: activeFilter === 'noPublish' }"
-              @click="$emit('select-category', 'noPublish')"
-            >
-              <span class="stat-value no-publish-color">{{ stats.noPublishDocs }}</span>
-              <span class="stat-label">未发布</span>
-            </div>
-          </div>
+        <div class="summary-item pending">
+          <span class="summary-value">{{ stats.pendingPublishDocs }}</span>
+          <span class="summary-unit">待发布</span>
         </div>
+      </div>
 
-        <!-- 结构分析 -->
-        <div class="grid-section">
-          <span class="grid-section-label"><Icon
-            icon="mdi:sitemap-outline"
-            class="section-icon-sm"
-          />结构</span>
-          <div class="stats-cards">
-            <div
-              class="stat-card"
-              :class="{ active: activeFilter === 'deep' }"
-              @click="$emit('select-category', 'deep')"
-            >
-              <span class="stat-value depth-color">{{ stats.deepDocs }}</span>
-              <span class="stat-label">深层≥5</span>
-            </div>
-            <div
-              class="stat-card"
-              :class="{ active: activeFilter === 'hasRef' }"
-              @click="$emit('select-category', 'hasRef')"
-            >
-              <span class="stat-value ref-color">{{ stats.refDocs }}</span>
-              <span class="stat-label">引用({{ stats.totalRefs }})</span>
-            </div>
-            <div
-              class="stat-card"
-              :class="{ active: activeFilter === 'hasImage' }"
-              @click="$emit('select-category', 'hasImage')"
-            >
-              <span class="stat-value img-color">{{ stats.imageDocs }}</span>
-              <span class="stat-label">图片({{ stats.totalImages }})</span>
-            </div>
+      <!-- 大小分布 -->
+      <div class="stat-section">
+        <div class="section-header"><Icon icon="mdi:harddisk" />大小分布</div>
+        <div class="section-cards">
+          <div class="stat-card" :class="{ active: activeFilter === '0B' }" @click="$emit('select-category', '0B')">
+            <span class="card-value zero">{{ stats.zeroByteDocs }}</span>
+            <span class="card-unit">0B空</span>
+            <span class="card-percent" :style="{ width: pct(stats.zeroByteDocs) }"></span>
+          </div>
+          <div class="stat-card" :class="{ active: activeFilter === 'small' }" @click="$emit('select-category', 'small')">
+            <span class="card-value small">{{ stats.smallDocs }}</span>
+            <span class="card-unit">&lt;1KB</span>
+            <span class="card-percent" :style="{ width: pct(stats.smallDocs) }"></span>
+          </div>
+          <div class="stat-card" :class="{ active: activeFilter === 'medium' }" @click="$emit('select-category', 'medium')">
+            <span class="card-value medium">{{ stats.mediumDocs }}</span>
+            <span class="card-unit">1~10KB</span>
+            <span class="card-percent" :style="{ width: pct(stats.mediumDocs) }"></span>
+          </div>
+          <div class="stat-card" :class="{ active: activeFilter === 'duplicate' }" @click="$emit('select-category', 'duplicate')">
+            <span class="card-value dup">{{ stats.duplicateNameDocs }}</span>
+            <span class="card-unit">重名({{ stats.duplicateNameGroups }}组)</span>
+            <span class="card-percent" :style="{ width: pct(stats.duplicateNameDocs) }"></span>
           </div>
         </div>
       </div>
 
-      <!-- 深度分布迷你图 -->
-      <div
-        v-if="depthStats.depthDistribution.length > 0"
-        class="depth-chart-wrap"
-      >
-        <span class="depth-chart-label">深度分布（均 {{ depthStats.avgDepth }} 层，最深 {{ depthStats.maxDepth }} 层）</span>
-        <div class="depth-chart">
-          <div
-            v-for="item in depthStats.depthDistribution"
-            :key="item.depth"
-            class="depth-bar-item"
-          >
-            <div
-              class="depth-bar"
-              :style="{ height: `${getBarHeight(item.count)}%` }"
-              :title="`${item.depth} 层: ${item.count} 篇`"
-            ></div>
-            <span class="depth-label">{{ item.depth }}</span>
+      <!-- 更新时间 -->
+      <div class="stat-section">
+        <div class="section-header"><Icon icon="mdi:clock-outline" />更新时间</div>
+        <div class="section-cards">
+          <div class="stat-card" :class="{ active: activeFilter === '7days' }" @click="$emit('select-category', '7days')">
+            <span class="card-value time-green">{{ stats.updatedIn7Days }}</span>
+            <span class="card-unit">7天内</span>
+          </div>
+          <div class="stat-card" :class="{ active: activeFilter === '30days' }" @click="$emit('select-category', '30days')">
+            <span class="card-value time-yellow">{{ stats.updatedIn30Days }}</span>
+            <span class="card-unit">7~30天</span>
+          </div>
+          <div class="stat-card" :class="{ active: activeFilter === '1to2month' }" @click="$emit('select-category', '1to2month')">
+            <span class="card-value time-cyan">{{ stats.updatedIn1To2Months }}</span>
+            <span class="card-unit">1~2月</span>
+          </div>
+          <div class="stat-card" :class="{ active: activeFilter === '2to3month' }" @click="$emit('select-category', '2to3month')">
+            <span class="card-value time-orange">{{ stats.updatedIn2To3Months }}</span>
+            <span class="card-unit">2~3月</span>
+          </div>
+          <div class="stat-card" :class="{ active: activeFilter === 'halfYear' }" @click="$emit('select-category', 'halfYear')">
+            <span class="card-value time-red">{{ stats.updatedOverHalfYear }}</span>
+            <span class="card-unit">半年+</span>
+          </div>
+          <div class="stat-card" :class="{ active: activeFilter === 'customTime' }" @click="$emit('select-category', 'customTime')">
+            <span class="card-value time-purple"><Icon icon="mdi:calendar-range" /></span>
+            <span class="card-unit">自定义</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 书签 -->
+      <div class="stat-section">
+        <div class="section-header">
+          <Icon icon="mdi:bookmark-outline" />书签
+          <button class="bookmark-detail-btn" title="查看全部书签" @click.stop="$emit('show-bookmark-details')">
+            <Icon icon="mdi:format-list-bulleted" :size="13" />详情
+          </button>
+        </div>
+        <div class="section-cards">
+          <div class="stat-card" :class="{ active: activeFilter === 'pendingPublish' }" @click="$emit('select-category', 'pendingPublish')">
+            <span class="card-value pending-color">{{ stats.pendingPublishDocs }}</span>
+            <span class="card-unit">待发布</span>
+            <button v-if="stats.pendingPublishDocs > 0" class="card-action-btn" title="批量发布" @click.stop="$emit('batch-publish', 'pendingPublish')">
+              <Icon icon="mdi:publish" />
+            </button>
+          </div>
+          <div class="stat-card" :class="{ active: activeFilter === 'published' }" @click="$emit('select-category', 'published')">
+            <span class="card-value published-color">{{ stats.publishedDocs }}</span>
+            <span class="card-unit">已发布</span>
+          </div>
+          <div class="stat-card" :class="{ active: activeFilter === 'unused' }" @click="$emit('select-category', 'unused')">
+            <span class="card-value unused-color">{{ stats.unusedDocs }}</span>
+            <span class="card-unit">不使用</span>
+          </div>
+          <div class="stat-card" :class="{ active: activeFilter === 'noneBookmark' }" @click="$emit('select-category', 'noneBookmark')">
+            <span class="card-value none-bookmark-color">{{ stats.noneBookmarkDocs }}</span>
+            <span class="card-unit">无</span>
+          </div>
+          <div class="stat-card" :class="{ active: activeFilter === 'hasBookmark' }" @click="$emit('select-category', 'hasBookmark')">
+            <span class="card-value bookmark-color">{{ stats.bookmarkedDocs }}</span>
+            <span class="card-unit">有书签</span>
+          </div>
+          <div class="stat-card" :class="{ active: activeFilter === 'noBookmark' }" @click="$emit('select-category', 'noBookmark')">
+            <span class="card-value no-bookmark-color">{{ stats.noBookmarkDocs }}</span>
+            <span class="card-unit">无书签</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 发布状态 -->
+      <div class="stat-section">
+        <div class="section-header"><Icon icon="mdi:cloud-check-outline" />发布状态</div>
+        <div class="section-cards">
+          <div class="stat-card" :class="{ active: activeFilter === 'fullPublish' }" @click="$emit('select-category', 'fullPublish')">
+            <span class="card-value full-publish-color">{{ stats.fullPublishDocs }}</span>
+            <span class="card-unit">完整发布</span>
+          </div>
+          <div class="stat-card" :class="{ active: activeFilter === 'partialPublish' }" @click="$emit('select-category', 'partialPublish')">
+            <span class="card-value partial-publish-color">{{ stats.partialPublishDocs }}</span>
+            <span class="card-unit">部分发布</span>
+          </div>
+          <div class="stat-card" :class="{ active: activeFilter === 'noPublish' }" @click="$emit('select-category', 'noPublish')">
+            <span class="card-value no-publish-color">{{ stats.noPublishDocs }}</span>
+            <span class="card-unit">未发布</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 结构分析 -->
+      <div class="stat-section">
+        <div class="section-header"><Icon icon="mdi:sitemap-outline" />结构</div>
+        <div class="section-cards">
+          <div class="stat-card" :class="{ active: activeFilter === 'deep' }" @click="$emit('select-category', 'deep')">
+            <span class="card-value depth-color">{{ stats.deepDocs }}</span>
+            <span class="card-unit">深层≥5</span>
+          </div>
+          <div class="stat-card" :class="{ active: activeFilter === 'hasRef' }" @click="$emit('select-category', 'hasRef')">
+            <span class="card-value ref-color">{{ stats.refDocs }}</span>
+            <span class="card-unit">引用({{ stats.totalRefs }})</span>
+          </div>
+          <div class="stat-card" :class="{ active: activeFilter === 'hasImage' }" @click="$emit('select-category', 'hasImage')">
+            <span class="card-value img-color">{{ stats.imageDocs }}</span>
+            <span class="card-unit">图片({{ stats.totalImages }})</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 深度分布图 -->
+      <div v-if="depthStats.depthDistribution.length > 0" class="stat-section">
+        <div class="section-header">
+          <Icon icon="mdi:chart-bar" />深度分布
+          <span class="section-hint">均 {{ depthStats.avgDepth }} 层 · 最深 {{ depthStats.maxDepth }} 层</span>
+        </div>
+        <div class="depth-chart-v2">
+          <div v-for="item in depthStats.depthDistribution" :key="item.depth" class="depth-bar-v2">
+            <span class="depth-bar-label">{{ item.depth }}</span>
+            <div class="depth-bar-track">
+              <div class="depth-bar-fill" :style="{ width: getBarPercent(item.count) }"></div>
+            </div>
+            <span class="depth-bar-count">{{ item.count }}</span>
           </div>
         </div>
       </div>
@@ -411,9 +303,12 @@ interface Props {
   bookmarkDetails: BookmarkDetail[]
   bookmarkDetailVisible: boolean
   bookmarkDetailLoading: boolean
+  collapsible?: boolean
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  collapsible: true,
+})
 
 const emit = defineEmits<{
   (e: "analyze"): void
@@ -436,21 +331,26 @@ function closeBookmarkDetail() {
   emit("show-bookmark-details")
 }
 
-/** 计算深度分布柱状图高度 */
-const maxCount = computed(() => {
+/** 计算卡片百分比进度条宽度 */
+function pct(count: number): string {
+  if (!props.stats.totalDocs || props.stats.totalDocs === 0) return "0%"
+  return `${Math.min(100, Math.round((count / props.stats.totalDocs) * 100))}%`
+}
+
+/** 计算深度分布柱状图宽度百分比 */
+const maxDepthCount = computed(() => {
   const counts = props.depthStats.depthDistribution.map((d) => d.count)
   return Math.max(...counts, 1)
 })
 
-function getBarHeight(count: number): number {
-  return Math.max((count / maxCount.value) * 100, 3)
+function getBarPercent(count: number): string {
+  return `${Math.round((count / maxDepthCount.value) * 100)}%`
 }
 </script>
 
 <style lang="scss" scoped>
 .stats-overview {
-  padding: 8px 14px;
-  border-bottom: 1px solid var(--b3-border-color);
+  padding: 10px 14px;
 }
 
 .stats-header {
@@ -496,75 +396,103 @@ function getBarHeight(count: number): number {
     font-size: 12px;
     cursor: pointer;
 
-    &:hover:not(:disabled) {
-      opacity: 0.85;
-    }
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
+    &:hover:not(:disabled) { opacity: 0.85; }
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .spin-icon {
       animation: spin 1s linear infinite;
     }
-
-    @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
   }
 }
 
-// ============ 紧凑网格布局 ============
-.stats-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-.grid-section {
+// ============ 总览概览条 ============
+.summary-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+  padding: 10px 0;
+  border-bottom: 2px solid var(--b3-border-color);
+}
+
+.summary-item {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  flex: 1 1 auto;
-  min-width: 140px;
+  align-items: center;
+  padding: 8px 4px;
+  border-radius: 8px;
+  background: var(--b3-theme-surface);
+
+  .summary-value {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--b3-theme-on-background);
+    line-height: 1;
+  }
+
+  .summary-unit {
+    font-size: 11px;
+    color: var(--b3-theme-on-surface-variant);
+    margin-top: 4px;
+  }
+
+  &.warn .summary-value { color: var(--b3-theme-error, #ef4444); }
+  &.accent .summary-value { color: #a855f7; }
+  &.pending .summary-value { color: #f59e0b; }
 }
 
-.grid-section-label {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 11px;
-  color: var(--b3-theme-on-surface-variant);
-  font-weight: 500;
-  line-height: 1;
+// ============ 分区 ============
+.stat-section {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--b3-border-color-light, rgba(0,0,0,0.04));
 
-  .section-icon-sm {
-    font-size: 12px;
-    opacity: 0.65;
-    flex-shrink: 0;
+  &:last-child {
+    border-bottom: none;
   }
 }
 
-// ============ 统计卡片（紧凑版） ============
-.stats-cards {
+.section-header {
   display: flex;
-  gap: 4px;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--b3-theme-on-background);
+  margin-bottom: 8px;
+
+  .section-hint {
+    font-weight: 400;
+    font-size: 11px;
+    color: var(--b3-theme-on-surface-variant);
+    margin-left: auto;
+  }
+}
+
+// ============ 卡片行 ============
+.section-cards {
+  display: flex;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
 .stat-card {
+  flex: 1;
+  min-width: 58px;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 4px 5px;
-  border-radius: 6px;
+  padding: 10px 6px 8px;
+  border-radius: 8px;
   background: var(--b3-theme-surface-light);
   cursor: pointer;
   border: 2px solid transparent;
-  flex: 1;
-  min-width: 48px;
+  overflow: hidden;
 
   &:hover {
     background: var(--b3-list-hover);
@@ -575,24 +503,13 @@ function getBarHeight(count: number): number {
     background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
   }
 
-  &.total {
-    cursor: default;
-    background: var(--b3-theme-surface);
-  }
-
-  &.custom-time-card {
-    cursor: pointer;
-
-    .custom-time-icon {
-      font-size: 15px;
-    }
-  }
-
-  .stat-value {
-    font-size: 14px;
+  .card-value {
+    font-size: 18px;
     font-weight: 700;
     color: var(--b3-theme-on-background);
-    line-height: 1.15;
+    line-height: 1.2;
+    position: relative;
+    z-index: 1;
 
     &.zero { color: var(--b3-theme-error, #ef4444); }
     &.small { color: var(--b3-theme-warning, #f59e0b); }
@@ -618,107 +535,91 @@ function getBarHeight(count: number): number {
     &.no-publish-color { color: #9ca3af; }
   }
 
-  .stat-label {
-    font-size: 9px;
+  .card-unit {
+    font-size: 11px;
     color: var(--b3-theme-on-surface-variant);
-    margin-top: 1px;
+    margin-top: 3px;
     white-space: nowrap;
     text-align: center;
+    position: relative;
+    z-index: 1;
   }
 
-  .stat-action-btn {
+  .card-percent {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: var(--b3-theme-primary);
+    opacity: 0.15;
+    border-radius: 0 0 6px 6px;
+    transition: width 0.3s ease;
+  }
+
+  .card-action-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
+    margin-top: 4px;
     border: none;
     border-radius: 50%;
     background: var(--b3-theme-primary);
     color: var(--b3-theme-on-primary);
     cursor: pointer;
-    font-size: 10px;
-    margin-top: 2px;
+    font-size: 12px;
+    position: relative;
+    z-index: 1;
 
-    &:hover {
-      opacity: 0.85;
-    }
-
-    .stat-action-icon {
-      font-size: 11px;
-    }
+    &:hover { opacity: 0.85; }
   }
 }
 
-.platform-gap-row {
+// ============ 深度分布图（水平条） ============
+.depth-chart-v2 {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.depth-bar-v2 {
+  display: flex;
   align-items: center;
-  gap: 3px;
-  margin-top: 4px;
-  font-size: 10px;
+  gap: 6px;
+}
+
+.depth-bar-label {
+  width: 20px;
+  font-size: 11px;
+  font-weight: 600;
   color: var(--b3-theme-on-surface-variant);
-
-  .gap-label {
-    color: var(--b3-theme-on-surface-variant);
-    opacity: 0.6;
-    margin-right: 2px;
-  }
-
-  .gap-item {
-    padding: 1px 6px;
-    border-radius: 8px;
-    background: rgba(245, 158, 11, 0.12);
-    color: #b45309;
-    white-space: nowrap;
-  }
+  text-align: right;
+  flex-shrink: 0;
 }
 
-// ============ 深度分布图（紧凑版） ============
-.depth-chart-wrap {
-  margin-top: 6px;
+.depth-bar-track {
+  flex: 1;
+  height: 14px;
+  border-radius: 7px;
+  background: var(--b3-theme-surface-light);
+  overflow: hidden;
 }
 
-.depth-chart-label {
+.depth-bar-fill {
+  height: 100%;
+  border-radius: 7px;
+  background: var(--b3-theme-primary);
+  opacity: 0.6;
+  min-width: 4px;
+  transition: width 0.3s ease;
+}
+
+.depth-bar-count {
+  width: 28px;
   font-size: 11px;
   color: var(--b3-theme-on-surface-variant);
-  font-weight: 500;
-}
-
-.depth-chart {
-  display: flex;
-  align-items: flex-end;
-  gap: 2px;
-  height: 32px;
-  padding: 2px 0;
-  margin-top: 3px;
-
-  .depth-bar-item {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    height: 100%;
-    justify-content: flex-end;
-  }
-
-  .depth-bar {
-    width: 100%;
-    min-height: 2px;
-    background: var(--b3-theme-primary);
-    opacity: 0.6;
-    border-radius: 2px 2px 0 0;
-
-    &:hover {
-      opacity: 1;
-    }
-  }
-
-  .depth-label {
-    font-size: 8px;
-    color: var(--b3-theme-on-surface-variant);
-    margin-top: 1px;
-  }
+  flex-shrink: 0;
 }
 
 // ============ 占位状态 ============
@@ -726,19 +627,17 @@ function getBarHeight(count: number): number {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px;
+  padding: 30px;
   color: var(--b3-theme-on-surface-variant);
   font-size: 13px;
-  gap: 6px;
+  gap: 8px;
 
   .placeholder-icon {
-    font-size: 36px;
-    opacity: 0.35;
+    font-size: 40px;
+    opacity: 0.3;
   }
 
-  p {
-    margin: 0;
-  }
+  p { margin: 0; }
 }
 
 // ============ 书签详情按钮 ============

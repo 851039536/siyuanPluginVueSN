@@ -316,7 +316,10 @@ import {
 // onload 同步阶段读取
 setFeatureFlagsDir((this as any).dataDir)
 const savedFlags = loadFeatureFlagsSync()
-this.settings = { ...DEFAULT_SETTINGS, ...savedFlags }
+this.settings = {
+  ...DEFAULT_SETTINGS,
+  ...savedFlags,
+}
 
 // 新增功能开关字段时，需在 FEATURE_ID_TO_KEY_MAP 中处理缩写词映射
 // 参见 src/config/settings.ts 中的 FEATURE_ID_TO_KEY_MAP

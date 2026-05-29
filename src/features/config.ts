@@ -253,6 +253,11 @@ export const FEATURE_CONFIG = [
       label: "⚙️ 设置",
     }],
   },
+  {
+    id: "apiDebugger",
+    defaultTitle: "API调试器",
+    defaultDesc: "调试和测试思源笔记API接口",
+  },
 ] as const
 
 /**

@@ -283,13 +283,13 @@ import {
   ref,
   watch,
 } from "vue"
+import { getBlockAttrs } from "@/api"
+import AttrsPanel from "./components/AttrsPanel.vue"
 import DocListItem from "./components/DocListItem.vue"
 import FilterSettings from "./components/FilterSettings.vue"
 import PublishPanel from "./components/PublishPanel.vue"
-import StatsOverview from "./components/StatsOverview.vue"
-import AttrsPanel from "./components/AttrsPanel.vue"
 
-import { getBlockAttrs } from "@/api"
+import StatsOverview from "./components/StatsOverview.vue"
 import { useDocAnalysis } from "./composables/useDocAnalysis"
 import { usePublish } from "./composables/usePublish"
 

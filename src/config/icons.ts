@@ -230,6 +230,12 @@ export const FEATURE_ICONS = {
     color: "#10b981",
   },
 
+  // API调试器
+  apiDebugger: {
+    icon: "mdi:console",
+    color: "#0ea5e9",
+  },
+
   // 密码箱
   passwordVault: {
     icon: "mdi:shield-key",

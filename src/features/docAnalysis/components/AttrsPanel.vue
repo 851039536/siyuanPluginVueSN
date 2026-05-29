@@ -91,7 +91,9 @@
             :key="item.key"
             class="attr-row"
           >
-            <div class="attr-key">{{ item.label }}</div>
+            <div class="attr-key">
+              {{ item.label }}
+            </div>
             <div class="attr-value">
               <template v-if="item.isYaml">
                 <div
@@ -146,8 +148,11 @@
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
+import {
+  computed,
+  ref,
+} from "vue"
 import { setBlockAttrs } from "@/api"
-import { computed, ref } from "vue"
 
 interface Props {
   visible: boolean
@@ -182,8 +187,16 @@ function countYamlLines(value: string): number {
 }
 
 const CORE_ATTRS = new Set([
-  "id", "type", "title", "alias", "memo", "bookmark", "tags",
-  "icon", "updated", "created",
+  "id",
+  "type",
+  "title",
+  "alias",
+  "memo",
+  "bookmark",
+  "tags",
+  "icon",
+  "updated",
+  "created",
 ])
 
 interface PlatformInfo {
@@ -198,7 +211,7 @@ const markingPlatform = ref<string | null>(null)
 async function markAsPublished(platformId: string) {
   if (!props.attrs || markingPlatform.value) return
 
-  const config = PLATFORM_CONFIGS.find(c => c.id === platformId)
+  const config = PLATFORM_CONFIGS.find((c) => c.id === platformId)
   if (!config) return
 
   // eslint-disable-next-line no-alert
@@ -208,10 +221,10 @@ async function markAsPublished(platformId: string) {
 
   try {
     // 查找已有的匹配 YAML key
-    const yamlKeys = Object.keys(props.attrs).filter(k => k.endsWith("-yaml"))
-    const matchKey = yamlKeys.find(k => {
+    const yamlKeys = Object.keys(props.attrs).filter((k) => k.endsWith("-yaml"))
+    const matchKey = yamlKeys.find((k) => {
       const lower = k.toLowerCase()
-      return config.matchers.some(m => lower.includes(m))
+      return config.matchers.some((m) => lower.includes(m))
     })
 
     const attrKey = matchKey || `custom-${config.matchers[0]}-yaml`
@@ -244,7 +257,7 @@ function buildYamlTemplate(platformName: string): string {
     const tagList = props.attrs.tags.split(",").filter(Boolean)
     if (tagList.length > 0) {
       lines.push("tags:")
-      tagList.forEach(t => { lines.push(`  - ${t.trim()}`) })
+      tagList.forEach((t) => { lines.push(`  - ${t.trim()}`) })
     }
   }
 
@@ -261,27 +274,62 @@ function buildYamlTemplate(platformName: string): string {
 }
 
 const PLATFORM_CONFIGS = [
-  { id: "csdn", name: "CSDN", matchers: ["csdn"] },
-  { id: "zhihu", name: "知乎", matchers: ["zhihu"] },
-  { id: "juejin", name: "掘金", matchers: ["juejin"] },
-  { id: "blog", name: "博客园", matchers: ["cnblogs", "blog"] },
-  { id: "bibi", name: "B站", matchers: ["bili", "bibi"] },
-  { id: "gzh", name: "公众号", matchers: ["gzh"] },
+  {
+    id: "csdn",
+    name: "CSDN",
+    matchers: ["csdn"],
+  },
+  {
+    id: "zhihu",
+    name: "知乎",
+    matchers: ["zhihu"],
+  },
+  {
+    id: "juejin",
+    name: "掘金",
+    matchers: ["juejin"],
+  },
+  {
+    id: "blog",
+    name: "博客园",
+    matchers: ["cnblogs", "blog"],
+  },
+  {
+    id: "bibi",
+    name: "B站",
+    matchers: ["bili", "bibi"],
+  },
+  {
+    id: "gzh",
+    name: "公众号",
+    matchers: ["gzh"],
+  },
 ]
 
 const platforms = computed<PlatformInfo[]>(() => {
-  if (!props.attrs) return PLATFORM_CONFIGS.map(c => ({ id: c.id, name: c.name, published: false, matchKeys: [] }))
+  if (!props.attrs) { return PLATFORM_CONFIGS.map((c) => ({
+    id: c.id,
+    name: c.name,
+    published: false,
+    matchKeys: [],
+  }))
+  }
 
-  const yamlKeys = Object.keys(props.attrs).filter(k => k.endsWith("-yaml"))
+  const yamlKeys = Object.keys(props.attrs).filter((k) => k.endsWith("-yaml"))
 
-  return PLATFORM_CONFIGS.map(config => {
-    const matchedKey = yamlKeys.find(k => {
+  return PLATFORM_CONFIGS.map((config) => {
+    const matchedKey = yamlKeys.find((k) => {
       const lower = k.toLowerCase()
-      return config.matchers.some(m => lower.includes(m))
+      return config.matchers.some((m) => lower.includes(m))
     })
     const published = !!matchedKey && !!(props.attrs![matchedKey]?.trim())
     const matchKeys = matchedKey ? [matchedKey] : []
-    return { id: config.id, name: config.name, published, matchKeys }
+    return {
+      id: config.id,
+      name: config.name,
+      published,
+      matchKeys,
+    }
   })
 })
 
@@ -333,7 +381,12 @@ const displayItems = computed<DisplayItem[]>(() => {
       label = ATTR_LABELS[key]
     }
 
-    items.push({ key, label, value, isYaml })
+    items.push({
+      key,
+      label,
+      value,
+      isYaml,
+    })
   }
 
   return items

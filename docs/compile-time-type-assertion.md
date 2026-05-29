@@ -71,9 +71,9 @@ export type FeatureId = (typeof FEATURE_CONFIG)[number]["id"]
 ```typescript
 import type { FeatureId } from "./config"
 
+export { registerImageCompressor } from "./imageCompressor"
 // ========== 导出注册函数 ==========
 export { registerPageLock } from "./pageLock"
-export { registerImageCompressor } from "./imageCompressor"
 export { registerStatistics } from "./statistics"
 // qrCode 仅用于 UI 展示，不需要 register
 
@@ -211,16 +211,16 @@ type _AssertAllCovered = _AssertTrue<
 
 ```typescript
 // ===== config.ts =====
-export const ITEMS = [
+// "a" | "b" | "c"
+
+// ===== handler.ts =====
+import type { ItemId } from "./config"  export const ITEMS = [
   { id: "a", label: "功能A" },
   { id: "b", label: "功能B" },
   { id: "c", label: "功能C" },
 ] as const
 
-export type ItemId = (typeof ITEMS)[number]["id"]  // "a" | "b" | "c"
-
-// ===== handler.ts =====
-import type { ItemId } from "./config"
+export type ItemId = (typeof ITEMS)[number]["id"]
 
 // 不需要处理函数的 ID（如纯展示项）
 type ConfigOnly = "c"

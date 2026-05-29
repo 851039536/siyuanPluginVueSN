@@ -278,7 +278,11 @@ import {
   watch,
 } from "vue"
 import { useSkillsLoader } from "../composables/useSkillsLoader"
-import { renderMarkdown, getSourceHint, getSourceHintText } from "../utils"
+import {
+  getSourceHint,
+  getSourceHintText,
+  renderMarkdown,
+} from "../utils"
 
 interface Props {
   plugin: any

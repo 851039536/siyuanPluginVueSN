@@ -107,7 +107,8 @@
       "WebFetch(domain:liuyun.io)",
       "Bash(gh repo *)",
       "WebFetch(domain:ld246.com)",
-      "WebFetch(domain:cdn.jsdelivr.net)"
+      "WebFetch(domain:cdn.jsdelivr.net)",
+      "Bash(gh api *)"
     ],
     "deny": [],
     "ask": []

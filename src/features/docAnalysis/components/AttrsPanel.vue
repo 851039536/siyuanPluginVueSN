@@ -61,9 +61,21 @@
               v-for="platform in platforms"
               :key="platform.id"
               class="platform-status-item"
-              :class="{ published: platform.published }"
+              :class="{
+                published: platform.published,
+                marking: markingPlatform === platform.id,
+                clickable: !platform.published,
+              }"
+              :title="platform.published ? `${platform.name} 已发布` : `点击标记 ${platform.name} 已发布`"
+              @click="!platform.published && markAsPublished(platform.id)"
             >
               <Icon
+                v-if="markingPlatform === platform.id"
+                icon="mdi:loading"
+                class="status-icon spin-icon"
+              />
+              <Icon
+                v-else
                 :icon="platform.published ? 'mdi:check-circle' : 'mdi:minus-circle-outline'"
                 class="status-icon"
               />
@@ -134,6 +146,7 @@
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
+import { setBlockAttrs } from "@/api"
 import { computed, ref } from "vue"
 
 interface Props {
@@ -146,8 +159,9 @@ interface Props {
 
 const props = defineProps<Props>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: "close"): void
+  (e: "refresh"): void
 }>()
 
 const expandedYaml = ref(new Set<string>())
@@ -177,6 +191,70 @@ interface PlatformInfo {
   name: string
   published: boolean
   matchKeys: string[]
+}
+
+const markingPlatform = ref<string | null>(null)
+
+async function markAsPublished(platformId: string) {
+  if (!props.attrs || markingPlatform.value) return
+
+  const config = PLATFORM_CONFIGS.find(c => c.id === platformId)
+  if (!config) return
+
+  markingPlatform.value = platformId
+
+  try {
+    // 查找已有的匹配 YAML key
+    const yamlKeys = Object.keys(props.attrs).filter(k => k.endsWith("-yaml"))
+    const matchKey = yamlKeys.find(k => {
+      const lower = k.toLowerCase()
+      return config.matchers.some(m => lower.includes(m))
+    })
+
+    const attrKey = matchKey || `custom-${config.matchers[0]}-yaml`
+    const yamlValue = buildYamlTemplate(config.name)
+
+    await setBlockAttrs(props.docId, { [attrKey]: yamlValue })
+    emit("refresh")
+  }
+  catch (e) {
+    console.error("标记已发布失败:", e)
+  }
+  finally {
+    markingPlatform.value = null
+  }
+}
+
+function buildYamlTemplate(platformName: string): string {
+  if (!props.attrs) return ""
+
+  const lines: string[] = [
+    "---",
+    `created: '${props.attrs.created || ""}'`,
+    `updated: '${props.attrs.updated || ""}'`,
+    `title: ${props.attrs.title || ""}`,
+    `permalink: siyuan://blocks/${props.docId}`,
+    `desc: ${props.attrs.alias || props.attrs.memo || props.attrs.title || ""}`,
+  ]
+
+  if (props.attrs.tags) {
+    const tagList = props.attrs.tags.split(",").filter(Boolean)
+    if (tagList.length > 0) {
+      lines.push("tags:")
+      tagList.forEach(t => { lines.push(`  - ${t.trim()}`) })
+    }
+  }
+
+  if (props.attrs.bookmark && props.attrs.bookmark !== "无") {
+    lines.push("categories:")
+    lines.push(`  - ${props.attrs.bookmark}`)
+  }
+  else {
+    lines.push("categories: []")
+  }
+
+  lines.push("---")
+  return lines.join("\n")
 }
 
 const PLATFORM_CONFIGS = [
@@ -409,38 +487,61 @@ async function copyAllAttrs() {
   }
 
   .platform-status-item {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 10px;
-    border-radius: 14px;
-    font-size: 12px;
-    background: var(--b3-theme-surface-light);
-    color: var(--b3-theme-on-surface-variant);
-
-    .status-icon {
-      font-size: 14px;
-      flex-shrink: 0;
-    }
-
-    .platform-name {
-      font-weight: 500;
-    }
-
-    .status-text {
-      opacity: 0.7;
-      font-size: 11px;
-    }
-
-    &.published {
-      background: rgba(34, 197, 94, 0.1);
-      color: #16a34a;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 14px;
+      font-size: 12px;
+      background: var(--b3-theme-surface-light);
+      color: var(--b3-theme-on-surface-variant);
+      user-select: none;
 
       .status-icon {
-        color: #22c55e;
+        font-size: 14px;
+        flex-shrink: 0;
+      }
+
+      .platform-name {
+        font-weight: 500;
+      }
+
+      .status-text {
+        opacity: 0.7;
+        font-size: 11px;
+      }
+
+      &.clickable {
+        cursor: pointer;
+
+        &:hover {
+          background: rgba(34, 197, 94, 0.15);
+          color: #16a34a;
+
+          .status-icon {
+            color: #22c55e;
+          }
+        }
+      }
+
+      &.marking {
+        cursor: wait;
+        opacity: 0.7;
+      }
+
+      &.published {
+        background: rgba(34, 197, 94, 0.1);
+        color: #16a34a;
+
+        .status-icon {
+          color: #22c55e;
+        }
       }
     }
-  }
+
+    .spin-icon {
+      animation: spin 1s linear infinite;
+    }
 }
 
 .attrs-table {
@@ -570,5 +671,10 @@ async function copyAllAttrs() {
       background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
     }
   }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 </style>

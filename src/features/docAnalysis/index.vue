@@ -257,6 +257,7 @@
       :loading="attrsLoading"
       :error="attrsError"
       @close="handleCloseAttrs"
+      @refresh="handleRefreshAttrs"
     />
 
     <!-- 发布面板 -->
@@ -381,6 +382,21 @@ function handleCloseAttrs() {
   attrsPanelVisible.value = false
   attrsData.value = null
   attrsError.value = ""
+}
+
+async function handleRefreshAttrs() {
+  attrsLoading.value = true
+  attrsError.value = ""
+  try {
+    const data = await getBlockAttrs(attrsPanelDocId.value)
+    attrsData.value = data
+  }
+  catch (e: unknown) {
+    attrsError.value = e instanceof Error ? e.message : "加载属性失败"
+  }
+  finally {
+    attrsLoading.value = false
+  }
 }
 
 /** 批量发布 - 按统计类别 */

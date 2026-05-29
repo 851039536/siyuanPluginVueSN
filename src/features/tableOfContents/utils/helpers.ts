@@ -112,30 +112,26 @@ export function escapeSqlString(str: string): string {
 }
 
 /**
- * 查找整个文档中该类型的索引块
- * @param docId 文档ID
- * @param indexType 索引类型
+ * 查找文档中该类型的所有索引块 ID。
+ * 多行 Markdown 插入后会被解析为多个块，每个块都带有标记属性。
  */
-export async function findExistingIndexBlock(
+export async function findExistingIndexBlockIds(
   docId: string,
   indexType: string,
-): Promise<any> {
+): Promise<string[]> {
   try {
-    // 使用SQL直接查询带有自定义属性的块,避免循环调用API
-    // 通过JOIN attributes表一次性查询,性能更优
-    const blocks = await api.sql(`
-      SELECT DISTINCT b.id, b.type
+    const rows = await api.sql(`
+      SELECT b.id
       FROM blocks b
-      JOIN attributes a1 ON b.id = a1.block_id AND a1.name = 'custom-toc-type' AND a1.value = '${escapeSqlString(indexType)}'
-      JOIN attributes a2 ON b.id = a2.block_id AND a2.name = 'custom-toc-generated' AND a2.value = 'true'
+      JOIN attributes a ON b.id = a.block_id
+        AND a.name = 'custom-toc-type'
+        AND a.value = '${escapeSqlString(indexType)}'
       WHERE b.root_id = '${escapeSqlString(docId)}'
       ORDER BY b.sort ASC
-      LIMIT 1
     `)
-
-    return blocks && blocks.length > 0 ? blocks[0] : null
+    return (rows || []).map((r: any) => r.id)
   } catch (error) {
     console.error("查找索引块失败:", error)
-    return null
+    return []
   }
 }

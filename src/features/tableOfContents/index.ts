@@ -8,7 +8,7 @@ import * as api from "@/api"
 import type { IndexType, SubDocInfo } from "./types"
 import {
   escapeSqlString,
-  findExistingIndexBlock,
+  findExistingIndexBlockIds,
   getCurrentContext,
 } from "./utils/helpers"
 
@@ -59,68 +59,71 @@ export class TableOfContentsManager {
   }
 
   /**
-   * 插入内容到当前光标位置
-   * @param content 要插入的内容
-   * @param indexType 索引类型标识
-   * @param docId 已解析的文档 ID（由调用方传入，避免重复查询）
-   * @param currentBlockId 已解析的当前块 ID（由调用方传入）
+   * 插入内容到当前光标位置。
+   * 先删除文档中同类型的旧索引块（全部），再重新插入，确保永不累加。
+   * 变更检测通过块属性 custom-toc-ids 做指纹对比（不依赖易出错的 getBlockKramdown）。
    */
   private async insertContent(
     content: string,
     indexType: IndexType,
-    docId: string | null,
-    currentBlockId: string | null,
+    docId: string,
+    currentBlockId: string,
+    subDocCount: number,
   ) {
     try {
-      if (!currentBlockId) {
-        showMessage("请先将光标放在文档中的某个块上", 3000, "error")
-        return
-      }
+      const oldIds = await findExistingIndexBlockIds(docId, indexType)
 
-      if (!docId) {
-        showMessage("无法获取当前文档信息", 3000, "error")
-        return
-      }
-
-      // 查找文档中是否存在同类型的索引块
-      const existingIndexBlock = await findExistingIndexBlock(docId, indexType)
-
-      if (existingIndexBlock) {
-        const existingMarkdown = await api.getBlockMarkdown(existingIndexBlock.id)
-
-        if (existingMarkdown) {
-          const normalizedExisting = existingMarkdown.replace(/\r\n/g, "\n").trim()
-          const normalizedNew = content.replace(/\r\n/g, "\n").trim()
-
-          if (normalizedExisting === normalizedNew) {
-            showMessage("内容无变化,无需更新", 2000, "info")
-            return
+      if (oldIds.length > 0) {
+        // outline 含可变标题数不精确 —— 但用 custom-toc-ids 指纹 + 块数量辅助判断
+        let unchanged = false
+        if (indexType !== "subdocs-outline") {
+          // index / subdocs-ref: 标题行 + 空行 + N 条条目 = N+2 个块
+          if (oldIds.length === subDocCount + 2) {
+            // 读取首块属性中的指纹比较，替代 getBlockMarkdown（可能对某些块返回空）
+            const attrs = await api.getBlockAttrs(oldIds[0])
+            unchanged = attrs?.["custom-toc-ids"] === content
           }
         }
 
-        await api.updateBlock("markdown", content, existingIndexBlock.id)
-        showMessage("索引已更新", 2000, "info")
-      } else {
-        const result = await api.insertBlock(
-          "markdown",
-          content,
-          undefined,
-          currentBlockId,
-          undefined,
+        if (unchanged) {
+          showMessage("内容无变化,无需更新", 2000, "info")
+          return
+        }
+
+        await Promise.allSettled(oldIds.map(id => api.deleteBlock(id)))
+      }
+
+      // 插入新内容
+      const result = await api.insertBlock(
+        "markdown",
+        content,
+        undefined,
+        currentBlockId,
+        undefined,
+      )
+
+      if (result?.length) {
+        const newIds = result.flatMap(r =>
+          (r.doOperations || [])
+            .map((op: any) => op.id)
+            .filter(Boolean),
         )
 
-        if (result && result.length > 0 && result[0].doOperations) {
-          const newBlockId = result[0].doOperations[0]?.id
-          if (newBlockId) {
-            await api.setBlockAttrs(newBlockId, {
-              "custom-toc-type": indexType,
-              "custom-toc-generated": "true",
-            })
-          }
-        }
+        // 给每个新块打上标记
+        await Promise.allSettled(newIds.map(id =>
+          api.setBlockAttrs(id, {
+            "custom-toc-type": indexType,
+            "custom-toc-generated": "true",
+          }),
+        ))
 
-        showMessage(this.plugin.i18n.insertSuccess, 2000, "info")
+        // 首块额外存内容指纹，供后续 getBlockAttrs 变更检测
+        if (newIds.length > 0) {
+          await api.setBlockAttrs(newIds[0], { "custom-toc-ids": content })
+        }
       }
+
+      showMessage(this.plugin.i18n.insertSuccess, 2000, "info")
     } catch (error) {
       console.error("插入内容失败:", error)
       showMessage(`${this.plugin.i18n.insertFailed}${getErrorMessage(error)}`, 3000, "error")
@@ -183,7 +186,7 @@ export class TableOfContentsManager {
         const num = String(i + 1).padStart(2, "0")
         content += `${num}. [${subDocs[i].name}](siyuan://blocks/${subDocs[i].id})\n`
       }
-      await this.insertContent(content, "index", docId, blockId)
+      await this.insertContent(content, "index", docId, blockId, subDocs.length)
     })
   }
 
@@ -195,7 +198,7 @@ export class TableOfContentsManager {
         const num = String(i + 1).padStart(2, "0")
         content += `${num}. ((${subDocs[i].id} "${subDocs[i].name}"))\n`
       }
-      await this.insertContent(content, "subdocs-ref", docId, blockId)
+      await this.insertContent(content, "subdocs-ref", docId, blockId, subDocs.length)
     })
   }
 
@@ -234,7 +237,7 @@ export class TableOfContentsManager {
         }
       }
 
-      await this.insertContent(content, "subdocs-outline", docId, blockId)
+      await this.insertContent(content, "subdocs-outline", docId, blockId, subDocs.length)
     })
   }
 

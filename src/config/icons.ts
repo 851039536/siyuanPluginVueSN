@@ -232,7 +232,7 @@ export const FEATURE_ICONS = {
 
   // API调试器
   apiDebugger: {
-    icon: "mdi:console",
+    icon: "mdi:flask",
     color: "#0ea5e9",
   },
 

@@ -216,6 +216,70 @@
           </div>
         </div>
 
+        <!-- 发布状态 -->
+        <div class="grid-section">
+          <span class="grid-section-label"><Icon
+            icon="mdi:cloud-check-outline"
+            class="section-icon-sm"
+          />发布状态</span>
+          <div class="stats-cards">
+            <div
+              class="stat-card"
+              :class="{ active: activeFilter === 'fullPublish' }"
+              @click="$emit('select-category', 'fullPublish')"
+            >
+              <span class="stat-value full-publish-color">{{ stats.fullPublishDocs }}</span>
+              <span class="stat-label">完整发布</span>
+            </div>
+            <div
+              class="stat-card"
+              :class="{ active: activeFilter === 'partialPublish' }"
+              @click="$emit('select-category', 'partialPublish')"
+            >
+              <span class="stat-value partial-publish-color">{{ stats.partialPublishDocs }}</span>
+              <span class="stat-label">部分发布</span>
+            </div>
+            <div
+              class="stat-card"
+              :class="{ active: activeFilter === 'noPublish' }"
+              @click="$emit('select-category', 'noPublish')"
+            >
+              <span class="stat-value no-publish-color">{{ stats.noPublishDocs }}</span>
+              <span class="stat-label">未发布</span>
+            </div>
+          </div>
+          <div
+            v-if="stats.platformPublishGap"
+            class="platform-gap-row"
+          >
+            <span class="gap-label">未发布平台：</span>
+            <span
+              v-if="stats.platformPublishGap.csdn > 0"
+              class="gap-item"
+            >CSDN {{ stats.platformPublishGap.csdn }}</span>
+            <span
+              v-if="stats.platformPublishGap.zhihu > 0"
+              class="gap-item"
+            >知乎 {{ stats.platformPublishGap.zhihu }}</span>
+            <span
+              v-if="stats.platformPublishGap.juejin > 0"
+              class="gap-item"
+            >掘金 {{ stats.platformPublishGap.juejin }}</span>
+            <span
+              v-if="stats.platformPublishGap.blog > 0"
+              class="gap-item"
+            >博客园 {{ stats.platformPublishGap.blog }}</span>
+            <span
+              v-if="stats.platformPublishGap.bibi > 0"
+              class="gap-item"
+            >B站 {{ stats.platformPublishGap.bibi }}</span>
+            <span
+              v-if="stats.platformPublishGap.gzh > 0"
+              class="gap-item"
+            >公众号 {{ stats.platformPublishGap.gzh }}</span>
+          </div>
+        </div>
+
         <!-- 结构分析 -->
         <div class="grid-section">
           <span class="grid-section-label"><Icon
@@ -579,6 +643,9 @@ function getBarHeight(count: number): number {
     &.pending-color { color: #f59e0b; }
     &.published-color { color: #22c55e; }
     &.unused-color { color: #9ca3af; }
+    &.full-publish-color { color: #22c55e; }
+    &.partial-publish-color { color: #f59e0b; }
+    &.no-publish-color { color: #9ca3af; }
   }
 
   .stat-label {
@@ -610,6 +677,30 @@ function getBarHeight(count: number): number {
     .stat-action-icon {
       font-size: 11px;
     }
+  }
+}
+
+.platform-gap-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px;
+  margin-top: 4px;
+  font-size: 10px;
+  color: var(--b3-theme-on-surface-variant);
+
+  .gap-label {
+    color: var(--b3-theme-on-surface-variant);
+    opacity: 0.6;
+    margin-right: 2px;
+  }
+
+  .gap-item {
+    padding: 1px 6px;
+    border-radius: 8px;
+    background: rgba(245, 158, 11, 0.12);
+    color: #b45309;
+    white-space: nowrap;
   }
 }
 

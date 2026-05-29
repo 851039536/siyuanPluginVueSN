@@ -531,6 +531,9 @@ function getCategoryLabel(category: string): string {
     case "published": return "已发布"
     case "unused": return "不使用"
     case "noneBookmark": return "书签「无」"
+    case "fullPublish": return "完整发布"
+    case "partialPublish": return "部分发布"
+    case "noPublish": return "未发布"
     default: return category
   }
 }

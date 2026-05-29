@@ -6,6 +6,7 @@ import type {
   DocStats,
   DuplicateNameGroup,
   FilterOptions,
+  PlatformPublishGap,
   QueryState,
 } from "../types/index"
 
@@ -121,6 +122,17 @@ export function useDocAnalysis(plugin: Plugin) {
     publishedDocs: 0,
     unusedDocs: 0,
     noneBookmarkDocs: 0,
+    fullPublishDocs: 0,
+    partialPublishDocs: 0,
+    noPublishDocs: 0,
+    platformPublishGap: {
+      csdn: 0,
+      zhihu: 0,
+      juejin: 0,
+      blog: 0,
+      bibi: 0,
+      gzh: 0,
+    },
   })
   const statsLoading = ref(false)
   const hasAnalyzed = ref(false)
@@ -352,6 +364,9 @@ export function useDocAnalysis(plugin: Plugin) {
       // 书签统计
       await analyzeBookmarks(notebookCondition)
 
+      // 平台发布状态统计
+      await analyzePlatformPublish(notebookCondition)
+
       hasAnalyzed.value = true
     } catch (error) {
       console.error("分析文档统计失败:", error)
@@ -582,6 +597,72 @@ export function useDocAnalysis(plugin: Plugin) {
   }
 
   /**
+   * 平台发布状态分析
+   * 扫描 attributes 表，检测每个文档的 custom-*-yaml 属性
+   */
+  async function analyzePlatformPublish(notebookCondition: string) {
+    try {
+      const platformSql = `
+        SELECT
+          b.id as doc_id,
+          MAX(CASE WHEN a.name LIKE '%csdn%' AND a.name LIKE '%yaml%' THEN 1 ELSE 0 END) as has_csdn,
+          MAX(CASE WHEN a.name LIKE '%zhihu%' AND a.name LIKE '%yaml%' THEN 1 ELSE 0 END) as has_zhihu,
+          MAX(CASE WHEN a.name LIKE '%juejin%' AND a.name LIKE '%yaml%' THEN 1 ELSE 0 END) as has_juejin,
+          MAX(CASE WHEN (a.name LIKE '%cnblogs%' OR a.name LIKE '%blog%') AND a.name LIKE '%yaml%' THEN 1 ELSE 0 END) as has_blog,
+          MAX(CASE WHEN (a.name LIKE '%bili%' OR a.name LIKE '%bibi%') AND a.name LIKE '%yaml%' THEN 1 ELSE 0 END) as has_bibi,
+          MAX(CASE WHEN a.name LIKE '%gzh%' AND a.name LIKE '%yaml%' THEN 1 ELSE 0 END) as has_gzh
+        FROM blocks b
+        LEFT JOIN attributes a ON a.block_id = b.id
+        WHERE b.type = 'd' ${notebookCondition}
+        GROUP BY b.id
+      `
+
+      const rows = await sql(platformSql)
+      if (!rows || rows.length === 0) return
+
+      let fullCount = 0
+      let partialCount = 0
+      let noCount = 0
+      const gap: PlatformPublishGap = { csdn: 0, zhihu: 0, juejin: 0, blog: 0, bibi: 0, gzh: 0 }
+
+      for (const row of rows) {
+        const csdn = Number(row.has_csdn) || 0
+        const zhihu = Number(row.has_zhihu) || 0
+        const juejin = Number(row.has_juejin) || 0
+        const blog = Number(row.has_blog) || 0
+        const bibi = Number(row.has_bibi) || 0
+        const gzh = Number(row.has_gzh) || 0
+        const total = csdn + zhihu + juejin + blog + bibi + gzh
+
+        if (total === 0) {
+          noCount++
+        }
+        else if (total === 6) {
+          fullCount++
+        }
+        else {
+          partialCount++
+        }
+
+        if (csdn === 0) gap.csdn++
+        if (zhihu === 0) gap.zhihu++
+        if (juejin === 0) gap.juejin++
+        if (blog === 0) gap.blog++
+        if (bibi === 0) gap.bibi++
+        if (gzh === 0) gap.gzh++
+      }
+
+      docStats.fullPublishDocs = fullCount
+      docStats.partialPublishDocs = partialCount
+      docStats.noPublishDocs = noCount
+      docStats.platformPublishGap = gap
+    }
+    catch (error) {
+      console.error("平台发布状态分析失败:", error)
+    }
+  }
+
+  /**
    * 查询所有书签详情（按值分组统计）
    */
   async function fetchBookmarkDetails() {
@@ -788,6 +869,47 @@ export function useDocAnalysis(plugin: Plugin) {
           break
         case "unused":
           extraWhere = "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'bookmark' AND a.value = '不使用' AND a.block_id = b.id)"
+          orderBy = "b.updated DESC"
+          break
+        case "fullPublish":
+          extraWhere = [
+            "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name LIKE '%csdn%' AND a.name LIKE '%yaml%' AND a.block_id = b.id)",
+            "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name LIKE '%zhihu%' AND a.name LIKE '%yaml%' AND a.block_id = b.id)",
+            "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name LIKE '%juejin%' AND a.name LIKE '%yaml%' AND a.block_id = b.id)",
+            "AND EXISTS (SELECT 1 FROM attributes a WHERE (a.name LIKE '%cnblogs%' OR a.name LIKE '%blog%') AND a.name LIKE '%yaml%' AND a.block_id = b.id)",
+            "AND EXISTS (SELECT 1 FROM attributes a WHERE (a.name LIKE '%bili%' OR a.name LIKE '%bibi%') AND a.name LIKE '%yaml%' AND a.block_id = b.id)",
+            "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name LIKE '%gzh%' AND a.name LIKE '%yaml%' AND a.block_id = b.id)",
+          ].join(" ")
+          orderBy = "b.updated DESC"
+          break
+        case "partialPublish":
+          extraWhere = [
+            "AND (",
+            "(SELECT COUNT(*) FROM attributes a WHERE a.block_id = b.id AND a.name LIKE '%yaml%' AND (",
+            "a.name LIKE '%csdn%' OR a.name LIKE '%zhihu%' OR a.name LIKE '%juejin%' OR",
+            "a.name LIKE '%cnblogs%' OR a.name LIKE '%blog%' OR a.name LIKE '%bili%' OR",
+            "a.name LIKE '%bibi%' OR a.name LIKE '%gzh%'",
+            ")) > 0",
+            "AND NOT (",
+            "EXISTS (SELECT 1 FROM attributes a WHERE a.name LIKE '%csdn%' AND a.name LIKE '%yaml%' AND a.block_id = b.id)",
+            "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name LIKE '%zhihu%' AND a.name LIKE '%yaml%' AND a.block_id = b.id)",
+            "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name LIKE '%juejin%' AND a.name LIKE '%yaml%' AND a.block_id = b.id)",
+            "AND EXISTS (SELECT 1 FROM attributes a WHERE (a.name LIKE '%cnblogs%' OR a.name LIKE '%blog%') AND a.name LIKE '%yaml%' AND a.block_id = b.id)",
+            "AND EXISTS (SELECT 1 FROM attributes a WHERE (a.name LIKE '%bili%' OR a.name LIKE '%bibi%') AND a.name LIKE '%yaml%' AND a.block_id = b.id)",
+            "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name LIKE '%gzh%' AND a.name LIKE '%yaml%' AND a.block_id = b.id)",
+            ")",
+            ")",
+          ].join(" ")
+          orderBy = "b.updated DESC"
+          break
+        case "noPublish":
+          extraWhere = [
+            "AND NOT EXISTS (SELECT 1 FROM attributes a WHERE a.block_id = b.id AND a.name LIKE '%yaml%' AND (",
+            "a.name LIKE '%csdn%' OR a.name LIKE '%zhihu%' OR a.name LIKE '%juejin%' OR",
+            "a.name LIKE '%cnblogs%' OR a.name LIKE '%blog%' OR a.name LIKE '%bili%' OR",
+            "a.name LIKE '%bibi%' OR a.name LIKE '%gzh%'",
+            "))",
+          ].join(" ")
           orderBy = "b.updated DESC"
           break
         default:

@@ -189,18 +189,6 @@ export interface DocStats {
   partialPublishDocs: number
   /** 未在任何平台发布文档数 */
   noPublishDocs: number
-  /** 各平台缺失统计 */
-  platformPublishGap: PlatformPublishGap
-}
-
-/** 各平台缺失文档数 */
-export interface PlatformPublishGap {
-  csdn: number
-  zhihu: number
-  juejin: number
-  blog: number
-  bibi: number
-  gzh: number
 }
 
 /** 书签详情项 */

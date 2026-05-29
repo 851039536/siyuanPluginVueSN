@@ -232,25 +232,6 @@
   }
 }
 
-.doc-list-container {
-  flex: 1;
-  overflow-y: auto;
-  min-height: 0;
-
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--b3-scroll-color);
-    border-radius: 3px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-}
-
 .loading-state,
 .empty-state {
   display: flex;

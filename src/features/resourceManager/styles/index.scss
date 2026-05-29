@@ -232,9 +232,9 @@
     flex-wrap: wrap;
 
     .rm-btn.active {
-      background: $brand-primary;
+      background: var(--b3-theme-primary);
       color: #fff;
-      border-color: $brand-primary;
+      border-color: var(--b3-theme-primary);
     }
 
     &--category {

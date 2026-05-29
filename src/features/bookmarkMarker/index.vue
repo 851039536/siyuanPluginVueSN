@@ -1,7 +1,9 @@
 <template>
   <div class="bookmark-marker-panel">
     <div class="panel-header">
-      <h3 class="panel-title">🔖 {{ i18n?.title || '书签标记' }}</h3>
+      <h3 class="panel-title">
+        🔖 {{ i18n?.title || '书签标记' }}
+      </h3>
       <button
         class="close-btn"
         @click="props.onClose?.()"
@@ -369,16 +371,56 @@ const updateInterval = ref(DEFAULT_BOOKMARK_MARKER_SETTINGS.updateInterval.toStr
 const tagInputRefs = ref<Record<number, HTMLInputElement | null>>({})
 
 const presetIcons = [
-  "🔖", "🏷️", "📑", "📌", "📍",
-  "✅", "❌", "⚠️", "🔄", "📝",
-  "⭐", "🌟", "💎", "🏆", "🎯",
-  "🚀", "🔥", "⚡", "🎉", "💡",
-  "📋", "📄", "📊", "📈", "📁",
-  "🖊️", "✏️", "📝", "📎", "🔗",
-  "🎨", "🌈", "✨", "💫", "🪄",
-  "💬", "💭", "🗨️", "💡", "🔔",
-  "🔐", "🔒", "🔑", "🛡️", "🔍",
-  "📂", "🗂️", "📚", "📦", "🧩",
+  "🔖",
+  "🏷️",
+  "📑",
+  "📌",
+  "📍",
+  "✅",
+  "❌",
+  "⚠️",
+  "🔄",
+  "📝",
+  "⭐",
+  "🌟",
+  "💎",
+  "🏆",
+  "🎯",
+  "🚀",
+  "🔥",
+  "⚡",
+  "🎉",
+  "💡",
+  "📋",
+  "📄",
+  "📊",
+  "📈",
+  "📁",
+  "🖊️",
+  "✏️",
+  "📝",
+  "📎",
+  "🔗",
+  "🎨",
+  "🌈",
+  "✨",
+  "💫",
+  "🪄",
+  "💬",
+  "💭",
+  "🗨️",
+  "💡",
+  "🔔",
+  "🔐",
+  "🔒",
+  "🔑",
+  "🛡️",
+  "🔍",
+  "📂",
+  "🗂️",
+  "📚",
+  "📦",
+  "🧩",
 ]
 
 let _storage: BookmarkMarkerStorage | null = null
@@ -475,7 +517,10 @@ const getPreviewStyle = (rule: BookmarkRule) => {
   const mode = rule.displayMode || "bg"
   const alpha = rule.alpha ?? 0.25
   if (mode === "icon" && rule.icon) {
-    return { color: rule.color, backgroundColor: "transparent" }
+    return {
+      color: rule.color,
+      backgroundColor: "transparent",
+    }
   }
   if (mode === "row") {
     return {

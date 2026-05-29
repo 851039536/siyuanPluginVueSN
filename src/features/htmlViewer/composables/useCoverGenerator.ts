@@ -12,21 +12,65 @@ import { ref } from "vue"
 
 // 尺寸预设
 export const COVER_SIZE_PRESETS: CoverSizePreset[] = [
-  { label: "微信公众号 (900×383)", width: 900, height: 383 },
-  { label: "头条封面 (1280×720)", width: 1280, height: 720 },
-  { label: "小红书 (1080×1440)", width: 1080, height: 1440 },
-  { label: "知乎 (1920×1080)", width: 1920, height: 1080 },
-  { label: "博客横幅 (1200×630)", width: 1200, height: 630 },
-  { label: "正方形 (1080×1080)", width: 1080, height: 1080 },
+  {
+    label: "微信公众号 (900×383)",
+    width: 900,
+    height: 383,
+  },
+  {
+    label: "头条封面 (1280×720)",
+    width: 1280,
+    height: 720,
+  },
+  {
+    label: "小红书 (1080×1440)",
+    width: 1080,
+    height: 1440,
+  },
+  {
+    label: "知乎 (1920×1080)",
+    width: 1920,
+    height: 1080,
+  },
+  {
+    label: "博客横幅 (1200×630)",
+    width: 1200,
+    height: 630,
+  },
+  {
+    label: "正方形 (1080×1080)",
+    width: 1080,
+    height: 1080,
+  },
 ]
 
 // 风格预设
 export const COVER_STYLE_PRESETS: CoverStylePreset[] = [
-  { id: "minimal", label: "极简", description: "白底大字、黑色标题、简洁装饰线" },
-  { id: "tech", label: "科技", description: "深色背景、霓虹线条、青色强调" },
-  { id: "magazine", label: "杂志", description: "大标题排版、分栏布局、衬线字体" },
-  { id: "drawio", label: "导图", description: "白底蓝边、网格辅助线、架构图风格" },
-  { id: "chinese", label: "国风", description: "暖色宣纸底、水墨深色标题、朱红点缀" },
+  {
+    id: "minimal",
+    label: "极简",
+    description: "白底大字、黑色标题、简洁装饰线",
+  },
+  {
+    id: "tech",
+    label: "科技",
+    description: "深色背景、霓虹线条、青色强调",
+  },
+  {
+    id: "magazine",
+    label: "杂志",
+    description: "大标题排版、分栏布局、衬线字体",
+  },
+  {
+    id: "drawio",
+    label: "导图",
+    description: "白底蓝边、网格辅助线、架构图风格",
+  },
+  {
+    id: "chinese",
+    label: "国风",
+    description: "暖色宣纸底、水墨深色标题、朱红点缀",
+  },
 ]
 
 interface StyleColors {
@@ -38,11 +82,41 @@ interface StyleColors {
 }
 
 const STYLE_COLORS_MAP: Record<string, StyleColors> = {
-  minimal: { bg: "#ffffff", titleColor: "#1a1a1a", subtitleColor: "#666666", accent: "#e74c3c", accentAlt: "#c0392b" },
-  tech: { bg: "#0a0a0a", titleColor: "#ffffff", subtitleColor: "#888888", accent: "#00ffff", accentAlt: "#00cc99" },
-  magazine: { bg: "#faf8f5", titleColor: "#1a1a1a", subtitleColor: "#555555", accent: "#c0392b", accentAlt: "#e74c3c" },
-  chinese: { bg: "#f5e6d3", titleColor: "#2c1810", subtitleColor: "#5a3e2b", accent: "#c0392b", accentAlt: "#e74c3c" },
-  drawio: { bg: "#f5f6f8", titleColor: "#1a1a2e", subtitleColor: "#546e7a", accent: "#1565c0", accentAlt: "#0d47a1" },
+  minimal: {
+    bg: "#ffffff",
+    titleColor: "#1a1a1a",
+    subtitleColor: "#666666",
+    accent: "#e74c3c",
+    accentAlt: "#c0392b",
+  },
+  tech: {
+    bg: "#0a0a0a",
+    titleColor: "#ffffff",
+    subtitleColor: "#888888",
+    accent: "#00ffff",
+    accentAlt: "#00cc99",
+  },
+  magazine: {
+    bg: "#faf8f5",
+    titleColor: "#1a1a1a",
+    subtitleColor: "#555555",
+    accent: "#c0392b",
+    accentAlt: "#e74c3c",
+  },
+  chinese: {
+    bg: "#f5e6d3",
+    titleColor: "#2c1810",
+    subtitleColor: "#5a3e2b",
+    accent: "#c0392b",
+    accentAlt: "#e74c3c",
+  },
+  drawio: {
+    bg: "#f5f6f8",
+    titleColor: "#1a1a2e",
+    subtitleColor: "#546e7a",
+    accent: "#1565c0",
+    accentAlt: "#0d47a1",
+  },
 }
 
 /** 装饰层 HTML 片段（每个风格在 content 区域内的额外装饰元素） */

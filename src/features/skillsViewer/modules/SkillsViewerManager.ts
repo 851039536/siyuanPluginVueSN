@@ -179,7 +179,7 @@ export class SkillsViewerManager {
   public parseSkillMd(
     content: string,
     fallbackName: string,
-  ): { name: string; description: string } {
+  ): { name: string, description: string } {
     let name = fallbackName
     let description = ""
 
@@ -212,7 +212,7 @@ export class SkillsViewerManager {
   private async checkPathGroup(
     basePath: string,
     relPaths: string[],
-  ): Promise<{ exists: boolean; count: number }> {
+  ): Promise<{ exists: boolean, count: number }> {
     let exists = false
     let count = 0
     for (const relPath of relPaths) {
@@ -229,7 +229,10 @@ export class SkillsViewerManager {
         // 忽略
       }
     }
-    return { exists, count }
+    return {
+      exists,
+      count,
+    }
   }
 
   async checkToolExists(tool: AIToolConfig, projectPath?: string): Promise<{
@@ -238,12 +241,21 @@ export class SkillsViewerManager {
     globalCount: number
     projectCount: number
   }> {
-    if (!this.available) return { global: false, project: false, globalCount: 0, projectCount: 0 }
+    if (!this.available) { return {
+      global: false,
+      project: false,
+      globalCount: 0,
+      projectCount: 0,
+    }
+    }
 
     const globalResult = await this.checkPathGroup(this.homeDir, tool.skillPaths)
     const projectResult = projectPath
       ? await this.checkPathGroup(projectPath, tool.projectPaths)
-      : { exists: false, count: 0 }
+      : {
+          exists: false,
+          count: 0,
+        }
 
     return {
       global: globalResult.exists,

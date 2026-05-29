@@ -341,7 +341,11 @@ import {
 import Button from "@/components/Button.vue"
 import Tag from "@/components/Tag.vue"
 import Textarea from "@/components/Textarea.vue"
-import { getPromptPreview, truncateTitle, getSourceHint } from "../utils"
+import {
+  getPromptPreview,
+  getSourceHint,
+  truncateTitle,
+} from "../utils"
 
 interface QuickAction {
   key: "polish" | "expand" | "condense" | "fix" | "rewrite" | "summary"

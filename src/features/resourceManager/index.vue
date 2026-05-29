@@ -343,7 +343,6 @@ import {
   ref,
   watch,
 } from "vue"
-import { PluginStorage } from "@/utils/pluginStorage"
 import {
   fullReindexAssetContent,
   getBlockByID,
@@ -358,6 +357,7 @@ import {
   updateBlock,
 } from "@/api"
 import IconWrapper from "@/components/IconWrapper.vue"
+import { PluginStorage } from "@/utils/pluginStorage"
 
 interface Props {
   i18n: ResourceManagerI18n
@@ -388,12 +388,27 @@ const builtInCategoryKeys = new Set(["images", "net", "tool", "other"])
 
 const quickCategories = computed(() => {
   const builtIn = [
-    { key: "images", label: props.i18n.categoryImages || "图片" },
-    { key: "net", label: props.i18n.categoryNet || "NET" },
-    { key: "tool", label: props.i18n.categoryTool || "tool" },
-    { key: "other", label: props.i18n.categoryOther || "其他" },
+    {
+      key: "images",
+      label: props.i18n.categoryImages || "图片",
+    },
+    {
+      key: "net",
+      label: props.i18n.categoryNet || "NET",
+    },
+    {
+      key: "tool",
+      label: props.i18n.categoryTool || "tool",
+    },
+    {
+      key: "other",
+      label: props.i18n.categoryOther || "其他",
+    },
   ]
-  const custom = customCategories.value.map(cat => ({ key: cat, label: cat }))
+  const custom = customCategories.value.map((cat) => ({
+    key: cat,
+    label: cat,
+  }))
   return [...builtIn, ...custom]
 })
 
@@ -617,7 +632,7 @@ const currentAssetList = computed(() => {
   const list = activeTab.value === "fileAssets" ? fileAssets.value : imageAssets.value
   if (!categoryFilter.value) return list
   const prefix = `assets/${categoryFilter.value}/`
-  return list.filter(item => item.path.startsWith(prefix))
+  return list.filter((item) => item.path.startsWith(prefix))
 })
 
 /** 加载当前 tab 对应的资源 */
@@ -846,15 +861,18 @@ function locateDoc(asset: ImageAssetInfo) {
  */
 function updateAssetItemAfterMove(oldPath: string, newPath: string) {
   const target = activeTab.value === "fileAssets" ? fileAssets : imageAssets
-  const idx = target.value.findIndex(item => item.path === oldPath)
+  const idx = target.value.findIndex((item) => item.path === oldPath)
   if (idx === -1) return
 
   const moved = target.value[idx]
-  const updated: ImageAssetInfo = { ...moved, path: newPath }
+  const updated: ImageAssetInfo = {
+    ...moved,
+    path: newPath,
+  }
 
   // 新路径不在当前分类筛选范围内则移除，否则原地替换
   if (categoryFilter.value && !newPath.startsWith(`assets/${categoryFilter.value}/`)) {
-    target.value = target.value.filter(item => item.path !== oldPath)
+    target.value = target.value.filter((item) => item.path !== oldPath)
   }
   else {
     const next = [...target.value]

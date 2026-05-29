@@ -207,7 +207,7 @@ export async function rerankResults(
     }
 
     const data = await response.json()
-    const ranked: Array<{ index: number; relevance_score: number }> = data?.results || []
+    const ranked: Array<{ index: number, relevance_score: number }> = data?.results || []
 
     return ranked
       .filter((r) => r.relevance_score >= minScore)
@@ -230,7 +230,10 @@ export async function searchWeb(
   config: SearchApiConfig,
   maxResults: number = DEFAULT_MAX_RESULTS,
 ): Promise<SearchResult[]> {
-  const { searchProvider, searchLanguage } = config
+  const {
+    searchProvider,
+    searchLanguage,
+  } = config
 
   switch (searchProvider) {
     case "bocha": {

@@ -79,14 +79,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue"
 import type { Plugin } from "siyuan"
-import { PluginStorage } from "@/utils/pluginStorage"
+import type { FeatureDrawerItem } from "./components/FeatureDrawer.vue"
+import {
+  computed,
+  ref,
+} from "vue"
 import { emitCustomEvent } from "@/utils/eventBus"
+import { PluginStorage } from "@/utils/pluginStorage"
 import { showPasswordVault } from "../passwordVault/types"
 import { showSkillsViewer } from "../skillsViewer/types"
 import FeatureDrawer from "./components/FeatureDrawer.vue"
-import type { FeatureDrawerItem } from "./components/FeatureDrawer.vue"
 import MonitorItem from "./components/MonitorItem.vue"
 import { useStatusBar } from "./composables/useStatusBar"
 
@@ -167,17 +170,47 @@ interface ShortcutDisplay {
 }
 
 const SHORTCUT_DISPLAY: Record<string, ShortcutDisplay> = {
-  passwordVault: { id: "passwordVault", icon: "ph:lock-key", title: "密码箱", itemClass: "action-item password-vault-item", handler: () => showPasswordVault() },
-  video: { id: "video", icon: "ph:video", title: "视频管理器", itemClass: "action-item video-manager-item", handler: () => emitCustomEvent("openVideoManager") },
-  htmlViewer: { id: "htmlViewer", icon: "ph:code", title: "HTML展示", itemClass: "action-item html-viewer-item", handler: () => emitCustomEvent("openHtmlViewer") },
-  skillsViewer: { id: "skillsViewer", icon: "ph:puzzle-piece", title: "Skills查看器", itemClass: "action-item skills-viewer-item", handler: () => showSkillsViewer() },
-  formatAssistant: { id: "formatAssistant", icon: "ph:text-align-left", title: "排版助手", itemClass: "action-item format-assistant-item", handler: () => emitCustomEvent("openFormatAssistant") },
+  passwordVault: {
+    id: "passwordVault",
+    icon: "ph:lock-key",
+    title: "密码箱",
+    itemClass: "action-item password-vault-item",
+    handler: () => showPasswordVault(),
+  },
+  video: {
+    id: "video",
+    icon: "ph:video",
+    title: "视频管理器",
+    itemClass: "action-item video-manager-item",
+    handler: () => emitCustomEvent("openVideoManager"),
+  },
+  htmlViewer: {
+    id: "htmlViewer",
+    icon: "ph:code",
+    title: "HTML展示",
+    itemClass: "action-item html-viewer-item",
+    handler: () => emitCustomEvent("openHtmlViewer"),
+  },
+  skillsViewer: {
+    id: "skillsViewer",
+    icon: "ph:puzzle-piece",
+    title: "Skills查看器",
+    itemClass: "action-item skills-viewer-item",
+    handler: () => showSkillsViewer(),
+  },
+  formatAssistant: {
+    id: "formatAssistant",
+    icon: "ph:text-align-left",
+    title: "排版助手",
+    itemClass: "action-item format-assistant-item",
+    handler: () => emitCustomEvent("openFormatAssistant"),
+  },
 }
 
 const visibleShortcuts = computed(() =>
   statusBarShortcuts.value
-    .filter(id => id in SHORTCUT_DISPLAY)
-    .map(id => SHORTCUT_DISPLAY[id]),
+    .filter((id) => id in SHORTCUT_DISPLAY)
+    .map((id) => SHORTCUT_DISPLAY[id]),
 )
 
 const handleToggleStatusBar = async (id: string) => {
@@ -185,7 +218,7 @@ const handleToggleStatusBar = async (id: string) => {
   if (idx === -1) {
     statusBarShortcuts.value = [...statusBarShortcuts.value, id]
   } else {
-    statusBarShortcuts.value = statusBarShortcuts.value.filter(s => s !== id)
+    statusBarShortcuts.value = statusBarShortcuts.value.filter((s) => s !== id)
   }
   await storage.save("statusBar-shortcuts", statusBarShortcuts.value)
 }

@@ -82,7 +82,11 @@ export async function getCurrentContext(): Promise<CurrentContext> {
 
   if (blockId) {
     const docId = await getDocIdByBlockId(blockId)
-    if (docId) return { docId, blockId }
+    if (docId) { return {
+      docId,
+      blockId,
+    }
+    }
   }
 
   // 降级：通过激活窗口获取文档 ID
@@ -90,7 +94,10 @@ export async function getCurrentContext(): Promise<CurrentContext> {
   const docId = protyle
     ?.querySelector(".protyle-background")
     ?.getAttribute("data-node-id") ?? null
-  return { docId, blockId }
+  return {
+    docId,
+    blockId,
+  }
 }
 
 /**

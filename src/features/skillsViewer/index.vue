@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <Teleport to="body">
     <Transition name="fade">
       <div
@@ -477,10 +477,16 @@ async function checkAllToolStatuses() {
         tool,
         projectPath.value || undefined,
       )
-      return { id: tool.id, status }
+      return {
+        id: tool.id,
+        status,
+      }
     }),
   )
-  for (const { id, status } of results) {
+  for (const {
+    id,
+    status,
+  } of results) {
     toolStatuses[id] = status
   }
 }

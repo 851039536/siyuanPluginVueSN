@@ -570,6 +570,22 @@ export async function getBlockAttrs(
   return request(url, data)
 }
 
+// **************************************** Tag ****************************************
+
+export interface TagInfo {
+  name: string
+  label: string
+  children: TagInfo[] | null
+  type: string
+  depth: number
+  count: number
+}
+
+export async function listTags(): Promise<TagInfo[]> {
+  const url = "/api/tag/list"
+  return request(url, {})
+}
+
 // **************************************** SQL ****************************************
 
 export async function sql(sql: string): Promise<any[]> {

@@ -171,13 +171,51 @@
             <span class="card-value depth-color">{{ stats.deepDocs }}</span>
             <span class="card-unit">深层≥5</span>
           </div>
-          <div class="stat-card" :class="{ active: activeFilter === 'hasRef' }" @click="$emit('select-category', 'hasRef')">
-            <span class="card-value ref-color">{{ stats.refDocs }}</span>
-            <span class="card-unit">引用({{ stats.totalRefs }})</span>
-          </div>
           <div class="stat-card" :class="{ active: activeFilter === 'hasImage' }" @click="$emit('select-category', 'hasImage')">
             <span class="card-value img-color">{{ stats.imageDocs }}</span>
             <span class="card-unit">图片({{ stats.totalImages }})</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 内容质量 -->
+      <div class="stat-section">
+        <div class="section-header"><Icon icon="mdi:star-outline" />内容质量</div>
+        <div class="section-cards">
+          <div class="stat-card" :class="{ active: activeFilter === 'hasTag' }" @click="$emit('select-category', 'hasTag')">
+            <span class="card-value time-green">{{ stats.taggedDocs }}</span>
+            <span class="card-unit">有标签</span>
+          </div>
+          <div class="stat-card" :class="{ active: activeFilter === 'noTag' }" @click="$emit('select-category', 'noTag')">
+            <span class="card-value time-red">{{ totalDocs - stats.taggedDocs }}</span>
+            <span class="card-unit">无标签</span>
+          </div>
+          <div class="stat-card" :class="{ active: activeFilter === 'hasAlias' }" @click="$emit('select-category', 'hasAlias')">
+            <span class="card-value time-cyan">{{ stats.aliasedDocs }}</span>
+            <span class="card-unit">有别名</span>
+          </div>
+          <div class="stat-card" :class="{ active: activeFilter === 'hasMemo' }" @click="$emit('select-category', 'hasMemo')">
+            <span class="card-value time-purple">{{ stats.memoedDocs }}</span>
+            <span class="card-unit">有备注</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 引用拓扑 -->
+      <div class="stat-section">
+        <div class="section-header"><Icon icon="mdi:graph-outline" />引用拓扑</div>
+        <div class="section-cards">
+          <div class="stat-card" :class="{ active: activeFilter === 'hasRef' }" @click="$emit('select-category', 'hasRef')">
+            <span class="card-value ref-color">{{ stats.refDocs }}</span>
+            <span class="card-unit">含引用({{ stats.totalRefs }})</span>
+          </div>
+          <div class="stat-card" :class="{ active: activeFilter === 'incomingRef' }" @click="$emit('select-category', 'incomingRef')">
+            <span class="card-value time-cyan">{{ stats.incomingRefDocs }}</span>
+            <span class="card-unit">被引用</span>
+          </div>
+          <div class="stat-card" :class="{ active: activeFilter === 'orphanDoc' }" @click="$emit('select-category', 'orphanDoc')">
+            <span class="card-value zero">{{ stats.orphanDocs }}</span>
+            <span class="card-unit">孤文档</span>
           </div>
         </div>
       </div>
@@ -330,6 +368,8 @@ function closeBookmarkDetail() {
   // 此处通知父组件关闭，由 composable 的 bookmarkDetailVisible 控制
   emit("show-bookmark-details")
 }
+
+const totalDocs = computed(() => props.stats.totalDocs)
 
 /** 计算卡片百分比进度条宽度 */
 function pct(count: number): string {

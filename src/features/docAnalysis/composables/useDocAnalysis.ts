@@ -71,6 +71,13 @@ function daysAgoStr(days: number): string {
   return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`
 }
 
+/** 构建 SQL IN 子句（空集时返回不匹配条件） */
+function buildIdInClause(ids: Set<string>): string {
+  if (ids.size === 0) return "AND 1 = 0"
+  const escaped = [...ids].map(id => `'${id.replace(/'/g, "''")}'`).join(",")
+  return `AND b.id IN (${escaped})`
+}
+
 /**
  * 文档分析 composable
  */
@@ -124,12 +131,24 @@ export function useDocAnalysis(plugin: Plugin) {
     fullPublishDocs: 0,
     partialPublishDocs: 0,
     noPublishDocs: 0,
+    taggedDocs: 0,
+    aliasedDocs: 0,
+    memoedDocs: 0,
+    incomingRefDocs: 0,
+    orphanDocs: 0,
   })
   const statsLoading = ref(false)
   const hasAnalyzed = ref(false)
 
   // 重名文档详情（供列表展示）
   const duplicateGroups = ref<DuplicateNameGroup[]>([])
+
+  // 引用拓扑缓存（用于分类查询避免重复计算）
+  let orphanDocIds: Set<string> = new Set()
+  let incomingRefDocIds: Set<string> = new Set()
+
+  // 标签文档缓存
+  let taggedDocIds: Set<string> = new Set()
 
   // 深度分析详情
   const depthStats = ref<DepthStats>({
@@ -357,6 +376,12 @@ export function useDocAnalysis(plugin: Plugin) {
 
       // 平台发布状态统计
       await analyzePlatformPublish(notebookCondition)
+
+      // 内容质量分析
+      await analyzeContentQuality(notebookCondition)
+
+      // 引用拓扑分析
+      await analyzeRefTopology(notebookCondition)
 
       hasAnalyzed.value = true
     } catch (error) {
@@ -646,6 +671,133 @@ export function useDocAnalysis(plugin: Plugin) {
   }
 
   /**
+   * 内容质量分析：标签/别名/备注覆盖率
+   *
+   * 标签：blocks.tag 列直查（思源 native 列，逗号分隔）
+   * 别名/备注：attributes 表聚合查询
+   */
+  async function analyzeContentQuality(notebookCondition: string) {
+    const tagDocIds = new Set<string>()
+
+    // ── 标签：blocks.tag 列 ──
+    try {
+      const tagSql = `
+        SELECT id, tag
+        FROM blocks
+        WHERE type = 'd' AND tag != ''
+        ${notebookCondition}
+        LIMIT 50000
+      `
+      const tagRows = await sql(tagSql)
+      if (tagRows) {
+        for (const row of tagRows) {
+          tagDocIds.add(String(row.id))
+        }
+      }
+    }
+    catch (_e) {
+      /* 保持 0 */
+    }
+
+    // ── 缓存 + 写入统计 ──
+    taggedDocIds = tagDocIds
+    docStats.taggedDocs = tagDocIds.size
+
+    // ── 别名 / 备注 ──
+    try {
+      const [aliased, memoed] = await Promise.all([
+        (async (): Promise<number> => {
+          const rows = await sql(`
+            SELECT COUNT(DISTINCT a.block_id) as cnt FROM attributes a
+            WHERE a.name = 'alias' AND a.value != ''
+            AND a.block_id IN (SELECT b.id FROM blocks b WHERE b.type = 'd' ${notebookCondition})
+          `)
+          return rows?.[0]?.cnt ?? 0
+        })(),
+        (async (): Promise<number> => {
+          const rows = await sql(`
+            SELECT COUNT(DISTINCT a.block_id) as cnt FROM attributes a
+            WHERE a.name = 'memo' AND a.value != ''
+            AND a.block_id IN (SELECT b.id FROM blocks b WHERE b.type = 'd' ${notebookCondition})
+          `)
+          return rows?.[0]?.cnt ?? 0
+        })(),
+      ])
+
+      docStats.aliasedDocs = aliased
+      docStats.memoedDocs = memoed
+    }
+    catch (error) {
+      console.error("别名/备注统计失败:", error)
+    }
+  }
+
+  /**
+   * 引用拓扑分析：入链引用 / 孤立文档
+   */
+  async function analyzeRefTopology(notebookCondition: string) {
+    try {
+      const allDocsSql = `
+        SELECT b.id
+        FROM blocks b
+        WHERE b.type = 'd' ${notebookCondition}
+        LIMIT 10000
+      `
+
+      const docRows = await sql(allDocsSql)
+      if (!docRows || docRows.length === 0) return
+
+      const allDocIds = new Set(docRows.map((r: any) => r.id))
+
+      const refBlocksSql = `
+        SELECT DISTINCT root_id, markdown
+        FROM blocks
+        WHERE type != 'd' AND markdown LIKE '%((%'
+        AND root_id IN (SELECT id FROM blocks WHERE type = 'd' ${notebookCondition})
+        LIMIT 50000
+      `
+
+      const refRows = await sql(refBlocksSql)
+      const outgoingSet = new Set<string>()
+      const incomingSet = new Set<string>()
+      const idPattern = /\(\((\d{14}-[a-z0-9]{7})\b/g
+
+      if (refRows) {
+        for (const row of refRows) {
+          const rootId = row.root_id
+          const md = row.markdown || ""
+
+          if (rootId && rootId.length >= 22) {
+            outgoingSet.add(String(rootId))
+          }
+
+          let match: RegExpExecArray | null
+          while ((match = idPattern.exec(md)) !== null) {
+            const targetId = match[1]
+            if (allDocIds.has(targetId) && targetId !== rootId) {
+              incomingSet.add(targetId)
+            }
+          }
+        }
+      }
+
+      docStats.incomingRefDocs = incomingSet.size
+      incomingRefDocIds = incomingSet
+
+      const hasOutOrIn = new Set([...outgoingSet, ...incomingSet])
+      const orphans = new Set<string>()
+      for (const id of allDocIds) {
+        if (!hasOutOrIn.has(id)) orphans.add(id)
+      }
+      orphanDocIds = orphans
+      docStats.orphanDocs = orphans.size
+    }
+    catch (error) {
+      console.error("引用拓扑分析失败:", error)
+    }
+  }
+
+  /**
    * 查询所有书签详情（按值分组统计）
    */
   async function fetchBookmarkDetails() {
@@ -893,6 +1045,36 @@ export function useDocAnalysis(plugin: Plugin) {
             "a.name LIKE '%bibi%' OR a.name LIKE '%gzh%'",
             "))",
           ].join(" ")
+          orderBy = "b.updated DESC"
+          break
+        case "hasTag":
+          extraWhere = buildIdInClause(taggedDocIds)
+          orderBy = "b.updated DESC"
+          break
+        case "noTag":
+          if (taggedDocIds.size === 0) {
+            extraWhere = ""
+          }
+          else {
+            const escaped = [...taggedDocIds].map(id => `'${id.replace(/'/g, "''")}'`).join(",")
+            extraWhere = `AND b.id NOT IN (${escaped})`
+          }
+          orderBy = "b.updated DESC"
+          break
+        case "hasAlias":
+          extraWhere = "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'alias' AND a.value != '' AND a.block_id = b.id)"
+          orderBy = "b.updated DESC"
+          break
+        case "hasMemo":
+          extraWhere = "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'memo' AND a.value != '' AND a.block_id = b.id)"
+          orderBy = "b.updated DESC"
+          break
+        case "incomingRef":
+          extraWhere = buildIdInClause(incomingRefDocIds)
+          orderBy = "b.updated DESC"
+          break
+        case "orphanDoc":
+          extraWhere = buildIdInClause(orphanDocIds)
           orderBy = "b.updated DESC"
           break
         default:

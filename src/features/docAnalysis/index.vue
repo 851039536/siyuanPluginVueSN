@@ -579,6 +579,12 @@ function getCategoryLabel(category: string): string {
     case "fullPublish": return "完整发布"
     case "partialPublish": return "部分发布"
     case "noPublish": return "未发布"
+    case "hasTag": return "有标签"
+    case "noTag": return "无标签"
+    case "hasAlias": return "有别名"
+    case "hasMemo": return "有备注"
+    case "incomingRef": return "被引用"
+    case "orphanDoc": return "孤文档"
     default: return category
   }
 }

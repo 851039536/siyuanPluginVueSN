@@ -11,6 +11,7 @@
         :placeholder="i18n.endpointPlaceholder || '选择预设接口'"
         filterable
         size="small"
+        :max-height="420"
         @update:model-value="handleEndpointChange"
       />
     </div>

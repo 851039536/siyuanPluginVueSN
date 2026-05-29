@@ -44,10 +44,8 @@ export interface ResourceManagerI18n {
   cancel: string
   loadFailed: string
   categoryImages: string
-  categoryScreenshots: string
-  categoryIcons: string
-  categoryBackgrounds: string
-  categoryAvatars: string
+  categoryNet: string
+  categoryTool: string
   categoryOther: string
   customCategoryPlaceholder: string
   apply: string

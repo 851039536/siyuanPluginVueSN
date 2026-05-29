@@ -56,7 +56,6 @@
         :bookmark-detail-visible="bookmarkDetailVisible"
         :bookmark-detail-loading="bookmarkDetailLoading"
         :collapsible="false"
-        @analyze="handleAnalyze"
         @select-category="handleSelectCategory"
         @batch-publish="handleBatchPublish"
         @show-bookmark-details="fetchBookmarkDetails"

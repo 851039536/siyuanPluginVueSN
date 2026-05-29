@@ -6,7 +6,6 @@ import type {
   DocStats,
   DuplicateNameGroup,
   FilterOptions,
-  PlatformPublishGap,
   QueryState,
 } from "../types/index"
 
@@ -125,14 +124,6 @@ export function useDocAnalysis(plugin: Plugin) {
     fullPublishDocs: 0,
     partialPublishDocs: 0,
     noPublishDocs: 0,
-    platformPublishGap: {
-      csdn: 0,
-      zhihu: 0,
-      juejin: 0,
-      blog: 0,
-      bibi: 0,
-      gzh: 0,
-    },
   })
   const statsLoading = ref(false)
   const hasAnalyzed = ref(false)
@@ -624,7 +615,6 @@ export function useDocAnalysis(plugin: Plugin) {
       let fullCount = 0
       let partialCount = 0
       let noCount = 0
-      const gap: PlatformPublishGap = { csdn: 0, zhihu: 0, juejin: 0, blog: 0, bibi: 0, gzh: 0 }
 
       for (const row of rows) {
         const csdn = Number(row.has_csdn) || 0
@@ -644,19 +634,11 @@ export function useDocAnalysis(plugin: Plugin) {
         else {
           partialCount++
         }
-
-        if (csdn === 0) gap.csdn++
-        if (zhihu === 0) gap.zhihu++
-        if (juejin === 0) gap.juejin++
-        if (blog === 0) gap.blog++
-        if (bibi === 0) gap.bibi++
-        if (gzh === 0) gap.gzh++
       }
 
       docStats.fullPublishDocs = fullCount
       docStats.partialPublishDocs = partialCount
       docStats.noPublishDocs = noCount
-      docStats.platformPublishGap = gap
     }
     catch (error) {
       console.error("平台发布状态分析失败:", error)

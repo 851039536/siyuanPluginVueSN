@@ -29,59 +29,59 @@
     </div>
 
     <div class="rm-content">
-      <!-- 图片资源 -->
+      <!-- 图片资源 / 文件资源（共用 UI） -->
       <div
-        v-if="activeTab === 'imageAssets'"
+        v-if="activeTab === 'imageAssets' || activeTab === 'fileAssets'"
         class="rm-section"
       >
         <!-- 模式切换栏 -->
         <div class="rm-filter-bar">
           <button
             class="rm-btn small"
-            :class="{ active: imageMode === 'all' }"
-            @click="imageMode = 'all'; loadImageAssets()"
+            :class="{ active: assetMode === 'all' }"
+            @click="assetMode = 'all'; loadCurrentTabAssets()"
           >
             {{ i18n.allAssets }}
           </button>
           <button
             class="rm-btn small"
-            :class="{ active: imageMode === 'currentDoc' }"
-            @click="imageMode = 'currentDoc'; loadImageAssets()"
+            :class="{ active: assetMode === 'currentDoc' }"
+            @click="assetMode = 'currentDoc'; loadCurrentTabAssets()"
           >
             {{ i18n.currentDoc }}
           </button>
           <button
             class="rm-btn small"
-            :class="{ active: imageMode === 'specifiedDoc' }"
-            @click="imageMode = 'specifiedDoc'"
+            :class="{ active: assetMode === 'specifiedDoc' }"
+            @click="assetMode = 'specifiedDoc'"
           >
             {{ i18n.specifiedDoc }}
           </button>
         </div>
         <!-- 指定文档输入 -->
         <div
-          v-if="imageMode === 'specifiedDoc'"
+          v-if="assetMode === 'specifiedDoc'"
           class="rm-input-row"
         >
           <label>{{ i18n.targetDocId }}:</label>
           <input
             v-model="specifiedDocId"
             :placeholder="i18n.docIdPlaceholder"
-            @keyup.enter="loadImageAssets"
+            @keyup.enter="loadCurrentTabAssets"
           />
           <button
             class="rm-btn small primary"
-            @click="loadImageAssets"
+            @click="loadCurrentTabAssets"
           >
             {{ i18n.refresh }}
           </button>
         </div>
         <!-- 资源统计 -->
         <div
-          v-if="!loading && imageAssets.length > 0"
+          v-if="!loading && currentAssetList.length > 0"
           class="rm-asset-count"
         >
-          {{ i18n.assetCount }}: {{ imageAssets.length }}
+          {{ i18n.assetCount }}: {{ currentAssetList.length }}
         </div>
         <div
           v-if="loading"
@@ -90,7 +90,7 @@
           {{ i18n.loading }}
         </div>
         <div
-          v-else-if="imageAssets.length === 0"
+          v-else-if="currentAssetList.length === 0"
           class="rm-empty"
         >
           {{ i18n.noAssets }}
@@ -100,7 +100,7 @@
           class="rm-asset-list"
         >
           <li
-            v-for="asset in imageAssets"
+            v-for="asset in currentAssetList"
             :key="asset.path"
             class="rm-asset-item"
           >
@@ -373,11 +373,12 @@ const props = defineProps<Props>()
 const activeTab = ref("imageAssets")
 const loading = ref(false)
 const imageAssets = ref<ImageAssetInfo[]>([])
+const fileAssets = ref<ImageAssetInfo[]>([])
 const missingAssets = ref<string[]>([])
 const unusedAssets = ref<string[]>([])
 
-// 图片资源模式
-const imageMode = ref<"all" | "currentDoc" | "specifiedDoc">("all")
+// 资源模式（图片/文件共用）
+const assetMode = ref<"all" | "currentDoc" | "specifiedDoc">("all")
 const specifiedDocId = ref("")
 
 // 移动资源
@@ -405,6 +406,10 @@ const tabs = [
   {
     key: "imageAssets",
     label: props.i18n.imageAssets || "图片资源",
+  },
+  {
+    key: "fileAssets",
+    label: props.i18n.fileAssets || "文件资源",
   },
   {
     key: "missingAssets",
@@ -513,6 +518,9 @@ async function refresh() {
     if (activeTab.value === "imageAssets") {
       await loadImageAssets()
     }
+    else if (activeTab.value === "fileAssets") {
+      await loadFileAssets()
+    }
     else if (activeTab.value === "missingAssets") {
       await loadMissingAssets()
     }
@@ -591,14 +599,32 @@ async function getCurrentDocId(): Promise<string | null> {
   return docId || null
 }
 
+/** 图片扩展名 */
+const IMAGE_EXT = /\.(png|jpg|jpeg|gif|svg|webp|bmp|ico|tiff|avif)$/i
+
+/** 当前 tab 对应的资源列表 */
+const currentAssetList = computed(() => {
+  return activeTab.value === "fileAssets" ? fileAssets.value : imageAssets.value
+})
+
+/** 加载当前 tab 对应的资源 */
+async function loadCurrentTabAssets() {
+  if (activeTab.value === "fileAssets") {
+    await loadFileAssets()
+  }
+  else {
+    await loadImageAssets()
+  }
+}
+
 async function loadImageAssets() {
-  if (imageMode.value === "all") {
+  if (assetMode.value === "all") {
     await loadAllImageAssets()
   }
-  else if (imageMode.value === "currentDoc") {
+  else if (assetMode.value === "currentDoc") {
     await loadCurrentDocImageAssets()
   }
-  else if (imageMode.value === "specifiedDoc") {
+  else if (assetMode.value === "specifiedDoc") {
     if (!specifiedDocId.value.trim()) {
       showMsg(props.i18n.docIdRequired || "请输入文档 ID")
       return
@@ -607,14 +633,51 @@ async function loadImageAssets() {
   }
 }
 
+async function loadFileAssets() {
+  if (assetMode.value === "all") {
+    await loadAllFileAssets()
+  }
+  else if (assetMode.value === "currentDoc") {
+    await loadCurrentDocFileAssets()
+  }
+  else if (assetMode.value === "specifiedDoc") {
+    if (!specifiedDocId.value.trim()) {
+      showMsg(props.i18n.docIdRequired || "请输入文档 ID")
+      return
+    }
+    await loadDocFileAssets(specifiedDocId.value.trim())
+  }
+}
+
 /**
  * 加载指定文档的图片资源（供 currentDoc / specifiedDoc 模式共用）
  */
 async function loadDocImageAssets(docId: string) {
   const paths = await getDocImageAssets(docId)
-  const pathList = paths || []
+  const pathList = (paths || [])
+    .filter((p: unknown): p is string => typeof p === "string")
+    .filter((p: string) => IMAGE_EXT.test(p))
   const docMap = await loadDocNamesForImages(pathList)
   imageAssets.value = pathList.map((path) => {
+    const info = docMap.get(path)
+    return {
+      path,
+      docNames: info?.docNames || [],
+      docIds: info?.docIds || [],
+    }
+  })
+}
+
+/**
+ * 加载指定文档的文件资源（供 currentDoc / specifiedDoc 模式共用）
+ */
+async function loadDocFileAssets(docId: string) {
+  const paths = await getDocImageAssets(docId)
+  const pathList = (paths || [])
+    .filter((p: unknown): p is string => typeof p === "string")
+    .filter((p: string) => !IMAGE_EXT.test(p))
+  const docMap = await loadDocNamesForImages(pathList)
+  fileAssets.value = pathList.map((path) => {
     const info = docMap.get(path)
     return {
       path,
@@ -634,6 +697,18 @@ async function loadCurrentDocImageAssets() {
     return
   }
   await loadDocImageAssets(docId)
+}
+
+/**
+ * 加载当前文档的文件资源
+ */
+async function loadCurrentDocFileAssets() {
+  const docId = await getCurrentDocId()
+  if (!docId) {
+    showMsg("无法获取当前文档 ID")
+    return
+  }
+  await loadDocFileAssets(docId)
 }
 
 /**
@@ -690,22 +765,19 @@ async function loadDocNamesForImages(
  * 通过 SQL 查询已引用的资源 + 未使用资源 API 合并
  */
 async function loadAllImageAssets() {
-  const IMAGE_EXT = /\.(png|jpg|jpeg|gif|svg|webp|bmp|ico|tiff|avif)$/i
   try {
-    // 查询已引用的资源路径
     const referenced = await sql("SELECT DISTINCT path FROM assets WHERE path LIKE 'assets/%'")
     const refImagePaths = (referenced || [])
       .map((r: { path: string }) => r.path)
+      .filter((p: unknown): p is string => typeof p === "string")
       .filter((p: string) => IMAGE_EXT.test(p))
 
-    // 查询未使用的资源（可能是只存在磁盘但未被索引的）
     const unused = await getUnusedAssets()
-    const unusedImagePaths = (unused || []).filter((p: string) => IMAGE_EXT.test(p))
+    const unusedImagePaths = (unused || [])
+      .filter((p: unknown): p is string => typeof p === "string")
+      .filter((p: string) => IMAGE_EXT.test(p))
 
-    // 合并去重
     const allPaths = [...new Set([...refImagePaths, ...unusedImagePaths])].sort()
-
-    // 批量查询关联文档
     const docMap = await loadDocNamesForImages(allPaths)
 
     imageAssets.value = allPaths.map((path) => {
@@ -719,6 +791,41 @@ async function loadAllImageAssets() {
   }
   catch (e: unknown) {
     console.error("加载全部图片资源失败:", e)
+    showMsg(props.i18n.loadFailed || "加载失败")
+  }
+}
+
+/**
+ * 加载全部文件资源（整个项目）
+ * 过滤逻辑与图片相反：排除图片扩展名
+ */
+async function loadAllFileAssets() {
+  try {
+    const referenced = await sql("SELECT DISTINCT path FROM assets WHERE path LIKE 'assets/%'")
+    const refFilePaths = (referenced || [])
+      .map((r: { path: string }) => r.path)
+      .filter((p: unknown): p is string => typeof p === "string")
+      .filter((p: string) => !IMAGE_EXT.test(p))
+
+    const unused = await getUnusedAssets()
+    const unusedFilePaths = (unused || [])
+      .filter((p: unknown): p is string => typeof p === "string")
+      .filter((p: string) => !IMAGE_EXT.test(p))
+
+    const allPaths = [...new Set([...refFilePaths, ...unusedFilePaths])].sort()
+    const docMap = await loadDocNamesForImages(allPaths)
+
+    fileAssets.value = allPaths.map((path) => {
+      const info = docMap.get(path)
+      return {
+        path,
+        docNames: info?.docNames || [],
+        docIds: info?.docIds || [],
+      }
+    })
+  }
+  catch (e: unknown) {
+    console.error("加载全部文件资源失败:", e)
     showMsg(props.i18n.loadFailed || "加载失败")
   }
 }

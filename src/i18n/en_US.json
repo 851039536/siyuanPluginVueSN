@@ -1255,6 +1255,7 @@
     "panelTitle": "Resource Manager",
     "description": "Manage Siyuan asset files: view, rename, insert, and clean up resources",
     "imageAssets": "Image Assets",
+    "fileAssets": "File Assets",
     "missingAssets": "Missing Assets",
     "unusedAssets": "Unused Assets",
     "rebuildIndex": "Rebuild Index",

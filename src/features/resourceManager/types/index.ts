@@ -10,6 +10,7 @@ export interface ResourceManagerI18n {
   panelTitle: string
   description: string
   imageAssets: string
+  fileAssets: string
   missingAssets: string
   unusedAssets: string
   rebuildIndex: string

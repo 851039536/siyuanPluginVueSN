@@ -9,8 +9,7 @@ import type { IndexType, SubDocInfo } from "./types"
 import {
   escapeSqlString,
   findExistingIndexBlock,
-  getCurrentBlockId,
-  getCurrentDocId,
+  getCurrentContext,
 } from "./utils/helpers"
 
 // 模块级引用，避免 (plugin as any) 绕过类型系统
@@ -146,14 +145,20 @@ export class TableOfContentsManager {
   }
 
   /**
-   * 公共入口：解析当前文档/块 ID，然后执行具体插入逻辑
-   * 集中一次 DOM 查询 + 一次 SQL 查询，消除各方法间的重复解析
+   * 公共入口：一次 DOM 查询 + 一次 SQL 查询获取当前上下文和子文档，
+   * callback 接收 docId / blockId / subDocs，消除各方法间的重复解析。
    */
-  private async resolveAndInsert(fn: (docId: string, subDocs: SubDocInfo[]) => Promise<void>) {
+  private async resolveAndInsert(
+    fn: (docId: string, blockId: string, subDocs: SubDocInfo[]) => Promise<void>,
+  ) {
     try {
-      const docId = await getCurrentDocId()
+      const { docId, blockId } = await getCurrentContext()
       if (!docId) {
         showMessage(this.plugin.i18n.noActiveDocument, 3000, "error")
+        return
+      }
+      if (!blockId) {
+        showMessage("请先将光标放在文档中的某个块上", 3000, "error")
         return
       }
 
@@ -163,7 +168,7 @@ export class TableOfContentsManager {
         return
       }
 
-      await fn(docId, subDocs)
+      await fn(docId, blockId, subDocs)
     } catch (error) {
       console.error("插入索引失败:", error)
       showMessage(`${this.plugin.i18n.insertFailed}${getErrorMessage(error)}`, 3000, "error")
@@ -172,31 +177,31 @@ export class TableOfContentsManager {
 
   /** 1. 插入索引（当前文档的子文档列表） CTRL+ALT+I */
   private async insertIndex() {
-    await this.resolveAndInsert(async (docId, subDocs) => {
+    await this.resolveAndInsert(async (docId, blockId, subDocs) => {
       let content = "## 📑 子文档索引\n\n"
       for (let i = 0; i < subDocs.length; i++) {
         const num = String(i + 1).padStart(2, "0")
         content += `${num}. [${subDocs[i].name}](siyuan://blocks/${subDocs[i].id})\n`
       }
-      await this.insertContent(content, "index", docId, getCurrentBlockId())
+      await this.insertContent(content, "index", docId, blockId)
     })
   }
 
   /** 2. 插入子文档引用列表 CTRL+ALT+R */
   private async insertSubDocsRef() {
-    await this.resolveAndInsert(async (docId, subDocs) => {
+    await this.resolveAndInsert(async (docId, blockId, subDocs) => {
       let content = "## 🔗 子文档引用\n\n"
       for (let i = 0; i < subDocs.length; i++) {
         const num = String(i + 1).padStart(2, "0")
         content += `${num}. ((${subDocs[i].id} "${subDocs[i].name}"))\n`
       }
-      await this.insertContent(content, "subdocs-ref", docId, getCurrentBlockId())
+      await this.insertContent(content, "subdocs-ref", docId, blockId)
     })
   }
 
   /** 3. 插入子文档及其大纲（使用引用块） CTRL+ALT+O */
   private async insertSubDocsWithOutline() {
-    await this.resolveAndInsert(async (docId, subDocs) => {
+    await this.resolveAndInsert(async (docId, blockId, subDocs) => {
       // 一次性查询所有子文档标题，避免 N+1 查询
       const subDocIds = subDocs.map(d => `'${escapeSqlString(d.id)}'`).join(",")
       const allHeadings = await api.sql(`
@@ -229,7 +234,7 @@ export class TableOfContentsManager {
         }
       }
 
-      await this.insertContent(content, "subdocs-outline", docId, getCurrentBlockId())
+      await this.insertContent(content, "subdocs-outline", docId, blockId)
     })
   }
 

@@ -113,18 +113,26 @@ export function escapeSqlString(str: string): string {
 
 /**
  * 查找文档中该类型的所有索引块 ID。
- * 多行 Markdown 插入后会被解析为多个块，每个块都带有标记属性。
+ * setBlockAttrs 将 custom-* 属性写入 attributes 表。
  */
 export async function findExistingIndexBlockIds(
   docId: string,
   indexType: string,
 ): Promise<string[]> {
+  const safeDocId = escapeSqlString(docId)
+  const safeType = escapeSqlString(indexType)
+
   try {
     const rows = await api.sql(`
       SELECT b.id
       FROM blocks b
-      WHERE b.root_id = '${escapeSqlString(docId)}'
-      AND b.ial LIKE '%custom-toc-type="${escapeSqlString(indexType)}"%'
+      WHERE b.root_id = '${safeDocId}'
+      AND EXISTS (
+        SELECT 1 FROM attributes a
+        WHERE a.block_id = b.id
+        AND a.name = 'custom-toc-type'
+        AND a.value = '${safeType}'
+      )
       ORDER BY b.sort ASC
     `)
     return (rows || []).map((r: any) => r.id)

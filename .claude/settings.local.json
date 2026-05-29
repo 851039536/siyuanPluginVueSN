@@ -108,7 +108,8 @@
       "Bash(gh repo *)",
       "WebFetch(domain:ld246.com)",
       "WebFetch(domain:cdn.jsdelivr.net)",
-      "Bash(gh api *)"
+      "Bash(gh api *)",
+      "Bash(where gh *)"
     ],
     "deny": [],
     "ask": []

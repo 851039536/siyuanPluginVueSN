@@ -3,43 +3,46 @@
  */
 import * as api from "@/api"
 
+/** 当前文档/块上下文 */
+export interface CurrentContext {
+  docId: string | null
+  blockId: string | null
+}
+
 /**
- * 获取当前光标所在的块ID
+ * 获取当前光标所在的块 ID。
+ * 优先使用 window.getSelection()（最可靠，不依赖 CSS 类名实现细节），
+ * CSS 类选择器作为降级方案。
  */
 export function getCurrentBlockId(): string | null {
-  // 方法1: 获取当前选中的块
-  const selectedBlock = document.querySelector(".protyle-wysiwyg--select")
-  if (selectedBlock) {
-    return selectedBlock.getAttribute("data-node-id")
-  }
-
-  // 方法2: 获取光标所在的块（聚焦的块）
-  const focusedBlock = document.querySelector(
-    ".protyle-wysiwyg [data-node-id].protyle-wysiwyg--focus",
-  )
-  if (focusedBlock) {
-    return focusedBlock.getAttribute("data-node-id")
-  }
-
-  // 方法3: 通过 window.getSelection() 精确获取光标位置
+  // 首选: window.getSelection() 精确获取光标位置
   const selection = window.getSelection()
   if (selection && selection.rangeCount > 0) {
     const range = selection.getRangeAt(0)
     let node: Node | null = range.startContainer
 
-    // 向上查找直到找到带有 data-node-id 和 data-type 的元素
     while (node) {
       if (node instanceof Element) {
         const nodeId = node.getAttribute("data-node-id")
         const dataType = node.getAttribute("data-type")
-
-        // 必须同时有 data-node-id 和 data-type 才是有效的块
-        if (nodeId && dataType) {
-          return nodeId
-        }
+        if (nodeId && dataType) return nodeId
       }
       node = node.parentNode
     }
+  }
+
+  // 降级1: 当前选中的块
+  const selectedBlock = document.querySelector(".protyle-wysiwyg--select")
+  if (selectedBlock) {
+    return selectedBlock.getAttribute("data-node-id")
+  }
+
+  // 降级2: 聚焦的块
+  const focusedBlock = document.querySelector(
+    ".protyle-wysiwyg [data-node-id].protyle-wysiwyg--focus",
+  )
+  if (focusedBlock) {
+    return focusedBlock.getAttribute("data-node-id")
   }
 
   return null
@@ -71,24 +74,32 @@ export function getActiveProtyle(): any {
 }
 
 /**
- * 获取当前文档ID（优先使用光标所在文档，其次使用激活窗口）
+ * 一次性获取当前文档 ID 和块 ID，避免分开调用时的重复 DOM 遍历。
+ * 优先通过光标所在块获取，其次使用激活窗口。
  */
-export async function getCurrentDocId(): Promise<string | null> {
-  // 优先方案：通过光标所在的块获取文档ID
-  const currentBlockId = getCurrentBlockId()
-  if (currentBlockId) {
-    const docId = await getDocIdByBlockId(currentBlockId)
-    if (docId) {
-      return docId
-    }
+export async function getCurrentContext(): Promise<CurrentContext> {
+  const blockId = getCurrentBlockId()
+
+  if (blockId) {
+    const docId = await getDocIdByBlockId(blockId)
+    if (docId) return { docId, blockId }
   }
 
-  // 备用方案：使用激活窗口的文档
+  // 降级：通过激活窗口获取文档 ID
   const protyle = getActiveProtyle()
   const docId = protyle
     ?.querySelector(".protyle-background")
-    ?.getAttribute("data-node-id")
-  return docId || null
+    ?.getAttribute("data-node-id") ?? null
+  return { docId, blockId }
+}
+
+/**
+ * 获取当前文档 ID（优先使用光标所在文档，其次使用激活窗口）。
+ * 如需同时获取 blockId，请使用 getCurrentContext() 以避免重复 DOM 查询。
+ */
+export async function getCurrentDocId(): Promise<string | null> {
+  const { docId } = await getCurrentContext()
+  return docId
 }
 
 /**

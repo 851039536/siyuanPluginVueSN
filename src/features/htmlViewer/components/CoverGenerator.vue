@@ -270,7 +270,10 @@ import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
 import { usePlugin } from "@/main"
-import { callAI, getApiConfigFromPlugin } from "@/utils/aiApi"
+import {
+  callAI,
+  getApiConfigFromPlugin,
+} from "@/utils/aiApi"
 import { useCoverGenerator } from "../composables/useCoverGenerator"
 
 interface Props {

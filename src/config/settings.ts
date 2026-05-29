@@ -74,6 +74,7 @@ export interface PluginSettings {
   enableResourceManager: boolean // 是否启用资源管理功能
   enableThemeColor: boolean // 是否启用全局主题色功能
   enableBookmarkMarker: boolean // 是否启用手动书签标记功能
+  enableApiDebugger: boolean // 是否启用API调试器功能
   themeColorScheme: string // 主题色方案: 'orange' | 'github'
   videoCategories?: string[] // 视频分类列表
   compactMode: boolean // 是否启用全局紧洛模式
@@ -131,6 +132,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enableResourceManager: true,
   enableThemeColor: false,
   enableBookmarkMarker: true,
+  enableApiDebugger: true,
   themeColorScheme: "orange",
   videoCategories: ["默认分类", "教程", "演示", "其他"],
   compactMode: true,

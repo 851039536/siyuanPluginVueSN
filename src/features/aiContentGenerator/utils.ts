@@ -1,8 +1,8 @@
+import type { SkillItem } from "@/types/ai"
 /**
  * AI 内容生成器共享工具函数
  */
 import { marked } from "marked"
-import type { SkillItem } from "@/types/ai"
 import { AI_TOOLS } from "@/features/skillsViewer/modules/SkillsViewerManager"
 
 // 配置 marked 选项（只需配置一次）

@@ -23,6 +23,7 @@ import {
 import {
   getStatisticsInstance,
   registerAIContentGenerator,
+  registerApiDebugger,
   registerBase64Image,
   registerBookmarkMarker,
   registerCodeImageGenerator,
@@ -239,6 +240,7 @@ export default class PluginSample extends Plugin {
       (this as any).__themeColor = registerThemeColor(this, s.themeColorScheme)
     }
     if (s.enableBookmarkMarker) registerBookmarkMarker(this)
+    if (s.enableApiDebugger) registerApiDebugger(this)
   }
 
   /**

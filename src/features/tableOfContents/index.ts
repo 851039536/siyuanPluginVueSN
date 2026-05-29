@@ -3,9 +3,12 @@
  * 参考: https://github.com/TinkMingKing/siyuan-plugins-index
  */
 import type { Plugin } from "siyuan"
+import type {
+  IndexType,
+  SubDocInfo,
+} from "./types"
 import { showMessage } from "siyuan"
 import * as api from "@/api"
-import type { IndexType, SubDocInfo } from "./types"
 import {
   escapeSqlString,
   findExistingIndexBlockIds,
@@ -90,7 +93,7 @@ export class TableOfContentsManager {
           return
         }
 
-        await Promise.allSettled(oldIds.map(id => api.deleteBlock(id)))
+        await Promise.allSettled(oldIds.map((id) => api.deleteBlock(id)))
       }
 
       // 插入新内容
@@ -103,14 +106,14 @@ export class TableOfContentsManager {
       )
 
       if (result?.length) {
-        const newIds = result.flatMap(r =>
+        const newIds = result.flatMap((r) =>
           (r.doOperations || [])
             .map((op: any) => op.id)
             .filter(Boolean),
         )
 
         // 给每个新块打上标记
-        await Promise.allSettled(newIds.map(id =>
+        await Promise.allSettled(newIds.map((id) =>
           api.setBlockAttrs(id, {
             "custom-toc-type": indexType,
             "custom-toc-generated": "true",
@@ -137,7 +140,7 @@ export class TableOfContentsManager {
       if (!pathInfo?.notebook || !pathInfo.path) return []
 
       const result = await api.listDocsByPath(pathInfo.notebook, pathInfo.path)
-      return (result?.files || []).map(f => ({
+      return (result?.files || []).map((f) => ({
         id: f.id,
         name: stripSySuffix(f.name),
       }))
@@ -155,7 +158,10 @@ export class TableOfContentsManager {
     fn: (docId: string, blockId: string, subDocs: SubDocInfo[]) => Promise<void>,
   ) {
     try {
-      const { docId, blockId } = await getCurrentContext()
+      const {
+        docId,
+        blockId,
+      } = await getCurrentContext()
       if (!docId) {
         showMessage(this.plugin.i18n.noActiveDocument, 3000, "error")
         return
@@ -206,7 +212,7 @@ export class TableOfContentsManager {
   private async insertSubDocsWithOutline() {
     await this.resolveAndInsert(async (docId, blockId, subDocs) => {
       // 一次性查询所有子文档标题，避免 N+1 查询
-      const subDocIds = subDocs.map(d => `'${escapeSqlString(d.id)}'`).join(",")
+      const subDocIds = subDocs.map((d) => `'${escapeSqlString(d.id)}'`).join(",")
       const allHeadings = await api.sql(`
         SELECT id, root_id, content, subtype, sort
         FROM blocks

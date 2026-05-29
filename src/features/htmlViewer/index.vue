@@ -608,7 +608,10 @@ import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
 import { usePlugin } from "@/main"
 import CoverGenerator from "./components/CoverGenerator.vue"
-import { DEFAULT_CATEGORIES, HtmlViewerStorage } from "./types/storage"
+import {
+  DEFAULT_CATEGORIES,
+  HtmlViewerStorage,
+} from "./types/storage"
 import {
   isJsonString,
   jsonToHtml,
@@ -766,7 +769,10 @@ const snippetCount = computed(() => snippets.value.length)
 
 // 分类选项（供 Select 组件使用）
 const categoryOptions = computed(() =>
-  categories.value.map((cat) => ({ value: cat.id, label: cat.name })),
+  categories.value.map((cat) => ({
+    value: cat.id,
+    label: cat.name,
+  })),
 )
 
 // 分类Map
@@ -838,7 +844,7 @@ function formatHtml() {
         indent--
       }
       result.push("  ".repeat(indent) + line)
-      if (line.match(/^<([a-z][a-z0-9]*)([\s>])/i) && !line.match(/\/>/) && !line.match(/^<(br|hr|img|input|meta|link)(?:\s|>|\/)/i)) {
+      if (line.match(/^<([a-z][a-z0-9]*)([\s>])/i) && !line.match(/\/>/) && !line.match(/^<(br|hr|img|input|meta|link)[\s>/]/i)) {
         indent++
       }
     }

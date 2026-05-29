@@ -333,7 +333,7 @@ interface Props {
   showReasoning?: boolean
 
   // 搜索来源
-  searchResults?: Array<{ title: string; url: string; content: string; score?: number }>
+  searchResults?: Array<{ title: string, url: string, content: string, score?: number }>
   showSearchResults?: boolean
   searchStatus?: string
 

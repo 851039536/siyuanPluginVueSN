@@ -34,7 +34,7 @@
         v-if="activeTab === 'imageAssets' || activeTab === 'fileAssets'"
         class="rm-section"
       >
-        <!-- 模式切换栏 -->
+        <!-- 来源筛选栏 -->
         <div class="rm-filter-bar">
           <button
             class="rm-btn small"
@@ -50,30 +50,24 @@
           >
             {{ i18n.currentDoc }}
           </button>
+        </div>
+        <!-- 分类筛选栏 -->
+        <div class="rm-filter-bar rm-filter-bar--category">
           <button
             class="rm-btn small"
-            :class="{ active: assetMode === 'specifiedDoc' }"
-            @click="assetMode = 'specifiedDoc'"
+            :class="{ active: categoryFilter === '' }"
+            @click="categoryFilter = ''"
           >
-            {{ i18n.specifiedDoc }}
+            {{ i18n.allCategories }}
           </button>
-        </div>
-        <!-- 指定文档输入 -->
-        <div
-          v-if="assetMode === 'specifiedDoc'"
-          class="rm-input-row"
-        >
-          <label>{{ i18n.targetDocId }}:</label>
-          <input
-            v-model="specifiedDocId"
-            :placeholder="i18n.docIdPlaceholder"
-            @keyup.enter="loadCurrentTabAssets"
-          />
           <button
-            class="rm-btn small primary"
-            @click="loadCurrentTabAssets"
+            v-for="cat in quickCategories"
+            :key="cat.key"
+            class="rm-btn small"
+            :class="{ active: categoryFilter === cat.key }"
+            @click="categoryFilter = cat.key"
           >
-            {{ i18n.refresh }}
+            {{ cat.label }}
           </button>
         </div>
         <!-- 资源统计 -->
@@ -378,8 +372,8 @@ const missingAssets = ref<string[]>([])
 const unusedAssets = ref<string[]>([])
 
 // 资源模式（图片/文件共用）
-const assetMode = ref<"all" | "currentDoc" | "specifiedDoc">("all")
-const specifiedDocId = ref("")
+const assetMode = ref<"all" | "currentDoc">("all")
+const categoryFilter = ref("")
 
 // 移动资源
 const movingAsset = ref<string | null>(null)
@@ -478,6 +472,7 @@ function findDocIdFromDom(): string | null {
 
 // 切换到数据页签时自动加载
 watch(activeTab, () => {
+  categoryFilter.value = ""
   refresh()
 }, { immediate: true })
 
@@ -602,9 +597,12 @@ async function getCurrentDocId(): Promise<string | null> {
 /** 图片扩展名 */
 const IMAGE_EXT = /\.(png|jpg|jpeg|gif|svg|webp|bmp|ico|tiff|avif)$/i
 
-/** 当前 tab 对应的资源列表 */
+/** 当前 tab 对应的资源列表（按分类过滤） */
 const currentAssetList = computed(() => {
-  return activeTab.value === "fileAssets" ? fileAssets.value : imageAssets.value
+  const list = activeTab.value === "fileAssets" ? fileAssets.value : imageAssets.value
+  if (!categoryFilter.value) return list
+  const prefix = `assets/${categoryFilter.value}/`
+  return list.filter(item => item.path.startsWith(prefix))
 })
 
 /** 加载当前 tab 对应的资源 */
@@ -624,13 +622,6 @@ async function loadImageAssets() {
   else if (assetMode.value === "currentDoc") {
     await loadCurrentDocImageAssets()
   }
-  else if (assetMode.value === "specifiedDoc") {
-    if (!specifiedDocId.value.trim()) {
-      showMsg(props.i18n.docIdRequired || "请输入文档 ID")
-      return
-    }
-    await loadDocImageAssets(specifiedDocId.value.trim())
-  }
 }
 
 async function loadFileAssets() {
@@ -639,13 +630,6 @@ async function loadFileAssets() {
   }
   else if (assetMode.value === "currentDoc") {
     await loadCurrentDocFileAssets()
-  }
-  else if (assetMode.value === "specifiedDoc") {
-    if (!specifiedDocId.value.trim()) {
-      showMsg(props.i18n.docIdRequired || "请输入文档 ID")
-      return
-    }
-    await loadDocFileAssets(specifiedDocId.value.trim())
   }
 }
 

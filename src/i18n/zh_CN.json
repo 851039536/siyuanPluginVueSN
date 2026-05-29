@@ -1361,6 +1361,7 @@
     "targetDocId": "目标文档ID",
     "selectFiles": "选择文件",
     "allAssets": "全部",
+    "allCategories": "全部分类",
     "currentDoc": "当前文档",
     "specifiedDoc": "指定文档",
     "docIdPlaceholder": "输入文档 ID（如 20231027130500-xxxx）",

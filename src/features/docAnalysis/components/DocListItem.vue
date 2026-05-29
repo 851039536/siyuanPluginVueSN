@@ -90,7 +90,14 @@
     </div>
     <div class="doc-actions">
       <button
-        class="publish-action-btn"
+        class="action-btn attrs-btn"
+        title="查看属性"
+        @click.stop="$emit('attrs', doc.id)"
+      >
+        <Icon icon="mdi:information-outline" />
+      </button>
+      <button
+        class="action-btn publish-action-btn"
         title="发布此文档"
         @click.stop="$emit('publish', doc.id, doc.title)"
       >
@@ -125,6 +132,7 @@ const props = defineProps<Props>()
 defineEmits<{
   (e: "open", docId: string): void
   (e: "publish", docId: string, docTitle: string): void
+  (e: "attrs", docId: string): void
 }>()
 
 const formatSize = computed(() => formatBytes(props.doc.contentSize))
@@ -305,9 +313,12 @@ function formatTime(ts: string): string {
   .doc-actions {
     flex-shrink: 0;
     margin-left: 4px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
   }
 
-  .publish-action-btn {
+  .action-btn {
     display: flex;
     align-items: center;
     justify-content: center;

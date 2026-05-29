@@ -113,29 +113,32 @@ export function escapeSqlString(str: string): string {
 
 /**
  * 查找文档中该类型的所有索引块 ID。
- * setBlockAttrs 将 custom-* 属性写入 attributes 表。
+ * 第一步：通过 ial LIKE 找到候选块，第二步：通过 getBlockAttrs 过滤类型。
+ * 与开源项目 Szerelem0617/siyuan-plugins-index 模式完全一致。
  */
 export async function findExistingIndexBlockIds(
   docId: string,
   indexType: string,
 ): Promise<string[]> {
   const safeDocId = escapeSqlString(docId)
-  const safeType = escapeSqlString(indexType)
 
   try {
     const rows = await api.sql(`
       SELECT b.id
       FROM blocks b
       WHERE b.root_id = '${safeDocId}'
-      AND EXISTS (
-        SELECT 1 FROM attributes a
-        WHERE a.block_id = b.id
-        AND a.name = 'custom-toc-type'
-        AND a.value = '${safeType}'
-      )
+      AND b.ial LIKE '%custom-toc-type%'
       ORDER BY b.sort ASC
     `)
-    return (rows || []).map((r: any) => r.id)
+
+    if (!rows || rows.length === 0) return []
+
+    const attrPromises = rows.map((r: any) => api.getBlockAttrs(r.id))
+    const allAttrs = await Promise.all(attrPromises)
+
+    return rows
+      .filter((_: any, i: number) => allAttrs[i]?.["custom-toc-type"] === indexType)
+      .map((r: any) => r.id)
   } catch (error) {
     console.error("查找索引块失败:", error)
     return []

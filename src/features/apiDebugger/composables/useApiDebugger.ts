@@ -15,27 +15,36 @@ import { SIYUAN_API_BASE_URL } from "@/api"
 
 import { ApiDebuggerStorage } from "../types/storage"
 
+const INITIAL_STATE = {
+  method: "POST" as HttpMethod,
+  path: "",
+  requestBody: "{}",
+  statusCode: null as number | null,
+  responseBody: "",
+  responseTime: 0,
+  errorMessage: "",
+}
+
 export function useApiDebugger(plugin: Plugin) {
   const storage = new ApiDebuggerStorage(plugin)
 
-  const method = ref<HttpMethod>("POST")
-  const path = ref("")
-  const requestBody = ref("{}")
+  const method = ref(INITIAL_STATE.method)
+  const path = ref(INITIAL_STATE.path)
+  const requestBody = ref(INITIAL_STATE.requestBody)
   const customHeaders = ref<CustomHeader[]>([])
   const loading = ref(false)
   const activeTab = ref<"response" | "history">("response")
   const selectedEndpoint = ref<ApiEndpointPreset | null>(null)
-
-  const statusCode = ref<number | null>(null)
-  const responseBody = ref("")
-  const responseTime = ref(0)
-  const errorMessage = ref("")
-
+  const statusCode = ref(INITIAL_STATE.statusCode)
+  const responseBody = ref(INITIAL_STATE.responseBody)
+  const responseTime = ref(INITIAL_STATE.responseTime)
+  const errorMessage = ref(INITIAL_STATE.errorMessage)
   const history = shallowRef<ApiRequestRecord[]>([])
 
-  async function loadHistory() {
-    history.value = await storage.loadHistory()
-  }
+  onMounted(async () => {
+    const data = await storage.settings.loadOrDefault()
+    history.value = data.history
+  })
 
   function selectEndpoint(preset: ApiEndpointPreset) {
     selectedEndpoint.value = preset
@@ -44,10 +53,7 @@ export function useApiDebugger(plugin: Plugin) {
   }
 
   function addHeader() {
-    customHeaders.value.push({
-      key: "",
-      value: "",
-    })
+    customHeaders.value.push({ key: "", value: "" })
   }
 
   function removeHeader(index: number) {
@@ -55,15 +61,37 @@ export function useApiDebugger(plugin: Plugin) {
   }
 
   function clearRequest() {
-    method.value = "POST"
-    path.value = ""
-    requestBody.value = "{}"
+    Object.assign(method, INITIAL_STATE.method)
+    Object.assign(path, INITIAL_STATE.path)
+    Object.assign(requestBody, INITIAL_STATE.requestBody)
+    Object.assign(statusCode, INITIAL_STATE.statusCode)
+    Object.assign(responseBody, INITIAL_STATE.responseBody)
+    Object.assign(responseTime, INITIAL_STATE.responseTime)
+    Object.assign(errorMessage, INITIAL_STATE.errorMessage)
     customHeaders.value = []
     selectedEndpoint.value = null
-    statusCode.value = null
-    responseBody.value = ""
-    responseTime.value = 0
-    errorMessage.value = ""
+  }
+
+  function createRecord(
+    success: boolean,
+    status: number,
+    body: string,
+    errMsg?: string,
+  ): ApiRequestRecord {
+    return {
+      id: Date.now(),
+      timestamp: Date.now(),
+      method: method.value,
+      url: `${SIYUAN_API_BASE_URL}${path.value}`,
+      path: path.value,
+      requestBody: requestBody.value,
+      headers: [...customHeaders.value],
+      statusCode: status,
+      responseBody: body,
+      responseTime: responseTime.value,
+      success,
+      errorMessage: errMsg,
+    }
   }
 
   async function sendRequest() {
@@ -72,7 +100,6 @@ export function useApiDebugger(plugin: Plugin) {
       return
     }
 
-    // Validate JSON body
     try {
       JSON.parse(requestBody.value)
     } catch {
@@ -86,29 +113,24 @@ export function useApiDebugger(plugin: Plugin) {
     responseBody.value = ""
     responseTime.value = 0
 
-    const url = `${SIYUAN_API_BASE_URL}${path.value}`
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
     }
-
-    // Add custom headers
     for (const h of customHeaders.value) {
-      if (h.key.trim()) {
+      if (h.key.trim())
         headers[h.key.trim()] = h.value
-      }
     }
 
     const startTime = performance.now()
 
     try {
-      const response = await fetch(url, {
+      const response = await fetch(`${SIYUAN_API_BASE_URL}${path.value}`, {
         method: method.value,
         headers,
         body: method.value !== "GET" ? requestBody.value : undefined,
       })
 
-      const endTime = performance.now()
-      responseTime.value = Math.round(endTime - startTime)
+      responseTime.value = Math.round(performance.now() - startTime)
       statusCode.value = response.status
 
       const text = await response.text()
@@ -118,55 +140,25 @@ export function useApiDebugger(plugin: Plugin) {
         responseBody.value = text
       }
 
-      // Parse Siyuan convention: code === 0 means success
       let success = response.ok
       try {
         const json = JSON.parse(text)
-        if (json.code !== undefined) {
+        if (json.code !== undefined)
           success = json.code === 0
-        }
       } catch {}
 
-      const record: ApiRequestRecord = {
-        id: Date.now(),
-        timestamp: Date.now(),
-        method: method.value,
-        url,
-        path: path.value,
-        requestBody: requestBody.value,
-        headers: [...customHeaders.value],
-        statusCode: response.status,
-        responseBody: responseBody.value,
-        responseTime: responseTime.value,
-        success,
-      }
-
-      await storage.addRecord(record)
-      await loadHistory()
+      await storage.addRecord(createRecord(success, response.status, responseBody.value))
+      const data = await storage.settings.loadOrDefault()
+      history.value = data.history
       activeTab.value = "response"
     } catch (err: any) {
-      const endTime = performance.now()
-      responseTime.value = Math.round(endTime - startTime)
+      responseTime.value = Math.round(performance.now() - startTime)
       errorMessage.value = err.message || "请求失败"
       statusCode.value = 0
 
-      const record: ApiRequestRecord = {
-        id: Date.now(),
-        timestamp: Date.now(),
-        method: method.value,
-        url,
-        path: path.value,
-        requestBody: requestBody.value,
-        headers: [...customHeaders.value],
-        statusCode: 0,
-        responseBody: "",
-        responseTime: responseTime.value,
-        success: false,
-        errorMessage: err.message,
-      }
-
-      await storage.addRecord(record)
-      await loadHistory()
+      await storage.addRecord(createRecord(false, 0, "", err.message))
+      const data = await storage.settings.loadOrDefault()
+      history.value = data.history
       activeTab.value = "response"
     } finally {
       loading.value = false
@@ -197,11 +189,7 @@ export function useApiDebugger(plugin: Plugin) {
       (match) => {
         let cls = "json-number"
         if (match.startsWith('"')) {
-          if (match.endsWith(':')) {
-            cls = "json-key"
-          } else {
-            cls = "json-string"
-          }
+          cls = match.endsWith(":") ? "json-key" : "json-string"
         } else if (/true|false/.test(match)) {
           cls = "json-boolean"
         } else if (/null/.test(match)) {
@@ -215,20 +203,15 @@ export function useApiDebugger(plugin: Plugin) {
   async function copyToClipboard(text: string) {
     try {
       await navigator.clipboard.writeText(text)
-      return true
     } catch {
-      // Fallback
       const textarea = document.createElement("textarea")
       textarea.value = text
       document.body.appendChild(textarea)
       textarea.select()
       document.execCommand("copy")
       document.body.removeChild(textarea)
-      return true
     }
   }
-
-  onMounted(() => loadHistory())
 
   return {
     method,
@@ -237,7 +220,6 @@ export function useApiDebugger(plugin: Plugin) {
     customHeaders,
     loading,
     activeTab,
-    selectedEndpoint,
     statusCode,
     responseBody,
     responseTime,

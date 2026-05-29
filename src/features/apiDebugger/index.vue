@@ -239,18 +239,15 @@
 
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
-import type {
-  ApiEndpointPreset,
-  SelectGroupOption,
-  SelectOption,
-} from "./types"
+import type { ApiEndpointPreset } from "./types"
+import type { SelectGroupOption, SelectOption } from "@/components/Select.vue"
 
 import { computed } from "vue"
 import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
-
 import Textarea from "@/components/Textarea.vue"
+
 import { useApiDebugger } from "./composables/useApiDebugger"
 import { API_ENDPOINT_PRESETS } from "./types"
 
@@ -322,17 +319,16 @@ const endpointGroups = computed<SelectGroupOption[]>(() => {
 
 const endpointSelectValue = computed(() => path.value)
 
-function handleEndpointChange(val: string | number | undefined) {
+function handleEndpointChange(val: string | number | boolean | null) {
   const preset = API_ENDPOINT_PRESETS.find((p) => p.path === val)
   if (preset) {
     selectEndpoint(preset)
   }
 }
 
-function handleMethodChange(val: string | number | undefined) {
-  if (val === "POST" || val === "GET" || val === "PUT" || val === "DELETE") {
-    method.value = val
-  }
+function handleMethodChange(val: string | number | boolean | null) {
+  const valid = methodOptions.find(o => o.value === val)
+  if (valid) method.value = valid.value as typeof method.value
 }
 
 async function handleCopyResponse() {

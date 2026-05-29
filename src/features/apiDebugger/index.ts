@@ -6,7 +6,7 @@ import ApiDebuggerPanel from "./index.vue"
 
 export function registerApiDebugger(plugin: Plugin): void {
   createVueDockApp(plugin, ApiDebuggerPanel, {
-    icon: "iconAPI",
+    icon: "iconSparkles",
     title: (plugin.i18n as any).apiDebugger?.panelTitle || "API调试器",
     type: "api-debugger-dock",
     width: 420,

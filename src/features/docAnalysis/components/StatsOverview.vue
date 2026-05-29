@@ -350,7 +350,7 @@ function getBarPercent(count: number): string {
 
 <style lang="scss" scoped>
 .stats-overview {
-  padding: 10px 14px;
+  padding: 8px 12px;
 }
 
 .stats-header {
@@ -413,9 +413,9 @@ function getBarPercent(count: number): string {
 // ============ 总览概览条 ============
 .summary-bar {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   margin-bottom: 4px;
-  padding: 10px 0;
+  padding: 8px 0;
   border-bottom: 2px solid var(--b3-border-color);
 }
 
@@ -424,21 +424,21 @@ function getBarPercent(count: number): string {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8px 4px;
+  padding: 6px 3px;
   border-radius: 8px;
   background: var(--b3-theme-surface);
 
   .summary-value {
-    font-size: 22px;
+    font-size: 18px;
     font-weight: 800;
     color: var(--b3-theme-on-background);
     line-height: 1;
   }
 
   .summary-unit {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--b3-theme-on-surface-variant);
-    margin-top: 4px;
+    margin-top: 3px;
   }
 
   &.warn .summary-value { color: var(--b3-theme-error, #ef4444); }
@@ -448,7 +448,7 @@ function getBarPercent(count: number): string {
 
 // ============ 分区 ============
 .stat-section {
-  padding: 10px 0;
+  padding: 8px 0;
   border-bottom: 1px solid var(--b3-border-color-light, rgba(0,0,0,0.04));
 
   &:last-child {
@@ -460,14 +460,14 @@ function getBarPercent(count: number): string {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--b3-theme-on-background);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 
   .section-hint {
     font-weight: 400;
-    font-size: 11px;
+    font-size: 10px;
     color: var(--b3-theme-on-surface-variant);
     margin-left: auto;
   }
@@ -476,18 +476,18 @@ function getBarPercent(count: number): string {
 // ============ 卡片行 ============
 .section-cards {
   display: flex;
-  gap: 6px;
+  gap: 5px;
   flex-wrap: wrap;
 }
 
 .stat-card {
   flex: 1;
-  min-width: 58px;
+  min-width: 54px;
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 10px 6px 8px;
+  padding: 8px 5px 6px;
   border-radius: 8px;
   background: var(--b3-theme-surface-light);
   cursor: pointer;
@@ -504,7 +504,7 @@ function getBarPercent(count: number): string {
   }
 
   .card-value {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 700;
     color: var(--b3-theme-on-background);
     line-height: 1.2;
@@ -536,9 +536,9 @@ function getBarPercent(count: number): string {
   }
 
   .card-unit {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--b3-theme-on-surface-variant);
-    margin-top: 3px;
+    margin-top: 2px;
     white-space: nowrap;
     text-align: center;
     position: relative;
@@ -549,7 +549,7 @@ function getBarPercent(count: number): string {
     position: absolute;
     bottom: 0;
     left: 0;
-    height: 3px;
+    height: 2px;
     background: var(--b3-theme-primary);
     opacity: 0.15;
     border-radius: 0 0 6px 6px;
@@ -560,15 +560,15 @@ function getBarPercent(count: number): string {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 22px;
-    height: 22px;
-    margin-top: 4px;
+    width: 20px;
+    height: 20px;
+    margin-top: 3px;
     border: none;
     border-radius: 50%;
     background: var(--b3-theme-primary);
     color: var(--b3-theme-on-primary);
     cursor: pointer;
-    font-size: 12px;
+    font-size: 11px;
     position: relative;
     z-index: 1;
 
@@ -580,7 +580,7 @@ function getBarPercent(count: number): string {
 .depth-chart-v2 {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .depth-bar-v2 {
@@ -590,8 +590,8 @@ function getBarPercent(count: number): string {
 }
 
 .depth-bar-label {
-  width: 20px;
-  font-size: 11px;
+  width: 18px;
+  font-size: 10px;
   font-weight: 600;
   color: var(--b3-theme-on-surface-variant);
   text-align: right;
@@ -600,15 +600,15 @@ function getBarPercent(count: number): string {
 
 .depth-bar-track {
   flex: 1;
-  height: 14px;
-  border-radius: 7px;
+  height: 12px;
+  border-radius: 6px;
   background: var(--b3-theme-surface-light);
   overflow: hidden;
 }
 
 .depth-bar-fill {
   height: 100%;
-  border-radius: 7px;
+  border-radius: 6px;
   background: var(--b3-theme-primary);
   opacity: 0.6;
   min-width: 4px;
@@ -616,8 +616,8 @@ function getBarPercent(count: number): string {
 }
 
 .depth-bar-count {
-  width: 28px;
-  font-size: 11px;
+  width: 24px;
+  font-size: 10px;
   color: var(--b3-theme-on-surface-variant);
   flex-shrink: 0;
 }

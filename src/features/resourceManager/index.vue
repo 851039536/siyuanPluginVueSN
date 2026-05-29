@@ -308,9 +308,10 @@
         </div>
         <button
           class="rm-btn primary"
+          :disabled="rebuildingIndex"
           @click="handleRebuildIndex"
         >
-          {{ i18n.rebuildIndex }}
+          {{ rebuildingIndex ? i18n.rebuildIndexStart : i18n.rebuildIndex }}
         </button>
         <div
           v-if="rebuildResult"
@@ -364,8 +365,10 @@ interface Props {
 
 const props = defineProps<Props>()
 
+const isMounted = ref(false)
 const activeTab = ref("imageAssets")
 const loading = ref(false)
+const rebuildingIndex = ref(false)
 const imageAssets = ref<ImageAssetInfo[]>([])
 const fileAssets = ref<ImageAssetInfo[]>([])
 const missingAssets = ref<string[]>([])
@@ -385,12 +388,24 @@ const quickCategories = computed(() => [
     label: props.i18n.categoryImages || "图片",
   },
   {
-    key: "csharp",
-    label: "csharp",
+    key: "screenshots",
+    label: props.i18n.categoryScreenshots || "截图",
   },
   {
-    key: "vue",
-    label: "vue",
+    key: "icons",
+    label: props.i18n.categoryIcons || "图标",
+  },
+  {
+    key: "backgrounds",
+    label: props.i18n.categoryBackgrounds || "背景",
+  },
+  {
+    key: "avatars",
+    label: props.i18n.categoryAvatars || "头像",
+  },
+  {
+    key: "other",
+    label: props.i18n.categoryOther || "其他",
   },
 ])
 
@@ -434,6 +449,7 @@ const onSwitchProtyle = (event: CustomEvent<{ protyle: IProtyle }>) => {
 }
 
 onMounted(() => {
+  isMounted.value = true
   props.plugin.eventBus.on("switch-protyle", onSwitchProtyle)
   props.plugin.eventBus.on("loaded-protyle-dynamic", onSwitchProtyle)
   props.plugin.eventBus.on("loaded-protyle-static", onSwitchProtyle)
@@ -452,6 +468,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  isMounted.value = false
   props.plugin.eventBus.off("switch-protyle", onSwitchProtyle)
   props.plugin.eventBus.off("loaded-protyle-dynamic", onSwitchProtyle)
   props.plugin.eventBus.off("loaded-protyle-static", onSwitchProtyle)
@@ -483,6 +500,10 @@ function showMsg(msg: string, timeout = 3000) {
   catch { /* ignore */ }
 }
 
+function escapeSqlLike(str: string): string {
+  return str.replace(/'/g, "''")
+}
+
 async function copyPathToClipboard(path: string) {
   try {
     await navigator.clipboard.writeText(path)
@@ -510,11 +531,8 @@ async function copyPathToClipboard(path: string) {
 async function refresh() {
   loading.value = true
   try {
-    if (activeTab.value === "imageAssets") {
-      await loadImageAssets()
-    }
-    else if (activeTab.value === "fileAssets") {
-      await loadFileAssets()
+    if (activeTab.value === "imageAssets" || activeTab.value === "fileAssets") {
+      await loadCurrentTabAssets()
     }
     else if (activeTab.value === "missingAssets") {
       await loadMissingAssets()
@@ -524,7 +542,7 @@ async function refresh() {
     }
   }
   finally {
-    loading.value = false
+    if (isMounted.value) loading.value = false
   }
 }
 
@@ -607,42 +625,70 @@ const currentAssetList = computed(() => {
 
 /** 加载当前 tab 对应的资源 */
 async function loadCurrentTabAssets() {
-  if (activeTab.value === "fileAssets") {
-    await loadFileAssets()
-  }
-  else {
-    await loadImageAssets()
-  }
-}
-
-async function loadImageAssets() {
+  const isImage = activeTab.value === "imageAssets"
   if (assetMode.value === "all") {
-    await loadAllImageAssets()
+    await loadAllAssets(isImage)
   }
   else if (assetMode.value === "currentDoc") {
-    await loadCurrentDocImageAssets()
-  }
-}
-
-async function loadFileAssets() {
-  if (assetMode.value === "all") {
-    await loadAllFileAssets()
-  }
-  else if (assetMode.value === "currentDoc") {
-    await loadCurrentDocFileAssets()
+    const docId = await getCurrentDocId()
+    if (!docId) {
+      showMsg("无法获取当前文档 ID")
+      return
+    }
+    await loadDocAssets(docId, isImage)
   }
 }
 
 /**
- * 加载指定文档的图片资源（供 currentDoc / specifiedDoc 模式共用）
+ * 加载全部资源（图片或文件）
  */
-async function loadDocImageAssets(docId: string) {
+async function loadAllAssets(isImage: boolean) {
+  const extFilter = isImage ? (p: string) => IMAGE_EXT.test(p) : (p: string) => !IMAGE_EXT.test(p)
+  const target = isImage ? imageAssets : fileAssets
+
+  try {
+    const referenced = await sql("SELECT DISTINCT path FROM assets WHERE path LIKE 'assets/%'")
+    const refPaths = (referenced || [])
+      .map((r: { path: string }) => r.path)
+      .filter((p: unknown): p is string => typeof p === "string")
+      .filter(extFilter)
+
+    const unused = await getUnusedAssets()
+    const unusedPaths = (unused || [])
+      .filter((p: unknown): p is string => typeof p === "string")
+      .filter(extFilter)
+
+    const allPaths = [...new Set([...refPaths, ...unusedPaths])].sort()
+    const docMap = await loadDocNamesForImages(allPaths)
+
+    target.value = allPaths.map((path) => {
+      const info = docMap.get(path)
+      return {
+        path,
+        docNames: info?.docNames || [],
+        docIds: info?.docIds || [],
+      }
+    })
+  }
+  catch (e: unknown) {
+    console.error(`加载全部${isImage ? "图片" : "文件"}资源失败:`, e)
+    showMsg(props.i18n.loadFailed || "加载失败")
+  }
+}
+
+/**
+ * 加载指定文档的资源（图片或文件）
+ */
+async function loadDocAssets(docId: string, isImage: boolean) {
+  const extFilter = isImage ? (p: string) => IMAGE_EXT.test(p) : (p: string) => !IMAGE_EXT.test(p)
+  const target = isImage ? imageAssets : fileAssets
+
   const paths = await getDocImageAssets(docId)
   const pathList = (paths || [])
     .filter((p: unknown): p is string => typeof p === "string")
-    .filter((p: string) => IMAGE_EXT.test(p))
+    .filter(extFilter)
   const docMap = await loadDocNamesForImages(pathList)
-  imageAssets.value = pathList.map((path) => {
+  target.value = pathList.map((path) => {
     const info = docMap.get(path)
     return {
       path,
@@ -650,49 +696,6 @@ async function loadDocImageAssets(docId: string) {
       docIds: info?.docIds || [],
     }
   })
-}
-
-/**
- * 加载指定文档的文件资源（供 currentDoc / specifiedDoc 模式共用）
- */
-async function loadDocFileAssets(docId: string) {
-  const paths = await getDocImageAssets(docId)
-  const pathList = (paths || [])
-    .filter((p: unknown): p is string => typeof p === "string")
-    .filter((p: string) => !IMAGE_EXT.test(p))
-  const docMap = await loadDocNamesForImages(pathList)
-  fileAssets.value = pathList.map((path) => {
-    const info = docMap.get(path)
-    return {
-      path,
-      docNames: info?.docNames || [],
-      docIds: info?.docIds || [],
-    }
-  })
-}
-
-/**
- * 加载当前文档的图片资源
- */
-async function loadCurrentDocImageAssets() {
-  const docId = await getCurrentDocId()
-  if (!docId) {
-    showMsg("无法获取当前文档 ID")
-    return
-  }
-  await loadDocImageAssets(docId)
-}
-
-/**
- * 加载当前文档的文件资源
- */
-async function loadCurrentDocFileAssets() {
-  const docId = await getCurrentDocId()
-  if (!docId) {
-    showMsg("无法获取当前文档 ID")
-    return
-  }
-  await loadDocFileAssets(docId)
 }
 
 /**
@@ -710,12 +713,13 @@ async function loadDocNamesForImages(
     const batchResults = await Promise.all(batch.map(async (path) => {
       const fileName = path.split("/").pop() || path
       try {
+        const escapedFileName = escapeSqlLike(fileName)
         const rows = await sql(
           `SELECT DISTINCT b2.id, b2.content
            FROM blocks b1
            JOIN blocks b2 ON b1.root_id = b2.id
            WHERE b2.type = 'd'
-           AND b1.markdown LIKE '%${fileName}%'
+           AND b1.markdown LIKE '%${escapedFileName}%'
            LIMIT 10`,
         ) as { id: string, content: string }[]
         const docNames = (rows || []).map((r) => r.content || "(无标题)")
@@ -744,95 +748,38 @@ async function loadDocNamesForImages(
   return result
 }
 
-/**
- * 加载全部图片资源（整个项目）
- * 通过 SQL 查询已引用的资源 + 未使用资源 API 合并
- */
-async function loadAllImageAssets() {
-  try {
-    const referenced = await sql("SELECT DISTINCT path FROM assets WHERE path LIKE 'assets/%'")
-    const refImagePaths = (referenced || [])
-      .map((r: { path: string }) => r.path)
-      .filter((p: unknown): p is string => typeof p === "string")
-      .filter((p: string) => IMAGE_EXT.test(p))
-
-    const unused = await getUnusedAssets()
-    const unusedImagePaths = (unused || [])
-      .filter((p: unknown): p is string => typeof p === "string")
-      .filter((p: string) => IMAGE_EXT.test(p))
-
-    const allPaths = [...new Set([...refImagePaths, ...unusedImagePaths])].sort()
-    const docMap = await loadDocNamesForImages(allPaths)
-
-    imageAssets.value = allPaths.map((path) => {
-      const info = docMap.get(path)
-      return {
-        path,
-        docNames: info?.docNames || [],
-        docIds: info?.docIds || [],
-      }
-    })
-  }
-  catch (e: unknown) {
-    console.error("加载全部图片资源失败:", e)
-    showMsg(props.i18n.loadFailed || "加载失败")
-  }
-}
-
-/**
- * 加载全部文件资源（整个项目）
- * 过滤逻辑与图片相反：排除图片扩展名
- */
-async function loadAllFileAssets() {
-  try {
-    const referenced = await sql("SELECT DISTINCT path FROM assets WHERE path LIKE 'assets/%'")
-    const refFilePaths = (referenced || [])
-      .map((r: { path: string }) => r.path)
-      .filter((p: unknown): p is string => typeof p === "string")
-      .filter((p: string) => !IMAGE_EXT.test(p))
-
-    const unused = await getUnusedAssets()
-    const unusedFilePaths = (unused || [])
-      .filter((p: unknown): p is string => typeof p === "string")
-      .filter((p: string) => !IMAGE_EXT.test(p))
-
-    const allPaths = [...new Set([...refFilePaths, ...unusedFilePaths])].sort()
-    const docMap = await loadDocNamesForImages(allPaths)
-
-    fileAssets.value = allPaths.map((path) => {
-      const info = docMap.get(path)
-      return {
-        path,
-        docNames: info?.docNames || [],
-        docIds: info?.docIds || [],
-      }
-    })
-  }
-  catch (e: unknown) {
-    console.error("加载全部文件资源失败:", e)
-    showMsg(props.i18n.loadFailed || "加载失败")
-  }
-}
-
 async function loadMissingAssets() {
-  const result = await getMissingAssets()
-  missingAssets.value = result || []
+  try {
+    const result = await getMissingAssets()
+    if (isMounted.value) missingAssets.value = result || []
+  }
+  catch (e: unknown) {
+    console.error("加载丢失资源失败:", e)
+    showMsg(props.i18n.loadFailed || "加载失败")
+  }
 }
 
 async function loadUnusedAssets() {
-  const result = await getUnusedAssets()
-  unusedAssets.value = result || []
+  try {
+    const result = await getUnusedAssets()
+    if (isMounted.value) unusedAssets.value = result || []
+  }
+  catch (e: unknown) {
+    console.error("加载未使用资源失败:", e)
+    showMsg(props.i18n.loadFailed || "加载失败")
+  }
 }
 
 async function handleDeleteUnused(path: string) {
   if (!confirm(`${props.i18n.deleteConfirm} ${path}?`)) return
   try {
     await removeUnusedAsset(path)
+    if (!isMounted.value) return
     showMsg(props.i18n.deleteSuccess)
     await loadUnusedAssets()
   }
   catch {
-    showMsg(props.i18n.deleteFailed)
+    if (isMounted.value) showMsg(props.i18n.deleteFailed)
   }
 }
 
@@ -840,11 +787,12 @@ async function handleDeleteAllUnused() {
   if (!confirm(`${props.i18n.deleteConfirm}?`)) return
   try {
     await removeUnusedAssets()
+    if (!isMounted.value) return
     showMsg(props.i18n.deleteSuccess)
     await loadUnusedAssets()
   }
   catch {
-    showMsg(props.i18n.deleteFailed)
+    if (isMounted.value) showMsg(props.i18n.deleteFailed)
   }
 }
 
@@ -918,8 +866,9 @@ async function handleMoveAsset(oldPath: string) {
     await renameFile(`/data/${oldPath}`, `/data/${newPath}`)
 
     // 3. 更新所有文档引用
+    const escapedOldPath = escapeSqlLike(oldPath)
     const blocks = await sql(
-      `SELECT id, markdown FROM blocks WHERE markdown LIKE '%${oldPath}%'`,
+      `SELECT id, markdown FROM blocks WHERE markdown LIKE '%${escapedOldPath}%'`,
     ) as { id: string, markdown: string }[]
 
     let updatedCount = 0
@@ -940,6 +889,7 @@ async function handleMoveAsset(oldPath: string) {
     }
     catch { /* ignore */ }
 
+    if (!isMounted.value) return
     showMsg(
       updatedCount > 0
         ? `${props.i18n.moveSuccess}（已更新 ${updatedCount} 处引用，新路径: ${newPath}）`
@@ -949,22 +899,33 @@ async function handleMoveAsset(oldPath: string) {
     await refresh()
   }
   catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e)
-    showMsg(`${props.i18n.moveFailed}: ${msg}`)
+    if (isMounted.value) {
+      const msg = e instanceof Error ? e.message : String(e)
+      showMsg(`${props.i18n.moveFailed}: ${msg}`)
+    }
   }
 }
 
 async function handleRebuildIndex() {
+  if (rebuildingIndex.value) return
+  rebuildingIndex.value = true
   rebuildResult.value = props.i18n.rebuildIndexStart
   try {
     await fullReindexAssetContent()
-    rebuildResult.value = props.i18n.rebuildIndexSuccess
-    showMsg(props.i18n.rebuildIndexSuccess)
+    if (isMounted.value) {
+      rebuildResult.value = props.i18n.rebuildIndexSuccess
+      showMsg(props.i18n.rebuildIndexSuccess)
+    }
   }
   catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e)
-    rebuildResult.value = `${props.i18n.rebuildIndexFailed}: ${msg}`
-    showMsg(props.i18n.rebuildIndexFailed)
+    if (isMounted.value) {
+      const msg = e instanceof Error ? e.message : String(e)
+      rebuildResult.value = `${props.i18n.rebuildIndexFailed}: ${msg}`
+      showMsg(props.i18n.rebuildIndexFailed)
+    }
+  }
+  finally {
+    if (isMounted.value) rebuildingIndex.value = false
   }
 }
 </script>

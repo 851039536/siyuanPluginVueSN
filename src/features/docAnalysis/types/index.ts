@@ -189,6 +189,16 @@ export interface DocStats {
   partialPublishDocs: number
   /** 未在任何平台发布文档数 */
   noPublishDocs: number
+  /** 有标签文档数 */
+  taggedDocs: number
+  /** 有别名文档数 */
+  aliasedDocs: number
+  /** 有备注文档数 */
+  memoedDocs: number
+  /** 被其他文档引用的文档数 */
+  incomingRefDocs: number
+  /** 孤文档数（无入链无出链） */
+  orphanDocs: number
 }
 
 /** 书签详情项 */

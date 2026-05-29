@@ -51,6 +51,28 @@
         v-else-if="attrs"
         class="attrs-content"
       >
+        <div class="publish-status-section">
+          <div class="section-title">
+            <Icon icon="mdi:cloud-check-outline" />
+            平台发布状态
+          </div>
+          <div class="platform-status-list">
+            <div
+              v-for="platform in platforms"
+              :key="platform.id"
+              class="platform-status-item"
+              :class="{ published: platform.published }"
+            >
+              <Icon
+                :icon="platform.published ? 'mdi:check-circle' : 'mdi:minus-circle-outline'"
+                class="status-icon"
+              />
+              <span class="platform-name">{{ platform.name }}</span>
+              <span class="status-text">{{ platform.published ? '已发布' : '未发布' }}</span>
+            </div>
+          </div>
+        </div>
+
         <div class="attrs-table">
           <div
             v-for="item in displayItems"
@@ -149,6 +171,38 @@ const CORE_ATTRS = new Set([
   "id", "type", "title", "alias", "memo", "bookmark", "tags",
   "icon", "updated", "created",
 ])
+
+interface PlatformInfo {
+  id: string
+  name: string
+  published: boolean
+  matchKeys: string[]
+}
+
+const PLATFORM_CONFIGS = [
+  { id: "csdn", name: "CSDN", matchers: ["csdn"] },
+  { id: "zhihu", name: "知乎", matchers: ["zhihu"] },
+  { id: "juejin", name: "掘金", matchers: ["juejin"] },
+  { id: "blog", name: "博客园", matchers: ["cnblogs", "blog"] },
+  { id: "bibi", name: "B站", matchers: ["bili", "bibi"] },
+  { id: "gzh", name: "公众号", matchers: ["gzh"] },
+]
+
+const platforms = computed<PlatformInfo[]>(() => {
+  if (!props.attrs) return PLATFORM_CONFIGS.map(c => ({ id: c.id, name: c.name, published: false, matchKeys: [] }))
+
+  const yamlKeys = Object.keys(props.attrs).filter(k => k.endsWith("-yaml"))
+
+  return PLATFORM_CONFIGS.map(config => {
+    const matchedKey = yamlKeys.find(k => {
+      const lower = k.toLowerCase()
+      return config.matchers.some(m => lower.includes(m))
+    })
+    const published = !!matchedKey && !!(props.attrs![matchedKey]?.trim())
+    const matchKeys = matchedKey ? [matchedKey] : []
+    return { id: config.id, name: config.name, published, matchKeys }
+  })
+})
 
 const ATTR_LABELS: Record<string, string> = {
   id: "ID",
@@ -331,6 +385,61 @@ async function copyAllAttrs() {
   &::-webkit-scrollbar-thumb {
     background: var(--b3-scroll-color);
     border-radius: 3px;
+  }
+}
+
+.publish-status-section {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--b3-border-color);
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--b3-theme-on-background);
+    margin-bottom: 10px;
+  }
+
+  .platform-status-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .platform-status-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 14px;
+    font-size: 12px;
+    background: var(--b3-theme-surface-light);
+    color: var(--b3-theme-on-surface-variant);
+
+    .status-icon {
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .platform-name {
+      font-weight: 500;
+    }
+
+    .status-text {
+      opacity: 0.7;
+      font-size: 11px;
+    }
+
+    &.published {
+      background: rgba(34, 197, 94, 0.1);
+      color: #16a34a;
+
+      .status-icon {
+        color: #22c55e;
+      }
+    }
   }
 }
 

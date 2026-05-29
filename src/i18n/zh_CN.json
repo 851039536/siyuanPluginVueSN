@@ -1327,6 +1327,7 @@
     "panelTitle": "资源管理",
     "description": "管理思源笔记资源文件：查看、重命名、插入、清理资源",
     "imageAssets": "图片资源",
+    "fileAssets": "文件资源",
     "missingAssets": "丢失资源",
     "unusedAssets": "未使用资源",
     "rebuildIndex": "重建索引",

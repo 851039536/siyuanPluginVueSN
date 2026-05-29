@@ -343,6 +343,7 @@ import {
   ref,
   watch,
 } from "vue"
+import { PluginStorage } from "@/utils/pluginStorage"
 import {
   fullReindexAssetContent,
   getBlockByID,
@@ -382,32 +383,19 @@ const categoryFilter = ref("")
 const movingAsset = ref<string | null>(null)
 const moveNewPath = ref("")
 const customCategory = ref("")
-const quickCategories = computed(() => [
-  {
-    key: "images",
-    label: props.i18n.categoryImages || "图片",
-  },
-  {
-    key: "screenshots",
-    label: props.i18n.categoryScreenshots || "截图",
-  },
-  {
-    key: "icons",
-    label: props.i18n.categoryIcons || "图标",
-  },
-  {
-    key: "backgrounds",
-    label: props.i18n.categoryBackgrounds || "背景",
-  },
-  {
-    key: "avatars",
-    label: props.i18n.categoryAvatars || "头像",
-  },
-  {
-    key: "other",
-    label: props.i18n.categoryOther || "其他",
-  },
-])
+const customCategories = ref<string[]>([])
+const builtInCategoryKeys = new Set(["images", "net", "tool", "other"])
+
+const quickCategories = computed(() => {
+  const builtIn = [
+    { key: "images", label: props.i18n.categoryImages || "图片" },
+    { key: "net", label: props.i18n.categoryNet || "NET" },
+    { key: "tool", label: props.i18n.categoryTool || "tool" },
+    { key: "other", label: props.i18n.categoryOther || "其他" },
+  ]
+  const custom = customCategories.value.map(cat => ({ key: cat, label: cat }))
+  return [...builtIn, ...custom]
+})
 
 // 从 protyle 事件中缓存当前文档 ID
 
@@ -448,8 +436,17 @@ const onSwitchProtyle = (event: CustomEvent<{ protyle: IProtyle }>) => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   isMounted.value = true
+
+  // 加载持久化的自定义分类
+  try {
+    const storage = new PluginStorage(props.plugin)
+    const saved = await storage.load<string[]>("resourceManager-customCategories")
+    if (saved) customCategories.value = saved
+  }
+  catch { /* ignore */ }
+
   props.plugin.eventBus.on("switch-protyle", onSwitchProtyle)
   props.plugin.eventBus.on("loaded-protyle-dynamic", onSwitchProtyle)
   props.plugin.eventBus.on("loaded-protyle-static", onSwitchProtyle)
@@ -821,11 +818,17 @@ function applyCategory(currentPath: string, category: string) {
   moveNewPath.value = `assets/${category}/${fileName}`
 }
 
-/** 应用自定义分类 */
-function applyCustomCategory(currentPath: string) {
+/** 应用自定义分类，自动持久化新分类 */
+async function applyCustomCategory(currentPath: string) {
   const cat = customCategory.value.trim()
   if (!cat) return
   applyCategory(currentPath, cat)
+
+  if (!builtInCategoryKeys.has(cat) && !customCategories.value.includes(cat)) {
+    customCategories.value = [...customCategories.value, cat]
+    const storage = new PluginStorage(props.plugin)
+    await storage.save("resourceManager-customCategories", customCategories.value)
+  }
   customCategory.value = ""
 }
 

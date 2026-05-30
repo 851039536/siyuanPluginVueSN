@@ -223,12 +223,11 @@ function applyInlineStyles(html: string, colors: BaseThemeColors, fontSize: numb
     `<blockquote style="margin: 12px 0; padding: ${overrides.blockquotePadding}; border-left: 4px solid ${colors.quoteBorderColor}; background-color: ${colors.quoteBgColor}; color: ${colors.textColor}; font-size: ${fontSize}px; line-height: ${lineHeight};${blockquoteRadius}">`,
   )
 
-  // pre (代码块) — 用 section 包裹以兼容微信手机端
+  // pre (代码块) — 用 section 包裹，overflow 逻辑放在 code 上（微信对 section 的 overflow 支持不可靠）
   const preWhiteSpace = codeWrap === "wrap" ? "pre-wrap" : "pre"
-  const preWordBreak = codeWrap === "wrap" ? "word-break: break-all; " : ""
   result = result.replace(
     /<pre>/g,
-    `<section style="margin: 12px 0; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; background-color: ${colors.codeBgColor}; border-radius: ${overrides.preBorderRadius};"><pre style="margin: 0; padding: 0; background: none; border-radius: 0; overflow-x: visible; line-height: 1.5;">`,
+    `<section style="margin: 12px 0; max-width: 100%; background-color: ${colors.codeBgColor}; border-radius: ${overrides.preBorderRadius};"><pre style="margin: 0; padding: 0; background: none; border-radius: 0; line-height: 1.5;">`,
   )
   result = result.replace(
     /<\/pre>/g,
@@ -236,11 +235,12 @@ function applyInlineStyles(html: string, colors: BaseThemeColors, fontSize: numb
   )
 
   // code with class (代码块内的 code)
+  // word-break: break-all 兜底：微信可能剥离 overflow-x，此时自动换行防止撑破容器
   const codeLangColor = overrides.codeLangColor || colors.textColor
   const codeFontSize = Math.round(fontSize * 0.75)
   result = result.replace(
     /<code class="language-(\w+)">/g,
-    (_, lang) => `<code class="language-${lang}" style="display: block; white-space: ${preWhiteSpace}; ${preWordBreak}overflow-x: auto; padding: 14px; font-family: 'Menlo', 'Monaco', 'Consolas', monospace; font-size: ${codeFontSize}px; color: ${codeLangColor}; background: none; border-radius: ${overrides.codeLangBorderRadius}; max-width: 100%; box-sizing: border-box;">`,
+    (_, lang) => `<code class="language-${lang}" style="display: block; white-space: ${preWhiteSpace}; word-break: break-all; overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 14px; font-family: 'Menlo', 'Monaco', 'Consolas', monospace; font-size: ${codeFontSize}px; color: ${codeLangColor}; background: none; border-radius: ${overrides.codeLangBorderRadius}; max-width: 100%; box-sizing: border-box;">`,
   )
 
   // code (行内代码，不含 class 的)

@@ -248,6 +248,21 @@
         />
       </CollapsibleSection>
 
+      <!-- 可折叠：块类型分布 -->
+      <CollapsibleSection
+        :title="`🧩 ${blockTypeStatsTitle}`"
+        :badge="stats.blockTypeStats.length > 0 ? `${stats.blockTypeStats.length}种` : ''"
+      >
+        <DocBarChart
+          :title="blockTypeStatsTitle"
+          :chart-data="stats.blockTypeStats.map(item => ({
+            name: item.label,
+            count: item.count,
+          }))"
+          :i18n="blockTypeChartI18n"
+        />
+      </CollapsibleSection>
+
       <!-- 可折叠：笔记本字数占比饼图 -->
       <CollapsibleSection
         :title="`🥧 ${notebookWordPieTitle}`"
@@ -664,6 +679,12 @@ const docBarChartTitle = computed(() => props.i18n.docBarChartTitle || "各笔�
 const docBarChartI18n = computed(() => ({
   loading: props.i18n.loading || "加载中...",
   docsUnit: props.i18n.notesUnit || "笔记",
+}))
+
+const blockTypeStatsTitle = computed(() => "块类型分布")
+const blockTypeChartI18n = computed(() => ({
+  loading: props.i18n.loading || "加载中...",
+  docsUnit: "个",
 }))
 
 const wordRankingI18n = computed(() => ({

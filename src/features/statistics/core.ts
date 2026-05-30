@@ -1,4 +1,5 @@
 ﻿import type {
+  BlockTypeStat,
   ChangedDoc,
   DailyWordCount,
   NotebookActivityItem,
@@ -20,7 +21,11 @@ import {
 import { emitCustomEvent } from "@/utils/eventBus"
 import StatisticsPanel from "./index.vue"
 import { StatisticsStorage } from "./types/storage"
-import { formatDate, isValidDateStr, padZero } from "./utils"
+import {
+  formatDate,
+  isValidDateStr,
+  padZero,
+} from "./utils"
 
 const DAY_PERIOD_MAP: Record<number, string> = {
   7: "最近一周每日字数",
@@ -43,6 +48,26 @@ const NOTEBOOK_COLORS = [
   "#6366f1", "#e11d48", "#0ea5e9", "#a855f7", "#10b981",
 ]
 
+const BLOCK_TYPE_LABELS: Record<string, string> = {
+  d: "文档",
+  p: "段落",
+  h: "标题",
+  l: "列表项",
+  i: "列表项",
+  c: "代码块",
+  t: "表格",
+  b: "引用块",
+  html: "HTML块",
+  query_embed: "嵌入查询",
+  img: "图片",
+  audio: "音频",
+  video: "视频",
+  widget: "挂件",
+  iframe: "框架",
+  super: "超级块",
+  tag: "标签",
+}
+
 const ZERO_STATISTICS: StatisticsData = {
   totalNotes: 0,
   totalWords: 0,
@@ -57,6 +82,7 @@ const ZERO_STATISTICS: StatisticsData = {
   currentPeriod: "",
   periodTotalWords: 0,
   totalImages: 0,
+  blockTypeStats: [],
 }
 
 /**
@@ -228,10 +254,11 @@ export class Statistics {
           (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d' AND substr(updated, 1, 8) = '${todayStr}') as todayModified
       `
 
-      const [combinedResult, totalTags, totalImages] = await Promise.all([
+      const [combinedResult, totalTags, totalImages, blockTypeStats] = await Promise.all([
         this.executeSql(combinedSql),
         this.getTotalTags(),
         this.getTotalImages(),
+        this.getBlockTypeStats(),
       ])
 
       const baseStats = combinedResult[0] || {}
@@ -292,6 +319,7 @@ export class Statistics {
         currentPeriod,
         periodTotalWords,
         totalImages,
+        blockTypeStats,
       }
     } catch (error) {
       console.error("获取统计数据失败:", error)
@@ -489,6 +517,32 @@ export class Statistics {
     } catch (error) {
       console.error("统计思源图片失败:", error)
       return 0
+    }
+  }
+
+  /**
+   * 获取块类型分布统计
+   * 按 type 分组统计 blocks 表中各类型数量
+   */
+  private async getBlockTypeStats(): Promise<BlockTypeStat[]> {
+    try {
+      const sqlStmt = `
+        SELECT type, COUNT(*) as cnt
+        FROM blocks
+        GROUP BY type
+        ORDER BY cnt DESC
+      `
+      const rows = await this.executeSql(sqlStmt)
+      if (!rows || rows.length === 0) return []
+
+      return rows.map((row: any) => ({
+        name: row.type,
+        count: Number(row.cnt || 0),
+        label: BLOCK_TYPE_LABELS[row.type] || row.type,
+      }))
+    } catch (error) {
+      console.error("获取块类型统计失败:", error)
+      return []
     }
   }
 

@@ -31,6 +31,15 @@ export interface RangeStatItem {
 }
 
 /**
+ * 块类型分布统计
+ */
+export interface BlockTypeStat {
+  name: string
+  count: number
+  label: string
+}
+
+/**
  * 统计数据接口
  */
 export interface StatisticsData {
@@ -47,6 +56,7 @@ export interface StatisticsData {
   dailyStats: DailyWordCount[]
   currentPeriod: string
   periodTotalWords: number
+  blockTypeStats: BlockTypeStat[]
 }
 
 /**

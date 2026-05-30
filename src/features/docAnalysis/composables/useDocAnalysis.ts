@@ -311,25 +311,61 @@ export function useDocAnalysis(plugin: Plugin) {
 
   /**
    * 执行分析 - 获取文档统计概览（含新增维度）
+   * 阶段 1：并行执行所有独立查询
+   * 阶段 2：串行执行依赖 totalDocs 的书签计算
    */
   async function analyzeDocStats() {
     statsLoading.value = true
     try {
       const notebookCondition = buildNotebookCondition()
 
-      // 大小统计
-      const sizeSql = `
-        SELECT
-          COUNT(*) as total,
-          SUM(CASE WHEN COALESCE(sw.total_size, 0) = 0 THEN 1 ELSE 0 END) as zero_count,
-          SUM(CASE WHEN COALESCE(sw.total_size, 0) > 0 AND COALESCE(sw.total_size, 0) < 1024 THEN 1 ELSE 0 END) as small_count,
-          SUM(CASE WHEN COALESCE(sw.total_size, 0) >= 1024 AND COALESCE(sw.total_size, 0) < 10240 THEN 1 ELSE 0 END) as medium_count
-        FROM blocks b
-        LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
-        WHERE b.type = 'd' ${notebookCondition}
-      `
+      // ── 阶段 1：互不依赖的查询并行 ──
+      const [
+        sizeRows,
+        dupRows,
+        _timeResult,
+        _depthResult,
+        _bmResult,
+        _platformResult,
+        _qualityResult,
+        _scanResult,
+      ] = await Promise.all([
+        // 大小统计
+        sql(`
+          SELECT
+            COUNT(*) as total,
+            SUM(CASE WHEN COALESCE(sw.total_size, 0) = 0 THEN 1 ELSE 0 END) as zero_count,
+            SUM(CASE WHEN COALESCE(sw.total_size, 0) > 0 AND COALESCE(sw.total_size, 0) < 1024 THEN 1 ELSE 0 END) as small_count,
+            SUM(CASE WHEN COALESCE(sw.total_size, 0) >= 1024 AND COALESCE(sw.total_size, 0) < 10240 THEN 1 ELSE 0 END) as medium_count
+          FROM blocks b
+          LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
+          WHERE b.type = 'd' ${notebookCondition}
+        `),
+        // 重名统计
+        sql(`
+          SELECT b.content as doc_title, COUNT(*) as cnt
+          FROM blocks b
+          WHERE b.type = 'd' ${notebookCondition}
+          GROUP BY b.content
+          HAVING COUNT(*) > 1
+          ORDER BY cnt DESC
+          LIMIT 500
+        `),
+        // 更新时间
+        analyzeUpdateTime(notebookCondition),
+        // 深度
+        analyzeDepth(notebookCondition),
+        // 书签（不依赖 totalDocs 的部分先并行）
+        analyzeBookmarks(notebookCondition),
+        // 平台发布
+        analyzePlatformPublish(notebookCondition),
+        // 内容质量
+        analyzeContentQuality(notebookCondition),
+        // 内容扫描（引用+图片+拓扑）
+        analyzeContentScan(notebookCondition),
+      ])
 
-      const sizeRows = await sql(sizeSql)
+      // ── 阶段 2：汇总 ──
       if (sizeRows && sizeRows.length > 0) {
         const row = sizeRows[0]
         docStats.totalDocs = row.total || 0
@@ -338,18 +374,6 @@ export function useDocAnalysis(plugin: Plugin) {
         docStats.mediumDocs = row.medium_count || 0
       }
 
-      // 重名统计
-      const dupSql = `
-        SELECT b.content as doc_title, COUNT(*) as cnt
-        FROM blocks b
-        WHERE b.type = 'd' ${notebookCondition}
-        GROUP BY b.content
-        HAVING COUNT(*) > 1
-        ORDER BY cnt DESC
-        LIMIT 500
-      `
-
-      const dupRows = await sql(dupSql)
       if (dupRows && dupRows.length > 0) {
         docStats.duplicateNameGroups = dupRows.length
         docStats.duplicateNameDocs = dupRows.reduce((sum: number, r: any) => sum + (r.cnt || 0), 0)
@@ -357,40 +381,24 @@ export function useDocAnalysis(plugin: Plugin) {
           title: r.doc_title || "无标题",
           count: r.cnt || 0,
         }))
-      } else {
+      }
+      else {
         docStats.duplicateNameGroups = 0
         docStats.duplicateNameDocs = 0
         duplicateGroups.value = []
       }
 
-      // 更新时间分析
-      await analyzeUpdateTime(notebookCondition)
-
-      // 文档深度分析
-      await analyzeDepth(notebookCondition)
-
-      // 引用分析
-      await analyzeRefs(notebookCondition)
-
-      // 图片/资源分析
-      await analyzeImages(notebookCondition)
-
-      // 书签统计
-      await analyzeBookmarks(notebookCondition)
-
-      // 平台发布状态统计
-      await analyzePlatformPublish(notebookCondition)
-
-      // 内容质量分析
-      await analyzeContentQuality(notebookCondition)
-
-      // 引用拓扑分析
-      await analyzeRefTopology(notebookCondition)
+      // 书签中 noBookmarkDocs 依赖 totalDocs，在此后处理
+      const effectiveBookmarked = Math.max(0, docStats.bookmarkedDocs - docStats.noneBookmarkDocs)
+      docStats.bookmarkedDocs = effectiveBookmarked
+      docStats.noBookmarkDocs = Math.max(0, docStats.totalDocs - effectiveBookmarked - docStats.noneBookmarkDocs)
 
       hasAnalyzed.value = true
-    } catch (error) {
+    }
+    catch (error) {
       console.error("分析文档统计失败:", error)
-    } finally {
+    }
+    finally {
       statsLoading.value = false
     }
   }
@@ -477,54 +485,86 @@ export function useDocAnalysis(plugin: Plugin) {
   }
 
   /**
-   * 引用/嵌入块分析
-   * 思源中引用语法 ((id "标题")) 存储在 markdown 字段中
+   * 内容扫描（合并引用/图片/拓扑分析为一次全量扫描）
+   * 单次 SQL 拉取所有含 (( 或 ![ 的 content 块 → JS 端一次性统计
    */
-  async function analyzeRefs(notebookCondition: string) {
+  async function analyzeContentScan(notebookCondition: string) {
     try {
-      // 引用统计概览
-      const refCountSql = `
-        SELECT
-          COUNT(DISTINCT root_id) as ref_doc_count,
-          COUNT(*) as total_ref_count
-        FROM blocks
-        WHERE type != 'd' AND markdown LIKE '%((%'
-      `
+      // ① 所有文档 ID
+      const allDocs = await sql(`
+        SELECT id FROM blocks WHERE type = 'd' ${notebookCondition} LIMIT 10000
+      `)
+      if (!allDocs || allDocs.length === 0) return
 
-      const refCountRows = await sql(refCountSql)
-      if (refCountRows && refCountRows.length > 0) {
-        const row = refCountRows[0]
-        docStats.refDocs = row.ref_doc_count || 0
-        docStats.totalRefs = row.total_ref_count || 0
+      const allDocIds = new Set(allDocs.map((r: any) => String(r.id)))
+
+      // ② 所有含引用或图片的非文档块 — 一次 SQL
+      const contentRows = await sql(`
+        SELECT root_id, markdown
+        FROM blocks
+        WHERE type != 'd'
+        AND (markdown LIKE '%((%' OR markdown LIKE '%![%')
+        AND root_id IN (SELECT id FROM blocks WHERE type = 'd' ${notebookCondition})
+        LIMIT 50000
+      `)
+
+      // ③ JS 端一次性统计所有维度
+      const refDocSet = new Set<string>()
+      const imgDocSet = new Set<string>()
+      const outgoingSet = new Set<string>()
+      const incomingSet = new Set<string>()
+      const idPattern = /\(\((\d{14}-[a-z0-9]{7})\b/g
+      let totalRefCount = 0
+      let totalImgCount = 0
+
+      if (contentRows) {
+        for (const row of contentRows) {
+          const rootId = String(row.root_id || "")
+          const md = String(row.markdown || "")
+
+          if (!rootId || rootId.length < 22) continue
+
+          const hasRef = md.includes("((")
+          const hasImg = md.includes("!(")
+
+          if (hasRef) {
+            refDocSet.add(rootId)
+            totalRefCount++
+            outgoingSet.add(rootId)
+
+            let match: RegExpExecArray | null
+            while ((match = idPattern.exec(md)) !== null) {
+              const targetId = match[1]
+              if (allDocIds.has(targetId) && targetId !== rootId) {
+                incomingSet.add(targetId)
+              }
+            }
+          }
+
+          if (hasImg) {
+            imgDocSet.add(rootId)
+            totalImgCount++
+          }
+        }
       }
-    } catch (error) {
-      console.error("引用分析失败:", error)
+
+      docStats.refDocs = refDocSet.size
+      docStats.totalRefs = totalRefCount
+      docStats.imageDocs = imgDocSet.size
+      docStats.totalImages = totalImgCount
+      docStats.incomingRefDocs = incomingSet.size
+      incomingRefDocIds = incomingSet
+
+      const hasOutOrIn = new Set([...outgoingSet, ...incomingSet])
+      const orphans = new Set<string>()
+      for (const id of allDocIds) {
+        if (!hasOutOrIn.has(id)) orphans.add(id)
+      }
+      orphanDocIds = orphans
+      docStats.orphanDocs = orphans.size
     }
-  }
-
-  /**
-   * 图片/资源使用分析
-   * 思源中图片是内联元素，通过 markdown 字段中包含 ![ 来识别
-   */
-  async function analyzeImages(notebookCondition: string) {
-    try {
-      // 图片统计概览
-      const imgCountSql = `
-        SELECT
-          COUNT(DISTINCT root_id) as image_doc_count,
-          COUNT(*) as total_image_count
-        FROM blocks
-        WHERE type != 'd' AND markdown LIKE '%![%'
-      `
-
-      const imgCountRows = await sql(imgCountSql)
-      if (imgCountRows && imgCountRows.length > 0) {
-        const row = imgCountRows[0]
-        docStats.imageDocs = row.image_doc_count || 0
-        docStats.totalImages = row.total_image_count || 0
-      }
-    } catch (error) {
-      console.error("图片分析失败:", error)
+    catch (error) {
+      console.error("内容扫描分析失败:", error)
     }
   }
 
@@ -557,10 +597,6 @@ export function useDocAnalysis(plugin: Plugin) {
         docStats.unusedDocs = row.unused_count || 0
         docStats.noneBookmarkDocs = row.none_count || 0
       }
-
-      const effectiveBookmarked = Math.max(0, docStats.bookmarkedDocs - docStats.noneBookmarkDocs)
-      docStats.bookmarkedDocs = effectiveBookmarked
-      docStats.noBookmarkDocs = Math.max(0, docStats.totalDocs - effectiveBookmarked - docStats.noneBookmarkDocs)
     } catch (error) {
       console.error("书签分析失败:", error)
     }
@@ -702,71 +738,6 @@ export function useDocAnalysis(plugin: Plugin) {
     }
     catch (error) {
       console.error("别名/备注统计失败:", error)
-    }
-  }
-
-  /**
-   * 引用拓扑分析：入链引用 / 孤立文档
-   */
-  async function analyzeRefTopology(notebookCondition: string) {
-    try {
-      const allDocsSql = `
-        SELECT b.id
-        FROM blocks b
-        WHERE b.type = 'd' ${notebookCondition}
-        LIMIT 10000
-      `
-
-      const docRows = await sql(allDocsSql)
-      if (!docRows || docRows.length === 0) return
-
-      const allDocIds = new Set(docRows.map((r: any) => r.id))
-
-      const refBlocksSql = `
-        SELECT DISTINCT root_id, markdown
-        FROM blocks
-        WHERE type != 'd' AND markdown LIKE '%((%'
-        AND root_id IN (SELECT id FROM blocks WHERE type = 'd' ${notebookCondition})
-        LIMIT 50000
-      `
-
-      const refRows = await sql(refBlocksSql)
-      const outgoingSet = new Set<string>()
-      const incomingSet = new Set<string>()
-      const idPattern = /\(\((\d{14}-[a-z0-9]{7})\b/g
-
-      if (refRows) {
-        for (const row of refRows) {
-          const rootId = row.root_id
-          const md = row.markdown || ""
-
-          if (rootId && rootId.length >= 22) {
-            outgoingSet.add(String(rootId))
-          }
-
-          let match: RegExpExecArray | null
-          while ((match = idPattern.exec(md)) !== null) {
-            const targetId = match[1]
-            if (allDocIds.has(targetId) && targetId !== rootId) {
-              incomingSet.add(targetId)
-            }
-          }
-        }
-      }
-
-      docStats.incomingRefDocs = incomingSet.size
-      incomingRefDocIds = incomingSet
-
-      const hasOutOrIn = new Set([...outgoingSet, ...incomingSet])
-      const orphans = new Set<string>()
-      for (const id of allDocIds) {
-        if (!hasOutOrIn.has(id)) orphans.add(id)
-      }
-      orphanDocIds = orphans
-      docStats.orphanDocs = orphans.size
-    }
-    catch (error) {
-      console.error("引用拓扑分析失败:", error)
     }
   }
 

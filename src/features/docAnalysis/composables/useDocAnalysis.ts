@@ -150,6 +150,10 @@ export function useDocAnalysis(plugin: Plugin) {
   // 标签文档缓存
   let taggedDocIds: Set<string> = new Set()
 
+  // 发布状态缓存
+  let fullPublishDocIds: Set<string> = new Set()
+  let noPublishDocIds: Set<string> = new Set()
+
   // 深度分析详情
   const depthStats = ref<DepthStats>({
     depthDistribution: [],
@@ -493,24 +497,6 @@ export function useDocAnalysis(plugin: Plugin) {
         docStats.refDocs = row.ref_doc_count || 0
         docStats.totalRefs = row.total_ref_count || 0
       }
-
-      // 被引用最多的文档
-      const topRefSql = `
-        SELECT r.root_id as doc_id, b.content as doc_title, r.ref_count
-        FROM (
-          SELECT root_id, COUNT(*) as ref_count
-          FROM blocks
-          WHERE type != 'd' AND markdown LIKE '%((%'
-          GROUP BY root_id
-          ORDER BY ref_count DESC
-          LIMIT 20
-        ) r
-        JOIN blocks b ON b.id = r.root_id AND b.type = 'd'
-        ${notebookCondition ? `WHERE b.box = '${filterOptions.notebookId}'` : ""}
-        ORDER BY r.ref_count DESC
-      `
-
-      await sql(topRefSql)
     } catch (error) {
       console.error("引用分析失败:", error)
     }
@@ -537,24 +523,6 @@ export function useDocAnalysis(plugin: Plugin) {
         docStats.imageDocs = row.image_doc_count || 0
         docStats.totalImages = row.total_image_count || 0
       }
-
-      // 包含图片最多的文档
-      const topImgSql = `
-        SELECT img.root_id as doc_id, b.content as doc_title, img.image_count
-        FROM (
-          SELECT root_id, COUNT(*) as image_count
-          FROM blocks
-          WHERE type != 'd' AND markdown LIKE '%![%'
-          GROUP BY root_id
-          ORDER BY image_count DESC
-          LIMIT 20
-        ) img
-        JOIN blocks b ON b.id = img.root_id AND b.type = 'd'
-        ${notebookCondition ? `WHERE b.box = '${filterOptions.notebookId}'` : ""}
-        ORDER BY img.image_count DESC
-      `
-
-      await sql(topImgSql)
     } catch (error) {
       console.error("图片分析失败:", error)
     }
@@ -566,23 +534,9 @@ export function useDocAnalysis(plugin: Plugin) {
    */
   async function analyzeBookmarks(notebookCondition: string) {
     try {
-      const bmCountSql = `
-        SELECT COUNT(DISTINCT a.block_id) as bookmarked_docs
-        FROM attributes a
-        WHERE a.name = 'bookmark'
-        AND a.block_id IN (
-          SELECT b.id FROM blocks b WHERE b.type = 'd' ${notebookCondition}
-        )
-      `
-
-      const bmRows = await sql(bmCountSql)
-      if (bmRows && bmRows.length > 0) {
-        docStats.bookmarkedDocs = bmRows[0].bookmarked_docs || 0
-      }
-
-      // 统计特定书签值：待发布、已发布、不使用、无
-      const bmValueSql = `
+      const bmSql = `
         SELECT
+          COUNT(DISTINCT a.block_id) as bookmarked_docs,
           SUM(CASE WHEN a.value = '待发布' THEN 1 ELSE 0 END) as pending_count,
           SUM(CASE WHEN a.value = '已发布' THEN 1 ELSE 0 END) as published_count,
           SUM(CASE WHEN a.value = '不使用' THEN 1 ELSE 0 END) as unused_count,
@@ -590,20 +544,20 @@ export function useDocAnalysis(plugin: Plugin) {
         FROM attributes a
         WHERE a.name = 'bookmark'
         AND a.block_id IN (
-          SELECT b.id FROM blocks b WHERE b.type = 'd' ${notebookCondition}
+          SELECT b.id FROM blocks b WHERE b.type = 'd' ${notebookCondition} LIMIT 50000
         )
       `
 
-      const bmValueRows = await sql(bmValueSql)
-      if (bmValueRows && bmValueRows.length > 0) {
-        const row = bmValueRows[0]
+      const rows = await sql(bmSql)
+      if (rows && rows.length > 0) {
+        const row = rows[0]
+        docStats.bookmarkedDocs = row.bookmarked_docs || 0
         docStats.pendingPublishDocs = row.pending_count || 0
         docStats.publishedDocs = row.published_count || 0
         docStats.unusedDocs = row.unused_count || 0
         docStats.noneBookmarkDocs = row.none_count || 0
       }
 
-      // 重新计算：bookmarkedDocs 排除"无"，noBookmarkDocs 也排除"无"
       const effectiveBookmarked = Math.max(0, docStats.bookmarkedDocs - docStats.noneBookmarkDocs)
       docStats.bookmarkedDocs = effectiveBookmarked
       docStats.noBookmarkDocs = Math.max(0, docStats.totalDocs - effectiveBookmarked - docStats.noneBookmarkDocs)
@@ -614,56 +568,75 @@ export function useDocAnalysis(plugin: Plugin) {
 
   /**
    * 平台发布状态分析
-   * 扫描 attributes 表，检测每个文档的 custom-*-yaml 属性
+   * 两步查询：① 所有文档ID ② 所有 yaml 属性 → JS 聚合
    */
   async function analyzePlatformPublish(notebookCondition: string) {
     try {
-      const platformSql = `
-        SELECT
-          b.id as doc_id,
-          MAX(CASE WHEN a.name LIKE '%csdn%' AND a.name LIKE '%yaml%' AND a.value != '' THEN 1 ELSE 0 END) as has_csdn,
-          MAX(CASE WHEN a.name LIKE '%zhihu%' AND a.name LIKE '%yaml%' AND a.value != '' THEN 1 ELSE 0 END) as has_zhihu,
-          MAX(CASE WHEN a.name LIKE '%juejin%' AND a.name LIKE '%yaml%' AND a.value != '' THEN 1 ELSE 0 END) as has_juejin,
-          MAX(CASE WHEN (a.name LIKE '%cnblogs%' OR a.name LIKE '%blog%') AND a.name LIKE '%yaml%' AND a.value != '' THEN 1 ELSE 0 END) as has_blog,
-          MAX(CASE WHEN (a.name LIKE '%bili%' OR a.name LIKE '%bibi%') AND a.name LIKE '%yaml%' AND a.value != '' THEN 1 ELSE 0 END) as has_bibi,
-          MAX(CASE WHEN a.name LIKE '%gzh%' AND a.name LIKE '%yaml%' AND a.value != '' THEN 1 ELSE 0 END) as has_gzh
-        FROM blocks b
-        LEFT JOIN attributes a ON a.block_id = b.id
-        WHERE b.type = 'd' ${notebookCondition}
-        GROUP BY b.id
-        LIMIT 10000
-      `
+      const allDocs = await sql(`
+        SELECT id FROM blocks WHERE type = 'd' ${notebookCondition} LIMIT 10000
+      `)
+      if (!allDocs || allDocs.length === 0) return
 
-      const rows = await sql(platformSql)
-      if (!rows || rows.length === 0) return
+      const yamlRows = await sql(`
+        SELECT block_id, name
+        FROM attributes
+        WHERE name LIKE '%yaml%'
+        AND block_id IN (SELECT id FROM blocks WHERE type = 'd' ${notebookCondition})
+        LIMIT 50000
+      `)
 
-      let fullCount = 0
-      let partialCount = 0
-      let noCount = 0
+      const docMap = new Map<string, number>()
+      for (const doc of allDocs) {
+        docMap.set(String(doc.id), 0)
+      }
 
-      for (const row of rows) {
-        const csdn = Number(row.has_csdn) || 0
-        const zhihu = Number(row.has_zhihu) || 0
-        const juejin = Number(row.has_juejin) || 0
-        const blog = Number(row.has_blog) || 0
-        const bibi = Number(row.has_bibi) || 0
-        const gzh = Number(row.has_gzh) || 0
-        const total = csdn + zhihu + juejin + blog + bibi + gzh
+      const MATCHERS: [string, number][] = [
+        ["csdn", 1], ["zhihu", 2], ["juejin", 4],
+        ["cnblogs", 8], ["blog", 8], ["bili", 16], ["bibi", 16],
+        ["gzh", 32],
+      ]
 
-        if (total === 0) {
-          noCount++
-        }
-        else if (total === 6) {
-          fullCount++
-        }
-        else {
-          partialCount++
+      if (yamlRows) {
+        for (const row of yamlRows) {
+          const id = String(row.block_id)
+          if (!docMap.has(id)) continue
+          const name = String(row.name).toLowerCase()
+          let mask = 0
+          for (const [m, bit] of MATCHERS) {
+            if (name.includes(m)) { mask = bit; break }
+          }
+          if (mask > 0) {
+            docMap.set(id, docMap.get(id)! | mask)
+          }
         }
       }
 
-      docStats.fullPublishDocs = fullCount
-      docStats.partialPublishDocs = partialCount
-      docStats.noPublishDocs = noCount
+      let full = 0
+      let partial = 0
+      let no = 0
+      const fullSet = new Set<string>()
+      const noSet = new Set<string>()
+      const ALL_PLATFORMS = 63 // 1+2+4+8+16+32 = 63
+
+      for (const [id, mask] of docMap) {
+        if (mask === 0) {
+          no++
+          noSet.add(id)
+        }
+        else if (mask === ALL_PLATFORMS) {
+          full++
+          fullSet.add(id)
+        }
+        else {
+          partial++
+        }
+      }
+
+      docStats.fullPublishDocs = full
+      docStats.partialPublishDocs = partial
+      docStats.noPublishDocs = no
+      fullPublishDocIds = fullSet
+      noPublishDocIds = noSet
     }
     catch (error) {
       console.error("平台发布状态分析失败:", error)
@@ -682,7 +655,7 @@ export function useDocAnalysis(plugin: Plugin) {
     // ── 标签：blocks.tag 列 ──
     try {
       const tagSql = `
-        SELECT id, tag
+        SELECT id
         FROM blocks
         WHERE type = 'd' AND tag != ''
         ${notebookCondition}
@@ -987,64 +960,41 @@ export function useDocAnalysis(plugin: Plugin) {
           orderBy = "bm.bookmark ASC"
           break
         case "noBookmark":
-          extraWhere = "AND b.id NOT IN (SELECT block_id FROM attributes WHERE name = 'bookmark')"
+          extraWhere = "AND b.id NOT IN (SELECT block_id FROM attributes WHERE name = 'bookmark' LIMIT 10000)"
           orderBy = "b.updated DESC"
           break
         case "noneBookmark":
-          extraWhere = "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'bookmark' AND a.value = '无' AND a.block_id = b.id)"
+          extraWhere = "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'bookmark' AND a.value = '无' AND a.block_id = b.id LIMIT 1)"
           orderBy = "b.updated DESC"
           break
         case "pendingPublish":
-          extraWhere = "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'bookmark' AND a.value = '待发布' AND a.block_id = b.id)"
+          extraWhere = "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'bookmark' AND a.value = '待发布' AND a.block_id = b.id LIMIT 1)"
           orderBy = "b.updated DESC"
           break
         case "published":
-          extraWhere = "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'bookmark' AND a.value = '已发布' AND a.block_id = b.id)"
+          extraWhere = "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'bookmark' AND a.value = '已发布' AND a.block_id = b.id LIMIT 1)"
           orderBy = "b.updated DESC"
           break
         case "unused":
-          extraWhere = "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'bookmark' AND a.value = '不使用' AND a.block_id = b.id)"
+          extraWhere = "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'bookmark' AND a.value = '不使用' AND a.block_id = b.id LIMIT 1)"
           orderBy = "b.updated DESC"
           break
         case "fullPublish":
-          extraWhere = [
-            "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name LIKE '%csdn%' AND a.name LIKE '%yaml%' AND a.block_id = b.id)",
-            "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name LIKE '%zhihu%' AND a.name LIKE '%yaml%' AND a.block_id = b.id)",
-            "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name LIKE '%juejin%' AND a.name LIKE '%yaml%' AND a.block_id = b.id)",
-            "AND EXISTS (SELECT 1 FROM attributes a WHERE (a.name LIKE '%cnblogs%' OR a.name LIKE '%blog%') AND a.name LIKE '%yaml%' AND a.block_id = b.id)",
-            "AND EXISTS (SELECT 1 FROM attributes a WHERE (a.name LIKE '%bili%' OR a.name LIKE '%bibi%') AND a.name LIKE '%yaml%' AND a.block_id = b.id)",
-            "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name LIKE '%gzh%' AND a.name LIKE '%yaml%' AND a.block_id = b.id)",
-          ].join(" ")
+          extraWhere = buildIdInClause(fullPublishDocIds)
           orderBy = "b.updated DESC"
           break
         case "partialPublish":
-          extraWhere = [
-            "AND (",
-            "(SELECT COUNT(*) FROM attributes a WHERE a.block_id = b.id AND a.name LIKE '%yaml%' AND (",
-            "a.name LIKE '%csdn%' OR a.name LIKE '%zhihu%' OR a.name LIKE '%juejin%' OR",
-            "a.name LIKE '%cnblogs%' OR a.name LIKE '%blog%' OR a.name LIKE '%bili%' OR",
-            "a.name LIKE '%bibi%' OR a.name LIKE '%gzh%'",
-            ")) > 0",
-            "AND NOT (",
-            "EXISTS (SELECT 1 FROM attributes a WHERE a.name LIKE '%csdn%' AND a.name LIKE '%yaml%' AND a.block_id = b.id)",
-            "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name LIKE '%zhihu%' AND a.name LIKE '%yaml%' AND a.block_id = b.id)",
-            "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name LIKE '%juejin%' AND a.name LIKE '%yaml%' AND a.block_id = b.id)",
-            "AND EXISTS (SELECT 1 FROM attributes a WHERE (a.name LIKE '%cnblogs%' OR a.name LIKE '%blog%') AND a.name LIKE '%yaml%' AND a.block_id = b.id)",
-            "AND EXISTS (SELECT 1 FROM attributes a WHERE (a.name LIKE '%bili%' OR a.name LIKE '%bibi%') AND a.name LIKE '%yaml%' AND a.block_id = b.id)",
-            "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name LIKE '%gzh%' AND a.name LIKE '%yaml%' AND a.block_id = b.id)",
-            ")",
-            ")",
-          ].join(" ")
+          if (fullPublishDocIds.size === 0 && noPublishDocIds.size === 0) {
+            extraWhere = "AND 1 = 0"
+          } else {
+            const exclude = new Set([...fullPublishDocIds, ...noPublishDocIds])
+            const escaped = [...exclude].map(id => `'${id.replace(/'/g, "''")}'`).join(",")
+            extraWhere = `AND b.id NOT IN (${escaped})`
+          }
           orderBy = "b.updated DESC"
           break
         case "noPublish":
-          extraWhere = [
-            "AND NOT EXISTS (SELECT 1 FROM attributes a WHERE a.block_id = b.id AND a.name LIKE '%yaml%' AND (",
-            "a.name LIKE '%csdn%' OR a.name LIKE '%zhihu%' OR a.name LIKE '%juejin%' OR",
-            "a.name LIKE '%cnblogs%' OR a.name LIKE '%blog%' OR a.name LIKE '%bili%' OR",
-            "a.name LIKE '%bibi%' OR a.name LIKE '%gzh%'",
-            "))",
-          ].join(" ")
+          extraWhere = buildIdInClause(noPublishDocIds)
           orderBy = "b.updated DESC"
           break
         case "hasTag":
@@ -1062,11 +1012,11 @@ export function useDocAnalysis(plugin: Plugin) {
           orderBy = "b.updated DESC"
           break
         case "hasAlias":
-          extraWhere = "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'alias' AND a.value != '' AND a.block_id = b.id)"
+          extraWhere = "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'alias' AND a.value != '' AND a.block_id = b.id LIMIT 1)"
           orderBy = "b.updated DESC"
           break
         case "hasMemo":
-          extraWhere = "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'memo' AND a.value != '' AND a.block_id = b.id)"
+          extraWhere = "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'memo' AND a.value != '' AND a.block_id = b.id LIMIT 1)"
           orderBy = "b.updated DESC"
           break
         case "incomingRef":

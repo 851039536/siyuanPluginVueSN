@@ -1,4 +1,4 @@
-import type { WechatTheme } from "../types/storage"
+import type { CodeWrapMode, WechatTheme } from "../types/storage"
 import type { BaseThemeColors } from "./mdToShared"
 import {
   buildThemeList,
@@ -123,6 +123,7 @@ export async function convertMdToWechat(
     fontSize: number
     lineHeight: number
     codeHighlight: boolean
+    codeWrap?: CodeWrapMode
   },
 ): Promise<string> {
   const {

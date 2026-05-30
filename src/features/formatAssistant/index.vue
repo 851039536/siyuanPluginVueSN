@@ -97,6 +97,18 @@
             <span>{{ $t('codeHighlight') }}</span>
           </label>
         </div>
+        <div class="option-group">
+          <span class="option-label">{{ $t('codeWrap') }}</span>
+          <button
+            v-for="w in codeWrapOptions"
+            :key="w.value"
+            class="toggle-btn"
+            :class="{ active: codeWrap === w.value }"
+            @click="codeWrap = w.value"
+          >
+            {{ w.label }}
+          </button>
+        </div>
       </div>
       <div class="toolbar-right">
         <button
@@ -200,6 +212,7 @@
 import type { Plugin } from "siyuan"
 import type {
   BilibiliTheme,
+  CodeWrapMode,
   FormatAssistantSettings,
   WechatTheme,
 } from "./types/storage"
@@ -239,6 +252,7 @@ const bilibiliTheme = ref<BilibiliTheme>("default")
 const fontSize = ref(15)
 const lineHeight = ref(1.75)
 const codeHighlight = ref(true)
+const codeWrap = ref<CodeWrapMode>("scroll")
 const copyBtnText = ref("复制HTML")
 
 // 选项数据
@@ -255,6 +269,10 @@ const targetOptions = [
 
 const fontSizeOptions = [13, 14, 15, 16, 17, 18]
 const lineHeightOptions = [1.3, 1.5, 1.6, 1.75, 1.8, 2.0]
+const codeWrapOptions: { value: CodeWrapMode, label: string }[] = [
+  { value: "scroll", label: "横向滚动" },
+  { value: "wrap", label: "自动换行" },
+]
 const wechatThemes = getWechatThemes()
 const bilibiliThemes = getBilibiliThemes()
 
@@ -281,6 +299,7 @@ const convertAndPreview = async () => {
         fontSize: fontSize.value,
         lineHeight: lineHeight.value,
         codeHighlight: codeHighlight.value,
+        codeWrap: codeWrap.value,
       })
     } else if (target.value === "bilibili") {
       outputHtml.value = await convertMdToBilibili(inputMd.value, {
@@ -288,6 +307,7 @@ const convertAndPreview = async () => {
         fontSize: fontSize.value,
         lineHeight: lineHeight.value,
         codeHighlight: codeHighlight.value,
+        codeWrap: codeWrap.value,
       })
     }
   } catch (error) {
@@ -338,6 +358,7 @@ const loadSettings = async () => {
     fontSize.value = settings.fontSize
     lineHeight.value = settings.lineHeight
     codeHighlight.value = settings.codeHighlight
+    codeWrap.value = settings.codeWrap ?? "scroll"
   } catch (error) {
     console.error("加载设置失败:", error)
   }
@@ -354,6 +375,7 @@ const saveSettings = async () => {
       fontSize: fontSize.value,
       lineHeight: lineHeight.value,
       codeHighlight: codeHighlight.value,
+      codeWrap: codeWrap.value,
     }
     await storage.settings.save(settings)
   } catch (error) {
@@ -362,7 +384,7 @@ const saveSettings = async () => {
 }
 
 // 设置变更时自动保存并重新转换
-watch([target, wechatTheme, bilibiliTheme, fontSize, lineHeight, codeHighlight], () => {
+watch([target, wechatTheme, bilibiliTheme, fontSize, lineHeight, codeHighlight, codeWrap], () => {
   saveSettings()
   convertAndPreview()
 })
@@ -379,6 +401,7 @@ const $t = (key: string): string => {
     fontSize: "字号",
     lineHeight: "行高",
     codeHighlight: "代码高亮",
+    codeWrap: "代码换行",
     convert: "转换",
     chars: "字符",
     htmlChars: "HTML字符",

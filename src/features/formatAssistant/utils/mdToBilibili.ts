@@ -1,4 +1,4 @@
-import type { BilibiliTheme } from "../types/storage"
+import type { BilibiliTheme, CodeWrapMode } from "../types/storage"
 import type { BaseThemeColors } from "./mdToShared"
 import {
   BILIBILI_STYLE_OVERRIDES,
@@ -112,6 +112,7 @@ export async function convertMdToBilibili(
     fontSize: number
     lineHeight: number
     codeHighlight: boolean
+    codeWrap?: CodeWrapMode
   },
 ): Promise<string> {
   const {

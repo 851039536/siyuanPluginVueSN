@@ -5,10 +5,78 @@
  * 所有样式必须内联。本模块提供共享的 Markdown → 内联样式 HTML 转换逻辑，
  * 通过 StyleOverrides 配置实现平台差异化。
  */
+import type { CodeWrapMode } from "../types/storage"
 import hljs from "highlight.js"
 import { marked } from "marked"
 import { escapeHtml } from "@/utils/stringUtils"
 import { normalizeWidths } from "../../htmlViewer/utils/normalizeWidths"
+
+/**
+ * hljs class → inline style 映射（微信不支持 class，需转为内联样式）
+ */
+const HLJS_INLINE_COLORS: Record<string, string> = {
+  "hljs-keyword": "#d73a49",
+  "hljs-built_in": "#e36209",
+  "hljs-type": "#d73a49",
+  "hljs-literal": "#d73a49",
+  "hljs-number": "#005cc5",
+  "hljs-string": "#032f62",
+  "hljs-template-variable": "#005cc5",
+  "hljs-regexp": "#032f62",
+  "hljs-symbol": "#005cc5",
+  "hljs-variable": "#e36209",
+  "hljs-title": "#6f42c1",
+  "hljs-title.class_": "#6f42c1",
+  "hljs-title.function_": "#6f42c1",
+  "hljs-params": "#24292e",
+  "hljs-comment": "#6a737d",
+  "hljs-doctag": "#d73a49",
+  "hljs-meta": "#6a737d",
+  "hljs-meta-keyword": "#d73a49",
+  "hljs-meta-string": "#032f62",
+  "hljs-section": "#005cc5",
+  "hljs-selector-tag": "#005cc5",
+  "hljs-selector-id": "#6f42c1",
+  "hljs-selector-class": "#6f42c1",
+  "hljs-selector-attr": "#6f42c1",
+  "hljs-selector-pseudo": "#6f42c1",
+  "hljs-attr": "#6f42c1",
+  "hljs-attribute": "#005cc5",
+  "hljs-name": "#005cc5",
+  "hljs-tag": "#22863a",
+  "hljs-link": "#005cc5",
+  "hljs-addition": "#22863a",
+  "hljs-deletion": "#b31d28",
+  "hljs-emphasis": "font-style: italic",
+  "hljs-strong": "font-weight: bold",
+  "hljs-property": "#005cc5",
+  "hljs-punctuation": "#24292e",
+  "hljs-operator": "#d73a49",
+}
+
+/**
+ * 将 hljs 输出的 class-based spans 转换为 inline style spans（兼容微信）
+ */
+function convertHljsToInlineStyles(highlighted: string): string {
+  return highlighted.replace(
+    /<span class="([^"]+)">/g,
+    (_, classes: string) => {
+      const classList = classes.split(/\s+/)
+      const styles: string[] = []
+      for (const cls of classList) {
+        const mapped = HLJS_INLINE_COLORS[cls]
+        if (mapped) {
+          if (mapped.includes(":")) {
+            styles.push(mapped)
+          } else {
+            styles.push(`color: ${mapped}`)
+          }
+        }
+      }
+      return styles.length ? `<span style="${styles.join("; ")};">` : "<span>"
+    },
+  )
+}
 
 /**
  * 基础主题颜色（所有平台共有字段）
@@ -95,7 +163,7 @@ export const BILIBILI_STYLE_OVERRIDES: StyleOverrides = {
 /**
  * 对 HTML 字符串中的标签添加内联样式
  */
-function applyInlineStyles(html: string, colors: BaseThemeColors, fontSize: number, lineHeight: number, overrides: StyleOverrides): string {
+function applyInlineStyles(html: string, colors: BaseThemeColors, fontSize: number, lineHeight: number, overrides: StyleOverrides, codeWrap: CodeWrapMode = "scroll"): string {
   let result = html
 
   // h1 - h6
@@ -155,17 +223,24 @@ function applyInlineStyles(html: string, colors: BaseThemeColors, fontSize: numb
     `<blockquote style="margin: 12px 0; padding: ${overrides.blockquotePadding}; border-left: 4px solid ${colors.quoteBorderColor}; background-color: ${colors.quoteBgColor}; color: ${colors.textColor}; font-size: ${fontSize}px; line-height: ${lineHeight};${blockquoteRadius}">`,
   )
 
-  // pre (代码块)
+  // pre (代码块) — 用 section 包裹以兼容微信手机端
+  const preWhiteSpace = codeWrap === "wrap" ? "pre-wrap" : "pre"
+  const preWordBreak = codeWrap === "wrap" ? "word-break: break-all; " : ""
   result = result.replace(
     /<pre>/g,
-    `<pre style="margin: 12px 0; padding: 0; background-color: ${colors.codeBgColor}; border-radius: ${overrides.preBorderRadius}; overflow-x: auto; line-height: 1.5;">`,
+    `<section style="margin: 12px 0; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; background-color: ${colors.codeBgColor}; border-radius: ${overrides.preBorderRadius};"><pre style="margin: 0; padding: 0; background: none; border-radius: 0; overflow-x: visible; line-height: 1.5;">`,
+  )
+  result = result.replace(
+    /<\/pre>/g,
+    `</pre></section>`,
   )
 
   // code with class (代码块内的 code)
   const codeLangColor = overrides.codeLangColor || colors.textColor
+  const codeFontSize = Math.round(fontSize * 0.75)
   result = result.replace(
     /<code class="language-(\w+)">/g,
-    (_, lang) => `<code class="language-${lang}" style="display: block; white-space: pre; overflow-x: auto; padding: 14px; font-family: 'Menlo', 'Monaco', 'Consolas', monospace; font-size: ${Math.round(fontSize * 0.85)}px; color: ${codeLangColor}; background: none; border-radius: ${overrides.codeLangBorderRadius};">`,
+    (_, lang) => `<code class="language-${lang}" style="display: block; white-space: ${preWhiteSpace}; ${preWordBreak}overflow-x: auto; padding: 14px; font-family: 'Menlo', 'Monaco', 'Consolas', monospace; font-size: ${codeFontSize}px; color: ${codeLangColor}; background: none; border-radius: ${overrides.codeLangBorderRadius}; max-width: 100%; box-sizing: border-box;">`,
   )
 
   // code (行内代码，不含 class 的)
@@ -247,6 +322,7 @@ export async function convertMarkdown(
     fontSize: number
     lineHeight: number
     codeHighlight: boolean
+    codeWrap?: CodeWrapMode
   },
   colors: BaseThemeColors,
   overrides: StyleOverrides,
@@ -255,6 +331,7 @@ export async function convertMarkdown(
     fontSize,
     lineHeight,
     codeHighlight,
+    codeWrap = "scroll",
   } = options
 
   marked.use({
@@ -271,7 +348,7 @@ export async function convertMarkdown(
         if (codeHighlight && lang) {
           try {
             highlighted = hljs.getLanguage(lang)
-              ? hljs.highlight(text, { language: lang }).value
+              ? convertHljsToInlineStyles(hljs.highlight(text, { language: lang }).value)
               : escapeHtml(text)
           } catch {
             highlighted = escapeHtml(text)
@@ -285,7 +362,7 @@ export async function convertMarkdown(
   })
 
   const html = await marked.parse(markdown)
-  const styledHtml = applyInlineStyles(html, colors, fontSize, lineHeight, overrides)
+  const styledHtml = applyInlineStyles(html, colors, fontSize, lineHeight, overrides, codeWrap)
   const normalizedHtml = normalizeWidths(styledHtml).html
 
   return `<section style="padding: 14px; max-width: 100%; box-sizing: border-box; word-wrap: break-word;">${normalizedHtml}</section>`

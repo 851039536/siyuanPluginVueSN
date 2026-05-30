@@ -18,6 +18,13 @@ export type WechatTheme = "default" | "green" | "orange" | "purple" | "blue"
 export type BilibiliTheme = "default" | "pink" | "dark" | "mint"
 
 /**
+ * 代码块换行模式
+ * - scroll: 横向滚动（默认，保持原始排版）
+ * - wrap: 自动换行（适配手机端窄屏）
+ */
+export type CodeWrapMode = "scroll" | "wrap"
+
+/**
  * 排版助手设置接口
  */
 export interface FormatAssistantSettings {
@@ -33,6 +40,8 @@ export interface FormatAssistantSettings {
   lineHeight: number
   /** 代码块是否高亮 */
   codeHighlight: boolean
+  /** 代码块换行模式 */
+  codeWrap: CodeWrapMode
 }
 
 /**
@@ -45,6 +54,7 @@ export const DEFAULT_FORMAT_ASSISTANT_SETTINGS: FormatAssistantSettings = {
   fontSize: 15,
   lineHeight: 1.75,
   codeHighlight: true,
+  codeWrap: "scroll",
 }
 
 /**

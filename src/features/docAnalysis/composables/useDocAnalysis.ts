@@ -35,7 +35,7 @@ export interface NotebookInfo {
 const SIZE_WORDCOUNT_SUBQUERY = `
   SELECT root_id,
     SUM(length) as total_size,
-    SUM(LENGTH(content)) as total_word_count
+    SUM(length) as total_word_count
   FROM blocks
   WHERE type != 'd'
   GROUP BY root_id

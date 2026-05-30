@@ -247,6 +247,43 @@
           :i18n="docBarChartI18n"
         />
       </CollapsibleSection>
+
+      <!-- 可折叠：笔记本字数占比饼图 -->
+      <CollapsibleSection
+        :title="`🥧 ${notebookWordPieTitle}`"
+        :badge="notebookWordStats.length > 0 ? `${notebookWordStats.length}` : ''"
+      >
+        <NotebookWordPie
+          :data="notebookWordStats"
+        />
+      </CollapsibleSection>
+
+      <!-- 可折叠：各笔记本写作活跃度对比 -->
+      <CollapsibleSection
+        :title="`📈 ${notebookActivityTitle}`"
+      >
+        <NotebookActivityTrend
+          :on-get-notebook-activity-trend="props.onGetNotebookActivityTrend"
+        />
+      </CollapsibleSection>
+
+      <!-- 可折叠：年度/月度报告 -->
+      <CollapsibleSection
+        :title="`📊 ${reportTitle}`"
+      >
+        <ReportView
+          :on-get-report-data="props.onGetReportData"
+        />
+      </CollapsibleSection>
+
+      <!-- 可折叠：趋势预测 -->
+      <CollapsibleSection
+        :title="`🔮 ${predictionTitle}`"
+      >
+        <TrendPrediction
+          :on-get-trend-prediction="props.onGetTrendPrediction"
+        />
+      </CollapsibleSection>
     </div>
 
   </div>
@@ -256,8 +293,12 @@
 import type {
   ChangedDoc,
   DailyWordCount,
+  NotebookActivityItem,
+  NotebookWordStat,
   RangeStatItem,
+  ReportData,
   StatisticsData,
+  TrendPrediction as TrendPredictionData,
 } from "./types"
 import {
   computed,
@@ -269,8 +310,12 @@ import BarChart from "./components/BarChart.vue"
 import CollapsibleSection from "./components/CollapsibleSection.vue"
 import DocBarChart from "./components/DocBarChart.vue"
 import InsightCards from "./components/InsightCards.vue"
+import NotebookActivityTrend from "./components/NotebookActivityTrend.vue"
+import NotebookWordPie from "./components/NotebookWordPie.vue"
+import ReportView from "./components/ReportView.vue"
 import StatisticsHeader from "./components/StatisticsHeader.vue"
 import StatsCardsCompact from "./components/StatsCardsCompact.vue"
+import TrendPrediction from "./components/TrendPrediction.vue"
 import TrendView from "./components/TrendView.vue"
 import ViewModeSection from "./components/ViewModeSection.vue"
 import WordRanking from "./components/WordRanking.vue"
@@ -290,6 +335,10 @@ interface Props {
     modifiedDocs: ChangedDoc[]
   }>
   onGetDateRangeChangeStats?: (startStr: string, endStr: string) => Promise<RangeStatItem[]>
+  onGetNotebookWordStats?: () => Promise<NotebookWordStat[]>
+  onGetNotebookActivityTrend?: (days: number) => Promise<NotebookActivityItem[]>
+  onGetReportData?: (year?: number, month?: number) => Promise<ReportData>
+  onGetTrendPrediction?: () => Promise<TrendPredictionData>
   onRegisterRefresh?: (fn: () => Promise<void>) => void
   i18n?: {
     loading: string
@@ -420,6 +469,8 @@ const historicalData = ref<any[]>([])
 const updateInterval = ref(60)
 const notebookDocStats = ref<Array<{ name: string, count: number }>>([])
 const docChartLoading = ref(false)
+
+const notebookWordStats = ref<NotebookWordStat[]>([])
 
 // 文档变化按日期查看
 const docChangeDate = ref(getTodayStr())
@@ -622,6 +673,11 @@ const wordRankingI18n = computed(() => ({
   emptyText: "暂无数据",
 }))
 
+const notebookWordPieTitle = computed(() => "笔记本字数占比")
+const notebookActivityTitle = computed(() => "笔记本写作活跃度")
+const reportTitle = computed(() => "年度/月度报告")
+const predictionTitle = computed(() => "趋势预测")
+
 const chartTitle = computed(() => {
   return stats.value?.currentPeriod || ""
 })
@@ -711,6 +767,9 @@ async function refreshData() {
 
     // 加载笔记本文档统计
     await loadNotebookDocStats()
+
+    // 加载笔记本字数占比
+    await loadNotebookWordStats()
   } catch (error) {
     console.error("刷新统计数据失败:", error)
   } finally {
@@ -737,6 +796,15 @@ async function loadNotebookDocStats() {
     console.error("加载笔记本文档统计失败:", error)
   } finally {
     docChartLoading.value = false
+  }
+}
+
+async function loadNotebookWordStats() {
+  if (!props.onGetNotebookWordStats) return
+  try {
+    notebookWordStats.value = await props.onGetNotebookWordStats()
+  } catch (error) {
+    console.error("加载笔记本字数统计失败:", error)
   }
 }
 

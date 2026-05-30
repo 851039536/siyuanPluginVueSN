@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   ChangedDoc,
   DailyWordCount,
   NotebookActivityItem,
@@ -20,7 +20,7 @@ import {
 import { emitCustomEvent } from "@/utils/eventBus"
 import StatisticsPanel from "./index.vue"
 import { StatisticsStorage } from "./types/storage"
-import { isValidDateStr } from "./utils"
+import { formatDate, isValidDateStr, padZero } from "./utils"
 
 const DAY_PERIOD_MAP: Record<number, string> = {
   7: "最近一周每日字数",
@@ -192,7 +192,7 @@ export class Statistics {
   private async getStatistics(): Promise<StatisticsData> {
     try {
       const today = new Date()
-      const todayStr = this.formatDate(today).substring(0, 8)
+      const todayStr = this.formatDateTime(today).substring(0, 8)
 
       // 合并基础统计查询，减少 API 调用次数
       const combinedSql = `
@@ -409,7 +409,7 @@ export class Statistics {
       d <= endDate;
       d.setDate(d.getDate() + 1)
     ) {
-      const dateStr = `${d.getFullYear()}${this.padZero(d.getMonth() + 1)}${this.padZero(d.getDate())}`
+      const dateStr = `${d.getFullYear()}${padZero(d.getMonth() + 1)}${padZero(d.getDate())}`
       result.push({
         date: dateStr,
         newCount: newMap.get(dateStr) || 0,
@@ -582,8 +582,8 @@ export class Statistics {
     startDate.setDate(today.getDate() - days + 1)
     startDate.setHours(0, 0, 0, 0)
 
-    const startDateStr = this.formatDate(startDate)
-    const endDateStr = this.formatDate(today)
+    const startDateStr = this.formatDateTime(startDate)
+    const endDateStr = this.formatDateTime(today)
 
     const queryResult = await this.getWordCountAggregation(
       startDateStr,
@@ -599,7 +599,7 @@ export class Statistics {
       const year = Number.parseInt(dateStr.substring(0, 4))
       const month = Number.parseInt(dateStr.substring(4, 6))
       const day = Number.parseInt(dateStr.substring(6, 8))
-      const formattedDate = `${year}-${this.padZero(month)}-${this.padZero(day)}`
+      const formattedDate = `${year}-${padZero(month)}-${padZero(day)}`
       dateMap.set(formattedDate, row.total || 0)
     })
 
@@ -610,7 +610,7 @@ export class Statistics {
       date.setDate(today.getDate() - i)
       date.setHours(0, 0, 0, 0)
 
-      const dateStr = `${date.getFullYear()}-${this.padZero(date.getMonth() + 1)}-${this.padZero(date.getDate())}`
+      const dateStr = `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())}`
       const words = dateMap.get(dateStr) || 0
 
       result.push({
@@ -638,8 +638,8 @@ export class Statistics {
     lastWeekEnd.setDate(today.getDate() - currentDayOfWeek + 7)
     lastWeekEnd.setHours(23, 59, 59, 999)
 
-    const startDate = this.formatDate(firstWeekStart)
-    const endDate = this.formatDate(lastWeekEnd)
+    const startDate = this.formatDateTime(firstWeekStart)
+    const endDate = this.formatDateTime(lastWeekEnd)
 
     const queryResult = await this.getWordCountAggregation(
       startDate,
@@ -670,12 +670,12 @@ export class Statistics {
       for (let d = 0; d < 7; d++) {
         const day = new Date(weekStart)
         day.setDate(weekStart.getDate() + d)
-        const dayStr = this.formatDate(day).substring(0, 8)
+        const dayStr = this.formatDateTime(day).substring(0, 8)
         weekWords += dateMap.get(dayStr) || 0
       }
 
       result.push({
-        date: `${weekStart.getFullYear()}-${this.padZero(weekStart.getMonth() + 1)}-${this.padZero(weekStart.getDate())}`,
+        date: `${weekStart.getFullYear()}-${padZero(weekStart.getMonth() + 1)}-${padZero(weekStart.getDate())}`,
         words: weekWords,
         dateLabel: `${weekStart.getMonth() + 1}/${weekStart.getDate()} - ${weekEnd.getMonth() + 1}/${weekEnd.getDate()}`,
       })
@@ -695,7 +695,7 @@ export class Statistics {
     // 计算起始年月
     const startYear = currentYear - years + 1
     const startDate = `${startYear}0101000000`
-    const endDate = this.formatDate(today)
+    const endDate = this.formatDateTime(today)
 
     const queryResult = await this.getWordCountAggregation(
       startDate,
@@ -717,7 +717,7 @@ export class Statistics {
       const endM = y === currentYear ? currentMonth : 12
 
       for (let m = startM; m <= endM; m++) {
-        const monthStr = this.padZero(m)
+        const monthStr = padZero(m)
         const monthKey = `${y}${monthStr}`
         const words = monthMap.get(monthKey) || 0
 
@@ -771,23 +771,16 @@ export class Statistics {
   }
 
   /**
-   * 格式化日期为思源笔记格式
+   * 格式化日期时间为思源笔记格式
    */
-  private formatDate(date: Date): string {
+  private formatDateTime(date: Date): string {
     const year = date.getFullYear()
-    const month = this.padZero(date.getMonth() + 1)
-    const day = this.padZero(date.getDate())
-    const hour = this.padZero(date.getHours())
-    const minute = this.padZero(date.getMinutes())
-    const second = this.padZero(date.getSeconds())
+    const month = padZero(date.getMonth() + 1)
+    const day = padZero(date.getDate())
+    const hour = padZero(date.getHours())
+    const minute = padZero(date.getMinutes())
+    const second = padZero(date.getSeconds())
     return `${year}${month}${day}${hour}${minute}${second}`
-  }
-
-  /**
-   * 数字补零
-   */
-  private padZero(num: number): string {
-    return num < 10 ? `0${num}` : String(num)
   }
 
   /**
@@ -851,7 +844,7 @@ export class Statistics {
 
       // 保存到数据库（按日期）
       const today = new Date()
-      const dateKey = this.formatDateKey(today)
+      const dateKey = formatDate(today)
       const existingData = await this.storage.loadHistory()
 
       // 更新当日数据（使用统一的 createHistoryRecord）
@@ -893,7 +886,7 @@ export class Statistics {
     avgWordsPerDoc: number,
   ) {
     return {
-      date: this.formatDateKey(date),
+      date: formatDate(date),
       dateLabel: `${date.getMonth() + 1}/${date.getDate()}`,
       totalNotes,
       totalWords,
@@ -935,7 +928,7 @@ export class Statistics {
       for (let i = (daysToProcess || 30) - 1; i >= 0; i--) {
         const date = new Date(today)
         date.setDate(today.getDate() - i)
-        const dateKey = this.formatDateKey(date)
+        const dateKey = formatDate(date)
         const isToday = i === 0
 
         const dayData = historyData[dateKey]
@@ -1047,16 +1040,6 @@ export class Statistics {
   }
 
   /**
-   * 格式化日期为键值
-   */
-  private formatDateKey(date: Date): string {
-    const year = date.getFullYear()
-    const month = this.padZero(date.getMonth() + 1)
-    const day = this.padZero(date.getDate())
-    return `${year}-${month}-${day}`
-  }
-
-  /**
    * 获取笔记本字数统计（饼图用）
    * 查询每个笔记本的段落字数总和
    */
@@ -1148,8 +1131,8 @@ export class Statistics {
       startDate.setDate(today.getDate() - days + 1)
       startDate.setHours(0, 0, 0, 0)
 
-      const startStr = this.formatDate(startDate)
-      const endStr = this.formatDate(today)
+      const startStr = this.formatDateTime(startDate)
+      const endStr = this.formatDateTime(today)
 
       const notebookIds = openNotebooks
         .map((nb: any) => `'${(nb.id as string).replace(/'/g, "''")}'`)
@@ -1198,11 +1181,11 @@ export class Statistics {
           const date = new Date(today)
           date.setDate(today.getDate() - i)
           date.setHours(0, 0, 0, 0)
-          const dateStr = `${date.getFullYear()}${this.padZero(date.getMonth() + 1)}${this.padZero(date.getDate())}`
+          const dateStr = `${date.getFullYear()}${padZero(date.getMonth() + 1)}${padZero(date.getDate())}`
           const words = dayMap.get(dateStr) || 0
 
           dailyData.push({
-            date: `${date.getFullYear()}-${this.padZero(date.getMonth() + 1)}-${this.padZero(date.getDate())}`,
+            date: `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())}`,
             words,
             dateLabel: `${date.getMonth() + 1}/${date.getDate()}`,
           })
@@ -1233,7 +1216,7 @@ export class Statistics {
     const reportMonth = month
 
     const isAnnual = !reportMonth
-    const pad = this.padZero
+    const pad = padZero
 
     try {
       if (isAnnual) {
@@ -1540,8 +1523,8 @@ export class Statistics {
     startDate.setDate(today.getDate() - 29)
     startDate.setHours(0, 0, 0, 0)
 
-    const startStr = this.formatDate(startDate)
-    const endStr = this.formatDate(today)
+    const startStr = this.formatDateTime(startDate)
+    const endStr = this.formatDateTime(today)
 
     try {
       // 获取最近30天的每日字数
@@ -1566,10 +1549,10 @@ export class Statistics {
       for (let i = 29; i >= 0; i--) {
         const date = new Date(today)
         date.setDate(today.getDate() - i)
-        const dateStr = `${date.getFullYear()}${this.padZero(date.getMonth() + 1)}${this.padZero(date.getDate())}`
+        const dateStr = `${date.getFullYear()}${padZero(date.getMonth() + 1)}${padZero(date.getDate())}`
 
         historical.push({
-          date: `${date.getFullYear()}-${this.padZero(date.getMonth() + 1)}-${this.padZero(date.getDate())}`,
+          date: `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())}`,
           words: wordMap.get(dateStr) || 0,
           dateLabel: `${date.getMonth() + 1}/${date.getDate()}`,
         })
@@ -1620,7 +1603,7 @@ export class Statistics {
         predDate.setDate(today.getDate() + i + 1)
 
         predicted.push({
-          date: `${predDate.getFullYear()}-${this.padZero(predDate.getMonth() + 1)}-${this.padZero(predDate.getDate())}`,
+          date: `${predDate.getFullYear()}-${padZero(predDate.getMonth() + 1)}-${padZero(predDate.getDate())}`,
           words: predWords,
           dateLabel: `${predDate.getMonth() + 1}/${predDate.getDate()}`,
         })

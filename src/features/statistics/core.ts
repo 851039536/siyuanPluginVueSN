@@ -37,6 +37,28 @@ const MONTH_PERIOD_MAP: Record<number, string> = {
   3: "最近三年每月字数",
 }
 
+const NOTEBOOK_COLORS = [
+  "#3b82f6", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6",
+  "#06b6d4", "#ec4899", "#f97316", "#84cc16", "#14b8a6",
+  "#6366f1", "#e11d48", "#0ea5e9", "#a855f7", "#10b981",
+]
+
+const ZERO_STATISTICS: StatisticsData = {
+  totalNotes: 0,
+  totalWords: 0,
+  totalBlocks: 0,
+  totalAssets: 0,
+  totalTags: 0,
+  totalBacklinks: 0,
+  todayCreated: 0,
+  todayModified: 0,
+  avgWordsPerDoc: 0,
+  dailyStats: [],
+  currentPeriod: "",
+  periodTotalWords: 0,
+  totalImages: 0,
+}
+
 /**
  * 数据统计功能模块
  * 提供思源笔记的使用数据统计分析
@@ -273,21 +295,7 @@ export class Statistics {
       }
     } catch (error) {
       console.error("获取统计数据失败:", error)
-      return {
-        totalNotes: 0,
-        totalWords: 0,
-        totalBlocks: 0,
-        totalAssets: 0,
-        totalTags: 0,
-        totalBacklinks: 0,
-        todayCreated: 0,
-        todayModified: 0,
-        avgWordsPerDoc: 0,
-        dailyStats: [],
-        currentPeriod: "",
-        periodTotalWords: 0,
-        totalImages: 0,
-      }
+      return { ...ZERO_STATISTICS }
     }
   }
 
@@ -1044,12 +1052,6 @@ export class Statistics {
    * 查询每个笔记本的段落字数总和
    */
   public async getNotebookWordStats(): Promise<NotebookWordStat[]> {
-    const notebookColors = [
-      "#3b82f6", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6",
-      "#06b6d4", "#ec4899", "#f97316", "#84cc16", "#14b8a6",
-      "#6366f1", "#e11d48", "#0ea5e9", "#a855f7", "#10b981",
-    ]
-
     try {
       const data = await lsNotebooks()
       if (!data || !data.notebooks) return []
@@ -1099,7 +1101,7 @@ export class Statistics {
         item.percentage = totalWordsAll > 0
           ? Math.round((item.words / totalWordsAll) * 1000) / 10
           : 0
-        item.color = notebookColors[idx % notebookColors.length]
+        item.color = NOTEBOOK_COLORS[idx % NOTEBOOK_COLORS.length]
       })
 
       return result
@@ -1114,11 +1116,6 @@ export class Statistics {
    * @param days 最近N天
    */
   public async getNotebookActivityTrend(days: number): Promise<NotebookActivityItem[]> {
-    const notebookColors = [
-      "#3b82f6", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6",
-      "#06b6d4", "#ec4899", "#f97316", "#84cc16", "#14b8a6",
-    ]
-
     try {
       const data = await lsNotebooks()
       if (!data || !data.notebooks) return []
@@ -1194,7 +1191,7 @@ export class Statistics {
         result.push({
           notebook: notebookMap.get(nb.id) || "未知笔记本",
           data: dailyData,
-          color: notebookColors[idx % notebookColors.length],
+          color: NOTEBOOK_COLORS[idx % NOTEBOOK_COLORS.length],
         })
       })
 

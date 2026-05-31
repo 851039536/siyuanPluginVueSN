@@ -1,21 +1,24 @@
 <template>
   <div class="stats-section">
-    <h3 class="stats-title">📊 总览</h3>
+    <h3 class="stats-title">
+      📊 总览
+    </h3>
     <div class="stats-cards-wrapper">
       <div
         v-for="item in allItems"
         :key="item.label"
         class="stats-item"
       >
-      <div class="stats-value-row">
-        <span class="stats-value">{{ item.value }}</span>
-        <span
-          v-if="item.change !== null"
-          class="stats-change"
-          :class="item.change > 0 ? 'up' : 'down'"
-        >{{ formatChange(item.change) }}</span>
+        <div class="stats-value-row">
+          <span class="stats-value">{{ item.value }}</span>
+          <span
+            v-if="item.change !== null"
+            class="stats-change"
+            :class="item.change > 0 ? 'up' : 'down'"
+          >{{ formatChange(item.change) }}</span>
+        </div>
+        <span class="stats-label">{{ item.label }}</span>
       </div>
-      <span class="stats-label">{{ item.label }}</span>
     </div>
   </div>
 </template>
@@ -148,6 +151,32 @@ function formatChange(change: number | null): string {
 @use "@/variables" as *;
 @use "../../superPanel/styles/shared" as *;
 @use "../styles/index.scss" as stats;
+
+.stats-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stats-title {
+  margin: 0;
+  font-family: $font-heading;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--b3-theme-on-surface);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  &::before {
+    content: "";
+    display: inline-block;
+    width: 3px;
+    height: 14px;
+    background: var(--b3-theme-primary);
+    border-radius: 2px;
+  }
+}
 
 .stats-cards-wrapper {
   display: grid;

@@ -347,87 +347,131 @@ const TIER_POINTS: Record<Tier, number> = {
 // 公式：第 n 级所需累计点数（n 从 1 开始，1 级 = 0 点）
 function pointsForLevel(level: number): number {
   if (level <= 1) return 0
-  return Math.floor(15 * (level - 1) * Math.sqrt(level - 1))
+  return Math.floor(28 * (level - 1) * Math.sqrt(level - 1))
 }
 
 const LEVEL_TITLES = [
-  { icon: "✏️", title: "新手写手" },
-  { icon: "📝", title: "初露锋芒" },
-  { icon: "✍️", title: "笔耕不辍" },
-  { icon: "🖊️", title: "妙笔生花" },
-  { icon: "🔧", title: "知识工匠" },
-  { icon: "📖", title: "资深作者" },
-  { icon: "🎓", title: "内容大师" },
-  { icon: "🧠", title: "知识大师" },
-  { icon: "👑", title: "传奇学者" },
-  { icon: "🏆", title: "思源之巅" },
-  { icon: "⚡", title: "超越极限" },
-  { icon: "🌌", title: "无尽探索" },
-  { icon: "🔮", title: "永恒之光" },
-  { icon: "🐉", title: "东方巨龙" },
-  { icon: "🦅", title: "翱翔天际" },
-  { icon: "🌊", title: "知识海洋" },
-  { icon: "🌋", title: "火山淬炼" },
-  { icon: "🌠", title: "星辰大海" },
-  { icon: "🪐", title: "宇宙征途" },
-  { icon: "🌕", title: "皓月当空" },
-  { icon: "☀️", title: "烈日灼心" },
-  { icon: "🌈", title: "七彩虹光" },
-  { icon: "💎", title: "钻石永恒" },
-  { icon: "🫅", title: "王者归来" },
-  { icon: "🦸", title: "超级英雄" },
-  { icon: "🧬", title: "基因进化" },
-  { icon: "🌀", title: "时空旅者" },
-  { icon: "🪩", title: "光芒万丈" },
-  { icon: "♾️", title: "无穷无尽" },
-  { icon: "🎭", title: "万象宗师" },
-  { icon: "🗺️", title: "世界开拓者" },
-  { icon: "🧭", title: "方向引领者" },
-  { icon: "🏔️", title: "巅峰攀登者" },
-  { icon: "🔥", title: "烈焰铸造者" },
-  { icon: "❄️", title: "冰霜意志" },
-  { icon: "🌿", title: "万物生长" },
-  { icon: "🏗️", title: "宏伟建筑师" },
-  { icon: "🧩", title: "完美拼图者" },
-  { icon: "🎯", title: "百步穿杨" },
-  { icon: "🛡️", title: "知识守护者" },
-  { icon: "⚔️", title: "笔锋战士" },
-  { icon: "🎪", title: "万象掌控者" },
-  { icon: "🏛️", title: "不朽殿堂" },
-  { icon: "🌱", title: "播种先驱" },
-  { icon: "🔔", title: "晨钟暮鼓" },
-  { icon: "🧲", title: "万有引力" },
-  { icon: "🕊️", title: "和平使者" },
-  { icon: "🎆", title: "璀璨烟火" },
-  { icon: "🐉", title: "龙腾四海" },
-  { icon: "🦋", title: "破茧成蝶" },
-  { icon: "🌀", title: "太极宗师" },
-  { icon: "🏴‍☠️", title: "航海传奇" },
-  { icon: "🦾", title: "钢铁意志" },
-  { icon: "🪶", title: "轻如鸿毛" },
-  { icon: "🧱", title: "铜墙铁壁" },
-  { icon: "🫧", title: "深海潜行者" },
-  { icon: "🐾", title: "万兽之王" },
-  { icon: "🎶", title: "天籁之音" },
-  { icon: "🧲", title: "万磁之力" },
-  { icon: "🗝️", title: "万能钥匙" },
-  { icon: "🪜", title: "步步高升" },
-  { icon: "🧊", title: "极地探险家" },
-  { icon: "🏹", title: "百发百中" },
-  { icon: "🪄", title: "魔法编织者" },
-  { icon: "🛸", title: "星际穿越者" },
-  { icon: "🧿", title: "命运之眼" },
-  { icon: "🪬", title: "不灭薪火" },
-  { icon: "🦩", title: "涅槃重生" },
-  { icon: "🫀", title: "赤诚之心" },
-  { icon: "🪺", title: "筑巢引凤" },
-  { icon: "🏔️", title: "万山之祖" },
-  { icon: "🌊", title: "沧海桑田" },
-  { icon: "🌪️", title: "风暴驾驭者" },
-  { icon: "🪨", title: "磐石不动" },
-  { icon: "🌜", title: "暗夜守望者" },
-  { icon: "🏵️", title: "王者风范" },
-  { icon: "🌍", title: "大千世界" },
+  // Lv.1-10 笔墨初阶
+  { icon: "✏️", title: "新手写手" },          // 1
+  { icon: "📝", title: "初露锋芒" },          // 2
+  { icon: "✍️", title: "笔耕不辍" },          // 3
+  { icon: "🖊️", title: "妙笔生花" },          // 4
+  { icon: "📖", title: "小有所成" },          // 5
+  { icon: "📚", title: "博览群书" },          // 6
+  { icon: "🎓", title: "学识渐丰" },          // 7
+  { icon: "🧠", title: "融会贯通" },          // 8
+  { icon: "👑", title: "知识大师" },          // 9
+  { icon: "🏆", title: "思源之巅" },          // 10
+  // Lv.11-20 才华绽放
+  { icon: "⭐", title: "崭露头角" },          // 11
+  { icon: "🌟", title: "才华横溢" },          // 12
+  { icon: "💫", title: "文采斐然" },          // 13
+  { icon: "🔥", title: "笔下生风" },          // 14
+  { icon: "⚡", title: "灵感如电" },          // 15
+  { icon: "🌈", title: "七彩文思" },          // 16
+  { icon: "💎", title: "字字珠玑" },          // 17
+  { icon: "🦋", title: "破茧成蝶" },          // 18
+  { icon: "🌈", title: "彩虹之巅" },          // 19
+  { icon: "🎇", title: "才华绽放" },          // 20
+  // Lv.21-30 匠心独运
+  { icon: "🔧", title: "知识工匠" },          // 21
+  { icon: "🏗️", title: "宏伟建筑师" },        // 22
+  { icon: "🧩", title: "完美拼图者" },        // 23
+  { icon: "🎯", title: "百步穿杨" },          // 24
+  { icon: "🛡️", title: "知识守护者" },        // 25
+  { icon: "⚔️", title: "笔锋战士" },          // 26
+  { icon: "🔑", title: "万能钥匙" },          // 27
+  { icon: "🧭", title: "方向引领者" },        // 28
+  { icon: "🏗️", title: "匠心独运" },          // 29
+  { icon: "🎭", title: "万象宗师" },          // 30
+  // Lv.31-40 力量觉醒
+  { icon: "🦁", title: "雄狮觉醒" },          // 31
+  { icon: "🦅", title: "翱翔天际" },          // 32
+  { icon: "🐾", title: "万兽之王" },          // 33
+  { icon: "🐉", title: "潜龙在渊" },          // 34
+  { icon: "🏹", title: "百发百中" },          // 35
+  { icon: "🦾", title: "钢铁意志" },          // 36
+  { icon: "🧊", title: "冰霜之心" },          // 37
+  { icon: "🔥", title: "烈焰铸造者" },        // 38
+  { icon: "🪨", title: "磐石不动" },          // 39
+  { icon: "🎪", title: "万象掌控者" },        // 40
+  // Lv.41-50 自然之力
+  { icon: "🌿", title: "万物生长" },          // 41
+  { icon: "🌱", title: "播种先驱" },          // 42
+  { icon: "🌊", title: "知识海洋" },          // 43
+  { icon: "🌋", title: "火山淬炼" },          // 44
+  { icon: "🌪️", title: "风暴驾驭者" },        // 45
+  { icon: "❄️", title: "极地探险家" },        // 46
+  { icon: "☀️", title: "烈日灼心" },          // 47
+  { icon: "🌊", title: "沧海桑田" },          // 48
+  { icon: "🏔️", title: "万山之祖" },          // 49
+  { icon: "🌍", title: "大千世界" },          // 50
+  // Lv.51-60 星辰大海
+  { icon: "🌙", title: "皓月当空" },          // 51
+  { icon: "🌜", title: "暗夜守望者" },        // 52
+  { icon: "🪐", title: "星球漫步" },          // 53
+  { icon: "🌠", title: "流星赶月" },          // 54
+  { icon: "🌌", title: "银河垂钓" },          // 55
+  { icon: "🚀", title: "星际穿越者" },        // 56
+  { icon: "🛸", title: "宇宙巡航" },          // 57
+  { icon: "✨", title: "星尘使者" },          // 58
+  { icon: "🌕", title: "满月之辉" },          // 59
+  { icon: "🔮", title: "星辰预言者" },        // 60
+  // Lv.61-70 神话境界
+  { icon: "🐉", title: "龙腾四海" },          // 61
+  { icon: "🦩", title: "涅槃重生" },          // 62
+  { icon: "🌀", title: "太极宗师" },          // 63
+  { icon: "🏴‍☠️", title: "航海传奇" },       // 64
+  { icon: "🪄", title: "魔法编织者" },        // 65
+  { icon: "🧿", title: "命运之眼" },          // 66
+  { icon: "🪬", title: "不灭薪火" },          // 67
+  { icon: "🎶", title: "天籁之音" },          // 68
+  { icon: "🫀", title: "赤诚之心" },          // 69
+  { icon: "🏵️", title: "王者风范" },          // 70
+  // Lv.71-80 超凡入圣
+  { icon: "🦸", title: "超级英雄" },          // 71
+  { icon: "🧬", title: "基因进化" },          // 72
+  { icon: "🪩", title: "光芒万丈" },          // 73
+  { icon: "🏛️", title: "不朽殿堂" },          // 74
+  { icon: "🪺", title: "筑巢引凤" },          // 75
+  { icon: "🔔", title: "晨钟暮鼓" },          // 76
+  { icon: "🪜", title: "步步高升" },          // 77
+  { icon: "🕊️", title: "和平使者" },          // 78
+  { icon: "🎆", title: "璀璨烟火" },          // 79
+  { icon: "💎", title: "钻石永恒" },          // 80
+  // Lv.81-90 宇宙意志
+  { icon: "🌍", title: "万界巡游者" },        // 81
+  { icon: "🧭", title: "时空旅者" },          // 82
+  { icon: "🫅", title: "王者归来" },          // 83
+  { icon: "⚡", title: "超越极限" },          // 84
+  { icon: "🌀", title: "混沌之眼" },          // 85
+  { icon: "♾️", title: "无穷无尽" },          // 86
+  { icon: "🌌", title: "宇宙意志" },          // 87
+  { icon: "🪐", title: "银河主宰" },          // 88
+  { icon: "🌠", title: "星辰大海" },          // 89
+  { icon: "🔮", title: "永恒之光" },          // 90
+  // Lv.91-100 天道轮回
+  { icon: "☯️", title: "天道酬勤" },          // 91
+  { icon: "🌀", title: "轮回超越" },          // 92
+  { icon: "🐉", title: "太古真龙" },          // 93
+  { icon: "🦅", title: "九天玄鹰" },          // 94
+  { icon: "🌊", title: "四海龙王" },          // 95
+  { icon: "☀️", title: "金乌化身" },          // 96
+  { icon: "🌙", title: "太阴星君" },          // 97
+  { icon: "🏔️", title: "昆仑之主" },          // 98
+  { icon: "🔥", title: "凤凰涅槃" },          // 99
+  { icon: "👑", title: "万古帝王" },          // 100
+  // Lv.101-110 无上境界
+  { icon: "🌌", title: "创世之神" },          // 101
+  { icon: "💫", title: "万界之主" },          // 102
+  { icon: "⚡", title: "天罚执行者" },        // 103
+  { icon: "🔮", title: "命运编织者" },        // 104
+  { icon: "🌍", title: "造物主宰" },          // 105
+  { icon: "🪬", title: "不朽传说" },          // 106
+  { icon: "✨", title: "万古流芳" },          // 107
+  { icon: "♾️", title: "永恒不灭" },          // 108
+  { icon: "🌀", title: "无极之道" },          // 109
+  { icon: "🏆", title: "至高无上" },          // 110
 ]
 
 function getLevelInfo(level: number) {

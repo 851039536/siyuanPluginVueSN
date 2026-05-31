@@ -51,6 +51,35 @@
             <span class="ach-tier-badge">{{ tierLabels[ach.tier] }}</span>
           </div>
         </div>
+
+        <!-- 未获得成就 -->
+        <div
+          v-if="lockedAchievements.length > 0"
+          class="locked-section"
+        >
+          <button
+            class="locked-toggle"
+            @click="showLocked = !showLocked"
+          >
+            <span>🔒 未获得 ({{ lockedAchievements.length }})</span>
+            <span class="toggle-arrow">{{ showLocked ? '▲' : '▼' }}</span>
+          </button>
+          <div
+            v-if="showLocked"
+            class="achievements-grid locked-grid"
+          >
+            <div
+              v-for="ach in lockedAchievements"
+              :key="ach.id"
+              class="achievement-card locked"
+              :class="[`tier-${ach.tier}`]"
+            >
+              <span class="ach-icon">🔒</span>
+              <span class="ach-title">{{ ach.title }}</span>
+              <span class="ach-desc">{{ ach.description }}</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- 下一目标聚焦卡 -->
@@ -209,6 +238,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const showAll = ref(false)
+const showLocked = ref(false)
 
 const tierLabels: Record<Tier, string> = {
   common: props.i18n.tierCommon || "普通",
@@ -920,6 +950,47 @@ const lockedAchievements = computed(() =>
     background: rgba(234, 179, 8, 0.25);
     color: #ca8a04;
   }
+
+  &.locked {
+    opacity: 0.4;
+    filter: grayscale(0.6);
+
+    .ach-icon { font-size: 16px; }
+  }
+}
+
+.locked-section {
+  margin-top: 8px;
+}
+
+.locked-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 5px 8px;
+  border: 1px dashed var(--b3-border-color);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  font-size: 9px;
+  opacity: 0.5;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover {
+    opacity: 0.8;
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+  }
+
+  .toggle-arrow {
+    font-size: 8px;
+  }
+}
+
+.locked-grid {
+  margin-top: 6px;
 }
 
 // ===== 分类 =====

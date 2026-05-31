@@ -347,7 +347,7 @@ const TIER_POINTS: Record<Tier, number> = {
 // 公式：第 n 级所需累计点数（n 从 1 开始，1 级 = 0 点）
 function pointsForLevel(level: number): number {
   if (level <= 1) return 0
-  return Math.floor(8 * (level - 1) * Math.sqrt(level - 1))
+  return Math.floor(15 * (level - 1) * Math.sqrt(level - 1))
 }
 
 const LEVEL_TITLES = [
@@ -381,6 +381,53 @@ const LEVEL_TITLES = [
   { icon: "🪩", title: "光芒万丈" },
   { icon: "♾️", title: "无穷无尽" },
   { icon: "🎭", title: "万象宗师" },
+  { icon: "🗺️", title: "世界开拓者" },
+  { icon: "🧭", title: "方向引领者" },
+  { icon: "🏔️", title: "巅峰攀登者" },
+  { icon: "🔥", title: "烈焰铸造者" },
+  { icon: "❄️", title: "冰霜意志" },
+  { icon: "🌿", title: "万物生长" },
+  { icon: "🏗️", title: "宏伟建筑师" },
+  { icon: "🧩", title: "完美拼图者" },
+  { icon: "🎯", title: "百步穿杨" },
+  { icon: "🛡️", title: "知识守护者" },
+  { icon: "⚔️", title: "笔锋战士" },
+  { icon: "🎪", title: "万象掌控者" },
+  { icon: "🏛️", title: "不朽殿堂" },
+  { icon: "🌱", title: "播种先驱" },
+  { icon: "🔔", title: "晨钟暮鼓" },
+  { icon: "🧲", title: "万有引力" },
+  { icon: "🕊️", title: "和平使者" },
+  { icon: "🎆", title: "璀璨烟火" },
+  { icon: "🐉", title: "龙腾四海" },
+  { icon: "🦋", title: "破茧成蝶" },
+  { icon: "🌀", title: "太极宗师" },
+  { icon: "🏴‍☠️", title: "航海传奇" },
+  { icon: "🦾", title: "钢铁意志" },
+  { icon: "🪶", title: "轻如鸿毛" },
+  { icon: "🧱", title: "铜墙铁壁" },
+  { icon: "🫧", title: "深海潜行者" },
+  { icon: "🐾", title: "万兽之王" },
+  { icon: "🎶", title: "天籁之音" },
+  { icon: "🧲", title: "万磁之力" },
+  { icon: "🗝️", title: "万能钥匙" },
+  { icon: "🪜", title: "步步高升" },
+  { icon: "🧊", title: "极地探险家" },
+  { icon: "🏹", title: "百发百中" },
+  { icon: "🪄", title: "魔法编织者" },
+  { icon: "🛸", title: "星际穿越者" },
+  { icon: "🧿", title: "命运之眼" },
+  { icon: "🪬", title: "不灭薪火" },
+  { icon: "🦩", title: "涅槃重生" },
+  { icon: "🫀", title: "赤诚之心" },
+  { icon: "🪺", title: "筑巢引凤" },
+  { icon: "🏔️", title: "万山之祖" },
+  { icon: "🌊", title: "沧海桑田" },
+  { icon: "🌪️", title: "风暴驾驭者" },
+  { icon: "🪨", title: "磐石不动" },
+  { icon: "🌜", title: "暗夜守望者" },
+  { icon: "🏵️", title: "王者风范" },
+  { icon: "🌍", title: "大千世界" },
 ]
 
 function getLevelInfo(level: number) {

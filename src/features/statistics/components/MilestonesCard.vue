@@ -364,6 +364,23 @@ const LEVEL_TITLES = [
   { icon: "⚡", title: "超越极限" },
   { icon: "🌌", title: "无尽探索" },
   { icon: "🔮", title: "永恒之光" },
+  { icon: "🐉", title: "东方巨龙" },
+  { icon: "🦅", title: "翱翔天际" },
+  { icon: "🌊", title: "知识海洋" },
+  { icon: "🌋", title: "火山淬炼" },
+  { icon: "🌠", title: "星辰大海" },
+  { icon: "🪐", title: "宇宙征途" },
+  { icon: "🌕", title: "皓月当空" },
+  { icon: "☀️", title: "烈日灼心" },
+  { icon: "🌈", title: "七彩虹光" },
+  { icon: "💎", title: "钻石永恒" },
+  { icon: "🫅", title: "王者归来" },
+  { icon: "🦸", title: "超级英雄" },
+  { icon: "🧬", title: "基因进化" },
+  { icon: "🌀", title: "时空旅者" },
+  { icon: "🪩", title: "光芒万丈" },
+  { icon: "♾️", title: "无穷无尽" },
+  { icon: "🎭", title: "万象宗师" },
 ]
 
 function getLevelInfo(level: number) {

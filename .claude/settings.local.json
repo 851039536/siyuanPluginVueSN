@@ -110,7 +110,8 @@
       "WebFetch(domain:cdn.jsdelivr.net)",
       "Bash(gh api *)",
       "Bash(where gh *)",
-      "Bash(pnpm lint:fix)"
+      "Bash(pnpm lint:fix)",
+      "Bash(node -e ' *)"
     ],
     "deny": [],
     "ask": []

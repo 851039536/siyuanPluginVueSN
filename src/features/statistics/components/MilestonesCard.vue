@@ -336,33 +336,40 @@ const allMilestones = computed((): MilestoneDef[] => {
   return result
 })
 
-// ===== 等级系统 =====
+// ===== 等级系统（公式化，无上限） =====
 const TIER_POINTS: Record<Tier, number> = {
-  common: 1,
-  rare: 3,
-  epic: 5,
-  legendary: 10,
+  common: 3,
+  rare: 8,
+  epic: 15,
+  legendary: 30,
 }
 
-interface LevelDef {
-  level: number
-  title: string
-  icon: string
-  pointsRequired: number
+// 公式：第 n 级所需累计点数（n 从 1 开始，1 级 = 0 点）
+function pointsForLevel(level: number): number {
+  if (level <= 1) return 0
+  return Math.floor(8 * (level - 1) * Math.sqrt(level - 1))
 }
 
-const LEVEL_DEFS: LevelDef[] = [
-  { level: 1, title: "新手写手", icon: "✏️", pointsRequired: 0 },
-  { level: 2, title: "初露锋芒", icon: "📝", pointsRequired: 5 },
-  { level: 3, title: "笔耕不辍", icon: "✍️", pointsRequired: 15 },
-  { level: 4, title: "妙笔生花", icon: "🖊️", pointsRequired: 30 },
-  { level: 5, title: "知识工匠", icon: "🔧", pointsRequired: 50 },
-  { level: 6, title: "资深作者", icon: "📖", pointsRequired: 80 },
-  { level: 7, title: "内容大师", icon: "🎓", pointsRequired: 120 },
-  { level: 8, title: "知识大师", icon: "🧠", pointsRequired: 170 },
-  { level: 9, title: "传奇学者", icon: "👑", pointsRequired: 230 },
-  { level: 10, title: "思源之巅", icon: "🏆", pointsRequired: 300 },
+const LEVEL_TITLES = [
+  { icon: "✏️", title: "新手写手" },
+  { icon: "📝", title: "初露锋芒" },
+  { icon: "✍️", title: "笔耕不辍" },
+  { icon: "🖊️", title: "妙笔生花" },
+  { icon: "🔧", title: "知识工匠" },
+  { icon: "📖", title: "资深作者" },
+  { icon: "🎓", title: "内容大师" },
+  { icon: "🧠", title: "知识大师" },
+  { icon: "👑", title: "传奇学者" },
+  { icon: "🏆", title: "思源之巅" },
+  { icon: "⚡", title: "超越极限" },
+  { icon: "🌌", title: "无尽探索" },
+  { icon: "🔮", title: "永恒之光" },
 ]
+
+function getLevelInfo(level: number) {
+  const idx = Math.min(level - 1, LEVEL_TITLES.length - 1)
+  return LEVEL_TITLES[idx]
+}
 
 // ===== 特殊成就卡片 =====
 interface AchievementDef {
@@ -483,7 +490,7 @@ const showAllText = computed(() =>
     .replace("{count}", String(allMilestones.value.length)),
 )
 
-// ===== 等级计算 =====
+// ===== 等级计算（公式化，无上限） =====
 const totalPoints = computed(() => {
   return milestonesWithState.value
     .filter((m) => m.achieved)
@@ -491,24 +498,19 @@ const totalPoints = computed(() => {
 })
 
 const currentLevel = computed(() => {
-  let lvl = LEVEL_DEFS[0]
-  for (const def of LEVEL_DEFS) {
-    if (totalPoints.value >= def.pointsRequired) {
-      lvl = def
-    } else {
-      break
-    }
-  }
-  return lvl
+  let level = 1
+  while (pointsForLevel(level + 1) <= totalPoints.value) level++
+  const info = getLevelInfo(level)
+  return { level, ...info, pointsRequired: pointsForLevel(level) }
 })
 
 const nextLevel = computed(() => {
-  const idx = LEVEL_DEFS.findIndex((d) => d.level === currentLevel.value.level)
-  return idx < LEVEL_DEFS.length - 1 ? LEVEL_DEFS[idx + 1] : null
+  const lv = currentLevel.value.level + 1
+  const info = getLevelInfo(lv)
+  return { level: lv, ...info, pointsRequired: pointsForLevel(lv) }
 })
 
 const levelProgress = computed(() => {
-  if (!nextLevel.value) return 100
   const cur = currentLevel.value.pointsRequired
   const nxt = nextLevel.value.pointsRequired
   const range = nxt - cur
@@ -927,12 +929,12 @@ const achievementDefs = computed<AchievementDef[]>(() => [
     },
   },
   {
-    id: "ach-max-level",
+    id: "ach-level-10",
     icon: "🏆",
     title: "登峰造极",
-    description: "达到最高等级",
+    description: "达到 Lv.10",
     tier: "legendary",
-    check: () => currentLevel.value.level >= LEVEL_DEFS.length,
+    check: () => currentLevel.value.level >= 10,
   },
 ])
 

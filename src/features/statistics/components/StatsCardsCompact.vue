@@ -1,42 +1,22 @@
 <template>
-  <div class="stats-cards-wrapper">
-    <div class="core-metrics">
+  <div class="stats-section">
+    <h3 class="stats-title">📊 总览</h3>
+    <div class="stats-cards-wrapper">
       <div
-        v-for="item in coreItems"
+        v-for="item in allItems"
         :key="item.label"
-        class="core-item"
+        class="stats-item"
       >
-        <span class="core-icon">{{ item.icon }}</span>
-        <div class="core-data">
-          <span class="core-value">{{ item.value }}</span>
-          <span class="core-label">{{ item.label }}</span>
-        </div>
+      <div class="stats-value-row">
+        <span class="stats-value">{{ item.value }}</span>
+        <span
+          v-if="item.change !== null"
+          class="stats-change"
+          :class="item.change > 0 ? 'up' : 'down'"
+        >{{ formatChange(item.change) }}</span>
       </div>
+      <span class="stats-label">{{ item.label }}</span>
     </div>
-
-    <CollapsibleSection
-      :title="i18n.moreStats || '详细统计'"
-      :default-expanded="true"
-      :badge="`${secondaryItems.length}项`"
-    >
-      <div class="detail-grid">
-        <div
-          v-for="item in secondaryItems"
-          :key="item.label"
-          class="detail-item"
-        >
-          <div class="detail-value-row">
-            <span class="detail-value">{{ item.value }}</span>
-            <span
-              v-if="item.change !== null"
-              class="detail-change"
-              :class="item.change > 0 ? 'up' : 'down'"
-            >{{ formatChange(item.change) }}</span>
-          </div>
-          <span class="detail-label">{{ item.label }}</span>
-        </div>
-      </div>
-    </CollapsibleSection>
   </div>
 </template>
 
@@ -46,7 +26,6 @@ import {
   formatNumber,
   formatShortNumber,
 } from "../utils"
-import CollapsibleSection from "./CollapsibleSection.vue"
 
 interface Props {
   totalNotes?: number
@@ -104,25 +83,22 @@ const props = withDefaults(defineProps<Props>(), {
   }),
 })
 
-const coreItems = computed(() => [
+const allItems = computed(() => [
   {
-    icon: "📓",
     value: formatNumber(props.totalNotes),
     label: props.i18n.totalNotes,
+    change: null as number | null,
   },
   {
-    icon: "✍️",
     value: formatShortNumber(props.totalWords),
     label: props.i18n.totalWords,
+    change: null,
   },
   {
-    icon: "📊",
     value: String(props.avgWordsPerDoc),
     label: props.i18n.avgWordsPerDoc,
+    change: null,
   },
-])
-
-const secondaryItems = computed(() => [
   {
     value: String(props.todayCreated),
     label: props.i18n.todayCreated,
@@ -136,7 +112,7 @@ const secondaryItems = computed(() => [
   {
     value: formatShortNumber(props.totalBlocks),
     label: props.i18n.totalBlocks,
-    change: null as number | null,
+    change: null,
   },
   {
     value: formatShortNumber(props.totalAssets),
@@ -174,68 +150,16 @@ function formatChange(change: number | null): string {
 @use "../styles/index.scss" as stats;
 
 .stats-cards-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.core-metrics {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-
-.core-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
-  border-radius: 8px;
-  transition: border-color 0.2s, box-shadow 0.2s;
-
-  &:hover {
-    border-color: var(--b3-theme-primary);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  }
-}
-
-.core-icon {
-  font-size: 22px;
-  flex-shrink: 0;
-}
-
-.core-data {
-  flex: 1;
-  min-width: 0;
-}
-
-.core-value {
-  font-family: $font-heading;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--b3-theme-primary);
-  line-height: 1.2;
-  display: block;
-}
-
-.core-label {
-  font-size: 10px;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.6;
-}
-
-.detail-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 1px;
   background: var(--b3-border-color);
-  border-radius: 6px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 8px;
   overflow: hidden;
 }
 
-.detail-item {
+.stats-item {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -245,13 +169,13 @@ function formatChange(change: number | null): string {
   text-align: center;
 }
 
-.detail-value-row {
+.stats-value-row {
   display: flex;
   align-items: baseline;
   gap: 3px;
 }
 
-.detail-value {
+.stats-value {
   font-family: $font-heading;
   font-size: 15px;
   font-weight: 700;
@@ -259,14 +183,14 @@ function formatChange(change: number | null): string {
   line-height: 1.2;
 }
 
-.detail-label {
+.stats-label {
   font-size: 9px;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
   margin-top: 2px;
 }
 
-.detail-change {
+.stats-change {
   padding: 1px 3px;
   border-radius: 4px;
   font-size: 8px;
@@ -274,22 +198,18 @@ function formatChange(change: number | null): string {
   line-height: 1.4;
 }
 
-.detail-change.up {
+.stats-change.up {
   background: rgba(stats.$color-success, 0.15);
   color: stats.$color-success;
 }
 
-.detail-change.down {
+.stats-change.down {
   background: rgba(stats.$color-danger, 0.15);
   color: stats.$color-danger;
 }
 
 @include mobile-only {
-  .core-metrics {
-    grid-template-columns: 1fr;
-  }
-
-  .detail-grid {
+  .stats-cards-wrapper {
     grid-template-columns: repeat(2, 1fr);
   }
 }

@@ -24,6 +24,12 @@
         {{ i18n.activityHeatmap || '活跃热力图' }}
       </button>
       <button
+        :class="['tab-item', { active: activeTab === 'activity' }]"
+        @click="activeTab = 'activity'"
+      >
+        {{ i18n.notebookActivity || '写作活跃度' }}
+      </button>
+      <button
         :class="['tab-item', { active: activeTab === 'milestones' }]"
         @click="activeTab = 'milestones'"
       >
@@ -160,16 +166,6 @@
           />
         </CollapsibleSection>
 
-        <!-- 可折叠：各笔记本写作活跃度对比 -->
-        <CollapsibleSection
-          :title="`📈 ${i18n.notebookActivity || '笔记本写作活跃度'}`"
-          :default-expanded="false"
-        >
-          <NotebookActivityTrend
-            :on-get-notebook-activity-trend="getNotebookActivityTrend"
-          />
-        </CollapsibleSection>
-
         <!-- 可折叠：年度/月度报告 -->
         <CollapsibleSection
           :title="`📊 ${i18n.reportTitle || '年度/月度报告'}`"
@@ -221,6 +217,17 @@
           :writing-streak="stats?.writingStreak ?? 0"
           :active-days="stats?.activeDays ?? 0"
           :i18n="heatmapI18n"
+        />
+      </div>
+
+      <!-- 写作活跃度 Tab -->
+      <div
+        v-show="activeTab === 'activity'"
+        class="activity-tab"
+      >
+        <NotebookActivityTrend
+          :on-get-notebook-activity-trend="getNotebookActivityTrend"
+          :i18n="activityI18n"
         />
       </div>
     </div>
@@ -388,7 +395,7 @@ const props = withDefaults(defineProps<Props>(), {
   }),
 })
 
-const activeTab = ref<"overview" | "heatmap" | "milestones">("overview")
+const activeTab = ref<"overview" | "heatmap" | "activity" | "milestones">("overview")
 
 const {
   loading,
@@ -467,6 +474,28 @@ const heatmapI18n = computed(() => ({
   mon: "一",
   wed: "三",
   fri: "五",
+}))
+
+const activityI18n = computed(() => ({
+  loading: props.i18n.loading || "加载中...",
+  noData: "暂无数据",
+  activeNotebooks: "活跃笔记本",
+  mostActive: "最活跃",
+  periodTotalWords: "期间总字数",
+  dailyAvgWords: "日均字数",
+  notebookRanking: "笔记本排行",
+  notebookName: "笔记本",
+  totalWords: "总字数",
+  activeDaysLabel: "活跃天数",
+  dailyAvg: "日均",
+  proportion: "占比",
+  wordsUnit: props.i18n.wordsUnit || "字",
+  days7: props.i18n.days7 || "7天",
+  days15: props.i18n.days15 || "15天",
+  days30: props.i18n.days30 || "30天",
+  days60: "60天",
+  days90: "90天",
+  days180: "180天",
 }))
 
 const milestonesI18n = computed(() => ({
@@ -624,7 +653,8 @@ defineExpose({
 }
 
 .milestones-tab,
-.heatmap-tab {
+.heatmap-tab,
+.activity-tab {
   padding: 12px;
 }
 </style>

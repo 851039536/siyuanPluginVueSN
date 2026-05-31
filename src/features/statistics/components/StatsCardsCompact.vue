@@ -1,6 +1,5 @@
 <template>
   <div class="stats-cards-wrapper">
-    <!-- 核心指标横幅（常驻） -->
     <div class="core-metrics">
       <div
         v-for="item in coreItems"
@@ -15,32 +14,26 @@
       </div>
     </div>
 
-    <!-- 次要指标（折叠） -->
     <CollapsibleSection
       :title="i18n.moreStats || '详细统计'"
       :default-expanded="true"
       :badge="`${secondaryItems.length}项`"
     >
-      <div class="secondary-grid">
+      <div class="detail-grid">
         <div
           v-for="item in secondaryItems"
           :key="item.label"
-          class="stat-item secondary"
+          class="detail-item"
         >
-          <span class="stat-icon">{{ item.icon }}</span>
-          <div class="stat-data">
-            <div class="value-row">
-              <span class="stat-value">{{ item.value }}</span>
-              <span
-                v-if="item.change !== null"
-                class="change"
-                :class="item.change > 0 ? 'up' : 'down'"
-              >
-                {{ formatChange(item.change) }}
-              </span>
-            </div>
-            <span class="stat-label">{{ item.label }}</span>
+          <div class="detail-value-row">
+            <span class="detail-value">{{ item.value }}</span>
+            <span
+              v-if="item.change !== null"
+              class="detail-change"
+              :class="item.change > 0 ? 'up' : 'down'"
+            >{{ formatChange(item.change) }}</span>
           </div>
+          <span class="detail-label">{{ item.label }}</span>
         </div>
       </div>
     </CollapsibleSection>
@@ -131,43 +124,36 @@ const coreItems = computed(() => [
 
 const secondaryItems = computed(() => [
   {
-    icon: "📅",
     value: String(props.todayCreated),
     label: props.i18n.todayCreated,
     change: props.createdChange,
   },
   {
-    icon: "✏️",
     value: String(props.todayModified),
     label: props.i18n.todayModified,
     change: props.modifiedChange,
   },
   {
-    icon: "🧩",
     value: formatShortNumber(props.totalBlocks),
     label: props.i18n.totalBlocks,
     change: null as number | null,
   },
   {
-    icon: "📎",
     value: formatShortNumber(props.totalAssets),
     label: props.i18n.totalAssets,
     change: null,
   },
   {
-    icon: "🖼️",
     value: formatShortNumber(props.totalImages),
     label: props.i18n.totalImages,
     change: null,
   },
   {
-    icon: "🏷️",
     value: formatShortNumber(props.totalTags),
     label: props.i18n.totalTags,
     change: null,
   },
   {
-    icon: "🔗",
     value: formatShortNumber(props.totalBacklinks),
     label: props.i18n.totalBacklinks,
     change: null,
@@ -193,7 +179,6 @@ function formatChange(change: number | null): string {
   gap: 8px;
 }
 
-// 核心指标横幅
 .core-metrics {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -241,68 +226,60 @@ function formatChange(change: number | null): string {
   opacity: 0.6;
 }
 
-// 次要指标
-.secondary-grid {
+.detail-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 1px;
   background: var(--b3-border-color);
-  border-radius: 8px;
+  border-radius: 6px;
   overflow: hidden;
 }
 
-.stat-item {
+.detail-item {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
+  justify-content: center;
+  padding: 8px 4px;
   background: var(--b3-theme-surface);
+  text-align: center;
 }
 
-.stat-icon {
-  font-size: 14px;
-  flex-shrink: 0;
-  opacity: 0.7;
+.detail-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
 }
 
-.stat-data {
-  flex: 1;
-  min-width: 0;
-}
-
-.stat-value {
+.detail-value {
   font-family: $font-heading;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--b3-theme-on-surface);
   line-height: 1.2;
 }
 
-.stat-label {
+.detail-label {
   font-size: 9px;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
+  margin-top: 2px;
 }
 
-.value-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.change {
-  padding: 1px 4px;
-  border-radius: 6px;
+.detail-change {
+  padding: 1px 3px;
+  border-radius: 4px;
   font-size: 8px;
   font-weight: 700;
+  line-height: 1.4;
 }
 
-.change.up {
+.detail-change.up {
   background: rgba(stats.$color-success, 0.15);
   color: stats.$color-success;
 }
 
-.change.down {
+.detail-change.down {
   background: rgba(stats.$color-danger, 0.15);
   color: stats.$color-danger;
 }
@@ -312,8 +289,8 @@ function formatChange(change: number | null): string {
     grid-template-columns: 1fr;
   }
 
-  .secondary-grid {
-    grid-template-columns: 1fr;
+  .detail-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>

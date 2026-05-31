@@ -9,6 +9,26 @@
       @refresh="refreshData"
     />
 
+    <!-- Tab 栏 -->
+    <div class="tab-bar">
+      <button
+        :class="['tab-item', { active: activeTab === 'overview' }]"
+        @click="activeTab = 'overview'"
+      >
+        {{ i18n.tabOverview || '概览' }}
+      </button>
+      <button
+        :class="['tab-item', { active: activeTab === 'milestones' }]"
+        @click="activeTab = 'milestones'"
+      >
+        {{ i18n.milestones || '里程碑' }}
+        <span
+          v-if="stats"
+          class="tab-badge"
+        >{{ milestonesAchievedCount }}/{{ milestonesTotalCount }}</span>
+      </button>
+    </div>
+
     <!-- 加载状态 -->
     <div
       v-if="loading && !stats"
@@ -23,79 +43,163 @@
       v-else-if="stats"
       class="statistics-content"
     >
-      <!-- 核心指标横幅（常驻） -->
-      <StatsCardsCompact
-        :total-notes="stats.totalNotes"
-        :total-words="stats.totalWords"
-        :total-blocks="stats.totalBlocks"
-        :total-assets="stats.totalAssets"
-        :total-images="stats.totalImages"
-        :total-tags="stats.totalTags"
-        :total-backlinks="stats.totalBacklinks"
-        :today-created="stats.todayCreated"
-        :today-modified="stats.todayModified"
-        :avg-words-per-doc="stats.avgWordsPerDoc"
-        :created-change="createdChange"
-        :modified-change="modifiedChange"
-        :i18n="statsCardsI18n"
-      />
+      <!-- 概览 Tab -->
+      <div v-show="activeTab === 'overview'">
+        <!-- 核心指标横幅（常驻） -->
+        <StatsCardsCompact
+          :total-notes="stats.totalNotes"
+          :total-words="stats.totalWords"
+          :total-blocks="stats.totalBlocks"
+          :total-assets="stats.totalAssets"
+          :total-images="stats.totalImages"
+          :total-tags="stats.totalTags"
+          :total-backlinks="stats.totalBacklinks"
+          :today-created="stats.todayCreated"
+          :today-modified="stats.todayModified"
+          :avg-words-per-doc="stats.avgWordsPerDoc"
+          :created-change="createdChange"
+          :modified-change="modifiedChange"
+          :i18n="statsCardsI18n"
+        />
 
-      <!-- 文档变化详情（日期范围 + 柱状图 + 详情列表） -->
-      <DocChangeSection
-        :on-get-date-changed-docs="getDateChangedDocs"
-        :on-get-date-range-change-stats="getDateRangeChangeStats"
-        :i18n="docChangeI18n"
-      />
+        <!-- 文档变化详情（日期范围 + 柱状图 + 详情列表） -->
+        <DocChangeSection
+          :on-get-date-changed-docs="getDateChangedDocs"
+          :on-get-date-range-change-stats="getDateRangeChangeStats"
+          :i18n="docChangeI18n"
+        />
 
-      <!-- 视图模式切换 + 时段统计 + 图表 -->
-      <ViewModeSection
-        v-model="viewMode"
-        v-model:day-range="dayRange"
-        v-model:month-year-range="monthYearRange"
-        v-model:selected-year="selectedYear"
-        :period-avg-words="periodAvgWords"
-        :period-total-words="stats.periodTotalWords"
-        :i18n="viewModeI18n"
-        @refresh="refreshData"
-      />
+        <!-- 视图模式切换 + 时段统计 + 图表 -->
+        <ViewModeSection
+          v-model="viewMode"
+          v-model:day-range="dayRange"
+          v-model:month-year-range="monthYearRange"
+          v-model:selected-year="selectedYear"
+          :period-avg-words="periodAvgWords"
+          :period-total-words="stats.periodTotalWords"
+          :i18n="viewModeI18n"
+          @refresh="refreshData"
+        />
 
-      <div class="chart-section">
-        <h3
-          v-if="viewMode !== 'trend'"
-          class="section-title"
+        <div class="chart-section">
+          <h3
+            v-if="viewMode !== 'trend'"
+            class="section-title"
+          >
+            {{ chartTitle }}
+          </h3>
+          <BarChart
+            v-if="viewMode !== 'trend'"
+            :title="chartTitle"
+            :chart-data="chartData"
+            :i18n="barChartI18n"
+          />
+
+          <TrendView
+            v-if="viewMode === 'trend'"
+            :historical-data="historicalData"
+            :i18n="trendViewI18n"
+          />
+        </div>
+
+        <!-- 可折叠：活跃热力图 -->
+        <CollapsibleSection
+          :title="`🔥 ${i18n.activityHeatmap || '活跃热力图'}`"
+          :default-expanded="false"
         >
-          {{ chartTitle }}
-        </h3>
-        <BarChart
-          v-if="viewMode !== 'trend'"
-          :title="chartTitle"
-          :chart-data="chartData"
-          :i18n="barChartI18n"
-        />
+          <HeatmapCard
+            :historical-data="historicalData"
+            :i18n="heatmapI18n"
+          />
+        </CollapsibleSection>
 
-        <TrendView
-          v-if="viewMode === 'trend'"
-          :historical-data="historicalData"
-          :i18n="trendViewI18n"
-        />
+        <!-- 可折叠：字数排行 -->
+        <CollapsibleSection
+          :title="`🏆 ${i18n.wordRanking || '字数排行'}`"
+          :default-expanded="false"
+        >
+          <WordRanking
+            v-if="viewMode !== 'trend'"
+            :chart-data="chartData"
+            :i18n="wordRankingI18n"
+          />
+        </CollapsibleSection>
+
+        <!-- 可折叠：各笔记本文档数 -->
+        <CollapsibleSection
+          :title="`📂 ${i18n.docBarChartTitle}`"
+          :default-expanded="false"
+        >
+          <DocBarChart
+            :title="i18n.docBarChartTitle"
+            :chart-data="notebookDocStats"
+            :loading="docChartLoading"
+            :i18n="docBarChartI18n"
+          />
+        </CollapsibleSection>
+
+        <!-- 可折叠：块类型分布 -->
+        <CollapsibleSection
+          :title="`🧩 ${i18n.blockTypeStats || '块类型分布'}`"
+          :badge="stats.blockTypeStats.length > 0 ? `${stats.blockTypeStats.length}种` : ''"
+          :default-expanded="false"
+        >
+          <DocBarChart
+            :title="i18n.blockTypeStats || '块类型分布'"
+            :chart-data="stats.blockTypeStats.map(item => ({
+              name: item.label,
+              count: item.count,
+            }))"
+            :i18n="blockTypeChartI18n"
+          />
+        </CollapsibleSection>
+
+        <!-- 可折叠：笔记本字数占比饼图 -->
+        <CollapsibleSection
+          :title="`🥧 ${i18n.notebookWordPie || '笔记本字数占比'}`"
+          :badge="notebookWordStats.length > 0 ? `${notebookWordStats.length}` : ''"
+          :default-expanded="false"
+        >
+          <NotebookWordPie
+            :data="notebookWordStats"
+          />
+        </CollapsibleSection>
+
+        <!-- 可折叠：各笔记本写作活跃度对比 -->
+        <CollapsibleSection
+          :title="`📈 ${i18n.notebookActivity || '笔记本写作活跃度'}`"
+          :default-expanded="false"
+        >
+          <NotebookActivityTrend
+            :on-get-notebook-activity-trend="getNotebookActivityTrend"
+          />
+        </CollapsibleSection>
+
+        <!-- 可折叠：年度/月度报告 -->
+        <CollapsibleSection
+          :title="`📊 ${i18n.reportTitle || '年度/月度报告'}`"
+          :default-expanded="false"
+        >
+          <ReportView
+            :on-get-report-data="getReportData"
+          />
+        </CollapsibleSection>
+
+        <!-- 可折叠：趋势预测 -->
+        <CollapsibleSection
+          :title="`🔮 ${i18n.predictionTitle || '趋势预测'}`"
+          :default-expanded="false"
+        >
+          <TrendPrediction
+            :on-get-trend-prediction="getTrendPrediction"
+          />
+        </CollapsibleSection>
       </div>
 
-      <!-- 可折叠：活跃热力图 -->
-      <CollapsibleSection
-        :title="`🔥 ${i18n.activityHeatmap || '活跃热力图'}`"
-        :default-expanded="false"
-      >
-        <HeatmapCard
-          :historical-data="historicalData"
-          :i18n="heatmapI18n"
-        />
-      </CollapsibleSection>
-
-      <!-- 可折叠：里程碑 -->
-      <CollapsibleSection
-        :title="`🏆 ${i18n.milestones || '里程碑'}`"
-        :badge="`${milestonesAchievedCount}/${milestonesTotalCount}`"
-        :default-expanded="false"
+      <!-- 里程碑 Tab -->
+      <div
+        v-show="activeTab === 'milestones'"
+        class="milestones-tab"
       >
         <MilestonesCard
           :total-notes="stats.totalNotes"
@@ -110,89 +214,7 @@
           :active-days="stats.activeDays"
           :i18n="milestonesI18n"
         />
-      </CollapsibleSection>
-
-      <!-- 可折叠：字数排行 -->
-      <CollapsibleSection
-        :title="`🏆 ${i18n.wordRanking || '字数排行'}`"
-        :default-expanded="false"
-      >
-        <WordRanking
-          v-if="viewMode !== 'trend'"
-          :chart-data="chartData"
-          :i18n="wordRankingI18n"
-        />
-      </CollapsibleSection>
-
-      <!-- 可折叠：各笔记本文档数 -->
-      <CollapsibleSection
-        :title="`📂 ${i18n.docBarChartTitle}`"
-        :default-expanded="false"
-      >
-        <DocBarChart
-          :title="i18n.docBarChartTitle"
-          :chart-data="notebookDocStats"
-          :loading="docChartLoading"
-          :i18n="docBarChartI18n"
-        />
-      </CollapsibleSection>
-
-      <!-- 可折叠：块类型分布 -->
-      <CollapsibleSection
-        :title="`🧩 ${i18n.blockTypeStats || '块类型分布'}`"
-        :badge="stats.blockTypeStats.length > 0 ? `${stats.blockTypeStats.length}种` : ''"
-        :default-expanded="false"
-      >
-        <DocBarChart
-          :title="i18n.blockTypeStats || '块类型分布'"
-          :chart-data="stats.blockTypeStats.map(item => ({
-            name: item.label,
-            count: item.count,
-          }))"
-          :i18n="blockTypeChartI18n"
-        />
-      </CollapsibleSection>
-
-      <!-- 可折叠：笔记本字数占比饼图 -->
-      <CollapsibleSection
-        :title="`🥧 ${i18n.notebookWordPie || '笔记本字数占比'}`"
-        :badge="notebookWordStats.length > 0 ? `${notebookWordStats.length}` : ''"
-        :default-expanded="false"
-      >
-        <NotebookWordPie
-          :data="notebookWordStats"
-        />
-      </CollapsibleSection>
-
-      <!-- 可折叠：各笔记本写作活跃度对比 -->
-      <CollapsibleSection
-        :title="`📈 ${i18n.notebookActivity || '笔记本写作活跃度'}`"
-        :default-expanded="false"
-      >
-        <NotebookActivityTrend
-          :on-get-notebook-activity-trend="getNotebookActivityTrend"
-        />
-      </CollapsibleSection>
-
-      <!-- 可折叠：年度/月度报告 -->
-      <CollapsibleSection
-        :title="`📊 ${i18n.reportTitle || '年度/月度报告'}`"
-        :default-expanded="false"
-      >
-        <ReportView
-          :on-get-report-data="getReportData"
-        />
-      </CollapsibleSection>
-
-      <!-- 可折叠：趋势预测 -->
-      <CollapsibleSection
-        :title="`🔮 ${i18n.predictionTitle || '趋势预测'}`"
-        :default-expanded="false"
-      >
-        <TrendPrediction
-          :on-get-trend-prediction="getTrendPrediction"
-        />
-      </CollapsibleSection>
+      </div>
     </div>
 
   </div>
@@ -203,6 +225,7 @@ import type { Plugin } from "siyuan"
 import {
   computed,
   onMounted,
+  ref,
   watch,
 } from "vue"
 import BarChart from "./components/BarChart.vue"
@@ -288,6 +311,7 @@ interface Props {
     predictionTitle?: string
     activityHeatmap?: string
     milestones?: string
+    tabOverview?: string
   }
 }
 
@@ -352,8 +376,11 @@ const props = withDefaults(defineProps<Props>(), {
     predictionTitle: "趋势预测",
     activityHeatmap: "活跃热力图",
     milestones: "里程碑",
+    tabOverview: "概览",
   }),
 })
+
+const activeTab = ref<"overview" | "milestones">("overview")
 
 const {
   loading,
@@ -514,4 +541,63 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
+@use '@/variables' as *;
+
+.tab-bar {
+  display: flex;
+  gap: 0;
+  padding: 0 12px;
+  background: var(--b3-theme-surface);
+  border-bottom: 1px solid var(--b3-border-color);
+  flex-shrink: 0;
+}
+
+.tab-item {
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  color: var(--b3-theme-on-surface-light);
+  font-size: 13px;
+  font-family: $font-body;
+  font-weight: 500;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s;
+
+  &:hover {
+    color: var(--b3-theme-on-surface);
+  }
+
+  &.active {
+    color: var(--b3-theme-primary);
+    font-weight: 600;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 8px;
+      right: 8px;
+      height: 2px;
+      background: var(--b3-theme-primary);
+      border-radius: 1px 1px 0 0;
+    }
+  }
+}
+
+.tab-badge {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: rgba(var(--b3-theme-primary-rgb), 0.1);
+  color: var(--b3-theme-primary);
+  font-weight: 500;
+}
+
+.milestones-tab {
+  padding: 12px;
+}
 </style>

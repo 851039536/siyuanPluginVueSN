@@ -2,7 +2,7 @@
   <div class="milestones-card">
     <div class="card-header">
       <span class="card-title">{{ i18n.milestones }}</span>
-      <span class="header-badge">{{ achievedCount }}/{{ allMilestones.length }}</span>
+      <span class="header-badge">{{ achievedCount }}</span>
     </div>
     <div class="card-body">
       <!-- 等级显示 -->
@@ -254,114 +254,87 @@ const categories: CategoryDef[] = [
   { id: "persistence", icon: "🔥", name: props.i18n.catPersistence || "坚持不懈", types: ["streak", "activeDays"] },
 ]
 
-const allMilestones: MilestoneDef[] = [
-  // 笔记数
-  { id: "n-10", icon: "🌱", label: "10篇", target: 10, type: "notes", tier: "common" },
-  { id: "n-30", icon: "🌿", label: "30篇", target: 30, type: "notes", tier: "common" },
-  { id: "n-60", icon: "🍀", label: "60篇", target: 60, type: "notes", tier: "common" },
-  { id: "n-100", icon: "🌳", label: "100篇", target: 100, type: "notes", tier: "common" },
-  { id: "n-150", icon: "🌲", label: "150篇", target: 150, type: "notes", tier: "rare" },
-  { id: "n-200", icon: "🌴", label: "200篇", target: 200, type: "notes", tier: "rare" },
-  { id: "n-250", icon: "🌾", label: "250篇", target: 250, type: "notes", tier: "rare" },
-  { id: "n-300", icon: "🏔️", label: "300篇", target: 300, type: "notes", tier: "rare" },
-  { id: "n-500", icon: "⛰️", label: "500篇", target: 500, type: "notes", tier: "epic" },
-  { id: "n-1k", icon: "🏛️", label: "1000篇", target: 1000, type: "notes", tier: "epic" },
-  { id: "n-3k", icon: "🏰", label: "3000篇", target: 3000, type: "notes", tier: "legendary" },
-  { id: "n-5k", icon: "👑", label: "5000篇", target: 5000, type: "notes", tier: "legendary" },
-  // 笔记本
-  { id: "nb-1", icon: "📓", label: "1个笔记本", target: 1, type: "notebooks", tier: "common" },
-  { id: "nb-3", icon: "📔", label: "3个笔记本", target: 3, type: "notebooks", tier: "common" },
-  { id: "nb-5", icon: "📕", label: "5个笔记本", target: 5, type: "notebooks", tier: "common" },
-  { id: "nb-10", icon: "📚", label: "10个笔记本", target: 10, type: "notebooks", tier: "rare" },
-  { id: "nb-15", icon: "📖", label: "15个笔记本", target: 15, type: "notebooks", tier: "rare" },
-  { id: "nb-20", icon: "🏛️", label: "20个笔记本", target: 20, type: "notebooks", tier: "epic" },
-  { id: "nb-30", icon: "🏰", label: "30个笔记本", target: 30, type: "notebooks", tier: "legendary" },
-  // 字数
-  { id: "w-1w", icon: "✏️", label: "1万字", target: 10000, type: "words", tier: "common" },
-  { id: "w-3w", icon: "📝", label: "3万字", target: 30000, type: "words", tier: "common" },
-  { id: "w-5w", icon: "✍️", label: "5万字", target: 50000, type: "words", tier: "common" },
-  { id: "w-10w", icon: "📋", label: "10万字", target: 100000, type: "words", tier: "common" },
-  { id: "w-20w", icon: "📑", label: "20万字", target: 200000, type: "words", tier: "rare" },
-  { id: "w-30w", icon: "📚", label: "30万字", target: 300000, type: "words", tier: "rare" },
-  { id: "w-50w", icon: "📖", label: "50万字", target: 500000, type: "words", tier: "rare" },
-  { id: "w-100w", icon: "🎓", label: "100万字", target: 1000000, type: "words", tier: "epic" },
-  { id: "w-200w", icon: "🏅", label: "200万字", target: 2000000, type: "words", tier: "epic" },
-  { id: "w-300w", icon: "🏆", label: "300万字", target: 3000000, type: "words", tier: "epic" },
-  { id: "w-500w", icon: "💎", label: "500万字", target: 5000000, type: "words", tier: "legendary" },
-  { id: "w-1000w", icon: "👑", label: "1000万字", target: 10000000, type: "words", tier: "legendary" },
-  // 代码块
-  { id: "c-10", icon: "⌨️", label: "10个代码块", target: 10, type: "code", tier: "common" },
-  { id: "c-30", icon: "💻", label: "30个代码块", target: 30, type: "code", tier: "common" },
-  { id: "c-50", icon: "🖥️", label: "50个代码块", target: 50, type: "code", tier: "common" },
-  { id: "c-100", icon: "⌨️", label: "100个代码块", target: 100, type: "code", tier: "rare" },
-  { id: "c-200", icon: "🖥️", label: "200个代码块", target: 200, type: "code", tier: "rare" },
-  { id: "c-500", icon: "💻", label: "500个代码块", target: 500, type: "code", tier: "epic" },
-  { id: "c-1k", icon: "🤖", label: "1000个代码块", target: 1000, type: "code", tier: "epic" },
-  { id: "c-3k", icon: "🧠", label: "3000个代码块", target: 3000, type: "code", tier: "legendary" },
-  // 标签
-  { id: "t-10", icon: "🏷️", label: "10个标签", target: 10, type: "tags", tier: "common" },
-  { id: "t-30", icon: "🔖", label: "30个标签", target: 30, type: "tags", tier: "common" },
-  { id: "t-50", icon: "📎", label: "50个标签", target: 50, type: "tags", tier: "common" },
-  { id: "t-100", icon: "🏷️", label: "100个标签", target: 100, type: "tags", tier: "rare" },
-  { id: "t-200", icon: "🔖", label: "200个标签", target: 200, type: "tags", tier: "rare" },
-  { id: "t-300", icon: "📎", label: "300个标签", target: 300, type: "tags", tier: "epic" },
-  { id: "t-500", icon: "🌐", label: "500个标签", target: 500, type: "tags", tier: "legendary" },
-  // 双链
-  { id: "b-10", icon: "🔗", label: "10条双链", target: 10, type: "backlinks", tier: "common" },
-  { id: "b-30", icon: "🔗", label: "30条双链", target: 30, type: "backlinks", tier: "common" },
-  { id: "b-60", icon: "⛓️", label: "60条双链", target: 60, type: "backlinks", tier: "common" },
-  { id: "b-100", icon: "🔗", label: "100条双链", target: 100, type: "backlinks", tier: "common" },
-  { id: "b-200", icon: "⛓️", label: "200条双链", target: 200, type: "backlinks", tier: "rare" },
-  { id: "b-300", icon: "🌐", label: "300条双链", target: 300, type: "backlinks", tier: "rare" },
-  { id: "b-500", icon: "🌐", label: "500条双链", target: 500, type: "backlinks", tier: "rare" },
-  { id: "b-1k", icon: "🕸️", label: "1000条双链", target: 1000, type: "backlinks", tier: "epic" },
-  { id: "b-2k", icon: "🌐", label: "2000条双链", target: 2000, type: "backlinks", tier: "epic" },
-  { id: "b-5k", icon: "🕸️", label: "5000条双链", target: 5000, type: "backlinks", tier: "legendary" },
-  // 附件
-  { id: "a-10", icon: "📁", label: "10个附件", target: 10, type: "assets", tier: "common" },
-  { id: "a-30", icon: "📂", label: "30个附件", target: 30, type: "assets", tier: "common" },
-  { id: "a-60", icon: "📁", label: "60个附件", target: 60, type: "assets", tier: "common" },
-  { id: "a-100", icon: "💼", label: "100个附件", target: 100, type: "assets", tier: "rare" },
-  { id: "a-200", icon: "📂", label: "200个附件", target: 200, type: "assets", tier: "rare" },
-  { id: "a-500", icon: "🗄️", label: "500个附件", target: 500, type: "assets", tier: "epic" },
-  { id: "a-1k", icon: "🗄️", label: "1000个附件", target: 1000, type: "assets", tier: "legendary" },
-  // 图片
-  { id: "i-10", icon: "🖼️", label: "10张图片", target: 10, type: "images", tier: "common" },
-  { id: "i-30", icon: "🖼️", label: "30张图片", target: 30, type: "images", tier: "common" },
-  { id: "i-60", icon: "📷", label: "60张图片", target: 60, type: "images", tier: "common" },
-  { id: "i-100", icon: "📷", label: "100张图片", target: 100, type: "images", tier: "common" },
-  { id: "i-200", icon: "🖼️", label: "200张图片", target: 200, type: "images", tier: "rare" },
-  { id: "i-300", icon: "📷", label: "300张图片", target: 300, type: "images", tier: "rare" },
-  { id: "i-500", icon: "🎨", label: "500张图片", target: 500, type: "images", tier: "rare" },
-  { id: "i-1k", icon: "🎨", label: "1000张图片", target: 1000, type: "images", tier: "epic" },
-  { id: "i-3k", icon: "🖼️", label: "3000张图片", target: 3000, type: "images", tier: "epic" },
-  { id: "i-5k", icon: "🏛️", label: "5000张图片", target: 5000, type: "images", tier: "legendary" },
-  // 连续写作天数
-  { id: "s-3", icon: "🔥", label: "连续3天", target: 3, type: "streak", tier: "common" },
-  { id: "s-7", icon: "⚡", label: "连续7天", target: 7, type: "streak", tier: "common" },
-  { id: "s-10", icon: "✨", label: "连续10天", target: 10, type: "streak", tier: "common" },
-  { id: "s-14", icon: "💫", label: "连续14天", target: 14, type: "streak", tier: "rare" },
-  { id: "s-21", icon: "🌙", label: "连续21天", target: 21, type: "streak", tier: "rare" },
-  { id: "s-30", icon: "🌟", label: "连续30天", target: 30, type: "streak", tier: "rare" },
-  { id: "s-50", icon: "🌠", label: "连续50天", target: 50, type: "streak", tier: "epic" },
-  { id: "s-60", icon: "🚀", label: "连续60天", target: 60, type: "streak", tier: "epic" },
-  { id: "s-100", icon: "💎", label: "连续100天", target: 100, type: "streak", tier: "epic" },
-  { id: "s-150", icon: "🏆", label: "连续150天", target: 150, type: "streak", tier: "epic" },
-  { id: "s-200", icon: "🌈", label: "连续200天", target: 200, type: "streak", tier: "legendary" },
-  { id: "s-300", icon: "👑", label: "连续300天", target: 300, type: "streak", tier: "legendary" },
-  { id: "s-365", icon: "🔮", label: "连续1年", target: 365, type: "streak", tier: "legendary" },
-  // 活跃天数
-  { id: "d-10", icon: "📅", label: "活跃10天", target: 10, type: "activeDays", tier: "common" },
-  { id: "d-30", icon: "📅", label: "活跃30天", target: 30, type: "activeDays", tier: "common" },
-  { id: "d-60", icon: "📆", label: "活跃60天", target: 60, type: "activeDays", tier: "common" },
-  { id: "d-100", icon: "📆", label: "活跃100天", target: 100, type: "activeDays", tier: "rare" },
-  { id: "d-150", icon: "🗓️", label: "活跃150天", target: 150, type: "activeDays", tier: "rare" },
-  { id: "d-200", icon: "🗓️", label: "活跃200天", target: 200, type: "activeDays", tier: "rare" },
-  { id: "d-300", icon: "🏅", label: "活跃300天", target: 300, type: "activeDays", tier: "epic" },
-  { id: "d-365", icon: "🏅", label: "活跃1年", target: 365, type: "activeDays", tier: "epic" },
-  { id: "d-500", icon: "🏆", label: "活跃500天", target: 500, type: "activeDays", tier: "epic" },
-  { id: "d-730", icon: "👑", label: "活跃2年", target: 730, type: "activeDays", tier: "legendary" },
-]
+// ===== 公式化无限里程碑 =====
+const TYPE_META: Record<string, { icon: string, labelFn: (v: number) => string }> = {
+  notes: { icon: "📝", labelFn: v => v >= 10000 ? `${v / 10000}万篇` : `${v}篇` },
+  notebooks: { icon: "📓", labelFn: v => `${v}个笔记本` },
+  words: { icon: "✍️", labelFn: v => v >= 10000 ? `${v / 10000}万字` : `${v}字` },
+  code: { icon: "💻", labelFn: v => `${v}个代码块` },
+  tags: { icon: "🏷️", labelFn: v => `${v}个标签` },
+  backlinks: { icon: "🔗", labelFn: v => `${v}条双链` },
+  assets: { icon: "📁", labelFn: v => `${v}个附件` },
+  images: { icon: "🖼️", labelFn: v => `${v}张图片` },
+  streak: { icon: "🔥", labelFn: v => v >= 365 ? `${Math.floor(v / 365)}年` : `连续${v}天` },
+  activeDays: { icon: "📅", labelFn: v => v >= 365 ? `活跃${Math.floor(v / 365)}年` : `活跃${v}天` },
+}
+
+// 公式：第 n 个里程碑的目标值（n 从 1 开始）
+function targetOf(type: string, n: number): number {
+  const g = Math.floor((n - 1) / 3) // 每 3 个为一档
+  const r = (n - 1) % 3 // 档内序号 0,1,2
+  switch (type) {
+    case "notes": return 10 + g * 30 + r * 10
+    case "notebooks": return n * 5
+    case "words": return (g * 2 + r + 1) * 10000
+    case "code": return 10 + (n - 1) * 30
+    case "tags": return 10 + (n - 1) * 30
+    case "backlinks": return 10 + g * 50 + r * 20
+    case "assets": return 10 + g * 20 + r * 10
+    case "images": return 10 + (n - 1) * 30
+    case "streak": return Math.round(3 * Math.pow(1.5, n - 1))
+    case "activeDays": return Math.round(10 * Math.pow(1.5, n - 1))
+    default: return n * 10
+  }
+}
+
+function tierOf(idx: number, total: number): Tier {
+  const r = idx / total
+  if (r < 0.4) return "common"
+  if (r < 0.7) return "rare"
+  if (r < 0.9) return "epic"
+  return "legendary"
+}
+
+function generateMilestones(type: string, current: number, extra = 20): MilestoneDef[] {
+  const meta = TYPE_META[type]
+  if (!meta) return []
+  const result: MilestoneDef[] = []
+  let n = 1
+  while (true) {
+    const target = targetOf(type, n)
+    if (target > current + extra * targetOf(type, 1)) break
+    result.push({
+      id: `${type}-${n}`,
+      icon: meta.icon,
+      label: meta.labelFn(target),
+      target,
+      type,
+      tier: tierOf(n - 1, 50),
+    })
+    n++
+  }
+  return result
+}
+
+const allMilestones = computed((): MilestoneDef[] => {
+  const counts: Record<string, number> = {
+    notes: props.totalNotes,
+    notebooks: props.notebookCount,
+    words: props.totalWords,
+    code: props.codeBlocks,
+    tags: props.totalTags,
+    backlinks: props.totalBacklinks,
+    assets: props.totalAssets,
+    images: props.totalImages,
+    streak: props.writingStreak,
+    activeDays: props.activeDays,
+  }
+  const result: MilestoneDef[] = []
+  for (const type of Object.keys(TYPE_META)) {
+    result.push(...generateMilestones(type, counts[type] ?? 0))
+  }
+  return result
+})
 
 // ===== 等级系统 =====
 const TIER_POINTS: Record<Tier, number> = {
@@ -418,7 +391,7 @@ function getCurrent(type: string): number {
 }
 
 const milestonesWithState = computed(() => {
-  return allMilestones.map((m) => {
+  return allMilestones.value.map((m) => {
     const current = getCurrent(m.type)
     const achieved = current >= m.target
     const progress = achieved ? 100 : Math.min((current / m.target) * 100, 100)
@@ -502,12 +475,12 @@ const visibleCategories = computed(() => {
 
 const hasHidden = computed(() => {
   return milestonesWithState.value.filter((m) => m.achieved).length > 3
-    || allMilestones.length > visibleCategories.value.reduce((s, c) => s + c.items.length, 0) + 3
+    || allMilestones.value.length > visibleCategories.value.reduce((s, c) => s + c.items.length, 0) + 3
 })
 
 const showAllText = computed(() =>
   (props.i18n.showAllMilestones || "显示全部 {count} 个里程碑")
-    .replace("{count}", String(allMilestones.length)),
+    .replace("{count}", String(allMilestones.value.length)),
 )
 
 // ===== 等级计算 =====
@@ -930,7 +903,7 @@ const achievementDefs = computed<AchievementDef[]>(() => [
     description: "解锁全部普通里程碑",
     tier: "epic",
     check: () => {
-      const commonMilestones = allMilestones.filter((m) => m.tier === "common")
+      const commonMilestones = allMilestones.value.filter((m) => m.tier === "common")
       return commonMilestones.every((m) => getCurrent(m.type) >= m.target)
     },
   },
@@ -940,7 +913,7 @@ const achievementDefs = computed<AchievementDef[]>(() => [
     title: "半程里程碑",
     description: "达成一半里程碑",
     tier: "epic",
-    check: () => achievedCount.value >= allMilestones.length / 2,
+    check: () => achievedCount.value >= allMilestones.value.length / 2,
   },
   {
     id: "ach-all-rare",
@@ -949,7 +922,7 @@ const achievementDefs = computed<AchievementDef[]>(() => [
     description: "解锁全部稀有里程碑",
     tier: "legendary",
     check: () => {
-      const rareMilestones = allMilestones.filter((m) => m.tier === "rare")
+      const rareMilestones = allMilestones.value.filter((m) => m.tier === "rare")
       return rareMilestones.every((m) => getCurrent(m.type) >= m.target)
     },
   },

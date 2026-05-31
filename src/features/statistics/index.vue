@@ -37,7 +37,7 @@
         <span
           v-if="stats"
           class="tab-badge"
-        >{{ milestonesAchievedCount }}/{{ milestonesTotalCount }}</span>
+        >{{ milestonesAchievedCount }}</span>
       </button>
     </div>
 
@@ -515,19 +515,31 @@ const milestonesI18n = computed(() => ({
 }))
 
 // Milestone badge counts
-const MILESTONE_TARGETS = {
-  notes: [10, 30, 60, 100, 150, 200, 250, 300, 500, 1000, 3000, 5000],
-  notebooks: [1, 3, 5, 10, 15, 20, 30],
-  words: [10000, 30000, 50000, 100000, 200000, 300000, 500000, 1000000, 2000000, 3000000, 5000000, 10000000],
-  code: [10, 30, 50, 100, 200, 500, 1000, 3000],
-  tags: [10, 30, 50, 100, 200, 300, 500],
-  backlinks: [10, 30, 60, 100, 200, 300, 500, 1000, 2000, 5000],
-  assets: [10, 30, 60, 100, 200, 500, 1000],
-  images: [10, 30, 60, 100, 200, 300, 500, 1000, 3000, 5000],
-  streak: [3, 7, 10, 14, 21, 30, 50, 60, 100, 150, 200, 300, 365],
-  activeDays: [10, 30, 60, 100, 150, 200, 300, 365, 500, 730],
+// 公式：计算每种类型的已达成里程碑数
+function milestoneTargetOf(type: string, n: number): number {
+  const g = Math.floor((n - 1) / 3)
+  const r = (n - 1) % 3
+  switch (type) {
+    case "notes": return 10 + g * 30 + r * 10
+    case "notebooks": return n * 5
+    case "words": return (g * 2 + r + 1) * 10000
+    case "code": return 10 + (n - 1) * 30
+    case "tags": return 10 + (n - 1) * 30
+    case "backlinks": return 10 + g * 50 + r * 20
+    case "assets": return 10 + g * 20 + r * 10
+    case "images": return 10 + (n - 1) * 30
+    case "streak": return Math.round(3 * Math.pow(1.5, n - 1))
+    case "activeDays": return Math.round(10 * Math.pow(1.5, n - 1))
+    default: return n * 10
+  }
 }
-const milestonesTotalCount = Object.values(MILESTONE_TARGETS).reduce((s, arr) => s + arr.length, 0)
+
+function countAchieved(type: string, current: number): number {
+  let n = 0
+  while (milestoneTargetOf(type, n + 1) <= current) n++
+  return n
+}
+
 const milestonesAchievedCount = computed(() => {
   const s = stats.value
   if (!s) return 0
@@ -543,9 +555,7 @@ const milestonesAchievedCount = computed(() => {
     streak: s.writingStreak,
     activeDays: s.activeDays,
   }
-  return Object.entries(MILESTONE_TARGETS).reduce((sum, [type, targets]) => {
-    return sum + targets.filter((t) => (counts[type] ?? 0) >= t).length
-  }, 0)
+  return Object.entries(counts).reduce((sum, [type, val]) => sum + countAchieved(type, val), 0)
 })
 
 const docBarChartI18n = computed(() => ({

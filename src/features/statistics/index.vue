@@ -18,6 +18,12 @@
         {{ i18n.tabOverview || '概览' }}
       </button>
       <button
+        :class="['tab-item', { active: activeTab === 'heatmap' }]"
+        @click="activeTab = 'heatmap'"
+      >
+        {{ i18n.activityHeatmap || '活跃热力图' }}
+      </button>
+      <button
         :class="['tab-item', { active: activeTab === 'milestones' }]"
         @click="activeTab = 'milestones'"
       >
@@ -101,17 +107,6 @@
             :i18n="trendViewI18n"
           />
         </div>
-
-        <!-- 可折叠：活跃热力图 -->
-        <CollapsibleSection
-          :title="`🔥 ${i18n.activityHeatmap || '活跃热力图'}`"
-          :default-expanded="false"
-        >
-          <HeatmapCard
-            :historical-data="historicalData"
-            :i18n="heatmapI18n"
-          />
-        </CollapsibleSection>
 
         <!-- 可折叠：字数排行 -->
         <CollapsibleSection
@@ -213,6 +208,19 @@
           :writing-streak="stats.writingStreak"
           :active-days="stats.activeDays"
           :i18n="milestonesI18n"
+        />
+      </div>
+
+      <!-- 热力图 Tab -->
+      <div
+        v-show="activeTab === 'heatmap'"
+        class="heatmap-tab"
+      >
+        <HeatmapCard
+          :historical-data="historicalData"
+          :writing-streak="stats?.writingStreak ?? 0"
+          :active-days="stats?.activeDays ?? 0"
+          :i18n="heatmapI18n"
         />
       </div>
     </div>
@@ -380,7 +388,7 @@ const props = withDefaults(defineProps<Props>(), {
   }),
 })
 
-const activeTab = ref<"overview" | "milestones">("overview")
+const activeTab = ref<"overview" | "heatmap" | "milestones">("overview")
 
 const {
   loading,
@@ -441,6 +449,24 @@ const heatmapI18n = computed(() => ({
   more: "多",
   last30Days: "近30天",
   activeDaysCount: "天活跃",
+  activeDaysLabel: "活跃天数",
+  currentStreak: "当前连续",
+  longestStreak: "最长连续",
+  totalOperations: "总操作次数",
+  months3: "3个月",
+  months6: "6个月",
+  year1: "1年",
+  weekdayDistribution: "星期分布",
+  monday: "周一",
+  tuesday: "周二",
+  wednesday: "周三",
+  thursday: "周四",
+  friday: "周五",
+  saturday: "周六",
+  sunday: "周日",
+  mon: "一",
+  wed: "三",
+  fri: "五",
 }))
 
 const milestonesI18n = computed(() => ({
@@ -597,7 +623,8 @@ defineExpose({
   font-weight: 500;
 }
 
-.milestones-tab {
+.milestones-tab,
+.heatmap-tab {
   padding: 12px;
 }
 </style>

@@ -58,4 +58,8 @@ export const ZERO_STATISTICS: StatisticsData = {
   periodTotalWords: 0,
   totalImages: 0,
   blockTypeStats: [],
+  notebookCount: 0,
+  codeBlocks: 0,
+  writingStreak: 0,
+  activeDays: 0,
 }

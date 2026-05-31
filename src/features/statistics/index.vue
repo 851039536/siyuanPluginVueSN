@@ -104,6 +104,10 @@
           :total-backlinks="stats.totalBacklinks"
           :total-assets="stats.totalAssets"
           :total-images="stats.totalImages"
+          :notebook-count="stats.notebookCount"
+          :code-blocks="stats.codeBlocks"
+          :writing-streak="stats.writingStreak"
+          :active-days="stats.activeDays"
           :i18n="milestonesI18n"
         />
       </CollapsibleSection>
@@ -431,26 +435,34 @@ const milestonesI18n = computed(() => ({
 // Milestone badge counts
 const MILESTONE_TARGETS = {
   notes: [100, 500, 1000, 3000, 5000, 10000],
+  notebooks: [3, 5, 10, 20],
   words: [100000, 500000, 1000000, 3000000, 5000000, 10000000],
+  code: [50, 200, 1000, 5000],
   tags: [50, 200, 500],
   backlinks: [100, 500, 2000, 5000],
   assets: [100, 500, 1000],
   images: [200, 1000, 5000],
+  streak: [3, 7, 14, 30, 60, 100, 365],
+  activeDays: [30, 100, 365, 730],
 }
 const milestonesTotalCount = Object.values(MILESTONE_TARGETS).reduce((s, arr) => s + arr.length, 0)
 const milestonesAchievedCount = computed(() => {
   const s = stats.value
   if (!s) return 0
-  const counts = {
+  const counts: Record<string, number> = {
     notes: s.totalNotes,
     words: s.totalWords,
     tags: s.totalTags,
     backlinks: s.totalBacklinks,
     assets: s.totalAssets,
     images: s.totalImages,
+    notebooks: s.notebookCount,
+    code: s.codeBlocks,
+    streak: s.writingStreak,
+    activeDays: s.activeDays,
   }
   return Object.entries(MILESTONE_TARGETS).reduce((sum, [type, targets]) => {
-    return sum + targets.filter((t) => (counts[type as keyof typeof counts] ?? 0) >= t).length
+    return sum + targets.filter((t) => (counts[type] ?? 0) >= t).length
   }, 0)
 })
 

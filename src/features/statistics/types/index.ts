@@ -57,6 +57,10 @@ export interface StatisticsData {
   currentPeriod: string
   periodTotalWords: number
   blockTypeStats: BlockTypeStat[]
+  notebookCount: number
+  codeBlocks: number
+  writingStreak: number
+  activeDays: number
 }
 
 /**

@@ -1,5 +1,5 @@
 import type { BlockTypeStat, StatisticsData } from "../types"
-import { readDir } from "@/api"
+import { lsNotebooks, readDir } from "@/api"
 import { BLOCK_TYPE_LABELS, IMAGE_EXTENSIONS, ZERO_STATISTICS } from "../types/constants"
 import { formatDateTime, executeSql } from "./executeSql"
 import { getDailyStats, getMonthlyStatsRange, getWeeklyStats, getYearlyStats } from "./timeStats"
@@ -53,6 +53,70 @@ export async function getTotalImages(): Promise<number> {
   }
 }
 
+async function getNotebookCount(): Promise<number> {
+  try {
+    const data = await lsNotebooks()
+    if (!data || !data.notebooks) return 0
+    return data.notebooks.filter((nb: any) => !nb.closed).length
+  } catch {
+    return 0
+  }
+}
+
+async function getCodeBlocks(): Promise<number> {
+  const result = await executeSql("SELECT COUNT(*) as cnt FROM blocks WHERE type = 'c'")
+  return Number(result[0]?.cnt || 0)
+}
+
+async function getWritingActivity(): Promise<{ activeDays: number, writingStreak: number }> {
+  // Get distinct dates with any create/update activity in the last 2 years
+  const today = new Date()
+  const twoYearsAgo = new Date(today)
+  twoYearsAgo.setFullYear(today.getFullYear() - 2)
+  const startStr = formatDateTime(twoYearsAgo)
+  const endStr = formatDateTime(today)
+
+  const rows = await executeSql(`
+    SELECT DISTINCT substr(created, 1, 8) as date FROM blocks
+    WHERE type = 'd' AND created >= '${startStr}' AND created <= '${endStr}'
+    UNION
+    SELECT DISTINCT substr(updated, 1, 8) as date FROM blocks
+    WHERE type = 'd' AND updated >= '${startStr}' AND updated <= '${endStr}'
+  `)
+
+  if (!rows || rows.length === 0) return { activeDays: 0, writingStreak: 0 }
+
+  const activeDateSet = new Set<string>()
+  for (const row of rows) {
+    const d = String(row.date || "")
+    if (d.length >= 8) activeDateSet.add(d.substring(0, 8))
+  }
+
+  const activeDays = activeDateSet.size
+
+  // Calculate streak: count consecutive days ending today
+  const pad = (n: number) => n < 10 ? `0${n}` : `${n}`
+  let streak = 0
+  const checkDate = new Date(today)
+  // Include today if active, otherwise start from yesterday
+  const todayKey = `${checkDate.getFullYear()}${pad(checkDate.getMonth() + 1)}${pad(checkDate.getDate())}`
+  if (!activeDateSet.has(todayKey)) {
+    checkDate.setDate(checkDate.getDate() - 1)
+  }
+
+  while (true) {
+    const key = `${checkDate.getFullYear()}${pad(checkDate.getMonth() + 1)}${pad(checkDate.getDate())}`
+    if (activeDateSet.has(key)) {
+      streak++
+      checkDate.setDate(checkDate.getDate() - 1)
+    } else {
+      break
+    }
+  }
+
+  return { activeDays, writingStreak: streak }
+}
+
 export async function getBlockTypeStats(): Promise<BlockTypeStat[]> {
   try {
     const sqlStmt = `
@@ -95,11 +159,14 @@ export async function getStatistics(viewMode: string, options: {
         (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d' AND substr(updated, 1, 8) = '${todayStr}') as todayModified
     `
 
-    const [combinedResult, totalTags, totalImages, blockTypeStats] = await Promise.all([
+    const [combinedResult, totalTags, totalImages, blockTypeStats, notebookCount, codeBlocks, writingActivity] = await Promise.all([
       executeSql(combinedSql),
       getTotalTags(),
       getTotalImages(),
       getBlockTypeStats(),
+      getNotebookCount(),
+      getCodeBlocks(),
+      getWritingActivity(),
     ])
 
     const baseStats = combinedResult[0] || {}
@@ -170,6 +237,10 @@ export async function getStatistics(viewMode: string, options: {
       periodTotalWords,
       totalImages,
       blockTypeStats,
+      notebookCount,
+      codeBlocks,
+      writingStreak: writingActivity.writingStreak,
+      activeDays: writingActivity.activeDays,
     }
   } catch (error) {
     console.error("获取统计数据失败:", error)

@@ -1,6 +1,7 @@
 <template>
   <CollapsibleSection
     :title="`📋 ${i18n.docChanges || '文档变化'} — ${rangeLabel}`"
+    :default-expanded="true"
     :badge="docRange !== 'today' && rangeStats.length > 0 ? `${rangeTotalChanges}` : changedDocsCount > 0 ? `${changedDocsCount}` : ''"
   >
     <!-- 范围选择按钮 -->

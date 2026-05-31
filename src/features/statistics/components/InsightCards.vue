@@ -35,7 +35,7 @@
     <CollapsibleSection
       :title="`🏆 ${i18n.milestones}`"
       :badge="`${achievedCount}/${allMilestones.length}`"
-      :default-expanded="achievedCount > 0"
+      :default-expanded="true"
     >
       <div class="milestones-grid">
         <div

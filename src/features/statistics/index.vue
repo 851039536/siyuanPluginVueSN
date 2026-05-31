@@ -100,6 +100,10 @@
         <MilestonesCard
           :total-notes="stats.totalNotes"
           :total-words="stats.totalWords"
+          :total-tags="stats.totalTags"
+          :total-backlinks="stats.totalBacklinks"
+          :total-assets="stats.totalAssets"
+          :total-images="stats.totalImages"
           :i18n="milestonesI18n"
         />
       </CollapsibleSection>
@@ -411,18 +415,43 @@ const heatmapI18n = computed(() => ({
 const milestonesI18n = computed(() => ({
   milestones: props.i18n.milestones || "里程碑",
   showAllMilestones: "显示全部 {count} 个里程碑",
+  nextGoal: "下一目标",
+  encourageAlmost: "只差一点点，加油！",
+  encourageHalfway: "已完成过半，继续努力！",
+  encourageStart: "千里之行，始于足下",
+  tierCommon: "普通",
+  tierRare: "稀有",
+  tierEpic: "史诗",
+  tierLegendary: "传说",
+  catWriting: "写作达人",
+  catKnowledge: "知识管理",
+  catRich: "内容丰富",
 }))
 
 // Milestone badge counts
 const MILESTONE_TARGETS = {
-  notes: [500, 1500, 3000, 3500, 4000, 5000, 7500, 10000],
-  words: [500000, 1000000, 2000000, 3000000, 5000000, 10000000, 50000000, 100000000],
+  notes: [100, 500, 1000, 3000, 5000, 10000],
+  words: [100000, 500000, 1000000, 3000000, 5000000, 10000000],
+  tags: [50, 200, 500],
+  backlinks: [100, 500, 2000, 5000],
+  assets: [100, 500, 1000],
+  images: [200, 1000, 5000],
 }
-const milestonesTotalCount = MILESTONE_TARGETS.notes.length + MILESTONE_TARGETS.words.length
+const milestonesTotalCount = Object.values(MILESTONE_TARGETS).reduce((s, arr) => s + arr.length, 0)
 const milestonesAchievedCount = computed(() => {
-  const notesAchieved = MILESTONE_TARGETS.notes.filter((t) => (stats.value?.totalNotes ?? 0) >= t).length
-  const wordsAchieved = MILESTONE_TARGETS.words.filter((t) => (stats.value?.totalWords ?? 0) >= t).length
-  return notesAchieved + wordsAchieved
+  const s = stats.value
+  if (!s) return 0
+  const counts = {
+    notes: s.totalNotes,
+    words: s.totalWords,
+    tags: s.totalTags,
+    backlinks: s.totalBacklinks,
+    assets: s.totalAssets,
+    images: s.totalImages,
+  }
+  return Object.entries(MILESTONE_TARGETS).reduce((sum, [type, targets]) => {
+    return sum + targets.filter((t) => (counts[type as keyof typeof counts] ?? 0) >= t).length
+  }, 0)
 })
 
 const docBarChartI18n = computed(() => ({

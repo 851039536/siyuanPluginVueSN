@@ -92,6 +92,7 @@
       <!-- 可折叠：字数排行 -->
       <CollapsibleSection
         :title="`🏆 ${wordRankingI18n.title}`"
+        :default-expanded="true"
       >
         <WordRanking
           v-if="viewMode !== 'trend'"
@@ -103,6 +104,7 @@
       <!-- 可折叠：各笔记本文档数 -->
       <CollapsibleSection
         :title="`📂 ${docBarChartTitle}`"
+        :default-expanded="true"
       >
         <DocBarChart
           :title="docBarChartTitle"
@@ -116,6 +118,7 @@
       <CollapsibleSection
         :title="`🧩 ${blockTypeStatsTitle}`"
         :badge="stats.blockTypeStats.length > 0 ? `${stats.blockTypeStats.length}种` : ''"
+        :default-expanded="true"
       >
         <DocBarChart
           :title="blockTypeStatsTitle"
@@ -131,6 +134,7 @@
       <CollapsibleSection
         :title="`🥧 ${notebookWordPieTitle}`"
         :badge="notebookWordStats.length > 0 ? `${notebookWordStats.length}` : ''"
+        :default-expanded="true"
       >
         <NotebookWordPie
           :data="notebookWordStats"
@@ -140,6 +144,7 @@
       <!-- 可折叠：各笔记本写作活跃度对比 -->
       <CollapsibleSection
         :title="`📈 ${notebookActivityTitle}`"
+        :default-expanded="true"
       >
         <NotebookActivityTrend
           :on-get-notebook-activity-trend="getNotebookActivityTrend"
@@ -149,6 +154,7 @@
       <!-- 可折叠：年度/月度报告 -->
       <CollapsibleSection
         :title="`📊 ${reportTitle}`"
+        :default-expanded="true"
       >
         <ReportView
           :on-get-report-data="getReportData"
@@ -158,6 +164,7 @@
       <!-- 可折叠：趋势预测 -->
       <CollapsibleSection
         :title="`🔮 ${predictionTitle}`"
+        :default-expanded="true"
       >
         <TrendPrediction
           :on-get-trend-prediction="getTrendPrediction"

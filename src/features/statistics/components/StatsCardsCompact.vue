@@ -18,6 +18,7 @@
     <!-- 次要指标（折叠） -->
     <CollapsibleSection
       :title="i18n.moreStats || '详细统计'"
+      :default-expanded="true"
       :badge="`${secondaryItems.length}项`"
     >
       <div class="secondary-grid">

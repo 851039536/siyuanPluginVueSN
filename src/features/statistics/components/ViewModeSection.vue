@@ -1,26 +1,25 @@
 <template>
   <div class="view-mode-section">
     <!-- 视图模式切换 -->
-    <div class="mode-tabs">
-      <template
-        v-for="(mode, idx) in viewModes"
-        :key="mode.value"
-      >
-        <span
-          v-if="idx === periodModesCount"
-          class="mode-separator"
-        ></span>
+    <div class="mode-row">
+      <div class="mode-tabs">
         <button
+          v-for="mode in periodModes"
+          :key="mode.value"
           class="mode-tab"
-          :class="{
-            'active': modelValue === mode.value,
-            'trend-tab': mode.value === 'trend',
-          }"
+          :class="{ active: modelValue === mode.value }"
           @click="$emit('update:modelValue', mode.value)"
         >
           {{ mode.icon }} {{ mode.label }}
         </button>
-      </template>
+      </div>
+      <button
+        class="trend-toggle"
+        :class="{ active: modelValue === 'trend' }"
+        @click="$emit('update:modelValue', 'trend')"
+      >
+        📉 {{ i18n.trend }}
+      </button>
     </div>
 
     <!-- 时段统计卡片 -->
@@ -187,9 +186,7 @@ function onRangeChange(mode: "day" | "month", value: number): void {
   emit("refresh")
 }
 
-const periodModesCount = 4 // 日/周/月/年 为时段模式，趋势为独立分析模式
-
-const viewModes = computed(() => [
+const periodModes = computed(() => [
   {
     value: "day" as const,
     label: props.i18n.day,
@@ -209,11 +206,6 @@ const viewModes = computed(() => [
     value: "year" as const,
     label: props.i18n.year,
     icon: "📈",
-  },
-  {
-    value: "trend" as const,
-    label: props.i18n.trend,
-    icon: "📉",
   },
 ])
 
@@ -287,8 +279,15 @@ const periodAvgLabel = computed(() => {
 @use "../styles/index.scss" as stats;
 
 .view-mode-section {
+  .mode-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
   .mode-tabs {
     display: flex;
+    flex: 1;
     gap: 4px;
     padding: 3px;
     background: var(--b3-theme-surface);
@@ -297,12 +296,33 @@ const periodAvgLabel = computed(() => {
     align-items: center;
   }
 
-  .mode-separator {
-    width: 1px;
-    height: 16px;
-    background: var(--b3-border-color);
+  .trend-toggle {
     flex-shrink: 0;
-    margin: 0 2px;
+    padding: 7px 12px;
+    border: 1px solid var(--b3-border-color);
+    background: var(--b3-theme-surface);
+    color: var(--b3-theme-on-surface);
+    cursor: pointer;
+    font-family: $font-body;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 8px;
+    white-space: nowrap;
+    opacity: 0.65;
+
+    &:hover {
+      border-color: var(--b3-theme-secondary);
+      color: var(--b3-theme-secondary);
+      opacity: 0.9;
+    }
+
+    &.active {
+      background: var(--b3-theme-secondary);
+      color: var(--b3-theme-on-primary, #fff);
+      border-color: var(--b3-theme-secondary);
+      opacity: 1;
+      box-shadow: 0 2px 8px rgba(var(--b3-theme-secondary-rgb), 0.25);
+    }
   }
 
   .mode-tab {
@@ -331,13 +351,6 @@ const periodAvgLabel = computed(() => {
       background: var(--b3-theme-primary);
       color: var(--b3-theme-on-primary);
       box-shadow: 0 2px 8px rgba(var(--b3-theme-primary-rgb), 0.2);
-    }
-
-    &.trend-tab {
-      &.active {
-        background: var(--b3-theme-secondary);
-        box-shadow: 0 2px 8px rgba(var(--b3-theme-secondary-rgb), 0.2);
-      }
     }
   }
 

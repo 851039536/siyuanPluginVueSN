@@ -16,6 +16,7 @@ $gradient-surface: linear-gradient(180deg, var(--b3-theme-surface) 0%, var(--b3-
 
 $color-success: #2da44e;
 $color-danger: #cf222e;
+$color-warning: #d97706;
 
 @mixin heatmap-level-colors {
   &.level-0 { background: rgba(var(--b3-theme-on-surface-rgb), 0.05); }

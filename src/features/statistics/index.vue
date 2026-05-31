@@ -80,19 +80,34 @@
         />
       </div>
 
-      <!-- 可折叠：热力图 + 里程碑 -->
-      <InsightCards
-        :historical-data="historicalData"
-        :total-notes="stats.totalNotes"
-        :total-words="stats.totalWords"
-        :total-backlinks="stats.totalBacklinks"
-        :i18n="insightCardsI18n"
-      />
+      <!-- 可折叠：活跃热力图 -->
+      <CollapsibleSection
+        :title="`🔥 ${i18n.activityHeatmap || '活跃热力图'}`"
+        :default-expanded="false"
+      >
+        <HeatmapCard
+          :historical-data="historicalData"
+          :i18n="heatmapI18n"
+        />
+      </CollapsibleSection>
+
+      <!-- 可折叠：里程碑 -->
+      <CollapsibleSection
+        :title="`🏆 ${i18n.milestones || '里程碑'}`"
+        :badge="`${milestonesAchievedCount}/${milestonesTotalCount}`"
+        :default-expanded="false"
+      >
+        <MilestonesCard
+          :total-notes="stats.totalNotes"
+          :total-words="stats.totalWords"
+          :i18n="milestonesI18n"
+        />
+      </CollapsibleSection>
 
       <!-- 可折叠：字数排行 -->
       <CollapsibleSection
-        :title="`🏆 ${wordRankingI18n.title}`"
-        :default-expanded="true"
+        :title="`🏆 ${i18n.wordRanking || '字数排行'}`"
+        :default-expanded="false"
       >
         <WordRanking
           v-if="viewMode !== 'trend'"
@@ -103,11 +118,11 @@
 
       <!-- 可折叠：各笔记本文档数 -->
       <CollapsibleSection
-        :title="`📂 ${docBarChartTitle}`"
-        :default-expanded="true"
+        :title="`📂 ${i18n.docBarChartTitle}`"
+        :default-expanded="false"
       >
         <DocBarChart
-          :title="docBarChartTitle"
+          :title="i18n.docBarChartTitle"
           :chart-data="notebookDocStats"
           :loading="docChartLoading"
           :i18n="docBarChartI18n"
@@ -116,12 +131,12 @@
 
       <!-- 可折叠：块类型分布 -->
       <CollapsibleSection
-        :title="`🧩 ${blockTypeStatsTitle}`"
+        :title="`🧩 ${i18n.blockTypeStats || '块类型分布'}`"
         :badge="stats.blockTypeStats.length > 0 ? `${stats.blockTypeStats.length}种` : ''"
-        :default-expanded="true"
+        :default-expanded="false"
       >
         <DocBarChart
-          :title="blockTypeStatsTitle"
+          :title="i18n.blockTypeStats || '块类型分布'"
           :chart-data="stats.blockTypeStats.map(item => ({
             name: item.label,
             count: item.count,
@@ -132,9 +147,9 @@
 
       <!-- 可折叠：笔记本字数占比饼图 -->
       <CollapsibleSection
-        :title="`🥧 ${notebookWordPieTitle}`"
+        :title="`🥧 ${i18n.notebookWordPie || '笔记本字数占比'}`"
         :badge="notebookWordStats.length > 0 ? `${notebookWordStats.length}` : ''"
-        :default-expanded="true"
+        :default-expanded="false"
       >
         <NotebookWordPie
           :data="notebookWordStats"
@@ -143,8 +158,8 @@
 
       <!-- 可折叠：各笔记本写作活跃度对比 -->
       <CollapsibleSection
-        :title="`📈 ${notebookActivityTitle}`"
-        :default-expanded="true"
+        :title="`📈 ${i18n.notebookActivity || '笔记本写作活跃度'}`"
+        :default-expanded="false"
       >
         <NotebookActivityTrend
           :on-get-notebook-activity-trend="getNotebookActivityTrend"
@@ -153,8 +168,8 @@
 
       <!-- 可折叠：年度/月度报告 -->
       <CollapsibleSection
-        :title="`📊 ${reportTitle}`"
-        :default-expanded="true"
+        :title="`📊 ${i18n.reportTitle || '年度/月度报告'}`"
+        :default-expanded="false"
       >
         <ReportView
           :on-get-report-data="getReportData"
@@ -163,8 +178,8 @@
 
       <!-- 可折叠：趋势预测 -->
       <CollapsibleSection
-        :title="`🔮 ${predictionTitle}`"
-        :default-expanded="true"
+        :title="`🔮 ${i18n.predictionTitle || '趋势预测'}`"
+        :default-expanded="false"
       >
         <TrendPrediction
           :on-get-trend-prediction="getTrendPrediction"
@@ -186,7 +201,8 @@ import BarChart from "./components/BarChart.vue"
 import CollapsibleSection from "./components/CollapsibleSection.vue"
 import DocBarChart from "./components/DocBarChart.vue"
 import DocChangeSection from "./components/DocChangeSection.vue"
-import InsightCards from "./components/InsightCards.vue"
+import HeatmapCard from "./components/HeatmapCard.vue"
+import MilestonesCard from "./components/MilestonesCard.vue"
 import NotebookActivityTrend from "./components/NotebookActivityTrend.vue"
 import NotebookWordPie from "./components/NotebookWordPie.vue"
 import ReportView from "./components/ReportView.vue"
@@ -256,6 +272,14 @@ interface Props {
     today: string
     days3: string
     oneMonth: string
+    wordRanking?: string
+    blockTypeStats?: string
+    notebookWordPie?: string
+    notebookActivity?: string
+    reportTitle?: string
+    predictionTitle?: string
+    activityHeatmap?: string
+    milestones?: string
   }
 }
 
@@ -312,6 +336,14 @@ const props = withDefaults(defineProps<Props>(), {
     today: "今天",
     days3: "近3天",
     oneMonth: "近1月",
+    wordRanking: "字数排行",
+    blockTypeStats: "块类型分布",
+    notebookWordPie: "笔记本字数占比",
+    notebookActivity: "笔记本写作活跃度",
+    reportTitle: "年度/月度报告",
+    predictionTitle: "趋势预测",
+    activityHeatmap: "活跃热力图",
+    milestones: "里程碑",
   }),
 })
 
@@ -368,44 +400,49 @@ const trendViewI18n = computed(() => ({
   monthOverMonth: "月环比",
 }))
 
-const insightCardsI18n = computed(() => ({
-  activityHeatmap: "活跃热力图",
+const heatmapI18n = computed(() => ({
+  activityHeatmap: props.i18n.activityHeatmap || "活跃热力图",
   less: "少",
   more: "多",
   last30Days: "近30天",
   activeDaysCount: "天活跃",
-  milestones: "里程碑",
-  notes: "笔记",
-  words: "字数",
-  notesUnit: "篇",
-  wordsUnit: "字",
 }))
 
-const docBarChartTitle = computed(() => props.i18n.docBarChartTitle || "各笔记本文档数")
+const milestonesI18n = computed(() => ({
+  milestones: props.i18n.milestones || "里程碑",
+  showAllMilestones: "显示全部 {count} 个里程碑",
+}))
+
+// Milestone badge counts
+const MILESTONE_TARGETS = {
+  notes: [500, 1500, 3000, 3500, 4000, 5000, 7500, 10000],
+  words: [500000, 1000000, 2000000, 3000000, 5000000, 10000000, 50000000, 100000000],
+}
+const milestonesTotalCount = MILESTONE_TARGETS.notes.length + MILESTONE_TARGETS.words.length
+const milestonesAchievedCount = computed(() => {
+  const notesAchieved = MILESTONE_TARGETS.notes.filter((t) => (stats.value?.totalNotes ?? 0) >= t).length
+  const wordsAchieved = MILESTONE_TARGETS.words.filter((t) => (stats.value?.totalWords ?? 0) >= t).length
+  return notesAchieved + wordsAchieved
+})
+
 const docBarChartI18n = computed(() => ({
   loading: props.i18n.loading || "加载中...",
   docsUnit: props.i18n.notesUnit || "笔记",
 }))
 
-const blockTypeStatsTitle = computed(() => "块类型分布")
 const blockTypeChartI18n = computed(() => ({
   loading: props.i18n.loading || "加载中...",
   docsUnit: "个",
 }))
 
 const wordRankingI18n = computed(() => ({
-  title: "字数排行",
+  title: props.i18n.wordRanking || "字数排行",
   loading: props.i18n.loading || "加载中...",
   wordsUnit: props.i18n.wordsUnit || "字",
   emptyText: "暂无数据",
 }))
 
 const docChangeI18n = computed(() => props.i18n)
-
-const notebookWordPieTitle = computed(() => "笔记本字数占比")
-const notebookActivityTitle = computed(() => "笔记本写作活跃度")
-const reportTitle = computed(() => "年度/月度报告")
-const predictionTitle = computed(() => "趋势预测")
 
 watch([viewMode, dayRange, monthYearRange, selectedYear], () => {
   refreshData()

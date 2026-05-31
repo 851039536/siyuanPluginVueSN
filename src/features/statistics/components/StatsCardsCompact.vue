@@ -15,6 +15,10 @@
         <div class="core-value-row">
           <span class="core-value">{{ item.value }}</span>
           <span
+            v-if="item.unitText"
+            class="core-unit"
+          >（{{ item.unitText }}）</span>
+          <span
             v-if="item.change !== null"
             class="core-change"
             :class="item.change > 0 ? 'up' : 'down'"
@@ -102,20 +106,32 @@ const props = withDefaults(defineProps<Props>(), {
   }),
 })
 
+function formatChineseUnit(num: number): string {
+  if (num >= 100000000) {
+    return `${(num / 100000000).toFixed(1)}亿`
+  } else if (num >= 10000) {
+    return `${(num / 10000).toFixed(1)}万`
+  }
+  return ""
+}
+
 const coreItems = computed(() => [
   {
     value: formatNumber(props.totalNotes),
     label: props.i18n.totalNotes,
+    unitText: formatChineseUnit(props.totalNotes),
     change: null as number | null,
   },
   {
     value: formatNumber(props.totalWords),
     label: props.i18n.totalWords,
+    unitText: formatChineseUnit(props.totalWords),
     change: null,
   },
   {
     value: String(props.todayCreated),
     label: props.i18n.todayCreated,
+    unitText: "",
     change: props.createdChange,
   },
 ])
@@ -226,6 +242,13 @@ function formatChange(change: number | null): string {
   font-weight: 800;
   color: var(--b3-theme-primary);
   line-height: 1.2;
+}
+
+.core-unit {
+  font-size: 10px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.4;
+  white-space: nowrap;
 }
 
 .core-change {

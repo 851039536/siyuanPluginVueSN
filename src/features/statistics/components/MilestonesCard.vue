@@ -27,6 +27,36 @@
           </div>
           <span class="level-progress-label">距 Lv.{{ nextLevel.level }} {{ nextLevel.title }} {{ levelProgress.toFixed(0) }}%</span>
         </div>
+
+        <!-- 等级之路 -->
+        <button
+          class="level-road-toggle"
+          @click="showLevelRoad = !showLevelRoad"
+        >
+          <span>🗺️ 等级之路</span>
+          <span class="toggle-arrow">{{ showLevelRoad ? '▲' : '▼' }}</span>
+        </button>
+        <div
+          v-if="showLevelRoad"
+          class="level-road"
+        >
+          <div
+            v-for="tier in tierRoad"
+            :key="tier.idx"
+            :class="['road-item', tier.status]"
+          >
+            <span class="road-icon">{{ tier.status === 'completed' ? '✅' : tier.status === 'current' ? '📍' : '🔒' }}</span>
+            <span class="road-prefix">{{ tier.prefix }}</span>
+            <span class="road-range">Lv.{{ tier.startLv }}-{{ tier.endLv }}</span>
+            <div class="road-bar-track">
+              <div
+                class="road-bar-fill"
+                :style="{ width: `${tier.progress}%` }"
+              ></div>
+            </div>
+            <span class="road-percent">{{ tier.progress }}%</span>
+          </div>
+        </div>
       </div>
 
       <!-- 特殊成就卡片 -->
@@ -564,6 +594,39 @@ const levelProgress = computed(() => {
   const range = nxt - cur
   if (range <= 0) return 100
   return Math.min(((totalPoints.value - cur) / range) * 100, 100)
+})
+
+// 等级之路：30 个境界的进度列表
+const showLevelRoad = ref(false)
+
+interface TierItem {
+  idx: number
+  prefix: string
+  startLv: number
+  endLv: number
+  progress: number
+  status: "completed" | "current" | "locked"
+}
+
+const tierRoad = computed<TierItem[]>(() => {
+  const curLv = currentLevel.value.level
+  return TIER_PREFIXES.map((prefix, idx) => {
+    const startLv = idx * TIER_SIZE + 1
+    const endLv = (idx + 1) * TIER_SIZE
+    let progress: number
+    let status: "completed" | "current" | "locked"
+    if (curLv > endLv) {
+      progress = 100
+      status = "completed"
+    } else if (curLv >= startLv) {
+      progress = Math.round(((curLv - startLv + 1) / TIER_SIZE) * 100)
+      status = "current"
+    } else {
+      progress = 0
+      status = "locked"
+    }
+    return { idx, prefix: prefix.replace("·", ""), startLv, endLv, progress, status }
+  })
 })
 
 // ===== 特殊成就卡片 =====
@@ -1500,5 +1563,107 @@ const lockedAchievements = computed(() =>
     border-color: var(--b3-theme-primary);
     color: var(--b3-theme-primary);
   }
+}
+
+// ========== 等级之路 ==========
+.level-road-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 10px;
+  margin-top: 10px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 6px;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+.toggle-arrow {
+  font-size: 10px;
+  opacity: 0.5;
+}
+
+.level-road {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 8px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.road-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--b3-theme-on-surface);
+  transition: background 0.15s;
+
+  &.current {
+    background: rgba(var(--b3-theme-primary-rgb), 0.08);
+    font-weight: 600;
+    color: var(--b3-theme-primary);
+  }
+
+  &.completed {
+    opacity: 0.55;
+  }
+
+  &.locked {
+    opacity: 0.3;
+  }
+}
+
+.road-icon {
+  flex-shrink: 0;
+  font-size: 10px;
+}
+
+.road-prefix {
+  width: 36px;
+  flex-shrink: 0;
+  font-weight: 600;
+}
+
+.road-range {
+  width: 70px;
+  flex-shrink: 0;
+  font-size: 10px;
+  opacity: 0.5;
+  font-family: monospace;
+}
+
+.road-bar-track {
+  flex: 1;
+  height: 4px;
+  background: rgba(var(--b3-theme-on-surface-rgb), 0.06);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.road-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--b3-theme-primary);
+  transition: width 0.3s ease;
+}
+
+.road-percent {
+  width: 32px;
+  text-align: right;
+  font-size: 10px;
+  opacity: 0.5;
+  flex-shrink: 0;
 }
 </style>

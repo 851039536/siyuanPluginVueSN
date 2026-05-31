@@ -156,6 +156,7 @@ function formatChange(change: number | null): string {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  padding-top: 4px;
 }
 
 .stats-title {

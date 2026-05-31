@@ -350,7 +350,9 @@ function pointsForLevel(level: number): number {
   return Math.floor(28 * (level - 1) * Math.sqrt(level - 1))
 }
 
-// 公式化称号：20 个笔记主题基础称号 × 6 个境界前缀 = 120 种组合（无限循环）
+// 公式化称号：每 20 级一个境界，每个境界内 20 个笔记称号循环，无限扩展
+const TIER_SIZE = 20
+
 const BASE_TITLES = [
   { icon: "✏️", title: "笔墨新秀" },
   { icon: "📝", title: "码字练手" },
@@ -379,15 +381,38 @@ const TIER_PREFIXES = [
   "入门·",
   "进阶·",
   "精通·",
-  "宗师·",
-  "至高·",
+  "熟手·",
+  "高手·",
+  "精英·",
+  "大师·",
+  "传说·",
+  "神话·",
+  "超凡·",
+  "入圣·",
+  "登峰·",
+  "造极·",
+  "通天·",
+  "破界·",
+  "无双·",
+  "绝世·",
+  "独步·",
+  "万古·",
+  "永恒·",
+  "不朽·",
+  "天道·",
+  "轮回·",
+  "混沌·",
+  "鸿蒙·",
+  "太初·",
+  "无极·",
+  "至尊·",
+  "超越·",
 ]
 
 function getLevelInfo(level: number) {
-  const stage = Math.floor((level - 1) / 3)
-  const baseIdx = stage % BASE_TITLES.length
-  const tierIdx = Math.min(Math.floor(stage / BASE_TITLES.length), TIER_PREFIXES.length - 1)
-  const base = BASE_TITLES[baseIdx]
+  const tierIdx = Math.min(Math.floor((level - 1) / TIER_SIZE), TIER_PREFIXES.length - 1)
+  const stage = (level - 1) % TIER_SIZE
+  const base = BASE_TITLES[stage % BASE_TITLES.length]
   return {
     icon: base.icon,
     title: TIER_PREFIXES[tierIdx] + base.title,

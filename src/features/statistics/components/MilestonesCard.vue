@@ -109,6 +109,10 @@ interface Props {
   totalBacklinks?: number
   totalAssets?: number
   totalImages?: number
+  notebookCount?: number
+  codeBlocks?: number
+  writingStreak?: number
+  activeDays?: number
   i18n?: {
     milestones?: string
     showAllMilestones?: string
@@ -123,6 +127,7 @@ interface Props {
     catWriting?: string
     catKnowledge?: string
     catRich?: string
+    catPersistence?: string
   }
 }
 
@@ -133,6 +138,10 @@ const props = withDefaults(defineProps<Props>(), {
   totalBacklinks: 0,
   totalAssets: 0,
   totalImages: 0,
+  notebookCount: 0,
+  codeBlocks: 0,
+  writingStreak: 0,
+  activeDays: 0,
   i18n: () => ({
     milestones: "里程碑",
     showAllMilestones: "显示全部 {count} 个里程碑",
@@ -147,6 +156,7 @@ const props = withDefaults(defineProps<Props>(), {
     catWriting: "写作达人",
     catKnowledge: "知识管理",
     catRich: "内容丰富",
+    catPersistence: "坚持不懈",
   }),
 })
 
@@ -160,9 +170,10 @@ const tierLabels: Record<Tier, string> = {
 }
 
 const categories: CategoryDef[] = [
-  { id: "writing", icon: "✍️", name: props.i18n.catWriting || "写作达人", types: ["notes"] },
+  { id: "writing", icon: "✍️", name: props.i18n.catWriting || "写作达人", types: ["notes", "notebooks"] },
   { id: "knowledge", icon: "🧠", name: props.i18n.catKnowledge || "知识管理", types: ["tags", "backlinks"] },
-  { id: "rich", icon: "📦", name: props.i18n.catRich || "内容丰富", types: ["words", "assets", "images"] },
+  { id: "rich", icon: "📦", name: props.i18n.catRich || "内容丰富", types: ["words", "assets", "images", "code"] },
+  { id: "persistence", icon: "🔥", name: props.i18n.catPersistence || "坚持不懈", types: ["streak", "activeDays"] },
 ]
 
 const allMilestones: MilestoneDef[] = [
@@ -173,6 +184,11 @@ const allMilestones: MilestoneDef[] = [
   { id: "n-3k", icon: "🌲", label: "3000篇", target: 3000, type: "notes", tier: "rare" },
   { id: "n-5k", icon: "⛰️", label: "5000篇", target: 5000, type: "notes", tier: "epic" },
   { id: "n-10k", icon: "🏔️", label: "1万篇", target: 10000, type: "notes", tier: "legendary" },
+  // 笔记本
+  { id: "nb-3", icon: "📓", label: "3个笔记本", target: 3, type: "notebooks", tier: "common" },
+  { id: "nb-5", icon: "📔", label: "5个笔记本", target: 5, type: "notebooks", tier: "common" },
+  { id: "nb-10", icon: "📚", label: "10个笔记本", target: 10, type: "notebooks", tier: "rare" },
+  { id: "nb-20", icon: "🏛️", label: "20个笔记本", target: 20, type: "notebooks", tier: "epic" },
   // 字数
   { id: "w-10w", icon: "📝", label: "10万字", target: 100000, type: "words", tier: "common" },
   { id: "w-50w", icon: "📚", label: "50万字", target: 500000, type: "words", tier: "common" },
@@ -180,6 +196,11 @@ const allMilestones: MilestoneDef[] = [
   { id: "w-300w", icon: "📖", label: "300万字", target: 3000000, type: "words", tier: "rare" },
   { id: "w-500w", icon: "🏆", label: "500万字", target: 5000000, type: "words", tier: "epic" },
   { id: "w-1000w", icon: "👑", label: "1000万字", target: 10000000, type: "words", tier: "legendary" },
+  // 代码块
+  { id: "c-50", icon: "💻", label: "50个代码块", target: 50, type: "code", tier: "common" },
+  { id: "c-200", icon: "⌨️", label: "200个代码块", target: 200, type: "code", tier: "rare" },
+  { id: "c-1k", icon: "🖥️", label: "1000个代码块", target: 1000, type: "code", tier: "epic" },
+  { id: "c-5k", icon: "🤖", label: "5000个代码块", target: 5000, type: "code", tier: "legendary" },
   // 标签
   { id: "t-50", icon: "🏷️", label: "50个标签", target: 50, type: "tags", tier: "common" },
   { id: "t-200", icon: "🔖", label: "200个标签", target: 200, type: "tags", tier: "rare" },
@@ -197,6 +218,19 @@ const allMilestones: MilestoneDef[] = [
   { id: "i-200", icon: "🖼️", label: "200张图片", target: 200, type: "images", tier: "common" },
   { id: "i-1k", icon: "📷", label: "1000张图片", target: 1000, type: "images", tier: "rare" },
   { id: "i-5k", icon: "🎨", label: "5000张图片", target: 5000, type: "images", tier: "epic" },
+  // 连续写作天数
+  { id: "s-3", icon: "🔥", label: "连续3天", target: 3, type: "streak", tier: "common" },
+  { id: "s-7", icon: "⚡", label: "连续7天", target: 7, type: "streak", tier: "common" },
+  { id: "s-14", icon: "💫", label: "连续14天", target: 14, type: "streak", tier: "rare" },
+  { id: "s-30", icon: "🌟", label: "连续30天", target: 30, type: "streak", tier: "rare" },
+  { id: "s-60", icon: "🚀", label: "连续60天", target: 60, type: "streak", tier: "epic" },
+  { id: "s-100", icon: "💎", label: "连续100天", target: 100, type: "streak", tier: "epic" },
+  { id: "s-365", icon: "👑", label: "连续1年", target: 365, type: "streak", tier: "legendary" },
+  // 活跃天数
+  { id: "d-30", icon: "📅", label: "活跃30天", target: 30, type: "activeDays", tier: "common" },
+  { id: "d-100", icon: "📆", label: "活跃100天", target: 100, type: "activeDays", tier: "rare" },
+  { id: "d-365", icon: "🗓️", label: "活跃1年", target: 365, type: "activeDays", tier: "epic" },
+  { id: "d-730", icon: "🏅", label: "活跃2年", target: 730, type: "activeDays", tier: "legendary" },
 ]
 
 function getCurrent(type: string): number {
@@ -205,6 +239,10 @@ function getCurrent(type: string): number {
     words: props.totalWords,
     tags: props.totalTags,
     backlinks: props.totalBacklinks,
+    notebooks: props.notebookCount,
+    code: props.codeBlocks,
+    streak: props.writingStreak,
+    activeDays: props.activeDays,
     assets: props.totalAssets,
     images: props.totalImages,
   }

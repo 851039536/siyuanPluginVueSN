@@ -369,8 +369,8 @@ function setDocDateToday() {
   margin-right: 3px;
   vertical-align: middle;
 
-  &.new { background: #22c55e; }
-  &.modified { background: #f59e0b; }
+  &.new { background: stats.$color-success; }
+  &.modified { background: stats.$color-warning; }
 }
 
 .range-chart-row {
@@ -419,8 +419,8 @@ function setDocDateToday() {
   min-width: 20px;
   font-weight: 600;
 
-  &.new { background: #22c55e; }
-  &.modified { background: #f59e0b; }
+  &.new { background: stats.$color-success; }
+  &.modified { background: stats.$color-warning; }
 }
 
 .changed-date-picker {
@@ -511,13 +511,13 @@ function setDocDateToday() {
   }
 
   &.new .changed-doc-icon {
-    background: rgba(34, 197, 94, 0.15);
-    color: #22c55e;
+    background: rgba(stats.$color-success, 0.15);
+    color: stats.$color-success;
   }
 
   &.modified .changed-doc-icon {
-    background: rgba(245, 158, 11, 0.15);
-    color: #f59e0b;
+    background: rgba(stats.$color-warning, 0.15);
+    color: stats.$color-warning;
   }
 
   .changed-doc-title {

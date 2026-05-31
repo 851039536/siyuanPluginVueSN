@@ -1,23 +1,37 @@
 <template>
   <div class="stats-section">
     <h3 class="stats-title">
-      📊 总览
+      {{ i18n.overview || '总览' }}
     </h3>
-    <div class="stats-cards-wrapper">
+
+    <!-- 核心指标：3 列大卡片 -->
+    <div class="core-cards">
       <div
-        v-for="item in allItems"
+        v-for="item in coreItems"
         :key="item.label"
-        class="stats-item"
+        class="core-card"
       >
-        <div class="stats-value-row">
-          <span class="stats-value">{{ item.value }}</span>
+        <span class="core-label">{{ item.label }}</span>
+        <div class="core-value-row">
+          <span class="core-value">{{ item.value }}</span>
           <span
             v-if="item.change !== null"
-            class="stats-change"
+            class="core-change"
             :class="item.change > 0 ? 'up' : 'down'"
           >{{ formatChange(item.change) }}</span>
         </div>
-        <span class="stats-label">{{ item.label }}</span>
+      </div>
+    </div>
+
+    <!-- 次要指标：紧凑网格 -->
+    <div class="secondary-grid">
+      <div
+        v-for="item in secondaryItems"
+        :key="item.label"
+        class="secondary-item"
+      >
+        <span class="secondary-value">{{ item.value }}</span>
+        <span class="secondary-label">{{ item.label }}</span>
       </div>
     </div>
   </div>
@@ -44,6 +58,7 @@ interface Props {
   createdChange?: number | null
   modifiedChange?: number | null
   i18n?: {
+    overview?: string
     totalNotes: string
     totalWords: string
     totalBlocks: string
@@ -72,6 +87,7 @@ const props = withDefaults(defineProps<Props>(), {
   createdChange: null,
   modifiedChange: null,
   i18n: () => ({
+    overview: "总览",
     totalNotes: "笔记总数",
     totalWords: "总字数",
     totalBlocks: "内容块",
@@ -86,7 +102,7 @@ const props = withDefaults(defineProps<Props>(), {
   }),
 })
 
-const allItems = computed(() => [
+const coreItems = computed(() => [
   {
     value: formatNumber(props.totalNotes),
     label: props.i18n.totalNotes,
@@ -98,44 +114,40 @@ const allItems = computed(() => [
     change: null,
   },
   {
-    value: String(props.avgWordsPerDoc),
-    label: props.i18n.avgWordsPerDoc,
-    change: null,
-  },
-  {
     value: String(props.todayCreated),
     label: props.i18n.todayCreated,
     change: props.createdChange,
   },
+])
+
+const secondaryItems = computed(() => [
   {
     value: String(props.todayModified),
     label: props.i18n.todayModified,
-    change: props.modifiedChange,
+  },
+  {
+    value: String(props.avgWordsPerDoc),
+    label: props.i18n.avgWordsPerDoc,
   },
   {
     value: formatShortNumber(props.totalBlocks),
     label: props.i18n.totalBlocks,
-    change: null,
   },
   {
     value: formatShortNumber(props.totalAssets),
     label: props.i18n.totalAssets,
-    change: null,
   },
   {
     value: formatShortNumber(props.totalImages),
     label: props.i18n.totalImages,
-    change: null,
   },
   {
     value: formatShortNumber(props.totalTags),
     label: props.i18n.totalTags,
-    change: null,
   },
   {
     value: formatShortNumber(props.totalBacklinks),
     label: props.i18n.totalBacklinks,
-    change: null,
   },
 ])
 
@@ -179,9 +191,65 @@ function formatChange(change: number | null): string {
   }
 }
 
-.stats-cards-wrapper {
+// 核心指标：3 列大卡片
+.core-cards {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.core-card {
+  @include stats.stats-card-base;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 8px;
+  text-align: center;
+}
+
+.core-label {
+  font-size: 10px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+  margin-bottom: 4px;
+}
+
+.core-value-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+}
+
+.core-value {
+  font-family: $font-heading;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--b3-theme-primary);
+  line-height: 1.2;
+}
+
+.core-change {
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.core-change.up {
+  background: rgba(stats.$color-success, 0.15);
+  color: stats.$color-success;
+}
+
+.core-change.down {
+  background: rgba(stats.$color-danger, 0.15);
+  color: stats.$color-danger;
+}
+
+// 次要指标：紧凑网格
+.secondary-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
   gap: 1px;
   background: var(--b3-border-color);
   border: 1px solid var(--b3-border-color);
@@ -189,58 +257,38 @@ function formatChange(change: number | null): string {
   overflow: hidden;
 }
 
-.stats-item {
+.secondary-item {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 8px 4px;
+  padding: 6px 2px;
   background: var(--b3-theme-surface);
   text-align: center;
 }
 
-.stats-value-row {
-  display: flex;
-  align-items: baseline;
-  gap: 3px;
-}
-
-.stats-value {
+.secondary-value {
   font-family: $font-heading;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--b3-theme-on-surface);
   line-height: 1.2;
 }
 
-.stats-label {
-  font-size: 9px;
+.secondary-label {
+  font-size: 8px;
   color: var(--b3-theme-on-surface);
-  opacity: 0.5;
+  opacity: 0.45;
   margin-top: 2px;
 }
 
-.stats-change {
-  padding: 1px 3px;
-  border-radius: 4px;
-  font-size: 8px;
-  font-weight: 700;
-  line-height: 1.4;
-}
-
-.stats-change.up {
-  background: rgba(stats.$color-success, 0.15);
-  color: stats.$color-success;
-}
-
-.stats-change.down {
-  background: rgba(stats.$color-danger, 0.15);
-  color: stats.$color-danger;
-}
-
 @include mobile-only {
-  .stats-cards-wrapper {
-    grid-template-columns: repeat(2, 1fr);
+  .core-cards {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .secondary-grid {
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 </style>

@@ -475,7 +475,7 @@ const LEVEL_TITLES = [
 ]
 
 function getLevelInfo(level: number) {
-  const idx = Math.min(level - 1, LEVEL_TITLES.length - 1)
+  const idx = Math.min(Math.floor((level - 1) / 3), LEVEL_TITLES.length - 1)
   return LEVEL_TITLES[idx]
 }
 

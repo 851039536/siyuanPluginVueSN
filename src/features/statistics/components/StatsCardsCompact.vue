@@ -109,7 +109,7 @@ const coreItems = computed(() => [
     change: null as number | null,
   },
   {
-    value: formatShortNumber(props.totalWords),
+    value: formatNumber(props.totalWords),
     label: props.i18n.totalWords,
     change: null,
   },

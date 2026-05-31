@@ -42,8 +42,8 @@
 
       <!-- 文档变化详情（日期范围 + 柱状图 + 详情列表） -->
       <DocChangeSection
-        :on-get-date-changed-docs="props.onGetDateChangedDocs"
-        :on-get-date-range-change-stats="props.onGetDateRangeChangeStats"
+        :on-get-date-changed-docs="getDateChangedDocs"
+        :on-get-date-range-change-stats="getDateRangeChangeStats"
         :i18n="docChangeI18n"
       />
 
@@ -142,7 +142,7 @@
         :title="`📈 ${notebookActivityTitle}`"
       >
         <NotebookActivityTrend
-          :on-get-notebook-activity-trend="props.onGetNotebookActivityTrend"
+          :on-get-notebook-activity-trend="getNotebookActivityTrend"
         />
       </CollapsibleSection>
 
@@ -151,7 +151,7 @@
         :title="`📊 ${reportTitle}`"
       >
         <ReportView
-          :on-get-report-data="props.onGetReportData"
+          :on-get-report-data="getReportData"
         />
       </CollapsibleSection>
 
@@ -160,7 +160,7 @@
         :title="`🔮 ${predictionTitle}`"
       >
         <TrendPrediction
-          :on-get-trend-prediction="props.onGetTrendPrediction"
+          :on-get-trend-prediction="getTrendPrediction"
         />
       </CollapsibleSection>
     </div>
@@ -169,20 +169,10 @@
 </template>
 
 <script setup lang="ts">
-import type {
-  ChangedDoc,
-  DailyWordCount,
-  NotebookActivityItem,
-  NotebookWordStat,
-  RangeStatItem,
-  ReportData,
-  StatisticsData,
-  TrendPrediction as TrendPredictionData,
-} from "./types"
+import type { Plugin } from "siyuan"
 import {
   computed,
   onMounted,
-  ref,
   watch,
 } from "vue"
 import BarChart from "./components/BarChart.vue"
@@ -199,26 +189,13 @@ import TrendPrediction from "./components/TrendPrediction.vue"
 import TrendView from "./components/TrendView.vue"
 import ViewModeSection from "./components/ViewModeSection.vue"
 import WordRanking from "./components/WordRanking.vue"
-import { padZero } from "./utils"
+import { useHistoryData } from "./composables/useHistoryData"
+import { useNotebookStats } from "./composables/useNotebookStats"
+import { useReport } from "./composables/useReport"
+import { useStatistics } from "./composables/useStatistics"
 
 interface Props {
-  onRefresh?: (params: {
-    viewMode: "day" | "week" | "month" | "year" | "trend"
-    dayRange?: 7 | 15 | 30 | 90 | 180 | 365
-    monthYearRange?: 1 | 2 | 3
-    selectedYear?: number
-  }) => Promise<StatisticsData>
-  onGetHistoricalData?: (days?: number) => Promise<any[]>
-  onGetNotebookDocStats?: () => Promise<Array<{ name: string, count: number }>>
-  onGetDateChangedDocs?: (dateStr: string) => Promise<{
-    newDocs: ChangedDoc[]
-    modifiedDocs: ChangedDoc[]
-  }>
-  onGetDateRangeChangeStats?: (startStr: string, endStr: string) => Promise<RangeStatItem[]>
-  onGetNotebookWordStats?: () => Promise<NotebookWordStat[]>
-  onGetNotebookActivityTrend?: (days: number) => Promise<NotebookActivityItem[]>
-  onGetReportData?: (year?: number, month?: number) => Promise<ReportData>
-  onGetTrendPrediction?: () => Promise<TrendPredictionData>
+  plugin: Plugin
   onRegisterRefresh?: (fn: () => Promise<void>) => void
   i18n?: {
     loading: string
@@ -331,20 +308,45 @@ const props = withDefaults(defineProps<Props>(), {
   }),
 })
 
-const loading = ref(false)
-const stats = ref<StatisticsData | null>(null)
-const lastUpdateTime = ref("")
-const viewMode = ref<"day" | "week" | "month" | "year" | "trend">("day")
-const dayRange = ref<7 | 15 | 30 | 90 | 180 | 365>(7)
-const monthYearRange = ref<1 | 2 | 3>(1)
-const selectedYear = ref<number>(new Date().getFullYear())
-const chartData = ref<DailyWordCount[]>([])
-const historicalData = ref<any[]>([])
-const updateInterval = ref(60)
-const notebookDocStats = ref<Array<{ name: string, count: number }>>([])
-const docChartLoading = ref(false)
+const {
+  loading,
+  stats,
+  lastUpdateTime,
+  viewMode,
+  dayRange,
+  monthYearRange,
+  selectedYear,
+  chartData,
+  updateInterval,
+  periodAvgWords,
+  chartTitle,
+  refreshData: refreshCore,
+} = useStatistics()
 
-const notebookWordStats = ref<NotebookWordStat[]>([])
+const {
+  historicalData,
+  yesterdayCreated: _yesterdayCreated,
+  yesterdayModified: _yesterdayModified,
+  createdChange,
+  modifiedChange,
+  loadHistoricalData,
+} = useHistoryData(props.plugin, stats)
+
+const {
+  notebookDocStats,
+  docChartLoading,
+  notebookWordStats,
+  loadNotebookDocStats,
+  loadNotebookWordStats,
+} = useNotebookStats()
+
+const {
+  getDateChangedDocs,
+  getDateRangeChangeStats,
+  getNotebookActivityTrend,
+  getReportData,
+  getTrendPrediction,
+} = useReport()
 
 const headerI18n = computed(() => props.i18n)
 const statsCardsI18n = computed(() => props.i18n)
@@ -398,97 +400,16 @@ const notebookActivityTitle = computed(() => "笔记本写作活跃度")
 const reportTitle = computed(() => "年度/月度报告")
 const predictionTitle = computed(() => "趋势预测")
 
-const chartTitle = computed(() => {
-  return stats.value?.currentPeriod || ""
-})
-
-const periodAvgWords = computed(() => {
-  if (!chartData.value || chartData.value.length === 0) return 0
-
-  const totalWords = chartData.value.reduce((sum, item) => sum + item.words, 0)
-  const days = chartData.value.length
-
-  return days > 0 ? Math.round(totalWords / days) : 0
-})
-
-// 计算昨日数据
-const yesterdayCreated = computed(() => {
-  if (!historicalData.value || historicalData.value.length < 2) return null
-  const today = new Date()
-  const yesterday = new Date(today)
-  yesterday.setDate(yesterday.getDate() - 1)
-  const yesterdayStr = `${yesterday.getFullYear()}-${padZero(yesterday.getMonth() + 1)}-${padZero(yesterday.getDate())}`
-
-  const yesterdayData = historicalData.value.find(
-    (item) => item.date === yesterdayStr,
-  )
-  return yesterdayData?.todayCreated ?? null
-})
-
-const yesterdayModified = computed(() => {
-  if (!historicalData.value || historicalData.value.length < 2) return null
-  const today = new Date()
-  const yesterday = new Date(today)
-  yesterday.setDate(yesterday.getDate() - 1)
-  const yesterdayStr = `${yesterday.getFullYear()}-${padZero(yesterday.getMonth() + 1)}-${padZero(yesterday.getDate())}`
-
-  const yesterdayData = historicalData.value.find(
-    (item) => item.date === yesterdayStr,
-  )
-  return yesterdayData?.todayModified ?? null
-})
-
-// 计算变化百分比
-const createdChange = computed(() => {
-  if (yesterdayCreated.value === null || yesterdayCreated.value === 0) {
-    return stats.value?.todayCreated ? 100 : null
-  }
-  if (stats.value?.todayCreated === undefined) return null
-  return (
-    ((stats.value.todayCreated - yesterdayCreated.value)
-      / yesterdayCreated.value)
-    * 100
-  )
-})
-
-const modifiedChange = computed(() => {
-  if (yesterdayModified.value === null || yesterdayModified.value === 0) {
-    return stats.value?.todayModified ? 100 : null
-  }
-  if (stats.value?.todayModified === undefined) return null
-  return (
-    ((stats.value.todayModified - yesterdayModified.value)
-      / yesterdayModified.value)
-    * 100
-  )
-})
-
-// 合并监听，避免多个状态同时变化时触发多次刷新
 watch([viewMode, dayRange, monthYearRange, selectedYear], () => {
   refreshData()
 })
 
-async function refreshData() {
-  if (!props.onRefresh) return
-
+async function refreshData(): Promise<void> {
   loading.value = true
   try {
-    stats.value = await props.onRefresh({
-      viewMode: viewMode.value,
-      dayRange: dayRange.value,
-      monthYearRange: monthYearRange.value,
-      selectedYear: selectedYear.value,
-    })
-    chartData.value = stats.value.dailyStats || []
-    lastUpdateTime.value = new Date().toLocaleString("zh-CN")
-
-    // 始终加载历史数据，供 InsightCards 和 TrendView 使用
+    await refreshCore()
     await loadHistoricalData()
-
-    // 加载笔记本文档统计
     await loadNotebookDocStats()
-
-    // 加载笔记本字数占比
     await loadNotebookWordStats()
   } catch (error) {
     console.error("刷新统计数据失败:", error)
@@ -497,40 +418,8 @@ async function refreshData() {
   }
 }
 
-async function loadHistoricalData() {
-  if (!props.onGetHistoricalData) return
-  try {
-    const data = await props.onGetHistoricalData()
-    historicalData.value = [...data].reverse()
-  } catch (error) {
-    console.error("加载历史数据失败:", error)
-  }
-}
-
-async function loadNotebookDocStats() {
-  if (!props.onGetNotebookDocStats) return
-  docChartLoading.value = true
-  try {
-    notebookDocStats.value = await props.onGetNotebookDocStats()
-  } catch (error) {
-    console.error("加载笔记本文档统计失败:", error)
-  } finally {
-    docChartLoading.value = false
-  }
-}
-
-async function loadNotebookWordStats() {
-  if (!props.onGetNotebookWordStats) return
-  try {
-    notebookWordStats.value = await props.onGetNotebookWordStats()
-  } catch (error) {
-    console.error("加载笔记本字数统计失败:", error)
-  }
-}
-
 onMounted(() => {
   refreshData()
-  // 向父组件注册 refreshData 函数，供外部调用
   props.onRegisterRefresh?.(refreshData)
 })
 

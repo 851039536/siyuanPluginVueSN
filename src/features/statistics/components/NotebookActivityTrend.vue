@@ -211,7 +211,7 @@
 
 <script setup lang="ts">
 import type { NotebookActivityItem } from "../types"
-import { computed, ref, watch } from "vue"
+import { computed, onMounted, ref, watch } from "vue"
 import { formatNumber } from "../utils"
 
 interface Props {
@@ -229,7 +229,7 @@ const PAD_L = 42
 const PAD_R = 8
 const PAD_T = 14
 
-const days = ref(30)
+const days = ref(7)
 const periodOptions = computed(() => [
   { label: props.i18n.days7 || '7天', value: 7 },
   { label: props.i18n.days15 || '15天', value: 15 },
@@ -453,6 +453,10 @@ async function load() {
 }
 
 watch(days, () => {})
+
+onMounted(() => {
+  load()
+})
 
 defineExpose({ load })
 </script>

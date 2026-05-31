@@ -5,6 +5,54 @@
       <span class="header-badge">{{ achievedCount }}/{{ allMilestones.length }}</span>
     </div>
     <div class="card-body">
+      <!-- 等级显示 -->
+      <div class="level-section">
+        <div class="level-main">
+          <span class="level-icon">{{ currentLevel.icon }}</span>
+          <div class="level-info">
+            <span class="level-title">Lv.{{ currentLevel.level }} {{ currentLevel.title }}</span>
+            <span class="level-points">{{ totalPoints }} 成就点</span>
+          </div>
+          <span class="level-badge">{{ unlockedAchievements.length }}/{{ achievementDefs.length }}</span>
+        </div>
+        <div
+          v-if="nextLevel"
+          class="level-progress-wrap"
+        >
+          <div class="level-progress-bar">
+            <div
+              class="level-progress-fill"
+              :style="{ width: `${levelProgress}%` }"
+            ></div>
+          </div>
+          <span class="level-progress-label">距 Lv.{{ nextLevel.level }} {{ nextLevel.title }} {{ levelProgress.toFixed(0) }}%</span>
+        </div>
+      </div>
+
+      <!-- 特殊成就卡片 -->
+      <div
+        v-if="unlockedAchievements.length > 0"
+        class="achievements-section"
+      >
+        <div class="achievements-header">
+          <span class="achievements-title">🎖️ 成就</span>
+          <span class="achievements-count">{{ unlockedAchievements.length }}</span>
+        </div>
+        <div class="achievements-grid">
+          <div
+            v-for="ach in unlockedAchievements"
+            :key="ach.id"
+            class="achievement-card"
+            :class="[`tier-${ach.tier}`]"
+          >
+            <span class="ach-icon">{{ ach.icon }}</span>
+            <span class="ach-title">{{ ach.title }}</span>
+            <span class="ach-desc">{{ ach.description }}</span>
+            <span class="ach-tier-badge">{{ tierLabels[ach.tier] }}</span>
+          </div>
+        </div>
+      </div>
+
       <!-- 下一目标聚焦卡 -->
       <div
         v-if="nextMilestone"
@@ -233,6 +281,44 @@ const allMilestones: MilestoneDef[] = [
   { id: "d-730", icon: "🏅", label: "活跃2年", target: 730, type: "activeDays", tier: "legendary" },
 ]
 
+// ===== 等级系统 =====
+const TIER_POINTS: Record<Tier, number> = {
+  common: 1,
+  rare: 3,
+  epic: 5,
+  legendary: 10,
+}
+
+interface LevelDef {
+  level: number
+  title: string
+  icon: string
+  pointsRequired: number
+}
+
+const LEVEL_DEFS: LevelDef[] = [
+  { level: 1, title: "新手写手", icon: "✏️", pointsRequired: 0 },
+  { level: 2, title: "初露锋芒", icon: "📝", pointsRequired: 5 },
+  { level: 3, title: "笔耕不辍", icon: "✍️", pointsRequired: 15 },
+  { level: 4, title: "妙笔生花", icon: "🖊️", pointsRequired: 30 },
+  { level: 5, title: "知识工匠", icon: "🔧", pointsRequired: 50 },
+  { level: 6, title: "资深作者", icon: "📖", pointsRequired: 80 },
+  { level: 7, title: "内容大师", icon: "🎓", pointsRequired: 120 },
+  { level: 8, title: "知识大师", icon: "🧠", pointsRequired: 170 },
+  { level: 9, title: "传奇学者", icon: "👑", pointsRequired: 230 },
+  { level: 10, title: "思源之巅", icon: "🏆", pointsRequired: 300 },
+]
+
+// ===== 特殊成就卡片 =====
+interface AchievementDef {
+  id: string
+  icon: string
+  title: string
+  description: string
+  tier: Tier
+  check: () => boolean
+}
+
 function getCurrent(type: string): number {
   const map: Record<string, number> = {
     notes: props.totalNotes,
@@ -341,6 +427,198 @@ const showAllText = computed(() =>
   (props.i18n.showAllMilestones || "显示全部 {count} 个里程碑")
     .replace("{count}", String(allMilestones.length)),
 )
+
+// ===== 等级计算 =====
+const totalPoints = computed(() => {
+  return milestonesWithState.value
+    .filter((m) => m.achieved)
+    .reduce((sum, m) => sum + TIER_POINTS[m.tier], 0)
+})
+
+const currentLevel = computed(() => {
+  let lvl = LEVEL_DEFS[0]
+  for (const def of LEVEL_DEFS) {
+    if (totalPoints.value >= def.pointsRequired) {
+      lvl = def
+    } else {
+      break
+    }
+  }
+  return lvl
+})
+
+const nextLevel = computed(() => {
+  const idx = LEVEL_DEFS.findIndex((d) => d.level === currentLevel.value.level)
+  return idx < LEVEL_DEFS.length - 1 ? LEVEL_DEFS[idx + 1] : null
+})
+
+const levelProgress = computed(() => {
+  if (!nextLevel.value) return 100
+  const cur = currentLevel.value.pointsRequired
+  const nxt = nextLevel.value.pointsRequired
+  const range = nxt - cur
+  if (range <= 0) return 100
+  return Math.min(((totalPoints.value - cur) / range) * 100, 100)
+})
+
+// ===== 特殊成就卡片 =====
+const achievementDefs = computed<AchievementDef[]>(() => [
+  {
+    id: "ach-first-note",
+    icon: "🌟",
+    title: "破冰之旅",
+    description: "创建第一篇笔记",
+    tier: "common",
+    check: () => props.totalNotes >= 1,
+  },
+  {
+    id: "ach-100-notes",
+    icon: "📚",
+    title: "百篇大关",
+    description: "累计100篇笔记",
+    tier: "rare",
+    check: () => props.totalNotes >= 100,
+  },
+  {
+    id: "ach-1000-notes",
+    icon: "🏛️",
+    title: "千篇一律",
+    description: "累计1000篇笔记",
+    tier: "epic",
+    check: () => props.totalNotes >= 1000,
+  },
+  {
+    id: "ach-first-notebook",
+    icon: "📓",
+    title: "知识启航",
+    description: "创建第一个笔记本",
+    tier: "common",
+    check: () => props.notebookCount >= 1,
+  },
+  {
+    id: "ach-10-notebooks",
+    icon: "📚",
+    title: "知识花园",
+    description: "拥有10个笔记本",
+    tier: "rare",
+    check: () => props.notebookCount >= 10,
+  },
+  {
+    id: "ach-10w-words",
+    icon: "📝",
+    title: "十万字成书",
+    description: "累计写作10万字",
+    tier: "common",
+    check: () => props.totalWords >= 100000,
+  },
+  {
+    id: "ach-100w-words",
+    icon: "🎓",
+    title: "百万字巨著",
+    description: "累计写作100万字",
+    tier: "epic",
+    check: () => props.totalWords >= 1000000,
+  },
+  {
+    id: "ach-1000w-words",
+    icon: "👑",
+    title: "千万字传说",
+    description: "累计写作1000万字",
+    tier: "legendary",
+    check: () => props.totalWords >= 10000000,
+  },
+  {
+    id: "ach-streak-7",
+    icon: "🔥",
+    title: "一周坚持",
+    description: "连续写作7天",
+    tier: "common",
+    check: () => props.writingStreak >= 7,
+  },
+  {
+    id: "ach-streak-30",
+    icon: "⚡",
+    title: "月度坚持",
+    description: "连续写作30天",
+    tier: "rare",
+    check: () => props.writingStreak >= 30,
+  },
+  {
+    id: "ach-streak-365",
+    icon: "👑",
+    title: "年度传奇",
+    description: "连续写作365天",
+    tier: "legendary",
+    check: () => props.writingStreak >= 365,
+  },
+  {
+    id: "ach-50-tags",
+    icon: "🏷️",
+    title: "标签达人",
+    description: "使用50个标签",
+    tier: "common",
+    check: () => props.totalTags >= 50,
+  },
+  {
+    id: "ach-500-backlinks",
+    icon: "⛓️",
+    title: "知识网络",
+    description: "建立500条双链",
+    tier: "rare",
+    check: () => props.totalBacklinks >= 500,
+  },
+  {
+    id: "ach-100-assets",
+    icon: "📁",
+    title: "资源宝库",
+    description: "积累100个附件",
+    tier: "common",
+    check: () => props.totalAssets >= 100,
+  },
+  {
+    id: "ach-50-code",
+    icon: "💻",
+    title: "代码新秀",
+    description: "创建50个代码块",
+    tier: "common",
+    check: () => props.codeBlocks >= 50,
+  },
+  {
+    id: "ach-all-common",
+    icon: "⭐",
+    title: "全面初成",
+    description: "解锁全部普通里程碑",
+    tier: "epic",
+    check: () => {
+      const commonMilestones = allMilestones.filter((m) => m.tier === "common")
+      return commonMilestones.every((m) => getCurrent(m.type) >= m.target)
+    },
+  },
+  {
+    id: "ach-half-all",
+    icon: "🌟",
+    title: "半程里程碑",
+    description: "达成一半里程碑",
+    tier: "epic",
+    check: () => achievedCount.value >= allMilestones.length / 2,
+  },
+  {
+    id: "ach-max-level",
+    icon: "🏆",
+    title: "登峰造极",
+    description: "达到最高等级",
+    tier: "legendary",
+    check: () => currentLevel.value.level >= LEVEL_DEFS.length,
+  },
+])
+
+const unlockedAchievements = computed(() =>
+  achievementDefs.value.filter((a) => a.check()),
+)
+
+const lockedAchievements = computed(() =>
+  achievementDefs.value.filter((a) => !a.check()),
+)
 </script>
 
 <style scoped lang="scss">
@@ -445,6 +723,203 @@ const showAllText = computed(() =>
   color: var(--b3-theme-on-surface);
   opacity: 0.45;
   font-style: italic;
+}
+
+// ===== 等级系统 =====
+.level-section {
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(var(--b3-theme-primary-rgb), 0.08) 0%, rgba(var(--b3-theme-primary-rgb), 0.03) 100%);
+  border: 1px solid rgba(var(--b3-theme-primary-rgb), 0.12);
+}
+
+.level-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.level-icon {
+  font-size: 24px;
+}
+
+.level-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.level-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--b3-theme-primary);
+  font-family: $font-heading;
+}
+
+.level-points {
+  font-size: 9px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+}
+
+.level-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--b3-theme-primary);
+  opacity: 0.6;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(var(--b3-theme-primary-rgb), 0.08);
+}
+
+.level-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.level-progress-bar {
+  flex: 1;
+  height: 3px;
+  background: rgba(var(--b3-theme-primary-rgb), 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.level-progress-fill {
+  height: 100%;
+  background: var(--b3-theme-primary);
+  border-radius: 2px;
+  transition: width 0.6s ease;
+}
+
+.level-progress-label {
+  font-size: 8px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.4;
+  white-space: nowrap;
+}
+
+// ===== 特殊成就卡片 =====
+.achievements-section {
+  margin-bottom: 10px;
+}
+
+.achievements-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px dashed var(--b3-border-color);
+
+  .achievements-title {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.65;
+  }
+
+  .achievements-count {
+    margin-left: auto;
+    font-size: 9px;
+    color: var(--b3-theme-primary);
+    opacity: 0.5;
+  }
+}
+
+.achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 6px;
+}
+
+.achievement-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 6px;
+  border-radius: 8px;
+  text-align: center;
+  position: relative;
+  transition: transform 0.15s ease;
+
+  &:hover { transform: translateY(-1px); }
+
+  &.tier-common {
+    background: rgba(stats.$color-success, 0.06);
+    border: 1px solid rgba(stats.$color-success, 0.15);
+  }
+
+  &.tier-rare {
+    background: rgba(var(--b3-theme-primary-rgb), 0.08);
+    border: 1px solid rgba(var(--b3-theme-primary-rgb), 0.15);
+  }
+
+  &.tier-epic {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(var(--b3-theme-primary-rgb), 0.06));
+    border: 1px solid rgba(168, 85, 247, 0.2);
+  }
+
+  &.tier-legendary {
+    background: linear-gradient(135deg, rgba(234, 179, 8, 0.12), rgba(234, 88, 12, 0.06));
+    border: 1px solid rgba(234, 179, 8, 0.3);
+  }
+
+  .ach-icon {
+    font-size: 20px;
+    margin-bottom: 3px;
+  }
+
+  .ach-title {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--b3-theme-on-surface);
+    line-height: 1.3;
+  }
+
+  .ach-desc {
+    font-size: 8px;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.45;
+    line-height: 1.3;
+    margin-top: 1px;
+  }
+
+  .ach-tier-badge {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    font-size: 6px;
+    padding: 0 3px;
+    border-radius: 3px;
+    font-weight: 700;
+    line-height: 1.5;
+    pointer-events: none;
+  }
+
+  &.tier-common .ach-tier-badge {
+    background: rgba(stats.$color-success, 0.2);
+    color: stats.$color-success;
+  }
+
+  &.tier-rare .ach-tier-badge {
+    background: rgba(var(--b3-theme-primary-rgb), 0.2);
+    color: var(--b3-theme-primary);
+  }
+
+  &.tier-epic .ach-tier-badge {
+    background: rgba(168, 85, 247, 0.2);
+    color: #a855f7;
+  }
+
+  &.tier-legendary .ach-tier-badge {
+    background: rgba(234, 179, 8, 0.25);
+    color: #ca8a04;
+  }
 }
 
 // ===== 分类 =====

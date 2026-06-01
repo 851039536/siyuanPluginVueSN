@@ -211,7 +211,7 @@
 
 <script setup lang="ts">
 import type { NotebookActivityItem } from "../types"
-import { computed, onMounted, ref, watch } from "vue"
+import { computed, onMounted, ref } from "vue"
 import { formatNumber } from "../utils"
 
 interface Props {
@@ -452,8 +452,6 @@ async function load() {
   }
 }
 
-watch(days, () => {})
-
 onMounted(() => {
   load()
 })
@@ -504,34 +502,13 @@ defineExpose({ load })
 }
 
 // ========== Summary ==========
-.summary-cards {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-}
+@include stats.summary-cards-base;
 
-.summary-card {
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
-  border-radius: 8px;
-  padding: 10px 8px;
-  text-align: center;
-
-  .summary-value {
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--b3-theme-primary);
-    line-height: 1.2;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .summary-label {
-    font-size: 11px;
-    color: var(--b3-theme-on-surface-light);
-    margin-top: 4px;
-  }
+.summary-card .summary-value {
+  font-size: 18px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 // ========== Loading / Empty ==========

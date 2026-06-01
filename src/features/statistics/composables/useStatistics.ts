@@ -16,7 +16,7 @@ export function useStatistics(): {
   loading: Ref<boolean>
   stats: Ref<StatisticsData | null>
   lastUpdateTime: Ref<string>
-  viewMode: Ref<"day" | "week" | "month" | "year" | "trend">
+  viewMode: Ref<"day" | "week" | "month" | "year">
   dayRange: Ref<7 | 15 | 30 | 90 | 180 | 365>
   monthYearRange: Ref<1 | 2 | 3>
   selectedYear: Ref<number>
@@ -29,7 +29,7 @@ export function useStatistics(): {
   const loading = ref(false)
   const stats = ref<StatisticsData | null>(null)
   const lastUpdateTime = ref("")
-  const viewMode = ref<"day" | "week" | "month" | "year" | "trend">("day")
+  const viewMode = ref<"day" | "week" | "month" | "year">("day")
   const dayRange = ref<7 | 15 | 30 | 90 | 180 | 365>(7)
   const monthYearRange = ref<1 | 2 | 3>(1)
   const selectedYear = ref<number>(new Date().getFullYear())

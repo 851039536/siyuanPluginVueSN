@@ -30,6 +30,12 @@
         {{ i18n.notebookActivity || '写作活跃度' }}
       </button>
       <button
+        :class="['tab-item', { active: activeTab === 'trend' }]"
+        @click="activeTab = 'trend'"
+      >
+        {{ i18n.trendTab || '趋势' }}
+      </button>
+      <button
         :class="['tab-item', { active: activeTab === 'milestones' }]"
         @click="activeTab = 'milestones'"
       >
@@ -94,23 +100,13 @@
         />
 
         <div class="chart-section">
-          <h3
-            v-if="viewMode !== 'trend'"
-            class="section-title"
-          >
+          <h3 class="section-title">
             {{ chartTitle }}
           </h3>
           <BarChart
-            v-if="viewMode !== 'trend'"
             :title="chartTitle"
             :chart-data="chartData"
             :i18n="barChartI18n"
-          />
-
-          <TrendView
-            v-if="viewMode === 'trend'"
-            :historical-data="historicalData"
-            :i18n="trendViewI18n"
           />
         </div>
 
@@ -120,7 +116,6 @@
           :default-expanded="false"
         >
           <WordRanking
-            v-if="viewMode !== 'trend'"
             :chart-data="chartData"
             :i18n="wordRankingI18n"
           />
@@ -176,15 +171,20 @@
           />
         </CollapsibleSection>
 
-        <!-- 可折叠：趋势预测 -->
-        <CollapsibleSection
-          :title="`🔮 ${i18n.predictionTitle || '趋势预测'}`"
-          :default-expanded="false"
-        >
-          <TrendPrediction
-            :on-get-trend-prediction="getTrendPrediction"
-          />
-        </CollapsibleSection>
+      </div>
+
+      <!-- 趋势 Tab -->
+      <div
+        v-show="activeTab === 'trend'"
+        class="trend-tab"
+      >
+        <TrendView
+          :historical-data="historicalData"
+          :i18n="trendViewI18n"
+        />
+        <TrendPrediction
+          :on-get-trend-prediction="getTrendPrediction"
+        />
       </div>
 
       <!-- 里程碑 Tab -->
@@ -284,7 +284,6 @@ interface Props {
     week: string
     month: string
     year: string
-    trend: string
     avgLabel: string
     totalLabel: string
     wordsUnit: string
@@ -327,6 +326,7 @@ interface Props {
     activityHeatmap?: string
     milestones?: string
     tabOverview?: string
+    trendTab?: string
   }
 }
 
@@ -349,7 +349,6 @@ const props = withDefaults(defineProps<Props>(), {
     week: "周",
     month: "月",
     year: "年",
-    trend: "趋势",
     avgLabel: "日均字数",
     totalLabel: "总字数",
     wordsUnit: "字",
@@ -395,7 +394,7 @@ const props = withDefaults(defineProps<Props>(), {
   }),
 })
 
-const activeTab = ref<"overview" | "heatmap" | "activity" | "milestones">("overview")
+const activeTab = ref<"overview" | "trend" | "heatmap" | "activity" | "milestones">("overview")
 
 const {
   loading,
@@ -664,7 +663,8 @@ defineExpose({
 
 .milestones-tab,
 .heatmap-tab,
-.activity-tab {
+.activity-tab,
+.trend-tab {
   padding: 12px;
 }
 </style>

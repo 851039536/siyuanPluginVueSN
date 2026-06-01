@@ -1,6 +1,6 @@
 export { getBlockTypeStats, getStatistics, getTotalImages } from "./baseStats"
 export { getDateChangedDocs, getDateRangeChangeStats } from "./docChangeStats"
 export { executeSql, formatDateTime } from "./executeSql"
-export { getMostProductiveNotebook, getNotebookActivityTrend, getNotebookDocStats, getNotebookWordStats } from "./notebookStats"
+export { getMostProductiveNotebook, getNotebookActivityTrend, getNotebookBlockTypeStats, getNotebookDocStats, getNotebookTagStats, getNotebookWordStats } from "./notebookStats"
 export { getReportData, getTrendPrediction } from "./reportStats"
 export { getDailyStats, getMonthlyStatsRange, getWeeklyStats, getWordCountAggregation, getYearlyStats } from "./timeStats"

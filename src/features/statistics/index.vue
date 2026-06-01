@@ -395,7 +395,7 @@ const props = withDefaults(defineProps<Props>(), {
   }),
 })
 
-const activeTab = ref<"overview" | "heatmap" | "activity" | "milestones">("activity")
+const activeTab = ref<"overview" | "heatmap" | "activity" | "milestones">("overview")
 
 const {
   loading,

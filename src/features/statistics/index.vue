@@ -169,7 +169,14 @@
         </section>
 
         <section class="dist-section">
-          <h3 class="dist-section-title">🥧 {{ i18n.notebookWordPie || '笔记本字数占比' }}</h3>
+          <h3 class="dist-section-title">{{ i18n.notebookBlockTypeTitle || '各笔记本块类型分布' }}</h3>
+          <NotebookBlockTypeChart
+            :data="notebookBlockTypeStats"
+          />
+        </section>
+
+        <section class="dist-section">
+          <h3 class="dist-section-title">{{ i18n.notebookWordPie || '笔记本字数占比' }}</h3>
           <NotebookWordPie
             :data="notebookWordStats"
           />
@@ -248,6 +255,7 @@ import DocChangeSection from "./components/DocChangeSection.vue"
 import HeatmapCard from "./components/HeatmapCard.vue"
 import MilestonesCard from "./components/MilestonesCard.vue"
 import NotebookActivityTrend from "./components/NotebookActivityTrend.vue"
+import NotebookBlockTypeChart from "./components/NotebookBlockTypeChart.vue"
 import NotebookWordPie from "./components/NotebookWordPie.vue"
 import ReportView from "./components/ReportView.vue"
 import StatisticsHeader from "./components/StatisticsHeader.vue"
@@ -328,6 +336,7 @@ interface Props {
     tabOverview?: string
     trendTab?: string
     notebookDistributionTab?: string
+    notebookBlockTypeTitle?: string
     reportTab?: string
   }
 }
@@ -423,8 +432,10 @@ const {
   notebookDocStats,
   docChartLoading,
   notebookWordStats,
+  notebookBlockTypeStats,
   loadNotebookDocStats,
   loadNotebookWordStats,
+  loadNotebookBlockTypeStats,
 } = useNotebookStats()
 
 const headerI18n = computed(() => props.i18n)
@@ -590,7 +601,11 @@ async function refreshData(): Promise<void> {
 
 async function loadNotebookStats(): Promise<void> {
   if (notebookStatsLoaded.value) return
-  await Promise.all([loadNotebookDocStats(), loadNotebookWordStats()])
+  await Promise.all([
+    loadNotebookDocStats(),
+    loadNotebookWordStats(),
+    loadNotebookBlockTypeStats(),
+  ])
   notebookStatsLoaded.value = true
 }
 
@@ -685,9 +700,10 @@ defineExpose({
 }
 
 .notebook-distribution-tab {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
+  align-items: start;
 }
 
 .dist-section {

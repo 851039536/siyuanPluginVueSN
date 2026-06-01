@@ -1,6 +1,6 @@
-import type { DailyWordCount, NotebookActivityItem, NotebookWordStat } from "../types"
+import type { DailyWordCount, NotebookActivityItem, NotebookBlockTypeStat, NotebookWordStat } from "../types"
 import { lsNotebooks } from "@/api"
-import { NOTEBOOK_COLORS } from "../types/constants"
+import { BLOCK_TYPE_LABELS, NOTEBOOK_COLORS } from "../types/constants"
 import { padZero } from "../utils"
 import { executeSql, formatDateTime } from "./executeSql"
 
@@ -226,5 +226,108 @@ export async function getMostProductiveNotebook(
     return { name: openNotebooks[0].name, words: 0 }
   } catch {
     return { name: "", words: 0 }
+  }
+}
+
+export async function getNotebookTagStats(): Promise<Array<{ name: string, count: number }>> {
+  try {
+    const data = await lsNotebooks()
+    if (!data || !data.notebooks) return []
+
+    const openNotebooks = data.notebooks.filter((nb: any) => !nb.closed)
+    if (openNotebooks.length === 0) return []
+
+    const notebookIds = openNotebooks
+      .map((nb: any) => `'${(nb.id as string).replace(/'/g, "''")}'`)
+      .join(",")
+
+    const rows = await executeSql(`
+      SELECT box as notebook_id, COUNT(*) as tag_count
+      FROM blocks
+      WHERE type = 'tag' AND box IN (${notebookIds})
+      GROUP BY box
+      ORDER BY tag_count DESC
+    `)
+
+    const notebookMap = new Map<string, string>()
+    for (const nb of openNotebooks) {
+      notebookMap.set(nb.id, nb.name)
+    }
+
+    const result: Array<{ name: string, count: number }> = []
+    if (rows && rows.length > 0) {
+      for (const row of rows) {
+        const name = notebookMap.get(row.notebook_id) || "未知笔记本"
+        result.push({ name, count: Number(row.tag_count || 0) })
+        notebookMap.delete(row.notebook_id)
+      }
+    }
+
+    for (const [_, name] of notebookMap) {
+      result.push({ name, count: 0 })
+    }
+
+    return result
+  } catch (error) {
+    console.error("获取笔记本标签分布失败:", error)
+    return []
+  }
+}
+
+export async function getNotebookBlockTypeStats(): Promise<NotebookBlockTypeStat[]> {
+  try {
+    const data = await lsNotebooks()
+    if (!data || !data.notebooks) return []
+
+    const openNotebooks = data.notebooks.filter((nb: any) => !nb.closed)
+    if (openNotebooks.length === 0) return []
+
+    const notebookIds = openNotebooks
+      .map((nb: any) => `'${(nb.id as string).replace(/'/g, "''")}'`)
+      .join(",")
+
+    const rows = await executeSql(`
+      SELECT box as notebook_id, type, COUNT(*) as cnt
+      FROM blocks
+      WHERE box IN (${notebookIds})
+      GROUP BY box, type
+      ORDER BY box, cnt DESC
+    `)
+
+    const notebookMap = new Map<string, string>()
+    for (const nb of openNotebooks) {
+      notebookMap.set(nb.id, nb.name)
+    }
+
+    const grouped = new Map<string, Array<{ name: string, count: number, label: string }>>()
+    if (rows) {
+      for (const row of rows) {
+        const nbName = notebookMap.get(row.notebook_id) || "未知笔记本"
+        if (!grouped.has(nbName)) {
+          grouped.set(nbName, [])
+        }
+        grouped.get(nbName)!.push({
+          name: row.type,
+          count: Number(row.cnt || 0),
+          label: BLOCK_TYPE_LABELS[row.type] || row.type,
+        })
+      }
+    }
+
+    // ensure all open notebooks appear, even with empty stats
+    for (const nb of openNotebooks) {
+      if (!grouped.has(nb.name)) {
+        grouped.set(nb.name, [])
+      }
+    }
+
+    return Array.from(grouped.entries()).map(([notebook, blockTypes], idx) => ({
+      notebook,
+      blockTypes,
+      color: NOTEBOOK_COLORS[idx % NOTEBOOK_COLORS.length],
+    }))
+  } catch (error) {
+    console.error("获取笔记本块类型分布失败:", error)
+    return []
   }
 }

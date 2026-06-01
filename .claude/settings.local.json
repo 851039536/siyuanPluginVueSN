@@ -111,7 +111,8 @@
       "Bash(gh api *)",
       "Bash(where gh *)",
       "Bash(pnpm lint:fix)",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "mcp__codegraph__codegraph_context"
     ],
     "deny": [],
     "ask": []

@@ -190,6 +190,7 @@ import {
   computed,
   ref,
 } from "vue"
+import { milestoneTargetOf } from "../utils/milestones"
 
 type Tier = "common" | "rare" | "epic" | "legendary"
 
@@ -298,25 +299,6 @@ const TYPE_META: Record<string, { icon: string, labelFn: (v: number) => string }
   activeDays: { icon: "📅", labelFn: v => v >= 365 ? `活跃${Math.floor(v / 365)}年` : `活跃${v}天` },
 }
 
-// 公式：第 n 个里程碑的目标值（n 从 1 开始）
-function targetOf(type: string, n: number): number {
-  const g = Math.floor((n - 1) / 3) // 每 3 个为一档
-  const r = (n - 1) % 3 // 档内序号 0,1,2
-  switch (type) {
-    case "notes": return 10 + g * 30 + r * 10
-    case "notebooks": return n * 5
-    case "words": return (g * 2 + r + 1) * 10000
-    case "code": return 10 + (n - 1) * 30
-    case "tags": return 10 + (n - 1) * 30
-    case "backlinks": return 10 + g * 50 + r * 20
-    case "assets": return 10 + g * 20 + r * 10
-    case "images": return 10 + (n - 1) * 30
-    case "streak": return Math.round(3 * Math.pow(1.5, n - 1))
-    case "activeDays": return Math.round(10 * Math.pow(1.5, n - 1))
-    default: return n * 10
-  }
-}
-
 function tierOf(idx: number, total: number): Tier {
   const r = idx / total
   if (r < 0.4) return "common"
@@ -331,8 +313,8 @@ function generateMilestones(type: string, current: number, extra = 20): Mileston
   const result: MilestoneDef[] = []
   let n = 1
   while (true) {
-    const target = targetOf(type, n)
-    if (target > current + extra * targetOf(type, 1)) break
+    const target = milestoneTargetOf(type, n)
+    if (target > current + extra * milestoneTargetOf(type, 1)) break
     result.push({
       id: `${type}-${n}`,
       icon: meta.icon,

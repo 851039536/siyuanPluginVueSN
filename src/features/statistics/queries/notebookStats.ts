@@ -4,42 +4,53 @@ import { BLOCK_TYPE_LABELS, NOTEBOOK_COLORS } from "../types/constants"
 import { padZero } from "../utils"
 import { executeSql, formatDateTime } from "./executeSql"
 
+interface OpenNotebooks {
+  notebooks: any[]
+  idList: string
+  idToName: Map<string, string>
+}
+
+async function getOpenNotebooks(): Promise<OpenNotebooks> {
+  const data = await lsNotebooks()
+  const notebooks = data?.notebooks?.filter((nb: any) => !nb.closed) ?? []
+  const idList = notebooks
+    .map((nb: any) => `'${(nb.id as string).replace(/'/g, "''")}'`)
+    .join(",")
+  const idToName = new Map<string, string>()
+  for (const nb of notebooks) {
+    idToName.set(nb.id, nb.name)
+  }
+  return { notebooks, idList, idToName }
+}
+
 export async function getNotebookDocStats(): Promise<Array<{ name: string, count: number }>> {
   try {
-    const data = await lsNotebooks()
-    if (!data || !data.notebooks) return []
+    const { notebooks, idList, idToName } = await getOpenNotebooks()
+    if (notebooks.length === 0) return []
 
-    const openNotebooks = data.notebooks.filter((nb: any) => !nb.closed)
-    if (openNotebooks.length === 0) return []
-
-    const notebookIds = openNotebooks.map((nb: any) => `'${(nb.id as string).replace(/'/g, "''")}'`).join(",")
-    const sqlStmt = `
+    const rows = await executeSql(`
       SELECT box as notebook_id, COUNT(*) as doc_count
       FROM blocks
-      WHERE type = 'd' AND box IN (${notebookIds})
+      WHERE type = 'd' AND box IN (${idList})
       GROUP BY box
       ORDER BY doc_count DESC
-    `
-
-    const rows = await executeSql(sqlStmt)
-
-    const notebookMap = new Map<string, string>()
-    for (const nb of openNotebooks) {
-      notebookMap.set(nb.id, nb.name)
-    }
+    `)
 
     const result: Array<{ name: string, count: number }> = []
+    const seen = new Set<string>()
 
     if (rows && rows.length > 0) {
       for (const row of rows) {
-        const name = notebookMap.get(row.notebook_id) || "未知笔记本"
-        result.push({ name, count: row.doc_count || 0 })
-        notebookMap.delete(row.notebook_id)
+        const name = idToName.get(row.notebook_id) || "未知笔记本"
+        result.push({ name, count: Number(row.doc_count || 0) })
+        seen.add(row.notebook_id)
       }
     }
 
-    for (const [_, name] of notebookMap) {
-      result.push({ name, count: 0 })
+    for (const nb of notebooks) {
+      if (!seen.has(nb.id)) {
+        result.push({ name: nb.name, count: 0 })
+      }
     }
 
     return result
@@ -51,45 +62,35 @@ export async function getNotebookDocStats(): Promise<Array<{ name: string, count
 
 export async function getNotebookWordStats(): Promise<NotebookWordStat[]> {
   try {
-    const data = await lsNotebooks()
-    if (!data || !data.notebooks) return []
+    const { notebooks, idList, idToName } = await getOpenNotebooks()
+    if (notebooks.length === 0) return []
 
-    const openNotebooks = data.notebooks.filter((nb: any) => !nb.closed)
-    if (openNotebooks.length === 0) return []
-
-    const notebookIds = openNotebooks
-      .map((nb: any) => `'${(nb.id as string).replace(/'/g, "''")}'`)
-      .join(",")
-
-    const sqlStmt = `
+    const rows = await executeSql(`
       SELECT box as notebook_id, SUM(length) as total_words
       FROM blocks
-      WHERE type = 'p' AND length > 0 AND box IN (${notebookIds})
+      WHERE type = 'p' AND length > 0 AND box IN (${idList})
       GROUP BY box
       ORDER BY total_words DESC
-    `
-    const rows = await executeSql(sqlStmt)
-
-    const notebookMap = new Map<string, string>()
-    for (const nb of openNotebooks) {
-      notebookMap.set(nb.id, nb.name)
-    }
+    `)
 
     const result: NotebookWordStat[] = []
+    const seen = new Set<string>()
     let totalWordsAll = 0
 
     if (rows && rows.length > 0) {
       for (const row of rows) {
-        const name = notebookMap.get(row.notebook_id) || "未知笔记本"
+        const name = idToName.get(row.notebook_id) || "未知笔记本"
         const words = Number(row.total_words || 0)
         totalWordsAll += words
         result.push({ name, words, percentage: 0, color: "" })
-        notebookMap.delete(row.notebook_id)
+        seen.add(row.notebook_id)
       }
     }
 
-    for (const [_, name] of notebookMap) {
-      result.push({ name, words: 0, percentage: 0, color: "" })
+    for (const nb of notebooks) {
+      if (!seen.has(nb.id)) {
+        result.push({ name: nb.name, words: 0, percentage: 0, color: "" })
+      }
     }
 
     result.forEach((item, idx) => {
@@ -108,11 +109,8 @@ export async function getNotebookWordStats(): Promise<NotebookWordStat[]> {
 
 export async function getNotebookActivityTrend(days: number): Promise<NotebookActivityItem[]> {
   try {
-    const data = await lsNotebooks()
-    if (!data || !data.notebooks) return []
-
-    const openNotebooks = data.notebooks.filter((nb: any) => !nb.closed)
-    if (openNotebooks.length === 0) return []
+    const { notebooks, idList, idToName } = await getOpenNotebooks()
+    if (notebooks.length === 0) return []
 
     const today = new Date()
     const startDate = new Date(today)
@@ -122,27 +120,17 @@ export async function getNotebookActivityTrend(days: number): Promise<NotebookAc
     const startStr = formatDateTime(startDate)
     const endStr = formatDateTime(today)
 
-    const notebookIds = openNotebooks
-      .map((nb: any) => `'${(nb.id as string).replace(/'/g, "''")}'`)
-      .join(",")
-
-    const sqlStmt = `
+    const rows = await executeSql(`
       SELECT box as notebook_id, substr(created, 1, 8) as date, SUM(length) as words
       FROM blocks
       WHERE type = 'p'
         AND length > 0
-        AND box IN (${notebookIds})
+        AND box IN (${idList})
         AND created >= '${startStr}'
         AND created <= '${endStr}'
       GROUP BY box, substr(created, 1, 8)
       ORDER BY date ASC
-    `
-    const rows = await executeSql(sqlStmt)
-
-    const notebookMap = new Map<string, string>()
-    for (const nb of openNotebooks) {
-      notebookMap.set(nb.id, nb.name)
-    }
+    `)
 
     const pivot = new Map<string, Map<string, number>>()
     if (rows) {
@@ -158,7 +146,7 @@ export async function getNotebookActivityTrend(days: number): Promise<NotebookAc
     }
 
     const result: NotebookActivityItem[] = []
-    openNotebooks.forEach((nb: any, idx) => {
+    notebooks.forEach((nb: any, idx) => {
       const dayMap = pivot.get(nb.id) || new Map()
       const dailyData: DailyWordCount[] = []
 
@@ -177,7 +165,7 @@ export async function getNotebookActivityTrend(days: number): Promise<NotebookAc
       }
 
       result.push({
-        notebook: notebookMap.get(nb.id) || "未知笔记本",
+        notebook: idToName.get(nb.id) || "未知笔记本",
         data: dailyData,
         color: NOTEBOOK_COLORS[idx % NOTEBOOK_COLORS.length],
       })
@@ -195,20 +183,13 @@ export async function getMostProductiveNotebook(
   endStr: string,
 ): Promise<{ name: string, words: number }> {
   try {
-    const data = await lsNotebooks()
-    if (!data || !data.notebooks) return { name: "", words: 0 }
-
-    const openNotebooks = data.notebooks.filter((nb: any) => !nb.closed)
-    if (openNotebooks.length === 0) return { name: "", words: 0 }
-
-    const notebookIds = openNotebooks
-      .map((nb: any) => `'${(nb.id as string).replace(/'/g, "''")}'`)
-      .join(",")
+    const { notebooks, idList, idToName } = await getOpenNotebooks()
+    if (notebooks.length === 0) return { name: "", words: 0 }
 
     const rows = await executeSql(`
       SELECT box as notebook_id, SUM(length) as words
       FROM blocks
-      WHERE type = 'p' AND length > 0 AND box IN (${notebookIds})
+      WHERE type = 'p' AND length > 0 AND box IN (${idList})
         AND created >= '${startStr}' AND created <= '${endStr}'
       GROUP BY box
       ORDER BY words DESC
@@ -216,93 +197,35 @@ export async function getMostProductiveNotebook(
     `)
 
     if (rows.length > 0) {
-      const nb = openNotebooks.find((n: any) => n.id === rows[0].notebook_id)
       return {
-        name: nb?.name || "未知笔记本",
+        name: idToName.get(rows[0].notebook_id) || "未知笔记本",
         words: Number(rows[0].words || 0),
       }
     }
 
-    return { name: openNotebooks[0].name, words: 0 }
+    return { name: notebooks[0].name, words: 0 }
   } catch {
     return { name: "", words: 0 }
   }
 }
 
-export async function getNotebookTagStats(): Promise<Array<{ name: string, count: number }>> {
-  try {
-    const data = await lsNotebooks()
-    if (!data || !data.notebooks) return []
-
-    const openNotebooks = data.notebooks.filter((nb: any) => !nb.closed)
-    if (openNotebooks.length === 0) return []
-
-    const notebookIds = openNotebooks
-      .map((nb: any) => `'${(nb.id as string).replace(/'/g, "''")}'`)
-      .join(",")
-
-    const rows = await executeSql(`
-      SELECT box as notebook_id, COUNT(*) as tag_count
-      FROM blocks
-      WHERE type = 'tag' AND box IN (${notebookIds})
-      GROUP BY box
-      ORDER BY tag_count DESC
-    `)
-
-    const notebookMap = new Map<string, string>()
-    for (const nb of openNotebooks) {
-      notebookMap.set(nb.id, nb.name)
-    }
-
-    const result: Array<{ name: string, count: number }> = []
-    if (rows && rows.length > 0) {
-      for (const row of rows) {
-        const name = notebookMap.get(row.notebook_id) || "未知笔记本"
-        result.push({ name, count: Number(row.tag_count || 0) })
-        notebookMap.delete(row.notebook_id)
-      }
-    }
-
-    for (const [_, name] of notebookMap) {
-      result.push({ name, count: 0 })
-    }
-
-    return result
-  } catch (error) {
-    console.error("获取笔记本标签分布失败:", error)
-    return []
-  }
-}
-
 export async function getNotebookBlockTypeStats(): Promise<NotebookBlockTypeStat[]> {
   try {
-    const data = await lsNotebooks()
-    if (!data || !data.notebooks) return []
-
-    const openNotebooks = data.notebooks.filter((nb: any) => !nb.closed)
-    if (openNotebooks.length === 0) return []
-
-    const notebookIds = openNotebooks
-      .map((nb: any) => `'${(nb.id as string).replace(/'/g, "''")}'`)
-      .join(",")
+    const { notebooks, idList, idToName } = await getOpenNotebooks()
+    if (notebooks.length === 0) return []
 
     const rows = await executeSql(`
       SELECT box as notebook_id, type, COUNT(*) as cnt
       FROM blocks
-      WHERE box IN (${notebookIds})
+      WHERE box IN (${idList})
       GROUP BY box, type
       ORDER BY box, cnt DESC
     `)
 
-    const notebookMap = new Map<string, string>()
-    for (const nb of openNotebooks) {
-      notebookMap.set(nb.id, nb.name)
-    }
-
     const grouped = new Map<string, Array<{ name: string, count: number, label: string }>>()
     if (rows) {
       for (const row of rows) {
-        const nbName = notebookMap.get(row.notebook_id) || "未知笔记本"
+        const nbName = idToName.get(row.notebook_id) || "未知笔记本"
         if (!grouped.has(nbName)) {
           grouped.set(nbName, [])
         }
@@ -314,8 +237,7 @@ export async function getNotebookBlockTypeStats(): Promise<NotebookBlockTypeStat
       }
     }
 
-    // ensure all open notebooks appear, even with empty stats
-    for (const nb of openNotebooks) {
+    for (const nb of notebooks) {
       if (!grouped.has(nb.name)) {
         grouped.set(nb.name, [])
       }

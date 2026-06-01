@@ -148,23 +148,32 @@
         v-if="activeTab === 'notebookDistribution'"
         class="notebook-distribution-tab"
       >
-        <DocBarChart
-          :title="i18n.docBarChartTitle"
-          :chart-data="notebookDocStats"
-          :loading="docChartLoading"
-          :i18n="docBarChartI18n"
-        />
-        <DocBarChart
-          :title="i18n.blockTypeStats || '块类型分布'"
-          :chart-data="stats.blockTypeStats.map(item => ({
-            name: item.label,
-            count: item.count,
-          }))"
-          :i18n="blockTypeChartI18n"
-        />
-        <NotebookWordPie
-          :data="notebookWordStats"
-        />
+        <section class="dist-section">
+          <DocBarChart
+            :title="i18n.docBarChartTitle"
+            :chart-data="notebookDocStats"
+            :loading="docChartLoading"
+            :i18n="docBarChartI18n"
+          />
+        </section>
+
+        <section class="dist-section">
+          <DocBarChart
+            :title="i18n.blockTypeStats || '块类型分布'"
+            :chart-data="stats.blockTypeStats.map(item => ({
+              name: item.label,
+              count: item.count,
+            }))"
+            :i18n="blockTypeChartI18n"
+          />
+        </section>
+
+        <section class="dist-section">
+          <h3 class="dist-section-title">🥧 {{ i18n.notebookWordPie || '笔记本字数占比' }}</h3>
+          <NotebookWordPie
+            :data="notebookWordStats"
+          />
+        </section>
       </div>
 
       <!-- 报告 Tab -->
@@ -673,5 +682,29 @@ defineExpose({
   border-radius: 0;
   box-shadow: none;
   padding: 0;
+}
+
+.notebook-distribution-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dist-section {
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.dist-section-title {
+  margin: 0 0 10px 0;
+  font-family: $font-heading;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--b3-theme-on-surface);
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 </style>

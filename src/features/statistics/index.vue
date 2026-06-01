@@ -120,18 +120,12 @@
             :chart-data="stats.dailyStats"
             :i18n="barChartI18n"
           />
-        </div>
 
-        <!-- 可折叠：字数排行 -->
-        <CollapsibleSection
-          :title="`🏆 ${i18n.wordRanking || '字数排行'}`"
-          :default-expanded="false"
-        >
           <WordRanking
             :chart-data="stats.dailyStats"
             :i18n="wordRankingI18n"
           />
-        </CollapsibleSection>
+        </div>
 
       </div>
 
@@ -240,7 +234,6 @@ import {
   watch,
 } from "vue"
 import BarChart from "./components/BarChart.vue"
-import CollapsibleSection from "./components/CollapsibleSection.vue"
 import DocBarChart from "./components/DocBarChart.vue"
 import DocChangeSection from "./components/DocChangeSection.vue"
 import HeatmapCard from "./components/HeatmapCard.vue"
@@ -657,5 +650,13 @@ defineExpose({
 .notebook-distribution-tab,
 .report-tab {
   padding: 12px;
+}
+
+.chart-section {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
 }
 </style>

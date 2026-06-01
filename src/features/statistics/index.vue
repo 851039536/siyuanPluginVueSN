@@ -74,7 +74,7 @@
       class="statistics-content"
     >
       <!-- 概览 Tab -->
-      <div v-show="activeTab === 'overview'">
+      <div v-if="activeTab === 'overview'">
         <!-- 核心指标横幅（常驻） -->
         <StatsCardsCompact
           :total-notes="stats.totalNotes"
@@ -131,7 +131,7 @@
 
       <!-- 趋势 Tab -->
       <div
-        v-show="activeTab === 'trend'"
+        v-if="activeTab === 'trend'"
         class="trend-tab"
       >
         <TrendView
@@ -145,7 +145,7 @@
 
       <!-- 笔记分布 Tab -->
       <div
-        v-show="activeTab === 'notebookDistribution'"
+        v-if="activeTab === 'notebookDistribution'"
         class="notebook-distribution-tab"
       >
         <DocBarChart
@@ -169,7 +169,7 @@
 
       <!-- 报告 Tab -->
       <div
-        v-show="activeTab === 'report'"
+        v-if="activeTab === 'report'"
         class="report-tab"
       >
         <ReportView
@@ -179,7 +179,7 @@
 
       <!-- 里程碑 Tab -->
       <div
-        v-show="activeTab === 'milestones'"
+        v-if="activeTab === 'milestones'"
         class="milestones-tab"
       >
         <MilestonesCard
@@ -199,7 +199,7 @@
 
       <!-- 热力图 Tab -->
       <div
-        v-show="activeTab === 'heatmap'"
+        v-if="activeTab === 'heatmap'"
         class="heatmap-tab"
       >
         <HeatmapCard
@@ -212,7 +212,7 @@
 
       <!-- 写作活跃度 Tab -->
       <div
-        v-show="activeTab === 'activity'"
+        v-if="activeTab === 'activity'"
         class="activity-tab"
       >
         <NotebookActivityTrend
@@ -562,19 +562,34 @@ watch([viewMode, dayRange, monthYearRange, selectedYear], () => {
   refreshData()
 })
 
+const notebookStatsLoaded = ref(false)
+
 async function refreshData(): Promise<void> {
   loading.value = true
   try {
     await refreshCore()
     await loadHistoricalData()
-    await loadNotebookDocStats()
-    await loadNotebookWordStats()
+    if (activeTab.value === 'notebookDistribution' && !notebookStatsLoaded.value) {
+      await loadNotebookStats()
+    }
   } catch (error) {
     console.error("刷新统计数据失败:", error)
   } finally {
     loading.value = false
   }
 }
+
+async function loadNotebookStats(): Promise<void> {
+  if (notebookStatsLoaded.value) return
+  await Promise.all([loadNotebookDocStats(), loadNotebookWordStats()])
+  notebookStatsLoaded.value = true
+}
+
+watch(activeTab, (tab) => {
+  if (tab === 'notebookDistribution') {
+    loadNotebookStats()
+  }
+})
 
 onMounted(() => {
   refreshData()

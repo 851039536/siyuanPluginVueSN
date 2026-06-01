@@ -12,29 +12,6 @@ import {
   encryptSetting,
 } from "@/utils/settingsCrypto"
 
-// 从规范位置 re-export，保持向后兼容
-export type {
-  CodeBlockSettings,
-  FontSettings,
-  HeadingSettings,
-  HighlightSettings,
-  ListSettings,
-  TabPinSettings,
-} from "@/features/generalSettings/types/storage"
-
-export {
-  DEFAULT_CODEBLOCK_SETTINGS,
-  DEFAULT_FONT_SETTINGS,
-  DEFAULT_HEADING_SETTINGS,
-  DEFAULT_HIGHLIGHT_SETTINGS,
-  DEFAULT_LIST_SETTINGS,
-  DEFAULT_TABPIN_SETTINGS,
-} from "@/features/generalSettings/types/storage"
-
-// TextDiffSettings 也从 feature 规范位置 re-export
-export type { TextDiffSettings } from "@/features/textDiff/types/storage"
-export { DEFAULT_TEXTDIFF_SETTINGS } from "@/features/textDiff/types/storage"
-
 /**
  * 插件配置接口
  */

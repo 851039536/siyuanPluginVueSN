@@ -42,6 +42,12 @@
         {{ i18n.notebookDistributionTab || '笔记分布' }}
       </button>
       <button
+        :class="['tab-item', { active: activeTab === 'report' }]"
+        @click="activeTab = 'report'"
+      >
+        {{ i18n.reportTab || '报告' }}
+      </button>
+      <button
         :class="['tab-item', { active: activeTab === 'milestones' }]"
         @click="activeTab = 'milestones'"
       >
@@ -127,16 +133,6 @@
           />
         </CollapsibleSection>
 
-        <!-- 可折叠：年度/月度报告 -->
-        <CollapsibleSection
-          :title="`📊 ${i18n.reportTitle || '年度/月度报告'}`"
-          :default-expanded="false"
-        >
-          <ReportView
-            :on-get-report-data="getReportData"
-          />
-        </CollapsibleSection>
-
       </div>
 
       <!-- 趋势 Tab -->
@@ -174,6 +170,16 @@
         />
         <NotebookWordPie
           :data="notebookWordStats"
+        />
+      </div>
+
+      <!-- 报告 Tab -->
+      <div
+        v-show="activeTab === 'report'"
+        class="report-tab"
+      >
+        <ReportView
+          :on-get-report-data="getReportData"
         />
       </div>
 
@@ -318,6 +324,7 @@ interface Props {
     tabOverview?: string
     trendTab?: string
     notebookDistributionTab?: string
+    reportTab?: string
   }
 }
 
@@ -385,7 +392,7 @@ const props = withDefaults(defineProps<Props>(), {
   }),
 })
 
-const activeTab = ref<"overview" | "trend" | "heatmap" | "activity" | "notebookDistribution" | "milestones">("overview")
+const activeTab = ref<"overview" | "trend" | "heatmap" | "activity" | "notebookDistribution" | "report" | "milestones">("overview")
 
 const {
   loading,
@@ -656,7 +663,8 @@ defineExpose({
 .heatmap-tab,
 .activity-tab,
 .trend-tab,
-.notebook-distribution-tab {
+.notebook-distribution-tab,
+.report-tab {
   padding: 12px;
 }
 </style>

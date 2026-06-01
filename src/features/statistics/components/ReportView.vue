@@ -1,5 +1,25 @@
 <template>
   <div class="report-view">
+    <!-- Mode toggle -->
+    <div class="report-mode-toggle">
+      <button
+        :class="['mode-btn', { active: reportMode === 'single' }]"
+        @click="reportMode = 'single'"
+      >单期报告</button>
+      <button
+        :class="['mode-btn', { active: reportMode === 'compare' }]"
+        @click="reportMode = 'compare'"
+      >对比分析</button>
+    </div>
+
+    <!-- Comparison view -->
+    <ComparisonView
+      v-if="reportMode === 'compare'"
+      :on-get-comparison-data="onGetComparisonData"
+    />
+
+    <!-- Single report view -->
+    <template v-else>
     <div class="report-controls">
       <div class="report-selector">
         <select
@@ -144,21 +164,25 @@
         </div>
       </div>
     </div>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { ReportData } from "../types"
+import type { ComparisonData, ReportData } from "../types"
 import { computed, ref } from "vue"
+import ComparisonView from "./ComparisonView.vue"
 import { formatNumber } from "../utils"
 
 interface Props {
   onGetReportData?: (year?: number, month?: number) => Promise<ReportData>
+  onGetComparisonData?: (yearA: number, monthA: number | undefined, yearB: number, monthB: number | undefined) => Promise<ComparisonData>
 }
 
 const props = defineProps<Props>()
 
 const now = new Date()
+const reportMode = ref<'single' | 'compare'>('single')
 const reportYear = ref(now.getFullYear())
 const reportMonth = ref(0)
 const loading = ref(false)
@@ -214,6 +238,39 @@ async function generate() {
 
 .report-view {
   padding: 4px 0;
+}
+
+.report-mode-toggle {
+  display: flex;
+  gap: 4px;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: 6px;
+  padding: 3px;
+  width: fit-content;
+  margin-bottom: 12px;
+}
+
+.mode-btn {
+  padding: 4px 14px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--b3-theme-on-surface-light);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    color: var(--b3-theme-on-surface);
+    background: var(--b3-list-hover);
+  }
+
+  &.active {
+    background: var(--b3-theme-primary);
+    color: var(--b3-theme-on-primary);
+    font-weight: 600;
+  }
 }
 
 .report-controls {

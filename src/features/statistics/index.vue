@@ -190,6 +190,7 @@
       >
         <ReportView
           :on-get-report-data="getReportData"
+          :on-get-comparison-data="getComparisonData"
         />
       </div>
 
@@ -269,7 +270,7 @@ import { useNotebookStats } from "./composables/useNotebookStats"
 import { useStatistics } from "./composables/useStatistics"
 import { getDateChangedDocs, getDateRangeChangeStats } from "./queries/docChangeStats"
 import { getNotebookActivityTrend } from "./queries/notebookStats"
-import { getReportData, getTrendPrediction } from "./queries/reportStats"
+import { getComparisonData, getReportData, getTrendPrediction } from "./queries/reportStats"
 import { milestoneTargetOf } from "./utils/milestones"
 
 interface Props {

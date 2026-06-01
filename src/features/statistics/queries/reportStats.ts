@@ -1,4 +1,4 @@
-import type { DailyWordCount, ReportData, TrendPrediction } from "../types"
+import type { ComparisonData, DailyWordCount, ReportData, TrendPrediction } from "../types"
 import { padZero } from "../utils"
 import { executeSql } from "./executeSql"
 import { getMostProductiveNotebook } from "./notebookStats"
@@ -358,5 +358,28 @@ export async function getTrendPrediction(): Promise<TrendPrediction> {
       weeklyProjection: 0,
       monthlyProjection: 0,
     }
+  }
+}
+
+export async function getComparisonData(
+  yearA: number, monthA: number | undefined,
+  yearB: number, monthB: number | undefined,
+): Promise<ComparisonData> {
+  const [a, b] = await Promise.all([
+    getReportData(yearA, monthA),
+    getReportData(yearB, monthB),
+  ])
+  return {
+    periodALabel: a.periodLabel,
+    periodBLabel: b.periodLabel,
+    a,
+    b,
+    deltas: {
+      totalWords: b.totalWords - a.totalWords,
+      totalNotesCreated: b.totalNotesCreated - a.totalNotesCreated,
+      avgDailyWords: b.avgDailyWords - a.avgDailyWords,
+      activeDays: b.activeDays - a.activeDays,
+      longestStreak: b.longestStreak - a.longestStreak,
+    },
   }
 }

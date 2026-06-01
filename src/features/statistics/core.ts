@@ -137,6 +137,7 @@ export class Statistics {
         dateLabel: `${today.getMonth() + 1}/${today.getDate()}`,
         totalNotes: stats.totalNotes,
         totalWords: stats.totalWords,
+        totalBlocks: stats.totalBlocks,
         todayCreated: stats.todayCreated,
         todayModified: stats.todayModified,
         avgWordsPerDoc: stats.avgWordsPerDoc,

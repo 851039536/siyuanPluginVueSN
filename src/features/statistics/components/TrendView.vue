@@ -191,6 +191,10 @@
                 <span class="th-icon">✍️</span>
                 {{ i18n.words }}
               </th>
+              <th class="col-blocks">
+                <span class="th-icon">🧩</span>
+                {{ i18n.blocks || '块' }}
+              </th>
               <th class="col-created">
                 <span class="th-icon">📅</span>
                 {{ i18n.created }}
@@ -220,6 +224,9 @@
               <td class="col-words">
                 {{ formatNumber(row.item.totalWords) }}
               </td>
+              <td class="col-blocks">
+                {{ formatNumber(row.item.totalBlocks) }}
+              </td>
               <td class="col-created">
                 {{ row.item.todayCreated }}
               </td>
@@ -241,6 +248,13 @@
                     :class="row.noteDiff > 0 ? 'success' : 'danger'"
                   >
                     {{ `${(row.noteDiff > 0 ? '+' : '') + row.noteDiff} ${i18n.notesUnit}` }}
+                  </span>
+                  <span
+                    v-if="row.blockDiff !== 0"
+                    class="diff-tag"
+                    :class="row.blockDiff > 0 ? 'success' : 'danger'"
+                  >
+                    {{ `${(row.blockDiff > 0 ? '+' : '') + formatShortNumber(row.blockDiff)} 块` }}
                   </span>
                 </template>
                 <span
@@ -273,6 +287,7 @@ interface HistoricalDataItem {
   dateLabel: string
   totalNotes: number
   totalWords: number
+  totalBlocks: number
   todayCreated: number
   todayModified: number
 }
@@ -287,6 +302,7 @@ interface Props {
     date: string
     notes: string
     words: string
+    blocks: string
     created: string
     modified: string
     change: string
@@ -308,6 +324,7 @@ const props = withDefaults(defineProps<Props>(), {
     date: "日期",
     notes: "笔记",
     words: "字数",
+    blocks: "块",
     created: "新增",
     modified: "修改",
     change: "变化",
@@ -320,7 +337,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 // ===== 趋势图表状态 =====
-const activeMetric = ref<"totalWords" | "totalNotes" | "todayCreated" | "todayModified">("totalWords")
+const activeMetric = ref<"totalWords" | "totalNotes" | "totalBlocks" | "todayCreated" | "todayModified">("totalWords")
 const hoveredIndex = ref(-1)
 
 const metricTabs = computed(() => [
@@ -335,6 +352,12 @@ const metricTabs = computed(() => [
     icon: "📓",
     label: props.i18n.notes,
     unit: props.i18n.notesUnit,
+  },
+  {
+    key: "totalBlocks" as const,
+    icon: "🧩",
+    label: props.i18n.blocks || "块",
+    unit: "个",
   },
   {
     key: "todayCreated" as const,
@@ -741,6 +764,7 @@ const historicalRows = computed(() => {
       item,
       wordDiff: previous ? getDiff(item, previous, "totalWords") : 0,
       noteDiff: previous ? getDiff(item, previous, "totalNotes") : 0,
+      blockDiff: previous ? getDiff(item, previous, "totalBlocks") : 0,
       hasPrevious: Boolean(previous),
       isToday: item.date === todayStr,
     }
@@ -750,7 +774,7 @@ const historicalRows = computed(() => {
 function getDiff(
   current: HistoricalDataItem,
   previous: HistoricalDataItem,
-  field: "totalWords" | "totalNotes",
+  field: "totalWords" | "totalNotes" | "totalBlocks",
 ): number {
   if (!current || !previous) return 0
   // 累计值的差值即为该周期内的净变化
@@ -1103,6 +1127,7 @@ function getDiff(
 
             &.col-notes,
             &.col-words,
+            &.col-blocks,
             &.col-created,
             &.col-modified {
               width: 50px;
@@ -1140,6 +1165,7 @@ function getDiff(
 
               &.col-notes,
               &.col-words,
+              &.col-blocks,
               &.col-created,
               &.col-modified {
                 text-align: right;

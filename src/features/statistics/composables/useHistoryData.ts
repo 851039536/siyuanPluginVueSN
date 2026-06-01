@@ -91,6 +91,7 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
       let lastKnownStats: {
         totalNotes: number
         totalWords: number
+        totalBlocks: number
         avgWordsPerDoc: number
       } | null = null
 
@@ -118,16 +119,18 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
         if (isValidData) {
           const record = createHistoryRecord(
             date,
-            dayData.totalNotes,
-            dayData.totalWords,
-            dayData.todayCreated,
-            dayData.todayModified,
-            dayData.avgWordsPerDoc,
+            dayData.totalNotes ?? 0,
+            dayData.totalWords ?? 0,
+            dayData.totalBlocks ?? 0,
+            dayData.todayCreated ?? 0,
+            dayData.todayModified ?? 0,
+            dayData.avgWordsPerDoc ?? 0,
           )
           result.push(record)
           lastKnownStats = {
             totalNotes: record.totalNotes,
             totalWords: record.totalWords,
+            totalBlocks: record.totalBlocks,
             avgWordsPerDoc: record.avgWordsPerDoc,
           }
         } else if (isToday) {
@@ -141,6 +144,7 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
               date,
               currentStats.totalNotes,
               currentStats.totalWords,
+              currentStats.totalBlocks,
               currentStats.todayCreated,
               currentStats.todayModified,
               currentStats.avgWordsPerDoc,
@@ -149,6 +153,7 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
             lastKnownStats = {
               totalNotes: record.totalNotes,
               totalWords: record.totalWords,
+              totalBlocks: record.totalBlocks,
               avgWordsPerDoc: record.avgWordsPerDoc,
             }
           } catch (error) {
@@ -158,11 +163,12 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
                   date,
                   lastKnownStats.totalNotes,
                   lastKnownStats.totalWords,
+                  lastKnownStats.totalBlocks,
                   0,
                   0,
                   lastKnownStats.avgWordsPerDoc,
                 )
-              : createHistoryRecord(date, 0, 0, 0, 0, 0)
+              : createHistoryRecord(date, 0, 0, 0, 0, 0, 0)
             result.push(record)
           }
         } else {
@@ -171,11 +177,12 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
                 date,
                 lastKnownStats.totalNotes,
                 lastKnownStats.totalWords,
+                lastKnownStats.totalBlocks,
                 0,
                 0,
                 lastKnownStats.avgWordsPerDoc,
               )
-            : createHistoryRecord(date, 0, 0, 0, 0, 0)
+            : createHistoryRecord(date, 0, 0, 0, 0, 0, 0)
           result.push(record)
         }
       }
@@ -191,6 +198,7 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
     date: Date,
     totalNotes: number,
     totalWords: number,
+    totalBlocks: number,
     todayCreated: number,
     todayModified: number,
     avgWordsPerDoc: number,
@@ -199,6 +207,7 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
     dateLabel: string
     totalNotes: number
     totalWords: number
+    totalBlocks: number
     todayCreated: number
     todayModified: number
     avgWordsPerDoc: number
@@ -208,6 +217,7 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
       dateLabel: `${date.getMonth() + 1}/${date.getDate()}`,
       totalNotes,
       totalWords,
+      totalBlocks,
       todayCreated,
       todayModified,
       avgWordsPerDoc,

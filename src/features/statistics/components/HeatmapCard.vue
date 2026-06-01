@@ -285,31 +285,10 @@ const weekdayDistribution = computed(() => {
 }
 
 // ========== Summary Cards ==========
-.summary-cards {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-}
+@include stats.summary-cards-base;
 
-.summary-card {
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
-  border-radius: 8px;
-  padding: 10px 8px;
-  text-align: center;
-
-  .summary-value {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--b3-theme-primary);
-    line-height: 1.2;
-  }
-
-  .summary-label {
-    font-size: 11px;
-    color: var(--b3-theme-on-surface-light);
-    margin-top: 4px;
-  }
+.summary-card .summary-value {
+  font-size: 20px;
 }
 
 // ========== Range Selector ==========

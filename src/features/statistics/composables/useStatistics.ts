@@ -2,10 +2,7 @@ import type {
   ComputedRef,
   Ref,
 } from "vue"
-import type {
-  DailyWordCount,
-  StatisticsData,
-} from "../types"
+import type { StatisticsData } from "../types"
 import {
   computed,
   ref,
@@ -20,7 +17,6 @@ export function useStatistics(): {
   dayRange: Ref<7 | 15 | 30 | 90 | 180 | 365>
   monthYearRange: Ref<1 | 2 | 3>
   selectedYear: Ref<number>
-  chartData: Ref<DailyWordCount[]>
   updateInterval: Ref<number>
   periodAvgWords: ComputedRef<number>
   chartTitle: ComputedRef<string>
@@ -33,14 +29,13 @@ export function useStatistics(): {
   const dayRange = ref<7 | 15 | 30 | 90 | 180 | 365>(7)
   const monthYearRange = ref<1 | 2 | 3>(1)
   const selectedYear = ref<number>(new Date().getFullYear())
-  const chartData = ref<DailyWordCount[]>([])
   const updateInterval = ref(60)
 
   const periodAvgWords = computed(() => {
-    if (!chartData.value || chartData.value.length === 0) return 0
-    const totalWords = chartData.value.reduce((sum, item) => sum + item.words, 0)
-    const days = chartData.value.length
-    return days > 0 ? Math.round(totalWords / days) : 0
+    const dailyStats = stats.value?.dailyStats
+    if (!dailyStats || dailyStats.length === 0) return 0
+    const totalWords = dailyStats.reduce((sum, item) => sum + item.words, 0)
+    return Math.round(totalWords / dailyStats.length)
   })
 
   const chartTitle = computed(() => {
@@ -53,7 +48,6 @@ export function useStatistics(): {
       monthYearRange: monthYearRange.value,
       selectedYear: selectedYear.value,
     })
-    chartData.value = stats.value.dailyStats || []
     lastUpdateTime.value = new Date().toLocaleString("zh-CN")
   }
 
@@ -65,7 +59,6 @@ export function useStatistics(): {
     dayRange,
     monthYearRange,
     selectedYear,
-    chartData,
     updateInterval,
     periodAvgWords,
     chartTitle,

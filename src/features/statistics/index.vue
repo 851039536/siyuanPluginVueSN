@@ -36,6 +36,12 @@
         {{ i18n.trendTab || '趋势' }}
       </button>
       <button
+        :class="['tab-item', { active: activeTab === 'notebookDistribution' }]"
+        @click="activeTab = 'notebookDistribution'"
+      >
+        {{ i18n.notebookDistributionTab || '笔记分布' }}
+      </button>
+      <button
         :class="['tab-item', { active: activeTab === 'milestones' }]"
         @click="activeTab = 'milestones'"
       >
@@ -121,46 +127,6 @@
           />
         </CollapsibleSection>
 
-        <!-- 可折叠：各笔记本文档数 -->
-        <CollapsibleSection
-          :title="`📂 ${i18n.docBarChartTitle}`"
-          :default-expanded="false"
-        >
-          <DocBarChart
-            :title="i18n.docBarChartTitle"
-            :chart-data="notebookDocStats"
-            :loading="docChartLoading"
-            :i18n="docBarChartI18n"
-          />
-        </CollapsibleSection>
-
-        <!-- 可折叠：块类型分布 -->
-        <CollapsibleSection
-          :title="`🧩 ${i18n.blockTypeStats || '块类型分布'}`"
-          :badge="stats.blockTypeStats.length > 0 ? `${stats.blockTypeStats.length}种` : ''"
-          :default-expanded="false"
-        >
-          <DocBarChart
-            :title="i18n.blockTypeStats || '块类型分布'"
-            :chart-data="stats.blockTypeStats.map(item => ({
-              name: item.label,
-              count: item.count,
-            }))"
-            :i18n="blockTypeChartI18n"
-          />
-        </CollapsibleSection>
-
-        <!-- 可折叠：笔记本字数占比饼图 -->
-        <CollapsibleSection
-          :title="`🥧 ${i18n.notebookWordPie || '笔记本字数占比'}`"
-          :badge="notebookWordStats.length > 0 ? `${notebookWordStats.length}` : ''"
-          :default-expanded="false"
-        >
-          <NotebookWordPie
-            :data="notebookWordStats"
-          />
-        </CollapsibleSection>
-
         <!-- 可折叠：年度/月度报告 -->
         <CollapsibleSection
           :title="`📊 ${i18n.reportTitle || '年度/月度报告'}`"
@@ -184,6 +150,30 @@
         />
         <TrendPrediction
           :on-get-trend-prediction="getTrendPrediction"
+        />
+      </div>
+
+      <!-- 笔记分布 Tab -->
+      <div
+        v-show="activeTab === 'notebookDistribution'"
+        class="notebook-distribution-tab"
+      >
+        <DocBarChart
+          :title="i18n.docBarChartTitle"
+          :chart-data="notebookDocStats"
+          :loading="docChartLoading"
+          :i18n="docBarChartI18n"
+        />
+        <DocBarChart
+          :title="i18n.blockTypeStats || '块类型分布'"
+          :chart-data="stats.blockTypeStats.map(item => ({
+            name: item.label,
+            count: item.count,
+          }))"
+          :i18n="blockTypeChartI18n"
+        />
+        <NotebookWordPie
+          :data="notebookWordStats"
         />
       </div>
 
@@ -327,6 +317,7 @@ interface Props {
     milestones?: string
     tabOverview?: string
     trendTab?: string
+    notebookDistributionTab?: string
   }
 }
 
@@ -394,7 +385,7 @@ const props = withDefaults(defineProps<Props>(), {
   }),
 })
 
-const activeTab = ref<"overview" | "trend" | "heatmap" | "activity" | "milestones">("overview")
+const activeTab = ref<"overview" | "trend" | "heatmap" | "activity" | "notebookDistribution" | "milestones">("overview")
 
 const {
   loading,
@@ -664,7 +655,8 @@ defineExpose({
 .milestones-tab,
 .heatmap-tab,
 .activity-tab,
-.trend-tab {
+.trend-tab,
+.notebook-distribution-tab {
   padding: 12px;
 }
 </style>

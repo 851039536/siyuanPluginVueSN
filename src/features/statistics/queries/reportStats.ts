@@ -51,7 +51,6 @@ export async function getReportData(year?: number, month?: number): Promise<Repo
   const today = new Date()
   const reportYear = year || today.getFullYear()
   const reportMonth = month
-  const pad = padZero
 
   try {
     if (!reportMonth) {
@@ -120,10 +119,10 @@ export async function getReportData(year?: number, month?: number): Promise<Repo
 
       const monthlyBreakdown: Array<{ month: string, words: number, created: number }> = []
       for (let m = 1; m <= 12; m++) {
-        const monthKey = `${reportYear}${pad(m)}`
+        const monthKey = `${reportYear}${padZero(m)}`
         const row = (monthlyRows || []).find((r: any) => String(r.month) === monthKey)
         monthlyBreakdown.push({
-          month: `${reportYear}/${pad(m)}`,
+          month: `${reportYear}/${padZero(m)}`,
           words: Number(row?.words || 0),
           created: Number(row?.created || 0),
         })
@@ -146,9 +145,9 @@ export async function getReportData(year?: number, month?: number): Promise<Repo
       }
     } else {
       // === 月度报告 ===
-      const monthStartStr = `${reportYear}${pad(reportMonth)}01000000`
+      const monthStartStr = `${reportYear}${padZero(reportMonth)}01000000`
       const lastDay = new Date(reportYear, reportMonth, 0).getDate()
-      const monthEndStr = `${reportYear}${pad(reportMonth)}${pad(lastDay)}235959`
+      const monthEndStr = `${reportYear}${padZero(reportMonth)}${padZero(lastDay)}235959`
 
       const [wordRows, createdRows] = await Promise.all([
         executeSql(`
@@ -161,7 +160,7 @@ export async function getReportData(year?: number, month?: number): Promise<Repo
           SELECT COUNT(*) as cnt
           FROM blocks
           WHERE type = 'd'
-            AND substr(created, 1, 6) = '${reportYear}${pad(reportMonth)}'
+            AND substr(created, 1, 6) = '${reportYear}${padZero(reportMonth)}'
         `),
       ])
 

@@ -17,8 +17,6 @@ import {
 
 export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>): {
   historicalData: Ref<any[]>
-  yesterdayCreated: ComputedRef<number | null>
-  yesterdayModified: ComputedRef<number | null>
   createdChange: ComputedRef<number | null>
   modifiedChange: ComputedRef<number | null>
   loadHistoricalData: (days?: number) => Promise<void>
@@ -218,8 +216,6 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
 
   return {
     historicalData,
-    yesterdayCreated,
-    yesterdayModified,
     createdChange,
     modifiedChange,
     loadHistoricalData,

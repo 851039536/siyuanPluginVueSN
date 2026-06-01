@@ -117,7 +117,7 @@
           </h3>
           <BarChart
             :title="chartTitle"
-            :chart-data="chartData"
+            :chart-data="stats.dailyStats"
             :i18n="barChartI18n"
           />
         </div>
@@ -128,7 +128,7 @@
           :default-expanded="false"
         >
           <WordRanking
-            :chart-data="chartData"
+            :chart-data="stats.dailyStats"
             :i18n="wordRankingI18n"
           />
         </CollapsibleSection>
@@ -256,8 +256,10 @@ import ViewModeSection from "./components/ViewModeSection.vue"
 import WordRanking from "./components/WordRanking.vue"
 import { useHistoryData } from "./composables/useHistoryData"
 import { useNotebookStats } from "./composables/useNotebookStats"
-import { useReport } from "./composables/useReport"
 import { useStatistics } from "./composables/useStatistics"
+import { getDateChangedDocs, getDateRangeChangeStats } from "./queries/docChangeStats"
+import { getNotebookActivityTrend } from "./queries/notebookStats"
+import { getReportData, getTrendPrediction } from "./queries/reportStats"
 
 interface Props {
   plugin: Plugin
@@ -402,7 +404,6 @@ const {
   dayRange,
   monthYearRange,
   selectedYear,
-  chartData,
   updateInterval,
   periodAvgWords,
   chartTitle,
@@ -411,8 +412,6 @@ const {
 
 const {
   historicalData,
-  yesterdayCreated: _yesterdayCreated,
-  yesterdayModified: _yesterdayModified,
   createdChange,
   modifiedChange,
   loadHistoricalData,
@@ -425,14 +424,6 @@ const {
   loadNotebookDocStats,
   loadNotebookWordStats,
 } = useNotebookStats()
-
-const {
-  getDateChangedDocs,
-  getDateRangeChangeStats,
-  getNotebookActivityTrend,
-  getReportData,
-  getTrendPrediction,
-} = useReport()
 
 const headerI18n = computed(() => props.i18n)
 const statsCardsI18n = computed(() => props.i18n)

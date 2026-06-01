@@ -118,3 +118,20 @@ export interface TrendPrediction {
   weeklyProjection: number
   monthlyProjection: number
 }
+
+/**
+ * 对比分析数据
+ */
+export interface ComparisonData {
+  periodALabel: string
+  periodBLabel: string
+  a: ReportData
+  b: ReportData
+  deltas: {
+    totalWords: number
+    totalNotesCreated: number
+    avgDailyWords: number
+    activeDays: number
+    longestStreak: number
+  }
+}

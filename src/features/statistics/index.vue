@@ -5,7 +5,7 @@
       :loading="loading"
       :last-update-time="lastUpdateTime"
       :update-interval="updateInterval"
-      :i18n="headerI18n"
+      :i18n="i18n"
       @refresh="refreshData"
     />
 
@@ -89,14 +89,14 @@
           :avg-words-per-doc="stats.avgWordsPerDoc"
           :created-change="createdChange"
           :modified-change="modifiedChange"
-          :i18n="statsCardsI18n"
+          :i18n="i18n"
         />
 
         <!-- 文档变化详情（日期范围 + 柱状图 + 详情列表） -->
         <DocChangeSection
           :on-get-date-changed-docs="getDateChangedDocs"
           :on-get-date-range-change-stats="getDateRangeChangeStats"
-          :i18n="docChangeI18n"
+          :i18n="i18n"
         />
 
         <!-- 视图模式切换 + 时段统计 + 图表 -->
@@ -107,7 +107,7 @@
           v-model:selected-year="selectedYear"
           :period-avg-words="periodAvgWords"
           :period-total-words="stats.periodTotalWords"
-          :i18n="viewModeI18n"
+          :i18n="i18n"
           @refresh="refreshData"
         />
 
@@ -118,7 +118,7 @@
           <BarChart
             :title="chartTitle"
             :chart-data="stats.dailyStats"
-            :i18n="barChartI18n"
+            :i18n="i18n"
           />
 
           <WordRanking
@@ -318,9 +318,7 @@ interface Props {
     change: string
     blocks: string
     assets: string
-    changeLabel: string
     docBarChartTitle: string
-    todayChanges: string
     docChanges: string
     noDocChanges: string
     today: string
@@ -386,9 +384,7 @@ const props = withDefaults(defineProps<Props>(), {
     change: "变化",
     blocks: "块",
     assets: "附件",
-    changeLabel: "变化",
     docBarChartTitle: "各笔记本文档数",
-    todayChanges: "今日文档变化",
     docChanges: "文档变化",
     noDocChanges: "当天无新增或修改",
     today: "今天",
@@ -438,11 +434,6 @@ const {
   loadNotebookWordStats,
   loadNotebookBlockTypeStats,
 } = useNotebookStats()
-
-const headerI18n = computed(() => props.i18n)
-const statsCardsI18n = computed(() => props.i18n)
-const barChartI18n = computed(() => props.i18n)
-const viewModeI18n = computed(() => props.i18n)
 
 const trendViewI18n = computed(() => ({
   ...props.i18n,
@@ -558,7 +549,6 @@ const wordRankingI18n = computed(() => ({
   emptyText: "暂无数据",
 }))
 
-const docChangeI18n = computed(() => props.i18n)
 
 watch([viewMode, dayRange, monthYearRange, selectedYear], () => {
   refreshData()

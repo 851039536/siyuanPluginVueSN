@@ -44,6 +44,34 @@ $color-warning: #d97706;
   -webkit-backdrop-filter: blur(8px);
 }
 
+@mixin summary-cards-base {
+  .summary-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+
+  .summary-card {
+    background: var(--b3-theme-surface);
+    border: 1px solid var(--b3-border-color);
+    border-radius: 8px;
+    padding: 10px 8px;
+    text-align: center;
+
+    .summary-value {
+      font-weight: 700;
+      color: var(--b3-theme-primary);
+      line-height: 1.2;
+    }
+
+    .summary-label {
+      font-size: 11px;
+      color: var(--b3-theme-on-surface-light);
+      margin-top: 4px;
+    }
+  }
+}
+
 @mixin small-action-btn {
   padding: 4px 10px;
   border: 1px solid var(--b3-border-color);

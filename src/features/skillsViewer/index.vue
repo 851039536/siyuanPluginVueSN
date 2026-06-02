@@ -285,6 +285,7 @@
 </template>
 
 <script setup lang="ts">
+import type { Plugin } from "siyuan"
 import type {
   AIToolType,
   SkillInfo,
@@ -306,7 +307,7 @@ import {
 
 interface Props {
   visible: boolean
-  plugin?: any
+  plugin?: Plugin | null
 }
 
 interface Emits {
@@ -353,19 +354,24 @@ const toolStatuses = reactive<Record<string, {
   projectCount: number
 }>>({})
 
+const toolColorMap = new Map<AIToolType, string>(
+  AI_TOOLS.map((t) => [t.id, t.color]),
+)
+const toolNameMap = new Map<AIToolType, string>(
+  AI_TOOLS.map((t) => [t.id, t.name]),
+)
+
 const filteredSkills = computed(() => {
   if (selectedTool.value === "all") return skills.value
   return skills.value.filter((s) => s.tool === selectedTool.value)
 })
 
-marked.use({
-  breaks: true,
-  gfm: true,
-})
-
 function renderMarkdown(content: string): string {
   try {
-    return marked.parse(content) as string
+    return marked.parse(content, {
+      breaks: true,
+      gfm: true,
+    }) as string
   } catch {
     return content
   }
@@ -376,11 +382,11 @@ function selectTool(toolId: string) {
 }
 
 function getToolColor(toolId: AIToolType): string {
-  return AI_TOOLS.find((t) => t.id === toolId)?.color || "#999"
+  return toolColorMap.get(toolId) || "#999"
 }
 
 function getToolName(toolId: AIToolType): string {
-  return AI_TOOLS.find((t) => t.id === toolId)?.name || toolId
+  return toolNameMap.get(toolId) || toolId
 }
 
 function toggleExpand(index: number) {
@@ -537,8 +543,15 @@ async function openCurrentToolDir() {
   }
 }
 
+let pathChangeTimer: ReturnType<typeof setTimeout> | null = null
+
 async function handlePathChange() {
-  await refreshSkills()
+  if (!managerAvailable) return
+  if (pathChangeTimer) clearTimeout(pathChangeTimer)
+  pathChangeTimer = setTimeout(async () => {
+    await refreshSkills()
+    pathChangeTimer = null
+  }, 500)
 }
 
 function closeDialog() {

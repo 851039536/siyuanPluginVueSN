@@ -241,12 +241,13 @@ export class SkillsViewerManager {
     globalCount: number
     projectCount: number
   }> {
-    if (!this.available) { return {
-      global: false,
-      project: false,
-      globalCount: 0,
-      projectCount: 0,
-    }
+    if (!this.available) {
+      return {
+        global: false,
+        project: false,
+        globalCount: 0,
+        projectCount: 0,
+      }
     }
 
     const globalResult = await this.checkPathGroup(this.homeDir, tool.skillPaths)
@@ -262,15 +263,6 @@ export class SkillsViewerManager {
       project: projectResult.exists,
       globalCount: globalResult.count,
       projectCount: projectResult.count,
-    }
-  }
-
-  async readSkillContent(filePath: string): Promise<string | null> {
-    if (!this.available) return null
-    try {
-      return await this.fs.promises.readFile(filePath, "utf-8")
-    } catch {
-      return null
     }
   }
 

@@ -1,7 +1,7 @@
 /**
  * Skills 查看器管理器
  * 扫描并读取 AI 编程工具的 Skills 配置文件
- * 兼容 Claude, CodeBuddy, Qoder, Trae
+ * 兼容 Claude, CodeBuddy, Qoder, Trae, Opencode
  */
 
 export interface SkillInfo {
@@ -13,7 +13,7 @@ export interface SkillInfo {
   fileSize: number
 }
 
-export type AIToolType = "claude" | "codebuddy" | "qoder" | "trae"
+export type AIToolType = "claude" | "codebuddy" | "qoder" | "trae" | "opencode"
 
 export interface AIToolConfig {
   id: AIToolType
@@ -56,6 +56,14 @@ export const AI_TOOLS: AIToolConfig[] = [
     color: "#27AE60",
     skillPaths: [".trae/skills"],
     projectPaths: [".trae/skills"],
+  },
+  {
+    id: "opencode",
+    name: "Opencode",
+    icon: "💎",
+    color: "#00ACC1",
+    skillPaths: [".config/opencode/skills", ".agents/skills"],
+    projectPaths: [".opencode/skills"],
   },
 ]
 

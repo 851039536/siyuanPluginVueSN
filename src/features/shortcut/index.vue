@@ -12,7 +12,7 @@
     <FilterBar
       v-model:active-filter="activeFilter"
       v-model:view-mode="viewMode"
-      :filters="quickFilters"
+      :filters="QUICK_FILTERS"
       :total-count="totalCount"
       :favorite-count="favoriteCount"
       :custom-count="customCount"
@@ -127,7 +127,12 @@ import PanelHeader from "./components/PanelHeader.vue"
 import ShortcutDialog from "./components/ShortcutDialog.vue"
 import ShortcutGrid from "./components/ShortcutGrid.vue"
 import { getShortcutManager } from "./manager"
-import { ShortcutStorage } from "./types/storage"
+import {
+  SHORTCUTS_FAVORITES_KEY,
+  SHORTCUTS_RECENT_KEY,
+  SHORTCUTS_STORAGE_KEY,
+  ShortcutStorage,
+} from "./types/storage"
 
 const props = withDefaults(defineProps<Props>(), {
   i18n: () => ({}),
@@ -173,14 +178,8 @@ const formData = ref<ShortcutFormData>({
   group: "自定义",
 })
 
-const quickFilters = QUICK_FILTERS
-
 // 数据存储路径
-const STORAGE_KEYS = [
-  "plugin-shortcuts-custom",
-  "plugin-shortcuts-favorites",
-  "plugin-shortcuts-recent",
-]
+const STORAGE_KEYS = [SHORTCUTS_STORAGE_KEY, SHORTCUTS_FAVORITES_KEY, SHORTCUTS_RECENT_KEY]
 const storageDir = "data/storage/petals/siyuan-plugin-vite-vue-sn"
 const showStoragePath = ref(false)
 
@@ -190,6 +189,7 @@ function copyStoragePath(path: string) {
 
 // 获取快捷键管理器
 const manager = getShortcutManager()
+const storage = computed(() => props.plugin ? new ShortcutStorage(props.plugin) : null)
 
 // 统计信息
 const totalCount = computed(() => manager.getAllShortcuts().length)
@@ -198,12 +198,11 @@ const customCount = computed(() => manager.getByCategory("custom").length)
 
 // 初始化
 onMounted(async () => {
-  if (props.plugin) {
+  if (storage.value) {
     try {
-      const storage = new ShortcutStorage(props.plugin)
       const [loadedFavorites, loadedRecent] = await Promise.all([
-        storage.loadFavorites(),
-        storage.loadRecent(),
+        storage.value.loadFavorites(),
+        storage.value.loadRecent(),
       ])
       favorites.value = new Set(loadedFavorites)
       recentUsed.value = loadedRecent
@@ -279,9 +278,9 @@ async function toggleFavorite(id: string) {
     favorites.value.add(id)
   }
 
-  if (props.plugin) {
+  if (storage.value) {
     try {
-      await new ShortcutStorage(props.plugin).saveFavorites(Array.from(favorites.value))
+      await storage.value.saveFavorites(Array.from(favorites.value))
     } catch (error) {
       console.error("保存收藏状态失败:", error)
     }
@@ -298,9 +297,9 @@ async function addToRecent(id: string) {
   recentUsed.value.unshift(id)
   if (recentUsed.value.length > 10) recentUsed.value.pop()
 
-  if (props.plugin) {
+  if (storage.value) {
     try {
-      await new ShortcutStorage(props.plugin).saveRecent(recentUsed.value)
+      await storage.value.saveRecent(recentUsed.value)
     } catch (error) {
       console.error("保存最近使用失败:", error)
     }
@@ -361,9 +360,9 @@ async function deleteShortcut(id: string) {
     const index = recentUsed.value.indexOf(id)
     if (index > -1) recentUsed.value.splice(index, 1)
 
-    if (props.plugin) {
+    if (storage.value) {
       try {
-        await new ShortcutStorage(props.plugin).saveFavorites(Array.from(favorites.value))
+        await storage.value.saveFavorites(Array.from(favorites.value))
       } catch (error) {
         console.error("更新收藏数据失败:", error)
       }

@@ -5,10 +5,7 @@ import type { ShortcutInfo } from "./types"
  * 侧边栏图标：iconKeymap（快捷键图标）
  */
 import { Plugin } from "siyuan"
-import {
-  createApp,
-  h,
-} from "vue"
+import { createVueDockApp } from "@/utils/vueAppHelper"
 import ShortcutPanel from "./index.vue"
 import {
   getShortcutManager,
@@ -107,54 +104,7 @@ function getSiyuanShortcuts(): ShortcutInfo[] {
       category: "siyuan",
       group: "文本格式",
     },
-    {
-      id: "sy_code",
-      name: "代码",
-      description: "使文本显示为代码",
-      keys: "Ctrl+Shift+`",
-      category: "siyuan",
-      group: "文本格式",
-    },
-    {
-      id: "sy_heading1",
-      name: "一级标题",
-      description: "插入一级标题",
-      keys: "Ctrl+1",
-      category: "siyuan",
-      group: "块类型",
-    },
-    {
-      id: "sy_heading2",
-      name: "二级标题",
-      description: "插入二级标题",
-      keys: "Ctrl+2",
-      category: "siyuan",
-      group: "块类型",
-    },
-    {
-      id: "sy_heading3",
-      name: "三级标题",
-      description: "插入三级标题",
-      keys: "Ctrl+3",
-      category: "siyuan",
-      group: "块类型",
-    },
-    {
-      id: "sy_unordered_list",
-      name: "无序列表",
-      description: "插入无序列表",
-      keys: "Ctrl+Shift+L",
-      category: "siyuan",
-      group: "块类型",
-    },
-    {
-      id: "sy_ordered_list",
-      name: "有序列表",
-      description: "插入有序列表",
-      keys: "Ctrl+Shift+O",
-      category: "siyuan",
-      group: "块类型",
-    },
+
     {
       id: "sy_quote",
       name: "引用块",
@@ -163,22 +113,7 @@ function getSiyuanShortcuts(): ShortcutInfo[] {
       category: "siyuan",
       group: "块类型",
     },
-    {
-      id: "sy_code_block",
-      name: "代码块",
-      description: "插入代码块",
-      keys: "Ctrl+Shift+C",
-      category: "siyuan",
-      group: "块类型",
-    },
-    {
-      id: "sy_inline_link",
-      name: "行内链接",
-      description: "插入行内链接",
-      keys: "Ctrl+K",
-      category: "siyuan",
-      group: "插入",
-    },
+
     {
       id: "sy_search",
       name: "搜索",
@@ -421,14 +356,6 @@ function getClaudeShortcuts(): ShortcutInfo[] {
       category: "claude",
       group: "快捷命令",
     },
-    {
-      id: "claude_vim",
-      name: "Vim 模式",
-      description: "切换 vim 模式",
-      keys: "/vim",
-      category: "claude",
-      group: "快捷命令",
-    },
     // Think 模式
     {
       id: "claude_think",
@@ -512,47 +439,6 @@ function getClaudeShortcuts(): ShortcutInfo[] {
 function getOpenSpecShortcuts(): ShortcutInfo[] {
   return [
     // 核心命令
-    {
-      id: "openspec_proposal",
-      name: "创建变更提案",
-      description: "创建新的 OpenSpec 变更提案",
-      keys: "/openspec:proposal",
-      category: "openspec",
-      group: "核心命令",
-    },
-    {
-      id: "openspec_apply",
-      name: "应用变更",
-      description: "应用已批准的 OpenSpec 变更",
-      keys: "/openspec:apply",
-      category: "openspec",
-      group: "核心命令",
-    },
-    {
-      id: "openspec_archive",
-      name: "归档变更",
-      description: "归档已部署的 OpenSpec 变更",
-      keys: "/openspec:archive",
-      category: "openspec",
-      group: "核心命令",
-    },
-    // 辅助命令
-    {
-      id: "openspec_validate",
-      name: "验证变更",
-      description: "验证 OpenSpec 变更的正确性",
-      keys: "openspec validate",
-      category: "openspec",
-      group: "辅助命令",
-    },
-    {
-      id: "openspec_list",
-      name: "列出变更",
-      description: "列出所有 OpenSpec 变更",
-      keys: "openspec list",
-      category: "openspec",
-      group: "辅助命令",
-    },
     {
       id: "openspec_show",
       name: "显示详情",
@@ -904,15 +790,7 @@ function getToolShortcuts(): ShortcutInfo[] {
       group: "Windows CMD",
       copyContent: "type",
     },
-    {
-      id: "tool_cmd_xcopy",
-      name: "xcopy",
-      description: "高级复制文件",
-      keys: "",
-      category: "cmd",
-      group: "Windows CMD",
-      copyContent: "xcopy",
-    },
+
     {
       id: "tool_cmd_robocopy",
       name: "robocopy",
@@ -940,15 +818,7 @@ function getToolShortcuts(): ShortcutInfo[] {
       group: "Windows CMD",
       copyContent: "ping",
     },
-    {
-      id: "tool_cmd_tracert",
-      name: "tracert",
-      description: "跟踪网络路径",
-      keys: "",
-      category: "cmd",
-      group: "Windows CMD",
-      copyContent: "tracert",
-    },
+
     {
       id: "tool_cmd_nslookup",
       name: "nslookup",
@@ -995,33 +865,6 @@ function getToolShortcuts(): ShortcutInfo[] {
       copyContent: "systeminfo",
     },
     {
-      id: "tool_cmd_sfc",
-      name: "sfc /scannow",
-      description: "系统文件检查器",
-      keys: "",
-      category: "cmd",
-      group: "Windows CMD",
-      copyContent: "sfc /scannow",
-    },
-    {
-      id: "tool_cmd_chkdsk",
-      name: "chkdsk",
-      description: "检查磁盘",
-      keys: "",
-      category: "cmd",
-      group: "Windows CMD",
-      copyContent: "chkdsk",
-    },
-    {
-      id: "tool_cmd_format",
-      name: "format",
-      description: "格式化磁盘",
-      keys: "",
-      category: "cmd",
-      group: "Windows CMD",
-      copyContent: "format",
-    },
-    {
       id: "tool_cmd_diskpart",
       name: "diskpart",
       description: "磁盘管理工具",
@@ -1030,15 +873,7 @@ function getToolShortcuts(): ShortcutInfo[] {
       group: "Windows CMD",
       copyContent: "diskpart",
     },
-    {
-      id: "tool_cmd_powercfg",
-      name: "powercfg",
-      description: "电源配置管理",
-      keys: "",
-      category: "cmd",
-      group: "Windows CMD",
-      copyContent: "powercfg",
-    },
+
     // Visual Studio Code 快捷键
     {
       id: "tool_vscode_command_palette",
@@ -1139,15 +974,7 @@ function getToolShortcuts(): ShortcutInfo[] {
       group: "VS Code",
       copyContent: "Ctrl+Shift+Y",
     },
-    {
-      id: "tool_vscode_toggle_sidebar",
-      name: "Toggle Sidebar",
-      description: "切换侧边栏",
-      keys: "Ctrl+B",
-      category: "vscode",
-      group: "VS Code",
-      copyContent: "Ctrl+B",
-    },
+
     {
       id: "tool_vscode_quick_open",
       name: "Quick Open",
@@ -1166,24 +993,7 @@ function getToolShortcuts(): ShortcutInfo[] {
       group: "VS Code",
       copyContent: "Ctrl+N",
     },
-    {
-      id: "tool_vscode_open_file",
-      name: "Open File",
-      description: "打开文件",
-      keys: "Ctrl+O",
-      category: "vscode",
-      group: "VS Code",
-      copyContent: "Ctrl+O",
-    },
-    {
-      id: "tool_vscode_save",
-      name: "Save",
-      description: "保存文件",
-      keys: "Ctrl+S",
-      category: "vscode",
-      group: "VS Code",
-      copyContent: "Ctrl+S",
-    },
+
     {
       id: "tool_vscode_save_all",
       name: "Save All",
@@ -1202,24 +1012,7 @@ function getToolShortcuts(): ShortcutInfo[] {
       group: "VS Code",
       copyContent: "Ctrl+W",
     },
-    {
-      id: "tool_vscode_split_editor",
-      name: "Split Editor",
-      description: "拆分编辑器",
-      keys: "Ctrl+\\",
-      category: "vscode",
-      group: "VS Code",
-      copyContent: "Ctrl+\\",
-    },
-    {
-      id: "tool_vscode_Zen_Mode",
-      name: "Zen Mode",
-      description: "禅模式",
-      keys: "Ctrl+K, Z",
-      category: "vscode",
-      group: "VS Code",
-      copyContent: "Ctrl+K, Z",
-    },
+
     {
       id: "tool_vscode_toggle_fullscreen",
       name: "Toggle Fullscreen",
@@ -1320,24 +1113,7 @@ function getToolShortcuts(): ShortcutInfo[] {
       group: "Visual Studio",
       copyContent: "Ctrl+Alt+J",
     },
-    {
-      id: "tool_vs_code_definition_window",
-      name: "Code Definition Window",
-      description: "显示代码定义窗口",
-      keys: "Ctrl+\\, D",
-      category: "visual-studio",
-      group: "Visual Studio",
-      copyContent: "Ctrl+\\, D",
-    },
-    {
-      id: "tool_vs_server_explorer",
-      name: "Server Explorer",
-      description: "显示服务器资源管理器",
-      keys: "Ctrl+Alt+S",
-      category: "visual-studio",
-      group: "Visual Studio",
-      copyContent: "Ctrl+Alt+S",
-    },
+
     {
       id: "tool_vs_stop_debugging",
       name: "Stop Debugging",
@@ -1383,24 +1159,7 @@ function getToolShortcuts(): ShortcutInfo[] {
       group: "Visual Studio",
       copyContent: "F9",
     },
-    {
-      id: "tool_vs_run_to_cursor",
-      name: "Run to Cursor",
-      description: "运行到光标处",
-      keys: "Ctrl+F10",
-      category: "visual-studio",
-      group: "Visual Studio",
-      copyContent: "Ctrl+F10",
-    },
-    {
-      id: "tool_vs_set_next_statement",
-      name: "Set Next Statement",
-      description: "设置下一语句",
-      keys: "Ctrl+Shift+F10",
-      category: "visual-studio",
-      group: "Visual Studio",
-      copyContent: "Ctrl+Shift+F10",
-    },
+
     {
       id: "tool_vs_comment_selection",
       name: "Comment Selection",
@@ -1427,15 +1186,6 @@ function getToolShortcuts(): ShortcutInfo[] {
       category: "visual-studio",
       group: "Visual Studio",
       copyContent: "Ctrl+K, Ctrl+D",
-    },
-    {
-      id: "tool_vs_format_selection",
-      name: "Format Selection",
-      description: "格式化选中代码",
-      keys: "Ctrl+K, Ctrl+F",
-      category: "visual-studio",
-      group: "Visual Studio",
-      copyContent: "Ctrl+K, Ctrl+F",
     },
     {
       id: "tool_vs_go_to_definition",
@@ -1465,15 +1215,6 @@ function getToolShortcuts(): ShortcutInfo[] {
       copyContent: "Shift+F12",
     },
     {
-      id: "tool_vs_navigate_to",
-      name: "Navigate To",
-      description: "导航到",
-      keys: "Ctrl+,",
-      category: "visual-studio",
-      group: "Visual Studio",
-      copyContent: "Ctrl+,",
-    },
-    {
       id: "tool_vs_quick_find",
       name: "Quick Find",
       description: "快速查找",
@@ -1498,42 +1239,14 @@ function getToolShortcuts(): ShortcutInfo[] {
  * 添加快捷键 Dock 到右侧边栏
  */
 function addShortcutDock(plugin: Plugin) {
-  plugin.addDock({
-    config: {
-      position: "RightTop",
-      size: {
-        width: 480,
-        height: 0,
-      },
-      icon: "iconKeymap",
-      title: plugin.i18n.shortcuts || "快捷键",
-      show: false,
-    },
-    data: {},
+  createVueDockApp(plugin, ShortcutPanel, {
+    position: "RightTop",
+    width: 480,
+    icon: "iconKeymap",
+    title: plugin.i18n.shortcuts || "快捷键",
     type: "shortcut-panel-dock",
-    init(dock: any) {
-      // 创建 Vue 应用
-      const container = document.createElement("div")
-      container.style.height = "100%"
-      container.style.overflow = "hidden"
-
-      const app = createApp({
-        setup() {
-          return () =>
-            h(ShortcutPanel, {
-              i18n: plugin.i18n,
-              plugin,
-            })
-        },
-      })
-
-      app.mount(container)
-      dock.element?.appendChild(container)
-
-      // 保存应用引用，以便卸载时清理
-      dock.__app = app
-      dock.__container = container
-    },
+    i18n: plugin.i18n,
+    extraProps: { plugin },
   })
 }
 

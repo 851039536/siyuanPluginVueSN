@@ -384,7 +384,7 @@ const movingAsset = ref<string | null>(null)
 const moveNewPath = ref("")
 const customCategory = ref("")
 const customCategories = ref<string[]>([])
-const builtInCategoryKeys = new Set(["images", "net", "tool", "other"])
+const BUILT_IN_CATEGORY_KEYS = new Set(["images", "net", "tool", "other"])
 
 const quickCategories = computed(() => {
   const builtIn = [
@@ -451,6 +451,8 @@ const onSwitchProtyle = (event: CustomEvent<{ protyle: IProtyle }>) => {
   }
 }
 
+const PROTYLE_EVENTS = ["switch-protyle", "loaded-protyle-dynamic", "loaded-protyle-static"] as const
+
 onMounted(async () => {
   isMounted.value = true
 
@@ -462,9 +464,9 @@ onMounted(async () => {
   }
   catch { /* ignore */ }
 
-  props.plugin.eventBus.on("switch-protyle", onSwitchProtyle)
-  props.plugin.eventBus.on("loaded-protyle-dynamic", onSwitchProtyle)
-  props.plugin.eventBus.on("loaded-protyle-static", onSwitchProtyle)
+  PROTYLE_EVENTS.forEach((eventName) => {
+    props.plugin.eventBus.on(eventName, onSwitchProtyle)
+  })
 
   // 组件挂载时主动扫描当前可见的 protyle 获取文档 ID（不等待事件）
   if (!savedDocId.value) {
@@ -481,9 +483,9 @@ onMounted(async () => {
 
 onUnmounted(() => {
   isMounted.value = false
-  props.plugin.eventBus.off("switch-protyle", onSwitchProtyle)
-  props.plugin.eventBus.off("loaded-protyle-dynamic", onSwitchProtyle)
-  props.plugin.eventBus.off("loaded-protyle-static", onSwitchProtyle)
+  PROTYLE_EVENTS.forEach((eventName) => {
+    props.plugin.eventBus.off(eventName, onSwitchProtyle)
+  })
 })
 
 /**
@@ -631,6 +633,7 @@ const IMAGE_EXT = /\.(png|jpg|jpeg|gif|svg|webp|bmp|ico|tiff|avif)$/i
 const currentAssetList = computed(() => {
   const list = activeTab.value === "fileAssets" ? fileAssets.value : imageAssets.value
   if (!categoryFilter.value) return list
+  // 缓存分类前缀避免每次过滤时重复拼接
   const prefix = `assets/${categoryFilter.value}/`
   return list.filter((item) => item.path.startsWith(prefix))
 })
@@ -652,10 +655,29 @@ async function loadCurrentTabAssets() {
 }
 
 /**
+ * 将原始路径列表转换为带关联文档信息的资源列表
+ * 统一处理扩展名过滤 + 批量查询关联文档 + 组装最终结果
+ */
+async function buildAssetList(paths: string[], isImage: boolean): Promise<ImageAssetInfo[]> {
+  const extFilter = isImage
+    ? (p: string) => IMAGE_EXT.test(p)
+    : (p: string) => !IMAGE_EXT.test(p)
+  const filtered = paths.filter(extFilter)
+  const docMap = await loadDocNamesForImages(filtered)
+  return filtered.map((path) => {
+    const info = docMap.get(path)
+    return {
+      path,
+      docNames: info?.docNames || [],
+      docIds: info?.docIds || [],
+    }
+  })
+}
+
+/**
  * 加载全部资源（图片或文件）
  */
 async function loadAllAssets(isImage: boolean) {
-  const extFilter = isImage ? (p: string) => IMAGE_EXT.test(p) : (p: string) => !IMAGE_EXT.test(p)
   const target = isImage ? imageAssets : fileAssets
 
   try {
@@ -663,24 +685,13 @@ async function loadAllAssets(isImage: boolean) {
     const refPaths = (referenced || [])
       .map((r: { path: string }) => r.path)
       .filter((p: unknown): p is string => typeof p === "string")
-      .filter(extFilter)
 
     const unused = await getUnusedAssets()
     const unusedPaths = (unused || [])
       .filter((p: unknown): p is string => typeof p === "string")
-      .filter(extFilter)
 
     const allPaths = [...new Set([...refPaths, ...unusedPaths])].sort()
-    const docMap = await loadDocNamesForImages(allPaths)
-
-    target.value = allPaths.map((path) => {
-      const info = docMap.get(path)
-      return {
-        path,
-        docNames: info?.docNames || [],
-        docIds: info?.docIds || [],
-      }
-    })
+    target.value = await buildAssetList(allPaths, isImage)
   }
   catch (e: unknown) {
     console.error(`加载全部${isImage ? "图片" : "文件"}资源失败:`, e)
@@ -692,22 +703,12 @@ async function loadAllAssets(isImage: boolean) {
  * 加载指定文档的资源（图片或文件）
  */
 async function loadDocAssets(docId: string, isImage: boolean) {
-  const extFilter = isImage ? (p: string) => IMAGE_EXT.test(p) : (p: string) => !IMAGE_EXT.test(p)
   const target = isImage ? imageAssets : fileAssets
 
   const paths = await getDocImageAssets(docId)
   const pathList = (paths || [])
     .filter((p: unknown): p is string => typeof p === "string")
-    .filter(extFilter)
-  const docMap = await loadDocNamesForImages(pathList)
-  target.value = pathList.map((path) => {
-    const info = docMap.get(path)
-    return {
-      path,
-      docNames: info?.docNames || [],
-      docIds: info?.docIds || [],
-    }
-  })
+  target.value = await buildAssetList(pathList, isImage)
 }
 
 /**
@@ -839,7 +840,7 @@ async function applyCustomCategory(currentPath: string) {
   if (!cat) return
   applyCategory(currentPath, cat)
 
-  if (!builtInCategoryKeys.has(cat) && !customCategories.value.includes(cat)) {
+  if (!BUILT_IN_CATEGORY_KEYS.has(cat) && !customCategories.value.includes(cat)) {
     customCategories.value = [...customCategories.value, cat]
     const storage = new PluginStorage(props.plugin)
     await storage.save("resourceManager-customCategories", customCategories.value)

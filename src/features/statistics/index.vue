@@ -69,10 +69,9 @@
     <!-- 加载状态 -->
     <div
       v-if="loading && !stats"
-      class="loading-state"
+      class="loading-wrapper"
     >
-      <div class="loading-spinner"></div>
-      <p>{{ i18n.loading }}</p>
+      <Loader />
     </div>
 
     <!-- 主要内容 -->
@@ -261,6 +260,7 @@ import {
   ref,
   watch,
 } from "vue"
+import Loader from "@/components/Loader.vue"
 import BarChart from "./components/BarChart.vue"
 import DocBarChart from "./components/DocBarChart.vue"
 import DocChangeSection from "./components/DocChangeSection.vue"
@@ -713,5 +713,10 @@ defineExpose({
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.loading-wrapper {
+  position: relative;
+  height: 200px;
 }
 </style>

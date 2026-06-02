@@ -7,10 +7,9 @@
     <!-- 加载中 -->
     <div
       v-if="loading"
-      class="loading-state"
+      class="loading-wrapper"
     >
-      <div class="loading-spinner"></div>
-      <p>{{ i18n.loading || '加载中...' }}</p>
+      <Loader />
     </div>
 
     <!-- 空状态 -->
@@ -46,7 +45,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue"
+import {
+  computed,
+  ref,
+  watch,
+} from "vue"
+import Loader from "@/components/Loader.vue"
 import {
   formatNumber,
   formatShortNumber,
@@ -113,23 +117,9 @@ function getBarWidth(count: number): string {
 @use "../styles/index.scss" as stats;
 
 .doc-bar-chart-section {
-  .loading-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+  .loading-wrapper {
+    position: relative;
     height: 100px;
-    color: var(--b3-theme-on-surface);
-
-    .loading-spinner {
-      width: 20px;
-      height: 20px;
-      border: 2px solid var(--b3-border-color);
-      border-top-color: var(--b3-theme-primary);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin-bottom: 8px;
-    }
   }
 
   .empty-hint {

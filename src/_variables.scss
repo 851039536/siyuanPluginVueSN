@@ -1,80 +1,80 @@
 // ========== SCSS 变量定义 ==========
 // 此文件包含所有 SCSS 变量，可供组件导入使用
-// 设计系统：基于 shadcn-vue 的设计规范
+// 设计系统：Codex 主题（基于 shadcn-vue，暖色风格）
 
 // ========== 基础颜色变量（Shadcn-vue 风格） ==========
 
 // 亮色主题基础色
 $background-light: 0 0% 100%;           // 白色背景
-$foreground-light: 240 10% 3.9%;        // 深色文本
+$foreground-light: 24 10% 5%;           // 暖深色文本（原 240 10% 3.9%）
 
 // 卡片和弹出层
 $card-light: 0 0% 100%;                 // 卡片背景
-$card-foreground-light: 240 10% 3.9%;   // 卡片文本
+$card-foreground-light: 24 10% 5%;      // 暖深色（原 240 10% 3.9%）
 $popover-light: 0 0% 100%;              // 弹出层背景
-$popover-foreground-light: 240 10% 3.9%;// 弹出层文本
+$popover-foreground-light: 24 10% 5%;   // 暖深色
 
 // 主色调（Primary）- 黑色系
-$primary-light: 240 5.9% 10%;           // 主色背景
-$primary-foreground-light: 0 0% 98%;    // 主色文本
+$primary-light: 24 9% 10%;              // 暖黑背景（原 240 5.9% 10%）
+$primary-foreground-light: 55 9% 97%;   // 暖白文本
 
 // 次要色调（Secondary）
-$secondary-light: 240 4.8% 95.9%;       // 次要背景
-$secondary-foreground-light: 240 5.9% 10%; // 次要文本
+$secondary-light: 45 5% 96%;            // 暖灰背景（原 240 4.8% 95.9%）
+$secondary-foreground-light: 24 9% 10%; // 暖黑文本
 
 // 静音色调（Muted）
-$muted-light: 240 4.8% 95.9%;           // 静音背景
-$muted-foreground-light: 240 3.8% 46.1%; // 静音文本
+$muted-light: 45 5% 96%;                // 暖灰背景（原 240 4.8% 95.9%）
+$muted-foreground-light: 24 5% 46%;     // 暖中灰文本（原 240 3.8% 46.1%）
 
 // 强调色调（Accent）
-$accent-light: 240 4.8% 95.9%;          // 强调背景
-$accent-foreground-light: 240 5.9% 10%; // 强调文本
+$accent-light: 35 70% 92%;              // 极淡琥珀背景（原 240 4.8% 95.9%）
+$accent-foreground-light: 24 9% 10%;    // 暖黑文本
 
 // 危险色调（Destructive）
 $destructive-light: 0 84.2% 60.2%;      // 危险背景（红色）
 $destructive-foreground-light: 0 0% 98%; // 危险文本
 
 // 边框和输入
-$border-light: 240 5.9% 90%;            // 边框颜色
-$input-light: 240 5.9% 90%;             // 输入框边框
-$ring-light: 240 5.9% 10%;              // 焦点环颜色
+$border-light: 30 6% 88%;               // 暖边框（原 240 5.9% 90%）
+$input-light: 30 6% 88%;                // 暖输入框边框
+$ring-light: 35 85% 55%;                // 琥珀焦点环（原 240 5.9% 10%）
 
 // ========== 暗色主题基础色 ==========
 
 // 暗色主题基础色
-$background-dark: 240 10% 3.9%;         // 深色背景
-$foreground-dark: 0 0% 98%;             // 浅色文本
+$background-dark: 24 10% 5%;            // 暖深棕背景（原 240 10% 3.9%）
+$foreground-dark: 55 9% 97%;            // 暖白文本（原 0 0% 98%）
 
 // 卡片和弹出层
-$card-dark: 240 10% 3.9%;               // 卡片背景
-$card-foreground-dark: 0 0% 98%;        // 卡片文本
-$popover-dark: 240 10% 3.9%;            // 弹出层背景
-$popover-foreground-dark: 0 0% 98%;     // 弹出层文本
+$card-dark: 24 10% 5%;                  // 暖深棕卡片（原 240 10% 3.9%）
+$card-foreground-dark: 55 9% 97%;       // 暖白文本
+$popover-dark: 24 10% 5%;               // 暖深棕弹出层
+$popover-foreground-dark: 55 9% 97%;    // 暖白文本
 
 // 主色调（Primary）- 浅色系
-$primary-dark: 0 0% 98%;                // 主色背景
-$primary-foreground-dark: 240 5.9% 10%; // 主色文本
+$primary-dark: 55 9% 97%;               // 暖白背景（原 0 0% 98%）
+$primary-foreground-dark: 24 9% 10%;    // 暖黑文本
 
 // 次要色调（Secondary）
-$secondary-dark: 240 3.7% 15.9%;        // 次要背景
-$secondary-foreground-dark: 0 0% 98%;   // 次要文本
+$secondary-dark: 24 4% 14%;             // 暖深灰背景（原 240 3.7% 15.9%）
+$secondary-foreground-dark: 55 9% 97%;  // 暖白文本
 
 // 静音色调（Muted）
-$muted-dark: 240 3.7% 15.9%;            // 静音背景
-$muted-foreground-dark: 240 5% 64.9%;   // 静音文本
+$muted-dark: 24 4% 14%;                 // 暖深灰背景（原 240 3.7% 15.9%）
+$muted-foreground-dark: 30 5% 65%;      // 暖中灰文本（原 240 5% 64.9%）
 
 // 强调色调（Accent）
-$accent-dark: 240 3.7% 15.9%;           // 强调背景
-$accent-foreground-dark: 0 0% 98%;      // 强调文本
+$accent-dark: 30 5% 22%;                // 暖褐强调背景（原 240 3.7% 15.9%）
+$accent-foreground-dark: 55 9% 97%;     // 暖白文本
 
 // 危险色调（Destructive）
 $destructive-dark: 0 62.8% 30.6%;       // 危险背景
 $destructive-foreground-dark: 0 0% 98%; // 危险文本
 
 // 边框和输入
-$border-dark: 240 3.7% 15.9%;           // 边框颜色
-$input-dark: 240 3.7% 15.9%;            // 输入框边框
-$ring-dark: 240 4.9% 83.9%;             // 焦点环颜色
+$border-dark: 24 4% 14%;                // 暖暗边框（原 240 3.7% 15.9%）
+$input-dark: 24 4% 14%;                 // 暖暗输入框
+$ring-dark: 35 85% 55%;                 // 琥珀焦点环（原 240 4.9% 83.9%）
 
 // ========== 语义化颜色（HSL 格式） ==========
 
@@ -186,21 +186,21 @@ $codeblock-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 // ========== 语义化颜色别名（向后兼容） ==========
 
 // 主色（用于主要文本、深色背景）
-$brand-dark: hsl(240, 10%, 4%);
-$brand-light: hsl(0, 0%, 100%);
+$brand-dark: hsl(24, 10%, 5%);           // 暖深棕（原 240 10% 4%）
+$brand-light: hsl(55, 9%, 97%);          // 暖白（原 0 0% 100%）
 
 // 灰度（用于次要元素）
-$brand-mid-gray: hsl(240, 5%, 65%);
-$brand-light-gray: hsl(240, 5%, 96%);
-$brand-subtle-gray: hsl(240, 5%, 90%);
+$brand-mid-gray: hsl(30, 5%, 65%);       // 暖中灰
+$brand-light-gray: hsl(45, 5%, 96%);     // 暖浅灰
+$brand-subtle-gray: hsl(30, 6%, 88%);    // 暖淡灰
 
 // 强调色（用于交互元素）
-$brand-primary: hsl(240, 6%, 10%);      // 黑色主色
-$brand-secondary: hsl(240, 5%, 96%);    // 浅灰次色
-$brand-accent: hsl(240, 4%, 96%);       // 强调色
-$brand-destructive: hsl(0, 84%, 60%);   // 危险色（红色）
+$brand-primary: hsl(24, 9%, 10%);        // 暖黑主色（原 240 6% 10%）
+$brand-secondary: hsl(45, 5%, 96%);      // 暖灰次色
+$brand-accent: hsl(35, 85%, 55%);        // 琥珀金强调色（原 240 4% 96% 冷灰）
+$brand-destructive: hsl(0, 72%, 51%);    // 危险色（红色）
 $brand-success: hsl(142, 76%, 36%);     // 成功色（绿色）
-$brand-warning: hsl(38, 92%, 50%);      // 警告色（黄色）
+$brand-warning: hsl(35, 90%, 50%);       // 琥珀警告色（原 38 92% 50%）
 $brand-info: hsl(217, 91%, 60%);        // 信息色（蓝色）
 
 // ========== 原有品牌色（向后兼容） ==========

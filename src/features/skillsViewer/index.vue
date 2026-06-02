@@ -63,11 +63,17 @@
                       <template v-if="toolStatuses[tool.id]">
                         <span v-if="toolStatuses[tool.id].global || toolStatuses[tool.id].project">
                           <span class="sv-count">{{ (toolStatuses[tool.id].globalCount || 0) + (toolStatuses[tool.id].projectCount || 0) }}</span>
-                          {{ i18n.skillsUnit || '个 Skills' }}
+                          {{ i18n.skillsUnit || '个' }}
                         </span>
-                        <span v-else>{{ i18n.noSkillsFound || '未发现 Skills' }}</span>
+                        <span
+                          v-else
+                          class="sv-tool-empty"
+                        >{{ i18n.noSkillsFound || '无' }}</span>
                       </template>
-                      <span v-else>{{ i18n.checking || '检测中...' }}</span>
+                      <span
+                        v-else
+                        class="sv-tool-checking"
+                      >{{ i18n.checking || '检测中...' }}</span>
                     </div>
                   </div>
                 </div>
@@ -207,8 +213,8 @@
                         class="sv-skill-expand-btn"
                         @click="toggleExpand(index)"
                       >
-                        {{ expandedSkills.has(index) ? (i18n.collapse || '收起') : (i18n.expand || '展开内容') }}
-                        {{ expandedSkills.has(index) ? '▲' : '▼' }}
+                        {{ i18n.expand || '展开' }}
+                        <span class="sv-expand-arrow">{{ expandedSkills.has(index) ? '▾' : '▸' }}</span>
                       </button>
                       <div
                         v-if="expandedSkills.has(index)"

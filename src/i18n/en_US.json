@@ -1164,7 +1164,7 @@
     "descending": "Descending"
   },
   "skillsViewerTitle": "Skills Viewer",
-  "skillsViewerDesc": "View and manage AI coding tools' Skills configuration files, compatible with Claude, CodeBuddy, Qoder, Trae",
+  "skillsViewerDesc": "View and manage AI coding tools' Skills configuration files, compatible with Claude, CodeBuddy, Qoder, Trae, Opencode",
   "skillsViewerUnsupported": "Skills Viewer requires desktop Electron environment, not available in current environment",
   "skillsUnit": " Skills",
   "checking": "Checking...",

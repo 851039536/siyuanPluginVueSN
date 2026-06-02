@@ -74,7 +74,7 @@ function daysAgoStr(days: number): string {
 /** 构建 SQL IN 子句（空集时返回不匹配条件） */
 function buildIdInClause(ids: Set<string>): string {
   if (ids.size === 0) return "AND 1 = 0"
-  const escaped = [...ids].map(id => `'${id.replace(/'/g, "''")}'`).join(",")
+  const escaped = [...ids].map((id) => `'${id.replace(/'/g, "''")}'`).join(",")
   return `AND b.id IN (${escaped})`
 }
 
@@ -627,8 +627,13 @@ export function useDocAnalysis(plugin: Plugin) {
       }
 
       const MATCHERS: [string, number][] = [
-        ["csdn", 1], ["zhihu", 2], ["juejin", 4],
-        ["cnblogs", 8], ["blog", 8], ["bili", 16], ["bibi", 16],
+        ["csdn", 1],
+        ["zhihu", 2],
+        ["juejin", 4],
+        ["cnblogs", 8],
+        ["blog", 8],
+        ["bili", 16],
+        ["bibi", 16],
         ["gzh", 32],
       ]
 
@@ -959,7 +964,7 @@ export function useDocAnalysis(plugin: Plugin) {
             extraWhere = "AND 1 = 0"
           } else {
             const exclude = new Set([...fullPublishDocIds, ...noPublishDocIds])
-            const escaped = [...exclude].map(id => `'${id.replace(/'/g, "''")}'`).join(",")
+            const escaped = [...exclude].map((id) => `'${id.replace(/'/g, "''")}'`).join(",")
             extraWhere = `AND b.id NOT IN (${escaped})`
           }
           orderBy = "b.updated DESC"
@@ -977,7 +982,7 @@ export function useDocAnalysis(plugin: Plugin) {
             extraWhere = ""
           }
           else {
-            const escaped = [...taggedDocIds].map(id => `'${id.replace(/'/g, "''")}'`).join(",")
+            const escaped = [...taggedDocIds].map((id) => `'${id.replace(/'/g, "''")}'`).join(",")
             extraWhere = `AND b.id NOT IN (${escaped})`
           }
           orderBy = "b.updated DESC"

@@ -53,7 +53,10 @@ export function useApiDebugger(plugin: Plugin) {
   }
 
   function addHeader() {
-    customHeaders.value.push({ key: "", value: "" })
+    customHeaders.value.push({
+      key: "",
+      value: "",
+    })
   }
 
   function removeHeader(index: number) {

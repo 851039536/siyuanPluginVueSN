@@ -12,43 +12,50 @@
     <!-- Tab 栏 -->
     <div class="tab-bar">
       <button
-        :class="['tab-item', { active: activeTab === 'overview' }]"
+        class="tab-item"
+        :class="[{ active: activeTab === 'overview' }]"
         @click="activeTab = 'overview'"
       >
         {{ i18n.tabOverview || '概览' }}
       </button>
       <button
-        :class="['tab-item', { active: activeTab === 'heatmap' }]"
+        class="tab-item"
+        :class="[{ active: activeTab === 'heatmap' }]"
         @click="activeTab = 'heatmap'"
       >
         {{ i18n.activityHeatmap || '活跃热力图' }}
       </button>
       <button
-        :class="['tab-item', { active: activeTab === 'activity' }]"
+        class="tab-item"
+        :class="[{ active: activeTab === 'activity' }]"
         @click="activeTab = 'activity'"
       >
         {{ i18n.notebookActivity || '写作活跃度' }}
       </button>
       <button
-        :class="['tab-item', { active: activeTab === 'trend' }]"
+        class="tab-item"
+        :class="[{ active: activeTab === 'trend' }]"
         @click="activeTab = 'trend'"
       >
         {{ i18n.trendTab || '趋势' }}
       </button>
       <button
-        :class="['tab-item', { active: activeTab === 'notebookDistribution' }]"
+        class="tab-item"
+        :class="[{ active: activeTab === 'notebookDistribution' }]"
         @click="activeTab = 'notebookDistribution'"
       >
         {{ i18n.notebookDistributionTab || '笔记分布' }}
       </button>
       <button
-        :class="['tab-item', { active: activeTab === 'report' }]"
+        class="tab-item"
+        :class="[{ active: activeTab === 'report' }]"
         @click="activeTab = 'report'"
       >
         {{ i18n.reportTab || '报告' }}
       </button>
       <button
-        :class="['tab-item', { active: activeTab === 'milestones' }]"
+        class="tab-item"
+        :class="[{ active: activeTab === 'milestones' }]"
         @click="activeTab = 'milestones'"
       >
         {{ i18n.milestones || '里程碑' }}
@@ -169,14 +176,18 @@
         </section>
 
         <section class="dist-section">
-          <h3 class="dist-section-title">{{ i18n.notebookBlockTypeTitle || '各笔记本块类型分布' }}</h3>
+          <h3 class="dist-section-title">
+            {{ i18n.notebookBlockTypeTitle || '各笔记本块类型分布' }}
+          </h3>
           <NotebookBlockTypeChart
             :data="notebookBlockTypeStats"
           />
         </section>
 
         <section class="dist-section">
-          <h3 class="dist-section-title">{{ i18n.notebookWordPie || '笔记本字数占比' }}</h3>
+          <h3 class="dist-section-title">
+            {{ i18n.notebookWordPie || '笔记本字数占比' }}
+          </h3>
           <NotebookWordPie
             :data="notebookWordStats"
           />
@@ -268,9 +279,16 @@ import WordRanking from "./components/WordRanking.vue"
 import { useHistoryData } from "./composables/useHistoryData"
 import { useNotebookStats } from "./composables/useNotebookStats"
 import { useStatistics } from "./composables/useStatistics"
-import { getDateChangedDocs, getDateRangeChangeStats } from "./queries/docChangeStats"
+import {
+  getDateChangedDocs,
+  getDateRangeChangeStats,
+} from "./queries/docChangeStats"
 import { getNotebookActivityTrend } from "./queries/notebookStats"
-import { getComparisonData, getReportData, getTrendPrediction } from "./queries/reportStats"
+import {
+  getComparisonData,
+  getReportData,
+  getTrendPrediction,
+} from "./queries/reportStats"
 import { milestoneTargetOf } from "./utils/milestones"
 
 interface Props {

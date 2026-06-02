@@ -12,7 +12,6 @@ import type {
   AiProvider,
   DeepSeekReasoningEffort,
   SearchApiConfig,
-  SearchResult,
 } from "@/types/ai"
 import {
   formatSearchResults,

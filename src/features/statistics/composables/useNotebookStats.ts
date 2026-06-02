@@ -1,5 +1,8 @@
 import type { Ref } from "vue"
-import type { NotebookBlockTypeStat, NotebookWordStat } from "../types"
+import type {
+  NotebookBlockTypeStat,
+  NotebookWordStat,
+} from "../types"
 import { ref } from "vue"
 import {
   getNotebookBlockTypeStats,

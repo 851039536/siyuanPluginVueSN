@@ -52,6 +52,20 @@
       >{{ filteredFeatures.length }}/{{ features.length }}</span>
     </div>
 
+    <!-- 状态统计 -->
+    <div class="super-panel-stats">
+      <span
+        v-for="s in FEATURE_STATUSES"
+        :key="s"
+        class="stats-item"
+        :class="`stats-${s}`"
+      >
+        <span class="stats-dot" />
+        {{ statusLabels[s] || s }}
+        <span class="stats-count">{{ statusStats[s] }}</span>
+      </span>
+    </div>
+
     <!-- 内容区 -->
     <div class="super-panel-content">
       <div
@@ -110,6 +124,7 @@ import { FEATURE_CONFIG } from "@/features/config"
 import { THEMES } from "@/features/themeColor"
 import FeatureCard from "./components/FeatureCard.vue"
 import SuperPanelHeader from "./components/SuperPanelHeader.vue"
+import { FEATURE_STATUSES } from "./types"
 
 interface Props {
   visible: boolean
@@ -175,6 +190,18 @@ const clearSearch = (): void => {
   searchInputRef.value?.focus()
 }
 
+const statusStats = computed(() => {
+  const counts: Record<string, number> = {}
+  FEATURE_STATUSES.forEach((s) => {
+    counts[s] = 0
+  })
+  const source = searchQuery.value ? filteredFeatures.value : features.value
+  source.forEach((f) => {
+    if (f.status) counts[f.status] = (counts[f.status] || 0) + 1
+  })
+  return counts
+})
+
 onMounted(() => {
   nextTick(() => searchInputRef.value?.focus())
 })
@@ -191,7 +218,7 @@ const statusLabels = computed<Record<string, string>>(() => ({
   stable: props.i18n.statusStable || "稳定",
   needsFix: props.i18n.statusNeedsFix || "待修复",
   critical: props.i18n.statusCritical || "严重",
-  minor: props.i18n.statusMinor || "轻微",
+  minor: props.i18n.statusMinor || "需优化",
 }))
 
 const handleToggle = (featureId: string, enabled: boolean): void => {

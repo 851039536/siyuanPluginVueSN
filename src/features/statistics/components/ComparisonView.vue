@@ -4,49 +4,122 @@
     <div class="comparison-controls">
       <div class="period-picker">
         <span class="period-label">A</span>
-        <select v-model="yearA" class="period-select">
-          <option v-for="y in yearOptions" :key="y" :value="y">{{ y }}年</option>
+        <select
+          v-model="yearA"
+          class="period-select"
+        >
+          <option
+            v-for="y in yearOptions"
+            :key="y"
+            :value="y"
+          >
+            {{ y }}年
+          </option>
         </select>
-        <select v-model="monthA" class="period-select">
-          <option :value="0">全年</option>
-          <option v-for="m in 12" :key="m" :value="m">{{ m }}月</option>
+        <select
+          v-model="monthA"
+          class="period-select"
+        >
+          <option :value="0">
+            全年
+          </option>
+          <option
+            v-for="m in 12"
+            :key="m"
+            :value="m"
+          >
+            {{ m }}月
+          </option>
         </select>
       </div>
       <span class="vs-text">vs</span>
       <div class="period-picker">
         <span class="period-label">B</span>
-        <select v-model="yearB" class="period-select">
-          <option v-for="y in yearOptions" :key="y" :value="y">{{ y }}年</option>
+        <select
+          v-model="yearB"
+          class="period-select"
+        >
+          <option
+            v-for="y in yearOptions"
+            :key="y"
+            :value="y"
+          >
+            {{ y }}年
+          </option>
         </select>
-        <select v-model="monthB" class="period-select">
-          <option :value="0">全年</option>
-          <option v-for="m in 12" :key="m" :value="m">{{ m }}月</option>
+        <select
+          v-model="monthB"
+          class="period-select"
+        >
+          <option :value="0">
+            全年
+          </option>
+          <option
+            v-for="m in 12"
+            :key="m"
+            :value="m"
+          >
+            {{ m }}月
+          </option>
         </select>
       </div>
-      <button class="compare-btn" @click="compare">对比</button>
+      <button
+        class="compare-btn"
+        @click="compare"
+      >
+        对比
+      </button>
     </div>
 
-    <div v-if="loading" class="compare-loading">对比中...</div>
+    <div
+      v-if="loading"
+      class="compare-loading"
+    >
+      对比中...
+    </div>
 
     <!-- Comparison result -->
-    <div v-if="data" class="compare-result">
+    <div
+      v-if="data"
+      class="compare-result"
+    >
       <!-- Metric table -->
       <div class="compare-table-wrap">
         <table class="compare-table">
           <thead>
             <tr>
-              <th class="col-metric">指标</th>
-              <th class="col-value">{{ data.periodALabel }}</th>
-              <th class="col-value">{{ data.periodBLabel }}</th>
-              <th class="col-delta">变化</th>
+              <th class="col-metric">
+                指标
+              </th>
+              <th class="col-value">
+                {{ data.periodALabel }}
+              </th>
+              <th class="col-value">
+                {{ data.periodBLabel }}
+              </th>
+              <th class="col-delta">
+                变化
+              </th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="m in metrics" :key="m.key">
-              <td class="col-metric">{{ m.label }}</td>
-              <td class="col-value">{{ m.format(data.a) }}</td>
-              <td class="col-value">{{ m.format(data.b) }}</td>
-              <td :class="['col-delta', deltaClass(m.key)]">
+            <tr
+              v-for="m in metrics"
+              :key="m.key"
+            >
+              <td class="col-metric">
+                {{ m.label }}
+              </td>
+              <td class="col-value">
+                {{ m.format(data.a) }}
+              </td>
+              <td class="col-value">
+                {{ m.format(data.b) }}
+              </td>
+              <td
+                class="col-delta"
+                :class="[deltaClass(m.key)]"
+              >
                 {{ deltaText(m.key) }}
               </td>
             </tr>
@@ -55,8 +128,13 @@
       </div>
 
       <!-- Merged breakdown -->
-      <div v-if="mergedBreakdown.length > 0" class="compare-breakdown">
-        <h4 class="breakdown-title">各时段明细对比</h4>
+      <div
+        v-if="mergedBreakdown.length > 0"
+        class="compare-breakdown"
+      >
+        <h4 class="breakdown-title">
+          各时段明细对比
+        </h4>
         <div class="breakdown-list">
           <div
             v-for="item in mergedBreakdown"
@@ -91,7 +169,10 @@
 
 <script setup lang="ts">
 import type { ComparisonData } from "../types"
-import { computed, ref } from "vue"
+import {
+  computed,
+  ref,
+} from "vue"
 import { formatNumber } from "../utils"
 
 interface Props {
@@ -125,11 +206,31 @@ interface MetricDef {
 }
 
 const metrics: MetricDef[] = [
-  { key: 'totalWords', label: '总字数', format: r => formatNumber(r.totalWords) },
-  { key: 'totalNotesCreated', label: '新增笔记', format: r => String(r.totalNotesCreated) },
-  { key: 'avgDailyWords', label: '日均字数', format: r => r.avgDailyWords.toLocaleString() },
-  { key: 'activeDays', label: '活跃天数', format: r => String(r.activeDays) },
-  { key: 'longestStreak', label: '最长连续', format: r => String(r.longestStreak) },
+  {
+    key: 'totalWords',
+    label: '总字数',
+    format: (r) => formatNumber(r.totalWords),
+  },
+  {
+    key: 'totalNotesCreated',
+    label: '新增笔记',
+    format: (r) => String(r.totalNotesCreated),
+  },
+  {
+    key: 'avgDailyWords',
+    label: '日均字数',
+    format: (r) => r.avgDailyWords.toLocaleString(),
+  },
+  {
+    key: 'activeDays',
+    label: '活跃天数',
+    format: (r) => String(r.activeDays),
+  },
+  {
+    key: 'longestStreak',
+    label: '最长连续',
+    format: (r) => String(r.longestStreak),
+  },
 ]
 
 function deltaClass(key: string): string {

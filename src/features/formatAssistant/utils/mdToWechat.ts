@@ -1,4 +1,7 @@
-import type { CodeWrapMode, WechatTheme } from "../types/storage"
+import type {
+  CodeWrapMode,
+  WechatTheme,
+} from "../types/storage"
 import type { BaseThemeColors } from "./mdToShared"
 import {
   buildThemeList,

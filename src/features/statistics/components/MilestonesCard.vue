@@ -43,7 +43,8 @@
           <div
             v-for="tier in tierRoad"
             :key="tier.idx"
-            :class="['road-item', tier.status]"
+            class="road-item"
+            :class="[tier.status]"
           >
             <span class="road-icon">{{ tier.status === 'completed' ? '✅' : tier.status === 'current' ? '📍' : '🔒' }}</span>
             <span class="road-prefix">{{ tier.prefix }}</span>
@@ -279,24 +280,74 @@ const tierLabels: Record<Tier, string> = {
 }
 
 const categories: CategoryDef[] = [
-  { id: "writing", icon: "✍️", name: props.i18n.catWriting || "写作达人", types: ["notes", "notebooks"] },
-  { id: "knowledge", icon: "🧠", name: props.i18n.catKnowledge || "知识管理", types: ["tags", "backlinks"] },
-  { id: "rich", icon: "📦", name: props.i18n.catRich || "内容丰富", types: ["words", "assets", "images", "code"] },
-  { id: "persistence", icon: "🔥", name: props.i18n.catPersistence || "坚持不懈", types: ["streak", "activeDays"] },
+  {
+    id: "writing",
+    icon: "✍️",
+    name: props.i18n.catWriting || "写作达人",
+    types: ["notes", "notebooks"],
+  },
+  {
+    id: "knowledge",
+    icon: "🧠",
+    name: props.i18n.catKnowledge || "知识管理",
+    types: ["tags", "backlinks"],
+  },
+  {
+    id: "rich",
+    icon: "📦",
+    name: props.i18n.catRich || "内容丰富",
+    types: ["words", "assets", "images", "code"],
+  },
+  {
+    id: "persistence",
+    icon: "🔥",
+    name: props.i18n.catPersistence || "坚持不懈",
+    types: ["streak", "activeDays"],
+  },
 ]
 
 // ===== 公式化无限里程碑 =====
 const TYPE_META: Record<string, { icon: string, labelFn: (v: number) => string }> = {
-  notes: { icon: "📝", labelFn: v => v >= 10000 ? `${v / 10000}万篇` : `${v}篇` },
-  notebooks: { icon: "📓", labelFn: v => `${v}个笔记本` },
-  words: { icon: "✍️", labelFn: v => v >= 10000 ? `${v / 10000}万字` : `${v}字` },
-  code: { icon: "💻", labelFn: v => `${v}个代码块` },
-  tags: { icon: "🏷️", labelFn: v => `${v}个标签` },
-  backlinks: { icon: "🔗", labelFn: v => `${v}条双链` },
-  assets: { icon: "📁", labelFn: v => `${v}个附件` },
-  images: { icon: "🖼️", labelFn: v => `${v}张图片` },
-  streak: { icon: "🔥", labelFn: v => v >= 365 ? `${Math.floor(v / 365)}年` : `连续${v}天` },
-  activeDays: { icon: "📅", labelFn: v => v >= 365 ? `活跃${Math.floor(v / 365)}年` : `活跃${v}天` },
+  notes: {
+    icon: "📝",
+    labelFn: (v) => v >= 10000 ? `${v / 10000}万篇` : `${v}篇`,
+  },
+  notebooks: {
+    icon: "📓",
+    labelFn: (v) => `${v}个笔记本`,
+  },
+  words: {
+    icon: "✍️",
+    labelFn: (v) => v >= 10000 ? `${v / 10000}万字` : `${v}字`,
+  },
+  code: {
+    icon: "💻",
+    labelFn: (v) => `${v}个代码块`,
+  },
+  tags: {
+    icon: "🏷️",
+    labelFn: (v) => `${v}个标签`,
+  },
+  backlinks: {
+    icon: "🔗",
+    labelFn: (v) => `${v}条双链`,
+  },
+  assets: {
+    icon: "📁",
+    labelFn: (v) => `${v}个附件`,
+  },
+  images: {
+    icon: "🖼️",
+    labelFn: (v) => `${v}张图片`,
+  },
+  streak: {
+    icon: "🔥",
+    labelFn: (v) => v >= 365 ? `${Math.floor(v / 365)}年` : `连续${v}天`,
+  },
+  activeDays: {
+    icon: "📅",
+    labelFn: (v) => v >= 365 ? `活跃${Math.floor(v / 365)}年` : `活跃${v}天`,
+  },
 }
 
 function tierOf(idx: number, total: number): Tier {
@@ -366,26 +417,86 @@ function pointsForLevel(level: number): number {
 const TIER_SIZE = 20
 
 const BASE_TITLES = [
-  { icon: "✏️", title: "笔墨新秀" },
-  { icon: "📝", title: "码字练手" },
-  { icon: "📒", title: "日记录者" },
-  { icon: "🖊️", title: "摘抄达人" },
-  { icon: "📖", title: "读书笔记" },
-  { icon: "📚", title: "知识收集" },
-  { icon: "🗂️", title: "整理能手" },
-  { icon: "🧩", title: "归档达人" },
-  { icon: "🔗", title: "双链编织" },
-  { icon: "🏷️", title: "标签管理" },
-  { icon: "🧠", title: "思维导图" },
-  { icon: "📐", title: "结构设计" },
-  { icon: "🔍", title: "深度检索" },
-  { icon: "💡", title: "灵感捕手" },
-  { icon: "🎯", title: "精准表达" },
-  { icon: "✨", title: "妙笔生花" },
-  { icon: "📜", title: "长篇大论" },
-  { icon: "🔥", title: "笔耕不辍" },
-  { icon: "💎", title: "字字珠玑" },
-  { icon: "🏆", title: "万字长城" },
+  {
+    icon: "✏️",
+    title: "笔墨新秀",
+  },
+  {
+    icon: "📝",
+    title: "码字练手",
+  },
+  {
+    icon: "📒",
+    title: "日记录者",
+  },
+  {
+    icon: "🖊️",
+    title: "摘抄达人",
+  },
+  {
+    icon: "📖",
+    title: "读书笔记",
+  },
+  {
+    icon: "📚",
+    title: "知识收集",
+  },
+  {
+    icon: "🗂️",
+    title: "整理能手",
+  },
+  {
+    icon: "🧩",
+    title: "归档达人",
+  },
+  {
+    icon: "🔗",
+    title: "双链编织",
+  },
+  {
+    icon: "🏷️",
+    title: "标签管理",
+  },
+  {
+    icon: "🧠",
+    title: "思维导图",
+  },
+  {
+    icon: "📐",
+    title: "结构设计",
+  },
+  {
+    icon: "🔍",
+    title: "深度检索",
+  },
+  {
+    icon: "💡",
+    title: "灵感捕手",
+  },
+  {
+    icon: "🎯",
+    title: "精准表达",
+  },
+  {
+    icon: "✨",
+    title: "妙笔生花",
+  },
+  {
+    icon: "📜",
+    title: "长篇大论",
+  },
+  {
+    icon: "🔥",
+    title: "笔耕不辍",
+  },
+  {
+    icon: "💎",
+    title: "字字珠玑",
+  },
+  {
+    icon: "🏆",
+    title: "万字长城",
+  },
 ]
 
 const TIER_PREFIXES = [
@@ -462,7 +573,13 @@ const milestonesWithState = computed(() => {
     const current = getCurrent(m.type)
     const achieved = current >= m.target
     const progress = achieved ? 100 : Math.min((current / m.target) * 100, 100)
-    return { ...m, achieved, progress, current, isNext: false }
+    return {
+      ...m,
+      achieved,
+      progress,
+      current,
+      isNext: false,
+    }
   })
 })
 
@@ -561,13 +678,21 @@ const currentLevel = computed(() => {
   let level = 1
   while (pointsForLevel(level + 1) <= totalPoints.value) level++
   const info = getLevelInfo(level)
-  return { level, ...info, pointsRequired: pointsForLevel(level) }
+  return {
+    level,
+    ...info,
+    pointsRequired: pointsForLevel(level),
+  }
 })
 
 const nextLevel = computed(() => {
   const lv = currentLevel.value.level + 1
   const info = getLevelInfo(lv)
-  return { level: lv, ...info, pointsRequired: pointsForLevel(lv) }
+  return {
+    level: lv,
+    ...info,
+    pointsRequired: pointsForLevel(lv),
+  }
 })
 
 const levelProgress = computed(() => {
@@ -607,7 +732,14 @@ const tierRoad = computed<TierItem[]>(() => {
       progress = 0
       status = "locked"
     }
-    return { idx, prefix: prefix.replace("·", ""), startLv, endLv, progress, status }
+    return {
+      idx,
+      prefix: prefix.replace("·", ""),
+      startLv,
+      endLv,
+      progress,
+      status,
+    }
   })
 })
 

@@ -1,6 +1,9 @@
 import type { DailyWordCount } from "../types"
 import { padZero } from "../utils"
-import { executeSql, formatDateTime } from "./executeSql"
+import {
+  executeSql,
+  formatDateTime,
+} from "./executeSql"
 
 export async function getWordCountAggregation(
   startDate: string,

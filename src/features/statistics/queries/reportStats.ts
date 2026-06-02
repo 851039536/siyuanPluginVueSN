@@ -1,4 +1,9 @@
-import type { ComparisonData, DailyWordCount, ReportData, TrendPrediction } from "../types"
+import type {
+  ComparisonData,
+  DailyWordCount,
+  ReportData,
+  TrendPrediction,
+} from "../types"
 import { padZero } from "../utils"
 import { executeSql } from "./executeSql"
 import { getMostProductiveNotebook } from "./notebookStats"
@@ -94,7 +99,10 @@ export async function getReportData(year?: number, month?: number): Promise<Repo
         LIMIT 1
       `)
 
-      let maxWordsDay: { date: string, words: number } = { date: "", words: 0 }
+      let maxWordsDay: { date: string, words: number } = {
+        date: "",
+        words: 0,
+      }
       if (maxDayRows.length > 0) {
         const d = maxDayRows[0].date
         maxWordsDay = {
@@ -185,7 +193,10 @@ export async function getReportData(year?: number, month?: number): Promise<Repo
         LIMIT 1
       `)
 
-      let maxWordsDay: { date: string, words: number } = { date: "", words: 0 }
+      let maxWordsDay: { date: string, words: number } = {
+        date: "",
+        words: 0,
+      }
       if (maxDayRows.length > 0) {
         const d = maxDayRows[0].date
         maxWordsDay = {
@@ -237,8 +248,14 @@ export async function getReportData(year?: number, month?: number): Promise<Repo
       totalNotesCreated: 0,
       avgDailyWords: 0,
       activeDays: 0,
-      maxWordsDay: { date: "", words: 0 },
-      mostProductiveNotebook: { name: "", words: 0 },
+      maxWordsDay: {
+        date: "",
+        words: 0,
+      },
+      mostProductiveNotebook: {
+        name: "",
+        words: 0,
+      },
       longestStreak: 0,
       monthlyBreakdown: [],
     }
@@ -299,7 +316,7 @@ export async function getTrendPrediction(): Promise<TrendPrediction> {
 
     // 简单线性回归：y = mx + b
     const xs = historical.map((_, i) => i)
-    const ys = historical.map(h => h.words)
+    const ys = historical.map((h) => h.words)
     const meanX = xs.reduce((a, b) => a + b, 0) / n
     const meanY = ys.reduce((a, b) => a + b, 0) / n
 
@@ -314,7 +331,7 @@ export async function getTrendPrediction(): Promise<TrendPrediction> {
     const slope = denominator !== 0 ? numerator / denominator : 0
     const intercept = meanY - slope * meanX
 
-    const yPred = xs.map(x => slope * x + intercept)
+    const yPred = xs.map((x) => slope * x + intercept)
     const ssRes = ys.reduce((sum, y, i) => sum + (y - yPred[i]) ** 2, 0)
     const ssTot = ys.reduce((sum, y) => sum + (y - meanY) ** 2, 0)
     const rSquared = ssTot !== 0 ? Math.max(0, Math.min(1, 1 - ssRes / ssTot)) : 0
@@ -362,8 +379,10 @@ export async function getTrendPrediction(): Promise<TrendPrediction> {
 }
 
 export async function getComparisonData(
-  yearA: number, monthA: number | undefined,
-  yearB: number, monthB: number | undefined,
+  yearA: number,
+  monthA: number | undefined,
+  yearB: number,
+  monthB: number | undefined,
 ): Promise<ComparisonData> {
   const [a, b] = await Promise.all([
     getReportData(yearA, monthA),

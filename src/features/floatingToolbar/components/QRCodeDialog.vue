@@ -32,13 +32,14 @@
       <div class="dialog-body">
         <!-- 输入内容 -->
         <div class="input-section">
-          <Textarea
-            v-model="inputContent"
-            :label="i18n.qrcodeContent || '内容'"
-            :placeholder="i18n.qrcodePlaceholder || '输入或选择内容生成二维码...'"
-            :rows="3"
-            @input="regenerateQRCode"
-          />
+<Input
+  type="textarea"
+  v-model="inputContent"
+  :label="i18n.qrcodeContent || '内容'"
+  :placeholder="i18n.qrcodePlaceholder || '输入或选择内容生成二维码...'"
+  :rows="3"
+  @input="regenerateQRCode"
+/>
         </div>
 
         <!-- 二维码预览 -->
@@ -126,7 +127,7 @@ import Button from "@/components/Button.vue"
 import Label from "@/components/Label.vue"
 import Select from "@/components/Select.vue"
 import Slider from "@/components/Slider.vue"
-import Textarea from "@/components/Textarea.vue"
+import Input from "@/components/Input.vue"
 
 interface Props {
   visible: boolean

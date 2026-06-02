@@ -3,16 +3,12 @@
     :class="selectClasses"
     v-bind="containerAttrs"
   >
-    <label
-      v-if="label"
-      class="si-select__label"
-    >
-      {{ label }}
-      <span
-        v-if="required"
-        class="si-select__required"
-      >*</span>
-    </label>
+    <FormField
+      :label="label"
+      :required="required"
+      :hint="hint"
+      :size="size"
+    />
     <div
       ref="wrapperRef"
       class="si-select__wrapper"
@@ -139,13 +135,6 @@
         </div>
       </Transition>
     </div>
-
-    <div
-      v-if="hint"
-      class="si-select__hint"
-    >
-      {{ hint }}
-    </div>
   </div>
 </template>
 
@@ -160,6 +149,7 @@ import {
   useAttrs,
   watch,
 } from "vue"
+import FormField from "@/components/FormField.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 
 type SelectSize = "small" | "medium" | "large"
@@ -571,20 +561,6 @@ defineExpose({
   position: relative;
   font-family: $font-body;
 
-  &__label {
-    display: flex;
-    align-items: center;
-    margin-bottom: 6px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--b3-theme-on-background);
-  }
-
-  &__required {
-    color: var(--b3-theme-primary);
-    margin-left: 2px;
-  }
-
   &__wrapper {
     position: relative;
   }
@@ -768,12 +744,6 @@ defineExpose({
       opacity: 0.5;
       cursor: not-allowed;
     }
-  }
-
-  &__hint {
-    margin-top: 4px;
-    font-size: 12px;
-    color: var(--b3-theme-secondary);
   }
 
   // 尺寸变体

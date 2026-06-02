@@ -2,7 +2,8 @@
   <div class="ascii-converter">
     <div class="converter-section">
       <h4>文本转ASCII</h4>
-      <Textarea
+      <Input
+        type="textarea"
         v-model="textInput"
         label="输入文本"
         placeholder="请输入要转换的文本"
@@ -21,7 +22,8 @@
 
     <div class="converter-section">
       <h4>ASCII转文本</h4>
-      <Textarea
+      <Input
+        type="textarea"
         v-model="asciiInput"
         label="输入ASCII码"
         placeholder="请输入ASCII码，用空格或逗号分隔"
@@ -95,7 +97,6 @@ import {
   ref,
 } from "vue"
 import Input from "@/components/Input.vue"
-import Textarea from "@/components/Textarea.vue"
 
 const textInput = ref("")
 const asciiInput = ref("")

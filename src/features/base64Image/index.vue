@@ -146,7 +146,8 @@
               {{ props.i18n.base64Image_download || '下载' }}
             </Button>
           </div>
-          <Textarea
+          <Input
+            type="textarea"
             v-model="base64Output"
             class="output-textarea"
             :placeholder="props.i18n.base64Image_base64Placeholder || 'Base64编码将显示在这里...'"
@@ -174,7 +175,8 @@
     >
       <div class="input-section">
         <h4>{{ props.i18n.base64Image_base64Input || 'Base64输入' }}</h4>
-        <Textarea
+        <Input
+          type="textarea"
           v-model="base64Input"
           class="input-textarea"
           :placeholder="props.i18n.base64Image_base64InputPlaceholder || '在此粘贴Base64编码...'"
@@ -275,7 +277,8 @@
               {{ props.i18n.base64Image_download || '下载' }}
             </Button>
           </div>
-          <Textarea
+          <Input
+            type="textarea"
             v-model="urlBase64Output"
             class="output-textarea"
             :readonly="true"
@@ -343,8 +346,8 @@ import {
   watch,
 } from "vue"
 import Button from "@/components/Button.vue"
+import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
-import Textarea from "@/components/Textarea.vue"
 import CopyDropdown from "./components/CopyDropdown.vue"
 import FilterSettings from "./components/FilterSettings.vue"
 import PanelHeader from "./components/PanelHeader.vue"

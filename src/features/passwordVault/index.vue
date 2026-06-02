@@ -319,7 +319,8 @@
                 </div>
 
                 <div class="form-group">
-                  <Textarea
+                  <Input
+                    type="textarea"
                     v-model="entryForm.description"
                     label="描述"
                     placeholder="请输入描述信息"
@@ -556,7 +557,6 @@ import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
-import Textarea from "@/components/Textarea.vue"
 import { usePlugin } from "@/main"
 import HelpDialog from "./components/HelpDialog.vue"
 import PasswordVaultLogin from "./components/PasswordVaultLogin.vue"

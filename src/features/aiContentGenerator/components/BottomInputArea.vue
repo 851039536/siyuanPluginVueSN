@@ -276,7 +276,8 @@
       v-if="editTargetDoc || currentSkillIndex >= 0"
       class="input-row"
     >
-      <Textarea
+      <Input
+        type="textarea"
         :model-value="editCustomInput"
         :placeholder="inputPlaceholder"
         :rows="1"
@@ -339,8 +340,8 @@ import {
   ref,
 } from "vue"
 import Button from "@/components/Button.vue"
+import Input from "@/components/Input.vue"
 import Tag from "@/components/Tag.vue"
-import Textarea from "@/components/Textarea.vue"
 import {
   getPromptPreview,
   getSourceHint,

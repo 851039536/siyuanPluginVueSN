@@ -335,7 +335,8 @@
               class="language-select"
             />
           </div>
-          <Textarea
+          <Input
+            type="textarea"
             v-model="translateText"
             class="translate-textarea"
             :placeholder="props.i18n.wordQuery?.enterTextToTranslate || '输入要翻译的文本，2秒后自动翻译...'"
@@ -501,7 +502,6 @@ import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
-import Textarea from "@/components/Textarea.vue"
 import CodeCommentGenerator from "./components/CodeCommentGenerator.vue"
 import CodeExplainer from "./components/CodeExplainer.vue"
 import CodeTranslationPanel from "./components/CodeTranslationPanel.vue"

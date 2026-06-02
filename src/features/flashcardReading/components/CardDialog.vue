@@ -28,7 +28,8 @@
           @input="$emit('inputTitle')"
           @blur="$emit('validateTitle')"
         />
-        <Textarea
+        <Input
+          type="textarea"
           :modelValue="localFormData.content"
           :label="t.content"
           :placeholder="t.contentPlaceholder"
@@ -91,7 +92,6 @@ import {
 import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
-import Textarea from "@/components/Textarea.vue"
 
 const props = defineProps<{
   visible: boolean

@@ -213,7 +213,8 @@ function handleDebouncedInput() {
   }
 
   .notebook-select {
-    width: 84px;
+    flex: 1;
+    min-width: 0;
   }
 
   .filter-separator {

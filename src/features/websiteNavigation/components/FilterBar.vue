@@ -10,7 +10,6 @@
       type="text"
       :placeholder="i18n.searchPlaceholder || '搜索网站名称或描述...'"
       size="small"
-      class="search-input"
       @update:model-value="emit('update:searchQuery', $event)"
     />
 

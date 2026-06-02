@@ -67,10 +67,10 @@
         </div>
         <!-- 资源统计 -->
         <div
-          v-if="!loading && currentAssetList.length > 0"
+          v-if="!loading && totalAssetCount > 0"
           class="rm-asset-count"
         >
-          {{ i18n.assetCount }}: {{ currentAssetList.length }}
+          {{ i18n.assetCount }}: {{ currentAssetList.length }} / {{ totalAssetCount }}
         </div>
         <div
           v-if="loading"
@@ -326,6 +326,7 @@ const {
   customCategory,
   rebuildResult,
   quickCategories,
+  totalAssetCount,
   currentAssetList,
   refresh,
   copyPathToClipboard,

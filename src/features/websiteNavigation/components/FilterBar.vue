@@ -1,17 +1,19 @@
 <template>
-  <div class="filter-bar">
-    <IconWrapper
-      name="search"
-      :size="14"
-      class="search-icon"
-    />
-    <Input
-      :model-value="searchQuery"
-      type="text"
-      :placeholder="i18n.searchPlaceholder || '搜索网站名称或描述...'"
-      size="small"
-      @update:model-value="emit('update:searchQuery', $event)"
-    />
+  <div>
+    <div class="filter-bar">
+      <IconWrapper
+        name="search"
+        :size="14"
+        class="search-icon"
+      />
+      <Input
+        :model-value="searchQuery"
+        type="text"
+        :placeholder="i18n.searchPlaceholder || '搜索网站名称或描述...'"
+        size="small"
+        @update:model-value="emit('update:searchQuery', $event)"
+      />
+    </div>
 
     <div class="category-filter">
       <button

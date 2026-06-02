@@ -70,7 +70,7 @@
             :class="{ active: categoryFilter === '' }"
             @click="categoryFilter = ''"
           >
-            {{ i18n.allCategories }}
+            {{ i18n.uncategorized }}
           </button>
           <button
             v-for="cat in quickCategories"
@@ -642,13 +642,21 @@ async function getCurrentDocId(): Promise<string | null> {
 /** 图片扩展名 */
 const IMAGE_EXT = /\.(png|jpg|jpeg|gif|svg|webp|bmp|ico|tiff|avif)$/i
 
-/** 当前 tab 对应的资源列表（按分类过滤） */
+/** 所有分类前缀集合（built-in + custom） */
+const allCategoryPrefixes = computed(() =>
+  quickCategories.value.map((cat) => `assets/${cat.key}/`),
+)
+
+/** 当前 tab 对应的资源列表（按分类过滤 + 数量限制） */
 const currentAssetList = computed(() => {
   const list = activeTab.value === "fileAssets" ? fileAssets.value : imageAssets.value
-  if (!categoryFilter.value) return list
-  // 缓存分类前缀避免每次过滤时重复拼接
+  if (!categoryFilter.value) {
+    // 待分类：不属于任何已知分类
+    const prefixes = allCategoryPrefixes.value
+    return list.filter((item) => !prefixes.some((p) => item.path.startsWith(p))).slice(0, loadLimit.value)
+  }
   const prefix = `assets/${categoryFilter.value}/`
-  return list.filter((item) => item.path.startsWith(prefix))
+  return list.filter((item) => item.path.startsWith(prefix)).slice(0, loadLimit.value)
 })
 
 /** 加载当前 tab 对应的资源 */
@@ -675,8 +683,9 @@ async function buildAssetList(paths: string[], isImage: boolean): Promise<ImageA
   const extFilter = isImage
     ? (p: string) => IMAGE_EXT.test(p)
     : (p: string) => !IMAGE_EXT.test(p)
-  const filtered = paths.filter(extFilter).slice(0, loadLimit.value)
-  const docMap = await loadDocNamesForImages(filtered)
+  const filtered = paths.filter(extFilter)
+  // 关联文档查询较重，只对前 500 条加载文档信息
+  const docMap = await loadDocNamesForImages(filtered.slice(0, 500))
   return filtered.map((path) => {
     const info = docMap.get(path)
     return {
@@ -694,7 +703,7 @@ async function loadAllAssets(isImage: boolean) {
   const target = isImage ? imageAssets : fileAssets
 
   try {
-    const referenced = await sql(`SELECT DISTINCT path FROM assets WHERE path LIKE 'assets/%' LIMIT ${loadLimit.value}`)
+    const referenced = await sql("SELECT DISTINCT path FROM assets WHERE path LIKE 'assets/%'")
     const refPaths = (referenced || [])
       .map((r: { path: string }) => r.path)
       .filter((p: unknown): p is string => typeof p === "string")

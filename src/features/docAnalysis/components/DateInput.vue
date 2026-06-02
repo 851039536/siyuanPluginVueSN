@@ -81,15 +81,15 @@ import {
   watch,
 } from "vue"
 
+withDefaults(defineProps<Props>(), {
+  placeholder: "yyyy-MM-dd",
+})
+
 const WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"]
 
 interface Props {
   placeholder?: string
 }
-
-withDefaults(defineProps<Props>(), {
-  placeholder: "yyyy-MM-dd",
-})
 
 const modelValue = defineModel<string>({ default: "" })
 

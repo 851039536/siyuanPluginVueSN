@@ -2,14 +2,14 @@
   <div class="qrcode-section">
     <div class="input-section">
       <h4>{{ inputTitle }}</h4>
-<Input
-  type="textarea"
-  :model-value="content"
-  class="input-textarea"
-  :placeholder="placeholder"
-  :rows="4"
-  @update:model-value="onContentChange"
-/>
+      <Input
+        type="textarea"
+        :model-value="content"
+        class="input-textarea"
+        :placeholder="placeholder"
+        :rows="4"
+        @update:model-value="onContentChange"
+      />
       <div class="qrcode-settings">
         <div class="setting-group">
           <label>{{ sizeLabel }}: {{ size }}px</label>

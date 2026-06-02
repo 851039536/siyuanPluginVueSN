@@ -3,14 +3,14 @@
     <label class="section-label">
       {{ contentType === 'code' ? codeLabel : textLabel }}
     </label>
-<Input
-  type="textarea"
-  :model-value="modelValue"
-  :placeholder="contentType === 'code' ? codePlaceholder : textPlaceholder"
-  :rows="10"
-  :spellcheck="false"
-  @update:model-value="onInputChange"
-/>
+    <Input
+      type="textarea"
+      :model-value="modelValue"
+      :placeholder="contentType === 'code' ? codePlaceholder : textPlaceholder"
+      :rows="10"
+      :spellcheck="false"
+      @update:model-value="onInputChange"
+    />
   </div>
 </template>
 

@@ -53,6 +53,7 @@ import {
   registerThemeColor,
   registerUnitConverter,
   registerVideo,
+  registerWebsiteNavigation,
   registerWordQuery,
 } from "@/features"
 import {
@@ -241,6 +242,7 @@ export default class PluginSample extends Plugin {
     }
     if (s.enableBookmarkMarker) registerBookmarkMarker(this)
     if (s.enableApiDebugger) registerApiDebugger(this)
+    if (s.enableWebsiteNavigation) registerWebsiteNavigation(this)
   }
 
   /**

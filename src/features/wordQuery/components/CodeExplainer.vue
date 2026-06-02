@@ -19,14 +19,14 @@
           />
           {{ i18n.enterCode || '输入代码' }}
         </div>
-<Input
-  type="textarea"
-  v-model="codeInput"
-  class="code-textarea"
-  :placeholder="i18n.codeInputPlaceholder || '粘贴需要解释的代码...'"
-  :rows="8"
-  @input="handleInput"
-/>
+        <Input
+          v-model="codeInput"
+          type="textarea"
+          class="code-textarea"
+          :placeholder="i18n.codeInputPlaceholder || '粘贴需要解释的代码...'"
+          :rows="8"
+          @input="handleInput"
+        />
       </div>
 
       <div class="action-section">

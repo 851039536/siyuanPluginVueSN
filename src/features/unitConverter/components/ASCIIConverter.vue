@@ -3,8 +3,8 @@
     <div class="converter-section">
       <h4>文本转ASCII</h4>
       <Input
-        type="textarea"
         v-model="textInput"
+        type="textarea"
         label="输入文本"
         placeholder="请输入要转换的文本"
         :rows="3"
@@ -23,8 +23,8 @@
     <div class="converter-section">
       <h4>ASCII转文本</h4>
       <Input
-        type="textarea"
         v-model="asciiInput"
+        type="textarea"
         label="输入ASCII码"
         placeholder="请输入ASCII码，用空格或逗号分隔"
         :rows="3"

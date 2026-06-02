@@ -336,8 +336,8 @@
             />
           </div>
           <Input
-            type="textarea"
             v-model="translateText"
+            type="textarea"
             class="translate-textarea"
             :placeholder="props.i18n.wordQuery?.enterTextToTranslate || '输入要翻译的文本，2秒后自动翻译...'"
             :rows="8"

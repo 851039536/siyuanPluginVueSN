@@ -47,8 +47,6 @@
 <script setup lang="ts">
 import {
   computed,
-  ref,
-  watch,
 } from "vue"
 import Loader from "@/components/Loader.vue"
 import {

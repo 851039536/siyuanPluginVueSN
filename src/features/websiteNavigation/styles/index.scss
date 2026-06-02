@@ -55,7 +55,7 @@
       color: var(--b3-theme-secondary);
     }
 
-    .search-input {
+    :deep(.si-input) {
       flex: 1;
     }
   }

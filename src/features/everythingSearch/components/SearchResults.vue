@@ -3,10 +3,9 @@
     <!-- 加载状态 -->
     <div
       v-if="state.status === 'loading'"
-      class="loading-state"
+      class="loading-wrapper"
     >
-      <div class="loading-spinner-large"></div>
-      <p>正在搜索...</p>
+      <Loader />
     </div>
 
     <!-- 错误状态 -->
@@ -69,6 +68,7 @@ import type {
   SearchState,
 } from "../types"
 import { computed } from "vue"
+import Loader from "@/components/Loader.vue"
 import ResultItem from "./ResultItem.vue"
 
 interface Props {
@@ -135,7 +135,11 @@ const handleItemCopyPath = (item: EverythingSearchResult) => {
   flex-direction: column;
 }
 
-.loading-state,
+.loading-wrapper {
+  flex: 1;
+  position: relative;
+}
+
 .error-state,
 .empty-state {
   flex: 1;
@@ -145,15 +149,6 @@ const handleItemCopyPath = (item: EverythingSearchResult) => {
   justify-content: center;
   padding: 30px;
   font-family: $font-body;
-}
-
-.loading-spinner-large {
-  width: 28px;
-  height: 28px;
-  border: 2px solid var(--b3-border-color);
-  border-top-color: $brand-orange;
-  border-radius: 50%;
-  margin-bottom: 10px;
 }
 
 .empty-icon,

@@ -3,10 +3,9 @@
     <!-- 加载状态（仅在没有内容时显示） -->
     <div
       v-if="isGenerating && !displayedContent && !generatedContent"
-      class="loading-state"
+      class="loading-wrapper"
     >
-      <div class="loading-spinner-large"></div>
-      <p>{{ '正在思考...' }}</p>
+      <Loader />
     </div>
 
     <!-- 错误提示 -->
@@ -312,6 +311,7 @@ import {
   watch,
 } from "vue"
 import Button from "@/components/Button.vue"
+import Loader from "@/components/Loader.vue"
 import DiffPreview from "./DiffPreview.vue"
 
 interface Props {
@@ -384,6 +384,11 @@ watch(isGenerating, (newVal, oldVal) => {
 
 <style scoped lang="scss">
 @use "../styles/index.scss";
+
+.loading-wrapper {
+  position: relative;
+  height: 200px;
+}
 
 // ============ 思考过程 ============
 .reasoning-section {

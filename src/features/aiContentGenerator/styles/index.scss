@@ -242,7 +242,6 @@
   white-space: nowrap;
 }
 
-.loading-state,
 .error-state,
 .empty-state {
   flex: 1;
@@ -254,17 +253,9 @@
   color: var(--b3-theme-on-surface);
 }
 
-.loading-spinner-large,
 .loading-spinner-small,
 .loading-spinner-tiny { border-radius: 50%; }
 
-.loading-spinner-large {
-  width: 40px;
-  height: 40px;
-  margin-bottom: 16px;
-  border: 3px solid var(--b3-theme-surface-light);
-  border-top-color: var(--b3-theme-primary);
-}
 
 .loading-spinner-small {
   width: 14px;

@@ -154,10 +154,9 @@
     </div>
     <div
       v-else
-      class="loading-state"
+      class="loading-wrapper"
     >
-      <div class="loading-spinner"></div>
-      <span>{{ i18n.loading || '加载中...' }}</span>
+      <Loader />
     </div>
   </div>
 </template>
@@ -170,6 +169,7 @@ import type {
 } from "../types"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import Loader from "@/components/Loader.vue"
 import Tag from "@/components/Tag.vue"
 import { formatSize } from "../utils"
 
@@ -340,24 +340,8 @@ function isFavorite(path: string): boolean {
   }
 }
 
-.loading-state {
-  @include flex-center;
-  flex-direction: column;
-  padding: 40px;
-  gap: 12px;
-
-  span {
-    font-size: 13px;
-    color: var(--b3-theme-on-surface-light);
-  }
-}
-
-.loading-spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid var(--b3-theme-surface-lighter);
-  border-top-color: var(--b3-theme-primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+.loading-wrapper {
+  position: relative;
+  height: 200px;
 }
 </style>

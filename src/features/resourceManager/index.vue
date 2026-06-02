@@ -117,19 +117,6 @@
               >
                 {{ asset.path }}
               </div>
-              <div
-                v-if="asset.docNames.length > 0"
-                class="rm-asset-item__docs"
-              >
-                <span class="rm-asset-item__docs-label">{{ i18n.referencingDocs }}:</span>
-                <span class="rm-asset-item__docs-list">{{ asset.docNames.join("、") }}</span>
-              </div>
-              <div
-                v-else
-                class="rm-asset-item__docs rm-asset-item__docs--empty"
-              >
-                {{ i18n.noReferencingDocs }}
-              </div>
             </div>
             <div class="rm-asset-item__actions">
               <button
@@ -143,13 +130,6 @@
                 @click="startMoveAsset(asset.path)"
               >
                 {{ i18n.moveAsset }}
-              </button>
-              <button
-                v-if="asset.docIds.length > 0"
-                class="rm-btn small"
-                @click="locateDoc(asset)"
-              >
-                {{ i18n.locateDoc }}
               </button>
             </div>
             <!-- 移动表单 -->
@@ -642,17 +622,10 @@ async function getCurrentDocId(): Promise<string | null> {
 /** 图片扩展名 */
 const IMAGE_EXT = /\.(png|jpg|jpeg|gif|svg|webp|bmp|ico|tiff|avif)$/i
 
-/** 路径前缀匹配（大小写不敏感） */
-function pathStartsWithPrefix(path: string, prefix: string): boolean {
-  return path.toLowerCase().startsWith(prefix.toLowerCase())
-}
-
-/** 当前 tab 对应的资源列表（按分类过滤 + 数量限制） */
+/** 当前 tab 对应的资源列表（数量限制） */
 const currentAssetList = computed(() => {
   const list = activeTab.value === "fileAssets" ? fileAssets.value : imageAssets.value
-  if (!categoryFilter.value) return list.slice(0, loadLimit.value)
-  const prefix = `assets/${categoryFilter.value}/`
-  return list.filter((item) => pathStartsWithPrefix(item.path, prefix)).slice(0, loadLimit.value)
+  return list.slice(0, loadLimit.value)
 })
 
 /** 加载当前 tab 对应的资源 */
@@ -672,24 +645,13 @@ async function loadCurrentTabAssets() {
 }
 
 /**
- * 将原始路径列表转换为带关联文档信息的资源列表
- * 统一处理扩展名过滤 + 批量查询关联文档 + 组装最终结果
+ * 将原始路径列表转换为资源列表，按扩展名过滤
  */
-async function buildAssetList(paths: string[], isImage: boolean): Promise<ImageAssetInfo[]> {
+function buildAssetList(paths: string[], isImage: boolean): ImageAssetInfo[] {
   const extFilter = isImage
     ? (p: string) => IMAGE_EXT.test(p)
     : (p: string) => !IMAGE_EXT.test(p)
-  const filtered = paths.filter(extFilter)
-  // 关联文档查询较重，只对前 500 条加载文档信息
-  const docMap = await loadDocNamesForImages(filtered.slice(0, 500))
-  return filtered.map((path) => {
-    const info = docMap.get(path)
-    return {
-      path,
-      docNames: info?.docNames || [],
-      docIds: info?.docIds || [],
-    }
-  })
+  return paths.filter(extFilter).map((path) => ({ path }))
 }
 
 /**
@@ -709,7 +671,7 @@ async function loadAllAssets(isImage: boolean) {
       .filter((p: unknown): p is string => typeof p === "string")
 
     const allPaths = [...new Set([...refPaths, ...unusedPaths])].sort()
-    target.value = await buildAssetList(allPaths, isImage)
+    target.value = buildAssetList(allPaths, isImage)
   }
   catch (e: unknown) {
     console.error(`加载全部${isImage ? "图片" : "文件"}资源失败:`, e)
@@ -726,57 +688,7 @@ async function loadDocAssets(docId: string, isImage: boolean) {
   const paths = await getDocImageAssets(docId)
   const pathList = (paths || [])
     .filter((p: unknown): p is string => typeof p === "string")
-  target.value = await buildAssetList(pathList, isImage)
-}
-
-/**
- * 批量查询图片资产的关联文档名称
- * 使用受控并发（5 个一批）避免同时发送过多 SQL 请求
- */
-async function loadDocNamesForImages(
-  paths: string[],
-): Promise<Map<string, { docNames: string[], docIds: string[] }>> {
-  const result = new Map<string, { docNames: string[], docIds: string[] }>()
-  const CONCURRENCY = 5
-
-  for (let i = 0; i < paths.length; i += CONCURRENCY) {
-    const batch = paths.slice(i, i + CONCURRENCY)
-    const batchResults = await Promise.all(batch.map(async (path) => {
-      const fileName = path.split("/").pop() || path
-      try {
-        const escapedFileName = escapeSqlLike(fileName)
-        const rows = await sql(
-          `SELECT DISTINCT b2.id, b2.content
-           FROM blocks b1
-           JOIN blocks b2 ON b1.root_id = b2.id
-           WHERE b2.type = 'd'
-           AND b1.markdown LIKE '%${escapedFileName}%'
-           LIMIT 10`,
-        ) as { id: string, content: string }[]
-        const docNames = (rows || []).map((r) => r.content || "(无标题)")
-        const docIds = (rows || []).map((r) => r.id)
-        return {
-          path,
-          docNames,
-          docIds,
-        }
-      }
-      catch {
-        return {
-          path,
-          docNames: [] as string[],
-          docIds: [] as string[],
-        }
-      }
-    }))
-    for (const item of batchResults) {
-      result.set(item.path, {
-        docNames: item.docNames,
-        docIds: item.docIds,
-      })
-    }
-  }
-  return result
+  target.value = buildAssetList(pathList, isImage)
 }
 
 async function loadMissingAssets() {
@@ -869,11 +781,6 @@ async function applyCustomCategory(currentPath: string) {
 /**
  * 定位到图片所在的文档
  */
-function locateDoc(asset: ImageAssetInfo) {
-  if (asset.docIds.length > 0) {
-    window.open(`siyuan://blocks/${asset.docIds[0]}`)
-  }
-}
 
 /**
  * 移动成功后原地更新资源列表，避免全量刷新重新扫描

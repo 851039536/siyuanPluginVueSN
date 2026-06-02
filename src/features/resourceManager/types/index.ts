@@ -1,8 +1,6 @@
 /** 图片资源信息 */
 export interface ImageAssetInfo {
   path: string
-  docNames: string[]
-  docIds: string[]
 }
 
 /** 资源管理器国际化类型 */

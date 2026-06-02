@@ -70,7 +70,7 @@
             :class="{ active: categoryFilter === '' }"
             @click="categoryFilter = ''"
           >
-            {{ i18n.uncategorized }}
+            {{ i18n.allCategories }}
           </button>
           <button
             v-for="cat in quickCategories"
@@ -642,11 +642,6 @@ async function getCurrentDocId(): Promise<string | null> {
 /** 图片扩展名 */
 const IMAGE_EXT = /\.(png|jpg|jpeg|gif|svg|webp|bmp|ico|tiff|avif)$/i
 
-/** 所有分类前缀集合（built-in + custom） */
-const allCategoryPrefixes = computed(() =>
-  quickCategories.value.map((cat) => `assets/${cat.key}/`),
-)
-
 /** 路径前缀匹配（大小写不敏感） */
 function pathStartsWithPrefix(path: string, prefix: string): boolean {
   return path.toLowerCase().startsWith(prefix.toLowerCase())
@@ -655,11 +650,7 @@ function pathStartsWithPrefix(path: string, prefix: string): boolean {
 /** 当前 tab 对应的资源列表（按分类过滤 + 数量限制） */
 const currentAssetList = computed(() => {
   const list = activeTab.value === "fileAssets" ? fileAssets.value : imageAssets.value
-  if (!categoryFilter.value) {
-    // 待分类：不属于任何已知分类
-    const prefixes = allCategoryPrefixes.value
-    return list.filter((item) => !prefixes.some((p) => pathStartsWithPrefix(item.path, p))).slice(0, loadLimit.value)
-  }
+  if (!categoryFilter.value) return list.slice(0, loadLimit.value)
   const prefix = `assets/${categoryFilter.value}/`
   return list.filter((item) => pathStartsWithPrefix(item.path, prefix)).slice(0, loadLimit.value)
 })

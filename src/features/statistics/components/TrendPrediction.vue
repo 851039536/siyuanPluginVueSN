@@ -33,7 +33,10 @@
       <div class="pred-trend-label">
         <span class="trend-up">▲</span> 趋势：
         <strong
-          :class="{ 'trend-pos': prediction.slope > 0, 'trend-neg': prediction.slope < 0 }"
+          :class="{
+            'trend-pos': prediction.slope > 0,
+            'trend-neg': prediction.slope < 0,
+          }"
         >
           {{ prediction.slope > 0 ? '上升' : prediction.slope < 0 ? '下降' : '平稳' }}
           （{{ prediction.slope > 0 ? '+' : '' }}{{ prediction.slope.toFixed(1) }} 字/天）
@@ -102,7 +105,10 @@
             :cx="pt.x"
             :cy="pt.y"
             :r="pt.isPred ? 3 : 2"
-            :class="{ 'dot-history': !pt.isPred, 'dot-predict': pt.isPred }"
+            :class="{
+              'dot-history': !pt.isPred,
+              'dot-predict': pt.isPred,
+            }"
           />
           <!-- hover -->
           <rect
@@ -128,7 +134,10 @@
         <div
           v-if="hoveredIndex >= 0 && allPoints[hoveredIndex]"
           class="pred-tooltip"
-          :style="{ left: tooltipLeft, top: '4px' }"
+          :style="{
+            left: tooltipLeft,
+            top: '4px',
+          }"
         >
           <div class="tooltip-label">
             {{ allPoints[hoveredIndex].label }}
@@ -137,7 +146,9 @@
               class="tooltip-pred-badge"
             >预测</span>
           </div>
-          <div class="tooltip-val">{{ formatNumber(allPoints[hoveredIndex].value) }} 字</div>
+          <div class="tooltip-val">
+            {{ formatNumber(allPoints[hoveredIndex].value) }} 字
+          </div>
         </div>
       </div>
 
@@ -162,7 +173,11 @@
 
 <script setup lang="ts">
 import type { TrendPrediction } from "../types"
-import { computed, ref, onMounted } from "vue"
+import {
+  computed,
+  onMounted,
+  ref,
+} from "vue"
 import { formatNumber } from "../utils"
 
 interface Props {
@@ -205,7 +220,10 @@ const yRange = computed(() => {
   for (const d of allData.value) {
     max = Math.max(max, d.words)
   }
-  return { min: 0, max: max * 1.1 }
+  return {
+    min: 0,
+    max: max * 1.1,
+  }
 })
 
 const gridLines = computed(() =>
@@ -213,7 +231,10 @@ const gridLines = computed(() =>
 )
 
 const yLabels = computed(() => {
-  const { min, max } = yRange.value
+  const {
+    min,
+    max,
+  } = yRange.value
   return [0, 1, 2, 3, 4].map((i) => {
     const val = min + (max - min) * (i / 4)
     return {
@@ -236,7 +257,10 @@ function toX(idx: number): number {
 }
 
 function toY(val: number): number {
-  const { min, max } = yRange.value
+  const {
+    min,
+    max,
+  } = yRange.value
   const range = max - min || 1
   return PAD_T + plotH.value * (1 - (val - min) / range)
 }

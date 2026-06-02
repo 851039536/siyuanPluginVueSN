@@ -5,7 +5,8 @@
       <button
         v-for="opt in periodOptions"
         :key="opt.value"
-        :class="['range-btn', { active: days === opt.value }]"
+        class="range-btn"
+        :class="[{ active: days === opt.value }]"
         @click="switchPeriod(opt.value)"
       >
         {{ opt.label }}
@@ -15,20 +16,36 @@
     <!-- 统计摘要 -->
     <div class="summary-cards">
       <div class="summary-card">
-        <div class="summary-value">{{ summary.activeNotebooks }}</div>
-        <div class="summary-label">{{ i18n.activeNotebooks || '活跃笔记本' }}</div>
+        <div class="summary-value">
+          {{ summary.activeNotebooks }}
+        </div>
+        <div class="summary-label">
+          {{ i18n.activeNotebooks || '活跃笔记本' }}
+        </div>
       </div>
       <div class="summary-card">
-        <div class="summary-value">{{ summary.mostActive }}</div>
-        <div class="summary-label">{{ i18n.mostActive || '最活跃' }}</div>
+        <div class="summary-value">
+          {{ summary.mostActive }}
+        </div>
+        <div class="summary-label">
+          {{ i18n.mostActive || '最活跃' }}
+        </div>
       </div>
       <div class="summary-card">
-        <div class="summary-value">{{ formatNumber(summary.totalWords) }}</div>
-        <div class="summary-label">{{ i18n.periodTotalWords || '期间总字数' }}</div>
+        <div class="summary-value">
+          {{ formatNumber(summary.totalWords) }}
+        </div>
+        <div class="summary-label">
+          {{ i18n.periodTotalWords || '期间总字数' }}
+        </div>
       </div>
       <div class="summary-card">
-        <div class="summary-value">{{ formatNumber(summary.dailyAvg) }}</div>
-        <div class="summary-label">{{ i18n.dailyAvgWords || '日均字数' }}</div>
+        <div class="summary-value">
+          {{ formatNumber(summary.dailyAvg) }}
+        </div>
+        <div class="summary-label">
+          {{ i18n.dailyAvgWords || '日均字数' }}
+        </div>
       </div>
     </div>
 
@@ -53,7 +70,8 @@
           <div
             v-for="nb in activeNotebooks"
             :key="nb.notebook"
-            :class="['legend-item', { dimmed: hoveredNb && hoveredNb !== nb.notebook }]"
+            class="legend-item"
+            :class="[{ dimmed: hoveredNb && hoveredNb !== nb.notebook }]"
             @mouseenter="hoveredNb = nb.notebook"
             @mouseleave="hoveredNb = null"
           >
@@ -146,9 +164,14 @@
           <div
             v-if="hoveredX >= 0 && xLabels[hoveredX]"
             class="tooltip"
-            :style="{ left: tooltipLeft, top: tooltipTop }"
+            :style="{
+              left: tooltipLeft,
+              top: tooltipTop,
+            }"
           >
-            <div class="tooltip-date">{{ dateAt(hoveredX) }}</div>
+            <div class="tooltip-date">
+              {{ dateAt(hoveredX) }}
+            </div>
             <div
               v-for="nb in activeNotebooks"
               :key="nb.notebook"
@@ -167,7 +190,9 @@
 
       <!-- 笔记本排行表 -->
       <div class="ranking-card">
-        <div class="ranking-title">{{ i18n.notebookRanking || '笔记本排行' }}</div>
+        <div class="ranking-title">
+          {{ i18n.notebookRanking || '笔记本排行' }}
+        </div>
         <div class="ranking-table">
           <div class="ranking-header">
             <span class="col-rank">#</span>
@@ -197,7 +222,10 @@
               <span class="bar-track">
                 <span
                   class="bar-fill"
-                  :style="{ width: item.percent + '%', background: item.color }"
+                  :style="{
+                    width: `${item.percent}%`,
+                    background: item.color,
+                  }"
                 ></span>
               </span>
               <span class="bar-label">{{ item.percent }}%</span>
@@ -211,7 +239,11 @@
 
 <script setup lang="ts">
 import type { NotebookActivityItem } from "../types"
-import { computed, onMounted, ref } from "vue"
+import {
+  computed,
+  onMounted,
+  ref,
+} from "vue"
 import { formatNumber } from "../utils"
 
 interface Props {
@@ -231,12 +263,30 @@ const PAD_T = 14
 
 const days = ref(7)
 const periodOptions = computed(() => [
-  { label: props.i18n.days7 || '7天', value: 7 },
-  { label: props.i18n.days15 || '15天', value: 15 },
-  { label: props.i18n.days30 || '30天', value: 30 },
-  { label: props.i18n.days60 || '60天', value: 60 },
-  { label: props.i18n.days90 || '90天', value: 90 },
-  { label: props.i18n.days180 || '180天', value: 180 },
+  {
+    label: props.i18n.days7 || '7天',
+    value: 7,
+  },
+  {
+    label: props.i18n.days15 || '15天',
+    value: 15,
+  },
+  {
+    label: props.i18n.days30 || '30天',
+    value: 30,
+  },
+  {
+    label: props.i18n.days60 || '60天',
+    value: 60,
+  },
+  {
+    label: props.i18n.days90 || '90天',
+    value: 90,
+  },
+  {
+    label: props.i18n.days180 || '180天',
+    value: 180,
+  },
 ])
 
 const loading = ref(false)
@@ -290,7 +340,10 @@ const yRange = computed(() => {
       maxVal = Math.max(maxVal, d.words)
     }
   }
-  return { min: 0, max: maxVal }
+  return {
+    min: 0,
+    max: maxVal,
+  }
 })
 
 const gridLines = computed(() => {
@@ -302,7 +355,10 @@ const gridLines = computed(() => {
 })
 
 const yLabels = computed(() => {
-  const { min, max } = yRange.value
+  const {
+    min,
+    max,
+  } = yRange.value
   return [0, 1, 2, 3, 4].map((i) => {
     const val = min + (max - min) * (i / 4)
     return {
@@ -347,7 +403,10 @@ function toX(idx: number): number {
 }
 
 function toY(val: number): number {
-  const { min, max } = yRange.value
+  const {
+    min,
+    max,
+  } = yRange.value
   const range = max - min || 1
   return PAD_T + plotH.value * (1 - (val - min) / range)
 }

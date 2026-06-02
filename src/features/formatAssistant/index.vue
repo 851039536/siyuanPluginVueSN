@@ -270,8 +270,14 @@ const targetOptions = [
 const fontSizeOptions = [13, 14, 15, 16, 17, 18]
 const lineHeightOptions = [1.3, 1.5, 1.6, 1.75, 1.8, 2.0]
 const codeWrapOptions: { value: CodeWrapMode, label: string }[] = [
-  { value: "scroll", label: "横向滚动" },
-  { value: "wrap", label: "自动换行" },
+  {
+    value: "scroll",
+    label: "横向滚动",
+  },
+  {
+    value: "wrap",
+    label: "自动换行",
+  },
 ]
 const wechatThemes = getWechatThemes()
 const bilibiliThemes = getBilibiliThemes()

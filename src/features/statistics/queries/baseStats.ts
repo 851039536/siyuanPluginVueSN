@@ -1,8 +1,26 @@
-import type { BlockTypeStat, StatisticsData } from "../types"
-import { lsNotebooks, readDir } from "@/api"
-import { BLOCK_TYPE_LABELS, IMAGE_EXTENSIONS, ZERO_STATISTICS } from "../types/constants"
-import { formatDateTime, executeSql } from "./executeSql"
-import { getDailyStats, getMonthlyStatsRange, getWeeklyStats, getYearlyStats } from "./timeStats"
+import type {
+  BlockTypeStat,
+  StatisticsData,
+} from "../types"
+import {
+  lsNotebooks,
+  readDir,
+} from "@/api"
+import {
+  BLOCK_TYPE_LABELS,
+  IMAGE_EXTENSIONS,
+  ZERO_STATISTICS,
+} from "../types/constants"
+import {
+  executeSql,
+  formatDateTime,
+} from "./executeSql"
+import {
+  getDailyStats,
+  getMonthlyStatsRange,
+  getWeeklyStats,
+  getYearlyStats,
+} from "./timeStats"
 
 async function getTotalTags(): Promise<number> {
   const sql = `
@@ -84,7 +102,11 @@ async function getWritingActivity(): Promise<{ activeDays: number, writingStreak
     WHERE type = 'd' AND updated >= '${startStr}' AND updated <= '${endStr}'
   `)
 
-  if (!rows || rows.length === 0) return { activeDays: 0, writingStreak: 0 }
+  if (!rows || rows.length === 0) { return {
+    activeDays: 0,
+    writingStreak: 0,
+  }
+  }
 
   const activeDateSet = new Set<string>()
   for (const row of rows) {
@@ -114,7 +136,10 @@ async function getWritingActivity(): Promise<{ activeDays: number, writingStreak
     }
   }
 
-  return { activeDays, writingStreak: streak }
+  return {
+    activeDays,
+    writingStreak: streak,
+  }
 }
 
 export async function getBlockTypeStats(): Promise<BlockTypeStat[]> {

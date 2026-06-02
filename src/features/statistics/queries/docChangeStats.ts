@@ -1,5 +1,8 @@
 import type { ChangedDoc } from "../types"
-import { isValidDateStr, padZero } from "../utils"
+import {
+  isValidDateStr,
+  padZero,
+} from "../utils"
 import { executeSql } from "./executeSql"
 
 export async function getDateChangedDocs(dateStr: string): Promise<{
@@ -8,7 +11,10 @@ export async function getDateChangedDocs(dateStr: string): Promise<{
 }> {
   if (!isValidDateStr(dateStr)) {
     console.warn("getDateChangedDocs: 无效的日期参数", dateStr)
-    return { newDocs: [], modifiedDocs: [] }
+    return {
+      newDocs: [],
+      modifiedDocs: [],
+    }
   }
 
   const newDocsSql = `
@@ -46,7 +52,10 @@ export async function getDateRangeChangeStats(startStr: string, endStr: string):
   Array<{ date: string, newCount: number, modifiedCount: number }>
 > {
   if (!isValidDateStr(startStr) || !isValidDateStr(endStr)) {
-    console.warn("getDateRangeChangeStats: 无效的日期参数", { startStr, endStr })
+    console.warn("getDateRangeChangeStats: 无效的日期参数", {
+      startStr,
+      endStr,
+    })
     return []
   }
 

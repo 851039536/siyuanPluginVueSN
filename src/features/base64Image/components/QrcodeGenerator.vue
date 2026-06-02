@@ -2,13 +2,14 @@
   <div class="qrcode-section">
     <div class="input-section">
       <h4>{{ inputTitle }}</h4>
-      <Textarea
-        :model-value="content"
-        class="input-textarea"
-        :placeholder="placeholder"
-        :rows="4"
-        @update:model-value="onContentChange"
-      />
+<Input
+  type="textarea"
+  :model-value="content"
+  class="input-textarea"
+  :placeholder="placeholder"
+  :rows="4"
+  @update:model-value="onContentChange"
+/>
       <div class="qrcode-settings">
         <div class="setting-group">
           <label>{{ sizeLabel }}: {{ size }}px</label>
@@ -89,7 +90,7 @@
 
 <script setup lang="ts">
 import Button from "@/components/Button.vue"
-import Textarea from "@/components/Textarea.vue"
+import Input from "@/components/Input.vue"
 
 interface Props {
   content: string

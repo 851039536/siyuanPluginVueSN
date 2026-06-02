@@ -3,16 +3,13 @@
     :class="sliderClasses"
     v-bind="containerAttrs"
   >
-    <label
-      v-if="label"
-      class="si-slider__label"
-    >
-      {{ label }}
-      <span
-        v-if="required"
-        class="si-slider__required"
-      >*</span>
-    </label>
+    <FormField
+      :label="label"
+      :required="required"
+      :hint="hint"
+      :error="error"
+      :size="size"
+    />
     <div class="si-slider__wrapper">
       <input
         ref="inputRef"
@@ -36,20 +33,6 @@
         {{ displayValue }}
       </div>
     </div>
-    <div
-      v-if="hint || error"
-      class="si-slider__hint"
-      :class="{ 'si-slider__hint--error': error }"
-    >
-      {{ error || hint }}
-    </div>
-    <div
-      v-if="showMinMax"
-      class="si-slider__min-max"
-    >
-      <span class="si-slider__min">{{ min }}</span>
-      <span class="si-slider__max">{{ max }}</span>
-    </div>
   </div>
 </template>
 
@@ -59,6 +42,7 @@ import {
   ref,
   useAttrs,
 } from "vue"
+import FormField from "@/components/FormField.vue"
 
 type SliderSize = "small" | "medium" | "large"
 
@@ -142,7 +126,6 @@ const sliderClasses = computed(() => [
   {
     "si-slider--disabled": props.disabled,
     "si-slider--readonly": props.readonly,
-    "si-slider--labeled": props.label,
     "si-slider--error": props.error,
   },
 ])
@@ -192,21 +175,6 @@ defineExpose({
   position: relative;
   font-family: $font-body;
   width: 100%;
-
-  &__label {
-    display: flex;
-    align-items: center;
-    margin-bottom: 6px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--b3-theme-on-background);
-    font-family: $font-heading;
-  }
-
-  &__required {
-    color: var(--b3-theme-primary, $brand-orange);
-    margin-left: 2px;
-  }
 
   &__wrapper {
     display: flex;
@@ -322,25 +290,6 @@ defineExpose({
     font-family: $font-heading;
   }
 
-  &__hint {
-    margin-top: 4px;
-    font-size: 12px;
-    color: var(--b3-theme-secondary, $brand-mid-gray);
-
-    &--error {
-      color: var(--b3-theme-destructive, $brand-destructive);
-    }
-  }
-
-  &__min-max {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 4px;
-    font-size: 11px;
-    color: var(--b3-theme-secondary, $brand-mid-gray);
-    font-family: $font-body;
-  }
-
   &--disabled {
     .si-slider__field {
       cursor: not-allowed;
@@ -381,17 +330,9 @@ defineExpose({
       }
     }
 
-    .si-slider__label {
-      font-size: 12px;
-    }
-
     .si-slider__value {
       font-size: 12px;
       min-width: 32px;
-    }
-
-    .si-slider__min-max {
-      font-size: 10px;
     }
   }
 
@@ -410,17 +351,9 @@ defineExpose({
       }
     }
 
-    .si-slider__label {
-      font-size: 13px;
-    }
-
     .si-slider__value {
       font-size: 14px;
       min-width: 40px;
-    }
-
-    .si-slider__min-max {
-      font-size: 11px;
     }
   }
 
@@ -439,22 +372,10 @@ defineExpose({
       }
     }
 
-    .si-slider__label {
-      font-size: 14px;
-    }
-
     .si-slider__value {
       font-size: 15px;
       min-width: 48px;
     }
-
-    .si-slider__min-max {
-      font-size: 12px;
-    }
-  }
-
-  &--labeled {
-    width: 100%;
   }
 }
 </style>

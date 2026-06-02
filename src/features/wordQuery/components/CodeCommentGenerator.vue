@@ -19,13 +19,14 @@
           />
           {{ i18n.enterCode || '输入代码' }}
         </div>
-        <Textarea
-          v-model="codeInput"
-          class="code-textarea"
-          :placeholder="i18n.codeInputPlaceholder || '粘贴需要添加注释的代码...'"
-          :rows="8"
-          @input="handleInput"
-        />
+<Input
+  type="textarea"
+  v-model="codeInput"
+  class="code-textarea"
+  :placeholder="i18n.codeInputPlaceholder || '粘贴需要添加注释的代码...'"
+  :rows="8"
+  @input="handleInput"
+/>
       </div>
 
       <div class="style-section">
@@ -137,7 +138,7 @@ import {
 } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import Textarea from "@/components/Textarea.vue"
+import Input from "@/components/Input.vue"
 import { getApiConfigFromPlugin } from "../utils/apiBase"
 import {
 

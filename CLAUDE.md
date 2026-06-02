@@ -167,7 +167,7 @@ type _AssertAllCovered = _AssertTrue<
 
 位置：`src/components/`（基于 shadcn-vue 组件系统）
 
-可用组件：`Avatar`, `Badge`, `Button`, `Card`, `Chart`, `IconWrapper`, `Input`, `Label`, `Select`, `Slider`, `Switch`, `Tag`, `Textarea`
+可用组件：`Avatar`, `Badge`, `Button`, `Card`, `Chart`, `FormField`, `IconWrapper`, `Input`, `Label`, `Loader`, `Select`, `Slider`, `Switch`, `Tag`
 
 大多数组件附带 `.md` 文档，使用前可参考。
 

@@ -19,7 +19,8 @@
           />
           {{ i18n.regexDescription || '正则描述' }}
         </div>
-        <Textarea
+        <Input
+          type="textarea"
           v-model="description"
           class="description-textarea"
           :placeholder="i18n.regexDescPlaceholder || '描述你想要的正则表达式，例如：匹配邮箱地址、匹配手机号码...'"
@@ -253,7 +254,6 @@ import {
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
-import Textarea from "@/components/Textarea.vue"
 import { getApiConfigFromPlugin } from "../utils/apiBase"
 import {
   generateRegex,

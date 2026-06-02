@@ -1,6 +1,7 @@
 <template>
   <button
     ref="buttonRef"
+    type="button"
     :class="buttonClasses"
     :disabled="disabled || loading"
     @click="handleClick"

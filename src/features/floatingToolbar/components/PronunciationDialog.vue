@@ -130,27 +130,9 @@
         <!-- 加载状态 -->
         <div
           v-if="isGenerating"
-          class="loading-state"
+          class="loading-wrapper"
         >
-          <div class="spinner-container">
-            <div class="spinner"></div>
-            <svg
-              class="spinner-icon"
-              viewBox="0 0 24 24"
-              width="32"
-              height="32"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
-            </svg>
-          </div>
-          <p class="loading-text">
-            正在生成谐音记忆...
-          </p>
+          <Loader />
         </div>
       </div>
 
@@ -252,6 +234,7 @@ import {
 import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
 import Label from "@/components/Label.vue"
+import Loader from "@/components/Loader.vue"
 import Select from "@/components/Select.vue"
 import { FlashcardStorage } from "@/features/flashcardReading/types/storage"
 import {
@@ -587,4 +570,9 @@ function closeDialog() {
 
 <style scoped lang="scss">
 @use "../styles/pronunciation.scss";
+
+.loading-wrapper {
+  position: relative;
+  height: 200px;
+}
 </style>

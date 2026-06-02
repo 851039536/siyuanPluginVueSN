@@ -158,43 +158,6 @@
   line-height: 1.5;
 }
 
-.loading-state {
-  @include ft.flex-column(16px);
-  @include ft.flex-center;
-  padding: 32px 20px;
-  text-align: center;
-  background: var(--b3-theme-surface);
-  border-radius: ft.$radius-md;
-
-  @media (max-width: ft.$breakpoint-sm) {
-    padding: 24px 16px;
-  }
-}
-
-.spinner-container {
-  position: relative;
-  width: 32px;
-  height: 32px;
-}
-
-.spinner {
-}
-
-.spinner-icon {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  color: var(--b3-theme-primary);
-}
-
-.loading-text {
-  font-size: 14px;
-  margin: 0;
-  color: var(--b3-theme-on-surface);
-  font-weight: 500;
-}
 
 // ========================================
 // 对话框底部

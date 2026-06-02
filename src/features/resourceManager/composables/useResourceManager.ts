@@ -78,14 +78,28 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
 
   const totalAssetCount = computed(() => {
     const list = activeTab.value === "fileAssets" ? fileAssets.value : imageAssets.value
-    if (!categoryFilter.value) return list.length
+    if (!categoryFilter.value) {
+      const categoryKeys = quickCategories.value.map(c => c.key)
+      return list.filter((item) => {
+        const lower = item.path.toLowerCase()
+        return !categoryKeys.some(key => lower.startsWith(`assets/${key.toLowerCase()}/`))
+      }).length
+    }
     const prefix = `assets/${categoryFilter.value}/`
     return list.filter((item) => item.path.toLowerCase().startsWith(prefix.toLowerCase())).length
   })
 
   const currentAssetList = computed(() => {
     const list = activeTab.value === "fileAssets" ? fileAssets.value : imageAssets.value
-    if (!categoryFilter.value) return list.slice(0, loadLimit.value)
+    if (!categoryFilter.value) {
+      const categoryKeys = quickCategories.value.map(c => c.key)
+      return list
+        .filter((item) => {
+          const lower = item.path.toLowerCase()
+          return !categoryKeys.some(key => lower.startsWith(`assets/${key.toLowerCase()}/`))
+        })
+        .slice(0, loadLimit.value)
+    }
     const prefix = `assets/${categoryFilter.value}/`
     return list
       .filter((item) => item.path.toLowerCase().startsWith(prefix.toLowerCase()))
@@ -287,7 +301,11 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
       path: newPath,
     }
 
-    if (categoryFilter.value && !newPath.startsWith(`assets/${categoryFilter.value}/`)) {
+    const shouldRemove = categoryFilter.value
+      ? !newPath.startsWith(`assets/${categoryFilter.value}/`)
+      : quickCategories.value.some(cat => newPath.startsWith(`assets/${cat.key}/`))
+
+    if (shouldRemove) {
       target.value = target.value.filter((item) => item.path !== oldPath)
     }
     else {

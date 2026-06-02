@@ -102,10 +102,6 @@ defineEmits<{
   font-size: 10px;
   color: var(--b3-theme-on-surface-variant);
   white-space: nowrap;
-
-  &::after {
-    content: attr(data-value);
-  }
 }
 
 .view-toggle {

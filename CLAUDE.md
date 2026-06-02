@@ -4,7 +4,7 @@
 
 ## 项目概述
 
-基于 Vite + Vue 3 + TS 的思源笔记插件合集，采用功能模块化架构。当前共计 **25 个已实现功能模块**，另有若干功能在 FEATURE_CONFIG 中有条目但尚未实现。
+基于 Vite + Vue 3 + TS 的思源笔记插件合集，采用功能模块化架构。
 
 ## 项目架构
 
@@ -61,12 +61,6 @@ src/
 ├── index.ts                     # 插件入口（同步读取开关 → 条件注册各功能模块）
 └── main.ts                      # Vue 初始化
 
-# 未实现（FEATURE_CONFIG 中已注册但无实现目录/注册函数）
-#   - qrCode / 二维码生成
-#   - pronunciation / 谐音翻译
-#   - skills / 技能库
-#   - translate / 英译中替换
-```
 
 ### 编译时验证链（二重校验）
 
@@ -162,7 +156,7 @@ type _AssertAllCovered = _AssertTrue<
 
 ## 品牌设计
 
-基于 shadcn-vue 设计系统，SCSS 变量在 `src/_variables.scss` 中定义。
+品牌设计，SCSS 变量在 `src/_variables.scss` 中定义。
 
 ```scss
 @use '@/index.scss' as *;

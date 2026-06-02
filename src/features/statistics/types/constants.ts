@@ -1,9 +1,21 @@
 import type { StatisticsData } from "./index"
 
 export const NOTEBOOK_COLORS = [
-  "#3b82f6", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6",
-  "#06b6d4", "#ec4899", "#f97316", "#84cc16", "#14b8a6",
-  "#6366f1", "#e11d48", "#0ea5e9", "#a855f7", "#10b981",
+  "#3b82f6",
+  "#22c55e",
+  "#f59e0b",
+  "#ef4444",
+  "#8b5cf6",
+  "#06b6d4",
+  "#ec4899",
+  "#f97316",
+  "#84cc16",
+  "#14b8a6",
+  "#6366f1",
+  "#e11d48",
+  "#0ea5e9",
+  "#a855f7",
+  "#10b981",
 ]
 
 export const BLOCK_TYPE_LABELS: Record<string, string> = {

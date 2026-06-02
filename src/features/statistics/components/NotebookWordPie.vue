@@ -52,7 +52,10 @@
 
 <script setup lang="ts">
 import type { NotebookWordStat } from "../types"
-import { computed, ref } from "vue"
+import {
+  computed,
+  ref,
+} from "vue"
 import { formatNumber } from "../utils"
 
 interface Props {
@@ -91,7 +94,11 @@ const pieArcs = computed<PieArc[]>(() => {
     const sweepAngle = (item.words / total) * 360
     const endAngle = startAngle + sweepAngle
     const d = describeArc(0, 0, RADIUS, startAngle, endAngle)
-    const result = { d, color: item.color, percentage: Math.round(percentage * 10) / 10 }
+    const result = {
+      d,
+      color: item.color,
+      percentage: Math.round(percentage * 10) / 10,
+    }
     startAngle = endAngle
     return result
   })

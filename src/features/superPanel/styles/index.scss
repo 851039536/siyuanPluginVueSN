@@ -226,6 +226,46 @@
   flex-shrink: 0;
 }
 
+// ==================== 状态统计栏 ====================
+
+.super-panel-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px $spacing-lg;
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  background: var(--b3-theme-surface);
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+
+.stats-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--b3-theme-on-surface-variant);
+  white-space: nowrap;
+
+  &.stats-stable { color: #22c55e; }
+  &.stats-needsFix { color: #d97706; }
+  &.stats-critical { color: #ef4444; }
+  &.stats-minor { color: #3b82f6; }
+}
+
+.stats-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.stats-count {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
 // ==================== 面板内容（列表式） ====================
 
 .super-panel-content {

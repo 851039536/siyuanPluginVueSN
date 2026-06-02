@@ -3,20 +3,36 @@
     <!-- 统计摘要 -->
     <div class="summary-cards">
       <div class="summary-card">
-        <div class="summary-value">{{ activeDays }}</div>
-        <div class="summary-label">{{ i18n.activeDaysLabel || '活跃天数' }}</div>
+        <div class="summary-value">
+          {{ activeDays }}
+        </div>
+        <div class="summary-label">
+          {{ i18n.activeDaysLabel || '活跃天数' }}
+        </div>
       </div>
       <div class="summary-card">
-        <div class="summary-value">{{ writingStreak }}</div>
-        <div class="summary-label">{{ i18n.currentStreak || '当前连续' }}</div>
+        <div class="summary-value">
+          {{ writingStreak }}
+        </div>
+        <div class="summary-label">
+          {{ i18n.currentStreak || '当前连续' }}
+        </div>
       </div>
       <div class="summary-card">
-        <div class="summary-value">{{ longestStreak }}</div>
-        <div class="summary-label">{{ i18n.longestStreak || '最长连续' }}</div>
+        <div class="summary-value">
+          {{ longestStreak }}
+        </div>
+        <div class="summary-label">
+          {{ i18n.longestStreak || '最长连续' }}
+        </div>
       </div>
       <div class="summary-card">
-        <div class="summary-value">{{ totalOperations }}</div>
-        <div class="summary-label">{{ i18n.totalOperations || '总操作次数' }}</div>
+        <div class="summary-value">
+          {{ totalOperations }}
+        </div>
+        <div class="summary-label">
+          {{ i18n.totalOperations || '总操作次数' }}
+        </div>
       </div>
     </div>
 
@@ -25,7 +41,8 @@
       <button
         v-for="opt in rangeOptions"
         :key="opt.value"
-        :class="['range-btn', { active: selectedRange === opt.value }]"
+        class="range-btn"
+        :class="[{ active: selectedRange === opt.value }]"
         @click="selectedRange = opt.value"
       >
         {{ opt.label }}
@@ -59,7 +76,8 @@
           <div
             v-for="(cell, idx) in calendarCells"
             :key="idx"
-            :class="['calendar-cell', cell.level]"
+            class="calendar-cell"
+            :class="[cell.level]"
             :title="cell.tooltip"
           ></div>
         </div>
@@ -79,7 +97,9 @@
 
     <!-- 星期分布 -->
     <div class="weekday-section">
-      <div class="section-title">{{ i18n.weekdayDistribution || '星期分布' }}</div>
+      <div class="section-title">
+        {{ i18n.weekdayDistribution || '星期分布' }}
+      </div>
       <div class="weekday-bars">
         <div
           v-for="(item, idx) in weekdayDistribution"
@@ -90,7 +110,7 @@
           <div class="bar-track">
             <div
               class="bar-fill"
-              :style="{ width: item.percent + '%' }"
+              :style="{ width: `${item.percent}%` }"
             ></div>
           </div>
           <span class="bar-value">{{ item.avg }}</span>
@@ -101,7 +121,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue"
+import {
+  computed,
+  ref,
+} from "vue"
 import { formatDate } from "../utils"
 
 interface HistoricalDataItem {
@@ -130,9 +153,18 @@ const props = withDefaults(defineProps<Props>(), {
 const LEVEL_THRESHOLDS = [0, 1, 6, 16, 31] as const
 
 const rangeOptions = computed(() => [
-  { value: 3, label: props.i18n.months3 || '3个月' },
-  { value: 6, label: props.i18n.months6 || '6个月' },
-  { value: 12, label: props.i18n.year1 || '1年' },
+  {
+    value: 3,
+    label: props.i18n.months3 || '3个月',
+  },
+  {
+    value: 6,
+    label: props.i18n.months6 || '6个月',
+  },
+  {
+    value: 12,
+    label: props.i18n.year1 || '1年',
+  },
 ])
 
 const selectedRange = ref(12)
@@ -188,7 +220,11 @@ const calendarCells = computed(() => {
   if (remainder > 0) {
     for (let i = 0; i < 7 - remainder; i++) {
       const dateStr = formatDate(cursor)
-      cells.push({ date: dateStr, level: 'level-empty', tooltip: '' })
+      cells.push({
+        date: dateStr,
+        level: 'level-empty',
+        tooltip: '',
+      })
       cursor.setDate(cursor.getDate() + 1)
     }
   }
@@ -212,7 +248,10 @@ const monthLabels = computed(() => {
     const d = new Date(cell.date)
     const m = d.getMonth()
     if (m !== lastMonth) {
-      labels.push({ text: monthNames[m], col: week + 1 })
+      labels.push({
+        text: monthNames[m],
+        col: week + 1,
+      })
       lastMonth = m
     }
   }
@@ -254,8 +293,8 @@ const weekdayDistribution = computed(() => {
     props.i18n.friday || '周五',
     props.i18n.saturday || '周六',
   ]
-  const totals = new Array(7).fill(0)
-  const counts = new Array(7).fill(0)
+  const totals = Array.from({ length: 7 }).fill(0)
+  const counts = Array.from({ length: 7 }).fill(0)
 
   for (const item of props.historicalData) {
     const d = new Date(item.date)

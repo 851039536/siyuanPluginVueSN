@@ -258,7 +258,10 @@ function sortByDate(items: RangeStatItem[]) {
 async function switchDocRange(range: DocRangeType) {
   docRange.value = range
   selectedChartDate.value = null
-  changedDocs.value = { newDocs: [], modifiedDocs: [] }
+  changedDocs.value = {
+    newDocs: [],
+    modifiedDocs: [],
+  }
 
   if (range === 'today') {
     loadDateChangedDocs(docChangeDate.value)
@@ -307,7 +310,10 @@ async function loadDateChangedDocs(dateStr: string) {
     changedDocs.value = await props.onGetDateChangedDocs(dateStr)
   } catch (error) {
     console.error("加载文档变化失败:", error)
-    changedDocs.value = { newDocs: [], modifiedDocs: [] }
+    changedDocs.value = {
+      newDocs: [],
+      modifiedDocs: [],
+    }
   } finally {
     changedDocsLoading.value = false
   }

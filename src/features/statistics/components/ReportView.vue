@@ -3,11 +3,13 @@
     <!-- Mode toggle -->
     <div class="report-mode-toggle">
       <button
-        :class="['mode-btn', { active: reportMode === 'single' }]"
+        class="mode-btn"
+        :class="[{ active: reportMode === 'single' }]"
         @click="reportMode = 'single'"
       >单期报告</button>
       <button
-        :class="['mode-btn', { active: reportMode === 'compare' }]"
+        class="mode-btn"
+        :class="[{ active: reportMode === 'compare' }]"
         @click="reportMode = 'compare'"
       >对比分析</button>
     </div>
@@ -20,159 +22,171 @@
 
     <!-- Single report view -->
     <template v-else>
-    <div class="report-controls">
-      <div class="report-selector">
-        <select
-          v-model="reportYear"
-          class="report-select"
-        >
-          <option
-            v-for="y in yearOptions"
-            :key="y"
-            :value="y"
+      <div class="report-controls">
+        <div class="report-selector">
+          <select
+            v-model="reportYear"
+            class="report-select"
           >
-            {{ y }}年
-          </option>
-        </select>
-        <select
-          v-model="reportMonth"
-          class="report-select"
-        >
-          <option :value="0">全年报告</option>
-          <option
-            v-for="m in 12"
-            :key="m"
-            :value="m"
+            <option
+              v-for="y in yearOptions"
+              :key="y"
+              :value="y"
+            >
+              {{ y }}年
+            </option>
+          </select>
+          <select
+            v-model="reportMonth"
+            class="report-select"
           >
-            {{ m }}月
-          </option>
-        </select>
-        <button
-          class="report-generate-btn"
-          @click="generate"
-        >
-          生成报告
-        </button>
-      </div>
-    </div>
-
-    <div
-      v-if="reports.length === 0 && !loading"
-      class="report-prompt"
-    >
-      选择年份/月份，点击"生成报告"
-    </div>
-
-    <div
-      v-if="loading"
-      class="report-loading"
-    >
-      生成中...
-    </div>
-
-    <div
-      v-for="(report, ri) in reports"
-      :key="ri"
-      class="report-card"
-    >
-      <div class="report-card-header">
-        <h3 class="report-title">📊 {{ report.periodLabel }} 统计报告</h3>
-        <button
-          class="report-close-btn"
-          @click="removeReport(ri)"
-        >
-          ✕
-        </button>
-      </div>
-
-      <div class="report-stats-grid">
-        <div class="report-stat">
-          <span class="stat-icon">✍️</span>
-          <span class="stat-value">{{ formatNumber(report.totalWords) }}</span>
-          <span class="stat-label">总字数</span>
-        </div>
-        <div class="report-stat">
-          <span class="stat-icon">📄</span>
-          <span class="stat-value">{{ formatNumber(report.totalNotesCreated) }}</span>
-          <span class="stat-label">新增笔记</span>
-        </div>
-        <div class="report-stat">
-          <span class="stat-icon">📅</span>
-          <span class="stat-value">{{ report.avgDailyWords.toLocaleString() }}</span>
-          <span class="stat-label">日均字数</span>
-        </div>
-        <div class="report-stat">
-          <span class="stat-icon">🔥</span>
-          <span class="stat-value">{{ report.activeDays }}</span>
-          <span class="stat-label">活跃天数</span>
-        </div>
-        <div class="report-stat">
-          <span class="stat-icon">💪</span>
-          <span class="stat-value">{{ report.longestStreak }}</span>
-          <span class="stat-label">最长连续</span>
-        </div>
-        <div class="report-stat">
-          <span class="stat-icon">🏆</span>
-          <span class="stat-value">{{ formatNumber(report.maxWordsDay.words) }}</span>
-          <span class="stat-label">最高单日</span>
-          <template v-if="report.maxWordsDay.wordCount">
-            <span
-              class="stat-sub"
-            >{{ report.maxWordsDay.date }}</span>
-          </template>
+            <option :value="0">
+              全年报告
+            </option>
+            <option
+              v-for="m in 12"
+              :key="m"
+              :value="m"
+            >
+              {{ m }}月
+            </option>
+          </select>
+          <button
+            class="report-generate-btn"
+            @click="generate"
+          >
+            生成报告
+          </button>
         </div>
       </div>
 
       <div
-        v-if="report.mostProductiveNotebook.name"
-        class="report-highlight"
+        v-if="reports.length === 0 && !loading"
+        class="report-prompt"
       >
-        📓 最高产笔记本：<strong>{{ report.mostProductiveNotebook.name }}</strong>
-        （{{ formatNumber(report.mostProductiveNotebook.words) }} 字）
+        选择年份/月份，点击"生成报告"
       </div>
 
       <div
-        v-if="report.maxWordsDay.date"
-        class="report-highlight"
+        v-if="loading"
+        class="report-loading"
       >
-        🚀 最高产日：<strong>{{ report.maxWordsDay.date }}</strong>
-        （{{ formatNumber(report.maxWordsDay.words) }} 字）
+        生成中...
       </div>
 
       <div
-        v-if="report.monthlyBreakdown.length > 0"
-        class="report-breakdown"
+        v-for="(report, ri) in reports"
+        :key="ri"
+        class="report-card"
       >
-        <h4 class="breakdown-title">各时段明细</h4>
-        <div class="breakdown-list">
-          <div
-            v-for="item in report.monthlyBreakdown"
-            :key="item.month"
-            class="breakdown-row"
+        <div class="report-card-header">
+          <h3 class="report-title">
+            📊 {{ report.periodLabel }} 统计报告
+          </h3>
+          <button
+            class="report-close-btn"
+            @click="removeReport(ri)"
           >
-            <span class="breakdown-month">{{ item.month }}</span>
-            <div class="breakdown-bars">
-              <div
-                class="breakdown-bar words"
-                :style="{ width: barPct(item.words, maxBreakWords) }"
-              >
-                {{ item.words > 0 ? formatNumber(item.words) + '字' : '' }}
+            ✕
+          </button>
+        </div>
+
+        <div class="report-stats-grid">
+          <div class="report-stat">
+            <span class="stat-icon">✍️</span>
+            <span class="stat-value">{{ formatNumber(report.totalWords) }}</span>
+            <span class="stat-label">总字数</span>
+          </div>
+          <div class="report-stat">
+            <span class="stat-icon">📄</span>
+            <span class="stat-value">{{ formatNumber(report.totalNotesCreated) }}</span>
+            <span class="stat-label">新增笔记</span>
+          </div>
+          <div class="report-stat">
+            <span class="stat-icon">📅</span>
+            <span class="stat-value">{{ report.avgDailyWords.toLocaleString() }}</span>
+            <span class="stat-label">日均字数</span>
+          </div>
+          <div class="report-stat">
+            <span class="stat-icon">🔥</span>
+            <span class="stat-value">{{ report.activeDays }}</span>
+            <span class="stat-label">活跃天数</span>
+          </div>
+          <div class="report-stat">
+            <span class="stat-icon">💪</span>
+            <span class="stat-value">{{ report.longestStreak }}</span>
+            <span class="stat-label">最长连续</span>
+          </div>
+          <div class="report-stat">
+            <span class="stat-icon">🏆</span>
+            <span class="stat-value">{{ formatNumber(report.maxWordsDay.words) }}</span>
+            <span class="stat-label">最高单日</span>
+            <template v-if="report.maxWordsDay.wordCount">
+              <span
+                class="stat-sub"
+              >{{ report.maxWordsDay.date }}</span>
+            </template>
+          </div>
+        </div>
+
+        <div
+          v-if="report.mostProductiveNotebook.name"
+          class="report-highlight"
+        >
+          📓 最高产笔记本：<strong>{{ report.mostProductiveNotebook.name }}</strong>
+          （{{ formatNumber(report.mostProductiveNotebook.words) }} 字）
+        </div>
+
+        <div
+          v-if="report.maxWordsDay.date"
+          class="report-highlight"
+        >
+          🚀 最高产日：<strong>{{ report.maxWordsDay.date }}</strong>
+          （{{ formatNumber(report.maxWordsDay.words) }} 字）
+        </div>
+
+        <div
+          v-if="report.monthlyBreakdown.length > 0"
+          class="report-breakdown"
+        >
+          <h4 class="breakdown-title">
+            各时段明细
+          </h4>
+          <div class="breakdown-list">
+            <div
+              v-for="item in report.monthlyBreakdown"
+              :key="item.month"
+              class="breakdown-row"
+            >
+              <span class="breakdown-month">{{ item.month }}</span>
+              <div class="breakdown-bars">
+                <div
+                  class="breakdown-bar words"
+                  :style="{ width: barPct(item.words, maxBreakWords) }"
+                >
+                  {{ item.words > 0 ? `${formatNumber(item.words)}字` : '' }}
+                </div>
               </div>
+              <span class="breakdown-created">{{ item.created > 0 ? `+${item.created}` : '' }}</span>
             </div>
-            <span class="breakdown-created">{{ item.created > 0 ? '+' + item.created : '' }}</span>
           </div>
         </div>
       </div>
-    </div>
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { ComparisonData, ReportData } from "../types"
-import { computed, ref } from "vue"
-import ComparisonView from "./ComparisonView.vue"
+import type {
+  ComparisonData,
+  ReportData,
+} from "../types"
+import {
+  computed,
+  ref,
+} from "vue"
 import { formatNumber } from "../utils"
+import ComparisonView from "./ComparisonView.vue"
 
 interface Props {
   onGetReportData?: (year?: number, month?: number) => Promise<ReportData>

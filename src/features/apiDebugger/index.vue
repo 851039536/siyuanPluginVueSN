@@ -240,7 +240,10 @@
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
 import type { ApiEndpointPreset } from "./types"
-import type { SelectGroupOption, SelectOption } from "@/components/Select.vue"
+import type {
+  SelectGroupOption,
+  SelectOption,
+} from "@/components/Select.vue"
 
 import { computed } from "vue"
 import Button from "@/components/Button.vue"
@@ -327,7 +330,7 @@ function handleEndpointChange(val: string | number | boolean | null) {
 }
 
 function handleMethodChange(val: string | number | boolean | null) {
-  const valid = methodOptions.find(o => o.value === val)
+  const valid = methodOptions.find((o) => o.value === val)
   if (valid) method.value = valid.value as typeof method.value
 }
 

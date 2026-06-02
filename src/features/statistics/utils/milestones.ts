@@ -15,8 +15,8 @@ export function milestoneTargetOf(type: string, n: number): number {
     case "backlinks": return 10 + g * 50 + r * 20
     case "assets": return 10 + g * 20 + r * 10
     case "images": return 10 + (n - 1) * 30
-    case "streak": return Math.round(3 * Math.pow(1.5, n - 1))
-    case "activeDays": return Math.round(10 * Math.pow(1.5, n - 1))
+    case "streak": return Math.round(3 * 1.5 ** (n - 1))
+    case "activeDays": return Math.round(10 * 1.5 ** (n - 1))
     default: return n * 10
   }
 }

@@ -52,6 +52,7 @@ export interface PluginSettings {
   enableThemeColor: boolean // 是否启用全局主题色功能
   enableBookmarkMarker: boolean // 是否启用手动书签标记功能
   enableApiDebugger: boolean // 是否启用API调试器功能
+  featureStatus: Record<string, string> // 功能状态标识: featureId -> 'stable' | 'needsFix' | 'critical' | 'minor'
   themeColorScheme: string // 主题色方案: 'orange' | 'github'
   videoCategories?: string[] // 视频分类列表
   compactMode: boolean // 是否启用全局紧洛模式
@@ -110,6 +111,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enableThemeColor: false,
   enableBookmarkMarker: true,
   enableApiDebugger: true,
+  featureStatus: {},
   themeColorScheme: "orange",
   videoCategories: ["默认分类", "教程", "演示", "其他"],
   compactMode: true,

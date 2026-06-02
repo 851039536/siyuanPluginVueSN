@@ -25,6 +25,9 @@ import SuperPanelPanel from "../index.vue"
 
 export type { FeatureAction }
 
+export const FEATURE_STATUSES = ["stable", "needsFix", "critical", "minor"] as const
+export type FeatureStatus = typeof FEATURE_STATUSES[number] | ""
+
 /**
  * 功能配置
  */
@@ -39,6 +42,8 @@ export interface Feature {
   desc: string
   /** 操作列表 */
   actions: FeatureAction[]
+  /** 状态标识 */
+  status: FeatureStatus
 }
 
 /**
@@ -180,6 +185,9 @@ export class SuperPanelManager {
       onToggleFeature: async (featureId: string, enabled: boolean) => {
         await this.handleToggleFeature(featureId, enabled)
       },
+      onStatusFeature: async (featureId: string, status: string) => {
+        await this.handleStatusFeature(featureId, status)
+      },
       onSelectFeature: async (featureId: string, value: string) => {
         await this.handleSelectFeature(featureId, value)
       },
@@ -298,6 +306,15 @@ export class SuperPanelManager {
     await this._updatePluginSettings({
       [settingKey]: enabled,
     } as Partial<PluginSettings>)
+  }
+
+  private async handleStatusFeature(featureId: string, featureStatus: string) {
+    const s = (this.plugin as any).settings || {}
+    const currentStatus = { ...(s.featureStatus || {}) }
+    currentStatus[featureId] = featureStatus
+    await this._updatePluginSettings({
+      featureStatus: currentStatus,
+    })
   }
 
   private async handleSelectFeature(featureId: string, value: string) {

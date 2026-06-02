@@ -78,9 +78,11 @@
           :show-toggle="canToggle(feature.id)"
           :selector-options="getSelectorOptions(feature.id)"
           :selected-option="getSelectedOption(feature.id)"
+          :status-labels="statusLabels"
           @action="emit('action', $event)"
           @toggle="handleToggle(feature.id, $event)"
           @select="handleSelect(feature.id, $event)"
+          @status-change="handleStatusChange(feature.id, $event)"
         />
       </TransitionGroup>
     </div>
@@ -89,7 +91,10 @@
 
 <script setup lang="ts">
 import type { SelectorOption } from "./components/FeatureCard.vue"
-import type { Feature } from "./types"
+import type {
+  Feature,
+  FeatureStatus,
+} from "./types"
 import type { IconKey } from "@/config/icons"
 import type { PluginSettings } from "@/config/settings"
 import type { FeatureMeta } from "@/features/config"
@@ -119,6 +124,7 @@ interface Emits {
   (e: "refresh"): void
   (e: "toggleFeature", featureId: string, enabled: boolean): void
   (e: "selectFeature", featureId: string, value: string): void
+  (e: "statusFeature", featureId: string, status: string): void
 }
 
 const props = defineProps<Props>()
@@ -150,6 +156,7 @@ const features = computed<Feature[]>(() =>
     title: (titleI18nKey ? resolveI18n(props.i18n, titleI18nKey) : props.i18n[id]) || defaultTitle,
     desc: (descI18nKey ? resolveI18n(props.i18n, descI18nKey) : props.i18n[`${id}Desc`]) || defaultDesc,
     actions: actions || [],
+    status: (props.settings.featureStatus?.[id] || "") as FeatureStatus,
   })),
 )
 
@@ -180,8 +187,19 @@ const getFeatureEnabled = (featureId: string): boolean => {
 
 const canToggle = (featureId: string): boolean => featureId !== "superPanel"
 
+const statusLabels = computed<Record<string, string>>(() => ({
+  stable: props.i18n.statusStable || "稳定",
+  needsFix: props.i18n.statusNeedsFix || "待修复",
+  critical: props.i18n.statusCritical || "严重",
+  minor: props.i18n.statusMinor || "轻微",
+}))
+
 const handleToggle = (featureId: string, enabled: boolean): void => {
   emit("toggleFeature", featureId, enabled)
+}
+
+const handleStatusChange = (featureId: string, status: string): void => {
+  emit("statusFeature", featureId, status)
 }
 
 const themeSchemeOptions = computed<SelectorOption[]>(() =>

@@ -27,6 +27,22 @@
     </div>
 
     <template v-if="hasAnalyzed && (!isCollapsed || !collapsible)">
+      <!-- 工具栏：隐藏零值 -->
+      <div class="stats-toolbar">
+        <button
+          class="toolbar-btn"
+          :class="{ active: hideZero }"
+          title="隐藏零值卡片"
+          @click="hideZero = !hideZero"
+        >
+          <Icon
+            :icon="hideZero ? 'mdi:eye-off-outline' : 'mdi:eye-outline'"
+            :size="13"
+          />
+          {{ hideZero ? '已隐藏零值' : '隐藏零值' }}
+        </button>
+      </div>
+
       <!-- 总览概览条 -->
       <div class="summary-bar">
         <div class="summary-item">
@@ -49,11 +65,22 @@
 
       <!-- 大小分布 -->
       <div class="stat-section">
-        <div class="section-header">
+        <div
+          class="section-header"
+          @click="toggleSection('size')"
+        >
+          <Icon
+            :icon="isSectionCollapsed('size') ? 'mdi:chevron-right' : 'mdi:chevron-down'"
+            class="section-toggle-icon"
+          />
           <Icon icon="mdi:harddisk" />大小分布
         </div>
-        <div class="section-cards">
+        <div
+          v-show="!isSectionCollapsed('size')"
+          class="section-cards"
+        >
           <div
+            v-if="!hideZero || !isZero(stats.zeroByteDocs)"
             class="stat-card"
             :class="{ active: activeFilter === '0B' }"
             @click="$emit('select-category', '0B')"
@@ -66,6 +93,7 @@
             ></span>
           </div>
           <div
+            v-if="!hideZero || !isZero(stats.smallDocs)"
             class="stat-card"
             :class="{ active: activeFilter === 'small' }"
             @click="$emit('select-category', 'small')"
@@ -78,6 +106,7 @@
             ></span>
           </div>
           <div
+            v-if="!hideZero || !isZero(stats.mediumDocs)"
             class="stat-card"
             :class="{ active: activeFilter === 'medium' }"
             @click="$emit('select-category', 'medium')"
@@ -90,6 +119,7 @@
             ></span>
           </div>
           <div
+            v-if="!hideZero || !isZero(stats.duplicateNameDocs)"
             class="stat-card"
             :class="{ active: activeFilter === 'duplicate' }"
             @click="$emit('select-category', 'duplicate')"
@@ -106,11 +136,22 @@
 
       <!-- 更新时间 -->
       <div class="stat-section">
-        <div class="section-header">
+        <div
+          class="section-header"
+          @click="toggleSection('time')"
+        >
+          <Icon
+            :icon="isSectionCollapsed('time') ? 'mdi:chevron-right' : 'mdi:chevron-down'"
+            class="section-toggle-icon"
+          />
           <Icon icon="mdi:clock-outline" />更新时间
         </div>
-        <div class="section-cards">
+        <div
+          v-show="!isSectionCollapsed('time')"
+          class="section-cards"
+        >
           <div
+            v-if="!hideZero || !isZero(stats.updatedIn7Days)"
             class="stat-card"
             :class="{ active: activeFilter === '7days' }"
             @click="$emit('select-category', '7days')"
@@ -119,6 +160,7 @@
             <span class="card-unit">7天内</span>
           </div>
           <div
+            v-if="!hideZero || !isZero(stats.updatedIn30Days)"
             class="stat-card"
             :class="{ active: activeFilter === '30days' }"
             @click="$emit('select-category', '30days')"
@@ -127,6 +169,7 @@
             <span class="card-unit">7~30天</span>
           </div>
           <div
+            v-if="!hideZero || !isZero(stats.updatedIn1To2Months)"
             class="stat-card"
             :class="{ active: activeFilter === '1to2month' }"
             @click="$emit('select-category', '1to2month')"
@@ -135,6 +178,7 @@
             <span class="card-unit">1~2月</span>
           </div>
           <div
+            v-if="!hideZero || !isZero(stats.updatedIn2To3Months)"
             class="stat-card"
             :class="{ active: activeFilter === '2to3month' }"
             @click="$emit('select-category', '2to3month')"
@@ -143,6 +187,7 @@
             <span class="card-unit">2~3月</span>
           </div>
           <div
+            v-if="!hideZero || !isZero(stats.updatedOverHalfYear)"
             class="stat-card"
             :class="{ active: activeFilter === 'halfYear' }"
             @click="$emit('select-category', 'halfYear')"
@@ -163,7 +208,14 @@
 
       <!-- 书签 -->
       <div class="stat-section">
-        <div class="section-header">
+        <div
+          class="section-header"
+          @click="toggleSection('bookmark')"
+        >
+          <Icon
+            :icon="isSectionCollapsed('bookmark') ? 'mdi:chevron-right' : 'mdi:chevron-down'"
+            class="section-toggle-icon"
+          />
           <Icon icon="mdi:bookmark-outline" />书签
           <button
             class="bookmark-detail-btn"
@@ -176,8 +228,12 @@
             />详情
           </button>
         </div>
-        <div class="section-cards">
+        <div
+          v-show="!isSectionCollapsed('bookmark')"
+          class="section-cards"
+        >
           <div
+            v-if="!hideZero || !isZero(stats.pendingPublishDocs)"
             class="stat-card"
             :class="{ active: activeFilter === 'pendingPublish' }"
             @click="$emit('select-category', 'pendingPublish')"
@@ -194,6 +250,7 @@
             </button>
           </div>
           <div
+            v-if="!hideZero || !isZero(stats.publishedDocs)"
             class="stat-card"
             :class="{ active: activeFilter === 'published' }"
             @click="$emit('select-category', 'published')"
@@ -202,6 +259,7 @@
             <span class="card-unit">已发布</span>
           </div>
           <div
+            v-if="!hideZero || !isZero(stats.unusedDocs)"
             class="stat-card"
             :class="{ active: activeFilter === 'unused' }"
             @click="$emit('select-category', 'unused')"
@@ -210,6 +268,7 @@
             <span class="card-unit">不使用</span>
           </div>
           <div
+            v-if="!hideZero || !isZero(stats.noneBookmarkDocs)"
             class="stat-card"
             :class="{ active: activeFilter === 'noneBookmark' }"
             @click="$emit('select-category', 'noneBookmark')"
@@ -218,6 +277,7 @@
             <span class="card-unit">无</span>
           </div>
           <div
+            v-if="!hideZero || !isZero(stats.bookmarkedDocs)"
             class="stat-card"
             :class="{ active: activeFilter === 'hasBookmark' }"
             @click="$emit('select-category', 'hasBookmark')"
@@ -226,6 +286,7 @@
             <span class="card-unit">有书签</span>
           </div>
           <div
+            v-if="!hideZero || !isZero(stats.noBookmarkDocs)"
             class="stat-card"
             :class="{ active: activeFilter === 'noBookmark' }"
             @click="$emit('select-category', 'noBookmark')"
@@ -238,11 +299,22 @@
 
       <!-- 发布状态 -->
       <div class="stat-section">
-        <div class="section-header">
+        <div
+          class="section-header"
+          @click="toggleSection('publish')"
+        >
+          <Icon
+            :icon="isSectionCollapsed('publish') ? 'mdi:chevron-right' : 'mdi:chevron-down'"
+            class="section-toggle-icon"
+          />
           <Icon icon="mdi:cloud-check-outline" />发布状态
         </div>
-        <div class="section-cards">
+        <div
+          v-show="!isSectionCollapsed('publish')"
+          class="section-cards"
+        >
           <div
+            v-if="!hideZero || !isZero(stats.fullPublishDocs)"
             class="stat-card"
             :class="{ active: activeFilter === 'fullPublish' }"
             @click="$emit('select-category', 'fullPublish')"
@@ -251,6 +323,7 @@
             <span class="card-unit">完整发布</span>
           </div>
           <div
+            v-if="!hideZero || !isZero(stats.partialPublishDocs)"
             class="stat-card"
             :class="{ active: activeFilter === 'partialPublish' }"
             @click="$emit('select-category', 'partialPublish')"
@@ -259,6 +332,7 @@
             <span class="card-unit">部分发布</span>
           </div>
           <div
+            v-if="!hideZero || !isZero(stats.noPublishDocs)"
             class="stat-card"
             :class="{ active: activeFilter === 'noPublish' }"
             @click="$emit('select-category', 'noPublish')"
@@ -271,11 +345,22 @@
 
       <!-- 结构分析 -->
       <div class="stat-section">
-        <div class="section-header">
+        <div
+          class="section-header"
+          @click="toggleSection('structure')"
+        >
+          <Icon
+            :icon="isSectionCollapsed('structure') ? 'mdi:chevron-right' : 'mdi:chevron-down'"
+            class="section-toggle-icon"
+          />
           <Icon icon="mdi:sitemap-outline" />结构
         </div>
-        <div class="section-cards">
+        <div
+          v-show="!isSectionCollapsed('structure')"
+          class="section-cards"
+        >
           <div
+            v-if="!hideZero || !isZero(stats.deepDocs)"
             class="stat-card"
             :class="{ active: activeFilter === 'deep' }"
             @click="$emit('select-category', 'deep')"
@@ -284,6 +369,7 @@
             <span class="card-unit">深层≥5</span>
           </div>
           <div
+            v-if="!hideZero || !isZero(stats.imageDocs)"
             class="stat-card"
             :class="{ active: activeFilter === 'hasImage' }"
             @click="$emit('select-category', 'hasImage')"
@@ -296,11 +382,22 @@
 
       <!-- 内容质量 -->
       <div class="stat-section">
-        <div class="section-header">
+        <div
+          class="section-header"
+          @click="toggleSection('quality')"
+        >
+          <Icon
+            :icon="isSectionCollapsed('quality') ? 'mdi:chevron-right' : 'mdi:chevron-down'"
+            class="section-toggle-icon"
+          />
           <Icon icon="mdi:star-outline" />内容质量
         </div>
-        <div class="section-cards">
+        <div
+          v-show="!isSectionCollapsed('quality')"
+          class="section-cards"
+        >
           <div
+            v-if="!hideZero || !isZero(stats.taggedDocs)"
             class="stat-card"
             :class="{ active: activeFilter === 'hasTag' }"
             @click="$emit('select-category', 'hasTag')"
@@ -309,6 +406,7 @@
             <span class="card-unit">有标签</span>
           </div>
           <div
+            v-if="!hideZero || !isZero(totalDocs - stats.taggedDocs)"
             class="stat-card"
             :class="{ active: activeFilter === 'noTag' }"
             @click="$emit('select-category', 'noTag')"
@@ -317,6 +415,7 @@
             <span class="card-unit">无标签</span>
           </div>
           <div
+            v-if="!hideZero || !isZero(stats.aliasedDocs)"
             class="stat-card"
             :class="{ active: activeFilter === 'hasAlias' }"
             @click="$emit('select-category', 'hasAlias')"
@@ -325,6 +424,7 @@
             <span class="card-unit">有别名</span>
           </div>
           <div
+            v-if="!hideZero || !isZero(stats.memoedDocs)"
             class="stat-card"
             :class="{ active: activeFilter === 'hasMemo' }"
             @click="$emit('select-category', 'hasMemo')"
@@ -337,11 +437,22 @@
 
       <!-- 引用拓扑 -->
       <div class="stat-section">
-        <div class="section-header">
+        <div
+          class="section-header"
+          @click="toggleSection('ref')"
+        >
+          <Icon
+            :icon="isSectionCollapsed('ref') ? 'mdi:chevron-right' : 'mdi:chevron-down'"
+            class="section-toggle-icon"
+          />
           <Icon icon="mdi:graph-outline" />引用拓扑
         </div>
-        <div class="section-cards">
+        <div
+          v-show="!isSectionCollapsed('ref')"
+          class="section-cards"
+        >
           <div
+            v-if="!hideZero || !isZero(stats.refDocs)"
             class="stat-card"
             :class="{ active: activeFilter === 'hasRef' }"
             @click="$emit('select-category', 'hasRef')"
@@ -350,6 +461,7 @@
             <span class="card-unit">含引用({{ stats.totalRefs }})</span>
           </div>
           <div
+            v-if="!hideZero || !isZero(stats.incomingRefDocs)"
             class="stat-card"
             :class="{ active: activeFilter === 'incomingRef' }"
             @click="$emit('select-category', 'incomingRef')"
@@ -358,6 +470,7 @@
             <span class="card-unit">被引用</span>
           </div>
           <div
+            v-if="!hideZero || !isZero(stats.orphanDocs)"
             class="stat-card"
             :class="{ active: activeFilter === 'orphanDoc' }"
             @click="$emit('select-category', 'orphanDoc')"
@@ -373,11 +486,21 @@
         v-if="depthStats.depthDistribution.length > 0"
         class="stat-section"
       >
-        <div class="section-header">
+        <div
+          class="section-header"
+          @click="toggleSection('depth')"
+        >
+          <Icon
+            :icon="isSectionCollapsed('depth') ? 'mdi:chevron-right' : 'mdi:chevron-down'"
+            class="section-toggle-icon"
+          />
           <Icon icon="mdi:chart-bar" />深度分布
           <span class="section-hint">均 {{ depthStats.avgDepth }} 层 · 最深 {{ depthStats.maxDepth }} 层</span>
         </div>
-        <div class="depth-chart-v2">
+        <div
+          v-show="!isSectionCollapsed('depth')"
+          class="depth-chart-v2"
+        >
           <div
             v-for="item in depthStats.depthDistribution"
             :key="item.depth"
@@ -487,6 +610,7 @@ import type {
 import { Icon } from "@iconify/vue"
 import {
   computed,
+  reactive,
   ref,
 } from "vue"
 
@@ -519,6 +643,30 @@ const isCollapsed = ref(false)
 
 function toggleCollapse() {
   isCollapsed.value = !isCollapsed.value
+}
+
+/** 隐藏零值卡片 */
+const hideZero = ref(false)
+
+/** 分区折叠状态 */
+const collapsedSections = reactive(new Set<string>())
+
+function toggleSection(key: string) {
+  if (collapsedSections.has(key)) {
+    collapsedSections.delete(key)
+  }
+  else {
+    collapsedSections.add(key)
+  }
+}
+
+function isSectionCollapsed(key: string): boolean {
+  return collapsedSections.has(key)
+}
+
+/** 判断数值是否为零（用于隐藏零值） */
+function isZero(val: number): boolean {
+  return val === 0
 }
 
 function closeBookmarkDetail() {
@@ -644,6 +792,38 @@ function getBarPercent(count: number): string {
   &.pending .summary-value { color: #f59e0b; }
 }
 
+// ============ 工具栏 ============
+.stats-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+
+  .toolbar-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 8px;
+    border: 1px solid var(--b3-border-color);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--b3-theme-on-surface-variant);
+    font-size: 11px;
+    cursor: pointer;
+    white-space: nowrap;
+
+    &:hover {
+      background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
+    }
+
+    &.active {
+      border-color: var(--b3-theme-primary);
+      color: var(--b3-theme-primary);
+      background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
+    }
+  }
+}
+
 // ============ 分区 ============
 .stat-section {
   padding: 8px 0;
@@ -662,6 +842,19 @@ function getBarPercent(count: number): string {
   font-weight: 600;
   color: var(--b3-theme-on-background);
   margin-bottom: 6px;
+  cursor: pointer;
+  user-select: none;
+
+  &:hover {
+    color: var(--b3-theme-primary);
+  }
+
+  .section-toggle-icon {
+    font-size: 14px;
+    color: var(--b3-theme-on-surface-variant);
+    flex-shrink: 0;
+    transition: transform 0.15s ease;
+  }
 
   .section-hint {
     font-weight: 400;

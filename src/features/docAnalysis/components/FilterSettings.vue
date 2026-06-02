@@ -8,6 +8,7 @@
         class="filter-input title-input"
         placeholder="标题搜索"
         @input="handleDebouncedInput"
+        @keyup.enter="$emit('query')"
       />
       <input
         v-model="options.contentKeyword"
@@ -15,7 +16,19 @@
         class="filter-input content-input"
         placeholder="全文搜索"
         @input="handleDebouncedInput"
+        @keyup.enter="$emit('query')"
       />
+      <button
+        v-if="hasAnyFilter"
+        class="clear-btn"
+        title="清空所有过滤条件"
+        @click="handleClearAll"
+      >
+        <Icon
+          icon="mdi:filter-remove-outline"
+          :size="14"
+        />
+      </button>
       <button
         class="query-btn"
         :disabled="isQuerying"
@@ -38,6 +51,7 @@
           min="0"
           placeholder="字数"
           @change="handleChange"
+          @keyup.enter="$emit('query')"
         />
         <span class="filter-separator">~</span>
         <input
@@ -47,6 +61,7 @@
           min="0"
           placeholder="上限"
           @change="handleChange"
+          @keyup.enter="$emit('query')"
         />
       </div>
       <select
@@ -71,22 +86,21 @@
         class="filter-input bookmark-input"
         placeholder="书签"
         @input="handleDebouncedInput"
+        @keyup.enter="$emit('query')"
       />
-      <div class="filter-group">
-        <input
+      <div class="filter-group date-group">
+        <DateInput
           v-model="options.updatedAfter"
-          type="date"
-          class="filter-input date-input"
-          title="更新起始日期"
-          @change="handleChange"
+          placeholder="起始日期"
+          class="date-picker"
+          @update:model-value="handleChange"
         />
         <span class="filter-separator">~</span>
-        <input
+        <DateInput
           v-model="options.updatedBefore"
-          type="date"
-          class="filter-input date-input"
-          title="更新截止日期"
-          @change="handleChange"
+          placeholder="截止日期"
+          class="date-picker"
+          @update:model-value="handleChange"
         />
       </div>
     </div>
@@ -97,6 +111,8 @@
 import type { NotebookInfo } from "../composables/useDocAnalysis"
 import type { FilterOptions } from "../types/index"
 import { Icon } from "@iconify/vue"
+import { computed } from "vue"
+import DateInput from "./DateInput.vue"
 
 interface Props {
   options: FilterOptions
@@ -109,9 +125,25 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   (e: "query"): void
   (e: "update:options", options: FilterOptions): void
+  (e: "reset"): void
 }>()
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
+
+/** 是否有任何非空过滤条件 */
+const hasAnyFilter = computed(() => {
+  const o = props.options
+  return !!(
+    o.titleKeyword
+    || o.contentKeyword
+    || o.wordCountMin
+    || o.wordCountMax
+    || o.notebookId
+    || o.bookmarkName
+    || o.updatedAfter
+    || o.updatedBefore
+  )
+})
 
 function handleChange() {
   emit("update:options", { ...props.options })
@@ -124,6 +156,11 @@ function handleDebouncedInput() {
   debounceTimer = setTimeout(() => {
     emit("query")
   }, 500)
+}
+
+/** 一键清空所有过滤条件 */
+function handleClearAll() {
+  emit("reset")
 }
 </script>
 
@@ -185,15 +222,13 @@ function handleDebouncedInput() {
     width: 54px;
   }
 
-  .date-input {
-    width: 94px;
-    font-size: 11px;
-    padding: 3px 4px;
+  .date-group {
+    gap: 4px;
+  }
 
-    &::-webkit-calendar-picker-indicator {
-      filter: var(--b3-theme-on-surface-variant);
-      cursor: pointer;
-    }
+  .date-picker {
+    flex: 1;
+    min-width: 0;
   }
 
   .filter-select {
@@ -221,6 +256,25 @@ function handleDebouncedInput() {
     font-size: 12px;
     color: var(--b3-theme-on-surface-variant);
     flex-shrink: 0;
+  }
+
+  .clear-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--b3-theme-on-surface-variant);
+    cursor: pointer;
+    flex-shrink: 0;
+
+    &:hover {
+      color: var(--b3-theme-error, #ef4444);
+      background: rgba(239, 68, 68, 0.08);
+    }
   }
 
   .query-btn {

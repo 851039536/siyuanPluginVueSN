@@ -39,6 +39,7 @@
       :is-querying="queryState.status === 'loading'"
       @query="handleQuery"
       @update:options="handleOptionsUpdate"
+      @reset="handleReset"
     />
 
     <!-- 统计面板 -->
@@ -550,6 +551,15 @@ function clearStatsFilter() {
 /** 更新过滤选项 */
 function handleOptionsUpdate(newOptions: Partial<FilterOptions>) {
   Object.assign(filterOptions, newOptions)
+}
+
+/** 一键清空所有过滤条件 */
+function handleReset() {
+  Object.assign(filterOptions, DEFAULT_FILTER_OPTIONS)
+  statsFilter.value = ""
+  clearResults()
+  queryState.status = "idle"
+  queryState.hasQueried = false
 }
 
 /** 排序字段变更 */

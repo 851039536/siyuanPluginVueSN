@@ -681,7 +681,7 @@ async function loadAllAssets(isImage: boolean) {
   const target = isImage ? imageAssets : fileAssets
 
   try {
-    const referenced = await sql("SELECT DISTINCT path FROM assets WHERE path LIKE 'assets/%'")
+    const referenced = await sql("SELECT DISTINCT path FROM assets WHERE path LIKE 'assets/%' LIMIT 10000")
     const refPaths = (referenced || [])
       .map((r: { path: string }) => r.path)
       .filter((p: unknown): p is string => typeof p === "string")
@@ -913,7 +913,7 @@ async function handleMoveAsset(oldPath: string) {
     // 3. 更新所有文档引用
     const escapedOldPath = escapeSqlLike(oldPath)
     const blocks = await sql(
-      `SELECT id, markdown FROM blocks WHERE markdown LIKE '%${escapedOldPath}%'`,
+      `SELECT id, markdown FROM blocks WHERE markdown LIKE '%${escapedOldPath}%' LIMIT 1000`,
     ) as { id: string, markdown: string }[]
 
     let updatedCount = 0

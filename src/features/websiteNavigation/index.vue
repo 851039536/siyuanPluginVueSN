@@ -3,7 +3,7 @@
     <div class="panel-header">
       <div class="header-title">
         <IconWrapper
-          name="link"
+          name="browser"
           :size="20"
         />
         <h2>{{ i18n.panelTitle || '网站导航' }}</h2>
@@ -73,7 +73,7 @@
           <div class="entry-info">
             <div class="entry-name-row">
               <IconWrapper
-                name="link"
+                name="browser"
                 :size="16"
                 class="entry-icon"
               />
@@ -93,7 +93,7 @@
               @click="openUrl(entry.url)"
             >
               <IconWrapper
-                name="link"
+                name="openInNew"
                 :size="12"
               />
               <span class="url-text">{{ entry.url }}</span>
@@ -107,7 +107,7 @@
           </div>
           <div class="entry-actions">
             <Button
-              icon="copy"
+              icon="contentCopy"
               variant="ghost"
               size="small"
               :title="i18n.copyUrl || '复制网址'"
@@ -136,7 +136,7 @@
         class="empty-state"
       >
         <IconWrapper
-          name="link"
+          name="browser"
           :size="48"
         />
         <p>{{ searchQuery ? '未找到匹配的网站' : i18n.noWebsites || '暂无网站，点击添加' }}</p>

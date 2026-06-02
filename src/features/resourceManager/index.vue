@@ -301,33 +301,10 @@
 
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
-import type {
-  ImageAssetInfo,
-  ResourceManagerI18n,
-} from "./types"
-import {
-  showMessage,
-} from "siyuan"
-import {
-  computed,
-  onMounted,
-  onUnmounted,
-  ref,
-  watch,
-} from "vue"
-import {
-  fullReindexAssetContent,
-  getMissingAssets,
-  getUnusedAssets,
-  putFile,
-  removeUnusedAsset,
-  removeUnusedAssets,
-  renameFile,
-  sql,
-  updateBlock,
-} from "@/api"
+import type { ResourceManagerI18n } from "./types"
+import { computed } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { PluginStorage } from "@/utils/pluginStorage"
+import { useResourceManager } from "./composables/useResourceManager"
 
 interface Props {
   i18n: ResourceManagerI18n
@@ -336,54 +313,33 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const isMounted = ref(false)
-const activeTab = ref("imageAssets")
-const loading = ref(false)
-const rebuildingIndex = ref(false)
-const imageAssets = ref<ImageAssetInfo[]>([])
-const fileAssets = ref<ImageAssetInfo[]>([])
-const missingAssets = ref<string[]>([])
-const unusedAssets = ref<string[]>([])
+const {
+  activeTab,
+  loading,
+  rebuildingIndex,
+  missingAssets,
+  unusedAssets,
+  categoryFilter,
+  loadLimit,
+  movingAsset,
+  moveNewPath,
+  customCategory,
+  rebuildResult,
+  quickCategories,
+  currentAssetList,
+  refresh,
+  copyPathToClipboard,
+  handleDeleteUnused,
+  handleDeleteAllUnused,
+  startMoveAsset,
+  cancelMove,
+  applyCategory,
+  applyCustomCategory,
+  handleMoveAsset,
+  handleRebuildIndex,
+} = useResourceManager(props.plugin, props.i18n)
 
-const categoryFilter = ref("")
-const loadLimit = ref(30)
-
-// 移动资源
-const movingAsset = ref<string | null>(null)
-const moveNewPath = ref("")
-const customCategory = ref("")
-const customCategories = ref<string[]>([])
-const BUILT_IN_CATEGORY_KEYS = new Set(["images", "net", "tool", "other"])
-
-const quickCategories = computed(() => {
-  const builtIn = [
-    {
-      key: "images",
-      label: props.i18n.categoryImages || "图片",
-    },
-    {
-      key: "net",
-      label: props.i18n.categoryNet || "NET",
-    },
-    {
-      key: "tool",
-      label: props.i18n.categoryTool || "tool",
-    },
-    {
-      key: "other",
-      label: props.i18n.categoryOther || "其他",
-    },
-  ]
-  const custom = customCategories.value.map((cat) => ({
-    key: cat,
-    label: cat,
-  }))
-  return [...builtIn, ...custom]
-})
-
-// 从 protyle 事件中缓存当前文档 ID
-
-const tabs = [
+const tabs = computed(() => [
   {
     key: "imageAssets",
     label: props.i18n.imageAssets || "图片资源",
@@ -404,350 +360,7 @@ const tabs = [
     key: "rebuildIndex",
     label: props.i18n.rebuildIndex || "重建索引",
   },
-]
-
-// 重建索引
-const rebuildResult = ref("")
-
-onMounted(async () => {
-  isMounted.value = true
-
-  // 加载持久化的自定义分类
-  try {
-    const storage = new PluginStorage(props.plugin)
-    const saved = await storage.load<string[]>("resourceManager-customCategories")
-    if (saved) customCategories.value = saved
-  }
-  catch { /* ignore */ }
-})
-
-onUnmounted(() => {
-  isMounted.value = false
-})
-
-// 切换到数据页签时自动加载
-watch(activeTab, () => {
-  categoryFilter.value = ""
-  refresh()
-}, { immediate: true })
-
-function showMsg(msg: string, timeout = 3000) {
-  try {
-    showMessage(msg, timeout, "info")
-  }
-  catch { /* ignore */ }
-}
-
-function escapeSqlLike(str: string): string {
-  return str.replace(/'/g, "''")
-}
-
-async function copyPathToClipboard(path: string) {
-  try {
-    await navigator.clipboard.writeText(path)
-    showMsg(props.i18n.pathCopied)
-  }
-  catch {
-    console.warn("复制到剪贴板失败:", path)
-    // 兜底：使用 textarea 方式复制
-    try {
-      const ta = document.createElement("textarea")
-      ta.value = path
-      ta.style.position = "fixed"
-      ta.style.opacity = "0"
-      document.body.appendChild(ta)
-      ta.select()
-      document.execCommand("copy")
-      document.body.removeChild(ta)
-      showMsg(props.i18n.pathCopied)
-    } catch {
-      showMsg("复制失败，请手动复制")
-    }
-  }
-}
-
-async function refresh() {
-  loading.value = true
-  try {
-    if (activeTab.value === "imageAssets" || activeTab.value === "fileAssets") {
-      await loadCurrentTabAssets()
-    }
-    else if (activeTab.value === "missingAssets") {
-      await loadMissingAssets()
-    }
-    else if (activeTab.value === "unusedAssets") {
-      await loadUnusedAssets()
-    }
-  }
-  finally {
-    if (isMounted.value) loading.value = false
-  }
-}
-
-/** 图片扩展名 */
-const IMAGE_EXT = /\.(png|jpg|jpeg|gif|svg|webp|bmp|ico|tiff|avif)$/i
-
-/** 路径前缀匹配（大小写不敏感） */
-function pathStartsWithPrefix(path: string, prefix: string): boolean {
-  return path.toLowerCase().startsWith(prefix.toLowerCase())
-}
-
-/** 当前 tab 对应的资源列表（按分类过滤 + 数量限制） */
-const currentAssetList = computed(() => {
-  const list = activeTab.value === "fileAssets" ? fileAssets.value : imageAssets.value
-  if (!categoryFilter.value) return list.slice(0, loadLimit.value)
-  const prefix = `assets/${categoryFilter.value}/`
-  return list.filter((item) => pathStartsWithPrefix(item.path, prefix)).slice(0, loadLimit.value)
-})
-
-/** 加载当前 tab 对应的资源 */
-async function loadCurrentTabAssets() {
-  const isImage = activeTab.value === "imageAssets"
-  await loadAllAssets(isImage)
-}
-
-/**
- * 将原始路径列表转换为资源列表，按扩展名过滤
- */
-function buildAssetList(paths: string[], isImage: boolean): ImageAssetInfo[] {
-  const extFilter = isImage
-    ? (p: string) => IMAGE_EXT.test(p)
-    : (p: string) => !IMAGE_EXT.test(p)
-  return paths.filter(extFilter).map((path) => ({ path }))
-}
-
-/**
- * 加载全部资源（图片或文件）
- */
-async function loadAllAssets(isImage: boolean) {
-  const target = isImage ? imageAssets : fileAssets
-
-  try {
-    const referenced = await sql("SELECT DISTINCT path FROM assets WHERE path LIKE 'assets/%'")
-    const refPaths = (referenced || [])
-      .map((r: { path: string }) => r.path)
-      .filter((p: unknown): p is string => typeof p === "string")
-
-    const unused = await getUnusedAssets()
-    const unusedPaths = (unused || [])
-      .filter((p: unknown): p is string => typeof p === "string")
-
-    const allPaths = [...new Set([...refPaths, ...unusedPaths])].sort()
-    target.value = buildAssetList(allPaths, isImage)
-  }
-  catch (e: unknown) {
-    console.error(`加载全部${isImage ? "图片" : "文件"}资源失败:`, e)
-    showMsg(props.i18n.loadFailed || "加载失败")
-  }
-}
-
-async function loadMissingAssets() {
-  try {
-    const result = await getMissingAssets()
-    if (isMounted.value) missingAssets.value = result || []
-  }
-  catch (e: unknown) {
-    console.error("加载丢失资源失败:", e)
-    showMsg(props.i18n.loadFailed || "加载失败")
-  }
-}
-
-async function loadUnusedAssets() {
-  try {
-    const result = await getUnusedAssets()
-    if (isMounted.value) unusedAssets.value = result || []
-  }
-  catch (e: unknown) {
-    console.error("加载未使用资源失败:", e)
-    showMsg(props.i18n.loadFailed || "加载失败")
-  }
-}
-
-async function handleDeleteUnused(path: string) {
-  if (!confirm(`${props.i18n.deleteConfirm} ${path}?`)) return
-  try {
-    await removeUnusedAsset(path)
-    if (!isMounted.value) return
-    showMsg(props.i18n.deleteSuccess)
-    await loadUnusedAssets()
-  }
-  catch {
-    if (isMounted.value) showMsg(props.i18n.deleteFailed)
-  }
-}
-
-async function handleDeleteAllUnused() {
-  if (!confirm(`${props.i18n.deleteConfirm}?`)) return
-  try {
-    await removeUnusedAssets()
-    if (!isMounted.value) return
-    showMsg(props.i18n.deleteSuccess)
-    await loadUnusedAssets()
-  }
-  catch {
-    if (isMounted.value) showMsg(props.i18n.deleteFailed)
-  }
-}
-
-/**
- * 开始移动资源：显示移动表单
- */
-function startMoveAsset(path: string) {
-  movingAsset.value = path
-  moveNewPath.value = path
-}
-
-/**
- * 取消移动
- */
-function cancelMove() {
-  movingAsset.value = null
-  moveNewPath.value = ""
-  customCategory.value = ""
-}
-
-/**
- * 快速分类：将资源移动到 assets/分类名/ 下
- */
-function applyCategory(currentPath: string, category: string) {
-  const fileName = currentPath.split("/").pop() || currentPath
-  moveNewPath.value = `assets/${category}/${fileName}`
-}
-
-/** 应用自定义分类，自动持久化新分类 */
-async function applyCustomCategory(currentPath: string) {
-  const cat = customCategory.value.trim()
-  if (!cat) return
-  applyCategory(currentPath, cat)
-
-  if (!BUILT_IN_CATEGORY_KEYS.has(cat) && !customCategories.value.includes(cat)) {
-    customCategories.value = [...customCategories.value, cat]
-    const storage = new PluginStorage(props.plugin)
-    await storage.save("resourceManager-customCategories", customCategories.value)
-  }
-  customCategory.value = ""
-}
-
-/**
- * 定位到图片所在的文档
- */
-
-/**
- * 移动成功后原地更新资源列表，避免全量刷新重新扫描
- */
-function updateAssetItemAfterMove(oldPath: string, newPath: string) {
-  const target = activeTab.value === "fileAssets" ? fileAssets : imageAssets
-  const idx = target.value.findIndex((item) => item.path === oldPath)
-  if (idx === -1) return
-
-  const moved = target.value[idx]
-  const updated: ImageAssetInfo = {
-    ...moved,
-    path: newPath,
-  }
-
-  // 新路径不在当前分类筛选范围内则移除，否则原地替换
-  if (categoryFilter.value && !newPath.startsWith(`assets/${categoryFilter.value}/`)) {
-    target.value = target.value.filter((item) => item.path !== oldPath)
-  }
-  else {
-    const next = [...target.value]
-    next.splice(idx, 1, updated)
-    next.sort((a, b) => a.path.localeCompare(b.path))
-    target.value = next
-  }
-}
-
-/**
- * 确认移动资源
- * renameAsset 不做物理移动也不更新文档内容，因此需要：
- * 1. 确保目标子目录存在（如 assets/csharp/）
- * 2. renameFile 物理移动文件（路径格式 /data/assets/...）
- * 3. 手动更新所有文档引用（SQL 查询 + updateBlock）
- * 4. 重建资产索引
- */
-async function handleMoveAsset(oldPath: string) {
-  const newPath = moveNewPath.value.trim()
-  if (!newPath || newPath === oldPath) {
-    cancelMove()
-    return
-  }
-  try {
-    // 1. 确保目标子目录存在
-    const dirPart = newPath.substring(0, newPath.lastIndexOf("/"))
-    if (dirPart && dirPart !== "assets") {
-      try {
-        await putFile(`/data/${dirPart}`, true, new File([], ""))
-      }
-      catch { /* 目录可能已存在，忽略 */ }
-    }
-
-    // 2. 物理移动文件（路径需要 /data/ 前缀）
-    await renameFile(`/data/${oldPath}`, `/data/${newPath}`)
-
-    // 3. 更新所有文档引用
-    const escapedOldPath = escapeSqlLike(oldPath)
-    const blocks = await sql(
-      `SELECT id, markdown FROM blocks WHERE markdown LIKE '%${escapedOldPath}%' LIMIT 1000`,
-    ) as { id: string, markdown: string }[]
-
-    let updatedCount = 0
-    for (const block of blocks) {
-      try {
-        const newMarkdown = block.markdown.split(oldPath).join(newPath)
-        if (newMarkdown !== block.markdown) {
-          await updateBlock("markdown", newMarkdown, block.id)
-          updatedCount++
-        }
-      }
-      catch { /* skip single block failure */ }
-    }
-
-    // 4. 重建资产索引，让资产数据库同步
-    try {
-      await fullReindexAssetContent()
-    }
-    catch { /* ignore */ }
-
-    if (!isMounted.value) return
-    showMsg(
-      updatedCount > 0
-        ? `${props.i18n.moveSuccess}（已更新 ${updatedCount} 处引用，新路径: ${newPath}）`
-        : `${props.i18n.moveSuccess}（新路径: ${newPath}）`,
-    )
-    updateAssetItemAfterMove(oldPath, newPath)
-    cancelMove()
-  }
-  catch (e: unknown) {
-    if (isMounted.value) {
-      const msg = e instanceof Error ? e.message : String(e)
-      showMsg(`${props.i18n.moveFailed}: ${msg}`)
-    }
-  }
-}
-
-async function handleRebuildIndex() {
-  if (rebuildingIndex.value) return
-  rebuildingIndex.value = true
-  rebuildResult.value = props.i18n.rebuildIndexStart
-  try {
-    await fullReindexAssetContent()
-    if (isMounted.value) {
-      rebuildResult.value = props.i18n.rebuildIndexSuccess
-      showMsg(props.i18n.rebuildIndexSuccess)
-    }
-  }
-  catch (e: unknown) {
-    if (isMounted.value) {
-      const msg = e instanceof Error ? e.message : String(e)
-      rebuildResult.value = `${props.i18n.rebuildIndexFailed}: ${msg}`
-      showMsg(props.i18n.rebuildIndexFailed)
-    }
-  }
-  finally {
-    if (isMounted.value) rebuildingIndex.value = false
-  }
-}
+])
 </script>
 
 <style scoped lang="scss">

@@ -1302,7 +1302,9 @@
     "noReferencingDocs": "No referencing docs found",
     "customCategoryPlaceholder": "Custom",
     "apply": "Apply",
-    "loadLimit": "Load Limit"
+    "loadLimit": "Load Limit",
+    "copyFailed": "Copy failed",
+    "updatedRefs": "Updated {count} reference(s)"
   },
   "apiDebugger": {
     "panelTitle": "API Debugger",

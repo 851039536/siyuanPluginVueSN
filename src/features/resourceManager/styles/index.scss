@@ -176,7 +176,7 @@
 
     &__docs {
       margin-top: 3px;
-      font-size: 11px;
+      font-size: $font-size-xs;
       color: var(--b3-theme-on-surface-light);
       @include text-ellipsis;
 
@@ -196,7 +196,7 @@
 
     &__meta {
       color: var(--b3-theme-on-surface-light);
-      font-size: 11px;
+      font-size: $font-size-xs;
       margin-top: 1px;
       @include text-ellipsis;
     }
@@ -238,7 +238,7 @@
 
     .rm-btn.active {
       background: var(--b3-theme-primary);
-      color: #fff;
+      color: var(--b3-theme-on-primary);
       border-color: var(--b3-theme-primary);
     }
 
@@ -247,7 +247,7 @@
       gap: 6px;
 
       .rm-filter-bar__label {
-        font-size: 11px;
+        font-size: $font-size-xs;
         color: var(--b3-theme-on-surface-light);
         white-space: nowrap;
       }
@@ -263,7 +263,7 @@
       margin-top: -4px;
 
       .rm-btn {
-        font-size: 11px;
+        font-size: $font-size-xs;
         padding: 1px 6px;
         opacity: 0.8;
       }
@@ -276,7 +276,7 @@
 
   // ── 资源统计 ──
   .rm-asset-count {
-    font-size: 11px;
+    font-size: $font-size-xs;
     color: var(--b3-theme-on-surface-light);
     margin-bottom: $spacing-2;
     padding: 0 2px;
@@ -308,7 +308,7 @@
     &__path {
       color: var(--b3-theme-on-surface);
       word-break: break-all;
-      font-size: 11px;
+      font-size: $font-size-xs;
     }
 
     &__input {
@@ -363,7 +363,7 @@
     // 主操作
     &.primary {
       background: $brand-primary;
-      color: #fff;
+      color: var(--b3-theme-on-primary);
       border-color: $brand-primary;
       padding: 6px 14px;
 
@@ -375,7 +375,7 @@
     // 危险操作
     &.danger {
       background: $brand-destructive;
-      color: #fff;
+      color: var(--b3-theme-on-primary);
       border-color: $brand-destructive;
 
       &:hover:not(:disabled) {
@@ -386,7 +386,7 @@
     // 小号按钮（列表项）
     &.small {
       padding: 2px 7px;
-      font-size: 11px;
+      font-size: $font-size-xs;
     }
 
     // 带图标按钮

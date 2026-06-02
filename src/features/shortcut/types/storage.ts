@@ -10,17 +10,17 @@ import { TypedStorage } from "@/utils/typedStorage"
 /**
  * 快捷键存储键
  */
-const SHORTCUTS_STORAGE_KEY = "plugin-shortcuts-custom"
+export const SHORTCUTS_STORAGE_KEY = "plugin-shortcuts-custom"
 
 /**
  * 快捷键收藏存储键
  */
-const SHORTCUTS_FAVORITES_KEY = "plugin-shortcuts-favorites"
+export const SHORTCUTS_FAVORITES_KEY = "plugin-shortcuts-favorites"
 
 /**
  * 最近使用存储键
  */
-const SHORTCUTS_RECENT_KEY = "plugin-shortcuts-recent"
+export const SHORTCUTS_RECENT_KEY = "plugin-shortcuts-recent"
 
 /**
  * 快捷键存储管理类

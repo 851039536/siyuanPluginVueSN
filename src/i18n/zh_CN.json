@@ -1372,7 +1372,8 @@
     "referencingDocs": "关联文档",
     "noReferencingDocs": "未找到关联文档",
     "customCategoryPlaceholder": "自定义",
-    "apply": "应用"
+    "apply": "应用",
+    "loadLimit": "加载数量"
   },
   "apiDebugger": {
     "panelTitle": "API接口调试器",

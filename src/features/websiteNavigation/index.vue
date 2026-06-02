@@ -1,135 +1,35 @@
 <template>
   <div class="website-navigation-panel">
-    <div class="panel-header">
-      <div class="header-title">
-        <IconWrapper
-          name="browser"
-          :size="20"
-        />
-        <h2>{{ i18n.panelTitle || '网站导航' }}</h2>
-        <span class="entry-count">{{ filteredEntries.length }}/{{ entries.length }}</span>
-      </div>
-      <div class="header-actions">
-        <Button
-          icon="add"
-          variant="primary"
-          size="small"
-          @click="openAddDialog"
-        >
-          {{ i18n.addWebsite || '添加网站' }}
-        </Button>
-      </div>
-    </div>
+    <PanelHeader
+      :i18n="i18n"
+      :count="filteredEntries.length"
+      :total-count="entries.length"
+      @add="openAddDialog"
+    />
 
-    <div class="filter-bar">
-      <IconWrapper
-        name="search"
-        :size="14"
-        class="search-icon"
-      />
-      <Input
-        v-model="searchQuery"
-        type="text"
-        :placeholder="i18n.searchPlaceholder || '搜索网站名称或描述...'"
-        size="small"
-      />
-    </div>
-
-    <div class="category-filter">
-      <button
-        v-for="cat in [{
-          id: 'all',
-          name: i18n.allCategories || '全部',
-          color: '#b0aea5',
-        }, ...categories]"
-        :key="cat.id"
-        class="category-chip"
-        :class="{ active: selectedCategory === cat.id }"
-        :style="{ '--cat-color': cat.color }"
-        @click="selectedCategory = cat.id"
-      >
-        <span
-          class="chip-dot"
-          :style="{ backgroundColor: cat.color }"
-        ></span>
-        {{ cat.name }}
-      </button>
-      <Button
-        icon="settings"
-        variant="ghost"
-        size="small"
-        :title="i18n.manageCategories || '管理类别'"
-        @click="showCategoryMgr = true"
-      />
-    </div>
+    <FilterBar
+      :i18n="i18n"
+      :categories="categories"
+      :search-query="searchQuery"
+      :selected-category="selectedCategory"
+      @update:search-query="searchQuery = $event"
+      @update:selected-category="selectedCategory = $event"
+      @manage-categories="showCategoryMgr = true"
+    />
 
     <div class="entries-list">
-      <div
+      <WebsiteCard
         v-for="entry in filteredEntries"
         :key="entry.id"
-        class="entry-card"
-      >
-        <div class="entry-main">
-          <div class="entry-info">
-            <div class="entry-name-row">
-              <IconWrapper
-                name="browser"
-                :size="16"
-                class="entry-icon"
-              />
-              <span class="entry-name">{{ entry.name }}</span>
-              <span
-                class="entry-category-tag"
-                :style="{
-                  backgroundColor: `${getCategoryById(entry.category)?.color || '#b0aea5'}20`,
-                  color: getCategoryById(entry.category)?.color || '#b0aea5',
-                }"
-              >
-                {{ getCategoryById(entry.category)?.name || '未分类' }}
-              </span>
-            </div>
-            <div
-              class="entry-url"
-              @click="openUrl(entry.url)"
-            >
-              <IconWrapper
-                name="openInNew"
-                :size="12"
-              />
-              <span class="url-text">{{ entry.url }}</span>
-            </div>
-            <div
-              v-if="entry.description"
-              class="entry-desc"
-            >
-              {{ entry.description }}
-            </div>
-          </div>
-          <div class="entry-actions">
-            <Button
-              icon="contentCopy"
-              variant="ghost"
-              size="small"
-              :title="i18n.copyUrl || '复制网址'"
-              @click="copyUrl(entry.url)"
-            />
-            <Button
-              variant="ghost"
-              size="small"
-              @click="editEntry(entry)"
-            >
-              {{ i18n.editWebsite || '编辑' }}
-            </Button>
-            <Button
-              icon="delete"
-              variant="ghost"
-              size="small"
-              :title="i18n.deleteWebsite || '删除'"
-              @click="deleteEntry(entry.id)"
-            />
-          </div>
-        </div>
-      </div>
+        :entry="entry"
+        :i18n="i18n"
+        :category-color="getCategoryById(entry.category)?.color || '#b0aea5'"
+        :category-name="getCategoryById(entry.category)?.name || '未分类'"
+        @edit="editEntry"
+        @delete="deleteEntry"
+        @copy-url="copyUrl"
+        @open-url="openUrl"
+      />
 
       <div
         v-if="filteredEntries.length === 0"
@@ -143,167 +43,23 @@
       </div>
     </div>
 
-    <Teleport to="body">
-      <Transition name="fade">
-        <div
-          v-if="showDialog"
-          class="website-dialog-overlay"
-          @click.self="closeDialog"
-        >
-          <Transition name="scale">
-            <div
-              v-if="showDialog"
-              class="website-dialog"
-              @click.stop
-            >
-              <div class="dialog-header">
-                <h3>{{ editingEntry ? i18n.editWebsite || '编辑网站' : i18n.addWebsite || '添加网站' }}</h3>
-                <Button
-                  icon="close"
-                  variant="ghost"
-                  size="small"
-                  @click="closeDialog"
-                />
-              </div>
-              <div class="dialog-body">
-                <div class="form-group">
-                  <label>{{ i18n.name || '名称' }}</label>
-                  <Input
-                    v-model="form.name"
-                    type="text"
-                    :placeholder="i18n.namePlaceholder || '网站名称'"
-                    required
-                  />
-                </div>
-                <div class="form-group">
-                  <label>{{ i18n.url || '网址' }}</label>
-                  <Input
-                    v-model="form.url"
-                    type="text"
-                    :placeholder="i18n.urlPlaceholder || 'https://example.com'"
-                    required
-                  />
-                </div>
-                <div class="form-group">
-                  <label>{{ i18n.category || '类别' }}</label>
-                  <Select
-                    v-model="form.category"
-                    :options="categories.map(c => ({
-                      value: c.id,
-                      label: c.name,
-                    }))"
-                  />
-                </div>
-                <div class="form-group">
-                  <label>{{ i18n.description || '描述' }}</label>
-                  <Input
-                    v-model="form.description"
-                    type="text"
-                    :placeholder="i18n.descriptionPlaceholder || '备注描述'"
-                  />
-                </div>
-              </div>
-              <div class="dialog-footer">
-                <Button
-                  variant="ghost"
-                  @click="closeDialog"
-                >
-                  {{ i18n.cancel || '取消' }}
-                </Button>
-                <Button
-                  variant="primary"
-                  :disabled="!form.name.trim() || !form.url.trim()"
-                  @click="saveEntry"
-                >
-                  {{ i18n.save || '保存' }}
-                </Button>
-              </div>
-            </div>
-          </Transition>
-        </div>
-      </Transition>
-    </Teleport>
+    <WebsiteDialog
+      :visible="showDialog"
+      :i18n="i18n"
+      :categories="categories"
+      :editing-entry="editingEntry"
+      @close="closeDialog"
+      @save="saveEntry"
+    />
 
-    <Teleport to="body">
-      <Transition name="fade">
-        <div
-          v-if="showCategoryMgr"
-          class="website-dialog-overlay"
-          @click.self="closeCategoryMgr"
-        >
-          <Transition name="scale">
-            <div
-              v-if="showCategoryMgr"
-              class="website-dialog category-manager"
-              @click.stop
-            >
-              <div class="dialog-header">
-                <h3>{{ i18n.manageCategories || '管理类别' }}</h3>
-                <Button
-                  icon="close"
-                  variant="ghost"
-                  size="small"
-                  @click="closeCategoryMgr"
-                />
-              </div>
-              <div class="dialog-body">
-                <div class="add-category-row">
-                  <Input
-                    v-model="newCatName"
-                    type="text"
-                    :placeholder="i18n.categoryName || '类别名称'"
-                    size="small"
-                  />
-                  <div class="color-picker">
-                    <button
-                      v-for="color in presetColors"
-                      :key="color"
-                      class="color-option"
-                      :class="{ selected: newCatColor === color }"
-                      :style="{ backgroundColor: color }"
-                      @click="newCatColor = color"
-                    />
-                  </div>
-                  <Button
-                    icon="add"
-                    variant="primary"
-                    size="small"
-                    :disabled="!newCatName.trim()"
-                    @click="addCategory"
-                  >
-                    {{ i18n.add || '添加' }}
-                  </Button>
-                </div>
-                <div class="category-list">
-                  <div
-                    v-for="cat in categories"
-                    :key="cat.id"
-                    class="category-row"
-                  >
-                    <span
-                      class="cat-dot"
-                      :style="{ backgroundColor: cat.color }"
-                    ></span>
-                    <span class="cat-name">{{ cat.name }}</span>
-                    <Button
-                      v-if="cat.id !== 'default'"
-                      icon="delete"
-                      variant="ghost"
-                      size="small"
-                      @click="removeCategory(cat.id)"
-                    />
-                    <span
-                      v-else
-                      class="default-badge"
-                    >默认</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Transition>
-        </div>
-      </Transition>
-    </Teleport>
+    <CategoryManager
+      :visible="showCategoryMgr"
+      :i18n="i18n"
+      :categories="categories"
+      @close="showCategoryMgr = false"
+      @add="addCategory"
+      @remove="removeCategory"
+    />
   </div>
 </template>
 
@@ -319,10 +75,12 @@ import {
   computed,
   ref,
 } from "vue"
-import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import Input from "@/components/Input.vue"
-import Select from "@/components/Select.vue"
+import CategoryManager from "./components/CategoryManager.vue"
+import FilterBar from "./components/FilterBar.vue"
+import PanelHeader from "./components/PanelHeader.vue"
+import WebsiteCard from "./components/WebsiteCard.vue"
+import WebsiteDialog from "./components/WebsiteDialog.vue"
 import { useWebsiteNavigation } from "./composables/useWebsiteNavigation"
 
 interface Props {
@@ -343,28 +101,7 @@ const searchQuery = ref("")
 const selectedCategory = ref<string>("all")
 const showDialog = ref(false)
 const editingEntry = ref<WebsiteEntry | null>(null)
-const form = ref({
-  name: "",
-  url: "",
-  category: "default",
-  description: "",
-})
-
 const showCategoryMgr = ref(false)
-const newCatName = ref("")
-const newCatColor = ref("#3b82f6")
-
-const presetColors = [
-  "#3b82f6",
-  "#10b981",
-  "#f59e0b",
-  "#ef4444",
-  "#8b5cf6",
-  "#ec4899",
-  "#06b6d4",
-  "#84cc16",
-  "#b0aea5",
-]
 
 const categoriesMap = computed(() => {
   const map = new Map<string, WebsiteCategory>()
@@ -409,23 +146,11 @@ const reloadAfterMutation = async () => {
 
 const openAddDialog = () => {
   editingEntry.value = null
-  form.value = {
-    name: "",
-    url: "",
-    category: "default",
-    description: "",
-  }
   showDialog.value = true
 }
 
 const editEntry = (entry: WebsiteEntry) => {
   editingEntry.value = entry
-  form.value = {
-    name: entry.name,
-    url: entry.url,
-    category: entry.category,
-    description: entry.description,
-  }
   showDialog.value = true
 }
 
@@ -434,15 +159,13 @@ const closeDialog = () => {
   editingEntry.value = null
 }
 
-const saveEntry = async () => {
-  if (!form.value.name.trim() || !form.value.url.trim()) return
-
+const saveEntry = async (data: { name: string, url: string, category: string, description: string }) => {
   try {
     if (editingEntry.value) {
-      await storage.updateEntry(editingEntry.value.id, form.value)
+      await storage.updateEntry(editingEntry.value.id, data)
       showMessage(props.i18n.updateSuccess || "网站已更新", 2000, "info")
     } else {
-      await storage.createEntry(form.value)
+      await storage.createEntry(data)
       showMessage(props.i18n.createSuccess || "网站已添加", 2000, "info")
     }
     closeDialog()
@@ -483,22 +206,19 @@ const copyUrl = async (url: string) => {
   }
 }
 
-const addCategory = async () => {
-  if (!newCatName.value.trim()) return
-  if (categories.value.some((c) => c.name === newCatName.value.trim())) {
+const addCategory = async (name: string, color: string) => {
+  if (categories.value.some((c) => c.name === name)) {
     showMessage("类别已存在", 2000, "error")
     return
   }
 
   const cat: WebsiteCategory = {
     id: Date.now().toString(),
-    name: newCatName.value.trim(),
-    color: newCatColor.value,
+    name,
+    color,
   }
   categories.value = [...categories.value, cat]
   await storage.saveCategories(categories.value)
-  newCatName.value = ""
-  newCatColor.value = "#3b82f6"
 }
 
 const removeCategory = async (catId: string) => {
@@ -514,12 +234,6 @@ const removeCategory = async (catId: string) => {
   if (selectedCategory.value === catId) {
     selectedCategory.value = "all"
   }
-}
-
-const closeCategoryMgr = () => {
-  showCategoryMgr.value = false
-  newCatName.value = ""
-  newCatColor.value = "#3b82f6"
 }
 </script>
 

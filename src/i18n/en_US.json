@@ -1300,7 +1300,8 @@
     "referencingDocs": "Referencing Docs",
     "noReferencingDocs": "No referencing docs found",
     "customCategoryPlaceholder": "Custom",
-    "apply": "Apply"
+    "apply": "Apply",
+    "loadLimit": "Load Limit"
   },
   "apiDebugger": {
     "panelTitle": "API Debugger",

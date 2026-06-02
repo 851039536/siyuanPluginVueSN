@@ -51,6 +51,18 @@
             {{ i18n.currentDoc }}
           </button>
         </div>
+        <!-- 加载数量 -->
+        <div class="rm-filter-bar rm-filter-bar--limit">
+          <span class="rm-filter-bar__label">{{ i18n.loadLimit }}:</span>
+          <input
+            v-model.number="loadLimit"
+            type="number"
+            min="1"
+            max="10000"
+            class="rm-limit-input"
+            @change="refresh"
+          />
+        </div>
         <!-- 分类筛选栏 -->
         <div class="rm-filter-bar rm-filter-bar--category">
           <button
@@ -378,6 +390,7 @@ const unusedAssets = ref<string[]>([])
 // 资源模式（图片/文件共用）
 const assetMode = ref<"all" | "currentDoc">("all")
 const categoryFilter = ref("")
+const loadLimit = ref(30)
 
 // 移动资源
 const movingAsset = ref<string | null>(null)
@@ -662,7 +675,7 @@ async function buildAssetList(paths: string[], isImage: boolean): Promise<ImageA
   const extFilter = isImage
     ? (p: string) => IMAGE_EXT.test(p)
     : (p: string) => !IMAGE_EXT.test(p)
-  const filtered = paths.filter(extFilter)
+  const filtered = paths.filter(extFilter).slice(0, loadLimit.value)
   const docMap = await loadDocNamesForImages(filtered)
   return filtered.map((path) => {
     const info = docMap.get(path)
@@ -681,7 +694,7 @@ async function loadAllAssets(isImage: boolean) {
   const target = isImage ? imageAssets : fileAssets
 
   try {
-    const referenced = await sql("SELECT DISTINCT path FROM assets WHERE path LIKE 'assets/%' LIMIT 10000")
+    const referenced = await sql(`SELECT DISTINCT path FROM assets WHERE path LIKE 'assets/%' LIMIT ${loadLimit.value}`)
     const refPaths = (referenced || [])
       .map((r: { path: string }) => r.path)
       .filter((p: unknown): p is string => typeof p === "string")

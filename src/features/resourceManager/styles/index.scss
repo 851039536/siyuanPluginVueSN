@@ -21,6 +21,25 @@
   }
 }
 
+@mixin form-input {
+  padding: 4px 6px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  outline: none;
+  transition: border-color 0.15s;
+
+  &:focus {
+    border-color: $brand-primary;
+  }
+
+  &::placeholder {
+    color: var(--b3-theme-on-surface-light);
+  }
+}
+
 // ==================== Panel ====================
 .resource-manager-panel {
   height: 100%;
@@ -204,23 +223,9 @@
     }
 
     input {
+      @include form-input;
       flex: 1;
       padding: 5px 8px;
-      border: 1px solid var(--b3-border-color);
-      border-radius: $radius-sm;
-      font-size: $font-size-xs;
-      background: var(--b3-theme-surface);
-      color: var(--b3-theme-on-surface);
-      outline: none;
-      transition: border-color 0.15s;
-
-      &:focus {
-        border-color: $brand-primary;
-      }
-
-      &::placeholder {
-        color: var(--b3-theme-on-surface-light);
-      }
     }
   }
 
@@ -290,23 +295,8 @@
     }
 
     &__input {
+      @include form-input;
       flex: 1;
-      padding: 4px 6px;
-      border: 1px solid var(--b3-border-color);
-      border-radius: $radius-sm;
-      font-size: $font-size-xs;
-      background: var(--b3-theme-surface);
-      color: var(--b3-theme-on-surface);
-      outline: none;
-      transition: border-color 0.15s;
-
-      &:focus {
-        border-color: $brand-primary;
-      }
-
-      &::placeholder {
-        color: var(--b3-theme-on-surface-light);
-      }
     }
 
     &__categories {
@@ -316,18 +306,9 @@
     }
 
     &__category-input {
+      @include form-input;
       width: 72px;
       padding: 2px 4px;
-      border: 1px solid var(--b3-border-color);
-      border-radius: $radius-sm;
-      font-size: $font-size-xs;
-      background: var(--b3-theme-surface);
-      color: var(--b3-theme-on-surface);
-      outline: none;
-
-      &:focus {
-        border-color: $brand-primary;
-      }
     }
 
     &__actions {

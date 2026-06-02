@@ -30,7 +30,7 @@
 
             <div class="skills-viewer-body">
               <p class="sv-description">
-                {{ i18n.skillsViewerDesc || '查看和管理 AI 编程工具的 Skills 配置文件，兼容 Claude、CodeBuddy、Qoder、Trae' }}
+                {{ i18n.skillsViewerDesc || '查看和管理 AI 编程工具的 Skills 配置文件，兼容 Claude、CodeBuddy、Qoder、Trae、Opencode' }}
               </p>
 
               <div

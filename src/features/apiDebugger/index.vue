@@ -86,8 +86,8 @@
         {{ i18n.requestBody || '请求体' }}
       </div>
       <Input
-        type="textarea"
         v-model="requestBody"
+        type="textarea"
         :placeholder="i18n.requestBodyPlaceholder || '输入JSON格式的请求体...'"
         :rows="6"
         size="small"

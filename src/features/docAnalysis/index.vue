@@ -321,7 +321,11 @@ import {
   ref,
   watch,
 } from "vue"
-import { getBlockAttrs, pushMsg, setBlockAttrs } from "@/api"
+import {
+  getBlockAttrs,
+  pushMsg,
+  setBlockAttrs,
+} from "@/api"
 import AttrsPanel from "./components/AttrsPanel.vue"
 import DocListItem from "./components/DocListItem.vue"
 import FilterSettings from "./components/FilterSettings.vue"

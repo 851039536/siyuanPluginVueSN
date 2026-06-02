@@ -74,6 +74,7 @@ export { registerTextDiff } from "./textDiff"
 export { registerThemeColor } from "./themeColor"
 export { registerUnitConverter } from "./unitConverter"
 export { registerVideo } from "./video"
+export { registerWebsiteNavigation } from "./websiteNavigation"
 export { registerWordQuery } from "./wordQuery"
 
 /**
@@ -94,6 +95,7 @@ type _Registered =
   | "base64Image" | "flashcardReading" | "passwordVault" | "docAnalysis"
   | "formatAssistant" | "htmlViewer" | "rssReader" | "resourceManager"
   | "skillsViewer" | "themeColor" | "bookmarkMarker" | "apiDebugger"
+  | "websiteNavigation"
 
 // --- 编译时断言辅助 ---
 // 利用泛型接口约束 T extends true 产生 TypeScript 编译错误，无运行时开销

@@ -19,14 +19,14 @@
           />
           {{ i18n.enterChinese || '输入中文' }}
         </div>
-<Input
-  type="textarea"
-  v-model="chineseInput"
-  class="translation-textarea"
-  :placeholder="i18n.enterChinesePlaceholder || '输入中文，如：获取用户信息、用户接口、计算总价...'"
-  :rows="3"
-  @input="handleInput"
-/>
+        <Input
+          v-model="chineseInput"
+          type="textarea"
+          class="translation-textarea"
+          :placeholder="i18n.enterChinesePlaceholder || '输入中文，如：获取用户信息、用户接口、计算总价...'"
+          :rows="3"
+          @input="handleInput"
+        />
       </div>
 
       <div class="style-section">

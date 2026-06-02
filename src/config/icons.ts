@@ -235,59 +235,9 @@ export const FEATURE_ICONS = {
     icon: "mdi:flask",
     color: "#0ea5e9",
   },
-
-  // 密码箱
-  passwordVault: {
-    icon: "mdi:shield-key",
-    color: "#dc2626",
-  },
-
-  // 文档分析
-  docAnalysis: {
-    icon: "mdi:file-search",
-    color: "#14b8a6",
-  },
-
-  // 排版助手
-  formatAssistant: {
-    icon: "mdi:format-align-left",
-    color: "#07c160",
-  },
-
-  // HTML 展示
-  htmlViewer: {
-    icon: "mdi:code-tags",
-    color: "#0ea5e9",
-  },
-
-  // 视频相关图标
-  play: {
-    icon: "mdi:play",
-    color: "#10b981",
-  },
-
-  // 资源管理
-  resourceManager: {
-    icon: "mdi:folder-multiple-image",
-    color: "#06b6d4",
-  },
-
-  // RSS订阅
-  rssReader: {
-    icon: "mdi:rss",
-    color: "#f97316",
-  },
-  pause: {
-    icon: "mdi:pause",
-    color: "#f59e0b",
-  },
-  stop: {
-    icon: "mdi:stop",
-    color: "#ef4444",
-  },
-  merge: {
-    icon: "mdi:merge",
-    color: "#8b5cf6",
+  websiteNavigation: {
+    icon: "mdi:web",
+    color: "#6366f1",
   },
 } as const
 

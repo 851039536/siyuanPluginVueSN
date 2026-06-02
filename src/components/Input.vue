@@ -214,7 +214,11 @@ const emit = defineEmits<Emits>()
 const attrs = useAttrs()
 
 const containerAttrs = computed(() => {
-  const { class: className, style, ...rest } = attrs
+  const {
+    class: className,
+    style,
+    ...rest
+  } = attrs
   return rest
 })
 

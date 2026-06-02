@@ -258,6 +258,11 @@ export const FEATURE_CONFIG = [
     defaultTitle: "API调试器",
     defaultDesc: "调试和测试思源笔记API接口",
   },
+  {
+    id: "websiteNavigation",
+    defaultTitle: "网站导航",
+    defaultDesc: "管理常用网站链接，支持分类筛选和快捷访问",
+  },
 ] as const
 
 /**

@@ -320,8 +320,8 @@
 
                 <div class="form-group">
                   <Input
-                    type="textarea"
                     v-model="entryForm.description"
+                    type="textarea"
                     label="描述"
                     placeholder="请输入描述信息"
                     :rows="3"

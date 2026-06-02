@@ -147,8 +147,8 @@
             </Button>
           </div>
           <Input
-            type="textarea"
             v-model="base64Output"
+            type="textarea"
             class="output-textarea"
             :placeholder="props.i18n.base64Image_base64Placeholder || 'Base64编码将显示在这里...'"
             :readonly="true"
@@ -176,8 +176,8 @@
       <div class="input-section">
         <h4>{{ props.i18n.base64Image_base64Input || 'Base64输入' }}</h4>
         <Input
-          type="textarea"
           v-model="base64Input"
+          type="textarea"
           class="input-textarea"
           :placeholder="props.i18n.base64Image_base64InputPlaceholder || '在此粘贴Base64编码...'"
           :rows="8"
@@ -278,8 +278,8 @@
             </Button>
           </div>
           <Input
-            type="textarea"
             v-model="urlBase64Output"
+            type="textarea"
             class="output-textarea"
             :readonly="true"
             :rows="6"

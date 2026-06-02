@@ -20,8 +20,8 @@
           {{ i18n.regexDescription || '正则描述' }}
         </div>
         <Input
-          type="textarea"
           v-model="description"
+          type="textarea"
           class="description-textarea"
           :placeholder="i18n.regexDescPlaceholder || '描述你想要的正则表达式，例如：匹配邮箱地址、匹配手机号码...'"
           :rows="3"

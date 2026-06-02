@@ -567,6 +567,7 @@ async function executeCopySkill() {
       copyConfirmVisible.value = false
       copySourceIndex.value = null
       copyTargetToolId.value = null
+      await checkAllToolStatuses()
       showMessage(
         `${i18n.value.copySkillSuccess || '已复制到'} ${targetTool.name}`,
         2000,

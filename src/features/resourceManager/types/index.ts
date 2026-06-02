@@ -50,5 +50,6 @@ export interface ResourceManagerI18n {
   locateDoc: string
   referencingDocs: string
   noReferencingDocs: string
-  [key: string]: string
+  copyFailed: string
+  updatedRefs: string
 }

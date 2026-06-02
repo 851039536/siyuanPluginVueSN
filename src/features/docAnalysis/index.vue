@@ -320,7 +320,7 @@ import {
   ref,
   watch,
 } from "vue"
-import { getBlockAttrs } from "@/api"
+import { getBlockAttrs, pushMsg, setBlockAttrs } from "@/api"
 import AttrsPanel from "./components/AttrsPanel.vue"
 import DocListItem from "./components/DocListItem.vue"
 import FilterSettings from "./components/FilterSettings.vue"
@@ -328,7 +328,7 @@ import PublishPanel from "./components/PublishPanel.vue"
 
 import StatsOverview from "./components/StatsOverview.vue"
 import { useDocAnalysis } from "./composables/useDocAnalysis"
-import { usePublish } from "./composables/usePublish"
+import { getCategoryLabel } from "./types/index"
 
 interface Props {
   i18n: Record<string, Record<string, string>>
@@ -361,9 +361,12 @@ const {
   clearResults,
 } = useDocAnalysis(props.plugin)
 
-const { markAsPending } = usePublish(props.plugin)
-
 const showPublishTip = ref(false)
+
+/** 刷新当前查询结果列表 */
+function refreshList() {
+  if (queryState.hasQueried) queryDocs()
+}
 
 // ============================================================
 // Tab 切换
@@ -386,10 +389,7 @@ function handlePublishDoc(docId: string, docTitle: string) {
 
 /** 发布完成回调 */
 function handlePublished() {
-  // 刷新列表以更新发布状态
-  if (queryState.hasQueried) {
-    queryDocs()
-  }
+  refreshList()
 }
 
 // ============================================================
@@ -401,16 +401,13 @@ const attrsData = ref<Record<string, string> | null>(null)
 const attrsLoading = ref(false)
 const attrsError = ref("")
 
-async function handleShowAttrs(docId: string) {
-  attrsPanelDocId.value = docId
-  attrsPanelVisible.value = true
+/** 加载指定文档的属性 */
+async function loadAttrs(docId: string) {
   attrsData.value = null
   attrsError.value = ""
   attrsLoading.value = true
-
   try {
-    const data = await getBlockAttrs(docId)
-    attrsData.value = data
+    attrsData.value = await getBlockAttrs(docId)
   }
   catch (e: unknown) {
     attrsError.value = e instanceof Error ? e.message : "加载属性失败"
@@ -418,6 +415,12 @@ async function handleShowAttrs(docId: string) {
   finally {
     attrsLoading.value = false
   }
+}
+
+function handleShowAttrs(docId: string) {
+  attrsPanelDocId.value = docId
+  attrsPanelVisible.value = true
+  loadAttrs(docId)
 }
 
 function handleCloseAttrs() {
@@ -426,31 +429,13 @@ function handleCloseAttrs() {
   attrsError.value = ""
 }
 
-async function handleRefreshAttrs() {
-  attrsLoading.value = true
-  attrsError.value = ""
-  try {
-    const data = await getBlockAttrs(attrsPanelDocId.value)
-    attrsData.value = data
-  }
-  catch (e: unknown) {
-    attrsError.value = e instanceof Error ? e.message : "加载属性失败"
-  }
-  finally {
-    attrsLoading.value = false
-  }
+function handleRefreshAttrs() {
+  loadAttrs(attrsPanelDocId.value)
 }
 
 /** 批量发布 - 按统计类别 */
 async function handleBatchPublish(category: string) {
-  // 先查询该类别的文档
   await queryByStatsCategory(category)
-
-  if (queryState.results.length === 0) {
-    return
-  }
-
-  // 打开批量发布面板（取第一个文档作为示例）
   if (queryState.results.length > 0) {
     publishDocId.value = queryState.results[0].id
     publishDocTitle.value = `批量发布 (${queryState.results.length} 篇)`
@@ -470,11 +455,11 @@ function handleBatchPublishAll() {
 async function handleBatchMarkPending() {
   if (queryState.results.length === 0) return
   const docIds = queryState.results.map((d) => d.id)
-  await markAsPending(docIds)
-  // 刷新列表
-  if (queryState.hasQueried) {
-    queryDocs()
+  for (const docId of docIds) {
+    await setBlockAttrs(docId, { bookmark: "待发布" })
   }
+  await pushMsg(`已标记 ${docIds.length} 篇文档为"待发布"`)
+  refreshList()
 }
 
 // ============================================================
@@ -552,41 +537,6 @@ function handleAnalyze() {
 function handleSelectCategory(category: string) {
   queryByStatsCategory(category)
   activeTab.value = "list"
-}
-
-/** 获取分类标签 */
-function getCategoryLabel(category: string): string {
-  switch (category) {
-    case "0B": return "0B 空文档"
-    case "small": return "< 1KB"
-    case "medium": return "1~10KB"
-    case "duplicate": return "重名文档"
-    case "7days": return "7天内更新"
-    case "30days": return "7~30天更新"
-    case "1to2month": return "1~2月更新"
-    case "2to3month": return "2~3月更新"
-    case "halfYear": return "半年以上未更新"
-    case "customTime": return "自定义时间"
-    case "deep": return "深层文档(≥5层)"
-    case "hasRef": return "含引用"
-    case "hasImage": return "含图片"
-    case "hasBookmark": return "有书签"
-    case "noBookmark": return "无书签"
-    case "pendingPublish": return "待发布"
-    case "published": return "已发布"
-    case "unused": return "不使用"
-    case "noneBookmark": return "书签「无」"
-    case "fullPublish": return "完整发布"
-    case "partialPublish": return "部分发布"
-    case "noPublish": return "未发布"
-    case "hasTag": return "有标签"
-    case "noTag": return "无标签"
-    case "hasAlias": return "有别名"
-    case "hasMemo": return "有备注"
-    case "incomingRef": return "被引用"
-    case "orphanDoc": return "孤文档"
-    default: return category
-  }
 }
 
 /** 清除统计过滤 */

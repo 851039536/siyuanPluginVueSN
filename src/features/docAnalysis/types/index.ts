@@ -207,3 +207,42 @@ export interface BookmarkDetail {
   count: number
 }
 
+// ============================================================
+// 工具函数（纯函数，无副作用）
+// ============================================================
+
+/** 获取统计类别的中文标签 */
+export function getCategoryLabel(category: string): string {
+  switch (category) {
+    case "0B": return "0B 空文档"
+    case "small": return "< 1KB"
+    case "medium": return "1~10KB"
+    case "duplicate": return "重名文档"
+    case "7days": return "7天内更新"
+    case "30days": return "7~30天更新"
+    case "1to2month": return "1~2月更新"
+    case "2to3month": return "2~3月更新"
+    case "halfYear": return "半年以上未更新"
+    case "customTime": return "自定义时间"
+    case "deep": return "深层文档(≥5层)"
+    case "hasRef": return "含引用"
+    case "hasImage": return "含图片"
+    case "hasBookmark": return "有书签"
+    case "noBookmark": return "无书签"
+    case "pendingPublish": return "待发布"
+    case "published": return "已发布"
+    case "unused": return "不使用"
+    case "noneBookmark": return "书签「无」"
+    case "fullPublish": return "完整发布"
+    case "partialPublish": return "部分发布"
+    case "noPublish": return "未发布"
+    case "hasTag": return "有标签"
+    case "noTag": return "无标签"
+    case "hasAlias": return "有别名"
+    case "hasMemo": return "有备注"
+    case "incomingRef": return "被引用"
+    case "orphanDoc": return "孤文档"
+    default: return category
+  }
+}
+

@@ -49,6 +49,7 @@
     align-items: center;
     gap: 8px;
     flex-shrink: 0;
+    margin-bottom: 8px;
 
     .search-icon {
       flex-shrink: 0;
@@ -57,6 +58,7 @@
 
     :deep(.si-input) {
       flex: 1;
+      max-width: 100%;
     }
   }
 

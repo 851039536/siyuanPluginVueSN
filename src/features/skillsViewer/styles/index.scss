@@ -404,6 +404,11 @@ $ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
         background: rgba(217, 83, 79, 0.1);
         color: #d9534f;
       }
+
+      &--copy:hover {
+        background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1);
+        color: var(--b3-theme-primary);
+      }
     }
 
     .sv-skill-desc {
@@ -755,6 +760,48 @@ $ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
         font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
         margin-top: 4px;
         word-break: break-all;
+      }
+
+      .sv-modal-tool-select {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-top: 12px;
+
+        .sv-modal-tool-option {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 12px;
+          border: 1.5px solid var(--b3-theme-surface-lighter);
+          border-radius: 8px;
+          cursor: pointer;
+          transition:
+            border-color 0.15s $ease-in-out,
+            background 0.15s $ease-in-out,
+            box-shadow 0.15s $ease-in-out;
+
+          &:hover {
+            border-color: var(--tool-color);
+          }
+
+          &.active {
+            border-color: var(--tool-color);
+            background: color-mix(in srgb, var(--tool-color) 8%, var(--b3-theme-surface));
+            box-shadow: 0 0 0 2.5px color-mix(in srgb, var(--tool-color) 15%, transparent);
+          }
+
+          .sv-modal-tool-option-icon {
+            font-size: 16px;
+            line-height: 1;
+          }
+
+          .sv-modal-tool-option-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--b3-theme-on-surface);
+          }
+        }
       }
     }
 

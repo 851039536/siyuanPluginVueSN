@@ -242,6 +242,23 @@
       border-color: var(--b3-theme-primary);
     }
 
+    &--limit {
+      align-items: center;
+      gap: 6px;
+
+      .rm-filter-bar__label {
+        font-size: 11px;
+        color: var(--b3-theme-on-surface-light);
+        white-space: nowrap;
+      }
+
+      .rm-limit-input {
+        @include form-input;
+        width: 64px;
+        text-align: center;
+      }
+    }
+
     &--category {
       margin-top: -4px;
 

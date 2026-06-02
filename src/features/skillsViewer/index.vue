@@ -154,6 +154,14 @@
                         >
                           ✏️
                         </button>
+                        <button
+                          v-if="editingSkill !== index"
+                          class="sv-skill-action-btn sv-skill-action-btn--copy"
+                          :title="i18n.copySkill || '复制到其他工具'"
+                          @click="confirmCopySkill(index)"
+                        >
+                          📋
+                        </button>
                         <template v-if="editingSkill === index">
                           <button
                             class="sv-skill-action-btn sv-skill-action-btn--save"
@@ -287,6 +295,56 @@
         </div>
       </div>
     </div>
+
+    <div
+      v-if="copyConfirmVisible"
+      class="sv-modal-overlay"
+      @click.self="cancelCopySkill"
+    >
+      <div class="sv-modal">
+        <div class="sv-modal-header">
+          <span class="sv-modal-icon">📋</span>
+          <span class="sv-modal-title">{{ i18n.copySkillTitle || '复制 Skill 到其他工具' }}</span>
+        </div>
+        <div class="sv-modal-body">
+          <p>{{ i18n.copySkillConfirm || '选择目标 AI 编程工具，将当前 Skill 复制到对应 skills 目录' }}</p>
+          <p class="sv-modal-skill-name">
+            {{ copySourceSkill?.name }}
+          </p>
+          <div class="sv-modal-tool-select">
+            <div
+              v-for="tool in copyTargetTools"
+              :key="tool.id"
+              class="sv-modal-tool-option"
+              :class="{ active: copyTargetToolId === tool.id }"
+              :style="{ '--tool-color': tool.color }"
+              @click="copyTargetToolId = tool.id"
+            >
+              <span class="sv-modal-tool-option-icon">{{ tool.icon }}</span>
+              <span class="sv-modal-tool-option-name">{{ tool.name }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="sv-modal-footer">
+          <SiButton
+            variant="ghost"
+            size="small"
+            @click="cancelCopySkill"
+          >
+            {{ i18n.cancel || '取消' }}
+          </SiButton>
+          <SiButton
+            variant="primary"
+            size="small"
+            :loading="copyingSkill"
+            :disabled="!copyTargetToolId"
+            @click="executeCopySkill"
+          >
+            {{ i18n.copyTo || '复制到' }} {{ copyTargetToolId && getToolName(copyTargetToolId as AIToolType) }}
+          </SiButton>
+        </div>
+      </div>
+    </div>
   </Teleport>
 </template>
 
@@ -348,10 +406,24 @@ const deleteConfirmVisible = ref(false)
 const deleteTargetIndex = ref<number | null>(null)
 const deletingSkill = ref(false)
 
+const copyConfirmVisible = ref(false)
+const copySourceIndex = ref<number | null>(null)
+const copyTargetToolId = ref<AIToolType | null>(null)
+const copyingSkill = ref(false)
+
 const deleteTargetSkill = computed(() => {
   if (deleteTargetIndex.value === null) return null
   return filteredSkills.value[deleteTargetIndex.value] || null
 })
+
+const copySourceSkill = computed(() => {
+  if (copySourceIndex.value === null) return null
+  return filteredSkills.value[copySourceIndex.value] || null
+})
+
+const copyTargetTools = computed(() =>
+  AI_TOOLS.filter((t) => t.id !== copySourceSkill.value?.tool),
+)
 
 const toolStatuses = reactive<Record<string, {
   global: boolean
@@ -451,6 +523,64 @@ function confirmDeleteSkill(index: number) {
 function cancelDeleteSkill() {
   deleteConfirmVisible.value = false
   deleteTargetIndex.value = null
+}
+
+function confirmCopySkill(index: number) {
+  copySourceIndex.value = index
+  copyTargetToolId.value = null
+  copyConfirmVisible.value = true
+}
+
+function cancelCopySkill() {
+  copyConfirmVisible.value = false
+  copySourceIndex.value = null
+  copyTargetToolId.value = null
+}
+
+async function executeCopySkill() {
+  if (copySourceIndex.value === null || !copyTargetToolId.value) return
+  const skill = filteredSkills.value[copySourceIndex.value]
+  if (!skill || copyingSkill.value) return
+
+  const targetTool = AI_TOOLS.find((t) => t.id === copyTargetToolId.value)
+  if (!targetTool) return
+
+  copyingSkill.value = true
+  try {
+    const nodePath = window.require("path")
+    const skillDir = nodePath.dirname(skill.filePath)
+    const isGlobal = skill.filePath.startsWith(manager.getHomeDir())
+    const targetBase = isGlobal ? manager.getHomeDir() : (projectPath.value || "")
+    const targetPaths = isGlobal ? targetTool.skillPaths : targetTool.projectPaths
+
+    let copied = false
+    for (const relPath of targetPaths) {
+      const targetDir = nodePath.join(targetBase, relPath)
+      const success = await manager.copySkill(skillDir, targetDir)
+      if (success) {
+        copied = true
+        break
+      }
+    }
+
+    if (copied) {
+      copyConfirmVisible.value = false
+      copySourceIndex.value = null
+      copyTargetToolId.value = null
+      showMessage(
+        `${i18n.value.copySkillSuccess || '已复制到'} ${targetTool.name}`,
+        2000,
+        "info",
+      )
+    } else {
+      showMessage(i18n.value.copySkillFailed || '复制失败（目标已存在或权限不足）', 2000, "error")
+    }
+  } catch (e) {
+    console.error("复制 Skill 失败:", e)
+    showMessage(i18n.value.copySkillFailed || '复制失败', 2000, "error")
+  } finally {
+    copyingSkill.value = false
+  }
 }
 
 async function executeDeleteSkill() {

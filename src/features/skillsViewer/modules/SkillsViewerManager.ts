@@ -308,6 +308,20 @@ export class SkillsViewerManager {
     }
   }
 
+  async copySkill(sourceSkillDir: string, targetDir: string): Promise<boolean> {
+    if (!this.available) return false
+    try {
+      const skillName = this.path.basename(sourceSkillDir)
+      const destPath = this.path.join(targetDir, skillName)
+      if (await this.fileExists(destPath)) return false
+      await this.fs.promises.mkdir(targetDir, { recursive: true })
+      await this.fs.promises.cp(sourceSkillDir, destPath, { recursive: true })
+      return true
+    } catch {
+      return false
+    }
+  }
+
   formatFileSize(bytes: number): string {
     if (bytes === 0) return "0 B"
     const units = ["B", "KB", "MB", "GB"]

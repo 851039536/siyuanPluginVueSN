@@ -36,11 +36,11 @@ export const THEMES: Record<string, ThemeColorScheme> = {
     primary: "#ff91a4",
     primaryRgb: "255, 145, 164",
   },
-  mono: {
-    id: "mono",
-    name: "灰白动漫",
-    primary: "#8e99a4",
-    primaryRgb: "142, 153, 164",
+  codex: {
+    id: "codex",
+    name: "Codex",
+    primary: "#8B5CF6",
+    primaryRgb: "139, 92, 246",
   },
 }
 

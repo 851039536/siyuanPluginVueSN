@@ -16,6 +16,7 @@ import {
   getMissingAssets,
   getUnusedAssets,
   putFile,
+  readDir,
   removeUnusedAsset,
   removeUnusedAssets,
   renameFile,
@@ -75,6 +76,13 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     return [...builtIn, ...custom]
   })
 
+  const totalAssetCount = computed(() => {
+    const list = activeTab.value === "fileAssets" ? fileAssets.value : imageAssets.value
+    if (!categoryFilter.value) return list.length
+    const prefix = `assets/${categoryFilter.value}/`
+    return list.filter((item) => item.path.toLowerCase().startsWith(prefix.toLowerCase())).length
+  })
+
   const currentAssetList = computed(() => {
     const list = activeTab.value === "fileAssets" ? fileAssets.value : imageAssets.value
     if (!categoryFilter.value) return list.slice(0, loadLimit.value)
@@ -127,6 +135,27 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     return paths.filter(extFilter).map((path) => ({ path }))
   }
 
+  async function scanAssetDir(dirPath: string): Promise<string[]> {
+    const paths: string[] = []
+    try {
+      const entries = await readDir(dirPath)
+      const files = Array.isArray(entries) ? entries : [entries]
+      for (const entry of files) {
+        const fullPath = `${dirPath}/${entry.name}`
+        if (entry.isDir) {
+          const sub = await scanAssetDir(fullPath)
+          paths.push(...sub)
+        }
+        else {
+          const relPath = fullPath.replace(/^\/data\//, "")
+          paths.push(relPath)
+        }
+      }
+    }
+    catch { /* ignore scan errors */ }
+    return paths
+  }
+
   async function loadAllAssets(isImage: boolean) {
     const target = isImage ? imageAssets : fileAssets
     try {
@@ -139,7 +168,9 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
       const unusedPaths = (unused || [])
         .filter((p: unknown): p is string => typeof p === "string")
 
-      const allPaths = [...new Set([...refPaths, ...unusedPaths])].sort()
+      const fsPaths = await scanAssetDir("/data/assets")
+
+      const allPaths = [...new Set([...refPaths, ...unusedPaths, ...fsPaths])].sort()
       target.value = buildAssetList(allPaths, isImage)
     }
     catch (e: unknown) {
@@ -379,6 +410,7 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     customCategories,
     rebuildResult,
     quickCategories,
+    totalAssetCount,
     currentAssetList,
     refresh,
     copyPathToClipboard,

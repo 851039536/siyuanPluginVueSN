@@ -34,23 +34,6 @@
         v-if="activeTab === 'imageAssets' || activeTab === 'fileAssets'"
         class="rm-section"
       >
-        <!-- 来源筛选栏 -->
-        <div class="rm-filter-bar">
-          <button
-            class="rm-btn small"
-            :class="{ active: assetMode === 'all' }"
-            @click="assetMode = 'all'; loadCurrentTabAssets()"
-          >
-            {{ i18n.allAssets }}
-          </button>
-          <button
-            class="rm-btn small"
-            :class="{ active: assetMode === 'currentDoc' }"
-            @click="assetMode = 'currentDoc'; loadCurrentTabAssets()"
-          >
-            {{ i18n.currentDoc }}
-          </button>
-        </div>
         <!-- 加载数量 -->
         <div class="rm-filter-bar rm-filter-bar--limit">
           <span class="rm-filter-bar__label">{{ i18n.loadLimit }}:</span>
@@ -317,10 +300,7 @@
 </template>
 
 <script setup lang="ts">
-import type {
-  IProtyle,
-  Plugin,
-} from "siyuan"
+import type { Plugin } from "siyuan"
 import type {
   ImageAssetInfo,
   ResourceManagerI18n,
@@ -337,8 +317,6 @@ import {
 } from "vue"
 import {
   fullReindexAssetContent,
-  getBlockByID,
-  getDocImageAssets,
   getMissingAssets,
   getUnusedAssets,
   putFile,
@@ -367,8 +345,6 @@ const fileAssets = ref<ImageAssetInfo[]>([])
 const missingAssets = ref<string[]>([])
 const unusedAssets = ref<string[]>([])
 
-// 资源模式（图片/文件共用）
-const assetMode = ref<"all" | "currentDoc">("all")
 const categoryFilter = ref("")
 const loadLimit = ref(30)
 
@@ -433,19 +409,6 @@ const tabs = [
 // 重建索引
 const rebuildResult = ref("")
 
-// 从 protyle 事件中缓存当前文档 ID（解决面板聚焦时无法获取当前文档的问题）
-const savedDocId = ref<string | null>(null)
-
-// 监听 protyle 切换事件，更新缓存的当前文档 ID
-const onSwitchProtyle = (event: CustomEvent<{ protyle: IProtyle }>) => {
-  const rootID = event.detail.protyle.block.rootID
-  if (rootID) {
-    savedDocId.value = rootID
-  }
-}
-
-const PROTYLE_EVENTS = ["switch-protyle", "loaded-protyle-dynamic", "loaded-protyle-static"] as const
-
 onMounted(async () => {
   isMounted.value = true
 
@@ -456,43 +419,11 @@ onMounted(async () => {
     if (saved) customCategories.value = saved
   }
   catch { /* ignore */ }
-
-  PROTYLE_EVENTS.forEach((eventName) => {
-    props.plugin.eventBus.on(eventName, onSwitchProtyle)
-  })
-
-  // 组件挂载时主动扫描当前可见的 protyle 获取文档 ID（不等待事件）
-  if (!savedDocId.value) {
-    const docId = findDocIdFromDom()
-    if (docId) {
-      savedDocId.value = docId
-      // 如果初始加载因无 docId 而显示为空，现在补刷新
-      if (activeTab.value === "imageAssets") {
-        refresh()
-      }
-    }
-  }
 })
 
 onUnmounted(() => {
   isMounted.value = false
-  PROTYLE_EVENTS.forEach((eventName) => {
-    props.plugin.eventBus.off(eventName, onSwitchProtyle)
-  })
 })
-
-/**
- * 从 DOM 中查找当前可见 protyle 的文档 ID
- * 使用 SiYuan 标准方式：protyle DOM 元素的 .protyle 属性 → .block.rootID
- */
-function findDocIdFromDom(): string | null {
-  const protyleElements = document.querySelectorAll<HTMLElement & { protyle?: IProtyle }>('.protyle:not(.fn__none)')
-  for (const el of protyleElements) {
-    const rootId = el.protyle?.block?.rootID
-    if (rootId) return rootId
-  }
-  return null
-}
 
 // 切换到数据页签时自动加载
 watch(activeTab, () => {
@@ -553,95 +484,26 @@ async function refresh() {
   }
 }
 
-/**
- * 获取当前光标所在的块ID
- */
-function getCurrentBlockId(): string | null {
-  // 方法1: 获取当前选中的块
-  const selectedBlock = document.querySelector(".protyle-wysiwyg--select")
-  if (selectedBlock) {
-    return selectedBlock.getAttribute("data-node-id")
-  }
-  // 方法2: 获取光标所在的块
-  const focusedBlock = document.querySelector(
-    ".protyle-wysiwyg [data-node-id].protyle-wysiwyg--focus",
-  )
-  if (focusedBlock) {
-    return focusedBlock.getAttribute("data-node-id")
-  }
-  // 方法3: 通过 window.getSelection() 精确获取光标位置
-  const selection = window.getSelection()
-  if (selection && selection.rangeCount > 0) {
-    const range = selection.getRangeAt(0)
-    let node: Node | null = range.startContainer
-    while (node) {
-      if (node instanceof Element) {
-        const nodeId = node.getAttribute("data-node-id")
-        const dataType = node.getAttribute("data-type")
-        if (nodeId && dataType) {
-          return nodeId
-        }
-      }
-      node = node.parentNode
-    }
-  }
-  return null
-}
-
-/**
- * 获取当前文档ID
- * 优先顺序：protyle 事件缓存 > 光标所在块 > DOM 实例扫描
- */
-async function getCurrentDocId(): Promise<string | null> {
-  // 优先方案：使用 protyle 事件缓存的文档 ID（最可靠）
-  if (savedDocId.value) {
-    return savedDocId.value
-  }
-
-  // 方案2：通过光标所在的块获取文档ID
-  const currentBlockId = getCurrentBlockId()
-  if (currentBlockId) {
-    try {
-      const block = await getBlockByID(currentBlockId)
-      if (block?.root_id) {
-        savedDocId.value = block.root_id
-        return block.root_id
-      }
-    }
-    catch { /* 降级到备用方案 */ }
-  }
-
-  // 方案3：从 DOM 中扫描当前可见 protyle 实例获取文档 ID
-  const docId = findDocIdFromDom()
-  if (docId) {
-    savedDocId.value = docId
-  }
-  return docId || null
-}
-
 /** 图片扩展名 */
 const IMAGE_EXT = /\.(png|jpg|jpeg|gif|svg|webp|bmp|ico|tiff|avif)$/i
 
-/** 当前 tab 对应的资源列表（数量限制） */
+/** 路径前缀匹配（大小写不敏感） */
+function pathStartsWithPrefix(path: string, prefix: string): boolean {
+  return path.toLowerCase().startsWith(prefix.toLowerCase())
+}
+
+/** 当前 tab 对应的资源列表（按分类过滤 + 数量限制） */
 const currentAssetList = computed(() => {
   const list = activeTab.value === "fileAssets" ? fileAssets.value : imageAssets.value
-  return list.slice(0, loadLimit.value)
+  if (!categoryFilter.value) return list.slice(0, loadLimit.value)
+  const prefix = `assets/${categoryFilter.value}/`
+  return list.filter((item) => pathStartsWithPrefix(item.path, prefix)).slice(0, loadLimit.value)
 })
 
 /** 加载当前 tab 对应的资源 */
 async function loadCurrentTabAssets() {
   const isImage = activeTab.value === "imageAssets"
-  if (assetMode.value === "all") {
-    await loadAllAssets(isImage)
-  }
-  else if (assetMode.value === "currentDoc") {
-    const docId = await getCurrentDocId()
-    if (!docId) {
-      showMsg("无法获取当前文档 ID")
-      return
-    }
-    await loadDocAssets(docId, isImage)
-  }
+  await loadAllAssets(isImage)
 }
 
 /**
@@ -677,18 +539,6 @@ async function loadAllAssets(isImage: boolean) {
     console.error(`加载全部${isImage ? "图片" : "文件"}资源失败:`, e)
     showMsg(props.i18n.loadFailed || "加载失败")
   }
-}
-
-/**
- * 加载指定文档的资源（图片或文件）
- */
-async function loadDocAssets(docId: string, isImage: boolean) {
-  const target = isImage ? imageAssets : fileAssets
-
-  const paths = await getDocImageAssets(docId)
-  const pathList = (paths || [])
-    .filter((p: unknown): p is string => typeof p === "string")
-  target.value = buildAssetList(pathList, isImage)
 }
 
 async function loadMissingAssets() {

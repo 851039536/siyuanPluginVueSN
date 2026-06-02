@@ -19,13 +19,14 @@
           />
           {{ i18n.enterChinese || '输入中文' }}
         </div>
-        <Textarea
-          v-model="chineseInput"
-          class="translation-textarea"
-          :placeholder="i18n.enterChinesePlaceholder || '输入中文，如：获取用户信息、用户接口、计算总价...'"
-          :rows="3"
-          @input="handleInput"
-        />
+<Input
+  type="textarea"
+  v-model="chineseInput"
+  class="translation-textarea"
+  :placeholder="i18n.enterChinesePlaceholder || '输入中文，如：获取用户信息、用户接口、计算总价...'"
+  :rows="3"
+  @input="handleInput"
+/>
       </div>
 
       <div class="style-section">
@@ -189,7 +190,7 @@ import {
 } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import Textarea from "@/components/Textarea.vue"
+import Input from "@/components/Input.vue"
 import { getApiConfigFromPlugin } from "../utils/apiBase"
 import {
 

@@ -85,7 +85,8 @@
       <div class="api-debugger__section-title">
         {{ i18n.requestBody || '请求体' }}
       </div>
-      <Textarea
+      <Input
+        type="textarea"
         v-model="requestBody"
         :placeholder="i18n.requestBodyPlaceholder || '输入JSON格式的请求体...'"
         :rows="6"
@@ -249,7 +250,6 @@ import { computed } from "vue"
 import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
-import Textarea from "@/components/Textarea.vue"
 
 import { useApiDebugger } from "./composables/useApiDebugger"
 import { API_ENDPOINT_PRESETS } from "./types"

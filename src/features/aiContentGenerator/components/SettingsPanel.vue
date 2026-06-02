@@ -45,7 +45,8 @@
               ><use xlink:href="#iconEdit" /></svg>
               系统提示词
             </label>
-            <Textarea
+            <Input
+              type="textarea"
               :model-value="systemPrompt"
               placeholder="输入系统提示词，定义AI的角色和行为..."
               :rows="5"
@@ -199,7 +200,6 @@ import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
 import Slider from "@/components/Slider.vue"
 import Tag from "@/components/Tag.vue"
-import Textarea from "@/components/Textarea.vue"
 import { getPromptPreview } from "../utils"
 
 defineProps<{

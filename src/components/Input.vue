@@ -3,90 +3,111 @@
     :class="inputClasses"
     v-bind="containerAttrs"
   >
-    <label
-      v-if="label"
-      class="si-input__label"
+    <FormField
+      :label="label"
+      :required="required"
+      :hint="hint"
+      :error="error"
+      :size="size"
+      :show-count="showCount"
+      :show-count-without-max="showCountWithoutMax"
+      :count-current="currentLength"
+      :count-max="maxlength"
     >
-      {{ label }}
-      <span
-        v-if="required"
-        class="si-input__required"
-      >*</span>
-    </label>
-    <div class="si-input__wrapper">
-      <IconWrapper
-        v-if="prefixIcon"
-        :name="prefixIcon"
-        :size="iconSize"
-        class="si-input__icon si-input__icon--prefix"
-      />
-      <component
-        :is="isTextarea ? 'textarea' : 'input'"
-        ref="inputRef"
-        :type="inputType"
-        :value="modelValue"
-        :placeholder="placeholder"
-        :disabled="disabled"
-        :readonly="readonly"
-        :maxlength="maxlength"
-        :minlength="minlength"
-        :autocomplete="autocomplete"
-        :pattern="pattern"
-        :name="name"
-        :form="form"
-        class="si-input__field"
-        :class="{
-          'si-input__field--with-prefix': prefixIcon,
-          'si-input__field--with-suffix': suffixIcon,
-          'si-input__field--error': error,
-          'si-input__field--textarea': isTextarea,
-        }"
-        @input="handleInput"
-        @blur="handleBlur"
-        @focus="handleFocus"
-        @keydown="handleKeydown"
-        @change="handleChange"
-      />
-      <IconWrapper
-        v-if="suffixIcon"
-        :name="suffixIcon"
-        :size="iconSize"
-        class="si-input__icon si-input__icon--suffix"
-      />
-      <span
-        v-if="clearable && modelValue && !disabled && !readonly"
-        class="si-input__clear"
-        @click="handleClear"
+      <div
+        class="si-input__wrapper"
+        :class="{ 'si-input__wrapper--error': error }"
       >
         <IconWrapper
-          :name="'x' as IconKey"
+          v-if="prefixIcon && !isTextarea"
+          :name="prefixIcon"
           :size="iconSize"
+          class="si-input__icon si-input__icon--prefix"
         />
-      </span>
-      <span
-        v-if="showPassword && type === 'password' && !disabled && !readonly"
-        class="si-input__password-toggle"
-        @click="togglePasswordVisibility"
-      >
+        <textarea
+          v-if="isTextarea"
+          ref="textareaRef"
+          :value="modelValue"
+          :placeholder="placeholder"
+          :disabled="disabled"
+          :readonly="readonly"
+          :maxlength="maxlength"
+          :minlength="minlength"
+          :rows="rows"
+          :cols="cols"
+          :autofocus="autofocus"
+          :autocomplete="autocomplete"
+          :wrap="wrap"
+          :spellcheck="spellcheck"
+          :inputmode="inputmode"
+          :name="name"
+          :form="form"
+          class="si-input__field si-input__field--textarea"
+          :style="textareaStyle"
+          @input="handleInput"
+          @change="handleChange"
+          @focus="handleFocus"
+          @blur="handleBlur"
+          @keydown="handleKeydown"
+        />
+        <input
+          v-else
+          ref="inputRef"
+          :type="inputType"
+          :value="modelValue"
+          :placeholder="placeholder"
+          :disabled="disabled"
+          :readonly="readonly"
+          :maxlength="maxlength"
+          :minlength="minlength"
+          :autocomplete="autocomplete"
+          :pattern="pattern"
+          :name="name"
+          :form="form"
+          class="si-input__field"
+          :class="{
+            'si-input__field--with-prefix': prefixIcon,
+            'si-input__field--with-suffix': suffixIcon,
+          }"
+          @input="handleInput"
+          @blur="handleBlur"
+          @focus="handleFocus"
+          @keydown="handleKeydown"
+          @change="handleChange"
+        />
         <IconWrapper
-          :name="(passwordVisible ? 'eyeOff' : 'eye') as IconKey"
+          v-if="suffixIcon && !isTextarea"
+          :name="suffixIcon"
           :size="iconSize"
+          class="si-input__icon si-input__icon--suffix"
         />
-      </span>
-    </div>
-    <div
-      v-if="hint || error"
-      class="si-input__hint"
-      :class="{ 'si-input__hint--error': error }"
-    >
-      {{ error || hint }}
-    </div>
-    <div
-      v-if="showCount && (type === 'text' || type === 'textarea') && maxlength"
-      class="si-input__count"
-    >
-      {{ currentLength }} / {{ maxlength }}
-    </div>
+        <span
+          v-if="clearable && modelValue && !disabled && !readonly"
+          class="si-input__clear"
+          @click="handleClear"
+        >
+          <IconWrapper
+            :name="'x' as IconKey"
+            :size="iconSize"
+          />
+        </span>
+        <span
+          v-if="showPassword && type === 'password' && !disabled && !readonly"
+          class="si-input__password-toggle"
+          @click="togglePasswordVisibility"
+        >
+          <IconWrapper
+            :name="(passwordVisible ? 'eyeOff' : 'eye') as IconKey"
+            :size="iconSize"
+          />
+        </span>
+        <div
+          v-if="isTextarea && showResizeHandle && !disabled && !readonly"
+          class="si-input__resize-handle"
+          @mousedown="startResize"
+        />
+      </div>
+    </FormField>
   </div>
 </template>
 
@@ -95,10 +116,12 @@ import type { IconKey } from "@/config/icons"
 import {
   computed,
   nextTick,
+  onMounted,
   ref,
   useAttrs,
   watch,
 } from "vue"
+import FormField from "@/components/FormField.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 
 type InputType =
@@ -111,54 +134,44 @@ type InputType =
   | "search"
   | "textarea"
 type InputSize = "small" | "medium" | "large"
+type InputResize = "none" | "both" | "horizontal" | "vertical"
+type InputWrap = "hard" | "soft" | "off"
 
 interface Props {
-  /** 绑定值 */
   modelValue?: string | number | null
-  /** 输入框类型 */
   type?: InputType
-  /** 尺寸 */
   size?: InputSize
-  /** 占位文本 */
   placeholder?: string
-  /** 禁用状态 */
   disabled?: boolean
-  /** 只读状态 */
   readonly?: boolean
-  /** 标签文本 */
   label?: string
-  /** 是否必填 */
   required?: boolean
-  /** 提示文本 */
   hint?: string
-  /** 错误文本 */
   error?: string
-  /** 前缀图标 */
   prefixIcon?: IconKey
-  /** 后缀图标 */
   suffixIcon?: IconKey
-  /** 图标大小 */
   iconSize?: number
-  /** 最大长度 */
   maxlength?: number
-  /** 最小长度 */
   minlength?: number
-  /** 自动完成 */
   autocomplete?: string
-  /** 正则验证模式 */
   pattern?: string
-  /** 是否可清空（显示清除按钮） */
   clearable?: boolean
-  /** 是否显示密码切换 */
   showPassword?: boolean
-  /** 是否显示字符计数 */
   showCount?: boolean
-  /** 是否自动获得焦点 */
+  showCountWithoutMax?: boolean
   autofocus?: boolean
-  /** 原生 name 属性 */
   name?: string
-  /** 原生 form 属性 */
   form?: string
+  rows?: number
+  cols?: number
+  autosize?: boolean
+  minRows?: number
+  maxRows?: number
+  resize?: InputResize
+  showResizeHandle?: boolean
+  wrap?: InputWrap
+  spellcheck?: boolean
+  inputmode?: "none" | "text" | "tel" | "url" | "email" | "numeric" | "decimal" | "search"
 }
 
 interface Emits {
@@ -183,24 +196,34 @@ const props = withDefaults(defineProps<Props>(), {
   clearable: false,
   showPassword: false,
   showCount: false,
+  showCountWithoutMax: false,
   autofocus: false,
   autocomplete: "off",
+  rows: 3,
+  autosize: false,
+  minRows: 1,
+  maxRows: 10,
+  resize: "vertical",
+  showResizeHandle: false,
+  wrap: "soft",
+  spellcheck: true,
+  inputmode: "text",
 })
 
 const emit = defineEmits<Emits>()
 const attrs = useAttrs()
 
 const containerAttrs = computed(() => {
-  const {
-    class: className,
-    style,
-    ...rest
-  } = attrs
+  const { class: className, style, ...rest } = attrs
   return rest
 })
 
-const inputRef = ref<HTMLInputElement | HTMLTextAreaElement>()
+const inputRef = ref<HTMLInputElement>()
+const textareaRef = ref<HTMLTextAreaElement>()
 const passwordVisible = ref(false)
+const isResizing = ref(false)
+const startY = ref(0)
+const startHeight = ref(0)
 
 const isTextarea = computed(() => props.type === "textarea")
 
@@ -225,19 +248,67 @@ const inputClasses = computed(() => [
     "si-input--disabled": props.disabled,
     "si-input--readonly": props.readonly,
     "si-input--error": props.error,
-    "si-input--with-prefix": props.prefixIcon,
+    "si-input--textarea": isTextarea.value,
+    "si-input--with-prefix": props.prefixIcon && !isTextarea.value,
     "si-input--with-suffix":
-      props.suffixIcon
+      (props.suffixIcon && !isTextarea.value)
       || (props.clearable && props.modelValue)
       || (props.showPassword && props.type === "password"),
   },
 ])
+
+const textareaStyle = computed(() => {
+  const style: Record<string, string> = {}
+
+  if (props.autosize || props.resize === "none") {
+    style.resize = "none"
+  } else if (props.resize) {
+    style.resize = props.resize
+  }
+
+  if (props.autosize) {
+    style.overflow = "hidden"
+  }
+
+  return style
+})
+
+const adjustHeight = () => {
+  if (!props.autosize || !textareaRef.value) return
+
+  const textarea = textareaRef.value
+  textarea.style.height = "auto"
+
+  const styles = window.getComputedStyle(textarea)
+  const paddingTop = Number.parseFloat(styles.paddingTop)
+  const paddingBottom = Number.parseFloat(styles.paddingBottom)
+  const lineHeight = Number.parseFloat(styles.lineHeight)
+  const minHeight = paddingTop + paddingBottom + lineHeight * props.minRows
+  const maxHeight = paddingTop + paddingBottom + lineHeight * props.maxRows
+
+  let newHeight = textarea.scrollHeight
+
+  if (newHeight < minHeight) {
+    newHeight = minHeight
+  } else if (newHeight > maxHeight) {
+    newHeight = maxHeight
+    textarea.style.overflowY = "auto"
+  } else {
+    textarea.style.overflowY = "hidden"
+  }
+
+  textarea.style.height = `${newHeight}px`
+}
 
 const handleInput = (event: Event) => {
   const target = event.target as HTMLInputElement | HTMLTextAreaElement
   const value = target.value
   emit("update:modelValue", value)
   emit("input", value, event)
+
+  if (isTextarea.value && props.autosize) {
+    nextTick(() => adjustHeight())
+  }
 }
 
 const handleChange = (event: Event) => {
@@ -266,41 +337,98 @@ const togglePasswordVisibility = () => {
   passwordVisible.value = !passwordVisible.value
 }
 
+const startResize = (event: MouseEvent) => {
+  if (props.disabled || props.readonly) return
+
+  isResizing.value = true
+  startY.value = event.clientY
+  startHeight.value = textareaRef.value?.offsetHeight || 0
+
+  document.addEventListener("mousemove", onResize)
+  document.addEventListener("mouseup", stopResize)
+  event.preventDefault()
+}
+
+const onResize = (event: MouseEvent) => {
+  if (!isResizing.value || !textareaRef.value) return
+
+  const deltaY = event.clientY - startY.value
+  const newHeight = Math.max(startHeight.value + deltaY, 40)
+
+  textareaRef.value.style.height = `${newHeight}px`
+}
+
+const stopResize = () => {
+  isResizing.value = false
+  document.removeEventListener("mousemove", onResize)
+  document.removeEventListener("mouseup", stopResize)
+}
+
 const focus = () => {
   nextTick(() => {
-    inputRef.value?.focus()
+    const el = isTextarea.value ? textareaRef.value : inputRef.value
+    el?.focus()
   })
 }
 
 const blur = () => {
   nextTick(() => {
-    inputRef.value?.blur()
+    const el = isTextarea.value ? textareaRef.value : inputRef.value
+    el?.blur()
   })
 }
 
 const select = () => {
   nextTick(() => {
-    inputRef.value?.select()
+    const el = isTextarea.value ? textareaRef.value : inputRef.value
+    el?.select()
   })
+}
+
+const setRangeText = (
+  replacement: string,
+  start: number,
+  end: number,
+  selectMode: SelectionMode = "select",
+) => {
+  const el = textareaRef.value
+  if (!el) return
+  el.setRangeText(replacement, start, end, selectMode)
+  emit("update:modelValue", el.value)
 }
 
 watch(
   () => props.autofocus,
   (newVal) => {
     if (newVal) {
-      nextTick(() => {
-        inputRef.value?.focus()
-      })
+      nextTick(() => focus())
     }
   },
   { immediate: true },
 )
 
+watch(
+  () => props.modelValue,
+  () => {
+    if (isTextarea.value && props.autosize) {
+      nextTick(() => adjustHeight())
+    }
+  },
+)
+
+onMounted(() => {
+  if (isTextarea.value && props.autosize) {
+    nextTick(() => adjustHeight())
+  }
+})
+
 defineExpose({
   focus,
   blur,
   select,
-  inputElement: inputRef,
+  setRangeText,
+  inputElement: computed(() => isTextarea.value ? textareaRef.value : inputRef.value),
+  adjustHeight,
 })
 </script>
 
@@ -314,20 +442,6 @@ defineExpose({
   font-family: $font-body;
   width: 100%;
 
-  &__label {
-    display: flex;
-    align-items: center;
-    margin-bottom: 6px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--b3-theme-on-background);
-  }
-
-  &__required {
-    color: var(--b3-theme-primary, $brand-orange);
-    margin-left: 2px;
-  }
-
   &__wrapper {
     display: flex;
     align-items: center;
@@ -337,13 +451,21 @@ defineExpose({
     border-radius: 6px;
     outline: none;
 
-    &:hover:not(.si-input__wrapper--disabled) {
+    &:hover:not(.si-input--disabled .si-input__wrapper) {
       border-color: var(--b3-theme-secondary, $brand-blue);
     }
 
     &:focus-within {
       border-color: var(--b3-theme-primary, $brand-orange);
       box-shadow: 0 0 0 3px rgba(var(--b3-theme-primary-rgb, $brand-orange), 0.1);
+    }
+
+    &--error {
+      border-color: var(--b3-theme-error, $brand-orange) !important;
+
+      &:focus-within {
+        box-shadow: 0 0 0 3px rgba(var(--b3-theme-error-rgb, $brand-orange), 0.1);
+      }
     }
   }
 
@@ -371,10 +493,6 @@ defineExpose({
       cursor: default;
     }
 
-    &--error {
-      border-color: var(--b3-theme-error, $brand-orange) !important;
-    }
-
     &--with-prefix {
       padding-left: 0;
     }
@@ -387,6 +505,25 @@ defineExpose({
       resize: vertical;
       min-height: 80px;
       max-height: 200px;
+      line-height: 1.6;
+      align-items: flex-start;
+
+      &::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: var(--b3-theme-surface-light, $brand-light-gray);
+        border-radius: 4px;
+
+        &:hover {
+          background: var(--b3-theme-secondary, $brand-mid-gray);
+        }
+      }
     }
   }
 
@@ -420,34 +557,75 @@ defineExpose({
     }
   }
 
-  &__hint {
-    margin-top: 4px;
-    font-size: 12px;
-    color: var(--b3-theme-secondary, $brand-mid-gray);
+  &__resize-handle {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 16px;
+    height: 16px;
+    cursor: ns-resize;
+    border-radius: 4px;
 
-    &--error {
-      color: var(--b3-theme-error, $brand-orange);
+    &::before {
+      content: '';
+      position: absolute;
+      bottom: 5px;
+      right: 5px;
+      width: 8px;
+      height: 2px;
+      background: repeating-linear-gradient(
+        to right,
+        var(--b3-theme-secondary, $brand-mid-gray) 0px,
+        var(--b3-theme-secondary, $brand-mid-gray) 2px,
+        transparent 2px,
+        transparent 4px
+      );
+      border-radius: 1px;
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 8px;
+      right: 5px;
+      width: 8px;
+      height: 2px;
+      background: repeating-linear-gradient(
+        to right,
+        var(--b3-theme-secondary, $brand-mid-gray) 0px,
+        var(--b3-theme-secondary, $brand-mid-gray) 2px,
+        transparent 2px,
+        transparent 4px
+      );
+      border-radius: 1px;
+    }
+
+    &:hover::before,
+    &:hover::after {
+      background: repeating-linear-gradient(
+        to right,
+        var(--b3-theme-primary, $brand-orange) 0px,
+        var(--b3-theme-primary, $brand-orange) 2px,
+        transparent 2px,
+        transparent 4px
+      );
+    }
+
+    &:hover {
+      background: rgba(var(--b3-theme-primary-rgb, 201, 122, 93), 0.1);
+    }
+
+    &:active::before,
+    &:active::after {
+      background: var(--b3-theme-primary, $brand-orange);
     }
   }
 
-  &__count {
-    position: absolute;
-    right: 0;
-    bottom: -20px;
-    font-size: 12px;
-    color: var(--b3-theme-secondary, $brand-mid-gray);
-  }
-
-  // 尺寸变体
   &--small {
     .si-input__field {
       padding: 6px 10px;
       font-size: 13px;
       min-height: 28px;
-    }
-
-    .si-input__label {
-      font-size: 12px;
     }
   }
 
@@ -457,10 +635,6 @@ defineExpose({
       font-size: 14px;
       min-height: 36px;
     }
-
-    .si-input__label {
-      font-size: 13px;
-    }
   }
 
   &--large {
@@ -469,13 +643,14 @@ defineExpose({
       font-size: 15px;
       min-height: 44px;
     }
+  }
 
-    .si-input__label {
-      font-size: 14px;
+  &--textarea {
+    .si-input__wrapper {
+      align-items: stretch;
     }
   }
 
-  // 状态变体
   &--disabled {
     .si-input__wrapper {
       background: var(--b3-theme-surface, $brand-light-gray);

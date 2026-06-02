@@ -451,7 +451,11 @@
     "skillsViewer": "Skills Viewer",
     "skillsViewerDesc": "View and manage AI coding tools Skills configuration files",
     "themeColor": "Theme Color",
-    "themeColorDesc": "Apply warm orange global theme color"
+    "themeColorDesc": "Apply warm orange global theme color",
+    "statusStable": "Stable",
+    "statusNeedsFix": "Needs Fix",
+    "statusCritical": "Critical",
+    "statusMinor": "Needs Opt"
   },
   "bookmarkMarker": {
     "title": "Bookmark Marker",

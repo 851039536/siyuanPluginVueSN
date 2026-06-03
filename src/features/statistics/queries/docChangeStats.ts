@@ -1,4 +1,5 @@
-import type { ChangedDoc } from "../types"
+import type { ChangedDoc, RecentUpdatedDoc } from "../types"
+import { lsNotebooks } from "@/api"
 import {
   isValidDateStr,
   padZero,
@@ -115,4 +116,59 @@ export async function getDateRangeChangeStats(startStr: string, endStr: string):
   }
 
   return result
+}
+
+/**
+ * 获取最近更新的文档列表
+ * 按 updated 降序排列，返回最近 N 条记录
+ */
+export async function getRecentUpdatedDocs(limit: number = 20): Promise<RecentUpdatedDoc[]> {
+  // 获取笔记本映射表
+  const idToName = new Map<string, string>()
+  try {
+    const nbData = await lsNotebooks()
+    const notebooks = nbData?.notebooks?.filter((nb: any) => !nb.closed) ?? []
+    for (const nb of notebooks) {
+      idToName.set(nb.id, nb.name)
+    }
+  } catch (e) {
+    console.error("获取笔记本列表失败:", e)
+  }
+
+  const sql = `
+    SELECT id, content, updated, box FROM blocks
+    WHERE type = 'd'
+    ORDER BY updated DESC
+    LIMIT ${limit}
+  `
+
+  const rows = await executeSql(sql)
+  if (!rows || rows.length === 0) return []
+
+  return rows.map((r: any) => {
+    const updated = r.updated || ""
+    // 将 YYYYMMDDHHmmss 转换为可读时间
+    let timeLabel = ""
+    if (updated.length >= 14) {
+      const y = updated.substring(0, 4)
+      const mo = updated.substring(4, 6)
+      const d = updated.substring(6, 8)
+      const h = updated.substring(8, 10)
+      const mi = updated.substring(10, 12)
+      timeLabel = `${y}-${mo}-${d} ${h}:${mi}`
+    } else if (updated.length >= 8) {
+      const y = updated.substring(0, 4)
+      const mo = updated.substring(4, 6)
+      const d = updated.substring(6, 8)
+      timeLabel = `${y}-${mo}-${d}`
+    }
+
+    return {
+      id: r.id,
+      title: (r.content || "").replace(/<[^>]*>/g, ""),
+      updated,
+      timeLabel,
+      notebookName: idToName.get(r.box) || "",
+    }
+  })
 }

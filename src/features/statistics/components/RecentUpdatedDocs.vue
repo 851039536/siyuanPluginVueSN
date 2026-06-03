@@ -1,69 +1,72 @@
 <template>
   <CollapsibleSection
-    :title="`📝 ${title}`"
+    :title="title"
     :default-expanded="true"
     :badge="loading ? '' : docs.length > 0 ? `${docs.length}` : ''"
   >
     <!-- 加载状态 -->
     <div
       v-if="loading"
-      class="recent-docs-loading"
+      class="rd-loading"
     >
+      <span class="rd-loading-dot" />
       {{ i18n.loading || '加载中...' }}
     </div>
 
     <!-- 空状态 -->
     <div
       v-else-if="docs.length === 0"
-      class="recent-docs-empty"
+      class="rd-empty"
     >
-      {{ emptyText }}
+      <svg class="rd-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+        <polyline points="14 2 14 8 20 8" />
+      </svg>
+      <span>{{ emptyText }}</span>
     </div>
 
-    <!-- 文档列表 -->
+    <!-- 文档列表（按时间分组） -->
     <div
       v-else
-      class="recent-docs-list"
+      class="rd-list"
     >
-      <div
-        v-for="(doc, index) in docs"
-        :key="doc.id"
-        class="recent-doc-item"
-        :class="{ 'is-today': isToday(doc.updated), 'is-recent': isRecent(doc.updated) }"
-        title="点击打开文档"
-        @click="openDoc(doc.id)"
-      >
-        <!-- 序号 -->
-        <span class="recent-doc-index">{{ index + 1 }}</span>
+      <template v-for="group in groupedDocs" :key="group.label">
+        <div class="rd-group-header">{{ group.label }}</div>
+        <div
+          v-for="doc in group.docs"
+          :key="doc.id"
+          class="rd-item"
+          @click="openDoc(doc.id)"
+        >
+          <!-- 文档图标 -->
+          <svg class="rd-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+            <polyline points="14 2 14 8 20 8" />
+          </svg>
 
-        <!-- 文档信息 -->
-        <div class="recent-doc-body">
-          <div class="recent-doc-top">
-            <span class="recent-doc-title">{{ doc.title || '无标题' }}</span>
-            <span
-              v-if="doc.notebookName"
-              class="recent-doc-notebook"
-            >{{ doc.notebookName }}</span>
+          <!-- 主体内容 -->
+          <div class="rd-item-body">
+            <div class="rd-item-path">
+              <span
+                v-if="doc.notebookName"
+                class="rd-notebook"
+              >{{ doc.notebookName }}</span>
+              <span class="rd-separator">/</span>
+            </div>
+            <div class="rd-item-title">{{ doc.title || '无标题' }}</div>
           </div>
-          <div class="recent-doc-bottom">
-            <span class="recent-doc-time-full">{{ doc.timeLabel }}</span>
-            <span class="recent-doc-relative">{{ formatRelativeTime(doc.updated) }}</span>
-          </div>
+
+          <!-- 时间 -->
+          <span class="rd-time">{{ formatRelativeTime(doc.updated) }}</span>
         </div>
-
-        <!-- 今日标记 -->
-        <span
-          v-if="isToday(doc.updated)"
-          class="recent-doc-today-badge"
-        >今天</span>
-      </div>
+      </template>
     </div>
   </CollapsibleSection>
 </template>
 
 <script setup lang="ts">
 import type { RecentUpdatedDoc } from "../types"
-import { ref } from "vue"
+import { computed, ref } from "vue"
 import { padZero } from "../utils"
 import CollapsibleSection from "./CollapsibleSection.vue"
 
@@ -75,7 +78,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   title: "最近更新",
-  emptyText: "暂无数据",
+  emptyText: "暂无最近更新的文档",
   i18n: () => ({}),
 })
 
@@ -93,32 +96,61 @@ function getTodayStr(): string {
   return `${d.getFullYear()}${padZero(d.getMonth() + 1)}${padZero(d.getDate())}`
 }
 
-/**
- * 判断是否为今天更新的文档
- */
-function isToday(updated: string): boolean {
-  if (!updated || updated.length < 8) return false
-  return updated.substring(0, 8) === getTodayStr()
+function getYesterdayStr(): string {
+  const d = new Date()
+  d.setDate(d.getDate() - 1)
+  return `${d.getFullYear()}${padZero(d.getMonth() + 1)}${padZero(d.getDate())}`
 }
 
-/**
- * 判断是否为最近 3 天更新的文档
- */
-function isRecent(updated: string): boolean {
-  if (!updated || updated.length < 8) return false
+type TimeGroup = 'today' | 'yesterday' | 'thisWeek' | 'earlier'
+
+function getTimeGroup(updated: string): TimeGroup {
+  if (!updated || updated.length < 8) return 'earlier'
+  const date8 = updated.substring(0, 8)
+  if (date8 === getTodayStr()) return 'today'
+  if (date8 === getYesterdayStr()) return 'yesterday'
+
   const today = new Date()
   const y = Number.parseInt(updated.substring(0, 4))
   const mo = Number.parseInt(updated.substring(4, 6)) - 1
   const d = Number.parseInt(updated.substring(6, 8))
   const docDate = new Date(y, mo, d)
   const diffDay = Math.floor((today.getTime() - docDate.getTime()) / 86400000)
-  return diffDay >= 0 && diffDay < 3
+  if (diffDay < 7) return 'thisWeek'
+  return 'earlier'
 }
 
-/**
- * 计算相对时间描述
- * 输入 updated 为 YYYYMMDDHHmmss 格式字符串
- */
+const groupLabels: Record<TimeGroup, string> = {
+  today: '今天',
+  yesterday: '昨天',
+  thisWeek: '本周',
+  earlier: '更早',
+}
+
+interface DocGroup {
+  label: string
+  docs: RecentUpdatedDoc[]
+}
+
+const groupedDocs = computed<DocGroup[]>(() => {
+  const groups: Record<TimeGroup, RecentUpdatedDoc[]> = {
+    today: [],
+    yesterday: [],
+    thisWeek: [],
+    earlier: [],
+  }
+  for (const doc of docs.value) {
+    groups[getTimeGroup(doc.updated)].push(doc)
+  }
+  const result: DocGroup[] = []
+  for (const key of ['today', 'yesterday', 'thisWeek', 'earlier'] as TimeGroup[]) {
+    if (groups[key].length > 0) {
+      result.push({ label: groupLabels[key], docs: groups[key] })
+    }
+  }
+  return result
+})
+
 function formatRelativeTime(updated: string): string {
   if (!updated || updated.length < 8) return ""
 
@@ -136,12 +168,12 @@ function formatRelativeTime(updated: string): string {
   const diffDay = Math.floor(diffMs / 86400000)
 
   if (diffMin < 1) return "刚刚"
-  if (diffMin < 60) return `${diffMin}分钟前`
-  if (diffHour < 24) return `${diffHour}小时前`
-  if (diffDay < 7) return `${diffDay}天前`
-  if (diffDay < 30) return `${Math.floor(diffDay / 7)}周前`
-  if (diffDay < 365) return `${Math.floor(diffDay / 30)}个月前`
-  return `${Math.floor(diffDay / 365)}年前`
+  if (diffMin < 60) return `${diffMin} 分钟前`
+  if (diffHour < 24) return `${diffHour} 小时前`
+  if (diffDay < 7) return `${diffDay} 天前`
+  if (diffDay < 30) return `${Math.floor(diffDay / 7)} 周前`
+  if (diffDay < 365) return `${Math.floor(diffDay / 30)} 个月前`
+  return `${Math.floor(diffDay / 365)} 年前`
 }
 
 async function loadDocs(fetchFn: () => Promise<RecentUpdatedDoc[]>) {
@@ -160,126 +192,130 @@ defineExpose({ loadDocs, docs })
 </script>
 
 <style scoped lang="scss">
-@use "../styles/index.scss" as stats;
+@use "@/variables" as *;
 
-.recent-docs-loading,
-.recent-docs-empty {
-  text-align: center;
-  padding: 16px;
+.rd-loading,
+.rd-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 28px 12px;
   font-size: 12px;
   color: var(--b3-theme-on-surface);
-  opacity: 0.5;
+  opacity: 0.45;
+  font-family: $font-body;
 }
 
-.recent-docs-list {
-  max-height: 420px;
-  overflow-y: auto;
+.rd-loading-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--b3-theme-primary);
+  animation: rd-pulse 1.2s ease-in-out infinite;
 }
 
-.recent-doc-item {
+@keyframes rd-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+.rd-empty-icon {
+  width: 28px;
+  height: 28px;
+  opacity: 0.35;
+}
+
+.rd-list {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 7px 8px;
-  border-radius: 4px;
+  flex-direction: column;
+}
+
+// ---- group header ----
+.rd-group-header {
+  padding: 10px 12px 4px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.35;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: $font-body;
+}
+
+// ---- item row ----
+.rd-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.12s;
+  font-family: $font-body;
 
   &:hover {
     background: var(--b3-list-hover);
   }
-
-  & + & {
-    border-top: 1px solid rgba(128, 128, 128, 0.08);
-  }
-
-  // 今天更新的高亮
-  &.is-today {
-    background: rgba(var(--b3-theme-primary-rgb), 0.04);
-    border-left: 2px solid var(--b3-theme-primary);
-    padding-left: 6px;
-  }
-
-  &.is-recent:not(.is-today) {
-    background: rgba(var(--b3-theme-primary-rgb), 0.015);
-  }
 }
 
-.recent-doc-index {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.3;
-  min-width: 16px;
-  text-align: center;
-  line-height: 20px;
+.rd-item-icon {
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.25;
 }
 
-.recent-doc-body {
+.rd-item-body {
   flex: 1;
   min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
 }
 
-.recent-doc-top {
+.rd-item-path {
   display: flex;
   align-items: center;
-  gap: 6px;
-}
-
-.recent-doc-title {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--b3-theme-on-surface);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 1;
-}
-
-.recent-doc-notebook {
-  font-size: 9px;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.5;
-  background: rgba(128, 128, 128, 0.08);
-  padding: 1px 6px;
-  border-radius: 3px;
-  white-space: nowrap;
+  gap: 0;
   flex-shrink: 0;
-  max-width: 80px;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.recent-doc-bottom {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 3px;
-}
-
-.recent-doc-time-full {
-  font-size: 10px;
+.rd-notebook {
+  font-size: 11px;
   color: var(--b3-theme-on-surface);
   opacity: 0.4;
+  font-weight: 400;
+  white-space: nowrap;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.recent-doc-relative {
-  font-size: 10px;
-  color: var(--b3-theme-primary);
-  opacity: 0.65;
+.rd-separator {
+  font-size: 11px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.2;
+  margin: 0 3px;
+}
+
+.rd-item-title {
+  font-size: 12.5px;
   font-weight: 500;
+  color: var(--b3-theme-on-surface);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.recent-doc-today-badge {
-  font-size: 9px;
-  font-weight: 600;
-  color: #fff;
-  background: var(--b3-theme-primary);
-  padding: 1px 5px;
-  border-radius: 3px;
+.rd-time {
+  font-size: 11px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.35;
   white-space: nowrap;
   flex-shrink: 0;
-  line-height: 16px;
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
 }
 </style>

@@ -9,6 +9,13 @@
         :title="i18n.refresh"
         @click="handleRefresh"
       />
+      <button
+        class="storage-toggle-btn"
+        :title="showStorage ? '隐藏存储路径' : '查看存储路径'"
+        @click="showStorage = !showStorage"
+      >
+        <svg><use xlink:href="#iconFolder"></use></svg>
+      </button>
     </div>
     <div class="header-right">
       <div class="auto-update-info">
@@ -21,28 +28,29 @@
     </div>
   </div>
   <div
-    v-if="storagePaths && storagePaths.length > 0"
+    v-if="showStorage && storagePaths && storagePaths.length > 0"
     class="storage-paths"
   >
-    <span class="storage-paths-label">存储路径:</span>
     <div
       v-for="item in storagePaths"
       :key="item.key"
-      :title="item.path"
       class="storage-path-item"
     >
-      {{ item.path }}
+      <span class="storage-key">{{ item.key }}</span>
+      <span class="storage-desc">{{ item.desc }}</span>
+      <span class="storage-path" :title="item.path">{{ item.path }}</span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { IconKey } from "@/config/icons"
-import { computed } from "vue"
+import { computed, ref } from "vue"
 import Button from "@/components/Button.vue"
 
 interface StoragePathItem {
   key: string
+  desc: string
   path: string
 }
 
@@ -73,6 +81,8 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<Emits>()
+
+const showStorage = ref(false)
 
 const updateIntervalText = computed(() => {
   const seconds = props.updateInterval
@@ -172,36 +182,72 @@ $stats-header-height: 56px;
   }
 }
 
+.storage-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: $radius-sm;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.2s, background 0.2s;
+
+  &:hover {
+    opacity: 1;
+    background: var(--b3-theme-hover);
+  }
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
 .storage-paths {
-  padding: 4px 16px 6px;
+  padding: 6px 12px;
   background: var(--b3-theme-background);
   border-bottom: 1px solid var(--b3-border-color);
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px;
+  flex-direction: column;
+  gap: 3px;
   font-family: $font-body;
-  font-size: 10px;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.55;
   user-select: all;
+}
 
-  .storage-paths-label {
-    opacity: 0.7;
-    margin-right: 4px;
-  }
+.storage-path-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+}
 
-  .storage-path-item {
-    background: var(--b3-theme-surface);
-    padding: 1px 6px;
-    border-radius: 3px;
-    border: 1px solid var(--b3-border-color);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 240px;
-    cursor: default;
-  }
+.storage-key {
+  font-weight: 600;
+  color: var(--b3-theme-primary);
+  white-space: nowrap;
+  min-width: 130px;
+}
+
+.storage-desc {
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+  white-space: nowrap;
+  min-width: 60px;
+}
+
+.storage-path {
+  flex: 1;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.4;
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: default;
 }
 </style>
 

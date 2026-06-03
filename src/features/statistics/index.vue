@@ -575,8 +575,8 @@ const storagePaths = computed(() => {
   const pluginName = props.plugin.name || ""
   const baseDir = `${dataDir}/storage/petal/${pluginName}`
   return [
-    { key: STATISTICS_STORAGE_KEYS.HISTORY, path: `${baseDir}/${STATISTICS_STORAGE_KEYS.HISTORY}.json` },
-    { key: STATISTICS_STORAGE_KEYS.SETTINGS, path: `${baseDir}/${STATISTICS_STORAGE_KEYS.SETTINGS}.json` },
+    { key: STATISTICS_STORAGE_KEYS.HISTORY, desc: "每日快照", path: `${baseDir}/${STATISTICS_STORAGE_KEYS.HISTORY}.json` },
+    { key: STATISTICS_STORAGE_KEYS.SETTINGS, desc: "更新间隔", path: `${baseDir}/${STATISTICS_STORAGE_KEYS.SETTINGS}.json` },
   ]
 })
 

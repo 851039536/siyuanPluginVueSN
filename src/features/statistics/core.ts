@@ -143,13 +143,6 @@ export class Statistics {
         avgWordsPerDoc: stats.avgWordsPerDoc,
       }
 
-      const keys = Object.keys(existingData).sort().reverse()
-      if (keys.length > 365) {
-        keys.slice(365).forEach((key) => {
-          delete existingData[key]
-        })
-      }
-
       await this.storage.saveHistory(existingData)
       this.lastUpdateTime = now
     } catch (error) {

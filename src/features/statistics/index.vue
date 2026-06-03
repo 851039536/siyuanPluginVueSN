@@ -108,8 +108,8 @@
         <!-- 最近更新的文档 -->
         <RecentUpdatedDocs
           ref="recentUpdatedDocsRef"
-          :title="i18n.recentUpdatedDocs || '最近更新的文档'"
-          :empty-text="i18n.noRecentDocs || '暂无最近更新'"
+          :title="i18n.recentUpdatedDocs || '最近更新'"
+          :empty-text="i18n.noRecentDocs || '暂无最近更新的文档'"
           :i18n="i18n"
         />
 
@@ -419,8 +419,8 @@ const props = withDefaults(defineProps<Props>(), {
     docBarChartTitle: "各笔记本文档数",
     docChanges: "文档变化",
     noDocChanges: "当天无新增或修改",
-    noRecentDocs: "暂无最近更新",
-    recentUpdatedDocs: "最近更新的文档",
+    noRecentDocs: "暂无最近更新的文档",
+    recentUpdatedDocs: "最近更新",
     today: "今天",
     days3: "近3天",
     oneMonth: "近1月",

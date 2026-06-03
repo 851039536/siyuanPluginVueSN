@@ -29,15 +29,6 @@ export class Statistics {
   async init(): Promise<void> {
     this.registerDock()
 
-    try {
-      const settings = await this.storage.loadSettings()
-      if (settings.statisticsUpdateInterval) {
-        this.updateInterval = settings.statisticsUpdateInterval
-      }
-    } catch (error) {
-      console.error("加载设置失败:", error)
-    }
-
     this.startUpdateTimer()
     this.bindEvents()
   }
@@ -150,19 +141,6 @@ export class Statistics {
     } finally {
       this.isCollecting = false
     }
-  }
-
-  async updateUpdateInterval(interval: number): Promise<void> {
-    this.updateInterval = interval
-    try {
-      const settings = await this.storage.loadSettings()
-      settings.statisticsUpdateInterval = interval
-      await this.storage.saveSettings(settings)
-    } catch (error) {
-      console.error("保存更新间隔设置失败:", error)
-    }
-
-    this.startUpdateTimer(false)
   }
 
   async manualRefresh(): Promise<void> {

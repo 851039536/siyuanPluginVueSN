@@ -287,35 +287,6 @@ const periodAvgLabel = computed(() => {
     align-items: center;
   }
 
-  .trend-toggle {
-    flex-shrink: 0;
-    padding: 7px 12px;
-    border: 1px solid var(--b3-border-color);
-    background: var(--b3-theme-surface);
-    color: var(--b3-theme-on-surface);
-    cursor: pointer;
-    font-family: $font-body;
-    font-size: 11px;
-    font-weight: 600;
-    border-radius: 8px;
-    white-space: nowrap;
-    opacity: 0.65;
-
-    &:hover {
-      border-color: var(--b3-theme-secondary);
-      color: var(--b3-theme-secondary);
-      opacity: 0.9;
-    }
-
-    &.active {
-      background: var(--b3-theme-secondary);
-      color: var(--b3-theme-on-primary, #fff);
-      border-color: var(--b3-theme-secondary);
-      opacity: 1;
-      box-shadow: 0 2px 8px rgba(var(--b3-theme-secondary-rgb), 0.25);
-    }
-  }
-
   .mode-tab {
     flex: 1;
     padding: 6px 4px;

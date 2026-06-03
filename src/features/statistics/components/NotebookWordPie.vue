@@ -130,8 +130,6 @@ function degToRad(deg: number): number {
 </script>
 
 <style scoped lang="scss">
-@use "../styles/index.scss" as stats;
-
 .notebook-word-pie {
   padding: 8px 0;
 }

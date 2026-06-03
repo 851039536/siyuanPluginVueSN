@@ -121,7 +121,7 @@
             <span class="stat-icon">🏆</span>
             <span class="stat-value">{{ formatNumber(report.maxWordsDay.words) }}</span>
             <span class="stat-label">最高单日</span>
-            <template v-if="report.maxWordsDay.wordCount">
+            <template v-if="report.maxWordsDay.words">
               <span
                 class="stat-sub"
               >{{ report.maxWordsDay.date }}</span>

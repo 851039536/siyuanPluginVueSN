@@ -112,6 +112,56 @@
         </p>
       </div>
 
+      <!-- 插件设置导出/导入 -->
+      <div class="backup-section">
+        <div class="section-header">
+          <span class="section-icon">⚙️</span>
+          <h4>{{ i18n.pluginSettingsBackup || '插件设置备份' }}</h4>
+        </div>
+        <div class="backup-actions-row">
+          <button
+            class="backup-btn secondary"
+            :disabled="isExporting"
+            @click="exportPluginSettings"
+          >
+            <span
+              v-if="isExporting"
+              class="loading-spinner"
+            ></span>
+            <span v-else>📤</span>
+            <span>{{ i18n.exportSettings || '导出设置' }}</span>
+          </button>
+          <label
+            class="backup-btn secondary import-label"
+            :disabled="isImporting"
+          >
+            <span
+              v-if="isImporting"
+              class="loading-spinner"
+            ></span>
+            <span v-else>📥</span>
+            <span>{{ i18n.importSettings || '导入设置' }}</span>
+            <input
+              ref="importFileRef"
+              type="file"
+              accept=".json"
+              class="hidden-input"
+              @change="onImportFileChange"
+            />
+          </label>
+        </div>
+        <p class="backup-hint">
+          {{ i18n.pluginSettingsBackupHint || '仅导出/导入插件自身设置（不含工作区笔记数据），可用于跨设备迁移或数据恢复' }}
+        </p>
+        <div
+          v-if="importResult"
+          class="import-result"
+          :class="importResult.success ? 'success' : 'error'"
+        >
+          {{ importResult.message }}
+        </div>
+      </div>
+
       <!-- 自动备份设置 -->
       <div class="auto-backup-section">
         <div class="section-header">
@@ -454,6 +504,10 @@ import type {
 } from "../modules/CloudBackupManager"
 import { showMessage } from "siyuan"
 import {
+  backupPluginData,
+  restoreFromUpload,
+} from "@/utils/settingsBackup"
+import {
   computed,
   nextTick,
   onMounted,
@@ -493,6 +547,10 @@ const backupFrequency = ref("daily")
 const backupTime = ref("03:00")
 const keepBackupCount = ref(7)
 const cloudSyncEnabled = ref(false)
+const isExporting = ref(false)
+const isImporting = ref(false)
+const importResult = ref<{ success: boolean, message: string } | null>(null)
+const importFileRef = ref<HTMLInputElement | null>(null)
 const backupList = ref<
   Array<{ name: string, path: string, time: string, size: number }>
 >([])
@@ -1073,6 +1131,58 @@ async function deleteBackup(backup: { name: string, path: string }) {
   } catch (error) {
     console.error("删除备份失败:", error)
     showMessage(props.i18n.deleteFailed || "删除失败", 3000, "error")
+  }
+}
+
+// ========== 插件设置导出/导入 ==========
+
+async function exportPluginSettings() {
+  if (!props.plugin || isExporting.value || !workspaceRoot.value) return
+  isExporting.value = true
+  importResult.value = null
+  try {
+    const result = await backupPluginData(props.plugin, workspaceRoot.value)
+    showMessage(`${props.i18n.exportSuccess || "备份成功"}: ${result.filePath}`, 5000, "info")
+  } catch (error: any) {
+    console.error("导出设置失败:", error)
+    showMessage(`${props.i18n.exportFailed || "导出失败"}: ${error.message}`, 5000, "error")
+  } finally {
+    isExporting.value = false
+  }
+}
+
+async function onImportFileChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file || !props.plugin || !workspaceRoot.value) return
+
+  const confirmImport = confirm(
+    props.i18n.confirmImportSettings || "确定要恢复此备份吗？\n\n⚠️ 当前插件数据将被覆盖，建议先导出当前设置作为备份。",
+  )
+  if (!confirmImport) {
+    input.value = ""
+    return
+  }
+
+  isImporting.value = true
+  importResult.value = null
+  try {
+    const result = await restoreFromUpload(file, props.plugin, workspaceRoot.value)
+    importResult.value = {
+      success: true,
+      message: `${props.i18n.importSuccess || "恢复完成"}: ${result.restored} 个文件已恢复`,
+    }
+    showMessage(props.i18n.importSuccessHint || "设置已恢复，建议重启思源笔记以使更改生效", 5000, "info")
+  } catch (error: any) {
+    console.error("导入设置失败:", error)
+    importResult.value = {
+      success: false,
+      message: `${props.i18n.importFailed || "导入失败"}: ${error.message}`,
+    }
+    showMessage(`${props.i18n.importFailed || "导入失败"}: ${error.message}`, 5000, "error")
+  } finally {
+    isImporting.value = false
+    input.value = ""
   }
 }
 

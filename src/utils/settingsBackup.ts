@@ -15,7 +15,7 @@ export interface BackupResult {
   fileCount: number
 }
 
-/** 获取 fs/path/JSZip */
+/** 获取 fs/path 模块（Electron 环境） */
 function getNodeModules(): { fs: any, path: any } | null {
   try {
     const fs = require("node:fs")
@@ -26,10 +26,38 @@ function getNodeModules(): { fs: any, path: any } | null {
   }
 }
 
+/** 递归添加目录到 zip */
+function addDirToZip(zip: JSZip, dirPath: string, relativePath: string, fs: any, path: any) {
+  const entries = fs.readdirSync(dirPath, { withFileTypes: true })
+  for (const entry of entries) {
+    const fullPath = path.join(dirPath, entry.name)
+    const relPath = relativePath ? `${relativePath}/${entry.name}` : entry.name
+    if (entry.isDirectory()) {
+      addDirToZip(zip, fullPath, relPath, fs, path)
+    } else {
+      zip.file(relPath, fs.readFileSync(fullPath))
+    }
+  }
+}
+
+/** 将 zip 内容解压到目标目录 */
+async function extractZipToDir(zip: JSZip, targetDir: string, fs: any, path: any): Promise<number> {
+  let count = 0
+  for (const [relativePath, zipEntry] of Object.entries(zip.files) as [string, any][]) {
+    if (zipEntry.dir) continue
+    const targetPath = path.join(targetDir, relativePath)
+    const targetSubDir = path.dirname(targetPath)
+    if (!fs.existsSync(targetSubDir)) {
+      fs.mkdirSync(targetSubDir, { recursive: true })
+    }
+    fs.writeFileSync(targetPath, await zipEntry.async("nodebuffer"))
+    count++
+  }
+  return count
+}
+
 /**
  * 备份插件数据目录为 zip 文件
- * @param plugin 插件实例
- * @param workspaceRoot 工作区根目录（如 E:\siyuan）
  */
 export async function backupPluginData(plugin: Plugin, workspaceRoot: string): Promise<BackupResult> {
   const node = getNodeModules()
@@ -40,29 +68,10 @@ export async function backupPluginData(plugin: Plugin, workspaceRoot: string): P
     throw new Error(`插件数据目录不存在: ${pluginDataDir}`)
   }
 
-
   const zip = new JSZip()
-
-  // 递归读取目录下所有文件
-  const { fs, path } = node
-  function addDir(dirPath: string, relativePath: string) {
-    const entries = fs.readdirSync(dirPath, { withFileTypes: true })
-    for (const entry of entries) {
-      const fullPath = path.join(dirPath, entry.name)
-      const relPath = relativePath ? `${relativePath}/${entry.name}` : entry.name
-      if (entry.isDirectory()) {
-        addDir(fullPath, relPath)
-      } else {
-        zip.file(relPath, fs.readFileSync(fullPath))
-      }
-    }
-  }
-
-  addDir(pluginDataDir, "")
-
+  addDirToZip(zip, pluginDataDir, "", node.fs, node.path)
   const content = await zip.generateAsync({ type: "nodebuffer" })
 
-  // 保存到 workspace/data-backup/
   const backupDir = `${workspaceRoot}/data-backup`
   if (!node.fs.existsSync(backupDir)) {
     node.fs.mkdirSync(backupDir, { recursive: true })
@@ -75,83 +84,20 @@ export async function backupPluginData(plugin: Plugin, workspaceRoot: string): P
   const filePath = node.path.join(backupDir, fileName)
 
   node.fs.writeFileSync(filePath, content)
-
   return { fileName, filePath, size: content.length, fileCount: Object.keys(zip.files).length }
 }
 
 /**
- * 从 zip 文件恢复插件数据
- * @param backupFilePath zip 文件路径
- * @param plugin 插件实例
- * @param workspaceRoot 工作区根目录
+ * 从上传的 zip 文件恢复插件数据
  */
-export async function restorePluginData(
-  backupFilePath: string,
-  plugin: Plugin,
-  workspaceRoot: string,
-): Promise<{ restored: number }> {
+export async function restoreFromUpload(file: File, plugin: Plugin, workspaceRoot: string): Promise<{ restored: number }> {
   const node = getNodeModules()
   if (!node) throw new Error("当前环境不支持文件系统操作")
 
   const pluginDataDir = `${workspaceRoot}/data/storage/petal/${plugin.name}`
-
-
-  const buffer = node.fs.readFileSync(backupFilePath)
-  const zip = await JSZip.loadAsync(buffer)
-
-  let restored = 0
-
-  for (const [relativePath, zipEntry] of Object.entries(zip.files) as [string, any][]) {
-    if (zipEntry.dir) continue
-
-    const targetPath = node.path.join(pluginDataDir, relativePath)
-    const targetDir = node.path.dirname(targetPath)
-
-    if (!node.fs.existsSync(targetDir)) {
-      node.fs.mkdirSync(targetDir, { recursive: true })
-    }
-
-    const data = await zipEntry.async("nodebuffer")
-    node.fs.writeFileSync(targetPath, data)
-    restored++
-  }
-
-  return { restored }
-}
-
-/**
- * 从上传的 zip 文件恢复
- */
-export async function restoreFromUpload(
-  file: File,
-  plugin: Plugin,
-  workspaceRoot: string,
-): Promise<{ restored: number }> {
-  const node = getNodeModules()
-  if (!node) throw new Error("当前环境不支持文件系统操作")
-
-  const pluginDataDir = `${workspaceRoot}/data/storage/petal/${plugin.name}`
-
-
   const buffer = Buffer.from(await file.arrayBuffer())
   const zip = await JSZip.loadAsync(buffer)
-
-  let restored = 0
-
-  for (const [relativePath, zipEntry] of Object.entries(zip.files) as [string, any][]) {
-    if (zipEntry.dir) continue
-
-    const targetPath = node.path.join(pluginDataDir, relativePath)
-    const targetDir = node.path.dirname(targetPath)
-
-    if (!node.fs.existsSync(targetDir)) {
-      node.fs.mkdirSync(targetDir, { recursive: true })
-    }
-
-    const data = await zipEntry.async("nodebuffer")
-    node.fs.writeFileSync(targetPath, data)
-    restored++
-  }
+  const restored = await extractZipToDir(zip, pluginDataDir, node.fs, node.path)
 
   return { restored }
 }

@@ -533,7 +533,7 @@ defineExpose({ load })
   gap: 4px;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 6px;
+  border-radius: 4px;
   padding: 3px;
   width: fit-content;
 }
@@ -584,7 +584,7 @@ defineExpose({ load })
 .chart-card {
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 10px;
+  border-radius: 4px;
   padding: 14px;
 }
 
@@ -680,7 +680,7 @@ defineExpose({ load })
   position: absolute;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 8px;
+  border-radius: 4px;
   padding: 8px 10px;
   font-size: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
@@ -722,7 +722,7 @@ defineExpose({ load })
 .ranking-card {
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 10px;
+  border-radius: 4px;
   padding: 14px;
 }
 
@@ -821,13 +821,13 @@ defineExpose({ load })
   flex: 1;
   height: 6px;
   background: rgba(var(--b3-theme-on-surface-rgb), 0.06);
-  border-radius: 3px;
+  border-radius: 4px;
   overflow: hidden;
 }
 
 .bar-fill {
   height: 100%;
-  border-radius: 3px;
+  border-radius: 4px;
   transition: width 0.3s ease;
   min-width: 2px;
 }

@@ -283,7 +283,7 @@ const periodAvgLabel = computed(() => {
     padding: 3px;
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
-    border-radius: 8px;
+    border-radius: 4px;
     align-items: center;
   }
 
@@ -301,7 +301,7 @@ const periodAvgLabel = computed(() => {
     align-items: center;
     justify-content: center;
     gap: 4px;
-    border-radius: 5px;
+    border-radius: 4px;
     white-space: nowrap;
 
     &:hover {
@@ -333,7 +333,7 @@ const periodAvgLabel = computed(() => {
     font-family: $font-body;
     font-size: 10px;
     font-weight: 600;
-    border-radius: 15px;
+    border-radius: 4px;
 
     &:hover {
       border-color: var(--b3-theme-primary);
@@ -355,7 +355,7 @@ const periodAvgLabel = computed(() => {
       width: 100%;
       padding: 6px 12px;
       border: 1px solid var(--b3-border-color);
-      border-radius: 8px;
+      border-radius: 4px;
       background: var(--b3-theme-surface);
       color: var(--b3-theme-on-surface);
       font-family: $font-body;
@@ -400,7 +400,7 @@ const periodAvgLabel = computed(() => {
     .stat-value {
       font-family: $font-heading;
       font-size: 16px;
-      font-weight: 800;
+      font-weight: 700;
       color: var(--b3-theme-primary);
     }
   }

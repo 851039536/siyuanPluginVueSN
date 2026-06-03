@@ -298,6 +298,7 @@ async function compare() {
 </script>
 
 <style scoped lang="scss">
+@use "../styles/index.scss" as stats;
 .comparison-view {
   padding: 4px 0;
 }
@@ -376,7 +377,7 @@ async function compare() {
 .compare-table-wrap {
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 10px;
+  border-radius: 4px;
   overflow: hidden;
 }
 
@@ -415,12 +416,12 @@ async function compare() {
   }
 
   .delta-up {
-    color: #22c55e;
+    color: stats.$color-success;
     font-weight: 700;
   }
 
   .delta-down {
-    color: #ef4444;
+    color: stats.$color-danger;
     font-weight: 700;
   }
 
@@ -432,7 +433,7 @@ async function compare() {
 .compare-breakdown {
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 10px;
+  border-radius: 4px;
   padding: 12px;
 }
 
@@ -473,14 +474,14 @@ async function compare() {
 .bar-row {
   height: 10px;
   background: rgba(var(--b3-theme-on-surface-rgb), 0.04);
-  border-radius: 2px;
+  border-radius: 4px;
   overflow: hidden;
 }
 
 .bar-fill {
   height: 100%;
-  border-radius: 2px;
-  font-size: 8px;
+  border-radius: 4px;
+  font-size: 10px;
   color: #fff;
   display: flex;
   align-items: center;
@@ -512,7 +513,7 @@ async function compare() {
   display: inline-block;
   width: 10px;
   height: 10px;
-  border-radius: 2px;
+  border-radius: 4px;
   margin-right: 3px;
 
   &.legend-a {

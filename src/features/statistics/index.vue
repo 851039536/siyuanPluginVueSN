@@ -692,7 +692,7 @@ defineExpose({
 .tab-badge {
   font-size: 11px;
   padding: 1px 6px;
-  border-radius: 10px;
+  border-radius: 4px;
   background: rgba(var(--b3-theme-primary-rgb), 0.1);
   color: var(--b3-theme-primary);
   font-weight: 500;
@@ -725,7 +725,7 @@ defineExpose({
 .dist-section {
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 10px;
+  border-radius: 4px;
   padding: 12px;
 }
 

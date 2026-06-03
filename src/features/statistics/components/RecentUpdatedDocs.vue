@@ -210,7 +210,7 @@ defineExpose({ loadDocs, docs })
 .rd-loading-dot {
   width: 6px;
   height: 6px;
-  border-radius: 3px;
+  border-radius: 4px;
   background: var(--b3-theme-primary);
   animation: rd-pulse 1.2s ease-in-out infinite;
 }
@@ -249,7 +249,7 @@ defineExpose({ loadDocs, docs })
   align-items: center;
   gap: 10px;
   padding: 7px 12px;
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
   transition: background 0.12s;
   font-family: $font-body;

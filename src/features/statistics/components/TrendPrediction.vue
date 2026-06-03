@@ -405,15 +405,15 @@ defineExpose({ load })
   color: var(--b3-theme-on-surface);
 
   .trend-up {
-    color: #22c55e;
+    color: stats.$color-success;
   }
 
   .trend-pos {
-    color: #22c55e;
+    color: stats.$color-success;
   }
 
   .trend-neg {
-    color: #ef4444;
+    color: stats.$color-danger;
   }
 }
 
@@ -455,7 +455,7 @@ defineExpose({ load })
   }
 
   &.predict {
-    stroke: #f59e0b;
+    stroke: stats.$color-warning;
     stroke-dasharray: 6 3;
   }
 }
@@ -468,7 +468,7 @@ defineExpose({ load })
   }
 
   &.predict {
-    fill: #f59e0b;
+    fill: stats.$color-warning;
   }
 }
 
@@ -477,7 +477,7 @@ defineExpose({ load })
 }
 
 .dot-predict {
-  fill: #f59e0b;
+  fill: stats.$color-warning;
 }
 
 .chart-hit-area {
@@ -494,7 +494,7 @@ defineExpose({ load })
   position: absolute;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 6px;
+  border-radius: 4px;
   padding: 4px 8px;
   font-size: 11px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -508,11 +508,11 @@ defineExpose({ load })
 
 .tooltip-pred-badge {
   display: inline-block;
-  background: #f59e0b;
+  background: stats.$color-warning;
   color: #fff;
-  font-size: 8px;
+  font-size: 10px;
   padding: 1px 4px;
-  border-radius: 3px;
+  border-radius: 4px;
   margin-left: 4px;
 }
 
@@ -539,14 +539,14 @@ defineExpose({ load })
 .legend-dot {
   width: 12px;
   height: 3px;
-  border-radius: 2px;
+  border-radius: 4px;
 
   &.history {
     background: var(--b3-theme-primary);
   }
 
   &.predict {
-    background: #f59e0b;
+    background: stats.$color-warning;
   }
 }
 </style>

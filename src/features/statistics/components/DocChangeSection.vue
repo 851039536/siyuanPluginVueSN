@@ -371,7 +371,7 @@ function setDocDateToday() {
   display: inline-block;
   width: 8px;
   height: 8px;
-  border-radius: 2px;
+  border-radius: 4px;
   margin-right: 3px;
   vertical-align: middle;
 
@@ -416,7 +416,7 @@ function setDocDateToday() {
 
 .range-chart-bar {
   height: 16px;
-  border-radius: 3px;
+  border-radius: 4px;
   font-size: 10px;
   color: #fff;
   display: flex;
@@ -507,7 +507,7 @@ function setDocDateToday() {
   .changed-doc-icon {
     width: 16px;
     height: 16px;
-    border-radius: 3px;
+    border-radius: 4px;
     display: inline-flex;
     align-items: center;
     justify-content: center;

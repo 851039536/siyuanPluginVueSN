@@ -125,7 +125,6 @@ const toggleFavorite = () => {
 | `video`           | 视频             | #e11d48   |
 | `everythingSearch` | 文件搜索        | #3b82f6   |
 | `statusBar`      | 监控仪表盘       | #8b5cf6   |
-| `apiReference`    | API              | #0ea5e9   |
 | `floatingToolbar` | 文本格式         | #f97316   |
 | `floatingBox`     | 部件             | #8b5cf6   |
 | `textDiff`        | 文件对比         | #06b6d4   |

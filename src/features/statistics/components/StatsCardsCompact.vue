@@ -203,7 +203,7 @@ function formatChange(change: number | null): string {
     width: 3px;
     height: 14px;
     background: var(--b3-theme-primary);
-    border-radius: 2px;
+    border-radius: 4px;
   }
 }
 
@@ -239,7 +239,7 @@ function formatChange(change: number | null): string {
 .core-value {
   font-family: $font-heading;
   font-size: 20px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--b3-theme-primary);
   line-height: 1.2;
 }
@@ -276,7 +276,7 @@ function formatChange(change: number | null): string {
   gap: 1px;
   background: var(--b3-border-color);
   border: 1px solid var(--b3-border-color);
-  border-radius: 8px;
+  border-radius: 4px;
   overflow: hidden;
 }
 
@@ -299,7 +299,7 @@ function formatChange(change: number | null): string {
 }
 
 .secondary-label {
-  font-size: 8px;
+  font-size: 10px;
   color: var(--b3-theme-on-surface);
   opacity: 0.45;
   margin-top: 2px;

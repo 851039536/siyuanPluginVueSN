@@ -135,7 +135,7 @@ function totalCount(item: NotebookBlockTypeStat): number {
     .nb-bar-wrap {
       flex: 1;
       height: 14px;
-      border-radius: 3px;
+      border-radius: 4px;
       overflow: hidden;
       display: flex;
       min-width: 40px;
@@ -183,7 +183,7 @@ function totalCount(item: NotebookBlockTypeStat): number {
     .legend-dot {
       width: 8px;
       height: 8px;
-      border-radius: 2px;
+      border-radius: 4px;
       flex-shrink: 0;
     }
   }

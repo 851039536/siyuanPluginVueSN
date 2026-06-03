@@ -1209,7 +1209,7 @@ const lockedAchievements = computed(() =>
 .next-goal-card {
   padding: 10px 12px;
   margin-bottom: 10px;
-  border-radius: 8px;
+  border-radius: 4px;
   background: linear-gradient(135deg, rgba(var(--b3-theme-primary-rgb), 0.06) 0%, rgba(var(--b3-theme-primary-rgb), 0.02) 100%);
   border: 1px solid rgba(var(--b3-theme-primary-rgb), 0.15);
 }
@@ -1248,7 +1248,7 @@ const lockedAchievements = computed(() =>
 
 .next-goal-percent {
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 700;
   font-family: $font-heading;
   color: var(--b3-theme-primary);
   opacity: 0.8;
@@ -1257,7 +1257,7 @@ const lockedAchievements = computed(() =>
 .next-goal-progress {
   height: 4px;
   background: rgba(var(--b3-theme-primary-rgb), 0.1);
-  border-radius: 2px;
+  border-radius: 4px;
   overflow: hidden;
   margin-bottom: 6px;
 }
@@ -1265,7 +1265,7 @@ const lockedAchievements = computed(() =>
 .next-goal-fill {
   height: 100%;
   background: var(--b3-theme-primary);
-  border-radius: 2px;
+  border-radius: 4px;
   transition: width 0.6s ease;
 }
 
@@ -1280,7 +1280,7 @@ const lockedAchievements = computed(() =>
 .level-section {
   padding: 10px 12px;
   margin-bottom: 10px;
-  border-radius: 8px;
+  border-radius: 4px;
   background: linear-gradient(135deg, rgba(var(--b3-theme-primary-rgb), 0.08) 0%, rgba(var(--b3-theme-primary-rgb), 0.03) 100%);
   border: 1px solid rgba(var(--b3-theme-primary-rgb), 0.12);
 }
@@ -1336,19 +1336,19 @@ const lockedAchievements = computed(() =>
   flex: 1;
   height: 3px;
   background: rgba(var(--b3-theme-primary-rgb), 0.1);
-  border-radius: 2px;
+  border-radius: 4px;
   overflow: hidden;
 }
 
 .level-progress-fill {
   height: 100%;
   background: var(--b3-theme-primary);
-  border-radius: 2px;
+  border-radius: 4px;
   transition: width 0.6s ease;
 }
 
 .level-progress-label {
-  font-size: 8px;
+  font-size: 10px;
   color: var(--b3-theme-on-surface);
   opacity: 0.4;
   white-space: nowrap;
@@ -1393,7 +1393,7 @@ const lockedAchievements = computed(() =>
   flex-direction: column;
   align-items: center;
   padding: 8px 6px;
-  border-radius: 8px;
+  border-radius: 4px;
   text-align: center;
   position: relative;
   transition: transform 0.15s ease;
@@ -1433,7 +1433,7 @@ const lockedAchievements = computed(() =>
   }
 
   .ach-desc {
-    font-size: 8px;
+    font-size: 10px;
     color: var(--b3-theme-on-surface);
     opacity: 0.45;
     line-height: 1.3;
@@ -1444,9 +1444,9 @@ const lockedAchievements = computed(() =>
     position: absolute;
     top: -3px;
     right: -3px;
-    font-size: 6px;
+    font-size: 10px;
     padding: 0 3px;
-    border-radius: 3px;
+    border-radius: 4px;
     font-weight: 700;
     line-height: 1.5;
     pointer-events: none;
@@ -1464,12 +1464,12 @@ const lockedAchievements = computed(() =>
 
   &.tier-epic .ach-tier-badge {
     background: rgba(168, 85, 247, 0.2);
-    color: #a855f7;
+    color: stats.$color-tier-epic;
   }
 
   &.tier-legendary .ach-tier-badge {
     background: rgba(234, 179, 8, 0.25);
-    color: #ca8a04;
+    color: stats.$color-tier-legendary;
   }
 
   &.locked {
@@ -1491,7 +1491,7 @@ const lockedAchievements = computed(() =>
   width: 100%;
   padding: 5px 8px;
   border: 1px dashed var(--b3-border-color);
-  border-radius: 6px;
+  border-radius: 4px;
   background: transparent;
   color: var(--b3-theme-on-surface);
   font-size: 9px;
@@ -1506,7 +1506,7 @@ const lockedAchievements = computed(() =>
   }
 
   .toggle-arrow {
-    font-size: 8px;
+    font-size: 10px;
   }
 }
 
@@ -1560,7 +1560,7 @@ const lockedAchievements = computed(() =>
   padding: 5px 8px;
   min-width: 52px;
   background: rgba(var(--b3-theme-primary-rgb), 0.03);
-  border-radius: 6px;
+  border-radius: 4px;
   position: relative;
 
   &.achieved {
@@ -1574,12 +1574,12 @@ const lockedAchievements = computed(() =>
     }
     &.tier-epic {
       background: linear-gradient(135deg, rgba(168, 85, 247, 0.12), rgba(var(--b3-theme-primary-rgb), 0.08));
-      .milestone-label { color: #a855f7; }
+      .milestone-label { color: stats.$color-tier-epic; }
     }
     &.tier-legendary {
       background: linear-gradient(135deg, rgba(234, 179, 8, 0.15), rgba(234, 88, 12, 0.08));
       border: 1px solid rgba(234, 179, 8, 0.25);
-      .milestone-label { color: #ca8a04; font-weight: 700; }
+      .milestone-label { color: stats.$color-tier-legendary; font-weight: 700; }
     }
   }
 
@@ -1604,7 +1604,7 @@ const lockedAchievements = computed(() =>
   }
 
   .milestone-label {
-    font-size: 8px;
+    font-size: 10px;
     text-align: center;
     white-space: nowrap;
     line-height: 1.3;
@@ -1614,9 +1614,9 @@ const lockedAchievements = computed(() =>
     position: absolute;
     top: -3px;
     right: -3px;
-    font-size: 6px;
+    font-size: 10px;
     padding: 0 3px;
-    border-radius: 3px;
+    border-radius: 4px;
     font-weight: 700;
     line-height: 1.5;
     pointer-events: none;
@@ -1634,12 +1634,12 @@ const lockedAchievements = computed(() =>
 
   &.tier-epic .milestone-tier-badge {
     background: rgba(168, 85, 247, 0.2);
-    color: #a855f7;
+    color: stats.$color-tier-epic;
   }
 
   &.tier-legendary .milestone-tier-badge {
     background: rgba(234, 179, 8, 0.25);
-    color: #ca8a04;
+    color: stats.$color-tier-legendary;
   }
 
   .mini-progress {
@@ -1664,7 +1664,7 @@ const lockedAchievements = computed(() =>
   margin-top: 8px;
   padding: 6px;
   border: 1px dashed var(--b3-border-color);
-  border-radius: 6px;
+  border-radius: 4px;
   background: transparent;
   color: var(--b3-theme-on-surface);
   font-size: 10px;
@@ -1688,7 +1688,7 @@ const lockedAchievements = computed(() =>
   padding: 8px 10px;
   margin-top: 10px;
   border: 1px solid var(--b3-border-color);
-  border-radius: 6px;
+  border-radius: 4px;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   font-size: 12px;
@@ -1762,13 +1762,13 @@ const lockedAchievements = computed(() =>
   flex: 1;
   height: 4px;
   background: rgba(var(--b3-theme-on-surface-rgb), 0.06);
-  border-radius: 2px;
+  border-radius: 4px;
   overflow: hidden;
 }
 
 .road-bar-fill {
   height: 100%;
-  border-radius: 2px;
+  border-radius: 4px;
   background: var(--b3-theme-primary);
   transition: width 0.3s ease;
 }

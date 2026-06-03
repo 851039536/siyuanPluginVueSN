@@ -121,7 +121,7 @@ function getRankClass(index: number): string {
 
 .word-ranking-section {
   @include stats.stats-card-base;
-  border-radius: 8px;
+  border-radius: 4px;
   padding: 0;
   overflow: visible;
 
@@ -197,26 +197,26 @@ function getRankClass(index: number): string {
         justify-content: center;
         font-family: $font-heading;
         font-size: 10px;
-        font-weight: 800;
+        font-weight: 700;
         background: rgba(var(--b3-theme-on-surface-rgb), 0.06);
         color: var(--b3-theme-on-surface);
         opacity: 0.6;
       }
 
       &.rank-gold .rank-badge {
-        background: linear-gradient(135deg, #ffd700, #ffb800);
-        color: #7c5800;
+        background: linear-gradient(135deg, stats.$color-rank-gold, #ffb800);
+        color: stats.$color-rank-gold-text;
         opacity: 1;
       }
 
       &.rank-silver .rank-badge {
-        background: linear-gradient(135deg, #c0c0c0, #a8a8a8);
+        background: linear-gradient(135deg, stats.$color-rank-silver, #a8a8a8);
         color: #555;
         opacity: 1;
       }
 
       &.rank-bronze .rank-badge {
-        background: linear-gradient(135deg, #cd7f32, #b8722d);
+        background: linear-gradient(135deg, stats.$color-rank-bronze, #b8722d);
         color: #fff;
         opacity: 1;
       }
@@ -250,13 +250,13 @@ function getRankClass(index: number): string {
         width: 60px;
         height: 6px;
         background: rgba(var(--b3-theme-on-surface-rgb), 0.06);
-        border-radius: 3px;
+        border-radius: 4px;
         overflow: hidden;
 
         .rank-bar {
           height: 100%;
           background: stats.$gradient-primary;
-          border-radius: 3px;
+          border-radius: 4px;
           transition: width 0.3s ease;
         }
       }

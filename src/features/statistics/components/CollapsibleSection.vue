@@ -49,7 +49,7 @@ function toggle() {
 
 .collapsible-section {
   border: 1px solid var(--b3-border-color);
-  border-radius: 8px;
+  border-radius: 4px;
   overflow: hidden;
   background: var(--b3-theme-surface);
 

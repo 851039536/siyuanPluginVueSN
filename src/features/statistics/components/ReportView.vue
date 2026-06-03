@@ -259,7 +259,7 @@ async function generate() {
   gap: 4px;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 6px;
+  border-radius: 4px;
   padding: 3px;
   width: fit-content;
   margin-bottom: 12px;
@@ -374,7 +374,7 @@ async function generate() {
   align-items: center;
   padding: 8px 4px;
   background: var(--b3-theme-background);
-  border-radius: 6px;
+  border-radius: 4px;
 }
 
 .stat-icon {
@@ -407,7 +407,7 @@ async function generate() {
   color: var(--b3-theme-on-surface);
   padding: 6px 8px;
   background: rgba(var(--b3-theme-primary-rgb), 0.05);
-  border-radius: 6px;
+  border-radius: 4px;
   margin-bottom: 6px;
 
   strong {
@@ -454,13 +454,13 @@ async function generate() {
   flex: 1;
   height: 14px;
   background: rgba(var(--b3-theme-on-surface-rgb), 0.04);
-  border-radius: 3px;
+  border-radius: 4px;
   overflow: hidden;
 }
 
 .breakdown-bar {
   height: 100%;
-  border-radius: 3px;
+  border-radius: 4px;
   font-size: 9px;
   color: #fff;
   display: flex;
@@ -478,7 +478,7 @@ async function generate() {
   width: 28px;
   flex-shrink: 0;
   font-size: 10px;
-  color: #22c55e;
+  color: stats.$color-success;
   font-weight: 600;
 }
 </style>

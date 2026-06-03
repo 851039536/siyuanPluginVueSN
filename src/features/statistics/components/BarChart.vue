@@ -150,7 +150,7 @@ function formatChartLabel(label: string): string {
         width: 100%;
         min-height: 3px;
         background: stats.$gradient-primary;
-        border-radius: 4px 4px 1px 1px;
+        border-radius: 4px;
         cursor: pointer;
 
         &.today {

@@ -6,7 +6,7 @@
 @use '../../superPanel/styles/mixins' as *;
 
 // ========== Variables & Mixins ==========
-$stats-card-radius: 10px;
+$stats-card-radius: 4px;
 $stats-shadow-light: 0 2px 8px rgba(0, 0, 0, 0.04);
 $stats-shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.08);
 
@@ -17,6 +17,14 @@ $gradient-surface: linear-gradient(180deg, var(--b3-theme-surface) 0%, var(--b3-
 $color-success: #2da44e;
 $color-danger: #cf222e;
 $color-warning: #d97706;
+
+// 等级 / 排名语义色
+$color-tier-epic: #a855f7;
+$color-tier-legendary: #ca8a04;
+$color-rank-gold: #ffd700;
+$color-rank-gold-text: #7c5800;
+$color-rank-silver: #c0c0c0;
+$color-rank-bronze: #cd7f32;
 
 @mixin heatmap-level-colors {
   &.level-0 { background: rgba(var(--b3-theme-on-surface-rgb), 0.05); }
@@ -54,7 +62,7 @@ $color-warning: #d97706;
   .summary-card {
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
-    border-radius: 8px;
+    border-radius: 4px;
     padding: 10px 8px;
     text-align: center;
 
@@ -140,7 +148,7 @@ $color-warning: #d97706;
   }
   &::-webkit-scrollbar-thumb {
     background: var(--b3-border-color);
-    border-radius: 3px;
+    border-radius: 4px;
     &:hover {
       background: var(--b3-theme-on-surface);
       opacity: 0.2;
@@ -167,7 +175,7 @@ $color-warning: #d97706;
         width: 3px;
         height: 14px;
         background: var(--b3-theme-primary);
-        border-radius: 2px;
+        border-radius: 4px;
       }
     }
   }

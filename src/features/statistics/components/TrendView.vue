@@ -792,7 +792,7 @@ function getDiff(
   // ===== 趋势图表 =====
   .trend-chart-section {
     @include stats.stats-card-base;
-    border-radius: 8px;
+    border-radius: 4px;
     margin-bottom: 12px;
 
     .chart-header {
@@ -857,14 +857,14 @@ function getDiff(
         }
 
         .chart-y-label {
-          font-size: 8px;
+          font-size: 10px;
           fill: var(--b3-theme-on-surface);
           opacity: 0.45;
           font-family: $font-heading;
         }
 
         .chart-x-label {
-          font-size: 7px;
+          font-size: 10px;
           fill: var(--b3-theme-on-surface);
           opacity: 0.45;
           font-family: $font-body;
@@ -914,7 +914,7 @@ function getDiff(
         padding: 6px 10px;
         background: var(--b3-theme-surface);
         border: 1px solid var(--b3-theme-primary);
-        border-radius: 6px;
+        border-radius: 4px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
         font-size: 11px;
         pointer-events: none;
@@ -959,7 +959,7 @@ function getDiff(
 
     .comparison-card {
       @include stats.stats-card-base;
-      border-radius: 8px;
+      border-radius: 4px;
 
       .comparison-header {
         display: flex;
@@ -1015,7 +1015,7 @@ function getDiff(
             }
 
             .vs-label {
-              font-size: 8px;
+              font-size: 10px;
               opacity: 0.4;
             }
 
@@ -1026,8 +1026,8 @@ function getDiff(
 
           .change-tag {
             padding: 1px 4px;
-            border-radius: 3px;
-            font-size: 8px;
+            border-radius: 4px;
+            font-size: 10px;
             font-weight: 700;
             font-family: $font-heading;
 
@@ -1093,7 +1093,7 @@ function getDiff(
       max-height: 280px;
       overflow-y: auto;
       border: 1px solid var(--b3-border-color);
-      border-radius: 8px;
+      border-radius: 4px;
       @include scrollbar-thin;
 
       .historical-table {
@@ -1180,7 +1180,7 @@ function getDiff(
               .diff-tag {
                 display: inline-block;
                 padding: 1px 6px;
-                border-radius: 3px;
+                border-radius: 4px;
                 font-weight: 700;
                 font-size: 10px;
                 margin: 0 1px;

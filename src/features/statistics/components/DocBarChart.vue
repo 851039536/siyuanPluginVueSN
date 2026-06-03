@@ -167,14 +167,14 @@ function getBarWidth(count: number): string {
         flex: 1;
         height: 14px;
         background: rgba(var(--b3-theme-on-surface-rgb), 0.06);
-        border-radius: 3px;
+        border-radius: 4px;
         overflow: hidden;
         min-width: 20px;
 
         .row-bar {
           height: 100%;
           background: stats.$gradient-primary;
-          border-radius: 3px;
+          border-radius: 4px;
           transition: width 0.3s ease;
           min-width: 2px;
         }

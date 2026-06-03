@@ -336,7 +336,7 @@ const weekdayDistribution = computed(() => {
   gap: 4px;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 6px;
+  border-radius: 4px;
   padding: 3px;
   width: fit-content;
 }
@@ -367,7 +367,7 @@ const weekdayDistribution = computed(() => {
 .calendar-wrapper {
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 10px;
+  border-radius: 4px;
   padding: 14px;
   overflow-x: auto;
 }
@@ -422,7 +422,7 @@ const weekdayDistribution = computed(() => {
 
 .calendar-cell {
   aspect-ratio: 1;
-  border-radius: 3px;
+  border-radius: 4px;
   min-width: 12px;
   min-height: 12px;
   cursor: default;
@@ -450,7 +450,7 @@ const weekdayDistribution = computed(() => {
   .legend-cell {
     width: 12px;
     height: 12px;
-    border-radius: 2px;
+    border-radius: 4px;
     @include stats.heatmap-level-colors;
   }
 }
@@ -459,7 +459,7 @@ const weekdayDistribution = computed(() => {
 .weekday-section {
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 10px;
+  border-radius: 4px;
   padding: 14px;
 
   .section-title {

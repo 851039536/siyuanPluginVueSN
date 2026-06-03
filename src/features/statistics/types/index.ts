@@ -22,6 +22,17 @@ export interface ChangedDoc {
 }
 
 /**
+ * 最近更新的文档
+ */
+export interface RecentUpdatedDoc {
+  id: string
+  title: string
+  updated: string
+  timeLabel: string
+  notebookName: string
+}
+
+/**
  * 范围统计项（柱状图数据）
  */
 export interface RangeStatItem {

@@ -105,6 +105,14 @@
           :i18n="i18n"
         />
 
+        <!-- 最近更新的文档 -->
+        <RecentUpdatedDocs
+          ref="recentUpdatedDocsRef"
+          :title="i18n.recentUpdatedDocs || '最近更新的文档'"
+          :empty-text="i18n.noRecentDocs || '暂无最近更新'"
+          :i18n="i18n"
+        />
+
         <!-- 视图模式切换 + 时段统计 + 图表 -->
         <ViewModeSection
           v-model="viewMode"
@@ -267,6 +275,7 @@ import DocChangeSection from "./components/DocChangeSection.vue"
 import HeatmapCard from "./components/HeatmapCard.vue"
 import MilestonesCard from "./components/MilestonesCard.vue"
 import NotebookActivityTrend from "./components/NotebookActivityTrend.vue"
+import RecentUpdatedDocs from "./components/RecentUpdatedDocs.vue"
 import NotebookBlockTypeChart from "./components/NotebookBlockTypeChart.vue"
 import NotebookWordPie from "./components/NotebookWordPie.vue"
 import ReportView from "./components/ReportView.vue"
@@ -282,6 +291,7 @@ import { useStatistics } from "./composables/useStatistics"
 import {
   getDateChangedDocs,
   getDateRangeChangeStats,
+  getRecentUpdatedDocs,
 } from "./queries/docChangeStats"
 import { getNotebookActivityTrend } from "./queries/notebookStats"
 import {
@@ -341,6 +351,8 @@ interface Props {
     docBarChartTitle: string
     docChanges: string
     noDocChanges: string
+    noRecentDocs?: string
+    recentUpdatedDocs?: string
     today: string
     days3: string
     oneMonth: string
@@ -407,6 +419,8 @@ const props = withDefaults(defineProps<Props>(), {
     docBarChartTitle: "各笔记本文档数",
     docChanges: "文档变化",
     noDocChanges: "当天无新增或修改",
+    noRecentDocs: "暂无最近更新",
+    recentUpdatedDocs: "最近更新的文档",
     today: "今天",
     days3: "近3天",
     oneMonth: "近1月",
@@ -582,6 +596,7 @@ watch([viewMode, dayRange, monthYearRange, selectedYear], () => {
   refreshData()
 })
 
+const recentUpdatedDocsRef = ref<InstanceType<typeof RecentUpdatedDocs> | null>(null)
 const notebookStatsLoaded = ref(false)
 
 async function refreshData(): Promise<void> {
@@ -589,6 +604,7 @@ async function refreshData(): Promise<void> {
   try {
     await refreshCore()
     await loadHistoricalData()
+    recentUpdatedDocsRef.value?.loadDocs(() => getRecentUpdatedDocs(20))
     if (activeTab.value === 'notebookDistribution' && !notebookStatsLoaded.value) {
       await loadNotebookStats()
     }

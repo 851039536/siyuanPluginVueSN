@@ -88,8 +88,8 @@ export class WebsiteNavigation {
     }
     this.modal = createModalVueApp(WebsiteNavigationPanel, {
       maskId: "website-navigation-mask",
-      width: "70vw",
-      height: "80vh",
+      width: "min(60vw, 900px)",
+      height: "75vh",
       getCloseHandler: () => () => {
         this.modal?.close()
         this.modal = null
@@ -102,14 +102,6 @@ export class WebsiteNavigation {
     this.modal.open()
   }
 
-  public getStorage(): WebsiteNavigationStorage {
-    return this.storage
-  }
-
-  public destroy() {
-    this.modal?.close()
-    this.modal = null
-  }
 }
 
 let _instance: WebsiteNavigation | null = null

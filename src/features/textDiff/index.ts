@@ -13,4 +13,3 @@ export function registerTextDiff(plugin: Plugin): TextDiffManager {
   return manager
 }
 
-export * from "./types"

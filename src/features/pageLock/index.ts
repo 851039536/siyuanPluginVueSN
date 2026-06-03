@@ -419,4 +419,3 @@ export function registerPageLock(plugin: Plugin) {
   setInterval(cleanupCache, 30000)
 }
 
-export * from "./types"

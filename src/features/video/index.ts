@@ -14,4 +14,3 @@ export function registerVideo(plugin: Plugin) {
   return manager
 }
 
-export * from "./types"

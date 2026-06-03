@@ -32,4 +32,3 @@ export function registerRssReader(plugin: Plugin) {
   })
 }
 
-export * from "./types"

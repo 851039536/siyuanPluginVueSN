@@ -18,4 +18,3 @@ export function registerBase64Image(plugin: Plugin) {
   })
 }
 
-export * from "./types"

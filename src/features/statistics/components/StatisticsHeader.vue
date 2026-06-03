@@ -18,10 +18,6 @@
       </button>
     </div>
     <div class="header-right">
-      <div class="auto-update-info">
-        <span class="update-icon">⏱️</span>
-        <span class="update-text">{{ updateIntervalText }}</span>
-      </div>
       <div class="last-update">
         {{ i18n.lastUpdate }}: {{ lastUpdateTime }}
       </div>
@@ -57,7 +53,6 @@ interface StoragePathItem {
 interface Props {
   loading?: boolean
   lastUpdateTime?: string
-  updateInterval?: number
   storagePaths?: StoragePathItem[]
   i18n?: {
     refresh: string
@@ -72,7 +67,6 @@ interface Emits {
 const props = withDefaults(defineProps<Props>(), {
   loading: false,
   lastUpdateTime: "",
-  updateInterval: 60,
   storagePaths: () => [],
   i18n: () => ({
     refresh: "刷新",
@@ -83,16 +77,6 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<Emits>()
 
 const showStorage = ref(false)
-
-const updateIntervalText = computed(() => {
-  const seconds = props.updateInterval
-  if (seconds < 60) {
-    return `${seconds}秒`
-  } else {
-    const minutes = seconds / 60
-    return `${minutes}分钟`
-  }
-})
 
 const refreshIcon = computed<IconKey>(() => {
   return props.loading ? "loading" : "refresh"
@@ -134,27 +118,6 @@ $stats-header-height: 56px;
     display: flex;
     align-items: center;
     gap: 16px;
-  }
-
-  .auto-update-info {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 11px;
-    color: var(--b3-theme-on-surface);
-    background: var(--b3-theme-background);
-    padding: 4px 8px;
-    border-radius: 4px;
-    border: 1px solid var(--b3-border-color);
-
-    .update-icon {
-      font-size: 12px;
-    }
-
-    .update-text {
-      font-weight: 600;
-      opacity: 0.8;
-    }
   }
 
   .last-update {

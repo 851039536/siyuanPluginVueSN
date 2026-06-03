@@ -4,7 +4,6 @@
     <StatisticsHeader
       :loading="loading"
       :last-update-time="lastUpdateTime"
-      :update-interval="updateInterval"
       :storage-paths="storagePaths"
       :i18n="i18n"
       @refresh="refreshData"
@@ -433,7 +432,6 @@ const {
   dayRange,
   monthYearRange,
   selectedYear,
-  updateInterval,
   periodAvgWords,
   chartTitle,
   refreshData: refreshCore,
@@ -576,7 +574,6 @@ const storagePaths = computed(() => {
   const baseDir = `${dataDir}/storage/petal/${pluginName}`
   return [
     { key: STATISTICS_STORAGE_KEYS.HISTORY, desc: "每日快照", path: `${baseDir}/${STATISTICS_STORAGE_KEYS.HISTORY}.json` },
-    { key: STATISTICS_STORAGE_KEYS.SETTINGS, desc: "更新间隔", path: `${baseDir}/${STATISTICS_STORAGE_KEYS.SETTINGS}.json` },
   ]
 })
 

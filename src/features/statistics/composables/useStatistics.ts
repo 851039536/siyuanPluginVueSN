@@ -17,7 +17,6 @@ export function useStatistics(): {
   dayRange: Ref<7 | 15 | 30 | 90 | 180 | 365>
   monthYearRange: Ref<1 | 2 | 3>
   selectedYear: Ref<number>
-  updateInterval: Ref<number>
   periodAvgWords: ComputedRef<number>
   chartTitle: ComputedRef<string>
   refreshData: () => Promise<void>
@@ -29,7 +28,6 @@ export function useStatistics(): {
   const dayRange = ref<7 | 15 | 30 | 90 | 180 | 365>(7)
   const monthYearRange = ref<1 | 2 | 3>(1)
   const selectedYear = ref<number>(new Date().getFullYear())
-  const updateInterval = ref(60)
 
   const periodAvgWords = computed(() => {
     const dailyStats = stats.value?.dailyStats
@@ -59,7 +57,6 @@ export function useStatistics(): {
     dayRange,
     monthYearRange,
     selectedYear,
-    updateInterval,
     periodAvgWords,
     chartTitle,
     refreshData,

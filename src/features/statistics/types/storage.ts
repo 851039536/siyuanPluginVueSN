@@ -8,7 +8,6 @@ import { PluginStorage } from "@/utils/pluginStorage"
 /** 存储键常量 */
 export const STATISTICS_STORAGE_KEYS = {
   HISTORY: "statistics-history",
-  SETTINGS: "statistics-settings",
 } as const
 
 /**
@@ -36,22 +35,5 @@ export class StatisticsStorage {
    */
   async saveHistory(data: Record<string, any>): Promise<boolean> {
     return this.storage.save(STATISTICS_STORAGE_KEYS.HISTORY, data)
-  }
-
-  /**
-   * 加载统计设置（如更新间隔）
-   */
-  async loadSettings(): Promise<Record<string, any>> {
-    const data = await this.storage.load<Record<string, any>>(
-      STATISTICS_STORAGE_KEYS.SETTINGS,
-    )
-    return data || {}
-  }
-
-  /**
-   * 保存统计设置
-   */
-  async saveSettings(settings: Record<string, any>): Promise<boolean> {
-    return this.storage.save(STATISTICS_STORAGE_KEYS.SETTINGS, settings)
   }
 }

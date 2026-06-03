@@ -19,4 +19,3 @@ export function registerCodeImageGenerator(plugin: Plugin) {
   })
 }
 
-export * from "./types"

@@ -47,8 +47,3 @@ export { default as PronunciationDialog } from "./components/PronunciationDialog
 // 导出对话框组件供 App.vue 使用
 export { default as QRCodeDialog } from "./components/QRCodeDialog.vue"
 
-// 导出工具函数供其他模块使用
-export * from "./core/utils"
-
-// 导出类型
-export * from "./types"

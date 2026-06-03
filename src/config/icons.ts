@@ -400,7 +400,7 @@ export const COMMON_ICONS = {
 
   // 编程翻译相关
   code: {
-    icon: "mdi:code",
+    icon: "mdi:code-braces",
   },
   format: {
     icon: "mdi:format-text",

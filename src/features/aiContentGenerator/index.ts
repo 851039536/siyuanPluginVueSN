@@ -16,4 +16,3 @@ export function registerAIContentGenerator(plugin: Plugin) {
   return generator
 }
 
-export * from "./types"

@@ -25,4 +25,3 @@ export {
   showEverythingSearch,
   toggleEverythingSearch,
 } from "./types"
-export * from "./types"

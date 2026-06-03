@@ -14,4 +14,3 @@ export function registerUnitConverter(plugin: PluginSample) {
   return manager
 }
 
-export * from "./types"

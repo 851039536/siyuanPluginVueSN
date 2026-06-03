@@ -14,4 +14,3 @@ export function registerSuperPanel(plugin: Plugin) {
   return manager
 }
 
-export * from "./types"

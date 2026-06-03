@@ -29,4 +29,3 @@ export function registerDocAnalysis(plugin: Plugin) {
   })
 }
 
-export * from "./types"

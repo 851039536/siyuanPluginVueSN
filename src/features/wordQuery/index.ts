@@ -14,4 +14,3 @@ export function registerWordQuery(plugin: Plugin) {
   return manager
 }
 
-export * from "./types"

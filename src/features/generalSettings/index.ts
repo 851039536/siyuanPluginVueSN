@@ -14,7 +14,6 @@ export function registerGeneralSettings(plugin: Plugin) {
   return settings
 }
 
-export * from "./types"
 export {
   applyCodeBlockCollapse,
   applyCodeBlockEnhancedStyles,

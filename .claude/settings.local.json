@@ -113,7 +113,8 @@
       "Bash(pnpm lint:fix)",
       "Bash(node -e ' *)",
       "mcp__codegraph__codegraph_context",
-      "Bash(node -e \"require\\('jszip'\\)\")"
+      "Bash(node -e \"require\\('jszip'\\)\")",
+      "Bash(npx vite *)"
     ],
     "deny": [],
     "ask": []

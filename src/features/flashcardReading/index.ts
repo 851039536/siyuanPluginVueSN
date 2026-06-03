@@ -16,4 +16,3 @@ export function registerFlashcardReading(plugin: Plugin) {
   return flashcardReading
 }
 
-export * from "./types"

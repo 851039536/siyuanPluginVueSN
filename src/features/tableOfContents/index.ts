@@ -263,4 +263,3 @@ export function registerTableOfContents(plugin: Plugin): TableOfContentsManager 
   return _manager
 }
 
-export * from "./types"

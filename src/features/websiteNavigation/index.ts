@@ -6,4 +6,3 @@ export function registerWebsiteNavigation(plugin: Plugin) {
   websiteNavigation.init()
 }
 
-export * from "./types"

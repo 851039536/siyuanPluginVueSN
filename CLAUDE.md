@@ -10,8 +10,8 @@
 
 ```
 src/
-├── features/                    # 功能模块（25个已实现）
-│   ├── config.ts                # 单一数据源：所有功能元数据 + FeatureId 类型（27个条目）
+├── features/                    # 功能模块（38个已实现）
+│   ├── config.ts                # 单一数据源：所有功能元数据 + FeatureId 类型（38个条目）
 │   ├── index.ts                 # 功能注册函数统一导出
 │   ├── superPanel/              # 统一入口面板
 │   ├── pageLock/                # 页面锁定
@@ -36,8 +36,7 @@ src/
 │   ├── base64Image/             # Base64图片转换
 │   ├── flashcardReading/        # 单词阅读
 │   ├── passwordVault/           # 密码箱
-│   ├── docAnalysis/             # 文档分析
-│   └── webDAV/                  # WebDAV同步
+│   └── docAnalysis/             # 文档分析
 ├── components/                  # 共享 shadcn-vue 组件（Avatar/Badge/Button/Card/Chart等）
 ├── config/                      # 配置管理
 │   ├── settings.ts              # 全局设置：PluginSettings 接口 + 默认值 + load/save
@@ -53,7 +52,7 @@ src/
 │   ├── eventBus.ts              # 统一事件总线（emitCustomEvent）
 │   ├── pluginStorage.ts         # 存储抽象层（PluginStorage）
 │   ├── typedStorage.ts          # 类型安全存储槽（TypedStorage<T>）
-│   ├── settingsCrypto.ts        # 敏感配置加密（AES-GCM + PBKDF2，用于 aiApiKey / WebDAV 密码）
+│   ├── settingsCrypto.ts        # 敏感配置加密（AES-GCM + PBKDF2，用于 aiApiKey 等敏感字段）
 │   ├── iconHelper.ts            # 图标操作工具（replaceTopBarIcon/createIconElement）
 │   └── vueAppHelper.ts          # Vue 应用挂载辅助（createVueDockApp/createModalVueApp）
 ├── i18n/                        # 国际化（zh_CN.json, en_US.json）
@@ -236,7 +235,7 @@ export class MyFeatureStorage {
 
 全局插件设置使用 `PluginSettings` 接口 + `DEFAULT_SETTINGS` + 直接 `loadData/saveData` 方式（这是整个项目中唯一允许直接调用 `plugin.loadData/saveData` 的例外）。
 
-**敏感字段加密**：`aiApiKey` 和 `webdavConfig.password` 在保存时自动使用 Web Crypto API（AES-GCM）加密，加载时自动解密，磁盘上不会明文存储。加密工具在 `src/utils/settingsCrypto.ts`。
+**敏感字段加密**：`aiApiKeys` 和 `searchBochaApiKey` 在保存时自动使用 Web Crypto API（AES-GCM）加密，加载时自动解密，磁盘上不会明文存储。加密工具在 `src/utils/settingsCrypto.ts`。
 
 ```typescript
 import {

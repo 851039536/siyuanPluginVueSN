@@ -16,8 +16,6 @@ export {
   everythingSearchVisible,
   hideEverythingSearch,
   registerEverythingSearch,
-  showEverythingSearch,
-  toggleEverythingSearch,
 } from "./everythingSearch"
 export { registerFlashcardReading } from "./flashcardReading"
 export { registerFloatingBox } from "./floatingBox"
@@ -44,24 +42,14 @@ export {
   hidePasswordVault,
   passwordVaultVisible,
   registerPasswordVault,
-  showPasswordVault,
-  togglePasswordVault,
 } from "./passwordVault"
 export { registerResourceManager } from "./resourceManager"
 export { registerRssReader } from "./rssReader"
-export {
-  addCustomShortcut,
-  addCustomShortcuts,
-  getShortcutManager,
-  registerShortcut,
-  type ShortcutInfo,
-} from "./shortcut"
+export { registerShortcut } from "./shortcut"
 export {
   hideSkillsViewer,
   registerSkillsViewer,
-  showSkillsViewer,
   skillsViewerVisible,
-  toggleSkillsViewer,
 } from "./skillsViewer"
 export {
   getStatisticsInstance,

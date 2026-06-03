@@ -14,4 +14,3 @@ export function registerFormatAssistant(plugin: Plugin): FormatAssistantManager 
   return manager
 }
 
-export * from "./types"

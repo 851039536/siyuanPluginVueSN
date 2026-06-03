@@ -20,6 +20,20 @@
       </div>
     </div>
   </div>
+  <div
+    v-if="storagePaths && storagePaths.length > 0"
+    class="storage-paths"
+  >
+    <span class="storage-paths-label">存储路径:</span>
+    <div
+      v-for="item in storagePaths"
+      :key="item.key"
+      :title="item.path"
+      class="storage-path-item"
+    >
+      {{ item.path }}
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -27,10 +41,16 @@ import type { IconKey } from "@/config/icons"
 import { computed } from "vue"
 import Button from "@/components/Button.vue"
 
+interface StoragePathItem {
+  key: string
+  path: string
+}
+
 interface Props {
   loading?: boolean
   lastUpdateTime?: string
   updateInterval?: number
+  storagePaths?: StoragePathItem[]
   i18n?: {
     refresh: string
     lastUpdate: string
@@ -45,6 +65,7 @@ const props = withDefaults(defineProps<Props>(), {
   loading: false,
   lastUpdateTime: "",
   updateInterval: 60,
+  storagePaths: () => [],
   i18n: () => ({
     refresh: "刷新",
     lastUpdate: "最后更新",
@@ -148,6 +169,38 @@ $stats-header-height: 56px;
       justify-content: space-between;
       gap: 8px;
     }
+  }
+}
+
+.storage-paths {
+  padding: 4px 16px 6px;
+  background: var(--b3-theme-background);
+  border-bottom: 1px solid var(--b3-border-color);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  font-family: $font-body;
+  font-size: 10px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.55;
+  user-select: all;
+
+  .storage-paths-label {
+    opacity: 0.7;
+    margin-right: 4px;
+  }
+
+  .storage-path-item {
+    background: var(--b3-theme-surface);
+    padding: 1px 6px;
+    border-radius: 3px;
+    border: 1px solid var(--b3-border-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 240px;
+    cursor: default;
   }
 }
 </style>

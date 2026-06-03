@@ -5,6 +5,7 @@
       :loading="loading"
       :last-update-time="lastUpdateTime"
       :update-interval="updateInterval"
+      :storage-paths="storagePaths"
       :i18n="i18n"
       @refresh="refreshData"
     />
@@ -290,6 +291,7 @@ import {
   getTrendPrediction,
 } from "./queries/reportStats"
 import { milestoneTargetOf } from "./utils/milestones"
+import { STATISTICS_STORAGE_KEYS } from "./types/storage"
 
 interface Props {
   plugin: Plugin
@@ -567,6 +569,16 @@ const wordRankingI18n = computed(() => ({
   wordsUnit: props.i18n.wordsUnit || "字",
   emptyText: "暂无数据",
 }))
+
+const storagePaths = computed(() => {
+  const dataDir = (props.plugin as any).dataDir || ""
+  const pluginName = props.plugin.name || ""
+  const baseDir = `${dataDir}/storage/petal/${pluginName}`
+  return [
+    { key: STATISTICS_STORAGE_KEYS.HISTORY, path: `${baseDir}/${STATISTICS_STORAGE_KEYS.HISTORY}.json` },
+    { key: STATISTICS_STORAGE_KEYS.SETTINGS, path: `${baseDir}/${STATISTICS_STORAGE_KEYS.SETTINGS}.json` },
+  ]
+})
 
 
 watch([viewMode, dayRange, monthYearRange, selectedYear], () => {

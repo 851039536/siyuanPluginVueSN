@@ -229,6 +229,8 @@ defineExpose({ loadDocs, docs })
 .rd-list {
   display: flex;
   flex-direction: column;
+  max-height: 180px;
+  overflow-y: auto;
 }
 
 // ---- group header ----

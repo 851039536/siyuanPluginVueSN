@@ -89,6 +89,7 @@ import { emitCustomEvent } from "@/utils/eventBus"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { showPasswordVault } from "../passwordVault/types"
 import { showSkillsViewer } from "../skillsViewer/types"
+import { showWebsiteNavigation } from "../websiteNavigation/types"
 import FeatureDrawer from "./components/FeatureDrawer.vue"
 import MonitorItem from "./components/MonitorItem.vue"
 import { useStatusBar } from "./composables/useStatusBar"
@@ -159,6 +160,13 @@ const featureDrawerItems: FeatureDrawerItem[] = [
     title: "排版助手",
     pinnable: true,
   },
+  {
+    id: "websiteNavigation",
+    icon: "mdi:link-variant",
+    color: "#8b5cf6",
+    title: "网站导航",
+    pinnable: true,
+  },
 ]
 
 interface ShortcutDisplay {
@@ -204,6 +212,13 @@ const SHORTCUT_DISPLAY: Record<string, ShortcutDisplay> = {
     title: "排版助手",
     itemClass: "action-item format-assistant-item",
     handler: () => emitCustomEvent("openFormatAssistant"),
+  },
+  websiteNavigation: {
+    id: "websiteNavigation",
+    icon: "ph:link",
+    title: "网站导航",
+    itemClass: "action-item website-navigation-item",
+    handler: () => showWebsiteNavigation(props.plugin),
   },
 }
 

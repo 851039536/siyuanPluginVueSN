@@ -92,11 +92,6 @@ $color-warning: #d97706;
   }
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
 // ========== Shared Component Styles ==========
 .section-title {
   margin: 0 0 12px 0;
@@ -128,16 +123,6 @@ $color-warning: #d97706;
 }
 
 
-
-.empty-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 200px;
-  color: var(--b3-theme-on-surface);
-  font-size: 12px;
-  font-family: $font-body;
-}
 
 // ========== Main Content ==========
 .statistics-content {

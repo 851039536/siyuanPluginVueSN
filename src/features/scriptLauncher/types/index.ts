@@ -14,7 +14,7 @@ export interface Script {
   language: ScriptLanguage
   category: string
   description: string
-  fileName: string
+  content: string
   createdAt: number
   updatedAt: number
   lastRunAt?: number
@@ -130,12 +130,10 @@ export interface I18n {
 export class ScriptLauncher {
   private plugin: Plugin
   private storage: ScriptStorage
-  private dataDir: string
 
-  constructor(plugin: Plugin, dataDir: string) {
+  constructor(plugin: Plugin) {
     this.plugin = plugin
-    this.dataDir = dataDir
-    this.storage = new ScriptStorage(plugin, dataDir)
+    this.storage = new ScriptStorage(plugin)
   }
 
   public async init() {
@@ -151,7 +149,6 @@ export class ScriptLauncher {
       title: (this.plugin.i18n as any)?.scriptLauncher?.panelTitle || "脚本启动器",
       type: "scriptLauncher-dock",
       i18n: (this.plugin.i18n?.scriptLauncher as I18n) || ({} as I18n),
-      extraProps: { dataDir: this.dataDir },
     })
   }
 

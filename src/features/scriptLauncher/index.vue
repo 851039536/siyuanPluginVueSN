@@ -67,7 +67,6 @@ import { useScriptStorage } from "./composables/useScriptStorage"
 interface Props {
   i18n: I18n
   plugin: Plugin
-  dataDir: string
 }
 
 const props = defineProps<Props>()
@@ -79,7 +78,7 @@ const {
   addScript,
   updateScript,
   deleteScript,
-} = useScriptStorage(props.plugin, props.dataDir)
+} = useScriptStorage(props.plugin)
 
 const { runScript } = useScriptRunner()
 
@@ -120,12 +119,7 @@ const closeOutput = () => {
 
 const handleEdit = async (script: Script) => {
   selectedScript.value = script
-  try {
-    const content = await storage.loadScriptFile(script.id, script.language)
-    editingContent.value = content || ""
-  } catch {
-    editingContent.value = ""
-  }
+  editingContent.value = script.content || ""
   showEditor.value = true
 }
 
@@ -186,10 +180,10 @@ const handleRun = async (script: Script) => {
   runnerStderr.value = ""
   runnerExitCode.value = null
 
-  const filePath = storage.getScriptFilePath(script.id, script.language)
+  const filePath = storage.writeTempFile(script)
   if (!filePath) {
     runnerRunning.value = false
-    runnerStderr.value = "无法获取脚本路径"
+    runnerStderr.value = "无法创建临时脚本文件"
     runnerExitCode.value = 1
     return
   }
@@ -206,6 +200,7 @@ const handleRun = async (script: Script) => {
     runnerExitCode.value = 1
   } finally {
     runnerRunning.value = false
+    storage.removeTempFile(filePath)
   }
 }
 </script>

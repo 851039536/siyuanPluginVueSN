@@ -82,7 +82,7 @@ export function useDocNavigation(): UseDocNavigationReturn {
     parentDoc.value = null
     childDocs.value = []
     breadcrumbs.value = []
-    siblingDocs.value = emptySiblings
+    siblingDocs.value = { ...emptySiblings }
   }
 
   async function loadHierarchy(docId: string): Promise<void> {
@@ -151,6 +151,10 @@ export function useDocNavigation(): UseDocNavigationReturn {
     openDoc,
     stripHtml,
   }
+}
+
+export function disposeCache(): void {
+  cache.clearAll()
 }
 
 export function findNavigationTarget(

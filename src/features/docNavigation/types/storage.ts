@@ -277,19 +277,18 @@ export async function fetchBreadcrumb(
       ancestorPaths.push(accumulated)
     }
 
-    // 对每个祖先路径，获取其所在目录的文档列表
-    // 相邻层级的 listDocsByPath 可以复用缓存
+    // 并行获取所有祖先路径所在目录的文档列表
+    const results = await Promise.all(
+      ancestorPaths.map((ancestorPath) => {
+        const parentDir =
+          ancestorPath.substring(0, ancestorPath.lastIndexOf("/")) || "/"
+        return api.listDocsByPath(pathInfo.notebook, parentDir, 0)
+          .then((result) => ({ ancestorPath, result }))
+      }),
+    )
+
     const items: BreadcrumbItem[] = []
-    for (const ancestorPath of ancestorPaths) {
-      const parentDir =
-        ancestorPath.substring(0, ancestorPath.lastIndexOf("/")) || "/"
-
-      const result = await api.listDocsByPath(
-        pathInfo.notebook,
-        parentDir,
-        0,
-      )
-
+    for (const { ancestorPath, result } of results) {
       if (result?.files) {
         const targetFile = result.files.find(
           (f) => stripSySuffix(f.path) === ancestorPath,

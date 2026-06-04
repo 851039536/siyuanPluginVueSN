@@ -2,7 +2,11 @@
  * 脚本启动器 - 数据加载组合式函数
  */
 import type { Plugin } from "siyuan"
-import type { Script } from "../types"
+import type {
+  CreateScriptDTO,
+  Script,
+  UpdateScriptDTO,
+} from "../types"
 import {
   onMounted,
   onUnmounted,
@@ -23,39 +27,15 @@ export function useScriptStorage(plugin: Plugin) {
     }
   }
 
-  const addScript = async (data: {
-    name: string
-    language: string
-    category: string
-    description: string
-    content: string
-  }) => {
-    const script = await storage.add({
-      name: data.name,
-      language: data.language as any,
-      category: data.category,
-      description: data.description,
-      content: data.content,
-    })
+  const addScript = async (data: CreateScriptDTO) => {
+    const script = await storage.add(data)
     await loadScripts()
     emitCustomEvent("scriptDataChanged")
     return script
   }
 
-  const updateScript = async (id: string, data: {
-    name?: string
-    language?: string
-    category?: string
-    description?: string
-    content?: string
-  }) => {
-    const result = await storage.update(id, {
-      name: data.name,
-      language: data.language as any,
-      category: data.category,
-      description: data.description,
-      content: data.content,
-    })
+  const updateScript = async (id: string, data: UpdateScriptDTO) => {
+    const result = await storage.update(id, data)
     await loadScripts()
     emitCustomEvent("scriptDataChanged")
     return result

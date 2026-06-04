@@ -65,7 +65,7 @@
 
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
-import type { Script } from "./types"
+import type { CreateScriptDTO, Script, ScriptLanguage } from "./types"
 import type { I18n } from "./types/index"
 import { computed, ref } from "vue"
 import { showMessage } from "siyuan"
@@ -164,14 +164,20 @@ const handleSave = async (data: {
     if (selectedScript.value) {
       await updateScript(selectedScript.value.id, {
         name: data.name,
-        language: data.language as any,
+        language: data.language as ScriptLanguage,
         category: data.category,
         description: data.description,
         content: data.content,
       })
       showMessage(props.i18n.updateSuccess || "脚本已更新", 2000, "info")
     } else {
-      await addScript(data)
+      await addScript({
+        name: data.name,
+        language: data.language as ScriptLanguage,
+        category: data.category,
+        description: data.description,
+        content: data.content,
+      } as CreateScriptDTO)
       showMessage(props.i18n.createSuccess || "脚本已创建", 2000, "info")
     }
     closeEditor()

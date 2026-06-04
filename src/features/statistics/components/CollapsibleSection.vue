@@ -78,16 +78,20 @@ function toggle() {
   }
 
   .collapse-title {
+    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
     font-size: 11px;
     font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
     color: var(--b3-theme-on-surface);
     opacity: 0.7;
   }
 
   .collapse-badge {
     margin-left: auto;
-    font-size: 9px;
-    font-weight: 600;
+    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    font-size: 10px;
+    font-weight: 700;
     color: var(--b3-theme-primary);
     opacity: 0.5;
   }

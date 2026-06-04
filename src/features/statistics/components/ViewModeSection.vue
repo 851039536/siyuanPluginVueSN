@@ -294,7 +294,7 @@ const periodAvgLabel = computed(() => {
     background: transparent;
     color: var(--b3-theme-on-surface);
     cursor: pointer;
-    font-family: $font-body;
+    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
     font-size: 11px;
     font-weight: 600;
     display: inline-flex;
@@ -312,7 +312,6 @@ const periodAvgLabel = computed(() => {
     &.active {
       background: var(--b3-theme-primary);
       color: var(--b3-theme-on-primary);
-      box-shadow: 0 2px 8px rgba(var(--b3-theme-primary-rgb), 0.2);
     }
   }
 
@@ -330,7 +329,7 @@ const periodAvgLabel = computed(() => {
     background: var(--b3-theme-surface);
     color: var(--b3-theme-on-surface);
     cursor: pointer;
-    font-family: $font-body;
+    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
     font-size: 10px;
     font-weight: 600;
     border-radius: 4px;
@@ -358,7 +357,7 @@ const periodAvgLabel = computed(() => {
       border-radius: 4px;
       background: var(--b3-theme-surface);
       color: var(--b3-theme-on-surface);
-      font-family: $font-body;
+      font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
@@ -366,7 +365,7 @@ const periodAvgLabel = computed(() => {
 
       &:focus {
         border-color: var(--b3-theme-primary);
-        box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.1);
+        box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest, rgba(var(--b3-theme-primary-rgb), 0.12));
       }
     }
   }
@@ -387,18 +386,18 @@ const periodAvgLabel = computed(() => {
     background: stats.$gradient-surface;
 
     .stat-label {
-      font-family: $font-body;
+      font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
       font-size: 10px;
-      font-weight: 600;
-      color: var(--b3-theme-on-surface);
-      opacity: 0.5;
-      margin-bottom: 2px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
-      letter-spacing: 0.3px;
+      color: var(--b3-theme-on-surface);
+      opacity: 0.45;
+      margin-bottom: 2px;
     }
 
     .stat-value {
-      font-family: $font-heading;
+      font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
       font-size: 16px;
       font-weight: 700;
       color: var(--b3-theme-primary);

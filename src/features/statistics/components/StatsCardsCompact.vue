@@ -189,10 +189,13 @@ function formatChange(change: number | null): string {
 
 .stats-title {
   margin: 0;
-  font-family: $font-heading;
-  font-size: 13px;
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-size: 11px;
   font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--b3-theme-on-surface);
+  opacity: 0.6;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -223,9 +226,13 @@ function formatChange(change: number | null): string {
 }
 
 .core-label {
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--b3-theme-on-surface);
-  opacity: 0.5;
+  opacity: 0.45;
   margin-bottom: 4px;
 }
 
@@ -237,7 +244,7 @@ function formatChange(change: number | null): string {
 }
 
 .core-value {
-  font-family: $font-heading;
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   font-size: 20px;
   font-weight: 700;
   color: var(--b3-theme-primary);
@@ -245,6 +252,7 @@ function formatChange(change: number | null): string {
 }
 
 .core-unit {
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   font-size: 10px;
   color: var(--b3-theme-on-surface);
   opacity: 0.4;
@@ -254,6 +262,7 @@ function formatChange(change: number | null): string {
 .core-change {
   padding: 1px 4px;
   border-radius: 4px;
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   font-size: 9px;
   font-weight: 700;
   line-height: 1.4;
@@ -291,7 +300,7 @@ function formatChange(change: number | null): string {
 }
 
 .secondary-value {
-  font-family: $font-heading;
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   font-size: 13px;
   font-weight: 700;
   color: var(--b3-theme-on-surface);
@@ -299,7 +308,11 @@ function formatChange(change: number | null): string {
 }
 
 .secondary-label {
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--b3-theme-on-surface);
   opacity: 0.45;
   margin-top: 2px;

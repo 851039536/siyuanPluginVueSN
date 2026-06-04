@@ -314,6 +314,7 @@ const weekdayDistribution = computed(() => {
 
 .summary-card .summary-value {
   font-size: 20px;
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
 }
 
 // ========== Range Selector ==========
@@ -333,7 +334,9 @@ const weekdayDistribution = computed(() => {
   border-radius: 4px;
   background: transparent;
   color: var(--b3-theme-on-surface-light);
-  font-size: 12px;
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-size: 11px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
 
@@ -345,7 +348,7 @@ const weekdayDistribution = computed(() => {
   &.active {
     background: var(--b3-theme-primary);
     color: var(--b3-theme-on-primary);
-    font-weight: 600;
+    font-weight: 700;
   }
 }
 
@@ -366,9 +369,14 @@ const weekdayDistribution = computed(() => {
 }
 
 .month-label {
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--b3-theme-on-surface-light);
   white-space: nowrap;
+  opacity: 0.45;
 }
 
 .calendar-body {
@@ -386,8 +394,13 @@ const weekdayDistribution = computed(() => {
 
   // Space for 7 cells: position Mon(1), Wed(3), Fri(5)
   .weekday-label {
+    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
     font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     color: var(--b3-theme-on-surface-light);
+    opacity: 0.45;
     line-height: 14px;
     height: 14px;
 
@@ -428,8 +441,13 @@ const weekdayDistribution = computed(() => {
   margin-top: 10px;
 
   .legend-text {
+    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
     font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     color: var(--b3-theme-on-surface-light);
+    opacity: 0.45;
     margin: 0 2px;
   }
 
@@ -449,9 +467,13 @@ const weekdayDistribution = computed(() => {
   padding: 14px;
 
   .section-title {
-    font-size: 13px;
-    font-weight: 600;
+    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
     color: var(--b3-theme-on-surface);
+    opacity: 0.6;
     margin-bottom: 12px;
   }
 }
@@ -469,8 +491,13 @@ const weekdayDistribution = computed(() => {
 
   .weekday-name {
     width: 32px;
-    font-size: 11px;
+    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     color: var(--b3-theme-on-surface-light);
+    opacity: 0.45;
     text-align: right;
     flex-shrink: 0;
   }
@@ -493,8 +520,10 @@ const weekdayDistribution = computed(() => {
 
   .bar-value {
     width: 36px;
+    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
     font-size: 11px;
-    color: var(--b3-theme-on-surface-light);
+    font-weight: 700;
+    color: var(--b3-theme-on-surface);
     text-align: left;
     flex-shrink: 0;
   }

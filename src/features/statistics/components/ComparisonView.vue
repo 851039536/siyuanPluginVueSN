@@ -318,6 +318,7 @@ async function compare() {
 }
 
 .period-label {
+  font-family: stats.$font-mono;
   font-size: 11px;
   font-weight: 700;
   color: var(--b3-theme-primary);
@@ -330,12 +331,11 @@ async function compare() {
   border-radius: 4px;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
+  font-family: stats.$font-mono;
   font-size: 12px;
   outline: none;
 
-  &:focus {
-    border-color: var(--b3-theme-primary);
-  }
+  @include stats.codex-focus-glow;
 }
 
 .vs-text {
@@ -351,6 +351,7 @@ async function compare() {
   border-radius: 4px;
   background: var(--b3-theme-primary);
   color: var(--b3-theme-on-primary);
+  font-family: stats.$font-mono;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -398,14 +399,18 @@ async function compare() {
   th {
     background: var(--b3-theme-background);
     color: var(--b3-theme-on-surface-light);
-    font-weight: 600;
-    font-size: 11px;
+    font-family: stats.$font-mono;
+    font-weight: 700;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
     border-bottom: 1px solid var(--b3-border-color);
   }
 
   td {
     border-bottom: 1px solid rgba(var(--b3-theme-on-surface-rgb), 0.04);
     color: var(--b3-theme-on-surface);
+    font-family: stats.$font-mono;
     font-weight: 500;
   }
 
@@ -413,6 +418,8 @@ async function compare() {
     color: var(--b3-theme-on-surface-light);
     font-weight: 400;
     font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
   }
 
   .delta-up {
@@ -438,10 +445,13 @@ async function compare() {
 }
 
 .breakdown-title {
+  font-family: stats.$font-mono;
   font-size: 12px;
   font-weight: 600;
   color: var(--b3-theme-on-surface);
   margin: 0 0 8px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .breakdown-list {
@@ -460,6 +470,7 @@ async function compare() {
   width: 52px;
   flex-shrink: 0;
   text-align: right;
+  font-family: stats.$font-mono;
   font-size: 10px;
   color: var(--b3-theme-on-surface-light);
 }
@@ -481,6 +492,7 @@ async function compare() {
 .bar-fill {
   height: 100%;
   border-radius: 4px;
+  font-family: stats.$font-mono;
   font-size: 10px;
   color: #fff;
   display: flex;
@@ -505,6 +517,7 @@ async function compare() {
   gap: 12px;
   align-items: center;
   margin-top: 8px;
+  font-family: stats.$font-mono;
   font-size: 10px;
   color: var(--b3-theme-on-surface-light);
 }

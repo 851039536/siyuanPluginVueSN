@@ -183,7 +183,7 @@ function getBarWidth(count: number): string {
       .row-count {
         flex-shrink: 0;
         width: 36px;
-        font-family: $font-heading;
+        font-family: stats.$font-mono;
         font-size: 10px;
         font-weight: 700;
         color: var(--b3-theme-primary);

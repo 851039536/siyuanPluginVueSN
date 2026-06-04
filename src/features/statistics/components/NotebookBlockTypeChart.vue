@@ -86,6 +86,7 @@ function totalCount(item: NotebookBlockTypeStat): number {
 <style scoped lang="scss">
 @use "@/variables" as *;
 @use "../../superPanel/styles/shared" as *;
+@use "../styles/index.scss" as stats;
 
 .notebook-blocktype-chart {
   .empty-hint {
@@ -155,7 +156,7 @@ function totalCount(item: NotebookBlockTypeStat): number {
     .nb-total {
       flex-shrink: 0;
       width: 32px;
-      font-family: $font-heading;
+      font-family: stats.$font-mono;
       font-size: 10px;
       font-weight: 700;
       color: var(--b3-theme-primary);

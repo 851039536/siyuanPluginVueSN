@@ -271,7 +271,9 @@ async function generate() {
   border-radius: 4px;
   background: transparent;
   color: var(--b3-theme-on-surface-light);
-  font-size: 12px;
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-size: 11px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
 
@@ -283,7 +285,7 @@ async function generate() {
   &.active {
     background: var(--b3-theme-primary);
     color: var(--b3-theme-on-primary);
-    font-weight: 600;
+    font-weight: 700;
   }
 }
 
@@ -303,11 +305,14 @@ async function generate() {
   border-radius: 4px;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
-  font-size: 12px;
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-size: 11px;
+  font-weight: 600;
   outline: none;
 
   &:focus {
     border-color: var(--b3-theme-primary);
+    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest, rgba(var(--b3-theme-primary-rgb), 0.12));
   }
 }
 
@@ -349,14 +354,19 @@ async function generate() {
   border: none;
   background: transparent;
   color: var(--b3-theme-on-surface);
-  opacity: 0.4;
+  opacity: 0;
   cursor: pointer;
   font-size: 14px;
   padding: 2px 6px;
   border-radius: 4px;
+  transition: opacity 0.15s;
+
+  .report-card-header:hover & {
+    opacity: 0.4;
+  }
 
   &:hover {
-    opacity: 0.8;
+    opacity: 0.8 !important;
     background: var(--b3-list-hover);
   }
 }
@@ -383,20 +393,27 @@ async function generate() {
 }
 
 .stat-value {
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   font-size: 16px;
   font-weight: 700;
   color: var(--b3-theme-on-surface);
 }
 
 .stat-label {
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--b3-theme-on-surface);
-  opacity: 0.5;
+  opacity: 0.45;
   margin-top: 1px;
 }
 
 .stat-sub {
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   font-size: 9px;
+  font-weight: 700;
   color: var(--b3-theme-on-surface);
   opacity: 0.4;
   margin-top: 1px;
@@ -445,9 +462,12 @@ async function generate() {
   width: 48px;
   flex-shrink: 0;
   text-align: right;
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   color: var(--b3-theme-on-surface);
   opacity: 0.6;
-  font-size: 10px;
 }
 
 .breakdown-bars {
@@ -477,8 +497,9 @@ async function generate() {
 .breakdown-created {
   width: 28px;
   flex-shrink: 0;
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   font-size: 10px;
+  font-weight: 700;
   color: stats.$color-success;
-  font-weight: 600;
 }
 </style>

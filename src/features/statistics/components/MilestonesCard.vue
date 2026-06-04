@@ -1188,13 +1188,17 @@ const lockedAchievements = computed(() =>
     border-bottom: 1px solid var(--b3-border-color);
 
     .card-title {
+      font-family: stats.$font-mono;
       font-size: 11px;
       font-weight: 700;
       color: var(--b3-theme-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
     .header-badge {
       margin-left: auto;
+      font-family: stats.$font-mono;
       font-size: 9px;
       font-weight: 600;
       color: var(--b3-theme-primary);
@@ -1233,14 +1237,16 @@ const lockedAchievements = computed(() =>
 }
 
 .next-goal-label {
+  font-family: stats.$font-mono;
   font-size: 9px;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.06em;
 }
 
 .next-goal-target {
+  font-family: stats.$font-mono;
   font-size: 13px;
   font-weight: 700;
   color: var(--b3-theme-primary);
@@ -1249,7 +1255,7 @@ const lockedAchievements = computed(() =>
 .next-goal-percent {
   font-size: 18px;
   font-weight: 700;
-  font-family: $font-heading;
+  font-family: stats.$font-mono;
   color: var(--b3-theme-primary);
   opacity: 0.8;
 }
@@ -1307,16 +1313,18 @@ const lockedAchievements = computed(() =>
   font-size: 13px;
   font-weight: 700;
   color: var(--b3-theme-primary);
-  font-family: $font-heading;
+  font-family: stats.$font-mono;
 }
 
 .level-points {
+  font-family: stats.$font-mono;
   font-size: 9px;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
 }
 
 .level-badge {
+  font-family: stats.$font-mono;
   font-size: 10px;
   font-weight: 700;
   color: var(--b3-theme-primary);
@@ -1368,14 +1376,18 @@ const lockedAchievements = computed(() =>
   border-bottom: 1px dashed var(--b3-border-color);
 
   .achievements-title {
+    font-family: stats.$font-mono;
     font-size: 10px;
     font-weight: 700;
     color: var(--b3-theme-on-surface);
     opacity: 0.65;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
   }
 
   .achievements-count {
     margin-left: auto;
+    font-family: stats.$font-mono;
     font-size: 9px;
     color: var(--b3-theme-primary);
     opacity: 0.5;
@@ -1532,14 +1544,18 @@ const lockedAchievements = computed(() =>
   .category-icon { font-size: 11px; }
 
   .category-name {
+    font-family: stats.$font-mono;
     font-size: 10px;
     font-weight: 700;
     color: var(--b3-theme-on-surface);
     opacity: 0.65;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
   }
 
   .category-count {
     margin-left: auto;
+    font-family: stats.$font-mono;
     font-size: 9px;
     color: var(--b3-theme-primary);
     opacity: 0.5;
@@ -1604,6 +1620,7 @@ const lockedAchievements = computed(() =>
   }
 
   .milestone-label {
+    font-family: stats.$font-mono;
     font-size: 10px;
     text-align: center;
     white-space: nowrap;
@@ -1691,6 +1708,7 @@ const lockedAchievements = computed(() =>
   border-radius: 4px;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
+  font-family: stats.$font-mono;
   font-size: 12px;
   cursor: pointer;
   transition: all 0.15s;
@@ -1776,6 +1794,7 @@ const lockedAchievements = computed(() =>
 .road-percent {
   width: 32px;
   text-align: right;
+  font-family: stats.$font-mono;
   font-size: 10px;
   opacity: 0.5;
   flex-shrink: 0;

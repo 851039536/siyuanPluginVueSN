@@ -668,13 +668,14 @@ defineExpose({
 }
 
 .tab-item {
-  padding: 8px 16px;
+  padding: 8px 14px;
   border: none;
   background: transparent;
   color: var(--b3-theme-on-surface-light);
-  font-size: 13px;
   font-family: $font-body;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   cursor: pointer;
   position: relative;
   display: flex;
@@ -688,7 +689,7 @@ defineExpose({
 
   &.active {
     color: var(--b3-theme-primary);
-    font-weight: 600;
+    font-weight: 700;
 
     &::after {
       content: '';
@@ -704,12 +705,13 @@ defineExpose({
 }
 
 .tab-badge {
-  font-size: 11px;
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-size: 10px;
   padding: 1px 6px;
   border-radius: 4px;
   background: rgba(var(--b3-theme-primary-rgb), 0.1);
   color: var(--b3-theme-primary);
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .milestones-tab,
@@ -745,10 +747,13 @@ defineExpose({
 
 .dist-section-title {
   margin: 0 0 10px 0;
-  font-family: $font-heading;
-  font-size: 13px;
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-size: 11px;
   font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--b3-theme-on-surface);
+  opacity: 0.6;
   display: flex;
   align-items: center;
   gap: 6px;

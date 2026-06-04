@@ -53,15 +53,22 @@ export class ScriptStorage {
     this.scripts = new TypedStorage(this.storage, this.STORAGE_KEY, [])
   }
 
+  /** 获取工作区根目录（通过思源 API） */
+  private async getWorkspaceRoot(): Promise<string | null> {
+    if ((this as any).__cachedWorkspaceRoot) return (this as any).__cachedWorkspaceRoot
+    try {
+      const resp = await fetch("/api/system/getConf", { method: "POST" })
+      const data = await resp.json()
+      const ws = data?.data?.conf?.system?.workspaceDir || ""
+      if (ws) (this as any).__cachedWorkspaceRoot = ws
+      return ws || null
+    } catch { return null }
+  }
+
   /** 获取脚本文件的绝对路径（用于直接执行） */
-  getScriptPath(fileName: string): string | null {
-    const wsRoot = (this.plugin as any).__workspaceRoot
-    if (!wsRoot) {
-      // 降级：尝试用 node:path 拼接
-      const node = getNodeModules()
-      if (!node) return null
-      return node.path.resolve(this.scPath(fileName))
-    }
+  async getScriptPath(fileName: string): Promise<string | null> {
+    const wsRoot = await this.getWorkspaceRoot()
+    if (!wsRoot) return null
     const node = getNodeModules()
     if (!node) return null
     return node.path.join(wsRoot, this.scPath(fileName))

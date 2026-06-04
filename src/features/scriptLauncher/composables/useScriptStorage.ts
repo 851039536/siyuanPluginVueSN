@@ -11,8 +11,8 @@ import {
 import { emitCustomEvent } from "@/utils/eventBus"
 import { ScriptStorage } from "../types/storage"
 
-export function useScriptStorage(plugin: Plugin, dataDir: string) {
-  const storage = new ScriptStorage(plugin, dataDir)
+export function useScriptStorage(plugin: Plugin) {
+  const storage = new ScriptStorage(plugin)
   const scripts = ref<Script[]>([])
 
   const loadScripts = async () => {

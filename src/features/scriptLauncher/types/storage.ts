@@ -1,5 +1,7 @@
 /**
  * 脚本启动器 - 数据存储层
+ * 脚本内容直接存入 TypedStorage，不依赖文件系统持久化。
+ * 仅在运行时生成临时文件执行，执行后自动清理。
  */
 import type {
   CreateScriptDTO,
@@ -15,34 +17,9 @@ function getNodeModules(): { fs: any, path: any } | null {
   try {
     const fs = require("node:fs")
     const path = require("node:path")
-    return {
-      fs,
-      path,
-    }
+    return { fs, path }
   } catch {
     return null
-  }
-}
-
-function getScriptDir(dataDir: string): string | null {
-  if (!dataDir) return null
-  const node = getNodeModules()
-  if (!node) return null
-  return node.path.join(dataDir, "scripts")
-}
-
-function ensureScriptDir(dataDir: string): boolean {
-  const dir = getScriptDir(dataDir)
-  if (!dir) return false
-  const node = getNodeModules()
-  if (!node) return false
-  try {
-    if (!node.fs.existsSync(dir)) {
-      node.fs.mkdirSync(dir, { recursive: true })
-    }
-    return true
-  } catch {
-    return false
   }
 }
 
@@ -50,19 +27,15 @@ export class ScriptStorage {
   private storage: PluginStorage
   private scripts: TypedStorage<Script[]>
   private plugin: Plugin
-  private dataDir: string
   private readonly STORAGE_KEY = "scriptLauncher-scripts"
 
-  constructor(plugin: Plugin, dataDir: string) {
+  constructor(plugin: Plugin) {
     this.plugin = plugin
-    this.dataDir = dataDir
     this.storage = new PluginStorage(plugin)
     this.scripts = new TypedStorage(this.storage, this.STORAGE_KEY, [])
   }
 
-  async init(): Promise<void> {
-    ensureScriptDir(this.dataDir)
-  }
+  async init(): Promise<void> { /* no-op */ }
 
   async getAll(): Promise<Script[]> {
     const data = await this.scripts.loadOrDefault()
@@ -87,8 +60,6 @@ export class ScriptStorage {
 
     const now = Date.now()
     const id = `script-${now}`
-    const { extension } = this.getLanguageConfig(data.language)
-    const fileName = `${id}${extension}`
 
     const script: Script = {
       id,
@@ -96,7 +67,7 @@ export class ScriptStorage {
       language: data.language,
       category: data.category || "默认",
       description: data.description || "",
-      fileName,
+      content: data.content || "",
       createdAt: now,
       updatedAt: now,
     }
@@ -104,8 +75,6 @@ export class ScriptStorage {
     const all = await this.getAll()
     all.push(script)
     await this.scripts.save(all)
-    await this.saveScriptFile(id, data.content, data.language)
-
     return script
   }
 
@@ -121,29 +90,10 @@ export class ScriptStorage {
       }
     }
 
-    const oldLanguage = all[index].language
-    const newLanguage = data.language || oldLanguage
-
     all[index] = {
       ...all[index],
       ...data,
       updatedAt: Date.now(),
-    }
-
-    if (data.language && data.language !== oldLanguage) {
-      const { extension } = this.getLanguageConfig(newLanguage)
-      const newFileName = `${id}${extension}`
-      all[index].fileName = newFileName
-
-      const content = await this.loadScriptFile(id, oldLanguage)
-      if (content !== null) {
-        await this.deleteScriptFile(id, oldLanguage)
-        await this.saveScriptFile(id, content, newLanguage)
-      }
-    }
-
-    if (data.content !== undefined) {
-      await this.saveScriptFile(id, data.content, newLanguage)
     }
 
     await this.scripts.save(all)
@@ -155,10 +105,8 @@ export class ScriptStorage {
     const index = all.findIndex((s) => s.id === id)
     if (index === -1) return false
 
-    const script = all[index]
     const filtered = all.filter((s) => s.id !== id)
     await this.scripts.save(filtered)
-    await this.deleteScriptFile(id, script.language)
     return true
   }
 
@@ -170,81 +118,65 @@ export class ScriptStorage {
     await this.scripts.save(all)
   }
 
-  async saveScriptFile(id: string, content: string, language: ScriptLanguage): Promise<boolean> {
-    const dir = getScriptDir(this.dataDir)
-    if (!dir) return false
-    const node = getNodeModules()
-    if (!node) return false
-
-    const { extension } = this.getLanguageConfig(language)
-    const filePath = node.path.join(dir, `${id}${extension}`)
-
-    try {
-      node.fs.writeFileSync(filePath, content, "utf-8")
-      return true
-    } catch (error) {
-      console.error(`Failed to save script file [${id}]:`, error)
-      return false
-    }
-  }
-
-  async loadScriptFile(id: string, language: ScriptLanguage): Promise<string | null> {
-    const dir = getScriptDir(this.dataDir)
-    if (!dir) return null
+  /**
+   * 将脚本内容写入临时文件，返回文件路径。调用方应在执行后删除。
+   */
+  writeTempFile(script: Script): string | null {
     const node = getNodeModules()
     if (!node) return null
 
-    const { extension } = this.getLanguageConfig(language)
-    const filePath = node.path.join(dir, `${id}${extension}`)
-
+    const ext = this.getExtension(script.language)
+    // 优先使用系统临时目录
+    let tmpDir: string
     try {
-      if (!node.fs.existsSync(filePath)) return null
-      return node.fs.readFileSync(filePath, "utf-8")
+      const os = require("node:os")
+      tmpDir = node.path.join(os.tmpdir(), "siyuan-scripts")
+    } catch {
+      tmpDir = node.path.join(".", "siyuan-scripts-tmp")
+    }
+    try {
+      if (!node.fs.existsSync(tmpDir)) {
+        node.fs.mkdirSync(tmpDir, { recursive: true })
+      }
+    } catch {
+      // 目录创建失败，使用当前目录
+      tmpDir = "."
+    }
+
+    const filePath = node.path.join(tmpDir, `${script.id}${ext}`)
+    try {
+      node.fs.writeFileSync(filePath, script.content, "utf-8")
+      return filePath
     } catch (error) {
-      console.error(`Failed to load script file [${id}]:`, error)
+      console.error(`Failed to write temp script [${script.id}]:`, error)
       return null
     }
   }
 
-  async deleteScriptFile(id: string, language: ScriptLanguage): Promise<boolean> {
-    const dir = getScriptDir(this.dataDir)
-    if (!dir) return false
+  /**
+   * 删除临时脚本文件
+   */
+  removeTempFile(filePath: string): void {
     const node = getNodeModules()
-    if (!node) return false
-
-    const { extension } = this.getLanguageConfig(language)
-    const filePath = node.path.join(dir, `${id}${extension}`)
-
+    if (!node) return
     try {
       if (node.fs.existsSync(filePath)) {
         node.fs.unlinkSync(filePath)
       }
-      return true
-    } catch (error) {
-      console.error(`Failed to delete script file [${id}]:`, error)
-      return false
+    } catch {
+      // 清理失败忽略
     }
   }
 
-  getScriptFilePath(id: string, language: ScriptLanguage): string | null {
-    const dir = getScriptDir(this.dataDir)
-    if (!dir) return null
-    const node = getNodeModules()
-    if (!node) return null
-
-    const { extension } = this.getLanguageConfig(language)
-    return node.path.join(dir, `${id}${extension}`)
-  }
-
-  private getLanguageConfig(language: ScriptLanguage) {
-    const config = {
-      python: { extension: ".py" },
-      bash: { extension: ".sh" },
-      powershell: { extension: ".ps1" },
-      nodejs: { extension: ".js" },
-      batch: { extension: ".bat" },
-      other: { extension: ".txt" },
-    } as const
-    return config[language]
+  private getExtension(language: ScriptLanguage): string {
+    const map: Record<ScriptLanguage, string> = {
+      python: ".py",
+      bash: ".sh",
+      powershell: ".ps1",
+      nodejs: ".js",
+      batch: ".bat",
+      other: ".txt",
+    }
+    return map[language]
   }
 }

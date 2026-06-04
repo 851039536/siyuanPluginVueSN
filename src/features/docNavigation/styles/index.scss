@@ -139,9 +139,22 @@
 .doc-nav-link-hidden {
   display: none;
 
-  &.show {
+  .show & {
     display: inline-flex;
   }
+}
+
+#doc-nav-hidden-children {
+  display: contents;
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+.doc-nav-current {
+  font-weight: 600;
+  opacity: 1 !important;
 }
 
 .doc-nav-expand {

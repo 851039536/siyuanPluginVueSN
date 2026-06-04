@@ -4,11 +4,27 @@ import type {
   BreadcrumbItem,
   DocHierarchy,
   DocHierarchyCacheItem,
+  DocNavSettings,
   SiblingCacheItem,
   SiblingDocs,
 } from "./index"
+import { Plugin } from "siyuan"
 import * as api from "@/api"
-import { DEFAULT_OPTIONS } from "./index"
+import { PluginStorage } from "@/utils/pluginStorage"
+import { TypedStorage } from "@/utils/typedStorage"
+import {
+  DEFAULT_NAV_SETTINGS,
+  DEFAULT_OPTIONS,
+} from "./index"
+
+export class DocNavSettingsStorage {
+  readonly settings: TypedStorage<DocNavSettings>
+
+  constructor(plugin: Plugin) {
+    const storage = new PluginStorage(plugin)
+    this.settings = new TypedStorage(storage, "docNavigation-settings", DEFAULT_NAV_SETTINGS)
+  }
+}
 
 /** 文档路径信息，由 getPathByID 返回 */
 export interface DocPathInfo {
@@ -283,12 +299,18 @@ export async function fetchBreadcrumb(
         const parentDir =
           ancestorPath.substring(0, ancestorPath.lastIndexOf("/")) || "/"
         return api.listDocsByPath(pathInfo.notebook, parentDir, 0)
-          .then((result) => ({ ancestorPath, result }))
+          .then((result) => ({
+            ancestorPath,
+            result,
+          }))
       }),
     )
 
     const items: BreadcrumbItem[] = []
-    for (const { ancestorPath, result } of results) {
+    for (const {
+      ancestorPath,
+      result,
+    } of results) {
       if (result?.files) {
         const targetFile = result.files.find(
           (f) => stripSySuffix(f.path) === ancestorPath,

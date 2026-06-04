@@ -43,6 +43,7 @@ export interface SiblingCacheItem {
 export interface TargetCacheItem {
   el: Element
   method: "after" | "before"
+  position: "top" | "bottom"
 }
 
 export interface DocNavigationOptions {
@@ -55,6 +56,16 @@ export const DEFAULT_OPTIONS: Required<DocNavigationOptions> = {
   maxCacheSize: 20,
   cacheTTL: 60000,
   debounceDelay: 100,
+}
+
+export interface DocNavSettings {
+  maxVisibleChildren: number
+  position: "top" | "bottom"
+}
+
+export const DEFAULT_NAV_SETTINGS: DocNavSettings = {
+  maxVisibleChildren: 5,
+  position: "top",
 }
 
 export interface ProtyleLike {

@@ -53,8 +53,8 @@ export class ScriptStorage {
     this.scripts = new TypedStorage(this.storage, this.STORAGE_KEY, [])
   }
 
-  /** 获取工作区根目录（通过思源 API） */
-  private async getWorkspaceRoot(): Promise<string | null> {
+  /** 获取工作区根目录（通过思源 API） — public，供外部使用 */
+  async getWorkspaceRoot(): Promise<string | null> {
     if ((this as any).__cachedWorkspaceRoot) return (this as any).__cachedWorkspaceRoot
     try {
       const resp = await fetch("/api/system/getConf", { method: "POST" })

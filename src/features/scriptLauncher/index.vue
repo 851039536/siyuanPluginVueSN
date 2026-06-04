@@ -32,6 +32,13 @@
       >
         {{ i18n.refresh || "刷新" }}
       </Button>
+      <Button
+        variant="ghost"
+        size="small"
+        icon="folder"
+        :title="'打开 data/storage/sc/'"
+        @click="openScFolder"
+      />
     </div>
 
     <ScriptList
@@ -41,6 +48,7 @@
       @edit="handleEdit"
       @delete="handleDelete"
       @run="handleRun"
+      @rename="handleRename"
     />
 
     <ScriptEditor
@@ -100,6 +108,16 @@ const handleRefresh = async () => {
   } catch {
     showMessage(props.i18n.loadFailed || "加载脚本失败", 3000, "error")
   }
+}
+
+const openScFolder = async () => {
+  try {
+    const node = (() => { try { return { cp: require("node:child_process") } } catch { return null } })()
+    if (!node) { showMessage("当前环境不支持", 2000, "error"); return }
+    const wsRoot = await storage.getWorkspaceRoot()
+    const scPath = wsRoot ? `${wsRoot}/data/storage/sc` : "data/storage/sc"
+    node.cp.exec(`start "" "${scPath}"`, { shell: true })
+  } catch { showMessage("打开失败", 2000, "error") }
 }
 
 const openCreateDialog = () => {
@@ -185,6 +203,15 @@ const handleDelete = async (script: Script) => {
 
 const triggerImport = () => {
   fileInputRef.value?.click()
+}
+
+const handleRename = async (id: string, newName: string) => {
+  try {
+    await updateScript(id, { name: newName })
+    await loadScripts()
+  } catch (error: any) {
+    showMessage(error.message || "重命名失败", 3000, "error")
+  }
 }
 
 const handleImportFile = async (event: Event) => {

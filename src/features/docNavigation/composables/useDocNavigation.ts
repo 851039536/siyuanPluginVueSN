@@ -5,21 +5,22 @@ import type {
 import type {
   Block,
   BreadcrumbItem,
+  DocNavSettings,
   ProtyleLike,
   SiblingDocs,
   TargetCacheItem,
 } from "../types"
 import type { DocPathInfo } from "../types/storage"
+import { Plugin } from "siyuan"
 import {
   computed,
-
   ref,
-
 } from "vue"
 import * as api from "@/api"
+import { DEFAULT_NAV_SETTINGS } from "../types"
 import {
   DocNavigationCache,
-
+  DocNavSettingsStorage,
   fetchBreadcrumb,
   fetchDocHierarchy,
   fetchSiblingDocs,
@@ -30,6 +31,7 @@ export interface UseDocNavigationReturn {
   childDocs: Ref<Block[]>
   breadcrumbs: Ref<BreadcrumbItem[]>
   siblingDocs: Ref<SiblingDocs>
+  currentDocId: Ref<string>
   hasNavigation: ComputedRef<boolean>
   hasBreadcrumbs: ComputedRef<boolean>
   hasSiblings: ComputedRef<boolean>
@@ -51,11 +53,15 @@ const emptySiblings: SiblingDocs = {
   currentIndex: -1,
 }
 
-export function useDocNavigation(): UseDocNavigationReturn {
+export function useDocNavigation(plugin: Plugin): UseDocNavigationReturn {
+  const settingsStorage = new DocNavSettingsStorage(plugin)
+  const settings = ref<DocNavSettings>({ ...DEFAULT_NAV_SETTINGS })
+
   const parentDoc = ref<Block | null>(null)
   const childDocs = ref<Block[]>([])
   const breadcrumbs = ref<BreadcrumbItem[]>([])
   const siblingDocs = ref<SiblingDocs>({ ...emptySiblings })
+  const currentDocId = ref("")
   const isExpanded = ref(false)
 
   const hasNavigation = computed(() => {
@@ -71,11 +77,11 @@ export function useDocNavigation(): UseDocNavigationReturn {
   })
 
   const visibleChildren = computed(() => {
-    return childDocs.value.slice(0, 5)
+    return childDocs.value.slice(0, settings.value.maxVisibleChildren)
   })
 
   const hiddenChildren = computed(() => {
-    return childDocs.value.slice(5)
+    return childDocs.value.slice(settings.value.maxVisibleChildren)
   })
 
   function resetState() {
@@ -87,6 +93,11 @@ export function useDocNavigation(): UseDocNavigationReturn {
 
   async function loadHierarchy(docId: string): Promise<void> {
     try {
+      currentDocId.value = docId
+
+      const loaded = await settingsStorage.settings.loadOrDefault()
+      settings.value = loaded
+
       const pathInfo = await api.getPathByID(docId)
       if (!pathInfo?.notebook || !pathInfo.path) {
         resetState()
@@ -140,6 +151,7 @@ export function useDocNavigation(): UseDocNavigationReturn {
     childDocs,
     breadcrumbs,
     siblingDocs,
+    currentDocId,
     hasNavigation,
     hasBreadcrumbs,
     hasSiblings,
@@ -159,23 +171,39 @@ export function disposeCache(): void {
 
 export function findNavigationTarget(
   protyle: ProtyleLike,
+  position: "top" | "bottom" = "top",
 ): TargetCacheItem | null {
-  let cached = targetCache.get(protyle)
+  if (!protyle.element) return null
 
-  if (!cached && protyle.element) {
-    const target =
+  const cached = targetCache.get(protyle)
+  if (cached && cached.position === position) return cached
+
+  let target: Element | null = null
+  let method: "after" | "before"
+
+  if (position === "bottom") {
+    target = protyle.element.querySelector(".protyle-wysiwyg")
+    method = "before"
+  } else {
+    target = protyle.element.querySelector(".protyle-title")
+    method = "after"
+  }
+
+  if (!target) {
+    target =
       protyle.element.querySelector(".protyle-title")
       || protyle.element.querySelector(".protyle-wysiwyg")
     if (!target) return null
-
-    cached = {
-      el: target,
-      method: target.classList.contains("protyle-title") ? "after" : "before",
-    }
-    targetCache.set(protyle, cached)
+    method = target.classList.contains("protyle-title") ? "after" : "before"
   }
 
-  return cached ?? null
+  const result: TargetCacheItem = {
+    el: target,
+    method,
+    position,
+  }
+  targetCache.set(protyle, result)
+  return result
 }
 
 export function removeExistingNav(protyle: ProtyleLike): void {

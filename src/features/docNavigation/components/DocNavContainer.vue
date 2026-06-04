@@ -2,12 +2,16 @@
   <div
     v-if="hasNavigation || hasBreadcrumbs || hasSiblings"
     class="doc-navigation-container"
+    role="navigation"
+    aria-label="文档导航"
     :data-doc-id="docId"
   >
     <div class="doc-navigation">
       <div
         v-if="hasBreadcrumbs"
         class="doc-nav-breadcrumb"
+        role="list"
+        aria-label="面包屑导航"
       >
         <template
           v-for="(item, index) in breadcrumbs"
@@ -15,8 +19,11 @@
         >
           <a
             class="doc-nav-breadcrumb-link"
+            :class="{ 'doc-nav-current': item.id === currentDocId }"
+            role="listitem"
             :data-doc-id="item.id"
             :title="stripHtml(item.content)"
+            :aria-current="item.id === currentDocId ? 'page' : undefined"
             @click="openDoc(item.id)"
           >
             {{ stripHtml(item.content) }}
@@ -24,6 +31,7 @@
           <span
             v-if="index < breadcrumbs.length - 1"
             class="doc-nav-breadcrumb-separator"
+            aria-hidden="true"
           >/</span>
         </template>
       </div>
@@ -31,12 +39,15 @@
       <div
         v-if="hasSiblings"
         class="doc-nav-siblings"
+        role="group"
+        aria-label="同级文档"
       >
         <a
           v-if="siblingDocs.prev"
           class="doc-nav-sibling doc-nav-sibling-prev"
           :data-doc-id="siblingDocs.prev.id"
           :title="`上一篇: ${stripHtml(siblingDocs.prev.content)}`"
+          :aria-label="`上一篇: ${stripHtml(siblingDocs.prev.content)}`"
           @click="openDoc(siblingDocs.prev.id)"
         >
           <IconWrapper
@@ -48,6 +59,7 @@
         <span
           v-else
           class="doc-nav-sibling doc-nav-sibling-disabled"
+          aria-hidden="true"
         >
           <IconWrapper
             name="chevronLeft"
@@ -55,13 +67,17 @@
           />
         </span>
 
-        <span class="doc-nav-sibling-count">{{ siblingDocs.currentIndex + 1 }}/{{ siblingDocs.siblings.length }}</span>
+        <span
+          class="doc-nav-sibling-count"
+          aria-live="polite"
+        >{{ siblingDocs.currentIndex + 1 }}/{{ siblingDocs.siblings.length }}</span>
 
         <a
           v-if="siblingDocs.next"
           class="doc-nav-sibling doc-nav-sibling-next"
           :data-doc-id="siblingDocs.next.id"
           :title="`下一篇: ${stripHtml(siblingDocs.next.content)}`"
+          :aria-label="`下一篇: ${stripHtml(siblingDocs.next.content)}`"
           @click="openDoc(siblingDocs.next.id)"
         >
           <span class="doc-nav-sibling-text">{{ stripHtml(siblingDocs.next.content) }}</span>
@@ -73,6 +89,7 @@
         <span
           v-else
           class="doc-nav-sibling doc-nav-sibling-disabled"
+          aria-hidden="true"
         >
           <IconWrapper
             name="chevronRight"
@@ -89,12 +106,13 @@
           name="docNavParent"
           class="doc-nav-icon"
           size="18"
-          title="上级文档"
+          aria-hidden="true"
         />
         <a
           class="doc-nav-link"
           :data-doc-id="parentDoc.id"
           :title="stripHtml(parentDoc.content)"
+          :aria-label="`上级文档: ${stripHtml(parentDoc.content)}`"
           @click="openDoc(parentDoc.id)"
         >
           {{ stripHtml(parentDoc.content) }}
@@ -109,15 +127,22 @@
           name="docNavChildren"
           class="doc-nav-icon"
           size="18"
-          :title="`下级文档 (${childDocs.length})`"
+          aria-hidden="true"
         />
-        <div class="doc-nav-children-list">
+        <div
+          class="doc-nav-children-list"
+          role="list"
+          :aria-label="`下级文档 (${childDocs.length})`"
+        >
           <a
             v-for="doc in visibleChildren"
             :key="doc.id"
             class="doc-nav-link"
+            :class="{ 'doc-nav-current': doc.id === currentDocId }"
+            role="listitem"
             :data-doc-id="doc.id"
             :title="stripHtml(doc.content)"
+            :aria-current="doc.id === currentDocId ? 'page' : undefined"
             @click="openDoc(doc.id)"
           >
             {{ stripHtml(doc.content) }}
@@ -126,21 +151,33 @@
           <template v-if="hiddenChildren.length">
             <button
               class="doc-nav-expand"
+              :aria-expanded="isExpanded"
+              aria-controls="doc-nav-hidden-children"
               @click="toggleExpand"
             >
               {{ isExpanded ? '收起' : `+${hiddenChildren.length}` }}
             </button>
-            <a
-              v-for="doc in hiddenChildren"
-              :key="doc.id"
-              class="doc-nav-link doc-nav-link-hidden"
-              :class="{ show: isExpanded }"
-              :data-doc-id="doc.id"
-              :title="stripHtml(doc.content)"
-              @click="openDoc(doc.id)"
+            <div
+              id="doc-nav-hidden-children"
+              :hidden="!isExpanded"
             >
-              {{ stripHtml(doc.content) }}
-            </a>
+              <a
+                v-for="doc in hiddenChildren"
+                :key="doc.id"
+                class="doc-nav-link doc-nav-link-hidden"
+                :class="{
+                  'show': isExpanded,
+                  'doc-nav-current': doc.id === currentDocId,
+                }"
+                role="listitem"
+                :data-doc-id="doc.id"
+                :title="stripHtml(doc.content)"
+                :aria-current="doc.id === currentDocId ? 'page' : undefined"
+                @click="openDoc(doc.id)"
+              >
+                {{ stripHtml(doc.content) }}
+              </a>
+            </div>
           </template>
         </div>
       </div>
@@ -149,12 +186,14 @@
 </template>
 
 <script setup lang="ts">
+import type { Plugin } from "siyuan"
 import { watch } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import { useDocNavigation } from "../composables/useDocNavigation"
 
 const props = defineProps<{
   docId: string
+  plugin: Plugin
 }>()
 
 const {
@@ -162,6 +201,7 @@ const {
   childDocs,
   breadcrumbs,
   siblingDocs,
+  currentDocId,
   hasNavigation,
   hasBreadcrumbs,
   hasSiblings,
@@ -172,7 +212,7 @@ const {
   toggleExpand,
   openDoc,
   stripHtml,
-} = useDocNavigation()
+} = useDocNavigation(props.plugin)
 
 watch(
   () => props.docId,

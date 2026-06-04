@@ -88,7 +88,8 @@
                 <Button
                   variant="success"
                   size="small"
-                  icon="success"
+                  icon="play"
+                  class="script-list__btn-run"
                   :title="i18n.runScript || '运行'"
                   @click="emit('run', script)"
                 />
@@ -404,6 +405,16 @@ function formatLastRun(timestamp: number): string {
     gap: $spacing-1;
     opacity: 0;
     transition: opacity 0.15s ease;
+  }
+
+  &__btn-run {
+    background: rgba(16, 185, 129, 0.15) !important;
+    color: #10b981 !important;
+    border: 1px solid rgba(16, 185, 129, 0.3) !important;
+
+    &:hover {
+      background: rgba(16, 185, 129, 0.25) !important;
+    }
   }
 
   &__empty {

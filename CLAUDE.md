@@ -572,6 +572,28 @@ export function registerMyFeature(plugin: Plugin) {
 }
 ```
 
+## 文件路径规则
+
+### putFile / getFile / removeFile 路径
+
+`src/api.ts` 中的 `putFile(path, isDir, file)` 和 `getFile(path)` 路径**相对于工作区根目录**（不是 `data/` 目录）。
+
+| 调用 | path 示例 | 实际磁盘位置 |
+|------|----------|-------------|
+| `putFile("assets/x.png", false, blob)` | `assets/x.png` | `{workspace}/assets/x.png` |
+| `putFile("data/storage/sc/x.py", false, blob)` | `data/storage/sc/x.py` | `{workspace}/data/storage/sc/x.py` |
+| `getFile("data/storage/sc/x.py")` | `data/storage/sc/x.py` | `{workspace}/data/storage/sc/x.py` |
+
+若要存到工作区 `data/` 子目录，path 必须带 `data/` 前缀。
+
+### 插件数据目录
+
+插件自身数据目录可通过 `(this as any).dataDir` 在 `onload` 中获取，格式为 `{workspace}/data/storage/petal/{pluginName}`。从该路径可反推工作区根目录。
+
+### Vite 外部模块
+
+使用 `require("node:fs")` / `require("node:path")` / `require("node:os")` / `require("node:child_process")` 的模块，需在 `vite.config.ts` 的 `external` 数组中声明，否则打包后 `require` 调用失效。
+
 ## 依赖
 
 | 依赖 | 版本 | 用途 |

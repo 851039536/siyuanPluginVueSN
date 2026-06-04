@@ -23,6 +23,7 @@ export async function getWordCountAggregation(
       AND created <= '${endDate}'
     GROUP BY substr(created, 1, ${subStrLen})
     ORDER BY ${groupField}
+    LIMIT 1024
   `
   return await executeSql(sql)
 }

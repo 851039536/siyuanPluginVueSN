@@ -22,6 +22,7 @@ export async function getDateChangedDocs(dateStr: string): Promise<{
     SELECT id, content FROM blocks
     WHERE type = 'd' AND substr(created, 1, 8) = '${dateStr}'
     ORDER BY created ASC
+    LIMIT 512
   `
   const modifiedDocsSql = `
     SELECT id, content, updated FROM blocks
@@ -29,6 +30,7 @@ export async function getDateChangedDocs(dateStr: string): Promise<{
       AND substr(updated, 1, 8) = '${dateStr}'
       AND substr(created, 1, 8) != '${dateStr}'
     ORDER BY updated DESC
+    LIMIT 512
   `
 
   const [newRows, modifiedRows] = await Promise.all([
@@ -68,6 +70,7 @@ export async function getDateRangeChangeStats(startStr: string, endStr: string):
       AND substr(created, 1, 8) <= '${endStr}'
     GROUP BY substr(created, 1, 8)
     ORDER BY date ASC
+    LIMIT 1024
   `
   const modifiedSql = `
     SELECT substr(updated, 1, 8) as date, COUNT(*) as cnt
@@ -78,6 +81,7 @@ export async function getDateRangeChangeStats(startStr: string, endStr: string):
       AND substr(created, 1, 8) != substr(updated, 1, 8)
     GROUP BY substr(updated, 1, 8)
     ORDER BY date ASC
+    LIMIT 1024
   `
 
   const [newRows, modifiedRows] = await Promise.all([

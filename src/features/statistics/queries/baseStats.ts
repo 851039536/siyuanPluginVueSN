@@ -100,6 +100,7 @@ async function getWritingActivity(): Promise<{ activeDays: number, writingStreak
     UNION
     SELECT DISTINCT substr(updated, 1, 8) as date FROM blocks
     WHERE type = 'd' AND updated >= '${startStr}' AND updated <= '${endStr}'
+    LIMIT 1024
   `)
 
   if (!rows || rows.length === 0) { return {

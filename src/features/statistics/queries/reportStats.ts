@@ -16,6 +16,7 @@ async function calcLongestStreak(startStr: string, endStr: string): Promise<numb
       WHERE type = 'p' AND length > 0
         AND created >= '${startStr}' AND created <= '${endStr}'
       ORDER BY date ASC
+      LIMIT 1024
     `)
 
     if (!rows || rows.length === 0) return 0

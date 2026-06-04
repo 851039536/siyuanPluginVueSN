@@ -12,7 +12,7 @@ import {
 import { DEFAULT_OPTIONS } from "./types"
 import "./styles/index.scss"
 
-let updateTimer: ReturnType<typeof setTimeout> | null = null
+const timerMap = new WeakMap<Element, ReturnType<typeof setTimeout>>()
 
 export function registerDocNavigation(plugin: Plugin) {
   const handleEvent = (e: CustomEvent) => {
@@ -29,19 +29,23 @@ export function registerDocNavigation(plugin: Plugin) {
 }
 
 function updateDocNavigationDebounced(protyle: ProtyleLike) {
-  if (!protyle?.block?.rootID) return
+  if (!protyle?.block?.rootID || !protyle.element) return
 
-  updateTimer && clearTimeout(updateTimer)
-  updateTimer = setTimeout(
-    () => updateDocNavigation(protyle),
-    DEFAULT_OPTIONS.debounceDelay,
+  const el = protyle.element
+  const existing = timerMap.get(el)
+  if (existing) clearTimeout(existing)
+  timerMap.set(
+    el,
+    setTimeout(
+      () => updateDocNavigation(protyle),
+      DEFAULT_OPTIONS.debounceDelay,
+    ),
   )
 }
 
 async function updateDocNavigation(protyle: ProtyleLike) {
   try {
-    const docId = protyle?.block?.rootID
-    if (!docId) return
+    const docId = protyle.block!.rootID
 
     const target = findNavigationTarget(protyle)
     if (!target) return

@@ -121,11 +121,13 @@ $stats-header-height: 56px;
   }
 
   .last-update {
-    font-size: 11px;
+    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     color: var(--b3-theme-on-surface);
-    opacity: 0.6;
-    font-family: $font-body;
-    font-weight: 500;
+    opacity: 0.45;
   }
 }
 
@@ -151,17 +153,22 @@ $stats-header-height: 56px;
   justify-content: center;
   width: 28px;
   height: 28px;
-  border: none;
+  border: 1px solid transparent;
   border-radius: $radius-sm;
   background: transparent;
   color: var(--b3-theme-on-surface);
   cursor: pointer;
-  opacity: 0.5;
-  transition: opacity 0.2s, background 0.2s;
+  opacity: 0;
+  transition: opacity 0.2s, background 0.2s, border-color 0.2s;
+
+  .statistics-header:hover & {
+    opacity: 0.5;
+  }
 
   &:hover {
-    opacity: 1;
+    opacity: 1 !important;
     background: var(--b3-theme-hover);
+    border-color: var(--b3-border-color);
   }
 
   svg {
@@ -189,7 +196,11 @@ $stats-header-height: 56px;
 }
 
 .storage-key {
-  font-weight: 600;
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--b3-theme-primary);
   white-space: nowrap;
   min-width: 130px;
@@ -204,6 +215,7 @@ $stats-header-height: 56px;
 
 .storage-path {
   flex: 1;
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   color: var(--b3-theme-on-surface);
   opacity: 0.4;
   font-size: 10px;

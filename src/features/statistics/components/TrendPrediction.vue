@@ -362,12 +362,11 @@ defineExpose({ load })
 }
 
 .confidence-label {
-  font-size: 10px;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.5;
+  @include stats.codex-label;
 }
 
 .confidence-value {
+  font-family: stats.$font-mono;
   font-size: 14px;
   font-weight: 700;
   color: var(--b3-theme-primary);
@@ -391,16 +390,18 @@ defineExpose({ load })
 }
 
 .proj-label {
-  color: var(--b3-theme-on-surface);
+  @include stats.codex-label;
   opacity: 0.6;
 }
 
 .proj-value {
+  font-family: stats.$font-mono;
   font-weight: 600;
   color: var(--b3-theme-primary);
 }
 
 .pred-trend-label {
+  font-family: stats.$font-mono;
   font-size: 11px;
   color: var(--b3-theme-on-surface);
 
@@ -435,6 +436,7 @@ defineExpose({ load })
 }
 
 .chart-y-label {
+  font-family: stats.$font-mono;
   font-size: 9px;
   fill: var(--b3-theme-on-surface);
   opacity: 0.5;
@@ -502,6 +504,7 @@ defineExpose({ load })
 }
 
 .tooltip-label {
+  font-family: stats.$font-mono;
   font-weight: 500;
   color: var(--b3-theme-on-surface);
 }
@@ -517,6 +520,7 @@ defineExpose({ load })
 }
 
 .tooltip-val {
+  font-family: stats.$font-mono;
   font-weight: 700;
   color: var(--b3-theme-on-surface);
 }
@@ -531,6 +535,7 @@ defineExpose({ load })
   display: flex;
   align-items: center;
   gap: 4px;
+  font-family: stats.$font-mono;
   font-size: 10px;
   color: var(--b3-theme-on-surface);
   opacity: 0.6;

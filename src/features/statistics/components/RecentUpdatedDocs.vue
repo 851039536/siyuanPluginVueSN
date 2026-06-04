@@ -236,13 +236,13 @@ defineExpose({ loadDocs, docs })
 // ---- group header ----
 .rd-group-header {
   padding: 10px 12px 4px;
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--b3-theme-on-surface);
   opacity: 0.35;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-family: $font-body;
+  letter-spacing: 0.06em;
 }
 
 // ---- item row ----
@@ -285,10 +285,13 @@ defineExpose({ loadDocs, docs })
 }
 
 .rd-notebook {
-  font-size: 11px;
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--b3-theme-on-surface);
   opacity: 0.4;
-  font-weight: 400;
   white-space: nowrap;
   max-width: 100px;
   overflow: hidden;
@@ -312,12 +315,14 @@ defineExpose({ loadDocs, docs })
 }
 
 .rd-time {
-  font-size: 11px;
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   color: var(--b3-theme-on-surface);
   opacity: 0.35;
   white-space: nowrap;
   flex-shrink: 0;
-  font-feature-settings: "tnum";
   font-variant-numeric: tabular-nums;
 }
 </style>

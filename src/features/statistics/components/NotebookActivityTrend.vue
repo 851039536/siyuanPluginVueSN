@@ -544,6 +544,7 @@ defineExpose({ load })
   border-radius: 4px;
   background: transparent;
   color: var(--b3-theme-on-surface-light);
+  font-family: stats.$font-mono;
   font-size: 12px;
   cursor: pointer;
   transition: all 0.15s;
@@ -645,12 +646,14 @@ defineExpose({ load })
 }
 
 .y-label {
+  font-family: stats.$font-mono;
   font-size: 10px;
   fill: var(--b3-theme-on-surface);
   opacity: 0.5;
 }
 
 .x-label {
+  font-family: stats.$font-mono;
   font-size: 10px;
   fill: var(--b3-theme-on-surface);
   opacity: 0.4;
@@ -689,6 +692,7 @@ defineExpose({ load })
 }
 
 .tooltip-date {
+  font-family: stats.$font-mono;
   font-weight: 600;
   margin-bottom: 4px;
   color: var(--b3-theme-on-surface);
@@ -715,6 +719,7 @@ defineExpose({ load })
 }
 
 .tooltip-val {
+  font-family: stats.$font-mono;
   font-weight: 600;
 }
 
@@ -727,10 +732,13 @@ defineExpose({ load })
 }
 
 .ranking-title {
+  font-family: stats.$font-mono;
   font-size: 13px;
   font-weight: 600;
   color: var(--b3-theme-on-surface);
   margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .ranking-table {
@@ -743,8 +751,11 @@ defineExpose({ load })
   display: flex;
   align-items: center;
   padding: 6px 4px;
-  font-size: 11px;
-  font-weight: 600;
+  font-family: stats.$font-mono;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: var(--b3-theme-on-surface-light);
   border-bottom: 1px solid var(--b3-border-color);
 }
@@ -793,6 +804,7 @@ defineExpose({ load })
   width: 70px;
   text-align: right;
   flex-shrink: 0;
+  font-family: stats.$font-mono;
   font-weight: 600;
 }
 
@@ -800,12 +812,14 @@ defineExpose({ load })
   width: 55px;
   text-align: right;
   flex-shrink: 0;
+  font-family: stats.$font-mono;
 }
 
 .col-avg {
   width: 55px;
   text-align: right;
   flex-shrink: 0;
+  font-family: stats.$font-mono;
 }
 
 .col-bar {
@@ -834,6 +848,7 @@ defineExpose({ load })
 
 .bar-label {
   width: 32px;
+  font-family: stats.$font-mono;
   font-size: 11px;
   color: var(--b3-theme-on-surface-light);
   text-align: right;

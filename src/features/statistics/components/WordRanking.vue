@@ -144,15 +144,15 @@ function getRankClass(index: number): string {
         border-radius: 4px;
         background: var(--b3-theme-surface);
         color: var(--b3-theme-on-surface);
-        font-family: $font-body;
+        font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
         font-size: 10px;
-        font-weight: 600;
+        font-weight: 700;
         cursor: pointer;
         outline: none;
 
         &:focus {
           border-color: var(--b3-theme-primary);
-          box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.1);
+          box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest, rgba(var(--b3-theme-primary-rgb), 0.12));
         }
       }
     }
@@ -195,7 +195,7 @@ function getRankClass(index: number): string {
         display: flex;
         align-items: center;
         justify-content: center;
-        font-family: $font-heading;
+        font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
         font-size: 10px;
         font-weight: 700;
         background: rgba(var(--b3-theme-on-surface-rgb), 0.06);
@@ -229,15 +229,15 @@ function getRankClass(index: number): string {
         gap: 8px;
 
         .rank-date {
-          font-family: $font-body;
+          font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
           font-size: 11px;
-          font-weight: 600;
+          font-weight: 700;
           color: var(--b3-theme-on-surface);
           white-space: nowrap;
         }
 
         .rank-words {
-          font-family: $font-heading;
+          font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
           font-size: 10px;
           font-weight: 700;
           color: var(--b3-theme-primary);

@@ -136,7 +136,7 @@ function formatChartLabel(label: string): string {
 
       .bar-value {
         position: absolute;
-        font-family: $font-heading;
+        font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
         font-size: 10px;
         font-weight: 700;
         color: var(--b3-theme-primary);
@@ -163,11 +163,12 @@ function formatChartLabel(label: string): string {
       .bar-label {
         position: absolute;
         bottom: -18px;
-        font-family: $font-body;
+        font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
         font-size: 10px;
-        font-weight: 500;
+        font-weight: 700;
+        letter-spacing: 0.04em;
         color: var(--b3-theme-on-surface);
-        opacity: 0.5;
+        opacity: 0.45;
         white-space: nowrap;
         left: 50%;
         transform: translateX(-50%);
@@ -175,7 +176,6 @@ function formatChartLabel(label: string): string {
         &.today {
           color: var(--b3-theme-primary);
           opacity: 1;
-          font-weight: 700;
         }
       }
     }

@@ -131,6 +131,7 @@ function degToRad(deg: number): number {
 
 <style scoped lang="scss">
 @use "@/variables" as *;
+@use "../styles/index.scss" as stats;
 
 .notebook-word-pie {
   padding: 8px 0;
@@ -163,6 +164,7 @@ function degToRad(deg: number): number {
 }
 
 .pie-center-label {
+  font-family: stats.$font-mono;
   font-size: 18px;
   font-weight: 700;
   fill: var(--b3-theme-on-surface);
@@ -209,6 +211,7 @@ function degToRad(deg: number): number {
 }
 
 .legend-pct {
+  font-family: stats.$font-mono;
   color: var(--b3-theme-on-surface);
   opacity: 0.6;
   font-weight: 600;
@@ -217,6 +220,7 @@ function degToRad(deg: number): number {
 }
 
 .legend-words {
+  font-family: stats.$font-mono;
   color: var(--b3-theme-on-surface);
   opacity: 0.4;
   min-width: 48px;

@@ -7,12 +7,31 @@
 
 // ========== Variables & Mixins ==========
 $stats-card-radius: 4px;
-$stats-shadow-light: 0 2px 8px rgba(0, 0, 0, 0.04);
-$stats-shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.08);
 
+// Codex 等宽字体
+$font-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
 
 $gradient-primary: linear-gradient(135deg, var(--b3-theme-primary) 0%, var(--b3-theme-primary-light, #5d87ff) 100%);
 $gradient-surface: linear-gradient(180deg, var(--b3-theme-surface) 0%, var(--b3-theme-background) 100%);
+
+// Codex focus glow
+@mixin codex-focus-glow {
+  &:focus {
+    border-color: var(--b3-theme-primary);
+    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest, rgba(var(--b3-theme-primary-rgb), 0.12));
+    outline: none;
+  }
+}
+
+// Codex 大写标签
+@mixin codex-label {
+  font-family: $font-mono;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.45;
+}
 
 $color-success: #2da44e;
 $color-danger: #cf222e;
@@ -42,7 +61,6 @@ $color-rank-bronze: #cd7f32;
 
   &:hover {
     border-color: var(--b3-theme-primary);
-    box-shadow: $stats-shadow-medium;
   }
 }
 
@@ -66,15 +84,20 @@ $color-rank-bronze: #cd7f32;
     padding: 10px 8px;
     text-align: center;
 
+    &:hover {
+      border-color: var(--b3-theme-primary);
+    }
+
     .summary-value {
+      font-family: $font-mono;
       font-weight: 700;
       color: var(--b3-theme-primary);
       line-height: 1.2;
     }
 
     .summary-label {
-      font-size: 11px;
-      color: var(--b3-theme-on-surface-light);
+      @include codex-label;
+      color: var(--b3-theme-on-surface);
       margin-top: 4px;
     }
   }
@@ -86,16 +109,19 @@ $color-rank-bronze: #cd7f32;
   border-radius: 4px;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
-  font-size: 12px;
+  font-family: $font-mono;
+  font-size: 11px;
+  font-weight: 600;
   cursor: pointer;
 
   &:hover {
     background: var(--b3-list-hover);
+    border-color: var(--b3-theme-primary);
   }
 
   &.active {
-    background: var(--b3-theme-primary-light);
-    color: var(--b3-theme-primary);
+    background: var(--b3-theme-primary);
+    color: var(--b3-theme-on-primary);
     border-color: var(--b3-theme-primary);
   }
 }
@@ -104,17 +130,21 @@ $color-rank-bronze: #cd7f32;
 .section-title {
   margin: 0 0 12px 0;
   font-family: $font-heading;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   color: var(--b3-theme-on-surface);
 }
 
 .subsection-title {
   margin: 0 0 8px 0;
-  font-family: $font-heading;
-  font-size: 12px;
-  font-weight: 600;
+  font-family: $font-mono;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--b3-theme-on-surface);
+  opacity: 0.6;
 }
 
 // ========== Main Container ==========
@@ -160,7 +190,6 @@ $color-rank-bronze: #cd7f32;
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
     border-radius: $stats-card-radius;
-    box-shadow: $stats-shadow-light;
 
     .section-title {
       margin-bottom: 16px;

@@ -399,7 +399,9 @@ function setDocDateToday() {
 
 .range-chart-label {
   width: 32px;
-  font-size: 11px;
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-size: 10px;
+  font-weight: 700;
   color: var(--b3-theme-on-surface);
   opacity: 0.7;
   flex-shrink: 0;
@@ -417,13 +419,14 @@ function setDocDateToday() {
 .range-chart-bar {
   height: 16px;
   border-radius: 4px;
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   font-size: 10px;
+  font-weight: 700;
   color: #fff;
   display: flex;
   align-items: center;
   padding-left: 4px;
   min-width: 20px;
-  font-weight: 600;
 
   &.new { background: stats.$color-success; }
   &.modified { background: stats.$color-warning; }
@@ -443,7 +446,15 @@ function setDocDateToday() {
   border-radius: 4px;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
-  font-size: 12px;
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  outline: none;
+
+  &:focus {
+    border-color: var(--b3-theme-primary);
+    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest, rgba(var(--b3-theme-primary-rgb), 0.12));
+  }
 }
 
 .changed-date-today {
@@ -482,8 +493,11 @@ function setDocDateToday() {
 }
 
 .changed-docs-group-title {
-  font-size: 12px;
-  font-weight: 600;
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--b3-theme-on-surface);
   margin-bottom: 6px;
   padding: 0 4px;

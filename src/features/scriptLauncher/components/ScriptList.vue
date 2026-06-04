@@ -80,6 +80,7 @@
                 <span v-if="script.lastRunAt">{{ formatLastRun(script.lastRunAt) }}</span>
                 <span v-else>{{ i18n.neverRun || "未运行" }}</span>
               </p>
+              <p class="script-list__card-path">data/storage/sc/{{ script.fileName }}</p>
             </div>
 
             <template #footer>
@@ -373,6 +374,17 @@ function formatLastRun(timestamp: number): string {
     font-size: $font-size-xs;
     color: var(--b3-theme-secondary, $brand-mid-gray);
     margin: 0;
+  }
+
+  &__card-path {
+    font-size: 10px;
+    font-family: "JetBrains Mono", "Consolas", monospace;
+    color: var(--b3-theme-secondary, $brand-mid-gray);
+    opacity: 0.5;
+    margin: 2px 0 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   &__card-actions {

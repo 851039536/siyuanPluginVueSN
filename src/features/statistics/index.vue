@@ -238,7 +238,7 @@
         class="heatmap-tab"
       >
         <HeatmapCard
-          :historical-data="historicalData"
+          :activity-map="heatmapActivityMap"
           :writing-streak="stats?.writingStreak ?? 0"
           :active-days="stats?.activeDays ?? 0"
           :i18n="heatmapI18n"
@@ -293,6 +293,7 @@ import {
   getDateRangeChangeStats,
   getRecentUpdatedDocs,
 } from "./queries/docChangeStats"
+import { getHeatmapActivityData } from "./queries/heatmapStats"
 import { getNotebookActivityTrend } from "./queries/notebookStats"
 import {
   getComparisonData,
@@ -598,6 +599,13 @@ watch([viewMode, dayRange, monthYearRange, selectedYear], () => {
 
 const recentUpdatedDocsRef = ref<InstanceType<typeof RecentUpdatedDocs> | null>(null)
 const notebookStatsLoaded = ref(false)
+const heatmapActivityMap = ref(new Map<string, number>())
+const heatmapLoaded = ref(false)
+
+async function loadHeatmapData(): Promise<void> {
+  heatmapActivityMap.value = await getHeatmapActivityData(12)
+  heatmapLoaded.value = true
+}
 
 async function refreshData(): Promise<void> {
   loading.value = true
@@ -607,6 +615,9 @@ async function refreshData(): Promise<void> {
     recentUpdatedDocsRef.value?.loadDocs(() => getRecentUpdatedDocs(20))
     if (activeTab.value === 'notebookDistribution' && !notebookStatsLoaded.value) {
       await loadNotebookStats()
+    }
+    if (activeTab.value === 'heatmap') {
+      await loadHeatmapData()
     }
   } catch (error) {
     console.error("刷新统计数据失败:", error)
@@ -628,6 +639,9 @@ async function loadNotebookStats(): Promise<void> {
 watch(activeTab, (tab) => {
   if (tab === 'notebookDistribution') {
     loadNotebookStats()
+  }
+  if (tab === 'heatmap' && !heatmapLoaded.value) {
+    loadHeatmapData()
   }
 })
 

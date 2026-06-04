@@ -9,14 +9,31 @@ import {
   findNavigationTarget,
   removeExistingNav,
 } from "./composables/useDocNavigation"
-import { DEFAULT_OPTIONS } from "./types"
+import {
+  DEFAULT_NAV_SETTINGS,
+  DEFAULT_OPTIONS,
+} from "./types"
+import { DocNavSettingsStorage } from "./types/storage"
 import "./styles/index.scss"
 
 const timerMap = new WeakMap<Element, ReturnType<typeof setTimeout>>()
+const visibilityMap = new WeakMap<Element, boolean>()
+const observer = new IntersectionObserver(
+  (entries) => {
+    for (const entry of entries) {
+      visibilityMap.set(entry.target, entry.isIntersecting)
+    }
+  },
+  { threshold: 0 },
+)
 
 export function registerDocNavigation(plugin: Plugin) {
+  const settingsStorage = new DocNavSettingsStorage(plugin)
+
   const handleEvent = (e: CustomEvent) => {
     updateDocNavigationDebounced(
+      plugin,
+      settingsStorage,
       (e.detail as { protyle: ProtyleLike }).protyle,
     )
   };
@@ -28,8 +45,13 @@ export function registerDocNavigation(plugin: Plugin) {
   )
 }
 
-function updateDocNavigationDebounced(protyle: ProtyleLike) {
+function updateDocNavigationDebounced(
+  plugin: Plugin,
+  settingsStorage: DocNavSettingsStorage,
+  protyle: ProtyleLike,
+) {
   if (!protyle?.block?.rootID || !protyle.element) return
+  if (visibilityMap.get(protyle.element) === false) return
 
   const el = protyle.element
   const existing = timerMap.get(el)
@@ -37,17 +59,24 @@ function updateDocNavigationDebounced(protyle: ProtyleLike) {
   timerMap.set(
     el,
     setTimeout(
-      () => updateDocNavigation(protyle),
+      () => updateDocNavigation(plugin, settingsStorage, protyle),
       DEFAULT_OPTIONS.debounceDelay,
     ),
   )
 }
 
-async function updateDocNavigation(protyle: ProtyleLike) {
+async function updateDocNavigation(
+  plugin: Plugin,
+  settingsStorage: DocNavSettingsStorage,
+  protyle: ProtyleLike,
+) {
   try {
     const docId = protyle.block!.rootID
 
-    const target = findNavigationTarget(protyle)
+    const settings = await settingsStorage.settings.loadOrDefault()
+    const position = settings.position ?? DEFAULT_NAV_SETTINGS.position
+
+    const target = findNavigationTarget(protyle, position)
     if (!target) return
 
     removeExistingNav(protyle)
@@ -64,11 +93,16 @@ async function updateDocNavigation(protyle: ProtyleLike) {
       protyleRef.__docNavContainer = container
     }
 
+    if (protyle.element) {
+      observer.observe(protyle.element)
+    }
+
     const app = createApp({
       setup() {
         return () =>
           h(DocNavContainer, {
             docId,
+            plugin,
           })
       },
     })

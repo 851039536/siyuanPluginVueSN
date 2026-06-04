@@ -52,6 +52,8 @@ export function useScriptRunner() {
         {
           timeout,
           encoding: "utf-8",
+          shell: "cmd.exe",
+          env: { ...process.env, PYTHONIOENCODING: "utf-8" },
         },
         (err: any, stdout: string, stderr: string): void => {
           running.value = false
@@ -91,15 +93,15 @@ export function useScriptRunner() {
 function buildCommand(language: ScriptLanguage, filePath: string): string {
   switch (language) {
     case "python":
-      return `python "${filePath}"`
+      return `set PYTHONIOENCODING=utf-8 && python "${filePath}"`
     case "bash":
       return `bash "${filePath}"`
     case "powershell":
-      return `powershell -ExecutionPolicy Bypass -File "${filePath}"`
+      return `powershell -ExecutionPolicy Bypass -Command "[Console]::OutputEncoding=[Text.Encoding]::UTF8; & '${filePath}'"`
     case "nodejs":
       return `node "${filePath}"`
     case "batch":
-      return `"${filePath}"`
+      return `chcp 65001 >nul && call "${filePath}"`
     default:
       return `cat "${filePath}"`
   }

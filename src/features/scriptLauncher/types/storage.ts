@@ -16,7 +16,7 @@ import { getFile, putFile, removeFile } from "@/api"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
 
-const SC_DIR = "storage/sc"
+const SC_DIR = "data/storage/sc"
 
 function getNodeModules(): { fs: any, path: any, os: any } | null {
   try {
@@ -62,8 +62,8 @@ export class ScriptStorage {
   }
 
   private async putContent(fileName: string, content: string): Promise<void> {
-    const blob = new Blob([content], { type: "text/plain" })
-    await putFile(this.scPath(fileName), false, blob)
+    const file = new File([content], fileName, { type: "text/plain" })
+    await putFile(this.scPath(fileName), false, file)
   }
 
   private async getContent(fileName: string): Promise<string | null> {

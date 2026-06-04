@@ -1481,6 +1481,7 @@
     "panelTitle": "脚本启动器",
     "description": "管理并运行自定义脚本，支持 Python、Bash、PowerShell、Node.js、Batch",
     "addScript": "添加脚本",
+    "importScript": "导入",
     "editScript": "编辑脚本",
     "deleteScript": "删除脚本",
     "runScript": "运行",

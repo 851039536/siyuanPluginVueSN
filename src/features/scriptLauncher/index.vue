@@ -12,6 +12,21 @@
       <Button
         variant="secondary"
         size="small"
+        icon="plus"
+        @click="triggerImport"
+      >
+        {{ i18n.importScript || "导入" }}
+      </Button>
+      <input
+        ref="fileInputRef"
+        type="file"
+        :accept="importAccept"
+        style="display: none"
+        @change="handleImportFile"
+      >
+      <Button
+        variant="secondary"
+        size="small"
         icon="refresh"
         @click="handleRefresh"
       >
@@ -55,8 +70,8 @@
 import type { Plugin } from "siyuan"
 import type { Script } from "./types"
 import type { I18n } from "./types/index"
+import { computed, ref } from "vue"
 import { showMessage } from "siyuan"
-import { ref } from "vue"
 import Button from "@/components/Button.vue"
 import ScriptEditor from "./components/ScriptEditor.vue"
 import ScriptList from "./components/ScriptList.vue"
@@ -86,11 +101,16 @@ const showEditor = ref(false)
 const showOutput = ref(false)
 const selectedScript = ref<Script | null>(null)
 const editingContent = ref("")
+const fileInputRef = ref<HTMLInputElement>()
 
 const runnerRunning = ref(false)
 const runnerStdout = ref("")
 const runnerStderr = ref("")
 const runnerExitCode = ref<number | null>(null)
+
+const importAccept = computed(() =>
+  ".py,.pyw,.sh,.bash,.ps1,.js,.mjs,.bat,.cmd",
+)
 
 const handleRefresh = async () => {
   try {
@@ -119,7 +139,7 @@ const closeOutput = () => {
 
 const handleEdit = async (script: Script) => {
   selectedScript.value = script
-  editingContent.value = script.content || ""
+  editingContent.value = (await storage.loadContent(script.fileName)) || ""
   showEditor.value = true
 }
 
@@ -134,7 +154,7 @@ const handleSave = async (data: {
     if (selectedScript.value) {
       await updateScript(selectedScript.value.id, {
         name: data.name,
-        language: data.language,
+        language: data.language as any,
         category: data.category,
         description: data.description,
         content: data.content,
@@ -159,7 +179,6 @@ const handleDelete = async (script: Script) => {
   if (!window.confirm(props.i18n.confirmDelete || "确定要删除这个脚本吗？")) {
     return
   }
-
   try {
     await deleteScript(script.id)
     showMessage(props.i18n.deleteSuccess || "脚本已删除", 2000, "info")
@@ -180,10 +199,18 @@ const handleRun = async (script: Script) => {
   runnerStderr.value = ""
   runnerExitCode.value = null
 
-  const filePath = storage.writeTempFile(script)
+  const content = await storage.loadContent(script.fileName)
+  if (!content) {
+    runnerRunning.value = false
+    runnerStderr.value = "无法读取脚本内容"
+    runnerExitCode.value = 1
+    return
+  }
+
+  const filePath = storage.writeTempFile(script, content)
   if (!filePath) {
     runnerRunning.value = false
-    runnerStderr.value = "无法创建临时脚本文件"
+    runnerStderr.value = "无法创建临时文件"
     runnerExitCode.value = 1
     return
   }
@@ -201,6 +228,26 @@ const handleRun = async (script: Script) => {
   } finally {
     runnerRunning.value = false
     storage.removeTempFile(filePath)
+  }
+}
+
+const triggerImport = () => {
+  fileInputRef.value?.click()
+}
+
+const handleImportFile = async (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+  try {
+    const content = await file.text()
+    await storage.importFileContent(file.name, content)
+    await loadScripts()
+    showMessage("脚本已导入", 2000, "info")
+  } catch (error: any) {
+    showMessage(error.message || "导入失败", 3000, "error")
+  } finally {
+    input.value = ""
   }
 }
 </script>

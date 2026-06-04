@@ -137,15 +137,21 @@ export class ScriptLauncher {
   }
 
   public async init() {
+    this.registerIcon()
     this.addDock()
     await this.storage.init()
+  }
+
+  /** 注册自定义 SVG 图标（思源内置图标系统） */
+  private registerIcon() {
+    this.plugin.addIcons(`<symbol id="iconScriptLauncher" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></symbol>`)
   }
 
   private addDock() {
     createVueDockApp(this.plugin, ScriptLauncherPanel, {
       position: "RightTop",
       width: 420,
-      icon: "mdi:script-text-outline",
+      icon: "iconScriptLauncher",
       title: (this.plugin.i18n as any)?.scriptLauncher?.panelTitle || "脚本启动器",
       type: "scriptLauncher-dock",
       i18n: (this.plugin.i18n?.scriptLauncher as I18n) || ({} as I18n),

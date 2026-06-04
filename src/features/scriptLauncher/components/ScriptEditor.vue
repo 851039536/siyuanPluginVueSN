@@ -282,6 +282,13 @@ watch(
     padding: $spacing-4 $spacing-5;
     overflow-y: auto;
     flex: 1;
+
+    /* 脚本内容区域使用等宽字体（Codex 风格） */
+    :deep(.si-input__field--textarea) {
+      font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+      font-size: 13px;
+      line-height: 1.5;
+    }
   }
 
   &__category-row {

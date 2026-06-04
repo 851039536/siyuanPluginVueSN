@@ -314,8 +314,10 @@ function formatLastRun(timestamp: number): string {
   }
 
   &__group-title {
-    font-size: $font-size-sm;
-    font-weight: 600;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     flex: 1;
   }
 
@@ -330,6 +332,10 @@ function formatLastRun(timestamp: number): string {
 
     &:hover {
       border-color: var(--b3-theme-primary, $brand-primary);
+
+      .script-list__card-actions {
+        opacity: 1;
+      }
     }
   }
 
@@ -371,8 +377,12 @@ function formatLastRun(timestamp: number): string {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: $font-size-xs;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     color: var(--b3-theme-secondary, $brand-mid-gray);
+    opacity: 0.45;
     margin: 0;
   }
 
@@ -392,6 +402,8 @@ function formatLastRun(timestamp: number): string {
     align-items: center;
     justify-content: flex-end;
     gap: $spacing-1;
+    opacity: 0;
+    transition: opacity 0.15s ease;
   }
 
   &__empty {

@@ -8,12 +8,28 @@ import {
   computed,
   ref,
 } from "vue"
+import { executeSql, formatDateTime } from "../queries/executeSql"
 import { getStatistics } from "../queries"
 import { StatisticsStorage } from "../types/storage"
-import {
-  formatDate,
-  padZero,
-} from "../utils"
+import { formatDate } from "../utils"
+
+/**
+ * 通过 SQL 查询指定日期的新建/修改文档数
+ * 替代本地 JSON 快照，数据始终从数据库实时查询
+ */
+async function getDayCounts(date: Date): Promise<{ created: number, modified: number }> {
+  const dateStr = formatDateTime(date).substring(0, 8)
+  const rows = await executeSql(`
+    SELECT
+      (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d' AND substr(created, 1, 8) = '${dateStr}') as created,
+      (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d' AND substr(updated, 1, 8) = '${dateStr}') as modified
+  `)
+  const row = rows[0] || {}
+  return {
+    created: Number(row.created || 0),
+    modified: Number(row.modified || 0),
+  }
+}
 
 export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>): {
   historicalData: Ref<any[]>
@@ -24,57 +40,72 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
   const storage = new StatisticsStorage(plugin)
   const historicalData = ref<any[]>([])
 
-  const yesterdayCreated = computed(() => {
-    if (!historicalData.value || historicalData.value.length < 2) return null
-    const today = new Date()
-    const yesterday = new Date(today)
+  // 昨日数据：懒加载 + 缓存，避免每次 computed 重新计算都触发 SQL
+  const yesterdayCounts = ref<{ created: number, modified: number } | null>(null)
+  let yesterdayLoaded = false
+
+  async function ensureYesterdayLoaded(): Promise<void> {
+    if (yesterdayLoaded) return
+    const yesterday = new Date()
     yesterday.setDate(yesterday.getDate() - 1)
-    const yesterdayStr = `${yesterday.getFullYear()}-${padZero(yesterday.getMonth() + 1)}-${padZero(yesterday.getDate())}`
+    yesterdayCounts.value = await getDayCounts(yesterday)
+    yesterdayLoaded = true
+  }
 
-    const yesterdayData = historicalData.value.find(
-      (item: any) => item.date === yesterdayStr,
-    )
-    return yesterdayData?.todayCreated ?? null
-  })
-
-  const yesterdayModified = computed(() => {
-    if (!historicalData.value || historicalData.value.length < 2) return null
-    const today = new Date()
-    const yesterday = new Date(today)
-    yesterday.setDate(yesterday.getDate() - 1)
-    const yesterdayStr = `${yesterday.getFullYear()}-${padZero(yesterday.getMonth() + 1)}-${padZero(yesterday.getDate())}`
-
-    const yesterdayData = historicalData.value.find(
-      (item: any) => item.date === yesterdayStr,
-    )
-    return yesterdayData?.todayModified ?? null
-  })
+  // 触发加载（不阻塞 computed 返回）
+  ensureYesterdayLoaded()
 
   const createdChange = computed(() => {
-    if (yesterdayCreated.value === null || yesterdayCreated.value === 0) {
-      return stats.value?.todayCreated ? 100 : null
-    }
-    if (stats.value?.todayCreated === undefined) return null
-    return (
-      ((stats.value.todayCreated - yesterdayCreated.value)
-        / yesterdayCreated.value)
-      * 100
-    )
+    const yesterday = yesterdayCounts.value?.created ?? null
+    const today = stats.value?.todayCreated
+    if (today === undefined) return null
+    if (yesterday === null || yesterday === 0) return today > 0 ? 100 : null
+    return ((today - yesterday) / yesterday) * 100
   })
 
   const modifiedChange = computed(() => {
-    if (yesterdayModified.value === null || yesterdayModified.value === 0) {
-      return stats.value?.todayModified ? 100 : null
-    }
-    if (stats.value?.todayModified === undefined) return null
-    return (
-      ((stats.value.todayModified - yesterdayModified.value)
-        / yesterdayModified.value)
-      * 100
-    )
+    const yesterday = yesterdayCounts.value?.modified ?? null
+    const today = stats.value?.todayModified
+    if (today === undefined) return null
+    if (yesterday === null || yesterday === 0) return today > 0 ? 100 : null
+    return ((today - yesterday) / yesterday) * 100
   })
 
+  /**
+   * 将当前 stats 快照写入本地 JSON，供趋势/热力图使用
+   * 替代原来的 60 秒定时采集，改为用户主动刷新时写入
+   */
+  async function saveTodaySnapshot(): Promise<void> {
+    const s = stats.value
+    if (!s) return
+    try {
+      const today = new Date()
+      const dateKey = formatDate(today)
+      const existingData = await storage.loadHistory()
+      existingData[dateKey] = {
+        date: dateKey,
+        dateLabel: `${today.getMonth() + 1}/${today.getDate()}`,
+        totalNotes: s.totalNotes,
+        totalWords: s.totalWords,
+        totalBlocks: s.totalBlocks,
+        todayCreated: s.todayCreated,
+        todayModified: s.todayModified,
+        avgWordsPerDoc: s.avgWordsPerDoc,
+      }
+      await storage.saveHistory(existingData)
+    } catch (error) {
+      console.error("保存今日快照失败:", error)
+    }
+  }
+
   async function loadHistoricalData(days?: number): Promise<void> {
+    // 每次刷新时重置昨日缓存，获取最新数据
+    yesterdayLoaded = false
+    await ensureYesterdayLoaded()
+
+    // 先写入当天快照，确保趋势/热力图数据是最新的
+    await saveTodaySnapshot()
+
     try {
       const data = await getHistoricalStatistics(days)
       historicalData.value = [...data].reverse()

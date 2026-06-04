@@ -5,13 +5,11 @@ import { TypedStorage } from "@/utils/typedStorage"
 export interface WordQuerySettings {
   pronunciationType: "uk" | "us"
   autoPlayPronunciation: boolean
-  showRelatedWords: boolean
 }
 
 const DEFAULT_SETTINGS: WordQuerySettings = {
   pronunciationType: "uk",
   autoPlayPronunciation: false,
-  showRelatedWords: true,
 }
 
 export class WordQueryStorage {

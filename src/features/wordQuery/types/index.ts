@@ -1,9 +1,6 @@
-import { Plugin } from "siyuan"
-import {
-  createApp,
-  h,
-} from "vue"
+import type { Plugin } from "siyuan"
 import { getApiConfigFromPlugin } from "@/utils/aiApi"
+import { createVueDockApp } from "@/utils/vueAppHelper"
 import WordQueryPanel from "../index.vue"
 import { callWordQueryAPI } from "../utils/api"
 
@@ -22,66 +19,30 @@ export class WordQueryManager {
   }
 
   public init() {
-    this.addDock()
-  }
-
-  private addDock() {
     const self = this
-    this.plugin.addDock({
-      config: {
-        position: "RightTop",
-        size: {
-          width: 360,
-          height: 0,
-        },
-        icon: "iconLanguage",
-        title: (this.plugin.i18n as any).wordQuery?.title || "单词查询",
-        show: false,
-      },
-      data: {},
+    createVueDockApp(this.plugin, WordQueryPanel, {
+      icon: "iconLanguage",
+      title: (this.plugin.i18n as any).wordQuery?.title || "单词查询",
       type: "wordquery-dock",
-      init: (dock: any) => {
-        const container = document.createElement("div")
-        container.style.height = "100%"
-        container.style.overflow = "hidden"
-
-        const app = createApp({
-          setup() {
-            return () =>
-              h(WordQueryPanel, {
-                i18n: self.plugin.i18n,
-                plugin: self.plugin,
-                onQuery: async (word: string) => {
-                  return await self.queryWord(word)
-                },
-                onTranslate: async (
-                  text: string,
-                  sourceLang: string,
-                  targetLang: string,
-                ) => {
-                  return await self.translateText(text, sourceLang, targetLang)
-                },
-              })
-          },
-        })
-
-        app.mount(container)
-        dock.element?.appendChild(container)
-
-        dock.__app = app
-        dock.__container = container
+      width: 360,
+      i18n: (this.plugin.i18n as any).wordQuery || {},
+      extraProps: {
+        onQuery: async (word: string) => {
+          return await self.queryWord(word)
+        },
+        onTranslate: async (
+          text: string,
+          sourceLang: string,
+          targetLang: string,
+        ) => {
+          return await self.translateText(text, sourceLang, targetLang)
+        },
       },
     })
   }
 
   private isEnglishWord(text: string): boolean {
     return /^[a-z\s-]+$/i.test(text)
-  }
-
-  private isChinese(text: string): boolean {
-    return /^[\u4E00-\u9FA5\u3000-\u303F\uFF00-\uFFEF\s\-.,;:!?'"()]+$/.test(
-      text,
-    )
   }
 
   public async queryWord(word: string): Promise<string> {

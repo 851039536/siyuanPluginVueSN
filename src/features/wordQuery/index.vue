@@ -9,7 +9,11 @@
           size="small"
           @click="switchMode('word')"
         >
-          📖 {{ props.i18n.wordQuery?.title || '单词查询' }}
+          <IconWrapper
+            name="wordQuery"
+            :size="16"
+          />
+          {{ props.i18n.wordQuery?.title || '单词查询' }}
         </Button>
         <Button
           class="mode-tab"
@@ -18,7 +22,11 @@
           size="small"
           @click="switchMode('translate')"
         >
-          🌐 {{ props.i18n.wordQuery?.translation || '长文翻译' }}
+          <IconWrapper
+            name="translate"
+            :size="16"
+          />
+          {{ props.i18n.wordQuery?.translation || '长文翻译' }}
         </Button>
         <Button
           class="mode-tab"
@@ -27,7 +35,11 @@
           size="small"
           @click="switchMode('codeTranslation')"
         >
-          💻 {{ props.i18n.wordQuery?.codeTranslation || '编程翻译' }}
+          <IconWrapper
+            name="codeTranslation"
+            :size="16"
+          />
+          {{ props.i18n.wordQuery?.codeTranslation || '编程翻译' }}
         </Button>
         <Button
           class="mode-tab"
@@ -36,7 +48,11 @@
           size="small"
           @click="switchMode('codeComment')"
         >
-          💬 {{ props.i18n.wordQuery?.codeComment || '注释生成' }}
+          <IconWrapper
+            name="codeComment"
+            :size="16"
+          />
+          {{ props.i18n.wordQuery?.codeComment || '注释生成' }}
         </Button>
         <Button
           class="mode-tab"
@@ -45,7 +61,11 @@
           size="small"
           @click="switchMode('codeExplain')"
         >
-          🔍 {{ props.i18n.wordQuery?.codeExplain || '代码解释' }}
+          <IconWrapper
+            name="search"
+            :size="16"
+          />
+          {{ props.i18n.wordQuery?.codeExplain || '代码解释' }}
         </Button>
         <Button
           class="mode-tab"
@@ -54,7 +74,11 @@
           size="small"
           @click="switchMode('regex')"
         >
-          🎯 {{ props.i18n.wordQuery?.regexGenerator || '正则生成' }}
+          <IconWrapper
+            name="regex"
+            :size="16"
+          />
+          {{ props.i18n.wordQuery?.regexGenerator || '正则生成' }}
         </Button>
       </div>
 
@@ -105,7 +129,13 @@
         class="common-panel"
       >
         <div class="panel-header">
-          <span>{{ getPanelConfig(activePanel).icon }} {{ getPanelConfig(activePanel).title }}</span>
+          <span class="panel-header-title">
+            <IconWrapper
+              :name="getPanelConfig(activePanel).iconKey"
+              :size="16"
+            />
+            {{ getPanelConfig(activePanel).title }}
+          </span>
           <div class="panel-actions">
             <Button
               variant="ghost"
@@ -126,7 +156,11 @@
         >
           <div class="option-group">
             <label class="option-label">
-              <span>🔊 {{ props.i18n.wordQuery?.pronunciation || '发音设置' }}</span>
+              <IconWrapper
+                name="pronunciation"
+                :size="16"
+              />
+              <span>{{ props.i18n.wordQuery?.pronunciation || '发音设置' }}</span>
             </label>
             <div class="option-row">
               <label class="radio-label">
@@ -135,7 +169,7 @@
                   type="radio"
                   value="uk"
                 />
-                <span>🇬🇧 {{ props.i18n.wordQuery?.britishPronunciation || '英式发音' }}</span>
+                <span>{{ props.i18n.wordQuery?.britishPronunciation || '英式发音' }}</span>
               </label>
               <label class="radio-label">
                 <input
@@ -143,7 +177,7 @@
                   type="radio"
                   value="us"
                 />
-                <span>🇺🇸 {{ props.i18n.wordQuery?.americanPronunciation || '美式发音' }}</span>
+                <span>{{ props.i18n.wordQuery?.americanPronunciation || '美式发音' }}</span>
               </label>
             </div>
           </div>
@@ -154,17 +188,11 @@
                 v-model="autoPlayPronunciation"
                 type="checkbox"
               />
-              <span>🎵 {{ props.i18n.wordQuery?.autoPlayPronunciation || '查询后自动播放发音' }}</span>
-            </label>
-          </div>
-
-          <div class="option-group">
-            <label class="checkbox-label">
-              <input
-                v-model="showRelatedWords"
-                type="checkbox"
+              <IconWrapper
+                name="play"
+                :size="16"
               />
-              <span>🔗 {{ props.i18n.wordQuery?.showRelatedWords || '显示相关词推荐' }}</span>
+              <span>{{ props.i18n.wordQuery?.autoPlayPronunciation || '查询后自动播放发音' }}</span>
             </label>
           </div>
         </div>
@@ -313,7 +341,10 @@
           class="query-empty"
         >
           <div class="empty-icon">
-            📚
+            <IconWrapper
+              name="wordQuery"
+              :size="48"
+            />
           </div>
           <p>{{ props.i18n.wordQuery?.enterWordHint || '输入中英文单词或词语查询释义、音标、谐音等信息' }}</p>
         </div>
@@ -410,7 +441,10 @@
             class="translate-empty"
           >
             <div class="empty-icon">
-              🌍
+              <IconWrapper
+                name="translate"
+                :size="48"
+              />
             </div>
             <p>{{ props.i18n.wordQuery?.translationWillAppearHere || '翻译结果将显示在这里' }}</p>
           </div>
@@ -488,6 +522,7 @@
 </template>
 
 <script setup lang="ts">
+import type { Plugin } from "siyuan"
 import type { Ref } from "vue"
 import { showMessage } from "siyuan"
 import {
@@ -509,8 +544,8 @@ import RegexGenerator from "./components/RegexGenerator.vue"
 import { WordQueryStorage } from "./types/storage"
 
 interface Props {
-  i18n: any
-  plugin?: any
+  i18n: Record<string, any>
+  plugin?: Plugin
   onQuery: (word: string) => Promise<string>
   onTranslate?: (
     text: string,
@@ -638,7 +673,6 @@ const activePanel = ref<string | null>(null)
 
 const pronunciationType = ref<"uk" | "us">("uk")
 const autoPlayPronunciation = ref(false)
-const showRelatedWords = ref(true)
 
 const autoQueryTimer = ref<NodeJS.Timeout | null>(null)
 const autoTranslateTimer = ref<NodeJS.Timeout | null>(null)
@@ -679,11 +713,20 @@ const formattedResult = computed(() => {
   return html
 })
 
-const extractContentParts = computed(() => {
+interface ExtractedParts {
+  phonetic?: string
+  meaning?: string
+  english?: string
+  pronunciation?: string
+  example?: string
+  all?: string
+}
+
+const extractContentParts = computed<ExtractedParts>(() => {
   if (!queryResult.value) return {}
 
   const content = queryResult.value
-  const parts: any = {}
+  const parts: ExtractedParts = {}
 
   Object.entries(CONTENT_PATTERNS).forEach(([key, patterns]) => {
     for (const pattern of patterns) {
@@ -774,7 +817,6 @@ const exportToSiyuan = async () => {
 const advancedOptionsData = computed(() => ({
   pronunciationType: pronunciationType.value,
   autoPlayPronunciation: autoPlayPronunciation.value,
-  showRelatedWords: showRelatedWords.value,
 }))
 
 const saveAdvancedOptions = async () => {
@@ -788,7 +830,6 @@ const loadAdvancedOptions = async () => {
     const settings = await storage.settings.loadOrDefault()
     pronunciationType.value = settings.pronunciationType
     autoPlayPronunciation.value = settings.autoPlayPronunciation
-    showRelatedWords.value = settings.showRelatedWords
   }
 }
 
@@ -899,17 +940,17 @@ const handleTranslate = async () => {
   }
 }
 
-const PANEL_CONFIG = {
+const panelConfig = computed(() => ({
   advanced: {
-    icon: "⚙️",
-    title: props.i18n.wordQuery?.advancedOptions || "高级选项",
+    iconKey: "settings" as const,
+    title: (props.i18n.wordQuery?.advancedOptions as string) || "高级选项",
   },
-} as const
+}))
 
 const getPanelConfig = (panel: string) => {
   return (
-    PANEL_CONFIG[panel as keyof typeof PANEL_CONFIG] || {
-      icon: "",
+    panelConfig.value[panel as keyof typeof panelConfig.value] || {
+      iconKey: "settings",
       title: "",
     }
   )
@@ -998,7 +1039,7 @@ watch(translateText, () => {
 })
 
 watch(
-  [pronunciationType, autoPlayPronunciation, showRelatedWords],
+  [pronunciationType, autoPlayPronunciation],
   async () => {
     await saveAdvancedOptions()
   },

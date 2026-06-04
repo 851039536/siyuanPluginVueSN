@@ -246,15 +246,13 @@ import type {
   RegexExample,
   RegexResult,
 } from "../utils/codeUtils"
+import type { Plugin } from "siyuan"
 import { showMessage } from "siyuan"
-import {
-  ref,
-  watch,
-} from "vue"
+import { ref } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
-import { getApiConfigFromPlugin } from "../utils/apiBase"
+import { useCodeFeature } from "../composables/useCodeFeature"
 import {
   generateRegex,
 
@@ -263,8 +261,8 @@ import {
 } from "../utils/codeUtils"
 
 interface Props {
-  i18n: any
-  plugin?: any
+  i18n: Record<string, any>
+  plugin?: Plugin
 }
 
 const props = defineProps<Props>()
@@ -282,7 +280,9 @@ const testResult = ref<{
   error?: string
 } | null>(null)
 const isGenerating = ref(false)
-const errorMessage = ref("")
+
+const { errorMessage, clearErrorOnInput, getApiConfig } = useCodeFeature(props.plugin)
+clearErrorOnInput(description)
 
 function addExample() {
   examples.value.push({
@@ -350,25 +350,12 @@ function handleClear() {
   errorMessage.value = ""
 }
 
-function getApiConfig() {
-  return getApiConfigFromPlugin(props.plugin)
-}
-
 function copyRegex() {
   if (result.value) {
     navigator.clipboard.writeText(result.value.regex)
     showMessage(props.i18n.copied || "已复制", 1500, "info")
   }
 }
-
-watch(
-  () => description.value,
-  () => {
-    if (errorMessage.value) {
-      errorMessage.value = ""
-    }
-  },
-)
 </script>
 
 <style scoped lang="scss">

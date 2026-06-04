@@ -423,6 +423,9 @@ export const COMMON_ICONS = {
   browser: {
     icon: "mdi:web",
   },
+  play: {
+    icon: "mdi:play",
+  },
 } as const
 
 /**

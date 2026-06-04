@@ -5,11 +5,12 @@
  * 路径相对于 workspace data/ 目录。
  * 元数据通过 TypedStorage 持久化。
  */
-import type {
-  CreateScriptDTO,
-  Script,
-  ScriptLanguage,
-  UpdateScriptDTO,
+import {
+  SCRIPT_LANGUAGE_CONFIG,
+  type CreateScriptDTO,
+  type Script,
+  type ScriptLanguage,
+  type UpdateScriptDTO,
 } from "./index"
 import { Plugin } from "siyuan"
 import { getFile, putFile, removeFile } from "@/api"
@@ -46,6 +47,7 @@ export class ScriptStorage {
   private scripts: TypedStorage<Script[]>
   private plugin: Plugin
   private readonly STORAGE_KEY = "scriptLauncher-scripts"
+  private cachedWorkspaceRoot: string | null = null
 
   constructor(plugin: Plugin, _dataDir: string) {
     this.plugin = plugin
@@ -55,12 +57,12 @@ export class ScriptStorage {
 
   /** 获取工作区根目录（通过思源 API） — public，供外部使用 */
   async getWorkspaceRoot(): Promise<string | null> {
-    if ((this as any).__cachedWorkspaceRoot) return (this as any).__cachedWorkspaceRoot
+    if (this.cachedWorkspaceRoot) return this.cachedWorkspaceRoot
     try {
       const resp = await fetch("/api/system/getConf", { method: "POST" })
       const data = await resp.json()
       const ws = data?.data?.conf?.system?.workspaceDir || ""
-      if (ws) (this as any).__cachedWorkspaceRoot = ws
+      if (ws) this.cachedWorkspaceRoot = ws
       return ws || null
     } catch { return null }
   }
@@ -219,10 +221,8 @@ export class ScriptStorage {
     try { if (node.fs.existsSync(filePath)) node.fs.unlinkSync(filePath) } catch { /* ignore */ }
   }
 
+  /** 从 SCRIPT_LANGUAGE_CONFIG 获取扩展名 */
   private getExtension(language: ScriptLanguage): string {
-    const map: Record<ScriptLanguage, string> = {
-      python: ".py", bash: ".sh", powershell: ".ps1", nodejs: ".js", batch: ".bat", other: ".txt",
-    }
-    return map[language]
+    return SCRIPT_LANGUAGE_CONFIG[language].extension
   }
 }

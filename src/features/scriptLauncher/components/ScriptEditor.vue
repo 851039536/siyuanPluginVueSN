@@ -224,17 +224,12 @@ function handleMaskClick() {
   emit("close")
 }
 
-watch(() => props.visible, (visible) => {
-  if (visible) {
-    resetForm()
-  }
-})
-
-watch(() => props.script, () => {
-  if (props.visible) {
-    resetForm()
-  }
-})
+watch(
+  () => [props.visible, props.script],
+  ([visible]) => {
+    if (visible) resetForm()
+  },
+)
 </script>
 
 <style lang="scss" scoped>

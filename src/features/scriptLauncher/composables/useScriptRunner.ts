@@ -7,10 +7,11 @@ import type {
 } from "../types"
 import { ref } from "vue"
 
-function getNodeModules(): { child_process: any } | null {
+function getNodeModules(): { child_process: any, os: any } | null {
   try {
     const child_process = require("node:child_process")
-    return { child_process }
+    const os = require("node:os")
+    return { child_process, os }
   } catch {
     return null
   }
@@ -22,6 +23,39 @@ export interface RunResult {
   exitCode: number | null
 }
 
+/**
+ * 用系统默认程序打开脚本文件（类似双击本地文件）
+ */
+export function useScriptLauncher() {
+  const launchScript = (script: Script, filePath: string): boolean => {
+    const node = getNodeModules()
+    if (!node) return false
+
+    const platform = node.os.platform()
+    let command: string
+
+    if (platform === "win32") {
+      command = `start "" "${filePath}"`
+    } else if (platform === "darwin") {
+      command = `open "${filePath}"`
+    } else {
+      command = `xdg-open "${filePath}"`
+    }
+
+    try {
+      node.child_process.exec(command, { shell: true })
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  return { launchScript }
+}
+
+/**
+ * 捕获输出方式运行脚本（保留备用）
+ */
 export function useScriptRunner() {
   const running = ref(false)
   const output = ref<string>("")

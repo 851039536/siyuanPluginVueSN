@@ -590,6 +590,19 @@ export function registerMyFeature(plugin: Plugin) {
 
 插件自身数据目录可通过 `(this as any).dataDir` 在 `onload` 中获取，格式为 `{workspace}/data/storage/petal/{pluginName}`。从该路径可反推工作区根目录。
 
+### 获取工作区路径
+
+通过思源 API 获取工作区根目录：
+
+```typescript
+const resp = await fetch("/api/system/getConf", { method: "POST" })
+const data = await resp.json()
+const workspaceDir = data?.data?.conf?.system?.workspaceDir || ""
+// 示例返回: "E:\\siyuan2"
+```
+
+参考实现：`src/features/video/utils/utils.ts` 的 `getWorkspacePath()`。
+
 ### Vite 外部模块
 
 使用 `require("node:fs")` / `require("node:path")` / `require("node:os")` / `require("node:child_process")` 的模块，需在 `vite.config.ts` 的 `external` 数组中声明，否则打包后 `require` 调用失效。

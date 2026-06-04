@@ -199,7 +199,7 @@ const handleRun = async (script: Script) => {
   runnerStderr.value = ""
   runnerExitCode.value = null
 
-  const filePath = storage.getScriptPath(script.fileName)
+  const filePath = await storage.getScriptPath(script.fileName)
   if (!filePath) {
     runnerRunning.value = false
     runnerStderr.value = "无法找到脚本文件路径"

@@ -113,18 +113,6 @@ export default class PluginSample extends Plugin {
     // 存储 dataDir 到实例上，供子模块通过 plugin 引用获取
     ;(this as any).__pluginDataDir = (this as any).dataDir
 
-    // 从 pluginDataDir 推导工作区根目录
-    // dataDir 格式: {workspace}/data/storage/petal/{pluginName}
-    const dataDir: string = (this as any).dataDir || ""
-    const node = (() => { try { return { path: require("node:path") } } catch { return null } })()
-    if (node && dataDir) {
-      const parts = dataDir.split(node.path.sep)
-      const idx = parts.indexOf("data")
-      if (idx > 0) {
-        ;(this as any).__workspaceRoot = parts.slice(0, idx).join(node.path.sep)
-      }
-    }
-
     // 同步读取功能开关（优先从文件，跨重启可靠）
     // 因为 addDock() 必须在 onload 同步阶段完成，不能等异步 loadData
     const savedFlags = loadFeatureFlagsSync()

@@ -124,7 +124,6 @@ type _AssertAllCovered = _AssertTrue<
 - **无死代码**：禁止保留未使用的函数、变量、接口、导出；composables 返回值只暴露外部实际使用的成员
 - **微信宽度规范**：发布到微信的内容必须通过 `normalizeWidths()` 净化固定像素宽度（`width: Npx` → `max-width: 100%; width: auto`），参见 `src/features/htmlViewer/utils/normalizeWidths.ts`
 - **功能注册完整性**：新功能必须完成 4 处注册 + 2 处 i18n（详见下方「添加新功能 → 注册步骤」）
-- **功能开关注册**：新功能需在 `PluginSettings` 中添加 `enableXxx` 字段、在 `DEFAULT_SETTINGS` 中添加默认值、在 `src/index.ts` 的 `registerFeatures()` 中添加条件注册。若功能 ID 含缩写词（如 `qrCode`、`aiContentGenerator`），需在 `FEATURE_ID_TO_KEY_MAP` 中添加映射
 - **编辑器配置**：缩进使用 2 空格，文件编码 UTF-8，清理尾随空格（参见 `.editorconfig`）
 
 ### 代码风格
@@ -181,6 +180,21 @@ type _AssertAllCovered = _AssertTrue<
 
 完整定义见 `src/_variables.scss`。
 
+### UI 风格：Codex
+
+所有 UI 组件默认使用 **Codex 风格**——代码文档式设计语言，强调结构化、可读性、技术感。
+
+核心规范：
+- **等宽字体**：版本号、路径、日期、标签等代码类文本使用 `font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace`
+- **大写标签**：元信息 key 使用 `font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.45`
+- **边框卡片**：使用 `border: 1px solid var(--b3-border-color)` 而非阴影，hover 时边框变主题色
+- **按钮风格**：主按钮 `vp-btn--primary`（实底），次按钮 `vp-btn--ghost`（描边），图标按钮带边框
+- **分割线**：section 间使用 `border-bottom: 1px solid` 或 `1px dashed` 分隔
+- **focus 发光**：输入框 focus 时 `box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest)`
+- **操作按钮**：默认隐藏（`opacity: 0`），父容器 hover 时显示（`opacity: 1`）
+
+参考实现：`src/features/superPanel/components/VersionPanel.vue` + `styles/index.scss` 中的 `.vp-*` 系列类名。
+
 ## API 参考
 
 ### PluginStorage（统一存储层）
@@ -233,9 +247,7 @@ export class MyFeatureStorage {
 
 ### 全局设置（src/config/settings.ts）
 
-全局插件设置使用 `PluginSettings` 接口 + `DEFAULT_SETTINGS` + 直接 `loadData/saveData` 方式（这是整个项目中唯一允许直接调用 `plugin.loadData/saveData` 的例外）。
-
-**敏感字段加密**：`aiApiKeys` 和 `searchBochaApiKey` 在保存时自动使用 Web Crypto API（AES-GCM）加密，加载时自动解密，磁盘上不会明文存储。加密工具在 `src/utils/settingsCrypto.ts`。
+全局插件设置使用 `PluginSettings` 接口 + `DEFAULT_SETTINGS` + 直接 `loadData/saveData` 方式（这是整个项目中唯一允许直接调用 `plugin.loadData/saveData` 的例外）。敏感字段（`aiApiKeys`、`searchBochaApiKey`）自动加解密，详见「配置加密」章节。
 
 ```typescript
 import {
@@ -343,8 +355,6 @@ COMMON_ICONS.CLOSE // iconClose
 `src/utils/aiApi.ts` — 所有 AI 调用的唯一入口。
 
 ```typescript
-
-
 import {
   callAI,
   getApiConfigFromPlugin,
@@ -547,7 +557,7 @@ const {
 6. `src/i18n/zh_CN.json` 和 `src/i18n/en_US.json` 添加翻译条目
 7. `src/features/config.ts` 的 `FEATURE_CONFIG` 中添加条目（自动推导 `FeatureId` 类型）
    → 若功能为纯配置型（无 register 函数），须在 `_ConfigOnly` 白名单中添加
-8. `src/config/icons.ts` 的 `FEATURE_ICONS` 中添加图标映射
+8. `src/config/icons.ts` 的 `FEATURE_ICONS` 中添加图标映射，并运行 `pnpm validate:icons` 验证
 
 ### 简单功能（无面板，无存储）
 

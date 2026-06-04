@@ -127,24 +127,16 @@ import {
 } from "vue"
 import { formatDate } from "../utils"
 
-interface HistoricalDataItem {
-  date: string
-  dateLabel: string
-  totalNotes: number
-  totalWords: number
-  todayCreated: number
-  todayModified: number
-}
-
 interface Props {
-  historicalData?: HistoricalDataItem[]
+  /** 每天的操作数 Map<YYYY-MM-DD, count>，由 SQL 实时查询 */
+  activityMap?: Map<string, number>
   writingStreak?: number
   activeDays?: number
   i18n?: Record<string, string>
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  historicalData: () => [],
+  activityMap: () => new Map(),
   writingStreak: 0,
   activeDays: 0,
   i18n: () => ({}),
@@ -169,18 +161,8 @@ const rangeOptions = computed(() => [
 
 const selectedRange = ref(12)
 
-// Build a date -> data lookup map
-const dataMap = computed(() => {
-  const map = new Map<string, HistoricalDataItem>()
-  for (const item of props.historicalData) {
-    map.set(item.date, item)
-  }
-  return map
-})
-
 function getActivity(dateStr: string): number {
-  const d = dataMap.value.get(dateStr)
-  return d ? d.todayCreated + d.todayModified : 0
+  return props.activityMap.get(dateStr) || 0
 }
 
 function getLevel(activity: number): string {
@@ -259,15 +241,15 @@ const monthLabels = computed(() => {
   return labels
 })
 
-// Longest streak from historicalData
+// Longest streak from activityMap
 const longestStreak = computed(() => {
-  if (props.historicalData.length === 0) return 0
-  const sorted = [...props.historicalData].sort((a, b) => a.date.localeCompare(b.date))
+  if (props.activityMap.size === 0) return 0
+  // 按日期排序遍历
+  const sorted = [...props.activityMap.entries()].sort((a, b) => a[0].localeCompare(b[0]))
   let max = 0
   let current = 0
-  for (const item of sorted) {
-    const activity = item.todayCreated + item.todayModified
-    if (activity > 0) {
+  for (const [, count] of sorted) {
+    if (count > 0) {
       current++
       max = Math.max(max, current)
     } else {
@@ -279,7 +261,11 @@ const longestStreak = computed(() => {
 
 // Total operations
 const totalOperations = computed(() => {
-  return props.historicalData.reduce((sum, d) => sum + d.todayCreated + d.todayModified, 0)
+  let sum = 0
+  for (const count of props.activityMap.values()) {
+    sum += count
+  }
+  return sum
 })
 
 // Weekday distribution
@@ -293,13 +279,13 @@ const weekdayDistribution = computed(() => {
     props.i18n.friday || '周五',
     props.i18n.saturday || '周六',
   ]
-  const totals = Array.from({ length: 7 }).fill(0)
-  const counts = Array.from({ length: 7 }).fill(0)
+  const totals: number[] = Array.from({ length: 7 }).fill(0) as number[]
+  const counts: number[] = Array.from({ length: 7 }).fill(0) as number[]
 
-  for (const item of props.historicalData) {
-    const d = new Date(item.date)
+  for (const [dateStr, count] of props.activityMap.entries()) {
+    const d = new Date(dateStr)
     const day = d.getDay()
-    totals[day] += item.todayCreated + item.todayModified
+    totals[day] += count
     counts[day]++
   }
 

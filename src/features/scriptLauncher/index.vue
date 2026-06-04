@@ -199,18 +199,10 @@ const handleRun = async (script: Script) => {
   runnerStderr.value = ""
   runnerExitCode.value = null
 
-  const content = await storage.loadContent(script.fileName)
-  if (!content) {
-    runnerRunning.value = false
-    runnerStderr.value = "无法读取脚本内容"
-    runnerExitCode.value = 1
-    return
-  }
-
-  const filePath = storage.writeTempFile(script, content)
+  const filePath = storage.getScriptPath(script.fileName)
   if (!filePath) {
     runnerRunning.value = false
-    runnerStderr.value = "无法创建临时文件"
+    runnerStderr.value = "无法找到脚本文件路径"
     runnerExitCode.value = 1
     return
   }
@@ -227,7 +219,6 @@ const handleRun = async (script: Script) => {
     runnerExitCode.value = 1
   } finally {
     runnerRunning.value = false
-    storage.removeTempFile(filePath)
   }
 }
 

@@ -53,13 +53,25 @@ export class ScriptStorage {
     this.scripts = new TypedStorage(this.storage, this.STORAGE_KEY, [])
   }
 
-  async init(): Promise<void> { /* no-op */ }
-
-  // ========== 文件操作（思源 api.ts） ==========
+  /** 获取脚本文件的绝对路径（用于直接执行） */
+  getScriptPath(fileName: string): string | null {
+    const wsRoot = (this.plugin as any).__workspaceRoot
+    if (!wsRoot) {
+      // 降级：尝试用 node:path 拼接
+      const node = getNodeModules()
+      if (!node) return null
+      return node.path.resolve(this.scPath(fileName))
+    }
+    const node = getNodeModules()
+    if (!node) return null
+    return node.path.join(wsRoot, this.scPath(fileName))
+  }
 
   private scPath(fileName: string): string {
     return `${SC_DIR}/${fileName}`
   }
+
+  async init(): Promise<void> { /* no-op */ }
 
   private async putContent(fileName: string, content: string): Promise<void> {
     const file = new File([content], fileName, { type: "text/plain" })

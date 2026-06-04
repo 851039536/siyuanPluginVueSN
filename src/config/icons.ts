@@ -233,6 +233,10 @@ export const FEATURE_ICONS = {
     icon: "mdi:web",
     color: "#6366f1",
   },
+  scriptLauncher: {
+    icon: "mdi:script-text-outline",
+    color: "#f59e0b",
+  },
 } as const
 
 /**

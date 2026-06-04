@@ -12,6 +12,11 @@
     <div class="feature-body">
       <div class="feature-info">
         <span class="feature-title">{{ feature.title }}</span>
+        <span
+          class="version-badge"
+          title="点击查看版本信息"
+          @click.stop="emit('openVersions')"
+        >{{ feature.version || '1.0.0.0' }}</span>
         <span class="status-badge-wrapper">
           <span
             ref="statusBadgeRef"
@@ -131,6 +136,7 @@ interface Emits {
   (e: "toggle", value: boolean): void
   (e: "select", value: string): void
   (e: "statusChange", status: FeatureStatus): void
+  (e: "openVersions"): void
 }
 
 const props = defineProps<Props>()

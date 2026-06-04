@@ -1,0 +1,215 @@
+<template>
+  <div class="script-launcher-panel">
+    <div class="script-launcher__toolbar">
+      <Button
+        variant="primary"
+        size="small"
+        icon="add"
+        @click="openCreateDialog"
+      >
+        {{ i18n.addScript || "添加脚本" }}
+      </Button>
+      <Button
+        variant="secondary"
+        size="small"
+        icon="refresh"
+        @click="handleRefresh"
+      >
+        {{ i18n.refresh || "刷新" }}
+      </Button>
+    </div>
+
+    <ScriptList
+      :scripts="scripts"
+      :i18n="i18n"
+      @add="openCreateDialog"
+      @edit="handleEdit"
+      @delete="handleDelete"
+      @run="handleRun"
+    />
+
+    <ScriptEditor
+      :visible="showEditor"
+      :plugin="plugin"
+      :i18n="i18n"
+      :script="selectedScript"
+      :content="editingContent"
+      @close="closeEditor"
+      @save="handleSave"
+    />
+
+    <ScriptOutput
+      :visible="showOutput"
+      :script="selectedScript"
+      :running="runnerRunning"
+      :stdout="runnerStdout"
+      :stderr="runnerStderr"
+      :exit-code="runnerExitCode"
+      :i18n="i18n"
+      @close="closeOutput"
+    />
+  </div>
+</template>
+
+<script setup lang="ts">
+import type { Plugin } from "siyuan"
+import type { Script } from "./types"
+import type { I18n } from "./types/index"
+import { showMessage } from "siyuan"
+import { ref } from "vue"
+import Button from "@/components/Button.vue"
+import ScriptEditor from "./components/ScriptEditor.vue"
+import ScriptList from "./components/ScriptList.vue"
+import ScriptOutput from "./components/ScriptOutput.vue"
+import { useScriptRunner } from "./composables/useScriptRunner"
+import { useScriptStorage } from "./composables/useScriptStorage"
+
+interface Props {
+  i18n: I18n
+  plugin: Plugin
+  dataDir: string
+}
+
+const props = defineProps<Props>()
+
+const {
+  storage,
+  scripts,
+  loadScripts,
+  addScript,
+  updateScript,
+  deleteScript,
+} = useScriptStorage(props.plugin, props.dataDir)
+
+const { runScript } = useScriptRunner()
+
+const showEditor = ref(false)
+const showOutput = ref(false)
+const selectedScript = ref<Script | null>(null)
+const editingContent = ref("")
+
+const runnerRunning = ref(false)
+const runnerStdout = ref("")
+const runnerStderr = ref("")
+const runnerExitCode = ref<number | null>(null)
+
+const handleRefresh = async () => {
+  try {
+    await loadScripts()
+  } catch {
+    showMessage(props.i18n.loadFailed || "加载脚本失败", 3000, "error")
+  }
+}
+
+const openCreateDialog = () => {
+  selectedScript.value = null
+  editingContent.value = ""
+  showEditor.value = true
+}
+
+const closeEditor = () => {
+  showEditor.value = false
+  selectedScript.value = null
+  editingContent.value = ""
+}
+
+const closeOutput = () => {
+  showOutput.value = false
+  selectedScript.value = null
+}
+
+const handleEdit = async (script: Script) => {
+  selectedScript.value = script
+  try {
+    const content = await storage.loadScriptFile(script.id, script.language)
+    editingContent.value = content || ""
+  } catch {
+    editingContent.value = ""
+  }
+  showEditor.value = true
+}
+
+const handleSave = async (data: {
+  name: string
+  language: string
+  category: string
+  description: string
+  content: string
+}) => {
+  try {
+    if (selectedScript.value) {
+      await updateScript(selectedScript.value.id, {
+        name: data.name,
+        language: data.language,
+        category: data.category,
+        description: data.description,
+        content: data.content,
+      })
+      showMessage(props.i18n.updateSuccess || "脚本已更新", 2000, "info")
+    } else {
+      await addScript(data)
+      showMessage(props.i18n.createSuccess || "脚本已创建", 2000, "info")
+    }
+    closeEditor()
+  } catch (error: any) {
+    showMessage(
+      error.message || props.i18n.saveFailed || "保存失败",
+      3000,
+      "error",
+    )
+  }
+}
+
+const handleDelete = async (script: Script) => {
+  // eslint-disable-next-line no-alert
+  if (!window.confirm(props.i18n.confirmDelete || "确定要删除这个脚本吗？")) {
+    return
+  }
+
+  try {
+    await deleteScript(script.id)
+    showMessage(props.i18n.deleteSuccess || "脚本已删除", 2000, "info")
+  } catch (error: any) {
+    showMessage(
+      error.message || props.i18n.deleteFailed || "删除失败",
+      3000,
+      "error",
+    )
+  }
+}
+
+const handleRun = async (script: Script) => {
+  selectedScript.value = script
+  showOutput.value = true
+  runnerRunning.value = true
+  runnerStdout.value = ""
+  runnerStderr.value = ""
+  runnerExitCode.value = null
+
+  const filePath = storage.getScriptFilePath(script.id, script.language)
+  if (!filePath) {
+    runnerRunning.value = false
+    runnerStderr.value = "无法获取脚本路径"
+    runnerExitCode.value = 1
+    return
+  }
+
+  try {
+    await storage.updateLastRun(script.id)
+    await loadScripts()
+    const result = await runScript(script, filePath)
+    runnerStdout.value = result.stdout
+    runnerStderr.value = result.stderr
+    runnerExitCode.value = result.exitCode
+  } catch (err: any) {
+    runnerStderr.value = err.message || "运行失败"
+    runnerExitCode.value = 1
+  } finally {
+    runnerRunning.value = false
+  }
+}
+</script>
+
+<style lang="scss">
+@use './styles/index.scss';
+</style>

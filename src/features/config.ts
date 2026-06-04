@@ -263,6 +263,11 @@ export const FEATURE_CONFIG = [
     defaultTitle: "网站导航",
     defaultDesc: "管理常用网站链接，支持分类筛选和快捷访问",
   },
+  {
+    id: "scriptLauncher",
+    defaultTitle: "脚本启动器",
+    defaultDesc: "快速启动和管理自定义脚本，支持多种语言分类",
+  },
 ] as const
 
 /**

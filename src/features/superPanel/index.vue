@@ -97,6 +97,7 @@
           @toggle="handleToggle(feature.id, $event)"
           @select="handleSelect(feature.id, $event)"
           @status-change="handleStatusChange(feature.id, $event)"
+          @open-versions="emit('openVersions', feature.id)"
         />
       </TransitionGroup>
     </div>
@@ -108,6 +109,7 @@ import type { SelectorOption } from "./components/FeatureCard.vue"
 import type {
   Feature,
   FeatureStatus,
+  FeatureVersionEntry,
 } from "./types"
 import type { IconKey } from "@/config/icons"
 import type { PluginSettings } from "@/config/settings"
@@ -124,12 +126,16 @@ import { FEATURE_CONFIG } from "@/features/config"
 import { THEMES } from "@/features/themeColor"
 import FeatureCard from "./components/FeatureCard.vue"
 import SuperPanelHeader from "./components/SuperPanelHeader.vue"
-import { FEATURE_STATUSES } from "./types"
+import {
+  DEFAULT_VERSION,
+  FEATURE_STATUSES,
+} from "./types"
 
 interface Props {
   visible: boolean
   settings: PluginSettings
   i18n: Record<string, any>
+  featureVersions?: Record<string, FeatureVersionEntry[]>
   onOpenAiSettings?: () => void
 }
 
@@ -140,6 +146,7 @@ interface Emits {
   (e: "toggleFeature", featureId: string, enabled: boolean): void
   (e: "selectFeature", featureId: string, value: string): void
   (e: "statusFeature", featureId: string, status: string): void
+  (e: "openVersions", featureId: string): void
 }
 
 const props = defineProps<Props>()
@@ -165,14 +172,18 @@ const features = computed<Feature[]>(() =>
     titleI18nKey,
     descI18nKey,
     actions,
-  }) => ({
-    id,
-    iconKey: id as IconKey,
-    title: (titleI18nKey ? resolveI18n(props.i18n, titleI18nKey) : props.i18n[id]) || defaultTitle,
-    desc: (descI18nKey ? resolveI18n(props.i18n, descI18nKey) : props.i18n[`${id}Desc`]) || defaultDesc,
-    actions: actions || [],
-    status: (props.settings.featureStatus?.[id] || "") as FeatureStatus,
-  })),
+  }) => {
+    const versions = props.featureVersions?.[id] || []
+    return {
+      id,
+      iconKey: id as IconKey,
+      title: (titleI18nKey ? resolveI18n(props.i18n, titleI18nKey) : props.i18n[id]) || defaultTitle,
+      desc: (descI18nKey ? resolveI18n(props.i18n, descI18nKey) : props.i18n[`${id}Desc`]) || defaultDesc,
+      actions: actions || [],
+      status: (props.settings.featureStatus?.[id] || "") as FeatureStatus,
+      version: versions.length > 0 ? versions[0].version : DEFAULT_VERSION,
+    }
+  }),
 )
 
 const filteredFeatures = computed<Feature[]>(() => {

@@ -173,6 +173,7 @@ export async function getNotebookActivityTrend(days: number): Promise<NotebookAc
         AND created <= '${endStr}'
       GROUP BY box, substr(created, 1, 8)
       ORDER BY date ASC
+      LIMIT 2048
     `)
 
     const pivot = new Map<string, Map<string, number>>()
@@ -281,6 +282,7 @@ export async function getNotebookBlockTypeStats(): Promise<NotebookBlockTypeStat
       WHERE box IN (${idList})
       GROUP BY box, type
       ORDER BY box, cnt DESC
+      LIMIT 512
     `)
 
     const grouped = new Map<string, Array<{ name: string, count: number, label: string }>>()

@@ -52,17 +52,6 @@
       @close="closeEditor"
       @save="handleSave"
     />
-
-    <ScriptOutput
-      :visible="showOutput"
-      :script="selectedScript"
-      :running="runnerRunning"
-      :stdout="runnerStdout"
-      :stderr="runnerStderr"
-      :exit-code="runnerExitCode"
-      :i18n="i18n"
-      @close="closeOutput"
-    />
   </div>
 </template>
 
@@ -75,8 +64,7 @@ import { showMessage } from "siyuan"
 import Button from "@/components/Button.vue"
 import ScriptEditor from "./components/ScriptEditor.vue"
 import ScriptList from "./components/ScriptList.vue"
-import ScriptOutput from "./components/ScriptOutput.vue"
-import { useScriptRunner } from "./composables/useScriptRunner"
+import { useScriptLauncher } from "./composables/useScriptRunner"
 import { useScriptStorage } from "./composables/useScriptStorage"
 
 interface Props {
@@ -95,18 +83,12 @@ const {
   deleteScript,
 } = useScriptStorage(props.plugin)
 
-const { runScript } = useScriptRunner()
+const { launchScript } = useScriptLauncher()
 
 const showEditor = ref(false)
-const showOutput = ref(false)
 const selectedScript = ref<Script | null>(null)
 const editingContent = ref("")
 const fileInputRef = ref<HTMLInputElement>()
-
-const runnerRunning = ref(false)
-const runnerStdout = ref("")
-const runnerStderr = ref("")
-const runnerExitCode = ref<number | null>(null)
 
 const importAccept = computed(() =>
   ".py,.pyw,.sh,.bash,.ps1,.js,.mjs,.bat,.cmd",
@@ -132,9 +114,19 @@ const closeEditor = () => {
   editingContent.value = ""
 }
 
-const closeOutput = () => {
-  showOutput.value = false
-  selectedScript.value = null
+const handleRun = async (script: Script) => {
+  const filePath = await storage.getScriptPath(script.fileName)
+  if (!filePath) {
+    showMessage("无法找到脚本文件路径", 3000, "error")
+    return
+  }
+  const ok = launchScript(script, filePath)
+  if (ok) {
+    await storage.updateLastRun(script.id)
+    await loadScripts()
+  } else {
+    showMessage("启动失败，当前环境不支持", 3000, "error")
+  }
 }
 
 const handleEdit = async (script: Script) => {
@@ -188,37 +180,6 @@ const handleDelete = async (script: Script) => {
       3000,
       "error",
     )
-  }
-}
-
-const handleRun = async (script: Script) => {
-  selectedScript.value = script
-  showOutput.value = true
-  runnerRunning.value = true
-  runnerStdout.value = ""
-  runnerStderr.value = ""
-  runnerExitCode.value = null
-
-  const filePath = await storage.getScriptPath(script.fileName)
-  if (!filePath) {
-    runnerRunning.value = false
-    runnerStderr.value = "无法找到脚本文件路径"
-    runnerExitCode.value = 1
-    return
-  }
-
-  try {
-    await storage.updateLastRun(script.id)
-    await loadScripts()
-    const result = await runScript(script, filePath)
-    runnerStdout.value = result.stdout
-    runnerStderr.value = result.stderr
-    runnerExitCode.value = result.exitCode
-  } catch (err: any) {
-    runnerStderr.value = err.message || "运行失败"
-    runnerExitCode.value = 1
-  } finally {
-    runnerRunning.value = false
   }
 }
 

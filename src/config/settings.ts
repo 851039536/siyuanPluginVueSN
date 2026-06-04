@@ -140,6 +140,13 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 const SETTINGS_KEY = "plugin-settings"
 const FEATURE_FLAGS_FILE = "feature-flags.json"
 
+/**
+ * 获取插件数据目录路径（功能开关持久化时已验证可用）
+ */
+export function getPluginDataDir(): string | null {
+  return _flagsDir
+}
+
 let _flagsDir: string | null = null
 
 /**

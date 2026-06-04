@@ -110,6 +110,9 @@ export default class PluginSample extends Plugin {
     // 关键：初始化功能开关文件持久化目录（必须在 loadFeatureFlagsSync 之前）
     setFeatureFlagsDir((this as any).dataDir)
 
+    // 存储 dataDir 到实例上，供子模块通过 plugin 引用获取
+    ;(this as any).__pluginDataDir = (this as any).dataDir
+
     // 同步读取功能开关（优先从文件，跨重启可靠）
     // 因为 addDock() 必须在 onload 同步阶段完成，不能等异步 loadData
     const savedFlags = loadFeatureFlagsSync()

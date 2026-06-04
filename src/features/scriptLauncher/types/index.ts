@@ -14,7 +14,7 @@ export interface Script {
   language: ScriptLanguage
   category: string
   description: string
-  content: string
+  fileName: string
   createdAt: number
   updatedAt: number
   lastRunAt?: number
@@ -133,7 +133,7 @@ export class ScriptLauncher {
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
-    this.storage = new ScriptStorage(plugin)
+    this.storage = new ScriptStorage(plugin, "")
   }
 
   public async init() {

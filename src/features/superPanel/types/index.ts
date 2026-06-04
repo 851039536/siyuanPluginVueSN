@@ -13,20 +13,30 @@ import {
 import {
   createApp,
   reactive,
-
 } from "vue"
 import { FEATURE_ICONS } from "@/config/icons"
 import { featureIdToSettingKey } from "@/config/settings"
+import { FEATURE_CONFIG } from "@/features/config"
 import { emitCustomEvent } from "@/utils/eventBus"
 import { replaceTopBarIcon } from "@/utils/iconHelper"
+import { PluginStorage } from "@/utils/pluginStorage"
 import { createModalVueApp } from "@/utils/vueAppHelper"
 import AiSettingsPanel from "../components/AiSettingsPanel.vue"
+import VersionPanel from "../components/VersionPanel.vue"
 import SuperPanelPanel from "../index.vue"
 
 export type { FeatureAction }
 
 export const FEATURE_STATUSES = ["stable", "needsFix", "critical", "minor"] as const
 export type FeatureStatus = typeof FEATURE_STATUSES[number] | ""
+
+export const DEFAULT_VERSION = "1.0.0.0"
+
+export interface FeatureVersionEntry {
+  version: string
+  date: string
+  description: string
+}
 
 /**
  * 功能配置
@@ -44,6 +54,8 @@ export interface Feature {
   actions: FeatureAction[]
   /** 状态标识 */
   status: FeatureStatus
+  /** 当前版本号 */
+  version: string
 }
 
 /**
@@ -70,6 +82,8 @@ export interface AiSettings {
 let vueApp: VueApp | null = null
 let panelContainer: HTMLElement | null = null
 let reactiveSettings: PluginSettings | null = null
+
+const VERSIONS_STORAGE_KEY = "superPanel-feature-versions"
 
 /**
  * 统一 action 映射表：action -> 事件配置
@@ -99,10 +113,14 @@ export class SuperPanelManager {
   private plugin: Plugin
   private boundToggleHandler: () => void
   private aiSettingsModal: ModalAppInstance
+  private versionModal: ModalAppInstance | null = null
+  private versionStorage: PluginStorage
+  private featureVersions: Record<string, FeatureVersionEntry[]> = {}
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
     this.boundToggleHandler = this.toggle.bind(this)
+    this.versionStorage = new PluginStorage(plugin)
 
     this.aiSettingsModal = createModalVueApp(AiSettingsPanel, {
       maskId: "super-panel-ai-settings-mask",
@@ -156,7 +174,9 @@ export class SuperPanelManager {
     }
   }
 
-  private open() {
+  private async open() {
+    await this.loadVersions()
+
     // 创建容器
     panelContainer = document.createElement("div")
     panelContainer.id = "super-panel-vue-container"
@@ -170,6 +190,7 @@ export class SuperPanelManager {
       visible: true,
       settings: reactiveSettings,
       i18n: (this.plugin.i18n as any).superPanel || {},
+      featureVersions: this.featureVersions,
       onClose: () => {
         this.close()
       },
@@ -193,6 +214,9 @@ export class SuperPanelManager {
       },
       onOpenAiSettings: () => {
         this.openAiSettings()
+      },
+      onOpenVersions: (featureId: string) => {
+        this.openVersions(featureId)
       },
     })
 
@@ -359,9 +383,99 @@ export class SuperPanelManager {
     }
   }
 
+  // ==================== 版本管理 ====================
+
+  private async loadVersions() {
+    this.featureVersions = (await this.versionStorage.load<Record<string, FeatureVersionEntry[]>>(
+      VERSIONS_STORAGE_KEY,
+    )) || {}
+  }
+
+  private async saveVersions() {
+    await this.versionStorage.save(VERSIONS_STORAGE_KEY, this.featureVersions)
+  }
+
+  private getStoragePath(): string {
+    const dataDir = (this.plugin as any).dataDir
+      || (this.plugin as any).getDataDir?.()
+      || ""
+    const dir = dataDir || "[dataDir]"
+    return `${dir}/${VERSIONS_STORAGE_KEY}.json`
+  }
+
+  public openVersions(featureId: string) {
+    const featureMeta = (FEATURE_CONFIG as any[]).find((f) => f.id === featureId)
+    const featureTitle = featureMeta?.defaultTitle || featureId
+    const storagePath = this.getStoragePath()
+
+    this.versionModal = createModalVueApp(VersionPanel, {
+      maskId: "super-panel-version-mask",
+      width: "624px",
+      height: "auto",
+      getCloseHandler: () => this.closeVersions.bind(this),
+      buildProps: () => ({
+        featureId,
+        featureTitle,
+        versions: this.featureVersions[featureId] || [],
+        storagePath,
+        onAddVersion: async (entry: FeatureVersionEntry) => {
+          await this.addVersion(featureId, entry)
+        },
+        onUpdateVersion: async (index: number, entry: FeatureVersionEntry) => {
+          await this.updateVersion(featureId, index, entry)
+        },
+        onDeleteVersion: async (index: number) => {
+          await this.deleteVersion(featureId, index)
+        },
+        onClose: () => {
+          this.closeVersions()
+        },
+      }),
+    })
+
+    this.versionModal.open()
+  }
+
+  public closeVersions() {
+    this.versionModal?.close()
+    this.versionModal = null
+  }
+
+  private async addVersion(featureId: string, entry: FeatureVersionEntry) {
+    if (!this.featureVersions[featureId]) {
+      this.featureVersions[featureId] = []
+    }
+    this.featureVersions[featureId].unshift(entry)
+    await this.saveVersions()
+    this.refreshVersionModal(featureId)
+  }
+
+  private async updateVersion(featureId: string, index: number, entry: FeatureVersionEntry) {
+    const versions = this.featureVersions[featureId]
+    if (!versions || !versions[index]) return
+    versions[index] = entry
+    await this.saveVersions()
+    this.refreshVersionModal(featureId)
+  }
+
+  private async deleteVersion(featureId: string, index: number) {
+    const versions = this.featureVersions[featureId]
+    if (!versions) return
+    versions.splice(index, 1)
+    await this.saveVersions()
+    this.refreshVersionModal(featureId)
+  }
+
+  private refreshVersionModal(featureId: string) {
+    if (!this.versionModal) return
+    this.versionModal.close()
+    this.openVersions(featureId)
+  }
+
   public destroy() {
     this.close()
     this.closeAiSettings()
+    this.closeVersions()
     window.removeEventListener("toggleSuperPanel", this.boundToggleHandler)
   }
 }

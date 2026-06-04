@@ -53,6 +53,7 @@ export interface PluginSettings {
   enableBookmarkMarker: boolean // 是否启用手动书签标记功能
   enableApiDebugger: boolean // 是否启用API调试器功能
   enableWebsiteNavigation: boolean // 是否启用网站导航功能
+  enableScriptLauncher: boolean // 是否启用脚本启动器功能
   featureStatus: Record<string, string> // 功能状态标识: featureId -> 'stable' | 'needsFix' | 'critical' | 'minor'
   themeColorScheme: string // 主题色方案: 'orange' | 'github'
   videoCategories?: string[] // 视频分类列表
@@ -113,6 +114,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enableBookmarkMarker: true,
   enableApiDebugger: true,
   enableWebsiteNavigation: true,
+  enableScriptLauncher: true,
   featureStatus: {},
   themeColorScheme: "orange",
   videoCategories: ["默认分类", "教程", "演示", "其他"],

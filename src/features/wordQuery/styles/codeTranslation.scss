@@ -41,7 +41,7 @@
 
   .translation-textarea {
     width: 100%;
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
     font-size: 14px;
     line-height: 1.6;
     resize: vertical;
@@ -91,7 +91,7 @@
 
     .style-example {
       font-size: 12px;
-      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
       color: var(--b3-theme-on-surface-light);
     }
   }
@@ -156,7 +156,7 @@
     .result-value {
       flex: 1;
       font-size: 14px;
-      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
       color: var(--b3-theme-on-background);
       word-break: break-all;
 
@@ -225,7 +225,7 @@
       background: var(--b3-theme-background);
       border-radius: 4px;
       cursor: pointer;
-      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
       font-size: 13px;
       color: var(--b3-theme-on-background);
 

@@ -183,15 +183,13 @@ import type {
   CodeTranslationResult,
   NamingStyle,
 } from "../utils/codeTranslation"
+import type { Plugin } from "siyuan"
 import { showMessage } from "siyuan"
-import {
-  ref,
-  watch,
-} from "vue"
+import { ref } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
-import { getApiConfigFromPlugin } from "../utils/apiBase"
+import { useCodeFeature } from "../composables/useCodeFeature"
 import {
 
   NAMING_STYLES,
@@ -200,8 +198,8 @@ import {
 } from "../utils/codeTranslation"
 
 interface Props {
-  i18n: any
-  plugin?: any
+  i18n: Record<string, any>
+  plugin?: Plugin
 }
 
 const props = defineProps<Props>()
@@ -210,7 +208,9 @@ const chineseInput = ref("")
 const selectedStyle = ref<NamingStyle>(NAMING_STYLES[0])
 const translationResult = ref<CodeTranslationResult | null>(null)
 const isTranslating = ref(false)
-const errorMessage = ref("")
+
+const { errorMessage, clearErrorOnInput, getApiConfig } = useCodeFeature(props.plugin)
+clearErrorOnInput(chineseInput)
 
 const namingStyles = NAMING_STYLES
 
@@ -254,10 +254,6 @@ function handleClear() {
   chineseInput.value = ""
   translationResult.value = null
   errorMessage.value = ""
-}
-
-function getApiConfig() {
-  return getApiConfigFromPlugin(props.plugin)
 }
 
 function copyResult() {
@@ -305,15 +301,6 @@ function copyAbbreviation() {
     showMessage(props.i18n.copied || "已复制", 1500, "info")
   }
 }
-
-watch(
-  () => chineseInput.value,
-  () => {
-    if (errorMessage.value) {
-      errorMessage.value = ""
-    }
-  },
-)
 </script>
 
 <style scoped lang="scss">

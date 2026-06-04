@@ -140,23 +140,21 @@
 
 <script setup lang="ts">
 import type { CodeExplanationResult } from "../utils/codeUtils"
+import type { Plugin } from "siyuan"
 import { showMessage } from "siyuan"
-import {
-  ref,
-  watch,
-} from "vue"
+import { ref } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
-import { getApiConfigFromPlugin } from "../utils/apiBase"
+import { useCodeFeature } from "../composables/useCodeFeature"
 import {
 
   explainCode,
 } from "../utils/codeUtils"
 
 interface Props {
-  i18n: any
-  plugin?: any
+  i18n: Record<string, any>
+  plugin?: Plugin
 }
 
 const props = defineProps<Props>()
@@ -164,7 +162,9 @@ const props = defineProps<Props>()
 const codeInput = ref("")
 const result = ref<CodeExplanationResult | null>(null)
 const isExplaining = ref(false)
-const errorMessage = ref("")
+
+const { errorMessage, clearErrorOnInput, getApiConfig } = useCodeFeature(props.plugin)
+clearErrorOnInput(codeInput)
 
 function handleInput() {
   errorMessage.value = ""
@@ -200,10 +200,6 @@ function handleClear() {
   errorMessage.value = ""
 }
 
-function getApiConfig() {
-  return getApiConfigFromPlugin(props.plugin)
-}
-
 function copyExplanation() {
   if (result.value) {
     const text = `代码解释：\n${result.value.explanation}\n\n语言：${result.value.language}\n复杂度：${result.value.complexity}\n\n优化建议：\n${result.value.suggestions.map((s, i) => `${i + 1}. ${s}`).join("\n")}`
@@ -211,15 +207,6 @@ function copyExplanation() {
     showMessage(props.i18n.copied || "已复制", 1500, "info")
   }
 }
-
-watch(
-  () => codeInput.value,
-  () => {
-    if (errorMessage.value) {
-      errorMessage.value = ""
-    }
-  },
-)
 </script>
 
 <style scoped lang="scss">

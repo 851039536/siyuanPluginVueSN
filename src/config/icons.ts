@@ -420,6 +420,9 @@ export const COMMON_ICONS = {
     icon: "mdi:auto-fix",
     color: "#a855f7",
   },
+  codeComment: {
+    icon: "mdi:comment-text",
+  },
   browser: {
     icon: "mdi:web",
   },

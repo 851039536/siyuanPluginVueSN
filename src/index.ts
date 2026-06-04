@@ -43,6 +43,7 @@ import {
   registerPasswordVault,
   registerResourceManager,
   registerRssReader,
+  registerScriptLauncher,
   registerShortcut,
   registerSkillsViewer,
   registerStatistics,
@@ -193,6 +194,11 @@ export default class PluginSample extends Plugin {
       (this as any).__bookmarkMarker.destroy()
     }
 
+    // 清理脚本启动器资源
+    if ((this as any).__scriptLauncher) {
+      (this as any).__scriptLauncher.destroy()
+    }
+
     // 清理统计数据资源
     getStatisticsInstance()?.destroy()
 
@@ -243,6 +249,7 @@ export default class PluginSample extends Plugin {
     if (s.enableBookmarkMarker) registerBookmarkMarker(this)
     if (s.enableApiDebugger) registerApiDebugger(this)
     if (s.enableWebsiteNavigation) registerWebsiteNavigation(this)
+    if (s.enableScriptLauncher) registerScriptLauncher(this)
   }
 
   /**

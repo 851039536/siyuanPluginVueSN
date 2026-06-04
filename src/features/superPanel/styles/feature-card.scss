@@ -53,6 +53,21 @@
   white-space: nowrap;
 }
 
+.version-badge {
+  font-size: 10px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.45;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  transition: opacity 0.15s, color 0.15s;
+
+  &:hover {
+    opacity: 0.9;
+    color: var(--b3-theme-primary);
+  }
+}
+
 .feature-desc {
   font-size: 12px;
   color: var(--b3-theme-on-surface);

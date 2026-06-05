@@ -41,7 +41,7 @@
             </button>
             <button @click="openInBrowser(selectedItem!)">
               <Icon icon="mdi:open-in-new" />
-              {{ i18n.openInBrowser || '打开' }}
+              <span class="btn-label">{{ i18n.openInBrowser || '打开' }}</span>
             </button>
           </div>
         </div>
@@ -50,9 +50,9 @@
             {{ selectedItem!.title }}
           </h2>
           <div class="detail-meta">
-            <span v-if="selectedItem!.feedTitle">{{ selectedItem!.feedTitle }}</span>
-            <span v-if="selectedItem!.author">{{ i18n.author || '作者' }}: {{ selectedItem!.author }}</span>
-            <span v-if="selectedItem!.pubDate">{{ formatDate(selectedItem!.pubDate) }}</span>
+            <span v-if="selectedItem!.feedTitle" class="meta-chip">{{ selectedItem!.feedTitle }}</span>
+            <span v-if="selectedItem!.author" class="meta-chip"><span class="meta-key">AUTHOR</span> {{ selectedItem!.author }}</span>
+            <span v-if="selectedItem!.pubDate" class="meta-chip">{{ formatDate(selectedItem!.pubDate) }}</span>
           </div>
           <div
             class="detail-body"
@@ -238,7 +238,7 @@
         <div class="rss-toolbar-title">
           <Icon
             icon="mdi:rss"
-            style="color: #f97316"
+            class="rss-title-icon"
           />
           {{ i18n.title || 'RSS订阅' }}
           <span
@@ -562,7 +562,9 @@
 </template>
 
 <script setup lang="ts">
+import type { Plugin } from "siyuan"
 import { Icon } from "@iconify/vue"
+import { showMessage } from "siyuan"
 import {
   computed,
   onBeforeUnmount,
@@ -572,8 +574,8 @@ import {
 import { useRssReader } from "./composables/useRssReader"
 
 interface Props {
-  i18n: any
-  plugin: any
+  i18n: Record<string, string>
+  plugin: Plugin
 }
 
 const props = defineProps<Props>()
@@ -728,14 +730,12 @@ async function handleOpmlFile(e: Event) {
 }
 
 // ===== TTS 朗读 =====
-const ttsUtterance = ref<SpeechSynthesisUtterance | null>(null)
 const ttsPlaying = ref(false)
 
 function speakArticle(item: { title?: string, content?: string, description?: string }) {
   if (ttsPlaying.value) {
     window.speechSynthesis.cancel()
     ttsPlaying.value = false
-    ttsUtterance.value = null
     return
   }
   const text = [item.title, item.content || item.description].filter(Boolean).join(". ")
@@ -743,9 +743,8 @@ function speakArticle(item: { title?: string, content?: string, description?: st
   const utterance = new SpeechSynthesisUtterance(text)
   utterance.lang = "zh-CN"
   utterance.rate = 1.0
-  utterance.onend = () => { ttsPlaying.value = false; ttsUtterance.value = null }
-  utterance.onerror = () => { ttsPlaying.value = false; ttsUtterance.value = null }
-  ttsUtterance.value = utterance
+  utterance.onend = () => { ttsPlaying.value = false }
+  utterance.onerror = () => { ttsPlaying.value = false }
   ttsPlaying.value = true
   window.speechSynthesis.speak(utterance)
 }

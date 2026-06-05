@@ -7,11 +7,14 @@
   align-items: center;
   gap: 10px;
   padding: $spacing-sm $spacing-md;
+  border: 1px solid transparent;
   border-radius: 6px;
   cursor: pointer;
+  transition: border-color 0.12s;
 
   &:hover {
     background: var(--b3-theme-surface-lighter);
+    border-color: var(--b3-theme-primary);
   }
 
   &--expandable {
@@ -54,6 +57,7 @@
 }
 
 .version-badge {
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
   font-size: 10px;
   color: var(--b3-theme-on-surface);
   opacity: 0.45;
@@ -127,6 +131,12 @@
   align-items: center;
   gap: $spacing-xs;
   flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.12s;
+
+  .feature-card:hover & {
+    opacity: 1;
+  }
 }
 
 .action-hotkey {
@@ -208,9 +218,8 @@
   min-width: 100px;
   padding: 4px;
   background: var(--b3-theme-background);
-  border: 1px solid var(--b3-theme-surface-lighter);
+  border: 1px solid var(--b3-border-color);
   border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
   gap: 2px;

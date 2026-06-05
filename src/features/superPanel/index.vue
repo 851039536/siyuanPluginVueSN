@@ -14,14 +14,19 @@
     <!-- 头部 -->
     <SuperPanelHeader
       :title="i18n.title || '超级面板'"
+      :active-tab="activeTab"
       :i18n="i18n"
       @toggle-ai-settings="props.onOpenAiSettings?.()"
       @refresh="emit('refresh')"
       @close="emit('close')"
+      @change-tab="activeTab = $event"
     />
 
-    <!-- 搜索栏 -->
-    <div class="super-panel-search">
+    <!-- 搜索栏（仅功能列表 Tab） -->
+    <div
+      v-if="activeTab === 'features'"
+      class="super-panel-search"
+    >
       <div class="search-input-wrapper">
         <IconWrapper
           name="search"
@@ -52,8 +57,11 @@
       >{{ filteredFeatures.length }}/{{ features.length }}</span>
     </div>
 
-    <!-- 状态统计 -->
-    <div class="super-panel-stats">
+    <!-- 状态统计（仅功能列表 Tab） -->
+    <div
+      v-if="activeTab === 'features'"
+      class="super-panel-stats"
+    >
       <span
         v-for="s in FEATURE_STATUSES"
         :key="s"
@@ -68,38 +76,49 @@
 
     <!-- 内容区 -->
     <div class="super-panel-content">
-      <div
-        v-if="searchQuery && filteredFeatures.length === 0"
-        class="search-empty"
-      >
-        <IconWrapper
-          name="search"
-          :size="32"
-          class="search-empty-icon"
-        />
-        <span class="search-empty-text">{{ i18n.noResults || '未找到匹配的功能' }}</span>
-      </div>
-      <TransitionGroup
-        name="feature-list"
-        tag="div"
-        class="feature-list-inner"
-      >
-        <FeatureCard
-          v-for="feature in filteredFeatures"
-          :key="feature.id"
-          :feature="feature"
-          :enabled="getFeatureEnabled(feature.id)"
-          :show-toggle="canToggle(feature.id)"
-          :selector-options="getSelectorOptions(feature.id)"
-          :selected-option="getSelectedOption(feature.id)"
-          :status-labels="statusLabels"
-          @action="emit('action', $event)"
-          @toggle="emit('toggleFeature', feature.id, $event)"
-          @select="emit('selectFeature', feature.id, $event)"
-          @status-change="emit('statusFeature', feature.id, $event)"
-          @open-versions="emit('openVersions', feature.id)"
-        />
-      </TransitionGroup>
+      <!-- 版本汇总 Tab -->
+      <VersionSummary
+        v-if="activeTab === 'versions'"
+        :i18n="i18n"
+        :feature-versions="featureVersions"
+        @open-versions="emit('openVersions', $event)"
+      />
+
+      <!-- 功能列表 Tab -->
+      <template v-else>
+        <div
+          v-if="searchQuery && filteredFeatures.length === 0"
+          class="search-empty"
+        >
+          <IconWrapper
+            name="search"
+            :size="32"
+            class="search-empty-icon"
+          />
+          <span class="search-empty-text">{{ i18n.noResults || '未找到匹配的功能' }}</span>
+        </div>
+        <TransitionGroup
+          name="feature-list"
+          tag="div"
+          class="feature-list-inner"
+        >
+          <FeatureCard
+            v-for="feature in filteredFeatures"
+            :key="feature.id"
+            :feature="feature"
+            :enabled="getFeatureEnabled(feature.id)"
+            :show-toggle="canToggle(feature.id)"
+            :selector-options="getSelectorOptions(feature.id)"
+            :selected-option="getSelectedOption(feature.id)"
+            :status-labels="statusLabels"
+            @action="emit('action', $event)"
+            @toggle="emit('toggleFeature', feature.id, $event)"
+            @select="emit('selectFeature', feature.id, $event)"
+            @status-change="emit('statusFeature', feature.id, $event)"
+            @open-versions="emit('openVersions', feature.id)"
+          />
+        </TransitionGroup>
+      </template>
     </div>
   </div>
 </template>
@@ -126,6 +145,7 @@ import { FEATURE_CONFIG } from "@/features/config"
 import { THEMES } from "@/features/themeColor"
 import FeatureCard from "./components/FeatureCard.vue"
 import SuperPanelHeader from "./components/SuperPanelHeader.vue"
+import VersionSummary from "./components/VersionSummary.vue"
 import {
   DEFAULT_VERSION,
   FEATURE_STATUSES,
@@ -151,6 +171,9 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+
+// Tab 状态
+const activeTab = ref<"features" | "versions">("features")
 
 // 搜索状态
 const searchQuery = ref("")

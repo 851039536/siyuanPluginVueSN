@@ -17,6 +17,9 @@ $spacing-lg: 16px !default;
 // 等宽字体栈（Codex 规范）
 $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace !default;
 
+// Codex 圆角
+$vp-radius: 6px !default;
+
 // 状态色（与 _variables.scss $success-light / $warning-light / $info-light / $brand-destructive 对齐）
 $status-stable: #22c55e !default;
 $status-needsFix: #d97706 !default;

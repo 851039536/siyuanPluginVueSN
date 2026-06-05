@@ -48,6 +48,14 @@ export interface UpdateFlashcardDTO {
 }
 
 /**
+ * 打字练习设置
+ */
+export interface TypingSettings {
+  sessionSize: number
+  timerEnabled: boolean
+}
+
+/**
  * 视图模式类型
  */
 export type ViewMode = "list" | "single" | "statistics" | "typing"
@@ -133,6 +141,9 @@ export interface I18n {
   coverMode?: string
   revealMode?: string
   sessionCorrect?: string
+  timerLabel?: string
+  sessionSizeLabel?: string
+  roundComplete?: string
 }
 
 export function showFlashcardDialog(plugin?: Plugin, i18n?: any) {

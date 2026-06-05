@@ -5,6 +5,26 @@ import {
   ref,
 } from "vue"
 
+/** 计算每张卡片的权重（练习次数越少权重越高） */
+function computeWeights(list: Flashcard[]): number[] {
+  const maxCount = Math.max(...list.map((c) => c.practiceCount || 0), 0)
+  return list.map((c) =>
+    maxCount > 0 ? 1 + maxCount - (c.practiceCount || 0) : 1,
+  )
+}
+
+/** 根据权重随机选取一个索引 */
+function weightedRandomIndex(cards: Flashcard[]): number {
+  const weights = computeWeights(cards)
+  const totalWeight = weights.reduce((sum, w) => sum + w, 0)
+  let rand = Math.random() * totalWeight
+  for (let i = 0; i < weights.length; i++) {
+    rand -= weights[i]
+    if (rand <= 0) return i
+  }
+  return cards.length - 1
+}
+
 export function useTypingQueue(cards: Ref<Flashcard[]>) {
   const currentIndex = ref(0)
 
@@ -12,14 +32,8 @@ export function useTypingQueue(cards: Ref<Flashcard[]>) {
     const list = cards.value
     if (list.length <= 1) return [...list]
 
-    const maxCount = Math.max(...list.map((c) => c.practiceCount || 0), 0)
-
-    const weighted: Array<{ card: Flashcard, weight: number }> = list.map(
-      (card) => ({
-        card,
-        weight: maxCount > 0 ? 1 + maxCount - (card.practiceCount || 0) : 1,
-      }),
-    )
+    const weights = computeWeights(list)
+    const weighted = list.map((card, i) => ({ card, weight: weights[i] }))
 
     const result: Flashcard[] = []
     const remaining = [...weighted]
@@ -90,20 +104,4 @@ export function useTypingQueue(cards: Ref<Flashcard[]>) {
     random,
     rebuild,
   }
-}
-
-function weightedRandomIndex(cards: Flashcard[]): number {
-  const maxCount = Math.max(...cards.map((c) => c.practiceCount || 0), 0)
-  let totalWeight = 0
-  const weights = cards.map((c) => {
-    const w = maxCount > 0 ? 1 + maxCount - (c.practiceCount || 0) : 1
-    totalWeight += w
-    return w
-  })
-  let rand = Math.random() * totalWeight
-  for (let i = 0; i < weights.length; i++) {
-    rand -= weights[i]
-    if (rand <= 0) return i
-  }
-  return cards.length - 1
 }

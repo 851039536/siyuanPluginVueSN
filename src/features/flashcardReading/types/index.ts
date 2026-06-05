@@ -64,15 +64,6 @@ export interface StatisticsData {
 }
 
 /**
- * 表单数据类型
- */
-export interface FormData {
-  title: string
-  content: string
-  category: string
-}
-
-/**
  * 表单错误类型
  */
 export type FormErrors = Record<string, string>
@@ -151,7 +142,7 @@ export function showFlashcardDialog(plugin?: Plugin, i18n?: any) {
         return () =>
           h(FlashcardDialog, {
             i18n: dialogI18n || {},
-            plugin: dialogPlugin,
+            plugin: dialogPlugin!,
             ref: (el: any) => {
               dialogInstance = el
             },
@@ -216,10 +207,6 @@ export class FlashcardReading {
       i18n:
         (this.plugin.i18n?.flashcardReading as I18n) || ({} as I18n),
     })
-  }
-
-  public getStorage(): FlashcardStorage {
-    return this.storage
   }
 
   public destroy() {}

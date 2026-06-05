@@ -201,26 +201,28 @@ defineExpose({
   max-width: 400px;
   max-height: 90vh;
   background: var(--b3-theme-background);
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  padding: 24px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $fc-radius;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   overflow-y: auto;
 
   .close-btn {
     position: absolute;
-    top: 12px;
-    right: 12px;
+    top: 10px;
+    right: 10px;
     z-index: 1;
   }
 }
 
 .card-counter {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  color: var(--b3-theme-on-background);
+  font-family: $fc-mono;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
   min-width: 60px;
   text-align: center;
 }
@@ -230,7 +232,7 @@ defineExpose({
   opacity: 0;
 
   .flashcard-dialog {
-    transform: scale(0.9) translateY(20px);
+    transform: scale(0.95) translateY(10px);
   }
 }
 </style>

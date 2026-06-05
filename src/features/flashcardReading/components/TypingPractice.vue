@@ -45,6 +45,17 @@
           {{ caseInsensitive ? (i18n.caseInsensitive || '不区分大小写') : (i18n.caseSensitive || '区分大小写') }}
         </span>
       </button>
+      <button
+        class="typing-case-toggle"
+        :class="{ 'typing-case-toggle--active': instantReset }"
+        :title="instantReset ? '当前：输错立即重试' : '当前：输错稍后重试'"
+        @click="emit('update:instantReset', !instantReset)"
+      >
+        <span class="typing-case-toggle__label">↻</span>
+        <span class="typing-case-toggle__text">
+          {{ instantReset ? (i18n.instantReset || '立即重试') : (i18n.delayedReset || '稍后重试') }}
+        </span>
+      </button>
     </div>
 
     <div class="typing-area">
@@ -153,6 +164,7 @@ const props = defineProps<{
   currentIndex: number
   totalCards: number
   caseInsensitive: boolean
+  instantReset: boolean
   i18n: I18n
 }>()
 
@@ -164,6 +176,7 @@ const emit = defineEmits<{
   skip: []
   correct: [card: Flashcard | null]
   "update:caseInsensitive": [value: boolean]
+  "update:instantReset": [value: boolean]
 }>()
 
 const inputEl = ref<HTMLInputElement | null>(null)
@@ -244,6 +257,13 @@ watch(
 watch(typedWord, (val) => {
   if (resultState.value !== "idle") {
     resultState.value = "idle"
+  }
+  // instantReset: 每个字符输入时立即校验，错误则清空重来
+  if (props.instantReset && val.length > 0) {
+    if (normalizeChar(val[val.length - 1]) !== normalizeChar(targetChars.value[val.length - 1])) {
+      resetTyping()
+      return
+    }
   }
   if (val.length >= targetWord.value.length) {
     checkCompletion()

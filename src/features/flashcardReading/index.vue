@@ -59,6 +59,7 @@
         :currentIndex="typingQueue.currentIndex.value"
         :totalCards="typingQueue.queue.value.length"
         :caseInsensitive="caseInsensitive"
+        :instantReset="instantReset"
         :i18n="i18n"
         @play="playWord"
         @previous="() => navigateAndPlay('previous')"
@@ -67,6 +68,7 @@
         @skip="() => navigateAndPlay('next')"
         @correct="onTypingCorrect"
         @update:caseInsensitive="caseInsensitive = $event"
+        @update:instantReset="instantReset = $event"
       />
 
       <div
@@ -217,6 +219,7 @@ const selectedCategory = ref<string>("all")
 const searchQuery = ref<string>("")
 const viewMode = ref<ViewMode>("list")
 const caseInsensitive = ref(false)
+const instantReset = ref(false)
 const currentPage = ref(1)
 
 const showCreateDialog = ref(false)

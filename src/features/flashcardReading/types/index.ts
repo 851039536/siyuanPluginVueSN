@@ -128,6 +128,8 @@ export interface I18n {
   skipCard?: string
   caseInsensitive?: string
   caseSensitive?: string
+  instantReset?: string
+  delayedReset?: string
 }
 
 export function showFlashcardDialog(plugin?: Plugin, i18n?: any) {

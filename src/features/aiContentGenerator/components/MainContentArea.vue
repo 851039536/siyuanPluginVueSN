@@ -464,9 +464,12 @@ watch(isGenerating, (newVal, oldVal) => {
   align-items: center;
   gap: 3px;
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--b3-theme-on-surface);
-  opacity: 0.55;
+  opacity: 0.45;
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   font-variant-numeric: tabular-nums;
 
   svg {

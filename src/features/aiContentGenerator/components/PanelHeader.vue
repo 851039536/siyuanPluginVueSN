@@ -109,7 +109,6 @@
         <svg
           width="18"
           height="16"
-          viewBox="0 0 24 24"
         >
           <use xlink:href="#iconSettings"></use>
         </svg>
@@ -224,6 +223,7 @@ defineEmits<{
 
   &:focus {
     border-color: var(--b3-theme-primary);
+    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
   }
 }
 
@@ -237,9 +237,13 @@ defineEmits<{
   outline: none;
   max-width: 100px;
 
-  &:hover,
+  &:hover {
+    border-color: var(--b3-theme-primary);
+  }
+
   &:focus {
     border-color: var(--b3-theme-primary);
+    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
   }
 
   &::placeholder {

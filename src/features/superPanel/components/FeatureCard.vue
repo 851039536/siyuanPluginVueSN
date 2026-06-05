@@ -107,13 +107,12 @@ import type {
 } from "../types"
 import {
   computed,
-  onBeforeUnmount,
   ref,
-  watch,
 } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Switch from "@/components/Switch.vue"
+import { useClickOutside } from "../composables/useClickOutside"
 import { FEATURE_STATUSES } from "../types"
 
 export interface SelectorOption {
@@ -145,6 +144,8 @@ const emit = defineEmits<Emits>()
 const statusBadgeRef = ref<HTMLElement | null>(null)
 const showStatusMenu = ref(false)
 
+useClickOutside(statusBadgeRef, showStatusMenu)
+
 const statusOptions = computed(() => [
   ...FEATURE_STATUSES.map((v) => ({
     value: v,
@@ -164,31 +165,6 @@ const selectStatus = (status: FeatureStatus): void => {
   emit("statusChange", status)
   showStatusMenu.value = false
 }
-
-let clickOutsideHandler: ((e: MouseEvent) => void) | null = null
-
-watch(showStatusMenu, (open) => {
-  if (open) {
-    clickOutsideHandler = (e: MouseEvent) => {
-      if (statusBadgeRef.value && !statusBadgeRef.value.contains(e.target as Node)) {
-        showStatusMenu.value = false
-      }
-    }
-    document.addEventListener("click", clickOutsideHandler, true)
-  } else {
-    if (clickOutsideHandler) {
-      document.removeEventListener("click", clickOutsideHandler, true)
-      clickOutsideHandler = null
-    }
-  }
-})
-
-onBeforeUnmount(() => {
-  if (clickOutsideHandler) {
-    document.removeEventListener("click", clickOutsideHandler, true)
-    clickOutsideHandler = null
-  }
-})
 
 const handleAction = (actionKey: string): void => {
   emit("action", actionKey)

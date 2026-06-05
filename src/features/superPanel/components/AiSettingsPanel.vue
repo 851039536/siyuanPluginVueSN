@@ -185,6 +185,7 @@ import { searchWeb } from "@/utils/webSearch"
 import AiModelSelect from "./AiModelSelect.vue"
 import AiProviderSelect from "./AiProviderSelect.vue"
 import ApiKeyInput from "./ApiKeyInput.vue"
+import { getDefaultModel } from "./providers"
 import SettingGroup from "./SettingGroup.vue"
 import TextInput from "./TextInput.vue"
 
@@ -247,16 +248,8 @@ const updateSetting = (field: keyof AiSettings, value: string | boolean) => {
 }
 
 const handleProviderChange = (provider: string) => {
-  const defaultModels: Record<string, string> = {
-    tongyi: "qwen-plus",
-    openai: "gpt-3.5-turbo",
-    deepseek: "deepseek-v4-flash",
-    zhipu: "glm-4-flash",
-    xiaomi: "mimo-v2-flash",
-    custom: "",
-  }
   settings.provider = provider
-  settings.model = defaultModels[provider] || ""
+  settings.model = getDefaultModel(provider)
   settings.apiKey = settings.apiKeys[provider] || ""
   emit("update:settings", { ...settings })
   showMessage("供应商已更新", 2000, "info")

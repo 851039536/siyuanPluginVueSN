@@ -79,10 +79,6 @@ export interface AiSettings {
   searchSearxngUrl: string
 }
 
-let vueApp: VueApp | null = null
-let panelContainer: HTMLElement | null = null
-let reactiveSettings: PluginSettings | null = null
-
 const VERSIONS_STORAGE_KEY = "superPanel-feature-versions"
 
 /**
@@ -116,6 +112,9 @@ export class SuperPanelManager {
   private versionModal: ModalAppInstance | null = null
   private versionStorage: PluginStorage
   private featureVersions: Record<string, FeatureVersionEntry[]> = {}
+  private vueApp: VueApp | null = null
+  private panelContainer: HTMLElement | null = null
+  private reactiveSettings: PluginSettings | null = null
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
@@ -167,7 +166,7 @@ export class SuperPanelManager {
   }
 
   private toggle() {
-    if (vueApp && panelContainer) {
+    if (this.vueApp && this.panelContainer) {
       this.close()
     } else {
       this.open()
@@ -178,17 +177,17 @@ export class SuperPanelManager {
     await this.loadVersions()
 
     // 创建容器
-    panelContainer = document.createElement("div")
-    panelContainer.id = "super-panel-vue-container"
-    document.body.appendChild(panelContainer)
+    this.panelContainer = document.createElement("div")
+    this.panelContainer.id = "super-panel-vue-container"
+    document.body.appendChild(this.panelContainer)
 
     // 创建响应式 settings 对象
-    reactiveSettings = reactive<PluginSettings>((this.plugin as any).settings)
+    this.reactiveSettings = reactive<PluginSettings>((this.plugin as any).settings)
 
     // 创建 Vue 应用
-    vueApp = createApp(SuperPanelPanel, {
+    this.vueApp = createApp(SuperPanelPanel, {
       visible: true,
-      settings: reactiveSettings,
+      settings: this.reactiveSettings,
       i18n: (this.plugin.i18n as any).superPanel || {},
       featureVersions: this.featureVersions,
       onClose: () => {
@@ -220,16 +219,16 @@ export class SuperPanelManager {
       },
     })
 
-    vueApp.mount(panelContainer)
+    this.vueApp.mount(this.panelContainer)
   }
 
   private close() {
-    if (vueApp && panelContainer) {
-      vueApp.unmount()
-      panelContainer.remove()
-      vueApp = null
-      panelContainer = null
-      reactiveSettings = null
+    if (this.vueApp && this.panelContainer) {
+      this.vueApp.unmount()
+      this.panelContainer.remove()
+      this.vueApp = null
+      this.panelContainer = null
+      this.reactiveSettings = null
     }
   }
 
@@ -265,8 +264,8 @@ export class SuperPanelManager {
     }
     const success = await pluginSample.updateSettings(newSettings)
     if (success) {
-      if (reactiveSettings) {
-        Object.assign(reactiveSettings, fields)
+      if (this.reactiveSettings) {
+        Object.assign(this.reactiveSettings, fields)
       }
       if (successMsg) {
         showMessage(successMsg, 2000, "info")

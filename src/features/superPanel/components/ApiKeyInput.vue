@@ -23,26 +23,13 @@
 <script setup lang="ts">
 import { ref } from "vue"
 import Button from "@/components/Button.vue"
+import { getProviderDisplayName, PROVIDER_MAP } from "./providers"
 import TextInput from "./TextInput.vue"
 
 interface Props {
   provider: string
   modelValue: string
-  i18n: {
-    tongyiQianwen?: string
-    openAI?: string
-    deepSeek?: string
-    zhipuAI?: string
-    xiaomiMiMo?: string
-    customApi?: string
-    tongyiQianwenPlaceholder?: string
-    openAIPlaceholder?: string
-    deepSeekPlaceholder?: string
-    zhipuAIPlaceholder?: string
-    xiaomiMiMoPlaceholder?: string
-    customApiPlaceholder?: string
-    [key: string]: any
-  }
+  i18n: Record<string, any>
 }
 
 interface Emits {
@@ -54,47 +41,22 @@ const emit = defineEmits<Emits>()
 
 const visible = ref(false)
 
-const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
-  tongyi: "通义千问",
-  openai: "OpenAI",
-  deepseek: "DeepSeek",
-  zhipu: "智谱AI",
-  xiaomi: "小米MiMo",
-  custom: "自定义API",
-}
-
 const toggleVisibility = () => {
   visible.value = !visible.value
 }
 
 const getPlaceholder = () => {
-  const i18nPlaceholders: Record<string, string | undefined> = {
-    tongyi: props.i18n.tongyiQianwenPlaceholder,
-    openai: props.i18n.openAIPlaceholder,
-    deepseek: props.i18n.deepSeekPlaceholder,
-    zhipu: props.i18n.zhipuAIPlaceholder,
-    xiaomi: props.i18n.xiaomiMiMoPlaceholder,
-    custom: props.i18n.customApiPlaceholder,
-  }
-  return i18nPlaceholders[props.provider]
-    || `请输入${PROVIDER_DISPLAY_NAMES[props.provider]}API密钥`
+  const meta = PROVIDER_MAP[props.provider]
+  const i18nPlaceholder = meta ? props.i18n[`${meta.i18nKey}Placeholder`] : undefined
+  return i18nPlaceholder
+    || `请输入${getProviderDisplayName(props.provider, props.i18n)}API密钥`
 }
 
 const getDescription = () => {
-  const providerNames: Record<string, string> = {
-    tongyi: props.i18n.tongyiQianwen || PROVIDER_DISPLAY_NAMES.tongyi,
-    openai: props.i18n.openAI || PROVIDER_DISPLAY_NAMES.openai,
-    deepseek: props.i18n.deepSeek || PROVIDER_DISPLAY_NAMES.deepseek,
-    zhipu: props.i18n.zhipuAI || PROVIDER_DISPLAY_NAMES.zhipu,
-    xiaomi: props.i18n.xiaomiMiMo || PROVIDER_DISPLAY_NAMES.xiaomi,
-    custom: props.i18n.customApi || PROVIDER_DISPLAY_NAMES.custom,
-  }
-  return `${providerNames[props.provider]} API密钥，用于所有AI功能`
+  return `${getProviderDisplayName(props.provider, props.i18n)} API密钥，用于所有AI功能`
 }
 
 const handleInput = (value: string) => {
   emit("update:modelValue", value)
 }
 </script>
-
-

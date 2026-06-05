@@ -251,10 +251,10 @@
   color: var(--b3-theme-on-surface-variant);
   white-space: nowrap;
 
-  &.stats-stable { color: #22c55e; }
-  &.stats-needsFix { color: #d97706; }
-  &.stats-critical { color: #ef4444; }
-  &.stats-minor { color: #3b82f6; }
+  &.stats-stable { color: $status-stable; }
+  &.stats-needsFix { color: $status-needsFix; }
+  &.stats-critical { color: $status-critical; }
+  &.stats-minor { color: $status-minor; }
 }
 
 .stats-dot {
@@ -372,7 +372,6 @@
 
 // ==================== Codex 版本面板 ====================
 
-$vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 $vp-radius: 6px;
 
 .vp {
@@ -681,9 +680,9 @@ $vp-radius: 6px;
   }
 
   &--danger:hover {
-    border-color: #ef4444;
-    color: #ef4444;
-    background: #ef444415;
+    border-color: $status-critical;
+    color: $status-critical;
+    background: rgba($status-critical, 0.08);
   }
 }
 

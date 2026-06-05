@@ -1,6 +1,7 @@
 import type {
   CreateFlashcardDTO,
   Flashcard,
+  TypingSettings,
   UpdateFlashcardDTO,
 } from "./index"
 /**
@@ -15,6 +16,12 @@ import { PluginStorage } from "@/utils/pluginStorage"
 export class FlashcardStorage {
   private storage: PluginStorage
   private readonly STORAGE_KEY = "flashcard-cards"
+  private readonly SETTINGS_KEY = "flashcard-typing-settings"
+
+  static readonly DEFAULT_SETTINGS: TypingSettings = {
+    sessionSize: 10,
+    timerEnabled: true,
+  }
 
   constructor(plugin: Plugin) {
     this.storage = new PluginStorage(plugin)
@@ -135,6 +142,25 @@ export class FlashcardStorage {
 
     await this.storage.save(this.STORAGE_KEY, filteredCards)
     return true
+  }
+
+  /**
+   * 读取打字练习设置
+   */
+  async getTypingSettings(): Promise<TypingSettings> {
+    try {
+      const data = await this.storage.load<TypingSettings>(this.SETTINGS_KEY)
+      return { ...FlashcardStorage.DEFAULT_SETTINGS, ...data }
+    } catch {
+      return { ...FlashcardStorage.DEFAULT_SETTINGS }
+    }
+  }
+
+  /**
+   * 保存打字练习设置
+   */
+  async saveTypingSettings(settings: TypingSettings): Promise<boolean> {
+    return this.storage.save(this.SETTINGS_KEY, settings)
   }
 
   /**

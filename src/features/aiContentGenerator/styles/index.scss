@@ -647,9 +647,11 @@
     background: var(--b3-theme-primary);
     color: var(--b3-theme-on-primary);
 
-    .skill-source-hint {
-      opacity: 0.8;
-      color: var(--b3-theme-on-primary);
+    .skill-source-dots {
+      .source-dot {
+        opacity: 0.9;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3);
+      }
     }
 
     .skill-item-desc {

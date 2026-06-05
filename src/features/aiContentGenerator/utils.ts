@@ -54,17 +54,13 @@ export function truncateTitle(title: string, maxLen = 12): string {
   return `${title.substring(0, maxLen)}...`
 }
 
-/** 获取技能来源提示文字（带图标） */
-export function getSourceHint(skill: SkillItem): string {
-  if (!skill.sources || skill.sources.length === 0) return ""
-  const toolNames = skill.sources.map((s) => {
+/** 获取技能来源的颜色数组（用于圆点图标显示） */
+export function getSourceDotColors(skill: SkillItem): string[] {
+  if (!skill.sources || skill.sources.length === 0) return []
+  return skill.sources.map((s) => {
     const tool = AI_TOOLS.find((t) => t.id === s.tool)
-    return tool ? `${tool.icon} ${tool.name}` : s.tool
+    return tool?.color || "#999"
   })
-  if (skill.sources.length === 1) {
-    return `(${toolNames[0]})`
-  }
-  return `(来自 ${toolNames.join("、")})`
 }
 
 /** 获取技能来源提示文字（纯文本） */

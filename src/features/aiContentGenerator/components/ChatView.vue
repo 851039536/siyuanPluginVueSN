@@ -13,7 +13,14 @@
           <span class="skill-select-value">
             <template v-if="currentSkillIndex >= 0 && currentSkill">
               {{ currentSkill.name }}
-              <span class="skill-source-hint">{{ getSourceHint(currentSkill) }}</span>
+              <span class="skill-source-dots">
+                <span
+                  v-for="(color, i) in getSourceDotColors(currentSkill)"
+                  :key="i"
+                  class="source-dot"
+                  :style="{ background: color }"
+                ></span>
+              </span>
             </template>
             <template v-else>🧠 无技能</template>
           </span>
@@ -58,7 +65,14 @@
             >
               <div class="skill-item-main">
                 <span class="skill-item-name">{{ skill.name }}</span>
-                <span class="skill-source-hint">{{ getSourceHint(skill) }}</span>
+                <span class="skill-source-dots">
+                  <span
+                    v-for="(color, i) in getSourceDotColors(skill)"
+                    :key="i"
+                    class="source-dot"
+                    :style="{ background: color }"
+                  ></span>
+                </span>
               </div>
               <div
                 v-if="skill.description"
@@ -280,7 +294,7 @@ import {
 } from "vue"
 import { useSkillsLoader } from "../composables/useSkillsLoader"
 import {
-  getSourceHint,
+  getSourceDotColors,
   getSourceHintText,
   renderMarkdown,
 } from "../utils"
@@ -596,10 +610,19 @@ defineExpose({
   white-space: nowrap;
 }
 
-.skill-source-hint {
-  font-size: 10px;
-  opacity: 0.6;
-  margin-left: 2px;
+.skill-source-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 4px;
+}
+
+.source-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .skill-select-arrow {

@@ -60,6 +60,48 @@
   gap: 4px;
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.header-tab {
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.55;
+
+  &:hover {
+    opacity: 0.85;
+    background: var(--b3-theme-surface-lighter);
+  }
+
+  &--active {
+    opacity: 1;
+    border: 1px solid var(--b3-theme-primary);
+    background: var(--b3-theme-primary);
+    color: #fff;
+
+    &:hover {
+      opacity: 0.9;
+      background: var(--b3-theme-primary);
+    }
+  }
+}
+
 // ==================== AI配置面板 ====================
 
 .ai-settings-panel {
@@ -353,6 +395,175 @@
   }
 }
 
+// ==================== 版本汇总 ====================
+
+.vs {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.vs-meta {
+  display: flex;
+  gap: 16px;
+  padding: 10px 12px;
+  background: var(--b3-theme-surface-lighter);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+  font-family: $vp-mono;
+}
+
+.vs-meta-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.vs-meta-key {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.4;
+}
+
+.vs-meta-val {
+  font-size: 13px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
+
+  &--primary {
+    color: var(--b3-theme-primary);
+    opacity: 1;
+    font-weight: 600;
+  }
+}
+
+.vs-table-wrap {
+  overflow-x: auto;
+  @include scrollbar-thin;
+}
+
+.vs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.vs-th {
+  text-align: left;
+  padding: 6px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.45;
+  border-bottom: 1px solid var(--b3-border-color);
+  white-space: nowrap;
+  user-select: none;
+
+  &--sortable {
+    cursor: pointer;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+
+  &--center {
+    text-align: center;
+  }
+
+  &--right {
+    text-align: right;
+  }
+}
+
+.vs-sort-icon {
+  margin-left: 2px;
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+.vs-row {
+  transition: border-color 0.12s;
+
+  &:hover {
+    .vs-detail-btn {
+      opacity: 1;
+    }
+  }
+
+  &:not(:last-child) .vs-td {
+    border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  }
+
+  &:hover .vs-td {
+    border-bottom-color: var(--b3-theme-primary);
+  }
+}
+
+.vs-td {
+  padding: 8px 10px;
+  color: var(--b3-theme-on-background);
+  vertical-align: middle;
+
+  &--mono {
+    font-family: $vp-mono;
+    font-size: 11px;
+  }
+
+  &--muted {
+    color: var(--b3-theme-on-surface);
+    opacity: 0.45;
+  }
+
+  &--center {
+    text-align: center;
+  }
+
+  &--right {
+    text-align: right;
+  }
+}
+
+.vs-feature {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vs-feature-icon {
+  color: var(--b3-theme-primary);
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.vs-feature-title {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.vs-detail-btn {
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s;
+  border: 1px solid var(--b3-border-color);
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  opacity: 0;
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+    border-color: var(--b3-theme-on-surface);
+  }
+}
+
 // ==================== 深色模式 ====================
 
 @media (prefers-color-scheme: dark) {
@@ -371,8 +582,6 @@
 }
 
 // ==================== Codex 版本面板 ====================
-
-$vp-radius: 6px;
 
 .vp {
   padding: 20px;

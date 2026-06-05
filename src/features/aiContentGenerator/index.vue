@@ -117,6 +117,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from "vue";
+import type { Plugin } from "siyuan";
 import { showMessage } from "siyuan";
 import hljs from "highlight.js";
 import "highlight.js/styles/github.css";
@@ -133,15 +134,13 @@ import ChatView from "./components/ChatView.vue";
 import AutomationView from "./components/AutomationView.vue";
 
 interface Props {
-  i18n: any;
-  plugin: any;
+  i18n: Record<string, string>;
+  plugin: Plugin;
   onGenerate: (options: GenerateOptions) => Promise<string>;
   onChat?: (messages: Array<{ role: string; content: string }>, options: ChatOptions) => Promise<string>;
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  plugin: null,
-});
+const props = withDefaults(defineProps<Props>(), {});
 
 // 存储实例
 let storage: AIGeneratorStorage | null = null;
@@ -247,7 +246,7 @@ const paginatedPrompts = computed(() => {
 // ============ AI 模型配置 ============
 import { AI_MODELS_CONFIG } from "./types/models";
 
-const currentProvider = computed(() => props.plugin?.settings?.aiApiProvider || "tongyi")
+const currentProvider = computed(() => (props.plugin as any)?.settings?.aiApiProvider || "tongyi")
 
 const availableModels = computed(() => {
   return AI_MODELS_CONFIG[currentProvider.value] || { common: [], all: [] }

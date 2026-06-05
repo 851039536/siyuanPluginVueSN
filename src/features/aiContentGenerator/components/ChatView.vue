@@ -264,6 +264,7 @@
 </template>
 
 <script setup lang="ts">
+import type { Plugin } from "siyuan"
 import type {
   ChatMessage,
   ChatOptions,
@@ -285,7 +286,7 @@ import {
 } from "../utils"
 
 interface Props {
-  plugin: any
+  plugin: Plugin
   onChat?: (messages: Array<{ role: string, content: string }>, options: ChatOptions) => Promise<string>
 }
 
@@ -878,6 +879,7 @@ defineExpose({
 
   &:focus {
     border-color: var(--b3-theme-primary);
+    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
   }
 
   &:disabled {

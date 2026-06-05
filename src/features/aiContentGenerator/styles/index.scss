@@ -653,11 +653,6 @@
         box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3);
       }
     }
-
-    .skill-item-desc {
-      color: var(--b3-theme-on-primary);
-      opacity: 0.7;
-    }
   }
 }
 
@@ -671,15 +666,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.skill-item-desc {
-  font-size: 10px;
-  opacity: 0.6;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  margin-top: 2px;
 }
 
 .skill-dropdown-empty {

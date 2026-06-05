@@ -126,6 +126,8 @@ export interface I18n {
   clickToStartTyping?: string
   correct?: string
   skipCard?: string
+  caseInsensitive?: string
+  caseSensitive?: string
 }
 
 export function showFlashcardDialog(plugin?: Plugin, i18n?: any) {

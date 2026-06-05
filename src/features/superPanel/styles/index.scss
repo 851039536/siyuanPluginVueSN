@@ -26,7 +26,7 @@
   max-height: 92vh;
   background: var(--b3-theme-background);
   border-radius: $panel-border-radius;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  border: 1px solid var(--b3-border-color);
   z-index: $z-panel;
   display: flex;
   flex-direction: column;
@@ -69,7 +69,7 @@
   max-height: 80vh;
   overflow-y: auto;
   border-radius: 8px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--b3-border-color);
 }
 
 .ai-settings-header {
@@ -98,9 +98,12 @@
 }
 
 .setting-label {
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--b3-theme-on-surface);
+  opacity: 0.45;
 }
 
 // ==================== 表单控件 ====================
@@ -117,6 +120,7 @@
 
   &:focus {
     border-color: var(--b3-theme-primary);
+    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
   }
 }
 
@@ -354,10 +358,6 @@
 @media (prefers-color-scheme: dark) {
   .super-panel-overlay {
     background: rgba(0, 0, 0, 0.55);
-  }
-
-  .super-panel-container {
-    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
   }
 }
 

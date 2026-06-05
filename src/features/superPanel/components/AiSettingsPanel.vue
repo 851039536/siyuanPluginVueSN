@@ -305,18 +305,27 @@ const testSearch = async () => {
 }
 
 .thinking-toggle-btn {
-  font-size: 11px;
-  padding: 2px 10px;
+  padding: 4px 14px;
   border-radius: 4px;
-  border: 1px solid var(--b3-border-color);
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
+  font-size: 11px;
+  font-weight: 600;
   cursor: pointer;
+  transition: all 0.12s;
+  border: 1px solid var(--b3-border-color);
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+    border-color: var(--b3-theme-on-surface);
+  }
 
   &.active {
+    border: 1px solid var(--b3-theme-primary);
     background: var(--b3-theme-primary);
     color: #fff;
-    border-color: var(--b3-theme-primary);
+
+    &:hover { opacity: 0.9; }
   }
 }
 
@@ -343,22 +352,27 @@ const testSearch = async () => {
 }
 
 .search-provider-btn {
-  padding: 4px 10px;
-  font-size: 11px;
-  color: var(--b3-theme-on-surface);
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
+  padding: 4px 14px;
   border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
   cursor: pointer;
+  transition: all 0.12s;
+  border: 1px solid var(--b3-border-color);
+  background: transparent;
+  color: var(--b3-theme-on-surface);
 
   &:hover {
-    border-color: var(--b3-theme-primary);
+    background: var(--b3-theme-surface-lighter);
+    border-color: var(--b3-theme-on-surface);
   }
 
   &.active {
-    color: var(--b3-theme-primary);
-    background: rgba(var(--b3-theme-primary-rgb), 0.1);
-    border-color: var(--b3-theme-primary);
+    border: 1px solid var(--b3-theme-primary);
+    background: var(--b3-theme-primary);
+    color: #fff;
+
+    &:hover { opacity: 0.9; }
   }
 }
 
@@ -376,23 +390,20 @@ const testSearch = async () => {
 
 .test-search-btn {
   width: 100%;
-  padding: 6px 0;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--b3-theme-primary);
-  background: rgba(var(--b3-theme-primary-rgb), 0.08);
-  border: 1px solid var(--b3-theme-primary);
+  padding: 6px 18px;
   border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
-  opacity: 0.9;
+  transition: all 0.12s;
+  border: 1px solid var(--b3-theme-primary);
+  background: var(--b3-theme-primary);
+  color: #fff;
 
-  &:hover {
-    opacity: 1;
-    background: rgba(var(--b3-theme-primary-rgb), 0.15);
-  }
+  &:hover { opacity: 0.9; }
 
   &:disabled {
-    opacity: 0.5;
+    opacity: 0.35;
     cursor: not-allowed;
   }
 }

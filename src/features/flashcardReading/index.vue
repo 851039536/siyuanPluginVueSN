@@ -61,8 +61,11 @@
         :caseInsensitive="caseInsensitive"
         :instantReset="instantReset"
         :coverMode="coverMode"
+        :timerEnabled="timerEnabled"
+        :sessionSize="sessionSize"
         :sessionTotal="sessionTotal"
         :sessionCorrect="sessionCorrect"
+        :roundComplete="roundComplete"
         :i18n="i18n"
         @play="playWord"
         @previous="() => navigateAndPlay('previous')"
@@ -71,9 +74,12 @@
         @skip="() => navigateAndPlay('next')"
         @correct="onTypingCorrect"
         @wrong="() => sessionTotal++"
+        @restartRound="restartRound"
         @update:caseInsensitive="caseInsensitive = $event"
         @update:instantReset="instantReset = $event"
         @update:coverMode="coverMode = $event"
+        @update:timerEnabled="onTimerToggle"
+        @update:sessionSize="onSessionSizeChange"
       />
 
       <div
@@ -186,6 +192,7 @@ import type { SelectOption } from "@/components/Select.vue"
 import { showMessage } from "siyuan"
 import {
   computed,
+  onMounted,
   ref,
   watch,
 } from "vue"
@@ -226,6 +233,8 @@ const viewMode = ref<ViewMode>("list")
 const caseInsensitive = ref(false)
 const instantReset = ref(false)
 const coverMode = ref(false)
+const timerEnabled = ref(true)
+const sessionSize = ref(10)
 const sessionTotal = ref(0)
 const sessionCorrect = ref(0)
 const currentPage = ref(1)
@@ -277,6 +286,10 @@ const formCategoryOptions = computed<SelectOption[]>(() => [
     label: cat,
   })),
 ])
+
+const roundComplete = computed(
+  () => sessionTotal.value > 0 && sessionTotal.value >= sessionSize.value,
+)
 
 const filteredCards = computed(() => {
   let result = cards.value
@@ -536,6 +549,37 @@ const onTypingCorrect = async (card: Flashcard | null) => {
     // 静默处理
   }
 }
+
+const restartRound = () => {
+  sessionTotal.value = 0
+  sessionCorrect.value = 0
+  typingQueue.rebuild()
+  typingQueue.currentIndex.value = 0
+}
+
+const onTimerToggle = (val: boolean) => {
+  timerEnabled.value = val
+  saveTypingSettings()
+}
+
+const onSessionSizeChange = (val: number) => {
+  sessionSize.value = val
+  saveTypingSettings()
+}
+
+const saveTypingSettings = () => {
+  storage.saveTypingSettings({
+    sessionSize: sessionSize.value,
+    timerEnabled: timerEnabled.value,
+  })
+}
+
+// 初始化时加载持久化设置
+onMounted(async () => {
+  const settings = await storage.getTypingSettings()
+  timerEnabled.value = settings.timerEnabled
+  sessionSize.value = settings.sessionSize
+})
 
 watch([searchQuery, selectedCategory], () => {
   currentPage.value = 1

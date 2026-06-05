@@ -352,6 +352,55 @@ $fc-transition: 0.12s;
       display: flex;
       justify-content: center;
       gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .typing-session-config {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 11px;
+
+      &__label {
+        @include fc-label;
+        font-size: 10px;
+      }
+
+      &__btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        border: 1px solid var(--b3-border-color);
+        border-radius: $fc-radius;
+        background: var(--b3-theme-surface-lighter);
+        color: var(--b3-theme-on-surface);
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1;
+        transition: all $fc-transition;
+
+        &:hover {
+          border-color: var(--b3-theme-primary);
+          color: var(--b3-theme-primary);
+        }
+      }
+
+      &__value {
+        font-family: $fc-mono;
+        font-size: 13px;
+        font-weight: 700;
+        min-width: 24px;
+        text-align: center;
+      }
+
+      &__unit {
+        @include fc-label;
+        font-size: 10px;
+      }
     }
 
     .typing-case-toggle {
@@ -535,9 +584,42 @@ $fc-transition: 0.12s;
       opacity: 0.6;
       border-top: 1px solid var(--b3-border-color);
       flex-shrink: 0;
+      flex-wrap: wrap;
 
       &__sep {
         opacity: 0.4;
+      }
+    }
+
+    .typing-timer {
+      font-family: $fc-mono;
+      font-weight: 600;
+      color: var(--b3-theme-primary);
+    }
+
+    .typing-round-summary {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 16px;
+      border: 1px solid var(--b3-border-color);
+      border-radius: $fc-radius;
+      background: var(--b3-theme-surface-lighter);
+
+      &__title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--b3-theme-primary);
+      }
+
+      &__stats {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        font-family: $fc-mono;
+        color: var(--b3-theme-on-surface);
       }
     }
   }

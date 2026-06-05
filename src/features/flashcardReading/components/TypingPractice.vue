@@ -69,6 +69,25 @@
           {{ coverMode ? (i18n.coverMode || '盲打') : (i18n.revealMode || '看打') }}
         </span>
       </button>
+      <button
+        class="typing-case-toggle"
+        :class="{ 'typing-case-toggle--active': timerEnabled }"
+        :title="timerEnabled ? '当前：计时开启' : '当前：计时关闭'"
+        @click="emit('update:timerEnabled', !timerEnabled)"
+      >
+        <span class="typing-case-toggle__label">⏱</span>
+        <span class="typing-case-toggle__text">
+          {{ timerEnabled ? '计时' : '计时关' }}
+        </span>
+      </button>
+    </div>
+
+    <div class="typing-session-config">
+      <span class="typing-session-config__label">{{ i18n.sessionSizeLabel || '每组' }}</span>
+      <button class="typing-session-config__btn" @click="changeSessionSize(-5)">−</button>
+      <span class="typing-session-config__value">{{ sessionSize }}</span>
+      <button class="typing-session-config__btn" @click="changeSessionSize(5)">+</button>
+      <span class="typing-session-config__unit">张</span>
     </div>
 
     <div class="typing-area">
@@ -161,6 +180,26 @@
       <span class="typing-session-stats__sep">·</span>
       <span>{{ sessionTotal > 0 ? Math.round(sessionCorrect / sessionTotal * 100) : 0 }}%</span>
       <span v-if="streak >= 2" class="typing-streak typing-streak--inline">🔥 x{{ streak }}</span>
+      <template v-if="timerEnabled">
+        <span class="typing-session-stats__sep">·</span>
+        <span class="typing-timer">⏱ {{ formatTime(elapsedSeconds) }}</span>
+      </template>
+    </div>
+
+    <div v-if="roundComplete" class="typing-round-summary">
+      <div class="typing-round-summary__title">{{ i18n.roundComplete || '本轮完成!' }}</div>
+      <div class="typing-round-summary__stats">
+        <span>{{ sessionCorrect }} / {{ sessionTotal }} 正确</span>
+        <span class="typing-session-stats__sep">·</span>
+        <span>{{ sessionTotal > 0 ? Math.round(sessionCorrect / sessionTotal * 100) : 0 }}%</span>
+        <template v-if="timerEnabled">
+          <span class="typing-session-stats__sep">·</span>
+          <span>⏱ {{ formatTime(elapsedSeconds) }}</span>
+        </template>
+      </div>
+      <Button variant="primary" size="small" @click="emit('restartRound')">
+        开始下一轮
+      </Button>
     </div>
   </div>
 </template>
@@ -187,8 +226,11 @@ const props = defineProps<{
   caseInsensitive: boolean
   instantReset: boolean
   coverMode: boolean
+  timerEnabled: boolean
+  sessionSize: number
   sessionTotal: number
   sessionCorrect: number
+  roundComplete: boolean
   i18n: I18n
 }>()
 
@@ -200,9 +242,12 @@ const emit = defineEmits<{
   skip: []
   correct: [card: Flashcard | null]
   wrong: [card: Flashcard | null]
+  restartRound: []
   "update:caseInsensitive": [value: boolean]
   "update:instantReset": [value: boolean]
   "update:coverMode": [value: boolean]
+  "update:timerEnabled": [value: boolean]
+  "update:sessionSize": [value: number]
 }>()
 
 const inputEl = ref<HTMLInputElement | null>(null)
@@ -210,6 +255,38 @@ const typedWord = ref("")
 const isFocused = ref(false)
 const resultState = ref<"idle" | "correct" | "incorrect">("idle")
 const streak = ref(0)
+const elapsedSeconds = ref(0)
+let timerInterval: ReturnType<typeof setInterval> | null = null
+
+function startTimer() {
+  if (timerInterval) return
+  timerInterval = setInterval(() => {
+    elapsedSeconds.value++
+  }, 1000)
+}
+
+function stopTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval)
+    timerInterval = null
+  }
+}
+
+function resetTimer() {
+  stopTimer()
+  elapsedSeconds.value = 0
+}
+
+function formatTime(totalSec: number): string {
+  const m = Math.floor(totalSec / 60)
+  const s = totalSec % 60
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
+}
+
+function changeSessionSize(delta: number) {
+  const next = Math.max(5, Math.min(100, props.sessionSize + delta))
+  emit("update:sessionSize", next)
+}
 
 const targetWord = computed(() => props.currentCard?.title || "")
 
@@ -254,6 +331,7 @@ function checkCompletion() {
   const target = props.caseInsensitive ? targetWord.value.toLowerCase() : targetWord.value
   if (typed === target) {
     streak.value++
+    stopTimer()
     resultState.value = "correct"
     emit("correct", props.currentCard)
     setTimeout(() => {
@@ -284,9 +362,28 @@ watch(
   },
 )
 
+watch(
+  () => props.roundComplete,
+  (val) => {
+    if (val) stopTimer()
+  },
+)
+
+watch(
+  () => props.sessionTotal,
+  (val) => {
+    // 新一轮开始（sessionTotal 重置为 0）时重置计时器
+    if (val === 0) resetTimer()
+  },
+)
+
 watch(typedWord, (val) => {
   if (resultState.value !== "idle") {
     resultState.value = "idle"
+  }
+  // 开始计时：首次输入字符时
+  if (props.timerEnabled && val.length === 1 && !timerInterval) {
+    startTimer()
   }
   // instantReset: 每个字符输入时立即校验，错误则清空重来
   if (props.instantReset && val.length > 0) {

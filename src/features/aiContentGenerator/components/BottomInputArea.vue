@@ -132,12 +132,6 @@
                     ></span>
                   </span>
                 </div>
-                <div
-                  v-if="skill.description"
-                  class="skill-item-desc"
-                >
-                  {{ skill.description }}
-                </div>
               </div>
               <div
                 v-if="filteredSkills.length === 0"

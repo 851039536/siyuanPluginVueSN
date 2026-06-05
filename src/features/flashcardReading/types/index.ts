@@ -130,6 +130,9 @@ export interface I18n {
   caseSensitive?: string
   instantReset?: string
   delayedReset?: string
+  coverMode?: string
+  revealMode?: string
+  sessionCorrect?: string
 }
 
 export function showFlashcardDialog(plugin?: Plugin, i18n?: any) {

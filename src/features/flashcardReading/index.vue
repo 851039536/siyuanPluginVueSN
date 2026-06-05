@@ -60,6 +60,9 @@
         :totalCards="typingQueue.queue.value.length"
         :caseInsensitive="caseInsensitive"
         :instantReset="instantReset"
+        :coverMode="coverMode"
+        :sessionTotal="sessionTotal"
+        :sessionCorrect="sessionCorrect"
         :i18n="i18n"
         @play="playWord"
         @previous="() => navigateAndPlay('previous')"
@@ -67,8 +70,10 @@
         @random="() => navigateAndPlay('random')"
         @skip="() => navigateAndPlay('next')"
         @correct="onTypingCorrect"
+        @wrong="() => sessionTotal++"
         @update:caseInsensitive="caseInsensitive = $event"
         @update:instantReset="instantReset = $event"
+        @update:coverMode="coverMode = $event"
       />
 
       <div
@@ -220,6 +225,9 @@ const searchQuery = ref<string>("")
 const viewMode = ref<ViewMode>("list")
 const caseInsensitive = ref(false)
 const instantReset = ref(false)
+const coverMode = ref(false)
+const sessionTotal = ref(0)
+const sessionCorrect = ref(0)
 const currentPage = ref(1)
 
 const showCreateDialog = ref(false)
@@ -515,6 +523,8 @@ const copyToClipboard = async (text: string, message: string) => {
 
 const onTypingCorrect = async (card: Flashcard | null) => {
   if (!card) return
+  sessionTotal.value++
+  sessionCorrect.value++
   try {
     await storage.incrementPracticeCount(card.id)
     const index = cards.value.findIndex((c) => c.id === card.id)

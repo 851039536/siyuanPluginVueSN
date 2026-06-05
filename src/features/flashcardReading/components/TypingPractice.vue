@@ -7,7 +7,9 @@
     >
       <template #header>
         <div class="card-header">
-          <span class="card-title">{{ currentCard?.title }}</span>
+          <span class="card-title" :class="{ 'card-title--covered': coverMode }">
+            {{ coverMode ? '?' : currentCard?.title }}
+          </span>
           <div class="card-actions">
             <Button
               variant="ghost"
@@ -56,6 +58,17 @@
           {{ instantReset ? (i18n.instantReset || '立即重试') : (i18n.delayedReset || '稍后重试') }}
         </span>
       </button>
+      <button
+        class="typing-case-toggle"
+        :class="{ 'typing-case-toggle--active': coverMode }"
+        :title="coverMode ? '当前：盲打模式' : '当前：看打模式'"
+        @click="emit('update:coverMode', !coverMode)"
+      >
+        <span class="typing-case-toggle__label">{{ coverMode ? '◌' : '◉' }}</span>
+        <span class="typing-case-toggle__text">
+          {{ coverMode ? (i18n.coverMode || '盲打') : (i18n.revealMode || '看打') }}
+        </span>
+      </button>
     </div>
 
     <div class="typing-area">
@@ -69,7 +82,7 @@
           :key="i"
           class="typing-char"
           :class="charClass(i)"
-        >{{ char }}</span>
+        >{{ coverMode && typedWord.length <= i ? '_' : char }}</span>
       </div>
 
       <div class="typing-input-wrapper">
@@ -97,9 +110,10 @@
             :size="20"
           />
           <span>{{ i18n.correct || '正确!' }}</span>
+          <span v-if="streak >= 2" class="typing-streak">🔥 x{{ streak }}</span>
         </template>
         <template v-else-if="resultState === 'incorrect'">
-          <span>{{ typedWord }}</span>
+          <span>{{ coverMode ? currentCard?.title : typedWord }}</span>
           <Button
             variant="ghost"
             size="small"
@@ -141,6 +155,13 @@
         @click="$emit('next')"
       />
     </div>
+
+    <div v-if="sessionTotal > 0" class="typing-session-stats">
+      <span>{{ sessionCorrect }} / {{ sessionTotal }}</span>
+      <span class="typing-session-stats__sep">·</span>
+      <span>{{ sessionTotal > 0 ? Math.round(sessionCorrect / sessionTotal * 100) : 0 }}%</span>
+      <span v-if="streak >= 2" class="typing-streak typing-streak--inline">🔥 x{{ streak }}</span>
+    </div>
   </div>
 </template>
 
@@ -165,6 +186,9 @@ const props = defineProps<{
   totalCards: number
   caseInsensitive: boolean
   instantReset: boolean
+  coverMode: boolean
+  sessionTotal: number
+  sessionCorrect: number
   i18n: I18n
 }>()
 
@@ -175,14 +199,17 @@ const emit = defineEmits<{
   random: []
   skip: []
   correct: [card: Flashcard | null]
+  wrong: [card: Flashcard | null]
   "update:caseInsensitive": [value: boolean]
   "update:instantReset": [value: boolean]
+  "update:coverMode": [value: boolean]
 }>()
 
 const inputEl = ref<HTMLInputElement | null>(null)
 const typedWord = ref("")
 const isFocused = ref(false)
 const resultState = ref<"idle" | "correct" | "incorrect">("idle")
+const streak = ref(0)
 
 const targetWord = computed(() => props.currentCard?.title || "")
 
@@ -226,12 +253,15 @@ function checkCompletion() {
   const typed = props.caseInsensitive ? typedWord.value.toLowerCase() : typedWord.value
   const target = props.caseInsensitive ? targetWord.value.toLowerCase() : targetWord.value
   if (typed === target) {
+    streak.value++
     resultState.value = "correct"
     emit("correct", props.currentCard)
     setTimeout(() => {
       emit("skip")
     }, 600)
   } else {
+    streak.value = 0
+    emit("wrong", props.currentCard)
     resultState.value = "incorrect"
     setTimeout(() => {
       resetTyping()
@@ -261,6 +291,8 @@ watch(typedWord, (val) => {
   // instantReset: 每个字符输入时立即校验，错误则清空重来
   if (props.instantReset && val.length > 0) {
     if (normalizeChar(val[val.length - 1]) !== normalizeChar(targetChars.value[val.length - 1])) {
+      streak.value = 0
+      emit("wrong", props.currentCard)
       resetTyping()
       return
     }

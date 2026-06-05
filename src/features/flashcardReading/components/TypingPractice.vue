@@ -33,6 +33,20 @@
       </template>
     </Card>
 
+    <div class="typing-options">
+      <button
+        class="typing-case-toggle"
+        :class="{ 'typing-case-toggle--active': caseInsensitive }"
+        :title="caseInsensitive ? '当前：不区分大小写' : '当前：区分大小写'"
+        @click="emit('update:caseInsensitive', !caseInsensitive)"
+      >
+        <span class="typing-case-toggle__label">Aa</span>
+        <span class="typing-case-toggle__text">
+          {{ caseInsensitive ? (i18n.caseInsensitive || '不区分大小写') : (i18n.caseSensitive || '区分大小写') }}
+        </span>
+      </button>
+    </div>
+
     <div class="typing-area">
       <div class="typing-hint">
         {{ i18n.typeTheWord || '请输入单词' }}:
@@ -138,6 +152,7 @@ const props = defineProps<{
   currentCard: Flashcard | null
   currentIndex: number
   totalCards: number
+  caseInsensitive: boolean
   i18n: I18n
 }>()
 
@@ -148,6 +163,7 @@ const emit = defineEmits<{
   random: []
   skip: []
   correct: [card: Flashcard | null]
+  "update:caseInsensitive": [value: boolean]
 }>()
 
 const inputEl = ref<HTMLInputElement | null>(null)
@@ -159,6 +175,11 @@ const targetWord = computed(() => props.currentCard?.title || "")
 
 const targetChars = computed(() => targetWord.value.split(""))
 
+/** 根据大小写敏感设置返回用于比较的字符 */
+function normalizeChar(ch: string): string {
+  return props.caseInsensitive ? ch.toLowerCase() : ch
+}
+
 const typingPlaceholder = computed(() => {
   if (!isFocused.value && !typedWord.value) {
     return props.i18n.clickToStartTyping || "点击开始输入..."
@@ -168,7 +189,7 @@ const typingPlaceholder = computed(() => {
 
 function charClass(index: number) {
   if (typedWord.value.length <= index) return ""
-  return typedWord.value[index] === targetChars.value[index]
+  return normalizeChar(typedWord.value[index]) === normalizeChar(targetChars.value[index])
     ? "typing-char--correct"
     : "typing-char--incorrect"
 }
@@ -189,7 +210,9 @@ function onFocus() {
 
 function checkCompletion() {
   if (!typedWord.value) return
-  if (typedWord.value === targetWord.value) {
+  const typed = props.caseInsensitive ? typedWord.value.toLowerCase() : typedWord.value
+  const target = props.caseInsensitive ? targetWord.value.toLowerCase() : targetWord.value
+  if (typed === target) {
     resultState.value = "correct"
     emit("correct", props.currentCard)
     setTimeout(() => {

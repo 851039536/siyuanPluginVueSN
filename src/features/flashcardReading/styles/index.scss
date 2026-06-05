@@ -341,6 +341,52 @@ $fc-transition: 0.12s;
     gap: 16px;
     overflow: hidden;
 
+    .typing-options {
+      display: flex;
+      justify-content: center;
+    }
+
+    .typing-case-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border: 1px solid var(--b3-border-color);
+      border-radius: $fc-radius;
+      background: var(--b3-theme-surface-lighter);
+      color: var(--b3-theme-on-surface);
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
+      transition: all $fc-transition;
+      opacity: 0.65;
+
+      &:hover {
+        opacity: 1;
+        border-color: var(--b3-theme-primary);
+      }
+
+      &--active {
+        opacity: 1;
+        border-color: var(--b3-theme-primary);
+        background: rgba(var(--b3-theme-primary-rgb, 35, 131, 226), 0.08);
+        color: var(--b3-theme-primary);
+      }
+
+      &__label {
+        font-family: $fc-mono;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      &__text {
+        @include fc-label;
+        font-size: 10px;
+        opacity: 1;
+        color: inherit;
+      }
+    }
+
     .typing-area {
       display: flex;
       flex-direction: column;

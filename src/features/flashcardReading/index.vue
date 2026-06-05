@@ -58,6 +58,7 @@
         :currentCard="typingQueue.currentCard.value"
         :currentIndex="typingQueue.currentIndex.value"
         :totalCards="typingQueue.queue.value.length"
+        :caseInsensitive="caseInsensitive"
         :i18n="i18n"
         @play="playWord"
         @previous="() => navigateAndPlay('previous')"
@@ -65,6 +66,7 @@
         @random="() => navigateAndPlay('random')"
         @skip="() => navigateAndPlay('next')"
         @correct="onTypingCorrect"
+        @update:caseInsensitive="caseInsensitive = $event"
       />
 
       <div
@@ -214,6 +216,7 @@ const { playWord } = usePlayWord(storage, cards, props.i18n)
 const selectedCategory = ref<string>("all")
 const searchQuery = ref<string>("")
 const viewMode = ref<ViewMode>("list")
+const caseInsensitive = ref(false)
 const currentPage = ref(1)
 
 const showCreateDialog = ref(false)

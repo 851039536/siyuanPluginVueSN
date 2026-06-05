@@ -94,9 +94,9 @@
           :selected-option="getSelectedOption(feature.id)"
           :status-labels="statusLabels"
           @action="emit('action', $event)"
-          @toggle="handleToggle(feature.id, $event)"
-          @select="handleSelect(feature.id, $event)"
-          @status-change="handleStatusChange(feature.id, $event)"
+          @toggle="emit('toggleFeature', feature.id, $event)"
+          @select="emit('selectFeature', feature.id, $event)"
+          @status-change="emit('statusFeature', feature.id, $event)"
           @open-versions="emit('openVersions', feature.id)"
         />
       </TransitionGroup>
@@ -232,14 +232,6 @@ const statusLabels = computed<Record<string, string>>(() => ({
   minor: props.i18n.statusMinor || "需优化",
 }))
 
-const handleToggle = (featureId: string, enabled: boolean): void => {
-  emit("toggleFeature", featureId, enabled)
-}
-
-const handleStatusChange = (featureId: string, status: string): void => {
-  emit("statusFeature", featureId, status)
-}
-
 const themeSchemeOptions = computed<SelectorOption[]>(() =>
   Object.values(THEMES).map((t) => ({
     value: t.id,
@@ -258,9 +250,6 @@ const getSelectedOption = (featureId: string): string => {
   return ""
 }
 
-const handleSelect = (featureId: string, value: string): void => {
-  emit("selectFeature", featureId, value)
-}
 </script>
 
 <style lang="scss">

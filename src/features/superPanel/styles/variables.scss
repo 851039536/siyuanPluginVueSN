@@ -8,8 +8,17 @@ $panel-border-radius: 8px !default;
 $z-overlay: 9998 !default;
 $z-panel: 9999 !default;
 
-// 间距规范
+// 间距规范（对齐全局 $spacing-1 ~ $spacing-4）
 $spacing-xs: 4px !default;
 $spacing-sm: 8px !default;
 $spacing-md: 12px !default;
 $spacing-lg: 16px !default;
+
+// 等宽字体栈（Codex 规范）
+$vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace !default;
+
+// 状态色（与 _variables.scss $success-light / $warning-light / $info-light / $brand-destructive 对齐）
+$status-stable: #22c55e !default;
+$status-needsFix: #d97706 !default;
+$status-critical: #ef4444 !default;
+$status-minor: #3b82f6 !default;

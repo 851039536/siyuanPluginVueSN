@@ -57,7 +57,7 @@
 }
 
 .version-badge {
-  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
+  font-family: $vp-mono;
   font-size: 10px;
   color: var(--b3-theme-on-surface);
   opacity: 0.45;
@@ -173,33 +173,33 @@
   }
 
   &.status-stable {
-    background: #22c55e15;
-    color: #22c55e;
-    border-color: #22c55e40;
+    background: rgba($status-stable, 0.08);
+    color: $status-stable;
+    border-color: rgba($status-stable, 0.25);
     border-style: solid;
     opacity: 1;
   }
 
   &.status-needsFix {
-    background: #f59e0b15;
-    color: #d97706;
-    border-color: #f59e0b40;
+    background: rgba($status-needsFix, 0.08);
+    color: $status-needsFix;
+    border-color: rgba($status-needsFix, 0.25);
     border-style: solid;
     opacity: 1;
   }
 
   &.status-critical {
-    background: #ef444415;
-    color: #ef4444;
-    border-color: #ef444440;
+    background: rgba($status-critical, 0.08);
+    color: $status-critical;
+    border-color: rgba($status-critical, 0.25);
     border-style: solid;
     opacity: 1;
   }
 
   &.status-minor {
-    background: #3b82f615;
-    color: #3b82f6;
-    border-color: #3b82f640;
+    background: rgba($status-minor, 0.08);
+    color: $status-minor;
+    border-color: rgba($status-minor, 0.25);
     border-style: solid;
     opacity: 1;
   }
@@ -256,10 +256,10 @@
   border-radius: 50%;
   flex-shrink: 0;
 
-  &.status-stable { background: #22c55e; }
-  &.status-needsFix { background: #f59e0b; }
-  &.status-critical { background: #ef4444; }
-  &.status-minor { background: #3b82f6; }
+  &.status-stable { background: $status-stable; }
+  &.status-needsFix { background: $status-needsFix; }
+  &.status-critical { background: $status-critical; }
+  &.status-minor { background: $status-minor; }
 }
 
 .status-popover-enter-active,

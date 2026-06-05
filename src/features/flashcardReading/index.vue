@@ -4,7 +4,7 @@
       :i18n="i18n"
       :plugin="plugin"
       @addCard="openCreateDialog"
-      @refresh="handleRefresh"
+      @refresh="reload"
     />
 
     <CategoryFilter
@@ -25,8 +25,8 @@
         :cards="paginatedCards"
         :i18n="i18n"
         @play="playWord"
-        @copyTitle="copyTitle"
-        @copyContent="copyContent"
+        @copyTitle="(c: Flashcard) => copyToClipboard(c.title, '已复制单词')"
+        @copyContent="(c: Flashcard) => copyToClipboard(c.content, '已复制内容')"
         @edit="editCard"
         @delete="deleteCard"
       />
@@ -38,11 +38,11 @@
         :totalCards="typingQueue.queue.value.length"
         :i18n="i18n"
         @play="playWord"
-        @previous="typingPrevious"
-        @next="typingNext"
-        @random="typingRandom"
-        @copyTitle="copyTitle"
-        @copyContent="copyContent"
+        @previous="() => navigateAndPlay('previous')"
+        @next="() => navigateAndPlay('next')"
+        @random="() => navigateAndPlay('random')"
+        @copyTitle="(c: Flashcard) => copyToClipboard(c.title, '已复制单词')"
+        @copyContent="(c: Flashcard) => copyToClipboard(c.content, '已复制内容')"
         @edit="editCard"
         @delete="deleteCard"
       />
@@ -60,10 +60,10 @@
         :totalCards="typingQueue.queue.value.length"
         :i18n="i18n"
         @play="playWord"
-        @previous="typingPrevious"
-        @next="typingNext"
-        @random="typingRandom"
-        @skip="typingNext"
+        @previous="() => navigateAndPlay('previous')"
+        @next="() => navigateAndPlay('next')"
+        @random="() => navigateAndPlay('random')"
+        @skip="() => navigateAndPlay('next')"
         @correct="onTypingCorrect"
       />
 
@@ -123,7 +123,7 @@
       <Button
         :variant="viewMode === 'single' ? 'primary' : 'secondary'"
         size="small"
-        @click="switchToSingleMode"
+        @click="switchMode('single')"
       >
         {{ i18n.singleView || '单卡' }}
       </Button>
@@ -137,7 +137,7 @@
       <Button
         :variant="viewMode === 'typing' ? 'primary' : 'secondary'"
         size="small"
-        @click="switchToTypingMode"
+        @click="switchMode('typing')"
       >
         {{ i18n.typingView || '边学边写' }}
       </Button>
@@ -354,7 +354,7 @@ const statisticsData = computed<StatisticsData>(() => {
   }
 })
 
-const handleRefresh = async () => {
+const reload = async () => {
   try {
     await loadCards()
   } catch {
@@ -362,38 +362,14 @@ const handleRefresh = async () => {
   }
 }
 
-const reloadAfterMutation = async () => {
-  try {
-    await loadCards()
-  } catch {
-    showMessage(props.i18n.loadFailed || "加载卡片失败", 3000, "error")
-  }
-}
-
-const switchToSingleMode = () => {
-  viewMode.value = "single"
+const switchMode = (mode: "single" | "typing") => {
+  viewMode.value = mode
   typingQueue.rebuild()
   typingQueue.currentIndex.value = 0
 }
 
-const switchToTypingMode = () => {
-  viewMode.value = "typing"
-  typingQueue.rebuild()
-  typingQueue.currentIndex.value = 0
-}
-
-const typingPrevious = () => {
-  typingQueue.previous()
-  playWord(typingQueue.currentCard.value)
-}
-
-const typingNext = () => {
-  typingQueue.next()
-  playWord(typingQueue.currentCard.value)
-}
-
-const typingRandom = () => {
-  typingQueue.random()
+const navigateAndPlay = (action: "previous" | "next" | "random") => {
+  typingQueue[action]()
   playWord(typingQueue.currentCard.value)
 }
 
@@ -474,7 +450,7 @@ const saveCard = async () => {
     }
 
     closeDialog()
-    await reloadAfterMutation()
+    await reload()
   } catch (error: any) {
     showMessage(
       error.message || props.i18n.saveFailed || "保存失败",
@@ -512,7 +488,7 @@ const deleteCard = async (card: Flashcard) => {
   try {
     await storage.deleteCard(card.id)
     showMessage(props.i18n.deleteSuccess || "卡片已删除", 2000, "info")
-    await reloadAfterMutation()
+    await reload()
   } catch (error: any) {
     showMessage(
       error.message || props.i18n.deleteFailed || "删除失败",
@@ -522,10 +498,10 @@ const deleteCard = async (card: Flashcard) => {
   }
 }
 
-const copyTitle = async (card: Flashcard) => {
+const copyToClipboard = async (text: string, message: string) => {
   try {
-    await navigator.clipboard.writeText(card.title)
-    showMessage("已复制单词", 2000, "info")
+    await navigator.clipboard.writeText(text)
+    showMessage(message, 2000, "info")
   } catch {
     showMessage("复制失败", 2000, "error")
   }
@@ -545,21 +521,7 @@ const onTypingCorrect = async (card: Flashcard | null) => {
   }
 }
 
-const copyContent = async (card: Flashcard) => {
-  try {
-    await navigator.clipboard.writeText(card.content)
-    showMessage("已复制内容", 2000, "info")
-  } catch {
-    showMessage("复制失败", 2000, "error")
-  }
-}
-
-watch(searchQuery, () => {
-  currentPage.value = 1
-  typingQueue.currentIndex.value = 0
-})
-
-watch(selectedCategory, () => {
+watch([searchQuery, selectedCategory], () => {
   currentPage.value = 1
   typingQueue.currentIndex.value = 0
 })

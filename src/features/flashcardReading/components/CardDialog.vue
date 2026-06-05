@@ -78,8 +78,8 @@
 
 <script setup lang="ts">
 import type {
+  CreateFlashcardDTO,
   Flashcard,
-  FormData,
   FormErrors,
   I18n,
 } from "../types"
@@ -96,7 +96,7 @@ import Select from "@/components/Select.vue"
 const props = defineProps<{
   visible: boolean
   editingCard: Flashcard | null
-  formData: FormData
+  formData: CreateFlashcardDTO
   formErrors: FormErrors
   customCategory: string
   categoryOptions: SelectOption[]
@@ -110,7 +110,7 @@ const emit = defineEmits<{
   "inputTitle": []
   "validateTitle": []
   "changeCategory": []
-  "update:formData": [value: FormData]
+  "update:formData": [value: CreateFlashcardDTO]
   "update:customCategory": [value: string]
 }>()
 
@@ -132,7 +132,7 @@ const t = computed(() => ({
   ...props.i18n,
 }) as Required<I18n>)
 
-const localFormData = ref<FormData>({ ...props.formData })
+const localFormData = ref<CreateFlashcardDTO>({ ...props.formData })
 const localCustomCategory = ref(props.customCategory)
 
 watch(
@@ -144,7 +144,7 @@ watch(() => props.customCategory, (val) => {
   localCustomCategory.value = val
 })
 
-const updateField = (field: keyof FormData, value: unknown) => {
+const updateField = (field: keyof CreateFlashcardDTO, value: unknown) => {
   localFormData.value[field] = String(value)
   emit("update:formData", { ...localFormData.value })
 }

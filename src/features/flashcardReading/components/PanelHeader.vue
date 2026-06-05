@@ -1,34 +1,40 @@
 <template>
-  <div class="panel-header">
-    <h4 class="panel-title">
-      <IconWrapper
-        name="headphones"
-        :size="20"
-      />
-      <span>{{ i18n.panelTitle || '单词阅读' }}</span>
-    </h4>
-    <div class="header-actions">
-      <Button
-        variant="ghost"
-        size="small"
-        icon="add"
-        :title="i18n.addCard || '添加卡片'"
-        @click="$emit('addCard')"
-      />
-      <Button
-        variant="ghost"
-        size="small"
-        icon="refresh"
-        :title="i18n.refresh || '刷新'"
-        @click="$emit('refresh')"
-      />
-      <Button
-        variant="ghost"
-        size="small"
-        icon="info"
-        :title="storagePath"
-        @click="copyPath"
-      />
+  <div class="panel-header-wrapper">
+    <div class="panel-header">
+      <h4 class="panel-title">
+        <IconWrapper
+          name="headphones"
+          :size="18"
+        />
+        <span>{{ i18n.panelTitle || '单词阅读' }}</span>
+      </h4>
+      <div class="header-actions">
+        <Button
+          variant="ghost"
+          size="small"
+          icon="add"
+          :title="i18n.addCard || '添加卡片'"
+          @click="$emit('addCard')"
+        />
+        <Button
+          variant="ghost"
+          size="small"
+          icon="refresh"
+          :title="i18n.refresh || '刷新'"
+          @click="$emit('refresh')"
+        />
+        <Button
+          variant="ghost"
+          size="small"
+          icon="info"
+          :title="storagePath"
+          @click="copyPath"
+        />
+      </div>
+    </div>
+    <div class="panel-meta">
+      <span class="panel-meta-key">STORE</span>
+      <code class="panel-meta-val">{{ storagePath }}</code>
     </div>
   </div>
 </template>

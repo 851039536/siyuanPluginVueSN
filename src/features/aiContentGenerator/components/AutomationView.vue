@@ -11,7 +11,6 @@
           <svg
             width="14"
             height="14"
-            viewBox="0 0 24 24"
           ><use xlink:href="#iconAdd" /></svg>
           <span>新建任务</span>
         </button>
@@ -25,7 +24,6 @@
         <svg
           width="40"
           height="40"
-          viewBox="0 0 24 24"
           class="empty-icon"
         >
           <use xlink:href="#iconRefresh" />
@@ -89,7 +87,6 @@
                 <svg
                   width="14"
                   height="14"
-                  viewBox="0 0 24 24"
                 ><use xlink:href="#iconRefresh" /></svg>
               </button>
               <button
@@ -100,7 +97,6 @@
                 <svg
                   width="14"
                   height="14"
-                  viewBox="0 0 24 24"
                 ><use xlink:href="#iconEdit" /></svg>
               </button>
               <button
@@ -111,7 +107,6 @@
                 <svg
                   width="14"
                   height="14"
-                  viewBox="0 0 24 24"
                 ><use xlink:href="#iconTrashcan" /></svg>
               </button>
             </div>
@@ -137,7 +132,6 @@
               <svg
                 width="16"
                 height="16"
-                viewBox="0 0 24 24"
               ><use xlink:href="#iconClose" /></svg>
             </button>
           </div>
@@ -382,7 +376,6 @@
               <svg
                 width="16"
                 height="16"
-                viewBox="0 0 24 24"
               ><use xlink:href="#iconClose" /></svg>
             </button>
           </div>
@@ -460,6 +453,7 @@
 </template>
 
 <script setup lang="ts">
+import type { Plugin } from "siyuan"
 import type {
   AutomationFrequency,
   AutomationTask,
@@ -478,7 +472,7 @@ import { AIGeneratorStorage } from "../types/storage"
 import { renderMarkdown } from "../utils"
 
 interface Props {
-  plugin: any
+  plugin: Plugin
   onGenerate: (options: GenerateOptions) => Promise<string>
 }
 
@@ -845,7 +839,11 @@ onMounted(async () => {
   border: 1px solid var(--b3-theme-surface-lighter);
   border-radius: 6px;
   padding: 10px;
-  transition: opacity 0.2s;
+  transition: border-color 0.15s;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+  }
 
   &.disabled {
     opacity: 0.55;
@@ -891,6 +889,7 @@ onMounted(async () => {
   @extend .task-badge;
   color: var(--b3-theme-primary);
   background: rgba(var(--b3-theme-primary-rgb), 0.1);
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
 }
 
 .task-websearch-badge {
@@ -922,8 +921,12 @@ onMounted(async () => {
 
 .task-last-run {
   font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--b3-theme-on-surface);
-  opacity: 0.5;
+  opacity: 0.45;
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
 
   &.never {
     font-style: italic;
@@ -933,6 +936,12 @@ onMounted(async () => {
 .task-actions {
   display: flex;
   gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.task-card:hover .task-actions {
+  opacity: 1;
 }
 
 .task-action-btn {
@@ -974,8 +983,9 @@ onMounted(async () => {
   width: 400px;
   max-height: 85vh;
   background: var(--b3-theme-background);
+  border: 1px solid var(--b3-theme-surface-light);
   border-radius: 8px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1158,6 +1168,7 @@ onMounted(async () => {
 
   &:focus {
     border-color: var(--b3-theme-primary);
+    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
   }
 
   &::placeholder {

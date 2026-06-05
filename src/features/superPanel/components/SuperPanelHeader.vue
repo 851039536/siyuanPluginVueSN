@@ -1,11 +1,29 @@
 <template>
   <div class="super-panel-header">
-    <div class="super-panel-title">
-      <IconWrapper
-        name="superPanel"
-        :size="20"
-      />
-      <span>{{ title }}</span>
+    <div class="header-left">
+      <div class="super-panel-title">
+        <IconWrapper
+          name="superPanel"
+          :size="20"
+        />
+        <span>{{ title }}</span>
+      </div>
+      <div class="header-tabs">
+        <button
+          class="header-tab"
+          :class="{ 'header-tab--active': activeTab === 'features' }"
+          @click="emit('changeTab', 'features')"
+        >
+          {{ i18n.tabFeatures || '功能列表' }}
+        </button>
+        <button
+          class="header-tab"
+          :class="{ 'header-tab--active': activeTab === 'versions' }"
+          @click="emit('changeTab', 'versions')"
+        >
+          {{ i18n.tabVersions || '版本汇总' }}
+        </button>
+      </div>
     </div>
     <div class="header-actions">
       <Button
@@ -37,18 +55,15 @@ interface HeaderAction {
 
 interface Props {
   title?: string
-  i18n: {
-    title?: string
-    aiSettings?: string
-    refresh?: string
-    close?: string
-  }
+  activeTab?: "features" | "versions"
+  i18n: Record<string, any>
 }
 
 interface Emits {
   (e: "toggleAiSettings"): void
   (e: "refresh"): void
   (e: "close"): void
+  (e: "changeTab", tab: "features" | "versions"): void
 }
 
 const props = defineProps<Props>()

@@ -59,17 +59,6 @@
         </div>
 
         <div
-          v-show="activeCategory === 'backup'"
-          class="content-section"
-        >
-          <DataBackupSettings
-            :i18n="i18n"
-            :plugin="plugin"
-            @change="handleBackupChange"
-          />
-        </div>
-
-        <div
           v-show="activeCategory === 'documentFont'"
           class="content-section"
         >
@@ -144,7 +133,6 @@ import {
   ref,
 } from "vue"
 import CodeBlockSettings from "./components/CodeBlockSettings.vue"
-import DataBackupSettings from "./components/DataBackupSettings.vue"
 import DocCountSettings from "./components/DocCountSettings.vue"
 import DocumentFontSettings from "./components/DocumentFontSettings.vue"
 import EncryptionSettings from "./components/EncryptionSettings.vue"
@@ -204,10 +192,6 @@ const categories = computed(() => [
     label: props.i18n.encryptionSettings || "加密设置",
   },
   {
-    id: "backup",
-    label: props.i18n.dataBackup || "数据备份",
-  },
-  {
     id: "docCount",
     label: props.i18n.docCountSettings || "文档数统计",
   },
@@ -228,7 +212,6 @@ function createSettingsHandler(moduleId: string) {
 
 const handleCodeBlockChange = createSettingsHandler("codeblock")
 const handleHeadingChange = createSettingsHandler("heading")
-const handleBackupChange = createSettingsHandler("backup")
 const handleDocumentFontChange = createSettingsHandler("documentFont")
 const handleTableStyleChange = createSettingsHandler("tableStyle")
 const handleListStyleChange = createSettingsHandler("listStyle")

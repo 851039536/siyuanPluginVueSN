@@ -25,15 +25,12 @@ import {
   applyCodeBlockCollapse,
   applyCodeBlockEnhancedStyles,
   applyCodeBlockStyle,
-  checkIsMobile,
   generateTabPinCSS,
   HEADING_LEVEL_MAPPINGS,
 } from "./utils/styles"
 
 export class GeneralSettings {
   private plugin: Plugin
-  private autoBackupTimer: number | null = null
-  private lastBackupTimestamp = 0
   private storage: GeneralSettingsStorage
   private contentObserver: MutationObserver | null = null
   private docCountManager: DocCountManager | null = null
@@ -63,7 +60,6 @@ export class GeneralSettings {
     await this.applyTabPinStyle()
     await this.applyHighlightStyle()
     this.observeContentChanges()
-    await this.initAutoBackup()
   }
 
   private addDock() {
@@ -845,108 +841,7 @@ export class GeneralSettings {
     }
   }
 
-  private async initAutoBackup() {
-    try {
-      const data = await this.storage.backup.loadOrDefault()
-      this.lastBackupTimestamp = data.lastBackupTimestamp || 0
-
-      const isMobile = checkIsMobile()
-      const autoBackupEnabled = data.autoBackupEnabled ?? false
-      const backupFrequency = data.backupFrequency ?? "daily"
-      const backupTime = data.backupTime ?? "03:00"
-
-      if (!isMobile && autoBackupEnabled) {
-        this.startAutoBackupTimer(backupFrequency, backupTime)
-      }
-    } catch (error) {
-      console.error("初始化自动备份失败:", error)
-    }
-  }
-
-  private startAutoBackupTimer(backupFrequency: string, backupTime: string) {
-    this.stopAutoBackupTimer()
-
-    // 记录定时器启动时间，防止重启后立即触发备份
-    const timerStartTime = Date.now()
-    // 用于防止同一时间点重复触发
-    let lastExecutedHour = -1
-    let lastExecutedDateStr = ""
-
-    const checkAndBackup = async () => {
-      const now = new Date()
-      const currentTime = now.getTime()
-      const currentHour = now.getHours()
-      const currentMinute = now.getMinutes()
-      const currentDateStr = now.toDateString()
-      const timeSinceTimerStart = currentTime - timerStartTime
-      const timeSinceLastBackup = currentTime - this.lastBackupTimestamp
-
-      let shouldBackup = false
-
-      switch (backupFrequency) {
-        case "minute":
-          // 每分钟：间隔触发，跳过启动后首个周期
-          if (timeSinceLastBackup >= 60 * 1000 && timeSinceTimerStart >= 60 * 1000) {
-            shouldBackup = true
-          }
-          break
-
-        case "hourly":
-          // 每小时：整点触发（分钟数为0时），跳过启动后首个周期
-          if (
-            currentMinute === 0
-            && lastExecutedHour !== currentHour
-            && timeSinceTimerStart >= 60 * 1000
-          ) {
-            shouldBackup = true
-            lastExecutedHour = currentHour
-          }
-          break
-
-        case "daily": {
-          // 每天：在用户指定的时间点触发，跳过启动后首个周期
-          const [targetHour, targetMinute] = backupTime.split(":").map(Number)
-          if (
-            currentHour === targetHour
-            && currentMinute === targetMinute
-            && lastExecutedDateStr !== currentDateStr
-            && timeSinceTimerStart >= 60 * 1000
-          ) {
-            shouldBackup = true
-            lastExecutedDateStr = currentDateStr
-          }
-          break
-        }
-      }
-
-      if (shouldBackup) {
-        emitCustomEvent("autoBackupTrigger")
-      }
-    }
-
-    this.autoBackupTimer = window.setInterval(checkAndBackup, 60000)
-  }
-
-  private stopAutoBackupTimer() {
-    if (this.autoBackupTimer) {
-      clearInterval(this.autoBackupTimer)
-      this.autoBackupTimer = null
-    }
-  }
-
-  public updateLastBackupTime(timestamp: number) {
-    this.lastBackupTimestamp = timestamp
-  }
-
-  public restartAutoBackupTimer(enabled: boolean, frequency: string, backupTime: string = "03:00") {
-    this.stopAutoBackupTimer()
-    if (enabled) {
-      this.startAutoBackupTimer(frequency, backupTime)
-    }
-  }
-
   public destroy() {
-    this.stopAutoBackupTimer()
     if (this.contentObserver) {
       this.contentObserver.disconnect()
       this.contentObserver = null

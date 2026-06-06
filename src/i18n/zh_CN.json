@@ -462,6 +462,8 @@
     "wordQueryDesc": "快速查询单词释义",
     "generalSettings": "通用设置",
     "generalSettingsDesc": "字体、标题、代码块等通用配置",
+    "dataBackup": "数据备份",
+    "dataBackupDesc": "工作区备份、自动备份和云同步",
     "qrCode": "二维码生成",
     "qrCodeDesc": "生成文本或链接的二维码",
     "unitConverter": "单位转换",

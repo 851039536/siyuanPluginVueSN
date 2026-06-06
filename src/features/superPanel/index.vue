@@ -1,16 +1,6 @@
 <template>
-  <!-- 遮罩层 -->
-  <div
-    v-if="visible"
-    class="super-panel-overlay"
-    @click="emit('close')"
-  />
-
   <!-- 面板容器 -->
-  <div
-    v-if="visible"
-    class="super-panel-container"
-  >
+  <div class="super-panel-container">
     <!-- 头部 -->
     <SuperPanelHeader
       :title="i18n.title || '超级面板'"
@@ -152,7 +142,6 @@ import {
 } from "./types"
 
 interface Props {
-  visible: boolean
   settings: PluginSettings
   i18n: Record<string, any>
   featureVersions?: Record<string, FeatureVersionEntry[]>

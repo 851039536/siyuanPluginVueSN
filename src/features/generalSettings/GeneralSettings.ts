@@ -12,11 +12,8 @@ import type {
  * 提供模块化的通用配置功能，包括字体设置、外观设置等
  */
 import { Plugin } from "siyuan"
-import {
-  createApp,
-  h,
-} from "vue"
 import { emitCustomEvent } from "@/utils/eventBus"
+import { createVueDockApp } from "@/utils/vueAppHelper"
 import GeneralSettingsPanel from "./index.vue"
 import { DocCountManager } from "./modules/DocCountManager"
 import { HighlightManager } from "./modules/HighlightManager"
@@ -63,43 +60,17 @@ export class GeneralSettings {
   }
 
   private addDock() {
-    this.plugin.addDock({
-      config: {
-        position: "RightTop",
-        size: {
-          width: 360,
-          height: 0,
-        },
-        icon: "iconSettings",
-        title: this.plugin.i18n.generalSettings || "通用设置",
-        show: false,
-      },
-      data: {},
+    const handleSettingsChange = (settings: any) => this.handleSettingsChange(settings)
+
+    createVueDockApp(this.plugin, GeneralSettingsPanel, {
+      position: "RightTop",
+      width: 360,
+      icon: "iconSettings",
+      title: this.plugin.i18n.generalSettings || "通用设置",
       type: "general-settings-dock",
-      init: (dock: any) => {
-        const container = document.createElement("div")
-        container.style.height = "100%"
-        container.style.overflow = "hidden"
-
-        const plugin = this.plugin
-        const handleSettingsChange = (settings: any) => this.handleSettingsChange(settings)
-
-        const app = createApp({
-          setup() {
-            return () =>
-              h(GeneralSettingsPanel, {
-                i18n: plugin.i18n,
-                plugin,
-                onSettingsChange: handleSettingsChange,
-              })
-          },
-        })
-
-        app.mount(container)
-        dock.element?.appendChild(container)
-
-        dock.__app = app
-        dock.__container = container
+      i18n: this.plugin.i18n,
+      extraProps: {
+        onSettingsChange: handleSettingsChange,
       },
     })
   }

@@ -1,8 +1,5 @@
 import type PluginSample from "@/index"
-import {
-  createApp,
-  h,
-} from "vue"
+import { createVueDockApp } from "@/utils/vueAppHelper"
 import UnitConverterPanel from "../index.vue"
 
 /**
@@ -36,41 +33,13 @@ export class UnitConverterManager {
   }
 
   private addDock() {
-    const self = this
-    this.plugin.addDock({
-      config: {
-        position: "RightTop",
-        size: {
-          width: 360,
-          height: 0,
-        },
-        icon: "iconList",
-        title: this.plugin.i18n.unitConverter || "单位转换",
-        show: false,
-      },
-      data: {},
+    createVueDockApp(this.plugin, UnitConverterPanel, {
+      position: "RightTop",
+      width: 360,
+      icon: "iconList",
+      title: this.plugin.i18n.unitConverter || "单位转换",
       type: "unit-converter-dock",
-      init: (dock: any) => {
-        const container = document.createElement("div")
-        container.style.height = "100%"
-        container.style.overflow = "hidden"
-
-        const app = createApp({
-          setup() {
-            return () =>
-              h(UnitConverterPanel, {
-                i18n: self.plugin.i18n || {},
-                plugin: self.plugin,
-              })
-          },
-        })
-
-        app.mount(container)
-        dock.element?.appendChild(container)
-
-        dock.__app = app
-        dock.__container = container
-      },
+      i18n: this.plugin.i18n || {},
     })
   }
 

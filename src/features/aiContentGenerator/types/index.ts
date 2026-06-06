@@ -13,14 +13,11 @@ import {
   showMessage,
 } from "siyuan"
 import {
-  createApp,
-  h,
-} from "vue"
-import {
   callAIChat,
   callAISmart,
   getApiConfigFromPlugin,
 } from "@/utils/aiApi"
+import { createVueDockApp } from "@/utils/vueAppHelper"
 import AIContentGeneratorPanel from "../index.vue"
 
 /**
@@ -52,46 +49,20 @@ export class AIContentGenerator {
    * 添加AI内容生成 Dock 到右侧边栏
    */
   private addDock() {
-    const self = this
-    this.plugin.addDock({
-      config: {
-        position: "RightTop",
-        size: {
-          width: 400,
-          height: 0,
-        },
-        icon: "iconSparkles",
-        title: "AI信息生成",
-        show: false,
-      },
-      data: {},
+    createVueDockApp(this.plugin, AIContentGeneratorPanel, {
+      position: "RightTop",
+      width: 400,
+      icon: "iconSparkles",
+      title: "AI信息生成",
       type: "ai-content-generator-dock",
-      init: (dock: any) => {
-        const container = document.createElement("div")
-        container.style.height = "100%"
-        container.style.overflow = "hidden"
-
-        const app = createApp({
-          setup() {
-            return () =>
-              h(AIContentGeneratorPanel, {
-                i18n: self.plugin.i18n,
-                plugin: self.plugin,
-                onGenerate: async (options: GenerateOptions) => {
-                  return await self.generateContent(options)
-                },
-                onChat: async (messages: Array<{ role: string, content: string }>, options: ChatOptions) => {
-                  return await self.sendChatMessage(messages, options)
-                },
-              })
-          },
-        })
-
-        app.mount(container)
-        dock.element?.appendChild(container)
-
-        dock.__app = app
-        dock.__container = container
+      i18n: this.plugin.i18n,
+      extraProps: {
+        onGenerate: async (options: GenerateOptions) => {
+          return await this.generateContent(options)
+        },
+        onChat: async (messages: Array<{ role: string, content: string }>, options: ChatOptions) => {
+          return await this.sendChatMessage(messages, options)
+        },
       },
     })
   }

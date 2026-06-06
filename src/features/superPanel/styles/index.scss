@@ -5,29 +5,11 @@
 @use './mixins' as *;
 @use './feature-card';
 
-// ==================== 遮罩层 ====================
-
-.super-panel-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.35);
-  z-index: $z-overlay;
-}
-
-// ==================== 面板容器（居中弹窗） ====================
+// ==================== 面板容器 ====================
 
 .super-panel-container {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: $panel-width;
-  height: 80vh;
-  max-height: 92vh;
+  height: 100%;
   background: var(--b3-theme-background);
-  border-radius: $panel-border-radius;
-  border: 1px solid var(--b3-border-color);
-  z-index: $z-panel;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -371,21 +353,7 @@
 
 // ==================== 响应式 ====================
 
-@include tablet-only {
-  .super-panel-container {
-    width: 92vw;
-    height: 85vh;
-    max-height: 90vh;
-  }
-}
-
 @include mobile-only {
-  .super-panel-container {
-    width: 96vw;
-    height: 85vh;
-    max-height: 92vh;
-  }
-
   .super-panel-header {
     padding: $spacing-sm $spacing-md;
   }
@@ -564,18 +532,9 @@
   }
 }
 
-// ==================== 深色模式 ====================
-
-@media (prefers-color-scheme: dark) {
-  .super-panel-overlay {
-    background: rgba(0, 0, 0, 0.55);
-  }
-}
-
 // ==================== 打印 ====================
 
 @media print {
-  .super-panel-overlay,
   .super-panel-container {
     display: none;
   }

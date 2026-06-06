@@ -1,4 +1,3 @@
-import type { App as VueApp } from "vue"
 import type { IconKey } from "@/config/icons"
 import type { PluginSettings } from "@/config/settings"
 import type { FeatureAction } from "@/features/config"
@@ -10,10 +9,7 @@ import {
   Plugin,
   showMessage,
 } from "siyuan"
-import {
-  createApp,
-  reactive,
-} from "vue"
+import { reactive } from "vue"
 import { FEATURE_ICONS } from "@/config/icons"
 import { featureIdToSettingKey } from "@/config/settings"
 import { FEATURE_CONFIG } from "@/features/config"
@@ -108,18 +104,56 @@ const ACTION_EVENT_MAP: Record<
 export class SuperPanelManager {
   private plugin: Plugin
   private boundToggleHandler: () => void
+  private panel: ModalAppInstance
   private aiSettingsModal: ModalAppInstance
   private versionModal: ModalAppInstance | null = null
   private versionStorage: PluginStorage
   private featureVersions: Record<string, FeatureVersionEntry[]> = {}
-  private vueApp: VueApp | null = null
-  private panelContainer: HTMLElement | null = null
   private reactiveSettings: PluginSettings | null = null
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
     this.boundToggleHandler = this.toggle.bind(this)
     this.versionStorage = new PluginStorage(plugin)
+
+    this.panel = createModalVueApp(SuperPanelPanel, {
+      maskId: "super-panel-mask",
+      width: "860px",
+      height: "80vh",
+      getCloseHandler: () => this.close.bind(this),
+      buildProps: () => ({
+        settings: this.reactiveSettings!,
+        i18n: (this.plugin.i18n as any).superPanel || {},
+        featureVersions: this.featureVersions,
+        onClose: () => {
+          this.close()
+        },
+        onAction: (action: string) => {
+          this.handleFeatureAction(action)
+        },
+        onRefresh: async () => {
+          await this.handleRefresh()
+        },
+        onUpdateAiSettings: async (aiSettings: AiSettings) => {
+          await this.handleUpdateAiSettings(aiSettings)
+        },
+        onToggleFeature: async (featureId: string, enabled: boolean) => {
+          await this.handleToggleFeature(featureId, enabled)
+        },
+        onStatusFeature: async (featureId: string, status: string) => {
+          await this.handleStatusFeature(featureId, status)
+        },
+        onSelectFeature: async (featureId: string, value: string) => {
+          await this.handleSelectFeature(featureId, value)
+        },
+        onOpenAiSettings: () => {
+          this.openAiSettings()
+        },
+        onOpenVersions: (featureId: string) => {
+          this.openVersions(featureId)
+        },
+      }),
+    })
 
     this.aiSettingsModal = createModalVueApp(AiSettingsPanel, {
       maskId: "super-panel-ai-settings-mask",
@@ -166,7 +200,7 @@ export class SuperPanelManager {
   }
 
   private toggle() {
-    if (this.vueApp && this.panelContainer) {
+    if (this.panel.visible) {
       this.close()
     } else {
       this.open()
@@ -175,61 +209,13 @@ export class SuperPanelManager {
 
   private async open() {
     await this.loadVersions()
-
-    // 创建容器
-    this.panelContainer = document.createElement("div")
-    this.panelContainer.id = "super-panel-vue-container"
-    document.body.appendChild(this.panelContainer)
-
-    // 创建响应式 settings 对象
     this.reactiveSettings = reactive<PluginSettings>((this.plugin as any).settings)
-
-    // 创建 Vue 应用
-    this.vueApp = createApp(SuperPanelPanel, {
-      visible: true,
-      settings: this.reactiveSettings,
-      i18n: (this.plugin.i18n as any).superPanel || {},
-      featureVersions: this.featureVersions,
-      onClose: () => {
-        this.close()
-      },
-      onAction: (action: string) => {
-        this.handleFeatureAction(action)
-      },
-      onRefresh: async () => {
-        await this.handleRefresh()
-      },
-      onUpdateAiSettings: async (aiSettings: AiSettings) => {
-        await this.handleUpdateAiSettings(aiSettings)
-      },
-      onToggleFeature: async (featureId: string, enabled: boolean) => {
-        await this.handleToggleFeature(featureId, enabled)
-      },
-      onStatusFeature: async (featureId: string, status: string) => {
-        await this.handleStatusFeature(featureId, status)
-      },
-      onSelectFeature: async (featureId: string, value: string) => {
-        await this.handleSelectFeature(featureId, value)
-      },
-      onOpenAiSettings: () => {
-        this.openAiSettings()
-      },
-      onOpenVersions: (featureId: string) => {
-        this.openVersions(featureId)
-      },
-    })
-
-    this.vueApp.mount(this.panelContainer)
+    this.panel.open()
   }
 
   private close() {
-    if (this.vueApp && this.panelContainer) {
-      this.vueApp.unmount()
-      this.panelContainer.remove()
-      this.vueApp = null
-      this.panelContainer = null
-      this.reactiveSettings = null
-    }
+    this.panel.close()
+    this.reactiveSettings = null
   }
 
   private async handleRefresh() {
@@ -472,7 +458,7 @@ export class SuperPanelManager {
   }
 
   public destroy() {
-    this.close()
+    this.panel.destroy()
     this.closeAiSettings()
     this.closeVersions()
     window.removeEventListener("toggleSuperPanel", this.boundToggleHandler)

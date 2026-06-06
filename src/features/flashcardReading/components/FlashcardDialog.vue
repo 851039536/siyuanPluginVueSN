@@ -1,80 +1,70 @@
 <template>
-  <Teleport to="body">
-    <Transition name="dialog">
-      <div
-        v-if="visible"
-        class="flashcard-dialog-overlay"
-        @click.self="close"
-      >
-        <div class="flashcard-dialog">
-          <Button
-            variant="ghost"
-            size="small"
-            icon="close"
-            class="close-btn"
-            @click="close"
-          />
+  <div class="flashcard-dialog">
+    <Button
+      variant="ghost"
+      size="small"
+      icon="close"
+      class="close-btn"
+      @click="emit('close')"
+    />
 
-          <div
-            v-if="filteredCards.length === 0"
-            class="empty-state"
-          >
-            <IconWrapper
-              name="file"
-              :size="64"
-            />
-            <p>{{ i18n.noCards || '暂无卡片' }}</p>
-          </div>
+    <div
+      v-if="filteredCards.length === 0"
+      class="empty-state"
+    >
+      <IconWrapper
+        name="file"
+        :size="64"
+      />
+      <p>{{ i18n.noCards || '暂无卡片' }}</p>
+    </div>
 
-          <template v-else>
-            <SingleCardView
-              :currentCard="currentCard"
-              :currentIndex="currentIndex"
-              :totalCards="filteredCards.length"
-              :i18n="i18n"
-              hideNavigation
-              hideActions
-              @play="(card) => playWord(card)"
-              @copyTitle="(card) => handleCopy(card?.title)"
-              @copyContent="(card) => handleCopy(card?.content)"
-            />
+    <template v-else>
+      <SingleCardView
+        :currentCard="currentCard"
+        :currentIndex="currentIndex"
+        :totalCards="filteredCards.length"
+        :i18n="i18n"
+        hideNavigation
+        hideActions
+        @play="(card) => playWord(card)"
+        @copyTitle="(card) => handleCopy(card?.title)"
+        @copyContent="(card) => handleCopy(card?.content)"
+      />
 
-            <div class="category-filter">
-              <label>{{ i18n.category || '类别' }}:</label>
-              <Select
-                v-model="selectedCategory"
-                :options="categoryOptions"
-                @change="currentIndex = 0"
-              />
-            </div>
-
-            <div class="card-navigation">
-              <Button
-                variant="ghost"
-                icon="chevronLeft"
-                :disabled="currentIndex === 0"
-                @click="previousCard"
-              />
-              <Button
-                variant="ghost"
-                icon="shuffle"
-                @click="randomCard"
-              />
-              <span class="card-counter">
-                {{ currentIndex + 1 }} / {{ filteredCards.length }}
-              </span>
-              <Button
-                variant="ghost"
-                icon="chevronRight"
-                :disabled="currentIndex === filteredCards.length - 1"
-                @click="nextCard"
-              />
-            </div>
-          </template>
-        </div>
+      <div class="category-filter">
+        <label>{{ i18n.category || '类别' }}:</label>
+        <Select
+          v-model="selectedCategory"
+          :options="categoryOptions"
+          @change="currentIndex = 0"
+        />
       </div>
-    </Transition>
-  </Teleport>
+
+      <div class="card-navigation">
+        <Button
+          variant="ghost"
+          icon="chevronLeft"
+          :disabled="currentIndex === 0"
+          @click="previousCard"
+        />
+        <Button
+          variant="ghost"
+          icon="shuffle"
+          @click="randomCard"
+        />
+        <span class="card-counter">
+          {{ currentIndex + 1 }} / {{ filteredCards.length }}
+        </span>
+        <Button
+          variant="ghost"
+          icon="chevronRight"
+          :disabled="currentIndex === filteredCards.length - 1"
+          @click="nextCard"
+        />
+      </div>
+    </template>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -84,6 +74,7 @@ import type { SelectOption } from "@/components/Select.vue"
 import { showMessage } from "siyuan"
 import {
   computed,
+  onMounted,
   ref,
 } from "vue"
 import Button from "@/components/Button.vue"
@@ -100,8 +91,8 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const emit = defineEmits<{ (e: 'close'): void }>()
 
-const visible = ref(false)
 const selectedCategory = ref<string>("all")
 
 const {
@@ -161,48 +152,17 @@ const handleCopy = async (text?: string) => {
   }
 }
 
-const open = () => {
-  visible.value = true
+onMounted(() => {
   loadCards()
-}
-
-const close = () => {
-  visible.value = false
-}
-
-defineExpose({
-  open,
-  close,
-  visible,
 })
 </script>
 
 <style scoped lang="scss">
 @use '../styles/index.scss' as *;
 
-.flashcard-dialog-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-  padding: 20px;
-}
-
 .flashcard-dialog {
-  position: relative;
   width: 100%;
-  max-width: 400px;
-  max-height: 90vh;
-  background: var(--b3-theme-background);
-  border: 1px solid var(--b3-border-color);
-  border-radius: $fc-radius;
+  max-height: 85vh;
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -225,14 +185,5 @@ defineExpose({
   opacity: 0.7;
   min-width: 60px;
   text-align: center;
-}
-
-.dialog-enter-from,
-.dialog-leave-to {
-  opacity: 0;
-
-  .flashcard-dialog {
-    transform: scale(0.95) translateY(10px);
-  }
 }
 </style>

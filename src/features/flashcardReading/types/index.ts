@@ -2,17 +2,13 @@
  * 单词阅读功能 - 类型定义和注册函数
  */
 import type { Plugin } from "siyuan"
-import {
-  createApp,
-  h,
-} from "vue"
-import { createVueDockApp } from "@/utils/vueAppHelper"
+import type { ModalAppInstance } from "@/utils/vueAppHelper"
+import { createModalVueApp, createVueDockApp } from "@/utils/vueAppHelper"
 import FlashcardDialog from "../components/FlashcardDialog.vue"
 import FlashcardReadingPanel from "../index.vue"
 import { FlashcardStorage } from "./storage"
 
-let dialogInstance: any = null
-let dialogApp: any = null
+let flashcardModal: ModalAppInstance | null = null
 let dialogPlugin: Plugin | null = null
 let dialogI18n: any = null
 
@@ -150,48 +146,35 @@ export function showFlashcardDialog(plugin?: Plugin, i18n?: any) {
   if (plugin) dialogPlugin = plugin
   if (i18n) dialogI18n = i18n
 
-  if (!dialogInstance) {
-    const container = document.createElement("div")
-    container.id = "flashcard-dialog-container"
-    document.body.appendChild(container)
-
-    dialogApp = createApp({
-      setup() {
-        return () =>
-          h(FlashcardDialog, {
-            i18n: dialogI18n || {},
-            plugin: dialogPlugin!,
-            ref: (el: any) => {
-              dialogInstance = el
-            },
-          })
-      },
+  if (!flashcardModal) {
+    flashcardModal = createModalVueApp(FlashcardDialog, {
+      maskId: "flashcard-dialog-mask",
+      width: "440px",
+      height: "auto",
+      getCloseHandler: () => hideFlashcardDialog,
+      buildProps: () => ({
+        i18n: dialogI18n || {},
+        plugin: dialogPlugin!,
+        onClose: () => {
+          flashcardModal?.close()
+        },
+      }),
     })
-
-    dialogApp.mount(container)
   }
 
-  if (dialogInstance) {
-    dialogInstance.open()
-  }
+  flashcardModal.open()
 }
 
 export function hideFlashcardDialog() {
-  if (dialogInstance) {
-    dialogInstance.close()
-  }
+  flashcardModal?.close()
 }
 
 export function toggleFlashcardDialog(plugin?: Plugin, i18n?: any) {
   if (plugin) dialogPlugin = plugin
   if (i18n) dialogI18n = i18n
 
-  if (dialogInstance) {
-    if (dialogInstance.visible) {
-      dialogInstance.close()
-    } else {
-      dialogInstance.open()
-    }
+  if (flashcardModal?.visible) {
+    hideFlashcardDialog()
   } else {
     showFlashcardDialog(plugin, i18n)
   }

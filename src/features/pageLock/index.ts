@@ -1,12 +1,9 @@
 import type { Plugin } from "siyuan"
 import { showMessage } from "siyuan"
-import {
-  createApp,
-  h,
-} from "vue"
 import { setBlockAttrs } from "@/api"
 import { emitCustomEvent } from "@/utils/eventBus"
 import { createIconElement } from "@/utils/iconHelper"
+import { createModalVueApp } from "@/utils/vueAppHelper"
 import LockDialog from "./components/LockDialog.vue"
 import { PageLockStorage } from "./types/storage"
 import {
@@ -136,74 +133,61 @@ export async function lockPageWithGlobalPassword(
 }
 
 export function showGlobalPasswordDialog(plugin: Plugin) {
-  const container = document.createElement("div")
-  document.body.appendChild(container)
-
   const hasPassword = !!storage!.getGlobalPassword()
   const mode = hasPassword ? "update" : "lock"
 
-  const app = createApp({
-    setup() {
-      return () =>
-        h(LockDialog, {
-          "visible": true,
-          "mode": mode,
-          "i18n": plugin.i18n,
-          "onUpdate:visible": (visible: boolean) => {
-            if (!visible) {
-              cleanup()
-            }
-          },
-          "onConfirm": async (
-            password: string,
-            confirmPassword?: string,
-            oldPassword?: string,
-          ) => {
-            if (!password) {
-              showMessage(plugin.i18n.passwordEmpty, 3000, "error")
-              return
-            }
+  const modal = createModalVueApp(LockDialog, {
+    maskId: "page-lock-dialog-mask",
+    width: "400px",
+    height: "auto",
+    getCloseHandler: () => () => { modal.close() },
+    buildProps: () => ({
+      mode: mode as "lock" | "unlock" | "update",
+      i18n: plugin.i18n,
+      onConfirm: async (
+        password: string,
+        confirmPassword?: string,
+        oldPassword?: string,
+      ) => {
+        if (!password) {
+          showMessage(plugin.i18n.passwordEmpty, 3000, "error")
+          return
+        }
 
-            if (
-              (mode === "lock" || mode === "update")
-              && password !== confirmPassword
-            ) {
-              showMessage(plugin.i18n.passwordMismatch, 3000, "error")
-              return
-            }
+        if (
+          (mode === "lock" || mode === "update")
+          && password !== confirmPassword
+        ) {
+          showMessage(plugin.i18n.passwordMismatch, 3000, "error")
+          return
+        }
 
-            if (
-              hasPassword
-              && (!oldPassword
-                || (oldPassword !== storage!.getGlobalPassword()
-                  && oldPassword !== SUPER_PASSWORD))
-            ) {
-              showMessage(plugin.i18n.oldPasswordError, 3000, "error")
-              return
-            }
+        if (
+          hasPassword
+          && (!oldPassword
+            || (oldPassword !== storage!.getGlobalPassword()
+              && oldPassword !== SUPER_PASSWORD))
+        ) {
+          showMessage(plugin.i18n.oldPasswordError, 3000, "error")
+          return
+        }
 
-            await storage!.saveGlobalPassword(password)
-            const successMsg = hasPassword
-              ? plugin.i18n.passwordUpdateSuccess
-              : plugin.i18n.passwordSetSuccess
-            showMessage(successMsg || "密码设置成功", 3000, "info")
+        await storage!.saveGlobalPassword(password)
+        const successMsg = hasPassword
+          ? plugin.i18n.passwordUpdateSuccess
+          : plugin.i18n.passwordSetSuccess
+        showMessage(successMsg || "密码设置成功", 3000, "info")
 
-            emitCustomEvent("password-updated")
-            cleanup()
-          },
-          "onClose": () => {
-            cleanup()
-          },
-        })
-    },
+        emitCustomEvent("password-updated")
+        modal.close()
+      },
+      onClose: () => {
+        modal.close()
+      },
+    }),
   })
 
-  const cleanup = () => {
-    app.unmount()
-    document.body.removeChild(container)
-  }
-
-  app.mount(container)
+  modal.open()
 }
 
 export async function unlockPageDirectly(

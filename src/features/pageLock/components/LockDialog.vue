@@ -1,123 +1,117 @@
 <template>
   <div
-    v-if="visible"
-    class="page-lock-dialog-mask"
-    @click="handleMaskClick"
+    class="page-lock-dialog"
+    @click.stop
   >
-    <div
-      class="page-lock-dialog"
-      @click.stop
-    >
-      <div class="page-lock-dialog__header">
-        <div class="header-icon">
+    <div class="page-lock-dialog__header">
+      <div class="header-icon">
+        <IconWrapper
+          :name="headerIconName"
+          :size="20"
+        />
+      </div>
+      <h3>{{ title }}</h3>
+      <Button
+        class="page-lock-dialog__close"
+        variant="ghost"
+        size="small"
+        @click="handleClose"
+      >
+        <template #icon>
           <IconWrapper
-            :name="headerIconName"
-            :size="20"
+            name="close"
+            :size="18"
           />
-        </div>
-        <h3>{{ title }}</h3>
-        <Button
-          class="page-lock-dialog__close"
-          variant="ghost"
-          size="small"
-          @click="handleClose"
-        >
-          <template #icon>
-            <IconWrapper
-              name="close"
-              :size="18"
-            />
-          </template>
-        </Button>
+        </template>
+      </Button>
+    </div>
+
+    <div class="page-lock-dialog__content">
+      <div
+        v-if="hintText"
+        class="page-lock-dialog__hint"
+      >
+        <IconWrapper
+          name="info"
+          :size="16"
+        />
+        <span>{{ hintText }}</span>
       </div>
 
-      <div class="page-lock-dialog__content">
+      <div class="page-lock-dialog__form">
         <div
-          v-if="hintText"
-          class="page-lock-dialog__hint"
+          v-if="isUpdateMode"
+          class="page-lock-dialog__field"
         >
-          <IconWrapper
-            name="info"
-            :size="16"
+          <Input
+            ref="firstInput"
+            v-model="oldPassword"
+            type="password"
+            :label="oldPasswordLabel"
+            :placeholder="i18n.oldPasswordPlaceholder"
+            :prefix-icon="'pageLock' as IconKey"
+            :show-password="true"
+            autocomplete="current-password"
+            :autofocus="isUpdateMode"
+            @keydown.enter="handleConfirm"
           />
-          <span>{{ hintText }}</span>
         </div>
 
-        <div class="page-lock-dialog__form">
-          <div
-            v-if="isUpdateMode"
-            class="page-lock-dialog__field"
-          >
-            <Input
-              ref="firstInput"
-              v-model="oldPassword"
-              type="password"
-              :label="oldPasswordLabel"
-              :placeholder="i18n.oldPasswordPlaceholder"
-              :prefix-icon="'pageLock' as IconKey"
-              :show-password="true"
-              autocomplete="current-password"
-              :autofocus="isUpdateMode"
-              @keydown.enter="handleConfirm"
-            />
-          </div>
-
-          <div class="page-lock-dialog__field">
-            <Input
-              :ref="isUpdateMode ? 'secondInput' : 'firstInput'"
-              v-model="password"
-              type="password"
-              :label="passwordLabel"
-              :placeholder="passwordPlaceholder"
-              :prefix-icon="'pageLock' as IconKey"
-              :show-password="true"
-              :autocomplete="!isLockMode && !isUpdateMode ? 'current-password' : 'new-password'"
-              :autofocus="!isUpdateMode"
-              @keydown.enter="handleConfirm"
-            />
-          </div>
-
-          <div
-            v-if="isLockMode || isUpdateMode"
-            class="page-lock-dialog__field"
-          >
-            <Input
-              v-model="confirmPassword"
-              type="password"
-              :label="confirmPasswordLabel"
-              :placeholder="confirmPasswordPlaceholder"
-              :prefix-icon="'pageLock' as IconKey"
-              :show-password="true"
-              autocomplete="new-password"
-              @keydown.enter="handleConfirm"
-            />
-          </div>
+        <div class="page-lock-dialog__field">
+          <Input
+            :ref="isUpdateMode ? 'secondInput' : 'firstInput'"
+            v-model="password"
+            type="password"
+            :label="passwordLabel"
+            :placeholder="passwordPlaceholder"
+            :prefix-icon="'pageLock' as IconKey"
+            :show-password="true"
+            :autocomplete="!isLockMode && !isUpdateMode ? 'current-password' : 'new-password'"
+            :autofocus="!isUpdateMode"
+            @keydown.enter="handleConfirm"
+          />
         </div>
-      </div>
 
-      <div class="page-lock-dialog__footer">
-        <Button
-          variant="secondary"
-          @click="handleClose"
+        <div
+          v-if="isLockMode || isUpdateMode"
+          class="page-lock-dialog__field"
         >
-          <template #icon>
-            <IconWrapper
-              name="close"
-              :size="15"
-            />
-          </template>
-          {{ cancelText }}
-        </Button>
-        <Button @click="handleConfirm">
-          <template #icon>
-            <IconWrapper
-              name="success"
-              :size="15"
-            />
-          </template>
-          {{ confirmText }}
-        </Button>
+          <Input
+            v-model="confirmPassword"
+            type="password"
+            :label="confirmPasswordLabel"
+            :placeholder="confirmPasswordPlaceholder"
+            :prefix-icon="'pageLock' as IconKey"
+            :show-password="true"
+            autocomplete="new-password"
+            @keydown.enter="handleConfirm"
+          />
+        </div>
       </div>
+    </div>
+
+    <div class="page-lock-dialog__footer">
+      <Button
+        variant="secondary"
+        @click="handleClose"
+      >
+        <template #icon>
+          <IconWrapper
+            name="close"
+            :size="15"
+          />
+        </template>
+        {{ cancelText }}
+      </Button>
+      <Button @click="handleConfirm">
+        <template #icon>
+          <IconWrapper
+            name="success"
+            :size="15"
+          />
+        </template>
+        {{ confirmText }}
+      </Button>
     </div>
   </div>
 </template>
@@ -131,8 +125,8 @@ import type { IconKey } from "@/config/icons"
 import {
   computed,
   nextTick,
+  onMounted,
   ref,
-  watch,
 } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
@@ -201,12 +195,7 @@ const focusInput = () => {
 
 const handleClose = () => {
   clearPasswords()
-  emit("update:visible", false)
   emit("close")
-}
-
-const handleMaskClick = () => {
-  handleClose()
 }
 
 const handleConfirm = () => {
@@ -220,14 +209,9 @@ const handleConfirm = () => {
   clearPasswords()
 }
 
-watch(
-  () => props.visible,
-  (newVal) => {
-    if (newVal) {
-      setTimeout(focusInput, 100)
-    }
-  },
-)
+onMounted(() => {
+  setTimeout(focusInput, 100)
+})
 </script>
 
 <style lang="scss" scoped>

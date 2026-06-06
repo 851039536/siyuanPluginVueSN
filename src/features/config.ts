@@ -61,6 +61,13 @@ export const FEATURE_CONFIG = [
     defaultDesc: "字体、标题、代码块等通用配置",
   },
   {
+    id: "dataBackup",
+    defaultTitle: "数据备份",
+    defaultDesc: "工作区备份、自动备份和云同步",
+    titleI18nKey: "dataBackup",
+    descI18nKey: "dataBackupDesc",
+  },
+  {
     id: "qrCode",
     defaultTitle: "二维码生成",
     defaultDesc: "生成文本或链接的二维码",

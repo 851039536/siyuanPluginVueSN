@@ -29,13 +29,11 @@ export interface PageLockI18n {
 }
 
 export interface LockDialogProps {
-  visible: boolean
   mode: "lock" | "unlock" | "update"
   i18n: PageLockI18n
 }
 
 export interface LockDialogEmits {
-  (e: "update:visible", value: boolean): void
   (
     e: "confirm",
     password: string,

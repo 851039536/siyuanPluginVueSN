@@ -167,6 +167,13 @@ const featureDrawerItems: FeatureDrawerItem[] = [
     title: "网站导航",
     pinnable: true,
   },
+  {
+    id: "dataBackup",
+    icon: "mdi:backup-restore",
+    color: "#10b981",
+    title: props.plugin?.i18n?.dataBackup || "数据备份",
+    pinnable: true,
+  },
 ]
 
 interface ShortcutDisplay {
@@ -219,6 +226,13 @@ const SHORTCUT_DISPLAY: Record<string, ShortcutDisplay> = {
     title: "网站导航",
     itemClass: "action-item website-navigation-item",
     handler: () => showWebsiteNavigation(props.plugin),
+  },
+  dataBackup: {
+    id: "dataBackup",
+    icon: "mdi:backup-restore",
+    title: props.plugin?.i18n?.dataBackup || "数据备份",
+    itemClass: "action-item data-backup-item",
+    handler: () => emitCustomEvent("openDataBackup"),
   },
 }
 

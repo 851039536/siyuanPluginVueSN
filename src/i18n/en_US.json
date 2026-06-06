@@ -447,6 +447,8 @@
     "wordQueryDesc": "Quickly query word definitions",
     "generalSettings": "General Settings",
     "generalSettingsDesc": "Font, heading, code block and other general configurations",
+    "dataBackup": "Data Backup",
+    "dataBackupDesc": "Workspace backup, auto backup and cloud sync",
     "qrCode": "QR Code Generator",
     "qrCodeDesc": "Generate QR codes from text or links",
     "unitConverter": "Unit Converter",

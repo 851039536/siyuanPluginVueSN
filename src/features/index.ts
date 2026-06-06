@@ -8,6 +8,7 @@ export { registerApiDebugger } from "./apiDebugger"
 export { registerBase64Image } from "./base64Image"
 export { registerBookmarkMarker } from "./bookmarkMarker"
 export { registerCodeImageGenerator } from "./codeImageGenerator"
+export { registerDataBackup } from "./dataBackup"
 export { registerDiskBrowser } from "./diskBrowser"
 export { registerDocAnalysis } from "./docAnalysis"
 export { registerDocNavigation } from "./docNavigation"
@@ -84,7 +85,7 @@ type _Registered =
   | "base64Image" | "flashcardReading" | "passwordVault" | "docAnalysis"
   | "formatAssistant" | "htmlViewer" | "rssReader" | "resourceManager"
   | "skillsViewer" | "themeColor" | "bookmarkMarker" | "apiDebugger"
-  | "scriptLauncher" | "websiteNavigation"
+  | "scriptLauncher" | "websiteNavigation" | "dataBackup"
 
 // --- 编译时断言辅助 ---
 // 利用泛型接口约束 T extends true 产生 TypeScript 编译错误，无运行时开销

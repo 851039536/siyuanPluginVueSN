@@ -1,5 +1,15 @@
 <template>
   <div class="data-backup-settings">
+    <div class="data-backup-header">
+      <span class="data-backup-header-icon">💾</span>
+      <span class="data-backup-header-title">{{ i18n.dataBackup || '数据备份' }}</span>
+      <button
+        class="data-backup-close-btn"
+        @click="onClose"
+      >
+        ✕
+      </button>
+    </div>
     <div class="settings-container">
       <!-- 工作区信息 -->
       <div class="info-section">
@@ -476,11 +486,11 @@ import type {
   BackupProgress,
   BackupResult,
   RestoreProgress,
-} from "../modules/BackupManager"
+} from "./modules/BackupManager"
 import type {
   CloudFileInfo,
   CloudProviderConfig,
-} from "../modules/CloudBackupManager"
+} from "./modules/CloudBackupManager"
 import { showMessage } from "siyuan"
 import {
   backupPluginData,
@@ -494,22 +504,24 @@ import {
   ref,
   watch,
 } from "vue"
-import { BackupManager } from "../modules/BackupManager"
-import { CloudBackupManager } from "../modules/CloudBackupManager"
-import { GeneralSettingsStorage } from "../types/storage"
-import { checkIsMobile } from "../utils/styles"
+import { BackupManager } from "./modules/BackupManager"
+import { CloudBackupManager } from "./modules/CloudBackupManager"
+import { DataBackupStorage } from "./types"
+import { checkIsMobile } from "../generalSettings/utils/styles"
 
 interface Props {
   i18n?: any
   plugin?: any
+  onClose?: () => void
 }
 
 const props = withDefaults(defineProps<Props>(), {
   i18n: () => ({}),
   plugin: null,
+  onClose: () => {},
 })
 
-const gsStorage = computed(() => props.plugin ? new GeneralSettingsStorage(props.plugin) : null)
+const dbStorage = computed(() => props.plugin ? new DataBackupStorage(props.plugin) : null)
 
 // 基础状态
 const workspacePath = ref("")
@@ -647,8 +659,8 @@ watch(autoBackupEnabled, (enabled) => handleTimerRestart(enabled))
 // 加载设置
 async function loadSettings() {
   try {
-    if (gsStorage.value) {
-      const data = await gsStorage.value.backup.loadOrDefault()
+    if (dbStorage.value) {
+      const data = await dbStorage.value.backup.loadOrDefault()
       autoBackupEnabled.value = data.autoBackupEnabled ?? false
       backupFrequency.value = data.backupFrequency ?? "daily"
       backupTime.value = data.backupTime ?? "03:00"
@@ -669,8 +681,8 @@ async function loadSettings() {
 // 保存设置
 async function saveSettings() {
   try {
-    if (gsStorage.value) {
-      await gsStorage.value.backup.save({
+    if (dbStorage.value) {
+      await dbStorage.value.backup.save({
         autoBackupEnabled: autoBackupEnabled.value,
         backupFrequency: backupFrequency.value,
         backupTime: backupTime.value,
@@ -896,7 +908,7 @@ async function onBackupComplete(result: BackupResult) {
     backupList.value = backupList.value.slice(0, keepBackupCount.value)
   }
 
-  await gsStorage.value?.backupHistory.save({ list: backupList.value })
+  await dbStorage.value?.backupHistory.save({ list: backupList.value })
 
   showMessage(`备份成功: ${result.fileName}（${result.totalFiles} 文件）`, 3000, "info")
 
@@ -1064,13 +1076,13 @@ async function loadBackupList() {
       const scanned = await backupManager.scanBackupDir()
       if (scanned.length > 0) {
         backupList.value = scanned
-        await gsStorage.value?.backupHistory.save({ list: backupList.value })
+        await dbStorage.value?.backupHistory.save({ list: backupList.value })
         return
       }
     }
 
     // 降级到已保存的记录
-    const backupHistory = await gsStorage.value?.backupHistory.load()
+    const backupHistory = await dbStorage.value?.backupHistory.load()
     if (backupHistory?.list) {
       backupList.value = backupHistory.list
     }
@@ -1101,7 +1113,7 @@ async function deleteBackup(backup: { name: string, path: string }) {
     }
 
     backupList.value = backupList.value.filter((b) => b.name !== backup.name)
-    await gsStorage.value?.backupHistory.save({ list: backupList.value })
+    await dbStorage.value?.backupHistory.save({ list: backupList.value })
 
     showMessage(props.i18n.deleteSuccess || "删除成功", 2000, "info")
   } catch (error) {
@@ -1161,5 +1173,5 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
-@use '../styles/DataBackupSettings.scss';
+@use './styles/index.scss';
 </style>

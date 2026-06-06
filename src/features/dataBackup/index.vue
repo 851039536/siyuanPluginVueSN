@@ -5,7 +5,7 @@
       <span class="data-backup-header-title">{{ i18n.dataBackup || '数据备份' }}</span>
       <button
         class="data-backup-close-btn"
-        @click="onClose"
+        @click="handleClose"
       >
         ✕
       </button>
@@ -1162,6 +1162,17 @@ async function onImportFileChange(event: Event) {
     isPluginBackup.value = false
     input.value = ""
   }
+}
+
+// 关闭弹窗（备份进行中时提示确认）
+function handleClose() {
+  if (isBackingUp.value || isRestoring.value) {
+    const msg = isRestoring.value
+      ? "正在恢复数据，关闭窗口不会中断恢复。确定要隐藏窗口吗？"
+      : "正在备份中，关闭窗口不会中断备份。确定要隐藏窗口吗？"
+    if (!confirm(msg)) return
+  }
+  props.onClose?.()
 }
 
 defineExpose({

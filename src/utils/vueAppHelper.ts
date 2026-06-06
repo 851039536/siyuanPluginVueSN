@@ -110,14 +110,24 @@ export interface ModalAppOptions {
   height?: string
   /** 传递给组件的 props */
   props?: Record<string, any>
+  /**
+   * 持久模式：关闭时仅隐藏 DOM，不销毁 Vue 实例。
+   * 适用于需要保留组件内部状态（如进行中的任务、表单内容）的场景。
+   * 默认 false（关闭即销毁）。
+   */
+  persistent?: boolean
 }
 
 /** Modal 弹窗实例（用于外部控制开关闭） */
 export interface ModalAppInstance {
   app: VueApp | null
   container: HTMLElement | null
+  /** 当前是否可见（仅 persistent 模式有意义） */
+  visible: boolean
   open: () => void
   close: () => void
+  /** 彻底销毁（persistent 模式下用于插件卸载时清理） */
+  destroy: () => void
 }
 
 /**
@@ -139,31 +149,54 @@ export function createModalVueApp(
     maskId,
     width = "90vw",
     height = "85vh",
+    persistent = false,
   } = options
 
   let app: VueApp | null = null
   let container: HTMLElement | null = null
+  let mask: HTMLElement | null = null
+  let _visible = false
 
-  const close = () => {
+  // 彻底销毁：unmount Vue + 移除 DOM
+  const destroy = () => {
     if (app) {
       app.unmount()
       app = null
     }
-    const mask = document.getElementById(maskId)
     if (mask) {
       mask.remove()
+      mask = null
     }
     container = null
+    _visible = false
+  }
+
+  const close = () => {
+    if (persistent && mask) {
+      // 持久模式：仅隐藏，保留 Vue 实例
+      mask.style.display = "none"
+      _visible = false
+    } else {
+      // 默认模式：彻底销毁
+      destroy()
+    }
   }
 
   const open = () => {
-    // 如果已打开则先关闭
+    if (persistent && mask) {
+      // 持久模式：已存在则仅显示
+      mask.style.display = "flex"
+      _visible = true
+      return
+    }
+
+    // 如果已打开则先关闭（非持久模式会销毁重建）
     if (app && container) {
       close()
     }
 
     // 创建遮罩层
-    const mask = document.createElement("div")
+    mask = document.createElement("div")
     mask.style.cssText = `
       position: fixed;
       top: 0;
@@ -210,12 +243,15 @@ export function createModalVueApp(
     })
 
     app.mount(container)
+    _visible = true
   }
 
   return {
-    app,
-    container,
+    get app() { return app },
+    get container() { return container },
+    get visible() { return _visible },
     open,
     close,
+    destroy,
   }
 }

@@ -139,18 +139,6 @@ export interface HighlightSettings {
   maxLetterLength: number
 }
 
-export interface BackupSettings {
-  autoBackupEnabled: boolean
-  backupFrequency: string
-  backupTime: string
-  keepBackupCount: number
-  lastBackupTime: string
-  lastBackupTimestamp: number
-  workspacePath: string
-  workspaceRoot: string
-  cloudSyncEnabled?: boolean
-}
-
 // ============================================================
 // 默认值
 // ============================================================
@@ -260,15 +248,12 @@ export class GeneralSettingsStorage {
   readonly heading: TypedStorage<HeadingSettings>
   readonly list: TypedStorage<ListSettings>
   readonly highlight: TypedStorage<HighlightSettings>
-  readonly backup: TypedStorage<BackupSettings>
   readonly documentFont: TypedStorage<DocumentFontSettings>
   readonly tableStyle: TypedStorage<TableStyleSettings>
   readonly listStyle: TypedStorage<ListStyleSettings>
   readonly docCount: TypedStorage<DocCountSettings>
   readonly tabPin: TypedStorage<TabPinSettings>
   readonly appearance: TypedStorage<Record<string, any>>
-  readonly backupHistory: TypedStorage<Record<string, any>>
-  readonly cloudBackupConfig: TypedStorage<Record<string, any>>
   readonly password: TypedStorage<string>
 
   constructor(plugin: Plugin) {
@@ -278,15 +263,12 @@ export class GeneralSettingsStorage {
     this.heading = new TypedStorage(storage, "heading-settings", DEFAULT_HEADING_SETTINGS)
     this.list = new TypedStorage(storage, "list-settings", DEFAULT_LIST_SETTINGS)
     this.highlight = new TypedStorage(storage, "highlight-settings", DEFAULT_HIGHLIGHT_SETTINGS)
-    this.backup = new TypedStorage(storage, "data-backup-settings")
     this.documentFont = new TypedStorage(storage, "document-font-settings")
     this.tableStyle = new TypedStorage(storage, "table-style-settings")
     this.listStyle = new TypedStorage(storage, "list-style-settings")
     this.docCount = new TypedStorage(storage, "doc-count-settings")
     this.tabPin = new TypedStorage(storage, "tabpin-settings", DEFAULT_TABPIN_SETTINGS)
     this.appearance = new TypedStorage(storage, "appearance-settings")
-    this.backupHistory = new TypedStorage(storage, "backup-history")
-    this.cloudBackupConfig = new TypedStorage(storage, "cloud-backup-config")
     this.password = new TypedStorage(storage, "global-password")
   }
 
@@ -315,15 +297,12 @@ export class GeneralSettingsStorage {
       this.heading.remove(),
       this.list.remove(),
       this.highlight.remove(),
-      this.backup.remove(),
       this.documentFont.remove(),
       this.tableStyle.remove(),
       this.listStyle.remove(),
       this.docCount.remove(),
       this.tabPin.remove(),
       this.appearance.remove(),
-      this.backupHistory.remove(),
-      this.cloudBackupConfig.remove(),
       this.password.remove(),
     ])
   }

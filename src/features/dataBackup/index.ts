@@ -3,49 +3,22 @@
  *
  * 管理自动备份定时器、备份数据存储，以及弹窗 UI。
  * 通过 statusBar 功能抽屉触发打开。
- * 弹窗使用隐藏/显示模式，关闭时保留 Vue 实例状态（备份进度等）。
+ * 弹窗使用 persistent 模式，关闭时保留 Vue 实例状态（备份进度等）。
  */
-import type { App as VueApp } from "vue"
+import type { ModalAppInstance } from "@/utils/vueAppHelper"
 import { Plugin } from "siyuan"
-import {
-  createApp,
-  h,
-} from "vue"
 import { emitCustomEvent } from "@/utils/eventBus"
+import { createModalVueApp } from "@/utils/vueAppHelper"
 import { checkIsMobile } from "../generalSettings/utils/styles"
 import DataBackupPanel from "./index.vue"
 import { DataBackupStorage } from "./types"
 
 let dataBackupInstance: DataBackup | null = null
 
-const MASK_ID = "data-backup-mask"
-const MASK_STYLE = `
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 10000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`
-const CONTAINER_STYLE = `
-  width: 720px;
-  height: 80vh;
-  background: var(--b3-theme-background);
-  border-radius: 8px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  position: relative;
-`
-
 export class DataBackup {
   private plugin: Plugin
   private storage: DataBackupStorage
-  private app: VueApp | null = null
-  private mask: HTMLElement | null = null
-  private container: HTMLElement | null = null
+  private modal: ModalAppInstance
   private autoBackupTimer: number | null = null
   private lastBackupTimestamp = 0
   private _openHandler: (() => void) | null = null
@@ -53,6 +26,19 @@ export class DataBackup {
   constructor(plugin: Plugin) {
     this.plugin = plugin
     this.storage = new DataBackupStorage(plugin)
+
+    this.modal = createModalVueApp(DataBackupPanel, {
+      maskId: "data-backup-mask",
+      width: "720px",
+      height: "80vh",
+      persistent: true,
+      getCloseHandler: () => this.close,
+      buildProps: () => ({
+        onClose: this.close,
+        i18n: this.plugin.i18n,
+        plugin: this.plugin,
+      }),
+    })
   }
 
   getStorage(): DataBackupStorage {
@@ -65,60 +51,16 @@ export class DataBackup {
     window.addEventListener("openDataBackup", this._openHandler)
   }
 
-  /**
-   * 打开弹窗（首次创建，后续仅显示）
-   */
   public open() {
-    if (this.mask) {
-      // 已存在，仅显示
-      this.mask.style.display = "flex"
-      return
-    }
-
-    this.mask = document.createElement("div")
-    this.mask.id = MASK_ID
-    this.mask.style.cssText = MASK_STYLE
-
-    this.container = document.createElement("div")
-    this.container.style.cssText = CONTAINER_STYLE
-
-    this.mask.appendChild(this.container)
-    document.body.appendChild(this.mask)
-
-    // 点击遮罩关闭
-    this.mask.onclick = (e) => {
-      if (e.target === this.mask) {
-        this.close()
-      }
-    }
-
-    const plugin = this.plugin
-    const onClose = () => this.close()
-
-    this.app = createApp({
-      setup: () => {
-        return () => h(DataBackupPanel as any, {
-          i18n: plugin.i18n,
-          plugin,
-          onClose,
-        })
-      },
-    })
-
-    this.app.mount(this.container)
+    this.modal.open()
   }
 
-  /**
-   * 关闭弹窗（隐藏，保留状态）
-   */
   public close = () => {
-    if (this.mask) {
-      this.mask.style.display = "none"
-    }
+    this.modal.close()
   }
 
   public toggle() {
-    if (this.mask && this.mask.style.display !== "none") {
+    if (this.modal.visible) {
       this.close()
     } else {
       this.open()
@@ -226,15 +168,7 @@ export class DataBackup {
       window.removeEventListener("openDataBackup", this._openHandler)
       this._openHandler = null
     }
-    if (this.app) {
-      this.app.unmount()
-      this.app = null
-    }
-    if (this.mask) {
-      this.mask.remove()
-      this.mask = null
-      this.container = null
-    }
+    this.modal.destroy()
   }
 }
 

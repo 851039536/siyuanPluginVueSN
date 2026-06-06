@@ -460,6 +460,8 @@ this.modal = createModalVueApp(MyDialog, {
   maskId: "my-feature-mask",
   width: "90vw",
   height: "85vh",
+  // persistent: true 时关闭仅隐藏 DOM，保留 Vue 实例状态（进行中的任务等）
+  persistent: false, // 默认 false，关闭即销毁
   getCloseHandler: () => this.close.bind(this),
   buildProps: () => ({
     onClose: this.close.bind(this),
@@ -472,17 +474,24 @@ this.modal = createModalVueApp(MyDialog, {
 this.modal.open()
 this.modal.close()
 
-// 判断是否已打开
-if (this.modal.app && this.modal.container) { ... }
+// 判断是否可见（推荐，替代 modal.app && modal.container）
+if (this.modal.visible) { ... }
+
+// 插件卸载时彻底销毁（persistent 模式必须调用 destroy）
+this.modal.destroy()
 ```
 
 **返回值 `ModalAppInstance`**：
 | 属性 | 类型 | 说明 |
 |------|------|------|
-| `app` | `VueApp \| null` | Vue 应用实例（关闭时为 null） |
-| `container` | `HTMLElement \| null` | DOM 容器元素（关闭时为 null） |
-| `open()` | `() => void` | 打开弹窗（已打开时先关闭再重建） |
-| `close()` | `() => void` | 关闭弹窗并清理 DOM |
+| `app` | `VueApp \| null` | Vue 应用实例（非 persistent 关闭时为 null） |
+| `container` | `HTMLElement \| null` | DOM 容器元素（非 persistent 关闭时为 null） |
+| `visible` | `boolean` | 当前是否可见 |
+| `open()` | `() => void` | 打开弹窗（persistent 模式复用已有实例） |
+| `close()` | `() => void` | 关闭弹窗（persistent 模式仅隐藏，非 persistent 销毁） |
+| `destroy()` | `() => void` | 彻底销毁 Vue 实例和 DOM（用于插件卸载） |
+
+**persistent 模式**：适用于需要保留组件内部状态的场景（如进行中的备份任务、表单填写进度）。关闭时仅 `display: none`，再次打开时 `display: flex`，组件状态完整保留。插件卸载时必须调用 `destroy()` 清理资源。
 
 ## 国际化（i18n）
 

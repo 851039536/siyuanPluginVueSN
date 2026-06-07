@@ -20,6 +20,7 @@
 | Node 模块 | 各自 `try { require("node:xxx") } catch` | `getNodeModules / getNodeProcessModules / getNodeFsPathOs` from `@/utils/nodeModules` |
 | SQL | `fetch("/api/query/sql")` | `sql()` from `@/api` |
 | 系统 API | `fetch("/api/...")` 直调 | 对应 `@/api` 封装函数（找不到则新增） |
+| 状态栏任务 | 绕过状态栏直接弹通知 | `useStatusBarTask` from `@/features/statusBar/composables/useStatusBarTask` |
 | 全局 siyuan | `(window as any).siyuan` | props 传入 Plugin 实例 |
 
 额外的硬规则：
@@ -55,6 +56,9 @@ src/
 │   └── settingsBackup.ts   # backupPluginData / restoreFromUpload
 ├── components/             # 共享 shadcn-vue 组件（Button/Input/Select/Switch/Tag 等）
 ├── features/
+│   ├── statusBar/
+│   │   └── composables/
+│   │       └── useStatusBarTask.ts  # 状态栏后台任务（task.progress/complete/fail）
 │   ├── config.ts           # FEATURE_CONFIG — 单一数据源，推导 FeatureId 类型
 │   ├── index.ts            # 功能注册函数统一导出 + 编译时双向断言
 │   └── <feature>/          # 各功能模块（index.ts + index.vue + types/ + composables/）
@@ -166,6 +170,38 @@ emitCustomEvent("dock-click", { dockId: "xxx" })
 emitCustomEvent("openDialog", { content }, { useMicrotask: true })
 // 默认值: bubbles=true, cancelable=true, target=window, useMicrotask=false
 ```
+
+### 状态栏后台任务
+
+任何需要后台执行并显示进度的功能，使用 `useStatusBarTask` 在状态栏展示进度，完成后自动消失。
+
+```typescript
+import { useStatusBarTask } from '@/features/statusBar/composables/useStatusBarTask'
+
+// 创建任务句柄（taskId 全局唯一，icon 为 Iconify 图标名）
+const task = useStatusBarTask('my-feature', 'ph:archive')
+
+// 更新进度 → 状态栏显示 "导出中 45%"，带脉冲动画
+task.progress({ label: '导出中', percent: 45, phase: '压缩' })
+
+// 完成 → 显示 "导出完成"，hover 看详情，5 秒后自动消失
+task.complete('导出完成', '已导出 100 条数据')
+
+// 失败 → 显示 "导出失败"，3 秒后自动消失
+task.fail('导出失败')
+
+// 立即清除
+task.clear()
+```
+
+**`task.progress(opts)`** 参数：
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `label` | `string` | 主显示文本（如"备份中"） |
+| `percent` | `number?` | 0-100 进度百分比，有值时显示百分比 + 脉冲动画 |
+| `phase` | `string?` | 当前阶段名，显示在 tooltip 中 |
+
+状态栏模板自动遍历活跃任务渲染，无需手动添加 `<MonitorItem>`。
 
 ### DOM 操作
 

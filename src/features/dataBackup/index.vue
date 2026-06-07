@@ -496,7 +496,7 @@ import {
   backupPluginData,
   restoreFromUpload,
 } from "@/utils/settingsBackup"
-import { emitCustomEvent } from "@/utils/eventBus"
+import { useStatusBarTask } from "../statusBar/composables/useStatusBarTask"
 import {
   computed,
   nextTick,
@@ -545,6 +545,8 @@ const backupList = ref<
 >([])
 
 let lastBackupTimestamp = 0
+
+const backupTask = useStatusBarTask("dataBackup", "ph:archive")
 
 // 备份进度
 const backupProgress = ref<BackupProgress | RestoreProgress>({
@@ -877,7 +879,7 @@ async function performFullBackup() {
     const result = await backupManager.performFullBackup({
       onProgress: (p) => {
         backupProgress.value = { ...p }
-        emitCustomEvent("dataBackupProgress", { ...p, type: "backup" as const })
+        backupTask.progress({ label: "备份中", percent: p.percent, phase: p.phase })
       },
     })
 
@@ -914,11 +916,7 @@ async function onBackupComplete(result: BackupResult) {
 
   showMessage(`备份成功: ${result.fileName}（${result.totalFiles} 文件）`, 3000, "info")
 
-  emitCustomEvent("dataBackupComplete", {
-    fileName: result.fileName,
-    fileCount: result.totalFiles,
-    size: result.size,
-  })
+  backupTask.complete("备份完成", `${result.fileName} · ${result.totalFiles} 文件`)
 
   // 自动云同步
   if (cloudSyncEnabled.value && cloudBackupManager) {
@@ -955,7 +953,7 @@ async function restoreBackup(backup: { name: string, path: string }) {
     const result = await backupManager.restoreBackup(backup.path, {
       onProgress: (p: RestoreProgress) => {
         backupProgress.value = { ...p }
-        emitCustomEvent("dataBackupProgress", { ...p, type: "restore" as const })
+        backupTask.progress({ label: "恢复中", percent: p.percent, phase: p.phase })
       },
     })
 

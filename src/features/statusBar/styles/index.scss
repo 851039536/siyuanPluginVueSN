@@ -111,6 +111,21 @@
   .data-backup-item {
     color: #10b981;
   }
+
+  .backup-item {
+    color: var(--b3-theme-primary);
+    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    font-size: 11px;
+
+    &[data-level="medium"] {
+      animation: backup-pulse 1.5s ease-in-out infinite;
+    }
+  }
+}
+
+@keyframes backup-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 // 响应式调整

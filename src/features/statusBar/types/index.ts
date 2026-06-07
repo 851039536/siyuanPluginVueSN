@@ -19,6 +19,14 @@ export interface StatusBarState {
   todayModified: number
   yesterdayCreated: number
   yesterdayModified: number
+  /** 备份/恢复进度 */
+  backupPercent: number
+  backupPhase: string
+  backupType: string
+  /** 备份完成信息 */
+  backupCompleted: boolean
+  backupFileName: string
+  backupFileCount: number
 }
 
 // ============================================================

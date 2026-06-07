@@ -496,6 +496,7 @@ import {
   backupPluginData,
   restoreFromUpload,
 } from "@/utils/settingsBackup"
+import { emitCustomEvent } from "@/utils/eventBus"
 import {
   computed,
   nextTick,
@@ -874,7 +875,10 @@ async function performFullBackup() {
 
   try {
     const result = await backupManager.performFullBackup({
-      onProgress: (p) => { backupProgress.value = { ...p } },
+      onProgress: (p) => {
+        backupProgress.value = { ...p }
+        emitCustomEvent("dataBackupProgress", { ...p, type: "backup" as const })
+      },
     })
 
     await onBackupComplete(result)
@@ -909,6 +913,12 @@ async function onBackupComplete(result: BackupResult) {
   await dbStorage.value?.backupHistory.save({ list: backupList.value })
 
   showMessage(`备份成功: ${result.fileName}（${result.totalFiles} 文件）`, 3000, "info")
+
+  emitCustomEvent("dataBackupComplete", {
+    fileName: result.fileName,
+    fileCount: result.totalFiles,
+    size: result.size,
+  })
 
   // 自动云同步
   if (cloudSyncEnabled.value && cloudBackupManager) {
@@ -945,6 +955,7 @@ async function restoreBackup(backup: { name: string, path: string }) {
     const result = await backupManager.restoreBackup(backup.path, {
       onProgress: (p: RestoreProgress) => {
         backupProgress.value = { ...p }
+        emitCustomEvent("dataBackupProgress", { ...p, type: "restore" as const })
       },
     })
 

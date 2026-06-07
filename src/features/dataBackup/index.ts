@@ -49,6 +49,11 @@ export class DataBackup {
     await this.initAutoBackup()
     this._openHandler = () => this.open()
     window.addEventListener("openDataBackup", this._openHandler)
+
+    // 触发 Vue 组件 mount 以注册 autoBackupTrigger 事件监听器
+    // persistent 模式下 open 创建实例，close 仅隐藏 DOM，状态常驻
+    this.modal.open()
+    this.modal.close()
   }
 
   public open() {
@@ -115,6 +120,7 @@ export class DataBackup {
             currentMinute === 0
             && lastExecutedHour !== currentHour
             && timeSinceTimerStart >= 60 * 1000
+            && timeSinceLastBackup >= 60 * 60 * 1000
           ) {
             shouldBackup = true
             lastExecutedHour = currentHour

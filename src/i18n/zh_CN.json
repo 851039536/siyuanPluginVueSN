@@ -1097,13 +1097,9 @@
   "mobileBackupDisabled": "检测到移动端环境，备份功能已自动禁用以节省流量和存储空间",
   "pluginSettingsBackup": "插件设置备份",
   "exportSettings": "导出设置",
-  "importSettings": "恢复设置",
   "pluginSettingsBackupHint": "仅打包插件配置数据，可用于跨设备迁移或数据恢复",
   "exportSuccess": "备份成功",
   "exportFailed": "备份失败",
-  "confirmImportSettings": "确定要恢复此备份吗？\n\n⚠️ 当前插件数据将被覆盖，建议先导出当前设置作为备份。",
-  "importSuccess": "恢复完成",
-  "importFailed": "恢复失败",
   "flashcardReading": {
     "panelTitle": "单词阅读",
     "description": "闪卡式阅读工具，支持分类和翻转",

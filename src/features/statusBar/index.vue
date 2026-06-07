@@ -52,6 +52,16 @@
     </MonitorItem>
 
     <MonitorItem
+      v-if="backupDisplay"
+      icon="ph:archive"
+      item-class="backup-item"
+      :title="backupTooltip"
+      :level="backupLevel"
+    >
+      {{ backupDisplay }}
+    </MonitorItem>
+
+    <MonitorItem
       v-for="shortcut in visibleShortcuts"
       :key="shortcut.id"
       :icon="shortcut.icon"
@@ -113,6 +123,9 @@ const {
   statisticsTooltip,
   todayActivityDisplay,
   todayTooltip,
+  backupDisplay,
+  backupLevel,
+  backupTooltip,
 } = useStatusBar()
 
 const statusBarShortcuts = ref<string[]>([])

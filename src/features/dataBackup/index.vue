@@ -492,6 +492,7 @@ import type {
   CloudProviderConfig,
 } from "./modules/CloudBackupManager"
 import { showMessage } from "siyuan"
+import { getWorkspaceDir } from "@/api"
 import {
   backupPluginData,
   restoreFromUpload,
@@ -610,7 +611,6 @@ function updateWorkspacePath(root: string, shouldSave = false) {
 // 通过 API 获取工作区路径
 async function fetchWorkspacePath(): Promise<string | null> {
   try {
-    const { getWorkspaceDir } = await import("@/api")
     const dir = await getWorkspaceDir()
     return dir || null
   } catch (e) {

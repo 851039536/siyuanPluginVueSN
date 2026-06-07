@@ -51,17 +51,10 @@ export function useStatusBar() {
     todayModified: 0,
     yesterdayCreated: 0,
     yesterdayModified: 0,
-    backupPercent: 0,
-    backupPhase: "",
-    backupType: "",
-    backupCompleted: false,
-    backupFileName: "",
-    backupFileCount: 0,
   })
 
   let intervalIds: ReturnType<typeof setInterval>[] = []
   let timeoutId: ReturnType<typeof setTimeout> | null = null
-  let backupClearTimer: ReturnType<typeof setTimeout> | null = null
   let lastCPU: NodeJS.CpuUsage | null = null
   let lastTime: number | null = null
 
@@ -145,62 +138,6 @@ export function useStatusBar() {
   const cpuLevel = computed(() => getLevel(state.cpuPercent, THRESHOLDS.CPU))
   const memLevel = computed(() => getLevel(state.memPercent, THRESHOLDS.MEM))
 
-  // ── Backup ──
-
-  const backupDisplay = computed(() => {
-    if (state.backupCompleted) return "备份完成"
-    if (!state.backupPhase) return ""
-    const type = state.backupType === "restore" ? "恢复" : "备份"
-    if (state.backupPercent >= 99) return `${type}完成`
-    return `${type}中 ${Math.round(state.backupPercent)}%`
-  })
-
-  const backupLevel = computed<ResourceLevel>(() => {
-    if (state.backupCompleted) return "normal"
-    if (state.backupPercent > 0) return "medium"
-    return "normal"
-  })
-
-  const backupTooltip = computed(() => {
-    if (state.backupCompleted) {
-      return `备份完成: ${state.backupFileName}\n文件数: ${state.backupFileCount}`
-    }
-    if (!state.backupPhase) return ""
-    return `${state.backupType === "restore" ? "恢复" : "备份"}进度: ${Math.round(state.backupPercent)}%\n${state.backupPhase}`
-  })
-
-  function onBackupProgress(e: Event) {
-    const detail = (e as CustomEvent).detail
-    state.backupPercent = detail.percent ?? 0
-    state.backupPhase = detail.phase ?? ""
-    state.backupType = detail.type ?? ""
-    state.backupCompleted = false
-    if (backupClearTimer) { clearTimeout(backupClearTimer); backupClearTimer = null }
-  }
-
-  function onBackupComplete(e: Event) {
-    const detail = (e as CustomEvent).detail
-    state.backupCompleted = true
-    state.backupFileName = detail.fileName ?? ""
-    state.backupFileCount = detail.fileCount ?? 0
-    state.backupPercent = 100
-    state.backupPhase = ""
-
-    if (backupClearTimer) clearTimeout(backupClearTimer)
-    backupClearTimer = setTimeout(() => {
-      state.backupCompleted = false
-      state.backupPercent = 0
-      state.backupPhase = ""
-      state.backupType = ""
-      state.backupFileName = ""
-      state.backupFileCount = 0
-      backupClearTimer = null
-    }, 5000)
-  }
-
-  window.addEventListener("dataBackupProgress", onBackupProgress)
-  window.addEventListener("dataBackupComplete", onBackupComplete)
-
   async function fetchStatistics() {
     try {
       // 优化：使用预存的 length 字段代替 LENGTH(content)，避免对每行数据计算长度
@@ -283,9 +220,6 @@ export function useStatusBar() {
 
   onUnmounted(() => {
     if (timeoutId) clearTimeout(timeoutId)
-    if (backupClearTimer) clearTimeout(backupClearTimer)
-    window.removeEventListener("dataBackupProgress", onBackupProgress)
-    window.removeEventListener("dataBackupComplete", onBackupComplete)
     stop()
   })
 
@@ -302,8 +236,5 @@ export function useStatusBar() {
     statisticsTooltip,
     todayActivityDisplay,
     todayTooltip,
-    backupDisplay,
-    backupLevel,
-    backupTooltip,
   }
 }

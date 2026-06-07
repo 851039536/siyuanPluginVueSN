@@ -161,6 +161,15 @@ this.modal.destroy() // 彻底销毁（persistent 模式卸载时必调）
 // this.modal.visible → boolean
 ```
 
+**persistent 模式注意事项**：Vue 组件在首次 `open()` 时才创建挂载（`onMounted` 触发）。如果组件需要在后台响应自定义事件，必须在 `init()` 中先 open 再 close 以触发 mount 注册监听器——就像定时备份：程序启动后虽然面板没打开，但 `autoBackupTrigger` 监听器已在后台待命，到点自动执行。
+
+```typescript
+async init() {
+  // ... 初始化逻辑
+  this.modal.open()   // 触发 Vue mount，注册事件监听
+  this.modal.close()  // 隐藏 DOM，保留 Vue 实例和事件监听
+}
+
 ### 事件
 
 ```typescript

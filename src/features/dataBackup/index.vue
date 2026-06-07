@@ -529,9 +529,6 @@ const phaseLabel = computed(() => {
     compressing: "压缩数据",
     saving: "保存备份",
     uploading: "上传云端",
-    reading: "读取备份",
-    extracting: "解压文件",
-    swapping: "替换数据",
   }
   return labels[backupProgress.value.phase] || backupProgress.value.phase
 })
@@ -619,6 +616,7 @@ function handleTimerRestart(enabled: boolean) {
 }
 
 watch(backupFrequency, () => handleTimerRestart(autoBackupEnabled.value))
+watch(backupTime, () => handleTimerRestart(autoBackupEnabled.value))
 watch(autoBackupEnabled, (enabled) => handleTimerRestart(enabled))
 
 // 加载设置

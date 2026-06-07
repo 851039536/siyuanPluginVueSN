@@ -41,10 +41,6 @@ export class DataBackup {
     })
   }
 
-  getStorage(): DataBackupStorage {
-    return this.storage
-  }
-
   public async init() {
     await this.initAutoBackup()
     this._openHandler = () => this.open()
@@ -62,14 +58,6 @@ export class DataBackup {
 
   public close = () => {
     this.modal.close()
-  }
-
-  public toggle() {
-    if (this.modal.visible) {
-      this.close()
-    } else {
-      this.open()
-    }
   }
 
   private async initAutoBackup() {
@@ -185,11 +173,4 @@ export function registerDataBackup(plugin: Plugin) {
   dataBackupInstance = new DataBackup(plugin)
   dataBackupInstance.init()
   ;(plugin as any).__dataBackup = dataBackupInstance
-}
-
-/**
- * 获取数据备份实例
- */
-export function getDataBackupInstance(): DataBackup | null {
-  return dataBackupInstance
 }

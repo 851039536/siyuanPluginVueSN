@@ -222,11 +222,6 @@ $radius-lg: 0.5rem;
 }
 
 // 备份操作按钮
-.backup-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
 
 .backup-hint {
   font-size: 0.6875rem;
@@ -659,38 +654,4 @@ $radius-lg: 0.5rem;
   margin-top: 0.75rem;
   padding-top: 0.5rem;
   border-top: 1px solid var(--b3-theme-surface-variant);
-}
-
-// ========== 插件设置导出/导入 ==========
-.import-label {
-  cursor: pointer;
-  margin: 0;
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-}
-
-.hidden-input {
-  display: none;
-}
-
-.import-result {
-  margin-top: 0.5rem;
-  padding: 0.375rem 0.625rem;
-  border-radius: $radius-sm;
-  font-size: 0.75rem;
-
-  &.success {
-    background: rgba(76, 175, 80, 0.1);
-    color: #4caf50;
-    border: 1px solid rgba(76, 175, 80, 0.3);
-  }
-
-  &.error {
-    background: rgba(244, 67, 54, 0.1);
-    color: #f44336;
-    border: 1px solid rgba(244, 67, 54, 0.3);
-  }
 }

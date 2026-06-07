@@ -5,7 +5,7 @@ import { Plugin } from "siyuan"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
 
-export interface BackupSettings {
+interface BackupSettings {
   autoBackupEnabled: boolean
   backupFrequency: string
   backupTime: string
@@ -17,7 +17,7 @@ export interface BackupSettings {
   cloudSyncEnabled?: boolean
 }
 
-export const BACKUP_STORAGE_KEYS = {
+const BACKUP_STORAGE_KEYS = {
   SETTINGS: "data-backup-settings",
   HISTORY: "backup-history",
   CLOUD_CONFIG: "cloud-backup-config",

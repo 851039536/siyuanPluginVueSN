@@ -53,6 +53,9 @@ src/
 │   ├── pluginStorage.ts         # 存储抽象层（PluginStorage）
 │   ├── typedStorage.ts          # 类型安全存储槽（TypedStorage<T>）
 │   ├── settingsCrypto.ts        # 敏感配置加密（AES-GCM + PBKDF2，用于 aiApiKey 等敏感字段）
+│   ├── cryptoPrimitives.ts      # AES-GCM + PBKDF2 加密基元（deriveAESKey/aesGcmEncrypt/aesGcmDecrypt 等）
+│   ├── domUtils.ts              # DOM 操作工具（copyToClipboard/triggerDownload/injectStyle/removeStyle）
+│   ├── nodeModules.ts           # Node.js 模块加载（getNodeModules/getNodeProcessModules/getNodeFsPathOs）
 │   ├── iconHelper.ts            # 图标操作工具（replaceTopBarIcon/createIconElement）
 │   └── vueAppHelper.ts          # Vue 应用挂载辅助（createVueDockApp/createModalVueApp）
 ├── i18n/                        # 国际化（zh_CN.json, en_US.json）
@@ -115,6 +118,11 @@ type _AssertAllCovered = _AssertTrue<
 - **AI 统一**：所有 AI API 调用必须通过 `src/utils/aiApi.ts`，禁止在功能模块中直接调用 fetch/axios
 - **事件统一**：所有自定义事件派发必须通过 `src/utils/eventBus.ts` 的 `emitCustomEvent` 函数，禁止直接使用 `window.dispatchEvent(new CustomEvent(...))` 或 `document.dispatchEvent(...)`
 - **Dock/Modal 统一**：新建 Dock 侧边栏面板必须使用 `src/utils/vueAppHelper.ts` 的 `createVueDockApp()`，新建遮罩弹窗必须使用 `createModalVueApp()`，禁止在功能模块中直接编写 `createApp + mount + appendChild` 或 `mask + container + createApp` 样板代码
+- **DOM 操作统一**：剪贴板复制必须使用 `src/utils/domUtils.ts` 的 `copyToClipboard()` / `fallbackCopyToClipboard()`，文件下载必须使用 `triggerDownload()` / `triggerBlobDownload()`，禁止在各功能模块中重复实现 `textarea.appendChild + execCommand("copy")` 或 `a.click()` 下载逻辑
+- **样式注入统一**：动态注入 `<style>` 标签必须使用 `src/utils/domUtils.ts` 的 `injectStyle(id, css)` / `removeStyle(id)`，禁止在各功能模块中重复编写 `document.getElementById + createElement("style") + appendChild` 模式
+- **加密基元统一**：AES-GCM + PBKDF2 加密基元使用 `src/utils/cryptoPrimitives.ts`（`deriveAESKey`、`aesGcmEncrypt`、`aesGcmDecrypt`、`deriveBits` 等），各模块（settingsCrypto、encryption、passwordVault）保留自身密钥派生策略和序列化格式，仅通过共享原语实现底层加密操作
+- **Node 模块统一**：在 Electron 环境中加载 Node.js 模块必须使用 `src/utils/nodeModules.ts`（`getNodeModules` 返回 `fs/path`、`getNodeProcessModules` 返回 `child_process/os`、`getNodeFsPathOs` 返回 `fs/path/os`），禁止在各功能模块中重复 `try { require("node:xxx") } catch` 模板
+- **API 调用统一**：所有思源 API 调用必须通过 `src/api.ts` 的封装函数，包括系统配置（`getConf()` / `getWorkspaceDir()`）、导出/导入（`exportNotebookMd()` / `exportData()` / `importData()`）等，禁止在功能模块中直接使用 `fetch("/api/...")`
 - **Composable 复用**：当功能的 Dock 面板和浮动弹窗共享业务逻辑（数据加载、CRUD、导航、播放）时，必须将共享逻辑抽取到 `composables/use*.ts`，禁止在两个组件中各自实例化 `Storage` 并重复实现相同逻辑。参考 `src/features/flashcardReading/composables/`
 - **禁止访问全局 siyuan**：禁止通过 `(window as any).siyuan` 访问思源配置或数据。应通过 props 传入 `Plugin` 实例，使用 `plugin.getDataDir()` 等官方 API
 - **Vue 事件命名**：自定义 emit 事件名必须使用 camelCase（如 `inputTitle`、`validateTitle`），禁止使用 `kebab-case` 或带冒号的事件名（如 `input:title`），与 ESLint `vue/custom-event-name-casing` 规则一致
@@ -493,6 +501,99 @@ this.modal.destroy()
 
 **persistent 模式**：适用于需要保留组件内部状态的场景（如进行中的备份任务、表单填写进度）。关闭时仅 `display: none`，再次打开时 `display: flex`，组件状态完整保留。插件卸载时必须调用 `destroy()` 清理资源。
 
+### DOM 操作工具（domUtils）
+
+`src/utils/domUtils.ts` — 剪贴板、下载、样式注入的通用 DOM 操作。
+
+```typescript
+import {
+  copyToClipboard,
+  fallbackCopyToClipboard,
+  injectStyle,
+  removeStyle,
+  triggerBlobDownload,
+  triggerDownload,
+} from '@/utils/domUtils'
+
+// 剪贴板复制（优先 Clipboard API，失败时降级到 execCommand）
+const ok = await copyToClipboard('要复制的文本')
+
+// 降级方案（不依赖 Clipboard API）
+const ok = fallbackCopyToClipboard('要复制的文本')
+
+// 触发文件下载（Blob URL 或远程 URL）
+triggerDownload(url, 'filename.zip')
+
+// Blob 下载
+triggerBlobDownload(blob, 'export.json')
+
+// 幂等注入 <style> 标签
+injectStyle('my-style-id', '.my-class { color: red; }')
+
+// 移除已注入的 <style>
+removeStyle('my-style-id')
+```
+
+**禁止**：在功能模块中直接编写 `textarea.appendChild + execCommand("copy")`、`a.click()` 下载、`createElement("style") + appendChild(head)` 等模式。
+
+### Node.js 模块加载（nodeModules）
+
+`src/utils/nodeModules.ts` — Electron 环境下延迟加载 Node.js 模块。
+
+```typescript
+import {
+  getNodeFsPathOs,
+  getNodeModules,
+  getNodeProcessModules,
+} from '@/utils/nodeModules'
+
+// 获取 fs + path（用于文件读写操作）
+const node = getNodeModules()
+if (node) {
+  node.fs.writeFileSync('/path/to/file', 'content', 'utf-8')
+}
+
+// 获取 child_process + os（用于脚本执行）
+const proc = getNodeProcessModules()
+if (proc) {
+  proc.child_process.exec('echo hello')
+}
+
+// 获取 fs + path + os（用于临时文件操作）
+const all = getNodeFsPathOs()
+```
+
+**禁止**：在各功能模块中重复 `try { require("node:xxx") } catch` 模板。
+
+### 加密基元（cryptoPrimitives）
+
+`src/utils/cryptoPrimitives.ts` — AES-GCM + PBKDF2 通用加密基元。各模块（`settingsCrypto`、`encryption`、`passwordVault`）通过共享原语实现底层加密，自身保留密钥派生策略和序列化格式。
+
+```typescript
+import {
+  aesGcmDecrypt,
+  aesGcmEncrypt,
+  arrayBufferToBase64,
+  base64ToUint8Array,
+  deriveAESKey,
+  deriveBits,
+  generateIV,
+  generateSalt,
+} from '@/utils/cryptoPrimitives'
+
+// PBKDF2 派生 AES-GCM 密钥
+const key = await deriveAESKey(passwordBytes, salt, 100000, 256)
+
+// AES-GCM 加密
+const { iv, ciphertext } = await aesGcmEncrypt(dataBytes, key)
+
+// AES-GCM 解密
+const plaintext = await aesGcmDecrypt(ciphertext, key, iv)
+
+// PBKDF2 派生比特（用于密码哈希验证）
+const hash = await deriveBits(passwordBytes, salt, 100000, 256)
+```
+
 ## 国际化（i18n）
 
 所有用户可见文本必须通过 i18n 管理：
@@ -601,12 +702,12 @@ export function registerMyFeature(plugin: Plugin) {
 
 ### 获取工作区路径
 
-通过思源 API 获取工作区根目录：
+通过 `src/api.ts` 的封装函数获取工作区根目录：
 
 ```typescript
-const resp = await fetch("/api/system/getConf", { method: "POST" })
-const data = await resp.json()
-const workspaceDir = data?.data?.conf?.system?.workspaceDir || ""
+import { getWorkspaceDir } from '@/api'
+
+const workspaceDir = await getWorkspaceDir()
 // 示例返回: "E:\\siyuan2"
 ```
 

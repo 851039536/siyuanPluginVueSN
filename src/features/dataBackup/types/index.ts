@@ -7,6 +7,7 @@ import { TypedStorage } from "@/utils/typedStorage"
 
 interface BackupSettings {
   autoBackupEnabled: boolean
+  autoBackupPluginData?: boolean
   backupFrequency: string
   backupTime: string
   keepBackupCount: number

@@ -195,6 +195,18 @@
             </div>
 
             <div class="form-row">
+              <label class="form-label">同时备份插件设置</label>
+              <select
+                v-model="autoBackupPluginData"
+                class="form-select"
+                @change="saveSettings"
+              >
+                <option :value="false">禁用</option>
+                <option :value="true">启用</option>
+              </select>
+            </div>
+
+            <div class="form-row">
               <label class="form-label">云同步</label>
               <select
                 v-model="cloudSyncEnabled"
@@ -503,6 +515,7 @@ const backupFrequency = ref("daily")
 const backupTime = ref("03:00")
 const keepBackupCount = ref(7)
 const cloudSyncEnabled = ref(false)
+const autoBackupPluginData = ref(false)
 const isPluginBackup = ref(false)
 const pluginExportPath = ref("")
 const backupList = ref<
@@ -605,6 +618,9 @@ onUnmounted(() => {
 
 async function handleAutoBackupTrigger() {
   await performFullBackup()
+  if (autoBackupPluginData.value) {
+    await exportPluginSettings()
+  }
 }
 
 // 定时器重启逻辑（委托给 DataBackup）
@@ -629,6 +645,7 @@ async function loadSettings() {
       backupTime.value = data.backupTime ?? "03:00"
       keepBackupCount.value = data.keepBackupCount ?? 7
       cloudSyncEnabled.value = data.cloudSyncEnabled ?? false
+      autoBackupPluginData.value = data.autoBackupPluginData ?? false
       lastBackupTime.value = data.lastBackupTime ?? ""
       lastBackupTimestamp = data.lastBackupTimestamp ?? 0
       if (data.workspacePath) {
@@ -651,6 +668,7 @@ async function saveSettings() {
         backupTime: backupTime.value,
         keepBackupCount: keepBackupCount.value,
         cloudSyncEnabled: cloudSyncEnabled.value,
+        autoBackupPluginData: autoBackupPluginData.value,
         lastBackupTime: lastBackupTime.value,
         lastBackupTimestamp,
         workspacePath: workspacePath.value,

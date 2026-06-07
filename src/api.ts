@@ -708,7 +708,7 @@ export async function renameFile(path: string, newPath: string): Promise<null> {
   return null
 }
 
-export async function readDir(path: string): Promise<IResReadDir> {
+export async function readDir(path: string): Promise<IResReadDir[]> {
   const data = {
     path,
   }
@@ -758,10 +758,11 @@ export async function pandoc(args: PandocArgs[]) {
 //     "msg": "test",
 //     "timeout": 7000
 //   }
-export async function pushMsg(msg: string, timeout: number = 7000) {
+export async function pushMsg(msg: string, timeout: number = 7000, type: string = "info") {
   const payload = {
     msg,
     timeout,
+    type,
   }
   const url = "/api/notification/pushMsg"
   return request(url, payload)

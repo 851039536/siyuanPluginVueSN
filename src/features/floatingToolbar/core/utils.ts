@@ -1,5 +1,6 @@
 import type { Plugin } from "siyuan"
 import type { ToolbarAction } from "../types"
+import { pushMsg } from "@/api"
 import { emitCustomEvent } from "@/utils/eventBus"
 
 /**
@@ -46,17 +47,7 @@ export function showMessage(
     type = "info",
   } = options
 
-  fetch("/api/notification/pushMsg", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      msg: message,
-      timeout,
-      type,
-    }),
-  }).catch((error) => {
+  pushMsg(message, timeout, type).catch((error) => {
     console.error("Failed to show message:", error)
   })
 }

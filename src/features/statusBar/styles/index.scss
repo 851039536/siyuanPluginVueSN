@@ -112,18 +112,18 @@
     color: #10b981;
   }
 
-  .backup-item {
+  .status-bar-task-item {
     color: var(--b3-theme-primary);
     font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
     font-size: 11px;
 
     &[data-level="medium"] {
-      animation: backup-pulse 1.5s ease-in-out infinite;
+      animation: task-pulse 1.5s ease-in-out infinite;
     }
   }
 }
 
-@keyframes backup-pulse {
+@keyframes task-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
 }

@@ -52,13 +52,14 @@
     </MonitorItem>
 
     <MonitorItem
-      v-if="backupDisplay"
-      icon="ph:archive"
-      item-class="backup-item"
-      :title="backupTooltip"
-      :level="backupLevel"
+      v-for="task in activeTasks"
+      :key="task.id"
+      :icon="task.icon"
+      item-class="status-bar-task-item"
+      :title="task.tooltip"
+      :level="task.level"
     >
-      {{ backupDisplay }}
+      {{ task.display }}
     </MonitorItem>
 
     <MonitorItem
@@ -103,6 +104,7 @@ import { showWebsiteNavigation } from "../websiteNavigation/types"
 import FeatureDrawer from "./components/FeatureDrawer.vue"
 import MonitorItem from "./components/MonitorItem.vue"
 import { useStatusBar } from "./composables/useStatusBar"
+import { activeTasks } from "./composables/useStatusBarTask"
 
 const props = defineProps<{
   plugin: Plugin
@@ -123,9 +125,6 @@ const {
   statisticsTooltip,
   todayActivityDisplay,
   todayTooltip,
-  backupDisplay,
-  backupLevel,
-  backupTooltip,
 } = useStatusBar()
 
 const statusBarShortcuts = ref<string[]>([])

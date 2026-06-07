@@ -19,41 +19,22 @@
  * 更高级的保护（如 keytar/操作系统凭据管理器）需配合 Electron 原生模块使用。
  */
 
-const ALGORITHM = "AES-GCM" as const
-const KEY_LENGTH = 256
+import {
+  aesGcmDecrypt,
+  aesGcmEncrypt,
+  arrayBufferToBase64,
+  base64ToUint8Array,
+  deriveAESKey,
+} from "@/utils/cryptoPrimitives"
+
 const PBKDF2_ITERATIONS = 100000
-const IV_LENGTH = 12 // AES-GCM 推荐 IV 长度
 const ENC_PREFIX = "enc:" // 加密值前缀，用于区分加密值与明文
 
 /** 内置应用盐值（变更此值会导致已有加密数据无法解密） */
-const APP_SALT = "siyuan-plugin-settings-crypto-v1"
+const APP_SALT = new TextEncoder().encode("siyuan-plugin-settings-crypto-v1")
 
 /** 缓存派生密钥，避免每次加解密都重新派生 */
 let cachedKey: CryptoKey | null = null
-
-/**
- * ArrayBuffer 转 Base64
- */
-function arrayBufferToBase64(buffer: ArrayBuffer | Uint8Array): string {
-  const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer)
-  let binary = ""
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i])
-  }
-  return btoa(binary)
-}
-
-/**
- * Base64 转 Uint8Array
- */
-function base64ToUint8Array(base64: string): Uint8Array {
-  const binary = atob(base64)
-  const bytes = new Uint8Array(binary.length)
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i)
-  }
-  return bytes
-}
 
 /**
  * 派生 AES-GCM 加密密钥
@@ -62,33 +43,8 @@ function base64ToUint8Array(base64: string): Uint8Array {
 async function getEncryptionKey(): Promise<CryptoKey> {
   if (cachedKey) return cachedKey
 
-  const encoder = new TextEncoder()
-  const keyMaterial = encoder.encode("siyuan-plugin-settings-key-v1")
-  const salt = encoder.encode(APP_SALT)
-
-  const pkcsKey = await crypto.subtle.importKey(
-    "raw",
-    keyMaterial,
-    "PBKDF2",
-    false,
-    ["deriveKey"],
-  )
-
-  cachedKey = await crypto.subtle.deriveKey(
-    {
-      name: "PBKDF2",
-      salt,
-      iterations: PBKDF2_ITERATIONS,
-      hash: "SHA-256",
-    },
-    pkcsKey,
-    {
-      name: ALGORITHM,
-      length: KEY_LENGTH,
-    },
-    false,
-    ["encrypt", "decrypt"],
-  )
+  const keyMaterial = new TextEncoder().encode("siyuan-plugin-settings-key-v1")
+  cachedKey = await deriveAESKey(keyMaterial, APP_SALT, PBKDF2_ITERATIONS)
 
   return cachedKey
 }
@@ -103,23 +59,14 @@ export async function encryptSetting(value: string): Promise<string> {
 
   try {
     const key = await getEncryptionKey()
-    const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH))
-    const encoder = new TextEncoder()
-    const data = encoder.encode(value)
-
-    const encrypted = await crypto.subtle.encrypt(
-      {
-        name: ALGORITHM,
-        iv,
-      },
+    const { iv, ciphertext } = await aesGcmEncrypt(
+      new TextEncoder().encode(value),
       key,
-      data,
     )
 
-    return `${ENC_PREFIX + arrayBufferToBase64(iv)}.${arrayBufferToBase64(encrypted)}`
+    return `${ENC_PREFIX + arrayBufferToBase64(iv)}.${arrayBufferToBase64(ciphertext)}`
   } catch (error) {
     console.error("设置加密失败:", error)
-    // 加密失败时回退到明文（避免用户配置丢失）
     return value
   }
 }
@@ -132,7 +79,6 @@ export async function encryptSetting(value: string): Promise<string> {
 export async function decryptSetting(encryptedValue: string): Promise<string> {
   if (!encryptedValue) return ""
 
-  // 没有前缀 → 未加密的旧数据，直接返回（向后兼容）
   if (!encryptedValue.startsWith(ENC_PREFIX)) {
     return encryptedValue
   }
@@ -144,28 +90,15 @@ export async function decryptSetting(encryptedValue: string): Promise<string> {
     return encryptedValue
   }
 
-  const ivBase64 = withoutPrefix.slice(0, dotIndex)
-  const dataBase64 = withoutPrefix.slice(dotIndex + 1)
-
   try {
     const key = await getEncryptionKey()
-    const iv = base64ToUint8Array(ivBase64)
-    const encrypted = base64ToUint8Array(dataBase64)
+    const iv = base64ToUint8Array(withoutPrefix.slice(0, dotIndex))
+    const ciphertext = base64ToUint8Array(withoutPrefix.slice(dotIndex + 1))
 
-    const decrypted = await crypto.subtle.decrypt(
-      {
-        name: ALGORITHM,
-        iv,
-      },
-      key,
-      encrypted,
-    )
-
-    const decoder = new TextDecoder()
-    return decoder.decode(decrypted)
+    const decrypted = await aesGcmDecrypt(ciphertext, key, iv)
+    return new TextDecoder().decode(decrypted)
   } catch (error) {
     console.error("设置解密失败:", error)
-    // 解密失败时返回原值（不影响启动流程）
     return encryptedValue
   }
 }

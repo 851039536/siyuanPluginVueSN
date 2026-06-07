@@ -11,6 +11,7 @@ import {
   decryptSetting,
   encryptSetting,
 } from "@/utils/settingsCrypto"
+import { getNodeModules } from "@/utils/nodeModules"
 
 /**
  * 插件配置接口
@@ -183,19 +184,6 @@ function isEnableKey(key: string): boolean {
 /**
  * 获取 fs 和 path 模块（Electron 环境可用）
  */
-function getNodeModules(): { fs: any, path: any } | null {
-  try {
-    const fs = require("node:fs")
-    const path = require("node:path")
-    return {
-      fs,
-      path,
-    }
-  } catch {
-    return null
-  }
-}
-
 /**
  * 从完整 settings 中提取 enable* 开关并同步持久化
  * 优先使用 fs.writeFileSync 写入文件，不支持时降级到 localStorage

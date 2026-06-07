@@ -2,6 +2,8 @@
  * 视频模块共享工具函数
  */
 
+import { getWorkspaceDir } from "@/api"
+
 /**
  * 格式化文件大小
  * @param bytes 字节数
@@ -42,14 +44,7 @@ export function calculateCompressionRate(
  */
 export async function getWorkspacePath(): Promise<string> {
   try {
-    const response = await fetch("/api/system/getConf", {
-      method: "POST",
-    })
-
-    if (response.ok) {
-      const data = await response.json()
-      return data?.data?.conf?.system?.workspaceDir || ""
-    }
+    return await getWorkspaceDir()
   } catch (error) {
     console.error("获取工作区路径失败:", error)
   }

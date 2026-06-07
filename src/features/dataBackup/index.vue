@@ -607,11 +607,9 @@ function updateWorkspacePath(root: string, shouldSave = false) {
 // 通过 API 获取工作区路径
 async function fetchWorkspacePath(): Promise<string | null> {
   try {
-    const response = await fetch("/api/system/getConf", { method: "POST" })
-    if (response.ok) {
-      const data = await response.json()
-      return data?.data?.conf?.system?.workspaceDir || null
-    }
+    const { getWorkspaceDir } = await import("@/api")
+    const dir = await getWorkspaceDir()
+    return dir || null
   } catch (e) {
     console.error("通过 API 获取工作区路径失败:", e)
   }

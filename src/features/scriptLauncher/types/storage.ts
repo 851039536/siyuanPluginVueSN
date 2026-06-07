@@ -16,19 +16,10 @@ import { Plugin } from "siyuan"
 import { getFile, putFile, removeFile } from "@/api"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
+import { getNodeFsPathOs } from "@/utils/nodeModules"
+import { getWorkspaceDir } from "@/api"
 
 const SC_DIR = "data/storage/sc"
-
-function getNodeModules(): { fs: any, path: any, os: any } | null {
-  try {
-    const fs = require("node:fs")
-    const path = require("node:path")
-    const os = require("node:os")
-    return { fs, path, os }
-  } catch {
-    return null
-  }
-}
 
 function detectLanguage(fileName: string): ScriptLanguage {
   const ext = fileName.split(".").pop()?.toLowerCase() || ""
@@ -59,9 +50,7 @@ export class ScriptStorage {
   async getWorkspaceRoot(): Promise<string | null> {
     if (this.cachedWorkspaceRoot) return this.cachedWorkspaceRoot
     try {
-      const resp = await fetch("/api/system/getConf", { method: "POST" })
-      const data = await resp.json()
-      const ws = data?.data?.conf?.system?.workspaceDir || ""
+      const ws = await getWorkspaceDir()
       if (ws) this.cachedWorkspaceRoot = ws
       return ws || null
     } catch { return null }
@@ -71,7 +60,7 @@ export class ScriptStorage {
   async getScriptPath(fileName: string): Promise<string | null> {
     const wsRoot = await this.getWorkspaceRoot()
     if (!wsRoot) return null
-    const node = getNodeModules()
+    const node = getNodeFsPathOs()
     if (!node) return null
     return node.path.join(wsRoot, this.scPath(fileName))
   }
@@ -203,7 +192,7 @@ export class ScriptStorage {
 
   /** 将脚本内容写入临时文件并返回路径（用于执行），用完需调用 removeTempFile */
   writeTempFile(script: Script, content: string): string | null {
-    const node = getNodeModules()
+    const node = getNodeFsPathOs()
     if (!node) return null
     const ext = this.getExtension(script.language)
     try {
@@ -216,7 +205,7 @@ export class ScriptStorage {
   }
 
   removeTempFile(filePath: string): void {
-    const node = getNodeModules()
+    const node = getNodeFsPathOs()
     if (!node) return
     try { if (node.fs.existsSync(filePath)) node.fs.unlinkSync(filePath) } catch { /* ignore */ }
   }

@@ -429,18 +429,18 @@ import {
 } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import { copyToClipboard } from "@/utils/domUtils"
 import { FloatingBoxStorage } from "../types/storage"
 
 const props = defineProps<{
   i18n?: Record<string, string>
   plugin?: any
+  onClose?: () => void
 }>()
 
 const emit = defineEmits<{
   (e: "close"): void
 }>()
-
-
 
 const showModal = ref(true)
 const showAddModal = ref(false)
@@ -687,17 +687,14 @@ async function deleteSkill(id: string) {
 }
 
 async function copyContent(content: string) {
-  try {
-    await navigator.clipboard.writeText(content)
-  } catch (err) {
-    console.error("Failed to copy content:", err)
-    alert("复制失败，请手动复制")
-  }
+  const ok = await copyToClipboard(content)
+  if (!ok) alert("复制失败，请手动复制")
 }
 
 function closeModal() {
   showModal.value = false
   emit("close")
+  props.onClose?.()
 }
 </script>
 

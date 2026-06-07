@@ -24,6 +24,7 @@ import {
   updateBlock,
 } from "@/api"
 import { PluginStorage } from "@/utils/pluginStorage"
+import { copyToClipboard } from "@/utils/domUtils"
 
 const IMAGE_EXT = /\.(?:png|jpg|jpeg|gif|svg|webp|bmp|ico|tiff|avif)$/i
 const BUILT_IN_CATEGORY_KEYS = new Set(["images", "net", "tool", "other"])
@@ -118,26 +119,8 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
   }
 
   async function copyPathToClipboard(path: string) {
-    try {
-      await navigator.clipboard.writeText(path)
-      showMsg(i18n.pathCopied)
-    }
-    catch {
-      try {
-        const ta = document.createElement("textarea")
-        ta.value = path
-        ta.style.position = "fixed"
-        ta.style.opacity = "0"
-        document.body.appendChild(ta)
-        ta.select()
-        document.execCommand("copy")
-        document.body.removeChild(ta)
-        showMsg(i18n.pathCopied)
-      }
-      catch {
-        showMsg(i18n.copyFailed || "复制失败")
-      }
-    }
+    const ok = await copyToClipboard(path)
+    showMsg(ok ? i18n.pathCopied : i18n.copyFailed || "复制失败")
   }
 
   // ── Data Loading ──

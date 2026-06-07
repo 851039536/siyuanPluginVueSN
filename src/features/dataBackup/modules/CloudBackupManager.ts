@@ -643,19 +643,6 @@ export class CloudBackupManager {
     await provider.delete(cloudKey)
   }
 
-  /**
-   * 自动上传最新备份（供自动备份流程调用）
-   */
-  async autoUploadLatest(localFilePath: string): Promise<boolean> {
-    try {
-      await this.upload(localFilePath)
-      return true
-    } catch (err) {
-      console.error("自动云备份失败:", err)
-      return false
-    }
-  }
-
   private createProvider(config: CloudProviderConfig): QiniuProvider | AlibabaProvider | TencentProvider {
     switch (config.type) {
       case "qiniu":

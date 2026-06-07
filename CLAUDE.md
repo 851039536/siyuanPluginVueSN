@@ -20,6 +20,7 @@
 | Node 模块 | 各自 `try { require("node:xxx") } catch` | `getNodeModules / getNodeProcessModules / getNodeFsPathOs` from `@/utils/nodeModules` |
 | SQL | `fetch("/api/query/sql")` | `sql()` from `@/api` |
 | 系统 API | `fetch("/api/...")` 直调 | 对应 `@/api` 封装函数（找不到则新增） |
+| API 导入 | `await import("@/api")` 动态导入 | `import { ... } from "@/api"` 静态导入（api.ts 已被多文件静态引用，动态导入产生 Vite 分块警告） |
 | 状态栏任务 | 绕过状态栏直接弹通知 | `useStatusBarTask` from `@/features/statusBar/composables/useStatusBarTask` |
 | 全局 siyuan | `(window as any).siyuan` | props 传入 Plugin 实例 |
 
@@ -306,6 +307,20 @@ const dir = await getWorkspaceDir() // "E:\\siyuan2"
 ### Vite 外部模块
 
 使用 `require("node:fs/path/os/child_process")` 的模块需在 `vite.config.ts` 的 `external` 中声明。
+
+## 构建与验证
+
+```bash
+pnpm vite build       # 构建，关注有无警告/错误
+######## 或 ########
+# pnpm vue-tsc --noEmit   # 仅类型检查（更快）
+```
+
+常见 Vite 警告：
+
+| 警告 | 原因 | 处理 |
+|------|------|------|
+| `is dynamically imported by ... but also statically imported` | 某模块同时被静态和动态导入 | 改为统一静态 `import` |
 
 ## 依赖
 

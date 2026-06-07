@@ -813,6 +813,7 @@
 
 <script setup lang="ts">
 import { showMessage } from "siyuan"
+import { getWorkspaceDir } from "@/api"
 import {
   computed,
   onMounted,
@@ -1055,7 +1056,6 @@ async function openVideoFolder() {
       const { shell } = window.require("electron")
 
       // 获取工作空间路径
-      const { getWorkspaceDir } = await import("@/api")
       const workspacePath = await getWorkspaceDir()
 
       if (workspacePath) {

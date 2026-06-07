@@ -4,6 +4,7 @@ import {
   ToolbarAction,
   ToolbarActionManager,
 } from "../types"
+import { copyToClipboard } from "@/utils/domUtils"
 import { HeatmapMarker } from "./HeatmapMarker"
 import {
   debounce,
@@ -399,37 +400,11 @@ export class FloatingToolbar {
       return
     }
 
-    try {
-      await navigator.clipboard.writeText(text)
+    const success = await copyToClipboard(text)
+    if (success) {
       showI18nMessage(this.plugin, "copySuccess", "已复制到剪贴板")
-    } catch (error) {
-      // 降级方案
-      this.fallbackCopy(text)
-    }
-  }
-
-  /**
-   * 降级复制方案
-   */
-  private fallbackCopy(text: string) {
-    const textarea = document.createElement("textarea")
-    textarea.value = text
-    textarea.style.cssText = "position:fixed;left:-9999px;opacity:0;"
-    document.body.appendChild(textarea)
-
-    try {
-      textarea.select()
-      const success = document.execCommand("copy")
-      if (success) {
-        showI18nMessage(this.plugin, "copySuccess", "已复制到剪贴板")
-      } else {
-        showI18nMessage(this.plugin, "copyFailed", "复制失败")
-      }
-    } catch (e) {
-      console.error("Fallback copy failed:", e)
+    } else {
       showI18nMessage(this.plugin, "copyFailed", "复制失败")
-    } finally {
-      document.body.removeChild(textarea)
     }
   }
 

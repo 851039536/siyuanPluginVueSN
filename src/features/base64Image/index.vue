@@ -345,6 +345,7 @@ import {
   ref,
   watch,
 } from "vue"
+import { triggerDownload } from "@/utils/domUtils"
 import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
@@ -808,14 +809,7 @@ const copyQrcodeBase64 = () =>
   copyToClipboard(qrcodeOutput.value.replace(/^data:image\/.*;base64,/, ""))
 
 // 下载函数
-const downloadFile = (url: string, filename: string) => {
-  const a = document.createElement("a")
-  a.href = url
-  a.download = filename
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-}
+const downloadFile = (url: string, filename: string) => triggerDownload(url, filename)
 
 const downloadBase64 = () => {
   const blob = new Blob([base64Output.value], { type: "text/plain" })

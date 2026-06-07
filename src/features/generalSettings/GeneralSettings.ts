@@ -14,6 +14,7 @@ import type {
 import { Plugin } from "siyuan"
 import { emitCustomEvent } from "@/utils/eventBus"
 import { createVueDockApp } from "@/utils/vueAppHelper"
+import { injectStyle, removeStyle } from "@/utils/domUtils"
 import GeneralSettingsPanel from "./index.vue"
 import { DocCountManager } from "./modules/DocCountManager"
 import { HighlightManager } from "./modules/HighlightManager"
@@ -227,23 +228,16 @@ export class GeneralSettings {
 
   private applyDocumentFontStyles(fontSettings: DocumentFontSettings) {
     try {
-      const existingStyle = document.getElementById("document-font-settings")
-      if (existingStyle) {
-        existingStyle.remove()
-      }
-
       if (!fontSettings.enabled) {
+        removeStyle("document-font-settings")
         return
       }
-
-      const style = document.createElement("style")
-      style.id = "document-font-settings"
 
       const fontFamily = fontSettings.fontFamily
         ? `'${fontSettings.fontFamily}', `
         : ""
 
-      style.textContent = `
+      const css = `
         /* 编辑器内容区域 - 基础样式 */
         .protyle-wysiwyg {
           font-family: ${fontFamily}var(--b3-font-family) !important;
@@ -321,7 +315,7 @@ export class GeneralSettings {
         }
       `
 
-      document.head.appendChild(style)
+      injectStyle("document-font-settings", css)
     } catch (error) {
       console.error("应用文档字体样式失败:", error)
     }
@@ -340,19 +334,12 @@ export class GeneralSettings {
 
   private applyTableStyles(tableSettings: TableStyleSettings) {
     try {
-      const existingStyle = document.getElementById("table-style-settings")
-      if (existingStyle) {
-        existingStyle.remove()
-      }
-
       if (!tableSettings.enabled) {
+        removeStyle("table-style-settings")
         return
       }
 
-      const style = document.createElement("style")
-      style.id = "table-style-settings"
-
-      style.textContent = `
+      const css = `
         /* 表格整体外框 */
         .protyle-wysiwyg table {
           border-collapse: collapse !important;
@@ -397,7 +384,7 @@ export class GeneralSettings {
         }
       `
 
-      document.head.appendChild(style)
+      injectStyle("table-style-settings", css)
     } catch (error) {
       console.error("应用表格样式失败:", error)
     }
@@ -515,19 +502,12 @@ export class GeneralSettings {
 
   private applyTabPinStyles(tabPinSettings: { enabled: boolean, displayMode: string, backgroundColor: string }) {
     try {
-      const existingStyle = document.getElementById("tab-pin-settings-style")
-      if (existingStyle) {
-        existingStyle.remove()
-      }
-
       if (!tabPinSettings.enabled) {
+        removeStyle("tab-pin-settings-style")
         return
       }
 
-      const style = document.createElement("style")
-      style.id = "tab-pin-settings-style"
-      style.textContent = generateTabPinCSS(tabPinSettings)
-      document.head.appendChild(style)
+      injectStyle("tab-pin-settings-style", generateTabPinCSS(tabPinSettings))
     } catch (error) {
       console.error("应用钉住页签样式失败:", error)
     }
@@ -535,17 +515,10 @@ export class GeneralSettings {
 
   private applyListStylesEnhanced(listSettings: ListStyleSettings) {
     try {
-      const existingStyle = document.getElementById("list-style-settings")
-      if (existingStyle) {
-        existingStyle.remove()
-      }
-
       if (!listSettings.enabled) {
+        removeStyle("list-style-settings")
         return
       }
-
-      const style = document.createElement("style")
-      style.id = "list-style-settings"
 
       // 有序列表颜色
       const orderedListCss = listSettings.orderedListColors
@@ -578,7 +551,7 @@ export class GeneralSettings {
         })
         .join("\n")
 
-      style.textContent = `
+      const css = `
         /* 有序列表样式 */
         ${orderedListCss}
 
@@ -597,7 +570,7 @@ export class GeneralSettings {
         }
       `
 
-      document.head.appendChild(style)
+      injectStyle("list-style-settings", css)
     } catch (error) {
       console.error("应用列表样式失败:", error)
     }
@@ -605,11 +578,6 @@ export class GeneralSettings {
 
   private applyHeadingStyles(settings: HeadingSettings) {
     try {
-      const style =
-        document.getElementById("heading-colors-style")
-        || document.createElement("style")
-      style.id = "heading-colors-style"
-
       const colors = settings.colors || {}
       const colorCss = Object.entries(colors)
         .map(([level, color]) => {
@@ -668,8 +636,7 @@ export class GeneralSettings {
       `
         : ""
 
-      style.textContent =
-        `${colorCss
+      const css = `${colorCss
         }\n${
           fontSizeCss
         }\n${
@@ -681,9 +648,7 @@ export class GeneralSettings {
         }\n${
           titleFontSizeCss}`
 
-      if (!style.parentElement) {
-        document.head.appendChild(style)
-      }
+      injectStyle("heading-colors-style", css)
     } catch (error) {
       console.error("应用标题样式失败:", error)
     }
@@ -726,7 +691,7 @@ export class GeneralSettings {
       if (settings.css) {
         this.applyListCSS(settings.css)
       } else {
-        this.removeExistingListStyles()
+        removeStyle("custom-list-styles")
       }
     } catch (error) {
       console.error("应用列表样式失败:", error)
@@ -735,23 +700,10 @@ export class GeneralSettings {
 
   private applyListCSS(css: string) {
     if (!css) {
-      this.removeExistingListStyles()
+      removeStyle("custom-list-styles")
       return
     }
-
-    this.removeExistingListStyles()
-
-    const styleElement = document.createElement("style")
-    styleElement.id = "custom-list-styles"
-    styleElement.textContent = css
-    document.head.appendChild(styleElement)
-  }
-
-  private removeExistingListStyles() {
-    const existingStyle = document.getElementById("custom-list-styles")
-    if (existingStyle) {
-      existingStyle.remove()
-    }
+    injectStyle("custom-list-styles", css)
   }
 
   private applyCodeBlockStyleFromSettings(settings: CodeBlockSettings) {

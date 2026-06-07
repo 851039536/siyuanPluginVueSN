@@ -6,6 +6,7 @@
  */
 import JSZip from "jszip"
 import { Plugin } from "siyuan"
+import { getNodeModules } from "@/utils/nodeModules"
 
 /** 备份结果 */
 export interface BackupResult {
@@ -13,17 +14,6 @@ export interface BackupResult {
   filePath: string
   size: number
   fileCount: number
-}
-
-/** 获取 fs/path 模块（Electron 环境） */
-function getNodeModules(): { fs: any, path: any } | null {
-  try {
-    const fs = require("node:fs")
-    const path = require("node:path")
-    return { fs, path }
-  } catch {
-    return null
-  }
 }
 
 /** 递归添加目录到 zip */

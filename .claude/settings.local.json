@@ -115,7 +115,9 @@
       "mcp__codegraph__codegraph_context",
       "Bash(node -e \"require\\('jszip'\\)\")",
       "Bash(npx vite *)",
-      "Bash(npx sass *)"
+      "Bash(npx sass *)",
+      "mcp__fetch__fetch",
+      "Bash(pnpm vite *)"
     ],
     "deny": [],
     "ask": []

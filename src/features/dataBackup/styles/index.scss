@@ -387,15 +387,6 @@ $radius-lg: 0.5rem;
   border: none;
   font-size: 0.6875rem;
 
-  &.restore {
-    background: var(--b3-theme-primary);
-    color: #fff;
-
-    &:hover {
-      background: var(--b3-theme-primary-light);
-    }
-  }
-
   &.delete {
     background: var(--b3-theme-error);
     color: #fff;
@@ -701,27 +692,5 @@ $radius-lg: 0.5rem;
     background: rgba(244, 67, 54, 0.1);
     color: #f44336;
     border: 1px solid rgba(244, 67, 54, 0.3);
-  }
-}
-
-// ========== 恢复完成提示 ==========
-.restore-script-section {
-  background: rgba(76, 175, 80, 0.06);
-  border: 1px solid rgba(76, 175, 80, 0.25);
-  border-radius: $radius-md;
-  padding: 0.75rem 1rem;
-  margin-bottom: 0.75rem;
-
-  .section-header {
-    margin-bottom: 0.5rem;
-  }
-}
-
-.restore-script-steps {
-  .step {
-    margin: 0.375rem 0;
-    font-size: 0.8125rem;
-    color: var(--b3-theme-on-surface);
-    line-height: 1.5;
   }
 }

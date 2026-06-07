@@ -1055,26 +1055,20 @@ async function openVideoFolder() {
       const { shell } = window.require("electron")
 
       // 获取工作空间路径
-      const response = await fetch("/api/system/getConf", {
-        method: "POST",
-      })
+      const { getWorkspaceDir } = await import("@/api")
+      const workspacePath = await getWorkspaceDir()
 
-      if (response.ok) {
-        const data = await response.json()
-        const workspacePath = data?.data?.conf?.system?.workspaceDir
+      if (workspacePath) {
+        const fullPath = `${workspacePath}/${storagePath.value}`
+        const result = await shell.openPath(fullPath)
 
-        if (workspacePath) {
-          const fullPath = `${workspacePath}/${storagePath.value}`
-          const result = await shell.openPath(fullPath)
-
-          if (result) {
-            console.error("打开文件夹失败:", result)
-          } else {
-            // showMessage('已打开视频文件夹', 2000, 'info')
-          }
+        if (result) {
+          console.error("打开文件夹失败:", result)
         } else {
-          // showMessage('无法获取工作空间路径', 2000, 'error')
+          // showMessage('已打开视频文件夹', 2000, 'info')
         }
+      } else {
+        // showMessage('无法获取工作空间路径', 2000, 'error')
       }
     } catch (error) {
       console.error("打开文件夹失败:", error)

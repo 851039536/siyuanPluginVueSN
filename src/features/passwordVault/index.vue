@@ -553,6 +553,7 @@ import {
   ref,
   watch,
 } from "vue"
+import { triggerBlobDownload } from "@/utils/domUtils"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
@@ -776,15 +777,7 @@ async function exportAllData() {
 
     const json = JSON.stringify(exportData, null, 2)
     const blob = new Blob([json], { type: "application/json" })
-    const url = URL.createObjectURL(blob)
-
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `password-vault-backup-${new Date().toISOString().split("T")[0]}.json`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    triggerBlobDownload(blob, `password-vault-backup-${new Date().toISOString().split("T")[0]}.json`)
 
     showMessage("数据已导出，请妥善保管", 3000, "info")
   } catch (error) {

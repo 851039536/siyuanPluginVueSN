@@ -3,6 +3,7 @@ import type {
   CacheStatus,
   DiskBrowserI18n,
 } from "../types"
+import { copyToClipboard as _copyToClipboard } from "@/utils/domUtils"
 
 const UNITS = ["B", "KB", "MB", "GB", "TB"]
 const K = 1024
@@ -109,32 +110,4 @@ export function formatDate(dateString: string, i18n: DiskBrowserI18n): string {
   }
 }
 
-export async function copyToClipboard(
-  text: string,
-): Promise<boolean> {
-  try {
-    if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(text)
-      return true
-    }
-    return fallbackCopyToClipboard(text)
-  } catch {
-    return fallbackCopyToClipboard(text)
-  }
-}
-
-function fallbackCopyToClipboard(text: string): boolean {
-  const textarea = document.createElement("textarea")
-  textarea.value = text
-  textarea.style.cssText = "position:fixed;opacity:0;"
-  document.body.appendChild(textarea)
-  textarea.select()
-  try {
-    document.execCommand("copy")
-    return true
-  } catch {
-    return false
-  } finally {
-    document.body.removeChild(textarea)
-  }
-}
+export { _copyToClipboard as copyToClipboard }

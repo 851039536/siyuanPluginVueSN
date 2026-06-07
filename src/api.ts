@@ -740,6 +740,35 @@ export async function exportResources(
   return request(url, data)
 }
 
+/**
+ * 导出笔记本为 Markdown
+ */
+export async function exportNotebookMd(notebook: string): Promise<string> {
+  const url = "/api/export/exportNotebookMd"
+  return request(url, { notebook })
+}
+
+/**
+ * 导出数据（用于备份）
+ */
+export async function exportData(tempDir: string): Promise<any> {
+  const url = "/api/export/exportData"
+  return request(url, { tempDir })
+}
+
+/**
+ * 导入数据（用于恢复备份）
+ */
+export async function importData(tempDir: string): Promise<any> {
+  const formData = new FormData()
+  formData.append("tempDir", tempDir)
+  const response = await fetch("/api/import/importData", {
+    method: "POST",
+    body: formData,
+  })
+  return response.json()
+}
+
 // **************************************** Convert ****************************************
 
 export type PandocArgs = string
@@ -810,6 +839,21 @@ export async function version(): Promise<string> {
 
 export async function currentTime(): Promise<number> {
   return request("/api/system/currentTime", {})
+}
+
+/**
+ * 获取思源配置（包含工作区路径等系统信息）
+ */
+export async function getConf(): Promise<any> {
+  return request("/api/system/getConf", {})
+}
+
+/**
+ * 获取工作区根目录路径
+ */
+export async function getWorkspaceDir(): Promise<string> {
+  const data = await getConf()
+  return data?.conf?.system?.workspaceDir || ""
 }
 
 /**

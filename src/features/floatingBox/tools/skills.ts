@@ -1,26 +1,10 @@
-import type { App as VueApp } from "vue"
-import type { FloatingTool } from "../types"
-import { Plugin } from "siyuan"
-import { createApp } from "vue"
+import type { Plugin } from "siyuan"
+import { createModalVueApp } from "@/utils/vueAppHelper"
+import type { ModalAppInstance } from "@/utils/vueAppHelper"
 import Skills from "../components/SkillsModal.vue"
+import type { FloatingTool } from "../types"
 
-let vueApp: VueApp | null = null
-let container: HTMLElement | null = null
-
-const CONTAINER_SELECTORS = [
-  "#workspace",
-  "body",
-  ".layout__center",
-  ".fn__flex-1",
-]
-
-function findContainer(): HTMLElement {
-  for (const selector of CONTAINER_SELECTORS) {
-    const target = document.querySelector(selector)
-    if (target) return target as HTMLElement
-  }
-  return document.body
-}
+let modal: ModalAppInstance | null = null
 
 function getI18nMap(plugin: Plugin) {
   const m = (plugin.i18n?.skills as unknown as Record<string, any>) || {}
@@ -28,7 +12,6 @@ function getI18nMap(plugin: Plugin) {
     skillsTitle: m.modal?.title || "技能库",
     close: m.modal?.close || "关闭",
     addSkill: m.modal?.addSkill || "添加技能",
-    editSkill: m.modal?.editSkill || "编辑技能",
     delete: m.modal?.delete || "删除",
     edit: m.modal?.edit || "编辑",
     search: m.modal?.search || "搜索技能...",
@@ -53,49 +36,21 @@ function getI18nMap(plugin: Plugin) {
   }
 }
 
-function closeSkillsModal() {
-  if (container) {
-    container.remove()
-    vueApp?.unmount()
-    vueApp = null
-    container = null
-  }
-}
-
 function showSkillsModal(plugin: Plugin) {
-  if (container) {
-    container.remove()
-    vueApp?.unmount()
-    vueApp = null
-    container = null
+  if (!modal) {
+    modal = createModalVueApp(Skills, {
+      maskId: "skills-modal-mask",
+      width: "80vw",
+      height: "80vh",
+      getCloseHandler: () => () => modal?.close(),
+      buildProps: () => ({
+        i18n: getI18nMap(plugin),
+        plugin,
+        onClose: () => modal?.close(),
+      }),
+    })
   }
-
-  container = document.createElement("div")
-  container.id = "skills-modal-container"
-  findContainer().appendChild(container)
-
-  vueApp = createApp(Skills, {
-    i18n: getI18nMap(plugin),
-    plugin,
-  })
-
-  try {
-    vueApp.mount(container)
-  } catch (error) {
-    console.error("Failed to mount skills modal:", error)
-  }
-
-  const handleEscape = (e: KeyboardEvent) => {
-    if (e.key === "Escape" && container) closeSkillsModal()
-  }
-  document.addEventListener("keydown", handleEscape);
-
-  (plugin as any).__skillsModal = {
-    destroy: () => {
-      document.removeEventListener("keydown", handleEscape)
-      closeSkillsModal()
-    },
-  }
+  modal.open()
 }
 
 export function createSkillsTool(plugin: Plugin): FloatingTool {

@@ -12,6 +12,7 @@ import {
   shallowRef,
 } from "vue"
 import { SIYUAN_API_BASE_URL } from "@/api"
+import { copyToClipboard as _copyToClipboard } from "@/utils/domUtils"
 
 import { ApiDebuggerStorage } from "../types/storage"
 
@@ -204,16 +205,7 @@ export function useApiDebugger(plugin: Plugin) {
   }
 
   async function copyToClipboard(text: string) {
-    try {
-      await navigator.clipboard.writeText(text)
-    } catch {
-      const textarea = document.createElement("textarea")
-      textarea.value = text
-      document.body.appendChild(textarea)
-      textarea.select()
-      document.execCommand("copy")
-      document.body.removeChild(textarea)
-    }
+    await _copyToClipboard(text)
   }
 
   return {

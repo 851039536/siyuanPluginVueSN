@@ -56,12 +56,12 @@
 
       <!-- 备份进度 -->
       <div
-        v-if="isBackingUp || isRestoring"
+        v-if="isBackingUp"
         class="progress-section"
       >
         <div class="section-header">
-          <span class="section-icon">{{ isRestoring ? '🔄' : '📊' }}</span>
-          <h4>{{ isRestoring ? '恢复进度' : '备份进度' }}</h4>
+          <span class="section-icon">📊</span>
+          <h4>备份进度</h4>
         </div>
         <div class="progress-bar-container">
           <div
@@ -81,22 +81,6 @@
         </div>
       </div>
 
-      <!-- 恢复完成提示 -->
-      <div
-        v-if="restoreCompleted && !isRestoring"
-        class="restore-script-section"
-      >
-        <div class="section-header">
-          <span class="section-icon">✅</span>
-          <h4>备份已恢复</h4>
-        </div>
-        <div class="restore-script-steps">
-          <p class="step">
-            数据已通过思源API导入，请 <strong>重启思源笔记</strong> 以使更改生效。
-          </p>
-        </div>
-      </div>
-
       <!-- 手动备份 -->
       <div class="backup-section">
         <div class="section-header">
@@ -106,7 +90,7 @@
         <div class="backup-actions-row">
           <button
             class="backup-btn primary"
-            :disabled="isBackingUp || isRestoring"
+            :disabled="isBackingUp"
             @click="performFullBackup"
           >
             <span
@@ -118,7 +102,7 @@
           </button>
           <button
             class="backup-btn secondary"
-            :disabled="isBackingUp || isRestoring || isPluginBackup"
+            :disabled="isBackingUp || isPluginBackup"
             @click="exportPluginSettings"
           >
             <span
@@ -354,7 +338,6 @@
               <div class="backup-actions">
                 <button
                   class="action-btn restore"
-                  :disabled="isRestoring"
                   @click="downloadFromCloud(file)"
                 >
                   下载
@@ -399,13 +382,6 @@
               <span class="backup-size">{{ formatFileSize(backup.size) }}</span>
             </div>
             <div class="backup-actions">
-              <button
-                class="action-btn restore"
-                :disabled="isRestoring"
-                @click="restoreBackup(backup)"
-              >
-                恢复
-              </button>
               <button
                 class="action-btn cloud"
                 :disabled="!cloudSyncEnabled"
@@ -476,7 +452,6 @@
 import type {
   BackupProgress,
   BackupResult,
-  RestoreProgress,
 } from "./modules/BackupManager"
 import type {
   CloudFileInfo,
@@ -519,11 +494,9 @@ const dbStorage = computed(() => props.plugin ? new DataBackupStorage(props.plug
 const workspacePath = ref("")
 const workspaceRoot = ref("")
 const isBackingUp = ref(false)
-const isRestoring = ref(false)
 const isLoading = ref(false)
 const isTestingCloud = ref(false)
 const lastBackupTime = ref("")
-const restoreCompleted = ref(false)
 const autoBackupEnabled = ref(false)
 const isMobile = ref(false)
 const backupFrequency = ref("daily")
@@ -541,7 +514,7 @@ let lastBackupTimestamp = 0
 const backupTask = useStatusBarTask("dataBackup", "ph:archive")
 
 // 备份进度
-const backupProgress = ref<BackupProgress | RestoreProgress>({
+const backupProgress = ref<BackupProgress>({
   phase: "scanning",
   currentFile: "",
   filesProcessed: 0,
@@ -921,61 +894,6 @@ async function onBackupComplete(result: BackupResult) {
   }
 }
 
-// 恢复备份
-async function restoreBackup(backup: { name: string, path: string }) {
-  if (isRestoring.value || !backupManager) return
-
-  const confirmRestore = confirm(
-    `确定要从备份 "${backup.name}" 恢复吗？\n\n⚠️ 此操作将覆盖当前工作区数据，恢复后需重启思源笔记！`,
-  )
-  if (!confirmRestore) return
-
-  isRestoring.value = true
-  restoreCompleted.value = false
-  backupProgress.value = {
-    phase: "reading",
-    currentFile: "",
-    filesProcessed: 0,
-    totalFiles: 0,
-    percent: 0,
-  }
-
-  try {
-    const result = await backupManager.restoreBackup(backup.path, {
-      onProgress: (p: RestoreProgress) => {
-        backupProgress.value = { ...p }
-        backupTask.progress({ label: "恢复中", percent: p.percent, phase: p.phase })
-      },
-    })
-
-    if (result.needRestart) {
-      restoreCompleted.value = true
-      showMessage(
-        `恢复完成（${result.restoredFiles} 个文件已通过思源API导入），请重启思源笔记以使更改生效`,
-        10000,
-        "info",
-      )
-    } else if (result.success) {
-      showMessage(
-        `恢复成功！已恢复 ${result.restoredFiles} 个文件`,
-        5000,
-        "info",
-      )
-    } else {
-      showMessage(
-        `恢复失败，${result.skippedFiles} 个文件未能恢复`,
-        5000,
-        "error",
-      )
-    }
-  } catch (error: any) {
-    console.error("恢复备份失败:", error)
-    showMessage(`恢复失败: ${error.message}`, 5000, "error")
-  } finally {
-    isRestoring.value = false
-  }
-}
-
 // 上传到云端
 async function uploadToCloud(backup: { name: string, path: string }) {
   if (!cloudBackupManager) return
@@ -1024,9 +942,8 @@ async function loadCloudBackups() {
 
 // 从云端下载
 async function downloadFromCloud(file: CloudFileInfo) {
-  if (!cloudBackupManager || isRestoring.value) return
+  if (!cloudBackupManager) return
 
-  isRestoring.value = true
   try {
     const localPath = `${workspaceRoot.value}/data-backup/${file.name}`
     await cloudBackupManager.download(file.key, localPath)
@@ -1034,8 +951,6 @@ async function downloadFromCloud(file: CloudFileInfo) {
     await loadBackupList()
   } catch (error: any) {
     showMessage(`下载失败: ${error.message}`, 3000, "error")
-  } finally {
-    isRestoring.value = false
   }
 }
 
@@ -1139,11 +1054,8 @@ async function exportPluginSettings() {
 
 // 关闭弹窗（备份进行中时提示确认）
 function handleClose() {
-  if (isBackingUp.value || isRestoring.value) {
-    const msg = isRestoring.value
-      ? "正在恢复数据，关闭窗口不会中断恢复。确定要隐藏窗口吗？"
-      : "正在备份中，关闭窗口不会中断备份。确定要隐藏窗口吗？"
-    if (!confirm(msg)) return
+  if (isBackingUp.value) {
+    if (!confirm("正在备份中，关闭窗口不会中断备份。确定要隐藏窗口吗？")) return
   }
   props.onClose?.()
 }

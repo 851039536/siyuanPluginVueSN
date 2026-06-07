@@ -128,24 +128,15 @@
             <span v-else>⚙️</span>
             <span>{{ i18n.pluginSettingsBackup || '插件设置备份' }}</span>
           </button>
-          <label
-            class="backup-btn secondary import-label"
-            :disabled="isPluginBackup"
-          >
-            <span
-              v-if="isPluginBackup"
-              class="loading-spinner"
-            ></span>
-            <span v-else>📥</span>
-            <span>{{ i18n.importSettings || '恢复设置' }}</span>
-            <input
-              type="file"
-              accept=".zip"
-              class="hidden-input"
-              @change="onImportFileChange"
-            />
-          </label>
         </div>
+        <p
+          v-if="pluginExportPath"
+          class="export-path"
+          :title="pluginExportPath"
+        >
+          <span class="export-path-label">备份路径：</span>
+          <span class="export-path-value">{{ pluginExportPath }}</span>
+        </p>
         <p class="backup-hint">
           全量备份包含工作区所有文件；插件设置备份仅打包插件配置，可用于跨设备迁移
         </p>
@@ -495,7 +486,6 @@ import { showMessage } from "siyuan"
 import { getWorkspaceDir } from "@/api"
 import {
   backupPluginData,
-  restoreFromUpload,
 } from "@/utils/settingsBackup"
 import { useStatusBarTask } from "../statusBar/composables/useStatusBarTask"
 import {
@@ -541,6 +531,7 @@ const backupTime = ref("03:00")
 const keepBackupCount = ref(7)
 const cloudSyncEnabled = ref(false)
 const isPluginBackup = ref(false)
+const pluginExportPath = ref("")
 const backupList = ref<
   Array<{ name: string, path: string, time: string, size: number }>
 >([])
@@ -1129,45 +1120,20 @@ async function deleteBackup(backup: { name: string, path: string }) {
   }
 }
 
-// ========== 插件设置导出/导入 ==========
+// ========== 插件设置导出 ==========
 
 async function exportPluginSettings() {
   if (!props.plugin || isPluginBackup.value || !workspaceRoot.value) return
   isPluginBackup.value = true
   try {
     const result = await backupPluginData(props.plugin, workspaceRoot.value)
+    pluginExportPath.value = result.filePath
     showMessage(`${props.i18n.exportSuccess || "备份成功"}: ${result.filePath}`, 5000, "info")
   } catch (error: any) {
     console.error("导出设置失败:", error)
     showMessage(`${props.i18n.exportFailed || "导出失败"}: ${error.message}`, 5000, "error")
   } finally {
     isPluginBackup.value = false
-  }
-}
-
-async function onImportFileChange(event: Event) {
-  const input = event.target as HTMLInputElement
-  const file = input.files?.[0]
-  if (!file || !props.plugin || !workspaceRoot.value) return
-
-  const confirmImport = confirm(
-    props.i18n.confirmImportSettings || "确定要恢复此备份吗？\n\n⚠️ 当前插件数据将被覆盖，建议先导出当前设置作为备份。",
-  )
-  if (!confirmImport) {
-    input.value = ""
-    return
-  }
-
-  isPluginBackup.value = true
-  try {
-    const result = await restoreFromUpload(file, props.plugin, workspaceRoot.value)
-    showMessage(`${props.i18n.importSuccess || "恢复完成"}: ${result.restored} 个文件已恢复，建议重启思源笔记`, 5000, "info")
-  } catch (error: any) {
-    console.error("导入设置失败:", error)
-    showMessage(`${props.i18n.importFailed || "导入失败"}: ${error.message}`, 5000, "error")
-  } finally {
-    isPluginBackup.value = false
-    input.value = ""
   }
 }
 

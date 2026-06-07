@@ -1069,13 +1069,9 @@
   "mobileBackupDisabled": "Mobile environment detected, backup feature has been automatically disabled to save data and storage",
   "pluginSettingsBackup": "Plugin Settings Backup",
   "exportSettings": "Export",
-  "importSettings": "Restore",
   "pluginSettingsBackupHint": "Backup plugin config only (no workspace notes). Useful for cross-device migration or data recovery.",
   "exportSuccess": "Backup saved",
   "exportFailed": "Backup failed",
-  "confirmImportSettings": "Restore this backup?\n\n⚠️ Current plugin data will be overwritten. Consider exporting first.",
-  "importSuccess": "Restore complete",
-  "importFailed": "Restore failed",
   "flashcardReading": {
     "panelTitle": "Flashcard Reading",
     "description": "Flashcard-style reading tool with category filtering",

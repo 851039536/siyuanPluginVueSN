@@ -234,6 +234,23 @@ $radius-lg: 0.5rem;
   margin: 0;
 }
 
+.export-path {
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-size: 0.6875rem;
+  color: var(--b3-theme-primary);
+  margin: 0.25rem 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &-label {
+    opacity: 0.6;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+}
+
 // 加载动画
 .loading-spinner {
   width: 0.875rem;

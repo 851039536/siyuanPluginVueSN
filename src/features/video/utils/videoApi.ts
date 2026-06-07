@@ -3,6 +3,12 @@
  */
 import { Plugin } from "siyuan"
 import {
+  getFile,
+  putFile,
+  readDir,
+  removeFile,
+} from "@/api"
+import {
   decryptVideo,
   encryptVideo,
   getEncryptedFileName,
@@ -47,21 +53,9 @@ function isVideoFile(fileName: string): boolean {
  */
 async function getFileSize(filePath: string): Promise<number> {
   try {
-    const response = await fetch("/api/file/getFile", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        path: filePath,
-      }),
-    })
-
-    if (response.ok) {
-      const blob = await response.blob()
+    const blob = await getFile(filePath)
+    if (blob) {
       return blob.size
-    } else {
-      console.warn("获取文件大小失败:", filePath, response.status)
     }
   } catch (error) {
     console.error("获取文件大小异常:", filePath, error)
@@ -80,25 +74,13 @@ async function scanVideoDirectory(
   const fullPath = currentPath ? `${basePath}/${currentPath}` : basePath
 
   try {
-    // 读取目录内容
-    const response = await fetch("/api/file/readDir", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        path: fullPath,
-      }),
-    })
+    const items = await readDir(fullPath)
 
-    const result = await response.json()
-
-    if (result.code !== 0 || !result.data) {
+    if (!items) {
       return videos
     }
 
-    // 遍历目录内容
-    for (const item of result.data) {
+    for (const item of items) {
       const itemPath = currentPath ? `${currentPath}/${item.name}` : item.name
       const itemFullPath = `${basePath}/${itemPath}`
 
@@ -166,20 +148,9 @@ export async function getVideoCategories(plugin: Plugin): Promise<string[]> {
  */
 export async function getVideoUrl(videoPath: string): Promise<string> {
   try {
-    const response = await fetch("/api/file/getFile", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        path: videoPath,
-      }),
-    })
+    const blob = await getFile(videoPath)
 
-    if (response.ok) {
-      const blob = await response.blob()
-
-      // 检查是否为加密视频，自动解密
+    if (blob) {
       if (isEncryptedVideo(videoPath)) {
         const encryptedData = new Uint8Array(await blob.arrayBuffer())
         const decryptedData = await decryptVideo(encryptedData)
@@ -189,10 +160,9 @@ export async function getVideoUrl(videoPath: string): Promise<string> {
         return URL.createObjectURL(decryptedBlob)
       }
 
-      // 创建 Blob URL 用于视频播放
       return URL.createObjectURL(blob)
     } else {
-      console.error("获取视频文件失败:", videoPath, response.status)
+      console.error("获取视频文件失败:", videoPath)
       return ""
     }
   } catch (error) {
@@ -212,45 +182,19 @@ export async function encryptVideoFile(
   doubleCompress: boolean = false,
 ): Promise<string> {
   try {
-    // 读取原始视频文件
-    const response = await fetch("/api/file/getFile", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        path: videoPath,
-      }),
-    })
-
-    if (!response.ok) {
+    const blob = await getFile(videoPath)
+    if (!blob) {
       throw new Error("读取视频文件失败")
     }
 
-    const blob = await response.blob()
     const videoData = new Uint8Array(await blob.arrayBuffer())
 
-    // 加密视频（仅压缩）
     const encryptedData = await encryptVideo(videoData, doubleCompress)
 
-    // 生成加密文件路径
     const encryptedPath = getEncryptedFileName(videoPath, doubleCompress)
 
-    // 保存加密文件
-    const formData = new FormData()
-    formData.append("path", encryptedPath)
-    formData.append("file", new Blob([encryptedData.buffer as ArrayBuffer]))
+    await putFile(encryptedPath, false, new Blob([encryptedData.buffer as ArrayBuffer]))
 
-    const uploadResponse = await fetch("/api/file/putFile", {
-      method: "POST",
-      body: formData,
-    })
-
-    if (!uploadResponse.ok) {
-      throw new Error("保存加密文件失败")
-    }
-
-    // 删除原始文件
     await deleteVideoFile(videoPath)
 
     return encryptedPath
@@ -265,19 +209,7 @@ export async function encryptVideoFile(
  */
 async function deleteVideoFile(videoPath: string): Promise<void> {
   try {
-    const response = await fetch("/api/file/removeFile", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        path: videoPath,
-      }),
-    })
-
-    if (!response.ok) {
-      console.warn("删除原始文件失败:", videoPath)
-    }
+    await removeFile(videoPath)
   } catch (error) {
     console.error("删除文件异常:", error)
   }
@@ -329,45 +261,19 @@ export async function encryptAllVideos(
  */
 export async function decryptVideoFile(videoPath: string): Promise<string> {
   try {
-    // 读取加密视频文件
-    const response = await fetch("/api/file/getFile", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        path: videoPath,
-      }),
-    })
-
-    if (!response.ok) {
+    const blob = await getFile(videoPath)
+    if (!blob) {
       throw new Error("读取加密文件失败")
     }
 
-    const blob = await response.blob()
     const encryptedData = new Uint8Array(await blob.arrayBuffer())
 
-    // 解密视频
     const decryptedData = await decryptVideo(encryptedData)
 
-    // 生成解密文件路径（去除 .sn 或 .sn2 后缀）
     const decryptedPath = getOriginalFileName(videoPath)
 
-    // 保存解密文件
-    const formData = new FormData()
-    formData.append("path", decryptedPath)
-    formData.append("file", new Blob([decryptedData.buffer as ArrayBuffer]))
+    await putFile(decryptedPath, false, new Blob([decryptedData.buffer as ArrayBuffer]))
 
-    const uploadResponse = await fetch("/api/file/putFile", {
-      method: "POST",
-      body: formData,
-    })
-
-    if (!uploadResponse.ok) {
-      throw new Error("保存解密文件失败")
-    }
-
-    // 删除加密文件
     await deleteVideoFile(videoPath)
 
     return decryptedPath

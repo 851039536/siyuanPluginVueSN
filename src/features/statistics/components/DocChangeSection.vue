@@ -146,6 +146,7 @@
             >
               <span class="changed-doc-icon">+</span>
               <span class="changed-doc-title">{{ doc.title || '无标题' }}</span>
+              <span v-if="doc.time" class="changed-doc-time">{{ doc.time }}</span>
             </div>
           </div>
           <div
@@ -164,6 +165,7 @@
             >
               <span class="changed-doc-icon">~</span>
               <span class="changed-doc-title">{{ doc.title || '无标题' }}</span>
+              <span v-if="doc.time" class="changed-doc-time">{{ doc.time }}</span>
             </div>
           </div>
         </div>
@@ -774,6 +776,16 @@ function setDocDateToday() {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .changed-doc-time {
+    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.35;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
   }
 }
 </style>

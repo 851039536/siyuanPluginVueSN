@@ -98,18 +98,11 @@
           :i18n="i18n"
         />
 
-        <!-- 文档变化详情（日期范围 + 柱状图 + 详情列表） -->
+        <!-- 文档变化详情（日期范围 + 柱状图 + 详情列表 + 最近更新） -->
         <DocChangeSection
           :on-get-date-changed-docs="getDateChangedDocs"
           :on-get-date-range-change-stats="getDateRangeChangeStats"
-          :i18n="i18n"
-        />
-
-        <!-- 最近更新的文档 -->
-        <RecentUpdatedDocs
-          ref="recentUpdatedDocsRef"
-          :title="i18n.recentUpdatedDocs || '最近更新'"
-          :empty-text="i18n.noRecentDocs || '暂无最近更新的文档'"
+          :on-get-recent-updated-docs="getRecentUpdatedDocs"
           :i18n="i18n"
         />
 
@@ -275,7 +268,6 @@ import DocChangeSection from "./components/DocChangeSection.vue"
 import HeatmapCard from "./components/HeatmapCard.vue"
 import MilestonesCard from "./components/MilestonesCard.vue"
 import NotebookActivityTrend from "./components/NotebookActivityTrend.vue"
-import RecentUpdatedDocs from "./components/RecentUpdatedDocs.vue"
 import NotebookBlockTypeChart from "./components/NotebookBlockTypeChart.vue"
 import NotebookWordPie from "./components/NotebookWordPie.vue"
 import ReportView from "./components/ReportView.vue"
@@ -597,7 +589,6 @@ watch([viewMode, dayRange, monthYearRange, selectedYear], () => {
   refreshData()
 })
 
-const recentUpdatedDocsRef = ref<InstanceType<typeof RecentUpdatedDocs> | null>(null)
 const notebookStatsLoaded = ref(false)
 const heatmapActivityMap = ref(new Map<string, number>())
 const heatmapLoaded = ref(false)
@@ -612,7 +603,6 @@ async function refreshData(): Promise<void> {
   try {
     await refreshCore()
     await loadHistoricalData()
-    recentUpdatedDocsRef.value?.loadDocs(() => getRecentUpdatedDocs(20))
     if (activeTab.value === 'notebookDistribution' && !notebookStatsLoaded.value) {
       await loadNotebookStats()
     }

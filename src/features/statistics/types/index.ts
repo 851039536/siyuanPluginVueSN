@@ -28,6 +28,7 @@ export interface RecentUpdatedDoc {
   id: string
   title: string
   updated: string
+  created: string
   timeLabel: string
   notebookName: string
 }

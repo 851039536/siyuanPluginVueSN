@@ -9,7 +9,7 @@
             v-for="mode in modeOptions"
             :key="mode.value"
             class="toggle-btn"
-            :class="[{ active: diffMode === mode.value }]"
+            :class="{ active: diffMode === mode.value }"
             @click="updateMode(mode.value)"
           >
             {{ mode.label }}
@@ -46,7 +46,7 @@
             height="16"
             fill="currentColor"
           >
-            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+            <path :d="ICONS.close" />
           </svg>
           <span>{{ $t('clear') }}</span>
         </button>
@@ -61,7 +61,7 @@
             height="16"
             fill="currentColor"
           >
-            <path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z" />
+            <path :d="ICONS.swap" />
           </svg>
           <span>{{ $t('swap') }}</span>
         </button>
@@ -101,7 +101,7 @@
                   height="14"
                   fill="currentColor"
                 >
-                  <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z" />
+                  <path :d="ICONS.file" />
                 </svg>
               </button>
             </div>
@@ -122,7 +122,7 @@
               height="32"
               fill="currentColor"
             >
-              <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" />
+              <path :d="ICONS.cloudUpload" />
             </svg>
             <span>{{ $t('dropFile') }}</span>
           </div>
@@ -157,7 +157,7 @@
                   height="14"
                   fill="currentColor"
                 >
-                  <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z" />
+                  <path :d="ICONS.file" />
                 </svg>
               </button>
             </div>
@@ -178,7 +178,7 @@
               height="32"
               fill="currentColor"
             >
-              <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" />
+              <path :d="ICONS.cloudUpload" />
             </svg>
             <span>{{ $t('dropFile') }}</span>
           </div>
@@ -201,7 +201,7 @@
           height="18"
           fill="currentColor"
         >
-          <path d="M7 10l5 5 5-5z" />
+          <path :d="ICONS.chevronDown" />
         </svg>
       </div>
 
@@ -270,6 +270,15 @@ const dragState = reactive({
 
 // 固定使用浅色主题
 const diffTheme = "light"
+
+// 内联 SVG 图标路径（模板复用去重）
+const ICONS = {
+  close: "M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z",
+  swap: "M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z",
+  file: "M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z",
+  cloudUpload: "M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z",
+  chevronDown: "M7 10l5 5 5-5z",
+}
 
 // 选项数据
 const FONT_SIZE_OPTIONS = [

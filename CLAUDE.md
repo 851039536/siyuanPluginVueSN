@@ -110,6 +110,20 @@ export function registerMyFeature(plugin: Plugin) {
 }
 ```
 
+### UI 风格：Codex
+
+所有 UI 组件默认使用 **Codex 风格**——代码文档式设计语言，强调结构化、可读性、技术感。
+
+核心规范：
+- **等宽字体**：版本号、路径、日期、标签等代码类文本使用 `font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace`
+- **大写标签**：元信息 key 使用 `font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.45`
+- **边框卡片**：使用 `border: 1px solid var(--b3-border-color)` 而非阴影，hover 时边框变主题色
+- **按钮风格**：主按钮 `vp-btn--primary`（实底），次按钮 `vp-btn--ghost`（描边），图标按钮带边框
+- **分割线**：section 间使用 `border-bottom: 1px solid` 或 `1px dashed` 分隔
+- **focus 发光**：输入框 focus 时 `box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest)`
+
+参考实现：`src/features/superPanel/components/VersionPanel.vue` + `styles/index.scss` 中的 `.vp-*` 系列类名。
+
 ## API 参考
 
 ### 存储

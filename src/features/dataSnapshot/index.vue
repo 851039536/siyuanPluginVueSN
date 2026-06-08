@@ -32,15 +32,15 @@ const {
   switchTab,
 } = useDataSnapshot(props.plugin)
 
-const restoreTarget = ref<string | null>(null)
+const restoreTarget = ref<SnapshotInfo | null>(null)
 
-function confirmRestore(id: string) {
-  restoreTarget.value = id
+function confirmRestore(snap: SnapshotInfo) {
+  restoreTarget.value = snap
 }
 
 function doRestore() {
   if (restoreTarget.value) {
-    restoreSnapshot(restoreTarget.value)
+    restoreSnapshot(restoreTarget.value.id)
     restoreTarget.value = null
   }
 }
@@ -158,7 +158,7 @@ function formatSize(s: SnapshotInfo): string {
               <button
                 class="ds-btn ds-btn--small"
                 :disabled="op.restoring === snap.id"
-                @click="confirmRestore(snap.id)"
+                @click="confirmRestore(snap)"
               >
                 <IconWrapper name="refreshLeft" :size="12" />
                 {{ i18n.restore || "恢复" }}
@@ -249,7 +249,13 @@ function formatSize(s: SnapshotInfo): string {
     <!-- Restore confirm -->
     <div v-if="restoreTarget" class="ds-confirm" @click.self="cancelRestore">
       <div class="ds-confirm__box">
-        <div class="ds-confirm__text">{{ i18n.restoreConfirm || "确定要恢复此快照吗？当前数据将被覆盖。" }}</div>
+        <div class="ds-confirm__text">
+          {{ i18n.restoreConfirm || "确定要恢复此快照吗？当前数据将被覆盖。" }}
+          <div style="margin-top:8px;padding:8px;background:var(--b3-theme-surface);border-radius:4px;font-size:12px;">
+            <div><strong>{{ i18n.memo || "备注" }}:</strong> {{ restoreTarget.memo || restoreTarget.id }}</div>
+            <div><strong>{{ i18n.createdAt || "时间" }}:</strong> {{ formatTime(restoreTarget) }}</div>
+          </div>
+        </div>
         <div class="ds-confirm__actions">
           <button class="ds-btn" @click="cancelRestore">{{ i18n.cancel || "取消" }}</button>
           <button class="ds-btn ds-btn--danger" @click="doRestore">{{ i18n.confirmRestore || "确认恢复" }}</button>

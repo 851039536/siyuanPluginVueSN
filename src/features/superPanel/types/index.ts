@@ -13,6 +13,7 @@ import { reactive } from "vue"
 import { FEATURE_ICONS } from "@/config/icons"
 import { featureIdToSettingKey } from "@/config/settings"
 import { FEATURE_CONFIG } from "@/features/config"
+import { getTextDiffManager } from "@/features/textDiff"
 import { emitCustomEvent } from "@/utils/eventBus"
 import { replaceTopBarIcon } from "@/utils/iconHelper"
 import { PluginStorage } from "@/utils/pluginStorage"
@@ -277,7 +278,7 @@ export class SuperPanelManager {
 
     // 特殊处理：文本对比（直接调用 manager，不走事件）
     if (action === "openTextDiff") {
-      (this.plugin as any).__textDiff?.toggle?.()
+      getTextDiffManager()?.toggle()
       this.close()
       return
     }

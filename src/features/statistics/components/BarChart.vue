@@ -20,7 +20,7 @@
             class="bar"
             :class="{ today: isToday(item.date) }"
             :style="{ height: `${getBarHeight(item.words)}px` }"
-            :title="`${item.dateLabel}: ${formatNumber(item.words)} ${i18n.wordsUnit}`"
+            :title="`${item.dateLabel}: ${formatNumber(item.words)} ${i18n.wordsUnit || '字'}`"
           ></div>
           <div
             class="bar-label"

@@ -947,3 +947,15 @@ export async function reloadProtyle(blockId: string): Promise<void> {
     throw error
   }
 }
+
+// **************************************** Repo / Cloud Sync ****************************************
+
+/**
+ * 将指定的本地历史快照上传到当前配置的云端同步服务
+ * @param id 要上传的本地快照 ID
+ * @param tag 快照关联的标签名
+ */
+export async function uploadCloudSnapshot(id: string, tag: string): Promise<null> {
+  const url = "/api/repo/uploadCloudSnapshot"
+  return request(url, { id, tag })
+}

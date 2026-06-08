@@ -994,6 +994,9 @@ export interface SnapshotInfo {
   hTagUpdated?: string
   files?: SnapshotContentFile[] | null
   typesCount?: Array<{ type: string, count: number }>
+  systemID?: string
+  systemName?: string
+  systemOS?: string
 }
 
 /** 快照内容/差异文件条目 */

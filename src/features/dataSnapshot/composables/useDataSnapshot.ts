@@ -1,8 +1,6 @@
 import type { Plugin } from "siyuan"
 import type {
   CloudSnapshotTag,
-  SnapshotDetail,
-  SnapshotDiffData,
   SnapshotInfo,
   SnapshotOperationState,
   SnapshotView,
@@ -17,7 +15,6 @@ import {
   createSnapshot,
   downloadCloudSnapshot,
   getCloudRepoTagSnapshots,
-  getRepoSnapshotContent,
   getRepoSnapshots,
   importRepo,
   removeCloudRepoTag,
@@ -32,11 +29,8 @@ export function useDataSnapshot(plugin: Plugin) {
   const currentView = ref<SnapshotView>("local")
   const snapshots = ref<SnapshotInfo[]>([])
   const cloudTags = ref<CloudSnapshotTag[]>([])
-  const selectedSnapshot = ref<SnapshotDetail | null>(null)
-  const diffData = ref<SnapshotDiffData | null>(null)
+  const selectedSnapshot = ref<SnapshotInfo | null>(null)
   const memo = ref("")
-  const compareMode = ref(false)
-  const compareIds = ref<[string, string] | null>(null)
   const loading = ref(false)
   const cloudLoading = ref(false)
 
@@ -77,20 +71,9 @@ export function useDataSnapshot(plugin: Plugin) {
     }
   }
 
-  async function viewSnapshot(id: string) {
-    op.loadingContent = id
-    try {
-      const files = await getRepoSnapshotContent(id)
-      const snapshot = snapshots.value.find(s => s.id === id)
-      if (snapshot) {
-        selectedSnapshot.value = { snapshot, files }
-        currentView.value = "detail"
-      }
-    } catch {
-      // ignore
-    } finally {
-      op.loadingContent = null
-    }
+  function viewSnapshot(snap: SnapshotInfo) {
+    selectedSnapshot.value = snap
+    currentView.value = "detail"
   }
 
   async function restoreSnapshot(id: string) {
@@ -148,55 +131,14 @@ export function useDataSnapshot(plugin: Plugin) {
     }
   }
 
-  function toggleCompare(id: string) {
-    if (!compareIds.value) {
-      compareIds.value = [id, ""] as [string, string]
-    } else if (compareIds.value[0] === id) {
-      compareIds.value = null
-    } else if (!compareIds.value[1]) {
-      compareIds.value = [compareIds.value[0], id]
-    } else {
-      compareIds.value = [id, ""] as [string, string]
-    }
-  }
-
-  async function compareSnapshots() {
-    if (!compareIds.value || !compareIds.value[0] || !compareIds.value[1]) return
-    const [idA, idB] = compareIds.value
-    const snapA = snapshots.value.find(s => s.id === idA)
-    const snapB = snapshots.value.find(s => s.id === idB)
-    if (!snapA || !snapB) return
-
-    loading.value = true
-    try {
-      const [filesA, filesB] = await Promise.all([
-        getRepoSnapshotContent(idA),
-        getRepoSnapshotContent(idB),
-      ])
-      diffData.value = {
-        snapshotA: { snapshot: snapA, files: filesA },
-        snapshotB: { snapshot: snapB, files: filesB },
-      }
-      currentView.value = "diff"
-    } catch {
-      // ignore
-    } finally {
-      loading.value = false
-    }
-  }
-
   function backToList() {
     currentView.value = "local"
     selectedSnapshot.value = null
-    diffData.value = null
-    compareMode.value = false
-    compareIds.value = null
   }
 
   function switchTab(tab: SnapshotView) {
     currentView.value = tab
     selectedSnapshot.value = null
-    diffData.value = null
     if (tab === "cloud" && cloudTags.value.length === 0) {
       loadCloudSnapshots()
     }
@@ -211,10 +153,7 @@ export function useDataSnapshot(plugin: Plugin) {
     snapshots,
     cloudTags,
     selectedSnapshot,
-    diffData,
     memo,
-    compareMode,
-    compareIds,
     loading,
     cloudLoading,
     op,
@@ -226,8 +165,6 @@ export function useDataSnapshot(plugin: Plugin) {
     loadCloudSnapshots,
     downloadFromCloud,
     removeCloudTag,
-    toggleCompare,
-    compareSnapshots,
     backToList,
     switchTab,
   }

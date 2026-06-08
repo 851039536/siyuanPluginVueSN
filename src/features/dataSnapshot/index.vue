@@ -54,7 +54,9 @@ function cancelRestore() {
 }
 
 function formatTime(s: SnapshotInfo): string {
+  if (s.hCreated) return s.hCreated
   if (s.hCreateTime) return s.hCreateTime
+  if (s.created) return new Date(s.created).toLocaleString()
   const raw = s.createTime
   if (!raw) return ""
   const num = Number(raw)

@@ -77,7 +77,6 @@
         <svg
           class="trend-chart-svg"
           :viewBox="`0 0 ${chartWidth} ${chartHeight}`"
-          preserveAspectRatio="none"
         >
           <!-- 网格线 -->
           <line
@@ -154,10 +153,6 @@
         <div
           v-if="hoveredIndex >= 0 && chartPoints[hoveredIndex]"
           class="chart-tooltip"
-          :style="{
-            left: tooltipLeft,
-            top: tooltipTop,
-          }"
         >
           <div class="tooltip-date">
             {{ historicalData[hoveredIndex]?.dateLabel || historicalData[hoveredIndex]?.date }}
@@ -376,16 +371,22 @@ const metricTabs = computed(() => [
 const activeMetricObj = computed(() => metricTabs.value.find((t) => t.key === activeMetric.value) || metricTabs.value[0])
 
 // 图表尺寸参数
-const chartWidth = 600
 const chartHeight = 200
 const chartPaddingTop = 16
 const chartPaddingBottom = 24
 const chartPaddingLeft = 42
 const chartPaddingRight = 10
+const MIN_POINT_SPACING = 14
+
+const chartWidth = computed(() => {
+  const plotWidth = props.historicalData.length * MIN_POINT_SPACING
+  return Math.max(600, chartPaddingLeft + plotWidth + chartPaddingRight)
+})
+
 const hitWidth = computed(() => {
   const count = props.historicalData.length
   if (count <= 1) return 20
-  const availWidth = chartWidth - chartPaddingLeft - chartPaddingRight
+  const availWidth = chartWidth.value - chartPaddingLeft - chartPaddingRight
   return Math.max(10, availWidth / count)
 })
 
@@ -415,7 +416,7 @@ const chartMax = computed(() => {
 const drawArea = computed(() => ({
   x: chartPaddingLeft,
   y: chartPaddingTop,
-  w: chartWidth - chartPaddingLeft - chartPaddingRight,
+  w: chartWidth.value - chartPaddingLeft - chartPaddingRight,
   h: chartHeight - chartPaddingTop - chartPaddingBottom,
 }))
 
@@ -518,23 +519,6 @@ function isLastPoint(idx: number): boolean {
   return idx === props.historicalData.length - 1
 }
 
-// Tooltip 定位
-const tooltipLeft = computed(() => {
-  if (hoveredIndex.value < 0 || !chartPoints.value[hoveredIndex.value]) return "0px"
-  const pt = chartPoints.value[hoveredIndex.value]
-  // SVG 用 viewBox 600，容器实际宽度由 CSS 控制，需要百分比换算
-  const pct = (pt.x / chartWidth) * 100
-  // 如果 tooltip 在右侧，向左偏移
-  if (pct > 70) return `calc(${pct}% - 120px)`
-  return `${pct}%`
-})
-
-const tooltipTop = computed(() => {
-  if (hoveredIndex.value < 0 || !chartPoints.value[hoveredIndex.value]) return "0px"
-  const pt = chartPoints.value[hoveredIndex.value]
-  const pct = (pt.y / chartHeight) * 100
-  return `calc(${pct}% - 40px)`
-})
 
 // 计算周期对比数据
 const comparisonStats = computed(() => {
@@ -843,10 +827,10 @@ function getDiff(
     .trend-chart-container {
       position: relative;
       padding: 8px 4px 4px;
-      overflow: hidden;
+      overflow-x: auto;
+      overflow-y: hidden;
 
       .trend-chart-svg {
-        width: 100%;
         height: 160px;
         display: block;
 
@@ -911,7 +895,11 @@ function getDiff(
       }
 
       .chart-tooltip {
-        position: absolute;
+        position: sticky;
+        top: 4px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: fit-content;
         padding: 6px 10px;
         background: var(--b3-theme-surface);
         border: 1px solid var(--b3-theme-primary);
@@ -920,7 +908,7 @@ function getDiff(
         font-size: 11px;
         pointer-events: none;
         z-index: 10;
-        min-width: 80px;
+        white-space: nowrap;
 
         .tooltip-date {
           font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;

@@ -461,6 +461,9 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+// Codex design language — mono font stack
+$codex-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
+
 .text-diff-container {
   height: 100%;
   display: flex;
@@ -470,14 +473,15 @@ onMounted(() => {
   overflow: hidden;
 }
 
-// 工具栏
+// ==================== Toolbar ====================
+
 .diff-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
+  padding: 10px 14px;
   background: var(--b3-theme-surface);
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  border-bottom: 1px solid var(--b3-border-color);
   gap: 16px;
   flex-shrink: 0;
 }
@@ -501,70 +505,95 @@ onMounted(() => {
   gap: 6px;
 }
 
+// Codex uppercase meta label
 .option-label {
-  font-size: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.45;
   color: var(--b3-theme-on-surface);
-  font-weight: 500;
   white-space: nowrap;
 }
 
-// 切换按钮
+// ==================== Toggle Buttons ====================
+
 .toggle-btn {
   padding: 4px 10px;
   font-size: 12px;
-  border: 1px solid var(--b3-theme-surface-lighter);
+  border: 1px solid var(--b3-border-color);
   border-radius: 4px;
   background: transparent;
   color: var(--b3-theme-on-surface);
   cursor: pointer;
   white-space: nowrap;
+  transition: all 0.12s;
 
+  // Codex primary (solid) button
   &.active {
     background: var(--b3-theme-primary);
-    color: var(--b3-theme-on-primary);
+    color: #fff;
     border-color: var(--b3-theme-primary);
+
+    &:hover {
+      opacity: 0.9;
+    }
   }
 
+  // Codex ghost button hover
   &:hover:not(.active) {
     background: var(--b3-theme-surface-lighter);
   }
 }
 
-// 字体选择
+// ==================== Font Select ====================
+
 .font-select {
-  padding: 4px 8px;
+  padding: 6px 10px;
   font-size: 12px;
-  border: 1px solid var(--b3-theme-surface-lighter);
+  border: 1px solid var(--b3-border-color);
   border-radius: 4px;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
   cursor: pointer;
   outline: none;
+  transition: border-color 0.12s;
+
+  // Codex focus glow
+  &:focus {
+    border-color: var(--b3-theme-primary);
+    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
+    outline: none;
+  }
 }
 
-// 操作按钮
+// ==================== Action Buttons ====================
+
 .action-btn {
   display: flex;
   align-items: center;
   gap: 4px;
   padding: 4px 10px;
   font-size: 12px;
-  border: 1px solid var(--b3-theme-surface-lighter);
+  border: 1px solid var(--b3-border-color);
   border-radius: 4px;
   background: transparent;
   color: var(--b3-theme-on-surface);
   cursor: pointer;
+  transition: all 0.12s;
 
   svg {
     flex-shrink: 0;
   }
 
+  // Codex ghost button hover
   &:hover {
     background: var(--b3-theme-surface-lighter);
   }
 }
 
-// 主内容
+// ==================== Main Content ====================
+
 .diff-main {
   flex: 1;
   display: flex;
@@ -573,25 +602,35 @@ onMounted(() => {
   min-height: 0;
 }
 
-// 输入区域
+// ==================== Input Section ====================
+
 .input-section {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1px;
-  background: var(--b3-theme-surface-lighter);
+  gap: 8px;
+  padding: 8px;
   flex-shrink: 0;
   max-height: 35vh;
 }
 
+// Codex border card
 .input-panel {
   display: flex;
   flex-direction: column;
-  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-border-color);
+  border-radius: 6px;
+  background: var(--b3-theme-surface);
   overflow: hidden;
   min-height: 150px;
   position: relative;
+  transition: border-color 0.12s;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+  }
 
   &.drag-over {
+    border-color: var(--b3-theme-primary);
     background: var(--b3-theme-surface-lighter);
   }
 }
@@ -602,7 +641,7 @@ onMounted(() => {
   align-items: center;
   padding: 6px 10px;
   background: var(--b3-theme-surface);
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
 }
 
@@ -620,14 +659,20 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
+// Codex uppercase meta label
 .panel-title {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.45;
   color: var(--b3-theme-on-surface);
   flex-shrink: 0;
 }
 
+// Codex mono font
 .file-name {
+  font-family: $codex-mono;
   font-size: 11px;
   color: var(--b3-theme-primary);
   overflow: hidden;
@@ -635,33 +680,38 @@ onMounted(() => {
   white-space: nowrap;
 }
 
+// Codex mono font
 .char-count {
+  font-family: $codex-mono;
   font-size: 11px;
   color: var(--b3-theme-on-surface-variant);
 }
 
+// Codex icon button
 .file-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
-  border: 1px solid var(--b3-theme-surface-lighter);
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--b3-border-color);
   border-radius: 4px;
-  background: transparent;
+  background: var(--b3-theme-background);
   color: var(--b3-theme-on-surface-variant);
   cursor: pointer;
   flex-shrink: 0;
+  transition: all 0.12s;
 
   &:hover {
-    background: var(--b3-theme-surface-lighter);
-    color: var(--b3-theme-on-surface);
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
   }
 }
 
+// Codex input + focus glow
 .input-textarea {
   flex: 1;
-  padding: 8px 10px;
+  padding: 6px 10px;
   font-size: var(--diff-font-size, 14px);
   font-family: inherit;
   border: none;
@@ -671,13 +721,18 @@ onMounted(() => {
   outline: none;
   line-height: 1.5;
 
+  &:focus {
+    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
+  }
+
   &::placeholder {
     color: var(--b3-theme-on-surface-variant);
     opacity: 0.6;
   }
 }
 
-// 拖拽提示层
+// ==================== Drag Overlay ====================
+
 .drag-overlay {
   position: absolute;
   inset: 0;
@@ -689,6 +744,7 @@ onMounted(() => {
   gap: 8px;
   background: rgba(var(--b3-theme-primary-rgb, 235, 94, 42), 0.1);
   border: 2px dashed var(--b3-theme-primary);
+  border-radius: 0 0 5px 5px;
   color: var(--b3-theme-primary);
   pointer-events: none;
   z-index: 10;
@@ -699,27 +755,38 @@ onMounted(() => {
   }
 }
 
-// 分割线
+// ==================== Divider ====================
+
 .divider {
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 4px;
   background: var(--b3-theme-surface);
-  border-top: 1px solid var(--b3-theme-surface-lighter);
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  border-top: 1px dashed var(--b3-border-color);
+  border-bottom: 1px dashed var(--b3-border-color);
   color: var(--b3-theme-on-surface-variant);
   flex-shrink: 0;
 }
 
-// 结果区域
+// ==================== Result Section ====================
+
+// Codex border card
 .result-section {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   min-height: 200px;
-  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-border-color);
+  border-radius: 6px;
+  background: var(--b3-theme-surface);
+  margin: 0 8px 8px;
+  transition: border-color 0.12s;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+  }
 }
 
 .diff-viewer {
@@ -741,7 +808,8 @@ onMounted(() => {
   }
 }
 
-// 响应式
+// ==================== Responsive ====================
+
 @media (max-width: 900px) {
   .diff-toolbar {
     flex-wrap: wrap;
@@ -765,6 +833,10 @@ onMounted(() => {
 
   .input-panel {
     min-height: 120px;
+  }
+
+  .result-section {
+    margin: 0 4px 4px;
   }
 }
 </style>

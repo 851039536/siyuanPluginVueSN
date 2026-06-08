@@ -983,9 +983,17 @@ export async function uploadCloudSnapshot(id: string, tag: string): Promise<null
 export interface SnapshotInfo {
   id: string
   memo: string
-  createTime: string
-  hSize?: string
+  createTime?: string
+  created?: number
+  hCreated?: string
   hCreateTime?: string
+  hSize?: string
+  count?: number
+  size?: number
+  tag?: string
+  hTagUpdated?: string
+  files?: SnapshotContentFile[] | null
+  typesCount?: Array<{ type: string, count: number }>
 }
 
 /** 快照内容/差异文件条目 */
@@ -1023,34 +1031,26 @@ export async function getRepoSnapshots(page: number = 1): Promise<SnapshotInfo[]
  * 获取快照内容（文件列表或差异）
  * @param id 快照 ID
  */
-export async function getRepoSnapshotContent(id: string): Promise<SnapshotContentFile[]> {
-  const endpoints = [
-    "/api/repo/getRepoSnapshotContent",
-    "/api/repo/getRepoTagSnapshots",
-    "/api/repo/getRepoSnapshots",
-  ]
-  for (const url of endpoints) {
-    try {
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      })
-      const text = await resp.text()
-      if (text) {
-        console.log(`[dataSnapshot] ${url} body:`, text.substring(0, 500))
-        const json = JSON.parse(text)
-        if (json.code === 0 && json.data) {
-          const data = json.data
-          if (Array.isArray(data)) return data
-          return data?.files ?? data?.content ?? data?.diff ?? data?.snapshots ?? []
-        }
-      }
-    } catch (e: any) {
-      console.error(`[dataSnapshot] ${url} error:`, e?.message)
-    }
+export async function getRepoSnapshotContent(id: string, tag?: string): Promise<SnapshotContentFile[]> {
+  const url = "/api/repo/getRepoSnapshotContent"
+  const params = tag ? { id, tag } : { id }
+  try {
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    })
+    const text = await resp.text()
+    if (!text) return []
+    const json = JSON.parse(text)
+    if (json.code !== 0) return []
+    const data = json.data
+    if (Array.isArray(data)) return data
+    return data?.files ?? data?.content ?? data?.diff ?? []
+  } catch (e: any) {
+    console.error("[dataSnapshot] getRepoSnapshotContent error:", e?.message)
+    return []
   }
-  return []
 }
 
 /**

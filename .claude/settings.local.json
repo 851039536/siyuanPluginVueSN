@@ -117,7 +117,8 @@
       "Bash(npx vite *)",
       "Bash(npx sass *)",
       "mcp__fetch__fetch",
-      "Bash(pnpm vite *)"
+      "Bash(pnpm vite *)",
+      "Bash(pnpm vue-tsc *)"
     ],
     "deny": [],
     "ask": []

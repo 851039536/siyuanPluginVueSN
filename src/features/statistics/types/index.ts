@@ -18,7 +18,6 @@ export interface DailyWordCount {
 export interface ChangedDoc {
   id: string
   title: string
-  updated?: string
   time?: string
 }
 
@@ -30,7 +29,6 @@ export interface RecentUpdatedDoc {
   title: string
   updated: string
   created: string
-  timeLabel: string
   notebookName: string
 }
 

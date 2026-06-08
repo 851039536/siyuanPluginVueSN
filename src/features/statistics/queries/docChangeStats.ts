@@ -30,7 +30,7 @@ export async function getDateChangedDocs(dateStr: string): Promise<{
     LIMIT 512
   `
   const modifiedDocsSql = `
-    SELECT id, content, created, updated FROM blocks
+    SELECT id, content, updated FROM blocks
     WHERE type = 'd'
       AND substr(updated, 1, 8) = '${dateStr}'
       AND substr(created, 1, 8) != '${dateStr}'
@@ -52,7 +52,6 @@ export async function getDateChangedDocs(dateStr: string): Promise<{
     modifiedDocs: (modifiedRows || []).map((r: any) => ({
       id: r.id,
       title: (r.content || "").replace(/<[^>]*>/g, ""),
-      updated: r.updated,
       time: formatTime(r.updated),
     })),
   }
@@ -156,31 +155,11 @@ export async function getRecentUpdatedDocs(limit: number = 20): Promise<RecentUp
   const rows = await executeSql(sql)
   if (!rows || rows.length === 0) return []
 
-  return rows.map((r: any) => {
-    const updated = r.updated || ""
-    // 将 YYYYMMDDHHmmss 转换为可读时间
-    let timeLabel = ""
-    if (updated.length >= 14) {
-      const y = updated.substring(0, 4)
-      const mo = updated.substring(4, 6)
-      const d = updated.substring(6, 8)
-      const h = updated.substring(8, 10)
-      const mi = updated.substring(10, 12)
-      timeLabel = `${y}-${mo}-${d} ${h}:${mi}`
-    } else if (updated.length >= 8) {
-      const y = updated.substring(0, 4)
-      const mo = updated.substring(4, 6)
-      const d = updated.substring(6, 8)
-      timeLabel = `${y}-${mo}-${d}`
-    }
-
-    return {
-      id: r.id,
-      title: (r.content || "").replace(/<[^>]*>/g, ""),
-      created: r.created || "",
-      updated,
-      timeLabel,
-      notebookName: idToName.get(r.box) || "",
-    }
-  })
+  return rows.map((r: any) => ({
+    id: r.id,
+    title: (r.content || "").replace(/<[^>]*>/g, ""),
+    created: r.created || "",
+    updated: r.updated || "",
+    notebookName: idToName.get(r.box) || "",
+  }))
 }

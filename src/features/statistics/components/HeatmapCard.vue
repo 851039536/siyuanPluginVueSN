@@ -31,27 +31,65 @@
           {{ totalOperations }}
         </div>
         <div class="summary-label">
-          {{ i18n.totalOperations || '总操作次数' }}
+          {{ metricLabel(selectedMetric) }}
         </div>
       </div>
     </div>
 
-    <!-- 时间范围选择器 -->
-    <div class="range-selector">
-      <button
-        v-for="opt in rangeOptions"
-        :key="opt.value"
-        class="range-btn"
-        :class="[{ active: selectedRange === opt.value }]"
-        @click="selectedRange = opt.value"
+    <!-- 筛选栏：时间范围 + 指标 + 笔记本 -->
+    <div class="filters-row">
+      <div class="range-selector">
+        <button
+          v-for="opt in rangeOptions"
+          :key="opt.value"
+          class="range-btn"
+          :class="[{ active: selectedRange === opt.value }]"
+          @click="switchRange(opt.value)"
+        >
+          {{ opt.label }}
+        </button>
+      </div>
+
+      <div class="metric-selector">
+        <button
+          v-for="m in metricOptions"
+          :key="m.value"
+          class="range-btn"
+          :class="[{ active: selectedMetric === m.value }]"
+          @click="switchMetric(m.value)"
+        >
+          {{ m.label }}
+        </button>
+      </div>
+
+      <select
+        v-if="notebooks.length > 1"
+        class="notebook-select"
+        :value="selectedNotebook"
+        @change="switchNotebook(($event.target as HTMLSelectElement).value)"
       >
-        {{ opt.label }}
-      </button>
+        <option value="">{{ i18n.allNotebooks || '全部笔记本' }}</option>
+        <option
+          v-for="nb in notebooks"
+          :key="nb.id"
+          :value="nb.id"
+        >{{ nb.name }}</option>
+      </select>
+    </div>
+
+    <!-- 加载态 -->
+    <div
+      v-if="loading"
+      class="hm-loading"
+    >
+      {{ i18n.loading || '加载中...' }}
     </div>
 
     <!-- 日历网格 -->
-    <div class="calendar-wrapper">
-      <!-- 月份标签 -->
+    <div
+      v-else
+      class="calendar-wrapper"
+    >
       <div class="month-labels">
         <div
           v-for="(label, idx) in monthLabels"
@@ -64,26 +102,24 @@
       </div>
 
       <div class="calendar-body">
-        <!-- 星期标签 -->
         <div class="weekday-labels">
           <span class="weekday-label">{{ i18n.mon || '一' }}</span>
           <span class="weekday-label">{{ i18n.wed || '三' }}</span>
           <span class="weekday-label">{{ i18n.fri || '五' }}</span>
         </div>
 
-        <!-- 格子 -->
         <div class="calendar-grid">
           <div
             v-for="(cell, idx) in calendarCells"
             :key="idx"
             class="calendar-cell"
-            :class="[cell.level]"
+            :class="[cell.level, { selected: selectedDate === cell.date }]"
             :title="cell.tooltip"
+            @click="clickCell(cell)"
           ></div>
         </div>
       </div>
 
-      <!-- 图例 -->
       <div class="legend-bar">
         <span class="legend-text">{{ i18n.less || '少' }}</span>
         <span class="legend-cell level-0"></span>
@@ -92,6 +128,83 @@
         <span class="legend-cell level-3"></span>
         <span class="legend-cell level-4"></span>
         <span class="legend-text">{{ i18n.more || '多' }}</span>
+      </div>
+    </div>
+
+    <!-- 日详情面板 -->
+    <div
+      v-if="selectedDate"
+      class="daily-detail"
+    >
+      <div class="daily-detail-header">
+        <span class="daily-detail-title">{{ selectedDate }}</span>
+        <button
+          class="daily-detail-close"
+          @click="selectedDate = null"
+        >&times;</button>
+      </div>
+
+      <div
+        v-if="detailLoading"
+        class="daily-detail-status"
+      >
+        {{ i18n.loading || '加载中...' }}
+      </div>
+
+      <div
+        v-else-if="detailNewDocs.length === 0 && detailModifiedDocs.length === 0"
+        class="daily-detail-status"
+      >
+        {{ i18n.noDocChanges || '当天无新增或修改' }}
+      </div>
+
+      <div
+        v-else
+        class="daily-detail-list"
+      >
+        <div
+          v-if="detailNewDocs.length > 0"
+          class="detail-group"
+        >
+          <div class="detail-group-title">
+            🆕 {{ i18n.todayCreated || '新增' }}（{{ detailNewDocs.length }}）
+          </div>
+          <div
+            v-for="doc in detailNewDocs"
+            :key="doc.id"
+            class="detail-item new"
+            @click="openDoc(doc.id)"
+          >
+            <span class="detail-icon">+</span>
+            <span class="detail-title">{{ doc.title || '无标题' }}</span>
+            <span
+              v-if="doc.time"
+              class="detail-time"
+            >{{ doc.time }}</span>
+          </div>
+        </div>
+
+        <div
+          v-if="detailModifiedDocs.length > 0"
+          class="detail-group"
+        >
+          <div class="detail-group-title">
+            ✏️ {{ i18n.todayModified || '修改' }}（{{ detailModifiedDocs.length }}）
+          </div>
+          <div
+            v-for="doc in detailModifiedDocs"
+            :key="doc.id"
+            class="detail-item modified"
+            @click="openDoc(doc.id)"
+          >
+            <span class="detail-icon">~</span>
+            <span class="detail-title">{{ doc.title || '无标题' }}</span>
+            <span
+              v-if="doc.time"
+              class="detail-time"
+            >{{ doc.time }}</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -121,6 +234,7 @@
 </template>
 
 <script setup lang="ts">
+import type { ChangedDoc, HeatmapMetric } from "../types"
 import {
   computed,
   ref,
@@ -128,15 +242,23 @@ import {
 import { formatDate } from "../utils"
 
 interface Props {
-  /** 每天的操作数 Map<YYYY-MM-DD, count>，由 SQL 实时查询 */
-  activityMap?: Map<string, number>
+  onGetActivityData?: (
+    months: number,
+    metric: HeatmapMetric,
+    notebookId?: string,
+  ) => Promise<Map<string, number>>
+  onGetDailyDetail?: (dateStr: string) => Promise<{
+    newDocs: ChangedDoc[]
+    modifiedDocs: ChangedDoc[]
+  }>
+  notebooks?: Array<{ id: string, name: string }>
   writingStreak?: number
   activeDays?: number
   i18n?: Record<string, string>
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  activityMap: () => new Map(),
+  notebooks: () => [],
   writingStreak: 0,
   activeDays: 0,
   i18n: () => ({}),
@@ -144,25 +266,84 @@ const props = withDefaults(defineProps<Props>(), {
 
 const LEVEL_THRESHOLDS = [0, 1, 6, 16, 31] as const
 
+// ---- 筛选状态 ----
+const selectedRange = ref(12)
+const selectedMetric = ref<HeatmapMetric>('docsModified')
+const selectedNotebook = ref('')
+const loading = ref(false)
+
 const rangeOptions = computed(() => [
-  {
-    value: 3,
-    label: props.i18n.months3 || '3个月',
-  },
-  {
-    value: 6,
-    label: props.i18n.months6 || '6个月',
-  },
-  {
-    value: 12,
-    label: props.i18n.year1 || '1年',
-  },
+  { value: 3, label: props.i18n.months3 || '3个月' },
+  { value: 6, label: props.i18n.months6 || '6个月' },
+  { value: 12, label: props.i18n.year1 || '1年' },
 ])
 
-const selectedRange = ref(12)
+const metricOptions = computed(() => [
+  { value: 'docsModified' as HeatmapMetric, label: props.i18n.metricDocsModified || '修改文档' },
+  { value: 'docsCreated' as HeatmapMetric, label: props.i18n.metricDocsCreated || '新增文档' },
+  { value: 'blockEdits' as HeatmapMetric, label: props.i18n.metricBlockEdits || '编辑块' },
+])
 
+function metricLabel(m: HeatmapMetric): string {
+  const found = metricOptions.value.find((o) => o.value === m)
+  return found ? `总${found.label}` : ''
+}
+
+// ---- 数据 ----
+const activityMap = ref(new Map<string, number>())
+
+async function loadData() {
+  if (!props.onGetActivityData) return
+  loading.value = true
+  try {
+    const nbId = selectedNotebook.value || undefined
+    activityMap.value = await props.onGetActivityData(
+      selectedRange.value,
+      selectedMetric.value,
+      nbId,
+    )
+  } catch (e) {
+    console.error("加载热力图数据失败:", e)
+  } finally {
+    loading.value = false
+  }
+}
+
+function switchRange(v: number) { selectedRange.value = v; loadData() }
+function switchMetric(v: HeatmapMetric) { selectedMetric.value = v; loadData() }
+function switchNotebook(v: string) { selectedNotebook.value = v; loadData() }
+
+// ---- 日详情 ----
+const selectedDate = ref<string | null>(null)
+const detailLoading = ref(false)
+const detailNewDocs = ref<ChangedDoc[]>([])
+const detailModifiedDocs = ref<ChangedDoc[]>([])
+
+async function clickCell(cell: { date: string, level: string }) {
+  if (cell.level === 'level-empty' || !cell.date) return
+  if (selectedDate.value === cell.date) {
+    selectedDate.value = null
+    return
+  }
+  selectedDate.value = cell.date
+  if (!props.onGetDailyDetail) return
+  detailLoading.value = true
+  try {
+    const d = await props.onGetDailyDetail(cell.date)
+    detailNewDocs.value = d.newDocs
+    detailModifiedDocs.value = d.modifiedDocs
+  } finally {
+    detailLoading.value = false
+  }
+}
+
+function openDoc(docId: string) {
+  if (docId) window.open(`siyuan://blocks/${docId}`)
+}
+
+// ---- 日历网格 ----
 function getActivity(dateStr: string): number {
-  return props.activityMap.get(dateStr) || 0
+  return activityMap.value.get(dateStr) || 0
 }
 
 function getLevel(activity: number): string {
@@ -173,16 +354,14 @@ function getLevel(activity: number): string {
   return `level-${idx}`
 }
 
-// Calendar grid: 7 rows (Sun=0 .. Sat=6) x N columns (weeks)
 const calendarCells = computed(() => {
   const now = new Date()
   const startDate = new Date(now)
   startDate.setMonth(startDate.getMonth() - selectedRange.value)
-  // Align to the nearest previous Sunday
   const dayOfWeek = startDate.getDay()
   startDate.setDate(startDate.getDate() - dayOfWeek)
 
-  const cells: { level: string, tooltip: string, date: string }[] = []
+  const cells: { date: string, level: string, tooltip: string }[] = []
   const cursor = new Date(startDate)
 
   while (cursor <= now) {
@@ -192,21 +371,15 @@ const calendarCells = computed(() => {
     cells.push({
       date: dateStr,
       level: getLevel(activity),
-      tooltip: `${dateStr} (周${dayNames[cursor.getDay()]}): ${activity}次操作`,
+      tooltip: `${dateStr} (周${dayNames[cursor.getDay()]}): ${activity}次`,
     })
     cursor.setDate(cursor.getDate() + 1)
   }
 
-  // Pad to complete the last week
   const remainder = cells.length % 7
   if (remainder > 0) {
     for (let i = 0; i < 7 - remainder; i++) {
-      const dateStr = formatDate(cursor)
-      cells.push({
-        date: dateStr,
-        level: 'level-empty',
-        tooltip: '',
-      })
+      cells.push({ date: '', level: 'level-empty', tooltip: '' })
       cursor.setDate(cursor.getDate() + 1)
     }
   }
@@ -216,24 +389,18 @@ const calendarCells = computed(() => {
 
 const totalWeeks = computed(() => Math.ceil(calendarCells.value.length / 7))
 
-// Month labels positioned at the week column where each month starts
 const monthLabels = computed(() => {
   const labels: { text: string, col: number }[] = []
   const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
   let lastMonth = -1
 
   for (let week = 0; week < totalWeeks.value; week++) {
-    const cellIdx = week * 7
-    const cell = calendarCells.value[cellIdx]
+    const cell = calendarCells.value[week * 7]
     if (!cell || cell.level === 'level-empty') continue
-
     const d = new Date(cell.date)
     const m = d.getMonth()
     if (m !== lastMonth) {
-      labels.push({
-        text: monthNames[m],
-        col: week + 1,
-      })
+      labels.push({ text: monthNames[m], col: week + 1 })
       lastMonth = m
     }
   }
@@ -241,34 +408,25 @@ const monthLabels = computed(() => {
   return labels
 })
 
-// Longest streak from activityMap
+// ---- 摘要计算 ----
 const longestStreak = computed(() => {
-  if (props.activityMap.size === 0) return 0
-  // 按日期排序遍历
-  const sorted = [...props.activityMap.entries()].sort((a, b) => a[0].localeCompare(b[0]))
-  let max = 0
-  let current = 0
+  if (activityMap.value.size === 0) return 0
+  const sorted = [...activityMap.value.entries()].sort((a, b) => a[0].localeCompare(b[0]))
+  let max = 0, current = 0
   for (const [, count] of sorted) {
-    if (count > 0) {
-      current++
-      max = Math.max(max, current)
-    } else {
-      current = 0
-    }
+    if (count > 0) { current++; max = Math.max(max, current) }
+    else { current = 0 }
   }
   return max
 })
 
-// Total operations
 const totalOperations = computed(() => {
   let sum = 0
-  for (const count of props.activityMap.values()) {
-    sum += count
-  }
+  for (const count of activityMap.value.values()) sum += count
   return sum
 })
 
-// Weekday distribution
+// ---- 星期分布 ----
 const weekdayDistribution = computed(() => {
   const dayLabels = [
     props.i18n.sunday || '周日',
@@ -282,7 +440,7 @@ const weekdayDistribution = computed(() => {
   const totals: number[] = Array.from({ length: 7 }).fill(0) as number[]
   const counts: number[] = Array.from({ length: 7 }).fill(0) as number[]
 
-  for (const [dateStr, count] of props.activityMap.entries()) {
+  for (const [dateStr, count] of activityMap.value.entries()) {
     const d = new Date(dateStr)
     const day = d.getDay()
     totals[day] += count
@@ -298,6 +456,9 @@ const weekdayDistribution = computed(() => {
     percent: (avgs[i] / maxAvg) * 100,
   }))
 })
+
+// 初始加载
+loadData()
 </script>
 
 <style scoped lang="scss">
@@ -317,8 +478,16 @@ const weekdayDistribution = computed(() => {
   font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
 }
 
-// ========== Range Selector ==========
-.range-selector {
+// ========== Filters ==========
+.filters-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.range-selector,
+.metric-selector {
   display: flex;
   gap: 4px;
   background: var(--b3-theme-surface);
@@ -329,7 +498,7 @@ const weekdayDistribution = computed(() => {
 }
 
 .range-btn {
-  padding: 4px 12px;
+  padding: 4px 10px;
   border: none;
   border-radius: 4px;
   background: transparent;
@@ -339,6 +508,7 @@ const weekdayDistribution = computed(() => {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
+  white-space: nowrap;
 
   &:hover {
     color: var(--b3-theme-on-surface);
@@ -350,6 +520,31 @@ const weekdayDistribution = computed(() => {
     color: var(--b3-theme-on-primary);
     font-weight: 700;
   }
+}
+
+.notebook-select {
+  padding: 5px 8px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  outline: none;
+  max-width: 140px;
+
+  &:focus {
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+.hm-loading {
+  text-align: center;
+  padding: 24px;
+  font-size: 12px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
 }
 
 // ========== Calendar ==========
@@ -392,7 +587,6 @@ const weekdayDistribution = computed(() => {
   padding: 2px 0;
   flex-shrink: 0;
 
-  // Space for 7 cells: position Mon(1), Wed(3), Fri(5)
   .weekday-label {
     font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
     font-size: 10px;
@@ -404,9 +598,9 @@ const weekdayDistribution = computed(() => {
     line-height: 14px;
     height: 14px;
 
-    &:nth-child(1) { margin-top: 14px; }  // skip Sun row
-    &:nth-child(2) { margin-top: 14px; }  // skip Tue row
-    &:nth-child(3) { margin-top: 14px; }  // skip Thu row
+    &:nth-child(1) { margin-top: 14px; }
+    &:nth-child(2) { margin-top: 14px; }
+    &:nth-child(3) { margin-top: 14px; }
   }
 }
 
@@ -424,10 +618,22 @@ const weekdayDistribution = computed(() => {
   border-radius: 4px;
   min-width: 12px;
   min-height: 12px;
-  cursor: default;
+  cursor: pointer;
+  transition: outline 0.1s;
 
   &.level-empty {
     visibility: hidden;
+    pointer-events: none;
+  }
+
+  &:hover:not(.level-empty) {
+    outline: 2px solid var(--b3-theme-on-surface);
+    outline-offset: 1px;
+  }
+
+  &.selected {
+    outline: 2px solid var(--b3-theme-primary);
+    outline-offset: 1px;
   }
 
   @include stats.heatmap-level-colors;
@@ -457,6 +663,129 @@ const weekdayDistribution = computed(() => {
     border-radius: 4px;
     @include stats.heatmap-level-colors;
   }
+}
+
+// ========== Daily Detail Panel ==========
+.daily-detail {
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  padding: 12px;
+}
+
+.daily-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.daily-detail-title {
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--b3-theme-primary);
+}
+
+.daily-detail-close {
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--b3-theme-on-surface-light);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background: var(--b3-list-hover);
+    color: var(--b3-theme-on-surface);
+  }
+}
+
+.daily-detail-status {
+  text-align: center;
+  padding: 12px;
+  font-size: 12px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+}
+
+.daily-detail-list {
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.detail-group {
+  margin-bottom: 10px;
+  &:last-child { margin-bottom: 0; }
+}
+
+.detail-group-title {
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.55;
+  margin-bottom: 4px;
+  padding: 0 4px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--b3-theme-on-surface);
+  transition: background 0.12s;
+
+  &:hover { background: var(--b3-list-hover); }
+}
+
+.detail-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.detail-item.new .detail-icon {
+  background: rgba(stats.$color-success, 0.15);
+  color: stats.$color-success;
+}
+
+.detail-item.modified .detail-icon {
+  background: rgba(stats.$color-warning, 0.15);
+  color: stats.$color-warning;
+}
+
+.detail-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detail-time {
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.35;
+  flex-shrink: 0;
 }
 
 // ========== Weekday Distribution ==========

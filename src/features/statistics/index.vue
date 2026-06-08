@@ -231,7 +231,9 @@
         class="heatmap-tab"
       >
         <HeatmapCard
-          :activity-map="heatmapActivityMap"
+          :on-get-activity-data="getHeatmapActivityData"
+          :on-get-daily-detail="getHeatmapDailyDetail"
+          :notebooks="heatmapNotebooks"
           :writing-streak="stats?.writingStreak ?? 0"
           :active-days="stats?.activeDays ?? 0"
           :i18n="heatmapI18n"
@@ -285,7 +287,11 @@ import {
   getDateRangeChangeStats,
   getRecentUpdatedDocs,
 } from "./queries/docChangeStats"
-import { getHeatmapActivityData } from "./queries/heatmapStats"
+import {
+  getHeatmapActivityData,
+  getHeatmapDailyDetail,
+  getHeatmapNotebooks,
+} from "./queries/heatmapStats"
 import { getNotebookActivityTrend } from "./queries/notebookStats"
 import {
   getComparisonData,
@@ -473,6 +479,10 @@ const heatmapI18n = computed(() => ({
   activityHeatmap: props.i18n.activityHeatmap || "活跃热力图",
   less: "少",
   more: "多",
+  loading: props.i18n.loading || "加载中...",
+  noDocChanges: "当天无新增或修改",
+  todayCreated: props.i18n.todayCreated || "新增",
+  todayModified: props.i18n.todayModified || "修改",
   last30Days: "近30天",
   activeDaysCount: "天活跃",
   activeDaysLabel: "活跃天数",
@@ -493,6 +503,10 @@ const heatmapI18n = computed(() => ({
   mon: "一",
   wed: "三",
   fri: "五",
+  metricDocsModified: "修改文档",
+  metricDocsCreated: "新增文档",
+  metricBlockEdits: "编辑块",
+  allNotebooks: "全部笔记本",
 }))
 
 const activityI18n = computed(() => ({
@@ -590,13 +604,7 @@ watch([viewMode, dayRange, monthYearRange, selectedYear], () => {
 })
 
 const notebookStatsLoaded = ref(false)
-const heatmapActivityMap = ref(new Map<string, number>())
-const heatmapLoaded = ref(false)
-
-async function loadHeatmapData(): Promise<void> {
-  heatmapActivityMap.value = await getHeatmapActivityData(12)
-  heatmapLoaded.value = true
-}
+const heatmapNotebooks = ref<Array<{ id: string, name: string }>>([])
 
 async function refreshData(): Promise<void> {
   loading.value = true
@@ -605,9 +613,6 @@ async function refreshData(): Promise<void> {
     await loadHistoricalData()
     if (activeTab.value === 'notebookDistribution' && !notebookStatsLoaded.value) {
       await loadNotebookStats()
-    }
-    if (activeTab.value === 'heatmap') {
-      await loadHeatmapData()
     }
   } catch (error) {
     console.error("刷新统计数据失败:", error)
@@ -630,14 +635,12 @@ watch(activeTab, (tab) => {
   if (tab === 'notebookDistribution') {
     loadNotebookStats()
   }
-  if (tab === 'heatmap' && !heatmapLoaded.value) {
-    loadHeatmapData()
-  }
 })
 
-onMounted(() => {
+onMounted(async () => {
   refreshData()
   props.onRegisterRefresh?.(refreshData)
+  heatmapNotebooks.value = await getHeatmapNotebooks()
 })
 
 defineExpose({

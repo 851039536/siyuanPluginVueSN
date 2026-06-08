@@ -2,7 +2,7 @@
   <CollapsibleSection
     :title="`📋 ${i18n.docChanges || '文档变化'} — ${rangeLabel}`"
     :default-expanded="true"
-    :badge="docRange !== 'today' && rangeStats.length > 0 ? `${rangeTotalChanges}` : changedDocsCount > 0 ? `${changedDocsCount}` : ''"
+    :badge="badgeText"
   >
     <!-- 范围选择按钮 -->
     <div class="changed-range-picker">
@@ -17,129 +17,172 @@
       </button>
     </div>
 
-    <!-- 范围模式：柱状图 -->
-    <div
-      v-if="docRange !== 'today' && rangeStats.length > 0"
-      class="range-chart-section"
-    >
-      <div class="range-chart-bar-group">
-        <div class="range-chart-legend">
-          <span class="legend-dot new"></span>{{ i18n.todayCreated || '新增' }}
-          <span class="legend-dot modified"></span>{{ i18n.todayModified || '修改' }}
-        </div>
-        <div
-          v-for="item in sortByDate(rangeStats)"
-          :key="item.date"
-          class="range-chart-row"
-          :class="{ active: selectedChartDate === item.date }"
-          @click="drillIntoDate(item.date)"
-        >
-          <span class="range-chart-label">{{ formatChartDate(item.date) }}</span>
-          <div class="range-chart-bars">
-            <div
-              v-if="item.newCount > 0"
-              class="range-chart-bar new"
-              :style="{ width: barWidth(item.newCount) }"
-            >
-              {{ item.newCount }}
-            </div>
-            <div
-              v-if="item.modifiedCount > 0"
-              class="range-chart-bar modified"
-              :style="{ width: barWidth(item.modifiedCount) }"
-            >
-              {{ item.modifiedCount }}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 单日详情（date 模式钻取 或 today 模式） -->
-    <div v-if="selectedChartDate || docRange === 'today'">
+    <!-- ========== 最近更新模式 ========== -->
+    <template v-if="docRange === 'recent'">
       <div
-        v-if="docRange === 'today'"
-        class="changed-date-picker"
-      >
-        <input
-          type="date"
-          :value="docChangeDate"
-          :max="todayDateStr"
-          class="changed-date-input"
-          @change="onDocDateChange"
-        >
-        <button
-          class="changed-date-today"
-          :class="{ active: docChangeDate === todayDateStr }"
-          @click="setDocDateToday"
-        >
-          {{ i18n.today || '今天' }}
-        </button>
-      </div>
-
-      <div
-        v-if="changedDocsLoading"
+        v-if="recentDocsLoading"
         class="changed-docs-loading"
       >
         {{ i18n.loading || '加载中...' }}
       </div>
 
       <div
-        v-else-if="changedDocs.newDocs.length > 0 || changedDocs.modifiedDocs.length > 0"
-        class="changed-docs-content"
-      >
-        <div
-          v-if="changedDocs.newDocs.length > 0"
-          class="changed-docs-group"
-        >
-          <div class="changed-docs-group-title">
-            🆕 {{ i18n.todayCreated || '新增' }}（{{ changedDocs.newDocs.length }}）
-          </div>
-          <div
-            v-for="doc in changedDocs.newDocs"
-            :key="doc.id"
-            class="changed-doc-item new"
-            title="点击打开文档"
-            @click="openDoc(doc.id)"
-          >
-            <span class="changed-doc-icon">+</span>
-            <span class="changed-doc-title">{{ doc.title || '无标题' }}</span>
-          </div>
-        </div>
-        <div
-          v-if="changedDocs.modifiedDocs.length > 0"
-          class="changed-docs-group"
-        >
-          <div class="changed-docs-group-title">
-            ✏️ {{ i18n.todayModified || '修改' }}（{{ changedDocs.modifiedDocs.length }}）
-          </div>
-          <div
-            v-for="doc in changedDocs.modifiedDocs"
-            :key="doc.id"
-            class="changed-doc-item modified"
-            title="点击打开文档"
-            @click="openDoc(doc.id)"
-          >
-            <span class="changed-doc-icon">~</span>
-            <span class="changed-doc-title">{{ doc.title || '无标题' }}</span>
-          </div>
-        </div>
-      </div>
-      <div
-        v-else
+        v-else-if="recentDocs.length === 0"
         class="changed-docs-empty"
       >
-        {{ i18n.noDocChanges || '当天无新增或修改' }}
+        {{ i18n.noDocChanges || '暂无最近更新的文档' }}
       </div>
-    </div>
 
-    <!-- 范围模式下无数据 或 尚未选择 -->
-    <div
-      v-if="docRange !== 'today' && !selectedChartDate && rangeStats.length === 0"
-      class="changed-docs-empty"
-    >
-      {{ rangeStatsLoading ? (i18n.loading || '加载中...') : (i18n.noDocChanges || '该范围无变更') }}
-    </div>
+      <div
+        v-else
+        class="recent-docs-list"
+      >
+        <template v-for="group in recentGroupedDocs" :key="group.label">
+          <div class="recent-group-header">{{ group.label }}</div>
+          <div
+            v-for="doc in group.docs"
+            :key="doc.id"
+            class="recent-doc-item"
+            :class="{ new: isDocCreatedToday(doc) }"
+            @click="openDoc(doc.id)"
+          >
+            <span class="recent-doc-badge">{{ isDocCreatedToday(doc) ? '+' : '~' }}</span>
+            <span
+              v-if="doc.notebookName"
+              class="recent-doc-notebook"
+            >{{ doc.notebookName }}</span>
+            <span class="recent-doc-title">{{ doc.title || '无标题' }}</span>
+            <span class="recent-doc-time">{{ formatRelativeTime(doc.updated) }}</span>
+          </div>
+        </template>
+      </div>
+    </template>
+
+    <!-- ========== 范围模式：柱状图 ========== -->
+    <template v-else>
+      <div
+        v-if="docRange !== 'today' && rangeStats.length > 0"
+        class="range-chart-section"
+      >
+        <div class="range-chart-bar-group">
+          <div class="range-chart-legend">
+            <span class="legend-dot new"></span>{{ i18n.todayCreated || '新增' }}
+            <span class="legend-dot modified"></span>{{ i18n.todayModified || '修改' }}
+          </div>
+          <div
+            v-for="item in sortByDate(rangeStats)"
+            :key="item.date"
+            class="range-chart-row"
+            :class="{ active: selectedChartDate === item.date }"
+            @click="drillIntoDate(item.date)"
+          >
+            <span class="range-chart-label">{{ formatChartDate(item.date) }}</span>
+            <div class="range-chart-bars">
+              <div
+                v-if="item.newCount > 0"
+                class="range-chart-bar new"
+                :style="{ width: barWidth(item.newCount) }"
+              >
+                {{ item.newCount }}
+              </div>
+              <div
+                v-if="item.modifiedCount > 0"
+                class="range-chart-bar modified"
+                :style="{ width: barWidth(item.modifiedCount) }"
+              >
+                {{ item.modifiedCount }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 单日详情（date 模式钻取 或 today 模式） -->
+      <div v-if="selectedChartDate || docRange === 'today'">
+        <div
+          v-if="docRange === 'today'"
+          class="changed-date-picker"
+        >
+          <input
+            type="date"
+            :value="docChangeDate"
+            :max="todayDateStr"
+            class="changed-date-input"
+            @change="onDocDateChange"
+          >
+          <button
+            class="changed-date-today"
+            :class="{ active: docChangeDate === todayDateStr }"
+            @click="setDocDateToday"
+          >
+            {{ i18n.today || '今天' }}
+          </button>
+        </div>
+
+        <div
+          v-if="changedDocsLoading"
+          class="changed-docs-loading"
+        >
+          {{ i18n.loading || '加载中...' }}
+        </div>
+
+        <div
+          v-else-if="changedDocs.newDocs.length > 0 || changedDocs.modifiedDocs.length > 0"
+          class="changed-docs-content"
+        >
+          <div
+            v-if="changedDocs.newDocs.length > 0"
+            class="changed-docs-group"
+          >
+            <div class="changed-docs-group-title">
+              🆕 {{ i18n.todayCreated || '新增' }}（{{ changedDocs.newDocs.length }}）
+            </div>
+            <div
+              v-for="doc in changedDocs.newDocs"
+              :key="doc.id"
+              class="changed-doc-item new"
+              title="点击打开文档"
+              @click="openDoc(doc.id)"
+            >
+              <span class="changed-doc-icon">+</span>
+              <span class="changed-doc-title">{{ doc.title || '无标题' }}</span>
+            </div>
+          </div>
+          <div
+            v-if="changedDocs.modifiedDocs.length > 0"
+            class="changed-docs-group"
+          >
+            <div class="changed-docs-group-title">
+              ✏️ {{ i18n.todayModified || '修改' }}（{{ changedDocs.modifiedDocs.length }}）
+            </div>
+            <div
+              v-for="doc in changedDocs.modifiedDocs"
+              :key="doc.id"
+              class="changed-doc-item modified"
+              title="点击打开文档"
+              @click="openDoc(doc.id)"
+            >
+              <span class="changed-doc-icon">~</span>
+              <span class="changed-doc-title">{{ doc.title || '无标题' }}</span>
+            </div>
+          </div>
+        </div>
+        <div
+          v-else
+          class="changed-docs-empty"
+        >
+          {{ i18n.noDocChanges || '当天无新增或修改' }}
+        </div>
+      </div>
+
+      <!-- 范围模式下无数据 -->
+      <div
+        v-if="docRange !== 'today' && !selectedChartDate && rangeStats.length === 0"
+        class="changed-docs-empty"
+      >
+        {{ rangeStatsLoading ? (i18n.loading || '加载中...') : (i18n.noDocChanges || '该范围无变更') }}
+      </div>
+    </template>
   </CollapsibleSection>
 </template>
 
@@ -147,6 +190,7 @@
 import type {
   ChangedDoc,
   RangeStatItem,
+  RecentUpdatedDoc,
 } from "../types"
 import {
   computed,
@@ -161,6 +205,7 @@ interface Props {
     modifiedDocs: ChangedDoc[]
   }>
   onGetDateRangeChangeStats?: (startStr: string, endStr: string) => Promise<RangeStatItem[]>
+  onGetRecentUpdatedDocs?: (limit: number) => Promise<RecentUpdatedDoc[]>
   i18n?: Record<string, string>
 }
 
@@ -186,38 +231,115 @@ const changedDocs = ref<{ newDocs: ChangedDoc[], modifiedDocs: ChangedDoc[] }>({
 })
 const changedDocsLoading = ref(false)
 
-type DocRangeType = 'today' | '3d' | '7d' | '1m' | '6m'
+type DocRangeType = 'today' | '3d' | '7d' | '1m' | '6m' | 'recent'
 const docRange = ref<DocRangeType>('today')
 const dateRangeOptions = computed<Array<{ value: DocRangeType, label: string }>>(() => [
-  {
-    value: 'today',
-    label: props.i18n.today || '今天',
-  },
-  {
-    value: '3d',
-    label: props.i18n.days3 || '近3天',
-  },
-  {
-    value: '7d',
-    label: props.i18n.days7 || '近7天',
-  },
-  {
-    value: '1m',
-    label: props.i18n.oneMonth || '近1月',
-  },
-  {
-    value: '6m',
-    label: props.i18n.halfYear || '近半年',
-  },
+  { value: 'today', label: props.i18n.today || '今天' },
+  { value: '3d', label: props.i18n.days3 || '近3天' },
+  { value: '7d', label: props.i18n.days7 || '近7天' },
+  { value: '1m', label: props.i18n.oneMonth || '近1月' },
+  { value: '6m', label: props.i18n.halfYear || '近半年' },
+  { value: 'recent', label: props.i18n.recentUpdated || '最近更新' },
 ])
 
 const rangeStats = ref<RangeStatItem[]>([])
 const rangeStatsLoading = ref(false)
 const selectedChartDate = ref<string | null>(null)
 
+// ---- 最近更新模式 ----
+const recentDocs = ref<RecentUpdatedDoc[]>([])
+const recentDocsLoading = ref(false)
+
+function isDocCreatedToday(doc: RecentUpdatedDoc): boolean {
+  return doc.created.substring(0, 8) === getTodayStr()
+}
+
+type TimeGroup = 'today' | 'yesterday' | 'thisWeek' | 'earlier'
+
+function getYesterdayStr(): string {
+  const d = new Date()
+  d.setDate(d.getDate() - 1)
+  return `${d.getFullYear()}${padZero(d.getMonth() + 1)}${padZero(d.getDate())}`
+}
+
+function getTimeGroup(updated: string): TimeGroup {
+  if (!updated || updated.length < 8) return 'earlier'
+  const date8 = updated.substring(0, 8)
+  if (date8 === getTodayStr()) return 'today'
+  if (date8 === getYesterdayStr()) return 'yesterday'
+
+  const today = new Date()
+  const y = Number.parseInt(updated.substring(0, 4))
+  const mo = Number.parseInt(updated.substring(4, 6)) - 1
+  const d = Number.parseInt(updated.substring(6, 8))
+  const docDate = new Date(y, mo, d)
+  const diffDay = Math.floor((today.getTime() - docDate.getTime()) / 86400000)
+  if (diffDay < 7) return 'thisWeek'
+  return 'earlier'
+}
+
+const groupLabels: Record<TimeGroup, string> = {
+  today: '今天',
+  yesterday: '昨天',
+  thisWeek: '本周',
+  earlier: '更早',
+}
+
+interface DocGroup {
+  label: string
+  docs: RecentUpdatedDoc[]
+}
+
+const recentGroupedDocs = computed<DocGroup[]>(() => {
+  const groups: Record<TimeGroup, RecentUpdatedDoc[]> = {
+    today: [],
+    yesterday: [],
+    thisWeek: [],
+    earlier: [],
+  }
+  for (const doc of recentDocs.value) {
+    groups[getTimeGroup(doc.updated)].push(doc)
+  }
+  const result: DocGroup[] = []
+  for (const key of ['today', 'yesterday', 'thisWeek', 'earlier'] as TimeGroup[]) {
+    if (groups[key].length > 0) {
+      result.push({ label: groupLabels[key], docs: groups[key] })
+    }
+  }
+  return result
+})
+
+function formatRelativeTime(updated: string): string {
+  if (!updated || updated.length < 8) return ""
+
+  const y = Number.parseInt(updated.substring(0, 4))
+  const mo = Number.parseInt(updated.substring(4, 6)) - 1
+  const d = Number.parseInt(updated.substring(6, 8))
+  const h = updated.length >= 10 ? Number.parseInt(updated.substring(8, 10)) : 0
+  const mi = updated.length >= 12 ? Number.parseInt(updated.substring(10, 12)) : 0
+
+  const docDate = new Date(y, mo, d, h, mi)
+  const now = new Date()
+  const diffMs = now.getTime() - docDate.getTime()
+  const diffMin = Math.floor(diffMs / 60000)
+  const diffHour = Math.floor(diffMs / 3600000)
+  const diffDay = Math.floor(diffMs / 86400000)
+
+  if (diffMin < 1) return "刚刚"
+  if (diffMin < 60) return `${diffMin} 分钟前`
+  if (diffHour < 24) return `${diffHour} 小时前`
+  if (diffDay < 7) return `${diffDay} 天前`
+  if (diffDay < 30) return `${Math.floor(diffDay / 7)} 周前`
+  if (diffDay < 365) return `${Math.floor(diffDay / 30)} 个月前`
+  return `${Math.floor(diffDay / 365)} 年前`
+}
+
+// ---- 现有逻辑 ----
+
 const todayDateStr = computed(() => getTodayStr())
 
 const rangeLabel = computed(() => {
+  if (docRange.value === 'recent') return dateRangeOptions.value.find((r) => r.value === 'recent')?.label || ''
   if (docRange.value === 'today') return formattedDocDate.value
   return dateRangeOptions.value.find((r) => r.value === docRange.value)?.label || ''
 })
@@ -225,6 +347,13 @@ const rangeLabel = computed(() => {
 const rangeTotalChanges = computed(() =>
   rangeStats.value.reduce((s, i) => s + i.newCount + i.modifiedCount, 0),
 )
+
+const badgeText = computed(() => {
+  if (docRange.value === 'recent') return recentDocs.value.length > 0 ? `${recentDocs.value.length}` : ''
+  if (docRange.value !== 'today' && rangeStats.value.length > 0) return `${rangeTotalChanges.value}`
+  if (docRange.value === 'today' && changedDocsCount.value > 0) return `${changedDocsCount.value}`
+  return ''
+})
 
 const formattedDocDate = computed(() => {
   const d = docChangeDate.value
@@ -258,9 +387,11 @@ function sortByDate(items: RangeStatItem[]) {
 async function switchDocRange(range: DocRangeType) {
   docRange.value = range
   selectedChartDate.value = null
-  changedDocs.value = {
-    newDocs: [],
-    modifiedDocs: [],
+  changedDocs.value = { newDocs: [], modifiedDocs: [] }
+
+  if (range === 'recent') {
+    await loadRecentDocs()
+    return
   }
 
   if (range === 'today') {
@@ -292,6 +423,19 @@ async function switchDocRange(range: DocRangeType) {
   }
 }
 
+async function loadRecentDocs() {
+  if (!props.onGetRecentUpdatedDocs) return
+  recentDocsLoading.value = true
+  try {
+    recentDocs.value = await props.onGetRecentUpdatedDocs(20)
+  } catch (e) {
+    console.error("加载最近更新文档失败:", e)
+    recentDocs.value = []
+  } finally {
+    recentDocsLoading.value = false
+  }
+}
+
 async function drillIntoDate(dateStr: string) {
   if (!props.onGetDateChangedDocs) return
   selectedChartDate.value = dateStr
@@ -310,10 +454,7 @@ async function loadDateChangedDocs(dateStr: string) {
     changedDocs.value = await props.onGetDateChangedDocs(dateStr)
   } catch (error) {
     console.error("加载文档变化失败:", error)
-    changedDocs.value = {
-      newDocs: [],
-      modifiedDocs: [],
-    }
+    changedDocs.value = { newDocs: [], modifiedDocs: [] }
   } finally {
     changedDocsLoading.value = false
   }
@@ -346,6 +487,94 @@ function setDocDateToday() {
   @include stats.small-action-btn;
 }
 
+// ---- 最近更新列表 ----
+.recent-docs-list {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.recent-group-header {
+  padding: 10px 12px 4px;
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.35;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.recent-doc-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.12s;
+  font-size: 12px;
+  color: var(--b3-theme-on-surface);
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+}
+
+.recent-doc-badge {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+  background: rgba(stats.$color-warning, 0.12);
+  color: stats.$color-warning;
+}
+
+.recent-doc-item.new .recent-doc-badge {
+  background: rgba(stats.$color-success, 0.12);
+  color: stats.$color-success;
+}
+
+.recent-doc-notebook {
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.4;
+  white-space: nowrap;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+}
+
+.recent-doc-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.recent-doc-time {
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.35;
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+// ---- 范围柱状图 ----
 .range-chart-section {
   margin-bottom: 8px;
 }

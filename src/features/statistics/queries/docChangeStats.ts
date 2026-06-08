@@ -140,7 +140,7 @@ export async function getRecentUpdatedDocs(limit: number = 20): Promise<RecentUp
   }
 
   const sql = `
-    SELECT id, content, updated, box FROM blocks
+    SELECT id, content, created, updated, box FROM blocks
     WHERE type = 'd'
     ORDER BY updated DESC
     LIMIT ${limit}
@@ -170,6 +170,7 @@ export async function getRecentUpdatedDocs(limit: number = 20): Promise<RecentUp
     return {
       id: r.id,
       title: (r.content || "").replace(/<[^>]*>/g, ""),
+      created: r.created || "",
       updated,
       timeLabel,
       notebookName: idToName.get(r.box) || "",

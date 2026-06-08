@@ -1,24 +1,27 @@
 @use "@/variables.scss" as *;
 
+// ==================== Mixins ====================
 @mixin text-ellipsis {
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 @mixin custom-scrollbar {
   &::-webkit-scrollbar {
-    width: 6px;
+    width: 4px;
+    height: 4px;
   }
   &::-webkit-scrollbar-thumb {
-    background: var(--b3-theme-on-surface-light);
-    border-radius: 3px;
+    background: var(--b3-theme-surface-lighter);
+    border-radius: 2px;
   }
   &::-webkit-scrollbar-track {
     background: transparent;
   }
 }
 
+// ==================== Panel ====================
 .data-snapshot-panel {
   height: 100%;
   display: flex;
@@ -26,457 +29,322 @@
   overflow: hidden;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
-  font-size: 13px;
-}
+  font-size: $font-size-sm;
 
-// ==================== Header ====================
-.ds-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
-  flex-shrink: 0;
-
-  &__title {
-    font-size: 14px;
-    font-weight: 600;
-  }
-
-  &__actions {
+  // ── Header ──
+  .ds-header {
     display: flex;
-    gap: 4px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--b3-border-color);
+    flex-shrink: 0;
+    gap: $spacing-2;
+
+    &__title {
+      font-size: $font-size-base;
+      font-weight: $font-weight-semibold;
+    }
+
+    &__actions {
+      display: flex;
+      gap: $spacing-1;
+      flex-shrink: 0;
+    }
   }
-}
 
-// ==================== Tabs ====================
-.ds-tabs {
-  display: flex;
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
-  flex-shrink: 0;
+  // ── Tabs ──
+  .ds-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--b3-border-color);
+    flex-shrink: 0;
+    overflow-x: auto;
+    @include custom-scrollbar;
 
-  &__item {
+    &__item {
+      padding: 7px 10px;
+      font-size: $font-size-xs;
+      cursor: pointer;
+      white-space: nowrap;
+      color: var(--b3-theme-on-surface);
+      border: none;
+      background: none;
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+      user-select: none;
+
+      &:hover {
+        color: var(--b3-theme-on-surface);
+        background: var(--b3-list-hover);
+      }
+
+      &--active {
+        color: var(--b3-theme-primary);
+        border-bottom-color: var(--b3-theme-primary);
+        font-weight: $font-weight-medium;
+      }
+    }
+  }
+
+  // ── Create form ──
+  .ds-create {
+    display: flex;
+    gap: $spacing-2;
+    padding: $spacing-3;
+    border-bottom: 1px solid var(--b3-border-color);
+    flex-shrink: 0;
+
+    &__input {
+      flex: 1;
+      padding: 4px 8px;
+      border: 1px solid var(--b3-border-color);
+      border-radius: $radius-sm;
+      font-size: $font-size-xs;
+      background: var(--b3-theme-surface);
+      color: var(--b3-theme-on-surface);
+      outline: none;
+      transition: border-color 0.15s;
+
+      &:focus {
+        border-color: $brand-accent;
+      }
+
+      &::placeholder {
+        color: var(--b3-theme-on-surface-light);
+      }
+    }
+  }
+
+  // ── Content ──
+  .ds-content {
     flex: 1;
-    padding: 8px 0;
+    overflow-y: auto;
+    padding: $spacing-3;
+    @include custom-scrollbar;
+  }
+
+  // ── List ──
+  .ds-empty {
+    padding: $spacing-10 $spacing-3;
     text-align: center;
-    cursor: pointer;
-    font-size: 13px;
-    color: var(--b3-theme-on-surface);
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s;
-    background: none;
-    border-top: none;
-    border-left: none;
-    border-right: none;
+    color: var(--b3-theme-on-surface-light);
+    font-size: $font-size-xs;
+  }
+
+  .ds-loading {
+    padding: $spacing-5 $spacing-3;
+    text-align: center;
+    color: var(--b3-theme-on-surface-light);
+    font-size: $font-size-xs;
+  }
+
+  // ── Snapshot item ──
+  .ds-item {
+    padding: $spacing-2 $spacing-3;
+    border-radius: $radius-sm;
+    transition: background 0.15s;
+    margin-bottom: $spacing-1;
 
     &:hover {
-      color: var(--b3-theme-primary);
+      background: var(--b3-list-hover);
     }
 
-    &--active {
-      color: var(--b3-theme-primary);
-      border-bottom-color: var(--b3-theme-primary);
-      font-weight: 500;
+    &__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: $spacing-2;
+    }
+
+    &__memo {
+      flex: 1;
+      @include text-ellipsis;
+      font-size: $font-size-sm;
+      font-weight: $font-weight-medium;
+    }
+
+    &__time {
+      font-size: $font-size-xs;
+      color: var(--b3-theme-on-surface-light);
+      margin-top: 2px;
+    }
+
+    &__actions {
+      display: flex;
+      gap: $spacing-1;
+      margin-top: $spacing-2;
     }
   }
-}
 
-// ==================== Create Form ====================
-.ds-create {
-  display: flex;
-  gap: 8px;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
-  flex-shrink: 0;
+  // ── Cloud tag group ──
+  .ds-cloud-tag {
+    margin-bottom: $spacing-3;
 
-  &__input {
-    flex: 1;
-    padding: 6px 10px;
-    border: 1px solid var(--b3-theme-surface-lighter);
-    border-radius: 4px;
-    background: var(--b3-theme-surface);
-    color: var(--b3-theme-on-surface);
-    font-size: 13px;
-    outline: none;
-
-    &:focus {
-      border-color: var(--b3-theme-primary);
+    &__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: $spacing-2 $spacing-3;
+      font-weight: $font-weight-semibold;
+      font-size: $font-size-xs;
+      color: var(--b3-theme-primary);
     }
 
-    &::placeholder {
+    &__count {
+      font-size: $font-size-xs;
+      font-weight: $font-weight-normal;
       color: var(--b3-theme-on-surface-light);
     }
   }
-}
 
-// ==================== Content ====================
-.ds-content {
-  flex: 1;
-  overflow-y: auto;
-  @include custom-scrollbar;
-}
-
-// ==================== Snapshot List ====================
-.ds-list {
-  padding: 6px 0;
-
-  &__empty {
-    padding: 40px 12px;
-    text-align: center;
-    color: var(--b3-theme-on-surface-light);
-    font-size: 13px;
-  }
-
-  &__loading {
-    padding: 20px 12px;
-    text-align: center;
-    color: var(--b3-theme-on-surface-light);
-  }
-}
-
-.ds-item {
-  display: flex;
-  flex-direction: column;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
-  cursor: default;
-  transition: background 0.15s;
-
-  &:hover {
-    background: var(--b3-theme-surface);
-  }
-
-  &__header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 8px;
-  }
-
-  &__memo {
-    flex: 1;
-    @include text-ellipsis;
-    font-size: 13px;
-    font-weight: 500;
-  }
-
-  &__time {
-    font-size: 11px;
-    color: var(--b3-theme-on-surface-light);
-    margin-top: 4px;
-  }
-
-  &__actions {
-    display: flex;
-    gap: 4px;
-    margin-top: 8px;
-    flex-wrap: wrap;
-  }
-
-  &__compare-check {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 12px;
-    color: var(--b3-theme-on-surface-light);
-    cursor: pointer;
-    user-select: none;
-    flex-shrink: 0;
-  }
-}
-
-// ==================== Cloud List ====================
-.ds-cloud-tag {
-  &__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 12px 6px;
-    font-weight: 600;
-    font-size: 13px;
-    color: var(--b3-theme-primary);
-    border-bottom: 1px solid var(--b3-theme-surface-lighter);
-  }
-
-  &__count {
-    font-size: 11px;
-    font-weight: normal;
-    color: var(--b3-theme-on-surface-light);
-  }
-}
-
-// ==================== Detail View ====================
-.ds-detail {
-  &__back {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 10px 12px;
-    cursor: pointer;
-    color: var(--b3-theme-primary);
-    font-size: 13px;
-    border-bottom: 1px solid var(--b3-theme-surface-lighter);
-    background: none;
-    border-left: none;
-    border-right: none;
-    border-top: none;
-    width: 100%;
-    text-align: left;
-
-    &:hover {
-      background: var(--b3-theme-surface);
-    }
-  }
-
-  &__info {
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--b3-theme-surface-lighter);
-    font-size: 12px;
-    color: var(--b3-theme-on-surface-light);
-  }
-
-  &__file-list {
-    padding: 6px 0;
-  }
-
-  &__file {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 12px;
-    font-size: 12px;
-    font-family: var(--b3-font-family-code);
-
-    &-path {
-      flex: 1;
-      @include text-ellipsis;
-    }
-
-    &-status {
-      flex-shrink: 0;
-      font-size: 11px;
-      padding: 1px 6px;
-      border-radius: 3px;
-
-      &--add {
-        color: #16a34a;
-        background: rgba(22, 163, 74, 0.1);
-      }
-
-      &--remove {
-        color: #dc2626;
-        background: rgba(220, 38, 38, 0.1);
-      }
-
-      &--modify {
-        color: #d97706;
-        background: rgba(217, 119, 6, 0.1);
-      }
-    }
-  }
-}
-
-// ==================== Diff View ====================
-.ds-diff {
-  &__back {
-    @extend .ds-detail__back;
-  }
-
-  &__header {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--b3-theme-surface-lighter);
-    font-size: 12px;
-    color: var(--b3-theme-on-surface-light);
-  }
-
-  &__files {
-    padding: 6px 0;
-  }
-
-  &__file {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 12px;
-    font-size: 12px;
-
-    &-path {
-      flex: 1;
-      @include text-ellipsis;
-      font-family: var(--b3-font-family-code);
-    }
-
-    &-indicators {
+  // ── Detail view ──
+  .ds-detail {
+    &__back {
       display: flex;
-      gap: 4px;
-      flex-shrink: 0;
+      align-items: center;
+      gap: $spacing-1;
+      padding: $spacing-2 $spacing-3;
+      cursor: pointer;
+      color: var(--b3-theme-primary);
+      font-size: $font-size-xs;
+      background: none;
+      border: none;
+      border-bottom: 1px solid var(--b3-border-color);
+      width: 100%;
+      text-align: left;
+      transition: background 0.15s;
+
+      &:hover {
+        background: var(--b3-list-hover);
+      }
+    }
+
+    &__info {
+      padding: $spacing-3;
+      font-size: $font-size-xs;
+      color: var(--b3-theme-on-surface);
+      line-height: $line-height-relaxed;
+
+      > div {
+        margin-bottom: $spacing-1;
+      }
+    }
+
+    &__section-title {
+      font-size: $font-size-xs;
+      font-weight: $font-weight-semibold;
+      color: var(--b3-theme-on-surface-light);
+      margin-bottom: $spacing-2;
+    }
+
+    &__type-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: $spacing-1 $spacing-3;
+      font-size: $font-size-xs;
+
+      &-ext {
+        font-family: var(--b3-font-family-code);
+        color: var(--b3-theme-on-surface);
+      }
+
+      &-count {
+        color: var(--b3-theme-on-surface-light);
+        font-variant-numeric: tabular-nums;
+      }
     }
   }
 
-  &__empty {
-    padding: 40px 12px;
-    text-align: center;
-    color: var(--b3-theme-on-surface-light);
-    font-size: 13px;
-  }
-}
-
-// ==================== Upload Dialog ====================
-.ds-upload-dialog {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10001;
-  background: rgba(0, 0, 0, 0.4);
-
-  &__box {
-    background: var(--b3-theme-surface);
-    border-radius: 8px;
-    padding: 20px;
-    width: 320px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  }
-
-  &__title {
-    font-size: 14px;
-    font-weight: 600;
-    margin-bottom: 12px;
-  }
-
-  &__input {
-    width: 100%;
-    padding: 8px 10px;
-    border: 1px solid var(--b3-theme-surface-lighter);
-    border-radius: 4px;
-    background: var(--b3-theme-background);
-    color: var(--b3-theme-on-background);
-    font-size: 13px;
-    outline: none;
-    margin-bottom: 16px;
-    box-sizing: border-box;
-
-    &:focus {
-      border-color: var(--b3-theme-primary);
-    }
-  }
-
-  &__actions {
+  // ── Confirm dialog ──
+  .ds-confirm {
+    position: fixed;
+    inset: 0;
     display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-  }
-}
+    align-items: center;
+    justify-content: center;
+    z-index: 10001;
+    background: rgba(0, 0, 0, 0.4);
 
-// ==================== Restore Confirm ====================
-.ds-confirm {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10001;
-  background: rgba(0, 0, 0, 0.4);
-
-  &__box {
-    background: var(--b3-theme-surface);
-    border-radius: 8px;
-    padding: 20px;
-    width: 320px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  }
-
-  &__text {
-    font-size: 13px;
-    margin-bottom: 16px;
-    line-height: 1.5;
-    color: var(--b3-theme-on-surface);
-  }
-
-  &__actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-  }
-}
-
-// ==================== Buttons ====================
-.ds-btn {
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 12px;
-  cursor: pointer;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-  transition: all 0.15s;
-
-  &:hover {
-    background: var(--b3-theme-surface-light);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  &--primary {
-    background: var(--b3-theme-primary);
-    color: var(--b3-theme-on-primary);
-    border-color: var(--b3-theme-primary);
-
-    &:hover {
-      opacity: 0.85;
-    }
-  }
-
-  &--danger {
-    color: #dc2626;
-    border-color: rgba(220, 38, 38, 0.3);
-
-    &:hover {
-      background: rgba(220, 38, 38, 0.08);
-    }
-  }
-
-  &--small {
-    padding: 2px 8px;
-    font-size: 11px;
-  }
-
-  &--icon {
-    padding: 4px;
-    border: none;
-    background: transparent;
-
-    &:hover {
+    &__box {
       background: var(--b3-theme-surface);
+      border-radius: $radius-md;
+      padding: $spacing-5;
+      width: 320px;
+      box-shadow: $shadow-xl;
+    }
+
+    &__text {
+      font-size: $font-size-sm;
+      margin-bottom: $spacing-4;
+      line-height: $line-height-normal;
+      color: var(--b3-theme-on-surface);
+    }
+
+    &__actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: $spacing-2;
     }
   }
 
-  &--compare {
-    border-color: var(--b3-theme-primary);
-    color: var(--b3-theme-primary);
-  }
-}
+  // ── Buttons ──
+  .ds-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: $spacing-1;
+    padding: 4px 10px;
+    border-radius: $radius-sm;
+    font-size: $font-size-xs;
+    cursor: pointer;
+    border: 1px solid var(--b3-border-color);
+    background: var(--b3-theme-surface);
+    color: var(--b3-theme-on-surface);
+    transition: all 0.15s;
+    white-space: nowrap;
 
-.ds-compare-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  background: var(--b3-theme-surface);
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
-  flex-shrink: 0;
-  font-size: 12px;
-  color: var(--b3-theme-on-surface-light);
+    &:hover {
+      background: var(--b3-list-hover);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    &--primary {
+      background: var(--b3-theme-primary);
+      color: var(--b3-theme-on-primary);
+      border-color: var(--b3-theme-primary);
+
+      &:hover {
+        opacity: 0.85;
+      }
+    }
+
+    &--danger {
+      color: $brand-destructive;
+      border-color: hsl(0 72% 51% / 0.3);
+
+      &:hover {
+        background: hsl(0 72% 51% / 0.08);
+      }
+    }
+
+    &--small {
+      padding: 2px 8px;
+      font-size: $font-size-xs;
+    }
+
+    &--icon {
+      padding: 4px;
+      border: none;
+      background: transparent;
+
+      &:hover {
+        background: var(--b3-list-hover);
+      }
+    }
+  }
 }

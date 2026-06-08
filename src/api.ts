@@ -1025,9 +1025,44 @@ export async function getRepoSnapshots(page: number = 1): Promise<SnapshotInfo[]
  */
 export async function getRepoSnapshotContent(id: string): Promise<SnapshotContentFile[]> {
   const url = "/api/repo/getRepoSnapshotContent"
-  const data = await request(url, { id })
-  if (Array.isArray(data)) return data
-  return data?.files ?? data?.content ?? []
+  try {
+    // 尝试两种参数格式
+    let resp = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    })
+    let text = await resp.text()
+    console.log("[dataSnapshot] getRepoSnapshotContent(id) body:", text.substring(0, 300))
+    if (text) {
+      const json = JSON.parse(text)
+      if (json.code === 0 && json.data) {
+        const data = json.data
+        if (Array.isArray(data)) return data
+        return data?.files ?? data?.content ?? data?.diff ?? []
+      }
+    }
+    // 尝试 { snapshot: id }
+    resp = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ snapshot: id }),
+    })
+    text = await resp.text()
+    console.log("[dataSnapshot] getRepoSnapshotContent(snapshot) body:", text.substring(0, 300))
+    if (text) {
+      const json = JSON.parse(text)
+      if (json.code === 0 && json.data) {
+        const data = json.data
+        if (Array.isArray(data)) return data
+        return data?.files ?? data?.content ?? data?.diff ?? []
+      }
+    }
+    return []
+  } catch (e: any) {
+    console.error("[dataSnapshot] getRepoSnapshotContent error:", e?.message)
+    return []
+  }
 }
 
 /**

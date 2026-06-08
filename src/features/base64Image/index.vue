@@ -328,7 +328,7 @@
         :disabled="isDecoding"
         @click="decodeBase64"
       >
-        🔄 {{ props.i18n.base64Image_decode || '解码' }}
+        {{ props.i18n.base64Image_decode || '解码' }}
       </Button>
     </div>
   </div>
@@ -345,7 +345,7 @@ import {
   ref,
   watch,
 } from "vue"
-import { triggerDownload } from "@/utils/domUtils"
+import { copyToClipboard, triggerDownload } from "@/utils/domUtils"
 import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
@@ -773,7 +773,7 @@ const handleCopySelect = (type: string) => {
       break
   }
 
-  copyToClipboard(content)
+  showCopyResult(content)
 }
 
 const handleUrlCopySelect = (type: string) => {
@@ -791,20 +791,22 @@ const handleUrlCopySelect = (type: string) => {
       break
   }
 
-  copyToClipboard(content)
+  showCopyResult(content)
 }
 
-// 复制函数
-const copyToClipboard = async (content: string) => {
-  try {
-    await navigator.clipboard.writeText(content)
-    showMessage(props.i18n.base64Image_copySuccess || "复制成功", 2000, "info")
-  } catch {
-    showMessage(props.i18n.base64Image_copyFailed || "复制失败", 3000, "error")
-  }
+// 复制函数（使用统一剪贴板 API + showMessage 反馈）
+const showCopyResult = async (content: string) => {
+  const ok = await copyToClipboard(content)
+  showMessage(
+    ok
+      ? props.i18n.base64Image_copySuccess || "复制成功"
+      : props.i18n.base64Image_copyFailed || "复制失败",
+    2000,
+    ok ? "info" : "error",
+  )
 }
 
-const copyDecodedImageUrl = () => copyToClipboard(decodedImageUrl.value)
+const copyDecodedImageUrl = () => showCopyResult(decodedImageUrl.value)
 const copyQrcodeBase64 = () =>
   copyToClipboard(qrcodeOutput.value.replace(/^data:image\/.*;base64,/, ""))
 

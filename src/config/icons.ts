@@ -243,6 +243,11 @@ export const FEATURE_ICONS = {
     icon: "mdi:script-text-outline",
     color: "#f59e0b",
   },
+  // 数据快照
+  dataSnapshot: {
+    icon: "mdi:camera-marker",
+    color: "#0ea5e9",
+  },
 } as const
 
 /**

@@ -28,6 +28,7 @@ import {
   registerBookmarkMarker,
   registerCodeImageGenerator,
   registerDataBackup,
+  registerDataSnapshot,
   registerDiskBrowser,
   registerDocAnalysis,
   registerDocNavigation,
@@ -260,6 +261,7 @@ export default class PluginSample extends Plugin {
     if (s.enableApiDebugger) registerApiDebugger(this)
     if (s.enableWebsiteNavigation) registerWebsiteNavigation(this)
     if (s.enableScriptLauncher) registerScriptLauncher(this)
+    if (s.enableDataSnapshot) registerDataSnapshot(this)
   }
 
   /**

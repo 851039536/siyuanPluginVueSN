@@ -118,7 +118,9 @@
       "Bash(npx sass *)",
       "mcp__fetch__fetch",
       "Bash(pnpm vite *)",
-      "Bash(pnpm vue-tsc *)"
+      "Bash(pnpm vue-tsc *)",
+      "Bash(cat tsconfig.json)",
+      "Bash(cat tsconfig.app.json)"
     ],
     "deny": [],
     "ask": []

@@ -21,6 +21,9 @@ export interface ChangedDoc {
   time?: string
 }
 
+/** 热力图指标类型 */
+export type HeatmapMetric = 'docsModified' | 'docsCreated' | 'blockEdits'
+
 /**
  * 最近更新的文档
  */

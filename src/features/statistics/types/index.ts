@@ -19,6 +19,7 @@ export interface ChangedDoc {
   id: string
   title: string
   updated?: string
+  time?: string
 }
 
 /**

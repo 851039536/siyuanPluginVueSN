@@ -6,6 +6,11 @@ import {
 } from "../utils"
 import { executeSql } from "./executeSql"
 
+function formatTime(ts: string | undefined): string {
+  if (!ts || ts.length < 12) return ""
+  return `${ts.substring(8, 10)}:${ts.substring(10, 12)}`
+}
+
 export async function getDateChangedDocs(dateStr: string): Promise<{
   newDocs: ChangedDoc[]
   modifiedDocs: ChangedDoc[]
@@ -19,13 +24,13 @@ export async function getDateChangedDocs(dateStr: string): Promise<{
   }
 
   const newDocsSql = `
-    SELECT id, content FROM blocks
+    SELECT id, content, created FROM blocks
     WHERE type = 'd' AND substr(created, 1, 8) = '${dateStr}'
     ORDER BY created ASC
     LIMIT 512
   `
   const modifiedDocsSql = `
-    SELECT id, content, updated FROM blocks
+    SELECT id, content, created, updated FROM blocks
     WHERE type = 'd'
       AND substr(updated, 1, 8) = '${dateStr}'
       AND substr(created, 1, 8) != '${dateStr}'
@@ -42,11 +47,13 @@ export async function getDateChangedDocs(dateStr: string): Promise<{
     newDocs: (newRows || []).map((r: any) => ({
       id: r.id,
       title: (r.content || "").replace(/<[^>]*>/g, ""),
+      time: formatTime(r.created),
     })),
     modifiedDocs: (modifiedRows || []).map((r: any) => ({
       id: r.id,
       title: (r.content || "").replace(/<[^>]*>/g, ""),
       updated: r.updated,
+      time: formatTime(r.updated),
     })),
   }
 }

@@ -218,15 +218,18 @@
           v-for="(item, idx) in weekdayDistribution"
           :key="idx"
           class="weekday-row"
+          :class="{ 'is-max': item.isMax }"
         >
           <span class="weekday-name">{{ item.label }}</span>
           <div class="bar-track">
             <div
               class="bar-fill"
+              :class="{ top: item.isMax }"
               :style="{ width: `${item.percent}%` }"
             ></div>
           </div>
-          <span class="bar-value">{{ item.avg }}</span>
+          <span class="bar-total">{{ item.total }}</span>
+          <span class="bar-pct">{{ item.pct }}%</span>
         </div>
       </div>
     </div>
@@ -438,22 +441,21 @@ const weekdayDistribution = computed(() => {
     props.i18n.saturday || '周六',
   ]
   const totals: number[] = Array.from({ length: 7 }).fill(0) as number[]
-  const counts: number[] = Array.from({ length: 7 }).fill(0) as number[]
 
   for (const [dateStr, count] of activityMap.value.entries()) {
     const d = new Date(dateStr)
-    const day = d.getDay()
-    totals[day] += count
-    counts[day]++
+    totals[d.getDay()] += count
   }
 
-  const avgs = totals.map((t, i) => counts[i] > 0 ? Math.round(t / counts[i] * 10) / 10 : 0)
-  const maxAvg = Math.max(...avgs, 1)
+  const grandTotal = totals.reduce((s, t) => s + t, 0)
+  const maxTotal = Math.max(...totals, 1)
 
   return dayLabels.map((label, i) => ({
     label,
-    avg: avgs[i],
-    percent: (avgs[i] / maxAvg) * 100,
+    total: totals[i],
+    pct: grandTotal > 0 ? Math.round((totals[i] / grandTotal) * 100) : 0,
+    percent: (totals[i] / maxTotal) * 100,
+    isMax: totals[i] === maxTotal && totals[i] > 0,
   }))
 })
 
@@ -818,6 +820,11 @@ loadData()
   align-items: center;
   gap: 8px;
 
+  &.is-max .weekday-name {
+    color: var(--b3-theme-primary);
+    opacity: 1;
+  }
+
   .weekday-name {
     width: 32px;
     font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
@@ -833,7 +840,7 @@ loadData()
 
   .bar-track {
     flex: 1;
-    height: 16px;
+    height: 18px;
     background: rgba(var(--b3-theme-on-surface-rgb), 0.05);
     border-radius: 4px;
     overflow: hidden;
@@ -845,15 +852,32 @@ loadData()
     border-radius: 4px;
     transition: width 0.3s ease;
     min-width: 2px;
+    opacity: 0.65;
+
+    &.top {
+      opacity: 1;
+      background: var(--b3-theme-primary);
+    }
   }
 
-  .bar-value {
+  .bar-total {
     width: 36px;
     font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
     font-size: 11px;
     font-weight: 700;
     color: var(--b3-theme-on-surface);
-    text-align: left;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .bar-pct {
+    width: 32px;
+    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.45;
+    text-align: right;
     flex-shrink: 0;
   }
 }

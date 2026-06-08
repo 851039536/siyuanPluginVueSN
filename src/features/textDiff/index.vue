@@ -238,10 +238,7 @@ import {
   ref,
 } from "vue"
 import { Diff } from "vue-diff"
-import {
-
-  TextDiffStorage,
-} from "./types/storage"
+import { TextDiffStorage } from "./types/storage"
 import "vue-diff/dist/index.css"
 
 const props = defineProps<{
@@ -461,8 +458,31 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-// Codex design language — mono font stack
+// ==================== Codex Design System ====================
+
 $codex-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
+
+@mixin codex-meta-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.45;
+  color: var(--b3-theme-on-surface);
+}
+
+@mixin codex-border-card {
+  border: 1px solid var(--b3-border-color);
+  border-radius: 6px;
+  background: var(--b3-theme-surface);
+  transition: border-color 0.12s;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+// ==================== Container ====================
 
 .text-diff-container {
   height: 100%;
@@ -505,14 +525,8 @@ $codex-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospa
   gap: 6px;
 }
 
-// Codex uppercase meta label
 .option-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  opacity: 0.45;
-  color: var(--b3-theme-on-surface);
+  @include codex-meta-label;
   white-space: nowrap;
 }
 
@@ -529,7 +543,6 @@ $codex-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospa
   white-space: nowrap;
   transition: all 0.12s;
 
-  // Codex primary (solid) button
   &.active {
     background: var(--b3-theme-primary);
     color: #fff;
@@ -540,7 +553,6 @@ $codex-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospa
     }
   }
 
-  // Codex ghost button hover
   &:hover:not(.active) {
     background: var(--b3-theme-surface-lighter);
   }
@@ -559,7 +571,6 @@ $codex-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospa
   outline: none;
   transition: border-color 0.12s;
 
-  // Codex focus glow
   &:focus {
     border-color: var(--b3-theme-primary);
     box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
@@ -586,7 +597,6 @@ $codex-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospa
     flex-shrink: 0;
   }
 
-  // Codex ghost button hover
   &:hover {
     background: var(--b3-theme-surface-lighter);
   }
@@ -613,21 +623,13 @@ $codex-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospa
   max-height: 35vh;
 }
 
-// Codex border card
 .input-panel {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--b3-border-color);
-  border-radius: 6px;
-  background: var(--b3-theme-surface);
+  @include codex-border-card;
   overflow: hidden;
   min-height: 150px;
   position: relative;
-  transition: border-color 0.12s;
-
-  &:hover {
-    border-color: var(--b3-theme-primary);
-  }
 
   &.drag-over {
     border-color: var(--b3-theme-primary);
@@ -659,18 +661,11 @@ $codex-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospa
   flex-shrink: 0;
 }
 
-// Codex uppercase meta label
 .panel-title {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  opacity: 0.45;
-  color: var(--b3-theme-on-surface);
+  @include codex-meta-label;
   flex-shrink: 0;
 }
 
-// Codex mono font
 .file-name {
   font-family: $codex-mono;
   font-size: 11px;
@@ -680,14 +675,12 @@ $codex-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospa
   white-space: nowrap;
 }
 
-// Codex mono font
 .char-count {
   font-family: $codex-mono;
   font-size: 11px;
   color: var(--b3-theme-on-surface-variant);
 }
 
-// Codex icon button
 .file-btn {
   display: flex;
   align-items: center;
@@ -708,7 +701,6 @@ $codex-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospa
   }
 }
 
-// Codex input + focus glow
 .input-textarea {
   flex: 1;
   padding: 6px 10px;
@@ -771,22 +763,14 @@ $codex-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospa
 
 // ==================== Result Section ====================
 
-// Codex border card
 .result-section {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   min-height: 200px;
-  border: 1px solid var(--b3-border-color);
-  border-radius: 6px;
-  background: var(--b3-theme-surface);
+  @include codex-border-card;
   margin: 0 8px 8px;
-  transition: border-color 0.12s;
-
-  &:hover {
-    border-color: var(--b3-theme-primary);
-  }
 }
 
 .diff-viewer {

@@ -20,9 +20,9 @@ export class TextDiffManager {
       maskId: "text-diff-mask",
       width: "90vw",
       height: "80vh",
-      getCloseHandler: () => this.close.bind(this),
+      getCloseHandler: () => this.close,
       buildProps: () => ({
-        onClose: this.close.bind(this),
+        onClose: this.close,
         i18n: this.plugin.i18n,
         plugin: this.plugin,
       }),

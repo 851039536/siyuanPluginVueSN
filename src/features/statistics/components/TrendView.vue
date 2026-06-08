@@ -240,14 +240,14 @@
                     class="diff-tag"
                     :class="row.wordDiff > 0 ? 'success' : 'danger'"
                   >
-                    {{ `${(row.wordDiff > 0 ? '+' : '') + formatShortNumber(row.wordDiff)} ${i18n.wordsUnit}` }}
+                    {{ `${(row.wordDiff > 0 ? '+' : '') + formatShortNumber(row.wordDiff)} ${i18n.wordsUnit || '字'}` }}
                   </span>
                   <span
                     v-if="row.noteDiff !== 0"
                     class="diff-tag"
                     :class="row.noteDiff > 0 ? 'success' : 'danger'"
                   >
-                    {{ `${(row.noteDiff > 0 ? '+' : '') + row.noteDiff} ${i18n.notesUnit}` }}
+                    {{ `${(row.noteDiff > 0 ? '+' : '') + row.noteDiff} ${i18n.notesUnit || '笔记'}` }}
                   </span>
                   <span
                     v-if="row.blockDiff !== 0"

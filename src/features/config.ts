@@ -275,6 +275,11 @@ export const FEATURE_CONFIG = [
     defaultTitle: "脚本启动器",
     defaultDesc: "快速启动和管理自定义脚本，支持多种语言分类",
   },
+  {
+    id: "dataSnapshot",
+    defaultTitle: "数据快照",
+    defaultDesc: "创建、比较、查看和上传数据快照",
+  },
 ] as const
 
 /**

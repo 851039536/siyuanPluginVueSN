@@ -17,9 +17,26 @@ import {
 export const SIYUAN_API_BASE_URL = "http://127.0.0.1:6806"
 
 async function request(url: string, data: any) {
-  const response: IWebSocketData = await fetchSyncPost(url, data)
-  const res = response.code === 0 ? response.data : null
-  return res
+  try {
+    const response: IWebSocketData = await fetchSyncPost(url, data)
+    const res = response.code === 0 ? response.data : null
+    return res
+  } catch {
+    return null
+  }
+}
+
+async function requestOrThrow(url: string, data: any) {
+  let response: IWebSocketData
+  try {
+    response = await fetchSyncPost(url, data)
+  } catch (e: any) {
+    throw new Error(e?.message || `API request failed: ${url}`)
+  }
+  if (response.code !== 0) {
+    throw new Error(response.msg || `API error: ${url}`)
+  }
+  return response.data ?? null
 }
 
 // **************************************** Noteboook ****************************************
@@ -958,4 +975,105 @@ export async function reloadProtyle(blockId: string): Promise<void> {
 export async function uploadCloudSnapshot(id: string, tag: string): Promise<null> {
   const url = "/api/repo/uploadCloudSnapshot"
   return request(url, { id, tag })
+}
+
+// **************************************** Repo / Snapshot ****************************************
+
+/** 快照信息 */
+export interface SnapshotInfo {
+  id: string
+  memo: string
+  createTime: string
+  hSize?: string
+  hCreateTime?: string
+}
+
+/** 快照内容/差异文件条目 */
+export interface SnapshotContentFile {
+  path: string
+  status: string
+}
+
+/** 云端快照标签信息 */
+export interface CloudSnapshotTag {
+  tag: string
+  snapshots: SnapshotInfo[]
+}
+
+/**
+ * 创建本地快照
+ * @param memo 快照备注说明
+ */
+export async function createSnapshot(memo: string): Promise<string> {
+  const url = "/api/repo/createSnapshot"
+  return request(url, { memo })
+}
+
+/**
+ * 获取本地快照列表
+ * @param page 页码（从 1 开始）
+ */
+export async function getRepoSnapshots(page: number = 1): Promise<SnapshotInfo[]> {
+  const url = "/api/repo/getRepoSnapshots"
+  const data = await request(url, { page })
+  return data?.snapshots ?? []
+}
+
+/**
+ * 获取快照内容（文件列表或差异）
+ * @param id 快照 ID
+ */
+export async function getRepoSnapshotContent(id: string): Promise<SnapshotContentFile[]> {
+  const url = "/api/repo/getRepoSnapshotContent"
+  const data = await request(url, { id })
+  if (Array.isArray(data)) return data
+  return data?.files ?? data?.content ?? []
+}
+
+/**
+ * 恢复/检出指定快照（破坏性操作，会覆盖当前数据）
+ * @param id 快照 ID
+ */
+export async function importRepo(id: string): Promise<null> {
+  const url = "/api/repo/checkoutRepo"
+  return requestOrThrow(url, { id })
+}
+
+/**
+ * 获取云端快照标签列表
+ * @param page 页码（从 1 开始）
+ */
+export async function getCloudRepoTagSnapshots(page: number = 1): Promise<CloudSnapshotTag[]> {
+  const url = "/api/repo/getCloudRepoTagSnapshots"
+  const data = await request(url, { page })
+  if (!data) return []
+  // 思源返回 { snapshots: [...] } 扁平列表，按 tag 分组
+  const snapshots: SnapshotInfo[] = data.snapshots ?? []
+  if (snapshots.length === 0) return []
+  const grouped = new Map<string, SnapshotInfo[]>()
+  for (const snap of snapshots) {
+    const tag = (snap as any).tag || "default"
+    if (!grouped.has(tag)) grouped.set(tag, [])
+    grouped.get(tag)!.push(snap)
+  }
+  return Array.from(grouped.entries()).map(([tag, snaps]) => ({ tag, snapshots: snaps }))
+}
+
+/**
+ * 从云端下载快照
+ * @param tag 云端标签名
+ * @param id 快照 ID
+ */
+export async function downloadCloudSnapshot(tag: string, id: string): Promise<null> {
+  const url = "/api/repo/downloadCloudSnapshot"
+  return request(url, { tag, id })
+}
+
+/**
+ * 删除云端快照标签
+ * @param tag 要删除的标签名
+ */
+export async function removeCloudRepoTag(tag: string): Promise<null> {
+  const url = "/api/repo/removeCloudRepoTag"
+  return request(url, { tag })
 }

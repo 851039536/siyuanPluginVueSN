@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
-import type { SnapshotDiffData, SnapshotInfo, SnapshotContentFile } from "./types"
+import type { SnapshotInfo } from "./types"
 import { ref } from "vue"
 import { useDataSnapshot } from "./composables/useDataSnapshot"
+import IconWrapper from "@/components/IconWrapper.vue"
 import "./styles/index.scss"
 
 const props = defineProps<{
@@ -15,10 +16,7 @@ const {
   snapshots,
   cloudTags,
   selectedSnapshot,
-  diffData,
   memo,
-  compareMode,
-  compareIds,
   loading,
   cloudLoading,
   op,
@@ -30,8 +28,6 @@ const {
   loadCloudSnapshots,
   downloadFromCloud,
   removeCloudTag,
-  toggleCompare,
-  compareSnapshots,
   backToList,
   switchTab,
 } = useDataSnapshot(props.plugin)
@@ -68,21 +64,15 @@ function formatTime(s: SnapshotInfo): string {
   return raw
 }
 
-function getFileStatusClass(status: string): string {
-  if (status === "add") return "ds-detail__file-status--add"
-  if (status === "remove") return "ds-detail__file-status--remove"
-  return "ds-detail__file-status--modify"
-}
-
-function getAllDiffPaths(data: SnapshotDiffData): string[] {
-  const paths = new Set<string>()
-  for (const f of data.snapshotA.files) paths.add(f.path)
-  for (const f of data.snapshotB.files) paths.add(f.path)
-  return Array.from(paths).sort()
-}
-
-function findFileStatus(files: SnapshotContentFile[], path: string): string {
-  return files.find(f => f.path === path)?.status || ""
+function formatSize(s: SnapshotInfo): string {
+  if (s.hSize) return s.hSize
+  if (s.size) {
+    if (s.size > 1073741824) return `${(s.size / 1073741824).toFixed(2)} GB`
+    if (s.size > 1048576) return `${(s.size / 1048576).toFixed(2)} MB`
+    if (s.size > 1024) return `${(s.size / 1024).toFixed(2)} KB`
+    return `${s.size} B`
+  }
+  return ""
 }
 </script>
 
@@ -97,9 +87,7 @@ function findFileStatus(files: SnapshotContentFile[], path: string): string {
           :title="i18n.refresh || '刷新'"
           @click="currentView === 'cloud' ? loadCloudSnapshots() : loadLocalSnapshots()"
         >
-          <svg class="svg-icon" viewBox="0 0 1024 1024" width="16" height="16">
-            <path d="M934.4 193.6v243.2c0 17.6-14.4 32-32 32s-32-14.4-32-32V257.6c-62.4 70.4-148.8 115.2-243.2 115.2-177.6 0-321.6-144-321.6-321.6 0-17.6 14.4-32 32-32s32 14.4 32 32c0 142.4 115.2 257.6 257.6 257.6 76.8 0 147.2-33.6 196.8-86.4v-84.8c0-17.6 14.4-32 32-32s32 14.4 32 32v1.6zM513.6 897.6c-76.8 0-147.2-33.6-196.8-86.4v84.8c0 17.6-14.4 32-32 32s-32-14.4-32-32v-243.2c0-17.6 14.4-32 32-32h243.2c17.6 0 32 14.4 32 32s-14.4 32-32 32H291.2c62.4-70.4 148.8-115.2 243.2-115.2 177.6 0 321.6 144 321.6 321.6 0 17.6-14.4 32-32 32s-32-14.4-32-32c0-142.4-115.2-257.6-257.6-257.6z" fill="currentColor"/>
-          </svg>
+          <IconWrapper name="refresh" :size="14" />
         </button>
       </div>
     </div>
@@ -122,7 +110,7 @@ function findFileStatus(files: SnapshotContentFile[], path: string): string {
       </button>
     </div>
 
-    <!-- Create form (local tab only) -->
+    <!-- Create form -->
     <div v-if="currentView === 'local'" class="ds-create">
       <input
         v-model="memo"
@@ -135,36 +123,20 @@ function findFileStatus(files: SnapshotContentFile[], path: string): string {
         :disabled="op.creating"
         @click="createSnapshotAction"
       >
+        <IconWrapper v-if="!op.creating" name="plus" :size="12" />
         {{ op.creating ? "..." : (i18n.createSnapshot || "创建快照") }}
       </button>
     </div>
 
-    <!-- Compare bar -->
-    <div v-if="compareMode && currentView === 'local'" class="ds-compare-bar">
-      <span>{{ compareIds?.filter(Boolean).length || 0 }}/2 {{ i18n.selectSnapshotToCompare || "选择要对比的快照" }}</span>
-      <div style="display:flex;gap:4px;">
-        <button
-          class="ds-btn ds-btn--primary ds-btn--small"
-          :disabled="!compareIds || compareIds.filter(Boolean).length < 2"
-          @click="compareSnapshots()"
-        >
-          {{ i18n.compare || "对比" }}
-        </button>
-        <button class="ds-btn ds-btn--small" @click="compareMode=false;compareIds=null">
-          {{ i18n.cancel || "取消" }}
-        </button>
-      </div>
-    </div>
-
-    <!-- Content area -->
+    <!-- Content -->
     <div class="ds-content">
-      <!-- Local snapshot list -->
+      <!-- Local -->
       <div v-if="currentView === 'local'">
-        <div v-if="loading" class="ds-list__loading">{{ i18n.refreshing || "加载中..." }}</div>
-        <div v-else-if="snapshots.length === 0" class="ds-list__empty">
+        <div v-if="loading" class="ds-loading">{{ i18n.refreshing || "加载中..." }}</div>
+        <div v-else-if="snapshots.length === 0" class="ds-empty">
           {{ i18n.noSnapshots || "暂无快照" }}
         </div>
-        <div v-else class="ds-list">
+        <div v-else>
           <div
             v-for="snap in snapshots"
             :key="snap.id"
@@ -172,21 +144,15 @@ function findFileStatus(files: SnapshotContentFile[], path: string): string {
           >
             <div class="ds-item__header">
               <span class="ds-item__memo">{{ snap.memo || snap.id }}</span>
-              <label v-if="compareMode" class="ds-item__compare-check">
-                <input
-                  type="checkbox"
-                  :checked="compareIds?.[0] === snap.id || compareIds?.[1] === snap.id"
-                  @change="toggleCompare(snap.id)"
-                >
-              </label>
             </div>
-            <div class="ds-item__time">{{ formatTime(snap) }}</div>
+            <div class="ds-item__time">
+              {{ formatTime(snap) }}
+              <template v-if="snap.count"> · {{ snap.count }} {{ i18n.snapshotFiles || "文件" }}</template>
+              <template v-if="formatSize(snap)"> · {{ formatSize(snap) }}</template>
+            </div>
             <div class="ds-item__actions">
-              <button
-                class="ds-btn ds-btn--small"
-                :disabled="op.loadingContent === snap.id"
-                @click="viewSnapshot(snap.id)"
-              >
+              <button class="ds-btn ds-btn--small" @click="viewSnapshot(snap)">
+                <IconWrapper name="eye" :size="12" />
                 {{ i18n.view || "查看" }}
               </button>
               <button
@@ -194,38 +160,32 @@ function findFileStatus(files: SnapshotContentFile[], path: string): string {
                 :disabled="op.restoring === snap.id"
                 @click="confirmRestore(snap.id)"
               >
+                <IconWrapper name="refreshLeft" :size="12" />
                 {{ i18n.restore || "恢复" }}
-              </button>
-              <button
-                v-if="!compareMode"
-                class="ds-btn ds-btn--small ds-btn--compare"
-                @click="compareMode=true;toggleCompare(snap.id)"
-              >
-                {{ i18n.snapshotDiff || "对比" }}
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Cloud snapshot list -->
+      <!-- Cloud -->
       <div v-if="currentView === 'cloud'">
-        <div v-if="cloudLoading" class="ds-list__loading">{{ i18n.refreshing || "加载中..." }}</div>
-        <div v-else-if="cloudTags.length === 0" class="ds-list__empty">
+        <div v-if="cloudLoading" class="ds-loading">{{ i18n.refreshing || "加载中..." }}</div>
+        <div v-else-if="cloudTags.length === 0" class="ds-empty">
           {{ i18n.noCloudSnapshots || "暂无云端快照" }}
         </div>
         <div v-else>
           <div v-for="tag in cloudTags" :key="tag.tag" class="ds-cloud-tag">
             <div class="ds-cloud-tag__header">
               <span>{{ tag.tag }}</span>
-              <div style="display:flex;align-items:center;gap:8px;">
+              <div style="display:flex;align-items:center;gap:6px;">
                 <span class="ds-cloud-tag__count">{{ tag.snapshots?.length || 0 }}</span>
                 <button
                   class="ds-btn ds-btn--small ds-btn--danger"
                   :disabled="op.removing === tag.tag"
                   @click="removeCloudTag(tag.tag)"
                 >
-                  {{ i18n.removeCloudTag || "删除" }}
+                  <IconWrapper name="delete" :size="12" />
                 </button>
               </div>
             </div>
@@ -240,6 +200,7 @@ function findFileStatus(files: SnapshotContentFile[], path: string): string {
                   :disabled="op.downloading === snap.id"
                   @click="downloadFromCloud(tag.tag, snap.id)"
                 >
+                  <IconWrapper name="download" :size="12" />
                   {{ op.downloading === snap.id ? (i18n.downloading || "下载中...") : (i18n.download || "下载") }}
                 </button>
               </div>
@@ -248,71 +209,44 @@ function findFileStatus(files: SnapshotContentFile[], path: string): string {
         </div>
       </div>
 
-      <!-- Detail view -->
+      <!-- Detail -->
       <div v-if="currentView === 'detail' && selectedSnapshot">
         <button class="ds-detail__back" @click="backToList">
-          <svg viewBox="0 0 1024 1024" width="14" height="14">
-            <path d="M724 218.3V141c0-6.7-7.7-10.4-12.9-6.3L260.3 486.8c-3.9 3.1-3.9 9.2 0 12.3l450.8 352.1c5.3 4.1 12.9.4 12.9-6.3v-77.3c0-4.9-2.3-9.6-6.1-12.6l-364.2-276.1 364.2-276.1c3.8-3 6.1-7.7 6.1-12.6z" fill="currentColor"/>
-          </svg>
+          <IconWrapper name="back" :size="14" />
           {{ i18n.snapshotDetail || "快照详情" }}
         </button>
         <div class="ds-detail__info">
-          <div>{{ i18n.memo || "备注" }}: {{ selectedSnapshot.snapshot.memo }}</div>
-          <div>{{ i18n.createdAt || "创建时间" }}: {{ formatTime(selectedSnapshot.snapshot) }}</div>
-          <div>{{ i18n.snapshotFiles || "文件" }}: {{ selectedSnapshot.files.length }}</div>
-        </div>
-        <div class="ds-detail__file-list">
-          <div v-for="file in selectedSnapshot.files" :key="file.path" class="ds-detail__file">
-            <span class="ds-detail__file-path" :title="file.path">{{ file.path }}</span>
-            <span class="ds-detail__file-status" :class="getFileStatusClass(file.status)">{{ file.status }}</span>
+          <div><strong>{{ i18n.memo || "备注" }}:</strong> {{ selectedSnapshot.memo }}</div>
+          <div><strong>{{ i18n.createdAt || "创建时间" }}:</strong> {{ formatTime(selectedSnapshot) }}</div>
+          <div v-if="selectedSnapshot.count">
+            <strong>{{ i18n.snapshotFiles || "文件数" }}:</strong> {{ selectedSnapshot.count }}
           </div>
-          <div v-if="selectedSnapshot.files.length === 0" class="ds-list__empty">
-            {{ i18n.noChanges || "无变更" }}
+          <div v-if="formatSize(selectedSnapshot)">
+            <strong>大小:</strong> {{ formatSize(selectedSnapshot) }}
+          </div>
+          <div v-if="selectedSnapshot.hTagUpdated">
+            <strong>Tag 更新:</strong> {{ selectedSnapshot.hTagUpdated }}
+          </div>
+          <div v-if="selectedSnapshot.systemName">
+            <strong>设备:</strong> {{ selectedSnapshot.systemName }}
+            <template v-if="selectedSnapshot.systemOS"> ({{ selectedSnapshot.systemOS }})</template>
           </div>
         </div>
-      </div>
-
-      <!-- Diff view -->
-      <div v-if="currentView === 'diff' && diffData">
-        <button class="ds-diff__back" @click="backToList">
-          <svg viewBox="0 0 1024 1024" width="14" height="14">
-            <path d="M724 218.3V141c0-6.7-7.7-10.4-12.9-6.3L260.3 486.8c-3.9 3.1-3.9 9.2 0 12.3l450.8 352.1c5.3 4.1 12.9.4 12.9-6.3v-77.3c0-4.9-2.3-9.6-6.1-12.6l-364.2-276.1 364.2-276.1c3.8-3 6.1-7.7 6.1-12.6z" fill="currentColor"/>
-          </svg>
-          {{ i18n.snapshotDiff || "差异对比" }}
-        </button>
-        <div class="ds-diff__header">
-          <span>{{ diffData.snapshotA.snapshot.memo || diffData.snapshotA.snapshot.id }}</span>
-          <span>vs</span>
-          <span>{{ diffData.snapshotB.snapshot.memo || diffData.snapshotB.snapshot.id }}</span>
-        </div>
-        <div v-if="getAllDiffPaths(diffData).length === 0" class="ds-diff__empty">
-          {{ i18n.noChanges || "无变更" }}
-        </div>
-        <div v-else class="ds-diff__files">
-          <div v-for="diffPath in getAllDiffPaths(diffData)" :key="diffPath" class="ds-diff__file">
-            <span class="ds-diff__file-path" :title="diffPath">{{ diffPath }}</span>
-            <div class="ds-diff__file-indicators">
-              <span
-                v-if="findFileStatus(diffData.snapshotA.files, diffPath)"
-                class="ds-detail__file-status"
-                :class="getFileStatusClass(findFileStatus(diffData.snapshotA.files, diffPath))"
-              >
-                A: {{ findFileStatus(diffData.snapshotA.files, diffPath) }}
-              </span>
-              <span
-                v-if="findFileStatus(diffData.snapshotB.files, diffPath)"
-                class="ds-detail__file-status"
-                :class="getFileStatusClass(findFileStatus(diffData.snapshotB.files, diffPath))"
-              >
-                B: {{ findFileStatus(diffData.snapshotB.files, diffPath) }}
-              </span>
-            </div>
+        <div v-if="selectedSnapshot.typesCount && selectedSnapshot.typesCount.length > 0">
+          <div class="ds-detail__section-title" style="padding: 0 12px;">文件类型分布</div>
+          <div
+            v-for="tc in selectedSnapshot.typesCount"
+            :key="tc.type"
+            class="ds-detail__type-row"
+          >
+            <span class="ds-detail__type-row-ext">{{ tc.type }}</span>
+            <span class="ds-detail__type-row-count">{{ tc.count }}</span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Restore confirm dialog -->
+    <!-- Restore confirm -->
     <div v-if="restoreTarget" class="ds-confirm" @click.self="cancelRestore">
       <div class="ds-confirm__box">
         <div class="ds-confirm__text">{{ i18n.restoreConfirm || "确定要恢复此快照吗？当前数据将被覆盖。" }}</div>

@@ -6,21 +6,31 @@ $ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 $ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
 $ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 
-@mixin custom-scrollbar($width: 4px) {
+// Codex 设计 tokens
+$sv-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
+$sv-radius: 6px;
+
+@mixin custom-scrollbar {
   &::-webkit-scrollbar {
-    width: $width;
-    height: $width;
+    width: 5px;
+    height: 5px;
   }
   &::-webkit-scrollbar-track {
     background: transparent;
   }
   &::-webkit-scrollbar-thumb {
-    background: var(--b3-theme-surface-variant);
-    border-radius: 99px;
+    background: var(--b3-theme-surface-lighter);
+    border-radius: 3px;
     &:hover {
-      background: var(--b3-theme-on-surface-variant);
+      background: var(--b3-theme-on-surface);
     }
   }
+}
+
+@mixin text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 @mixin modal-overlay($z-index: 9999) {
@@ -45,12 +55,8 @@ $ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
   max-width: 92vw;
   max-height: 86vh;
   background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 10px;
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.04),
-    0 2px 4px rgba(0, 0, 0, 0.08),
-    0 12px 40px rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $sv-radius;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -63,7 +69,7 @@ $ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
   background: var(--b3-theme-surface);
   user-select: none;
@@ -79,8 +85,8 @@ $ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .sv-header-title {
-      font-size: 13px;
-      font-weight: 650;
+      font-size: 15px;
+      font-weight: 600;
       color: var(--b3-theme-on-surface);
       letter-spacing: -0.01em;
     }
@@ -102,17 +108,18 @@ $ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
     justify-content: center;
-    border: none;
-    border-radius: 6px;
+    border: 1px solid var(--b3-border-color);
+    border-radius: $sv-radius;
     cursor: pointer;
     background: transparent;
     color: var(--b3-theme-on-surface-variant);
-    font-size: 14px;
-    transition: background 0.15s $ease-in-out, color 0.15s $ease-in-out;
+    font-size: 13px;
+    transition: border-color 0.15s $ease-in-out, color 0.15s $ease-in-out, background 0.15s $ease-in-out;
 
     &:hover {
+      border-color: var(--b3-theme-primary);
+      color: var(--b3-theme-primary);
       background: var(--b3-theme-surface-lighter);
-      color: var(--b3-theme-on-surface);
     }
   }
 }
@@ -130,7 +137,9 @@ $ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
     font-size: 12px;
     color: var(--b3-theme-on-surface-variant);
     line-height: 1.5;
-    margin-bottom: 18px;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px dashed var(--b3-border-color);
     opacity: 0.75;
   }
 
@@ -140,12 +149,14 @@ $ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 8px;
-    margin-bottom: 18px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px dashed var(--b3-border-color);
 
     .sv-tool-card {
       padding: 10px 10px 8px;
-      border: 1.5px solid var(--b3-theme-surface-lighter);
-      border-radius: 8px;
+      border: 1px solid var(--b3-border-color);
+      border-radius: $sv-radius;
       cursor: pointer;
       background: var(--b3-theme-surface);
       position: relative;
@@ -202,6 +213,7 @@ $ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 
       .sv-tool-status {
         font-size: 10.5px;
+        font-family: $sv-mono;
         color: var(--b3-theme-on-surface-variant);
         padding-left: 20px;
         line-height: 1.3;
@@ -226,19 +238,21 @@ $ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
   .sv-project-path {
     margin-bottom: 16px;
     padding: 10px 12px;
-    background: var(--b3-theme-background);
-    border: 1px solid var(--b3-theme-surface-lighter);
-    border-radius: 8px;
+    background: var(--b3-theme-surface-lighter);
+    border: 1px solid var(--b3-border-color);
+    border-radius: $sv-radius;
 
     .sv-path-label {
       display: flex;
       align-items: center;
       gap: 6px;
-      font-size: 11.5px;
-      font-weight: 600;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
       color: var(--b3-theme-on-surface-variant);
       margin-bottom: 7px;
-      opacity: 0.8;
+      opacity: 0.45;
     }
 
     .sv-path-input-row {
@@ -249,17 +263,17 @@ $ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
         flex: 1;
         padding: 7px 10px;
         font-size: 11.5px;
-        border: 1px solid var(--b3-theme-surface-lighter);
-        border-radius: 6px;
+        border: 1px solid var(--b3-border-color);
+        border-radius: 4px;
         background: var(--b3-theme-surface);
         color: var(--b3-theme-on-surface);
         outline: none;
-        font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+        font-family: $sv-mono;
         transition: border-color 0.15s $ease-in-out, box-shadow 0.15s $ease-in-out;
 
         &:focus {
           border-color: var(--b3-theme-primary);
-          box-shadow: 0 0 0 2.5px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.12);
+          box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
         }
       }
     }
@@ -271,6 +285,8 @@ $ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     gap: 8px;
     margin-bottom: 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px dashed var(--b3-border-color);
   }
 
   /* ── skill card ─────────────────────────────── */
@@ -284,8 +300,8 @@ $ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
   .sv-skill-card {
     padding: 12px 14px;
     background: var(--b3-theme-surface);
-    border: 1px solid var(--b3-theme-surface-lighter);
-    border-radius: 8px;
+    border: 1px solid var(--b3-border-color);
+    border-radius: $sv-radius;
     position: relative;
     transition:
       border-color 0.15s $ease-in-out,
@@ -309,7 +325,7 @@ $ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 
     &--editing {
       border-color: var(--b3-theme-primary);
-      box-shadow: 0 0 0 3px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1);
+      background: var(--b3-theme-primary-lightest);
     }
 
     .sv-skill-header {
@@ -350,45 +366,49 @@ $ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .sv-skill-tool-badge {
-      font-size: 10.5px;
+      font-size: 10px;
+      font-family: $sv-mono;
       padding: 2px 7px;
-      border-radius: 99px;
+      border-radius: 3px;
       font-weight: 600;
       flex-shrink: 0;
       line-height: 1.3;
     }
 
     .sv-skill-size {
-      font-size: 10.5px;
+      font-size: 10px;
+      font-family: $sv-mono;
       color: var(--b3-theme-on-surface-variant);
-      opacity: 0.5;
+      opacity: 0.45;
       flex-shrink: 0;
       font-variant-numeric: tabular-nums;
     }
 
     .sv-skill-action-btn {
-      width: 28px;
-      height: 28px;
+      width: 24px;
+      height: 24px;
       display: flex;
       align-items: center;
       justify-content: center;
-      border: none;
-      border-radius: 5px;
+      border: 1px solid var(--b3-border-color);
+      border-radius: 4px;
       cursor: pointer;
-      font-size: 13px;
-      background: transparent;
+      font-size: 12px;
+      background: var(--b3-theme-background);
       color: var(--b3-theme-on-surface-variant);
-      transition: background 0.12s $ease-in-out, color 0.12s $ease-in-out;
+      transition: background 0.12s $ease-in-out, color 0.12s $ease-in-out, border-color 0.12s $ease-in-out;
 
       &--edit:hover {
-        background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1);
+        border-color: var(--b3-theme-primary);
         color: var(--b3-theme-primary);
+        background: var(--b3-theme-surface-lighter);
       }
 
       &--save {
         &:hover:not(:disabled) {
-          background: rgba(39, 174, 96, 0.1);
-          color: #27ae60;
+          border-color: #22c55e;
+          color: #22c55e;
+          background: var(--b3-theme-surface-lighter);
         }
         &:disabled {
           opacity: 0.4;
@@ -401,13 +421,15 @@ $ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
       }
 
       &--delete:hover {
-        background: rgba(217, 83, 79, 0.1);
-        color: #d9534f;
+        border-color: #ef4444;
+        color: #ef4444;
+        background: var(--b3-theme-surface-lighter);
       }
 
       &--copy:hover {
-        background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1);
+        border-color: var(--b3-theme-primary);
         color: var(--b3-theme-primary);
+        background: var(--b3-theme-surface-lighter);
       }
     }
 
@@ -423,7 +445,7 @@ $ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
       font-size: 10.5px;
       color: var(--b3-theme-on-surface-variant);
       opacity: 0.45;
-      font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+      font-family: $sv-mono;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -464,8 +486,8 @@ $ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
       margin-top: 10px;
       padding: 12px 14px;
       background: var(--b3-theme-background);
-      border: 1px solid var(--b3-theme-surface-lighter);
-      border-radius: 6px;
+      border: 1px solid var(--b3-border-color);
+      border-radius: $sv-radius;
       max-height: 320px;
       overflow-y: auto;
       font-size: 12.5px;
@@ -511,7 +533,7 @@ $ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
       }
 
       :deep(code) {
-        font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+        font-family: $sv-mono;
         font-size: 11.5px;
         padding: 1.5px 5px;
         border-radius: 3px;
@@ -522,9 +544,9 @@ $ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
       :deep(pre) {
         margin: 8px 0;
         padding: 10px 12px;
-        border-radius: 6px;
+        border-radius: $sv-radius;
         background: var(--b3-theme-surface);
-        border: 1px solid var(--b3-theme-surface-lighter);
+        border: 1px solid var(--b3-border-color);
         overflow-x: auto;
 
         code {
@@ -560,7 +582,7 @@ $ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
         th,
         td {
           padding: 6px 10px;
-          border: 1px solid var(--b3-theme-surface-lighter);
+          border: 1px solid var(--b3-border-color);
           text-align: left;
         }
 
@@ -573,7 +595,7 @@ $ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
       :deep(hr) {
         margin: 12px 0;
         border: none;
-        border-top: 1px solid var(--b3-theme-surface-lighter);
+        border-top: 1px dashed var(--b3-border-color);
       }
 
       :deep(strong) {
@@ -595,15 +617,15 @@ $ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
         max-height: 300px;
         padding: 10px 12px;
         font-size: 11.5px;
-        font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+        font-family: $sv-mono;
         line-height: 1.6;
         color: var(--b3-theme-on-background);
         background: var(--b3-theme-background);
-        border: 1.5px solid var(--b3-theme-primary);
-        border-radius: 6px;
+        border: 1px solid var(--b3-border-color);
+        border-radius: $sv-radius;
         outline: none;
         resize: vertical;
-        box-shadow: 0 0 0 3px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.08);
+        box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
 
         &::placeholder {
           color: var(--b3-theme-on-surface-variant);
@@ -714,10 +736,9 @@ $ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
     width: 380px;
     max-width: 90vw;
     background: var(--b3-theme-surface);
-    border: 1px solid var(--b3-theme-surface-lighter);
-    border-radius: 10px;
+    border: 1px solid var(--b3-border-color);
+    border-radius: $sv-radius;
     box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.03),
       0 4px 12px rgba(0, 0, 0, 0.12),
       0 16px 48px rgba(0, 0, 0, 0.18);
     overflow: hidden;
@@ -737,6 +758,8 @@ $ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
         font-size: 13.5px;
         font-weight: 650;
         color: var(--b3-theme-on-surface);
+        border-bottom: 1px dashed var(--b3-border-color);
+        padding-bottom: 12px;
       }
     }
 
@@ -757,7 +780,7 @@ $ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
         font-size: 11px;
         color: var(--b3-theme-on-surface-variant);
         opacity: 0.6;
-        font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+        font-family: $sv-mono;
         margin-top: 4px;
         word-break: break-all;
       }
@@ -773,8 +796,8 @@ $ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
           align-items: center;
           gap: 8px;
           padding: 10px 12px;
-          border: 1.5px solid var(--b3-theme-surface-lighter);
-          border-radius: 8px;
+          border: 1px solid var(--b3-border-color);
+          border-radius: $sv-radius;
           cursor: pointer;
           transition:
             border-color 0.15s $ease-in-out,

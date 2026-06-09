@@ -477,7 +477,7 @@ loadData()
 
 .summary-card .summary-value {
   font-size: 20px;
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
 }
 
 // ========== Filters ==========
@@ -505,7 +505,7 @@ loadData()
   border-radius: 4px;
   background: transparent;
   color: var(--b3-theme-on-surface-light);
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
@@ -530,7 +530,7 @@ loadData()
   border-radius: 4px;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
   font-size: 11px;
   font-weight: 600;
   outline: none;
@@ -566,7 +566,7 @@ loadData()
 }
 
 .month-label {
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -590,7 +590,7 @@ loadData()
   flex-shrink: 0;
 
   .weekday-label {
-    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    font-family: stats.$font-mono;
     font-size: 10px;
     font-weight: 700;
     letter-spacing: 0.06em;
@@ -649,7 +649,7 @@ loadData()
   margin-top: 10px;
 
   .legend-text {
-    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    font-family: stats.$font-mono;
     font-size: 10px;
     font-weight: 700;
     letter-spacing: 0.06em;
@@ -683,7 +683,7 @@ loadData()
 }
 
 .daily-detail-title {
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
   font-size: 12px;
   font-weight: 700;
   color: var(--b3-theme-primary);
@@ -727,7 +727,7 @@ loadData()
 }
 
 .detail-group-title {
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -782,7 +782,7 @@ loadData()
 }
 
 .detail-time {
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
   font-size: 10px;
   font-weight: 700;
   color: var(--b3-theme-on-surface);
@@ -798,7 +798,7 @@ loadData()
   padding: 14px;
 
   .section-title {
-    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    font-family: stats.$font-mono;
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.04em;
@@ -827,7 +827,7 @@ loadData()
 
   .weekday-name {
     width: 32px;
-    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    font-family: stats.$font-mono;
     font-size: 10px;
     font-weight: 700;
     letter-spacing: 0.06em;
@@ -862,7 +862,7 @@ loadData()
 
   .bar-total {
     width: 36px;
-    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    font-family: stats.$font-mono;
     font-size: 11px;
     font-weight: 700;
     color: var(--b3-theme-on-surface);
@@ -872,7 +872,7 @@ loadData()
 
   .bar-pct {
     width: 32px;
-    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    font-family: stats.$font-mono;
     font-size: 10px;
     font-weight: 700;
     color: var(--b3-theme-on-surface);

@@ -20,6 +20,11 @@
           :class="{ active: activeTab === 'achievements' }"
           @click="activeTab = 'achievements'"
         >自定义成就</button>
+        <button
+          class="tab-btn"
+          :class="{ active: activeTab === 'level' }"
+          @click="activeTab = 'level'"
+        >等级设置</button>
       </div>
 
       <!-- Milestones tab toolbar -->
@@ -169,6 +174,64 @@
             </div>
           </div>
         </div>
+
+        <!-- ═══ Level Tab ═══ -->
+        <div v-show="activeTab === 'level'" class="level-tab">
+          <div class="level-config-help">
+            <p class="help-title">等级系统说明</p>
+            <ul class="help-list">
+              <li><b>成就点</b>：每达成一个里程碑获得对应稀有度的成就点，累积成就点提升等级。</li>
+              <li><b>曲线乘数</b>：控制升级难度，值越大每级所需成就点越多，升级越慢。</li>
+              <li>修改后点击「保存等级设置」生效，等级和进度条会立即重新计算。</li>
+            </ul>
+          </div>
+
+          <div class="level-config-section">
+            <div class="level-config-label">里程碑成就点</div>
+            <div class="tier-points-grid">
+              <div v-for="tier in ['common','rare','epic','legendary']" :key="tier" class="tier-point-item">
+                <span class="tier-point-badge" :class="`tier-${tier}`">{{ TIER_LABELS[tier] }}</span>
+                <input
+                  type="number"
+                  class="tier-point-input"
+                  :value="editableLevelConfig.tierPoints[tier]"
+                  min="1"
+                  @change="(e: Event) => onTierPointChange(tier, parseInt((e.target as HTMLInputElement).value) || 1)"
+                />
+                <span class="tier-point-unit">点</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="level-config-section">
+            <div class="level-config-label">等级曲线乘数</div>
+            <div class="curve-row">
+              <input
+                type="number"
+                class="curve-input"
+                :value="editableLevelConfig.curveMultiplier"
+                min="1"
+                step="1"
+                @change="(e: Event) => onCurveMultiplierChange(parseInt((e.target as HTMLInputElement).value) || 1)"
+              />
+              <span class="curve-formula-hint">
+                公式: <code>{{ editableLevelConfig.curveMultiplier }} × (等级−1) × √(等级−1)</code>
+              </span>
+            </div>
+            <div class="curve-preview">
+              <span class="curve-preview-label">预览前 10 级所需成就点：</span>
+              <span class="curve-preview-values">
+                <span v-for="lv in 10" :key="lv" class="curve-preview-lv">
+                  Lv.{{ lv }}: {{ pointsForLevelPreview(lv) }}
+                </span>
+              </span>
+            </div>
+          </div>
+
+          <div class="level-config-actions">
+            <button class="btn-save-level" @click="onSaveLevelConfig">保存等级设置</button>
+          </div>
+        </div>
       </div>
 
       <div class="rule-editor-footer">
@@ -181,8 +244,8 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue"
-import type { CustomAchievement, MilestoneTypeKey } from "../types/milestoneRules"
-import { MILESTONE_TYPES, STAT_TYPE_DESCRIPTIONS } from "../types/milestoneRules"
+import type { CustomAchievement, LevelConfig, MilestoneTypeKey } from "../types/milestoneRules"
+import { DEFAULT_LEVEL_CONFIG, MILESTONE_TYPES, STAT_TYPE_DESCRIPTIONS } from "../types/milestoneRules"
 import { generateDefaultRules } from "../utils/milestones"
 
 interface Row {
@@ -196,6 +259,7 @@ interface Props {
   visible: boolean
   rules: Record<string, number[]>
   customAchievements: CustomAchievement[]
+  levelConfig: LevelConfig
 }
 
 const props = defineProps<Props>()
@@ -204,6 +268,7 @@ const emit = defineEmits<{
   save: [rules: Record<string, number[]>]
   addAchievement: [achievement: CustomAchievement]
   deleteAchievement: [id: string]
+  saveLevelConfig: [config: LevelConfig]
 }>()
 
 const TIER_LABELS: Record<string, string> = {
@@ -218,7 +283,7 @@ const TYPE_LABEL_MAP = Object.fromEntries(
 ) as Record<string, { icon: string; label: string }>
 
 // ── Tabs ──
-const activeTab = ref<"milestones" | "achievements">("milestones")
+const activeTab = ref<"milestones" | "achievements" | "level">("milestones")
 
 // ── Milestones state ──
 const editableRows = ref<Row[]>([])
@@ -325,6 +390,33 @@ function onAddAchievement() {
 
 function onDeleteAchievement(id: string) {
   emit("deleteAchievement", id)
+}
+
+// ── Level config state ──
+const editableLevelConfig = ref<LevelConfig>({ ...DEFAULT_LEVEL_CONFIG })
+
+watch(() => [props.visible, props.levelConfig], () => {
+  if (props.visible) {
+    editableLevelConfig.value = { ...props.levelConfig }
+  }
+}, { immediate: true })
+
+function onTierPointChange(tier: string, val: number) {
+  editableLevelConfig.value.tierPoints[tier] = Math.max(1, val)
+}
+
+function onCurveMultiplierChange(val: number) {
+  editableLevelConfig.value.curveMultiplier = Math.max(1, val)
+}
+
+function pointsForLevelPreview(level: number): number {
+  const m = editableLevelConfig.value.curveMultiplier
+  if (level <= 1) return 0
+  return Math.floor(m * (level - 1) * Math.sqrt(level - 1))
+}
+
+function onSaveLevelConfig() {
+  emit("saveLevelConfig", { ...editableLevelConfig.value })
 }
 </script>
 
@@ -880,6 +972,203 @@ function onDeleteAchievement(id: string) {
 }
 
 .btn-ach-submit {
+  padding: 5px 16px;
+  border: none;
+  border-radius: 4px;
+  background: var(--b3-theme-primary);
+  color: var(--b3-theme-on-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.85;
+  }
+}
+
+// ═══════════════════════════════════════
+// Level config tab
+// ═══════════════════════════════════════
+
+.level-tab {
+  padding-top: 4px;
+}
+
+.level-config-help {
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  background: rgba(var(--b3-theme-primary-rgb), 0.04);
+  border: 1px solid rgba(var(--b3-theme-primary-rgb), 0.12);
+  border-radius: 4px;
+
+  .help-title {
+    margin: 0 0 6px 0;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--b3-theme-primary);
+  }
+
+  .help-list {
+    margin: 0;
+    padding-left: 16px;
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--b3-theme-on-surface);
+
+    li { margin-bottom: 2px; }
+    b { color: var(--b3-theme-on-surface); font-weight: 700; }
+  }
+}
+
+.level-config-section {
+  margin-bottom: 14px;
+}
+
+.level-config-label {
+  font-family: stats.$font-mono;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+  margin-bottom: 8px;
+}
+
+.tier-points-grid {
+  display: flex;
+  gap: 8px;
+}
+
+.tier-point-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  background: var(--b3-theme-surface);
+}
+
+.tier-point-badge {
+  font-family: stats.$font-mono;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 3px;
+  min-width: 32px;
+  text-align: center;
+
+  &.tier-common { background: rgba(stats.$color-success, 0.15); color: stats.$color-success; }
+  &.tier-rare { background: rgba(var(--b3-theme-primary-rgb), 0.15); color: var(--b3-theme-primary); }
+  &.tier-epic { background: rgba(stats.$color-tier-epic, 0.15); color: stats.$color-tier-epic; }
+  &.tier-legendary { background: rgba(stats.$color-tier-legendary, 0.2); color: stats.$color-tier-legendary; }
+}
+
+.tier-point-input {
+  width: 56px;
+  padding: 3px 6px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-surface);
+  font-family: stats.$font-mono;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+
+  &:focus {
+    outline: none;
+    border-color: var(--b3-theme-primary);
+    box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.15);
+  }
+}
+
+.tier-point-unit {
+  font-size: 11px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.4;
+}
+
+.curve-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.curve-input {
+  width: 64px;
+  padding: 4px 8px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  font-family: stats.$font-mono;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+
+  &:focus {
+    outline: none;
+    border-color: var(--b3-theme-primary);
+    box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.15);
+  }
+}
+
+.curve-formula-hint {
+  font-size: 11px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+
+  code {
+    font-family: stats.$font-mono;
+    font-size: 11px;
+    color: var(--b3-theme-primary);
+    background: rgba(var(--b3-theme-primary-rgb), 0.06);
+    padding: 1px 4px;
+    border-radius: 2px;
+  }
+}
+
+.curve-preview {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.curve-preview-label {
+  font-size: 10px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.4;
+}
+
+.curve-preview-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.curve-preview-lv {
+  font-family: stats.$font-mono;
+  font-size: 10px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.45;
+  background: var(--b3-theme-surface);
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid var(--b3-border-color);
+}
+
+.level-config-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 8px;
+  border-top: 1px solid var(--b3-border-color);
+  margin-top: 8px;
+}
+
+.btn-save-level {
   padding: 5px 16px;
   border: none;
   border-radius: 4px;

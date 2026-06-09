@@ -657,6 +657,7 @@ defineExpose({
   flex-direction: column;
   height: 100%;
   min-height: 0;
+  overflow: hidden;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
   font-family: $font-body;

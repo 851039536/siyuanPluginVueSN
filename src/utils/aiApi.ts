@@ -161,6 +161,7 @@ function buildRequestBody(
       max_tokens: maxTokens,
       thinking: { type: "enabled" },
       reasoning_effort: reasoningEffort,
+      ...(options?.responseFormat ? { response_format: options.responseFormat } : {}),
       ...(stream ? { stream: true } : {}),
     }
   }
@@ -171,6 +172,7 @@ function buildRequestBody(
     messages,
     temperature,
     max_tokens: maxTokens,
+    ...(options?.responseFormat ? { response_format: options.responseFormat } : {}),
     ...(stream ? { stream: true } : {}),
   }
 }

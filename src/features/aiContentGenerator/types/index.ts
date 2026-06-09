@@ -202,6 +202,7 @@ ${generatedContent.slice(0, 3000)}
         systemPrompt: "你只输出JSON，禁止任何解释或前缀文字。",
         temperature: 0.1,
         maxTokens: 800,
+        responseFormat: { type: "json_object" },
       })
 
       // 尝试从响应中提取 JSON（模型可能包裹在 markdown 或前缀文字中）

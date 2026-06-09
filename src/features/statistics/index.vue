@@ -171,6 +171,7 @@
         class="milestones-tab"
       >
         <MilestonesCard
+          :plugin="plugin"
           :total-notes="stats.totalNotes"
           :total-words="stats.totalWords"
           :total-tags="stats.totalTags"
@@ -258,8 +259,10 @@ import {
   getReportData,
   getTrendPrediction,
 } from "./queries/reportStats"
-import { milestoneTargetOf } from "./utils/milestones"
+import { milestoneTargetOfWithRules } from "./utils/milestones"
 import { STATISTICS_STORAGE_KEYS } from "./types/storage"
+import { PluginStorage } from "@/utils/pluginStorage"
+import { STORAGE_KEY_MILESTONE_RULES } from "./types/milestoneRules"
 
 interface Props {
   plugin: Plugin
@@ -459,10 +462,12 @@ const milestonesAchievedCount = computed(() => {
   ]
   return fields.reduce((sum, { type, val }) => {
     let n = 0
-    while (milestoneTargetOf(type, n + 1) <= val) n++
+    while (milestoneTargetOfWithRules(type, n + 1, customRules.value) <= val) n++
     return sum + n
   }, 0)
 })
+
+const customRules = ref<Record<string, number[]>>({})
 
 const storagePaths = computed(() => {
   const dataDir = (props.plugin as any).dataDir || ""
@@ -516,6 +521,9 @@ onMounted(async () => {
   refreshData()
   props.onRegisterRefresh?.(refreshData)
   heatmapNotebooks.value = await getHeatmapNotebooks()
+  const storage = new PluginStorage(props.plugin)
+  const rules = await storage.load<Record<string, number[]>>(STORAGE_KEY_MILESTONE_RULES)
+  if (rules) customRules.value = rules
 })
 
 defineExpose({

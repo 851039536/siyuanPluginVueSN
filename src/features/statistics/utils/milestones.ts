@@ -1,7 +1,8 @@
+import type { MilestoneTypeKey } from "../types/milestoneRules"
+
 /**
- * 里程碑目标值计算公式
- * @param type 里程碑类型
- * @param n 第 n 个里程碑（n 从 1 开始）
+ * 使用公式计算某类型第 n 个里程碑的目标值（硬编码默认值）。
+ * 当用户未自定义规则时作为兜底。
  */
 export function milestoneTargetOf(type: string, n: number): number {
   const g = Math.floor((n - 1) / 3)
@@ -19,4 +20,34 @@ export function milestoneTargetOf(type: string, n: number): number {
     case "activeDays": return Math.round(10 * 1.5 ** (n - 1))
     default: return n * 10
   }
+}
+
+/**
+ * 带自定义规则的目标值查询。
+ * 优先使用 customRules 中对应类型的第 n 个值，超出或无自定义时回退到公式。
+ */
+export function milestoneTargetOfWithRules(
+  type: string,
+  n: number,
+  customRules?: Record<string, number[]>,
+): number {
+  if (customRules?.[type] && n <= customRules[type].length) {
+    return customRules[type][n - 1]
+  }
+  return milestoneTargetOf(type, n)
+}
+
+/**
+ * 生成所有类型的默认里程碑目标值（每种类型前 10 级），供编辑器初始化和重置使用。
+ */
+export function generateDefaultRules(levels = 10): Record<string, number[]> {
+  const types: MilestoneTypeKey[] = [
+    "notes", "words", "tags", "backlinks", "assets", "images",
+    "notebooks", "code", "streak", "activeDays",
+  ]
+  const rules: Record<string, number[]> = {}
+  for (const type of types) {
+    rules[type] = Array.from({ length: levels }, (_, i) => milestoneTargetOf(type, i + 1))
+  }
+  return rules
 }

@@ -1143,7 +1143,6 @@ const lockedAchievements = computed(() =>
 
   .card-body {
     padding: 10px 12px;
-    overflow-y: auto;
   }
 }
 

@@ -651,6 +651,69 @@ defineExpose({
 <style scoped lang="scss">
 @use '@/variables' as *;
 
+// ========== Main Container ==========
+.statistics-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  font-family: $font-body;
+
+  --stat-color-success: #2da44e;
+  --stat-color-danger: #cf222e;
+  --stat-color-warning: #d97706;
+}
+
+// ========== Scrollable Content ==========
+.statistics-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px;
+  background: var(--b3-theme-background);
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--b3-border-color);
+    border-radius: 4px;
+    &:hover {
+      background: var(--b3-theme-on-surface);
+      opacity: 0.2;
+    }
+  }
+}
+
+// ========== Chart Section (Overview tab) ==========
+.chart-section {
+  padding: 6px;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+
+  .section-title {
+    margin-bottom: 16px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &::before {
+      content: '';
+      display: inline-block;
+      width: 3px;
+      height: 14px;
+      background: var(--b3-theme-primary);
+      border-radius: 4px;
+    }
+  }
+}
+
+// ========== Tab Bar ==========
+
 .tab-bar {
   display: flex;
   flex-wrap: wrap;
@@ -715,7 +778,7 @@ defineExpose({
 .trend-tab,
 .notebook-distribution-tab,
 .report-tab {
-  padding: 12px;
+  // padding handled by .statistics-content
 }
 
 .notebook-distribution-tab {

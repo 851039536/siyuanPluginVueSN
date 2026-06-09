@@ -1,20 +1,33 @@
-// Statistics Panel Global Styles
+// Statistics Shared Variables, Mixins & Utility Classes
+// Container styles (.statistics-panel, .statistics-content) live in index.vue.
 
-// 只导入变量，不导入全局样式（全局样式已在 index.ts 中导入）
 @use '../../../variables' as *;
 @use '../../superPanel/styles/variables' as *;
 @use '../../superPanel/styles/mixins' as *;
 
-// ========== Variables & Mixins ==========
+// ========== Variables ==========
 $stats-card-radius: 4px;
 
-// Codex 等宽字体
+// Codex monospace font
 $font-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
 
 $gradient-primary: linear-gradient(135deg, var(--b3-theme-primary) 0%, var(--b3-theme-primary-light, #5d87ff) 100%);
 $gradient-surface: linear-gradient(180deg, var(--b3-theme-surface) 0%, var(--b3-theme-background) 100%);
 
-// Codex focus glow
+$color-success: #2da44e;
+$color-danger: #cf222e;
+$color-warning: #d97706;
+
+// Tier / rank semantic colors
+$color-tier-epic: #a855f7;
+$color-tier-legendary: #ca8a04;
+$color-rank-gold: #ffd700;
+$color-rank-gold-text: #7c5800;
+$color-rank-silver: #c0c0c0;
+$color-rank-bronze: #cd7f32;
+
+// ========== Mixins ==========
+
 @mixin codex-focus-glow {
   &:focus {
     border-color: var(--b3-theme-primary);
@@ -23,27 +36,15 @@ $gradient-surface: linear-gradient(180deg, var(--b3-theme-surface) 0%, var(--b3-
   }
 }
 
-// Codex 大写标签
+// Codex uppercase label (used for metadata keys)
 @mixin codex-label {
   font-family: $font-mono;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  opacity: 0.45;
+  opacity: 0.55;
 }
-
-$color-success: #2da44e;
-$color-danger: #cf222e;
-$color-warning: #d97706;
-
-// 等级 / 排名语义色
-$color-tier-epic: #a855f7;
-$color-tier-legendary: #ca8a04;
-$color-rank-gold: #ffd700;
-$color-rank-gold-text: #7c5800;
-$color-rank-silver: #c0c0c0;
-$color-rank-bronze: #cd7f32;
 
 @mixin progress-bar($height: 6px) {
   height: $height;
@@ -159,7 +160,10 @@ $color-rank-bronze: #cd7f32;
   }
 }
 
-// ========== Shared Component Styles ==========
+// ========== Shared Utility Classes ==========
+// These are used across multiple child components (DocBarChart, HeatmapCard,
+// TrendView, WordRanking, etc.) so they must remain global.
+
 .section-title {
   margin: 0 0 12px 0;
   font-family: $font-heading;
@@ -177,71 +181,5 @@ $color-rank-bronze: #cd7f32;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--b3-theme-on-surface);
-  opacity: 0.6;
-}
-
-// ========== Main Container ==========
-
-
-.statistics-panel {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  font-family: $font-body;
-  overflow: hidden;
-
-  // CSS custom properties for theme-aware color overrides
-  --stat-color-success: #{$color-success};
-  --stat-color-danger: #{$color-danger};
-  --stat-color-warning: #{$color-warning};
-}
-
-
-
-// ========== Main Content ==========
-.statistics-content {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 12px;
-  background: var(--b3-theme-background);
-
-  // Custom scrollbar
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: var(--b3-border-color);
-    border-radius: 4px;
-    &:hover {
-      background: var(--b3-theme-on-surface);
-      opacity: 0.2;
-    }
-  }
-
-  .chart-section {
-    padding: 6px;
-    background: var(--b3-theme-surface);
-    border: 1px solid var(--b3-border-color);
-    border-radius: $stats-card-radius;
-
-    .section-title {
-      margin-bottom: 16px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-
-      &::before {
-        content: '';
-        display: inline-block;
-        width: 3px;
-        height: 14px;
-        background: var(--b3-theme-primary);
-        border-radius: 4px;
-      }
-    }
-  }
+  opacity: 0.65;
 }

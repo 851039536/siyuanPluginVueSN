@@ -80,7 +80,7 @@
       class="statistics-content"
     >
       <!-- 概览 Tab -->
-      <div v-if="activeTab === 'overview'">
+      <div v-show="activeTab === 'overview'">
         <!-- 核心指标横幅（常驻） -->
         <StatsCardsCompact
           :total-notes="stats.totalNotes"
@@ -138,7 +138,7 @@
 
       <!-- 趋势 Tab -->
       <div
-        v-if="activeTab === 'trend'"
+        v-show="activeTab === 'trend'"
         class="trend-tab"
       >
         <TrendView
@@ -152,7 +152,7 @@
 
       <!-- 笔记分布 Tab -->
       <div
-        v-if="activeTab === 'notebookDistribution'"
+        v-show="activeTab === 'notebookDistribution'"
         class="notebook-distribution-tab"
       >
         <section class="dist-section">
@@ -196,7 +196,7 @@
 
       <!-- 报告 Tab -->
       <div
-        v-if="activeTab === 'report'"
+        v-show="activeTab === 'report'"
         class="report-tab"
       >
         <ReportView
@@ -207,7 +207,7 @@
 
       <!-- 里程碑 Tab -->
       <div
-        v-if="activeTab === 'milestones'"
+        v-show="activeTab === 'milestones'"
         class="milestones-tab"
       >
         <MilestonesCard
@@ -227,7 +227,7 @@
 
       <!-- 热力图 Tab -->
       <div
-        v-if="activeTab === 'heatmap'"
+        v-show="activeTab === 'heatmap'"
         class="heatmap-tab"
       >
         <HeatmapCard
@@ -242,7 +242,7 @@
 
       <!-- 写作活跃度 Tab -->
       <div
-        v-if="activeTab === 'activity'"
+        v-show="activeTab === 'activity'"
         class="activity-tab"
       >
         <NotebookActivityTrend
@@ -653,11 +653,13 @@ defineExpose({
 
 .tab-bar {
   display: flex;
+  flex-wrap: wrap;
   gap: 0;
   padding: 0 12px;
   background: var(--b3-theme-surface);
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
+  overflow-x: auto;
 }
 
 .tab-item {
@@ -718,19 +720,11 @@ defineExpose({
   min-height: 0;
 }
 
-.chart-section {
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
-  padding: 0;
-}
-
 .notebook-distribution-tab {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .dist-section {

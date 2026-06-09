@@ -271,7 +271,7 @@ async function generate() {
   border-radius: 4px;
   background: transparent;
   color: var(--b3-theme-on-surface-light);
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
@@ -305,7 +305,7 @@ async function generate() {
   border-radius: 4px;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
   font-size: 11px;
   font-weight: 600;
   outline: none;
@@ -389,14 +389,14 @@ async function generate() {
 }
 
 .stat-value {
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
   font-size: 16px;
   font-weight: 700;
   color: var(--b3-theme-on-surface);
 }
 
 .stat-label {
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -407,7 +407,7 @@ async function generate() {
 }
 
 .stat-sub {
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
   font-size: 9px;
   font-weight: 700;
   color: var(--b3-theme-on-surface);
@@ -458,7 +458,7 @@ async function generate() {
   width: 48px;
   flex-shrink: 0;
   text-align: right;
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -493,7 +493,7 @@ async function generate() {
 .breakdown-created {
   width: 28px;
   flex-shrink: 0;
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
   font-size: 10px;
   font-weight: 700;
   color: stats.$color-success;

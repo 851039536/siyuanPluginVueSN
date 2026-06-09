@@ -189,7 +189,7 @@ function formatChange(change: number | null): string {
 
 .stats-title {
   margin: 0;
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -226,7 +226,7 @@ function formatChange(change: number | null): string {
 }
 
 .core-label {
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -244,7 +244,7 @@ function formatChange(change: number | null): string {
 }
 
 .core-value {
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
   font-size: 20px;
   font-weight: 700;
   color: var(--b3-theme-primary);
@@ -252,7 +252,7 @@ function formatChange(change: number | null): string {
 }
 
 .core-unit {
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
   font-size: 10px;
   color: var(--b3-theme-on-surface);
   opacity: 0.4;
@@ -262,7 +262,7 @@ function formatChange(change: number | null): string {
 .core-change {
   padding: 1px 4px;
   border-radius: 4px;
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
   font-size: 9px;
   font-weight: 700;
   line-height: 1.4;
@@ -281,7 +281,8 @@ function formatChange(change: number | null): string {
 // 次要指标：紧凑网格
 .secondary-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
   gap: 1px;
   background: var(--b3-border-color);
   border: 1px solid var(--b3-border-color);
@@ -300,7 +301,7 @@ function formatChange(change: number | null): string {
 }
 
 .secondary-value {
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
   font-size: 13px;
   font-weight: 700;
   color: var(--b3-theme-on-surface);
@@ -308,7 +309,7 @@ function formatChange(change: number | null): string {
 }
 
 .secondary-label {
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.06em;

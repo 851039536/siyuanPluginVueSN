@@ -96,15 +96,6 @@
       />
     </template>
 
-    <!-- ====== 智能体问答模式 ====== -->
-    <ChatView
-      v-if="activeMode === 'chat'"
-      ref="chatViewRef"
-      :plugin="plugin"
-      :on-chat="props.onChat"
-      @stop-generation="handleChatStop"
-    />
-
     <!-- ====== 自动化任务模式 ====== -->
     <AutomationView
       v-if="activeMode === 'automation'"
@@ -123,21 +114,19 @@ import hljs from "highlight.js";
 import "highlight.js/styles/github.css";
 import * as api from "@/api";
 import { AIGeneratorStorage } from "./types/storage";
-import type { GenerateOptions, SavedPrompt, TargetDoc, ChatOptions } from "@/types/ai";
+import type { GenerateOptions, SavedPrompt, TargetDoc } from "@/types/ai";
 import { useSkillsLoader } from "./composables/useSkillsLoader";
 import { renderMarkdown } from "./utils";
 import PanelHeader from "./components/PanelHeader.vue";
 import SettingsPanel from "./components/SettingsPanel.vue";
 import MainContentArea from "./components/MainContentArea.vue";
 import BottomInputArea from "./components/BottomInputArea.vue";
-import ChatView from "./components/ChatView.vue";
 import AutomationView from "./components/AutomationView.vue";
 
 interface Props {
   i18n: Record<string, string>;
   plugin: Plugin;
   onGenerate: (options: GenerateOptions) => Promise<string>;
-  onChat?: (messages: Array<{ role: string; content: string }>, options: ChatOptions) => Promise<string>;
 }
 
 const props = withDefaults(defineProps<Props>(), {});
@@ -155,8 +144,7 @@ const showSettings = ref(false);
 const abortController = ref<AbortController | null>(null);
 
 // 模式切换
-const activeMode = ref<"generator" | "chat" | "automation">("generator");
-const chatViewRef = ref<InstanceType<typeof ChatView> | null>(null);
+const activeMode = ref<"generator" | "automation">("generator");
 
 // ============ 技能系统 ============
 const { skills, currentSkillIndex, currentSkill, loadSkills, skillSearchQuery, filteredSkills } = useSkillsLoader(props.plugin)
@@ -271,16 +259,6 @@ watch(showPromptSelector, (newVal) => {
   if (newVal) {
     promptSearchQuery.value = "";
     currentPage.value = 1;
-  }
-});
-
-// 切换到聊天模式时，重置生成器状态
-watch(activeMode, (newMode) => {
-  if (newMode === "chat") {
-    // 清理生成器状态
-    if (isGenerating.value) {
-      handleStop()
-    }
   }
 });
 
@@ -523,11 +501,6 @@ const handleStop = () => {
   resetAllGenerationStates();
   generationElapsed.value = "";
   generationStartTime = 0;
-};
-
-// 停止生成（聊天模式）
-const handleChatStop = () => {
-  chatViewRef.value?.stopGeneration();
 };
 
 /**

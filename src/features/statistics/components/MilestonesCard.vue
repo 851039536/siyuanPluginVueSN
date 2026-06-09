@@ -11,8 +11,11 @@
     <MilestoneRuleEditor
       :visible="showRuleEditor"
       :rules="customRules"
+      :custom-achievements="customAchievements"
       @close="showRuleEditor = false"
       @save="onSaveRules"
+      @add-achievement="onAddAchievement"
+      @delete-achievement="onDeleteAchievement"
     />
 
     <!-- ====== 1. Hero Rank Banner ====== -->
@@ -147,74 +150,6 @@
         </div>
       </div>
 
-      <!-- Add custom achievement -->
-      <button
-        class="btn-add-achievement"
-        @click="showAddAchievement = !showAddAchievement"
-      >
-        <span>{{ showAddAchievement ? '−' : '+' }}</span>
-        <span>{{ showAddAchievement ? '取消添加' : '添加自定义成就' }}</span>
-      </button>
-
-      <div v-if="showAddAchievement" class="add-achievement-form">
-        <div class="ach-form-row">
-          <label class="ach-form-label">统计类型</label>
-          <select v-model="newAchievement.type" class="ach-form-select">
-            <option v-for="t in MILESTONE_TYPES" :key="t.key" :value="t.key">
-              {{ t.icon }} {{ t.label }}
-            </option>
-          </select>
-          <span class="ach-form-hint">{{ STAT_TYPE_DESCRIPTIONS[newAchievement.type] }}</span>
-        </div>
-        <div class="ach-form-row">
-          <label class="ach-form-label">达标阈值</label>
-          <input
-            v-model.number="newAchievement.threshold"
-            type="number"
-            class="ach-form-input"
-            min="1"
-            placeholder="输入数值"
-          />
-        </div>
-        <div class="ach-form-row">
-          <label class="ach-form-label">图标</label>
-          <input
-            v-model="newAchievement.icon"
-            class="ach-form-input ach-form-icon"
-            placeholder="🏆"
-            maxlength="2"
-          />
-        </div>
-        <div class="ach-form-row">
-          <label class="ach-form-label">名称</label>
-          <input
-            v-model="newAchievement.title"
-            class="ach-form-input"
-            placeholder="成就名称"
-          />
-        </div>
-        <div class="ach-form-row">
-          <label class="ach-form-label">描述</label>
-          <input
-            v-model="newAchievement.description"
-            class="ach-form-input"
-            placeholder="成就描述（可选）"
-          />
-        </div>
-        <div class="ach-form-row">
-          <label class="ach-form-label">稀有度</label>
-          <select v-model="newAchievement.tier" class="ach-form-select">
-            <option value="common">普通</option>
-            <option value="rare">稀有</option>
-            <option value="epic">史诗</option>
-            <option value="legendary">传说</option>
-          </select>
-        </div>
-        <div class="ach-form-actions">
-          <button class="btn-ach-submit" @click="addCustomAchievement">添加成就</button>
-        </div>
-      </div>
-
       <!-- locked toggle -->
       <button
         v-if="lockedAchievements.length > 0"
@@ -267,7 +202,6 @@ import {
   MILESTONE_TYPES,
   STORAGE_KEY_CUSTOM_ACHIEVEMENTS,
   STORAGE_KEY_MILESTONE_RULES,
-  STAT_TYPE_DESCRIPTIONS,
 } from "../types/milestoneRules"
 import type { CustomAchievement } from "../types/milestoneRules"
 
@@ -361,45 +295,19 @@ async function onSaveRules(rules: Record<string, number[]>) {
 
 // ===== Custom Achievements =====
 const customAchievements = ref<CustomAchievement[]>([])
-const showAddAchievement = ref(false)
-const newAchievement = ref<CustomAchievement>({
-  id: "",
-  icon: "🏆",
-  title: "",
-  description: "",
-  tier: "common",
-  type: "notes",
-  threshold: 1,
-})
 
-function generateAchievementId(): string {
-  return `custom-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+function onAddAchievement(achievement: CustomAchievement) {
+  customAchievements.value.push(achievement)
+  saveCustomAchievements()
 }
 
-function addCustomAchievement() {
-  const a = newAchievement.value
-  if (!a.title.trim() || a.threshold <= 0) return
-  customAchievements.value.push({
-    ...a,
-    id: generateAchievementId(),
-  })
+function onDeleteAchievement(id: string) {
+  customAchievements.value = customAchievements.value.filter((a) => a.id !== id)
   saveCustomAchievements()
-  // reset form
-  newAchievement.value = {
-    id: "",
-    icon: "🏆",
-    title: "",
-    description: "",
-    tier: "common",
-    type: "notes",
-    threshold: 1,
-  }
-  showAddAchievement.value = false
 }
 
 function deleteCustomAchievement(id: string) {
-  customAchievements.value = customAchievements.value.filter(a => a.id !== id)
-  saveCustomAchievements()
+  onDeleteAchievement(id)
 }
 
 async function saveCustomAchievements() {
@@ -1362,124 +1270,6 @@ const lockedAchievements = computed(() => achievementPartition.value.locked)
     opacity: 1;
     color: var(--stat-color-danger, #cf222e);
     background: rgba(207, 34, 46, 0.08);
-  }
-}
-
-// ===== Add achievement button & form =====
-.btn-add-achievement {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  margin-top: 8px;
-  border: 1px dashed var(--b3-border-color);
-  border-radius: 4px;
-  background: transparent;
-  color: var(--b3-theme-on-surface);
-  font-family: stats.$font-mono;
-  font-size: 11px;
-  cursor: pointer;
-  transition: border-color 0.15s, color 0.15s;
-
-  &:hover {
-    border-color: var(--b3-theme-primary);
-    color: var(--b3-theme-primary);
-  }
-}
-
-.add-achievement-form {
-  margin-top: 8px;
-  padding: 12px;
-  border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
-  background: rgba(var(--b3-theme-surface-rgb), 0.5);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.ach-form-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.ach-form-label {
-  width: 64px;
-  flex-shrink: 0;
-  font-family: stats.$font-mono;
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.5;
-  text-align: right;
-}
-
-.ach-form-input {
-  width: 160px;
-  padding: 4px 8px;
-  border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-  font-family: stats.$font-mono;
-  font-size: 12px;
-
-  &:focus {
-    outline: none;
-    border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.12);
-  }
-}
-
-.ach-form-icon {
-  width: 48px;
-  text-align: center;
-  font-size: 16px;
-}
-
-.ach-form-select {
-  padding: 4px 6px;
-  border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-  font-size: 12px;
-  cursor: pointer;
-
-  &:focus {
-    outline: none;
-    border-color: var(--b3-theme-primary);
-  }
-}
-
-.ach-form-hint {
-  font-size: 10px;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.35;
-  font-style: italic;
-}
-
-.ach-form-actions {
-  display: flex;
-  justify-content: flex-end;
-  padding-top: 4px;
-}
-
-.btn-ach-submit {
-  padding: 5px 16px;
-  border: none;
-  border-radius: 4px;
-  background: var(--b3-theme-primary);
-  color: var(--b3-theme-on-primary);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-
-  &:hover {
-    opacity: 0.85;
   }
 }
 </style>

@@ -1112,7 +1112,6 @@ const lockedAchievements = computed(() =>
 
 .milestones-card {
   @include stats.stats-card-base;
-  overflow: visible;
 
   .card-header {
     display: flex;

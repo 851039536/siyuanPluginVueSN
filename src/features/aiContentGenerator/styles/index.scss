@@ -95,7 +95,6 @@
   background: var(--b3-theme-surface);
 }
 
-.header-title { font-size: 13px; color: var(--b3-theme-on-surface); }
 .header-actions { display: flex; gap: 6px; }
 
 .content-display-section {
@@ -325,10 +324,6 @@
   text-align: center;
   color: var(--b3-theme-on-surface);
 }
-
-.loading-spinner-small,
-.loading-spinner-tiny { border-radius: 50%; }
-
 
 .loading-spinner-small {
   width: 14px;

@@ -386,7 +386,6 @@
 import {
   computed,
   ref,
-  toRef,
   watch,
 } from "vue"
 import Button from "@/components/Button.vue"
@@ -474,8 +473,7 @@ const hasDiff = computed(() => {
 })
 
 // 生成完成后自动切换到 Diff 模式
-const isGenerating = toRef(props, "isGenerating")
-watch(isGenerating, (newVal, oldVal) => {
+watch(() => props.isGenerating, (newVal, oldVal) => {
   if (oldVal && !newVal && hasDiff.value) {
     viewMode.value = "diff"
   }

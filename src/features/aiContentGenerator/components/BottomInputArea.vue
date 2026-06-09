@@ -469,6 +469,7 @@ interface Props {
   paginatedPrompts: SavedPrompt[]
   editCustomInput: string
   skills: SkillItem[]
+  currentSkill: SkillItem | null
   currentSkillIndex: number
   filteredSkills: SkillItem[]
   skillSearchQuery: string
@@ -485,14 +486,6 @@ interface Props {
 // 技能下拉面板状态
 const showSkillDropdown = ref(false)
 const skillSearchInputRef = ref<HTMLInputElement | null>(null)
-
-/** 当前选中的技能 */
-const currentSkill = computed(() => {
-  if (props.currentSkillIndex < 0 || props.currentSkillIndex >= props.skills.length) {
-    return null
-  }
-  return props.skills[props.currentSkillIndex]
-})
 
 const toggleSkillDropdown = () => {
   showSkillDropdown.value = !showSkillDropdown.value

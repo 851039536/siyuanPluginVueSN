@@ -68,6 +68,7 @@
         :paginated-prompts="paginatedPrompts"
         :edit-custom-input="editCustomInput"
         :skills="skills"
+        :current-skill="currentSkill"
         :current-skill-index="currentSkillIndex"
         :filtered-skills="filteredSkills"
         :skill-search-query="skillSearchQuery"
@@ -209,37 +210,14 @@ const showPromptSelector = ref(false);
 const newPromptName = ref("");
 const currentPromptName = ref(""); // 当前选中的提示词名称
 
-// 提示词搜索和分页状态
-const promptSearchQuery = ref("");
-const currentPage = ref(1);
-
 // ============ 常量定义 ============
-const ITEMS_PER_PAGE = 10; // 每页显示数量
 const SETTINGS_SAVE_DEBOUNCE_MS = 300; // 设置保存防抖时间(毫秒)
 
 // 是否有可撤回的编辑历史
 const canUndoEdit = computed(() => editHistoryStack.value.length > 0);
 
-// 过滤后的提示词
-const filteredPrompts = computed(() => {
-  if (!promptSearchQuery.value.trim()) {
-    return savedPrompts.value;
-  }
-
-  const query = promptSearchQuery.value.toLowerCase().trim();
-  return savedPrompts.value.filter(
-    (prompt) =>
-      prompt.name.toLowerCase().includes(query) ||
-      prompt.systemPrompt.toLowerCase().includes(query),
-  );
-});
-
-// 分页后的提示词
-const paginatedPrompts = computed(() => {
-  const start = (currentPage.value - 1) * ITEMS_PER_PAGE;
-  const end = start + ITEMS_PER_PAGE;
-  return filteredPrompts.value.slice(start, end);
-});
+// 提示词列表（直接使用，无需过滤/分页）
+const paginatedPrompts = computed(() => savedPrompts.value);
 
 // ============ AI 模型配置 ============
 import { AI_MODELS_CONFIG } from "./types/models";
@@ -258,19 +236,6 @@ const supportsThinking = computed(() =>
   currentProvider.value === "deepseek" &&
   (selectedModel.value === "deepseek-reasoner" || selectedModel.value.startsWith("deepseek-v4-"))
 )
-
-// 监听搜索查询变化，重置页码
-watch(promptSearchQuery, () => {
-  currentPage.value = 1;
-});
-
-// 监听提示词选择面板显示状态，重置搜索
-watch(showPromptSelector, (newVal) => {
-  if (newVal) {
-    promptSearchQuery.value = "";
-    currentPage.value = 1;
-  }
-});
 
 // ============ 公共工具函数 ============
 
@@ -441,6 +406,33 @@ const buildGenerateOptions = (userInput: string, systemPrompt: string, searchQue
     showMessage(`联网搜索失败: ${error}`, 3000, "info");
   },
 })
+
+/**
+ * 统一的生成执行封装
+ * 处理 startGeneration → try/catch/finally → resetAllGenerationStates/recordGenerationElapsed/performReview
+ * @param context 错误上下文标识（如 "AI编辑"、"自定义编辑"）
+ * @param buildOptions 构建 GenerateOptions 的回调
+ * @param onSuccess 生成成功后的可选回调
+ */
+const executeGeneration = async (
+  context: string,
+  buildOptions: () => GenerateOptions,
+  onSuccess?: () => void,
+) => {
+  showSettings.value = false;
+  startGeneration();
+  try {
+    const options = buildOptions();
+    await props.onGenerate(options);
+    onSuccess?.();
+  } catch (error) {
+    if (handleGenerationError(error as Error, context)) return;
+  } finally {
+    resetAllGenerationStates();
+    recordGenerationElapsed();
+    performReview();
+  }
+};
 
 /**
  * 移除Markdown内容中的Frontmatter（YAML元数据）
@@ -908,8 +900,6 @@ const aiEditAction = async (
     return;
   }
 
-  showSettings.value = false;
-
   const actionPrompts = {
     polish:
       "请对以下文档进行润色优化，保持原有结构，提升语言质量和可读性，使表达更加专业、流畅。保持Markdown格式，直接输出优化后的完整文档内容：",
@@ -924,25 +914,15 @@ const aiEditAction = async (
       "请为以下文档生成一个简洁的总结，包括主要内容和关键要点。总结应该清晰明了，突出文档的核心信息。保持Markdown格式，直接输出总结内容：",
   };
 
-  startGeneration();
-
-  try {
+  await executeGeneration("AI编辑", () => {
     const skillSystemPrompt = currentSkill.value
       ? `${currentSkill.value.content}\n\n你是一个专业的文档编辑助手，擅长优化Markdown文档。请直接输出优化后的完整文档，不要添加任何解释性文字。`
       : "你是一个专业的文档编辑助手，擅长优化Markdown文档。请直接输出优化后的完整文档，不要添加任何解释性文字。"
-    const options = buildGenerateOptions(
-      `${actionPrompts[action]}\n\n${editTargetDoc.value.content}`,
+    return buildGenerateOptions(
+      `${actionPrompts[action]}\n\n${editTargetDoc.value!.content}`,
       skillSystemPrompt,
     )
-
-    await props.onGenerate(options);
-  } catch (error) {
-    if (handleGenerationError(error as Error, "AI编辑")) return;
-  } finally {
-    resetAllGenerationStates();
-    recordGenerationElapsed();
-    performReview();
-  }
+  });
 };
 
 /**
@@ -960,9 +940,8 @@ const handleCustomEdit = async () => {
 
   // 无输入时，必须有技能+文档 或 提示词+文档 才能继续
   if (!editCustomInput.value.trim()) {
-    // 有文档+技能：直接用技能处理文档，无需输入
     if (editTargetDoc.value && currentSkill.value) {
-      // 允许继续
+      // 有文档+技能：直接用技能处理文档，无需输入
     } else if (editTargetDoc.value && currentPromptName.value) {
       // 有文档+提示词，允许继续
     } else {
@@ -971,10 +950,7 @@ const handleCustomEdit = async () => {
     }
   }
 
-  showSettings.value = false;
-  startGeneration();
-
-  try {
+  await executeGeneration("自定义编辑", () => {
     let finalSystemPrompt: string;
     let userInput: string;
 
@@ -987,7 +963,6 @@ const handleCustomEdit = async () => {
       let baseSystemPrompt: string;
 
       if (currentSkill.value) {
-        // 选了技能，以技能内容为主
         baseSystemPrompt = currentSkill.value.content;
       } else if (currentPromptName.value) {
         baseSystemPrompt = systemPrompt.value;
@@ -1009,18 +984,10 @@ ${editTargetDoc.value.content}`;
       finalSystemPrompt = baseSystemPrompt;
     }
 
-    const options = buildGenerateOptions(userInput, finalSystemPrompt, editCustomInput.value.trim() || undefined)
-
-    await props.onGenerate(options);
-
+    return buildGenerateOptions(userInput, finalSystemPrompt, editCustomInput.value.trim() || undefined)
+  }, () => {
     editCustomInput.value = "";
-  } catch (error) {
-    if (handleGenerationError(error as Error, "自定义编辑")) return;
-  } finally {
-    resetAllGenerationStates();
-    recordGenerationElapsed();
-    performReview();
-  }
+  });
 };
 
 /**

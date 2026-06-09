@@ -1,5 +1,37 @@
 import { ref } from "vue"
 
+// ============================================================
+// 封面生成相关类型
+// ============================================================
+
+export interface CoverSizePreset {
+  label: string
+  width: number
+  height: number
+}
+
+export interface CoverStylePreset {
+  id: string
+  label: string
+  description: string
+}
+
+export type CoverGenerationStatus = "idle" | "generating" | "done" | "error"
+
+export interface CoverGenerationConfig {
+  title: string
+  category: string
+  keywords: string
+  watermark: string
+  width: number
+  height: number
+  styleId: string
+}
+
+// ============================================================
+// 弹出层状态管理
+// ============================================================
+
 export const articleCoverVisible = ref(false)
 export const articleCoverInitialTitle = ref("")
 export const articleCoverInitialKeywords = ref("")
@@ -12,6 +44,4 @@ export function showArticleCover(title?: string, keywords?: string) {
 
 export function hideArticleCover() {
   articleCoverVisible.value = false
-  // 不清除 context refs，避免关闭动画期间 props 变化闪烁
-  // 下次 show 时会覆盖
 }

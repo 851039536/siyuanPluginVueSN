@@ -42,14 +42,6 @@
                   保存片段
                 </Button>
                 <Button
-                  icon="image"
-                  variant="ghost"
-                  size="small"
-                  @click="showArticleCover(coverInitialTitle)"
-                >
-                  AI 封面
-                </Button>
-                <Button
                   icon="close"
                   variant="ghost"
                   size="small"
@@ -601,7 +593,6 @@ import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
 import { usePlugin } from "@/main"
-import { showArticleCover } from "@/features/articleCover/types"
 import {
   DEFAULT_CATEGORIES,
   HtmlViewerStorage,
@@ -727,18 +718,6 @@ async function copyFormattedJsonHtml() {
     showMessage("复制失败", 2000, "error")
   }
 }
-
-// AI 封面：从 HTML 内容中提取文档标题
-const coverInitialTitle = computed(() => {
-  const content = htmlContent.value
-  if (!content) return ""
-  // 尝试从 HTML 中提取 <title> 或 <h1> 标签
-  const titleMatch = content.match(/<title[^>]*>([\s\S]*?)<\/title>/i)
-  if (titleMatch) return titleMatch[1].trim()
-  const h1Match = content.match(/<h[1-3][^>]*>([\s\S]*?)<\/h[1-3]>/i)
-  if (h1Match) return h1Match[1].replace(/<[^>]*>/g, "").trim()
-  return ""
-})
 
 const presetColors = [
   "#d97757",

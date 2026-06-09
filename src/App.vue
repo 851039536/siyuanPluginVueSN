@@ -100,7 +100,7 @@ import {
   articleCoverVisible,
   hideArticleCover,
 } from "@/features"
-import CoverGenerator from "@/features/htmlViewer/components/CoverGenerator.vue"
+import CoverGenerator from "@/features/articleCover/components/CoverGenerator.vue"
 import DecryptDialog from "@/features/encryption/components/DecryptDialog.vue"
 import { getEncryptionInstance } from "@/features/encryption/index"
 import EverythingSearchDialog from "@/features/everythingSearch/index.vue"

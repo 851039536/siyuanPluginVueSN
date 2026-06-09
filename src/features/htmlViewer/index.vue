@@ -124,6 +124,15 @@
                         variant="ghost"
                         size="small"
                         icon="contentCopy"
+                        title="复制渲染内容（带样式，适配哔哩哔哩等平台）"
+                        @click="copyRenderedContent"
+                      >
+                        带样式
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="small"
+                        icon="contentCopy"
                         title="复制为图片"
                         @click="copyAsImage"
                       />
@@ -303,11 +312,94 @@ const BASE_STYLES = [
   '</style>',
 ].join('')
 
+/**
+ * 直接内联样式映射表
+ * 不依赖 styleSheets.cssRules API（iframe sandbox 下可能静默失败）
+ * 通过字符串操作直接注入 style="" 属性，确保复制到哔哩哔哩等平台时样式不丢失
+ */
+const INLINE_STYLE_MAP: Record<string, string> = {
+  code:
+    'font-family:"SF Mono",Menlo,Monaco,Consolas,"Courier New",monospace;background:#f6f8fa;padding:2px 4px;border-radius:3px;font-size:0.9em',
+  pre:
+    'font-family:"SF Mono",Menlo,Monaco,Consolas,"Courier New",monospace;background:#f6f8fa;padding:16px;border-radius:6px;overflow:auto;line-height:1.5',
+  kbd: 'font-family:"SF Mono",Menlo,Monaco,Consolas,"Courier New",monospace',
+  samp: 'font-family:"SF Mono",Menlo,Monaco,Consolas,"Courier New",monospace',
+  table: 'border-collapse:collapse;width:100%',
+  th: 'border:1px solid #dfe2e5;padding:6px 13px;background:#f6f8fa;font-weight:600',
+  td: 'border:1px solid #dfe2e5;padding:6px 13px',
+}
+
+/** 清洗 SiYuan 专属属性/包裹元素 + 注入内联样式，返回可直接粘贴的干净 HTML */
+function cleanAndInlineStyles(html: string): string {
+  let result = html
+  // 移除 <script> 标签（安全）
+  result = result.replace(/<script[\s\S]*?<\/script>/gi, '')
+  // 移除 SiYuan 专属包裹元素
+  result = result.replace(/<\/?protyle-[\w-]+[^>]*>/gi, '')
+  result = result.replace(/<\/?div[^>]*data-node-id[^>]*>/gi, '')
+  // 移除所有 data-* 属性
+  result = result.replace(/\s+data-[\w-]+="[^"]*"/gi, '')
+  // 注入内联样式到各标签
+  for (const [tag, styles] of Object.entries(INLINE_STYLE_MAP)) {
+    result = result.replace(new RegExp(`<${tag}([^>]*?)>`, 'gi'), (_, attrs: string) => {
+      const existingMatch = attrs.match(/style="([^"]*?)"/i)
+      const cleaned = attrs.replace(/\s*style="[^"]*"/i, '')
+      const combined = existingMatch ? `${styles};${existingMatch[1]}` : styles
+      return `<${tag}${cleaned} style="${combined}">`
+    })
+  }
+  return result
+}
+
+/**
+ * iframe 内 Ctrl+C 拦截脚本
+ * 用与 cleanAndInlineStyles 相同的映射表，确保 iframe 内复制也自动内联样式
+ */
+const COPY_INTERCEPT_SCRIPT = `<script>
+(function(){
+  var S={
+    code:'font-family:"SF Mono",Menlo,Monaco,Consolas,"Courier New",monospace;background:#f6f8fa;padding:2px 4px;border-radius:3px;font-size:0.9em',
+    pre:'font-family:"SF Mono",Menlo,Monaco,Consolas,"Courier New",monospace;background:#f6f8fa;padding:16px;border-radius:6px;overflow:auto;line-height:1.5',
+    kbd:'font-family:"SF Mono",Menlo,Monaco,Consolas,"Courier New",monospace',
+    samp:'font-family:"SF Mono",Menlo,Monaco,Consolas,"Courier New",monospace',
+    table:'border-collapse:collapse;width:100%',
+    th:'border:1px solid #dfe2e5;padding:6px 13px;background:#f6f8fa;font-weight:600',
+    td:'border:1px solid #dfe2e5;padding:6px 13px'
+  };
+  function apply(){
+    for(var t in S){
+      var els=document.querySelectorAll(t);
+      for(var i=0;i<els.length;i++){
+        var e=els[i];if(!e.style)continue;
+        var ps=S[t].split(';');
+        for(var j=0;j<ps.length;j++){
+          var kv=ps[j].split(':');
+          if(kv.length===2&&!e.style.getPropertyValue(kv[0].trim()))
+            e.style.setProperty(kv[0].trim(),kv[1].trim());
+        }
+      }
+    }
+  }
+  document.addEventListener('copy',function(e){
+    try{
+      apply();
+      var h='';
+      var ss=document.querySelectorAll('style');
+      for(var i=0;i<ss.length;i++)h+=ss[i].outerHTML;
+      h+=document.body.innerHTML;
+      e.clipboardData.setData('text/html',h);
+      e.clipboardData.setData('text/plain',document.body.innerText);
+      e.preventDefault();
+    }catch(ex){}
+  });
+})();
+<` + '/script>'
+
 function wrapWithBaseStyles(content: string): string {
   if (/<\/body>/i.test(content)) {
-    return content.replace(/<\/body>/i, `${BASE_STYLES}</body>`)
+    return content.replace(/<\/body>/i, `${BASE_STYLES}${COPY_INTERCEPT_SCRIPT}</body>`)
   }
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>${BASE_STYLES}${content}</body></html>`
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>${BASE_STYLES}${COPY_INTERCEPT_SCRIPT}${content}</body></html>`
 }
 
 // 预览HTML（带JSON格式化支持 + debounce 防抖）
@@ -381,6 +473,42 @@ const snippetCount = computed(() => snippets.value.length)
 async function copySource() {
   const ok = await copyToClipboard(htmlContent.value)
   showMessage(ok ? "源码已复制" : "复制失败", 2000, ok ? "info" : "error")
+}
+
+/**
+ * 复制渲染内容（保留样式，适配哔哩哔哩/公众号等平台）
+ * 直接对源 HTML 做字符串清洗 + 内联样式注入，不依赖 iframe DOM
+ * 解决 iframe sandbox 下 styleSheets.cssRules 静默失败的问题
+ */
+async function copyRenderedContent() {
+  const source = htmlContent.value
+  if (!source.trim()) {
+    showMessage("没有可复制的内容", 2000, "info")
+    return
+  }
+
+  // 1. 清洗 SiYuan 专属内容 + 注入内联样式
+  const cleanedHtml = cleanAndInlineStyles(source)
+  // 2. 拼接 <style> 标签（兜底：内联无法处理的伪类/媒体查询）
+  const finalHtml = `${BASE_STYLES}${cleanedHtml}`
+  // 3. 提取纯文本
+  const text = source.replace(/<[^>]*>/g, '').trim()
+
+  try {
+    const htmlBlob = new Blob([finalHtml], { type: "text/html" })
+    const textBlob = new Blob([text], { type: "text/plain" })
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        "text/html": htmlBlob,
+        "text/plain": textBlob,
+      }),
+    ])
+    showMessage("已复制渲染内容（带样式）", 2000, "info")
+  } catch {
+    // 降级：用 copyToClipboard 写入纯 HTML 源码
+    const ok = await copyToClipboard(finalHtml)
+    showMessage(ok ? "已复制（富文本剪贴板不可用，已复制HTML源码）" : "复制失败", 2000, ok ? "info" : "error")
+  }
 }
 
 // 简单格式化HTML

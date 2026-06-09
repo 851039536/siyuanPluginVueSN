@@ -24,6 +24,27 @@
       </div>
 
       <div class="rule-editor-body">
+        <div class="rule-editor-help">
+          <p class="help-title">使用说明</p>
+          <ul class="help-list">
+            <li>每行对应一种统计类型，输入框为该类型各<b>等级</b>的达标目标值。</li>
+            <li>等级从 <b>Lv.1</b> 开始递增，值必须从小到大排列（第一个里程碑最简单，越往后越难）。</li>
+            <li>修改「每类里程碑级数」可统一调整所有类型的等级数量，新增的等级会自动按 1.3 倍递增。</li>
+            <li>留空某个等级或填入 0 表示该等级及之后不再生成里程碑。</li>
+            <li>点击「恢复默认值」将重置为系统预设的公式计算值。</li>
+          </ul>
+        </div>
+
+        <div class="level-header-row">
+          <div class="level-header-spacer"></div>
+          <div class="level-header-inputs">
+            <span
+              v-for="i in levelCount"
+              :key="i"
+              class="level-header-label"
+            >Lv.{{ i }}</span>
+          </div>
+        </div>
         <div
           v-for="row in rows"
           :key="row.key"
@@ -83,11 +104,13 @@ const emit = defineEmits<{
 const editableRows = ref<Row[]>([])
 
 function buildRows(rules: Record<string, number[]>): Row[] {
+  const hasRules = Object.keys(rules).length > 0
+  const defaults = hasRules ? null : generateDefaultRules()
   return MILESTONE_TYPES.map((t) => ({
     key: t.key,
     icon: t.icon,
     label: t.label,
-    targets: [...(rules[t.key] ?? [])],
+    targets: [...(rules[t.key] ?? defaults?.[t.key] ?? [])],
   }))
 }
 
@@ -254,6 +277,71 @@ function onSave() {
   flex: 1;
   overflow-y: auto;
   padding: 8px 20px 16px;
+}
+
+.rule-editor-help {
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  background: rgba(var(--b3-theme-primary-rgb), 0.04);
+  border: 1px solid rgba(var(--b3-theme-primary-rgb), 0.12);
+  border-radius: 4px;
+}
+
+.help-title {
+  margin: 0 0 6px 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--b3-theme-primary);
+}
+
+.help-list {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--b3-theme-on-surface);
+
+  li {
+    margin-bottom: 2px;
+  }
+
+  b {
+    color: var(--b3-theme-on-surface);
+    font-weight: 700;
+  }
+}
+
+.level-header-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 0 2px;
+  border-bottom: 1px solid var(--b3-border-color);
+  margin-bottom: 4px;
+}
+
+.level-header-spacer {
+  width: 130px;
+  flex-shrink: 0;
+}
+
+.level-header-inputs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: 1;
+}
+
+.level-header-label {
+  width: 64px;
+  font-family: stats.$font-mono;
+  font-size: 9px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.35;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .rule-row {

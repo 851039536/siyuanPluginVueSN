@@ -265,14 +265,6 @@ import { STATISTICS_STORAGE_KEYS } from "./types/storage"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { STORAGE_KEY_MILESTONE_RULES } from "./types/milestoneRules"
 
-function sortMilestoneRules(rules: Record<string, number[]>): Record<string, number[]> {
-  const sorted: Record<string, number[]> = {}
-  for (const [key, targets] of Object.entries(rules)) {
-    sorted[key] = [...targets].sort((a, b) => a - b)
-  }
-  return sorted
-}
-
 interface Props {
   plugin: Plugin
   onRegisterRefresh?: (fn: () => Promise<void>) => void
@@ -472,7 +464,7 @@ const milestonesAchievedCount = computed(() => {
   ]
   return fields.reduce((sum, { type, val }) => {
     let n = 0
-    while (milestoneTargetOfWithRules(type, n + 1, customRules.value) <= val) n++
+    while (n < 200 && milestoneTargetOfWithRules(type, n + 1, customRules.value) <= val) n++
     return sum + n
   }, 0)
 })
@@ -533,7 +525,7 @@ onMounted(async () => {
   heatmapNotebooks.value = await getHeatmapNotebooks()
   const storage = new PluginStorage(props.plugin)
   const rules = await storage.load<Record<string, number[]>>(STORAGE_KEY_MILESTONE_RULES)
-  if (rules) customRules.value = sortMilestoneRules(rules)
+  if (rules) customRules.value = rules
 })
 
 defineExpose({

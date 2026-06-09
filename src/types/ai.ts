@@ -91,23 +91,7 @@ export interface SavedPrompt {
   createdAt: number
 }
 
-// ============ 技能问答相关类型 ============
-
-/** 聊天消息 */
-export interface ChatMessage {
-  role: "user" | "assistant" | "system"
-  content: string
-  timestamp: number
-  isStreaming?: boolean // 正在流式输出中的消息
-}
-
-/** 聊天选项（用于 AIContentGenerator.sendChatMessage） */
-export interface ChatOptions {
-  temperature: number
-  maxTokens: number
-  signal?: AbortSignal
-  onChunk?: (chunk: string) => void
-}
+// ============ 技能相关类型 ============
 
 /** AI 技能来源信息 */
 export interface SkillSource {

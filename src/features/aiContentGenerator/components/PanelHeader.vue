@@ -23,17 +23,6 @@
         ><use xlink:href="#iconRefresh" /></svg>
         <span>{{ automationTitle }}</span>
       </button>
-      <button
-        class="mode-tab"
-        :class="{ active: activeMode === 'chat' }"
-        @click="$emit('update:activeMode', 'chat')"
-      >
-        <svg
-          width="14"
-          height="14"
-        ><use xlink:href="#iconHelp" /></svg>
-        <span>{{ chatTitle }}</span>
-      </button>
     </div>
     <div class="header-actions">
       <!-- 模型选择器（仅在生成器模式显示） -->
@@ -123,10 +112,9 @@ import Button from "@/components/Button.vue"
 
 interface Props {
   title?: string
-  activeMode: "generator" | "automation" | "chat"
+  activeMode: "generator" | "automation"
   generatorTitle?: string
   automationTitle?: string
-  chatTitle?: string
   selectedModel?: string
   customModel?: string
   enableThinking?: boolean
@@ -138,7 +126,6 @@ withDefaults(defineProps<Props>(), {
   title: "信息生成",
   generatorTitle: "生成器",
   automationTitle: "自动化",
-  chatTitle: "技能问答",
   selectedModel: "",
   customModel: "",
   enableThinking: false,
@@ -151,7 +138,7 @@ withDefaults(defineProps<Props>(), {
 
 defineEmits<{
   (e: "toggle-settings"): void
-  (e: "update:activeMode", mode: "generator" | "automation" | "chat"): void
+  (e: "update:activeMode", mode: "generator" | "automation"): void
   (e: "update:selected-model", value: string): void
   (e: "update:custom-model", value: string): void
   (e: "update:enable-thinking", value: boolean): void

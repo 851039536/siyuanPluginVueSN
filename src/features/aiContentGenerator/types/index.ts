@@ -1,5 +1,4 @@
 import type {
-  ChatOptions,
   GenerateOptions,
 } from "@/types/ai"
 import type { AiApiConfig } from "@/utils/aiApi"
@@ -13,7 +12,6 @@ import {
   showMessage,
 } from "siyuan"
 import {
-  callAIChat,
   callAISmart,
   getApiConfigFromPlugin,
 } from "@/utils/aiApi"
@@ -59,9 +57,6 @@ export class AIContentGenerator {
       extraProps: {
         onGenerate: async (options: GenerateOptions) => {
           return await this.generateContent(options)
-        },
-        onChat: async (messages: Array<{ role: string, content: string }>, options: ChatOptions) => {
-          return await this.sendChatMessage(messages, options)
         },
       },
     })
@@ -125,35 +120,6 @@ export class AIContentGenerator {
 ${options.userInput}`
     }
     return options.userInput
-  }
-
-  /**
-   * 技能问答：发送多轮对话消息
-   * @param messages 完整的对话消息数组（包含 system prompt 和历史记录）
-   * @param options 调用选项（temperature, maxTokens, signal, onChunk）
-   */
-  public async sendChatMessage(
-    messages: Array<{ role: string, content: string }>,
-    options: ChatOptions,
-  ): Promise<string> {
-    try {
-      const result = await callAIChat(messages, this.getApiConfig(), {
-        temperature: options.temperature,
-        maxTokens: options.maxTokens,
-        signal: options.signal,
-        onChunk: options.onChunk,
-      })
-
-      if (result !== undefined && result !== null) {
-        return result
-      }
-      showMessage("生成失败，请重试", 3000, "error")
-      return ""
-    } catch (error) {
-      const errorMsg = (error as Error).message || "未知错误"
-      showMessage(`🚫 生成失败: ${errorMsg}`, 5000, "error")
-      throw error
-    }
   }
 
   /**

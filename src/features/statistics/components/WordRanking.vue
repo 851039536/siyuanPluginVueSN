@@ -70,11 +70,7 @@ interface DailyWordCount {
 
 interface Props {
   chartData?: DailyWordCount[]
-  i18n?: {
-    title: string
-    wordsUnit: string
-    emptyText: string
-  }
+  i18n?: Record<string, any>
 }
 
 const props = withDefaults(defineProps<Props>(), {

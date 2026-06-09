@@ -289,24 +289,7 @@ interface HistoricalDataItem {
 
 interface Props {
   historicalData?: HistoricalDataItem[]
-  i18n?: {
-    title: string
-    avgDailyCreated: string
-    avgDailyModified: string
-    historicalData: string
-    date: string
-    notes: string
-    words: string
-    blocks: string
-    created: string
-    modified: string
-    change: string
-    wordsUnit: string
-    notesUnit: string
-    dayOverDay: string
-    weekOverWeek: string
-    monthOverMonth: string
-  }
+  i18n?: Record<string, any>
 }
 
 const props = withDefaults(defineProps<Props>(), {

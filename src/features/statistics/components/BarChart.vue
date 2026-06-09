@@ -54,9 +54,7 @@ interface ChartDataItem {
 interface Props {
   title?: string
   chartData?: ChartDataItem[]
-  i18n?: {
-    wordsUnit: string
-  }
+  i18n?: Record<string, any>
 }
 
 const props = withDefaults(defineProps<Props>(), {

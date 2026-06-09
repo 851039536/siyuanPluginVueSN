@@ -54,10 +54,7 @@ interface Props {
   loading?: boolean
   lastUpdateTime?: string
   storagePaths?: StoragePathItem[]
-  i18n?: {
-    refresh: string
-    lastUpdate: string
-  }
+  i18n?: Record<string, any>
 }
 
 interface Emits {

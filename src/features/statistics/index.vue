@@ -12,55 +12,15 @@
     <!-- Tab 栏 -->
     <div class="tab-bar">
       <button
+        v-for="tab in TAB_CONFIGS"
+        :key="tab.id"
         class="tab-item"
-        :class="[{ active: activeTab === 'overview' }]"
-        @click="activeTab = 'overview'"
+        :class="{ active: activeTab === tab.id }"
+        @click="activeTab = tab.id"
       >
-        {{ i18n.tabOverview || '概览' }}
-      </button>
-      <button
-        class="tab-item"
-        :class="[{ active: activeTab === 'heatmap' }]"
-        @click="activeTab = 'heatmap'"
-      >
-        {{ i18n.activityHeatmap || '活跃热力图' }}
-      </button>
-      <button
-        class="tab-item"
-        :class="[{ active: activeTab === 'activity' }]"
-        @click="activeTab = 'activity'"
-      >
-        {{ i18n.notebookActivity || '写作活跃度' }}
-      </button>
-      <button
-        class="tab-item"
-        :class="[{ active: activeTab === 'trend' }]"
-        @click="activeTab = 'trend'"
-      >
-        {{ i18n.trendTab || '趋势' }}
-      </button>
-      <button
-        class="tab-item"
-        :class="[{ active: activeTab === 'notebookDistribution' }]"
-        @click="activeTab = 'notebookDistribution'"
-      >
-        {{ i18n.notebookDistributionTab || '笔记分布' }}
-      </button>
-      <button
-        class="tab-item"
-        :class="[{ active: activeTab === 'report' }]"
-        @click="activeTab = 'report'"
-      >
-        {{ i18n.reportTab || '报告' }}
-      </button>
-      <button
-        class="tab-item"
-        :class="[{ active: activeTab === 'milestones' }]"
-        @click="activeTab = 'milestones'"
-      >
-        {{ i18n.milestones || '里程碑' }}
+        {{ i18n[tab.labelKey] }}
         <span
-          v-if="stats"
+          v-if="tab.id === 'milestones' && stats"
           class="tab-badge"
         >{{ milestonesAchievedCount }}</span>
       </button>
@@ -130,7 +90,7 @@
 
           <WordRanking
             :chart-data="stats.dailyStats"
-            :i18n="wordRankingI18n"
+            :i18n="i18n"
           />
         </div>
 
@@ -143,7 +103,7 @@
       >
         <TrendView
           :historical-data="historicalData"
-          :i18n="trendViewI18n"
+          :i18n="i18n"
         />
         <TrendPrediction
           :on-get-trend-prediction="getTrendPrediction"
@@ -160,24 +120,24 @@
             :title="i18n.docBarChartTitle"
             :chart-data="notebookDocStats"
             :loading="docChartLoading"
-            :i18n="docBarChartI18n"
+            :i18n="i18n"
           />
         </section>
 
         <section class="dist-section">
           <DocBarChart
-            :title="i18n.blockTypeStats || '块类型分布'"
+            :title="i18n.blockTypeStats"
             :chart-data="stats.blockTypeStats.map(item => ({
               name: item.label,
               count: item.count,
             }))"
-            :i18n="blockTypeChartI18n"
+            :i18n="i18n"
           />
         </section>
 
         <section class="dist-section">
           <h3 class="dist-section-title">
-            {{ i18n.notebookBlockTypeTitle || '各笔记本块类型分布' }}
+            {{ i18n.notebookBlockTypeTitle }}
           </h3>
           <NotebookBlockTypeChart
             :data="notebookBlockTypeStats"
@@ -186,7 +146,7 @@
 
         <section class="dist-section">
           <h3 class="dist-section-title">
-            {{ i18n.notebookWordPie || '笔记本字数占比' }}
+            {{ i18n.notebookWordPie }}
           </h3>
           <NotebookWordPie
             :data="notebookWordStats"
@@ -221,7 +181,7 @@
           :code-blocks="stats.codeBlocks"
           :writing-streak="stats.writingStreak"
           :active-days="stats.activeDays"
-          :i18n="milestonesI18n"
+          :i18n="i18n"
         />
       </div>
 
@@ -236,7 +196,7 @@
           :notebooks="heatmapNotebooks"
           :writing-streak="stats?.writingStreak ?? 0"
           :active-days="stats?.activeDays ?? 0"
-          :i18n="heatmapI18n"
+          :i18n="i18n"
         />
       </div>
 
@@ -247,7 +207,7 @@
       >
         <NotebookActivityTrend
           :on-get-notebook-activity-trend="getNotebookActivityTrend"
-          :i18n="activityI18n"
+          :i18n="i18n"
         />
       </div>
     </div>
@@ -304,138 +264,153 @@ import { STATISTICS_STORAGE_KEYS } from "./types/storage"
 interface Props {
   plugin: Plugin
   onRegisterRefresh?: (fn: () => Promise<void>) => void
-  i18n?: {
-    loading: string
-    refresh: string
-    lastUpdate: string
-    totalNotes: string
-    totalWords: string
-    totalBlocks: string
-    totalAssets: string
-    totalImages: string
-    totalTags: string
-    totalBacklinks: string
-    todayCreated: string
-    todayModified: string
-    avgWordsPerDoc: string
-    day: string
-    week: string
-    month: string
-    year: string
-    avgLabel: string
-    totalLabel: string
-    wordsUnit: string
-    notesUnit: string
-    days7: string
-    days15: string
-    days30: string
-    quarter: string
-    halfYear: string
-    fullYear: string
-    last1Year: string
-    last2Years: string
-    last3Years: string
-    trendTitle: string
-    avgDailyCreated: string
-    avgDailyModified: string
-    historicalData: string
-    date: string
-    notes: string
-    words: string
-    created: string
-    modified: string
-    change: string
-    blocks: string
-    assets: string
-    docBarChartTitle: string
-    docChanges: string
-    noDocChanges: string
-    noRecentDocs?: string
-    recentUpdatedDocs?: string
-    today: string
-    days3: string
-    oneMonth: string
-    wordRanking?: string
-    blockTypeStats?: string
-    notebookWordPie?: string
-    notebookActivity?: string
-    reportTitle?: string
-    predictionTitle?: string
-    activityHeatmap?: string
-    milestones?: string
-    tabOverview?: string
-    trendTab?: string
-    notebookDistributionTab?: string
-    notebookBlockTypeTitle?: string
-    reportTab?: string
-  }
+  i18n?: Record<string, any>
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  i18n: () => ({
-    loading: "加载中...",
-    refresh: "刷新",
-    lastUpdate: "最后更新",
-    totalNotes: "笔记总数",
-    totalWords: "总字数",
-    totalBlocks: "内容块",
-    totalAssets: "附件",
-    totalImages: "图片",
-    totalTags: "标签",
-    totalBacklinks: "双链",
-    todayCreated: "今日新增",
-    todayModified: "今日修改",
-    avgWordsPerDoc: "平均字数",
-    day: "日",
-    week: "周",
-    month: "月",
-    year: "年",
-    avgLabel: "日均字数",
-    totalLabel: "总字数",
-    wordsUnit: "字",
-    notesUnit: "笔记",
-    days7: "7天",
-    days15: "15天",
-    days30: "30天",
-    quarter: "季度",
-    halfYear: "半年",
-    fullYear: "整年",
-    last1Year: "最近一年",
-    last2Years: "最近两年",
-    last3Years: "最近三年",
-    trendTitle: "趋势分析",
-    avgDailyCreated: "日均新增",
-    avgDailyModified: "日均修改",
-    historicalData: "历史数据",
-    date: "日期",
-    notes: "笔记",
-    words: "字数",
-    created: "新增",
-    modified: "修改",
-    change: "变化",
-    blocks: "块",
-    assets: "附件",
-    docBarChartTitle: "各笔记本文档数",
-    docChanges: "文档变化",
-    noDocChanges: "当天无新增或修改",
-    noRecentDocs: "暂无最近更新的文档",
-    recentUpdatedDocs: "最近更新",
-    today: "今天",
-    days3: "近3天",
-    oneMonth: "近1月",
-    wordRanking: "字数排行",
-    blockTypeStats: "块类型分布",
-    notebookWordPie: "笔记本字数占比",
-    notebookActivity: "笔记本写作活跃度",
-    reportTitle: "年度/月度报告",
-    predictionTitle: "趋势预测",
-    activityHeatmap: "活跃热力图",
-    milestones: "里程碑",
-    tabOverview: "概览",
-  }),
-})
+const props = defineProps<Props>()
 
-const activeTab = ref<"overview" | "trend" | "heatmap" | "activity" | "notebookDistribution" | "report" | "milestones">("overview")
+// ── Unified i18n defaults for the entire statistics feature ──
+const STATS_DEFAULT_LABELS: Record<string, string> = {
+  loading: "加载中...",
+  refresh: "刷新",
+  lastUpdate: "最后更新",
+  wordsUnit: "字",
+  notesUnit: "笔记",
+  overview: "总览",
+  totalNotes: "笔记总数",
+  totalWords: "总字数",
+  totalBlocks: "内容块",
+  totalAssets: "附件",
+  totalImages: "图片",
+  totalTags: "标签",
+  totalBacklinks: "双链",
+  todayCreated: "今日新增",
+  todayModified: "今日修改",
+  avgWordsPerDoc: "平均字数",
+  moreStats: "详细统计",
+  tabOverview: "概览",
+  activityHeatmap: "活跃热力图",
+  notebookActivity: "写作活跃度",
+  trendTab: "趋势",
+  notebookDistributionTab: "笔记分布",
+  reportTab: "报告",
+  milestones: "里程碑",
+  day: "日",
+  week: "周",
+  month: "月",
+  year: "年",
+  avgLabel: "日均字数",
+  totalLabel: "总字数",
+  days7: "7天",
+  days15: "15天",
+  days30: "30天",
+  quarter: "季度",
+  halfYear: "半年",
+  fullYear: "整年",
+  last1Year: "最近一年",
+  last2Years: "最近两年",
+  last3Years: "最近三年",
+  title: "趋势分析",
+  avgDailyCreated: "日均新增",
+  avgDailyModified: "日均修改",
+  historicalData: "历史数据",
+  date: "日期",
+  notes: "笔记",
+  words: "字数",
+  created: "新增",
+  modified: "修改",
+  change: "变化",
+  blocks: "块",
+  assets: "附件",
+  dayOverDay: "日环比",
+  weekOverWeek: "周环比",
+  monthOverMonth: "月环比",
+  docBarChartTitle: "各笔记本文档数",
+  docChanges: "文档变化",
+  noDocChanges: "当天无新增或修改",
+  noRecentDocs: "暂无最近更新的文档",
+  recentUpdatedDocs: "最近更新",
+  today: "今天",
+  days3: "近3天",
+  oneMonth: "近1月",
+  wordRanking: "字数排行",
+  emptyText: "暂无数据",
+  blockTypeStats: "块类型分布",
+  notebookWordPie: "笔记本字数占比",
+  notebookBlockTypeTitle: "各笔记本块类型分布",
+  reportTitle: "年度/月度报告",
+  predictionTitle: "趋势预测",
+  docsUnit: "篇",
+  less: "少",
+  more: "多",
+  last30Days: "近30天",
+  activeDaysCount: "天活跃",
+  activeDaysLabel: "活跃天数",
+  currentStreak: "当前连续",
+  longestStreak: "最长连续",
+  totalOperations: "总操作次数",
+  months3: "3个月",
+  months6: "6个月",
+  year1: "1年",
+  weekdayDistribution: "星期分布",
+  monday: "周一",
+  tuesday: "周二",
+  wednesday: "周三",
+  thursday: "周四",
+  friday: "周五",
+  saturday: "周六",
+  sunday: "周日",
+  mon: "一",
+  wed: "三",
+  fri: "五",
+  metricDocsModified: "修改文档",
+  metricDocsCreated: "新增文档",
+  metricBlockEdits: "编辑块",
+  allNotebooks: "全部笔记本",
+  noData: "暂无数据",
+  activeNotebooks: "活跃笔记本",
+  mostActive: "最活跃",
+  periodTotalWords: "期间总字数",
+  dailyAvgWords: "日均字数",
+  notebookRanking: "笔记本排行",
+  notebookName: "笔记本",
+  dailyAvg: "日均",
+  proportion: "占比",
+  days60: "60天",
+  days90: "90天",
+  days180: "180天",
+  showAllMilestones: "显示全部 {count} 个里程碑",
+  nextGoal: "下一目标",
+  encourageAlmost: "只差一点点，加油！",
+  encourageHalfway: "已完成过半，继续努力！",
+  encourageStart: "千里之行，始于足下",
+  tierCommon: "普通",
+  tierRare: "稀有",
+  tierEpic: "史诗",
+  tierLegendary: "传说",
+  catWriting: "写作达人",
+  catKnowledge: "知识管理",
+  catRich: "内容丰富",
+}
+
+const i18n = computed(() => ({
+  ...STATS_DEFAULT_LABELS,
+  ...(props.i18n || {}),
+}))
+
+const TAB_CONFIGS = [
+  { id: 'overview', labelKey: 'tabOverview' },
+  { id: 'heatmap', labelKey: 'activityHeatmap' },
+  { id: 'activity', labelKey: 'notebookActivity' },
+  { id: 'trend', labelKey: 'trendTab' },
+  { id: 'notebookDistribution', labelKey: 'notebookDistributionTab' },
+  { id: 'report', labelKey: 'reportTab' },
+  { id: 'milestones', labelKey: 'milestones' },
+] as const
+
+type TabId = typeof TAB_CONFIGS[number]['id']
+
+const activeTab = ref<TabId>("overview")
 
 const {
   loading,
@@ -467,127 +442,27 @@ const {
   loadNotebookBlockTypeStats,
 } = useNotebookStats()
 
-const trendViewI18n = computed(() => ({
-  ...props.i18n,
-  title: props.i18n.trendTitle,
-  dayOverDay: "日环比",
-  weekOverWeek: "周环比",
-  monthOverMonth: "月环比",
-}))
-
-const heatmapI18n = computed(() => ({
-  activityHeatmap: props.i18n.activityHeatmap || "活跃热力图",
-  less: "少",
-  more: "多",
-  loading: props.i18n.loading || "加载中...",
-  noDocChanges: "当天无新增或修改",
-  todayCreated: props.i18n.todayCreated || "新增",
-  todayModified: props.i18n.todayModified || "修改",
-  last30Days: "近30天",
-  activeDaysCount: "天活跃",
-  activeDaysLabel: "活跃天数",
-  currentStreak: "当前连续",
-  longestStreak: "最长连续",
-  totalOperations: "总操作次数",
-  months3: "3个月",
-  months6: "6个月",
-  year1: "1年",
-  weekdayDistribution: "星期分布",
-  monday: "周一",
-  tuesday: "周二",
-  wednesday: "周三",
-  thursday: "周四",
-  friday: "周五",
-  saturday: "周六",
-  sunday: "周日",
-  mon: "一",
-  wed: "三",
-  fri: "五",
-  metricDocsModified: "修改文档",
-  metricDocsCreated: "新增文档",
-  metricBlockEdits: "编辑块",
-  allNotebooks: "全部笔记本",
-}))
-
-const activityI18n = computed(() => ({
-  loading: props.i18n.loading || "加载中...",
-  noData: "暂无数据",
-  activeNotebooks: "活跃笔记本",
-  mostActive: "最活跃",
-  periodTotalWords: "期间总字数",
-  dailyAvgWords: "日均字数",
-  notebookRanking: "笔记本排行",
-  notebookName: "笔记本",
-  totalWords: "总字数",
-  activeDaysLabel: "活跃天数",
-  dailyAvg: "日均",
-  proportion: "占比",
-  wordsUnit: props.i18n.wordsUnit || "字",
-  days7: props.i18n.days7 || "7天",
-  days15: props.i18n.days15 || "15天",
-  days30: props.i18n.days30 || "30天",
-  days60: "60天",
-  days90: "90天",
-  days180: "180天",
-}))
-
-const milestonesI18n = computed(() => ({
-  milestones: props.i18n.milestones || "里程碑",
-  showAllMilestones: "显示全部 {count} 个里程碑",
-  nextGoal: "下一目标",
-  encourageAlmost: "只差一点点，加油！",
-  encourageHalfway: "已完成过半，继续努力！",
-  encourageStart: "千里之行，始于足下",
-  tierCommon: "普通",
-  tierRare: "稀有",
-  tierEpic: "史诗",
-  tierLegendary: "传说",
-  catWriting: "写作达人",
-  catKnowledge: "知识管理",
-  catRich: "内容丰富",
-}))
-
-// Milestone badge counts
-function countAchieved(type: string, current: number): number {
-  let n = 0
-  while (milestoneTargetOf(type, n + 1) <= current) n++
-  return n
-}
-
 const milestonesAchievedCount = computed(() => {
   const s = stats.value
   if (!s) return 0
-  const counts: Record<string, number> = {
-    notes: s.totalNotes,
-    words: s.totalWords,
-    tags: s.totalTags,
-    backlinks: s.totalBacklinks,
-    assets: s.totalAssets,
-    images: s.totalImages,
-    notebooks: s.notebookCount,
-    code: s.codeBlocks,
-    streak: s.writingStreak,
-    activeDays: s.activeDays,
-  }
-  return Object.entries(counts).reduce((sum, [type, val]) => sum + countAchieved(type, val), 0)
+  const fields: Array<{ type: string, val: number }> = [
+    { type: 'notes', val: s.totalNotes },
+    { type: 'words', val: s.totalWords },
+    { type: 'tags', val: s.totalTags },
+    { type: 'backlinks', val: s.totalBacklinks },
+    { type: 'assets', val: s.totalAssets },
+    { type: 'images', val: s.totalImages },
+    { type: 'notebooks', val: s.notebookCount },
+    { type: 'code', val: s.codeBlocks },
+    { type: 'streak', val: s.writingStreak },
+    { type: 'activeDays', val: s.activeDays },
+  ]
+  return fields.reduce((sum, { type, val }) => {
+    let n = 0
+    while (milestoneTargetOf(type, n + 1) <= val) n++
+    return sum + n
+  }, 0)
 })
-
-const docBarChartI18n = computed(() => ({
-  loading: props.i18n.loading || "加载中...",
-  docsUnit: props.i18n.notesUnit || "笔记",
-}))
-
-const blockTypeChartI18n = computed(() => ({
-  loading: props.i18n.loading || "加载中...",
-  docsUnit: "个",
-}))
-
-const wordRankingI18n = computed(() => ({
-  title: props.i18n.wordRanking || "字数排行",
-  loading: props.i18n.loading || "加载中...",
-  wordsUnit: props.i18n.wordsUnit || "字",
-  emptyText: "暂无数据",
-}))
 
 const storagePaths = computed(() => {
   const dataDir = (props.plugin as any).dataDir || ""
@@ -650,6 +525,7 @@ defineExpose({
 
 <style scoped lang="scss">
 @use '@/variables' as *;
+@use "./styles/index.scss" as stats;
 
 // ========== Main Container ==========
 .statistics-panel {
@@ -764,22 +640,13 @@ defineExpose({
 }
 
 .tab-badge {
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
   font-size: 10px;
   padding: 1px 6px;
   border-radius: 4px;
   background: rgba(var(--b3-theme-primary-rgb), 0.1);
   color: var(--b3-theme-primary);
   font-weight: 700;
-}
-
-.milestones-tab,
-.heatmap-tab,
-.activity-tab,
-.trend-tab,
-.notebook-distribution-tab,
-.report-tab {
-  // padding handled by .statistics-content
 }
 
 .notebook-distribution-tab {
@@ -798,7 +665,7 @@ defineExpose({
 
 .dist-section-title {
   margin: 0 0 10px 0;
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;

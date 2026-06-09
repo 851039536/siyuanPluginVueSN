@@ -102,27 +102,7 @@ interface Props {
   selectedYear?: number
   periodAvgWords?: number
   periodTotalWords?: number
-  i18n?: {
-    day: string
-    week: string
-    month: string
-    year: string
-    avgLabel: string
-    totalLabel: string
-    wordsUnit: string
-    days7: string
-    days15: string
-    days30: string
-    quarter: string
-    halfYear: string
-    fullYear: string
-    last1Year: string
-    last2Years: string
-    last3Years: string
-    weekAvg?: string
-    monthAvg?: string
-    yearAvg?: string
-  }
+  i18n?: Record<string, any>
 }
 
 interface Emits {

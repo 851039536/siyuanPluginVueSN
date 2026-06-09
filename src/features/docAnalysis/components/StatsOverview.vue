@@ -113,7 +113,7 @@
           class="section-cards"
         >
           <div
-            v-if="!hideZero || !isZero(stats.zeroByteDocs)"
+            v-if="!hideZero || stats.zeroByteDocs !== 0"
             class="stat-card"
             :class="{ active: activeFilter === '0B' }"
             @click="$emit('select-category', '0B')"
@@ -126,7 +126,7 @@
             ></span>
           </div>
           <div
-            v-if="!hideZero || !isZero(stats.smallDocs)"
+            v-if="!hideZero || stats.smallDocs !== 0"
             class="stat-card"
             :class="{ active: activeFilter === 'small' }"
             @click="$emit('select-category', 'small')"
@@ -139,7 +139,7 @@
             ></span>
           </div>
           <div
-            v-if="!hideZero || !isZero(stats.mediumDocs)"
+            v-if="!hideZero || stats.mediumDocs !== 0"
             class="stat-card"
             :class="{ active: activeFilter === 'medium' }"
             @click="$emit('select-category', 'medium')"
@@ -152,7 +152,7 @@
             ></span>
           </div>
           <div
-            v-if="!hideZero || !isZero(stats.duplicateNameDocs)"
+            v-if="!hideZero || stats.duplicateNameDocs !== 0"
             class="stat-card"
             :class="{ active: activeFilter === 'duplicate' }"
             @click="$emit('select-category', 'duplicate')"
@@ -184,7 +184,7 @@
           class="section-cards"
         >
           <div
-            v-if="!hideZero || !isZero(stats.updatedIn7Days)"
+            v-if="!hideZero || stats.updatedIn7Days"
             class="stat-card"
             :class="{ active: activeFilter === '7days' }"
             @click="$emit('select-category', '7days')"
@@ -193,7 +193,7 @@
             <span class="card-unit">7天内</span>
           </div>
           <div
-            v-if="!hideZero || !isZero(stats.updatedIn30Days)"
+            v-if="!hideZero || stats.updatedIn30Days"
             class="stat-card"
             :class="{ active: activeFilter === '30days' }"
             @click="$emit('select-category', '30days')"
@@ -202,7 +202,7 @@
             <span class="card-unit">7~30天</span>
           </div>
           <div
-            v-if="!hideZero || !isZero(stats.updatedIn1To2Months)"
+            v-if="!hideZero || stats.updatedIn1To2Months"
             class="stat-card"
             :class="{ active: activeFilter === '1to2month' }"
             @click="$emit('select-category', '1to2month')"
@@ -211,7 +211,7 @@
             <span class="card-unit">1~2月</span>
           </div>
           <div
-            v-if="!hideZero || !isZero(stats.updatedIn2To3Months)"
+            v-if="!hideZero || stats.updatedIn2To3Months"
             class="stat-card"
             :class="{ active: activeFilter === '2to3month' }"
             @click="$emit('select-category', '2to3month')"
@@ -220,7 +220,7 @@
             <span class="card-unit">2~3月</span>
           </div>
           <div
-            v-if="!hideZero || !isZero(stats.updatedOverHalfYear)"
+            v-if="!hideZero || stats.updatedOverHalfYear !== 0"
             class="stat-card"
             :class="{ active: activeFilter === 'halfYear' }"
             @click="$emit('select-category', 'halfYear')"
@@ -266,7 +266,7 @@
           class="section-cards"
         >
           <div
-            v-if="!hideZero || !isZero(stats.pendingPublishDocs)"
+            v-if="!hideZero || stats.pendingPublishDocs !== 0"
             class="stat-card"
             :class="{ active: activeFilter === 'pendingPublish' }"
             @click="$emit('select-category', 'pendingPublish')"
@@ -283,7 +283,7 @@
             </button>
           </div>
           <div
-            v-if="!hideZero || !isZero(stats.publishedDocs)"
+            v-if="!hideZero || stats.publishedDocs !== 0"
             class="stat-card"
             :class="{ active: activeFilter === 'published' }"
             @click="$emit('select-category', 'published')"
@@ -292,7 +292,7 @@
             <span class="card-unit">已发布</span>
           </div>
           <div
-            v-if="!hideZero || !isZero(stats.unusedDocs)"
+            v-if="!hideZero || stats.unusedDocs !== 0"
             class="stat-card"
             :class="{ active: activeFilter === 'unused' }"
             @click="$emit('select-category', 'unused')"
@@ -301,7 +301,7 @@
             <span class="card-unit">不使用</span>
           </div>
           <div
-            v-if="!hideZero || !isZero(stats.noneBookmarkDocs)"
+            v-if="!hideZero || stats.noneBookmarkDocs !== 0"
             class="stat-card"
             :class="{ active: activeFilter === 'noneBookmark' }"
             @click="$emit('select-category', 'noneBookmark')"
@@ -310,7 +310,7 @@
             <span class="card-unit">无</span>
           </div>
           <div
-            v-if="!hideZero || !isZero(stats.bookmarkedDocs)"
+            v-if="!hideZero || stats.bookmarkedDocs !== 0"
             class="stat-card"
             :class="{ active: activeFilter === 'hasBookmark' }"
             @click="$emit('select-category', 'hasBookmark')"
@@ -319,7 +319,7 @@
             <span class="card-unit">有书签</span>
           </div>
           <div
-            v-if="!hideZero || !isZero(stats.noBookmarkDocs)"
+            v-if="!hideZero || stats.noBookmarkDocs !== 0"
             class="stat-card"
             :class="{ active: activeFilter === 'noBookmark' }"
             @click="$emit('select-category', 'noBookmark')"
@@ -347,7 +347,7 @@
           class="section-cards"
         >
           <div
-            v-if="!hideZero || !isZero(stats.fullPublishDocs)"
+            v-if="!hideZero || stats.fullPublishDocs !== 0"
             class="stat-card"
             :class="{ active: activeFilter === 'fullPublish' }"
             @click="$emit('select-category', 'fullPublish')"
@@ -356,7 +356,7 @@
             <span class="card-unit">完整发布</span>
           </div>
           <div
-            v-if="!hideZero || !isZero(stats.partialPublishDocs)"
+            v-if="!hideZero || stats.partialPublishDocs !== 0"
             class="stat-card"
             :class="{ active: activeFilter === 'partialPublish' }"
             @click="$emit('select-category', 'partialPublish')"
@@ -365,7 +365,7 @@
             <span class="card-unit">部分发布</span>
           </div>
           <div
-            v-if="!hideZero || !isZero(stats.noPublishDocs)"
+            v-if="!hideZero || stats.noPublishDocs !== 0"
             class="stat-card"
             :class="{ active: activeFilter === 'noPublish' }"
             @click="$emit('select-category', 'noPublish')"
@@ -409,7 +409,7 @@
             </div>
             <div class="section-cards">
               <div
-                v-if="!hideZero || !isZero(stats.deepDocs)"
+                v-if="!hideZero || stats.deepDocs !== 0"
                 class="stat-card"
                 :class="{ active: activeFilter === 'deep' }"
                 @click="$emit('select-category', 'deep')"
@@ -418,7 +418,7 @@
                 <span class="card-unit">深层≥5</span>
               </div>
               <div
-                v-if="!hideZero || !isZero(stats.imageDocs)"
+                v-if="!hideZero || stats.imageDocs !== 0"
                 class="stat-card"
                 :class="{ active: activeFilter === 'hasImage' }"
                 @click="$emit('select-category', 'hasImage')"
@@ -439,7 +439,7 @@
             </div>
             <div class="section-cards">
               <div
-                v-if="!hideZero || !isZero(stats.taggedDocs)"
+                v-if="!hideZero || stats.taggedDocs !== 0"
                 class="stat-card"
                 :class="{ active: activeFilter === 'hasTag' }"
                 @click="$emit('select-category', 'hasTag')"
@@ -448,16 +448,16 @@
                 <span class="card-unit">有标签</span>
               </div>
               <div
-                v-if="!hideZero || !isZero(totalDocs - stats.taggedDocs)"
+                v-if="!hideZero || stats.taggedDocs !== stats.totalDocs"
                 class="stat-card"
                 :class="{ active: activeFilter === 'noTag' }"
                 @click="$emit('select-category', 'noTag')"
               >
-                <span class="card-value time-red">{{ totalDocs - stats.taggedDocs }}</span>
+                <span class="card-value time-red">{{ stats.totalDocs - stats.taggedDocs }}</span>
                 <span class="card-unit">无标签</span>
               </div>
               <div
-                v-if="!hideZero || !isZero(stats.aliasedDocs)"
+                v-if="!hideZero || stats.aliasedDocs !== 0"
                 class="stat-card"
                 :class="{ active: activeFilter === 'hasAlias' }"
                 @click="$emit('select-category', 'hasAlias')"
@@ -466,7 +466,7 @@
                 <span class="card-unit">有别名</span>
               </div>
               <div
-                v-if="!hideZero || !isZero(stats.memoedDocs)"
+                v-if="!hideZero || stats.memoedDocs !== 0"
                 class="stat-card"
                 :class="{ active: activeFilter === 'hasMemo' }"
                 @click="$emit('select-category', 'hasMemo')"
@@ -487,7 +487,7 @@
             </div>
             <div class="section-cards">
               <div
-                v-if="!hideZero || !isZero(stats.refDocs)"
+                v-if="!hideZero || stats.refDocs !== 0"
                 class="stat-card"
                 :class="{ active: activeFilter === 'hasRef' }"
                 @click="$emit('select-category', 'hasRef')"
@@ -496,7 +496,7 @@
                 <span class="card-unit">含引用({{ stats.totalRefs }})</span>
               </div>
               <div
-                v-if="!hideZero || !isZero(stats.incomingRefDocs)"
+                v-if="!hideZero || stats.incomingRefDocs !== 0"
                 class="stat-card"
                 :class="{ active: activeFilter === 'incomingRef' }"
                 @click="$emit('select-category', 'incomingRef')"
@@ -505,7 +505,7 @@
                 <span class="card-unit">被引用</span>
               </div>
               <div
-                v-if="!hideZero || !isZero(stats.orphanDocs)"
+                v-if="!hideZero || stats.orphanDocs !== 0"
                 class="stat-card"
                 :class="{ active: activeFilter === 'orphanDoc' }"
                 @click="$emit('select-category', 'orphanDoc')"
@@ -566,7 +566,7 @@
     <div
       v-if="bookmarkDetailVisible"
       class="bookmark-detail-overlay"
-      @click.self="closeBookmarkDetail"
+      @click.self="$emit('show-bookmark-details')"
     >
       <div class="bookmark-detail-panel">
         <div class="bookmark-detail-header">
@@ -576,7 +576,7 @@
           </span>
           <button
             class="close-btn"
-            @click="closeBookmarkDetail"
+            @click="$emit('show-bookmark-details')"
           >
             <Icon icon="mdi:close" />
           </button>
@@ -660,7 +660,7 @@ const props = withDefaults(defineProps<Props>(), {
   collapsible: true,
 })
 
-const emit = defineEmits<{
+defineEmits<{
   (e: "analyze"): void
   (e: "select-category", category: string): void
   (e: "batch-publish", category: string): void
@@ -693,19 +693,6 @@ function toggleSection(key: string) {
 function isSectionCollapsed(key: string): boolean {
   return collapsedSections.has(key)
 }
-
-/** 判断数值是否为零（用于隐藏零值） */
-function isZero(val: number): boolean {
-  return val === 0
-}
-
-function closeBookmarkDetail() {
-  // 通过再次触发相同事件来让 composable 关闭面板
-  // 此处通知父组件关闭，由 composable 的 bookmarkDetailVisible 控制
-  emit("show-bookmark-details")
-}
-
-const totalDocs = computed(() => props.stats.totalDocs)
 
 /** 健康度百分比（0-100） */
 const healthPct = computed(() => {

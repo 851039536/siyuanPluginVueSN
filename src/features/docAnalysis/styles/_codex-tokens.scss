@@ -1,3 +1,9 @@
 // Codex 设计 Token（docAnalysis 局部）
 $da-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 $da-radius: 6px;
+
+// 旋转动画（loading spinner 共享）
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

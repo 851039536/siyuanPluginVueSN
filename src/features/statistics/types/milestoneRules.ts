@@ -38,3 +38,32 @@ export const MILESTONE_LABEL_FNS: Record<string, (v: number) => string> = {
 }
 
 export const STORAGE_KEY_MILESTONE_RULES = "milestone-rules"
+export const STORAGE_KEY_CUSTOM_ACHIEVEMENTS = "milestone-custom-achievements"
+
+/** 自定义成就定义 */
+export interface CustomAchievement {
+  id: string
+  icon: string
+  title: string
+  description: string
+  tier: "common" | "rare" | "epic" | "legendary"
+  /** 关联的统计类型 */
+  type: string
+  /** 达标阈值 */
+  threshold: number
+}
+
+/** 统计类型描述（供自定义成就编辑器使用） */
+export const STAT_TYPE_DESCRIPTIONS: Record<string, string> = {
+  notes: "笔记总数达到指定值",
+  words: "总字数达到指定值",
+  blocks: "内容块数达到指定值",
+  tags: "标签数达到指定值",
+  backlinks: "双链数达到指定值",
+  assets: "附件数达到指定值",
+  images: "图片数达到指定值",
+  notebooks: "笔记本数达到指定值",
+  code: "代码块数达到指定值",
+  streak: "连续写作天数达到指定值",
+  activeDays: "活跃天数达到指定值",
+}

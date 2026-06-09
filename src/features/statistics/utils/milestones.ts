@@ -25,15 +25,19 @@ export function milestoneTargetOf(type: string, n: number): number {
 
 /**
  * 带自定义规则的目标值查询。
- * 优先使用 customRules 中对应类型的第 n 个值，超出或无自定义时回退到公式。
+ * 当某类型存在自定义规则时，完全使用自定义值（不混合公式）；
+ * 超出数组长度返回 Infinity 表示没有更多里程碑。
  */
 export function milestoneTargetOfWithRules(
   type: string,
   n: number,
   customRules?: Record<string, number[]>,
 ): number {
-  if (customRules?.[type] && n <= customRules[type].length) {
-    return customRules[type][n - 1]
+  if (customRules?.[type] && customRules[type].length > 0) {
+    if (n <= customRules[type].length) {
+      return customRules[type][n - 1]
+    }
+    return Infinity
   }
   return milestoneTargetOf(type, n)
 }

@@ -174,6 +174,7 @@
           :plugin="plugin"
           :total-notes="stats.totalNotes"
           :total-words="stats.totalWords"
+          :total-blocks="stats.totalBlocks"
           :total-tags="stats.totalTags"
           :total-backlinks="stats.totalBacklinks"
           :total-assets="stats.totalAssets"
@@ -263,6 +264,14 @@ import { milestoneTargetOfWithRules } from "./utils/milestones"
 import { STATISTICS_STORAGE_KEYS } from "./types/storage"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { STORAGE_KEY_MILESTONE_RULES } from "./types/milestoneRules"
+
+function sortMilestoneRules(rules: Record<string, number[]>): Record<string, number[]> {
+  const sorted: Record<string, number[]> = {}
+  for (const [key, targets] of Object.entries(rules)) {
+    sorted[key] = [...targets].sort((a, b) => a - b)
+  }
+  return sorted
+}
 
 interface Props {
   plugin: Plugin
@@ -451,6 +460,7 @@ const milestonesAchievedCount = computed(() => {
   const fields: Array<{ type: string, val: number }> = [
     { type: 'notes', val: s.totalNotes },
     { type: 'words', val: s.totalWords },
+    { type: 'blocks', val: s.totalBlocks },
     { type: 'tags', val: s.totalTags },
     { type: 'backlinks', val: s.totalBacklinks },
     { type: 'assets', val: s.totalAssets },
@@ -523,7 +533,7 @@ onMounted(async () => {
   heatmapNotebooks.value = await getHeatmapNotebooks()
   const storage = new PluginStorage(props.plugin)
   const rules = await storage.load<Record<string, number[]>>(STORAGE_KEY_MILESTONE_RULES)
-  if (rules) customRules.value = rules
+  if (rules) customRules.value = sortMilestoneRules(rules)
 })
 
 defineExpose({

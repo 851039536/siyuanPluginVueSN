@@ -27,39 +27,60 @@
     </div>
 
     <template v-if="hasAnalyzed && (!isCollapsed || !collapsible)">
-      <!-- 工具栏：隐藏零值 -->
-      <div class="stats-toolbar">
-        <button
-          class="toolbar-btn"
-          :class="{ active: hideZero }"
-          title="隐藏零值卡片"
-          @click="hideZero = !hideZero"
-        >
-          <Icon
-            :icon="hideZero ? 'mdi:eye-off-outline' : 'mdi:eye-outline'"
-            :size="13"
-          />
-          {{ hideZero ? '已隐藏零值' : '隐藏零值' }}
-        </button>
+      <!-- Hero：总文档 + 健康度 -->
+      <div class="stats-hero">
+        <div class="hero-left">
+          <span class="hero-value">{{ stats.totalDocs }}</span>
+          <span class="hero-label">总文档</span>
+        </div>
+        <div class="hero-right">
+          <span class="hero-health-label">健康度</span>
+          <div class="hero-health-bar">
+            <div
+              class="hero-health-fill"
+              :style="{ width: healthPct + '%' }"
+            ></div>
+          </div>
+          <span class="hero-health-value">{{ healthPct }}%</span>
+        </div>
       </div>
 
-      <!-- 总览概览条 -->
-      <div class="summary-bar">
-        <div class="summary-item">
-          <span class="summary-value">{{ stats.totalDocs }}</span>
-          <span class="summary-unit">总文档</span>
+      <!-- 问题摘要条 -->
+      <div
+        v-if="hasIssues"
+        class="issue-bar"
+      >
+        <div
+          v-if="stats.zeroByteDocs"
+          class="issue-item critical"
+          @click="$emit('select-category', '0B')"
+        >
+          <span class="issue-value">{{ stats.zeroByteDocs }}</span>
+          <span class="issue-label">0B空</span>
         </div>
-        <div class="summary-item warn">
-          <span class="summary-value">{{ stats.zeroByteDocs }}</span>
-          <span class="summary-unit">0B空</span>
+        <div
+          v-if="stats.duplicateNameDocs"
+          class="issue-item warn"
+          @click="$emit('select-category', 'duplicate')"
+        >
+          <span class="issue-value">{{ stats.duplicateNameDocs }}</span>
+          <span class="issue-label">重名</span>
         </div>
-        <div class="summary-item accent">
-          <span class="summary-value">{{ stats.duplicateNameDocs }}</span>
-          <span class="summary-unit">重名</span>
+        <div
+          v-if="stats.pendingPublishDocs"
+          class="issue-item accent"
+          @click="$emit('select-category', 'pendingPublish')"
+        >
+          <span class="issue-value">{{ stats.pendingPublishDocs }}</span>
+          <span class="issue-label">待发布</span>
         </div>
-        <div class="summary-item pending">
-          <span class="summary-value">{{ stats.pendingPublishDocs }}</span>
-          <span class="summary-unit">待发布</span>
+        <div
+          v-if="stats.orphanDocs"
+          class="issue-item critical"
+          @click="$emit('select-category', 'orphanDoc')"
+        >
+          <span class="issue-value">{{ stats.orphanDocs }}</span>
+          <span class="issue-label">孤文档</span>
         </div>
       </div>
 
@@ -74,6 +95,18 @@
             class="section-toggle-icon"
           />
           <Icon icon="mdi:harddisk" />大小分布
+          <button
+            class="toolbar-btn"
+            :class="{ active: hideZero }"
+            title="隐藏零值卡片"
+            @click.stop="hideZero = !hideZero"
+          >
+            <Icon
+              :icon="hideZero ? 'mdi:eye-off-outline' : 'mdi:eye-outline'"
+              :size="13"
+            />
+            {{ hideZero ? '已隐藏' : '隐藏零值' }}
+          </button>
         </div>
         <div
           v-show="!isSectionCollapsed('size')"
@@ -343,177 +376,174 @@
         </div>
       </div>
 
-      <!-- 结构分析 -->
+      <!-- 分割线 -->
+      <div class="section-divider"></div>
+
+      <!-- 深度分析（合并折叠区：结构 + 内容质量 + 引用拓扑 + 深度分布） -->
       <div class="stat-section">
         <div
           class="section-header"
-          @click="toggleSection('structure')"
+          @click="toggleSection('advanced')"
         >
           <Icon
-            :icon="isSectionCollapsed('structure') ? 'mdi:chevron-right' : 'mdi:chevron-down'"
+            :icon="isSectionCollapsed('advanced') ? 'mdi:chevron-right' : 'mdi:chevron-down'"
             class="section-toggle-icon"
           />
-          <Icon icon="mdi:sitemap-outline" />结构
+          <Icon icon="mdi:chart-box-outline" />深度分析
+          <span
+            v-if="isSectionCollapsed('advanced')"
+            class="section-hint"
+          >{{ advancedSummary }}</span>
         </div>
         <div
-          v-show="!isSectionCollapsed('structure')"
-          class="section-cards"
+          v-show="!isSectionCollapsed('advanced')"
+          class="advanced-grid"
         >
-          <div
-            v-if="!hideZero || !isZero(stats.deepDocs)"
-            class="stat-card"
-            :class="{ active: activeFilter === 'deep' }"
-            @click="$emit('select-category', 'deep')"
-          >
-            <span class="card-value depth-color">{{ stats.deepDocs }}</span>
-            <span class="card-unit">深层≥5</span>
-          </div>
-          <div
-            v-if="!hideZero || !isZero(stats.imageDocs)"
-            class="stat-card"
-            :class="{ active: activeFilter === 'hasImage' }"
-            @click="$emit('select-category', 'hasImage')"
-          >
-            <span class="card-value img-color">{{ stats.imageDocs }}</span>
-            <span class="card-unit">图片({{ stats.totalImages }})</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 内容质量 -->
-      <div class="stat-section">
-        <div
-          class="section-header"
-          @click="toggleSection('quality')"
-        >
-          <Icon
-            :icon="isSectionCollapsed('quality') ? 'mdi:chevron-right' : 'mdi:chevron-down'"
-            class="section-toggle-icon"
-          />
-          <Icon icon="mdi:star-outline" />内容质量
-        </div>
-        <div
-          v-show="!isSectionCollapsed('quality')"
-          class="section-cards"
-        >
-          <div
-            v-if="!hideZero || !isZero(stats.taggedDocs)"
-            class="stat-card"
-            :class="{ active: activeFilter === 'hasTag' }"
-            @click="$emit('select-category', 'hasTag')"
-          >
-            <span class="card-value time-green">{{ stats.taggedDocs }}</span>
-            <span class="card-unit">有标签</span>
-          </div>
-          <div
-            v-if="!hideZero || !isZero(totalDocs - stats.taggedDocs)"
-            class="stat-card"
-            :class="{ active: activeFilter === 'noTag' }"
-            @click="$emit('select-category', 'noTag')"
-          >
-            <span class="card-value time-red">{{ totalDocs - stats.taggedDocs }}</span>
-            <span class="card-unit">无标签</span>
-          </div>
-          <div
-            v-if="!hideZero || !isZero(stats.aliasedDocs)"
-            class="stat-card"
-            :class="{ active: activeFilter === 'hasAlias' }"
-            @click="$emit('select-category', 'hasAlias')"
-          >
-            <span class="card-value time-cyan">{{ stats.aliasedDocs }}</span>
-            <span class="card-unit">有别名</span>
-          </div>
-          <div
-            v-if="!hideZero || !isZero(stats.memoedDocs)"
-            class="stat-card"
-            :class="{ active: activeFilter === 'hasMemo' }"
-            @click="$emit('select-category', 'hasMemo')"
-          >
-            <span class="card-value time-purple">{{ stats.memoedDocs }}</span>
-            <span class="card-unit">有备注</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 引用拓扑 -->
-      <div class="stat-section">
-        <div
-          class="section-header"
-          @click="toggleSection('ref')"
-        >
-          <Icon
-            :icon="isSectionCollapsed('ref') ? 'mdi:chevron-right' : 'mdi:chevron-down'"
-            class="section-toggle-icon"
-          />
-          <Icon icon="mdi:graph-outline" />引用拓扑
-        </div>
-        <div
-          v-show="!isSectionCollapsed('ref')"
-          class="section-cards"
-        >
-          <div
-            v-if="!hideZero || !isZero(stats.refDocs)"
-            class="stat-card"
-            :class="{ active: activeFilter === 'hasRef' }"
-            @click="$emit('select-category', 'hasRef')"
-          >
-            <span class="card-value ref-color">{{ stats.refDocs }}</span>
-            <span class="card-unit">含引用({{ stats.totalRefs }})</span>
-          </div>
-          <div
-            v-if="!hideZero || !isZero(stats.incomingRefDocs)"
-            class="stat-card"
-            :class="{ active: activeFilter === 'incomingRef' }"
-            @click="$emit('select-category', 'incomingRef')"
-          >
-            <span class="card-value time-cyan">{{ stats.incomingRefDocs }}</span>
-            <span class="card-unit">被引用</span>
-          </div>
-          <div
-            v-if="!hideZero || !isZero(stats.orphanDocs)"
-            class="stat-card"
-            :class="{ active: activeFilter === 'orphanDoc' }"
-            @click="$emit('select-category', 'orphanDoc')"
-          >
-            <span class="card-value zero">{{ stats.orphanDocs }}</span>
-            <span class="card-unit">孤文档</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 深度分布图 -->
-      <div
-        v-if="depthStats.depthDistribution.length > 0"
-        class="stat-section"
-      >
-        <div
-          class="section-header"
-          @click="toggleSection('depth')"
-        >
-          <Icon
-            :icon="isSectionCollapsed('depth') ? 'mdi:chevron-right' : 'mdi:chevron-down'"
-            class="section-toggle-icon"
-          />
-          <Icon icon="mdi:chart-bar" />深度分布
-          <span class="section-hint">均 {{ depthStats.avgDepth }} 层 · 最深 {{ depthStats.maxDepth }} 层</span>
-        </div>
-        <div
-          v-show="!isSectionCollapsed('depth')"
-          class="depth-chart-v2"
-        >
-          <div
-            v-for="item in depthStats.depthDistribution"
-            :key="item.depth"
-            class="depth-bar-v2"
-          >
-            <span class="depth-bar-label">{{ item.depth }}</span>
-            <div class="depth-bar-track">
-              <div
-                class="depth-bar-fill"
-                :style="{ width: getBarPercent(item.count) }"
-              ></div>
+          <!-- 结构 -->
+          <div class="advanced-group">
+            <div class="advanced-group-title">
+              <Icon
+                icon="mdi:sitemap-outline"
+                :size="13"
+              />结构
             </div>
-            <span class="depth-bar-count">{{ item.count }}</span>
+            <div class="section-cards">
+              <div
+                v-if="!hideZero || !isZero(stats.deepDocs)"
+                class="stat-card"
+                :class="{ active: activeFilter === 'deep' }"
+                @click="$emit('select-category', 'deep')"
+              >
+                <span class="card-value depth-color">{{ stats.deepDocs }}</span>
+                <span class="card-unit">深层≥5</span>
+              </div>
+              <div
+                v-if="!hideZero || !isZero(stats.imageDocs)"
+                class="stat-card"
+                :class="{ active: activeFilter === 'hasImage' }"
+                @click="$emit('select-category', 'hasImage')"
+              >
+                <span class="card-value img-color">{{ stats.imageDocs }}</span>
+                <span class="card-unit">图片({{ stats.totalImages }})</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 内容质量 -->
+          <div class="advanced-group">
+            <div class="advanced-group-title">
+              <Icon
+                icon="mdi:star-outline"
+                :size="13"
+              />内容质量
+            </div>
+            <div class="section-cards">
+              <div
+                v-if="!hideZero || !isZero(stats.taggedDocs)"
+                class="stat-card"
+                :class="{ active: activeFilter === 'hasTag' }"
+                @click="$emit('select-category', 'hasTag')"
+              >
+                <span class="card-value time-green">{{ stats.taggedDocs }}</span>
+                <span class="card-unit">有标签</span>
+              </div>
+              <div
+                v-if="!hideZero || !isZero(totalDocs - stats.taggedDocs)"
+                class="stat-card"
+                :class="{ active: activeFilter === 'noTag' }"
+                @click="$emit('select-category', 'noTag')"
+              >
+                <span class="card-value time-red">{{ totalDocs - stats.taggedDocs }}</span>
+                <span class="card-unit">无标签</span>
+              </div>
+              <div
+                v-if="!hideZero || !isZero(stats.aliasedDocs)"
+                class="stat-card"
+                :class="{ active: activeFilter === 'hasAlias' }"
+                @click="$emit('select-category', 'hasAlias')"
+              >
+                <span class="card-value time-cyan">{{ stats.aliasedDocs }}</span>
+                <span class="card-unit">有别名</span>
+              </div>
+              <div
+                v-if="!hideZero || !isZero(stats.memoedDocs)"
+                class="stat-card"
+                :class="{ active: activeFilter === 'hasMemo' }"
+                @click="$emit('select-category', 'hasMemo')"
+              >
+                <span class="card-value time-purple">{{ stats.memoedDocs }}</span>
+                <span class="card-unit">有备注</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 引用拓扑 -->
+          <div class="advanced-group">
+            <div class="advanced-group-title">
+              <Icon
+                icon="mdi:graph-outline"
+                :size="13"
+              />引用拓扑
+            </div>
+            <div class="section-cards">
+              <div
+                v-if="!hideZero || !isZero(stats.refDocs)"
+                class="stat-card"
+                :class="{ active: activeFilter === 'hasRef' }"
+                @click="$emit('select-category', 'hasRef')"
+              >
+                <span class="card-value ref-color">{{ stats.refDocs }}</span>
+                <span class="card-unit">含引用({{ stats.totalRefs }})</span>
+              </div>
+              <div
+                v-if="!hideZero || !isZero(stats.incomingRefDocs)"
+                class="stat-card"
+                :class="{ active: activeFilter === 'incomingRef' }"
+                @click="$emit('select-category', 'incomingRef')"
+              >
+                <span class="card-value time-cyan">{{ stats.incomingRefDocs }}</span>
+                <span class="card-unit">被引用</span>
+              </div>
+              <div
+                v-if="!hideZero || !isZero(stats.orphanDocs)"
+                class="stat-card"
+                :class="{ active: activeFilter === 'orphanDoc' }"
+                @click="$emit('select-category', 'orphanDoc')"
+              >
+                <span class="card-value zero">{{ stats.orphanDocs }}</span>
+                <span class="card-unit">孤文档</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 深度分布（跨列） -->
+          <div
+            v-if="depthStats.depthDistribution.length > 0"
+            class="advanced-group advanced-group--full"
+          >
+            <div class="advanced-group-title">
+              <Icon
+                icon="mdi:chart-bar"
+                :size="13"
+              />深度分布
+              <span class="advanced-group-hint">均 {{ depthStats.avgDepth }} 层 · 最深 {{ depthStats.maxDepth }} 层</span>
+            </div>
+            <div class="depth-chart-v2">
+              <div
+                v-for="item in depthStats.depthDistribution"
+                :key="item.depth"
+                class="depth-bar-v2"
+              >
+                <span class="depth-bar-label">{{ item.depth }}</span>
+                <div class="depth-bar-track">
+                  <div
+                    class="depth-bar-fill"
+                    :style="{ width: getBarPercent(item.count) }"
+                  ></div>
+                </div>
+                <span class="depth-bar-count">{{ item.count }}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -648,8 +678,8 @@ function toggleCollapse() {
 /** 隐藏零值卡片 */
 const hideZero = ref(false)
 
-/** 分区折叠状态 */
-const collapsedSections = reactive(new Set<string>())
+/** 分区折叠状态（深度分析默认折叠） */
+const collapsedSections = reactive(new Set<string>(["advanced"]))
 
 function toggleSection(key: string) {
   if (collapsedSections.has(key)) {
@@ -676,6 +706,32 @@ function closeBookmarkDetail() {
 }
 
 const totalDocs = computed(() => props.stats.totalDocs)
+
+/** 健康度百分比（0-100） */
+const healthPct = computed(() => {
+  const total = props.stats.totalDocs
+  if (!total) return 100
+  const issues = props.stats.zeroByteDocs + props.stats.duplicateNameDocs
+    + props.stats.orphanDocs + props.stats.updatedOverHalfYear + props.stats.unusedDocs
+  return Math.max(0, Math.min(100, Math.round((1 - issues / total) * 100)))
+})
+
+/** 是否有问题项需要显示 */
+const hasIssues = computed(() =>
+  props.stats.zeroByteDocs > 0 || props.stats.duplicateNameDocs > 0
+  || props.stats.pendingPublishDocs > 0 || props.stats.orphanDocs > 0,
+)
+
+/** 深度分析折叠时的摘要文本 */
+const advancedSummary = computed(() => {
+  const parts: string[] = []
+  if (props.stats.deepDocs) parts.push(`深层 ${props.stats.deepDocs}`)
+  if (props.stats.imageDocs) parts.push(`有图 ${props.stats.imageDocs}`)
+  if (props.stats.taggedDocs) parts.push(`有标签 ${props.stats.taggedDocs}`)
+  if (props.stats.orphanDocs) parts.push(`孤文档 ${props.stats.orphanDocs}`)
+  if (props.depthStats.avgDepth) parts.push(`均深 ${props.depthStats.avgDepth}`)
+  return parts.join(" · ")
+})
 
 /** 计算卡片百分比进度条宽度 */
 function pct(count: number): string {
@@ -758,73 +814,137 @@ function getBarPercent(count: number): string {
   to { transform: rotate(360deg); }
 }
 
-// ============ 总览概览条 ============
-.summary-bar {
+// ============ Hero 区域 ============
+.stats-hero {
   display: flex;
-  gap: 6px;
-  margin-bottom: 4px;
-  padding: 8px 0;
-  border-bottom: 2px solid var(--b3-border-color);
-}
-
-.summary-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  padding: 6px 3px;
-  border-radius: $da-radius;
+  gap: 12px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
   border: 1px solid var(--b3-border-color);
-  background: transparent;
+  border-radius: $da-radius;
 
-  .summary-value {
-    font-size: 18px;
+  .hero-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .hero-value {
+    font-size: 24px;
     font-weight: 800;
+    font-family: $da-mono;
     color: var(--b3-theme-on-background);
     line-height: 1;
   }
 
-  .summary-unit {
+  .hero-label {
     font-size: 10px;
-    color: var(--b3-theme-on-surface-variant);
-    margin-top: 3px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.45;
+    margin-top: 2px;
   }
 
-  &.warn .summary-value { color: var(--b3-theme-error, #ef4444); }
-  &.accent .summary-value { color: var(--b3-theme-info, #a855f7); }
-  &.pending .summary-value { color: var(--b3-theme-warning, #f59e0b); }
+  .hero-right {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .hero-health-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.45;
+    white-space: nowrap;
+  }
+
+  .hero-health-bar {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--b3-theme-surface-light);
+    overflow: hidden;
+    min-width: 40px;
+  }
+
+  .hero-health-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--b3-theme-primary);
+    transition: width 0.5s ease;
+  }
+
+  .hero-health-value {
+    font-size: 14px;
+    font-weight: 700;
+    font-family: $da-mono;
+    color: var(--b3-theme-primary);
+    white-space: nowrap;
+  }
 }
 
-// ============ 工具栏 ============
-.stats-toolbar {
+// ============ 问题摘要条 ============
+.issue-bar {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 4px;
+  gap: 4px;
+  margin-bottom: 6px;
 
-  .toolbar-btn {
-    display: inline-flex;
+  .issue-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 3px;
-    padding: 2px 8px;
+    padding: 4px 2px;
+    border-radius: $da-radius;
     border: 1px solid var(--b3-border-color);
-    border-radius: 4px;
-    background: transparent;
-    color: var(--b3-theme-on-surface-variant);
-    font-size: 11px;
     cursor: pointer;
-    white-space: nowrap;
+    transition: border-color 0.15s;
 
     &:hover {
-      background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
+      border-color: var(--b3-theme-primary);
     }
 
-    &.active {
-      border-color: var(--b3-theme-primary);
-      color: var(--b3-theme-primary);
-      background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
+    &.critical {
+      border-color: var(--b3-theme-error, #ef4444);
+      .issue-value { color: var(--b3-theme-error, #ef4444); }
+    }
+
+    &.warn {
+      border-color: var(--b3-theme-warning, #f59e0b);
+      .issue-value { color: var(--b3-theme-warning, #f59e0b); }
+    }
+
+    &.accent {
+      border-color: var(--b3-theme-info, #a855f7);
+      .issue-value { color: var(--b3-theme-info, #a855f7); }
     }
   }
+
+  .issue-value {
+    font-size: 16px;
+    font-weight: 700;
+    font-family: $da-mono;
+    line-height: 1;
+  }
+
+  .issue-label {
+    font-size: 10px;
+    color: var(--b3-theme-on-surface-variant);
+    margin-top: 2px;
+  }
+}
+
+// ============ 分割线 ============
+.section-divider {
+  border-top: 1px dashed var(--b3-border-color);
+  margin: 6px 0;
 }
 
 // ============ 分区 ============
@@ -867,6 +987,35 @@ function getBarPercent(count: number): string {
     color: var(--b3-theme-on-surface-variant);
     margin-left: auto;
   }
+
+  .toolbar-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 8px;
+    border: 1px solid var(--b3-border-color);
+    border-radius: $da-radius;
+    background: transparent;
+    color: var(--b3-theme-on-surface-variant);
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+    opacity: 1;
+    cursor: pointer;
+    white-space: nowrap;
+    margin-left: auto;
+
+    &:hover {
+      background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
+    }
+
+    &.active {
+      border-color: var(--b3-theme-primary);
+      color: var(--b3-theme-primary);
+      background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
+    }
+  }
 }
 
 // ============ 卡片行 ============
@@ -874,6 +1023,53 @@ function getBarPercent(count: number): string {
   display: flex;
   gap: 5px;
   flex-wrap: wrap;
+}
+
+// ============ 深度分析网格 ============
+.advanced-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.advanced-group {
+  border: 1px solid var(--b3-border-color);
+  border-radius: $da-radius;
+  padding: 8px;
+
+  &--full {
+    grid-column: 1 / -1;
+  }
+
+  .advanced-group-title {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.45;
+    margin-bottom: 6px;
+  }
+
+  .advanced-group-hint {
+    font-weight: 400;
+    font-size: 10px;
+    color: var(--b3-theme-on-surface-variant);
+    margin-left: auto;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .section-cards {
+    gap: 4px;
+  }
+
+  .stat-card {
+    min-width: 48px;
+    padding: 6px 4px 5px;
+  }
 }
 
 .stat-card {

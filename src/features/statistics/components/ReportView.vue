@@ -163,10 +163,9 @@
                 <div
                   class="breakdown-bar words"
                   :style="{ width: barPct(item.words, maxBreakWords) }"
-                >
-                  {{ item.words > 0 ? `${formatNumber(item.words)}字` : '' }}
-                </div>
+                ></div>
               </div>
+              <span class="breakdown-value">{{ item.words > 0 ? `${formatNumber(item.words)}字` : '' }}</span>
               <span class="breakdown-created">{{ item.created > 0 ? `+${item.created}` : '' }}</span>
             </div>
           </div>
@@ -442,16 +441,16 @@ async function generate() {
 .breakdown-list {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  max-height: 200px;
+  gap: 6px;
+  max-height: 280px;
   overflow-y: auto;
 }
 
 .breakdown-row {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 11px;
+  gap: 8px;
+  font-size: 12px;
 }
 
 .breakdown-month {
@@ -468,33 +467,39 @@ async function generate() {
 
 .breakdown-bars {
   flex: 1;
-  height: 14px;
+  height: 22px;
   background: rgba(var(--b3-theme-on-surface-rgb), 0.04);
-  border-radius: 4px;
+  border-radius: 6px;
   overflow: hidden;
 }
 
 .breakdown-bar {
   height: 100%;
-  border-radius: 4px;
-  font-size: 9px;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  padding-left: 4px;
+  border-radius: 6px;
   min-width: 4px;
-  font-weight: 500;
 
   &.words {
     background: linear-gradient(90deg, var(--b3-theme-primary), var(--b3-theme-primary-light, #5d87ff));
   }
 }
 
-.breakdown-created {
-  width: 28px;
+.breakdown-value {
+  width: 48px;
   flex-shrink: 0;
   font-family: stats.$font-mono;
-  font-size: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--b3-theme-on-surface);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.breakdown-created {
+  width: 36px;
+  padding-left: 8px;
+  flex-shrink: 0;
+  font-family: stats.$font-mono;
+  font-size: 11px;
   font-weight: 700;
   color: stats.$color-success;
 }

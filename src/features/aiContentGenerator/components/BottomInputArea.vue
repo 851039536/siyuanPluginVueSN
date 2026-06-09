@@ -573,7 +573,7 @@ const getOriginalIndex = (prompt: SavedPrompt) => {
 </script>
 
 <style scoped lang="scss">
-@use "../styles/index.scss";
+@use "../styles/index.scss" as *;
 
 // ============ RAG 联网搜索开关 ============
 .rag-toggle {

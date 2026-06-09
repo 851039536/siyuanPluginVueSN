@@ -1360,5 +1360,5 @@ watch([systemPrompt, temperature, maxTokens, selectedModel, customModel, enableT
 </script>
 
 <style scoped lang="scss">
-@use "./styles/index.scss";
+@use "./styles/index.scss" as *;
 </style>

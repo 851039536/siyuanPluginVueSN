@@ -1,5 +1,81 @@
 // AI内容生成器面板样式
 
+// ============ 可折叠区块 mixin ============
+// 统一 思考过程 / 搜索来源 / 交叉审核 三处重复的折叠卡片模式
+@mixin collapsible-section {
+  margin: 0 14px;
+  border-radius: 6px;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  background: var(--b3-theme-surface);
+  overflow: hidden;
+}
+
+@mixin collapsible-toggle($icon-color: var(--b3-theme-primary)) {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--b3-theme-on-surface);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  user-select: none;
+
+  svg {
+    color: $icon-color;
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    background: var(--b3-theme-surface-light);
+  }
+}
+
+@mixin collapsible-chevron {
+  transition: transform 0.2s;
+
+  &.expanded {
+    transform: rotate(90deg);
+  }
+}
+
+@mixin collapsible-body {
+  padding: 8px 10px 10px;
+  border-top: 1px solid var(--b3-theme-surface-lighter);
+  margin: 0 10px 8px;
+}
+
+@mixin collapsible-status-dot($color: var(--b3-theme-primary)) {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: $color;
+  animation: collapsible-blink 1s ease-in-out infinite;
+}
+
+@keyframes collapsible-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+// ============ 加载旋转动画 ============
+@keyframes ai-spinner-rotate {
+  to { transform: rotate(360deg); }
+}
+
+// ============ Codex 元信息标签 ============
+@mixin codex-meta-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.45;
+}
+
 .ai-content-panel {
   display: flex;
   flex-direction: column;
@@ -136,9 +212,6 @@
     svg { opacity: 1; }
   }
 
-  &:active:not(:disabled) {
-  }
-
   &:disabled {
     opacity: 0.4;
     cursor: not-allowed;
@@ -262,6 +335,7 @@
   height: 14px;
   border: 2px solid transparent;
   border-top-color: currentColor;
+  animation: ai-spinner-rotate 0.6s linear infinite;
 }
 
 .error-icon { color: var(--b3-theme-error); margin-bottom: 16px; }
@@ -483,11 +557,11 @@
 }
 
 .stat-added {
-  color: #22c55e;
+  color: var(--b3-theme-success);
 }
 
 .stat-removed {
-  color: #ef4444;
+  color: var(--b3-theme-error);
 }
 
 .diff-toolbar-right {

@@ -275,6 +275,7 @@ import {
   getApiConfigFromPlugin,
 } from "@/utils/aiApi"
 import { useCoverGenerator } from "../composables/useCoverGenerator"
+import { triggerBlobDownload } from "@/utils/domUtils"
 
 interface Props {
   visible: boolean
@@ -467,14 +468,16 @@ watch(
   },
 )
 
-// 获取封面截图画布（共享 html2canvas 逻辑）
+// 获取封面截图画布
 async function captureCoverCanvas(): Promise<HTMLCanvasElement | null> {
   const iframe = coverFrame.value
-  if (!iframe?.contentDocument?.body?.firstElementChild) return null
+  const doc = iframe?.contentDocument
+  if (!doc?.body) return null
 
   await nextTick()
-  const target = (iframe.contentDocument.body.firstElementChild as HTMLElement) ?? iframe.contentDocument.body
-  return html2canvas(target, {
+
+  // 使用 body 而非 firstElementChild，确保捕获完整封面内容
+  return html2canvas(doc.body, {
     useCORS: true,
     scale: 2,
     backgroundColor: "#ffffff",
@@ -510,13 +513,17 @@ async function copyCoverAsImage() {
     showMessage("封面已复制为图片", 2000, "info")
   } catch (error) {
     console.error("复制封面为图片失败:", error)
-    // 兜底：下载图片（复用已捕获的 canvas）
+    // 兜底：剪贴板不可用时降级为下载
     if (canvas) {
-      const link = document.createElement("a")
-      link.download = `cover-${config.value.width}x${config.value.height}-${Date.now()}.png`
-      link.href = canvas.toDataURL("image/png")
-      link.click()
-      showMessage("已下载为图片（剪贴板不可用）", 2000, "info")
+      const fallbackBlob = await new Promise<Blob | null>((resolve) => {
+        canvas!.toBlob((b) => resolve(b), "image/png")
+      })
+      if (fallbackBlob) {
+        triggerBlobDownload(fallbackBlob, `cover-${config.value.width}x${config.value.height}-${Date.now()}.png`)
+        showMessage("已下载为图片（剪贴板不可用）", 2000, "info")
+      } else {
+        showMessage("复制失败", 2000, "error")
+      }
     } else {
       showMessage("复制失败", 2000, "error")
     }
@@ -532,10 +539,14 @@ async function downloadCoverAsImage() {
       return
     }
 
-    const link = document.createElement("a")
-    link.download = `cover-${config.value.width}x${config.value.height}-${Date.now()}.png`
-    link.href = canvas.toDataURL("image/png")
-    link.click()
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((b) => {
+        if (b) resolve(b)
+        else reject(new Error("Canvas toBlob 失败"))
+      }, "image/png")
+    })
+
+    triggerBlobDownload(blob, `cover-${config.value.width}x${config.value.height}-${Date.now()}.png`)
     showMessage("封面已下载", 2000, "info")
   } catch (error) {
     console.error("下载封面失败:", error)

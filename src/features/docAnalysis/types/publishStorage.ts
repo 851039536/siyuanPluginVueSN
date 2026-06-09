@@ -84,42 +84,4 @@ export class PublishStorage {
     return history[docId] || null
   }
 
-  /** 更新指定文档的发布状态 */
-  async updateDocPublishState(docId: string, state: DocPublishState): Promise<void> {
-    const history = await this.loadHistory()
-    history[docId] = state
-    await this.saveHistory(history)
-  }
-
-  /** 获取已配置的平台 */
-  async getPlatforms(): Promise<PlatformConfig[]> {
-    const settings = await this.loadSettings()
-    return settings.platforms.filter((p) => p.enabled)
-  }
-
-  /** 通过 ID 获取平台 */
-  async getPlatformById(id: string): Promise<PlatformConfig | null> {
-    const settings = await this.loadSettings()
-    return settings.platforms.find((p) => p.id === id) || null
-  }
-
-  /** 添加或更新平台 */
-  async savePlatform(platform: PlatformConfig): Promise<void> {
-    const settings = await this.loadSettings()
-    const idx = settings.platforms.findIndex((p) => p.id === platform.id)
-    if (idx >= 0) {
-      settings.platforms[idx] = platform
-    } else {
-      settings.platforms.push(platform)
-    }
-    await this.saveSettings(settings)
-  }
-
-  /** 删除平台 */
-  async removePlatform(id: string): Promise<void> {
-    const settings = await this.loadSettings()
-    settings.platforms = settings.platforms.filter((p) => p.id !== id)
-    settings.defaultPlatformIds = settings.defaultPlatformIds.filter((pid) => pid !== id)
-    await this.saveSettings(settings)
-  }
 }

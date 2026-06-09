@@ -228,7 +228,7 @@ async function markAsPublished(platformId: string) {
     })
 
     const attrKey = matchKey || `custom-${config.matchers[0]}-yaml`
-    const yamlValue = buildYamlTemplate(config.name)
+    const yamlValue = buildYamlTemplate()
 
     await setBlockAttrs(props.docId, { [attrKey]: yamlValue })
     emit("refresh")
@@ -241,7 +241,7 @@ async function markAsPublished(platformId: string) {
   }
 }
 
-function buildYamlTemplate(platformName: string): string {
+function buildYamlTemplate(): string {
   if (!props.attrs) return ""
 
   const lines: string[] = [
@@ -513,15 +513,7 @@ async function copyAllAttrs() {
   flex: 1;
   overflow-y: auto;
   padding: 0;
-
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--b3-scroll-color);
-    border-radius: 3px;
-  }
+  @include da-scrollbar;
 }
 
 .publish-status-section {
@@ -600,7 +592,7 @@ async function copyAllAttrs() {
     }
 
     .spin-icon {
-      animation: spin 1s linear infinite;
+      @include da-spin-icon;
     }
 }
 

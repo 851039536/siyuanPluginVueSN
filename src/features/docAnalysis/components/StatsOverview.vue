@@ -791,7 +791,7 @@ function getBarPercent(count: number): string {
     &:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .spin-icon {
-      animation: spin 1s linear infinite;
+      @include da-spin-icon;
     }
   }
 }
@@ -1302,15 +1302,7 @@ function getBarPercent(count: number): string {
   flex: 1;
   overflow-y: auto;
   padding: 8px;
-
-  &::-webkit-scrollbar {
-    width: 5px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--b3-scroll-color);
-    border-radius: 3px;
-  }
+  @include da-scrollbar;
 }
 
 .bookmark-detail-loading,
@@ -1330,7 +1322,7 @@ function getBarPercent(count: number): string {
 
   .spin-icon {
     font-size: 28px;
-    animation: spin 1s linear infinite;
+    @include da-spin-icon;
     color: var(--b3-theme-primary);
   }
 }

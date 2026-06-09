@@ -323,16 +323,9 @@ export function useDocAnalysis(plugin: Plugin) {
       const notebookCondition = buildNotebookCondition()
 
       // ── 阶段 1：互不依赖的查询并行 ──
-      const [
-        sizeRows,
-        dupRows,
-        _timeResult,
-        _depthResult,
-        _bmResult,
-        _platformResult,
-        _qualityResult,
-        _scanResult,
-      ] = await Promise.all([
+      // 并行执行所有查询，仅 sizeRows/dupRows 结果被直接使用，
+      // 其余查询通过闭包更新 reactive state（side effect）
+      const [sizeRows, dupRows] = await Promise.all([
         // 大小统计
         sql(`
           SELECT

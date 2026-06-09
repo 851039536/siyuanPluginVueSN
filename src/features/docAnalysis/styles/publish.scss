@@ -130,15 +130,7 @@
   flex: 1;
   overflow-y: auto;
   padding: 14px 18px;
-
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--b3-scroll-color);
-    border-radius: 3px;
-  }
+  @include da-scrollbar;
 }
 
 // ============ Section ============
@@ -374,7 +366,7 @@
 }
 
 .spin-icon {
-  animation: spin 1s linear infinite;
+  @include da-spin-icon;
 }
 
 // ============ 发布结果 ============

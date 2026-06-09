@@ -279,6 +279,46 @@
       </button>
     </div>
 
+    <!-- 选项行：模型选择 + 思考 + 审核 -->
+    <div class="options-bar">
+      <!-- 自定义模型输入 -->
+      <input
+        v-if="selectedModel === 'custom'"
+        class="model-custom-input"
+        :value="customModel"
+        placeholder="输入模型名..."
+        @input="$emit('update:custom-model', ($event.target as HTMLInputElement).value)"
+      />
+      <!-- 模型选择下拉 -->
+      <select
+        v-else
+        class="model-select"
+        :value="selectedModel"
+        @change="$emit('update:selected-model', ($event.target as HTMLSelectElement).value)"
+      >
+        <option value="">默认模型</option>
+        <optgroup v-if="availableModels.common.length > 0" label="常用">
+          <option v-for="m in availableModels.common" :key="m.value" :value="m.value">{{ m.label }}</option>
+        </optgroup>
+        <optgroup v-if="availableModels.all.length > 0" label="全部">
+          <option v-for="m in availableModels.all" :key="m.value" :value="m.value">{{ m.label }}</option>
+        </optgroup>
+        <option value="custom">自定义...</option>
+      </select>
+      <!-- 思考模式开关 -->
+      <label v-if="supportsThinking" class="thinking-toggle" title="思考模式">
+        <input type="checkbox" :checked="enableThinking" @change="$emit('update:enable-thinking', ($event.target as HTMLInputElement).checked)" />
+        <span class="thinking-label">思考</span>
+      </label>
+      <!-- 审核开关 -->
+      <label class="review-toggle" title="生成后使用 V4 Pro 交叉审核">
+        <input type="checkbox" :checked="enableReview" @change="$emit('update:enable-review', ($event.target as HTMLInputElement).checked)" />
+        <span class="review-label">
+          <svg width="11" height="11"><use xlink:href="#iconCheck" /></svg>审核
+        </span>
+      </label>
+    </div>
+
     <!-- 第三行：输入框 + 执行按钮（已选择文档或技能时显示） -->
     <div
       v-if="editTargetDoc || currentSkillIndex >= 0"
@@ -340,6 +380,7 @@ import type {
   SkillItem,
   TargetDoc,
 } from "@/types/ai"
+import type { ProviderModels } from "../types/models"
 import {
   computed,
   nextTick,
@@ -380,6 +421,10 @@ const emit = defineEmits<{
   'update:currentSkillIndex': [value: number]
   'update:skillSearchQuery': [value: string]
   'update:webSearch': [value: boolean]
+  'update:selected-model': [value: string]
+  'update:custom-model': [value: string]
+  'update:enable-thinking': [value: boolean]
+  'update:enable-review': [value: boolean]
 }>()
 
 const quickActions: QuickAction[] = [
@@ -428,6 +473,13 @@ interface Props {
   filteredSkills: SkillItem[]
   skillSearchQuery: string
   webSearch: boolean
+  // 模型与选项
+  selectedModel: string
+  customModel: string
+  availableModels: ProviderModels
+  supportsThinking: boolean
+  enableThinking: boolean
+  enableReview: boolean
 }
 
 // 技能下拉面板状态
@@ -634,5 +686,83 @@ const getOriginalIndex = (prompt: SavedPrompt) => {
 
 .skill-selector-wrapper.open .skill-select-arrow {
   transform: rotate(180deg);
+}
+
+// ============ 选项行（模型选择 + 思考 + 审核） ============
+.options-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-top: 1px solid var(--b3-theme-surface-lighter);
+}
+
+.model-select {
+  padding: 2px 6px;
+  font-size: 10px;
+  color: var(--b3-theme-on-background);
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 4px;
+  cursor: pointer;
+  max-width: 120px;
+  outline: none;
+
+  &:hover { border-color: var(--b3-theme-primary); }
+  &:focus { border-color: var(--b3-theme-primary); box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest); }
+}
+
+.model-custom-input {
+  padding: 2px 6px;
+  font-size: 10px;
+  color: var(--b3-theme-on-background);
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 4px;
+  outline: none;
+  max-width: 100px;
+
+  &:hover { border-color: var(--b3-theme-primary); }
+  &:focus { border-color: var(--b3-theme-primary); box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest); }
+  &::placeholder { color: var(--b3-theme-on-surface); opacity: 0.4; }
+}
+
+.thinking-toggle, .review-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 5px;
+  font-size: 10px;
+  color: var(--b3-theme-on-surface);
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+
+  input[type="checkbox"] { width: 12px; height: 12px; cursor: pointer; }
+  &:hover { background: var(--b3-theme-surface); }
+}
+
+.thinking-toggle input[type="checkbox"] { accent-color: var(--b3-theme-primary); }
+.review-toggle input[type="checkbox"] { accent-color: var(--b3-theme-success); }
+
+.thinking-label {
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
+}
+.thinking-toggle input:checked + .thinking-label {
+  color: var(--b3-theme-primary); opacity: 1; font-weight: 500;
+}
+
+.review-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
+  svg { color: var(--b3-theme-success); }
+}
+.review-toggle input:checked + .review-label {
+  color: var(--b3-theme-success); opacity: 1; font-weight: 500;
 }
 </style>

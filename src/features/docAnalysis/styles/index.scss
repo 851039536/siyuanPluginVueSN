@@ -1,4 +1,5 @@
 // 文档分析面板样式（Dock 侧边栏）
+@use "./codex-tokens" as *;
 
 .doc-analysis-panel {
   display: flex;
@@ -54,8 +55,8 @@
     align-items: center;
     gap: 4px;
     padding: 5px 12px;
-    border: none;
-    border-radius: 6px;
+    border: 1px solid var(--b3-theme-primary);
+    border-radius: $da-radius;
     background: var(--b3-theme-primary);
     color: var(--b3-theme-on-primary);
     font-size: 12px;
@@ -179,12 +180,17 @@
   .sort-select {
     padding: 3px 6px;
     border: 1px solid var(--b3-border-color);
-    border-radius: 4px;
+    border-radius: $da-radius;
     background: var(--b3-theme-background);
     color: var(--b3-theme-on-background);
     font-size: 12px;
     outline: none;
     cursor: pointer;
+
+    &:focus {
+      border-color: var(--b3-theme-primary);
+      box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
+    }
   }
 
   .sort-order-btn,
@@ -195,12 +201,13 @@
     justify-content: center;
     width: 28px;
     height: 28px;
-    border: none;
-    border-radius: 4px;
+    border: 1px solid var(--b3-border-color);
+    border-radius: $da-radius;
     background: transparent;
     cursor: pointer;
 
     &:hover {
+      border-color: var(--b3-theme-primary);
       background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
     }
   }
@@ -293,7 +300,7 @@
   .footer-toggle-tip {
     padding: 2px 8px;
     border: 1px solid var(--b3-border-color);
-    border-radius: 4px;
+    border-radius: $da-radius;
     background: transparent;
     color: var(--b3-theme-primary);
     font-size: 11px;
@@ -342,7 +349,7 @@
       background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
       color: var(--b3-theme-primary);
       font-size: 11px;
-      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-family: $da-mono;
     }
   }
 
@@ -351,7 +358,7 @@
     align-items: center;
     min-width: 52px;
     padding: 1px 8px;
-    border-radius: 10px;
+    border-radius: $da-radius;
     font-size: 11px;
     font-weight: 600;
     flex-shrink: 0;

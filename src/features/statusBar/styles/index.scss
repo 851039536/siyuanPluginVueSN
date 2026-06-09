@@ -1,3 +1,7 @@
+// Codex 设计 tokens
+$sb-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
+$sb-radius: 6px;
+
 // 状态栏面板样式
 .status__resUsage {
   font-size: 11px;
@@ -114,7 +118,7 @@
 
   .status-bar-task-item {
     color: var(--b3-theme-primary);
-    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    font-family: $sb-mono;
     font-size: 11px;
 
     &[data-level="medium"] {
@@ -157,8 +161,8 @@
   width: 280px;
   max-height: 260px;
   background: var(--b3-theme-background);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 8px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $sb-radius;
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12), 0 4px 20px rgba(0, 0, 0, 0.08);
   z-index: 9998;
   display: flex;
@@ -171,7 +175,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 10px 14px;
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  border-bottom: 1px dashed var(--b3-border-color);
   flex-shrink: 0;
 }
 
@@ -197,15 +201,17 @@
   justify-content: center;
   width: 24px;
   height: 24px;
-  border: none;
+  border: 1px solid var(--b3-border-color);
   border-radius: 4px;
   background: transparent;
   color: var(--b3-theme-on-surface);
   cursor: pointer;
   opacity: 0.6;
+  transition: border-color 0.15s, color 0.15s, opacity 0.15s;
 
   &:hover {
-    background: var(--b3-theme-surface-lighter);
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
     opacity: 1;
   }
 }
@@ -252,21 +258,24 @@
     justify-content: center;
     width: 22px;
     height: 22px;
-    border: none;
+    border: 1px solid var(--b3-border-color);
     border-radius: 4px;
     background: transparent;
     color: var(--b3-theme-on-surface);
     cursor: pointer;
     opacity: 0.35;
     flex-shrink: 0;
+    transition: border-color 0.15s, color 0.15s, opacity 0.15s;
 
     &:hover {
+      border-color: var(--b3-theme-primary);
+      color: var(--b3-theme-primary);
       opacity: 1;
-      background: var(--b3-theme-surface-lighter);
     }
 
     &.pinned {
       opacity: 1;
+      border-color: var(--b3-theme-primary);
       color: var(--b3-theme-primary);
       background: var(--b3-theme-primary-lightest);
     }

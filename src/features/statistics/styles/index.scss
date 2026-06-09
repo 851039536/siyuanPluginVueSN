@@ -207,9 +207,6 @@ $color-rank-bronze: #cd7f32;
   overflow-y: auto;
   padding: 12px;
   background: var(--b3-theme-background);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
 
   // Custom scrollbar
   &::-webkit-scrollbar {

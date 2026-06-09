@@ -745,7 +745,7 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
-@use "../styles/index.scss";
+@use "../styles/index.scss" as *;
 
 .automation-view {
   display: flex;
@@ -894,8 +894,8 @@ onMounted(async () => {
 
 .task-websearch-badge {
   @extend .task-badge;
-  color: #3b82f6;
-  background: rgba(59, 130, 246, 0.1);
+  color: var(--b3-theme-primary);
+  background: rgba(var(--b3-theme-primary-rgb), 0.1);
 }
 
 .task-card-body {
@@ -920,12 +920,7 @@ onMounted(async () => {
 }
 
 .task-last-run {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.45;
+  @include codex-meta-label;
   font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
 
   &.never {
@@ -1289,16 +1284,4 @@ onMounted(async () => {
   :deep(blockquote) { margin: 0.4em 0; padding-left: 0.5em; border-left: 2px solid var(--b3-theme-primary); opacity: 0.8; }
 }
 
-.loading-spinner-small {
-  width: 14px;
-  height: 14px;
-  border: 2px solid transparent;
-  border-top-color: currentColor;
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
 </style>

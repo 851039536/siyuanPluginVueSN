@@ -79,6 +79,34 @@ $color-rank-bronze: #cd7f32;
   }
 }
 
+// Achieved milestone chip tier-specific colors
+@mixin tier-chip-achieved {
+  &.tier-common {
+    background: rgba($color-success, 0.08);
+    border-color: rgba($color-success, 0.15);
+    .chip-label { color: $color-success; }
+    .chip-tier { background: rgba($color-success, 0.15); color: $color-success; }
+  }
+  &.tier-rare {
+    background: rgba(var(--b3-theme-primary-rgb), 0.08);
+    border-color: rgba(var(--b3-theme-primary-rgb), 0.15);
+    .chip-label { color: var(--b3-theme-primary); }
+    .chip-tier { background: rgba(var(--b3-theme-primary-rgb), 0.15); color: var(--b3-theme-primary); }
+  }
+  &.tier-epic {
+    background: linear-gradient(135deg, rgba($color-tier-epic, 0.1), rgba(var(--b3-theme-primary-rgb), 0.06));
+    border-color: rgba($color-tier-epic, 0.2);
+    .chip-label { color: $color-tier-epic; }
+    .chip-tier { background: rgba($color-tier-epic, 0.15); color: $color-tier-epic; }
+  }
+  &.tier-legendary {
+    background: linear-gradient(135deg, rgba($color-tier-legendary, 0.12), rgba(234, 88, 12, 0.06));
+    border-color: rgba($color-tier-legendary, 0.3);
+    .chip-label { color: $color-tier-legendary; font-weight: 700; }
+    .chip-tier { background: rgba($color-tier-legendary, 0.2); color: $color-tier-legendary; }
+  }
+}
+
 @mixin heatmap-level-colors {
   &.level-0 { background: rgba(var(--b3-theme-on-surface-rgb), 0.05); }
   &.level-1 { background: rgba($color-success, 0.2); }

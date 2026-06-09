@@ -11,6 +11,7 @@ export function milestoneTargetOf(type: string, n: number): number {
     case "notes": return 10 + g * 30 + r * 10
     case "notebooks": return n * 5
     case "words": return (g * 2 + r + 1) * 10000
+    case "blocks": return 50 + (n - 1) * 100
     case "code": return 10 + (n - 1) * 30
     case "tags": return 10 + (n - 1) * 30
     case "backlinks": return 10 + g * 50 + r * 20
@@ -42,7 +43,7 @@ export function milestoneTargetOfWithRules(
  */
 export function generateDefaultRules(levels = 10): Record<string, number[]> {
   const types: MilestoneTypeKey[] = [
-    "notes", "words", "tags", "backlinks", "assets", "images",
+    "notes", "words", "blocks", "tags", "backlinks", "assets", "images",
     "notebooks", "code", "streak", "activeDays",
   ]
   const rules: Record<string, number[]> = {}

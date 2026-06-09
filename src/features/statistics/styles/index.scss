@@ -45,6 +45,39 @@ $color-rank-gold-text: #7c5800;
 $color-rank-silver: #c0c0c0;
 $color-rank-bronze: #cd7f32;
 
+@mixin progress-bar($height: 6px) {
+  height: $height;
+  background: rgba(var(--b3-theme-primary-rgb), 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+
+  .fill {
+    height: 100%;
+    background: var(--b3-theme-primary);
+    border-radius: 4px;
+    transition: width 0.6s ease;
+  }
+}
+
+@mixin tier-badge-colors($child: '') {
+  &.tier-common #{$child} {
+    background: rgba($color-success, 0.2);
+    color: $color-success;
+  }
+  &.tier-rare #{$child} {
+    background: rgba(var(--b3-theme-primary-rgb), 0.2);
+    color: var(--b3-theme-primary);
+  }
+  &.tier-epic #{$child} {
+    background: rgba(168, 85, 247, 0.2);
+    color: $color-tier-epic;
+  }
+  &.tier-legendary #{$child} {
+    background: rgba(234, 179, 8, 0.25);
+    color: $color-tier-legendary;
+  }
+}
+
 @mixin heatmap-level-colors {
   &.level-0 { background: rgba(var(--b3-theme-on-surface-rgb), 0.05); }
   &.level-1 { background: rgba($color-success, 0.2); }

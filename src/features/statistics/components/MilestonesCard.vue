@@ -5,7 +5,7 @@
       <span class="header-badge">{{ achievedCount }}</span>
     </div>
     <div class="card-body">
-      <!-- 等级显示 -->
+      <!-- ====== 1. 等级 + 下一目标（合并） ====== -->
       <div class="level-section">
         <div class="level-main">
           <span class="level-icon">{{ currentLevel.icon }}</span>
@@ -20,26 +20,27 @@
           class="level-progress-wrap"
         >
           <div class="level-progress-bar">
-            <div
-              class="level-progress-fill"
-              :style="{ width: `${levelProgress}%` }"
-            ></div>
+            <div class="fill" :style="{ width: `${levelProgress}%` }" />
           </div>
           <span class="level-progress-label">距 Lv.{{ nextLevel.level }} {{ nextLevel.title }} {{ levelProgress.toFixed(0) }}%</span>
         </div>
 
+        <!-- 下一目标（内联） -->
+        <div v-if="nextMilestone" class="next-goal-inline">
+          <span class="next-goal-icon">{{ nextMilestone.icon }}</span>
+          <span class="next-goal-target">{{ nextMilestone.label }}</span>
+          <div class="next-goal-progress">
+            <div class="fill" :style="{ width: `${nextMilestone.progress}%` }" />
+          </div>
+          <span class="next-goal-percent">{{ nextMilestone.progress.toFixed(0) }}%</span>
+        </div>
+
         <!-- 等级之路 -->
-        <button
-          class="level-road-toggle"
-          @click="showLevelRoad = !showLevelRoad"
-        >
+        <button class="level-road-toggle" @click="showLevelRoad = !showLevelRoad">
           <span>🗺️ 等级之路</span>
           <span class="toggle-arrow">{{ showLevelRoad ? '▲' : '▼' }}</span>
         </button>
-        <div
-          v-if="showLevelRoad"
-          class="level-road"
-        >
+        <div v-if="showLevelRoad" class="level-road">
           <div
             v-for="tier in tierRoad"
             :key="tier.idx"
@@ -50,17 +51,50 @@
             <span class="road-prefix">{{ tier.prefix }}</span>
             <span class="road-range">Lv.{{ tier.startLv }}-{{ tier.endLv }}</span>
             <div class="road-bar-track">
-              <div
-                class="road-bar-fill"
-                :style="{ width: `${tier.progress}%` }"
-              ></div>
+              <div class="road-bar-fill" :style="{ width: `${tier.progress}%` }" />
             </div>
             <span class="road-percent">{{ tier.progress }}%</span>
           </div>
         </div>
       </div>
 
-      <!-- 特殊成就卡片 -->
+      <!-- ====== 2. 里程碑分类 ====== -->
+      <div
+        v-for="category in visibleCategories"
+        :key="category.id"
+        class="milestone-category"
+      >
+        <div class="category-header">
+          <span class="category-icon">{{ category.icon }}</span>
+          <span class="category-name">{{ category.name }}</span>
+          <span class="category-count">{{ category.achievedCount }}/{{ category.items.length }}</span>
+        </div>
+        <div class="milestones-grid">
+          <div
+            v-for="m in category.items"
+            :key="m.id"
+            class="milestone-item"
+            :class="[`tier-${m.tier}`, { achieved: m.achieved, locked: !m.achieved && !m.isNext }]"
+          >
+            <span class="milestone-icon">{{ m.achieved ? m.icon : (m.isNext ? '🎯' : '🔒') }}</span>
+            <span class="milestone-label">{{ m.label }}</span>
+            <span v-if="m.achieved" class="milestone-tier-badge">{{ tierLabels[m.tier] }}</span>
+            <div v-if="!m.achieved" class="mini-progress">
+              <div class="fill" :style="{ width: `${m.progress}%` }" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button
+        v-if="!showAll && hasHidden"
+        class="show-all-btn"
+        @click="showAll = true"
+      >
+        {{ showAllText }}
+      </button>
+
+      <!-- ====== 3. 特殊成就 ====== -->
       <div
         v-if="unlockedAchievements.length > 0"
         class="achievements-section"
@@ -84,21 +118,12 @@
         </div>
 
         <!-- 未获得成就 -->
-        <div
-          v-if="lockedAchievements.length > 0"
-          class="locked-section"
-        >
-          <button
-            class="locked-toggle"
-            @click="showLocked = !showLocked"
-          >
+        <div v-if="lockedAchievements.length > 0" class="locked-section">
+          <button class="locked-toggle" @click="showLocked = !showLocked">
             <span>🔒 未获得 ({{ lockedAchievements.length }})</span>
             <span class="toggle-arrow">{{ showLocked ? '▲' : '▼' }}</span>
           </button>
-          <div
-            v-if="showLocked"
-            class="achievements-grid locked-grid"
-          >
+          <div v-if="showLocked" class="achievements-grid locked-grid">
             <div
               v-for="ach in lockedAchievements"
               :key="ach.id"
@@ -112,76 +137,6 @@
           </div>
         </div>
       </div>
-
-      <!-- 下一目标聚焦卡 -->
-      <div
-        v-if="nextMilestone"
-        class="next-goal-card"
-      >
-        <div class="next-goal-top">
-          <span class="next-goal-icon">{{ nextMilestone.icon }}</span>
-          <div class="next-goal-info">
-            <span class="next-goal-label">{{ nextGoalLabel }}</span>
-            <span class="next-goal-target">{{ nextMilestone.label }}</span>
-          </div>
-          <span class="next-goal-percent">{{ nextMilestone.progress.toFixed(0) }}%</span>
-        </div>
-        <div class="next-goal-progress">
-          <div
-            class="next-goal-fill"
-            :style="{ width: `${nextMilestone.progress}%` }"
-          ></div>
-        </div>
-        <span class="next-goal-encourage">{{ encourageText }}</span>
-      </div>
-
-      <!-- 分类展示 -->
-      <div
-        v-for="category in visibleCategories"
-        :key="category.id"
-        class="milestone-category"
-      >
-        <div class="category-header">
-          <span class="category-icon">{{ category.icon }}</span>
-          <span class="category-name">{{ category.name }}</span>
-          <span class="category-count">{{ category.achievedCount }}/{{ category.items.length }}</span>
-        </div>
-        <div class="milestones-grid">
-          <div
-            v-for="m in category.items"
-            :key="m.id"
-            class="milestone-item"
-            :class="[`tier-${m.tier}`, {
-              achieved: m.achieved,
-              locked: !m.achieved && !m.isNext,
-            }]"
-          >
-            <span class="milestone-icon">{{ m.achieved ? m.icon : (m.isNext ? '🎯' : '🔒') }}</span>
-            <span class="milestone-label">{{ m.label }}</span>
-            <span
-              v-if="m.achieved"
-              class="milestone-tier-badge"
-            >{{ tierLabels[m.tier] }}</span>
-            <div
-              v-if="!m.achieved"
-              class="mini-progress"
-            >
-              <div
-                class="mini-fill"
-                :style="{ width: `${m.progress}%` }"
-              ></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <button
-        v-if="!showAll && hasHidden"
-        class="show-all-btn"
-        @click="showAll = true"
-      >
-        {{ showAllText }}
-      </button>
     </div>
   </div>
 </template>
@@ -306,6 +261,20 @@ const categories: CategoryDef[] = [
   },
 ]
 
+// ===== 统一统计值（消除 getCurrent 重复） =====
+const statCounts = computed<Record<string, number>>(() => ({
+  notes: props.totalNotes,
+  notebooks: props.notebookCount,
+  words: props.totalWords,
+  code: props.codeBlocks,
+  tags: props.totalTags,
+  backlinks: props.totalBacklinks,
+  assets: props.totalAssets,
+  images: props.totalImages,
+  streak: props.writingStreak,
+  activeDays: props.activeDays,
+}))
+
 // ===== 公式化无限里程碑 =====
 const TYPE_META: Record<string, { icon: string, labelFn: (v: number) => string }> = {
   notes: {
@@ -380,21 +349,9 @@ function generateMilestones(type: string, current: number, extra = 20): Mileston
 }
 
 const allMilestones = computed((): MilestoneDef[] => {
-  const counts: Record<string, number> = {
-    notes: props.totalNotes,
-    notebooks: props.notebookCount,
-    words: props.totalWords,
-    code: props.codeBlocks,
-    tags: props.totalTags,
-    backlinks: props.totalBacklinks,
-    assets: props.totalAssets,
-    images: props.totalImages,
-    streak: props.writingStreak,
-    activeDays: props.activeDays,
-  }
   const result: MilestoneDef[] = []
   for (const type of Object.keys(TYPE_META)) {
-    result.push(...generateMilestones(type, counts[type] ?? 0))
+    result.push(...generateMilestones(type, statCounts.value[type] ?? 0))
   }
   return result
 })
@@ -552,25 +509,9 @@ interface AchievementDef {
   check: () => boolean
 }
 
-function getCurrent(type: string): number {
-  const map: Record<string, number> = {
-    notes: props.totalNotes,
-    words: props.totalWords,
-    tags: props.totalTags,
-    backlinks: props.totalBacklinks,
-    notebooks: props.notebookCount,
-    code: props.codeBlocks,
-    streak: props.writingStreak,
-    activeDays: props.activeDays,
-    assets: props.totalAssets,
-    images: props.totalImages,
-  }
-  return map[type] ?? 0
-}
-
 const milestonesWithState = computed(() => {
   return allMilestones.value.map((m) => {
-    const current = getCurrent(m.type)
+    const current = statCounts.value[m.type] ?? 0
     const achieved = current >= m.target
     const progress = achieved ? 100 : Math.min((current / m.target) * 100, 100)
     return {
@@ -595,17 +536,7 @@ const nextMilestone = computed(() => {
   return pending.length > 0 ? pending[0] : null
 })
 
-const nextGoalLabel = computed(() => props.i18n.nextGoal || "下一目标")
-
-const encourageText = computed(() => {
-  if (!nextMilestone.value) return ""
-  const p = nextMilestone.value.progress
-  if (p >= 80) return props.i18n.encourageAlmost || "只差一点点，加油！"
-  if (p >= 50) return props.i18n.encourageHalfway || "已完成过半，继续努力！"
-  return props.i18n.encourageStart || "千里之行，始于足下"
-})
-
-// 分类 + 可见性逻辑
+// ===== 分类 + 可见性逻辑 =====
 const visibleCategories = computed(() => {
   const result: Array<{
     id: string
@@ -657,10 +588,13 @@ const visibleCategories = computed(() => {
   return result
 })
 
-const hasHidden = computed(() => {
-  return milestonesWithState.value.filter((m) => m.achieved).length > 3
-    || allMilestones.value.length > visibleCategories.value.reduce((s, c) => s + c.items.length, 0) + 3
-})
+const visibleItemCount = computed(() =>
+  visibleCategories.value.reduce((s, c) => s + c.items.length, 0),
+)
+
+const hasHidden = computed(() =>
+  visibleItemCount.value < milestonesWithState.value.length,
+)
 
 const showAllText = computed(() =>
   (props.i18n.showAllMilestones || "显示全部 {count} 个里程碑")
@@ -1131,7 +1065,7 @@ const achievementDefs = computed<AchievementDef[]>(() => [
     tier: "epic",
     check: () => {
       const commonMilestones = allMilestones.value.filter((m) => m.tier === "common")
-      return commonMilestones.every((m) => getCurrent(m.type) >= m.target)
+      return commonMilestones.every((m) => (statCounts.value[m.type] ?? 0) >= m.target)
     },
   },
   {
@@ -1150,7 +1084,7 @@ const achievementDefs = computed<AchievementDef[]>(() => [
     tier: "legendary",
     check: () => {
       const rareMilestones = allMilestones.value.filter((m) => m.tier === "rare")
-      return rareMilestones.every((m) => getCurrent(m.type) >= m.target)
+      return rareMilestones.every((m) => (statCounts.value[m.type] ?? 0) >= m.target)
     },
   },
   {
@@ -1178,6 +1112,7 @@ const lockedAchievements = computed(() =>
 
 .milestones-card {
   @include stats.stats-card-base;
+  overflow: visible;
 
   .card-header {
     display: flex;
@@ -1199,87 +1134,63 @@ const lockedAchievements = computed(() =>
     .header-badge {
       margin-left: auto;
       font-family: stats.$font-mono;
-      font-size: 9px;
+      font-size: 11px;
       font-weight: 600;
       color: var(--b3-theme-primary);
       opacity: 0.6;
     }
   }
 
-  .card-body { padding: 10px 12px; }
+  .card-body {
+    padding: 10px 12px;
+    overflow-y: auto;
+  }
 }
 
-// ===== 下一目标聚焦卡 =====
-.next-goal-card {
-  padding: 10px 12px;
-  margin-bottom: 10px;
-  border-radius: 4px;
-  background: linear-gradient(135deg, rgba(var(--b3-theme-primary-rgb), 0.06) 0%, rgba(var(--b3-theme-primary-rgb), 0.02) 100%);
-  border: 1px solid rgba(var(--b3-theme-primary-rgb), 0.15);
-}
-
-.next-goal-top {
+// ===== 下一目标（内联，合并到等级区域） =====
+.next-goal-inline {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  padding: 6px 8px;
   margin-bottom: 8px;
-}
-
-.next-goal-icon {
-  font-size: 20px;
-}
-
-.next-goal-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.next-goal-label {
-  font-family: stats.$font-mono;
-  font-size: 9px;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.5;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.next-goal-target {
-  font-family: stats.$font-mono;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--b3-theme-primary);
-}
-
-.next-goal-percent {
-  font-size: 18px;
-  font-weight: 700;
-  font-family: stats.$font-mono;
-  color: var(--b3-theme-primary);
-  opacity: 0.8;
-}
-
-.next-goal-progress {
-  height: 4px;
-  background: rgba(var(--b3-theme-primary-rgb), 0.1);
   border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 6px;
-}
+  background: rgba(var(--b3-theme-primary-rgb), 0.05);
+  border: 1px dashed rgba(var(--b3-theme-primary-rgb), 0.2);
 
-.next-goal-fill {
-  height: 100%;
-  background: var(--b3-theme-primary);
-  border-radius: 4px;
-  transition: width 0.6s ease;
-}
+  .next-goal-icon {
+    font-size: 14px;
+    flex-shrink: 0;
+  }
 
-.next-goal-encourage {
-  font-size: 9px;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.45;
-  font-style: italic;
+  .next-goal-target {
+    flex: 1;
+    font-family: stats.$font-mono;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--b3-theme-primary);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .next-goal-progress {
+    @include stats.progress-bar(6px);
+    width: 60px;
+    flex-shrink: 0;
+  }
+
+  .next-goal-percent {
+    font-family: stats.$font-mono;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--b3-theme-primary);
+    opacity: 0.8;
+    width: 36px;
+    text-align: right;
+    flex-shrink: 0;
+  }
 }
 
 // ===== 等级系统 =====
@@ -1318,7 +1229,7 @@ const lockedAchievements = computed(() =>
 
 .level-points {
   font-family: stats.$font-mono;
-  font-size: 9px;
+  font-size: 11px;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
 }
@@ -1341,18 +1252,8 @@ const lockedAchievements = computed(() =>
 }
 
 .level-progress-bar {
+  @include stats.progress-bar(3px);
   flex: 1;
-  height: 3px;
-  background: rgba(var(--b3-theme-primary-rgb), 0.1);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.level-progress-fill {
-  height: 100%;
-  background: var(--b3-theme-primary);
-  border-radius: 4px;
-  transition: width 0.6s ease;
 }
 
 .level-progress-label {
@@ -1388,7 +1289,7 @@ const lockedAchievements = computed(() =>
   .achievements-count {
     margin-left: auto;
     font-family: stats.$font-mono;
-    font-size: 9px;
+    font-size: 11px;
     color: var(--b3-theme-primary);
     opacity: 0.5;
   }
@@ -1464,25 +1365,7 @@ const lockedAchievements = computed(() =>
     pointer-events: none;
   }
 
-  &.tier-common .ach-tier-badge {
-    background: rgba(stats.$color-success, 0.2);
-    color: stats.$color-success;
-  }
-
-  &.tier-rare .ach-tier-badge {
-    background: rgba(var(--b3-theme-primary-rgb), 0.2);
-    color: var(--b3-theme-primary);
-  }
-
-  &.tier-epic .ach-tier-badge {
-    background: rgba(168, 85, 247, 0.2);
-    color: stats.$color-tier-epic;
-  }
-
-  &.tier-legendary .ach-tier-badge {
-    background: rgba(234, 179, 8, 0.25);
-    color: stats.$color-tier-legendary;
-  }
+  @include stats.tier-badge-colors(' .ach-tier-badge');
 
   &.locked {
     opacity: 0.4;
@@ -1506,10 +1389,7 @@ const lockedAchievements = computed(() =>
   border-radius: 4px;
   background: transparent;
   color: var(--b3-theme-on-surface);
-  font-size: 9px;
-  opacity: 0.5;
-  cursor: pointer;
-  text-align: left;
+  font-size: 11px;
 
   &:hover {
     opacity: 0.8;
@@ -1556,15 +1436,15 @@ const lockedAchievements = computed(() =>
   .category-count {
     margin-left: auto;
     font-family: stats.$font-mono;
-    font-size: 9px;
+    font-size: 11px;
     color: var(--b3-theme-primary);
     opacity: 0.5;
   }
 }
 
 .milestones-grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
   gap: 5px;
 }
 
@@ -1639,39 +1519,12 @@ const lockedAchievements = computed(() =>
     pointer-events: none;
   }
 
-  &.tier-common .milestone-tier-badge {
-    background: rgba(stats.$color-success, 0.2);
-    color: stats.$color-success;
-  }
-
-  &.tier-rare .milestone-tier-badge {
-    background: rgba(var(--b3-theme-primary-rgb), 0.2);
-    color: var(--b3-theme-primary);
-  }
-
-  &.tier-epic .milestone-tier-badge {
-    background: rgba(168, 85, 247, 0.2);
-    color: stats.$color-tier-epic;
-  }
-
-  &.tier-legendary .milestone-tier-badge {
-    background: rgba(234, 179, 8, 0.25);
-    color: stats.$color-tier-legendary;
-  }
+  @include stats.tier-badge-colors(' .milestone-tier-badge');
 
   .mini-progress {
+    @include stats.progress-bar(2px);
     width: 100%;
-    height: 2px;
-    background: rgba(var(--b3-theme-primary-rgb), 0.1);
-    border-radius: 1px;
     margin-top: 3px;
-    overflow: hidden;
-
-    .mini-fill {
-      height: 100%;
-      background: var(--b3-theme-primary);
-      border-radius: 1px;
-    }
   }
 }
 

@@ -53,6 +53,7 @@ export interface PluginSettings {
   enableThemeColor: boolean // 是否启用全局主题色功能
   enableBookmarkMarker: boolean // 是否启用手动书签标记功能
   enableApiDebugger: boolean // 是否启用API调试器功能
+  enableArticleCover: boolean // 是否启用文章封面生成器功能
   enableWebsiteNavigation: boolean // 是否启用网站导航功能
   enableScriptLauncher: boolean // 是否启用脚本启动器功能
   enableDataSnapshot: boolean // 是否启用数据快照功能
@@ -114,6 +115,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enableResourceManager: true,
   enableThemeColor: false,
   enableBookmarkMarker: true,
+  enableArticleCover: true,
   enableApiDebugger: true,
   enableWebsiteNavigation: true,
   enableScriptLauncher: true,

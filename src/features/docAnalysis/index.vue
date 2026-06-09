@@ -38,7 +38,7 @@
       :notebooks="notebooks"
       :is-querying="queryState.status === 'loading'"
       @query="handleQuery"
-      @update:options="handleOptionsUpdate"
+      @optionsUpdate="handleOptionsUpdate"
       @reset="handleReset"
     />
 
@@ -57,10 +57,10 @@
         :bookmark-detail-visible="bookmarkDetailVisible"
         :bookmark-detail-loading="bookmarkDetailLoading"
         :collapsible="false"
-        @select-category="handleSelectCategory"
-        @batch-publish="handleBatchPublish"
-        @show-bookmark-details="fetchBookmarkDetails"
-        @select-bookmark="queryByBookmark"
+        @selectCategory="handleSelectCategory"
+        @batchPublish="handleBatchPublish"
+        @showBookmarkDetails="fetchBookmarkDetails"
+        @selectBookmark="queryByBookmark"
       />
     </div>
 
@@ -334,6 +334,7 @@ import PublishPanel from "./components/PublishPanel.vue"
 import StatsOverview from "./components/StatsOverview.vue"
 import { useDocAnalysis } from "./composables/useDocAnalysis"
 import { getCategoryLabel } from "./types/index"
+import { DEFAULT_FILTER_OPTIONS } from "./types/storage"
 
 interface Props {
   i18n: Record<string, Record<string, string>>

@@ -124,6 +124,12 @@ export const FEATURE_ICONS = {
     color: "#0ea5e9",
   },
 
+  // 文档分析
+  docAnalysis: {
+    icon: "mdi:file-search-outline",
+    color: "#0ea5e9",
+  },
+
   // 谐音翻译
   pronunciation: {
     icon: "mdi:volume-high",

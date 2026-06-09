@@ -25,83 +25,6 @@
       </button>
     </div>
     <div class="header-actions">
-      <!-- 模型选择器（仅在生成器模式显示） -->
-      <template v-if="activeMode === 'generator'">
-        <!-- 自定义模型输入 -->
-        <input
-          v-if="selectedModel === 'custom'"
-          class="model-custom-input"
-          :value="customModel"
-          placeholder="输入模型名..."
-          @input="$emit('update:custom-model', ($event.target as HTMLInputElement).value)"
-        />
-        <!-- 模型选择下拉 -->
-        <select
-          v-else
-          class="model-select"
-          :value="selectedModel"
-          @change="$emit('update:selected-model', ($event.target as HTMLSelectElement).value)"
-        >
-          <option value="">
-            默认模型
-          </option>
-          <optgroup
-            v-if="availableModels.common.length > 0"
-            label="常用"
-          >
-            <option
-              v-for="m in availableModels.common"
-              :key="m.value"
-              :value="m.value"
-            >
-              {{ m.label }}
-            </option>
-          </optgroup>
-          <optgroup
-            v-if="availableModels.all.length > 0"
-            label="全部"
-          >
-            <option
-              v-for="m in availableModels.all"
-              :key="m.value"
-              :value="m.value"
-            >
-              {{ m.label }}
-            </option>
-          </optgroup>
-          <option value="custom">
-            自定义...
-          </option>
-        </select>
-        <!-- 思考模式开关（仅 DeepSeek 思考模型显示） -->
-        <label
-          v-if="supportsThinking"
-          class="thinking-toggle"
-          title="思考模式"
-        >
-          <input
-            type="checkbox"
-            :checked="enableThinking"
-            @change="$emit('update:enable-thinking', ($event.target as HTMLInputElement).checked)"
-          />
-          <span class="thinking-label">思考</span>
-        </label>
-        <!-- 审核开关 -->
-        <label
-          class="review-toggle"
-          title="生成后使用 V4 Pro 交叉审核"
-        >
-          <input
-            type="checkbox"
-            :checked="enableReview"
-            @change="$emit('update:enable-review', ($event.target as HTMLInputElement).checked)"
-          />
-          <span class="review-label">
-            <svg width="11" height="11"><use xlink:href="#iconCheck" /></svg>
-            审核
-          </span>
-        </label>
-      </template>
       <!-- 设置按钮（仅在生成器模式显示） -->
       <Button
         v-if="activeMode === 'generator'"
@@ -122,7 +45,6 @@
 </template>
 
 <script setup lang="ts">
-import type { ProviderModels } from "../types/models"
 import Button from "@/components/Button.vue"
 
 interface Props {
@@ -130,36 +52,17 @@ interface Props {
   activeMode: "generator" | "automation"
   generatorTitle?: string
   automationTitle?: string
-  selectedModel?: string
-  customModel?: string
-  enableThinking?: boolean
-  enableReview?: boolean
-  availableModels?: ProviderModels
-  supportsThinking?: boolean
 }
 
 withDefaults(defineProps<Props>(), {
   title: "信息生成",
   generatorTitle: "生成器",
   automationTitle: "自动化",
-  selectedModel: "",
-  customModel: "",
-  enableThinking: false,
-  enableReview: false,
-  availableModels: () => ({
-    common: [],
-    all: [],
-  }),
-  supportsThinking: false,
 })
 
 defineEmits<{
   (e: "toggle-settings"): void
   (e: "update:activeMode", mode: "generator" | "automation"): void
-  (e: "update:selected-model", value: string): void
-  (e: "update:custom-model", value: string): void
-  (e: "update:enable-thinking", value: boolean): void
-  (e: "update:enable-review", value: boolean): void
 }>()
 </script>
 
@@ -210,133 +113,4 @@ defineEmits<{
   }
 }
 
-// ============ 模型选择器 ============
-.model-select {
-  padding: 2px 6px;
-  font-size: 10px;
-  color: var(--b3-theme-on-background);
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 4px;
-  cursor: pointer;
-  max-width: 120px;
-  outline: none;
-
-  &:hover {
-    border-color: var(--b3-theme-primary);
-  }
-
-  &:focus {
-    border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
-  }
-}
-
-.model-custom-input {
-  padding: 2px 6px;
-  font-size: 10px;
-  color: var(--b3-theme-on-background);
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 4px;
-  outline: none;
-  max-width: 100px;
-
-  &:hover {
-    border-color: var(--b3-theme-primary);
-  }
-
-  &:focus {
-    border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
-  }
-
-  &::placeholder {
-    color: var(--b3-theme-on-surface);
-    opacity: 0.4;
-  }
-}
-
-// ============ 思考模式开关 ============
-.thinking-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 1px 5px;
-  font-size: 10px;
-  color: var(--b3-theme-on-surface);
-  border-radius: 4px;
-  cursor: pointer;
-  user-select: none;
-  white-space: nowrap;
-
-  input[type="checkbox"] {
-    width: 12px;
-    height: 12px;
-    cursor: pointer;
-    accent-color: var(--b3-theme-primary);
-  }
-
-  &:hover {
-    background: var(--b3-theme-surface);
-  }
-
-  &.active .thinking-label {
-    color: var(--b3-theme-primary);
-  }
-}
-
-.thinking-label {
-  color: var(--b3-theme-on-surface);
-  opacity: 0.7;
-}
-
-.thinking-toggle input:checked + .thinking-label {
-  color: var(--b3-theme-primary);
-  opacity: 1;
-  font-weight: 500;
-}
-
-// ============ 审核开关 ============
-.review-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 1px 5px;
-  font-size: 10px;
-  color: var(--b3-theme-on-surface);
-  border-radius: 4px;
-  cursor: pointer;
-  user-select: none;
-  white-space: nowrap;
-
-  input[type="checkbox"] {
-    width: 12px;
-    height: 12px;
-    cursor: pointer;
-    accent-color: var(--b3-theme-success);
-  }
-
-  &:hover {
-    background: var(--b3-theme-surface);
-  }
-}
-
-.review-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.7;
-
-  svg {
-    color: var(--b3-theme-success);
-  }
-}
-
-.review-toggle input:checked + .review-label {
-  color: var(--b3-theme-success);
-  opacity: 1;
-  font-weight: 500;
-}
 </style>

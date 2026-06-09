@@ -100,6 +100,7 @@ import { emitCustomEvent } from "@/utils/eventBus"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { showPasswordVault } from "../passwordVault/types"
 import { showSkillsViewer } from "../skillsViewer/types"
+import { showArticleCover } from "../articleCover/types"
 import { showWebsiteNavigation } from "../websiteNavigation/types"
 import FeatureDrawer from "./components/FeatureDrawer.vue"
 import MonitorItem from "./components/MonitorItem.vue"
@@ -180,6 +181,13 @@ const featureDrawerItems: FeatureDrawerItem[] = [
     pinnable: true,
   },
   {
+    id: "articleCover",
+    icon: "mdi:image-text",
+    color: "#f59e0b",
+    title: "文章封面",
+    pinnable: false,
+  },
+  {
     id: "dataBackup",
     icon: "mdi:backup-restore",
     color: "#10b981",
@@ -238,6 +246,13 @@ const SHORTCUT_DISPLAY: Record<string, ShortcutDisplay> = {
     title: "网站导航",
     itemClass: "action-item website-navigation-item",
     handler: () => showWebsiteNavigation(props.plugin),
+  },
+  articleCover: {
+    id: "articleCover",
+    icon: "ph:image-square",
+    title: "文章封面",
+    itemClass: "action-item article-cover-item",
+    handler: () => showArticleCover(),
   },
   dataBackup: {
     id: "dataBackup",

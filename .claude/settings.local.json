@@ -121,7 +121,8 @@
       "Bash(pnpm vue-tsc *)",
       "Bash(cat tsconfig.json)",
       "Bash(cat tsconfig.app.json)",
-      "Bash(git stash *)"
+      "Bash(git stash *)",
+      "Bash(pnpm validate:icons)"
     ],
     "deny": [],
     "ask": []

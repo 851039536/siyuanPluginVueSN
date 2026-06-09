@@ -1546,6 +1546,8 @@
   },
   "enableScriptLauncher": "启用脚本启动器",
   "enableScriptLauncherDesc": "管理并运行自定义脚本，支持 Python、Bash、PowerShell、Node.js、Batch",
+  "enableArticleCover": "启用文章封面生成器",
+  "enableArticleCoverDesc": "AI 文章封面生成器，支持多种风格和尺寸",
   "enableDataSnapshot": "启用数据快照功能",
   "enableDataSnapshotDesc": "创建、比较、查看和上传数据快照，支持本地历史管理与云端同步",
   "dataSnapshot": {

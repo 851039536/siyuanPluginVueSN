@@ -1473,6 +1473,8 @@
   },
   "enableScriptLauncher": "Enable Script Launcher",
   "enableScriptLauncherDesc": "Manage and run custom scripts, supports Python, Bash, PowerShell, Node.js, Batch",
+  "enableArticleCover": "Enable Article Cover",
+  "enableArticleCoverDesc": "AI article cover generator with multiple styles and sizes",
   "enableDataSnapshot": "Enable Data Snapshot",
   "enableDataSnapshotDesc": "Create, compare, view, and upload data snapshots with local history and cloud sync",
   "dataSnapshot": {

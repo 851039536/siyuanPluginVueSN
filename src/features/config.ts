@@ -276,6 +276,11 @@ export const FEATURE_CONFIG = [
     defaultDesc: "快速启动和管理自定义脚本，支持多种语言分类",
   },
   {
+    id: "articleCover",
+    defaultTitle: "文章封面",
+    defaultDesc: "AI 文章封面生成器，支持多种风格和尺寸的封面图片",
+  },
+  {
     id: "dataSnapshot",
     defaultTitle: "数据快照",
     defaultDesc: "创建、比较、查看和上传数据快照",

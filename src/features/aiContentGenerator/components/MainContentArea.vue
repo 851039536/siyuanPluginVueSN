@@ -483,7 +483,7 @@ watch(isGenerating, (newVal, oldVal) => {
 </script>
 
 <style scoped lang="scss">
-@use "../styles/index.scss";
+@use "../styles/index.scss" as *;
 
 .loading-wrapper {
   position: relative;
@@ -492,60 +492,23 @@ watch(isGenerating, (newVal, oldVal) => {
 
 // ============ 思考过程 ============
 .reasoning-section {
-  margin: 0 14px;
-  border-radius: 6px;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  background: var(--b3-theme-surface);
-  overflow: hidden;
+  @include collapsible-section;
 }
 
 .reasoning-toggle {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  width: 100%;
-  padding: 6px 10px;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--b3-theme-on-surface);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  user-select: none;
-
-  svg {
-    color: var(--b3-theme-primary);
-    flex-shrink: 0;
-  }
-
-  &:hover {
-    background: var(--b3-theme-surface-light);
-  }
+  @include collapsible-toggle;
 }
 
 .reasoning-chevron {
-  transition: transform 0.2s;
-
-  &.expanded {
-    transform: rotate(90deg);
-  }
+  @include collapsible-chevron;
 }
 
 .reasoning-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--b3-theme-primary);
-  animation: reasoning-blink 1s ease-in-out infinite;
-}
-
-@keyframes reasoning-blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+  @include collapsible-status-dot;
 }
 
 .reasoning-content {
-  padding: 8px 10px 10px;
+  @include collapsible-body;
   font-size: 11px;
   color: var(--b3-theme-on-surface);
   opacity: 0.7;
@@ -554,21 +517,14 @@ watch(isGenerating, (newVal, oldVal) => {
   word-break: break-word;
   max-height: 200px;
   overflow-y: auto;
-  border-top: 1px solid var(--b3-theme-surface-lighter);
-  margin: 0 10px 8px;
 }
 
 // ============ 耗时徽章 ============
 .elapsed-badge {
+  @include codex-meta-label;
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.45;
   font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   font-variant-numeric: tabular-nums;
 
@@ -580,43 +536,15 @@ watch(isGenerating, (newVal, oldVal) => {
 
 // ============ RAG 搜索来源 ============
 .search-results-section {
-  margin: 0 14px;
-  border-radius: 6px;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  background: var(--b3-theme-surface);
-  overflow: hidden;
+  @include collapsible-section;
 }
 
 .search-results-toggle {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  width: 100%;
-  padding: 6px 10px;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--b3-theme-on-surface);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  user-select: none;
-
-  svg {
-    color: var(--b3-theme-primary);
-    flex-shrink: 0;
-  }
-
-  &:hover {
-    background: var(--b3-theme-surface-light);
-  }
+  @include collapsible-toggle;
 }
 
 .search-chevron {
-  transition: transform 0.2s;
-
-  &.expanded {
-    transform: rotate(90deg);
-  }
+  @include collapsible-chevron;
 }
 
 .search-status-text {
@@ -627,14 +555,13 @@ watch(isGenerating, (newVal, oldVal) => {
 }
 
 .search-results-body {
-  padding: 6px 10px 10px;
+  @include collapsible-body;
+  padding-top: 6px;
   display: flex;
   flex-direction: column;
   gap: 6px;
   max-height: 220px;
   overflow-y: auto;
-  border-top: 1px solid var(--b3-theme-surface-lighter);
-  margin: 0 10px 8px;
 }
 
 .search-result-item {
@@ -686,51 +613,19 @@ watch(isGenerating, (newVal, oldVal) => {
 
 // ============ 审核结果 ============
 .review-section {
-  margin: 0 14px;
-  border-radius: 6px;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  background: var(--b3-theme-surface);
-  overflow: hidden;
+  @include collapsible-section;
 }
 
 .review-toggle-btn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  width: 100%;
-  padding: 6px 10px;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--b3-theme-on-surface);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  user-select: none;
-
-  svg {
-    color: var(--b3-theme-success);
-    flex-shrink: 0;
-  }
-
-  &:hover {
-    background: var(--b3-theme-surface-light);
-  }
+  @include collapsible-toggle(var(--b3-theme-success));
 }
 
 .review-chevron {
-  transition: transform 0.2s;
-
-  &.expanded {
-    transform: rotate(90deg);
-  }
+  @include collapsible-chevron;
 }
 
 .review-loading-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--b3-theme-success);
-  animation: reasoning-blink 1s ease-in-out infinite;
+  @include collapsible-status-dot(var(--b3-theme-success));
   margin-left: auto;
 }
 
@@ -758,9 +653,7 @@ watch(isGenerating, (newVal, oldVal) => {
 }
 
 .review-body {
-  padding: 8px 10px 10px;
-  border-top: 1px solid var(--b3-theme-surface-lighter);
-  margin: 0 10px 8px;
+  @include collapsible-body;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -782,12 +675,7 @@ watch(isGenerating, (newVal, oldVal) => {
 }
 
 .review-section-title {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.45;
+  @include codex-meta-label;
   margin-bottom: 4px;
 }
 
@@ -857,10 +745,8 @@ watch(isGenerating, (newVal, oldVal) => {
 }
 
 .review-model {
+  @include codex-meta-label;
   font-size: 9px;
-  font-weight: 500;
   font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.4;
 }
 </style>

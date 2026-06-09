@@ -23,6 +23,7 @@ import AIContentGeneratorPanel from "../index.vue"
 /**
  * 从任意文本中提取 JSON 对象。
  * 支持模型返回 `{...}` 纯 JSON、markdown 代码块、或带前缀的文本。
+ * 若 JSON 被截断（如 token 耗尽），尝试修复未闭合的字符串和括号。
  */
 function extractJsonFromText(text: string): string | null {
   // 1. 尝试提取 markdown 代码块中的 JSON
@@ -51,6 +52,23 @@ function extractJsonFromText(text: string): string | null {
     if (ch === "}") {
       depth--
       if (depth === 0) return trimmed.slice(firstBrace, i + 1)
+    }
+  }
+
+  // 3. JSON 被截断：尝试修复未闭合的结构
+  if (depth > 0) {
+    let partial = trimmed.slice(firstBrace)
+    // 闭合未终止的字符串
+    if (inString) partial += '"'
+    // 移除末尾可能的截断片段（如半个 key/value）
+    partial = partial.replace(/,\s*"[^"]*$/, "")
+    // 闭合所有未闭合的括号
+    for (let d = depth; d > 0; d--) partial += "}"
+    try {
+      JSON.parse(partial)
+      return partial
+    } catch {
+      // 修复失败，放弃
     }
   }
 
@@ -201,7 +219,7 @@ ${generatedContent.slice(0, 3000)}
       const result = await callAI(reviewPrompt, apiConfig, {
         systemPrompt: "你只输出JSON，禁止任何解释或前缀文字。",
         temperature: 0.1,
-        maxTokens: 800,
+        maxTokens: 2000,
         responseFormat: { type: "json_object" },
       })
 

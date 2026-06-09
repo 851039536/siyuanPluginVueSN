@@ -86,10 +86,6 @@ export interface SavedPrompt {
   systemPrompt: string
   temperature: number
   maxTokens: number
-  /** AI 模型名称 */
-  model?: string
-  /** 启用思考模式 */
-  enableThinking?: boolean
   createdAt: number
 }
 

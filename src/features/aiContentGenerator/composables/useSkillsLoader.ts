@@ -14,8 +14,6 @@ import {
 import { SkillsViewerManager } from "@/features/skillsViewer/modules/SkillsViewerManager"
 
 export function useSkillsLoader(plugin: any) {
-  /** 原始技能列表（去重前） */
-  const rawSkills = ref<SkillItem[]>([])
   /** 去重后的技能列表 */
   const skills = ref<SkillItem[]>([])
   const currentSkillIndex = ref(-1)
@@ -94,7 +92,7 @@ export function useSkillsLoader(plugin: any) {
       } catch { /* 忽略，只扫全局 */ }
 
       const skillInfos = await manager.scanAllSkills(projectPath || undefined)
-      rawSkills.value = skillInfos.map((s: SkillInfo) => ({
+      const rawSkills = skillInfos.map((s: SkillInfo) => ({
         id: s.filePath,
         name: s.name,
         description: s.description,
@@ -108,7 +106,7 @@ export function useSkillsLoader(plugin: any) {
       }))
 
       // 去重
-      skills.value = deduplicateSkills(rawSkills.value)
+      skills.value = deduplicateSkills(rawSkills)
 
       // 首次加载时自动选中第一个技能
       if (skills.value.length > 0 && currentSkillIndex.value < 0) {

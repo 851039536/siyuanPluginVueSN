@@ -5,16 +5,6 @@
       :activeMode="activeMode"
       @update:activeMode="activeMode = $event"
       @toggle-settings="toggleSettings"
-      :selected-model="selectedModel"
-      :custom-model="customModel"
-      :enable-thinking="enableThinking"
-      :available-models="availableModels"
-      :supports-thinking="supportsThinking"
-      :enable-review="enableReview"
-      @update:selected-model="selectedModel = $event"
-      @update:custom-model="customModel = $event"
-      @update:enable-thinking="enableThinking = $event"
-      @update:enable-review="enableReview = $event"
     />
 
     <!-- ====== 生成器模式 ====== -->
@@ -82,6 +72,12 @@
         :filtered-skills="filteredSkills"
         :skill-search-query="skillSearchQuery"
         :web-search="webSearch"
+        :selected-model="selectedModel"
+        :custom-model="customModel"
+        :available-models="availableModels"
+        :supports-thinking="supportsThinking"
+        :enable-thinking="enableThinking"
+        :enable-review="enableReview"
         @ai-edit="aiEditAction"
         @stop="handleStop"
         @toggle-prompt-selector="showPromptSelector = !showPromptSelector"
@@ -97,6 +93,10 @@
         @update:current-skill-index="currentSkillIndex = $event"
         @update:skill-search-query="skillSearchQuery = $event"
         @update:web-search="webSearch = $event"
+        @update:selected-model="selectedModel = $event"
+        @update:custom-model="customModel = $event"
+        @update:enable-thinking="enableThinking = $event"
+        @update:enable-review="enableReview = $event"
       />
     </template>
 

@@ -4,7 +4,7 @@ import type {
 } from "@/types/ai"
 /**
  * 技能加载 Composable
- * 统一 index.vue 和 ChatView.vue 中的 loadSkills 逻辑
+ * 统一 index.vue 中的 loadSkills 逻辑
  * 支持同名技能去重（合并来源提示）和搜索过滤
  */
 import {

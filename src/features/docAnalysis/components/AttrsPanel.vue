@@ -407,6 +407,8 @@ async function copyAllAttrs() {
 </script>
 
 <style lang="scss" scoped>
+@use "../styles/codex-tokens" as *;
+
 .attrs-panel-overlay {
   position: fixed;
   inset: 0;
@@ -422,8 +424,8 @@ async function copyAllAttrs() {
   max-width: 90vw;
   max-height: 80vh;
   background: var(--b3-theme-background);
-  border-radius: 8px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+  border-radius: $da-radius;
+  border: 1px solid var(--b3-border-color);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -470,8 +472,8 @@ async function copyAllAttrs() {
     justify-content: center;
     width: 28px;
     height: 28px;
-    border: none;
-    border-radius: 6px;
+    border: 1px solid var(--b3-border-color);
+    border-radius: $da-radius;
     background: transparent;
     color: var(--b3-theme-on-surface-variant);
     cursor: pointer;
@@ -479,8 +481,8 @@ async function copyAllAttrs() {
     flex-shrink: 0;
 
     &:hover {
-      background: var(--b3-theme-surface-light);
-      color: var(--b3-theme-on-background);
+      border-color: var(--b3-theme-primary);
+      color: var(--b3-theme-primary);
     }
   }
 }
@@ -530,9 +532,11 @@ async function copyAllAttrs() {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--b3-theme-on-background);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.45;
     margin-bottom: 10px;
   }
 
@@ -572,10 +576,10 @@ async function copyAllAttrs() {
 
         &:hover {
           background: rgba(34, 197, 94, 0.15);
-          color: #16a34a;
+          color: var(--b3-theme-success, #16a34a);
 
           .status-icon {
-            color: #22c55e;
+            color: var(--b3-theme-success, #22c55e);
           }
         }
       }
@@ -587,10 +591,10 @@ async function copyAllAttrs() {
 
       &.published {
         background: rgba(34, 197, 94, 0.1);
-        color: #16a34a;
+        color: var(--b3-theme-success, #16a34a);
 
         .status-icon {
-          color: #22c55e;
+          color: var(--b3-theme-success, #22c55e);
         }
       }
     }
@@ -614,9 +618,11 @@ async function copyAllAttrs() {
     width: 160px;
     flex-shrink: 0;
     padding: 10px 16px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--b3-theme-on-surface-variant);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.45;
     background: var(--b3-theme-surface, rgba(0, 0, 0, 0.02));
     word-break: break-all;
   }
@@ -674,7 +680,7 @@ async function copyAllAttrs() {
     border-radius: 6px;
     font-size: 12px;
     line-height: 1.6;
-    font-family: "Cascadia Code", "Fira Code", "Consolas", monospace;
+    font-family: $da-mono;
     white-space: pre-wrap;
     word-break: break-all;
     overflow-x: auto;
@@ -708,7 +714,7 @@ async function copyAllAttrs() {
     gap: 4px;
     padding: 6px 14px;
     border: 1px solid var(--b3-border-color);
-    border-radius: 6px;
+    border-radius: $da-radius;
     background: var(--b3-theme-background);
     color: var(--b3-theme-on-background);
     font-size: 13px;

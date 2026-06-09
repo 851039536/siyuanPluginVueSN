@@ -695,6 +695,8 @@ function getBarPercent(count: number): string {
 </script>
 
 <style lang="scss" scoped>
+@use "../styles/codex-tokens" as *;
+
 .stats-overview {
   padding: 8px 12px;
 }
@@ -735,8 +737,8 @@ function getBarPercent(count: number): string {
     align-items: center;
     gap: 3px;
     padding: 3px 10px;
-    border: none;
-    border-radius: 5px;
+    border: 1px solid var(--b3-theme-primary);
+    border-radius: $da-radius;
     background: var(--b3-theme-primary);
     color: var(--b3-theme-on-primary);
     font-size: 12px;
@@ -771,8 +773,9 @@ function getBarPercent(count: number): string {
   flex-direction: column;
   align-items: center;
   padding: 6px 3px;
-  border-radius: 8px;
-  background: var(--b3-theme-surface);
+  border-radius: $da-radius;
+  border: 1px solid var(--b3-border-color);
+  background: transparent;
 
   .summary-value {
     font-size: 18px;
@@ -788,8 +791,8 @@ function getBarPercent(count: number): string {
   }
 
   &.warn .summary-value { color: var(--b3-theme-error, #ef4444); }
-  &.accent .summary-value { color: #a855f7; }
-  &.pending .summary-value { color: #f59e0b; }
+  &.accent .summary-value { color: var(--b3-theme-info, #a855f7); }
+  &.pending .summary-value { color: var(--b3-theme-warning, #f59e0b); }
 }
 
 // ============ 工具栏 ============
@@ -838,9 +841,11 @@ function getBarPercent(count: number): string {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--b3-theme-on-background);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.45;
   margin-bottom: 6px;
   cursor: pointer;
   user-select: none;
@@ -879,14 +884,14 @@ function getBarPercent(count: number): string {
   flex-direction: column;
   align-items: center;
   padding: 8px 5px 6px;
-  border-radius: 8px;
-  background: var(--b3-theme-surface-light);
+  border-radius: $da-radius;
+  background: transparent;
   cursor: pointer;
-  border: 2px solid transparent;
+  border: 1px solid var(--b3-border-color);
   overflow: hidden;
 
   &:hover {
-    background: var(--b3-list-hover);
+    border-color: var(--b3-theme-primary);
   }
 
   &.active {
@@ -905,25 +910,25 @@ function getBarPercent(count: number): string {
     &.zero { color: var(--b3-theme-error, #ef4444); }
     &.small { color: var(--b3-theme-warning, #f59e0b); }
     &.medium { color: var(--b3-theme-info, #3b82f6); }
-    &.dup { color: #a855f7; }
-    &.time-green { color: #22c55e; }
-    &.time-yellow { color: #f59e0b; }
-    &.time-red { color: #ef4444; }
-    &.time-cyan { color: #06b6d4; }
-    &.time-orange { color: #f97316; }
-    &.time-purple { color: #a855f7; }
-    &.depth-color { color: #06b6d4; }
-    &.ref-color { color: #8b5cf6; }
-    &.img-color { color: #f97316; }
-    &.bookmark-color { color: #eab308; }
-    &.no-bookmark-color { color: #9ca3af; }
-    &.none-bookmark-color { color: #6b7280; }
-    &.pending-color { color: #f59e0b; }
-    &.published-color { color: #22c55e; }
-    &.unused-color { color: #9ca3af; }
-    &.full-publish-color { color: #22c55e; }
-    &.partial-publish-color { color: #f59e0b; }
-    &.no-publish-color { color: #9ca3af; }
+    &.dup { color: var(--b3-theme-info, #a855f7); }
+    &.time-green { color: var(--b3-theme-success, #22c55e); }
+    &.time-yellow { color: var(--b3-theme-warning, #f59e0b); }
+    &.time-red { color: var(--b3-theme-error, #ef4444); }
+    &.time-cyan { color: var(--b3-theme-info, #06b6d4); }
+    &.time-orange { color: var(--b3-theme-warning, #f97316); }
+    &.time-purple { color: var(--b3-theme-info, #a855f7); }
+    &.depth-color { color: var(--b3-theme-info, #06b6d4); }
+    &.ref-color { color: var(--b3-theme-info, #8b5cf6); }
+    &.img-color { color: var(--b3-theme-warning, #f97316); }
+    &.bookmark-color { color: var(--b3-theme-warning, #eab308); }
+    &.no-bookmark-color { color: var(--b3-theme-on-surface-variant, #9ca3af); }
+    &.none-bookmark-color { color: var(--b3-theme-on-surface-variant, #6b7280); }
+    &.pending-color { color: var(--b3-theme-warning, #f59e0b); }
+    &.published-color { color: var(--b3-theme-success, #22c55e); }
+    &.unused-color { color: var(--b3-theme-on-surface-variant, #9ca3af); }
+    &.full-publish-color { color: var(--b3-theme-success, #22c55e); }
+    &.partial-publish-color { color: var(--b3-theme-warning, #f59e0b); }
+    &.no-publish-color { color: var(--b3-theme-on-surface-variant, #9ca3af); }
   }
 
   .card-unit {
@@ -984,6 +989,7 @@ function getBarPercent(count: number): string {
   width: 18px;
   font-size: 10px;
   font-weight: 600;
+  font-family: $da-mono;
   color: var(--b3-theme-on-surface-variant);
   text-align: right;
   flex-shrink: 0;
@@ -1009,6 +1015,7 @@ function getBarPercent(count: number): string {
 .depth-bar-count {
   width: 24px;
   font-size: 10px;
+  font-family: $da-mono;
   color: var(--b3-theme-on-surface-variant);
   flex-shrink: 0;
 }
@@ -1070,8 +1077,8 @@ function getBarPercent(count: number): string {
   max-width: 92vw;
   max-height: 70vh;
   background: var(--b3-theme-background);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.24);
+  border-radius: $da-radius;
+  border: 1px solid var(--b3-border-color);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1099,15 +1106,16 @@ function getBarPercent(count: number): string {
     justify-content: center;
     width: 28px;
     height: 28px;
-    border: none;
-    border-radius: 6px;
+    border: 1px solid var(--b3-border-color);
+    border-radius: $da-radius;
     background: transparent;
     color: var(--b3-theme-on-surface-variant);
     cursor: pointer;
     font-size: 18px;
 
     &:hover {
-      background: var(--b3-list-hover);
+      border-color: var(--b3-theme-primary);
+      color: var(--b3-theme-primary);
     }
   }
 }
@@ -1161,9 +1169,9 @@ function getBarPercent(count: number): string {
   gap: 10px;
   width: 100%;
   padding: 10px 14px;
-  border: none;
-  border-radius: 8px;
-  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $da-radius;
+  background: transparent;
   color: var(--b3-theme-on-background);
   cursor: pointer;
   text-align: left;
@@ -1188,10 +1196,11 @@ function getBarPercent(count: number): string {
 
   .bd-item-count {
     font-size: 12px;
+    font-family: $da-mono;
     color: var(--b3-theme-on-surface-variant);
     background: var(--b3-theme-surface-light);
     padding: 2px 8px;
-    border-radius: 10px;
+    border-radius: $da-radius;
     white-space: nowrap;
     flex-shrink: 0;
   }

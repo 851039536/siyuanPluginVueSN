@@ -40,6 +40,8 @@ export interface AiCallOptions {
   onSearchResults?: (results: SearchResult[]) => void
   /** 搜索失败回调（错误信息） */
   onSearchError?: (error: string) => void
+  /** 响应格式（仅 OpenAI/DeepSeek 等兼容 API 有效，强制 JSON 模式） */
+  responseFormat?: { type: "json_object" } | { type: "text" }
 }
 
 /** AI 生成选项接口（用于 AIContentGenerator） */

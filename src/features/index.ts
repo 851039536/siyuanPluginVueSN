@@ -3,6 +3,14 @@
 
 import type { FeatureId } from "./config"
 
+export {
+  articleCoverInitialKeywords,
+  articleCoverInitialTitle,
+  articleCoverVisible,
+  hideArticleCover,
+  registerArticleCover,
+  showArticleCover,
+} from "./articleCover"
 export { registerAIContentGenerator } from "./aiContentGenerator"
 export { registerApiDebugger } from "./apiDebugger"
 export { registerBase64Image } from "./base64Image"
@@ -78,6 +86,7 @@ type _ConfigOnly = "qrCode" | "pronunciation" | "skills" | "translate" | "heatma
  * 需要 register 导出的功能列表（必须与本文件 export 行一一对应）
  */
 type _Registered =
+  | "articleCover"
   | "pageLock" | "tableOfContents" | "imageCompressor" | "docNavigation"
   | "shortcuts" | "wordQuery" | "generalSettings" | "unitConverter"
   | "superPanel" | "diskBrowser" | "codeImageGenerator" | "aiContentGenerator"

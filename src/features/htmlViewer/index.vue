@@ -45,7 +45,7 @@
                   icon="image"
                   variant="ghost"
                   size="small"
-                  @click="showCoverGenerator = true"
+                  @click="showArticleCover(coverInitialTitle)"
                 >
                   AI 封面
                 </Button>
@@ -578,12 +578,6 @@
       </div>
     </Transition>
   </Teleport>
-
-  <!-- AI 封面生成器 -->
-  <CoverGenerator
-    v-model:visible="showCoverGenerator"
-    :initial-title="coverInitialTitle"
-  />
 </template>
 
 <script setup lang="ts">
@@ -607,7 +601,7 @@ import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
 import { usePlugin } from "@/main"
-import CoverGenerator from "./components/CoverGenerator.vue"
+import { showArticleCover } from "@/features/articleCover/types"
 import {
   DEFAULT_CATEGORIES,
   HtmlViewerStorage,
@@ -659,7 +653,6 @@ const showSaveModal = ref(false)
 const showSnippetLibrary = ref(false)
 const showEditModal = ref(false)
 const showCategoryManager = ref(false)
-const showCoverGenerator = ref(false)
 
 // 保存表单
 const saveForm = reactive({
@@ -1115,9 +1108,7 @@ function closeDialog() {
 function handleKeyDown(event: KeyboardEvent) {
   if (!props.visible) return
   if (event.key === "Escape") {
-    if (showCoverGenerator.value) {
-      showCoverGenerator.value = false
-    } else if (showCategoryManager.value) {
+    if (showCategoryManager.value) {
       closeCategoryManager()
     } else if (showEditModal.value) {
       closeEditModal()

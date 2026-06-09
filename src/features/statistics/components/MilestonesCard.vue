@@ -194,22 +194,7 @@ interface Props {
   codeBlocks?: number
   writingStreak?: number
   activeDays?: number
-  i18n?: {
-    milestones?: string
-    showAllMilestones?: string
-    nextGoal?: string
-    encourageAlmost?: string
-    encourageHalfway?: string
-    encourageStart?: string
-    tierCommon?: string
-    tierRare?: string
-    tierEpic?: string
-    tierLegendary?: string
-    catWriting?: string
-    catKnowledge?: string
-    catRich?: string
-    catPersistence?: string
-  }
+  i18n?: Record<string, any>
 }
 
 const props = withDefaults(defineProps<Props>(), {

@@ -674,15 +674,35 @@ const newCategory = reactive({
 // JSON 格式化状态
 const isJsonFormatted = ref(false)
 
+const BASE_STYLES = [
+  '<style>',
+  'code,pre,kbd,samp{font-family:"SF Mono",Menlo,Monaco,Consolas,"Courier New",monospace}',
+  'code{background:#f6f8fa;padding:2px 4px;border-radius:3px;font-size:0.9em}',
+  'pre{background:#f6f8fa;padding:16px;border-radius:6px;overflow:auto;line-height:1.5}',
+  'pre code{background:none;padding:0;font-size:inherit}',
+  'table{border-collapse:collapse;width:100%}',
+  'td,th{border:1px solid #dfe2e5;padding:6px 13px}',
+  'th{background:#f6f8fa;font-weight:600}',
+  '</style>',
+].join('')
+
+function wrapWithBaseStyles(content: string): string {
+  if (/<\/body>/i.test(content)) {
+    return content.replace(/<\/body>/i, `${BASE_STYLES}</body>`)
+  }
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>${BASE_STYLES}${content}</body></html>`
+}
+
 // 预览HTML（带JSON格式化支持）
 const previewHtml = computed(() => {
-  if (isJsonFormatted.value && htmlContent.value.trim()) {
-    const result = jsonToHtml(htmlContent.value)
+  let content = htmlContent.value
+  if (isJsonFormatted.value && content.trim()) {
+    const result = jsonToHtml(content)
     if (!result.error) {
-      return result.html
+      content = result.html
     }
   }
-  return htmlContent.value
+  return wrapWithBaseStyles(content)
 })
 
 // JSON格式化内容（公众号浅色背景主题）
@@ -716,6 +736,37 @@ async function copyFormattedJsonHtml() {
     showMessage("格式化JSON HTML已复制，可直接粘贴到公众号", 2000, "info")
   } catch {
     showMessage("复制失败", 2000, "error")
+  }
+}
+
+async function copyRenderedContent() {
+  const iframe = previewFrame.value
+  if (!iframe?.contentDocument?.body) {
+    showMessage("没有可复制的内容", 2000, "info")
+    return
+  }
+
+  const body = iframe.contentDocument.body
+  const html = body.innerHTML
+  const text = body.innerText
+
+  try {
+    const htmlBlob = new Blob([html], { type: 'text/html' })
+    const textBlob = new Blob([text], { type: 'text/plain' })
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        'text/html': htmlBlob,
+        'text/plain': textBlob,
+      }),
+    ])
+    showMessage("已复制渲染内容", 2000, "info")
+  } catch {
+    try {
+      await navigator.clipboard.writeText(text)
+      showMessage("已复制文本内容", 2000, "info")
+    } catch {
+      showMessage("复制失败", 2000, "error")
+    }
   }
 }
 

@@ -257,7 +257,7 @@ interface Props {
   notebooks?: Array<{ id: string, name: string }>
   writingStreak?: number
   activeDays?: number
-  i18n?: Record<string, string>
+  i18n?: Record<string, any>
 }
 
 const props = withDefaults(defineProps<Props>(), {

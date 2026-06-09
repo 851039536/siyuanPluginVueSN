@@ -61,20 +61,7 @@ interface Props {
   avgWordsPerDoc?: number
   createdChange?: number | null
   modifiedChange?: number | null
-  i18n?: {
-    overview?: string
-    totalNotes: string
-    totalWords: string
-    totalBlocks: string
-    totalAssets: string
-    totalImages: string
-    totalTags: string
-    totalBacklinks: string
-    todayCreated: string
-    todayModified: string
-    avgWordsPerDoc: string
-    moreStats?: string
-  }
+  i18n?: Record<string, any>
 }
 
 const props = withDefaults(defineProps<Props>(), {

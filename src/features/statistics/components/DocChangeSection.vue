@@ -208,7 +208,7 @@ interface Props {
   }>
   onGetDateRangeChangeStats?: (startStr: string, endStr: string) => Promise<RangeStatItem[]>
   onGetRecentUpdatedDocs?: (limit: number) => Promise<RecentUpdatedDoc[]>
-  i18n?: Record<string, string>
+  i18n?: Record<string, any>
 }
 
 const props = withDefaults(defineProps<Props>(), {

@@ -248,7 +248,7 @@ import { formatNumber } from "../utils"
 
 interface Props {
   onGetNotebookActivityTrend?: (days: number) => Promise<NotebookActivityItem[]>
-  i18n?: Record<string, string>
+  i18n?: Record<string, any>
 }
 
 const props = withDefaults(defineProps<Props>(), {

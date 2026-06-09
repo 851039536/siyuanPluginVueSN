@@ -65,10 +65,7 @@ interface Props {
   loading?: boolean
   sortBy?: "count" | "name"
   sortOrder?: "asc" | "desc"
-  i18n?: {
-    loading?: string
-    docsUnit?: string
-  }
+  i18n?: Record<string, any>
 }
 
 const props = withDefaults(defineProps<Props>(), {

@@ -144,16 +144,22 @@
             <span class="breakdown-label">{{ item.label }}</span>
             <div class="breakdown-bars-wrap">
               <div class="bar-row">
-                <div
-                  class="bar-fill bar-a"
-                  :style="{ width: barPct(item.aWords, maxBreakVal) }"
-                >{{ item.aWords > 0 ? fmtN(item.aWords) : '' }}</div>
+                <div class="bar-track">
+                  <div
+                    class="bar-fill bar-a"
+                    :style="{ width: barPct(item.aWords, maxBreakVal) }"
+                  ></div>
+                </div>
+                <span class="bar-value">{{ item.aWords > 0 ? fmtN(item.aWords) : '' }}</span>
               </div>
               <div class="bar-row">
-                <div
-                  class="bar-fill bar-b"
-                  :style="{ width: barPct(item.bWords, maxBreakVal) }"
-                >{{ item.bWords > 0 ? fmtN(item.bWords) : '' }}</div>
+                <div class="bar-track">
+                  <div
+                    class="bar-fill bar-b"
+                    :style="{ width: barPct(item.bWords, maxBreakVal) }"
+                  ></div>
+                </div>
+                <span class="bar-value">{{ item.bWords > 0 ? fmtN(item.bWords) : '' }}</span>
               </div>
             </div>
           </div>
@@ -475,21 +481,21 @@ async function compare() {
 .breakdown-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .breakdown-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .breakdown-label {
-  width: 52px;
+  width: 56px;
   flex-shrink: 0;
   text-align: right;
   font-family: stats.$font-mono;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--b3-theme-on-surface-light);
 }
 
@@ -497,28 +503,31 @@ async function compare() {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 3px;
 }
 
 .bar-row {
-  height: 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.bar-track {
+  position: relative;
+  flex: 1;
+  height: 20px;
   background: rgba(var(--b3-theme-on-surface-rgb), 0.04);
-  border-radius: 4px;
+  border-radius: 6px;
   overflow: hidden;
 }
 
 .bar-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
   height: 100%;
-  border-radius: 4px;
-  font-family: stats.$font-mono;
-  font-size: 10px;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  padding-left: 3px;
-  min-width: 3px;
-  font-weight: 500;
-  white-space: nowrap;
+  border-radius: 6px;
+  min-width: 4px;
 
   &.bar-a {
     background: var(--b3-theme-primary);
@@ -528,6 +537,17 @@ async function compare() {
   &.bar-b {
     background: var(--b3-theme-primary);
   }
+}
+
+.bar-value {
+  width: 44px;
+  flex-shrink: 0;
+  font-family: stats.$font-mono;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--b3-theme-on-surface);
+  text-align: right;
+  white-space: nowrap;
 }
 
 .breakdown-legend {

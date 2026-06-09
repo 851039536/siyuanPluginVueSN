@@ -354,19 +354,15 @@ async function generate() {
   border: none;
   background: transparent;
   color: var(--b3-theme-on-surface);
-  opacity: 0;
+  opacity: 0.4;
   cursor: pointer;
   font-size: 14px;
   padding: 2px 6px;
   border-radius: 4px;
-  transition: opacity 0.15s;
-
-  .report-card-header:hover & {
-    opacity: 0.4;
-  }
+  transition: opacity 0.15s, background 0.15s;
 
   &:hover {
-    opacity: 0.8 !important;
+    opacity: 0.8;
     background: var(--b3-list-hover);
   }
 }

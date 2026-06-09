@@ -714,6 +714,8 @@ defineExpose({
 .notebook-distribution-tab,
 .report-tab {
   padding: 12px;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .chart-section {

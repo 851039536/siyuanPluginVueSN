@@ -164,6 +164,13 @@
         </div>
       </div>
     </div>
+
+    <div
+      v-else-if="!loading"
+      class="compare-empty"
+    >
+      选择两个期间并点击"对比"
+    </div>
   </div>
 </template>
 
@@ -346,22 +353,20 @@ async function compare() {
 }
 
 .compare-btn {
-  padding: 4px 14px;
-  border: 1px solid var(--b3-theme-primary);
-  border-radius: 4px;
+  @include stats.small-action-btn;
   background: var(--b3-theme-primary);
   color: var(--b3-theme-on-primary);
-  font-family: stats.$font-mono;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
+  border-color: var(--b3-theme-primary);
 
   &:hover {
     opacity: 0.85;
+    background: var(--b3-theme-primary);
+    border-color: var(--b3-theme-primary);
   }
 }
 
-.compare-loading {
+.compare-loading,
+.compare-empty {
   text-align: center;
   padding: 20px;
   font-size: 12px;
@@ -384,8 +389,21 @@ async function compare() {
 
 .compare-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 12px;
+
+  .col-metric {
+    width: 25%;
+  }
+
+  .col-value {
+    width: 25%;
+  }
+
+  .col-delta {
+    width: 25%;
+  }
 
   th, td {
     padding: 8px 10px;

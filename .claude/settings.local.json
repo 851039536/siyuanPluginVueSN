@@ -120,7 +120,8 @@
       "Bash(pnpm vite *)",
       "Bash(pnpm vue-tsc *)",
       "Bash(cat tsconfig.json)",
-      "Bash(cat tsconfig.app.json)"
+      "Bash(cat tsconfig.app.json)",
+      "Bash(git stash *)"
     ],
     "deny": [],
     "ask": []

@@ -181,395 +181,30 @@
     </Transition>
   </Teleport>
 
-  <!-- 保存片段弹窗 -->
-  <Teleport to="body">
-    <Transition name="fade">
-      <div
-        v-if="showSaveModal"
-        class="html-viewer-overlay modal-overlay"
-        @click="closeSaveModal"
-      >
-        <Transition name="scale">
-          <div
-            v-if="showSaveModal"
-            class="html-viewer-dialog small"
-            @click.stop
-          >
-            <div class="dialog-header">
-              <h2>保存HTML片段</h2>
-              <Button
-                icon="close"
-                variant="ghost"
-                size="small"
-                @click="closeSaveModal"
-              />
-            </div>
-            <div class="dialog-body">
-              <form
-                class="save-form"
-                @submit.prevent="handleSaveSnippet"
-              >
-                <div class="form-group">
-                  <Input
-                    v-model="saveForm.name"
-                    label="名称"
-                    type="text"
-                    placeholder="请输入片段名称"
-                    required
-                  />
-                </div>
-                <div class="form-group">
-                  <Select
-                    v-model="saveForm.category"
-                    label="分类"
-                    :options="categoryOptions"
-                    required
-                  />
-                </div>
-                <div class="form-actions">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    @click="closeSaveModal"
-                  >
-                    取消
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    :disabled="!saveForm.name.trim()"
-                  >
-                    保存
-                  </Button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </Transition>
-      </div>
-    </Transition>
-  </Teleport>
-
-  <!-- 片段库弹窗 -->
-  <Teleport to="body">
-    <Transition name="fade">
-      <div
-        v-if="showSnippetLibrary"
-        class="html-viewer-overlay modal-overlay"
-        @click="closeSnippetLibrary"
-      >
-        <Transition name="scale">
-          <div
-            v-if="showSnippetLibrary"
-            class="html-viewer-dialog"
-            @click.stop
-          >
-            <div class="dialog-header">
-              <div class="header-title">
-                <IconWrapper
-                  name="folder"
-                  :size="22"
-                />
-                <h2>HTML 片段库</h2>
-              </div>
-              <Button
-                icon="close"
-                variant="ghost"
-                size="small"
-                @click="closeSnippetLibrary"
-              />
-            </div>
-            <div class="dialog-body">
-              <!-- 分类筛选 -->
-              <div class="category-filter">
-                <div class="category-chips">
-                  <button
-                    v-for="cat in [{
-                      id: 'all',
-                      name: '全部',
-                      color: '#b0aea5',
-                    }, ...categories]"
-                    :key="cat.id"
-                    class="category-chip"
-                    :class="{ active: selectedCategory === cat.id }"
-                    :style="{ '--cat-color': cat.color }"
-                    @click="selectedCategory = cat.id"
-                  >
-                    <span
-                      class="chip-dot"
-                      :style="{ backgroundColor: cat.color }"
-                    ></span>
-                    {{ cat.name }}
-                  </button>
-                </div>
-                <Button
-                  icon="settings"
-                  variant="ghost"
-                  size="small"
-                  title="管理分类"
-                  @click="showCategoryManager = true"
-                />
-              </div>
-
-              <!-- 搜索 -->
-              <div class="snippet-controls">
-                <IconWrapper
-                  name="search"
-                  :size="16"
-                  class="search-icon"
-                />
-                <Input
-                  v-model="searchQuery"
-                  type="text"
-                  placeholder="搜索片段名称..."
-                  size="small"
-                />
-                <Button
-                  icon="add"
-                  variant="primary"
-                  size="small"
-                  @click="openCreateSnippet"
-                >
-                  新建片段
-                </Button>
-              </div>
-
-              <!-- 片段列表 -->
-              <div class="snippet-grid">
-                <div
-                  v-for="snippet in filteredSnippets"
-                  :key="snippet.id"
-                  class="snippet-card"
-                >
-                  <div class="snippet-header">
-                    <h3>{{ snippet.name }}</h3>
-                    <span
-                      class="snippet-category-tag"
-                      :style="{
-                        backgroundColor: `${getCategoryById(snippet.category)?.color}20`,
-                        color: getCategoryById(snippet.category)?.color,
-                      }"
-                    >
-                      {{ getCategoryById(snippet.category)?.name || '未分类' }}
-                    </span>
-                  </div>
-                  <div class="snippet-preview-mini">
-                    <iframe
-                      class="mini-preview-iframe"
-                      sandbox="allow-scripts"
-                      :srcdoc="getPreviewHtml(snippet.content)"
-                    ></iframe>
-                  </div>
-                  <div class="snippet-meta">
-                    <span class="snippet-time">{{ formatTime(snippet.updatedAt) }}</span>
-                  </div>
-                  <div class="snippet-actions">
-                    <Button
-                      variant="ghost"
-                      size="small"
-                      @click="loadSnippet(snippet)"
-                    >
-                      加载
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="small"
-                      @click="editSnippet(snippet)"
-                    >
-                      编辑
-                    </Button>
-                    <Button
-                      icon="delete"
-                      variant="ghost"
-                      size="small"
-                      title="删除"
-                      @click="deleteSnippet(snippet.id)"
-                    />
-                  </div>
-                </div>
-
-                <div
-                  v-if="filteredSnippets.length === 0"
-                  class="no-snippets"
-                >
-                  {{ searchQuery ? '未找到匹配的片段' : '暂无HTML片段，点击新建' }}
-                </div>
-              </div>
-            </div>
-          </div>
-        </Transition>
-      </div>
-    </Transition>
-  </Teleport>
-
-  <!-- 编辑片段弹窗 -->
-  <Teleport to="body">
-    <Transition name="fade">
-      <div
-        v-if="showEditModal"
-        class="html-viewer-overlay modal-overlay"
-        @click="closeEditModal"
-      >
-        <Transition name="scale">
-          <div
-            v-if="showEditModal"
-            class="html-viewer-dialog small"
-            @click.stop
-          >
-            <div class="dialog-header">
-              <h2>{{ editingSnippet ? '编辑片段' : '新建片段' }}</h2>
-              <Button
-                icon="close"
-                variant="ghost"
-                size="small"
-                @click="closeEditModal"
-              />
-            </div>
-            <div class="dialog-body">
-              <form
-                class="edit-form"
-                @submit.prevent="handleSaveEdit"
-              >
-                <div class="form-group">
-                  <Input
-                    v-model="editForm.name"
-                    label="名称"
-                    type="text"
-                    placeholder="请输入片段名称"
-                    required
-                  />
-                </div>
-                <div class="form-group">
-                  <Select
-                    v-model="editForm.category"
-                    label="分类"
-                    :options="categoryOptions"
-                    required
-                  />
-                </div>
-                <div class="form-group">
-                  <label class="form-label">HTML内容</label>
-                  <textarea
-                    v-model="editForm.content"
-                    class="edit-content-editor"
-                    placeholder="请输入HTML代码..."
-                    rows="10"
-                    spellcheck="false"
-                    required
-                  ></textarea>
-                </div>
-                <div class="form-actions">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    @click="closeEditModal"
-                  >
-                    取消
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    :disabled="!editForm.name.trim() || !editForm.content.trim()"
-                  >
-                    保存
-                  </Button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </Transition>
-      </div>
-    </Transition>
-  </Teleport>
-
-  <!-- 分类管理弹窗 -->
-  <Teleport to="body">
-    <Transition name="fade">
-      <div
-        v-if="showCategoryManager"
-        class="html-viewer-overlay modal-overlay"
-        @click="closeCategoryManager"
-      >
-        <Transition name="scale">
-          <div
-            v-if="showCategoryManager"
-            class="html-viewer-dialog category-manager"
-            @click.stop
-          >
-            <div class="dialog-header">
-              <h2>管理分类</h2>
-              <Button
-                icon="close"
-                variant="ghost"
-                size="small"
-                @click="closeCategoryManager"
-              />
-            </div>
-            <div class="dialog-body">
-              <div class="add-category-section">
-                <h3>添加新分类</h3>
-                <div class="add-category-form">
-                  <Input
-                    v-model="newCategory.name"
-                    type="text"
-                    placeholder="分类名称"
-                    :maxlength="10"
-                  />
-                  <div class="color-picker-wrapper">
-                    <button
-                      v-for="color in presetColors"
-                      :key="color"
-                      class="color-option"
-                      :class="{ selected: newCategory.color === color }"
-                      :style="{ backgroundColor: color }"
-                      @click="newCategory.color = color"
-                    ></button>
-                  </div>
-                  <Button
-                    icon="add"
-                    variant="primary"
-                    size="small"
-                    :disabled="!newCategory.name.trim()"
-                    @click="addCategory"
-                  >
-                    添加
-                  </Button>
-                </div>
-              </div>
-              <div class="category-list-section">
-                <h3>现有分类</h3>
-                <div class="category-list">
-                  <div
-                    v-for="cat in categories"
-                    :key="cat.id"
-                    class="category-item"
-                  >
-                    <span
-                      class="category-dot"
-                      :style="{ backgroundColor: cat.color }"
-                    ></span>
-                    <span class="category-name">{{ cat.name }}</span>
-                    <Button
-                      v-if="cat.id !== 'default'"
-                      icon="close"
-                      variant="ghost"
-                      size="small"
-                      title="删除分类"
-                      @click="deleteCategory(cat.id)"
-                    />
-                    <span
-                      v-else
-                      class="default-badge"
-                    >默认</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Transition>
-      </div>
-    </Transition>
-  </Teleport>
+  <!-- 子组件弹窗 -->
+  <SnippetEditModal
+    v-model:visible="showEditModal"
+    :snippet="editingSnippet"
+    :categories="categories"
+    :default-content="htmlContent"
+    @save="handleSaveEdit"
+  />
+  <SnippetLibrary
+    v-model:visible="showSnippetLibrary"
+    :snippets="snippets"
+    :categories="categories"
+    @load-snippet="loadSnippet"
+    @edit-snippet="editSnippet"
+    @delete-snippet="deleteSnippet"
+    @create-snippet="openCreateSnippet"
+    @manage-categories="showCategoryManager = true"
+  />
+  <CategoryManager
+    v-model:visible="showCategoryManager"
+    :categories="categories"
+    @add-category="addCategory"
+    @delete-category="deleteCategory"
+  />
 </template>
 
 <script setup lang="ts">
@@ -584,15 +219,19 @@ import {
   nextTick,
   onMounted,
   onUnmounted,
-  reactive,
   ref,
   watch,
 } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import Input from "@/components/Input.vue"
-import Select from "@/components/Select.vue"
 import { usePlugin } from "@/main"
+import {
+  copyToClipboard,
+  triggerDownload,
+} from "@/utils/domUtils"
+import CategoryManager from "./components/CategoryManager.vue"
+import SnippetEditModal from "./components/SnippetEditModal.vue"
+import SnippetLibrary from "./components/SnippetLibrary.vue"
 import {
   DEFAULT_CATEGORIES,
   HtmlViewerStorage,
@@ -640,36 +279,14 @@ const htmlContent = ref("")
 const previewFrame = ref<HTMLIFrameElement | null>(null)
 
 // 弹窗状态
-const showSaveModal = ref(false)
 const showSnippetLibrary = ref(false)
 const showEditModal = ref(false)
 const showCategoryManager = ref(false)
 
-// 保存表单
-const saveForm = reactive({
-  name: "",
-  category: "default",
-})
-
-// 编辑表单
-const editForm = reactive({
-  name: "",
-  category: "default",
-  content: "",
-})
-const editingSnippet = ref<HtmlSnippet | null>(null)
-
 // 片段库状态
+const editingSnippet = ref<HtmlSnippet | null>(null)
 const snippets = ref<HtmlSnippet[]>([])
 const categories = ref<HtmlCategory[]>([...DEFAULT_CATEGORIES])
-const selectedCategory = ref<string>("all")
-const searchQuery = ref("")
-
-// 分类管理
-const newCategory = reactive({
-  name: "",
-  color: "#d97757",
-})
 
 // JSON 格式化状态
 const isJsonFormatted = ref(false)
@@ -693,8 +310,11 @@ function wrapWithBaseStyles(content: string): string {
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>${BASE_STYLES}${content}</body></html>`
 }
 
-// 预览HTML（带JSON格式化支持）
-const previewHtml = computed(() => {
+// 预览HTML（带JSON格式化支持 + debounce 防抖）
+const previewHtml = ref("")
+let previewTimer: ReturnType<typeof setTimeout> | null = null
+
+function buildPreviewHtml(): string {
   let content = htmlContent.value
   if (isJsonFormatted.value && content.trim()) {
     const result = jsonToHtml(content)
@@ -703,7 +323,18 @@ const previewHtml = computed(() => {
     }
   }
   return wrapWithBaseStyles(content)
-})
+}
+
+watch(
+  [htmlContent, isJsonFormatted],
+  () => {
+    if (previewTimer) clearTimeout(previewTimer)
+    previewTimer = setTimeout(() => {
+      previewHtml.value = buildPreviewHtml()
+    }, 300)
+  },
+  { immediate: true },
+)
 
 // JSON格式化内容（公众号浅色背景主题）
 function formatJsonContent() {
@@ -731,53 +362,9 @@ async function copyFormattedJsonHtml() {
     showMessage(result.error, 2000, "error")
     return
   }
-  try {
-    await navigator.clipboard.writeText(result.html)
-    showMessage("格式化JSON HTML已复制，可直接粘贴到公众号", 2000, "info")
-  } catch {
-    showMessage("复制失败", 2000, "error")
-  }
+  const ok = await copyToClipboard(result.html)
+  showMessage(ok ? "格式化JSON HTML已复制，可直接粘贴到公众号" : "复制失败", 2000, ok ? "info" : "error")
 }
-
-async function copyRenderedContent() {
-  const iframe = previewFrame.value
-  if (!iframe?.contentDocument?.body) {
-    showMessage("没有可复制的内容", 2000, "info")
-    return
-  }
-
-  const body = iframe.contentDocument.body
-  const html = body.innerHTML
-  const text = body.innerText
-
-  try {
-    const htmlBlob = new Blob([html], { type: 'text/html' })
-    const textBlob = new Blob([text], { type: 'text/plain' })
-    await navigator.clipboard.write([
-      new ClipboardItem({
-        'text/html': htmlBlob,
-        'text/plain': textBlob,
-      }),
-    ])
-    showMessage("已复制渲染内容", 2000, "info")
-  } catch {
-    try {
-      await navigator.clipboard.writeText(text)
-      showMessage("已复制文本内容", 2000, "info")
-    } catch {
-      showMessage("复制失败", 2000, "error")
-    }
-  }
-}
-
-const presetColors = [
-  "#d97757",
-  "#6a9bcc",
-  "#788c5d",
-  "#b0aea5",
-  "#e8a04c",
-  "#9b6bb5",
-]
 
 // 内容大小
 const contentSize = computed(() => {
@@ -790,65 +377,10 @@ const contentSize = computed(() => {
 // 片段数量
 const snippetCount = computed(() => snippets.value.length)
 
-// 分类选项（供 Select 组件使用）
-const categoryOptions = computed(() =>
-  categories.value.map((cat) => ({
-    value: cat.id,
-    label: cat.name,
-  })),
-)
-
-// 分类Map
-const categoriesMap = computed(() => {
-  const map = new Map<string, HtmlCategory>()
-  for (const cat of categories.value) {
-    map.set(cat.id, cat)
-  }
-  return map
-})
-
-// 过滤片段
-const filteredSnippets = computed(() => {
-  let result = snippets.value
-  if (selectedCategory.value !== "all") {
-    result = result.filter((s) => s.category === selectedCategory.value)
-  }
-  if (searchQuery.value) {
-    const q = searchQuery.value.toLowerCase()
-    result = result.filter((s) => s.name.toLowerCase().includes(q))
-  }
-  return result
-})
-
-// 分类查找
-const getCategoryById = (id: string): HtmlCategory | undefined => {
-  return categoriesMap.value.get(id)
-}
-
-// 格式化时间
-function formatTime(timestamp: number): string {
-  const d = new Date(timestamp)
-  return d.toLocaleDateString("zh-CN", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  })
-}
-
-// 获取预览HTML（限制高度）
-function getPreviewHtml(content: string): string {
-  return `<style>body{margin:0;padding:4px;overflow:hidden;pointer-events:none;font-size:12px;}</style>${content}`
-}
-
 // 复制源码
 async function copySource() {
-  try {
-    await navigator.clipboard.writeText(htmlContent.value)
-    showMessage("源码已复制", 2000, "info")
-  } catch {
-    showMessage("复制失败", 2000, "error")
-  }
+  const ok = await copyToClipboard(htmlContent.value)
+  showMessage(ok ? "源码已复制" : "复制失败", 2000, ok ? "info" : "error")
 }
 
 // 简单格式化HTML
@@ -934,10 +466,7 @@ async function copyAsImage() {
     console.error("复制为图片失败:", error)
     // 兜底：复用已渲染的 canvas 下载图片
     if (canvas) {
-      const link = document.createElement("a")
-      link.download = `html-preview-${Date.now()}.png`
-      link.href = canvas.toDataURL("image/png")
-      link.click()
+      triggerDownload(canvas.toDataURL("image/png"), `html-preview-${Date.now()}.png`)
       showMessage("已下载为图片（剪贴板不可用）", 2000, "info")
     } else {
       showMessage("复制失败", 2000, "error")
@@ -945,42 +474,14 @@ async function copyAsImage() {
   }
 }
 
-// 打开保存弹窗
+// 打开保存弹窗（通过 SnippetEditModal 新建）
 function openSaveModal() {
   if (!htmlContent.value.trim()) {
     showMessage("没有可保存的内容", 2000, "info")
     return
   }
-  saveForm.name = ""
-  saveForm.category = categories.value[0]?.id || "default"
-  showSaveModal.value = true
-}
-
-function closeSaveModal() {
-  showSaveModal.value = false
-}
-
-// 保存片段
-async function handleSaveSnippet() {
-  if (!saveForm.name.trim()) return
-  try {
-    await storage.addSnippet({
-      name: saveForm.name.trim(),
-      category: saveForm.category,
-      content: htmlContent.value,
-    })
-    await loadSnippets()
-    closeSaveModal()
-    showMessage("片段已保存", 2000, "info")
-  } catch (error) {
-    console.error("保存片段失败:", error)
-    showMessage("保存失败", 2000, "error")
-  }
-}
-
-// 打开片段库
-function closeSnippetLibrary() {
-  showSnippetLibrary.value = false
+  editingSnippet.value = null
+  showEditModal.value = true
 }
 
 // 加载片段到主预览
@@ -994,47 +495,34 @@ function loadSnippet(snippet: HtmlSnippet) {
 // 打开新建片段
 function openCreateSnippet() {
   editingSnippet.value = null
-  editForm.name = ""
-  editForm.category = categories.value[0]?.id || "default"
-  editForm.content = ""
   showEditModal.value = true
 }
 
 // 编辑片段
 function editSnippet(snippet: HtmlSnippet) {
   editingSnippet.value = snippet
-  editForm.name = snippet.name
-  editForm.category = snippet.category
-  editForm.content = snippet.content
   showEditModal.value = true
 }
 
-function closeEditModal() {
-  showEditModal.value = false
-  editingSnippet.value = null
-}
-
-// 保存编辑
-async function handleSaveEdit() {
-  if (!editForm.name.trim() || !editForm.content.trim()) return
+// 保存编辑（子组件回调）
+async function handleSaveEdit(payload: { id?: string; name: string; category: string; content?: string }) {
   try {
-    if (editingSnippet.value) {
-      await storage.updateSnippet(editingSnippet.value.id, {
-        name: editForm.name.trim(),
-        category: editForm.category,
-        content: editForm.content,
+    if (payload.id) {
+      await storage.updateSnippet(payload.id, {
+        name: payload.name,
+        category: payload.category,
+        content: payload.content,
       })
       showMessage("片段已更新", 2000, "info")
     } else {
       await storage.addSnippet({
-        name: editForm.name.trim(),
-        category: editForm.category,
-        content: editForm.content,
+        name: payload.name,
+        category: payload.category,
+        content: payload.content ?? htmlContent.value,
       })
       showMessage("片段已创建", 2000, "info")
     }
     await loadSnippets()
-    closeEditModal()
   } catch (error) {
     console.error("保存片段失败:", error)
     showMessage("保存失败", 2000, "error")
@@ -1057,28 +545,18 @@ async function deleteSnippet(id: string) {
   }
 }
 
-// 分类管理
-function closeCategoryManager() {
-  showCategoryManager.value = false
-  newCategory.name = ""
-  newCategory.color = "#d97757"
-}
-
-async function addCategory() {
-  if (!newCategory.name.trim()) return
-  if (categories.value.some((c) => c.name === newCategory.name.trim())) {
+async function addCategory(payload: { name: string; color: string }) {
+  if (categories.value.some((c) => c.name === payload.name)) {
     showMessage("分类已存在", 2000, "error")
     return
   }
   const category: HtmlCategory = {
     id: Date.now().toString(),
-    name: newCategory.name.trim(),
-    color: newCategory.color,
+    name: payload.name,
+    color: payload.color,
   }
   categories.value.push(category)
   await saveCategories()
-  newCategory.name = ""
-  newCategory.color = presetColors[0]
   showMessage("分类已添加", 2000, "info")
 }
 
@@ -1094,9 +572,6 @@ async function deleteCategory(categoryId: string) {
   }
   categories.value = categories.value.filter((c) => c.id !== categoryId)
   await saveCategories()
-  if (selectedCategory.value === categoryId) {
-    selectedCategory.value = "all"
-  }
   showMessage("分类已删除", 2000, "info")
 }
 
@@ -1139,13 +614,12 @@ function handleKeyDown(event: KeyboardEvent) {
   if (!props.visible) return
   if (event.key === "Escape") {
     if (showCategoryManager.value) {
-      closeCategoryManager()
+      showCategoryManager.value = false
     } else if (showEditModal.value) {
-      closeEditModal()
-    } else if (showSaveModal.value) {
-      closeSaveModal()
+      showEditModal.value = false
+      editingSnippet.value = null
     } else if (showSnippetLibrary.value) {
-      closeSnippetLibrary()
+      showSnippetLibrary.value = false
     } else {
       closeDialog()
     }
@@ -1178,11 +652,12 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (previewTimer) clearTimeout(previewTimer)
   document.removeEventListener("keydown", handleKeyDown)
   window.removeEventListener("openHtmlViewer", handleOpenHtmlViewer as EventListener)
 })
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 @use './styles/index.scss';
 </style>

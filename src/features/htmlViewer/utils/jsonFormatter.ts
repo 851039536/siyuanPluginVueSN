@@ -5,10 +5,7 @@
  * 参考 GitHub 浅色主题配色方案。
  */
 
-import {
-  escapeHtml,
-  escapeHtmlFull,
-} from "@/utils/stringUtils"
+import { escapeHtml } from "@/utils/stringUtils"
 
 // GitHub 浅色主题配色（公众号兼容，白底浅灰代码区）
 const LIGHT_COLORS = {
@@ -36,7 +33,7 @@ export interface JsonFormatterResult {
 
 function wrapToken(text: string, color: string, bold = false): string {
   const fw = bold ? "font-weight: bold;" : ""
-  return `<span style="color: ${color};${fw}">${escapeHtmlFull(text)}</span>`
+  return `<span style="color: ${color};${fw}">${escapeHtml(text)}</span>`
 }
 
 /**

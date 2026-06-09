@@ -158,6 +158,11 @@ $color-rank-bronze: #cd7f32;
   color: var(--b3-theme-on-background);
   font-family: $font-body;
   overflow: hidden;
+
+  // CSS custom properties for theme-aware color overrides
+  --stat-color-success: #{$color-success};
+  --stat-color-danger: #{$color-danger};
+  --stat-color-warning: #{$color-warning};
 }
 
 

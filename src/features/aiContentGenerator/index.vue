@@ -296,7 +296,8 @@ const startGeneration = () => {
   searchStatus.value = "";
   searchResults.value = [];
   showSearchResults.value = false;
-  resetReview();
+  reviewResult.value = null;
+  isReviewing.value = false;
 };
 
 /**
@@ -528,29 +529,7 @@ const performReview = async () => {
   isReviewing.value = true;
   reviewResult.value = null;
 
-  try {
-    const result = await props.onReview(userRequest, generatedContent.value);
-    reviewResult.value = result;
-  } catch (error) {
-    console.error("审核执行失败:", error);
-    reviewResult.value = {
-      rating: "需改进",
-      summary: `审核失败: ${(error as Error).message}`,
-      issues: [],
-      suggestions: [],
-      reviewModel: "deepseek-v4-pro",
-      reviewedAt: Date.now(),
-    };
-  } finally {
-    isReviewing.value = false;
-  }
-};
-
-/**
- * 重置审核状态
- */
-const resetReview = () => {
-  reviewResult.value = null;
+  reviewResult.value = await props.onReview(userRequest, generatedContent.value);
   isReviewing.value = false;
 };
 

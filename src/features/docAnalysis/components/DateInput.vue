@@ -234,6 +234,8 @@ watch(pickerOpen, (val) => {
 </script>
 
 <style lang="scss" scoped>
+@use "../styles/codex-tokens" as *;
+
 .date-input-wrapper {
   position: relative;
   display: flex;
@@ -243,15 +245,17 @@ watch(pickerOpen, (val) => {
     width: 100%;
     padding: 4px 38px 4px 6px;
     border: 1px solid var(--b3-border-color);
-    border-radius: 4px;
+    border-radius: $da-radius;
     background: var(--b3-theme-background);
     color: var(--b3-theme-on-background);
     font-size: 11px;
+    font-family: $da-mono;
     outline: none;
     min-width: 0;
 
     &:focus {
       border-color: var(--b3-theme-primary);
+      box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
     }
 
     &::placeholder {
@@ -296,9 +300,8 @@ watch(pickerOpen, (val) => {
   margin-top: 2px;
   width: 224px;
   padding: 6px;
-  border-radius: 8px;
+  border-radius: $da-radius;
   background: var(--b3-theme-background);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
   border: 1px solid var(--b3-border-color);
 
   .picker-nav {
@@ -313,8 +316,8 @@ watch(pickerOpen, (val) => {
       justify-content: center;
       width: 24px;
       height: 24px;
-      border: none;
-      border-radius: 4px;
+      border: 1px solid var(--b3-border-color);
+      border-radius: $da-radius;
       background: transparent;
       color: var(--b3-theme-on-surface-variant);
       cursor: pointer;
@@ -328,6 +331,7 @@ watch(pickerOpen, (val) => {
     &-title {
       font-size: 12px;
       font-weight: 600;
+      font-family: $da-mono;
       color: var(--b3-theme-on-background);
     }
   }
@@ -358,7 +362,7 @@ watch(pickerOpen, (val) => {
       height: 26px;
       margin: 0 auto;
       border: none;
-      border-radius: 4px;
+      border-radius: $da-radius;
       background: transparent;
       color: var(--b3-theme-on-background);
       font-size: 11px;

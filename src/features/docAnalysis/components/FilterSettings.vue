@@ -165,6 +165,8 @@ function handleClearAll() {
 </script>
 
 <style lang="scss" scoped>
+@use "../styles/codex-tokens" as *;
+
 .doc-analysis-filter {
   padding: 6px 10px;
   border-bottom: 1px solid var(--b3-border-color);
@@ -191,7 +193,7 @@ function handleClearAll() {
   .filter-input {
     padding: 4px 6px;
     border: 1px solid var(--b3-border-color);
-    border-radius: 4px;
+    border-radius: $da-radius;
     background: var(--b3-theme-background);
     color: var(--b3-theme-on-background);
     font-size: 12px;
@@ -200,6 +202,7 @@ function handleClearAll() {
 
     &:focus {
       border-color: var(--b3-theme-primary);
+      box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
     }
   }
 
@@ -234,7 +237,7 @@ function handleClearAll() {
   .filter-select {
     padding: 4px 4px;
     border: 1px solid var(--b3-border-color);
-    border-radius: 4px;
+    border-radius: $da-radius;
     background: var(--b3-theme-background);
     color: var(--b3-theme-on-background);
     font-size: 12px;
@@ -244,6 +247,7 @@ function handleClearAll() {
 
     &:focus {
       border-color: var(--b3-theme-primary);
+      box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
     }
   }
 
@@ -264,8 +268,8 @@ function handleClearAll() {
     justify-content: center;
     width: 24px;
     height: 24px;
-    border: none;
-    border-radius: 4px;
+    border: 1px solid var(--b3-border-color);
+    border-radius: $da-radius;
     background: transparent;
     color: var(--b3-theme-on-surface-variant);
     cursor: pointer;
@@ -282,8 +286,8 @@ function handleClearAll() {
     align-items: center;
     gap: 3px;
     padding: 4px 12px;
-    border: none;
-    border-radius: 4px;
+    border: 1px solid var(--b3-theme-primary);
+    border-radius: $da-radius;
     background: var(--b3-theme-primary);
     color: var(--b3-theme-on-primary);
     font-size: 12px;

@@ -179,6 +179,8 @@ function formatTime(ts: string): string {
 </script>
 
 <style lang="scss" scoped>
+@use "../styles/codex-tokens" as *;
+
 .doc-list-item {
   display: flex;
   align-items: center;
@@ -258,7 +260,7 @@ function formatTime(ts: string): string {
     gap: 2px;
     font-size: 11px;
     padding: 2px 6px;
-    border-radius: 10px;
+    border-radius: $da-radius;
     background: var(--b3-theme-surface-light);
     color: var(--b3-theme-on-surface-variant);
     white-space: nowrap;
@@ -268,43 +270,43 @@ function formatTime(ts: string): string {
     }
 
     &.time-green {
-      color: #22c55e;
+      color: var(--b3-theme-success, #22c55e);
       background: rgba(34, 197, 94, 0.1);
     }
 
     &.time-yellow {
-      color: #f59e0b;
+      color: var(--b3-theme-warning, #f59e0b);
       background: rgba(245, 158, 11, 0.1);
     }
 
     &.time-red {
-      color: #ef4444;
+      color: var(--b3-theme-error, #ef4444);
       background: rgba(239, 68, 68, 0.1);
     }
 
     &.depth-badge {
-      color: #06b6d4;
+      color: var(--b3-theme-info, #06b6d4);
       background: rgba(6, 182, 212, 0.1);
     }
 
     &.ref-badge {
-      color: #8b5cf6;
+      color: var(--b3-theme-info, #8b5cf6);
       background: rgba(139, 92, 246, 0.1);
     }
 
     &.img-badge {
-      color: #f97316;
+      color: var(--b3-theme-warning, #f97316);
       background: rgba(249, 115, 22, 0.1);
     }
 
     &.bookmark-badge {
-      color: #eab308;
+      color: var(--b3-theme-warning, #eab308);
       background: rgba(234, 179, 8, 0.1);
     }
 
     &.publish-badge {
       &.published {
-        color: #22c55e;
+        color: var(--b3-theme-success, #22c55e);
         background: rgba(34, 197, 94, 0.1);
       }
     }
@@ -324,8 +326,8 @@ function formatTime(ts: string): string {
     justify-content: center;
     width: 28px;
     height: 28px;
-    border: none;
-    border-radius: 6px;
+    border: 1px solid var(--b3-border-color);
+    border-radius: $da-radius;
     background: transparent;
     color: var(--b3-theme-on-surface-variant);
     cursor: pointer;
@@ -347,15 +349,17 @@ function formatTime(ts: string): string {
 
     .wordcount-value {
       font-size: 12px;
+      font-family: $da-mono;
       color: var(--b3-theme-on-surface-variant);
       background: var(--b3-theme-surface-light);
       padding: 2px 8px;
-      border-radius: 10px;
+      border-radius: $da-radius;
       white-space: nowrap;
     }
 
     .size-value {
       font-size: 11px;
+      font-family: $da-mono;
       color: var(--b3-theme-on-surface-variant);
       opacity: 0.7;
       white-space: nowrap;

@@ -12,10 +12,12 @@
       :visible="showRuleEditor"
       :rules="customRules"
       :custom-achievements="customAchievements"
+      :level-config="levelConfig"
       @close="showRuleEditor = false"
       @save="onSaveRules"
       @add-achievement="onAddAchievement"
       @delete-achievement="onDeleteAchievement"
+      @save-level-config="onSaveLevelConfig"
     />
 
     <!-- ====== 1. Hero Rank Banner ====== -->
@@ -201,9 +203,11 @@ import {
   MILESTONE_LABEL_FNS,
   MILESTONE_TYPES,
   STORAGE_KEY_CUSTOM_ACHIEVEMENTS,
+  STORAGE_KEY_LEVEL_CONFIG,
   STORAGE_KEY_MILESTONE_RULES,
 } from "../types/milestoneRules"
-import type { CustomAchievement } from "../types/milestoneRules"
+import type { CustomAchievement, LevelConfig } from "../types/milestoneRules"
+import { DEFAULT_LEVEL_CONFIG } from "../types/milestoneRules"
 
 type Tier = "common" | "rare" | "epic" | "legendary"
 
@@ -281,6 +285,8 @@ onMounted(async () => {
     if (data) customRules.value = data
     const achData = await storage.load<CustomAchievement[]>(STORAGE_KEY_CUSTOM_ACHIEVEMENTS)
     if (achData) customAchievements.value = achData
+    const lcData = await storage.load<LevelConfig>(STORAGE_KEY_LEVEL_CONFIG)
+    if (lcData) levelConfig.value = lcData
   }
 })
 
@@ -314,6 +320,17 @@ async function saveCustomAchievements() {
   if (props.plugin) {
     const storage = new PluginStorage(props.plugin)
     await storage.save(STORAGE_KEY_CUSTOM_ACHIEVEMENTS, customAchievements.value)
+  }
+}
+
+// ===== Level Config =====
+const levelConfig = ref<LevelConfig>({ ...DEFAULT_LEVEL_CONFIG })
+
+async function onSaveLevelConfig(config: LevelConfig) {
+  levelConfig.value = config
+  if (props.plugin) {
+    const storage = new PluginStorage(props.plugin)
+    await storage.save(STORAGE_KEY_LEVEL_CONFIG, config)
   }
 }
 const expandedCategories = ref<Set<string>>(new Set())
@@ -416,16 +433,12 @@ const allMilestones = computed((): MilestoneDef[] => {
 })
 
 // ===== 等级系统 =====
-const TIER_POINTS: Record<Tier, number> = {
-  common: 3,
-  rare: 8,
-  epic: 15,
-  legendary: 30,
-}
+const tierPoints = computed(() => levelConfig.value.tierPoints)
 
 function pointsForLevel(level: number): number {
+  const m = levelConfig.value.curveMultiplier
   if (level <= 1) return 0
-  return Math.floor(28 * (level - 1) * Math.sqrt(level - 1))
+  return Math.floor(m * (level - 1) * Math.sqrt(level - 1))
 }
 
 const TIER_SIZE = 20
@@ -578,7 +591,7 @@ const categoryViews = computed<CategoryView[]>(() => {
 const totalPoints = computed(() => {
   return milestonesWithState.value
     .filter((m) => m.achieved)
-    .reduce((sum, m) => sum + TIER_POINTS[m.tier], 0)
+    .reduce((sum, m) => sum + (tierPoints.value[m.tier] ?? 0), 0)
 })
 
 const currentLevel = computed(() => {

@@ -39,6 +39,20 @@ export const MILESTONE_LABEL_FNS: Record<string, (v: number) => string> = {
 
 export const STORAGE_KEY_MILESTONE_RULES = "milestone-rules"
 export const STORAGE_KEY_CUSTOM_ACHIEVEMENTS = "milestone-custom-achievements"
+export const STORAGE_KEY_LEVEL_CONFIG = "milestone-level-config"
+
+/** 等级系统配置 */
+export interface LevelConfig {
+  /** 各稀有度里程碑对应的成就点 */
+  tierPoints: Record<string, number>
+  /** 等级曲线乘数（越大升级越慢） */
+  curveMultiplier: number
+}
+
+export const DEFAULT_LEVEL_CONFIG: LevelConfig = {
+  tierPoints: { common: 3, rare: 8, epic: 15, legendary: 30 },
+  curveMultiplier: 10,
+}
 
 /** 自定义成就定义 */
 export interface CustomAchievement {

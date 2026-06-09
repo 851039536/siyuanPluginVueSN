@@ -1,6 +1,6 @@
 @use './transitions';
 
-// HTML展示功能样式
+// HTML展示功能样式（非 scoped，子组件共享类名）
 
 .html-viewer-overlay {
   position: fixed;

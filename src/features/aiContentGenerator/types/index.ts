@@ -21,6 +21,50 @@ import { createVueDockApp } from "@/utils/vueAppHelper"
 import AIContentGeneratorPanel from "../index.vue"
 
 /**
+ * 从任意文本中提取 JSON 对象。
+ * 支持模型返回 `{...}` 纯 JSON、markdown 代码块、或带前缀的文本。
+ */
+function extractJsonFromText(text: string): string | null {
+  // 1. 尝试提取 markdown 代码块中的 JSON
+  const codeBlock = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/)
+  if (codeBlock) {
+    const inner = codeBlock[1].trim()
+    if (inner.startsWith("{")) return inner
+  }
+
+  // 2. 直接查找第一个完整 JSON 对象（从 { 到配对的 }）
+  const trimmed = text.trim()
+  const firstBrace = trimmed.indexOf("{")
+  if (firstBrace === -1) return null
+
+  // 配对括号查找
+  let depth = 0
+  let inString = false
+  let escaped = false
+  for (let i = firstBrace; i < trimmed.length; i++) {
+    const ch = trimmed[i]
+    if (escaped) { escaped = false; continue }
+    if (ch === "\\") { escaped = true; continue }
+    if (ch === '"') { inString = !inString; continue }
+    if (inString) continue
+    if (ch === "{") depth++
+    if (ch === "}") {
+      depth--
+      if (depth === 0) return trimmed.slice(firstBrace, i + 1)
+    }
+  }
+
+  return null
+}
+
+/** 校验并规范评级值 */
+function validateRating(rating: unknown): "优秀" | "良好" | "需改进" {
+  const valid = ["优秀", "良好", "需改进"]
+  if (typeof rating === "string" && valid.includes(rating)) return rating as any
+  return "良好"
+}
+
+/**
  * AI内容生成类
  * 仅负责 Dock 注册和 UI 编排，API 调用使用统一模块
  */
@@ -133,36 +177,19 @@ ${options.userInput}`
    * @param generatedContent AI 生成的内容
    */
   public async reviewContent(userRequest: string, generatedContent: string): Promise<ReviewResult> {
-    const reviewPrompt = `你是一位严谨的文档质量审核专家。请对以下AI生成的文档进行交叉审核。
+    const reviewPrompt = `你是文档质量审核专家。请审核以下AI生成的文档并输出JSON。
 
-## 用户原始需求
-${userRequest}
+## 用户需求
+${userRequest.slice(0, 500)}
 
-## AI 生成的内容
-${generatedContent}
+## 生成内容
+${generatedContent.slice(0, 3000)}
 
-请从以下维度严格审核，并以 JSON 格式返回结果：
+## 输出格式（必须严格JSON，禁止任何额外文字）
+{"rating":"优秀|良好|需改进","summary":"总体评价","issues":[{"description":"问题","severity":"高|中|低"}],"suggestions":["建议1"]}
 
-{
-  "rating": "优秀|良好|需改进",
-  "summary": "总体评价（一两句话）",
-  "issues": [
-    { "description": "问题描述", "severity": "高|中|低" }
-  ],
-  "suggestions": ["改进建议1", "改进建议2"]
-}
-
-审核标准：
-1. **内容准确性**：是否准确回应用户需求，无事实错误
-2. **结构完整性**：结构清晰、逻辑连贯、层级合理
-3. **语言质量**：表达专业流畅、无语法错误
-4. **格式规范**：Markdown 格式正确
-5. **覆盖完整性**：是否遗漏用户要求的关键内容
-
-要求：
-- 如果文档质量良好无问题，issues 返回空数组，rating 为 "优秀"
-- 只返回 JSON，不要添加任何解释文字
-- 建议要具体、可操作`
+审核维度：内容准确性、结构完整性、语言质量、格式规范、覆盖完整性。
+无问题时 issues 为空数组 rating 为优秀。`
 
     const apiConfig = this.getApiConfig()
     // 审核使用 deepseek-v4-pro 模型（如果 provider 是 deepseek）
@@ -172,18 +199,31 @@ ${generatedContent}
 
     try {
       const result = await callAI(reviewPrompt, apiConfig, {
-        systemPrompt: "你是一位严谨的文档质量审核专家，只返回 JSON 格式的审核结果。",
-        temperature: 0.3,
-        maxTokens: 1000,
+        systemPrompt: "你只输出JSON，禁止任何解释或前缀文字。",
+        temperature: 0.1,
+        maxTokens: 800,
       })
 
-      // 解析 JSON 结果
-      const parsed = JSON.parse(result.trim()) as ReviewResult
+      // 尝试从响应中提取 JSON（模型可能包裹在 markdown 或前缀文字中）
+      const json = extractJsonFromText(result)
+      if (json) {
+        const parsed = JSON.parse(json) as Partial<ReviewResult>
+        return {
+          rating: validateRating(parsed.rating),
+          summary: parsed.summary || "审核完成",
+          issues: Array.isArray(parsed.issues) ? parsed.issues.filter((i: any) => i?.description) : [],
+          suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions.filter((s: any) => typeof s === "string") : [],
+          reviewModel: apiConfig.model,
+          reviewedAt: Date.now(),
+        }
+      }
+
+      // JSON 提取失败：将原始文本作为审核摘要展示
       return {
-        rating: parsed.rating || "良好",
-        summary: parsed.summary || "审核完成",
-        issues: Array.isArray(parsed.issues) ? parsed.issues : [],
-        suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions : [],
+        rating: "良好",
+        summary: result.trim().slice(0, 300),
+        issues: [],
+        suggestions: [],
         reviewModel: apiConfig.model,
         reviewedAt: Date.now(),
       }
@@ -191,7 +231,7 @@ ${generatedContent}
       console.error("审核失败:", error)
       return {
         rating: "需改进",
-        summary: `审核过程出错: ${(error as Error).message}`,
+        summary: `审核异常: ${(error as Error).message}`,
         issues: [],
         suggestions: [],
         reviewModel: apiConfig.model || "deepseek-v4-pro",

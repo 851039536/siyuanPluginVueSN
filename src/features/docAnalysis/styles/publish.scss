@@ -377,11 +377,6 @@
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
 // ============ 发布结果 ============
 .publish-result {
   margin-top: 12px;

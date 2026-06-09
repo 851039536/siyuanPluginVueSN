@@ -40,22 +40,6 @@ export interface DocInfo {
   publishedPlatformCount?: number
 }
 
-/** 更新时间分析统计 */
-export interface UpdateTimeStats {
-  /** 7天内更新的文档数 */
-  in7Days: number
-  /** 7~30天更新的文档数 */
-  in30Days: number
-  /** 30天~2个月更新的文档数 */
-  in1To2Months: number
-  /** 2~3个月更新的文档数 */
-  in2To3Months: number
-  /** 3个月~半年更新的文档数 */
-  inHalfYear: number
-  /** 半年以上未更新的文档数 */
-  overHalfYear: number
-}
-
 /** 深度分析统计 */
 export interface DepthStats {
   /** 各深度的文档数量 */
@@ -64,26 +48,6 @@ export interface DepthStats {
   maxDepth: number
   /** 平均深度 */
   avgDepth: number
-}
-
-/** 引用分析统计 */
-export interface RefStats {
-  /** 被引用最多的文档 */
-  topRefDocs: { docId: string, title: string, refCount: number }[]
-  /** 包含引用的文档总数 */
-  refDocCount: number
-  /** 引用块总数 */
-  totalRefCount: number
-}
-
-/** 图片/资源分析统计 */
-export interface ImageStats {
-  /** 包含图片最多的文档 */
-  topImageDocs: { docId: string, title: string, imageCount: number }[]
-  /** 包含图片的文档总数 */
-  imageDocCount: number
-  /** 图片/资源块总数 */
-  totalImageCount: number
 }
 
 /** 排序方式 */

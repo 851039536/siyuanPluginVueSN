@@ -111,7 +111,10 @@
 import type { NotebookInfo } from "../composables/useDocAnalysis"
 import type { FilterOptions } from "../types/index"
 import { Icon } from "@iconify/vue"
-import { computed } from "vue"
+import {
+  computed,
+  onBeforeUnmount,
+} from "vue"
 import DateInput from "./DateInput.vue"
 
 interface Props {
@@ -124,11 +127,18 @@ const props = defineProps<Props>()
 
 const emit = defineEmits<{
   (e: "query"): void
-  (e: "update:options", options: FilterOptions): void
+  (e: "optionsUpdate", options: FilterOptions): void
   (e: "reset"): void
 }>()
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
+
+onBeforeUnmount(() => {
+  if (debounceTimer) {
+    clearTimeout(debounceTimer)
+    debounceTimer = null
+  }
+})
 
 /** 是否有任何非空过滤条件 */
 const hasAnyFilter = computed(() => {
@@ -146,7 +156,7 @@ const hasAnyFilter = computed(() => {
 })
 
 function handleChange() {
-  emit("update:options", { ...props.options })
+  emit("optionsUpdate", { ...props.options })
 }
 
 /** 标题/全文输入防抖查询 */

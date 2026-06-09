@@ -365,13 +365,13 @@
     justify-content: center;
 
     &.pending {
-      background: #fef3c7;
-      color: #b45309;
+      background: var(--b3-theme-warning-light, #fef3c7);
+      color: var(--b3-theme-warning-dark, #b45309);
     }
 
     &.published {
-      background: #dbeafe;
-      color: #1d4ed8;
+      background: var(--b3-theme-info-light, #dbeafe);
+      color: var(--b3-theme-info-dark, #1d4ed8);
     }
 
     &.none {
@@ -380,13 +380,13 @@
     }
 
     &.unused {
-      background: #fee2e2;
-      color: #991b1b;
+      background: var(--b3-theme-error-light, #fee2e2);
+      color: var(--b3-theme-error-dark, #991b1b);
     }
 
     &.category {
-      background: #d1fae5;
-      color: #065f46;
+      background: var(--b3-theme-success-light, #d1fae5);
+      color: var(--b3-theme-success-dark, #065f46);
     }
   }
 }

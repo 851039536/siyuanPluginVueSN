@@ -31,7 +31,10 @@ export interface NotebookInfo {
   name: string
 }
 
-/** 子查询：统计每个文档的内容大小和字数（合并减少扫描次数） */
+/** 子查询：统计每个文档的内容大小和字数（合并减少扫描次数）
+ *  length = 字符数，对中日韩文本 ≈ 词数，对英文文本 ≈ 字符数（非精确词数）
+ *  两者使用相同表达式，因为思源 blocks 表无独立字数列
+ */
 const SIZE_WORDCOUNT_SUBQUERY = `
   SELECT root_id,
     SUM(length) as total_size,

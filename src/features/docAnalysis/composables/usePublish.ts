@@ -421,7 +421,12 @@ export function usePublish(plugin: Plugin) {
     // Base64 编码内容
     const encoder = new TextEncoder()
     const data = encoder.encode(content.fullMarkdown)
-    const base64Content = btoa(String.fromCharCode(...data))
+    // 分块转换避免大文件 RangeError（call stack size exceeded）
+    let binary = ""
+    for (let i = 0; i < data.length; i += 8192) {
+      binary += String.fromCharCode(...data.subarray(i, i + 8192))
+    }
+    const base64Content = btoa(binary)
 
     const payload: any = {
       message: commitMessage,
@@ -477,7 +482,12 @@ export function usePublish(plugin: Plugin) {
     // Base64 编码
     const encoder = new TextEncoder()
     const data = encoder.encode(content.fullMarkdown)
-    const base64Content = btoa(String.fromCharCode(...data))
+    // 分块转换避免大文件 RangeError（call stack size exceeded）
+    let binary = ""
+    for (let i = 0; i < data.length; i += 8192) {
+      binary += String.fromCharCode(...data.subarray(i, i + 8192))
+    }
+    const base64Content = btoa(binary)
 
     const payload = {
       branch,
@@ -529,8 +539,8 @@ export function usePublish(plugin: Plugin) {
   <methodName>metaWeblog.newPost</methodName>
   <params>
     <param><value><string>1</string></value></param>
-    <param><value><string>${username}</string></value></param>
-    <param><value><string>${password}</string></value></param>
+    <param><value><string>${escapeXml(username)}</string></value></param>
+    <param><value><string>${escapeXml(password)}</string></value></param>
     <param><value><struct>
       <member><name>title</name><value><string>${escapeXml(content.title)}</string></value></member>
       <member><name>description</name><value><string>${escapeXml(bodyContent)}</string></value></member>

@@ -1,5 +1,20 @@
 <template>
   <div class="milestones-panel">
+    <!-- ====== 0. Top Bar with Settings ====== -->
+    <div class="milestones-top-bar">
+      <button class="btn-settings" @click="showRuleEditor = true">
+        <svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 9.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M12.2 7a.4.4 0 01-.3-.46l.38-2.27a.5.5 0 00-.25-.54l-2-1.15a.5.5 0 00-.58.07l-1.66 1.35a.42.42 0 01-.54 0L5.61 2.65a.5.5 0 00-.59-.07l-1.99 1.15a.5.5 0 00-.25.54l.38 2.27a.42.42 0 01-.3.46l-2.21.64a.5.5 0 00-.33.49v2.3a.5.5 0 00.33.49l2.21.64a.45.45 0 01.3.46l-.38 2.27a.5.5 0 00.25.54l1.99 1.15a.5.5 0 00.59-.07l1.66-1.35a.4.4 0 01.54 0l1.64 1.35a.5.5 0 00.58-.07l2-1.15a.5.5 0 00.25-.54l-.38-2.27a.43.43 0 01.3-.46l2.21-.64a.5.5 0 00.33-.49v-2.3a.5.5 0 00-.33-.49l-2.21-.64z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+        <span>规则设置</span>
+      </button>
+    </div>
+
+    <MilestoneRuleEditor
+      :visible="showRuleEditor"
+      :rules="customRules"
+      @close="showRuleEditor = false"
+      @save="onSaveRules"
+    />
+
     <!-- ====== 1. Hero Rank Banner ====== -->
     <div class="hero-banner">
       <div class="hero-icon-wrap">
@@ -161,9 +176,18 @@
 <script setup lang="ts">
 import {
   computed,
+  onMounted,
   ref,
 } from "vue"
-import { milestoneTargetOf } from "../utils/milestones"
+import type { Plugin } from "siyuan"
+import { PluginStorage } from "@/utils/pluginStorage"
+import MilestoneRuleEditor from "./MilestoneRuleEditor.vue"
+import {
+  milestoneTargetOfWithRules,
+} from "../utils/milestones"
+import {
+  STORAGE_KEY_MILESTONE_RULES,
+} from "../types/milestoneRules"
 
 type Tier = "common" | "rare" | "epic" | "legendary"
 
@@ -184,6 +208,7 @@ interface CategoryDef {
 }
 
 interface Props {
+  plugin?: Plugin
   totalNotes?: number
   totalWords?: number
   totalTags?: number
@@ -198,6 +223,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  plugin: undefined,
   totalNotes: 0,
   totalWords: 0,
   totalTags: 0,
@@ -227,6 +253,25 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const showLocked = ref(false)
+const showRuleEditor = ref(false)
+const customRules = ref<Record<string, number[]>>({})
+
+onMounted(async () => {
+  if (props.plugin) {
+    const storage = new PluginStorage(props.plugin)
+    const data = await storage.load<Record<string, number[]>>(STORAGE_KEY_MILESTONE_RULES)
+    if (data) customRules.value = data
+  }
+})
+
+async function onSaveRules(rules: Record<string, number[]>) {
+  customRules.value = rules
+  showRuleEditor.value = false
+  if (props.plugin) {
+    const storage = new PluginStorage(props.plugin)
+    await storage.save(STORAGE_KEY_MILESTONE_RULES, rules)
+  }
+}
 const expandedCategories = ref<Set<string>>(new Set())
 
 const tierLabels: Record<Tier, string> = {
@@ -335,8 +380,8 @@ function generateMilestones(type: string, current: number, extra = 20): Mileston
   const result: MilestoneDef[] = []
   let n = 1
   while (true) {
-    const target = milestoneTargetOf(type, n)
-    if (target > current + extra * milestoneTargetOf(type, 1)) break
+    const target = milestoneTargetOfWithRules(type, n, customRules.value)
+    if (target > current + extra * milestoneTargetOfWithRules(type, 1, customRules.value)) break
     result.push({
       id: `${type}-${n}`,
       icon: meta.icon,
@@ -989,6 +1034,38 @@ $tier-legendary: #ca8a04;
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+// ===== 0. Top Bar =====
+.milestones-top-bar {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-settings {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  font-family: stats.$font-mono;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+
+  &:hover {
+    background: var(--b3-list-hover);
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+  }
+
+  svg {
+    flex-shrink: 0;
+    opacity: 0.7;
+  }
 }
 
 // ===== 1. Hero Banner =====

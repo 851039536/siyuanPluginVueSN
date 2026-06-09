@@ -254,6 +254,85 @@
         </div>
       </div>
 
+      <!-- 审核结果（可折叠） -->
+      <div
+        v-if="isReviewing || reviewResult"
+        class="review-section"
+      >
+        <button
+          class="review-toggle-btn"
+          @click="showReviewPanel = !showReviewPanel"
+        >
+          <svg
+            width="12"
+            height="12"
+            class="review-chevron"
+            :class="{ expanded: showReviewPanel }"
+          >
+            <use xlink:href="#iconRight"></use>
+          </svg>
+          <svg
+            width="14"
+            height="14"
+          ><use xlink:href="#iconCheck"></use></svg>
+          <span>交叉审核</span>
+          <span
+            v-if="isReviewing"
+            class="review-loading-dot"
+          ></span>
+          <span
+            v-else-if="reviewResult"
+            class="review-rating-badge"
+            :class="ratingClass"
+          >
+            {{ reviewResult.rating }}
+          </span>
+        </button>
+        <div
+          v-if="showReviewPanel && reviewResult"
+          class="review-body"
+        >
+          <div class="review-summary">
+            <svg width="12" height="12"><use xlink:href="#iconSparkles" /></svg>
+            {{ reviewResult.summary }}
+          </div>
+          <div
+            v-if="reviewResult.issues.length > 0"
+            class="review-issues"
+          >
+            <div class="review-section-title">问题清单</div>
+            <div
+              v-for="(issue, idx) in reviewResult.issues"
+              :key="idx"
+              class="review-issue-item"
+            >
+              <span
+                class="issue-severity"
+                :class="'severity-' + issue.severity"
+              >{{ issue.severity }}</span>
+              <span>{{ issue.description }}</span>
+            </div>
+          </div>
+          <div
+            v-if="reviewResult.suggestions.length > 0"
+            class="review-suggestions"
+          >
+            <div class="review-section-title">改进建议</div>
+            <div
+              v-for="(sug, idx) in reviewResult.suggestions"
+              :key="idx"
+              class="review-suggestion-item"
+            >
+              <span class="suggestion-num">{{ idx + 1 }}.</span>
+              {{ sug }}
+            </div>
+          </div>
+          <div class="review-footer">
+            <span class="review-model">审核模型: {{ reviewResult.reviewModel }}</span>
+          </div>
+        </div>
+      </div>
+
       <div class="result-content">
         <!-- 预览模式 -->
         <div
@@ -340,6 +419,17 @@ interface Props {
   // 耗时
   generationElapsed?: string
 
+  // 审核
+  isReviewing?: boolean
+  reviewResult?: {
+    rating: string
+    summary: string
+    issues: Array<{ description: string, severity: string }>
+    suggestions: string[]
+    reviewModel: string
+    reviewedAt: number
+  } | null
+
   // 操作可用性
   canApply: boolean
   canInsertSubDoc: boolean
@@ -366,6 +456,16 @@ defineEmits<{
 
 const viewMode = ref<"preview" | "diff">("preview")
 const showSearchPanel = ref(true)
+const showReviewPanel = ref(true)
+
+// 审核评级样式类
+const ratingClass = computed(() => {
+  if (!props.reviewResult) return ""
+  const r = props.reviewResult.rating
+  if (r === "优秀") return "rating-good"
+  if (r === "良好") return "rating-ok"
+  return "rating-needs-fix"
+})
 
 // 是否存在差异（有原文且有生成内容且不同）
 const hasDiff = computed(() => {
@@ -582,5 +682,185 @@ watch(isGenerating, (newVal, oldVal) => {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+}
+
+// ============ 审核结果 ============
+.review-section {
+  margin: 0 14px;
+  border-radius: 6px;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  background: var(--b3-theme-surface);
+  overflow: hidden;
+}
+
+.review-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--b3-theme-on-surface);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  user-select: none;
+
+  svg {
+    color: var(--b3-theme-success);
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    background: var(--b3-theme-surface-light);
+  }
+}
+
+.review-chevron {
+  transition: transform 0.2s;
+
+  &.expanded {
+    transform: rotate(90deg);
+  }
+}
+
+.review-loading-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--b3-theme-success);
+  animation: reasoning-blink 1s ease-in-out infinite;
+  margin-left: auto;
+}
+
+.review-rating-badge {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 3px;
+
+  &.rating-good {
+    color: #fff;
+    background: var(--b3-theme-success);
+  }
+
+  &.rating-ok {
+    color: #fff;
+    background: var(--b3-theme-primary);
+  }
+
+  &.rating-needs-fix {
+    color: #fff;
+    background: var(--b3-theme-error);
+  }
+}
+
+.review-body {
+  padding: 8px 10px 10px;
+  border-top: 1px solid var(--b3-theme-surface-lighter);
+  margin: 0 10px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.review-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--b3-theme-on-surface);
+  line-height: 1.6;
+
+  svg {
+    color: var(--b3-theme-primary);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+}
+
+.review-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.45;
+  margin-bottom: 4px;
+}
+
+.review-issues {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.review-issue-item {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--b3-theme-on-surface);
+  line-height: 1.5;
+}
+
+.issue-severity {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 0 4px;
+  border-radius: 2px;
+  flex-shrink: 0;
+
+  &.severity-高 {
+    color: var(--b3-theme-error);
+    background: var(--b3-theme-error-background);
+  }
+
+  &.severity-中 {
+    color: var(--b3-theme-warning);
+    background: var(--b3-theme-warning-background);
+  }
+
+  &.severity-低 {
+    color: var(--b3-theme-on-surface);
+    background: var(--b3-theme-surface-lighter);
+    opacity: 0.7;
+  }
+}
+
+.review-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.review-suggestion-item {
+  font-size: 11px;
+  color: var(--b3-theme-on-surface);
+  line-height: 1.5;
+}
+
+.suggestion-num {
+  font-weight: 600;
+  color: var(--b3-theme-primary);
+  margin-right: 3px;
+}
+
+.review-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 4px;
+  border-top: 1px dashed var(--b3-theme-surface-lighter);
+}
+
+.review-model {
+  font-size: 9px;
+  font-weight: 500;
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.4;
 }
 </style>

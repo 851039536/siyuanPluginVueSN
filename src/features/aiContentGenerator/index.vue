@@ -10,9 +10,11 @@
       :enable-thinking="enableThinking"
       :available-models="availableModels"
       :supports-thinking="supportsThinking"
+      :enable-review="enableReview"
       @update:selected-model="selectedModel = $event"
       @update:custom-model="customModel = $event"
       @update:enable-thinking="enableThinking = $event"
+      @update:enable-review="enableReview = $event"
     />
 
     <!-- ====== 生成器模式 ====== -->
@@ -51,7 +53,9 @@
           :reasoning-content="reasoningContent"
           :show-reasoning="showReasoning"
           :generation-elapsed="generationElapsed"
-          :can-apply="!!editTargetDoc && !isApplying && !isGenerating"
+          :is-reviewing="isReviewing"
+          :review-result="reviewResult"
+          :can-apply="!!editTargetDoc && !isApplying && !isGenerating && !isReviewing"
           :can-insert-sub-doc="!!editTargetDoc && !isInsertingSubDoc && !isGenerating"
           :can-undo="canUndoEdit"
           @stop="handleStop"
@@ -114,7 +118,7 @@ import hljs from "highlight.js";
 import "highlight.js/styles/github.css";
 import * as api from "@/api";
 import { AIGeneratorStorage } from "./types/storage";
-import type { GenerateOptions, SavedPrompt, TargetDoc } from "@/types/ai";
+import type { GenerateOptions, ReviewResult, SavedPrompt, TargetDoc } from "@/types/ai";
 import { useSkillsLoader } from "./composables/useSkillsLoader";
 import { renderMarkdown } from "./utils";
 import PanelHeader from "./components/PanelHeader.vue";
@@ -127,6 +131,7 @@ interface Props {
   i18n: Record<string, string>;
   plugin: Plugin;
   onGenerate: (options: GenerateOptions) => Promise<string>;
+  onReview?: (userRequest: string, generatedContent: string) => Promise<ReviewResult>;
 }
 
 const props = withDefaults(defineProps<Props>(), {});
@@ -142,6 +147,11 @@ const generationElapsed = ref(""); // 生成耗时显示（如 "3.2s"），空�
 let generationStartTime = 0;       // 生成开始时间戳（非响应式）
 const showSettings = ref(false);
 const abortController = ref<AbortController | null>(null);
+
+// ============ 审核系统 ============
+const enableReview = ref(false);
+const isReviewing = ref(false);
+const reviewResult = ref<ReviewResult | null>(null);
 
 // 模式切换
 const activeMode = ref<"generator" | "automation">("generator");
@@ -286,6 +296,7 @@ const startGeneration = () => {
   searchStatus.value = "";
   searchResults.value = [];
   showSearchResults.value = false;
+  resetReview();
 };
 
 /**
@@ -501,6 +512,46 @@ const handleStop = () => {
   resetAllGenerationStates();
   generationElapsed.value = "";
   generationStartTime = 0;
+};
+
+/**
+ * 交叉审核：生成完成后，使用 V4 Pro 审核生成内容
+ */
+const performReview = async () => {
+  if (!enableReview.value || !generatedContent.value) return;
+  if (!props.onReview) return;
+
+  // 构建用户原始请求（从当前上下文推断）
+  const userRequest = editCustomInput.value
+    || (editTargetDoc.value ? `对文档"${editTargetDoc.value.title}"进行编辑` : "AI 内容生成")
+
+  isReviewing.value = true;
+  reviewResult.value = null;
+
+  try {
+    const result = await props.onReview(userRequest, generatedContent.value);
+    reviewResult.value = result;
+  } catch (error) {
+    console.error("审核执行失败:", error);
+    reviewResult.value = {
+      rating: "需改进",
+      summary: `审核失败: ${(error as Error).message}`,
+      issues: [],
+      suggestions: [],
+      reviewModel: "deepseek-v4-pro",
+      reviewedAt: Date.now(),
+    };
+  } finally {
+    isReviewing.value = false;
+  }
+};
+
+/**
+ * 重置审核状态
+ */
+const resetReview = () => {
+  reviewResult.value = null;
+  isReviewing.value = false;
 };
 
 /**
@@ -911,6 +962,7 @@ const aiEditAction = async (
   } finally {
     resetAllGenerationStates();
     recordGenerationElapsed();
+    performReview();
   }
 };
 
@@ -988,6 +1040,7 @@ ${editTargetDoc.value.content}`;
   } finally {
     resetAllGenerationStates();
     recordGenerationElapsed();
+    performReview();
   }
 };
 

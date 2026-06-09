@@ -86,6 +86,21 @@
           />
           <span class="thinking-label">思考</span>
         </label>
+        <!-- 审核开关 -->
+        <label
+          class="review-toggle"
+          title="生成后使用 V4 Pro 交叉审核"
+        >
+          <input
+            type="checkbox"
+            :checked="enableReview"
+            @change="$emit('update:enable-review', ($event.target as HTMLInputElement).checked)"
+          />
+          <span class="review-label">
+            <svg width="11" height="11"><use xlink:href="#iconCheck" /></svg>
+            审核
+          </span>
+        </label>
       </template>
       <!-- 设置按钮（仅在生成器模式显示） -->
       <Button
@@ -118,6 +133,7 @@ interface Props {
   selectedModel?: string
   customModel?: string
   enableThinking?: boolean
+  enableReview?: boolean
   availableModels?: ProviderModels
   supportsThinking?: boolean
 }
@@ -129,6 +145,7 @@ withDefaults(defineProps<Props>(), {
   selectedModel: "",
   customModel: "",
   enableThinking: false,
+  enableReview: false,
   availableModels: () => ({
     common: [],
     all: [],
@@ -142,6 +159,7 @@ defineEmits<{
   (e: "update:selected-model", value: string): void
   (e: "update:custom-model", value: string): void
   (e: "update:enable-thinking", value: boolean): void
+  (e: "update:enable-review", value: boolean): void
 }>()
 </script>
 
@@ -275,6 +293,49 @@ defineEmits<{
 
 .thinking-toggle input:checked + .thinking-label {
   color: var(--b3-theme-primary);
+  opacity: 1;
+  font-weight: 500;
+}
+
+// ============ 审核开关 ============
+.review-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 5px;
+  font-size: 10px;
+  color: var(--b3-theme-on-surface);
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+
+  input[type="checkbox"] {
+    width: 12px;
+    height: 12px;
+    cursor: pointer;
+    accent-color: var(--b3-theme-success);
+  }
+
+  &:hover {
+    background: var(--b3-theme-surface);
+  }
+}
+
+.review-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
+
+  svg {
+    color: var(--b3-theme-success);
+  }
+}
+
+.review-toggle input:checked + .review-label {
+  color: var(--b3-theme-success);
   opacity: 1;
   font-weight: 500;
 }

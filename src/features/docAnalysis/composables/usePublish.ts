@@ -67,6 +67,46 @@ function formatDateForFM(date?: string): string {
   return d.toISOString().replace("T", " ").substring(0, 19)
 }
 
+/** Base64 编码（分块转换避免大文件 RangeError） */
+function encodeBase64(str: string): string {
+  const data = new TextEncoder().encode(str)
+  let binary = ""
+  for (let i = 0; i < data.length; i += 8192) {
+    binary += String.fromCharCode(...data.subarray(i, i + 8192))
+  }
+  return btoa(binary)
+}
+
+/** 解析 XMLRPC 响应，提取 postId 或抛出 fault 错误 */
+function parseXmlrpcResponse(xmlBody: string, platformName: string): string {
+  const faultMatch = xmlBody.match(/<fault>[\s\S]*?<value>\s*<int>\s*(-?\d+)\s*<\/int>[\s\S]*?<value>\s*<string>\s*([\s\S]*?)\s*<\/string>[\s\S]*?<\/fault>/i)
+  if (faultMatch) {
+    throw new Error(`${platformName} 返回错误 [${faultMatch[1]}]: ${decodeXmlEntities(faultMatch[2])}`)
+  }
+  const postIdMatch = xmlBody.match(/<string>\s*(\d+)\s*<\/string>/)
+  return postIdMatch ? postIdMatch[1] : xmlBody.substring(0, 100)
+}
+
+/** 构建 MetaWeblog newPost XMLRPC 请求体 */
+function buildMetaWeblogXml(blogId: string, username: string, password: string, content: ExportContent, bodyContent: string, extra?: string): string {
+  return `<?xml version="1.0"?>
+<methodCall>
+  <methodName>metaWeblog.newPost</methodName>
+  <params>
+    <param><value><string>${escapeXml(blogId)}</string></value></param>
+    <param><value><string>${escapeXml(username)}</string></value></param>
+    <param><value><string>${escapeXml(password)}</string></value></param>
+    <param><value><struct>
+      <member><name>title</name><value><string>${escapeXml(content.title)}</string></value></member>
+      <member><name>description</name><value><string>${escapeXml(bodyContent)}</string></value></member>
+      <member><name>categories</name><value><array><data>${content.categories.map((c) => `<value><string>${escapeXml(c)}</string></value>`).join("")}</data></array></value></member>
+      <member><name>mt_keywords</name><value><string>${content.tags.join(",")}</string></value></member>${extra || ""}
+    </struct></value></param>
+    <param><value><boolean>1</boolean></value></param>
+  </params>
+</methodCall>`
+}
+
 /**
  * 发布功能 composable
  */
@@ -418,15 +458,7 @@ export function usePublish(plugin: Plugin) {
       // 文件不存在，跳过
     }
 
-    // Base64 编码内容
-    const encoder = new TextEncoder()
-    const data = encoder.encode(content.fullMarkdown)
-    // 分块转换避免大文件 RangeError（call stack size exceeded）
-    let binary = ""
-    for (let i = 0; i < data.length; i += 8192) {
-      binary += String.fromCharCode(...data.subarray(i, i + 8192))
-    }
-    const base64Content = btoa(binary)
+    const base64Content = encodeBase64(content.fullMarkdown)
 
     const payload: any = {
       message: commitMessage,
@@ -533,24 +565,8 @@ export function usePublish(plugin: Plugin) {
       ? content.htmlContent
       : content.fullMarkdown
 
-    // 构建 XMLRPC 请求
-    const xmlBody = `<?xml version="1.0"?>
-<methodCall>
-  <methodName>metaWeblog.newPost</methodName>
-  <params>
-    <param><value><string>1</string></value></param>
-    <param><value><string>${escapeXml(username)}</string></value></param>
-    <param><value><string>${escapeXml(password)}</string></value></param>
-    <param><value><struct>
-      <member><name>title</name><value><string>${escapeXml(content.title)}</string></value></member>
-      <member><name>description</name><value><string>${escapeXml(bodyContent)}</string></value></member>
-      <member><name>categories</name><value><array><data>${content.categories.map((c) => `<value><string>${escapeXml(c)}</string></value>`).join("")}</data></array></value></member>
-      <member><name>mt_keywords</name><value><string>${content.tags.join(",")}</string></value></member>
-      <member><name>post_status</name><value><string>publish</string></value></member>
-    </struct></value></param>
-    <param><value><boolean>1</boolean></value></param>
-  </params>
-</methodCall>`
+    const xmlBody = buildMetaWeblogXml("1", username, password, content, bodyContent,
+      "\n      <member><name>post_status</name><value><string>publish</string></value></member>")
 
     const resp = await forwardProxy(
       xmlrpcUrl,
@@ -574,16 +590,7 @@ export function usePublish(plugin: Plugin) {
     }
 
     const xmlBodyResp = resp.body || ""
-
-    // 检测 XMLRPC fault
-    const faultCodeMatch = xmlBodyResp.match(/<fault>[\s\S]*?<value>\s*<int>\s*(-?\d+)\s*<\/int>[\s\S]*?<value>\s*<string>\s*([\s\S]*?)\s*<\/string>[\s\S]*?<\/fault>/i)
-    if (faultCodeMatch) {
-      throw new Error(`WordPress 返回错误 [${faultCodeMatch[1]}]: ${decodeXmlEntities(faultCodeMatch[2])}`)
-    }
-
-    // 从 XML 响应中提取 postId
-    const postIdMatch = xmlBodyResp.match(/<string>\s*(\d+)\s*<\/string>/)
-    const remoteId = postIdMatch ? postIdMatch[1] : xmlBodyResp.substring(0, 100)
+    const remoteId = parseXmlrpcResponse(xmlBodyResp, "WordPress")
 
     return {
       platformId: platform.id,
@@ -625,23 +632,7 @@ export function usePublish(plugin: Plugin) {
       ? content.htmlContent
       : content.fullMarkdown
 
-    // 构建 MetaWeblog XMLRPC 请求
-    const xmlBody = `<?xml version="1.0"?>
-<methodCall>
-  <methodName>metaWeblog.newPost</methodName>
-  <params>
-    <param><value><string>${escapeXml(blogName)}</string></value></param>
-    <param><value><string>${escapeXml(username)}</string></value></param>
-    <param><value><string>${escapeXml(password)}</string></value></param>
-    <param><value><struct>
-      <member><name>title</name><value><string>${escapeXml(content.title)}</string></value></member>
-      <member><name>description</name><value><string>${escapeXml(bodyContent)}</string></value></member>
-      <member><name>categories</name><value><array><data>${content.categories.map((c) => `<value><string>${escapeXml(c)}</string></value>`).join("")}</data></array></value></member>
-      <member><name>mt_keywords</name><value><string>${content.tags.join(",")}</string></value></member>
-    </struct></value></param>
-    <param><value><boolean>1</boolean></value></param>
-  </params>
-</methodCall>`
+    const xmlBody = buildMetaWeblogXml(blogName, username, password, content, bodyContent)
 
     const resp = await forwardProxy(
       apiUrl,
@@ -665,16 +656,7 @@ export function usePublish(plugin: Plugin) {
     }
 
     const xmlBodyResp = resp.body || ""
-
-    // 检测 XMLRPC fault（正确请求也可能返回 fault）
-    const faultCodeMatch = xmlBodyResp.match(/<fault>[\s\S]*?<value>\s*<int>\s*(-?\d+)\s*<\/int>[\s\S]*?<value>\s*<string>\s*([\s\S]*?)\s*<\/string>[\s\S]*?<\/fault>/i)
-    if (faultCodeMatch) {
-      throw new Error(`博客园返回错误 [${faultCodeMatch[1]}]: ${decodeXmlEntities(faultCodeMatch[2])}`)
-    }
-
-    // 从 XML 响应中提取 postId
-    const postIdMatch = xmlBodyResp.match(/<string>\s*(\d+)\s*<\/string>/)
-    const remoteId = postIdMatch ? postIdMatch[1] : xmlBodyResp.substring(0, 100)
+    const remoteId = parseXmlrpcResponse(xmlBodyResp, "博客园")
 
     return {
       platformId: platform.id,

@@ -7,3 +7,55 @@ $da-radius: 6px;
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+// 旋转图标
+@mixin da-spin-icon {
+  animation: spin 1s linear infinite;
+}
+
+// 自定义滚动条
+@mixin da-scrollbar {
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--b3-scroll-color);
+    border-radius: 3px;
+  }
+}
+
+// 输入框基座（focus 发光）
+@mixin da-input-base {
+  padding: 5px 8px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $da-radius;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  font-size: 12px;
+  outline: none;
+  min-width: 0;
+  &:focus {
+    border-color: var(--b3-theme-primary);
+    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
+  }
+}
+
+// 面板关闭按钮
+@mixin da-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $da-radius;
+  background: transparent;
+  color: var(--b3-theme-on-surface-variant);
+  cursor: pointer;
+  font-size: 18px;
+  flex-shrink: 0;
+  &:hover {
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+  }
+}

@@ -180,3 +180,24 @@ export interface SearchApiConfig {
   /** Jina API Key（用于 Reranker 重排序，注册 https://jina.ai 获取免费额度） */
   jinaApiKey?: string
 }
+
+// ============ 审核相关类型 ============
+
+/** 审核结果 */
+export interface ReviewResult {
+  /** 质量评级：优秀/良好/需改进 */
+  rating: "优秀" | "良好" | "需改进"
+  /** 总体评价 */
+  summary: string
+  /** 问题清单 */
+  issues: Array<{
+    description: string
+    severity: "高" | "中" | "低"
+  }>
+  /** 改进建议 */
+  suggestions: string[]
+  /** 审核模型 */
+  reviewModel: string
+  /** 审核时间 */
+  reviewedAt: number
+}

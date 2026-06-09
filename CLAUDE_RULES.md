@@ -1,128 +1,6 @@
-# CLAUDE.md
+# CLAUDE_RULES.md
 
-思源笔记插件开发指南 — 基于 Vite + Vue 3 + TS，功能模块化架构。
-
-## 统一入口原则
-
-所有跨功能的通用操作必须通过统一定义的入口。以下模式一经发现即为违规：
-
-| 场景 | ❌ 禁止 | ✅ 必须 |
-|------|---------|---------|
-| 存储 | `plugin.loadData/saveData` | `PluginStorage` / `TypedStorage` from `@/utils/pluginStorage` |
-| AI | `fetch/axios` 直调 AI API | `callAI / callAIStream` from `@/utils/aiApi` |
-| 事件 | `new CustomEvent + dispatchEvent` | `emitCustomEvent` from `@/utils/eventBus` |
-| Dock | `createApp + mount + appendChild` | `createVueDockApp` from `@/utils/vueAppHelper` |
-| Modal | `mask + container + createApp` | `createModalVueApp` from `@/utils/vueAppHelper` |
-| 剪贴板 | `textarea + execCommand("copy")` | `copyToClipboard / fallbackCopyToClipboard` from `@/utils/domUtils` |
-| 下载 | `a.click()` | `triggerDownload / triggerBlobDownload` from `@/utils/domUtils` |
-| 动态样式 | `createElement("style") + appendChild` | `injectStyle(id, css) / removeStyle(id)` from `@/utils/domUtils` |
-| 加密 | 各自实现 AES-GCM + PBKDF2 | `cryptoPrimitives.ts` 基元（各模块保留自身密钥策略） |
-| Node 模块 | 各自 `try { require("node:xxx") } catch` | `getNodeModules / getNodeProcessModules / getNodeFsPathOs` from `@/utils/nodeModules` |
-| SQL | `fetch("/api/query/sql")` | `sql()` from `@/api` |
-| 系统 API | `fetch("/api/...")` 直调 | 对应 `@/api` 封装函数（找不到则新增） |
-| API 导入 | `await import("@/api")` 动态导入 | `import { ... } from "@/api"` 静态导入（api.ts 已被多文件静态引用，动态导入产生 Vite 分块警告） |
-| 状态栏任务 | 绕过状态栏直接弹通知 | `useStatusBarTask` from `@/features/statusBar/composables/useStatusBarTask` |
-| 全局 siyuan | `(window as any).siyuan` | props 传入 Plugin 实例 |
-
-额外的硬规则：
-
-- **功能注册完整性**：新功能必须在 5 处注册（见下方「添加新功能」清单）
-- **Composable 复用**：Dock 面板与弹窗共享逻辑时抽取 `composables/use*.ts`，禁止两个组件各自实例化 Storage。参考 `flashcardReading/composables/`
-- **Vue 事件命名**：emit 事件必须 camelCase，禁止 kebab-case 或 `input:title` 格式
-- **图标注册**：`FEATURE_ICONS` 中添加映射 + 运行 `pnpm validate:icons`
-- **README 文档**：每个 `src/features/*/` 目录下必须有 `README.md`
-- **全局样式**：`@use "@/index.scss" as *;`
-- **优先思源内置图标** 或 @iconify/vue
-
-## 关键文件速查
-
-```
-src/
-├── api.ts                  # 所有思源 API 封装（sql/getFile/putFile/getConf 等 60+ 函数）
-├── index.ts                # 插件入口（同步读开关 → 条件注册各功能）
-├── config/
-│   ├── settings.ts         # PluginSettings 接口 + 功能开关持久化
-│   └── icons.ts            # FEATURE_ICONS + COMMON_ICONS
-├── utils/
-│   ├── aiApi.ts            # callAI / callAIStream — 所有 AI 调用唯一入口
-│   ├── eventBus.ts         # emitCustomEvent — 所有自定义事件唯一入口
-│   ├── pluginStorage.ts    # PluginStorage — 统一存储抽象层
-│   ├── typedStorage.ts     # TypedStorage<T> — 类型安全存储槽
-│   ├── vueAppHelper.ts     # createVueDockApp / createModalVueApp
-│   ├── domUtils.ts         # copyToClipboard / triggerDownload / injectStyle
-│   ├── nodeModules.ts      # getNodeModules / getNodeProcessModules / getNodeFsPathOs
-│   ├── settingsCrypto.ts   # encryptSetting / decryptSetting — 配置加密
-│   ├── cryptoPrimitives.ts # deriveAESKey / aesGcmEncrypt / aesGcmDecrypt — 加密基元
-│   ├── iconHelper.ts       # replaceTopBarIcon / createIconElement
-│   └── settingsBackup.ts   # backupPluginData / restoreFromUpload
-├── components/             # 共享 shadcn-vue 组件（Button/Input/Select/Switch/Tag 等）
-├── features/
-│   ├── statusBar/
-│   │   └── composables/
-│   │       └── useStatusBarTask.ts  # 状态栏后台任务（task.progress/complete/fail）
-│   ├── config.ts           # FEATURE_CONFIG — 单一数据源，推导 FeatureId 类型
-│   ├── index.ts            # 功能注册函数统一导出 + 编译时双向断言
-│   └── <feature>/          # 各功能模块（index.ts + index.vue + types/ + composables/）
-├── types/
-│   ├── ai.ts               # AI API 类型
-│   └── api.d.ts            # API 请求/响应类型
-└── i18n/                   # zh_CN.json / en_US.json
-```
-
-## 添加新功能
-
-### 目录结构
-
-```
-src/features/myFeature/
-├── index.ts               # registerMyFeature() 导出
-├── index.vue              # 主面板
-├── types/
-│   ├── index.ts           # 类型 + Manager 类（不放 register 函数）
-│   └── storage.ts         # class MyFeatureStorage { ... TypedStorage }
-├── composables/
-│   └── useFeature.ts      # 面板与弹窗共享逻辑
-├── components/            # 子组件
-└── styles/index.scss
-```
-
-### 注册清单（8 步，缺一不可）
-
-1. **实现** `index.ts` 导出 `registerMyFeature()`
-2. **类型** `types/index.ts` 仅放类型和 Manager，不放 register 函数
-3. **导出** `src/features/index.ts` 添加 `from "./myFeature"`，同步更新 `_Registered` 类型（否则编译报错）
-4. **注册** `src/index.ts` → `registerFeatures()` 添加 `if (s.enableXxx) registerMyFeature(this)`
-5. **开关** `src/config/settings.ts` → `PluginSettings` 加 `enableXxx: boolean` + `DEFAULT_SETTINGS` 加默认值；若 ID 含缩写词需在 `FEATURE_ID_TO_KEY_MAP` 添加映射
-6. **i18n** `src/i18n/zh_CN.json` + `en_US.json` 添加翻译条目
-7. **配置** `src/features/config.ts` → `FEATURE_CONFIG` 添加条目；纯配置型功能（无 register）需加到 `_ConfigOnly` 白名单
-8. **图标** `src/config/icons.ts` → `FEATURE_ICONS` 添加映射，运行 `pnpm validate:icons`
-
-### 简单功能（无面板、无存储）
-
-```typescript
-// src/features/myFeature/index.ts
-export function registerMyFeature(plugin: Plugin) {
-  plugin.addTopBar({
-    icon: 'iconSettings',
-    title: plugin.i18n.myFeature.title,
-    callback: () => { /* 逻辑 */ },
-  })
-}
-```
-
-### UI 风格：Codex
-
-所有 UI 组件默认使用 **Codex 风格**——代码文档式设计语言，强调结构化、可读性、技术感。
-
-核心规范：
-- **等宽字体**：版本号、路径、日期、标签等代码类文本使用 `font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace`
-- **大写标签**：元信息 key 使用 `font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.45`
-- **边框卡片**：使用 `border: 1px solid var(--b3-border-color)` 而非阴影，hover 时边框变主题色
-- **按钮风格**：主按钮 `vp-btn--primary`（实底），次按钮 `vp-btn--ghost`（描边），图标按钮带边框
-- **分割线**：section 间使用 `border-bottom: 1px solid` 或 `1px dashed` 分隔
-- **focus 发光**：输入框 focus 时 `box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest)`
-
-参考实现：`src/features/superPanel/components/VersionPanel.vue` + `styles/index.scss` 中的 `.vp-*` 系列类名。
+思源笔记插件 — 详细 API 参考、代码示例、UI 规范。
 
 ## API 参考
 
@@ -183,6 +61,7 @@ async init() {
   this.modal.open()   // 触发 Vue mount，注册事件监听
   this.modal.close()  // 隐藏 DOM，保留 Vue 实例和事件监听
 }
+```
 
 ### 事件
 
@@ -331,11 +210,24 @@ const dir = await getWorkspaceDir() // "E:\\siyuan2"
 
 使用 `require("node:fs/path/os/child_process")` 的模块需在 `vite.config.ts` 的 `external` 中声明。
 
+## UI 风格：Codex
+
+所有 UI 组件默认使用 **Codex 风格**——代码文档式设计语言，强调结构化、可读性、技术感。
+
+核心规范：
+- **等宽字体**：版本号、路径、日期、标签等代码类文本使用 `font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace`
+- **大写标签**：元信息 key 使用 `font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.45`
+- **边框卡片**：使用 `border: 1px solid var(--b3-border-color)` 而非阴影，hover 时边框变主题色
+- **按钮风格**：主按钮 `vp-btn--primary`（实底），次按钮 `vp-btn--ghost`（描边），图标按钮带边框
+- **分割线**：section 间使用 `border-bottom: 1px solid` 或 `1px dashed` 分隔
+- **focus 发光**：输入框 focus 时 `box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest)`
+
+参考实现：`src/features/superPanel/components/VersionPanel.vue` + `styles/index.scss` 中的 `.vp-*` 系列类名。
+
 ## 构建与验证
 
 ```bash
 pnpm vite build       # 构建，关注有无警告/错误
-######## 或 ########
 # pnpm vue-tsc --noEmit   # 仅类型检查（更快）
 ```
 

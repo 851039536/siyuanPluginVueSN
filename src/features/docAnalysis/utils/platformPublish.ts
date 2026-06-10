@@ -1,8 +1,9 @@
 import type { DocInfo } from "../types/index"
 import { PLATFORM_META } from "../composables/useDocAnalysis"
 
-/** 从 YAML 属性 key 中提取发布平台名（如 custom-csdn-yaml → "csdn"），无匹配返回 null */
+/** 从 YAML 属性 key 中提取发布平台名（如 custom-csdn-yaml → "csdn"），格式不符或无匹配返回 null */
 export function getPlatformIdFromAttrKey(key: string): string | null {
+  if (!key.startsWith("custom-") || !key.endsWith("-yaml")) return null
   const lower = key.toLowerCase()
   for (const meta of PLATFORM_META) {
     if (meta.matchers.some((m) => lower.includes(m))) return meta.id
@@ -15,7 +16,6 @@ export function getPublishedPlatformIdsFromAttrs(attrs: Record<string, string> |
   const ids = new Set<string>()
   if (!attrs) return ids
   for (const key of Object.keys(attrs)) {
-    if (!key.startsWith("custom-") || !key.endsWith("-yaml")) continue
     if (!attrs[key]?.trim()) continue
     const id = getPlatformIdFromAttrKey(key)
     if (id) ids.add(id)

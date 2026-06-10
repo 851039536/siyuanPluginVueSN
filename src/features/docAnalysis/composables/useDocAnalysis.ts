@@ -56,6 +56,7 @@ export const PLATFORM_META: { matchers: string[], name: string }[] = [
   { matchers: ["51cto"], name: "51CTO" },
   { matchers: ["segmentfault", "sifou"], name: "思否" },
   { matchers: ["oschina"], name: "开源中国" },
+  { matchers: ["infoq"], name: "InfoQ" },
 ]
 
 /** 子查询：获取每个文档的书签名称（思源书签存储在 attributes 表中） */
@@ -650,6 +651,7 @@ export function useDocAnalysis(plugin: Plugin) {
         ["segmentfault", 256],
         ["sifou", 256],
         ["oschina", 512],
+        ["infoq", 1024],
       ]
 
       if (yamlRows) {
@@ -672,7 +674,7 @@ export function useDocAnalysis(plugin: Plugin) {
       let no = 0
       const fullSet = new Set<string>()
       const noSet = new Set<string>()
-      const ALL_PLATFORMS = 1023 // 1+2+4+8+16+32+64+128+256+512 = 63
+      const ALL_PLATFORMS = 2047 // 1+2+4+8+16+32+64+128+256+512+1024 = 63
 
       for (const [id, mask] of docMap) {
         if (mask === 0) {
@@ -1377,6 +1379,13 @@ export function useDocAnalysis(plugin: Plugin) {
     try {
       const notebookCondition = buildNotebookCondition()
 
+      // 找到该平台的所有 matcher，避免只查第一个遗漏用第二个 matcher 标记的文档
+      const meta = PLATFORM_META.find((p) => p.matchers.includes(platformMatcher))
+      const matchers = meta ? meta.matchers : [platformMatcher]
+      const nameConditions = matchers
+        .map((m) => `name LIKE '%${m.replace(/'/g, "''")}%'`)
+        .join(" OR ")
+
       const sqlStmt = `
         SELECT
           b.id as doc_id,
@@ -1400,7 +1409,7 @@ export function useDocAnalysis(plugin: Plugin) {
         )
         AND b.id NOT IN (
           SELECT block_id FROM attributes
-          WHERE name LIKE '%${platformMatcher.replace(/'/g, "''")}%' AND name LIKE '%yaml%'
+          WHERE (${nameConditions}) AND name LIKE '%yaml%'
         )
         ORDER BY b.updated DESC
         LIMIT 2000

@@ -324,6 +324,11 @@ const PLATFORM_CONFIGS = [
     name: "开源中国",
     matchers: ["oschina"],
   },
+  {
+    id: "infoq",
+    name: "InfoQ",
+    matchers: ["infoq"],
+  },
 ]
 
 const platforms = computed<PlatformInfo[]>(() => {

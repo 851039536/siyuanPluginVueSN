@@ -44,6 +44,20 @@ const SIZE_WORDCOUNT_SUBQUERY = `
   GROUP BY root_id
 `
 
+/** 平台元数据：matcher → 显示名称 */
+const PLATFORM_META: { matchers: string[], name: string }[] = [
+  { matchers: ["csdn"], name: "CSDN" },
+  { matchers: ["zhihu"], name: "知乎" },
+  { matchers: ["juejin"], name: "掘金" },
+  { matchers: ["cnblogs", "blog"], name: "博客园" },
+  { matchers: ["bili", "bibi"], name: "B站" },
+  { matchers: ["gzh"], name: "公众号" },
+  { matchers: ["jianshu"], name: "简书" },
+  { matchers: ["51cto"], name: "51CTO" },
+  { matchers: ["segmentfault", "sifou"], name: "思否" },
+  { matchers: ["oschina"], name: "开源中国" },
+]
+
 /** 子查询：获取每个文档的书签名称（思源书签存储在 attributes 表中） */
 const BOOKMARK_SUBQUERY = `
   SELECT block_id, value as bookmark
@@ -255,7 +269,7 @@ export function useDocAnalysis(plugin: Plugin) {
 
       const docs = mapRowsToDocs(rows)
       const sortedDocs = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder)
-
+      await enrichWithPublishedPlatforms(sortedDocs)
       setResults(sortedDocs)
       queryState.status = "success"
     } catch (error) {
@@ -828,7 +842,9 @@ export function useDocAnalysis(plugin: Plugin) {
         queryState.status = "empty"
       } else {
         const docs = mapRowsToDocs(rows)
-        setResults(sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder))
+        const sortedDocs = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder)
+        await enrichWithPublishedPlatforms(sortedDocs)
+        setResults(sortedDocs)
         queryState.status = "success"
       }
     } catch (error) {
@@ -1042,7 +1058,9 @@ export function useDocAnalysis(plugin: Plugin) {
       }
 
       const docs = mapRowsToDocs(rows)
-      setResults(sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder))
+      const sortedDocs = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder)
+      await enrichWithPublishedPlatforms(sortedDocs)
+      setResults(sortedDocs)
       queryState.status = "success"
     } catch (error) {
       console.error("按类别查询文档失败:", error)
@@ -1103,7 +1121,7 @@ export function useDocAnalysis(plugin: Plugin) {
 
       const docs = mapRowsToDocs(rows)
       const sortedDocs = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder)
-
+      await enrichWithPublishedPlatforms(sortedDocs)
       setResults(sortedDocs)
       queryState.status = "success"
     } catch (error) {
@@ -1192,7 +1210,9 @@ export function useDocAnalysis(plugin: Plugin) {
           queryState.status = "empty"
         } else {
           const docs = mapRowsToDocs(rows)
-          setResults(sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder))
+          const sortedDocs = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder)
+          await enrichWithPublishedPlatforms(sortedDocs)
+          setResults(sortedDocs)
           queryState.status = "success"
         }
       } else {
@@ -1223,7 +1243,9 @@ export function useDocAnalysis(plugin: Plugin) {
           queryState.status = "empty"
         } else {
           const docs = mapRowsToDocs(rows)
-          setResults(sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder))
+          const sortedDocs = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder)
+          await enrichWithPublishedPlatforms(sortedDocs)
+          setResults(sortedDocs)
           queryState.status = "success"
         }
       }
@@ -1296,6 +1318,50 @@ export function useDocAnalysis(plugin: Plugin) {
   /** 清空查询结果 */
   function clearResults() {
     setResults([])
+  }
+
+  /**
+   * 丰富文档列表：查询 yaml 属性，标记未发布平台
+   */
+  async function enrichWithPublishedPlatforms(docs: DocInfo[]) {
+    if (docs.length === 0) return
+    const idList = docs.map((d) => `'${d.id.replace(/'/g, "''")}'`).join(",")
+
+    try {
+      const yamlRows = await sql(`
+        SELECT block_id, name FROM attributes
+        WHERE name LIKE '%yaml%'
+        AND block_id IN (${idList})
+        LIMIT 10000
+      `)
+
+      const docPublishedMap = new Map<string, Set<string>>()
+      if (yamlRows) {
+        for (const row of yamlRows) {
+          const id = String(row.block_id)
+          if (!docPublishedMap.has(id)) docPublishedMap.set(id, new Set())
+          const name = String(row.name).toLowerCase()
+          for (const meta of PLATFORM_META) {
+            for (const matcher of meta.matchers) {
+              if (name.includes(matcher)) {
+                docPublishedMap.get(id)!.add(matcher)
+                break
+              }
+            }
+          }
+        }
+      }
+
+      for (const doc of docs) {
+        const published = docPublishedMap.get(doc.id) || new Set()
+        const unpublished = PLATFORM_META
+          .filter((m) => !m.matchers.some((mt) => published.has(mt)))
+          .map((m) => m.name)
+        doc.unpublishedPlatforms = unpublished.length > 0 ? unpublished : undefined
+      }
+    } catch (error) {
+      console.error("查询文档发布属性失败:", error)
+    }
   }
 
   return {

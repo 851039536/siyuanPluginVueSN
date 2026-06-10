@@ -89,13 +89,32 @@
       </span>
     </div>
     <div class="doc-actions">
-      <button
-        class="action-btn attrs-btn"
-        title="查看属性"
-        @click.stop="$emit('attrs', doc.id)"
-      >
-        <Icon icon="mdi:information-outline" />
-      </button>
+      <div class="attrs-btn-wrapper">
+        <button
+          class="action-btn attrs-btn"
+          title="查看属性"
+          @click.stop="$emit('attrs', doc.id)"
+        >
+          <Icon icon="mdi:information-outline" />
+        </button>
+        <div
+          v-if="doc.unpublishedPlatforms"
+          class="unpublished-tooltip"
+        >
+          <div class="tooltip-header">未发布平台</div>
+          <div
+            v-for="name in doc.unpublishedPlatforms"
+            :key="name"
+            class="tooltip-item"
+          >{{ name }}</div>
+        </div>
+        <div
+          v-else
+          class="unpublished-tooltip published-all"
+        >
+          <div class="tooltip-header">全部已发布</div>
+        </div>
+      </div>
       <button
         class="action-btn publish-action-btn"
         title="发布此文档"
@@ -318,6 +337,72 @@ function formatTime(ts: string): string {
     display: flex;
     align-items: center;
     gap: 2px;
+  }
+
+  .attrs-btn-wrapper {
+    position: relative;
+
+    .unpublished-tooltip {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      min-width: 120px;
+      max-height: 220px;
+      overflow-y: auto;
+      padding: 8px 10px;
+      border-radius: 6px;
+      background: var(--b3-theme-background);
+      border: 1px solid var(--b3-border-color);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      z-index: 100;
+      white-space: nowrap;
+
+      &::-webkit-scrollbar {
+        width: 3px;
+      }
+      &::-webkit-scrollbar-thumb {
+        background: var(--b3-scroll-color);
+        border-radius: 2px;
+      }
+
+      .tooltip-header {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        opacity: 0.45;
+        margin-bottom: 6px;
+        padding-bottom: 4px;
+        border-bottom: 1px solid var(--b3-border-color);
+      }
+
+      .tooltip-item {
+        font-size: 12px;
+        padding: 3px 0;
+        color: var(--b3-theme-on-background);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        &::before {
+          content: "✕";
+          font-size: 10px;
+          color: var(--b3-theme-error, #ef4444);
+          opacity: 0.7;
+        }
+      }
+
+      &.published-all .tooltip-header {
+        color: var(--b3-theme-success, #22c55e);
+        opacity: 1;
+      }
+    }
+
+    &:hover .unpublished-tooltip {
+      display: block;
+    }
   }
 
   .action-btn {

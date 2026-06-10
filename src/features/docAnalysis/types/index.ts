@@ -38,6 +38,8 @@ export interface DocInfo {
   publishStatus?: string
   /** 已发布平台数量 */
   publishedPlatformCount?: number
+  /** 未发布的平台名称列表 */
+  unpublishedPlatforms?: string[]
 }
 
 /** 深度分析统计 */

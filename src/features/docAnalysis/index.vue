@@ -47,10 +47,10 @@
       <span class="platform-filter-label">平台过滤</span>
       <button
         v-for="platform in PLATFORM_META"
-        :key="platform.matchers[0]"
+        :key="platform.id"
         class="platform-chip"
-        :class="{ active: activePlatformFilter === platform.matchers[0] }"
-        @click="handlePlatformFilter(platform.matchers[0])"
+        :class="{ active: activePlatformFilter === platform.id }"
+        @click="handlePlatformFilter(platform.id)"
       >
         {{ platform.name }}
       </button>
@@ -218,7 +218,7 @@
           <DocListItem
             v-for="doc in visibleDocs"
             :key="doc.id"
-            v-memo="[doc.id, doc.title, doc.wordCount, doc.contentSize, doc.updated, doc.depth, doc.refCount, doc.imageCount, doc.bookmark, doc.publishStatus]"
+            v-memo="[doc.id, doc.title, doc.wordCount, doc.contentSize, doc.updated, doc.depth, doc.refCount, doc.imageCount, doc.bookmark]"
             :doc="doc"
             @open="openDoc"
             @publish="handlePublishDoc"
@@ -407,7 +407,7 @@ const activePlatformFilter = ref("")
 
 /** 当前过滤平台的显示名称 */
 const activePlatformName = computed(() => {
-  const meta = PLATFORM_META.find((p) => p.matchers.includes(activePlatformFilter.value))
+  const meta = PLATFORM_META.find((p) => p.id === activePlatformFilter.value)
   return meta ? meta.name : activePlatformFilter.value
 })
 

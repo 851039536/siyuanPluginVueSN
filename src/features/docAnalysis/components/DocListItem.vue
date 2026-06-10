@@ -27,16 +27,6 @@
     </div>
     <div class="doc-badges">
       <span
-        v-if="doc.publishStatus === 'published'"
-        class="badge publish-badge published"
-      >
-        <Icon
-          icon="mdi:check-circle"
-          class="badge-icon"
-        />
-        已发布{{ doc.publishedPlatformCount ? `(${doc.publishedPlatformCount})` : '' }}
-      </span>
-      <span
         v-if="doc.updated"
         class="badge time-badge"
         :class="timeClass"
@@ -321,13 +311,6 @@ function formatTime(ts: string): string {
     &.bookmark-badge {
       color: var(--b3-theme-warning, #eab308);
       background: rgba(234, 179, 8, 0.1);
-    }
-
-    &.publish-badge {
-      &.published {
-        color: var(--b3-theme-success, #22c55e);
-        background: rgba(34, 197, 94, 0.1);
-      }
     }
   }
 

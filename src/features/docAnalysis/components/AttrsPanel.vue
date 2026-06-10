@@ -153,6 +153,7 @@ import {
   ref,
 } from "vue"
 import { setBlockAttrs } from "@/api"
+import { PLATFORM_META } from "../composables/useDocAnalysis"
 
 interface Props {
   visible: boolean
@@ -203,7 +204,6 @@ interface PlatformInfo {
   id: string
   name: string
   published: boolean
-  matchKeys: string[]
 }
 
 const markingPlatform = ref<string | null>(null)
@@ -211,7 +211,7 @@ const markingPlatform = ref<string | null>(null)
 async function markAsPublished(platformId: string) {
   if (!props.attrs || markingPlatform.value) return
 
-  const config = PLATFORM_CONFIGS.find((c) => c.id === platformId)
+  const config = PLATFORM_META.find((p) => p.id === platformId)
   if (!config) return
 
   // eslint-disable-next-line no-alert
@@ -273,87 +273,27 @@ function buildYamlTemplate(): string {
   return lines.join("\n")
 }
 
-const PLATFORM_CONFIGS = [
-  {
-    id: "csdn",
-    name: "CSDN",
-    matchers: ["csdn"],
-  },
-  {
-    id: "zhihu",
-    name: "知乎",
-    matchers: ["zhihu"],
-  },
-  {
-    id: "juejin",
-    name: "掘金",
-    matchers: ["juejin"],
-  },
-  {
-    id: "blog",
-    name: "博客园",
-    matchers: ["cnblogs", "blog"],
-  },
-  {
-    id: "bibi",
-    name: "B站",
-    matchers: ["bili", "bibi"],
-  },
-  {
-    id: "gzh",
-    name: "公众号",
-    matchers: ["gzh"],
-  },
-  {
-    id: "jianshu",
-    name: "简书",
-    matchers: ["jianshu"],
-  },
-  {
-    id: "51cto",
-    name: "51CTO",
-    matchers: ["51cto"],
-  },
-  {
-    id: "segmentfault",
-    name: "思否",
-    matchers: ["segmentfault", "sifou"],
-  },
-  {
-    id: "oschina",
-    name: "开源中国",
-    matchers: ["oschina"],
-  },
-  {
-    id: "infoq",
-    name: "InfoQ",
-    matchers: ["infoq"],
-  },
-]
-
 const platforms = computed<PlatformInfo[]>(() => {
-  if (!props.attrs) { return PLATFORM_CONFIGS.map((c) => ({
-    id: c.id,
-    name: c.name,
-    published: false,
-    matchKeys: [],
-  }))
+  if (!props.attrs) {
+    return PLATFORM_META.map((p) => ({
+      id: p.id,
+      name: p.name,
+      published: false,
+    }))
   }
 
   const yamlKeys = Object.keys(props.attrs).filter((k) => k.endsWith("-yaml"))
 
-  return PLATFORM_CONFIGS.map((config) => {
+  return PLATFORM_META.map((config) => {
     const matchedKey = yamlKeys.find((k) => {
       const lower = k.toLowerCase()
       return config.matchers.some((m) => lower.includes(m))
     })
     const published = !!matchedKey && !!(props.attrs![matchedKey]?.trim())
-    const matchKeys = matchedKey ? [matchedKey] : []
     return {
       id: config.id,
       name: config.name,
       published,
-      matchKeys,
     }
   })
 })

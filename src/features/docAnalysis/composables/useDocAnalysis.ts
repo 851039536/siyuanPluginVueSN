@@ -44,19 +44,19 @@ const SIZE_WORDCOUNT_SUBQUERY = `
   GROUP BY root_id
 `
 
-/** 平台元数据：matcher → 显示名称 */
-export const PLATFORM_META: { matchers: string[], name: string }[] = [
-  { matchers: ["csdn"], name: "CSDN" },
-  { matchers: ["zhihu"], name: "知乎" },
-  { matchers: ["juejin"], name: "掘金" },
-  { matchers: ["cnblogs", "blog"], name: "博客园" },
-  { matchers: ["bili", "bibi"], name: "B站" },
-  { matchers: ["gzh"], name: "公众号" },
-  { matchers: ["jianshu"], name: "简书" },
-  { matchers: ["51cto"], name: "51CTO" },
-  { matchers: ["segmentfault", "sifou"], name: "思否" },
-  { matchers: ["oschina"], name: "开源中国" },
-  { matchers: ["infoq"], name: "InfoQ" },
+/** 平台元数据：单一数据源，所有平台列表由此推导 */
+export const PLATFORM_META: { id: string, matchers: string[], name: string }[] = [
+  { id: "csdn", matchers: ["csdn"], name: "CSDN" },
+  { id: "zhihu", matchers: ["zhihu"], name: "知乎" },
+  { id: "juejin", matchers: ["juejin"], name: "掘金" },
+  { id: "cnblogs", matchers: ["cnblogs", "blog"], name: "博客园" },
+  { id: "bili", matchers: ["bili", "bibi"], name: "B站" },
+  { id: "gzh", matchers: ["gzh"], name: "公众号" },
+  { id: "jianshu", matchers: ["jianshu"], name: "简书" },
+  { id: "51cto", matchers: ["51cto"], name: "51CTO" },
+  { id: "segmentfault", matchers: ["segmentfault", "sifou"], name: "思否" },
+  { id: "oschina", matchers: ["oschina"], name: "开源中国" },
+  { id: "infoq", matchers: ["infoq"], name: "InfoQ" },
 ]
 
 /** 子查询：获取每个文档的书签名称（思源书签存储在 attributes 表中） */
@@ -225,8 +225,6 @@ export function useDocAnalysis(plugin: Plugin) {
       refCount: row.ref_count ?? undefined,
       imageCount: row.image_count ?? undefined,
       bookmark: row.bookmark || undefined,
-      publishStatus: row.publish_status || undefined,
-      publishedPlatformCount: row.published_platform_count ?? undefined,
     }))
   }
 
@@ -637,22 +635,10 @@ export function useDocAnalysis(plugin: Plugin) {
         docMap.set(String(doc.id), 0)
       }
 
-      const MATCHERS: [string, number][] = [
-        ["csdn", 1],
-        ["zhihu", 2],
-        ["juejin", 4],
-        ["cnblogs", 8],
-        ["blog", 8],
-        ["bili", 16],
-        ["bibi", 16],
-        ["gzh", 32],
-        ["jianshu", 64],
-        ["51cto", 128],
-        ["segmentfault", 256],
-        ["sifou", 256],
-        ["oschina", 512],
-        ["infoq", 1024],
-      ]
+      // 从 PLATFORM_META 推导位掩码，消除硬编码重复
+      const platformBits: [string, number][] = PLATFORM_META.flatMap((p, i) =>
+        p.matchers.map((m) => [m, 1 << i] as [string, number]),
+      )
 
       if (yamlRows) {
         for (const row of yamlRows) {
@@ -660,7 +646,7 @@ export function useDocAnalysis(plugin: Plugin) {
           if (!docMap.has(id)) continue
           const name = String(row.name).toLowerCase()
           let mask = 0
-          for (const [m, bit] of MATCHERS) {
+          for (const [m, bit] of platformBits) {
             if (name.includes(m)) { mask = bit; break }
           }
           if (mask > 0) {
@@ -674,7 +660,7 @@ export function useDocAnalysis(plugin: Plugin) {
       let no = 0
       const fullSet = new Set<string>()
       const noSet = new Set<string>()
-      const ALL_PLATFORMS = 2047 // 1+2+4+8+16+32+64+128+256+512+1024 = 63
+      const ALL_PLATFORMS = 2047 // (1 << PLATFORM_META.length) - 1，PLATFORM_META 有 11 个平台
 
       for (const [id, mask] of docMap) {
         if (mask === 0) {

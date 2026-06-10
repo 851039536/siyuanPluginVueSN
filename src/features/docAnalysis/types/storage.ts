@@ -2,7 +2,7 @@ import type { FilterOptions } from "./index"
 /**
  * 文档分析功能 - 数据存储管理
  */
-import { Plugin } from "siyuan"
+import type { Plugin } from "siyuan"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
 
@@ -29,14 +29,6 @@ export class DocAnalysisStorage {
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
     this.options = new TypedStorage(storage, "doc-analysis-options", DEFAULT_FILTER_OPTIONS)
-  }
-
-  /**
-   * 初始化存储（加载或使用默认值）
-   */
-  async init(): Promise<{ filterOptions: FilterOptions }> {
-    const filterOptions = await this.options.loadOrDefault()
-    return { filterOptions }
   }
 }
 

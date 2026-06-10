@@ -228,12 +228,14 @@
         <div
           v-else-if="queryState.status === 'empty'"
           class="empty-state"
+          :class="{ 'empty-state--done': activePlatformFilter }"
         >
           <Icon
             icon="mdi:file-check-outline"
             class="empty-icon"
           />
-          <p>没有找到符合条件的文档</p>
+          <p v-if="activePlatformFilter">{{ activePlatformName }} 已全部发布</p>
+          <p v-else>没有找到符合条件的文档</p>
           <p class="empty-desc">
             尝试调整搜索条件或选择其他笔记本
           </p>

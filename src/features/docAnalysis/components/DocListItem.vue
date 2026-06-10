@@ -345,13 +345,11 @@ function formatTime(ts: string): string {
     .unpublished-tooltip {
       display: none;
       position: absolute;
-      bottom: calc(100% + 6px);
+      top: calc(100% + 4px);
       left: 50%;
       transform: translateX(-50%);
-      min-width: 120px;
-      max-height: 220px;
-      overflow-y: auto;
-      padding: 8px 10px;
+      min-width: 110px;
+      padding: 6px 10px;
       border-radius: 6px;
       background: var(--b3-theme-background);
       border: 1px solid var(--b3-border-color);

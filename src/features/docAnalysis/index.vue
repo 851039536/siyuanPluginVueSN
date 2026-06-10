@@ -42,6 +42,35 @@
       @reset="handleReset"
     />
 
+    <!-- 平台快捷过滤栏 -->
+    <div class="platform-filter-bar">
+      <span class="platform-filter-label">平台过滤</span>
+      <button
+        v-for="platform in PLATFORM_META"
+        :key="platform.matchers[0]"
+        class="platform-chip"
+        :class="{ active: activePlatformFilter === platform.matchers[0] }"
+        @click="handlePlatformFilter(platform.matchers[0])"
+      >
+        {{ platform.name }}
+      </button>
+      <button
+        v-if="activePlatformFilter"
+        class="platform-chip-clear"
+        title="清除平台过滤"
+        @click="handlePlatformFilter(activePlatformFilter)"
+      >
+        <Icon icon="mdi:close" />
+      </button>
+    </div>
+    <div
+      v-if="activePlatformFilter"
+      class="platform-filter-hint"
+    >
+      <Icon icon="mdi:information-outline" />
+      <span>显示已发布到其他平台、但还没发布到<strong>{{ activePlatformName }}</strong>的文档</span>
+    </div>
+
     <!-- 统计面板 -->
     <div
       v-show="activeTab === 'stats'"
@@ -332,7 +361,10 @@ import FilterSettings from "./components/FilterSettings.vue"
 import PublishPanel from "./components/PublishPanel.vue"
 
 import StatsOverview from "./components/StatsOverview.vue"
-import { useDocAnalysis } from "./composables/useDocAnalysis"
+import {
+  PLATFORM_META,
+  useDocAnalysis,
+} from "./composables/useDocAnalysis"
 import { getCategoryLabel } from "./types/index"
 import { DEFAULT_FILTER_OPTIONS } from "./types/storage"
 
@@ -362,12 +394,33 @@ const {
   queryByStatsCategory,
   fetchBookmarkDetails,
   queryByBookmark,
+  queryByMissingPlatform,
   openDoc,
   updateSort,
   clearResults,
 } = useDocAnalysis(props.plugin)
 
 const showPublishTip = ref(false)
+
+/** 当前选中的平台过滤 */
+const activePlatformFilter = ref("")
+
+/** 当前过滤平台的显示名称 */
+const activePlatformName = computed(() => {
+  const meta = PLATFORM_META.find((p) => p.matchers.includes(activePlatformFilter.value))
+  return meta ? meta.name : activePlatformFilter.value
+})
+
+/** 切换平台过滤：点击显示该平台未发布的文档 */
+function handlePlatformFilter(matcher: string) {
+  if (activePlatformFilter.value === matcher) {
+    activePlatformFilter.value = ""
+    return
+  }
+  activePlatformFilter.value = matcher
+  queryByMissingPlatform(matcher)
+  activeTab.value = "list"
+}
 
 /** 刷新当前查询结果列表 */
 function refreshList() {

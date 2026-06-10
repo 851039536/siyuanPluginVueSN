@@ -65,7 +65,7 @@ export const PLATFORM_META: { id: string, matchers: string[], name: string, url:
   { id: "bili", matchers: ["bili", "bibi"], name: "B站", url: "https://www.bilibili.com/" },
   { id: "gzh", matchers: ["gzh"], name: "公众号", url: "" },
   { id: "jianshu", matchers: ["jianshu"], name: "简书", url: "https://www.jianshu.com/writer" },
-  { id: "51cto", matchers: ["51cto"], name: "51CTO", url: "https://blog.51cto.com/writer" },
+  { id: "cto51", matchers: ["cto51"], name: "51CTO", url: "https://blog.51cto.com/writer" },
   { id: "segmentfault", matchers: ["segmentfault", "sifou"], name: "思否", url: "https://segmentfault.com/write" },
   { id: "oschina", matchers: ["oschina"], name: "开源中国", url: "https://oschina.net/writer" },
   { id: "infoq", matchers: ["infoq"], name: "InfoQ", url: "https://www.infoq.com/" },

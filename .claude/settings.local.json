@@ -124,7 +124,9 @@
       "Bash(git stash *)",
       "Bash(pnpm validate:icons)",
       "Bash(gh search *)",
-      "Bash(xxd)"
+      "Bash(xxd)",
+      "Skill(simplify)",
+      "Skill(simplify:*)"
     ],
     "deny": [],
     "ask": []

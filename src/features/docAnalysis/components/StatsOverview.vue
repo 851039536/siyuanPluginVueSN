@@ -152,6 +152,32 @@
             ></span>
           </div>
           <div
+            v-if="!hideZero || stats.largeDocs !== 0"
+            class="stat-card"
+            :class="{ active: activeFilter === 'large' }"
+            @click="$emit('selectCategory', 'large')"
+          >
+            <span class="card-value time-cyan">{{ stats.largeDocs }}</span>
+            <span class="card-unit">10~100KB</span>
+            <span
+              class="card-percent"
+              :style="{ width: pct(stats.largeDocs) }"
+            ></span>
+          </div>
+          <div
+            v-if="!hideZero || stats.xlargeDocs !== 0"
+            class="stat-card"
+            :class="{ active: activeFilter === 'xlarge' }"
+            @click="$emit('selectCategory', 'xlarge')"
+          >
+            <span class="card-value time-purple">{{ stats.xlargeDocs }}</span>
+            <span class="card-unit">&gt;100KB</span>
+            <span
+              class="card-percent"
+              :style="{ width: pct(stats.xlargeDocs) }"
+            ></span>
+          </div>
+          <div
             v-if="!hideZero || stats.duplicateNameDocs !== 0"
             class="stat-card"
             :class="{ active: activeFilter === 'duplicate' }"
@@ -398,6 +424,82 @@
         </div>
       </div>
 
+      <!-- 字数分布 -->
+      <div
+        v-if="stats.wordCountDistribution.length > 0"
+        class="stat-section"
+      >
+        <div
+          class="section-header"
+          @click="toggleSection('wordcount')"
+        >
+          <Icon
+            :icon="isSectionCollapsed('wordcount') ? 'mdi:chevron-right' : 'mdi:chevron-down'"
+            class="section-toggle-icon"
+          />
+          <Icon icon="mdi:text-short" />字数分布
+          <span
+            v-if="isSectionCollapsed('wordcount')"
+            class="section-hint"
+          >{{ wordCountSummary }}</span>
+        </div>
+        <div
+          v-show="!isSectionCollapsed('wordcount')"
+          class="wordcount-chart"
+        >
+          <div
+            v-for="item in stats.wordCountDistribution"
+            :key="item.label"
+            class="platform-bar-v2"
+          >
+            <span class="platform-bar-label">{{ item.label }}</span>
+            <div class="platform-bar-track">
+              <div
+                class="platform-bar-fill"
+                :style="{ width: wcBarPct(item.count) + '%' }"
+              ></div>
+            </div>
+            <span class="platform-bar-count">{{ item.count }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 自定义书签 -->
+      <div
+        v-if="stats.customBookmarkTop.length > 0"
+        class="stat-section"
+      >
+        <div
+          class="section-header"
+          @click="toggleSection('customBm')"
+        >
+          <Icon
+            :icon="isSectionCollapsed('customBm') ? 'mdi:chevron-right' : 'mdi:chevron-down'"
+            class="section-toggle-icon"
+          />
+          <Icon icon="mdi:tag-outline" />书签分类 Top-{{ stats.customBookmarkTop.length }}
+        </div>
+        <div
+          v-show="!isSectionCollapsed('customBm')"
+          class="wordcount-chart"
+        >
+          <div
+            v-for="item in stats.customBookmarkTop"
+            :key="item.value"
+            class="platform-bar-v2"
+          >
+            <span class="platform-bar-label">{{ item.value }}</span>
+            <div class="platform-bar-track">
+              <div
+                class="platform-bar-fill custom-bm-fill"
+                :style="{ width: customBmBarPct(item.count) + '%' }"
+              ></div>
+            </div>
+            <span class="platform-bar-count">{{ item.count }}</span>
+          </div>
+        </div>
+      </div>
+
       <!-- 分割线 -->
       <div class="section-divider"></div>
 
@@ -554,7 +656,8 @@
               <div
                 v-for="item in depthStats.depthDistribution"
                 :key="item.depth"
-                class="depth-bar-v2"
+                class="depth-bar-v2 depth-bar-clickable"
+                @click="$emit('selectDepth', item.depth)"
               >
                 <span class="depth-bar-label">{{ item.depth }}</span>
                 <div class="depth-bar-track">
@@ -688,6 +791,7 @@ defineEmits<{
   (e: "selectCategory", category: string): void
   (e: "showBookmarkDetails"): void
   (e: "selectBookmark", bookmark: string): void
+  (e: "selectDepth", depth: number): void
 }>()
 
 /** 折叠状态 */
@@ -720,9 +824,10 @@ function isSectionCollapsed(key: string): boolean {
 const healthPct = computed(() => {
   const total = props.stats.totalDocs
   if (!total) return 100
-  const issues = props.stats.zeroByteDocs + props.stats.duplicateNameDocs
+  const rawIssues = props.stats.zeroByteDocs + props.stats.duplicateNameDocs
     + props.stats.orphanDocs + props.stats.updatedOverHalfYear + props.stats.unusedDocs
-  return Math.max(0, Math.min(100, Math.round((1 - issues / total) * 100)))
+  const issues = Math.min(total, rawIssues)
+  return Math.round(((total - issues) / total) * 100)
 })
 
 /** 是否有问题项需要显示 */
@@ -782,6 +887,33 @@ const coveragePct = computed(() => {
   if (!props.stats.totalDocs) return 0
   return Math.round((docsInSystem.value / props.stats.totalDocs) * 100)
 })
+
+/** 字数分布折叠摘要 */
+const wordCountSummary = computed(() => {
+  const dist = props.stats.wordCountDistribution || []
+  if (dist.length === 0) return ""
+  return dist.map((d) => `${d.label.split("字")[0]} ${d.count}`).join(" · ")
+})
+
+/** 字数分布柱状图最大计数 */
+const maxWordCount = computed(() => {
+  const counts = (props.stats.wordCountDistribution || []).map((d) => d.count)
+  return Math.max(...counts, 1)
+})
+
+function wcBarPct(count: number): number {
+  return Math.round((count / maxWordCount.value) * 100)
+}
+
+/** 自定义书签柱状图最大计数 */
+const maxCustomBm = computed(() => {
+  const counts = (props.stats.customBookmarkTop || []).map((d) => d.count)
+  return Math.max(...counts, 1)
+})
+
+function customBmBarPct(count: number): number {
+  return Math.round((count / maxCustomBm.value) * 100)
+}
 
 /** 计算卡片百分比进度条宽度 */
 function pct(count: number): string {
@@ -1259,6 +1391,30 @@ function getBarPercent(count: number): string {
   font-family: $da-mono;
   color: var(--b3-theme-on-surface-variant);
   flex-shrink: 0;
+}
+
+.depth-bar-clickable {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 1px 2px;
+  margin: 0 -2px;
+  transition: background 0.15s;
+
+  &:hover {
+    background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
+  }
+}
+
+// ============ 字数分布 / 自定义书签图（复用平台柱状图布局） ============
+.wordcount-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.custom-bm-fill {
+  background: var(--b3-theme-warning, #f59e0b);
+  opacity: 0.55;
 }
 
 // ============ 平台分布图 ============

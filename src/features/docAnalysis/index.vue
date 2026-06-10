@@ -93,6 +93,7 @@
         @selectCategory="handleSelectCategory"
         @showBookmarkDetails="fetchBookmarkDetails"
         @selectBookmark="queryByBookmark"
+        @selectDepth="handleSelectDepth"
       />
     </div>
 
@@ -520,6 +521,12 @@ function handleAnalyze() {
 /** 点击统计卡片 */
 function handleSelectCategory(category: string) {
   queryByStatsCategory(category)
+  activeTab.value = "list"
+}
+
+/** 点击深度柱状图 */
+function handleSelectDepth(depth: number) {
+  queryByStatsCategory(`depth_${depth}`)
   activeTab.value = "list"
 }
 

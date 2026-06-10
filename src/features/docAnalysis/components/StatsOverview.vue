@@ -35,13 +35,24 @@
         </div>
         <div class="hero-right">
           <span class="hero-health-label">健康度</span>
-          <div class="hero-health-bar">
+          <div
+            class="hero-health-bar"
+            :title="healthTooltip"
+          >
             <div
               class="hero-health-fill"
               :style="{ width: healthPct + '%' }"
             ></div>
           </div>
-          <span class="hero-health-value">{{ healthPct }}%</span>
+          <span
+            class="hero-health-value"
+            :title="healthTooltip"
+          >{{ healthPct }}%</span>
+          <Icon
+            icon="mdi:information-outline"
+            class="hero-health-info"
+            :title="healthTooltip"
+          />
         </div>
       </div>
 
@@ -824,10 +835,24 @@ function isSectionCollapsed(key: string): boolean {
 const healthPct = computed(() => {
   const total = props.stats.totalDocs
   if (!total) return 100
-  const rawIssues = props.stats.zeroByteDocs + props.stats.duplicateNameDocs
-    + props.stats.orphanDocs + props.stats.updatedOverHalfYear + props.stats.unusedDocs
-  const issues = Math.min(total, rawIssues)
-  return Math.round(((total - issues) / total) * 100)
+  // 仅计入客观缺陷项：空文档 + 重名超出 + 明确废弃
+  const excessDupes = Math.max(0, props.stats.duplicateNameDocs - props.stats.duplicateNameGroups)
+  const issues = props.stats.zeroByteDocs + excessDupes + props.stats.unusedDocs
+  return Math.round(((total - Math.min(total, issues)) / total) * 100)
+})
+
+/** 健康度计算说明 tooltip */
+const healthTooltip = computed(() => {
+  const total = props.stats.totalDocs
+  if (!total) return "暂无数据"
+  const excessDupes = Math.max(0, props.stats.duplicateNameDocs - props.stats.duplicateNameGroups)
+  const issues = props.stats.zeroByteDocs + excessDupes + props.stats.unusedDocs
+  const healthy = Math.max(0, total - issues)
+  return [
+    `健康文档 ${healthy} / ${total}`,
+    `扣分项: 0B空 ${props.stats.zeroByteDocs}  +  重名超出 ${excessDupes}  +  不使用 ${props.stats.unusedDocs}`,
+    `(孤文档、半年未更新 为特征项，不计入扣分)`,
+  ].join("\n")
 })
 
 /** 是否有问题项需要显示 */
@@ -1064,6 +1089,19 @@ function getBarPercent(count: number): string {
     font-family: $da-mono;
     color: var(--b3-theme-primary);
     white-space: nowrap;
+  }
+
+  .hero-health-info {
+    font-size: 13px;
+    color: var(--b3-theme-on-surface-variant);
+    opacity: 0.45;
+    cursor: help;
+    flex-shrink: 0;
+
+    &:hover {
+      opacity: 0.8;
+      color: var(--b3-theme-primary);
+    }
   }
 }
 

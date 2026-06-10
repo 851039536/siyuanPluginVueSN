@@ -5,6 +5,8 @@ export const DEFAULT_DOC_STATS: DocStats = {
   zeroByteDocs: 0,
   smallDocs: 0,
   mediumDocs: 0,
+  largeDocs: 0,
+  xlargeDocs: 0,
   duplicateNameGroups: 0,
   duplicateNameDocs: 0,
   updatedIn7Days: 0,
@@ -32,4 +34,6 @@ export const DEFAULT_DOC_STATS: DocStats = {
   incomingRefDocs: 0,
   orphanDocs: 0,
   platformCounts: {},
+  wordCountDistribution: [],
+  customBookmarkTop: [],
 }

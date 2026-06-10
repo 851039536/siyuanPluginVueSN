@@ -304,6 +304,26 @@ const PLATFORM_CONFIGS = [
     name: "公众号",
     matchers: ["gzh"],
   },
+  {
+    id: "jianshu",
+    name: "简书",
+    matchers: ["jianshu"],
+  },
+  {
+    id: "51cto",
+    name: "51CTO",
+    matchers: ["51cto"],
+  },
+  {
+    id: "segmentfault",
+    name: "思否",
+    matchers: ["segmentfault", "sifou"],
+  },
+  {
+    id: "oschina",
+    name: "开源中国",
+    matchers: ["oschina"],
+  },
 ]
 
 const platforms = computed<PlatformInfo[]>(() => {

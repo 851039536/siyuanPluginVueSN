@@ -631,6 +631,11 @@ export function useDocAnalysis(plugin: Plugin) {
         ["bili", 16],
         ["bibi", 16],
         ["gzh", 32],
+        ["jianshu", 64],
+        ["51cto", 128],
+        ["segmentfault", 256],
+        ["sifou", 256],
+        ["oschina", 512],
       ]
 
       if (yamlRows) {
@@ -653,7 +658,7 @@ export function useDocAnalysis(plugin: Plugin) {
       let no = 0
       const fullSet = new Set<string>()
       const noSet = new Set<string>()
-      const ALL_PLATFORMS = 63 // 1+2+4+8+16+32 = 63
+      const ALL_PLATFORMS = 1023 // 1+2+4+8+16+32+64+128+256+512 = 63
 
       for (const [id, mask] of docMap) {
         if (mask === 0) {

@@ -319,6 +319,28 @@
       border-color: var(--b3-theme-error, #ef4444);
       color: var(--b3-theme-error, #ef4444);
       background: rgba(239, 68, 68, 0.08);
+
+      .platform-chip-badge {
+        background: var(--b3-theme-error, #ef4444);
+        color: #fff;
+      }
+    }
+
+    .platform-chip-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 16px;
+      height: 15px;
+      padding: 0 4px;
+      border-radius: 7px;
+      background: var(--b3-theme-on-surface-variant, #6b7280);
+      color: var(--b3-theme-on-primary, #fff);
+      font-size: 9px;
+      font-weight: 700;
+      font-family: $da-mono;
+      margin-left: 3px;
+      line-height: 1;
     }
   }
 

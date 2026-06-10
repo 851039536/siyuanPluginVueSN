@@ -53,6 +53,10 @@
         @click="handlePlatformFilter(platform.id)"
       >
         {{ platform.name }}
+        <span
+          v-if="platformUnpublishedCounts[platform.id]"
+          class="platform-chip-badge"
+        >{{ platformUnpublishedCounts[platform.id] }}</span>
       </button>
       <button
         v-if="activePlatformFilter"
@@ -371,6 +375,7 @@ const {
   openDoc,
   updateSort,
   clearResults,
+  platformUnpublishedCounts,
 } = useDocAnalysis(props.plugin)
 
 const showPublishTip = ref(false)

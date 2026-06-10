@@ -161,7 +161,12 @@ import {
   ref,
 } from "vue"
 import { setBlockAttrs } from "@/api"
+import { copyToClipboard } from "@/utils/domUtils"
 import { PLATFORM_META } from "../composables/useDocAnalysis"
+import {
+  getPlatformIdFromAttrKey,
+  getPublishedPlatformIdsFromAttrs,
+} from "../utils/platformPublish"
 
 interface Props {
   visible: boolean
@@ -235,10 +240,7 @@ async function markAsPublished(platformId: string) {
   try {
     // 查找已有的匹配 YAML key
     const yamlKeys = Object.keys(props.attrs).filter((k) => k.endsWith("-yaml"))
-    const matchKey = yamlKeys.find((k) => {
-      const lower = k.toLowerCase()
-      return config.matchers.some((m) => lower.includes(m))
-    })
+    const matchKey = yamlKeys.find((k) => getPlatformIdFromAttrKey(k) === platformId)
 
     const attrKey = matchKey || `custom-${config.matchers[0]}-yaml`
     const yamlValue = buildYamlTemplate()
@@ -287,30 +289,14 @@ function buildYamlTemplate(): string {
 }
 
 const platforms = computed<PlatformInfo[]>(() => {
-  if (!props.attrs) {
-    return PLATFORM_META.map((p) => ({
-      id: p.id,
-      name: p.name,
-      published: false,
-      url: p.url,
-    }))
-  }
+  const publishedIds = getPublishedPlatformIdsFromAttrs(props.attrs)
 
-  const yamlKeys = Object.keys(props.attrs).filter((k) => k.endsWith("-yaml"))
-
-  return PLATFORM_META.map((config) => {
-    const matchedKey = yamlKeys.find((k) => {
-      const lower = k.toLowerCase()
-      return config.matchers.some((m) => lower.includes(m))
-    })
-    const published = !!matchedKey && !!(props.attrs![matchedKey]?.trim())
-    return {
-      id: config.id,
-      name: config.name,
-      published,
-      url: config.url,
-    }
-  })
+  return PLATFORM_META.map((config) => ({
+    id: config.id,
+    name: config.name,
+    published: publishedIds.has(config.id),
+    url: config.url,
+  }))
 })
 
 const ATTR_LABELS: Record<string, string> = {
@@ -377,12 +363,7 @@ async function copyAllAttrs() {
   const text = Object.entries(props.attrs)
     .map(([k, v]) => `${k}: ${v}`)
     .join("\n")
-  try {
-    await navigator.clipboard.writeText(text)
-  }
-  catch {
-    // fallback
-  }
+  await copyToClipboard(text)
 }
 </script>
 

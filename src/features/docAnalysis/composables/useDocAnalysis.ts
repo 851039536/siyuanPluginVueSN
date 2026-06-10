@@ -45,7 +45,7 @@ const SIZE_WORDCOUNT_SUBQUERY = `
 `
 
 /** 平台元数据：matcher → 显示名称 */
-const PLATFORM_META: { matchers: string[], name: string }[] = [
+export const PLATFORM_META: { matchers: string[], name: string }[] = [
   { matchers: ["csdn"], name: "CSDN" },
   { matchers: ["zhihu"], name: "知乎" },
   { matchers: ["juejin"], name: "掘金" },
@@ -1364,6 +1364,69 @@ export function useDocAnalysis(plugin: Plugin) {
     }
   }
 
+  /**
+   * 按缺失平台查询：查找在其他平台有发布标识、但指定平台未发布的文档
+   * 没有任何发布标识的文档（不在发布范畴）不显示
+   */
+  async function queryByMissingPlatform(platformMatcher: string) {
+    statsFilter.value = ""
+    queryState.status = "loading"
+    queryState.errorMessage = ""
+    queryState.hasQueried = true
+
+    try {
+      const notebookCondition = buildNotebookCondition()
+
+      const sqlStmt = `
+        SELECT
+          b.id as doc_id,
+          b.content as doc_title,
+          b.hpath as doc_path,
+          b.box as notebook_id,
+          b.updated as doc_updated,
+          b.created as doc_created,
+          COALESCE(sw.total_size, 0) as content_size,
+          COALESCE(sw.total_word_count, 0) as word_count,
+          LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth,
+          COALESCE(bm.bookmark, '') as bookmark
+        FROM blocks b
+        LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
+        LEFT JOIN (${BOOKMARK_SUBQUERY}) bm ON b.id = bm.block_id
+        WHERE b.type = 'd' ${notebookCondition}
+        AND b.id IN (
+          SELECT block_id FROM attributes
+          WHERE name LIKE '%yaml%'
+          AND block_id IN (SELECT id FROM blocks WHERE type = 'd' ${notebookCondition})
+        )
+        AND b.id NOT IN (
+          SELECT block_id FROM attributes
+          WHERE name LIKE '%${platformMatcher.replace(/'/g, "''")}%' AND name LIKE '%yaml%'
+        )
+        ORDER BY b.updated DESC
+        LIMIT 2000
+      `
+
+      const rows = await sql(sqlStmt)
+
+      if (!rows || rows.length === 0) {
+        setResults([])
+        queryState.status = "empty"
+        return
+      }
+
+      const docs = mapRowsToDocs(rows)
+      const sortedDocs = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder)
+      await enrichWithPublishedPlatforms(sortedDocs)
+      setResults(sortedDocs)
+      queryState.status = "success"
+    } catch (error) {
+      console.error("按缺失平台查询失败:", error)
+      queryState.errorMessage = (error as Error).message || "查询失败"
+      queryState.status = "error"
+      setResults([])
+    }
+  }
+
   return {
     notebooks,
     queryState,
@@ -1383,6 +1446,7 @@ export function useDocAnalysis(plugin: Plugin) {
     queryByStatsCategory,
     fetchBookmarkDetails,
     queryByBookmark,
+    queryByMissingPlatform,
     openDoc,
     updateSort,
     clearResults,

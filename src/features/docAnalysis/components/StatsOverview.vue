@@ -273,14 +273,6 @@
           >
             <span class="card-value pending-color">{{ stats.pendingPublishDocs }}</span>
             <span class="card-unit">待发布</span>
-            <button
-              v-if="stats.pendingPublishDocs > 0"
-              class="card-action-btn"
-              title="批量发布"
-              @click.stop="$emit('batchPublish', 'pendingPublish')"
-            >
-              <Icon icon="mdi:publish" />
-            </button>
           </div>
           <div
             v-if="!hideZero || stats.publishedDocs !== 0"
@@ -663,7 +655,6 @@ const props = withDefaults(defineProps<Props>(), {
 defineEmits<{
   (e: "analyze"): void
   (e: "selectCategory", category: string): void
-  (e: "batchPublish", category: string): void
   (e: "showBookmarkDetails"): void
   (e: "selectBookmark", bookmark: string): void
 }>()

@@ -45,18 +45,18 @@ const SIZE_WORDCOUNT_SUBQUERY = `
 `
 
 /** 平台元数据：单一数据源，所有平台列表由此推导 */
-export const PLATFORM_META: { id: string, matchers: string[], name: string }[] = [
-  { id: "csdn", matchers: ["csdn"], name: "CSDN" },
-  { id: "zhihu", matchers: ["zhihu"], name: "知乎" },
-  { id: "juejin", matchers: ["juejin"], name: "掘金" },
-  { id: "cnblogs", matchers: ["cnblogs", "blog"], name: "博客园" },
-  { id: "bili", matchers: ["bili", "bibi"], name: "B站" },
-  { id: "gzh", matchers: ["gzh"], name: "公众号" },
-  { id: "jianshu", matchers: ["jianshu"], name: "简书" },
-  { id: "51cto", matchers: ["51cto"], name: "51CTO" },
-  { id: "segmentfault", matchers: ["segmentfault", "sifou"], name: "思否" },
-  { id: "oschina", matchers: ["oschina"], name: "开源中国" },
-  { id: "infoq", matchers: ["infoq"], name: "InfoQ" },
+export const PLATFORM_META: { id: string, matchers: string[], name: string, url: string }[] = [
+  { id: "csdn", matchers: ["csdn"], name: "CSDN", url: "https://mp.csdn.net/mp_blog/creation/editor" },
+  { id: "zhihu", matchers: ["zhihu"], name: "知乎", url: "https://zhuanlan.zhihu.com/write" },
+  { id: "juejin", matchers: ["juejin"], name: "掘金", url: "https://juejin.cn/editor/drafts/new" },
+  { id: "cnblogs", matchers: ["cnblogs", "blog"], name: "博客园", url: "https://i.cnblogs.com/posts/edit" },
+  { id: "bili", matchers: ["bili", "bibi"], name: "B站", url: "https://www.bilibili.com/" },
+  { id: "gzh", matchers: ["gzh"], name: "公众号", url: "" },
+  { id: "jianshu", matchers: ["jianshu"], name: "简书", url: "https://www.jianshu.com/writer" },
+  { id: "51cto", matchers: ["51cto"], name: "51CTO", url: "https://blog.51cto.com/writer" },
+  { id: "segmentfault", matchers: ["segmentfault", "sifou"], name: "思否", url: "https://segmentfault.com/write" },
+  { id: "oschina", matchers: ["oschina"], name: "开源中国", url: "https://oschina.net/writer" },
+  { id: "infoq", matchers: ["infoq"], name: "InfoQ", url: "https://www.infoq.com/" },
 ]
 
 /** 子查询：获取每个文档的书签名称（思源书签存储在 attributes 表中） */

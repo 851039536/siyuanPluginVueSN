@@ -123,7 +123,8 @@
       "Bash(cat tsconfig.app.json)",
       "Bash(git stash *)",
       "Bash(pnpm validate:icons)",
-      "Bash(gh search *)"
+      "Bash(gh search *)",
+      "Bash(xxd)"
     ],
     "deny": [],
     "ask": []

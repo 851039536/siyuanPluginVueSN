@@ -87,7 +87,6 @@
         :bookmark-detail-loading="bookmarkDetailLoading"
         :collapsible="false"
         @selectCategory="handleSelectCategory"
-        @batchPublish="handleBatchPublish"
         @showBookmarkDetails="fetchBookmarkDetails"
         @selectBookmark="queryByBookmark"
       />
@@ -170,20 +169,6 @@
           >
             <Icon :icon="filterOptions.sortOrder === 'asc' ? 'mdi:sort-ascending' : 'mdi:sort-descending'" />
           </button>
-          <button
-            class="batch-publish-btn"
-            title="批量发布当前结果"
-            @click="handleBatchPublishAll"
-          >
-            <Icon icon="mdi:publish" />
-          </button>
-          <button
-            class="batch-mark-btn"
-            title="批量标记为待发布"
-            @click="handleBatchMarkPending"
-          >
-            <Icon icon="mdi:bookmark-plus-outline" />
-          </button>
         </div>
       </div>
 
@@ -221,7 +206,6 @@
             v-memo="[doc.id, doc.title, doc.wordCount, doc.contentSize, doc.updated, doc.depth, doc.refCount, doc.imageCount, doc.bookmark]"
             :doc="doc"
             @open="openDoc"
-            @publish="handlePublishDoc"
             @attrs="handleShowAttrs"
           />
           <div
@@ -326,16 +310,6 @@
       @close="handleCloseAttrs"
       @refresh="handleRefreshAttrs"
     />
-
-    <!-- 发布面板 -->
-    <PublishPanel
-      :visible="publishPanelVisible"
-      :doc-id="publishDocId"
-      :doc-title="publishDocTitle"
-      :plugin="plugin"
-      @close="publishPanelVisible = false"
-      @published="handlePublished"
-    />
   </div>
 </template>
 
@@ -352,13 +326,10 @@ import {
 } from "vue"
 import {
   getBlockAttrs,
-  pushMsg,
-  setBlockAttrs,
 } from "@/api"
 import AttrsPanel from "./components/AttrsPanel.vue"
 import DocListItem from "./components/DocListItem.vue"
 import FilterSettings from "./components/FilterSettings.vue"
-import PublishPanel from "./components/PublishPanel.vue"
 
 import StatsOverview from "./components/StatsOverview.vue"
 import {
@@ -422,34 +393,10 @@ function handlePlatformFilter(matcher: string) {
   activeTab.value = "list"
 }
 
-/** 刷新当前查询结果列表 */
-function refreshList() {
-  if (queryState.hasQueried) queryDocs()
-}
-
 // ============================================================
 // Tab 切换
 // ============================================================
 const activeTab = ref<"stats" | "list">("stats")
-
-// ============================================================
-// 发布面板状态
-// ============================================================
-const publishPanelVisible = ref(false)
-const publishDocId = ref("")
-const publishDocTitle = ref("")
-
-/** 打开单个文档发布面板 */
-function handlePublishDoc(docId: string, docTitle: string) {
-  publishDocId.value = docId
-  publishDocTitle.value = docTitle
-  publishPanelVisible.value = true
-}
-
-/** 发布完成回调 */
-function handlePublished() {
-  refreshList()
-}
 
 // ============================================================
 // 属性面板状态
@@ -490,35 +437,6 @@ function handleCloseAttrs() {
 
 function handleRefreshAttrs() {
   loadAttrs(attrsPanelDocId.value)
-}
-
-/** 批量发布 - 按统计类别 */
-async function handleBatchPublish(category: string) {
-  await queryByStatsCategory(category)
-  if (queryState.results.length > 0) {
-    publishDocId.value = queryState.results[0].id
-    publishDocTitle.value = `批量发布 (${queryState.results.length} 篇)`
-    publishPanelVisible.value = true
-  }
-}
-
-/** 批量发布全部当前结果 */
-function handleBatchPublishAll() {
-  if (queryState.results.length === 0) return
-  publishDocId.value = queryState.results[0].id
-  publishDocTitle.value = `批量发布当前结果 (${queryState.results.length} 篇)`
-  publishPanelVisible.value = true
-}
-
-/** 批量标记为待发布 */
-async function handleBatchMarkPending() {
-  if (queryState.results.length === 0) return
-  const docIds = queryState.results.map((d) => d.id)
-  for (const docId of docIds) {
-    await setBlockAttrs(docId, { bookmark: "待发布" })
-  }
-  await pushMsg(`已标记 ${docIds.length} 篇文档为"待发布"`)
-  refreshList()
 }
 
 // ============================================================

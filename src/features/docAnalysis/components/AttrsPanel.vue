@@ -60,14 +60,13 @@
             <div
               v-for="platform in platforms"
               :key="platform.id"
-              class="platform-status-item"
+              class="platform-status-item clickable"
               :class="{
                 published: platform.published,
                 marking: markingPlatform === platform.id,
-                clickable: !platform.published,
               }"
-              :title="platform.published ? `${platform.name} 已发布` : `点击标记 ${platform.name} 已发布`"
-              @click="!platform.published && markAsPublished(platform.id)"
+              :title="platform.published ? `点击取消 ${platform.name} 发布状态` : `点击标记 ${platform.name} 已发布`"
+              @click="handlePlatformClick(platform)"
             >
               <Icon
                 v-if="markingPlatform === platform.id"
@@ -226,6 +225,14 @@ function openPlatformUrl(url: string) {
   window.open(url, "_blank")
 }
 
+async function handlePlatformClick(platform: PlatformInfo) {
+  if (platform.published) {
+    await unmarkAsPublished(platform.id)
+  } else {
+    await markAsPublished(platform.id)
+  }
+}
+
 async function markAsPublished(platformId: string) {
   if (!props.attrs || markingPlatform.value) return
 
@@ -252,6 +259,31 @@ async function markAsPublished(platformId: string) {
     console.error("标记已发布失败:", e)
   }
   finally {
+    markingPlatform.value = null
+  }
+}
+
+async function unmarkAsPublished(platformId: string) {
+  if (!props.attrs || markingPlatform.value) return
+
+  const config = PLATFORM_META.find((p) => p.id === platformId)
+  if (!config) return
+
+  // eslint-disable-next-line no-alert
+  if (!confirm(`确认取消「${props.attrs.title || props.docId}」在 ${config.name} 的发布状态？`)) return
+
+  markingPlatform.value = platformId
+
+  try {
+    const yamlKeys = Object.keys(props.attrs).filter((k) => k.endsWith("-yaml"))
+    const matchKey = yamlKeys.find((k) => getPlatformIdFromAttrKey(k) === platformId)
+    if (matchKey) {
+      await setBlockAttrs(props.docId, { [matchKey]: null as unknown as string })
+      emit("refresh")
+    }
+  } catch (e) {
+    console.error("取消发布状态失败:", e)
+  } finally {
     markingPlatform.value = null
   }
 }
@@ -534,6 +566,15 @@ async function copyAllAttrs() {
           .status-icon {
             color: var(--b3-theme-success, #22c55e);
           }
+        }
+      }
+
+      &.published.clickable:hover {
+        background: rgba(239, 68, 68, 0.12);
+        color: var(--b3-theme-error, #dc2626);
+
+        .status-icon {
+          color: var(--b3-theme-error, #ef4444);
         }
       }
 

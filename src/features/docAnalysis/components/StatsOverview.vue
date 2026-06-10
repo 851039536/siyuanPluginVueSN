@@ -48,11 +48,12 @@
             class="hero-health-value"
             :title="healthTooltip"
           >{{ healthPct }}%</span>
-          <Icon
-            icon="mdi:information-outline"
+          <span
             class="hero-health-info"
             :title="healthTooltip"
-          />
+          >
+            <Icon icon="mdi:information-outline" />
+          </span>
         </div>
       </div>
 
@@ -835,9 +836,27 @@ function isSectionCollapsed(key: string): boolean {
 const healthPct = computed(() => {
   const total = props.stats.totalDocs
   if (!total) return 100
-  // 仅计入客观缺陷项：空文档 + 重名超出 + 明确废弃
+
   const excessDupes = Math.max(0, props.stats.duplicateNameDocs - props.stats.duplicateNameGroups)
-  const issues = props.stats.zeroByteDocs + excessDupes + props.stats.unusedDocs
+  // 无书签但排除 0B 文档（0B 已单独扣分）
+  const noBmExclude0B = Math.max(0, props.stats.noBookmarkDocs - props.stats.zeroByteDocs)
+  // 深度 > 7
+  const depthGt7 = props.depthStats.depthDistribution
+    .filter((d) => d.depth > 7)
+    .reduce((sum, d) => sum + d.count, 0)
+  // 字数 > 2万
+  const wcGt20000 = (props.stats.wordCountDistribution || [])
+    .filter((d) => d.label === ">2万字")
+    .reduce((sum, d) => sum + d.count, 0)
+
+  const issues = props.stats.zeroByteDocs
+    + excessDupes
+    + props.stats.unusedDocs
+    + noBmExclude0B
+    + props.stats.partialPublishDocs
+    + depthGt7
+    + wcGt20000
+
   return Math.round(((total - Math.min(total, issues)) / total) * 100)
 })
 
@@ -845,13 +864,35 @@ const healthPct = computed(() => {
 const healthTooltip = computed(() => {
   const total = props.stats.totalDocs
   if (!total) return "暂无数据"
+
   const excessDupes = Math.max(0, props.stats.duplicateNameDocs - props.stats.duplicateNameGroups)
-  const issues = props.stats.zeroByteDocs + excessDupes + props.stats.unusedDocs
-  const healthy = Math.max(0, total - issues)
+  const noBmExclude0B = Math.max(0, props.stats.noBookmarkDocs - props.stats.zeroByteDocs)
+  const depthGt7 = props.depthStats.depthDistribution
+    .filter((d) => d.depth > 7)
+    .reduce((sum, d) => sum + d.count, 0)
+  const wcGt20000 = (props.stats.wordCountDistribution || [])
+    .filter((d) => d.label === ">2万字")
+    .reduce((sum, d) => sum + d.count, 0)
+
+  const issues = props.stats.zeroByteDocs
+    + excessDupes
+    + props.stats.unusedDocs
+    + noBmExclude0B
+    + props.stats.partialPublishDocs
+    + depthGt7
+    + wcGt20000
+
+  const healthy = Math.max(0, total - Math.min(total, issues))
   return [
     `健康文档 ${healthy} / ${total}`,
-    `扣分项: 0B空 ${props.stats.zeroByteDocs}  +  重名超出 ${excessDupes}  +  不使用 ${props.stats.unusedDocs}`,
-    `(孤文档、半年未更新 为特征项，不计入扣分)`,
+    `扣分项:`,
+    `  0B空 ${props.stats.zeroByteDocs}`,
+    `  重名超出 ${excessDupes}`,
+    `  不使用 ${props.stats.unusedDocs}`,
+    `  无书签(排除0B) ${noBmExclude0B}`,
+    `  部分发布 ${props.stats.partialPublishDocs}`,
+    `  深度>7 ${depthGt7}`,
+    `  字数>2万 ${wcGt20000}`,
   ].join("\n")
 })
 
@@ -1092,6 +1133,8 @@ function getBarPercent(count: number): string {
   }
 
   .hero-health-info {
+    display: inline-flex;
+    align-items: center;
     font-size: 13px;
     color: var(--b3-theme-on-surface-variant);
     opacity: 0.45;

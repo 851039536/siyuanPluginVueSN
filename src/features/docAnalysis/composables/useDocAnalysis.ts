@@ -24,6 +24,18 @@ import {
   DEFAULT_FILTER_OPTIONS,
   DocAnalysisStorage,
 } from "../types/storage"
+import { DEFAULT_DOC_STATS } from "../utils/defaults"
+import {
+  buildIdInClause,
+  buildIdNotInClause,
+  escapeSql,
+  quoteSql,
+  quoteSqlList,
+} from "../utils/sqlHelpers"
+import {
+  computeUnpublishedPlatformNames,
+  getPlatformIdFromAttrKey,
+} from "../utils/platformPublish"
 
 /** 笔记本信息 */
 export interface NotebookInfo {
@@ -59,12 +71,39 @@ export const PLATFORM_META: { id: string, matchers: string[], name: string, url:
   { id: "infoq", matchers: ["infoq"], name: "InfoQ", url: "https://www.infoq.com/" },
 ]
 
+/** 全平台位掩码，由 PLATFORM_META.length 动态计算 */
+const ALL_PLATFORMS = (1 << PLATFORM_META.length) - 1
+
 /** 子查询：获取每个文档的书签名称（思源书签存储在 attributes 表中） */
 const BOOKMARK_SUBQUERY = `
   SELECT block_id, value as bookmark
   FROM attributes
   WHERE name = 'bookmark'
 `
+
+/** 文档列表 SELECT 公共列（不含 ref_count/image_count/bookmark） */
+const DOC_SELECT = `
+b.id as doc_id,
+b.content as doc_title,
+b.hpath as doc_path,
+b.box as notebook_id,
+b.updated as doc_updated,
+b.created as doc_created,
+COALESCE(sw.total_size, 0) as content_size,
+COALESCE(sw.total_word_count, 0) as word_count,
+LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth`
+
+/** 文档列表 SELECT（不含 size JOIN 时，size/wordCount 置 0） */
+const DOC_SELECT_NO_SIZE = `
+b.id as doc_id,
+b.content as doc_title,
+b.hpath as doc_path,
+b.box as notebook_id,
+b.updated as doc_updated,
+b.created as doc_created,
+0 as content_size,
+0 as word_count,
+LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth`
 
 /** 子查询：统计每个文档的引用块数量（思源引用语法 ((id "标题")) 在 markdown 字段中） */
 const REF_SUBQUERY = `
@@ -87,13 +126,6 @@ function daysAgoStr(days: number): string {
   const d = new Date(Date.now() - days * 86400000)
   const pad = (n: number) => String(n).padStart(2, "0")
   return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`
-}
-
-/** 构建 SQL IN 子句（空集时返回不匹配条件） */
-function buildIdInClause(ids: Set<string>): string {
-  if (ids.size === 0) return "AND 1 = 0"
-  const escaped = [...ids].map((id) => `'${id.replace(/'/g, "''")}'`).join(",")
-  return `AND b.id IN (${escaped})`
 }
 
 /**
@@ -123,38 +155,7 @@ export function useDocAnalysis(plugin: Plugin) {
   const filterOptions = reactive<FilterOptions>({ ...DEFAULT_FILTER_OPTIONS })
 
   // 文档统计信息
-  const docStats = reactive<DocStats>({
-    totalDocs: 0,
-    zeroByteDocs: 0,
-    smallDocs: 0,
-    mediumDocs: 0,
-    duplicateNameGroups: 0,
-    duplicateNameDocs: 0,
-    updatedIn7Days: 0,
-    updatedIn30Days: 0,
-    updatedIn1To2Months: 0,
-    updatedIn2To3Months: 0,
-    updatedOverHalfYear: 0,
-    deepDocs: 0,
-    refDocs: 0,
-    totalRefs: 0,
-    imageDocs: 0,
-    totalImages: 0,
-    bookmarkedDocs: 0,
-    noBookmarkDocs: 0,
-    pendingPublishDocs: 0,
-    publishedDocs: 0,
-    unusedDocs: 0,
-    noneBookmarkDocs: 0,
-    fullPublishDocs: 0,
-    partialPublishDocs: 0,
-    noPublishDocs: 0,
-    taggedDocs: 0,
-    aliasedDocs: 0,
-    memoedDocs: 0,
-    incomingRefDocs: 0,
-    orphanDocs: 0,
-  })
+  const docStats = reactive<DocStats>({ ...DEFAULT_DOC_STATS })
   const statsLoading = ref(false)
   const hasAnalyzed = ref(false)
 
@@ -228,34 +229,51 @@ export function useDocAnalysis(plugin: Plugin) {
     }))
   }
 
-  /** 查询文档列表（带条件），公共核心逻辑 */
-  async function fetchDocList(extraCondition: string) {
+  interface DocQueryConfig {
+    /** Additional SELECT columns (appended after DOC_SELECT) */
+    extraSelect?: string
+    /** Additional JOIN clauses */
+    extraJoin?: string
+    /** Additional WHERE conditions (after notebook condition) */
+    extraWhere?: string
+    /** ORDER BY clause */
+    orderBy?: string
+    /** LIMIT value */
+    limit?: number
+    /** Use INNER JOIN for bookmark instead of LEFT JOIN */
+    bookmarkInner?: boolean
+    /** Skip SIZE_WORDCOUNT_SUBQUERY join */
+    skipSizeJoin?: boolean
+  }
+
+  /** 统一文档查询执行器 */
+  async function runDocQuery(config: DocQueryConfig) {
     queryState.status = "loading"
     queryState.errorMessage = ""
     queryState.hasQueried = true
 
     try {
       const notebookCondition = buildNotebookCondition()
+      const sizeJoin = config.skipSizeJoin
+        ? ""
+        : `LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id`
+      const bmJoinType = config.bookmarkInner ? "INNER JOIN" : "LEFT JOIN"
+      const bmJoin = `${bmJoinType} (${BOOKMARK_SUBQUERY}) bm ON b.id = bm.block_id`
 
+      const doctSelect = config.skipSizeJoin ? DOC_SELECT_NO_SIZE : DOC_SELECT
       const sqlStmt = `
         SELECT
-          b.id as doc_id,
-          b.content as doc_title,
-          b.hpath as doc_path,
-          b.box as notebook_id,
-          b.updated as doc_updated,
-          b.created as doc_created,
-          COALESCE(sw.total_size, 0) as content_size,
-          COALESCE(sw.total_word_count, 0) as word_count,
-          LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth,
+          ${doctSelect},
+          ${config.extraSelect || "0 as ref_count, 0 as image_count,"}
           COALESCE(bm.bookmark, '') as bookmark
         FROM blocks b
-        LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
-        LEFT JOIN (${BOOKMARK_SUBQUERY}) bm ON b.id = bm.block_id
+        ${sizeJoin}
+        ${bmJoin}
+        ${config.extraJoin || ""}
         WHERE b.type = 'd' ${notebookCondition}
-        ${extraCondition}
-        ORDER BY word_count ASC
-        LIMIT 2000
+        ${config.extraWhere || ""}
+        ORDER BY ${config.orderBy || "b.updated DESC"}
+        LIMIT ${config.limit || 2000}
       `
 
       const rows = await sql(sqlStmt)
@@ -660,7 +678,6 @@ export function useDocAnalysis(plugin: Plugin) {
       let no = 0
       const fullSet = new Set<string>()
       const noSet = new Set<string>()
-      const ALL_PLATFORMS = 2047 // (1 << PLATFORM_META.length) - 1，PLATFORM_META 有 11 个平台
 
       for (const [id, mask] of docMap) {
         if (mask === 0) {
@@ -795,52 +812,11 @@ export function useDocAnalysis(plugin: Plugin) {
     bookmarkDetailVisible.value = false
     statsFilter.value = ""
 
-    queryState.status = "loading"
-    queryState.errorMessage = ""
-    queryState.hasQueried = true
-
-    try {
-      const notebookCondition = buildNotebookCondition()
-      const escaped = bookmarkValue.replace(/'/g, "''")
-
-      const sqlStmt = `
-        SELECT
-          b.id as doc_id,
-          b.content as doc_title,
-          b.hpath as doc_path,
-          b.box as notebook_id,
-          b.updated as doc_updated,
-          b.created as doc_created,
-          COALESCE(sw.total_size, 0) as content_size,
-          COALESCE(sw.total_word_count, 0) as word_count,
-          LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth,
-          COALESCE(bm.bookmark, '') as bookmark
-        FROM blocks b
-        LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
-        INNER JOIN (${BOOKMARK_SUBQUERY}) bm ON b.id = bm.block_id
-        WHERE b.type = 'd' ${notebookCondition}
-        AND bm.bookmark = '${escaped}'
-        ORDER BY b.updated DESC
-        LIMIT 2000
-      `
-
-      const rows = await sql(sqlStmt)
-      if (!rows || rows.length === 0) {
-        setResults([])
-        queryState.status = "empty"
-      } else {
-        const docs = mapRowsToDocs(rows)
-        const sortedDocs = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder)
-        await enrichWithPublishedPlatforms(sortedDocs)
-        setResults(sortedDocs)
-        queryState.status = "success"
-      }
-    } catch (error) {
-      console.error("按书签查询文档失败:", error)
-      queryState.errorMessage = (error as Error).message || "查询失败"
-      queryState.status = "error"
-      setResults([])
-    }
+    await runDocQuery({
+      bookmarkInner: true,
+      extraWhere: `AND bm.bookmark = ${quoteSql(bookmarkValue)}`,
+      orderBy: "b.updated DESC",
+    })
   }
 
   /**
@@ -870,379 +846,154 @@ export function useDocAnalysis(plugin: Plugin) {
     }
 
     if (sizeConditions[category]) {
-      await fetchDocList(sizeConditions[category])
+      await runDocQuery({ extraWhere: sizeConditions[category], orderBy: "word_count ASC" })
       return
     }
 
-    // 新类别（时间/深度/引用/图片）使用轻量查询
-    queryState.status = "loading"
-    queryState.errorMessage = ""
-    queryState.hasQueried = true
+    // 类别 → DocQueryConfig
+    let qConfig: DocQueryConfig
 
-    try {
-      const notebookCondition = buildNotebookCondition()
-
-      // 根据类别确定额外条件、JOIN 和排序
-      let extraWhere = ""
-      let extraJoin = ""
-      let refCol = "0 as ref_count"
-      let imgCol = "0 as image_count"
-      let orderBy = "b.updated DESC"
-
-      switch (category) {
-        case "7days":
-          extraWhere = `AND b.updated >= '${daysAgoStr(7)}'`
-          break
-        case "30days":
-          extraWhere = `AND b.updated >= '${daysAgoStr(30)}' AND b.updated < '${daysAgoStr(7)}'`
-          break
-        case "1to2month":
-          extraWhere = `AND b.updated >= '${daysAgoStr(60)}' AND b.updated < '${daysAgoStr(30)}'`
-          break
-        case "2to3month":
-          extraWhere = `AND b.updated >= '${daysAgoStr(90)}' AND b.updated < '${daysAgoStr(60)}'`
-          break
-        case "halfYear":
-          extraWhere = `AND b.updated < '${daysAgoStr(180)}'`
-          break
-        case "customTime": {
-          // 使用自定义时间范围
-          if (filterOptions.updatedAfter) {
-            const afterStr = `${filterOptions.updatedAfter.replace(/-/g, "")}000000`
-            extraWhere += `AND b.updated >= '${afterStr}' `
-          }
-          if (filterOptions.updatedBefore) {
-            const beforeStr = `${filterOptions.updatedBefore.replace(/-/g, "")}235959`
-            extraWhere += `AND b.updated <= '${beforeStr}' `
-          }
-          if (!filterOptions.updatedAfter && !filterOptions.updatedBefore) {
-            queryState.status = "empty"
-            return
-          }
-          break
-        }
-        case "deep":
-          extraWhere = "AND LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 >= 5"
-          orderBy = "doc_depth DESC"
-          break
-        case "hasRef":
-          extraJoin = `INNER JOIN (${REF_SUBQUERY}) r ON b.id = r.root_id`
-          refCol = "COALESCE(r.ref_count, 0) as ref_count"
-          orderBy = "r.ref_count DESC"
-          break
-        case "hasImage":
-          extraJoin = `INNER JOIN (${IMAGE_SUBQUERY}) img ON b.id = img.root_id`
-          imgCol = "COALESCE(img.image_count, 0) as image_count"
-          orderBy = "img.image_count DESC"
-          break
-        case "hasBookmark":
-          extraJoin = `INNER JOIN (${BOOKMARK_SUBQUERY}) bm ON b.id = bm.block_id`
-          extraWhere = "AND bm.bookmark != '无'"
-          orderBy = "bm.bookmark ASC"
-          break
-        case "noBookmark":
-          extraWhere = "AND b.id NOT IN (SELECT block_id FROM attributes WHERE name = 'bookmark' LIMIT 10000)"
-          orderBy = "b.updated DESC"
-          break
-        case "noneBookmark":
-          extraWhere = "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'bookmark' AND a.value = '无' AND a.block_id = b.id LIMIT 1)"
-          orderBy = "b.updated DESC"
-          break
-        case "pendingPublish":
-          extraWhere = "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'bookmark' AND a.value = '待发布' AND a.block_id = b.id LIMIT 1)"
-          orderBy = "b.updated DESC"
-          break
-        case "published":
-          extraWhere = "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'bookmark' AND a.value = '已发布' AND a.block_id = b.id LIMIT 1)"
-          orderBy = "b.updated DESC"
-          break
-        case "unused":
-          extraWhere = "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'bookmark' AND a.value = '不使用' AND a.block_id = b.id LIMIT 1)"
-          orderBy = "b.updated DESC"
-          break
-        case "fullPublish":
-          extraWhere = buildIdInClause(fullPublishDocIds)
-          orderBy = "b.updated DESC"
-          break
-        case "partialPublish":
-          if (fullPublishDocIds.size === 0 && noPublishDocIds.size === 0) {
-            extraWhere = "AND 1 = 0"
-          } else {
-            const exclude = new Set([...fullPublishDocIds, ...noPublishDocIds])
-            const escaped = [...exclude].map((id) => `'${id.replace(/'/g, "''")}'`).join(",")
-            extraWhere = `AND b.id NOT IN (${escaped})`
-          }
-          orderBy = "b.updated DESC"
-          break
-        case "noPublish":
-          extraWhere = buildIdInClause(noPublishDocIds)
-          orderBy = "b.updated DESC"
-          break
-        case "hasTag":
-          extraWhere = buildIdInClause(taggedDocIds)
-          orderBy = "b.updated DESC"
-          break
-        case "noTag":
-          if (taggedDocIds.size === 0) {
-            extraWhere = ""
-          }
-          else {
-            const escaped = [...taggedDocIds].map((id) => `'${id.replace(/'/g, "''")}'`).join(",")
-            extraWhere = `AND b.id NOT IN (${escaped})`
-          }
-          orderBy = "b.updated DESC"
-          break
-        case "hasAlias":
-          extraWhere = "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'alias' AND a.value != '' AND a.block_id = b.id LIMIT 1)"
-          orderBy = "b.updated DESC"
-          break
-        case "hasMemo":
-          extraWhere = "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'memo' AND a.value != '' AND a.block_id = b.id LIMIT 1)"
-          orderBy = "b.updated DESC"
-          break
-        case "incomingRef":
-          extraWhere = buildIdInClause(incomingRefDocIds)
-          orderBy = "b.updated DESC"
-          break
-        case "orphanDoc":
-          extraWhere = buildIdInClause(orphanDocIds)
-          orderBy = "b.updated DESC"
-          break
-        default:
-          queryState.status = "empty"
-          return
+    switch (category) {
+      case "7days":
+        qConfig = { extraWhere: `AND b.updated >= '${daysAgoStr(7)}'` }
+        break
+      case "30days":
+        qConfig = { extraWhere: `AND b.updated >= '${daysAgoStr(30)}' AND b.updated < '${daysAgoStr(7)}'` }
+        break
+      case "1to2month":
+        qConfig = { extraWhere: `AND b.updated >= '${daysAgoStr(60)}' AND b.updated < '${daysAgoStr(30)}'` }
+        break
+      case "2to3month":
+        qConfig = { extraWhere: `AND b.updated >= '${daysAgoStr(90)}' AND b.updated < '${daysAgoStr(60)}'` }
+        break
+      case "halfYear":
+        qConfig = { extraWhere: `AND b.updated < '${daysAgoStr(180)}'` }
+        break
+      case "customTime": {
+        let w = ""
+        if (filterOptions.updatedAfter) w += `AND b.updated >= '${filterOptions.updatedAfter.replace(/-/g, "")}000000' `
+        if (filterOptions.updatedBefore) w += `AND b.updated <= '${filterOptions.updatedBefore.replace(/-/g, "")}235959' `
+        if (!w) { queryState.status = "empty"; return }
+        qConfig = { extraWhere: w }
+        break
       }
-
-      const sqlStmt = `
-        SELECT
-          b.id as doc_id,
-          b.content as doc_title,
-          b.hpath as doc_path,
-          b.box as notebook_id,
-          b.updated as doc_updated,
-          b.created as doc_created,
-          COALESCE(sw.total_size, 0) as content_size,
-          COALESCE(sw.total_word_count, 0) as word_count,
-          LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth,
-          ${refCol},
-          ${imgCol},
-          COALESCE(bm_out.bookmark, '') as bookmark
-        FROM blocks b
-        LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
-        LEFT JOIN (${BOOKMARK_SUBQUERY}) bm_out ON b.id = bm_out.block_id
-        ${extraJoin}
-        WHERE b.type = 'd' ${notebookCondition}
-        ${extraWhere}
-        ORDER BY ${orderBy}
-        LIMIT 2000
-      `
-
-      const rows = await sql(sqlStmt)
-
-      if (!rows || rows.length === 0) {
-        setResults([])
+      case "deep":
+        qConfig = { extraWhere: "AND LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 >= 5", orderBy: "doc_depth DESC" }
+        break
+      case "hasRef":
+        qConfig = { extraSelect: "COALESCE(r.ref_count, 0) as ref_count, 0 as image_count,", extraJoin: `INNER JOIN (${REF_SUBQUERY}) r ON b.id = r.root_id`, orderBy: "r.ref_count DESC" }
+        break
+      case "hasImage":
+        qConfig = { extraSelect: "0 as ref_count, COALESCE(img.image_count, 0) as image_count,", extraJoin: `INNER JOIN (${IMAGE_SUBQUERY}) img ON b.id = img.root_id`, orderBy: "img.image_count DESC" }
+        break
+      case "hasBookmark":
+        qConfig = { bookmarkInner: true, extraWhere: "AND bm.bookmark != '无'", orderBy: "bm.bookmark ASC" }
+        break
+      case "noBookmark":
+        qConfig = { extraWhere: "AND b.id NOT IN (SELECT block_id FROM attributes WHERE name = 'bookmark' LIMIT 10000)" }
+        break
+      case "noneBookmark":
+        qConfig = { extraWhere: "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'bookmark' AND a.value = '无' AND a.block_id = b.id LIMIT 1)" }
+        break
+      case "pendingPublish":
+        qConfig = { extraWhere: "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'bookmark' AND a.value = '待发布' AND a.block_id = b.id LIMIT 1)" }
+        break
+      case "published":
+        qConfig = { extraWhere: "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'bookmark' AND a.value = '已发布' AND a.block_id = b.id LIMIT 1)" }
+        break
+      case "unused":
+        qConfig = { extraWhere: "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'bookmark' AND a.value = '不使用' AND a.block_id = b.id LIMIT 1)" }
+        break
+      case "fullPublish":
+        qConfig = { extraWhere: buildIdInClause(fullPublishDocIds) }
+        break
+      case "partialPublish":
+        qConfig = { extraWhere: fullPublishDocIds.size === 0 && noPublishDocIds.size === 0 ? "AND 1 = 0" : buildIdNotInClause(new Set([...fullPublishDocIds, ...noPublishDocIds])) }
+        break
+      case "noPublish":
+        qConfig = { extraWhere: buildIdInClause(noPublishDocIds) }
+        break
+      case "hasTag":
+        qConfig = { extraWhere: buildIdInClause(taggedDocIds) }
+        break
+      case "noTag":
+        qConfig = { extraWhere: buildIdNotInClause(taggedDocIds) }
+        break
+      case "hasAlias":
+        qConfig = { extraWhere: "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'alias' AND a.value != '' AND a.block_id = b.id LIMIT 1)" }
+        break
+      case "hasMemo":
+        qConfig = { extraWhere: "AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = 'memo' AND a.value != '' AND a.block_id = b.id LIMIT 1)" }
+        break
+      case "incomingRef":
+        qConfig = { extraWhere: buildIdInClause(incomingRefDocIds) }
+        break
+      case "orphanDoc":
+        qConfig = { extraWhere: buildIdInClause(orphanDocIds) }
+        break
+      default:
         queryState.status = "empty"
         return
-      }
-
-      const docs = mapRowsToDocs(rows)
-      const sortedDocs = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder)
-      await enrichWithPublishedPlatforms(sortedDocs)
-      setResults(sortedDocs)
-      queryState.status = "success"
-    } catch (error) {
-      console.error("按类别查询文档失败:", error)
-      queryState.errorMessage = (error as Error).message || "查询失败"
-      queryState.status = "error"
-      setResults([])
     }
+
+    await runDocQuery(qConfig)
   }
 
   /**
    * 查询重名文档列表
    */
   async function fetchDuplicateDocs() {
-    queryState.status = "loading"
-    queryState.errorMessage = ""
-    queryState.hasQueried = true
-
-    try {
-      const notebookCondition = buildNotebookCondition()
-
-      const dupTitles = duplicateGroups.value.map((g) => g.title)
-      if (dupTitles.length === 0) {
-        setResults([])
-        queryState.status = "empty"
-        return
-      }
-
-      const titleList = dupTitles.map((t) => `'${t.replace(/'/g, "''")}'`).join(",")
-
-      const sqlStmt = `
-        SELECT
-          b.id as doc_id,
-          b.content as doc_title,
-          b.hpath as doc_path,
-          b.box as notebook_id,
-          b.updated as doc_updated,
-          b.created as doc_created,
-          COALESCE(sw.total_size, 0) as content_size,
-          COALESCE(sw.total_word_count, 0) as word_count,
-          LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth,
-          COALESCE(bm.bookmark, '') as bookmark
-        FROM blocks b
-        LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
-        LEFT JOIN (${BOOKMARK_SUBQUERY}) bm ON b.id = bm.block_id
-        WHERE b.type = 'd' ${notebookCondition}
-        AND b.content IN (${titleList})
-        ORDER BY b.content ASC, content_size ASC
-        LIMIT 2000
-      `
-
-      const rows = await sql(sqlStmt)
-
-      if (!rows || rows.length === 0) {
-        setResults([])
-        queryState.status = "empty"
-        return
-      }
-
-      const docs = mapRowsToDocs(rows)
-      const sortedDocs = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder)
-      await enrichWithPublishedPlatforms(sortedDocs)
-      setResults(sortedDocs)
-      queryState.status = "success"
-    } catch (error) {
-      console.error("查询重名文档失败:", error)
-      queryState.errorMessage = (error as Error).message || "查询失败"
-      queryState.status = "error"
+    const dupTitles = duplicateGroups.value.map((g) => g.title)
+    if (dupTitles.length === 0) {
+      queryState.status = "empty"
+      queryState.hasQueried = true
       setResults([])
+      return
     }
+
+    await runDocQuery({
+      extraWhere: `AND b.content IN (${quoteSqlList(dupTitles)})`,
+      orderBy: "b.content ASC, content_size ASC",
+    })
   }
 
   /**
    * 执行查询 - 按字数和关键词过滤文档列表
    */
   async function queryDocs() {
-    queryState.status = "loading"
-    queryState.errorMessage = ""
-    queryState.hasQueried = true
+    const needWordCountFilter = filterOptions.wordCountMin > 0 || filterOptions.wordCountMax > 0
+    let conditions = ""
 
-    try {
-      const notebookCondition = buildNotebookCondition()
-      const needWordCountFilter = filterOptions.wordCountMin > 0 || filterOptions.wordCountMax > 0
-      let conditions = ""
-
-      if (filterOptions.titleKeyword.trim()) {
-        const keyword = filterOptions.titleKeyword.trim().replace(/'/g, "''")
-        conditions += `AND b.content LIKE '%${keyword}%' `
-      }
-
-      // 全文内容搜索：查找内容块中包含关键词的文档
-      if (filterOptions.contentKeyword.trim()) {
-        const keyword = filterOptions.contentKeyword.trim().replace(/'/g, "''")
-        conditions += `AND b.id IN (
-          SELECT DISTINCT root_id FROM blocks
-          WHERE content LIKE '%${keyword}%' AND type != 'd'
-        ) `
-      }
-
-      if (filterOptions.bookmarkName.trim()) {
-        const bmName = filterOptions.bookmarkName.trim().replace(/'/g, "''")
-        conditions += `AND b.id IN (SELECT block_id FROM attributes WHERE name='bookmark' AND value='${bmName}') `
-      }
-
-      // 自定义时间范围过滤
-      if (filterOptions.updatedAfter) {
-        const afterStr = `${filterOptions.updatedAfter.replace(/-/g, "")}000000`
-        conditions += `AND b.updated >= '${afterStr}' `
-      }
-      if (filterOptions.updatedBefore) {
-        const beforeStr = `${filterOptions.updatedBefore.replace(/-/g, "")}235959`
-        conditions += `AND b.updated <= '${beforeStr}' `
-      }
-
-      if (needWordCountFilter) {
-        // 需要字数过滤时才 JOIN 子查询
-        if (filterOptions.wordCountMin > 0) {
-          conditions += `AND COALESCE(sw.total_word_count, 0) >= ${filterOptions.wordCountMin} `
-        }
-        if (filterOptions.wordCountMax > 0) {
-          conditions += `AND COALESCE(sw.total_word_count, 0) <= ${filterOptions.wordCountMax} `
-        }
-
-        const sqlStmt = `
-          SELECT
-            b.id as doc_id,
-            b.content as doc_title,
-            b.hpath as doc_path,
-            b.box as notebook_id,
-            b.updated as doc_updated,
-            b.created as doc_created,
-            COALESCE(sw.total_size, 0) as content_size,
-            COALESCE(sw.total_word_count, 0) as word_count,
-            LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth,
-            COALESCE(bm.bookmark, '') as bookmark
-          FROM blocks b
-          LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
-          LEFT JOIN (${BOOKMARK_SUBQUERY}) bm ON b.id = bm.block_id
-          WHERE b.type = 'd' ${notebookCondition}
-          ${conditions}
-          ORDER BY word_count ASC
-          LIMIT 2000
-        `
-
-        const rows = await sql(sqlStmt)
-        if (!rows || rows.length === 0) {
-          setResults([])
-          queryState.status = "empty"
-        } else {
-          const docs = mapRowsToDocs(rows)
-          const sortedDocs = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder)
-          await enrichWithPublishedPlatforms(sortedDocs)
-          setResults(sortedDocs)
-          queryState.status = "success"
-        }
-      } else {
-        // 不需要字数过滤时，轻量查询（不 JOIN 子查询）
-        const sqlStmt = `
-          SELECT
-            b.id as doc_id,
-            b.content as doc_title,
-            b.hpath as doc_path,
-            b.box as notebook_id,
-            b.updated as doc_updated,
-            b.created as doc_created,
-            0 as content_size,
-            0 as word_count,
-            LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth,
-            COALESCE(bm.bookmark, '') as bookmark
-          FROM blocks b
-          LEFT JOIN (${BOOKMARK_SUBQUERY}) bm ON b.id = bm.block_id
-          WHERE b.type = 'd' ${notebookCondition}
-          ${conditions}
-          ORDER BY b.content ASC
-          LIMIT 2000
-        `
-
-        const rows = await sql(sqlStmt)
-        if (!rows || rows.length === 0) {
-          setResults([])
-          queryState.status = "empty"
-        } else {
-          const docs = mapRowsToDocs(rows)
-          const sortedDocs = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder)
-          await enrichWithPublishedPlatforms(sortedDocs)
-          setResults(sortedDocs)
-          queryState.status = "success"
-        }
-      }
-    } catch (error) {
-      console.error("查询文档列表失败:", error)
-      queryState.errorMessage = (error as Error).message || "查询失败"
-      queryState.status = "error"
-      setResults([])
+    if (filterOptions.titleKeyword.trim()) {
+      conditions += `AND b.content LIKE '%${escapeSql(filterOptions.titleKeyword.trim())}%' `
     }
+
+    if (filterOptions.contentKeyword.trim()) {
+      const keyword = escapeSql(filterOptions.contentKeyword.trim())
+      conditions += `AND b.id IN (SELECT DISTINCT root_id FROM blocks WHERE content LIKE '%${keyword}%' AND type != 'd') `
+    }
+
+    if (filterOptions.bookmarkName.trim()) {
+      conditions += `AND b.id IN (SELECT block_id FROM attributes WHERE name='bookmark' AND value='${escapeSql(filterOptions.bookmarkName.trim())}') `
+    }
+
+    if (filterOptions.updatedAfter) {
+      conditions += `AND b.updated >= '${filterOptions.updatedAfter.replace(/-/g, "")}000000' `
+    }
+    if (filterOptions.updatedBefore) {
+      conditions += `AND b.updated <= '${filterOptions.updatedBefore.replace(/-/g, "")}235959' `
+    }
+
+    if (needWordCountFilter) {
+      if (filterOptions.wordCountMin > 0) conditions += `AND COALESCE(sw.total_word_count, 0) >= ${filterOptions.wordCountMin} `
+      if (filterOptions.wordCountMax > 0) conditions += `AND COALESCE(sw.total_word_count, 0) <= ${filterOptions.wordCountMax} `
+    }
+
+    await runDocQuery({
+      extraWhere: conditions,
+      orderBy: needWordCountFilter ? "word_count ASC" : "b.content ASC",
+      skipSizeJoin: !needWordCountFilter,
+    })
 
     await saveOptions()
   }
@@ -1313,7 +1064,7 @@ export function useDocAnalysis(plugin: Plugin) {
    */
   async function enrichWithPublishedPlatforms(docs: DocInfo[]) {
     if (docs.length === 0) return
-    const idList = docs.map((d) => `'${d.id.replace(/'/g, "''")}'`).join(",")
+    const idList = quoteSqlList(docs.map((d) => d.id))
 
     try {
       const yamlRows = await sql(`
@@ -1328,24 +1079,13 @@ export function useDocAnalysis(plugin: Plugin) {
         for (const row of yamlRows) {
           const id = String(row.block_id)
           if (!docPublishedMap.has(id)) docPublishedMap.set(id, new Set())
-          const name = String(row.name).toLowerCase()
-          for (const meta of PLATFORM_META) {
-            for (const matcher of meta.matchers) {
-              if (name.includes(matcher)) {
-                docPublishedMap.get(id)!.add(matcher)
-                break
-              }
-            }
-          }
+          const platformId = getPlatformIdFromAttrKey(String(row.name))
+          if (platformId) docPublishedMap.get(id)!.add(platformId)
         }
       }
 
       for (const doc of docs) {
-        const published = docPublishedMap.get(doc.id) || new Set()
-        const unpublished = PLATFORM_META
-          .filter((m) => !m.matchers.some((mt) => published.has(mt)))
-          .map((m) => m.name)
-        doc.unpublishedPlatforms = unpublished.length > 0 ? unpublished : undefined
+        doc.unpublishedPlatforms = computeUnpublishedPlatformNames(docPublishedMap.get(doc.id) || new Set())
       }
     } catch (error) {
       console.error("查询文档发布属性失败:", error)
@@ -1358,68 +1098,22 @@ export function useDocAnalysis(plugin: Plugin) {
    */
   async function queryByMissingPlatform(platformMatcher: string) {
     statsFilter.value = ""
-    queryState.status = "loading"
-    queryState.errorMessage = ""
-    queryState.hasQueried = true
 
-    try {
-      const notebookCondition = buildNotebookCondition()
+    const meta = PLATFORM_META.find((p) => p.matchers.includes(platformMatcher))
+    const matchers = meta ? meta.matchers : [platformMatcher]
+    const nameConditions = matchers.map((m) => `name LIKE '%${escapeSql(m)}%'`).join(" OR ")
 
-      // 找到该平台的所有 matcher，避免只查第一个遗漏用第二个 matcher 标记的文档
-      const meta = PLATFORM_META.find((p) => p.matchers.includes(platformMatcher))
-      const matchers = meta ? meta.matchers : [platformMatcher]
-      const nameConditions = matchers
-        .map((m) => `name LIKE '%${m.replace(/'/g, "''")}%'`)
-        .join(" OR ")
-
-      const sqlStmt = `
-        SELECT
-          b.id as doc_id,
-          b.content as doc_title,
-          b.hpath as doc_path,
-          b.box as notebook_id,
-          b.updated as doc_updated,
-          b.created as doc_created,
-          COALESCE(sw.total_size, 0) as content_size,
-          COALESCE(sw.total_word_count, 0) as word_count,
-          LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 as doc_depth,
-          COALESCE(bm.bookmark, '') as bookmark
-        FROM blocks b
-        LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
-        LEFT JOIN (${BOOKMARK_SUBQUERY}) bm ON b.id = bm.block_id
-        WHERE b.type = 'd' ${notebookCondition}
-        AND b.id IN (
+    await runDocQuery({
+      extraWhere: `AND b.id IN (
           SELECT block_id FROM attributes
           WHERE name LIKE '%yaml%'
-          AND block_id IN (SELECT id FROM blocks WHERE type = 'd' ${notebookCondition})
+          AND block_id IN (SELECT id FROM blocks WHERE type = 'd' ${buildNotebookCondition()})
         )
         AND b.id NOT IN (
           SELECT block_id FROM attributes
           WHERE (${nameConditions}) AND name LIKE '%yaml%'
-        )
-        ORDER BY b.updated DESC
-        LIMIT 2000
-      `
-
-      const rows = await sql(sqlStmt)
-
-      if (!rows || rows.length === 0) {
-        setResults([])
-        queryState.status = "empty"
-        return
-      }
-
-      const docs = mapRowsToDocs(rows)
-      const sortedDocs = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder)
-      await enrichWithPublishedPlatforms(sortedDocs)
-      setResults(sortedDocs)
-      queryState.status = "success"
-    } catch (error) {
-      console.error("按缺失平台查询失败:", error)
-      queryState.errorMessage = (error as Error).message || "查询失败"
-      queryState.status = "error"
-      setResults([])
-    }
+        )`,
+    })
   }
 
   return {

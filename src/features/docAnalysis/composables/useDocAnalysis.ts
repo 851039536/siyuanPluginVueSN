@@ -367,7 +367,9 @@ export function useDocAnalysis(plugin: Plugin) {
             COUNT(*) as total,
             SUM(CASE WHEN COALESCE(sw.total_size, 0) = 0 THEN 1 ELSE 0 END) as zero_count,
             SUM(CASE WHEN COALESCE(sw.total_size, 0) > 0 AND COALESCE(sw.total_size, 0) < 1024 THEN 1 ELSE 0 END) as small_count,
-            SUM(CASE WHEN COALESCE(sw.total_size, 0) >= 1024 AND COALESCE(sw.total_size, 0) < 10240 THEN 1 ELSE 0 END) as medium_count
+            SUM(CASE WHEN COALESCE(sw.total_size, 0) >= 1024 AND COALESCE(sw.total_size, 0) < 10240 THEN 1 ELSE 0 END) as medium_count,
+            SUM(CASE WHEN COALESCE(sw.total_size, 0) >= 10240 AND COALESCE(sw.total_size, 0) < 102400 THEN 1 ELSE 0 END) as large_count,
+            SUM(CASE WHEN COALESCE(sw.total_size, 0) >= 102400 THEN 1 ELSE 0 END) as xlarge_count
           FROM blocks b
           LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
           WHERE b.type = 'd' ${notebookCondition}
@@ -394,6 +396,8 @@ export function useDocAnalysis(plugin: Plugin) {
         analyzeContentQuality(notebookCondition),
         // 内容扫描（引用+图片+拓扑）
         analyzeContentScan(notebookCondition),
+        // 字数分布
+        analyzeWordCount(notebookCondition),
       ])
 
       // ── 阶段 2：汇总 ──
@@ -403,6 +407,8 @@ export function useDocAnalysis(plugin: Plugin) {
         docStats.zeroByteDocs = row.zero_count || 0
         docStats.smallDocs = row.small_count || 0
         docStats.mediumDocs = row.medium_count || 0
+        docStats.largeDocs = row.large_count || 0
+        docStats.xlargeDocs = row.xlarge_count || 0
       }
 
       if (dupRows && dupRows.length > 0) {
@@ -512,6 +518,38 @@ export function useDocAnalysis(plugin: Plugin) {
       }
     } catch (error) {
       console.error("文档深度分析失败:", error)
+    }
+  }
+
+  /**
+   * 字数分布分析（复用 SIZE_WORDCOUNT_SUBQUERY）
+   */
+  async function analyzeWordCount(notebookCondition: string) {
+    try {
+      const wcSql = `
+        SELECT
+          SUM(CASE WHEN COALESCE(sw.total_word_count, 0) BETWEEN 0 AND 500 THEN 1 ELSE 0 END) as wc_0_500,
+          SUM(CASE WHEN COALESCE(sw.total_word_count, 0) BETWEEN 501 AND 2000 THEN 1 ELSE 0 END) as wc_500_2000,
+          SUM(CASE WHEN COALESCE(sw.total_word_count, 0) BETWEEN 2001 AND 5000 THEN 1 ELSE 0 END) as wc_2000_5000,
+          SUM(CASE WHEN COALESCE(sw.total_word_count, 0) BETWEEN 5001 AND 10000 THEN 1 ELSE 0 END) as wc_5000_10000,
+          SUM(CASE WHEN COALESCE(sw.total_word_count, 0) > 10000 THEN 1 ELSE 0 END) as wc_10000_plus
+        FROM blocks b
+        LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
+        WHERE b.type = 'd' ${notebookCondition}
+      `
+      const rows = await sql(wcSql)
+      if (rows && rows.length > 0) {
+        const r = rows[0]
+        docStats.wordCountDistribution = [
+          { label: "0~500字", count: r.wc_0_500 || 0 },
+          { label: "500~2000字", count: r.wc_500_2000 || 0 },
+          { label: "2000~5000字", count: r.wc_2000_5000 || 0 },
+          { label: "5000~1万字", count: r.wc_5000_10000 || 0 },
+          { label: ">1万字", count: r.wc_10000_plus || 0 },
+        ]
+      }
+    } catch (error) {
+      console.error("字数分布分析失败:", error)
     }
   }
 
@@ -627,6 +665,29 @@ export function useDocAnalysis(plugin: Plugin) {
         docStats.publishedDocs = row.published_count || 0
         docStats.unusedDocs = row.unused_count || 0
         docStats.noneBookmarkDocs = row.none_count || 0
+      }
+
+      // 自定义书签 Top-8（排除系统书签）
+      const customSql = `
+        SELECT a.value, COUNT(DISTINCT a.block_id) as cnt
+        FROM attributes a
+        WHERE a.name = 'bookmark'
+        AND a.value NOT IN ('待发布', '已发布', '不使用', '无', '')
+        AND a.block_id IN (
+          SELECT b.id FROM blocks b WHERE b.type = 'd' ${notebookCondition} LIMIT 50000
+        )
+        GROUP BY a.value
+        ORDER BY cnt DESC
+        LIMIT 8
+      `
+      const customRows = await sql(customSql)
+      if (customRows) {
+        docStats.customBookmarkTop = customRows.map((r: any) => ({
+          value: r.value || "",
+          count: r.cnt || 0,
+        }))
+      } else {
+        docStats.customBookmarkTop = []
       }
     } catch (error) {
       console.error("书签分析失败:", error)
@@ -873,6 +934,8 @@ export function useDocAnalysis(plugin: Plugin) {
       "0B": "AND COALESCE(sw.total_size, 0) = 0",
       "small": "AND COALESCE(sw.total_size, 0) > 0 AND COALESCE(sw.total_size, 0) < 1024",
       "medium": "AND COALESCE(sw.total_size, 0) >= 1024 AND COALESCE(sw.total_size, 0) < 10240",
+      "large": "AND COALESCE(sw.total_size, 0) >= 10240 AND COALESCE(sw.total_size, 0) < 102400",
+      "xlarge": "AND COALESCE(sw.total_size, 0) >= 102400",
     }
 
     if (sizeConditions[category]) {
@@ -882,6 +945,16 @@ export function useDocAnalysis(plugin: Plugin) {
 
     // 类别 → DocQueryConfig
     let qConfig: DocQueryConfig
+
+    // 按精确深度过滤（点击深度柱状图触发）
+    if (category.startsWith("depth_")) {
+      const d = parseInt(category.slice(6), 10)
+      if (!isNaN(d)) {
+        qConfig = { extraWhere: `AND LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 = ${d}`, orderBy: "b.updated DESC" }
+        await runDocQuery(qConfig)
+        return
+      }
+    }
 
     switch (category) {
       case "7days":

@@ -163,6 +163,26 @@ export interface DocStats {
   orphanDocs: number
   /** 各平台已发布文档数（key 为 platform.id，如 csdn/zhihu） */
   platformCounts: Record<string, number>
+  /** 10~100KB 文档数 */
+  largeDocs: number
+  /** >100KB 文档数 */
+  xlargeDocs: number
+  /** 字数分布 */
+  wordCountDistribution: WordCountBin[]
+  /** 自定义书签 Top-N（排除系统书签：待发布/已发布/不使用/无） */
+  customBookmarkTop: BookmarkBin[]
+}
+
+/** 字数分档 */
+export interface WordCountBin {
+  label: string
+  count: number
+}
+
+/** 书签分档（复用，也用于自定义书签） */
+export interface BookmarkBin {
+  value: string
+  count: number
 }
 
 /** 书签详情项 */
@@ -206,6 +226,8 @@ export function getCategoryLabel(category: string): string {
     case "hasMemo": return "有备注"
     case "incomingRef": return "被引用"
     case "orphanDoc": return "孤文档"
+    case "large": return "10~100KB"
+    case "xlarge": return ">100KB"
     default: return category
   }
 }

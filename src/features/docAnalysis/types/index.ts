@@ -161,6 +161,8 @@ export interface DocStats {
   incomingRefDocs: number
   /** 孤文档数（无入链无出链） */
   orphanDocs: number
+  /** 各平台已发布文档数（key 为 platform.id，如 csdn/zhihu） */
+  platformCounts: Record<string, number>
 }
 
 /** 书签详情项 */

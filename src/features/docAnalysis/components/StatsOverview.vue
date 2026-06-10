@@ -333,6 +333,10 @@
             class="section-toggle-icon"
           />
           <Icon icon="mdi:cloud-check-outline" />发布状态
+          <span
+            v-if="isSectionCollapsed('publish')"
+            class="section-hint"
+          >{{ publishSummary }}</span>
         </div>
         <div
           v-show="!isSectionCollapsed('publish')"
@@ -364,6 +368,32 @@
           >
             <span class="card-value no-publish-color">{{ stats.noPublishDocs }}</span>
             <span class="card-unit">未发布</span>
+          </div>
+        </div>
+        <!-- 平台分布柱状图 + 覆盖率指标 -->
+        <div
+          v-show="!isSectionCollapsed('publish') && platformEntries.length > 0"
+          class="platform-distro"
+        >
+          <div class="platform-distro-title">
+            <span>平台分布</span>
+            <span class="platform-metrics">
+              人均 {{ avgPlatformsPerDoc }} 平台 · 覆盖率 {{ coveragePct }}%
+            </span>
+          </div>
+          <div
+            v-for="entry in platformEntries"
+            :key="entry.id"
+            class="platform-bar-v2"
+          >
+            <span class="platform-bar-label">{{ entry.name }}</span>
+            <div class="platform-bar-track">
+              <div
+                class="platform-bar-fill"
+                :style="{ width: entry.pct + '%' }"
+              ></div>
+            </div>
+            <span class="platform-bar-count">{{ entry.count }}</span>
           </div>
         </div>
       </div>
@@ -629,6 +659,7 @@ import type {
   DepthStats,
   DocStats,
 } from "../types/index"
+import { PLATFORM_META } from "../composables/useDocAnalysis"
 import { Icon } from "@iconify/vue"
 import {
   computed,
@@ -709,6 +740,47 @@ const advancedSummary = computed(() => {
   if (props.stats.orphanDocs) parts.push(`孤文档 ${props.stats.orphanDocs}`)
   if (props.depthStats.avgDepth) parts.push(`均深 ${props.depthStats.avgDepth}`)
   return parts.join(" · ")
+})
+
+/** 发布状态折叠时的摘要文本 */
+const publishSummary = computed(() => {
+  const parts: string[] = []
+  if (props.stats.fullPublishDocs) parts.push(`完整 ${props.stats.fullPublishDocs}`)
+  if (props.stats.partialPublishDocs) parts.push(`部分 ${props.stats.partialPublishDocs}`)
+  if (props.stats.noPublishDocs) parts.push(`未发布 ${props.stats.noPublishDocs}`)
+  return parts.length > 0 ? parts.join(" · ") : ""
+})
+
+/** 平台分布柱状图数据（按发布数降序） */
+const platformEntries = computed(() => {
+  // PLATFORM_META 在运行时通过统计注入，这里从 stats.platformCounts 推导
+  const counts = props.stats.platformCounts || {}
+  const entries = Object.entries(counts)
+    .map(([id, count]) => {
+      // 从 PLATFORM_META 查找名称（静态导入会循环，直接用 id 推导）
+      const meta = PLATFORM_META.find((p) => p.id === id)
+      return { id, name: meta?.name || id, count }
+    })
+    .filter((e) => e.count > 0)
+    .sort((a, b) => b.count - a.count)
+  const max = Math.max(...entries.map((e) => e.count), 1)
+  return entries.map((e) => ({ ...e, pct: Math.round((e.count / max) * 100) }))
+})
+
+/** 进入发布体系的文档数（有任一平台发布属性） */
+const docsInSystem = computed(() => props.stats.fullPublishDocs + props.stats.partialPublishDocs)
+
+/** 平均每文档发布平台数 */
+const avgPlatformsPerDoc = computed(() => {
+  if (docsInSystem.value === 0) return "0"
+  const total = Object.values(props.stats.platformCounts || {}).reduce((a, b) => a + b, 0)
+  return (total / docsInSystem.value).toFixed(1)
+})
+
+/** 发布覆盖率：有任一平台发布的文档占总文档比例 */
+const coveragePct = computed(() => {
+  if (!props.stats.totalDocs) return 0
+  return Math.round((docsInSystem.value / props.stats.totalDocs) * 100)
 })
 
 /** 计算卡片百分比进度条宽度 */
@@ -1187,6 +1259,82 @@ function getBarPercent(count: number): string {
   font-family: $da-mono;
   color: var(--b3-theme-on-surface-variant);
   flex-shrink: 0;
+}
+
+// ============ 平台分布图 ============
+.platform-distro {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--b3-border-color);
+}
+
+.platform-distro-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.45;
+  margin-bottom: 6px;
+}
+
+.platform-metrics {
+  font-weight: 400;
+  font-size: 10px;
+  color: var(--b3-theme-on-surface-variant);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.platform-bar-v2 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.platform-bar-label {
+  width: 54px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--b3-theme-on-surface-variant);
+  text-align: right;
+  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.platform-bar-track {
+  flex: 1;
+  height: 10px;
+  border-radius: 5px;
+  background: var(--b3-theme-surface-light);
+  overflow: hidden;
+}
+
+.platform-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  background: var(--b3-theme-success, #22c55e);
+  opacity: 0.5;
+  min-width: 3px;
+  transition: width 0.3s ease;
+}
+
+.platform-bar-count {
+  width: 24px;
+  font-size: 10px;
+  font-family: $da-mono;
+  color: var(--b3-theme-on-surface-variant);
+  flex-shrink: 0;
+  text-align: right;
 }
 
 // ============ 占位状态 ============

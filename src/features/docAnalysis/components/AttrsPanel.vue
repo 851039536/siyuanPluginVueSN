@@ -81,6 +81,14 @@
               />
               <span class="platform-name">{{ platform.name }}</span>
               <span class="status-text">{{ platform.published ? '已发布' : '未发布' }}</span>
+              <button
+                v-if="!platform.published && platform.url"
+                class="publish-go-btn"
+                title="前往发布"
+                @click.stop="openPlatformUrl(platform.url)"
+              >
+                <Icon icon="mdi:open-in-new" />
+              </button>
             </div>
           </div>
         </div>
@@ -204,9 +212,14 @@ interface PlatformInfo {
   id: string
   name: string
   published: boolean
+  url: string
 }
 
 const markingPlatform = ref<string | null>(null)
+
+function openPlatformUrl(url: string) {
+  window.open(url, "_blank")
+}
 
 async function markAsPublished(platformId: string) {
   if (!props.attrs || markingPlatform.value) return
@@ -279,6 +292,7 @@ const platforms = computed<PlatformInfo[]>(() => {
       id: p.id,
       name: p.name,
       published: false,
+      url: p.url,
     }))
   }
 
@@ -294,6 +308,7 @@ const platforms = computed<PlatformInfo[]>(() => {
       id: config.id,
       name: config.name,
       published,
+      url: config.url,
     }
   })
 })
@@ -552,6 +567,26 @@ async function copyAllAttrs() {
 
         .status-icon {
           color: var(--b3-theme-success, #22c55e);
+        }
+      }
+
+      .publish-go-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        border: none;
+        border-radius: 50%;
+        background: var(--b3-theme-primary);
+        color: var(--b3-theme-on-primary);
+        cursor: pointer;
+        font-size: 13px;
+        flex-shrink: 0;
+        margin-left: 4px;
+
+        &:hover {
+          opacity: 0.85;
         }
       }
     }

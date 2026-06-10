@@ -180,9 +180,7 @@
     }
   }
 
-  .sort-order-btn,
-  .batch-publish-btn,
-  .batch-mark-btn {
+  .sort-order-btn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -197,24 +195,9 @@
       border-color: var(--b3-theme-primary);
       background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
     }
-  }
 
-  .sort-order-btn {
     color: var(--b3-theme-on-surface-variant);
     font-size: 18px;
-  }
-
-  .batch-publish-btn,
-  .batch-mark-btn {
-    font-size: 16px;
-  }
-
-  .batch-publish-btn {
-    color: var(--b3-theme-primary);
-  }
-
-  .batch-mark-btn {
-    color: var(--b3-theme-warning, #f59e0b);
   }
 }
 

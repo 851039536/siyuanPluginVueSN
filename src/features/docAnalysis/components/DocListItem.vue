@@ -105,13 +105,6 @@
           <div class="tooltip-header">全部已发布</div>
         </div>
       </div>
-      <button
-        class="action-btn publish-action-btn"
-        title="发布此文档"
-        @click.stop="$emit('publish', doc.id, doc.title)"
-      >
-        <Icon icon="mdi:publish" />
-      </button>
     </div>
     <div class="doc-size">
       <span
@@ -140,7 +133,6 @@ const props = defineProps<Props>()
 
 defineEmits<{
   (e: "open", docId: string): void
-  (e: "publish", docId: string, docTitle: string): void
   (e: "attrs", docId: string): void
 }>()
 

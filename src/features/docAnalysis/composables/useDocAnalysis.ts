@@ -703,7 +703,11 @@ export function useDocAnalysis(plugin: Plugin) {
   async function analyzePlatformPublish(notebookCondition: string) {
     try {
       const allDocs = await sql(`
-        SELECT id FROM blocks WHERE type = 'd' ${notebookCondition} LIMIT 10000
+        SELECT b.id FROM blocks b
+        LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
+        WHERE b.type = 'd' AND COALESCE(sw.total_size, 0) > 0
+        ${notebookCondition}
+        LIMIT 10000
       `)
       if (!allDocs || allDocs.length === 0) return
 
@@ -711,7 +715,12 @@ export function useDocAnalysis(plugin: Plugin) {
         SELECT block_id, name
         FROM attributes
         WHERE name LIKE '%yaml%'
-        AND block_id IN (SELECT id FROM blocks WHERE type = 'd' ${notebookCondition})
+        AND block_id IN (
+          SELECT b.id FROM blocks b
+          LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
+          WHERE b.type = 'd' AND COALESCE(sw.total_size, 0) > 0
+          ${notebookCondition}
+        )
         LIMIT 50000
       `)
 
@@ -1212,7 +1221,12 @@ export function useDocAnalysis(plugin: Plugin) {
       extraWhere: `AND b.id IN (
           SELECT block_id FROM attributes
           WHERE name LIKE '%yaml%'
-          AND block_id IN (SELECT id FROM blocks WHERE type = 'd' ${buildNotebookCondition()})
+          AND block_id IN (
+            SELECT b2.id FROM blocks b2
+            LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw2 ON b2.id = sw2.root_id
+            WHERE b2.type = 'd' AND COALESCE(sw2.total_size, 0) > 0
+            ${buildNotebookCondition()}
+          )
         )
         AND b.id NOT IN (
           SELECT block_id FROM attributes

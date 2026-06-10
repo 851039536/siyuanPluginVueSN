@@ -31,4 +31,5 @@ export const DEFAULT_DOC_STATS: DocStats = {
   memoedDocs: 0,
   incomingRefDocs: 0,
   orphanDocs: 0,
+  platformCounts: {},
 }

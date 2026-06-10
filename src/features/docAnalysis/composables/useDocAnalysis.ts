@@ -172,6 +172,10 @@ export function useDocAnalysis(plugin: Plugin) {
   // 发布状态缓存
   let fullPublishDocIds: Set<string> = new Set()
   let noPublishDocIds: Set<string> = new Set()
+  /** 各平台未发布文档数（有任一发布但缺该平台的文档数），响应式供模板消费 */
+  const platformUnpublishedCounts = ref<Record<string, number>>({})
+  /** 含任一平台发布属性的文档总数，供覆盖率计算 */
+  const docsInPublishSystem = ref(0)
 
   // 深度分析详情
   const depthStats = ref<DepthStats>({
@@ -678,24 +682,50 @@ export function useDocAnalysis(plugin: Plugin) {
       let no = 0
       const fullSet = new Set<string>()
       const noSet = new Set<string>()
+      /** 各平台已发布文档计数（按 platform.id 索引） */
+      const pCounts: Record<string, number> = {}
+      for (const p of PLATFORM_META) pCounts[p.id] = 0
+
+      let totalPlatformHits = 0 // ∑ 每个文档命中的平台数，用于计算人均
 
       for (const [id, mask] of docMap) {
         if (mask === 0) {
           no++
           noSet.add(id)
+          continue
         }
-        else if (mask === ALL_PLATFORMS) {
+
+        if (mask === ALL_PLATFORMS) {
           full++
           fullSet.add(id)
         }
         else {
           partial++
         }
+
+        // 逐位统计各平台
+        for (let i = 0; i < PLATFORM_META.length; i++) {
+          if (mask & (1 << i)) {
+            pCounts[PLATFORM_META[i].id]++
+            totalPlatformHits++
+          }
+        }
+      }
+
+      const inSystem = docMap.size - no // 有任一平台发布属性的文档数
+
+      // 各平台未发布数 = 在发布体系中但缺少该平台的文档数
+      const unpubCounts: Record<string, number> = {}
+      for (const p of PLATFORM_META) {
+        unpubCounts[p.id] = inSystem - pCounts[p.id]
       }
 
       docStats.fullPublishDocs = full
       docStats.partialPublishDocs = partial
       docStats.noPublishDocs = no
+      docStats.platformCounts = pCounts
+      docsInPublishSystem.value = inSystem
+      platformUnpublishedCounts.value = unpubCounts
       fullPublishDocIds = fullSet
       noPublishDocIds = noSet
     }
@@ -1139,5 +1169,7 @@ export function useDocAnalysis(plugin: Plugin) {
     openDoc,
     updateSort,
     clearResults,
+    platformUnpublishedCounts,
+    docsInPublishSystem,
   }
 }

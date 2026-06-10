@@ -532,7 +532,8 @@ export function useDocAnalysis(plugin: Plugin) {
           SUM(CASE WHEN COALESCE(sw.total_word_count, 0) BETWEEN 501 AND 2000 THEN 1 ELSE 0 END) as wc_500_2000,
           SUM(CASE WHEN COALESCE(sw.total_word_count, 0) BETWEEN 2001 AND 5000 THEN 1 ELSE 0 END) as wc_2000_5000,
           SUM(CASE WHEN COALESCE(sw.total_word_count, 0) BETWEEN 5001 AND 10000 THEN 1 ELSE 0 END) as wc_5000_10000,
-          SUM(CASE WHEN COALESCE(sw.total_word_count, 0) > 10000 THEN 1 ELSE 0 END) as wc_10000_plus
+          SUM(CASE WHEN COALESCE(sw.total_word_count, 0) BETWEEN 10001 AND 20000 THEN 1 ELSE 0 END) as wc_10000_20000,
+          SUM(CASE WHEN COALESCE(sw.total_word_count, 0) > 20000 THEN 1 ELSE 0 END) as wc_20000_plus
         FROM blocks b
         LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
         WHERE b.type = 'd' ${notebookCondition}
@@ -545,7 +546,8 @@ export function useDocAnalysis(plugin: Plugin) {
           { label: "500~2000字", count: r.wc_500_2000 || 0 },
           { label: "2000~5000字", count: r.wc_2000_5000 || 0 },
           { label: "5000~1万字", count: r.wc_5000_10000 || 0 },
-          { label: ">1万字", count: r.wc_10000_plus || 0 },
+          { label: "1万~2万字", count: r.wc_10000_20000 || 0 },
+          { label: ">2万字", count: r.wc_20000_plus || 0 },
         ]
       }
     } catch (error) {

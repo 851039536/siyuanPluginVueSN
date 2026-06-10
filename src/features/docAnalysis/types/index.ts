@@ -171,6 +171,8 @@ export interface DocStats {
   wordCountDistribution: WordCountBin[]
   /** 自定义书签 Top-N（排除系统书签：待发布/已发布/不使用/无） */
   customBookmarkTop: BookmarkBin[]
+  /** 命中去重扣分条件的文档数（去重后） */
+  distinctIssueCount: number
 }
 
 /** 字数分档 */

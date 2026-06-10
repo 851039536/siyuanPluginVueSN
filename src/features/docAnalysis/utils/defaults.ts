@@ -36,4 +36,5 @@ export const DEFAULT_DOC_STATS: DocStats = {
   platformCounts: {},
   wordCountDistribution: [],
   customBookmarkTop: [],
+  distinctIssueCount: 0,
 }

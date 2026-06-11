@@ -95,13 +95,6 @@ export class ShortcutManager {
   }
 
   /**
-   * 按ID查询快捷键
-   */
-  getById(id: string): ShortcutInfo | undefined {
-    return this.shortcuts.find((s) => s.id === id)
-  }
-
-  /**
    * 删除快捷键
    */
   async removeShortcut(id: string): Promise<boolean> {
@@ -113,13 +106,6 @@ export class ShortcutManager {
       return true
     }
     return false
-  }
-
-  /**
-   * 清空所有快捷键
-   */
-  clear(): void {
-    this.shortcuts = []
   }
 
   /**

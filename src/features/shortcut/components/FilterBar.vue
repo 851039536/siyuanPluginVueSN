@@ -38,6 +38,18 @@
           <span class="line"></span>
         </span>
       </Button>
+      <Button
+        :variant="viewMode === 'three-col' ? 'primary' : 'ghost'"
+        size="small"
+        title="三列视图"
+        @click="$emit('update:viewMode', 'three-col')"
+      >
+        <span class="three-col-icon">
+          <span class="square"></span>
+          <span class="square"></span>
+          <span class="square"></span>
+        </span>
+      </Button>
     </div>
   </div>
 </template>
@@ -113,10 +125,15 @@ defineEmits<{
 }
 
 .grid-icon,
-.list-icon {
+.list-icon,
+.three-col-icon {
   display: flex;
   align-items: center;
   gap: 2px;
+}
+
+.three-col-icon {
+  gap: 1px;
 }
 
 .square {

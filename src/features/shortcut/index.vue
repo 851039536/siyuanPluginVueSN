@@ -51,7 +51,7 @@
       @toggle-favorite="toggleFavorite"
       @copy="copyShortcutInfo"
       @edit="editShortcut"
-      @delete="deleteShortcut"
+      @delete="requestDelete"
     />
 
     <!-- 数据存储路径（底部折叠） -->
@@ -81,6 +81,36 @@
           :title="`${storageDir}/${key}.json`"
           @click="copyStoragePath(`${storageDir}/${key}.json`)"
         >{{ storageDir }}/<wbr>{{ key }}.json</code>
+      </div>
+    </div>
+
+    <!-- 删除确认对话框 -->
+    <div
+      v-if="deleteConfirmId"
+      class="delete-confirm-overlay"
+      @click="cancelDelete"
+    >
+      <div
+        class="delete-confirm-dialog"
+        @click.stop
+      >
+        <p class="delete-confirm-text">{{ i18n.confirmDelete || '确认删除此快捷键？' }}</p>
+        <div class="delete-confirm-actions">
+          <Button
+            variant="secondary"
+            size="small"
+            @click="cancelDelete"
+          >
+            {{ i18n.cancel || '取消' }}
+          </Button>
+          <Button
+            variant="danger"
+            size="small"
+            @click="confirmDelete"
+          >
+            {{ i18n.delete || '删除' }}
+          </Button>
+        </div>
       </div>
     </div>
 
@@ -123,6 +153,7 @@ import {
   ref,
 } from "vue"
 import { copyToClipboard } from "@/utils/domUtils"
+import Button from "@/components/Button.vue"
 import CategorySelector from "./components/CategorySelector.vue"
 import FilterBar from "./components/FilterBar.vue"
 import PanelHeader from "./components/PanelHeader.vue"
@@ -189,6 +220,7 @@ const storageDir = computed(() => {
   return "data/storage/petals/siyuan-plugin-vite-vue-sn"
 })
 const showStoragePath = ref(false)
+const deleteConfirmId = ref<string | null>(null)
 
 async function copyStoragePath(path: string) {
   await copyToClipboard(path)
@@ -363,24 +395,65 @@ function handleDialogError(msg: string) {
   console.warn("[ShortcutDialog]", msg)
 }
 
-async function deleteShortcut(id: string) {
-  if (confirm(props.i18n.confirmDelete || "确认删除此快捷键？")) {
-    await manager.removeShortcut(id)
-    favorites.value.delete(id)
-    const index = recentUsed.value.indexOf(id)
-    if (index > -1) recentUsed.value.splice(index, 1)
+function requestDelete(id: string) {
+  deleteConfirmId.value = id
+}
 
-    if (storage.value) {
-      try {
-        await storage.value.saveFavorites(Array.from(favorites.value))
-      } catch (error) {
-        console.error("更新收藏数据失败:", error)
-      }
+function cancelDelete() {
+  deleteConfirmId.value = null
+}
+
+async function confirmDelete() {
+  const id = deleteConfirmId.value
+  if (!id) return
+  await manager.removeShortcut(id)
+  favorites.value.delete(id)
+  const index = recentUsed.value.indexOf(id)
+  if (index > -1) recentUsed.value.splice(index, 1)
+  if (storage.value) {
+    try {
+      await storage.value.saveFavorites(Array.from(favorites.value))
+    } catch (error) {
+      console.error("更新收藏数据失败:", error)
     }
   }
+  deleteConfirmId.value = null
 }
 </script>
 
 <style scoped lang="scss">
 @use "./styles/index.scss";
+
+.delete-confirm-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.delete-confirm-dialog {
+  background: var(--b3-theme-background);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  max-width: 300px;
+  width: 90%;
+}
+
+.delete-confirm-text {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--b3-theme-on-background);
+  line-height: 1.4;
+  text-align: center;
+}
+
+.delete-confirm-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
 </style>

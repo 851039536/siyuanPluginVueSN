@@ -51,8 +51,12 @@
           @clear="clearContent"
           @toggle-reasoning="showReasoning = !showReasoning"
           @auto-fix="handleAutoFix"
+          :conversation-count="conversationHistory.length"
+          :has-content="!!generatedContent"
+          :generation-tip="generationTip"
           @re-review="handleReReview"
           @fix-issue="handleFixIssue"
+          @clear-conversation="clearConversation"
         />
       </div>
 
@@ -159,6 +163,11 @@ const autoFixCount = ref(0);
 const MAX_AUTO_FIX_ITERATIONS = 2;
 const fixHistory = ref<FixEntry[]>([]);
 
+// ============ 多轮对话系统 ============
+interface ConversationTurn { role: "user" | "assistant"; content: string; timestamp: number }
+const conversationHistory = ref<ConversationTurn[]>([]);
+const MAX_CONVERSATION_TURNS = 20;
+
 // ============ 技能系统 ============
 const { skills, currentSkillIndex, currentSkill, loadSkills, skillSearchQuery, filteredSkills } = useSkillsLoader(props.plugin)
 
@@ -261,6 +270,9 @@ const startGeneration = () => {
   showReasoning.value = false;
   chunkBuffer = "";
   reasoningBuffer = "";
+  streamingInCodeBlock = false;
+  headingCount = 0;
+  generationTip.value = "";
   if (rafId) {
     cancelAnimationFrame(rafId);
     rafId = null;
@@ -349,13 +361,38 @@ const loadDocument = async (
 
 /**
  * 流式输出缓冲区与节流渲染
- * 使用 requestAnimationFrame 批量更新，避免高频 chunk 导致频繁 DOM 重渲染
+ * 增强版：跟踪代码块状态、段落计数，提供智能分块和进度估计
  */
 let chunkBuffer = "";
 let rafId: number | null = null;
+let streamingInCodeBlock = false;
+let headingCount = 0;
+const generationTip = ref("");
 
 const flushChunkBuffer = () => {
   if (chunkBuffer) {
+    // 跟踪代码块状态以支持智能渲染
+    let codeBlockToggle = 0;
+    for (let i = 0; i < chunkBuffer.length; i++) {
+      if (chunkBuffer.slice(i, i + 3) === "```") codeBlockToggle++;
+    }
+    if (codeBlockToggle % 2 !== 0) {
+      streamingInCodeBlock = !streamingInCodeBlock;
+    }
+
+    // 统计标题数量用于进度估计
+    const headingMatches = chunkBuffer.match(/^#{1,6}\s/gm);
+    if (headingMatches) headingCount += headingMatches.length;
+
+    // 构建位置提示
+    if (headingCount >= 2) {
+      generationTip.value = `已生成 ${headingCount} 个章节`;
+    } else if (streamingInCodeBlock) {
+      generationTip.value = "正在生成代码块...";
+    } else {
+      generationTip.value = "";
+    }
+
     displayedContent.value += chunkBuffer;
     chunkBuffer = "";
   }
@@ -388,6 +425,23 @@ const defaultOnReasoningChunk = (chunk: string) => {
 };
 
 /**
+ * 将对话历史构建为上下文字符串
+ */
+const buildConversationContext = (): string => {
+  if (conversationHistory.value.length === 0) return ""
+  return conversationHistory.value
+    .map(turn => `[${turn.role === "user" ? "用户" : "助手"}]: ${turn.content}`)
+    .join("\n\n")
+};
+
+/**
+ * 清空对话历史
+ */
+const clearConversation = () => {
+  conversationHistory.value = [];
+};
+
+/**
  * 构建生成请求的公共 options，避免 aiEditAction / handleCustomEdit 重复
  */
 const buildGenerateOptions = (userInput: string, systemPrompt: string, searchQueryOverride?: string): GenerateOptions => ({
@@ -414,6 +468,9 @@ const buildGenerateOptions = (userInput: string, systemPrompt: string, searchQue
     searchStatus.value = `搜索失败: ${error}`;
     showMessage(`联网搜索失败: ${error}`, 3000, "info");
   },
+  ...(conversationHistory.value.length > 0 ? {
+    context: buildConversationContext(),
+  } : {}),
 })
 
 /**
@@ -434,7 +491,26 @@ const executeGeneration = async (
   startGeneration();
   try {
     const options = buildOptions();
+    // 保存用户提问到对话历史（在生成前保存，避免响应式问题）
+    const userInput = options.userInput;
     await props.onGenerate(options);
+    // 生成成功后保存对话历史
+    if (generatedContent.value) {
+      conversationHistory.value.push({
+        role: "user",
+        content: userInput.length > 500 ? userInput.slice(0, 500) + "..." : userInput,
+        timestamp: Date.now(),
+      });
+      conversationHistory.value.push({
+        role: "assistant",
+        content: generatedContent.value.length > 300 ? generatedContent.value.slice(0, 300) + "..." : generatedContent.value,
+        timestamp: Date.now(),
+      });
+      // 限制历史数量
+      if (conversationHistory.value.length > MAX_CONVERSATION_TURNS * 2) {
+        conversationHistory.value = conversationHistory.value.slice(-MAX_CONVERSATION_TURNS * 2);
+      }
+    }
     onSuccess?.();
   } catch (error) {
     if (handleGenerationError(error as Error, context)) return;

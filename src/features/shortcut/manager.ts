@@ -2,10 +2,7 @@
  * 快捷键模块 - 管理器
  * 负责快捷键数据的存储、查询和管理
  */
-import type {
-  ShortcutInfo,
-  ShortcutManagerConfig,
-} from "./types"
+import type { ShortcutInfo } from "./types"
 
 /**
  * 快捷键管理器
@@ -14,8 +11,8 @@ export class ShortcutManager {
   private shortcuts: ShortcutInfo[] = []
   private onSave?: (shortcuts: ShortcutInfo[]) => Promise<void>
 
-  constructor(config: ShortcutManagerConfig = { shortcuts: [] }) {
-    this.shortcuts = [...config.shortcuts]
+  constructor() {
+    this.shortcuts = []
   }
 
   /**

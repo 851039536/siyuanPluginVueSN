@@ -2,7 +2,7 @@
  * AI内容生成功能模块
  */
 import { Plugin } from "siyuan"
-import { AIContentGenerator } from "./types"
+import { AIContentGenerator } from "./modules/AIContentGenerator"
 
 /**
  * 注册AI内容生成模块

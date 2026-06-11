@@ -380,7 +380,7 @@ import type {
   SkillItem,
   TargetDoc,
 } from "@/types/ai"
-import type { ProviderModels } from "../types/models"
+import type { ProviderModels } from "../config/models"
 import {
   computed,
   nextTick,

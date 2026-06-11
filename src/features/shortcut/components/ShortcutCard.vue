@@ -109,14 +109,6 @@ const keyParts = computed(() => {
     seq.split("+").map((k) => k.trim()),
   )
 })
-
-const pathText = computed(() => {
-  const parts = [props.categoryLabel]
-  if (props.shortcut.group) {
-    parts.push(props.shortcut.group)
-  }
-  return parts.join(" / ")
-})
 </script>
 
 <style scoped lang="scss">

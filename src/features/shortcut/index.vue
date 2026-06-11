@@ -135,7 +135,6 @@ import { getShortcutManager } from "./manager"
 import {
   SHORTCUTS_FAVORITES_KEY,
   SHORTCUTS_RECENT_KEY,
-  SHORTCUTS_STORAGE_KEY,
   ShortcutStorage,
 } from "./types/storage"
 
@@ -184,7 +183,7 @@ const formData = ref<ShortcutFormData>({
 })
 
 // 数据存储路径
-const STORAGE_KEYS = [SHORTCUTS_STORAGE_KEY, SHORTCUTS_FAVORITES_KEY, SHORTCUTS_RECENT_KEY]
+const STORAGE_KEYS = [SHORTCUTS_FAVORITES_KEY, SHORTCUTS_RECENT_KEY]
 const storageDir = computed(() => {
   if (props.plugin) {
     return (props.plugin as any).dataDir || "data/storage/petals/siyuan-plugin-vite-vue-sn"
@@ -204,8 +203,6 @@ const storage = computed(() => props.plugin ? new ShortcutStorage(props.plugin) 
 
 // 统计信息
 const totalCount = computed(() => manager.getAllShortcuts().length)
-const favoriteCount = computed(() => favorites.value.size)
-const customCount = computed(() => manager.getByCategory("custom").length)
 
 // 初始化
 onMounted(async () => {

@@ -18,7 +18,7 @@
               {{ statistics.totalPractice }}
             </div>
             <div class="stat-label">
-              {{ i18n.totalPractice || '总练习次数' }}
+              {{ t.totalPractice }}
             </div>
           </div>
         </div>
@@ -40,7 +40,7 @@
               {{ statistics.practicedCards }}
             </div>
             <div class="stat-label">
-              {{ i18n.practicedCards || '已练习卡片' }}
+              {{ t.practicedCards }}
             </div>
           </div>
         </div>
@@ -62,7 +62,7 @@
               {{ statistics.totalCards }}
             </div>
             <div class="stat-label">
-              {{ i18n.totalCards || '总卡片数' }}
+              {{ t.totalCards }}
             </div>
           </div>
         </div>
@@ -76,7 +76,7 @@
       class="progress-section"
     >
       <div class="progress-header">
-        <span class="progress-title">{{ i18n.masteryProgress || '掌握进度' }}</span>
+        <span class="progress-title">{{ t.masteryProgress }}</span>
         <span class="progress-percent">{{ statistics.practicedCards }}/{{ statistics.totalCards }} ({{ masteryPercent }}%)</span>
       </div>
       <div class="progress-bar">
@@ -99,7 +99,7 @@
             name="statistics"
             :size="14"
           />
-          {{ i18n.categoryStats || '类别统计' }}
+          {{ t.categoryStats }}
         </span>
       </template>
       <div class="bar-chart">
@@ -136,7 +136,7 @@
             name="starCircle"
             :size="14"
           />
-          {{ i18n.topCards || '练习排行榜' }}
+          {{ t.topCards }}
         </span>
       </template>
       <div class="rank-list">
@@ -167,9 +167,9 @@
         name="statistics"
         :size="48"
       />
-      <p>{{ i18n.noPracticeData || '暂无练习数据' }}</p>
+      <p>{{ t.noPracticeData }}</p>
       <p class="empty-state-hint">
-        {{ i18n.startPracticeHint || '开始练习单词，这里将显示你的学习统计' }}
+        {{ t.startPracticeHint }}
       </p>
     </div>
   </div>
@@ -183,6 +183,7 @@ import type {
 import { computed } from "vue"
 import Card from "@/components/Card.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import { useI18n } from "../composables/useI18n"
 
 const props = defineProps<{
   statistics: StatisticsData
@@ -199,4 +200,6 @@ const categoryPercent = (count: number) =>
   props.statistics.totalPractice > 0
     ? Math.round(count / props.statistics.totalPractice * 100)
     : 0
+
+const t = useI18n(props.i18n)
 </script>

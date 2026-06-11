@@ -16,7 +16,7 @@
         name="file"
         :size="64"
       />
-      <p>{{ i18n.noCards || '暂无卡片' }}</p>
+      <p>{{ t.noCards }}</p>
     </div>
 
     <template v-else>
@@ -33,7 +33,7 @@
       />
 
       <div class="category-filter">
-        <label>{{ i18n.category || '类别' }}:</label>
+        <label>{{ t.category }}:</label>
         <Select
           v-model="selectedCategory"
           :options="categoryOptions"
@@ -80,7 +80,8 @@ import {
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Select from "@/components/Select.vue"
-import { useCardNavigation } from "../composables/useCardNavigation"
+import { copyToClipboard } from "@/utils/domUtils"
+import { useI18n } from "../composables/useI18n"
 import { useFlashcardStorage } from "../composables/useFlashcardStorage"
 import { usePlayWord } from "../composables/usePlayWord"
 import SingleCardView from "./SingleCardView.vue"
@@ -93,6 +94,7 @@ interface Props {
 const props = defineProps<Props>()
 const emit = defineEmits<{ (e: 'close'): void }>()
 
+const t = useI18n(props.i18n)
 const selectedCategory = ref<string>("all")
 
 const {
@@ -108,18 +110,15 @@ const filteredCards = computed(() => {
   return cards.value.filter((card) => card.category === selectedCategory.value)
 })
 
-const {
-  currentIndex,
-  currentCard,
-  previous,
-  next,
-  random,
-} = useCardNavigation(filteredCards)
+const currentIndex = ref(0)
+const currentCard = computed(() =>
+  filteredCards.value[currentIndex.value] ?? null,
+)
 
 const categoryOptions = computed<SelectOption[]>(() => [
   {
     value: "all",
-    label: props.i18n.allCategories || "全部",
+    label: t.value.allCategories,
   },
   ...categories.value.map((cat) => ({
     value: cat,
@@ -128,28 +127,33 @@ const categoryOptions = computed<SelectOption[]>(() => [
 ])
 
 const previousCard = () => {
-  previous()
+  if (currentIndex.value > 0) {
+    currentIndex.value--
+  }
   playWord(currentCard.value)
 }
 
 const nextCard = () => {
-  next()
+  if (currentIndex.value < filteredCards.value.length - 1) {
+    currentIndex.value++
+  }
   playWord(currentCard.value)
 }
 
 const randomCard = () => {
-  random()
+  if (filteredCards.value.length <= 1) return
+  let newIndex: number
+  do {
+    newIndex = Math.floor(Math.random() * filteredCards.value.length)
+  } while (newIndex === currentIndex.value && filteredCards.value.length > 1)
+  currentIndex.value = newIndex
   playWord(currentCard.value)
 }
 
 const handleCopy = async (text?: string) => {
   if (!text) return
-  try {
-    await navigator.clipboard.writeText(text)
-    showMessage("已复制", 2000, "info")
-  } catch {
-    showMessage("复制失败", 2000, "error")
-  }
+  const ok = await copyToClipboard(text)
+  showMessage(ok ? "已复制" : "复制失败", 2000, ok ? "info" : "error")
 }
 
 onMounted(() => {

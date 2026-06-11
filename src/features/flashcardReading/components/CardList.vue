@@ -16,7 +16,7 @@
               size="small"
               icon="play"
               :iconSize="14"
-              :title="i18n.play || '播放'"
+              :title="t.play"
               @click="$emit('play', card)"
             />
             <Button
@@ -24,7 +24,7 @@
               size="small"
               icon="contentCopy"
               :iconSize="14"
-              :title="i18n.copyTitle || '复制单词'"
+              :title="t.copyTitle"
               @click="$emit('copyTitle', card)"
             />
             <Button
@@ -32,7 +32,7 @@
               size="small"
               icon="contentCopy"
               :iconSize="14"
-              :title="i18n.copyContent || '复制内容'"
+              :title="t.copyContent"
               @click="$emit('copyContent', card)"
             />
             <Button
@@ -40,7 +40,7 @@
               size="small"
               icon="edit"
               :iconSize="14"
-              :title="i18n.editCard || '编辑'"
+              :title="t.editCard"
               @click="$emit('edit', card)"
             />
             <Button
@@ -48,7 +48,7 @@
               size="small"
               icon="delete"
               :iconSize="14"
-              :title="i18n.deleteCard || '删除'"
+              :title="t.deleteCard"
               @click="$emit('delete', card)"
             />
           </div>
@@ -60,7 +60,7 @@
       <template #footer>
         <div class="card-footer">
           <span class="tag tag-small">{{ card.category }}</span>
-          <span class="tag tag-small tag-contrast">{{ i18n.practiceCount || '练习' }}: {{ card.practiceCount || 0 }}</span>
+          <span class="tag tag-small tag-contrast">{{ t.practiceCount }}: {{ card.practiceCount || 0 }}</span>
         </div>
       </template>
     </Card>
@@ -74,8 +74,9 @@ import type {
 } from "../types"
 import Button from "@/components/Button.vue"
 import Card from "@/components/Card.vue"
+import { useI18n } from "../composables/useI18n"
 
-defineProps<{
+const props = defineProps<{
   cards: Flashcard[]
   i18n: I18n
 }>()
@@ -87,4 +88,6 @@ defineEmits<{
   edit: [card: Flashcard]
   delete: [card: Flashcard]
 }>()
+
+const t = useI18n(props.i18n)
 </script>

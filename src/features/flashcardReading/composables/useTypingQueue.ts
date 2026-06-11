@@ -33,26 +33,32 @@ export function useTypingQueue(cards: Ref<Flashcard[]>) {
     if (list.length <= 1) return [...list]
 
     const weights = computeWeights(list)
-    const weighted = list.map((card, i) => ({ card, weight: weights[i] }))
+    const entries = list.map((card, i) => ({ card, weight: weights[i] }))
+    let totalWeight = weights.reduce((sum, w) => sum + w, 0)
 
     const result: Flashcard[] = []
-    const remaining = [...weighted]
+    let remaining = entries.length
 
-    while (remaining.length > 0) {
-      const totalWeight = remaining.reduce((sum, r) => sum + r.weight, 0)
+    while (remaining > 0) {
       let rand = Math.random() * totalWeight
-      let pickedIndex = 0
+      let pickedIdx = 0
 
-      for (let i = 0; i < remaining.length; i++) {
-        rand -= remaining[i].weight
+      for (let i = 0; i < remaining; i++) {
+        rand -= entries[i].weight
         if (rand <= 0) {
-          pickedIndex = i
+          pickedIdx = i
           break
         }
       }
 
-      result.push(remaining[pickedIndex].card)
-      remaining.splice(pickedIndex, 1)
+      result.push(entries[pickedIdx].card)
+      totalWeight -= entries[pickedIdx].weight
+      remaining--
+
+      // 交换到末尾 + 减少长度 = O(1) 删除，替代 splice O(n)
+      if (pickedIdx < remaining) {
+        entries[pickedIdx] = entries[remaining]
+      }
     }
 
     return result

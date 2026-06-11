@@ -1,0 +1,73 @@
+// 单词阅读 - 弹窗样式
+@use 'variables' as *;
+
+.flashcard-reading-panel {
+  .dialog-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .dialog {
+    background: var(--b3-theme-background);
+    border: 1px solid var(--b3-border-color);
+    border-radius: $fc-radius;
+    width: 90%;
+    max-width: 500px;
+    max-height: 95vh;
+    overflow: auto;
+
+    &-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--b3-border-color);
+
+      h4 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+    }
+
+    &-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    &-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 14px 16px;
+      border-top: 1px solid var(--b3-border-color);
+    }
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    label {
+      @include fc-label;
+    }
+  }
+
+  .category-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    .si-select { width: 100%; }
+    .custom-category-input { margin-top: 4px; }
+  }
+}

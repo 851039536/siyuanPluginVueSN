@@ -2,7 +2,7 @@
  * 单词阅读功能模块
  */
 import { Plugin } from "siyuan"
-import { FlashcardReading } from "./types"
+import { FlashcardReading } from "./FlashcardReading"
 
 /**
  * 注册单词阅读功能

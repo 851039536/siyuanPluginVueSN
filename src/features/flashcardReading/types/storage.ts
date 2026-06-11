@@ -13,9 +13,10 @@ import { PluginStorage } from "@/utils/pluginStorage"
 /**
  * Flashcard 存储类
  */
+export const STORAGE_KEY = "flashcard-cards"
+
 export class FlashcardStorage {
   private storage: PluginStorage
-  private readonly STORAGE_KEY = "flashcard-cards"
   private readonly SETTINGS_KEY = "flashcard-typing-settings"
 
   static readonly DEFAULT_SETTINGS: TypingSettings = {
@@ -46,7 +47,7 @@ export class FlashcardStorage {
    */
   async getAllCards(): Promise<Flashcard[]> {
     try {
-      const data = await this.storage.load<Flashcard[]>(this.STORAGE_KEY)
+      const data = await this.storage.load<Flashcard[]>(STORAGE_KEY)
       return (data || []).map((card: Flashcard) => ({
         ...card,
         practiceCount: card.practiceCount ?? 0,
@@ -96,7 +97,7 @@ export class FlashcardStorage {
 
     const cards = await this.getAllCards()
     cards.push(newCard)
-    await this.storage.save(this.STORAGE_KEY, cards)
+    await this.storage.save(STORAGE_KEY, cards)
 
     return newCard
   }
@@ -125,7 +126,7 @@ export class FlashcardStorage {
       updatedAt: Date.now(),
     }
 
-    await this.storage.save(this.STORAGE_KEY, cards)
+    await this.storage.save(STORAGE_KEY, cards)
     return true
   }
 
@@ -140,7 +141,7 @@ export class FlashcardStorage {
       return false
     }
 
-    await this.storage.save(this.STORAGE_KEY, filteredCards)
+    await this.storage.save(STORAGE_KEY, filteredCards)
     return true
   }
 
@@ -177,7 +178,7 @@ export class FlashcardStorage {
     cards[index].practiceCount = (cards[index].practiceCount || 0) + 1
     cards[index].updatedAt = Date.now()
 
-    await this.storage.save(this.STORAGE_KEY, cards)
+    await this.storage.save(STORAGE_KEY, cards)
     return true
   }
 }

@@ -86,6 +86,18 @@
               height="10"
             ><use xlink:href="#iconDown"></use></svg>
           </div>
+          <!-- 技能预览按钮 -->
+          <button
+            v-if="currentSkillIndex >= 0 && currentSkill"
+            class="skill-preview-btn"
+            title="预览技能细则"
+            @click="showSkillPreview = true"
+          >
+            <svg
+              width="11"
+              height="11"
+            ><use xlink:href="#iconEye" /></svg>
+          </button>
           <!-- 下拉面板 -->
           <div
             v-if="showSkillDropdown"
@@ -371,6 +383,49 @@
       class="dropdown-overlay"
       @click="$emit('toggle-prompt-selector')"
     ></div>
+
+    <!-- 技能细则预览弹窗 -->
+    <Teleport to="body">
+      <div
+        v-if="showSkillPreview && currentSkill"
+        class="skill-preview-overlay"
+        @click.self="showSkillPreview = false"
+      >
+        <div class="skill-preview-modal">
+          <div class="skill-preview-header">
+            <div>
+              <span class="skill-preview-title">{{ currentSkill.name }}</span>
+              <span
+                v-if="currentSkill.description"
+                class="skill-preview-desc"
+              >{{ currentSkill.description }}</span>
+            </div>
+            <button
+              class="skill-preview-close"
+              @click="showSkillPreview = false"
+            >
+              <svg
+                width="16"
+                height="16"
+              ><use xlink:href="#iconClose" /></svg>
+            </button>
+          </div>
+          <div class="skill-preview-body">
+            <div
+              class="skill-preview-content markdown-preview"
+              v-html="renderedSkillContent"
+            ></div>
+          </div>
+          <div class="skill-preview-footer">
+            <span class="skill-preview-tool">来源: {{ currentSkill.tool }}</span>
+            <button
+              class="skill-preview-btn-close"
+              @click="showSkillPreview = false"
+            >关闭</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -394,6 +449,7 @@ import Tag from "@/components/Tag.vue"
 import {
   getPromptPreview,
   getSourceDotColors,
+  renderMarkdown,
   truncateTitle,
 } from "../utils"
 
@@ -486,6 +542,14 @@ interface Props {
 // 技能下拉面板状态
 const showSkillDropdown = ref(false)
 const skillSearchInputRef = ref<HTMLInputElement | null>(null)
+
+// 技能预览状态
+const showSkillPreview = ref(false)
+
+const renderedSkillContent = computed(() => {
+  if (!props.currentSkill) return ""
+  return renderMarkdown(props.currentSkill.content, false)
+})
 
 const toggleSkillDropdown = () => {
   showSkillDropdown.value = !showSkillDropdown.value
@@ -757,5 +821,140 @@ const getOriginalIndex = (prompt: SavedPrompt) => {
 }
 .review-toggle input:checked + .review-label {
   color: var(--b3-theme-success); opacity: 1; font-weight: 500;
+}
+
+// ============ 技能预览弹窗 ============
+.skill-preview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.skill-preview-modal {
+  width: 480px;
+  max-height: 75vh;
+  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-theme-surface-light);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.skill-preview-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  gap: 12px;
+}
+
+.skill-preview-title {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--b3-theme-on-background);
+  margin-bottom: 2px;
+}
+
+.skill-preview-desc {
+  display: block;
+  font-size: 11px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
+  line-height: 1.4;
+}
+
+.skill-preview-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+  }
+}
+
+.skill-preview-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.skill-preview-content {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--b3-theme-on-surface);
+
+  :deep(h2), :deep(h3) { margin-top: 0.8em; margin-bottom: 0.4em; font-weight: 500; }
+  :deep(p) { margin: 0.4em 0; }
+  :deep(ul), :deep(ol) { margin: 0.3em 0; padding-left: 1.4em; }
+  :deep(code) { padding: 1px 4px; background: var(--b3-theme-surface-lighter); border-radius: 2px; font-size: 0.85em; }
+  :deep(pre) { padding: 8px; background: var(--b3-theme-surface-lighter); border-radius: 4px; overflow-x: auto; margin: 0.4em 0; }
+  :deep(blockquote) { margin: 0.4em 0; padding-left: 0.5em; border-left: 2px solid var(--b3-theme-primary); opacity: 0.8; }
+}
+
+.skill-preview-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-top: 1px solid var(--b3-theme-surface-lighter);
+}
+
+.skill-preview-tool {
+  @include codex-meta-label;
+  font-size: 9px;
+}
+
+.skill-preview-btn-close {
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--b3-theme-on-surface);
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 4px;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--b3-theme-surface-light);
+  }
+}
+
+// ============ 技能预览按钮 ============
+.skill-preview-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 4px;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  flex-shrink: 0;
+  opacity: 0.6;
+
+  &:hover {
+    opacity: 1;
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+  }
 }
 </style>

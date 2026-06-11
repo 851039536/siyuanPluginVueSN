@@ -45,7 +45,8 @@
           :generation-elapsed="generationElapsed"
           :is-reviewing="isReviewing"
           :review-result="reviewResult"
-          :can-apply="!!editTargetDoc && !isApplying && !isGenerating && !isReviewing"
+          :is-auto-fixing="isAutoFixing"
+          :can-apply="!!editTargetDoc && !isApplying && !isGenerating && !isReviewing && !isAutoFixing"
           :can-insert-sub-doc="!!editTargetDoc && !isInsertingSubDoc && !isGenerating"
           :can-undo="canUndoEdit"
           @stop="handleStop"
@@ -55,6 +56,7 @@
           @copy="copyContent"
           @clear="clearContent"
           @toggle-reasoning="showReasoning = !showReasoning"
+          @auto-fix="handleAutoFix"
         />
       </div>
 
@@ -132,7 +134,18 @@ interface Props {
   i18n: Record<string, string>;
   plugin: Plugin;
   onGenerate: (options: GenerateOptions) => Promise<string>;
-  onReview?: (userRequest: string, generatedContent: string) => Promise<ReviewResult>;
+  onReview?: (
+    userRequest: string,
+    generatedContent: string,
+    skill?: {
+      name: string;
+      description: string;
+      content: string;
+      tool: string;
+      sources: Array<{ id: string; tool: string; content: string }>;
+      id: string;
+    },
+  ) => Promise<ReviewResult>;
 }
 
 const props = withDefaults(defineProps<Props>(), {});
@@ -153,6 +166,7 @@ const abortController = ref<AbortController | null>(null);
 const enableReview = ref(false);
 const isReviewing = ref(false);
 const reviewResult = ref<ReviewResult | null>(null);
+const isAutoFixing = ref(false);
 
 // 模式切换
 const activeMode = ref<"generator" | "automation">("generator");
@@ -521,8 +535,51 @@ const performReview = async () => {
   isReviewing.value = true;
   reviewResult.value = null;
 
-  reviewResult.value = await props.onReview(userRequest, generatedContent.value);
+  reviewResult.value = await props.onReview(
+    userRequest,
+    generatedContent.value,
+    currentSkill.value
+      ? {
+          name: currentSkill.value.name,
+          description: currentSkill.value.description,
+          content: currentSkill.value.content,
+          tool: currentSkill.value.tool,
+          sources: currentSkill.value.sources,
+          id: currentSkill.value.id,
+        }
+      : undefined,
+  );
   isReviewing.value = false;
+};
+
+/**
+ * 自动修正：根据审核结果修复生成内容
+ */
+const handleAutoFix = async () => {
+  if (!reviewResult.value || !generatedContent.value) return;
+
+  isAutoFixing.value = true;
+  const currentContent = generatedContent.value;
+
+  const issuesText = reviewResult.value.issues
+    .map((issue) => `- [${issue.severity}] ${issue.description}`)
+    .join("\n");
+  const suggestionsText = reviewResult.value.suggestions.join("\n");
+
+  const fixInstruction = `请修正以下内容中的问题：\n\n问题清单：\n${issuesText}\n\n改进建议：\n${suggestionsText}`;
+
+  const skillSystemPrompt = currentSkill.value
+    ? `${currentSkill.value.content}\n\n你是一个专业的文档编辑助手，擅长根据审核反馈修正Markdown文档。请直接输出修正后的完整文档，不要添加任何解释性文字。`
+    : "你是一个专业的文档编辑助手，擅长根据审核反馈修正Markdown文档。请直接输出修正后的完整文档，不要添加任何解释性文字。";
+
+  await executeGeneration("内容修正", () =>
+    buildGenerateOptions(
+      `${fixInstruction}\n\n待修正内容：\n${currentContent}`,
+      skillSystemPrompt,
+    ),
+  () => {
+    isAutoFixing.value = false;
+  });
 };
 
 /**

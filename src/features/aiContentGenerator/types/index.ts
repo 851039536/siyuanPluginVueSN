@@ -1,6 +1,7 @@
 import type {
   GenerateOptions,
   ReviewResult,
+  SkillItem,
 } from "@/types/ai"
 import type { AiApiConfig } from "@/utils/aiApi"
 /**
@@ -122,8 +123,12 @@ export class AIContentGenerator {
         onGenerate: async (options: GenerateOptions) => {
           return await this.generateContent(options)
         },
-        onReview: async (userRequest: string, generatedContent: string): Promise<ReviewResult> => {
-          return await this.reviewContent(userRequest, generatedContent)
+        onReview: async (
+          userRequest: string,
+          generatedContent: string,
+          skill?: SkillItem,
+        ): Promise<ReviewResult> => {
+          return await this.reviewContent(userRequest, generatedContent, skill)
         },
       },
     })
@@ -193,20 +198,37 @@ ${options.userInput}`
    * 交叉审核：使用 V4 Pro 模型审核生成内容
    * @param userRequest 用户原始请求
    * @param generatedContent AI 生成的内容
+   * @param skill 当前选中的技能上下文（用于按技能标准审核）
    */
-  public async reviewContent(userRequest: string, generatedContent: string): Promise<ReviewResult> {
-    const reviewPrompt = `你是文档质量审核专家。请审核以下AI生成的文档并输出JSON。
+  public async reviewContent(userRequest: string, generatedContent: string, skill?: SkillItem): Promise<ReviewResult> {
+    let reviewPrompt = `你是文档质量审核专家。请审核以下AI生成的文档并输出JSON。
 
 ## 用户需求
 ${userRequest.slice(0, 500)}
 
 ## 生成内容
 ${generatedContent.slice(0, 3000)}
+`
 
+    // 如果有选中的技能，将其作为审核标准注入
+    if (skill) {
+      reviewPrompt += `
+## 技能要求（审核参考标准）
+技能名称: ${skill.name}
+技能描述: ${skill.description}
+技能内容:
+${skill.content.slice(0, 1000)}
+
+请以上述技能要求作为审核的核心标准，检查生成内容是否符合该技能规范的要求。
+`
+    }
+
+    reviewPrompt += `
 ## 输出格式（必须严格JSON，禁止任何额外文字）
 {"rating":"优秀|良好|需改进","summary":"总体评价","issues":[{"description":"问题","severity":"高|中|低"}],"suggestions":["建议1"]}
 
 审核维度：内容准确性、结构完整性、语言质量、格式规范、覆盖完整性。
+${skill ? '额外维度：技能规范遵守程度。' : ''}
 无问题时 issues 为空数组 rating 为优秀。`
 
     const apiConfig = this.getApiConfig()

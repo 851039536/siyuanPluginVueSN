@@ -126,7 +126,7 @@ export async function aesGcmEncrypt(
     key,
     data as BufferSource,
   )
-  return { iv: new Uint8Array(encrypted as ArrayBufferLike), ciphertext: new Uint8Array(encrypted) }
+  return { iv: actualIV, ciphertext: new Uint8Array(encrypted) }
 }
 
 /**

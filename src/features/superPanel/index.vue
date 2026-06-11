@@ -245,10 +245,10 @@ const statusLabels = computed<Record<string, string>>(() => ({
 }))
 
 const themeSchemeOptions = computed<SelectorOption[]>(() =>
-  Object.values(THEMES).map((t) => ({
-    value: t.id,
-    label: t.name,
-    color: t.primary,
+  Object.entries(THEMES).map(([id, scheme]) => ({
+    value: id,
+    label: scheme.name,
+    color: scheme.primary,
   })),
 )
 

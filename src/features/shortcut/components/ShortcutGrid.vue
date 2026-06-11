@@ -19,7 +19,6 @@
       </div>
       <div
         class="shortcut-grid"
-        :class="gridClass"
       >
         <ShortcutCard
           v-for="shortcut in group.shortcuts"
@@ -48,14 +47,12 @@
 import type {
   ShortcutGroup,
   ShortcutInfo,
-  ViewMode,
 } from "../types"
 import { computed } from "vue"
 import ShortcutCard from "./ShortcutCard.vue"
 
 interface Props {
   shortcuts: ShortcutInfo[]
-  viewMode: ViewMode
   isFavorite: (id: string) => boolean
   isRecent: (id: string) => boolean
   getCategoryLabel: (category: string) => string
@@ -85,11 +82,6 @@ defineEmits<{
   edit: [shortcut: ShortcutInfo]
   delete: [id: string]
 }>()
-
-const gridClass = computed(() => ({
-  "list-view": props.viewMode === "list",
-  "three-col-view": props.viewMode === "three-col",
-}))
 
 const groupedShortcuts = computed((): ShortcutGroup[] => {
   const groupMap = new Map<string, ShortcutInfo[]>()
@@ -175,28 +167,8 @@ const groupedShortcuts = computed((): ShortcutGroup[] => {
 .shortcut-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-  padding: 12px;
-}
-
-.shortcut-grid.list-view {
-  grid-template-columns: 1fr;
-}
-
-.shortcut-grid.three-col-view {
-  grid-template-columns: repeat(3, 1fr);
-}
-
-@media (max-width: 1200px) {
-  .shortcut-grid.three-col-view {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 800px) {
-  .shortcut-grid.three-col-view {
-    grid-template-columns: 1fr;
-  }
+  gap: 6px;
+  padding: 8px 12px;
 }
 
 .shortcut-content::-webkit-scrollbar {

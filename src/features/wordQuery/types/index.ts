@@ -4,6 +4,18 @@ import { createVueDockApp } from "@/utils/vueAppHelper"
 import WordQueryPanel from "../index.vue"
 import { callWordQueryAPI } from "../utils/api"
 
+/** 语言代码 → 语言名称 映射，作为 index.vue LANGUAGE_OPTIONS 与 translateText 共享的单一数据源 */
+export const LANGUAGE_MAP: Record<string, string> = {
+  auto: "自动检测",
+  zh: "中文",
+  en: "英文",
+  ja: "日文",
+  ko: "韩文",
+  fr: "法文",
+  de: "德文",
+  es: "西班牙文",
+}
+
 export class WordQueryManager {
   private plugin: Plugin
 
@@ -94,19 +106,8 @@ ${
   ): Promise<string> {
     if (!text) return ""
 
-    const langNames: Record<string, string> = {
-      auto: "自动检测",
-      zh: "中文",
-      en: "英文",
-      ja: "日文",
-      ko: "韩文",
-      fr: "法文",
-      de: "德文",
-      es: "西班牙文",
-    }
-
-    const sourceName = langNames[sourceLang] || sourceLang
-    const targetName = langNames[targetLang] || targetLang
+    const sourceName = LANGUAGE_MAP[sourceLang] || sourceLang
+    const targetName = LANGUAGE_MAP[targetLang] || targetLang
 
     const prompt =
       sourceLang === "auto"

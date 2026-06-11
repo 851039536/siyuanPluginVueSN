@@ -1,7 +1,7 @@
 import type { Plugin } from "siyuan"
 import type { Ref } from "vue"
 import { ref, watch } from "vue"
-import { getApiConfigFromPlugin } from "../utils/apiBase"
+import { getApiConfigFromPlugin } from "@/utils/aiApi"
 
 /**
  * 代码相关子组件共享逻辑：

@@ -205,6 +205,11 @@ export default class PluginSample extends Plugin {
       (this as any).__bookmarkMarker.destroy()
     }
 
+    // 清理单词查询资源
+    if ((this as any).__wordQuery) {
+      (this as any).__wordQuery.destroy()
+    }
+
     // 清理脚本启动器资源
     if ((this as any).__scriptLauncher) {
       (this as any).__scriptLauncher.destroy()

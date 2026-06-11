@@ -1,7 +1,6 @@
 <template>
-  <Card
-    variant="bordered"
-    size="small"
+  <div
+    class="shortcut-card"
     :class="{
       'is-favorite': isFavorite,
       'is-recent': isRecent,
@@ -69,25 +68,13 @@
     <div class="shortcut-desc">
       {{ shortcut.description }}
     </div>
-    <div
-      class="shortcut-path"
-      :title="pathText"
-    >
-      <svg
-        class="path-icon"
-        viewBox="0 0 16 16"
-        fill="currentColor"
-      ><path d="M6.5 1L1 6l5.5 5L8 9.5 4 6l4-3.5L6.5 1zm3 0L8 2.5 12 6l-4 3.5L9.5 11 15 6 9.5 1zM1 13h14v2H1v-2z" /></svg>
-      <span class="path-text">{{ pathText }}</span>
-    </div>
-  </Card>
+  </div>
 </template>
 
 <script setup lang="ts">
 import type { ShortcutInfo } from "../types"
 import { computed } from "vue"
 import Button from "@/components/Button.vue"
-import Card from "@/components/Card.vue"
 
 interface Props {
   shortcut: ShortcutInfo
@@ -133,8 +120,17 @@ const pathText = computed(() => {
 </script>
 
 <style scoped lang="scss">
+.shortcut-card {
+  padding: 10px 12px;
+  border-bottom: 1px dashed var(--b3-theme-surface-lighter);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
 .is-favorite {
-  background: linear-gradient(135deg, var(--b3-theme-surface) 0%, var(--b3-theme-primary-lightest) 100%);
+  background: linear-gradient(135deg, transparent 0%, var(--b3-theme-primary-lightest) 100%);
 }
 
 .is-recent {
@@ -146,6 +142,7 @@ const pathText = computed(() => {
   align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
+  margin-bottom: 6px;
 }
 
 .shortcut-name {
@@ -157,32 +154,38 @@ const pathText = computed(() => {
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
 }
 
 .name-text {
   flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .platform-badge {
   display: inline-block;
-  padding: 2px 6px;
+  padding: 1px 5px;
   background: var(--b3-theme-surface-lighter);
   color: var(--b3-theme-on-surface-variant);
-  border-radius: 4px;
+  border-radius: 3px;
   font-size: 9px;
   font-weight: 600;
   text-transform: uppercase;
+  flex-shrink: 0;
 }
 
 .tool-badge {
   display: inline-block;
-  padding: 2px 6px;
+  padding: 1px 5px;
   background: var(--b3-theme-primary-lightest);
   color: var(--b3-theme-primary);
-  border-radius: 4px;
+  border-radius: 3px;
   font-size: 9px;
   font-weight: 600;
   text-transform: uppercase;
+  flex-shrink: 0;
 }
 
 .shortcut-desc {
@@ -191,9 +194,8 @@ const pathText = computed(() => {
   line-height: 1.4;
   overflow: hidden;
   text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  white-space: nowrap;
+  margin-top: 4px;
 }
 
 .shortcut-keys {
@@ -211,50 +213,24 @@ const pathText = computed(() => {
   opacity: 0.6;
 }
 
+// Codex-style key-badge: monospace, border, subtle background
 .key-badge {
   display: inline-block;
-  padding: 4px 8px;
-  background: linear-gradient(135deg, var(--b3-theme-primary) 0%, var(--b3-theme-primary-light) 100%);
-  color: white;
+  padding: 2px 7px;
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--b3-theme-primary);
+  background: var(--b3-theme-primary-lightest);
+  border: 1px solid var(--b3-theme-primary-light);
   border-radius: 4px;
-  font-size: 10px;
-  font-weight: 700;
   white-space: nowrap;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3);
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.3px;
 }
 
 .shortcut-actions {
   display: flex;
-  gap: 4px;
+  gap: 2px;
   flex-shrink: 0;
-  opacity: 1;
-}
-
-.shortcut-path {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 6px;
-  padding-top: 6px;
-  border-top: 1px dashed var(--b3-theme-surface-lighter);
-  font-size: 10px;
-  color: var(--b3-theme-on-surface-variant);
-  opacity: 0.7;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.path-icon {
-  width: 12px;
-  height: 12px;
-  flex-shrink: 0;
-  opacity: 0.6;
-}
-
-.path-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 </style>

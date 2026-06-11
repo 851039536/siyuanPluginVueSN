@@ -16,6 +16,14 @@ export class ShortcutManager {
   }
 
   /**
+   * 从数组批量加载快捷键（替换整个数据源）
+   * 用于从持久化存储恢复数据，不触发保存回调
+   */
+  loadFromArray(shortcuts: ShortcutInfo[]): void {
+    this.shortcuts = [...shortcuts]
+  }
+
+  /**
    * 设置保存回调函数
    * 当快捷键数据发生变化时调用
    */

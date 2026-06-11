@@ -16,7 +16,7 @@
               size="small"
               icon="play"
               :iconSize="14"
-              :title="i18n.play || '播放'"
+              :title="t.play"
               @click="$emit('play', currentCard)"
             />
           </div>
@@ -29,7 +29,7 @@
         <div class="card-footer card-footer--single">
           <div class="card-footer__meta">
             <span class="tag tag-small tag-info">{{ currentCard?.category }}</span>
-            <span class="tag tag-small tag-contrast">{{ i18n.practiceCount || '练习' }}: {{ currentCard?.practiceCount || 0 }}</span>
+            <span class="tag tag-small tag-contrast">{{ t.practiceCount }}: {{ currentCard?.practiceCount || 0 }}</span>
           </div>
         </div>
       </template>
@@ -44,7 +44,7 @@
       >
         <span class="typing-case-toggle__label">Aa</span>
         <span class="typing-case-toggle__text">
-          {{ caseInsensitive ? (i18n.caseInsensitive || '不区分大小写') : (i18n.caseSensitive || '区分大小写') }}
+          {{ caseInsensitive ? t.caseInsensitive : t.caseSensitive }}
         </span>
       </button>
       <button
@@ -55,7 +55,7 @@
       >
         <span class="typing-case-toggle__label">↻</span>
         <span class="typing-case-toggle__text">
-          {{ instantReset ? (i18n.instantReset || '立即重试') : (i18n.delayedReset || '稍后重试') }}
+          {{ instantReset ? t.instantReset : t.delayedReset }}
         </span>
       </button>
       <button
@@ -66,7 +66,7 @@
       >
         <span class="typing-case-toggle__label">{{ coverMode ? '◌' : '◉' }}</span>
         <span class="typing-case-toggle__text">
-          {{ coverMode ? (i18n.coverMode || '盲打') : (i18n.revealMode || '看打') }}
+          {{ coverMode ? t.coverMode : t.revealMode }}
         </span>
       </button>
       <button
@@ -83,7 +83,7 @@
     </div>
 
     <div class="typing-session-config">
-      <span class="typing-session-config__label">{{ i18n.sessionSizeLabel || '每组' }}</span>
+      <span class="typing-session-config__label">{{ t.sessionSizeLabel }}</span>
       <button class="typing-session-config__btn" @click="changeSessionSize(-5)">−</button>
       <span class="typing-session-config__value">{{ sessionSize }}</span>
       <button class="typing-session-config__btn" @click="changeSessionSize(5)">+</button>
@@ -92,7 +92,7 @@
 
     <div class="typing-area">
       <div class="typing-hint">
-        {{ i18n.typeTheWord || '请输入单词' }}:
+        {{ t.typeTheWord }}:
       </div>
 
       <div class="typing-target">
@@ -128,7 +128,7 @@
             name="success"
             :size="20"
           />
-          <span>{{ i18n.correct || '正确!' }}</span>
+          <span>{{ t.correct }}</span>
           <span v-if="streak >= 2" class="typing-streak">🔥 x{{ streak }}</span>
         </template>
         <template v-else-if="resultState === 'incorrect'">
@@ -150,27 +150,27 @@
         variant="ghost"
         icon="chevronLeft"
         :disabled="currentIndex === 0"
-        :title="i18n.previous || '上一个'"
+        :title="t.previous"
         @click="$emit('previous')"
       />
       <Button
         variant="ghost"
         icon="shuffle"
-        :title="i18n.randomCard || '随机'"
+        :title="t.randomCard"
         @click="$emit('random')"
       />
       <span class="tag tag-rounded">{{ currentIndex + 1 }} / {{ totalCards }}</span>
       <Button
         variant="ghost"
         icon="skipNext"
-        :title="i18n.skipCard || '跳过'"
+        :title="t.skipCard"
         @click="$emit('skip')"
       />
       <Button
         variant="ghost"
         icon="chevronRight"
         :disabled="currentIndex === totalCards - 1"
-        :title="i18n.next || '下一个'"
+        :title="t.next"
         @click="$emit('next')"
       />
     </div>
@@ -187,7 +187,7 @@
     </div>
 
     <div v-if="roundComplete" class="typing-round-summary">
-      <div class="typing-round-summary__title">{{ i18n.roundComplete || '本轮完成!' }}</div>
+      <div class="typing-round-summary__title">{{ t.roundComplete }}</div>
       <div class="typing-round-summary__stats">
         <span>{{ sessionCorrect }} / {{ sessionTotal }} 正确</span>
         <span class="typing-session-stats__sep">·</span>
@@ -218,6 +218,7 @@ import {
 import Button from "@/components/Button.vue"
 import Card from "@/components/Card.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import { useI18n } from "../composables/useI18n"
 
 const props = defineProps<{
   currentCard: Flashcard | null
@@ -249,6 +250,8 @@ const emit = defineEmits<{
   "update:timerEnabled": [value: boolean]
   "update:sessionSize": [value: number]
 }>()
+
+const t = useI18n(props.i18n)
 
 const inputEl = ref<HTMLInputElement | null>(null)
 const typedWord = ref("")
@@ -299,7 +302,7 @@ function normalizeChar(ch: string): string {
 
 const typingPlaceholder = computed(() => {
   if (!isFocused.value && !typedWord.value) {
-    return props.i18n.clickToStartTyping || "点击开始输入..."
+    return t.value.clickToStartTyping
   }
   return ""
 })

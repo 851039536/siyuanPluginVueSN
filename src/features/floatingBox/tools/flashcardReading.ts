@@ -1,5 +1,5 @@
 import type { FloatingTool } from "../types"
-import { toggleFlashcardDialog } from "../../flashcardReading/types"
+import { toggleFlashcardDialog } from "../../flashcardReading/FlashcardReading"
 
 export function createFlashcardReadingTool(plugin?: any): FloatingTool {
   return {

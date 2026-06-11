@@ -85,9 +85,8 @@
 
         <div class="chart-container">
           <svg
-            :viewBox="`0 0 ${CHART_W} ${CHART_H}`"
+            :viewBox="`0 0 ${chartW} ${CHART_H}`"
             class="chart-svg"
-            preserveAspectRatio="none"
           >
             <!-- 网格线 -->
             <line
@@ -95,7 +94,7 @@
               :key="`grid-${i}`"
               :x1="PAD_L"
               :y1="i"
-              :x2="CHART_W - PAD_R"
+              :x2="chartW - PAD_R"
               :y2="i"
               class="grid-line"
             />
@@ -255,11 +254,11 @@ const props = withDefaults(defineProps<Props>(), {
   i18n: () => ({}),
 })
 
-const CHART_W = 700
 const CHART_H = 240
 const PAD_L = 42
 const PAD_R = 8
 const PAD_T = 14
+const MIN_POINT_SPACING = 14
 
 const days = ref(7)
 const periodOptions = computed(() => [
@@ -330,7 +329,13 @@ const summary = computed(() => {
 })
 
 // ========== Chart ==========
-const plotW = computed(() => CHART_W - PAD_L - PAD_R)
+const chartW = computed(() => {
+  const n = dataLen.value
+  const plotWidth = n * MIN_POINT_SPACING
+  return Math.max(600, PAD_L + plotWidth + PAD_R)
+})
+
+const plotW = computed(() => chartW.value - PAD_L - PAD_R)
 const plotH = computed(() => CHART_H - PAD_T - 20)
 
 const yRange = computed(() => {
@@ -463,7 +468,7 @@ const hitAreas = computed(() => {
 
 const tooltipLeft = computed(() => {
   if (hoveredX.value < 0) return '0'
-  const pct = (toX(hoveredX.value) / CHART_W) * 100
+  const pct = (toX(hoveredX.value) / chartW.value) * 100
   return pct > 60 ? `calc(${pct}% - 140px)` : `${pct}%`
 })
 
@@ -630,12 +635,14 @@ defineExpose({ load })
 .chart-container {
   position: relative;
   width: 100%;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .chart-svg {
   width: 100%;
-  height: auto;
+  min-width: 600px;
+  height: 200px;
   display: block;
 }
 

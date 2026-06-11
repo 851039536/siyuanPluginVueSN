@@ -1,7 +1,7 @@
 <template>
   <div class="category-filter">
     <div class="filter-left">
-      <label>{{ i18n.category || '类别' }}:</label>
+      <label>{{ t.category }}:</label>
       <Select
         :modelValue="selectedCategory"
         :options="categoryOptions"
@@ -12,18 +12,18 @@
     <div class="filter-right">
       <Input
         :modelValue="searchQuery"
-        :placeholder="i18n.searchPlaceholder || '搜索标题或内容...'"
+        :placeholder="t.searchPlaceholder"
         prefixIcon="search"
         size="small"
         @update:modelValue="(val) => $emit('update:searchQuery', val as string)"
       />
       <div class="statistics">
-        <span class="tag tag-secondary">{{ i18n.total || '总计' }}: {{ totalCards }}</span>
+        <span class="tag tag-secondary">{{ t.total }}: {{ totalCards }}</span>
         <span
           v-if="selectedCategory !== 'all' || searchQuery"
           class="tag tag-info"
         >
-          {{ selectedCategory !== 'all' ? selectedCategory : (i18n.filtered || '筛选') }}: {{ filteredCount }}
+          {{ selectedCategory !== 'all' ? selectedCategory : t.filtered }}: {{ filteredCount }}
         </span>
       </div>
     </div>
@@ -35,8 +35,9 @@ import type { I18n } from "../types"
 import type { SelectOption } from "@/components/Select.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
+import { useI18n } from "../composables/useI18n"
 
-defineProps<{
+const props = defineProps<{
   i18n: I18n
   selectedCategory: string
   searchQuery: string
@@ -49,4 +50,6 @@ defineEmits<{
   "update:selectedCategory": [value: string]
   "update:searchQuery": [value: string]
 }>()
+
+const t = useI18n(props.i18n)
 </script>

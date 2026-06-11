@@ -6,21 +6,21 @@
           name="headphones"
           :size="18"
         />
-        <span>{{ i18n.panelTitle || '单词阅读' }}</span>
+        <span>{{ t.panelTitle }}</span>
       </h4>
       <div class="header-actions">
         <Button
           variant="ghost"
           size="small"
           icon="add"
-          :title="i18n.addCard || '添加卡片'"
+          :title="t.addCard"
           @click="$emit('addCard')"
         />
         <Button
           variant="ghost"
           size="small"
           icon="refresh"
-          :title="i18n.refresh || '刷新'"
+          :title="t.refresh"
           @click="$emit('refresh')"
         />
         <Button
@@ -46,6 +46,9 @@ import { showMessage } from "siyuan"
 import { computed } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import { copyToClipboard } from "@/utils/domUtils"
+import { useI18n } from "../composables/useI18n"
+import { STORAGE_KEY } from "../types/storage"
 
 const props = defineProps<{
   i18n: I18n
@@ -57,7 +60,7 @@ defineEmits<{
   refresh: []
 }>()
 
-const STORAGE_KEY = "flashcard-cards"
+const t = useI18n(props.i18n)
 
 const storagePath = computed(() => {
   const base = (props.plugin as any).getDataDir?.() || ""
@@ -67,11 +70,7 @@ const storagePath = computed(() => {
 })
 
 const copyPath = async () => {
-  try {
-    await navigator.clipboard.writeText(storagePath.value)
-    showMessage("已复制存储路径", 2000, "info")
-  } catch {
-    showMessage("复制失败", 2000, "error")
-  }
+  const ok = await copyToClipboard(storagePath.value)
+  showMessage(ok ? "已复制存储路径" : "复制失败", 2000, ok ? "info" : "error")
 }
 </script>

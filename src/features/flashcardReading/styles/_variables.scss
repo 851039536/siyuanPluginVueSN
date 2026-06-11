@@ -1,0 +1,17 @@
+// 单词阅读 - 局部变量和 mixin
+@forward '../../../_variables.scss';
+
+// Codex 风格变量
+$fc-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+$fc-radius: 6px;
+$fc-transition: 0.12s;
+
+// Codex 大写标签 mixin
+@mixin fc-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.45;
+}

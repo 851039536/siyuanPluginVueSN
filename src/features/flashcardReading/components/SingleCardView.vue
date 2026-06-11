@@ -14,7 +14,7 @@
               size="small"
               icon="fileCopy"
               :iconSize="16"
-              :title="i18n.copyTitle || '复制标题'"
+              :title="t.copyTitle || '复制标题'"
               @click="$emit('copyTitle', currentCard)"
             />
             <Button
@@ -22,27 +22,27 @@
               size="small"
               icon="contentCopy"
               :iconSize="16"
-              :title="i18n.copyContent || '复制内容'"
-              @click="$emit('copyContent', currentCard)"
-            />
-            <Button
-              v-if="!hideActions"
-              variant="ghost"
-              size="small"
-              icon="edit"
-              :iconSize="16"
-              :title="i18n.editCard || '编辑'"
-              @click="$emit('edit', currentCard)"
-            />
-            <Button
-              v-if="!hideActions"
-              variant="danger"
-              size="small"
-              icon="delete"
-              :iconSize="16"
-              :title="i18n.deleteCard || '删除'"
-              @click="$emit('delete', currentCard)"
-            />
+            :title="t.copyContent"
+            @click="$emit('copyContent', currentCard)"
+          />
+          <Button
+            v-if="!hideActions"
+            variant="ghost"
+            size="small"
+            icon="edit"
+            :iconSize="16"
+            :title="t.editCard"
+            @click="$emit('edit', currentCard)"
+          />
+          <Button
+            v-if="!hideActions"
+            variant="danger"
+            size="small"
+            icon="delete"
+            :iconSize="16"
+            :title="t.deleteCard"
+            @click="$emit('delete', currentCard)"
+          />
           </div>
         </div>
       </template>
@@ -53,17 +53,17 @@
         <div class="card-footer card-footer--single">
           <div class="card-footer__meta">
             <span class="tag tag-small tag-info">{{ currentCard?.category }}</span>
-            <span class="tag tag-small tag-contrast">{{ i18n.practiceCount || '练习' }}: {{ currentCard?.practiceCount || 0 }}</span>
+            <span class="tag tag-small tag-contrast">{{ t.practiceCount }}: {{ currentCard?.practiceCount || 0 }}</span>
           </div>
           <Button
             variant="primary"
             size="small"
             icon="play"
             :iconSize="14"
-            :title="i18n.play || '播放'"
+            :title="t.play"
             @click="$emit('play', currentCard)"
           >
-            {{ i18n.play || '播放' }}
+            {{ t.play }}
           </Button>
         </div>
       </template>
@@ -77,13 +77,13 @@
         variant="ghost"
         icon="chevronLeft"
         :disabled="currentIndex === 0"
-        :title="i18n.previous || '上一个'"
+        :title="t.previous"
         @click="$emit('previous')"
       />
       <Button
         variant="ghost"
         icon="shuffle"
-        :title="i18n.randomCard || '随机'"
+        :title="t.randomCard"
         @click="$emit('random')"
       />
       <span class="tag tag-rounded">{{ currentIndex + 1 }} / {{ totalCards }}</span>
@@ -91,7 +91,7 @@
         variant="ghost"
         icon="chevronRight"
         :disabled="currentIndex === totalCards - 1"
-        :title="i18n.next || '下一个'"
+        :title="t.next"
         @click="$emit('next')"
       />
     </div>
@@ -105,8 +105,9 @@ import type {
 } from "../types"
 import Button from "@/components/Button.vue"
 import Card from "@/components/Card.vue"
+import { useI18n } from "../composables/useI18n"
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     currentCard: Flashcard | null
     currentIndex: number
@@ -131,4 +132,6 @@ defineEmits<{
   edit: [card: Flashcard | null]
   delete: [card: Flashcard | null]
 }>()
+
+const t = useI18n(props.i18n)
 </script>

@@ -85,13 +85,13 @@ import type {
 } from "../types"
 import type { SelectOption } from "@/components/Select.vue"
 import {
-  computed,
   ref,
   watch,
 } from "vue"
 import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
+import { useI18n } from "../composables/useI18n"
 
 const props = defineProps<{
   visible: boolean
@@ -114,23 +114,7 @@ const emit = defineEmits<{
   "update:customCategory": [value: string]
 }>()
 
-const defaults: I18n = {
-  editCard: "编辑卡片",
-  addCard: "添加卡片",
-  title: "标题",
-  titlePlaceholder: "标题（不可重复）",
-  content: "内容",
-  contentPlaceholder: "内容",
-  category: "类别",
-  customCategoryPlaceholder: "输入自定义类别",
-  cancel: "取消",
-  save: "保存",
-} as I18n
-
-const t = computed(() => ({
-  ...defaults,
-  ...props.i18n,
-}) as Required<I18n>)
+const t = useI18n(props.i18n)
 
 const localFormData = ref<CreateFlashcardDTO>({ ...props.formData })
 const localCustomCategory = ref(props.customCategory)

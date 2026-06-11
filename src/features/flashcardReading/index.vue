@@ -25,8 +25,8 @@
         :cards="paginatedCards"
         :i18n="i18n"
         @play="playWord"
-        @copyTitle="(c: Flashcard) => copyToClipboard(c.title, '已复制单词')"
-        @copyContent="(c: Flashcard) => copyToClipboard(c.content, '已复制内容')"
+        @copyTitle="(c: Flashcard) => handleCopy(c.title, '已复制单词')"
+        @copyContent="(c: Flashcard) => handleCopy(c.content, '已复制内容')"
         @edit="editCard"
         @delete="deleteCard"
       />
@@ -41,8 +41,8 @@
         @previous="() => navigateAndPlay('previous')"
         @next="() => navigateAndPlay('next')"
         @random="() => navigateAndPlay('random')"
-        @copyTitle="(c: Flashcard) => copyToClipboard(c.title, '已复制单词')"
-        @copyContent="(c: Flashcard) => copyToClipboard(c.content, '已复制内容')"
+        @copyTitle="(c: Flashcard) => handleCopy(c.title, '已复制单词')"
+        @copyContent="(c: Flashcard) => handleCopy(c.content, '已复制内容')"
         @edit="editCard"
         @delete="deleteCard"
       />
@@ -92,7 +92,7 @@
           :disabled="currentPage === 1"
           @click="currentPage--"
         >
-          {{ i18n.previous || '上一页' }}
+          {{ t.previous }}
         </Button>
         <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
         <Button
@@ -101,7 +101,7 @@
           :disabled="currentPage === totalPages"
           @click="currentPage++"
         >
-          {{ i18n.next || '下一页' }}
+          {{ t.next }}
         </Button>
       </div>
     </div>
@@ -114,13 +114,13 @@
         name="file"
         :size="48"
       />
-      <p>{{ i18n.noCards || '暂无卡片' }}</p>
+      <p>{{ t.noCards }}</p>
       <Button
         variant="primary"
         icon="add"
         @click="openCreateDialog"
       >
-        {{ i18n.addCard || '添加卡片' }}
+        {{ t.addCard }}
       </Button>
     </div>
 
@@ -133,28 +133,28 @@
         size="small"
         @click="viewMode = 'list'"
       >
-        {{ i18n.listView || '列表' }}
+        {{ t.listView }}
       </Button>
       <Button
         :variant="viewMode === 'single' ? 'primary' : 'secondary'"
         size="small"
         @click="switchMode('single')"
       >
-        {{ i18n.singleView || '单卡' }}
+        {{ t.singleView }}
       </Button>
       <Button
         :variant="viewMode === 'statistics' ? 'primary' : 'secondary'"
         size="small"
         @click="viewMode = 'statistics'"
       >
-        {{ i18n.statisticsView || '统计' }}
+        {{ t.statisticsView }}
       </Button>
       <Button
         :variant="viewMode === 'typing' ? 'primary' : 'secondary'"
         size="small"
         @click="switchMode('typing')"
       >
-        {{ i18n.typingView || '边学边写' }}
+        {{ t.typingView }}
       </Button>
     </div>
 
@@ -181,7 +181,6 @@
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
 import type {
-  CreateFlashcardDTO,
   Flashcard,
   I18n,
   StatisticsData,
@@ -196,6 +195,7 @@ import {
   ref,
   watch,
 } from "vue"
+import { copyToClipboard } from "@/utils/domUtils"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import CardDialog from "./components/CardDialog.vue"
@@ -211,6 +211,8 @@ import {
 } from "./composables/useFlashcardStorage"
 import { usePlayWord } from "./composables/usePlayWord"
 import { useTypingQueue } from "./composables/useTypingQueue"
+import { useI18n } from "./composables/useI18n"
+import { useFlashcardOperations } from "./composables/useFlashcardOperations"
 
 interface Props {
   i18n: I18n
@@ -219,6 +221,8 @@ interface Props {
 
 const props = defineProps<Props>()
 
+const t = useI18n(props.i18n)
+
 const {
   storage,
   cards,
@@ -226,6 +230,31 @@ const {
   loadCards,
 } = useFlashcardStorage(props.plugin)
 const { playWord } = usePlayWord(storage, cards, props.i18n)
+
+const reload = async () => {
+  try {
+    await loadCards()
+  } catch {
+    showMessage(t.value.loadFailed, 3000, "error")
+  }
+}
+
+const {
+  showCreateDialog,
+  editingCard,
+  formData,
+  formErrors,
+  customCategory,
+  isFormValid,
+  openCreateDialog,
+  closeDialog,
+  handleTitleInput,
+  validateTitle,
+  handleCategorySelect,
+  saveCard,
+  editCard,
+  deleteCard,
+} = useFlashcardOperations(storage, reload, t)
 
 const selectedCategory = ref<string>("all")
 const searchQuery = ref<string>("")
@@ -239,16 +268,6 @@ const sessionTotal = ref(0)
 const sessionCorrect = ref(0)
 const currentPage = ref(1)
 
-const showCreateDialog = ref(false)
-const editingCard = ref<Flashcard | null>(null)
-const formData = ref<CreateFlashcardDTO>({
-  title: "",
-  content: "",
-  category: "",
-})
-const formErrors = ref<Record<string, string>>({})
-const customCategory = ref("")
-
 const normalizedSearchQuery = computed(() =>
   searchQuery.value.toLowerCase().trim(),
 )
@@ -256,7 +275,7 @@ const normalizedSearchQuery = computed(() =>
 const categoryOptions = computed<SelectOption[]>(() => [
   {
     value: "all",
-    label: props.i18n.allCategories || "全部",
+    label: t.value.allCategories,
   },
   ...categories.value.map((cat) => ({
     value: cat,
@@ -275,11 +294,11 @@ const allCategories = computed(() => {
 const formCategoryOptions = computed<SelectOption[]>(() => [
   {
     value: "",
-    label: props.i18n.selectCategory || "请选择类别",
+    label: t.value.selectCategory,
   },
   {
     value: "__custom__",
-    label: props.i18n.customCategory || "自定义...",
+    label: t.value.customCategory,
   },
   ...allCategories.value.map((cat) => ({
     value: cat,
@@ -321,20 +340,6 @@ const paginatedCards = computed(() => {
   const start = (currentPage.value - 1) * CARD_CONFIG.PAGE_SIZE
   const end = start + CARD_CONFIG.PAGE_SIZE
   return filteredCards.value.slice(start, end)
-})
-
-const isFormValid = computed(() => {
-  const hasValidCategory =
-    formData.value.category === "__custom__"
-      ? customCategory.value.trim() !== ""
-      : formData.value.category.trim() !== ""
-
-  return (
-    formData.value.title.trim() !== ""
-    && formData.value.content.trim() !== ""
-    && hasValidCategory
-    && Object.keys(formErrors.value).length === 0
-  )
 })
 
 const statisticsData = computed<StatisticsData>(() => {
@@ -381,14 +386,6 @@ const statisticsData = computed<StatisticsData>(() => {
   }
 })
 
-const reload = async () => {
-  try {
-    await loadCards()
-  } catch {
-    showMessage(props.i18n.loadFailed || "加载卡片失败", 3000, "error")
-  }
-}
-
 const switchMode = (mode: "single" | "typing") => {
   viewMode.value = mode
   typingQueue.rebuild()
@@ -400,138 +397,9 @@ const navigateAndPlay = (action: "previous" | "next" | "random") => {
   playWord(typingQueue.currentCard.value)
 }
 
-const handleTitleInput = () => {
-  if (formErrors.value.title) {
-    delete formErrors.value.title
-  }
-}
-
-const validateTitle = async () => {
-  if (!formData.value.title.trim()) {
-    formErrors.value.title = props.i18n.titleEmpty || "标题不能为空"
-    return
-  }
-
-  if (editingCard.value && formData.value.title === editingCard.value.title) {
-    delete formErrors.value.title
-    return
-  }
-
-  const isUnique = await storage.isTitleUnique(
-    formData.value.title,
-    editingCard.value?.id,
-  )
-
-  if (!isUnique) {
-    formErrors.value.title = props.i18n.titleDuplicate || "标题已存在"
-  } else {
-    delete formErrors.value.title
-  }
-}
-
-const openCreateDialog = () => {
-  showCreateDialog.value = true
-}
-
-const closeDialog = () => {
-  showCreateDialog.value = false
-  editingCard.value = null
-  formData.value = {
-    title: "",
-    content: "",
-    category: "",
-  }
-  formErrors.value = {}
-  customCategory.value = ""
-}
-
-const saveCard = async () => {
-  await validateTitle()
-
-  if (!isFormValid.value) {
-    return
-  }
-
-  const categoryToSave =
-    formData.value.category === "__custom__"
-      ? customCategory.value.trim()
-      : formData.value.category
-
-  if (!categoryToSave) {
-    showMessage(props.i18n.selectCategory || "请选择类别", 2000, "error")
-    return
-  }
-
-  try {
-    const cardData = {
-      ...formData.value,
-      category: categoryToSave,
-    }
-
-    if (editingCard.value) {
-      await storage.updateCard(editingCard.value.id, cardData)
-      showMessage(props.i18n.updateSuccess || "卡片已更新", 2000, "info")
-    } else {
-      await storage.createCard(cardData)
-      showMessage(props.i18n.createSuccess || "卡片已创建", 2000, "info")
-    }
-
-    closeDialog()
-    await reload()
-  } catch (error: any) {
-    showMessage(
-      error.message || props.i18n.saveFailed || "保存失败",
-      3000,
-      "error",
-    )
-  }
-}
-
-const handleCategorySelect = () => {
-  if (formData.value.category === "__custom__") {
-    customCategory.value = ""
-  }
-}
-
-const editCard = (card: Flashcard) => {
-  editingCard.value = card
-  const category = card.category
-  const isCustomCategory = !CARD_CONFIG.PRESET_CATEGORIES.includes(category)
-  formData.value = {
-    title: card.title,
-    content: card.content,
-    category: isCustomCategory ? "__custom__" : category,
-  }
-  customCategory.value = isCustomCategory ? category : ""
-  showCreateDialog.value = true
-}
-
-const deleteCard = async (card: Flashcard) => {
-  // eslint-disable-next-line no-alert
-  if (!window.confirm(props.i18n.confirmDelete || "确定要删除这张卡片吗？")) {
-    return
-  }
-
-  try {
-    await storage.deleteCard(card.id)
-    showMessage(props.i18n.deleteSuccess || "卡片已删除", 2000, "info")
-    await reload()
-  } catch (error: any) {
-    showMessage(
-      error.message || props.i18n.deleteFailed || "删除失败",
-      3000,
-      "error",
-    )
-  }
-}
-
-const copyToClipboard = async (text: string, message: string) => {
-  try {
-    await navigator.clipboard.writeText(text)
-    showMessage(message, 2000, "info")
-  } catch {
-    showMessage("复制失败", 2000, "error")
-  }
+const handleCopy = async (text: string, message: string) => {
+  const ok = await copyToClipboard(text)
+  showMessage(ok ? message : "复制失败", 2000, ok ? "info" : "error")
 }
 
 const onTypingCorrect = async (card: Flashcard | null) => {

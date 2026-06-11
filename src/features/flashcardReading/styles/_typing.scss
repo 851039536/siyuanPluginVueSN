@@ -1,0 +1,286 @@
+// 单词阅读 - 打字练习样式
+@use 'variables' as *;
+
+.flashcard-reading-panel {
+  .typing-practice {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow: hidden;
+
+    .typing-options {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .typing-session-config {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 11px;
+
+      &__label {
+        @include fc-label;
+        font-size: 10px;
+      }
+
+      &__btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        border: 1px solid var(--b3-border-color);
+        border-radius: $fc-radius;
+        background: var(--b3-theme-surface-lighter);
+        color: var(--b3-theme-on-surface);
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1;
+        transition: all $fc-transition;
+
+        &:hover {
+          border-color: var(--b3-theme-primary);
+          color: var(--b3-theme-primary);
+        }
+      }
+
+      &__value {
+        font-family: $fc-mono;
+        font-size: 13px;
+        font-weight: 700;
+        min-width: 24px;
+        text-align: center;
+      }
+
+      &__unit {
+        @include fc-label;
+        font-size: 10px;
+      }
+    }
+
+    .typing-case-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border: 1px solid var(--b3-border-color);
+      border-radius: $fc-radius;
+      background: var(--b3-theme-surface-lighter);
+      color: var(--b3-theme-on-surface);
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
+      transition: all $fc-transition;
+      opacity: 0.65;
+
+      &:hover {
+        opacity: 1;
+        border-color: var(--b3-theme-primary);
+      }
+
+      &--active {
+        opacity: 1;
+        border-color: var(--b3-theme-primary);
+        background: rgba(var(--b3-theme-primary-rgb, 35, 131, 226), 0.08);
+        color: var(--b3-theme-primary);
+      }
+
+      &__label {
+        font-family: $fc-mono;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      &__text {
+        @include fc-label;
+        font-size: 10px;
+        opacity: 1;
+        color: inherit;
+      }
+    }
+
+    .typing-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 8px 0;
+      flex-shrink: 0;
+    }
+
+    .typing-detail {
+      width: 100%;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--b3-theme-on-background);
+      opacity: 0.85;
+      word-break: break-word;
+      white-space: pre-wrap;
+      padding: 0 8px;
+    }
+
+    .typing-hint {
+      @include fc-label;
+      font-size: 11px;
+    }
+
+    .typing-target {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      justify-content: center;
+
+      .typing-char {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 40px;
+        font-size: 20px;
+        font-weight: 600;
+        font-family: $fc-mono;
+        border-radius: $fc-radius;
+        background: var(--b3-theme-surface-lighter);
+        color: var(--b3-theme-on-background);
+        border: 1px solid var(--b3-border-color);
+        transition: all 0.12s;
+
+        &--correct {
+          background: rgba($brand-success, 0.12);
+          border-color: $brand-success;
+          color: $brand-success;
+        }
+
+        &--incorrect {
+          background: rgba($brand-destructive, 0.08);
+          border-color: $brand-destructive;
+          color: $brand-destructive;
+        }
+      }
+    }
+
+    .typing-input-wrapper {
+      width: 100%;
+      max-width: 300px;
+    }
+
+    .typing-input {
+      width: 100%;
+      padding: 10px 14px;
+      font-size: 18px;
+      font-family: $fc-mono;
+      text-align: center;
+      letter-spacing: 4px;
+      border: 1px solid var(--b3-border-color);
+      border-radius: $fc-radius;
+      background: var(--b3-theme-background);
+      color: var(--b3-theme-on-background);
+      outline: none;
+      transition: border-color $fc-transition, box-shadow $fc-transition;
+
+      &:focus {
+        border-color: var(--b3-theme-primary);
+        box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
+      }
+
+      &::placeholder {
+        color: var(--b3-theme-secondary);
+        font-size: 14px;
+        letter-spacing: normal;
+      }
+    }
+
+    .typing-result {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: $fc-mono;
+      padding: 6px 14px;
+      border-radius: $fc-radius;
+      border: 1px solid transparent;
+
+      &--correct {
+        color: $brand-success;
+        background: rgba($brand-success, 0.08);
+        border-color: rgba($brand-success, 0.3);
+      }
+
+      &--incorrect {
+        color: $brand-destructive;
+        background: rgba($brand-destructive, 0.08);
+        border-color: rgba($brand-destructive, 0.3);
+      }
+    }
+
+    .typing-streak {
+      font-size: 13px;
+      font-weight: 700;
+      color: $brand-accent;
+      font-family: $fc-mono;
+      animation: streak-pulse 0.4s ease;
+
+      &--inline {
+        margin-left: 6px;
+      }
+    }
+
+    .typing-session-stats {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: $fc-mono;
+      color: var(--b3-theme-on-surface);
+      opacity: 0.6;
+      border-top: 1px solid var(--b3-border-color);
+      flex-shrink: 0;
+      flex-wrap: wrap;
+
+      &__sep {
+        opacity: 0.4;
+      }
+    }
+
+    .typing-timer {
+      font-family: $fc-mono;
+      font-weight: 600;
+      color: var(--b3-theme-primary);
+    }
+
+    .typing-round-summary {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 16px;
+      border: 1px solid var(--b3-border-color);
+      border-radius: $fc-radius;
+      background: var(--b3-theme-surface-lighter);
+
+      &__title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--b3-theme-primary);
+      }
+
+      &__stats {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        font-family: $fc-mono;
+        color: var(--b3-theme-on-surface);
+      }
+    }
+  }
+}

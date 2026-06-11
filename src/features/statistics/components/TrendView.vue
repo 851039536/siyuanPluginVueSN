@@ -878,7 +878,7 @@ function getDiff(
       }
 
       .chart-tooltip {
-        position: sticky;
+        position: absolute;
         top: 4px;
         left: 50%;
         transform: translateX(-50%);
@@ -1073,7 +1073,9 @@ function getDiff(
     margin: 0;
 
     .historical-table-container {
+      max-height: 380px;
       overflow-y: auto;
+      overflow-x: hidden;
       border: 1px solid var(--b3-border-color);
       border-radius: 4px;
       @include scrollbar-thin;

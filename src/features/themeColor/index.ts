@@ -7,40 +7,40 @@
 import type { Plugin } from "siyuan"
 
 export interface ThemeColorScheme {
-  id: string
+  /** 主题显示名称 */
   name: string
+  /** 主色 hex 值，如 "#d97757"，RGB 由 hexToRgb() 自动推导 */
   primary: string
-  primaryRgb: string
+}
+
+/** 将 #RRGGBB 格式转为 "R, G, B" 格式的 RGB 字符串 */
+function hexToRgb(hex: string): string {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return `${r}, ${g}, ${b}`
 }
 
 /**
  * 主题方案注册表
- * 新增主题只需在此对象中添加条目
+ * 新增主题只需在此对象中添加条目，键名即为方案 ID
  */
 export const THEMES: Record<string, ThemeColorScheme> = {
   orange: {
-    id: "orange",
     name: "暖橙色",
     primary: "#d97757",
-    primaryRgb: "217, 119, 87",
   },
   github: {
-    id: "github",
     name: "GitHub 蓝",
     primary: "#0969da",
-    primaryRgb: "9, 105, 218",
   },
   sakura: {
-    id: "sakura",
     name: "樱花动漫",
     primary: "#ff91a4",
-    primaryRgb: "255, 145, 164",
   },
   codex: {
-    id: "codex",
     name: "Codex",
     primary: "#8B5CF6",
-    primaryRgb: "139, 92, 246",
   },
 }
 
@@ -51,10 +51,10 @@ export const DEFAULT_THEME_SCHEME = "orange"
 
 function applyTheme(scheme: ThemeColorScheme) {
   document.documentElement.style.setProperty("--b3-theme-primary", scheme.primary)
-  document.documentElement.style.setProperty("--b3-theme-primary-rgb", scheme.primaryRgb)
+  document.documentElement.style.setProperty("--b3-theme-primary-rgb", hexToRgb(scheme.primary))
 }
 
-function removeTheme() {
+function clearTheme() {
   document.documentElement.style.removeProperty("--b3-theme-primary")
   document.documentElement.style.removeProperty("--b3-theme-primary-rgb")
 }
@@ -65,7 +65,7 @@ export function registerThemeColor(_plugin: Plugin, schemeId?: string) {
 
   return {
     destroy: () => {
-      removeTheme()
+      clearTheme()
     },
   }
 }

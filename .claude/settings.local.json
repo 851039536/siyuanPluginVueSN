@@ -126,10 +126,14 @@
       "Bash(gh search *)",
       "Bash(xxd)",
       "Skill(simplify)",
-      "Skill(simplify:*)"
+      "Skill(simplify:*)",
+      "Bash(rm \"e:/5.vue/siyuan-plugin-vite-vue-sn/src/features/aiContentGenerator/components/AutomationView.vue\")"
     ],
     "deny": [],
-    "ask": []
+    "ask": [],
+    "additionalDirectories": [
+      "e:\\5.vue\\siyuan-plugin-vite-vue-sn\\src\\features\\aiContentGenerator\\components"
+    ]
   },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [

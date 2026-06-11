@@ -109,47 +109,6 @@ export interface SkillItem {
   sources: SkillSource[]
 }
 
-// ============ 自动化任务相关类型 ============
-
-/** 执行频率类型 */
-export type AutomationFrequency = "hourly" | "daily" | "weekly" | "monthly" | "custom"
-
-/** 自动化任务接口 */
-export interface AutomationTask {
-  id: string
-  name: string
-  /** 自定义提示词 */
-  prompt: string
-  /** 系统提示词 */
-  systemPrompt: string
-  /** 执行频率 */
-  frequency: AutomationFrequency
-  /** 自定义 cron 表达式（frequency 为 custom 时使用） */
-  customCron?: string
-  /** 间隔分钟数（frequency 为 hourly 时使用，默认 60） */
-  intervalMinutes?: number
-  /** 每周几执行（frequency 为 weekly 时使用，0=周日，1=周一...6=周六） */
-  weekDay?: number
-  /** 每月几号执行（frequency 为 monthly 时使用，1-31） */
-  monthDay?: number
-  /** 执行时间（小时:分钟，如 "09:30"） */
-  executeTime?: string
-  /** 是否启用 */
-  enabled: boolean
-  /** 目标文档ID（可选，指定后结果写入该文档） */
-  targetDocId?: string
-  /** 创建时间 */
-  createdAt: number
-  /** 最后执行时间 */
-  lastExecutedAt?: number
-  /** 温度参数 */
-  temperature: number
-  /** 最大 token 数 */
-  maxTokens: number
-  /** 是否启用联网搜索（RAG 模式：先搜后答，所有 provider 通用） */
-  webSearch?: boolean
-}
-
 // ============ 联网搜索相关类型 ============
 
 /** 搜索引擎类型（均为国内可用） */

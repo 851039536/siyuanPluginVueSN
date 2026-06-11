@@ -329,6 +329,24 @@
           </div>
           <div class="review-footer">
             <span class="review-model">审核模型: {{ reviewResult.reviewModel }}</span>
+            <template v-if="reviewResult.rating === '需改进' && reviewResult.issues.length > 0">
+              <Button
+                v-if="!isAutoFixing"
+                variant="primary"
+                size="small"
+                @click="$emit('auto-fix')"
+              >
+                <svg width="12" height="12"><use xlink:href="#iconRefresh"></use></svg>
+                自动修复
+              </Button>
+              <span
+                v-else
+                class="auto-fixing-badge"
+              >
+                <span class="dot-flashing"></span>
+                修复中...
+              </span>
+            </template>
           </div>
         </div>
       </div>
@@ -433,6 +451,9 @@ interface Props {
   canApply: boolean
   canInsertSubDoc: boolean
   canUndo: boolean
+
+  // 自动修复
+  isAutoFixing?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -451,6 +472,7 @@ defineEmits<{
   (e: "copy"): void
   (e: "clear"): void
   (e: "toggle-reasoning"): void
+  (e: "auto-fix"): void
 }>()
 
 const viewMode = ref<"preview" | "diff">("preview")
@@ -746,5 +768,14 @@ watch(() => props.isGenerating, (newVal, oldVal) => {
   @include codex-meta-label;
   font-size: 9px;
   font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+}
+
+.auto-fixing-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
 }
 </style>

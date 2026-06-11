@@ -75,3 +75,31 @@ export function getSourceHintText(skill: SkillItem): string {
   }
   return toolNames.join("、")
 }
+
+/**
+ * 尝试将审核问题描述与生成内容中的位置进行匹配
+ * 用于在内容中标注问题对应的位置
+ */
+export function extractIssueLocations(
+  issues: Array<{ description: string; severity: string }>,
+  content: string,
+): Array<{ issueIndex: number; excerpt: string }> {
+  const locations: Array<{ issueIndex: number; excerpt: string }> = []
+
+  issues.forEach((issue, idx) => {
+    const sentences = issue.description.split(/[。；]/).filter(s => s.length > 5)
+    for (const sentence of sentences) {
+      const pos = content.indexOf(sentence)
+      if (pos >= 0) {
+        const excerpt = content.slice(
+          Math.max(0, pos - 10),
+          pos + sentence.length + 10,
+        )
+        locations.push({ issueIndex: idx, excerpt })
+        break
+      }
+    }
+  })
+
+  return locations
+}

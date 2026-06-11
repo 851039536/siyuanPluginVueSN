@@ -157,6 +157,19 @@
               height="14"
             ><use xlink:href="#iconCopy"></use></svg>
           </Button>
+          <!-- 重新审核 -->
+          <Button
+            v-if="!isGenerating && generatedContent"
+            title="重新审核内容"
+            variant="ghost"
+            size="small"
+            @click="$emit('re-review')"
+          >
+            <svg
+              width="14"
+              height="14"
+            ><use xlink:href="#iconCheck"></use></svg>
+          </Button>
           <Button
             title="清除"
             variant="ghost"
@@ -254,102 +267,16 @@
         </div>
       </div>
 
-      <!-- 审核结果（可折叠） -->
-      <div
+      <!-- 审核结果（独立组件） -->
+      <ReviewPanel
         v-if="isReviewing || reviewResult"
-        class="review-section"
-      >
-        <button
-          class="review-toggle-btn"
-          @click="showReviewPanel = !showReviewPanel"
-        >
-          <svg
-            width="12"
-            height="12"
-            class="review-chevron"
-            :class="{ expanded: showReviewPanel }"
-          >
-            <use xlink:href="#iconRight"></use>
-          </svg>
-          <svg
-            width="14"
-            height="14"
-          ><use xlink:href="#iconCheck"></use></svg>
-          <span>交叉审核</span>
-          <span
-            v-if="isReviewing"
-            class="review-loading-dot"
-          ></span>
-          <span
-            v-else-if="reviewResult"
-            class="review-rating-badge"
-            :class="ratingClass"
-          >
-            {{ reviewResult.rating }}
-          </span>
-        </button>
-        <div
-          v-if="showReviewPanel && reviewResult"
-          class="review-body"
-        >
-          <div class="review-summary">
-            <svg width="12" height="12"><use xlink:href="#iconSparkles" /></svg>
-            {{ reviewResult.summary }}
-          </div>
-          <div
-            v-if="reviewResult.issues.length > 0"
-            class="review-issues"
-          >
-            <div class="review-section-title">问题清单</div>
-            <div
-              v-for="(issue, idx) in reviewResult.issues"
-              :key="idx"
-              class="review-issue-item"
-            >
-              <span
-                class="issue-severity"
-                :class="'severity-' + issue.severity"
-              >{{ issue.severity }}</span>
-              <span>{{ issue.description }}</span>
-            </div>
-          </div>
-          <div
-            v-if="reviewResult.suggestions.length > 0"
-            class="review-suggestions"
-          >
-            <div class="review-section-title">改进建议</div>
-            <div
-              v-for="(sug, idx) in reviewResult.suggestions"
-              :key="idx"
-              class="review-suggestion-item"
-            >
-              <span class="suggestion-num">{{ idx + 1 }}.</span>
-              {{ sug }}
-            </div>
-          </div>
-          <div class="review-footer">
-            <span class="review-model">审核模型: {{ reviewResult.reviewModel }}</span>
-            <template v-if="reviewResult.rating === '需改进' && reviewResult.issues.length > 0">
-              <Button
-                v-if="!isAutoFixing"
-                variant="primary"
-                size="small"
-                @click="$emit('auto-fix')"
-              >
-                <svg width="12" height="12"><use xlink:href="#iconRefresh"></use></svg>
-                自动修复
-              </Button>
-              <span
-                v-else
-                class="auto-fixing-badge"
-              >
-                <span class="dot-flashing"></span>
-                修复中...
-              </span>
-            </template>
-          </div>
-        </div>
-      </div>
+        :is-reviewing="isReviewing"
+        :review-result="reviewResult"
+        :is-auto-fixing="isAutoFixing"
+        @re-review="$emit('re-review')"
+        @auto-fix="$emit('auto-fix')"
+        @fix-issue="$emit('fix-issue', $event)"
+      />
 
       <div class="result-content">
         <!-- 预览模式 -->
@@ -409,6 +336,7 @@ import {
 import Button from "@/components/Button.vue"
 import Loader from "@/components/Loader.vue"
 import DiffPreview from "./DiffPreview.vue"
+import ReviewPanel from "./ReviewPanel.vue"
 
 interface Props {
   // 状态
@@ -473,20 +401,12 @@ defineEmits<{
   (e: "clear"): void
   (e: "toggle-reasoning"): void
   (e: "auto-fix"): void
+  (e: "re-review"): void
+  (e: "fix-issue", issueIndex: number): void
 }>()
 
 const viewMode = ref<"preview" | "diff">("preview")
 const showSearchPanel = ref(true)
-const showReviewPanel = ref(true)
-
-// 审核评级样式类
-const ratingClass = computed(() => {
-  if (!props.reviewResult) return ""
-  const r = props.reviewResult.rating
-  if (r === "优秀") return "rating-good"
-  if (r === "良好") return "rating-ok"
-  return "rating-needs-fix"
-})
 
 // 是否存在差异（有原文且有生成内容且不同）
 const hasDiff = computed(() => {

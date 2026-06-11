@@ -110,6 +110,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   close: []
   confirm: [shortcut: ShortcutInfo]
+  error: [message: string]
 }>()
 
 const localFormData = ref<ShortcutFormData>({
@@ -137,7 +138,7 @@ const title = computed(() =>
 
 function handleConfirm() {
   if (!localFormData.value.name || !localFormData.value.keys) {
-    alert(props.fillRequiredText)
+    emit("error", props.fillRequiredText)
     return
   }
 

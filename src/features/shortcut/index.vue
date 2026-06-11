@@ -104,6 +104,7 @@
       :fill-required-text="i18n.fillRequired || '请填写必填项'"
       @close="closeDialog"
       @confirm="addShortcut"
+      @error="handleDialogError"
     />
   </div>
 </template>
@@ -121,6 +122,7 @@ import {
   onMounted,
   ref,
 } from "vue"
+import { copyToClipboard } from "@/utils/domUtils"
 import CategorySelector from "./components/CategorySelector.vue"
 import FilterBar from "./components/FilterBar.vue"
 import PanelHeader from "./components/PanelHeader.vue"
@@ -180,11 +182,16 @@ const formData = ref<ShortcutFormData>({
 
 // 数据存储路径
 const STORAGE_KEYS = [SHORTCUTS_STORAGE_KEY, SHORTCUTS_FAVORITES_KEY, SHORTCUTS_RECENT_KEY]
-const storageDir = "data/storage/petals/siyuan-plugin-vite-vue-sn"
+const storageDir = computed(() => {
+  if (props.plugin) {
+    return (props.plugin as any).dataDir || "data/storage/petals/siyuan-plugin-vite-vue-sn"
+  }
+  return "data/storage/petals/siyuan-plugin-vite-vue-sn"
+})
 const showStoragePath = ref(false)
 
-function copyStoragePath(path: string) {
-  navigator.clipboard.writeText(path).catch(() => {})
+async function copyStoragePath(path: string) {
+  await copyToClipboard(path)
 }
 
 // 获取快捷键管理器
@@ -244,8 +251,10 @@ function getCategoryLabel(category: string): string {
   return categoryLabels.value[category] || category
 }
 
+const TOOL_CATEGORIES = ["npm", "nvm", "cmd", "vscode", "visual-studio"] as const
+
 function showToolBadge(category: string): boolean {
-  return ["npm", "nvm", "cmd", "vscode", "visual-studio"].includes(category)
+  return (TOOL_CATEGORIES as readonly string[]).includes(category)
 }
 
 // 过滤快捷键
@@ -306,16 +315,13 @@ async function addToRecent(id: string) {
   }
 }
 
-function copyShortcutInfo(shortcut: ShortcutInfo) {
+async function copyShortcutInfo(shortcut: ShortcutInfo) {
   const text = shortcut.copyContent || shortcut.keys
-  navigator.clipboard
-    .writeText(text)
-    .then(() => {
-      addToRecent(shortcut.id)
-    })
-    .catch((err) => {
-      console.error("复制失败:", err)
-    })
+  const ok = await copyToClipboard(text)
+  if (ok) {
+    addToRecent(shortcut.id)
+    console.log(props.i18n.copiedSuccess || "Copied to clipboard")
+  }
 }
 
 // 对话框操作
@@ -351,6 +357,10 @@ function closeDialog() {
 async function addShortcut(shortcut: ShortcutInfo) {
   await manager.addShortcut(shortcut)
   closeDialog()
+}
+
+function handleDialogError(msg: string) {
+  console.warn("[ShortcutDialog]", msg)
 }
 
 async function deleteShortcut(id: string) {

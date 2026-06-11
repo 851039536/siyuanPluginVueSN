@@ -59,8 +59,8 @@
       @click="$emit('copy', shortcut)"
     >
       <span
-        v-for="key in keyParts"
-        :key="key"
+        v-for="(key, idx) in keyParts"
+        :key="`key-${idx}`"
         class="key-badge"
       >
         {{ key }}
@@ -118,7 +118,9 @@ defineEmits<{
 }>()
 
 const keyParts = computed(() => {
-  return props.shortcut.keys.split("+").map((k) => k.trim())
+  return props.shortcut.keys.split(", ").flatMap(seq =>
+    seq.split("+").map((k) => k.trim()),
+  )
 })
 
 const pathText = computed(() => {

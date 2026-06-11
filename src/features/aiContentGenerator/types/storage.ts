@@ -1,5 +1,4 @@
 import type {
-  AutomationTask,
   SavedPrompt,
 } from "@/types/ai"
 /**
@@ -38,14 +37,12 @@ export class AIGeneratorStorage {
   readonly settings: TypedStorage<AISettings>
   readonly prompts: TypedStorage<SavedPrompt[]>
   readonly currentPrompt: TypedStorage<string>
-  readonly automationTasks: TypedStorage<AutomationTask[]>
 
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
     this.settings = new TypedStorage(storage, "ai-content-generator-settings", DEFAULT_AI_SETTINGS)
     this.prompts = new TypedStorage(storage, "ai-content-generator-prompts", [])
     this.currentPrompt = new TypedStorage(storage, "ai-content-generator-current-prompt")
-    this.automationTasks = new TypedStorage(storage, "ai-content-generator-automation-tasks", [])
   }
 
   async init(): Promise<void> {
@@ -58,11 +55,6 @@ export class AIGeneratorStorage {
       const prompts = await this.prompts.load()
       if (!prompts) {
         await this.prompts.save([])
-      }
-
-      const tasks = await this.automationTasks.load()
-      if (!tasks) {
-        await this.automationTasks.save([])
       }
     } catch (error) {
       console.error("初始化AI生成器存储失败:", error)

@@ -50,8 +50,7 @@ export function renderMarkdown(content: string, stripHeadingBold = true): string
 
 /** 截断标题用于UI显示 */
 export function truncateTitle(title: string, maxLen = 12): string {
-  if (title.length <= maxLen) return title
-  return `${title.substring(0, maxLen)}...`
+  return truncateText(title, maxLen)
 }
 
 /** 获取技能来源的颜色数组（用于圆点图标显示） */

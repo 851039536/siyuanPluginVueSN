@@ -1,33 +1,27 @@
 <template>
   <div class="ai-content-panel">
-    <!-- 顶部工具栏（含模式切换） -->
-    <PanelHeader
-      :activeMode="activeMode"
-      @update:activeMode="activeMode = $event"
+    <!-- 顶部工具栏 -->
+    <PanelHeader @toggle-settings="toggleSettings" />
+
+    <!-- 提示词配置面板 -->
+    <SettingsPanel
+      :showSettings="showSettings"
+      v-model:systemPrompt="systemPrompt"
+      v-model:temperature="temperature"
+      v-model:maxTokens="maxTokens"
+      :currentPromptName="currentPromptName"
+      v-model:newPromptName="newPromptName"
+      :savedPrompts="savedPrompts"
       @toggle-settings="toggleSettings"
+      @save-current-prompt="saveCurrentPrompt"
+      @on-prompt-name-focus="onPromptNameFocus"
+      @load-prompt="loadPrompt"
+      @delete-prompt="deletePrompt"
     />
 
-    <!-- ====== 生成器模式 ====== -->
-    <template v-if="activeMode === 'generator'">
-      <!-- 提示词配置面板 -->
-      <SettingsPanel
-        :showSettings="showSettings"
-        v-model:systemPrompt="systemPrompt"
-        v-model:temperature="temperature"
-        v-model:maxTokens="maxTokens"
-        :currentPromptName="currentPromptName"
-        v-model:newPromptName="newPromptName"
-        :savedPrompts="savedPrompts"
-        @toggle-settings="toggleSettings"
-        @save-current-prompt="saveCurrentPrompt"
-        @on-prompt-name-focus="onPromptNameFocus"
-        @load-prompt="loadPrompt"
-        @delete-prompt="deletePrompt"
-      />
-
-      <!-- 内容显示区域 -->
-      <div class="content-display-section">
-        <MainContentArea
+    <!-- 内容显示区域 -->
+    <div class="content-display-section">
+      <MainContentArea
           :is-generating="isGenerating"
           :is-applying="isApplying"
           :is-undoing="isUndoing"
@@ -103,14 +97,6 @@
         @update:enable-thinking="enableThinking = $event"
         @update:enable-review="enableReview = $event"
       />
-    </template>
-
-    <!-- ====== 自动化任务模式 ====== -->
-    <AutomationView
-      v-if="activeMode === 'automation'"
-      :plugin="plugin"
-      :on-generate="props.onGenerate"
-    />
 
   </div>
 </template>
@@ -126,11 +112,11 @@ import { AIGeneratorStorage } from "./types/storage";
 import type { GenerateOptions, ReviewResult, SavedPrompt, TargetDoc } from "@/types/ai";
 import { useSkillsLoader } from "./composables/useSkillsLoader";
 import { renderMarkdown } from "./utils";
+import { AI_MODELS_CONFIG } from "./config/models";
 import PanelHeader from "./components/PanelHeader.vue";
 import SettingsPanel from "./components/SettingsPanel.vue";
 import MainContentArea from "./components/MainContentArea.vue";
 import BottomInputArea from "./components/BottomInputArea.vue";
-import AutomationView from "./components/AutomationView.vue";
 
 interface Props {
   i18n: Record<string, string>;
@@ -172,9 +158,6 @@ const isAutoFixing = ref(false);
 const autoFixCount = ref(0);
 const MAX_AUTO_FIX_ITERATIONS = 2;
 const fixHistory = ref<FixEntry[]>([]);
-
-// 模式切换
-const activeMode = ref<"generator" | "automation">("generator");
 
 // ============ 技能系统 ============
 const { skills, currentSkillIndex, currentSkill, loadSkills, skillSearchQuery, filteredSkills } = useSkillsLoader(props.plugin)
@@ -246,7 +229,6 @@ const canUndoEdit = computed(() => editHistoryStack.value.length > 0);
 const paginatedPrompts = computed(() => savedPrompts.value);
 
 // ============ AI 模型配置 ============
-import { AI_MODELS_CONFIG } from "./types/models";
 
 const currentProvider = computed(() => (props.plugin as any)?.settings?.aiApiProvider || "tongyi")
 

@@ -1073,7 +1073,6 @@ function getDiff(
     margin: 0;
 
     .historical-table-container {
-      max-height: 280px;
       overflow-y: auto;
       border: 1px solid var(--b3-border-color);
       border-radius: 4px;

@@ -36,6 +36,10 @@
           >
             <span class="dot-flashing"></span>
             生成中...
+            <span
+              v-if="generationTip"
+              class="generation-tip"
+            >{{ generationTip }}</span>
           </span>
           <template v-else>
             <span
@@ -170,6 +174,20 @@
               height="14"
             ><use xlink:href="#iconCheck"></use></svg>
           </Button>
+          <!-- 对话控制 -->
+          <Button
+            v-if="!isGenerating && (conversationCount || 0) > 0"
+            :title="'清空对话历史（' + (conversationCount || 0) + ' 轮）'"
+            variant="ghost"
+            size="small"
+            @click="$emit('clear-conversation')"
+          >
+            <svg
+              width="14"
+              height="14"
+            ><use xlink:href="#iconRefresh"></use></svg>
+            <span class="conv-count">{{ (conversationCount || 0) / 2 }}</span>
+          </Button>
           <Button
             title="清除"
             variant="ghost"
@@ -271,7 +289,7 @@
       <ReviewPanel
         v-if="isReviewing || reviewResult"
         :is-reviewing="isReviewing"
-        :review-result="reviewResult"
+        :review-result="reviewResult || null"
         :is-auto-fixing="isAutoFixing"
         @re-review="$emit('re-review')"
         @auto-fix="$emit('auto-fix')"
@@ -382,6 +400,13 @@ interface Props {
 
   // 自动修复
   isAutoFixing?: boolean
+
+  // 对话
+  conversationCount?: number
+  hasContent?: boolean
+
+  // 流式输出增强
+  generationTip?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -403,6 +428,7 @@ defineEmits<{
   (e: "auto-fix"): void
   (e: "re-review"): void
   (e: "fix-issue", issueIndex: number): void
+  (e: "clear-conversation"): void
 }>()
 
 const viewMode = ref<"preview" | "diff">("preview")
@@ -697,5 +723,21 @@ watch(() => props.isGenerating, (newVal, oldVal) => {
   font-size: 10px;
   color: var(--b3-theme-on-surface);
   opacity: 0.7;
+}
+
+// ============ 流式输出提示 ============
+.generation-tip {
+  margin-left: 8px;
+  font-size: 10px;
+  font-weight: 400;
+  opacity: 0.5;
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+}
+
+// ============ 对话计数徽章 ============
+.conv-count {
+  font-size: 10px;
+  font-weight: 600;
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
 }
 </style>

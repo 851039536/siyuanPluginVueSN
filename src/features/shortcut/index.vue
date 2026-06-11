@@ -3,40 +3,21 @@
     <!-- 顶部操作栏 -->
     <PanelHeader
       v-model:search-keyword="searchKeyword"
-      :placeholder="i18n.searchPlaceholder || '搜索快捷键...'"
-      :add-title="i18n.addCustomShortcut || '添加快捷键'"
-      @add="showAddDialog"
-    />
-
-    <!-- 统计 + 筛选 + 视图切换 -->
-    <FilterBar
+      v-model:active-tab="activeTab"
       v-model:active-filter="activeFilter"
       v-model:view-mode="viewMode"
+      :placeholder="i18n.searchPlaceholder || '搜索快捷键...'"
+      :add-title="i18n.addCustomShortcut || '添加快捷键'"
       :filters="QUICK_FILTERS"
-      :total-count="totalCount"
-      :favorite-count="favoriteCount"
-      :custom-count="customCount"
-      :total-label="i18n.total || '总计'"
-      :favorite-label="i18n.favorite || '收藏'"
-      :custom-label="i18n.custom || '自定义'"
-    />
-
-    <!-- 分类选择器 -->
-    <CategorySelector
-      v-model:active-tab="activeTab"
-      v-model:category-search="categorySearch"
       :tabs="tabs"
       :get-category-label="getCategoryLabel"
       :get-tab-count="getTabCount"
-      :category-label="i18n.category || '分类:'"
-      :search-placeholder="i18n.searchCategory || '搜索分类...'"
-      :no-result-hint="i18n.noCategoryFound || '未找到匹配的分类'"
+      @add="showAddDialog"
     />
 
     <!-- 快捷键列表 -->
     <ShortcutGrid
       :shortcuts="filteredShortcuts"
-      :view-mode="viewMode"
       :is-favorite="isFavorite"
       :is-recent="isRecent"
       :get-category-label="getCategoryLabel"
@@ -84,7 +65,7 @@
       </div>
     </div>
 
-    <!-- 删除确认对话框 -->
+    <!-- 删除确认对话框（全屏 Modal） -->
     <div
       v-if="deleteConfirmId"
       class="delete-confirm-overlay"
@@ -94,22 +75,15 @@
         class="delete-confirm-dialog"
         @click.stop
       >
-        <p class="delete-confirm-text">{{ i18n.confirmDelete || '确认删除此快捷键？' }}</p>
-        <div class="delete-confirm-actions">
-          <Button
-            variant="secondary"
-            size="small"
-            @click="cancelDelete"
-          >
-            {{ i18n.cancel || '取消' }}
-          </Button>
-          <Button
-            variant="danger"
-            size="small"
-            @click="confirmDelete"
-          >
-            {{ i18n.delete || '删除' }}
-          </Button>
+        <div class="delete-modal-header">
+          <div class="delete-modal-title">{{ i18n.confirmDelete || '确认删除此快捷键？' }}</div>
+        </div>
+        <div class="delete-modal-body">
+          <p>{{ i18n.confirmDeleteMsg || '此操作不可撤销。' }}</p>
+        </div>
+        <div class="delete-modal-footer">
+          <Button variant="secondary" size="small" @click="cancelDelete">{{ i18n.cancel || '取消' }}</Button>
+          <Button variant="danger" size="small" @click="confirmDelete">{{ i18n.delete || '删除' }}</Button>
         </div>
       </div>
     </div>
@@ -154,8 +128,6 @@ import {
 } from "vue"
 import { copyToClipboard } from "@/utils/domUtils"
 import Button from "@/components/Button.vue"
-import CategorySelector from "./components/CategorySelector.vue"
-import FilterBar from "./components/FilterBar.vue"
 import PanelHeader from "./components/PanelHeader.vue"
 import ShortcutDialog from "./components/ShortcutDialog.vue"
 import ShortcutGrid from "./components/ShortcutGrid.vue"
@@ -196,7 +168,7 @@ const searchKeyword = ref("")
 const activeTab = ref("all")
 const activeFilter = ref("all")
 const viewMode = ref<ViewMode>("grid")
-const categorySearch = ref("")
+
 const showDialog = ref(false)
 const dialogType = ref<DialogType>(null)
 const favorites = ref<Set<string>>(new Set())
@@ -424,36 +396,51 @@ async function confirmDelete() {
 <style scoped lang="scss">
 @use "./styles/index.scss";
 
+/* 全屏删除确认遮罩 -- 与 ShortcutDialog 一致的 fixed 定位 */
 .delete-confirm-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.3);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
+  z-index: 1000;
 }
 
 .delete-confirm-dialog {
   background: var(--b3-theme-background);
   border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-  padding: 20px;
-  max-width: 300px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  max-width: 360px;
   width: 90%;
 }
 
-.delete-confirm-text {
-  margin: 0 0 16px;
-  font-size: 13px;
-  color: var(--b3-theme-on-background);
-  line-height: 1.4;
-  text-align: center;
+.delete-modal-header {
+  padding: 16px 16px 0;
 }
 
-.delete-confirm-actions {
+.delete-modal-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--b3-theme-on-background);
+}
+
+.delete-modal-body {
+  padding: 12px 16px;
+  font-size: 13px;
+  color: var(--b3-theme-on-surface-variant);
+  line-height: 1.4;
+}
+
+.delete-modal-footer {
   display: flex;
   gap: 8px;
-  justify-content: center;
+  padding: 12px 16px;
+  border-top: 1px solid var(--b3-theme-surface-lighter);
+  background: var(--b3-theme-surface);
+  justify-content: flex-end;
 }
 </style>

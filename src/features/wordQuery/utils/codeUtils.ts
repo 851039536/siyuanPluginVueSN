@@ -1,10 +1,12 @@
-import type { ApiConfig } from "./apiBase"
+import type { AiApiConfig } from "@/types/ai"
 import {
+  callAI,
+} from "@/utils/aiApi"
 
-  callAPI,
-} from "./apiBase"
+/** 本地别名，保持内部代码一致 */
+const callAPI = callAI
 
-export type { ApiConfig }
+export type ApiConfig = AiApiConfig
 
 // ========== 代码注释生成器 ==========
 

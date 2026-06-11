@@ -541,10 +541,12 @@ import CodeCommentGenerator from "./components/CodeCommentGenerator.vue"
 import CodeExplainer from "./components/CodeExplainer.vue"
 import CodeTranslationPanel from "./components/CodeTranslationPanel.vue"
 import RegexGenerator from "./components/RegexGenerator.vue"
+import { copyToClipboard as copyToClipboardUtil } from "@/utils/domUtils"
+import { LANGUAGE_MAP } from "./types"
 import { WordQueryStorage } from "./types/storage"
 
 interface Props {
-  i18n: Record<string, any>
+  i18n: Record<string, any> & { wordQuery?: Record<string, string> }
   plugin?: Plugin
   onQuery: (word: string) => Promise<string>
   onTranslate?: (
@@ -556,44 +558,12 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const LANGUAGE_OPTIONS = [
-  {
-    value: "auto",
-    label: "自动检测",
-  },
-  {
-    value: "zh",
-    label: "中文",
-  },
-  {
-    value: "en",
-    label: "英文",
-  },
-  {
-    value: "ja",
-    label: "日文",
-  },
-  {
-    value: "ko",
-    label: "韩文",
-  },
-  {
-    value: "fr",
-    label: "法文",
-  },
-  {
-    value: "de",
-    label: "德文",
-  },
-  {
-    value: "es",
-    label: "西班牙文",
-  },
-]
+const LANGUAGE_OPTIONS = Object.entries(LANGUAGE_MAP).map(([value, label]) => ({
+  value,
+  label,
+}))
 
-const LANGUAGE_NAMES = Object.fromEntries(
-  LANGUAGE_OPTIONS.map((opt) => [opt.value, opt.label]),
-) as Record<string, string>
+const LANGUAGE_NAMES = LANGUAGE_MAP
 
 const TARGET_LANGUAGE_OPTIONS = LANGUAGE_OPTIONS.filter(
   (opt) => opt.value !== "auto",
@@ -613,21 +583,29 @@ const FIELD_MAPPINGS = [
     pattern: /(拼音|音标)：/,
     class: "phonetic-section",
     label: "$1：",
+    contentKey: "phonetic",
+    contentPatterns: [/音标：[^\n]+/, /拼音：[^\n]+/],
   },
   {
     pattern: /(英文)：/,
     class: "english-section",
     label: "$1：",
+    contentKey: "english",
+    contentPatterns: [/英文：[^\n]+/],
   },
   {
     pattern: /(释义)：/,
     class: "meaning-section",
     label: "$1：",
+    contentKey: "meaning",
+    contentPatterns: [/释义：[^\n]+/],
   },
   {
     pattern: /(谐音)：/,
     class: "pronunciation-section",
     label: "$1：",
+    contentKey: "pronunciation",
+    contentPatterns: [/谐音：[^\n]+/],
   },
   {
     pattern: /(发音)：/,
@@ -638,16 +616,10 @@ const FIELD_MAPPINGS = [
     pattern: /(例句)：/,
     class: "example-section",
     label: "$1：",
+    contentKey: "example",
+    contentPatterns: [/例句：[\s\S]+/],
   },
 ]
-
-const CONTENT_PATTERNS = {
-  phonetic: [/音标：[^\n]+/, /拼音：[^\n]+/],
-  meaning: [/释义：[^\n]+/],
-  english: [/英文：[^\n]+/],
-  pronunciation: [/谐音：[^\n]+/],
-  example: [/例句：[\s\S]+/],
-}
 
 const currentMode = ref<
   | "word"
@@ -720,6 +692,7 @@ interface ExtractedParts {
   pronunciation?: string
   example?: string
   all?: string
+  [key: string]: string | undefined
 }
 
 const extractContentParts = computed<ExtractedParts>(() => {
@@ -728,12 +701,13 @@ const extractContentParts = computed<ExtractedParts>(() => {
   const content = queryResult.value
   const parts: ExtractedParts = {}
 
-  Object.entries(CONTENT_PATTERNS).forEach(([key, patterns]) => {
-    for (const pattern of patterns) {
+  FIELD_MAPPINGS.forEach((mapping) => {
+    if (!mapping.contentKey || !mapping.contentPatterns) return
+    for (const pattern of mapping.contentPatterns) {
       const match = content.match(pattern)
       if (match) {
         const label = match[0].split("：")[0]
-        parts[key] = match[0].replace(`${label}：`, "").trim()
+        parts[mapping.contentKey] = match[0].replace(`${label}：`, "").trim()
         break
       }
     }
@@ -811,7 +785,8 @@ const exportToSiyuan = async () => {
 
   const word = searchWord.value.trim()
   const content = `## ${word}\n\n${queryResult.value}`
-  copyToClipboard(content, props.i18n.wordQuery?.exportFailed || "导出失败")
+  const ok = await copyToClipboardUtil(content)
+  if (!ok) showMessage(props.i18n.wordQuery?.exportFailed || "导出失败", 3000, "error")
 }
 
 const advancedOptionsData = computed(() => ({
@@ -883,10 +858,11 @@ const copyResult = async (type: string = "all") => {
     return
   }
 
-  if (
-    copyToClipboard(textToCopy, props.i18n.wordQuery?.copyFailed || "复制失败")
-  ) {
+  const ok = await copyToClipboardUtil(textToCopy)
+  if (ok) {
     showCopyOptions.value = false
+  } else {
+    showMessage(props.i18n.wordQuery?.copyFailed || "复制失败", 3000, "error")
   }
 }
 
@@ -984,7 +960,8 @@ const copyTranslation = async () => {
     showMessage("没有可复制的内容", 2000, "error")
     return
   }
-  copyToClipboard(translateResult.value, "复制失败")
+  const ok = await copyToClipboardUtil(translateResult.value)
+  if (!ok) showMessage("复制失败", 3000, "error")
 }
 
 const exportTranslation = async () => {
@@ -994,7 +971,8 @@ const exportTranslation = async () => {
   }
 
   const content = `## 翻译结果\n\n### 原文 (${getLanguageName(sourceLanguage.value)})\n${translateText.value}\n\n### 译文 (${getLanguageName(targetLanguage.value)})\n${translateResult.value}`
-  copyToClipboard(content, "导出失败")
+  const ok = await copyToClipboardUtil(content)
+  if (!ok) showMessage("导出失败", 3000, "error")
 }
 
 const handleKeyDown = (event: KeyboardEvent) => {
@@ -1015,18 +993,6 @@ const handleClickOutside = (event: Event) => {
   const target = event.target as HTMLElement
   if (!target.closest(".dropdown")) {
     showCopyOptions.value = false
-  }
-}
-
-const copyToClipboard = async (text: string, errorMessage?: string) => {
-  if (!text) return false
-  try {
-    await navigator.clipboard.writeText(text)
-    return true
-  } catch (error) {
-    console.error("Copy failed:", error)
-    if (errorMessage) showMessage(errorMessage, 3000, "error")
-    return false
   }
 }
 

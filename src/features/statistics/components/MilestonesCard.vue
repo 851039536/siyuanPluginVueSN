@@ -131,11 +131,42 @@
     </div>
 
     <!-- ====== 4. Achievement Wall ====== -->
-    <div v-if="unlockedAchievements.length > 0" class="achievement-section">
+    <div class="achievement-section">
       <div class="section-label">成就</div>
+
+      <!-- 成就分类 Tab -->
+      <div class="ach-category-bar">
+        <button
+          v-for="cat in achCategories"
+          :key="cat.id"
+          class="ach-category-tab"
+          :class="{ active: activeAchCategory === cat.id }"
+          @click="activeAchCategory = cat.id"
+        >
+          <span class="ach-cat-icon">{{ cat.icon }}</span>
+          <span class="ach-cat-name">{{ cat.name }}</span>
+          <span class="ach-cat-count">{{ getCategoryCount(cat.id) }}</span>
+        </button>
+      </div>
+
+      <!-- 稀有度筛选 Tab -->
+      <div class="ach-category-bar ach-tier-bar">
+        <button
+          v-for="tier in achTiers"
+          :key="tier.id"
+          class="ach-category-tab ach-tier-tab"
+          :class="{ active: activeAchTier === tier.id, [`tier-active-${tier.id}`]: activeAchTier === tier.id }"
+          @click="activeAchTier = tier.id"
+        >
+          <span class="ach-cat-icon">{{ tier.icon }}</span>
+          <span class="ach-cat-name">{{ tier.name }}</span>
+          <span class="ach-cat-count">{{ getTierCount(tier.id) }}</span>
+        </button>
+      </div>
+
       <div class="achievement-grid">
         <div
-          v-for="ach in unlockedAchievements"
+          v-for="ach in filteredUnlocked"
           :key="ach.id"
           class="achievement-card"
           :class="[`tier-${ach.tier}`, { 'custom-ach': ach._custom }]"
@@ -154,11 +185,11 @@
 
       <!-- locked toggle -->
       <button
-        v-if="lockedAchievements.length > 0"
+        v-if="filteredLocked.length > 0"
         class="locked-toggle"
         @click="showLocked = !showLocked"
       >
-        <span>🔒 未获得 ({{ lockedAchievements.length }})</span>
+        <span>🔒 未获得 ({{ filteredLocked.length }})</span>
         <svg
           width="10" height="10" viewBox="0 0 10 10"
           :class="{ rotated: showLocked }"
@@ -166,7 +197,7 @@
       </button>
       <div v-if="showLocked" class="achievement-grid locked">
         <div
-          v-for="ach in lockedAchievements"
+          v-for="ach in filteredLocked"
           :key="ach.id"
           class="achievement-card locked-card"
           :class="[`tier-${ach.tier}`, { 'custom-ach': ach._custom }]"
@@ -764,6 +795,72 @@ const achievementPartition = computed(() => {
 
 const unlockedAchievements = computed(() => achievementPartition.value.unlocked)
 const lockedAchievements = computed(() => achievementPartition.value.locked)
+
+// ===== 成就分类筛选 =====
+const activeAchCategory = ref('all')
+const activeAchTier = ref('all')
+
+const achCategories = [
+  { id: 'all', icon: '🏅', name: '全部' },
+  { id: 'writing', icon: '✍️', name: '写作达人', types: ['notes', 'words', 'notebooks'] },
+  { id: 'knowledge', icon: '🧠', name: '知识管理', types: ['tags', 'backlinks'] },
+  { id: 'rich', icon: '📦', name: '内容丰富', types: ['blocks', 'assets', 'images', 'code'] },
+  { id: 'persistence', icon: '🔥', name: '坚持不懈', types: ['streak', 'activeDays'] },
+  { id: 'meta', icon: '⭐', name: '特殊', types: ['meta', 'custom'] },
+]
+
+const achTiers = [
+  { id: 'all', icon: '🎯', name: '全部' },
+  { id: 'common', icon: '⭐', name: tierLabels.common },
+  { id: 'rare', icon: '💎', name: tierLabels.rare },
+  { id: 'epic', icon: '🔮', name: tierLabels.epic },
+  { id: 'legendary', icon: '👑', name: tierLabels.legendary },
+]
+
+function getAchType(ach: AchievementDef): string {
+  if ((ach as any)._custom) return 'custom'
+  // meta achievements have ids like ach-all-*, ach-half-*, ach-level-*
+  if (ach.id.startsWith('ach-all-') || ach.id.startsWith('ach-half-') || ach.id.startsWith('ach-level-')) return 'meta'
+  // threshold: id format is ach-{type}-{value}
+  const parts = ach.id.split('-')
+  return parts[1] || ''
+}
+
+function matchCategory(ach: AchievementDef, catId: string): boolean {
+  if (catId === 'all') return true
+  const cat = achCategories.find(c => c.id === catId)
+  if (!cat || !cat.types) return false
+  return cat.types.includes(getAchType(ach))
+}
+
+function matchTier(ach: AchievementDef, tierId: string): boolean {
+  if (tierId === 'all') return true
+  return ach.tier === tierId
+}
+
+function matchFilters(ach: AchievementDef): boolean {
+  return matchCategory(ach, activeAchCategory.value) && matchTier(ach, activeAchTier.value)
+}
+
+const filteredUnlocked = computed(() =>
+  unlockedAchievements.value.filter(matchFilters),
+)
+
+const filteredLocked = computed(() =>
+  lockedAchievements.value.filter(matchFilters),
+)
+
+function getCategoryCount(catId: string): number {
+  if (catId === 'all') return unlockedAchievements.value.filter(a => matchTier(a, activeAchTier.value)).length
+  const cat = achCategories.find(c => c.id === catId)
+  if (!cat || !cat.types) return 0
+  return unlockedAchievements.value.filter(a => cat.types!.includes(getAchType(a)) && matchTier(a, activeAchTier.value)).length
+}
+
+function getTierCount(tierId: string): number {
+  if (tierId === 'all') return unlockedAchievements.value.filter(a => matchCategory(a, activeAchCategory.value)).length
+  return unlockedAchievements.value.filter(a => a.tier === tierId && matchCategory(a, activeAchCategory.value)).length
+}
 </script>
 
 <style scoped lang="scss">
@@ -1150,6 +1247,87 @@ const lockedAchievements = computed(() => achievementPartition.value.locked)
 .achievement-section {
   display: flex;
   flex-direction: column;
+}
+
+.ach-category-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 8px 0;
+}
+
+.ach-category-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  font-family: stats.$font-mono;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: rgba(var(--b3-theme-primary-rgb), 0.3);
+    background: rgba(var(--b3-theme-primary-rgb), 0.04);
+  }
+
+  &.active {
+    border-color: var(--b3-theme-primary);
+    background: rgba(var(--b3-theme-primary-rgb), 0.08);
+    color: var(--b3-theme-primary);
+    font-weight: 700;
+  }
+}
+
+.ach-cat-icon {
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.ach-cat-name {
+  font-weight: 600;
+}
+
+.ach-cat-count {
+  font-size: 10px;
+  opacity: 0.5;
+  font-weight: 700;
+}
+
+// Tier bar active colors
+.ach-tier-bar {
+  margin-top: 0;
+  margin-bottom: 4px;
+}
+
+.ach-tier-tab {
+  &.tier-active-common {
+    border-color: stats.$color-success;
+    background: rgba(stats.$color-success, 0.08);
+    color: stats.$color-success;
+  }
+
+  &.tier-active-rare {
+    border-color: var(--b3-theme-primary);
+    background: rgba(var(--b3-theme-primary-rgb), 0.08);
+    color: var(--b3-theme-primary);
+  }
+
+  &.tier-active-epic {
+    border-color: stats.$color-tier-epic;
+    background: rgba(stats.$color-tier-epic, 0.08);
+    color: stats.$color-tier-epic;
+  }
+
+  &.tier-active-legendary {
+    border-color: stats.$color-tier-legendary;
+    background: rgba(stats.$color-tier-legendary, 0.08);
+    color: stats.$color-tier-legendary;
+  }
 }
 
 .achievement-grid {

@@ -201,35 +201,40 @@ ${options.userInput}`
    * @param skill 当前选中的技能上下文（用于按技能标准审核）
    */
   public async reviewContent(userRequest: string, generatedContent: string, skill?: SkillItem): Promise<ReviewResult> {
-    let reviewPrompt = `你是文档质量审核专家。请审核以下AI生成的文档并输出JSON。
+    const skillRubric = skill ? this.buildSkillRubric(skill) : "";
 
-## 用户需求
-${userRequest.slice(0, 500)}
+    const reviewPrompt = [
+      "你是专业的文档质量审核专家。请严格按以下维度审核AI生成的Markdown文档，并以JSON格式输出。",
 
-## 生成内容
-${generatedContent.slice(0, 3000)}
-`
+      "## 用户需求",
+      userRequest.slice(0, 500),
 
-    // 如果有选中的技能，将其作为审核标准注入
-    if (skill) {
-      reviewPrompt += `
-## 技能要求（审核参考标准）
-技能名称: ${skill.name}
-技能描述: ${skill.description}
-技能内容:
-${skill.content.slice(0, 1000)}
+      "## 生成内容",
+      generatedContent.slice(0, 3000),
 
-请以上述技能要求作为审核的核心标准，检查生成内容是否符合该技能规范的要求。
-`
-    }
+      ...(skillRubric ? [skillRubric] : []),
 
-    reviewPrompt += `
-## 输出格式（必须严格JSON，禁止任何额外文字）
-{"rating":"优秀|良好|需改进","summary":"总体评价","issues":[{"description":"问题","severity":"高|中|低"}],"suggestions":["建议1"]}
+      "## 评分维度（逐项打分 1-10）",
+      "1. 内容准确性（accuracy）— 事实正确性、与用户需求一致",
+      "2. 结构完整性（structure）— 标题层级、章节划分、逻辑流畅",
+      "3. 语言质量（quality）— 清晰度、简洁度、语气一致",
+      "4. 格式规范（format）— Markdown语法正确、无原始HTML、标准格式",
+      "5. 覆盖完整性（coverage）— 所有必要方面已涵盖",
 
-审核维度：内容准确性、结构完整性、语言质量、格式规范、覆盖完整性。
-${skill ? '额外维度：技能规范遵守程度。' : ''}
-无问题时 issues 为空数组 rating 为优秀。`
+      "## 输出格式（严格JSON，禁止任何额外文字）",
+      `{`,
+      `  "rating":"优秀|良好|需改进",`,
+      `  "summary":"总体评价（1-2句话）",`,
+      `  "issues":[{"description":"具体问题描述","severity":"高|中|低"}],`,
+      `  "suggestions":["可操作改进建议"],`,
+      `  "detailedScore":{"accuracy":8,"structure":7,"quality":9,"format":8,"coverage":7}`,
+      `}`,
+
+      "规则：",
+      "- 无问题时 \"issues\" 数组必须为空，\"rating\" 为\"优秀\"",
+      "- 对每个问题明确标出严重程度",
+      "- 只输出合法JSON，禁止markdown包裹或解释文字\n",
+    ].join("\n");
 
     const apiConfig = this.getApiConfig()
     // 审核使用 deepseek-v4-pro 模型（如果 provider 是 deepseek）
@@ -256,6 +261,7 @@ ${skill ? '额外维度：技能规范遵守程度。' : ''}
           suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions.filter((s: any) => typeof s === "string") : [],
           reviewModel: apiConfig.model,
           reviewedAt: Date.now(),
+          detailedScore: parsed.detailedScore,
         }
       }
 
@@ -279,6 +285,49 @@ ${skill ? '额外维度：技能规范遵守程度。' : ''}
         reviewedAt: Date.now(),
       }
     }
+  }
+
+  /**
+   * 将技能内容解析为结构化评分标准（Rubric）
+   * 提取标题作为维度分类，提取列表项作为具体审核标准
+   */
+  private buildSkillRubric(skill: SkillItem): string {
+    const sections: string[] = [
+      "## 技能审核标准（Rubric）",
+      `技能名称: ${skill.name}`,
+      `技能描述: ${skill.description}`,
+      "",
+      "### 逐项审核标准",
+    ]
+
+    const lines = skill.content.split("\n")
+    let hasCriteria = false
+
+    for (const line of lines) {
+      const trimmed = line.trim()
+      // 标题 → 维度分类
+      if (/^#{2,3}\s/.test(trimmed)) {
+        sections.push(`\n【${trimmed.replace(/^#+\s*/, "")}】`)
+        hasCriteria = true
+      }
+      // 列表项 → 具体审核标准
+      else if (/^[-*\d.]/.test(trimmed) && trimmed.length > 10) {
+        sections.push(`- ${trimmed.replace(/^[-*\d.]+\s*/, "")}`)
+        hasCriteria = true
+      }
+    }
+
+    if (!hasCriteria) {
+      sections.push("- 遵循技能核心方法论和输出格式要求")
+    }
+
+    sections.push(
+      "",
+      "评估要求：对以上每条标准，检查生成内容是否满足。",
+      "任何未满足的标准必须列为 issue。",
+    )
+
+    return sections.join("\n")
   }
 
   /**

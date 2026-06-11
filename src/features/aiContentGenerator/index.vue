@@ -57,6 +57,8 @@
           @clear="clearContent"
           @toggle-reasoning="showReasoning = !showReasoning"
           @auto-fix="handleAutoFix"
+          @re-review="handleReReview"
+          @fix-issue="handleFixIssue"
         />
       </div>
 
@@ -167,6 +169,9 @@ const enableReview = ref(false);
 const isReviewing = ref(false);
 const reviewResult = ref<ReviewResult | null>(null);
 const isAutoFixing = ref(false);
+const autoFixCount = ref(0);
+const MAX_AUTO_FIX_ITERATIONS = 2;
+const fixHistory = ref<FixEntry[]>([]);
 
 // 模式切换
 const activeMode = ref<"generator" | "automation">("generator");
@@ -193,8 +198,15 @@ interface EditHistory {
   isBlock?: boolean;
   insertedBlockIds?: string[]; // 块模式下通过 insertBlock 追加的块ID，撤回时需要删除
 }
-const MAX_EDIT_HISTORY = 20; // 最大历史记录数
+const MAX_EDIT_HISTORY = 20;
 const editHistoryStack = ref<EditHistory[]>([]);
+
+interface FixEntry {
+  timestamp: number;
+  issuesAddressed: string[];
+  ratingBefore: string;
+  ratingAfter: string;
+}
 
 // 对话设置
 const systemPrompt = ref(
@@ -277,6 +289,7 @@ const startGeneration = () => {
   showSearchResults.value = false;
   reviewResult.value = null;
   isReviewing.value = false;
+  autoFixCount.value = 0;
 };
 
 /**
@@ -427,11 +440,13 @@ const buildGenerateOptions = (userInput: string, systemPrompt: string, searchQue
  * @param context 错误上下文标识（如 "AI编辑"、"自定义编辑"）
  * @param buildOptions 构建 GenerateOptions 的回调
  * @param onSuccess 生成成功后的可选回调
+ * @param skipReview 是否跳过审核（用于 auto-fix 避免循环）
  */
 const executeGeneration = async (
   context: string,
   buildOptions: () => GenerateOptions,
   onSuccess?: () => void,
+  skipReview = false,
 ) => {
   showSettings.value = false;
   startGeneration();
@@ -444,7 +459,9 @@ const executeGeneration = async (
   } finally {
     resetAllGenerationStates();
     recordGenerationElapsed();
-    performReview();
+    if (!skipReview) {
+      performReview();
+    }
   }
 };
 
@@ -558,6 +575,16 @@ const performReview = async () => {
 const handleAutoFix = async () => {
   if (!reviewResult.value || !generatedContent.value) return;
 
+  // 防止无限循环
+  autoFixCount.value++;
+  if (autoFixCount.value > MAX_AUTO_FIX_ITERATIONS) {
+    showMessage(`已达到自动修复次数上限（${MAX_AUTO_FIX_ITERATIONS}次）`, 3000, "info");
+    isAutoFixing.value = false;
+    autoFixCount.value = 0;
+    return;
+  }
+
+  const ratingBefore = reviewResult.value.rating;
   isAutoFixing.value = true;
   const currentContent = generatedContent.value;
 
@@ -579,7 +606,69 @@ const handleAutoFix = async () => {
     ),
   () => {
     isAutoFixing.value = false;
-  });
+    // 记录修复历史
+    fixHistory.value.push({
+      timestamp: Date.now(),
+      issuesAddressed: reviewResult.value?.issues.map(i => i.description) || [],
+      ratingBefore,
+      ratingAfter: reviewResult.value?.rating || ratingBefore,
+    });
+  },
+  true); // skipReview 避免循环
+};
+
+/**
+ * 手动重新审核当前生成内容
+ */
+const handleReReview = () => {
+  reviewResult.value = null;
+  isReviewing.value = false;
+  performReview();
+};
+
+/**
+ * 定向修复单个问题
+ * @param issueIndex 问题在 reviewResult.issues 中的索引
+ */
+const handleFixIssue = async (issueIndex: number) => {
+  if (!reviewResult.value || !generatedContent.value) return;
+  const issue = reviewResult.value.issues[issueIndex];
+  if (!issue) return;
+
+  const suggestion = reviewResult.value.suggestions[issueIndex] || '';
+  const ratingBefore = reviewResult.value.rating;
+  isAutoFixing.value = true;
+  const currentContent = generatedContent.value;
+
+  const fixInstruction = `请修复以下文档中的第 ${issueIndex + 1} 个问题。
+仅修改相关内容，保持文档其他部分不变。
+
+问题描述：${issue.description}
+严重程度：${issue.severity}
+${suggestion ? `改进建议：${suggestion}` : ''}
+
+直接输出修复后的完整文档。`;
+
+  const skillSystemPrompt = currentSkill.value
+    ? `${currentSkill.value.content}\n\n你是一个专业的文档编辑助手。请根据描述的问题定向修改，仅修正相关问题部分，保持其他内容不变。直接输出修改后的完整文档。`
+    : "你是一个专业的文档编辑助手。请根据描述的问题定向修改，仅修正相关问题部分，保持其他内容不变。直接输出修改后的完整文档。";
+
+  await executeGeneration("定向修复", () =>
+    buildGenerateOptions(
+      `${fixInstruction}\n\n当前文档：\n${currentContent}`,
+      skillSystemPrompt,
+    ),
+    () => {
+      isAutoFixing.value = false;
+      fixHistory.value.push({
+        timestamp: Date.now(),
+        issuesAddressed: [issue.description],
+        ratingBefore,
+        ratingAfter: reviewResult.value?.rating || ratingBefore,
+      });
+    },
+    true,
+  );
 };
 
 /**

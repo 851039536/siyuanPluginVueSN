@@ -55,6 +55,8 @@
           :avg-words-per-doc="stats.avgWordsPerDoc"
           :created-change="createdChange"
           :modified-change="modifiedChange"
+          :notes-change="notesChange"
+          :words-change="wordsChange"
           :i18n="i18n"
         />
 
@@ -433,6 +435,8 @@ const {
   historicalData,
   createdChange,
   modifiedChange,
+  notesChange,
+  wordsChange,
   loadHistoricalData,
 } = useHistoryData(props.plugin, stats)
 

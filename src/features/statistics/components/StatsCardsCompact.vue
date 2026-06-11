@@ -22,7 +22,7 @@
             v-if="item.change !== null"
             class="core-change"
             :class="item.change > 0 ? 'up' : 'down'"
-          >{{ formatChange(item.change) }}</span>
+          >{{ item.isPercent ? formatPercent(item.change) : formatDelta(item.change) }}</span>
         </div>
       </div>
     </div>
@@ -61,6 +61,8 @@ interface Props {
   avgWordsPerDoc?: number
   createdChange?: number | null
   modifiedChange?: number | null
+  notesChange?: number | null
+  wordsChange?: number | null
   i18n?: Record<string, any>
 }
 
@@ -77,6 +79,8 @@ const props = withDefaults(defineProps<Props>(), {
   avgWordsPerDoc: 0,
   createdChange: null,
   modifiedChange: null,
+  notesChange: null,
+  wordsChange: null,
   i18n: () => ({
     overview: "总览",
     totalNotes: "笔记总数",
@@ -107,19 +111,22 @@ const coreItems = computed(() => [
     value: formatNumber(props.totalNotes),
     label: props.i18n.totalNotes,
     unitText: formatChineseUnit(props.totalNotes),
-    change: null as number | null,
+    change: props.notesChange,
+    isPercent: false,
   },
   {
     value: formatNumber(props.totalWords),
     label: props.i18n.totalWords,
     unitText: formatChineseUnit(props.totalWords),
-    change: null,
+    change: props.wordsChange,
+    isPercent: false,
   },
   {
     value: String(props.todayCreated),
     label: props.i18n.todayCreated,
     unitText: "",
     change: props.createdChange,
+    isPercent: true,
   },
 ])
 
@@ -154,11 +161,16 @@ const secondaryItems = computed(() => [
   },
 ])
 
-function formatChange(change: number | null): string {
+function formatPercent(change: number | null): string {
   if (change === null) return ""
   const prefix = change > 0 ? "↑" : "↓"
-  const absVal = Math.abs(change)
-  return `${prefix}${absVal.toFixed(0)}%`
+  return `${prefix}${Math.abs(change).toFixed(0)}%`
+}
+
+function formatDelta(change: number | null): string {
+  if (change === null) return ""
+  const prefix = change > 0 ? "↑" : "↓"
+  return `${prefix}${Math.abs(change)}`
 }
 </script>
 

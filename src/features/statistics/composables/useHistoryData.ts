@@ -35,6 +35,8 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
   historicalData: Ref<any[]>
   createdChange: ComputedRef<number | null>
   modifiedChange: ComputedRef<number | null>
+  notesChange: ComputedRef<number | null>
+  wordsChange: ComputedRef<number | null>
   loadHistoricalData: (days?: number) => Promise<void>
 } {
   const storage = new StatisticsStorage(plugin)
@@ -44,6 +46,10 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
   const yesterdayCounts = ref<{ created: number, modified: number } | null>(null)
   let yesterdayLoaded = false
 
+  // 昨日快照（totalNotes / totalWords）：从本地历史 JSON 中读取
+  const yesterdaySnapshot = ref<{ totalNotes: number, totalWords: number } | null>(null)
+  let yesterdaySnapshotLoaded = false
+
   async function ensureYesterdayLoaded(): Promise<void> {
     if (yesterdayLoaded) return
     const yesterday = new Date()
@@ -52,8 +58,29 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
     yesterdayLoaded = true
   }
 
+  async function ensureYesterdaySnapshotLoaded(): Promise<void> {
+    if (yesterdaySnapshotLoaded) return
+    try {
+      const historyData = await storage.loadHistory()
+      const yesterday = new Date()
+      yesterday.setDate(yesterday.getDate() - 1)
+      const dateKey = formatDate(yesterday)
+      const entry = historyData[dateKey]
+      if (entry) {
+        yesterdaySnapshot.value = {
+          totalNotes: entry.totalNotes ?? 0,
+          totalWords: entry.totalWords ?? 0,
+        }
+      }
+    } catch (error) {
+      console.error("加载昨日快照失败:", error)
+    }
+    yesterdaySnapshotLoaded = true
+  }
+
   // 触发加载（不阻塞 computed 返回）
   ensureYesterdayLoaded()
+  ensureYesterdaySnapshotLoaded()
 
   const createdChange = computed(() => {
     const yesterday = yesterdayCounts.value?.created ?? null
@@ -69,6 +96,22 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
     if (today === undefined) return null
     if (yesterday === null || yesterday === 0) return today > 0 ? 100 : null
     return ((today - yesterday) / yesterday) * 100
+  })
+
+  const notesChange = computed(() => {
+    const yesterdayVal = yesterdaySnapshot.value?.totalNotes ?? null
+    const today = stats.value?.totalNotes
+    if (today === undefined) return null
+    if (yesterdayVal === null) return today > 0 ? today : null
+    return today - yesterdayVal
+  })
+
+  const wordsChange = computed(() => {
+    const yesterdayVal = yesterdaySnapshot.value?.totalWords ?? null
+    const today = stats.value?.totalWords
+    if (today === undefined) return null
+    if (yesterdayVal === null) return today > 0 ? today : null
+    return today - yesterdayVal
   })
 
   /**
@@ -101,7 +144,9 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
   async function loadHistoricalData(days?: number): Promise<void> {
     // 每次刷新时重置昨日缓存，获取最新数据
     yesterdayLoaded = false
+    yesterdaySnapshotLoaded = false
     await ensureYesterdayLoaded()
+    await ensureYesterdaySnapshotLoaded()
 
     // 先写入当天快照，确保趋势/热力图数据是最新的
     await saveTodaySnapshot()
@@ -259,6 +304,8 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
     historicalData,
     createdChange,
     modifiedChange,
+    notesChange,
+    wordsChange,
     loadHistoricalData,
   }
 }

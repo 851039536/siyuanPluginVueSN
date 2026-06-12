@@ -180,7 +180,7 @@ interface Props {
   currentDisplayPath: string
   loadingFolders: boolean
   currentFolderCache: CacheStatus
-  favoriteFolders: string[]
+  favoriteSet: Set<string>
   i18n: DiskBrowserI18n
   formatDate: (date: string) => string
 }
@@ -197,7 +197,7 @@ defineEmits<{
 }>()
 
 function isFavorite(path: string): boolean {
-  return props.favoriteFolders.includes(path)
+  return props.favoriteSet.has(path)
 }
 </script>
 

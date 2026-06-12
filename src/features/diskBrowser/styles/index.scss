@@ -44,7 +44,7 @@
   color: $color;
 }
 
-@mixin card-hover-effect($translate-y: -2px) {
+@mixin card-hover-effect {
   &:hover {
     transform: none;
   }

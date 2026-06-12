@@ -3,7 +3,6 @@ import { createVueDockApp } from "@/utils/vueAppHelper"
 import DiskBrowserPanel from "./index.vue"
 import { DiskBrowserStorage } from "./types/storage"
 
-export { useDiskBrowser } from "./composables/useDiskBrowser"
 export type {
   CacheData,
   CacheStatus,

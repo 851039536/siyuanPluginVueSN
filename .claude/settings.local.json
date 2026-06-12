@@ -127,7 +127,9 @@
       "Bash(xxd)",
       "Skill(simplify)",
       "Skill(simplify:*)",
-      "Bash(rm \"e:/5.vue/siyuan-plugin-vite-vue-sn/src/features/aiContentGenerator/components/AutomationView.vue\")"
+      "Bash(rm \"e:/5.vue/siyuan-plugin-vite-vue-sn/src/features/aiContentGenerator/components/AutomationView.vue\")",
+      "Bash(echo \"hello world\")",
+      "Read(//tmp/**)"
     ],
     "deny": [],
     "ask": [],

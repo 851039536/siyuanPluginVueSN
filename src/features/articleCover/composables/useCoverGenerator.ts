@@ -1,13 +1,15 @@
+/**
+ * 封面生成器 Composable
+ * 根据标题 + 关键字 + 风格，纯代码生成 HTML 封面（无 AI 依赖）
+ */
 import type {
   CoverGenerationConfig,
   CoverGenerationStatus,
   CoverSizePreset,
   CoverStylePreset,
+  StyleColors,
+  StyleDefinition,
 } from "../types"
-/**
- * 封面生成器 Composable
- * 根据标题 + 关键字 + 风格，纯代码生成 HTML 封面（无 AI 依赖）
- */
 import { ref } from "vue"
 
 /** 封面字体族常量（避免每次 buildCoverHtml 重新定义） */
@@ -15,115 +17,20 @@ const COVER_FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "PingFang SC", "Mi
 
 // 尺寸预设
 export const COVER_SIZE_PRESETS: CoverSizePreset[] = [
-  {
-    label: "微信公众号 (900×383)",
-    width: 900,
-    height: 383,
-  },
-  {
-    label: "头条封面 (1280×720)",
-    width: 1280,
-    height: 720,
-  },
-  {
-    label: "小红书 (1080×1440)",
-    width: 1080,
-    height: 1440,
-  },
-  {
-    label: "知乎 (1920×1080)",
-    width: 1920,
-    height: 1080,
-  },
-  {
-    label: "博客横幅 (1200×630)",
-    width: 1200,
-    height: 630,
-  },
-  {
-    label: "正方形 (1080×1080)",
-    width: 1080,
-    height: 1080,
-  },
+  { label: "微信公众号 (900×383)", width: 900, height: 383 },
+  { label: "头条封面 (1280×720)", width: 1280, height: 720 },
+  { label: "小红书 (1080×1440)", width: 1080, height: 1440 },
+  { label: "知乎 (1920×1080)", width: 1920, height: 1080 },
+  { label: "博客横幅 (1200×630)", width: 1200, height: 630 },
+  { label: "正方形 (1080×1080)", width: 1080, height: 1080 },
 ]
 
-// 风格预设
-export const COVER_STYLE_PRESETS: CoverStylePreset[] = [
-  {
-    id: "minimal",
-    label: "极简",
-    description: "白底大字、黑色标题、简洁装饰线",
-  },
-  {
-    id: "tech",
-    label: "科技",
-    description: "深色背景、霓虹线条、青色强调",
-  },
-  {
-    id: "magazine",
-    label: "杂志",
-    description: "大标题排版、分栏布局、衬线字体",
-  },
-  {
-    id: "drawio",
-    label: "导图",
-    description: "白底蓝边、网格辅助线、架构图风格",
-  },
-  {
-    id: "chinese",
-    label: "国风",
-    description: "暖色宣纸底、水墨深色标题、朱红点缀",
-  },
-]
+// ============================================================
+// 私有：标签样式构建器（替代 getBaseTagStyles + getColoredTagStyles）
+// ============================================================
 
-interface StyleColors {
-  bg: string
-  titleColor: string
-  subtitleColor: string
-  accent: string
-  accentAlt: string
-}
-
-const STYLE_COLORS_MAP: Record<string, StyleColors> = {
-  minimal: {
-    bg: "#ffffff",
-    titleColor: "#1a1a1a",
-    subtitleColor: "#666666",
-    accent: "#e74c3c",
-    accentAlt: "#c0392b",
-  },
-  tech: {
-    bg: "#0a0a0a",
-    titleColor: "#ffffff",
-    subtitleColor: "#888888",
-    accent: "#00ffff",
-    accentAlt: "#00cc99",
-  },
-  magazine: {
-    bg: "#faf8f5",
-    titleColor: "#1a1a1a",
-    subtitleColor: "#555555",
-    accent: "#c0392b",
-    accentAlt: "#e74c3c",
-  },
-  chinese: {
-    bg: "#f5e6d3",
-    titleColor: "#2c1810",
-    subtitleColor: "#5a3e2b",
-    accent: "#c0392b",
-    accentAlt: "#e74c3c",
-  },
-  drawio: {
-    bg: "#f5f6f8",
-    titleColor: "#1a1a2e",
-    subtitleColor: "#546e7a",
-    accent: "#1565c0",
-    accentAlt: "#0d47a1",
-  },
-}
-
-/** 生成 .tag 基础样式（5 风格共享的 tag 颜色循环，不含 category-badge） */
-function getBaseTagStyles(mode: string): string {
+/** 生成 .tag 基础样式（5 风格共享的 tag 颜色循环） */
+function _tagCommon(mode: string): string {
   if (mode === "minimal" || mode === "chinese") {
     return [
       `.tag { background:transparent !important; border-radius:4px !important; letter-spacing:1px; }`,
@@ -152,7 +59,7 @@ function getBaseTagStyles(mode: string): string {
 }
 
 /** 生成需要颜色上下文的 .tag 差异样式（drawio/magazine 需 c.titleColor） */
-function getColoredTagStyles(mode: string, c: StyleColors): string {
+function _tagColored(mode: string, c: StyleColors): string {
   if (mode === "drawio") {
     return [
       `.tag:nth-child(5n+1) { color:${c.titleColor} !important; background:#e74c3c08 !important; border:1px solid #e74c3c25; border-left:3px solid #e74c3c; }`,
@@ -174,18 +81,19 @@ function getColoredTagStyles(mode: string, c: StyleColors): string {
   return ""
 }
 
-/** 装饰层 HTML 片段（每个风格在 content 区域内的额外装饰元素） */
-const STYLE_DECOR_HTML: Record<string, string> = {
-  minimal: `<div class="decor-diamond"></div><div class="decor-circle"></div><div class="decor-circle-sm"></div><div class="decor-line-l"></div><div class="decor-line-r"></div><div class="decor-dots"></div>`,
-  tech: `<div class="decor-scan"></div><div class="decor-scan s2"></div><div class="decor-corner tl"></div><div class="decor-corner tr"></div><div class="decor-corner bl"></div><div class="decor-corner br"></div><div class="decor-node n1"></div><div class="decor-node n2"></div><div class="decor-node n3"></div><div class="decor-node n4"></div><div class="decor-node n5"></div><div class="decor-data-line"></div>`,
-  magazine: `<div class="decor-topline"></div><div class="decor-block"></div><div class="decor-block b2"></div><div class="decor-ring"></div><div class="decor-ring r2"></div><div class="decor-bar"></div><div class="decor-pageno"></div><div class="decor-dot-row"></div>`,
-  drawio: `<div class="decor-grid"></div><div class="decor-corner tl"></div><div class="decor-corner tr"></div><div class="decor-corner bl"></div><div class="decor-corner br"></div><div class="decor-connector c1"></div><div class="decor-connector c2"></div><div class="decor-node-a"></div><div class="decor-node-b"></div><div class="decor-crosshair"></div><div class="decor-label-box"></div>`,
-  chinese: `<div class="decor-seal"></div><div class="decor-seal s2"></div><div class="decor-ink"></div><div class="decor-ink i2"></div><div class="decor-line-v"></div><div class="decor-line-v v2"></div><div class="decor-mountain"></div><div class="decor-cloud"></div><div class="decor-cloud c2"></div><div class="decor-wave"></div>`,
-}
+// ============================================================
+// 封面风格注册表（单一数据源：colors + decorHtml + buildDecorCss 三位一体）
+// ============================================================
 
-/** 每个风格的装饰 CSS（纯代码，无 AI） */
-const STYLE_DECOR_CSS: Record<string, (c: StyleColors) => string> = {
-  minimal: (c) => `
+export const COVER_STYLE_REGISTRY: StyleDefinition[] = [
+  {
+    id: "minimal",
+    label: "极简",
+    description: "白底大字、黑色标题、简洁装饰线",
+    colors: { bg: "#ffffff", titleColor: "#1a1a1a", subtitleColor: "#666666", accent: "#e74c3c", accentAlt: "#c0392b" },
+    decorHtml: `<div class="decor-diamond"></div><div class="decor-circle"></div><div class="decor-circle-sm"></div><div class="decor-line-l"></div><div class="decor-line-r"></div><div class="decor-dots"></div>`,
+    buildDecorCss(c) {
+      return `
     body { background-image: radial-gradient(circle, ${c.accent}04 1px, transparent 1px); background-size:32px 32px; background-position: -16px -16px; }
     body::before { content:""; position:absolute; top:0; left:0; right:0; height:5px; background:linear-gradient(90deg, ${c.accent}, ${c.accentAlt}, ${c.accent}); }
     body::after { content:""; position:absolute; bottom:52px; left:50%; transform:translateX(-50%); width:48px; height:48px; border:2px solid ${c.accent}30; border-radius:50%; }
@@ -199,12 +107,20 @@ const STYLE_DECOR_CSS: Record<string, (c: StyleColors) => string> = {
     .decor-line-l { position:absolute; bottom:16%; left:5%; width:70px; height:1px; background:${c.accent}; opacity:0.25; }
     .decor-line-r { position:absolute; top:16%; right:5%; width:50px; height:1px; background:${c.accent}; opacity:0.2; }
     .decor-dots { position:absolute; bottom:12%; right:12%; width:60px; height:60px; background-image:radial-gradient(circle, ${c.accent}18 1.5px, transparent 1.5px); background-size:12px 12px; }
-    ${getBaseTagStyles("minimal")}
+    ${_tagCommon("minimal")}
     .tag:nth-child(5n+5) { border-style:dashed; }
     .category-badge { background:transparent !important; color:${c.accent} !important; border:1.5px solid ${c.accent}60; border-radius:4px !important; font-weight:500; }
-    .title-sep { border-top-style:solid; border-top-color:${c.accent}18; width:60px; }`,
-
-  tech: (c) => `
+    .title-sep { border-top-style:solid; border-top-color:${c.accent}18; width:60px; }`
+    },
+  },
+  {
+    id: "tech",
+    label: "科技",
+    description: "深色背景、霓虹线条、青色强调",
+    colors: { bg: "#0a0a0a", titleColor: "#ffffff", subtitleColor: "#888888", accent: "#00ffff", accentAlt: "#00cc99" },
+    decorHtml: `<div class="decor-scan"></div><div class="decor-scan s2"></div><div class="decor-corner tl"></div><div class="decor-corner tr"></div><div class="decor-corner bl"></div><div class="decor-corner br"></div><div class="decor-node n1"></div><div class="decor-node n2"></div><div class="decor-node n3"></div><div class="decor-node n4"></div><div class="decor-node n5"></div><div class="decor-data-line"></div>`,
+    buildDecorCss(c) {
+      return `
     body { background-image: linear-gradient(rgba(0,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,255,0.03) 1px, transparent 1px); background-size:40px 40px; }
     body::before { content:""; position:absolute; top:28px; left:28px; right:28px; bottom:28px; border:1px solid rgba(0,255,255,0.1); }
     body::after { content:""; position:absolute; top:0; right:0; width:350px; height:350px; background:radial-gradient(circle, ${c.accent}12 0%, transparent 70%); }
@@ -228,11 +144,19 @@ const STYLE_DECOR_CSS: Record<string, (c: StyleColors) => string> = {
     .decor-data-line { position:absolute; top:15%; bottom:15%; right:8%; width:1px; background:linear-gradient(to bottom, transparent, ${c.accent}12 20%, ${c.accent}12 80%, transparent); }
     .decor-data-line::before { content:""; position:absolute; top:20%; left:-2px; width:5px; height:5px; border-radius:50%; background:${c.accent}; box-shadow:0 0 6px ${c.accent}40; }
     .decor-data-line::after { content:""; position:absolute; bottom:25%; left:-2px; width:5px; height:5px; border-radius:50%; background:${c.accentAlt}; box-shadow:0 0 6px ${c.accentAlt}40; }
-    ${getBaseTagStyles("tech")}
+    ${_tagCommon("tech")}
     .category-badge { background:${c.accentAlt}18 !important; color:${c.accentAlt} !important; border:1px solid ${c.accentAlt}50; border-radius:3px !important; box-shadow:0 0 10px ${c.accentAlt}25; font-family:"SF Mono","Fira Code","Consolas",monospace; text-transform:uppercase; letter-spacing:2px; }
-    .title-sep { border-top-color:${c.accent}35; width:100px; box-shadow:0 0 6px ${c.accent}20; }`,
-
-  magazine: (c) => `
+    .title-sep { border-top-color:${c.accent}35; width:100px; box-shadow:0 0 6px ${c.accent}20; }`
+    },
+  },
+  {
+    id: "magazine",
+    label: "杂志",
+    description: "大标题排版、分栏布局、衬线字体",
+    colors: { bg: "#faf8f5", titleColor: "#1a1a1a", subtitleColor: "#555555", accent: "#c0392b", accentAlt: "#e74c3c" },
+    decorHtml: `<div class="decor-topline"></div><div class="decor-block"></div><div class="decor-block b2"></div><div class="decor-ring"></div><div class="decor-ring r2"></div><div class="decor-bar"></div><div class="decor-pageno"></div><div class="decor-dot-row"></div>`,
+    buildDecorCss(c) {
+      return `
     body::before { content:""; position:absolute; top:0; left:0; width:42%; height:100%; background:linear-gradient(180deg, ${c.accentAlt}05 0%, ${c.accent}03 100%); }
     body::after { content:""; position:absolute; bottom:0; left:42%; right:0; height:6px; background:${c.accent}; }
     .content::before { content:""; position:absolute; top:8%; right:8%; width:120px; height:120px; border:3px solid ${c.accent}15; border-radius:50%; }
@@ -248,12 +172,20 @@ const STYLE_DECOR_CSS: Record<string, (c: StyleColors) => string> = {
     .content { padding-left:46% !important; padding-right:12% !important; }
     h1 { font-family:"Georgia","Noto Serif SC",serif !important; letter-spacing:-0.5px; position:relative; }
     h1::before { content:""; position:absolute; top:-16px; left:0; width:30px; height:3px; background:${c.accent}; }
-    ${getBaseTagStyles("magazine")}
-    ${getColoredTagStyles("magazine", c)}
+    ${_tagCommon("magazine")}
+    ${_tagColored("magazine", c)}
     .category-badge { background:transparent !important; color:${c.accentAlt} !important; border:1px solid ${c.accentAlt}30; border-radius:2px !important; font-family:"Georgia","Noto Serif SC",serif; font-style:italic; letter-spacing:1px; }
-    .title-sep { border-top-style:double; border-top-color:${c.accent}22; width:70px; }`,
-
-  drawio: (c) => `
+    .title-sep { border-top-style:double; border-top-color:${c.accent}22; width:70px; }`
+    },
+  },
+  {
+    id: "drawio",
+    label: "导图",
+    description: "白底蓝边、网格辅助线、架构图风格",
+    colors: { bg: "#f5f6f8", titleColor: "#1a1a2e", subtitleColor: "#546e7a", accent: "#1565c0", accentAlt: "#0d47a1" },
+    decorHtml: `<div class="decor-grid"></div><div class="decor-corner tl"></div><div class="decor-corner tr"></div><div class="decor-corner bl"></div><div class="decor-corner br"></div><div class="decor-connector c1"></div><div class="decor-connector c2"></div><div class="decor-node-a"></div><div class="decor-node-b"></div><div class="decor-crosshair"></div><div class="decor-label-box"></div>`,
+    buildDecorCss(c) {
+      return `
     body { background-image: radial-gradient(circle, ${c.accent}12 1px, transparent 1px); background-size:20px 20px; }
     body::before { content:""; position:absolute; top:10px; left:10px; right:10px; bottom:10px; border:2px solid ${c.accent}18; border-radius:2px; }
     body::after { content:""; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg, ${c.accent}, ${c.accentAlt}80, ${c.accent}); }
@@ -275,12 +207,20 @@ const STYLE_DECOR_CSS: Record<string, (c: StyleColors) => string> = {
     .decor-crosshair::after { content:""; position:absolute; left:50%; top:0; bottom:0; width:1px; background:${c.accent}18; }
     .decor-label-box { position:absolute; top:12%; left:8%; padding:4px 10px; border:1px solid ${c.accent}20; border-radius:2px; }
     h1 { border-bottom:2px solid ${c.accent}22; padding-bottom:14px; }
-    ${getBaseTagStyles("drawio")}
-    ${getColoredTagStyles("drawio", c)}
+    ${_tagCommon("drawio")}
+    ${_tagColored("drawio", c)}
     .category-badge { background:${c.accent} !important; color:#fff !important; border-radius:3px !important; font-family:"SF Mono","Consolas",monospace; letter-spacing:1px; }
-    .title-sep { border-top-style:solid; border-top-color:${c.accent}30; width:90px; height:1px; border-top-width:1px; }`,
-
-  chinese: (c) => `
+    .title-sep { border-top-style:solid; border-top-color:${c.accent}30; width:90px; height:1px; border-top-width:1px; }`
+    },
+  },
+  {
+    id: "chinese",
+    label: "国风",
+    description: "暖色宣纸底、水墨深色标题、朱红点缀",
+    colors: { bg: "#f5e6d3", titleColor: "#2c1810", subtitleColor: "#5a3e2b", accent: "#c0392b", accentAlt: "#e74c3c" },
+    decorHtml: `<div class="decor-seal"></div><div class="decor-seal s2"></div><div class="decor-ink"></div><div class="decor-ink i2"></div><div class="decor-line-v"></div><div class="decor-line-v v2"></div><div class="decor-mountain"></div><div class="decor-cloud"></div><div class="decor-cloud c2"></div><div class="decor-wave"></div>`,
+    buildDecorCss(c) {
+      return `
     body { background-color:#f5e6d3; background-image: linear-gradient(${c.accent}05 1px, transparent 1px), linear-gradient(90deg, ${c.accent}05 1px, transparent 1px); background-size:60px 60px; }
     body::before { content:""; position:absolute; top:14px; left:14px; width:44px; height:44px; border-top:2px solid ${c.accent}22; border-left:2px solid ${c.accent}22; }
     body::after { content:""; position:absolute; bottom:14px; right:14px; width:44px; height:44px; border-bottom:2px solid ${c.accent}22; border-right:2px solid ${c.accent}22; }
@@ -302,27 +242,34 @@ const STYLE_DECOR_CSS: Record<string, (c: StyleColors) => string> = {
     .decor-cloud.c2 { top:8%; left:auto; right:20%; width:60px; height:16px; opacity:0.6; }
     .decor-cloud.c2::before { top:-7px; left:12px; width:20px; height:10px; }
     .decor-wave { position:absolute; bottom:20%; left:0; right:0; height:2px; background:repeating-linear-gradient(90deg, ${c.accent}10 0px, ${c.accent}10 8px, transparent 8px, transparent 16px); }
-    ${getBaseTagStyles("chinese")}
+    ${_tagCommon("chinese")}
     .tag:nth-child(5n+4) { border-style:dashed; }
     .tag:nth-child(5n+5) { font-weight:bold; }
     .category-badge { background:${c.accentAlt}15 !important; color:${c.accentAlt} !important; border:1px solid ${c.accentAlt}40; border-radius:3px !important; font-family:"KaiTi","STKaiti","楷体",serif; letter-spacing:3px; }
-    .title-sep { border-top-color:${c.accentAlt}25; width:100px; height:1px; border-top-width:1px; }`,
-}
+    .title-sep { border-top-color:${c.accentAlt}25; width:100px; height:1px; border-top-width:1px; }`
+    },
+  },
+]
 
-function getStyleColors(styleId: string): StyleColors {
-  return STYLE_COLORS_MAP[styleId] ?? STYLE_COLORS_MAP.minimal
-}
+/** 风格预设列表（从注册表派生 label + description） */
+export const COVER_STYLE_PRESETS: CoverStylePreset[] = COVER_STYLE_REGISTRY.map(s => ({
+  id: s.id,
+  label: s.label,
+  description: s.description,
+}))
+
+// ============================================================
+// 封面 HTML 构建
+// ============================================================
 
 /** 构建完整封面 HTML（纯代码，无 AI） */
 function buildCoverHtml(config: CoverGenerationConfig): string {
-  const colors = getStyleColors(config.styleId)
-  const c = colors
+  const style = COVER_STYLE_REGISTRY.find(s => s.id === config.styleId) ?? COVER_STYLE_REGISTRY[0]
+  const c = style.colors
   const titleSize = Math.max(48, Math.floor(config.width / 15))
   const subtitleSize = Math.max(20, Math.floor(config.width / 40))
   const padding = Math.max(40, Math.floor(config.width / 20))
   const titleText = config.title?.trim() || "无标题"
-  const decorCss = STYLE_DECOR_CSS[config.styleId]?.(c) ?? STYLE_DECOR_CSS.minimal(c)
-  const decorHtml = STYLE_DECOR_HTML[config.styleId] ?? ""
 
   // 分类挂饰
   const categoryBadge = config.category?.trim()
@@ -389,11 +336,11 @@ function buildCoverHtml(config: CoverGenerationConfig): string {
   .decor-layer { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
 
   /* === 风格装饰 === */
-  ${decorCss}
+  ${style.buildDecorCss(c)}
 </style>
 </head>
 <body>
-  <div class="decor-layer">${decorHtml}</div>
+  <div class="decor-layer">${style.decorHtml}</div>
   <div class="content">
     <div class="title-row">
       <h1>${titleText}</h1>${categoryBadge}
@@ -404,6 +351,10 @@ function buildCoverHtml(config: CoverGenerationConfig): string {
 </body>
 </html>`
 }
+
+// ============================================================
+// Composable
+// ============================================================
 
 export function useCoverGenerator() {
   const coverHtml = ref("")
@@ -419,7 +370,6 @@ export function useCoverGenerator() {
     styleId: "minimal",
   })
 
-  /** 生成封面（同步，纯代码） */
   function generateCover(config?: Partial<CoverGenerationConfig>): void {
     if (config) {
       Object.assign(currentConfig.value, config)

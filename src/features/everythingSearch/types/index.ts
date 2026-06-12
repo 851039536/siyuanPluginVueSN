@@ -35,6 +35,8 @@ export interface SearchOptions {
   ascending: boolean
   /** 选中的盘符 */
   selectedDrive: string
+  /** 高级搜索模式（显示语法帮助面板） */
+  advancedMode: boolean
 }
 
 /** 搜索结果状态 */

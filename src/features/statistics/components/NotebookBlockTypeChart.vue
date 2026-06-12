@@ -15,10 +15,7 @@
         v-for="item in data"
         :key="item.notebook"
         class="nb-row"
-        :class="{
-          'nb-row-highlight': hoveredNotebook === item.notebook,
-          'nb-row-dim': hoveredNotebook !== null && hoveredNotebook !== item.notebook,
-        }"
+        :class="{ 'nb-row-highlight': hoveredNotebook === item.notebook }"
         @mouseenter="onHover(item.notebook)"
         @mouseleave="onHover(null)"
       >
@@ -128,18 +125,15 @@ function totalCount(item: NotebookBlockTypeStat): number {
     gap: 6px;
     padding: 3px 6px;
     border-radius: 4px;
-    transition: background 0.15s, opacity 0.2s ease;
+    transition: background 0.15s, box-shadow 0.15s;
 
     &:hover {
       background: var(--b3-list-hover);
     }
 
     &.nb-row-highlight {
-      background: var(--b3-list-hover);
-    }
-
-    &.nb-row-dim {
-      opacity: 0.45;
+      background: rgba(var(--b3-theme-primary-rgb), 0.1);
+      box-shadow: inset 3px 0 0 var(--b3-theme-primary);
     }
 
     .nb-label {

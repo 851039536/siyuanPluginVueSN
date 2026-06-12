@@ -23,10 +23,7 @@
           v-for="row in sortedRows"
           :key="row.name"
           class="nb-tr"
-          :class="{
-            'nb-tr-highlight': hoveredNotebook === row.name,
-            'nb-tr-dim': hoveredNotebook !== null && hoveredNotebook !== row.name,
-          }"
+          :class="{ 'nb-tr-highlight': hoveredNotebook === row.name }"
           @mouseenter="onHover(row.name)"
           @mouseleave="onHover(null)"
         >
@@ -196,18 +193,15 @@ const sortedRows = computed(() => {
 }
 
 .nb-tr {
-  transition: background 0.15s, opacity 0.2s ease;
+  transition: background 0.15s, box-shadow 0.15s;
 
   &:hover {
     background: var(--b3-list-hover);
   }
 
   &.nb-tr-highlight {
-    background: var(--b3-list-hover);
-  }
-
-  &.nb-tr-dim {
-    opacity: 0.45;
+    background: rgba(var(--b3-theme-primary-rgb), 0.1);
+    box-shadow: inset 3px 0 0 var(--b3-theme-primary);
   }
 }
 

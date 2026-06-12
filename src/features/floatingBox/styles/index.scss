@@ -12,6 +12,8 @@ $modal-small-max-width: 500px;
 $modal-large-max-width: 1100px;
 $card-border-radius: 8px;
 $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
+$vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
+$vp-radius: 6px;
 
 @mixin modal-overlay {
   position: fixed;
@@ -52,7 +54,7 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
   width: 100%;
   padding: 8px 12px;
   border: 1px solid var(--b3-border-color);
-  border-radius: 6px;
+  border-radius: $vp-radius;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-background);
   font-size: 14px;
@@ -61,9 +63,11 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
   &:focus {
     outline: none;
     border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 3px rgba(var(--b3-theme-primary-rgb, 217, 119, 87), 0.1);
+    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
   }
 }
+
+// ==================== 悬浮工具栏（保持原样） ====================
 
 .floating-box-wrapper {
   position: fixed;
@@ -112,9 +116,6 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
   }
 }
 
-.trigger-icon {
-}
-
 .floating-toolbar {
   position: absolute;
   right: 36px;
@@ -134,7 +135,7 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
   align-items: center;
   gap: 8px;
   padding: 4px 8px;
-  border-radius: 6px;
+  border-radius: $vp-radius;
   cursor: pointer;
   min-width: 80px;
 
@@ -227,7 +228,6 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
   }
 }
 
-
 .toolbar-enter-from,
 .toolbar-leave-to {
   opacity: 0;
@@ -272,33 +272,35 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
   }
 }
 
-.skills-modal-overlay {
+// ==================== Skills Modal (Codex vp-* 体系) ====================
+
+.vp-overlay {
   @include modal-overlay;
 }
 
-.skills-modal {
+.vp-modal {
   @include modal-base;
   width: 90%;
   max-width: $modal-large-max-width;
 
-  &.small {
+  &.vp-modal--small {
     max-width: $modal-small-max-width;
   }
 }
 
-.skills-modal-header {
+.vp-modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
   border-bottom: 1px solid var(--b3-border-color);
 
-  .header-title {
+  .vp-modal-title {
     display: flex;
     align-items: center;
     gap: 10px;
 
-    .header-icon {
+    .vp-modal-icon {
       color: var(--b3-theme-primary);
       flex-shrink: 0;
     }
@@ -312,20 +314,30 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
     }
   }
 
-  .header-actions {
+  .vp-modal-actions {
     display: flex;
     align-items: center;
     gap: 8px;
   }
 }
 
-.skills-modal-body {
+.vp-modal-body {
   padding: 12px 16px;
   overflow-y: auto;
   flex: 1;
 }
 
-.category-filter {
+// Loading 状态
+.vp-loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--b3-theme-on-surface-light);
+  font-size: 14px;
+  font-family: $font-body;
+}
+
+// 分类筛选
+.vp-category-filter {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -333,7 +345,7 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
   padding-bottom: 10px;
   border-bottom: 1px solid var(--b3-border-color);
 
-  .category-chip {
+  .vp-chip {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -346,7 +358,7 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
     font-weight: 500;
     cursor: pointer;
 
-    .chip-dot {
+    .vp-chip-dot {
       width: 8px;
       height: 8px;
       border-radius: 50%;
@@ -363,51 +375,50 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
       color: var(--b3-theme-on-primary);
       border-color: var(--b3-theme-primary);
 
-      .chip-dot {
+      .vp-chip-dot {
         background: var(--b3-theme-on-primary) !important;
       }
     }
   }
 }
 
-.skills-controls {
+// 搜索与操作栏
+.vp-controls {
   display: flex;
   gap: 10px;
   margin-bottom: 12px;
 
-  .search-wrapper {
+  .vp-search {
     flex: 1;
     position: relative;
     display: flex;
     align-items: center;
 
-    .search-icon {
+    .vp-search-icon {
       position: absolute;
       left: 10px;
       color: var(--b3-theme-on-surface-light);
       pointer-events: none;
     }
 
-    .search-input {
-      @include form-input;
+    .vp-input--search {
       padding-left: 36px;
 
       &:focus {
-        outline: none;
-        border-color: $brand-orange;
-        box-shadow: 0 0 0 3px rgba(217, 119, 87, 0.1);
+        box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
       }
     }
   }
 }
 
-.skills-grid {
+// 技能网格
+.vp-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
 }
 
-.skill-card {
+.vp-card {
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
   border-radius: $card-border-radius;
@@ -428,21 +439,21 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
   }
 }
 
-.skill-header {
+.vp-card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 8px;
   gap: 6px;
 
-  .skill-title-wrapper {
+  .vp-card-title {
     display: flex;
     align-items: center;
     gap: 8px;
     flex: 1;
     min-width: 0;
 
-    .skill-icon {
+    .vp-card-icon {
       color: var(--b3-theme-primary);
       flex-shrink: 0;
     }
@@ -459,7 +470,7 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
       font-family: $font-heading;
     }
 
-    .skill-category-tag {
+    .vp-tag {
       padding: 2px 8px;
       border-radius: 4px;
       font-size: 11px;
@@ -468,14 +479,14 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
     }
   }
 
-  .skill-actions {
+  .vp-card-actions {
     display: flex;
     gap: 4px;
     flex-shrink: 0;
   }
 }
 
-.skill-description {
+.vp-card-desc {
   font-size: 12px;
   color: var(--b3-theme-on-surface);
   margin-bottom: 8px;
@@ -483,31 +494,30 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
   font-family: $font-body;
 }
 
-.skill-content {
-  .content-label {
-    font-size: 12px;
+// 内容复制块
+.vp-content-block {
+  .vp-content-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.45;
     color: var(--b3-theme-on-surface);
     margin-bottom: 6px;
-    font-weight: 500;
     display: flex;
     align-items: center;
     gap: 6px;
-
-    svg {
-      color: var(--b3-theme-on-surface-light);
-      flex-shrink: 0;
-    }
   }
 
-  .content-value {
+  .vp-content-value {
     background: var(--b3-theme-background);
     border: 1px solid var(--b3-border-color);
-    border-radius: 6px;
+    border-radius: $vp-radius;
     padding: 8px;
     cursor: pointer;
 
     &:hover {
-      border-color: $brand-orange;
+      border-color: var(--b3-theme-primary);
       background: var(--b3-theme-surface-light);
       box-shadow: 0 2px 8px rgba(217, 119, 87, 0.15);
     }
@@ -518,11 +528,11 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
       color: var(--b3-theme-on-background);
       white-space: pre-wrap;
       word-break: break-word;
-      font-family: $font-body;
+      font-family: $vp-mono;
       line-height: 1.4;
     }
 
-    .copy-hint {
+    .vp-copy-hint {
       font-size: 11px;
       color: var(--b3-theme-on-surface-light);
       margin-top: 6px;
@@ -532,19 +542,15 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
       justify-content: flex-end;
       gap: 4px;
       opacity: 0.7;
-
-      svg {
-        flex-shrink: 0;
-      }
     }
 
-    &:hover .copy-hint {
+    &:hover .vp-copy-hint {
       opacity: 1;
     }
   }
 }
 
-.no-skills {
+.vp-empty {
   grid-column: 1 / -1;
   text-align: center;
   padding: 40px 20px;
@@ -552,26 +558,30 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
   font-size: 14px;
 }
 
-.skill-form {
-  .form-group {
+// 表单
+.vp-form {
+  .vp-form-group {
     margin-bottom: 12px;
 
     label {
       display: block;
-      font-size: 14px;
-      font-weight: 500;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      opacity: 0.45;
       color: var(--b3-theme-on-background);
       margin-bottom: 8px;
     }
 
-    input,
-    textarea,
-    select {
+    .vp-input,
+    .vp-textarea,
+    .vp-select {
       @include form-input;
       box-sizing: border-box;
     }
 
-    select.category-select {
+    .vp-select {
       cursor: pointer;
       appearance: none;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M6 9l6 6 6-6' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
@@ -580,18 +590,14 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
       padding-right: 40px;
     }
 
-    textarea {
+    .vp-textarea {
       resize: vertical;
       min-height: 100px;
       line-height: 1.5;
-
-      &.description-textarea {
-        min-height: 72px;
-      }
     }
   }
 
-  .form-actions {
+  .vp-form-actions {
     display: flex;
     gap: 12px;
     justify-content: flex-end;
@@ -599,25 +605,26 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
   }
 }
 
-.add-category-form {
+// 分类管理
+.vp-category-form {
   margin-bottom: 12px;
 
-  .form-row {
+  .vp-form-row {
     display: flex;
     gap: 8px;
     align-items: center;
 
-    .input-name {
+    .vp-input {
       flex: 1;
       @include form-input;
     }
 
-    .input-color {
+    .vp-color-input {
       width: 40px;
       height: 36px;
       padding: 2px;
       border: 1px solid var(--b3-border-color);
-      border-radius: 6px;
+      border-radius: $vp-radius;
       cursor: pointer;
       background: var(--b3-theme-surface);
 
@@ -633,34 +640,34 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
   }
 }
 
-.category-list {
+.vp-category-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
   max-height: 300px;
   overflow-y: auto;
 
-  .category-item {
+  .vp-category-item {
     display: flex;
     align-items: center;
     gap: 10px;
     padding: 10px 12px;
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
-    border-radius: 6px;
+    border-radius: $vp-radius;
 
     &:hover {
-    background: var(--b3-list-hover);
-  }
+      background: var(--b3-list-hover);
+    }
 
-    .category-dot {
+    .vp-category-dot {
       width: 12px;
       height: 12px;
       border-radius: 50%;
       flex-shrink: 0;
     }
 
-    .category-name {
+    .vp-category-name {
       flex: 1;
       font-size: 14px;
       color: var(--b3-theme-on-background);
@@ -668,17 +675,18 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
   }
 }
 
+// 响应式
 @media (max-width: 768px) {
-  .skills-modal {
+  .vp-modal {
     width: 95%;
     max-height: 95vh;
   }
 
-  .skills-modal-header {
+  .vp-modal-header {
     padding: 16px 20px;
 
-    .header-title {
-      .header-icon {
+    .vp-modal-title {
+      .vp-modal-icon {
         width: 20px;
         height: 20px;
       }
@@ -689,34 +697,33 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
     }
   }
 
-  .skills-modal-body {
+  .vp-modal-body {
     padding: 16px 20px;
   }
 
-  .category-filter {
+  .vp-category-filter {
     gap: 6px;
 
-    .category-chip {
+    .vp-chip {
       font-size: 12px;
       padding: 5px 10px;
     }
   }
 
-  .skills-grid {
+  .vp-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .skills-controls {
+  .vp-controls {
     flex-direction: column;
 
-    .search-wrapper .search-input {
+    .vp-search .vp-input--search {
       padding: 10px 12px 10px 36px;
     }
-
   }
 
-  .skill-card {
-    .skill-icon {
+  .vp-card {
+    .vp-card-icon {
       width: 16px;
       height: 16px;
     }
@@ -725,13 +732,13 @@ $shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.3);
       font-size: 15px;
     }
 
-    .skill-category-tag {
+    .vp-tag {
       font-size: 10px;
       padding: 2px 6px;
     }
   }
 
-  .input-name {
+  .vp-input {
     font-size: 14px;
   }
 }

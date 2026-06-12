@@ -7,36 +7,33 @@
           variant="ghost"
           size="small"
           icon="back"
-          :icon-size="16"
+          :icon-size="14"
           class="back-btn"
           :title="i18n.back || '返回上级'"
           @click="$emit('back')"
         />
-        <span>{{ currentDisplayPath }}</span>
+        <code class="header-path">{{ currentDisplayPath }}</code>
       </div>
       <div class="folder-header-actions">
-        <Tag
+        <span
           v-if="folders.length > 0"
-          size="small"
-          variant="default"
           class="item-count"
         >
           {{ folders.length }} {{ i18n.items || '项' }}
-        </Tag>
-        <Tag
+        </span>
+        <span
           v-if="currentFolderCache.text"
-          :variant="currentFolderCache.isExpired ? 'danger' : 'info'"
-          size="small"
           class="cache-tag-small"
+          :class="{ expired: currentFolderCache.isExpired }"
           :title="currentFolderCache.tooltip"
         >
           {{ currentFolderCache.text }}
-        </Tag>
+        </span>
         <Button
           variant="ghost"
           size="small"
           icon="refresh"
-          :icon-size="14"
+          :icon-size="13"
           :loading="loadingFolders"
           :title="i18n.refreshing || '刷新'"
           @click="$emit('refresh')"
@@ -45,7 +42,7 @@
           variant="ghost"
           size="small"
           icon="openInNew"
-          :icon-size="14"
+          :icon-size="13"
           :title="i18n.openInExplorer || '在资源管理器中打开'"
           @click="$emit('open', currentPath || expandedDisk)"
         />
@@ -53,7 +50,7 @@
           variant="ghost"
           size="small"
           icon="contentCopy"
-          :icon-size="14"
+          :icon-size="13"
           :title="i18n.copyPath || '复制路径'"
           @click="$emit('copy-path', currentPath || expandedDisk)"
         />
@@ -74,7 +71,7 @@
         <div class="folder-icon">
           <IconWrapper
             :name="item.isFile ? 'file' : 'folder'"
-            :size="20"
+            :size="18"
           />
         </div>
         <div class="folder-info">
@@ -104,7 +101,7 @@
             variant="ghost"
             size="small"
             :icon="isFavorite(item.path) ? 'star' : 'starOutline'"
-            :icon-size="14"
+            :icon-size="13"
             class="folder-action-btn favorite-btn"
             :class="{ 'is-favorite': isFavorite(item.path) }"
             :title="isFavorite(item.path) ? (i18n.removeFavorite || '取消收藏') : (i18n.addFavorite || '添加收藏')"
@@ -115,7 +112,7 @@
             variant="ghost"
             size="small"
             icon="chevronRight"
-            :icon-size="14"
+            :icon-size="13"
             class="folder-action-btn"
             :title="i18n.browse || '浏览'"
             @click.stop="$emit('navigate', item)"
@@ -124,7 +121,7 @@
             variant="ghost"
             size="small"
             icon="openInNew"
-            :icon-size="14"
+            :icon-size="13"
             class="folder-action-btn"
             :title="i18n.open || '打开'"
             @click.stop="$emit('open', item.path)"
@@ -133,7 +130,7 @@
             variant="ghost"
             size="small"
             icon="contentCopy"
-            :icon-size="14"
+            :icon-size="13"
             class="folder-action-btn"
             :title="i18n.copyPath || '复制路径'"
             @click.stop="$emit('copy-path', item.path)"
@@ -146,7 +143,7 @@
       >
         <IconWrapper
           name="folder"
-          :size="48"
+          :size="40"
           color="var(--b3-theme-on-surface-light)"
         />
         <p>{{ i18n.emptyFolder || '此文件夹为空' }}</p>
@@ -170,7 +167,6 @@ import type {
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Loader from "@/components/Loader.vue"
-import Tag from "@/components/Tag.vue"
 import { formatSize } from "../utils"
 
 interface Props {
@@ -209,59 +205,84 @@ function isFavorite(path: string): boolean {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-top: 1px solid var(--b3-theme-surface-lighter);
+  border-top: 1px solid $border;
   @include contain-layout;
 }
 
 .folder-list-header {
   @include flex-align-center;
   justify-content: space-between;
-  padding: 10px 16px;
+  padding: 8px 14px;
   background: var(--b3-theme-surface);
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  border-bottom: 1px solid $border;
   flex-shrink: 0;
 
   .header-left {
     @include flex-align-center;
-    gap: 8px;
+    gap: 6px;
     flex: 1;
     min-width: 0;
+  }
 
-    span {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--b3-theme-on-background);
-      @include text-ellipsis;
-    }
+  .header-path {
+    font-family: $mono;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--b3-theme-on-background);
+    @include text-ellipsis;
   }
 }
 
 .folder-header-actions {
   @include flex-align-center;
-  gap: 6px;
+  gap: 4px;
+}
+
+.item-count {
+  font-family: $mono;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+  padding: 1px 6px;
+  background: var(--b3-theme-surface-lighter);
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.cache-tag-small {
+  font-family: $mono;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--b3-theme-primary);
+  padding: 1px 6px;
+  background: var(--b3-theme-primary-lightest);
+  border-radius: 3px;
+  white-space: nowrap;
+
+  &.expired {
+    color: var(--b3-theme-error);
+    background: rgba(var(--b3-theme-error-rgb, 220, 38, 38), 0.08);
+  }
 }
 
 .folder-items {
   flex: 1;
   overflow-y: auto;
-  padding: 8px;
+  padding: 6px;
   @include scrollbar;
 }
 
 .folder-item {
   @include flex-align-center;
   gap: 10px;
-  padding: 10px 12px;
-  margin-bottom: 4px;
-  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 3px;
   background: var(--b3-theme-surface);
   cursor: pointer;
-  @include gpu-accelerate;
+  @include border-card;
 
   &:hover {
-    background: var(--b3-theme-surface-lighter);
-    transform: translateX(2px);
-
     .folder-actions {
       opacity: 1;
     }
@@ -270,6 +291,10 @@ function isFavorite(path: string): boolean {
   &.is-file {
     .folder-icon {
       color: var(--b3-theme-on-surface-light);
+    }
+
+    .folder-name {
+      font-family: $mono;
     }
   }
 }
@@ -289,31 +314,30 @@ function isFavorite(path: string): boolean {
 }
 
 .folder-name {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--b3-theme-on-background);
   @include text-ellipsis;
 }
 
 .folder-meta {
   @include flex-align-center;
-  gap: 12px;
-  font-size: 11px;
-  color: var(--b3-theme-on-surface-light);
+  gap: 10px;
 }
 
-.file-size {
-  font-weight: 500;
-}
-
+.file-size,
 .modified-time {
-  opacity: 0.8;
+  font-family: $mono;
+  font-size: 10px;
+  color: var(--b3-theme-on-surface-light);
+  opacity: 0.6;
 }
 
 .folder-actions {
   flex-shrink: 0;
   @include flex-align-center;
-  gap: 4px;
+  gap: 2px;
   opacity: 0;
+  transition: opacity 0.12s;
 }
 
 .folder-action-btn {
@@ -325,18 +349,19 @@ function isFavorite(path: string): boolean {
 .empty-state {
   @include flex-center;
   flex-direction: column;
-  padding: 60px 20px;
+  padding: 48px 20px;
   color: var(--b3-theme-on-surface-light);
 
   svg, :deep(svg) {
-    opacity: 0.3;
-    margin-bottom: 16px;
+    opacity: 0.25;
+    margin-bottom: 12px;
   }
 
   p {
     margin: 0;
-    font-size: 14px;
-    opacity: 0.7;
+    font-size: 12px;
+    opacity: 0.5;
+    font-style: italic;
   }
 }
 

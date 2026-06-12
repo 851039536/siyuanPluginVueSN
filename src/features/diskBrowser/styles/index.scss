@@ -1,3 +1,8 @@
+// ==================== Codex Variables ====================
+$mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
+$radius: 6px;
+$border: var(--b3-border-color);
+
 // ==================== Mixins ====================
 @mixin flex-center {
   display: flex;
@@ -44,9 +49,23 @@
   color: $color;
 }
 
-@mixin card-hover-effect {
+/// Codex 大写元信息标签
+@mixin meta-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.45;
+}
+
+/// Codex 边框卡片
+@mixin border-card {
+  border: 1px solid $border;
+  border-radius: $radius;
+  transition: border-color 0.15s;
+
   &:hover {
-    transform: none;
+    border-color: var(--b3-theme-primary);
   }
 }
 
@@ -66,7 +85,8 @@
   height: 100%;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
-  font-size: 14px;
+  font-size: 13px;
+  line-height: 1.5;
   overflow: hidden;
   @include contain-layout;
 }
@@ -82,8 +102,4 @@
   flex-shrink: 0;
   align-content: flex-start;
   @include scrollbar;
-
-  &:deep(.disk-card) {
-    @include card-hover-effect;
-  }
 }

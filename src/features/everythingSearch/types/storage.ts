@@ -33,6 +33,7 @@ export const DEFAULT_OPTIONS: SearchOptions = {
   sort: "date_modified",
   ascending: false,
   selectedDrive: "",
+  advancedMode: false,
 }
 
 /**

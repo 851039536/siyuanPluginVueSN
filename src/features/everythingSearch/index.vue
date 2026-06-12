@@ -32,6 +32,12 @@
           @refresh-drives="refreshDrives"
         />
 
+        <!-- 高级搜索语法帮助 -->
+        <AdvancedHelpPanel
+          v-if="options.advancedMode"
+          @insert="handleSyntaxInsert"
+        />
+
         <!-- 服务状态提示 -->
         <ServiceWarning
           v-if="!serviceAvailable"
@@ -84,6 +90,7 @@ import {
   searchFiles,
   showInExplorer,
 } from "./api"
+import AdvancedHelpPanel from "./components/AdvancedHelpPanel.vue"
 import DialogFooter from "./components/DialogFooter.vue"
 
 // 子组件
@@ -295,6 +302,14 @@ const handleConfigUpdate = (
   value: EverythingConfig[keyof EverythingConfig],
 ) => {
   Object.assign(config, { [key]: value })
+}
+
+/** 插入高级搜索语法 */
+const handleSyntaxInsert = (keyword: string) => {
+  searchQuery.value = searchQuery.value
+    ? `${searchQuery.value} ${keyword}`
+    : keyword
+  searchBarRef.value?.focus()
 }
 
 /** 点击项目 */

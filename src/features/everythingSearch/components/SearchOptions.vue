@@ -52,6 +52,15 @@
 
     <!-- 配置选单组 -->
     <div class="vp-options__group">
+      <div class="vp-options__item">
+        <Switch
+          :model-value="options.advancedMode"
+          size="small"
+          label="高级模式"
+          @update:model-value="updateOption('advancedMode', $event)"
+        />
+      </div>
+
       <div class="vp-options__item vp-options__item--select">
         <span class="vp-options__key">数量</span>
         <Select

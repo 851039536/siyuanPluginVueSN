@@ -10,8 +10,8 @@ import FloatingBox from "./index.vue"
 export type {
   FloatingBoxOptions,
   FloatingTool,
-  Skill,
-  SkillCategory,
+  Prompt,
+  PromptCategory,
 } from "./types"
 
 let vueApp: VueApp | null = null
@@ -54,7 +54,7 @@ export function registerFloatingBox(plugin: Plugin): void {
     console.error("悬浮框挂载失败:", error)
   }
 
-  (plugin as any).__floatingBox = {
+  ;(plugin as any).__floatingBox = {
     destroy: () => {
       if (vueApp && container) {
         vueApp.unmount()

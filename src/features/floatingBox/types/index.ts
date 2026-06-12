@@ -20,7 +20,7 @@ export interface FloatingTool {
   children?: FloatingToolChild[]
 }
 
-export interface Skill {
+export interface Prompt {
   id: string
   title: string
   description: string
@@ -30,7 +30,7 @@ export interface Skill {
   category: string
 }
 
-export interface SkillCategory {
+export interface PromptCategory {
   id: string
   name: string
   color: string

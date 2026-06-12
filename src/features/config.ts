@@ -175,8 +175,8 @@ export const FEATURE_CONFIG = [
   },
   {
     id: "skills",
-    defaultTitle: "技能库",
-    defaultDesc: "管理常用的Claude技能和模板",
+    defaultTitle: "提示词库",
+    defaultDesc: "管理常用的提示词模板",
     titleI18nKey: "skills.title",
     descI18nKey: "skills.description",
   },

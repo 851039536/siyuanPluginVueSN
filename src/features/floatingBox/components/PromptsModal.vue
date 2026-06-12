@@ -16,7 +16,7 @@
             :size="24"
             class="vp-modal-icon"
           />
-          <h2>{{ i18n?.skillsTitle || '技能库' }}</h2>
+          <h2>{{ i18n?.promptsTitle || '提示词库' }}</h2>
         </div>
         <div class="vp-modal-actions">
           <Button
@@ -73,9 +73,9 @@
               <input
                 v-model="searchQuery"
                 type="text"
-                :placeholder="i18n?.search || '搜索技能...'"
+                :placeholder="i18n?.search || '搜索提示词...'"
                 class="vp-input vp-input--search"
-                aria-label="搜索技能"
+                aria-label="搜索提示词"
               />
             </div>
 
@@ -84,17 +84,17 @@
               size="small"
               @click="openAddModal"
             >
-              {{ i18n?.addSkill || '添加技能' }}
+              {{ i18n?.addPrompt || '添加提示词' }}
             </Button>
           </div>
 
           <div class="vp-grid">
             <div
-              v-for="skill in filteredSkills"
-              :key="skill.id"
+              v-for="prompt in filteredPrompts"
+              :key="prompt.id"
               class="vp-card"
               role="article"
-              :aria-label="`技能: ${skill.title}`"
+              :aria-label="`提示词: ${prompt.title}`"
             >
               <div class="vp-card-header">
                 <div class="vp-card-title">
@@ -103,15 +103,15 @@
                     :size="18"
                     class="vp-card-icon"
                   />
-                  <h3>{{ skill.title }}</h3>
+                  <h3>{{ prompt.title }}</h3>
                   <span
                     class="vp-tag"
                     :style="{
-                      backgroundColor: skill.catBgColor,
-                      color: skill.catColor,
+                      backgroundColor: prompt.catBgColor,
+                      color: prompt.catColor,
                     }"
                   >
-                    {{ skill.catName }}
+                    {{ prompt.catName }}
                   </span>
                 </div>
                 <div class="vp-card-actions">
@@ -119,22 +119,22 @@
                     variant="ghost"
                     icon="edit"
                     size="small"
-                    @click="editSkill(skill)"
+                    @click="editPrompt(prompt)"
                   />
                   <Button
                     variant="danger"
                     icon="delete"
                     size="small"
-                    @click="deleteSkill(skill.id)"
+                    @click="deletePrompt(prompt.id)"
                   />
                 </div>
               </div>
               <div class="vp-card-desc">
-                {{ skill.description }}
+                {{ prompt.description }}
               </div>
 
               <div
-                v-for="slot in skill.contents"
+                v-for="slot in prompt.contents"
                 :key="slot.key"
                 class="vp-content-block"
               >
@@ -149,7 +149,7 @@
                   class="vp-content-value"
                   role="button"
                   tabindex="0"
-                  :aria-label="`点击复制${slot.label}: ${skill.title}`"
+                  :aria-label="`点击复制${slot.label}: ${prompt.title}`"
                   @click="copyContent(slot.text)"
                   @keydown.enter="copyContent(slot.text)"
                   @keydown.space.prevent="copyContent(slot.text)"
@@ -167,11 +167,11 @@
             </div>
 
             <div
-              v-if="filteredSkills.length === 0"
+              v-if="filteredPrompts.length === 0"
               class="vp-empty"
               role="status"
             >
-              {{ searchQuery ? i18n?.noSkillsFound || '未找到匹配的技能' : i18n?.noSkills || '暂无技能，点击添加' }}
+              {{ searchQuery ? i18n?.noPromptsFound || '未找到匹配的提示词' : i18n?.noPrompts || '暂无提示词，点击添加' }}
             </div>
           </div>
         </template>
@@ -190,7 +190,7 @@
       @click.stop
     >
       <div class="vp-modal-header">
-        <h2>{{ editingSkill ? i18n?.editSkill || '编辑技能' : i18n?.addSkill || '添加技能' }}</h2>
+        <h2>{{ editingPrompt ? i18n?.editPrompt || '编辑提示词' : i18n?.addPrompt || '添加提示词' }}</h2>
         <Button
           variant="ghost"
           icon="close"
@@ -202,37 +202,37 @@
       <div class="vp-modal-body">
         <form
           class="vp-form"
-          @submit.prevent="saveSkill"
+          @submit.prevent="savePrompt"
         >
           <div class="vp-form-group">
-            <label for="skill-title">{{ i18n?.title || '标题' }}</label>
+            <label for="prompt-title">{{ i18n?.title || '标题' }}</label>
             <input
-              id="skill-title"
-              v-model="skillForm.title"
+              id="prompt-title"
+              v-model="promptForm.title"
               type="text"
               class="vp-input"
-              :placeholder="i18n?.titlePlaceholder || '请输入技能标题'"
+              :placeholder="i18n?.titlePlaceholder || '请输入提示词标题'"
               required
               aria-required="true"
             />
           </div>
 
           <div class="vp-form-group">
-            <label for="skill-description">{{ i18n?.description || '描述' }}</label>
+            <label for="prompt-description">{{ i18n?.description || '描述' }}</label>
             <textarea
-              id="skill-description"
-              v-model="skillForm.description"
+              id="prompt-description"
+              v-model="promptForm.description"
               class="vp-textarea"
-              :placeholder="i18n?.descriptionPlaceholder || '请输入技能描述'"
+              :placeholder="i18n?.descriptionPlaceholder || '请输入提示词描述'"
               rows="3"
             />
           </div>
 
           <div class="vp-form-group">
-            <label for="skill-category">{{ i18n?.category || '分类' }}</label>
+            <label for="prompt-category">{{ i18n?.category || '分类' }}</label>
             <select
-              id="skill-category"
-              v-model="skillForm.category"
+              id="prompt-category"
+              v-model="promptForm.category"
               class="vp-select"
               required
               aria-required="true"
@@ -248,12 +248,12 @@
           </div>
 
           <div class="vp-form-group">
-            <label for="skill-content">{{ i18n?.content || '内容' }}</label>
+            <label for="prompt-content">{{ i18n?.content || '内容' }}</label>
             <textarea
-              id="skill-content"
-              v-model="skillForm.content"
+              id="prompt-content"
+              v-model="promptForm.content"
               class="vp-textarea"
-              :placeholder="i18n?.contentPlaceholder || '请输入要复制的内容'"
+              :placeholder="i18n?.contentPlaceholder || '请输入提示词内容'"
               rows="6"
               required
               aria-required="true"
@@ -261,23 +261,23 @@
           </div>
 
           <div class="vp-form-group">
-            <label for="skill-content2">{{ i18n?.content2 || '内容2' }}</label>
+            <label for="prompt-content2">{{ i18n?.content2 || '内容2' }}</label>
             <textarea
-              id="skill-content2"
-              v-model="skillForm.content2"
+              id="prompt-content2"
+              v-model="promptForm.content2"
               class="vp-textarea"
-              :placeholder="i18n?.content2Placeholder || '请输入要复制的内容2'"
+              :placeholder="i18n?.content2Placeholder || '请输入提示词内容2'"
               rows="6"
             />
           </div>
 
           <div class="vp-form-group">
-            <label for="skill-content3">{{ i18n?.content3 || '内容3' }}</label>
+            <label for="prompt-content3">{{ i18n?.content3 || '内容3' }}</label>
             <textarea
-              id="skill-content3"
-              v-model="skillForm.content3"
+              id="prompt-content3"
+              v-model="promptForm.content3"
               class="vp-textarea"
-              :placeholder="i18n?.content3Placeholder || '请输入要复制的内容3'"
+              :placeholder="i18n?.content3Placeholder || '请输入提示词内容3'"
               rows="6"
             />
           </div>
@@ -385,8 +385,8 @@
 import type { Plugin } from "siyuan"
 import { showMessage } from "siyuan"
 import type {
-  Skill,
-  SkillCategory,
+  Prompt,
+  PromptCategory,
 } from "../types"
 import {
   computed,
@@ -404,7 +404,7 @@ interface ContentSlot {
   text: string
 }
 
-interface SkillDisplay extends Skill {
+interface PromptDisplay extends Prompt {
   catName: string
   catColor: string
   catBgColor: string
@@ -424,14 +424,14 @@ const emit = defineEmits<{
 const showModal = ref(true)
 const showAddModal = ref(false)
 const showCategoryManage = ref(false)
-const editingSkill = ref<Skill | null>(null)
+const editingPrompt = ref<Prompt | null>(null)
 const searchQuery = ref("")
 const selectedCategory = ref<string>("all")
 const loading = ref(true)
 
 const storage = ref<FloatingBoxStorage | null>(null)
 
-const skillForm = ref({
+const promptForm = ref({
   title: "",
   description: "",
   content: "",
@@ -445,8 +445,8 @@ const categoryForm = ref({
   color: "#d97757",
 })
 
-const skills = ref<Skill[]>([])
-const categories = ref<SkillCategory[]>([
+const prompts = ref<Prompt[]>([])
+const categories = ref<PromptCategory[]>([
   { id: "default", name: "默认", color: "#d97757" },
 ])
 
@@ -459,14 +459,14 @@ const allCategories = computed(() => {
 })
 
 const categoryMap = computed(() => {
-  const map = new Map<string, SkillCategory>()
+  const map = new Map<string, PromptCategory>()
   for (const cat of categories.value) {
     map.set(cat.id, cat)
   }
   return map
 })
 
-const getCategoryById = (id: string): SkillCategory => {
+const getCategoryById = (id: string): PromptCategory => {
   return categoryMap.value.get(id) || categories.value[0]
 }
 
@@ -474,50 +474,50 @@ onMounted(async () => {
   if (props.plugin) {
     storage.value = new FloatingBoxStorage(props.plugin)
   }
-  await Promise.all([loadSkills(), loadCategories()])
+  await Promise.all([loadPrompts(), loadCategories()])
   loading.value = false
 
-  if (categories.value.length > 0 && !skillForm.value.category) {
-    skillForm.value.category = categories.value[0].id
+  if (categories.value.length > 0 && !promptForm.value.category) {
+    promptForm.value.category = categories.value[0].id
   }
 })
 
-const filteredSkills = computed<SkillDisplay[]>(() => {
-  let result = skills.value
+const filteredPrompts = computed<PromptDisplay[]>(() => {
+  let result = prompts.value
 
   if (selectedCategory.value !== "all") {
     result = result.filter(
-      (skill) => skill.category === selectedCategory.value,
+      (prompt) => prompt.category === selectedCategory.value,
     )
   }
 
   const query = searchQuery.value.toLowerCase().trim()
   if (query) {
     result = result.filter(
-      (skill) =>
-        skill.title?.toLowerCase().includes(query)
-        || skill.description?.toLowerCase().includes(query)
-        || skill.content?.toLowerCase().includes(query)
-        || (skill.content2 || "")?.toLowerCase().includes(query)
-        || (skill.content3 || "")?.toLowerCase().includes(query),
+      (prompt) =>
+        prompt.title?.toLowerCase().includes(query)
+        || prompt.description?.toLowerCase().includes(query)
+        || prompt.content?.toLowerCase().includes(query)
+        || (prompt.content2 || "")?.toLowerCase().includes(query)
+        || (prompt.content3 || "")?.toLowerCase().includes(query),
     )
   }
 
-  return result.map((skill) => {
-    const cat = getCategoryById(skill.category)
+  return result.map((prompt) => {
+    const cat = getCategoryById(prompt.category)
     const contents: ContentSlot[] = []
-    if (skill.content) {
-      contents.push({ key: "content", label: props.i18n?.content || "内容", text: skill.content })
+    if (prompt.content) {
+      contents.push({ key: "content", label: props.i18n?.content || "内容", text: prompt.content })
     }
-    if (skill.content2) {
-      contents.push({ key: "content2", label: props.i18n?.content2 || "内容2", text: skill.content2 })
+    if (prompt.content2) {
+      contents.push({ key: "content2", label: props.i18n?.content2 || "内容2", text: prompt.content2 })
     }
-    if (skill.content3) {
-      contents.push({ key: "content3", label: props.i18n?.content3 || "内容3", text: skill.content3 })
+    if (prompt.content3) {
+      contents.push({ key: "content3", label: props.i18n?.content3 || "内容3", text: prompt.content3 })
     }
 
     return {
-      ...skill,
+      ...prompt,
       catName: cat.name,
       catColor: cat.color,
       catBgColor: `${cat.color}20`,
@@ -530,10 +530,10 @@ const selectCategory = (categoryId: string) => {
   selectedCategory.value = categoryId
 }
 
-async function loadSkills() {
+async function loadPrompts() {
   if (!storage.value) return
-  const loaded = await storage.value.skills.loadOrDefault()
-  skills.value = Array.isArray(loaded) ? loaded : []
+  const loaded = await storage.value.prompts.loadOrDefault()
+  prompts.value = Array.isArray(loaded) ? loaded : []
 }
 
 async function loadCategories() {
@@ -554,14 +554,14 @@ async function saveCategories() {
   await storage.value.categories.save(categories.value)
 }
 
-async function saveSkills() {
+async function savePrompts() {
   if (!storage.value) return
-  await storage.value.skills.save(skills.value)
+  await storage.value.prompts.save(prompts.value)
 }
 
 function openAddModal() {
-  editingSkill.value = null
-  skillForm.value = {
+  editingPrompt.value = null
+  promptForm.value = {
     title: "",
     description: "",
     content: "",
@@ -572,63 +572,63 @@ function openAddModal() {
   showAddModal.value = true
 }
 
-function editSkill(skill: Skill) {
-  editingSkill.value = skill
-  skillForm.value = {
-    title: skill.title,
-    description: skill.description,
-    content: skill.content,
-    content2: skill.content2 || "",
-    content3: skill.content3 || "",
-    category: skill.category,
+function editPrompt(prompt: Prompt) {
+  editingPrompt.value = prompt
+  promptForm.value = {
+    title: prompt.title,
+    description: prompt.description,
+    content: prompt.content,
+    content2: prompt.content2 || "",
+    content3: prompt.content3 || "",
+    category: prompt.category,
   }
   showAddModal.value = true
 }
 
 function closeAddModal() {
   showAddModal.value = false
-  editingSkill.value = null
+  editingPrompt.value = null
 }
 
-async function saveSkill() {
+async function savePrompt() {
   try {
-    if (!skillForm.value.title.trim() || !skillForm.value.content.trim()) {
+    if (!promptForm.value.title.trim() || !promptForm.value.content.trim()) {
       showMessage("标题和内容是必填项", 2000, "error")
       return
     }
 
-    if (editingSkill.value) {
-      const index = skills.value.findIndex(
-        (s) => s.id === editingSkill.value!.id,
+    if (editingPrompt.value) {
+      const index = prompts.value.findIndex(
+        (p) => p.id === editingPrompt.value!.id,
       )
       if (index !== -1) {
-        skills.value[index] = {
-          ...editingSkill.value,
-          title: skillForm.value.title.trim(),
-          description: skillForm.value.description.trim(),
-          content: skillForm.value.content.trim(),
-          content2: skillForm.value.content2.trim(),
-          content3: skillForm.value.content3.trim(),
-          category: skillForm.value.category,
+        prompts.value[index] = {
+          ...editingPrompt.value,
+          title: promptForm.value.title.trim(),
+          description: promptForm.value.description.trim(),
+          content: promptForm.value.content.trim(),
+          content2: promptForm.value.content2.trim(),
+          content3: promptForm.value.content3.trim(),
+          category: promptForm.value.category,
         }
       }
     } else {
-      const newSkill: Skill = {
+      const newPrompt: Prompt = {
         id: Date.now().toString(),
-        title: skillForm.value.title.trim(),
-        description: skillForm.value.description.trim(),
-        content: skillForm.value.content.trim(),
-        content2: skillForm.value.content2.trim(),
-        content3: skillForm.value.content3.trim(),
-        category: skillForm.value.category,
+        title: promptForm.value.title.trim(),
+        description: promptForm.value.description.trim(),
+        content: promptForm.value.content.trim(),
+        content2: promptForm.value.content2.trim(),
+        content3: promptForm.value.content3.trim(),
+        category: promptForm.value.category,
       }
-      skills.value.push(newSkill)
+      prompts.value.push(newPrompt)
     }
 
-    await saveSkills()
+    await savePrompts()
     closeAddModal()
   } catch (error) {
-    console.error("Failed to save skill:", error)
+    console.error("Failed to save prompt:", error)
     showMessage("保存失败，请重试", 2000, "error")
   }
 }
@@ -648,7 +648,7 @@ async function addCategory() {
     return
   }
 
-  const newCategory: SkillCategory = {
+  const newCategory: PromptCategory = {
     id: Date.now().toString(),
     name: categoryForm.value.name.trim(),
     color: categoryForm.value.color,
@@ -661,9 +661,9 @@ async function addCategory() {
 }
 
 async function deleteCategory(id: string) {
-  const hasSkillsInCategory = skills.value.some((s) => s.category === id)
-  if (hasSkillsInCategory) {
-    showMessage("无法删除：该分类下还有技能", 3000, "error")
+  const hasPromptsInCategory = prompts.value.some((p) => p.category === id)
+  if (hasPromptsInCategory) {
+    showMessage("无法删除：该分类下还有提示词", 3000, "error")
     return
   }
 
@@ -675,10 +675,10 @@ async function deleteCategory(id: string) {
   showMessage("分类已删除", 2000, "info")
 }
 
-async function deleteSkill(id: string) {
-  skills.value = skills.value.filter((s) => s.id !== id)
-  await saveSkills()
-  showMessage("技能已删除", 2000, "info")
+async function deletePrompt(id: string) {
+  prompts.value = prompts.value.filter((p) => p.id !== id)
+  await savePrompts()
+  showMessage("提示词已删除", 2000, "info")
 }
 
 async function copyContent(content: string) {

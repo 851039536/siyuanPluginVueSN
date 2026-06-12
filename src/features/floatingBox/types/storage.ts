@@ -1,6 +1,6 @@
 import type {
-  Skill,
-  SkillCategory,
+  Prompt,
+  PromptCategory,
 } from "./index"
 /**
  * 悬浮框功能 - 数据存储管理
@@ -13,13 +13,13 @@ import { TypedStorage } from "@/utils/typedStorage"
  * 悬浮框存储管理类
  */
 export class FloatingBoxStorage {
-  readonly skills: TypedStorage<Skill[]>
-  readonly categories: TypedStorage<SkillCategory[]>
+  readonly prompts: TypedStorage<Prompt[]>
+  readonly categories: TypedStorage<PromptCategory[]>
 
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
-    this.skills = new TypedStorage<Skill[]>(storage, "siyuan-skills", [])
-    this.categories = new TypedStorage<SkillCategory[]>(
+    this.prompts = new TypedStorage<Prompt[]>(storage, "siyuan-skills", [])
+    this.categories = new TypedStorage<PromptCategory[]>(
       storage,
       "siyuan-categories",
       [],
@@ -30,13 +30,13 @@ export class FloatingBoxStorage {
    * 初始化存储（加载所有数据）
    */
   async init(): Promise<{
-    skills: Skill[]
-    categories: SkillCategory[]
+    prompts: Prompt[]
+    categories: PromptCategory[]
   }> {
-    const skills = await this.skills.loadOrDefault()
+    const prompts = await this.prompts.loadOrDefault()
     const categories = await this.categories.loadOrDefault()
     return {
-      skills,
+      prompts,
       categories,
     }
   }

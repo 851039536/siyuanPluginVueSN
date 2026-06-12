@@ -11,4 +11,4 @@ export {
   articleCoverVisible,
   hideArticleCover,
   showArticleCover,
-} from "./types"
+} from "./composables/useArticleCoverState"

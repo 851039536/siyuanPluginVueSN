@@ -95,3 +95,45 @@ export function removeStyle(id: string): void {
     existing.remove()
   }
 }
+
+/**
+ * Canvas 转 Blob（Promise 封装）
+ * @param canvas HTMLCanvasElement
+ * @param type 图片 MIME 类型，默认 "image/png"
+ * @param quality 图片质量 0-1（仅对 image/jpeg 等有效）
+ */
+export function canvasToBlob(
+  canvas: HTMLCanvasElement,
+  type: string = "image/png",
+  quality?: number,
+): Promise<Blob> {
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (b) => {
+        if (b) resolve(b)
+        else reject(new Error(`Canvas toBlob 失败 (${type})`))
+      },
+      type,
+      quality,
+    )
+  })
+}
+
+/**
+ * 复制图片到剪贴板（使用 Clipboard API）
+ * @param blob 图片 Blob 数据（PNG/JPEG 等）
+ * @returns 是否复制成功
+ */
+export async function copyImageToClipboard(blob: Blob): Promise<boolean> {
+  try {
+    if (navigator.clipboard?.write) {
+      await navigator.clipboard.write([
+        new ClipboardItem({ [blob.type]: blob }),
+      ])
+      return true
+    }
+    return false
+  } catch {
+    return false
+  }
+}

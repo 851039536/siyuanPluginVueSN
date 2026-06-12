@@ -62,6 +62,7 @@
 import type {
   DiskBrowserI18n,
 } from "./types"
+import type { DiskBrowserStorage } from "./types/storage"
 import type { Plugin } from "siyuan"
 import BreadcrumbNav from "./components/BreadcrumbNav.vue"
 import DiskCard from "./components/DiskCard.vue"
@@ -73,6 +74,7 @@ import { useDiskBrowser } from "./composables/useDiskBrowser"
 interface Props {
   i18n: DiskBrowserI18n
   plugin: Plugin
+  storage: DiskBrowserStorage
 }
 
 const props = defineProps<Props>()
@@ -104,7 +106,7 @@ const {
   navigateToFavorite,
   copyPathToClipboard,
   formatDate,
-} = useDiskBrowser(props.plugin, props.i18n)
+} = useDiskBrowser(props.plugin, props.i18n, props.storage)
 </script>
 
 <style scoped lang="scss">

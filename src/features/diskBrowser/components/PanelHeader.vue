@@ -76,19 +76,10 @@ defineEmits<{
 }
 
 .cache-tag {
-  font-family: $mono;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
   color: var(--b3-theme-primary);
-  padding: 2px 8px;
-  background: var(--b3-theme-primary-lightest);
-  border-radius: 3px;
-  white-space: nowrap;
+  @include cache-tag-base;
 
   &.expired {
-    color: var(--b3-theme-error);
-    background: rgba(var(--b3-theme-error-rgb, 220, 38, 38), 0.08);
     animation: pulse 2s ease-in-out infinite;
   }
 }

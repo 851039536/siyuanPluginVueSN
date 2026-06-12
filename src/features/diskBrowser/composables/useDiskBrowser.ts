@@ -13,9 +13,9 @@ import {
   onUnmounted,
   ref,
 } from "vue"
+import type { DiskBrowserStorage } from "../types/storage"
 import { getNodeProcessModules } from "@/utils/nodeModules"
 import { getDefaultDisks } from "../types"
-import { DiskBrowserStorage } from "../types/storage"
 import {
   buildPath,
   computeCacheStatus,
@@ -52,9 +52,11 @@ async function execWithTimeout(
   return Promise.race([exec(command), timeoutPromise])
 }
 
-export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
-  const storage = new DiskBrowserStorage(plugin)
-
+export function useDiskBrowser(
+  plugin: Plugin,
+  i18n: DiskBrowserI18n,
+  storage: DiskBrowserStorage,
+) {
   const disks = ref<DiskInfo[]>([])
   const selectedDisk = ref("")
   const expandedDisk = ref("")
@@ -63,15 +65,15 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
   const loadingFolders = ref(false)
   const currentPath = ref("")
   const favoriteFolders = ref<string[]>([])
-  const favoriteSet = ref(new Set<string>())
+  const favoriteSet = computed(() => new Set(favoriteFolders.value))
 
   const diskCache = ref<CacheData<DiskInfo[]> | null>(null)
   const folderCacheMap = ref<Map<string, CacheData<FolderInfo[]>>>(new Map())
 
   const cacheExpiryTime = getCacheExpiryTime()
 
-  // 并发控制（实例级，避免多实例共享状态）
-  let isExecutingCommand = false
+  // 并发控制 — Promise 链式队列替代 spin-wait 忙等待
+  let execQueue = Promise.resolve()
   let lastExecutionTime = 0
 
   async function retryExec(
@@ -80,25 +82,15 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
     timeout = 3000,
     operationType = "unknown",
   ): Promise<{ stdout: string, stderr: string }> {
-    // 等待前一个命令完成
-    if (isExecutingCommand) {
-      while (isExecutingCommand) {
-        await new Promise((resolve) => setTimeout(resolve, 100))
+    const currentTask = execQueue.then(async () => {
+      // 防抖延迟
+      const waitTime = DEBOUNCE_DELAY - (Date.now() - lastExecutionTime)
+      if (waitTime > 0) {
+        await new Promise((resolve) => setTimeout(resolve, waitTime))
       }
-    }
+      lastExecutionTime = Date.now()
 
-    // 防抖延迟
-    const waitTime = DEBOUNCE_DELAY - (Date.now() - lastExecutionTime)
-    if (waitTime > 0) {
-      await new Promise((resolve) => setTimeout(resolve, waitTime))
-    }
-
-    isExecutingCommand = true
-    lastExecutionTime = Date.now()
-
-    try {
       let lastError: Error | null = null
-
       for (let i = 0; i <= retries; i++) {
         try {
           return await execWithTimeout(command, timeout)
@@ -113,11 +105,12 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
           await new Promise((resolve) => setTimeout(resolve, delay))
         }
       }
-
       throw lastError || new Error("未知错误")
-    } finally {
-      isExecutingCommand = false
-    }
+    })
+
+    // 链入队列（即使前序任务失败也不阻断后续任务）
+    execQueue = currentTask.then(() => {}, () => {}) as Promise<void>
+    return currentTask
   }
 
   const pathSegments = computed(() => {
@@ -151,10 +144,6 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
     return computeCacheStatus(cached, i18n, cacheExpiryTime, "short")
   })
 
-  function updateFavoriteSet(): void {
-    favoriteSet.value = new Set(favoriteFolders.value)
-  }
-
   function toggleFavorite(folderPath: string): void {
     const index = favoriteFolders.value.indexOf(folderPath)
     if (index > -1) {
@@ -164,7 +153,6 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
       favoriteFolders.value.push(folderPath)
       showMessage(i18n.favoriteAdded || "已添加收藏", 2000, "info")
     }
-    updateFavoriteSet()
     saveFavorites()
   }
 
@@ -180,7 +168,6 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
     try {
       const favorites = await storage.loadFavorites()
       favoriteFolders.value = favorites
-      updateFavoriteSet()
     } catch (error) {
       console.error("加载收藏夹失败:", error)
       favoriteFolders.value = []

@@ -58,24 +58,8 @@ export function computeCacheStatus<T>(
   }
 }
 
-let cachedNetworkSlow: boolean | null = null
-
-export function isNetworkSlow(): boolean {
-  if (cachedNetworkSlow !== null) return cachedNetworkSlow
-
-  if (typeof navigator !== "undefined" && (navigator as any).connection) {
-    const connection = (navigator as any).connection
-    cachedNetworkSlow = ["slow-2g", "2g", "3g"].includes(
-      connection.effectiveType,
-    )
-  } else {
-    cachedNetworkSlow = false
-  }
-  return cachedNetworkSlow
-}
-
 export function getCacheExpiryTime(): number {
-  return isNetworkSlow() ? 10 * 60 * 1000 : 60 * 60 * 1000
+  return 60 * 60 * 1000
 }
 
 export function isCacheValid<T>(

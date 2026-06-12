@@ -12,10 +12,7 @@
               :key="idx"
               :d="arc.d"
               :fill="arc.color"
-              :class="{
-                'pie-arc-hover': activeIndex === idx,
-                'pie-arc-dim': activeIndex >= 0 && activeIndex !== idx,
-              }"
+              :class="{ 'pie-arc-hover': activeIndex === idx }"
               class="pie-arc"
               @mouseenter="onArcEnter(idx)"
               @mouseleave="onArcLeave"
@@ -214,15 +211,15 @@ function degToRad(deg: number): number {
 
 .pie-arc {
   cursor: pointer;
-  transition: opacity 0.2s ease;
+  transition: stroke-width 0.15s ease;
+  stroke: transparent;
+  stroke-width: 0;
 }
 
 .pie-arc-hover {
-  opacity: 0.85;
-}
-
-.pie-arc-dim {
-  opacity: 0.4;
+  opacity: 1;
+  stroke: var(--b3-theme-on-background);
+  stroke-width: 2px;
 }
 
 .pie-center-name {

@@ -29,10 +29,7 @@
         v-for="item in sortedData"
         :key="item.name"
         class="chart-row"
-        :class="{
-          'row-highlight': hoveredNotebook === item.name,
-          'row-dim': hoveredNotebook !== null && hoveredNotebook !== item.name,
-        }"
+        :class="{ 'row-highlight': hoveredNotebook === item.name }"
         :title="`${item.name}: ${formatNumber(item.count)} ${i18n.docsUnit || '篇'}`"
         @mouseenter="onHover(item.name)"
         @mouseleave="onHover(null)"
@@ -166,18 +163,15 @@ function getBarWidth(count: number): string {
       gap: 6px;
       padding: 4px 6px;
       border-radius: 4px;
-      transition: background 0.15s, opacity 0.2s ease;
+      transition: background 0.15s, box-shadow 0.15s;
 
       &:hover {
         background: var(--b3-list-hover);
       }
 
       &.row-highlight {
-        background: var(--b3-list-hover);
-      }
-
-      &.row-dim {
-        opacity: 0.45;
+        background: rgba(var(--b3-theme-primary-rgb), 0.1);
+        box-shadow: inset 3px 0 0 var(--b3-theme-primary);
       }
 
       .row-label {

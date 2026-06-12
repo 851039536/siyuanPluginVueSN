@@ -85,7 +85,8 @@
 
         <div class="chart-container">
           <svg
-            :viewBox="`0 0 ${chartW} ${CHART_H}`"
+            :width="svgPixelW"
+            :height="CHART_H"
             class="chart-svg"
           >
             <!-- 网格线 -->
@@ -258,18 +259,10 @@ const CHART_H = 240
 const PAD_L = 42
 const PAD_R = 8
 const PAD_T = 14
-const MIN_POINT_SPACING = 14
+const POINT_SPACING = 40
 
-const days = ref(7)
+const days = ref(30)
 const periodOptions = computed(() => [
-  {
-    label: props.i18n.days7 || '7天',
-    value: 7,
-  },
-  {
-    label: props.i18n.days15 || '15天',
-    value: 15,
-  },
   {
     label: props.i18n.days30 || '30天',
     value: 30,
@@ -285,6 +278,14 @@ const periodOptions = computed(() => [
   {
     label: props.i18n.days180 || '180天',
     value: 180,
+  },
+  {
+    label: props.i18n.days200 || '200天',
+    value: 200,
+  },
+  {
+    label: props.i18n.days365 || '1年',
+    value: 365,
   },
 ])
 
@@ -329,11 +330,14 @@ const summary = computed(() => {
 })
 
 // ========== Chart ==========
-const chartW = computed(() => {
+// SVG 像素宽度：严格按每天 POINT_SPACING 计算
+const svgPixelW = computed(() => {
   const n = dataLen.value
-  const plotWidth = n * MIN_POINT_SPACING
-  return Math.max(600, PAD_L + plotWidth + PAD_R)
+  return PAD_L + n * POINT_SPACING + PAD_R
 })
+
+// 内部绘图宽度（与像素宽度一致，无缩放）
+const chartW = svgPixelW
 
 const plotW = computed(() => chartW.value - PAD_L - PAD_R)
 const plotH = computed(() => CHART_H - PAD_T - 20)
@@ -388,16 +392,14 @@ const xLabels = computed(() => {
   const labels: Array<{ x: number, label: string }> = []
   if (n === 0) return labels
 
-  const showEvery = n <= 10 ? 1 : Math.ceil(n / 10)
+  // 每天显示日期标签，40px 间距足够容纳
   for (let i = 0; i < n; i++) {
-    if (i % showEvery === 0 || i === n - 1) {
-      const nb = activeNotebooks.value[0]
-      if (nb?.data[i]) {
-        labels.push({
-          x: PAD_L + i * stepW.value,
-          label: nb.data[i].dateLabel.split(' ')[0],
-        })
-      }
+    const nb = activeNotebooks.value[0]
+    if (nb?.data[i]) {
+      labels.push({
+        x: PAD_L + i * stepW.value,
+        label: nb.data[i].dateLabel.split(' ')[0],
+      })
     }
   }
   return labels
@@ -640,9 +642,6 @@ defineExpose({ load })
 }
 
 .chart-svg {
-  width: 100%;
-  min-width: 600px;
-  height: 200px;
   display: block;
 }
 

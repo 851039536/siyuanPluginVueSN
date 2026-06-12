@@ -76,8 +76,10 @@ import {
   watch,
 } from "vue"
 import { usePlugin } from "@/main"
+import { copyToClipboard } from "@/utils/domUtils"
 import {
   checkEverythingService,
+  getFullPath,
   openFile,
   searchFiles,
   showInExplorer,
@@ -176,45 +178,15 @@ const checkService = async () => {
   serviceAvailable.value = await checkEverythingService(config)
 }
 
-/** 检测系统盘符 */
-const detectDrives = async () => {
-  try {
-    const commonDrives = [
-      "C:",
-      "D:",
-      "E:",
-      "F:",
-      "G:",
-      "H:",
-      "I:",
-      "J:",
-      "K:",
-      "L:",
-      "M:",
-      "N:",
-      "O:",
-      "P:",
-      "Q:",
-      "R:",
-      "S:",
-      "T:",
-      "U:",
-      "V:",
-      "W:",
-      "X:",
-      "Y:",
-      "Z:",
-    ]
-    availableDrives.value = commonDrives
-  } catch (error) {
-    console.error("检测盘符失败:", error)
-    availableDrives.value = ["C:", "D:", "E:", "F:", "G:", "H:", "I:", "J:"]
-  }
+/** 列出所有可选盘符（A-Z） */
+const listAvailableDrives = async () => {
+  const drives = Array.from({ length: 26 }, (_, i) => `${String.fromCharCode(65 + i)}:`)
+  availableDrives.value = drives
 }
 
 /** 刷新盘符列表 */
 const refreshDrives = () => {
-  detectDrives()
+  listAvailableDrives()
 }
 
 /** 处理盘符变化 */
@@ -314,7 +286,7 @@ const handleOptionUpdate = (
   key: keyof SearchOptionsType,
   value: SearchOptionsType[keyof SearchOptionsType],
 ) => {
-  (options as any)[key] = value
+  Object.assign(options, { [key]: value })
 }
 
 /** 处理配置更新 */
@@ -323,11 +295,6 @@ const handleConfigUpdate = (
   value: EverythingConfig[keyof EverythingConfig],
 ) => {
   Object.assign(config, { [key]: value })
-}
-
-/** 获取完整路径 */
-const getFullPath = (item: EverythingSearchResult) => {
-  return item.path ? `${item.path}\\${item.name}` : item.name
 }
 
 /** 点击项目 */
@@ -360,17 +327,12 @@ const handleItemShowInFolder = async (item: EverythingSearchResult) => {
 
 /** 复制路径 */
 const handleItemCopyPath = async (item: EverythingSearchResult) => {
-  try {
-    await navigator.clipboard.writeText(getFullPath(item))
-    showMessage("路径已复制", 2000, "info")
-  } catch (error) {
-    showMessage("复制失败", 2000, "error")
-  }
+  const ok = await copyToClipboard(getFullPath(item))
+  showMessage(ok ? "路径已复制" : "复制失败", 2000, ok ? "info" : "error")
 }
 
-/** 键盘事件 */
+/** 键盘事件（仅在弹窗可见时监听） */
 const handleKeyDown = (event: KeyboardEvent) => {
-  if (!props.visible) return
   if (event.key === "Escape") {
     closeDialog()
   }
@@ -381,10 +343,13 @@ watch(
   () => props.visible,
   async (newVal) => {
     if (newVal) {
+      document.addEventListener("keydown", handleKeyDown)
       await nextTick()
       await loadConfig()
       searchBarRef.value?.focus()
       checkService()
+    } else {
+      document.removeEventListener("keydown", handleKeyDown)
     }
   },
 )
@@ -406,13 +371,11 @@ watch(
 )
 
 onMounted(async () => {
-  document.addEventListener("keydown", handleKeyDown)
   await loadConfig()
-  await detectDrives()
+  await listAvailableDrives()
 })
 
 onUnmounted(() => {
-  document.removeEventListener("keydown", handleKeyDown)
   if (debounceTimer.value) {
     clearTimeout(debounceTimer.value)
   }

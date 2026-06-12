@@ -27,16 +27,11 @@ export interface EverythingConfig {
   port: number
 }
 
-const DEFAULT_CONFIG: EverythingConfig = {
-  host: "localhost",
-  port: 80,
-}
-
 /**
  * 检查Everything HTTP服务是否可用
  */
 export async function checkEverythingService(
-  config: EverythingConfig = DEFAULT_CONFIG,
+  config: EverythingConfig,
 ): Promise<boolean> {
   try {
     const response = await fetch(
@@ -58,7 +53,7 @@ export async function checkEverythingService(
  */
 export async function searchFiles(
   options: EverythingSearchOptions,
-  config: EverythingConfig = DEFAULT_CONFIG,
+  config: EverythingConfig,
 ): Promise<EverythingSearchResult[]> {
   const {
     query,
@@ -81,17 +76,9 @@ export async function searchFiles(
     date_modified_column: "1",
   })
 
-  // 排序参数
-  const sortMap: Record<string, string> = {
-    name: "name",
-    path: "path",
-    size: "size",
-    date_modified: "date_modified",
-  }
-  if (sortMap[sort]) {
-    params.append("sort", sortMap[sort])
-    params.append("ascending", ascending ? "1" : "0")
-  }
+  // 排序参数（TypeScript 确保 sort 仅可能为有效值）
+  params.append("sort", sort)
+  params.append("ascending", ascending ? "1" : "0")
 
   // 搜索选项
   if (matchCase) params.append("case", "1")
@@ -178,6 +165,13 @@ export function formatFileSize(bytes: number): string {
   const i = Math.floor(Math.log(bytes) / Math.log(k))
 
   return `${Number.parseFloat((bytes / k ** i).toFixed(2))} ${units[i]}`
+}
+
+/**
+ * 拼接搜索结果项的完整路径（path\\name）
+ */
+export function getFullPath(item: EverythingSearchResult): string {
+  return item.path ? `${item.path}\\${item.name}` : item.name
 }
 
 /**

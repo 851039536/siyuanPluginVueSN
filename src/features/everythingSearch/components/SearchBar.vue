@@ -1,24 +1,17 @@
 <template>
   <div class="search-bar">
-    <div class="search-input-wrapper">
-      <IconWrapper
-        name="search"
-        :size="14"
-        class="search-icon"
-      />
-      <Input
-        ref="inputRef"
-        :model-value="modelValue"
-        type="text"
-        size="small"
-        :placeholder="placeholder"
-        :show-clear="true"
-        :clearable="true"
-        @update:model-value="handleInput"
-        @keydown="handleKeydown"
-        @clear="handleClear"
-      />
-    </div>
+    <Input
+      ref="inputRef"
+      :model-value="modelValue"
+      type="text"
+      size="small"
+      :placeholder="placeholder"
+      prefix-icon="search"
+      :clearable="true"
+      @update:model-value="handleInput"
+      @keydown="handleKeydown"
+      @clear="handleClear"
+    />
     <Button
       variant="primary"
       size="small"
@@ -38,7 +31,6 @@ import {
   ref,
 } from "vue"
 import Button from "@/components/Button.vue"
-import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
 
 interface Props {
@@ -119,19 +111,9 @@ defineExpose({
   padding: 10px 16px;
   background: var(--b3-theme-surface);
   border-bottom: 1px solid var(--b3-border-color);
-}
 
-.search-input-wrapper {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 4px;
-  background: transparent;
-}
-
-.search-icon {
-  color: $brand-mid-gray;
-  flex-shrink: 0;
+  .si-input {
+    flex: 1;
+  }
 }
 </style>

@@ -21,7 +21,14 @@ interface OpenNotebooks {
   idToName: Map<string, string>
 }
 
+/** Module-level cache with 10s TTL to avoid repeated lsNotebooks calls within one refresh cycle */
+let _cache: { data: OpenNotebooks, ts: number } | null = null
+const CACHE_TTL = 10_000
+
 async function getOpenNotebooks(): Promise<OpenNotebooks> {
+  const now = Date.now()
+  if (_cache && now - _cache.ts < CACHE_TTL) return _cache.data
+
   const data = await lsNotebooks()
   const notebooks = data?.notebooks?.filter((nb: any) => !nb.closed) ?? []
   const idList = notebooks
@@ -31,11 +38,10 @@ async function getOpenNotebooks(): Promise<OpenNotebooks> {
   for (const nb of notebooks) {
     idToName.set(nb.id, nb.name)
   }
-  return {
-    notebooks,
-    idList,
-    idToName,
-  }
+
+  const result: OpenNotebooks = { notebooks, idList, idToName }
+  _cache = { data: result, ts: now }
+  return result
 }
 
 export async function getNotebookDocStats(): Promise<Array<{ name: string, count: number }>> {
@@ -306,10 +312,9 @@ export async function getNotebookBlockTypeStats(): Promise<NotebookBlockTypeStat
       }
     }
 
-    return Array.from(grouped.entries()).map(([notebook, blockTypes], idx) => ({
+    return Array.from(grouped.entries()).map(([notebook, blockTypes]) => ({
       notebook,
       blockTypes,
-      color: NOTEBOOK_COLORS[idx % NOTEBOOK_COLORS.length],
     }))
   } catch (error) {
     console.error("获取笔记本块类型分布失败:", error)

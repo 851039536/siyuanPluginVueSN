@@ -15,6 +15,12 @@
         v-for="item in data"
         :key="item.notebook"
         class="nb-row"
+        :class="{
+          'nb-row-highlight': hoveredNotebook === item.notebook,
+          'nb-row-dim': hoveredNotebook !== null && hoveredNotebook !== item.notebook,
+        }"
+        @mouseenter="onHover(item.notebook)"
+        @mouseleave="onHover(null)"
       >
         <span class="nb-label">{{ item.notebook }}</span>
         <div class="nb-bar-wrap">
@@ -53,6 +59,7 @@
 import type { NotebookBlockTypeStat } from "../types"
 import { computed } from "vue"
 import { NOTEBOOK_COLORS } from "../types/constants"
+import { useNotebookHover } from "../composables/useNotebookHover"
 
 interface Props {
   data?: NotebookBlockTypeStat[]
@@ -61,6 +68,8 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   data: () => [],
 })
+
+const { hoveredNotebook, onHover } = useNotebookHover()
 
 const legendLabels = computed(() => {
   const seen = new Map<string, string>()
@@ -89,6 +98,10 @@ function totalCount(item: NotebookBlockTypeStat): number {
 @use "../styles/index.scss" as stats;
 
 .notebook-blocktype-chart {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+
   .empty-hint {
     display: flex;
     align-items: center;
@@ -103,7 +116,8 @@ function totalCount(item: NotebookBlockTypeStat): number {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    max-height: 360px;
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
     @include scrollbar-thin;
   }
@@ -114,10 +128,18 @@ function totalCount(item: NotebookBlockTypeStat): number {
     gap: 6px;
     padding: 3px 6px;
     border-radius: 4px;
-    transition: background 0.15s;
+    transition: background 0.15s, opacity 0.2s ease;
 
     &:hover {
       background: var(--b3-list-hover);
+    }
+
+    &.nb-row-highlight {
+      background: var(--b3-list-hover);
+    }
+
+    &.nb-row-dim {
+      opacity: 0.45;
     }
 
     .nb-label {

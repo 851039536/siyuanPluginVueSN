@@ -117,7 +117,6 @@ export interface ReportData {
 export interface NotebookBlockTypeStat {
   notebook: string
   blockTypes: Array<{ name: string, count: number, label: string }>
-  color: string
 }
 
 /**

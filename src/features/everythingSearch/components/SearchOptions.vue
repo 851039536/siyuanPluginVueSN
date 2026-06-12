@@ -254,25 +254,7 @@ const handleRefreshDrives = () => {
   font-size: 12px;
 }
 
-.select-option {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
 .debounce-delay {
   margin-left: 4px;
-}
-
-.sort-option {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.drive-filter {
-  display: flex;
-  align-items: center;
-  gap: 4px;
 }
 </style>

@@ -1,15 +1,15 @@
 /**
  * Everything本地搜索功能 - 类型定义
+ * 仅包含类型和常量，所有运行时逻辑在 ../index.ts
  */
-import { ref } from "vue"
-
-// ============================================================
-// 类型定义
-// ============================================================
+import type { EverythingSearchResult as _EverythingSearchResult } from "../api"
 
 export type {
+  /** Everything 服务连接配置 */
   EverythingConfig,
+  /** Everything HTTP API 搜索参数 */
   EverythingSearchOptions,
+  /** Everything 搜索结果项 */
   EverythingSearchResult,
 } from "../api"
 
@@ -45,41 +45,9 @@ export interface SearchState {
   /** 状态 */
   status: SearchStatus
   /** 结果列表 */
-  results: any[]
+  results: _EverythingSearchResult[]
   /** 错误信息 */
   errorMessage: string
   /** 是否已搜索过 */
   hasSearched: boolean
-}
-
-// ============================================================
-// 全局状态
-// ============================================================
-
-/** 弹窗显示状态 */
-export const everythingSearchVisible = ref(false)
-
-// ============================================================
-// 注册函数
-// ============================================================
-
-/**
- * 显示Everything搜索弹窗
- */
-export function showEverythingSearch() {
-  everythingSearchVisible.value = true
-}
-
-/**
- * 隐藏Everything搜索弹窗
- */
-export function hideEverythingSearch() {
-  everythingSearchVisible.value = false
-}
-
-/**
- * 切换Everything搜索弹窗显示状态
- */
-export function toggleEverythingSearch() {
-  everythingSearchVisible.value = !everythingSearchVisible.value
 }

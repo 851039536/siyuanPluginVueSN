@@ -74,6 +74,7 @@ import { computed } from "vue"
 import {
   formatFileSize,
   getFileIconType,
+  getFullPath,
 } from "../api"
 
 interface Props {
@@ -93,11 +94,7 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 /** 完整路径 */
-const fullPath = computed(() => {
-  return props.item.path
-    ? `${props.item.path}\\${props.item.name}`
-    : props.item.name
-})
+const fullPath = computed(() => getFullPath(props.item))
 
 /** 格式化大小 */
 const formattedSize = computed(() => formatFileSize(props.item.size))

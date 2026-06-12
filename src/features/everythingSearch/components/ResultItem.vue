@@ -1,68 +1,55 @@
 <template>
   <div
-    class="result-item"
+    class="vp-result-item"
     @click="handleClick"
     @dblclick="handleDblClick"
   >
-    <!-- 图标 -->
-    <div
-      class="item-icon"
-      :class="iconClass"
-      :aria-label="item.type"
-    >
+    <!-- 类型图标 -->
+    <div class="vp-result-item__icon" :class="iconClass">
       {{ iconEmoji }}
     </div>
 
     <!-- 文件信息 -->
-    <div class="item-info">
-      <div
-        class="item-name"
-        :title="item.name"
-      >
+    <div class="vp-result-item__info">
+      <div class="vp-result-item__name" :title="item.name">
         {{ item.name }}
       </div>
-      <div
-        class="item-path"
-        :title="fullPath"
-      >
+      <div class="vp-result-item__path" :title="fullPath">
         {{ item.path }}
       </div>
     </div>
 
     <!-- 元数据 -->
-    <div class="item-meta">
-      <span
-        v-if="item.type === 'file'"
-        class="item-size"
-      >{{ formattedSize }}</span>
-      <span class="item-date">{{ item.dateModified }}</span>
+    <div class="vp-result-item__meta">
+      <span v-if="item.type === 'file'" class="vp-result-item__size">{{ formattedSize }}</span>
+      <span class="vp-result-item__date">{{ item.dateModified }}</span>
     </div>
 
     <!-- 操作按钮 -->
-    <div class="item-actions">
+    <div class="vp-result-item__actions">
       <button
-        class="action-btn"
+        class="vp-result-item__action"
         :title="openButtonTitle"
         :aria-label="openButtonTitle"
         @click.stop="handleOpen"
       >
-        <svg class="action-icon"><use xlink:href="#iconOpen"></use></svg>
+        <svg><use xlink:href="#iconOpen" /></svg>
       </button>
       <button
-        class="action-btn"
+        class="vp-result-item__action"
         title="在资源管理器中显示"
         aria-label="在资源管理器中显示"
         @click.stop="handleShowInFolder"
       >
-        <svg class="action-icon"><use xlink:href="#iconFolder"></use></svg>
+        <svg><use xlink:href="#iconFolder" /></svg>
       </button>
       <button
-        class="action-btn"
+        class="vp-result-item__action"
         title="复制路径"
         aria-label="复制路径"
         @click.stop="handleCopyPath"
       >
-        <svg class="action-icon"><use xlink:href="#iconCopy"></use></svg>
+        <svg><use xlink:href="#iconCopy" /></svg>
       </button>
     </div>
   </div>
@@ -78,7 +65,6 @@ import {
 } from "../api"
 
 interface Props {
-  /** 搜索结果项 */
   item: EverythingSearchResult
 }
 
@@ -93,172 +79,154 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-/** 完整路径 */
 const fullPath = computed(() => getFullPath(props.item))
-
-/** 格式化大小 */
 const formattedSize = computed(() => formatFileSize(props.item.size))
 
-/** 图标类 */
 const iconClass = computed(
-  () =>
-    `icon-${getFileIconType(props.item.name, props.item.type === "folder")}`,
+  () => `vp-result-item__icon--${getFileIconType(props.item.name, props.item.type === "folder")}`,
 )
 
-/** 图标 emoji */
 const iconEmoji = computed(() => {
   if (props.item.type === "folder") return "📁"
-
   const iconType = getFileIconType(props.item.name, false)
   const emojiMap: Record<string, string> = {
-    pdf: "📕",
-    word: "📘",
-    excel: "📗",
-    ppt: "📙",
-    text: "📄",
-    markdown: "📝",
-    image: "🖼️",
-    video: "🎬",
-    audio: "🎵",
-    archive: "📦",
-    code: "💻",
-    executable: "⚙️",
-    siyuan: "📔",
-    file: "📄",
+    pdf: "📕", word: "📘", excel: "📗", ppt: "📙",
+    text: "📄", markdown: "📝",
+    image: "🖼️", video: "🎬", audio: "🎵",
+    archive: "📦", code: "💻", executable: "⚙️",
+    siyuan: "📔", file: "📄",
   }
   return emojiMap[iconType] || "📄"
 })
 
-/** 打开按钮标题 */
-const openButtonTitle = computed(() => {
-  return props.item.type === "folder" ? "打开文件夹" : "打开文件"
-})
+const openButtonTitle = computed(() =>
+  props.item.type === "folder" ? "打开文件夹" : "打开文件",
+)
 
-/** 处理点击 */
-const handleClick = () => {
-  emit("click", props.item)
-}
-
-/** 处理双击 */
-const handleDblClick = () => {
-  emit("dblClick", props.item)
-}
-
-/** 处理打开 */
-const handleOpen = () => {
-  emit("open", props.item)
-}
-
-/** 处理在文件夹中显示 */
-const handleShowInFolder = () => {
-  emit("showInFolder", props.item)
-}
-
-/** 处理复制路径 */
-const handleCopyPath = () => {
-  emit("copyPath", props.item)
-}
+const handleClick = () => emit("click", props.item)
+const handleDblClick = () => emit("dblClick", props.item)
+const handleOpen = () => emit("open", props.item)
+const handleShowInFolder = () => emit("showInFolder", props.item)
+const handleCopyPath = () => emit("copyPath", props.item)
 </script>
 
 <style scoped lang="scss">
 @use "@/variables" as *;
 
-.result-item {
+$vp-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+
+.vp-result-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 16px;
+  gap: 10px;
+  padding: 7px 16px;
   border-bottom: 1px solid var(--b3-border-color);
   cursor: pointer;
-}
 
-.result-item:hover {
-  background: rgba(217, 119, 87, 0.06);
-}
+  &:hover {
+    background: rgba(201, 122, 93, 0.06);
 
-.result-item:hover .item-actions {
-  opacity: 1;
-}
+    .vp-result-item__actions {
+      opacity: 1;
+    }
+  }
 
-.item-icon {
-  width: 26px;
-  height: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  flex-shrink: 0;
-}
+  // 类型图标 — Codex 边框格子
+  &__icon {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    border: 1px solid var(--b3-border-color);
+    border-radius: 4px;
+    background: var(--b3-theme-surface);
+  }
 
-.item-info {
-  flex: 1;
-  min-width: 0;
-}
+  &__info {
+    flex: 1;
+    min-width: 0;
+  }
 
-.item-name {
-  font-size: 12px;
-  font-weight: 500;
-  font-family: $font-heading;
-  color: var(--b3-theme-on-background);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+  // 文件名 — 中等权重 + 普通字体（非等宽，避免中文文件名阅读困难）
+  &__name {
+    font-size: 12px;
+    font-weight: 600;
+    font-family: $font-heading;
+    color: var(--b3-theme-on-background);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
-.item-path {
-  font-size: 10px;
-  font-family: $font-body;
-  color: $brand-mid-gray;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-top: 1px;
-}
+  // 路径 — Codex 等宽字体
+  &__path {
+    font-size: 10px;
+    font-family: $vp-mono;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.45;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+  }
 
-.item-meta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 1px;
-  flex-shrink: 0;
-}
+  // 元数据 — Codex 等宽字体
+  &__meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    flex-shrink: 0;
+  }
 
-.item-size {
-  font-size: 10px;
-  font-family: $font-body;
-  color: var(--b3-theme-on-surface);
-  font-weight: 500;
-}
+  &__size {
+    font-size: 10px;
+    font-weight: 600;
+    font-family: $vp-mono;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.6;
+  }
 
-.item-date {
-  font-size: 9px;
-  font-family: $font-body;
-  color: $brand-mid-gray;
-}
+  &__date {
+    font-size: 9px;
+    font-family: $vp-mono;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.4;
+  }
 
-.item-actions {
-  display: flex;
-  gap: 3px;
-  opacity: 0;
-}
+  // 操作按钮 — hover 显示
+  &__actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+  }
 
-.action-btn {
-  padding: 4px;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
-  border-radius: 3px;
-  cursor: pointer;
-  color: var(--b3-theme-on-surface);
-}
+  &__action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background: var(--b3-theme-surface);
+    border: 1px solid var(--b3-border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--b3-theme-on-surface);
 
-.action-btn:hover {
-  background: $brand-orange;
-  border-color: $brand-orange;
-  color: $brand-light;
-}
+    svg {
+      width: 12px;
+      height: 12px;
+    }
 
-.action-icon {
-  width: 11px;
-  height: 11px;
+    &:hover {
+      background: $brand-orange;
+      border-color: $brand-orange;
+      color: $brand-light;
+    }
+  }
 }
 </style>

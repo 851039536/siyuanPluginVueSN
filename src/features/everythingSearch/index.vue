@@ -2,12 +2,12 @@
   <Teleport to="body">
     <div
       v-if="visible"
-      class="everything-search-overlay"
+      class="vp-overlay"
       @click.self="closeDialog"
     >
       <div
         v-if="visible"
-        class="everything-search-dialog"
+        class="vp-dialog"
       >
         <!-- 头部 -->
         <DialogHeader @close="closeDialog" />

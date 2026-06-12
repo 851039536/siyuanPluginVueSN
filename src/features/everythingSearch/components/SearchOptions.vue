@@ -1,115 +1,110 @@
 <template>
-  <div class="search-options">
-    <!-- 自动搜索选项 -->
-    <div class="option-item">
+  <div class="vp-options">
+    <!-- 自动搜索 -->
+    <label class="vp-options__item">
       <Switch
         :model-value="options.autoSearch"
         size="small"
         label="自动搜索"
         @update:model-value="updateOption('autoSearch', $event)"
       />
-    </div>
+    </label>
 
     <!-- 区分大小写 -->
-    <div class="option-item">
+    <label class="vp-options__item">
       <Switch
         :model-value="options.matchCase"
         size="small"
         label="区分大小写"
         @update:model-value="updateOption('matchCase', $event)"
       />
-    </div>
+    </label>
 
     <!-- 全词匹配 -->
-    <div class="option-item">
+    <label class="vp-options__item">
       <Switch
         :model-value="options.matchWholeWord"
         size="small"
         label="全词匹配"
         @update:model-value="updateOption('matchWholeWord', $event)"
       />
-    </div>
+    </label>
 
     <!-- 匹配路径 -->
-    <div class="option-item">
+    <label class="vp-options__item">
       <Switch
         :model-value="options.matchPath"
         size="small"
         label="匹配路径"
         @update:model-value="updateOption('matchPath', $event)"
       />
-    </div>
+    </label>
 
-    <!-- 正则表达式 -->
-    <div class="option-item">
+    <!-- 正则 -->
+    <label class="vp-options__item">
       <Switch
         :model-value="options.regex"
         size="small"
-        label="正则表达式"
+        label="正则"
         @update:model-value="updateOption('regex', $event)"
       />
-    </div>
+    </label>
 
-    <!-- 最大结果数 -->
-    <div class="option-item select-option">
-      <span class="option-label">最大结果:</span>
-      <Select
-        :model-value="options.maxResults"
-        :options="maxResultsOptions"
-        size="small"
-        @update:model-value="updateOption('maxResults', $event as number)"
-      />
-    </div>
+    <!-- 配置选单组 -->
+    <div class="vp-options__group">
+      <div class="vp-options__item vp-options__item--select">
+        <span class="vp-options__key">数量</span>
+        <Select
+          :model-value="options.maxResults"
+          :options="maxResultsOptions"
+          size="small"
+          @update:model-value="updateOption('maxResults', $event as number)"
+        />
+      </div>
 
-    <!-- 防抖延迟（仅自动搜索时显示） -->
-    <div
-      v-if="options.autoSearch"
-      class="option-item select-option debounce-delay"
-    >
-      <span class="option-label">延迟:</span>
-      <Select
-        :model-value="options.debounceDelay"
-        :options="debounceOptions"
-        size="small"
-        @update:model-value="updateOption('debounceDelay', $event as number)"
-      />
-    </div>
+      <div v-if="options.autoSearch" class="vp-options__item vp-options__item--select">
+        <span class="vp-options__key">延迟</span>
+        <Select
+          :model-value="options.debounceDelay"
+          :options="debounceOptions"
+          size="small"
+          @update:model-value="updateOption('debounceDelay', $event as number)"
+        />
+      </div>
 
-    <!-- 排序选项 -->
-    <div class="option-item select-option sort-option">
-      <span class="option-label">排序:</span>
-      <Select
-        :model-value="options.sort"
-        :options="sortOptions"
-        size="small"
-        @update:model-value="updateOption('sort', $event as string)"
-      />
-      <Switch
-        :model-value="options.ascending"
-        size="small"
-        label="升序"
-        @update:model-value="updateOption('ascending', $event)"
-      />
-    </div>
+      <div class="vp-options__item vp-options__item--select">
+        <span class="vp-options__key">排序</span>
+        <Select
+          :model-value="options.sort"
+          :options="sortOptions"
+          size="small"
+          @update:model-value="updateOption('sort', $event as string)"
+        />
+        <Switch
+          :model-value="options.ascending"
+          size="small"
+          label="↑"
+          @update:model-value="updateOption('ascending', $event)"
+        />
+      </div>
 
-    <!-- 盘符过滤 -->
-    <div class="option-item select-option drive-filter">
-      <span class="option-label">盘符:</span>
-      <Select
-        :model-value="options.selectedDrive"
-        :options="driveOptions"
-        size="small"
-        @update:model-value="handleDriveChange"
-      />
-      <Button
-        variant="ghost"
-        size="small"
-        icon="refresh"
-        :icon-size="12"
-        title="刷新盘符列表"
-        aria-label="刷新盘符列表"
-        @click="handleRefreshDrives"
-      />
+      <div class="vp-options__item vp-options__item--select">
+        <span class="vp-options__key">盘符</span>
+        <Select
+          :model-value="options.selectedDrive"
+          :options="driveOptions"
+          size="small"
+          @update:model-value="handleDriveChange"
+        />
+        <button
+          class="vp-options__refresh"
+          title="刷新盘符列表"
+          aria-label="刷新盘符列表"
+          @click="handleRefreshDrives"
+        >
+          ↻
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -117,7 +112,6 @@
 <script setup lang="ts">
 import type { SearchOptions } from "../types"
 import { computed } from "vue"
-import Button from "@/components/Button.vue"
 import Select from "@/components/Select.vue"
 import Switch from "@/components/Switch.vue"
 
@@ -143,66 +137,30 @@ const emit = defineEmits<Emits>()
 
 /** 最大结果选项 */
 const maxResultsOptions = computed(() => [
-  {
-    value: 50,
-    label: "50",
-  },
-  {
-    value: 100,
-    label: "100",
-  },
-  {
-    value: 200,
-    label: "200",
-  },
-  {
-    value: 500,
-    label: "500",
-  },
+  { value: 50, label: "50" },
+  { value: 100, label: "100" },
+  { value: 200, label: "200" },
+  { value: 500, label: "500" },
 ])
 
 /** 防抖延迟选项 */
 const debounceOptions = computed(() => [
-  {
-    value: 200,
-    label: "200ms",
-  },
-  {
-    value: 500,
-    label: "500ms",
-  },
-  {
-    value: 1000,
-    label: "1s",
-  },
+  { value: 200, label: "200ms" },
+  { value: 500, label: "500ms" },
+  { value: 1000, label: "1s" },
 ])
 
 /** 排序选项 */
 const sortOptions = computed(() => [
-  {
-    value: "date_modified",
-    label: "修改时间",
-  },
-  {
-    value: "name",
-    label: "名称",
-  },
-  {
-    value: "path",
-    label: "路径",
-  },
-  {
-    value: "size",
-    label: "大小",
-  },
+  { value: "date_modified", label: "修改时间" },
+  { value: "name", label: "名称" },
+  { value: "path", label: "路径" },
+  { value: "size", label: "大小" },
 ])
 
 /** 盘符选项 */
 const driveOptions = computed(() => [
-  {
-    value: "",
-    label: "所有盘符",
-  },
+  { value: "", label: "全部" },
   ...props.availableDrives.map((drive) => ({
     value: drive,
     label: drive,
@@ -231,30 +189,65 @@ const handleRefreshDrives = () => {
 <style scoped lang="scss">
 @use "@/variables" as *;
 
-.search-options {
+$vp-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+
+.vp-options {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  padding: 8px 16px;
-  background: var(--b3-theme-surface-light);
-  border-bottom: 1px solid var(--b3-border-color);
-}
-
-.option-item {
-  display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  font-family: $font-body;
-  color: var(--b3-theme-on-surface);
-}
+  gap: 8px 12px;
+  padding: 6px 16px;
+  background: var(--b3-theme-surface-light);
+  border-bottom: 1px dashed var(--b3-border-color);
 
-.option-label {
-  white-space: nowrap;
-  font-size: 12px;
-}
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
 
-.debounce-delay {
-  margin-left: 4px;
+    &--select {
+      gap: 6px;
+    }
+  }
+
+  &__group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    padding-top: 4px;
+    padding-left: 8px;
+    border-left: 1px solid var(--b3-border-color);
+    margin-left: 4px;
+  }
+
+  &__key {
+    font-size: 11px;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.5;
+    white-space: nowrap;
+  }
+
+  &__refresh {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: transparent;
+    border: 1px solid var(--b3-border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--b3-theme-on-surface);
+    font-size: 13px;
+    opacity: 0.5;
+
+    &:hover {
+      opacity: 1;
+      border-color: var(--b3-theme-primary);
+      color: var(--b3-theme-primary);
+    }
+  }
 }
 </style>

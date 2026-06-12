@@ -1,16 +1,19 @@
 /**
- * Everything本地搜索功能样式
- * 使用思源主题变量
+ * Everything 本地搜索 — Codex 风格
+ * 代码文档式设计语言：等宽字体、大写标签、边框卡片、分割线
  */
 
+// Codex 字体栈（对齐 superPanel 规范）
+$vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
+
 // 遮罩层
-.everything-search-overlay {
+.vp-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(20, 20, 19, 0.6);
+  background: rgba(20, 20, 19, 0.55);
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -20,15 +23,15 @@
 }
 
 // 主对话框
-.everything-search-dialog {
+.vp-dialog {
   width: 800px;
   max-width: 90vw;
   max-height: 80vh;
   background: var(--b3-theme-background);
-  border-radius: 10px;
-  box-shadow: 0 20px 60px rgba(20, 20, 19, 0.35);
+  border-radius: 8px;
+  border: 1px solid var(--b3-border-color);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid var(--b3-border-color);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
 }

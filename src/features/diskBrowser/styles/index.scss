@@ -1,3 +1,5 @@
+@use "@/index.scss" as *;
+
 // ==================== Codex Variables ====================
 $mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 $radius: 6px;
@@ -76,6 +78,23 @@ $border: var(--b3-border-color);
 
 @mixin contain-layout {
   contain: layout style;
+}
+
+/// 缓存标签基础样式（共享于 PanelHeader + FolderList）
+@mixin cache-tag-base {
+  font-family: $mono;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  padding: 2px 8px;
+  background: var(--b3-theme-primary-lightest);
+  border-radius: 3px;
+
+  &.expired {
+    color: var(--b3-theme-error);
+    background: rgba(var(--b3-theme-error-rgb, 220, 38, 38), 0.08);
+  }
 }
 
 // ==================== Base Styles ====================

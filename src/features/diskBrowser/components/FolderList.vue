@@ -52,7 +52,7 @@
           icon="contentCopy"
           :icon-size="13"
           :title="i18n.copyPath || '复制路径'"
-          @click="$emit('copy-path', currentPath || expandedDisk)"
+          @click="$emit('copyPath', currentPath || expandedDisk)"
         />
       </div>
     </div>
@@ -66,7 +66,7 @@
         :key="item.path"
         class="folder-item"
         :class="{ 'is-file': item.isFile }"
-        @dblclick="$emit('item-dblclick', item)"
+        @dblclick="$emit('itemDblclick', item)"
       >
         <div class="folder-icon">
           <IconWrapper
@@ -105,7 +105,7 @@
             class="folder-action-btn favorite-btn"
             :class="{ 'is-favorite': isFavorite(item.path) }"
             :title="isFavorite(item.path) ? (i18n.removeFavorite || '取消收藏') : (i18n.addFavorite || '添加收藏')"
-            @click.stop="$emit('toggle-favorite', item.path)"
+            @click.stop="$emit('toggleFavorite', item.path)"
           />
           <Button
             v-if="!item.isFile"
@@ -133,7 +133,7 @@
             :icon-size="13"
             class="folder-action-btn"
             :title="i18n.copyPath || '复制路径'"
-            @click.stop="$emit('copy-path', item.path)"
+            @click.stop="$emit('copyPath', item.path)"
           />
         </div>
       </div>
@@ -186,9 +186,9 @@ defineEmits<{
   "back": []
   "refresh": []
   "open": [path: string]
-  "copy-path": [path: string]
-  "item-dblclick": [item: FolderInfo]
-  "toggle-favorite": [path: string]
+  "copyPath": [path: string]
+  "itemDblclick": [item: FolderInfo]
+  "toggleFavorite": [path: string]
   "navigate": [item: FolderInfo]
 }>()
 
@@ -251,19 +251,9 @@ function isFavorite(path: string): boolean {
 }
 
 .cache-tag-small {
-  font-family: $mono;
-  font-size: 10px;
-  font-weight: 600;
   color: var(--b3-theme-primary);
   padding: 1px 6px;
-  background: var(--b3-theme-primary-lightest);
-  border-radius: 3px;
-  white-space: nowrap;
-
-  &.expired {
-    color: var(--b3-theme-error);
-    background: rgba(var(--b3-theme-error-rgb, 220, 38, 38), 0.08);
-  }
+  @include cache-tag-base;
 }
 
 .folder-items {

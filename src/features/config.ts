@@ -285,6 +285,11 @@ export const FEATURE_CONFIG = [
     defaultTitle: "数据快照",
     defaultDesc: "创建、比较、查看和上传数据快照",
   },
+  {
+    id: "gitPush",
+    defaultTitle: "Git 推送",
+    defaultDesc: "同时推送项目到 GitHub 和 Gitee，持久化项目路径映射",
+  },
 ] as const
 
 /**

@@ -259,6 +259,11 @@ export const FEATURE_ICONS = {
     icon: "mdi:camera-marker",
     color: "#0ea5e9",
   },
+  // Git 推送
+  gitPush: {
+    icon: "mdi:source-repository",
+    color: "#f05032",
+  },
 } as const
 
 /**

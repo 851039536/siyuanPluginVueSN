@@ -1564,6 +1564,8 @@
   "enableArticleCoverDesc": "AI 文章封面生成器，支持多种风格和尺寸",
   "enableDataSnapshot": "启用数据快照功能",
   "enableDataSnapshotDesc": "创建、比较、查看和上传数据快照，支持本地历史管理与云端同步",
+  "enableGitPush": "启用 Git 推送功能",
+  "enableGitPushDesc": "同时推送项目到 GitHub 和 Gitee，持久化项目路径映射",
   "dataSnapshot": {
     "title": "数据快照",
     "description": "创建、比较、查看和上传数据快照",
@@ -1617,5 +1619,25 @@
     "diffModified": "修改",
     "noChanges": "无变更",
     "cloudNotConfigured": "未配置云同步服务"
+  },
+  "gitPush": {
+    "panelTitle": "Git 推送",
+    "title": "Git 推送",
+    "addProject": "添加项目",
+    "loading": "加载中...",
+    "noProjects": "暂无项目，点击上方添加",
+    "notDetected": "未检测到",
+    "pushBoth": "推送到 GitHub + Gitee",
+    "pushing": "推送中...",
+    "projectName": "项目名称",
+    "namePlaceholder": "输入项目名称...",
+    "projectPath": "项目路径",
+    "pathPlaceholder": "选择或输入项目路径...",
+    "cancel": "取消",
+    "add": "添加",
+    "checkingGit": "正在检查 git 仓库...",
+    "gitRepoDetected": "✅ 已检测到 git 仓库",
+    "notGitRepo": "❌ 未检测到 git 仓库，将仅记录路径",
+    "refreshRemotes": "重新检测远程仓库"
   }
 }

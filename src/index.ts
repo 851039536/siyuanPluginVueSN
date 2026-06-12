@@ -42,6 +42,7 @@ import {
   registerFloatingToolbar,
   registerFormatAssistant,
   registerGeneralSettings,
+  registerGitPush,
   registerHtmlViewer,
   registerImageCompressor,
   registerPageLock,
@@ -219,6 +220,11 @@ export default class PluginSample extends Plugin {
       (this as any).__scriptLauncher.destroy()
     }
 
+    // 清理 Git 推送资源
+    if ((this as any).__gitPush) {
+      (this as any).__gitPush.destroy()
+    }
+
     // 清理统计数据资源
     getStatisticsInstance()?.destroy()
 
@@ -273,6 +279,7 @@ export default class PluginSample extends Plugin {
     if (s.enableWebsiteNavigation) registerWebsiteNavigation(this)
     if (s.enableScriptLauncher) registerScriptLauncher(this)
     if (s.enableDataSnapshot) registerDataSnapshot(this)
+    if (s.enableGitPush) registerGitPush(this)
   }
 
   /**

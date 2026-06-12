@@ -1,7 +1,7 @@
 <template>
-  <div class="dialog-footer">
-    <div class="config-section">
-      <span class="config-label">服务地址:</span>
+  <div class="vp-footer">
+    <div class="vp-footer__config">
+      <span class="vp-footer__key">地址</span>
       <Input
         :model-value="config.host"
         type="text"
@@ -10,7 +10,7 @@
         aria-label="服务地址"
         @update:model-value="updateConfig('host', $event as string)"
       />
-      <span class="config-label">端口:</span>
+      <span class="vp-footer__key">端口</span>
       <Input
         :model-value="config.port"
         type="number"
@@ -20,8 +20,11 @@
         @update:model-value="updateConfig('port', Number($event))"
       />
     </div>
-    <div class="footer-actions">
-      <span class="shortcut-hint">{{ shortcutHint }}</span>
+    <div class="vp-footer__hints">
+      <span class="vp-footer__kbd">ESC</span>
+      <span class="vp-footer__sep">关闭</span>
+      <span class="vp-footer__kbd">ENTER</span>
+      <span class="vp-footer__sep">搜索</span>
     </div>
   </div>
 </template>
@@ -33,8 +36,6 @@ import Input from "@/components/Input.vue"
 interface Props {
   /** 配置 */
   config: EverythingConfig
-  /** 快捷键提示文本 */
-  shortcutHint?: string
 }
 
 interface Emits {
@@ -45,9 +46,7 @@ interface Emits {
   ): void
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  shortcutHint: "Esc 关闭 | Enter 搜索",
-})
+defineProps<Props>()
 
 const emit = defineEmits<Emits>()
 
@@ -63,36 +62,52 @@ const updateConfig = (
 <style scoped lang="scss">
 @use "@/variables" as *;
 
-.dialog-footer {
+$vp-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+
+.vp-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 16px;
+  padding: 6px 16px;
   background: var(--b3-theme-surface);
   border-top: 1px solid var(--b3-border-color);
-}
 
-.config-section {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
+  &__config {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
 
-.config-label {
-  font-size: 10px;
-  font-family: $font-body;
-  color: $brand-mid-gray;
-  white-space: nowrap;
-}
+  &__key {
+    font-size: 11px;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.5;
+    white-space: nowrap;
+  }
 
-.footer-actions {
-  display: flex;
-  align-items: center;
-}
+  &__hints {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
 
-.shortcut-hint {
-  font-size: 10px;
-  font-family: $font-body;
-  color: $brand-mid-gray;
+  &__kbd {
+    font-size: 9px;
+    font-weight: 700;
+    font-family: $vp-mono;
+    letter-spacing: 0.06em;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.5;
+    padding: 1px 5px;
+    border: 1px solid var(--b3-border-color);
+    border-radius: 3px;
+  }
+
+  &__sep {
+    font-size: 10px;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.3;
+    margin: 0 2px;
+  }
 }
 </style>

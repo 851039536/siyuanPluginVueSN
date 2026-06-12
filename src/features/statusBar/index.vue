@@ -101,6 +101,7 @@ import { PluginStorage } from "@/utils/pluginStorage"
 import { showPasswordVault } from "../passwordVault/types"
 import { showSkillsViewer } from "../skillsViewer/types"
 import { showArticleCover } from "../articleCover"
+import { showEverythingSearch } from "../everythingSearch"
 import { showWebsiteNavigation } from "../websiteNavigation/types"
 import FeatureDrawer from "./components/FeatureDrawer.vue"
 import MonitorItem from "./components/MonitorItem.vue"
@@ -194,6 +195,13 @@ const featureDrawerItems: FeatureDrawerItem[] = [
     title: props.plugin?.i18n?.dataBackup || "数据备份",
     pinnable: true,
   },
+  {
+    id: "everythingSearch",
+    icon: "ph:binoculars",
+    color: "#d97706",
+    title: "Everything 搜索",
+    pinnable: true,
+  },
 ]
 
 interface ShortcutDisplay {
@@ -260,6 +268,13 @@ const SHORTCUT_DISPLAY: Record<string, ShortcutDisplay> = {
     title: props.plugin?.i18n?.dataBackup || "数据备份",
     itemClass: "action-item data-backup-item",
     handler: () => emitCustomEvent("openDataBackup"),
+  },
+  everythingSearch: {
+    id: "everythingSearch",
+    icon: "ph:binoculars",
+    title: "Everything 搜索",
+    itemClass: "action-item everything-search-item",
+    handler: () => showEverythingSearch(),
   },
 }
 

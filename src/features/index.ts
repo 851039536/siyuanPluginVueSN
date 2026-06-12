@@ -25,6 +25,7 @@ export {
   everythingSearchVisible,
   hideEverythingSearch,
   registerEverythingSearch,
+  showEverythingSearch,
 } from "./everythingSearch"
 export { registerFlashcardReading } from "./flashcardReading"
 export { registerFloatingBox } from "./floatingBox"

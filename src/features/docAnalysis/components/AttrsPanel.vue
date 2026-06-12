@@ -132,7 +132,7 @@
                   v-if="item.value && COPYABLE_KEYS.has(item.key)"
                   class="attr-copy-btn"
                   title="复制值"
-                  @click="copyAttrValue(item.value)"
+                  @click="copyToClipboard(item.value)"
                 >
                   <Icon icon="mdi:content-copy" />
                 </button>
@@ -371,10 +371,6 @@ const platforms = computed<PlatformInfo[]>(() => {
 
 const COPYABLE_KEYS = new Set(["id", "title", "alias", "memo", "bookmark"])
 
-async function copyAttrValue(value: string) {
-  await copyToClipboard(value)
-}
-
 const ATTR_LABELS: Record<string, string> = {
   id: "ID",
   type: "类型",
@@ -416,7 +412,6 @@ const displayItems = computed<DisplayItem[]>(() => {
       const platformName = key
         .replace(/^custom-/, "")
         .replace(/-yaml$/, "")
-        .replace(/^custom-/, "")
       label = `${platformName} 配置`
     }
     else if (ATTR_LABELS[key]) {

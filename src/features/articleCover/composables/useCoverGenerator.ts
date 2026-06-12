@@ -110,7 +110,8 @@ export const COVER_STYLE_REGISTRY: StyleDefinition[] = [
     ${_tagCommon("minimal")}
     .tag:nth-child(5n+5) { border-style:dashed; }
     .category-badge { background:transparent !important; color:${c.accent} !important; border:1.5px solid ${c.accent}60; border-radius:4px !important; font-weight:500; }
-    .title-sep { border-top-style:solid; border-top-color:${c.accent}18; width:60px; }`
+    .title-sep { border-top-style:solid; border-top-color:${c.accent}18; width:60px; }
+    .subtitle-line { color:${c.subtitleColor}; opacity:0.45; letter-spacing:2px; }`
     },
   },
   {
@@ -210,7 +211,8 @@ export const COVER_STYLE_REGISTRY: StyleDefinition[] = [
     ${_tagCommon("drawio")}
     ${_tagColored("drawio", c)}
     .category-badge { background:${c.accent} !important; color:#fff !important; border-radius:3px !important; font-family:"SF Mono","Consolas",monospace; letter-spacing:1px; }
-    .title-sep { border-top-style:solid; border-top-color:${c.accent}30; width:90px; height:1px; border-top-width:1px; }`
+    .title-sep { border-top-style:solid; border-top-color:${c.accent}30; width:90px; height:1px; border-top-width:1px; }
+    .decor-dims { position:absolute; top:24px; right:24px; font-family:"SF Mono","Consolas",monospace; font-size:11px; color:${c.accent}30; letter-spacing:1px; }`
     },
   },
   {
@@ -272,8 +274,19 @@ function buildCoverHtml(config: CoverGenerationConfig): string {
   const titleText = config.title?.trim() || "无标题"
 
   // 分类挂饰
-  const categoryBadge = config.category?.trim()
-    ? `\n    <span class="category-badge">${config.category.trim()}</span>`
+  const categoryText = config.category?.trim() || ""
+  const categoryBadge = categoryText
+    ? `\n    <span class="category-badge">${categoryText}</span>`
+    : ""
+
+  // 副标题行（minimal 风格专属：标题与分隔线之间的淡色过渡）
+  const subtitleLine = (categoryText && style.id === "minimal")
+    ? `\n    <div class="subtitle-line">${categoryText}</div>`
+    : ""
+
+  // 蓝图尺寸标注（drawio 风格专属）
+  const dimsAnnotation = style.id === "drawio"
+    ? `<div class="decor-dims">${config.width} × ${config.height}</div>`
     : ""
 
   // 关键字标签
@@ -320,6 +333,12 @@ function buildCoverHtml(config: CoverGenerationConfig): string {
     margin: 18px auto 0 auto;
     border-top: 2px dashed ${c.accent}30;
   }
+  .subtitle-line {
+    margin-top: 16px;
+    font-size: ${Math.max(16, subtitleSize - 4)}px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
   .tags {
     margin-top: 18px; display: flex; flex-wrap: wrap; justify-content: center;
     max-width: 90%; gap: 6px;
@@ -340,12 +359,12 @@ function buildCoverHtml(config: CoverGenerationConfig): string {
 </style>
 </head>
 <body>
-  <div class="decor-layer">${style.decorHtml}</div>
+  <div class="decor-layer">${style.decorHtml}${dimsAnnotation}</div>
   <div class="content">
     <div class="title-row">
       <h1>${titleText}</h1>${categoryBadge}
     </div>
-    <div class="title-sep"></div>${tagsBlock}
+    <div class="title-sep"></div>${subtitleLine}${tagsBlock}
   </div>
   <span class="watermark">${config.watermark || ""}</span>
 </body>

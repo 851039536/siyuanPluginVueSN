@@ -117,7 +117,8 @@
         v-show="activeTab === 'notebookDistribution'"
         class="notebook-distribution-tab"
       >
-        <section class="dist-section">
+        <!-- 左侧：文档数条形图（全高） -->
+        <section class="dist-section dist-left">
           <DocBarChart
             :title="i18n.docBarChartTitle"
             :chart-data="notebookDocStats"
@@ -126,7 +127,8 @@
           />
         </section>
 
-        <section class="dist-section">
+        <!-- 右侧上：块类型分布 -->
+        <section class="dist-section dist-right-top">
           <DocBarChart
             :title="i18n.blockTypeStats"
             :chart-data="stats.blockTypeStats.map(item => ({
@@ -137,21 +139,23 @@
           />
         </section>
 
-        <section class="dist-section">
-          <h3 class="dist-section-title">
-            {{ i18n.notebookBlockTypeTitle }}
-          </h3>
-          <NotebookBlockTypeChart
-            :data="notebookBlockTypeStats"
-          />
-        </section>
-
-        <section class="dist-section">
+        <!-- 右侧下：饼图 -->
+        <section class="dist-section dist-right-bottom">
           <h3 class="dist-section-title">
             {{ i18n.notebookWordPie }}
           </h3>
           <NotebookWordPie
             :data="notebookWordStats"
+          />
+        </section>
+
+        <!-- 底部全宽：堆叠条形图 -->
+        <section class="dist-section dist-bottom">
+          <h3 class="dist-section-title">
+            {{ i18n.notebookBlockTypeTitle }}
+          </h3>
+          <NotebookBlockTypeChart
+            :data="notebookBlockTypeStats"
           />
         </section>
       </div>
@@ -666,11 +670,35 @@ defineExpose({
 .notebook-distribution-tab {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr auto auto;
   gap: 12px;
   align-items: stretch;
 }
 
+.dist-left {
+  grid-row: 1 / 3;
+  grid-column: 1;
+}
+
+.dist-right-top {
+  grid-row: 1;
+  grid-column: 2;
+}
+
+.dist-right-bottom {
+  grid-row: 2;
+  grid-column: 2;
+}
+
+.dist-bottom {
+  grid-row: 3;
+  grid-column: 1 / -1;
+}
+
 .dist-section {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
   border-radius: 4px;

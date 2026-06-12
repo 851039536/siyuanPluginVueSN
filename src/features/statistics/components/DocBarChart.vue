@@ -112,6 +112,10 @@ function getBarWidth(count: number): string {
 @use "../styles/index.scss" as stats;
 
 .doc-bar-chart-section {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+
   .loading-wrapper {
     position: relative;
     height: 100px;
@@ -131,7 +135,8 @@ function getBarWidth(count: number): string {
     display: flex;
     flex-direction: column;
     gap: 3px;
-    max-height: 320px;
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
     @include scrollbar-thin;
 

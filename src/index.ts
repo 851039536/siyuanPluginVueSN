@@ -6,6 +6,8 @@ import {
 
 import PluginInfoString from "@/../plugin.json"
 
+import { setupIconifyOffline } from "@/utils/iconifySetup"
+
 import {
   destroyCommands,
   initCommands,
@@ -94,6 +96,8 @@ export default class PluginSample extends Plugin {
   public settings: PluginSettings
 
   onload() {
+    setupIconifyOffline() // 预加载 mdi + ph 图标数据，确保断网可用
+
     const frontEnd = getFrontend()
     this.platform = frontEnd as SyFrontendTypes
     this.isMobile = frontEnd === "mobile" || frontEnd === "browser-mobile"

@@ -27,7 +27,8 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
   z-index: 100001;
   display: flex;
   align-items: center;
@@ -43,8 +44,27 @@
   max-height: 800px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgb(from var(--b3-theme-primary) r g b / 0.06);
   overflow: hidden;
+  // 顶部细条点缀
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--b3-theme-primary) 20%,
+      var(--b3-theme-primary) 80%,
+      transparent 100%
+    );
+    opacity: 0.35;
+    z-index: 1;
+    pointer-events: none;
+  }
 
   .dialog-header {
     display: flex;
@@ -90,6 +110,14 @@
   gap: 14px;
   overflow-y: auto;
   padding-right: 8px;
+  // 底部暗纹 — 从 section 间隙之间透出极浅的装饰
+  background-image:
+    linear-gradient(
+      0deg,
+      rgb(from var(--b3-theme-primary) r g b / 0.025) 1px,
+      transparent 1px
+    );
+  background-size: 100% 28px;
 }
 
 .config-section {
@@ -268,15 +296,35 @@
   gap: 8px;
   color: var(--b3-theme-on-surface);
   opacity: 0.3;
+  position: relative;
+  // 微光晕，只在空态出现
+  &::before {
+    content: '';
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(
+      circle,
+      rgb(from var(--b3-theme-primary) r g b / 0.06) 0%,
+      transparent 70%
+    );
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
 
   p {
     margin: 0;
     font-size: 14px;
+    position: relative;
   }
 
   .preview-hint {
     font-size: 12px;
     opacity: 0.7;
+    position: relative;
   }
 }
 

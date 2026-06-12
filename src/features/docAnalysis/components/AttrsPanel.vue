@@ -144,17 +144,29 @@
 
       <div class="attrs-panel-footer">
         <button
-          class="footer-btn"
-          @click="$emit('close')"
+          class="footer-btn md-copy-btn"
+          :disabled="mdCopyLoading"
+          @click="copyMdContent"
         >
-          关闭
+          <Icon
+            :icon="mdCopyLoading ? 'mdi:loading' : 'mdi:language-markdown'"
+            :class="{ 'spin-icon': mdCopyLoading }"
+          />
+          {{ mdCopyLoading ? '获取中...' : '复制 MD' }}
         </button>
+        <div class="footer-spacer" />
         <button
-          class="footer-btn copy-btn"
+          class="footer-btn"
           @click="copyAllAttrs"
         >
           <Icon icon="mdi:content-copy" />
           复制全部
+        </button>
+        <button
+          class="footer-btn"
+          @click="$emit('close')"
+        >
+          关闭
         </button>
       </div>
     </div>
@@ -167,7 +179,10 @@ import {
   computed,
   ref,
 } from "vue"
-import { setBlockAttrs } from "@/api"
+import {
+  exportMdContent,
+  setBlockAttrs,
+} from "@/api"
 import { copyToClipboard } from "@/utils/domUtils"
 import { PLATFORM_META } from "../composables/useDocAnalysis"
 import {
@@ -228,6 +243,21 @@ interface PlatformInfo {
 }
 
 const markingPlatform = ref<string | null>(null)
+const mdCopyLoading = ref(false)
+
+async function copyMdContent() {
+  if (mdCopyLoading.value) return
+  mdCopyLoading.value = true
+  try {
+    const result = await exportMdContent(props.docId)
+    if (result?.content) {
+      await copyToClipboard(result.content)
+    }
+  }
+  finally {
+    mdCopyLoading.value = false
+  }
+}
 
 function openPlatformUrl(url: string) {
   window.open(url, "_blank")
@@ -756,10 +786,13 @@ async function copyAllAttrs() {
 .attrs-panel-footer {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
   gap: 8px;
   padding: 12px 18px;
   border-top: 1px solid var(--b3-border-color);
+
+  .footer-spacer {
+    flex: 1;
+  }
 
   .footer-btn {
     display: flex;
@@ -773,17 +806,28 @@ async function copyAllAttrs() {
     font-size: 13px;
     cursor: pointer;
 
-    &:hover {
+    &:hover:not(:disabled) {
       background: var(--b3-theme-surface-light);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
   }
 
-  .copy-btn {
-    color: var(--b3-theme-primary);
+  .md-copy-btn {
+    color: var(--b3-theme-on-primary);
+    background: var(--b3-theme-primary);
     border-color: var(--b3-theme-primary);
 
-    &:hover {
-      background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
+    &:hover:not(:disabled) {
+      opacity: 0.85;
+      background: var(--b3-theme-primary);
+    }
+
+    .spin-icon {
+      animation: spin 1s linear infinite;
     }
   }
 }

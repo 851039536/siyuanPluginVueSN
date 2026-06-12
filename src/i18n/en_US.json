@@ -1491,6 +1491,8 @@
   "enableArticleCoverDesc": "AI article cover generator with multiple styles and sizes",
   "enableDataSnapshot": "Enable Data Snapshot",
   "enableDataSnapshotDesc": "Create, compare, view, and upload data snapshots with local history and cloud sync",
+  "enableGitPush": "Enable Git Push",
+  "enableGitPushDesc": "Push projects to GitHub and Gitee simultaneously, with persistent path mapping",
   "dataSnapshot": {
     "title": "Data Snapshot",
     "description": "Create, compare, view, and upload data snapshots",
@@ -1544,5 +1546,25 @@
     "diffModified": "Modified",
     "noChanges": "No changes",
     "cloudNotConfigured": "Cloud sync service not configured"
+  },
+  "gitPush": {
+    "panelTitle": "Git Push",
+    "title": "Git Push",
+    "addProject": "Add Project",
+    "loading": "Loading...",
+    "noProjects": "No projects, click above to add",
+    "notDetected": "Not detected",
+    "pushBoth": "Push to GitHub + Gitee",
+    "pushing": "Pushing...",
+    "projectName": "Project Name",
+    "namePlaceholder": "Enter project name...",
+    "projectPath": "Project Path",
+    "pathPlaceholder": "Select or enter project path...",
+    "cancel": "Cancel",
+    "add": "Add",
+    "checkingGit": "Checking git repository...",
+    "gitRepoDetected": "✅ Git repository detected",
+    "notGitRepo": "❌ Not a git repository, path will be recorded",
+    "refreshRemotes": "Re-detect remotes"
   }
 }

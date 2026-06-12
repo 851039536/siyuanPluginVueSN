@@ -1,7 +1,7 @@
 import type { Plugin } from "siyuan"
 import { createModalVueApp } from "@/utils/vueAppHelper"
 import type { ModalAppInstance } from "@/utils/vueAppHelper"
-import Skills from "../components/SkillsModal.vue"
+import Prompts from "../components/PromptsModal.vue"
 import type { FloatingTool } from "../types"
 
 let modal: ModalAppInstance | null = null
@@ -9,12 +9,12 @@ let modal: ModalAppInstance | null = null
 function getI18nMap(plugin: Plugin) {
   const m = (plugin.i18n?.skills as unknown as Record<string, any>) || {}
   return {
-    skillsTitle: m.modal?.title || "技能库",
+    promptsTitle: m.modal?.title || "提示词库",
     close: m.modal?.close || "关闭",
-    addSkill: m.modal?.addSkill || "添加技能",
+    addPrompt: m.modal?.addPrompt || "添加提示词",
     delete: m.modal?.delete || "删除",
     edit: m.modal?.edit || "编辑",
-    search: m.modal?.search || "搜索技能...",
+    search: m.modal?.search || "搜索提示词...",
     title: m.modal?.titleLabel || "标题",
     description: m.modal?.description || "描述",
     content: m.modal?.content || "内容",
@@ -22,13 +22,13 @@ function getI18nMap(plugin: Plugin) {
     content3: m.modal?.content3 || "内容3",
     cancel: m.modal?.cancel || "取消",
     save: m.modal?.save || "保存",
-    titlePlaceholder: m.modal?.titlePlaceholder || "请输入技能标题",
-    descriptionPlaceholder: m.modal?.descriptionPlaceholder || "请输入技能描述",
-    contentPlaceholder: m.modal?.contentPlaceholder || "请输入要复制的内容",
-    content2Placeholder: m.modal?.content2Placeholder || "请输入要复制的内容2",
-    content3Placeholder: m.modal?.content3Placeholder || "请输入要复制的内容3",
-    noSkills: m.modal?.noSkills || "暂无技能，点击添加",
-    noSkillsFound: m.modal?.noSkillsFound || "未找到匹配的技能",
+    titlePlaceholder: m.modal?.titlePlaceholder || "请输入提示词标题",
+    descriptionPlaceholder: m.modal?.descriptionPlaceholder || "请输入提示词描述",
+    contentPlaceholder: m.modal?.contentPlaceholder || "请输入提示词内容",
+    content2Placeholder: m.modal?.content2Placeholder || "请输入提示词内容2",
+    content3Placeholder: m.modal?.content3Placeholder || "请输入提示词内容3",
+    noPrompts: m.modal?.noPrompts || "暂无提示词，点击添加",
+    noPromptsFound: m.modal?.noPromptsFound || "未找到匹配的提示词",
     clickToCopy: m.modal?.clickToCopy || "复制",
     manageCategories: m.modal?.manageCategories || "管理分类",
     add: m.modal?.add || "添加",
@@ -36,10 +36,10 @@ function getI18nMap(plugin: Plugin) {
   }
 }
 
-function showSkillsModal(plugin: Plugin) {
+function showPromptsModal(plugin: Plugin) {
   if (!modal) {
-    modal = createModalVueApp(Skills, {
-      maskId: "skills-modal-mask",
+    modal = createModalVueApp(Prompts, {
+      maskId: "prompts-modal-mask",
       width: "80vw",
       height: "80vh",
       getCloseHandler: () => () => modal?.close(),
@@ -53,18 +53,18 @@ function showSkillsModal(plugin: Plugin) {
   modal.open()
 }
 
-export function createSkillsTool(plugin: Plugin): FloatingTool {
+export function createPromptsTool(plugin: Plugin): FloatingTool {
   const m = (plugin.i18n?.skills as unknown as Record<string, any>) || {}
   return {
     id: "skills",
-    label: m.label || "Skills",
-    title: m.title || "技能库",
+    label: m.label || "Prompts",
+    title: m.title || "提示词库",
     icon: `<path fill="currentColor" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/><circle cx="12" cy="12" r="3.2"/>`,
     bgColor: "#667eea",
-    action: () => showSkillsModal(plugin),
+    action: () => showPromptsModal(plugin),
   }
 }
 
-export function skillsTool(plugin: Plugin): FloatingTool {
-  return createSkillsTool(plugin)
+export function promptsTool(plugin: Plugin): FloatingTool {
+  return createPromptsTool(plugin)
 }

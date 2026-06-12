@@ -55,7 +55,7 @@ import {
   createRefreshTool,
   createSuperPanelTool,
   createTextDiffTool,
-  skillsTool,
+  promptsTool,
 } from "./tools"
 
 const props = defineProps<{
@@ -88,7 +88,7 @@ const tools = computed<FloatingTool[]>(() => {
   ]
 
   if (props.plugin?.settings?.enableSkills !== false) {
-    desktopTools.push(skillsTool(props.plugin))
+    desktopTools.push(promptsTool(props.plugin))
   }
 
   return desktopTools

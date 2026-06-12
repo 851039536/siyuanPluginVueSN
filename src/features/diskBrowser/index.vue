@@ -43,7 +43,7 @@
         :current-display-path="currentDisplayPath"
         :loading-folders="loadingFolders"
         :current-folder-cache="currentFolderCache"
-        :favorite-folders="favoriteFolders"
+        :favorite-set="favoriteSet"
         :i18n="i18n"
         :format-date="formatDate"
         @back="navigateBack"
@@ -62,7 +62,7 @@
 import type {
   DiskBrowserI18n,
 } from "./types"
-import { Plugin } from "siyuan"
+import type { Plugin } from "siyuan"
 import BreadcrumbNav from "./components/BreadcrumbNav.vue"
 import DiskCard from "./components/DiskCard.vue"
 import FavoritesSection from "./components/FavoritesSection.vue"
@@ -86,6 +86,7 @@ const {
   loadingFolders,
   currentPath,
   favoriteFolders,
+  favoriteSet,
   pathSegments,
   currentDisplayPath,
   cacheStatus,

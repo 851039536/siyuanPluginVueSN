@@ -3,7 +3,6 @@ import type {
   CacheStatus,
   DiskBrowserI18n,
 } from "../types"
-import { copyToClipboard as _copyToClipboard } from "@/utils/domUtils"
 
 const UNITS = ["B", "KB", "MB", "GB", "TB"]
 const K = 1024
@@ -109,5 +108,3 @@ export function formatDate(dateString: string, i18n: DiskBrowserI18n): string {
     return dateString
   }
 }
-
-export { _copyToClipboard as copyToClipboard }

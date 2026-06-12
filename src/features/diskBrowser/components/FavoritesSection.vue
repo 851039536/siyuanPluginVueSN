@@ -109,7 +109,7 @@ defineEmits<{
   border: 1px solid var(--b3-theme-surface-lighter);
   cursor: pointer;
   flex-shrink: 0;
-  @include card-hover-effect(-1px);
+  @include card-hover-effect;
   @include gpu-accelerate;
 
   &:hover {

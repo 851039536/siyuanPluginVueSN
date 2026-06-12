@@ -69,7 +69,7 @@ export interface DiskBrowserI18n {
 
 export const STORAGE_KEY = "disk-browser-settings"
 
-export const DEFAULT_DISKS = ["C:", "D:", "E:", "F:", "G:", "H:"]
+const DEFAULT_DISKS = ["C:", "D:", "E:", "F:", "G:", "H:"]
 
 export function getDefaultDisks(): DiskInfo[] {
   return DEFAULT_DISKS.map((drive) => ({ drive }))

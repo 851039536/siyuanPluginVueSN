@@ -13,97 +13,43 @@ import {
   onUnmounted,
   ref,
 } from "vue"
+import { getNodeProcessModules } from "@/utils/nodeModules"
 import { getDefaultDisks } from "../types"
 import { DiskBrowserStorage } from "../types/storage"
 import {
   buildPath,
   computeCacheStatus,
-  copyToClipboard,
   formatDate,
   getCacheExpiryTime,
   isCacheValid,
 } from "../utils"
+import { copyToClipboard } from "@/utils/domUtils"
 
 const DEBOUNCE_DELAY = 500
 
-let isExecutingCommand = false
-let lastExecutionTime = 0
-let currentOperationId = 0
-const operationMap = new Map<number, string>()
+// 缓存 promisify(exec)，避免每次调用都重新创建
+let _execAsync: ((cmd: string, opts?: any) => Promise<{ stdout: string, stderr: string }>) | null = null
+
+function getExecAsync() {
+  if (_execAsync) return _execAsync
+  const node = getNodeProcessModules()
+  if (!node) return null
+  _execAsync = node.util.promisify(node.child_process.exec)
+  return _execAsync
+}
 
 async function execWithTimeout(
   command: string,
   timeout = 3000,
 ): Promise<{ stdout: string, stderr: string }> {
-  if (!window.require) {
-    throw new Error("当前环境不支持执行命令")
-  }
-
-  const { exec } = window.require("child_process")
-  const util = window.require("util")
-  const execPromise = util.promisify(exec)
+  const exec = getExecAsync()
+  if (!exec) throw new Error("当前环境不支持执行命令")
 
   const timeoutPromise = new Promise<never>((_, reject) => {
     setTimeout(() => reject(new Error("执行超时")), timeout)
   })
 
-  return Promise.race([execPromise(command), timeoutPromise])
-}
-
-async function retryExec(
-  command: string,
-  retries = 2,
-  timeout = 3000,
-  operationType = "unknown",
-): Promise<{ stdout: string, stderr: string }> {
-  const operationId = ++currentOperationId
-  operationMap.set(operationId, operationType)
-
-  try {
-    const now = Date.now()
-    if (isExecutingCommand || now - lastExecutionTime < DEBOUNCE_DELAY) {
-      while (isExecutingCommand) {
-        await new Promise((resolve) => setTimeout(resolve, 100))
-      }
-      const waitTime = DEBOUNCE_DELAY - (Date.now() - lastExecutionTime)
-      if (waitTime > 0) {
-        await new Promise((resolve) => setTimeout(resolve, waitTime))
-      }
-    }
-
-    if (operationMap.get(operationId) !== operationType) {
-      throw new Error("操作已被取消")
-    }
-
-    isExecutingCommand = true
-    lastExecutionTime = Date.now()
-
-    let lastError: Error | null = null
-
-    for (let i = 0; i <= retries; i++) {
-      if (operationMap.get(operationId) !== operationType) {
-        throw new Error("操作已被取消")
-      }
-
-      try {
-        return await execWithTimeout(command, timeout)
-      } catch (error) {
-        lastError = error as Error
-        if (i === retries) {
-          throw new Error(
-            `${operationType}失败，重试${retries}次后仍失败: ${lastError.message}`,
-          )
-        }
-        const delay = Math.min(1000 * 2 ** i, 3000)
-        await new Promise((resolve) => setTimeout(resolve, delay))
-      }
-    }
-
-    throw lastError || new Error("未知错误")
-  } finally {
-    isExecutingCommand = false
-    operationMap.delete(operationId)
-  }
+  return Promise.race([exec(command), timeoutPromise])
 }
 
 export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
@@ -117,11 +63,62 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
   const loadingFolders = ref(false)
   const currentPath = ref("")
   const favoriteFolders = ref<string[]>([])
+  const favoriteSet = ref(new Set<string>())
 
   const diskCache = ref<CacheData<DiskInfo[]> | null>(null)
   const folderCacheMap = ref<Map<string, CacheData<FolderInfo[]>>>(new Map())
 
-  let cacheExpiryTime = getCacheExpiryTime()
+  const cacheExpiryTime = getCacheExpiryTime()
+
+  // 并发控制（实例级，避免多实例共享状态）
+  let isExecutingCommand = false
+  let lastExecutionTime = 0
+
+  async function retryExec(
+    command: string,
+    retries = 2,
+    timeout = 3000,
+    operationType = "unknown",
+  ): Promise<{ stdout: string, stderr: string }> {
+    // 等待前一个命令完成
+    if (isExecutingCommand) {
+      while (isExecutingCommand) {
+        await new Promise((resolve) => setTimeout(resolve, 100))
+      }
+    }
+
+    // 防抖延迟
+    const waitTime = DEBOUNCE_DELAY - (Date.now() - lastExecutionTime)
+    if (waitTime > 0) {
+      await new Promise((resolve) => setTimeout(resolve, waitTime))
+    }
+
+    isExecutingCommand = true
+    lastExecutionTime = Date.now()
+
+    try {
+      let lastError: Error | null = null
+
+      for (let i = 0; i <= retries; i++) {
+        try {
+          return await execWithTimeout(command, timeout)
+        } catch (error) {
+          lastError = error as Error
+          if (i === retries) {
+            throw new Error(
+              `${operationType}失败，重试${retries}次后仍失败: ${lastError.message}`,
+            )
+          }
+          const delay = Math.min(1000 * 2 ** i, 3000)
+          await new Promise((resolve) => setTimeout(resolve, delay))
+        }
+      }
+
+      throw lastError || new Error("未知错误")
+    } finally {
+      isExecutingCommand = false
+    }
+  }
 
   const pathSegments = computed(() => {
     if (!currentPath.value || currentPath.value === expandedDisk.value)
@@ -147,15 +144,16 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
 
   const currentFolderCache = computed((): CacheStatus => {
     const path = currentPath.value || expandedDisk.value
-    if (!path) { return {
-      text: "",
-      isExpired: false,
-      tooltip: "",
-    }
+    if (!path) {
+      return { text: "", isExpired: false, tooltip: "" }
     }
     const cached = folderCacheMap.value.get(path)
     return computeCacheStatus(cached, i18n, cacheExpiryTime, "short")
   })
+
+  function updateFavoriteSet(): void {
+    favoriteSet.value = new Set(favoriteFolders.value)
+  }
 
   function toggleFavorite(folderPath: string): void {
     const index = favoriteFolders.value.indexOf(folderPath)
@@ -166,6 +164,7 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
       favoriteFolders.value.push(folderPath)
       showMessage(i18n.favoriteAdded || "已添加收藏", 2000, "info")
     }
+    updateFavoriteSet()
     saveFavorites()
   }
 
@@ -181,6 +180,7 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
     try {
       const favorites = await storage.loadFavorites()
       favoriteFolders.value = favorites
+      updateFavoriteSet()
     } catch (error) {
       console.error("加载收藏夹失败:", error)
       favoriteFolders.value = []
@@ -188,8 +188,6 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
   }
 
   async function fetchDisks(forceRefresh = false): Promise<void> {
-    cacheExpiryTime = getCacheExpiryTime()
-
     if (!forceRefresh && isCacheValid(diskCache.value, cacheExpiryTime)) {
       disks.value = diskCache.value.data
       return
@@ -197,7 +195,7 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
 
     loading.value = true
     try {
-      if (typeof window.require === "function") {
+      if (getNodeProcessModules()) {
         try {
           const command = `powershell -NoProfile -ExecutionPolicy Bypass -Command "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-WmiObject Win32_LogicalDisk | Select-Object DeviceID, VolumeName, Size, FreeSpace | ConvertTo-Json -Compress"`
           const { stdout } = await retryExec(command, 2, 3000, "获取磁盘列表")
@@ -251,7 +249,7 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
       expandedDisk.value = disk.drive
       selectedDisk.value = disk.drive
       currentPath.value = ""
-      await loadFolders(disk.drive)
+      await loadFolderContent(disk.drive)
     }
   }
 
@@ -303,80 +301,18 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
     return itemList
   }
 
-  async function loadFolders(
-    drive: string,
-    forceRefresh = false,
-  ): Promise<void> {
-    cacheExpiryTime = getCacheExpiryTime()
-
-    const cachedFolders = folderCacheMap.value.get(drive)
-    if (!forceRefresh && isCacheValid(cachedFolders, cacheExpiryTime)) {
-      folders.value = cachedFolders.data
-      return
-    }
-
-    loadingFolders.value = true
-    folders.value = []
-
-    try {
-      if (typeof window.require === "function") {
-        const command = `powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -Path '${drive}\\' -Directory -ErrorAction SilentlyContinue | Where-Object { -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) } | Select-Object -ExpandProperty Name | ForEach-Object { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Write-Output $_ }"`
-        const { stdout } = await retryExec(command, 1, 5000, "获取文件夹列表")
-
-        const folderList = processFolderList(stdout, drive)
-        folders.value = folderList
-        folderCacheMap.value.set(drive, {
-          data: folderList,
-          timestamp: Date.now(),
-        })
-      }
-    } catch (error) {
-      console.error("加载文件夹失败:", error)
-      showMessage(i18n.loadFoldersFailed || "加载文件夹失败", 3000, "error")
-    } finally {
-      loadingFolders.value = false
-    }
-  }
-
-  function openPath(path: string): void {
-    try {
-      if (window.require) {
-        const { shell } = window.require("electron")
-        shell.openPath(path)
-        showMessage(i18n.opened || "已打开", 2000, "info")
-      } else {
-        showMessage(
-          i18n.openDiskNotSupported || "当前环境不支持打开文件夹",
-          3000,
-          "error",
-        )
-      }
-    } catch (error) {
-      console.error("打开失败:", error)
-      showMessage(i18n.openDiskFailed || "打开失败", 3000, "error")
-    }
-  }
-
-  function refreshDisks(): void {
-    fetchDisks(true)
-    showMessage(i18n.refreshing || "正在刷新...", 2000, "info")
-  }
-
-  function refreshCurrentFolder(): void {
-    const pathToRefresh = currentPath.value || expandedDisk.value
-    if (pathToRefresh) {
-      loadFoldersFromPath(pathToRefresh, true)
-      showMessage(i18n.refreshing || "正在刷新...", 2000, "info")
-    }
-  }
-
-  async function loadFoldersFromPath(
+  /**
+   * 统一的文件夹加载函数（合并原 loadFolders / loadFoldersFromPath）
+   * @param path 磁盘根路径（如 C:）或子目录路径
+   * @param forceRefresh 是否强制刷新缓存
+   */
+  async function loadFolderContent(
     path: string,
     forceRefresh = false,
   ): Promise<void> {
-    const cachedFolders = folderCacheMap.value.get(path)
-    if (!forceRefresh && isCacheValid(cachedFolders, cacheExpiryTime)) {
-      folders.value = cachedFolders.data
+    const cached = folderCacheMap.value.get(path)
+    if (!forceRefresh && isCacheValid(cached, cacheExpiryTime)) {
+      folders.value = cached.data
       return
     }
 
@@ -384,11 +320,18 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
     folders.value = []
 
     try {
-      if (typeof window.require === "function") {
-        const command = `powershell -NoProfile -ExecutionPolicy Bypass -Command "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-ChildItem -Path '${path}' -ErrorAction SilentlyContinue | Where-Object { -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) } | Select-Object Name, @{Name='IsFile';Expression={-not $_.PSIsContainer}}, Length, LastWriteTime | ConvertTo-Json -Compress"`
+      if (getNodeProcessModules()) {
+        const isDriveRoot = /^[A-Z]:$/.test(path)
+        const command = isDriveRoot
+          ? `powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -Path '${path}\\' -Directory -ErrorAction SilentlyContinue | Where-Object { -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) } | Select-Object -ExpandProperty Name | ForEach-Object { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Write-Output $_ }"`
+          : `powershell -NoProfile -ExecutionPolicy Bypass -Command "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-ChildItem -Path '${path}' -ErrorAction SilentlyContinue | Where-Object { -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) } | Select-Object Name, @{Name='IsFile';Expression={-not $_.PSIsContainer}}, Length, LastWriteTime | ConvertTo-Json -Compress"`
+
         const { stdout } = await retryExec(command, 1, 5000, "获取文件夹列表")
 
-        const itemList = processItemList(stdout, path)
+        const itemList = isDriveRoot
+          ? processFolderList(stdout, path)
+          : processItemList(stdout, path)
+
         folders.value = itemList
         folderCacheMap.value.set(path, {
           data: itemList,
@@ -403,6 +346,38 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
     }
   }
 
+  function openPath(path: string): void {
+    if (!window.require) {
+      showMessage(
+        i18n.openDiskNotSupported || "当前环境不支持打开文件夹",
+        3000,
+        "error",
+      )
+      return
+    }
+    try {
+      const { shell } = window.require("electron")
+      shell.openPath(path)
+      showMessage(i18n.opened || "已打开", 2000, "info")
+    } catch (error) {
+      console.error("打开失败:", error)
+      showMessage(i18n.openDiskFailed || "打开失败", 3000, "error")
+    }
+  }
+
+  function refreshDisks(): void {
+    fetchDisks(true)
+    showMessage(i18n.refreshing || "正在刷新...", 2000, "info")
+  }
+
+  function refreshCurrentFolder(): void {
+    const pathToRefresh = currentPath.value || expandedDisk.value
+    if (pathToRefresh) {
+      loadFolderContent(pathToRefresh, true)
+      showMessage(i18n.refreshing || "正在刷新...", 2000, "info")
+    }
+  }
+
   function handleItemDoubleClick(item: FolderInfo): void {
     if (item.isFile) {
       openPath(item.path)
@@ -413,7 +388,7 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
 
   async function navigateIntoFolder(item: FolderInfo): Promise<void> {
     currentPath.value = item.path
-    await loadFoldersFromPath(item.path)
+    await loadFolderContent(item.path)
   }
 
   async function navigateBack(): Promise<void> {
@@ -424,10 +399,10 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
       const parentPath = currentPath.value.substring(0, lastSlash)
       if (parentPath.endsWith(":")) {
         currentPath.value = ""
-        await loadFolders(expandedDisk.value)
+        await loadFolderContent(expandedDisk.value)
       } else {
         currentPath.value = parentPath
-        await loadFoldersFromPath(parentPath)
+        await loadFolderContent(parentPath)
       }
     } else {
       navigateToRoot()
@@ -436,14 +411,14 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
 
   async function navigateToRoot(): Promise<void> {
     currentPath.value = ""
-    await loadFolders(expandedDisk.value)
+    await loadFolderContent(expandedDisk.value)
   }
 
   async function navigateToPath(segmentIndex: number): Promise<void> {
     const segments = pathSegments.value.slice(0, segmentIndex + 1)
     const newPath = `${expandedDisk.value}\\${segments.join("\\")}`
     currentPath.value = newPath
-    await loadFoldersFromPath(newPath)
+    await loadFolderContent(newPath)
   }
 
   async function navigateToFavorite(path: string): Promise<void> {
@@ -460,10 +435,10 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
 
       if (path === drive || path === `${drive}\\`) {
         currentPath.value = ""
-        await loadFolders(drive)
+        await loadFolderContent(drive)
       } else {
         currentPath.value = path
-        await loadFoldersFromPath(path)
+        await loadFolderContent(path)
       }
 
       showMessage(i18n.navigatedToFavorite || "已跳转到收藏夹", 2000, "info")
@@ -485,21 +460,15 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
   const formatDateWithI18n = (dateString: string): string =>
     formatDate(dateString, i18n)
 
-  function init(): void {
+  onMounted(() => {
     loadFavorites()
     fetchDisks()
-  }
-
-  function destroy(): void {
-    // 清理资源
-  }
-
-  onMounted(() => {
-    init()
   })
 
   onUnmounted(() => {
-    destroy()
+    // 清理缓存
+    diskCache.value = null
+    folderCacheMap.value.clear()
   })
 
   return {
@@ -511,12 +480,12 @@ export function useDiskBrowser(plugin: Plugin, i18n: DiskBrowserI18n) {
     loadingFolders,
     currentPath,
     favoriteFolders,
+    favoriteSet,
     pathSegments,
     currentDisplayPath,
     cacheStatus,
     currentFolderCache,
     toggleFavorite,
-    fetchDisks,
     toggleDisk,
     openPath,
     refreshDisks,

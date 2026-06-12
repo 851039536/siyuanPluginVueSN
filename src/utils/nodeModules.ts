@@ -16,12 +16,13 @@ export function getNodeModules(): { fs: any, path: any } | null {
   }
 }
 
-/** 获取 Node.js 子进程和操作系统模块 */
-export function getNodeProcessModules(): { child_process: any, os: any } | null {
+/** 获取 Node.js 子进程、操作系统和 util 模块 */
+export function getNodeProcessModules(): { child_process: any, os: any, util: any } | null {
   try {
     const child_process = require("node:child_process")
     const os = require("node:os")
-    return { child_process, os }
+    const util = require("node:util")
+    return { child_process, os, util }
   } catch {
     return null
   }

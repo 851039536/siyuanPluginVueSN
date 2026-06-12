@@ -70,22 +70,20 @@ defineEmits<{
 @use "../styles/index.scss" as *;
 
 .favorites-section {
-  border-top: 1px solid var(--b3-theme-surface-lighter);
-  background: var(--b3-theme-surface);
+  border-top: 1px solid $border;
   flex-shrink: 0;
 }
 
 .favorites-header {
   @include flex-align-center;
   gap: 6px;
-  padding: 6px 12px;
-  background: var(--b3-theme-surface-lighter);
-  color: var(--b3-theme-on-surface);
-  font-size: 11px;
-  font-weight: 600;
+  padding: 6px 14px;
+  border-bottom: 1px dashed $border;
 
   span {
+    @include meta-label;
     flex: 1;
+    color: var(--b3-theme-on-surface);
   }
 }
 
@@ -95,28 +93,21 @@ defineEmits<{
   padding: 8px;
   overflow-x: auto;
   overflow-y: hidden;
-  @include scrollbar(6px, 6px);
+  @include scrollbar(4px, 4px);
 }
 
 .favorite-card {
   @include flex-align-center;
   gap: 6px;
-  min-width: 120px;
-  max-width: 180px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  background: var(--b3-theme-background);
-  border: 1px solid var(--b3-theme-surface-lighter);
+  min-width: 110px;
+  max-width: 170px;
+  padding: 5px 10px;
+  background: var(--b3-theme-surface);
   cursor: pointer;
   flex-shrink: 0;
-  @include card-hover-effect;
-  @include gpu-accelerate;
+  @include border-card;
 
   &:hover {
-    background: var(--b3-theme-surface-lighter);
-    border-color: var(--b3-theme-primary);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-
     .favorite-remove-btn {
       opacity: 1;
     }
@@ -124,13 +115,14 @@ defineEmits<{
 }
 
 .favorite-icon {
-  @include icon-container(24px);
+  @include icon-container(22px);
 }
 
 .favorite-name {
   flex: 1;
   min-width: 0;
-  font-size: 12px;
+  font-family: $mono;
+  font-size: 11px;
   font-weight: 500;
   color: var(--b3-theme-on-background);
   @include text-ellipsis;

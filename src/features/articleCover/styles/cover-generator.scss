@@ -2,6 +2,25 @@
 
 // AI 封面生成器样式
 
+// 共用按钮交互模式（.style-btn / .size-preset-btn 共享）
+@mixin btn-interactive {
+  border: 1px solid var(--b3-theme-background-light);
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &.active {
+    border-color: var(--b3-theme-primary);
+    background: color-mix(in srgb, var(--b3-theme-primary) 10%, transparent);
+    color: var(--b3-theme-primary);
+  }
+
+  &:hover:not(.active) {
+    background: var(--b3-theme-background-light);
+  }
+}
+
 .cover-generator-overlay {
   position: fixed;
   top: 0;
@@ -124,24 +143,10 @@
 }
 
 .size-preset-btn {
+  @include btn-interactive;
   padding: 4px 8px;
-  border: 1px solid var(--b3-theme-background-light);
   border-radius: 4px;
-  background: transparent;
-  color: var(--b3-theme-on-surface);
-  cursor: pointer;
   font-size: 11px;
-  transition: all 0.2s;
-
-  &.active {
-    border-color: var(--b3-theme-primary);
-    background: color-mix(in srgb, var(--b3-theme-primary) 10%, transparent);
-    color: var(--b3-theme-primary);
-  }
-
-  &:hover:not(.active) {
-    background: var(--b3-theme-background-light);
-  }
 }
 
 .size-custom {
@@ -174,24 +179,16 @@
 }
 
 .style-btn {
+  @include btn-interactive;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   padding: 8px 10px;
-  border: 1px solid var(--b3-theme-background-light);
   border-radius: 6px;
-  background: transparent;
-  cursor: pointer;
-  transition: all 0.2s;
   text-align: left;
 
   &.active {
-    border-color: var(--b3-theme-primary);
     background: color-mix(in srgb, var(--b3-theme-primary) 8%, transparent);
-  }
-
-  &:hover:not(.active) {
-    background: var(--b3-theme-background-light);
   }
 
   .style-name {

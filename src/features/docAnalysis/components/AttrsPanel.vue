@@ -128,6 +128,14 @@
                   v-else
                   class="attr-empty"
                 >—</span>
+                <button
+                  v-if="item.value && COPYABLE_KEYS.has(item.key)"
+                  class="attr-copy-btn"
+                  title="复制值"
+                  @click="copyAttrValue(item.value)"
+                >
+                  <Icon icon="mdi:content-copy" />
+                </button>
               </template>
             </div>
           </div>
@@ -330,6 +338,12 @@ const platforms = computed<PlatformInfo[]>(() => {
     url: config.url,
   }))
 })
+
+const COPYABLE_KEYS = new Set(["id", "title", "alias", "memo", "bookmark"])
+
+async function copyAttrValue(value: string) {
+  await copyToClipboard(value)
+}
 
 const ATTR_LABELS: Record<string, string> = {
   id: "ID",
@@ -656,6 +670,31 @@ async function copyAllAttrs() {
     .attr-empty {
       color: var(--b3-theme-on-surface-variant);
       opacity: 0.5;
+    }
+
+    .attr-copy-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border: none;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--b3-theme-on-surface-variant);
+      cursor: pointer;
+      font-size: 13px;
+      flex-shrink: 0;
+      vertical-align: middle;
+      margin-left: 8px;
+      opacity: 0.4;
+      transition: opacity 0.15s;
+
+      &:hover {
+        opacity: 1;
+        color: var(--b3-theme-primary);
+        background: var(--b3-theme-surface-light);
+      }
     }
   }
 

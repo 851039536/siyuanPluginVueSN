@@ -274,8 +274,12 @@ import {
   callAI,
   getApiConfigFromPlugin,
 } from "@/utils/aiApi"
+import {
+  canvasToBlob,
+  copyImageToClipboard,
+  triggerBlobDownload,
+} from "@/utils/domUtils"
 import { useCoverGenerator } from "../composables/useCoverGenerator"
-import { triggerBlobDownload } from "@/utils/domUtils"
 
 interface Props {
   visible: boolean
@@ -454,10 +458,11 @@ watch(coverHtml, () => {
   }
 })
 
-// 响应式自动生成：标题/关键字/风格/尺寸变化 → debounce 200ms → 自动生成
+// 响应式自动生成
+// 文字变化：debounce 200ms 避免频繁触发
 let autoGenTimer: ReturnType<typeof setTimeout> | null = null
 watch(
-  () => [config.value.title, config.value.category, config.value.keywords, config.value.styleId, config.value.width, config.value.height],
+  () => [config.value.title, config.value.category, config.value.keywords],
   () => {
     if (autoGenTimer) clearTimeout(autoGenTimer)
     autoGenTimer = setTimeout(() => {
@@ -465,6 +470,16 @@ watch(
         generateCover()
       }
     }, 200)
+  },
+)
+
+// 尺寸/风格变化：即时生成（无需 debounce）
+watch(
+  () => [config.value.styleId, config.value.width, config.value.height],
+  () => {
+    if (config.value.title.trim()) {
+      generateCover()
+    }
   },
 )
 
@@ -499,34 +514,19 @@ async function copyCoverAsImage() {
       return
     }
 
-    const blob = await new Promise<Blob>((resolve, reject) => {
-      canvas!.toBlob((b) => {
-        if (b) resolve(b)
-        else reject(new Error("Canvas toBlob 失败"))
-      }, "image/png")
-    })
+    const blob = await canvasToBlob(canvas, "image/png")
+    const ok = await copyImageToClipboard(blob)
 
-    await navigator.clipboard.write([
-      new ClipboardItem({ "image/png": blob }),
-    ])
-
-    showMessage("封面已复制为图片", 2000, "info")
+    if (ok) {
+      showMessage("封面已复制为图片", 2000, "info")
+    } else {
+      // 兜底：剪贴板不可用时降级为下载
+      triggerBlobDownload(blob, `cover-${config.value.width}x${config.value.height}-${Date.now()}.png`)
+      showMessage("已下载为图片（剪贴板不可用）", 2000, "info")
+    }
   } catch (error) {
     console.error("复制封面为图片失败:", error)
-    // 兜底：剪贴板不可用时降级为下载
-    if (canvas) {
-      const fallbackBlob = await new Promise<Blob | null>((resolve) => {
-        canvas!.toBlob((b) => resolve(b), "image/png")
-      })
-      if (fallbackBlob) {
-        triggerBlobDownload(fallbackBlob, `cover-${config.value.width}x${config.value.height}-${Date.now()}.png`)
-        showMessage("已下载为图片（剪贴板不可用）", 2000, "info")
-      } else {
-        showMessage("复制失败", 2000, "error")
-      }
-    } else {
-      showMessage("复制失败", 2000, "error")
-    }
+    showMessage("复制失败", 2000, "error")
   }
 }
 
@@ -539,13 +539,7 @@ async function downloadCoverAsImage() {
       return
     }
 
-    const blob = await new Promise<Blob>((resolve, reject) => {
-      canvas.toBlob((b) => {
-        if (b) resolve(b)
-        else reject(new Error("Canvas toBlob 失败"))
-      }, "image/png")
-    })
-
+    const blob = await canvasToBlob(canvas, "image/png")
     triggerBlobDownload(blob, `cover-${config.value.width}x${config.value.height}-${Date.now()}.png`)
     showMessage("封面已下载", 2000, "info")
   } catch (error) {
@@ -554,12 +548,12 @@ async function downloadCoverAsImage() {
   }
 }
 
-// 关闭
 // 全屏预览
 function openFullscreen() {
   if (!coverHtml.value) return
   const blob = new Blob([coverHtml.value], { type: "text/html" })
-  window.open(URL.createObjectURL(blob), "_blank")
+  const url = URL.createObjectURL(blob)
+  window.open(url, "_blank")
 }
 
 function close() {

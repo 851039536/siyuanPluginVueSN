@@ -8,18 +8,9 @@
     @click="$emit('click')"
   >
     <div class="disk-card-header">
-      <div class="disk-icon">
-        <IconWrapper
-          name="diskBrowser"
-          :size="18"
-        />
-      </div>
       <div class="disk-info">
         <span class="disk-name">{{ disk.drive }}</span>
-        <span
-          v-if="disk.label"
-          class="disk-label"
-        >{{ disk.label }}</span>
+        <span class="disk-label">{{ disk.label || '\u00A0' }}</span>
       </div>
       <div class="expand-indicator">
         <IconWrapper
@@ -67,10 +58,10 @@ defineEmits<{
 
 .disk-card {
   width: calc(25% - 6px);
-  min-width: 120px;
-  max-width: 180px;
+  min-width: 110px;
+  max-width: 170px;
   flex-shrink: 0;
-  padding: 10px 12px;
+  padding: 6px 10px;
   background: var(--b3-theme-surface);
   cursor: pointer;
   @include border-card;
@@ -83,12 +74,7 @@ defineEmits<{
 
 .disk-card-header {
   @include flex-align-center;
-  gap: 8px;
-}
-
-.disk-icon {
-  @include icon-container(28px);
-  border-radius: $radius;
+  gap: 6px;
 }
 
 .disk-info {
@@ -96,20 +82,21 @@ defineEmits<{
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 1px;
 }
 
 .disk-name {
   font-family: $mono;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--b3-theme-on-background);
+  line-height: 1.2;
 }
 
 .disk-label {
   @include meta-label;
   color: var(--b3-theme-on-surface);
   @include text-ellipsis;
+  line-height: 1.2;
 }
 
 .expand-indicator {
@@ -122,24 +109,24 @@ defineEmits<{
 .disk-card-body {
   display: flex;
   flex-direction: column;
-  margin-top: 8px;
-  padding-top: 8px;
+  margin-top: 4px;
+  padding-top: 4px;
   border-top: 1px dashed $border;
 }
 
 .disk-usage-bar {
   width: 100%;
-  height: 3px;
+  height: 2px;
   background: var(--b3-theme-surface-lighter);
-  border-radius: 2px;
+  border-radius: 1px;
   overflow: hidden;
-  margin-bottom: 6px;
+  margin-bottom: 3px;
 }
 
 .usage-fill {
   height: 100%;
   background: var(--b3-theme-primary);
-  border-radius: 2px;
+  border-radius: 1px;
   transition: width 0.3s ease;
 }
 
@@ -149,5 +136,6 @@ defineEmits<{
   color: var(--b3-theme-on-surface-light);
   text-align: center;
   white-space: nowrap;
+  line-height: 1.2;
 }
 </style>

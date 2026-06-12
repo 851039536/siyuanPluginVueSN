@@ -1,5 +1,5 @@
 <template>
-  <div class="search-bar">
+  <div class="vp-search">
     <Input
       ref="inputRef"
       :model-value="modelValue"
@@ -62,7 +62,7 @@ const inputRef = ref<InstanceType<typeof Input> | null>(null)
 
 /** 搜索按钮文本 */
 const searchButtonText = computed(() =>
-  props.autoSearch ? "立即搜索" : "搜索",
+  props.autoSearch ? "搜索" : "搜索",
 )
 
 /** 处理输入 */
@@ -105,7 +105,7 @@ defineExpose({
 <style scoped lang="scss">
 @use "@/variables" as *;
 
-.search-bar {
+.vp-search {
   display: flex;
   gap: 8px;
   padding: 10px 16px;

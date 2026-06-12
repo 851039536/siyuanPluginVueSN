@@ -12,19 +12,40 @@
               :key="idx"
               :d="arc.d"
               :fill="arc.color"
-              :class="{ 'pie-arc-hover': hoveredIndex === idx }"
+              :class="{
+                'pie-arc-hover': activeIndex === idx,
+                'pie-arc-dim': activeIndex >= 0 && activeIndex !== idx,
+              }"
               class="pie-arc"
-              @mouseenter="hoveredIndex = idx"
-              @mouseleave="hoveredIndex = -1"
+              @mouseenter="onArcEnter(idx)"
+              @mouseleave="onArcLeave"
             />
-            <text
-              v-if="hoveredIndex >= 0 && pieArcs[hoveredIndex]"
-              class="pie-center-label"
-              text-anchor="middle"
-              dy="0.3em"
+            <g
+              v-if="activeIndex >= 0 && pieArcs[activeIndex]"
+              class="pie-center-group"
             >
-              {{ pieArcs[hoveredIndex].percentage }}%
-            </text>
+              <text
+                class="pie-center-name"
+                text-anchor="middle"
+                dy="-0.6em"
+              >
+                {{ truncateName(pieArcs[activeIndex].name) }}
+              </text>
+              <text
+                class="pie-center-pct"
+                text-anchor="middle"
+                dy="0.6em"
+              >
+                {{ pieArcs[activeIndex].percentage }}%
+              </text>
+              <text
+                class="pie-center-words"
+                text-anchor="middle"
+                dy="1.8em"
+              >
+                {{ formatNumber(pieArcs[activeIndex].words) }} 字
+              </text>
+            </g>
           </g>
         </svg>
       </div>
@@ -33,9 +54,9 @@
           v-for="(item, idx) in data"
           :key="idx"
           class="legend-item"
-          :class="{ active: hoveredIndex === idx }"
-          @mouseenter="hoveredIndex = idx"
-          @mouseleave="hoveredIndex = -1"
+          :class="{ active: activeIndex === idx }"
+          @mouseenter="onArcEnter(idx)"
+          @mouseleave="onArcLeave"
         >
           <span
             class="legend-color"
@@ -55,8 +76,10 @@ import type { NotebookWordStat } from "../types"
 import {
   computed,
   ref,
+  watch,
 } from "vue"
 import { formatNumber } from "../utils"
+import { useNotebookHover } from "../composables/useNotebookHover"
 
 interface Props {
   data?: NotebookWordStat[]
@@ -66,14 +89,45 @@ const props = withDefaults(defineProps<Props>(), {
   data: () => [],
 })
 
+const { hoveredNotebook, onHover } = useNotebookHover()
+
 const SIZE = 160
 const RADIUS = 68
-const hoveredIndex = ref(-1)
+const localHover = ref(-1)
+
+// Combine local hover and shared hover
+const activeIndex = computed(() => {
+  if (localHover.value >= 0) return localHover.value
+  if (hoveredNotebook.value) {
+    const idx = props.data.findIndex(d => d.name === hoveredNotebook.value)
+    if (idx >= 0) return idx
+  }
+  return -1
+})
+
+// Sync to shared state
+watch(localHover, (idx) => {
+  onHover(idx >= 0 ? props.data[idx]?.name ?? null : null)
+})
+
+function onArcEnter(idx: number) {
+  localHover.value = idx
+}
+
+function onArcLeave() {
+  localHover.value = -1
+}
+
+function truncateName(name: string): string {
+  return name.length > 6 ? name.slice(0, 5) + "…" : name
+}
 
 interface PieArc {
   d: string
   color: string
   percentage: number
+  name: string
+  words: number
 }
 
 const pieArcs = computed<PieArc[]>(() => {
@@ -83,6 +137,8 @@ const pieArcs = computed<PieArc[]>(() => {
       d: describeArc(0, 0, RADIUS, 0, 359.99),
       color: "rgba(var(--b3-theme-on-surface-rgb), 0.1)",
       percentage: 100,
+      name: "",
+      words: 0,
     }]
   }
 
@@ -98,6 +154,8 @@ const pieArcs = computed<PieArc[]>(() => {
       d,
       color: item.color,
       percentage: Math.round(percentage * 10) / 10,
+      name: item.name,
+      words: item.words,
     }
     startAngle = endAngle
     return result
@@ -156,18 +214,36 @@ function degToRad(deg: number): number {
 
 .pie-arc {
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition: opacity 0.2s ease;
 }
 
 .pie-arc-hover {
-  opacity: 0.8;
+  opacity: 0.85;
 }
 
-.pie-center-label {
-  font-family: stats.$font-mono;
-  font-size: 18px;
-  font-weight: 700;
+.pie-arc-dim {
+  opacity: 0.4;
+}
+
+.pie-center-name {
+  font-family: $font-body;
+  font-size: 11px;
+  font-weight: 600;
   fill: var(--b3-theme-on-surface);
+}
+
+.pie-center-pct {
+  font-family: stats.$font-mono;
+  font-size: 16px;
+  font-weight: 700;
+  fill: var(--b3-theme-primary);
+}
+
+.pie-center-words {
+  font-family: stats.$font-mono;
+  font-size: 9px;
+  fill: var(--b3-theme-on-surface);
+  opacity: 0.5;
 }
 
 .pie-legend {

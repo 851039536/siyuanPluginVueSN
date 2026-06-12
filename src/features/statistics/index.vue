@@ -117,6 +117,27 @@
         v-show="activeTab === 'notebookDistribution'"
         class="notebook-distribution-tab"
       >
+        <!-- 汇总摘要 -->
+        <div
+          v-if="distSummary"
+          class="dist-summary-bar"
+        >
+          <span class="dist-summary-item">
+            <span class="dist-summary-label">{{ i18n.notebookName }}</span>
+            <span class="dist-summary-value">{{ distSummary.notebookCount }}</span>
+          </span>
+          <span class="dist-summary-sep">·</span>
+          <span class="dist-summary-item">
+            <span class="dist-summary-label">{{ i18n.docBarChartTitle }}</span>
+            <span class="dist-summary-value">{{ distSummary.totalDocs.toLocaleString() }}</span>
+          </span>
+          <span class="dist-summary-sep">·</span>
+          <span class="dist-summary-item">
+            <span class="dist-summary-label">{{ i18n.totalWords }}</span>
+            <span class="dist-summary-value">{{ distSummary.totalWords.toLocaleString() }} {{ i18n.wordsUnit }}</span>
+          </span>
+        </div>
+
         <!-- 左侧：文档数条形图（全高） -->
         <section class="dist-section dist-left">
           <DocBarChart
@@ -156,6 +177,17 @@
           </h3>
           <NotebookBlockTypeChart
             :data="notebookBlockTypeStats"
+          />
+        </section>
+
+        <!-- 表格视图：可排序详情 -->
+        <section class="dist-section dist-table">
+          <h3 class="dist-section-title">
+            {{ i18n.notebookRanking }}
+          </h3>
+          <NotebookTable
+            :doc-stats="notebookDocStats"
+            :word-stats="notebookWordStats"
           />
         </section>
       </div>
@@ -239,6 +271,7 @@ import HeatmapCard from "./components/HeatmapCard.vue"
 import MilestonesCard from "./components/MilestonesCard.vue"
 import NotebookActivityTrend from "./components/NotebookActivityTrend.vue"
 import NotebookBlockTypeChart from "./components/NotebookBlockTypeChart.vue"
+import NotebookTable from "./components/NotebookTable.vue"
 import NotebookWordPie from "./components/NotebookWordPie.vue"
 import ReportView from "./components/ReportView.vue"
 import StatisticsHeader from "./components/StatisticsHeader.vue"
@@ -248,6 +281,7 @@ import TrendView from "./components/TrendView.vue"
 import ViewModeSection from "./components/ViewModeSection.vue"
 import WordRanking from "./components/WordRanking.vue"
 import { useHistoryData } from "./composables/useHistoryData"
+import { provideNotebookHover } from "./composables/useNotebookHover"
 import { useNotebookStats } from "./composables/useNotebookStats"
 import { useStatistics } from "./composables/useStatistics"
 import {
@@ -453,6 +487,23 @@ const {
   loadNotebookWordStats,
   loadNotebookBlockTypeStats,
 } = useNotebookStats()
+
+// 笔记本分布 hover 联动
+provideNotebookHover()
+
+// 分布 Tab 汇总摘要
+const distSummary = computed(() => {
+  const docs = notebookDocStats.value
+  const words = notebookWordStats.value
+  if (!docs.length && !words.length) return null
+  const totalDocs = docs.reduce((s, d) => s + d.count, 0)
+  const totalWords = words.reduce((s, d) => s + d.words, 0)
+  return {
+    notebookCount: docs.length || words.length,
+    totalDocs,
+    totalWords,
+  }
+})
 
 const milestonesAchievedCount = computed(() => {
   const s = stats.value
@@ -670,29 +721,72 @@ defineExpose({
 .notebook-distribution-tab {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr auto auto;
+  grid-template-rows: auto 1fr auto auto auto;
   gap: 12px;
   align-items: stretch;
 }
 
+.dist-summary-bar {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.dist-summary-item {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.dist-summary-label {
+  font-size: 11px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+}
+
+.dist-summary-value {
+  font-family: stats.$font-mono;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--b3-theme-primary);
+}
+
+.dist-summary-sep {
+  color: var(--b3-border-color);
+  font-size: 14px;
+}
+
 .dist-left {
-  grid-row: 1 / 3;
+  grid-row: 2 / 4;
   grid-column: 1;
 }
 
 .dist-right-top {
-  grid-row: 1;
-  grid-column: 2;
-}
-
-.dist-right-bottom {
   grid-row: 2;
   grid-column: 2;
 }
 
-.dist-bottom {
+.dist-right-bottom {
   grid-row: 3;
+  grid-column: 2;
+}
+
+.dist-bottom {
+  grid-row: 4;
   grid-column: 1 / -1;
+}
+
+.dist-table {
+  grid-row: 5;
+  grid-column: 1 / -1;
+  min-height: 200px;
 }
 
 .dist-section {

@@ -29,7 +29,13 @@
         v-for="item in sortedData"
         :key="item.name"
         class="chart-row"
+        :class="{
+          'row-highlight': hoveredNotebook === item.name,
+          'row-dim': hoveredNotebook !== null && hoveredNotebook !== item.name,
+        }"
         :title="`${item.name}: ${formatNumber(item.count)} ${i18n.docsUnit || '篇'}`"
+        @mouseenter="onHover(item.name)"
+        @mouseleave="onHover(null)"
       >
         <span class="row-label">{{ item.name }}</span>
         <div class="row-bar-wrap">
@@ -53,6 +59,7 @@ import {
   formatNumber,
   formatShortNumber,
 } from "../utils"
+import { useNotebookHover } from "../composables/useNotebookHover"
 
 interface NotebookDocCount {
   name: string
@@ -79,6 +86,8 @@ const props = withDefaults(defineProps<Props>(), {
     docsUnit: "篇",
   }),
 })
+
+const { hoveredNotebook, onHover } = useNotebookHover()
 
 const maxCount = computed(() => {
   if (!props.chartData.length) return 0
@@ -116,6 +125,17 @@ function getBarWidth(count: number): string {
   flex-direction: column;
   min-height: 0;
 
+  .section-title {
+    margin: 0 0 10px 0;
+    font-family: stats.$font-mono;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.6;
+  }
+
   .loading-wrapper {
     position: relative;
     height: 100px;
@@ -146,10 +166,18 @@ function getBarWidth(count: number): string {
       gap: 6px;
       padding: 4px 6px;
       border-radius: 4px;
-      transition: background 0.15s;
+      transition: background 0.15s, opacity 0.2s ease;
 
       &:hover {
         background: var(--b3-list-hover);
+      }
+
+      &.row-highlight {
+        background: var(--b3-list-hover);
+      }
+
+      &.row-dim {
+        opacity: 0.45;
       }
 
       .row-label {

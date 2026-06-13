@@ -112,10 +112,12 @@
         <div class="wt-commit-actions">
           <button
             class="vp-btn vp-btn--ghost vp-btn--sm"
+            :disabled="generating"
             @click.stop="handleGenerate"
           >
-            <Icon icon="mdi:auto-fix" height="13" />
-            <span>{{ i18n.generateMsg || '生成提交信息' }}</span>
+            <Icon v-if="generating" icon="mdi:loading" class="gp-spin" height="13" />
+            <Icon v-else icon="mdi:auto-fix" height="13" />
+            <span>{{ generating ? (i18n.generating || '生成中...') : (i18n.generateMsg || '生成提交信息') }}</span>
           </button>
           <button
             class="vp-btn vp-btn--primary vp-btn--sm"
@@ -154,6 +156,7 @@ const props = defineProps<{
   i18n: Record<string, any>
   tree: WorkingTreeInfo
   committing: boolean
+  generating: boolean
   commitOutput: string
   fileDiffs: Record<string, string>
   generatedMsg: string
@@ -268,6 +271,15 @@ defineExpose({ clear: () => { commitMessage.value = ""; commitType.value = "chor
 @use "@/index.scss" as *;
 
 $vp-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+
+.gp-spin {
+  animation: gp-spin 1s linear infinite;
+}
+
+@keyframes gp-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
 
 .wt-panel {
   border-top: 1px solid var(--b3-border-color);

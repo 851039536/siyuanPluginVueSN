@@ -83,8 +83,9 @@
           :i18n="i18n"
           :tree="workingTrees[project.id]"
           :committing="committing[project.id] || false"
+          :generating="generatingMsgs[project.id]?.generating || false"
           :commit-output="commitOutputs[project.id] || ''"
-          :generated-msg="generatedMsgs[project.id] || ''"
+          :generated-msg="generatingMsgs[project.id]?.text || ''"
           :file-diffs="fileDiffsForProject(project.id)"
           @stage-file="(file) => handleStageFile(project.id, file)"
           @unstage-file="(file) => handleUnstageFile(project.id, file)"
@@ -240,8 +241,8 @@ const addResult = ref<boolean | null>(null)
 const refreshing = ref<string | null>(null)
 /** 提交输出 id → text */
 const commitOutputs = ref<Record<string, string>>({})
-/** AI 生成的提交信息 id → text（传给 WorkingTreePanel 的 prop） */
-const generatedMsgs = ref<Record<string, string>>({})
+/** AI 生成状态 id → { generating, text } */
+const generatingMsgs = ref<Record<string, { generating: boolean; text: string }>>({})
 
 /** 提取指定项目相关的 fileDiffs（按前缀过滤） */
 function fileDiffsForProject(projectId: string): Record<string, string> {
@@ -383,10 +384,17 @@ async function handleCommit(id: string, message: string) {
 }
 
 async function handleGenerateMsg(id: string) {
-  const msg = await generateCommitMsg(id)
-  // 通过 prop 传递给 WorkingTreePanel，由 watch 自动填入文本框
-  generatedMsgs.value = { ...generatedMsgs.value, [id]: msg }
+  // 设置生成中状态
+  generatingMsgs.value = { ...generatingMsgs.value, [id]: { generating: true, text: "" } }
   commitOutputs.value[id] = ""
+  try {
+    const msg = await generateCommitMsg(id)
+    // 通过 prop 传递给 WorkingTreePanel，由 watch 自动填入文本框
+    generatingMsgs.value = { ...generatingMsgs.value, [id]: { generating: false, text: msg } }
+  } catch (e: any) {
+    commitOutputs.value[id] = `AI 生成失败: ${e?.message || e}，可手动输入`
+    generatingMsgs.value = { ...generatingMsgs.value, [id]: { generating: false, text: "" } }
+  }
 }
 
 async function handleLoadDiff(id: string, file: string, staged: boolean) {

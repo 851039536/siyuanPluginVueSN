@@ -1577,6 +1577,7 @@
     "unstaged": "Unstaged",
     "commitMessagePlaceholder": "Enter commit message...",
     "generateMsg": "Generate Message",
+    "generating": "Generating...",
     "commit": "Commit",
     "committing": "Committing..."
   }

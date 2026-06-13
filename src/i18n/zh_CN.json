@@ -1650,6 +1650,7 @@
     "unstaged": "未暂存",
     "commitMessagePlaceholder": "输入提交信息...",
     "generateMsg": "生成提交信息",
+    "generating": "生成中...",
     "commit": "提交",
     "committing": "提交中..."
   }

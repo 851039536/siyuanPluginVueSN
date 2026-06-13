@@ -1,6 +1,7 @@
 import type { Plugin } from "siyuan"
 import { createVueDockApp } from "@/utils/vueAppHelper"
 import { getNodeProcessModules } from "@/utils/nodeModules"
+import { callAISmart, getApiConfigFromPlugin } from "@/utils/aiApi"
 import type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo } from "./storage"
 import { GitPushStorage } from "./storage"
 import GitPushPanel from "../index.vue"
@@ -578,7 +579,7 @@ export class GitPushManager {
 
   /**
    * 根据暂存区差异自动生成提交信息
-   * 格式：<type>: <summary> — 基于变更文件统计
+   * 优先使用配置的 AI 模型分析 diff 内容；无 API Key 则降级为启发式
    */
   async generateCommitMessage(projectPath: string): Promise<string> {
     const proc = getNodeProcessModules()
@@ -586,34 +587,70 @@ export class GitPushManager {
     const { child_process } = proc
 
     try {
-      // 获取暂存区文件列表
-      const raw = await this.execGit(child_process, projectPath, [
-        "diff", "--cached", "--name-only",
+      // 获取暂存区差异文本
+      const diffText = await this.execGit(child_process, projectPath, [
+        "diff", "--cached", "--stat",
       ])
-      if (!raw) return "chore: update files"
+      if (!diffText) return "chore: update files"
 
-      const files = raw.split("\n").filter(Boolean)
+      // 截取用于 AI 的 diff（最多 3000 字符，避免 token 超限）
+      const fullDiff = await this.execGit(child_process, projectPath, [
+        "diff", "--cached",
+      ])
+      const diffSnippet = (fullDiff || diffText).substring(0, 3000)
 
-      // 简单启发式: 根据文件路径/类型推断 commit type
-      let type = "chore"
-      const allPaths = files.join(" ").toLowerCase()
+      // 尝试 AI 生成
+      const aiConfig = getApiConfigFromPlugin(this.plugin)
+      if (aiConfig.apiKey) {
+        try {
+          const result = await callAISmart(
+            `根据以下 git diff，生成一条英文 conventional commit 信息（格式：type(scope): description，其中 type 为 feat/fix/chore/docs/style/refactor/test/perf 之一）。
+只返回提交信息本身，不要任何解释。
+Diff:
+${diffSnippet}`,
+            aiConfig,
+            {
+              systemPrompt: "You are a git commit message generator. You analyze code diffs and output ONLY a conventional commit message without any explanation.",
+              temperature: 0.3,
+              maxTokens: 200,
+            },
+          )
+          if (result?.trim()) return result.trim()
+        } catch {
+          // AI 调用失败，降级到启发式
+        }
+      }
 
-      if (files.some(f => f.match(/\.(test|spec)\./))) type = "test"
-      else if (files.some(f => f.match(/\.(css|scss|less|style)/))) type = "style"
-      else if (allPaths.includes("fix") || allPaths.includes("bug")) type = "fix"
-      else if (allPaths.includes("readme") || allPaths.includes("doc")) type = "docs"
-      else if (allPaths.includes("refactor") || allPaths.includes("rename")) type = "refactor"
-      else if (allPaths.includes(".d.ts") || allPaths.includes("types/") || allPaths.includes("interface")) type = "types"
-      else if (files.length >= 5) type = "feat"
-
-      // 生成摘要：取前 3 个文件作为代表
-      const fileList = files.slice(0, 3).map(f => f.split("/").pop() || f).join(", ")
-      const more = files.length > 3 ? ` 等 ${files.length} 个文件` : ""
-
-      return `${type}: ${fileList}${more}`
+      // 降级：启发式生成
+      return this.heuristicCommitMessage(diffText)
     } catch {
       return "chore: update files"
     }
+  }
+
+  /**
+   * 启发式生成提交信息（AI 不可用时的降级方案）
+   */
+  private heuristicCommitMessage(statText: string): string {
+    const lines = statText.split("\n").filter(Boolean)
+    // 统计行如: "3 files changed, 15 insertions(+), 2 deletions(-)"
+    const files = lines.slice(0, -1).map(l => l.split("|")[0]?.trim()).filter(Boolean)
+
+    let type = "chore"
+    const allPaths = files.join(" ").toLowerCase()
+
+    if (files.some(f => f.match(/\.(test|spec)\./))) type = "test"
+    else if (files.some(f => f.match(/\.(css|scss|less|style)/))) type = "style"
+    else if (allPaths.includes("fix") || allPaths.includes("bug")) type = "fix"
+    else if (allPaths.includes("readme") || allPaths.includes("doc")) type = "docs"
+    else if (allPaths.includes("refactor") || allPaths.includes("rename")) type = "refactor"
+    else if (allPaths.includes(".d.ts") || allPaths.includes("types/")) type = "types"
+    else if (files.length >= 5) type = "feat"
+
+    const fileList = files.slice(0, 3).map(f => f.split("/").pop() || f).join(", ")
+    const more = files.length > 3 ? ` 等 ${files.length} 个文件` : ""
+
+    return `${type}: ${fileList}${more}`
   }
 
   destroy() {

@@ -1,23 +1,49 @@
 <template>
   <div class="base-unit-converter">
-    <Input
-      v-model="inputValue"
-      type="number"
-      label="输入值"
-      placeholder="请输入数值"
-    />
+    <div class="input-section">
+      <Input
+        v-model="inputValue"
+        type="number"
+        label="INPUT"
+        placeholder="请输入数值"
+      />
+    </div>
 
-    <Select
-      v-model="fromUnit"
-      :options="unitOptions"
-      label="从单位"
-    />
+    <div class="unit-select-row">
+      <div class="select-wrapper">
+        <Select
+          v-model="fromUnit"
+          :options="unitOptions"
+          label="FROM"
+        />
+      </div>
 
-    <Select
-      v-model="toUnit"
-      :options="unitOptions"
-      label="到单位"
-    />
+      <button
+        class="swap-btn"
+        title="互换单位"
+        @click="swapUnits"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M7 16V4m0 12l-3-3m3 3l3-3" />
+          <path d="M17 8v12m0-12l3 3m-3-3l-3 3" />
+        </svg>
+      </button>
+
+      <div class="select-wrapper">
+        <Select
+          v-model="toUnit"
+          :options="unitOptions"
+          label="TO"
+        />
+      </div>
+    </div>
 
     <div
       v-if="result"
@@ -25,7 +51,7 @@
     >
       <div class="result-value">
         <span class="input-display">{{ inputValue }} {{ lookup.getSymbol(fromUnit) }}</span>
-        <span class="equals"> = </span>
+        <span class="equals">=</span>
         <span class="output-display">{{ result }} {{ lookup.getSymbol(toUnit) }}</span>
       </div>
     </div>
@@ -34,15 +60,15 @@
       v-if="result && showQuickResults"
       class="converter-quick-results"
     >
-      <h4>快速转换结果</h4>
+      <h4>QUICK REFERENCE</h4>
       <div class="quick-results-grid">
         <div
           v-for="unit in filteredUnits"
           :key="unit.key"
           class="quick-result-item"
         >
-          <span class="unit-name">{{ unit.name }}:</span>
-          <span class="unit-value">{{ convertToUnit(unit.key) }} {{ unit.symbol }}</span>
+          <span class="unit-name">{{ unit.symbol }}</span>
+          <span class="unit-value">{{ convertToUnit(unit.key) }}</span>
         </div>
       </div>
     </div>
@@ -62,7 +88,6 @@ import {
   createUnitLookup,
   formatResult,
   generateUnitOptions,
-
 } from "../utils/converter"
 
 interface Props {
@@ -84,6 +109,13 @@ const lookup = computed(() => createUnitLookup(props.units))
 const inputValue = ref("1")
 const fromUnit = ref(props.defaultFrom || props.units[0]?.key || "")
 const toUnit = ref(props.defaultTo || props.units[1]?.key || "")
+
+// 互换单位
+function swapUnits() {
+  const tmp = fromUnit.value
+  fromUnit.value = toUnit.value
+  toUnit.value = tmp
+}
 
 // 生成选项（缓存）
 const unitOptions = computed(() => generateUnitOptions(props.units))
@@ -115,6 +147,6 @@ function convertToUnit(targetUnit: string): string {
 .base-unit-converter {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 </style>

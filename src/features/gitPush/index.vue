@@ -3,10 +3,15 @@
     <!-- 头部 -->
     <div class="gp-header">
       <span class="gp-title">{{ i18n.panelTitle || 'Git 推送' }}</span>
-      <button class="vp-btn vp-btn--ghost gp-add-btn" @click="showAddDialog = true">
-        <Icon icon="mdi:plus" />
-        <span>{{ i18n.addProject || '添加项目' }}</span>
-      </button>
+      <div class="gp-header-btns">
+        <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="showCatDialog = true">
+          <Icon icon="mdi:tag-outline" />
+        </button>
+        <button class="vp-btn vp-btn--ghost gp-add-btn" @click="showAddDialog = true">
+          <Icon icon="mdi:plus" />
+          <span>{{ i18n.addProject || '添加项目' }}</span>
+        </button>
+      </div>
     </div>
 
     <div class="gp-divider" />
@@ -22,17 +27,38 @@
     </div>
 
     <div v-else class="gp-list">
-      <div
-        v-for="project in projects"
-        :key="project.id"
-        class="gp-card"
-      >
+      <template v-for="group in groupedProjects" :key="group.category.id">
+        <div class="gp-cat-header" :style="{ borderLeftColor: group.category.color }">
+          <span class="gp-cat-dot" :style="{ background: group.category.color }" />
+          <span class="gp-cat-name">{{ group.category.name }}</span>
+          <span class="gp-cat-count">{{ group.projects.length }}</span>
+        </div>
+        <div
+          v-for="project in group.projects"
+          :key="project.id"
+          class="gp-card"
+        >
         <div class="gp-card-top">
           <div class="gp-card-info">
             <div class="gp-card-name">{{ project.name }}</div>
             <div class="gp-card-path" :title="project.path">{{ project.path }}</div>
           </div>
           <div class="gp-card-actions">
+            <select
+              class="gp-cat-select"
+              :value="project.categoryId"
+              :title="i18n.moveCategory || '移动分类'"
+              @change.stop="handleMoveProject(project.id, ($event.target as HTMLSelectElement).value)"
+            >
+              <option
+                v-for="cat in categories"
+                :key="cat.id"
+                :value="cat.id"
+                :selected="cat.id === project.categoryId"
+              >
+                {{ cat.name }}
+              </option>
+            </select>
             <button
               class="vp-btn vp-btn--ghost vp-btn--sm"
               title="打开项目目录"
@@ -152,7 +178,8 @@
         <div v-if="pushOutputs[project.id]" class="gp-output">
           <pre>{{ pushOutputs[project.id] }}</pre>
         </div>
-      </div>
+        </div>
+      </template>
     </div>
 
     <!-- 添加项目弹窗 -->
@@ -188,6 +215,18 @@
               </button>
             </div>
           </div>
+          <div class="gp-form-group">
+            <label class="gp-label">{{ i18n.category || '分类' }}</label>
+            <select v-model="newProjectCat" class="gp-select">
+              <option
+                v-for="cat in categories"
+                :key="cat.id"
+                :value="cat.id"
+              >
+                {{ cat.name }}
+              </option>
+            </select>
+          </div>
           <div v-if="addError" class="gp-error">{{ addError }}</div>
           <div v-if="addChecking" class="gp-checking">
             <Icon icon="mdi:loading" class="gp-spin" />
@@ -204,6 +243,53 @@
           <button class="vp-btn vp-btn--primary" :disabled="!newProjectName || !newProjectPath" @click="handleAdd">
             {{ i18n.add || '添加' }}
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 管理分类弹窗 -->
+    <div v-if="showCatDialog" class="gp-mask" @click.self="showCatDialog = false">
+      <div class="gp-dialog" style="width: 340px;">
+        <div class="gp-dialog-header">
+          <span class="gp-dialog-title">{{ i18n.manageCategories || '管理分类' }}</span>
+          <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="showCatDialog = false">
+            <Icon icon="mdi:close" />
+          </button>
+        </div>
+        <div class="gp-dialog-body">
+          <div v-for="cat in categories" :key="cat.id" class="gp-cat-row">
+            <span class="gp-cat-dot-sm" :style="{ background: cat.color }" />
+            <span class="gp-cat-name-sm">{{ cat.name }}</span>
+            <button
+              v-if="cat.id !== '__ungrouped__'"
+              class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"
+              @click="handleDeleteCategory(cat.id)"
+            >
+              <Icon icon="mdi:delete-outline" height="12" />
+            </button>
+          </div>
+          <div class="gp-cat-add-row">
+            <input
+              v-model="newCatName"
+              class="gp-input"
+              :placeholder="i18n.catNamePlaceholder || '分类名称'"
+              @keyup.enter="handleAddCategory"
+              style="flex:1"
+            />
+            <input
+              v-model="newCatColor"
+              type="color"
+              class="gp-color-input"
+              title="颜色"
+            />
+            <button
+              class="vp-btn vp-btn--primary vp-btn--sm"
+              :disabled="!newCatName.trim()"
+              @click="handleAddCategory"
+            >
+              <Icon icon="mdi:plus" height="13" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -225,6 +311,8 @@ const props = defineProps<{
 
 const {
   projects,
+  categories,
+  groupedProjects,
   loading,
   isPushing,
   pushOutputs,
@@ -248,11 +336,18 @@ const {
   pushToAll,
   pushSingle,
   checkIsGitRepo,
+  addCategory: addCategoryFn,
+  deleteCategory: deleteCategoryFn,
+  moveProject,
 } = useGitPush(props.manager)
 
 const showAddDialog = ref(false)
+const showCatDialog = ref(false)
 const newProjectName = ref("")
 const newProjectPath = ref("")
+const newProjectCat = ref("__ungrouped__")
+const newCatName = ref("")
+const newCatColor = ref("#4a9eff")
 const addError = ref("")
 const addChecking = ref(false)
 const addResult = ref<boolean | null>(null)
@@ -301,10 +396,11 @@ async function handleAdd() {
     const isGit = await checkIsGitRepo(newProjectPath.value.trim())
     addResult.value = isGit
     // 即使不是 git 仓库也允许添加（用户可能后续初始化）
-    await addProject(newProjectName.value.trim(), newProjectPath.value.trim())
+    await addProject(newProjectName.value.trim(), newProjectPath.value.trim(), newProjectCat.value)
     showAddDialog.value = false
     newProjectName.value = ""
     newProjectPath.value = ""
+    newProjectCat.value = "__ungrouped__"
     addResult.value = null
   } catch (e: any) {
     addError.value = e?.message || "添加失败"
@@ -421,6 +517,25 @@ async function handleLoadDiff(id: string, file: string, staged: boolean) {
   await loadFileDiff(id, file, staged)
 }
 
+// ---- 分类管理 ----
+
+async function handleAddCategory() {
+  const name = newCatName.value.trim()
+  if (!name) return
+  await addCategoryFn(name, newCatColor.value)
+  newCatName.value = ""
+}
+
+async function handleDeleteCategory(id: string) {
+  const cat = categories.value.find(c => c.id === id)
+  if (!cat || !confirm(`确定删除分类 "${cat.name}"？\n该分类下的项目将移至「未分组」。`)) return
+  await deleteCategoryFn(id)
+}
+
+async function handleMoveProject(projectId: string, categoryId: string) {
+  await moveProject(projectId, categoryId)
+}
+
 /** 获取远程推送状态标签文案 */
 function statusLabel(projectId: string, remoteKey: string): string {
   const status = pushStatuses.value[projectId]
@@ -504,6 +619,8 @@ async function selectDirectory() {
 <style lang="scss">
 @use "@/index.scss" as *;
 
+$vp-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+
 .git-push-panel {
   display: flex;
   flex-direction: column;
@@ -516,6 +633,11 @@ async function selectDirectory() {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.gp-header-btns {
+  display: flex;
+  gap: 4px;
 }
 
 .gp-title {
@@ -559,6 +681,37 @@ async function selectDirectory() {
   &:hover {
     border-color: var(--b3-theme-primary);
   }
+}
+
+.gp-cat-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0 2px;
+  border-left: 3px solid transparent;
+  padding-left: 8px;
+}
+
+.gp-cat-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.gp-cat-name {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+
+.gp-cat-count {
+  font-size: 10px;
+  font-weight: 600;
+  font-family: $vp-mono;
+  opacity: 0.35;
 }
 
 .gp-card-top {
@@ -813,6 +966,82 @@ async function selectDirectory() {
 
   &:not(.success) {
     opacity: 0.5;
+  }
+}
+
+// 分类管理弹窗
+.gp-cat-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--b3-border-color);
+
+  &:last-of-type {
+    border-bottom: none;
+  }
+}
+
+.gp-cat-dot-sm {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.gp-cat-name-sm {
+  flex: 1;
+  font-size: 11px;
+}
+
+.gp-cat-add-row {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.gp-color-input {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 2px;
+  background: none;
+}
+
+// 分类选择框（卡片内联）
+.gp-cat-select {
+  background: transparent;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 3px;
+  color: var(--b3-theme-on-surface);
+  font-size: 10px;
+  padding: 1px 2px;
+  cursor: pointer;
+  max-width: 60px;
+  opacity: 0.5;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+// 添加弹窗中的分类下拉
+.gp-select {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  font-size: 12px;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  outline: none;
+  cursor: pointer;
+
+  &:focus {
+    border-color: var(--b3-theme-primary);
+    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
   }
 }
 

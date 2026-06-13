@@ -10,6 +10,8 @@ export interface GitProject {
   name: string
   /** 项目绝对路径 */
   path: string
+  /** 分类 ID（默认 "__ungrouped__"） */
+  categoryId: string
   /** GitHub 远程名称（自动检测） */
   githubRemote?: string
   /** Gitee 远程名称（自动检测） */
@@ -18,6 +20,14 @@ export interface GitProject {
   giteaRemote?: string
   /** 添加时间 */
   addedAt: number
+}
+
+/** 项目分类 */
+export interface ProjectCategory {
+  id: string
+  name: string
+  color: string
+  order: number
 }
 
 /** GitHub/Gitee/Gitea 远程信息 */
@@ -89,16 +99,35 @@ export interface WorkingTreeInfo {
 
 const DEFAULT_PROJECTS: GitProject[] = []
 
+const DEFAULT_UNGROUPED: ProjectCategory = { id: "__ungrouped__", name: "未分组", color: "#888888", order: 0 }
+
 export class GitPushStorage {
   readonly projects: TypedStorage<GitProject[]>
+  readonly categories: TypedStorage<ProjectCategory[]>
 
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
     this.projects = new TypedStorage(storage, "git-push-projects", DEFAULT_PROJECTS)
+    this.categories = new TypedStorage(storage, "git-push-categories", [DEFAULT_UNGROUPED])
   }
 
   async init(): Promise<void> {
-    // loadOrDefault() 内置：数据缺失 → 回退默认值；非数组 → 打印警告并回退
     await this.projects.loadOrDefault()
+    const cats = await this.categories.loadOrDefault()
+    // 确保默认分类始终存在
+    if (!cats.some(c => c.id === "__ungrouped__")) {
+      cats.unshift(DEFAULT_UNGROUPED)
+      await this.categories.save(cats)
+    }
+    // 将旧项目（无 categoryId）迁移到未分组
+    const projs = await this.projects.loadOrDefault()
+    let needsSave = false
+    for (const p of projs) {
+      if (!p.categoryId) {
+        p.categoryId = "__ungrouped__"
+        needsSave = true
+      }
+    }
+    if (needsSave) await this.projects.save(projs)
   }
 }

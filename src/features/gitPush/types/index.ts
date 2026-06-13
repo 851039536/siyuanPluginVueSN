@@ -2,11 +2,11 @@ import type { Plugin } from "siyuan"
 import { createVueDockApp } from "@/utils/vueAppHelper"
 import { getNodeProcessModules } from "@/utils/nodeModules"
 import { callAI, getApiConfigFromPlugin } from "@/utils/aiApi"
-import type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo } from "./storage"
+import type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo, ProjectCategory } from "./storage"
 import { GitPushStorage } from "./storage"
 import GitPushPanel from "../index.vue"
 
-export type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo }
+export type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo, ProjectCategory }
 
 export class GitPushManager {
   private plugin: Plugin
@@ -43,12 +43,13 @@ export class GitPushManager {
   /**
    * 添加项目映射
    */
-  async addProject(name: string, path: string): Promise<GitProject> {
+  async addProject(name: string, path: string, categoryId = "__ungrouped__"): Promise<GitProject> {
     const projects = await this.getProjects()
     const project: GitProject = {
       id: Date.now().toString(),
       name,
       path,
+      categoryId,
       addedAt: Date.now(),
     }
     // 自动检测远程仓库
@@ -672,6 +673,65 @@ ${diffSnippet}`,
     const more = files.length > 3 ? ` 等 ${files.length} 个文件` : ""
 
     return `${type}: ${fileList}${more}`
+  }
+
+  /** 获取所有分类 */
+  async getCategories(): Promise<ProjectCategory[]> {
+    return this.storage.categories.loadOrDefault()
+  }
+
+  /** 新增分类 */
+  async addCategory(name: string, color = "#4a9eff"): Promise<ProjectCategory> {
+    const cats = await this.getCategories()
+    const cat: ProjectCategory = {
+      id: Date.now().toString(),
+      name,
+      color,
+      order: cats.length,
+    }
+    cats.push(cat)
+    await this.storage.categories.save(cats)
+    return cat
+  }
+
+  /** 更新分类 */
+  async updateCategory(id: string, data: Partial<Pick<ProjectCategory, "name" | "color">>): Promise<void> {
+    const cats = await this.getCategories()
+    const cat = cats.find(c => c.id === id)
+    if (!cat || id === "__ungrouped__") return
+    if (data.name !== undefined) cat.name = data.name
+    if (data.color !== undefined) cat.color = data.color
+    await this.storage.categories.save(cats)
+  }
+
+  /** 删除分类（项目回退到未分组） */
+  async deleteCategory(id: string): Promise<void> {
+    if (id === "__ungrouped__") return
+    const cats = await this.getCategories()
+    const idx = cats.findIndex(c => c.id === id)
+    if (idx === -1) return
+    cats.splice(idx, 1)
+    await this.storage.categories.save(cats)
+
+    // 将该分类下的项目移到未分组
+    const projs = await this.getProjects()
+    let changed = false
+    for (const p of projs) {
+      if (p.categoryId === id) {
+        p.categoryId = "__ungrouped__"
+        changed = true
+      }
+    }
+    if (changed) await this.storage.projects.save(projs)
+  }
+
+  /** 移动项目到指定分类 */
+  async moveProject(projectId: string, categoryId: string): Promise<void> {
+    const projs = await this.getProjects()
+    const p = projs.find(x => x.id === projectId)
+    if (!p) return
+    p.categoryId = categoryId
+    await this.storage.projects.save(projs)
   }
 
   destroy() {

@@ -406,34 +406,10 @@ export const POWER_UNITS: UnitDefinition[] = [
     factor: 1.355818,
   },
   {
-    key: "newtonMeterPerSecond",
-    name: "牛顿米/秒",
-    symbol: "N·m/s",
-    factor: 1,
-  },
-  {
-    key: "joulePerSecond",
-    name: "焦耳/秒",
-    symbol: "J/s",
-    factor: 1,
-  },
-  {
     key: "ergPerSecond",
     name: "尔格/秒",
     symbol: "erg/s",
     factor: 1e-7,
-  },
-  {
-    key: "dbm",
-    name: "分贝毫瓦",
-    symbol: "dBm",
-    factor: 0.001258925,
-  },
-  {
-    key: "dbw",
-    name: "分贝瓦",
-    symbol: "dBW",
-    factor: 1.258925,
   },
 ]
 
@@ -710,29 +686,5 @@ export const DATA_UNITS: UnitDefinition[] = [
     name: "艾位",
     symbol: "Ebit",
     factor: 1.4411518807585587e17,
-  },
-  {
-    key: "kibibyte",
-    name: "二进制千字节",
-    symbol: "KiB",
-    factor: 1024,
-  },
-  {
-    key: "mebibyte",
-    name: "二进制兆字节",
-    symbol: "MiB",
-    factor: 1048576,
-  },
-  {
-    key: "gibibyte",
-    name: "二进制吉字节",
-    symbol: "GiB",
-    factor: 1073741824,
-  },
-  {
-    key: "tebibyte",
-    name: "二进制太字节",
-    symbol: "TiB",
-    factor: 1099511627776,
   },
 ]

@@ -1,19 +1,19 @@
 <template>
   <div class="unit-converter">
     <div class="converter-header">
-      <h3>{{ i18n?.unitConverterTitle || '单位转换' }}</h3>
+      <h3>{{ i18n?.unitConverterTitle || 'UNIT CONVERTER' }}</h3>
     </div>
 
     <div class="converter-tabs">
-      <Button
+      <div
         v-for="tab in tabs"
         :key="tab.key"
-        :variant="activeTab === tab.key ? 'primary' : 'ghost'"
-        size="small"
+        class="converter-tab"
+        :class="{ active: activeTab === tab.key }"
         @click="activeTab = tab.key"
       >
         {{ tab.name }}
-      </Button>
+      </div>
     </div>
 
     <div class="converter-content">
@@ -31,7 +31,6 @@ import {
   computed,
   ref,
 } from "vue"
-import Button from "@/components/Button.vue"
 import BaseUnitConverter from "./components/BaseUnitConverter.vue"
 import ASCIIConverter from "./components/ASCIIConverter.vue"
 import BaseConverter from "./components/BaseConverter.vue"

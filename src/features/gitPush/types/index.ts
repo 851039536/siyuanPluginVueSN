@@ -431,18 +431,19 @@ export class GitPushManager {
   /** 列出所有 stash 条目 */
   async stashList(projectPath: string): Promise<StashEntry[]> {
     try {
-      const raw = await this.execGit(projectPath, ["stash", "list", "--format=%gd%x00%gs"])
+      // 默认格式: "stash@{0}: WIP on master: abc1234 feat: some message"
+      const raw = await this.execGit(projectPath, ["stash", "list"])
       if (!raw) return []
       const entries: StashEntry[] = []
       const lines = raw.split("\n").filter(Boolean)
       for (const line of lines) {
-        const [refName, subject] = line.split("\0")
-        if (!refName) continue
-        const idxMatch = refName.match(/^stash@\{(\d+)\}$/)
-        entries.push({
-          index: idxMatch ? parseInt(idxMatch[1], 10) : entries.length,
-          message: subject || refName,
-        })
+        const match = line.match(/^stash@\{(\d+)\}:\s*(.+)$/)
+        if (match) {
+          entries.push({
+            index: parseInt(match[1], 10),
+            message: match[2],
+          })
+        }
       }
       return entries
     } catch {

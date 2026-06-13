@@ -381,15 +381,26 @@ export class GitPushManager {
 
   /**
    * 执行 git 命令
+   * 自动对含空格/特殊字符的非标志参数加双引号，解决文件名和提交信息含空格的问题
    */
   private execGit(
     child_process: any,
     cwd: string,
     args: string[],
   ): Promise<string> {
+    const escaped = args.map(a => {
+      // 子命令（第一个参数，如 add/commit/status）不需要引号
+      // 标志参数（以 - 开头）和 -- 不需要引号
+      // 其余参数若含空格则加双引号
+      if (a.startsWith("-") || a === "--") return a
+      if (/[\s"'$`\\]/.test(a)) return `"${a.replace(/"/g, '\\"')}"`
+      return a
+    })
+    const cmd = `git ${escaped.join(" ")}`
+
     return new Promise((resolve, reject) => {
       child_process.exec(
-        `git ${args.join(" ")}`,
+        cmd,
         { cwd, timeout: 30000 },
         (error: any, stdout: string, stderr: string) => {
           if (error) {

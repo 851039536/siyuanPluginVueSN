@@ -1,11 +1,11 @@
 import type { Plugin } from "siyuan"
 import { createVueDockApp } from "@/utils/vueAppHelper"
 import { getNodeProcessModules } from "@/utils/nodeModules"
-import type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus } from "./storage"
+import type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo } from "./storage"
 import { GitPushStorage } from "./storage"
 import GitPushPanel from "../index.vue"
 
-export type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus }
+export type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo }
 
 export class GitPushManager {
   private plugin: Plugin
@@ -400,6 +400,209 @@ export class GitPushManager {
         },
       )
     })
+  }
+
+  /**
+   * 获取工作区变更状态（git status --porcelain -b）
+   */
+  async getWorkingTreeStatus(projectPath: string): Promise<WorkingTreeInfo> {
+    const proc = getNodeProcessModules()
+    const empty: WorkingTreeInfo = {
+      branch: "",
+      files: [],
+      stagedCount: 0,
+      unstagedCount: 0,
+      untrackedCount: 0,
+      hasChanges: false,
+    }
+    if (!proc) return empty
+
+    const { child_process } = proc
+    let branch = ""
+    let stagedCount = 0
+    let unstagedCount = 0
+    let untrackedCount = 0
+    const files: FileChange[] = []
+
+    try {
+      // 先获取分支名
+      branch = await this.execGit(child_process, projectPath, ["rev-parse", "--abbrev-ref", "HEAD"])
+    } catch {
+      return empty
+    }
+
+    try {
+      const raw = await this.execGit(child_process, projectPath, ["status", "--porcelain"])
+      if (!raw) return { ...empty, branch }
+
+      const lines = raw.split("\n").filter(Boolean)
+      for (const line of lines) {
+        const statusCode = line.substring(0, 2)
+        const filePath = line.substring(3).trim()
+        if (!filePath) continue
+
+        const xy = statusCode.trim()
+        const staged = xy[0] !== " " && xy[0] !== "?"
+        const unstaged = xy[1] !== " "
+
+        // 解析 git status --porcelain 的状态码
+        // 格式：XY path，where X=staging area status, Y=working tree status
+        let status: FileChange["status"] = "modified"
+
+        if (xy === "??") {
+          status = "untracked"
+          untrackedCount++
+        } else if (xy.includes("M")) {
+          status = "modified"
+        } else if (xy.includes("A")) {
+          status = "added"
+        } else if (xy.includes("D")) {
+          status = "deleted"
+        } else if (xy.includes("R")) {
+          status = "renamed"
+        } else if (xy.includes("C")) {
+          status = "copied"
+        } else if (xy.includes("U")) {
+          status = "unmerged"
+        }
+
+        if (staged && status !== "untracked") stagedCount++
+        if (unstaged && status !== "untracked") unstagedCount++
+
+        // 处理重命名（R  old -> new）
+        let actualPath = filePath
+        let oldPath: string | undefined
+        if (status === "renamed") {
+          const arrowIdx = filePath.indexOf(" -> ")
+          if (arrowIdx > 0) {
+            oldPath = filePath.substring(0, arrowIdx).trim()
+            actualPath = filePath.substring(arrowIdx + 4).trim()
+          }
+        }
+
+        files.push({ path: actualPath, status, staged, oldPath })
+      }
+    } catch {
+      // git status 失败，返回空
+    }
+
+    return {
+      branch,
+      files,
+      stagedCount,
+      unstagedCount,
+      untrackedCount,
+      hasChanges: files.length > 0,
+    }
+  }
+
+  /**
+   * 获取文件差异
+   * @param staged true=暂存区差异（git diff --cached），false=工作区差异（git diff）
+   */
+  async getFileDiff(projectPath: string, file: string, staged = false): Promise<string> {
+    const proc = getNodeProcessModules()
+    if (!proc) return ""
+    try {
+      const { child_process } = proc
+      const args = ["diff"]
+      if (staged) args.push("--cached")
+      args.push("--", file)
+      return await this.execGit(child_process, projectPath, args) || "（无差异）"
+    } catch {
+      return "（无法获取差异）"
+    }
+  }
+
+  /**
+   * 暂存单个文件
+   */
+  async stageFile(projectPath: string, file: string): Promise<void> {
+    const proc = getNodeProcessModules()
+    if (!proc) throw new Error("Node 环境不可用")
+    const { child_process } = proc
+    await this.execGit(child_process, projectPath, ["add", "--", file])
+  }
+
+  /**
+   * 暂存全部文件
+   */
+  async stageAll(projectPath: string): Promise<void> {
+    const proc = getNodeProcessModules()
+    if (!proc) throw new Error("Node 环境不可用")
+    const { child_process } = proc
+    await this.execGit(child_process, projectPath, ["add", "-A"])
+  }
+
+  /**
+   * 取消暂存单个文件
+   */
+  async unstageFile(projectPath: string, file: string): Promise<void> {
+    const proc = getNodeProcessModules()
+    if (!proc) throw new Error("Node 环境不可用")
+    const { child_process } = proc
+    await this.execGit(child_process, projectPath, ["reset", "HEAD", "--", file])
+  }
+
+  /**
+   * 取消全部暂存
+   */
+  async unstageAll(projectPath: string): Promise<void> {
+    const proc = getNodeProcessModules()
+    if (!proc) throw new Error("Node 环境不可用")
+    const { child_process } = proc
+    await this.execGit(child_process, projectPath, ["reset", "HEAD"])
+  }
+
+  /**
+   * 提交暂存的内容
+   */
+  async commit(projectPath: string, message: string): Promise<string> {
+    const proc = getNodeProcessModules()
+    if (!proc) throw new Error("Node 环境不可用")
+    const { child_process } = proc
+    const result = await this.execGit(child_process, projectPath, ["commit", "-m", message])
+    return result
+  }
+
+  /**
+   * 根据暂存区差异自动生成提交信息
+   * 格式：<type>: <summary> — 基于变更文件统计
+   */
+  async generateCommitMessage(projectPath: string): Promise<string> {
+    const proc = getNodeProcessModules()
+    if (!proc) return "chore: update files"
+    const { child_process } = proc
+
+    try {
+      // 获取暂存区文件列表
+      const raw = await this.execGit(child_process, projectPath, [
+        "diff", "--cached", "--name-only",
+      ])
+      if (!raw) return "chore: update files"
+
+      const files = raw.split("\n").filter(Boolean)
+
+      // 简单启发式: 根据文件路径/类型推断 commit type
+      let type = "chore"
+      const allPaths = files.join(" ").toLowerCase()
+
+      if (files.some(f => f.match(/\.(test|spec)\./))) type = "test"
+      else if (files.some(f => f.match(/\.(css|scss|less|style)/))) type = "style"
+      else if (allPaths.includes("fix") || allPaths.includes("bug")) type = "fix"
+      else if (allPaths.includes("readme") || allPaths.includes("doc")) type = "docs"
+      else if (allPaths.includes("refactor") || allPaths.includes("rename")) type = "refactor"
+      else if (allPaths.includes(".d.ts") || allPaths.includes("types/") || allPaths.includes("interface")) type = "types"
+      else if (files.length >= 5) type = "feat"
+
+      // 生成摘要：取前 3 个文件作为代表
+      const fileList = files.slice(0, 3).map(f => f.split("/").pop() || f).join(", ")
+      const more = files.length > 3 ? ` 等 ${files.length} 个文件` : ""
+
+      return `${type}: ${fileList}${more}`
+    } catch {
+      return "chore: update files"
+    }
   }
 
   destroy() {

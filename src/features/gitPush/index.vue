@@ -70,6 +70,24 @@
           </div>
         </div>
 
+        <!-- 工作区变更状态 -->
+        <WorkingTreePanel
+          v-if="workingTrees[project.id]"
+          :i18n="i18n"
+          :tree="workingTrees[project.id]"
+          :committing="committing[project.id] || false"
+          :commit-output="commitOutputs[project.id] || ''"
+          :generated-msg="generatedMsgs[project.id] || ''"
+          :file-diffs="fileDiffsForProject(project.id)"
+          @stage-file="(file) => handleStageFile(project.id, file)"
+          @unstage-file="(file) => handleUnstageFile(project.id, file)"
+          @stage-all="handleStageAll(project.id)"
+          @unstage-all="handleUnstageAll(project.id)"
+          @commit="(msg) => handleCommit(project.id, msg)"
+          @generate-msg="handleGenerateMsg(project.id)"
+          @load-diff="(file, staged) => handleLoadDiff(project.id, file, staged)"
+        />
+
         <!-- 推送按钮组 -->
         <div class="gp-push-group">
           <button
@@ -171,6 +189,7 @@ import { onMounted, ref } from "vue"
 import { Icon } from "@iconify/vue"
 import type { GitPushManager } from "./types"
 import { useGitPush } from "./composables/useGitPush"
+import WorkingTreePanel from "./components/WorkingTreePanel.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -184,8 +203,19 @@ const {
   isPushing,
   pushOutputs,
   pushStatuses,
+  workingTrees,
+  fileDiffs,
+  committing,
   loadProjects,
   loadPushStatus,
+  loadWorkingTree,
+  loadFileDiff,
+  stageItem,
+  stageAllItems,
+  unstageItem,
+  unstageAllItems,
+  doCommit,
+  generateCommitMsg,
   addProject,
   removeProject,
   refreshRemotes,
@@ -201,9 +231,31 @@ const addError = ref("")
 const addChecking = ref(false)
 const addResult = ref<boolean | null>(null)
 const refreshing = ref<string | null>(null)
+/** 提交输出 id → text */
+const commitOutputs = ref<Record<string, string>>({})
+/** AI 生成的提交信息 id → text（传给 WorkingTreePanel 的 prop） */
+const generatedMsgs = ref<Record<string, string>>({})
+
+/** 提取指定项目相关的 fileDiffs（按前缀过滤） */
+function fileDiffsForProject(projectId: string): Record<string, string> {
+  const result: Record<string, string> = {}
+  for (const [key, val] of Object.entries(fileDiffs.value)) {
+    if (key.startsWith(`${projectId}::`)) {
+      // 去掉 projectId 前缀作为组件内 key
+      result[key.substring(projectId.length + 2)] = val
+    }
+  }
+  return result
+}
 
 onMounted(() => {
   loadProjects()
+  // 自动加载各项目工作区状态
+  setTimeout(async () => {
+    for (const p of projects.value) {
+      await loadWorkingTree(p.id)
+    }
+  }, 200)
 })
 
 async function handleAdd() {
@@ -258,6 +310,61 @@ function handleRemove(project: any) {
   if (confirm(`确定要删除项目 "${project.name}" 吗？`)) {
     removeProject(project.id)
   }
+}
+
+// ---- 工作区操作 ----
+
+async function handleStageFile(id: string, file: string) {
+  try {
+    await stageItem(id, file)
+  } catch (e: any) {
+    commitOutputs.value[id] = `暂存失败: ${e?.message || e}`
+  }
+}
+
+async function handleUnstageFile(id: string, file: string) {
+  try {
+    await unstageItem(id, file)
+  } catch (e: any) {
+    commitOutputs.value[id] = `取消暂存失败: ${e?.message || e}`
+  }
+}
+
+async function handleStageAll(id: string) {
+  try {
+    await stageAllItems(id)
+  } catch (e: any) {
+    commitOutputs.value[id] = `暂存失败: ${e?.message || e}`
+  }
+}
+
+async function handleUnstageAll(id: string) {
+  try {
+    await unstageAllItems(id)
+  } catch (e: any) {
+    commitOutputs.value[id] = `取消暂存失败: ${e?.message || e}`
+  }
+}
+
+async function handleCommit(id: string, message: string) {
+  commitOutputs.value[id] = ""
+  try {
+    const result = await doCommit(id, message)
+    commitOutputs.value[id] = result || "提交成功"
+  } catch (e: any) {
+    commitOutputs.value[id] = `提交失败: ${e?.message || e}`
+  }
+}
+
+async function handleGenerateMsg(id: string) {
+  const msg = await generateCommitMsg(id)
+  // 通过 prop 传递给 WorkingTreePanel，由 watch 自动填入文本框
+  generatedMsgs.value = { ...generatedMsgs.value, [id]: msg }
+  commitOutputs.value[id] = ""
+}
+
+async function handleLoadDiff(id: string, file: string, staged: boolean) {
+  await loadFileDiff(id, file, staged)
 }
 
 /** 获取远程推送状态标签文案 */

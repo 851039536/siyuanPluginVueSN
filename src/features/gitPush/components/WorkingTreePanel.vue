@@ -198,30 +198,24 @@ const activeDiffText = computed(() => {
   return props.fileDiffs[key] || ""
 })
 
+/** 文件状态元数据（图标 + 标题统一维护） */
+const STATUS_MAP: Record<string, { icon: string; title: string }> = {
+  modified:  { icon: "~", title: "已修改" },
+  added:     { icon: "+", title: "新增" },
+  deleted:   { icon: "−", title: "已删除" },
+  renamed:   { icon: "→", title: "重命名" },
+  untracked: { icon: "?", title: "未跟踪" },
+  copied:    { icon: "⇋", title: "已复制" },
+  unmerged:  { icon: "⚠", title: "冲突" },
+}
+
 function statusIcon(file: FileChange): string {
-  const map: Record<string, string> = {
-    modified: "~",
-    added: "+",
-    deleted: "−",
-    renamed: "→",
-    untracked: "?",
-    copied: "⇋",
-    unmerged: "⚠",
-  }
-  return map[file.status] || "·"
+  return STATUS_MAP[file.status]?.icon || "·"
 }
 
 function statusTitle(file: FileChange): string {
-  const map: Record<string, string> = {
-    modified: "已修改",
-    added: "新增",
-    deleted: "已删除",
-    renamed: "重命名",
-    untracked: "未跟踪",
-    copied: "已复制",
-    unmerged: "冲突",
-  }
-  return file.oldPath ? `${map[file.status]}: ${file.oldPath} → ${file.path}` : map[file.status] || file.status
+  const title = STATUS_MAP[file.status]?.title || file.status
+  return file.oldPath ? `${title}: ${file.oldPath} → ${file.path}` : title
 }
 
 function toggleStage(file: FileChange) {
@@ -272,15 +266,6 @@ defineExpose({ clear: () => { commitMessage.value = ""; commitType.value = "chor
 @use "@/index.scss" as *;
 
 $vp-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
-
-.gp-spin {
-  animation: gp-spin 1s linear infinite;
-}
-
-@keyframes gp-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
 
 .wt-panel {
   border-top: 1px solid var(--b3-border-color);

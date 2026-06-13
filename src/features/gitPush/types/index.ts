@@ -17,6 +17,23 @@ export class GitPushManager {
     this.storage = new GitPushStorage(plugin)
   }
 
+  /** 获取 child_process 模块（简写） */
+  private getProcess() {
+    return getNodeProcessModules()?.child_process
+  }
+
+  /** 将检测到的远程仓库信息应用到项目对象 */
+  private applyRemotesToProject(project: GitProject, remotes: GitRemoteInfo[]) {
+    project.githubRemote = undefined
+    project.giteeRemote = undefined
+    project.giteaRemote = undefined
+    for (const r of remotes) {
+      if (r.isGithub) project.githubRemote = r.name
+      if (r.isGitee) project.giteeRemote = r.name
+      if (r.isGitea) project.giteaRemote = r.name
+    }
+  }
+
   async init() {
     await this.storage.init()
     const i18n = (this.plugin.i18n as any)?.gitPush || {}
@@ -53,12 +70,7 @@ export class GitPushManager {
       addedAt: Date.now(),
     }
     // 自动检测远程仓库
-    const remotes = await this.detectRemotes(path)
-    for (const r of remotes) {
-      if (r.isGithub) project.githubRemote = r.name
-      if (r.isGitee) project.giteeRemote = r.name
-      if (r.isGitea) project.giteaRemote = r.name
-    }
+    this.applyRemotesToProject(project, await this.detectRemotes(path))
     projects.push(project)
     await this.storage.projects.save(projects)
     return project
@@ -83,15 +95,7 @@ export class GitPushManager {
     const projects = await this.getProjects()
     const project = projects.find(p => p.id === id)
     if (!project) return null
-    const remotes = await this.detectRemotes(project.path)
-    project.githubRemote = undefined
-    project.giteeRemote = undefined
-    project.giteaRemote = undefined
-    for (const r of remotes) {
-      if (r.isGithub) project.githubRemote = r.name
-      if (r.isGitee) project.giteeRemote = r.name
-      if (r.isGitea) project.giteaRemote = r.name
-    }
+    this.applyRemotesToProject(project, await this.detectRemotes(project.path))
     await this.storage.projects.save(projects)
     return project
   }
@@ -100,12 +104,8 @@ export class GitPushManager {
    * 检测项目目录下所有 git 远程仓库
    */
   async detectRemotes(projectPath: string): Promise<GitRemoteInfo[]> {
-    const proc = getNodeProcessModules()
-    if (!proc) return []
-
     try {
-      const { child_process } = proc
-      const remotes = await this.execGit(child_process, projectPath, ["remote", "-v"])
+      const remotes = await this.execGit(projectPath, ["remote", "-v"])
       if (!remotes) return []
 
       const result: GitRemoteInfo[] = []
@@ -135,66 +135,6 @@ export class GitPushManager {
   }
 
   /**
-   * 推送项目到所有已配置的远程仓库
-   * @returns {{ success: boolean, outputs: { remote: string, stdout: string, stderr: string, ok: boolean }[] }}
-   */
-  async pushProject(id: string): Promise<{
-    success: boolean
-    outputs: { remote: string; stdout: string; stderr: string; ok: boolean }[]
-  }> {
-    const projects = await this.getProjects()
-    const project = projects.find(p => p.id === id)
-    if (!project) {
-      return { success: false, outputs: [] }
-    }
-
-    const proc = getNodeProcessModules()
-    if (!proc) {
-      return { success: false, outputs: [] }
-    }
-
-    const { child_process } = proc
-    const outputs: { remote: string; stdout: string; stderr: string; ok: boolean }[] = []
-    const remotesToPush: string[] = []
-
-    const remotes = await this.detectRemotes(project.path)
-    for (const r of remotes) {
-      if (r.isGithub || r.isGitee) {
-        remotesToPush.push(r.name)
-      }
-    }
-
-    // 如果没有明确检测到，使用本地分支的默认远程
-    if (remotesToPush.length === 0) {
-      try {
-        const branch = await this.execGit(child_process, project.path, ["rev-parse", "--abbrev-ref", "HEAD"])
-        if (branch) {
-          remotesToPush.push("origin")
-        }
-      } catch {
-        // 忽略
-      }
-    }
-
-    for (const remote of remotesToPush) {
-      try {
-        const stdout = await this.execGit(child_process, project.path, ["push", remote, "--all"])
-        outputs.push({ remote, stdout: stdout || "", stderr: "", ok: true })
-      } catch (e: any) {
-        outputs.push({
-          remote,
-          stdout: "",
-          stderr: e?.message || String(e),
-          ok: false,
-        })
-      }
-    }
-
-    const allOk = outputs.every(o => o.ok) && outputs.length > 0
-    return { success: allOk, outputs }
-  }
-
-  /**
    * 推送项目到全部已配置的远程（GitHub + Gitee + Gitea）
    */
   async pushToAll(id: string): Promise<{
@@ -206,50 +146,25 @@ export class GitPushManager {
     const projects = await this.getProjects()
     const project = projects.find(p => p.id === id)
     const emptyResult = { ok: false, stdout: "", stderr: "" }
-    const notFound = { ...emptyResult, stderr: "项目未找到" }
 
     if (!project) {
+      const notFound = { ...emptyResult, stderr: "项目未找到" }
       return { success: false, github: notFound, gitee: notFound, gitea: notFound }
     }
 
-    const proc = getNodeProcessModules()
-    if (!proc) {
-      const noNode = { ...emptyResult, stderr: "Node 环境不可用" }
-      return { success: false, github: noNode, gitee: noNode, gitea: noNode }
-    }
-
-    const { child_process } = proc
-    const github = { ...emptyResult }
-    const gitee = { ...emptyResult }
-    const gitea = { ...emptyResult }
-
-    if (project.githubRemote) {
+    const tryPush = async (remoteName: string | undefined) => {
+      if (!remoteName) return { ...emptyResult }
       try {
-        github.stdout = await this.execGit(child_process, project.path, ["push", project.githubRemote, "--all"]) || ""
-        github.ok = true
+        const stdout = await this.execGit(project.path, ["push", remoteName, "--all"]) || ""
+        return { ok: true, stdout, stderr: "" }
       } catch (e: any) {
-        github.stderr = e?.message || String(e)
+        return { ok: false, stdout: "", stderr: e?.message || String(e) }
       }
     }
 
-    if (project.giteeRemote) {
-      try {
-        gitee.stdout = await this.execGit(child_process, project.path, ["push", project.giteeRemote, "--all"]) || ""
-        gitee.ok = true
-      } catch (e: any) {
-        gitee.stderr = e?.message || String(e)
-      }
-    }
-
-    if (project.giteaRemote) {
-      try {
-        gitea.stdout = await this.execGit(child_process, project.path, ["push", project.giteaRemote, "--all"]) || ""
-        gitea.ok = true
-      } catch (e: any) {
-        gitea.stderr = e?.message || String(e)
-      }
-    }
-
+    const github = await tryPush(project.githubRemote)
+    const gitee = await tryPush(project.giteeRemote)
+    const gitea = await tryPush(project.giteaRemote)
     return { success: github.ok || gitee.ok || gitea.ok, github, gitee, gitea }
   }
 
@@ -266,19 +181,13 @@ export class GitPushManager {
       return { ok: false, stdout: "", stderr: "项目未找到" }
     }
 
-    const proc = getNodeProcessModules()
-    if (!proc) {
-      return { ok: false, stdout: "", stderr: "Node 环境不可用" }
-    }
-
     const remoteName =
       target === "github" ? (project.githubRemote || "github")
       : target === "gitee" ? (project.giteeRemote || "gitee")
       : (project.giteaRemote || "gitea")
-    const { child_process } = proc
 
     try {
-      const stdout = await this.execGit(child_process, project.path, ["push", remoteName, "--all"]) || ""
+      const stdout = await this.execGit(project.path, ["push", remoteName, "--all"]) || ""
       return { ok: true, stdout, stderr: "" }
     } catch (e: any) {
       return { ok: false, stdout: "", stderr: e?.message || String(e) }
@@ -296,10 +205,6 @@ export class GitPushManager {
 
     if (!project) return emptyResult
 
-    const proc = getNodeProcessModules()
-    if (!proc) return emptyResult
-
-    const { child_process } = proc
     const status: PushStatusInfo = {
       branch: "",
       remotes: {},
@@ -308,7 +213,7 @@ export class GitPushManager {
 
     try {
       // 获取当前分支
-      status.branch = await this.execGit(child_process, project.path, ["rev-parse", "--abbrev-ref", "HEAD"])
+      status.branch = await this.execGit(project.path, ["rev-parse", "--abbrev-ref", "HEAD"])
     } catch {
       return emptyResult
     }
@@ -328,14 +233,14 @@ export class GitPushManager {
     for (const { key, remoteName } of remotesToCheck) {
       try {
         // 尝试检查远程分支是否存在
-        await this.execGit(child_process, project.path, [
+        await this.execGit(project.path, [
           "rev-parse",
           "--verify",
           `${remoteName}/${status.branch}`,
         ])
 
         // 远程分支存在，比较 ahead/behind
-        const counts = await this.execGit(child_process, project.path, [
+        const counts = await this.execGit(project.path, [
           "rev-list",
           "--left-right",
           "--count",
@@ -349,7 +254,7 @@ export class GitPushManager {
         if (ahead > 0) status.needsPush = true
       } catch {
         // 远程分支不存在 → 意味着从未推送过，全部本地提交都需要推送
-        const totalCommits = await this.execGit(child_process, project.path, [
+        const totalCommits = await this.execGit(project.path, [
           "rev-list",
           "--count",
           "HEAD",
@@ -368,11 +273,8 @@ export class GitPushManager {
    * 检查项目路径是否有效（目录存在且是 git 仓库）
    */
   async checkIsGitRepo(projectPath: string): Promise<boolean> {
-    const proc = getNodeProcessModules()
-    if (!proc) return false
     try {
-      const { child_process } = proc
-      await this.execGit(child_process, projectPath, ["rev-parse", "--is-inside-work-tree"])
+      await this.execGit(projectPath, ["rev-parse", "--is-inside-work-tree"])
       return true
     } catch {
       return false
@@ -407,10 +309,11 @@ export class GitPushManager {
    * 自动对含空格/特殊字符的非标志参数加双引号，解决文件名和提交信息含空格的问题
    */
   private execGit(
-    child_process: any,
     cwd: string,
     args: string[],
   ): Promise<string> {
+    const cp = this.getProcess()
+    if (!cp) throw new Error("Node 环境不可用")
     const escaped = args.map(a => {
       // 子命令（第一个参数，如 add/commit/status）不需要引号
       // 标志参数（以 - 开头）和 -- 不需要引号
@@ -422,7 +325,7 @@ export class GitPushManager {
     const cmd = `git ${escaped.join(" ")}`
 
     return new Promise((resolve, reject) => {
-      child_process.exec(
+      cp.exec(
         cmd,
         { cwd, timeout: 30000, encoding: "utf8" },
         (error: any, stdout: string, stderr: string) => {
@@ -440,7 +343,6 @@ export class GitPushManager {
    * 获取工作区变更状态（git status --porcelain -b）
    */
   async getWorkingTreeStatus(projectPath: string): Promise<WorkingTreeInfo> {
-    const proc = getNodeProcessModules()
     const empty: WorkingTreeInfo = {
       branch: "",
       files: [],
@@ -449,9 +351,7 @@ export class GitPushManager {
       untrackedCount: 0,
       hasChanges: false,
     }
-    if (!proc) return empty
 
-    const { child_process } = proc
     let branch = ""
     let stagedCount = 0
     let unstagedCount = 0
@@ -460,14 +360,14 @@ export class GitPushManager {
 
     try {
       // 先获取分支名
-      branch = await this.execGit(child_process, projectPath, ["rev-parse", "--abbrev-ref", "HEAD"])
+      branch = await this.execGit(projectPath, ["rev-parse", "--abbrev-ref", "HEAD"])
     } catch {
       return empty
     }
 
     try {
       // -c core.quotepath=false 禁用中文路径八进制转义，避免 git add 时找不到文件
-      const raw = await this.execGit(child_process, projectPath, [
+      const raw = await this.execGit(projectPath, [
         "-c", "core.quotepath=false", "status", "--porcelain",
       ])
       if (!raw) return { ...empty, branch }
@@ -544,68 +444,39 @@ export class GitPushManager {
    * @param staged true=暂存区差异（git diff --cached），false=工作区差异（git diff）
    */
   async getFileDiff(projectPath: string, file: string, staged = false): Promise<string> {
-    const proc = getNodeProcessModules()
-    if (!proc) return ""
     try {
-      const { child_process } = proc
       const args = ["diff", "--text"] // --text 强制文本模式，避免中文显示为 \346\226\207 八进制转义
       if (staged) args.push("--cached")
       args.push("--", file)
-      return await this.execGit(child_process, projectPath, args) || "（无差异）"
+      return await this.execGit(projectPath, args) || "（无差异）"
     } catch {
       return "（无法获取差异）"
     }
   }
 
-  /**
-   * 暂存单个文件
-   */
+  /** 暂存单个文件 */
   async stageFile(projectPath: string, file: string): Promise<void> {
-    const proc = getNodeProcessModules()
-    if (!proc) throw new Error("Node 环境不可用")
-    const { child_process } = proc
-    await this.execGit(child_process, projectPath, ["add", "--", file])
+    await this.execGit(projectPath, ["add", "--", file])
   }
 
-  /**
-   * 暂存全部文件
-   */
+  /** 暂存全部文件 */
   async stageAll(projectPath: string): Promise<void> {
-    const proc = getNodeProcessModules()
-    if (!proc) throw new Error("Node 环境不可用")
-    const { child_process } = proc
-    await this.execGit(child_process, projectPath, ["add", "-A"])
+    await this.execGit(projectPath, ["add", "-A"])
   }
 
-  /**
-   * 取消暂存单个文件
-   */
+  /** 取消暂存单个文件 */
   async unstageFile(projectPath: string, file: string): Promise<void> {
-    const proc = getNodeProcessModules()
-    if (!proc) throw new Error("Node 环境不可用")
-    const { child_process } = proc
-    await this.execGit(child_process, projectPath, ["reset", "HEAD", "--", file])
+    await this.execGit(projectPath, ["reset", "HEAD", "--", file])
   }
 
-  /**
-   * 取消全部暂存
-   */
+  /** 取消全部暂存 */
   async unstageAll(projectPath: string): Promise<void> {
-    const proc = getNodeProcessModules()
-    if (!proc) throw new Error("Node 环境不可用")
-    const { child_process } = proc
-    await this.execGit(child_process, projectPath, ["reset", "HEAD"])
+    await this.execGit(projectPath, ["reset", "HEAD"])
   }
 
-  /**
-   * 提交暂存的内容
-   */
+  /** 提交暂存的内容 */
   async commit(projectPath: string, message: string): Promise<string> {
-    const proc = getNodeProcessModules()
-    if (!proc) throw new Error("Node 环境不可用")
-    const { child_process } = proc
-    const result = await this.execGit(child_process, projectPath, ["commit", "-m", message])
-    return result
+    return await this.execGit(projectPath, ["commit", "-m", message])
   }
 
   /**
@@ -613,19 +484,15 @@ export class GitPushManager {
    * 优先使用配置的 AI 模型分析 diff 内容；无 API Key 则降级为启发式
    */
   async generateCommitMessage(projectPath: string): Promise<{ message: string; source: "ai" | "heuristic" }> {
-    const proc = getNodeProcessModules()
-    if (!proc) return { message: "chore: update files", source: "heuristic" }
-    const { child_process } = proc
-
     try {
       // 获取暂存区差异文本
-      const diffText = await this.execGit(child_process, projectPath, [
+      const diffText = await this.execGit(projectPath, [
         "diff", "--text", "--cached", "--stat",
       ])
       if (!diffText) return { message: "chore: update files", source: "heuristic" }
 
       // 截取用于 AI 的 diff（最多 3000 字符，避免 token 超限）
-      const fullDiff = await this.execGit(child_process, projectPath, [
+      const fullDiff = await this.execGit(projectPath, [
         "diff", "--text", "--cached",
       ])
       const diffSnippet = (fullDiff || diffText).substring(0, 3000)

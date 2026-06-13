@@ -62,6 +62,113 @@ export function useGitPush(manager: GitPushManager) {
       .sort((a, b) => a.category.order - b.category.order)
   })
 
+  // ── 统计视图 computed ──
+
+  /** 项目总数 */
+  const projectCount = computed(() => projects.value.length)
+
+  /** 远程仓库覆盖率统计 */
+  const remoteCoverage = computed(() => {
+    const total = projects.value.length
+    if (total === 0) return { total: 0, github: 0, gitee: 0, gitea: 0, hasRemote: 0, noRemote: 0, multiple: 0 }
+    let github = 0, gitee = 0, gitea = 0, hasRemote = 0, multiple = 0
+    for (const p of projects.value) {
+      const remotes = [p.githubUrl, p.giteeUrl, p.giteaUrl].filter(Boolean).length
+      if (p.githubUrl) github++
+      if (p.giteeUrl) gitee++
+      if (p.giteaUrl) gitea++
+      if (remotes > 0) hasRemote++
+      if (remotes >= 2) multiple++
+    }
+    return { total, github, gitee, gitea, hasRemote, noRemote: total - hasRemote, multiple }
+  })
+
+  /** 推送状态分布统计 */
+  const pushStatusStats = computed(() => {
+    const total = projects.value.length
+    if (total === 0) return { total: 0, ahead: 0, behind: 0, synced: 0, noRemote: 0 }
+    let ahead = 0, behind = 0, synced = 0, noRemote = 0
+    for (const p of projects.value) {
+      const status = pushStatuses.value[p.id]
+      if (!status || Object.keys(status.remotes).length === 0) {
+        noRemote++
+        continue
+      }
+      const remotes = Object.values(status.remotes)
+      if (remotes.some(r => r.ahead > 0)) {
+        ahead++
+      } else if (remotes.some(r => r.behind > 0)) {
+        behind++
+      } else {
+        synced++
+      }
+    }
+    return { total, ahead, behind, synced, noRemote }
+  })
+
+  /** 需要推送的项目列表（按 ahead 降序） */
+  const needsPushProjects = computed(() => {
+    const result: { project: GitProject; aheadByRemote: { key: string; ahead: number }[]; totalAhead: number }[] = []
+    for (const p of projects.value) {
+      const status = pushStatuses.value[p.id]
+      if (!status) continue
+      const aheadByRemote: { key: string; ahead: number }[] = []
+      if (status.remotes.github && status.remotes.github.ahead > 0) {
+        aheadByRemote.push({ key: "github", ahead: status.remotes.github.ahead! })
+      }
+      if (status.remotes.gitee && status.remotes.gitee.ahead > 0) {
+        aheadByRemote.push({ key: "gitee", ahead: status.remotes.gitee.ahead! })
+      }
+      if (status.remotes.gitea && status.remotes.gitea.ahead > 0) {
+        aheadByRemote.push({ key: "gitea", ahead: status.remotes.gitea.ahead! })
+      }
+      if (aheadByRemote.length > 0) {
+        result.push({
+          project: p,
+          aheadByRemote,
+          totalAhead: aheadByRemote.reduce((s, r) => s + r.ahead, 0),
+        })
+      }
+    }
+    return result.sort((a, b) => b.totalAhead - a.totalAhead)
+  })
+
+  /** 有未提交变更的项目列表 */
+  const uncommittedProjects = computed(() => {
+    return projects.value
+      .filter(p => workingTrees.value[p.id]?.hasChanges)
+      .map(p => ({
+        project: p,
+        staged: workingTrees.value[p.id]!.stagedCount,
+        unstaged: workingTrees.value[p.id]!.unstagedCount,
+        untracked: workingTrees.value[p.id]!.untrackedCount,
+      }))
+  })
+
+  /** 最近提交摘要（跨所有项目，含相对时间 + 文件差异信息） */
+  interface RecentCommitEntry {
+    projectId: string
+    projectName: string
+    entry: CommitLogEntry
+  }
+  const recentCommits = computed(() => {
+    const allEntries: RecentCommitEntry[] = []
+    for (const p of projects.value) {
+      const logs = commitLogs.value[p.id]
+      if (logs && logs.length > 0) {
+        allEntries.push({
+          projectId: p.id,
+          projectName: p.name,
+          entry: logs[0],
+        })
+      }
+    }
+    return allEntries.sort((a, b) => {
+      // 优先按绝对日期降序，回退到保持原顺序
+      return (b.entry.date || "").localeCompare(a.entry.date || "")
+    })
+  })
+
   function isPushing(projectId: string, target?: string): boolean {
     const v = pushingRemote.value[projectId]
     if (!v) return false
@@ -495,5 +602,12 @@ export function useGitPush(manager: GitPushManager) {
     generateStashDesc,
     addRemoteOp,
     removeRemoteOp,
+    // 统计视图数据
+    projectCount,
+    remoteCoverage,
+    pushStatusStats,
+    needsPushProjects,
+    uncommittedProjects,
+    recentCommits,
   }
 }

@@ -2,8 +2,30 @@
   <div class="git-push-panel">
     <!-- 头部 -->
     <div class="gp-header">
-      <span class="gp-title">{{ i18n.panelTitle || 'Git 推送' }}</span>
+      <div class="gp-header-left">
+        <span class="gp-title">{{ i18n.panelTitle || 'Git 推送' }}</span>
+        <span v-if="projectCount > 0" class="gp-count-badge">{{ projectCount }}</span>
+      </div>
       <div class="gp-header-btns">
+        <!-- 视图切换 -->
+        <div class="gp-view-toggle">
+          <button
+            class="vp-btn vp-btn--ghost vp-btn--sm gp-view-btn"
+            :class="{ active: currentView === 'list' }"
+            title="列表视图"
+            @click="currentView = 'list'"
+          >
+            <Icon icon="mdi:view-list" height="14" />
+          </button>
+          <button
+            class="vp-btn vp-btn--ghost vp-btn--sm gp-view-btn"
+            :class="{ active: currentView === 'stats' }"
+            title="统计视图"
+            @click="currentView = 'stats'"
+          >
+            <Icon icon="mdi:chart-bar" height="14" />
+          </button>
+        </div>
         <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="showCatDialog = true">
           <Icon icon="mdi:tag-outline" />
         </button>
@@ -31,6 +53,21 @@
 
     <div class="gp-divider" />
 
+    <!-- ========== 统计视图 ========== -->
+    <StatsPanel
+      v-if="currentView === 'stats'"
+      :i18n="i18n"
+      :project-count="projectCount"
+      :remote-coverage="remoteCoverage"
+      :push-status-stats="pushStatusStats"
+      :needs-push-projects="needsPushProjects"
+      :uncommitted-projects="uncommittedProjects"
+      :recent-commits="recentCommits"
+      @view-project="onViewProject"
+    />
+
+    <!-- ========== 列表视图 ========== -->
+    <template v-if="currentView === 'list'">
     <!-- 分类 TAB 导航 -->
     <div v-if="groupedProjects.length > 0" class="gp-tabs">
       <button
@@ -347,6 +384,8 @@
         </div>
       </template>
     </div>
+    </template>
+    <!-- 列表视图结束 -->
 
     <!-- 添加项目弹窗 -->
     <div v-if="showAddDialog" class="gp-mask" @click.self="showAddDialog = false">
@@ -613,6 +652,7 @@ import { Icon } from "@iconify/vue"
 import type { GitPushManager, GitProject, CommitLogEntry, ScannedGitRepo } from "./types"
 import { useGitPush } from "./composables/useGitPush"
 import WorkingTreePanel from "./components/WorkingTreePanel.vue"
+import StatsPanel from "./components/StatsPanel.vue"
 
 type RemoteKey = "github" | "gitee" | "gitea"
 
@@ -687,11 +727,20 @@ const {
   generateStashDesc,
   addRemoteOp,
   removeRemoteOp,
+  // 统计视图数据
+  projectCount,
+  remoteCoverage,
+  pushStatusStats,
+  needsPushProjects,
+  uncommittedProjects,
+  recentCommits,
 } = useGitPush(props.manager)
 
 const showAddDialog = ref(false)
 const showCatDialog = ref(false)
 const showSettings = ref(false)
+/** 当前视图: 'list' | 'stats' */
+const currentView = ref<"list" | "stats">("list")
 /** 当前选中的分类 ID（onMounted 中设为首个分类） */
 const activeCategory = ref<string>("")
 
@@ -898,6 +947,20 @@ async function handleRefreshAll() {
   } finally {
     refreshingAll.value = false
   }
+}
+
+/** 从统计视图跳转到指定项目 */
+function onViewProject(projectId: string) {
+  const project = projects.value.find(p => p.id === projectId)
+  if (!project) return
+  // 切换到列表视图
+  currentView.value = "list"
+  // 切换到项目所属分类
+  if (project.categoryId) {
+    activeCategory.value = project.categoryId
+  }
+  // 设置搜索词为项目名称，方便快速定位
+  searchQuery.value = project.name
 }
 
 /** 在文件管理器中打开项目路径 */
@@ -1358,6 +1421,54 @@ async function selectScanDirectory() {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.gp-header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gp-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: $vp-mono;
+  border-radius: 9px;
+  background: var(--b3-theme-primary-lightest);
+  color: var(--b3-theme-primary);
+}
+
+// 视图切换按钮组
+.gp-view-toggle {
+  display: flex;
+  gap: 2px;
+  margin-right: 8px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.gp-view-btn {
+  border-radius: 0 !important;
+  border: none !important;
+  padding: 4px 6px !important;
+  opacity: 0.35;
+
+  &.active {
+    opacity: 1;
+    background: var(--b3-theme-primary-lightest);
+    color: var(--b3-theme-primary);
+  }
+
+  &:hover {
+    opacity: 0.8;
+  }
 }
 
 .gp-header-btns {

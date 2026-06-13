@@ -152,6 +152,13 @@
               <Icon icon="mdi:refresh" :class="{ 'gp-spin': refreshing === project.id }" />
             </button>
             <button
+              class="vp-btn vp-btn--ghost vp-btn--sm"
+              title="仓库配置"
+              @click="openRemoteConfig(project)"
+            >
+              <Icon icon="mdi:source-repository" height="14" />
+            </button>
+            <button
               class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"
               @click="handleRemove(project)"
             >
@@ -537,6 +544,44 @@
         </div>
       </div>
     </div>
+
+    <!-- 仓库配置弹窗 -->
+    <div v-if="remoteConfigProject" class="gp-mask" @click.self="remoteConfigProject = null">
+      <div class="gp-dialog" style="width: 420px;">
+        <div class="gp-dialog-header">
+          <span class="gp-dialog-title">仓库配置 — {{ remoteConfigProject.name }}</span>
+          <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="remoteConfigProject = null">
+            <Icon icon="mdi:close" />
+          </button>
+        </div>
+        <div class="gp-dialog-body">
+          <!-- 当前远程列表 -->
+          <div v-if="remoteList.length" class="gp-remote-list">
+            <div v-for="(r, i) in remoteList" :key="i" class="gp-remote-row">
+              <span class="gp-remote-name">{{ r.name }}</span>
+              <span class="gp-remote-url" :title="r.url">{{ r.url }}</span>
+              <button
+                class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"
+                title="删除此远程"
+                @click="handleRemoveRemote(remoteConfigProject.id, r.name)"
+              >删除</button>
+            </div>
+          </div>
+          <div v-else class="gp-remote-empty">暂无远程仓库</div>
+          <!-- 添加远程表单 -->
+          <div class="gp-remote-add">
+            <input v-model="newRemoteName" class="gp-input" placeholder="远程名称 (如 origin)" style="width:100px" />
+            <input v-model="newRemoteUrl" class="gp-input" placeholder="远程 URL" style="flex:1" />
+            <button
+              class="vp-btn vp-btn--primary vp-btn--sm"
+              :disabled="!newRemoteName.trim() || !newRemoteUrl.trim()"
+              @click="handleAddRemote(remoteConfigProject.id)"
+            >添加</button>
+          </div>
+          <div v-if="remoteError" class="gp-error">{{ remoteError }}</div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -617,6 +662,8 @@ const {
   doStashPop,
   doStashApply,
   doStashDrop,
+  addRemoteOp,
+  removeRemoteOp,
 } = useGitPush(props.manager)
 
 const showAddDialog = ref(false)
@@ -665,6 +712,12 @@ const addChecking = ref(false)
 const addResult = ref<boolean | null>(null)
 const refreshing = ref<string | null>(null)
 const refreshingAll = ref(false)
+/** 远程仓库配置弹窗 */
+const remoteConfigProject = ref<GitProject | null>(null)
+const remoteList = ref<{ name: string; url: string }[]>([])
+const newRemoteName = ref("")
+const newRemoteUrl = ref("")
+const remoteError = ref("")
 /** 提交输出 id → text */
 const commitOutputs = ref<Record<string, string>>({})
 /** AI 生成状态 id → { generating, text } */
@@ -975,6 +1028,42 @@ async function handleMoveProject(projectId: string, categoryId: string) {
 async function handleSaveConcurrency() {
   await setGitConcurrency(gitConcurrency.value)
   showSettings.value = false
+}
+
+async function openRemoteConfig(project: GitProject) {
+  remoteError.value = ""
+  newRemoteName.value = ""
+  newRemoteUrl.value = ""
+  try {
+    remoteList.value = await props.manager.detectRemotes(project.path)
+  } catch {
+    remoteList.value = []
+  }
+  remoteConfigProject.value = project
+}
+
+async function handleAddRemote(id: string) {
+  remoteError.value = ""
+  try {
+    await addRemoteOp(id, newRemoteName.value.trim(), newRemoteUrl.value.trim())
+    newRemoteName.value = ""
+    newRemoteUrl.value = ""
+    const project = projects.value.find(p => p.id === id)
+    if (project) remoteList.value = await props.manager.detectRemotes(project.path)
+  } catch (e: any) {
+    remoteError.value = e?.message || "添加失败"
+  }
+}
+
+async function handleRemoveRemote(id: string, name: string) {
+  remoteError.value = ""
+  try {
+    await removeRemoteOp(id, name)
+    const project = projects.value.find(p => p.id === id)
+    if (project) remoteList.value = await props.manager.detectRemotes(project.path)
+  } catch (e: any) {
+    remoteError.value = e?.message || "删除失败"
+  }
 }
 
 /** 获取远程推送状态标签文案 */
@@ -1799,6 +1888,53 @@ async function selectScanDirectory() {
 }
 
 // 扫描导入弹窗
+.gp-remote-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+}
+
+.gp-remote-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  font-size: 11px;
+  border-bottom: 1px solid var(--b3-border-color);
+
+  &:last-child { border-bottom: none; }
+}
+
+.gp-remote-name {
+  font-family: $vp-mono;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.gp-remote-url {
+  flex: 1;
+  font-family: $vp-mono;
+  font-size: 10px;
+  opacity: 0.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gp-remote-empty {
+  padding: 12px;
+  text-align: center;
+  font-size: 11px;
+  opacity: 0.4;
+}
+
+.gp-remote-add {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+
 .gp-scan-results {
   max-height: 300px;
   overflow-y: auto;

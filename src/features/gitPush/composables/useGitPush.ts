@@ -381,6 +381,24 @@ export function useGitPush(manager: GitPushManager) {
     await withProjectPathStash(id, (path) => manager.stashDrop(path, index))
   }
 
+  /** 添加远程仓库并刷新状态 */
+  async function addRemoteOp(id: string, name: string, url: string) {
+    const project = projects.value.find(p => p.id === id)
+    if (!project) throw new Error("项目未找到")
+    await manager.addRemote(project.path, name, url)
+    await refreshRemotes(id)
+    await loadPushStatus(id)
+  }
+
+  /** 删除远程仓库并刷新状态 */
+  async function removeRemoteOp(id: string, name: string) {
+    const project = projects.value.find(p => p.id === id)
+    if (!project) throw new Error("项目未找到")
+    await manager.removeRemote(project.path, name)
+    await refreshRemotes(id)
+    await loadPushStatus(id)
+  }
+
   /** 扫描指定目录下的所有 Git 仓库 */
   async function startScan(dirPath: string) {
     scanning.value = true
@@ -468,5 +486,7 @@ export function useGitPush(manager: GitPushManager) {
     doStashPop,
     doStashApply,
     doStashDrop,
+    addRemoteOp,
+    removeRemoteOp,
   }
 }

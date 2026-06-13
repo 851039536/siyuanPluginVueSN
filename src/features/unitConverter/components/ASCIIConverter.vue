@@ -1,11 +1,11 @@
 <template>
   <div class="ascii-converter">
     <div class="converter-section">
-      <h4>文本转ASCII</h4>
+      <h4>TEXT → ASCII</h4>
       <Input
         v-model="textInput"
         type="textarea"
-        label="输入文本"
+        label="INPUT"
         placeholder="请输入要转换的文本"
         :rows="3"
       />
@@ -13,7 +13,7 @@
         v-if="asciiResult"
         class="output-group"
       >
-        <label>ASCII结果</label>
+        <label>OUTPUT</label>
         <div class="ascii-output">
           {{ asciiResult }}
         </div>
@@ -21,11 +21,11 @@
     </div>
 
     <div class="converter-section">
-      <h4>ASCII转文本</h4>
+      <h4>ASCII → TEXT</h4>
       <Input
         v-model="asciiInput"
         type="textarea"
-        label="输入ASCII码"
+        label="INPUT"
         placeholder="请输入ASCII码，用空格或逗号分隔"
         :rows="3"
       />
@@ -33,7 +33,7 @@
         v-if="textResult"
         class="output-group"
       >
-        <label>文本结果</label>
+        <label>OUTPUT</label>
         <div class="text-output">
           {{ textResult }}
         </div>
@@ -41,16 +41,16 @@
     </div>
 
     <div class="converter-section">
-      <h4>ASCII码表</h4>
+      <h4>CHAR TABLE</h4>
       <div class="ascii-table-controls">
-        <label>表格范围</label>
+        <label>RANGE</label>
         <div class="range-controls">
           <Input
             v-model.number="tableStart"
             type="number"
             size="small"
           />
-          <span>-</span>
+          <span>—</span>
           <Input
             v-model.number="tableEnd"
             type="number"
@@ -60,10 +60,10 @@
       </div>
       <div class="ascii-table">
         <div class="table-header">
-          <span>十进制</span>
-          <span>十六进制</span>
-          <span>二进制</span>
-          <span>字符</span>
+          <span>DEC</span>
+          <span>HEX</span>
+          <span>BIN</span>
+          <span>CHAR</span>
         </div>
         <div class="table-body">
           <div
@@ -81,7 +81,7 @@
     </div>
 
     <div class="converter-info">
-      <h4>使用说明</h4>
+      <h4>NOTES</h4>
       <ul>
         <li>文本转ASCII：输入任意文本，转换为对应的ASCII码值</li>
         <li>ASCII转文本：输入ASCII码（十进制），用空格或逗号分隔</li>
@@ -139,7 +139,7 @@ const CONTROL_CHARS = [
   "US",
 ]
 
-// 文本转ASCII（计算属性，自动响应）
+// 文本转ASCII
 const asciiResult = computed(() => {
   if (!textInput.value) return ""
   return Array.from(textInput.value)
@@ -147,7 +147,7 @@ const asciiResult = computed(() => {
     .join(" ")
 })
 
-// ASCII转文本（计算属性，自动响应）
+// ASCII转文本
 const textResult = computed(() => {
   if (!asciiInput.value) return ""
 
@@ -193,17 +193,20 @@ function getCharForDisplay(code: number): string {
 .ascii-converter {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 14px;
 
   .ascii-table-controls {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    margin-bottom: 12px;
+    gap: 6px;
+    margin-bottom: 10px;
 
     label {
-      font-size: 12px;
-      font-weight: 500;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      opacity: 0.45;
       color: var(--b3-theme-on-surface);
     }
 
@@ -214,7 +217,7 @@ function getCharForDisplay(code: number): string {
 
       span {
         color: var(--b3-theme-on-surface);
-        font-weight: 500;
+        opacity: 0.3;
       }
     }
   }
@@ -228,12 +231,16 @@ function getCharForDisplay(code: number): string {
 
     .table-header {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr 2fr;
-      background: var(--b3-primary);
-      color: var(--b3-on-primary);
-      font-weight: 600;
-      font-size: 12px;
-      padding: 8px 12px;
+      grid-template-columns: 1fr 1fr 1.5fr 1.5fr;
+      background: var(--b3-theme-surface);
+      border-bottom: 1px solid var(--b3-border-color);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--b3-theme-on-surface);
+      opacity: 0.45;
+      padding: 6px 10px;
 
       span {
         text-align: center;
@@ -243,26 +250,32 @@ function getCharForDisplay(code: number): string {
     .table-body {
       .table-row {
         display: grid;
-        grid-template-columns: 1fr 1fr 1fr 2fr;
+        grid-template-columns: 1fr 1fr 1.5fr 1.5fr;
         border-bottom: 1px solid var(--b3-border-color);
-        font-size: 12px;
+        font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+        font-size: 11px;
+
+        &:last-child {
+          border-bottom: none;
+        }
 
         &:hover {
           background: var(--b3-theme-surface);
         }
 
         span {
-          padding: 6px 12px;
+          padding: 4px 10px;
           text-align: center;
           color: var(--b3-theme-on-surface);
 
           &:first-child {
             font-weight: 600;
+            opacity: 0.7;
           }
 
           &:last-child {
             font-weight: 500;
-            color: var(--b3-theme-secondary);
+            color: var(--b3-theme-primary);
           }
         }
       }

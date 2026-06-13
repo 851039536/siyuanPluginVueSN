@@ -20,7 +20,7 @@ export class UnitConverterManager {
     createVueDockApp(this.plugin, UnitConverterPanel, {
       position: "RightTop",
       width: 360,
-      icon: "iconList",
+      icon: "iconUnitConverter",
       title: this.plugin.i18n.unitConverter || "单位转换",
       type: "unit-converter-dock",
       i18n: this.plugin.i18n || {},

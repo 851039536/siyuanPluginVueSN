@@ -1,9 +1,10 @@
-import type { GitProject, PushStatusInfo, WorkingTreeInfo } from "../types"
+import type { GitProject, PushStatusInfo, WorkingTreeInfo, ProjectCategory } from "../types"
 import type { GitPushManager } from "../types"
-import { ref } from "vue"
+import { ref, computed } from "vue"
 
 export function useGitPush(manager: GitPushManager) {
   const projects = ref<GitProject[]>([])
+  const categories = ref<ProjectCategory[]>([])
   const loading = ref(false)
   /** 正在推送的项目 id → "github"|"gitee"|"both" */
   const pushingRemote = ref<Record<string, string>>({})
@@ -17,6 +18,30 @@ export function useGitPush(manager: GitPushManager) {
   /** 正在提交的项目 id → true */
   const committing = ref<Record<string, boolean>>({})
 
+  /** 按分类分组后的项目列表 */
+  const groupedProjects = computed(() => {
+    const map = new Map<string, { category: ProjectCategory; projects: GitProject[] }>()
+    // 初始化所有分类
+    for (const cat of categories.value) {
+      map.set(cat.id, { category: cat, projects: [] })
+    }
+    // 分配项目
+    for (const p of projects.value) {
+      const group = map.get(p.categoryId)
+      if (group) {
+        group.projects.push(p)
+      } else {
+        // 分类不存在，回退到未分组
+        const ungrouped = map.get("__ungrouped__")
+        if (ungrouped) ungrouped.projects.push(p)
+      }
+    }
+    // 排序并过滤空分组
+    return [...map.values()]
+      .filter(g => g.projects.length > 0)
+      .sort((a, b) => a.category.order - b.category.order)
+  })
+
   function isPushing(projectId: string, target?: string): boolean {
     const v = pushingRemote.value[projectId]
     if (!v) return false
@@ -27,6 +52,7 @@ export function useGitPush(manager: GitPushManager) {
   async function loadProjects() {
     loading.value = true
     try {
+      categories.value = await manager.getCategories()
       projects.value = await manager.getProjects()
       // 自动检测所有项目的推送状态
       for (const p of projects.value) {
@@ -37,8 +63,8 @@ export function useGitPush(manager: GitPushManager) {
     }
   }
 
-  async function addProject(name: string, path: string) {
-    const project = await manager.addProject(name, path)
+  async function addProject(name: string, path: string, categoryId = "__ungrouped__") {
+    const project = await manager.addProject(name, path, categoryId)
     projects.value = [...projects.value, project]
     return project
   }
@@ -177,6 +203,34 @@ export function useGitPush(manager: GitPushManager) {
     return manager.generateCommitMessage(project.path)
   }
 
+  /** 分类操作 */
+  async function loadCategories() {
+    categories.value = await manager.getCategories()
+  }
+
+  async function addCategory(name: string, color?: string) {
+    const cat = await manager.addCategory(name, color)
+    categories.value = [...categories.value, cat]
+    return cat
+  }
+
+  async function updateCategory(id: string, data: { name?: string; color?: string }) {
+    await manager.updateCategory(id, data)
+    categories.value = categories.value.map(c => c.id === id ? { ...c, ...data } : c)
+  }
+
+  async function deleteCategory(id: string) {
+    await manager.deleteCategory(id)
+    categories.value = categories.value.filter(c => c.id !== id)
+    // 受影响的项目 categoryId 已由 Manager 更新，重载项目
+    projects.value = await manager.getProjects()
+  }
+
+  async function moveProject(projectId: string, categoryId: string) {
+    await manager.moveProject(projectId, categoryId)
+    projects.value = projects.value.map(p => p.id === projectId ? { ...p, categoryId } : p)
+  }
+
   async function checkCanPush(id: string) {
     return manager.checkCanPushToCloud(id)
   }
@@ -187,6 +241,8 @@ export function useGitPush(manager: GitPushManager) {
 
   return {
     projects,
+    categories,
+    groupedProjects,
     loading,
     pushingRemote,
     isPushing,
@@ -213,5 +269,10 @@ export function useGitPush(manager: GitPushManager) {
     pushSingle,
     checkCanPush,
     checkIsGitRepo,
+    loadCategories,
+    addCategory,
+    updateCategory,
+    deleteCategory,
+    moveProject,
   }
 }

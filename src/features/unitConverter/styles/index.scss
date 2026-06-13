@@ -1,115 +1,172 @@
-// 单位转换器样式
+// 单位转换器 — Codex 风格
+$mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+$label-style: (
+  font-size: 10px,
+  font-weight: 700,
+  letter-spacing: 0.06em,
+  text-transform: uppercase,
+  opacity: 0.45,
+);
+
 .unit-converter {
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
   background: var(--b3-theme-background);
-  padding: 16px;
   box-sizing: border-box;
+  font-size: 13px;
 
   .converter-header {
-    margin-bottom: 16px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--b3-border-color);
 
     h3 {
       margin: 0;
-      font-size: 16px;
-      font-weight: 600;
+      font-family: $mono;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
       color: var(--b3-theme-on-background);
+      opacity: 0.55;
     }
   }
 
   .converter-tabs {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
-    margin-bottom: 16px;
+    gap: 0;
+    padding: 0 12px;
     border-bottom: 1px solid var(--b3-border-color);
-    padding-bottom: 8px;
+  }
+
+  .converter-tab {
+    padding: 8px 10px;
+    font-family: $mono;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--b3-theme-on-background);
+    opacity: 0.45;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: opacity 0.15s, border-color 0.15s;
+    user-select: none;
+
+    &:hover {
+      opacity: 0.7;
+    }
+
+    &.active {
+      opacity: 1;
+      border-bottom-color: var(--b3-theme-primary);
+      color: var(--b3-theme-primary);
+    }
   }
 
   .converter-content {
     flex: 1;
     overflow-y: auto;
     min-height: 0;
+    padding: 12px 16px;
   }
 }
 
 // ========== 转换器通用样式 ==========
 
-// 结果显示区域
+// 结果显示卡片
 .converter-result {
-  padding: 16px;
+  padding: 14px 16px;
   background: var(--b3-theme-surface);
-  border-radius: 8px;
-  border-left: 4px solid var(--b3-primary);
+  border: 1px solid var(--b3-border-color);
+  border-radius: 6px;
 
   .result-value {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--b3-theme-on-surface);
+    font-family: $mono;
+    font-size: 14px;
+    font-weight: 500;
     text-align: center;
+    line-height: 1.6;
 
     .input-display {
-      color: var(--b3-theme-secondary);
+      color: var(--b3-theme-on-surface);
+      opacity: 0.7;
     }
 
     .equals {
-      color: var(--b3-theme-outline);
-      margin: 0 8px;
+      color: var(--b3-theme-on-surface);
+      opacity: 0.3;
+      margin: 0 6px;
     }
 
     .output-display {
-      color: var(--b3-primary);
+      color: var(--b3-theme-primary);
+      font-weight: 600;
     }
   }
 }
 
 // 快速转换结果
 .converter-quick-results {
+  margin-top: 4px;
+
   h4 {
-    margin: 0 0 12px 0;
-    font-size: 14px;
-    font-weight: 500;
+    @each $k, $v in $label-style {
+      #{$k}: $v;
+    }
+    margin: 0 0 8px;
     color: var(--b3-theme-on-surface);
   }
 
   .quick-results-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    border: 1px solid var(--b3-border-color);
+    border-radius: 4px;
+    overflow: hidden;
   }
 
   .quick-result-item {
     display: flex;
     justify-content: space-between;
-    padding: 8px 12px;
+    align-items: center;
+    padding: 6px 10px;
     background: var(--b3-theme-surface);
-    border-radius: 4px;
     font-size: 12px;
+
+    &:hover {
+      background: var(--b3-theme-background);
+    }
 
     .unit-name,
     .base-name {
+      @each $k, $v in $label-style {
+        #{$k}: $v;
+      }
       color: var(--b3-theme-on-surface);
-      font-weight: 500;
+      font-family: $mono;
     }
 
     .unit-value,
     .base-value {
-      color: var(--b3-theme-secondary);
+      font-family: $mono;
+      font-weight: 500;
+      color: var(--b3-theme-primary);
     }
   }
 }
 
 // 错误提示
 .converter-error {
-  padding: 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--b3-error);
+  border-radius: 6px;
   background: var(--b3-theme-error-container);
-  border-radius: 8px;
-  border-left: 4px solid var(--b3-error);
 
   .error-message {
-    font-size: 14px;
+    font-size: 12px;
+    font-family: $mono;
     color: var(--b3-error);
     text-align: center;
   }
@@ -117,37 +174,44 @@
 
 // 使用说明
 .converter-info {
+  border-top: 1px dashed var(--b3-border-color);
+  padding-top: 12px;
+  margin-top: 4px;
+
   h4 {
-    margin: 0 0 12px 0;
-    font-size: 14px;
-    font-weight: 500;
+    @each $k, $v in $label-style {
+      #{$k}: $v;
+    }
+    margin: 0 0 8px;
     color: var(--b3-theme-on-surface);
   }
 
   ul {
     margin: 0;
-    padding-left: 20px;
-    font-size: 12px;
+    padding-left: 16px;
+    font-size: 11px;
     color: var(--b3-theme-on-surface);
-    line-height: 1.5;
+    opacity: 0.7;
+    line-height: 1.7;
 
     li {
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
   }
 }
 
-// 转换器分区
+// 转换器分区卡片
 .converter-section {
   border: 1px solid var(--b3-border-color);
-  border-radius: 8px;
-  padding: 16px;
+  border-radius: 6px;
+  padding: 14px;
   background: var(--b3-theme-surface);
 
   h4 {
-    margin: 0 0 12px 0;
-    font-size: 14px;
-    font-weight: 600;
+    @each $k, $v in $label-style {
+      #{$k}: $v;
+    }
+    margin: 0 0 10px;
     color: var(--b3-theme-on-surface);
   }
 }
@@ -157,23 +221,67 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin-top: 12px;
+  margin-top: 10px;
 
   label {
-    font-size: 12px;
-    font-weight: 500;
+    @each $k, $v in $label-style {
+      #{$k}: $v;
+    }
     color: var(--b3-theme-on-surface);
   }
 
   .ascii-output,
   .text-output {
-    padding: 12px;
+    padding: 10px 12px;
     background: var(--b3-theme-background);
     border: 1px solid var(--b3-border-color);
     border-radius: 4px;
-    font-size: 14px;
+    font-family: $mono;
+    font-size: 12px;
     color: var(--b3-theme-primary);
-    min-height: 40px;
+    min-height: 36px;
     word-break: break-all;
+    line-height: 1.5;
+  }
+}
+
+// Swap 按钮
+.swap-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: 0 auto;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+  cursor: pointer;
+  transition: opacity 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+
+  &:hover {
+    opacity: 1;
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+  }
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+// 单位选择行（from + swap + to）
+.unit-select-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+
+  .select-wrapper {
+    flex: 1;
+    min-width: 0;
   }
 }

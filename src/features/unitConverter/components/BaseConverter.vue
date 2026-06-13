@@ -3,30 +3,54 @@
     <Input
       v-model="inputValue"
       type="text"
-      label="输入值"
+      label="INPUT"
       placeholder="请输入数值"
     />
 
-    <Select
-      v-model="fromBase"
-      :options="baseOptions"
-      label="从进制"
-    />
+    <div class="unit-select-row">
+      <div class="select-wrapper">
+        <Select
+          v-model="fromBase"
+          :options="baseOptions"
+          label="FROM"
+        />
+      </div>
 
-    <Select
-      v-model="toBase"
-      :options="baseOptions"
-      label="到进制"
-    />
+      <button
+        class="swap-btn"
+        title="互换进制"
+        @click="swapBases"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M7 16V4m0 12l-3-3m3 3l3-3" />
+          <path d="M17 8v12m0-12l3 3m-3-3l-3 3" />
+        </svg>
+      </button>
+
+      <div class="select-wrapper">
+        <Select
+          v-model="toBase"
+          :options="baseOptions"
+          label="TO"
+        />
+      </div>
+    </div>
 
     <div
       v-if="result && !error"
       class="converter-result"
     >
       <div class="result-value">
-        <span class="input-display">{{ inputValue }} ({{ fromBase }})</span>
-        <span class="equals"> = </span>
-        <span class="output-display">{{ result }} ({{ toBase }})</span>
+        <span class="input-display">{{ inputValue }}<sub>({{ fromBase }})</sub></span>
+        <span class="equals">=</span>
+        <span class="output-display">{{ result }}<sub>({{ toBase }})</sub></span>
       </div>
     </div>
 
@@ -43,21 +67,21 @@
       v-if="result && !error"
       class="converter-quick-results"
     >
-      <h4>快速转换结果</h4>
+      <h4>QUICK REFERENCE</h4>
       <div class="quick-results-grid">
         <div
           v-for="base in filteredBases"
           :key="base.value"
           class="quick-result-item"
         >
-          <span class="base-name">{{ base.name }}:</span>
+          <span class="base-name">BASE {{ base.value }}</span>
           <span class="base-value">{{ convertToBase(base.value) }}</span>
         </div>
       </div>
     </div>
 
     <div class="converter-info">
-      <h4>使用说明</h4>
+      <h4>CHAR SET</h4>
       <ul>
         <li
           v-for="info in BASES"
@@ -79,7 +103,7 @@ import {
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
 
-// 进制配置（合并名称与有效字符集，消除 BASES/USAGE_INFO 重复）
+// 进制配置（合并名称与有效字符集）
 const BASES = shallowRef([
   {
     value: 2,
@@ -117,6 +141,13 @@ const inputValue = ref("10")
 const fromBase = ref(10)
 const toBase = ref(2)
 const error = ref("")
+
+// 互换进制
+function swapBases() {
+  const tmp = fromBase.value
+  fromBase.value = toBase.value
+  toBase.value = tmp
+}
 
 const baseOptions = computed(() =>
   BASES.value.map((base) => ({
@@ -175,6 +206,12 @@ const result = computed(() => {
 .base-converter {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+
+  sub {
+    font-size: 0.7em;
+    opacity: 0.5;
+    margin-left: 2px;
+  }
 }
 </style>

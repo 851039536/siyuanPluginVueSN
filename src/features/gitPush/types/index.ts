@@ -56,6 +56,7 @@ export class GitPushManager {
     for (const r of remotes) {
       if (r.isGithub) project.githubRemote = r.name
       if (r.isGitee) project.giteeRemote = r.name
+      if (r.isGitea) project.giteaRemote = r.name
     }
     projects.push(project)
     await this.storage.projects.save(projects)
@@ -84,9 +85,11 @@ export class GitPushManager {
     const remotes = await this.detectRemotes(project.path)
     project.githubRemote = undefined
     project.giteeRemote = undefined
+    project.giteaRemote = undefined
     for (const r of remotes) {
       if (r.isGithub) project.githubRemote = r.name
       if (r.isGitee) project.giteeRemote = r.name
+      if (r.isGitea) project.giteaRemote = r.name
     }
     await this.storage.projects.save(projects)
     return project
@@ -119,6 +122,7 @@ export class GitPushManager {
               url,
               isGithub: lower.includes("github.com"),
               isGitee: lower.includes("gitee.com") || lower.includes("gitcode.com"),
+              isGitea: lower.includes("gitea"),
             })
           }
         }
@@ -190,53 +194,62 @@ export class GitPushManager {
   }
 
   /**
-   * 推送项目到指定远程（同时推送 GitHub 和 Gitee）
+   * 推送项目到全部已配置的远程（GitHub + Gitee + Gitea）
    */
-  async pushToBoth(id: string): Promise<{
+  async pushToAll(id: string): Promise<{
     success: boolean
     github: { ok: boolean; stdout: string; stderr: string }
     gitee: { ok: boolean; stdout: string; stderr: string }
+    gitea: { ok: boolean; stdout: string; stderr: string }
   }> {
     const projects = await this.getProjects()
     const project = projects.find(p => p.id === id)
+    const emptyResult = { ok: false, stdout: "", stderr: "" }
+    const notFound = { ...emptyResult, stderr: "项目未找到" }
+
     if (!project) {
-      return {
-        success: false,
-        github: { ok: false, stdout: "", stderr: "项目未找到" },
-        gitee: { ok: false, stdout: "", stderr: "项目未找到" },
-      }
+      return { success: false, github: notFound, gitee: notFound, gitea: notFound }
     }
 
     const proc = getNodeProcessModules()
     if (!proc) {
-      return {
-        success: false,
-        github: { ok: false, stdout: "", stderr: "Node 环境不可用" },
-        gitee: { ok: false, stdout: "", stderr: "Node 环境不可用" },
-      }
+      const noNode = { ...emptyResult, stderr: "Node 环境不可用" }
+      return { success: false, github: noNode, gitee: noNode, gitea: noNode }
     }
 
     const { child_process } = proc
-    const github: { ok: boolean; stdout: string; stderr: string } = { ok: false, stdout: "", stderr: "" }
-    const gitee: { ok: boolean; stdout: string; stderr: string } = { ok: false, stdout: "", stderr: "" }
+    const github = { ...emptyResult }
+    const gitee = { ...emptyResult }
+    const gitea = { ...emptyResult }
 
-    const remote = project.githubRemote || "github"
-    try {
-      github.stdout = await this.execGit(child_process, project.path, ["push", remote, "--all"]) || ""
-      github.ok = true
-    } catch (e: any) {
-      github.stderr = e?.message || String(e)
+    if (project.githubRemote) {
+      try {
+        github.stdout = await this.execGit(child_process, project.path, ["push", project.githubRemote, "--all"]) || ""
+        github.ok = true
+      } catch (e: any) {
+        github.stderr = e?.message || String(e)
+      }
     }
 
-    const remote2 = project.giteeRemote || "gitee"
-    try {
-      gitee.stdout = await this.execGit(child_process, project.path, ["push", remote2, "--all"]) || ""
-      gitee.ok = true
-    } catch (e: any) {
-      gitee.stderr = e?.message || String(e)
+    if (project.giteeRemote) {
+      try {
+        gitee.stdout = await this.execGit(child_process, project.path, ["push", project.giteeRemote, "--all"]) || ""
+        gitee.ok = true
+      } catch (e: any) {
+        gitee.stderr = e?.message || String(e)
+      }
     }
 
-    return { success: github.ok || gitee.ok, github, gitee }
+    if (project.giteaRemote) {
+      try {
+        gitea.stdout = await this.execGit(child_process, project.path, ["push", project.giteaRemote, "--all"]) || ""
+        gitea.ok = true
+      } catch (e: any) {
+        gitea.stderr = e?.message || String(e)
+      }
+    }
+
+    return { success: github.ok || gitee.ok || gitea.ok, github, gitee, gitea }
   }
 
   /**
@@ -244,7 +257,7 @@ export class GitPushManager {
    */
   async pushSingle(
     id: string,
-    target: "github" | "gitee",
+    target: "github" | "gitee" | "gitea",
   ): Promise<{ ok: boolean; stdout: string; stderr: string }> {
     const projects = await this.getProjects()
     const project = projects.find(p => p.id === id)
@@ -257,7 +270,10 @@ export class GitPushManager {
       return { ok: false, stdout: "", stderr: "Node 环境不可用" }
     }
 
-    const remoteName = target === "github" ? (project.githubRemote || "github") : (project.giteeRemote || "gitee")
+    const remoteName =
+      target === "github" ? (project.githubRemote || "github")
+      : target === "gitee" ? (project.giteeRemote || "gitee")
+      : (project.giteaRemote || "gitea")
     const { child_process } = proc
 
     try {
@@ -303,6 +319,9 @@ export class GitPushManager {
     }
     if (project.giteeRemote) {
       remotesToCheck.push({ key: "gitee", remoteName: project.giteeRemote })
+    }
+    if (project.giteaRemote) {
+      remotesToCheck.push({ key: "gitea", remoteName: project.giteaRemote })
     }
 
     for (const { key, remoteName } of remotesToCheck) {
@@ -366,18 +385,20 @@ export class GitPushManager {
     canPush: boolean
     github: boolean
     gitee: boolean
+    gitea: boolean
     remotes: GitRemoteInfo[]
   }> {
     const projects = await this.getProjects()
     const project = projects.find(p => p.id === id)
     if (!project) {
-      return { canPush: false, github: false, gitee: false, remotes: [] }
+      return { canPush: false, github: false, gitee: false, gitea: false, remotes: [] }
     }
 
     const remotes = await this.detectRemotes(project.path)
     const github = remotes.some(r => r.isGithub)
     const gitee = remotes.some(r => r.isGitee)
-    return { canPush: github || gitee, github, gitee, remotes }
+    const gitea = remotes.some(r => r.isGitea)
+    return { canPush: github || gitee || gitea, github, gitee, gitea, remotes }
   }
 
   /**

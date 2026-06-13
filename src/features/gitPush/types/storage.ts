@@ -14,11 +14,13 @@ export interface GitProject {
   githubRemote?: string
   /** Gitee 远程名称（自动检测） */
   giteeRemote?: string
+  /** Gitea 远程名称（自建实例，自动检测） */
+  giteaRemote?: string
   /** 添加时间 */
   addedAt: number
 }
 
-/** GitHub/Gitee 远程信息 */
+/** GitHub/Gitee/Gitea 远程信息 */
 export interface GitRemoteInfo {
   /** 远程名称（如 origin, github, gitee） */
   name: string
@@ -28,6 +30,8 @@ export interface GitRemoteInfo {
   isGithub: boolean
   /** 是否是 Gitee */
   isGitee: boolean
+  /** 是否是 Gitea（自建 Git 服务） */
+  isGitea: boolean
 }
 
 /** 单个远程的推送状态 */

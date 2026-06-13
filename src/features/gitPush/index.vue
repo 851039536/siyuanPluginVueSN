@@ -7,6 +7,14 @@
         <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="showCatDialog = true">
           <Icon icon="mdi:tag-outline" />
         </button>
+        <button
+          class="vp-btn vp-btn--ghost vp-btn--sm"
+          title="刷新全部"
+          :disabled="refreshingAll"
+          @click="handleRefreshAll"
+        >
+          <Icon icon="mdi:sync" :class="{ 'gp-spin': refreshingAll }" />
+        </button>
         <button class="vp-btn vp-btn--ghost gp-add-btn" @click="showAddDialog = true">
           <Icon icon="mdi:plus" />
           <span>{{ i18n.addProject || '添加项目' }}</span>
@@ -352,6 +360,7 @@ const addError = ref("")
 const addChecking = ref(false)
 const addResult = ref<boolean | null>(null)
 const refreshing = ref<string | null>(null)
+const refreshingAll = ref(false)
 /** 提交输出 id → text */
 const commitOutputs = ref<Record<string, string>>({})
 /** AI 生成状态 id → { generating, text } */
@@ -421,12 +430,23 @@ async function handleRefresh(id: string) {
   refreshing.value = id
   try {
     await refreshRemotes(id)
-    // 刷新后重新检测推送状态
     await loadPushStatus(id)
-    // 同时刷新工作区状态
     await loadWorkingTree(id)
   } finally {
     refreshing.value = null
+  }
+}
+
+async function handleRefreshAll() {
+  refreshingAll.value = true
+  try {
+    for (const p of projects.value) {
+      await refreshRemotes(p.id)
+      await loadPushStatus(p.id)
+      await loadWorkingTree(p.id)
+    }
+  } finally {
+    refreshingAll.value = false
   }
 }
 
@@ -498,17 +518,16 @@ async function handleCommit(id: string, message: string) {
 }
 
 async function handleGenerateMsg(id: string) {
-  // 设置生成中状态
   generatingMsgs.value = { ...generatingMsgs.value, [id]: { generating: true, text: "" } }
   commitOutputs.value[id] = ""
   try {
     const result = await generateCommitMsg(id)
     generatingMsgs.value = { ...generatingMsgs.value, [id]: { generating: false, text: result.message } }
     if (result.source === "heuristic") {
-      commitOutputs.value[id] = "ℹ️ AI 未配置或调用失败，已使用启发式生成"
+      commitOutputs.value[id] = "⚠️ 未配置 AI API Key，使用启发式生成。可在超级面板设置中配置。"
     }
   } catch (e: any) {
-    commitOutputs.value[id] = `❌ 生成失败: ${e?.message || e}，可手动输入`
+    commitOutputs.value[id] = `❌ 生成失败: ${e?.message || e}`
     generatingMsgs.value = { ...generatingMsgs.value, [id]: { generating: false, text: "" } }
   }
 }

@@ -225,7 +225,7 @@ export class BackupManager {
 
     const files = await this.fs.readdir(this.backupDir)
     const zipFiles = files
-      .filter((f: string) => f.startsWith("data-") && f.endsWith(".zip"))
+      .filter((f: string) => (f.startsWith("data-") || f.startsWith("sn-plugin-")) && f.endsWith(".zip"))
       .sort()
       .reverse()
 

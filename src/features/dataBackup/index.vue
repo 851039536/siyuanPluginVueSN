@@ -103,41 +103,34 @@
         <div class="section-header">
           <h4>{{ i18n.autoBackupSettings || '自动备份设置' }}</h4>
         </div>
-        <div class="settings-form">
-          <div class="form-row">
-            <label class="form-label">{{ i18n.autoBackup || '自动备份' }}</label>
-            <select v-model="autoBackupEnabled" class="form-select" @change="saveSettings">
-              <option :value="false">{{ i18n.disabled || '禁用' }}</option>
-              <option :value="true">{{ i18n.enabled || '启用' }}</option>
-            </select>
-          </div>
+        <div class="settings-row">
+          <span class="inline-label">{{ i18n.autoBackup || '自动备份' }}</span>
+          <select v-model="autoBackupEnabled" class="form-select narrow" @change="saveSettings">
+            <option :value="false">{{ i18n.disabled || '禁用' }}</option>
+            <option :value="true">{{ i18n.enabled || '启用' }}</option>
+          </select>
           <template v-if="autoBackupEnabled">
-            <div class="form-row">
-              <label class="form-label">{{ i18n.backupFrequency || '备份频率' }}</label>
-              <select v-model="backupFrequency" class="form-select" @change="saveSettings">
-                <option value="minute">{{ i18n.everyMinute || '每分钟' }}</option>
-                <option value="hourly">{{ i18n.everyHour || '每小时' }}</option>
-                <option value="daily">{{ i18n.everyDay || '每天' }}</option>
-              </select>
-            </div>
-            <div v-if="backupFrequency === 'daily'" class="form-row">
-              <label class="form-label">{{ i18n.backupTime || '备份时间' }}</label>
-              <input v-model="backupTime" type="time" class="form-input" @change="saveSettings" />
-            </div>
-            <div class="form-row">
-              <label class="form-label">{{ i18n.keepBackups || '保留备份数' }}</label>
-              <input
-                v-model="keepBackupCount" type="number" class="form-input small"
-                min="1" max="30" @change="saveSettings"
-              />
-            </div>
-            <div class="form-row">
-              <label class="form-label">同时备份插件设置</label>
-              <select v-model="autoBackupPluginData" class="form-select" @change="saveSettings">
-                <option :value="false">禁用</option>
-                <option :value="true">启用</option>
-              </select>
-            </div>
+            <span class="inline-label">{{ i18n.backupFrequency || '频率' }}</span>
+            <select v-model="backupFrequency" class="form-select narrow" @change="saveSettings">
+              <option value="minute">{{ i18n.everyMinute || '每分钟' }}</option>
+              <option value="hourly">{{ i18n.everyHour || '每小时' }}</option>
+              <option value="daily">{{ i18n.everyDay || '每天' }}</option>
+            </select>
+            <template v-if="backupFrequency === 'daily'">
+              <span class="inline-label">{{ i18n.backupTime || '时间' }}</span>
+              <input v-model="backupTime" type="time" class="form-input narrow" @change="saveSettings" />
+            </template>
+            <span class="inline-label">保留</span>
+            <input
+              v-model="keepBackupCount" type="number" class="form-input narrow" style="width: 3rem;"
+              min="1" max="30" @change="saveSettings"
+            />
+            <span class="inline-label">份</span>
+            <span class="inline-label">含插件</span>
+            <select v-model="autoBackupPluginData" class="form-select narrow" @change="saveSettings">
+              <option :value="false">否</option>
+              <option :value="true">是</option>
+            </select>
           </template>
         </div>
       </section>

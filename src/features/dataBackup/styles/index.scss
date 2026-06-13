@@ -26,10 +26,6 @@ $radius-lg: 0.5rem;
   flex-shrink: 0;
 }
 
-.data-backup-header-icon {
-  font-size: 1.125rem;
-}
-
 .data-backup-header-title {
   flex: 1;
   font-size: 0.875rem;
@@ -99,11 +95,6 @@ $radius-lg: 0.5rem;
   font-size: 0.75rem;
   color: var(--b3-theme-on-surface);
 
-  .warning-icon {
-    font-size: 1rem;
-    flex-shrink: 0;
-  }
-
   .warning-text {
     flex: 1;
     line-height: 1.3;
@@ -127,10 +118,6 @@ $radius-lg: 0.5rem;
     color: var(--b3-theme-on-surface);
     flex: 1;
   }
-}
-
-.section-icon {
-  font-size: 1rem;
 }
 
 // ========== 信息区块 ==========
@@ -209,12 +196,11 @@ $radius-lg: 0.5rem;
 
 .open-folder-btn {
   @extend %btn-base;
-  padding: 0.375rem;
+  padding: 0.25rem 0.5rem;
   border: 1px solid var(--b3-theme-surface-variant);
   background: var(--b3-theme-background);
-  font-size: 0.875rem;
-  min-width: 1.875rem;
-  justify-content: center;
+  color: var(--b3-theme-on-surface);
+  font-size: 0.75rem;
 
   &:hover:not(:disabled) {
     background: var(--b3-theme-surface);
@@ -250,19 +236,6 @@ $radius-lg: 0.5rem;
     text-transform: uppercase;
     letter-spacing: 0.06em;
   }
-}
-
-.loading-spinner {
-  width: 0.875rem;
-  height: 0.875rem;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 
 // ========== 表单 ==========
@@ -419,12 +392,6 @@ $radius-lg: 0.5rem;
   }
 }
 
-.empty-icon {
-  font-size: 2.5rem;
-  margin-bottom: 0.5rem;
-  opacity: 0.5;
-}
-
 // ========== 响应式 ==========
 
 @media (max-width: 768px) {
@@ -577,51 +544,69 @@ $radius-lg: 0.5rem;
   font-family: 'Consolas', 'Monaco', monospace;
 }
 
-// ========== 备份操作按钮行 ==========
+// ========== 备份操作按钮行 (Codex 风格) ==========
 
 .backup-actions-row {
   display: flex;
-  gap: 0.5rem;
+  gap: 6px;
 }
 
-.backup-btn {
-  display: flex;
+// Codex vp-btn 按钮体系
+.vp-btn {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.375rem;
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: $radius-md;
-  font-size: 0.8125rem;
-  font-weight: 500;
+  gap: 4px;
+  padding: 5px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
-  flex: 1;
+  border: 1px solid transparent;
+  transition: all 0.12s;
 
-  &.primary {
-    flex: 1.3;
-    background: linear-gradient(135deg, var(--b3-theme-primary), var(--b3-theme-primary-light));
+  &--sm {
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+
+  &--primary {
+    background: var(--b3-theme-primary);
     color: #fff;
+    border-color: var(--b3-theme-primary);
 
     &:hover:not(:disabled) {
-      box-shadow: 0 0.125rem 0.5rem rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.3);
+      opacity: 0.85;
     }
   }
 
-  &.secondary {
-    background: var(--b3-theme-surface);
-    color: var(--b3-theme-primary);
-    border: 1px solid var(--b3-theme-primary);
+  &--ghost {
+    background: transparent;
+    border-color: var(--b3-border-color);
+    color: var(--b3-theme-on-surface);
 
     &:hover:not(:disabled) {
-      background: var(--b3-theme-primary);
-      color: #fff;
+      background: var(--b3-theme-surface-lighter);
     }
   }
 
   &:disabled {
-    opacity: 0.6;
+    opacity: 0.35;
     cursor: not-allowed;
   }
+}
+
+// 内联小旋转器
+.vp-spin {
+  width: 10px;
+  height: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: vp-spin 0.6s linear infinite;
+}
+
+@keyframes vp-spin {
+  to { transform: rotate(360deg); }
 }
 
 

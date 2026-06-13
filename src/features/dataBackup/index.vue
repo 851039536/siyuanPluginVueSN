@@ -1,22 +1,19 @@
 <template>
   <div class="data-backup-settings">
     <div class="data-backup-header">
-      <span class="data-backup-header-icon">💾</span>
       <span class="data-backup-header-title">{{ i18n.dataBackup || '数据备份' }}</span>
-      <button class="data-backup-close-btn" @click="handleClose">✕</button>
+      <button class="data-backup-close-btn" @click="handleClose">×</button>
     </div>
 
     <div class="settings-container">
       <!-- 移动端警告 -->
       <div v-if="isMobile" class="mobile-warning">
-        <span class="warning-icon">📱</span>
         <span class="warning-text">{{ i18n.mobileBackupDisabled || '检测到移动端环境，备份功能已自动禁用以节省流量和存储空间' }}</span>
       </div>
 
       <!-- 1. 工作区信息 -->
       <section class="card-section info-section">
         <div class="section-header">
-          <span class="section-icon">💾</span>
           <h4>{{ i18n.workspaceInfo || '工作区信息' }}</h4>
         </div>
         <div class="info-grid">
@@ -33,7 +30,7 @@
                   :disabled="!workspaceRoot"
                   :title="i18n.openInExplorer || '在文件管理器中打开'"
                   @click="openWorkspaceFolder"
-                >📂</button>
+                >打开</button>
               </div>
             </div>
           </div>
@@ -47,7 +44,6 @@
       <!-- 2. 备份进度（条件渲染） -->
       <section v-if="isBackingUp" class="card-section progress-section">
         <div class="section-header">
-          <span class="section-icon">📊</span>
           <h4>备份进度</h4>
         </div>
         <div class="progress-bar-container">
@@ -65,23 +61,32 @@
       <!-- 3. 手动备份 -->
       <section class="card-section backup-section">
         <div class="section-header">
-          <span class="section-icon">📦</span>
           <h4>{{ i18n.manualBackup || '手动备份' }}</h4>
         </div>
         <div class="backup-actions-row">
-          <button class="backup-btn primary" :disabled="isBackingUp" @click="performFullBackup">
-            <span v-if="isBackingUp" class="loading-spinner" />
-            <span v-else>📀</span>
+          <button
+            class="vp-btn vp-btn--primary vp-btn--sm"
+            :disabled="isBackingUp || isBackupAll"
+            @click="performFullBackup"
+          >
+            <span v-if="isBackingUp" class="vp-spin" />
             <span>全量备份</span>
           </button>
           <button
-            class="backup-btn secondary"
-            :disabled="isBackingUp || isPluginBackup"
+            class="vp-btn vp-btn--ghost vp-btn--sm"
+            :disabled="isBackingUp || isPluginBackup || isBackupAll"
             @click="exportPluginSettings"
           >
-            <span v-if="isPluginBackup" class="loading-spinner" />
-            <span v-else>⚙️</span>
+            <span v-if="isPluginBackup" class="vp-spin" />
             <span>{{ i18n.pluginSettingsBackup || '插件设置备份' }}</span>
+          </button>
+          <button
+            class="vp-btn vp-btn--primary vp-btn--sm"
+            :disabled="isBackingUp || isBackupAll"
+            @click="performBackupAll"
+          >
+            <span v-if="isBackupAll" class="vp-spin" />
+            <span>备份所有</span>
           </button>
         </div>
         <p v-if="pluginExportPath" class="export-path" :title="pluginExportPath">
@@ -96,7 +101,6 @@
       <!-- 4. 自动备份设置 -->
       <section class="card-section auto-backup-section">
         <div class="section-header">
-          <span class="section-icon">⏰</span>
           <h4>{{ i18n.autoBackupSettings || '自动备份设置' }}</h4>
         </div>
         <div class="settings-form">
@@ -141,7 +145,6 @@
       <!-- 5. 本地备份历史 -->
       <section class="card-section history-section">
         <div class="section-header">
-          <span class="section-icon">📋</span>
           <h4>{{ i18n.backupHistory || '备份历史' }}</h4>
           <button class="refresh-btn" :disabled="isLoading" @click="refreshBackupList">
             {{ i18n.refresh || '刷新' }}
@@ -162,7 +165,6 @@
           </div>
         </div>
         <div v-else class="empty-state">
-          <span class="empty-icon">📭</span>
           <p>{{ i18n.noBackups || '暂无备份记录' }}</p>
         </div>
       </section>
@@ -237,6 +239,7 @@ let dbStorage: DataBackupStorage | null = null
 const workspacePath = ref("")
 const workspaceRoot = ref("")
 const isBackingUp = ref(false)
+const isBackupAll = ref(false)
 const isLoading = ref(false)
 const lastBackupTime = ref("")
 const autoBackupEnabled = ref(false)
@@ -661,6 +664,21 @@ async function exportPluginSettings() {
     showMessage(`${props.i18n.exportFailed || "导出失败"}: ${error.message}`, 5000, "error")
   } finally {
     isPluginBackup.value = false
+  }
+}
+
+async function performBackupAll() {
+  if (isBackupAll.value || isBackingUp.value) return
+  isBackupAll.value = true
+  try {
+    await performFullBackup()
+    await exportPluginSettings()
+    showMessage("全量备份 + 插件设置备份已完成", 3000, "info")
+  } catch (error: any) {
+    console.error("备份所有失败:", error)
+    showMessage(`备份所有失败: ${error.message}`, 5000, "error")
+  } finally {
+    isBackupAll.value = false
   }
 }
 

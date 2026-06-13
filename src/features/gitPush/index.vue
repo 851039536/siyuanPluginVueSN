@@ -7,6 +7,9 @@
         <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="showCatDialog = true">
           <Icon icon="mdi:tag-outline" />
         </button>
+        <button class="vp-btn vp-btn--ghost vp-btn--sm" title="设置" @click="showSettings = true">
+          <Icon icon="mdi:cog-outline" />
+        </button>
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
           title="刷新全部"
@@ -14,6 +17,7 @@
           @click="handleRefreshAll"
         >
           <Icon icon="mdi:sync" :class="{ 'gp-spin': refreshingAll }" />
+          <span v-if="refreshInterval > 0" class="gp-refresh-timer">{{ refreshInterval }}s</span>
         </button>
         <button class="vp-btn vp-btn--ghost gp-add-btn" @click="showAddDialog = true">
           <Icon icon="mdi:plus" />
@@ -344,11 +348,40 @@
         </div>
       </div>
     </div>
+
+    <!-- 设置弹窗 -->
+    <div v-if="showSettings" class="gp-mask" @click.self="showSettings = false">
+      <div class="gp-dialog" style="width: 320px;">
+        <div class="gp-dialog-header">
+          <span class="gp-dialog-title">{{ i18n.settings || '设置' }}</span>
+          <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="showSettings = false">
+            <Icon icon="mdi:close" />
+          </button>
+        </div>
+        <div class="gp-dialog-body">
+          <div class="gp-set-row">
+            <label class="gp-set-label">自动刷新间隔</label>
+            <div class="gp-set-input-row">
+              <input
+                v-model.number="refreshInterval"
+                type="number"
+                class="gp-input"
+                min="0"
+                max="300"
+                step="5"
+                style="width: 60px; text-align: center;"
+              />
+              <span class="gp-set-unit">秒（0 表示关闭）</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed } from "vue"
+import { onMounted, onUnmounted, ref, computed } from "vue"
 import { Icon } from "@iconify/vue"
 import type { GitPushManager, GitProject, CommitLogEntry } from "./types"
 import { useGitPush } from "./composables/useGitPush"
@@ -412,6 +445,9 @@ const {
 
 const showAddDialog = ref(false)
 const showCatDialog = ref(false)
+const showSettings = ref(false)
+const refreshInterval = ref(15)
+let refreshTimer: ReturnType<typeof setInterval> | null = null
 /** 当前选中的分类 ID，"__all__" 表示全部 */
 const activeCategory = ref<string>("__all__")
 
@@ -456,6 +492,32 @@ function commitLogForProject(projectId: string): CommitLogEntry[] {
 /** 提交日志加载状态 */
 const commitLogLoading = ref<Record<string, boolean>>({})
 
+/** 静默刷新所有项目状态（不触发 loading 动画） */
+async function silentRefreshAll() {
+  for (const p of projects.value) {
+    await loadPushStatus(p.id)
+    await loadWorkingTree(p.id)
+    await loadCommitLog(p.id)
+    await loadBranches(p.id)
+  }
+}
+
+function startRefreshTimer() {
+  stopRefreshTimer()
+  const secs = refreshInterval.value
+  if (secs <= 0) return
+  refreshTimer = setInterval(() => {
+    silentRefreshAll()
+  }, secs * 1000)
+}
+
+function stopRefreshTimer() {
+  if (refreshTimer !== null) {
+    clearInterval(refreshTimer)
+    refreshTimer = null
+  }
+}
+
 onMounted(() => {
   loadProjects()
   // 自动加载各项目工作区状态、分支列表和提交日志
@@ -465,7 +527,12 @@ onMounted(() => {
       await loadCommitLog(p.id)
       await loadBranches(p.id)
     }
+    startRefreshTimer()
   }, 200)
+})
+
+onUnmounted(() => {
+  stopRefreshTimer()
 })
 
 async function handleAdd() {
@@ -1093,6 +1160,36 @@ async function selectDirectory() {
 }
 
 // 分类管理弹窗
+.gp-refresh-timer {
+  font-size: 9px;
+  font-family: $vp-mono;
+  opacity: 0.35;
+}
+
+.gp-set-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.gp-set-label {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.gp-set-input-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.gp-set-unit {
+  font-size: 10px;
+  opacity: 0.45;
+  white-space: nowrap;
+}
+
 .gp-cat-row {
   display: flex;
   align-items: center;

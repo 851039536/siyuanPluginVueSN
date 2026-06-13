@@ -398,6 +398,17 @@ export class GitPushManager {
   }
 
   /**
+   * 获取当前 HEAD 的 commit hash（用于检测项目是否变动）
+   */
+  async getHeadHash(projectPath: string): Promise<string> {
+    try {
+      return (await this.execGit(projectPath, ["rev-parse", "HEAD"])).trim()
+    } catch {
+      return ""
+    }
+  }
+
+  /**
    * 检查项目路径是否有效（目录存在且是 git 仓库）
    */
   async checkIsGitRepo(projectPath: string): Promise<boolean> {

@@ -492,14 +492,30 @@ function commitLogForProject(projectId: string): CommitLogEntry[] {
 /** 提交日志加载状态 */
 const commitLogLoading = ref<Record<string, boolean>>({})
 
+/** HEAD hash 缓存，用于跳过无变动项目的 commit log / branches 刷新 */
+const headHashes = ref<Record<string, string>>({})
+
 /** 静默刷新所有项目状态（不触发 loading 动画） */
 async function silentRefreshAll() {
+  const proms: Promise<void>[] = []
   for (const p of projects.value) {
-    await loadPushStatus(p.id)
-    await loadWorkingTree(p.id)
-    await loadCommitLog(p.id)
-    await loadBranches(p.id)
+    proms.push((async () => {
+      // push status 始终刷新（远程可能变动）
+      await loadPushStatus(p.id)
+      // working tree 始终刷新（文件可能外部修改）
+      await loadWorkingTree(p.id)
+
+      // HEAD hash 变化时才刷新 commit log + branches
+      const prev = headHashes.value[p.id] || ""
+      const curr = await props.manager.getHeadHash(p.path)
+      if (curr && curr !== prev) {
+        headHashes.value[p.id] = curr
+        await loadCommitLog(p.id)
+        await loadBranches(p.id)
+      }
+    })())
   }
+  await Promise.all(proms)
 }
 
 function startRefreshTimer() {
@@ -520,12 +536,13 @@ function stopRefreshTimer() {
 
 onMounted(() => {
   loadProjects()
-  // 自动加载各项目工作区状态、分支列表和提交日志
+  // 自动加载各项目工作区状态、分支列表和提交日志，并缓存 HEAD hash
   setTimeout(async () => {
     for (const p of projects.value) {
       await loadWorkingTree(p.id)
       await loadCommitLog(p.id)
       await loadBranches(p.id)
+      headHashes.value[p.id] = await props.manager.getHeadHash(p.path)
     }
     startRefreshTimer()
   }, 200)

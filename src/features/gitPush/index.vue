@@ -865,6 +865,7 @@ onMounted(async () => {
       const [, hash] = await Promise.all([
         loadWorkingTree(p.id),
         props.manager.getHeadHash(p.path),
+        loadPushStatus(p.id),
         loadCommitLog(p.id),
         loadBranches(p.id),
       ])

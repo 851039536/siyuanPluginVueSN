@@ -188,10 +188,6 @@ export function useGitPush(manager: GitPushManager) {
     try {
       categories.value = await manager.getCategories()
       projects.value = await manager.getProjects()
-      // 自动检测所有项目的推送状态
-      for (const p of projects.value) {
-        loadPushStatus(p.id)
-      }
     } finally {
       loading.value = false
     }

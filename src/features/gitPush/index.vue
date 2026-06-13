@@ -53,6 +53,9 @@
 
     <div class="gp-divider" />
 
+    <!-- git 操作进度条 -->
+    <div v-if="activeGitOps > 0" class="gp-progress-bar" />
+
     <!-- ========== 统计视图 ========== -->
     <StatsPanel
       v-if="currentView === 'stats'"
@@ -647,7 +650,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed, watch } from "vue"
+import { onMounted, onUnmounted, ref, computed, watch } from "vue"
 import { Icon } from "@iconify/vue"
 import type { GitPushManager, GitProject, CommitLogEntry, ScannedGitRepo } from "./types"
 import { useGitPush } from "./composables/useGitPush"
@@ -739,6 +742,9 @@ const {
 const showAddDialog = ref(false)
 const showCatDialog = ref(false)
 const showSettings = ref(false)
+/** git 操作活跃数轮询 */
+const activeGitOps = ref(0)
+let opsPoller: ReturnType<typeof setInterval> | null = null
 /** 当前视图: 'list' | 'stats' */
 const currentView = ref<"list" | "stats">("list")
 /** 当前选中的分类 ID（onMounted 中设为首个分类） */
@@ -857,6 +863,8 @@ onMounted(async () => {
     activeCategory.value = groupedProjects.value[0].category.id
   }
   loadGitConcurrency()
+  // 轮询 git 操作活跃数
+  opsPoller = setInterval(() => { activeGitOps.value = props.manager.activeGitOps }, 120)
   // 延迟加载当前分类下项目的工作区状态（manager 内置信号量限流）
   setTimeout(async () => {
     const catId = activeCategory.value
@@ -874,6 +882,10 @@ onMounted(async () => {
     // 加载所有项目的 stash 列表（轻量，每个项目一条 git 命令）
     await Promise.all(projects.value.map(p => loadStashList(p.id)))
   }, 200)
+})
+
+onUnmounted(() => {
+  if (opsPoller) { clearInterval(opsPoller); opsPoller = null }
 })
 
 /** 切换分类时懒加载该分类下项目的数据 */
@@ -2227,6 +2239,19 @@ async function selectScanDirectory() {
   background: var(--b3-theme-primary-lightest);
   color: var(--b3-theme-primary);
   white-space: nowrap;
+}
+
+// 底部 git 操作进度条
+.gp-progress-bar {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--b3-theme-primary), transparent);
+  background-size: 200% 100%;
+  animation: gp-shimmer 1.2s linear infinite;
+}
+
+@keyframes gp-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 // 按钮样式已提取到 styles/_buttons.scss

@@ -388,11 +388,13 @@ async function handleGenerateMsg(id: string) {
   generatingMsgs.value = { ...generatingMsgs.value, [id]: { generating: true, text: "" } }
   commitOutputs.value[id] = ""
   try {
-    const msg = await generateCommitMsg(id)
-    // 通过 prop 传递给 WorkingTreePanel，由 watch 自动填入文本框
-    generatingMsgs.value = { ...generatingMsgs.value, [id]: { generating: false, text: msg } }
+    const result = await generateCommitMsg(id)
+    generatingMsgs.value = { ...generatingMsgs.value, [id]: { generating: false, text: result.message } }
+    if (result.source === "heuristic") {
+      commitOutputs.value[id] = "ℹ️ AI 未配置或调用失败，已使用启发式生成"
+    }
   } catch (e: any) {
-    commitOutputs.value[id] = `AI 生成失败: ${e?.message || e}，可手动输入`
+    commitOutputs.value[id] = `❌ 生成失败: ${e?.message || e}，可手动输入`
     generatingMsgs.value = { ...generatingMsgs.value, [id]: { generating: false, text: "" } }
   }
 }

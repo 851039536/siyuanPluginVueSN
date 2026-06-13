@@ -1,7 +1,7 @@
 import type { Plugin } from "siyuan"
 import { createVueDockApp } from "@/utils/vueAppHelper"
 import { getNodeProcessModules } from "@/utils/nodeModules"
-import { callAISmart, getApiConfigFromPlugin } from "@/utils/aiApi"
+import { callAI, getApiConfigFromPlugin } from "@/utils/aiApi"
 import type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo } from "./storage"
 import { GitPushStorage } from "./storage"
 import GitPushPanel from "../index.vue"
@@ -581,9 +581,9 @@ export class GitPushManager {
    * 根据暂存区差异自动生成提交信息
    * 优先使用配置的 AI 模型分析 diff 内容；无 API Key 则降级为启发式
    */
-  async generateCommitMessage(projectPath: string): Promise<string> {
+  async generateCommitMessage(projectPath: string): Promise<{ message: string; source: "ai" | "heuristic" }> {
     const proc = getNodeProcessModules()
-    if (!proc) return "chore: update files"
+    if (!proc) return { message: "chore: update files", source: "heuristic" }
     const { child_process } = proc
 
     try {
@@ -591,7 +591,7 @@ export class GitPushManager {
       const diffText = await this.execGit(child_process, projectPath, [
         "diff", "--cached", "--stat",
       ])
-      if (!diffText) return "chore: update files"
+      if (!diffText) return { message: "chore: update files", source: "heuristic" }
 
       // 截取用于 AI 的 diff（最多 3000 字符，避免 token 超限）
       const fullDiff = await this.execGit(child_process, projectPath, [
@@ -599,32 +599,32 @@ export class GitPushManager {
       ])
       const diffSnippet = (fullDiff || diffText).substring(0, 3000)
 
-      // 尝试 AI 生成
+      // 尝试 AI 生成（参照 wordQuery 使用 callAI 非流式调用）
       const aiConfig = getApiConfigFromPlugin(this.plugin)
       if (aiConfig.apiKey) {
         try {
-          const result = await callAISmart(
-            `根据以下 git diff，生成一条英文 conventional commit 信息（格式：type(scope): description，其中 type 为 feat/fix/chore/docs/style/refactor/test/perf 之一）。
-只返回提交信息本身，不要任何解释。
+          const result = await callAI(
+            `根据以下 git diff，生成一条中文 conventional commit 信息（格式：type(scope): 中文描述）。
+只返回提交信息本身，不解释。type 为 feat/fix/chore/docs/style/refactor/test/perf 之一。
 Diff:
 ${diffSnippet}`,
             aiConfig,
             {
-              systemPrompt: "You are a git commit message generator. You analyze code diffs and output ONLY a conventional commit message without any explanation.",
+              systemPrompt: "你是一个 git commit 信息生成器。分析代码 diff，只输出一条中文 conventional commit 信息，不要任何解释。",
               temperature: 0.3,
               maxTokens: 200,
             },
           )
-          if (result?.trim()) return result.trim()
+          if (result?.trim()) return { message: result.trim(), source: "ai" }
         } catch {
           // AI 调用失败，降级到启发式
         }
       }
 
       // 降级：启发式生成
-      return this.heuristicCommitMessage(diffText)
+      return { message: this.heuristicCommitMessage(diffText), source: "heuristic" }
     } catch {
-      return "chore: update files"
+      return { message: "chore: update files", source: "heuristic" }
     }
   }
 

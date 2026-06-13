@@ -50,6 +50,21 @@
           <div class="gp-card-info">
             <div class="gp-card-name">{{ project.name }}</div>
             <div class="gp-card-path" :title="project.path">{{ project.path }}</div>
+            <!-- 分支标签 -->
+            <div v-if="branches[project.id]?.length" class="gp-branch-row">
+              <Icon icon="mdi:source-branch" height="11" />
+              <button
+                v-for="b in branches[project.id]"
+                :key="b.name"
+                class="gp-branch-tag"
+                :class="{ current: b.current }"
+                :title="b.current ? '当前分支' : `切换到 ${b.name}`"
+                @click="handleSwitchBranch(project.id, b.name)"
+              >
+                {{ b.name }}
+                <Icon v-if="b.current" icon="mdi:check" height="9" />
+              </button>
+            </div>
           </div>
           <div class="gp-card-actions">
             <select
@@ -134,13 +149,39 @@
           @clear-output="commitOutputs[project.id] = ''"
         />
 
+        <!-- 拉取按钮组 -->
+        <div class="gp-push-group">
+          <button
+            v-for="r in REMOTES"
+            :key="`pull-${r.key}`"
+            class="vp-btn vp-btn--ghost gp-push-btn"
+            :disabled="!project[r.remoteProp] || isPulling(project.id) || isPushing(project.id)"
+            @click="pullSingle(project.id, r.key as 'github' | 'gitee' | 'gitea')"
+          >
+            <Icon v-if="isPulling(project.id, r.key)" icon="mdi:loading" class="gp-spin" />
+            <Icon v-else icon="mdi:source-pull" />
+            <span v-if="isPulling(project.id, r.key)">{{ i18n.pulling || '拉取中...' }}</span>
+            <span v-else>&#8203;</span>
+          </button>
+          <button
+            class="vp-btn vp-btn--ghost gp-push-btn"
+            :disabled="(!project.githubRemote && !project.giteeRemote && !project.giteaRemote) || isPulling(project.id) || isPushing(project.id)"
+            @click="pullToAll(project.id)"
+          >
+            <Icon v-if="isPulling(project.id, 'all')" icon="mdi:loading" class="gp-spin" />
+            <Icon v-else icon="mdi:source-pull" />
+            <span v-if="isPulling(project.id, 'all')">{{ i18n.pulling || '拉取中...' }}</span>
+            <span v-else>{{ i18n.pullAll || '拉取全部' }}</span>
+          </button>
+        </div>
+
         <!-- 推送按钮组 -->
         <div class="gp-push-group">
           <button
             v-for="r in REMOTES"
             :key="r.key"
             class="vp-btn vp-btn--ghost gp-push-btn"
-            :disabled="!project[r.remoteProp] || isPushing(project.id) || !needsPushFor(project.id, r.key)"
+            :disabled="!project[r.remoteProp] || isPushing(project.id) || isPulling(project.id) || !needsPushFor(project.id, r.key)"
             @click="pushSingle(project.id, r.key as 'github' | 'gitee' | 'gitea')"
           >
             <Icon v-if="isPushing(project.id, r.key)" icon="mdi:loading" class="gp-spin" />
@@ -150,7 +191,7 @@
           </button>
           <button
             class="vp-btn vp-btn--primary gp-push-btn"
-            :disabled="(!project.githubRemote && !project.giteeRemote && !project.giteaRemote) || isPushing(project.id) || !pushStatuses[project.id]?.needsPush"
+            :disabled="(!project.githubRemote && !project.giteeRemote && !project.giteaRemote) || isPushing(project.id) || isPulling(project.id) || !pushStatuses[project.id]?.needsPush"
             @click="pushToAll(project.id)"
           >
             <Icon v-if="isPushing(project.id, 'all')" icon="mdi:loading" class="gp-spin" />
@@ -158,6 +199,11 @@
             <span v-if="isPushing(project.id, 'all')">{{ i18n.pushing || '推送中...' }}</span>
             <span v-else>{{ i18n.pushAll || '推送全部' }}</span>
           </button>
+        </div>
+
+        <!-- 拉取输出 -->
+        <div v-if="pullOutputs[project.id]" class="gp-output">
+          <pre>{{ pullOutputs[project.id] }}</pre>
         </div>
 
         <!-- 推送输出 -->
@@ -311,10 +357,13 @@ const {
   loading,
   isPushing,
   pushOutputs,
+  isPulling,
+  pullOutputs,
   pushStatuses,
   workingTrees,
   fileDiffs,
   committing,
+  branches,
   loadProjects,
   loadPushStatus,
   loadWorkingTree,
@@ -330,12 +379,16 @@ const {
   refreshRemotes,
   pushToAll,
   pushSingle,
+  pullToAll,
+  pullSingle,
   checkIsGitRepo,
   addCategory: addCategoryFn,
   deleteCategory: deleteCategoryFn,
   moveProject,
   commitLogs,
   loadCommitLog,
+  loadBranches,
+  switchBranch,
 } = useGitPush(props.manager)
 
 const showAddDialog = ref(false)
@@ -378,11 +431,12 @@ const commitLogLoading = ref<Record<string, boolean>>({})
 
 onMounted(() => {
   loadProjects()
-  // 自动加载各项目工作区状态和提交日志
+  // 自动加载各项目工作区状态、分支列表和提交日志
   setTimeout(async () => {
     for (const p of projects.value) {
       await loadWorkingTree(p.id)
       await loadCommitLog(p.id)
+      await loadBranches(p.id)
     }
   }, 200)
 })
@@ -461,6 +515,14 @@ async function handleOpenPath(path: string) {
 function handleRemove(project: any) {
   if (confirm(`确定要删除项目 "${project.name}" 吗？`)) {
     removeProject(project.id)
+  }
+}
+
+async function handleSwitchBranch(id: string, branch: string) {
+  try {
+    await switchBranch(id, branch)
+  } catch (e: any) {
+    alert(`分支切换失败: ${e?.message || e}`)
   }
 }
 
@@ -733,6 +795,43 @@ async function selectDirectory() {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 280px;
+}
+
+.gp-branch-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+  flex-wrap: wrap;
+}
+
+.gp-branch-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 6px;
+  font-size: 9px;
+  font-family: $vp-mono;
+  font-weight: 600;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    opacity: 0.8;
+    border-color: var(--b3-theme-primary);
+  }
+
+  &.current {
+    opacity: 1;
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+    background: var(--b3-theme-primary-lightest);
+  }
 }
 
 .gp-card-actions {

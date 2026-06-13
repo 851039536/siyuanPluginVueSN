@@ -7,17 +7,41 @@
     </div>
 
     <div v-if="expanded" class="bcl-body">
+      <!-- 搜索栏 -->
+      <div class="bcl-search">
+        <Icon icon="mdi:magnify" height="12" class="bcl-search-icon" />
+        <input
+          v-model="searchKeyword"
+          class="bcl-search-input"
+          placeholder="搜索提交信息..."
+          @keyup.escape="searchKeyword = ''"
+        />
+        <input
+          v-model="searchAuthor"
+          class="bcl-search-input bcl-search-author"
+          placeholder="作者..."
+          @keyup.escape="searchAuthor = ''"
+        />
+        <button
+          v-if="searchKeyword || searchAuthor"
+          class="vp-btn vp-btn--ghost vp-btn--sm"
+          @click.stop="searchKeyword = ''; searchAuthor = ''"
+        >
+          <Icon icon="mdi:close" height="10" />
+        </button>
+      </div>
+
       <div v-if="loading" class="bcl-loading">
         <Icon icon="mdi:loading" class="gp-spin" height="14" />
         <span>加载中...</span>
       </div>
 
-      <div v-else-if="entries.length === 0" class="bcl-empty">
-        暂无提交记录
+      <div v-else-if="filteredEntries.length === 0" class="bcl-empty">
+        {{ (searchKeyword || searchAuthor) ? '无匹配结果' : '暂无提交记录' }}
       </div>
 
       <div v-else class="bcl-list">
-        <div v-for="entry in entries" :key="entry.hash" class="bcl-entry">
+        <div v-for="entry in filteredEntries" :key="entry.hash" class="bcl-entry">
           <span class="bcl-hash" :title="entry.hash">{{ entry.hash }}</span>
           <span class="bcl-msg" :title="entry.message">{{ entry.message }}</span>
           <span class="bcl-meta">
@@ -31,16 +55,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue"
+import { ref, computed } from "vue"
 import { Icon } from "@iconify/vue"
 import type { CommitLogEntry } from "../types"
 
-defineProps<{
+const props = defineProps<{
   entries: CommitLogEntry[]
   loading: boolean
 }>()
 
 const expanded = ref(false)
+const searchKeyword = ref("")
+const searchAuthor = ref("")
+
+const filteredEntries = computed(() => {
+  let list = props.entries
+  if (searchKeyword.value) {
+    const kw = searchKeyword.value.toLowerCase()
+    list = list.filter(e => e.message.toLowerCase().includes(kw))
+  }
+  if (searchAuthor.value) {
+    const au = searchAuthor.value.toLowerCase()
+    list = list.filter(e => e.author.toLowerCase().includes(au))
+  }
+  return list
+})
 
 function toggleExpanded() {
   expanded.value = !expanded.value
@@ -94,6 +133,44 @@ function toggleExpanded() {
 
 .bcl-body {
   margin-top: 4px;
+}
+
+.bcl-search {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 4px;
+  align-items: center;
+}
+
+.bcl-search-icon {
+  opacity: 0.3;
+  flex-shrink: 0;
+}
+
+.bcl-search-input {
+  flex: 1;
+  min-width: 0;
+  padding: 2px 6px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 3px;
+  font-size: 10px;
+  font-family: $vp-mono;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  outline: none;
+  transition: border-color 0.15s;
+
+  &:focus {
+    border-color: var(--b3-theme-primary);
+  }
+
+  &::placeholder {
+    opacity: 0.35;
+  }
+}
+
+.bcl-search-author {
+  max-width: 70px;
 }
 
 .bcl-loading,

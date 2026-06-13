@@ -115,6 +115,14 @@ export interface CommitLogEntry {
   date: string
 }
 
+/** 分支信息 */
+export interface BranchInfo {
+  /** 分支名（短名称） */
+  name: string
+  /** 是否为当前分支 */
+  current: boolean
+}
+
 const DEFAULT_PROJECTS: GitProject[] = []
 
 const DEFAULT_UNGROUPED: ProjectCategory = { id: "__ungrouped__", name: "未分组", color: "#888888", order: 0 }

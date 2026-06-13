@@ -2,11 +2,12 @@ import type { Plugin } from "siyuan"
 import { createVueDockApp } from "@/utils/vueAppHelper"
 import { getNodeProcessModules } from "@/utils/nodeModules"
 import { callAI, getApiConfigFromPlugin } from "@/utils/aiApi"
-import type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo, ProjectCategory, CommitLogEntry } from "./storage"
+import type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo, ProjectCategory, CommitLogEntry, BranchInfo } from "./storage"
 import { GitPushStorage, COMMIT_TYPE_VALUES } from "./storage"
 import GitPushPanel from "../index.vue"
 
-export type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo, ProjectCategory, CommitLogEntry }
+export type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo, ProjectCategory, CommitLogEntry, BranchInfo }
+export { GitPushStorage, COMMIT_TYPE_VALUES }
 
 export class GitPushManager {
   private plugin: Plugin
@@ -202,6 +203,66 @@ export class GitPushManager {
   }
 
   /**
+   * 从全部已配置远程拉取更新
+   */
+  async pullToAll(id: string): Promise<{
+    success: boolean
+    github: { ok: boolean; stdout: string; stderr: string }
+    gitee: { ok: boolean; stdout: string; stderr: string }
+    gitea: { ok: boolean; stdout: string; stderr: string }
+  }> {
+    const projects = await this.getProjects()
+    const project = projects.find(p => p.id === id)
+    const emptyResult = { ok: false, stdout: "", stderr: "" }
+
+    if (!project) {
+      const notFound = { ...emptyResult, stderr: "项目未找到" }
+      return { success: false, github: notFound, gitee: notFound, gitea: notFound }
+    }
+
+    const tryPull = async (remoteName: string | undefined) => {
+      if (!remoteName) return { ...emptyResult }
+      try {
+        const stdout = await this.execGit(project.path, ["pull", remoteName, "--ff-only"]) || ""
+        return { ok: true, stdout, stderr: "" }
+      } catch (e: any) {
+        return { ok: false, stdout: "", stderr: e?.message || String(e) }
+      }
+    }
+
+    const github = await tryPull(project.githubRemote)
+    const gitee = await tryPull(project.giteeRemote)
+    const gitea = await tryPull(project.giteaRemote)
+    return { success: github.ok || gitee.ok || gitea.ok, github, gitee, gitea }
+  }
+
+  /**
+   * 从单个远程仓库拉取
+   */
+  async pullSingle(
+    id: string,
+    target: "github" | "gitee" | "gitea",
+  ): Promise<{ ok: boolean; stdout: string; stderr: string }> {
+    const projects = await this.getProjects()
+    const project = projects.find(p => p.id === id)
+    if (!project) {
+      return { ok: false, stdout: "", stderr: "项目未找到" }
+    }
+
+    const remoteName =
+      target === "github" ? (project.githubRemote || "github")
+      : target === "gitee" ? (project.giteeRemote || "gitee")
+      : (project.giteaRemote || "gitea")
+
+    try {
+      const stdout = await this.execGit(project.path, ["pull", remoteName, "--ff-only"]) || ""
+      return { ok: true, stdout, stderr: "" }
+    } catch (e: any) {
+      return { ok: false, stdout: "", stderr: e?.message || String(e) }
+    }
+  }
+
+  /**
    * 检查项目各远程的推送状态（ahead/behind/noUpstream）
    * 用于判断是否需要进行 git push
    */
@@ -305,6 +366,37 @@ export class GitPushManager {
     } catch {
       return []
     }
+  }
+
+  /**
+   * 获取本地分支列表
+   */
+  async getBranches(projectPath: string): Promise<BranchInfo[]> {
+    try {
+      const raw = await this.execGit(projectPath, [
+        "branch", "--format=%(refname:short)%00%(HEAD)",
+      ])
+      if (!raw) return []
+      return raw.split("\n").filter(Boolean).map(line => {
+        const [name, head] = line.split("\0")
+        return { name, current: head === "*" }
+      })
+    } catch {
+      return []
+    }
+  }
+
+  /**
+   * 切换分支（切换前检测未提交变更）
+   */
+  async switchBranch(projectPath: string, branch: string): Promise<string> {
+    const wtInfo = await this.getWorkingTreeStatus(projectPath)
+    if (wtInfo.hasChanges) {
+      throw new Error(
+        `工作区有 ${wtInfo.stagedCount + wtInfo.unstagedCount + wtInfo.untrackedCount} 个未提交的变更，请先提交或暂存`,
+      )
+    }
+    return await this.execGit(projectPath, ["checkout", branch])
   }
 
   /**

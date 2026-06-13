@@ -88,7 +88,17 @@
             <Icon icon="mdi:close" height="12" />
           </button>
         </div>
-        <pre class="wt-diff-content" v-text="activeDiffText || '加载中...'" />
+        <div class="wt-diff-content">
+          <div
+            v-for="(line, i) in coloredDiffLines"
+            :key="i"
+            class="wt-diff-line"
+            :class="`wt-dl-${line.type}`"
+          >
+            <span class="wt-dl-sign">{{ line.type === 'add' ? '+' : line.type === 'del' ? '−' : line.type === 'hunk' ? '@' : ' ' }}</span>
+            <span class="wt-dl-text">{{ line.text }}</span>
+          </div>
+        </div>
       </div>
 
       <!-- 提交表单 -->
@@ -200,6 +210,20 @@ const activeDiffText = computed(() => {
   if (!activeDiffFile.value) return ""
   const key = `${activeDiffFile.value.staged ? "s" : "u"}::${activeDiffFile.value.path}`
   return props.fileDiffs[key] || ""
+})
+
+type DiffLineType = "add" | "del" | "hunk" | "ctx"
+interface DiffLine { text: string; type: DiffLineType }
+
+/** 将 diff 文本解析为带类型的行数组（用于着色渲染） */
+const coloredDiffLines = computed<DiffLine[]>(() => {
+  if (!activeDiffText.value) return []
+  return activeDiffText.value.split("\n").map(line => {
+    if (line.startsWith("+") && !line.startsWith("+++")) return { text: line, type: "add" }
+    if (line.startsWith("-") && !line.startsWith("---")) return { text: line, type: "del" }
+    if (line.startsWith("@@")) return { text: line, type: "hunk" }
+    return { text: line, type: "ctx" }
+  })
 })
 
 /** 文件状态元数据（图标 + 标题统一维护） */
@@ -459,15 +483,51 @@ defineExpose({ clear: () => { commitMessage.value = ""; commitType.value = "chor
 
 .wt-diff-content {
   margin: 0;
-  padding: 6px 8px;
   font-size: 10px;
   font-family: $vp-mono;
-  white-space: pre-wrap;
-  word-break: break-all;
-  max-height: 180px;
+  max-height: 200px;
   overflow: auto;
   color: var(--b3-theme-on-surface);
   tab-size: 2;
+}
+
+.wt-diff-line {
+  display: flex;
+  padding: 0 8px;
+  line-height: 1.6;
+
+  &.wt-dl-add {
+    background: #e6ffec;
+  }
+
+  &.wt-dl-del {
+    background: #ffebe9;
+  }
+
+  &.wt-dl-hunk {
+    color: #0969da;
+    .wt-dl-sign { color: #0969da; }
+  }
+
+  &.wt-dl-ctx {
+    opacity: 0.6;
+  }
+}
+
+.wt-dl-sign {
+  width: 16px;
+  flex-shrink: 0;
+  text-align: center;
+  font-weight: 700;
+  user-select: none;
+  opacity: 0.5;
+}
+
+.wt-dl-text {
+  white-space: pre-wrap;
+  word-break: break-all;
+  flex: 1;
+  min-width: 0;
 }
 
 .wt-commit-form {

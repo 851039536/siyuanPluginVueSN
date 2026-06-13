@@ -465,6 +465,30 @@ export class GitPushManager {
     await this.execGit(projectPath, ["stash", "drop", `stash@{${index}}`])
   }
 
+  /** 添加远程仓库 */
+  async addRemote(projectPath: string, name: string, url: string): Promise<void> {
+    await this.execGit(projectPath, ["remote", "add", name, url])
+  }
+
+  /** 删除远程仓库 */
+  async removeRemote(projectPath: string, name: string): Promise<void> {
+    await this.execGit(projectPath, ["remote", "remove", name])
+  }
+
+  /** 重命名远程仓库 */
+  async renameRemote(projectPath: string, oldName: string, newName: string): Promise<void> {
+    await this.execGit(projectPath, ["remote", "rename", oldName, newName])
+  }
+
+  /** 获取远程仓库 URL */
+  async getRemoteUrl(projectPath: string, name: string): Promise<string> {
+    try {
+      return (await this.execGit(projectPath, ["remote", "get-url", name])).trim()
+    } catch {
+      return ""
+    }
+  }
+
   /**
    * 获取当前 HEAD 的 commit hash（用于检测项目是否变动）
    */

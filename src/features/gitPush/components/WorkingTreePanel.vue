@@ -41,6 +41,10 @@
 
       <!-- 文件列表 -->
       <div v-if="tree.files.length" class="wt-files">
+        <div v-if="!activeDiffFile" class="wt-diff-hint">
+          <Icon icon="mdi:information-outline" height="11" />
+          <span>点击文件名或「差异」按钮查看带颜色的 diff 比对</span>
+        </div>
         <div
           v-for="file in sortedFiles"
           :key="file.path"
@@ -65,42 +69,58 @@
             {{ statusIcon(file) }}
           </span>
 
-          <!-- 文件名 -->
-          <span class="wt-file-path" :title="file.path">{{ file.path }}</span>
+          <!-- 文件名（点击查看差异） -->
+          <span
+            class="wt-file-path"
+            :title="'点击查看差异 — ' + file.path"
+            @click="toggleDiff(file)"
+          >{{ file.path }}</span>
 
           <!-- 查看差异 -->
           <button
             class="vp-btn vp-btn--ghost vp-btn--sm wt-diff-btn"
-            :title="i18n.viewDiff || '查看差异'"
+            :title="activeDiffFile?.path === file.path ? '关闭差异' : '查看差异（带增/删/改着色）'"
             @click.stop="toggleDiff(file)"
           >
-            <Icon icon="mdi:file-diff" height="13" />
+            <Icon icon="mdi:file-compare" height="13" />
+            <span class="wt-diff-btn-label">差异</span>
           </button>
         </div>
       </div>
 
-      <!-- 差异查看区 -->
-      <div v-if="activeDiffFile" class="wt-diff-viewer">
-        <div class="wt-diff-header">
-          <span class="wt-diff-label">
-            diff -- {{ activeDiffFile.staged ? (i18n.staged || '暂存') : (i18n.unstaged || '未暂存') }}: {{ activeDiffFile.path }}
-          </span>
-          <button class="vp-btn vp-btn--ghost vp-btn--sm" @click.stop="activeDiffFile = null">
-            <Icon icon="mdi:close" height="12" />
-          </button>
-        </div>
-        <div class="wt-diff-content">
-          <div
-            v-for="(line, i) in coloredDiffLines"
-            :key="i"
-            class="wt-diff-line"
-            :class="`wt-dl-${line.type}`"
-          >
-            <span class="wt-dl-sign">{{ line.type === 'add' ? '+' : line.type === 'del' ? '−' : line.type === 'hunk' ? '@' : ' ' }}</span>
-            <span class="wt-dl-text">{{ line.text }}</span>
+      <!-- 差异查看弹窗 -->
+      <Teleport to="body">
+        <div v-if="activeDiffFile" class="wt-diff-overlay" @click.self="activeDiffFile = null">
+          <div class="wt-diff-dialog">
+            <div class="wt-diff-header">
+              <div class="wt-diff-title-row">
+                <Icon icon="mdi:file-compare" height="14" />
+                <span class="wt-diff-title">{{ activeDiffFile.path }}</span>
+                <span class="wt-diff-badge">{{ activeDiffFile.staged ? (i18n.staged || '暂存') : (i18n.unstaged || '未暂存') }}</span>
+              </div>
+              <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="activeDiffFile = null">
+                <Icon icon="mdi:close" height="14" />
+              </button>
+            </div>
+            <div class="wt-diff-legend">
+              <span class="wt-legend-add">+ 新增</span>
+              <span class="wt-legend-del">− 删除</span>
+              <span class="wt-legend-ctx">⋯ 未变</span>
+            </div>
+            <div class="wt-diff-content">
+              <div
+                v-for="(line, i) in coloredDiffLines"
+                :key="i"
+                class="wt-diff-line"
+                :class="`wt-dl-${line.type}`"
+              >
+                <span class="wt-dl-sign">{{ line.type === 'add' ? '+' : line.type === 'del' ? '−' : line.type === 'hunk' ? '@' : ' ' }}</span>
+                <span class="wt-dl-text">{{ line.text }}</span>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </Teleport>
 
       <!-- 提交表单 -->
       <div v-if="tree.stagedCount > 0" class="wt-commit-form">
@@ -361,6 +381,16 @@ defineExpose({ clear: () => { commitMessage.value = ""; commitType.value = "chor
   margin-bottom: 6px;
 }
 
+.wt-diff-hint {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 8px;
+  font-size: 10px;
+  opacity: 0.35;
+  border-bottom: 1px solid var(--b3-border-color);
+}
+
 .wt-files {
   max-height: 200px;
   overflow-y: auto;
@@ -444,26 +474,57 @@ defineExpose({ clear: () => { commitMessage.value = ""; commitType.value = "chor
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--b3-theme-primary);
+  }
 }
 
 .wt-diff-btn {
   flex-shrink: 0;
-  opacity: 0;
+  opacity: 0.45;
+  gap: 2px;
   transition: opacity 0.15s;
 
   .wt-file-row:hover & {
-    opacity: 0.6;
+    opacity: 1;
+  }
 
-    &:hover {
-      opacity: 1;
-    }
+  &:hover {
+    opacity: 1;
+    border-color: var(--b3-theme-primary);
   }
 }
 
-.wt-diff-viewer {
-  margin-bottom: 6px;
+.wt-diff-btn-label {
+  font-size: 9px;
+  font-weight: 600;
+}
+
+// Diff 弹窗
+.wt-diff-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+}
+
+.wt-diff-dialog {
+  width: 90vw;
+  max-width: 800px;
+  height: 880px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   overflow: hidden;
 }
 
@@ -471,22 +532,56 @@ defineExpose({ clear: () => { commitMessage.value = ""; commitType.value = "chor
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 8px;
+  padding: 8px 12px;
   background: var(--b3-theme-surface);
   border-bottom: 1px solid var(--b3-border-color);
+  flex-shrink: 0;
 }
 
-.wt-diff-label {
-  font-size: 10px;
-  font-family: $vp-mono;
-  opacity: 0.5;
+.wt-diff-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
 }
+
+.wt-diff-title {
+  font-size: 12px;
+  font-family: $vp-mono;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wt-diff-badge {
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid var(--b3-border-color);
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.wt-diff-legend {
+  display: flex;
+  gap: 12px;
+  padding: 4px 12px;
+  font-size: 9px;
+  font-family: $vp-mono;
+  border-bottom: 1px solid var(--b3-border-color);
+  flex-shrink: 0;
+}
+
+.wt-legend-add { color: #1a7f37; }
+.wt-legend-del { color: #cf222e; }
+.wt-legend-ctx { opacity: 0.35; }
 
 .wt-diff-content {
   margin: 0;
   font-size: 10px;
   font-family: $vp-mono;
-  max-height: 200px;
+  max-height: calc(80vh - 100px);
   overflow: auto;
   color: var(--b3-theme-on-surface);
   tab-size: 2;

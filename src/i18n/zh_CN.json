@@ -1638,6 +1638,19 @@
     "checkingGit": "正在检查 git 仓库...",
     "gitRepoDetected": "✅ 已检测到 git 仓库",
     "notGitRepo": "❌ 未检测到 git 仓库，将仅记录路径",
-    "refreshRemotes": "重新检测远程仓库"
+    "refreshRemotes": "重新检测远程仓库",
+    "pendingChanges": "个文件变更",
+    "workingTreeClean": "工作区干净",
+    "stageAll": "暂存全部",
+    "unstageAll": "取消暂存全部",
+    "stageFile": "暂存",
+    "unstageFile": "取消暂存",
+    "viewDiff": "查看差异",
+    "staged": "已暂存",
+    "unstaged": "未暂存",
+    "commitMessagePlaceholder": "输入提交信息...",
+    "generateMsg": "生成提交信息",
+    "commit": "提交",
+    "committing": "提交中..."
   }
 }

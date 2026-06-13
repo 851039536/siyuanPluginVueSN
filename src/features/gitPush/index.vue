@@ -767,9 +767,13 @@ async function silentRefreshAll() {
         loadWorkingTree(p.id),
         loadCommitLog(p.id),
         loadBranches(p.id),
+        loadStashList(p.id),
       ])
     } else if (curr) {
-      await loadWorkingTree(p.id)
+      await Promise.all([
+        loadWorkingTree(p.id),
+        loadStashList(p.id),
+      ])
     }
   }))
 }
@@ -791,10 +795,11 @@ onMounted(async () => {
         props.manager.getHeadHash(p.path),
         loadCommitLog(p.id),
         loadBranches(p.id),
-        loadStashList(p.id),
       ])
       if (hash) headHashes.value[p.id] = hash
     }))
+    // 加载所有项目的 stash 列表（轻量，每个项目一条 git 命令）
+    await Promise.all(projects.value.map(p => loadStashList(p.id)))
   }, 200)
 })
 
@@ -834,6 +839,7 @@ async function handleRefresh(id: string) {
     await refreshRemotes(id)
     await loadPushStatus(id)
     await loadWorkingTree(id)
+    await loadStashList(id)
   } finally {
     refreshing.value = null
   }

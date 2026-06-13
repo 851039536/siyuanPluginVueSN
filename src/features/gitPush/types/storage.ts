@@ -138,11 +138,13 @@ const DEFAULT_UNGROUPED: ProjectCategory = { id: "__ungrouped__", name: "未分�
 export class GitPushStorage {
   readonly projects: TypedStorage<GitProject[]>
   readonly categories: TypedStorage<ProjectCategory[]>
+  readonly gitConcurrency: TypedStorage<number>
 
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
     this.projects = new TypedStorage(storage, "git-push-projects", DEFAULT_PROJECTS)
     this.categories = new TypedStorage(storage, "git-push-categories", [DEFAULT_UNGROUPED])
+    this.gitConcurrency = new TypedStorage(storage, "git-push-concurrency", 3)
   }
 
   async init(): Promise<void> {

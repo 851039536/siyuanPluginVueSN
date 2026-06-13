@@ -30,6 +30,9 @@ export function useGitPush(manager: GitPushManager) {
   const scanResults = ref<(ScannedGitRepo & { alreadyImported: boolean })[]>([])
   const scanDirInput = ref("")
 
+  /** git 并发配置 */
+  const gitConcurrency = ref(3)
+
   /** 按分类分组后的项目列表 */
   const groupedProjects = computed(() => {
     const map = new Map<string, { category: ProjectCategory; projects: GitProject[] }>()
@@ -327,6 +330,17 @@ export function useGitPush(manager: GitPushManager) {
     return manager.checkIsGitRepo(path)
   }
 
+  /** 加载保存的 git 并发配置 */
+  function loadGitConcurrency() {
+    gitConcurrency.value = manager.getGitConcurrency()
+  }
+
+  /** 设置并持久化 git 并发上限 */
+  async function setGitConcurrency(n: number) {
+    await manager.setGitConcurrency(n)
+    gitConcurrency.value = n
+  }
+
   /** 扫描指定目录下的所有 Git 仓库 */
   async function startScan(dirPath: string) {
     scanning.value = true
@@ -404,5 +418,8 @@ export function useGitPush(manager: GitPushManager) {
     updateCategory,
     deleteCategory,
     moveProject,
+    gitConcurrency,
+    loadGitConcurrency,
+    setGitConcurrency,
   }
 }

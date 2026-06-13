@@ -168,9 +168,9 @@ export function useGitPush(manager: GitPushManager) {
   }
 
   /** 自动生成提交信息 */
-  async function generateCommitMsg(id: string): Promise<string> {
+  async function generateCommitMsg(id: string): Promise<{ message: string; source: "ai" | "heuristic" }> {
     const project = projects.value.find(p => p.id === id)
-    if (!project) return "chore: update files"
+    if (!project) return { message: "chore: update files", source: "heuristic" }
     return manager.generateCommitMessage(project.path)
   }
 

@@ -1554,7 +1554,7 @@
     "loading": "Loading...",
     "noProjects": "No projects, click above to add",
     "notDetected": "Not detected",
-    "pushBoth": "Push to GitHub + Gitee",
+    "pushAll": "Push All",
     "pushing": "Pushing...",
     "projectName": "Project Name",
     "namePlaceholder": "Enter project name...",

@@ -75,6 +75,14 @@
               {{ statusLabel(project.id, 'gitee') }}
             </span>
           </div>
+          <div class="gp-remote-item" :class="{ active: !!project.giteaRemote }">
+            <Icon icon="mdi:tea" />
+            <span v-if="project.giteaRemote">{{ project.giteaRemote }}</span>
+            <span v-else class="gp-remote-none">{{ i18n.notDetected || '未检测到' }}</span>
+            <span v-if="pushStatuses[project.id]?.remotes.gitea" class="gp-status-badge" :class="statusBadgeClass(project.id, 'gitea')">
+              {{ statusLabel(project.id, 'gitea') }}
+            </span>
+          </div>
         </div>
 
         <!-- 工作区变更状态 -->
@@ -119,14 +127,24 @@
             <span v-else>Gitee</span>
           </button>
           <button
-            class="vp-btn vp-btn--primary gp-push-btn"
-            :disabled="(!project.githubRemote && !project.giteeRemote) || isPushing(project.id) || !pushStatuses[project.id]?.needsPush"
-            @click="handlePushBoth(project.id)"
+            class="vp-btn vp-btn--ghost gp-push-btn"
+            :disabled="!project.giteaRemote || isPushing(project.id) || !needsPushFor(project.id, 'gitea')"
+            @click="handlePushSingle(project.id, 'gitea')"
           >
-            <Icon v-if="isPushing(project.id, 'both')" icon="mdi:loading" class="gp-spin" />
+            <Icon v-if="isPushing(project.id, 'gitea')" icon="mdi:loading" class="gp-spin" />
+            <Icon v-else icon="mdi:tea" />
+            <span v-if="isPushing(project.id, 'gitea')">{{ i18n.pushing || '推送中...' }}</span>
+            <span v-else>Gitea</span>
+          </button>
+          <button
+            class="vp-btn vp-btn--primary gp-push-btn"
+            :disabled="(!project.githubRemote && !project.giteeRemote && !project.giteaRemote) || isPushing(project.id) || !pushStatuses[project.id]?.needsPush"
+            @click="handlePushAll(project.id)"
+          >
+            <Icon v-if="isPushing(project.id, 'all')" icon="mdi:loading" class="gp-spin" />
             <Icon v-else icon="mdi:cloud-upload" />
-            <span v-if="isPushing(project.id, 'both')">{{ i18n.pushing || '推送中...' }}</span>
-            <span v-else>{{ i18n.pushBoth || '双平台' }}</span>
+            <span v-if="isPushing(project.id, 'all')">{{ i18n.pushing || '推送中...' }}</span>
+            <span v-else>{{ i18n.pushAll || '推送全部' }}</span>
           </button>
         </div>
 
@@ -227,7 +245,7 @@ const {
   addProject,
   removeProject,
   refreshRemotes,
-  pushToBoth,
+  pushToAll,
   pushSingle,
   checkIsGitRepo,
 } = useGitPush(props.manager)
@@ -295,11 +313,11 @@ async function handleAdd() {
   }
 }
 
-async function handlePushBoth(id: string) {
-  await pushToBoth(id)
+async function handlePushAll(id: string) {
+  await pushToAll(id)
 }
 
-async function handlePushSingle(id: string, target: "github" | "gitee") {
+async function handlePushSingle(id: string, target: "github" | "gitee" | "gitea") {
   await pushSingle(id, target)
 }
 

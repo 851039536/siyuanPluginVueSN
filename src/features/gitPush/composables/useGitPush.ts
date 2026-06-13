@@ -60,10 +60,10 @@ export function useGitPush(manager: GitPushManager) {
     return updated
   }
 
-  async function pushToBoth(id: string) {
-    pushingRemote.value[id] = "both"
+  async function pushToAll(id: string) {
+    pushingRemote.value[id] = "all"
     try {
-      const result = await manager.pushToBoth(id)
+      const result = await manager.pushToAll(id)
       const lines: string[] = []
       lines.push(`[GitHub] ${result.github.ok ? "✅ 推送成功" : "❌ 推送失败"}`)
       if (result.github.stdout) lines.push(result.github.stdout)
@@ -71,6 +71,9 @@ export function useGitPush(manager: GitPushManager) {
       lines.push(`[Gitee] ${result.gitee.ok ? "✅ 推送成功" : "❌ 推送失败"}`)
       if (result.gitee.stdout) lines.push(result.gitee.stdout)
       if (result.gitee.stderr) lines.push(`错误: ${result.gitee.stderr}`)
+      lines.push(`[Gitea] ${result.gitea.ok ? "✅ 推送成功" : "❌ 推送失败"}`)
+      if (result.gitea.stdout) lines.push(result.gitea.stdout)
+      if (result.gitea.stderr) lines.push(`错误: ${result.gitea.stderr}`)
       pushOutputs.value[id] = lines.join("\n")
       // 推送后刷新状态
       loadPushStatus(id)
@@ -80,11 +83,11 @@ export function useGitPush(manager: GitPushManager) {
     }
   }
 
-  async function pushSingle(id: string, target: "github" | "gitee") {
+  async function pushSingle(id: string, target: "github" | "gitee" | "gitea") {
     pushingRemote.value[id] = target
     try {
       const result = await manager.pushSingle(id, target)
-      const label = target === "github" ? "GitHub" : "Gitee"
+      const label = target === "github" ? "GitHub" : target === "gitee" ? "Gitee" : "Gitea"
       const lines: string[] = []
       lines.push(`[${label}] ${result.ok ? "✅ 推送成功" : "❌ 推送失败"}`)
       if (result.stdout) lines.push(result.stdout)
@@ -205,7 +208,8 @@ export function useGitPush(manager: GitPushManager) {
     addProject,
     removeProject,
     refreshRemotes,
-    pushToBoth,
+    pushToAll,
+    pushToBoth: pushToAll,
     pushSingle,
     checkCanPush,
     checkIsGitRepo,

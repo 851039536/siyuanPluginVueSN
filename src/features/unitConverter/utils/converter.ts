@@ -45,8 +45,6 @@ export function createUnitLookup(units: UnitDefinition[]) {
   return {
     getFactor: (key: string): number => factorMap.get(key) ?? 1,
     getSymbol: (key: string): string => symbolMap.get(key) ?? "",
-    getUnit: (key: string): UnitDefinition | undefined =>
-      units.find((u) => u.key === key),
   }
 }
 

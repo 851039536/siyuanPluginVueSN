@@ -155,23 +155,6 @@
               <span class="backup-size">{{ formatFileSize(backup.size) }}</span>
             </div>
             <div class="backup-actions">
-              <!-- 云上传：支持选择目标云 -->
-              <div v-if="cloudConfigs.length > 0" class="upload-target-selector">
-                <select v-model="uploadTargets[backup.name]" class="mini-select">
-                  <option v-for="cfg in cloudConfigs" :key="cfg.id" :value="cfg.id">
-                    ☁️ {{ cfg.label }}
-                  </option>
-                </select>
-                <button
-                  class="action-btn cloud"
-                  @click="uploadToCloud(backup)"
-                >上传</button>
-              </div>
-              <button
-                v-else-if="cloudSyncConfigured"
-                class="action-btn cloud"
-                @click="uploadToCloud(backup)"
-              >☁️</button>
               <button class="action-btn delete" @click="deleteBackup(backup)">
                 {{ i18n.delete || '删除' }}
               </button>
@@ -182,94 +165,6 @@
           <span class="empty-icon">📭</span>
           <p>{{ i18n.noBackups || '暂无备份记录' }}</p>
         </div>
-      </section>
-
-      <!-- 6. 云备份设置（独立 section） -->
-      <section class="card-section cloud-backup-section">
-        <div class="section-header">
-          <span class="section-icon">☁️</span>
-          <h4>云备份设置</h4>
-        </div>
-        <div class="settings-form">
-          <div class="form-row">
-            <label class="form-label">云同步</label>
-            <select v-model="cloudSyncEnabled" class="form-select" @change="saveSettings">
-              <option :value="false">禁用</option>
-              <option :value="true">启用</option>
-            </select>
-          </div>
-        </div>
-
-        <template v-if="cloudSyncEnabled">
-          <div class="cloud-config-divider" />
-          <div class="settings-form">
-            <div class="form-row">
-              <label class="form-label">云服务商</label>
-              <select v-model="cloudConfig.type" class="form-select" @change="onProviderChange">
-                <option value="qiniu">七牛云</option>
-                <option value="alibaba">阿里云 OSS</option>
-                <option value="tencent">腾讯云 COS</option>
-              </select>
-            </div>
-            <div class="form-row">
-              <label class="form-label">AccessKey</label>
-              <input v-model="cloudConfig.accessKey" type="password" class="form-input" @change="saveCloudConfig" />
-            </div>
-            <div class="form-row">
-              <label class="form-label">SecretKey</label>
-              <input v-model="cloudConfig.secretKey" type="password" class="form-input" @change="saveCloudConfig" />
-            </div>
-            <div class="form-row">
-              <label class="form-label">Bucket</label>
-              <input v-model="cloudConfig.bucket" type="text" class="form-input" @change="saveCloudConfig" />
-            </div>
-            <div class="form-row">
-              <label class="form-label">{{ regionLabel }}</label>
-              <input
-                v-model="cloudConfig.region" type="text" class="form-input"
-                :placeholder="regionPlaceholder" @change="saveCloudConfig"
-              />
-            </div>
-            <div class="form-row">
-              <label class="form-label">存储路径</label>
-              <input
-                v-model="cloudConfig.prefix" type="text" class="form-input"
-                placeholder="siyuan-backup/" @change="saveCloudConfig"
-              />
-            </div>
-            <div class="cloud-actions">
-              <button class="backup-btn secondary" :disabled="isTestingCloud" @click="testCloudConnection">
-                {{ isTestingCloud ? '测试中...' : '测试连接' }}
-              </button>
-            </div>
-            <div
-              v-if="cloudTestResult"
-              class="cloud-test-result"
-              :class="{ success: cloudTestResult.success, error: !cloudTestResult.success }"
-            >
-              {{ cloudTestResult.message }}
-            </div>
-          </div>
-
-          <!-- 云端备份列表 -->
-          <div v-if="cloudBackupList.length > 0" class="cloud-backup-list">
-            <div class="section-header" style="margin-top: 0.5rem;">
-              <h4>云端备份</h4>
-              <button class="refresh-btn" @click="loadCloudBackups">刷新</button>
-            </div>
-            <div v-for="file in cloudBackupList" :key="file.key" class="backup-item">
-              <div class="backup-info">
-                <span class="backup-name">{{ file.name }}</span>
-                <span class="backup-time">{{ file.lastModified }}</span>
-                <span class="backup-size">{{ formatFileSize(file.size) }}</span>
-              </div>
-              <div class="backup-actions">
-                <button class="action-btn restore" @click="downloadFromCloud(file)">下载</button>
-                <button class="action-btn delete" @click="deleteFromCloud(file)">删除</button>
-              </div>
-            </div>
-          </div>
-        </template>
       </section>
     </div>
 
@@ -301,7 +196,6 @@
 
 <script setup lang="ts">
 import type { BackupProgress, BackupResult } from "./modules/BackupManager"
-import type { CloudFileInfo, CloudProviderConfig } from "./modules/CloudBackupManager"
 import { showMessage } from "siyuan"
 import { getWorkspaceDir } from "@/api"
 import { getNodeModules } from "@/utils/nodeModules"
@@ -317,7 +211,6 @@ import {
   watch,
 } from "vue"
 import { BackupManager } from "./modules/BackupManager"
-import { CloudBackupManager } from "./modules/CloudBackupManager"
 import { DataBackupStorage } from "./types"
 import { checkIsMobile } from "../generalSettings/utils/styles"
 
@@ -345,14 +238,12 @@ const workspacePath = ref("")
 const workspaceRoot = ref("")
 const isBackingUp = ref(false)
 const isLoading = ref(false)
-const isTestingCloud = ref(false)
 const lastBackupTime = ref("")
 const autoBackupEnabled = ref(false)
 const isMobile = ref(false)
 const backupFrequency = ref("daily")
 const backupTime = ref("03:00")
 const keepBackupCount = ref(7)
-const cloudSyncEnabled = ref(false)
 const autoBackupPluginData = ref(false)
 const isPluginBackup = ref(false)
 const pluginExportPath = ref("")
@@ -385,60 +276,12 @@ const phaseLabel = computed(() => {
   return labels[backupProgress.value.phase] || backupProgress.value.phase
 })
 
-// ========== 云备份 ==========
-
-const cloudConfig = ref<CloudProviderConfig>({
-  type: "qiniu",
-  accessKey: "",
-  secretKey: "",
-  bucket: "",
-  region: "",
-  prefix: "siyuan-backup/",
-})
-const cloudTestResult = ref<{ success: boolean, message: string } | null>(null)
-const cloudBackupList = ref<CloudFileInfo[]>([])
-
-/** 多云配置列表（用于上传选择） */
-const cloudConfigs = ref<Array<{ id: string, label: string, config: CloudProviderConfig }>>([])
-const uploadTargets = ref<Record<string, string>>({})
-const cloudSyncConfigured = computed(() =>
-  cloudConfig.value.accessKey && cloudConfig.value.secretKey && cloudConfig.value.bucket,
-)
-
-// ========== 云厂商相关计算属性 ==========
-
-const regionLabel = computed(() => {
-  const labels: Record<string, string> = {
-    qiniu: "上传域名（可选）",
-    alibaba: "Region",
-    tencent: "Region",
-  }
-  return labels[cloudConfig.value.type] || "Region"
-})
-
-const regionPlaceholder = computed(() => {
-  const placeholders: Record<string, string> = {
-    qiniu: "如 https://up.qiniup.com",
-    alibaba: "如 oss-cn-hangzhou",
-    tencent: "如 ap-guangzhou",
-  }
-  return placeholders[cloudConfig.value.type] || ""
-})
-
-function onProviderChange() {
-  // 切换云厂商时重置 region
-  cloudConfig.value.region = ""
-  saveCloudConfig()
-}
-
 // ========== Manager 实例 ==========
 
 let backupManager: BackupManager | null = null
-let cloudBackupManager: CloudBackupManager | null = null
 
 function initManagers() {
   backupManager = new BackupManager(workspacePath.value, workspaceRoot.value)
-  cloudBackupManager = new CloudBackupManager(props.plugin)
 }
 
 // ========== 工作区路径管理 ==========
@@ -486,7 +329,6 @@ onMounted(async () => {
   await detectWorkspacePath()
   initManagers()
   await loadBackupList()
-  await loadCloudConfig()
 
   window.addEventListener("autoBackupTrigger", handleAutoBackupTrigger)
 })
@@ -527,7 +369,6 @@ async function loadSettings() {
       backupFrequency.value = data.backupFrequency ?? "daily"
       backupTime.value = data.backupTime ?? "03:00"
       keepBackupCount.value = data.keepBackupCount ?? 7
-      cloudSyncEnabled.value = data.cloudSyncEnabled ?? false
       autoBackupPluginData.value = data.autoBackupPluginData ?? false
       lastBackupTime.value = data.lastBackupTime ?? ""
       lastBackupTimestamp = data.lastBackupTimestamp ?? 0
@@ -549,7 +390,6 @@ async function saveSettings() {
         backupFrequency: backupFrequency.value,
         backupTime: backupTime.value,
         keepBackupCount: keepBackupCount.value,
-        cloudSyncEnabled: cloudSyncEnabled.value,
         autoBackupPluginData: autoBackupPluginData.value,
         lastBackupTime: lastBackupTime.value,
         lastBackupTimestamp,
@@ -560,65 +400,6 @@ async function saveSettings() {
   } catch (error) {
     console.error("保存备份设置失败:", error)
   }
-}
-
-// ========== 云配置管理 ==========
-
-async function loadCloudConfig() {
-  if (!cloudBackupManager) return
-  const config = await cloudBackupManager.loadConfig()
-  if (config) {
-    cloudConfig.value = config
-  }
-  if (cloudSyncEnabled.value) {
-    await loadCloudBackups()
-  }
-  // 加载所有已保存的云配置供上传选择
-  await refreshCloudConfigs()
-}
-
-async function saveCloudConfig() {
-  if (!cloudBackupManager) return
-  await cloudBackupManager.saveConfig(cloudConfig.value)
-}
-
-async function refreshCloudConfigs() {
-  if (!cloudBackupManager) return
-  const configs: typeof cloudConfigs.value = []
-
-  // 默认配置
-  if (cloudSyncConfigured.value) {
-    configs.push({
-      id: "default",
-      label: `${getProviderLabel(cloudConfig.value.type)}`,
-      config: cloudConfig.value,
-    })
-  }
-
-  // 其他已保存配置
-  const ids = await cloudBackupManager.listConfigIds()
-  for (const id of ids) {
-    if (id === "default") continue
-    const cfg = await cloudBackupManager.loadConfigById(id)
-    if (cfg?.accessKey) {
-      configs.push({
-        id,
-        label: `${getProviderLabel(cfg.type)} (${id})`,
-        config: cfg,
-      })
-    }
-  }
-
-  cloudConfigs.value = configs
-}
-
-function getProviderLabel(type: string): string {
-  const labels: Record<string, string> = {
-    qiniu: "七牛云",
-    alibaba: "阿里云",
-    tencent: "腾讯云",
-  }
-  return labels[type] || type
 }
 
 // ========== 工作区检测 ==========
@@ -817,94 +598,6 @@ async function onBackupComplete(result: BackupResult) {
 
   showMessage(`备份成功: ${result.fileName}（${result.totalFiles} 文件）`, 3000, "info")
   backupTask.complete("备份完成", `${result.fileName} · ${result.totalFiles} 文件`)
-
-  // 自动云同步
-  if (cloudSyncEnabled.value && cloudBackupManager) {
-    try {
-      await cloudBackupManager.upload(result.filePath)
-      showMessage("已同步至云端", 2000, "info")
-    } catch (err: any) {
-      console.error("自动云同步失败:", err)
-      showMessage(`云同步失败: ${err.message}`, 3000, "error")
-    }
-  }
-}
-
-// ========== 云端操作 ==========
-
-async function uploadToCloud(backup: { name: string, path: string }) {
-  if (!cloudBackupManager) return
-
-  try {
-    // 支持选择指定云上传
-    const targetId = uploadTargets.value[backup.name]
-    let targetConfig: CloudProviderConfig | undefined
-
-    if (targetId && targetId !== "default") {
-      targetConfig = (await cloudBackupManager.loadConfigById(targetId)) || undefined
-    }
-
-    await cloudBackupManager.upload(backup.path, targetConfig ? { cloudConfig: targetConfig } : undefined)
-    showMessage(`已上传 ${backup.name} 至云端`, 2000, "info")
-    await loadCloudBackups()
-  } catch (error: any) {
-    console.error("云上传失败:", error)
-    showMessage(`上传失败: ${error.message}`, 3000, "error")
-  }
-}
-
-async function testCloudConnection() {
-  if (!cloudBackupManager) return
-
-  isTestingCloud.value = true
-  cloudTestResult.value = null
-
-  try {
-    await saveCloudConfig()
-    cloudTestResult.value = await cloudBackupManager.testConnection(cloudConfig.value)
-    if (cloudTestResult.value.success) {
-      await refreshCloudConfigs()
-    }
-  } catch (error: any) {
-    cloudTestResult.value = { success: false, message: error.message }
-  } finally {
-    isTestingCloud.value = false
-  }
-}
-
-async function loadCloudBackups() {
-  if (!cloudBackupManager) return
-  try {
-    cloudBackupList.value = await cloudBackupManager.listBackups()
-  } catch (error) {
-    console.error("加载云端备份列表失败:", error)
-    cloudBackupList.value = []
-  }
-}
-
-async function downloadFromCloud(file: CloudFileInfo) {
-  if (!cloudBackupManager) return
-  try {
-    const localPath = `${workspaceRoot.value}/data-backup/${file.name}`
-    await cloudBackupManager.download(file.key, localPath)
-    showMessage(`已下载 ${file.name}`, 2000, "info")
-    await loadBackupList()
-  } catch (error: any) {
-    showMessage(`下载失败: ${error.message}`, 3000, "error")
-  }
-}
-
-async function deleteFromCloud(file: CloudFileInfo) {
-  if (!cloudBackupManager) return
-  const confirmDelete = confirm(`确定要删除云端备份 "${file.name}" 吗？`)
-  if (!confirmDelete) return
-  try {
-    await cloudBackupManager.deleteBackup(file.key)
-    showMessage("云端备份已删除", 2000, "info")
-    await loadCloudBackups()
-  } catch (error: any) {
-    showMessage(`删除失败: ${error.message}`, 3000, "error")
-  }
 }
 
 // ========== 本地备份管理 ==========

@@ -3,6 +3,7 @@
     <!-- 工作区摘要条（可点击展开） -->
     <div class="wt-summary" :class="{ expanded: expanded }" @click="toggleExpanded">
       <Icon :icon="expanded ? 'mdi:chevron-down' : 'mdi:chevron-right'" height="14" />
+      <span class="wt-label">WORKING TREE</span>
       <template v-if="tree.hasChanges">
         <span class="wt-count">
           <span v-if="tree.stagedCount" class="wt-staged">●{{ tree.stagedCount }}</span>
@@ -614,5 +615,14 @@ defineExpose({ clear: () => { commitMessage.value = ""; commitType.value = "chor
   &:hover {
     opacity: 1;
   }
+}
+
+.wt-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.45;
+  margin-right: 6px;
 }
 </style>

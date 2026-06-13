@@ -348,19 +348,17 @@ export class GitPushManager {
       ])
       if (!raw) return []
 
+      // %s 只输出提交标题（单行），每 5 行 = 1 条记录
+      const allLines = raw.split("\n")
       const entries: CommitLogEntry[] = []
-      const records = raw.split("\n\n").filter(Boolean)
-      for (const record of records) {
-        const lines = record.split("\n")
-        if (lines.length >= 5) {
-          entries.push({
-            hash: lines[0],
-            message: lines[1],
-            author: lines[2],
-            relativeDate: lines[3],
-            date: lines[4],
-          })
-        }
+      for (let i = 0; i + 4 < allLines.length; i += 5) {
+        entries.push({
+          hash: allLines[i],
+          message: allLines[i + 1],
+          author: allLines[i + 2],
+          relativeDate: allLines[i + 3],
+          date: allLines[i + 4],
+        })
       }
       return entries
     } catch {

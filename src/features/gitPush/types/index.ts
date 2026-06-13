@@ -424,7 +424,7 @@ export class GitPushManager {
     return new Promise((resolve, reject) => {
       child_process.exec(
         cmd,
-        { cwd, timeout: 30000 },
+        { cwd, timeout: 30000, encoding: "utf8" },
         (error: any, stdout: string, stderr: string) => {
           if (error) {
             reject(new Error(stderr || error.message))
@@ -466,18 +466,27 @@ export class GitPushManager {
     }
 
     try {
-      const raw = await this.execGit(child_process, projectPath, ["status", "--porcelain"])
+      // -c core.quotepath=false 禁用中文路径八进制转义，避免 git add 时找不到文件
+      const raw = await this.execGit(child_process, projectPath, [
+        "-c", "core.quotepath=false", "status", "--porcelain",
+      ])
       if (!raw) return { ...empty, branch }
 
       const lines = raw.split("\n").filter(Boolean)
       for (const line of lines) {
+        // 格式: XY PATH（2 字符状态码 + 1 空格 + 路径）
         const statusCode = line.substring(0, 2)
-        const filePath = line.substring(3).trim()
+        // 剥离 git 对含特殊字符路径添加的双引号
+        let filePath = line.substring(2).trim()
+        if (filePath.startsWith('"') && filePath.endsWith('"')) {
+          filePath = filePath.slice(1, -1)
+        }
         if (!filePath) continue
 
         const xy = statusCode.trim()
-        const staged = xy[0] !== " " && xy[0] !== "?"
-        const unstaged = xy[1] !== " "
+        // 用原始 statusCode 判断，避免 trim 丢失位置信息
+        const staged = statusCode[0] !== " " && statusCode[0] !== "?"
+        const unstaged = statusCode[1] !== " "
 
         // 解析 git status --porcelain 的状态码
         // 格式：XY path，where X=staging area status, Y=working tree status
@@ -539,7 +548,7 @@ export class GitPushManager {
     if (!proc) return ""
     try {
       const { child_process } = proc
-      const args = ["diff"]
+      const args = ["diff", "--text"] // --text 强制文本模式，避免中文显示为 \346\226\207 八进制转义
       if (staged) args.push("--cached")
       args.push("--", file)
       return await this.execGit(child_process, projectPath, args) || "（无差异）"
@@ -611,36 +620,41 @@ export class GitPushManager {
     try {
       // 获取暂存区差异文本
       const diffText = await this.execGit(child_process, projectPath, [
-        "diff", "--cached", "--stat",
+        "diff", "--text", "--cached", "--stat",
       ])
       if (!diffText) return { message: "chore: update files", source: "heuristic" }
 
       // 截取用于 AI 的 diff（最多 3000 字符，避免 token 超限）
       const fullDiff = await this.execGit(child_process, projectPath, [
-        "diff", "--cached",
+        "diff", "--text", "--cached",
       ])
       const diffSnippet = (fullDiff || diffText).substring(0, 3000)
 
       // 尝试 AI 生成（参照 wordQuery 使用 callAI 非流式调用）
       const aiConfig = getApiConfigFromPlugin(this.plugin)
-      if (aiConfig.apiKey) {
-        try {
-          const result = await callAI(
-            `根据以下 git diff，生成一条中文 conventional commit 信息（格式：type(scope): 中文描述）。
+      if (!aiConfig.apiKey) {
+        return { message: this.heuristicCommitMessage(diffText), source: "heuristic" }
+      }
+
+      try {
+        const result = await callAI(
+          `根据以下 git diff，生成一条中文 conventional commit 信息（格式：type(scope): 中文描述）。
 只返回提交信息本身，不解释。type 为 feat/fix/chore/docs/style/refactor/test/perf 之一。
 Diff:
 ${diffSnippet}`,
-            aiConfig,
-            {
-              systemPrompt: "你是一个 git commit 信息生成器。分析代码 diff，只输出一条中文 conventional commit 信息，不要任何解释。",
-              temperature: 0.3,
-              maxTokens: 200,
-            },
-          )
-          if (result?.trim()) return { message: result.trim(), source: "ai" }
-        } catch {
-          // AI 调用失败，降级到启发式
-        }
+          aiConfig,
+          {
+            systemPrompt: "你是一个 git commit 信息生成器。分析代码 diff，只输出一条中文 conventional commit 信息，不要任何解释。",
+            temperature: 0.3,
+            maxTokens: 200,
+          },
+        )
+        const trimmed = result?.trim()
+        if (trimmed && trimmed.length > 2) return { message: trimmed, source: "ai" }
+        // AI 返回过短，降级
+        console.warn("[gitPush] AI 返回过短，降级启发式:", trimmed)
+      } catch (e: any) {
+        console.error("[gitPush] AI 调用失败:", e?.message || e)
       }
 
       // 降级：启发式生成

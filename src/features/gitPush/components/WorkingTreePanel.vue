@@ -199,15 +199,15 @@ const activeDiffText = computed(() => {
 
 function statusIcon(file: FileChange): string {
   const map: Record<string, string> = {
-    modified: "M",
-    added: "A",
-    deleted: "D",
-    renamed: "R",
-    untracked: "U",
-    copied: "C",
-    unmerged: "!",
+    modified: "~",
+    added: "+",
+    deleted: "−",
+    renamed: "→",
+    untracked: "?",
+    copied: "⇋",
+    unmerged: "⚠",
   }
-  return map[file.status] || "?"
+  return map[file.status] || "·"
 }
 
 function statusTitle(file: FileChange): string {
@@ -398,12 +398,13 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
 }
 
 .wt-file-status {
-  width: 16px;
+  width: 18px;
+  flex-shrink: 0;
   text-align: center;
   font-size: 10px;
   font-weight: 700;
   font-family: $vp-mono;
-  flex-shrink: 0;
+  overflow: hidden;
 
   &.wt-s-modified { color: var(--b3-theme-warning); }
   &.wt-s-added    { color: var(--b3-theme-success); }

@@ -909,6 +909,24 @@ watch(activeCategory, async (catId) => {
   }))
 })
 
+/** 切换到统计视图时，加载全部项目的数据以准确统计 */
+watch(currentView, async (view) => {
+  if (view !== "stats") return
+  const pending = projects.value.filter(p => !workingTrees.value[p.id])
+  if (pending.length === 0) return
+  await Promise.all(pending.map(async (p) => {
+    const [, hash] = await Promise.all([
+      loadWorkingTree(p.id),
+      props.manager.getHeadHash(p.path),
+      loadPushStatus(p.id),
+      loadCommitLog(p.id),
+      loadBranches(p.id),
+      loadStashList(p.id),
+    ])
+    if (hash) headHashes.value[p.id] = hash
+  }))
+})
+
 async function handleAdd() {
   addError.value = ""
   if (!newProjectName.value.trim()) {

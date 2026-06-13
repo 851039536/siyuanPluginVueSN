@@ -16,14 +16,26 @@ export class GitPushManager {
   storage: GitPushStorage
   /** 当前正在执行的 git 子进程数 */
   private gitRunning = 0
-  /** 最大并发 git 子进程数 */
-  private readonly GIT_MAX_CONCURRENT = 3
+  /** 最大并发 git 子进程数（从存储加载，可通过 setGitConcurrency 修改） */
+  private gitMaxConcurrent = 3
   /** 等待队列 */
   private gitWaitQueue: (() => void)[] = []
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
     this.storage = new GitPushStorage(plugin)
+  }
+
+  /** 获取当前 git 并发上限 */
+  getGitConcurrency(): number {
+    return this.gitMaxConcurrent
+  }
+
+  /** 设置 git 并发上限并持久化 */
+  async setGitConcurrency(n: number): Promise<void> {
+    const clamped = Math.max(1, Math.min(10, n))
+    this.gitMaxConcurrent = clamped
+    await this.storage.gitConcurrency.save(clamped)
   }
 
   /** 获取 child_process 模块（简写） */
@@ -45,6 +57,7 @@ export class GitPushManager {
 
   async init() {
     await this.storage.init()
+    this.gitMaxConcurrent = await this.storage.gitConcurrency.loadOrDefault()
     const i18n = (this.plugin.i18n as any)?.gitPush || {}
 
     createVueDockApp(this.plugin, GitPushPanel, {
@@ -538,7 +551,7 @@ export class GitPushManager {
         )
       }
 
-      if (this.gitRunning < this.GIT_MAX_CONCURRENT) {
+      if (this.gitRunning < this.gitMaxConcurrent) {
         run()
       } else {
         this.gitWaitQueue.push(run)

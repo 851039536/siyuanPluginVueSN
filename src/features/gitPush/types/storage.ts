@@ -52,6 +52,37 @@ export interface PushStatusInfo {
   needsPush: boolean
 }
 
+/** 文件变更状态 */
+export type FileChangeStatus = "modified" | "added" | "deleted" | "renamed" | "untracked" | "copied" | "unmerged"
+
+/** 工作区单个文件变更 */
+export interface FileChange {
+  /** 文件路径（相对仓库根目录） */
+  path: string
+  /** 变更类型 */
+  status: FileChangeStatus
+  /** 是否已在暂存区（index） */
+  staged: boolean
+  /** 重命名前的路径（仅 status=renamed 时） */
+  oldPath?: string
+}
+
+/** 工作区状态汇总 */
+export interface WorkingTreeInfo {
+  /** 当前分支 */
+  branch: string
+  /** 全部变更文件列表 */
+  files: FileChange[]
+  /** 已暂存文件数 */
+  stagedCount: number
+  /** 未暂存文件数 */
+  unstagedCount: number
+  /** 未跟踪文件数 */
+  untrackedCount: number
+  /** 是否有任何变更 */
+  hasChanges: boolean
+}
+
 const DEFAULT_PROJECTS: GitProject[] = []
 
 export class GitPushStorage {

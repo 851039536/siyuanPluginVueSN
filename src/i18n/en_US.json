@@ -1565,6 +1565,19 @@
     "checkingGit": "Checking git repository...",
     "gitRepoDetected": "✅ Git repository detected",
     "notGitRepo": "❌ Not a git repository, path will be recorded",
-    "refreshRemotes": "Re-detect remotes"
+    "refreshRemotes": "Re-detect remotes",
+    "pendingChanges": "files changed",
+    "workingTreeClean": "Working tree clean",
+    "stageAll": "Stage All",
+    "unstageAll": "Unstage All",
+    "stageFile": "Stage",
+    "unstageFile": "Unstage",
+    "viewDiff": "View Diff",
+    "staged": "Staged",
+    "unstaged": "Unstaged",
+    "commitMessagePlaceholder": "Enter commit message...",
+    "generateMsg": "Generate Message",
+    "commit": "Commit",
+    "committing": "Committing..."
   }
 }

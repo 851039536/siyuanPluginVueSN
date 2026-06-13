@@ -129,9 +129,10 @@
             <span>{{ committing ? (i18n.committing || '提交中...') : (i18n.commit || '提交') }}</span>
           </button>
         </div>
-        <div v-if="commitOutput" class="wt-commit-output">
-          <pre>{{ commitOutput }}</pre>
-        </div>
+      </div>
+      <!-- 操作反馈（不限提交表单可见，暂存失败等信息在此显示） -->
+      <div v-if="commitOutput" class="wt-commit-output">
+        <pre>{{ commitOutput }}</pre>
       </div>
     </div>
   </div>

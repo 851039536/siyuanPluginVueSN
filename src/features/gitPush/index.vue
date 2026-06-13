@@ -584,28 +584,14 @@ const commitLogLoading = ref<Record<string, boolean>>({})
 /** HEAD hash 缓存，用于跳过无变动项目的 commit log / branches 刷新 */
 const headHashes = ref<Record<string, string>>({})
 
-/** 并发池：每批最多 concurrency 个异步任务并行执行 */
-async function asyncPool<T>(concurrency: number, items: T[], fn: (item: T) => Promise<void>): Promise<void> {
-  let i = 0
-  const worker = async (): Promise<void> => {
-    while (i < items.length) {
-      const idx = i++
-      await fn(items[idx])
-    }
-  }
-  const workers = Array.from({ length: Math.min(concurrency, items.length) }, () => worker())
-  await Promise.all(workers)
-}
-
-/** 静默刷新当前分类下的项目状态（不触发 loading 动画） */
+/** 静默刷新当前分类下的项目状态（manager 内置 git 信号量限流 3 并发） */
 async function silentRefreshAll() {
   const catId = activeCategory.value
   if (!catId) return
   const projList = projects.value.filter(p => p.categoryId === catId)
   if (projList.length === 0) return
 
-  await asyncPool(4, projList, async (p) => {
-    // push status 始终刷新（远程可能变动）；同时前置获取 HEAD hash
+  await Promise.all(projList.map(async (p) => {
     const prev = headHashes.value[p.id] || ""
     const [, curr] = await Promise.all([
       loadPushStatus(p.id),
@@ -614,18 +600,15 @@ async function silentRefreshAll() {
 
     if (curr && curr !== prev) {
       headHashes.value[p.id] = curr
-      // HEAD 变动 → 全量刷新
       await Promise.all([
         loadWorkingTree(p.id),
         loadCommitLog(p.id),
         loadBranches(p.id),
       ])
     } else if (curr) {
-      // HEAD 未变，但仍需刷新工作区（文件可能外部修改）
       await loadWorkingTree(p.id)
     }
-    // curr 为空（取 hash 失败）→ 跳过该项目
-  })
+  }))
 }
 
 function startRefreshTimer() {
@@ -650,11 +633,11 @@ onMounted(async () => {
   if (!activeCategory.value && groupedProjects.value.length > 0) {
     activeCategory.value = groupedProjects.value[0].category.id
   }
-  // 延迟加载当前分类下项目的工作区状态，初始只看到此分类
+  // 延迟加载当前分类下项目的工作区状态（manager 内置信号量限流）
   setTimeout(async () => {
     const catId = activeCategory.value
     const projList = catId ? projects.value.filter(p => p.categoryId === catId) : projects.value
-    await asyncPool(4, projList, async (p) => {
+    await Promise.all(projList.map(async (p) => {
       const [, hash] = await Promise.all([
         loadWorkingTree(p.id),
         props.manager.getHeadHash(p.path),
@@ -662,7 +645,7 @@ onMounted(async () => {
         loadBranches(p.id),
       ])
       if (hash) headHashes.value[p.id] = hash
-    })
+    }))
     startRefreshTimer()
   }, 200)
 })

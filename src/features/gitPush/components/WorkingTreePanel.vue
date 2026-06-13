@@ -85,6 +85,15 @@
             <Icon icon="mdi:file-compare" height="13" />
             <span class="wt-diff-btn-label">差异</span>
           </button>
+
+          <!-- 丢弃更改 -->
+          <button
+            class="vp-btn vp-btn--ghost vp-btn--sm wt-discard-btn"
+            :title="file.staged ? '取消暂存并丢弃更改' : file.status === 'untracked' ? '删除未跟踪文件' : '丢弃更改'"
+            @click.stop="$emit('discardFile', file.path, file.staged, file.status)"
+          >
+            <Icon icon="mdi:undo-variant" height="13" />
+          </button>
         </div>
       </div>
 
@@ -206,6 +215,7 @@ const emit = defineEmits<{
   generateMsg: []
   loadDiff: [file: string, staged: boolean]
   clearOutput: []
+  discardFile: [file: string, staged: boolean, status: string]
 }>()
 
 const expanded = ref(false)
@@ -500,6 +510,22 @@ defineExpose({ clear: () => { commitMessage.value = ""; commitType.value = "chor
 .wt-diff-btn-label {
   font-size: 9px;
   font-weight: 600;
+}
+
+.wt-discard-btn {
+  flex-shrink: 0;
+  opacity: 0.3;
+  transition: opacity 0.15s;
+  color: var(--b3-theme-error, #cf222e);
+
+  .wt-file-row:hover & {
+    opacity: 0.7;
+  }
+
+  &:hover {
+    opacity: 1;
+    border-color: var(--b3-theme-error, #cf222e);
+  }
 }
 
 // Diff 弹窗

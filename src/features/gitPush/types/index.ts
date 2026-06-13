@@ -624,6 +624,19 @@ export class GitPushManager {
     await this.execGit(projectPath, ["reset", "HEAD"])
   }
 
+  /** 丢弃单个文件的更改 */
+  async discardFile(projectPath: string, file: string, staged: boolean, status: string): Promise<void> {
+    if (staged) {
+      // 先取消暂存，再丢弃工作区修改
+      await this.execGit(projectPath, ["reset", "HEAD", "--", file]).catch(() => {})
+      await this.execGit(projectPath, ["checkout", "--", file]).catch(() => {})
+    } else if (status === "untracked") {
+      await this.execGit(projectPath, ["clean", "-f", "--", file])
+    } else {
+      await this.execGit(projectPath, ["checkout", "--", file])
+    }
+  }
+
   /** 提交暂存的内容 */
   async commit(projectPath: string, message: string): Promise<string> {
     // -c core.quotepath=false 禁用中文路径八进制转义，让输出显示可读文件名

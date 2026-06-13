@@ -3,23 +3,18 @@
     <div class="data-backup-header">
       <span class="data-backup-header-icon">💾</span>
       <span class="data-backup-header-title">{{ i18n.dataBackup || '数据备份' }}</span>
-      <button
-        class="data-backup-close-btn"
-        @click="handleClose"
-      >
-        ✕
-      </button>
+      <button class="data-backup-close-btn" @click="handleClose">✕</button>
     </div>
+
     <div class="settings-container">
-      <!-- 工作区信息 -->
-      <div class="info-section">
-        <div
-          v-if="isMobile"
-          class="mobile-warning"
-        >
-          <span class="warning-icon">📱</span>
-          <span class="warning-text">{{ i18n.mobileBackupDisabled || '检测到移动端环境，备份功能已自动禁用以节省流量和存储空间' }}</span>
-        </div>
+      <!-- 移动端警告 -->
+      <div v-if="isMobile" class="mobile-warning">
+        <span class="warning-icon">📱</span>
+        <span class="warning-text">{{ i18n.mobileBackupDisabled || '检测到移动端环境，备份功能已自动禁用以节省流量和存储空间' }}</span>
+      </div>
+
+      <!-- 1. 工作区信息 -->
+      <section class="card-section info-section">
         <div class="section-header">
           <span class="section-icon">💾</span>
           <h4>{{ i18n.workspaceInfo || '工作区信息' }}</h4>
@@ -30,10 +25,7 @@
             <div class="workspace-path-row">
               <span class="info-value workspace-path">{{ workspacePath || i18n.notSet || '未设置' }}</span>
               <div class="path-actions">
-                <button
-                  class="select-path-btn"
-                  @click="selectWorkspacePath"
-                >
+                <button class="select-path-btn" @click="selectWorkspacePath">
                   {{ i18n.selectPath || '选择路径' }}
                 </button>
                 <button
@@ -41,9 +33,7 @@
                   :disabled="!workspaceRoot"
                   :title="i18n.openInExplorer || '在文件管理器中打开'"
                   @click="openWorkspaceFolder"
-                >
-                  📂
-                </button>
+                >📂</button>
               </div>
             </div>
           </div>
@@ -52,51 +42,35 @@
             <span class="info-value">{{ lastBackupTime || i18n.never || '从未' }}</span>
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- 备份进度 -->
-      <div
-        v-if="isBackingUp"
-        class="progress-section"
-      >
+      <!-- 2. 备份进度（条件渲染） -->
+      <section v-if="isBackingUp" class="card-section progress-section">
         <div class="section-header">
           <span class="section-icon">📊</span>
           <h4>备份进度</h4>
         </div>
         <div class="progress-bar-container">
-          <div
-            class="progress-bar"
-            :style="{ width: `${backupProgress.percent}%` }"
-          ></div>
+          <div class="progress-bar" :style="{ width: `${backupProgress.percent}%` }" />
         </div>
         <div class="progress-info">
           <span class="progress-phase">{{ phaseLabel }}</span>
           <span class="progress-percent">{{ backupProgress.percent }}%</span>
         </div>
-        <div
-          v-if="backupProgress.currentFile"
-          class="progress-current-file"
-        >
+        <div v-if="backupProgress.currentFile" class="progress-current-file">
           {{ backupProgress.currentFile }}
         </div>
-      </div>
+      </section>
 
-      <!-- 手动备份 -->
-      <div class="backup-section">
+      <!-- 3. 手动备份 -->
+      <section class="card-section backup-section">
         <div class="section-header">
           <span class="section-icon">📦</span>
           <h4>{{ i18n.manualBackup || '手动备份' }}</h4>
         </div>
         <div class="backup-actions-row">
-          <button
-            class="backup-btn primary"
-            :disabled="isBackingUp"
-            @click="performFullBackup"
-          >
-            <span
-              v-if="isBackingUp"
-              class="loading-spinner"
-            ></span>
+          <button class="backup-btn primary" :disabled="isBackingUp" @click="performFullBackup">
+            <span v-if="isBackingUp" class="loading-spinner" />
             <span v-else>📀</span>
             <span>全量备份</span>
           </button>
@@ -105,29 +79,22 @@
             :disabled="isBackingUp || isPluginBackup"
             @click="exportPluginSettings"
           >
-            <span
-              v-if="isPluginBackup"
-              class="loading-spinner"
-            ></span>
+            <span v-if="isPluginBackup" class="loading-spinner" />
             <span v-else>⚙️</span>
             <span>{{ i18n.pluginSettingsBackup || '插件设置备份' }}</span>
           </button>
         </div>
-        <p
-          v-if="pluginExportPath"
-          class="export-path"
-          :title="pluginExportPath"
-        >
+        <p v-if="pluginExportPath" class="export-path" :title="pluginExportPath">
           <span class="export-path-label">备份路径：</span>
           <span class="export-path-value">{{ pluginExportPath }}</span>
         </p>
         <p class="backup-hint">
           全量备份包含工作区所有文件；插件设置备份仅打包插件配置，可用于跨设备迁移
         </p>
-      </div>
+      </section>
 
-      <!-- 自动备份设置 -->
-      <div class="auto-backup-section">
+      <!-- 4. 自动备份设置 -->
+      <section class="card-section auto-backup-section">
         <div class="section-header">
           <span class="section-icon">⏰</span>
           <h4>{{ i18n.autoBackupSettings || '自动备份设置' }}</h4>
@@ -135,323 +102,195 @@
         <div class="settings-form">
           <div class="form-row">
             <label class="form-label">{{ i18n.autoBackup || '自动备份' }}</label>
-            <select
-              v-model="autoBackupEnabled"
-              class="form-select"
-              @change="saveSettings"
-            >
-              <option :value="false">
-                {{ i18n.disabled || '禁用' }}
-              </option>
-              <option :value="true">
-                {{ i18n.enabled || '启用' }}
-              </option>
+            <select v-model="autoBackupEnabled" class="form-select" @change="saveSettings">
+              <option :value="false">{{ i18n.disabled || '禁用' }}</option>
+              <option :value="true">{{ i18n.enabled || '启用' }}</option>
             </select>
           </div>
-
           <template v-if="autoBackupEnabled">
             <div class="form-row">
               <label class="form-label">{{ i18n.backupFrequency || '备份频率' }}</label>
-              <select
-                v-model="backupFrequency"
-                class="form-select"
-                @change="saveSettings"
-              >
-                <option value="minute">
-                  {{ i18n.everyMinute || '每分钟' }}
-                </option>
-                <option value="hourly">
-                  {{ i18n.everyHour || '每小时' }}
-                </option>
-                <option value="daily">
-                  {{ i18n.everyDay || '每天' }}
-                </option>
+              <select v-model="backupFrequency" class="form-select" @change="saveSettings">
+                <option value="minute">{{ i18n.everyMinute || '每分钟' }}</option>
+                <option value="hourly">{{ i18n.everyHour || '每小时' }}</option>
+                <option value="daily">{{ i18n.everyDay || '每天' }}</option>
               </select>
             </div>
-
-            <div
-              v-if="backupFrequency === 'daily'"
-              class="form-row"
-            >
+            <div v-if="backupFrequency === 'daily'" class="form-row">
               <label class="form-label">{{ i18n.backupTime || '备份时间' }}</label>
-              <input
-                v-model="backupTime"
-                type="time"
-                class="form-input"
-                @change="saveSettings"
-              />
+              <input v-model="backupTime" type="time" class="form-input" @change="saveSettings" />
             </div>
-
             <div class="form-row">
               <label class="form-label">{{ i18n.keepBackups || '保留备份数' }}</label>
               <input
-                v-model="keepBackupCount"
-                type="number"
-                class="form-input small"
-                min="1"
-                max="30"
-                @change="saveSettings"
+                v-model="keepBackupCount" type="number" class="form-input small"
+                min="1" max="30" @change="saveSettings"
               />
             </div>
-
             <div class="form-row">
               <label class="form-label">同时备份插件设置</label>
-              <select
-                v-model="autoBackupPluginData"
-                class="form-select"
-                @change="saveSettings"
-              >
+              <select v-model="autoBackupPluginData" class="form-select" @change="saveSettings">
                 <option :value="false">禁用</option>
                 <option :value="true">启用</option>
               </select>
             </div>
-
-            <div class="form-row">
-              <label class="form-label">云同步</label>
-              <select
-                v-model="cloudSyncEnabled"
-                class="form-select"
-                @change="saveSettings"
-              >
-                <option :value="false">
-                  禁用
-                </option>
-                <option :value="true">
-                  启用
-                </option>
-              </select>
-            </div>
           </template>
         </div>
-      </div>
+      </section>
 
-      <!-- 云备份设置 -->
-      <div
-        v-if="cloudSyncEnabled"
-        class="cloud-backup-section"
-      >
-        <div class="section-header">
-          <span class="section-icon">☁️</span>
-          <h4>云备份设置</h4>
-        </div>
-        <div class="settings-form">
-          <div class="form-row">
-            <label class="form-label">云服务商</label>
-            <select
-              v-model="cloudConfig.type"
-              class="form-select"
-              @change="saveCloudConfig"
-            >
-              <option value="qiniu">
-                七牛云
-              </option>
-              <option value="alibaba">
-                阿里云 OSS
-              </option>
-              <option value="tencent">
-                腾讯云 COS
-              </option>
-            </select>
-          </div>
-          <div class="form-row">
-            <label class="form-label">AccessKey</label>
-            <input
-              v-model="cloudConfig.accessKey"
-              type="password"
-              class="form-input"
-              @change="saveCloudConfig"
-            />
-          </div>
-          <div class="form-row">
-            <label class="form-label">SecretKey</label>
-            <input
-              v-model="cloudConfig.secretKey"
-              type="password"
-              class="form-input"
-              @change="saveCloudConfig"
-            />
-          </div>
-          <div class="form-row">
-            <label class="form-label">Bucket</label>
-            <input
-              v-model="cloudConfig.bucket"
-              type="text"
-              class="form-input"
-              @change="saveCloudConfig"
-            />
-          </div>
-          <div class="form-row">
-            <label class="form-label">Region</label>
-            <input
-              v-model="cloudConfig.region"
-              type="text"
-              class="form-input"
-              placeholder="如 oss-cn-hangzhou / ap-guangzhou"
-              @change="saveCloudConfig"
-            />
-          </div>
-          <div class="form-row">
-            <label class="form-label">存储路径</label>
-            <input
-              v-model="cloudConfig.prefix"
-              type="text"
-              class="form-input"
-              placeholder="siyuan-backup/"
-              @change="saveCloudConfig"
-            />
-          </div>
-          <div class="cloud-actions">
-            <button
-              class="backup-btn secondary"
-              :disabled="isTestingCloud"
-              @click="testCloudConnection"
-            >
-              {{ isTestingCloud ? '测试中...' : '测试连接' }}
-            </button>
-          </div>
-          <div
-            v-if="cloudTestResult"
-            class="cloud-test-result"
-            :class="{
-              success: cloudTestResult.success,
-              error: !cloudTestResult.success,
-            }"
-          >
-            {{ cloudTestResult.message }}
-          </div>
-
-          <!-- 云端备份列表 -->
-          <div
-            v-if="cloudBackupList.length > 0"
-            class="cloud-backup-list"
-          >
-            <div
-              class="section-header"
-              style="margin-top: 0.5rem;"
-            >
-              <h4>云端备份</h4>
-              <button
-                class="refresh-btn"
-                @click="loadCloudBackups"
-              >
-                刷新
-              </button>
-            </div>
-            <div
-              v-for="file in cloudBackupList"
-              :key="file.key"
-              class="backup-item"
-            >
-              <div class="backup-info">
-                <span class="backup-name">{{ file.name }}</span>
-                <span class="backup-time">{{ file.lastModified }}</span>
-                <span class="backup-size">{{ formatFileSize(file.size) }}</span>
-              </div>
-              <div class="backup-actions">
-                <button
-                  class="action-btn restore"
-                  @click="downloadFromCloud(file)"
-                >
-                  下载
-                </button>
-                <button
-                  class="action-btn delete"
-                  @click="deleteFromCloud(file)"
-                >
-                  删除
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 备份历史 -->
-      <div class="history-section">
+      <!-- 5. 本地备份历史 -->
+      <section class="card-section history-section">
         <div class="section-header">
           <span class="section-icon">📋</span>
           <h4>{{ i18n.backupHistory || '备份历史' }}</h4>
-          <button
-            class="refresh-btn"
-            :disabled="isLoading"
-            @click="refreshBackupList"
-          >
+          <button class="refresh-btn" :disabled="isLoading" @click="refreshBackupList">
             {{ i18n.refresh || '刷新' }}
           </button>
         </div>
-        <div
-          v-if="backupList.length > 0"
-          class="backup-list"
-        >
-          <div
-            v-for="(backup, index) in backupList"
-            :key="index"
-            class="backup-item"
-          >
+        <div v-if="backupList.length > 0" class="backup-list">
+          <div v-for="(backup, index) in backupList" :key="index" class="backup-item">
             <div class="backup-info">
               <span class="backup-name">{{ backup.name }}</span>
               <span class="backup-time">{{ backup.time }}</span>
               <span class="backup-size">{{ formatFileSize(backup.size) }}</span>
             </div>
             <div class="backup-actions">
+              <!-- 云上传：支持选择目标云 -->
+              <div v-if="cloudConfigs.length > 0" class="upload-target-selector">
+                <select v-model="uploadTargets[backup.name]" class="mini-select">
+                  <option v-for="cfg in cloudConfigs" :key="cfg.id" :value="cfg.id">
+                    ☁️ {{ cfg.label }}
+                  </option>
+                </select>
+                <button
+                  class="action-btn cloud"
+                  @click="uploadToCloud(backup)"
+                >上传</button>
+              </div>
               <button
+                v-else-if="cloudSyncConfigured"
                 class="action-btn cloud"
-                :disabled="!cloudSyncEnabled"
                 @click="uploadToCloud(backup)"
-              >
-                ☁️
-              </button>
-              <button
-                class="action-btn delete"
-                @click="deleteBackup(backup)"
-              >
+              >☁️</button>
+              <button class="action-btn delete" @click="deleteBackup(backup)">
                 {{ i18n.delete || '删除' }}
               </button>
             </div>
           </div>
         </div>
-        <div
-          v-else
-          class="empty-state"
-        >
+        <div v-else class="empty-state">
           <span class="empty-icon">📭</span>
           <p>{{ i18n.noBackups || '暂无备份记录' }}</p>
         </div>
-      </div>
+      </section>
+
+      <!-- 6. 云备份设置（独立 section） -->
+      <section class="card-section cloud-backup-section">
+        <div class="section-header">
+          <span class="section-icon">☁️</span>
+          <h4>云备份设置</h4>
+        </div>
+        <div class="settings-form">
+          <div class="form-row">
+            <label class="form-label">云同步</label>
+            <select v-model="cloudSyncEnabled" class="form-select" @change="saveSettings">
+              <option :value="false">禁用</option>
+              <option :value="true">启用</option>
+            </select>
+          </div>
+        </div>
+
+        <template v-if="cloudSyncEnabled">
+          <div class="cloud-config-divider" />
+          <div class="settings-form">
+            <div class="form-row">
+              <label class="form-label">云服务商</label>
+              <select v-model="cloudConfig.type" class="form-select" @change="onProviderChange">
+                <option value="qiniu">七牛云</option>
+                <option value="alibaba">阿里云 OSS</option>
+                <option value="tencent">腾讯云 COS</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label class="form-label">AccessKey</label>
+              <input v-model="cloudConfig.accessKey" type="password" class="form-input" @change="saveCloudConfig" />
+            </div>
+            <div class="form-row">
+              <label class="form-label">SecretKey</label>
+              <input v-model="cloudConfig.secretKey" type="password" class="form-input" @change="saveCloudConfig" />
+            </div>
+            <div class="form-row">
+              <label class="form-label">Bucket</label>
+              <input v-model="cloudConfig.bucket" type="text" class="form-input" @change="saveCloudConfig" />
+            </div>
+            <div class="form-row">
+              <label class="form-label">{{ regionLabel }}</label>
+              <input
+                v-model="cloudConfig.region" type="text" class="form-input"
+                :placeholder="regionPlaceholder" @change="saveCloudConfig"
+              />
+            </div>
+            <div class="form-row">
+              <label class="form-label">存储路径</label>
+              <input
+                v-model="cloudConfig.prefix" type="text" class="form-input"
+                placeholder="siyuan-backup/" @change="saveCloudConfig"
+              />
+            </div>
+            <div class="cloud-actions">
+              <button class="backup-btn secondary" :disabled="isTestingCloud" @click="testCloudConnection">
+                {{ isTestingCloud ? '测试中...' : '测试连接' }}
+              </button>
+            </div>
+            <div
+              v-if="cloudTestResult"
+              class="cloud-test-result"
+              :class="{ success: cloudTestResult.success, error: !cloudTestResult.success }"
+            >
+              {{ cloudTestResult.message }}
+            </div>
+          </div>
+
+          <!-- 云端备份列表 -->
+          <div v-if="cloudBackupList.length > 0" class="cloud-backup-list">
+            <div class="section-header" style="margin-top: 0.5rem;">
+              <h4>云端备份</h4>
+              <button class="refresh-btn" @click="loadCloudBackups">刷新</button>
+            </div>
+            <div v-for="file in cloudBackupList" :key="file.key" class="backup-item">
+              <div class="backup-info">
+                <span class="backup-name">{{ file.name }}</span>
+                <span class="backup-time">{{ file.lastModified }}</span>
+                <span class="backup-size">{{ formatFileSize(file.size) }}</span>
+              </div>
+              <div class="backup-actions">
+                <button class="action-btn restore" @click="downloadFromCloud(file)">下载</button>
+                <button class="action-btn delete" @click="deleteFromCloud(file)">删除</button>
+              </div>
+            </div>
+          </div>
+        </template>
+      </section>
     </div>
 
     <!-- 自定义输入对话框 -->
-    <div
-      v-if="showInputDialog"
-      class="input-dialog-overlay"
-      @click.self="cancelInputDialog"
-    >
+    <div v-if="showInputDialog" class="input-dialog-overlay" @click.self="cancelInputDialog">
       <div class="input-dialog">
         <div class="input-dialog-header">
           <h4>{{ i18n.enterWorkspacePath || '请输入思源工作区路径' }}</h4>
         </div>
         <div class="input-dialog-body">
           <input
-            ref="dialogInputRef"
-            v-model="inputDialogValue"
-            type="text"
-            class="input-dialog-field"
-            :placeholder="inputDialogPlaceholder"
-            @keyup.enter="confirmInputDialog"
-            @keyup.esc="cancelInputDialog"
+            ref="dialogInputRef" v-model="inputDialogValue" type="text"
+            class="input-dialog-field" :placeholder="inputDialogPlaceholder"
+            @keyup.enter="confirmInputDialog" @keyup.esc="cancelInputDialog"
           />
         </div>
         <div class="input-dialog-footer">
-          <button
-            class="input-dialog-btn cancel"
-            @click="cancelInputDialog"
-          >
+          <button class="input-dialog-btn cancel" @click="cancelInputDialog">
             {{ i18n.cancel || '取消' }}
           </button>
-          <button
-            class="input-dialog-btn confirm"
-            @click="confirmInputDialog"
-          >
+          <button class="input-dialog-btn confirm" @click="confirmInputDialog">
             {{ i18n.confirm || '确定' }}
           </button>
         </div>
@@ -461,19 +300,13 @@
 </template>
 
 <script setup lang="ts">
-import type {
-  BackupProgress,
-  BackupResult,
-} from "./modules/BackupManager"
-import type {
-  CloudFileInfo,
-  CloudProviderConfig,
-} from "./modules/CloudBackupManager"
+import type { BackupProgress, BackupResult } from "./modules/BackupManager"
+import type { CloudFileInfo, CloudProviderConfig } from "./modules/CloudBackupManager"
 import { showMessage } from "siyuan"
 import { getWorkspaceDir } from "@/api"
-import {
-  backupPluginData,
-} from "@/utils/settingsBackup"
+import { getNodeModules } from "@/utils/nodeModules"
+import { formatFileSize } from "@/utils/format"
+import { backupPluginData } from "@/utils/settingsBackup"
 import { useStatusBarTask } from "../statusBar/composables/useStatusBarTask"
 import {
   computed,
@@ -488,6 +321,8 @@ import { CloudBackupManager } from "./modules/CloudBackupManager"
 import { DataBackupStorage } from "./types"
 import { checkIsMobile } from "../generalSettings/utils/styles"
 
+// ========== Props ==========
+
 interface Props {
   i18n?: any
   plugin?: any
@@ -500,9 +335,12 @@ const props = withDefaults(defineProps<Props>(), {
   onClose: () => {},
 })
 
-const dbStorage = computed(() => props.plugin ? new DataBackupStorage(props.plugin) : null)
+// ========== 存储实例（一次性初始化） ==========
 
-// 基础状态
+let dbStorage: DataBackupStorage | null = null
+
+// ========== 基础状态 ==========
+
 const workspacePath = ref("")
 const workspaceRoot = ref("")
 const isBackingUp = ref(false)
@@ -526,7 +364,8 @@ let lastBackupTimestamp = 0
 
 const backupTask = useStatusBarTask("dataBackup", "ph:archive")
 
-// 备份进度
+// ========== 备份进度 ==========
+
 const backupProgress = ref<BackupProgress>({
   phase: "scanning",
   currentFile: "",
@@ -546,7 +385,8 @@ const phaseLabel = computed(() => {
   return labels[backupProgress.value.phase] || backupProgress.value.phase
 })
 
-// 云备份
+// ========== 云备份 ==========
+
 const cloudConfig = ref<CloudProviderConfig>({
   type: "qiniu",
   accessKey: "",
@@ -558,17 +398,51 @@ const cloudConfig = ref<CloudProviderConfig>({
 const cloudTestResult = ref<{ success: boolean, message: string } | null>(null)
 const cloudBackupList = ref<CloudFileInfo[]>([])
 
-// Manager 实例
+/** 多云配置列表（用于上传选择） */
+const cloudConfigs = ref<Array<{ id: string, label: string, config: CloudProviderConfig }>>([])
+const uploadTargets = ref<Record<string, string>>({})
+const cloudSyncConfigured = computed(() =>
+  cloudConfig.value.accessKey && cloudConfig.value.secretKey && cloudConfig.value.bucket,
+)
+
+// ========== 云厂商相关计算属性 ==========
+
+const regionLabel = computed(() => {
+  const labels: Record<string, string> = {
+    qiniu: "上传域名（可选）",
+    alibaba: "Region",
+    tencent: "Region",
+  }
+  return labels[cloudConfig.value.type] || "Region"
+})
+
+const regionPlaceholder = computed(() => {
+  const placeholders: Record<string, string> = {
+    qiniu: "如 https://up.qiniup.com",
+    alibaba: "如 oss-cn-hangzhou",
+    tencent: "如 ap-guangzhou",
+  }
+  return placeholders[cloudConfig.value.type] || ""
+})
+
+function onProviderChange() {
+  // 切换云厂商时重置 region
+  cloudConfig.value.region = ""
+  saveCloudConfig()
+}
+
+// ========== Manager 实例 ==========
+
 let backupManager: BackupManager | null = null
 let cloudBackupManager: CloudBackupManager | null = null
 
-// 初始化 Manager
 function initManagers() {
   backupManager = new BackupManager(workspacePath.value, workspaceRoot.value)
   cloudBackupManager = new CloudBackupManager(props.plugin)
 }
 
-// 统一更新工作区路径并持久化
+// ========== 工作区路径管理 ==========
+
 function updateWorkspacePath(root: string, shouldSave = false) {
   workspaceRoot.value = root
   workspacePath.value = `${root}/data`
@@ -582,7 +456,6 @@ function updateWorkspacePath(root: string, shouldSave = false) {
   }
 }
 
-// 通过 API 获取工作区路径
 async function fetchWorkspacePath(): Promise<string | null> {
   try {
     const dir = await getWorkspaceDir()
@@ -593,9 +466,16 @@ async function fetchWorkspacePath(): Promise<string | null> {
   return null
 }
 
-// 初始化
+// ========== 初始化 ==========
+
 onMounted(async () => {
   isMobile.value = checkIsMobile()
+
+  // 一次性初始化存储实例
+  if (props.plugin) {
+    dbStorage = new DataBackupStorage(props.plugin)
+  }
+
   await loadSettings()
 
   if (isMobile.value && autoBackupEnabled.value) {
@@ -623,23 +503,26 @@ async function handleAutoBackupTrigger() {
   }
 }
 
-// 定时器重启逻辑（委托给 DataBackup）
-function handleTimerRestart(enabled: boolean) {
+// ========== 定时器重启（合并 watch） ==========
+
+function handleTimerRestart() {
   const dataBackup = props.plugin?.__dataBackup
   if (dataBackup && typeof dataBackup.restartAutoBackupTimer === "function") {
-    dataBackup.restartAutoBackupTimer(enabled, backupFrequency.value, backupTime.value)
+    dataBackup.restartAutoBackupTimer(autoBackupEnabled.value, backupFrequency.value, backupTime.value)
   }
 }
 
-watch(backupFrequency, () => handleTimerRestart(autoBackupEnabled.value))
-watch(backupTime, () => handleTimerRestart(autoBackupEnabled.value))
-watch(autoBackupEnabled, (enabled) => handleTimerRestart(enabled))
+watch(
+  [backupFrequency, backupTime, autoBackupEnabled],
+  () => handleTimerRestart(),
+)
 
-// 加载设置
+// ========== 设置持久化 ==========
+
 async function loadSettings() {
   try {
-    if (dbStorage.value) {
-      const data = await dbStorage.value.backup.loadOrDefault()
+    if (dbStorage) {
+      const data = await dbStorage.backup.loadOrDefault()
       autoBackupEnabled.value = data.autoBackupEnabled ?? false
       backupFrequency.value = data.backupFrequency ?? "daily"
       backupTime.value = data.backupTime ?? "03:00"
@@ -658,11 +541,10 @@ async function loadSettings() {
   }
 }
 
-// 保存设置
 async function saveSettings() {
   try {
-    if (dbStorage.value) {
-      await dbStorage.value.backup.save({
+    if (dbStorage) {
+      await dbStorage.backup.save({
         autoBackupEnabled: autoBackupEnabled.value,
         backupFrequency: backupFrequency.value,
         backupTime: backupTime.value,
@@ -680,7 +562,8 @@ async function saveSettings() {
   }
 }
 
-// 加载云备份配置
+// ========== 云配置管理 ==========
+
 async function loadCloudConfig() {
   if (!cloudBackupManager) return
   const config = await cloudBackupManager.loadConfig()
@@ -690,15 +573,56 @@ async function loadCloudConfig() {
   if (cloudSyncEnabled.value) {
     await loadCloudBackups()
   }
+  // 加载所有已保存的云配置供上传选择
+  await refreshCloudConfigs()
 }
 
-// 保存云备份配置
 async function saveCloudConfig() {
   if (!cloudBackupManager) return
   await cloudBackupManager.saveConfig(cloudConfig.value)
 }
 
-// 检测工作区路径
+async function refreshCloudConfigs() {
+  if (!cloudBackupManager) return
+  const configs: typeof cloudConfigs.value = []
+
+  // 默认配置
+  if (cloudSyncConfigured.value) {
+    configs.push({
+      id: "default",
+      label: `${getProviderLabel(cloudConfig.value.type)}`,
+      config: cloudConfig.value,
+    })
+  }
+
+  // 其他已保存配置
+  const ids = await cloudBackupManager.listConfigIds()
+  for (const id of ids) {
+    if (id === "default") continue
+    const cfg = await cloudBackupManager.loadConfigById(id)
+    if (cfg?.accessKey) {
+      configs.push({
+        id,
+        label: `${getProviderLabel(cfg.type)} (${id})`,
+        config: cfg,
+      })
+    }
+  }
+
+  cloudConfigs.value = configs
+}
+
+function getProviderLabel(type: string): string {
+  const labels: Record<string, string> = {
+    qiniu: "七牛云",
+    alibaba: "阿里云",
+    tencent: "腾讯云",
+  }
+  return labels[type] || type
+}
+
+// ========== 工作区检测 ==========
+
 async function detectWorkspacePath() {
   const envRoot = (window as any).__SIYUAN_WORKSPACE__ || (window as any).SIYUAN_WORKSPACE
   if (envRoot) {
@@ -734,7 +658,8 @@ function handleWorkspacePathDetected(event: CustomEvent) {
   updateWorkspacePath(event.detail.path)
 }
 
-// 输入对话框
+// ========== 输入对话框 ==========
+
 const showInputDialog = ref(false)
 const inputDialogValue = ref("")
 const inputDialogPlaceholder = ref("")
@@ -767,38 +692,36 @@ function cancelInputDialog() {
   inputDialogResolve.value = null
 }
 
-// 打开工作区文件夹
+// ========== 文件夹操作 ==========
+
 async function openWorkspaceFolder() {
   if (!workspaceRoot.value) {
     showMessage(props.i18n.pleaseSelectWorkspace || "请先选择工作区路径", 3000, "info")
     return
   }
   try {
-    if (typeof window.require === "function") {
-      const electron = window.require("electron")
-      const shell = electron.shell || electron.remote?.shell
-      if (shell?.openPath) {
-        await shell.openPath(workspaceRoot.value)
-        return
+    const node = getNodeModules()
+    if (node) {
+      // Electron 环境：使用 shell.openPath
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const { shell } = require("electron")
+        if (shell?.openPath) {
+          await shell.openPath(workspaceRoot.value)
+          return
+        }
+      } catch {
+        // Electron shell 不可用
       }
     }
-    const response = await fetch("/api/file/getFile", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ path: workspaceRoot.value }),
-    })
-    if (response.ok) {
-      showMessage(props.i18n.folderOpened || "已在浏览器中打开", 2000, "info")
-    } else {
-      showMessage(props.i18n.openFolderFailed || "打开文件夹失败", 3000, "error")
-    }
+    // 降级：通过 API 告知用户
+    showMessage(props.i18n.workspacePathIs || `工作区路径: ${workspaceRoot.value}`, 3000, "info")
   } catch (error) {
     console.error("打开工作区文件夹失败:", error)
     showMessage(props.i18n.openFolderFailed || "打开文件夹失败", 3000, "error")
   }
 }
 
-// 选择工作区路径
 async function selectWorkspacePath() {
   if (!workspaceRoot.value) {
     const wsPath = await fetchWorkspacePath()
@@ -808,26 +731,26 @@ async function selectWorkspacePath() {
       return
     }
   }
-  if (typeof window.require === "function") {
-    try {
-      const electron = window.require("electron")
-      const remote = electron.remote || electron
-      if (remote?.dialog?.showOpenDialog) {
-        const result = await remote.dialog.showOpenDialog({
-          properties: ["openDirectory"],
-          title: props.i18n.selectWorkspace || "选择思源工作区",
-          defaultPath: workspaceRoot.value || undefined,
-        })
-        if (!result.canceled && result.filePaths[0]) {
-          updateWorkspacePath(result.filePaths[0], true)
-          showMessage(props.i18n.workspacePathSet || "工作区路径已设置", 2000, "info")
-          return
-        }
+  // 尝试 Electron 文件夹选择器
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { dialog } = require("electron")
+    if (dialog?.showOpenDialog) {
+      const result = await dialog.showOpenDialog({
+        properties: ["openDirectory"],
+        title: props.i18n.selectWorkspace || "选择思源工作区",
+        defaultPath: workspaceRoot.value || undefined,
+      })
+      if (!result.canceled && result.filePaths[0]) {
+        updateWorkspacePath(result.filePaths[0], true)
+        showMessage(props.i18n.workspacePathSet || "工作区路径已设置", 2000, "info")
+        return
       }
-    } catch (error) {
-      console.warn("Electron dialog 不可用:", error)
     }
+  } catch {
+    /* Electron dialog 不可用 */
   }
+  // 降级到手动输入
   const inputPath = await showInputDialogHelper(props.i18n.enterWorkspacePath || "请输入思源工作区路径:")
   if (inputPath) {
     updateWorkspacePath(inputPath, true)
@@ -872,7 +795,6 @@ async function performFullBackup() {
   }
 }
 
-// 备份完成后的统一处理
 async function onBackupComplete(result: BackupResult) {
   lastBackupTime.value = new Date().toLocaleString()
   lastBackupTimestamp = Date.now()
@@ -880,7 +802,6 @@ async function onBackupComplete(result: BackupResult) {
 
   props.plugin?.__dataBackup?.updateLastBackupTime?.(lastBackupTimestamp)
 
-  // 更新备份列表
   backupList.value.unshift({
     name: result.fileName,
     path: result.filePath,
@@ -892,10 +813,9 @@ async function onBackupComplete(result: BackupResult) {
     backupList.value = backupList.value.slice(0, keepBackupCount.value)
   }
 
-  await dbStorage.value?.backupHistory.save({ list: backupList.value })
+  await dbStorage?.backupHistory.save({ list: backupList.value })
 
   showMessage(`备份成功: ${result.fileName}（${result.totalFiles} 文件）`, 3000, "info")
-
   backupTask.complete("备份完成", `${result.fileName} · ${result.totalFiles} 文件`)
 
   // 自动云同步
@@ -910,12 +830,21 @@ async function onBackupComplete(result: BackupResult) {
   }
 }
 
-// 上传到云端
+// ========== 云端操作 ==========
+
 async function uploadToCloud(backup: { name: string, path: string }) {
   if (!cloudBackupManager) return
 
   try {
-    await cloudBackupManager.upload(backup.path)
+    // 支持选择指定云上传
+    const targetId = uploadTargets.value[backup.name]
+    let targetConfig: CloudProviderConfig | undefined
+
+    if (targetId && targetId !== "default") {
+      targetConfig = (await cloudBackupManager.loadConfigById(targetId)) || undefined
+    }
+
+    await cloudBackupManager.upload(backup.path, targetConfig ? { cloudConfig: targetConfig } : undefined)
     showMessage(`已上传 ${backup.name} 至云端`, 2000, "info")
     await loadCloudBackups()
   } catch (error: any) {
@@ -924,7 +853,6 @@ async function uploadToCloud(backup: { name: string, path: string }) {
   }
 }
 
-// 测试云连接
 async function testCloudConnection() {
   if (!cloudBackupManager) return
 
@@ -934,20 +862,18 @@ async function testCloudConnection() {
   try {
     await saveCloudConfig()
     cloudTestResult.value = await cloudBackupManager.testConnection(cloudConfig.value)
-  } catch (error: any) {
-    cloudTestResult.value = {
-      success: false,
-      message: error.message,
+    if (cloudTestResult.value.success) {
+      await refreshCloudConfigs()
     }
+  } catch (error: any) {
+    cloudTestResult.value = { success: false, message: error.message }
   } finally {
     isTestingCloud.value = false
   }
 }
 
-// 加载云端备份列表
 async function loadCloudBackups() {
   if (!cloudBackupManager) return
-
   try {
     cloudBackupList.value = await cloudBackupManager.listBackups()
   } catch (error) {
@@ -956,10 +882,8 @@ async function loadCloudBackups() {
   }
 }
 
-// 从云端下载
 async function downloadFromCloud(file: CloudFileInfo) {
   if (!cloudBackupManager) return
-
   try {
     const localPath = `${workspaceRoot.value}/data-backup/${file.name}`
     await cloudBackupManager.download(file.key, localPath)
@@ -970,13 +894,10 @@ async function downloadFromCloud(file: CloudFileInfo) {
   }
 }
 
-// 删除云端备份
 async function deleteFromCloud(file: CloudFileInfo) {
   if (!cloudBackupManager) return
-
   const confirmDelete = confirm(`确定要删除云端备份 "${file.name}" 吗？`)
   if (!confirmDelete) return
-
   try {
     await cloudBackupManager.deleteBackup(file.key)
     showMessage("云端备份已删除", 2000, "info")
@@ -986,32 +907,20 @@ async function deleteFromCloud(file: CloudFileInfo) {
   }
 }
 
-// 格式化文件大小
-function formatFileSize(bytes: number): string {
-  if (bytes === 0) return "0 B"
-  const k = 1024
-  const sizes = ["B", "KB", "MB", "GB"]
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return `${(bytes / k ** i).toFixed(2)} ${sizes[i]}`
-}
+// ========== 本地备份管理 ==========
 
-// 加载备份列表
 async function loadBackupList() {
   backupList.value = []
-
   try {
-    // 优先从文件系统扫描
     if (backupManager) {
       const scanned = await backupManager.scanBackupDir()
       if (scanned.length > 0) {
         backupList.value = scanned
-        await dbStorage.value?.backupHistory.save({ list: backupList.value })
+        await dbStorage?.backupHistory.save({ list: backupList.value })
         return
       }
     }
-
-    // 降级到已保存的记录
-    const backupHistory = await dbStorage.value?.backupHistory.load()
+    const backupHistory = await dbStorage?.backupHistory.load()
     if (backupHistory?.list) {
       backupList.value = backupHistory.list
     }
@@ -1020,7 +929,6 @@ async function loadBackupList() {
   }
 }
 
-// 刷新备份列表
 async function refreshBackupList() {
   isLoading.value = true
   try {
@@ -1030,20 +938,15 @@ async function refreshBackupList() {
   }
 }
 
-// 删除备份
 async function deleteBackup(backup: { name: string, path: string }) {
   try {
     const confirmDelete = confirm(props.i18n.confirmDelete || "确定要删除此备份吗？")
     if (!confirmDelete) return
-
-    // 从文件系统删除
     if (backupManager) {
       await backupManager.deleteBackupFile(backup.path)
     }
-
     backupList.value = backupList.value.filter((b) => b.name !== backup.name)
-    await dbStorage.value?.backupHistory.save({ list: backupList.value })
-
+    await dbStorage?.backupHistory.save({ list: backupList.value })
     showMessage(props.i18n.deleteSuccess || "删除成功", 2000, "info")
   } catch (error) {
     console.error("删除备份失败:", error)
@@ -1068,7 +971,6 @@ async function exportPluginSettings() {
   }
 }
 
-// 关闭弹窗（备份进行中时提示确认）
 function handleClose() {
   if (isBackingUp.value) {
     if (!confirm("正在备份中，关闭窗口不会中断备份。确定要隐藏窗口吗？")) return

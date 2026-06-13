@@ -117,7 +117,7 @@ const toggleFavorite = () => {
 | `unitConverter`   | 计算器           | #ec4899   |
 | `shortcuts`       | 键盘             | #14b8a6   |
 | `diskBrowser`     | 硬盘             | #f97316   |
-| `codeImageGenerator` | 代码标签     | #22c55e   |
+| `imageCreation`     | 图片生成     | #f59e0b   |
 | `aiContentGenerator` | 机器人        | #9333ea   |
 | `statistics`      | 柱状图           | #0ea5e9   |
 | `pronunciation`   | 音量             | #f43f5e   |

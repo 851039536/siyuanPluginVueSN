@@ -88,6 +88,61 @@
     }
   }
 
+  // ============================================================
+  // Tab 栏
+  // ============================================================
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--b3-theme-background-light);
+    background: var(--b3-theme-surface);
+    flex-shrink: 0;
+  }
+
+  .tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border: none;
+    background: transparent;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.6;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    font-family: inherit;
+
+    &::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 16px;
+      right: 16px;
+      height: 2px;
+      border-radius: 1px 1px 0 0;
+      background: transparent;
+      transition: background 0.2s ease;
+    }
+
+    &:hover:not(.active) {
+      opacity: 0.85;
+      background: var(--b3-theme-background-light);
+    }
+
+    &.active {
+      opacity: 1;
+      color: var(--b3-theme-primary);
+
+      &::after {
+        background: var(--b3-theme-primary);
+      }
+    }
+  }
+
   .dialog-body {
     flex: 1;
     overflow: auto;

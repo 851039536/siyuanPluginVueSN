@@ -26,10 +26,9 @@ import {
   getStatisticsInstance,
   registerAIContentGenerator,
   registerApiDebugger,
-  registerArticleCover,
+  registerImageCreation,
   registerBase64Image,
   registerBookmarkMarker,
-  registerCodeImageGenerator,
   registerDataBackup,
   registerDataSnapshot,
   registerDiskBrowser,
@@ -251,9 +250,8 @@ export default class PluginSample extends Plugin {
     if (s.enableGeneralSettings) registerGeneralSettings(this)
     if (s.enableUnitConverter) registerUnitConverter(this)
     if (s.enableDiskBrowser) registerDiskBrowser(this)
-    if (s.enableCodeImageGenerator) registerCodeImageGenerator(this)
     if (s.enableAIContentGenerator) registerAIContentGenerator(this)
-    if (s.enableArticleCover) registerArticleCover(this)
+    if (s.enableImageCreation) registerImageCreation(this)
     if (s.enableStatistics) registerStatistics(this)
     if (s.enableEncryption) registerEncryption(this)
     if (s.enableVideo) registerVideo(this)

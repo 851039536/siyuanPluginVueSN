@@ -16,10 +16,10 @@
             <div class="dialog-header">
               <div class="header-title">
                 <IconWrapper
-                  name="image"
+                  :name="activeTab === 'cover' ? 'image' : 'code'"
                   :size="22"
                 />
-                <h2>AI 文章封面</h2>
+                <h2>{{ activeTab === 'cover' ? '文章封面' : '代码图片' }}</h2>
               </div>
               <Button
                 icon="close"
@@ -29,9 +29,33 @@
               />
             </div>
 
+            <!-- Tab 栏 -->
+            <div class="tab-bar">
+              <button
+                class="tab-btn"
+                :class="{ active: activeTab === 'cover' }"
+                @click="switchTab('cover')"
+              >
+                <IconWrapper name="image" :size="16" />
+                <span>文章封面</span>
+              </button>
+              <button
+                class="tab-btn"
+                :class="{ active: activeTab === 'codeImage' }"
+                @click="switchTab('codeImage')"
+              >
+                <IconWrapper name="code" :size="16" />
+                <span>代码图片</span>
+              </button>
+            </div>
+
             <!-- 内容区 -->
             <div class="dialog-body">
-              <div class="cover-layout">
+              <!-- 文章封面 Tab -->
+              <div
+                v-if="activeTab === 'cover'"
+                class="cover-layout"
+              >
                 <!-- 左侧：配置区 -->
                 <div class="config-panel">
                   <!-- 标题输入 -->
@@ -246,6 +270,11 @@
                   </div>
                 </div>
               </div>
+
+              <!-- 代码图片 Tab -->
+              <CodeImageTab
+                v-if="activeTab === 'codeImage'"
+              />
             </div>
           </div>
         </Transition>
@@ -280,6 +309,8 @@ import {
   triggerBlobDownload,
 } from "@/utils/domUtils"
 import { useCoverGenerator } from "../composables/useCoverGenerator"
+import { activeTab, switchTab } from "../composables/useImageCreationState"
+import CodeImageTab from "./CodeImageTab.vue"
 
 interface Props {
   visible: boolean

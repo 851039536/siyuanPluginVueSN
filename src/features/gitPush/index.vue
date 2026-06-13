@@ -122,6 +122,8 @@
           :generated-msg="generatingMsgs[project.id]?.text || ''"
           :file-diffs="fileDiffsForProject(project.id)"
           :git-op-loading="gitOpLoading[project.id] || false"
+          :commit-log-entries="commitLogForProject(project.id)"
+          :commit-log-loading="commitLogLoading[project.id] || false"
           @stage-file="(file) => handleGitOp('暂存失败', () => stageItem(project.id, file), project.id)"
           @unstage-file="(file) => handleGitOp('取消暂存失败', () => unstageItem(project.id, file), project.id)"
           @stage-all="handleGitOp('暂存失败', () => stageAllItems(project.id), project.id)"
@@ -283,7 +285,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue"
 import { Icon } from "@iconify/vue"
-import type { GitPushManager, GitProject } from "./types"
+import type { GitPushManager, GitProject, CommitLogEntry } from "./types"
 import { useGitPush } from "./composables/useGitPush"
 import WorkingTreePanel from "./components/WorkingTreePanel.vue"
 
@@ -332,6 +334,8 @@ const {
   addCategory: addCategoryFn,
   deleteCategory: deleteCategoryFn,
   moveProject,
+  commitLogs,
+  loadCommitLog,
 } = useGitPush(props.manager)
 
 const showAddDialog = ref(false)
@@ -364,12 +368,21 @@ function fileDiffsForProject(projectId: string): Record<string, string> {
   return result
 }
 
+/** 提取指定项目相关的 commitLog */
+function commitLogForProject(projectId: string): CommitLogEntry[] {
+  return commitLogs.value[projectId] || []
+}
+
+/** 提交日志加载状态 */
+const commitLogLoading = ref<Record<string, boolean>>({})
+
 onMounted(() => {
   loadProjects()
-  // 自动加载各项目工作区状态
+  // 自动加载各项目工作区状态和提交日志
   setTimeout(async () => {
     for (const p of projects.value) {
       await loadWorkingTree(p.id)
+      await loadCommitLog(p.id)
     }
   }, 200)
 })
@@ -474,6 +487,7 @@ async function handleCommit(id: string, message: string) {
   try {
     const result = await doCommit(id, message)
     commitOutputs.value[id] = result || "提交成功"
+    await loadCommitLog(id)
   } catch (e: any) {
     commitOutputs.value[id] = `提交失败: ${e?.message || e}`
   }
@@ -595,8 +609,10 @@ async function selectDirectory() {
 
 <style lang="scss">
 @use "@/index.scss" as *;
-
-$vp-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+@use "./styles/variables" as *;
+@use "./styles/mixins" as *;
+@use "./styles/buttons";
+@use "./styles/shared";
 
 .git-push-panel {
   display: flex;
@@ -804,30 +820,12 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
 
 .gp-output {
   margin-top: 8px;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
-  padding: 8px;
   max-height: 150px;
-  overflow: auto;
+  @include output-base;
 
   pre {
-    margin: 0;
-    font-size: 10px;
-    font-family: $vp-mono;
-    white-space: pre-wrap;
     word-break: break-all;
-    color: var(--b3-theme-on-surface);
   }
-}
-
-.gp-spin {
-  animation: gp-spin 1s linear infinite;
-}
-
-@keyframes gp-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
 }
 
 // 弹窗
@@ -908,8 +906,7 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   transition: border-color 0.15s, box-shadow 0.15s;
 
   &:focus {
-    border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
+    @include focus-ring;
   }
 
   &::placeholder {
@@ -1018,46 +1015,9 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   cursor: pointer;
 
   &:focus {
-    border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
+    @include focus-ring;
   }
 }
 
-// 按钮样式
-.vp-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 5px 10px;
-  border-radius: 4px;
-  font-size: 12px;
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition: all 0.15s;
-
-  &--sm {
-    padding: 3px 6px;
-    font-size: 11px;
-  }
-
-  &--primary {
-    background: var(--b3-theme-primary);
-    color: var(--b3-theme-on-primary);
-    border-color: var(--b3-theme-primary);
-
-    &:hover {
-      opacity: 0.85;
-    }
-  }
-
-  &--ghost {
-    background: transparent;
-    border-color: var(--b3-border-color);
-    color: var(--b3-theme-on-surface);
-
-    &:hover {
-      background: var(--b3-list-hover);
-    }
-  }
-}
+// 按钮样式已提取到 styles/_buttons.scss
 </style>

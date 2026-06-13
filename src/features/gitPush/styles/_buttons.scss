@@ -1,0 +1,37 @@
+// Codex 风格按钮体系
+.vp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s;
+
+  &--sm {
+    padding: 3px 6px;
+    font-size: 11px;
+  }
+
+  &--primary {
+    background: var(--b3-theme-primary);
+    color: var(--b3-theme-on-primary);
+    border-color: var(--b3-theme-primary);
+
+    &:hover {
+      opacity: 0.85;
+    }
+  }
+
+  &--ghost {
+    background: transparent;
+    border-color: var(--b3-border-color);
+    color: var(--b3-theme-on-surface);
+
+    &:hover {
+      background: var(--b3-list-hover);
+    }
+  }
+}

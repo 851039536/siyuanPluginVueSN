@@ -1,0 +1,11 @@
+@use "./variables" as *;
+
+// 旋转动画（推送中/加载中状态）
+.gp-spin {
+  animation: gp-spin 1s linear infinite;
+}
+
+@keyframes gp-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

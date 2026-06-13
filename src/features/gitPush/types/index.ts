@@ -2,11 +2,11 @@ import type { Plugin } from "siyuan"
 import { createVueDockApp } from "@/utils/vueAppHelper"
 import { getNodeProcessModules } from "@/utils/nodeModules"
 import { callAI, getApiConfigFromPlugin } from "@/utils/aiApi"
-import type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo, ProjectCategory } from "./storage"
-import { GitPushStorage } from "./storage"
+import type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo, ProjectCategory, CommitLogEntry } from "./storage"
+import { GitPushStorage, COMMIT_TYPE_VALUES } from "./storage"
 import GitPushPanel from "../index.vue"
 
-export type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo, ProjectCategory }
+export type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo, ProjectCategory, CommitLogEntry }
 
 export class GitPushManager {
   private plugin: Plugin
@@ -98,6 +98,13 @@ export class GitPushManager {
     this.applyRemotesToProject(project, await this.detectRemotes(project.path))
     await this.storage.projects.save(projects)
     return project
+  }
+
+  /** 判断远程仓库是否为已知平台 */
+  private isKnownRemote(remote: GitRemoteInfo, platform: "github" | "gitee" | "gitea"): boolean {
+    if (platform === "github") return remote.isGithub
+    if (platform === "gitee") return remote.isGitee
+    return remote.isGitea
   }
 
   /**
@@ -270,6 +277,37 @@ export class GitPushManager {
   }
 
   /**
+   * 获取当前分支最近 N 条提交记录
+   */
+  async getCommitLog(projectPath: string, count = 5): Promise<CommitLogEntry[]> {
+    try {
+      const format = "%h%n%s%n%an%n%ar%n%aI"
+      const raw = await this.execGit(projectPath, [
+        "log", `-${count}`, `--format=${format}`,
+      ])
+      if (!raw) return []
+
+      const entries: CommitLogEntry[] = []
+      const records = raw.split("\n\n").filter(Boolean)
+      for (const record of records) {
+        const lines = record.split("\n")
+        if (lines.length >= 5) {
+          entries.push({
+            hash: lines[0],
+            message: lines[1],
+            author: lines[2],
+            relativeDate: lines[3],
+            date: lines[4],
+          })
+        }
+      }
+      return entries
+    } catch {
+      return []
+    }
+  }
+
+  /**
    * 检查项目路径是否有效（目录存在且是 git 仓库）
    */
   async checkIsGitRepo(projectPath: string): Promise<boolean> {
@@ -298,9 +336,9 @@ export class GitPushManager {
     }
 
     const remotes = await this.detectRemotes(project.path)
-    const github = remotes.some(r => r.isGithub)
-    const gitee = remotes.some(r => r.isGitee)
-    const gitea = remotes.some(r => r.isGitea)
+    const github = remotes.some(r => this.isKnownRemote(r, "github"))
+    const gitee = remotes.some(r => this.isKnownRemote(r, "gitee"))
+    const gitea = remotes.some(r => this.isKnownRemote(r, "gitea"))
     return { canPush: github || gitee || gitea, github, gitee, gitea, remotes }
   }
 
@@ -518,7 +556,7 @@ export class GitPushManager {
       try {
         const result = await callAI(
           `根据以下 git diff，生成一条中文 conventional commit 信息（格式：type(scope): 中文描述）。
-只返回提交信息本身，不解释。type 为 feat/fix/chore/docs/style/refactor/test/perf 之一。
+只返回提交信息本身，不解释。type 为 ${COMMIT_TYPE_VALUES.join("/")} 之一。
 Diff:
 ${diffSnippet}`,
           aiConfig,

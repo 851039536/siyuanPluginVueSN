@@ -121,6 +121,7 @@
           :commit-output="commitOutputs[project.id] || ''"
           :generated-msg="generatingMsgs[project.id]?.text || ''"
           :file-diffs="fileDiffsForProject(project.id)"
+          :git-op-loading="gitOpLoading[project.id] || false"
           @stage-file="(file) => handleGitOp('暂存失败', () => stageItem(project.id, file), project.id)"
           @unstage-file="(file) => handleGitOp('取消暂存失败', () => unstageItem(project.id, file), project.id)"
           @stage-all="handleGitOp('暂存失败', () => stageAllItems(project.id), project.id)"
@@ -128,6 +129,7 @@
           @commit="(msg) => handleCommit(project.id, msg)"
           @generate-msg="handleGenerateMsg(project.id)"
           @load-diff="(file, staged) => loadFileDiff(project.id, file, staged)"
+          @clear-output="commitOutputs[project.id] = ''"
         />
 
         <!-- 推送按钮组 -->
@@ -348,7 +350,8 @@ const refreshingAll = ref(false)
 const commitOutputs = ref<Record<string, string>>({})
 /** AI 生成状态 id → { generating, text } */
 const generatingMsgs = ref<Record<string, { generating: boolean; text: string }>>({})
-
+/** 暂存/取消操作加载中 id → true */
+const gitOpLoading = ref<Record<string, boolean>>({})
 /** 提取指定项目相关的 fileDiffs（按前缀过滤） */
 function fileDiffsForProject(projectId: string): Record<string, string> {
   const result: Record<string, string> = {}
@@ -450,12 +453,19 @@ function handleRemove(project: any) {
 
 // ---- 工作区操作 ----
 
-/** 统一的 git 操作错误处理包装 */
+/** 统一的 git 操作错误处理包装（含 loading 状态和调试日志） */
 async function handleGitOp(label: string, fn: () => Promise<void>, id: string) {
+  commitOutputs.value[id] = ""
+  gitOpLoading.value[id] = true
+  console.log(`[gitPush] ${label} 操作开始`)
   try {
     await fn()
+    console.log(`[gitPush] ${label} 操作成功`)
   } catch (e: any) {
+    console.error(`[gitPush] ${label} 失败:`, e)
     commitOutputs.value[id] = `${label}: ${e?.message || e}`
+  } finally {
+    delete gitOpLoading.value[id]
   }
 }
 

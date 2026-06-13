@@ -1,11 +1,12 @@
-// DataBackupSettings 组件样式 - 紧凑版
+// DataBackupSettings 组件样式 - 重构版
 
 // 基础变量
 $radius-sm: 0.25rem;
 $radius-md: 0.375rem;
 $radius-lg: 0.5rem;
 
-// 根容器
+// ========== 根容器 ==========
+
 .data-backup-settings {
   height: 100%;
   display: flex;
@@ -14,7 +15,8 @@ $radius-lg: 0.5rem;
   color: var(--b3-theme-on-background);
 }
 
-// 弹窗头部
+// ========== 弹窗头部 ==========
+
 .data-backup-header {
   display: flex;
   align-items: center;
@@ -61,29 +63,8 @@ $radius-lg: 0.5rem;
   padding: 0.75rem;
 }
 
-// 章节头部
-.section-header {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  margin-bottom: 0.375rem;
-  padding-bottom: 0.375rem;
-  border-bottom: 1px solid var(--b3-theme-surface-variant);
+// ========== 卡片区块 ==========
 
-  h4 {
-    margin: 0;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: var(--b3-theme-on-surface);
-    flex: 1;
-  }
-}
-
-.section-icon {
-  font-size: 1rem;
-}
-
-// 卡片区块 mixin
 @mixin card-section {
   background: var(--b3-theme-surface);
   border-radius: $radius-lg;
@@ -92,22 +73,20 @@ $radius-lg: 0.5rem;
   border: 1px solid var(--b3-theme-surface-variant);
 }
 
-// 信息区块
+.card-section {
+  @include card-section;
+}
+
 .info-section {
-  @include card-section;
-  background: linear-gradient(135deg, rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.06), rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.02));
+  background: linear-gradient(
+    135deg,
+    rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.06),
+    rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.02)
+  );
 }
 
-// 通用区块样式
-.backup-section,
-.auto-backup-section,
-.history-section,
-.progress-section,
-.cloud-backup-section {
-  @include card-section;
-}
+// ========== 移动端警告 ==========
 
-// 移动端警告
 .mobile-warning {
   display: flex;
   align-items: center;
@@ -130,6 +109,31 @@ $radius-lg: 0.5rem;
     line-height: 1.3;
   }
 }
+
+// ========== 章节头部 ==========
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-bottom: 0.375rem;
+  padding-bottom: 0.375rem;
+  border-bottom: 1px solid var(--b3-theme-surface-variant);
+
+  h4 {
+    margin: 0;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--b3-theme-on-surface);
+    flex: 1;
+  }
+}
+
+.section-icon {
+  font-size: 1rem;
+}
+
+// ========== 信息区块 ==========
 
 .info-grid {
   display: grid;
@@ -154,7 +158,8 @@ $radius-lg: 0.5rem;
   word-break: break-all;
 }
 
-// 工作区路径
+// ========== 工作区路径 ==========
+
 .workspace-path-row {
   display: flex;
   align-items: center;
@@ -180,7 +185,8 @@ $radius-lg: 0.5rem;
   align-items: center;
 }
 
-// 按钮基础样式
+// ========== 按钮基础 ==========
+
 %btn-base {
   padding: 0.375rem 0.75rem;
   border-radius: $radius-sm;
@@ -221,12 +227,12 @@ $radius-lg: 0.5rem;
   }
 }
 
-// 备份操作按钮
+// ========== 备份操作按钮 ==========
 
 .backup-hint {
   font-size: 0.6875rem;
   color: var(--b3-theme-on-surface-variant);
-  margin: 0;
+  margin: 0.25rem 0 0;
 }
 
 .export-path {
@@ -246,16 +252,21 @@ $radius-lg: 0.5rem;
   }
 }
 
-// 加载动画
 .loading-spinner {
   width: 0.875rem;
   height: 0.875rem;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-top-color: #fff;
   border-radius: 50%;
+  animation: spin 0.6s linear infinite;
 }
 
-// 表单样式
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+// ========== 表单 ==========
+
 .settings-form {
   display: flex;
   flex-direction: column;
@@ -268,24 +279,20 @@ $radius-lg: 0.5rem;
   gap: 0.375rem;
 
   .form-label {
-    min-width: 4.5rem;
+    min-width: 5rem;
     margin: 0;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--b3-theme-on-surface);
   }
 
   .form-select,
   .form-input {
     flex: 1;
-    max-width: 12rem;
+    max-width: 14rem;
   }
 }
 
-.form-label {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--b3-theme-on-surface);
-}
-
-// 输入框基础样式
 %input-base {
   padding: 0.375rem 0.5rem;
   border: 1px solid var(--b3-theme-surface-variant);
@@ -309,7 +316,8 @@ $radius-lg: 0.5rem;
   }
 }
 
-// 刷新按钮
+// ========== 刷新按钮 ==========
+
 .refresh-btn {
   @extend %btn-base;
   padding: 0.25rem 0.5rem;
@@ -328,7 +336,8 @@ $radius-lg: 0.5rem;
   }
 }
 
-// 备份列表
+// ========== 备份列表 ==========
+
 .backup-list {
   display: flex;
   flex-direction: column;
@@ -355,6 +364,7 @@ $radius-lg: 0.5rem;
   .backup-actions {
     display: flex;
     flex-direction: row;
+    align-items: center;
     gap: 0.375rem;
     flex-shrink: 0;
   }
@@ -375,7 +385,23 @@ $radius-lg: 0.5rem;
   color: var(--b3-theme-on-surface-variant);
 }
 
-// 操作按钮
+// ========== 云上传目标选择器 ==========
+
+.upload-target-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.mini-select {
+  @extend %input-base;
+  padding: 0.2rem 0.35rem;
+  font-size: 0.625rem;
+  max-width: 5.5rem;
+}
+
+// ========== 操作按钮 ==========
+
 .action-btn {
   @extend %btn-base;
   padding: 0.25rem 0.5rem;
@@ -390,9 +416,36 @@ $radius-lg: 0.5rem;
       background: var(--b3-theme-error-light);
     }
   }
+
+  &.cloud {
+    background: rgba(66, 133, 244, 0.1);
+    color: var(--b3-theme-primary);
+    border: 1px solid rgba(66, 133, 244, 0.3);
+
+    &:hover:not(:disabled) {
+      background: var(--b3-theme-primary);
+      color: #fff;
+    }
+
+    &:disabled {
+      opacity: 0.3;
+    }
+  }
+
+  &.restore {
+    background: var(--b3-theme-surface);
+    color: var(--b3-theme-on-surface);
+    border: 1px solid var(--b3-theme-surface-variant);
+
+    &:hover {
+      background: var(--b3-theme-primary);
+      color: #fff;
+    }
+  }
 }
 
-// 空状态
+// ========== 空状态 ==========
+
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -413,7 +466,8 @@ $radius-lg: 0.5rem;
   opacity: 0.5;
 }
 
-// 响应式设计
+// ========== 响应式 ==========
+
 @media (max-width: 768px) {
   .workspace-path-row {
     flex-direction: column;
@@ -445,7 +499,8 @@ $radius-lg: 0.5rem;
   }
 }
 
-// 输入对话框
+// ========== 输入对话框 ==========
+
 .input-dialog-overlay {
   position: fixed;
   inset: 0;
@@ -520,6 +575,7 @@ $radius-lg: 0.5rem;
 }
 
 // ========== 进度条 ==========
+
 .progress-bar-container {
   width: 100%;
   height: 0.5rem;
@@ -533,6 +589,7 @@ $radius-lg: 0.5rem;
   height: 100%;
   background: linear-gradient(90deg, var(--b3-theme-primary), var(--b3-theme-primary-light));
   border-radius: 0.25rem;
+  transition: width 0.3s ease;
 }
 
 .progress-info {
@@ -562,6 +619,7 @@ $radius-lg: 0.5rem;
 }
 
 // ========== 备份操作按钮行 ==========
+
 .backup-actions-row {
   display: flex;
   gap: 0.5rem;
@@ -607,25 +665,13 @@ $radius-lg: 0.5rem;
   }
 }
 
-// ========== 操作按钮扩展 ==========
-.action-btn {
-  &.cloud {
-    background: rgba(66, 133, 244, 0.1);
-    color: var(--b3-theme-primary);
-    border: 1px solid rgba(66, 133, 244, 0.3);
+// ========== 云备份 ==========
 
-    &:hover:not(:disabled) {
-      background: var(--b3-theme-primary);
-      color: #fff;
-    }
-
-    &:disabled {
-      opacity: 0.3;
-    }
-  }
+.cloud-config-divider {
+  border-top: 1px dashed var(--b3-theme-surface-variant);
+  margin: 0.5rem 0;
 }
 
-// ========== 云备份 ==========
 .cloud-actions {
   display: flex;
   gap: 0.5rem;

@@ -260,6 +260,13 @@ export function useGitPush(manager: GitPushManager) {
     await withProjectPath(id, (path) => manager.unstageAll(path))
   }
 
+  /** 丢弃单个文件的更改 */
+  async function discardFile(id: string, file: string, staged: boolean, status: string) {
+    const project = projects.value.find(p => p.id === id)
+    if (!project) throw new Error("项目未找到")
+    await manager.discardFile(project.path, file, staged, status)
+  }
+
   /** 提交 */
   async function doCommit(id: string, message: string): Promise<string> {
     const project = projects.value.find(p => p.id === id)
@@ -343,6 +350,7 @@ export function useGitPush(manager: GitPushManager) {
     stageAllItems,
     unstageItem,
     unstageAllItems,
+    discardFile,
     doCommit,
     generateCommitMsg,
     addProject,

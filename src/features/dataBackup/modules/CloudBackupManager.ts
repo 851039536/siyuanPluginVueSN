@@ -7,9 +7,7 @@
  *   2. 通过 REST API 直接上传/下载/列举文件
  */
 import type { BackupProgress } from "./BackupManager"
-
-// ========== CloudBackupManager ==========
-
+import { getNodeModules } from "@/utils/nodeModules"
 import { PluginStorage } from "@/utils/pluginStorage"
 
 // ========== 类型定义 ==========
@@ -48,32 +46,62 @@ export interface CloudTestResult {
   message: string
 }
 
+// ========== 公共 Provider 基类 ==========
+
+/** 各云厂商 Provider 的公共接口 */
+interface CloudProvider {
+  upload(localPath: string, cloudKey: string, options?: CloudUploadOptions): Promise<void>
+  download(cloudKey: string, localPath: string): Promise<void>
+  list(prefix: string): Promise<CloudFileInfo[]>
+  delete(cloudKey: string): Promise<void>
+  test(): Promise<CloudTestResult>
+}
+
+/** Provider 工厂签名 */
+type ProviderFactory = (config: CloudProviderConfig) => CloudProvider
+
+// ========== 公共工具方法 ==========
+
+function requireCrypto() {
+  const node = getNodeModules()
+  if (!node) throw new TypeError("签名需要 Node.js 环境")
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  return require("crypto")
+}
+
+function base64UrlEncode(str: string): string {
+  return btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")
+}
+
+function requireFsPath() {
+  const node = getNodeModules()
+  if (!node) throw new TypeError("无法访问文件系统，请使用桌面版思源笔记")
+  return { fs: node.fs.promises, path: node.path }
+}
+
 // ========== 七牛云 Provider ==========
 
-class QiniuProvider {
+class QiniuProvider implements CloudProvider {
   private config: CloudProviderConfig
 
   constructor(config: CloudProviderConfig) {
     this.config = config
   }
 
-  /**
-   * 生成七牛上传凭证（简化版，适合小文件直传）
-   * 生产环境建议由后端生成 token
-   */
   private generateUploadToken(key: string): string {
     const putPolicy = {
       scope: `${this.config.bucket}:${key}`,
       deadline: Math.floor(Date.now() / 1000) + 3600,
     }
-    const encodedPolicy = this.base64UrlEncode(JSON.stringify(putPolicy))
-    const sign = this.hmacSha1(this.config.secretKey, encodedPolicy)
-    const encodedSign = this.base64UrlEncode(sign)
+    const encodedPolicy = base64UrlEncode(JSON.stringify(putPolicy))
+    const crypto = requireCrypto()
+    const sign = crypto.createHmac("sha1", this.config.secretKey).update(encodedPolicy).digest("base64")
+    const encodedSign = base64UrlEncode(sign)
     return `${this.config.accessKey}:${encodedSign}:${encodedPolicy}`
   }
 
   async upload(localPath: string, cloudKey: string, options?: CloudUploadOptions): Promise<void> {
-    const fs = window.require("fs").promises
+    const { fs } = requireFsPath()
     const fileBuffer = await fs.readFile(localPath)
     const token = this.generateUploadToken(cloudKey)
 
@@ -86,19 +114,17 @@ class QiniuProvider {
     })
 
     const uploadDomain = this.config.endpoint || "https://up.qiniup.com"
-    const formData = new FormData()
-    formData.append("file", new Blob([fileBuffer]))
-    formData.append("key", cloudKey)
-    formData.append("token", token)
-
-    const response = await fetch(`${uploadDomain}/putb64/${fileBuffer.length}/key/${this.base64UrlEncode(cloudKey)}`, {
-      method: "POST",
-      headers: {
-        "Authorization": `UpToken ${token}`,
-        "Content-Type": "application/octet-stream",
+    const response = await fetch(
+      `${uploadDomain}/putb64/${fileBuffer.length}/key/${base64UrlEncode(cloudKey)}`,
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `UpToken ${token}`,
+          "Content-Type": "application/octet-stream",
+        },
+        body: fileBuffer,
       },
-      body: fileBuffer,
-    })
+    )
 
     if (!response.ok) {
       throw new Error(`七牛上传失败: ${response.status} ${await response.text()}`)
@@ -114,9 +140,7 @@ class QiniuProvider {
   }
 
   async download(cloudKey: string, localPath: string): Promise<void> {
-    const fs = window.require("fs").promises
-    const path = window.require("path")
-    // 七牛下载使用公开链接或私有链接
+    const { fs, path } = requireFsPath()
     const downloadUrl = this.getDownloadUrl(cloudKey)
     const response = await fetch(downloadUrl)
     if (!response.ok) {
@@ -128,10 +152,11 @@ class QiniuProvider {
   }
 
   async list(prefix: string): Promise<CloudFileInfo[]> {
-    // 七牛列举文件需要 RSF API
     const url = `https://rsf.qiniuapi.com/list?bucket=${this.config.bucket}&prefix=${prefix}&limit=100`
-    const sign = this.hmacSha1(this.config.secretKey, `GET\n${new URL(url).path}`)
-    const encodedSign = this.base64UrlEncode(sign)
+    const crypto = requireCrypto()
+    const sign = crypto.createHmac("sha1", this.config.secretKey).update(`GET\n${new URL(url).pathname}`).digest("base64")
+    const encodedSign = base64UrlEncode(sign)
+
     const response = await fetch(url, {
       headers: {
         Authorization: `Qiniu ${this.config.accessKey}:${encodedSign}`,
@@ -150,10 +175,12 @@ class QiniuProvider {
   }
 
   async delete(cloudKey: string): Promise<void> {
-    const encodedKey = this.base64UrlEncode(cloudKey)
-    const url = `https://rs.qiniuapi.com/delete/${this.base64UrlEncode(this.config.bucket)}/${encodedKey}`
-    const sign = this.hmacSha1(this.config.secretKey, `POST\n${new URL(url).path}`)
-    const encodedSign = this.base64UrlEncode(sign)
+    const encodedKey = base64UrlEncode(cloudKey)
+    const url = `https://rs.qiniuapi.com/delete/${base64UrlEncode(this.config.bucket)}/${encodedKey}`
+    const crypto = requireCrypto()
+    const sign = crypto.createHmac("sha1", this.config.secretKey).update(`POST\n${new URL(url).pathname}`).digest("base64")
+    const encodedSign = base64UrlEncode(sign)
+
     const response = await fetch(url, {
       method: "POST",
       headers: {
@@ -169,15 +196,9 @@ class QiniuProvider {
   async test(): Promise<CloudTestResult> {
     try {
       await this.list(this.config.prefix || "siyuan-backup/")
-      return {
-        success: true,
-        message: "七牛云连接成功",
-      }
+      return { success: true, message: "七牛云连接成功" }
     } catch (err: any) {
-      return {
-        success: false,
-        message: `七牛云连接失败: ${err.message}`,
-      }
+      return { success: false, message: `七牛云连接失败: ${err.message}` }
     }
   }
 
@@ -185,36 +206,31 @@ class QiniuProvider {
     const domain = this.config.endpoint || `https://${this.config.bucket}.qiniudn.com`
     return `${domain}/${key}`
   }
-
-  private base64UrlEncode(str: string): string {
-    return btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")
-  }
-
-  private hmacSha1(key: string, data: string): string {
-    // 简化的 HMAC-SHA1（Electron 环境使用 Node crypto）
-    if (typeof window.require === "function") {
-      const crypto = window.require("crypto")
-      return crypto.createHmac("sha1", key).update(data).digest("base64")
-    }
-    throw new Error("HMAC-SHA1 需要 Node.js 环境")
-  }
 }
 
 // ========== 阿里云 OSS Provider ==========
 
-class AlibabaProvider {
+class AlibabaProvider implements CloudProvider {
   private config: CloudProviderConfig
 
   constructor(config: CloudProviderConfig) {
     this.config = config
   }
 
-  async upload(localPath: string, cloudKey: string, options?: CloudUploadOptions): Promise<void> {
-    const fs = window.require("fs").promises
-    const fileBuffer = await fs.readFile(localPath)
+  private getHost(): string {
     const region = this.config.region || "oss-cn-hangzhou"
-    const endpoint = this.config.endpoint || `${this.config.bucket}.${region}.aliyuncs.com`
-    const host = `${this.config.bucket}.${region}.aliyuncs.com`
+    return `${this.config.bucket}.${region}.aliyuncs.com`
+  }
+
+  private sign(stringToSign: string): string {
+    const crypto = requireCrypto()
+    return crypto.createHmac("sha1", this.config.secretKey).update(stringToSign).digest("base64")
+  }
+
+  async upload(localPath: string, cloudKey: string, options?: CloudUploadOptions): Promise<void> {
+    const { fs } = requireFsPath()
+    const fileBuffer = await fs.readFile(localPath)
+    const host = this.getHost()
     const date = new Date().toUTCString()
     const contentType = "application/zip"
 
@@ -222,11 +238,8 @@ class AlibabaProvider {
     const signature = this.sign(stringToSign)
 
     options?.onProgress?.({
-      phase: "uploading",
-      currentFile: cloudKey,
-      filesProcessed: 0,
-      totalFiles: 1,
-      percent: 50,
+      phase: "uploading", currentFile: cloudKey,
+      filesProcessed: 0, totalFiles: 1, percent: 50,
     })
 
     const response = await fetch(`https://${host}/${cloudKey}`, {
@@ -245,19 +258,14 @@ class AlibabaProvider {
     }
 
     options?.onProgress?.({
-      phase: "uploading",
-      currentFile: cloudKey,
-      filesProcessed: 1,
-      totalFiles: 1,
-      percent: 100,
+      phase: "uploading", currentFile: cloudKey,
+      filesProcessed: 1, totalFiles: 1, percent: 100,
     })
   }
 
   async download(cloudKey: string, localPath: string): Promise<void> {
-    const fs = window.require("fs").promises
-    const path = window.require("path")
-    const region = this.config.region || "oss-cn-hangzhou"
-    const host = `${this.config.bucket}.${region}.aliyuncs.com`
+    const { fs, path } = requireFsPath()
+    const host = this.getHost()
     const date = new Date().toUTCString()
     const stringToSign = `GET\n\n\n${date}\n/${this.config.bucket}/${cloudKey}`
     const signature = this.sign(stringToSign)
@@ -268,19 +276,16 @@ class AlibabaProvider {
         Date: date,
       },
     })
-
     if (!response.ok) {
       throw new Error(`阿里云 OSS 下载失败: ${response.status}`)
     }
-
     const buffer = await response.arrayBuffer()
     await fs.mkdir(path.dirname(localPath), { recursive: true })
     await fs.writeFile(localPath, Buffer.from(buffer))
   }
 
   async list(prefix: string): Promise<CloudFileInfo[]> {
-    const region = this.config.region || "oss-cn-hangzhou"
-    const host = `${this.config.bucket}.${region}.aliyuncs.com`
+    const host = this.getHost()
     const date = new Date().toUTCString()
     const stringToSign = `GET\n\n\n${date}\n/${this.config.bucket}/`
     const signature = this.sign(stringToSign)
@@ -291,18 +296,14 @@ class AlibabaProvider {
         Date: date,
       },
     })
-
     if (!response.ok) {
       throw new Error(`阿里云 OSS 列举失败: ${response.status}`)
     }
-
-    const text = await response.text()
-    return this.parseListResponse(text)
+    return parseOssXmlResponse(await response.text())
   }
 
   async delete(cloudKey: string): Promise<void> {
-    const region = this.config.region || "oss-cn-hangzhou"
-    const host = `${this.config.bucket}.${region}.aliyuncs.com`
+    const host = this.getHost()
     const date = new Date().toUTCString()
     const stringToSign = `DELETE\n\n\n${date}\n/${this.config.bucket}/${cloudKey}`
     const signature = this.sign(stringToSign)
@@ -314,7 +315,6 @@ class AlibabaProvider {
         Date: date,
       },
     })
-
     if (!response.ok && response.status !== 204) {
       throw new Error(`阿里云 OSS 删除失败: ${response.status}`)
     }
@@ -323,67 +323,61 @@ class AlibabaProvider {
   async test(): Promise<CloudTestResult> {
     try {
       await this.list(this.config.prefix || "siyuan-backup/")
-      return {
-        success: true,
-        message: "阿里云 OSS 连接成功",
-      }
+      return { success: true, message: "阿里云 OSS 连接成功" }
     } catch (err: any) {
-      return {
-        success: false,
-        message: `阿里云 OSS 连接失败: ${err.message}`,
-      }
+      return { success: false, message: `阿里云 OSS 连接失败: ${err.message}` }
     }
-  }
-
-  private sign(stringToSign: string): string {
-    if (typeof window.require === "function") {
-      const crypto = window.require("crypto")
-      return crypto.createHmac("sha1", this.config.secretKey).update(stringToSign).digest("base64")
-    }
-    throw new Error("签名需要 Node.js 环境")
-  }
-
-  private parseListResponse(xml: string): CloudFileInfo[] {
-    const results: CloudFileInfo[] = []
-    const regex = /<Contents>\s*<Key>(.*?)<\/Key>\s*<LastModified>(.*?)<\/LastModified>\s*<Size>(.*?)<\/Size>\s*<\/Contents>/gs
-    let match
-    while ((match = regex.exec(xml)) !== null) {
-      results.push({
-        name: match[1].split("/").pop(),
-        key: match[1],
-        size: Number.parseInt(match[3], 10),
-        lastModified: match[2],
-      })
-    }
-    return results
   }
 }
 
 // ========== 腾讯云 COS Provider ==========
 
-class TencentProvider {
+class TencentProvider implements CloudProvider {
   private config: CloudProviderConfig
 
   constructor(config: CloudProviderConfig) {
     this.config = config
   }
 
-  async upload(localPath: string, cloudKey: string, options?: CloudUploadOptions): Promise<void> {
-    const fs = window.require("fs").promises
-    const fileBuffer = await fs.readFile(localPath)
+  private getHost(): string {
     const region = this.config.region || "ap-guangzhou"
-    const host = `${this.config.bucket}.cos.${region}.myqcloud.com`
-    const date = this.getTimestamp()
-    const contentType = "application/zip"
+    return `${this.config.bucket}.cos.${region}.myqcloud.com`
+  }
 
+  private getAuthorization(method: string, key: string, _date?: string, _contentType?: string): string {
+    const crypto = requireCrypto()
+
+    const startTime = Math.floor(Date.now() / 1000) - 60
+    const endTime = startTime + 3600
+    const keyTime = `${startTime};${endTime}`
+
+    const signKey = crypto.createHmac("sha1", this.config.secretKey).update(keyTime).digest("hex")
+    const httpString = `${method.toUpperCase()}\n/${key}\n\nhost=${this.getHost()}\n`
+    const stringToSign = `sha1\n${keyTime}\n${crypto.createHash("sha1").update(httpString).digest("hex")}\n`
+    const signature = crypto.createHmac("sha1", signKey).update(stringToSign).digest("hex")
+
+    return [
+      `q-sign-algorithm=sha1`,
+      `q-ak=${this.config.accessKey}`,
+      `q-sign-time=${keyTime}`,
+      `q-key-time=${keyTime}`,
+      `q-header-list=host`,
+      `q-url-param-list=`,
+      `q-signature=${signature}`,
+    ].join("&")
+  }
+
+  async upload(localPath: string, cloudKey: string, options?: CloudUploadOptions): Promise<void> {
+    const { fs } = requireFsPath()
+    const fileBuffer = await fs.readFile(localPath)
+    const host = this.getHost()
+    const date = new Date().toUTCString()
+    const contentType = "application/zip"
     const authorization = this.getAuthorization("put", cloudKey, date, contentType)
 
     options?.onProgress?.({
-      phase: "uploading",
-      currentFile: cloudKey,
-      filesProcessed: 0,
-      totalFiles: 1,
-      percent: 50,
+      phase: "uploading", currentFile: cloudKey,
+      filesProcessed: 0, totalFiles: 1, percent: 50,
     })
 
     const response = await fetch(`https://${host}/${cloudKey}`, {
@@ -402,73 +396,51 @@ class TencentProvider {
     }
 
     options?.onProgress?.({
-      phase: "uploading",
-      currentFile: cloudKey,
-      filesProcessed: 1,
-      totalFiles: 1,
-      percent: 100,
+      phase: "uploading", currentFile: cloudKey,
+      filesProcessed: 1, totalFiles: 1, percent: 100,
     })
   }
 
   async download(cloudKey: string, localPath: string): Promise<void> {
-    const fs = window.require("fs").promises
-    const path = window.require("path")
-    const region = this.config.region || "ap-guangzhou"
-    const host = `${this.config.bucket}.cos.${region}.myqcloud.com`
-    const date = this.getTimestamp()
+    const { fs, path } = requireFsPath()
+    const host = this.getHost()
+    const date = new Date().toUTCString()
     const authorization = this.getAuthorization("get", cloudKey, date)
 
     const response = await fetch(`https://${host}/${cloudKey}`, {
-      headers: {
-        Authorization: authorization,
-        Date: date,
-      },
+      headers: { Authorization: authorization, Date: date },
     })
-
     if (!response.ok) {
       throw new Error(`腾讯云 COS 下载失败: ${response.status}`)
     }
-
     const buffer = await response.arrayBuffer()
     await fs.mkdir(path.dirname(localPath), { recursive: true })
     await fs.writeFile(localPath, Buffer.from(buffer))
   }
 
   async list(prefix: string): Promise<CloudFileInfo[]> {
-    const region = this.config.region || "ap-guangzhou"
-    const host = `${this.config.bucket}.cos.${region}.myqcloud.com`
-    const date = this.getTimestamp()
+    const host = this.getHost()
+    const date = new Date().toUTCString()
     const authorization = this.getAuthorization("get", "", date)
 
     const response = await fetch(`https://${host}/?prefix=${prefix}&max-keys=100`, {
-      headers: {
-        Authorization: authorization,
-        Date: date,
-      },
+      headers: { Authorization: authorization, Date: date },
     })
-
     if (!response.ok) {
       throw new Error(`腾讯云 COS 列举失败: ${response.status}`)
     }
-
-    const text = await response.text()
-    return this.parseListResponse(text)
+    return parseOssXmlResponse(await response.text())
   }
 
   async delete(cloudKey: string): Promise<void> {
-    const region = this.config.region || "ap-guangzhou"
-    const host = `${this.config.bucket}.cos.${region}.myqcloud.com`
-    const date = this.getTimestamp()
+    const host = this.getHost()
+    const date = new Date().toUTCString()
     const authorization = this.getAuthorization("delete", cloudKey, date)
 
     const response = await fetch(`https://${host}/${cloudKey}`, {
       method: "DELETE",
-      headers: {
-        Authorization: authorization,
-        Date: date,
-      },
+      headers: { Authorization: authorization, Date: date },
     })
-
     if (!response.ok && response.status !== 204) {
       throw new Error(`腾讯云 COS 删除失败: ${response.status}`)
     }
@@ -477,79 +449,49 @@ class TencentProvider {
   async test(): Promise<CloudTestResult> {
     try {
       await this.list(this.config.prefix || "siyuan-backup/")
-      return {
-        success: true,
-        message: "腾讯云 COS 连接成功",
-      }
+      return { success: true, message: "腾讯云 COS 连接成功" }
     } catch (err: any) {
-      return {
-        success: false,
-        message: `腾讯云 COS 连接失败: ${err.message}`,
-      }
+      return { success: false, message: `腾讯云 COS 连接失败: ${err.message}` }
     }
-  }
-
-  private getTimestamp(): string {
-    return new Date().toUTCString()
-  }
-
-  private getAuthorization(method: string, key: string, date: string, contentType?: string): string {
-    if (typeof window.require !== "function") {
-      throw new TypeError("签名需要 Node.js 环境")
-    }
-    const crypto = window.require("crypto")
-    const region = this.config.region || "ap-guangzhou"
-    const service = "cos"
-    const startTime = Math.floor(Date.now() / 1000) - 60
-    const endTime = startTime + 3600
-    const keyTime = `${startTime};${endTime}`
-
-    // 简化的 COS 签名
-    const signKey = crypto.createHmac("sha1", this.config.secretKey).update(keyTime).digest("hex")
-    const httpString = `${method.toUpperCase()}\n/${key}\n\nhost=${this.config.bucket}.cos.${region}.myqcloud.com\n`
-    const stringToSign = `sha1\n${keyTime}\n${crypto.createHash("sha1").update(httpString).digest("hex")}\n`
-    const signature = crypto.createHmac("sha1", signKey).update(stringToSign).digest("hex")
-
-    return (
-      `q-sign-algorithm=sha1&`
-      + `q-ak=${this.config.accessKey}&`
-      + `q-sign-time=${keyTime}&`
-      + `q-key-time=${keyTime}&`
-      + `q-header-list=host&`
-      + `q-url-param-list=&`
-      + `q-signature=${signature}`
-    )
-  }
-
-  private parseListResponse(xml: string): CloudFileInfo[] {
-    const results: CloudFileInfo[] = []
-    const regex = /<Contents>\s*<Key>(.*?)<\/Key>\s*<LastModified>(.*?)<\/LastModified>\s*<Size>(.*?)<\/Size>\s*<\/Contents>/gs
-    let match
-    while ((match = regex.exec(xml)) !== null) {
-      results.push({
-        name: match[1].split("/").pop(),
-        key: match[1],
-        size: Number.parseInt(match[3], 10),
-        lastModified: match[2],
-      })
-    }
-    return results
   }
 }
 
+// ========== 公共 XML 解析（阿里云/腾讯云 通用） ==========
+
+function parseOssXmlResponse(xml: string): CloudFileInfo[] {
+  const results: CloudFileInfo[] = []
+  const regex = /<Contents>\s*<Key>(.*?)<\/Key>\s*<LastModified>(.*?)<\/LastModified>\s*<Size>(.*?)<\/Size>\s*<\/Contents>/gs
+  let match
+  while ((match = regex.exec(xml)) !== null) {
+    results.push({
+      name: match[1].split("/").pop() || match[1],
+      key: match[1],
+      size: Number.parseInt(match[3], 10),
+      lastModified: match[2],
+    })
+  }
+  return results
+}
+
+// ========== Provider 注册表 ==========
+
+const providerFactories: Record<CloudProviderType, ProviderFactory> = {
+  qiniu: (cfg) => new QiniuProvider(cfg),
+  alibaba: (cfg) => new AlibabaProvider(cfg),
+  tencent: (cfg) => new TencentProvider(cfg),
+}
+
+// ========== CloudBackupManager ==========
+
 export class CloudBackupManager {
   private config: CloudProviderConfig | null = null
-  private plugin: any
   private storage: PluginStorage
 
   constructor(plugin: any) {
-    this.plugin = plugin
     this.storage = new PluginStorage(plugin)
   }
 
-  /**
-   * 加载云备份配置
-   */
+  /** 加载云备份配置 */
   async loadConfig(): Promise<CloudProviderConfig | null> {
     try {
       const data = await this.storage.load<CloudProviderConfig>("cloud-backup-config")
@@ -564,23 +506,53 @@ export class CloudBackupManager {
   }
 
   /**
-   * 保存云备份配置
+   * 加载指定的云配置（用于多云切换场景）
+   * @param configId 配置标识（如 "qiniu-main", "tencent-backup"）
    */
+  async loadConfigById(configId: string): Promise<CloudProviderConfig | null> {
+    try {
+      const data = await this.storage.load<CloudProviderConfig>(`cloud-backup-config-${configId}`)
+      return data || null
+    } catch (error) {
+      console.error(`加载云配置失败 (${configId}):`, error)
+      return null
+    }
+  }
+
+  /** 保存云备份配置 */
   async saveConfig(config: CloudProviderConfig): Promise<void> {
     this.config = config
     await this.storage.save("cloud-backup-config", config)
   }
 
   /**
-   * 测试云存储连接
+   * 保存指定 ID 的云配置（用于多云管理）
+   * @param configId 配置标识
+   * @param config 云配置
    */
+  async saveConfigById(configId: string, config: CloudProviderConfig): Promise<void> {
+    await this.storage.save(`cloud-backup-config-${configId}`, config)
+  }
+
+  /** 列出所有已保存的云配置 ID */
+  async listConfigIds(): Promise<string[]> {
+    // 简化为返回已知 ID 列表，可根据实际存储扩展
+    const ids: string[] = []
+    for (let i = 0; i < 5; i++) {
+      const id = `cloud-${i}`
+      const data = await this.storage.load<CloudProviderConfig>(`cloud-backup-config-${id}`)
+      if (data) ids.push(id)
+    }
+    // 也包含默认配置
+    if (this.config) ids.unshift("default")
+    return ids
+  }
+
+  /** 测试云存储连接 */
   async testConnection(config?: CloudProviderConfig): Promise<CloudTestResult> {
     const cfg = config || this.config
     if (!cfg) {
-      return {
-        success: false,
-        message: "未配置云存储",
-      }
+      return { success: false, message: "未配置云存储" }
     }
     const provider = this.createProvider(cfg)
     return provider.test()
@@ -588,71 +560,68 @@ export class CloudBackupManager {
 
   /**
    * 上传备份文件到云存储
+   * @param localFilePath 本地文件路径
+   * @param options 上传选项，可指定 cloudConfig 来覆盖默认配置
    */
   async upload(
     localFilePath: string,
-    options?: CloudUploadOptions,
+    options?: CloudUploadOptions & { cloudConfig?: CloudProviderConfig },
   ): Promise<void> {
-    if (!this.config) {
+    const cfg = options?.cloudConfig || this.config
+    if (!cfg) {
       throw new Error("未配置云存储")
     }
 
-    const provider = this.createProvider(this.config)
-    const path = window.require("path")
+    const provider = this.createProvider(cfg)
+    const { path } = requireFsPath()
     const fileName = path.basename(localFilePath)
-    const prefix = this.config.prefix || "siyuan-backup/"
+    const prefix = cfg.prefix || "siyuan-backup/"
     const cloudKey = `${prefix}${fileName}`
 
     await provider.upload(localFilePath, cloudKey, options)
   }
 
-  /**
-   * 从云存储下载备份文件
-   */
-  async download(cloudKey: string, localFilePath: string): Promise<void> {
-    if (!this.config) {
+  /** 从云存储下载备份文件 */
+  async download(
+    cloudKey: string,
+    localFilePath: string,
+    config?: CloudProviderConfig,
+  ): Promise<void> {
+    const cfg = config || this.config
+    if (!cfg) {
       throw new Error("未配置云存储")
     }
-
-    const provider = this.createProvider(this.config)
+    const provider = this.createProvider(cfg)
     await provider.download(cloudKey, localFilePath)
   }
 
-  /**
-   * 列出云端备份文件
-   */
-  async listBackups(): Promise<CloudFileInfo[]> {
-    if (!this.config) {
-      return []
-    }
-
-    const provider = this.createProvider(this.config)
-    const prefix = this.config.prefix || "siyuan-backup/"
+  /** 列出云端备份文件 */
+  async listBackups(config?: CloudProviderConfig): Promise<CloudFileInfo[]> {
+    const cfg = config || this.config
+    if (!cfg) return []
+    const provider = this.createProvider(cfg)
+    const prefix = cfg.prefix || "siyuan-backup/"
     return provider.list(prefix)
   }
 
-  /**
-   * 删除云端备份文件
-   */
-  async deleteBackup(cloudKey: string): Promise<void> {
-    if (!this.config) {
-      throw new Error("未配置云存储")
-    }
-
-    const provider = this.createProvider(this.config)
+  /** 删除云端备份文件 */
+  async deleteBackup(cloudKey: string, config?: CloudProviderConfig): Promise<void> {
+    const cfg = config || this.config
+    if (!cfg) throw new Error("未配置云存储")
+    const provider = this.createProvider(cfg)
     await provider.delete(cloudKey)
   }
 
-  private createProvider(config: CloudProviderConfig): QiniuProvider | AlibabaProvider | TencentProvider {
-    switch (config.type) {
-      case "qiniu":
-        return new QiniuProvider(config)
-      case "alibaba":
-        return new AlibabaProvider(config)
-      case "tencent":
-        return new TencentProvider(config)
-      default:
-        throw new Error(`不支持的云存储类型: ${config.type}`)
+  /** 获取当前配置 */
+  get currentConfig(): CloudProviderConfig | null {
+    return this.config
+  }
+
+  private createProvider(config: CloudProviderConfig): CloudProvider {
+    const factory = providerFactories[config.type]
+    if (!factory) {
+      throw new Error(`不支持的云存储类型: ${config.type}`)
     }
+    return factory(config)
   }
 }

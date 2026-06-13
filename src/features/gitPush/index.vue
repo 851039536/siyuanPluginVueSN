@@ -608,7 +608,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed } from "vue"
+import { onMounted, ref, computed, watch } from "vue"
 import { Icon } from "@iconify/vue"
 import type { GitPushManager, GitProject, CommitLogEntry, ScannedGitRepo } from "./types"
 import { useGitPush } from "./composables/useGitPush"
@@ -824,6 +824,27 @@ onMounted(async () => {
     // 加载所有项目的 stash 列表（轻量，每个项目一条 git 命令）
     await Promise.all(projects.value.map(p => loadStashList(p.id)))
   }, 200)
+})
+
+/** 切换分类时懒加载该分类下项目的数据 */
+watch(activeCategory, async (catId) => {
+  if (!catId) return
+  const projList = projects.value.filter(p => p.categoryId === catId)
+  if (projList.length === 0) return
+  // 只加载尚未缓存的
+  const pending = projList.filter(p => !workingTrees.value[p.id])
+  if (pending.length === 0) return
+  await Promise.all(pending.map(async (p) => {
+    const [, hash] = await Promise.all([
+      loadWorkingTree(p.id),
+      props.manager.getHeadHash(p.path),
+      loadPushStatus(p.id),
+      loadCommitLog(p.id),
+      loadBranches(p.id),
+      loadStashList(p.id),
+    ])
+    if (hash) headHashes.value[p.id] = hash
+  }))
 })
 
 async function handleAdd() {

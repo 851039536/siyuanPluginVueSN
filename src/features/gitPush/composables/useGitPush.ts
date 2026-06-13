@@ -2,10 +2,6 @@ import type { GitProject, PushStatusInfo, WorkingTreeInfo, ProjectCategory } fro
 import type { GitPushManager } from "../types"
 import { ref, computed } from "vue"
 
-/** Windows 上 child_process.exec 完成后 .git/index 刷盘有延迟，需等待后再读 git status */
-const isWin = typeof process !== "undefined" && process.platform === "win32"
-const indexFlushDelay = () => isWin ? new Promise(r => setTimeout(r, 500)) : Promise.resolve()
-
 export function useGitPush(manager: GitPushManager) {
   const projects = ref<GitProject[]>([])
   const categories = ref<ProjectCategory[]>([])
@@ -157,8 +153,6 @@ export function useGitPush(manager: GitPushManager) {
     const project = projects.value.find(p => p.id === id)
     if (!project) return
     await fn(project.path)
-    // Windows: git reset/add 修改 .git/index 后需等待文件系统刷盘
-    await indexFlushDelay()
     await loadWorkingTree(id)
   }
 
@@ -193,8 +187,6 @@ export function useGitPush(manager: GitPushManager) {
     committing.value[id] = true
     try {
       const result = await manager.commit(project.path, message)
-      // Windows: git commit 修改 .git/index 后需等待文件系统刷盘
-      await indexFlushDelay()
       // 提交后刷新工作区状态和推送状态
       await loadWorkingTree(id)
       await loadPushStatus(id)

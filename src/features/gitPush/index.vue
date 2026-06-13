@@ -170,6 +170,7 @@
           @generate-msg="handleGenerateMsg(project.id)"
           @load-diff="(file, staged) => loadFileDiff(project.id, file, staged)"
           @clear-output="commitOutputs[project.id] = ''"
+          @discard-file="(file, staged, status) => handleDiscard(project.id, file, staged, status)"
         />
 
         <!-- 拉取按钮组 -->
@@ -424,6 +425,7 @@ const {
   stageAllItems,
   unstageItem,
   unstageAllItems,
+  discardFile,
   doCommit,
   generateCommitMsg,
   addProject,
@@ -650,6 +652,21 @@ async function handleGitOp(label: string, fn: () => Promise<void>, id: string) {
   } catch (e: any) {
     console.error(`[gitPush] ${label} 失败:`, e)
     commitOutputs.value[id] = `${label}: ${e?.message || e}`
+  } finally {
+    delete gitOpLoading.value[id]
+  }
+}
+
+async function handleDiscard(id: string, file: string, staged: boolean, status: string) {
+  const label = status === "untracked" ? "删除未跟踪文件" : "丢弃更改"
+  if (!confirm(`确定要${label} "${file}" 吗？此操作不可撤销。`)) return
+  commitOutputs.value[id] = ""
+  gitOpLoading.value[id] = true
+  try {
+    await discardFile(id, file, staged, status)
+    await loadWorkingTree(id)
+  } catch (e: any) {
+    commitOutputs.value[id] = `${label}失败: ${e?.message || e}`
   } finally {
     delete gitOpLoading.value[id]
   }

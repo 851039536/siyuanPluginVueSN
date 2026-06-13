@@ -1,4 +1,4 @@
-import type { GitProject, PushStatusInfo, WorkingTreeInfo, ProjectCategory } from "../types"
+import type { GitProject, PushStatusInfo, WorkingTreeInfo, ProjectCategory, CommitLogEntry } from "../types"
 import type { GitPushManager } from "../types"
 import { ref, computed } from "vue"
 
@@ -17,6 +17,8 @@ export function useGitPush(manager: GitPushManager) {
   const fileDiffs = ref<Record<string, string>>({})
   /** 正在提交的项目 id → true */
   const committing = ref<Record<string, boolean>>({})
+  /** 提交日志缓存 id → CommitLogEntry[] */
+  const commitLogs = ref<Record<string, CommitLogEntry[]>>({})
 
   /** 按分类分组后的项目列表 */
   const groupedProjects = computed(() => {
@@ -86,22 +88,26 @@ export function useGitPush(manager: GitPushManager) {
     return updated
   }
 
+  /** 格式化推送输出文本 */
+  function formatPushOutput(id: string, entries: { label: string; ok: boolean; stdout: string; stderr: string }[]) {
+    const lines: string[] = []
+    for (const e of entries) {
+      lines.push(`[${e.label}] ${e.ok ? "✅ 推送成功" : "❌ 推送失败"}`)
+      if (e.stdout) lines.push(e.stdout)
+      if (e.stderr) lines.push(`错误: ${e.stderr}`)
+    }
+    pushOutputs.value[id] = lines.join("\n")
+  }
+
   async function pushToAll(id: string) {
     pushingRemote.value[id] = "all"
     try {
       const result = await manager.pushToAll(id)
-      const lines: string[] = []
-      lines.push(`[GitHub] ${result.github.ok ? "✅ 推送成功" : "❌ 推送失败"}`)
-      if (result.github.stdout) lines.push(result.github.stdout)
-      if (result.github.stderr) lines.push(`错误: ${result.github.stderr}`)
-      lines.push(`[Gitee] ${result.gitee.ok ? "✅ 推送成功" : "❌ 推送失败"}`)
-      if (result.gitee.stdout) lines.push(result.gitee.stdout)
-      if (result.gitee.stderr) lines.push(`错误: ${result.gitee.stderr}`)
-      lines.push(`[Gitea] ${result.gitea.ok ? "✅ 推送成功" : "❌ 推送失败"}`)
-      if (result.gitea.stdout) lines.push(result.gitea.stdout)
-      if (result.gitea.stderr) lines.push(`错误: ${result.gitea.stderr}`)
-      pushOutputs.value[id] = lines.join("\n")
-      // 推送后刷新状态
+      formatPushOutput(id, [
+        { label: "GitHub", ok: result.github.ok, stdout: result.github.stdout, stderr: result.github.stderr },
+        { label: "Gitee", ok: result.gitee.ok, stdout: result.gitee.stdout, stderr: result.gitee.stderr },
+        { label: "Gitea", ok: result.gitea.ok, stdout: result.gitea.stdout, stderr: result.gitea.stderr },
+      ])
       loadPushStatus(id)
       return result
     } finally {
@@ -114,12 +120,7 @@ export function useGitPush(manager: GitPushManager) {
     try {
       const result = await manager.pushSingle(id, target)
       const label = target === "github" ? "GitHub" : target === "gitee" ? "Gitee" : "Gitea"
-      const lines: string[] = []
-      lines.push(`[${label}] ${result.ok ? "✅ 推送成功" : "❌ 推送失败"}`)
-      if (result.stdout) lines.push(result.stdout)
-      if (result.stderr) lines.push(`错误: ${result.stderr}`)
-      pushOutputs.value[id] = lines.join("\n")
-      // 推送后刷新状态
+      formatPushOutput(id, [{ label, ok: result.ok, stdout: result.stdout, stderr: result.stderr }])
       loadPushStatus(id)
       return result
     } finally {
@@ -146,6 +147,13 @@ export function useGitPush(manager: GitPushManager) {
     const diff = await manager.getFileDiff(project.path, file, staged)
     fileDiffs.value[key] = diff
     return diff
+  }
+
+  /** 加载分支提交日志 */
+  async function loadCommitLog(id: string) {
+    const project = projects.value.find(p => p.id === id)
+    if (!project) return
+    commitLogs.value[id] = await manager.getCommitLog(project.path)
   }
 
   /** 通过项目路径执行 git 操作的通用包装 */
@@ -247,10 +255,12 @@ export function useGitPush(manager: GitPushManager) {
     workingTrees,
     fileDiffs,
     committing,
+    commitLogs,
     loadProjects,
     loadPushStatus,
     loadWorkingTree,
     loadFileDiff,
+    loadCommitLog,
     stageItem,
     stageAllItems,
     unstageItem,

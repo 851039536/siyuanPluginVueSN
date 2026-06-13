@@ -66,6 +66,10 @@ export interface PushStatusInfo {
   needsPush: boolean
 }
 
+/** Conventional Commit 类型常量（单一数据源） */
+export const COMMIT_TYPE_VALUES = ["feat", "fix", "chore", "docs", "style", "refactor", "test"] as const
+export type CommitType = typeof COMMIT_TYPE_VALUES[number]
+
 /** 文件变更状态 */
 export type FileChangeStatus = "modified" | "added" | "deleted" | "renamed" | "untracked" | "copied" | "unmerged"
 
@@ -95,6 +99,20 @@ export interface WorkingTreeInfo {
   untrackedCount: number
   /** 是否有任何变更 */
   hasChanges: boolean
+}
+
+/** 提交历史单条记录 */
+export interface CommitLogEntry {
+  /** 短 hash（7 位） */
+  hash: string
+  /** 提交信息 */
+  message: string
+  /** 作者 */
+  author: string
+  /** 相对时间（如 "3 hours ago"） */
+  relativeDate: string
+  /** 绝对时间（ISO 格式） */
+  date: string
 }
 
 const DEFAULT_PROJECTS: GitProject[] = []

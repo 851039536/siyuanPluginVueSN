@@ -137,6 +137,9 @@
         <button class="wt-output-close" @click.stop="$emit('clearOutput')" title="关闭">×</button>
         <pre>{{ commitOutput }}</pre>
       </div>
+
+      <!-- 提交历史 -->
+      <BranchCommitList :entries="commitLogEntries" :loading="commitLogLoading" />
     </div>
   </div>
 </template>
@@ -144,17 +147,11 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue"
 import { Icon } from "@iconify/vue"
-import type { FileChange, WorkingTreeInfo } from "../types"
+import type { FileChange, WorkingTreeInfo, CommitLogEntry } from "../types"
+import { COMMIT_TYPE_VALUES } from "../types/storage"
+import BranchCommitList from "./BranchCommitList.vue"
 
-const COMMIT_TYPES = [
-  { value: "feat", label: "feat" },
-  { value: "fix", label: "fix" },
-  { value: "chore", label: "chore" },
-  { value: "docs", label: "docs" },
-  { value: "style", label: "style" },
-  { value: "refactor", label: "refactor" },
-  { value: "test", label: "test" },
-]
+const COMMIT_TYPES = COMMIT_TYPE_VALUES.map(v => ({ value: v, label: v }))
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -165,6 +162,8 @@ const props = defineProps<{
   fileDiffs: Record<string, string>
   generatedMsg: string
   gitOpLoading: boolean
+  commitLogEntries: CommitLogEntry[]
+  commitLogLoading: boolean
 }>()
 
 const emit = defineEmits<{
@@ -269,8 +268,8 @@ defineExpose({ clear: () => { commitMessage.value = ""; commitType.value = "chor
 
 <style lang="scss">
 @use "@/index.scss" as *;
-
-$vp-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+@use "../styles/variables" as *;
+@use "../styles/mixins" as *;
 
 .wt-panel {
   border-top: 1px solid var(--b3-border-color);
@@ -521,8 +520,7 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   outline: none;
 
   &:focus {
-    border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
+    @include focus-ring;
   }
 }
 
@@ -534,21 +532,10 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
 
 .wt-commit-output {
   position: relative;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
   padding: 6px 8px;
   padding-right: 28px;
   max-height: 100px;
-  overflow: auto;
-
-  pre {
-    margin: 0;
-    font-size: 10px;
-    font-family: $vp-mono;
-    white-space: pre-wrap;
-    color: var(--b3-theme-on-surface);
-  }
+  @include output-base;
 }
 
 .wt-output-close {

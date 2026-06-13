@@ -323,16 +323,23 @@ export class GitPushManager {
       return a
     })
     const cmd = `git ${escaped.join(" ")}`
+    // 诊断日志：stage/unstage/status 操作
+    const isStageOp = /^(add|reset|status)/.test(args[0] || "")
+    if (isStageOp) console.log(`[gitPush:execGit] cwd=${cwd} cmd=${cmd}`)
 
     return new Promise((resolve, reject) => {
       cp.exec(
         cmd,
         { cwd, timeout: 30000, encoding: "utf8" },
         (error: any, stdout: string, stderr: string) => {
+          if (isStageOp) console.log(`[gitPush:execGit] stdout=${stdout?.substring(0, 200)} stderr=${stderr?.substring(0, 200)}`)
           if (error) {
+            if (isStageOp) console.error(`[gitPush:execGit] ERROR:`, error.message, stderr)
             reject(new Error(stderr || error.message))
           } else {
-            resolve(stdout.trim())
+            // 只移除末尾换行符，保留前导空格/缩进
+            // 否则 git status --porcelain 首行 " M file" 会被 trim 成 "M file"，误判为已暂存
+            resolve(stdout.replace(/[\r\n]+$/, ""))
           }
         },
       )
@@ -366,6 +373,10 @@ export class GitPushManager {
     }
 
     try {
+      // Windows 上 child_process.exec 修改 .git/index 后 OS 文件缓存可能未刷盘，
+      // 先执行 update-index --refresh 强制 git 重新 stat index 中的所有条目，
+      // 确保后续 status 读到最新的暂存区状态
+      await this.execGit(projectPath, ["update-index", "--refresh", "-q"]).catch(() => {})
       // -c core.quotepath=false 禁用中文路径八进制转义，避免 git add 时找不到文件
       const raw = await this.execGit(projectPath, [
         "-c", "core.quotepath=false", "status", "--porcelain",

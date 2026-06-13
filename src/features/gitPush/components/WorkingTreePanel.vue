@@ -24,14 +24,14 @@
       <div v-if="tree.hasChanges" class="wt-toolbar">
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
-          :disabled="tree.unstagedCount === 0 && tree.untrackedCount === 0"
+          :disabled="(tree.unstagedCount === 0 && tree.untrackedCount === 0) || gitOpLoading"
           @click.stop="$emit('stageAll')"
         >
           {{ i18n.stageAll || '暂存全部' }}
         </button>
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
-          :disabled="tree.stagedCount === 0"
+          :disabled="tree.stagedCount === 0 || gitOpLoading"
           @click.stop="$emit('unstageAll')"
         >
           {{ i18n.unstageAll || '取消暂存全部' }}
@@ -50,10 +50,12 @@
           <button
             class="wt-checkbox"
             :class="{ checked: file.staged }"
-            :title="file.staged ? (i18n.unstageFile || '取消暂存') : (i18n.stageFile || '暂存')"
+            :disabled="gitOpLoading"
+            :title="gitOpLoading ? '处理中...' : file.staged ? (i18n.unstageFile || '取消暂存') : (i18n.stageFile || '暂存')"
             @click.stop="toggleStage(file)"
           >
-            <Icon v-if="file.staged" icon="mdi:checkbox-marked" height="14" />
+            <Icon v-if="gitOpLoading" icon="mdi:loading" class="gp-spin" height="14" />
+            <Icon v-else-if="file.staged" icon="mdi:checkbox-marked" height="14" />
             <Icon v-else icon="mdi:checkbox-blank-outline" height="14" />
           </button>
 
@@ -132,6 +134,7 @@
       </div>
       <!-- 操作反馈（不限提交表单可见，暂存失败等信息在此显示） -->
       <div v-if="commitOutput" class="wt-commit-output">
+        <button class="wt-output-close" @click.stop="$emit('clearOutput')" title="关闭">×</button>
         <pre>{{ commitOutput }}</pre>
       </div>
     </div>
@@ -161,6 +164,7 @@ const props = defineProps<{
   commitOutput: string
   fileDiffs: Record<string, string>
   generatedMsg: string
+  gitOpLoading: boolean
 }>()
 
 const emit = defineEmits<{
@@ -171,6 +175,7 @@ const emit = defineEmits<{
   commit: [message: string]
   generateMsg: []
   loadDiff: [file: string, staged: boolean]
+  clearOutput: []
 }>()
 
 const expanded = ref(false)
@@ -381,6 +386,12 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   &:hover {
     opacity: 0.8;
   }
+
+  &[disabled] {
+    cursor: not-allowed;
+    pointer-events: none;
+    opacity: 0.3;
+  }
 }
 
 .wt-file-status {
@@ -522,10 +533,12 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
 }
 
 .wt-commit-output {
+  position: relative;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
   border-radius: 4px;
   padding: 6px 8px;
+  padding-right: 28px;
   max-height: 100px;
   overflow: auto;
 
@@ -535,6 +548,24 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
     font-family: $vp-mono;
     white-space: pre-wrap;
     color: var(--b3-theme-on-surface);
+  }
+}
+
+.wt-output-close {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.4;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 4px;
+
+  &:hover {
+    opacity: 1;
   }
 }
 </style>

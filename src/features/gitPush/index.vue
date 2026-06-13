@@ -237,26 +237,26 @@
           </div>
           <div v-if="stashEntries[project.id]?.length" class="gp-stash-list">
             <div v-for="e in stashEntries[project.id]" :key="e.index" class="gp-stash-row">
-              <span class="gp-stash-index">stash@&#123;&#123;{ e.index }}&#125;</span>
+              <span class="gp-stash-index">stash@{{ '{' + e.index + '}' }}</span>
               <span class="gp-stash-msg" :title="e.message">{{ e.message }}</span>
               <button
                 class="vp-btn vp-btn--ghost vp-btn--sm"
                 title="恢复并删除 (pop)"
                 :disabled="stashLoading[project.id]"
                 @click="handleStashPop(project.id, e.index)"
-              >恢复</button>
+              >{{ i18n.stashRestore || '恢复' }}</button>
               <button
                 class="vp-btn vp-btn--ghost vp-btn--sm"
                 title="应用但不删除 (apply)"
                 :disabled="stashLoading[project.id]"
                 @click="handleStashApply(project.id, e.index)"
-              >应用</button>
+              >{{ i18n.stashApply || '应用' }}</button>
               <button
                 class="vp-btn vp-btn--ghost vp-btn--sm"
                 title="删除 (drop)"
                 :disabled="stashLoading[project.id]"
                 @click="handleStashDrop(project.id, e.index)"
-              >删除</button>
+              >{{ i18n.stashDrop || '删除' }}</button>
             </div>
           </div>
         </div>

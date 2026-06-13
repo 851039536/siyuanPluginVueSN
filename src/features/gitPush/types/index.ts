@@ -466,6 +466,32 @@ export class GitPushManager {
     await this.execGit(projectPath, ["stash", "drop", `stash@{${index}}`])
   }
 
+  /** AI 生成 stash 描述（基于工作区变更文件列表） */
+  async generateStashDescription(projectPath: string): Promise<string> {
+    const wt = await this.getWorkingTreeStatus(projectPath)
+    if (!wt.hasChanges) return ""
+    const names = wt.files.slice(0, 8).map(f => f.path.split("/").pop() || f.path).join("、")
+    const more = wt.files.length > 8 ? `等${wt.files.length}个文件` : ""
+
+    const aiConfig = getApiConfigFromPlugin(this.plugin)
+    if (!aiConfig.apiKey) {
+      return `${wt.files.length}个文件: ${names}${more}`
+    }
+
+    try {
+      const result = await callAI(
+        `以下是 git 工作区变更的文件列表，生成一条不超过 12 个字的简短描述（只返回描述本身）：
+${names}${more}`,
+        aiConfig,
+        { temperature: 0.5, maxTokens: 40 },
+      )
+      const t = result?.trim()
+      return t && t.length > 0 ? t : `${wt.files.length}个文件`
+    } catch {
+      return `${wt.files.length}个文件: ${names}${more}`
+    }
+  }
+
   /** 添加远程仓库 */
   async addRemote(projectPath: string, name: string, url: string): Promise<void> {
     await this.execGit(projectPath, ["remote", "add", name, url])

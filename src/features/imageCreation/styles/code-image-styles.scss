@@ -169,11 +169,7 @@
   font-weight: 600;
 }
 
-.style-neon.theme-light .window-header {
-  background: rgba(0, 0, 0, 0.3);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-}
-
+.style-neon.theme-light .window-header,
 .style-neon.theme-dark .window-header {
   background: rgba(0, 0, 0, 0.3);
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);

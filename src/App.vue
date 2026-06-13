@@ -71,12 +71,12 @@
       @close="hideSkillsViewer"
     />
 
-    <!-- AI 文章封面生成器 -->
+    <!-- 图片生成器 -->
     <CoverGenerator
-      :visible="articleCoverVisible"
-      :initial-title="articleCoverInitialTitle"
-      :initial-keywords="articleCoverInitialKeywords"
-      @update:visible="(v: boolean) => { articleCoverVisible = v; if (!v) hideArticleCover() }"
+      :visible="imageCreationVisible"
+      :initial-title="imageCreationInitialTitle"
+      :initial-keywords="imageCreationInitialKeywords"
+      @update:visible="(v: boolean) => { imageCreationVisible = v; if (!v) hideImageCreation() }"
     />
   </div>
 </template>
@@ -95,12 +95,12 @@ import {
   htmlViewerVisible,
   passwordVaultVisible,
   skillsViewerVisible,
-  articleCoverInitialKeywords,
-  articleCoverInitialTitle,
-  articleCoverVisible,
-  hideArticleCover,
+  imageCreationInitialKeywords,
+  imageCreationInitialTitle,
+  imageCreationVisible,
+  hideImageCreation,
 } from "@/features"
-import CoverGenerator from "@/features/articleCover/components/CoverGenerator.vue"
+import CoverGenerator from "@/features/imageCreation/components/CoverGenerator.vue"
 import DecryptDialog from "@/features/encryption/components/DecryptDialog.vue"
 import { getEncryptionInstance } from "@/features/encryption/index"
 import EverythingSearchDialog from "@/features/everythingSearch/index.vue"

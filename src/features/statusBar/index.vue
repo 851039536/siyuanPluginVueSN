@@ -100,7 +100,7 @@ import { emitCustomEvent } from "@/utils/eventBus"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { showPasswordVault } from "../passwordVault/types"
 import { showSkillsViewer } from "../skillsViewer/types"
-import { showArticleCover } from "../articleCover"
+import { showImageCreation } from "../imageCreation"
 import { showEverythingSearch } from "../everythingSearch"
 import { showWebsiteNavigation } from "../websiteNavigation/types"
 import FeatureDrawer from "./components/FeatureDrawer.vue"
@@ -182,10 +182,10 @@ const featureDrawerItems: FeatureDrawerItem[] = [
     pinnable: true,
   },
   {
-    id: "articleCover",
+    id: "imageCreation",
     icon: "mdi:image-text",
     color: "#f59e0b",
-    title: "文章封面",
+    title: "图片生成",
     pinnable: false,
   },
   {
@@ -255,12 +255,12 @@ const SHORTCUT_DISPLAY: Record<string, ShortcutDisplay> = {
     itemClass: "action-item website-navigation-item",
     handler: () => showWebsiteNavigation(props.plugin),
   },
-  articleCover: {
-    id: "articleCover",
+  imageCreation: {
+    id: "imageCreation",
     icon: "ph:image-square",
-    title: "文章封面",
-    itemClass: "action-item article-cover-item",
-    handler: () => showArticleCover(),
+    title: "图片生成",
+    itemClass: "action-item image-creation-item",
+    handler: () => showImageCreation(),
   },
   dataBackup: {
     id: "dataBackup",

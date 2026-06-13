@@ -692,9 +692,6 @@
     "navigatedToFavorite": "已跳转到收藏夹",
     "navigationFailed": "导航失败"
   },
-  "codeImageGenerator": "图片生成",
-  "enableCodeImageGenerator": "启用代码图片生成器",
-  "enableCodeImageGeneratorDesc": "在右侧边栏生成代码或文字图片，支持多种风格和装饰选项",
   "codeImageGeneratorPanel": {
     "contentType": "内容类型",
     "codeMode": "代码",
@@ -1560,8 +1557,8 @@
   },
   "enableScriptLauncher": "启用脚本启动器",
   "enableScriptLauncherDesc": "管理并运行自定义脚本，支持 Python、Bash、PowerShell、Node.js、Batch",
-  "enableArticleCover": "启用文章封面生成器",
-  "enableArticleCoverDesc": "AI 文章封面生成器，支持多种风格和尺寸",
+  "enableImageCreation": "启用图片生成",
+  "enableImageCreationDesc": "图片生成工具，支持文章封面和代码图片两种模式",
   "enableDataSnapshot": "启用数据快照功能",
   "enableDataSnapshotDesc": "创建、比较、查看和上传数据快照，支持本地历史管理与云端同步",
   "enableGitPush": "启用 Git 推送功能",

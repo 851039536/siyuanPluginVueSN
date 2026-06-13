@@ -1,0 +1,336 @@
+// ============================================================
+// 代码图片风格样式（从 codeImageGenerator/styles/index.scss 提取）
+// 仅包含 14 种风格定义 + 主题覆盖，不含布局样式
+// ============================================================
+
+// ============================================================
+// 代码风格 (7种)
+// ============================================================
+
+/* GitHub 风格 */
+.style-github.theme-light {
+  background: #ffffff;
+  border: 1px solid #d0d7de;
+}
+.style-github.theme-dark {
+  background: #0d1117;
+  border: 1px solid #30363d;
+}
+
+/* Mac 风格 */
+.style-mac.theme-light {
+  background: #f6f8fa;
+  border: 1px solid #e1e4e8;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+.style-mac.theme-dark {
+  background: #1e1e1e;
+  border: 1px solid #3d3d3d;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* 卡通风格 */
+.style-cartoon.theme-light {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: 3px solid #5a67d8;
+  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+}
+.style-cartoon.theme-dark {
+  background: linear-gradient(135deg, #434343 0%, #000000 100%);
+  border: 3px solid #666;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+}
+
+/* 波浪渐变风格 */
+.style-wave.theme-light {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  border: none;
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+}
+.style-wave.theme-dark {
+  background: linear-gradient(135deg, #2d3561 0%, #3a1c71 50%, #6441a5 100%);
+  border: none;
+  box-shadow: 0 8px 24px rgba(58, 28, 113, 0.5);
+}
+
+/* 玻璃拟态风格 */
+.style-glass.theme-light {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+.style-glass.theme-dark {
+  background: rgba(30, 30, 30, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* 霓虹灯风格 */
+.style-neon.theme-light {
+  background: #1a1a2e;
+  border: 2px solid #0ff;
+  box-shadow:
+    0 0 10px #0ff,
+    0 0 20px #0ff,
+    0 0 40px #0ff,
+    inset 0 0 10px rgba(0, 255, 255, 0.2);
+}
+.style-neon.theme-dark {
+  background: #0f0f23;
+  border: 2px solid #f0f;
+  box-shadow:
+    0 0 10px #f0f,
+    0 0 20px #f0f,
+    0 0 40px #f0f,
+    inset 0 0 10px rgba(255, 0, 255, 0.2);
+}
+
+/* 3D立体风格 */
+.style-3d.theme-light {
+  background: linear-gradient(145deg, #f0f0f0, #cacaca);
+  border: none;
+  box-shadow:
+    20px 20px 60px #bebebe,
+    -20px -20px 60px #ffffff;
+  transform: perspective(1000px) rotateX(5deg);
+}
+.style-3d.theme-dark {
+  background: linear-gradient(145deg, #2d2d2d, #1a1a1a);
+  border: none;
+  box-shadow:
+    20px 20px 60px #0d0d0d,
+    -20px -20px 60px #3d3d3d;
+  transform: perspective(1000px) rotateX(5deg);
+}
+
+// ============================================================
+// 代码内容主题覆盖
+// ============================================================
+
+.code-content {
+  .style-neon.theme-light & {
+    color: #00ffff;
+    background: rgba(0, 20, 40, 0.6);
+    text-shadow: 0 0 5px #0ff, 0 0 10px #0ff;
+    font-weight: 500;
+  }
+  .style-neon.theme-dark & {
+    color: #ff00ff;
+    background: rgba(20, 0, 40, 0.6);
+    text-shadow: 0 0 5px #f0f, 0 0 10px #f0f;
+    font-weight: 500;
+  }
+  .style-cartoon.theme-light & {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+  }
+  .style-cartoon.theme-dark & {
+    color: #e0e0e0;
+    background: rgba(0, 0, 0, 0.3);
+  }
+  .style-glass.theme-light & {
+    color: #0a0a0a;
+    background: rgba(255, 255, 255, 0.6);
+    text-shadow: none;
+  }
+  .style-glass.theme-dark & {
+    color: #f0f0f0;
+    background: rgba(0, 0, 0, 0.4);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  }
+  .theme-light & {
+    color: #1a1a1a;
+    background: #ffffff;
+  }
+  .theme-dark & {
+    color: #c9d1d9;
+    background: #0d1117;
+  }
+}
+
+// ============================================================
+// 窗口标题覆盖
+// ============================================================
+
+.style-cartoon .window-header {
+  .window-btn {
+    &.close { background: #ff6b9d; }
+    &.minimize { background: #feca57; }
+    &.maximize { background: #48dbfb; }
+  }
+}
+
+.style-cartoon .window-title {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.style-neon.theme-light .window-header {
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.style-neon.theme-dark .window-header {
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.style-neon.theme-light .window-title {
+  color: #0ff;
+  text-shadow: 0 0 5px #0ff;
+}
+
+.style-neon.theme-dark .window-title {
+  color: #f0f;
+  text-shadow: 0 0 5px #f0f;
+}
+
+// ============================================================
+// 文字风格 (7种)
+// ============================================================
+
+/* 名人名言风格 */
+.text-style-quote.theme-light {
+  background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+  border-left: 6px solid #3498db;
+}
+.text-style-quote.theme-dark {
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  border-left: 6px solid #3498db;
+}
+.text-style-quote .text-body::before {
+  content: '"';
+  font-size: 3em;
+  color: #3498db;
+  opacity: 0.3;
+  position: absolute;
+  top: 20px;
+  left: 20px;
+}
+
+/* 诗词意境风格 */
+.text-style-poetry.theme-light {
+  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+  border: 2px solid rgba(255, 107, 107, 0.3);
+}
+.text-style-poetry.theme-dark {
+  background: linear-gradient(135deg, #4a2c2a 0%, #3d1e1c 100%);
+  border: 2px solid rgba(255, 107, 107, 0.5);
+}
+.text-style-poetry .text-body {
+  font-size: 1.2em;
+  line-height: 2;
+}
+
+/* 手写便签风格 */
+.text-style-note.theme-light {
+  background: #fef5e7;
+  border: none;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transform: rotate(-1deg);
+}
+.text-style-note.theme-dark {
+  background: #3e3021;
+  border: none;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  transform: rotate(-1deg);
+}
+.text-style-note.theme-light .text-body {
+  color: #2c3e50;
+}
+.text-style-note.theme-dark .text-body {
+  color: #ddd;
+}
+
+/* 激励海报风格 */
+.text-style-poster.theme-light {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  box-shadow: 0 12px 40px rgba(102, 126, 234, 0.4);
+}
+.text-style-poster.theme-dark {
+  background: linear-gradient(135deg, #2d3561 0%, #3a1c71 100%);
+  border: none;
+  box-shadow: 0 12px 40px rgba(58, 28, 113, 0.6);
+}
+.text-style-poster .text-body {
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 1.5em;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* 引用卡片风格 */
+.text-style-card.theme-light {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+}
+.text-style-card.theme-dark {
+  background: #1e1e1e;
+  border: 1px solid #3d3d3d;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  border-radius: 16px;
+}
+
+/* 复古报纸风格 */
+.text-style-newspaper.theme-light {
+  background: #f4f1e8;
+  border: 3px double #8b7355;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.1);
+}
+.text-style-newspaper.theme-dark {
+  background: #2a2418;
+  border: 3px double #5a4a3a;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3);
+}
+.text-style-newspaper .text-body {
+  color: #1a1410;
+}
+.text-style-newspaper.theme-dark .text-body {
+  color: #d4c4a8;
+}
+
+/* 渐变文字风格 */
+.text-style-gradient.theme-light {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  border: none;
+  box-shadow: 0 8px 24px rgba(245, 87, 108, 0.4);
+}
+.text-style-gradient.theme-dark {
+  background: linear-gradient(135deg, #6a1b9a 0%, #c2185b 100%);
+  border: none;
+  box-shadow: 0 8px 24px rgba(106, 27, 154, 0.5);
+}
+.text-style-gradient .text-body {
+  background: linear-gradient(45deg, #fff, rgba(255, 255, 255, 0.8));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: bold;
+}
+
+// ============================================================
+// 装饰元素暗色主题覆盖
+// ============================================================
+
+.theme-dark {
+  .decorations {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .watermark {
+    color: rgba(255, 255, 255, 0.3);
+  }
+  .metadata {
+    color: rgba(255, 255, 255, 0.5);
+  }
+  .window-header {
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}

@@ -49,3 +49,48 @@ export interface StyleDefinition {
   /** 构建完整装饰 CSS（含标签样式），由注册表引擎传入 this.colors */
   buildDecorCss(c: StyleColors): string
 }
+
+// ============================================================
+// 代码图片生成类型
+// ============================================================
+
+export type ContentType = "code" | "text"
+
+export type CodeStyleId = "github" | "mac" | "cartoon" | "wave" | "glass" | "neon" | "3d"
+
+export type TextStyleId = "quote" | "poetry" | "note" | "poster" | "card" | "newspaper" | "gradient"
+
+export type ThemeType = "light" | "dark"
+
+export type TabType = "cover" | "codeImage"
+
+/** 装饰配置 */
+export interface DecorationConfig {
+  showDecorations: boolean
+  enableWatermark: boolean
+  watermarkText: string
+  enableAuthor: boolean
+  authorName: string
+  enableTimestamp: boolean
+  borderWidth: number
+  borderRadius: number
+  paddingSize: number
+  backgroundOpacity: number
+  shadowIntensity: number
+}
+
+/** 代码图片生成器默认值 */
+export const CODE_IMAGE_DEFAULTS = Object.freeze({
+  fontSize: 14,
+  borderWidth: 1,
+  borderRadius: 8,
+  paddingSize: 16,
+  backgroundOpacity: 100,
+  shadowIntensity: 50,
+  watermarkText: "SiYuan Notes",
+  selectedLanguage: "javascript" as const,
+  selectedStyle: "github" as const,
+  selectedTheme: "light" as const,
+  scaleMultiplier: 3,
+  messageDuration: 3000,
+})

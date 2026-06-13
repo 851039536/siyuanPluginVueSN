@@ -27,7 +27,6 @@ export interface PluginSettings {
   enableQRCode: boolean // 是否启用二维码生成功能
   enableUnitConverter: boolean // 是否启用单位转换功能
   enableDiskBrowser: boolean // 是否启用本地磁盘浏览器功能
-  enableCodeImageGenerator: boolean // 是否启用代码图片生成器功能
   enableAIContentGenerator: boolean // 是否启用AI信息生成功能
   enableStatistics: boolean // 是否启用数据统计功能
   enablePronunciation: boolean // 是否启用谐音翻译功能
@@ -53,7 +52,7 @@ export interface PluginSettings {
   enableThemeColor: boolean // 是否启用全局主题色功能
   enableBookmarkMarker: boolean // 是否启用手动书签标记功能
   enableApiDebugger: boolean // 是否启用API调试器功能
-  enableArticleCover: boolean // 是否启用文章封面生成器功能
+  enableImageCreation: boolean // 是否启用图片生成功能
   enableWebsiteNavigation: boolean // 是否启用网站导航功能
   enableScriptLauncher: boolean // 是否启用脚本启动器功能
   enableDataSnapshot: boolean // 是否启用数据快照功能
@@ -91,7 +90,6 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enableQRCode: true,
   enableUnitConverter: true,
   enableDiskBrowser: true,
-  enableCodeImageGenerator: true,
   enableAIContentGenerator: true,
   enableStatistics: true,
   enablePronunciation: true,
@@ -116,7 +114,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enableResourceManager: true,
   enableThemeColor: false,
   enableBookmarkMarker: true,
-  enableArticleCover: true,
+  enableImageCreation: true,
   enableApiDebugger: true,
   enableWebsiteNavigation: true,
   enableScriptLauncher: true,

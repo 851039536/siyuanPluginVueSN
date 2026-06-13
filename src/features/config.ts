@@ -88,12 +88,6 @@ export const FEATURE_CONFIG = [
     defaultDesc: "浏览本地磁盘和文件夹",
   },
   {
-    id: "codeImageGenerator",
-    defaultTitle: "代码图片生成",
-    defaultDesc: "生成代码截图，支持GitHub、Mac、卡通风格",
-    descI18nKey: "enableCodeImageGeneratorDesc",
-  },
-  {
     id: "aiContentGenerator",
     defaultTitle: "AI信息生成",
     defaultDesc: "使用AI生成Markdown格式内容，支持自定义对话和上下文",
@@ -276,9 +270,9 @@ export const FEATURE_CONFIG = [
     defaultDesc: "快速启动和管理自定义脚本，支持多种语言分类",
   },
   {
-    id: "articleCover",
-    defaultTitle: "文章封面",
-    defaultDesc: "AI 文章封面生成器，支持多种风格和尺寸的封面图片",
+    id: "imageCreation",
+    defaultTitle: "图片生成",
+    defaultDesc: "图片生成工具，支持文章封面和代码图片两种模式",
   },
   {
     id: "dataSnapshot",

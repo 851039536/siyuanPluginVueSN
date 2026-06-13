@@ -106,12 +106,6 @@ export const FEATURE_ICONS = {
     color: "#f97316",
   },
 
-  // 代码图片生成器
-  codeImageGenerator: {
-    icon: "mdi:code-tags",
-    color: "#22c55e",
-  },
-
   // AI信息生成
   aiContentGenerator: {
     icon: "mdi:robot",
@@ -249,8 +243,8 @@ export const FEATURE_ICONS = {
     icon: "mdi:script-text-outline",
     color: "#f59e0b",
   },
-  // 文章封面
-  articleCover: {
+  // 图片生成
+  imageCreation: {
     icon: "mdi:image-text",
     color: "#f59e0b",
   },

@@ -225,10 +225,23 @@
             <span class="gp-stash-help" title="暂存：把当前未提交的修改临时保存起来，方便切换到其他分支工作。之后可以随时'恢复'回来继续编辑，就像把工作进度先放进抽屉里一样。">
               <Icon icon="mdi:help-circle-outline" height="14" />
             </span>
+            <template v-if="stashInputProject === project.id">
+              <input
+                v-model="stashInputMsg"
+                class="gp-stash-msg-input"
+                placeholder="暂存描述（可选）"
+                @keyup.enter="handleStashConfirm(project.id)"
+              />
+              <button class="vp-btn vp-btn--primary vp-btn--sm" :disabled="stashLoading[project.id]" @click="handleStashConfirm(project.id)">
+                <Icon icon="mdi:check" height="14" /></button>
+              <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="stashInputProject = ''">
+                <Icon icon="mdi:close" height="14" /></button>
+            </template>
             <button
+              v-else
               class="vp-btn vp-btn--ghost vp-btn--sm"
               :disabled="!workingTrees[project.id]?.hasChanges || stashLoading[project.id]"
-              @click="handleStashSave(project.id)"
+              @click="stashInputProject = project.id; stashInputMsg = ''"
             >
               <Icon v-if="stashLoading[project.id]" icon="mdi:loading" class="gp-spin" height="13" />
               <Icon v-else icon="mdi:archive-outline" height="13" />
@@ -952,9 +965,13 @@ async function handleDiscard(id: string, file: string, staged: boolean, status: 
 
 // ---- Stash 操作 ----
 
-async function handleStashSave(id: string) {
-  const msg = prompt("暂存描述（可选，留空使用时间戳）：", "")
-  if (msg === null) return // 用户取消
+const stashInputProject = ref("")
+const stashInputMsg = ref("")
+
+async function handleStashConfirm(id: string) {
+  const msg = stashInputMsg.value
+  stashInputProject.value = ""
+  stashInputMsg.value = ""
   try {
     await doStashSave(id, msg.trim() || new Date().toLocaleString())
   } catch (e: any) {
@@ -1620,6 +1637,22 @@ async function selectScanDirectory() {
 
   &:hover {
     opacity: 0.7;
+  }
+}
+
+.gp-stash-msg-input {
+  flex: 1;
+  padding: 3px 6px;
+  border: 1px solid var(--b3-theme-primary);
+  border-radius: 3px;
+  font-size: 10px;
+  font-family: $vp-mono;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  outline: none;
+
+  &::placeholder {
+    opacity: 0.35;
   }
 }
 

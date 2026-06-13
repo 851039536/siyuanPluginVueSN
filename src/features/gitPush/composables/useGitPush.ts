@@ -381,6 +381,12 @@ export function useGitPush(manager: GitPushManager) {
     await withProjectPathStash(id, (path) => manager.stashDrop(path, index))
   }
 
+  async function generateStashDesc(id: string): Promise<string> {
+    const project = projects.value.find(p => p.id === id)
+    if (!project) return ""
+    return manager.generateStashDescription(project.path)
+  }
+
   /** 添加远程仓库并刷新状态 */
   async function addRemoteOp(id: string, name: string, url: string) {
     const project = projects.value.find(p => p.id === id)
@@ -486,6 +492,7 @@ export function useGitPush(manager: GitPushManager) {
     doStashPop,
     doStashApply,
     doStashDrop,
+    generateStashDesc,
     addRemoteOp,
     removeRemoteOp,
   }

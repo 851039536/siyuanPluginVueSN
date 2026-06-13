@@ -232,6 +232,15 @@
                 placeholder="暂存描述（可选）"
                 @keyup.enter="handleStashConfirm(project.id)"
               />
+              <button
+                class="vp-btn vp-btn--ghost vp-btn--sm"
+                title="AI 生成描述"
+                :disabled="genStashDescLoading[project.id]"
+                @click="handleGenStashDesc(project.id)"
+              >
+                <Icon v-if="genStashDescLoading[project.id]" icon="mdi:loading" class="gp-spin" height="14" />
+                <Icon v-else icon="mdi:auto-fix" height="14" />
+              </button>
               <button class="vp-btn vp-btn--primary vp-btn--sm" :disabled="stashLoading[project.id]" @click="handleStashConfirm(project.id)">
                 <Icon icon="mdi:check" height="14" /></button>
               <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="stashInputProject = ''">
@@ -675,6 +684,7 @@ const {
   doStashPop,
   doStashApply,
   doStashDrop,
+  generateStashDesc,
   addRemoteOp,
   removeRemoteOp,
 } = useGitPush(props.manager)
@@ -967,13 +977,28 @@ async function handleDiscard(id: string, file: string, staged: boolean, status: 
 
 const stashInputProject = ref("")
 const stashInputMsg = ref("")
+const genStashDescLoading = ref<Record<string, boolean>>({})
+
+async function handleGenStashDesc(id: string) {
+  genStashDescLoading.value[id] = true
+  try {
+    const desc = await generateStashDesc(id)
+    if (desc) stashInputMsg.value = desc
+  } catch {
+    // 失败则保持输入内容不变
+  } finally {
+    delete genStashDescLoading.value[id]
+  }
+}
 
 async function handleStashConfirm(id: string) {
-  const msg = stashInputMsg.value
+  const ts = new Date().toLocaleString()
+  const desc = stashInputMsg.value.trim()
+  const msg = desc ? `${ts} - ${desc}` : ts
   stashInputProject.value = ""
   stashInputMsg.value = ""
   try {
-    await doStashSave(id, msg.trim() || new Date().toLocaleString())
+    await doStashSave(id, msg)
   } catch (e: any) {
     alert(`暂存失败: ${e?.message || e}`)
   }

@@ -23,6 +23,10 @@
           <Icon icon="mdi:plus" />
           <span>{{ i18n.addProject || '添加项目' }}</span>
         </button>
+        <button class="vp-btn vp-btn--ghost gp-add-btn" @click="handleOpenScan">
+          <Icon icon="mdi:file-find-outline" />
+          <span>{{ i18n.importProject || '导入项目' }}</span>
+        </button>
       </div>
     </div>
 
@@ -30,14 +34,6 @@
 
     <!-- 分类 TAB 导航 -->
     <div v-if="groupedProjects.length > 0" class="gp-tabs">
-      <button
-        class="gp-tab"
-        :class="{ active: activeCategory === '__all__' }"
-        @click="activeCategory = '__all__'"
-      >
-        <span>{{ i18n.allProjects || '全部' }}</span>
-        <span class="gp-tab-count">{{ projects.length }}</span>
-      </button>
       <button
         v-for="g in groupedProjects"
         :key="g.category.id"
@@ -367,14 +363,92 @@
                 v-model.number="refreshInterval"
                 type="number"
                 class="gp-input"
-                min="0"
+                min="30"
                 max="300"
                 step="5"
                 style="width: 60px; text-align: center;"
               />
-              <span class="gp-set-unit">秒（0 表示关闭）</span>
+              <span class="gp-set-unit">秒（最低 30 秒，0 表示关闭）</span>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 扫描导入项目弹窗 -->
+    <div v-if="showScanDialog" class="gp-mask" @click.self="handleCloseScan">
+      <div class="gp-dialog" style="width: 520px;">
+        <div class="gp-dialog-header">
+          <span class="gp-dialog-title">{{ i18n.importProject || '导入项目' }}</span>
+          <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="handleCloseScan">
+            <Icon icon="mdi:close" />
+          </button>
+        </div>
+        <div class="gp-dialog-body">
+          <div class="gp-form-group">
+            <label class="gp-label">{{ i18n.scanDir || '扫描目录' }}</label>
+            <div class="gp-path-row">
+              <input
+                v-model="scanDirInput"
+                class="gp-input"
+                :placeholder="i18n.scanDirPlaceholder || '选择要递归扫描的目录...'"
+              />
+              <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="selectScanDirectory">
+                <Icon icon="mdi:folder-open" />
+              </button>
+            </div>
+          </div>
+          <div style="display: flex; justify-content: center; margin-top: 4px;">
+            <button
+              class="vp-btn vp-btn--primary"
+              :disabled="scanning || !scanDirInput.trim()"
+              @click="handleStartScan"
+            >
+              <Icon v-if="scanning" icon="mdi:loading" class="gp-spin" />
+              <Icon v-else icon="mdi:magnify" />
+              <span>{{ scanning ? (i18n.scanning || '扫描中...') : (i18n.startScan || '开始扫描') }}</span>
+            </button>
+          </div>
+          <div v-if="scanResults.length > 0" class="gp-scan-results">
+            <div class="gp-scan-results-header">
+              <span class="gp-scan-count">{{ i18n.scanResults || '扫描结果' }} ({{ scanResults.length }})</span>
+              <button class="vp-btn vp-btn--ghost vp-btn--sm" style="font-size:10px;" @click="handleToggleSelectAll">
+                {{ i18n.selectAll || '全选' }}
+              </button>
+            </div>
+            <div v-for="repo in scanResults" :key="repo.path" class="gp-scan-item">
+              <label class="gp-scan-item-row" :class="{ 'gp-scan-imported': repo.alreadyImported }">
+                <input
+                  type="checkbox"
+                  :checked="scanSelection[repo.path] || false"
+                  :disabled="repo.alreadyImported"
+                  @change="toggleScanItem(repo.path)"
+                />
+                <div class="gp-scan-item-info">
+                  <span class="gp-scan-item-name">{{ repo.name }}</span>
+                  <span class="gp-scan-item-path">{{ repo.path }}</span>
+                </div>
+                <span v-if="repo.alreadyImported" class="gp-scan-badge">{{ i18n.imported || '已导入' }}</span>
+              </label>
+            </div>
+          </div>
+          <div v-else-if="!scanning && scanDirInput.trim() && scanResults.length === 0" class="gp-empty" style="padding:20px 0;">
+            <Icon icon="mdi:folder-search-outline" width="36" />
+            <div class="gp-empty-text">{{ i18n.noScanResults || '未找到 Git 仓库' }}</div>
+          </div>
+          <div v-if="scanError" class="gp-error">{{ scanError }}</div>
+        </div>
+        <div class="gp-dialog-footer">
+          <button class="vp-btn vp-btn--ghost" @click="handleCloseScan">
+            {{ i18n.cancel || '取消' }}
+          </button>
+          <button
+            class="vp-btn vp-btn--primary"
+            :disabled="selectedCount === 0"
+            @click="handleImportSelected"
+          >
+            {{ (i18n.importSelected || '导入选中') + ' (' + selectedCount + ')' }}
+          </button>
         </div>
       </div>
     </div>
@@ -384,7 +458,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, computed } from "vue"
 import { Icon } from "@iconify/vue"
-import type { GitPushManager, GitProject, CommitLogEntry } from "./types"
+import type { GitPushManager, GitProject, CommitLogEntry, ScannedGitRepo } from "./types"
 import { useGitPush } from "./composables/useGitPush"
 import WorkingTreePanel from "./components/WorkingTreePanel.vue"
 
@@ -443,19 +517,32 @@ const {
   loadCommitLog,
   loadBranches,
   switchBranch,
+  startScan,
+  importScanResults,
+  scanning,
+  scanResults,
+  scanDirInput,
 } = useGitPush(props.manager)
 
 const showAddDialog = ref(false)
 const showCatDialog = ref(false)
 const showSettings = ref(false)
-const refreshInterval = ref(15)
+const refreshInterval = ref(30)
 let refreshTimer: ReturnType<typeof setInterval> | null = null
-/** 当前选中的分类 ID，"__all__" 表示全部 */
-const activeCategory = ref<string>("__all__")
+/** 当前选中的分类 ID（onMounted 中设为首个分类） */
+const activeCategory = ref<string>("")
+
+/** 扫描导入弹窗状态 */
+const showScanDialog = ref(false)
+const scanError = ref("")
+const scanSelection = ref<Record<string, boolean>>({})
+const selectedCount = computed(() =>
+  Object.values(scanSelection.value).filter(Boolean).length,
+)
 
 /** 按分类 TAB 过滤后的分组 */
 const visibleGroups = computed(() => {
-  if (activeCategory.value === "__all__") return groupedProjects.value
+  if (!activeCategory.value) return groupedProjects.value
   return groupedProjects.value.filter(g => g.category.id === activeCategory.value)
 })
 const newProjectName = ref("")
@@ -497,27 +584,48 @@ const commitLogLoading = ref<Record<string, boolean>>({})
 /** HEAD hash 缓存，用于跳过无变动项目的 commit log / branches 刷新 */
 const headHashes = ref<Record<string, string>>({})
 
-/** 静默刷新所有项目状态（不触发 loading 动画） */
-async function silentRefreshAll() {
-  const proms: Promise<void>[] = []
-  for (const p of projects.value) {
-    proms.push((async () => {
-      // push status 始终刷新（远程可能变动）
-      await loadPushStatus(p.id)
-      // working tree 始终刷新（文件可能外部修改）
-      await loadWorkingTree(p.id)
-
-      // HEAD hash 变化时才刷新 commit log + branches
-      const prev = headHashes.value[p.id] || ""
-      const curr = await props.manager.getHeadHash(p.path)
-      if (curr && curr !== prev) {
-        headHashes.value[p.id] = curr
-        await loadCommitLog(p.id)
-        await loadBranches(p.id)
-      }
-    })())
+/** 并发池：每批最多 concurrency 个异步任务并行执行 */
+async function asyncPool<T>(concurrency: number, items: T[], fn: (item: T) => Promise<void>): Promise<void> {
+  let i = 0
+  const worker = async (): Promise<void> => {
+    while (i < items.length) {
+      const idx = i++
+      await fn(items[idx])
+    }
   }
-  await Promise.all(proms)
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, () => worker())
+  await Promise.all(workers)
+}
+
+/** 静默刷新当前分类下的项目状态（不触发 loading 动画） */
+async function silentRefreshAll() {
+  const catId = activeCategory.value
+  if (!catId) return
+  const projList = projects.value.filter(p => p.categoryId === catId)
+  if (projList.length === 0) return
+
+  await asyncPool(4, projList, async (p) => {
+    // push status 始终刷新（远程可能变动）；同时前置获取 HEAD hash
+    const prev = headHashes.value[p.id] || ""
+    const [, curr] = await Promise.all([
+      loadPushStatus(p.id),
+      props.manager.getHeadHash(p.path),
+    ])
+
+    if (curr && curr !== prev) {
+      headHashes.value[p.id] = curr
+      // HEAD 变动 → 全量刷新
+      await Promise.all([
+        loadWorkingTree(p.id),
+        loadCommitLog(p.id),
+        loadBranches(p.id),
+      ])
+    } else if (curr) {
+      // HEAD 未变，但仍需刷新工作区（文件可能外部修改）
+      await loadWorkingTree(p.id)
+    }
+    // curr 为空（取 hash 失败）→ 跳过该项目
+  })
 }
 
 function startRefreshTimer() {
@@ -536,16 +644,25 @@ function stopRefreshTimer() {
   }
 }
 
-onMounted(() => {
-  loadProjects()
-  // 自动加载各项目工作区状态、分支列表和提交日志，并缓存 HEAD hash
+onMounted(async () => {
+  await loadProjects()
+  // 默认选中第一个分类
+  if (!activeCategory.value && groupedProjects.value.length > 0) {
+    activeCategory.value = groupedProjects.value[0].category.id
+  }
+  // 延迟加载当前分类下项目的工作区状态，初始只看到此分类
   setTimeout(async () => {
-    for (const p of projects.value) {
-      await loadWorkingTree(p.id)
-      await loadCommitLog(p.id)
-      await loadBranches(p.id)
-      headHashes.value[p.id] = await props.manager.getHeadHash(p.path)
-    }
+    const catId = activeCategory.value
+    const projList = catId ? projects.value.filter(p => p.categoryId === catId) : projects.value
+    await asyncPool(4, projList, async (p) => {
+      const [, hash] = await Promise.all([
+        loadWorkingTree(p.id),
+        props.manager.getHeadHash(p.path),
+        loadCommitLog(p.id),
+        loadBranches(p.id),
+      ])
+      if (hash) headHashes.value[p.id] = hash
+    })
     startRefreshTimer()
   }, 200)
 })
@@ -795,6 +912,114 @@ async function selectDirectory() {
     // 最终降级：用户手动输入
   }
 }
+
+// ---- 扫描导入 ----
+
+function handleOpenScan() {
+  scanError.value = ""
+  scanDirInput.value = ""
+  scanResults.value = []
+  scanSelection.value = {}
+  showScanDialog.value = true
+}
+
+function handleCloseScan() {
+  showScanDialog.value = false
+  scanError.value = ""
+}
+
+async function handleStartScan() {
+  scanError.value = ""
+  try {
+    await startScan(scanDirInput.value.trim())
+    // 扫描成功 → 自动全选未导入项
+    const sel: Record<string, boolean> = {}
+    for (const repo of scanResults.value) {
+      if (!repo.alreadyImported) {
+        sel[repo.path] = true
+      }
+    }
+    scanSelection.value = sel
+  } catch (e: any) {
+    scanError.value = e?.message || (props.i18n.scanError || '扫描失败')
+  }
+}
+
+function handleToggleSelectAll() {
+  const allSelected = scanResults.value.every(
+    r => r.alreadyImported || scanSelection.value[r.path],
+  )
+  const sel: Record<string, boolean> = {}
+  for (const repo of scanResults.value) {
+    if (!repo.alreadyImported) {
+      sel[repo.path] = !allSelected
+    }
+  }
+  scanSelection.value = sel
+}
+
+function toggleScanItem(path: string) {
+  scanSelection.value = { ...scanSelection.value, [path]: !scanSelection.value[path] }
+}
+
+async function handleImportSelected() {
+  const selected = scanResults.value
+    .filter(r => scanSelection.value[r.path])
+    .map(r => r.path)
+  const catId = activeCategory.value || "__ungrouped__"
+  await importScanResults(selected, catId)
+  handleCloseScan()
+}
+
+/** 扫描目录专用路径选择，结果写入 scanDirInput */
+async function selectScanDirectory() {
+  // 优先使用 Electron 原生目录选择对话框
+  if (typeof window.require === "function") {
+    try {
+      let remote: any
+      try {
+        remote = window.require("@electron/remote")
+      } catch {
+        const electron = window.require("electron")
+        remote = electron.remote || electron
+      }
+      if (remote?.dialog?.showOpenDialog) {
+        const result = await remote.dialog.showOpenDialog({
+          properties: ["openDirectory"],
+          title: "选择要扫描的目录",
+        })
+        if (!result.canceled && result.filePaths[0]) {
+          scanDirInput.value = result.filePaths[0]
+          return
+        }
+      }
+    } catch {
+      // 降级
+    }
+  }
+  // 降级方案：浏览器环境使用 input[webkitdirectory]
+  try {
+    const input = document.createElement("input")
+    input.type = "file"
+    input.setAttribute("webkitdirectory", "")
+    input.setAttribute("directory", "")
+    input.onchange = (e: any) => {
+      const files = e.target?.files
+      if (files && files.length > 0) {
+        const relativePath = files[0].webkitRelativePath
+        const dirName = relativePath.split("/")[0]
+        if (files[0].path) {
+          const fullPath = files[0].path
+          const dirPath = fullPath.substring(0, fullPath.lastIndexOf(dirName) + dirName.length)
+          scanDirInput.value = dirPath
+        }
+      }
+    }
+    input.click()
+  } catch {
+    // 最终降级
+  }
+}
 </script>
 
 <style lang="scss">
@@ -809,7 +1034,7 @@ async function selectDirectory() {
   flex-direction: column;
   height: 100%;
   padding: 12px;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .gp-header {
@@ -903,9 +1128,12 @@ async function selectDirectory() {
 }
 
 .gp-list {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .gp-card {
@@ -1296,6 +1524,95 @@ async function selectDirectory() {
   &:focus {
     @include focus-ring;
   }
+}
+
+// 扫描导入弹窗
+.gp-scan-results {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  padding: 8px;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+}
+
+.gp-scan-results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0 6px;
+}
+
+.gp-scan-count {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.6;
+}
+
+.gp-scan-item {
+  border-bottom: 1px solid var(--b3-border-color);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.gp-scan-item-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px;
+  cursor: pointer;
+  transition: background 0.1s;
+
+  &:hover {
+    background: var(--b3-theme-surface);
+  }
+
+  &.gp-scan-imported {
+    opacity: 0.4;
+    cursor: default;
+    pointer-events: none;
+
+    &:hover {
+      background: transparent;
+    }
+  }
+}
+
+.gp-scan-item-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.gp-scan-item-name {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.gp-scan-item-path {
+  font-size: 9px;
+  font-family: $vp-mono;
+  opacity: 0.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gp-scan-badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--b3-theme-primary-lightest);
+  color: var(--b3-theme-primary);
+  white-space: nowrap;
 }
 
 // 按钮样式已提取到 styles/_buttons.scss

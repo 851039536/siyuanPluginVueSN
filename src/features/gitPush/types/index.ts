@@ -1,12 +1,14 @@
 import type { Plugin } from "siyuan"
 import { createVueDockApp } from "@/utils/vueAppHelper"
 import { getNodeProcessModules } from "@/utils/nodeModules"
+import { getNodeFsPathOs } from "@/utils/nodeModules"
 import { callAI, getApiConfigFromPlugin } from "@/utils/aiApi"
-import type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo, ProjectCategory, CommitLogEntry, BranchInfo } from "./storage"
+import type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo, ProjectCategory, CommitLogEntry, BranchInfo, ScannedGitRepo } from "./storage"
 import { GitPushStorage, COMMIT_TYPE_VALUES } from "./storage"
 import GitPushPanel from "../index.vue"
 
 export type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo, ProjectCategory, CommitLogEntry, BranchInfo }
+export type { ScannedGitRepo }
 export { GitPushStorage, COMMIT_TYPE_VALUES }
 
 export class GitPushManager {
@@ -421,6 +423,60 @@ export class GitPushManager {
   }
 
   /**
+   * BFS 递归扫描指定目录下的所有 Git 仓库
+   */
+  async scanForGitRepos(dirPath: string): Promise<ScannedGitRepo[]> {
+    const nodeModules = getNodeFsPathOs()
+    if (!nodeModules) throw new Error("Node 环境不可用")
+    const { fs, path } = nodeModules
+
+    if (!fs.existsSync(dirPath)) {
+      throw new Error("路径不存在")
+    }
+    if (!fs.statSync(dirPath).isDirectory()) {
+      throw new Error("路径不是目录")
+    }
+
+    const SKIP_DIRS = new Set([
+      "node_modules", ".git", "__pycache__", ".venv", "venv",
+      "dist", "build", "target", "bin", "obj",
+    ])
+
+    const results: ScannedGitRepo[] = []
+    const queue: string[] = [dirPath]
+
+    while (queue.length > 0) {
+      const currentDir = queue.shift()!
+
+      try {
+        const entries = fs.readdirSync(currentDir, { withFileTypes: true })
+        let hasGitDir = false
+
+        for (const entry of entries) {
+          const fullPath = path.join(currentDir, entry.name)
+          if (entry.name === ".git" && entry.isDirectory()) {
+            hasGitDir = true
+          } else if (entry.isDirectory() && !SKIP_DIRS.has(entry.name)) {
+            queue.push(fullPath)
+          }
+        }
+
+        if (hasGitDir) {
+          results.push({
+            name: path.basename(currentDir),
+            path: currentDir,
+          })
+        }
+      } catch {
+        // 跳过无权限或无法访问的目录
+        continue
+      }
+    }
+
+    return results
+  }
+
+  /**
    * 检查项目是否可以推送到云端（有 GitHub 或 Gitee 远程）
    */
   async checkCanPushToCloud(id: string): Promise<{
@@ -444,8 +500,7 @@ export class GitPushManager {
   }
 
   /**
-   * 执行 git 命令
-   * 自动对含空格/特殊字符的非标志参数加双引号，解决文件名和提交信息含空格的问题
+   * 执行 git 命令（execFile 直调，无 shell 开销）
    */
   private execGit(
     cwd: string,
@@ -453,23 +508,15 @@ export class GitPushManager {
   ): Promise<string> {
     const cp = this.getProcess()
     if (!cp) throw new Error("Node 环境不可用")
-    const escaped = args.map(a => {
-      // 子命令（第一个参数，如 add/commit/status）不需要引号
-      // 标志参数（以 - 开头）和 -- 不需要引号
-      // 其余参数若含空格则加双引号
-      if (a.startsWith("-") || a === "--") return a
-      if (/[\s"'$`\\]/.test(a)) return `"${a.replace(/"/g, '\\"')}"`
-      return a
-    })
-    const cmd = `git ${escaped.join(" ")}`
     // 诊断日志：stage/unstage/status 操作
     const isStageOp = /^(add|reset|status)/.test(args[0] || "")
-    if (isStageOp) console.log(`[gitPush:execGit] cwd=${cwd} cmd=${cmd}`)
+    if (isStageOp) console.log(`[gitPush:execGit] cwd=${cwd} args=${args.join(" ")}`)
 
     return new Promise((resolve, reject) => {
-      cp.exec(
-        cmd,
-        { cwd, timeout: 30000, encoding: "utf8" },
+      cp.execFile(
+        "git",
+        args,
+        { cwd, timeout: 30000, encoding: "utf8", windowsHide: true },
         (error: any, stdout: string, stderr: string) => {
           if (isStageOp) console.log(`[gitPush:execGit] stdout=${stdout?.substring(0, 200)} stderr=${stderr?.substring(0, 200)}`)
           if (error) {

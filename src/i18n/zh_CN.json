@@ -1656,6 +1656,17 @@
     "generateMsg": "生成提交信息",
     "generating": "生成中...",
     "commit": "提交",
-    "committing": "提交中..."
+    "committing": "提交中...",
+    "importProject": "导入项目",
+    "scanDir": "扫描目录",
+    "scanDirPlaceholder": "选择要递归扫描的目录...",
+    "startScan": "开始扫描",
+    "scanning": "扫描中...",
+    "scanResults": "扫描结果",
+    "noScanResults": "未找到 Git 仓库",
+    "selectAll": "全选",
+    "imported": "已导入",
+    "importSelected": "导入选中",
+    "scanError": "扫描失败"
   }
 }

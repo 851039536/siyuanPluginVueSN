@@ -1583,6 +1583,17 @@
     "generateMsg": "Generate Message",
     "generating": "Generating...",
     "commit": "Commit",
-    "committing": "Committing..."
+    "committing": "Committing...",
+    "importProject": "Import Projects",
+    "scanDir": "Scan Directory",
+    "scanDirPlaceholder": "Select a directory to scan recursively...",
+    "startScan": "Start Scan",
+    "scanning": "Scanning...",
+    "scanResults": "Scan Results",
+    "noScanResults": "No Git repositories found",
+    "selectAll": "Select All",
+    "imported": "Imported",
+    "importSelected": "Import Selected",
+    "scanError": "Scan failed"
   }
 }

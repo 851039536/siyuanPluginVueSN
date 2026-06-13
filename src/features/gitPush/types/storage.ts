@@ -123,6 +123,14 @@ export interface BranchInfo {
   current: boolean
 }
 
+/** 扫描到的 Git 仓库 */
+export interface ScannedGitRepo {
+  /** 目录名（用作项目名） */
+  name: string
+  /** 完整路径 */
+  path: string
+}
+
 const DEFAULT_PROJECTS: GitProject[] = []
 
 const DEFAULT_UNGROUPED: ProjectCategory = { id: "__ungrouped__", name: "未分组", color: "#888888", order: 0 }

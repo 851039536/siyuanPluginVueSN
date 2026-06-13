@@ -1,4 +1,4 @@
-import type { GitProject, PushStatusInfo, WorkingTreeInfo, ProjectCategory, CommitLogEntry, BranchInfo } from "../types"
+import type { GitProject, PushStatusInfo, WorkingTreeInfo, ProjectCategory, CommitLogEntry, BranchInfo, ScannedGitRepo } from "../types"
 import type { GitPushManager } from "../types"
 import { ref, computed } from "vue"
 
@@ -24,6 +24,11 @@ export function useGitPush(manager: GitPushManager) {
   const commitLogs = ref<Record<string, CommitLogEntry[]>>({})
   /** 分支列表缓存 id → BranchInfo[] */
   const branches = ref<Record<string, BranchInfo[]>>({})
+
+  /** 扫描导入相关状态 */
+  const scanning = ref(false)
+  const scanResults = ref<(ScannedGitRepo & { alreadyImported: boolean })[]>([])
+  const scanDirInput = ref("")
 
   /** 按分类分组后的项目列表 */
   const groupedProjects = computed(() => {
@@ -322,6 +327,34 @@ export function useGitPush(manager: GitPushManager) {
     return manager.checkIsGitRepo(path)
   }
 
+  /** 扫描指定目录下的所有 Git 仓库 */
+  async function startScan(dirPath: string) {
+    scanning.value = true
+    scanResults.value = []
+    try {
+      const repos = await manager.scanForGitRepos(dirPath)
+      const existingPaths = new Set(
+        projects.value.map(p => p.path.replace(/\\/g, "/").replace(/\/+$/, ""))
+      )
+      scanResults.value = repos.map(repo => ({
+        ...repo,
+        alreadyImported: existingPaths.has(
+          repo.path.replace(/\\/g, "/").replace(/\/+$/, "")
+        ),
+      }))
+    } finally {
+      scanning.value = false
+    }
+  }
+
+  /** 导入选中的扫描结果 */
+  async function importScanResults(selectedPaths: string[], categoryId: string) {
+    for (const repo of scanResults.value) {
+      if (!selectedPaths.includes(repo.path) || repo.alreadyImported) continue
+      await addProject(repo.name, repo.path, categoryId)
+    }
+  }
+
   return {
     projects,
     categories,
@@ -361,6 +394,11 @@ export function useGitPush(manager: GitPushManager) {
     pullToAll,
     pullSingle,
     checkIsGitRepo,
+    startScan,
+    importScanResults,
+    scanning,
+    scanResults,
+    scanDirInput,
     loadCategories,
     addCategory,
     updateCategory,

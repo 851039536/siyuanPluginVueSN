@@ -4,7 +4,6 @@
  */
 import type { CSSProperties } from "vue"
 import type { SelectOption } from "@/components/Select.vue"
-import type { DecorationConfig } from "../types"
 import { CODE_IMAGE_DEFAULTS } from "../types"
 import hljs from "highlight.js"
 import html2canvas from "html2canvas"
@@ -13,6 +12,7 @@ import {
   computed,
   ref,
 } from "vue"
+import { triggerBlobDownload } from "@/utils/domUtils"
 import "highlight.js/styles/github.css"
 import "highlight.js/styles/github-dark.css"
 
@@ -43,11 +43,6 @@ export const LANGUAGE_MAP = Object.freeze({
   sql: "SQL",
   bash: "Bash",
 } as const)
-
-export const contentTypeOptions: SelectOption[] = [
-  { value: "code", label: "代码" },
-  { value: "text", label: "文字" },
-]
 
 export const languageOptions: SelectOption[] = Object.entries(LANGUAGE_MAP).map(
   ([value, label]) => ({ value, label }),
@@ -147,21 +142,6 @@ export function useCodeImageGenerator() {
     borderStyle: borderWidth.value > 0 ? "solid" : "none",
   }))
 
-  /** 装饰配置对象（传递给 DecorationSettings 等子组件） */
-  const decorationConfig = computed<DecorationConfig>(() => ({
-    showDecorations: showDecorations.value,
-    enableWatermark: enableWatermark.value,
-    watermarkText: watermarkText.value,
-    enableAuthor: enableAuthor.value,
-    authorName: authorName.value,
-    enableTimestamp: enableTimestamp.value,
-    borderWidth: borderWidth.value,
-    borderRadius: borderRadius.value,
-    paddingSize: paddingSize.value,
-    backgroundOpacity: backgroundOpacity.value,
-    shadowIntensity: shadowIntensity.value,
-  }))
-
   // 工具方法
   const getLanguageDisplay = (): string =>
     LANGUAGE_MAP[selectedLanguage.value as keyof typeof LANGUAGE_MAP]
@@ -223,10 +203,14 @@ export function useCodeImageGenerator() {
     if (!codeContent.value) return
     try {
       const canvas = await generateCanvas()
-      const link = document.createElement("a")
-      link.download = createFilename()
-      link.href = canvas.toDataURL("image/png", 1.0)
-      link.click()
+      const blob = await new Promise<Blob>((resolve, reject) =>
+        canvas.toBlob(
+          (b) => (b ? resolve(b) : reject(new Error("Blob generation failed"))),
+          "image/png",
+          1.0,
+        ),
+      )
+      triggerBlobDownload(blob, createFilename())
       showMessage(downloadedMsg, CODE_IMAGE_DEFAULTS.messageDuration, "info")
     } catch (error) {
       console.error("下载失败:", error instanceof Error ? error.message : String(error))
@@ -255,7 +239,6 @@ export function useCodeImageGenerator() {
     paddingSize,
     backgroundOpacity,
     shadowIntensity,
-    decorationConfig,
     // 计算属性
     currentStyleOptions,
     highlightedCode,

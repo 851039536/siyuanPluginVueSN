@@ -480,8 +480,9 @@ export class GitPushManager {
 
     try {
       const result = await callAI(
-        `以下是 git 工作区变更的文件列表，生成一条不超过 12 个字的简短描述（只返回描述本身）：
-${names}${more}`,
+        `根据以下 git 工作区变更的文件，推断改动意图，生成一条不超过 12 个字的简短描述。只返回描述本身，不要解释。
+示例：README.md → "更新README文档"；index.ts+types.ts → "重构类型定义"；App.vue+style.css → "调整页面布局和样式"；package.json → "更新依赖配置"
+变更文件：${names}${more}`,
         aiConfig,
         { temperature: 0.5, maxTokens: 40 },
       )

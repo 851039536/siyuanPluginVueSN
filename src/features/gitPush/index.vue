@@ -883,6 +883,8 @@ async function handleRefresh(id: string) {
     await refreshRemotes(id)
     await loadPushStatus(id)
     await loadWorkingTree(id)
+    await loadCommitLog(id)
+    await loadBranches(id)
     await loadStashList(id)
   } finally {
     refreshing.value = null
@@ -1089,6 +1091,11 @@ async function handleAddCategory() {
 async function handleDeleteCategory(id: string) {
   const cat = categories.value.find(c => c.id === id)
   if (!cat || !confirm(`确定删除分类 "${cat.name}"？\n该分类下的项目将移至「未分组」。`)) return
+  // 如果删除的是当前选中分类，切到第一个可用分类
+  if (activeCategory.value === id) {
+    const others = groupedProjects.value.filter(g => g.category.id !== id)
+    activeCategory.value = others.length > 0 ? others[0].category.id : ""
+  }
   await deleteCategoryFn(id)
 }
 

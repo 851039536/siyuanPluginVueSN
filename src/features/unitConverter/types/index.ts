@@ -3,22 +3,6 @@ import { createVueDockApp } from "@/utils/vueAppHelper"
 import UnitConverterPanel from "../index.vue"
 
 /**
- * 转换器类型定义
- */
-export interface ConverterTab {
-  key: string
-  name: string
-  i18nKey?: string
-}
-
-/**
- * 单位转换器配置
- */
-export interface UnitConverterOptions {
-  defaultTab?: string
-}
-
-/**
  * 单位转换器管理类
  */
 export class UnitConverterManager {

@@ -9,8 +9,7 @@ import { UnitConverterManager } from "./types"
  */
 export function registerUnitConverter(plugin: PluginSample) {
   const manager = new UnitConverterManager(plugin)
-  manager.init();
-  (plugin as any).__unitConverter = manager
+  manager.init()
   return manager
 }
 

@@ -60,10 +60,10 @@
       <h4>使用说明</h4>
       <ul>
         <li
-          v-for="info in USAGE_INFO"
-          :key="info.base"
+          v-for="info in BASES"
+          :key="info.value"
         >
-          <strong>{{ info.name }} ({{ info.base }}):</strong> {{ info.chars }}
+          <strong>{{ info.name }} ({{ info.value }}):</strong> {{ info.chars }}
         </li>
       </ul>
     </div>
@@ -79,66 +79,39 @@ import {
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
 
-// 常量数据使用 shallowRef 避免深层响应式
+// 进制配置（合并名称与有效字符集，消除 BASES/USAGE_INFO 重复）
 const BASES = shallowRef([
   {
     value: 2,
     name: "二进制",
+    chars: "0-1",
   },
   {
     value: 8,
     name: "八进制",
+    chars: "0-7",
   },
   {
     value: 10,
     name: "十进制",
+    chars: "0-9",
   },
   {
     value: 16,
     name: "十六进制",
+    chars: "0-9, A-F",
   },
   {
     value: 32,
     name: "三十二进制",
+    chars: "0-9, A-V",
   },
   {
     value: 36,
     name: "三十六进制",
-  },
-])
-
-const USAGE_INFO = [
-  {
-    base: 2,
-    name: "二进制",
-    chars: "0-1",
-  },
-  {
-    base: 8,
-    name: "八进制",
-    chars: "0-7",
-  },
-  {
-    base: 10,
-    name: "十进制",
-    chars: "0-9",
-  },
-  {
-    base: 16,
-    name: "十六进制",
-    chars: "0-9, A-F",
-  },
-  {
-    base: 32,
-    name: "三十二进制",
-    chars: "0-9, A-V",
-  },
-  {
-    base: 36,
-    name: "三十六进制",
     chars: "0-9, A-Z",
   },
-]
+])
 
 const inputValue = ref("10")
 const fromBase = ref(10)

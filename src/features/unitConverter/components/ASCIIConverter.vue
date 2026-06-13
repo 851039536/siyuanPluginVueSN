@@ -188,7 +188,7 @@ function getCharForDisplay(code: number): string {
 </script>
 
 <style lang="scss" scoped>
-@use "../styles/index.scss" as *;
+@use "../styles/index.scss";
 
 .ascii-converter {
   display: flex;

@@ -114,6 +114,30 @@
               </option>
             </select>
             <button
+              v-if="project.githubUrl"
+              class="vp-btn vp-btn--ghost vp-btn--sm"
+              :title="'打开 GitHub ' + project.githubUrl"
+              @click="handleOpenWeb(project.githubUrl)"
+            >
+              <Icon icon="mdi:github" height="14" />
+            </button>
+            <button
+              v-if="project.giteeUrl"
+              class="vp-btn vp-btn--ghost vp-btn--sm"
+              :title="'打开 Gitee ' + project.giteeUrl"
+              @click="handleOpenWeb(project.giteeUrl)"
+            >
+              <Icon icon="mdi:git" height="14" />
+            </button>
+            <button
+              v-if="project.giteaUrl"
+              class="vp-btn vp-btn--ghost vp-btn--sm"
+              :title="'打开 Gitea ' + project.giteaUrl"
+              @click="handleOpenWeb(project.giteaUrl)"
+            >
+              <Icon icon="mdi:tea" height="14" />
+            </button>
+            <button
               class="vp-btn vp-btn--ghost vp-btn--sm"
               title="打开项目目录"
               @click="handleOpenPath(project.path)"
@@ -729,6 +753,38 @@ async function handleOpenPath(path: string) {
     }
   }
   // 浏览器环境：无法直接打开本地文件夹
+}
+
+/** 将 git URL 转为浏览器可访问的 web URL */
+function gitUrlToWebUrl(url: string): string {
+  // https://github.com/user/repo.git → https://github.com/user/repo
+  if (url.startsWith("https://") || url.startsWith("http://")) {
+    return url.replace(/\.git$/, "")
+  }
+  // git@github.com:user/repo.git → https://github.com/user/repo
+  const sshMatch = url.match(/^git@([^:]+):(.+?)(?:\.git)?$/)
+  if (sshMatch) {
+    return `https://${sshMatch[1]}/${sshMatch[2]}`
+  }
+  return url
+}
+
+/** 在浏览器中打开远程仓库网页 */
+async function handleOpenWeb(url: string) {
+  const webUrl = gitUrlToWebUrl(url)
+  if (typeof window.require === "function") {
+    try {
+      const electron = window.require("electron")
+      const shell = electron.shell || electron.remote?.shell
+      if (shell?.openExternal) {
+        await shell.openExternal(webUrl)
+        return
+      }
+    } catch {
+      // 降级
+    }
+  }
+  window.open(webUrl, "_blank")
 }
 
 function handleRemove(project: any) {

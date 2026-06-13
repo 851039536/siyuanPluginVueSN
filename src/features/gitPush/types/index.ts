@@ -48,10 +48,13 @@ export class GitPushManager {
     project.githubRemote = undefined
     project.giteeRemote = undefined
     project.giteaRemote = undefined
+    project.githubUrl = undefined
+    project.giteeUrl = undefined
+    project.giteaUrl = undefined
     for (const r of remotes) {
-      if (r.isGithub) project.githubRemote = r.name
-      if (r.isGitee) project.giteeRemote = r.name
-      if (r.isGitea) project.giteaRemote = r.name
+      if (r.isGithub) { project.githubRemote = r.name; project.githubUrl = r.url }
+      if (r.isGitee) { project.giteeRemote = r.name; project.giteeUrl = r.url }
+      if (r.isGitea) { project.giteaRemote = r.name; project.giteaUrl = r.url }
     }
   }
 

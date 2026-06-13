@@ -14,10 +14,16 @@ export interface GitProject {
   categoryId: string
   /** GitHub 远程名称（自动检测） */
   githubRemote?: string
+  /** GitHub 远程 URL */
+  githubUrl?: string
   /** Gitee 远程名称（自动检测） */
   giteeRemote?: string
+  /** Gitee 远程 URL */
+  giteeUrl?: string
   /** Gitea 远程名称（自建实例，自动检测） */
   giteaRemote?: string
+  /** Gitea 远程 URL */
+  giteaUrl?: string
   /** 添加时间 */
   addedAt: number
 }

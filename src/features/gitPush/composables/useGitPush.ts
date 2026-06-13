@@ -1,4 +1,4 @@
-import type { GitProject, PushStatusInfo, WorkingTreeInfo, ProjectCategory, CommitLogEntry, BranchInfo, ScannedGitRepo } from "../types"
+import type { GitProject, PushStatusInfo, WorkingTreeInfo, ProjectCategory, CommitLogEntry, BranchInfo, ScannedGitRepo, StashEntry } from "../types"
 import type { GitPushManager } from "../types"
 import { ref, computed } from "vue"
 
@@ -32,6 +32,11 @@ export function useGitPush(manager: GitPushManager) {
 
   /** git 并发配置 */
   const gitConcurrency = ref(3)
+
+  /** Stash 条目缓存 id → StashEntry[] */
+  const stashEntries = ref<Record<string, StashEntry[]>>({})
+  /** Stash 操作加载中 id → true */
+  const stashLoading = ref<Record<string, boolean>>({})
 
   /** 按分类分组后的项目列表 */
   const groupedProjects = computed(() => {
@@ -341,6 +346,41 @@ export function useGitPush(manager: GitPushManager) {
     gitConcurrency.value = n
   }
 
+  async function withProjectPathStash(id: string, fn: (path: string) => Promise<void>) {
+    stashLoading.value[id] = true
+    try {
+      const project = projects.value.find(p => p.id === id)
+      if (!project) return
+      await fn(project.path)
+      await loadStashList(id)
+      await loadWorkingTree(id)
+    } finally {
+      delete stashLoading.value[id]
+    }
+  }
+
+  async function loadStashList(id: string) {
+    const project = projects.value.find(p => p.id === id)
+    if (!project) return
+    stashEntries.value[id] = await manager.stashList(project.path)
+  }
+
+  async function doStashSave(id: string, message?: string) {
+    await withProjectPathStash(id, (path) => manager.stashSave(path, message))
+  }
+
+  async function doStashPop(id: string, index: number) {
+    await withProjectPathStash(id, (path) => manager.stashPop(path, index))
+  }
+
+  async function doStashApply(id: string, index: number) {
+    await withProjectPathStash(id, (path) => manager.stashApply(path, index))
+  }
+
+  async function doStashDrop(id: string, index: number) {
+    await withProjectPathStash(id, (path) => manager.stashDrop(path, index))
+  }
+
   /** 扫描指定目录下的所有 Git 仓库 */
   async function startScan(dirPath: string) {
     scanning.value = true
@@ -421,5 +461,12 @@ export function useGitPush(manager: GitPushManager) {
     gitConcurrency,
     loadGitConcurrency,
     setGitConcurrency,
+    stashEntries,
+    stashLoading,
+    loadStashList,
+    doStashSave,
+    doStashPop,
+    doStashApply,
+    doStashDrop,
   }
 }

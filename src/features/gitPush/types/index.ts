@@ -3,11 +3,11 @@ import { createVueDockApp } from "@/utils/vueAppHelper"
 import { getNodeProcessModules } from "@/utils/nodeModules"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
 import { callAI, getApiConfigFromPlugin } from "@/utils/aiApi"
-import type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo, ProjectCategory, CommitLogEntry, BranchInfo, ScannedGitRepo } from "./storage"
+import type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo, ProjectCategory, CommitLogEntry, BranchInfo, ScannedGitRepo, StashEntry } from "./storage"
 import { GitPushStorage, COMMIT_TYPE_VALUES } from "./storage"
 import GitPushPanel from "../index.vue"
 
-export type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo, ProjectCategory, CommitLogEntry, BranchInfo }
+export type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo, ProjectCategory, CommitLogEntry, BranchInfo, StashEntry }
 export type { ScannedGitRepo }
 export { GitPushStorage, COMMIT_TYPE_VALUES }
 
@@ -419,6 +419,50 @@ export class GitPushManager {
       )
     }
     return await this.execGit(projectPath, ["checkout", branch])
+  }
+
+  /** 暂存当前工作区变更 */
+  async stashSave(projectPath: string, message?: string): Promise<void> {
+    const args = ["stash", "push", "--include-untracked"]
+    if (message) args.push("-m", message)
+    await this.execGit(projectPath, args)
+  }
+
+  /** 列出所有 stash 条目 */
+  async stashList(projectPath: string): Promise<StashEntry[]> {
+    try {
+      const raw = await this.execGit(projectPath, ["stash", "list", "--format=%gd%x00%gs"])
+      if (!raw) return []
+      const entries: StashEntry[] = []
+      const lines = raw.split("\n").filter(Boolean)
+      for (const line of lines) {
+        const [refName, subject] = line.split("\0")
+        if (!refName) continue
+        const idxMatch = refName.match(/^stash@\{(\d+)\}$/)
+        entries.push({
+          index: idxMatch ? parseInt(idxMatch[1], 10) : entries.length,
+          message: subject || refName,
+        })
+      }
+      return entries
+    } catch {
+      return []
+    }
+  }
+
+  /** 恢复最近一次 stash（pop = 恢复并删除） */
+  async stashPop(projectPath: string, index = 0): Promise<void> {
+    await this.execGit(projectPath, ["stash", "pop", `stash@{${index}}`])
+  }
+
+  /** 应用 stash 但不删除 */
+  async stashApply(projectPath: string, index = 0): Promise<void> {
+    await this.execGit(projectPath, ["stash", "apply", `stash@{${index}}`])
+  }
+
+  /** 删除 stash 条目 */
+  async stashDrop(projectPath: string, index = 0): Promise<void> {
+    await this.execGit(projectPath, ["stash", "drop", `stash@{${index}}`])
   }
 
   /**

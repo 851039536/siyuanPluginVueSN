@@ -137,6 +137,14 @@ export interface ScannedGitRepo {
   path: string
 }
 
+/** Stash 条目 */
+export interface StashEntry {
+  /** 序号（0=最近） */
+  index: number
+  /** 描述信息 */
+  message: string
+}
+
 const DEFAULT_PROJECTS: GitProject[] = []
 
 const DEFAULT_UNGROUPED: ProjectCategory = { id: "__ungrouped__", name: "未分组", color: "#888888", order: 0 }

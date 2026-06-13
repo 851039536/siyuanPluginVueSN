@@ -445,7 +445,7 @@ export class GitPushManager {
    */
   async getFileDiff(projectPath: string, file: string, staged = false): Promise<string> {
     try {
-      const args = ["diff", "--text"] // --text 强制文本模式，避免中文显示为 \346\226\207 八进制转义
+      const args = ["-c", "core.quotepath=false", "diff", "--text"] // --text 强制文本模式，-c 禁用路径转义
       if (staged) args.push("--cached")
       args.push("--", file)
       return await this.execGit(projectPath, args) || "（无差异）"
@@ -476,7 +476,8 @@ export class GitPushManager {
 
   /** 提交暂存的内容 */
   async commit(projectPath: string, message: string): Promise<string> {
-    return await this.execGit(projectPath, ["commit", "-m", message])
+    // -c core.quotepath=false 禁用中文路径八进制转义，让输出显示可读文件名
+    return await this.execGit(projectPath, ["-c", "core.quotepath=false", "commit", "-m", message])
   }
 
   /**
@@ -487,13 +488,13 @@ export class GitPushManager {
     try {
       // 获取暂存区差异文本
       const diffText = await this.execGit(projectPath, [
-        "diff", "--text", "--cached", "--stat",
+        "-c", "core.quotepath=false", "diff", "--text", "--cached", "--stat",
       ])
       if (!diffText) return { message: "chore: update files", source: "heuristic" }
 
       // 截取用于 AI 的 diff（最多 3000 字符，避免 token 超限）
       const fullDiff = await this.execGit(projectPath, [
-        "diff", "--text", "--cached",
+        "-c", "core.quotepath=false", "diff", "--text", "--cached",
       ])
       const diffSnippet = (fullDiff || diffText).substring(0, 3000)
 

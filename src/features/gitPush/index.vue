@@ -896,6 +896,7 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
 
 .gp-input {
   width: 100%;
+  box-sizing: border-box;
   padding: 7px 10px;
   border: 1px solid var(--b3-border-color);
   border-radius: 4px;

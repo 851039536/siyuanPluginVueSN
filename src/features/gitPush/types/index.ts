@@ -14,6 +14,12 @@ export { GitPushStorage, COMMIT_TYPE_VALUES }
 export class GitPushManager {
   private plugin: Plugin
   storage: GitPushStorage
+  /** 当前正在执行的 git 子进程数 */
+  private gitRunning = 0
+  /** 最大并发 git 子进程数 */
+  private readonly GIT_MAX_CONCURRENT = 3
+  /** 等待队列 */
+  private gitWaitQueue: (() => void)[] = []
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
@@ -500,35 +506,43 @@ export class GitPushManager {
   }
 
   /**
-   * 执行 git 命令（execFile 直调，无 shell 开销）
+   * 执行 git 命令（execFile 直调，内部信号量限流 max 3 并发）
    */
-  private execGit(
-    cwd: string,
-    args: string[],
-  ): Promise<string> {
-    const cp = this.getProcess()
-    if (!cp) throw new Error("Node 环境不可用")
-    // 诊断日志：stage/unstage/status 操作
-    const isStageOp = /^(add|reset|status)/.test(args[0] || "")
-    if (isStageOp) console.log(`[gitPush:execGit] cwd=${cwd} args=${args.join(" ")}`)
+  private execGit(cwd: string, args: string[]): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+      const run = () => {
+        const cp = this.getProcess()
+        if (!cp) { reject(new Error("Node 环境不可用")); return }
+        this.gitRunning++
+        const isStageOp = /^(add|reset|status)/.test(args[0] || "")
+        if (isStageOp) console.log(`[gitPush:execGit] cwd=${cwd} args=${args.join(" ")} running=${this.gitRunning}`)
 
-    return new Promise((resolve, reject) => {
-      cp.execFile(
-        "git",
-        args,
-        { cwd, timeout: 30000, encoding: "utf8", windowsHide: true },
-        (error: any, stdout: string, stderr: string) => {
-          if (isStageOp) console.log(`[gitPush:execGit] stdout=${stdout?.substring(0, 200)} stderr=${stderr?.substring(0, 200)}`)
-          if (error) {
-            if (isStageOp) console.error(`[gitPush:execGit] ERROR:`, error.message, stderr)
-            reject(new Error(stderr || error.message))
-          } else {
-            // 只移除末尾换行符，保留前导空格/缩进
-            // 否则 git status --porcelain 首行 " M file" 会被 trim 成 "M file"，误判为已暂存
-            resolve(stdout.replace(/[\r\n]+$/, ""))
-          }
-        },
-      )
+        cp.execFile(
+          "git",
+          args,
+          { cwd, timeout: 30000, encoding: "utf8", windowsHide: true },
+          (error: any, stdout: string, stderr: string) => {
+            if (isStageOp) console.log(`[gitPush:execGit] stdout=${stdout?.substring(0, 200)} stderr=${stderr?.substring(0, 200)}`)
+            this.gitRunning--
+            // 唤醒队列中的下一个
+            const next = this.gitWaitQueue.shift()
+            if (next) next()
+
+            if (error) {
+              if (isStageOp) console.error(`[gitPush:execGit] ERROR:`, error.message, stderr)
+              reject(new Error(stderr || error.message))
+            } else {
+              resolve(stdout.replace(/[\r\n]+$/, ""))
+            }
+          },
+        )
+      }
+
+      if (this.gitRunning < this.GIT_MAX_CONCURRENT) {
+        run()
+      } else {
+        this.gitWaitQueue.push(run)
+      }
     })
   }
 

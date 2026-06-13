@@ -953,8 +953,10 @@ async function handleDiscard(id: string, file: string, staged: boolean, status: 
 // ---- Stash 操作 ----
 
 async function handleStashSave(id: string) {
+  const msg = prompt("暂存描述（可选，留空使用时间戳）：", "")
+  if (msg === null) return // 用户取消
   try {
-    await doStashSave(id)
+    await doStashSave(id, msg.trim() || new Date().toLocaleString())
   } catch (e: any) {
     alert(`暂存失败: ${e?.message || e}`)
   }

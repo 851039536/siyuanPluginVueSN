@@ -92,29 +92,21 @@
 
         <!-- 远程仓库状态 -->
         <div class="gp-remotes">
-          <div class="gp-remote-item" :class="{ active: !!project.githubRemote }">
-            <Icon icon="mdi:github" />
-            <span v-if="project.githubRemote">{{ project.githubRemote }}</span>
+          <div
+            v-for="r in REMOTES"
+            :key="r.key"
+            class="gp-remote-item"
+            :class="{ active: !!project[r.remoteProp] }"
+          >
+            <Icon :icon="r.icon" />
+            <span v-if="project[r.remoteProp]">{{ project[r.remoteProp] }}</span>
             <span v-else class="gp-remote-none">{{ i18n.notDetected || '未检测到' }}</span>
-            <!-- 推送状态指示 -->
-            <span v-if="pushStatuses[project.id]?.remotes.github" class="gp-status-badge" :class="statusBadgeClass(project.id, 'github')">
-              {{ statusLabel(project.id, 'github') }}
-            </span>
-          </div>
-          <div class="gp-remote-item" :class="{ active: !!project.giteeRemote }">
-            <Icon icon="mdi:git" />
-            <span v-if="project.giteeRemote">{{ project.giteeRemote }}</span>
-            <span v-else class="gp-remote-none">{{ i18n.notDetected || '未检测到' }}</span>
-            <span v-if="pushStatuses[project.id]?.remotes.gitee" class="gp-status-badge" :class="statusBadgeClass(project.id, 'gitee')">
-              {{ statusLabel(project.id, 'gitee') }}
-            </span>
-          </div>
-          <div class="gp-remote-item" :class="{ active: !!project.giteaRemote }">
-            <Icon icon="mdi:tea" />
-            <span v-if="project.giteaRemote">{{ project.giteaRemote }}</span>
-            <span v-else class="gp-remote-none">{{ i18n.notDetected || '未检测到' }}</span>
-            <span v-if="pushStatuses[project.id]?.remotes.gitea" class="gp-status-badge" :class="statusBadgeClass(project.id, 'gitea')">
-              {{ statusLabel(project.id, 'gitea') }}
+            <span
+              v-if="pushStatuses[project.id]?.remotes[r.key]"
+              class="gp-status-badge"
+              :class="statusBadgeClass(project.id, r.key)"
+            >
+              {{ statusLabel(project.id, r.key) }}
             </span>
           </div>
         </div>
@@ -129,51 +121,33 @@
           :commit-output="commitOutputs[project.id] || ''"
           :generated-msg="generatingMsgs[project.id]?.text || ''"
           :file-diffs="fileDiffsForProject(project.id)"
-          @stage-file="(file) => handleStageFile(project.id, file)"
-          @unstage-file="(file) => handleUnstageFile(project.id, file)"
-          @stage-all="handleStageAll(project.id)"
-          @unstage-all="handleUnstageAll(project.id)"
+          @stage-file="(file) => handleGitOp('暂存失败', () => stageItem(project.id, file), project.id)"
+          @unstage-file="(file) => handleGitOp('取消暂存失败', () => unstageItem(project.id, file), project.id)"
+          @stage-all="handleGitOp('暂存失败', () => stageAllItems(project.id), project.id)"
+          @unstage-all="handleGitOp('取消暂存失败', () => unstageAllItems(project.id), project.id)"
           @commit="(msg) => handleCommit(project.id, msg)"
           @generate-msg="handleGenerateMsg(project.id)"
-          @load-diff="(file, staged) => handleLoadDiff(project.id, file, staged)"
+          @load-diff="(file, staged) => loadFileDiff(project.id, file, staged)"
         />
 
         <!-- 推送按钮组 -->
         <div class="gp-push-group">
           <button
+            v-for="r in REMOTES"
+            :key="r.key"
             class="vp-btn vp-btn--ghost gp-push-btn"
-            :disabled="!project.githubRemote || isPushing(project.id) || !needsPushFor(project.id, 'github')"
-            @click="handlePushSingle(project.id, 'github')"
+            :disabled="!project[r.remoteProp] || isPushing(project.id) || !needsPushFor(project.id, r.key)"
+            @click="pushSingle(project.id, r.key as 'github' | 'gitee' | 'gitea')"
           >
-            <Icon v-if="isPushing(project.id, 'github')" icon="mdi:loading" class="gp-spin" />
-            <Icon v-else icon="mdi:github" />
-            <span v-if="isPushing(project.id, 'github')">{{ i18n.pushing || '推送中...' }}</span>
-            <span v-else>GitHub</span>
-          </button>
-          <button
-            class="vp-btn vp-btn--ghost gp-push-btn"
-            :disabled="!project.giteeRemote || isPushing(project.id) || !needsPushFor(project.id, 'gitee')"
-            @click="handlePushSingle(project.id, 'gitee')"
-          >
-            <Icon v-if="isPushing(project.id, 'gitee')" icon="mdi:loading" class="gp-spin" />
-            <Icon v-else icon="mdi:git" />
-            <span v-if="isPushing(project.id, 'gitee')">{{ i18n.pushing || '推送中...' }}</span>
-            <span v-else>Gitee</span>
-          </button>
-          <button
-            class="vp-btn vp-btn--ghost gp-push-btn"
-            :disabled="!project.giteaRemote || isPushing(project.id) || !needsPushFor(project.id, 'gitea')"
-            @click="handlePushSingle(project.id, 'gitea')"
-          >
-            <Icon v-if="isPushing(project.id, 'gitea')" icon="mdi:loading" class="gp-spin" />
-            <Icon v-else icon="mdi:tea" />
-            <span v-if="isPushing(project.id, 'gitea')">{{ i18n.pushing || '推送中...' }}</span>
-            <span v-else>Gitea</span>
+            <Icon v-if="isPushing(project.id, r.key)" icon="mdi:loading" class="gp-spin" />
+            <Icon v-else :icon="r.icon" />
+            <span v-if="isPushing(project.id, r.key)">{{ i18n.pushing || '推送中...' }}</span>
+            <span v-else>{{ r.label }}</span>
           </button>
           <button
             class="vp-btn vp-btn--primary gp-push-btn"
             :disabled="(!project.githubRemote && !project.giteeRemote && !project.giteaRemote) || isPushing(project.id) || !pushStatuses[project.id]?.needsPush"
-            @click="handlePushAll(project.id)"
+            @click="pushToAll(project.id)"
           >
             <Icon v-if="isPushing(project.id, 'all')" icon="mdi:loading" class="gp-spin" />
             <Icon v-else icon="mdi:cloud-upload" />
@@ -307,9 +281,18 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue"
 import { Icon } from "@iconify/vue"
-import type { GitPushManager } from "./types"
+import type { GitPushManager, GitProject } from "./types"
 import { useGitPush } from "./composables/useGitPush"
 import WorkingTreePanel from "./components/WorkingTreePanel.vue"
+
+type RemoteKey = "github" | "gitee" | "gitea"
+
+/** 远程仓库配置常量（驱动模板 v-for） */
+const REMOTES: { key: RemoteKey; icon: string; label: string; remoteProp: keyof GitProject }[] = [
+  { key: "github", icon: "mdi:github", label: "GitHub", remoteProp: "githubRemote" },
+  { key: "gitee", icon: "mdi:git", label: "Gitee", remoteProp: "giteeRemote" },
+  { key: "gitea", icon: "mdi:tea", label: "Gitea", remoteProp: "giteaRemote" },
+]
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -418,14 +401,6 @@ async function handleAdd() {
   }
 }
 
-async function handlePushAll(id: string) {
-  await pushToAll(id)
-}
-
-async function handlePushSingle(id: string, target: "github" | "gitee" | "gitea") {
-  await pushSingle(id, target)
-}
-
 async function handleRefresh(id: string) {
   refreshing.value = id
   try {
@@ -475,35 +450,12 @@ function handleRemove(project: any) {
 
 // ---- 工作区操作 ----
 
-async function handleStageFile(id: string, file: string) {
+/** 统一的 git 操作错误处理包装 */
+async function handleGitOp(label: string, fn: () => Promise<void>, id: string) {
   try {
-    await stageItem(id, file)
+    await fn()
   } catch (e: any) {
-    commitOutputs.value[id] = `暂存失败: ${e?.message || e}`
-  }
-}
-
-async function handleUnstageFile(id: string, file: string) {
-  try {
-    await unstageItem(id, file)
-  } catch (e: any) {
-    commitOutputs.value[id] = `取消暂存失败: ${e?.message || e}`
-  }
-}
-
-async function handleStageAll(id: string) {
-  try {
-    await stageAllItems(id)
-  } catch (e: any) {
-    commitOutputs.value[id] = `暂存失败: ${e?.message || e}`
-  }
-}
-
-async function handleUnstageAll(id: string) {
-  try {
-    await unstageAllItems(id)
-  } catch (e: any) {
-    commitOutputs.value[id] = `取消暂存失败: ${e?.message || e}`
+    commitOutputs.value[id] = `${label}: ${e?.message || e}`
   }
 }
 
@@ -530,10 +482,6 @@ async function handleGenerateMsg(id: string) {
     commitOutputs.value[id] = `❌ 生成失败: ${e?.message || e}`
     generatingMsgs.value = { ...generatingMsgs.value, [id]: { generating: false, text: "" } }
   }
-}
-
-async function handleLoadDiff(id: string, file: string, staged: boolean) {
-  await loadFileDiff(id, file, staged)
 }
 
 // ---- 分类管理 ----
@@ -753,7 +701,7 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
 
 .gp-card-path {
   font-size: 10px;
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: $vp-mono;
   opacity: 0.5;
   white-space: nowrap;
   overflow: hidden;
@@ -784,7 +732,7 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   align-items: center;
   gap: 4px;
   font-size: 11px;
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: $vp-mono;
   opacity: 0.35;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -856,7 +804,7 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   pre {
     margin: 0;
     font-size: 10px;
-    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    font-family: $vp-mono;
     white-space: pre-wrap;
     word-break: break-all;
     color: var(--b3-theme-on-surface);
@@ -942,7 +890,7 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   border: 1px solid var(--b3-border-color);
   border-radius: 4px;
   font-size: 12px;
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: $vp-mono;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   outline: none;

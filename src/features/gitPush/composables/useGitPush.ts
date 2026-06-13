@@ -6,7 +6,7 @@ export function useGitPush(manager: GitPushManager) {
   const projects = ref<GitProject[]>([])
   const categories = ref<ProjectCategory[]>([])
   const loading = ref(false)
-  /** 正在推送的项目 id → "github"|"gitee"|"both" */
+  /** 正在推送的项目 id → "github"|"gitee"|"all" */
   const pushingRemote = ref<Record<string, string>>({})
   const pushOutputs = ref<Record<string, string>>({})
   /** 项目推送状态缓存 id → PushStatusInfo */
@@ -148,36 +148,32 @@ export function useGitPush(manager: GitPushManager) {
     return diff
   }
 
-  /** 暂存单个文件 */
-  async function stageItem(id: string, file: string) {
+  /** 通过项目路径执行 git 操作的通用包装 */
+  async function withProjectPath(id: string, fn: (path: string) => Promise<void>) {
     const project = projects.value.find(p => p.id === id)
     if (!project) return
-    await manager.stageFile(project.path, file)
+    await fn(project.path)
     await loadWorkingTree(id)
+  }
+
+  /** 暂存单个文件 */
+  async function stageItem(id: string, file: string) {
+    await withProjectPath(id, (path) => manager.stageFile(path, file))
   }
 
   /** 暂存全部 */
   async function stageAllItems(id: string) {
-    const project = projects.value.find(p => p.id === id)
-    if (!project) return
-    await manager.stageAll(project.path)
-    await loadWorkingTree(id)
+    await withProjectPath(id, (path) => manager.stageAll(path))
   }
 
   /** 取消暂存单个文件 */
   async function unstageItem(id: string, file: string) {
-    const project = projects.value.find(p => p.id === id)
-    if (!project) return
-    await manager.unstageFile(project.path, file)
-    await loadWorkingTree(id)
+    await withProjectPath(id, (path) => manager.unstageFile(path, file))
   }
 
   /** 取消全部暂存 */
   async function unstageAllItems(id: string) {
-    const project = projects.value.find(p => p.id === id)
-    if (!project) return
-    await manager.unstageAll(project.path)
-    await loadWorkingTree(id)
+    await withProjectPath(id, (path) => manager.unstageAll(path))
   }
 
   /** 提交 */
@@ -231,10 +227,6 @@ export function useGitPush(manager: GitPushManager) {
     projects.value = projects.value.map(p => p.id === projectId ? { ...p, categoryId } : p)
   }
 
-  async function checkCanPush(id: string) {
-    return manager.checkCanPushToCloud(id)
-  }
-
   async function checkIsGitRepo(path: string) {
     return manager.checkIsGitRepo(path)
   }
@@ -265,9 +257,7 @@ export function useGitPush(manager: GitPushManager) {
     removeProject,
     refreshRemotes,
     pushToAll,
-    pushToBoth: pushToAll,
     pushSingle,
-    checkCanPush,
     checkIsGitRepo,
     loadCategories,
     addCategory,

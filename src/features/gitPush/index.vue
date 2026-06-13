@@ -12,12 +12,11 @@
         </button>
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
-          title="刷新全部"
+          title="手动刷新当前分类"
           :disabled="refreshingAll"
           @click="handleRefreshAll"
         >
           <Icon icon="mdi:sync" :class="{ 'gp-spin': refreshingAll }" />
-          <span v-if="refreshInterval > 0" class="gp-refresh-timer">{{ refreshInterval }}s</span>
         </button>
         <button class="vp-btn vp-btn--ghost gp-add-btn" @click="showAddDialog = true">
           <Icon icon="mdi:plus" />
@@ -48,6 +47,19 @@
       </button>
     </div>
 
+    <!-- 搜索框 -->
+    <div v-if="projects.length > 0" class="gp-search-wrap">
+      <Icon icon="mdi:magnify" class="gp-search-icon" />
+      <input
+        v-model="searchQuery"
+        class="gp-search-input"
+        :placeholder="i18n.searchPlaceholder || '搜索项目...'"
+      />
+      <button v-if="searchQuery" class="gp-search-clear" @click="searchQuery = ''">
+        <Icon icon="mdi:close" height="14" />
+      </button>
+    </div>
+
     <!-- 项目列表 -->
     <div v-if="loading" class="gp-loading">{{ i18n.loading || '加载中...' }}</div>
 
@@ -59,7 +71,7 @@
     </div>
 
     <div v-else class="gp-list">
-      <template v-for="group in visibleGroups" :key="group.category.id">
+      <template v-for="group in filteredGroups" :key="group.category.id">
         <div
           v-for="project in group.projects"
           :key="project.id"
@@ -348,7 +360,7 @@
 
     <!-- 设置弹窗 -->
     <div v-if="showSettings" class="gp-mask" @click.self="showSettings = false">
-      <div class="gp-dialog" style="width: 320px;">
+      <div class="gp-dialog" style="width: 300px;">
         <div class="gp-dialog-header">
           <span class="gp-dialog-title">{{ i18n.settings || '设置' }}</span>
           <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="showSettings = false">
@@ -357,20 +369,20 @@
         </div>
         <div class="gp-dialog-body">
           <div class="gp-set-row">
-            <label class="gp-set-label">自动刷新间隔</label>
+            <label class="gp-set-label">Git 并发数</label>
             <div class="gp-set-input-row">
               <input
-                v-model.number="refreshInterval"
+                v-model.number="gitConcurrency"
                 type="number"
                 class="gp-input"
-                min="30"
-                max="300"
-                step="5"
-                style="width: 60px; text-align: center;"
+                min="1"
+                max="10"
+                style="width: 50px; text-align: center;"
               />
-              <span class="gp-set-unit">秒（最低 30 秒，0 表示关闭）</span>
+              <button class="vp-btn vp-btn--primary vp-btn--sm" @click="handleSaveConcurrency">保存</button>
             </div>
           </div>
+          <div class="gp-set-hint">同时执行的 git 子进程数上限（1~10）</div>
         </div>
       </div>
     </div>
@@ -456,7 +468,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, computed } from "vue"
+import { onMounted, ref, computed } from "vue"
 import { Icon } from "@iconify/vue"
 import type { GitPushManager, GitProject, CommitLogEntry, ScannedGitRepo } from "./types"
 import { useGitPush } from "./composables/useGitPush"
@@ -522,13 +534,14 @@ const {
   scanning,
   scanResults,
   scanDirInput,
+  gitConcurrency,
+  loadGitConcurrency,
+  setGitConcurrency,
 } = useGitPush(props.manager)
 
 const showAddDialog = ref(false)
 const showCatDialog = ref(false)
 const showSettings = ref(false)
-const refreshInterval = ref(30)
-let refreshTimer: ReturnType<typeof setInterval> | null = null
 /** 当前选中的分类 ID（onMounted 中设为首个分类） */
 const activeCategory = ref<string>("")
 
@@ -545,6 +558,23 @@ const visibleGroups = computed(() => {
   if (!activeCategory.value) return groupedProjects.value
   return groupedProjects.value.filter(g => g.category.id === activeCategory.value)
 })
+/** 项目搜索关键词 */
+const searchQuery = ref("")
+
+/** 搜索过滤后的分组 */
+const filteredGroups = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  if (!q) return visibleGroups.value
+  return visibleGroups.value
+    .map(g => ({
+      ...g,
+      projects: g.projects.filter(
+        p => p.name.toLowerCase().includes(q) || p.path.toLowerCase().includes(q),
+      ),
+    }))
+    .filter(g => g.projects.length > 0)
+})
+
 const newProjectName = ref("")
 const newProjectPath = ref("")
 const newProjectCat = ref("__ungrouped__")
@@ -611,28 +641,13 @@ async function silentRefreshAll() {
   }))
 }
 
-function startRefreshTimer() {
-  stopRefreshTimer()
-  const secs = refreshInterval.value
-  if (secs <= 0) return
-  refreshTimer = setInterval(() => {
-    silentRefreshAll()
-  }, secs * 1000)
-}
-
-function stopRefreshTimer() {
-  if (refreshTimer !== null) {
-    clearInterval(refreshTimer)
-    refreshTimer = null
-  }
-}
-
 onMounted(async () => {
   await loadProjects()
   // 默认选中第一个分类
   if (!activeCategory.value && groupedProjects.value.length > 0) {
     activeCategory.value = groupedProjects.value[0].category.id
   }
+  loadGitConcurrency()
   // 延迟加载当前分类下项目的工作区状态（manager 内置信号量限流）
   setTimeout(async () => {
     const catId = activeCategory.value
@@ -646,12 +661,7 @@ onMounted(async () => {
       ])
       if (hash) headHashes.value[p.id] = hash
     }))
-    startRefreshTimer()
   }, 200)
-})
-
-onUnmounted(() => {
-  stopRefreshTimer()
 })
 
 async function handleAdd() {
@@ -698,11 +708,7 @@ async function handleRefresh(id: string) {
 async function handleRefreshAll() {
   refreshingAll.value = true
   try {
-    for (const p of projects.value) {
-      await refreshRemotes(p.id)
-      await loadPushStatus(p.id)
-      await loadWorkingTree(p.id)
-    }
+    await silentRefreshAll()
   } finally {
     refreshingAll.value = false
   }
@@ -815,6 +821,11 @@ async function handleDeleteCategory(id: string) {
 
 async function handleMoveProject(projectId: string, categoryId: string) {
   await moveProject(projectId, categoryId)
+}
+
+async function handleSaveConcurrency() {
+  await setGitConcurrency(gitConcurrency.value)
+  showSettings.value = false
 }
 
 /** 获取远程推送状态标签文案 */
@@ -1092,6 +1103,58 @@ async function selectScanDirectory() {
   font-size: 9px;
   font-family: $vp-mono;
   opacity: 0.4;
+}
+
+// 搜索框
+.gp-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin: 6px 0 2px;
+}
+
+.gp-search-icon {
+  position: absolute;
+  left: 8px;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.gp-search-input {
+  width: 100%;
+  padding: 5px 28px 5px 28px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: $vp-mono;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  outline: none;
+  transition: border-color 0.15s;
+
+  &:focus {
+    border-color: var(--b3-theme-primary);
+  }
+
+  &::placeholder {
+    opacity: 0.35;
+    font-family: inherit;
+  }
+}
+
+.gp-search-clear {
+  position: absolute;
+  right: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0.35;
+  padding: 2px;
+  color: var(--b3-theme-on-surface);
+
+  &:hover {
+    opacity: 0.7;
+  }
 }
 
 .gp-loading,
@@ -1405,12 +1468,6 @@ async function selectScanDirectory() {
 }
 
 // 分类管理弹窗
-.gp-refresh-timer {
-  font-size: 9px;
-  font-family: $vp-mono;
-  opacity: 0.35;
-}
-
 .gp-set-row {
   display: flex;
   align-items: center;
@@ -1429,10 +1486,9 @@ async function selectScanDirectory() {
   gap: 4px;
 }
 
-.gp-set-unit {
+.gp-set-hint {
   font-size: 10px;
-  opacity: 0.45;
-  white-space: nowrap;
+  opacity: 0.4;
 }
 
 .gp-cat-row {

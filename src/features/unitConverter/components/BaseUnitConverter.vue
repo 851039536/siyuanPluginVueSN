@@ -54,7 +54,6 @@ import type { UnitDefinition } from "../utils/converter"
 import {
   computed,
   ref,
-  shallowRef,
 } from "vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
@@ -79,22 +78,19 @@ const props = withDefaults(defineProps<Props>(), {
   showQuickResults: true,
 })
 
-// 使用 shallowRef 优化性能，单位数组不需要深层响应式
-const unitsRef = shallowRef(props.units)
-
 // 创建查找器（只创建一次）
-const lookup = computed(() => createUnitLookup(unitsRef.value))
+const lookup = computed(() => createUnitLookup(props.units))
 
 const inputValue = ref("1")
 const fromUnit = ref(props.defaultFrom || props.units[0]?.key || "")
 const toUnit = ref(props.defaultTo || props.units[1]?.key || "")
 
 // 生成选项（缓存）
-const unitOptions = computed(() => generateUnitOptions(unitsRef.value))
+const unitOptions = computed(() => generateUnitOptions(props.units))
 
 // 过滤后的单位列表（排除当前源单位）
 const filteredUnits = computed(() =>
-  unitsRef.value.filter((u) => u.key !== fromUnit.value),
+  props.units.filter((u: UnitDefinition) => u.key !== fromUnit.value),
 )
 
 // 转换结果

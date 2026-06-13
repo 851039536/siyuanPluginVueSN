@@ -35,6 +35,13 @@
           <div class="gp-card-actions">
             <button
               class="vp-btn vp-btn--ghost vp-btn--sm"
+              title="打开项目目录"
+              @click="handleOpenPath(project.path)"
+            >
+              <Icon icon="mdi:folder-open" height="14" />
+            </button>
+            <button
+              class="vp-btn vp-btn--ghost vp-btn--sm"
               title="重新检测远程仓库"
               @click="handleRefresh(project.id)"
             >
@@ -301,9 +308,28 @@ async function handleRefresh(id: string) {
     await refreshRemotes(id)
     // 刷新后重新检测推送状态
     await loadPushStatus(id)
+    // 同时刷新工作区状态
+    await loadWorkingTree(id)
   } finally {
     refreshing.value = null
   }
+}
+
+/** 在文件管理器中打开项目路径 */
+async function handleOpenPath(path: string) {
+  if (typeof window.require === "function") {
+    try {
+      const electron = window.require("electron")
+      const shell = electron.shell || electron.remote?.shell
+      if (shell?.openPath) {
+        await shell.openPath(path)
+        return
+      }
+    } catch {
+      // 降级
+    }
+  }
+  // 浏览器环境：无法直接打开本地文件夹
 }
 
 function handleRemove(project: any) {

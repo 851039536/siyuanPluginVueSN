@@ -1664,6 +1664,11 @@
     "selectAll": "全选",
     "imported": "已导入",
     "importSelected": "导入选中",
-    "scanError": "扫描失败"
+    "scanError": "扫描失败",
+    "conflictWarn": "远程有新的提交，建议先拉取再推送",
+    "stashSave": "暂存变更",
+    "stashRestore": "恢复",
+    "stashApply": "应用",
+    "stashDrop": "删除"
   }
 }

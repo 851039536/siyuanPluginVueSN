@@ -1591,6 +1591,11 @@
     "selectAll": "Select All",
     "imported": "Imported",
     "importSelected": "Import Selected",
-    "scanError": "Scan failed"
+    "scanError": "Scan failed",
+    "conflictWarn": "Remote has new commits, pull before pushing",
+    "stashSave": "Stash changes",
+    "stashRestore": "Restore",
+    "stashApply": "Apply",
+    "stashDrop": "Drop"
   }
 }

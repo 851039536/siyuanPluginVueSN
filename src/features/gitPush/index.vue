@@ -181,6 +181,12 @@
           </div>
         </div>
 
+        <!-- 远程冲突警告 -->
+        <div v-if="hasBehind(project.id)" class="gp-conflict-warn">
+          <Icon icon="mdi:alert-circle-outline" height="14" />
+          <span>{{ i18n.conflictWarn || '远程有新的提交，建议先拉取再推送' }}</span>
+        </div>
+
         <!-- 工作区变更状态 -->
         <WorkingTreePanel
           v-if="workingTrees[project.id]"
@@ -204,6 +210,49 @@
           @clear-output="commitOutputs[project.id] = ''"
           @discard-file="(file, staged, status) => handleDiscard(project.id, file, staged, status)"
         />
+
+        <!-- Stash 暂存 -->
+        <div class="gp-stash-wrap">
+          <div class="gp-stash-header">
+            <span class="gp-stash-label">STASH</span>
+            <span class="gp-stash-help" title="暂存：把当前未提交的修改临时保存起来，方便切换到其他分支工作。之后可以随时'恢复'回来继续编辑，就像把工作进度先放进抽屉里一样。">
+              <Icon icon="mdi:help-circle-outline" height="14" />
+            </span>
+            <button
+              class="vp-btn vp-btn--ghost vp-btn--sm"
+              :disabled="!workingTrees[project.id]?.hasChanges || stashLoading[project.id]"
+              @click="handleStashSave(project.id)"
+            >
+              <Icon v-if="stashLoading[project.id]" icon="mdi:loading" class="gp-spin" height="13" />
+              <Icon v-else icon="mdi:archive-outline" height="13" />
+              {{ i18n.stashSave || '暂存变更' }}
+            </button>
+          </div>
+          <div v-if="stashEntries[project.id]?.length" class="gp-stash-list">
+            <div v-for="e in stashEntries[project.id]" :key="e.index" class="gp-stash-row">
+              <span class="gp-stash-index">stash@&#123;&#123;{ e.index }}&#125;</span>
+              <span class="gp-stash-msg" :title="e.message">{{ e.message }}</span>
+              <button
+                class="vp-btn vp-btn--ghost vp-btn--sm"
+                title="恢复并删除 (pop)"
+                :disabled="stashLoading[project.id]"
+                @click="handleStashPop(project.id, e.index)"
+              >恢复</button>
+              <button
+                class="vp-btn vp-btn--ghost vp-btn--sm"
+                title="应用但不删除 (apply)"
+                :disabled="stashLoading[project.id]"
+                @click="handleStashApply(project.id, e.index)"
+              >应用</button>
+              <button
+                class="vp-btn vp-btn--ghost vp-btn--sm"
+                title="删除 (drop)"
+                :disabled="stashLoading[project.id]"
+                @click="handleStashDrop(project.id, e.index)"
+              >删除</button>
+            </div>
+          </div>
+        </div>
 
         <!-- 拉取按钮组 -->
         <div class="gp-push-group">
@@ -561,6 +610,13 @@ const {
   gitConcurrency,
   loadGitConcurrency,
   setGitConcurrency,
+  stashEntries,
+  stashLoading,
+  loadStashList,
+  doStashSave,
+  doStashPop,
+  doStashApply,
+  doStashDrop,
 } = useGitPush(props.manager)
 
 const showAddDialog = ref(false)
@@ -682,6 +738,7 @@ onMounted(async () => {
         props.manager.getHeadHash(p.path),
         loadCommitLog(p.id),
         loadBranches(p.id),
+        loadStashList(p.id),
       ])
       if (hash) headHashes.value[p.id] = hash
     }))
@@ -834,6 +891,42 @@ async function handleDiscard(id: string, file: string, staged: boolean, status: 
   }
 }
 
+// ---- Stash 操作 ----
+
+async function handleStashSave(id: string) {
+  try {
+    await doStashSave(id)
+  } catch (e: any) {
+    alert(`暂存失败: ${e?.message || e}`)
+  }
+}
+
+async function handleStashPop(id: string, index: number) {
+  if (!confirm(`确定恢复 stash@{${index}} 并删除该条目？恢复过程中如有冲突会保留该 stash。`)) return
+  try {
+    await doStashPop(id, index)
+  } catch (e: any) {
+    alert(`恢复失败: ${e?.message || e}`)
+  }
+}
+
+async function handleStashApply(id: string, index: number) {
+  try {
+    await doStashApply(id, index)
+  } catch (e: any) {
+    alert(`应用失败: ${e?.message || e}`)
+  }
+}
+
+async function handleStashDrop(id: string, index: number) {
+  if (!confirm(`确定删除 stash@{${index}}？此操作不可撤销。`)) return
+  try {
+    await doStashDrop(id, index)
+  } catch (e: any) {
+    alert(`删除失败: ${e?.message || e}`)
+  }
+}
+
 async function handleCommit(id: string, message: string) {
   commitOutputs.value[id] = ""
   try {
@@ -911,6 +1004,13 @@ function needsPushFor(projectId: string, remoteKey: string): boolean {
   const rs = status?.remotes[remoteKey]
   if (!rs) return true // 尚未检测，允许点击
   return rs.noUpstream || rs.ahead > 0
+}
+
+/** 判断项目是否有远程落后（远程有新提交） */
+function hasBehind(projectId: string): boolean {
+  const status = pushStatuses.value[projectId]
+  if (!status) return false
+  return Object.values(status.remotes).some(r => r.behind > 0)
 }
 
 async function selectDirectory() {
@@ -1352,6 +1452,19 @@ async function selectScanDirectory() {
   opacity: 0.35;
 }
 
+.gp-conflict-warn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--b3-theme-warning);
+  background: var(--b3-theme-warning-lightest);
+  border: 1px solid var(--b3-theme-warning-lighter, var(--b3-theme-warning));
+  border-radius: 4px;
+}
+
 .gp-status-badge {
   font-size: 10px;
   font-weight: 700;
@@ -1380,6 +1493,70 @@ async function selectScanDirectory() {
   display: flex;
   gap: 6px;
   margin-top: 6px;
+}
+
+// Stash 暂存
+.gp-stash-wrap {
+  border-top: 1px solid var(--b3-border-color);
+  margin-top: 6px;
+  padding-top: 6px;
+}
+
+.gp-stash-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.gp-stash-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.45;
+}
+
+.gp-stash-help {
+  cursor: help;
+  opacity: 0.35;
+  transition: opacity 0.15s;
+
+  &:hover {
+    opacity: 0.7;
+  }
+}
+
+.gp-stash-list {
+  margin-top: 4px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.gp-stash-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 0;
+  font-size: 10px;
+  border-bottom: 1px solid var(--b3-border-color);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.gp-stash-index {
+  font-family: $vp-mono;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.gp-stash-msg {
+  flex: 1;
+  font-family: $vp-mono;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .gp-push-btn {

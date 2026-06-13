@@ -24,6 +24,30 @@
 
     <div class="gp-divider" />
 
+    <!-- 分类 TAB 导航 -->
+    <div v-if="groupedProjects.length > 0" class="gp-tabs">
+      <button
+        class="gp-tab"
+        :class="{ active: activeCategory === '__all__' }"
+        @click="activeCategory = '__all__'"
+      >
+        <span>{{ i18n.allProjects || '全部' }}</span>
+        <span class="gp-tab-count">{{ projects.length }}</span>
+      </button>
+      <button
+        v-for="g in groupedProjects"
+        :key="g.category.id"
+        class="gp-tab"
+        :class="{ active: activeCategory === g.category.id }"
+        :style="activeCategory === g.category.id ? { borderBottomColor: g.category.color } : {}"
+        @click="activeCategory = g.category.id"
+      >
+        <span class="gp-tab-dot" :style="{ background: g.category.color }" />
+        <span>{{ g.category.name }}</span>
+        <span class="gp-tab-count">{{ g.projects.length }}</span>
+      </button>
+    </div>
+
     <!-- 项目列表 -->
     <div v-if="loading" class="gp-loading">{{ i18n.loading || '加载中...' }}</div>
 
@@ -35,12 +59,7 @@
     </div>
 
     <div v-else class="gp-list">
-      <template v-for="group in groupedProjects" :key="group.category.id">
-        <div class="gp-cat-header" :style="{ borderLeftColor: group.category.color }">
-          <span class="gp-cat-dot" :style="{ background: group.category.color }" />
-          <span class="gp-cat-name">{{ group.category.name }}</span>
-          <span class="gp-cat-count">{{ group.projects.length }}</span>
-        </div>
+      <template v-for="group in visibleGroups" :key="group.category.id">
         <div
           v-for="project in group.projects"
           :key="project.id"
@@ -329,7 +348,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from "vue"
+import { onMounted, ref, computed } from "vue"
 import { Icon } from "@iconify/vue"
 import type { GitPushManager, GitProject, CommitLogEntry } from "./types"
 import { useGitPush } from "./composables/useGitPush"
@@ -393,6 +412,14 @@ const {
 
 const showAddDialog = ref(false)
 const showCatDialog = ref(false)
+/** 当前选中的分类 ID，"__all__" 表示全部 */
+const activeCategory = ref<string>("__all__")
+
+/** 按分类 TAB 过滤后的分组 */
+const visibleGroups = computed(() => {
+  if (activeCategory.value === "__all__") return groupedProjects.value
+  return groupedProjects.value.filter(g => g.category.id === activeCategory.value)
+})
 const newProjectName = ref("")
 const newProjectPath = ref("")
 const newProjectCat = ref("__ungrouped__")
@@ -705,6 +732,59 @@ async function selectDirectory() {
   margin: 10px 0;
 }
 
+// 分类 TAB 导航栏
+.gp-tabs {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  padding: 0 0 4px;
+  -webkit-overflow-scrolling: touch;
+
+  &::-webkit-scrollbar { height: 0; }
+}
+
+.gp-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 4px 4px 0 0;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  font-size: 11px;
+  opacity: 0.5;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+
+  &:hover {
+    opacity: 0.8;
+  }
+
+  &.active {
+    opacity: 1;
+    font-weight: 600;
+    border-bottom-color: var(--b3-theme-primary);
+    background: var(--b3-theme-primary-lightest);
+  }
+}
+
+.gp-tab-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.gp-tab-count {
+  font-size: 9px;
+  font-family: $vp-mono;
+  opacity: 0.4;
+}
+
 .gp-loading,
 .gp-empty {
   display: flex;
@@ -736,37 +816,6 @@ async function selectDirectory() {
   &:hover {
     border-color: var(--b3-theme-primary);
   }
-}
-
-.gp-cat-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 0 2px;
-  border-left: 3px solid transparent;
-  padding-left: 8px;
-}
-
-.gp-cat-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.gp-cat-name {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  opacity: 0.5;
-}
-
-.gp-cat-count {
-  font-size: 10px;
-  font-weight: 600;
-  font-family: $vp-mono;
-  opacity: 0.35;
 }
 
 .gp-card-top {

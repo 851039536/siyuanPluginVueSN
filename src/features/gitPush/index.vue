@@ -256,6 +256,7 @@
           @load-diff="(file, staged) => loadFileDiff(project.id, file, staged)"
           @clear-output="commitOutputs[project.id] = ''"
           @discard-file="(file, staged, status) => handleDiscard(project.id, file, staged, status)"
+          @expand="handleExpand(project.id)"
         />
 
         <!-- Stash 暂存 -->
@@ -833,6 +834,27 @@ function commitLogForProject(projectId: string): CommitLogEntry[] {
 /** 提交日志加载状态 */
 const commitLogLoading = ref<Record<string, boolean>>({})
 
+/** 已展开过的项目集合（避免重复懒加载详情） */
+const expandedProjects = ref<Set<string>>(new Set())
+
+/** 工作区面板首次展开时懒加载详情：commitLog + branches + stash
+ *  首屏只加载了 workingTree/pushStatus，这三项延后到用户真正展开时才请求 */
+async function handleExpand(projectId: string) {
+  if (expandedProjects.value.has(projectId)) return
+  expandedProjects.value.add(projectId)
+  // 展开后立刻显示 loading 态
+  commitLogLoading.value[projectId] = true
+  try {
+    await Promise.all([
+      loadCommitLog(projectId),
+      loadBranches(projectId),
+      loadStashList(projectId),
+    ])
+  } finally {
+    delete commitLogLoading.value[projectId]
+  }
+}
+
 /** HEAD hash 缓存，用于跳过无变动项目的 commit log / branches 刷新 */
 const headHashes = ref<Record<string, string>>({})
 
@@ -876,23 +898,18 @@ onMounted(async () => {
   loadGitConcurrency()
   // 轮询 git 操作活跃数
   opsPoller = setInterval(() => { activeGitOps.value = props.manager.activeGitOps }, 120)
-  // 延迟加载当前分类下项目的工作区状态（批次处理避免拥堵）">
+  // 首屏只加载显示卡片所需的最小集：工作区变更摘要 + 推送状态。
+  // commitLog/branches/stash 改为展开工作区面板时按需懒加载（见 @expand）。
+  // getHeadHash 仅刷新去重用，首屏无历史值可对比，跳过。
   setTimeout(async () => {
     const catId = activeCategory.value
     const projList = catId ? projects.value.filter(p => p.categoryId === catId) : projects.value
     await batchProcess(projList, 3, async (p) => {
-      const [, hash] = await Promise.all([
-        loadWorkingTree(p.id),
-        props.manager.getHeadHash(p.path),
+      await Promise.all([
+        // 首屏 index 未被本进程改动，跳过 update-index --refresh 提速
+        loadWorkingTree(p.id, true),
         loadPushStatus(p.id),
-        loadCommitLog(p.id),
-        loadBranches(p.id),
       ])
-      if (hash) headHashes.value[p.id] = hash
-    })
-    // 加载所有项目的 stash 列表（轻量，每个项目一条 git 命令）
-    await batchProcess(projects.value, 3, async (p) => {
-      await loadStashList(p.id)
     })
   }, 200)
 })
@@ -901,7 +918,7 @@ onUnmounted(() => {
   if (opsPoller) { clearInterval(opsPoller); opsPoller = null }
 })
 
-/** 切换分类时懒加载该分类下项目的数据 */
+/** 切换分类时懒加载该分类下项目的数据（首屏最小集，详情展开时再补） */
 watch(activeCategory, async (catId) => {
   if (!catId) return
   const projList = projects.value.filter(p => p.categoryId === catId)
@@ -910,33 +927,28 @@ watch(activeCategory, async (catId) => {
   const pending = projList.filter(p => !workingTrees.value[p.id])
   if (pending.length === 0) return
   await batchProcess(pending, 3, async (p) => {
-    const [, hash] = await Promise.all([
-      loadWorkingTree(p.id),
-      props.manager.getHeadHash(p.path),
+    await Promise.all([
+      loadWorkingTree(p.id, true),
       loadPushStatus(p.id),
-      loadCommitLog(p.id),
-      loadBranches(p.id),
-      loadStashList(p.id),
     ])
-    if (hash) headHashes.value[p.id] = hash
   })
 })
 
-/** 切换到统计视图时，加载全部项目的数据以准确统计 */
+/** 切换到统计视图时，加载全部项目的数据以准确统计
+ *  统计视图需要 recentCommits/branches 等首屏未加载的详情，此处补齐 */
 watch(currentView, async (view) => {
   if (view !== "stats") return
-  const pending = projects.value.filter(p => !workingTrees.value[p.id])
+  const pending = projects.value.filter(p => !commitLogs.value[p.id])
   if (pending.length === 0) return
   await batchProcess(pending, 3, async (p) => {
-    const [, hash] = await Promise.all([
-      loadWorkingTree(p.id),
-      props.manager.getHeadHash(p.path),
-      loadPushStatus(p.id),
+    await Promise.all([
+      // 首屏可能未加载 working tree（新增项目），补齐
+      workingTrees.value[p.id] ? Promise.resolve() : loadWorkingTree(p.id, true),
+      pushStatuses.value[p.id] ? Promise.resolve() : loadPushStatus(p.id),
       loadCommitLog(p.id),
       loadBranches(p.id),
       loadStashList(p.id),
     ])
-    if (hash) headHashes.value[p.id] = hash
   })
 })
 

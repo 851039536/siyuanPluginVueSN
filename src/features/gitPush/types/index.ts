@@ -328,7 +328,8 @@ export class GitPushManager {
       remotesToCheck.push({ key: "gitea", remoteName: project.giteaRemote })
     }
 
-    for (const { key, remoteName } of remotesToCheck) {
+    // 并行检查每个远程
+    const remoteChecks = remotesToCheck.map(async ({ key, remoteName }) => {
       try {
         // 尝试检查远程分支是否存在
         await this.execGit(project.path, [
@@ -348,8 +349,7 @@ export class GitPushManager {
         const behind = parseInt(parts[0] || "0", 10) // 左侧 = 远程有而本地没有
         const ahead = parseInt(parts[1] || "0", 10)  // 右侧 = 本地有而远程没有
 
-        status.remotes[key] = { ahead, behind, noUpstream: false }
-        if (ahead > 0) status.needsPush = true
+        return { key, result: { ahead, behind, noUpstream: false }, ahead }
       } catch {
         // 远程分支不存在 → 意味着从未推送过，全部本地提交都需要推送
         const totalCommits = await this.execGit(project.path, [
@@ -359,9 +359,14 @@ export class GitPushManager {
         ]).catch(() => "0")
         const ahead = parseInt(totalCommits, 10) || 0
 
-        status.remotes[key] = { ahead, behind: 0, noUpstream: true }
-        if (ahead > 0) status.needsPush = true
+        return { key, result: { ahead, behind: 0, noUpstream: true }, ahead }
       }
+    })
+
+    const results = await Promise.all(remoteChecks)
+    for (const { key, result, ahead } of results) {
+      status.remotes[key] = result
+      if (ahead > 0) status.needsPush = true
     }
 
     return status

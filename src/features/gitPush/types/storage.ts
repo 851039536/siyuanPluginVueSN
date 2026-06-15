@@ -2,6 +2,12 @@ import type { Plugin } from "siyuan"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
 
+/** 项目状态（用于状态徽章；archived 是独立字段，不混入此处） */
+export type ProjectStatus = "active" | "maintenance" | "paused"
+
+/** 项目状态可选值（单一数据源，驱动 UI select） */
+export const PROJECT_STATUS_VALUES: ProjectStatus[] = ["active", "maintenance", "paused"]
+
 /** 项目映射条目 */
 export interface GitProject {
   /** 唯一标识（时间戳生成） */
@@ -26,6 +32,18 @@ export interface GitProject {
   giteaUrl?: string
   /** 添加时间 */
   addedAt: number
+  /** 多标签（自由文本，用于横向聚合筛选） */
+  tags?: string[]
+  /** 收藏/置顶（排序优先级最高） */
+  starred?: boolean
+  /** 项目状态徽章（active=在写/maintenance=维护中/paused=暂停） */
+  status?: ProjectStatus
+  /** 归档（默认隐藏，需 toggle 显示） */
+  archived?: boolean
+  /** 最后活动时间（ISO，由最近提交时间持久化，首屏直接读取展示） */
+  lastActivity?: string
+  /** 项目备注（编辑弹窗可填，展开面板可显示） */
+  note?: string
 }
 
 /** 项目分类 */
@@ -153,12 +171,15 @@ export class GitPushStorage {
   readonly projects: TypedStorage<GitProject[]>
   readonly categories: TypedStorage<ProjectCategory[]>
   readonly gitConcurrency: TypedStorage<number>
+  /** 全局标签缓存（所有用过的标签，用于筛选条与输入建议） */
+  readonly tags: TypedStorage<string[]>
 
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
     this.projects = new TypedStorage(storage, "git-push-projects", DEFAULT_PROJECTS)
     this.categories = new TypedStorage(storage, "git-push-categories", [DEFAULT_UNGROUPED])
     this.gitConcurrency = new TypedStorage(storage, "git-push-concurrency", 3)
+    this.tags = new TypedStorage(storage, "git-push-tags", [])
   }
 
   async init(): Promise<void> {
@@ -169,12 +190,20 @@ export class GitPushStorage {
       cats.unshift(DEFAULT_UNGROUPED)
       await this.categories.save(cats)
     }
-    // 将旧项目（无 categoryId）迁移到未分组
+    // 迁移旧项目：补 categoryId + 推导默认 status（依据 lastActivity 是否超过 90 天）
     const projs = await this.projects.loadOrDefault()
     let needsSave = false
+    const now = Date.now()
+    const NINETY_DAYS = 90 * 24 * 60 * 60 * 1000
     for (const p of projs) {
       if (!p.categoryId) {
         p.categoryId = "__ungrouped__"
+        needsSave = true
+      }
+      // status 缺失时按活动时间推导：长时间未活动 → paused，否则 active
+      if (!p.status) {
+        const last = p.lastActivity ? Date.parse(p.lastActivity) : NaN
+        p.status = !isNaN(last) && (now - last) > NINETY_DAYS ? "paused" : "active"
         needsSave = true
       }
     }

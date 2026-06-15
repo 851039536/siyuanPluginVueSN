@@ -621,7 +621,7 @@
         <div class="gp-dialog-body">
           <!-- 当前远程列表 -->
           <div v-if="remoteList.length" class="gp-remote-list">
-            <div v-for="(r, i) in remoteList" :key="i" class="gp-remote-row">
+            <div v-for="r in remoteList" :key="r.name" class="gp-remote-row">
               <span class="gp-remote-name">{{ r.name }}</span>
               <span class="gp-remote-url" :title="r.url">{{ r.url }}</span>
               <button
@@ -634,11 +634,14 @@
           <div v-else class="gp-remote-empty">暂无远程仓库</div>
           <!-- 添加远程表单 -->
           <div class="gp-remote-add">
-            <input v-model="newRemoteName" class="gp-input" placeholder="远程名称 (如 origin)" style="width:100px" />
+            <select v-model="newRemoteName" class="gp-select" style="width:110px">
+              <option value="" disabled>选择平台</option>
+              <option v-for="r in REMOTES" :key="r.key" :value="r.key">{{ r.label }}</option>
+            </select>
             <input v-model="newRemoteUrl" class="gp-input" placeholder="远程 URL" style="flex:1" />
             <button
               class="vp-btn vp-btn--primary vp-btn--sm"
-              :disabled="!newRemoteName.trim() || !newRemoteUrl.trim()"
+              :disabled="!newRemoteName || !newRemoteUrl.trim()"
               @click="handleAddRemote(remoteConfigProject.id)"
             >添加</button>
           </div>
@@ -1204,7 +1207,7 @@ async function handleSaveConcurrency() {
 
 async function openRemoteConfig(project: GitProject) {
   remoteError.value = ""
-  newRemoteName.value = ""
+  newRemoteName.value = "github"
   newRemoteUrl.value = ""
   try {
     remoteList.value = await props.manager.detectRemotes(project.path)
@@ -1218,7 +1221,7 @@ async function handleAddRemote(id: string) {
   remoteError.value = ""
   try {
     await addRemoteOp(id, newRemoteName.value.trim(), newRemoteUrl.value.trim())
-    newRemoteName.value = ""
+    newRemoteName.value = "github"
     newRemoteUrl.value = ""
     const project = projects.value.find(p => p.id === id)
     if (project) remoteList.value = await props.manager.detectRemotes(project.path)

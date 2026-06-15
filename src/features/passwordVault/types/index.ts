@@ -1,7 +1,6 @@
 /**
- * 密码箱类型定义
+ * 密码箱类型定义 — 仅包含类型和 Manager 类，不放运行时逻辑
  */
-import { ref } from "vue"
 
 // ============================================================
 // 类型定义
@@ -50,36 +49,6 @@ export interface PasswordCategory {
  */
 export interface PasswordHint {
   hint: string // 密码提示文本
-}
-
-// ============================================================
-// 全局状态
-// ============================================================
-
-/**
- * 弹窗显示状态
- */
-export const passwordVaultVisible = ref(false)
-
-/**
- * 显示密码箱弹窗
- */
-export function showPasswordVault() {
-  passwordVaultVisible.value = true
-}
-
-/**
- * 隐藏密码箱弹窗
- */
-export function hidePasswordVault() {
-  passwordVaultVisible.value = false
-}
-
-/**
- * 切换密码箱弹窗显示状态
- */
-export function togglePasswordVault() {
-  passwordVaultVisible.value = !passwordVaultVisible.value
 }
 
 // 导出存储管理

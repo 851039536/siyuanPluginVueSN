@@ -662,6 +662,14 @@ import StatsPanel from "./components/StatsPanel.vue"
 
 type RemoteKey = "github" | "gitee" | "gitea"
 
+/** 批次化并发处理：避免所有项目同时涌入 git 信号量导致排队拥堵 */
+async function batchProcess<T>(items: T[], batchSize: number, fn: (item: T) => Promise<void>) {
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize)
+    await Promise.all(batch.map(fn))
+  }
+}
+
 /** 远程仓库配置常量（驱动模板 v-for） */
 const REMOTES: { key: RemoteKey; icon: string; label: string; remoteProp: keyof GitProject }[] = [
   { key: "github", icon: "mdi:github", label: "GitHub", remoteProp: "githubRemote" },
@@ -828,14 +836,14 @@ const commitLogLoading = ref<Record<string, boolean>>({})
 /** HEAD hash 缓存，用于跳过无变动项目的 commit log / branches 刷新 */
 const headHashes = ref<Record<string, string>>({})
 
-/** 静默刷新当前分类下的项目状态（manager 内置 git 信号量限流 3 并发） */
+/** 静默刷新当前分类下的项目状态（批次处理，每批 3 个匹配 git 信号量上限） */
 async function silentRefreshAll() {
   const catId = activeCategory.value
   if (!catId) return
   const projList = projects.value.filter(p => p.categoryId === catId)
   if (projList.length === 0) return
 
-  await Promise.all(projList.map(async (p) => {
+  await batchProcess(projList, 3, async (p) => {
     const prev = headHashes.value[p.id] || ""
     const [, curr] = await Promise.all([
       loadPushStatus(p.id),
@@ -856,7 +864,7 @@ async function silentRefreshAll() {
         loadStashList(p.id),
       ])
     }
-  }))
+  })
 }
 
 onMounted(async () => {
@@ -868,11 +876,11 @@ onMounted(async () => {
   loadGitConcurrency()
   // 轮询 git 操作活跃数
   opsPoller = setInterval(() => { activeGitOps.value = props.manager.activeGitOps }, 120)
-  // 延迟加载当前分类下项目的工作区状态（manager 内置信号量限流）
+  // 延迟加载当前分类下项目的工作区状态（批次处理避免拥堵）">
   setTimeout(async () => {
     const catId = activeCategory.value
     const projList = catId ? projects.value.filter(p => p.categoryId === catId) : projects.value
-    await Promise.all(projList.map(async (p) => {
+    await batchProcess(projList, 3, async (p) => {
       const [, hash] = await Promise.all([
         loadWorkingTree(p.id),
         props.manager.getHeadHash(p.path),
@@ -881,9 +889,11 @@ onMounted(async () => {
         loadBranches(p.id),
       ])
       if (hash) headHashes.value[p.id] = hash
-    }))
+    })
     // 加载所有项目的 stash 列表（轻量，每个项目一条 git 命令）
-    await Promise.all(projects.value.map(p => loadStashList(p.id)))
+    await batchProcess(projects.value, 3, async (p) => {
+      await loadStashList(p.id)
+    })
   }, 200)
 })
 
@@ -899,7 +909,7 @@ watch(activeCategory, async (catId) => {
   // 只加载尚未缓存的
   const pending = projList.filter(p => !workingTrees.value[p.id])
   if (pending.length === 0) return
-  await Promise.all(pending.map(async (p) => {
+  await batchProcess(pending, 3, async (p) => {
     const [, hash] = await Promise.all([
       loadWorkingTree(p.id),
       props.manager.getHeadHash(p.path),
@@ -909,7 +919,7 @@ watch(activeCategory, async (catId) => {
       loadStashList(p.id),
     ])
     if (hash) headHashes.value[p.id] = hash
-  }))
+  })
 })
 
 /** 切换到统计视图时，加载全部项目的数据以准确统计 */
@@ -917,7 +927,7 @@ watch(currentView, async (view) => {
   if (view !== "stats") return
   const pending = projects.value.filter(p => !workingTrees.value[p.id])
   if (pending.length === 0) return
-  await Promise.all(pending.map(async (p) => {
+  await batchProcess(pending, 3, async (p) => {
     const [, hash] = await Promise.all([
       loadWorkingTree(p.id),
       props.manager.getHeadHash(p.path),
@@ -927,7 +937,7 @@ watch(currentView, async (view) => {
       loadStashList(p.id),
     ])
     if (hash) headHashes.value[p.id] = hash
-  }))
+  })
 })
 
 async function handleAdd() {

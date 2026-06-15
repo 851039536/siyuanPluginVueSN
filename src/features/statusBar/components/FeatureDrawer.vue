@@ -193,7 +193,7 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const gridMode = ref(true)
-const rarelyExpanded = ref(true)
+const rarelyExpanded = ref(false)
 
 // 当有"不常用"项被移除变为空时自动折叠
 const hasRarelyUsed = computed(() =>

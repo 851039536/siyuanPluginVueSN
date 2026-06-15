@@ -233,7 +233,10 @@ interface Emits {
   (e: "toggleRarelyUsed", id: string): void
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  rarelyUsedItems: () => [],
+  statusBarVisible: () => [],
+})
 const emit = defineEmits<Emits>()
 
 const gridMode = ref(true)
@@ -242,9 +245,7 @@ const searchQuery = ref("")
 const activeGroup = ref("__all__")
 
 // 当有"不常用"项被移除变为空时自动折叠
-const hasRarelyUsed = computed(() =>
-  props.rarelyUsedItems && props.rarelyUsedItems.length > 0,
-)
+const hasRarelyUsed = computed(() => props.rarelyUsedItems.length > 0)
 
 watch(hasRarelyUsed, (val) => {
   if (!val) {
@@ -265,7 +266,7 @@ const filteredItems = computed(() =>
 )
 
 const filteredRarelyItems = computed(() =>
-  (props.rarelyUsedItems || []).filter(matchSearch),
+  props.rarelyUsedItems.filter(matchSearch),
 )
 
 // 从所有项提取唯一分组标签

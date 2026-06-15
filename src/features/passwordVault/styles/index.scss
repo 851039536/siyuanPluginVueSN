@@ -24,8 +24,8 @@
   max-width: 90vw;
   max-height: 85vh;
   background: var(--b3-theme-background);
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-lg;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -89,7 +89,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  padding: 16px 20px;
+  padding: $spacing-lg;
 }
 
 // 分类筛选器
@@ -108,16 +108,19 @@
 
 .category-chip {
   @include flex-row-gap(6px);
-  padding: 6px 12px;
+  padding: 5px 12px;
   background: var(--b3-theme-surface-light);
   border: 1px solid var(--b3-border-color);
-  border-radius: 20px;
-  font-size: 13px;
+  border-radius: $radius-full;
+  font-size: 12px;
+  font-weight: 500;
   color: var(--b3-theme-on-surface);
   cursor: pointer;
+  transition: all 0.12s;
 
   &:hover {
     background: var(--b3-theme-surface);
+    border-color: var(--b3-theme-primary);
   }
 
   &.active {
@@ -142,9 +145,10 @@
   padding: 6px;
   background: var(--b3-theme-surface-light);
   border: 1px solid var(--b3-border-color);
-  border-radius: 8px;
+  border-radius: $vp-radius;
   color: var(--b3-theme-on-surface);
   flex-shrink: 0;
+  transition: all 0.12s;
 
   &:hover {
     background: var(--b3-theme-primary);
@@ -155,8 +159,8 @@
 
 // 控制区域
 .entries-controls {
-  @include flex-row-gap(12px);
-  margin-bottom: 16px;
+  @include flex-row-gap($spacing-md);
+  margin-bottom: $spacing-lg;
 
   .search-icon {
     color: var(--b3-theme-on-surface-light);
@@ -169,15 +173,15 @@
   flex: 1;
   overflow-y: auto;
   display: grid;
-  gap: 12px;
+  gap: $spacing-md;
 }
 
 .entry-card {
   @include card-base;
-  padding: 16px;
+  padding: $spacing-lg;
 
   &:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-color: var(--b3-theme-primary);
   }
 }
 
@@ -185,7 +189,7 @@
   @include flex-row;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 12px;
+  margin-bottom: $spacing-md;
 }
 
 .entry-title-wrapper {
@@ -200,7 +204,7 @@
 }
 
 .entry-header h3 {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--b3-theme-on-background);
   margin: 0;
@@ -211,25 +215,30 @@
 }
 
 .entry-category-tag {
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 500;
+  padding: 1px 6px;
+  border-radius: $radius-sm;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   flex-shrink: 0;
 }
 
 .entry-actions {
-  @include flex-row-gap(6px);
+  @include flex-row-gap($vp-radius);
   opacity: 0;
+  transition: opacity 0.12s;
 
   button {
-    padding: 4px 8px;
+    padding: 3px 8px;
     background: transparent;
     border: 1px solid var(--b3-border-color);
-    border-radius: 4px;
-    font-size: 12px;
+    border-radius: $radius-sm;
+    font-size: 11px;
+    font-weight: 600;
     color: var(--b3-theme-on-surface);
     cursor: pointer;
+    transition: all 0.12s;
 
     &:hover {
       background: var(--b3-theme-primary);
@@ -238,7 +247,7 @@
     }
 
     &:last-child {
-      padding: 4px;
+      padding: 3px 6px;
     }
   }
 }
@@ -253,12 +262,13 @@
   padding: 10px 12px;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
-  border-radius: 6px;
+  border-radius: $vp-radius;
   cursor: pointer;
-  margin-bottom: 8px;
+  margin-bottom: $spacing-sm;
 
   &:hover {
     background: var(--b3-theme-surface);
+    border-color: var(--b3-theme-primary);
   }
 
   svg {
@@ -286,25 +296,22 @@
 .entry-description {
   font-size: 13px;
   color: var(--b3-theme-on-surface-light);
-  margin-bottom: 12px;
+  margin-bottom: $spacing-md;
   line-height: 1.5;
 }
 
 .entry-field {
-  @include flex-row-gap(8px);
+  @include flex-row-gap($spacing-sm);
   padding: 10px 12px;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
-  border-radius: 6px;
+  border-radius: $vp-radius;
 }
 
 .field-label {
   @include flex-row-gap(4px);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--b3-theme-on-surface);
+  @include uppercase-label;
   flex-shrink: 0;
-  font-family: $font-heading;
 }
 
 .field-value {
@@ -315,7 +322,7 @@
   min-width: 0;
 
   .password-mask {
-    font-family: monospace;
+    font-family: $vp-mono;
     font-size: 14px;
     color: var(--b3-theme-on-background);
     overflow: hidden;
@@ -335,9 +342,11 @@
 
 .no-entries {
   @include flex-center;
-  padding: 60px 20px;
-  font-size: 14px;
+  padding: 60px $spacing-lg;
+  font-size: 13px;
   color: var(--b3-theme-on-surface-light);
+  font-style: italic;
+  opacity: 0.5;
 }
 
 // ============================================================
@@ -345,9 +354,9 @@
 // ============================================================
 
 .dialog-footer {
-  @include flex-row-gap(12px);
+  @include flex-row-gap($spacing-md);
   justify-content: space-between;
-  padding: 12px 20px;
+  padding: $spacing-md $spacing-lg;
   background: var(--b3-theme-surface);
   border-top: 1px solid var(--b3-border-color);
 }
@@ -360,25 +369,16 @@
 .change-password-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-}
-
-.change-password-form {
-  .password-input-wrapper {
-    width: 100%;
-  }
+  gap: $spacing-lg;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 
   label {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--b3-theme-on-surface);
-    font-family: $font-heading;
+    @include uppercase-label;
   }
 
   input,
@@ -395,8 +395,8 @@
 }
 
 .form-actions {
-  @include flex-row-gap(12px);
-  margin-top: 8px;
+  @include flex-row-gap($spacing-md);
+  margin-top: $spacing-sm;
 }
 
 // ============================================================
@@ -410,17 +410,17 @@
     display: flex;
     flex-direction: column;
     gap: 24px;
-    padding: 20px;
+    padding: $spacing-lg;
   }
 }
 
 .add-category-section,
 .category-list-section {
   h3 {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--b3-theme-on-background);
-    margin: 0 0 12px 0;
+    margin: 0 0 $spacing-md 0;
     font-family: $font-heading;
   }
 }
@@ -428,41 +428,36 @@
 .add-category-form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: $spacing-md;
 }
 
-// 删除的样式: .category-name-input - 实际使用 Input 组件
-
 .color-picker-wrapper {
-  @include flex-row-gap(8px);
+  @include flex-row-gap($spacing-sm);
   flex-wrap: wrap;
 }
 
 .color-option {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: $vp-radius;
   border: 2px solid transparent;
   cursor: pointer;
-  position: relative;
+  transition: transform 0.12s;
 
   &:hover {
-    transform: scale(1.1);
+    transform: scale(1.15);
   }
 
   &.selected {
     border-color: var(--b3-theme-on-background);
-    box-shadow: 0 0 0 2px var(--b3-theme-background),
-                0 0 0 4px var(--b3-theme-primary);
+    box-shadow: 0 0 0 2px var(--b3-theme-primary);
   }
 }
-
-// 删除的样式: .add-category-btn - 实际使用 Button 组件
 
 .category-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: $spacing-sm;
   max-height: 200px;
   overflow-y: auto;
 }
@@ -472,10 +467,10 @@
   padding: 10px 12px;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 6px;
+  border-radius: $vp-radius;
 
   &:hover {
-    background: var(--b3-theme-surface-light);
+    border-color: var(--b3-theme-primary);
   }
 }
 
@@ -488,17 +483,17 @@
 
 .category-name {
   flex: 1;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--b3-theme-on-background);
 }
-
-// 删除的样式: .delete-category-btn - 实际使用 Button 组件
 
 .default-badge {
   padding: 2px 8px;
   background: var(--b3-theme-primary);
   color: #fff;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 500;
+  border-radius: $radius-sm;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }

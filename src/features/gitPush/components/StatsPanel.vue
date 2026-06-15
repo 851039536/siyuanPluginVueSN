@@ -97,6 +97,57 @@
         </div>
       </div>
 
+      <!-- 项目管理概览（收藏/归档/状态分布） -->
+      <div class="gp-stats-section">
+        <div class="gp-stats-section-title">项目管理概览</div>
+        <div class="gp-mgmt-grid">
+          <div class="gp-mgmt-cell gp-mgmt-star">
+            <Icon icon="mdi:star" height="16" />
+            <div class="gp-mgmt-num">{{ starredCount }}</div>
+            <div class="gp-mgmt-label">收藏</div>
+          </div>
+          <div class="gp-mgmt-cell gp-mgmt-archive">
+            <Icon icon="mdi:archive-outline" height="16" />
+            <div class="gp-mgmt-num">{{ archivedCount }}</div>
+            <div class="gp-mgmt-label">归档</div>
+          </div>
+          <div class="gp-mgmt-cell gp-mgmt-active">
+            <Icon icon="mdi:circle-medium" height="16" />
+            <div class="gp-mgmt-num">{{ statusStats.active }}</div>
+            <div class="gp-mgmt-label">活跃</div>
+          </div>
+          <div class="gp-mgmt-cell gp-mgmt-maintenance">
+            <Icon icon="mdi:circle-medium" height="16" />
+            <div class="gp-mgmt-num">{{ statusStats.maintenance }}</div>
+            <div class="gp-mgmt-label">维护</div>
+          </div>
+          <div class="gp-mgmt-cell gp-mgmt-paused">
+            <Icon icon="mdi:pause-circle-outline" height="16" />
+            <div class="gp-mgmt-num">{{ statusStats.paused }}</div>
+            <div class="gp-mgmt-label">暂停</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 标签使用排行 -->
+      <div v-if="tagStats.length > 0" class="gp-stats-section">
+        <div class="gp-stats-section-title">
+          标签使用排行
+          <span class="gp-stats-section-count">{{ tagStats.length }}</span>
+        </div>
+        <div class="gp-tag-stats">
+          <button
+            v-for="t in tagStats.slice(0, 10)"
+            :key="t.tag"
+            class="gp-tag-stat"
+            :title="`${t.tag} (${t.count} 个项目)`"
+          >
+            <span class="gp-tag-stat-name">{{ t.tag }}</span>
+            <span class="gp-tag-stat-count">{{ t.count }}</span>
+          </button>
+        </div>
+      </div>
+
       <!-- 未推送项目列表 -->
       <div v-if="needsPushProjects.length > 0" class="gp-stats-section">
         <div class="gp-stats-section-title">
@@ -227,6 +278,14 @@ export interface RecentCommitEntry {
   entry: { hash: string; message: string; author: string; relativeDate: string; date: string }
 }
 
+export interface StatusStats {
+  active: number; maintenance: number; paused: number
+}
+
+export interface TagStatItem {
+  tag: string; count: number
+}
+
 const props = defineProps<{
   i18n: Record<string, any>
   projectCount: number
@@ -235,6 +294,14 @@ const props = defineProps<{
   needsPushProjects: NeedsPushItem[]
   uncommittedProjects: UncommittedItem[]
   recentCommits: RecentCommitEntry[]
+  /** 收藏项目数 */
+  starredCount: number
+  /** 归档项目数 */
+  archivedCount: number
+  /** 状态分布 */
+  statusStats: StatusStats
+  /** 标签使用排行 */
+  tagStats: TagStatItem[]
 }>()
 
 const emit = defineEmits<{
@@ -545,5 +612,78 @@ function platformLabel(key: string): string {
   opacity: 0.35;
   display: flex;
   gap: 4px;
+}
+
+// ── 项目管理概览 ──
+.gp-mgmt-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+
+.gp-mgmt-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  border-radius: 6px;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+}
+
+.gp-mgmt-num {
+  font-size: 16px;
+  font-weight: 700;
+  font-family: $vp-mono;
+  line-height: 1.1;
+}
+
+.gp-mgmt-label {
+  font-size: 9px;
+  opacity: 0.55;
+}
+
+.gp-mgmt-star { color: #f5a623; }
+.gp-mgmt-archive { color: var(--b3-theme-on-surface); opacity: 0.6; }
+.gp-mgmt-active { color: var(--b3-theme-success); }
+.gp-mgmt-maintenance { color: var(--b3-theme-primary); }
+.gp-mgmt-paused { color: var(--b3-theme-on-surface); opacity: 0.4; }
+
+// ── 标签使用排行 ──
+.gp-tag-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.gp-tag-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  font-size: 10px;
+  cursor: default;
+  transition: border-color 0.15s;
+
+  &:hover { border-color: var(--b3-theme-primary); }
+}
+
+.gp-tag-stat-name {
+  font-weight: 500;
+}
+
+.gp-tag-stat-count {
+  font-family: $vp-mono;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 0 5px;
+  border-radius: 3px;
+  background: var(--b3-theme-primary-lightest);
+  color: var(--b3-theme-primary);
 }
 </style>

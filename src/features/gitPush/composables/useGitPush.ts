@@ -33,6 +33,9 @@ export function useGitPush(manager: GitPushManager) {
   /** git 并发配置 */
   const gitConcurrency = ref(3)
 
+  /** 全局标签缓存（所有项目 tags 去重并集，用于筛选条与输入建议） */
+  const allTags = ref<string[]>([])
+
   /** Stash 条目缓存 id → StashEntry[] */
   const stashEntries = ref<Record<string, StashEntry[]>>({})
   /** Stash 操作加载中 id → true */
@@ -169,6 +172,36 @@ export function useGitPush(manager: GitPushManager) {
     })
   })
 
+  /** 收藏项目列表 */
+  const starredProjects = computed(() => projects.value.filter(p => p.starred))
+
+  /** 归档项目列表 */
+  const archivedProjects = computed(() => projects.value.filter(p => p.archived))
+
+  /** 标签使用统计：tag → 项目数（按计数降序） */
+  const tagStats = computed<{ tag: string; count: number }[]>(() => {
+    const map = new Map<string, number>()
+    for (const p of projects.value) {
+      if (!p.archived && p.tags) {
+        for (const t of p.tags) if (t) map.set(t, (map.get(t) || 0) + 1)
+      }
+    }
+    return [...map.entries()].map(([tag, count]) => ({ tag, count })).sort((a, b) => b.count - a.count)
+  })
+
+  /** 状态分布统计：status → 项目数 */
+  const statusStats = computed(() => {
+    const result = { active: 0, maintenance: 0, paused: 0 }
+    for (const p of projects.value) {
+      if (p.archived) continue
+      const s = p.status || "active"
+      if (s === "maintenance") result.maintenance++
+      else if (s === "paused") result.paused++
+      else result.active++
+    }
+    return result
+  })
+
   function isPushing(projectId: string, target?: string): boolean {
     const v = pushingRemote.value[projectId]
     if (!v) return false
@@ -188,20 +221,23 @@ export function useGitPush(manager: GitPushManager) {
     try {
       categories.value = await manager.getCategories()
       projects.value = await manager.getProjects()
+      allTags.value = await manager.getAllTags()
     } finally {
       loading.value = false
     }
   }
 
-  async function addProject(name: string, path: string, categoryId = "__ungrouped__") {
-    const project = await manager.addProject(name, path, categoryId)
+  async function addProject(name: string, path: string, categoryId = "__ungrouped__", tags?: string[]) {
+    const project = await manager.addProject(name, path, categoryId, tags)
     projects.value = [...projects.value, project]
+    if (tags && tags.length > 0) allTags.value = await manager.getAllTags()
     return project
   }
 
   async function removeProject(id: string) {
     await manager.removeProject(id)
     projects.value = projects.value.filter(p => p.id !== id)
+    allTags.value = await manager.getAllTags()
   }
 
   async function refreshRemotes(id: string) {
@@ -212,6 +248,60 @@ export function useGitPush(manager: GitPushManager) {
         projects.value[idx] = updated
         projects.value = [...projects.value]
       }
+    }
+    return updated
+  }
+
+  /** 本地更新单个项目并触发响应式 */
+  function patchProject(id: string, patch: Partial<GitProject>) {
+    const idx = projects.value.findIndex(p => p.id === id)
+    if (idx === -1) return
+    projects.value[idx] = { ...projects.value[idx], ...patch }
+    projects.value = [...projects.value]
+  }
+
+  /** 更新项目元信息（名称/标签/状态/收藏/归档/备注） */
+  async function updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "name" | "tags" | "starred" | "status" | "archived" | "note">>) {
+    const updated = await manager.updateProjectMeta(id, patch)
+    if (updated) {
+      patchProject(id, patch)
+      if (patch.tags !== undefined) allTags.value = await manager.getAllTags()
+    }
+    return updated
+  }
+
+  /** 切换收藏（高频操作，即时反馈） */
+  async function toggleStar(id: string) {
+    const project = projects.value.find(p => p.id === id)
+    if (!project) return
+    // 乐观更新：先改本地再持久化
+    patchProject(id, { starred: !project.starred })
+    await manager.toggleStar(id)
+  }
+
+  /** 设置项目状态徽章 */
+  async function setProjectStatus(id: string, status: GitProject["status"]) {
+    if (!status) return
+    patchProject(id, { status })
+    await manager.setProjectStatus(id, status)
+  }
+
+  /** 添加标签 */
+  async function appendTag(id: string, tag: string) {
+    const updated = await manager.appendTag(id, tag)
+    if (updated) {
+      patchProject(id, { tags: updated.tags })
+      allTags.value = await manager.getAllTags()
+    }
+    return updated
+  }
+
+  /** 移除标签 */
+  async function removeTag(id: string, tag: string) {
+    const updated = await manager.removeTag(id, tag)
+    if (updated) {
+      patchProject(id, { tags: updated.tags })
+      allTags.value = await manager.getAllTags()
     }
     return updated
   }
@@ -320,11 +410,19 @@ export function useGitPush(manager: GitPushManager) {
     return diff
   }
 
-  /** 加载分支提交日志 */
+  /** 加载分支提交日志；同时把最近提交时间持久化为 lastActivity（首屏可直接读取展示） */
   async function loadCommitLog(id: string) {
     const project = projects.value.find(p => p.id === id)
     if (!project) return
-    commitLogs.value[id] = await manager.getCommitLog(project.path)
+    const entries = await manager.getCommitLog(project.path)
+    commitLogs.value[id] = entries
+    // 最近提交时间变化时异步持久化（不阻塞、不 await），更新本地缓存即时反映
+    const latest = entries[0]?.date
+    if (latest && project.lastActivity !== latest) {
+      project.lastActivity = latest
+      projects.value = [...projects.value]
+      manager.recordLastActivity(id, latest).catch(() => {})
+    }
   }
 
   /** 加载分支列表 */
@@ -608,5 +706,16 @@ export function useGitPush(manager: GitPushManager) {
     needsPushProjects,
     uncommittedProjects,
     recentCommits,
+    // 项目聚合管理
+    allTags,
+    starredProjects,
+    archivedProjects,
+    tagStats,
+    statusStats,
+    updateProjectMeta,
+    toggleStar,
+    setProjectStatus,
+    appendTag,
+    removeTag,
   }
 }

@@ -3,13 +3,13 @@ import { createVueDockApp } from "@/utils/vueAppHelper"
 import { getNodeProcessModules } from "@/utils/nodeModules"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
 import { callAI, getApiConfigFromPlugin } from "@/utils/aiApi"
-import type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo, ProjectCategory, CommitLogEntry, BranchInfo, ScannedGitRepo, StashEntry } from "./storage"
-import { GitPushStorage, COMMIT_TYPE_VALUES } from "./storage"
+import type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo, ProjectCategory, CommitLogEntry, BranchInfo, ScannedGitRepo, StashEntry, ProjectStatus } from "./storage"
+import { GitPushStorage, COMMIT_TYPE_VALUES, PROJECT_STATUS_VALUES } from "./storage"
 import GitPushPanel from "../index.vue"
 
-export type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo, ProjectCategory, CommitLogEntry, BranchInfo, StashEntry }
+export type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo, ProjectCategory, CommitLogEntry, BranchInfo, StashEntry, ProjectStatus }
 export type { ScannedGitRepo }
-export { GitPushStorage, COMMIT_TYPE_VALUES }
+export { GitPushStorage, COMMIT_TYPE_VALUES, PROJECT_STATUS_VALUES }
 
 export class GitPushManager {
   private plugin: Plugin
@@ -86,8 +86,9 @@ export class GitPushManager {
 
   /**
    * 添加项目映射
+   * @param tags 可选初始标签
    */
-  async addProject(name: string, path: string, categoryId = "__ungrouped__"): Promise<GitProject> {
+  async addProject(name: string, path: string, categoryId = "__ungrouped__", tags?: string[]): Promise<GitProject> {
     const projects = await this.getProjects()
     const project: GitProject = {
       id: Date.now().toString(),
@@ -95,11 +96,16 @@ export class GitPushManager {
       path,
       categoryId,
       addedAt: Date.now(),
+      tags: tags && tags.length > 0 ? tags : undefined,
+      status: "active",
+      archived: false,
+      starred: false,
     }
     // 自动检测远程仓库
     this.applyRemotesToProject(project, await this.detectRemotes(path))
     projects.push(project)
     await this.storage.projects.save(projects)
+    if (tags && tags.length > 0) await this.syncGlobalTags()
     return project
   }
 
@@ -112,7 +118,91 @@ export class GitPushManager {
     if (idx !== -1) {
       projects.splice(idx, 1)
       await this.storage.projects.save(projects)
+      await this.syncGlobalTags()
     }
+  }
+
+  /**
+   * 更新项目元信息（tags/starred/status/archived/note 等）并持久化
+   * 返回更新后的项目，未找到返回 null
+   */
+  async updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "tags" | "starred" | "status" | "archived" | "note" | "name">>): Promise<GitProject | null> {
+    const projects = await this.getProjects()
+    const project = projects.find(p => p.id === id)
+    if (!project) return null
+    Object.assign(project, patch)
+    await this.storage.projects.save(projects)
+    if (patch.tags !== undefined) await this.syncGlobalTags()
+    return project
+  }
+
+  /** 切换收藏状态 */
+  async toggleStar(id: string): Promise<GitProject | null> {
+    const projects = await this.getProjects()
+    const project = projects.find(p => p.id === id)
+    if (!project) return null
+    project.starred = !project.starred
+    await this.storage.projects.save(projects)
+    return project
+  }
+
+  /** 设置项目状态徽章 */
+  async setProjectStatus(id: string, status: ProjectStatus): Promise<GitProject | null> {
+    return this.updateProjectMeta(id, { status })
+  }
+
+  /** 添加标签（去重） */
+  async appendTag(id: string, tag: string): Promise<GitProject | null> {
+    const t = tag.trim()
+    if (!t) return null
+    const projects = await this.getProjects()
+    const project = projects.find(p => p.id === id)
+    if (!project) return null
+    const tags = project.tags || []
+    if (!tags.includes(t)) {
+      project.tags = [...tags, t]
+      await this.storage.projects.save(projects)
+      await this.syncGlobalTags()
+    }
+    return project
+  }
+
+  /** 移除标签 */
+  async removeTag(id: string, tag: string): Promise<GitProject | null> {
+    const projects = await this.getProjects()
+    const project = projects.find(p => p.id === id)
+    if (!project) return null
+    if (project.tags) {
+      project.tags = project.tags.filter(t => t !== tag)
+      if (project.tags.length === 0) project.tags = undefined
+      await this.storage.projects.save(projects)
+      await this.syncGlobalTags()
+    }
+    return project
+  }
+
+  /** 记录最后活动时间（由 commitLog 更新触发，仅当变化时持久化） */
+  async recordLastActivity(id: string, isoTime: string): Promise<void> {
+    const projects = await this.getProjects()
+    const project = projects.find(p => p.id === id)
+    if (!project || project.lastActivity === isoTime) return
+    project.lastActivity = isoTime
+    await this.storage.projects.save(projects)
+  }
+
+  /** 同步全局标签缓存（所有项目 tags 去重并集） */
+  private async syncGlobalTags(): Promise<void> {
+    const projects = await this.getProjects()
+    const set = new Set<string>()
+    for (const p of projects) {
+      if (p.tags) for (const t of p.tags) if (t) set.add(t)
+    }
+    await this.storage.tags.save([...set].sort())
+  }
+
+  /** 读取全局标签缓存 */
+  async getAllTags(): Promise<string[]> {
+    return this.storage.tags.loadOrDefault()
   }
 
   /**

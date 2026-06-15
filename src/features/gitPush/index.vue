@@ -66,13 +66,56 @@
       :needs-push-projects="needsPushProjects"
       :uncommitted-projects="uncommittedProjects"
       :recent-commits="recentCommits"
+      :starred-count="starredProjects.length"
+      :archived-count="archivedProjects.length"
+      :status-stats="statusStats"
+      :tag-stats="tagStats"
       @view-project="onViewProject"
     />
 
     <!-- ========== 列表视图 ========== -->
     <template v-if="currentView === 'list'">
-    <!-- 分类 TAB 导航 -->
-    <div v-if="groupedProjects.length > 0" class="gp-tabs">
+    <!-- 筛选工具栏（智能视图 + 归档 toggle + 标签筛选） -->
+    <div v-if="projects.length > 0" class="gp-filter-bar">
+      <div class="gp-view-modes">
+        <button
+          v-for="vm in (['all','needsPush','uncommitted','starred'] as const)"
+          :key="vm"
+          class="gp-vm-btn"
+          :class="{ active: viewMode === vm }"
+          :title="VIEW_MODE_META[vm].label"
+          @click="viewMode = vm"
+        >
+          <Icon :icon="VIEW_MODE_META[vm].icon" height="13" />
+          <span>{{ VIEW_MODE_META[vm].label }}</span>
+        </button>
+      </div>
+      <div class="gp-filter-toggles">
+        <button
+          class="gp-ft-btn"
+          :class="{ active: showArchived }"
+          title="显示/隐藏归档项目"
+          @click="showArchived = !showArchived"
+        >
+          <Icon icon="mdi:archive-outline" height="13" />
+          <span v-if="showArchived">含归档</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 标签筛选条（有标签时显示） -->
+    <div v-if="allTags.length > 0 && projects.length > 0" class="gp-tag-filter">
+      <button
+        v-for="t in allTags"
+        :key="t"
+        class="gp-tag-chip"
+        :class="{ active: selectedTags.has(t) }"
+        @click="toggleTagFilter(t)"
+      >{{ t }}</button>
+    </div>
+
+    <!-- 分类 TAB 导航（仅 all 模式显示） -->
+    <div v-if="viewMode === 'all' && groupedProjects.length > 0" class="gp-tabs">
       <button
         v-for="g in groupedProjects"
         :key="g.category.id"
@@ -119,8 +162,54 @@
         >
         <div class="gp-card-top">
           <div class="gp-card-info">
-            <div class="gp-card-name">{{ project.name }}</div>
+            <div class="gp-card-name-row">
+              <!-- 收藏星标（高频，内联切换） -->
+              <button
+                class="gp-star-btn"
+                :class="{ active: project.starred }"
+                :title="project.starred ? '取消收藏' : '收藏置顶'"
+                @click.stop="toggleStar(project.id)"
+              >
+                <Icon :icon="project.starred ? 'mdi:star' : 'mdi:star-outline'" height="14" />
+              </button>
+              <span class="gp-card-name">{{ project.name }}</span>
+              <!-- 状态徽章（点击循环切换） -->
+              <button
+                class="gp-status-badge"
+                :class="`gp-sb-${project.status || 'active'}`"
+                :title="`状态: ${STATUS_META[project.status || 'active'].label}（点击切换）`"
+                @click.stop="cycleStatus(project.id, project.status)"
+              >
+                <Icon :icon="STATUS_META[project.status || 'active'].icon" height="12" />
+              </button>
+              <span v-if="project.archived" class="gp-archived-tag" title="已归档">
+                <Icon icon="mdi:archive-outline" height="11" />归档
+              </span>
+            </div>
             <div class="gp-card-path" :title="project.path">{{ project.path }}</div>
+            <!-- 标签 + 最后活动时间 -->
+            <div class="gp-card-meta">
+              <div v-if="project.tags?.length" class="gp-card-tags">
+                <span
+                  v-for="t in project.tags.slice(0, 3)"
+                  :key="t"
+                  class="gp-card-tag"
+                  :class="{ active: selectedTags.has(t) }"
+                  :title="`点击筛选标签: ${t}`"
+                  @click.stop="toggleTagFilter(t)"
+                >{{ t }}</span>
+                <span v-if="project.tags.length > 3" class="gp-card-tag gp-card-tag-more">+{{ project.tags.length - 3 }}</span>
+              </div>
+              <span
+                v-if="project.lastActivity"
+                class="gp-activity"
+                :class="`gp-act-${activityLevel(project.lastActivity)}`"
+                :title="activityLevel(project.lastActivity) === 'dead' ? '长时间未活动，建议归档' : ''"
+              >
+                <Icon icon="mdi:clock-outline" height="10" />
+                {{ relativeTime(project.lastActivity) }}
+              </span>
+            </div>
             <!-- 分支标签 -->
             <div v-if="branches[project.id]?.length" class="gp-branch-row">
               <Icon icon="mdi:source-branch" height="11" />
@@ -197,6 +286,13 @@
               @click="openRemoteConfig(project)"
             >
               <Icon icon="mdi:source-repository" height="14" />
+            </button>
+            <button
+              class="vp-btn vp-btn--ghost vp-btn--sm"
+              title="编辑项目（标签/状态/备注）"
+              @click="openEditDialog(project)"
+            >
+              <Icon icon="mdi:pencil-outline" height="14" />
             </button>
             <button
               class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"
@@ -436,6 +532,14 @@
               </option>
             </select>
           </div>
+          <div class="gp-form-group">
+            <label class="gp-label">标签（可选，逗号分隔）</label>
+            <input
+              v-model="newProjectTags"
+              class="gp-input"
+              placeholder="如：前端, 个人作品, 长期维护"
+            />
+          </div>
           <div v-if="addError" class="gp-error">{{ addError }}</div>
           <div v-if="addChecking" class="gp-checking">
             <Icon icon="mdi:loading" class="gp-spin" />
@@ -650,13 +754,91 @@
         </div>
       </div>
     </div>
+
+    <!-- 项目编辑弹窗 -->
+    <div v-if="editDialogProject" class="gp-mask" @click.self="editDialogProject = null">
+      <div class="gp-dialog" style="width: 420px;">
+        <div class="gp-dialog-header">
+          <span class="gp-dialog-title">编辑项目 — {{ editDialogProject.name }}</span>
+          <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="editDialogProject = null">
+            <Icon icon="mdi:close" />
+          </button>
+        </div>
+        <div class="gp-dialog-body">
+          <div class="gp-form-group">
+            <label class="gp-label">项目名称</label>
+            <input v-model="editName" class="gp-input" @keyup.enter="handleEditSave" />
+          </div>
+          <div class="gp-edit-row">
+            <div class="gp-form-group" style="flex:1">
+              <label class="gp-label">状态</label>
+              <select v-model="editStatus" class="gp-select">
+                <option v-for="s in STATUS_CYCLE" :key="s" :value="s">{{ STATUS_META[s].label }}</option>
+              </select>
+            </div>
+            <div class="gp-form-group gp-edit-toggles">
+              <label class="gp-label">标记</label>
+              <div class="gp-toggle-row">
+                <button
+                  class="gp-toggle-chip"
+                  :class="{ active: editStarred }"
+                  @click="editStarred = !editStarred"
+                >
+                  <Icon :icon="editStarred ? 'mdi:star' : 'mdi:star-outline'" height="13" />收藏
+                </button>
+                <button
+                  class="gp-toggle-chip"
+                  :class="{ active: editArchived }"
+                  @click="editArchived = !editArchived"
+                >
+                  <Icon icon="mdi:archive-outline" height="13" />归档
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="gp-form-group">
+            <label class="gp-label">标签</label>
+            <div v-if="editTags.length" class="gp-edit-tags">
+              <span v-for="t in editTags" :key="t" class="gp-edit-tag">
+                {{ t }}
+                <button class="gp-edit-tag-x" @click="handleEditRemoveTag(t)">
+                  <Icon icon="mdi:close" height="11" />
+                </button>
+              </span>
+            </div>
+            <input
+              v-model="editTagInput"
+              class="gp-input"
+              placeholder="输入标签后回车添加"
+              list="gp-tag-suggestions"
+              @keyup.enter="handleEditAddTag"
+            />
+            <datalist id="gp-tag-suggestions">
+              <option v-for="t in allTags" :key="t" :value="t" />
+            </datalist>
+          </div>
+          <div class="gp-form-group">
+            <label class="gp-label">备注</label>
+            <textarea v-model="editNote" class="gp-input" rows="3" placeholder="项目备注（可选）" />
+          </div>
+        </div>
+        <div class="gp-dialog-footer">
+          <button class="vp-btn vp-btn--ghost" @click="editDialogProject = null">
+            {{ i18n.cancel || '取消' }}
+          </button>
+          <button class="vp-btn vp-btn--primary" @click="handleEditSave">
+            {{ i18n.save || '保存' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, computed, watch } from "vue"
 import { Icon } from "@iconify/vue"
-import type { GitPushManager, GitProject, CommitLogEntry, ScannedGitRepo } from "./types"
+import type { GitPushManager, GitProject, CommitLogEntry, ProjectStatus } from "./types"
 import { useGitPush } from "./composables/useGitPush"
 import WorkingTreePanel from "./components/WorkingTreePanel.vue"
 import StatsPanel from "./components/StatsPanel.vue"
@@ -749,6 +931,15 @@ const {
   needsPushProjects,
   uncommittedProjects,
   recentCommits,
+  // 项目聚合管理
+  allTags,
+  starredProjects,
+  archivedProjects,
+  tagStats,
+  statusStats,
+  updateProjectMeta,
+  toggleStar,
+  setProjectStatus,
 } = useGitPush(props.manager)
 
 const showAddDialog = ref(false)
@@ -778,29 +969,136 @@ const visibleGroups = computed(() => {
 /** 项目搜索关键词 */
 const searchQuery = ref("")
 
-/** 搜索过滤后的分组 */
+/** 智能视图模式：all=按分类 / needsPush=需推送 / uncommitted=有变更 / starred=已收藏 */
+const viewMode = ref<"all" | "needsPush" | "uncommitted" | "starred">("all")
+/** 是否显示归档项目（默认隐藏） */
+const showArchived = ref(false)
+/** 选中的标签（多选交集过滤） */
+const selectedTags = ref<Set<string>>(new Set())
+
+/** 智能视图模式元数据（标签 + 命中数） */
+const VIEW_MODE_META: Record<typeof viewMode.value, { label: string; icon: string }> = {
+  all: { label: "全部", icon: "mdi:view-grid-outline" },
+  needsPush: { label: "需推送", icon: "mdi:cloud-upload-outline" },
+  uncommitted: { label: "有变更", icon: "mdi:source-branch" },
+  starred: { label: "收藏", icon: "mdi:star" },
+}
+
+/** 项目状态徽章元数据（颜色 + 文案 + 循环顺序） */
+const STATUS_META: Record<string, { color: string; label: string; icon: string }> = {
+  active: { color: "var(--b3-theme-success)", label: "活跃", icon: "mdi:circle-medium" },
+  maintenance: { color: "var(--b3-theme-primary)", label: "维护中", icon: "mdi:circle-medium" },
+  paused: { color: "var(--b3-theme-on-surface)", label: "暂停", icon: "mdi:pause-circle-outline" },
+}
+const STATUS_CYCLE: ProjectStatus[] = ["active", "maintenance", "paused"]
+
+/** 把 ISO 时间转为相对时间文案（"刚刚/N分钟前/N天前/N个月前"），无法解析返回空 */
+function relativeTime(iso?: string): string {
+  if (!iso) return ""
+  const t = Date.parse(iso)
+  if (isNaN(t)) return ""
+  const diff = Date.now() - t
+  const min = 60 * 1000, hour = 60 * min, day = 24 * hour
+  if (diff < min) return "刚刚"
+  if (diff < hour) return `${Math.floor(diff / min)}分钟前`
+  if (diff < day) return `${Math.floor(diff / hour)}小时前`
+  if (diff < 30 * day) return `${Math.floor(diff / day)}天前`
+  if (diff < 365 * day) return `${Math.floor(diff / (30 * day))}个月前`
+  return `${Math.floor(diff / (365 * day))}年前`
+}
+
+/** 按活动时间分级（用于卡片颜色提示） */
+function activityLevel(iso?: string): "fresh" | "recent" | "stale" | "dead" {
+  if (!iso) return "dead"
+  const t = Date.parse(iso)
+  if (isNaN(t)) return "dead"
+  const day = 24 * 60 * 60 * 1000
+  const diff = Date.now() - t
+  if (diff < 7 * day) return "fresh"
+  if (diff < 30 * day) return "recent"
+  if (diff < 90 * day) return "stale"
+  return "dead"
+}
+
+/** 全局排序：starred 优先 → lastActivity 降序 → name */
+function sortProjects(list: GitProject[]): GitProject[] {
+  return [...list].sort((a, b) => {
+    if (!!a.starred !== !!b.starred) return a.starred ? -1 : 1
+    const ta = a.lastActivity ? Date.parse(a.lastActivity) : 0
+    const tb = b.lastActivity ? Date.parse(b.lastActivity) : 0
+    if (ta !== tb) return tb - ta
+    return a.name.localeCompare(b.name)
+  })
+}
+
+/** 智能视图模式下，命中条件的扁平项目列表 */
+const smartViewProjects = computed<GitProject[]>(() => {
+  if (viewMode.value === "needsPush") {
+    const ids = new Set(needsPushProjects.value.map(n => n.project.id))
+    return sortProjects(projects.value.filter(p => ids.has(p.id)))
+  }
+  if (viewMode.value === "uncommitted") {
+    return sortProjects(uncommittedProjects.value.map(u => u.project))
+  }
+  if (viewMode.value === "starred") {
+    return sortProjects(starredProjects.value)
+  }
+  return []
+})
+
+/** 统一筛选 + 分组管道：archived 过滤 → 标签交集 → 搜索词 → 分组/排序 */
 const filteredGroups = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
-  if (!q) return visibleGroups.value
+  const tags = selectedTags.value
+
+  /** 应用三道过滤到一个项目列表 */
+  const applyFilters = (list: GitProject[]) => {
+    let r = list
+    if (!showArchived.value) r = r.filter(p => !p.archived)
+    if (tags.size > 0) r = r.filter(p => p.tags?.some(t => tags.has(t)))
+    if (q) r = r.filter(p => p.name.toLowerCase().includes(q) || p.path.toLowerCase().includes(q) || (p.tags?.some(t => t.toLowerCase().includes(q))))
+    return r
+  }
+
+  // 智能视图：扁平成单个虚拟分组
+  if (viewMode.value !== "all") {
+    const filtered = applyFilters(smartViewProjects.value)
+    if (filtered.length === 0) return []
+    const meta = VIEW_MODE_META[viewMode.value]
+    return [{
+      category: { id: `__smart_${viewMode.value}__`, name: meta.label, color: "var(--b3-theme-primary)", order: -1 },
+      projects: filtered,
+    }]
+  }
+
+  // all 模式：沿用分类分组（visibleGroups 已按 activeCategory 过滤）
   return visibleGroups.value
-    .map(g => ({
-      ...g,
-      projects: g.projects.filter(
-        p => p.name.toLowerCase().includes(q) || p.path.toLowerCase().includes(q),
-      ),
-    }))
+    .map(g => ({ ...g, projects: applyFilters(g.projects) }))
+    .map(g => ({ ...g, projects: sortProjects(g.projects) }))
     .filter(g => g.projects.length > 0)
 })
 
 const newProjectName = ref("")
 const newProjectPath = ref("")
 const newProjectCat = ref("__ungrouped__")
+/** 添加项目时的初始标签（逗号分隔输入） */
+const newProjectTags = ref("")
 const newCatName = ref("")
 const newCatColor = ref("#4a9eff")
 const addError = ref("")
 const addChecking = ref(false)
 const addResult = ref<boolean | null>(null)
 const refreshing = ref<string | null>(null)
+
+/** 项目编辑弹窗状态 */
+const editDialogProject = ref<GitProject | null>(null)
+const editName = ref("")
+const editStatus = ref<GitProject["status"]>("active")
+const editStarred = ref(false)
+const editArchived = ref(false)
+const editNote = ref("")
+const editTags = ref<string[]>([])
+const editTagInput = ref("")
 const refreshingAll = ref(false)
 /** 远程仓库配置弹窗 */
 const remoteConfigProject = ref<GitProject | null>(null)
@@ -968,12 +1266,20 @@ async function handleAdd() {
   try {
     const isGit = await checkIsGitRepo(newProjectPath.value.trim())
     addResult.value = isGit
+    // 解析标签（逗号分隔，去重去空白）
+    const tags = newProjectTags.value
+      .split(/[,，]/)
+      .map(t => t.trim())
+      .filter(Boolean)
+    const seen = new Set<string>()
+    const dedupTags = tags.filter(t => (seen.has(t) ? false : (seen.add(t), true)))
     // 即使不是 git 仓库也允许添加（用户可能后续初始化）
-    await addProject(newProjectName.value.trim(), newProjectPath.value.trim(), newProjectCat.value)
+    await addProject(newProjectName.value.trim(), newProjectPath.value.trim(), newProjectCat.value, dedupTags.length > 0 ? dedupTags : undefined)
     showAddDialog.value = false
     newProjectName.value = ""
     newProjectPath.value = ""
     newProjectCat.value = "__ungrouped__"
+    newProjectTags.value = ""
     addResult.value = null
   } catch (e: any) {
     addError.value = e?.message || "添加失败"
@@ -1085,6 +1391,65 @@ async function handleSwitchBranch(id: string, branch: string) {
   } catch (e: any) {
     alert(`分支切换失败: ${e?.message || e}`)
   }
+}
+
+// ---- 项目聚合管理操作 ----
+
+/** 切换标签筛选（多选交集） */
+function toggleTagFilter(tag: string) {
+  const next = new Set(selectedTags.value)
+  if (next.has(tag)) next.delete(tag)
+  else next.add(tag)
+  selectedTags.value = next
+}
+
+/** 状态徽章循环切换 active → maintenance → paused → active */
+async function cycleStatus(id: string, current?: ProjectStatus) {
+  const cur: ProjectStatus = current || "active"
+  const idx = STATUS_CYCLE.indexOf(cur)
+  const next = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length]
+  await setProjectStatus(id, next)
+}
+
+/** 打开项目编辑弹窗 */
+function openEditDialog(project: GitProject) {
+  editDialogProject.value = project
+  editName.value = project.name
+  editStatus.value = project.status || "active"
+  editStarred.value = !!project.starred
+  editArchived.value = !!project.archived
+  editNote.value = project.note || ""
+  editTags.value = [...(project.tags || [])]
+  editTagInput.value = ""
+}
+
+/** 编辑弹窗：添加标签（Enter 确认） */
+function handleEditAddTag() {
+  const t = editTagInput.value.trim()
+  if (t && !editTags.value.includes(t)) {
+    editTags.value = [...editTags.value, t]
+  }
+  editTagInput.value = ""
+}
+
+/** 编辑弹窗：移除标签 */
+function handleEditRemoveTag(tag: string) {
+  editTags.value = editTags.value.filter(t => t !== tag)
+}
+
+/** 编辑弹窗：保存 */
+async function handleEditSave() {
+  const project = editDialogProject.value
+  if (!project) return
+  await updateProjectMeta(project.id, {
+    name: editName.value.trim() || project.name,
+    status: editStatus.value,
+    starred: editStarred.value,
+    archived: editArchived.value,
+    note: editNote.value.trim() || undefined,
+    tags: editTags.value.length > 0 ? editTags.value : undefined,
+  })
+  editDialogProject.value = null
 }
 
 // ---- 工作区操作 ----
@@ -2300,6 +2665,287 @@ async function selectScanDirectory() {
 @keyframes gp-shimmer {
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
+}
+
+// ========== 筛选工具栏 ==========
+.gp-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.gp-view-modes {
+  display: flex;
+  gap: 2px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.gp-vm-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 7px;
+  border: none;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  font-size: 10px;
+  opacity: 0.45;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover { opacity: 0.75; }
+
+  &.active {
+    opacity: 1;
+    background: var(--b3-theme-primary-lightest);
+    color: var(--b3-theme-primary);
+    font-weight: 600;
+  }
+}
+
+.gp-filter-toggles {
+  display: flex;
+  gap: 4px;
+}
+
+.gp-ft-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 6px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  font-size: 10px;
+  opacity: 0.45;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover { opacity: 0.75; }
+
+  &.active {
+    opacity: 1;
+    background: var(--b3-theme-primary-lightest);
+    color: var(--b3-theme-primary);
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+// 标签筛选条
+.gp-tag-filter {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+
+  &::-webkit-scrollbar { height: 0; }
+}
+
+.gp-tag-chip {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover { border-color: var(--b3-theme-primary); }
+
+  &.active {
+    background: var(--b3-theme-primary);
+    color: var(--b3-theme-background);
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+// ========== 卡片增强 ==========
+.gp-card-name-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+
+.gp-star-btn {
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.3;
+  transition: opacity 0.15s, transform 0.1s;
+
+  &:hover { opacity: 0.7; }
+  &:active { transform: scale(0.9); }
+
+  &.active {
+    opacity: 1;
+    color: #f5a623;
+  }
+}
+
+.gp-status-badge {
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.1s;
+
+  &:hover { transform: scale(1.2); }
+
+  &.gp-sb-active { color: var(--b3-theme-success); }
+  &.gp-sb-maintenance { color: var(--b3-theme-primary); }
+  &.gp-sb-paused { color: var(--b3-theme-on-surface); opacity: 0.4; }
+}
+
+.gp-archived-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 600;
+  background: var(--b3-theme-on-surface);
+  color: var(--b3-theme-background);
+  opacity: 0.5;
+}
+
+.gp-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 3px;
+  flex-wrap: wrap;
+}
+
+.gp-card-tags {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+
+.gp-card-tag {
+  padding: 1px 6px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+
+  &:hover { border-color: var(--b3-theme-primary); color: var(--b3-theme-primary); }
+
+  &.active {
+    background: var(--b3-theme-primary-lightest);
+    color: var(--b3-theme-primary);
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+.gp-card-tag-more {
+  cursor: default;
+  opacity: 0.5;
+  &:hover { border-color: var(--b3-border-color); color: var(--b3-theme-on-surface); }
+}
+
+.gp-activity {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 9px;
+  font-family: $vp-mono;
+  white-space: nowrap;
+
+  &.gp-act-fresh { color: var(--b3-theme-success); opacity: 0.8; }
+  &.gp-act-recent { opacity: 0.55; }
+  &.gp-act-stale { opacity: 0.4; }
+  &.gp-act-dead { opacity: 0.3; color: var(--b3-theme-warning); }
+}
+
+// ========== 编辑弹窗 ==========
+.gp-edit-row {
+  display: flex;
+  gap: 10px;
+}
+
+.gp-edit-toggles {
+  display: flex;
+}
+
+.gp-toggle-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  height: 32px;
+}
+
+.gp-toggle-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 8px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+  opacity: 0.55;
+
+  &:hover { opacity: 0.85; }
+
+  &.active {
+    opacity: 1;
+    background: var(--b3-theme-primary-lightest);
+    color: var(--b3-theme-primary);
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+.gp-edit-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.gp-edit-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 4px 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  background: var(--b3-theme-primary-lightest);
+  color: var(--b3-theme-primary);
+}
+
+.gp-edit-tag-x {
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.6;
+  &:hover { opacity: 1; }
 }
 
 // 按钮样式已提取到 styles/_buttons.scss

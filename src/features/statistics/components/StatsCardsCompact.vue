@@ -21,7 +21,7 @@
           <span
             v-if="item.change !== null"
             class="core-change"
-            :class="item.change > 0 ? 'up' : 'down'"
+            :class="item.change > 0 ? 'up' : (item.change < 0 ? 'down' : '')"
           >{{ item.isPercent ? formatPercent(item.change) : formatDelta(item.change) }}</span>
         </div>
       </div>
@@ -163,12 +163,14 @@ const secondaryItems = computed(() => [
 
 function formatPercent(change: number | null): string {
   if (change === null) return ""
+  if (change === 0) return "0%"
   const prefix = change > 0 ? "↑" : "↓"
   return `${prefix}${Math.abs(change).toFixed(0)}%`
 }
 
 function formatDelta(change: number | null): string {
   if (change === null) return ""
+  if (change === 0) return "0"
   const prefix = change > 0 ? "↑" : "↓"
   return `${prefix}${Math.abs(change)}`
 }

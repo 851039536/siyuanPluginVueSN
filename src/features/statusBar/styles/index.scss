@@ -158,8 +158,8 @@ $sb-radius: 6px;
   position: fixed;
   right: 8px;
   bottom: 36px;
-  width: 280px;
-  max-height: 260px;
+  width: 450px;
+  max-height: 420px;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
   border-radius: $sb-radius;
@@ -313,7 +313,7 @@ $sb-radius: 6px;
   // 网格模式
   &.grid-mode {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 4px;
     padding: 6px;
 

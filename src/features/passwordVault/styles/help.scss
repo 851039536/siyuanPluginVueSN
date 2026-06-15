@@ -17,17 +17,17 @@
   max-width: 90%;
   max-height: 80%;
   background: var(--b3-theme-background);
-  border-radius: 12px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-lg;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
 }
 
 .help-dialog-header {
   @include flex-row-gap(10px);
   justify-content: space-between;
-  padding: 16px 20px;
+  padding: $spacing-lg;
   border-bottom: 1px solid var(--b3-border-color);
   background: var(--b3-theme-surface);
 
@@ -45,35 +45,35 @@
 .help-dialog-body {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  padding: $spacing-lg;
 }
 
 .help-section {
-  margin-bottom: 20px;
+  margin-bottom: $spacing-lg;
 
   &:last-child {
     margin-bottom: 0;
   }
 
   h4 {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--b3-theme-on-background);
     margin: 0 0 10px 0;
-    @include flex-row-gap(8px);
+    @include flex-row-gap($spacing-sm);
     font-family: $font-heading;
 
     &::before {
       content: '';
       width: 3px;
-      height: 16px;
+      height: 14px;
       background: var(--b3-theme-primary);
       border-radius: 2px;
     }
   }
 
   p {
-    font-size: 14px;
+    font-size: 13px;
     color: var(--b3-theme-on-surface);
     line-height: 1.6;
     margin: 0;
@@ -84,10 +84,10 @@
     padding-left: 20px;
 
     li {
-      font-size: 14px;
+      font-size: 13px;
       color: var(--b3-theme-on-surface);
       line-height: 1.8;
-      margin-bottom: 4px;
+      margin-bottom: $vp-radius;
 
       &:last-child {
         margin-bottom: 0;
@@ -97,7 +97,7 @@
 }
 
 .help-dialog-footer {
-  padding: 12px 20px;
+  padding: $spacing-md $spacing-lg;
   border-top: 1px solid var(--b3-border-color);
   background: var(--b3-theme-surface);
   display: flex;

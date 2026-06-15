@@ -7,6 +7,24 @@
 @use '@/variables.scss' as *;
 
 // ============================================================
+// 模块本地变量（Codex 设计 Token 对齐）
+// ============================================================
+
+// 等宽字体栈（Codex 规范 — 对齐 superPanel $vp-mono）
+$vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace !default;
+// Codex 圆角（对齐 superPanel $vp-radius）
+$vp-radius: 6px !default;
+// Codex 间距（对齐 superPanel $spacing-*）
+$spacing-sm: 8px !default;
+$spacing-md: 12px !default;
+$spacing-lg: 16px !default;
+// Codex 圆角层级
+$radius-sm: 4px !default;
+$radius-md: 8px !default;
+$radius-lg: 12px !default;
+$radius-full: 9999px !default;
+
+// ============================================================
 // Flex 布局 Mixins
 // ============================================================
 
@@ -39,22 +57,24 @@
   padding: 6px 8px;
   background: transparent;
   border: none;
-  border-radius: 6px;
+  border-radius: $vp-radius;
   cursor: pointer;
   @include flex-center;
 }
 
 @mixin input-base {
-  padding: 10px 12px;
+  padding: 7px 10px;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
-  border-radius: 6px;
-  font-size: 14px;
+  border-radius: $vp-radius;
+  font-size: 13px;
   color: var(--b3-theme-on-background);
   outline: none;
+  transition: border-color 0.12s, box-shadow 0.12s;
 
   &:focus {
     border-color: var(--b3-theme-primary);
+    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
   }
 
   &::placeholder {
@@ -65,7 +85,8 @@
 @mixin card-base {
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 10px;
+  border-radius: $radius-lg;
+  transition: border-color 0.12s;
 }
 
 @mixin heading-style {
@@ -126,13 +147,14 @@
     }
 
     .entry-count {
-      font-size: 13px;
-      font-weight: 500;
+      font-size: 11px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      font-family: $vp-mono;
       color: var(--b3-theme-on-surface-light);
       background: var(--b3-theme-surface-light);
       padding: 2px 8px;
-      border-radius: 10px;
-      font-family: $font-body;
+      border-radius: $radius-sm;
     }
   }
 }
@@ -142,15 +164,28 @@
 // ============================================================
 
 @mixin error-message {
-  @include flex-row-gap(8px);
+  @include flex-row-gap($spacing-sm);
   padding: 10px 14px;
-  background: rgba($brand-orange, 0.1);
-  color: $brand-orange;
-  border: 1px solid $brand-orange;
-  border-radius: 6px;
+  background: rgba($brand-destructive, 0.1);
+  color: $brand-destructive;
+  border: 1px solid $brand-destructive;
+  border-radius: $vp-radius;
   font-size: 13px;
 
   :deep(.icon-wrapper) {
-    color: $brand-orange;
+    color: $brand-destructive;
   }
+}
+
+// ============================================================
+// Codex 大写标签 Mixin（元信息 key 专用）
+// ============================================================
+
+@mixin uppercase-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.45;
 }

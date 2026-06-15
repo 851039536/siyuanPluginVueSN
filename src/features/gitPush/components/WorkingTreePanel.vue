@@ -148,7 +148,7 @@
         <textarea
           v-model="commitMessage"
           class="wt-commit-msg"
-          rows="3"
+          rows="10"
           :placeholder="i18n.commitMessagePlaceholder || '输入提交信息...'"
         />
         <div class="wt-commit-actions">
@@ -691,6 +691,7 @@ defineExpose({ clear: () => { commitMessage.value = ""; commitType.value = "chor
 
 .wt-commit-msg {
   width: 100%;
+  box-sizing: border-box;
   padding: 6px 8px;
   border: 1px solid var(--b3-border-color);
   border-radius: 4px;

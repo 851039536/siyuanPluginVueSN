@@ -1,0 +1,85 @@
+.shortcut-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.shortcut-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--b3-theme-on-surface-variant);
+  font-size: 12px;
+  gap: 12px;
+}
+
+.empty-icon {
+  width: 48px;
+  height: 48px;
+  opacity: 0.3;
+}
+
+.shortcut-group {
+  padding: 0;
+  margin-bottom: 16px;
+}
+
+.group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--b3-theme-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: var(--b3-theme-surface);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-left: 4px solid var(--b3-theme-primary);
+}
+
+.group-name {
+  flex: 1;
+}
+
+.group-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: var(--b3-theme-primary);
+  color: white;
+  border-radius: 10px;
+  font-size: 10px;
+}
+
+.shortcut-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  padding: 8px 12px;
+}
+
+.shortcut-content::-webkit-scrollbar {
+  width: 5px;
+}
+
+.shortcut-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.shortcut-content::-webkit-scrollbar-thumb {
+  background: var(--b3-theme-surface-lighter);
+  border-radius: 2px;
+}
+
+.shortcut-content::-webkit-scrollbar-thumb:hover {
+  background: var(--b3-theme-on-surface-variant);
+}

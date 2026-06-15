@@ -7,22 +7,16 @@
 @use '@/variables.scss' as *;
 
 // ============================================================
-// 模块本地变量（Codex 设计 Token 对齐）
+// 本模块未 import superPanel，以下 Codex Token 本地声明
+// 若有多个模块需要，后续可抽到共享 Codex partial 文件
 // ============================================================
 
-// 等宽字体栈（Codex 规范 — 对齐 superPanel $vp-mono）
-$vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace !default;
-// Codex 圆角（对齐 superPanel $vp-radius）
 $vp-radius: 6px !default;
-// Codex 间距（对齐 superPanel $spacing-*）
+$vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace !default;
+$spacing-xs: 4px !default;
 $spacing-sm: 8px !default;
 $spacing-md: 12px !default;
 $spacing-lg: 16px !default;
-// Codex 圆角层级
-$radius-sm: 4px !default;
-$radius-md: 8px !default;
-$radius-lg: 12px !default;
-$radius-full: 9999px !default;
 
 // ============================================================
 // Flex 布局 Mixins

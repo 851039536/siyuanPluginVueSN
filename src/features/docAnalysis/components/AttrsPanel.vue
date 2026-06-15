@@ -83,10 +83,19 @@
               <button
                 v-if="!platform.published && platform.url"
                 class="publish-go-btn"
-                title="前往发布"
-                @click.stop="openPlatformUrl(platform.url)"
+                title="复制标题和内容后前往发布"
+                :disabled="publishGoLoading === platform.id"
+                @click.stop="handlePublishGo(platform)"
               >
-                <Icon icon="mdi:open-in-new" />
+                <Icon
+                  v-if="publishGoLoading === platform.id"
+                  icon="mdi:loading"
+                  class="spin-icon"
+                />
+                <Icon
+                  v-else
+                  icon="mdi:open-in-new"
+                />
               </button>
             </div>
           </div>
@@ -179,6 +188,7 @@ import {
   computed,
   ref,
 } from "vue"
+import { showMessage } from "siyuan"
 import {
   exportMdContent,
   setBlockAttrs,
@@ -244,6 +254,36 @@ interface PlatformInfo {
 
 const markingPlatform = ref<string | null>(null)
 const mdCopyLoading = ref(false)
+const publishGoLoading = ref<string | null>(null)
+
+/** 前往发布：先复制标题+Markdown 内容到剪贴板，再打开平台 URL（类似 SyncCaster） */
+async function handlePublishGo(platform: PlatformInfo) {
+  if (publishGoLoading.value) return
+  publishGoLoading.value = platform.id
+  try {
+    // 1. 获取文档 Markdown 内容
+    const result = await exportMdContent(props.docId)
+    const title = props.attrs?.title || ""
+    const mdContent = result?.content || ""
+
+    // 2. 组合"标题 + 空行 + 正文"到剪贴板（模仿 SyncCaster 行为）
+    const combined = `# ${title}\n\n${mdContent}`
+    await copyToClipboard(combined)
+
+    // 3. 提示用户
+    showMessage(`标题和内容已复制，即将跳转到 ${platform.name}`, 3000, "info")
+
+    // 4. 稍微延迟后打开平台 URL
+    setTimeout(() => {
+      window.open(platform.url, "_blank")
+    }, 300)
+  } catch (e) {
+    console.error("前往发布失败:", e)
+    showMessage("获取文档内容失败，请重试", 3000, "error")
+  } finally {
+    publishGoLoading.value = null
+  }
+}
 
 async function copyMdContent() {
   if (mdCopyLoading.value) return
@@ -257,10 +297,6 @@ async function copyMdContent() {
   finally {
     mdCopyLoading.value = false
   }
-}
-
-function openPlatformUrl(url: string) {
-  window.open(url, "_blank")
 }
 
 async function handlePlatformClick(platform: PlatformInfo) {
@@ -646,8 +682,17 @@ async function copyAllAttrs() {
         flex-shrink: 0;
         margin-left: 4px;
 
-        &:hover {
+        &:hover:not(:disabled) {
           opacity: 0.85;
+        }
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: wait;
+        }
+
+        .spin-icon {
+          @include da-spin-icon;
         }
       }
     }

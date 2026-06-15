@@ -224,6 +224,59 @@ const dir = await getWorkspaceDir() // "E:\\siyuan2"
 
 参考实现：`src/features/superPanel/components/VersionPanel.vue` + `styles/index.scss` 中的 `.vp-*` 系列类名。
 
+## 强制规则：SCSS 必须分离到 styles/ 目录
+
+**所有 Vue 文件的 SCSS 样式必须提取到独立的 `.scss` 文件**，放置在对应 feature 的 `styles/` 目录下，使用 `@use` 导入。
+
+### 模式要求
+
+```
+src/features/myFeature/
+├── components/
+│   └── MyComponent.vue       # <style lang="scss" scoped> @use "../styles/MyComponent.scss"; </style>
+├── styles/
+│   ├── _variables.scss       # 共享变量/mixins（下划线前缀表示 partial）
+│   ├── MyComponent.scss      # 组件专属样式
+│   └── index.scss            # 主入口共享样式（可选）
+└── index.vue                 # <style lang="scss"> @use "./styles/variables"; @use "./styles/index.scss"; </style>
+```
+
+### 规则
+
+1. **禁止在 `.vue` 文件中编写 SCSS 样式代码**。仅允许 `@use` 导入语句。
+2. 每个组件对应一个 `styles/<ComponentName>.scss` 文件。
+3. 共享的变量/mixins 放在 `styles/_variables.scss` 或 `styles/_mixins.scss`（以下划线前缀命名）。
+4. Feature 主入口 `index.vue` 的样式放在 `styles/index.scss`。
+5. 导入路径使用相对路径（`../styles/` 或 `./styles/`）。
+6. `@use` 导入的 SCSS 文件会自动参与 Vue 的 scoped 样式编译。
+
+### 示例
+
+**❌ 错误（内联 SCSS）**:
+```vue
+<style lang="scss" scoped>
+.my-component {
+  color: red;
+  .nested { font-size: 12px; }
+}
+</style>
+```
+
+**✅ 正确（分离到外部文件）**:
+```vue
+<style lang="scss" scoped>
+@use "../styles/MyComponent.scss";
+</style>
+```
+
+```scss
+// styles/MyComponent.scss
+.my-component {
+  color: red;
+  .nested { font-size: 12px; }
+}
+```
+
 ## 构建与验证
 
 ```bash

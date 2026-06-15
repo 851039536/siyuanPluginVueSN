@@ -169,25 +169,6 @@ onBeforeUnmount(() => {
 })
 </script>
 
-<style scoped lang="scss">
-.video-player-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  .video-js {
-    border-radius: var(--b3-border-radius);
-    overflow: hidden;
-    background: #000;
-  }
-}
-
-// 响应式调整
-@media (max-width: 768px) {
-  .video-js {
-    width: 100% !important;
-    height: auto !important;
-    aspect-ratio: 16 / 9;
-  }
-}
+<style lang="scss" scoped>
+@use "../styles/VideoPlayer.scss";
 </style>

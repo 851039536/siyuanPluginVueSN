@@ -90,6 +90,54 @@ export async function decryptPassword(
   return new TextDecoder().decode(decrypted)
 }
 
+/** 条目敏感字段集合（名称、账号、密码、描述整体加密） */
+export interface EntryPayloadData {
+  name: string
+  account: string
+  password: string
+  description: string
+}
+
+/**
+ * 加密条目敏感字段集合 → 单一加密 blob
+ * @param data 包含 name/account/password/description 的对象
+ * @param key 加密密钥
+ * @returns 加密后的 payload 和 IV
+ */
+export async function encryptEntryPayload(
+  data: EntryPayloadData,
+  key: CryptoKey,
+): Promise<{ encryptedPayload: string, iv: string }> {
+  const json = JSON.stringify(data)
+  const { iv, ciphertext } = await aesGcmEncrypt(
+    new TextEncoder().encode(json),
+    key,
+  )
+  return {
+    encryptedPayload: arrayBufferToBase64(ciphertext),
+    iv: arrayBufferToBase64(iv),
+  }
+}
+
+/**
+ * 解密条目敏感字段 → 还原四个明文字段
+ * @param encryptedPayload 加密的 payload (Base64)
+ * @param iv 初始化向量 (Base64)
+ * @param key 解密密钥
+ * @returns 包含 name/account/password/description 的对象
+ */
+export async function decryptEntryPayload(
+  encryptedPayload: string,
+  iv: string,
+  key: CryptoKey,
+): Promise<EntryPayloadData> {
+  const data = base64ToUint8Array(encryptedPayload)
+  const ivData = base64ToUint8Array(iv)
+  const decrypted = await aesGcmDecrypt(data, key, ivData)
+  const json = new TextDecoder().decode(decrypted)
+  return JSON.parse(json) as EntryPayloadData
+}
+
 /**
  * 生成主密码哈希（用于验证）
  * 使用 PBKDF2 + 固定盐值生成验证哈希

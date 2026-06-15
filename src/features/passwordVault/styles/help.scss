@@ -103,3 +103,47 @@
   display: flex;
   justify-content: flex-end;
 }
+
+// ============================================================
+// 数据存储路径展示 (Codex 风格)
+// ============================================================
+
+.storage-path-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-sm;
+  padding: 10px 12px;
+  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+  cursor: pointer;
+  transition: all 0.12s;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+  }
+
+  &:active {
+    background: var(--b3-theme-primary-lightest);
+  }
+}
+
+.storage-path-text {
+  font-family: $vp-mono;
+  font-size: 11px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
+  word-break: break-all;
+  flex: 1;
+  min-width: 0;
+  user-select: all;
+}
+
+.storage-path-action {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--b3-theme-primary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}

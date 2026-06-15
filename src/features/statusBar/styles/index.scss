@@ -252,61 +252,41 @@ $sb-radius: 6px;
     flex: 1;
   }
 
-  .feature-drawer-item-pin {
+  // 角标（无边框，hover 显示）
+  .feature-drawer-item-badge {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 22px;
-    height: 22px;
-    border: 1px solid var(--b3-border-color);
-    border-radius: 4px;
-    background: transparent;
-    color: var(--b3-theme-on-surface);
+    width: 16px;
+    height: 16px;
     cursor: pointer;
-    opacity: 0.35;
+    opacity: 0;
     flex-shrink: 0;
-    transition: border-color 0.15s, color 0.15s, opacity 0.15s;
+    transition: opacity 0.15s, color 0.15s;
+    color: var(--b3-theme-on-surface);
+
+    .feature-drawer-item:hover & {
+      opacity: 0.35;
+    }
 
     &:hover {
-      border-color: var(--b3-theme-primary);
+      opacity: 1 !important;
+    }
+
+    &.active {
+      opacity: 0.9;
+
+      .feature-drawer-item:hover & {
+        opacity: 1;
+      }
+    }
+
+    &.badge-pin.active {
       color: var(--b3-theme-primary);
-      opacity: 1;
     }
 
-    &.pinned {
-      opacity: 1;
-      border-color: var(--b3-theme-primary);
-      color: var(--b3-theme-primary);
-      background: var(--b3-theme-primary-lightest);
-    }
-  }
-
-  .feature-drawer-item-bookmark {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 22px;
-    height: 22px;
-    border: 1px solid var(--b3-border-color);
-    border-radius: 4px;
-    background: transparent;
-    color: var(--b3-theme-on-surface);
-    cursor: pointer;
-    opacity: 0.6;
-    flex-shrink: 0;
-    transition: border-color 0.15s, color 0.15s, opacity 0.15s;
-
-    &:hover {
-      border-color: var(--b3-theme-secondary);
-      color: var(--b3-theme-secondary);
-      opacity: 1;
-    }
-
-    &.marked {
-      opacity: 1;
-      border-color: var(--b3-theme-secondary);
-      color: var(--b3-theme-secondary);
-      background: var(--b3-theme-surface-lighter);
+    &.badge-rarely.active {
+      color: var(--b3-theme-on-surface-lighter);
     }
   }
 
@@ -338,22 +318,16 @@ $sb-radius: 6px;
       flex: none;
     }
 
-    .feature-drawer-item-pin {
+    .badge-pin {
       position: absolute;
       top: 1px;
       right: 1px;
-      width: 18px;
-      height: 18px;
-      border-radius: 3px;
     }
 
-    .feature-drawer-item-bookmark {
+    .badge-rarely {
       position: absolute;
       bottom: 1px;
       right: 1px;
-      width: 18px;
-      height: 18px;
-      border-radius: 3px;
     }
   }
 }

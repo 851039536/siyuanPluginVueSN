@@ -78,28 +78,25 @@
               />
             </div>
             <span class="feature-drawer-item-title">{{ item.title }}</span>
-            <button
+            <span
               v-if="item.pinnable"
-              class="feature-drawer-item-pin"
-              :class="{ pinned: statusBarVisible.includes(item.id) }"
+              class="feature-drawer-item-badge badge-pin"
+              :class="{ active: statusBarVisible.includes(item.id) }"
               :title="statusBarVisible.includes(item.id) ? '取消固定' : '固定到状态栏'"
               @click.stop="emit('toggleStatusBar', item.id)"
             >
               <Icon
-                :icon="statusBarVisible.includes(item.id) ? 'mdi:pin' : 'mdi:pin-off-outline'"
-                :width="14"
+                :icon="statusBarVisible.includes(item.id) ? 'ph:push-pin-simple-fill' : 'ph:push-pin-simple'"
+                :width="12"
               />
-            </button>
-            <button
-              class="feature-drawer-item-bookmark"
+            </span>
+            <span
+              class="feature-drawer-item-badge badge-rarely"
               title="标记为不常用"
               @click.stop="emit('toggleRarelyUsed', item.id)"
             >
-              <Icon
-                icon="ph:bookmark-simple"
-                :width="14"
-              />
-            </button>
+              <Icon icon="ph:eye-slash" :width="12" />
+            </span>
           </div>
         </div>
         <div
@@ -139,28 +136,25 @@
                 />
               </div>
               <span class="feature-drawer-item-title">{{ item.title }}</span>
-              <button
+              <span
                 v-if="item.pinnable"
-                class="feature-drawer-item-pin"
-                :class="{ pinned: statusBarVisible.includes(item.id) }"
+                class="feature-drawer-item-badge badge-pin"
+                :class="{ active: statusBarVisible.includes(item.id) }"
                 :title="statusBarVisible.includes(item.id) ? '取消固定' : '固定到状态栏'"
                 @click.stop="emit('toggleStatusBar', item.id)"
               >
                 <Icon
-                  :icon="statusBarVisible.includes(item.id) ? 'mdi:pin' : 'mdi:pin-off-outline'"
-                  :width="14"
+                  :icon="statusBarVisible.includes(item.id) ? 'ph:push-pin-simple-fill' : 'ph:push-pin-simple'"
+                  :width="12"
                 />
-              </button>
-              <button
-                class="feature-drawer-item-bookmark marked"
+              </span>
+              <span
+                class="feature-drawer-item-badge badge-rarely active"
                 title="恢复为常用"
                 @click.stop="emit('toggleRarelyUsed', item.id)"
               >
-                <Icon
-                  icon="ph:bookmark-simple-fill"
-                  :width="14"
-                />
-              </button>
+                <Icon icon="ph:eye-slash" :width="12" />
+              </span>
             </div>
           </div>
         </div>

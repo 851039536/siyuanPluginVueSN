@@ -362,6 +362,55 @@
 }
 
 // ============================================================
+// 存储路径底部栏 (Codex 风格)
+// ============================================================
+
+.storage-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px $spacing-lg;
+  background: var(--b3-theme-surface);
+  border-top: 1px solid var(--b3-border-color);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+  flex-shrink: 0;
+
+  &:hover {
+    background: var(--b3-theme-background);
+    border-color: var(--b3-theme-primary);
+  }
+
+  &:active {
+    background: var(--b3-theme-primary-lightest);
+  }
+}
+
+.storage-footer-label {
+  font-family: $vp-mono;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--b3-theme-on-surface-light);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+
+.storage-footer-path {
+  font-family: $vp-mono;
+  font-size: 11px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.45;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+  user-select: all;
+}
+
+// ============================================================
 // 表单
 // ============================================================
 

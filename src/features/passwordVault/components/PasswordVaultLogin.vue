@@ -2,10 +2,6 @@
   <div class="login-page">
     <div class="dialog-header">
       <div class="header-title">
-        <IconWrapper
-          name="settings"
-          :size="24"
-        />
         <span>密码箱</span>
       </div>
       <Button
@@ -17,12 +13,6 @@
     </div>
 
     <div class="login-body">
-      <div class="login-icon">
-        <IconWrapper
-          name="pageLock"
-          :size="48"
-        />
-      </div>
       <h2>{{ isFirstTime ? '创建主密码' : '请输入主密码' }}</h2>
       <p class="login-hint">
         {{ isFirstTime ? '首次使用将创建新密码' : '请输入密码以解锁' }}
@@ -33,10 +23,6 @@
         v-if="!isFirstTime && passwordHint"
         class="password-hint-display"
       >
-        <IconWrapper
-          name="info"
-          :size="14"
-        />
         <span>提示：{{ passwordHint }}</span>
       </div>
 
@@ -64,10 +50,6 @@
             size="small"
             @click="showHintInput = !showHintInput"
           >
-            <IconWrapper
-              name="info"
-              :size="14"
-            />
             {{ showHintInput ? '取消密码提示' : '设置密码提示（推荐）' }}
           </Button>
           <Input
@@ -84,10 +66,6 @@
           v-if="loginError"
           class="error-message"
         >
-          <IconWrapper
-            name="error"
-            :size="16"
-          />
           {{ loginError }}
         </div>
 
@@ -125,7 +103,6 @@ import {
   ref,
 } from "vue"
 import Button from "@/components/Button.vue"
-import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
 
 // ============================================================

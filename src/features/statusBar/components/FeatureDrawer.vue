@@ -90,6 +90,78 @@
                 :width="14"
               />
             </button>
+            <button
+              class="feature-drawer-item-bookmark"
+              title="标记为不常用"
+              @click.stop="emit('toggleRarelyUsed', item.id)"
+            >
+              <Icon
+                icon="ph:bookmark-simple"
+                :width="14"
+              />
+            </button>
+          </div>
+        </div>
+        <div
+          v-if="rarelyUsedItems && rarelyUsedItems.length"
+          class="feature-drawer-rarely"
+        >
+          <button
+            class="feature-drawer-rarely-header"
+            :class="{ collapsed: !rarelyExpanded }"
+            @click="rarelyExpanded = !rarelyExpanded"
+          >
+            <Icon
+              icon="ph:caret-down-bold"
+              :width="12"
+              class="feature-drawer-rarely-caret"
+            />
+            <span>不常用 ({{ rarelyUsedItems.length }})</span>
+          </button>
+          <div
+            v-show="rarelyExpanded"
+            class="feature-drawer-list rarely-list"
+            :class="{ 'grid-mode': gridMode }"
+          >
+            <div
+              v-for="item in rarelyUsedItems"
+              :key="item.id"
+              class="feature-drawer-item"
+              @click="handleClick(item.id)"
+            >
+              <div
+                class="feature-drawer-item-icon"
+                :style="{ color: item.color }"
+              >
+                <Icon
+                  :icon="item.icon"
+                  :width="25"
+                />
+              </div>
+              <span class="feature-drawer-item-title">{{ item.title }}</span>
+              <button
+                v-if="item.pinnable"
+                class="feature-drawer-item-pin"
+                :class="{ pinned: statusBarVisible.includes(item.id) }"
+                :title="statusBarVisible.includes(item.id) ? '取消固定' : '固定到状态栏'"
+                @click.stop="emit('toggleStatusBar', item.id)"
+              >
+                <Icon
+                  :icon="statusBarVisible.includes(item.id) ? 'mdi:pin' : 'mdi:pin-off-outline'"
+                  :width="14"
+                />
+              </button>
+              <button
+                class="feature-drawer-item-bookmark marked"
+                title="恢复为常用"
+                @click.stop="emit('toggleRarelyUsed', item.id)"
+              >
+                <Icon
+                  icon="ph:bookmark-simple-fill"
+                  :width="14"
+                />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -99,7 +171,7 @@
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
-import { ref } from "vue"
+import { computed, ref, watch } from "vue"
 
 export interface FeatureDrawerItem {
   id: string
@@ -112,6 +184,7 @@ export interface FeatureDrawerItem {
 interface Props {
   visible: boolean
   items: FeatureDrawerItem[]
+  rarelyUsedItems?: FeatureDrawerItem[]
   statusBarVisible?: string[]
 }
 
@@ -119,12 +192,25 @@ interface Emits {
   (e: "close"): void
   (e: "select", id: string): void
   (e: "toggleStatusBar", id: string): void
+  (e: "toggleRarelyUsed", id: string): void
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const gridMode = ref(true)
+const rarelyExpanded = ref(true)
+
+// 当有"不常用"项被移除变为空时自动折叠
+const hasRarelyUsed = computed(() =>
+  props.rarelyUsedItems && props.rarelyUsedItems.length > 0,
+)
+
+watch(hasRarelyUsed, (val) => {
+  if (!val) {
+    rarelyExpanded.value = false
+  }
+})
 
 const handleClick = (id: string) => {
   emit("select", id)

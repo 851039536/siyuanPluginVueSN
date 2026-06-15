@@ -128,13 +128,16 @@ const coreItems = computed(() => [
     change: props.createdChange,
     isPercent: true,
   },
-])
-
-const secondaryItems = computed(() => [
   {
     value: String(props.todayModified),
     label: props.i18n.todayModified,
+    unitText: "",
+    change: props.modifiedChange,
+    isPercent: true,
   },
+])
+
+const secondaryItems = computed(() => [
   {
     value: String(props.avgWordsPerDoc),
     label: props.i18n.avgWordsPerDoc,
@@ -211,42 +214,42 @@ function formatDelta(change: number | null): string {
   }
 }
 
-// 核心指标：3 列大卡片
+// 核心指标：4 列大卡片
 .core-cards {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
 }
 
 .core-card {
   @include stats.stats-card-base;
   display: flex;
   flex-direction: column;
-  padding: 10px 8px;
+  padding: 8px 4px;
   text-align: center;
 }
 
 .core-label {
   font-family: stats.$font-mono;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--b3-theme-on-surface);
   opacity: 0.45;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .core-value-row {
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: 4px;
+  gap: 2px;
 }
 
 .core-value {
   font-family: stats.$font-mono;
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--b3-theme-primary);
   line-height: 1.2;
@@ -254,17 +257,17 @@ function formatDelta(change: number | null): string {
 
 .core-unit {
   font-family: stats.$font-mono;
-  font-size: 10px;
+  font-size: 9px;
   color: var(--b3-theme-on-surface);
   opacity: 0.4;
   white-space: nowrap;
 }
 
 .core-change {
-  padding: 1px 4px;
+  padding: 1px 3px;
   border-radius: 4px;
   font-family: stats.$font-mono;
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 700;
   line-height: 1.4;
 }
@@ -322,7 +325,7 @@ function formatDelta(change: number | null): string {
 
 @include mobile-only {
   .core-cards {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .secondary-grid {

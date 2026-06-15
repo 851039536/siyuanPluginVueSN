@@ -80,11 +80,13 @@
 
     <FeatureDrawer
       :visible="showFeatureDrawer"
-      :items="featureDrawerItems"
+      :items="frequentDrawerItems"
+      :rarely-used-items="rarelyUsedDrawerItems"
       :status-bar-visible="statusBarShortcuts"
       @close="showFeatureDrawer = false"
       @select="handleSelectFeature"
       @toggle-status-bar="handleToggleStatusBar"
+      @toggle-rarely-used="handleToggleRarelyUsed"
     />
   </div>
 </template>
@@ -130,6 +132,7 @@ const {
 } = useStatusBar()
 
 const statusBarShortcuts = ref<string[]>([])
+const rarelyUsedFeatures = ref<string[]>([])
 
 const featureDrawerItems: FeatureDrawerItem[] = [
   {
@@ -284,6 +287,14 @@ const visibleShortcuts = computed(() =>
     .map((id) => SHORTCUT_DISPLAY[id]),
 )
 
+const frequentDrawerItems = computed(() =>
+  featureDrawerItems.filter((item) => !rarelyUsedFeatures.value.includes(item.id)),
+)
+
+const rarelyUsedDrawerItems = computed(() =>
+  featureDrawerItems.filter((item) => rarelyUsedFeatures.value.includes(item.id)),
+)
+
 const handleToggleStatusBar = async (id: string) => {
   const idx = statusBarShortcuts.value.indexOf(id)
   if (idx === -1) {
@@ -294,8 +305,25 @@ const handleToggleStatusBar = async (id: string) => {
   await storage.save("statusBar-shortcuts", statusBarShortcuts.value)
 }
 
+const handleToggleRarelyUsed = async (id: string) => {
+  const idx = rarelyUsedFeatures.value.indexOf(id)
+  if (idx === -1) {
+    rarelyUsedFeatures.value = [...rarelyUsedFeatures.value, id]
+    // 标记为不常用后，从状态栏固定中移除
+    statusBarShortcuts.value = statusBarShortcuts.value.filter((s) => s !== id)
+    await storage.save("statusBar-shortcuts", statusBarShortcuts.value)
+  } else {
+    rarelyUsedFeatures.value = rarelyUsedFeatures.value.filter((s) => s !== id)
+  }
+  await storage.save("statusBar-rarelyUsed", rarelyUsedFeatures.value)
+}
+
 storage.load<string[]>("statusBar-shortcuts").then((data) => {
   if (data) statusBarShortcuts.value = data
+})
+
+storage.load<string[]>("statusBar-rarelyUsed").then((data) => {
+  if (data) rarelyUsedFeatures.value = data
 })
 
 const showFeatureDrawer = ref(false)

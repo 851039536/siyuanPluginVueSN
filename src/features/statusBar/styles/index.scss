@@ -281,6 +281,35 @@ $sb-radius: 6px;
     }
   }
 
+  .feature-drawer-item-bookmark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border: 1px solid var(--b3-border-color);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--b3-theme-on-surface);
+    cursor: pointer;
+    opacity: 0.6;
+    flex-shrink: 0;
+    transition: border-color 0.15s, color 0.15s, opacity 0.15s;
+
+    &:hover {
+      border-color: var(--b3-theme-secondary);
+      color: var(--b3-theme-secondary);
+      opacity: 1;
+    }
+
+    &.marked {
+      opacity: 1;
+      border-color: var(--b3-theme-secondary);
+      color: var(--b3-theme-secondary);
+      background: var(--b3-theme-surface-lighter);
+    }
+  }
+
   // 网格模式
   &.grid-mode {
     display: grid;
@@ -317,6 +346,56 @@ $sb-radius: 6px;
       height: 18px;
       border-radius: 3px;
     }
+
+    .feature-drawer-item-bookmark {
+      position: absolute;
+      bottom: 1px;
+      right: 1px;
+      width: 18px;
+      height: 18px;
+      border-radius: 3px;
+    }
+  }
+}
+
+// 不常用分组
+.feature-drawer-rarely {
+  flex-shrink: 0;
+  border-top: 1px dashed var(--b3-border-color);
+  background: var(--b3-theme-surface);
+}
+
+.feature-drawer-rarely-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 8px 14px;
+  border: none;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.15s;
+
+  &:hover { opacity: 1; }
+
+  .feature-drawer-rarely-caret {
+    transition: transform 0.2s;
+  }
+
+  &.collapsed .feature-drawer-rarely-caret {
+    transform: rotate(-90deg);
+  }
+}
+
+.rarely-list {
+  padding-top: 0;
+
+  .feature-drawer-item-title {
+    opacity: 0.7;
   }
 }
 

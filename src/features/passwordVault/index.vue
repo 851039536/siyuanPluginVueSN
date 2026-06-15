@@ -238,6 +238,7 @@
             <!-- 使用说明对话框 -->
             <HelpDialog
               :visible="showHelpDialog"
+              :storage-path="storagePath"
               @close="showHelpDialog = false"
             />
           </div>
@@ -540,6 +541,7 @@
 
 <script setup lang="ts">
 import type {
+  LegacyStoredPasswordEntry,
   PasswordCategory,
   PasswordEntry,
   StoredPasswordEntry,
@@ -563,11 +565,13 @@ import HelpDialog from "./components/HelpDialog.vue"
 import PasswordVaultLogin from "./components/PasswordVaultLogin.vue"
 import {
   PasswordVaultStorage,
+  DATA_VERSION,
 } from "./types/storage"
 import {
+  decryptEntryPayload,
   decryptPassword,
   deriveKey,
-  encryptPassword,
+  encryptEntryPayload,
   generateSalt,
   hashMasterPassword,
 } from "./utils/crypto"
@@ -616,6 +620,15 @@ const showNewPassword = ref(false)
 const showConfirmPassword = ref(false)
 const changePasswordError = ref("")
 const showHelpDialog = ref(false)
+
+// 数据存储路径（展示给用户）
+const storagePath = computed(() => {
+  const dataDir = (plugin as any).dataDir || ""
+  const name = plugin.name || ""
+  return dataDir && name
+    ? `${dataDir}/storage/petal/${name}/password-vault-entries.json`
+    : `data/storage/petal/{plugin}/password-vault-entries.json`
+})
 
 const entries = ref<PasswordEntry[]>([])
 const categories = ref<PasswordCategory[]>([
@@ -763,7 +776,7 @@ async function exportAllData() {
 
   try {
     const exportData = {
-      version: "1.0",
+      version: "2.0",
       exportDate: new Date().toISOString(),
       entries: entries.value,
       categories: categories.value,
@@ -857,23 +870,23 @@ async function handleChangePassword() {
     // 使用新密钥重新加密所有条目
     const reEncryptedEntries: StoredPasswordEntry[] = await Promise.all(
       entries.value.map(async (entry) => {
-        const {
-          encryptedData,
-          iv,
-        } = await encryptPassword(
-          entry.password,
+        const { encryptedPayload, iv } = await encryptEntryPayload(
+          {
+            name: entry.name,
+            account: entry.account,
+            password: entry.password,
+            description: entry.description,
+          },
           newKey,
         )
         return {
           id: entry.id,
           category: entry.category,
-          name: entry.name,
-          account: entry.account,
-          encryptedPassword: encryptedData,
+          encryptedPayload,
           iv,
-          description: entry.description,
           createdAt: entry.createdAt,
           updatedAt: Date.now(),
+          version: DATA_VERSION,
         }
       }),
     )
@@ -898,24 +911,67 @@ async function handleChangePassword() {
   }
 }
 
-// 加载条目（解密密码）
+// 加载条目（解密所有敏感字段，自动迁移旧格式）
 async function loadEntries() {
+  if (!encryptionKey.value) return
+
   try {
     const stored = await storage.entries.load()
-    if (stored && encryptionKey.value) {
-      // 解密所有条目的密码
-      entries.value = await Promise.all(
-        stored.map(async (entry) => ({
-          ...entry,
-          password: await decryptPassword(
-            entry.encryptedPassword,
-            entry.iv,
-            encryptionKey.value!,
-          ),
-        })),
-      )
-    } else {
+    if (!stored || stored.length === 0) {
       entries.value = []
+      return
+    }
+
+    let needsMigration = false
+    const decrypted: PasswordEntry[] = await Promise.all(
+      stored.map(async (entry: StoredPasswordEntry | LegacyStoredPasswordEntry) => {
+        // 检测旧格式（v1：有 encryptedPassword 字段，仅 password 加密）
+        if ("encryptedPassword" in entry && entry.encryptedPassword) {
+          needsMigration = true
+          const legacy = entry as LegacyStoredPasswordEntry
+          const password = await decryptPassword(
+            legacy.encryptedPassword,
+            legacy.iv,
+            encryptionKey.value!,
+          )
+          return {
+            id: legacy.id,
+            category: legacy.category,
+            name: legacy.name,
+            account: legacy.account,
+            password,
+            description: legacy.description ?? "",
+            createdAt: legacy.createdAt,
+            updatedAt: legacy.updatedAt,
+          }
+        }
+
+        // 新格式（v2）：所有敏感字段整体加密
+        const v2 = entry as StoredPasswordEntry
+        const payload = await decryptEntryPayload(
+          v2.encryptedPayload,
+          v2.iv,
+          encryptionKey.value!,
+        )
+        return {
+          id: v2.id,
+          category: v2.category,
+          name: payload.name,
+          account: payload.account,
+          password: payload.password,
+          description: payload.description,
+          createdAt: v2.createdAt,
+          updatedAt: v2.updatedAt,
+        }
+      }),
+    )
+
+    entries.value = decrypted
+
+    // 有旧数据时静默迁移回写新格式
+    if (needsMigration) {
+      await saveEntries()
+      console.info("[PasswordVault] 旧格式数据已自动迁移至 v2 加密格式")
     }
   } catch (error) {
     console.error("Failed to load entries:", error)
@@ -935,33 +991,32 @@ async function loadCategories() {
   }
 }
 
-// 保存条目（加密密码）
+// 保存条目（加密所有敏感字段）
 async function saveEntries() {
   if (!encryptionKey.value) {
     console.error("No encryption key available")
     return
   }
   try {
-    // 加密所有条目的密码后存储
     const storedEntries: StoredPasswordEntry[] = await Promise.all(
       entries.value.map(async (entry) => {
-        const {
-          encryptedData,
-          iv,
-        } = await encryptPassword(
-          entry.password,
+        const { encryptedPayload, iv } = await encryptEntryPayload(
+          {
+            name: entry.name,
+            account: entry.account,
+            password: entry.password,
+            description: entry.description,
+          },
           encryptionKey.value!,
         )
         return {
           id: entry.id,
           category: entry.category,
-          name: entry.name,
-          account: entry.account,
-          encryptedPassword: encryptedData,
+          encryptedPayload,
           iv,
-          description: entry.description,
           createdAt: entry.createdAt,
           updatedAt: entry.updatedAt,
+          version: DATA_VERSION,
         }
       }),
     )

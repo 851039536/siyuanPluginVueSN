@@ -21,15 +21,30 @@ export interface PasswordEntry {
 }
 
 /**
- * 存储的加密密码条目（持久化存储）
+ * 存储的加密密码条目（持久化存储 - v2 新格式）
+ * 所有敏感字段整体加密，name/account/description 不再明文泄露
  */
 export interface StoredPasswordEntry {
+  id: string // 明文 — 唯一标识
+  category: string // 明文 — 分类筛选需要
+  encryptedPayload: string // Base64 — AES-GCM({ name, account, password, description })
+  iv: string // 初始化向量 (Base64)
+  createdAt: number // 明文
+  updatedAt: number // 明文
+  version?: number // 数据格式版本（2=新格式）
+}
+
+/**
+ * 旧格式条目（v1，仅 password 字段加密）
+ * 用于自动迁移检测，loadEntries 遇到此格式会自动升级
+ */
+export interface LegacyStoredPasswordEntry {
   id: string
   category: string
   name: string
   account: string
-  encryptedPassword: string // 加密后的密码
-  iv: string // 初始化向量 (Base64)
+  encryptedPassword: string
+  iv: string
   description: string
   createdAt: number
   updatedAt: number

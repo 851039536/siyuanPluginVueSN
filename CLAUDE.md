@@ -24,6 +24,78 @@
 | 状态栏任务 | 绕过状态栏直接弹通知 | `useStatusBarTask` from `@/features/statusBar/composables/useStatusBarTask` |
 | 全局 siyuan | `(window as any).siyuan` | props 传入 Plugin 实例 |
 
+## 跨功能联动规则（强制）
+
+**功能模块之间禁止直接相互导入**。跨功能联动必须通过事件总线 + App.vue 中心调度实现零依赖解耦。
+
+### 正确模式（唯一允许）
+
+```
+Feature A（发起方）                 Feature B（响应方）
+  │                                   ▲
+  │ emitCustomEvent("eventName",      │
+  │   { detail })                     │ 导出 public API
+  │                                   │ (ref / function)
+  ▼                                   │
+App.vue onMounted 监听 ───────────────┘
+  window.addEventListener("eventName",
+    handler → 调用 Feature B 的 public API
+  )
+```
+
+### 错误模式 ❌
+
+| 禁止行为 | 原因 |
+|----------|------|
+| Feature A 直接 `import { xxx } from "@/features/FeatureB"` | 产生硬依赖，破坏模块独立性 |
+| Feature A 直接修改 Feature B 的 ref | 跨越模块边界，状态归属混乱 |
+| Feature A 通过全局变量 `(window as any).xxx` 访问 Feature B | 类型不安全，无契约约束 |
+
+### 正确示例 ✅
+
+```typescript
+// ===== Feature A（如 floatingToolbar/actions/passwordVault.ts）=====
+// 只用 createDialogAction 工厂 + emitCustomEvent 派发
+export function createPasswordVaultAction(plugin: Plugin): ToolbarAction {
+  return createDialogAction({
+    id: "passwordVault",
+    icon: `<svg>...</svg>`,
+    label: plugin.i18n.passwordVault.quickSave,
+    eventName: "openPasswordVaultAdd",  // 事件名
+    getContent: (selection) => ({ content: selection }),
+  })
+}
+
+// ===== Feature B（如 passwordVault/index.ts）=====
+// 导出 public API，不导入任何其他 feature
+export const pendingEntryName = ref("")
+export function openPasswordVaultWithText(text: string) {
+  pendingEntryName.value = text
+  passwordVaultVisible.value = true
+}
+
+// ===== App.vue（中心调度）=====
+// 唯一允许同时导入两个 feature 的文件
+import { openPasswordVaultWithText } from "@/features"
+
+onMounted(() => {
+  window.addEventListener("openPasswordVaultAdd", ((event: any) => {
+    if (event.detail?.content) {
+      openPasswordVaultWithText(event.detail.content)
+    }
+  }) as EventListener)
+})
+```
+
+### 规则清单
+
+1. **Feature 间零直接导入**：任何 feature 目录下的文件不得 `import` 其他 feature（`@/features/*` 的子目录）
+2. **单向数据流**：发起方只负责 `emitCustomEvent`，绝不触碰响应方的状态
+3. **App.vue 是唯一调度中心**：所有跨功能的事件监听统一在 App.vue 的 `onMounted` 中注册
+4. **Public API 契约**：响应方 feature 的 `index.ts` 导出的函数/ref 即为它的 public API，其他 feature 不直接调用
+5. **事件名规范**：使用 camelCase 动词短语（如 `openPasswordVaultAdd`），在 eventBus 中保持唯一
+6. **数据透传**：事件 detail 中携带的数据由 App.vue 透传给响应方，双方不共享类型定义
+
 ## 硬规则
 
 - **功能注册完整性**：新功能必须在 8 处注册（见下方「添加新功能」清单）

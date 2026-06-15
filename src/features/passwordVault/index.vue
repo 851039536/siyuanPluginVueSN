@@ -235,6 +235,17 @@
               </div>
             </div>
 
+            <!-- 存储路径（底部栏） -->
+            <div
+              v-if="storagePath"
+              class="storage-footer"
+              title="点击复制存储路径"
+              @click="copyStoragePath"
+            >
+              <span class="storage-footer-label">数据文件:</span>
+              <span class="storage-footer-path">{{ storagePath }}</span>
+            </div>
+
             <!-- 使用说明对话框 -->
             <HelpDialog
               :visible="showHelpDialog"
@@ -629,6 +640,12 @@ const storagePath = computed(() => {
     ? `${dataDir}/storage/petal/${name}/password-vault-entries.json`
     : `data/storage/petal/{plugin}/password-vault-entries.json`
 })
+
+const copyStoragePath = async () => {
+  if (!storagePath.value) return
+  const ok = await copyToClipboardUtil(storagePath.value)
+  showMessage(ok ? "路径已复制" : "复制失败", 2000, ok ? "info" : "error")
+}
 
 const entries = ref<PasswordEntry[]>([])
 const categories = ref<PasswordCategory[]>([

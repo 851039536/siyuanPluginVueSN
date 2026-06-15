@@ -566,7 +566,7 @@ import {
   ref,
   watch,
 } from "vue"
-import { pendingEntryName } from "./index"
+import { pendingEntryData } from "./index"
 import { copyToClipboard as copyToClipboardUtil, triggerBlobDownload } from "@/utils/domUtils"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
@@ -1305,35 +1305,36 @@ watch(
   },
 )
 
-// 监听外部预填名称（来自浮动工具栏"存密码"等外部调用）
-watch(pendingEntryName, (newVal) => {
-  if (newVal && isLoggedIn.value) {
-    // 直接打开添加表单并预填名称
+// 监听外部预填数据（来自浮动工具栏"存密码"等外部调用）
+watch(pendingEntryData, (data) => {
+  if (data && isLoggedIn.value) {
+    // 打开添加表单并预填所有字段
     editingEntry.value = null
     entryForm.category = categories.value[0]?.id || ""
-    entryForm.name = newVal
-    entryForm.account = ""
-    entryForm.password = ""
-    entryForm.description = ""
+    entryForm.name = data.name
+    entryForm.account = data.account
+    entryForm.password = data.password
+    entryForm.description = data.description
     showFormPassword.value = false
     showAddModal.value = true
     // 清空 pending 状态，避免重复触发
-    pendingEntryName.value = ""
+    pendingEntryData.value = null
   }
 })
 
 // 登录完成后检测是否有待处理的预填数据
 watch(isLoggedIn, (loggedIn) => {
-  if (loggedIn && pendingEntryName.value) {
+  if (loggedIn && pendingEntryData.value) {
+    const data = pendingEntryData.value
     editingEntry.value = null
     entryForm.category = categories.value[0]?.id || ""
-    entryForm.name = pendingEntryName.value
-    entryForm.account = ""
-    entryForm.password = ""
-    entryForm.description = ""
+    entryForm.name = data.name
+    entryForm.account = data.account
+    entryForm.password = data.password
+    entryForm.description = data.description
     showFormPassword.value = false
     showAddModal.value = true
-    pendingEntryName.value = ""
+    pendingEntryData.value = null
   }
 })
 

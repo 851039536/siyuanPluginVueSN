@@ -51,7 +51,7 @@ export {
   hidePasswordVault,
   openPasswordVaultWithText,
   passwordVaultVisible,
-  pendingEntryName,
+  pendingEntryData,
   registerPasswordVault,
 } from "./passwordVault"
 export { registerResourceManager } from "./resourceManager"

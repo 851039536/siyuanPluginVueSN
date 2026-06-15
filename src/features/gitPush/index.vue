@@ -963,12 +963,17 @@ async function handleAdd() {
 async function handleRefresh(id: string) {
   refreshing.value = id
   try {
-    await refreshRemotes(id)
-    await loadPushStatus(id)
-    await loadWorkingTree(id)
-    await loadCommitLog(id)
-    await loadBranches(id)
-    await loadStashList(id)
+    // 并行执行：remote 检测 + push 状态一组，工作区/日志/分支/stash 一组
+    await Promise.all([
+      refreshRemotes(id),
+      loadPushStatus(id),
+    ])
+    await Promise.all([
+      loadWorkingTree(id),
+      loadCommitLog(id),
+      loadBranches(id),
+      loadStashList(id),
+    ])
   } finally {
     refreshing.value = null
   }

@@ -671,8 +671,9 @@ export class GitPushManager {
 
   /**
    * 获取工作区变更状态（git status --porcelain -b）
+   * @param opts.skipRefresh 跳过 `update-index --refresh`（首屏/批量探测时设为 true，避免遍历 index 的重命令）
    */
-  async getWorkingTreeStatus(projectPath: string): Promise<WorkingTreeInfo> {
+  async getWorkingTreeStatus(projectPath: string, opts?: { skipRefresh?: boolean }): Promise<WorkingTreeInfo> {
     const empty: WorkingTreeInfo = {
       branch: "",
       files: [],
@@ -698,8 +699,12 @@ export class GitPushManager {
     try {
       // Windows 上 child_process.exec 修改 .git/index 后 OS 文件缓存可能未刷盘，
       // 先执行 update-index --refresh 强制 git 重新 stat index 中的所有条目，
-      // 确保后续 status 读到最新的暂存区状态
-      await this.execGit(projectPath, ["update-index", "--refresh", "-q"]).catch(() => {})
+      // 确保后续 status 读到最新的暂存区状态。
+      // 首屏/批量探测场景下 index 未被本进程改动，跳过此重命令以大幅提速；
+      // stage/commit 等改写了 index 的操作后仍需执行。
+      if (!opts?.skipRefresh) {
+        await this.execGit(projectPath, ["update-index", "--refresh", "-q"]).catch(() => {})
+      }
       // -c core.quotepath=false 禁用中文路径八进制转义，避免 git add 时找不到文件
       const raw = await this.execGit(projectPath, [
         "-c", "core.quotepath=false", "status", "--porcelain",

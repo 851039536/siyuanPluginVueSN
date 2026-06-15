@@ -216,6 +216,8 @@ const emit = defineEmits<{
   loadDiff: [file: string, staged: boolean]
   clearOutput: []
   discardFile: [file: string, staged: boolean, status: string]
+  /** 面板首次展开时触发，父组件按需懒加载 commitLog/branches/stash 等详情 */
+  expand: []
 }>()
 
 const expanded = ref(false)
@@ -287,6 +289,8 @@ function toggleStage(file: FileChange) {
 
 function toggleExpanded() {
   expanded.value = !expanded.value
+  // 首次展开时通知父组件懒加载详情数据（commitLog/branches/stash）
+  if (expanded.value) emit("expand")
 }
 
 function toggleDiff(file: FileChange) {

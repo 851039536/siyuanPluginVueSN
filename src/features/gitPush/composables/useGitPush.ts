@@ -300,11 +300,14 @@ export function useGitPush(manager: GitPushManager) {
     pushStatuses.value[id] = await manager.checkPushStatus(id)
   }
 
-  /** 加载工作区状态 */
-  async function loadWorkingTree(id: string) {
+  /** 加载工作区状态
+   *  @param skipRefresh 跳过 update-index --refresh（首屏/批量探测时传 true 提速；
+   *                    stage/commit 等改写 index 的操作后刷新走默认 false，确保读准）
+   */
+  async function loadWorkingTree(id: string, skipRefresh = false) {
     const project = projects.value.find(p => p.id === id)
     if (!project) return
-    workingTrees.value[id] = await manager.getWorkingTreeStatus(project.path)
+    workingTrees.value[id] = await manager.getWorkingTreeStatus(project.path, { skipRefresh })
   }
 
   /** 加载单个文件差异 */

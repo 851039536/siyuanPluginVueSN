@@ -1,0 +1,113 @@
+.shortcut-card {
+  padding: 10px 12px;
+  border-bottom: 1px dashed var(--b3-theme-surface-lighter);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.is-favorite {
+  background: linear-gradient(135deg, transparent 0%, var(--b3-theme-primary-lightest) 100%);
+}
+
+.is-recent {
+  border-left: 3px solid var(--b3-theme-primary);
+}
+
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.shortcut-name {
+  font-weight: 600;
+  color: var(--b3-theme-on-surface);
+  font-size: 13px;
+  line-height: 1.3;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.name-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.platform-badge {
+  display: inline-block;
+  padding: 1px 5px;
+  background: var(--b3-theme-surface-lighter);
+  color: var(--b3-theme-on-surface-variant);
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.tool-badge {
+  display: inline-block;
+  padding: 1px 5px;
+  background: var(--b3-theme-primary-lightest);
+  color: var(--b3-theme-primary);
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.shortcut-desc {
+  font-size: 11px;
+  color: var(--b3-theme-on-surface-variant);
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 4px;
+}
+
+.shortcut-keys {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  cursor: pointer;
+}
+
+.shortcut-keys:hover {
+  opacity: 0.8;
+}
+
+.shortcut-keys:active {
+  opacity: 0.6;
+}
+
+// Codex-style key-badge: monospace, border, subtle background
+.key-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--b3-theme-primary);
+  background: var(--b3-theme-primary-lightest);
+  border: 1px solid var(--b3-theme-primary-light);
+  border-radius: 4px;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+}
+
+.shortcut-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}

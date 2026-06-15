@@ -103,65 +103,6 @@ const selectOptions = computed((): SelectOption[] => {
 })
 </script>
 
-<style scoped lang="scss">
-.shortcut-header {
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
-  background: var(--b3-theme-surface);
-}
-
-.toolbar-row {
-  display: flex;
-  gap: 8px;
-  padding: 8px 12px;
-  align-items: center;
-}
-
-.toolbar-row-secondary {
-  display: flex;
-  gap: 8px;
-  padding: 0 12px 8px;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.toolbar-search {
-  flex: 1;
-  min-width: 0;
-}
-
-.toolbar-category {
-  width: 160px;
-  flex-shrink: 0;
-}
-
-.toolbar-add {
-  flex-shrink: 0;
-}
-
-.filter-group {
-  display: flex;
-  gap: 4px;
-}
-
-.view-toggle {
-  display: flex;
-  gap: 3px;
-  background: var(--b3-theme-background);
-  border-radius: 6px;
-  padding: 2px;
-}
-
-.grid-icon {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.square {
-  width: 4px;
-  height: 4px;
-  background-color: currentColor;
-  border-radius: 1px;
-  display: inline-block;
-}
+<style lang="scss" scoped>
+@use "../styles/PanelHeader.scss";
 </style>

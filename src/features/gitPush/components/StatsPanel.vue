@@ -97,6 +97,33 @@
         </div>
       </div>
 
+      <!-- 未设置平台的项目 -->
+      <div v-if="noPlatformProjects.length > 0" class="gp-stats-section">
+        <div class="gp-stats-section-title">
+          {{ i18n.noPlatformProjects || '未设置平台的项目' }}
+          <span class="gp-stats-section-count">{{ noPlatformProjects.length }}</span>
+        </div>
+        <div class="gp-table-wrap">
+          <div class="gp-table-row gp-table-row--head">
+            <span class="gp-table-cell gp-table-cell--name">{{ i18n.projectName || '项目' }}</span>
+            <span class="gp-table-cell gp-table-cell--time">{{ i18n.addedDate || '添加时间' }}</span>
+            <span class="gp-table-cell gp-table-cell--act"></span>
+          </div>
+          <div
+            v-for="item in noPlatformProjects"
+            :key="item.id"
+            class="gp-table-row gp-table-row--clickable"
+            @click="emit('viewProject', item.id)"
+          >
+            <span class="gp-table-cell gp-table-cell--name" :title="item.path">{{ item.name }}</span>
+            <span class="gp-table-cell gp-table-cell--time">{{ formatDate(item.addedAt) }}</span>
+            <span class="gp-table-cell gp-table-cell--act">
+              <Icon icon="mdi:arrow-right" height="12" />
+            </span>
+          </div>
+        </div>
+      </div>
+
       <!-- 项目管理概览（收藏/归档/状态分布） -->
       <div class="gp-stats-section">
         <div class="gp-stats-section-title">项目管理概览</div>
@@ -302,6 +329,8 @@ const props = defineProps<{
   statusStats: StatusStats
   /** 标签使用排行 */
   tagStats: TagStatItem[]
+  /** 未设置平台的项目列表 */
+  noPlatformProjects: GitProject[]
 }>()
 
 const emit = defineEmits<{
@@ -316,6 +345,14 @@ function pct(count: number): string {
 
 function platformLabel(key: string): string {
   return key === "github" ? "GitHub" : key === "gitee" ? "Gitee" : "Gitea"
+}
+
+function formatDate(ts: number): string {
+  const d = new Date(ts)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, "0")
+  const day = String(d.getDate()).padStart(2, "0")
+  return `${y}-${m}-${day}`
 }
 </script>
 
@@ -481,6 +518,8 @@ function platformLabel(key: string): string {
   border: 1px solid var(--b3-border-color);
   border-radius: 4px;
   overflow: hidden;
+  max-height: 220px;
+  overflow-y: auto;
 }
 
 .gp-table-row {
@@ -502,6 +541,15 @@ function platformLabel(key: string): string {
     text-transform: uppercase;
     letter-spacing: 0.04em;
     opacity: 0.45;
+  }
+
+  &--clickable {
+    cursor: pointer;
+    transition: background 0.15s;
+
+    &:hover {
+      background: var(--b3-theme-surface);
+    }
   }
 }
 
@@ -533,6 +581,14 @@ function platformLabel(key: string): string {
   &--act {
     width: 24px;
     text-align: center;
+  }
+
+  &--time {
+    width: 90px;
+    text-align: center;
+    font-size: 10px;
+    opacity: 0.55;
+    font-family: $vp-mono;
   }
 }
 

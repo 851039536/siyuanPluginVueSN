@@ -70,6 +70,7 @@
       :archived-count="archivedProjects.length"
       :status-stats="statusStats"
       :tag-stats="tagStats"
+      :no-platform-projects="noPlatformProjects"
       @view-project="onViewProject"
     />
 
@@ -930,6 +931,7 @@ const {
   pushStatusStats,
   needsPushProjects,
   uncommittedProjects,
+  noPlatformProjects,
   recentCommits,
   // 项目聚合管理
   allTags,

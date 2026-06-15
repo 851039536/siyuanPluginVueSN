@@ -10,16 +10,11 @@ import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
 
 /**
- * 密码箱存储数据结构
+ * 数据格式版本号
+ * - 1: 旧格式（仅 password 字段加密）
+ * - 2: 新格式（所有敏感字段整体加密为 encryptedPayload）
  */
-export interface PasswordVaultData {
-  masterPasswordHash: string
-  verifySalt: string
-  encryptionSalt: string
-  passwordHint: string
-  entries: StoredPasswordEntry[]
-  categories: PasswordCategory[]
-}
+export const DATA_VERSION = 2
 
 /**
  * 存储键常量

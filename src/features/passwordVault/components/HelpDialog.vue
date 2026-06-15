@@ -76,6 +76,20 @@
                 <li>如完全遗忘，需要联系开发者或手动清除插件数据</li>
               </ul>
             </div>
+            <div
+              v-if="storagePath"
+              class="help-section"
+            >
+              <h4>数据位置</h4>
+              <div
+                class="storage-path-section"
+                title="点击复制路径"
+                @click="copyStoragePath"
+              >
+                <span class="storage-path-text">{{ storagePath }}</span>
+                <span class="storage-path-action">📋 复制</span>
+              </div>
+            </div>
           </div>
           <div class="help-dialog-footer">
             <Button
@@ -93,13 +107,16 @@
 </template>
 
 <script setup lang="ts">
+import { showMessage } from "siyuan"
+import { copyToClipboard } from "@/utils/domUtils"
 import Button from "@/components/Button.vue"
 
 interface Props {
   visible: boolean
+  storagePath?: string
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 
 const emit = defineEmits<{
   (e: "close"): void
@@ -107,6 +124,12 @@ const emit = defineEmits<{
 
 const close = () => {
   emit("close")
+}
+
+const copyStoragePath = async () => {
+  if (!props.storagePath) return
+  const ok = await copyToClipboard(props.storagePath)
+  showMessage(ok ? "路径已复制" : "复制失败", 2000, ok ? "info" : "error")
 }
 </script>
 

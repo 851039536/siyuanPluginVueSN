@@ -134,6 +134,9 @@ $radius-xl: 1rem;         // 16px
 $radius-2xl: 1.5rem;      // 24px
 $radius-full: 9999px;
 
+// 注：Codex $vp-radius(6px) / $vp-mono(等宽字体栈) 定义在 superPanel/styles/variables.scss
+// 未导入 superPanel 的模块可在本地 mixins.scss 自行声明
+
 // ========== 阴影变量（Shadow） ==========
 
 $shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -156,6 +159,9 @@ $spacing-8: 2rem;       // 32px
 $spacing-10: 2.5rem;    // 40px
 $spacing-12: 3rem;      // 48px
 $spacing-16: 4rem;      // 64px
+
+// 注：Codex $spacing-xs/sm/md/lg 定义在 superPanel/styles/variables.scss
+// 未导入 superPanel 的模块可在本地 mixins.scss 自行声明
 
 
 

@@ -72,9 +72,9 @@ src/
 
 ## UI 风格：Codex
 
-所有 UI 组件默认使用 **Codex 风格**——代码文档式设计语言。核心规范：等宽字体用于代码类文本、大写标签用于元信息 key、边框卡片而非阴影、主按钮实底次按钮描边、section 间分割线分隔、输入框 focus 发光。
+**强制规则**：所有新增 feature 的 UI 必须遵循 Codex 风格。禁止硬编码尺寸——使用全局设计 Token（`src/_variables.scss` 提供 `$vp-radius` / `$spacing-*` / `$vp-mono` / `$radius-*`），禁止 `box-shadow`（改用边框）。
 
-> 详细规范与参考实现见 [CLAUDE_RULES.md](./CLAUDE_RULES.md#ui-风格codex)
+> 完整 Token 表、组件模式库、禁止事项见 [CLAUDE_RULES.md § UI 风格：Codex](./CLAUDE_RULES.md#ui-风格codex)
 
 ## API 速查
 

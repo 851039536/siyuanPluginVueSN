@@ -33,13 +33,16 @@ $sb-radius: 6px;
     &[data-level="high"] {
       color: var(--b3-theme-error);
       background: var(--b3-theme-error-lighter);
-
-      .monitor-icon { opacity: 1; }
     }
 
     &[data-level="medium"] {
       color: var(--b3-theme-warning);
       background: var(--b3-theme-warning-lighter);
+    }
+
+    // 高/中级别下图标完整可见
+    &[data-level="high"],
+    &[data-level="medium"] {
       .monitor-icon { opacity: 1; }
     }
   }

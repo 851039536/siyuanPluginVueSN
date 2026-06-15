@@ -1305,9 +1305,23 @@ watch(
   },
 )
 
+// 检查条目是否已存在（名称 + 账号 均一致）
+function isEntryDuplicate(data: { name: string, account: string }): boolean {
+  if (!data.account) return false // 无账号字段无法判断重复
+  return entries.value.some(
+    (e) => e.name === data.name && e.account === data.account,
+  )
+}
+
 // 监听外部预填数据（来自浮动工具栏"存密码"等外部调用）
 watch(pendingEntryData, (data) => {
   if (data && isLoggedIn.value) {
+    // 去重检查：名称+账号已存在则不重复添加
+    if (isEntryDuplicate(data)) {
+      showMessage(`「${data.name}」已存在，无需重复添加`, 3000, "info")
+      pendingEntryData.value = null
+      return
+    }
     // 打开添加表单并预填所有字段
     editingEntry.value = null
     entryForm.category = categories.value[0]?.id || ""
@@ -1320,12 +1334,18 @@ watch(pendingEntryData, (data) => {
     // 清空 pending 状态，避免重复触发
     pendingEntryData.value = null
   }
-})
+}, { immediate: true })
 
 // 登录完成后检测是否有待处理的预填数据
 watch(isLoggedIn, (loggedIn) => {
   if (loggedIn && pendingEntryData.value) {
     const data = pendingEntryData.value
+    // 去重检查：名称+账号已存在则不重复添加
+    if (isEntryDuplicate(data)) {
+      showMessage(`「${data.name}」已存在，无需重复添加`, 3000, "info")
+      pendingEntryData.value = null
+      return
+    }
     editingEntry.value = null
     entryForm.category = categories.value[0]?.id || ""
     entryForm.name = data.name
@@ -1336,7 +1356,7 @@ watch(isLoggedIn, (loggedIn) => {
     showAddModal.value = true
     pendingEntryData.value = null
   }
-})
+}, { immediate: true })
 
 onMounted(() => {
   document.addEventListener("keydown", handleKeyDown)

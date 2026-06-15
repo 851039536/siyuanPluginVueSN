@@ -38,17 +38,6 @@
   overflow-y: auto;
 }
 
-.login-icon {
-  margin-bottom: 20px;
-  color: var(--b3-theme-primary);
-
-  :deep(.icon-wrapper) {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-}
-
 .login-body h2 {
   font-size: 20px;
   font-weight: 600;
@@ -79,11 +68,6 @@
   margin-bottom: 20px;
   width: 100%;
   max-width: 320px;
-
-  :deep(.icon-wrapper) {
-    color: $brand-destructive;
-    flex-shrink: 0;
-  }
 
   span {
     flex: 1;

@@ -58,12 +58,49 @@
             </button>
           </div>
         </div>
+        <div class="feature-drawer-search">
+          <Icon icon="ph:magnifying-glass" :width="14" class="search-icon" />
+          <input
+            v-model="searchQuery"
+            type="text"
+            class="search-input"
+            placeholder="搜索功能..."
+            @keydown.escape="searchQuery = ''"
+          />
+          <button
+            v-if="searchQuery"
+            class="search-clear"
+            @click="searchQuery = ''"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24">
+              <path
+                fill="currentColor"
+                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+              />
+            </svg>
+          </button>
+        </div>
+        <!-- 分类标签栏 -->
+        <div
+          v-if="!searchQuery && groupTabs.length > 1"
+          class="feature-drawer-tabs"
+        >
+          <button
+            v-for="tab in groupTabs"
+            :key="tab.key"
+            class="feature-drawer-tab"
+            :class="{ active: activeGroup === tab.key }"
+            @click="activeGroup = tab.key"
+          >
+            {{ tab.label }}
+          </button>
+        </div>
         <div
           class="feature-drawer-list"
           :class="{ 'grid-mode': gridMode }"
         >
           <div
-            v-for="item in items"
+            v-for="item in displayItems"
             :key="item.id"
             class="feature-drawer-item"
             @click="handleClick(item.id)"
@@ -98,9 +135,15 @@
               <Icon icon="ph:eye-slash" :width="12" />
             </span>
           </div>
+          <div
+            v-if="displayItems.length === 0"
+            class="feature-drawer-empty"
+          >
+            {{ searchQuery ? '未找到匹配功能' : '暂无功能' }}
+          </div>
         </div>
         <div
-          v-if="rarelyUsedItems && rarelyUsedItems.length"
+          v-if="filteredRarelyItems.length"
           class="feature-drawer-rarely"
         >
           <button
@@ -113,7 +156,7 @@
               :width="12"
               class="feature-drawer-rarely-caret"
             />
-            <span>不常用 ({{ rarelyUsedItems.length }})</span>
+            <span>不常用 ({{ filteredRarelyItems.length }})</span>
           </button>
           <div
             v-show="rarelyExpanded"
@@ -121,7 +164,7 @@
             :class="{ 'grid-mode': gridMode }"
           >
             <div
-              v-for="item in rarelyUsedItems"
+              v-for="item in filteredRarelyItems"
               :key="item.id"
               class="feature-drawer-item"
               @click="handleClick(item.id)"
@@ -173,6 +216,7 @@ export interface FeatureDrawerItem {
   color: string
   title: string
   pinnable: boolean
+  group?: string
 }
 
 interface Props {
@@ -194,6 +238,8 @@ const emit = defineEmits<Emits>()
 
 const gridMode = ref(true)
 const rarelyExpanded = ref(false)
+const searchQuery = ref("")
+const activeGroup = ref("__all__")
 
 // 当有"不常用"项被移除变为空时自动折叠
 const hasRarelyUsed = computed(() =>
@@ -204,6 +250,49 @@ watch(hasRarelyUsed, (val) => {
   if (!val) {
     rarelyExpanded.value = false
   }
+})
+
+// 搜索过滤
+const matchSearch = (item: FeatureDrawerItem) => {
+  if (!searchQuery.value) return true
+  const q = searchQuery.value.toLowerCase()
+  return item.title.toLowerCase().includes(q)
+    || (item.group && item.group.toLowerCase().includes(q))
+}
+
+const filteredItems = computed(() =>
+  props.items.filter(matchSearch),
+)
+
+const filteredRarelyItems = computed(() =>
+  (props.rarelyUsedItems || []).filter(matchSearch),
+)
+
+// 从所有项提取唯一分组标签
+const allGroups = computed(() => {
+  const set = new Set<string>()
+  for (const item of props.items) {
+    if (item.group) set.add(item.group)
+  }
+  return [...set].sort()
+})
+
+// 标签栏选项
+const groupTabs = computed(() => {
+  const tabs: { key: string; label: string }[] = [
+    { key: "__all__", label: "全部" },
+  ]
+  for (const g of allGroups.value) {
+    tabs.push({ key: g, label: g })
+  }
+  return tabs
+})
+
+// 按 activeGroup 过滤（非搜索模式），搜索时忽略分组
+const displayItems = computed(() => {
+  if (searchQuery.value) return filteredItems.value
+  if (activeGroup.value === "__all__") return props.items
+  return props.items.filter((item) => item.group === activeGroup.value)
 })
 
 const handleClick = (id: string) => {

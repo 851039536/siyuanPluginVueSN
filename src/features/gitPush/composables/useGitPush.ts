@@ -148,6 +148,11 @@ export function useGitPush(manager: GitPushManager) {
       }))
   })
 
+  /** 未设置任何平台远程的项目列表 */
+  const noPlatformProjects = computed(() => {
+    return projects.value.filter(p => !p.githubUrl && !p.giteeUrl && !p.giteaUrl)
+  })
+
   /** 最近提交摘要（跨所有项目，含相对时间 + 文件差异信息） */
   interface RecentCommitEntry {
     projectId: string
@@ -705,6 +710,7 @@ export function useGitPush(manager: GitPushManager) {
     pushStatusStats,
     needsPushProjects,
     uncommittedProjects,
+    noPlatformProjects,
     recentCommits,
     // 项目聚合管理
     allTags,

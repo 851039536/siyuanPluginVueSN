@@ -39,8 +39,14 @@
 }
 
 .login-icon {
-  font-size: 64px;
   margin-bottom: 20px;
+  color: var(--b3-theme-primary);
+
+  :deep(.icon-wrapper) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 .login-body h2 {

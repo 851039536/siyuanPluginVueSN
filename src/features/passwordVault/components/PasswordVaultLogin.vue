@@ -18,7 +18,10 @@
 
     <div class="login-body">
       <div class="login-icon">
-        🔐
+        <IconWrapper
+          name="pageLock"
+          :size="48"
+        />
       </div>
       <h2>{{ isFirstTime ? '创建主密码' : '请输入主密码' }}</h2>
       <p class="login-hint">
@@ -118,8 +121,8 @@
 <script setup lang="ts">
 import {
   nextTick,
+  onMounted,
   ref,
-  watch,
 } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
@@ -180,22 +183,10 @@ const handleSubmit = () => {
 // Lifecycle
 // ============================================================
 
-// 监听首次使用状态变化，重置表单并自动聚焦
-watch(
-  () => props.isFirstTime,
-  async () => {
-    // 重置表单
-    password.value = ""
-    hint.value = ""
-    showHintInput.value = false
-    showPassword.value = false
-
-    // 自动聚焦输入框
-    await nextTick()
-    inputRef.value?.focus()
-  },
-  { immediate: true },
-)
+onMounted(async () => {
+  await nextTick()
+  inputRef.value?.focus()
+})
 </script>
 
 <style lang="scss" scoped>

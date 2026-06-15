@@ -110,11 +110,3 @@ export async function hashMasterPassword(
   )
   return arrayBufferToBase64(derivedBits)
 }
-
-/**
- * 生成初始验证盐值
- * 在首次设置主密码时调用
- */
-export function generateVerifySalt(): string {
-  return generateSalt()
-}

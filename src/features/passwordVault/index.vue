@@ -553,7 +553,7 @@ import {
   ref,
   watch,
 } from "vue"
-import { triggerBlobDownload } from "@/utils/domUtils"
+import { copyToClipboard as copyToClipboardUtil, triggerBlobDownload } from "@/utils/domUtils"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
@@ -568,7 +568,7 @@ import {
   decryptPassword,
   deriveKey,
   encryptPassword,
-  generateVerifySalt,
+  generateSalt,
   hashMasterPassword,
 } from "./utils/crypto"
 
@@ -597,7 +597,6 @@ const loginError = ref("")
 const isFirstTime = ref(false)
 const savedHash = ref("")
 const encryptionKey = ref<CryptoKey | null>(null) // 当前会话的加密密钥
-const encryptionSalt = ref<string>("") // 加密盐值
 const passwordHint = ref<string>("") // 密码提示
 
 const searchQuery = ref("")
@@ -674,7 +673,6 @@ async function loadMasterPasswordHash() {
     if (hash && verifySalt && encSalt) {
       savedHash.value = hash
       passwordHint.value = hint || ""
-      encryptionSalt.value = encSalt
       isFirstTime.value = false
     } else {
       isFirstTime.value = true
@@ -691,8 +689,8 @@ async function handleLogin(inputPassword: string, hint?: string) {
 
   if (isFirstTime.value) {
     // 首次创建密码 - 生成盐值并保存
-    const verifySalt = generateVerifySalt()
-    const encryptSalt = generateVerifySalt()
+    const verifySalt = generateSalt()
+    const encryptSalt = generateSalt()
     const hash = await hashMasterPassword(inputPassword, verifySalt)
 
     // 更新密码提示
@@ -709,15 +707,13 @@ async function handleLogin(inputPassword: string, hint?: string) {
     })
 
     savedHash.value = hash
-    encryptionSalt.value = encryptSalt
     isFirstTime.value = false
     isLoggedIn.value = true
 
     // 派生加密密钥
     encryptionKey.value = await deriveKey(inputPassword, encryptSalt)
 
-    await loadEntries()
-    await loadCategories()
+    await Promise.all([loadEntries(), loadCategories()])
   } else {
     // 验证密码 - 获取保存的盐值
     const verifySalt = await storage.verifySalt.load()
@@ -733,13 +729,11 @@ async function handleLogin(inputPassword: string, hint?: string) {
     if (hash === savedHash.value) {
       isLoggedIn.value = true
       loginError.value = ""
-      encryptionSalt.value = encryptSalt
 
       // 派生加密密钥
       encryptionKey.value = await deriveKey(inputPassword, encryptSalt)
 
-      await loadEntries()
-      await loadCategories()
+      await Promise.all([loadEntries(), loadCategories()])
     } else {
       loginError.value = "密码错误，请重试"
     }
@@ -853,8 +847,8 @@ async function handleChangePassword() {
     }
 
     // 生成新的盐值和哈希
-    const newVerifySalt = generateVerifySalt()
-    const newEncryptSalt = generateVerifySalt()
+    const newVerifySalt = generateSalt()
+    const newEncryptSalt = generateSalt()
     const newHash = await hashMasterPassword(newPassword.value, newVerifySalt)
 
     // 使用新密码派生新密钥
@@ -894,7 +888,6 @@ async function handleChangePassword() {
 
     // 更新状态
     savedHash.value = newHash
-    encryptionSalt.value = newEncryptSalt
     encryptionKey.value = newKey
 
     showMessage("密码修改成功，请记住新密码", 3000, "info")
@@ -1179,21 +1172,17 @@ const togglePasswordVisibility = (id: string) => {
   showPasswords.value[id] = !showPasswords.value[id]
 }
 
-// 通用复制函数
-const copyToClipboard = async (text: string, label: string) => {
-  try {
-    await navigator.clipboard.writeText(text)
-    showMessage(`${label}已复制`, 2000, "info")
-  } catch {
-    showMessage("复制失败", 2000, "error")
-  }
+// 通用复制函数 — 统一使用 domUtils.copyToClipboard
+const copyAndNotify = async (text: string, label: string) => {
+  const ok = await copyToClipboardUtil(text)
+  showMessage(ok ? `${label}已复制` : "复制失败", 2000, ok ? "info" : "error")
 }
 
 // 复制账号
-const copyAccount = (account: string) => copyToClipboard(account, "账号")
+const copyAccount = (account: string) => copyAndNotify(account, "账号")
 
 // 复制密码
-const copyPassword = (password: string) => copyToClipboard(password, "密码")
+const copyPassword = (password: string) => copyAndNotify(password, "密码")
 
 // 关闭弹窗
 const closeDialog = () => {
@@ -1201,7 +1190,6 @@ const closeDialog = () => {
   loginError.value = ""
   // 清除加密密钥和解密后的数据（安全措施）
   encryptionKey.value = null
-  encryptionSalt.value = ""
   entries.value = []
   // 清理密码可见性状态，防止内存泄漏
   Object.keys(showPasswords.value).forEach((key) => {

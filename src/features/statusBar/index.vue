@@ -80,8 +80,8 @@
 
     <FeatureDrawer
       :visible="showFeatureDrawer"
-      :items="frequentDrawerItems"
-      :rarely-used-items="rarelyUsedDrawerItems"
+      :items="drawerPartition.frequent"
+      :rarely-used-items="drawerPartition.rarely"
       :status-bar-visible="statusBarShortcuts"
       @close="showFeatureDrawer = false"
       @select="handleSelectFeature"
@@ -93,6 +93,7 @@
 
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
+import type { Ref } from "vue"
 import type { FeatureDrawerItem } from "./components/FeatureDrawer.vue"
 import {
   computed,
@@ -100,10 +101,10 @@ import {
 } from "vue"
 import { emitCustomEvent } from "@/utils/eventBus"
 import { PluginStorage } from "@/utils/pluginStorage"
+import { showEverythingSearch } from "../everythingSearch"
+import { showImageCreation } from "../imageCreation"
 import { showPasswordVault } from "../passwordVault/types"
 import { showSkillsViewer } from "../skillsViewer/types"
-import { showImageCreation } from "../imageCreation"
-import { showEverythingSearch } from "../everythingSearch"
 import { showWebsiteNavigation } from "../websiteNavigation/types"
 import FeatureDrawer from "./components/FeatureDrawer.vue"
 import MonitorItem from "./components/MonitorItem.vue"
@@ -134,13 +135,23 @@ const {
 const statusBarShortcuts = ref<string[]>([])
 const rarelyUsedFeatures = ref<string[]>([])
 
-const featureDrawerItems: FeatureDrawerItem[] = [
+// 单一功能注册表：抽屉展示 + 状态栏快捷 + 点击动作的统一数据源
+// 添加新功能只需在此处新增一条；title / 处理逻辑不再分散于多处
+interface FeatureRegistryEntry extends FeatureDrawerItem {
+  // 状态栏快捷项，缺省则不在状态栏显示
+  shortcut?: { icon: string, itemClass: string }
+  // 点击（抽屉选中或快捷点击）触发的动作
+  action: () => void
+}
+
+const FEATURES: FeatureRegistryEntry[] = [
   {
     id: "superPanel",
     icon: "mdi:view-dashboard",
     color: "#3b82f6",
     title: "超级面板",
     pinnable: false,
+    action: () => emitCustomEvent("toggleSuperPanel"),
   },
   {
     id: "video",
@@ -148,6 +159,11 @@ const featureDrawerItems: FeatureDrawerItem[] = [
     color: "#6366f1",
     title: "视频管理器",
     pinnable: true,
+    shortcut: {
+      icon: "ph:video",
+      itemClass: "action-item video-manager-item",
+    },
+    action: () => emitCustomEvent("openVideoManager"),
   },
   {
     id: "passwordVault",
@@ -155,6 +171,11 @@ const featureDrawerItems: FeatureDrawerItem[] = [
     color: "#22c55e",
     title: "密码箱",
     pinnable: true,
+    shortcut: {
+      icon: "ph:lock-key",
+      itemClass: "action-item password-vault-item",
+    },
+    action: () => showPasswordVault(),
   },
   {
     id: "skillsViewer",
@@ -162,6 +183,11 @@ const featureDrawerItems: FeatureDrawerItem[] = [
     color: "#f59e0b",
     title: "Skills 查看器",
     pinnable: true,
+    shortcut: {
+      icon: "ph:puzzle-piece",
+      itemClass: "action-item skills-viewer-item",
+    },
+    action: () => showSkillsViewer(),
   },
   {
     id: "htmlViewer",
@@ -169,6 +195,11 @@ const featureDrawerItems: FeatureDrawerItem[] = [
     color: "#e67e22",
     title: "HTML 展示",
     pinnable: true,
+    shortcut: {
+      icon: "ph:code",
+      itemClass: "action-item html-viewer-item",
+    },
+    action: () => emitCustomEvent("openHtmlViewer"),
   },
   {
     id: "formatAssistant",
@@ -176,6 +207,11 @@ const featureDrawerItems: FeatureDrawerItem[] = [
     color: "#07c160",
     title: "排版助手",
     pinnable: true,
+    shortcut: {
+      icon: "ph:text-align-left",
+      itemClass: "action-item format-assistant-item",
+    },
+    action: () => emitCustomEvent("openFormatAssistant"),
   },
   {
     id: "websiteNavigation",
@@ -183,6 +219,11 @@ const featureDrawerItems: FeatureDrawerItem[] = [
     color: "#8b5cf6",
     title: "网站导航",
     pinnable: true,
+    shortcut: {
+      icon: "ph:link",
+      itemClass: "action-item website-navigation-item",
+    },
+    action: () => showWebsiteNavigation(props.plugin),
   },
   {
     id: "imageCreation",
@@ -190,6 +231,11 @@ const featureDrawerItems: FeatureDrawerItem[] = [
     color: "#f59e0b",
     title: "图片生成",
     pinnable: false,
+    shortcut: {
+      icon: "ph:image-square",
+      itemClass: "action-item image-creation-item",
+    },
+    action: () => showImageCreation(),
   },
   {
     id: "dataBackup",
@@ -197,6 +243,11 @@ const featureDrawerItems: FeatureDrawerItem[] = [
     color: "#10b981",
     title: props.plugin?.i18n?.dataBackup || "数据备份",
     pinnable: true,
+    shortcut: {
+      icon: "mdi:backup-restore",
+      itemClass: "action-item data-backup-item",
+    },
+    action: () => emitCustomEvent("openDataBackup"),
   },
   {
     id: "everythingSearch",
@@ -204,116 +255,71 @@ const featureDrawerItems: FeatureDrawerItem[] = [
     color: "#d97706",
     title: "Everything 搜索",
     pinnable: true,
+    shortcut: {
+      icon: "ph:binoculars",
+      itemClass: "action-item everything-search-item",
+    },
+    action: () => showEverythingSearch(),
   },
 ]
 
-interface ShortcutDisplay {
-  id: string
-  icon: string
-  title: string
-  itemClass: string
-  handler: () => void
-}
+// id → 功能映射，用于点击分发（O(1) 取代 `id in SHORTCUT_DISPLAY` + superPanel 特判）
+const featureMap = new Map(FEATURES.map((f) => [f.id, f]))
 
-const SHORTCUT_DISPLAY: Record<string, ShortcutDisplay> = {
-  passwordVault: {
-    id: "passwordVault",
-    icon: "ph:lock-key",
-    title: "密码箱",
-    itemClass: "action-item password-vault-item",
-    handler: () => showPasswordVault(),
-  },
-  video: {
-    id: "video",
-    icon: "ph:video",
-    title: "视频管理器",
-    itemClass: "action-item video-manager-item",
-    handler: () => emitCustomEvent("openVideoManager"),
-  },
-  htmlViewer: {
-    id: "htmlViewer",
-    icon: "ph:code",
-    title: "HTML展示",
-    itemClass: "action-item html-viewer-item",
-    handler: () => emitCustomEvent("openHtmlViewer"),
-  },
-  skillsViewer: {
-    id: "skillsViewer",
-    icon: "ph:puzzle-piece",
-    title: "Skills查看器",
-    itemClass: "action-item skills-viewer-item",
-    handler: () => showSkillsViewer(),
-  },
-  formatAssistant: {
-    id: "formatAssistant",
-    icon: "ph:text-align-left",
-    title: "排版助手",
-    itemClass: "action-item format-assistant-item",
-    handler: () => emitCustomEvent("openFormatAssistant"),
-  },
-  websiteNavigation: {
-    id: "websiteNavigation",
-    icon: "ph:link",
-    title: "网站导航",
-    itemClass: "action-item website-navigation-item",
-    handler: () => showWebsiteNavigation(props.plugin),
-  },
-  imageCreation: {
-    id: "imageCreation",
-    icon: "ph:image-square",
-    title: "图片生成",
-    itemClass: "action-item image-creation-item",
-    handler: () => showImageCreation(),
-  },
-  dataBackup: {
-    id: "dataBackup",
-    icon: "mdi:backup-restore",
-    title: props.plugin?.i18n?.dataBackup || "数据备份",
-    itemClass: "action-item data-backup-item",
-    handler: () => emitCustomEvent("openDataBackup"),
-  },
-  everythingSearch: {
-    id: "everythingSearch",
-    icon: "ph:binoculars",
-    title: "Everything 搜索",
-    itemClass: "action-item everything-search-item",
-    handler: () => showEverythingSearch(),
-  },
-}
+// 状态栏快捷：按 statusBarShortcuts 顺序映射出可渲染项（含 title / handler）
+const visibleShortcuts = computed(() => {
+  const result: { id: string, icon: string, title: string, itemClass: string, handler: () => void }[] = []
+  for (const id of statusBarShortcuts.value) {
+    const f = featureMap.get(id)
+    if (f?.shortcut) {
+      result.push({
+        id: f.id,
+        icon: f.shortcut.icon,
+        title: f.title,
+        itemClass: f.shortcut.itemClass,
+        handler: f.action,
+      })
+    }
+  }
+  return result
+})
 
-const visibleShortcuts = computed(() =>
-  statusBarShortcuts.value
-    .filter((id) => id in SHORTCUT_DISPLAY)
-    .map((id) => SHORTCUT_DISPLAY[id]),
-)
+// 抽屉常用/不常用一次遍历拆分（取代两个独立 filter）
+const drawerPartition = computed(() => {
+  const frequent: FeatureDrawerItem[] = []
+  const rarely: FeatureDrawerItem[] = []
+  const rareSet = new Set(rarelyUsedFeatures.value)
+  for (const {
+    shortcut: _,
+    action: __,
+    ...drawerItem
+  } of FEATURES) {
+    ;(rareSet.has(drawerItem.id) ? rarely : frequent).push(drawerItem)
+  }
+  return {
+    frequent,
+    rarely,
+  }
+})
 
-const frequentDrawerItems = computed(() =>
-  featureDrawerItems.filter((item) => !rarelyUsedFeatures.value.includes(item.id)),
-)
-
-const rarelyUsedDrawerItems = computed(() =>
-  featureDrawerItems.filter((item) => rarelyUsedFeatures.value.includes(item.id)),
-)
+// 切换数组归属（存在则移除，不存在则追加）
+const toggleMembership = (target: Ref<string[]>, id: string) =>
+  target.value.includes(id)
+    ? target.value.filter((s) => s !== id)
+    : [...target.value, id]
 
 const handleToggleStatusBar = async (id: string) => {
-  const idx = statusBarShortcuts.value.indexOf(id)
-  if (idx === -1) {
-    statusBarShortcuts.value = [...statusBarShortcuts.value, id]
-  } else {
-    statusBarShortcuts.value = statusBarShortcuts.value.filter((s) => s !== id)
-  }
+  statusBarShortcuts.value = toggleMembership(statusBarShortcuts, id)
   await storage.save("statusBar-shortcuts", statusBarShortcuts.value)
 }
 
 const handleToggleRarelyUsed = async (id: string) => {
-  const idx = rarelyUsedFeatures.value.indexOf(id)
-  if (idx === -1) {
-    rarelyUsedFeatures.value = [...rarelyUsedFeatures.value, id]
+  const wasRare = rarelyUsedFeatures.value.includes(id)
+  rarelyUsedFeatures.value = toggleMembership(rarelyUsedFeatures, id)
+  if (!wasRare) {
     // 标记为不常用后，从状态栏固定中移除
     statusBarShortcuts.value = statusBarShortcuts.value.filter((s) => s !== id)
     await storage.save("statusBar-shortcuts", statusBarShortcuts.value)
-  } else {
-    rarelyUsedFeatures.value = rarelyUsedFeatures.value.filter((s) => s !== id)
   }
   await storage.save("statusBar-rarelyUsed", rarelyUsedFeatures.value)
 }
@@ -334,12 +340,6 @@ const toggleFeatureDrawer = () => {
 
 const handleSelectFeature = (id: string) => {
   showFeatureDrawer.value = false
-  if (id in SHORTCUT_DISPLAY) {
-    SHORTCUT_DISPLAY[id].handler()
-    return
-  }
-  if (id === "superPanel") {
-    emitCustomEvent("toggleSuperPanel")
-  }
+  featureMap.get(id)?.action()
 }
 </script>

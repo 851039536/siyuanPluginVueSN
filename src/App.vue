@@ -93,6 +93,7 @@ import {
   hidePasswordVault,
   hideSkillsViewer,
   htmlViewerVisible,
+  openPasswordVaultWithText,
   passwordVaultVisible,
   skillsViewerVisible,
   imageCreationInitialKeywords,
@@ -186,6 +187,13 @@ onMounted(() => {
   window.addEventListener("openPasswordVault", () => {
     passwordVaultVisible.value = true
   })
+
+  // 监听浮动工具栏"存密码"事件（携带选中文本）
+  window.addEventListener("openPasswordVaultAdd", ((event: any) => {
+    if (event.detail?.content) {
+      openPasswordVaultWithText(event.detail.content)
+    }
+  }) as EventListener)
 
   // 监听打开解密对话框事件
   window.addEventListener("openDecryptDialog", ((event: any) => {

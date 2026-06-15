@@ -1,6 +1,7 @@
 import type PluginSample from "@/index"
 import { Plugin } from "siyuan"
 import {
+  createPasswordVaultAction,
   createPronunciationAction,
   createQRCodeAction,
   createTranslateAction,
@@ -32,6 +33,11 @@ export function registerFloatingToolbar(plugin: Plugin): void {
   // 注册翻译替换功能（如果启用）
   if (pluginInstance.settings?.enableTranslate) {
     floatingToolbar.registerAction(createTranslateAction(plugin))
+  }
+
+  // 注册存密码功能（如果密码箱启用）
+  if (pluginInstance.settings?.enablePasswordVault) {
+    floatingToolbar.registerAction(createPasswordVaultAction(plugin))
   }
 
   // 启用热力图标记功能（如果启用）

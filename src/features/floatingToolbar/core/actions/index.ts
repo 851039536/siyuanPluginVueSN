@@ -2,6 +2,7 @@ import type { ToolbarAction } from "../../types"
 import { Plugin } from "siyuan"
 import { createDialogAction } from "../utils"
 
+export { createPasswordVaultAction } from "./passwordVault"
 export { createTranslateAction } from "./translate"
 
 export function createPronunciationAction(plugin: Plugin): ToolbarAction {

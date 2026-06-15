@@ -49,7 +49,9 @@ export { registerImageCompressor } from "./imageCompressor"
 export { registerPageLock } from "./pageLock"
 export {
   hidePasswordVault,
+  openPasswordVaultWithText,
   passwordVaultVisible,
+  pendingEntryName,
   registerPasswordVault,
 } from "./passwordVault"
 export { registerResourceManager } from "./resourceManager"

@@ -1672,5 +1672,17 @@
     "stashRestore": "恢复",
     "stashApply": "应用",
     "stashDrop": "删除"
-  }
+  },
+  "compactModeSettings": "紧凑模式",
+  "compactModeDescription": "启用后全局应用紧凑样式，可独立调节间距密度和字号缩放",
+  "compactModeEnabled": "紧凑模式已启用",
+  "compactModeDisabled": "紧凑模式已禁用",
+  "compactModeDensity": "密度级别",
+  "compactModeFontScale": "字号缩放",
+  "compactModeAreas": "生效区域",
+  "compactAreaSidebar": "侧边栏与文件树",
+  "compactAreaEditor": "编辑区",
+  "compactAreaTabs": "页签栏",
+  "compactAreaDialogs": "对话框",
+  "compactAreaControls": "按钮与菜单"
 }

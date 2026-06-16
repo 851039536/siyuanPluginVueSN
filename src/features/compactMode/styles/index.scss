@@ -1,0 +1,158 @@
+// ========== 紧凑模式样式 ==========
+// 从 src/index.scss 提取，作为独立功能模块
+// 通过 src/index.scss 中的 @use 引用，确保全局生效
+//
+// 架构：
+//   - 3 档密度（间距缩放） + 5 档字号缩放，独立控制
+//   - 5 个区域子类控制各区域独立开关
+//   - 全部通过 Sass 编译期乘法计算，无 calc()/var()
+
+@use "@/variables" as *;
+
+// ========== 间距密度（仅控制 padding/gap/min-height 等） ==========
+$density-spacings: (
+  "moderate": 0.8,
+  "compact":  0.6,
+  "extreme":  0.4,
+);
+
+// ========== 字号缩放（独立于密度） ==========
+$font-scales: (
+  "80":  0.80,
+  "85":  0.85,
+  "90":  0.90,
+  "95":  0.95,
+  "100": 1.00,
+);
+
+// ========== 响应式适配（仅受密度影响） ==========
+@mixin compact-responsive($s) {
+  @media (max-width: $mobile-breakpoint) {
+    .toolbar {
+      gap: 0.125rem * $s;
+      padding: (0.125rem * $s) (0.25rem * $s);
+    }
+    .protyle-content { padding: 0.5rem * $s; }
+    .b3-dialog { padding: 0.75rem * $s; }
+    .b3-dialog__body {
+      padding: 0.75rem * $s;
+      font-size: $font-size-xs;
+    }
+  }
+}
+
+// ========== 密度层：仅控制间距 ==========
+@each $name, $s in $density-spacings {
+  html.siyuan-compact-mode.compact-density-#{$name} {
+
+    // --- 侧边栏与文件树 ---
+    &.compact-area-sidebar {
+      .dock__item {
+        padding: 0.375rem * $s;
+      }
+      .b3-list-item {
+        padding: (0.25rem * $s) (0.5rem * $s);
+        min-height: 1.5rem * $s;
+        line-height: 24px !important;
+      }
+      .b3-list-item--hide-action {
+        line-height: 24px !important;
+      }
+      ul.b3-list--banner > li,
+      .b3-list-item__text {
+        line-height: 22px !important;
+      }
+    }
+
+    // --- 编辑区 ---
+    &.compact-area-editor {
+      .toolbar {
+        gap: 0.25rem * $s;
+        padding: (0.25rem * $s) (0.5rem * $s);
+      }
+      .protyle-content { padding: 0.5rem * $s; }
+      h1, h2, h3, h4, h5, h6 {
+        margin: (0.25rem * $s) 0;
+        padding: (0.25rem * $s) 0;
+      }
+      .hljs { padding: 0.375rem * $s; }
+      table { padding: 0.25rem * $s; }
+      td, th { padding: (0.25rem * $s) (0.5rem * $s); }
+    }
+
+    // --- 页签栏 ---
+    &.compact-area-tabs {
+      .layout-tab-bar .item {
+        padding: (0.25rem * $s) (0.75rem * $s);
+        line-height: 1.5rem * $s;
+      }
+      .tab {
+        padding: (0.375rem * $s) (0.75rem * $s);
+      }
+    }
+
+    // --- 对话框 ---
+    &.compact-area-dialogs {
+      .b3-dialog { padding: 0.75rem * $s; }
+      .b3-dialog__header { padding: (0.5rem * $s) (0.75rem * $s); }
+      .b3-dialog__body { padding: 0.5rem * $s; }
+    }
+
+    // --- 按钮与控件 ---
+    &.compact-area-controls {
+      .b3-button {
+        padding: (0.375rem * $s) (0.75rem * $s);
+      }
+      .b3-text-field,
+      .b3-input {
+        padding: (0.375rem * $s) (0.5rem * $s);
+      }
+      .b3-select {
+        padding: (0.375rem * $s) (0.5rem * $s);
+      }
+      .b3-menu { padding: (0.25rem * $s) 0; }
+      .b3-menu__item {
+        padding: (0.375rem * $s) (0.75rem * $s);
+        min-height: 1.5rem * $s;
+        line-height: 20px !important;
+      }
+    }
+
+    @include compact-responsive($s);
+  }
+}
+
+// ========== 字号层：仅控制 font-size ==========
+@each $label, $f in $font-scales {
+  html.siyuan-compact-mode.compact-font-#{$label} {
+
+    &.compact-area-sidebar {
+      .sidebar   { font-size: 0.8125rem * $f; }
+      .file-tree { font-size: $font-size-xs * $f; }
+    }
+
+    &.compact-area-editor {
+      .bq, .li, .p { line-height: 1.4; } // 行高不缩放
+    }
+
+    &.compact-area-tabs {
+      .layout-tab-bar .item { font-size: $font-size-xs * $f; }
+      .tab                  { font-size: $font-size-xs * $f; }
+    }
+
+    &.compact-area-dialogs {
+      .b3-dialog__header { font-size: 0.875rem * $f; }
+      .b3-dialog__body   { font-size: 0.8125rem * $f; }
+    }
+
+    &.compact-area-controls {
+      .b3-button,
+      .b3-text-field,
+      .b3-input,
+      .b3-select,
+      .b3-menu__item {
+        font-size: $font-size-xs * $f;
+      }
+    }
+  }
+}

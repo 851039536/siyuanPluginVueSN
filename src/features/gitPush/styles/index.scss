@@ -237,6 +237,53 @@
   font-size: 13px;
   font-weight: 600;
   margin-bottom: 2px;
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 1px 4px;
+  transition: background 0.15s;
+
+  &:hover {
+    background: var(--b3-theme-primary-lightest);
+  }
+}
+
+.gp-card-name-input {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 2px;
+  padding: 1px 4px;
+  border: 1px solid var(--b3-theme-primary);
+  border-radius: 3px;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  outline: none;
+  width: calc(100% - 10px);
+  max-width: 220px;
+  font-family: inherit;
+  box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
+}
+
+.gp-card-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin-top: 4px;
+  padding: 4px 6px;
+  font-size: 10px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.55;
+  background: var(--b3-theme-surface);
+  border-radius: 3px;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 .gp-card-path {

@@ -173,7 +173,21 @@
               >
                 <Icon :icon="project.starred ? 'mdi:star' : 'mdi:star-outline'" height="14" />
               </button>
-              <span class="gp-card-name">{{ project.name }}</span>
+              <input
+                v-if="editingNameId === project.id"
+                v-model="editingNameInput"
+                class="gp-card-name-input"
+                @blur="handleNameEditSave(project)"
+                @keyup.enter="($event.target as HTMLInputElement).blur()"
+                @keyup.escape="editingNameId = ''"
+                @click.stop
+              />
+              <span
+                v-else
+                class="gp-card-name"
+                title="点击修改名称"
+                @click.stop="startNameEdit(project)"
+              >{{ project.name }}</span>
               <!-- 状态徽章（点击循环切换） -->
               <button
                 class="gp-status-badge"
@@ -225,6 +239,11 @@
                 {{ b.name }}
                 <Icon v-if="b.current" icon="mdi:check" height="9" />
               </button>
+            </div>
+            <!-- 备注 -->
+            <div v-if="project.note" class="gp-card-note" :title="project.note">
+              <Icon icon="mdi:note-text-outline" height="11" />
+              <span>{{ project.note }}</span>
             </div>
           </div>
           <div class="gp-card-actions">
@@ -1101,6 +1120,9 @@ const editArchived = ref(false)
 const editNote = ref("")
 const editTags = ref<string[]>([])
 const editTagInput = ref("")
+/** 行内名称编辑状态 */
+const editingNameId = ref("")
+const editingNameInput = ref("")
 const refreshingAll = ref(false)
 /** 远程仓库配置弹窗 */
 const remoteConfigProject = ref<GitProject | null>(null)
@@ -1423,6 +1445,21 @@ function openEditDialog(project: GitProject) {
   editNote.value = project.note || ""
   editTags.value = [...(project.tags || [])]
   editTagInput.value = ""
+}
+
+/** 行内名称编辑：点击名称开始编辑 */
+function startNameEdit(project: GitProject) {
+  editingNameId.value = project.id
+  editingNameInput.value = project.name
+}
+
+/** 行内名称编辑：失焦/回车保存 */
+async function handleNameEditSave(project: GitProject) {
+  const newName = editingNameInput.value.trim()
+  if (newName && newName !== project.name) {
+    await updateProjectMeta(project.id, { name: newName })
+  }
+  editingNameId.value = ""
 }
 
 /** 编辑弹窗：添加标签（Enter 确认） */

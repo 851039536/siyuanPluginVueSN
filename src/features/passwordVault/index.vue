@@ -1259,14 +1259,10 @@ const copyAccount = (account: string) => copyAndNotify(account, "账号")
 // 复制密码
 const copyPassword = (password: string) => copyAndNotify(password, "密码")
 
-// 关闭弹窗
+// 关闭弹窗（保持登录状态，仅清理 UI 状态）
 const closeDialog = () => {
-  isLoggedIn.value = false
   loginError.value = ""
-  // 清除加密密钥和解密后的数据（安全措施）
-  encryptionKey.value = null
-  entries.value = []
-  // 清理密码可见性状态，防止内存泄漏
+  // 清理密码可见性状态
   Object.keys(showPasswords.value).forEach((key) => {
     delete showPasswords.value[key]
   })

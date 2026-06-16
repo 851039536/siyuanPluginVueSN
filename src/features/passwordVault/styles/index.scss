@@ -20,8 +20,8 @@
 }
 
 .password-vault-dialog {
-  width: 700px;
-  max-width: 90vw;
+  width: 910px;
+  max-width: 92vw;
   max-height: 85vh;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
@@ -173,6 +173,7 @@
   flex: 1;
   overflow-y: auto;
   display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: $spacing-sm;
 }
 

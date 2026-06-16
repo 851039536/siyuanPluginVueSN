@@ -739,12 +739,13 @@ async function handleLogin(inputPassword: string, hint?: string) {
 
     savedHash.value = hash
     isFirstTime.value = false
-    isLoggedIn.value = true
 
     // 派生加密密钥
     encryptionKey.value = await deriveKey(inputPassword, encryptSalt)
 
+    // 先加载数据，再标记登录（避免 watch 触发时 entries 空数组）
     await Promise.all([loadEntries(), loadCategories()])
+    isLoggedIn.value = true
   } else {
     // 验证密码 - 获取保存的盐值
     const verifySalt = await storage.verifySalt.load()
@@ -758,13 +759,14 @@ async function handleLogin(inputPassword: string, hint?: string) {
     const hash = await hashMasterPassword(inputPassword, verifySalt)
 
     if (hash === savedHash.value) {
-      isLoggedIn.value = true
       loginError.value = ""
 
       // 派生加密密钥
       encryptionKey.value = await deriveKey(inputPassword, encryptSalt)
 
+      // 先加载数据，再标记登录（避免 watch 触发时 entries 空数组）
       await Promise.all([loadEntries(), loadCategories()])
+      isLoggedIn.value = true
     } else {
       loginError.value = "密码错误，请重试"
     }
@@ -1313,13 +1315,24 @@ function isEntryDuplicate(data: { name: string, account: string }): boolean {
   )
 }
 
+/** 去重命中：搜索定位到已有条目，不打开添加表单 */
+function locateExistingEntry(data: { name: string }): void {
+  searchQuery.value = "" // 先清空触发一次更新
+  selectedCategory.value = "all"
+  // 下一 tick 设置搜索词，触发列表过滤定位
+  setTimeout(() => {
+    searchQuery.value = data.name
+  }, 50)
+  showMessage(`「${data.name}」已存在，已定位到该条目`, 2000, "info")
+  pendingEntryData.value = null
+}
+
 // 监听外部预填数据（来自浮动工具栏"存密码"等外部调用）
 watch(pendingEntryData, (data) => {
   if (data && isLoggedIn.value) {
-    // 去重检查：名称+账号已存在则不重复添加
+    // 去重检查：名称+账号已存在 → 搜索定位
     if (isEntryDuplicate(data)) {
-      showMessage(`「${data.name}」已存在，无需重复添加`, 3000, "info")
-      pendingEntryData.value = null
+      locateExistingEntry(data)
       return
     }
     // 打开添加表单并预填所有字段
@@ -1340,10 +1353,9 @@ watch(pendingEntryData, (data) => {
 watch(isLoggedIn, (loggedIn) => {
   if (loggedIn && pendingEntryData.value) {
     const data = pendingEntryData.value
-    // 去重检查：名称+账号已存在则不重复添加
+    // 去重检查：名称+账号已存在 → 搜索定位
     if (isEntryDuplicate(data)) {
-      showMessage(`「${data.name}」已存在，无需重复添加`, 3000, "info")
-      pendingEntryData.value = null
+      locateExistingEntry(data)
       return
     }
     editingEntry.value = null

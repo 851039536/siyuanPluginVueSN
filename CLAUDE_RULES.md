@@ -63,6 +63,119 @@ async init() {
 }
 ```
 
+## Vue 实例常驻模式（Persistent Modal + CustomEvent + 定时器）
+
+**适用场景**：功能需要在后台持续运行（如定时备份、轮询检查、自动刷新），但 UI 面板平时不显示。
+
+### 架构三层
+
+```
+┌─ 定时器层（index.ts）───────────────────────────────────┐
+│  setInterval(check, 60000)                               │
+│    └─ emitCustomEvent("autoBackupTrigger")               │
+├─ 事件桥接层（CustomEvent）───────────────────────────────┤
+│  window.dispatchEvent(...)    ←→   window.addEventListener│
+├─ UI 层（index.vue, persistent modal）────────────────────┤
+│  onMounted → addEventListener("autoBackupTrigger", ...)  │
+│  关闭弹窗 → display:none（Vue 实例不销毁，监听器存活）    │
+│  onUnmounted → removeEventListener（仅插件卸载时触发）    │
+└──────────────────────────────────────────────────────────┘
+```
+
+### 实现步骤
+
+**1. 创建 persistent Modal**
+
+```typescript
+// index.ts
+import { createModalVueApp } from "@/utils/vueAppHelper"
+
+class MyFeature {
+  private modal: ModalAppInstance
+
+  constructor(plugin: Plugin) {
+    this.modal = createModalVueApp(MyPanel, {
+      maskId: "my-feature-mask",
+      persistent: true,          // 关键：关闭时仅 display:none，不销毁 Vue
+      getCloseHandler: () => this.close,
+      buildProps: () => ({
+        onClose: this.close,
+        i18n: plugin.i18n,
+        plugin,
+      }),
+    })
+  }
+}
+```
+
+**2. init() 中预挂载，触发 onMounted 注册监听**
+
+```typescript
+async init() {
+  this.modal.open()    // 创建 Vue 实例 → onMounted 触发 → addEventListener 注册
+  this.modal.close()   // display:none 隐藏 DOM，Vue 实例/监听器保留
+  this.startTimer()    // 启动 setInterval 定时器
+}
+
+// setInterval 轮询，条件满足时派发事件
+private startTimer() {
+  this.timer = window.setInterval(() => {
+    if (/* 满足触发条件 */) {
+      emitCustomEvent("myFeatureTick")
+    }
+  }, 60000)
+}
+```
+
+**3. Vue 组件中注册事件监听**
+
+```typescript
+// index.vue
+import { onMounted, onUnmounted } from "vue"
+
+function handleTick() {
+  // 执行后台任务
+}
+
+onMounted(() => {
+  window.addEventListener("myFeatureTick", handleTick)
+})
+
+onUnmounted(() => {
+  window.removeEventListener("myFeatureTick", handleTick)
+})
+```
+
+**4. 插件卸载时彻底清理**
+
+```typescript
+// index.ts
+public destroy() {
+  if (this.timer) {
+    clearInterval(this.timer)
+    this.timer = null
+  }
+  this.modal.destroy()   // unmount Vue + 移除 DOM → onUnmounted 触发
+}
+```
+
+### 关键点
+
+| 关键点 | 说明 |
+|--------|------|
+| `persistent: true` | Modal 关闭时仅 `display:none`，Vue 实例和响应式状态保留 |
+| `modal.open() → modal.close()` | 在 init 中预挂载，确保组件 `onMounted` 触发一次 |
+| `destroy()` 调用时机 | 仅在插件 `onunload` 时调用，不在 close 时调用 |
+| `onUnmounted` 触发时机 | 仅 `destroy()` 调用时触发，用户手动关闭弹窗不会触发 |
+| `emitCustomEvent` | 定时器层和 Vue UI 层之间解耦通信的唯一桥梁 |
+| `plugin.__xxx` 引用 | 将实例挂到 plugin 对象上，方便 Vue 组件通过 props.plugin 反向调用定时器方法（如 `restartTimer`） |
+| `setInterval` 防抖 | 使用 `timeSinceTimerStart >= 60000` 防止刚启动就立即触发 |
+| 频率控制 | 通过 `lastExecutedHour` / `lastExecutedDateStr` 等标志位防止同周期重复执行 |
+
+### 参考实现
+
+`src/features/dataBackup/index.ts` + `index.vue` — 完整的持久后台备份实现，包含三种频率策略（minute/hourly/daily）和设置热重启。
+
 ### 事件
 
 ```typescript

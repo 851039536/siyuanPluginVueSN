@@ -239,6 +239,9 @@ const handleClose = () => {
   align-items: center;
   justify-content: center;
   z-index: 9999;
+  /* 父容器 .plugin-app-main 设置了 pointer-events: none，
+     需在遮罩层重新启用，否则点击事件无法触发关闭 */
+  pointer-events: auto;
 }
 
 .decrypt-dialog {

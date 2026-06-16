@@ -10,6 +10,7 @@
           <div
             v-if="visible"
             class="password-vault-dialog"
+            :class="{ 'is-login': !isLoggedIn }"
           >
             <!-- 登录界面 -->
             <PasswordVaultLogin

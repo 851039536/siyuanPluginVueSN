@@ -89,14 +89,14 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  padding: $spacing-lg;
+  padding: $spacing-md;
 }
 
 // 分类筛选器
 .category-filter {
-  @include flex-row-gap(12px);
+  @include flex-row-gap(10px);
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .category-chips {
@@ -159,8 +159,8 @@
 
 // 控制区域
 .entries-controls {
-  @include flex-row-gap($spacing-md);
-  margin-bottom: $spacing-lg;
+  @include flex-row-gap($spacing-sm);
+  margin-bottom: $spacing-md;
 
   .search-icon {
     color: var(--b3-theme-on-surface-light);
@@ -173,12 +173,12 @@
   flex: 1;
   overflow-y: auto;
   display: grid;
-  gap: $spacing-md;
+  gap: $spacing-sm;
 }
 
 .entry-card {
   @include card-base;
-  padding: $spacing-lg;
+  padding: $spacing-md;
 
   &:hover {
     border-color: var(--b3-theme-primary);
@@ -189,7 +189,7 @@
   @include flex-row;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: $spacing-md;
+  margin-bottom: $spacing-sm;
 }
 
 .entry-title-wrapper {
@@ -259,12 +259,12 @@
 .entry-account {
   @include flex-row-gap(6px);
   justify-content: space-between;
-  padding: 10px 12px;
+  padding: 8px 10px;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
   border-radius: $vp-radius;
   cursor: pointer;
-  margin-bottom: $spacing-sm;
+  margin-bottom: $spacing-xs;
 
   &:hover {
     background: var(--b3-theme-surface);
@@ -294,15 +294,15 @@
 }
 
 .entry-description {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--b3-theme-on-surface-light);
-  margin-bottom: $spacing-md;
-  line-height: 1.5;
+  margin-bottom: $spacing-sm;
+  line-height: 1.4;
 }
 
 .entry-field {
-  @include flex-row-gap($spacing-sm);
-  padding: 10px 12px;
+  @include flex-row-gap($spacing-xs);
+  padding: 8px 10px;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
   border-radius: $vp-radius;
@@ -342,7 +342,7 @@
 
 .no-entries {
   @include flex-center;
-  padding: 60px $spacing-lg;
+  padding: 40px $spacing-md;
   font-size: 13px;
   color: var(--b3-theme-on-surface-light);
   font-style: italic;
@@ -354,9 +354,9 @@
 // ============================================================
 
 .dialog-footer {
-  @include flex-row-gap($spacing-md);
+  @include flex-row-gap($spacing-sm);
   justify-content: space-between;
-  padding: $spacing-md $spacing-lg;
+  padding: 10px $spacing-md;
   background: var(--b3-theme-surface);
   border-top: 1px solid var(--b3-border-color);
 }
@@ -418,7 +418,7 @@
 .change-password-form {
   display: flex;
   flex-direction: column;
-  gap: $spacing-lg;
+  gap: $spacing-md;
 }
 
 .form-group {
@@ -444,8 +444,8 @@
 }
 
 .form-actions {
-  @include flex-row-gap($spacing-md);
-  margin-top: $spacing-sm;
+  @include flex-row-gap($spacing-sm);
+  margin-top: $spacing-xs;
 }
 
 // ============================================================
@@ -458,8 +458,8 @@
   .dialog-body {
     display: flex;
     flex-direction: column;
-    gap: 24px;
-    padding: $spacing-lg;
+    gap: 16px;
+    padding: $spacing-md;
   }
 }
 
@@ -512,8 +512,8 @@
 }
 
 .category-item {
-  @include flex-row-gap(10px);
-  padding: 10px 12px;
+  @include flex-row-gap(8px);
+  padding: 8px 10px;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
   border-radius: $vp-radius;

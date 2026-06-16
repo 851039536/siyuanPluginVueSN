@@ -449,12 +449,52 @@
                       variant="ghost"
                       size="small"
                       title="删除类别"
-                      @click="deleteCategory(cat.id)"
+                      @click="openCategoryDeleteConfirm(cat.id)"
                     />
                     <span
                       v-else
                       class="default-badge"
                     >默认</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 删除确认 -->
+              <div
+                v-if="showCategoryDeleteConfirm"
+                class="category-delete-confirm"
+              >
+                <div class="confirm-card">
+                  <p class="confirm-warning">
+                    ⚠️ 确定要删除类别「<strong>{{ getCategoryById(pendingDeleteCategoryId)?.name }}</strong>」吗？
+                  </p>
+                  <p
+                    v-if="getCategoryEntryCount(pendingDeleteCategoryId) > 0"
+                    class="confirm-hint"
+                  >
+                    该类别下 <strong>{{ getCategoryEntryCount(pendingDeleteCategoryId) }} 条</strong>条目将被移至默认类别。
+                  </p>
+                  <p
+                    v-else
+                    class="confirm-hint"
+                  >
+                    此操作不可撤销。
+                  </p>
+                  <div class="form-actions">
+                    <Button
+                      variant="ghost"
+                      size="small"
+                      @click="showCategoryDeleteConfirm = false"
+                    >
+                      取消
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="small"
+                      @click="executeDeleteCategory"
+                    >
+                      确认删除
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -796,6 +836,8 @@ const entryForm = reactive({
 
 // 类别管理
 const showCategoryManager = ref(false)
+const showCategoryDeleteConfirm = ref(false)
+const pendingDeleteCategoryId = ref("")
 const newCategory = reactive({
   name: "",
   color: "#d97757", // 使用品牌橙色作为默认
@@ -1269,6 +1311,15 @@ const getCategoryById = (id: string): PasswordCategory | undefined => {
   return categoriesMap.value.get(id)
 }
 
+// 获取某类别下的条目数量
+const getCategoryEntryCount = (categoryId: string): number => {
+  let count = 0
+  for (const e of entries.value) {
+    if (e.category === categoryId) count++
+  }
+  return count
+}
+
 // 打开添加弹窗
 const openAddModal = () => {
   editingEntry.value = null
@@ -1306,6 +1357,8 @@ const openCategoryManager = () => {
 
 const closeCategoryManager = () => {
   showCategoryManager.value = false
+  showCategoryDeleteConfirm.value = false
+  pendingDeleteCategoryId.value = ""
   newCategory.name = ""
   newCategory.color = "#3b82f6"
 }
@@ -1335,19 +1388,33 @@ const addCategory = async () => {
   showMessage("类别已添加", 2000, "info")
 }
 
-const deleteCategory = async (categoryId: string) => {
+// 打开删除确认
+const openCategoryDeleteConfirm = (categoryId: string) => {
+  pendingDeleteCategoryId.value = categoryId
+  showCategoryDeleteConfirm.value = true
+}
+
+// 确认后执行删除
+const executeDeleteCategory = async () => {
+  const categoryId = pendingDeleteCategoryId.value
   if (categoryId === "default") {
     showMessage("默认类别不能删除", 2000, "error")
+    showCategoryDeleteConfirm.value = false
     return
   }
 
-  // 检查是否有条目使用该类别
-  const hasEntries = entries.value.some((e) => e.category === categoryId)
-  if (hasEntries) {
-    showMessage("该类别下有密码条目，无法删除", 2000, "error")
-    return
+  // 将该类别下的条目迁移到默认类别
+  const affectedEntries = entries.value.filter((e) => e.category === categoryId)
+  for (const entry of affectedEntries) {
+    entry.category = "default"
   }
 
+  // 如果有条目被迁移，需要重新加密保存
+  if (affectedEntries.length > 0) {
+    await saveEntries()
+  }
+
+  // 删除类别
   categories.value = categories.value.filter((c) => c.id !== categoryId)
   await saveCategories()
 
@@ -1356,7 +1423,13 @@ const deleteCategory = async (categoryId: string) => {
     selectedCategory.value = "all"
   }
 
-  showMessage("类别已删除", 2000, "info")
+  const hint = affectedEntries.length > 0
+    ? `类别已删除，${affectedEntries.length} 条条目已移至默认类别`
+    : "类别已删除"
+  showMessage(hint, 2000, "info")
+
+  showCategoryDeleteConfirm.value = false
+  pendingDeleteCategoryId.value = ""
 }
 
 // 保存条目

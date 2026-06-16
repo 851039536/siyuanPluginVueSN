@@ -9,7 +9,7 @@
 
 @use "@/variables" as *;
 
-// ========== 间距密度（仅控制 padding/gap/min-height 等） ==========
+// ========== 间距密度（仅控制 padding/gap 等） ==========
 $density-spacings: (
   "moderate": 0.8,
   "compact":  0.6,
@@ -41,6 +41,41 @@ $font-scales: (
   }
 }
 
+// ========== 与密度/字号无关的固定规则（不放入循环，避免重复输出） ==========
+html.siyuan-compact-mode {
+
+  // --- 侧边栏与文件树（固定值） ---
+  &.compact-area-sidebar {
+    .b3-list-item {
+      min-height: 1.5rem;
+      line-height: 24px !important;
+    }
+    .b3-list-item--hide-action {
+      line-height: 24px !important;
+    }
+    ul.b3-list--banner > li,
+    .b3-list-item__text {
+      line-height: 22px !important;
+    }
+  }
+
+  // --- 编辑区（固定值） ---
+  &.compact-area-editor {
+    .bq, .li, .p {
+      line-height: 1.4;
+    }
+  }
+
+  // --- 控件与菜单（固定值） ---
+  &.compact-area-controls {
+    .b3-menu__item {
+      min-height: 1.5rem;
+      line-height: 20px !important;
+    }
+    .b3-menu { padding: 0.25rem 0; }
+  }
+}
+
 // ========== 密度层：仅控制间距 ==========
 @each $name, $s in $density-spacings {
   html.siyuan-compact-mode.compact-density-#{$name} {
@@ -52,15 +87,6 @@ $font-scales: (
       }
       .b3-list-item {
         padding: (0.25rem * $s) (0.5rem * $s);
-        min-height: 1.5rem;
-        line-height: 24px !important;
-      }
-      .b3-list-item--hide-action {
-        line-height: 24px !important;
-      }
-      ul.b3-list--banner > li,
-      .b3-list-item__text {
-        line-height: 22px !important;
       }
     }
 
@@ -104,17 +130,12 @@ $font-scales: (
         padding: (0.375rem * $s) (0.75rem * $s);
       }
       .b3-text-field,
-      .b3-input {
-        padding: (0.375rem * $s) (0.5rem * $s);
-      }
+      .b3-input,
       .b3-select {
         padding: (0.375rem * $s) (0.5rem * $s);
       }
-      .b3-menu { padding: (0.25rem * $s) 0; }
       .b3-menu__item {
         padding: (0.375rem * $s) (0.75rem * $s);
-        min-height: 1.5rem;
-        line-height: 20px !important;
       }
     }
 
@@ -129,10 +150,6 @@ $font-scales: (
     &.compact-area-sidebar {
       .sidebar   { font-size: 0.8125rem * $f; }
       .file-tree { font-size: $font-size-xs * $f; }
-    }
-
-    &.compact-area-editor {
-      .bq, .li, .p { line-height: 1.4; } // 行高不缩放
     }
 
     &.compact-area-tabs {

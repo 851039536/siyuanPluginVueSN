@@ -205,16 +205,11 @@ async function save() {
 }
 
 .sub-section {
-  margin-top: 14px;
-  padding: 12px 14px;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 8px;
-}
-
-.sub-title {
-  margin-bottom: 10px;
-  font-size: 13px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-border-color);
+  border-radius: 6px;
 }
 
 /* --- Chip 选项（密度 / 字号共用） --- */
@@ -226,13 +221,15 @@ async function save() {
 .chip-option {
   flex: 1;
   text-align: center;
-  padding: 6px 4px;
-  font-size: 12px;
+  padding: 5px 2px;
+  font-size: 11px;
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
   color: var(--b3-theme-on-surface-variant);
+  background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  transition: border-color 0.12s, background 0.12s, color 0.12s, box-shadow 0.12s;
   user-select: none;
 }
 
@@ -242,9 +239,19 @@ async function save() {
 
 .chip-option.active {
   border-color: var(--b3-theme-primary);
-  background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.08);
   color: var(--b3-theme-primary);
+  background: var(--b3-theme-surface);
+  box-shadow: 0 0 0 1px var(--b3-theme-primary);
+}
+
+.sub-title {
+  margin-bottom: 10px;
+  font-size: 10px;
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--b3-theme-on-surface-variant);
 }
 
 .hidden-radio {

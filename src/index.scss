@@ -6,7 +6,9 @@
 @use './variables.scss' as *;
 
 // 导入页面锁定功能样式
-@use './features/pageLock/styles/index.scss';
+@use './features/pageLock/styles/index.scss' as pageLock;
+// 导入紧凑模式样式
+@use './features/compactMode/styles/index.scss' as compactMode;
 
 // 代码块基础样式
 @mixin codeblock-base {
@@ -50,197 +52,14 @@
       color: var(--b3-theme-on-surface);
     }
 
-    // 移动端适配
-    @media (max-width: $mobile-breakpoint) {
-      margin: 0.25rem 0;
-
-      .protyle-action {
-        min-height: 1.25rem;
-        padding: 0.125rem 0.75rem;
-      }
-
-      .hljs {
-        padding: 0.75rem 0.75rem 0.75rem 1rem;
-        font-size: 0.75rem;
-      }
-    }
   }
 }
 
-// 紧凑模式响应式适配
-// 注：0.125rem / 0.375rem 等紧凑微调值无对应标准 Token，保留为精确值
-@mixin compact-responsive {
-  @media (max-width: $mobile-breakpoint) {
-    --siyuan-compact-padding: #{$compact-padding * 0.5};
-    --siyuan-compact-gap: #{$compact-gap * 0.5};
-    --siyuan-compact-font-size-reduction: 0.8;
-
-    .toolbar {
-      gap: 0.125rem;
-      padding: 0.125rem $spacing-1;
-    }
-
-    .protyle-content {
-      padding: $spacing-1;
-    }
-
-    .b3-dialog {
-      padding: $spacing-2;
-    }
-
-    .b3-dialog__body {
-      padding: $spacing-2;
-      font-size: $font-size-xs;
-    }
-  }
-}
 
 // 侧边栏和顶部栏配置
 body > #dockBottom,
 body > .fn__flex-1 {
   font-size: 13px;
-}
-
-// ========== 全局紧凑模式样式 ==========
-
-/* 当整个思源应用处于紧凑模式时 */
-// 注：0.375rem / 0.8125rem / 0.875rem 等间距无对应标准 Token，保留为紧凑专用值
-// $spacing-1=0.25rem, $spacing-2=0.5rem, $spacing-3=0.75rem
-html.siyuan-compact-mode {
-  /* 减少全局间距 */
-  --siyuan-compact-padding: #{$compact-padding};
-  --siyuan-compact-gap: #{$compact-gap};
-  --siyuan-compact-border-radius: #{$compact-border-radius};
-  --siyuan-compact-font-size-reduction: #{$compact-font-size-reduction};
-
-  /* 编辑器工具栏紧凑 */
-  .toolbar {
-    gap: $spacing-1;
-    padding: $spacing-1 $spacing-2;
-  }
-
-  /* 侧边栏紧凑 */
-  .sidebar {
-    font-size: 0.8125rem;
-  }
-
-  .dock__item {
-    padding: 0.375rem;
-  }
-
-  /* 文件树列表紧凑 — 精确匹配思源 DOM */
-  .file-tree {
-    font-size: $font-size-xs;
-  }
-
-  .b3-list-item {
-    padding: $spacing-1 $spacing-2;
-    min-height: $spacing-6; // 1.5rem
-    line-height: 24px !important; // 覆盖思源 JS 动态 inline style
-  }
-
-  .b3-list-item--hide-action {
-    line-height: 24px !important; // 覆盖思源 JS 动态 inline style
-  }
-
-  /* 编辑区紧凑 */
-  .protyle-content {
-    padding: $spacing-2;
-  }
-
-  /* 页签栏紧凑 */
-  .layout-tab-bar {
-    .item {
-      padding: $spacing-1 $spacing-3;
-      font-size: $font-size-xs;
-      line-height: $spacing-6;
-    }
-  }
-
-  .tab {
-    padding: 0.375rem $spacing-3;
-    font-size: $font-size-xs;
-  }
-
-  /* 对话框紧凑 */
-  .b3-dialog {
-    padding: $spacing-3;
-  }
-
-  .b3-dialog__header {
-    padding: $spacing-2 $spacing-3;
-    font-size: 0.875rem;
-  }
-
-  .b3-dialog__body {
-    padding: $spacing-2;
-    font-size: 0.8125rem;
-  }
-
-  /* 按钮紧凑 */
-  .b3-button {
-    padding: 0.375rem $spacing-3;
-    font-size: $font-size-xs;
-  }
-
-  /* 输入框紧凑 */
-  .b3-text-field,
-  .b3-input {
-    padding: 0.375rem $spacing-2;
-    font-size: $font-size-xs;
-  }
-
-  /* 下拉框紧凑 */
-  .b3-select {
-    padding: 0.375rem $spacing-2;
-    font-size: $font-size-xs;
-  }
-
-  .b3-menu {
-    padding: $spacing-1 0;
-  }
-
-  .b3-menu__item {
-    padding: 0.375rem $spacing-3;
-    font-size: $font-size-xs;
-    min-height: $spacing-6;
-    line-height: 20px !important; // 覆盖思源 JS 动态 inline style
-  }
-
-  /* 块编辑器紧凑 */
-  .bq,
-  .li,
-  .p {
-    line-height: 1.4;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    margin: $spacing-1 0;
-    padding: $spacing-1 0;
-  }
-
-  /* 代码块紧凑 */
-  .hljs {
-    padding: 0.375rem;
-  }
-
-  /* 表格紧凑 */
-  table {
-    padding: $spacing-1;
-  }
-
-  td, th {
-    padding: $spacing-1 $spacing-2;
-  }
-
-  /* 文件树间距紧凑 */
-  ul.b3-list--banner > li,
-  .b3-list-item__text {
-    line-height: 22px !important; // 覆盖思源 JS 动态 inline style
-  }
-
-  // 应用响应式适配
-  @include compact-responsive;
 }
 
 // ========== 代码块美化样式 ==========

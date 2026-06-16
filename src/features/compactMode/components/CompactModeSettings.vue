@@ -120,13 +120,14 @@ const densityOptions = [
   { value: 'extreme',  desc: '极简' },
 ]
 
-const fontScale = ref(s()?.compactModeFontScale ?? 90)
+const fontScale = ref(s()?.compactModeFontScale ?? 94)
 const fontScaleOptions = [
-  { value: 80,  desc: '80%' },
-  { value: 85,  desc: '85%' },
-  { value: 90,  desc: '90%' },
-  { value: 95,  desc: '95%' },
   { value: 100, desc: '100%' },
+  { value: 98,  desc: '98%' },
+  { value: 96,  desc: '96%' },
+  { value: 94,  desc: '94%' },
+  { value: 92,  desc: '92%' },
+  { value: 90,  desc: '90%' },
 ]
 
 const areas = reactive<Record<string, boolean>>({

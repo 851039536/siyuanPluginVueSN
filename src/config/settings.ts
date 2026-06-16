@@ -62,7 +62,7 @@ export interface PluginSettings {
   videoCategories?: string[] // 视频分类列表
   compactMode: boolean // 是否启用全局紧凑模式
   compactModeDensity: 'moderate' | 'compact' | 'extreme' // 密度级别
-  compactModeFontScale: number // 字号缩放 80|85|90|95|100
+  compactModeFontScale: number // 字号缩放 100|98|96|94|92|90
   compactModeAreas: Record<string, boolean> // 区域开关: sidebar/editor/tabs/dialogs/controls
   statisticsTheme: "default" | "github" // 统计面板主题风格
   statisticsUpdateInterval: number // 统计自动更新时间间隔(毫秒),默认60000(1分钟)
@@ -128,7 +128,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   videoCategories: ["默认分类", "教程", "演示", "其他"],
   compactMode: true,
   compactModeDensity: 'compact',
-  compactModeFontScale: 90,
+  compactModeFontScale: 94,
   compactModeAreas: {
     sidebar: true,
     editor: true,

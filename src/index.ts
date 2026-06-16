@@ -151,7 +151,7 @@ export default class PluginSample extends Plugin {
     applyCompactMode({
       compactMode: this.settings.compactMode,
       compactModeDensity: this.settings.compactModeDensity ?? 'compact',
-      compactModeFontScale: this.settings.compactModeFontScale ?? 90,
+      compactModeFontScale: this.settings.compactModeFontScale ?? 94,
       compactModeAreas: this.settings.compactModeAreas ?? { sidebar: true, editor: true, tabs: true, dialogs: true, controls: true },
     })
     // 主题色可能在异步加载后需要重新应用（scheme 已变）

@@ -148,6 +148,14 @@
                         <Button
                           variant="ghost"
                           size="small"
+                          title="一键复制名称、账号、密码、描述"
+                          @click="copyAllEntry(entry)"
+                        >
+                          一键复制
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="small"
                           title="编辑"
                           @click="editEntry(entry)"
                         >
@@ -1427,6 +1435,20 @@ const copyAccount = (account: string) => copyAndNotify(account, "账号")
 
 // 复制密码
 const copyPassword = (password: string) => copyAndNotify(password, "密码")
+
+// 一键复制：名称 + 账号 + 密码 + 描述
+const copyAllEntry = async (entry: PasswordEntry) => {
+  const lines = [
+    entry.name,
+    `账号：${entry.account}`,
+    `密码：${entry.password}`,
+  ]
+  if (entry.description) {
+    lines.push(`描述：${entry.description}`)
+  }
+  const ok = await copyToClipboardUtil(lines.join("\n"))
+  showMessage(ok ? "条目信息已复制" : "复制失败", 2000, ok ? "info" : "error")
+}
 
 // 关闭弹窗（保持登录状态，仅清理 UI 状态）
 const closeDialog = () => {

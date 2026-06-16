@@ -552,3 +552,54 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
+
+// 导出确认弹窗警告样式
+.export-warning {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 0;
+  text-align: center;
+
+  .warning-icon {
+    width: 40px;
+    height: 40px;
+    color: var(--b3-theme-warning, #f0ad4e);
+    margin-bottom: 4px;
+  }
+
+  .warning-text {
+    font-size: 14px;
+    color: var(--b3-theme-warning, #f0ad4e);
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  .warning-sub {
+    font-size: 12px;
+    color: var(--b3-theme-on-surface, #888);
+    margin: 0;
+  }
+
+  .warning-count {
+    font-size: 12px;
+    color: var(--b3-theme-on-background, #666);
+    margin: 0;
+  }
+}
+
+// 导出密码验证步骤
+.export-verify {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px 0 0;
+
+  .verify-hint {
+    font-size: 13px;
+    color: var(--b3-theme-on-background, #666);
+    margin: 0;
+    text-align: center;
+  }
+}

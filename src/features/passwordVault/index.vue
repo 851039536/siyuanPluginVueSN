@@ -106,7 +106,7 @@
                     variant="ghost"
                     size="small"
                     title="导出所有数据"
-                    @click="exportAllData"
+                    @click="openExportConfirm"
                   >
                     导出
                   </Button>
@@ -549,6 +549,121 @@
       </div>
     </Transition>
   </Teleport>
+
+  <!-- Export Confirmation Modal -->
+  <Teleport to="body">
+    <Transition name="fade">
+      <div
+        v-if="showExportConfirm"
+        class="password-vault-overlay modal-overlay"
+        @click="showExportConfirm = false"
+      >
+        <Transition name="scale">
+          <div
+            v-if="showExportConfirm"
+            class="password-vault-dialog small"
+            @click.stop
+          >
+            <div class="dialog-header">
+              <h2>导出确认</h2>
+              <Button
+                icon="close"
+                variant="ghost"
+                size="small"
+                @click="showExportConfirm = false"
+              />
+            </div>
+
+            <div class="dialog-body">
+              <!-- Step 1: 警告提示 + 确认 -->
+              <template v-if="!showExportPassword">
+                <div class="export-warning">
+                  <svg
+                    class="warning-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                  <p class="warning-text">
+                    导出数据为 <strong>明文 JSON 格式</strong>，包含所有密码、账号等敏感信息。
+                  </p>
+                  <p class="warning-sub">
+                    请确保将文件保存在安全位置，使用完毕后及时删除。
+                  </p>
+                  <p class="warning-count">
+                    当前共 <strong>{{ entries.length }} 条</strong>密码记录将被导出。
+                  </p>
+                </div>
+
+                <div class="form-actions">
+                  <Button
+                    variant="ghost"
+                    size="small"
+                    @click="showExportConfirm = false"
+                  >
+                    取消
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="small"
+                    @click="confirmExport"
+                  >
+                    确认导出
+                  </Button>
+                </div>
+              </template>
+
+              <!-- Step 2: 密码验证 -->
+              <template v-else>
+                <div class="export-verify">
+                  <p class="verify-hint">
+                    请输入主密码以确认身份并导出数据
+                  </p>
+                  <Input
+                    v-model="exportPassword"
+                    type="password"
+                    placeholder="请输入主密码"
+                    :visible="showExportPwd"
+                    @keyup.enter="verifyAndExport"
+                    @toggle="showExportPwd = $event"
+                  />
+                  <p
+                    v-if="exportPasswordError"
+                    class="error-text"
+                  >
+                    {{ exportPasswordError }}
+                  </p>
+                </div>
+
+                <div class="form-actions">
+                  <Button
+                    variant="ghost"
+                    size="small"
+                    @click="cancelExportPassword"
+                  >
+                    返回
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="small"
+                    :disabled="!exportPassword.trim()"
+                    @click="verifyAndExport"
+                  >
+                    验证并导出
+                  </Button>
+                </div>
+              </template>
+            </div>
+          </div>
+        </Transition>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -633,6 +748,11 @@ const showNewPassword = ref(false)
 const showConfirmPassword = ref(false)
 const changePasswordError = ref("")
 const showHelpDialog = ref(false)
+const showExportConfirm = ref(false)
+const showExportPassword = ref(false)
+const exportPassword = ref("")
+const exportPasswordError = ref("")
+const showExportPwd = ref(false)
 
 // 数据存储路径（展示给用户）
 const storagePath = computed(() => {
@@ -812,6 +932,54 @@ async function exportAllData() {
     console.error("Export failed:", error)
     showMessage("导出失败", 2000, "error")
   }
+}
+
+// 打开导出确认弹窗
+function openExportConfirm() {
+  if (!entries.value.length) {
+    showMessage("没有数据可导出", 2000, "info")
+    return
+  }
+  showExportConfirm.value = true
+}
+
+// 确认导出 → 进入密码验证步骤
+function confirmExport() {
+  showExportPassword.value = true
+  exportPassword.value = ""
+  exportPasswordError.value = ""
+}
+
+// 取消密码验证，返回警告步骤
+function cancelExportPassword() {
+  showExportPassword.value = false
+  exportPassword.value = ""
+  exportPasswordError.value = ""
+}
+
+// 密码验证通过后执行导出
+async function verifyAndExport() {
+  const pwd = exportPassword.value.trim()
+  if (!pwd) return
+
+  exportPasswordError.value = ""
+
+  const verifySalt = await storage.verifySalt.load()
+  if (!verifySalt) {
+    exportPasswordError.value = "数据异常，无法验证"
+    return
+  }
+
+  const hash = await hashMasterPassword(pwd, verifySalt)
+  if (hash !== savedHash.value) {
+    exportPasswordError.value = "密码错误"
+    return
+  }
+
+  showExportConfirm.value = false
+  showExportPassword.value = false
+  exportPassword.value = ""
+  exportAllData()
 }
 
 // 打开修改密码弹窗

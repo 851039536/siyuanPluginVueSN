@@ -26,8 +26,9 @@ export function useWebsiteNavigation(plugin: Plugin) {
 
   let dataChangeHandler: (() => void) | null = null
 
-  onMounted(() => {
-    loadData()
+  onMounted(async () => {
+    await storage.init() // 首次运行持久化默认分类
+    await loadData()
     dataChangeHandler = () => loadData()
     window.addEventListener("websiteNavigationDataChanged", dataChangeHandler)
   })

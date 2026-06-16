@@ -553,6 +553,35 @@
   text-transform: uppercase;
 }
 
+// 类别删除确认卡片
+.category-delete-confirm {
+  margin-top: 12px;
+
+  .confirm-card {
+    padding: 12px;
+    background: var(--b3-theme-surface, #f8f8f8);
+    border: 1px solid var(--b3-theme-warning, #f0ad4e);
+    border-radius: $vp-radius;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .confirm-warning {
+    font-size: 13px;
+    color: var(--b3-theme-on-background, #333);
+    margin: 0;
+    text-align: center;
+  }
+
+  .confirm-hint {
+    font-size: 12px;
+    color: var(--b3-theme-warning, #f0ad4e);
+    margin: 0;
+    text-align: center;
+  }
+}
+
 // 导出确认弹窗警告样式
 .export-warning {
   display: flex;

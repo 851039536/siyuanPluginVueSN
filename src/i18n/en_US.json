@@ -856,6 +856,8 @@
   "decryptedContent": "Decrypted Content",
   "copyContent": "Copy Content",
   "copied": "Copied",
+  "copySuccess": "Copied to clipboard",
+  "copyFailed": "Copy failed",
   "replaceEncrypted": "Replace Encrypted Text",
   "replaceSuccess": "Replaced successfully",
   "replaceFailed": "Replace failed",

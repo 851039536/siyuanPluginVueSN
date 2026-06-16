@@ -233,13 +233,13 @@ export class Encryption {
       }
       await this.replaceSelectedText(decryptedText)
       showMessage(
-        this.plugin.i18n.replaceSuccess || "替换成功",
+        this.plugin.i18n.replaceSuccess,
         2000,
         "info",
       )
     } catch (_error) {
       showMessage(
-        this.plugin.i18n.replaceFailed || "替换失败",
+        this.plugin.i18n.replaceFailed,
         2000,
         "error",
       )

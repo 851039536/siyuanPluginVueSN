@@ -882,6 +882,8 @@
   "decryptedContent": "解密内容",
   "copyContent": "复制内容",
   "copied": "已复制",
+  "copySuccess": "已复制到剪贴板",
+  "copyFailed": "复制失败",
   "replaceEncrypted": "替换加密文本",
   "replaceSuccess": "替换成功",
   "replaceFailed": "替换失败",

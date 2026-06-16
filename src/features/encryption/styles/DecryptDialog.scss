@@ -1,0 +1,154 @@
+/**
+ * 解密对话框 — Codex 风格
+ * 边框优先（禁用 box-shadow 作主要样式），全局设计 Token
+ */
+@use "@/variables.scss" as *;
+
+// 等宽字体栈（对齐项目 Codex 规范）
+$vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
+
+// 遮罩层
+.decrypt-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  /* 父容器 .plugin-app-main 设置了 pointer-events: none，
+     需在遮罩层重新启用，否则点击事件无法触发关闭 */
+  pointer-events: auto;
+}
+
+// 对话框主体（边框 + 圆角，禁用 box-shadow）
+.decrypt-dialog {
+  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-lg;
+  padding: $spacing-6;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.dialog-section {
+  margin-bottom: $spacing-5;
+}
+
+.dialog-title {
+  margin: 0 0 $spacing-2 0;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-background);
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.dialog-desc {
+  margin: 0;
+  font-size: $font-size-sm;
+  color: var(--b3-theme-on-surface-light);
+}
+
+.field-label {
+  display: block;
+  margin-bottom: $spacing-2;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--b3-theme-on-background);
+}
+
+.password-input {
+  width: 100%;
+  padding: $spacing-2 $spacing-3;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-base;
+  box-sizing: border-box;
+  font-size: $font-size-sm;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-background);
+  outline: none;
+  transition: border-color 0.12s, box-shadow 0.12s;
+
+  &:focus {
+    border-color: var(--b3-theme-primary);
+    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
+  }
+}
+
+.error-msg {
+  margin-top: $spacing-2;
+  color: var(--b3-card-error-color);
+  font-size: $font-size-xs;
+}
+
+.result-textarea {
+  width: 100%;
+  min-height: 150px;
+  max-height: 300px;
+  padding: $spacing-3;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-base;
+  box-sizing: border-box;
+  font-size: $font-size-sm;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-background);
+  font-family: $vp-mono;
+  line-height: $line-height-relaxed;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.12s, box-shadow 0.12s;
+
+  &:focus {
+    border-color: var(--b3-theme-primary);
+    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
+  }
+}
+
+.dialog-actions {
+  display: flex;
+  gap: $spacing-2;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: $spacing-2 $spacing-5;
+  border-radius: $radius-base;
+  cursor: pointer;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  transition: opacity 0.12s;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.btn-primary {
+  background: var(--b3-theme-primary);
+  color: var(--b3-theme-on-primary);
+}
+
+.btn-secondary {
+  border: 1px solid var(--b3-theme-surface-lighter);
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+}
+
+.btn-outline {
+  border: 1px solid var(--b3-theme-primary);
+  background: transparent;
+  color: var(--b3-theme-primary);
+}

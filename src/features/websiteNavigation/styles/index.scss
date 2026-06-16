@@ -1,5 +1,8 @@
 @use '../../../_variables.scss' as *;
 
+// Codex 标准 Token（非 superPanel 模块本地声明）
+$vp-radius: $radius-base;
+
 .website-navigation-panel {
   display: flex;
   flex-direction: column;
@@ -34,7 +37,7 @@
         color: var(--b3-theme-secondary);
         background: var(--b3-theme-surface);
         padding: 2px $spacing-2;
-        border-radius: 10px;
+        border-radius: $radius-base;
       }
     }
 
@@ -73,9 +76,9 @@
       align-items: center;
       gap: $spacing-1;
       padding: 2px 8px;
-      border-radius: 12px;
+      border-radius: $vp-radius;
       font-size: 12px;
-      border: 1px solid var(--b3-theme-surface);
+      border: 1px solid var(--b3-border-color);
       background: var(--b3-theme-background);
       color: var(--b3-theme-on-background);
       cursor: pointer;
@@ -109,14 +112,14 @@
     min-height: 0;
 
     .entry-card {
-      background: var(--b3-theme-background);
-      border: 1px solid var(--b3-theme-surface);
-      border-radius: $radius-md;
+      background: var(--b3-theme-surface);
+      border: 1px solid var(--b3-border-color);
+      border-radius: $vp-radius;
       padding: 10px $spacing-3;
       transition: border-color 0.12s;
 
       &:hover {
-        border-color: var(--b3-theme-primary-lighter);
+        border-color: var(--b3-theme-primary);
       }
 
       .entry-main {
@@ -150,10 +153,12 @@
 
             .entry-category-tag {
               font-size: 10px;
+              font-weight: 700;
+              letter-spacing: 0.04em;
+              text-transform: uppercase;
               padding: 1px 6px;
               border-radius: $radius-sm;
               flex-shrink: 0;
-              font-weight: 500;
             }
           }
 
@@ -204,7 +209,8 @@
       gap: $spacing-3;
       padding: $spacing-10 $spacing-5;
       color: var(--b3-theme-on-surface);
-      opacity: 0.6;
+      font-style: italic;
+      opacity: 0.35;
 
       p {
         font-size: 14px;
@@ -264,8 +270,11 @@
     gap: $spacing-1;
 
     label {
-      font-size: 13px;
-      font-weight: 500;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      opacity: 0.45;
       color: var(--b3-theme-on-background);
     }
   }
@@ -308,7 +317,7 @@
         align-items: center;
         gap: $spacing-2;
         padding: 6px $spacing-2;
-        border-radius: $radius-sm;
+        border-radius: $vp-radius;
         background: var(--b3-theme-surface);
 
         .cat-dot {

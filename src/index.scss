@@ -68,6 +68,7 @@
 }
 
 // 紧凑模式响应式适配
+// 注：0.125rem / 0.375rem 等紧凑微调值无对应标准 Token，保留为精确值
 @mixin compact-responsive {
   @media (max-width: $mobile-breakpoint) {
     --siyuan-compact-padding: #{$compact-padding * 0.5};
@@ -76,33 +77,35 @@
 
     .toolbar {
       gap: 0.125rem;
-      padding: 0.125rem 0.25rem;
+      padding: 0.125rem $spacing-1;
     }
 
     .protyle-content {
-      padding: 0.25rem;
+      padding: $spacing-1;
     }
 
     .b3-dialog {
-      padding: 0.5rem;
+      padding: $spacing-2;
     }
 
     .b3-dialog__body {
-      padding: 0.5rem;
-      font-size: 0.75rem;
+      padding: $spacing-2;
+      font-size: $font-size-xs;
     }
   }
 }
 
 // 侧边栏和顶部栏配置
-body>#dockBottom, body>.fn__flex-1 {
+body > #dockBottom,
+body > .fn__flex-1 {
   font-size: 13px;
-
 }
 
 // ========== 全局紧凑模式样式 ==========
 
 /* 当整个思源应用处于紧凑模式时 */
+// 注：0.375rem / 0.8125rem / 0.875rem 等间距无对应标准 Token，保留为紧凑专用值
+// $spacing-1=0.25rem, $spacing-2=0.5rem, $spacing-3=0.75rem
 html.siyuan-compact-mode {
   /* 减少全局间距 */
   --siyuan-compact-padding: #{$compact-padding};
@@ -112,8 +115,8 @@ html.siyuan-compact-mode {
 
   /* 编辑器工具栏紧凑 */
   .toolbar {
-    gap: 0.25rem;
-    padding: 0.25rem 0.5rem;
+    gap: $spacing-1;
+    padding: $spacing-1 $spacing-2;
   }
 
   /* 侧边栏紧凑 */
@@ -127,81 +130,81 @@ html.siyuan-compact-mode {
 
   /* 文件树列表紧凑 — 精确匹配思源 DOM */
   .file-tree {
-    font-size: 0.75rem;
+    font-size: $font-size-xs;
   }
 
   .b3-list-item {
-    padding: 0.25rem 0.5rem;
-    min-height: 1.5rem;
-    line-height: 24px !important;
+    padding: $spacing-1 $spacing-2;
+    min-height: $spacing-6; // 1.5rem
+    line-height: 24px !important; // 覆盖思源 JS 动态 inline style
   }
 
   .b3-list-item--hide-action {
-    line-height: 24px !important;
+    line-height: 24px !important; // 覆盖思源 JS 动态 inline style
   }
 
   /* 编辑区紧凑 */
   .protyle-content {
-    padding: 0.5rem;
+    padding: $spacing-2;
   }
 
   /* 页签栏紧凑 */
   .layout-tab-bar {
     .item {
-      padding: 0.25rem 0.75rem;
-      font-size: 0.75rem;
-      line-height: 1.5rem;
+      padding: $spacing-1 $spacing-3;
+      font-size: $font-size-xs;
+      line-height: $spacing-6;
     }
   }
 
   .tab {
-    padding: 0.375rem 0.75rem;
-    font-size: 0.75rem;
+    padding: 0.375rem $spacing-3;
+    font-size: $font-size-xs;
   }
 
   /* 对话框紧凑 */
   .b3-dialog {
-    padding: 0.75rem;
+    padding: $spacing-3;
   }
 
   .b3-dialog__header {
-    padding: 0.5rem 0.75rem;
+    padding: $spacing-2 $spacing-3;
     font-size: 0.875rem;
   }
 
   .b3-dialog__body {
-    padding: 0.5rem;
+    padding: $spacing-2;
     font-size: 0.8125rem;
   }
 
   /* 按钮紧凑 */
   .b3-button {
-    padding: 0.375rem 0.75rem;
-    font-size: 0.75rem;
+    padding: 0.375rem $spacing-3;
+    font-size: $font-size-xs;
   }
 
   /* 输入框紧凑 */
   .b3-text-field,
   .b3-input {
-    padding: 0.375rem 0.5rem;
-    font-size: 0.75rem;
+    padding: 0.375rem $spacing-2;
+    font-size: $font-size-xs;
   }
 
   /* 下拉框紧凑 */
   .b3-select {
-    padding: 0.375rem 0.5rem;
-    font-size: 0.75rem;
+    padding: 0.375rem $spacing-2;
+    font-size: $font-size-xs;
   }
 
   .b3-menu {
-    padding: 0.25rem 0;
+    padding: $spacing-1 0;
   }
 
   .b3-menu__item {
-    padding: 0.375rem 0.75rem;
-    font-size: 0.75rem;
-    min-height: 1.5rem;
-    line-height: 20px !important;
+    padding: 0.375rem $spacing-3;
+    font-size: $font-size-xs;
+    min-height: $spacing-6;
+    line-height: 20px !important; // 覆盖思源 JS 动态 inline style
   }
 
   /* 块编辑器紧凑 */
@@ -212,8 +215,8 @@ html.siyuan-compact-mode {
   }
 
   h1, h2, h3, h4, h5, h6 {
-    margin: 0.25rem 0;
-    padding: 0.25rem 0;
+    margin: $spacing-1 0;
+    padding: $spacing-1 0;
   }
 
   /* 代码块紧凑 */
@@ -223,17 +226,17 @@ html.siyuan-compact-mode {
 
   /* 表格紧凑 */
   table {
-    padding: 0.25rem;
+    padding: $spacing-1;
   }
 
   td, th {
-    padding: 0.25rem 0.5rem;
+    padding: $spacing-1 $spacing-2;
   }
 
   /* 文件树间距紧凑 */
   ul.b3-list--banner > li,
   .b3-list-item__text {
-    line-height: 22px !important;
+    line-height: 22px !important; // 覆盖思源 JS 动态 inline style
   }
 
   // 应用响应式适配
@@ -253,10 +256,9 @@ body.codeblock-style-github {
     border: 1px solid var(--b3-theme-outline);
     border-radius: $codeblock-border-radius;
     background: var(--b3-theme-surface);
-    box-shadow: $codeblock-shadow;
 
     &:hover {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      border-color: var(--b3-theme-primary);
     }
 
     .protyle-action {
@@ -301,11 +303,10 @@ body.codeblock-style-mac {
   .protyle-wysiwyg [data-node-id][data-type="NodeCodeBlock"],
   .b3-typography [data-node-id][data-type="NodeCodeBlock"] {
     border: 1px solid var(--b3-theme-outline);
-    border-radius: 0.625rem;
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.25);
+    border-radius: $radius-lg;
 
     &:hover {
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+      border-color: var(--b3-theme-primary);
     }
 
     .protyle-action {
@@ -320,6 +321,7 @@ body.codeblock-style-mac {
         border-radius: 50%;
         background: var(--mac-button-red, #ff5f56);
         border: 1px solid var(--mac-button-red-border, #e0443e);
+        // 例外：box-shadow 用于纯 CSS 渲染 Mac 红黄绿三色按钮，非页面阴影效果
         box-shadow:
           1.125rem 0 0 0 var(--mac-button-yellow, #ffbd2e),
           1.125rem 0 0 1px var(--mac-button-yellow-border, #dea123),
@@ -370,8 +372,10 @@ body.codeblock-style-default {
   .b3-typography .code-block,
   .protyle-wysiwyg [data-node-id][data-type="NodeCodeBlock"],
   .b3-typography [data-node-id][data-type="NodeCodeBlock"] {
+    border: 1px solid transparent;
+
     &:hover {
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      border-color: var(--b3-theme-outline);
     }
   }
 }

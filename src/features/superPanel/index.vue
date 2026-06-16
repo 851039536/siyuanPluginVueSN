@@ -238,10 +238,10 @@ const getFeatureEnabled = (featureId: string): boolean => {
 const canToggle = (featureId: string): boolean => featureId !== "superPanel"
 
 const statusLabels = computed<Record<string, string>>(() => ({
-  stable: props.i18n.statusStable || "稳定",
-  needsFix: props.i18n.statusNeedsFix || "待修复",
-  critical: props.i18n.statusCritical || "严重",
-  minor: props.i18n.statusMinor || "需优化",
+  stable: props.i18n.statusStable || "",
+  needsFix: props.i18n.statusNeedsFix || "",
+  critical: props.i18n.statusCritical || "",
+  minor: props.i18n.statusMinor || "",
 }))
 
 const themeSchemeOptions = computed<SelectorOption[]>(() =>
@@ -265,5 +265,6 @@ const getSelectedOption = (featureId: string): string => {
 </script>
 
 <style lang="scss">
-@use './styles/index.scss';
+@use "@/index.scss" as *;
+@use "./styles/index.scss";
 </style>

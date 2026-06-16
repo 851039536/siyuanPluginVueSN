@@ -144,7 +144,8 @@
 
   &:focus {
     border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
+    outline: 2px solid var(--b3-theme-primary-lightest);
+    outline-offset: 0;
   }
 }
 
@@ -200,7 +201,8 @@
 
   &:focus-within {
     border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.12);
+    outline: 2px solid rgba(var(--b3-theme-primary-rgb), 0.12);
+    outline-offset: 0;
   }
 }
 
@@ -694,7 +696,8 @@
 
   &:focus {
     border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
+    outline: 2px solid var(--b3-theme-primary-lightest);
+    outline-offset: 0;
   }
 
   &--mono {

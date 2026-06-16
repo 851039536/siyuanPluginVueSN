@@ -1,4 +1,4 @@
-// 登录页面样式
+// 登录页面 — 极简风
 @use '@/index.scss' as *;
 @use '@/variables.scss' as *;
 @use 'mixins' as *;
@@ -17,16 +17,7 @@
 }
 
 // ============================================================
-// 头部
-// ============================================================
-
-.dialog-header {
-  @include dialog-header;
-  flex-shrink: 0;
-}
-
-// ============================================================
-// 主体区域
+// 主体 — 居中极简
 // ============================================================
 
 .login-body {
@@ -34,23 +25,18 @@
   display: flex;
   flex-direction: column;
   @include flex-center;
-  padding: 24px $spacing-md;
+  padding: 40px 32px;
   overflow-y: auto;
 }
 
-.login-body h2 {
-  font-size: 20px;
+.login-title {
+  font-size: 15px;
   font-weight: 600;
   color: var(--b3-theme-on-background);
-  margin: 0 0 $spacing-sm 0;
+  margin: 0 0 24px 0;
   font-family: $font-heading;
-}
-
-.login-hint {
-  font-size: 13px;
-  color: var(--b3-theme-on-surface-light);
-  margin-bottom: 20px;
   text-align: center;
+  opacity: 0.7;
 }
 
 // ============================================================
@@ -58,20 +44,16 @@
 // ============================================================
 
 .password-hint-display {
-  @include flex-row-gap($spacing-sm);
-  padding: 10px 16px;
-  background: rgba($brand-destructive, 0.08);
-  border: 1px solid $brand-destructive;
-  border-radius: $radius-md;
-  font-size: 13px;
-  color: $brand-destructive;
-  margin-bottom: 16px;
   width: 100%;
-  max-width: 320px;
-
-  span {
-    flex: 1;
-  }
+  max-width: 280px;
+  padding: 8px 12px;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+  font-size: 12px;
+  color: var(--b3-theme-on-surface-light);
+  margin-bottom: 16px;
+  text-align: center;
 }
 
 // ============================================================
@@ -80,10 +62,14 @@
 
 .login-form {
   width: 100%;
-  max-width: 320px;
+  max-width: 280px;
   display: flex;
   flex-direction: column;
-  gap: $spacing-md;
+  gap: 12px;
+
+  .submit-btn {
+    align-self: center;
+  }
 }
 
 // ============================================================
@@ -107,12 +93,4 @@
 
 .error-message {
   @include error-message;
-}
-
-// ============================================================
-// 忘记密码区域
-// ============================================================
-
-.forgot-password-section {
-  margin-top: 16px;
 }

@@ -1,29 +1,14 @@
 <template>
   <div class="login-page">
-    <div class="dialog-header">
-      <div class="header-title">
-        <span>密码箱</span>
-      </div>
-      <Button
-        icon="close"
-        variant="ghost"
-        size="small"
-        @click="$emit('close')"
-      />
-    </div>
-
     <div class="login-body">
-      <h2>{{ isFirstTime ? '创建主密码' : '请输入主密码' }}</h2>
-      <p class="login-hint">
-        {{ isFirstTime ? '首次使用将创建新密码' : '请输入密码以解锁' }}
-      </p>
+      <p class="login-title">{{ isFirstTime ? '创建主密码' : '解锁密码箱' }}</p>
 
       <!-- 显示保存的密码提示 -->
       <div
         v-if="!isFirstTime && passwordHint"
         class="password-hint-display"
       >
-        <span>提示：{{ passwordHint }}</span>
+        <span>{{ passwordHint }}</span>
       </div>
 
       <form
@@ -34,7 +19,7 @@
           ref="inputRef"
           v-model="password"
           :type="showPassword ? 'text' : 'password'"
-          placeholder="请输入密码"
+          placeholder="输入主密码"
           size="small"
           @keydown.esc="$emit('close')"
         />
@@ -72,26 +57,13 @@
         <Button
           type="submit"
           variant="primary"
+          size="small"
           :disabled="!password.trim()"
-          block
+          class="submit-btn"
         >
           {{ isFirstTime ? '创建密码' : '解锁' }}
         </Button>
       </form>
-
-      <!-- 忘记密码选项 -->
-      <div
-        v-if="!isFirstTime"
-        class="forgot-password-section"
-      >
-        <Button
-          variant="ghost"
-          size="small"
-          @click="$emit('forgotPassword')"
-        >
-          忘记密码？
-        </Button>
-      </div>
     </div>
   </div>
 </template>

@@ -13,10 +13,9 @@
         icon="add"
         variant="primary"
         size="small"
+        :title="i18n.addWebsite || '添加网站'"
         @click="emit('add')"
-      >
-        {{ i18n.addWebsite || '添加网站' }}
-      </Button>
+      />
     </div>
   </div>
 </template>

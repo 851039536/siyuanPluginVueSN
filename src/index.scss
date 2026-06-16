@@ -121,11 +121,11 @@ html.siyuan-compact-mode {
     font-size: 0.8125rem;
   }
 
-  .dock-item {
+  .dock__item {
     padding: 0.375rem;
   }
 
-  /* 文件树紧凑 */
+  /* 文件树列表紧凑 — 精确匹配思源 DOM */
   .file-tree {
     font-size: 0.75rem;
   }
@@ -133,6 +133,11 @@ html.siyuan-compact-mode {
   .b3-list-item {
     padding: 0.25rem 0.5rem;
     min-height: 1.5rem;
+    line-height: 24px !important;
+  }
+
+  .b3-list-item--hide-action {
+    line-height: 24px !important;
   }
 
   /* 编辑区紧凑 */
@@ -140,9 +145,13 @@ html.siyuan-compact-mode {
     padding: 0.5rem;
   }
 
-  /* 标签紧凑 */
-  .tabs {
-    height: 1.75rem;
+  /* 页签栏紧凑 */
+  .layout-tab-bar {
+    .item {
+      padding: 0.25rem 0.75rem;
+      font-size: 0.75rem;
+      line-height: 1.5rem;
+    }
   }
 
   .tab {
@@ -192,6 +201,7 @@ html.siyuan-compact-mode {
     padding: 0.375rem 0.75rem;
     font-size: 0.75rem;
     min-height: 1.5rem;
+    line-height: 20px !important;
   }
 
   /* 块编辑器紧凑 */
@@ -218,6 +228,12 @@ html.siyuan-compact-mode {
 
   td, th {
     padding: 0.25rem 0.5rem;
+  }
+
+  /* 文件树间距紧凑 */
+  ul.b3-list--banner > li,
+  .b3-list-item__text {
+    line-height: 22px !important;
   }
 
   // 应用响应式适配

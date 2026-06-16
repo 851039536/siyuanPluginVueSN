@@ -1,7 +1,6 @@
 import type { Plugin } from "siyuan"
 import { createModalVueApp, type ModalAppInstance } from "@/utils/vueAppHelper"
 import WebsiteNavigationPanel from "../index.vue"
-import { WebsiteNavigationStorage } from "./storage"
 
 export interface WebsiteEntry {
   id: string
@@ -67,18 +66,16 @@ export interface I18n {
   urlCopied?: string
 }
 
+/**
+ * Manager：管理 modal 生命周期。
+ * 数据存储由 composables/useWebsiteNavigation.ts 统一负责。
+ */
 export class WebsiteNavigation {
   private plugin: Plugin
-  private storage: WebsiteNavigationStorage
   private modal: ModalAppInstance | null = null
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
-    this.storage = new WebsiteNavigationStorage(plugin)
-  }
-
-  public async init() {
-    await this.storage.init()
   }
 
   public showModal() {
@@ -101,15 +98,14 @@ export class WebsiteNavigation {
     })
     this.modal.open()
   }
-
 }
 
 let _instance: WebsiteNavigation | null = null
 
+/** 公共 API：显示网站导航弹窗 */
 export function showWebsiteNavigation(plugin?: Plugin) {
   if (!_instance && plugin) {
     _instance = new WebsiteNavigation(plugin)
-    _instance.init()
   }
   _instance?.showModal()
 }

@@ -75,6 +75,7 @@ import {
   computed,
   ref,
 } from "vue"
+import { copyToClipboard } from "@/utils/domUtils"
 import IconWrapper from "@/components/IconWrapper.vue"
 import CategoryManager from "./components/CategoryManager.vue"
 import FilterBar from "./components/FilterBar.vue"
@@ -194,12 +195,12 @@ const deleteEntry = async (id: string) => {
 }
 
 const openUrl = (url: string) => {
-  window.open(url, "_blank")
+  window.open(url, "_blank", "noopener,noreferrer")
 }
 
 const copyUrl = async (url: string) => {
   try {
-    await navigator.clipboard.writeText(url)
+    await copyToClipboard(url)
     showMessage(props.i18n.urlCopied || "网址已复制", 2000, "info")
   } catch {
     showMessage(props.i18n.copyUrl || "复制失败", 2000, "error")

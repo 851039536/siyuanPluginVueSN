@@ -102,7 +102,7 @@ const emit = defineEmits<{
   (e: "remove", id: string): void
 }>()
 
-const PRESET_COLORS = [
+const presetColors = [
   "#3b82f6",
   "#10b981",
   "#f59e0b",
@@ -112,9 +112,8 @@ const PRESET_COLORS = [
   "#06b6d4",
   "#84cc16",
   "#b0aea5",
-]
+] as const
 
-const presetColors = [...PRESET_COLORS]
 const catName = ref("")
 const catColor = ref("#3b82f6")
 

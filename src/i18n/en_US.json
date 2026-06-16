@@ -1599,5 +1599,17 @@
     "stashRestore": "Restore",
     "stashApply": "Apply",
     "stashDrop": "Drop"
-  }
+  },
+  "compactModeSettings": "Compact Mode",
+  "compactModeDescription": "Enable global compact styling with independent spacing density and font scale controls",
+  "compactModeEnabled": "Compact mode enabled",
+  "compactModeDisabled": "Compact mode disabled",
+  "compactModeDensity": "Density Level",
+  "compactModeFontScale": "Font Scale",
+  "compactModeAreas": "Affected Areas",
+  "compactAreaSidebar": "Sidebar & File Tree",
+  "compactAreaEditor": "Editor Area",
+  "compactAreaTabs": "Tab Bar",
+  "compactAreaDialogs": "Dialogs",
+  "compactAreaControls": "Buttons & Menus"
 }

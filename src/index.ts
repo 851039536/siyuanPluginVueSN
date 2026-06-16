@@ -4,6 +4,8 @@ import {
   Plugin,
 } from "siyuan"
 
+import { applyCompactMode } from "@/features/compactMode"
+
 import PluginInfoString from "@/../plugin.json"
 
 import { setupIconifyOffline } from "@/utils/iconifySetup"
@@ -146,11 +148,12 @@ export default class PluginSample extends Plugin {
     // 同步回文件缓存，确保下次 onload 同步阶段能读到最新开关
     saveFeatureFlagsSync(this.settings)
     // 根据真实配置同步紧凑模式 CSS 类
-    if (this.settings.compactMode) {
-      document.documentElement.classList.add("siyuan-compact-mode")
-    } else {
-      document.documentElement.classList.remove("siyuan-compact-mode")
-    }
+    applyCompactMode({
+      compactMode: this.settings.compactMode,
+      compactModeDensity: this.settings.compactModeDensity ?? 'compact',
+      compactModeFontScale: this.settings.compactModeFontScale ?? 90,
+      compactModeAreas: this.settings.compactModeAreas ?? { sidebar: true, editor: true, tabs: true, dialogs: true, controls: true },
+    })
     // 主题色可能在异步加载后需要重新应用（scheme 已变）
     if ((this as any).__themeColor) {
       (this as any).__themeColor.destroy()

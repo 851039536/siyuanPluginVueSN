@@ -60,7 +60,10 @@ export interface PluginSettings {
   featureStatus: Record<string, string> // 功能状态标识: featureId -> 'stable' | 'needsFix' | 'critical' | 'minor'
   themeColorScheme: string // 主题色方案: 'orange' | 'github'
   videoCategories?: string[] // 视频分类列表
-  compactMode: boolean // 是否启用全局紧洛模式
+  compactMode: boolean // 是否启用全局紧凑模式
+  compactModeDensity: 'moderate' | 'compact' | 'extreme' // 密度级别
+  compactModeFontScale: number // 字号缩放 80|85|90|95|100
+  compactModeAreas: Record<string, boolean> // 区域开关: sidebar/editor/tabs/dialogs/controls
   statisticsTheme: "default" | "github" // 统计面板主题风格
   statisticsUpdateInterval: number // 统计自动更新时间间隔(毫秒),默认60000(1分钟)
   // 统一的大模型API配置
@@ -124,6 +127,15 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   themeColorScheme: "orange",
   videoCategories: ["默认分类", "教程", "演示", "其他"],
   compactMode: true,
+  compactModeDensity: 'compact',
+  compactModeFontScale: 90,
+  compactModeAreas: {
+    sidebar: true,
+    editor: true,
+    tabs: true,
+    dialogs: true,
+    controls: true,
+  },
   statisticsTheme: "default",
   statisticsUpdateInterval: 60000,
   // 统一的大模型API配置默认值

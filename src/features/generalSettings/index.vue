@@ -122,6 +122,16 @@
             :plugin="plugin"
           />
         </div>
+
+        <div
+          v-show="activeCategory === 'compactMode'"
+          class="content-section"
+        >
+          <CompactModeSettings
+            :i18n="i18n"
+            :plugin="plugin"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -133,6 +143,7 @@ import {
   ref,
 } from "vue"
 import CodeBlockSettings from "./components/CodeBlockSettings.vue"
+import CompactModeSettings from "@/features/compactMode/components/CompactModeSettings.vue"
 import DocCountSettings from "./components/DocCountSettings.vue"
 import DocumentFontSettings from "./components/DocumentFontSettings.vue"
 import EncryptionSettings from "./components/EncryptionSettings.vue"
@@ -198,6 +209,10 @@ const categories = computed(() => [
   {
     id: "markdownExport",
     label: "Markdown 导出",
+  },
+  {
+    id: "compactMode",
+    label: props.i18n.compactModeSettings || "紧凑模式",
   },
 ])
 

@@ -85,7 +85,7 @@ export class WebsiteNavigation {
     }
     this.modal = createModalVueApp(WebsiteNavigationPanel, {
       maskId: "website-navigation-mask",
-      width: "min(60vw, 900px)",
+      width: "min(42vw, 630px)",
       height: "75vh",
       getCloseHandler: () => () => {
         this.modal?.close()

@@ -45,12 +45,12 @@
           @click="emit('copyUrl', entry.url)"
         />
         <Button
+          icon="edit"
           variant="ghost"
           size="small"
+          :title="i18n.editWebsite || '编辑'"
           @click="emit('edit', entry)"
-        >
-          {{ i18n.editWebsite || '编辑' }}
-        </Button>
+        />
         <Button
           icon="delete"
           variant="ghost"

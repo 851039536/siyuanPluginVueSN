@@ -89,6 +89,7 @@ import {
 } from "vue"
 import {
   everythingSearchVisible,
+  getTextDiffManager,
   hideEverythingSearch,
   hidePasswordVault,
   hideSkillsViewer,
@@ -221,6 +222,11 @@ onMounted(() => {
   window.addEventListener("openHtmlViewer", ((event: any) => {
     htmlViewerVisible.value = true
   }) as EventListener)
+
+  // 监听打开文本对比事件（来自超级面板）
+  window.addEventListener("openTextDiff", () => {
+    getTextDiffManager()?.toggle()
+  })
 })
 </script>
 

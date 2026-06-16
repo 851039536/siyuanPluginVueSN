@@ -69,7 +69,7 @@ export {
 export { registerStatusBar } from "./statusBar"
 export { registerSuperPanel } from "./superPanel"
 export { registerTableOfContents } from "./tableOfContents"
-export { registerTextDiff } from "./textDiff"
+export { getTextDiffManager, registerTextDiff } from "./textDiff"
 export { registerThemeColor } from "./themeColor"
 export { registerUnitConverter } from "./unitConverter"
 export { registerVideo } from "./video"

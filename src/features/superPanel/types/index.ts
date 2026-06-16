@@ -13,7 +13,6 @@ import { reactive } from "vue"
 import { FEATURE_ICONS } from "@/config/icons"
 import { featureIdToSettingKey } from "@/config/settings"
 import { FEATURE_CONFIG } from "@/features/config"
-import { getTextDiffManager } from "@/features/textDiff"
 import { emitCustomEvent } from "@/utils/eventBus"
 import { replaceTopBarIcon } from "@/utils/iconHelper"
 import { PluginStorage } from "@/utils/pluginStorage"
@@ -21,6 +20,10 @@ import { createModalVueApp } from "@/utils/vueAppHelper"
 import AiSettingsPanel from "../components/AiSettingsPanel.vue"
 import VersionPanel from "../components/VersionPanel.vue"
 import SuperPanelPanel from "../index.vue"
+import {
+  type VersionManager,
+  createVersionManager,
+} from "../composables/useVersionManager"
 
 export type { FeatureAction }
 
@@ -76,8 +79,6 @@ export interface AiSettings {
   searchSearxngUrl: string
 }
 
-const VERSIONS_STORAGE_KEY = "superPanel-feature-versions"
-
 /**
  * 统一 action 映射表：action -> 事件配置
  */
@@ -97,6 +98,7 @@ const ACTION_EVENT_MAP: Record<
   openBase64Image: { event: "openBase64Image" },
   openFormatAssistant: { event: "openFormatAssistant" },
   openBookmarkMarker: { event: "openBookmarkMarker" },
+  openTextDiff: { event: "openTextDiff" },
 }
 
 /**
@@ -108,14 +110,15 @@ export class SuperPanelManager {
   private panel: ModalAppInstance
   private aiSettingsModal: ModalAppInstance
   private versionModal: ModalAppInstance | null = null
-  private versionStorage: PluginStorage
-  private featureVersions: Record<string, FeatureVersionEntry[]> = {}
+  private versionMgr: VersionManager
   private reactiveSettings: PluginSettings | null = null
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
     this.boundToggleHandler = this.toggle.bind(this)
-    this.versionStorage = new PluginStorage(plugin)
+    const dataDir = ((plugin as any).dataDir || (plugin as any).getDataDir?.()) || ""
+    const storage = new PluginStorage(plugin)
+    this.versionMgr = createVersionManager(storage, dataDir)
 
     this.panel = createModalVueApp(SuperPanelPanel, {
       maskId: "super-panel-mask",
@@ -125,7 +128,7 @@ export class SuperPanelManager {
       buildProps: () => ({
         settings: this.reactiveSettings!,
         i18n: (this.plugin.i18n as any).superPanel || {},
-        featureVersions: this.featureVersions,
+        featureVersions: this.versionMgr.featureVersions,
         onClose: () => {
           this.close()
         },
@@ -209,7 +212,7 @@ export class SuperPanelManager {
   }
 
   private async open() {
-    await this.loadVersions()
+    await this.versionMgr.loadVersions()
     this.reactiveSettings = reactive<PluginSettings>((this.plugin as any).settings)
     this.panel.open()
   }
@@ -272,13 +275,6 @@ export class SuperPanelManager {
     const actionConfig = ACTION_EVENT_MAP[action]
     if (actionConfig) {
       emitCustomEvent(actionConfig.event, actionConfig.detail)
-      this.close()
-      return
-    }
-
-    // 特殊处理：文本对比（直接调用 manager，不走事件）
-    if (action === "openTextDiff") {
-      getTextDiffManager()?.toggle()
       this.close()
       return
     }
@@ -371,28 +367,10 @@ export class SuperPanelManager {
 
   // ==================== 版本管理 ====================
 
-  private async loadVersions() {
-    this.featureVersions = (await this.versionStorage.load<Record<string, FeatureVersionEntry[]>>(
-      VERSIONS_STORAGE_KEY,
-    )) || {}
-  }
-
-  private async saveVersions() {
-    await this.versionStorage.save(VERSIONS_STORAGE_KEY, this.featureVersions)
-  }
-
-  private getStoragePath(): string {
-    const dataDir = (this.plugin as any).dataDir
-      || (this.plugin as any).getDataDir?.()
-      || ""
-    const dir = dataDir || "[dataDir]"
-    return `${dir}/${VERSIONS_STORAGE_KEY}.json`
-  }
-
   public openVersions(featureId: string) {
-    const featureMeta = (FEATURE_CONFIG as any[]).find((f) => f.id === featureId)
+    const featureMeta = [...FEATURE_CONFIG].find((f: any) => f.id === featureId) as any
     const featureTitle = featureMeta?.defaultTitle || featureId
-    const storagePath = this.getStoragePath()
+    const storagePath = this.versionMgr.getStoragePath()
 
     this.versionModal = createModalVueApp(VersionPanel, {
       maskId: "super-panel-version-mask",
@@ -402,16 +380,19 @@ export class SuperPanelManager {
       buildProps: () => ({
         featureId,
         featureTitle,
-        versions: this.featureVersions[featureId] || [],
+        versions: this.versionMgr.featureVersions[featureId] || [],
         storagePath,
         onAddVersion: async (entry: FeatureVersionEntry) => {
-          await this.addVersion(featureId, entry)
+          await this.versionMgr.addVersion(featureId, entry)
+          this.refreshVersionModal(featureId)
         },
         onUpdateVersion: async (index: number, entry: FeatureVersionEntry) => {
-          await this.updateVersion(featureId, index, entry)
+          await this.versionMgr.updateVersion(featureId, index, entry)
+          this.refreshVersionModal(featureId)
         },
         onDeleteVersion: async (index: number) => {
-          await this.deleteVersion(featureId, index)
+          await this.versionMgr.deleteVersion(featureId, index)
+          this.refreshVersionModal(featureId)
         },
         onClose: () => {
           this.closeVersions()
@@ -425,31 +406,6 @@ export class SuperPanelManager {
   public closeVersions() {
     this.versionModal?.close()
     this.versionModal = null
-  }
-
-  private async addVersion(featureId: string, entry: FeatureVersionEntry) {
-    if (!this.featureVersions[featureId]) {
-      this.featureVersions[featureId] = []
-    }
-    this.featureVersions[featureId].unshift(entry)
-    await this.saveVersions()
-    this.refreshVersionModal(featureId)
-  }
-
-  private async updateVersion(featureId: string, index: number, entry: FeatureVersionEntry) {
-    const versions = this.featureVersions[featureId]
-    if (!versions || !versions[index]) return
-    versions[index] = entry
-    await this.saveVersions()
-    this.refreshVersionModal(featureId)
-  }
-
-  private async deleteVersion(featureId: string, index: number) {
-    const versions = this.featureVersions[featureId]
-    if (!versions) return
-    versions.splice(index, 1)
-    await this.saveVersions()
-    this.refreshVersionModal(featureId)
   }
 
   private refreshVersionModal(featureId: string) {

@@ -5,10 +5,10 @@
 .feature-card {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: $spacing-md;
   padding: $spacing-sm $spacing-md;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: $vp-radius;
   cursor: pointer;
   transition: border-color 0.12s;
 
@@ -25,7 +25,7 @@
 .feature-icon {
   width: 28px;
   height: 28px;
-  border-radius: 6px;
+  border-radius: $vp-radius;
   background: var(--b3-theme-primary-lightest);
   display: flex;
   align-items: center;
@@ -40,13 +40,13 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: $spacing-xs;
 }
 
 .feature-info {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: $spacing-sm;
 }
 
 .feature-title {
@@ -82,13 +82,13 @@
 .feature-selector {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: $spacing-xs;
 }
 
 .theme-chip {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: $spacing-xs;
   padding: 3px 10px;
   border-radius: 12px;
   border: 1px solid var(--b3-border-color);
@@ -228,7 +228,7 @@
 .status-option {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: $spacing-xs;
   padding: 5px 10px;
   border: none;
   border-radius: 6px;

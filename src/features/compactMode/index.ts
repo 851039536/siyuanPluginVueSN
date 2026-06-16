@@ -16,13 +16,13 @@ const FONT_PREFIX = "compact-font-"
 const AREA_PREFIX = "compact-area-"
 
 const ALL_DENSITIES = ["moderate", "compact", "extreme"] as const
-const ALL_FONT_SCALES = ["80", "85", "90", "95", "100"] as const
+const ALL_FONT_SCALES = ["100", "98", "96", "94", "92", "90"] as const
 const ALL_AREAS = ["sidebar", "editor", "tabs", "dialogs", "controls"] as const
 
 export interface CompactModeSettings {
   compactMode: boolean
   compactModeDensity: 'moderate' | 'compact' | 'extreme'
-  compactModeFontScale: number   // 80 | 85 | 90 | 95 | 100
+  compactModeFontScale: number   // 100 | 98 | 96 | 94 | 92 | 90
   compactModeAreas: Record<string, boolean>
 }
 

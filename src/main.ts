@@ -27,7 +27,7 @@ export function init(pluginInstance: Plugin) {
   applyCompactMode({
     compactMode: s?.compactMode ?? true,
     compactModeDensity: s?.compactModeDensity ?? 'compact',
-    compactModeFontScale: s?.compactModeFontScale ?? 90,
+    compactModeFontScale: s?.compactModeFontScale ?? 94,
     compactModeAreas: s?.compactModeAreas ?? { sidebar: true, editor: true, tabs: true, dialogs: true, controls: true },
   })
 

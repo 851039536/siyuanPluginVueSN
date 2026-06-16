@@ -65,15 +65,14 @@
   .category-filter {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: $spacing-1;
     flex-shrink: 0;
-    flex-wrap: wrap;
 
     .category-chip {
       display: inline-flex;
       align-items: center;
       gap: $spacing-1;
-      padding: 3px 10px;
+      padding: 2px 8px;
       border-radius: 12px;
       font-size: 12px;
       border: 1px solid var(--b3-theme-surface);

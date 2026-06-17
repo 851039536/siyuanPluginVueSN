@@ -80,43 +80,81 @@
         <div class="gp-status-grid">
           <div class="gp-status-cell gp-status-cell--ahead">
             <div class="gp-status-cell-num">{{ pushStatusStats.ahead }}</div>
-            <div class="gp-status-cell-label">{{ i18n.needsPush || '🚀 待推送' }}</div>
+            <div class="gp-status-cell-label">
+              <Icon icon="mdi:cloud-upload-outline" height="11" />
+              {{ i18n.needsPush || '待推送' }}
+            </div>
           </div>
           <div class="gp-status-cell gp-status-cell--behind">
             <div class="gp-status-cell-num">{{ pushStatusStats.behind }}</div>
-            <div class="gp-status-cell-label">{{ i18n.behindRemote || '📥 有更新' }}</div>
+            <div class="gp-status-cell-label">
+              <Icon icon="mdi:cloud-download-outline" height="11" />
+              {{ i18n.behindRemote || '有更新' }}
+            </div>
           </div>
           <div class="gp-status-cell gp-status-cell--synced">
             <div class="gp-status-cell-num">{{ pushStatusStats.synced }}</div>
-            <div class="gp-status-cell-label">{{ i18n.synced || '✅ 已同步' }}</div>
+            <div class="gp-status-cell-label">
+              <Icon icon="mdi:check-circle-outline" height="11" />
+              {{ i18n.synced || '已同步' }}
+            </div>
           </div>
           <div class="gp-status-cell gp-status-cell--none">
             <div class="gp-status-cell-num">{{ pushStatusStats.noRemote }}</div>
-            <div class="gp-status-cell-label">{{ i18n.noRemoteLabel || '📭 无远程' }}</div>
+            <div class="gp-status-cell-label">
+              <Icon icon="mdi:lan-disconnect" height="11" />
+              {{ i18n.noRemoteLabel || '无远程' }}
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- 未设置平台的项目 -->
-      <div v-if="noPlatformProjects.length > 0" class="gp-stats-section">
+      <!-- 平台配置状态（显示每个项目各平台是否已配置） -->
+      <div v-if="platformStatusProjects.length > 0" class="gp-stats-section">
         <div class="gp-stats-section-title">
-          {{ i18n.noPlatformProjects || '未设置平台的项目' }}
-          <span class="gp-stats-section-count">{{ noPlatformProjects.length }}</span>
+          {{ i18n.platformStatus || '平台配置状态' }}
+          <span class="gp-stats-section-count">{{ platformStatusProjects.length }}</span>
         </div>
         <div class="gp-table-wrap">
           <div class="gp-table-row gp-table-row--head">
             <span class="gp-table-cell gp-table-cell--name">{{ i18n.projectName || '项目' }}</span>
-            <span class="gp-table-cell gp-table-cell--time">{{ i18n.addedDate || '添加时间' }}</span>
+            <span
+              v-for="pm in PLATFORM_META"
+              :key="pm.key"
+              class="gp-table-cell gp-table-cell--platform-status"
+            >
+              <Icon :icon="pm.icon" height="11" />
+            </span>
             <span class="gp-table-cell gp-table-cell--act"></span>
           </div>
           <div
-            v-for="item in noPlatformProjects"
-            :key="item.id"
+            v-for="item in platformStatusProjects"
+            :key="item.project.id"
             class="gp-table-row gp-table-row--clickable"
-            @click="emit('viewProject', item.id)"
+            @click="emit('viewProject', item.project.id)"
           >
-            <span class="gp-table-cell gp-table-cell--name" :title="item.path">{{ item.name }}</span>
-            <span class="gp-table-cell gp-table-cell--time">{{ formatDate(item.addedAt) }}</span>
+            <span class="gp-table-cell gp-table-cell--name" :title="item.project.path">
+              {{ item.project.name }}
+            </span>
+            <span
+              v-for="pm in PLATFORM_META"
+              :key="pm.key"
+              class="gp-table-cell gp-table-cell--platform-status"
+              :title="(item as any)[pm.key] ? (i18n.configured || '已配置') : (i18n.notConfigured || '未配置')"
+            >
+              <Icon
+                v-if="(item as any)[pm.key]"
+                icon="mdi:check-circle"
+                height="13"
+                class="gp-platform-ok"
+              />
+              <Icon
+                v-else
+                icon="mdi:close-circle-outline"
+                height="13"
+                class="gp-platform-missing"
+              />
+            </span>
             <span class="gp-table-cell gp-table-cell--act">
               <Icon icon="mdi:arrow-right" height="12" />
             </span>
@@ -313,6 +351,15 @@ export interface TagStatItem {
   tag: string; count: number
 }
 
+/** 平台配置状态明细项 */
+export interface PlatformStatusItem {
+  project: GitProject
+  github: boolean
+  gitee: boolean
+  gitea: boolean
+  missingCount: number
+}
+
 const props = defineProps<{
   i18n: Record<string, any>
   projectCount: number
@@ -329,8 +376,10 @@ const props = defineProps<{
   statusStats: StatusStats
   /** 标签使用排行 */
   tagStats: TagStatItem[]
-  /** 未设置平台的项目列表 */
+  /** @deprecated 使用 platformStatusProjects 替代 */
   noPlatformProjects: GitProject[]
+  /** 平台配置状态明细（每个项目的 GitHub/Gitee/Gitea 是否已配置） */
+  platformStatusProjects: PlatformStatusItem[]
 }>()
 
 const emit = defineEmits<{
@@ -354,6 +403,13 @@ function formatDate(ts: number): string {
   const day = String(d.getDate()).padStart(2, "0")
   return `${y}-${m}-${day}`
 }
+
+/** 平台元数据（驱动 v-for） */
+const PLATFORM_META: { key: string; icon: string; label: string }[] = [
+  { key: "github", icon: "mdi:github", label: "GitHub" },
+  { key: "gitee", icon: "mdi:git", label: "Gitee" },
+  { key: "gitea", icon: "mdi:tea", label: "Gitea" },
+]
 </script>
 
 <style lang="scss">

@@ -148,9 +148,34 @@ export function useGitPush(manager: GitPushManager) {
       }))
   })
 
-  /** 未设置任何平台远程的项目列表 */
+  /** 平台配置状态明细（每个项目的 GitHub/Gitee/Gitea 是否已配置）
+   *  包含所有「至少缺失一个平台」的项目，按 missingCount 降序排列 */
+  interface PlatformStatusItem {
+    project: GitProject
+    github: boolean
+    gitee: boolean
+    gitea: boolean
+    missingCount: number
+  }
+  const platformStatusProjects = computed<PlatformStatusItem[]>(() => {
+    const result: PlatformStatusItem[] = []
+    for (const p of projects.value) {
+      const github = !!p.githubUrl
+      const gitee = !!p.giteeUrl
+      const gitea = !!p.giteaUrl
+      const missingCount = (github ? 0 : 1) + (gitee ? 0 : 1) + (gitea ? 0 : 1)
+      if (missingCount > 0) {
+        result.push({ project: p, github, gitee, gitea, missingCount })
+      }
+    }
+    return result.sort((a, b) => b.missingCount - a.missingCount)
+  })
+
+  /** @deprecated 使用 platformStatusProjects 替代 */
   const noPlatformProjects = computed(() => {
-    return projects.value.filter(p => !p.githubUrl && !p.giteeUrl && !p.giteaUrl)
+    return platformStatusProjects.value
+      .filter(item => item.missingCount === 3)
+      .map(item => item.project)
   })
 
   /** 最近提交摘要（跨所有项目，含相对时间 + 文件差异信息） */
@@ -711,6 +736,7 @@ export function useGitPush(manager: GitPushManager) {
     needsPushProjects,
     uncommittedProjects,
     noPlatformProjects,
+    platformStatusProjects,
     recentCommits,
     // 项目聚合管理
     allTags,

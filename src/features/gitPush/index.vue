@@ -71,6 +71,7 @@
       :status-stats="statusStats"
       :tag-stats="tagStats"
       :no-platform-projects="noPlatformProjects"
+      :platform-status-projects="platformStatusProjects"
       @view-project="onViewProject"
     />
 
@@ -951,6 +952,7 @@ const {
   needsPushProjects,
   uncommittedProjects,
   noPlatformProjects,
+  platformStatusProjects,
   recentCommits,
   // 项目聚合管理
   allTags,

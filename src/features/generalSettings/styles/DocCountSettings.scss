@@ -236,3 +236,47 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 .preview-count {
   margin-left: 2px;
 }
+
+/* 透明度滑块 */
+.opacity-value {
+  margin-left: 6px;
+  font-size: $font-size-xs;
+  color: var(--b3-theme-primary);
+  font-weight: $font-weight-medium;
+}
+
+.opacity-slider-row {
+  display: flex;
+  align-items: center;
+}
+
+.opacity-slider {
+  width: 100%;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--b3-theme-surface-lighter);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.opacity-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--b3-theme-primary);
+  cursor: pointer;
+  border: none;
+}
+
+.opacity-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--b3-theme-primary);
+  cursor: pointer;
+  border: none;
+}

@@ -49,6 +49,8 @@ export interface DocCountSettings {
   fontSize: string
   fontColor: string
   fontWeight: string
+  /** 透明度 0-1，默认 0.8 */
+  opacity: number
   /** 显示格式，默认 bracket 即 (123) */
   displayFormat: DocCountFormat
 }

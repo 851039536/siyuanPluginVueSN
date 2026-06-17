@@ -81,6 +81,7 @@
   "fontSize": "Font Size",
   "fontWeight": "Font Weight",
   "displayFormat": "Display Format",
+  "opacity": "Opacity",
   "enableCodeBlockStyle": "Enable Code Block Style Enhancement",
   "codeBlockBackground": "Background Color",
   "codeBlockBorder": "Border Settings",

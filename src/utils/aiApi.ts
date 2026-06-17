@@ -147,10 +147,8 @@ function buildRequestBody(
   }
 
   // DeepSeek 思考模式处理
-  const deepseekThinking =
-    resolvedProvider === "deepseek"
-    && supportsThinkingMode(model)
-    && options?.enableThinking !== false
+  const isDeepSeek = resolvedProvider === "deepseek" && supportsThinkingMode(model)
+  const deepseekThinking = isDeepSeek && options?.enableThinking !== false
 
   if (deepseekThinking) {
     const reasoningEffort: DeepSeekReasoningEffort =
@@ -161,6 +159,20 @@ function buildRequestBody(
       max_tokens: maxTokens,
       thinking: { type: "enabled" },
       reasoning_effort: reasoningEffort,
+      ...(options?.responseFormat ? { response_format: options.responseFormat } : {}),
+      ...(stream ? { stream: true } : {}),
+    }
+  }
+
+  // DeepSeek 思考模式已显式禁用 → 必须传 thinking: disabled，
+  // 否则 DeepSeek API 仍默认开启思考（ref: api-docs.deepseek.com）
+  if (isDeepSeek && options?.enableThinking === false) {
+    return {
+      model,
+      messages,
+      temperature,
+      max_tokens: maxTokens,
+      thinking: { type: "disabled" },
       ...(options?.responseFormat ? { response_format: options.responseFormat } : {}),
       ...(stream ? { stream: true } : {}),
     }

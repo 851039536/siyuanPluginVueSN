@@ -12,10 +12,12 @@ export class DocCountManager {
     fontSize: string
     color: string
     fontWeight: string
+    opacity: number
   } = {
     fontSize: "12px",
     color: "#8c8c8c",
     fontWeight: "normal",
+    opacity: 0.8,
   }
 
   /**
@@ -63,6 +65,7 @@ export class DocCountManager {
     fontSize: string
     color: string
     fontWeight: string
+    opacity: number
   }): void {
     this.fontStyle = style
     this.updateCountStyles()
@@ -103,6 +106,7 @@ export class DocCountManager {
       countSpan.style.fontSize = this.fontStyle.fontSize
       countSpan.style.color = this.fontStyle.color
       countSpan.style.fontWeight = this.fontStyle.fontWeight
+      countSpan.style.opacity = String(this.fontStyle.opacity)
       boxText.appendChild(countSpan)
     }
   }
@@ -136,6 +140,7 @@ export class DocCountManager {
       htmlSpan.style.fontSize = this.fontStyle.fontSize
       htmlSpan.style.color = this.fontStyle.color
       htmlSpan.style.fontWeight = this.fontStyle.fontWeight
+      htmlSpan.style.opacity = String(this.fontStyle.opacity)
     })
   }
 

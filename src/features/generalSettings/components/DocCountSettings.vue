@@ -151,6 +151,24 @@
         </select>
       </div>
 
+      <div class="style-row">
+        <label class="style-label">
+          {{ i18n?.opacity || '透明度' }}
+          <span class="opacity-value">{{ Math.round(opacity * 100) }}%</span>
+        </label>
+        <div class="opacity-slider-row">
+          <input
+            v-model.number="opacity"
+            type="range"
+            min="0.1"
+            max="1"
+            step="0.05"
+            class="opacity-slider"
+            @input="handleFontStyleChange"
+          />
+        </div>
+      </div>
+
       <!-- 样式预览 -->
       <div class="style-preview">
         <label class="preview-label">
@@ -164,6 +182,7 @@
               fontSize,
               color: fontColor,
               fontWeight,
+              opacity,
             }"
           >{{ previewFormatted }}</span>
         </div>
@@ -201,6 +220,7 @@ const displayFormat = ref<DocCountFormat>("bracket")
 const fontSize = ref("12px")
 const fontColor = ref("#8c8c8c")
 const fontWeight = ref("normal")
+const opacity = ref(0.8)
 
 const formatOptions: { value: DocCountFormat; label: string }[] = [
   { value: "bracket", label: "(123)" },
@@ -237,6 +257,7 @@ const loadSettings = async () => {
       fontSize.value = data.fontSize || "12px"
       fontColor.value = data.fontColor || "#8c8c8c"
       fontWeight.value = data.fontWeight || "normal"
+      opacity.value = data.opacity ?? 0.8
     }
   } catch (e) {
     console.error("加载文档数统计设置失败:", e)
@@ -252,6 +273,7 @@ const handleToggleChange = async () => {
       fontSize: fontSize.value,
       fontColor: fontColor.value,
       fontWeight: fontWeight.value,
+      opacity: opacity.value,
     })
 
     const manager = getDocCountManager()
@@ -267,6 +289,7 @@ const handleToggleChange = async () => {
           fontSize: fontSize.value,
           color: fontColor.value,
           fontWeight: fontWeight.value,
+          opacity: opacity.value,
         })
       } else {
         manager?.start()
@@ -291,6 +314,7 @@ const handleToggleChange = async () => {
       fontSize: fontSize.value,
       fontColor: fontColor.value,
       fontWeight: fontWeight.value,
+      opacity: opacity.value,
     })
   } catch (e) {
     console.error("保存文档数统计设置失败:", e)
@@ -306,6 +330,7 @@ const handleIntervalChange = async () => {
       fontSize: fontSize.value,
       fontColor: fontColor.value,
       fontWeight: fontWeight.value,
+      opacity: opacity.value,
     })
 
     const manager = getDocCountManager()
@@ -326,6 +351,7 @@ const handleFontStyleChange = async () => {
       fontSize: fontSize.value,
       fontColor: fontColor.value,
       fontWeight: fontWeight.value,
+      opacity: opacity.value,
     })
 
     const manager = getDocCountManager()
@@ -333,6 +359,7 @@ const handleFontStyleChange = async () => {
       fontSize: fontSize.value,
       color: fontColor.value,
       fontWeight: fontWeight.value,
+      opacity: opacity.value,
     })
     manager?.setDisplayFormat(displayFormat.value)
 
@@ -351,6 +378,7 @@ const handleDisplayFormatChange = async () => {
       fontSize: fontSize.value,
       fontColor: fontColor.value,
       fontWeight: fontWeight.value,
+      opacity: opacity.value,
     })
 
     const manager = getDocCountManager()

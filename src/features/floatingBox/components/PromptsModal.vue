@@ -135,7 +135,7 @@
 
               <div
                 v-for="slot in prompt.contents"
-                :key="slot.key"
+                :key="slot.id"
                 class="vp-content-block"
               >
                 <div class="vp-content-label">
@@ -179,6 +179,7 @@
     </div>
   </div>
 
+  <!-- 添加/编辑弹窗 -->
   <div
     v-if="showAddModal"
     class="vp-overlay"
@@ -186,7 +187,7 @@
     @keydown.escape="closeAddModal"
   >
     <div
-      class="vp-modal vp-modal--small"
+      class="vp-modal vp-modal--form"
       @click.stop
     >
       <div class="vp-modal-header">
@@ -247,39 +248,66 @@
             </select>
           </div>
 
-          <div class="vp-form-group">
-            <label for="prompt-content">{{ i18n?.content || '内容' }}</label>
-            <textarea
-              id="prompt-content"
-              v-model="promptForm.content"
-              class="vp-textarea"
-              :placeholder="i18n?.contentPlaceholder || '请输入提示词内容'"
-              rows="6"
-              required
-              aria-required="true"
-            />
-          </div>
-
-          <div class="vp-form-group">
-            <label for="prompt-content2">{{ i18n?.content2 || '内容2' }}</label>
-            <textarea
-              id="prompt-content2"
-              v-model="promptForm.content2"
-              class="vp-textarea"
-              :placeholder="i18n?.content2Placeholder || '请输入提示词内容2'"
-              rows="6"
-            />
-          </div>
-
-          <div class="vp-form-group">
-            <label for="prompt-content3">{{ i18n?.content3 || '内容3' }}</label>
-            <textarea
-              id="prompt-content3"
-              v-model="promptForm.content3"
-              class="vp-textarea"
-              :placeholder="i18n?.content3Placeholder || '请输入提示词内容3'"
-              rows="6"
-            />
+          <!-- 动态内容块编辑区 -->
+          <div class="vp-content-editor">
+            <label class="vp-form-label">{{ i18n?.contents || '内容块' }}</label>
+            <div
+              v-for="(block, index) in promptForm.contents"
+              :key="block.id"
+              class="vp-content-editor-item"
+            >
+              <div class="vp-content-editor-inputs">
+                <input
+                  v-model="block.label"
+                  type="text"
+                  class="vp-input vp-input--label"
+                  :placeholder="i18n?.contentLabelPlaceholder || '内容标签'"
+                  :aria-label="`${i18n?.contentLabel || '内容标签'} ${index + 1}`"
+                />
+                <textarea
+                  v-model="block.text"
+                  class="vp-textarea"
+                  :placeholder="i18n?.contentPlaceholder || '请输入提示词内容'"
+                  rows="5"
+                  required
+                  :aria-label="`${i18n?.content || '内容'} ${index + 1}`"
+                />
+              </div>
+              <div class="vp-content-editor-actions">
+                <Button
+                  variant="ghost"
+                  icon="up"
+                  size="small"
+                  :title="i18n?.moveUp || '上移'"
+                  :disabled="index === 0"
+                  @click="moveContentBlock(index, -1)"
+                />
+                <Button
+                  variant="ghost"
+                  icon="down"
+                  size="small"
+                  :title="i18n?.moveDown || '下移'"
+                  :disabled="index === promptForm.contents.length - 1"
+                  @click="moveContentBlock(index, 1)"
+                />
+                <Button
+                  variant="danger"
+                  icon="delete"
+                  size="small"
+                  :title="i18n?.removeContent || '删除内容块'"
+                  :disabled="promptForm.contents.length <= 1"
+                  @click="removeContentBlock(index)"
+                />
+              </div>
+            </div>
+            <Button
+              variant="secondary"
+              icon="add"
+              class="vp-content-editor-add"
+              @click="addContentBlock"
+            >
+              {{ i18n?.addContentBlock || '添加内容块' }}
+            </Button>
           </div>
 
           <div class="vp-form-actions">
@@ -302,6 +330,7 @@
     </div>
   </div>
 
+  <!-- 分类管理弹窗 -->
   <div
     v-if="showCategoryManage"
     class="vp-overlay"
@@ -388,6 +417,7 @@ import type {
   Prompt,
   PromptCategory,
 } from "../types"
+import type { PromptContent } from "../types"
 import {
   computed,
   onMounted,
@@ -398,17 +428,10 @@ import IconWrapper from "@/components/IconWrapper.vue"
 import { copyToClipboard } from "@/utils/domUtils"
 import { FloatingBoxStorage } from "../types/storage"
 
-interface ContentSlot {
-  key: string
-  label: string
-  text: string
-}
-
 interface PromptDisplay extends Prompt {
   catName: string
   catColor: string
   catBgColor: string
-  contents: ContentSlot[]
 }
 
 const props = defineProps<{
@@ -431,12 +454,15 @@ const loading = ref(true)
 
 const storage = ref<FloatingBoxStorage | null>(null)
 
-const promptForm = ref({
+const promptForm = ref<{
+  title: string
+  description: string
+  contents: PromptContent[]
+  category: string
+}>({
   title: "",
   description: "",
-  content: "",
-  content2: "",
-  content3: "",
+  contents: [],
   category: "",
 })
 
@@ -497,31 +523,19 @@ const filteredPrompts = computed<PromptDisplay[]>(() => {
       (prompt) =>
         prompt.title?.toLowerCase().includes(query)
         || prompt.description?.toLowerCase().includes(query)
-        || prompt.content?.toLowerCase().includes(query)
-        || (prompt.content2 || "")?.toLowerCase().includes(query)
-        || (prompt.content3 || "")?.toLowerCase().includes(query),
+        || (!prompt.contents ? false : prompt.contents.some(
+          (c) => c.text?.toLowerCase().includes(query) || c.label?.toLowerCase().includes(query),
+        )),
     )
   }
 
   return result.map((prompt) => {
     const cat = getCategoryById(prompt.category)
-    const contents: ContentSlot[] = []
-    if (prompt.content) {
-      contents.push({ key: "content", label: props.i18n?.content || "内容", text: prompt.content })
-    }
-    if (prompt.content2) {
-      contents.push({ key: "content2", label: props.i18n?.content2 || "内容2", text: prompt.content2 })
-    }
-    if (prompt.content3) {
-      contents.push({ key: "content3", label: props.i18n?.content3 || "内容3", text: prompt.content3 })
-    }
-
     return {
       ...prompt,
       catName: cat.name,
       catColor: cat.color,
       catBgColor: `${cat.color}20`,
-      contents,
     }
   })
 })
@@ -533,7 +547,20 @@ const selectCategory = (categoryId: string) => {
 async function loadPrompts() {
   if (!storage.value) return
   const loaded = await storage.value.prompts.loadOrDefault()
-  prompts.value = Array.isArray(loaded) ? loaded : []
+  if (Array.isArray(loaded)) {
+    const needMigration = loaded.some(
+      (p) => !p.contents || !Array.isArray(p.contents) || (p.content && (!p.contents || p.contents.length === 0)),
+    )
+    if (needMigration && storage.value) {
+      const migrated = storage.value.migratePrompts(loaded)
+      if (migrated) {
+        await storage.value.prompts.save(loaded)
+      }
+    }
+    prompts.value = loaded
+  } else {
+    prompts.value = []
+  }
 }
 
 async function loadCategories() {
@@ -559,14 +586,49 @@ async function savePrompts() {
   await storage.value.prompts.save(prompts.value)
 }
 
+/** 生成唯一内容块 ID */
+function generateContentId(): string {
+  return `c${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+}
+
+/** 创建空白内容块 */
+function createEmptyContentBlock(label?: string): PromptContent {
+  return {
+    id: generateContentId(),
+    label: label || "",
+    text: "",
+  }
+}
+
+/** 添加内容块 */
+function addContentBlock() {
+  promptForm.value.contents.push(createEmptyContentBlock())
+}
+
+/** 删除内容块 */
+function removeContentBlock(index: number) {
+  if (promptForm.value.contents.length <= 1) return
+  promptForm.value.contents.splice(index, 1)
+}
+
+/** 移动内容块（上移/下移） */
+function moveContentBlock(index: number, direction: -1 | 1) {
+  const contents = promptForm.value.contents
+  const target = index + direction
+  if (target < 0 || target >= contents.length) return
+  const tmp = contents[index]
+  contents[index] = contents[target]
+  contents[target] = tmp
+  // 触发响应式
+  promptForm.value.contents = [...contents]
+}
+
 function openAddModal() {
   editingPrompt.value = null
   promptForm.value = {
     title: "",
     description: "",
-    content: "",
-    content2: "",
-    content3: "",
+    contents: [createEmptyContentBlock()],
     category: categories.value[0]?.id || "default",
   }
   showAddModal.value = true
@@ -577,9 +639,9 @@ function editPrompt(prompt: Prompt) {
   promptForm.value = {
     title: prompt.title,
     description: prompt.description,
-    content: prompt.content,
-    content2: prompt.content2 || "",
-    content3: prompt.content3 || "",
+    contents: prompt.contents && prompt.contents.length > 0
+      ? prompt.contents.map((c) => ({ ...c }))
+      : [createEmptyContentBlock()],
     category: prompt.category,
   }
   showAddModal.value = true
@@ -591,46 +653,56 @@ function closeAddModal() {
 }
 
 async function savePrompt() {
-  try {
-    if (!promptForm.value.title.trim() || !promptForm.value.content.trim()) {
-      showMessage("标题和内容是必填项", 2000, "error")
-      return
-    }
+  // 验证标题
+  if (!promptForm.value.title.trim()) {
+    showMessage("标题是必填项", 2000, "error")
+    return
+  }
+  // 验证至少一个非空内容块
+  const validContents = promptForm.value.contents.filter((c) => c.text.trim())
+  if (validContents.length === 0) {
+    showMessage("至少需要一个非空内容块", 2000, "error")
+    return
+  }
 
-    if (editingPrompt.value) {
-      const index = prompts.value.findIndex(
-        (p) => p.id === editingPrompt.value!.id,
-      )
-      if (index !== -1) {
-        prompts.value[index] = {
-          ...editingPrompt.value,
-          title: promptForm.value.title.trim(),
-          description: promptForm.value.description.trim(),
-          content: promptForm.value.content.trim(),
-          content2: promptForm.value.content2.trim(),
-          content3: promptForm.value.content3.trim(),
-          category: promptForm.value.category,
-        }
-      }
-    } else {
-      const newPrompt: Prompt = {
-        id: Date.now().toString(),
+  if (editingPrompt.value) {
+    const index = prompts.value.findIndex(
+      (p) => p.id === editingPrompt.value!.id,
+    )
+    if (index !== -1) {
+      prompts.value[index] = {
+        ...editingPrompt.value,
         title: promptForm.value.title.trim(),
         description: promptForm.value.description.trim(),
-        content: promptForm.value.content.trim(),
-        content2: promptForm.value.content2.trim(),
-        content3: promptForm.value.content3.trim(),
+        contents: promptForm.value.contents
+          .filter((c) => c.text.trim())
+          .map((c) => ({
+            id: c.id,
+            label: c.label.trim() || `内容`,
+            text: c.text.trim(),
+          })),
         category: promptForm.value.category,
       }
-      prompts.value.push(newPrompt)
     }
-
-    await savePrompts()
-    closeAddModal()
-  } catch (error) {
-    console.error("Failed to save prompt:", error)
-    showMessage("保存失败，请重试", 2000, "error")
+  } else {
+    const newPrompt: Prompt = {
+      id: Date.now().toString(),
+      title: promptForm.value.title.trim(),
+      description: promptForm.value.description.trim(),
+      contents: promptForm.value.contents
+        .filter((c) => c.text.trim())
+        .map((c) => ({
+          id: c.id,
+          label: c.label.trim() || `内容`,
+          text: c.text.trim(),
+        })),
+      category: promptForm.value.category,
+    }
+    prompts.value.push(newPrompt)
   }
+
+  await savePrompts()
+  closeAddModal()
 }
 
 function openCategoryManage() {
@@ -694,5 +766,5 @@ function closeModal() {
 </script>
 
 <style lang="scss" scoped>
-@use '../styles/index.scss';
+@use '../styles/PromptsModal.scss';
 </style>

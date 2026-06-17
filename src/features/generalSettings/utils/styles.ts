@@ -68,9 +68,13 @@ export function applyCodeBlockEnhancedStyles(codeSettings: any): void {
         box-shadow: ${codeSettings.boxShadow !== "none" ? codeSettings.boxShadow : "none"} !important;
       }
 
-      /* 代码块内容 */
-      .protyle-wysiwyg .code-block .hljs {
+      /* 代码块内容 — hljs + 内层 code/span 均需覆盖，因为 SiYuan 的 code 元素自带 font-family */
+      .protyle-wysiwyg .code-block .hljs,
+      .protyle-wysiwyg .code-block .hljs code,
+      .protyle-wysiwyg .code-block .hljs span {
         font-family: '${codeSettings.codeFontFamily}', monospace !important;
+      }
+      .protyle-wysiwyg .code-block .hljs {
         font-size: ${codeSettings.codeFontSize}px !important;
         line-height: ${codeSettings.codeLineHeight} !important;
         color: ${codeSettings.textColor} !important;
@@ -128,8 +132,12 @@ export function applyCodeBlockEnhancedStyles(codeSettings: any): void {
 
       /* 预览区域代码块 */
       .b3-typography pre,
-      .b3-typography pre code {
+      .b3-typography pre code,
+      .b3-typography pre span {
         font-family: '${codeSettings.codeFontFamily}', monospace !important;
+      }
+      .b3-typography pre,
+      .b3-typography pre code {
         font-size: ${codeSettings.codeFontSize}px !important;
         line-height: ${codeSettings.codeLineHeight} !important;
         background-color: ${codeSettings.backgroundColor} !important;

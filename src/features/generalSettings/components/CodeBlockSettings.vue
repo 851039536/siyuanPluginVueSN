@@ -417,11 +417,10 @@ const styleIcons: Record<string, IconKey> = {
 
 const presetFonts = [
   "Consolas",
-  "Monaco",
   "Courier New",
-  "Fira Code",
-  "Source Code Pro",
   "JetBrains Mono",
+  "Cascadia Code",
+  "Hack",
 ] as const
 
 // ── Props & Emits ──

@@ -45,6 +45,16 @@ export function applyCodeBlockStyle(style: CodeBlockStyle | string): void {
   document.body.classList.add(`codeblock-style-${style}`)
 }
 
+/** 将 hex 颜色转为 rgba，支持透明度 */
+function hexToRgba(hex: string, opacity: number): string {
+  if (opacity >= 1) return hex
+  const h = hex.replace(/^#/, "")
+  const r = parseInt(h.substring(0, 2), 16)
+  const g = parseInt(h.substring(2, 4), 16)
+  const b = parseInt(h.substring(4, 6), 16)
+  return `rgba(${r}, ${g}, ${b}, ${Number(opacity.toFixed(2))})`
+}
+
 export function applyCodeBlockEnhancedStyles(codeSettings: any): void {
   try {
     const existingStyle = document.getElementById("codeblock-enhanced-style")
@@ -56,13 +66,15 @@ export function applyCodeBlockEnhancedStyles(codeSettings: any): void {
       return
     }
 
+    const bg = hexToRgba(codeSettings.backgroundColor, codeSettings.backgroundColorOpacity ?? 1)
+
     const style = document.createElement("style")
     style.id = "codeblock-enhanced-style"
 
     style.textContent = `
       /* 代码块基础样式 */
       .protyle-wysiwyg .code-block {
-        background-color: ${codeSettings.backgroundColor} !important;
+        background-color: ${bg} !important;
         border: ${codeSettings.borderWidth}px solid ${codeSettings.borderColor} !important;
         border-radius: ${codeSettings.borderRadius}px !important;
         box-shadow: ${codeSettings.boxShadow !== "none" ? codeSettings.boxShadow : "none"} !important;
@@ -140,7 +152,7 @@ export function applyCodeBlockEnhancedStyles(codeSettings: any): void {
       .b3-typography pre code {
         font-size: ${codeSettings.codeFontSize}px !important;
         line-height: ${codeSettings.codeLineHeight} !important;
-        background-color: ${codeSettings.backgroundColor} !important;
+        background-color: ${bg} !important;
         border: ${codeSettings.borderWidth}px solid ${codeSettings.borderColor} !important;
         border-radius: ${codeSettings.borderRadius}px !important;
         color: ${codeSettings.textColor} !important;

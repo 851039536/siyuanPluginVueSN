@@ -40,12 +40,25 @@ export interface ListStyleSettings {
   symbolSize: number
 }
 
+/** 文档数显示格式类型 */
+export type DocCountFormat = "bracket" | "square" | "plain" | "dot"
+
 export interface DocCountSettings {
   enableDocCount: boolean
   updateInterval: string
   fontSize: string
   fontColor: string
   fontWeight: string
+  /** 显示格式，默认 bracket 即 (123) */
+  displayFormat: DocCountFormat
+}
+
+/** 显示格式 → 渲染函数的映射 */
+export const DOC_COUNT_FORMATTERS: Record<DocCountFormat, (count: number) => string> = {
+  bracket: (n) => ` (${n})`,
+  square:  (n) => ` [${n}]`,
+  plain:   (n) => ` ${n}`,
+  dot:     (n) => ` ·${n}`,
 }
 
 export interface TabPinSettings {

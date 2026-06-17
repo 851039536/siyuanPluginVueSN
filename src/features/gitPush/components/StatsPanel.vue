@@ -162,57 +162,6 @@
         </div>
       </div>
 
-      <!-- 项目管理概览（收藏/归档/状态分布） -->
-      <div class="gp-stats-section">
-        <div class="gp-stats-section-title">项目管理概览</div>
-        <div class="gp-mgmt-grid">
-          <div class="gp-mgmt-cell gp-mgmt-star">
-            <Icon icon="mdi:star" height="16" />
-            <div class="gp-mgmt-num">{{ starredCount }}</div>
-            <div class="gp-mgmt-label">收藏</div>
-          </div>
-          <div class="gp-mgmt-cell gp-mgmt-archive">
-            <Icon icon="mdi:archive-outline" height="16" />
-            <div class="gp-mgmt-num">{{ archivedCount }}</div>
-            <div class="gp-mgmt-label">归档</div>
-          </div>
-          <div class="gp-mgmt-cell gp-mgmt-active">
-            <Icon icon="mdi:circle-medium" height="16" />
-            <div class="gp-mgmt-num">{{ statusStats.active }}</div>
-            <div class="gp-mgmt-label">活跃</div>
-          </div>
-          <div class="gp-mgmt-cell gp-mgmt-maintenance">
-            <Icon icon="mdi:circle-medium" height="16" />
-            <div class="gp-mgmt-num">{{ statusStats.maintenance }}</div>
-            <div class="gp-mgmt-label">维护</div>
-          </div>
-          <div class="gp-mgmt-cell gp-mgmt-paused">
-            <Icon icon="mdi:pause-circle-outline" height="16" />
-            <div class="gp-mgmt-num">{{ statusStats.paused }}</div>
-            <div class="gp-mgmt-label">暂停</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 标签使用排行 -->
-      <div v-if="tagStats.length > 0" class="gp-stats-section">
-        <div class="gp-stats-section-title">
-          标签使用排行
-          <span class="gp-stats-section-count">{{ tagStats.length }}</span>
-        </div>
-        <div class="gp-tag-stats">
-          <button
-            v-for="t in tagStats.slice(0, 10)"
-            :key="t.tag"
-            class="gp-tag-stat"
-            :title="`${t.tag} (${t.count} 个项目)`"
-          >
-            <span class="gp-tag-stat-name">{{ t.tag }}</span>
-            <span class="gp-tag-stat-count">{{ t.count }}</span>
-          </button>
-        </div>
-      </div>
-
       <!-- 未推送项目列表 -->
       <div v-if="needsPushProjects.length > 0" class="gp-stats-section">
         <div class="gp-stats-section-title">
@@ -343,14 +292,6 @@ export interface RecentCommitEntry {
   entry: { hash: string; message: string; author: string; relativeDate: string; date: string }
 }
 
-export interface StatusStats {
-  active: number; maintenance: number; paused: number
-}
-
-export interface TagStatItem {
-  tag: string; count: number
-}
-
 /** 平台配置状态明细项 */
 export interface PlatformStatusItem {
   project: GitProject
@@ -368,14 +309,6 @@ const props = defineProps<{
   needsPushProjects: NeedsPushItem[]
   uncommittedProjects: UncommittedItem[]
   recentCommits: RecentCommitEntry[]
-  /** 收藏项目数 */
-  starredCount: number
-  /** 归档项目数 */
-  archivedCount: number
-  /** 状态分布 */
-  statusStats: StatusStats
-  /** 标签使用排行 */
-  tagStats: TagStatItem[]
   /** @deprecated 使用 platformStatusProjects 替代 */
   noPlatformProjects: GitProject[]
   /** 平台配置状态明细（每个项目的 GitHub/Gitee/Gitea 是否已配置） */

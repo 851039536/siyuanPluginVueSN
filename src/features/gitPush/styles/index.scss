@@ -1179,3 +1179,130 @@
 }
 
 // 按钮样式已提取到 styles/_buttons.scss
+
+// ── Tag 管理 ──
+.gp-tag-panel {
+  .gp-tag-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+
+  .gp-tag-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    opacity: 0.45;
+    width: 36px;
+    flex-shrink: 0;
+  }
+
+  .gp-tag-input {
+    flex: 1;
+    min-width: 0;
+    height: 24px;
+    padding: 0 6px;
+    font-size: 11px;
+    font-family: $vp-mono;
+    border: 1px solid var(--b3-border-color);
+    border-radius: 4px;
+    background: var(--b3-theme-surface);
+    color: var(--b3-theme-on-surface);
+    &:focus { border-color: var(--b3-theme-primary); outline: none; }
+  }
+}
+
+.gp-tag-list {
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.gp-tag-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  font-size: 11px;
+  border-bottom: 1px solid var(--b3-border-color);
+  &:last-child { border-bottom: none; }
+}
+
+.gp-tag-name {
+  font-family: $vp-mono;
+  font-weight: 600;
+  color: var(--b3-theme-primary);
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gp-tag-msg {
+  flex: 1;
+  opacity: 0.45;
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gp-tag-date {
+  font-size: 9px;
+  opacity: 0.35;
+  font-family: $vp-mono;
+}
+
+.gp-tag-empty {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  font-size: 10px;
+  opacity: 0.35;
+  font-style: italic;
+}
+
+// ── 冲突警告条 ──
+.gp-conflict-bar {
+  margin: 8px 0;
+  padding: 8px 10px;
+  border: 1px solid var(--b3-theme-error-lighter);
+  border-radius: 4px;
+  background: var(--b3-theme-error-lightest);
+}
+
+.gp-conflict-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--b3-theme-error);
+  margin-bottom: 6px;
+}
+
+.gp-conflict-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.gp-conflict-file {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-family: $vp-mono;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  background: var(--b3-theme-surface);
+}
+
+.gp-conflict-actions {
+  display: flex;
+  gap: 6px;
+}

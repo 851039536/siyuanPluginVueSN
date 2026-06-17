@@ -1,4 +1,4 @@
-import type { GitProject, PushStatusInfo, WorkingTreeInfo, ProjectCategory, CommitLogEntry, BranchInfo, ScannedGitRepo, StashEntry } from "../types"
+import type { GitProject, PushStatusInfo, WorkingTreeInfo, ProjectCategory, CommitLogEntry, BranchInfo, ScannedGitRepo, StashEntry, TagInfo, ConflictFile, CommitTemplate } from "../types"
 import type { GitPushManager } from "../types"
 import { PLATFORM_META } from "../types"
 import { ref, computed } from "vue"
@@ -41,6 +41,14 @@ export function useGitPush(manager: GitPushManager) {
   const stashEntries = ref<Record<string, StashEntry[]>>({})
   /** Stash 操作加载中 id → true */
   const stashLoading = ref<Record<string, boolean>>({})
+  /** Tag 列表缓存 id → TagInfo[] */
+  const tagsCache = ref<Record<string, TagInfo[]>>({})
+  /** Tag 操作加载中 id → true */
+  const tagLoading = ref<Record<string, boolean>>({})
+  /** 冲突状态 id → ConflictFile[] */
+  const conflicts = ref<Record<string, ConflictFile[]>>({})
+  /** 提交信息模板 */
+  const commitTemplates = ref<CommitTemplate[]>([])
 
   /** 按分类分组后的项目列表 */
   const groupedProjects = computed(() => {
@@ -398,6 +406,7 @@ export function useGitPush(manager: GitPushManager) {
       const result = await manager.pullToAll(id)
       formatGitOutput(pullOutputs.value, id, "拉取", resultToEntries(result))
       loadPushStatus(id)
+      checkConflicts(id) // 异步检测冲突
       return result
     } finally {
       delete pullingRemote.value[id]
@@ -412,6 +421,7 @@ export function useGitPush(manager: GitPushManager) {
         label: platformLabel(target), ok: result.ok, stdout: result.stdout, stderr: result.stderr,
       }])
       loadPushStatus(id)
+      checkConflicts(id) // 异步检测冲突
       return result
     } finally {
       delete pullingRemote.value[id]
@@ -646,6 +656,90 @@ export function useGitPush(manager: GitPushManager) {
     return manager.generateStashDescription(project.path)
   }
 
+  // ── Tag 管理 ──
+
+  /** 加载 Tag 列表 */
+  async function loadTags(id: string): Promise<TagInfo[]> {
+    const project = projects.value.find(p => p.id === id)
+    if (!project) return []
+    const list = await manager.getTags(project.path)
+    tagsCache.value = { ...tagsCache.value, [id]: list }
+    return list
+  }
+
+  /** 创建 Tag */
+  async function createTagOp(id: string, name: string, message?: string) {
+    const project = projects.value.find(p => p.id === id)
+    if (!project) throw new Error("项目未找到")
+    await manager.createTag(project.path, name, message)
+  }
+
+  /** 删除 Tag */
+  async function deleteTagOp(id: string, name: string) {
+    const project = projects.value.find(p => p.id === id)
+    if (!project) throw new Error("项目未找到")
+    await manager.deleteTag(project.path, name)
+  }
+
+  /** 推送 Tag 到远程 */
+  async function pushTagOp(id: string, remoteName: string, tag: string): Promise<string> {
+    const project = projects.value.find(p => p.id === id)
+    if (!project) throw new Error("项目未找到")
+    return manager.pushTag(project.path, remoteName, tag)
+  }
+
+  // ── 冲突检测 ──
+
+  /** 检查项目是否有冲突 */
+  async function checkConflicts(id: string): Promise<ConflictFile[]> {
+    const project = projects.value.find(p => p.id === id)
+    if (!project) return []
+    const files = await manager.getConflictFiles(project.path)
+    conflicts.value = { ...conflicts.value, [id]: files }
+    return files
+  }
+
+  /** 中止合并 */
+  async function abortMergeOp(id: string) {
+    const project = projects.value.find(p => p.id === id)
+    if (!project) throw new Error("项目未找到")
+    await manager.abortMerge(project.path)
+    delete conflicts.value[id]
+    conflicts.value = { ...conflicts.value }
+  }
+
+  /** 解决单个冲突文件 */
+  async function resolveConflictOp(id: string, file: string, strategy: "theirs" | "ours") {
+    const project = projects.value.find(p => p.id === id)
+    if (!project) throw new Error("项目未找到")
+    await manager.resolveConflictFile(project.path, file, strategy)
+  }
+
+  // ── 提交信息模板 ──
+
+  /** 加载提交信息模板 */
+  async function loadCommitTemplates() {
+    commitTemplates.value = await manager.getCommitTemplates()
+  }
+
+  /** 保存提交信息模板 */
+  async function saveCommitTemplates(templates: CommitTemplate[]) {
+    await manager.saveCommitTemplates(templates)
+    commitTemplates.value = templates
+  }
+
+  /**
+   * 根据模板填充提交信息
+   * @param template 模板（pattern 支持 {branch}/files 占位符）
+   * @param branch 当前分支名
+   * @param fileCount 变更文件数
+   */
+  function fillTemplate(template: CommitTemplate, branch: string, fileCount: number): string {
+    return template.pattern
+      .replace(/\{branch\}/g, branch)
+      .replace(/\{files\}/g, String(fileCount))
+  }
+
   /** 添加远程仓库并刷新状态 */
   async function addRemoteOp(id: string, name: string, url: string) {
     const project = projects.value.find(p => p.id === id)
@@ -765,6 +859,23 @@ export function useGitPush(manager: GitPushManager) {
     addRemoteOp,
     removeRemoteOp,
     editRemoteOp,
+    // Tag 管理
+    tagsCache,
+    tagLoading,
+    loadTags,
+    createTagOp,
+    deleteTagOp,
+    pushTagOp,
+    // 冲突检测
+    conflicts,
+    checkConflicts,
+    abortMergeOp,
+    resolveConflictOp,
+    // 提交信息模板
+    commitTemplates,
+    loadCommitTemplates,
+    saveCommitTemplates,
+    fillTemplate,
     // 统计视图数据
     projectCount,
     remoteCoverage,

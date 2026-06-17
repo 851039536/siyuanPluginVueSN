@@ -339,6 +339,28 @@
   flex-wrap: wrap;
 }
 
+.wt-template-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  color: var(--b3-theme-on-surface-light);
+  font-size: 11px;
+}
+
+.wt-template-select {
+  flex: 1;
+  height: 26px;
+  padding: 0 6px;
+  font-size: 11px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  &:focus { border-color: var(--b3-theme-primary); outline: none; }
+}
+
 .wt-type-btn {
   padding: 1px 6px;
   font-size: 10px;

@@ -145,6 +145,19 @@
             {{ ct.label }}
           </button>
         </div>
+        <!-- 提交信息模板 -->
+        <div v-if="commitTemplates?.length" class="wt-template-row">
+          <Icon icon="mdi:file-document-outline" height="13" />
+          <select
+            class="wt-template-select"
+            @change="handleSelectTemplate(($event.target as HTMLSelectElement).value)"
+          >
+            <option value="">{{ i18n.selectTemplate || '选择模板...' }}</option>
+            <option v-for="tpl in commitTemplates" :key="tpl.id" :value="tpl.id">
+              {{ tpl.name }}
+            </option>
+          </select>
+        </div>
         <textarea
           v-model="commitMessage"
           class="wt-commit-msg"
@@ -187,7 +200,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue"
 import { Icon } from "@iconify/vue"
-import type { FileChange, WorkingTreeInfo, CommitLogEntry } from "../types"
+import type { FileChange, WorkingTreeInfo, CommitLogEntry, CommitTemplate } from "../types"
 import { COMMIT_TYPE_VALUES } from "../types/storage"
 import BranchCommitList from "./BranchCommitList.vue"
 
@@ -204,6 +217,8 @@ const props = defineProps<{
   gitOpLoading: boolean
   commitLogEntries: CommitLogEntry[]
   commitLogLoading: boolean
+  /** 提交信息模板 */
+  commitTemplates?: CommitTemplate[]
 }>()
 
 const emit = defineEmits<{
@@ -311,6 +326,16 @@ function updateCommitMessage() {
     }
   }
   // 如果为空，不自动填充（等用户点生成）
+}
+
+function handleSelectTemplate(tplId: string) {
+  if (!tplId) return
+  const tpl = props.commitTemplates?.find(t => t.id === tplId)
+  if (!tpl) return
+  // 填充模板，支持 {branch}/{files} 占位符
+  commitMessage.value = tpl.pattern
+    .replace(/\{branch\}/g, props.tree.branch || "")
+    .replace(/\{files\}/g, String(props.tree.files.length))
 }
 
 async function handleGenerate() {

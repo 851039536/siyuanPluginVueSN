@@ -974,6 +974,7 @@ ${diffSnippet}`,
             systemPrompt: "输出要求：只输出一行 conventional commit 格式的提交信息。禁止输出解释、分析、额外文字。",
             temperature: 0.1,
             maxTokens: 60,
+            enableThinking: false,
           },
         )
         // 后处理：从 AI 输出中智能提取 conventional commit 信息。

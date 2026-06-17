@@ -362,6 +362,7 @@
           :git-op-loading="gitOpLoading[project.id] || false"
           :commit-log-entries="commitLogForProject(project.id)"
           :commit-log-loading="commitLogLoading[project.id] || false"
+          :commit-templates="commitTemplates"
           @stage-file="(file) => handleGitOp('暂存失败', () => stageItem(project.id, file), project.id)"
           @unstage-file="(file) => handleGitOp('取消暂存失败', () => unstageItem(project.id, file), project.id)"
           @stage-all="handleGitOp('暂存失败', () => stageAllItems(project.id), project.id)"
@@ -436,6 +437,42 @@
                 @click="handleStashDrop(project.id, e.index)"
               >{{ i18n.stashDrop || '删除' }}</button>
             </div>
+          </div>
+        </div>
+
+        <!-- Tag 管理 -->
+        <TagPanel
+          :tags="tagsCache[project.id] || []"
+          :loading="tagLoading[project.id]"
+          :push-loaded="tagPushLoading[project.id]"
+          :i18n="i18n"
+          @create="(p) => handleCreateTag(project.id, p.name, p.message)"
+          @push="(p) => handlePushTag(project.id, p.tag)"
+          @delete="(p) => handleDeleteTag(project.id, p.tag)"
+        />
+
+        <!-- 冲突警告 -->
+        <div v-if="conflicts[project.id]?.length" class="gp-conflict-bar">
+          <div class="gp-conflict-header">
+            <Icon icon="mdi:alert-circle" height="14" />
+            <span>{{ i18n.conflictDetected || '检测到合并冲突' }}（{{ conflicts[project.id].length }} 个文件）</span>
+          </div>
+          <div class="gp-conflict-files">
+            <span v-for="f in conflicts[project.id].slice(0, 5)" :key="f.path" class="gp-conflict-file">
+              {{ f.path }}
+              <button class="vp-btn vp-btn--ghost vp-btn--sm" :title="i18n.keepOurs || '保留本地版本'" @click="handleResolveConflict(project.id, f.path, 'ours')">
+                <Icon icon="mdi:file-document-check-outline" height="11" />
+              </button>
+              <button class="vp-btn vp-btn--ghost vp-btn--sm" :title="i18n.keepTheirs || '保留远程版本'" @click="handleResolveConflict(project.id, f.path, 'theirs')">
+                <Icon icon="mdi:file-download-outline" height="11" />
+              </button>
+            </span>
+          </div>
+          <div class="gp-conflict-actions">
+            <button class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger" @click="handleAbortMerge(project.id)">
+              <Icon icon="mdi:undo" height="12" />
+              {{ i18n.abortMerge || '中止合并' }}
+            </button>
           </div>
         </div>
 
@@ -917,6 +954,7 @@ import { PLATFORM_META } from "./types"
 import { useGitPush } from "./composables/useGitPush"
 import WorkingTreePanel from "./components/WorkingTreePanel.vue"
 import StatsPanel from "./components/StatsPanel.vue"
+import TagPanel from "./components/TagPanel.vue"
 import { pickDirectory } from "./composables/useDirectoryPicker"
 
 /** 批次化并发处理：避免所有项目同时涌入 git 信号量导致排队拥堵 */
@@ -996,6 +1034,21 @@ const {
   addRemoteOp,
   removeRemoteOp,
   editRemoteOp,
+  // Tag 管理
+  tagsCache,
+  tagLoading,
+  loadTags,
+  createTagOp,
+  deleteTagOp,
+  pushTagOp,
+  // 冲突检测
+  conflicts,
+  checkConflicts,
+  abortMergeOp,
+  resolveConflictOp,
+  // 提交信息模板
+  commitTemplates,
+  loadCommitTemplates,
   // 统计视图数据
   projectCount,
   remoteCoverage,
@@ -1226,6 +1279,7 @@ async function handleExpand(projectId: string) {
       loadCommitLog(projectId),
       loadBranches(projectId),
       loadStashList(projectId),
+      loadTags(projectId),
     ])
   } finally {
     delete commitLogLoading.value[projectId]
@@ -1268,6 +1322,7 @@ async function silentRefreshAll() {
 
 onMounted(async () => {
   await loadProjects()
+  loadCommitTemplates()
   // 默认选中第一个分类
   if (!activeCategory.value && groupedProjects.value.length > 0) {
     activeCategory.value = groupedProjects.value[0].category.id
@@ -1598,6 +1653,8 @@ async function handleDiscard(id: string, file: string, staged: boolean, status: 
 const stashInputProject = ref("")
 const stashInputMsg = ref("")
 const genStashDescLoading = ref<Record<string, boolean>>({})
+/** Tag 推送操作加载中 id → tagName */
+const tagPushLoading = ref<Record<string, string>>({})
 
 async function handleGenStashDesc(id: string) {
   genStashDescLoading.value[id] = true
@@ -1647,6 +1704,68 @@ async function handleStashDrop(id: string, index: number) {
     await doStashDrop(id, index)
   } catch (e: any) {
     alert(`删除失败: ${e?.message || e}`)
+  }
+}
+
+// ── Tag 操作 ──
+
+async function handleCreateTag(id: string, name: string, message?: string) {
+  try {
+    await createTagOp(id, name, message)
+    await loadTags(id)
+  } catch (e: any) {
+    alert(`创建 Tag 失败: ${e?.message || e}`)
+  }
+}
+
+async function handleDeleteTag(id: string, tag: string) {
+  if (!confirm(`确定删除 Tag "${tag}"？此操作不可撤销。`)) return
+  try {
+    await deleteTagOp(id, tag)
+    await loadTags(id)
+  } catch (e: any) {
+    alert(`删除失败: ${e?.message || e}`)
+  }
+}
+
+async function handlePushTag(id: string, tag: string) {
+  const project = projects.value.find(p => p.id === id)
+  if (!project) return
+  // 自动选择第一个可用的远程
+  let remoteName = ""
+  for (const pm of PLATFORM_META) {
+    const name = project[pm.remoteProp] as string | undefined
+    if (name) { remoteName = name; break }
+  }
+  if (!remoteName) { alert("未找到远程仓库"); return }
+  tagPushLoading.value = { ...tagPushLoading.value, [id]: tag }
+  try {
+    await pushTagOp(id, remoteName, tag)
+  } catch (e: any) {
+    alert(`推送 Tag 失败: ${e?.message || e}`)
+  } finally {
+    delete tagPushLoading.value[id]
+    tagPushLoading.value = { ...tagPushLoading.value }
+  }
+}
+
+// ── 冲突操作 ──
+
+async function handleAbortMerge(id: string) {
+  if (!confirm("确定中止合并操作？所有合并进度将丢失。")) return
+  try {
+    await abortMergeOp(id)
+  } catch (e: any) {
+    alert(`中止合并失败: ${e?.message || e}`)
+  }
+}
+
+async function handleResolveConflict(id: string, file: string, strategy: "theirs" | "ours") {
+  try {
+    await resolveConflictOp(id, file, strategy)
+    await checkConflicts(id) // 重新检查是否还有冲突
+  } catch (e: any) {
+    alert(`解决冲突失败: ${e?.message || e}`)
   }
 }
 

@@ -3,11 +3,11 @@ import { createVueDockApp } from "@/utils/vueAppHelper"
 import { getNodeProcessModules } from "@/utils/nodeModules"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
 import { callAI, getApiConfigFromPlugin } from "@/utils/aiApi"
-import type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo, ProjectCategory, CommitLogEntry, BranchInfo, ScannedGitRepo, StashEntry, ProjectStatus } from "./storage"
+import type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo, ProjectCategory, CommitLogEntry, BranchInfo, ScannedGitRepo, StashEntry, ProjectStatus, TagInfo, ConflictFile, CommitTemplate } from "./storage"
 import { GitPushStorage, COMMIT_TYPE_VALUES, PROJECT_STATUS_VALUES } from "./storage"
 import GitPushPanel from "../index.vue"
 
-export type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo, ProjectCategory, CommitLogEntry, BranchInfo, StashEntry, ProjectStatus }
+export type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo, ProjectCategory, CommitLogEntry, BranchInfo, StashEntry, ProjectStatus, TagInfo, ConflictFile, CommitTemplate }
 export type { ScannedGitRepo }
 export { GitPushStorage, COMMIT_TYPE_VALUES, PROJECT_STATUS_VALUES }
 
@@ -596,6 +596,80 @@ export class GitPushManager {
     } catch {
       return `${wt.files.length}个文件: ${names}${more}`
     }
+  }
+
+  // ── Tag 管理 ──
+
+  /** 获取本地 Tag 列表（按日期降序） */
+  async getTags(projectPath: string, limit = 10): Promise<TagInfo[]> {
+    try {
+      const raw = await this.execGit(projectPath, ["tag", "-l", `--sort=-creatordate`, `-n1`, `--format=%(refname:short)|%(subject)|%(creatordate:iso)`])
+      return raw.trim().split("\n").filter(Boolean).slice(0, limit).map(line => {
+        const [name, message, date] = line.split("|")
+        return { name, message: message || undefined, date: date || undefined }
+      })
+    } catch { return [] }
+  }
+
+  /** 创建 Tag */
+  async createTag(projectPath: string, name: string, message?: string): Promise<void> {
+    const args = ["tag", name]
+    if (message) args.push("-m", message)
+    await this.execGit(projectPath, args)
+  }
+
+  /** 删除本地 Tag */
+  async deleteTag(projectPath: string, name: string): Promise<void> {
+    await this.execGit(projectPath, ["tag", "-d", name])
+  }
+
+  /** 推送指定 Tag 到远程 */
+  async pushTag(projectPath: string, remoteName: string, tag: string): Promise<string> {
+    return await this.execGit(projectPath, ["push", remoteName, tag])
+  }
+
+  // ── 冲突检测 ──
+
+  /** 检测当前是否有 merge/rebase 冲突 */
+  async hasConflict(projectPath: string): Promise<boolean> {
+    try {
+      const r = await this.execGit(projectPath, ["diff", "--name-only", "--diff-filter=U"])
+      return r.trim().length > 0
+    } catch { return false }
+  }
+
+  /** 获取冲突文件列表 */
+  async getConflictFiles(projectPath: string): Promise<ConflictFile[]> {
+    try {
+      const raw = await this.execGit(projectPath, ["diff", "--name-only", "--diff-filter=U"])
+      return raw.trim().split("\n").filter(Boolean).map(path => ({
+        path: path.trim(),
+        status: "both-modified",
+      }))
+    } catch { return [] }
+  }
+
+  /** 中止合并操作 */
+  async abortMerge(projectPath: string): Promise<void> {
+    await this.execGit(projectPath, ["merge", "--abort"])
+  }
+
+  /** 解决单个冲突文件（theirs=远程版本 / ours=本地版本） */
+  async resolveConflictFile(projectPath: string, file: string, strategy: "theirs" | "ours"): Promise<void> {
+    await this.execGit(projectPath, ["checkout", `--${strategy}`, file])
+    await this.execGit(projectPath, ["add", file])
+  }
+
+  // ── 提交信息模板 ──
+
+  /** 获取所有提交信息模板 */
+  async getCommitTemplates(): Promise<CommitTemplate[]> {
+    return this.storage.commitTemplates.loadOrDefault()
+  }
+
+  /** 保存自定义模板 */
+  async saveCommitTemplates(templates: CommitTemplate[]): Promise<void> {
+    await this.storage.commitTemplates.save(templates)
   }
 
   /** 添加远程仓库 */

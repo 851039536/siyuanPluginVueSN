@@ -79,6 +79,13 @@
     "recentCommits": "最近提交",
     "viewProject": "查看项目",
     "addedDate": "添加日期",
-    "untracked": "未跟踪"
+    "untracked": "未跟踪",
+    "createTag": "打 Tag",
+    "noTags": "暂无 Tag",
+    "conflictDetected": "检测到合并冲突",
+    "keepOurs": "保留本地版本",
+    "keepTheirs": "保留远程版本",
+    "abortMerge": "中止合并",
+    "selectTemplate": "选择模板..."
   }
 }

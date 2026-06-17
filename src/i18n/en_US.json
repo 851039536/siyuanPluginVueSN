@@ -1002,7 +1002,14 @@
     "recentCommits": "Recent Commits",
     "viewProject": "View Project",
     "addedDate": "Date Added",
-    "untracked": "Untracked"
+    "untracked": "Untracked",
+    "createTag": "Create Tag",
+    "noTags": "No Tags",
+    "conflictDetected": "Merge conflict detected",
+    "keepOurs": "Keep local version",
+    "keepTheirs": "Keep remote version",
+    "abortMerge": "Abort Merge",
+    "selectTemplate": "Select template..."
   },
   "heatmapMarker": {
     "title": "Heatmap Marker",

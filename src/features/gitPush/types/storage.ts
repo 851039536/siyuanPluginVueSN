@@ -163,6 +163,38 @@ export interface StashEntry {
   message: string
 }
 
+/** Tag 信息 */
+export interface TagInfo {
+  /** Tag 名称 */
+  name: string
+  /** 注解信息（annotated tag） */
+  message?: string
+  /** 创建日期（ISO） */
+  date?: string
+}
+
+/** 冲突文件信息 */
+export interface ConflictFile {
+  path: string
+  status: "both-modified" | "added-by-us" | "added-by-them" | "deleted-by-us" | "deleted-by-them"
+}
+
+/** 提价信息模板 */
+export interface CommitTemplate {
+  id: string
+  name: string
+  pattern: string  // 支持占位符 {branch} / {files}
+  builtin?: boolean
+}
+
+const DEFAULT_TEMPLATES: CommitTemplate[] = [
+  { id: "tpl-feat", name: "新功能", pattern: "feat: ", builtin: true },
+  { id: "tpl-fix", name: "修复", pattern: "fix: ", builtin: true },
+  { id: "tpl-chore", name: "杂项", pattern: "chore: ", builtin: true },
+  { id: "tpl-refactor", name: "重构", pattern: "refactor: ", builtin: true },
+  { id: "tpl-docs", name: "文档", pattern: "docs: ", builtin: true },
+]
+
 const DEFAULT_PROJECTS: GitProject[] = []
 
 const DEFAULT_UNGROUPED: ProjectCategory = { id: "__ungrouped__", name: "未分组", color: "#888888", order: 0 }
@@ -173,6 +205,8 @@ export class GitPushStorage {
   readonly gitConcurrency: TypedStorage<number>
   /** 全局标签缓存（所有用过的标签，用于筛选条与输入建议） */
   readonly tags: TypedStorage<string[]>
+  /** 提交信息模板 */
+  readonly commitTemplates: TypedStorage<CommitTemplate[]>
 
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
@@ -180,6 +214,7 @@ export class GitPushStorage {
     this.categories = new TypedStorage(storage, "git-push-categories", [DEFAULT_UNGROUPED])
     this.gitConcurrency = new TypedStorage(storage, "git-push-concurrency", 3)
     this.tags = new TypedStorage(storage, "git-push-tags", [])
+    this.commitTemplates = new TypedStorage(storage, "git-push-commit-templates", DEFAULT_TEMPLATES)
   }
 
   async init(): Promise<void> {

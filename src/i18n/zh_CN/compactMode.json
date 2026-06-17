@@ -1,0 +1,10 @@
+{
+  "compactMode": "紧洛模式",
+  "compactModeEnabled": "紧凑模式已启用",
+  "compactModeDisabled": "紧凑模式已禁用",
+  "compactModeSettings": "紧凑模式",
+  "compactModeDescription": "启用后全局应用紧凑样式，可独立调节间距密度和字号缩放",
+  "compactModeDensity": "密度级别",
+  "compactModeFontScale": "字号缩放",
+  "compactModeAreas": "生效区域"
+}

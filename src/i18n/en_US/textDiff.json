@@ -1,0 +1,23 @@
+{
+  "textDiff": {
+    "title": "Text Diff Tool",
+    "original": "Original Text",
+    "modified": "Modified Text",
+    "diffResult": "Diff Result",
+    "chars": "characters",
+    "clear": "Clear",
+    "swap": "Swap",
+    "originalPlaceholder": "Enter original text...",
+    "modifiedPlaceholder": "Enter modified text...",
+    "emptyState": "Please enter text to see differences",
+    "fontSize": "Font Size",
+    "displayMode": "Display Mode",
+    "splitMode": "Split",
+    "unifiedMode": "Unified",
+    "theme": "Theme",
+    "lightTheme": "Light",
+    "darkTheme": "Dark"
+  },
+  "enableTextDiff": "Enable Text Diff Feature",
+  "enableTextDiffDesc": "Provide text difference comparison functionality, supporting character, word, line, and patch modes"
+}

@@ -1,0 +1,22 @@
+{
+  "statusBar": {
+    "title": "Status Bar",
+    "description": "Display CPU, memory usage and document statistics in status bar",
+    "cpu": "CPU",
+    "memory": "Memory",
+    "used": "Used",
+    "free": "Free",
+    "total": "Total",
+    "settings": "Status Bar Settings",
+    "settingsDesc": "Configure status bar display options",
+    "enableStatusBar": "Enable Status Bar",
+    "enableStatusBarDesc": "Display CPU, memory usage and document statistics in status bar",
+    "updateInterval": "Update Interval",
+    "showCpuUsage": "Show CPU Usage",
+    "showMemoryUsage": "Show Memory Usage",
+    "showMemoryDetails": "Show Memory Details",
+    "compactMode": "Compact Mode",
+    "enabled": "Status bar enabled",
+    "disabled": "Status bar disabled"
+  }
+}

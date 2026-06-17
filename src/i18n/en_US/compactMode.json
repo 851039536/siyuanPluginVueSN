@@ -1,0 +1,10 @@
+{
+  "compactMode": "Compact Mode",
+  "compactModeEnabled": "Compact mode enabled",
+  "compactModeDisabled": "Compact mode disabled",
+  "compactModeSettings": "Compact Mode",
+  "compactModeDescription": "Enable global compact styling with independent spacing density and font scale controls",
+  "compactModeDensity": "Density Level",
+  "compactModeFontScale": "Font Scale",
+  "compactModeAreas": "Affected Areas"
+}

@@ -1,0 +1,9 @@
+{
+  "pronunciation": "谐音翻译",
+  "enablePronunciation": "启用谐音翻译功能",
+  "enablePronunciationDesc": "英文单词生成谐音记忆，中文词语翻译成英文后生成谐音",
+  "pronunciationDesc": "英文单词生成谐音记忆，中文词语翻译成英文后生成谐音",
+  "pronunciationPlaceholder": "输入中文或英文...",
+  "pronunciationHelp": "谐音翻译",
+  "pronunciationHint": "输入英文或中文，弹窗打开后自动生成谐音记忆（中文会先翻译成英文）"
+}

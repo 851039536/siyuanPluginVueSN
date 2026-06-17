@@ -1,0 +1,26 @@
+{
+  "docAnalysis": {
+    "title": "Document Analysis",
+    "description": "Analyze document content size, find small documents",
+    "enableDocAnalysis": "Enable Document Analysis",
+    "enableDocAnalysisDesc": "Analyze document content size and filter out small documents below a threshold",
+    "threshold": "Size Threshold",
+    "thresholdDesc": "Filter documents with content size below this value",
+    "notebookFilter": "Notebook Filter",
+    "allNotebooks": "All Notebooks",
+    "sortBySize": "Sort by Size",
+    "sortByTitle": "Sort by Title",
+    "sortByNotebook": "Sort by Notebook",
+    "query": "Query",
+    "querying": "Querying...",
+    "resultCount": "Found {count} small documents",
+    "noResults": "No documents found matching the criteria",
+    "noResultsHint": "Try adjusting the threshold or selecting another notebook",
+    "queryError": "Query error",
+    "clickToOpen": "Click a document to open in SiYuan",
+    "sizeUnit": "Size Unit",
+    "sortOrder": "Sort Order",
+    "ascending": "Ascending",
+    "descending": "Descending"
+  }
+}

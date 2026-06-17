@@ -1,0 +1,22 @@
+{
+  "statusBar": {
+    "title": "状态栏",
+    "description": "在状态栏显示 CPU、内存使用情况及文档统计",
+    "cpu": "CPU",
+    "memory": "内存",
+    "used": "已用",
+    "free": "可用",
+    "total": "总计",
+    "settings": "状态栏设置",
+    "settingsDesc": "配置状态栏显示选项",
+    "enableStatusBar": "启用状态栏功能",
+    "enableStatusBarDesc": "在状态栏显示 CPU、内存使用情况及文档统计",
+    "updateInterval": "更新间隔",
+    "showCpuUsage": "显示 CPU 使用率",
+    "showMemoryUsage": "显示内存使用率",
+    "showMemoryDetails": "显示内存详情",
+    "compactMode": "紧凑模式",
+    "enabled": "状态栏已启用",
+    "disabled": "状态栏已禁用"
+  }
+}

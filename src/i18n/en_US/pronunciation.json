@@ -1,0 +1,8 @@
+{
+  "enablePronunciation": "Enable Pronunciation Helper",
+  "enablePronunciationDesc": "Generate phonetic memory for English words, translate Chinese to English then generate phonetics",
+  "pronunciationDesc": "Generate phonetic memory for English words, translate Chinese to English then generate phonetics",
+  "pronunciationPlaceholder": "Enter Chinese or English...",
+  "pronunciationHelp": "Pronunciation Helper",
+  "pronunciationHint": "Enter Chinese or English, auto-generate phonetic memory on dialog open (Chinese will be translated first)"
+}

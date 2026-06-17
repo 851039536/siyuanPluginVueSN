@@ -1,0 +1,23 @@
+{
+  "textDiff": {
+    "title": "文本对比工具",
+    "original": "原文本",
+    "modified": "修改后文本",
+    "diffResult": "差异结果",
+    "chars": "字符",
+    "clear": "清空",
+    "swap": "交换",
+    "originalPlaceholder": "请输入原始文本...",
+    "modifiedPlaceholder": "请输入修改后的文本...",
+    "emptyState": "请输入文本以查看差异",
+    "fontSize": "字体大小",
+    "displayMode": "显示模式",
+    "splitMode": "分栏",
+    "unifiedMode": "统一",
+    "theme": "主题",
+    "lightTheme": "浅色",
+    "darkTheme": "深色"
+  },
+  "enableTextDiff": "启用文本对比功能",
+  "enableTextDiffDesc": "提供文本差异对比功能，支持字符、词语、行和补丁模式对比"
+}

@@ -1,0 +1,27 @@
+{
+  "floatingToolbar": {
+    "copy": "Copy",
+    "qrcode": "Generate QR Code",
+    "pronunciation": "Pronunciation Helper",
+    "highlight": "Highlight",
+    "search": "Search",
+    "translate": "Translate",
+    "aiProcess": "AI Process",
+    "aiQuery": "AI Query",
+    "noTextSelected": "No text selected",
+    "copySuccess": "Copied to clipboard",
+    "highlightSuccess": "Highlight added",
+    "highlightFailed": "Failed to add highlight",
+    "cannotGetBlockId": "Cannot get current block ID",
+    "selectEnglishToTranslate": "Please select English text to translate",
+    "translating": "Translating...",
+    "translateSuccess": "Translation complete (Ctrl+Z to undo)",
+    "translateFailed": "Translation failed, please retry",
+    "translateError": "Translation failed",
+    "aiProcessInDevelopment": "AI processing feature is under development...",
+    "queryFlashcard": "Query Flashcard",
+    "noFlashcards": "No flashcard data",
+    "cardNotFound": "Card not found",
+    "queryFailed": "Query failed"
+  }
+}

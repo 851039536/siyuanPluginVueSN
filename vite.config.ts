@@ -1,4 +1,5 @@
 /* eslint-disable node/prefer-global/process */
+import { execSync } from "node:child_process"
 import { resolve } from "node:path"
 import vue from "@vitejs/plugin-vue"
 import fg from "fast-glob"
@@ -52,6 +53,17 @@ export default defineConfig(({
 
     plugins: [
       vue(),
+      // 构建前自动合并 i18n 分片文件
+      {
+        name: "merge-i18n",
+        buildStart() {
+          try {
+            execSync("node scripts/merge-i18n.mjs", { stdio: "inherit" })
+          } catch (e) {
+            console.error("❌ Failed to merge i18n files:", e)
+          }
+        },
+      },
       viteStaticCopy({
         targets: [
           {

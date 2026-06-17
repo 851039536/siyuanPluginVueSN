@@ -1,0 +1,5 @@
+{
+  "htmlViewer": "HTML Viewer",
+  "enableHtmlViewer": "Enable HTML Viewer",
+  "enableHtmlViewerDesc": "Preview selected text as HTML from right-click menu, with HTML snippet CRUD management"
+}

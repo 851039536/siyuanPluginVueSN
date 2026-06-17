@@ -1,0 +1,5 @@
+{
+  "htmlViewer": "HTML展示",
+  "enableHtmlViewer": "启用HTML展示功能",
+  "enableHtmlViewerDesc": "右键选中文本后以HTML方式预览，支持HTML片段的增删改查"
+}

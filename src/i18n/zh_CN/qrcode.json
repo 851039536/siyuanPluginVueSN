@@ -1,4 +1,5 @@
 {
+  "qrcodeFeature": "二维码生成器",
   "qrcodeDesc": "右键选中文本生成二维码，支持复制和下载",
   "qrcodeGenerate": "生成二维码",
   "qrcodeContent": "内容",

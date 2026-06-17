@@ -92,6 +92,8 @@
   "toggleTheme": "Toggle Theme",
   "defaultTheme": "Default",
   "githubTheme": "GitHub",
+  "blocks": "Block",
+  "assets": "Asset",
   "backingUp": "Backing up...",
   "refresh": "Refresh Scan",
   "compactAreaSidebar": "Sidebar & File Tree",

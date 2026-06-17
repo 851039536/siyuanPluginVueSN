@@ -3,6 +3,7 @@
     "panelTitle": "Script Launcher",
     "description": "Manage and run custom scripts, supports Python, Bash, PowerShell, Node.js, Batch",
     "addScript": "Add Script",
+    "importScript": "Import",
     "editScript": "Edit Script",
     "deleteScript": "Delete Script",
     "runScript": "Run",

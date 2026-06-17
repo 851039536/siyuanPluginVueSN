@@ -1,4 +1,5 @@
 {
+  "pronunciation": "Pronunciation",
   "enablePronunciation": "Enable Pronunciation Helper",
   "enablePronunciationDesc": "Generate phonetic memory for English words, translate Chinese to English then generate phonetics",
   "pronunciationDesc": "Generate phonetic memory for English words, translate Chinese to English then generate phonetics",

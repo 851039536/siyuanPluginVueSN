@@ -271,6 +271,14 @@ export function registerMyFeature(plugin: Plugin) {
 
 **分片架构**：源文件按 feature 模块拆分（`src/i18n/{zh_CN,en_US}/featureName.json`），构建时 `scripts/merge-i18n.mjs` 自动合并为思源框架所需的单一 `zh_CN.json` / `en_US.json`。
 
+> ⛔ **硬规则：禁止直接写入 `zh_CN.json` 和 `en_US.json`**
+>
+> 这两个文件是构建产物，由 `merge-i18n.mjs` 自动生成。**新增或修改 i18n 文本时，必须定位到对应功能的分片文件**（`src/i18n/{zh_CN,en_US}/<feature>.json`），而非直接改大文件。
+>
+> - 不确定 key 属于哪个分片？→ 在 `zh_CN/` 目录下 grep 搜索
+> - 全新增模块？→ 新建 `zh_CN/<feature>.json` + `en_US/<feature>.json`
+> - 修改完成后 → 运行 `npm run i18n:merge` 重新生成大文件（构建时自动执行）
+
 ### 文件规则
 
 | 分片 | 内容 |

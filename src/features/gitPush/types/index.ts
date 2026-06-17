@@ -12,11 +12,14 @@ export type { ScannedGitRepo }
 export { GitPushStorage, COMMIT_TYPE_VALUES, PROJECT_STATUS_VALUES }
 
 /** 远程平台元数据（单一数据源，供 index.vue / StatsPanel.vue / types 共用） */
-export const PLATFORM_META: { key: "github" | "gitee" | "gitea"; icon: string; label: string; remoteProp: keyof GitProject; urlProp: keyof GitProject }[] = [
-  { key: "github", icon: "mdi:github", label: "GitHub", remoteProp: "githubRemote", urlProp: "githubUrl" },
-  { key: "gitee", icon: "mdi:git", label: "Gitee", remoteProp: "giteeRemote", urlProp: "giteeUrl" },
-  { key: "gitea", icon: "mdi:tea", label: "Gitea", remoteProp: "giteaRemote", urlProp: "giteaUrl" },
+export const PLATFORM_META = [
+  { key: "github" as const, icon: "mdi:github", label: "GitHub", remoteProp: "githubRemote" as const, urlProp: "githubUrl" as const },
+  { key: "gitee" as const, icon: "mdi:git", label: "Gitee", remoteProp: "giteeRemote" as const, urlProp: "giteeUrl" as const },
+  { key: "gitea" as const, icon: "mdi:tea", label: "Gitea", remoteProp: "giteaRemote" as const, urlProp: "giteaUrl" as const },
+  { key: "cnb" as const, icon: "mdi:cloud-braces", label: "CNB", remoteProp: "cnbRemote" as const, urlProp: "cnbUrl" as const },
 ]
+
+export type PlatformKey = typeof PLATFORM_META[number]["key"]
 
 export class GitPushManager {
   private plugin: Plugin
@@ -57,13 +60,16 @@ export class GitPushManager {
     project.githubRemote = undefined
     project.giteeRemote = undefined
     project.giteaRemote = undefined
+    project.cnbRemote = undefined
     project.githubUrl = undefined
     project.giteeUrl = undefined
     project.giteaUrl = undefined
+    project.cnbUrl = undefined
     for (const r of remotes) {
       if (r.isGithub) { project.githubRemote = r.name; project.githubUrl = r.url }
       if (r.isGitee) { project.giteeRemote = r.name; project.giteeUrl = r.url }
       if (r.isGitea) { project.giteaRemote = r.name; project.giteaUrl = r.url }
+      if (r.isCnb) { project.cnbRemote = r.name; project.cnbUrl = r.url }
     }
   }
 
@@ -133,7 +139,7 @@ export class GitPushManager {
    * 更新项目元信息（tags/starred/status/archived/note 等）并持久化
    * 返回更新后的项目，未找到返回 null
    */
-  async updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "tags" | "starred" | "status" | "archived" | "note" | "name" | "githubUrl" | "giteeUrl" | "giteaUrl">>): Promise<GitProject | null> {
+  async updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "tags" | "starred" | "status" | "archived" | "note" | "name" | "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl">>): Promise<GitProject | null> {
     const projects = await this.getProjects()
     const project = projects.find(p => p.id === id)
     if (!project) return null
@@ -225,9 +231,10 @@ export class GitPushManager {
   }
 
   /** 判断远程仓库是否为已知平台 */
-  private isKnownRemote(remote: GitRemoteInfo, platform: "github" | "gitee" | "gitea"): boolean {
+  private isKnownRemote(remote: GitRemoteInfo, platform: PlatformKey): boolean {
     if (platform === "github") return remote.isGithub
     if (platform === "gitee") return remote.isGitee
+    if (platform === "cnb") return remote.isCnb
     return remote.isGitea
   }
 
@@ -254,12 +261,14 @@ export class GitPushManager {
             // 自托管 Gitea/其他 git 服务（URL 不含上述域名且名称不匹配）统一作为 Gitea 兜底
             const isGithub = lowerUrl.includes("github.com") || lowerName === "github"
             const isGitee = lowerUrl.includes("gitee.com") || lowerUrl.includes("gitcode.com") || lowerName === "gitee"
+            const isCnb = lowerUrl.includes("cnb.cool") || lowerName === "cnb"
             result.push({
               name,
               url,
               isGithub,
               isGitee,
-              isGitea: !isGithub && !isGitee,
+              isCnb,
+              isGitea: !isGithub && !isGitee && !isCnb,
             })
           }
         }
@@ -271,13 +280,14 @@ export class GitPushManager {
   }
 
   /**
-   * 推送项目到全部已配置的远程（GitHub + Gitee + Gitea）
+   * 推送项目到全部已配置的远程（GitHub + Gitee + Gitea + CNB）
    */
   async pushToAll(id: string): Promise<{
     success: boolean
     github: { ok: boolean; stdout: string; stderr: string }
     gitee: { ok: boolean; stdout: string; stderr: string }
     gitea: { ok: boolean; stdout: string; stderr: string }
+    cnb: { ok: boolean; stdout: string; stderr: string }
   }> {
     const projects = await this.getProjects()
     const project = projects.find(p => p.id === id)
@@ -285,7 +295,7 @@ export class GitPushManager {
 
     if (!project) {
       const notFound = { ...emptyResult, stderr: "项目未找到" }
-      return { success: false, github: notFound, gitee: notFound, gitea: notFound }
+      return { success: false, github: notFound, gitee: notFound, gitea: notFound, cnb: notFound }
     }
 
     const tryPush = async (remoteName: string | undefined) => {
@@ -301,7 +311,8 @@ export class GitPushManager {
     const github = await tryPush(project.githubRemote)
     const gitee = await tryPush(project.giteeRemote)
     const gitea = await tryPush(project.giteaRemote)
-    return { success: github.ok || gitee.ok || gitea.ok, github, gitee, gitea }
+    const cnb = await tryPush(project.cnbRemote)
+    return { success: github.ok || gitee.ok || gitea.ok || cnb.ok, github, gitee, gitea, cnb }
   }
 
   /**
@@ -309,7 +320,7 @@ export class GitPushManager {
    */
   async pushSingle(
     id: string,
-    target: "github" | "gitee" | "gitea",
+    target: PlatformKey,
   ): Promise<{ ok: boolean; stdout: string; stderr: string }> {
     const projects = await this.getProjects()
     const project = projects.find(p => p.id === id)
@@ -320,6 +331,7 @@ export class GitPushManager {
     const remoteName =
       target === "github" ? (project.githubRemote || "github")
       : target === "gitee" ? (project.giteeRemote || "gitee")
+      : target === "cnb" ? (project.cnbRemote || "cnb")
       : (project.giteaRemote || "gitea")
 
     try {
@@ -338,6 +350,7 @@ export class GitPushManager {
     github: { ok: boolean; stdout: string; stderr: string }
     gitee: { ok: boolean; stdout: string; stderr: string }
     gitea: { ok: boolean; stdout: string; stderr: string }
+    cnb: { ok: boolean; stdout: string; stderr: string }
   }> {
     const projects = await this.getProjects()
     const project = projects.find(p => p.id === id)
@@ -345,7 +358,7 @@ export class GitPushManager {
 
     if (!project) {
       const notFound = { ...emptyResult, stderr: "项目未找到" }
-      return { success: false, github: notFound, gitee: notFound, gitea: notFound }
+      return { success: false, github: notFound, gitee: notFound, gitea: notFound, cnb: notFound }
     }
 
     const tryPull = async (remoteName: string | undefined) => {
@@ -361,7 +374,8 @@ export class GitPushManager {
     const github = await tryPull(project.githubRemote)
     const gitee = await tryPull(project.giteeRemote)
     const gitea = await tryPull(project.giteaRemote)
-    return { success: github.ok || gitee.ok || gitea.ok, github, gitee, gitea }
+    const cnb = await tryPull(project.cnbRemote)
+    return { success: github.ok || gitee.ok || gitea.ok || cnb.ok, github, gitee, gitea, cnb }
   }
 
   /**
@@ -369,7 +383,7 @@ export class GitPushManager {
    */
   async pullSingle(
     id: string,
-    target: "github" | "gitee" | "gitea",
+    target: PlatformKey,
   ): Promise<{ ok: boolean; stdout: string; stderr: string }> {
     const projects = await this.getProjects()
     const project = projects.find(p => p.id === id)
@@ -380,6 +394,7 @@ export class GitPushManager {
     const remoteName =
       target === "github" ? (project.githubRemote || "github")
       : target === "gitee" ? (project.giteeRemote || "gitee")
+      : target === "cnb" ? (project.cnbRemote || "cnb")
       : (project.giteaRemote || "gitea")
 
     try {
@@ -790,26 +805,28 @@ export class GitPushManager {
   }
 
   /**
-   * 检查项目是否可以推送到云端（有 GitHub 或 Gitee 远程）
+   * 检查项目是否可以推送到云端（有 GitHub/Gitee/Gitea/CNB 远程）
    */
   async checkCanPushToCloud(id: string): Promise<{
     canPush: boolean
     github: boolean
     gitee: boolean
     gitea: boolean
+    cnb: boolean
     remotes: GitRemoteInfo[]
   }> {
     const projects = await this.getProjects()
     const project = projects.find(p => p.id === id)
     if (!project) {
-      return { canPush: false, github: false, gitee: false, gitea: false, remotes: [] }
+      return { canPush: false, github: false, gitee: false, gitea: false, cnb: false, remotes: [] }
     }
 
     const remotes = await this.detectRemotes(project.path)
     const github = remotes.some(r => this.isKnownRemote(r, "github"))
     const gitee = remotes.some(r => this.isKnownRemote(r, "gitee"))
     const gitea = remotes.some(r => this.isKnownRemote(r, "gitea"))
-    return { canPush: github || gitee || gitea, github, gitee, gitea, remotes }
+    const cnb = remotes.some(r => this.isKnownRemote(r, "cnb"))
+    return { canPush: github || gitee || gitea || cnb, github, gitee, gitea, cnb, remotes }
   }
 
   /**

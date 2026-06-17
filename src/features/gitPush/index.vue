@@ -484,7 +484,7 @@
             :key="`pull-${r.key}`"
             class="vp-btn vp-btn--ghost gp-push-btn"
             :disabled="!project[r.remoteProp] || isPulling(project.id) || isPushing(project.id)"
-            @click="pullSingle(project.id, r.key as 'github' | 'gitee' | 'gitea')"
+            @click="pullSingle(project.id, r.key)"
           >
             <Icon v-if="isPulling(project.id, r.key)" icon="mdi:loading" class="gp-spin" />
             <Icon v-else icon="mdi:source-pull" />
@@ -510,7 +510,7 @@
             :key="r.key"
             class="vp-btn vp-btn--ghost gp-push-btn"
             :disabled="!project[r.remoteProp] || isPushing(project.id) || isPulling(project.id) || !needsPushFor(project.id, r.key)"
-            @click="pushSingle(project.id, r.key as 'github' | 'gitee' | 'gitea')"
+            @click="pushSingle(project.id, r.key)"
           >
             <Icon v-if="isPushing(project.id, r.key)" icon="mdi:loading" class="gp-spin" />
             <Icon v-else :icon="r.icon" />

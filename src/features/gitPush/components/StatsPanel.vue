@@ -74,38 +74,78 @@
         </div>
       </div>
 
-      <!-- 推送状态分布 -->
+      <!-- 待处理项目（推送状态概览 + 待处理表格合并） -->
       <div class="gp-stats-section">
-        <div class="gp-stats-section-title">{{ i18n.pushStatus || '推送状态分布' }}</div>
-        <div class="gp-status-grid">
-          <div class="gp-status-cell gp-status-cell--ahead">
-            <div class="gp-status-cell-num">{{ pushStatusStats.ahead }}</div>
-            <div class="gp-status-cell-label">
-              <Icon icon="mdi:cloud-upload-outline" height="11" />
-              {{ i18n.needsPush || '待推送' }}
-            </div>
+        <div class="gp-stats-section-title">
+          {{ i18n.pendingProjects || '待处理项目' }}
+          <span class="gp-stats-section-count">{{ pendingProjects.length }}</span>
+        </div>
+        <!-- 推送状态概览 -->
+        <div class="gp-status-bar">
+          <div class="gp-status-chip gp-status-chip--ahead">
+            <Icon icon="mdi:cloud-upload-outline" height="13" />
+            <span>{{ pushStatusStats.ahead }}</span>
           </div>
-          <div class="gp-status-cell gp-status-cell--behind">
-            <div class="gp-status-cell-num">{{ pushStatusStats.behind }}</div>
-            <div class="gp-status-cell-label">
-              <Icon icon="mdi:cloud-download-outline" height="11" />
-              {{ i18n.behindRemote || '有更新' }}
-            </div>
+          <div class="gp-status-chip gp-status-chip--behind">
+            <Icon icon="mdi:cloud-download-outline" height="13" />
+            <span>{{ pushStatusStats.behind }}</span>
           </div>
-          <div class="gp-status-cell gp-status-cell--synced">
-            <div class="gp-status-cell-num">{{ pushStatusStats.synced }}</div>
-            <div class="gp-status-cell-label">
-              <Icon icon="mdi:check-circle-outline" height="11" />
-              {{ i18n.synced || '已同步' }}
-            </div>
+          <div class="gp-status-chip gp-status-chip--synced">
+            <Icon icon="mdi:check-circle-outline" height="13" />
+            <span>{{ pushStatusStats.synced }}</span>
           </div>
-          <div class="gp-status-cell gp-status-cell--none">
-            <div class="gp-status-cell-num">{{ pushStatusStats.noRemote }}</div>
-            <div class="gp-status-cell-label">
-              <Icon icon="mdi:lan-disconnect" height="11" />
-              {{ i18n.noRemoteLabel || '无远程' }}
-            </div>
+          <div class="gp-status-chip gp-status-chip--none">
+            <Icon icon="mdi:lan-disconnect" height="13" />
+            <span>{{ pushStatusStats.noRemote }}</span>
           </div>
+        </div>
+        <!-- 待处理项目表格 -->
+        <div v-if="pendingProjects.length > 0" class="gp-table-wrap">
+          <div class="gp-table-row gp-table-row--head">
+            <span class="gp-table-cell gp-table-cell--name">{{ i18n.projectName || '项目' }}</span>
+            <span class="gp-table-cell gp-table-cell--num">{{ i18n.needsPushShort || '待推送' }}</span>
+            <span class="gp-table-cell gp-table-cell--num">{{ i18n.staged || '暂存' }}</span>
+            <span class="gp-table-cell gp-table-cell--num">{{ i18n.unstaged || '未暂存' }}</span>
+            <span class="gp-table-cell gp-table-cell--num">{{ i18n.untracked || '未跟踪' }}</span>
+            <span class="gp-table-cell gp-table-cell--act"></span>
+          </div>
+          <div
+            v-for="item in pendingProjects"
+            :key="item.project.id"
+            class="gp-table-row gp-table-row--clickable"
+            @click="emit('viewProject', item.project.id)"
+          >
+            <span class="gp-table-cell gp-table-cell--name" :title="item.project.path">
+              {{ item.project.name }}
+            </span>
+            <span class="gp-table-cell gp-table-cell--num">
+              <span
+                v-for="r in item.aheadByRemote"
+                :key="r.key"
+                class="gp-badge-ahead"
+              >↑{{ r.ahead }}</span>
+              <span v-if="item.aheadByRemote.length === 0" class="gp-cell-empty">-</span>
+            </span>
+            <span class="gp-table-cell gp-table-cell--num">
+              <span v-if="item.staged > 0" class="gp-badge-staged">{{ item.staged }}</span>
+              <span v-else class="gp-cell-empty">-</span>
+            </span>
+            <span class="gp-table-cell gp-table-cell--num">
+              <span v-if="item.unstaged > 0" class="gp-badge-unstaged">{{ item.unstaged }}</span>
+              <span v-else class="gp-cell-empty">-</span>
+            </span>
+            <span class="gp-table-cell gp-table-cell--num">
+              <span v-if="item.untracked > 0" class="gp-badge-untracked">{{ item.untracked }}</span>
+              <span v-else class="gp-cell-empty">-</span>
+            </span>
+            <span class="gp-table-cell gp-table-cell--act">
+              <Icon icon="mdi:arrow-right" height="12" />
+            </span>
+          </div>
+        </div>
+        <div v-else class="gp-status-all-clear">
+          <Icon icon="mdi:check-all" height="14" />
+          <span>{{ i18n.allClear || '所有项目状态正常' }}</span>
         </div>
       </div>
 
@@ -154,57 +194,6 @@
                 height="13"
                 class="gp-platform-missing"
               />
-            </span>
-            <span class="gp-table-cell gp-table-cell--act">
-              <Icon icon="mdi:arrow-right" height="12" />
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 待处理项目（需推送 + 未提交变更合并） -->
-      <div v-if="pendingProjects.length > 0" class="gp-stats-section">
-        <div class="gp-stats-section-title">
-          {{ i18n.pendingProjects || '待处理项目' }}
-          <span class="gp-stats-section-count">{{ pendingProjects.length }}</span>
-        </div>
-        <div class="gp-table-wrap">
-          <div class="gp-table-row gp-table-row--head">
-            <span class="gp-table-cell gp-table-cell--name">{{ i18n.projectName || '项目' }}</span>
-            <span class="gp-table-cell gp-table-cell--num">{{ i18n.needsPushShort || '待推送' }}</span>
-            <span class="gp-table-cell gp-table-cell--num">{{ i18n.staged || '暂存' }}</span>
-            <span class="gp-table-cell gp-table-cell--num">{{ i18n.unstaged || '未暂存' }}</span>
-            <span class="gp-table-cell gp-table-cell--num">{{ i18n.untracked || '未跟踪' }}</span>
-            <span class="gp-table-cell gp-table-cell--act"></span>
-          </div>
-          <div
-            v-for="item in pendingProjects"
-            :key="item.project.id"
-            class="gp-table-row gp-table-row--clickable"
-            @click="emit('viewProject', item.project.id)"
-          >
-            <span class="gp-table-cell gp-table-cell--name" :title="item.project.path">
-              {{ item.project.name }}
-            </span>
-            <span class="gp-table-cell gp-table-cell--num">
-              <span
-                v-for="r in item.aheadByRemote"
-                :key="r.key"
-                class="gp-badge-ahead"
-              >↑{{ r.ahead }}</span>
-              <span v-if="item.aheadByRemote.length === 0" class="gp-cell-empty">-</span>
-            </span>
-            <span class="gp-table-cell gp-table-cell--num">
-              <span v-if="item.staged > 0" class="gp-badge-staged">{{ item.staged }}</span>
-              <span v-else class="gp-cell-empty">-</span>
-            </span>
-            <span class="gp-table-cell gp-table-cell--num">
-              <span v-if="item.unstaged > 0" class="gp-badge-unstaged">{{ item.unstaged }}</span>
-              <span v-else class="gp-cell-empty">-</span>
-            </span>
-            <span class="gp-table-cell gp-table-cell--num">
-              <span v-if="item.untracked > 0" class="gp-badge-untracked">{{ item.untracked }}</span>
-              <span v-else class="gp-cell-empty">-</span>
             </span>
             <span class="gp-table-cell gp-table-cell--act">
               <Icon icon="mdi:arrow-right" height="12" />

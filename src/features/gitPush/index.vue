@@ -305,6 +305,27 @@
             >
               <Icon icon="mdi:folder-open" height="14" />
             </button>
+            <div class="gp-ide-wrap">
+              <button
+                class="vp-btn vp-btn--ghost vp-btn--sm"
+                title="用 IDE 打开"
+                @click.stop="toggleIdeMenu(project.id)"
+              >
+                <Icon icon="mdi:microsoft-visual-studio-code" height="14" />
+                <Icon icon="mdi:unfold-more-horizontal" height="10" style="margin-left:1px;opacity:0.5" />
+              </button>
+              <div v-if="openIdeMenu.has(project.id)" class="gp-ide-popover" @click.stop>
+                <button
+                  v-for="ide in IDE_ENTRIES"
+                  :key="ide.cmd"
+                  class="gp-ide-item"
+                  @click="handleOpenIde(project.path, ide); openIdeMenu.delete(project.id)"
+                >
+                  <Icon :icon="ide.icon" height="14" />
+                  <span>{{ ide.name }}</span>
+                </button>
+              </div>
+            </div>
             <button
               class="vp-btn vp-btn--ghost vp-btn--sm"
               title="重新检测远程仓库"
@@ -990,6 +1011,15 @@ const PLATFORM_LINKS: { key: string; icon: string; label: string; url: string }[
   { key: "cnb", icon: "mdi:cloud-braces", label: "CNB", url: "https://cnb.cool" },
 ]
 
+/** IDE 快捷打开入口 */
+const IDE_ENTRIES = [
+  { name: "VSCode", icon: "mdi:microsoft-visual-studio-code", cmd: "code" },
+  { name: "Visual Studio", icon: "mdi:microsoft-visual-studio", cmd: "devenv" },
+  { name: "Qoder", icon: "mdi:code-json", cmd: "qoder" },
+  { name: "CodeBuddy", icon: "mdi:robot-outline", cmd: "codebuddy" },
+  { name: "Trae CN", icon: "mdi:alpha-t-box", cmd: "trae" },
+]
+
 const props = defineProps<{
   i18n: Record<string, any>
   plugin: any
@@ -1260,6 +1290,8 @@ const remoteError = ref("")
 /** 行内编辑远程 URL 状态 */
 const editingRemoteName = ref("")
 const editingRemoteUrl = ref("")
+/** IDE 打开菜单：当前打开的项目 id 集合 */
+const openIdeMenu = ref(new Set<string>())
 /** 提交输出 id → text */
 const commitOutputs = ref<Record<string, string>>({})
 /** AI 生成状态 id → { generating, text } */
@@ -1370,7 +1402,19 @@ onMounted(async () => {
 
 onUnmounted(() => {
   if (opsPoller) { clearInterval(opsPoller); opsPoller = null }
+  document.removeEventListener("click", closeIdeMenuOnOutside)
 })
+
+/** 点击外部关闭 IDE 菜单 */
+function closeIdeMenuOnOutside(e: MouseEvent) {
+  const target = e.target as HTMLElement | null
+  if (target && !target.closest(".gp-ide-wrap")) {
+    openIdeMenu.value = new Set()
+  }
+}
+
+// 挂载时注册，卸载时清理
+document.addEventListener("click", closeIdeMenuOnOutside)
 
 /** 切换分类时懒加载该分类下项目的数据（首屏最小集，详情展开时再补） */
 watch(activeCategory, async (catId) => {
@@ -1495,6 +1539,37 @@ async function handleOpenPath(path: string) {
     }
   }
   // 浏览器环境：无法直接打开本地文件夹
+}
+
+/** 切换 IDE 打开菜单 */
+function toggleIdeMenu(id: string) {
+  const s = openIdeMenu.value
+  if (s.has(id)) { s.delete(id) } else { s.add(id) }
+  openIdeMenu.value = new Set(s)
+}
+
+/** 尝试用指定 IDE 打开项目，失败则降级到文件管理器 */
+async function handleOpenIde(path: string, ide: { name: string; cmd: string }) {
+  const cp = getNodeChildProcess()
+  if (cp) {
+    try {
+      await new Promise<void>((resolve, reject) => {
+        cp.execFile(ide.cmd, [path], { windowsHide: true, timeout: 5000 }, (err: any) => {
+          err ? reject(err) : resolve()
+        })
+      })
+      return
+    } catch { /* 降级 */ }
+  }
+  // 降级：打开文件夹
+  handleOpenPath(path)
+}
+
+/** 获取 child_process 模块 */
+function getNodeChildProcess(): typeof import("child_process") | null {
+  try {
+    return (window as any).require?.("child_process") ?? null
+  } catch { return null }
 }
 
 /** 将 git URL 转为浏览器可访问的 web URL */

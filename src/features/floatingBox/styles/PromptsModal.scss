@@ -235,6 +235,11 @@
   font-family: $font-body;
 }
 
+.vp-card-body {
+  max-height: 310px;
+  overflow-y: auto;
+}
+
 // 内容展示块
 .vp-content-block {
   margin-bottom: $spacing-1;

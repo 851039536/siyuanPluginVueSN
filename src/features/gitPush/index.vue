@@ -1587,7 +1587,7 @@ async function handleGenerateMsg(id: string) {
     const result = await generateCommitMsg(id)
     generatingMsgs.value = { ...generatingMsgs.value, [id]: { generating: false, text: result.message } }
     if (result.source === "heuristic") {
-      commitOutputs.value[id] = "⚠️ 未配置 AI API Key，使用启发式生成。可在超级面板设置中配置。"
+      commitOutputs.value[id] = "⚠️ AI 未返回有效信息，已使用启发式生成。"
     }
   } catch (e: any) {
     commitOutputs.value[id] = `❌ 生成失败: ${e?.message || e}`

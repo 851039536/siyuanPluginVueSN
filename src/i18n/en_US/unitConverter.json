@@ -1,4 +1,10 @@
 {
   "unitConverter": "Unit Converter",
-  "unitConverterDesc": "Provide unit conversion for length, area, volume, mass, power, time, speed, data storage, base, ASCII in the right sidebar"
+  "unitConverterDesc": "Provide unit conversion for length, area, volume, mass, power, time, speed, data storage, base, ASCII in the right sidebar",
+  "unitConverterTitle": "Unit Converter",
+  "lengthInputValue": "Input Value",
+  "lengthFromUnit": "From Unit",
+  "lengthToUnit": "To Unit",
+  "lengthPlaceholder": "Enter length value",
+  "lengthQuickResults": "Quick Conversion Results"
 }

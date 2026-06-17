@@ -134,5 +134,7 @@
   "highlightDescription": "Double-click text to automatically highlight",
   "enableFloatingToolbar": "Floating Toolbar",
   "floatingToolbarDescription": "Show toolbar with various actions when text is selected",
-  "collapse": "Collapse"
+  "collapse": "Collapse",
+  "enableHeatmapMarker": "Heatmap Marker",
+  "heatmapMarkerDescription": "Automatically mark English words from the wordbook in the document, displaying a heatmap gradient based on practice count"
 }

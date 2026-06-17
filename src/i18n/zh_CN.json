@@ -1071,6 +1071,7 @@
   "pronunciationPlaceholder": "输入中文或英文...",
   "pronunciationHelp": "谐音翻译",
   "pronunciationHint": "输入英文或中文，弹窗打开后自动生成谐音记忆（中文会先翻译成英文）",
+  "qrcodeFeature": "二维码生成器",
   "qrcodeDesc": "右键选中文本生成二维码，支持复制和下载",
   "qrcodeGenerate": "生成二维码",
   "qrcodeContent": "内容",

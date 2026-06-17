@@ -1,0 +1,6 @@
+{
+  "heatmapMarker": {
+    "title": "Heatmap Marker",
+    "description": "Automatically mark English words from the wordbook in the document, displaying a heatmap gradient based on practice count"
+  }
+}

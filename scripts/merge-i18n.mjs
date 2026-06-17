@@ -8,7 +8,7 @@
  *   2. 其他模块文件按字母顺序合并（后合并的 key 覆盖先合并的同名 key）
  */
 
-import { readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -51,7 +51,18 @@ function mergeI18n(lang) {
   }
 
   const outFile = join(I18N_DIR, `${lang}.json`)
-  writeFileSync(outFile, JSON.stringify(result, null, 2) + '\n', 'utf-8')
+  const newContent = JSON.stringify(result, null, 2) + '\n'
+
+  // 产物无变化时跳过写入，避免触发 Vite 文件监听导致重复构建
+  if (existsSync(outFile)) {
+    const existing = readFileSync(outFile, 'utf-8')
+    if (existing === newContent) {
+      console.log(`⏭️  ${lang}: No changes (${Object.keys(result).length} top-level keys / ${totalKeys} total)\n`)
+      return { topLevelKeys: Object.keys(result).length, totalKeys }
+    }
+  }
+
+  writeFileSync(outFile, newContent, 'utf-8')
   console.log(`✅ ${lang}: ${Object.keys(result).length} top-level keys (${totalKeys} total including nested)\n`)
 
   return { topLevelKeys: Object.keys(result).length, totalKeys }

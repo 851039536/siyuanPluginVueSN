@@ -61,6 +61,7 @@ export interface CodeBlockSettings {
   // 样式增强
   enabled: boolean
   backgroundColor: string
+  backgroundColorOpacity: number
   borderColor: string
   borderWidth: number
   borderRadius: number
@@ -158,6 +159,7 @@ export const DEFAULT_CODEBLOCK_SETTINGS: CodeBlockSettings = {
   collapseHeight: 400,
   enabled: false,
   backgroundColor: "#282c34",
+  backgroundColorOpacity: 1,
   borderColor: "#3e4451",
   borderWidth: 1,
   borderRadius: 6,

@@ -85,6 +85,7 @@
               <IconWrapper name="codeBlockBackground" :size="14" />
             </span>
             {{ i18n.codeBlockBackground || '背景色' }}
+            <span class="setting-value">{{ Math.round(settings.backgroundColorOpacity * 100) }}%</span>
           </label>
           <div class="color-picker-container">
             <input
@@ -98,6 +99,30 @@
               class="color-input"
               :placeholder="i18n.colorPlaceholder || '输入颜色值'"
             />
+          </div>
+          <div class="slider-container small">
+            <button
+              class="slider-btn"
+              @click="adjustOpacity(-0.1)"
+            >
+              −
+            </button>
+            <input
+              :value="settings.backgroundColorOpacity"
+              @input="onOpacityInput"
+              type="range"
+              min="0.1"
+              max="1"
+              step="0.05"
+              class="range-slider"
+            />
+            <button
+              class="slider-btn"
+              @click="adjustOpacity(0.1)"
+            >
+              +
+            </button>
+            <span class="slider-value">{{ Math.round(settings.backgroundColorOpacity * 100) }}%</span>
           </div>
         </div>
 
@@ -476,7 +501,7 @@ const colorFields = [
   { key: "numberColor" as const, i18nKey: "numberColor", label: "数字颜色" },
 ]
 
-// ── 防抖存储保存 ──
+// ── 防抖 ──
 let saveTimer: ReturnType<typeof setTimeout> | null = null
 function debouncedSave(s: CodeBlockSettings) {
   if (saveTimer) clearTimeout(saveTimer)
@@ -491,17 +516,27 @@ function debouncedSave(s: CodeBlockSettings) {
   }, 300)
 }
 
+let styleTimer: ReturnType<typeof setTimeout> | null = null
+function debouncedApplyEnhanced(s: CodeBlockSettings) {
+  if (styleTimer) clearTimeout(styleTimer)
+  styleTimer = setTimeout(() => {
+    applyCodeBlockEnhancedStyles(s)
+  }, 100)
+}
+
 // ── Watch ──
 watch(
   settings,
   (newSettings) => {
     emit("change", newSettings)
+    // 风格切换 / 折叠开关：轻量操作，立即执行
     applyCodeBlockStyle(newSettings.style)
     applyCodeBlockCollapse(
       newSettings.enableCollapse,
       newSettings.collapseHeight,
     )
-    applyCodeBlockEnhancedStyles(newSettings)
+    // 视觉属性：重建 <style> 开销大，100ms 防抖
+    debouncedApplyEnhanced(newSettings)
     debouncedSave(newSettings)
   },
   { deep: true, immediate: false },
@@ -525,6 +560,17 @@ function adjustValue(
   if (clamped !== current) {
     (settings.value as Record<string, unknown>)[key] = clamped
   }
+}
+
+function adjustOpacity(delta: number) {
+  const clamped = Math.max(0.1, Math.min(1, +(settings.value.backgroundColorOpacity + delta).toFixed(2)))
+  if (clamped !== settings.value.backgroundColorOpacity) {
+    settings.value.backgroundColorOpacity = clamped
+  }
+}
+
+function onOpacityInput(e: Event) {
+  settings.value.backgroundColorOpacity = +(e.target as HTMLInputElement).value
 }
 
 // ── 加载保存的设置 ──

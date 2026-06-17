@@ -913,11 +913,11 @@ import { onMounted, onUnmounted, ref, computed, watch } from "vue"
 import { Icon } from "@iconify/vue"
 import { copyToClipboard } from "@/utils/domUtils"
 import type { GitPushManager, GitProject, CommitLogEntry, ProjectStatus } from "./types"
+import { PLATFORM_META } from "./types"
 import { useGitPush } from "./composables/useGitPush"
 import WorkingTreePanel from "./components/WorkingTreePanel.vue"
 import StatsPanel from "./components/StatsPanel.vue"
-
-type RemoteKey = "github" | "gitee" | "gitea"
+import { pickDirectory } from "./composables/useDirectoryPicker"
 
 /** 批次化并发处理：避免所有项目同时涌入 git 信号量导致排队拥堵 */
 async function batchProcess<T>(items: T[], batchSize: number, fn: (item: T) => Promise<void>) {
@@ -927,12 +927,8 @@ async function batchProcess<T>(items: T[], batchSize: number, fn: (item: T) => P
   }
 }
 
-/** 远程仓库配置常量（驱动模板 v-for） */
-const REMOTES: { key: RemoteKey; icon: string; label: string; remoteProp: keyof GitProject }[] = [
-  { key: "github", icon: "mdi:github", label: "GitHub", remoteProp: "githubRemote" },
-  { key: "gitee", icon: "mdi:git", label: "Gitee", remoteProp: "giteeRemote" },
-  { key: "gitea", icon: "mdi:tea", label: "Gitea", remoteProp: "giteaRemote" },
-]
+/** 远程平台元数据（从 types 导入共享定义） */
+const REMOTES = PLATFORM_META.map(pm => ({ key: pm.key, icon: pm.icon, label: pm.label, remoteProp: pm.remoteProp }))
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -1804,53 +1800,8 @@ function hasBehind(projectId: string): boolean {
 }
 
 async function selectDirectory() {
-  // 优先使用 Electron 原生目录选择对话框（路径可靠）
-  if (typeof window.require === "function") {
-    try {
-      let remote: any
-      // 兼容新旧 Electron：先尝试 @electron/remote（Electron 14+），再回退 electron.remote
-      try {
-        remote = window.require("@electron/remote")
-      } catch {
-        const electron = window.require("electron")
-        remote = electron.remote || electron
-      }
-      if (remote?.dialog?.showOpenDialog) {
-        const result = await remote.dialog.showOpenDialog({
-          properties: ["openDirectory"],
-          title: "选择项目目录",
-        })
-        if (!result.canceled && result.filePaths[0]) {
-          newProjectPath.value = result.filePaths[0]
-          return
-        }
-      }
-    } catch {
-      // 降级到 webkitdirectory 方案
-    }
-  }
-  // 降级方案：浏览器环境使用 input[webkitdirectory]
-  try {
-    const input = document.createElement("input")
-    input.type = "file"
-    input.setAttribute("webkitdirectory", "")
-    input.setAttribute("directory", "")
-    input.onchange = (e: any) => {
-      const files = e.target?.files
-      if (files && files.length > 0) {
-        const relativePath = files[0].webkitRelativePath
-        const dirName = relativePath.split("/")[0]
-        if (files[0].path) {
-          const fullPath = files[0].path
-          const dirPath = fullPath.substring(0, fullPath.lastIndexOf(dirName) + dirName.length)
-          newProjectPath.value = dirPath
-        }
-      }
-    }
-    input.click()
-  } catch {
-    // 最终降级：用户手动输入
-  }
+  const path = await pickDirectory("选择项目目录")
+  if (path) newProjectPath.value = path
 }
 
 // ---- 扫描导入 ----
@@ -1913,52 +1864,8 @@ async function handleImportSelected() {
 
 /** 扫描目录专用路径选择，结果写入 scanDirInput */
 async function selectScanDirectory() {
-  // 优先使用 Electron 原生目录选择对话框
-  if (typeof window.require === "function") {
-    try {
-      let remote: any
-      try {
-        remote = window.require("@electron/remote")
-      } catch {
-        const electron = window.require("electron")
-        remote = electron.remote || electron
-      }
-      if (remote?.dialog?.showOpenDialog) {
-        const result = await remote.dialog.showOpenDialog({
-          properties: ["openDirectory"],
-          title: "选择要扫描的目录",
-        })
-        if (!result.canceled && result.filePaths[0]) {
-          scanDirInput.value = result.filePaths[0]
-          return
-        }
-      }
-    } catch {
-      // 降级
-    }
-  }
-  // 降级方案：浏览器环境使用 input[webkitdirectory]
-  try {
-    const input = document.createElement("input")
-    input.type = "file"
-    input.setAttribute("webkitdirectory", "")
-    input.setAttribute("directory", "")
-    input.onchange = (e: any) => {
-      const files = e.target?.files
-      if (files && files.length > 0) {
-        const relativePath = files[0].webkitRelativePath
-        const dirName = relativePath.split("/")[0]
-        if (files[0].path) {
-          const fullPath = files[0].path
-          const dirPath = fullPath.substring(0, fullPath.lastIndexOf(dirName) + dirName.length)
-          scanDirInput.value = dirPath
-        }
-      }
-    }
-    input.click()
-  } catch {
-    // 最终降级
-  }
+  const path = await pickDirectory("选择要扫描的目录")
+  if (path) scanDirInput.value = path
 }
 </script>
 

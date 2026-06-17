@@ -1,5 +1,6 @@
 import type { GitProject, PushStatusInfo, WorkingTreeInfo, ProjectCategory, CommitLogEntry, BranchInfo, ScannedGitRepo, StashEntry } from "../types"
 import type { GitPushManager } from "../types"
+import { PLATFORM_META } from "../types"
 import { ref, computed } from "vue"
 
 export function useGitPush(manager: GitPushManager) {
@@ -336,26 +337,40 @@ export function useGitPush(manager: GitPushManager) {
     return updated
   }
 
-  /** 格式化推送输出文本 */
-  function formatPushOutput(id: string, entries: { label: string; ok: boolean; stdout: string; stderr: string }[]) {
+  /** 格式化 Git 操作输出文本（推送/拉取共用） */
+  function formatGitOutput(
+    target: Record<string, string>, id: string, opName: string,
+    entries: { label: string; ok: boolean; stdout: string; stderr: string }[],
+  ) {
     const lines: string[] = []
     for (const e of entries) {
-      lines.push(`[${e.label}] ${e.ok ? "✅ 推送成功" : "❌ 推送失败"}`)
+      lines.push(`[${e.label}] ${e.ok ? `✅ ${opName}成功` : `❌ ${opName}失败`}`)
       if (e.stdout) lines.push(e.stdout)
       if (e.stderr) lines.push(`错误: ${e.stderr}`)
     }
-    pushOutputs.value[id] = lines.join("\n")
+    target[id] = lines.join("\n")
+  }
+
+  /** 从 target 字符串获取平台标签 */
+  function platformLabel(target: string): string {
+    return PLATFORM_META.find(pm => pm.key === target)?.label ?? "Gitea"
+  }
+
+  /** 将 pushToAll/pullToAll 返回的 result 对象转为格式化 entries 数组 */
+  function resultToEntries(result: { [key: string]: any }) {
+    return PLATFORM_META.map(pm => ({
+      label: pm.label,
+      ok: result[pm.key]?.ok ?? false,
+      stdout: result[pm.key]?.stdout ?? "",
+      stderr: result[pm.key]?.stderr ?? "",
+    }))
   }
 
   async function pushToAll(id: string) {
     pushingRemote.value[id] = "all"
     try {
       const result = await manager.pushToAll(id)
-      formatPushOutput(id, [
-        { label: "GitHub", ok: result.github.ok, stdout: result.github.stdout, stderr: result.github.stderr },
-        { label: "Gitee", ok: result.gitee.ok, stdout: result.gitee.stdout, stderr: result.gitee.stderr },
-        { label: "Gitea", ok: result.gitea.ok, stdout: result.gitea.stdout, stderr: result.gitea.stderr },
-      ])
+      formatGitOutput(pushOutputs.value, id, "推送", resultToEntries(result))
       loadPushStatus(id)
       return result
     } finally {
@@ -367,8 +382,9 @@ export function useGitPush(manager: GitPushManager) {
     pushingRemote.value[id] = target
     try {
       const result = await manager.pushSingle(id, target)
-      const label = target === "github" ? "GitHub" : target === "gitee" ? "Gitee" : "Gitea"
-      formatPushOutput(id, [{ label, ok: result.ok, stdout: result.stdout, stderr: result.stderr }])
+      formatGitOutput(pushOutputs.value, id, "推送", [{
+        label: platformLabel(target), ok: result.ok, stdout: result.stdout, stderr: result.stderr,
+      }])
       loadPushStatus(id)
       return result
     } finally {
@@ -376,26 +392,11 @@ export function useGitPush(manager: GitPushManager) {
     }
   }
 
-  /** 格式化拉取输出文本 */
-  function formatPullOutput(id: string, entries: { label: string; ok: boolean; stdout: string; stderr: string }[]) {
-    const lines: string[] = []
-    for (const e of entries) {
-      lines.push(`[${e.label}] ${e.ok ? "✅ 拉取成功" : "❌ 拉取失败"}`)
-      if (e.stdout) lines.push(e.stdout)
-      if (e.stderr) lines.push(`错误: ${e.stderr}`)
-    }
-    pullOutputs.value[id] = lines.join("\n")
-  }
-
   async function pullToAll(id: string) {
     pullingRemote.value[id] = "all"
     try {
       const result = await manager.pullToAll(id)
-      formatPullOutput(id, [
-        { label: "GitHub", ok: result.github.ok, stdout: result.github.stdout, stderr: result.github.stderr },
-        { label: "Gitee", ok: result.gitee.ok, stdout: result.gitee.stdout, stderr: result.gitee.stderr },
-        { label: "Gitea", ok: result.gitea.ok, stdout: result.gitea.stdout, stderr: result.gitea.stderr },
-      ])
+      formatGitOutput(pullOutputs.value, id, "拉取", resultToEntries(result))
       loadPushStatus(id)
       return result
     } finally {
@@ -407,8 +408,9 @@ export function useGitPush(manager: GitPushManager) {
     pullingRemote.value[id] = target
     try {
       const result = await manager.pullSingle(id, target)
-      const label = target === "github" ? "GitHub" : target === "gitee" ? "Gitee" : "Gitea"
-      formatPullOutput(id, [{ label, ok: result.ok, stdout: result.stdout, stderr: result.stderr }])
+      formatGitOutput(pullOutputs.value, id, "拉取", [{
+        label: platformLabel(target), ok: result.ok, stdout: result.stdout, stderr: result.stderr,
+      }])
       loadPushStatus(id)
       return result
     } finally {

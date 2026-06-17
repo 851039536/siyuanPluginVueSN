@@ -126,7 +126,7 @@ export class GitPushManager {
    * 更新项目元信息（tags/starred/status/archived/note 等）并持久化
    * 返回更新后的项目，未找到返回 null
    */
-  async updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "tags" | "starred" | "status" | "archived" | "note" | "name">>): Promise<GitProject | null> {
+  async updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "tags" | "starred" | "status" | "archived" | "note" | "name" | "githubUrl" | "giteeUrl" | "giteaUrl">>): Promise<GitProject | null> {
     const projects = await this.getProjects()
     const project = projects.find(p => p.id === id)
     if (!project) return null
@@ -617,6 +617,11 @@ export class GitPushManager {
     } catch {
       return ""
     }
+  }
+
+  /** 修改远程仓库 URL（git remote set-url） */
+  async setRemoteUrl(projectPath: string, name: string, url: string): Promise<void> {
+    await this.execGit(projectPath, ["remote", "set-url", name, url])
   }
 
   /**

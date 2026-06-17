@@ -1,42 +1,44 @@
+@use "@/variables.scss" as *;
+
 .markdown-export-settings {
-  padding: 12px;
+  padding: $spacing-3;
 }
 
 .settings-section {
-  margin-bottom: 16px;
+  margin-bottom: $spacing-4;
 }
 
 .section-title {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-background);
   margin: 0 0 4px;
 }
 
 .section-desc {
-  font-size: 12px;
+  font-size: $font-size-xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.6;
-  margin: 0 0 12px;
+  margin: 0 0 $spacing-3;
 }
 
 .action-buttons {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: $spacing-2;
+  margin-bottom: $spacing-3;
 }
 
 .button-group {
   display: flex;
-  gap: 8px;
+  gap: $spacing-2;
 }
 
 .export-tips {
-  margin-bottom: 12px;
+  margin-bottom: $spacing-3;
   padding: 10px;
   background: var(--b3-theme-surface);
-  border-radius: 4px;
+  border-radius: $radius-sm;
   border-left: 3px solid var(--b3-theme-primary);
 }
 
@@ -45,7 +47,7 @@
   align-items: flex-start;
   gap: 6px;
   margin-bottom: 6px;
-  font-size: 12px;
+  font-size: $font-size-xs;
   color: var(--b3-theme-on-surface);
 
   &:last-child {
@@ -55,7 +57,8 @@
 
 .tip-icon {
   flex-shrink: 0;
-  font-size: 13px;
+  font-size: $font-size-sm;
+  color: var(--b3-theme-primary);
 }
 
 .tip-text {
@@ -64,16 +67,16 @@
 }
 
 .notebook-list {
-  margin-bottom: 12px;
+  margin-bottom: $spacing-3;
 }
 
 .loading,
 .empty {
   text-align: center;
-  padding: 24px;
+  padding: $spacing-6;
   color: var(--b3-theme-on-surface);
   opacity: 0.6;
-  font-size: 13px;
+  font-size: $font-size-sm;
 }
 
 .notebook-items {
@@ -86,9 +89,9 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 10px;
+  padding: $spacing-2 10px;
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: $radius-sm;
   cursor: pointer;
 
   &:hover {
@@ -107,12 +110,13 @@
   }
 
   .notebook-icon {
-    font-size: 18px;
+    font-size: $font-size-lg;
+    flex-shrink: 0;
   }
 
   .notebook-name {
     flex: 1;
-    font-size: 13px;
+    font-size: $font-size-sm;
     color: var(--b3-theme-on-background);
   }
 
@@ -124,7 +128,7 @@
 }
 
 .export-progress {
-  margin-bottom: 12px;
+  margin-bottom: $spacing-3;
 
   .progress-bar {
     height: 6px;
@@ -147,12 +151,12 @@
 }
 
 .export-logs {
-  margin-top: 12px;
+  margin-top: $spacing-3;
 
   h4 {
-    margin: 0 0 8px;
-    font-size: 13px;
-    font-weight: 600;
+    margin: 0 0 $spacing-2;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
     color: var(--b3-theme-on-background);
   }
 
@@ -160,8 +164,8 @@
     max-height: 150px;
     overflow-y: auto;
     background: var(--b3-theme-surface);
-    border-radius: 4px;
-    padding: 8px;
+    border-radius: $radius-sm;
+    padding: $spacing-2;
   }
 
   .log-item {
@@ -181,4 +185,4 @@
       color: var(--b3-theme-on-surface);
     }
   }
-}
+}

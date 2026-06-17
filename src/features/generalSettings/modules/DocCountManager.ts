@@ -1,3 +1,5 @@
+import { type DocCountFormat, DOC_COUNT_FORMATTERS } from "../types/storage"
+
 /**
  * 笔记本文档数统计管理器
  * 用于在笔记本列表中显示文档数量
@@ -5,6 +7,7 @@
 export class DocCountManager {
   private updateTimer: number | null = null
   private updateInterval = 3600000 // 默认1小时
+  private displayFormat: DocCountFormat = "bracket"
   private fontStyle: {
     fontSize: string
     color: string
@@ -39,6 +42,17 @@ export class DocCountManager {
     if (this.updateTimer) {
       this.stopAutoUpdate()
       this.startAutoUpdate()
+    }
+  }
+
+  /**
+   * 设置显示格式
+   */
+  public setDisplayFormat(format: DocCountFormat): void {
+    this.displayFormat = format
+    // 重新渲染所有笔记本的文档数
+    if (this.updateTimer) {
+      this.setBoxCount()
     }
   }
 
@@ -78,14 +92,14 @@ export class DocCountManager {
         oldCountSpan.remove()
       }
 
-      // 移除文本中的文档数
-      const text = boxText.textContent?.replace(/\s*\(\d+\)$/, "") || ""
+      // 移除文本中的文档数（兼容所有格式：括号/方括号/纯数字/圆点）
+      const text = boxText.textContent?.replace(/\s*[([·]?\d+[)\]]?$/, "") || ""
       boxText.textContent = text
 
       // 创建带样式的文档数显示
       const countSpan = document.createElement("span")
       countSpan.className = "doc-count-number"
-      countSpan.textContent = ` (${count})`
+      countSpan.textContent = DOC_COUNT_FORMATTERS[this.displayFormat](count)
       countSpan.style.fontSize = this.fontStyle.fontSize
       countSpan.style.color = this.fontStyle.color
       countSpan.style.fontWeight = this.fontStyle.fontWeight

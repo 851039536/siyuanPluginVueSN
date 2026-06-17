@@ -132,6 +132,25 @@
         </select>
       </div>
 
+      <div class="style-row">
+        <label class="style-label">
+          {{ i18n?.displayFormat || '显示格式' }}
+        </label>
+        <select
+          v-model="displayFormat"
+          class="style-select"
+          @change="handleDisplayFormatChange"
+        >
+          <option
+            v-for="opt in formatOptions"
+            :key="opt.value"
+            :value="opt.value"
+          >
+            {{ opt.label }}
+          </option>
+        </select>
+      </div>
+
       <!-- 样式预览 -->
       <div class="style-preview">
         <label class="preview-label">
@@ -146,7 +165,7 @@
               color: fontColor,
               fontWeight,
             }"
-          >(123)</span>
+          >{{ previewFormatted }}</span>
         </div>
       </div>
     </div>
@@ -165,7 +184,7 @@ import SiSwitch from "@/components/Switch.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import { DocCountManager } from "../modules/DocCountManager"
 
-import { GeneralSettingsStorage } from "../types/storage"
+import { type DocCountFormat, DOC_COUNT_FORMATTERS, GeneralSettingsStorage } from "../types/storage"
 
 const props = defineProps<{
   i18n?: Record<string, string>
@@ -178,9 +197,17 @@ const emit = defineEmits<{
 
 const enableDocCount = ref(true)
 const updateInterval = ref("3600000")
+const displayFormat = ref<DocCountFormat>("bracket")
 const fontSize = ref("12px")
 const fontColor = ref("#8c8c8c")
 const fontWeight = ref("normal")
+
+const formatOptions: { value: DocCountFormat; label: string }[] = [
+  { value: "bracket", label: "(123)" },
+  { value: "square", label: "[123]" },
+  { value: "plain", label: "123" },
+  { value: "dot", label: "·123" },
+]
 
 /**
  * 获取 GeneralSettings 实例中的 DocCountManager
@@ -197,12 +224,16 @@ const ensureStorage = (): GeneralSettingsStorage => {
   return gsStorage.value
 }
 
+/** 预览用的格式化数字 */
+const previewFormatted = computed(() => DOC_COUNT_FORMATTERS[displayFormat.value](123))
+
 const loadSettings = async () => {
   try {
     const data = gsStorage.value ? await gsStorage.value.docCount.load() : null
     if (data) {
       enableDocCount.value = data.enableDocCount ?? true
       updateInterval.value = data.updateInterval || "3600000"
+      displayFormat.value = data.displayFormat || "bracket"
       fontSize.value = data.fontSize || "12px"
       fontColor.value = data.fontColor || "#8c8c8c"
       fontWeight.value = data.fontWeight || "normal"
@@ -217,6 +248,7 @@ const handleToggleChange = async () => {
     await ensureStorage().docCount.save({
       enableDocCount: enableDocCount.value,
       updateInterval: updateInterval.value,
+      displayFormat: displayFormat.value,
       fontSize: fontSize.value,
       fontColor: fontColor.value,
       fontWeight: fontWeight.value,
@@ -230,6 +262,7 @@ const handleToggleChange = async () => {
         const newManager = getDocCountManager()
         newManager?.start()
         newManager?.setUpdateInterval(Number.parseInt(updateInterval.value))
+        newManager?.setDisplayFormat(displayFormat.value)
         newManager?.setFontStyle({
           fontSize: fontSize.value,
           color: fontColor.value,
@@ -254,6 +287,7 @@ const handleToggleChange = async () => {
     emit("change", {
       enableDocCount: enableDocCount.value,
       updateInterval: updateInterval.value,
+      displayFormat: displayFormat.value,
       fontSize: fontSize.value,
       fontColor: fontColor.value,
       fontWeight: fontWeight.value,
@@ -268,6 +302,7 @@ const handleIntervalChange = async () => {
     await ensureStorage().docCount.save({
       enableDocCount: enableDocCount.value,
       updateInterval: updateInterval.value,
+      displayFormat: displayFormat.value,
       fontSize: fontSize.value,
       fontColor: fontColor.value,
       fontWeight: fontWeight.value,
@@ -287,6 +322,7 @@ const handleFontStyleChange = async () => {
     await ensureStorage().docCount.save({
       enableDocCount: enableDocCount.value,
       updateInterval: updateInterval.value,
+      displayFormat: displayFormat.value,
       fontSize: fontSize.value,
       fontColor: fontColor.value,
       fontWeight: fontWeight.value,
@@ -298,10 +334,31 @@ const handleFontStyleChange = async () => {
       color: fontColor.value,
       fontWeight: fontWeight.value,
     })
+    manager?.setDisplayFormat(displayFormat.value)
 
     showMessage("字体样式已修改", 2000, "info")
   } catch (e) {
     console.error("保存字体样式失败:", e)
+  }
+}
+
+const handleDisplayFormatChange = async () => {
+  try {
+    await ensureStorage().docCount.save({
+      enableDocCount: enableDocCount.value,
+      updateInterval: updateInterval.value,
+      displayFormat: displayFormat.value,
+      fontSize: fontSize.value,
+      fontColor: fontColor.value,
+      fontWeight: fontWeight.value,
+    })
+
+    const manager = getDocCountManager()
+    manager?.setDisplayFormat(displayFormat.value)
+
+    showMessage("显示格式已修改", 2000, "info")
+  } catch (e) {
+    console.error("保存显示格式失败:", e)
   }
 }
 

@@ -1009,7 +1009,8 @@
     "keepOurs": "保留本地版本",
     "keepTheirs": "保留远程版本",
     "abortMerge": "中止合并",
-    "selectTemplate": "选择模板..."
+    "selectTemplate": "选择模板...",
+    "visitPlatform": "访问 {0}"
   },
   "heatmapMarker": {
     "title": "热力图标记",

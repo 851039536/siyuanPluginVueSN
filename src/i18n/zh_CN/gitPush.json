@@ -4,7 +4,7 @@
   "gitPush": {
     "panelTitle": "Git 推送",
     "title": "Git 推送",
-    "addProject": "添加项目",
+    "addProject": "添加",
     "loading": "加载中...",
     "noProjects": "暂无项目，点击上方添加",
     "notDetected": "未检测到",
@@ -38,7 +38,7 @@
     "generating": "生成中...",
     "commit": "提交",
     "committing": "提交中...",
-    "importProject": "导入项目",
+    "importProject": "导入",
     "scanDir": "扫描目录",
     "scanDirPlaceholder": "选择要递归扫描的目录...",
     "startScan": "开始扫描",

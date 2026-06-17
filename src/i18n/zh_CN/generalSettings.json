@@ -80,6 +80,7 @@
   "fontFamilyPlaceholder": "输入字体名称，如: Microsoft YaHei, Arial",
   "fontSize": "字体大小",
   "fontWeight": "字体粗细",
+  "displayFormat": "显示格式",
   "enableCodeBlockStyle": "启用代码块样式增强",
   "codeBlockBackground": "背景色",
   "codeBlockBorder": "边框设置",

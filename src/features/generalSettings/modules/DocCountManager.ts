@@ -72,30 +72,52 @@ export class DocCountManager {
   }
 
   /**
-   * 给笔记本添加文档数
+   * 给笔记本添加文档数（批量查询优化）
    */
   private async setBoxCount(): Promise<void> {
     const boxes = document.querySelectorAll("ul[data-url]")
-    for (const box of boxes) {
-      const response = await this.query(
-        `SELECT count(*) as count FROM blocks where box = '${(box as HTMLElement).dataset.url}' and type = 'd';`,
-      )
-      if (!response[0] || !response[0].count) continue
+    if (boxes.length === 0) return
 
-      const count = response[0].count
+    // 收集所有 box URL，构建批量查询
+    const urls: string[] = []
+    const boxMap = new Map<string, Element>()
+    boxes.forEach((box) => {
+      const url = (box as HTMLElement).dataset.url
+      if (url) {
+        urls.push(url)
+        boxMap.set(url, box)
+      }
+    })
+    if (urls.length === 0) return
+
+    // 一次批量查询所有笔记本的文档数
+    const inClause = urls.map((u) => `'${u}'`).join(",")
+    const response = await this.query(
+      `SELECT box, count(*) as count FROM blocks WHERE box IN (${inClause}) AND type = 'd' GROUP BY box`,
+    )
+
+    // 构建 box → count 索引
+    const countMap = new Map<string, number>()
+    for (const row of response) {
+      if (row.box && row.count) countMap.set(row.box, row.count)
+    }
+
+    // 遍历 DOM，应用计数
+    for (const [url, box] of boxMap) {
+      const count = countMap.get(url)
+      if (!count) continue
+
       const li = box.querySelector('li[data-type="navigation-root"]')
       if (!li) continue
 
       const boxText = li.querySelector("span.b3-list-item__text")
       if (!boxText) continue
 
-      // 移除旧的文档数显示（包括带样式的span）
+      // 移除旧的文档数显示
       const oldCountSpan = boxText.querySelector(".doc-count-number")
-      if (oldCountSpan) {
-        oldCountSpan.remove()
-      }
+      if (oldCountSpan) oldCountSpan.remove()
 
-      // 移除文本中的文档数（兼容所有格式：括号/方括号/纯数字/圆点）
+      // 移除文本中的文档数（兼容所有格式）
       const text = boxText.textContent?.replace(/\s*[([·]?\d+[)\]]?$/, "") || ""
       boxText.textContent = text
 

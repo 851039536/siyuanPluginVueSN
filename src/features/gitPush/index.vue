@@ -65,7 +65,6 @@
       :push-status-stats="pushStatusStats"
       :needs-push-projects="needsPushProjects"
       :uncommitted-projects="uncommittedProjects"
-      :recent-commits="recentCommits"
       :no-platform-projects="noPlatformProjects"
       :platform-status-projects="platformStatusProjects"
       @view-project="onViewProject"
@@ -949,7 +948,6 @@ const {
   uncommittedProjects,
   noPlatformProjects,
   platformStatusProjects,
-  recentCommits,
   // 项目聚合管理
   allTags,
   starredProjects,

@@ -213,28 +213,6 @@
         </div>
       </div>
 
-      <!-- 最近提交 -->
-      <div v-if="recentCommits.length > 0" class="gp-stats-section">
-        <div class="gp-stats-section-title">{{ i18n.recentCommits || '最近提交' }}</div>
-        <div class="gp-timeline">
-          <div
-            v-for="rc in recentCommits.slice(0, 8)"
-            :key="rc.projectId"
-            class="gp-timeline-item"
-          >
-            <div class="gp-timeline-dot" />
-            <div class="gp-timeline-body">
-              <div class="gp-timeline-name">{{ rc.projectName }}</div>
-              <div class="gp-timeline-msg" :title="rc.entry.message">{{ rc.entry.message }}</div>
-              <div class="gp-timeline-meta">
-                <span>{{ rc.entry.author }}</span>
-                <span>·</span>
-                <span>{{ rc.entry.relativeDate }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </template>
   </div>
 </template>
@@ -264,10 +242,7 @@ export interface UncommittedItem {
   staged: number; unstaged: number; untracked: number
 }
 
-export interface RecentCommitEntry {
-  projectId: string; projectName: string
-  entry: { hash: string; message: string; author: string; relativeDate: string; date: string }
-}
+
 
 /** 平台配置状态明细项 */
 export interface PlatformStatusItem {
@@ -285,7 +260,6 @@ const props = defineProps<{
   pushStatusStats: PushStatusStats
   needsPushProjects: NeedsPushItem[]
   uncommittedProjects: UncommittedItem[]
-  recentCommits: RecentCommitEntry[]
   /** @deprecated 使用 platformStatusProjects 替代 */
   noPlatformProjects: GitProject[]
   /** 平台配置状态明细（每个项目的 GitHub/Gitee/Gitea 是否已配置） */

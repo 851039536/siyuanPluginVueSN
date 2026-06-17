@@ -241,11 +241,12 @@ export class GitPushManager {
           const url = parts[1]
           // 只在 fetch 行处理（避免 push 行重复）
           if (line.includes("(fetch)")) {
-            const lower = url.toLowerCase()
-            // 按域名识别已知平台；自托管 Gitea/其他 git 服务（URL 不含上述域名）
-            // 统一作为 Gitea 兜底，避免自建 Gitea（如 http://10.x.x.x:3000/...）无法识别
-            const isGithub = lower.includes("github.com")
-            const isGitee = lower.includes("gitee.com") || lower.includes("gitcode.com")
+            const lowerUrl = url.toLowerCase()
+            const lowerName = name.toLowerCase()
+            // 按域名 + 远程名称识别已知平台（均不区分大小写）；
+            // 自托管 Gitea/其他 git 服务（URL 不含上述域名且名称不匹配）统一作为 Gitea 兜底
+            const isGithub = lowerUrl.includes("github.com") || lowerName === "github"
+            const isGitee = lowerUrl.includes("gitee.com") || lowerUrl.includes("gitcode.com") || lowerName === "gitee"
             result.push({
               name,
               url,

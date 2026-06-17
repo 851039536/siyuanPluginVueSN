@@ -73,6 +73,7 @@
     "noRemoteLabel": "无远程",
     "noPlatformProjects": "平台未完整配置的项目",
     "pendingProjects": "待处理项目",
+    "allClear": "所有项目状态正常",
     "needsPushShort": "待推送",
     "needsPushList": "未及时推送项目",
     "recentCommits": "最近提交",

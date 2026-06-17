@@ -73,6 +73,7 @@
     "noRemoteLabel": "No Remote",
     "noPlatformProjects": "Projects with Missing Platforms",
     "pendingProjects": "Pending Projects",
+    "allClear": "All projects up to date",
     "needsPushShort": "Ahead",
     "needsPushList": "Projects Needing Push",
     "recentCommits": "Recent Commits",

@@ -122,41 +122,62 @@
 .gp-coverage-fill--gitea { background: #609926; }
 .gp-coverage-fill--multi { background: #8b5cf6; }
 
-// ── 推送状态分布 ──
-.gp-status-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
+// ── 推送状态概览条（待处理项目顶部）──
+.gp-status-bar {
+  display: flex;
+  gap: $spacing-1;
+  margin-bottom: $spacing-2;
 }
 
-.gp-status-cell {
-  text-align: center;
-  padding: 10px 4px;
-  border-radius: $radius-base;
+.gp-status-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: $radius-sm;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
+  font-size: 11px;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-surface);
+
+  span {
+    font-family: $vp-mono;
+    font-size: 13px;
+  }
+
+  &--ahead {
+    border-color: var(--b3-theme-primary-lighter);
+    color: var(--b3-theme-primary);
+    background: var(--b3-theme-primary-lightest);
+  }
+
+  &--behind {
+    border-color: var(--b3-theme-warning-lighter);
+    color: var(--b3-theme-warning);
+    background: var(--b3-theme-warning-lightest);
+  }
+
+  &--synced {
+    border-color: var(--b3-theme-success-lighter);
+    color: var(--b3-theme-success);
+    background: var(--b3-theme-success-lightest);
+  }
+
+  &--none {
+    opacity: 0.35;
+  }
 }
 
-.gp-status-cell-num {
-  font-size: $font-size-lg;
-  font-weight: $font-weight-bold;
-  font-family: $vp-mono;
-  line-height: 1.2;
-}
-
-.gp-status-cell-label {
-  font-size: 9px;
-  opacity: 0.55;
-  margin-top: 2px;
-  display: inline-flex;
+.gp-status-all-clear {
+  display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 6px;
+  padding: 10px $spacing-2;
+  font-size: 11px;
+  opacity: 0.45;
+  font-style: italic;
 }
-
-.gp-status-cell--ahead .gp-status-cell-num { color: var(--b3-theme-primary); }
-.gp-status-cell--behind .gp-status-cell-num { color: var(--b3-theme-warning); }
-.gp-status-cell--synced .gp-status-cell-num { color: var(--b3-theme-success); }
-.gp-status-cell--none .gp-status-cell-num { opacity: 0.3; }
 
 // ── 表格 ──
 .gp-table-wrap {

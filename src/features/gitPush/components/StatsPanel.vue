@@ -210,6 +210,7 @@
 import { computed } from "vue"
 import { Icon } from "@iconify/vue"
 import type { GitProject } from "../types"
+import { PLATFORM_META } from "../types"
 
 export interface RemoteCoverage {
   total: number; github: number; gitee: number; gitea: number
@@ -264,21 +265,6 @@ function pct(count: number): string {
   if (total === 0) return "0%"
   return `${Math.round((count / total) * 100)}%`
 }
-
-function formatDate(ts: number): string {
-  const d = new Date(ts)
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, "0")
-  const day = String(d.getDate()).padStart(2, "0")
-  return `${y}-${m}-${day}`
-}
-
-/** 平台元数据（驱动 v-for） */
-const PLATFORM_META: { key: string; icon: string; label: string }[] = [
-  { key: "github", icon: "mdi:github", label: "GitHub" },
-  { key: "gitee", icon: "mdi:git", label: "Gitee" },
-  { key: "gitea", icon: "mdi:tea", label: "Gitea" },
-]
 
 /** 合并后的待处理项目（需要推送 + 有未提交变更） */
 interface PendingProjectItem {

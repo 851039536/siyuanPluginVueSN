@@ -11,6 +11,13 @@ export type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileC
 export type { ScannedGitRepo }
 export { GitPushStorage, COMMIT_TYPE_VALUES, PROJECT_STATUS_VALUES }
 
+/** 远程平台元数据（单一数据源，供 index.vue / StatsPanel.vue / types 共用） */
+export const PLATFORM_META: { key: "github" | "gitee" | "gitea"; icon: string; label: string; remoteProp: keyof GitProject; urlProp: keyof GitProject }[] = [
+  { key: "github", icon: "mdi:github", label: "GitHub", remoteProp: "githubRemote", urlProp: "githubUrl" },
+  { key: "gitee", icon: "mdi:git", label: "Gitee", remoteProp: "giteeRemote", urlProp: "giteeUrl" },
+  { key: "gitea", icon: "mdi:tea", label: "Gitea", remoteProp: "giteaRemote", urlProp: "giteaUrl" },
+]
+
 export class GitPushManager {
   private plugin: Plugin
   storage: GitPushStorage
@@ -408,16 +415,11 @@ export class GitPushManager {
       return emptyResult
     }
 
-    // 检查每个已知的远程
+    // 检查每个已知的远程（由 PLATFORM_META 驱动）
     const remotesToCheck: { key: string; remoteName: string }[] = []
-    if (project.githubRemote) {
-      remotesToCheck.push({ key: "github", remoteName: project.githubRemote })
-    }
-    if (project.giteeRemote) {
-      remotesToCheck.push({ key: "gitee", remoteName: project.giteeRemote })
-    }
-    if (project.giteaRemote) {
-      remotesToCheck.push({ key: "gitea", remoteName: project.giteaRemote })
+    for (const pm of PLATFORM_META) {
+      const name = project[pm.remoteProp]
+      if (name) remotesToCheck.push({ key: pm.key, remoteName: name as string })
     }
 
     // 并行检查每个远程

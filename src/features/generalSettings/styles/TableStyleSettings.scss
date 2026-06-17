@@ -2,38 +2,37 @@
 
 $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 
-.table-style-settings {
+// ============================================================
+// 共享模式
+// ============================================================
+@mixin card-panel {
+  margin-top: $spacing-5;
   padding: $spacing-3;
-  box-sizing: border-box;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-md;
 }
 
-.settings-container {
+@mixin section-title {
   display: flex;
-  flex-direction: column;
-  gap: 14px;
-  max-width: 100%;
-}
-
-.setting-row {
-  display: flex;
-  width: 100%;
-}
-
-.setting-item {
-  display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 6px;
-  width: 100%;
+  font-size: 13px;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-surface);
+}
+
+// ============================================================
+// 组件样式
+// ============================================================
+
+.table-style-settings {
+  padding: $spacing-4;
 }
 
 .setting-label {
-  display: flex;
-  align-items: center;
-  gap: $spacing-1;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
-  color: var(--b3-theme-on-surface);
-  margin: 0;
+  @include section-title;
+  margin-bottom: 0;
 }
 
 .label-icon {
@@ -41,71 +40,49 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
   opacity: 0.8;
 }
 
-.setting-description {
-  font-size: 11px;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.6;
-  margin: $spacing-1 0 0 0;
+.toggle-description {
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface-variant);
+  margin-top: $spacing-2;
   line-height: 1.4;
 }
 
-.setting-value {
+// 颜色设置卡片
+.style-card {
+  @include card-panel;
+}
+
+.card-title {
+  @include section-title;
+  margin-bottom: 14px;
+}
+
+.title-icon {
+  font-size: 14px;
+}
+
+.style-row {
+  margin-bottom: $spacing-3;
+
+  &:last-of-type { margin-bottom: 0; }
+}
+
+.style-label {
+  display: block;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: var(--b3-theme-on-surface-variant);
+  margin-bottom: 6px;
+}
+
+.slider-value {
   margin-left: auto;
   font-size: 11px;
   color: var(--b3-theme-primary);
   font-weight: $font-weight-medium;
 }
 
-/* 开关 */
-.toggle-container {
-  display: flex;
-  align-items: center;
-  gap: $spacing-2;
-}
-
-.toggle-switch {
-  position: relative;
-  display: inline-block;
-  width: 44px;
-  height: 24px;
-}
-
-.toggle-input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-
-  &:checked + .toggle-slider {
-    background-color: var(--b3-theme-primary);
-  }
-}
-
-.toggle-slider {
-  position: absolute;
-  cursor: pointer;
-  inset: 0;
-  background-color: var(--b3-theme-surface-variant);
-  border-radius: 24px;
-
-  &:before {
-    position: absolute;
-    content: "";
-    height: 18px;
-    width: 18px;
-    left: 3px;
-    bottom: 3px;
-    background-color: white;
-    border-radius: 50%;
-  }
-}
-
-.toggle-description {
-  font-size: 11px;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.7;
-}
-
-/* 颜色输入组 */
+// 颜色输入组
 .color-input-group {
   display: flex;
   gap: $spacing-2;
@@ -115,13 +92,13 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 .color-picker {
   width: 40px;
   height: 32px;
-  border: 1px solid var(--b3-theme-outline);
+  border: 1px solid var(--b3-theme-surface-lighter);
   border-radius: $radius-base;
   cursor: pointer;
   padding: 2px;
-  background: var(--b3-theme-surface);
+  background: var(--b3-theme-background);
 
-  &::-webkit-color-swatch-wrapper { padding: 0; }
+  &::-webkit-color-swatch-wrapper { padding: 2px; }
   &::-webkit-color-swatch {
     border: none;
     border-radius: $radius-sm;
@@ -131,49 +108,47 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 .color-text {
   flex: 1;
   padding: 6px 10px;
-  border: 1px solid var(--b3-theme-outline);
+  border: 1px solid var(--b3-theme-surface-lighter);
   border-radius: $radius-base;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-  font-size: $font-size-xs;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  font-size: 13px;
   font-family: $vp-mono;
+
+  &:hover { border-color: var(--b3-theme-primary); }
 
   &:focus {
     outline: none;
     border-color: var(--b3-theme-primary);
+    box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.1);
   }
 }
 
-/* 滑块 */
-.slider-container {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-1;
-  width: 100%;
-}
-
+// 滑块
 .range-slider {
   width: 100%;
-  height: 6px;
-  border-radius: 3px;
-  background: var(--b3-theme-surface-variant);
+  height: 4px;
+  border-radius: 2px;
+  background: var(--b3-theme-surface-lighter);
   outline: none;
   -webkit-appearance: none;
   appearance: none;
+  cursor: pointer;
 
   &::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
     background: var(--b3-theme-primary);
     cursor: pointer;
+    border: none;
   }
 
   &::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
     background: var(--b3-theme-primary);
     cursor: pointer;
@@ -181,24 +156,16 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
   }
 }
 
-.slider-labels {
-  display: flex;
-  justify-content: space-between;
-  font-size: 10px;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.5;
-}
-
-/* 预览 */
-.preview-section {
-  margin-top: $spacing-2;
-  border: 1px solid var(--b3-theme-outline);
+// 预览卡片
+.preview-card {
+  margin-top: $spacing-5;
+  border: 1px solid var(--b3-theme-surface-lighter);
   border-radius: $radius-md;
   overflow: hidden;
   background: var(--b3-theme-surface);
 }
 
-.preview-toggle {
+.preview-header {
   display: flex;
   align-items: center;
   gap: $spacing-2;
@@ -207,24 +174,22 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
   background: var(--b3-theme-surface);
   user-select: none;
 
-  &:hover {
-    background: var(--b3-theme-surface-variant);
-  }
+  &:hover { background: var(--b3-theme-surface-lighter); }
 }
 
-.preview-icon {
+.preview-header-icon {
   font-size: 14px;
 }
 
-.toggle-arrow {
+.preview-arrow {
   margin-left: auto;
   font-size: 10px;
 }
 
-.preview-content {
+.preview-body {
   padding: $spacing-4;
   background: var(--b3-theme-background);
-  border-top: 1px solid var(--b3-theme-outline);
+  border-top: 1px solid var(--b3-border-color);
   overflow-x: auto;
 }
 
@@ -236,27 +201,29 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
   th, td {
     padding: $spacing-2 $spacing-3;
     text-align: left;
+    border: 1px solid var(--preview-cell-border, rgba(0, 0, 0, 0.171));
   }
 
   th {
-    background: var(--headerBackground, #e0ffd6);
+    background: var(--preview-header-bg, #e0ffd6);
+    color: var(--preview-text-color, #000);
     font-weight: $font-weight-semibold;
+  }
+
+  tr:nth-child(odd) {
+    background: var(--preview-odd-bg, #fff);
+  }
+
+  tr:nth-child(even) {
+    background: var(--preview-even-bg, #f8f8f8);
+  }
+
+  td {
+    color: var(--preview-text-color, #000);
   }
 }
 
-/* 预览展开动画 */
-.preview-expand-enter-active,
-.preview-expand-leave-active {
-  max-height: 500px;
-}
-
-.preview-expand-enter-from,
-.preview-expand-leave-to {
-  max-height: 0;
-  opacity: 0;
-}
-
-/* 重置按钮 */
+// 重置按钮
 .reset-btn {
   display: flex;
   align-items: center;
@@ -264,7 +231,8 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
   gap: 6px;
   padding: $spacing-2 $spacing-4;
   width: 100%;
-  border: 1px solid var(--b3-theme-outline);
+  margin-top: $spacing-4;
+  border: 1px solid var(--b3-theme-surface-lighter);
   border-radius: $radius-base;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
@@ -272,23 +240,16 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
   cursor: pointer;
 
   &:hover {
-    background: var(--b3-theme-surface-variant);
+    background: var(--b3-theme-surface-lighter);
     border-color: var(--b3-theme-primary);
   }
 }
 
-.btn-icon {
-  font-size: 14px;
-}
-
-/* 响应式 */
+// 响应式
 @media (max-width: 768px) {
   .color-input-group {
     flex-direction: column;
     align-items: stretch;
   }
-
-  .color-picker {
-    width: 100%;
-  }
+  .color-picker { width: 100%; }
 }

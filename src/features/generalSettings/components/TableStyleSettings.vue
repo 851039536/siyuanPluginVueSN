@@ -1,271 +1,120 @@
 <template>
   <div class="table-style-settings">
-    <div class="settings-container">
-      <!-- 表格样式设置 -->
-      <div class="setting-row">
-        <div class="setting-item">
-          <label class="setting-label">
-            <span class="label-icon"><IconWrapper name="tableBorder" :size="14" /></span>
-            {{ i18n.tableStyleSettings || '表格样式设置' }}
-          </label>
-          <p class="setting-description">
-            {{ i18n.tableStyleSettingsDesc || '自定义表格的边框、背景、颜色等样式' }}
-          </p>
-        </div>
-      </div>
+    <label class="setting-label">
+      <span class="label-icon"><IconWrapper name="tableBorder" :size="14" /></span>
+      {{ i18n.tableStyleSettings || '表格样式设置' }}
+    </label>
+    <SiSwitch
+      v-model="settings.enabled"
+      @change="handleToggleChange"
+    />
+    <p class="toggle-description">
+      {{ i18n.tableStyleSettingsDesc || '自定义表格的边框、背景、颜色等样式' }}
+    </p>
 
-      <!-- 启用表格样式设置 -->
-      <div class="setting-row">
-        <div class="setting-item">
-          <label class="setting-label">
-            <span class="label-icon"><IconWrapper name="starFourPoints" :size="14" /></span>
-            {{ i18n.enableTableStyle || '启用表格样式设置' }}
-          </label>
-          <div class="toggle-container">
-            <label class="toggle-switch">
-              <input
-                v-model="settings.enabled"
-                type="checkbox"
-                class="toggle-input"
-              />
-              <span class="toggle-slider"></span>
-            </label>
-            <span class="toggle-description">
-              {{ settings.enabled ? (i18n.enabled || '已启用') : (i18n.disabled || '已禁用') }}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <template v-if="settings.enabled">
-        <!-- 表格外框 -->
-        <div class="setting-row">
-          <div class="setting-item">
-            <label class="setting-label">
-              <span class="label-icon"><IconWrapper name="tableBorder" :size="14" /></span>
-              {{ i18n.tableBorder || '表格外框' }}
-            </label>
-            <div class="color-input-group">
-              <input
-                v-model="settings.borderColor"
-                type="color"
-                class="color-picker"
-              />
-              <input
-                v-model="settings.borderColor"
-                type="text"
-                class="color-text"
-                placeholder="#000000"
-              />
-            </div>
-          </div>
+    <template v-if="settings.enabled">
+      <!-- 颜色设置 -->
+      <div class="style-card">
+        <div class="card-title">
+          <span class="title-icon"><IconWrapper name="codeBlockColor" :size="14" /></span>
+          {{ i18n.tableStyleSettings || '表格样式' }}
         </div>
 
-        <!-- 单元格边框 -->
-        <div class="setting-row">
-          <div class="setting-item">
-            <label class="setting-label">
-              <span class="label-icon"><IconWrapper name="tableCell" :size="14" /></span>
-              {{ i18n.tableCellBorder || '单元格边框' }}
-            </label>
-            <div class="color-input-group">
-              <input
-                v-model="settings.cellBorderColor"
-                type="color"
-                class="color-picker"
-              />
-              <input
-                v-model="settings.cellBorderColor"
-                type="text"
-                class="color-text"
-                placeholder="#000000"
-              />
-            </div>
-          </div>
-        </div>
-
-        <!-- 表头背景 -->
-        <div class="setting-row">
-          <div class="setting-item">
-            <label class="setting-label">
-              <span class="label-icon"><IconWrapper name="tableHeader" :size="14" /></span>
-              {{ i18n.tableHeaderBackground || '表头背景' }}
-            </label>
-            <div class="color-input-group">
-              <input
-                v-model="settings.headerBackground"
-                type="color"
-                class="color-picker"
-              />
-              <input
-                v-model="settings.headerBackground"
-                type="text"
-                class="color-text"
-                placeholder="#e0ffd6"
-              />
-            </div>
-          </div>
-        </div>
-
-        <!-- 奇数行背景 -->
-        <div class="setting-row">
-          <div class="setting-item">
-            <label class="setting-label">
-              <span class="label-icon"><IconWrapper name="tableRowOdd" :size="14" /></span>
-              {{ i18n.tableOddRowBackground || '奇数行背景' }}
-            </label>
-            <div class="color-input-group">
-              <input
-                v-model="settings.oddRowBackground"
-                type="color"
-                class="color-picker"
-              />
-              <input
-                v-model="settings.oddRowBackground"
-                type="text"
-                class="color-text"
-                placeholder="#ffffff"
-              />
-            </div>
-          </div>
-        </div>
-
-        <!-- 偶数行背景 -->
-        <div class="setting-row">
-          <div class="setting-item">
-            <label class="setting-label">
-              <span class="label-icon"><IconWrapper name="tableRowEven" :size="14" /></span>
-              {{ i18n.tableEvenRowBackground || '偶数行背景' }}
-            </label>
-            <div class="color-input-group">
-              <input
-                v-model="settings.evenRowBackground"
-                type="color"
-                class="color-picker"
-              />
-              <input
-                v-model="settings.evenRowBackground"
-                type="text"
-                class="color-text"
-                placeholder="#f8f8f8"
-              />
-            </div>
-          </div>
-        </div>
-
-        <!-- 文本颜色 -->
-        <div class="setting-row">
-          <div class="setting-item">
-            <label class="setting-label">
-              <span class="label-icon"><IconWrapper name="tableTextColor" :size="14" /></span>
-              {{ i18n.tableTextColor || '文本颜色' }}
-            </label>
-            <div class="color-input-group">
-              <input
-                v-model="settings.textColor"
-                type="color"
-                class="color-picker"
-              />
-              <input
-                v-model="settings.textColor"
-                type="text"
-                class="color-text"
-                placeholder="#000000"
-              />
-            </div>
+        <div
+          v-for="field in colorFields"
+          :key="field.key"
+          class="style-row"
+        >
+          <label class="style-label">{{ i18n[field.labelKey] || field.fallback }}</label>
+          <div class="color-input-group">
+            <input
+              v-model="settings[field.key]"
+              type="color"
+              class="color-picker"
+              @input="handleColorChange"
+            />
+            <input
+              v-model="settings[field.key]"
+              type="text"
+              class="color-text"
+              :placeholder="field.placeholder"
+              @change="handleColorChange"
+            />
           </div>
         </div>
 
         <!-- 圆角大小 -->
-        <div class="setting-row">
-          <div class="setting-item">
-            <label class="setting-label">
-              <span class="label-icon"><IconWrapper name="borderRadius" :size="14" /></span>
-              {{ i18n.tableBorderRadius || '圆角大小' }}
-              <span class="setting-value">{{ settings.borderRadius }}px</span>
-            </label>
-            <div class="slider-container">
-              <input
-                v-model.number="settings.borderRadius"
-                type="range"
-                min="0"
-                max="20"
-                step="1"
-                class="range-slider"
-              />
-              <div class="slider-labels">
-                <span>0px</span>
-                <span>20px</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 预览区域 -->
-        <div class="preview-section">
-          <div
-            class="preview-toggle"
-            @click="togglePreview"
-          >
-            <span class="preview-icon"><IconWrapper :name="showPreview ? 'eye' : 'eyeOff'" :size="14" /></span>
-            <span>{{ i18n.preview || '预览效果' }}</span>
-            <span
-              class="toggle-arrow"
-              :class="{ expanded: showPreview }"
-            ><IconWrapper name="chevronDown" :size="10" /></span>
-          </div>
-          <transition name="preview-expand">
-            <div
-              v-show="showPreview"
-              class="preview-content"
-            >
-              <table
-                class="preview-table"
-                :style="previewTableStyle"
-              >
-                <thead>
-                  <tr>
-                    <th>标题 1</th>
-                    <th>标题 2</th>
-                    <th>标题 3</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>数据 1-1</td>
-                    <td>数据 1-2</td>
-                    <td>数据 1-3</td>
-                  </tr>
-                  <tr>
-                    <td>数据 2-1</td>
-                    <td>数据 2-2</td>
-                    <td>数据 2-3</td>
-                  </tr>
-                  <tr>
-                    <td>数据 3-1</td>
-                    <td>数据 3-2</td>
-                    <td>数据 3-3</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </transition>
-        </div>
-      </template>
-
-      <!-- 重置按钮 -->
-      <div class="setting-row">
-        <div class="setting-item">
-          <button
-            class="reset-btn"
-            @click="resetSettings"
-          >
-            <span class="btn-icon"><IconWrapper name="refresh" :size="14" /></span>
-            {{ i18n.resetToDefault || '恢复默认设置' }}
-          </button>
+        <div class="style-row">
+          <label class="style-label">
+            {{ i18n.tableBorderRadius || '圆角大小' }}
+            <span class="slider-value">{{ settings.borderRadius }}px</span>
+          </label>
+          <input
+            v-model.number="settings.borderRadius"
+            type="range"
+            min="0"
+            max="20"
+            step="1"
+            class="range-slider"
+          />
         </div>
       </div>
-    </div>
+
+      <!-- 预览区域 -->
+      <div class="preview-card">
+        <div
+          class="preview-header"
+          @click="togglePreview"
+        >
+          <span class="preview-header-icon"><IconWrapper :name="showPreview ? 'eye' : 'eyeOff'" :size="14" /></span>
+          <span>{{ i18n.preview || '预览效果' }}</span>
+          <span class="preview-arrow"><IconWrapper name="chevronDown" :size="10" /></span>
+        </div>
+        <div
+          v-show="showPreview"
+          class="preview-body"
+        >
+          <table
+            class="preview-table"
+            :style="previewTableStyle"
+          >
+            <thead>
+              <tr>
+                <th>标题 1</th>
+                <th>标题 2</th>
+                <th>标题 3</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>数据 1-1</td>
+                <td>数据 1-2</td>
+                <td>数据 1-3</td>
+              </tr>
+              <tr>
+                <td>数据 2-1</td>
+                <td>数据 2-2</td>
+                <td>数据 2-3</td>
+              </tr>
+              <tr>
+                <td>数据 3-1</td>
+                <td>数据 3-2</td>
+                <td>数据 3-3</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </template>
+
+    <!-- 重置按钮 -->
+    <button
+      class="reset-btn"
+      @click="resetSettings"
+    >
+      <IconWrapper name="refresh" :size="14" />
+      <span>{{ i18n.resetToDefault || '恢复默认设置' }}</span>
+    </button>
   </div>
 </template>
 
@@ -278,7 +127,9 @@ import {
   ref,
   watch,
 } from "vue"
+import SiSwitch from "@/components/Switch.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import { showMessage } from "siyuan"
 import { injectStyle, removeStyle } from "@/utils/domUtils"
 import { GeneralSettingsStorage, type TableStyleSettings as TableStyleSettingsData } from "../types/storage"
 
@@ -311,14 +162,35 @@ const DEFAULT_SETTINGS: TableStyleSettingsData = {
   borderRadius: 6,
 }
 
+/** 颜色字段配置——数据驱动，替代 5 段重复模板 */
+const colorFields: {
+  key: keyof Pick<TableStyleSettingsData, "borderColor" | "cellBorderColor" | "headerBackground" | "oddRowBackground" | "evenRowBackground" | "textColor">
+  labelKey: string
+  fallback: string
+  placeholder: string
+}[] = [
+  { key: "borderColor", labelKey: "tableBorder", fallback: "表格外框", placeholder: "#000000" },
+  { key: "cellBorderColor", labelKey: "tableCellBorder", fallback: "单元格边框", placeholder: "#000000" },
+  { key: "headerBackground", labelKey: "tableHeaderBackground", fallback: "表头背景", placeholder: "#e0ffd6" },
+  { key: "oddRowBackground", labelKey: "tableOddRowBackground", fallback: "奇数行背景", placeholder: "#ffffff" },
+  { key: "evenRowBackground", labelKey: "tableEvenRowBackground", fallback: "偶数行背景", placeholder: "#f8f8f8" },
+  { key: "textColor", labelKey: "tableTextColor", fallback: "文本颜色", placeholder: "#000000" },
+]
+
 const settings = ref<TableStyleSettingsData>({ ...DEFAULT_SETTINGS })
 const showPreview = ref(true)
 
 const previewTableStyle = computed(() => ({
   borderRadius: `${settings.value.borderRadius}px`,
+  border: `1px solid ${settings.value.borderColor}`,
+  "--preview-cell-border": settings.value.cellBorderColor,
+  "--preview-header-bg": settings.value.headerBackground,
+  "--preview-odd-bg": settings.value.oddRowBackground,
+  "--preview-even-bg": settings.value.evenRowBackground,
+  "--preview-text-color": settings.value.textColor,
 }))
 
-/** 防抖保存（100ms）—— 颜色拖动时减少写盘频率 */
+/** 防抖保存 */
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
 watch(
@@ -336,43 +208,53 @@ function togglePreview() {
   showPreview.value = !showPreview.value
 }
 
+function handleToggleChange() {
+  saveSettings()
+  applyTableStyles(settings.value)
+  showMessage(
+    settings.value.enabled ? "表格样式已启用" : "表格样式已禁用",
+    2000,
+    "info",
+  )
+}
+
+function handleColorChange() {
+  // watch(deep) 自动处理保存和样式应用
+}
+
 function resetSettings() {
   settings.value = { ...DEFAULT_SETTINGS }
+  showMessage("已恢复默认设置", 2000, "info")
 }
 
 function applyTableStyles(tableSettings: TableStyleSettingsData) {
   try {
     removeStyle(STYLE_ID)
-
     if (!tableSettings.enabled) return
 
     const css = `
       .protyle-wysiwyg table {
-        border-collapse: collapse !important;
-        border: 1px solid ${tableSettings.borderColor} !important;
-        border-radius: ${tableSettings.borderRadius}px !important;
+        border-collapse: collapse;
+        border: 1px solid ${tableSettings.borderColor};
+        border-radius: ${tableSettings.borderRadius}px;
         overflow: hidden;
       }
       .protyle-wysiwyg table th,
       .protyle-wysiwyg table td {
-        border: 1.5px solid ${tableSettings.cellBorderColor} !important;
+        border: 1px solid ${tableSettings.cellBorderColor};
       }
       .protyle-wysiwyg table th {
-        background-color: ${tableSettings.headerBackground} !important;
+        background-color: ${tableSettings.headerBackground};
         color: ${tableSettings.textColor};
       }
       .protyle-wysiwyg table tr:nth-child(odd) {
-        background-color: ${tableSettings.oddRowBackground} !important;
-        color: ${tableSettings.textColor};
+        background-color: ${tableSettings.oddRowBackground};
       }
       .protyle-wysiwyg table tr:nth-child(even) {
-        background-color: ${tableSettings.evenRowBackground} !important;
-        color: ${tableSettings.textColor};
+        background-color: ${tableSettings.evenRowBackground};
       }
-      :root[data-theme-mode="dark"] .protyle-wysiwyg table th,
-      :root[data-theme-mode="dark"] .protyle-wysiwyg table tr:nth-child(odd),
-      :root[data-theme-mode="dark"] .protyle-wysiwyg table tr:nth-child(even) {
-        color: #ffffff;
+      .protyle-wysiwyg table td {
+        color: ${tableSettings.textColor};
       }
     `
     injectStyle(STYLE_ID, css)
@@ -385,7 +267,6 @@ const gsStorage = computed(() => props.plugin ? new GeneralSettingsStorage(props
 
 async function loadSettings() {
   if (!gsStorage.value) return
-
   try {
     const data = await gsStorage.value.tableStyle.load()
     if (data) {

@@ -55,11 +55,11 @@
         </button>
         <button class="vp-btn vp-btn--ghost gp-add-btn" @click="showAddDialog = true">
           <Icon icon="mdi:plus" />
-          <span>{{ i18n.addProject || '添加项目' }}</span>
+          <span>{{ i18n.addProject || '添加' }}</span>
         </button>
         <button class="vp-btn vp-btn--ghost gp-add-btn" @click="handleOpenScan">
           <Icon icon="mdi:file-find-outline" />
-          <span>{{ i18n.importProject || '导入项目' }}</span>
+          <span>{{ i18n.importProject || '导入' }}</span>
         </button>
       </div>
     </div>
@@ -561,7 +561,7 @@
     <div v-if="showAddDialog" class="gp-mask" @click.self="showAddDialog = false">
       <div class="gp-dialog">
         <div class="gp-dialog-header">
-          <span class="gp-dialog-title">{{ i18n.addProject || '添加项目' }}</span>
+          <span class="gp-dialog-title">{{ i18n.addProject || '添加' }}</span>
           <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="showAddDialog = false">
             <Icon icon="mdi:close" />
           </button>
@@ -710,7 +710,7 @@
     <div v-if="showScanDialog" class="gp-mask" @click.self="handleCloseScan">
       <div class="gp-dialog" style="width: 520px;">
         <div class="gp-dialog-header">
-          <span class="gp-dialog-title">{{ i18n.importProject || '导入项目' }}</span>
+          <span class="gp-dialog-title">{{ i18n.importProject || '导入' }}</span>
           <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="handleCloseScan">
             <Icon icon="mdi:close" />
           </button>

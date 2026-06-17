@@ -52,54 +52,11 @@
   font-weight: 500;
 }
 
-/* 开关样式 */
+/* 开关样式（使用 SiSwitch 组件，此处仅保留布局） */
 .toggle-container {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.toggle-switch {
-  position: relative;
-  display: inline-block;
-  width: 44px;
-  height: 24px;
-}
-
-.toggle-input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-
-  &:checked + .toggle-slider {
-    background-color: var(--b3-theme-primary);
-
-    &:before {
-    }
-  }
-}
-
-.toggle-slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: var(--b3-theme-surface-variant);
-  border-radius: 24px;
-
-  &:before {
-    position: absolute;
-    content: "";
-    height: 18px;
-    width: 18px;
-    left: 3px;
-    bottom: 3px;
-    background-color: white;
-    border-radius: 50%;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  }
 }
 
 .toggle-description {
@@ -224,9 +181,6 @@
     background: var(--b3-theme-primary);
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-
-    &:hover {
-    }
   }
 
   &::-moz-range-thumb {
@@ -277,9 +231,11 @@
 
 .toggle-arrow {
   margin-left: auto;
-  font-size: 10px;
+  display: inline-flex;
+  transition: transform 0.2s ease;
 
   &.expanded {
+    transform: rotate(180deg);
   }
 }
 
@@ -345,13 +301,6 @@
     background: var(--b3-theme-surface-variant);
     border-color: var(--b3-theme-primary);
   }
-
-  &:active {
-  }
-}
-
-.btn-icon {
-  font-size: 14px;
 }
 
 /* 响应式设计 */

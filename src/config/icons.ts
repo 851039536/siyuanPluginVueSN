@@ -258,6 +258,49 @@ export const FEATURE_ICONS = {
     icon: "mdi:source-repository",
     color: "#f05032",
   },
+  // 代码块设置
+  codeBlockEnable: {
+    icon: "mdi:star-four-points",
+    color: "#fbbf24",
+  },
+  codeBlockStyle: {
+    icon: "mdi:palette-swatch",
+    color: "#a855f7",
+  },
+  codeBlockDefault: {
+    icon: "mdi:file-document-outline",
+  },
+  codeBlockGithub: {
+    icon: "mdi:github",
+  },
+  codeBlockMac: {
+    icon: "mdi:apple",
+  },
+  codeBlockAdvanced: {
+    icon: "mdi:cog-outline",
+    color: "#8b5cf6",
+  },
+  codeBlockBackground: {
+    icon: "mdi:image-outline",
+  },
+  codeBlockBorder: {
+    icon: "mdi:border-outside",
+  },
+  codeBlockShadow: {
+    icon: "mdi:circle-opacity",
+  },
+  codeBlockFont: {
+    icon: "mdi:format-font",
+  },
+  codeBlockColor: {
+    icon: "mdi:palette",
+  },
+  codeBlockCollapse: {
+    icon: "mdi:package-variant-closed",
+  },
+  codeBlockHeight: {
+    icon: "mdi:ruler",
+  },
 } as const
 
 /**

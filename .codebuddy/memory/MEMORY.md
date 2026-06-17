@@ -8,6 +8,7 @@
 - 优先思源内置图标或 @iconify/vue
 
 ## 最近重构记录
+- 2026-06-17：CodeBlockSettings 全面审查重构 — **Vue 组件**：emoji 图标替换为 Iconify 图标（12 处，CLAUDE.md 硬规则）；`getStyleName/getStyleDesc` 改为 `computed` 预计算映射（消除 v-for 内每次渲染重建 Record）；watch 存储保存添加 300ms 防抖；颜色字段改用 `colorFields` 数据驱动 `v-for` 渲染（原 6 个重复块的 54 行→17 行）；字体选项列表提取为 `presetFonts` 常量 + `v-for`。**SCSS**：移除 ~500 行死代码（预览区/语法高亮类无对应模板元素）；硬编码值替换为设计 Token（`$spacing-*/$radius-*/$font-size-*/$font-weight-*`）；响应式媒体查询合并为单一位置；`.toggle-slider::before` box-shadow→border。**icons.ts**：新增 12 个代码块图标注册。构建验证通过。
 - 2026-06-17：代码块样式模块化迁移 — 将 `src/index.scss` 第13-222行代码块美化样式移至新文件 `src/features/generalSettings/styles/codeblockThemes.scss`，index.scss 改为 `@use` 引入。审查了静态 SCSS 与动态 JS 注入样式（`styles.ts` → `applyCodeBlockEnhancedStyles()`）的冲突，产出 `docs/codeblock-styles-conflict-review.md`。发现 3 个严重问题：动态 `!important` 覆盖 hover 边框变色、静态/动态两套行号机制共存（CSS counter vs `.ln`）、动态层滥用 20+ 处 `!important` 破坏 CSS 级联。架构校验通过 6 大原则。
 - 2026-06-16：紧凑模式功能抽取并增强 — 将 index.scss 中紧凑模式 CSS 抽取为独立模块 `src/features/compactMode/`。**细调增强**：3 档间距密度（适中/紧凑/极简）+ 5 档字号缩放（80%/85%/90%/95%/100%）独立控制、5 个区域独立开关。全部通过 Sass @each 编译期乘法计算固定值，零 calc()/var()，CSS 类体系：siyuan-compact-mode + compact-density-* + compact-font-* + compact-area-*。
 - 2026-06-16：index.scss 审查修复 — 移除 6 处 box-shadow（Codex 违规→替换为 border），紧凑模式块硬编码值替换为 $spacing-*/$font-size-* Token，移除废弃的 $codeblock-shadow 变量，修复格式问题。唯一保留的 box-shadow：Mac 代码块 ::before 伪元素的红黄绿按钮（纯 CSS 渲染技术，非页面阴影效果）

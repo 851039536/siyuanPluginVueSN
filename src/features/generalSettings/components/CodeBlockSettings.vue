@@ -5,7 +5,9 @@
       <div class="setting-row">
         <div class="setting-item">
           <label class="setting-label">
-            <span class="label-icon">✨</span>
+            <span class="label-icon">
+              <IconWrapper name="codeBlockEnable" :size="14" />
+            </span>
             {{ i18n.enableCodeBlockStyle || '启用代码块样式增强' }}
           </label>
           <div class="toggle-container">
@@ -31,28 +33,28 @@
       >
         <div class="setting-item">
           <label class="setting-label">
-            <span class="label-icon">🎨</span>
+            <span class="label-icon">
+              <IconWrapper name="codeBlockStyle" :size="14" />
+            </span>
             {{ i18n.codeBlockStyle || '代码块风格' }}
           </label>
           <!-- 风格卡片选择器 -->
           <div class="style-cards">
             <div
-              v-for="style in (['default', 'github', 'mac'] as const)"
+              v-for="style in STYLE_OPTIONS"
               :key="style"
               class="style-card"
-              :class="[{ active: settings.style === style }]"
-              @click="settings.style = style as 'default' | 'github' | 'mac'"
+              :class="{ active: settings.style === style }"
+              @click="settings.style = style"
             >
               <div class="style-card-icon">
-                <span v-if="style === 'default'">📄</span>
-                <span v-if="style === 'github'">🐙</span>
-                <span v-if="style === 'mac'">🍎</span>
+                <IconWrapper :name="styleIcons[style]" :size="22" />
               </div>
               <div class="style-card-name">
-                {{ getStyleName(style) }}
+                {{ styleNameMap[style] }}
               </div>
               <div class="style-card-desc">
-                {{ getStyleDesc(style) }}
+                {{ styleDescMap[style] }}
               </div>
               <div
                 v-if="settings.style === style"
@@ -70,14 +72,18 @@
         class="advanced-settings"
       >
         <div class="setting-header">
-          <span class="label-icon">⚙️</span>
+          <span class="label-icon">
+            <IconWrapper name="codeBlockAdvanced" :size="14" />
+          </span>
           <span>{{ i18n.advancedSettings || '高级设置' }}</span>
         </div>
 
         <!-- 背景色 -->
         <div class="setting-item">
           <label class="setting-label">
-            <span class="label-icon">🖼️</span>
+            <span class="label-icon">
+              <IconWrapper name="codeBlockBackground" :size="14" />
+            </span>
             {{ i18n.codeBlockBackground || '背景色' }}
           </label>
           <div class="color-picker-container">
@@ -98,7 +104,9 @@
         <!-- 边框设置 -->
         <div class="setting-item">
           <label class="setting-label">
-            <span class="label-icon">🔲</span>
+            <span class="label-icon">
+              <IconWrapper name="codeBlockBorder" :size="14" />
+            </span>
             {{ i18n.codeBlockBorder || '边框设置' }}
           </label>
           <div class="border-settings">
@@ -175,7 +183,9 @@
         <!-- 阴影 -->
         <div class="setting-item">
           <label class="setting-label">
-            <span class="label-icon">🌓</span>
+            <span class="label-icon">
+              <IconWrapper name="codeBlockShadow" :size="14" />
+            </span>
             {{ i18n.codeBlockShadow || '阴影' }}
           </label>
           <div class="shadow-options">
@@ -183,7 +193,7 @@
               v-for="shadow in shadowOptions"
               :key="shadow.value"
               class="shadow-btn"
-              :class="[{ active: settings.boxShadow === shadow.value }]"
+              :class="{ active: settings.boxShadow === shadow.value }"
               @click="settings.boxShadow = shadow.value"
             >
               {{ shadow.label }}
@@ -194,7 +204,9 @@
         <!-- 代码字体设置 -->
         <div class="setting-item">
           <label class="setting-label">
-            <span class="label-icon">🔤</span>
+            <span class="label-icon">
+              <IconWrapper name="codeBlockFont" :size="14" />
+            </span>
             {{ i18n.codeFontSettings || '代码字体' }}
           </label>
           <div class="font-settings">
@@ -215,23 +227,12 @@
                   <option value="">
                     {{ i18n.selectFont || '选择字体' }}
                   </option>
-                  <option value="Consolas">
-                    Consolas
-                  </option>
-                  <option value="Monaco">
-                    Monaco
-                  </option>
-                  <option value="Courier New">
-                    Courier New
-                  </option>
-                  <option value="Fira Code">
-                    Fira Code
-                  </option>
-                  <option value="Source Code Pro">
-                    Source Code Pro
-                  </option>
-                  <option value="JetBrains Mono">
-                    JetBrains Mono
+                  <option
+                    v-for="f in presetFonts"
+                    :key="f"
+                    :value="f"
+                  >
+                    {{ f }}
                   </option>
                 </select>
               </div>
@@ -294,95 +295,26 @@
         <!-- 代码颜色设置 -->
         <div class="setting-item">
           <label class="setting-label">
-            <span class="label-icon">🎨</span>
+            <span class="label-icon">
+              <IconWrapper name="codeBlockColor" :size="14" />
+            </span>
             {{ i18n.codeColorSettings || '代码颜色' }}
           </label>
           <div class="color-settings">
-            <div class="color-row">
-              <label>{{ i18n.textColor || '文本颜色' }}</label>
+            <div
+              v-for="colorField in colorFields"
+              :key="colorField.key"
+              class="color-row"
+            >
+              <label>{{ i18n[colorField.i18nKey] || colorField.label }}</label>
               <div class="color-picker-container">
                 <input
-                  v-model="settings.textColor"
+                  v-model="settings[colorField.key]"
                   type="color"
                   class="color-picker"
                 />
                 <input
-                  v-model="settings.textColor"
-                  type="text"
-                  class="color-input"
-                />
-              </div>
-            </div>
-            <div class="color-row">
-              <label>{{ i18n.keywordColor || '关键字颜色' }}</label>
-              <div class="color-picker-container">
-                <input
-                  v-model="settings.keywordColor"
-                  type="color"
-                  class="color-picker"
-                />
-                <input
-                  v-model="settings.keywordColor"
-                  type="text"
-                  class="color-input"
-                />
-              </div>
-            </div>
-            <div class="color-row">
-              <label>{{ i18n.stringColor || '字符串颜色' }}</label>
-              <div class="color-picker-container">
-                <input
-                  v-model="settings.stringColor"
-                  type="color"
-                  class="color-picker"
-                />
-                <input
-                  v-model="settings.stringColor"
-                  type="text"
-                  class="color-input"
-                />
-              </div>
-            </div>
-            <div class="color-row">
-              <label>{{ i18n.commentColor || '注释颜色' }}</label>
-              <div class="color-picker-container">
-                <input
-                  v-model="settings.commentColor"
-                  type="color"
-                  class="color-picker"
-                />
-                <input
-                  v-model="settings.commentColor"
-                  type="text"
-                  class="color-input"
-                />
-              </div>
-            </div>
-            <div class="color-row">
-              <label>{{ i18n.functionColor || '函数颜色' }}</label>
-              <div class="color-picker-container">
-                <input
-                  v-model="settings.functionColor"
-                  type="color"
-                  class="color-picker"
-                />
-                <input
-                  v-model="settings.functionColor"
-                  type="text"
-                  class="color-input"
-                />
-              </div>
-            </div>
-            <div class="color-row">
-              <label>{{ i18n.numberColor || '数字颜色' }}</label>
-              <div class="color-picker-container">
-                <input
-                  v-model="settings.numberColor"
-                  type="color"
-                  class="color-picker"
-                />
-                <input
-                  v-model="settings.numberColor"
+                  v-model="settings[colorField.key]"
                   type="text"
                   class="color-input"
                 />
@@ -394,7 +326,9 @@
         <!-- 代码块折叠设置 -->
         <div class="setting-item">
           <label class="setting-label">
-            <span class="label-icon">📦</span>
+            <span class="label-icon">
+              <IconWrapper name="codeBlockCollapse" :size="14" />
+            </span>
             {{ i18n.codeBlockCollapse || '代码块折叠' }}
           </label>
           <div class="toggle-container">
@@ -417,7 +351,9 @@
           class="setting-item"
         >
           <label class="setting-label">
-            <span class="label-icon">📏</span>
+            <span class="label-icon">
+              <IconWrapper name="codeBlockHeight" :size="14" />
+            </span>
             {{ i18n.collapseHeight || '折叠高度' }}
             <span class="setting-value">{{ settings.collapseHeight }}px</span>
           </label>
@@ -456,14 +392,9 @@
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted, ref, watch } from "vue"
 import type { CodeBlockSettings } from "@/features/generalSettings/types/storage"
 import {
-  onMounted,
-  ref,
-  watch,
-} from "vue"
-import {
-
   DEFAULT_CODEBLOCK_SETTINGS,
   GeneralSettingsStorage,
 } from "@/features/generalSettings/types/storage"
@@ -472,9 +403,30 @@ import {
   applyCodeBlockEnhancedStyles,
   applyCodeBlockStyle,
 } from "../utils/styles"
+import type { IconKey } from "@/config/icons"
+import IconWrapper from "@/components/IconWrapper.vue"
 
+// ── 常量 ──
+const STYLE_OPTIONS: CodeBlockSettings["style"][] = ["default", "github", "mac"] as const
+
+const styleIcons: Record<string, IconKey> = {
+  default: "codeBlockDefault" as IconKey,
+  github: "codeBlockGithub" as IconKey,
+  mac: "codeBlockMac" as IconKey,
+}
+
+const presetFonts = [
+  "Consolas",
+  "Monaco",
+  "Courier New",
+  "Fira Code",
+  "Source Code Pro",
+  "JetBrains Mono",
+] as const
+
+// ── Props & Emits ──
 interface Props {
-  i18n?: any
+  i18n?: Record<string, string>
   plugin?: any
   initialSettings?: CodeBlockSettings
 }
@@ -491,33 +443,59 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
+// ── 状态 ──
 const settings = ref<CodeBlockSettings>({ ...props.initialSettings })
 const presetCodeFont = ref("")
 const storage = ref<GeneralSettingsStorage | null>(null)
 
+// ── 预计算映射（避免 v-for 内重复构建 Record） ──
+const styleNameMap = computed<Record<string, string>>(() => ({
+  default: props.i18n.defaultStyle || "默认风格",
+  github: props.i18n.githubStyle || "GitHub 风格",
+  mac: props.i18n.macStyle || "Mac 风格",
+}))
 
-const shadowOptions = [
-  {
-    label: props.i18n.noneShadow || "无阴影",
-    value: "none",
-  },
-  {
-    label: props.i18n.lightShadow || "轻阴影",
-    value: "0 2px 8px rgba(0, 0, 0, 0.1)",
-  },
-  {
-    label: props.i18n.mediumShadow || "中阴影",
-    value: "0 4px 12px rgba(0, 0, 0, 0.15)",
-  },
-  {
-    label: props.i18n.heavyShadow || "重阴影",
-    value: "0 8px 24px rgba(0, 0, 0, 0.2)",
-  },
+const styleDescMap = computed<Record<string, string>>(() => ({
+  default: props.i18n.defaultStyleDesc || "思源原生外观",
+  github: props.i18n.githubStyleDesc || "GitHub 深色代码块",
+  mac: props.i18n.macStyleDesc || "macOS 窗口样式",
+}))
+
+const shadowOptions = computed(() => [
+  { label: props.i18n.noneShadow || "无阴影", value: "none" },
+  { label: props.i18n.lightShadow || "轻阴影", value: "0 2px 8px rgba(0, 0, 0, 0.1)" },
+  { label: props.i18n.mediumShadow || "中阴影", value: "0 4px 12px rgba(0, 0, 0, 0.15)" },
+  { label: props.i18n.heavyShadow || "重阴影", value: "0 8px 24px rgba(0, 0, 0, 0.2)" },
+])
+
+const colorFields = [
+  { key: "textColor" as const, i18nKey: "textColor", label: "文本颜色" },
+  { key: "keywordColor" as const, i18nKey: "keywordColor", label: "关键字颜色" },
+  { key: "stringColor" as const, i18nKey: "stringColor", label: "字符串颜色" },
+  { key: "commentColor" as const, i18nKey: "commentColor", label: "注释颜色" },
+  { key: "functionColor" as const, i18nKey: "functionColor", label: "函数颜色" },
+  { key: "numberColor" as const, i18nKey: "numberColor", label: "数字颜色" },
 ]
 
+// ── 防抖存储保存 ──
+let saveTimer: ReturnType<typeof setTimeout> | null = null
+function debouncedSave(s: CodeBlockSettings) {
+  if (saveTimer) clearTimeout(saveTimer)
+  saveTimer = setTimeout(async () => {
+    if (storage.value) {
+      try {
+        await storage.value.codeblock.save(s)
+      } catch (error) {
+        console.error("自动保存失败:", error)
+      }
+    }
+  }, 300)
+}
+
+// ── Watch ──
 watch(
   settings,
-  async (newSettings) => {
+  (newSettings) => {
     emit("change", newSettings)
     applyCodeBlockStyle(newSettings.style)
     applyCodeBlockCollapse(
@@ -525,20 +503,12 @@ watch(
       newSettings.collapseHeight,
     )
     applyCodeBlockEnhancedStyles(newSettings)
-    if (storage.value) {
-      try {
-        await storage.value.codeblock.save(newSettings)
-      } catch (error) {
-        console.error("自动保存失败:", error)
-      }
-    }
+    debouncedSave(newSettings)
   },
-  {
-    deep: true,
-    immediate: false,
-  },
+  { deep: true, immediate: false },
 )
 
+// ── 方法 ──
 function applyPresetCodeFont() {
   if (presetCodeFont.value) {
     settings.value.codeFontFamily = presetCodeFont.value
@@ -551,30 +521,14 @@ function adjustValue(
   min: number,
   max: number,
 ) {
-  const currentValue = settings.value[key] as number
-  const newValue = Math.max(min, Math.min(max, currentValue + delta));
-  (settings.value as Record<string, unknown>)[key] = newValue
-}
-
-function getStyleName(style: string): string {
-  const names: Record<string, string> = {
-    default: props.i18n.defaultStyle || "默认风格",
-    github: props.i18n.githubStyle || "GitHub 风格",
-    mac: props.i18n.macStyle || "Mac 风格",
+  const current = settings.value[key] as number
+  const clamped = Math.max(min, Math.min(max, current + delta))
+  if (clamped !== current) {
+    (settings.value as Record<string, unknown>)[key] = clamped
   }
-  return names[style] || style
 }
 
-function getStyleDesc(style: string): string {
-  const descs: Record<string, string> = {
-    default: props.i18n.defaultStyleDesc || "思源原生外观",
-    github: props.i18n.githubStyleDesc || "GitHub 深色代码块",
-    mac: props.i18n.macStyleDesc || "macOS 窗口样式",
-  }
-  return descs[style] || ""
-}
-
-// 加载保存的设置
+// ── 加载保存的设置 ──
 async function loadSettings() {
   if (!props.plugin) {
     console.warn("插件实例不可用，使用默认设置")
@@ -600,7 +554,7 @@ async function loadSettings() {
   }
 }
 
-// 初始化时加载设置并应用样式
+// ── 初始化 ──
 onMounted(async () => {
   if (props.plugin) {
     storage.value = new GeneralSettingsStorage(props.plugin)
@@ -608,7 +562,7 @@ onMounted(async () => {
   await loadSettings()
 })
 
-// 暴露方法
+// ── 暴露 ──
 defineExpose({
   loadSettings,
   settings,
@@ -617,5 +571,4 @@ defineExpose({
 
 <style scoped lang="scss">
 @use "../styles/CodeBlockSettings.scss";
-
 </style>

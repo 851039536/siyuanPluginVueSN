@@ -410,10 +410,12 @@ export class GeneralSettings {
         this.docCountManager.setUpdateInterval(
           Number.parseInt(settings.updateInterval),
         )
+        this.docCountManager.setDisplayFormat(settings.displayFormat || "bracket")
         this.docCountManager.setFontStyle({
           fontSize: settings.fontSize,
           color: settings.fontColor,
           fontWeight: settings.fontWeight,
+          opacity: settings.opacity ?? 0.8,
         })
       }
     } catch (error) {

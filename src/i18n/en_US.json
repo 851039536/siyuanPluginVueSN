@@ -995,6 +995,8 @@
     "synced": "Synced",
     "noRemoteLabel": "No Remote",
     "noPlatformProjects": "Projects with Missing Platforms",
+    "pendingProjects": "Pending Projects",
+    "needsPushShort": "Ahead",
     "needsPushList": "Projects Needing Push",
     "recentCommits": "Recent Commits",
     "viewProject": "View Project",

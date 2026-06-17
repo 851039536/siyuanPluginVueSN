@@ -301,6 +301,33 @@ export const FEATURE_ICONS = {
   codeBlockHeight: {
     icon: "mdi:ruler",
   },
+
+  // 表格样式
+  tableBorder: {
+    icon: "mdi:border-outside",
+  },
+  tableCell: {
+    icon: "mdi:border-all",
+  },
+  tableHeader: {
+    icon: "mdi:table-headers-eye",
+  },
+  tableRowOdd: {
+    icon: "mdi:table-row",
+  },
+  tableRowEven: {
+    icon: "mdi:table-row-plus-after",
+  },
+  tableTextColor: {
+    icon: "mdi:format-color-text",
+  },
+  borderRadius: {
+    icon: "mdi:rounded-corner",
+  },
+  starFourPoints: {
+    icon: "mdi:star-four-points",
+    color: "#fbbf24",
+  },
 } as const
 
 /**

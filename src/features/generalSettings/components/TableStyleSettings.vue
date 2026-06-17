@@ -5,7 +5,7 @@
       <div class="setting-row">
         <div class="setting-item">
           <label class="setting-label">
-            <span class="label-icon">📊</span>
+            <span class="label-icon"><IconWrapper name="tableBorder" :size="14" /></span>
             {{ i18n.tableStyleSettings || '表格样式设置' }}
           </label>
           <p class="setting-description">
@@ -18,7 +18,7 @@
       <div class="setting-row">
         <div class="setting-item">
           <label class="setting-label">
-            <span class="label-icon">✨</span>
+            <span class="label-icon"><IconWrapper name="starFourPoints" :size="14" /></span>
             {{ i18n.enableTableStyle || '启用表格样式设置' }}
           </label>
           <div class="toggle-container">
@@ -42,7 +42,7 @@
         <div class="setting-row">
           <div class="setting-item">
             <label class="setting-label">
-              <span class="label-icon">🔲</span>
+              <span class="label-icon"><IconWrapper name="tableBorder" :size="14" /></span>
               {{ i18n.tableBorder || '表格外框' }}
             </label>
             <div class="color-input-group">
@@ -65,7 +65,7 @@
         <div class="setting-row">
           <div class="setting-item">
             <label class="setting-label">
-              <span class="label-icon">📐</span>
+              <span class="label-icon"><IconWrapper name="tableCell" :size="14" /></span>
               {{ i18n.tableCellBorder || '单元格边框' }}
             </label>
             <div class="color-input-group">
@@ -88,7 +88,7 @@
         <div class="setting-row">
           <div class="setting-item">
             <label class="setting-label">
-              <span class="label-icon">🎨</span>
+              <span class="label-icon"><IconWrapper name="tableHeader" :size="14" /></span>
               {{ i18n.tableHeaderBackground || '表头背景' }}
             </label>
             <div class="color-input-group">
@@ -111,7 +111,7 @@
         <div class="setting-row">
           <div class="setting-item">
             <label class="setting-label">
-              <span class="label-icon">📝</span>
+              <span class="label-icon"><IconWrapper name="tableRowOdd" :size="14" /></span>
               {{ i18n.tableOddRowBackground || '奇数行背景' }}
             </label>
             <div class="color-input-group">
@@ -134,7 +134,7 @@
         <div class="setting-row">
           <div class="setting-item">
             <label class="setting-label">
-              <span class="label-icon">📝</span>
+              <span class="label-icon"><IconWrapper name="tableRowEven" :size="14" /></span>
               {{ i18n.tableEvenRowBackground || '偶数行背景' }}
             </label>
             <div class="color-input-group">
@@ -157,7 +157,7 @@
         <div class="setting-row">
           <div class="setting-item">
             <label class="setting-label">
-              <span class="label-icon">🖌️</span>
+              <span class="label-icon"><IconWrapper name="tableTextColor" :size="14" /></span>
               {{ i18n.tableTextColor || '文本颜色' }}
             </label>
             <div class="color-input-group">
@@ -180,7 +180,7 @@
         <div class="setting-row">
           <div class="setting-item">
             <label class="setting-label">
-              <span class="label-icon">⭕</span>
+              <span class="label-icon"><IconWrapper name="borderRadius" :size="14" /></span>
               {{ i18n.tableBorderRadius || '圆角大小' }}
               <span class="setting-value">{{ settings.borderRadius }}px</span>
             </label>
@@ -207,12 +207,12 @@
             class="preview-toggle"
             @click="togglePreview"
           >
-            <span class="preview-icon">{{ showPreview ? '👁️' : '👁️‍🗨️' }}</span>
+            <span class="preview-icon"><IconWrapper :name="showPreview ? 'eye' : 'eyeOff'" :size="14" /></span>
             <span>{{ i18n.preview || '预览效果' }}</span>
             <span
               class="toggle-arrow"
               :class="{ expanded: showPreview }"
-            >▼</span>
+            ><IconWrapper name="chevronDown" :size="10" /></span>
           </div>
           <transition name="preview-expand">
             <div
@@ -260,7 +260,7 @@
             class="reset-btn"
             @click="resetSettings"
           >
-            <span class="btn-icon">🔄</span>
+            <span class="btn-icon"><IconWrapper name="refresh" :size="14" /></span>
             {{ i18n.resetToDefault || '恢复默认设置' }}
           </button>
         </div>
@@ -273,26 +273,17 @@
 import { Plugin } from "siyuan"
 import {
   computed,
+  onBeforeUnmount,
   onMounted,
   ref,
   watch,
 } from "vue"
-
-import { GeneralSettingsStorage } from "../types/storage"
-
-export interface TableStyleSettingsData {
-  enabled: boolean
-  borderColor: string
-  cellBorderColor: string
-  headerBackground: string
-  oddRowBackground: string
-  evenRowBackground: string
-  textColor: string
-  borderRadius: number
-}
+import IconWrapper from "@/components/IconWrapper.vue"
+import { injectStyle, removeStyle } from "@/utils/domUtils"
+import { GeneralSettingsStorage, type TableStyleSettings as TableStyleSettingsData } from "../types/storage"
 
 interface Props {
-  i18n?: any
+  i18n?: Record<string, string>
   plugin?: Plugin
 }
 
@@ -306,6 +297,8 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<Emits>()
+
+const STYLE_ID = "table-style-settings"
 
 const DEFAULT_SETTINGS: TableStyleSettingsData = {
   enabled: false,
@@ -325,12 +318,16 @@ const previewTableStyle = computed(() => ({
   borderRadius: `${settings.value.borderRadius}px`,
 }))
 
+/** 防抖保存（100ms）—— 颜色拖动时减少写盘频率 */
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+
 watch(
   settings,
   (newSettings) => {
     emit("change", newSettings)
-    saveSettings()
-    applySettings()
+    if (debounceTimer) clearTimeout(debounceTimer)
+    debounceTimer = setTimeout(() => saveSettings(), 100)
+    applyTableStyles(newSettings)
   },
   { deep: true },
 )
@@ -341,75 +338,44 @@ function togglePreview() {
 
 function resetSettings() {
   settings.value = { ...DEFAULT_SETTINGS }
-  applySettings()
-}
-
-function applySettings() {
-  applyTableStyles(settings.value)
 }
 
 function applyTableStyles(tableSettings: TableStyleSettingsData) {
   try {
-    // 移除现有样式
-    const existingStyle = document.getElementById("table-style-settings")
-    if (existingStyle) {
-      existingStyle.remove()
-    }
+    removeStyle(STYLE_ID)
 
-    if (!tableSettings.enabled) {
-      return
-    }
+    if (!tableSettings.enabled) return
 
-    // 创建新的样式元素
-    const style = document.createElement("style")
-    style.id = "table-style-settings"
-
-    style.textContent = `
-      /* 表格整体外框 */
+    const css = `
       .protyle-wysiwyg table {
         border-collapse: collapse !important;
         border: 1px solid ${tableSettings.borderColor} !important;
         border-radius: ${tableSettings.borderRadius}px !important;
         overflow: hidden;
-        box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
       }
-      
-      /* 表格内部网格线 */
       .protyle-wysiwyg table th,
       .protyle-wysiwyg table td {
         border: 1.5px solid ${tableSettings.cellBorderColor} !important;
       }
-      
-      /* 表头 */
       .protyle-wysiwyg table th {
         background-color: ${tableSettings.headerBackground} !important;
         color: ${tableSettings.textColor};
       }
-      
-      /* 奇数行 */
       .protyle-wysiwyg table tr:nth-child(odd) {
         background-color: ${tableSettings.oddRowBackground} !important;
         color: ${tableSettings.textColor};
       }
-      
-      /* 偶数行 */
       .protyle-wysiwyg table tr:nth-child(even) {
         background-color: ${tableSettings.evenRowBackground} !important;
         color: ${tableSettings.textColor};
       }
-      
-      /* 暗色主题适配 */
-      :root[data-theme-mode="dark"] .protyle-wysiwyg table th {
-        color: #ffffff;
-      }
-      
+      :root[data-theme-mode="dark"] .protyle-wysiwyg table th,
       :root[data-theme-mode="dark"] .protyle-wysiwyg table tr:nth-child(odd),
       :root[data-theme-mode="dark"] .protyle-wysiwyg table tr:nth-child(even) {
         color: #ffffff;
       }
     `
-
-    document.head.appendChild(style)
+    injectStyle(STYLE_ID, css)
   } catch (error) {
     console.error("应用表格样式失败:", error)
   }
@@ -418,18 +384,13 @@ function applyTableStyles(tableSettings: TableStyleSettingsData) {
 const gsStorage = computed(() => props.plugin ? new GeneralSettingsStorage(props.plugin) : null)
 
 async function loadSettings() {
-  if (!gsStorage.value) {
-    return
-  }
+  if (!gsStorage.value) return
 
   try {
     const data = await gsStorage.value.tableStyle.load()
     if (data) {
-      settings.value = {
-        ...DEFAULT_SETTINGS,
-        ...data,
-      }
-      applySettings()
+      settings.value = { ...DEFAULT_SETTINGS, ...data }
+      applyTableStyles(settings.value)
     }
   } catch (error) {
     console.error("加载表格样式设置失败:", error)
@@ -437,19 +398,18 @@ async function loadSettings() {
 }
 
 async function saveSettings() {
-  if (!gsStorage.value) {
-    return
-  }
-
-  try {
-    await gsStorage.value.tableStyle.save(settings.value)
-  } catch (error) {
+  if (!gsStorage.value) return
+  try { await gsStorage.value.tableStyle.save(settings.value) } catch (error) {
     console.error("保存表格样式设置失败:", error)
   }
 }
 
 onMounted(async () => {
   await loadSettings()
+})
+
+onBeforeUnmount(() => {
+  if (debounceTimer) clearTimeout(debounceTimer)
 })
 
 defineExpose({

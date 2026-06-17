@@ -1292,7 +1292,19 @@
       "contentPlaceholder": "Enter prompt content",
       "noPrompts": "No prompts yet, click to add",
       "noPromptsFound": "No matching prompts found",
-      "clickToCopy": "Click to copy"
+      "clickToCopy": "Click to copy",
+      "contents": "Content Blocks",
+      "contentLabel": "Content Label",
+      "contentLabelPlaceholder": "Content Label",
+      "addContentBlock": "Add Content Block",
+      "moveUp": "Move Up",
+      "moveDown": "Move Down",
+      "removeContent": "Remove Content Block",
+      "manageCategories": "Manage Categories",
+      "add": "Add",
+      "categoryName": "Category Name",
+      "category": "Category",
+      "loading": "Loading..."
     }
   },
   "skillsViewerTitle": "Skills Viewer",

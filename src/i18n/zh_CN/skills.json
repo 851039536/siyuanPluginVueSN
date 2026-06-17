@@ -23,7 +23,19 @@
       "contentPlaceholder": "请输入提示词内容",
       "noPrompts": "暂无提示词，点击添加",
       "noPromptsFound": "未找到匹配的提示词",
-      "clickToCopy": "复制"
+      "clickToCopy": "复制",
+      "contents": "内容块",
+      "contentLabel": "内容标签",
+      "contentLabelPlaceholder": "内容标签",
+      "addContentBlock": "添加内容块",
+      "moveUp": "上移",
+      "moveDown": "下移",
+      "removeContent": "删除内容块",
+      "manageCategories": "管理分类",
+      "add": "添加",
+      "categoryName": "分类名称",
+      "category": "分类",
+      "loading": "加载中..."
     }
   }
 }

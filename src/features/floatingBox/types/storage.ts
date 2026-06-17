@@ -40,4 +40,44 @@ export class FloatingBoxStorage {
       categories,
     }
   }
+
+  /**
+   * 迁移旧格式 Prompt（content/content2/content3）到新格式（contents 数组）
+   * 返回是否发生了迁移
+   */
+  migratePrompts(prompts: Prompt[]): boolean {
+    let migrated = false
+    for (const prompt of prompts) {
+      // 已迁移：有 contents 数组且不是空数组（或旧字段不存在）
+      if (prompt.contents && Array.isArray(prompt.contents) && prompt.contents.length > 0) {
+        continue
+      }
+      // 新格式但空数组，也不需迁移
+      if (prompt.contents && Array.isArray(prompt.contents) && prompt.contents.length === 0 && !prompt.content) {
+        continue
+      }
+
+      const contents: { id: string; label: string; text: string }[] = []
+      let idx = 1
+      if (prompt.content) {
+        contents.push({ id: `${prompt.id}-c${idx}`, label: `内容${idx}`, text: prompt.content })
+        idx++
+      }
+      if (prompt.content2) {
+        contents.push({ id: `${prompt.id}-c${idx}`, label: `内容${idx}`, text: prompt.content2 })
+        idx++
+      }
+      if (prompt.content3) {
+        contents.push({ id: `${prompt.id}-c${idx}`, label: `内容${idx}`, text: prompt.content3 })
+        idx++
+      }
+      prompt.contents = contents
+      // 清除旧字段
+      delete prompt.content
+      delete prompt.content2
+      delete prompt.content3
+      migrated = true
+    }
+    return migrated
+  }
 }

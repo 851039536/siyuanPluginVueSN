@@ -291,7 +291,7 @@ export function useGitPush(manager: GitPushManager) {
   }
 
   /** 更新项目元信息（名称/标签/状态/收藏/归档/备注） */
-  async function updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "name" | "tags" | "starred" | "status" | "archived" | "note">>) {
+  async function updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "name" | "tags" | "starred" | "status" | "archived" | "note" | "githubUrl" | "giteeUrl" | "giteaUrl">>) {
     const updated = await manager.updateProjectMeta(id, patch)
     if (updated) {
       patchProject(id, patch)
@@ -662,6 +662,15 @@ export function useGitPush(manager: GitPushManager) {
     await loadPushStatus(id)
   }
 
+  /** 编辑远程仓库 URL 并刷新状态 */
+  async function editRemoteOp(id: string, name: string, url: string) {
+    const project = projects.value.find(p => p.id === id)
+    if (!project) throw new Error("项目未找到")
+    await manager.setRemoteUrl(project.path, name, url)
+    await refreshRemotes(id)
+    await loadPushStatus(id)
+  }
+
   /** 扫描指定目录下的所有 Git 仓库 */
   async function startScan(dirPath: string) {
     scanning.value = true
@@ -753,6 +762,7 @@ export function useGitPush(manager: GitPushManager) {
     generateStashDesc,
     addRemoteOp,
     removeRemoteOp,
+    editRemoteOp,
     // 统计视图数据
     projectCount,
     remoteCoverage,

@@ -125,7 +125,7 @@
                     variant="danger"
                     icon="delete"
                     size="small"
-                    @click="deletePrompt(prompt.id)"
+                    @click="requestDelete(prompt.id)"
                   />
                 </div>
               </div>
@@ -175,6 +175,55 @@
             </div>
           </div>
         </template>
+      </div>
+    </div>
+  </div>
+
+  <!-- 删除确认弹窗 -->
+  <div
+    v-if="deleteConfirmTarget"
+    class="vp-overlay"
+    @click="cancelDelete"
+    @keydown.escape="cancelDelete"
+  >
+    <div
+      class="vp-modal vp-modal--small"
+      @click.stop
+    >
+      <div class="vp-modal-header">
+        <div class="vp-modal-title">
+          <IconWrapper
+            name="delete"
+            :size="20"
+            class="vp-modal-icon vp-modal-icon--danger"
+          />
+          <h2>{{ i18n?.deleteConfirmTitle || '确认删除' }}</h2>
+        </div>
+        <Button
+          variant="ghost"
+          icon="close"
+          size="small"
+          @click="cancelDelete"
+        />
+      </div>
+      <div class="vp-modal-body">
+        <p class="vp-delete-msg">{{ i18n?.deleteConfirmMsg || '确定要删除此提示词吗？此操作不可撤销。' }}</p>
+        <div class="vp-form-actions">
+          <Button
+            variant="secondary"
+            size="small"
+            @click="cancelDelete"
+          >
+            {{ i18n?.cancel || '取消' }}
+          </Button>
+          <Button
+            variant="danger"
+            size="small"
+            @click="confirmDelete"
+          >
+            {{ i18n?.deleteConfirmOK || '确认删除' }}
+          </Button>
+        </div>
       </div>
     </div>
   </div>
@@ -451,6 +500,7 @@ const editingPrompt = ref<Prompt | null>(null)
 const searchQuery = ref("")
 const selectedCategory = ref<string>("all")
 const loading = ref(true)
+const deleteConfirmTarget = ref<string | null>(null)
 
 const storage = ref<FloatingBoxStorage | null>(null)
 
@@ -747,9 +797,20 @@ async function deleteCategory(id: string) {
   showMessage("分类已删除", 2000, "info")
 }
 
-async function deletePrompt(id: string) {
+function requestDelete(id: string) {
+  deleteConfirmTarget.value = id
+}
+
+function cancelDelete() {
+  deleteConfirmTarget.value = null
+}
+
+async function confirmDelete() {
+  const id = deleteConfirmTarget.value
+  if (!id) return
   prompts.value = prompts.value.filter((p) => p.id !== id)
   await savePrompts()
+  deleteConfirmTarget.value = null
   showMessage("提示词已删除", 2000, "info")
 }
 

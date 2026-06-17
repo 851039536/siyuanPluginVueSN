@@ -39,6 +39,9 @@ function getI18nMap(plugin: Plugin) {
     category: m.modal?.category || "分类",
     loading: m.modal?.loading || "加载中...",
     editPrompt: m.modal?.editPrompt || "编辑提示词",
+    deleteConfirmTitle: m.modal?.deleteConfirmTitle || "确认删除",
+    deleteConfirmMsg: m.modal?.deleteConfirmMsg || "确定要删除此提示词吗？此操作不可撤销。",
+    deleteConfirmOK: m.modal?.deleteConfirmOK || "确认删除",
   }
 }
 

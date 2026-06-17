@@ -37,6 +37,10 @@
     .vp-modal-icon {
       color: var(--b3-theme-primary);
       flex-shrink: 0;
+
+      &--danger {
+        color: var(--b3-theme-error);
+      }
     }
 
     h2 {
@@ -297,6 +301,14 @@
   font-size: $font-size-sm;
   font-style: italic;
   opacity: 0.35;
+}
+
+// 删除确认
+.vp-delete-msg {
+  margin: 0 0 $spacing-4;
+  color: var(--b3-theme-on-background);
+  font-size: $font-size-sm;
+  line-height: 1.5;
 }
 
 // ==================== 表单 ====================

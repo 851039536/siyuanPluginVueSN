@@ -30,6 +30,10 @@ export interface GitProject {
   giteaRemote?: string
   /** Gitea 远程 URL */
   giteaUrl?: string
+  /** CNB (cnb.cool) 远程名称（自动检测） */
+  cnbRemote?: string
+  /** CNB 远程 URL */
+  cnbUrl?: string
   /** 添加时间 */
   addedAt: number
   /** 多标签（自由文本，用于横向聚合筛选） */
@@ -54,7 +58,7 @@ export interface ProjectCategory {
   order: number
 }
 
-/** GitHub/Gitee/Gitea 远程信息 */
+/** GitHub/Gitee/Gitea/CNB 远程信息 */
 export interface GitRemoteInfo {
   /** 远程名称（如 origin, github, gitee） */
   name: string
@@ -66,6 +70,8 @@ export interface GitRemoteInfo {
   isGitee: boolean
   /** 是否是 Gitea（自建 Git 服务） */
   isGitea: boolean
+  /** 是否是 CNB (cnb.cool) */
+  isCnb: boolean
 }
 
 /** 单个远程的推送状态 */

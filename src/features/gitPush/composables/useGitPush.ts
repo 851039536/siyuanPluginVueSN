@@ -1,5 +1,5 @@
 import type { GitProject, PushStatusInfo, WorkingTreeInfo, ProjectCategory, CommitLogEntry, BranchInfo, ScannedGitRepo, StashEntry, TagInfo, ConflictFile, CommitTemplate } from "../types"
-import type { GitPushManager } from "../types"
+import type { GitPushManager, PlatformKey } from "../types"
 import { PLATFORM_META } from "../types"
 import { ref, computed } from "vue"
 
@@ -7,10 +7,10 @@ export function useGitPush(manager: GitPushManager) {
   const projects = ref<GitProject[]>([])
   const categories = ref<ProjectCategory[]>([])
   const loading = ref(false)
-  /** 正在推送的项目 id → "github"|"gitee"|"all" */
+  /** 正在推送的项目 id → platformKey|"all" */
   const pushingRemote = ref<Record<string, string>>({})
   const pushOutputs = ref<Record<string, string>>({})
-  /** 正在拉取的项目 id → "github"|"gitee"|"all" */
+  /** 正在拉取的项目 id → platformKey|"all" */
   const pullingRemote = ref<Record<string, string>>({})
   const pullOutputs = ref<Record<string, string>>({})
   /** 项目推送状态缓存 id → PushStatusInfo */
@@ -82,17 +82,18 @@ export function useGitPush(manager: GitPushManager) {
   /** 远程仓库覆盖率统计 */
   const remoteCoverage = computed(() => {
     const total = projects.value.length
-    if (total === 0) return { total: 0, github: 0, gitee: 0, gitea: 0, hasRemote: 0, noRemote: 0, multiple: 0 }
-    let github = 0, gitee = 0, gitea = 0, hasRemote = 0, multiple = 0
+    if (total === 0) return { total: 0, github: 0, gitee: 0, gitea: 0, cnb: 0, hasRemote: 0, noRemote: 0, multiple: 0 }
+    let github = 0, gitee = 0, gitea = 0, cnb = 0, hasRemote = 0, multiple = 0
     for (const p of projects.value) {
-      const remotes = [p.githubUrl, p.giteeUrl, p.giteaUrl].filter(Boolean).length
+      const remotes = [p.githubUrl, p.giteeUrl, p.giteaUrl, p.cnbUrl].filter(Boolean).length
       if (p.githubUrl) github++
       if (p.giteeUrl) gitee++
       if (p.giteaUrl) gitea++
+      if (p.cnbUrl) cnb++
       if (remotes > 0) hasRemote++
       if (remotes >= 2) multiple++
     }
-    return { total, github, gitee, gitea, hasRemote, noRemote: total - hasRemote, multiple }
+    return { total, github, gitee, gitea, cnb, hasRemote, noRemote: total - hasRemote, multiple }
   })
 
   /** 推送状态分布统计 */
@@ -125,14 +126,11 @@ export function useGitPush(manager: GitPushManager) {
       const status = pushStatuses.value[p.id]
       if (!status) continue
       const aheadByRemote: { key: string; ahead: number }[] = []
-      if (status.remotes.github && status.remotes.github.ahead > 0) {
-        aheadByRemote.push({ key: "github", ahead: status.remotes.github.ahead! })
-      }
-      if (status.remotes.gitee && status.remotes.gitee.ahead > 0) {
-        aheadByRemote.push({ key: "gitee", ahead: status.remotes.gitee.ahead! })
-      }
-      if (status.remotes.gitea && status.remotes.gitea.ahead > 0) {
-        aheadByRemote.push({ key: "gitea", ahead: status.remotes.gitea.ahead! })
+      for (const pm of PLATFORM_META) {
+        const rs = status.remotes[pm.key]
+        if (rs && rs.ahead > 0) {
+          aheadByRemote.push({ key: pm.key, ahead: rs.ahead })
+        }
       }
       if (aheadByRemote.length > 0) {
         result.push({
@@ -157,13 +155,14 @@ export function useGitPush(manager: GitPushManager) {
       }))
   })
 
-  /** 平台配置状态明细（每个项目的 GitHub/Gitee/Gitea 是否已配置）
+  /** 平台配置状态明细（每个项目的各平台是否已配置）
    *  包含所有「至少缺失一个平台」的项目，按 missingCount 降序排列 */
   interface PlatformStatusItem {
     project: GitProject
     github: boolean
     gitee: boolean
     gitea: boolean
+    cnb: boolean
     missingCount: number
   }
   const platformStatusProjects = computed<PlatformStatusItem[]>(() => {
@@ -172,9 +171,10 @@ export function useGitPush(manager: GitPushManager) {
       const github = !!p.githubUrl
       const gitee = !!p.giteeUrl
       const gitea = !!p.giteaUrl
-      const missingCount = (github ? 0 : 1) + (gitee ? 0 : 1) + (gitea ? 0 : 1)
+      const cnb = !!p.cnbUrl
+      const missingCount = (github ? 0 : 1) + (gitee ? 0 : 1) + (gitea ? 0 : 1) + (cnb ? 0 : 1)
       if (missingCount > 0) {
-        result.push({ project: p, github, gitee, gitea, missingCount })
+        result.push({ project: p, github, gitee, gitea, cnb, missingCount })
       }
     }
     return result.sort((a, b) => b.missingCount - a.missingCount)
@@ -183,7 +183,7 @@ export function useGitPush(manager: GitPushManager) {
   /** @deprecated 使用 platformStatusProjects 替代 */
   const noPlatformProjects = computed(() => {
     return platformStatusProjects.value
-      .filter(item => item.missingCount === 3)
+      .filter(item => item.missingCount === PLATFORM_META.length)
       .map(item => item.project)
   })
 
@@ -386,7 +386,7 @@ export function useGitPush(manager: GitPushManager) {
     }
   }
 
-  async function pushSingle(id: string, target: "github" | "gitee" | "gitea") {
+  async function pushSingle(id: string, target: PlatformKey) {
     pushingRemote.value[id] = target
     try {
       const result = await manager.pushSingle(id, target)
@@ -413,7 +413,7 @@ export function useGitPush(manager: GitPushManager) {
     }
   }
 
-  async function pullSingle(id: string, target: "github" | "gitee" | "gitea") {
+  async function pullSingle(id: string, target: PlatformKey) {
     pullingRemote.value[id] = target
     try {
       const result = await manager.pullSingle(id, target)

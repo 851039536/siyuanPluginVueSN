@@ -63,6 +63,16 @@
           </div>
           <div class="gp-coverage-item">
             <div class="gp-coverage-head">
+              <Icon icon="mdi:cloud-braces" height="14" />
+              <span>CNB</span>
+              <span class="gp-coverage-num">{{ remoteCoverage.cnb }} / {{ remoteCoverage.total }}</span>
+            </div>
+            <div class="gp-coverage-bar">
+              <div class="gp-coverage-fill gp-coverage-fill--cnb" :style="{ width: pct(remoteCoverage.cnb) }" />
+            </div>
+          </div>
+          <div class="gp-coverage-item">
+            <div class="gp-coverage-head">
               <Icon icon="mdi:layers" height="14" />
               <span>{{ i18n.multipleRemotes || '多远程项目' }}</span>
               <span class="gp-coverage-num">{{ remoteCoverage.multiple }} / {{ remoteCoverage.total }}</span>
@@ -213,7 +223,7 @@ import type { GitProject } from "../types"
 import { PLATFORM_META } from "../types"
 
 export interface RemoteCoverage {
-  total: number; github: number; gitee: number; gitea: number
+  total: number; github: number; gitee: number; gitea: number; cnb: number
   hasRemote: number; noRemote: number; multiple: number
 }
 
@@ -240,6 +250,7 @@ export interface PlatformStatusItem {
   github: boolean
   gitee: boolean
   gitea: boolean
+  cnb: boolean
   missingCount: number
 }
 

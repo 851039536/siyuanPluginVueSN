@@ -960,21 +960,31 @@ export class GitPushManager {
 
       try {
         const result = await callAI(
-          `根据以下 git diff，生成一条中文 conventional commit 信息（格式：type(scope): 中文描述）。
-只返回提交信息本身，不解释。type 为 ${COMMIT_TYPE_VALUES.join("/")} 之一。
+          `根据以下 git diff，生成一条中文 conventional commit 信息。
+格式：type: 中文描述
+type 必须为 ${COMMIT_TYPE_VALUES.join("/")} 之一。
+示例：refactor: 重构 userService 为策略模式
+示例：fix: 修复订单列表空指针异常
+示例：feat: 新增导出 PDF 功能
+重要：只输出一行提交信息，不要输出分析、解释、Markdown 或任何别的内容。
 Diff:
 ${diffSnippet}`,
           aiConfig,
           {
-            systemPrompt: "你是一个 git commit 信息生成器。分析代码 diff，只输出一条中文 conventional commit 信息，不要任何解释。",
-            temperature: 0.3,
-            maxTokens: 200,
+            systemPrompt: "输出要求：只输出一行 conventional commit 格式的提交信息。禁止输出解释、分析、额外文字。",
+            temperature: 0.1,
+            maxTokens: 60,
           },
         )
-        const trimmed = result?.trim()
-        if (trimmed && trimmed.length > 2) return { message: trimmed, source: "ai" }
-        // AI 返回过短，降级
-        console.warn("[gitPush] AI 返回过短，降级启发式:", trimmed)
+        // 后处理：从 AI 输出中智能提取 conventional commit 信息。
+        // 推理模型可能泄露思考内容，不依赖首行，而是全文搜索 type: 描述 模式。
+        const trimmed = result?.trim() ?? ""
+        const match = trimmed.match(/(feat|fix|chore|docs|style|refactor|test)(?:\([^)]+\))?\s*:\s*(.+)/i)
+        if (match) {
+          return { message: `${match[1]}: ${match[2].trim()}`, source: "ai" }
+        }
+        // AI 未返回有效提交信息，降级
+        console.warn("[gitPush] AI 未返回有效 commit 格式，降级启发式:", trimmed.substring(0, 80))
       } catch (e: any) {
         console.error("[gitPush] AI 调用失败:", e?.message || e)
       }

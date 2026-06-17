@@ -385,8 +385,9 @@ export class GitPushManager {
   /**
    * 检查项目各远程的推送状态（ahead/behind/noUpstream）
    * 用于判断是否需要进行 git push
+   * @param opts.branch 当前分支名，传入后跳过 rev-parse（批量统计场景节省一次 git 调用）
    */
-  async checkPushStatus(id: string): Promise<PushStatusInfo> {
+  async checkPushStatus(id: string, opts?: { branch?: string }): Promise<PushStatusInfo> {
     const projects = await this.getProjects()
     const project = projects.find(p => p.id === id)
     const emptyResult: PushStatusInfo = { branch: "", remotes: {}, needsPush: false }
@@ -400,8 +401,8 @@ export class GitPushManager {
     }
 
     try {
-      // 获取当前分支
-      status.branch = await this.execGit(project.path, ["rev-parse", "--abbrev-ref", "HEAD"])
+      // 获取当前分支（外部已提供时跳过 rev-parse）
+      status.branch = opts?.branch ?? await this.execGit(project.path, ["rev-parse", "--abbrev-ref", "HEAD"])
     } catch {
       return emptyResult
     }
@@ -619,6 +620,17 @@ export class GitPushManager {
   }
 
   /**
+   * 获取当前分支名（轻量 rev-parse，批量统计场景复用避免重复调用）
+   */
+  async getBranch(projectPath: string): Promise<string> {
+    try {
+      return await this.execGit(projectPath, ["rev-parse", "--abbrev-ref", "HEAD"])
+    } catch {
+      return ""
+    }
+  }
+
+  /**
    * 获取当前 HEAD 的 commit hash（用于检测项目是否变动）
    */
   async getHeadHash(projectPath: string): Promise<string> {
@@ -763,7 +775,7 @@ export class GitPushManager {
    * 获取工作区变更状态（git status --porcelain -b）
    * @param opts.skipRefresh 跳过 `update-index --refresh`（首屏/批量探测时设为 true，避免遍历 index 的重命令）
    */
-  async getWorkingTreeStatus(projectPath: string, opts?: { skipRefresh?: boolean }): Promise<WorkingTreeInfo> {
+  async getWorkingTreeStatus(projectPath: string, opts?: { skipRefresh?: boolean; branch?: string }): Promise<WorkingTreeInfo> {
     const empty: WorkingTreeInfo = {
       branch: "",
       files: [],
@@ -780,8 +792,8 @@ export class GitPushManager {
     const files: FileChange[] = []
 
     try {
-      // 先获取分支名
-      branch = await this.execGit(projectPath, ["rev-parse", "--abbrev-ref", "HEAD"])
+      // 获取分支名（外部已提供时跳过 rev-parse）
+      branch = opts?.branch ?? await this.execGit(projectPath, ["rev-parse", "--abbrev-ref", "HEAD"])
     } catch {
       return empty
     }

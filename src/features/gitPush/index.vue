@@ -899,6 +899,7 @@ const {
   loadProjects,
   loadPushStatus,
   loadWorkingTree,
+  loadStatsData,
   loadFileDiff,
   stageItem,
   stageAllItems,
@@ -1250,16 +1251,14 @@ watch(activeCategory, async (catId) => {
 })
 
 /** 切换到统计视图时，补齐统计面板所需的最小数据集（pushStatus + workingTree）。
- *  commitLog/branches/stash 不在统计视图中展示，无需加载。 */
+ *  commitLog/branches/stash 不在统计视图中展示，无需加载。
+ *  使用 loadStatsData 共用 rev-parse，避免 loadPushStatus/loadWorkingTree 各调一次 */
 watch(currentView, async (view) => {
   if (view !== "stats") return
   const pending = projects.value.filter(p => !pushStatuses.value[p.id] || !workingTrees.value[p.id])
   if (pending.length === 0) return
   await batchProcess(pending, 3, async (p) => {
-    await Promise.all([
-      pushStatuses.value[p.id] ? Promise.resolve() : loadPushStatus(p.id),
-      workingTrees.value[p.id] ? Promise.resolve() : loadWorkingTree(p.id, true),
-    ])
+    await loadStatsData(p.id)
   })
 })
 

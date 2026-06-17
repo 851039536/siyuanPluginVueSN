@@ -1009,7 +1009,8 @@
     "keepOurs": "Keep local version",
     "keepTheirs": "Keep remote version",
     "abortMerge": "Abort Merge",
-    "selectTemplate": "Select template..."
+    "selectTemplate": "Select template...",
+    "visitPlatform": "Visit {0}"
   },
   "heatmapMarker": {
     "title": "Heatmap Marker",

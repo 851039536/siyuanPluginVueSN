@@ -26,6 +26,16 @@
             <Icon icon="mdi:chart-bar" height="14" />
           </button>
         </div>
+        <!-- 平台官网快捷入口 -->
+        <button
+          v-for="pl in PLATFORM_LINKS"
+          :key="pl.key"
+          class="vp-btn vp-btn--ghost vp-btn--sm gp-platform-link"
+          :title="i18n.visitPlatform?.replace('{0}', pl.label) || `访问 ${pl.label}`"
+          @click="handleOpenWeb(pl.url)"
+        >
+          <Icon :icon="pl.icon" height="14" />
+        </button>
         <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="showCatDialog = true">
           <Icon icon="mdi:tag-outline" />
         </button>
@@ -968,6 +978,14 @@ async function batchProcess<T>(items: T[], batchSize: number, fn: (item: T) => P
 
 /** 远程平台元数据（从 types 导入共享定义） */
 const REMOTES = PLATFORM_META.map(pm => ({ key: pm.key, icon: pm.icon, label: pm.label, remoteProp: pm.remoteProp }))
+
+/** 平台官网快捷入口 */
+const PLATFORM_LINKS: { key: string; icon: string; label: string; url: string }[] = [
+  { key: "github", icon: "mdi:github", label: "GitHub", url: "https://github.com" },
+  { key: "gitee", icon: "mdi:git", label: "Gitee", url: "https://gitee.com" },
+  { key: "gitea", icon: "mdi:tea", label: "Gitea", url: "https://about.gitea.com" },
+  { key: "cnb", icon: "mdi:cloud-braces", label: "CNB", url: "https://cnb.cool" },
+]
 
 const props = defineProps<{
   i18n: Record<string, any>

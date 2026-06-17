@@ -66,10 +66,6 @@
       :needs-push-projects="needsPushProjects"
       :uncommitted-projects="uncommittedProjects"
       :recent-commits="recentCommits"
-      :starred-count="starredProjects.length"
-      :archived-count="archivedProjects.length"
-      :status-stats="statusStats"
-      :tag-stats="tagStats"
       :no-platform-projects="noPlatformProjects"
       :platform-status-projects="platformStatusProjects"
       @view-project="onViewProject"
@@ -957,9 +953,6 @@ const {
   // 项目聚合管理
   allTags,
   starredProjects,
-  archivedProjects,
-  tagStats,
-  statusStats,
   updateProjectMeta,
   toggleStar,
   setProjectStatus,

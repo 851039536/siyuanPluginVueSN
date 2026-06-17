@@ -153,7 +153,6 @@ const STYLE_ID = "table-style-settings"
 
 const DEFAULT_SETTINGS: TableStyleSettingsData = {
   enabled: false,
-  borderColor: "rgba(0, 0, 0, 0.623)",
   cellBorderColor: "rgba(0, 0, 0, 0.171)",
   headerBackground: "#e0ffd6",
   oddRowBackground: "#ffffff",
@@ -162,14 +161,13 @@ const DEFAULT_SETTINGS: TableStyleSettingsData = {
   borderRadius: 6,
 }
 
-/** 颜色字段配置——数据驱动，替代 5 段重复模板 */
+/** 颜色字段配置——数据驱动 */
 const colorFields: {
-  key: keyof Pick<TableStyleSettingsData, "borderColor" | "cellBorderColor" | "headerBackground" | "oddRowBackground" | "evenRowBackground" | "textColor">
+  key: keyof Pick<TableStyleSettingsData, "cellBorderColor" | "headerBackground" | "oddRowBackground" | "evenRowBackground" | "textColor">
   labelKey: string
   fallback: string
   placeholder: string
 }[] = [
-  { key: "borderColor", labelKey: "tableBorder", fallback: "表格外框", placeholder: "#000000" },
   { key: "cellBorderColor", labelKey: "tableCellBorder", fallback: "单元格边框", placeholder: "#000000" },
   { key: "headerBackground", labelKey: "tableHeaderBackground", fallback: "表头背景", placeholder: "#e0ffd6" },
   { key: "oddRowBackground", labelKey: "tableOddRowBackground", fallback: "奇数行背景", placeholder: "#ffffff" },
@@ -182,7 +180,6 @@ const showPreview = ref(true)
 
 const previewTableStyle = computed(() => ({
   borderRadius: `${settings.value.borderRadius}px`,
-  border: `1px solid ${settings.value.borderColor}`,
   "--preview-cell-border": settings.value.cellBorderColor,
   "--preview-header-bg": settings.value.headerBackground,
   "--preview-odd-bg": settings.value.oddRowBackground,
@@ -235,7 +232,6 @@ function applyTableStyles(tableSettings: TableStyleSettingsData) {
     const css = `
       .protyle-wysiwyg table {
         border-collapse: collapse;
-        border: 1px solid ${tableSettings.borderColor};
         border-radius: ${tableSettings.borderRadius}px;
         overflow: hidden;
       }

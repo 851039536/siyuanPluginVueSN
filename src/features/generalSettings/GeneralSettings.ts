@@ -340,47 +340,27 @@ export class GeneralSettings {
       }
 
       const css = `
-        /* 表格整体外框 */
         .protyle-wysiwyg table {
-          border-collapse: collapse !important;
-          border: 1px solid ${tableSettings.borderColor} !important;
-          border-radius: ${tableSettings.borderRadius}px !important;
+          border-collapse: collapse;
+          border-radius: ${tableSettings.borderRadius}px;
           overflow: hidden;
-          box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
         }
-
-        /* 表格内部网格线 */
         .protyle-wysiwyg table th,
         .protyle-wysiwyg table td {
-          border: 1.5px solid ${tableSettings.cellBorderColor} !important;
+          border: 1px solid ${tableSettings.cellBorderColor};
         }
-
-        /* 表头 */
         .protyle-wysiwyg table th {
-          background-color: ${tableSettings.headerBackground} !important;
+          background-color: ${tableSettings.headerBackground};
           color: ${tableSettings.textColor};
         }
-
-        /* 奇数行 */
         .protyle-wysiwyg table tr:nth-child(odd) {
-          background-color: ${tableSettings.oddRowBackground} !important;
-          color: ${tableSettings.textColor};
+          background-color: ${tableSettings.oddRowBackground};
         }
-
-        /* 偶数行 */
         .protyle-wysiwyg table tr:nth-child(even) {
-          background-color: ${tableSettings.evenRowBackground} !important;
+          background-color: ${tableSettings.evenRowBackground};
+        }
+        .protyle-wysiwyg table td {
           color: ${tableSettings.textColor};
-        }
-
-        /* 暗色主题适配 */
-        :root[data-theme-mode="dark"] .protyle-wysiwyg table th {
-          color: #ffffff;
-        }
-
-        :root[data-theme-mode="dark"] .protyle-wysiwyg table tr:nth-child(odd),
-        :root[data-theme-mode="dark"] .protyle-wysiwyg table tr:nth-child(even) {
-          color: #ffffff;
         }
       `
 

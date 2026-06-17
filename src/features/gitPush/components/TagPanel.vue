@@ -34,12 +34,16 @@
         <span v-if="t.message" class="gp-tag-msg">{{ t.message }}</span>
         <span v-if="t.date" class="gp-tag-date">{{ t.date?.slice(0, 10) }}</span>
         <button
-          class="vp-btn vp-btn--ghost vp-btn--sm"
-          title="推送到远程"
+          class="vp-btn vp-btn--ghost vp-btn--sm gp-tag-push-btn"
+          title="推送到全部远程"
           :disabled="pushLoaded === t.name"
           @click="emit('push', { tag: t.name })"
         >
-          <Icon :icon="pushLoaded === t.name ? 'mdi:loading' : 'mdi:cloud-upload-outline'" :class="{ 'gp-spin': pushLoaded === t.name }" height="12" />
+          <Icon v-if="pushLoaded === t.name" icon="mdi:loading" class="gp-spin" height="12" />
+          <template v-else>
+            <Icon v-for="r in remotes" :key="r.key" :icon="r.icon" height="11" />
+            <Icon icon="mdi:cloud-upload-outline" height="11" style="opacity:0.5" />
+          </template>
         </button>
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"
@@ -67,6 +71,7 @@ const props = defineProps<{
   tags: TagInfo[]
   loading?: boolean
   pushLoaded?: string
+  remotes: { key: string; icon: string }[]
   i18n: Record<string, any>
 }>()
 

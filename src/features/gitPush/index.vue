@@ -445,6 +445,7 @@
           :tags="tagsCache[project.id] || []"
           :loading="tagLoading[project.id]"
           :push-loaded="tagPushLoading[project.id]"
+          :remotes="PLATFORM_META.filter(pm => project[pm.remoteProp]).map(pm => ({ key: pm.key, icon: pm.icon }))"
           :i18n="i18n"
           @create="(p) => handleCreateTag(project.id, p.name, p.message)"
           @push="(p) => handlePushTag(project.id, p.tag)"
@@ -1731,16 +1732,16 @@ async function handleDeleteTag(id: string, tag: string) {
 async function handlePushTag(id: string, tag: string) {
   const project = projects.value.find(p => p.id === id)
   if (!project) return
-  // 自动选择第一个可用的远程
-  let remoteName = ""
+  // 收集所有已配置的远程
+  const remoteNames: string[] = []
   for (const pm of PLATFORM_META) {
     const name = project[pm.remoteProp] as string | undefined
-    if (name) { remoteName = name; break }
+    if (name) remoteNames.push(name)
   }
-  if (!remoteName) { alert("未找到远程仓库"); return }
+  if (remoteNames.length === 0) { alert("未找到远程仓库"); return }
   tagPushLoading.value = { ...tagPushLoading.value, [id]: tag }
   try {
-    await pushTagOp(id, remoteName, tag)
+    await Promise.all(remoteNames.map(name => pushTagOp(id, name, tag)))
   } catch (e: any) {
     alert(`推送 Tag 失败: ${e?.message || e}`)
   } finally {

@@ -1,0 +1,10 @@
+{
+  "unitConverter": "单位转换",
+  "unitConverterDesc": "在右侧边栏提供长度、面积、体积、质量、功率、时间、速度、数据存储、进制、ASCII等转换功能",
+  "unitConverterTitle": "单位转换",
+  "lengthInputValue": "输入值",
+  "lengthFromUnit": "从单位",
+  "lengthToUnit": "到单位",
+  "lengthPlaceholder": "请输入长度数值",
+  "lengthQuickResults": "快速转换结果"
+}

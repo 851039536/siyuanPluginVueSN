@@ -1,0 +1,22 @@
+{
+  "qrcodeFeature": "QR Code Generator",
+  "qrcodeDesc": "Generate QR codes from selected text with copy and download options",
+  "qrcodeGenerate": "Generate QR Code",
+  "qrcodeContent": "Content",
+  "qrcodePlaceholder": "Enter or select content to generate QR code...",
+  "qrcodePreview": "QR Code Preview",
+  "qrcodeSize": "Size",
+  "qrcodeErrorCorrection": "Error Correction Level",
+  "qrcodeErrorL": "L (7%)",
+  "qrcodeErrorM": "M (15%)",
+  "qrcodeErrorQ": "Q (25%)",
+  "qrcodeErrorH": "H (30%)",
+  "qrcodeCopy": "Copy Image",
+  "qrcodeDownload": "Download",
+  "qrcodeNotGenerated": "Please generate QR code first",
+  "qrcodeCopied": "QR code copied to clipboard",
+  "qrcodeCopyFailed": "Copy failed",
+  "qrcodeDownloaded": "QR code downloaded",
+  "qrcodeDownloadFailed": "Download failed",
+  "qrcodeGenerateFailed": "Failed to generate QR code"
+}

@@ -1,0 +1,21 @@
+{
+  "qrcodeDesc": "右键选中文本生成二维码，支持复制和下载",
+  "qrcodeGenerate": "生成二维码",
+  "qrcodeContent": "内容",
+  "qrcodePlaceholder": "输入或选择内容生成二维码...",
+  "qrcodePreview": "二维码预览",
+  "qrcodeSize": "大小",
+  "qrcodeErrorCorrection": "纠错级别",
+  "qrcodeErrorL": "L (7%)",
+  "qrcodeErrorM": "M (15%)",
+  "qrcodeErrorQ": "Q (25%)",
+  "qrcodeErrorH": "H (30%)",
+  "qrcodeCopy": "复制图片",
+  "qrcodeDownload": "下载",
+  "qrcodeNotGenerated": "请先生成二维码",
+  "qrcodeCopied": "二维码已复制到剩贴板",
+  "qrcodeCopyFailed": "复制失败",
+  "qrcodeDownloaded": "二维码已下载",
+  "qrcodeDownloadFailed": "下载失败",
+  "qrcodeGenerateFailed": "生成二维码失败"
+}

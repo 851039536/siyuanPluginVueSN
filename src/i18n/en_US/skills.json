@@ -1,0 +1,29 @@
+{
+  "skills": {
+    "label": "Prompts",
+    "title": "Prompts Library",
+    "description": "Manage frequently used prompt templates",
+    "enableSkills": "Enable Prompts Library",
+    "enableSkillsDesc": "Add Prompts button to floating box, manage prompt templates",
+    "modal": {
+      "title": "Prompts Library",
+      "close": "Close",
+      "addPrompt": "Add Prompt",
+      "editPrompt": "Edit Prompt",
+      "delete": "Delete",
+      "edit": "Edit",
+      "search": "Search prompts...",
+      "titleLabel": "Title",
+      "description": "Description",
+      "content": "Content",
+      "cancel": "Cancel",
+      "save": "Save",
+      "titlePlaceholder": "Enter prompt title",
+      "descriptionPlaceholder": "Enter prompt description",
+      "contentPlaceholder": "Enter prompt content",
+      "noPrompts": "No prompts yet, click to add",
+      "noPromptsFound": "No matching prompts found",
+      "clickToCopy": "Click to copy"
+    }
+  }
+}

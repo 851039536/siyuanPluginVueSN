@@ -1,0 +1,29 @@
+{
+  "skills": {
+    "label": "Prompts",
+    "title": "提示词库",
+    "description": "管理常用提示词模板",
+    "enableSkills": "启用提示词库功能",
+    "enableSkillsDesc": "在悬浮框中添加提示词库按钮，管理常用提示词模板等",
+    "modal": {
+      "title": "提示词库",
+      "close": "关闭",
+      "addPrompt": "添加提示词",
+      "editPrompt": "编辑提示词",
+      "delete": "删除",
+      "edit": "编辑",
+      "search": "搜索提示词...",
+      "titleLabel": "标题",
+      "description": "描述",
+      "content": "内容",
+      "cancel": "取消",
+      "save": "保存",
+      "titlePlaceholder": "请输入提示词标题",
+      "descriptionPlaceholder": "请输入提示词描述",
+      "contentPlaceholder": "请输入提示词内容",
+      "noPrompts": "暂无提示词，点击添加",
+      "noPromptsFound": "未找到匹配的提示词",
+      "clickToCopy": "复制"
+    }
+  }
+}

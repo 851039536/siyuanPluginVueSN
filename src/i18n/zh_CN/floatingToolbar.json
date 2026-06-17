@@ -1,0 +1,27 @@
+{
+  "floatingToolbar": {
+    "copy": "复制",
+    "qrcode": "生成二维码",
+    "pronunciation": "谐音翻译",
+    "highlight": "高亮",
+    "search": "搜索",
+    "translate": "翻译替换",
+    "aiProcess": "AI处理",
+    "aiQuery": "AI查询",
+    "noTextSelected": "未选中文本",
+    "copySuccess": "已复制到剪贴板",
+    "highlightSuccess": "已添加高亮",
+    "highlightFailed": "高亮失败",
+    "cannotGetBlockId": "无法获取当前块ID",
+    "selectEnglishToTranslate": "请选择英文文本进行翻译",
+    "translating": "正在翻译...",
+    "translateSuccess": "翻译完成（支持 Ctrl+Z 撤回）",
+    "translateFailed": "翻译失败，请重试",
+    "translateError": "翻译失败",
+    "aiProcessInDevelopment": "AI处理功能开发中...",
+    "queryFlashcard": "查询单词",
+    "noFlashcards": "暂无卡片数据",
+    "cardNotFound": "未找到卡片",
+    "queryFailed": "查询失败"
+  }
+}

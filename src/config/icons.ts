@@ -468,6 +468,9 @@ export const COMMON_ICONS = {
   listBulleted: {
     icon: "mdi:format-list-bulleted",
   },
+  listOrdered: {
+    icon: "mdi:format-list-numbered",
+  },
   textBox: {
     icon: "mdi:text-box",
   },
@@ -499,6 +502,9 @@ export const COMMON_ICONS = {
   },
   format: {
     icon: "mdi:format-text",
+  },
+  formatSize: {
+    icon: "mdi:format-size",
   },
   lightbulb: {
     icon: "mdi:lightbulb",

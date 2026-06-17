@@ -129,38 +129,40 @@
                   />
                 </div>
               </div>
-              <div class="vp-card-desc">
-                {{ prompt.description }}
-              </div>
-
-              <div
-                v-for="slot in prompt.contents"
-                :key="slot.id"
-                class="vp-content-block"
-              >
-                <div class="vp-content-label">
-                  <IconWrapper
-                    name="textBox"
-                    :size="16"
-                  />
-                  {{ slot.label }}
+              <div class="vp-card-body">
+                <div class="vp-card-desc">
+                  {{ prompt.description }}
                 </div>
+
                 <div
-                  class="vp-content-value"
-                  role="button"
-                  tabindex="0"
-                  :aria-label="`点击复制${slot.label}: ${prompt.title}`"
-                  @click="copyContent(slot.text)"
-                  @keydown.enter="copyContent(slot.text)"
-                  @keydown.space.prevent="copyContent(slot.text)"
+                  v-for="slot in prompt.contents"
+                  :key="slot.id"
+                  class="vp-content-block"
                 >
-                  <pre>{{ slot.text }}</pre>
-                  <div class="vp-copy-hint">
+                  <div class="vp-content-label">
                     <IconWrapper
-                      name="contentCopy"
-                      :size="14"
+                      name="textBox"
+                      :size="16"
                     />
-                    {{ i18n?.clickToCopy || '复制' }}
+                    {{ slot.label }}
+                  </div>
+                  <div
+                    class="vp-content-value"
+                    role="button"
+                    tabindex="0"
+                    :aria-label="`点击复制${slot.label}: ${prompt.title}`"
+                    @click="copyContent(slot.text)"
+                    @keydown.enter="copyContent(slot.text)"
+                    @keydown.space.prevent="copyContent(slot.text)"
+                  >
+                    <pre>{{ slot.text }}</pre>
+                    <div class="vp-copy-hint">
+                      <IconWrapper
+                        name="contentCopy"
+                        :size="14"
+                      />
+                      {{ i18n?.clickToCopy || '复制' }}
+                    </div>
                   </div>
                 </div>
               </div>

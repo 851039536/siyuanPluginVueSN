@@ -139,7 +139,11 @@ src/
 ├── types/
 │   ├── ai.ts               # AI API 类型
 │   └── api.d.ts            # API 请求/响应类型
-└── i18n/                   # zh_CN.json / en_US.json
+└── i18n/
+    ├── zh_CN/                 # 中文分片（源文件，按 feature 模块拆分）
+    ├── en_US/                 # 英文分片（源文件，结构与中文对应）
+    ├── zh_CN.json             # 构建产物（自动合并，思源框架读取）
+    └── en_US.json             # 构建产物（自动合并）
 ```
 
 ## UI 风格：Codex
@@ -246,7 +250,7 @@ src/features/myFeature/
 3. **导出** `src/features/index.ts` 添加 `from "./myFeature"`，同步更新 `_Registered` 类型（否则编译报错）
 4. **注册** `src/index.ts` → `registerFeatures()` 添加 `if (s.enableXxx) registerMyFeature(this)`
 5. **开关** `src/config/settings.ts` → `PluginSettings` 加 `enableXxx: boolean` + `DEFAULT_SETTINGS` 加默认值；若 ID 含缩写词需在 `FEATURE_ID_TO_KEY_MAP` 添加映射
-6. **i18n** `src/i18n/zh_CN.json` + `en_US.json` 添加翻译条目
+6. **i18n** `src/i18n/zh_CN/<feature>.json` + `en_US/<feature>.json` 添加翻译条目（构建时自动合并为 `zh_CN.json`/`en_US.json`，运行 `npm run i18n:verify` 校验键对齐）
 7. **配置** `src/features/config.ts` → `FEATURE_CONFIG` 添加条目；纯配置型功能（无 register）需加到 `_ConfigOnly` 白名单
 8. **图标** `src/config/icons.ts` → `FEATURE_ICONS` 添加映射，运行 `pnpm validate:icons`
 
@@ -261,6 +265,55 @@ export function registerMyFeature(plugin: Plugin) {
     callback: () => { /* 逻辑 */ },
   })
 }
+```
+
+## i18n 国际化
+
+**分片架构**：源文件按 feature 模块拆分（`src/i18n/{zh_CN,en_US}/featureName.json`），构建时 `scripts/merge-i18n.mjs` 自动合并为思源框架所需的单一 `zh_CN.json` / `en_US.json`。
+
+### 文件规则
+
+| 分片 | 内容 |
+|------|------|
+| `common.json` | 全局通用键（save/cancel/confirm/delete/copy/edit/close/refresh 等） |
+| `pageLock.json` | 页面锁定模块的所有键（含嵌套 `pageLock.*` 和顶层 `enablePageLock*`） |
+| `<feature>.json` | 每个功能模块一个文件（命名与 `src/features/` 目录名对应） |
+
+### 命名约定
+
+```
+✅ 推荐 — 统一按 feature 模块组织
+  src/i18n/zh_CN/wordQuery.json     → plugin.i18n.wordQuery.title
+  src/i18n/zh_CN/imageCompressor.json → plugin.i18n.imageCompressor.quality
+
+⚠️ 遗留 — base64Image 使用下划线前缀，暂不重构
+  src/i18n/zh_CN/base64Image.json   → plugin.i18n.base64Image_encode
+```
+
+### 日常操作
+
+```bash
+npm run i18n:merge    # 手动合并（构建时自动执行，通常无需手动调用）
+npm run i18n:verify   # 校验 zh_CN 与 en_US 键完全对齐 + 检测重复键
+npm run i18n:split    # 从单体 JSON 重新拆分（极少需要，仅在分片损坏时使用）
+```
+
+### 新增 i18n 文本
+
+1. 找到对应 feature 的分片文件（如 `src/i18n/zh_CN/wordQuery.json`）
+2. 添加键值对
+3. 同样在 `src/i18n/en_US/<feature>.json` 添加英文翻译
+4. 提交前运行 `npm run i18n:verify` 确保键对齐
+
+### 构建流程
+
+```
+vite buildStart
+  → execSync("node scripts/merge-i18n.mjs")
+    → 读取 src/i18n/zh_CN/*.json → 合并 → 写入 src/i18n/zh_CN.json
+    → 读取 src/i18n/en_US/*.json → 合并 → 写入 src/i18n/en_US.json
+  → viteStaticCopy 复制产出的 .json 到 dist/i18n/
+  → 思源框架读取 dist/i18n/{zh_CN,en_US}.json
 ```
 
 ## 构建与验证

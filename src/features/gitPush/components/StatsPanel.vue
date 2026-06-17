@@ -162,31 +162,29 @@
         </div>
       </div>
 
-      <!-- 未推送项目列表 -->
-      <div v-if="needsPushProjects.length > 0" class="gp-stats-section">
+      <!-- 待处理项目（需推送 + 未提交变更合并） -->
+      <div v-if="pendingProjects.length > 0" class="gp-stats-section">
         <div class="gp-stats-section-title">
-          {{ i18n.needsPushList || '未及时推送项目' }}
-          <span class="gp-stats-section-count">{{ needsPushProjects.length }}</span>
+          {{ i18n.pendingProjects || '待处理项目' }}
+          <span class="gp-stats-section-count">{{ pendingProjects.length }}</span>
         </div>
         <div class="gp-table-wrap">
           <div class="gp-table-row gp-table-row--head">
             <span class="gp-table-cell gp-table-cell--name">{{ i18n.projectName || '项目' }}</span>
-            <span class="gp-table-cell gp-table-cell--plat">{{ i18n.platform || '平台' }}</span>
-            <span class="gp-table-cell gp-table-cell--num">Ahead</span>
+            <span class="gp-table-cell gp-table-cell--num">{{ i18n.needsPushShort || '待推送' }}</span>
+            <span class="gp-table-cell gp-table-cell--num">{{ i18n.staged || '暂存' }}</span>
+            <span class="gp-table-cell gp-table-cell--num">{{ i18n.unstaged || '未暂存' }}</span>
+            <span class="gp-table-cell gp-table-cell--num">{{ i18n.untracked || '未跟踪' }}</span>
             <span class="gp-table-cell gp-table-cell--act"></span>
           </div>
           <div
-            v-for="item in needsPushProjects"
+            v-for="item in pendingProjects"
             :key="item.project.id"
-            class="gp-table-row"
+            class="gp-table-row gp-table-row--clickable"
+            @click="emit('viewProject', item.project.id)"
           >
-            <span class="gp-table-cell gp-table-cell--name">{{ item.project.name }}</span>
-            <span class="gp-table-cell gp-table-cell--plat">
-              <span
-                v-for="r in item.aheadByRemote"
-                :key="r.key"
-                class="gp-table-remote-tag"
-              >{{ platformLabel(r.key) }}</span>
+            <span class="gp-table-cell gp-table-cell--name" :title="item.project.path">
+              {{ item.project.name }}
             </span>
             <span class="gp-table-cell gp-table-cell--num">
               <span
@@ -194,44 +192,22 @@
                 :key="r.key"
                 class="gp-badge-ahead"
               >↑{{ r.ahead }}</span>
+              <span v-if="item.aheadByRemote.length === 0" class="gp-cell-empty">-</span>
+            </span>
+            <span class="gp-table-cell gp-table-cell--num">
+              <span v-if="item.staged > 0" class="gp-badge-staged">{{ item.staged }}</span>
+              <span v-else class="gp-cell-empty">-</span>
+            </span>
+            <span class="gp-table-cell gp-table-cell--num">
+              <span v-if="item.unstaged > 0" class="gp-badge-unstaged">{{ item.unstaged }}</span>
+              <span v-else class="gp-cell-empty">-</span>
+            </span>
+            <span class="gp-table-cell gp-table-cell--num">
+              <span v-if="item.untracked > 0" class="gp-badge-untracked">{{ item.untracked }}</span>
+              <span v-else class="gp-cell-empty">-</span>
             </span>
             <span class="gp-table-cell gp-table-cell--act">
-              <button
-                class="vp-btn vp-btn--ghost vp-btn--sm"
-                :title="i18n.viewProject || '查看项目'"
-                @click="emit('viewProject', item.project.id)"
-              >
-                <Icon icon="mdi:arrow-right" height="12" />
-              </button>
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 未提交变更项目 -->
-      <div v-if="uncommittedProjects.length > 0" class="gp-stats-section">
-        <div class="gp-stats-section-title">
-          {{ i18n.uncommittedChanges || '未提交变更项目' }}
-          <span class="gp-stats-section-count">{{ uncommittedProjects.length }}</span>
-        </div>
-        <div class="gp-table-wrap">
-          <div class="gp-table-row gp-table-row--head">
-            <span class="gp-table-cell gp-table-cell--name">{{ i18n.projectName || '项目' }}</span>
-            <span class="gp-table-cell gp-table-cell--num">{{ i18n.staged || '暂存' }}</span>
-            <span class="gp-table-cell gp-table-cell--num">{{ i18n.unstaged || '未暂存' }}</span>
-            <span class="gp-table-cell gp-table-cell--num">{{ i18n.untracked || '未跟踪' }}</span>
-          </div>
-          <div
-            v-for="item in uncommittedProjects"
-            :key="item.project.id"
-            class="gp-table-row"
-          >
-            <span class="gp-table-cell gp-table-cell--name">{{ item.project.name }}</span>
-            <span class="gp-table-cell gp-table-cell--num">{{ item.staged }}</span>
-            <span class="gp-table-cell gp-table-cell--num">{{ item.unstaged }}</span>
-            <span class="gp-table-cell gp-table-cell--num">
-              <span v-if="item.untracked > 0" class="gp-badge-ahead">{{ item.untracked }}</span>
-              <span v-else>0</span>
+              <Icon icon="mdi:arrow-right" height="12" />
             </span>
           </div>
         </div>
@@ -264,6 +240,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue"
 import { Icon } from "@iconify/vue"
 import type { GitProject } from "../types"
 
@@ -325,10 +302,6 @@ function pct(count: number): string {
   return `${Math.round((count / total) * 100)}%`
 }
 
-function platformLabel(key: string): string {
-  return key === "github" ? "GitHub" : key === "gitee" ? "Gitee" : "Gitea"
-}
-
 function formatDate(ts: number): string {
   const d = new Date(ts)
   const y = d.getFullYear()
@@ -343,6 +316,59 @@ const PLATFORM_META: { key: string; icon: string; label: string }[] = [
   { key: "gitee", icon: "mdi:git", label: "Gitee" },
   { key: "gitea", icon: "mdi:tea", label: "Gitea" },
 ]
+
+/** 合并后的待处理项目（需要推送 + 有未提交变更） */
+interface PendingProjectItem {
+  project: GitProject
+  aheadByRemote: { key: string; ahead: number }[]
+  totalAhead: number
+  staged: number
+  unstaged: number
+  untracked: number
+  isPending: boolean
+}
+
+const pendingProjects = computed<PendingProjectItem[]>(() => {
+  const map = new Map<string, PendingProjectItem>()
+  // 先收集需要推送的项目
+  for (const np of props.needsPushProjects) {
+    map.set(np.project.id, {
+      project: np.project,
+      aheadByRemote: np.aheadByRemote,
+      totalAhead: np.totalAhead,
+      staged: 0,
+      unstaged: 0,
+      untracked: 0,
+      isPending: true,
+    })
+  }
+  // 再合并有未提交变更的项目
+  for (const uc of props.uncommittedProjects) {
+    const existing = map.get(uc.project.id)
+    if (existing) {
+      existing.staged = uc.staged
+      existing.unstaged = uc.unstaged
+      existing.untracked = uc.untracked
+    } else {
+      map.set(uc.project.id, {
+        project: uc.project,
+        aheadByRemote: [],
+        totalAhead: 0,
+        staged: uc.staged,
+        unstaged: uc.unstaged,
+        untracked: uc.untracked,
+        isPending: true,
+      })
+    }
+  }
+  // 按 totalAhead 降序 → staged+unstaged+untracked 降序
+  return [...map.values()].sort((a, b) => {
+    if (a.totalAhead !== b.totalAhead) return b.totalAhead - a.totalAhead
+    const aTotal = a.staged + a.unstaged + a.untracked
+    const bTotal = b.staged + b.unstaged + b.untracked
+    return bTotal - aTotal
+  })
+})
 </script>
 
 <style lang="scss">

@@ -243,17 +243,6 @@
   }
 }
 
-.gp-table-remote-tag {
-  display: inline-block;
-  font-size: 8px;
-  font-weight: 600;
-  text-transform: uppercase;
-  padding: 1px 4px;
-  border-radius: 2px;
-  background: var(--b3-theme-primary-lightest);
-  color: var(--b3-theme-primary);
-}
-
 .gp-badge-ahead {
   display: inline-block;
   font-size: 9px;
@@ -263,6 +252,28 @@
   border-radius: 3px;
   background: var(--b3-theme-primary-lightest);
   color: var(--b3-theme-primary);
+}
+
+.gp-cell-empty {
+  opacity: 0.2;
+}
+
+.gp-badge-staged {
+  @extend .gp-badge-ahead;
+  background: var(--b3-theme-primary-lightest);
+  color: var(--b3-theme-primary);
+}
+
+.gp-badge-unstaged {
+  @extend .gp-badge-ahead;
+  background: var(--b3-theme-warning-lightest);
+  color: var(--b3-theme-warning);
+}
+
+.gp-badge-untracked {
+  @extend .gp-badge-ahead;
+  background: #fde68a;
+  color: #92400e;
 }
 
 // ── 平台状态图标 ──

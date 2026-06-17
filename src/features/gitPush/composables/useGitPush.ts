@@ -416,18 +416,41 @@ export function useGitPush(manager: GitPushManager) {
     }
   }
 
-  async function loadPushStatus(id: string) {
-    pushStatuses.value[id] = await manager.checkPushStatus(id)
+  /**
+   * 加载推送状态
+   * @param opts.branch 当前分支名，传入后节省一次 rev-parse（批量统计场景复用）
+   */
+  async function loadPushStatus(id: string, opts?: { branch?: string }) {
+    pushStatuses.value[id] = await manager.checkPushStatus(id, opts ? { branch: opts.branch } : undefined)
   }
 
   /** 加载工作区状态
    *  @param skipRefresh 跳过 update-index --refresh（首屏/批量探测时传 true 提速；
    *                    stage/commit 等改写 index 的操作后刷新走默认 false，确保读准）
+   *  @param branch 当前分支名，传入后节省一次 rev-parse
    */
-  async function loadWorkingTree(id: string, skipRefresh = false) {
+  async function loadWorkingTree(id: string, skipRefresh = false, branch?: string) {
     const project = projects.value.find(p => p.id === id)
     if (!project) return
-    workingTrees.value[id] = await manager.getWorkingTreeStatus(project.path, { skipRefresh })
+    workingTrees.value[id] = await manager.getWorkingTreeStatus(project.path, { skipRefresh, branch })
+  }
+
+  /**
+   * 加载统计视图所需数据（pushStatus + workingTree）。
+   * 共用一次 rev-parse 获取分支名，避免 loadPushStatus 和 loadWorkingTree 各调一次。
+   * 专供统计视图批量探测使用。
+   */
+  async function loadStatsData(id: string) {
+    const project = projects.value.find(p => p.id === id)
+    if (!project) return
+
+    const branch = await manager.getBranch(project.path)
+    if (!branch) return
+
+    await Promise.all([
+      pushStatuses.value[id] ? Promise.resolve() : loadPushStatus(id, { branch }),
+      workingTrees.value[id] ? Promise.resolve() : loadWorkingTree(id, true, branch),
+    ])
   }
 
   /** 加载单个文件差异 */
@@ -687,6 +710,7 @@ export function useGitPush(manager: GitPushManager) {
     loadProjects,
     loadPushStatus,
     loadWorkingTree,
+    loadStatsData,
     loadFileDiff,
     loadCommitLog,
     loadBranches,

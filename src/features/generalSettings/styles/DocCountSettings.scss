@@ -1,0 +1,238 @@
+@use '@/variables.scss' as *;
+
+// 等宽字体栈（本地声明，superPanel 的 $vp-mono 不可用）
+$vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
+
+.doc-count-settings {
+  padding: $spacing-4;
+}
+
+.setting-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-surface);
+  margin-bottom: $spacing-3;
+}
+
+.label-icon {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.toggle-description {
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface-variant);
+  margin-top: $spacing-2;
+  line-height: 1.4;
+}
+
+.feature-description {
+  margin-top: $spacing-5;
+  padding: $spacing-3;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-md;
+}
+
+.description-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-surface);
+  margin-bottom: 10px;
+}
+
+.title-icon {
+  font-size: 14px;
+}
+
+.description-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface-variant);
+  line-height: 1.8;
+}
+
+.description-list li {
+  margin-bottom: $spacing-1;
+}
+
+.description-list li:last-child {
+  margin-bottom: 0;
+}
+
+.update-interval {
+  margin-top: $spacing-5;
+  padding: $spacing-3;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-md;
+}
+
+.interval-label {
+  display: block;
+  font-size: 13px;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-surface);
+  margin-bottom: $spacing-2;
+}
+
+.interval-select {
+  width: 100%;
+  padding: $spacing-2 $spacing-3;
+  font-size: 13px;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-base;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  cursor: pointer;
+}
+
+.interval-select:hover {
+  border-color: var(--b3-theme-primary);
+}
+
+.interval-select:focus {
+  outline: none;
+  border-color: var(--b3-theme-primary);
+  box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.1);
+}
+
+.font-style-settings {
+  margin-top: $spacing-5;
+  padding: $spacing-3;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-md;
+}
+
+.settings-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-surface);
+  margin-bottom: 14px;
+}
+
+.style-row {
+  margin-bottom: $spacing-3;
+}
+
+.style-row:last-of-type {
+  margin-bottom: 0;
+}
+
+.style-label {
+  display: block;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: var(--b3-theme-on-surface-variant);
+  margin-bottom: 6px;
+}
+
+.style-select {
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 13px;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-base;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  cursor: pointer;
+}
+
+.style-select:hover {
+  border-color: var(--b3-theme-primary);
+}
+
+.style-select:focus {
+  outline: none;
+  border-color: var(--b3-theme-primary);
+  box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.1);
+}
+
+.color-input-wrapper {
+  display: flex;
+  gap: $spacing-2;
+  align-items: center;
+}
+
+.color-picker {
+  width: 40px;
+  height: 32px;
+  padding: 2px;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-base;
+  cursor: pointer;
+  background: var(--b3-theme-background);
+}
+
+.color-picker::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+
+.color-picker::-webkit-color-swatch {
+  border: none;
+  border-radius: $radius-sm;
+}
+
+.color-text {
+  flex: 1;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-family: $vp-mono;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-base;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+}
+
+.color-text:hover {
+  border-color: var(--b3-theme-primary);
+}
+
+.color-text:focus {
+  outline: none;
+  border-color: var(--b3-theme-primary);
+  box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.1);
+}
+
+.style-preview {
+  margin-top: $spacing-4;
+  padding-top: $spacing-3;
+  border-top: 1px solid var(--b3-border-color);
+}
+
+.preview-label {
+  display: block;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: var(--b3-theme-on-surface-variant);
+  margin-bottom: $spacing-2;
+}
+
+.preview-box {
+  padding: 10px $spacing-3;
+  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-base;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+}
+
+.preview-text {
+  color: var(--b3-theme-on-background);
+}
+
+.preview-count {
+  margin-left: 2px;
+}

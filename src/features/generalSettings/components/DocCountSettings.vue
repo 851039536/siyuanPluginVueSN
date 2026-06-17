@@ -1,7 +1,7 @@
 <template>
   <div class="doc-count-settings">
     <label class="setting-label">
-      <span class="label-icon">📊</span>
+      <span class="label-icon"><IconWrapper name="statistics" :size="14" /></span>
       {{ i18n?.enableDocCount || '笔记本文档数统计' }}
     </label>
     <SiSwitch
@@ -15,7 +15,7 @@
     <!-- 功能说明 -->
     <div class="feature-description">
       <div class="description-title">
-        <span class="title-icon">💡</span>
+        <span class="title-icon"><IconWrapper name="lightbulb" :size="14" /></span>
         {{ i18n?.featureDescription || '功能说明' }}
       </div>
       <ul class="description-list">
@@ -53,7 +53,7 @@
     <!-- 字体样式设置 -->
     <div class="font-style-settings">
       <div class="settings-title">
-        <span class="title-icon">🎨</span>
+        <span class="title-icon"><IconWrapper name="codeBlockColor" :size="14" /></span>
         {{ i18n?.fontStyleSettings || '字体样式设置' }}
       </div>
 
@@ -162,6 +162,7 @@ import {
   ref,
 } from "vue"
 import SiSwitch from "@/components/Switch.vue"
+import IconWrapper from "@/components/IconWrapper.vue"
 import { DocCountManager } from "../modules/DocCountManager"
 
 import { GeneralSettingsStorage } from "../types/storage"
@@ -320,239 +321,6 @@ defineExpose({
 })
 </script>
 
-<style scoped>
-.doc-count-settings {
-  padding: 16px;
-}
-
-.setting-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--b3-theme-on-surface);
-  margin-bottom: 12px;
-}
-
-.label-icon {
-  font-size: 14px;
-  opacity: 0.8;
-}
-
-.toggle-description {
-  font-size: 12px;
-  color: var(--b3-theme-on-surface-variant);
-  margin-top: 8px;
-  line-height: 1.4;
-}
-
-.feature-description {
-  margin-top: 20px;
-  padding: 12px 14px;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 8px;
-}
-
-.description-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--b3-theme-on-surface);
-  margin-bottom: 10px;
-}
-
-.title-icon {
-  font-size: 14px;
-}
-
-.description-list {
-  margin: 0;
-  padding-left: 18px;
-  font-size: 12px;
-  color: var(--b3-theme-on-surface-variant);
-  line-height: 1.8;
-}
-
-.description-list li {
-  margin-bottom: 4px;
-}
-
-.description-list li:last-child {
-  margin-bottom: 0;
-}
-
-.update-interval {
-  margin-top: 20px;
-  padding: 12px 14px;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 8px;
-}
-
-.interval-label {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--b3-theme-on-surface);
-  margin-bottom: 8px;
-}
-
-.interval-select {
-  width: 100%;
-  padding: 8px 12px;
-  font-size: 13px;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 6px;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  cursor: pointer;
-}
-
-.interval-select:hover {
-  border-color: var(--b3-theme-primary);
-}
-
-.interval-select:focus {
-  outline: none;
-  border-color: var(--b3-theme-primary);
-  box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.1);
-}
-
-.font-style-settings {
-  margin-top: 20px;
-  padding: 12px 14px;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 8px;
-}
-
-.settings-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--b3-theme-on-surface);
-  margin-bottom: 14px;
-}
-
-.style-row {
-  margin-bottom: 12px;
-}
-
-.style-row:last-of-type {
-  margin-bottom: 0;
-}
-
-.style-label {
-  display: block;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--b3-theme-on-surface-variant);
-  margin-bottom: 6px;
-}
-
-.style-select {
-  width: 100%;
-  padding: 6px 10px;
-  font-size: 13px;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 6px;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  cursor: pointer;
-}
-
-.style-select:hover {
-  border-color: var(--b3-theme-primary);
-}
-
-.style-select:focus {
-  outline: none;
-  border-color: var(--b3-theme-primary);
-  box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.1);
-}
-
-.color-input-wrapper {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.color-picker {
-  width: 40px;
-  height: 32px;
-  padding: 2px;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 6px;
-  cursor: pointer;
-  background: var(--b3-theme-background);
-}
-
-.color-picker::-webkit-color-swatch-wrapper {
-  padding: 2px;
-}
-
-.color-picker::-webkit-color-swatch {
-  border: none;
-  border-radius: 4px;
-}
-
-.color-text {
-  flex: 1;
-  padding: 6px 10px;
-  font-size: 13px;
-  font-family: monospace;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 6px;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-}
-
-.color-text:hover {
-  border-color: var(--b3-theme-primary);
-}
-
-.color-text:focus {
-  outline: none;
-  border-color: var(--b3-theme-primary);
-  box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.1);
-}
-
-.style-preview {
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid var(--b3-theme-surface-lighter);
-}
-
-.preview-label {
-  display: block;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--b3-theme-on-surface-variant);
-  margin-bottom: 8px;
-}
-
-.preview-box {
-  padding: 10px 12px;
-  background: var(--b3-theme-background);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 6px;
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-}
-
-.preview-text {
-  color: var(--b3-theme-on-background);
-}
-
-.preview-count {
-  margin-left: 2px;
-}
-
+<style scoped lang="scss">
+@use "../styles/DocCountSettings.scss";
 </style>

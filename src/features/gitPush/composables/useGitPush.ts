@@ -364,14 +364,16 @@ export function useGitPush(manager: GitPushManager) {
     return PLATFORM_META.find(pm => pm.key === target)?.label ?? "Gitea"
   }
 
-  /** 将 pushToAll/pullToAll 返回的 result 对象转为格式化 entries 数组 */
+  /** 将 pushToAll/pullToAll 返回的 result 对象转为格式化 entries 数组（过滤跳过项） */
   function resultToEntries(result: { [key: string]: any }) {
-    return PLATFORM_META.map(pm => ({
-      label: pm.label,
-      ok: result[pm.key]?.ok ?? false,
-      stdout: result[pm.key]?.stdout ?? "",
-      stderr: result[pm.key]?.stderr ?? "",
-    }))
+    return PLATFORM_META
+      .filter(pm => (result[pm.key] as any)?.skipped !== true)
+      .map(pm => ({
+        label: pm.label,
+        ok: result[pm.key]?.ok ?? false,
+        stdout: result[pm.key]?.stdout ?? "",
+        stderr: result[pm.key]?.stderr ?? "",
+      }))
   }
 
   async function pushToAll(id: string) {

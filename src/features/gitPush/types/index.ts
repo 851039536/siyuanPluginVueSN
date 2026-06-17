@@ -279,27 +279,29 @@ export class GitPushManager {
     }
   }
 
+  /** 推送操作的单个远程结果 */
+  private skippedResult = { ok: false, stdout: "", stderr: "", skipped: true }
+
   /**
-   * 推送项目到全部已配置的远程（GitHub + Gitee + Gitea + CNB）
+   * 推送项目到全部已配置的远程（未配置的平台自动跳过）
    */
   async pushToAll(id: string): Promise<{
     success: boolean
-    github: { ok: boolean; stdout: string; stderr: string }
-    gitee: { ok: boolean; stdout: string; stderr: string }
-    gitea: { ok: boolean; stdout: string; stderr: string }
-    cnb: { ok: boolean; stdout: string; stderr: string }
+    github: { ok: boolean; stdout: string; stderr: string; skipped?: boolean }
+    gitee: { ok: boolean; stdout: string; stderr: string; skipped?: boolean }
+    gitea: { ok: boolean; stdout: string; stderr: string; skipped?: boolean }
+    cnb: { ok: boolean; stdout: string; stderr: string; skipped?: boolean }
   }> {
     const projects = await this.getProjects()
     const project = projects.find(p => p.id === id)
-    const emptyResult = { ok: false, stdout: "", stderr: "" }
 
     if (!project) {
-      const notFound = { ...emptyResult, stderr: "项目未找到" }
+      const notFound = { ok: false, stdout: "", stderr: "项目未找到" }
       return { success: false, github: notFound, gitee: notFound, gitea: notFound, cnb: notFound }
     }
 
     const tryPush = async (remoteName: string | undefined) => {
-      if (!remoteName) return { ...emptyResult }
+      if (!remoteName) return this.skippedResult
       try {
         const stdout = await this.execGit(project.path, ["push", remoteName, "--all"]) || ""
         return { ok: true, stdout, stderr: "" }
@@ -343,26 +345,25 @@ export class GitPushManager {
   }
 
   /**
-   * 从全部已配置远程拉取更新
+   * 从全部已配置远程拉取更新（未配置的平台自动跳过）
    */
   async pullToAll(id: string): Promise<{
     success: boolean
-    github: { ok: boolean; stdout: string; stderr: string }
-    gitee: { ok: boolean; stdout: string; stderr: string }
-    gitea: { ok: boolean; stdout: string; stderr: string }
-    cnb: { ok: boolean; stdout: string; stderr: string }
+    github: { ok: boolean; stdout: string; stderr: string; skipped?: boolean }
+    gitee: { ok: boolean; stdout: string; stderr: string; skipped?: boolean }
+    gitea: { ok: boolean; stdout: string; stderr: string; skipped?: boolean }
+    cnb: { ok: boolean; stdout: string; stderr: string; skipped?: boolean }
   }> {
     const projects = await this.getProjects()
     const project = projects.find(p => p.id === id)
-    const emptyResult = { ok: false, stdout: "", stderr: "" }
 
     if (!project) {
-      const notFound = { ...emptyResult, stderr: "项目未找到" }
+      const notFound = { ok: false, stdout: "", stderr: "项目未找到" }
       return { success: false, github: notFound, gitee: notFound, gitea: notFound, cnb: notFound }
     }
 
     const tryPull = async (remoteName: string | undefined) => {
-      if (!remoteName) return { ...emptyResult }
+      if (!remoteName) return this.skippedResult
       try {
         const stdout = await this.execGit(project.path, ["pull", remoteName, "--ff-only"]) || ""
         return { ok: true, stdout, stderr: "" }

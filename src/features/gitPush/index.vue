@@ -1249,20 +1249,16 @@ watch(activeCategory, async (catId) => {
   })
 })
 
-/** 切换到统计视图时，加载全部项目的数据以准确统计
- *  统计视图需要 recentCommits/branches 等首屏未加载的详情，此处补齐 */
+/** 切换到统计视图时，补齐统计面板所需的最小数据集（pushStatus + workingTree）。
+ *  commitLog/branches/stash 不在统计视图中展示，无需加载。 */
 watch(currentView, async (view) => {
   if (view !== "stats") return
-  const pending = projects.value.filter(p => !commitLogs.value[p.id])
+  const pending = projects.value.filter(p => !pushStatuses.value[p.id] || !workingTrees.value[p.id])
   if (pending.length === 0) return
   await batchProcess(pending, 3, async (p) => {
     await Promise.all([
-      // 首屏可能未加载 working tree（新增项目），补齐
-      workingTrees.value[p.id] ? Promise.resolve() : loadWorkingTree(p.id, true),
       pushStatuses.value[p.id] ? Promise.resolve() : loadPushStatus(p.id),
-      loadCommitLog(p.id),
-      loadBranches(p.id),
-      loadStashList(p.id),
+      workingTrees.value[p.id] ? Promise.resolve() : loadWorkingTree(p.id, true),
     ])
   })
 })

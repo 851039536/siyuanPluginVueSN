@@ -24,7 +24,6 @@ export interface DocumentFontSettings {
 
 export interface TableStyleSettings {
   enabled: boolean
-  borderColor: string
   cellBorderColor: string
   headerBackground: string
   oddRowBackground: string

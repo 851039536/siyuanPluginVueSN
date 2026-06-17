@@ -87,7 +87,7 @@
     display: flex;
     align-items: center;
     gap: $spacing-1;
-    padding: 6px 12px;
+    padding: $spacing-1 $spacing-3;
     border-radius: $radius-full;
     border: 1px solid var(--b3-border-color);
     background: var(--b3-theme-surface);
@@ -135,7 +135,7 @@
 
     .vp-search-icon {
       position: absolute;
-      left: 10px;
+      left: $spacing-2;
       color: var(--b3-theme-on-surface-light);
       pointer-events: none;
     }
@@ -212,7 +212,7 @@
     }
 
     .vp-tag {
-      padding: 2px 8px;
+      padding: 2px $spacing-2;
       border-radius: $radius-sm;
       font-size: $font-size-xs;
       font-weight: 500;
@@ -222,7 +222,7 @@
 
   .vp-card-actions {
     display: flex;
-    gap: 4px;
+    gap: $spacing-1;
     flex-shrink: 0;
   }
 }
@@ -251,10 +251,10 @@
     text-transform: uppercase;
     opacity: 0.45;
     color: var(--b3-theme-on-surface);
-    margin-bottom: 6px;
+    margin-bottom: $spacing-1;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: $spacing-1;
   }
 
   .vp-content-value {
@@ -272,7 +272,7 @@
 
     pre {
       margin: 0;
-      font-size: 11px;
+      font-size: 10px;
       color: var(--b3-theme-on-background);
       white-space: pre-wrap;
       word-break: break-word;
@@ -281,14 +281,14 @@
     }
 
     .vp-copy-hint {
-      font-size: 11px;
+      font-size: 10px;
       color: var(--b3-theme-on-surface-light);
-      margin-top: 6px;
+      margin-top: $spacing-1;
       text-align: right;
       display: flex;
       align-items: center;
       justify-content: flex-end;
-      gap: 4px;
+      gap: $spacing-1;
       opacity: 0.7;
     }
 
@@ -428,7 +428,7 @@
 .vp-content-editor-actions {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: $spacing-1;
   flex-shrink: 0;
   padding-top: 2px;
 }
@@ -481,7 +481,7 @@
 
       &::-webkit-color-swatch {
         border: none;
-        border-radius: 4px;
+        border-radius: $radius-sm;
       }
     }
   }
@@ -555,7 +555,7 @@
 
     .vp-chip {
       font-size: $font-size-xs;
-      padding: 5px 10px;
+      padding: $spacing-1 $spacing-2;
     }
   }
 
@@ -567,7 +567,7 @@
     flex-direction: column;
 
     .vp-search .vp-input--search {
-      padding: 10px 12px 10px 36px;
+      padding: $spacing-2 $spacing-3 $spacing-2 36px;
     }
   }
 
@@ -588,12 +588,12 @@
     }
 
     h3 {
-      font-size: 15px;
+      font-size: $font-size-base;
     }
 
     .vp-tag {
       font-size: 10px;
-      padding: 2px 6px;
+      padding: 0 $spacing-1;
     }
   }
 

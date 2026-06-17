@@ -23,10 +23,9 @@
             variant="ghost"
             size="small"
             icon="listBulleted"
+            :title="i18n?.manageCategories || '管理分类'"
             @click="openCategoryManage"
-          >
-            {{ i18n?.manageCategories || '管理分类' }}
-          </Button>
+          />
           <Button
             variant="ghost"
             icon="close"
@@ -395,13 +394,12 @@
       <div class="vp-modal-header">
         <h2>{{ i18n?.manageCategories || '管理分类' }}</h2>
         <Button
-          variant="secondary"
+          variant="ghost"
           icon="close"
-          icon-position="right"
+          size="small"
+          :title="i18n?.close || '关闭'"
           @click="closeCategoryManage"
-        >
-          {{ i18n?.close || '关闭' }}
-        </Button>
+        />
       </div>
 
       <div class="vp-modal-body">

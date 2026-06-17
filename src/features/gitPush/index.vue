@@ -27,6 +27,7 @@
           </button>
         </div>
         <!-- 平台官网快捷入口 -->
+        <span class="gp-header-sep" />
         <button
           v-for="pl in PLATFORM_LINKS"
           :key="pl.key"
@@ -34,8 +35,10 @@
           :title="i18n.visitPlatform?.replace('{0}', pl.label) || `访问 ${pl.label}`"
           @click="handleOpenWeb(pl.url)"
         >
-          <Icon :icon="pl.icon" height="14" />
+          <Icon :icon="pl.icon" height="13" />
+          <span class="gp-platform-link-label">{{ pl.label }}</span>
         </button>
+        <span class="gp-header-sep" />
         <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="showCatDialog = true">
           <Icon icon="mdi:tag-outline" />
         </button>

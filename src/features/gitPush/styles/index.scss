@@ -67,7 +67,22 @@
 
 .gp-header-btns {
   display: flex;
+  align-items: center;
   gap: 4px;
+}
+
+.gp-header-sep {
+  width: 1px;
+  height: 18px;
+  margin: 0 5px;
+  background: var(--b3-border-color);
+  flex-shrink: 0;
+}
+
+.gp-platform-link-label {
+  font-size: 10px;
+  opacity: 0.55;
+  margin-left: 3px;
 }
 
 .gp-title {

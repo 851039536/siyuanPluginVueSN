@@ -3,17 +3,49 @@
 // 等宽字体栈（本地声明，superPanel 的 $vp-mono 不可用）
 $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 
-.doc-count-settings {
-  padding: $spacing-4;
+// ============================================================
+// 共享 @mixin
+// ============================================================
+
+/** 卡片面板（feature-description / update-interval / font-style-settings 共享） */
+@mixin card-panel {
+  margin-top: $spacing-5;
+  padding: $spacing-3;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-md;
 }
 
-.setting-label {
+/** 区块标题（description-title / setting-label / settings-title / interval-label 共享 flex-row） */
+@mixin section-title {
   display: flex;
   align-items: center;
   gap: 6px;
   font-size: 13px;
   font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-surface);
+}
+
+/** 下拉选择器交互状态（hover + focus ring） */
+@mixin select-interactive {
+  &:hover { border-color: var(--b3-theme-primary); }
+  &:focus {
+    outline: none;
+    border-color: var(--b3-theme-primary);
+    box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.1);
+  }
+}
+
+// ============================================================
+// 组件样式
+// ============================================================
+
+.doc-count-settings {
+  padding: $spacing-4;
+}
+
+.setting-label {
+  @include section-title;
   margin-bottom: $spacing-3;
 }
 
@@ -30,20 +62,11 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 }
 
 .feature-description {
-  margin-top: $spacing-5;
-  padding: $spacing-3;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $radius-md;
+  @include card-panel;
 }
 
 .description-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: $font-weight-semibold;
-  color: var(--b3-theme-on-surface);
+  @include section-title;
   margin-bottom: 10px;
 }
 
@@ -57,29 +80,19 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
   font-size: $font-size-xs;
   color: var(--b3-theme-on-surface-variant);
   line-height: 1.8;
-}
 
-.description-list li {
-  margin-bottom: $spacing-1;
-}
-
-.description-list li:last-child {
-  margin-bottom: 0;
+  li {
+    margin-bottom: $spacing-1;
+    &:last-child { margin-bottom: 0; }
+  }
 }
 
 .update-interval {
-  margin-top: $spacing-5;
-  padding: $spacing-3;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $radius-md;
+  @include card-panel;
 }
 
 .interval-label {
-  display: block;
-  font-size: 13px;
-  font-weight: $font-weight-semibold;
-  color: var(--b3-theme-on-surface);
+  @include section-title;
   margin-bottom: $spacing-2;
 }
 
@@ -92,42 +105,21 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
   cursor: pointer;
-}
-
-.interval-select:hover {
-  border-color: var(--b3-theme-primary);
-}
-
-.interval-select:focus {
-  outline: none;
-  border-color: var(--b3-theme-primary);
-  box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.1);
+  @include select-interactive;
 }
 
 .font-style-settings {
-  margin-top: $spacing-5;
-  padding: $spacing-3;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $radius-md;
+  @include card-panel;
 }
 
 .settings-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: $font-weight-semibold;
-  color: var(--b3-theme-on-surface);
+  @include section-title;
   margin-bottom: 14px;
 }
 
 .style-row {
   margin-bottom: $spacing-3;
-}
-
-.style-row:last-of-type {
-  margin-bottom: 0;
+  &:last-of-type { margin-bottom: 0; }
 }
 
 .style-label {
@@ -147,16 +139,7 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
   cursor: pointer;
-}
-
-.style-select:hover {
-  border-color: var(--b3-theme-primary);
-}
-
-.style-select:focus {
-  outline: none;
-  border-color: var(--b3-theme-primary);
-  box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.1);
+  @include select-interactive;
 }
 
 .color-input-wrapper {

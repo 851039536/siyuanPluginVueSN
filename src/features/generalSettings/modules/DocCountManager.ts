@@ -103,12 +103,19 @@ export class DocCountManager {
       const countSpan = document.createElement("span")
       countSpan.className = "doc-count-number"
       countSpan.textContent = DOC_COUNT_FORMATTERS[this.displayFormat](count)
-      countSpan.style.fontSize = this.fontStyle.fontSize
-      countSpan.style.color = this.fontStyle.color
-      countSpan.style.fontWeight = this.fontStyle.fontWeight
-      countSpan.style.opacity = String(this.fontStyle.opacity)
+      this.applyStyleToSpan(countSpan)
       boxText.appendChild(countSpan)
     }
+  }
+
+  /**
+   * 将当前字体样式应用至 span 元素
+   */
+  private applyStyleToSpan(span: HTMLElement): void {
+    span.style.fontSize = this.fontStyle.fontSize
+    span.style.color = this.fontStyle.color
+    span.style.fontWeight = this.fontStyle.fontWeight
+    span.style.opacity = String(this.fontStyle.opacity)
   }
 
   /**
@@ -134,14 +141,8 @@ export class DocCountManager {
    * 更新所有文档数的样式
    */
   private updateCountStyles(): void {
-    const countSpans = document.querySelectorAll(".doc-count-number")
-    countSpans.forEach((span) => {
-      const htmlSpan = span as HTMLElement
-      htmlSpan.style.fontSize = this.fontStyle.fontSize
-      htmlSpan.style.color = this.fontStyle.color
-      htmlSpan.style.fontWeight = this.fontStyle.fontWeight
-      htmlSpan.style.opacity = String(this.fontStyle.opacity)
-    })
+    const countSpans = document.querySelectorAll<HTMLElement>(".doc-count-number")
+    countSpans.forEach((span) => this.applyStyleToSpan(span))
   }
 
   /**

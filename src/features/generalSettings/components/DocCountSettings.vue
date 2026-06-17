@@ -35,17 +35,12 @@
         class="interval-select"
         @change="handleIntervalChange"
       >
-        <option value="1800000">
-          {{ i18n?.interval30min || '30分钟' }}
-        </option>
-        <option value="3600000">
-          {{ i18n?.interval1hour || '1小时' }}
-        </option>
-        <option value="7200000">
-          {{ i18n?.interval2hour || '2小时' }}
-        </option>
-        <option value="14400000">
-          {{ i18n?.interval4hour || '4小时' }}
+        <option
+          v-for="opt in intervalOptions"
+          :key="opt.value"
+          :value="opt.value"
+        >
+          {{ i18n?.[opt.labelKey] || opt.fallback }}
         </option>
       </select>
     </div>
@@ -66,26 +61,12 @@
           class="style-select"
           @change="handleFontStyleChange"
         >
-          <option value="10px">
-            10px
-          </option>
-          <option value="11px">
-            11px
-          </option>
-          <option value="12px">
-            12px
-          </option>
-          <option value="13px">
-            13px
-          </option>
-          <option value="14px">
-            14px
-          </option>
-          <option value="15px">
-            15px
-          </option>
-          <option value="16px">
-            16px
+          <option
+            v-for="size in fontSizeOptions"
+            :key="size"
+            :value="size"
+          >
+            {{ size }}
           </option>
         </select>
       </div>
@@ -120,14 +101,12 @@
           class="style-select"
           @change="handleFontStyleChange"
         >
-          <option value="normal">
-            {{ i18n?.fontWeightNormal || '正常' }}
-          </option>
-          <option value="bold">
-            {{ i18n?.fontWeightBold || '粗体' }}
-          </option>
-          <option value="lighter">
-            {{ i18n?.fontWeightLighter || '细体' }}
+          <option
+            v-for="opt in weightOptions"
+            :key="opt.value"
+            :value="opt.value"
+          >
+            {{ i18n?.[opt.labelKey] || opt.fallback }}
           </option>
         </select>
       </div>
@@ -202,7 +181,6 @@ import {
 import SiSwitch from "@/components/Switch.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import { DocCountManager } from "../modules/DocCountManager"
-
 import { type DocCountFormat, DOC_COUNT_FORMATTERS, GeneralSettingsStorage } from "../types/storage"
 
 const props = defineProps<{
@@ -221,6 +199,24 @@ const fontSize = ref("12px")
 const fontColor = ref("#8c8c8c")
 const fontWeight = ref("normal")
 const opacity = ref(0.8)
+
+// ============================================================
+// 数据驱动选项列表
+// ============================================================
+const fontSizeOptions = ["10px", "11px", "12px", "13px", "14px", "15px", "16px"] as const
+
+const intervalOptions = [
+  { value: "1800000", labelKey: "interval30min", fallback: "30分钟" },
+  { value: "3600000", labelKey: "interval1hour", fallback: "1小时" },
+  { value: "7200000", labelKey: "interval2hour", fallback: "2小时" },
+  { value: "14400000", labelKey: "interval4hour", fallback: "4小时" },
+] as const
+
+const weightOptions = [
+  { value: "normal" as const, labelKey: "fontWeightNormal", fallback: "正常" },
+  { value: "bold" as const, labelKey: "fontWeightBold", fallback: "粗体" },
+  { value: "lighter" as const, labelKey: "fontWeightLighter", fallback: "细体" },
+] as const
 
 const formatOptions: { value: DocCountFormat; label: string }[] = [
   { value: "bracket", label: "(123)" },
@@ -247,6 +243,17 @@ const ensureStorage = (): GeneralSettingsStorage => {
 /** 预览用的格式化数字 */
 const previewFormatted = computed(() => DOC_COUNT_FORMATTERS[displayFormat.value](123))
 
+/** 构建保存对象——4 个 handler 复用，消除重复 */
+const buildSettings = () => ({
+  enableDocCount: enableDocCount.value,
+  updateInterval: updateInterval.value,
+  displayFormat: displayFormat.value,
+  fontSize: fontSize.value,
+  fontColor: fontColor.value,
+  fontWeight: fontWeight.value,
+  opacity: opacity.value,
+})
+
 const loadSettings = async () => {
   try {
     const data = gsStorage.value ? await gsStorage.value.docCount.load() : null
@@ -266,19 +273,11 @@ const loadSettings = async () => {
 
 const handleToggleChange = async () => {
   try {
-    await ensureStorage().docCount.save({
-      enableDocCount: enableDocCount.value,
-      updateInterval: updateInterval.value,
-      displayFormat: displayFormat.value,
-      fontSize: fontSize.value,
-      fontColor: fontColor.value,
-      fontWeight: fontWeight.value,
-      opacity: opacity.value,
-    })
+    const settings = buildSettings()
+    await ensureStorage().docCount.save(settings)
 
     const manager = getDocCountManager()
     if (enableDocCount.value) {
-      // 如果启用但管理器不存在,创建并启动
       if (!manager && props.plugin?.__generalSettings) {
         props.plugin.__generalSettings.docCountManager = new DocCountManager()
         const newManager = getDocCountManager()
@@ -295,27 +294,16 @@ const handleToggleChange = async () => {
         manager?.start()
       }
     } else {
-      // 如果禁用,停止管理器
       manager?.stop()
     }
 
     showMessage(
-      enableDocCount.value
-        ? "笔记本文档数统计已启用"
-        : "笔记本文档数统计已禁用",
+      enableDocCount.value ? "笔记本文档数统计已启用" : "笔记本文档数统计已禁用",
       2000,
       "info",
     )
 
-    emit("change", {
-      enableDocCount: enableDocCount.value,
-      updateInterval: updateInterval.value,
-      displayFormat: displayFormat.value,
-      fontSize: fontSize.value,
-      fontColor: fontColor.value,
-      fontWeight: fontWeight.value,
-      opacity: opacity.value,
-    })
+    emit("change", settings)
   } catch (e) {
     console.error("保存文档数统计设置失败:", e)
   }
@@ -323,19 +311,8 @@ const handleToggleChange = async () => {
 
 const handleIntervalChange = async () => {
   try {
-    await ensureStorage().docCount.save({
-      enableDocCount: enableDocCount.value,
-      updateInterval: updateInterval.value,
-      displayFormat: displayFormat.value,
-      fontSize: fontSize.value,
-      fontColor: fontColor.value,
-      fontWeight: fontWeight.value,
-      opacity: opacity.value,
-    })
-
-    const manager = getDocCountManager()
-    manager?.setUpdateInterval(Number.parseInt(updateInterval.value))
-
+    await ensureStorage().docCount.save(buildSettings())
+    getDocCountManager()?.setUpdateInterval(Number.parseInt(updateInterval.value))
     showMessage("更新间隔已修改", 2000, "info")
   } catch (e) {
     console.error("保存更新间隔失败:", e)
@@ -344,16 +321,7 @@ const handleIntervalChange = async () => {
 
 const handleFontStyleChange = async () => {
   try {
-    await ensureStorage().docCount.save({
-      enableDocCount: enableDocCount.value,
-      updateInterval: updateInterval.value,
-      displayFormat: displayFormat.value,
-      fontSize: fontSize.value,
-      fontColor: fontColor.value,
-      fontWeight: fontWeight.value,
-      opacity: opacity.value,
-    })
-
+    await ensureStorage().docCount.save(buildSettings())
     const manager = getDocCountManager()
     manager?.setFontStyle({
       fontSize: fontSize.value,
@@ -362,7 +330,6 @@ const handleFontStyleChange = async () => {
       opacity: opacity.value,
     })
     manager?.setDisplayFormat(displayFormat.value)
-
     showMessage("字体样式已修改", 2000, "info")
   } catch (e) {
     console.error("保存字体样式失败:", e)
@@ -371,19 +338,8 @@ const handleFontStyleChange = async () => {
 
 const handleDisplayFormatChange = async () => {
   try {
-    await ensureStorage().docCount.save({
-      enableDocCount: enableDocCount.value,
-      updateInterval: updateInterval.value,
-      displayFormat: displayFormat.value,
-      fontSize: fontSize.value,
-      fontColor: fontColor.value,
-      fontWeight: fontWeight.value,
-      opacity: opacity.value,
-    })
-
-    const manager = getDocCountManager()
-    manager?.setDisplayFormat(displayFormat.value)
-
+    await ensureStorage().docCount.save(buildSettings())
+    getDocCountManager()?.setDisplayFormat(displayFormat.value)
     showMessage("显示格式已修改", 2000, "info")
   } catch (e) {
     console.error("保存显示格式失败:", e)

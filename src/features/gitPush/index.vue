@@ -643,6 +643,7 @@
       v-if="showAddDialog"
       :i18n="i18n"
       :categories="categories"
+      :selected-path="newProjectPath"
       @close="showAddDialog = false"
       @pick-dir="selectDirectory"
       @add="handleAddFromDialog"

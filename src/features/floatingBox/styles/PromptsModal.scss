@@ -260,7 +260,7 @@
   .vp-content-value {
     background: var(--b3-theme-background);
     border: 1px solid var(--b3-border-color);
-    border-radius: floatingBox.$vp-radius;
+    border-radius: $vp-radius;
     padding: $spacing-2;
     cursor: pointer;
     transition: all 0.12s;
@@ -276,7 +276,7 @@
       color: var(--b3-theme-on-background);
       white-space: pre-wrap;
       word-break: break-word;
-      font-family: floatingBox.$vp-mono;
+      font-family: $vp-mono;
       line-height: 1.4;
     }
 
@@ -388,7 +388,7 @@
   margin-bottom: $spacing-2;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: floatingBox.$vp-radius;
+  border-radius: $vp-radius;
   transition: all 0.12s;
 
   &:hover {
@@ -436,7 +436,7 @@
 .vp-content-editor-add {
   width: 100%;
   border: 1px dashed var(--b3-border-color);
-  border-radius: floatingBox.$vp-radius;
+  border-radius: $vp-radius;
   justify-content: center;
   color: var(--b3-theme-primary);
   background: transparent;
@@ -471,7 +471,7 @@
       height: 36px;
       padding: 2px;
       border: 1px solid var(--b3-border-color);
-      border-radius: floatingBox.$vp-radius;
+      border-radius: $vp-radius;
       cursor: pointer;
       background: var(--b3-theme-surface);
 
@@ -501,7 +501,7 @@
     padding: $spacing-2 $spacing-3;
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
-    border-radius: floatingBox.$vp-radius;
+    border-radius: $vp-radius;
     transition: all 0.12s;
 
     &:hover {

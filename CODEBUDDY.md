@@ -145,7 +145,7 @@ feature/
 
 所有样式必须放在独立的 `.scss` 文件中，禁止在 Vue SFC `<style>` 块中编写内联样式。Vue 文件中仅允许 `@use` 导入语句。每个组件对应一个 `styles/<ComponentName>.scss` 文件。
 
-项目遵循 **Codex UI 风格**：基于边框的卡片（禁用 `box-shadow`），使用 `src/_variables.scss` 中的全局设计 Token（`$radius-*`/`$spacing-1`~`$spacing-4`/`$font-size-*`），`$vp-radius`/`$vp-mono` 需在模块内本地声明，大写标签 10px/700 字重 + 0.06em 字母间距，统一 0.12s 过渡。
+项目遵循 **Codex UI 风格**：基于边框的卡片（禁用 `box-shadow`），使用 `src/_variables.scss` 中的全局设计 Token（`$radius-*`/`$vp-radius`/`$spacing-1`~`$spacing-4`/`$font-size-*`/`$vp-mono`），大写标签 10px/700 字重 + 0.06em 字母间距，统一 0.12s 过渡。
 
 > 完整设计 Token 表、核心规范速查表、`.vp-*` 组件模式库（弹窗/输入框/标签）、禁止事项清单见 [CLAUDE_RULES.md § UI 风格：Codex](./CLAUDE_RULES.md#ui-风格codex)
 >

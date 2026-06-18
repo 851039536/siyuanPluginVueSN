@@ -3,8 +3,7 @@
  * 代码文档式设计语言：等宽字体、大写标签、边框卡片、分割线
  */
 
-// Codex 字体栈（对齐 superPanel 规范）
-$vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
+@use '@/variables.scss' as *;
 
 // 遮罩层
 .vp-overlay {

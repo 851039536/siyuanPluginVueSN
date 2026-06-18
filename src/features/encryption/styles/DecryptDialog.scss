@@ -4,9 +4,6 @@
  */
 @use "@/variables.scss" as *;
 
-// 等宽字体栈（对齐项目 Codex 规范）
-$vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
-
 // 遮罩层
 .decrypt-overlay {
   position: fixed;

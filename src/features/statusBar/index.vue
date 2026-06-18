@@ -261,6 +261,18 @@ const FEATURES: FeatureRegistryEntry[] = [
     },
     action: () => showEverythingSearch(),
   },
+  {
+    id: "imageCompressor",
+    icon: "mdi:image",
+    color: "#ef4444",
+    title: props.plugin?.i18n?.imageCompressor?.title || "图片压缩",
+    pinnable: true,
+    shortcut: {
+      icon: "ph:image",
+      itemClass: "action-item image-compressor-item",
+    },
+    action: () => emitCustomEvent("openImageCompressor"),
+  },
 ]
 
 // id → 功能映射，用于点击分发（O(1) 取代 `id in SHORTCUT_DISPLAY` + superPanel 特判）

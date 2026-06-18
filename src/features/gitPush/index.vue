@@ -307,6 +307,15 @@
             >
               <Icon icon="mdi:tea" height="14" />
             </button>
+            <button
+              v-if="project.cnbUrl"
+              class="vp-btn vp-btn--ghost vp-btn--sm"
+              :title="'打开 CNB（右键复制链接）'"
+              @click="handleOpenWeb(project.cnbUrl)"
+              @contextmenu.prevent="handleCopyUrl(project.cnbUrl)"
+            >
+              <Icon icon="mdi:cloud-braces" height="14" />
+            </button>
             <div class="gp-ide-wrap">
               <button
                 class="vp-btn vp-btn--ghost vp-btn--sm"
@@ -624,480 +633,80 @@
     </template>
     <!-- 列表视图结束 -->
 
-    <!-- 添加项目弹窗 -->
-    <div v-if="showAddDialog" class="gp-mask" @click.self="showAddDialog = false">
-      <div class="gp-dialog">
-        <div class="gp-dialog-header">
-          <span class="gp-dialog-title">{{ i18n.addProject || '添加' }}</span>
-          <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="showAddDialog = false">
-            <Icon icon="mdi:close" />
-          </button>
-        </div>
-        <div class="gp-dialog-body">
-          <div class="gp-form-group">
-            <label class="gp-label">{{ i18n.projectName || '项目名称' }}</label>
-            <input
-              v-model="newProjectName"
-              class="gp-input"
-              :placeholder="i18n.namePlaceholder || '输入项目名称...'"
-              @keyup.enter="handleAdd"
-            />
-          </div>
-          <div class="gp-form-group">
-            <label class="gp-label">{{ i18n.projectPath || '项目路径' }}</label>
-            <div class="gp-path-row">
-              <input
-                v-model="newProjectPath"
-                class="gp-input"
-                :placeholder="i18n.pathPlaceholder || '选择或输入项目路径...'"
-                @keyup.enter="handleAdd"
-              />
-              <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="selectDirectory">
-                <Icon icon="mdi:folder-open" />
-              </button>
-            </div>
-          </div>
-          <div class="gp-form-group">
-            <label class="gp-label">{{ i18n.category || '分类' }}</label>
-            <select v-model="newProjectCat" class="gp-select">
-              <option
-                v-for="cat in categories"
-                :key="cat.id"
-                :value="cat.id"
-              >
-                {{ cat.name }}
-              </option>
-            </select>
-          </div>
-          <div class="gp-form-group">
-            <label class="gp-label">标签（可选，逗号分隔）</label>
-            <input
-              v-model="newProjectTags"
-              class="gp-input"
-              placeholder="如：前端, 个人作品, 长期维护"
-            />
-          </div>
-          <div v-if="addError" class="gp-error">{{ addError }}</div>
-          <div v-if="addChecking" class="gp-checking">
-            <Icon icon="mdi:loading" class="gp-spin" />
-            {{ i18n.checkingGit || '正在检查 git 仓库...' }}
-          </div>
-          <div v-if="addResult !== null && !addChecking" class="gp-check-result" :class="{ success: addResult }">
-            {{ addResult ? (i18n.gitRepoDetected || '✅ 已检测到 git 仓库') : (i18n.notGitRepo || '❌ 未检测到 git 仓库，将仅记录路径') }}
-          </div>
-        </div>
-        <div class="gp-dialog-footer">
-          <button class="vp-btn vp-btn--ghost" @click="showAddDialog = false">
-            {{ i18n.cancel || '取消' }}
-          </button>
-          <button class="vp-btn vp-btn--primary" :disabled="!newProjectName || !newProjectPath" @click="handleAdd">
-            {{ i18n.add || '添加' }}
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 管理分类弹窗 -->
-    <div v-if="showCatDialog" class="gp-mask" @click.self="showCatDialog = false">
-      <div class="gp-dialog" style="width: 340px;">
-        <div class="gp-dialog-header">
-          <span class="gp-dialog-title">{{ i18n.manageCategories || '管理分类' }}</span>
-          <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="showCatDialog = false">
-            <Icon icon="mdi:close" />
-          </button>
-        </div>
-        <div class="gp-dialog-body">
-          <div v-for="cat in categories" :key="cat.id" class="gp-cat-row">
-            <span class="gp-cat-dot-sm" :style="{ background: cat.color }" />
-            <span class="gp-cat-name-sm">{{ cat.name }}</span>
-            <button
-              v-if="cat.id !== '__ungrouped__'"
-              class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"
-              @click="handleDeleteCategory(cat.id)"
-            >
-              <Icon icon="mdi:delete-outline" height="12" />
-            </button>
-          </div>
-          <div class="gp-cat-add-row">
-            <input
-              v-model="newCatName"
-              class="gp-input"
-              :placeholder="i18n.catNamePlaceholder || '分类名称'"
-              @keyup.enter="handleAddCategory"
-              style="flex:1"
-            />
-            <input
-              v-model="newCatColor"
-              type="color"
-              class="gp-color-input"
-              title="颜色"
-            />
-            <button
-              class="vp-btn vp-btn--primary vp-btn--sm"
-              :disabled="!newCatName.trim()"
-              @click="handleAddCategory"
-            >
-              <Icon icon="mdi:plus" height="13" />
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 设置弹窗 -->
-    <div v-if="showSettings" class="gp-mask" @click.self="showSettings = false">
-      <div class="gp-dialog" style="width: 300px;">
-        <div class="gp-dialog-header">
-          <span class="gp-dialog-title">{{ i18n.settings || '设置' }}</span>
-          <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="showSettings = false">
-            <Icon icon="mdi:close" />
-          </button>
-        </div>
-        <div class="gp-dialog-body">
-          <div class="gp-set-row">
-            <label class="gp-set-label">Git 并发数</label>
-            <div class="gp-set-input-row">
-              <input
-                v-model.number="gitConcurrency"
-                type="number"
-                class="gp-input"
-                min="1"
-                max="10"
-                style="width: 50px; text-align: center;"
-              />
-              <button class="vp-btn vp-btn--primary vp-btn--sm" @click="handleSaveConcurrency">保存</button>
-            </div>
-          </div>
-          <div class="gp-set-hint">同时执行的 git 子进程数上限（1~10）</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- IDE 管理弹窗 -->
-    <div v-if="showIdeDialog" class="gp-mask" @click.self="showIdeDialog = false">
-      <div class="gp-dialog" style="width: 460px;">
-        <div class="gp-dialog-header">
-          <span class="gp-dialog-title">管理自定义 IDE</span>
-          <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="showIdeDialog = false">
-            <Icon icon="mdi:close" />
-          </button>
-        </div>
-        <div class="gp-dialog-body">
-          <div v-if="customIdes.length > 0" class="gp-ide-mgmt-list">
-            <div v-for="(custom, idx) in customIdes" :key="idx" class="gp-ide-mgmt-row">
-              <template v-if="editingIdeIdx === idx">
-                <select v-model="editIdePreset" class="gp-select" style="width:140px">
-                  <option v-for="p in IDE_PRESETS" :key="p.name" :value="p.name">{{ p.name }}</option>
-                </select>
-                <input v-model="editIdePath" class="gp-input" placeholder="可执行文件路径" style="flex:1" @keyup.enter="saveEditIde(idx)" @keyup.escape="editingIdeIdx = -1" />
-                <button class="vp-btn vp-btn--primary vp-btn--sm" @click="saveEditIde(idx)" :disabled="!editIdePath.trim()">保存</button>
-                <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="editingIdeIdx = -1">取消</button>
-              </template>
-              <template v-else>
-                <Icon :icon="getIdePresetIcon(custom.name)" height="14" />
-                <span class="gp-ide-mgmt-name">{{ custom.name }}</span>
-                <span class="gp-ide-mgmt-path" :title="custom.path">{{ custom.path }}</span>
-                <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="startEditIde(idx)">编辑</button>
-                <button class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger" @click="confirmingMgmtDelIdx === idx ? doRemoveCustomIde(idx) : (confirmingMgmtDelIdx = idx)">
-                  {{ confirmingMgmtDelIdx === idx ? '确认?' : '删除' }}
-                </button>
-              </template>
-            </div>
-          </div>
-          <div v-else class="gp-ide-mgmt-empty">暂无自定义 IDE，在下方添加</div>
-          <div class="gp-ide-divider" style="margin:8px 0" />
-          <div class="gp-ide-mgmt-add">
-            <select v-model="addIdePreset" class="gp-select" style="width:140px">
-              <option v-for="p in IDE_PRESETS" :key="p.name" :value="p.name">{{ p.name }}</option>
-            </select>
-            <input v-model="addIdePath" class="gp-input" placeholder="可执行文件路径（如 D:/Tools/devenv.exe）" style="flex:1" @keyup.enter="addCustomIde" />
-            <button class="vp-btn vp-btn--primary vp-btn--sm" @click="addCustomIde" :disabled="!addIdePath.trim()">添加</button>
-          </div>
-        </div>
-        <div class="gp-dialog-footer">
-          <button class="vp-btn vp-btn--ghost" @click="showIdeDialog = false">关闭</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 扫描导入项目弹窗 -->
-    <div v-if="showScanDialog" class="gp-mask" @click.self="handleCloseScan">
-      <div class="gp-dialog" style="width: 520px;">
-        <div class="gp-dialog-header">
-          <span class="gp-dialog-title">{{ i18n.importProject || '导入' }}</span>
-          <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="handleCloseScan">
-            <Icon icon="mdi:close" />
-          </button>
-        </div>
-        <div class="gp-dialog-body">
-          <div class="gp-form-group">
-            <label class="gp-label">{{ i18n.scanDir || '扫描目录' }}</label>
-            <div class="gp-path-row">
-              <input
-                v-model="scanDirInput"
-                class="gp-input"
-                :placeholder="i18n.scanDirPlaceholder || '选择要递归扫描的目录...'"
-              />
-              <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="selectScanDirectory">
-                <Icon icon="mdi:folder-open" />
-              </button>
-            </div>
-          </div>
-          <div style="display: flex; justify-content: center; margin-top: 4px;">
-            <button
-              class="vp-btn vp-btn--primary"
-              :disabled="scanning || !scanDirInput.trim()"
-              @click="handleStartScan"
-            >
-              <Icon v-if="scanning" icon="mdi:loading" class="gp-spin" />
-              <Icon v-else icon="mdi:magnify" />
-              <span>{{ scanning ? (i18n.scanning || '扫描中...') : (i18n.startScan || '开始扫描') }}</span>
-            </button>
-          </div>
-          <div v-if="scanResults.length > 0" class="gp-scan-results">
-            <div class="gp-scan-results-header">
-              <span class="gp-scan-count">{{ i18n.scanResults || '扫描结果' }} ({{ scanResults.length }})</span>
-              <button class="vp-btn vp-btn--ghost vp-btn--sm" style="font-size:10px;" @click="handleToggleSelectAll">
-                {{ i18n.selectAll || '全选' }}
-              </button>
-            </div>
-            <div v-for="repo in scanResults" :key="repo.path" class="gp-scan-item">
-              <label class="gp-scan-item-row" :class="{ 'gp-scan-imported': repo.alreadyImported }">
-                <input
-                  type="checkbox"
-                  :checked="scanSelection[repo.path] || false"
-                  :disabled="repo.alreadyImported"
-                  @change="toggleScanItem(repo.path)"
-                />
-                <div class="gp-scan-item-info">
-                  <span class="gp-scan-item-name">{{ repo.name }}</span>
-                  <span class="gp-scan-item-path">{{ repo.path }}</span>
-                </div>
-                <span v-if="repo.alreadyImported" class="gp-scan-badge">{{ i18n.imported || '已导入' }}</span>
-              </label>
-            </div>
-          </div>
-          <div v-else-if="!scanning && scanDirInput.trim() && scanResults.length === 0" class="gp-empty" style="padding:20px 0;">
-            <Icon icon="mdi:folder-search-outline" width="36" />
-            <div class="gp-empty-text">{{ i18n.noScanResults || '未找到 Git 仓库' }}</div>
-          </div>
-          <div v-if="scanError" class="gp-error">{{ scanError }}</div>
-        </div>
-        <div class="gp-dialog-footer">
-          <button class="vp-btn vp-btn--ghost" @click="handleCloseScan">
-            {{ i18n.cancel || '取消' }}
-          </button>
-          <button
-            class="vp-btn vp-btn--primary"
-            :disabled="selectedCount === 0"
-            @click="handleImportSelected"
-          >
-            {{ (i18n.importSelected || '导入选中') + ' (' + selectedCount + ')' }}
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 仓库配置弹窗 -->
-    <div v-if="remoteConfigProject" class="gp-mask" @click.self="remoteConfigProject = null">
-      <div class="gp-dialog" style="width: 420px;">
-        <div class="gp-dialog-header">
-          <span class="gp-dialog-title">仓库配置 — {{ remoteConfigProject.name }}</span>
-          <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="remoteConfigProject = null">
-            <Icon icon="mdi:close" />
-          </button>
-        </div>
-        <div class="gp-dialog-body">
-          <!-- 当前远程列表 -->
-          <div v-if="remoteList.length" class="gp-remote-list">
-            <div v-for="r in remoteList" :key="r.name" class="gp-remote-row">
-              <span class="gp-remote-name">{{ r.name }}</span>
-              <template v-if="editingRemoteName === r.name">
-                <input
-                  v-model="editingRemoteUrl"
-                  class="gp-input"
-                  style="flex:1"
-                  @keyup.enter="handleEditRemote(remoteConfigProject.id, r.name)"
-                  @keyup.escape="editingRemoteName = ''"
-                />
-                <button
-                  class="vp-btn vp-btn--primary vp-btn--sm"
-                  :disabled="!editingRemoteUrl.trim()"
-                  @click="handleEditRemote(remoteConfigProject.id, r.name)"
-                >保存</button>
-                <button
-                  class="vp-btn vp-btn--ghost vp-btn--sm"
-                  @click="editingRemoteName = ''"
-                >取消</button>
-              </template>
-              <template v-else>
-                <span class="gp-remote-url" :title="r.url">{{ r.url }}</span>
-                <button
-                  class="vp-btn vp-btn--ghost vp-btn--sm"
-                  title="编辑此远程 URL"
-                  @click="startEditRemote(r.name, r.url)"
-                >编辑</button>
-                <button
-                  class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"
-                  title="删除此远程"
-                  @click="handleRemoveRemote(remoteConfigProject.id, r.name)"
-                >删除</button>
-              </template>
-            </div>
-          </div>
-          <div v-else class="gp-remote-empty">暂无远程仓库</div>
-          <!-- 添加远程表单 -->
-          <div class="gp-remote-add">
-            <select v-model="newRemoteName" class="gp-select" style="width:110px">
-              <option value="" disabled>选择平台</option>
-              <option v-for="r in REMOTES" :key="r.key" :value="r.key">{{ r.label }}</option>
-            </select>
-            <input v-model="newRemoteUrl" class="gp-input" placeholder="远程 URL" style="flex:1" />
-            <button
-              class="vp-btn vp-btn--primary vp-btn--sm"
-              :disabled="!newRemoteName || !newRemoteUrl.trim()"
-              @click="handleAddRemote(remoteConfigProject.id)"
-            >添加</button>
-          </div>
-          <div v-if="remoteError" class="gp-error">{{ remoteError }}</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 项目编辑弹窗 -->
-    <div v-if="editDialogProject" class="gp-mask" @click.self="editDialogProject = null">
-      <div class="gp-dialog" style="width: 420px;">
-        <div class="gp-dialog-header">
-          <span class="gp-dialog-title">编辑项目 — {{ editDialogProject.name }}</span>
-          <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="editDialogProject = null">
-            <Icon icon="mdi:close" />
-          </button>
-        </div>
-        <div class="gp-dialog-body">
-          <div class="gp-form-group">
-            <label class="gp-label">项目名称</label>
-            <input v-model="editName" class="gp-input" @keyup.enter="handleEditSave" />
-          </div>
-          <div class="gp-edit-row">
-            <div class="gp-form-group" style="flex:1">
-              <label class="gp-label">状态</label>
-              <select v-model="editStatus" class="gp-select">
-                <option v-for="s in STATUS_CYCLE" :key="s" :value="s">{{ STATUS_META[s].label }}</option>
-              </select>
-            </div>
-            <div class="gp-form-group gp-edit-toggles">
-              <label class="gp-label">标记</label>
-              <div class="gp-toggle-row">
-                <button
-                  class="gp-toggle-chip"
-                  :class="{ active: editStarred }"
-                  @click="editStarred = !editStarred"
-                >
-                  <Icon :icon="editStarred ? 'mdi:star' : 'mdi:star-outline'" height="13" />收藏
-                </button>
-                <button
-                  class="gp-toggle-chip"
-                  :class="{ active: editArchived }"
-                  @click="editArchived = !editArchived"
-                >
-                  <Icon icon="mdi:archive-outline" height="13" />归档
-                </button>
-              </div>
-            </div>
-          </div>
-          <div class="gp-form-group">
-            <label class="gp-label">标签</label>
-            <div v-if="editTags.length" class="gp-edit-tags">
-              <span v-for="t in editTags" :key="t" class="gp-edit-tag">
-                {{ t }}
-                <button class="gp-edit-tag-x" @click="handleEditRemoveTag(t)">
-                  <Icon icon="mdi:close" height="11" />
-                </button>
-              </span>
-            </div>
-            <input
-              v-model="editTagInput"
-              class="gp-input"
-              placeholder="输入标签后回车添加"
-              list="gp-tag-suggestions"
-              @keyup.enter="handleEditAddTag"
-            />
-            <datalist id="gp-tag-suggestions">
-              <option v-for="t in allTags" :key="t" :value="t" />
-            </datalist>
-          </div>
-          <div class="gp-form-group">
-            <label class="gp-label">备注</label>
-            <textarea v-model="editNote" class="gp-input" rows="3" placeholder="项目备注（可选）" />
-          </div>
-          <div class="gp-form-group">
-            <label class="gp-label">仓库链接</label>
-            <div class="gp-edit-urls">
-              <div class="gp-edit-url-row">
-                <Icon icon="mdi:github" height="14" />
-                <input
-                  v-model="editGithubUrl"
-                  class="gp-input"
-                  placeholder="GitHub 仓库 URL（可选）"
-                />
-              </div>
-              <div class="gp-edit-url-row">
-                <Icon icon="mdi:git" height="14" />
-                <input
-                  v-model="editGiteeUrl"
-                  class="gp-input"
-                  placeholder="Gitee 仓库 URL（可选）"
-                />
-              </div>
-              <div class="gp-edit-url-row">
-                <Icon icon="mdi:tea" height="14" />
-                <input
-                  v-model="editGiteaUrl"
-                  class="gp-input"
-                  placeholder="Gitea 仓库 URL（可选）"
-                />
-              </div>
-            </div>
-          </div>
-          <div class="gp-form-group">
-            <label class="gp-label">Git 远程仓库（编辑/增删）</label>
-            <div v-if="editRemoteList.length" class="gp-remote-list">
-              <div v-for="r in editRemoteList" :key="r.name" class="gp-remote-row">
-                <span class="gp-remote-name">{{ r.name }}</span>
-                <template v-if="editEditingRemote === r.name">
-                  <input v-model="editEditingRemoteUrl" class="gp-input" style="flex:1" @keyup.enter="handleEditRemoteSave(r.name)" @keyup.escape="editEditingRemote = ''" />
-                  <button class="vp-btn vp-btn--primary vp-btn--sm" @click="handleEditRemoteSave(r.name)">保存</button>
-                  <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="editEditingRemote = ''">取消</button>
-                </template>
-                <template v-else>
-                  <span class="gp-remote-url" :title="r.url">{{ r.url }}</span>
-                  <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="editEditingRemote = r.name; editEditingRemoteUrl = r.url">编辑</button>
-                  <button class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger" @click="handleEditRemoveRemote(r.name)">删除</button>
-                </template>
-              </div>
-            </div>
-            <div v-else class="gp-remote-empty">暂无远程仓库</div>
-            <div class="gp-remote-add" style="margin-top:4px">
-              <select v-model="editNewRemoteName" class="gp-select" style="width:110px">
-                <option value="" disabled>选择平台</option>
-                <option v-for="r in REMOTES" :key="r.key" :value="r.key">{{ r.label }}</option>
-              </select>
-              <input v-model="editNewRemoteUrl" class="gp-input" placeholder="远程 URL" style="flex:1" @keyup.enter="handleEditAddRemote" />
-              <button class="vp-btn vp-btn--primary vp-btn--sm" :disabled="!editNewRemoteName || !editNewRemoteUrl.trim()" @click="handleEditAddRemote">添加</button>
-            </div>
-            <div v-if="editRemoteError" class="gp-error" style="margin-top:4px">{{ editRemoteError }}</div>
-          </div>
-        </div>
-        <div class="gp-dialog-footer">
-          <button class="vp-btn vp-btn--ghost" @click="editDialogProject = null">
-            {{ i18n.cancel || '取消' }}
-          </button>
-          <button class="vp-btn vp-btn--primary" @click="handleEditSave">
-            {{ i18n.save || '保存' }}
-          </button>
-        </div>
-      </div>
-    </div>
+    <AddProjectDialog
+      v-if="showAddDialog"
+      :i18n="i18n"
+      :categories="categories"
+      @close="showAddDialog = false"
+      @pick-dir="selectDirectory"
+      @add="handleAddFromDialog"
+    />
+    <CategoryDialog
+      v-if="showCatDialog"
+      :i18n="i18n"
+      :categories="categories"
+      @close="showCatDialog = false"
+      @add-category="handleAddCategory"
+      @delete-category="handleDeleteCategory"
+    />
+    <SettingsDialog
+      v-if="showSettings"
+      :i18n="i18n"
+      :concurrency="gitConcurrency"
+      @close="showSettings = false"
+      @save="handleSaveConcurrency"
+    />
+    <IdeManagementDialog
+      v-if="showIdeDialog"
+      :custom-ides="customIdes"
+      :preset-options="IDE_PRESETS"
+      :get-icon="getIdePresetIcon"
+      @close="showIdeDialog = false"
+      @add-ide="(preset: string, path: string) => { addIdePreset = preset; addIdePath = path; addCustomIde() }"
+      @save-edit-ide="(idx: number, preset: string, path: string) => { editingIdeIdx = idx; editIdePreset = preset; editIdePath = path; saveEditIde(idx) }"
+      @delete-ide="doRemoveCustomIde"
+    />
+    <ScanImportDialog
+      v-if="showScanDialog"
+      :i18n="i18n"
+      :scanning="scanning"
+      :error="scanError"
+      :results="scanResults"
+      :selection="scanSelection"
+      :scan-dir="scanDirInput"
+      @close="handleCloseScan"
+      @pick-scan-dir="selectScanDirectory"
+      @start-scan="handleStartScan"
+      @toggle-select-all="handleToggleSelectAll"
+      @toggle-item="toggleScanItem"
+      @import-selected="handleImportSelected"
+    />
+    <RemoteConfigDialog
+      v-if="remoteConfigProject"
+      :project="remoteConfigProject"
+      :remotes="remoteList"
+      :remotes-meta="REMOTES"
+      :error="remoteError"
+      @close="remoteConfigProject = null"
+      @add-remote="(name:string,url:string) => handleAddRemote(remoteConfigProject!.id,name,url)"
+      @remove-remote="(name:string) => handleRemoveRemote(remoteConfigProject!.id,name)"
+      @edit-remote="(name:string,url:string) => handleEditRemote(remoteConfigProject!.id,name,url)"
+    />
+    <EditProjectDialog
+      v-if="editDialogProject"
+      :project="editDialogProject"
+      :i18n="i18n"
+      :all-tags="allTags"
+      :remote-list="editRemoteList"
+      :remote-error="editRemoteError"
+      :remotes-meta="REMOTES"
+      :url-values="{ githubUrl: editGithubUrl, giteeUrl: editGiteeUrl, giteaUrl: editGiteaUrl, cnbUrl: editCnbUrl }"
+      @close="editDialogProject = null"
+      @save="handleEditSaveFromDialog"
+      @edit-add-remote="(name:string,url:string) => { editNewRemoteName = name; editNewRemoteUrl = url; handleEditAddRemote() }"
+      @edit-remove-remote="handleEditRemoveRemote"
+      @edit-save-remote="(name:string,url:string) => { editEditingRemote = name; editEditingRemoteUrl = url; handleEditRemoteSave(name) }"
+    />
   </div>
 </template>
 
@@ -1111,8 +720,17 @@ import { useGitPush } from "./composables/useGitPush"
 import WorkingTreePanel from "./components/WorkingTreePanel.vue"
 import StatsPanel from "./components/StatsPanel.vue"
 import TagPanel from "./components/TagPanel.vue"
+import AddProjectDialog from "./components/AddProjectDialog.vue"
+import CategoryDialog from "./components/CategoryDialog.vue"
+import SettingsDialog from "./components/SettingsDialog.vue"
+import IdeManagementDialog from "./components/IdeManagementDialog.vue"
+import ScanImportDialog from "./components/ScanImportDialog.vue"
+import RemoteConfigDialog from "./components/RemoteConfigDialog.vue"
+import EditProjectDialog from "./components/EditProjectDialog.vue"
 import { pickDirectory } from "./composables/useDirectoryPicker"
-import { getNodeProcessModules, getNodeModules } from "@/utils/nodeModules"
+import { useTimeUtils } from "./composables/useTimeUtils"
+import { useProjectFilters, VIEW_MODE_META } from "./composables/useProjectFilters"
+import { useIdeManagement, IDE_PRESETS } from "./composables/useIdeManagement"
 
 /** 批次化并发处理：避免所有项目同时涌入 git 信号量导致排队拥堵 */
 async function batchProcess<T>(items: T[], batchSize: number, fn: (item: T) => Promise<void>) {
@@ -1121,6 +739,9 @@ async function batchProcess<T>(items: T[], batchSize: number, fn: (item: T) => P
     await Promise.all(batch.map(fn))
   }
 }
+
+const ut = useTimeUtils()
+const { relativeTime, activityLevel, sortProjects } = ut
 
 /** 远程平台元数据（从 types 导入共享定义） */
 const REMOTES = PLATFORM_META.map(pm => ({ key: pm.key, icon: pm.icon, label: pm.label, remoteProp: pm.remoteProp }))
@@ -1133,138 +754,6 @@ const PLATFORM_LINKS: { key: string; icon: string; label: string; url: string }[
   { key: "cnb", icon: "mdi:cloud-braces", label: "CNB", url: "https://cnb.cool" },
 ]
 
-/** IDE 快捷打开入口 — 参考 GitHub Desktop 编辑器检测策略
- *  每个 IDE 提供多候选 CLI 命令（按 PATH 优先级）和已知安装路径（回退）
- *  启动时自动检测哪些 IDE 已安装，只显示可用的 */
-interface IdeEntry {
-  name: string
-  icon: string
-  /** 候选 CLI 命令名（优先用 PATH 中的），Windows 下可带 .cmd */
-  cmds: string[]
-  /** 已知安装路径（按平台），作为 PATH 查找失败的回退 */
-  knownPaths: string[]
-}
-const IDE_ENTRIES: IdeEntry[] = [
-  {
-    name: "VSCode", icon: "mdi:microsoft-visual-studio-code",
-    cmds: ["code", "code.cmd"],
-    knownPaths: [
-      "%LOCALAPPDATA%/Programs/Microsoft VS Code/bin/code.cmd",
-      "C:/Program Files/Microsoft VS Code/bin/code.cmd",
-    ],
-  },
-]
-
-/** 已检测到安装的 IDE 列表（启动时扫描） */
-const detectedIdes = ref<IdeEntry[]>([])
-
-/** 自定义 IDE */
-interface CustomIde { name: string; path: string }
-const CUSTOM_IDE_KEY = "git-push-custom-ides"
-const customIdes = ref<CustomIde[]>([])
-const confirmingDelIdx = ref(-1)
-
-/** IDE 管理弹窗 */
-const showIdeDialog = ref(false)
-const addIdePreset = ref("Visual Studio")
-const addIdePath = ref("")
-const editingIdeIdx = ref(-1)
-const editIdePreset = ref("")
-const editIdePath = ref("")
-const confirmingMgmtDelIdx = ref(-1)
-
-/** 常用 IDE 预设 */
-const IDE_PRESETS = [
-  { name: "Visual Studio", icon: "mdi:microsoft-visual-studio" },
-  { name: "JetBrains Rider", icon: "mdi:language-csharp" },
-  { name: "CodeBuddy", icon: "mdi:robot-outline" },
-  { name: "Trae CN", icon: "mdi:alpha-t-box" },
-  { name: "Qoder", icon: "mdi:code-json" },
-  { name: "JetBrains WebStorm", icon: "mdi:language-javascript" },
-  { name: "JetBrains PyCharm", icon: "mdi:language-python" },
-  { name: "JetBrains GoLand", icon: "mdi:language-go" },
-  { name: "JetBrains IntelliJ IDEA", icon: "mdi:language-java" },
-  { name: "其他", icon: "mdi:application-brackets" },
-]
-
-function getIdePresetIcon(name: string): string {
-  return IDE_PRESETS.find(p => p.name === name)?.icon ?? "mdi:application-brackets"
-}
-
-function startEditIde(idx: number) {
-  const c = customIdes.value[idx]
-  if (!c) return
-  editingIdeIdx.value = idx
-  editIdePreset.value = IDE_PRESETS.some(p => p.name === c.name) ? c.name : "其他"
-  editIdePath.value = c.path
-}
-
-function saveEditIde(idx: number) {
-  const list = [...customIdes.value]
-  list[idx] = { name: editIdePreset.value.trim() || customIdes.value[idx].name, path: editIdePath.value.trim() }
-  customIdes.value = list
-  editingIdeIdx.value = -1
-  confirmingMgmtDelIdx.value = -1
-  saveCustomIdes()
-}
-
-async function loadCustomIdes() {
-  try {
-    const data = await props.plugin.loadData(CUSTOM_IDE_KEY)
-    if (Array.isArray(data)) customIdes.value = data
-  } catch { /* ignore */ }
-}
-
-async function saveCustomIdes() {
-  try { await props.plugin.saveData(CUSTOM_IDE_KEY, customIdes.value) }
-  catch { /* ignore */ }
-}
-
-function addCustomIde() {
-  const path = addIdePath.value.trim()
-  if (!path) return
-  customIdes.value = [...customIdes.value, { name: addIdePreset.value, path }]
-  saveCustomIdes()
-  addIdePath.value = ""
-}
-
-function doRemoveCustomIde(idx: number) {
-  customIdes.value = customIdes.value.filter((_, i) => i !== idx)
-  confirmingDelIdx.value = -1
-  confirmingMgmtDelIdx.value = -1
-  saveCustomIdes()
-}
-
-async function handleOpenCustomIde(projectPath: string, ideName: string, idePath: string) {
-  // Rider / Visual Studio：优先用 .sln 文件打开
-  let target = projectPath
-  if (/rider|visual\s*studio/i.test(ideName)) {
-    const sln = findSlnFile(projectPath)
-    if (sln) target = sln
-  }
-  const nodeModules = getNodeProcessModules()
-  const cp = nodeModules?.child_process
-  if (cp) {
-    try { await launchIde(cp, idePath, [target]); return }
-    catch { /* fallback */ }
-  }
-  handleOpenPath(projectPath)
-}
-
-/** 在项目根目录查找 .sln 文件 */
-function findSlnFile(dir: string): string | null {
-  const nodeModules = getNodeModules()
-  if (!nodeModules) return null
-  try {
-    const entries = nodeModules.fs.readdirSync(dir, { withFileTypes: true })
-    for (const e of entries) {
-      if (e.isFile() && e.name.endsWith(".sln")) {
-        return nodeModules.path.join(dir, e.name)
-      }
-    }
-  } catch { /* ignore */ }
-  return null
-}
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -1305,7 +794,6 @@ const {
   pushSingle,
   pullToAll,
   pullSingle,
-  checkIsGitRepo,
   addCategory: addCategoryFn,
   deleteCategory: deleteCategoryFn,
   moveProject,
@@ -1378,40 +866,40 @@ const activeCategory = ref<string>("")
 const showScanDialog = ref(false)
 const scanError = ref("")
 const scanSelection = ref<Record<string, boolean>>({})
-const selectedCount = computed(() =>
-  Object.values(scanSelection.value).filter(Boolean).length,
-)
 
 /** 按分类 TAB 过滤后的分组 */
 const visibleGroups = computed(() => {
   if (!activeCategory.value) return groupedProjects.value
   return groupedProjects.value.filter(g => g.category.id === activeCategory.value)
 })
-/** 项目搜索关键词 */
-const searchQuery = ref("")
 
-/** 智能视图模式：all=按分类 / needsPush=需推送 / uncommitted=有变更 / starred=已收藏 */
-const viewMode = ref<"all" | "needsPush" | "uncommitted" | "starred">("all")
-/** 是否显示归档项目（默认隐藏） */
-const showArchived = ref(false)
-/** 暂停 Git 状态自动加载（持久化） */
-const GIT_OPS_PAUSED_KEY = "git-push-ops-paused"
-const gitOpsPaused = ref(false)
-
-watch(gitOpsPaused, (v) => {
-  props.plugin.saveData(GIT_OPS_PAUSED_KEY, v).catch(() => {})
+const {
+  searchQuery, viewMode, showArchived,
+  gitOpsPaused, selectedTags,
+  filteredGroups, loadGitOpsPaused, loadShowArchived,
+} = useProjectFilters({
+  plugin: props.plugin,
+  projects,
+  needsPushProjects,
+  uncommittedProjects,
+  starredProjects,
+  visibleGroups,
+  sortProjects,
 })
-/** 选中的标签（多选交集过滤） */
-const selectedTags = ref<Set<string>>(new Set())
 
-/** 智能视图模式元数据（标签 + 命中数） */
-const VIEW_MODE_META: Record<typeof viewMode.value, { label: string; icon: string }> = {
-  all: { label: "全部", icon: "mdi:view-grid-outline" },
-  needsPush: { label: "需推送", icon: "mdi:cloud-upload-outline" },
-  uncommitted: { label: "有变更", icon: "mdi:source-branch" },
-  starred: { label: "收藏", icon: "mdi:star" },
-}
-
+const {
+  detectedIdes, customIdes, confirmingDelIdx,
+  showIdeDialog, addIdePreset, addIdePath,
+  editingIdeIdx, editIdePreset, editIdePath,
+  getIdePresetIcon, saveEditIde,
+  loadCustomIdes,
+  addCustomIde, doRemoveCustomIde,
+  handleOpenCustomIde,
+  scanIdes, handleOpenIde,
+} = useIdeManagement({
+  plugin: props.plugin,
+  openFolder: (path: string) => { handleOpenPath(path) },
+})
 /** 项目状态徽章元数据（颜色 + 文案 + 循环顺序） */
 const STATUS_META: Record<string, { color: string; label: string; icon: string }> = {
   active: { color: "var(--b3-theme-success)", label: "活跃", icon: "mdi:circle-medium" },
@@ -1420,116 +908,15 @@ const STATUS_META: Record<string, { color: string; label: string; icon: string }
 }
 const STATUS_CYCLE: ProjectStatus[] = ["active", "maintenance", "paused"]
 
-/** 把 ISO 时间转为相对时间文案（"刚刚/N分钟前/N天前/N个月前"），无法解析返回空 */
-function relativeTime(iso?: string): string {
-  if (!iso) return ""
-  const t = Date.parse(iso)
-  if (isNaN(t)) return ""
-  const diff = Date.now() - t
-  const min = 60 * 1000, hour = 60 * min, day = 24 * hour
-  if (diff < min) return "刚刚"
-  if (diff < hour) return `${Math.floor(diff / min)}分钟前`
-  if (diff < day) return `${Math.floor(diff / hour)}小时前`
-  if (diff < 30 * day) return `${Math.floor(diff / day)}天前`
-  if (diff < 365 * day) return `${Math.floor(diff / (30 * day))}个月前`
-  return `${Math.floor(diff / (365 * day))}年前`
-}
-
-/** 按活动时间分级（用于卡片颜色提示） */
-function activityLevel(iso?: string): "fresh" | "recent" | "stale" | "dead" {
-  if (!iso) return "dead"
-  const t = Date.parse(iso)
-  if (isNaN(t)) return "dead"
-  const day = 24 * 60 * 60 * 1000
-  const diff = Date.now() - t
-  if (diff < 7 * day) return "fresh"
-  if (diff < 30 * day) return "recent"
-  if (diff < 90 * day) return "stale"
-  return "dead"
-}
-
-/** 全局排序：starred 优先 → lastActivity 降序 → name */
-function sortProjects(list: GitProject[]): GitProject[] {
-  return [...list].sort((a, b) => {
-    if (!!a.starred !== !!b.starred) return a.starred ? -1 : 1
-    const ta = a.lastActivity ? Date.parse(a.lastActivity) : 0
-    const tb = b.lastActivity ? Date.parse(b.lastActivity) : 0
-    if (ta !== tb) return tb - ta
-    return a.name.localeCompare(b.name)
-  })
-}
-
-/** 智能视图模式下，命中条件的扁平项目列表 */
-const smartViewProjects = computed<GitProject[]>(() => {
-  if (viewMode.value === "needsPush") {
-    const ids = new Set(needsPushProjects.value.map(n => n.project.id))
-    return sortProjects(projects.value.filter(p => ids.has(p.id)))
-  }
-  if (viewMode.value === "uncommitted") {
-    return sortProjects(uncommittedProjects.value.map(u => u.project))
-  }
-  if (viewMode.value === "starred") {
-    return sortProjects(starredProjects.value)
-  }
-  return []
-})
-
-/** 统一筛选 + 分组管道：archived 过滤 → 标签交集 → 搜索词 → 分组/排序 */
-const filteredGroups = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
-  const tags = selectedTags.value
-
-  /** 应用三道过滤到一个项目列表 */
-  const applyFilters = (list: GitProject[]) => {
-    let r = list
-    if (!showArchived.value) r = r.filter(p => !p.archived)
-    if (tags.size > 0) r = r.filter(p => p.tags?.some(t => tags.has(t)))
-    if (q) r = r.filter(p => p.name.toLowerCase().includes(q) || p.path.toLowerCase().includes(q) || (p.tags?.some(t => t.toLowerCase().includes(q))))
-    return r
-  }
-
-  // 智能视图：扁平成单个虚拟分组
-  if (viewMode.value !== "all") {
-    const filtered = applyFilters(smartViewProjects.value)
-    if (filtered.length === 0) return []
-    const meta = VIEW_MODE_META[viewMode.value]
-    return [{
-      category: { id: `__smart_${viewMode.value}__`, name: meta.label, color: "var(--b3-theme-primary)", order: -1 },
-      projects: filtered,
-    }]
-  }
-
-  // all 模式：沿用分类分组（visibleGroups 已按 activeCategory 过滤）
-  return visibleGroups.value
-    .map(g => ({ ...g, projects: applyFilters(g.projects) }))
-    .map(g => ({ ...g, projects: sortProjects(g.projects) }))
-    .filter(g => g.projects.length > 0)
-})
-
-const newProjectName = ref("")
-const newProjectPath = ref("")
-const newProjectCat = ref("__ungrouped__")
-/** 添加项目时的初始标签（逗号分隔输入） */
-const newProjectTags = ref("")
-const newCatName = ref("")
-const newCatColor = ref("#4a9eff")
-const addError = ref("")
-const addChecking = ref(false)
-const addResult = ref<boolean | null>(null)
+const newProjectPath = ref("") // 目录选择回填用
 const refreshing = ref<string | null>(null)
 
 /** 项目编辑弹窗状态 */
 const editDialogProject = ref<GitProject | null>(null)
-const editName = ref("")
-const editStatus = ref<GitProject["status"]>("active")
-const editStarred = ref(false)
-const editArchived = ref(false)
-const editNote = ref("")
-const editTags = ref<string[]>([])
-const editTagInput = ref("")
 const editGithubUrl = ref("")
 const editGiteeUrl = ref("")
 const editGiteaUrl = ref("")
+const editCnbUrl = ref("")
 /** 编辑弹窗中的 Git 远程管理 */
 const editRemoteList = ref<GitRemoteInfo[]>([])
 const editNewRemoteName = ref("github")
@@ -1640,7 +1027,8 @@ onMounted(async () => {
   loadCommitTemplates()
   loadCustomIdes()
   scanIdes() // 扫描已安装的 IDE
-  gitOpsPaused.value = !!(await props.plugin.loadData(GIT_OPS_PAUSED_KEY))
+  await loadGitOpsPaused() // 从持久化存储恢复暂停状态
+  await loadShowArchived() // 从持久化存储恢复归档显示状态
   // 默认选中第一个分类
   if (!activeCategory.value && groupedProjects.value.length > 0) {
     activeCategory.value = groupedProjects.value[0].category.id
@@ -1709,41 +1097,12 @@ watch(currentView, async (view) => {
   })
 })
 
-async function handleAdd() {
-  addError.value = ""
-  if (!newProjectName.value.trim()) {
-    addError.value = "请输入项目名称"
-    return
-  }
-  if (!newProjectPath.value.trim()) {
-    addError.value = "请输入项目路径"
-    return
-  }
-
-  addChecking.value = true
-  addResult.value = null
+async function handleAddFromDialog(data: { name: string; path: string; catId: string; tags: string[] }) {
   try {
-    const isGit = await checkIsGitRepo(newProjectPath.value.trim())
-    addResult.value = isGit
-    // 解析标签（逗号分隔，去重去空白）
-    const tags = newProjectTags.value
-      .split(/[,，]/)
-      .map(t => t.trim())
-      .filter(Boolean)
-    const seen = new Set<string>()
-    const dedupTags = tags.filter(t => (seen.has(t) ? false : (seen.add(t), true)))
-    // 即使不是 git 仓库也允许添加（用户可能后续初始化）
-    await addProject(newProjectName.value.trim(), newProjectPath.value.trim(), newProjectCat.value, dedupTags.length > 0 ? dedupTags : undefined)
+    await addProject(data.name, data.path, data.catId, data.tags.length > 0 ? data.tags : undefined)
     showAddDialog.value = false
-    newProjectName.value = ""
-    newProjectPath.value = ""
-    newProjectCat.value = "__ungrouped__"
-    newProjectTags.value = ""
-    addResult.value = null
   } catch (e: any) {
-    addError.value = e?.message || "添加失败"
-  } finally {
-    addChecking.value = false
+    // error handled by dialog
   }
 }
 
@@ -1812,108 +1171,6 @@ function toggleIdeMenu(id: string) {
   const s = openIdeMenu.value
   if (s.has(id)) { s.delete(id) } else { s.add(id) }
   openIdeMenu.value = new Set(s)
-}
-
-/** 启动 IDE（exec 启动后 unref 脱离，不等待退出） */
-function launchIde(cp: any, cmd: string, args: string[]): Promise<void> {
-  return new Promise((resolve, reject) => {
-    try {
-      const argStr = args.map(a => `"${a}"`).join(" ")
-      const child = cp.exec(`"${cmd}" ${argStr}`, { windowsHide: true }, (err: any) => {
-        if (err) reject(err)
-      })
-      // exec 回调成功不代表进程启动成功，只要没立即报错就视为已发起
-      child.unref()
-      resolve()
-    } catch (e) {
-      reject(e)
-    }
-  })
-}
-
-/** 检查命令是否可执行（shell 模式，正确解析 .cmd/.bat 等 Windows 扩展名） */
-function isCmdAvailable(cp: any, cmd: string): Promise<boolean> {
-  return new Promise((resolve) => {
-    cp.exec(`"${cmd}" --version 2>nul`, { windowsHide: true, timeout: 3000 }, (err: any) => {
-      resolve(err?.code !== "ENOENT")
-    })
-  })
-}
-
-/** 解析路径中的环境变量（%VAR%）——通过 getNodeModules 读取 process.env */
-function resolvePath(raw: string): string | null {
-  let resolved = raw
-  const matches = raw.match(/%([^%]+)%/g)
-  if (matches) {
-    const env: Record<string, string | undefined> = {}
-    try {
-      // 通过 Node.js process 模块读取环境变量
-      const nodeModules = getNodeModules()
-      if (nodeModules) {
-        const proc = (globalThis as any).process
-        if (proc?.env) Object.assign(env, proc.env)
-      }
-    } catch { /* ignore */ }
-    for (const m of matches) {
-      const key = m.slice(1, -1)
-      const val = env[key]
-      if (!val) return null
-      resolved = resolved.replace(m, val)
-    }
-  }
-  return resolved
-}
-
-/** 扫描系统已安装的 IDE（参考 GitHub Desktop 的 findApplication 策略） */
-async function scanIdes() {
-  const nodeModules = getNodeProcessModules()
-  const cp = nodeModules?.child_process
-  if (!cp) { detectedIdes.value = [...IDE_ENTRIES]; return }
-
-  const found: IdeEntry[] = []
-  for (const ide of IDE_ENTRIES) {
-    let installed = false
-    // 1) 候选 CLI 命令：用 --version 探测是否可执行
-    for (const cmdName of ide.cmds) {
-      if (await isCmdAvailable(cp, cmdName)) { installed = true; break }
-    }
-    // 2) 已知安装路径存在
-    if (!installed) {
-      const fs = getNodeModules()?.fs
-      if (fs) {
-        for (const rawPath of ide.knownPaths) {
-          const resolved = resolvePath(rawPath)
-          if (resolved && fs.existsSync(resolved)) { installed = true; break }
-        }
-      }
-    }
-    if (installed) found.push(ide)
-  }
-  detectedIdes.value = found
-}
-
-/** 尝试用指定 IDE 打开项目，失败则降级到文件管理器 */
-async function handleOpenIde(path: string, ide: IdeEntry) {
-  const nodeModules = getNodeProcessModules()
-  const cp = nodeModules?.child_process
-  if (!cp) { handleOpenPath(path); return }
-
-  // 1) 候选 CLI 命令
-  for (const cmdName of ide.cmds) {
-    try { await launchIde(cp, cmdName, [path]); return }
-    catch { /* 继续 */ }
-  }
-  // 2) 已知安装路径
-  const fs = getNodeModules()?.fs
-  for (const rawPath of ide.knownPaths) {
-    const resolved = resolvePath(rawPath)
-    if (resolved && fs?.existsSync(resolved)) {
-      try { await launchIde(cp, resolved, [path]); return }
-      catch { /* 继续 */ }
-    }
-  }
-  // 3) 降级
-  handleOpenPath(path)
 }
 
 /** 将 git URL 转为浏览器可访问的 web URL */
@@ -1997,16 +1254,10 @@ async function cycleStatus(id: string, current?: ProjectStatus) {
 /** 打开项目编辑弹窗 */
 function openEditDialog(project: GitProject) {
   editDialogProject.value = project
-  editName.value = project.name
-  editStatus.value = project.status || "active"
-  editStarred.value = !!project.starred
-  editArchived.value = !!project.archived
-  editNote.value = project.note || ""
-  editTags.value = [...(project.tags || [])]
-  editTagInput.value = ""
   editGithubUrl.value = project.githubUrl || ""
   editGiteeUrl.value = project.giteeUrl || ""
   editGiteaUrl.value = project.giteaUrl || ""
+  editCnbUrl.value = project.cnbUrl || ""
   // 加载 Git 远程
   editRemoteList.value = []
   editRemoteError.value = ""
@@ -2031,34 +1282,26 @@ async function handleNameEditSave(project: GitProject) {
   editingNameId.value = ""
 }
 
-/** 编辑弹窗：添加标签（Enter 确认） */
-function handleEditAddTag() {
-  const t = editTagInput.value.trim()
-  if (t && !editTags.value.includes(t)) {
-    editTags.value = [...editTags.value, t]
-  }
-  editTagInput.value = ""
-}
 
-/** 编辑弹窗：移除标签 */
-function handleEditRemoveTag(tag: string) {
-  editTags.value = editTags.value.filter(t => t !== tag)
-}
-
-/** 编辑弹窗：保存 */
-async function handleEditSave() {
+/** 编辑弹窗：保存（接收子组件整理好的数据） */
+async function handleEditSaveFromDialog(data: {
+  name: string; status: string; starred: boolean; archived: boolean
+  note: string; tags: string[]
+  githubUrl: string; giteeUrl: string; giteaUrl: string; cnbUrl: string
+}) {
   const project = editDialogProject.value
   if (!project) return
   await updateProjectMeta(project.id, {
-    name: editName.value.trim() || project.name,
-    status: editStatus.value,
-    starred: editStarred.value,
-    archived: editArchived.value,
-    note: editNote.value.trim() || undefined,
-    tags: editTags.value.length > 0 ? editTags.value : undefined,
-    githubUrl: editGithubUrl.value.trim() || undefined,
-    giteeUrl: editGiteeUrl.value.trim() || undefined,
-    giteaUrl: editGiteaUrl.value.trim() || undefined,
+    name: data.name.trim() || project.name,
+    status: data.status as ProjectStatus,
+    starred: data.starred,
+    archived: data.archived,
+    note: data.note.trim() || undefined,
+    tags: data.tags.length > 0 ? data.tags : undefined,
+    githubUrl: data.githubUrl.trim() || undefined,
+    giteeUrl: data.giteeUrl.trim() || undefined,
+    giteaUrl: data.giteaUrl.trim() || undefined,
+    cnbUrl: data.cnbUrl.trim() || undefined,
   })
   editDialogProject.value = null
 }
@@ -2087,12 +1330,13 @@ async function handleEditRemoveRemote(name: string) {
   } catch (e: any) { editRemoteError.value = e?.message || "删除失败" }
 }
 
-async function handleEditRemoteSave(name: string) {
+async function handleEditRemoteSave(name: string, url?: string) {
   const project = editDialogProject.value
   if (!project) return
+  const newUrl = url ?? editEditingRemoteUrl.value
   editRemoteError.value = ""
   try {
-    await editRemoteOp(project.id, name, editEditingRemoteUrl.value)
+    await editRemoteOp(project.id, name, newUrl)
     editEditingRemote.value = ""
     const list = await props.manager.detectRemotes(project.path)
     editRemoteList.value = list
@@ -2281,11 +1525,9 @@ async function handleGenerateMsg(id: string) {
 
 // ---- 分类管理 ----
 
-async function handleAddCategory() {
-  const name = newCatName.value.trim()
+async function handleAddCategory(name: string, color: string) {
   if (!name) return
-  await addCategoryFn(name, newCatColor.value)
-  newCatName.value = ""
+  await addCategoryFn(name, color)
 }
 
 async function handleDeleteCategory(id: string) {
@@ -2303,9 +1545,8 @@ async function handleMoveProject(projectId: string, categoryId: string) {
   await moveProject(projectId, categoryId)
 }
 
-async function handleSaveConcurrency() {
-  await setGitConcurrency(gitConcurrency.value)
-  showSettings.value = false
+async function handleSaveConcurrency(value: number) {
+  await setGitConcurrency(value)
 }
 
 async function openRemoteConfig(project: GitProject) {
@@ -2320,12 +1561,10 @@ async function openRemoteConfig(project: GitProject) {
   remoteConfigProject.value = project
 }
 
-async function handleAddRemote(id: string) {
+async function handleAddRemote(id: string, name: string, url: string) {
   remoteError.value = ""
   try {
-    await addRemoteOp(id, newRemoteName.value.trim(), newRemoteUrl.value.trim())
-    newRemoteName.value = "github"
-    newRemoteUrl.value = ""
+    await addRemoteOp(id, name, url)
     const project = projects.value.find(p => p.id === id)
     if (project) remoteList.value = await props.manager.detectRemotes(project.path)
   } catch (e: any) {
@@ -2344,19 +1583,12 @@ async function handleRemoveRemote(id: string, name: string) {
   }
 }
 
-/** 开始行内编辑远程 URL */
-function startEditRemote(name: string, url: string) {
-  editingRemoteName.value = name
-  editingRemoteUrl.value = url
-}
-
 /** 保存行内编辑的远程 URL */
-async function handleEditRemote(id: string, name: string) {
+async function handleEditRemote(id: string, name: string, newUrl: string) {
   remoteError.value = ""
-  const newUrl = editingRemoteUrl.value.trim()
-  if (!newUrl) return
+  if (!newUrl.trim()) return
   try {
-    await editRemoteOp(id, name, newUrl)
+    await editRemoteOp(id, name, newUrl.trim())
     editingRemoteName.value = ""
     editingRemoteUrl.value = ""
     const project = projects.value.find(p => p.id === id)

@@ -388,13 +388,6 @@
             </button>
             <button
               class="vp-btn vp-btn--ghost vp-btn--sm"
-              title="仓库配置"
-              @click="openRemoteConfig(project)"
-            >
-              <Icon icon="mdi:source-repository" height="14" />
-            </button>
-            <button
-              class="vp-btn vp-btn--ghost vp-btn--sm"
               title="编辑项目（标签/状态/备注）"
               @click="openEditDialog(project)"
             >
@@ -1066,6 +1059,34 @@
               </div>
             </div>
           </div>
+          <div class="gp-form-group">
+            <label class="gp-label">Git 远程仓库（编辑/增删）</label>
+            <div v-if="editRemoteList.length" class="gp-remote-list">
+              <div v-for="r in editRemoteList" :key="r.name" class="gp-remote-row">
+                <span class="gp-remote-name">{{ r.name }}</span>
+                <template v-if="editEditingRemote === r.name">
+                  <input v-model="editEditingRemoteUrl" class="gp-input" style="flex:1" @keyup.enter="handleEditRemoteSave(r.name)" @keyup.escape="editEditingRemote = ''" />
+                  <button class="vp-btn vp-btn--primary vp-btn--sm" @click="handleEditRemoteSave(r.name)">保存</button>
+                  <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="editEditingRemote = ''">取消</button>
+                </template>
+                <template v-else>
+                  <span class="gp-remote-url" :title="r.url">{{ r.url }}</span>
+                  <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="editEditingRemote = r.name; editEditingRemoteUrl = r.url">编辑</button>
+                  <button class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger" @click="handleEditRemoveRemote(r.name)">删除</button>
+                </template>
+              </div>
+            </div>
+            <div v-else class="gp-remote-empty">暂无远程仓库</div>
+            <div class="gp-remote-add" style="margin-top:4px">
+              <select v-model="editNewRemoteName" class="gp-select" style="width:110px">
+                <option value="" disabled>选择平台</option>
+                <option v-for="r in REMOTES" :key="r.key" :value="r.key">{{ r.label }}</option>
+              </select>
+              <input v-model="editNewRemoteUrl" class="gp-input" placeholder="远程 URL" style="flex:1" @keyup.enter="handleEditAddRemote" />
+              <button class="vp-btn vp-btn--primary vp-btn--sm" :disabled="!editNewRemoteName || !editNewRemoteUrl.trim()" @click="handleEditAddRemote">添加</button>
+            </div>
+            <div v-if="editRemoteError" class="gp-error" style="margin-top:4px">{{ editRemoteError }}</div>
+          </div>
         </div>
         <div class="gp-dialog-footer">
           <button class="vp-btn vp-btn--ghost" @click="editDialogProject = null">
@@ -1084,7 +1105,7 @@
 import { onMounted, onUnmounted, ref, computed, watch } from "vue"
 import { Icon } from "@iconify/vue"
 import { copyToClipboard } from "@/utils/domUtils"
-import type { GitPushManager, GitProject, CommitLogEntry, ProjectStatus } from "./types"
+import type { GitPushManager, GitProject, CommitLogEntry, ProjectStatus, GitRemoteInfo } from "./types"
 import { PLATFORM_META } from "./types"
 import { useGitPush } from "./composables/useGitPush"
 import WorkingTreePanel from "./components/WorkingTreePanel.vue"
@@ -1509,6 +1530,13 @@ const editTagInput = ref("")
 const editGithubUrl = ref("")
 const editGiteeUrl = ref("")
 const editGiteaUrl = ref("")
+/** 编辑弹窗中的 Git 远程管理 */
+const editRemoteList = ref<GitRemoteInfo[]>([])
+const editNewRemoteName = ref("github")
+const editNewRemoteUrl = ref("")
+const editRemoteError = ref("")
+const editEditingRemote = ref("")
+const editEditingRemoteUrl = ref("")
 /** 行内名称编辑状态 */
 const editingNameId = ref("")
 const editingNameInput = ref("")
@@ -1979,6 +2007,13 @@ function openEditDialog(project: GitProject) {
   editGithubUrl.value = project.githubUrl || ""
   editGiteeUrl.value = project.giteeUrl || ""
   editGiteaUrl.value = project.giteaUrl || ""
+  // 加载 Git 远程
+  editRemoteList.value = []
+  editRemoteError.value = ""
+  editEditingRemote.value = ""
+  editNewRemoteName.value = "github"
+  editNewRemoteUrl.value = ""
+  props.manager.detectRemotes(project.path).then(r => { editRemoteList.value = r }).catch(() => {})
 }
 
 /** 行内名称编辑：点击名称开始编辑 */
@@ -2026,6 +2061,42 @@ async function handleEditSave() {
     giteaUrl: editGiteaUrl.value.trim() || undefined,
   })
   editDialogProject.value = null
+}
+
+async function handleEditAddRemote() {
+  const project = editDialogProject.value
+  if (!project) return
+  editRemoteError.value = ""
+  try {
+    await addRemoteOp(project.id, editNewRemoteName.value.trim(), editNewRemoteUrl.value.trim())
+    editNewRemoteName.value = "github"
+    editNewRemoteUrl.value = ""
+    const list = await props.manager.detectRemotes(project.path)
+    editRemoteList.value = list
+  } catch (e: any) { editRemoteError.value = e?.message || "添加失败" }
+}
+
+async function handleEditRemoveRemote(name: string) {
+  const project = editDialogProject.value
+  if (!project) return
+  editRemoteError.value = ""
+  try {
+    await removeRemoteOp(project.id, name)
+    const list = await props.manager.detectRemotes(project.path)
+    editRemoteList.value = list
+  } catch (e: any) { editRemoteError.value = e?.message || "删除失败" }
+}
+
+async function handleEditRemoteSave(name: string) {
+  const project = editDialogProject.value
+  if (!project) return
+  editRemoteError.value = ""
+  try {
+    await editRemoteOp(project.id, name, editEditingRemoteUrl.value)
+    editEditingRemote.value = ""
+    const list = await props.manager.detectRemotes(project.path)
+    editRemoteList.value = list
+  } catch (e: any) { editRemoteError.value = e?.message || "修改失败" }
 }
 
 // ---- 工作区操作 ----

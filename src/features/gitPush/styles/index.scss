@@ -393,6 +393,102 @@
   &:hover {
     background: var(--b3-list-hover);
   }
+
+  &--none {
+    opacity: 0.5;
+    cursor: default;
+    &:hover { background: none; }
+  }
+
+  &--add {
+    color: var(--b3-theme-primary);
+    &:hover { background: var(--b3-theme-primary-lightest); }
+  }
+}
+
+.gp-ide-item--custom {
+  // 为删除按钮留空间
+  padding-right: 4px;
+}
+
+.gp-ide-item-del {
+  margin-left: auto;
+  padding: 2px 4px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0;
+  background: none;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: opacity 0.12s;
+
+  .gp-ide-item--custom:hover & {
+    opacity: 0.35;
+  }
+
+  &:hover {
+    opacity: 1 !important;
+    color: #e74c3c;
+    background: rgba(231, 76, 60, 0.08);
+  }
+}
+
+.gp-ide-del-confirm {
+  margin-left: auto;
+  font-size: 10px;
+  opacity: 0.6;
+  white-space: nowrap;
+}
+
+.gp-ide-del-yes,
+.gp-ide-del-no {
+  padding: 1px 6px;
+  font-size: 10px;
+  border-radius: 3px;
+  border: none;
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.gp-ide-del-yes {
+  color: #fff;
+  background: #e74c3c;
+  &:hover { background: #c0392b; }
+}
+
+.gp-ide-del-no {
+  color: var(--b3-theme-on-surface);
+  background: var(--b3-list-hover);
+  &:hover { background: var(--b3-border-color); }
+}
+
+.gp-ide-divider {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--b3-border-color);
+}
+
+.gp-ide-custom-form {
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gp-ide-input {
+  padding: 4px 8px;
+  font-size: 11px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  &:focus { outline: none; border-color: var(--b3-theme-primary); }
+}
+
+.gp-ide-custom-actions {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
 }
 
 .gp-btn-danger {

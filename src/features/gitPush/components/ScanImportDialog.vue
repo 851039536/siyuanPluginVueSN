@@ -79,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue"
+import { ref, computed, watch } from "vue"
 import { Icon } from "@iconify/vue"
 
 const props = defineProps<{
@@ -101,6 +101,11 @@ const emit = defineEmits<{
 }>()
 
 const localScanDir = ref(props.scanDir)
+
+// 目录选择器回填路径
+watch(() => props.scanDir, (v) => {
+  localScanDir.value = v
+})
 
 const selectedCount = computed(() =>
   Object.values(props.selection).filter(Boolean).length

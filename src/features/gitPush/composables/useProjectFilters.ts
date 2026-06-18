@@ -17,13 +17,14 @@ export const VIEW_MODE_META: Record<string, { label: string; icon: string }> = {
   needsPush: { label: "需推送", icon: "mdi:cloud-upload-outline" },
   uncommitted: { label: "有变更", icon: "mdi:source-branch" },
   starred: { label: "收藏", icon: "mdi:star" },
+  archived: { label: "归档", icon: "mdi:archive-outline" },
 }
 
 export function useProjectFilters(options: UseProjectFiltersOptions) {
   const { plugin, projects, needsPushProjects, uncommittedProjects, starredProjects, visibleGroups, sortProjects } = options
 
   const searchQuery = ref("")
-  const viewMode = ref<"all" | "needsPush" | "uncommitted" | "starred">("all")
+  const viewMode = ref<"all" | "needsPush" | "uncommitted" | "starred" | "archived">("all")
   const showArchived = ref(false)
   const selectedTags = ref<Set<string>>(new Set())
 
@@ -69,6 +70,9 @@ export function useProjectFilters(options: UseProjectFiltersOptions) {
     if (viewMode.value === "starred") {
       return sortProjects(starredProjects.value)
     }
+    if (viewMode.value === "archived") {
+      return sortProjects(projects.value.filter(p => p.archived))
+    }
     return []
   })
 
@@ -76,10 +80,12 @@ export function useProjectFilters(options: UseProjectFiltersOptions) {
   const filteredGroups = computed(() => {
     const q = searchQuery.value.trim().toLowerCase()
     const tags = selectedTags.value
+    const isArchivedView = viewMode.value === "archived"
 
     const applyFilters = (list: GitProject[]) => {
       let r = list
-      if (!showArchived.value) r = r.filter(p => !p.archived)
+      // 归档视图已在 smartViewProjects 中预筛选，跳过 archived 过滤
+      if (!isArchivedView && !showArchived.value) r = r.filter(p => !p.archived)
       if (tags.size > 0) r = r.filter(p => p.tags?.some(t => tags.has(t)))
       if (q) r = r.filter(p => p.name.toLowerCase().includes(q) || p.path.toLowerCase().includes(q) || (p.tags?.some(t => t.toLowerCase().includes(q))))
       return r

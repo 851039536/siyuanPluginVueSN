@@ -65,12 +65,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue"
+import { ref, watch } from "vue"
 import { Icon } from "@iconify/vue"
 
-defineProps<{
+const props = defineProps<{
   i18n: Record<string, any>
   categories: { id: string; name: string }[]
+  selectedPath?: string
 }>()
 
 const emit = defineEmits<{
@@ -86,6 +87,11 @@ const tags = ref("")
 const error = ref("")
 const checking = ref(false)
 const result = ref<boolean | null>(null)
+
+// 目录选择器回填路径
+watch(() => props.selectedPath, (p) => {
+  if (p) path.value = p
+})
 
 function submit() {
   emit("add", {

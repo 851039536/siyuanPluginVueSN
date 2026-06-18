@@ -4,52 +4,12 @@
     class="status__resUsage"
     :title="systemInfoTooltip"
   >
-    <MonitorItem
-      icon="ph:file-text"
-      item-class="statistics-item notes-item"
-      :title="statisticsTooltip"
-    >
-      {{ totalNotesDisplay }}
-    </MonitorItem>
-
-    <MonitorItem
-      icon="ph:text-aa"
-      item-class="statistics-item words-item"
-      :title="statisticsTooltip"
-    >
-      {{ totalWordsDisplay }}
-    </MonitorItem>
-
-    <MonitorItem
-      icon="ph:chart-line-up"
-      item-class="statistics-item today-activity-item"
-      :title="todayTooltip"
-    >
-      {{ todayActivityDisplay }}
-    </MonitorItem>
-
-    <MonitorItem
-      icon="ph:cpu"
-      item-class="cpu-item"
-      :level="cpuLevel"
-    >
-      {{ cpuUsageDisplay }}
-    </MonitorItem>
-
-    <MonitorItem
-      icon="ph:memory"
-      item-class="mem-item"
-      :level="memLevel"
-    >
-      {{ memoryUsageDisplay }}
-    </MonitorItem>
-
-    <MonitorItem
-      icon="ph:timer"
-      item-class="uptime-item"
-    >
-      {{ uptimeDisplay }}
-    </MonitorItem>
+    <MonitorItem v-if="visibleMonitors.has('monitor-notes')" item-class="statistics-item notes-item" :title="statisticsTooltip">{{ totalNotesDisplay }}</MonitorItem><!--
+    --><MonitorItem v-if="visibleMonitors.has('monitor-words')" item-class="statistics-item words-item" :title="statisticsTooltip">{{ totalWordsDisplay }}</MonitorItem><!--
+    --><MonitorItem v-if="visibleMonitors.has('monitor-today')" item-class="statistics-item today-activity-item" :title="todayTooltip">{{ todayActivityDisplay }}</MonitorItem><!--
+    --><MonitorItem v-if="visibleMonitors.has('monitor-cpu')" item-class="cpu-item" :level="cpuLevel">{{ cpuUsageDisplay }}</MonitorItem><!--
+    --><MonitorItem v-if="visibleMonitors.has('monitor-memory')" item-class="mem-item" :level="memLevel">{{ memoryUsageDisplay }}</MonitorItem><!--
+    --><MonitorItem v-if="visibleMonitors.has('monitor-uptime')" item-class="uptime-item">{{ uptimeDisplay }}</MonitorItem>
 
     <MonitorItem
       v-for="task in activeTasks"
@@ -82,7 +42,7 @@
       :visible="showFeatureDrawer"
       :items="drawerPartition.frequent"
       :rarely-used-items="drawerPartition.rarely"
-      :status-bar-visible="statusBarShortcuts"
+      :status-bar-visible="statusBarVisible"
       @close="showFeatureDrawer = false"
       @select="handleSelectFeature"
       @toggle-status-bar="handleToggleStatusBar"
@@ -97,6 +57,7 @@ import type { Ref } from "vue"
 import type { FeatureDrawerItem } from "./components/FeatureDrawer.vue"
 import {
   computed,
+  reactive,
   ref,
 } from "vue"
 import { emitCustomEvent } from "@/utils/eventBus"
@@ -134,14 +95,26 @@ const {
 
 const statusBarShortcuts = ref<string[]>([])
 const rarelyUsedFeatures = ref<string[]>([])
+const visibleMonitors = reactive(new Set<string>())
+
+// 监控项 ID 集合（用于 handleToggleStatusBar 分流判断）
+const MONITOR_IDS = new Set([
+  "monitor-notes",
+  "monitor-words",
+  "monitor-today",
+  "monitor-cpu",
+  "monitor-memory",
+  "monitor-uptime",
+])
+const DEFAULT_MONITOR_IDS = [...MONITOR_IDS]
 
 // 单一功能注册表：抽屉展示 + 状态栏快捷 + 点击动作的统一数据源
 // 添加新功能只需在此处新增一条；title / 处理逻辑不再分散于多处
 interface FeatureRegistryEntry extends FeatureDrawerItem {
   // 状态栏快捷项，缺省则不在状态栏显示
   shortcut?: { icon: string, itemClass: string }
-  // 点击（抽屉选中或快捷点击）触发的动作
-  action: () => void
+  // 点击（抽屉选中或快捷点击）触发的动作（监控项无动作）
+  action?: () => void
 }
 
 const FEATURES: FeatureRegistryEntry[] = [
@@ -273,6 +246,55 @@ const FEATURES: FeatureRegistryEntry[] = [
     },
     action: () => emitCustomEvent("openImageCompressor"),
   },
+  // ========== 状态栏监控项（可固定控制显隐） ==========
+  {
+    id: "monitor-notes",
+    icon: "ph:file-text",
+    color: "#3b82f6",
+    title: props.plugin?.i18n?.statusBar?.monitorNotes || "文档数",
+    pinnable: true,
+    group: "监控",
+  },
+  {
+    id: "monitor-words",
+    icon: "ph:text-aa",
+    color: "#8b5cf6",
+    title: props.plugin?.i18n?.statusBar?.monitorWords || "总字数",
+    pinnable: true,
+    group: "监控",
+  },
+  {
+    id: "monitor-today",
+    icon: "ph:chart-line-up",
+    color: "#22c55e",
+    title: props.plugin?.i18n?.statusBar?.monitorToday || "今日活动",
+    pinnable: true,
+    group: "监控",
+  },
+  {
+    id: "monitor-cpu",
+    icon: "ph:cpu",
+    color: "#ef4444",
+    title: props.plugin?.i18n?.statusBar?.monitorCpu || "CPU 使用率",
+    pinnable: true,
+    group: "监控",
+  },
+  {
+    id: "monitor-memory",
+    icon: "ph:memory",
+    color: "#f59e0b",
+    title: props.plugin?.i18n?.statusBar?.monitorMemory || "内存使用",
+    pinnable: true,
+    group: "监控",
+  },
+  {
+    id: "monitor-uptime",
+    icon: "ph:timer",
+    color: "#6b7280",
+    title: props.plugin?.i18n?.statusBar?.monitorUptime || "运行时间",
+    pinnable: true,
+    group: "监控",
+  },
 ]
 
 // id → 功能映射，用于点击分发（O(1) 取代 `id in SHORTCUT_DISPLAY` + superPanel 特判）
@@ -280,7 +302,7 @@ const featureMap = new Map(FEATURES.map((f) => [f.id, f]))
 
 // 状态栏快捷：按 statusBarShortcuts 顺序映射出可渲染项（含 title / handler）
 const visibleShortcuts = computed(() => {
-  const result: { id: string, icon: string, title: string, itemClass: string, handler: () => void }[] = []
+  const result: { id: string, icon: string, title: string, itemClass: string, handler: (() => void) | undefined }[] = []
   for (const id of statusBarShortcuts.value) {
     const f = featureMap.get(id)
     if (f?.shortcut) {
@@ -295,6 +317,12 @@ const visibleShortcuts = computed(() => {
   }
   return result
 })
+
+// 合并快捷方式 + 监控项可见性，供 FeatureDrawer 显示 pin 状态
+const statusBarVisible = computed(() => [
+  ...statusBarShortcuts.value,
+  ...visibleMonitors,
+])
 
 // 抽屉常用/不常用一次遍历拆分（取代两个独立 filter）
 const drawerPartition = computed(() => {
@@ -321,17 +349,33 @@ const toggleMembership = (target: Ref<string[]>, id: string) =>
     : [...target.value, id]
 
 const handleToggleStatusBar = async (id: string) => {
-  statusBarShortcuts.value = toggleMembership(statusBarShortcuts, id)
-  await storage.save("statusBar-shortcuts", statusBarShortcuts.value)
+  if (MONITOR_IDS.has(id)) {
+    // 监控项：切换 visibleMonitors Set
+    if (visibleMonitors.has(id)) {
+      visibleMonitors.delete(id)
+    } else {
+      visibleMonitors.add(id)
+    }
+    await storage.save("statusBar-monitors", [...visibleMonitors])
+  } else {
+    // 功能快捷方式：原有逻辑
+    statusBarShortcuts.value = toggleMembership(statusBarShortcuts, id)
+    await storage.save("statusBar-shortcuts", statusBarShortcuts.value)
+  }
 }
 
 const handleToggleRarelyUsed = async (id: string) => {
   const wasRare = rarelyUsedFeatures.value.includes(id)
   rarelyUsedFeatures.value = toggleMembership(rarelyUsedFeatures, id)
   if (!wasRare) {
-    // 标记为不常用后，从状态栏固定中移除
-    statusBarShortcuts.value = statusBarShortcuts.value.filter((s) => s !== id)
-    await storage.save("statusBar-shortcuts", statusBarShortcuts.value)
+    // 标记为不常用后，从可见列表中移除
+    if (MONITOR_IDS.has(id)) {
+      visibleMonitors.delete(id)
+      await storage.save("statusBar-monitors", [...visibleMonitors])
+    } else {
+      statusBarShortcuts.value = statusBarShortcuts.value.filter((s) => s !== id)
+      await storage.save("statusBar-shortcuts", statusBarShortcuts.value)
+    }
   }
   await storage.save("statusBar-rarelyUsed", rarelyUsedFeatures.value)
 }
@@ -344,6 +388,15 @@ storage.load<string[]>("statusBar-rarelyUsed").then((data) => {
   if (data) rarelyUsedFeatures.value = data
 })
 
+// 加载监控项可见性偏好：有存储数据则按存储，否则默认全显
+storage.load<string[]>("statusBar-monitors").then((data) => {
+  if (data && data.length > 0) {
+    for (const id of data) visibleMonitors.add(id)
+  } else {
+    for (const id of DEFAULT_MONITOR_IDS) visibleMonitors.add(id)
+  }
+})
+
 const showFeatureDrawer = ref(false)
 
 const toggleFeatureDrawer = () => {
@@ -352,6 +405,6 @@ const toggleFeatureDrawer = () => {
 
 const handleSelectFeature = (id: string) => {
   showFeatureDrawer.value = false
-  featureMap.get(id)?.action()
+  featureMap.get(id)?.action?.()
 }
 </script>

@@ -1410,7 +1410,13 @@
     "showMemoryDetails": "Show Memory Details",
     "compactMode": "Compact Mode",
     "enabled": "Status bar enabled",
-    "disabled": "Status bar disabled"
+    "disabled": "Status bar disabled",
+    "monitorNotes": "Document Count",
+    "monitorWords": "Total Words",
+    "monitorToday": "Today Activity",
+    "monitorCpu": "CPU Usage",
+    "monitorMemory": "Memory Usage",
+    "monitorUptime": "Uptime"
   },
   "superPanel": {
     "title": "Super Panel",

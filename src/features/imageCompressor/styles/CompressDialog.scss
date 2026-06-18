@@ -1,9 +1,6 @@
 @use '@/variables.scss' as *;
 @use './index.scss' as *;
 
-// 本地声明（@/variables.scss 未定义的 Codex Token）
-$vp-radius: 6px;
-
 .compress-dialog-overlay {
   @include flex-center;
   @include overlay-base;

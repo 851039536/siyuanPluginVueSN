@@ -12,8 +12,6 @@ $modal-small-max-width: 500px;
 $modal-form-max-width: 900px;
 $modal-large-max-width: 1200px;
 $card-border-radius: 8px;
-$vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
-$vp-radius: 6px;
 
 @mixin modal-overlay {
   position: fixed;

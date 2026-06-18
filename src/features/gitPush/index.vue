@@ -620,11 +620,17 @@
 
         <!-- 拉取输出 -->
         <div v-if="pullOutputs[project.id]" class="gp-output">
+          <button class="gp-output-copy" :title="i18n.copy || '复制'" @click="handleCopyOutput(pullOutputs[project.id])">
+            <Icon icon="mdi:content-copy" height="12" />
+          </button>
           <pre>{{ pullOutputs[project.id] }}</pre>
         </div>
 
         <!-- 推送输出 -->
         <div v-if="pushOutputs[project.id]" class="gp-output">
+          <button class="gp-output-copy" :title="i18n.copy || '复制'" @click="handleCopyOutput(pushOutputs[project.id])">
+            <Icon icon="mdi:content-copy" height="12" />
+          </button>
           <pre>{{ pushOutputs[project.id] }}</pre>
         </div>
         </div>
@@ -1217,6 +1223,11 @@ async function handleCopyUrl(url: string) {
       setTimeout(() => { el.title = orig }, 1500)
     }
   }
+}
+
+/** 复制推送/拉取输出文本 */
+async function handleCopyOutput(text: string) {
+  await copyToClipboard(text)
 }
 
 function handleRemove(project: any) {

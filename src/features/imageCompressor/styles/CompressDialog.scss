@@ -25,12 +25,26 @@ $vp-radius: 6px;
   }
 
   .close-btn {
-    @include button-base;
-    padding: $spacing-1;
+    @include flex-center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--b3-theme-on-background);
+    opacity: 0.6;
+    border-radius: $radius-sm;
+    transition: opacity 0.12s, background 0.12s;
+
+    &:hover {
+      opacity: 1;
+      background: var(--b3-theme-surface-lighter);
+    }
 
     .icon {
-      width: 20px;
-      height: 20px;
+      width: 16px;
+      height: 16px;
     }
   }
 }

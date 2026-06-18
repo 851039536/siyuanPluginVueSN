@@ -131,33 +131,49 @@ $vp-radius: 6px;
   @include header-base;
 
   .icon-btn {
-    @include button-base;
+    @include flex-center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--b3-theme-on-background);
+    opacity: 0.6;
+    border-radius: $radius-sm;
+    transition: opacity 0.12s, background 0.12s;
+
+    &:hover {
+      opacity: 1;
+      background: var(--b3-theme-surface-lighter);
+    }
 
     .icon {
-      width: 20px;
-      height: 20px;
+      width: 16px;
+      height: 16px;
     }
   }
 }
 
 .viewer-header {
-  padding: $spacing-4 $spacing-6;
+  padding: $spacing-3 $spacing-4;
   background: var(--b3-theme-surface);
 
   h2 {
-    font-size: $font-size-xl;
+    font-size: $font-size-base;
+    font-weight: 600;
   }
 
   .header-left {
     @include flex-center;
-    gap: $spacing-4;
+    gap: $spacing-2;
 
     .image-count {
-      padding: $spacing-1 $spacing-3;
+      padding: 2px 8px;
       background: var(--b3-theme-primary);
       color: var(--b3-theme-on-primary);
       border-radius: $radius-lg;
-      font-size: 13px;
+      font-size: $font-size-xs;
       font-weight: 500;
     }
   }
@@ -165,8 +181,8 @@ $vp-radius: 6px;
 
 .viewer-toolbar {
   @include flex-center;
-  gap: $spacing-3;
-  padding: $spacing-3 $spacing-6;
+  gap: $spacing-2;
+  padding: $spacing-2 $spacing-4;
   border-bottom: 1px solid var(--b3-border-color);
   background: var(--b3-theme-background);
   flex-wrap: wrap;
@@ -183,7 +199,7 @@ $vp-radius: 6px;
   background: var(--b3-theme-surface);
   border-radius: $vp-radius;
   border: 1px solid var(--b3-border-color);
-  width: 180px
+  width: 160px
 }
 
 .pagination-controls {
@@ -200,11 +216,11 @@ $vp-radius: 6px;
 
 .progress-bar {
   position: relative;
-  height: 24px;
+  height: 20px;
   background: var(--b3-theme-surface);
   border-radius: $radius-sm;
   overflow: hidden;
-  margin: $spacing-2 $spacing-6;
+  margin: $spacing-2 $spacing-4;
 
   .progress-fill {
     height: 100%;
@@ -241,10 +257,10 @@ $vp-radius: 6px;
 .image-list {
   flex: 1 1 0;
   overflow-y: auto;
-  padding: $spacing-4 $spacing-6;
+  padding: $spacing-3 $spacing-4;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: $spacing-4;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: $spacing-3;
   align-content: start;
   min-height: 0;
 }
@@ -254,7 +270,7 @@ $vp-radius: 6px;
   border-radius: $radius-md;
   overflow: hidden;
   border: 2px solid transparent;
-  min-height: 300px;
+  min-height: 260px;
   transition: border-color 0.12s, background 0.12s;
 
   &:hover {
@@ -281,7 +297,7 @@ $vp-radius: 6px;
 
 .image-preview {
   position: relative;
-  height: 160px;
+  height: 140px;
   background: var(--b3-theme-background);
   overflow: hidden;
   cursor: pointer;
@@ -411,7 +427,7 @@ $vp-radius: 6px;
 }
 
 .compress-results {
-  padding: $spacing-4 $spacing-6;
+  padding: $spacing-3 $spacing-4;
   border-top: 1px solid var(--b3-border-color);
   background: var(--b3-theme-surface);
 }
@@ -500,7 +516,7 @@ $vp-radius: 6px;
   flex: 1;
   overflow: auto;
   @include flex-center;
-  padding: $spacing-5;
+  padding: $spacing-4;
   min-height: 0;
 
   img {

@@ -1,8 +1,5 @@
 @use '@/variables.scss' as *;
 
-// 本地声明（@/variables.scss 未定义的 Codex Token）
-$vp-radius: 6px;
-
 @mixin flex-center {
   display: flex;
   align-items: center;

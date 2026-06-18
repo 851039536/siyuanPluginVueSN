@@ -1,2 +1,3 @@
 // gitPush 共享 SCSS 变量
-$vp-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+// 透传全局 Token（$vp-mono 等），确保 @use "./variables" 也能拿到
+@forward '@/variables.scss';

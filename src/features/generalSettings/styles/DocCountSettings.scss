@@ -1,8 +1,5 @@
 @use '@/variables.scss' as *;
 
-// 等宽字体栈（本地声明，superPanel 的 $vp-mono 不可用）
-$vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
-
 // ============================================================
 // 共享 @mixin
 // ============================================================

@@ -134,8 +134,9 @@ $radius-xl: 1rem;         // 16px
 $radius-2xl: 1.5rem;      // 24px
 $radius-full: 9999px;
 
-// 注：Codex $vp-radius(6px) / $vp-mono(等宽字体栈) 定义在 superPanel/styles/variables.scss
-// 未导入 superPanel 的模块可在本地 mixins.scss 自行声明
+// Codex 增强 Token（全局可用，各模块无需本地重复声明）
+$vp-radius: $radius-base; // 6px — Codex 标准圆角，等价于 $radius-base
+$vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace; // 等宽字体栈
 
 // ========== 阴影变量（Shadow） ==========
 
@@ -160,8 +161,7 @@ $spacing-10: 2.5rem;    // 40px
 $spacing-12: 3rem;      // 48px
 $spacing-16: 4rem;      // 64px
 
-// 注：Codex $spacing-xs/sm/md/lg 定义在 superPanel/styles/variables.scss
-// 未导入 superPanel 的模块可在本地 mixins.scss 自行声明
+// 注：$spacing-1 ~ $spacing-4 是全局标准（数字后缀），等价于 superPanel 本地别名 $spacing-xs ~ $spacing-lg
 
 
 

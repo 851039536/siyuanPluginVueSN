@@ -358,17 +358,16 @@ $font-size-xl: 1.25rem;   // 20px  超大标题（极少用）
 
 > ⚠️ **重要**：上述变量名是 `$spacing-1`~`$spacing-4`（数字后缀），**不是** `$spacing-xs`~`$spacing-lg`。`$spacing-xs/sm/md/lg` 是 superPanel 模块的本地别名，**不存在于全局 `_variables.scss` 中**。错误使用会导致 `Undefined variable` 编译错误。
 
-### 需要本地声明的 Codex 专用 Token
+### Codex 增强 Token（`src/_variables.scss` 已全局定义）
 
-以下 Token 在 `src/_variables.scss` 中 **不存在**，需要在使用模块的 `styles/*.scss` 中本地声明（或通过 `@use '../../superPanel/styles/variables' as *;` 引入）：
+以下 Token 自 2026-06-18 起已收归全局 `_variables.scss`，各模块 **直接可用**，无需本地声明：
 
 ```scss
-// 在模块的 styles/index.scss 顶部添加（@use '@/variables.scss' as *; 之后）
-$vp-radius: 6px;  // Codex 标准圆角，等价于 $radius-base
-$vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;  // 等宽字体栈
+$vp-radius: $radius-base; // 6px — Codex 标准圆角
+$vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace; // 等宽字体栈
 ```
 
-> 参考：`superPanel/styles/variables.scss` 是 Codex Token 的权威定义源，`passwordVault/styles/mixins.scss` 也有等价本地声明。imageCompressor 模块已验证此模式。
+> 历史：`$vp-radius`/`$vp-mono` 曾由 `superPanel/styles/variables.scss` 独占，其他模块需本地声明。现已全局化。
 
 ### 核心规范速查表
 
@@ -437,14 +436,15 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 | ❌ 禁止 | ✅ 必须 |
 |----------|--------|
 | `box-shadow` 作为卡片/弹窗主要样式 | `border: 1px solid var(--b3-border-color)` + hover `border-color` 变色 |
-| `border-radius: 6px` / `12px` 等硬编码 | `$vp-radius`（本地声明）/ `$radius-base` / `$radius-lg` 等 Token |
+| `border-radius: 6px` / `12px` 等硬编码 | `$vp-radius` / `$radius-base` / `$radius-lg` 等全局 Token |
 | `padding: 8px` / `16px` 等硬编码 | `$spacing-2` / `$spacing-4` 等全局 Token（数字后缀！） |
 | `font-size: 14px` / `16px` 等硬编码 | `$font-size-sm` / `$font-size-base` 等全局 Token |
-| `font-family: monospace` / `"Consolas"` | `font-family: $vp-mono`（需本地声明） |
+| `font-family: monospace` / `"Consolas"` | `font-family: $vp-mono`（全局可用） |
 | `$spacing-xs` / `$spacing-sm` / `$spacing-md` / `$spacing-lg` | `$spacing-1` / `$spacing-2` / `$spacing-3` / `$spacing-4`（数字后缀是全局标准） |
 | emoji 表情作为图标 | `<IconWrapper name="iconName">` |
 | 图标按钮用 `padding` 控制尺寸 | 固定 `width: 26px; height: 26px; padding: 0;`，icon `16px` |
 | 标题 font-size > 16px | 统一 `$font-size-base`（16px），极少数场景可用 15px（如 superPanel-title） |
+| 各模块重复声明 `$vp-radius` / `$vp-mono` | 直接从 `@/variables.scss` 继承（已全局定义） |
 
 ## 强制规则：SCSS 必须分离到 styles/ 目录
 

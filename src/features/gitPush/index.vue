@@ -298,31 +298,85 @@
             >
               <Icon icon="mdi:tea" height="14" />
             </button>
-            <button
-              class="vp-btn vp-btn--ghost vp-btn--sm"
-              title="打开项目目录"
-              @click="handleOpenPath(project.path)"
-            >
-              <Icon icon="mdi:folder-open" height="14" />
-            </button>
             <div class="gp-ide-wrap">
               <button
                 class="vp-btn vp-btn--ghost vp-btn--sm"
-                title="用 IDE 打开"
+                title="打开项目"
                 @click.stop="toggleIdeMenu(project.id)"
               >
-                <Icon icon="mdi:microsoft-visual-studio-code" height="14" />
+                <Icon icon="mdi:folder-open" height="14" />
                 <Icon icon="mdi:unfold-more-horizontal" height="10" style="margin-left:1px;opacity:0.5" />
               </button>
               <div v-if="openIdeMenu.has(project.id)" class="gp-ide-popover" @click.stop>
                 <button
-                  v-for="ide in IDE_ENTRIES"
-                  :key="ide.cmd"
+                  class="gp-ide-item"
+                  @click="handleOpenPath(project.path); openIdeMenu.delete(project.id)"
+                >
+                  <Icon icon="mdi:folder-open" height="14" />
+                  <span>打开文件夹</span>
+                </button>
+                <div class="gp-ide-divider" />
+                <button
+                  v-if="detectedIdes.length === 0 && customIdes.length === 0"
+                  class="gp-ide-item gp-ide-item--none"
+                  disabled
+                >
+                  <Icon icon="mdi:information-outline" height="14" />
+                  <span>未检测到 IDE</span>
+                </button>
+                <button
+                  v-if="detectedIdes.length === 0 && customIdes.length === 0"
+                  class="gp-ide-item gp-ide-item--none"
+                  disabled
+                >
+                  <Icon icon="mdi:information-outline" height="14" />
+                  <span>未检测到已安装的 IDE</span>
+                </button>
+                <button
+                  v-for="ide in detectedIdes"
+                  :key="'detected-' + ide.name"
                   class="gp-ide-item"
                   @click="handleOpenIde(project.path, ide); openIdeMenu.delete(project.id)"
                 >
                   <Icon :icon="ide.icon" height="14" />
                   <span>{{ ide.name }}</span>
+                </button>
+                <button
+                  v-for="(custom, idx) in customIdes"
+                  :key="'custom-' + idx"
+                  class="gp-ide-item gp-ide-item--custom"
+                  @click="handleOpenCustomIde(project.path, custom.path); openIdeMenu.delete(project.id)"
+                >
+                  <Icon icon="mdi:application-brackets" height="14" />
+                  <span>{{ custom.name }}</span>
+                  <template v-if="confirmingDelIdx === idx">
+                    <span class="gp-ide-del-confirm">确认删除?</span>
+                    <button class="gp-ide-del-yes" @click.stop="doRemoveCustomIde(idx)">是</button>
+                    <button class="gp-ide-del-no" @click.stop="confirmingDelIdx = -1">否</button>
+                  </template>
+                  <button
+                    v-else
+                    class="gp-ide-item-del"
+                    title="删除此自定义 IDE"
+                    @click.stop="confirmingDelIdx = idx"
+                  >
+                    <Icon icon="mdi:delete-outline" height="13" />
+                  </button>
+                </button>
+                <div class="gp-ide-divider" />
+                <template v-if="showCustomIdeForm">
+                  <div class="gp-ide-custom-form">
+                    <input v-model="customIdeName" class="gp-ide-input" placeholder="名称" @keyup.escape="showCustomIdeForm = false" />
+                    <input v-model="customIdePath" class="gp-ide-input" placeholder="可执行文件路径" @keyup.escape="showCustomIdeForm = false" @keyup.enter="addCustomIde" />
+                    <div class="gp-ide-custom-actions">
+                      <button class="vp-btn vp-btn--primary vp-btn--sm" :disabled="!customIdeName.trim() || !customIdePath.trim()" @click="addCustomIde">添加</button>
+                      <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="showCustomIdeForm = false">取消</button>
+                    </div>
+                  </div>
+                </template>
+                <button v-else class="gp-ide-item gp-ide-item--add" @click.stop="showCustomIdeForm = true">
+                  <Icon icon="mdi:plus" height="14" />
+                  <span>自定义...</span>
                 </button>
               </div>
             </div>
@@ -991,6 +1045,7 @@ import WorkingTreePanel from "./components/WorkingTreePanel.vue"
 import StatsPanel from "./components/StatsPanel.vue"
 import TagPanel from "./components/TagPanel.vue"
 import { pickDirectory } from "./composables/useDirectoryPicker"
+import { getNodeProcessModules, getNodeModules } from "@/utils/nodeModules"
 
 /** 批次化并发处理：避免所有项目同时涌入 git 信号量导致排队拥堵 */
 async function batchProcess<T>(items: T[], batchSize: number, fn: (item: T) => Promise<void>) {
@@ -1011,14 +1066,78 @@ const PLATFORM_LINKS: { key: string; icon: string; label: string; url: string }[
   { key: "cnb", icon: "mdi:cloud-braces", label: "CNB", url: "https://cnb.cool" },
 ]
 
-/** IDE 快捷打开入口 */
-const IDE_ENTRIES = [
-  { name: "VSCode", icon: "mdi:microsoft-visual-studio-code", cmd: "code" },
-  { name: "Visual Studio", icon: "mdi:microsoft-visual-studio", cmd: "devenv" },
-  { name: "Qoder", icon: "mdi:code-json", cmd: "qoder" },
-  { name: "CodeBuddy", icon: "mdi:robot-outline", cmd: "codebuddy" },
-  { name: "Trae CN", icon: "mdi:alpha-t-box", cmd: "trae" },
+/** IDE 快捷打开入口 — 参考 GitHub Desktop 编辑器检测策略
+ *  每个 IDE 提供多候选 CLI 命令（按 PATH 优先级）和已知安装路径（回退）
+ *  启动时自动检测哪些 IDE 已安装，只显示可用的 */
+interface IdeEntry {
+  name: string
+  icon: string
+  /** 候选 CLI 命令名（优先用 PATH 中的），Windows 下可带 .cmd */
+  cmds: string[]
+  /** 已知安装路径（按平台），作为 PATH 查找失败的回退 */
+  knownPaths: string[]
+}
+const IDE_ENTRIES: IdeEntry[] = [
+  {
+    name: "VSCode", icon: "mdi:microsoft-visual-studio-code",
+    cmds: ["code", "code.cmd"],
+    knownPaths: [
+      "%LOCALAPPDATA%/Programs/Microsoft VS Code/bin/code.cmd",
+      "C:/Program Files/Microsoft VS Code/bin/code.cmd",
+    ],
+  },
 ]
+
+/** 已检测到安装的 IDE 列表（启动时扫描） */
+const detectedIdes = ref<IdeEntry[]>([])
+
+/** 自定义 IDE */
+interface CustomIde { name: string; path: string }
+const CUSTOM_IDE_KEY = "git-push-custom-ides"
+const customIdes = ref<CustomIde[]>([])
+const showCustomIdeForm = ref(false)
+const customIdeName = ref("")
+const customIdePath = ref("")
+const confirmingDelIdx = ref(-1)
+
+async function loadCustomIdes() {
+  try {
+    const data = await props.plugin.loadData(CUSTOM_IDE_KEY)
+    if (Array.isArray(data)) customIdes.value = data
+  } catch { /* ignore */ }
+}
+
+async function saveCustomIdes() {
+  try { await props.plugin.saveData(CUSTOM_IDE_KEY, customIdes.value) }
+  catch { /* ignore */ }
+}
+
+function addCustomIde() {
+  const name = customIdeName.value.trim()
+  const path = customIdePath.value.trim()
+  if (!name || !path) return
+  customIdes.value = [...customIdes.value, { name, path }]
+  saveCustomIdes()
+  customIdeName.value = ""
+  customIdePath.value = ""
+  showCustomIdeForm.value = false
+}
+
+function doRemoveCustomIde(idx: number) {
+  customIdes.value = customIdes.value.filter((_, i) => i !== idx)
+  confirmingDelIdx.value = -1
+  saveCustomIdes()
+}
+
+async function handleOpenCustomIde(projectPath: string, idePath: string) {
+  const nodeModules = getNodeProcessModules()
+  const cp = nodeModules?.child_process
+  if (cp) {
+    try { await launchIde(cp, idePath, [projectPath]); return }
+    catch { /* fallback */ }
+  }
+  handleOpenPath(projectPath)
+}
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -1377,6 +1496,8 @@ async function silentRefreshAll() {
 onMounted(async () => {
   await loadProjects()
   loadCommitTemplates()
+  loadCustomIdes()
+  scanIdes() // 扫描已安装的 IDE
   // 默认选中第一个分类
   if (!activeCategory.value && groupedProjects.value.length > 0) {
     activeCategory.value = groupedProjects.value[0].category.id
@@ -1548,28 +1669,106 @@ function toggleIdeMenu(id: string) {
   openIdeMenu.value = new Set(s)
 }
 
-/** 尝试用指定 IDE 打开项目，失败则降级到文件管理器 */
-async function handleOpenIde(path: string, ide: { name: string; cmd: string }) {
-  const cp = getNodeChildProcess()
-  if (cp) {
+/** 启动 IDE（exec 启动后 unref 脱离，不等待退出） */
+function launchIde(cp: any, cmd: string, args: string[]): Promise<void> {
+  return new Promise((resolve, reject) => {
     try {
-      await new Promise<void>((resolve, reject) => {
-        cp.execFile(ide.cmd, [path], { windowsHide: true, timeout: 5000 }, (err: any) => {
-          err ? reject(err) : resolve()
-        })
+      const argStr = args.map(a => `"${a}"`).join(" ")
+      const child = cp.exec(`"${cmd}" ${argStr}`, { windowsHide: true }, (err: any) => {
+        if (err) reject(err)
       })
-      return
-    } catch { /* 降级 */ }
-  }
-  // 降级：打开文件夹
-  handleOpenPath(path)
+      // exec 回调成功不代表进程启动成功，只要没立即报错就视为已发起
+      child.unref()
+      resolve()
+    } catch (e) {
+      reject(e)
+    }
+  })
 }
 
-/** 获取 child_process 模块 */
-function getNodeChildProcess(): typeof import("child_process") | null {
-  try {
-    return (window as any).require?.("child_process") ?? null
-  } catch { return null }
+/** 检查命令是否可执行（shell 模式，正确解析 .cmd/.bat 等 Windows 扩展名） */
+function isCmdAvailable(cp: any, cmd: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    cp.exec(`"${cmd}" --version 2>nul`, { windowsHide: true, timeout: 3000 }, (err: any) => {
+      resolve(err?.code !== "ENOENT")
+    })
+  })
+}
+
+/** 解析路径中的环境变量（%VAR%）——通过 getNodeModules 读取 process.env */
+function resolvePath(raw: string): string | null {
+  let resolved = raw
+  const matches = raw.match(/%([^%]+)%/g)
+  if (matches) {
+    const env: Record<string, string | undefined> = {}
+    try {
+      // 通过 Node.js process 模块读取环境变量
+      const nodeModules = getNodeModules()
+      if (nodeModules) {
+        const proc = (globalThis as any).process
+        if (proc?.env) Object.assign(env, proc.env)
+      }
+    } catch { /* ignore */ }
+    for (const m of matches) {
+      const key = m.slice(1, -1)
+      const val = env[key]
+      if (!val) return null
+      resolved = resolved.replace(m, val)
+    }
+  }
+  return resolved
+}
+
+/** 扫描系统已安装的 IDE（参考 GitHub Desktop 的 findApplication 策略） */
+async function scanIdes() {
+  const nodeModules = getNodeProcessModules()
+  const cp = nodeModules?.child_process
+  if (!cp) { detectedIdes.value = [...IDE_ENTRIES]; return }
+
+  const found: IdeEntry[] = []
+  for (const ide of IDE_ENTRIES) {
+    let installed = false
+    // 1) 候选 CLI 命令：用 --version 探测是否可执行
+    for (const cmdName of ide.cmds) {
+      if (await isCmdAvailable(cp, cmdName)) { installed = true; break }
+    }
+    // 2) 已知安装路径存在
+    if (!installed) {
+      const fs = getNodeModules()?.fs
+      if (fs) {
+        for (const rawPath of ide.knownPaths) {
+          const resolved = resolvePath(rawPath)
+          if (resolved && fs.existsSync(resolved)) { installed = true; break }
+        }
+      }
+    }
+    if (installed) found.push(ide)
+  }
+  detectedIdes.value = found
+}
+
+/** 尝试用指定 IDE 打开项目，失败则降级到文件管理器 */
+async function handleOpenIde(path: string, ide: IdeEntry) {
+  const nodeModules = getNodeProcessModules()
+  const cp = nodeModules?.child_process
+  if (!cp) { handleOpenPath(path); return }
+
+  // 1) 候选 CLI 命令
+  for (const cmdName of ide.cmds) {
+    try { await launchIde(cp, cmdName, [path]); return }
+    catch { /* 继续 */ }
+  }
+  // 2) 已知安装路径
+  const fs = getNodeModules()?.fs
+  for (const rawPath of ide.knownPaths) {
+    const resolved = resolvePath(rawPath)
+    if (resolved && fs?.existsSync(resolved)) {
+      try { await launchIde(cp, resolved, [path]); return }
+      catch { /* 继续 */ }
+    }
+  }
+  // 3) 降级
+  handleOpenPath(path)
 }
 
 /** 将 git URL 转为浏览器可访问的 web URL */

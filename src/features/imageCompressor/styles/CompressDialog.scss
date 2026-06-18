@@ -1,4 +1,8 @@
+@use '@/variables.scss' as *;
 @use './index.scss' as *;
+
+// 本地声明（@/variables.scss 未定义的 Codex Token）
+$vp-radius: 6px;
 
 .compress-dialog-overlay {
   @include flex-center;
@@ -17,12 +21,12 @@
   @include header-base;
 
   h3 {
-    font-size: 18px;
+    font-size: $font-size-lg;
   }
 
   .close-btn {
     @include button-base;
-    padding: 4px;
+    padding: $spacing-1;
 
     .icon {
       width: 20px;
@@ -32,13 +36,13 @@
 }
 
 .dialog-content {
-  padding: 20px;
+  padding: $spacing-5;
   max-height: 60vh;
   overflow-y: auto;
 }
 
 .setting-item {
-  margin-bottom: 24px;
+  margin-bottom: $spacing-6;
 
   &:last-child {
     margin-bottom: 0;
@@ -47,16 +51,16 @@
 
 .hint-text {
   margin-top: 6px;
-  font-size: 12px;
+  font-size: $font-size-xs;
   color: var(--b3-theme-on-surface-light);
   opacity: 0.7;
 }
 
 .statistics-preview {
-  margin-top: 20px;
-  padding: 16px;
+  margin-top: $spacing-5;
+  padding: $spacing-4;
   background: var(--b3-theme-surface);
-  border-radius: 6px;
+  border-radius: $vp-radius;
   border-left: 3px solid var(--b3-theme-primary);
 
   .stat-row {

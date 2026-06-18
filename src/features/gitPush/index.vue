@@ -89,7 +89,7 @@
     <div v-if="projects.length > 0" class="gp-filter-bar">
       <div class="gp-view-modes">
         <button
-          v-for="vm in (['all','needsPush','uncommitted','starred'] as const)"
+          v-for="vm in (['all','needsPush','uncommitted','starred','archived'] as const)"
           :key="vm"
           class="gp-vm-btn"
           :class="{ active: viewMode === vm }"

@@ -57,6 +57,7 @@ export function useStatusBar() {
   let timeoutId: ReturnType<typeof setTimeout> | null = null
   let lastCPU: NodeJS.CpuUsage | null = null
   let lastTime: number | null = null
+  let lastMemPercent = -1
 
   const cpuUsageDisplay = computed(() => `${Math.round(state.cpuPercent)}%`)
 
@@ -176,10 +177,15 @@ export function useStatusBar() {
       if (timeDiff > 0) {
         const cpuDiff =
           currCPU.user + currCPU.system - (lastCPU.user + lastCPU.system)
-        state.cpuPercent = Math.max(
+        const rawCpu = Math.max(
           0,
           Math.min(100, (cpuDiff / (timeDiff * 1000)) * 100),
         )
+        const roundedCpu = Math.round(rawCpu)
+        // 仅 CPU 整数部分变化时写入，避免空闲期无效响应式更新
+        if (roundedCpu !== Math.round(state.cpuPercent)) {
+          state.cpuPercent = rawCpu
+        }
       }
     }
 
@@ -187,7 +193,12 @@ export function useStatusBar() {
     lastTime = currTime
 
     const memUsage = process.memoryUsage()
-    state.memPercent = Math.min(100, (memUsage.rss / TOTAL_MEMORY_BYTES) * 100)
+    const rawMem = Math.min(100, (memUsage.rss / TOTAL_MEMORY_BYTES) * 100)
+    // 仅内存变化 >= 0.5% 时写入，避免微小波动触发渲染
+    if (Math.abs(rawMem - lastMemPercent) >= 0.5) {
+      state.memPercent = rawMem
+      lastMemPercent = rawMem
+    }
     state.uptimeSeconds = Math.floor(process.uptime())
   }
 

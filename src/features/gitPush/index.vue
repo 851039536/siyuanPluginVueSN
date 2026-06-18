@@ -1109,7 +1109,7 @@ async function handleAddFromDialog(data: { name: string; path: string; catId: st
     await addProject(data.name, data.path, data.catId, data.tags.length > 0 ? data.tags : undefined)
     showAddDialog.value = false
   } catch (e: any) {
-    // error handled by dialog
+    alert(e?.message || "添加失败")
   }
 }
 

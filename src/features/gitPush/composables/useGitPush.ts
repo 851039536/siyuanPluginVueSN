@@ -266,7 +266,18 @@ export function useGitPush(manager: GitPushManager) {
     }
   }
 
+  /** 规范化路径用于去重比较（统一斜杠 + 去除末尾斜杠 + 小写） */
+  function normalizePathForDedup(p: string): string {
+    return p.replace(/\\/g, "/").replace(/\/+$/, "").toLowerCase()
+  }
+
   async function addProject(name: string, path: string, categoryId = "__ungrouped__", tags?: string[]) {
+    // 检查重复：按规范化路径比对
+    const normalized = normalizePathForDedup(path)
+    const dup = projects.value.find(p => normalizePathForDedup(p.path) === normalized)
+    if (dup) {
+      throw new Error(`项目路径已存在："${dup.name}"（${dup.path}）`)
+    }
     const project = await manager.addProject(name, path, categoryId, tags)
     projects.value = [...projects.value, project]
     if (tags && tags.length > 0) allTags.value = await manager.getAllTags()
@@ -793,7 +804,11 @@ export function useGitPush(manager: GitPushManager) {
   async function importScanResults(selectedPaths: string[], categoryId: string) {
     for (const repo of scanResults.value) {
       if (!selectedPaths.includes(repo.path) || repo.alreadyImported) continue
-      await addProject(repo.name, repo.path, categoryId)
+      try {
+        await addProject(repo.name, repo.path, categoryId)
+      } catch (e: any) {
+        console.warn(`[gitPush] 跳过重复项目: ${repo.path} — ${e?.message || e}`)
+      }
     }
   }
 

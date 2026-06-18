@@ -5,17 +5,17 @@
   font-size: 11px;
   display: flex;
   align-items: center;
-  gap: 3px;
-  padding: 0 2px;
+  gap: 0;
+  padding: 0;
   height: 29px;
   user-select: none;
 
   .monitor-item {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: 0;
     height: 100%;
-    border-radius: 2px;
+    padding: 0 3px;
 
     .monitor-icon {
       font-size: 14px;
@@ -57,7 +57,6 @@
   .words-item { color: var(--b3-theme-secondary); }
   .today-activity-item {
     color: var(--b3-theme-success);
-    .monitor-value { font-size: 10px; min-width: 36px; }
   }
   .cpu-item { color: var(--b3-theme-primary); opacity: 0.8; }
   .mem-item { color: var(--b3-theme-secondary); opacity: 0.8; }
@@ -66,8 +65,6 @@
     color: var(--b3-theme-on-surface);
     opacity: 0.6;
     border-left: 1px solid var(--b3-theme-border);
-    padding-left: 6px;
-    margin-left: -2px;
 
     .monitor-value {
       font-weight: 400;

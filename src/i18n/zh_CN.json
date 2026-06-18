@@ -1410,7 +1410,13 @@
     "showMemoryDetails": "显示内存详情",
     "compactMode": "紧凑模式",
     "enabled": "状态栏已启用",
-    "disabled": "状态栏已禁用"
+    "disabled": "状态栏已禁用",
+    "monitorNotes": "文档数",
+    "monitorWords": "总字数",
+    "monitorToday": "今日活动",
+    "monitorCpu": "CPU 使用率",
+    "monitorMemory": "内存使用",
+    "monitorUptime": "运行时间"
   },
   "superPanel": {
     "title": "超级面板",

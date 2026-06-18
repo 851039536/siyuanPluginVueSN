@@ -80,13 +80,6 @@
 
 ## 📦 安装
 
-### 手动安装
-
-1. 从 [Releases](https://gitee.com/kaiouyang-sn/siyuan-plugin-vite-vue-sn/releases) 下载最新 `package.zip`
-2. 在思源笔记中打开 `设置 → 集市 → 插件`
-3. 点击「导入插件」并选择下载的 zip 文件
-4. 启用插件
-
 ### 开发安装
 
 ```bash
@@ -215,6 +208,11 @@ src/
 
 ## 🔗 相关链接
 
-- [思源笔记](https://github.com/siyuan-note/siyuan)
-- [思源笔记插件开发文档](https://github.com/siyuan-note/plugin-samples)
-- [Gitee 仓库](https://gitee.com/kaiouyang-sn/siyuan-plugin-vite-vue-sn)
+| 平台     | 地址                                           |
+| -------- | ---------------------------------------------- |
+| GitHub   | https://github.com/851039536/siyuanPluginVueSN |
+| 思源笔记 | https://github.com/siyuan-note/siyuan          |
+
+有问题去仓库提 Issue。觉得有用的话给个 Star。
+
+‍

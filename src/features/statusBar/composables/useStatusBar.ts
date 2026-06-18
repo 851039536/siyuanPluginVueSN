@@ -73,12 +73,7 @@ export function useStatusBar() {
     return hours > 0 ? `${hours}h${minutes}m` : `${minutes}m`
   })
 
-  const totalNotesDisplay = computed(() =>
-    formatCount(state.totalNotes, [
-      [10000, "w"],
-      [1000, "k"],
-    ]),
-  )
+  const totalNotesDisplay = computed(() => String(state.totalNotes))
 
   const totalWordsDisplay = computed(() =>
     formatCount(state.totalWords, [

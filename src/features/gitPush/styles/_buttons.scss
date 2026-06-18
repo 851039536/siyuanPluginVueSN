@@ -35,3 +35,10 @@
     }
   }
 }
+
+// 危险操作按钮悬停变红
+.gp-btn-danger {
+  &:hover {
+    color: var(--b3-theme-error);
+  }
+}

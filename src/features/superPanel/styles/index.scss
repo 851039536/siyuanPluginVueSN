@@ -306,9 +306,14 @@
 }
 
 .feature-list-inner {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-sm;
+
+  // 窄屏回退单列
+  @include mobile-only {
+    grid-template-columns: 1fr;
+  }
 }
 
 .search-empty {

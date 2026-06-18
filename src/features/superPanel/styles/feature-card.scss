@@ -1,30 +1,27 @@
-// 功能卡片样式（列表行式）
+// 功能卡片样式（纵向卡片式，适配 2 列网格）
 @use './variables' as *;
 @use './mixins' as *;
 
 .feature-card {
   display: flex;
-  align-items: center;
-  gap: $spacing-md;
-  padding: $spacing-sm $spacing-md;
+  flex-direction: column;
+  gap: $spacing-sm;
+  padding: $spacing-md;
   border: 1px solid transparent;
   border-radius: $vp-radius;
   cursor: pointer;
-  transition: border-color 0.12s;
+  transition: border-color 0.12s, background 0.12s;
+  min-height: 120px;
 
   &:hover {
     background: var(--b3-theme-surface-lighter);
     border-color: var(--b3-theme-primary);
   }
-
-  &--expandable {
-    align-items: flex-start;
-  }
 }
 
 .feature-icon {
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   border-radius: $vp-radius;
   background: var(--b3-theme-primary-lightest);
   display: flex;
@@ -32,7 +29,7 @@
   justify-content: center;
   flex-shrink: 0;
   color: var(--b3-theme-primary);
-  margin-top: 2px;
+  align-self: flex-start;
 }
 
 .feature-body {
@@ -45,15 +42,15 @@
 
 .feature-info {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: $spacing-sm;
+  gap: $spacing-xs;
 }
 
 .feature-title {
   font-size: 13px;
   font-weight: 500;
   color: var(--b3-theme-on-background);
-  white-space: nowrap;
 }
 
 .version-badge {
@@ -76,7 +73,11 @@
   font-size: 12px;
   color: var(--b3-theme-on-surface);
   opacity: 0.6;
-  @include text-ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  word-break: break-all;
 }
 
 .feature-selector {
@@ -121,9 +122,11 @@
 .feature-right {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: $spacing-sm;
   flex-shrink: 0;
-  margin-top: 2px;
+  margin-top: auto;
+  padding-top: $spacing-xs;
 }
 
 .feature-actions {

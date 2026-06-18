@@ -3,15 +3,16 @@
     class="feature-card"
     :class="{ 'feature-card--expandable': selectorOptions && selectorOptions.length > 0 }"
   >
-    <div class="feature-icon">
-      <IconWrapper
-        :name="feature.iconKey"
-        :size="16"
-      />
-    </div>
     <div class="feature-body">
-      <div class="feature-info">
-        <span class="feature-title">{{ feature.title }}</span>
+      <div class="feature-header">
+        <div class="feature-icon">
+          <IconWrapper
+            :name="feature.iconKey"
+            :size="12"
+          />
+        </div>
+        <div class="feature-info">
+          <span class="feature-title">{{ feature.title }}</span>
         <span
           class="version-badge"
           title="点击查看版本信息"
@@ -48,8 +49,16 @@
             </div>
           </Transition>
         </span>
-        <span class="feature-desc">{{ feature.desc }}</span>
       </div>
+      <Switch
+        v-if="showToggle"
+        :model-value="enabled"
+        size="small"
+        class="feature-toggle"
+        @update:model-value="emit('toggle', $event)"
+      />
+    </div>
+    <span class="feature-desc">{{ feature.desc }}</span>
       <div
         v-if="selectorOptions && selectorOptions.length > 0"
         class="feature-selector"
@@ -71,31 +80,23 @@
         </button>
       </div>
     </div>
-    <div class="feature-right">
-      <div
-        v-if="feature.actions.length > 0"
-        class="feature-actions"
-      >
-        <Button
-          v-for="action in feature.actions"
-          :key="action.key"
-          variant="ghost"
-          size="small"
-          @click.stop="handleAction(action.key)"
-        >
-          {{ action.label }}
-          <span
-            v-if="action.hotkey"
-            class="action-hotkey"
-          >{{ action.hotkey }}</span>
-        </Button>
-      </div>
-      <Switch
-        v-if="showToggle"
-        :model-value="enabled"
+    <div
+      v-if="feature.actions.length > 0"
+      class="feature-actions"
+    >
+      <Button
+        v-for="action in feature.actions"
+        :key="action.key"
+        variant="ghost"
         size="small"
-        @update:model-value="emit('toggle', $event)"
-      />
+        @click.stop="handleAction(action.key)"
+      >
+        {{ action.label }}
+        <span
+          v-if="action.hotkey"
+          class="action-hotkey"
+        >{{ action.hotkey }}</span>
+      </Button>
     </div>
   </div>
 </template>

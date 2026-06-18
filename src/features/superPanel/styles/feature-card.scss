@@ -1,4 +1,4 @@
-// 功能卡片样式（纵向卡片式，适配 2 列网格）
+// 功能卡片样式（2 列网格卡片，纵向堆叠布局）
 @use './variables' as *;
 @use './mixins' as *;
 
@@ -7,21 +7,29 @@
   flex-direction: column;
   gap: $spacing-sm;
   padding: $spacing-md;
-  border: 1px solid transparent;
+  border: 1px solid var(--b3-border-color);
   border-radius: $vp-radius;
   cursor: pointer;
-  transition: border-color 0.12s, background 0.12s;
-  min-height: 120px;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
 
   &:hover {
-    background: var(--b3-theme-surface-lighter);
-    border-color: var(--b3-theme-primary);
+    background: var(--b3-theme-surface);
+    border-color: var(--b3-theme-primary-light);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
   }
 }
 
+// ---- 标题行：图标 + 标题/版本/状态 ----
+.feature-header {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  min-width: 0;
+}
+
 .feature-icon {
-  width: 36px;
-  height: 36px;
+  width: 20px;
+  height: 20px;
   border-radius: $vp-radius;
   background: var(--b3-theme-primary-lightest);
   display: flex;
@@ -29,35 +37,38 @@
   justify-content: center;
   flex-shrink: 0;
   color: var(--b3-theme-primary);
-  align-self: flex-start;
-}
-
-.feature-body {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-xs;
 }
 
 .feature-info {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: $spacing-xs;
+  gap: 6px;
+  min-width: 0;
+}
+
+// ---- 内容区（描述 + 主题选择器） ----
+.feature-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .feature-title {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--b3-theme-on-background);
+  line-height: 1.4;
+  word-break: break-word;
 }
 
 .version-badge {
   font-family: $vp-mono;
   font-size: 10px;
   color: var(--b3-theme-on-surface);
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: pointer;
   flex-shrink: 0;
   font-variant-numeric: tabular-nums;
@@ -69,36 +80,40 @@
   }
 }
 
+// ---- 描述文字 ----
 .feature-desc {
   font-size: 12px;
   color: var(--b3-theme-on-surface);
-  opacity: 0.6;
+  opacity: 0.55;
+  line-height: 1.5;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
-  word-break: break-all;
+  word-break: break-word;
 }
 
+// ---- 主题选择器片段 ----
 .feature-selector {
   display: flex;
   flex-wrap: wrap;
-  gap: $spacing-xs;
+  gap: 4px;
+  margin-top: 2px;
 }
 
 .theme-chip {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-xs;
-  padding: 3px 10px;
-  border-radius: 12px;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 10px;
   border: 1px solid var(--b3-border-color);
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   font-size: 11px;
   font-weight: 500;
   cursor: pointer;
-  line-height: 1.6;
+  line-height: 1.5;
 
   &:hover {
     border-color: var(--chip-color, var(--b3-theme-primary));
@@ -113,32 +128,34 @@
 }
 
 .theme-chip-dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
-.feature-right {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: $spacing-sm;
+// ---- 开关（标题行最右侧） ----
+.feature-toggle {
+  margin-left: auto;
   flex-shrink: 0;
-  margin-top: auto;
-  padding-top: $spacing-xs;
 }
 
+// ---- 操作按钮（推至卡片底部） ----
 .feature-actions {
   display: flex;
   align-items: center;
-  gap: $spacing-xs;
-  flex-shrink: 0;
+  gap: 4px;
+  margin-top: auto;
+  padding-top: 6px;
+  border-top: 1px solid var(--b3-border-color-transparent);
   opacity: 0;
-  transition: opacity 0.12s;
+  transform: translateY(2px);
+  transition: opacity 0.15s, transform 0.15s, border-color 0.15s;
 
   .feature-card:hover & {
     opacity: 1;
+    transform: translateY(0);
+    border-color: var(--b3-theme-surface-lighter);
   }
 }
 

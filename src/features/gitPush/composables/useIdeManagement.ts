@@ -107,11 +107,11 @@ export function useIdeManagement(options: {
 
   // ---- IDE launch helpers ----
 
-  function findSlnFile(dir: string): string | null {
+  async function findSlnFile(dir: string): Promise<string | null> {
     const nodeModules = getNodeModules()
     if (!nodeModules) return null
     try {
-      const entries = nodeModules.fs.readdirSync(dir, { withFileTypes: true })
+      const entries = await nodeModules.fs.promises.readdir(dir, { withFileTypes: true })
       for (const e of entries) {
         if (e.isFile() && e.name.endsWith(".sln")) {
           return nodeModules.path.join(dir, e.name)
@@ -144,25 +144,44 @@ export function useIdeManagement(options: {
   }
 
   function launchIde(cp: any, cmd: string, args: string[]): Promise<void> {
-    return new Promise((resolve, reject) => {
-      try {
-        const argStr = args.map(a => `"${a}"`).join(" ")
-        const child = cp.exec(`"${cmd}" ${argStr}`, { windowsHide: true }, (err: any) => {
-          if (err) reject(err)
-        })
-        child.unref()
-        resolve()
-      } catch (e) {
-        reject(e)
-      }
-    })
+    try {
+      const child = cp.spawn(cmd, args, {
+        detached: true,
+        stdio: "ignore",
+        windowsHide: false,
+      })
+      child.unref()
+      return Promise.resolve()
+    } catch (e) {
+      return Promise.reject(e)
+    }
   }
 
   function isCmdAvailable(cp: any, cmd: string): Promise<boolean> {
     return new Promise((resolve) => {
-      cp.exec(`"${cmd}" --version 2>nul`, { windowsHide: true, timeout: 3000 }, (err: any) => {
-        resolve(err?.code !== "ENOENT")
-      })
+      try {
+        let settled = false
+        const child = cp.spawn(cmd, ["--version"], {
+          stdio: "ignore",
+          windowsHide: true,
+          timeout: 3000,
+        })
+        child.on("error", (err: any) => {
+          if (!settled) {
+            settled = true
+            resolve(err?.code !== "ENOENT")
+          }
+        })
+        child.on("close", (code: number | null) => {
+          if (!settled) {
+            settled = true
+            resolve(code === 0)
+          }
+        })
+        child.unref()
+      } catch {
+        resolve(false)
+      }
     })
   }
 
@@ -214,7 +233,7 @@ export function useIdeManagement(options: {
   async function handleOpenCustomIde(projectPath: string, ideName: string, idePath: string) {
     let target = projectPath
     if (/rider|visual\s*studio/i.test(ideName)) {
-      const sln = findSlnFile(projectPath)
+      const sln = await findSlnFile(projectPath)
       if (sln) target = sln
     }
     const nodeModules = getNodeProcessModules()

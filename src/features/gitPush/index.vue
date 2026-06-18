@@ -178,6 +178,7 @@
           v-for="project in group.projects"
           :key="project.id"
           class="gp-card"
+          @click="handleCardClick(project.id, $event)"
         >
         <div class="gp-card-top">
           <div class="gp-card-info">
@@ -1111,6 +1112,16 @@ async function handleAddFromDialog(data: { name: string; path: string; catId: st
   } catch (e: any) {
     alert(e?.message || "添加失败")
   }
+}
+
+/** 卡片点击：排除交互元素后，轻量刷新 git 状态 */
+function handleCardClick(projectId: string, event: MouseEvent) {
+  const target = event.target as HTMLElement
+  // 点击按钮/输入框/选择框/标签/IDE 弹窗时不触发刷新
+  if (target.closest("button, input, select, textarea, .gp-ide-popover, .gp-card-name, .gp-card-name-input")) return
+  // 避免短时间内重复刷新
+  if (refreshing.value === projectId) return
+  handleRefresh(projectId)
 }
 
 async function handleRefresh(id: string) {

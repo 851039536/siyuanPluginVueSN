@@ -74,7 +74,7 @@
   // 可点击项目通用样式
   .action-item {
     cursor: pointer;
-    padding: 0 4px;
+    padding: 0 $spacing-1;
 
     &:hover {
       background: var(--b3-theme-surface-lighter);
@@ -138,14 +138,14 @@
 // 响应式调整
 @media (max-width: 1024px) {
   .status__resUsage {
-    gap: 4px;
+    gap: $spacing-1;
     .uptime-item { display: none; }
   }
 }
 
 @media (max-width: 768px) {
   .status__resUsage {
-    padding: 0 4px;
+    padding: 0 $spacing-1;
   }
 }
 
@@ -193,10 +193,7 @@
   gap: $spacing-1;
 }
 
-.feature-drawer-view-btn {
-  @extend .feature-drawer-close;
-}
-
+.feature-drawer-view-btn,
 .feature-drawer-close {
   display: flex;
   align-items: center;
@@ -400,12 +397,6 @@
       position: relative;
     }
 
-    .feature-drawer-item-icon {
-      width: 25px;
-      height: 25px;
-      border-radius: $vp-radius;
-    }
-
     .feature-drawer-item-title {
       font-size: 10px;
       text-align: center;
@@ -469,11 +460,11 @@
 
 // 抽屉滑入动画
 .drawer-slide-enter-active {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .drawer-slide-leave-active {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .drawer-slide-enter-from {

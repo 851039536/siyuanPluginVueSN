@@ -1373,8 +1373,13 @@ const searchQuery = ref("")
 const viewMode = ref<"all" | "needsPush" | "uncommitted" | "starred">("all")
 /** 是否显示归档项目（默认隐藏） */
 const showArchived = ref(false)
-/** 暂停 Git 状态自动加载 */
+/** 暂停 Git 状态自动加载（持久化） */
+const GIT_OPS_PAUSED_KEY = "git-push-ops-paused"
 const gitOpsPaused = ref(false)
+
+watch(gitOpsPaused, (v) => {
+  props.plugin.saveData(GIT_OPS_PAUSED_KEY, v).catch(() => {})
+})
 /** 选中的标签（多选交集过滤） */
 const selectedTags = ref<Set<string>>(new Set())
 
@@ -1607,6 +1612,7 @@ onMounted(async () => {
   loadCommitTemplates()
   loadCustomIdes()
   scanIdes() // 扫描已安装的 IDE
+  gitOpsPaused.value = !!(await props.plugin.loadData(GIT_OPS_PAUSED_KEY))
   // 默认选中第一个分类
   if (!activeCategory.value && groupedProjects.value.length > 0) {
     activeCategory.value = groupedProjects.value[0].category.id

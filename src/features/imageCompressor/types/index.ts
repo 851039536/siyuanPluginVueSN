@@ -7,6 +7,8 @@ export interface ImageInfo {
   type: string
   lastModified: number
   url?: string
+  /** 内部追踪 blob URL，用于统一释放 */
+  _blobUrl?: string
 }
 
 export interface CompressOptions {
@@ -25,17 +27,6 @@ export interface CompressResult {
   error?: string
   compressionRatio?: number
   timeTaken?: number
-}
-
-export interface ImageComparison {
-  original: ImageInfo
-  compressed: {
-    size: number
-    blob: Blob
-  }
-  compressionRatio: number
-  sizeSaved: number
-  sizeSavedMB: string
 }
 
 export interface ScanProgress {
@@ -62,6 +53,7 @@ export interface ImageCompressorI18n {
   compressing: string
   replace: string
   replacing: string
+  replaceConfirmMessage: string
   quality: string
   maxSize: string
   maxDimension: string
@@ -90,5 +82,19 @@ export interface ImageCompressorI18n {
   estimatedTimeLabel: string
   second: string
   minute: string
+  scanFilterLabel: string
+  displayFilterLabel: string
+  allOption: string
+  perPageOption: string
+  copyImageNameTitle: string
+  copyBtn: string
+  navigateToDocBtn: string
+  closePreviewTitle: string
+  clickToPreview: string
+  imageNameCopied: string
+  copyFailed: string
+  imageNotFound: string
+  loadFailed: string
+  pageInfo: string
   [key: string]: string
 }

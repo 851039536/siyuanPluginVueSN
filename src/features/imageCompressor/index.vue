@@ -21,7 +21,7 @@
             <template v-else>
               {{ images.length }}
             </template>
-            {{ i18n.foundImages?.replace('{count}', '') || '张图片' }}
+            {{ i18n.foundImages?.replace('{count}', '') }}
           </span>
         </div>
         <div class="header-right">
@@ -47,7 +47,7 @@
           <SiSelect
             :options="minFileSizeOptions"
             :model-value="scanMinFileSize"
-            label="扫描筛选"
+            :label="i18n.scanFilterLabel"
             size="small"
             @update:model-value="(v) => scanMinFileSize = Number(v)"
           />
@@ -57,7 +57,7 @@
           <SiSelect
             :options="minFileSizeOptions"
             :model-value="minFileSize"
-            label="显示筛选"
+            :label="i18n.displayFilterLabel"
             size="small"
             @update:model-value="(v) => minFileSize = Number(v)"
           />
@@ -73,7 +73,7 @@
               :disabled="currentPage === 1"
               @click="currentPage = 1"
             >
-              {{ i18n.firstPage || "首页" }}
+              {{ i18n.firstPage }}
             </SiButton>
             <SiButton
               variant="ghost"
@@ -81,7 +81,7 @@
               :disabled="currentPage === 1"
               @click="currentPage--"
             >
-              {{ i18n.prevPage || "上一页" }}
+              {{ i18n.prevPage }}
             </SiButton>
             <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
             <SiButton
@@ -90,7 +90,7 @@
               :disabled="currentPage === totalPages"
               @click="currentPage++"
             >
-              {{ i18n.nextPage || "下一页" }}
+              {{ i18n.nextPage }}
             </SiButton>
             <SiButton
               variant="ghost"
@@ -98,7 +98,7 @@
               :disabled="currentPage === totalPages"
               @click="currentPage = totalPages"
             >
-              {{ i18n.lastPage || "末页" }}
+              {{ i18n.lastPage }}
             </SiButton>
             <SiSelect
               :options="pageSizeOptions"
@@ -181,11 +181,11 @@
               class="image-placeholder"
             >
               <svg class="icon"><use xlink:href="#iconImage"></use></svg>
-              <p>{{ i18n.loadingImage || "加载中..." }}</p>
+              <p>{{ i18n.loadingImage }}</p>
             </div>
             <div class="preview-hint">
               <svg class="icon"><use xlink:href="#iconEye"></use></svg>
-              点击预览
+              {{ i18n.clickToPreview }}
             </div>
           </div>
           <div
@@ -201,29 +201,29 @@
             <div class="image-actions">
               <button
                 class="action-btn"
-                title="复制图片名称"
+                :title="i18n.copyImageNameTitle"
                 @click.stop="copyImageName(image.name)"
               >
                 <svg class="icon"><use xlink:href="#iconCopy"></use></svg>
-                复制
+                {{ i18n.copyBtn }}
               </button>
               <button
                 class="action-btn"
-                title="导航到关联文档"
+                :title="i18n.navigateToDocBtn"
                 @click.stop="navigateToDoc(image)"
               >
                 <svg class="icon"><use xlink:href="#iconLink"></use></svg>
-                定位
+                {{ i18n.navigateToDocBtn }}
               </button>
             </div>
             <div class="image-meta">
               <div class="meta-row">
-                <span class="meta-label">{{ i18n.metaDimensions || "尺寸:" }}</span>
+                <span class="meta-label">{{ i18n.metaDimensions }}</span>
                 <span v-if="image.width && image.height">{{ image.width }} × {{ image.height }}</span>
                 <span v-else>-</span>
               </div>
               <div class="meta-row">
-                <span class="meta-label">{{ i18n.metaFileSize || "大小:" }}</span>
+                <span class="meta-label">{{ i18n.metaFileSize }}</span>
                 <span class="meta-value">{{ formatFileSize(image.size) }}</span>
               </div>
             </div>
@@ -244,7 +244,7 @@
         <svg class="empty-icon"><use xlink:href="#iconImage"></use></svg>
         <p>{{ i18n.scanImages }}</p>
         <SiButton @click="onScanImages">
-          {{ i18n.startScan || "开始扫描" }}
+          {{ i18n.startScan }}
         </SiButton>
       </div>
 
@@ -259,7 +259,7 @@
             size="small"
             @click="compressResults = []"
           >
-            {{ i18n.clearResults || "清除结果" }}
+            {{ i18n.clearResults }}
           </SiButton>
         </div>
         <div class="results-stats">
@@ -308,13 +308,13 @@
           <div class="preview-title">
             <h3>{{ previewImageData.name }}</h3>
             <div class="preview-meta">
-              <span>{{ i18n.metaDimensions || "尺寸:" }} {{ previewImageData.width }} × {{ previewImageData.height }}</span>
-              <span>{{ i18n.metaFileSize || "大小:" }} {{ formatFileSize(previewImageData.size) }}</span>
+              <span>{{ i18n.metaDimensions }} {{ previewImageData.width }} × {{ previewImageData.height }}</span>
+              <span>{{ i18n.metaFileSize }} {{ formatFileSize(previewImageData.size) }}</span>
             </div>
           </div>
           <button
             class="icon-btn"
-            title="关闭"
+            :title="i18n.closePreviewTitle"
             @click="closePreview"
           >
             <svg class="icon"><use xlink:href="#iconClose"></use></svg>
@@ -342,32 +342,25 @@
 <script setup lang="ts">
 import type {
   CompressOptions,
-  CompressResult,
   ImageCompressorI18n,
   ImageInfo,
 } from "./types"
 import { showMessage } from "siyuan"
-import {
-  computed,
-  nextTick,
-  ref,
-  shallowRef,
-  watch,
-} from "vue"
+import { computed, ref } from "vue"
 import * as api from "@/api"
 import SiButton from "@/components/Button.vue"
 import SiSelect from "@/components/Select.vue"
+import { copyToClipboard } from "@/utils/domUtils"
 import CompressDialog from "./components/CompressDialog.vue"
-import { formatFileSize } from "./services/comparator"
+import { useImageCompress } from "./composables/useImageCompress"
+import { useImagePagination } from "./composables/useImagePagination"
+import { useImageScanner } from "./composables/useImageScanner"
+import { useImageSelection } from "./composables/useImageSelection"
 import {
-  batchCompressImages,
   batchReplaceImages,
-  getCompressStats,
 } from "./services/compressor"
-import {
-  batchGetImageDetails,
-  scanAllAssets,
-} from "./services/scanner"
+import { formatFileSize } from "./services/comparator"
+import { revokeImageUrls } from "./services/scanner"
 
 interface Props {
   visible: boolean
@@ -383,116 +376,81 @@ const visible = computed({
   get: () => props.visible,
   set: () => emit("close"),
 })
-const images = shallowRef<ImageInfo[]>([])
-const selectedImages = ref<Set<string>>(new Set())
-const scanning = ref(false)
-const compressing = ref(false)
+
+// ── Composables ──────────────────────────────────────────────
+
+const {
+  images,
+  scanning,
+  scanProgress,
+  scanProgressText,
+  scanMinFileSize,
+  onScanImages: doScan,
+} = useImageScanner()
+
+const {
+  currentPage,
+  pageSize,
+  minFileSize,
+  imageListRef,
+  filteredImages,
+  totalPages,
+  paginatedImages,
+} = useImagePagination(images)
+
+const {
+  selectedImages,
+  toggleSelect,
+  onSelectAll,
+  onDeselectAll,
+  clearSelection,
+  removeFromSelection,
+} = useImageSelection(paginatedImages)
+
+const {
+  compressing,
+  compressResults,
+  showCompressDialog,
+  stats,
+  onCompress,
+  onCompressConfirm,
+} = useImageCompress(
+  filteredImages,
+  selectedImages,
+  (text) => { scanProgressText.value = text },
+)
+
 const replacing = ref(false)
-const scanProgress = ref(0)
-const scanProgressText = ref("")
-const compressResults = shallowRef<CompressResult[]>([])
-const showCompressDialog = ref(false)
-const imageListRef = ref<HTMLElement | null>(null)
 const previewImageData = ref<ImageInfo | null>(null)
 
-const currentPage = ref(1)
-const pageSize = ref(30)
-
-const minFileSize = ref(0)
-const scanMinFileSize = ref(0) // 扫描时的大小筛选
+// ── 下拉选项 ──────────────────────────────────────────────────
 
 const minFileSizeOptions = computed(() => [
-  {
-    value: 0,
-    label: "全部",
-  },
-  {
-    value: 100,
-    label: "100 KB",
-  },
-  {
-    value: 200,
-    label: "200 KB",
-  },
-  {
-    value: 500,
-    label: "500 KB",
-  },
-  {
-    value: 1024,
-    label: "1 MB",
-  },
-  {
-    value: 2048,
-    label: "2 MB",
-  },
-  {
-    value: 5120,
-    label: "5 MB",
-  },
+  { value: 0, label: props.i18n.allOption },
+  { value: 100, label: "100 KB" },
+  { value: 200, label: "200 KB" },
+  { value: 500, label: "500 KB" },
+  { value: 1024, label: "1 MB" },
+  { value: 2048, label: "2 MB" },
+  { value: 5120, label: "5 MB" },
 ])
 
-const pageSizeOptions = computed(() => [
-  {
-    value: 20,
-    label: "20/页",
-  },
-  {
-    value: 30,
-    label: "30/页",
-  },
-  {
-    value: 50,
-    label: "50/页",
-  },
-  {
-    value: 100,
-    label: "100/页",
-  },
-])
-
-const filteredImages = computed(() => {
-  if (minFileSize.value === 0) {
-    return images.value
-  }
-  const minBytes = minFileSize.value * 1024
-  return images.value.filter((img) => img.size >= minBytes)
+const pageSizeOptions = computed(() => {
+  const tpl = props.i18n.perPageOption
+  return [20, 30, 50, 100].map((n) => ({
+    value: n,
+    label: tpl.replace("{num}", String(n)),
+  }))
 })
 
-const totalPages = computed(() =>
-  Math.ceil(filteredImages.value.length / pageSize.value),
-)
-const paginatedImages = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  const end = start + pageSize.value
-  return filteredImages.value.slice(start, end)
-})
+// ── 扫描（组合 composable + 选中清空） ────────────────────────
 
-const stats = computed(() => {
-  if (compressResults.value.length === 0) {
-    return {
-      total: 0,
-      success: 0,
-      failed: 0,
-      averageRatio: 0,
-      totalSavedMB: "0.00",
-    }
-  }
-  return getCompressStats(compressResults.value)
-})
+const onScanImages = () => {
+  clearSelection()
+  doScan()
+}
 
-watch(currentPage, () => {
-  nextTick(() => {
-    imageListRef.value?.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    })
-  })
-})
-
-watch(minFileSize, () => {
-  currentPage.value = 1
-})
+// ── 替换（保留在 index.vue，因需跨 composable 编排） ──────────
 
 const showDelayedMessage = (
   message: string,
@@ -502,124 +460,14 @@ const showDelayedMessage = (
   setTimeout(() => showMessage(message, duration, type), 100)
 }
 
-const onScanImages = async () => {
-  scanning.value = true
-  scanProgress.value = 0
-  images.value = []
-  selectedImages.value.clear()
-
-  try {
-    const scannedImages = await scanAllAssets((progress) => {
-      scanProgress.value = Math.floor((progress.current / progress.total) * 50)
-      scanProgressText.value = `扫描中... ${progress.current}/${progress.total}`
-    })
-
-    scanProgressText.value = "正在获取图片详情..."
-
-    const detailedImages = await batchGetImageDetails(
-      scannedImages,
-      (current, total) => {
-        scanProgress.value = 50 + Math.floor((current / total) * 50)
-        scanProgressText.value = `获取详情... ${current}/${total}`
-      },
-      scanMinFileSize.value,
-    )
-
-    images.value = detailedImages
-    currentPage.value = 1
-
-    const totalSize = detailedImages.reduce((sum, img) => sum + img.size, 0)
-    const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2)
-
-    let message = `扫描完成: 共 ${detailedImages.length} 张图片, 总大小 ${totalSizeMB} MB`
-    if (scanMinFileSize.value > 0) {
-      message += ` (已筛选 ≥${scanMinFileSize.value}KB)`
-    }
-    showMessage(message, 3000, "info")
-  } catch (error) {
-    console.error("扫描图片失败:", error)
-    showMessage(`扫描图片失败: ${error}`, 5000, "error")
-  } finally {
-    scanning.value = false
-    scanProgress.value = 0
-  }
-}
-
-const updateSelection = (operation: (set: Set<string>) => void) => {
-  operation(selectedImages.value)
-  selectedImages.value = new Set(selectedImages.value)
-}
-
-const toggleSelect = (path: string) => {
-  updateSelection((set) => {
-    if (set.has(path)) {
-      set.delete(path)
-    } else {
-      set.add(path)
-    }
-  })
-}
-
-const onSelectAll = () => {
-  updateSelection((set) => {
-    paginatedImages.value.forEach((img) => set.add(img.path))
-  })
-}
-
-const onDeselectAll = () => {
-  updateSelection((set) => set.clear())
-}
-
-const onCompress = () => {
-  showCompressDialog.value = true
-}
-
-const onCompressConfirm = async (options: CompressOptions) => {
-  showCompressDialog.value = false
-  compressing.value = true
-  compressResults.value = []
-
-  try {
-    const selectedImageList = filteredImages.value.filter((img) =>
-      selectedImages.value.has(img.path),
-    )
-
-    const results = await batchCompressImages(
-      selectedImageList,
-      options,
-      (current, total, imageName) => {
-        scanProgressText.value = `压缩中... ${current}/${total} - ${imageName}`
-      },
-    )
-
-    compressResults.value = results
-
-    const successCount = results.filter((r) => r.success).length
-    showDelayedMessage(
-      `压缩完成! 成功 ${successCount}/${results.length} 张`,
-      3000,
-      "info",
-    )
-  } catch (error) {
-    console.error("压缩失败:", error)
-    showDelayedMessage(`压缩失败: ${error}`, 5000, "error")
-  } finally {
-    compressing.value = false
-  }
-}
-
 const onReplaceImages = async () => {
-  if (!confirm("确定要替换原图吗? 此操作不可撤销!")) {
-    return
-  }
+  const confirmMsg = props.i18n.replaceConfirmMessage
+  if (!confirm(confirmMsg)) return
 
   replacing.value = true
 
   try {
-    const {
-      success,
-      failed,
-    } = await batchReplaceImages(
+    const { success, failed } = await batchReplaceImages(
       compressResults.value,
       (current, total) => {
         scanProgressText.value = `替换中... ${current}/${total}`
@@ -639,10 +487,11 @@ const onReplaceImages = async () => {
       const replacedPaths = new Set(
         successfulResults.map((r) => r.originalFile.path),
       )
+      // 释放被替换图片的 blob URL
+      const removedImages = images.value.filter((img) => replacedPaths.has(img.path))
+      revokeImageUrls(removedImages)
       images.value = images.value.filter((img) => !replacedPaths.has(img.path))
-      updateSelection((set) => {
-        replacedPaths.forEach((path) => set.delete(path))
-      })
+      removeFromSelection(replacedPaths)
     }
   } catch (error) {
     console.error("替换失败:", error)
@@ -652,24 +501,46 @@ const onReplaceImages = async () => {
   }
 }
 
+// ── 图片操作 ──────────────────────────────────────────────────
+
 const onImageError = (e: Event) => {
   const img = e.target as HTMLImageElement
   img.style.display = "none"
   const parent = img.parentElement
   if (parent) {
-    parent.innerHTML =
-      '<div class="image-placeholder"><svg class="icon"><use xlink:href="#iconImage"></use></svg><p>加载失败</p></div>'
+    // 用 DOM API 替代 innerHTML，避免 XSS 风险
+    const placeholder = document.createElement("div")
+    placeholder.className = "image-placeholder"
+
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+    svg.setAttribute("class", "icon")
+    const use = document.createElementNS("http://www.w3.org/2000/svg", "use")
+    use.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", "#iconImage")
+    svg.appendChild(use)
+
+    const text = document.createElement("p")
+    text.textContent = props.i18n.loadFailed
+
+    placeholder.appendChild(svg)
+    placeholder.appendChild(text)
+    parent.appendChild(placeholder)
   }
 }
 
 const copyImageName = async (name: string) => {
   try {
-    await navigator.clipboard.writeText(name)
+    await copyToClipboard(name)
     showMessage("已复制图片名称", 2000, "info")
   } catch (error) {
     console.error("复制失败:", error)
     showMessage("复制失败", 2000, "error")
   }
+}
+
+// ── 文档导航 ──────────────────────────────────────────────────
+
+const escapeSqlString = (str: string): string => {
+  return str.replace(/\\/g, "\\\\").replace(/'/g, "''")
 }
 
 const extractDocIdFromImageName = (imageName: string): string | null => {
@@ -689,12 +560,13 @@ const navigateToDoc = async (image: ImageInfo) => {
       return
     }
 
-    const imagePath = image.path.replace("/data/", "")
+    const escapedPath = escapeSqlString(image.path.replace("/data/", ""))
+    const escapedName = escapeSqlString(image.name)
     const blocks = await api.sql(`
       SELECT DISTINCT root_id, content, hpath
       FROM blocks
-      WHERE markdown LIKE '%${imagePath}%'
-      OR content LIKE '%${image.name}%'
+      WHERE markdown LIKE '%${escapedPath}%'
+      OR content LIKE '%${escapedName}%'
       ORDER BY updated DESC
       LIMIT 5
     `)
@@ -710,6 +582,8 @@ const navigateToDoc = async (image: ImageInfo) => {
     showMessage(`导航失败: ${error}`, 3000, "error")
   }
 }
+
+// ── 预览 ─────────────────────────────────────────────────────
 
 const previewImage = (image: ImageInfo) => {
   previewImageData.value = image

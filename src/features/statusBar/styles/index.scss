@@ -124,6 +124,7 @@
     font-size: 11px;
 
     &[data-level="medium"] {
+      will-change: opacity;
       animation: task-pulse 1.5s ease-in-out infinite;
     }
   }

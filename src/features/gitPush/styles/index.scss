@@ -468,27 +468,47 @@
   background: var(--b3-border-color);
 }
 
-.gp-ide-custom-form {
-  padding: 6px;
+// IDE 管理弹窗
+.gp-ide-mgmt-list {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  margin-bottom: 4px;
 }
 
-.gp-ide-input {
-  padding: 4px 8px;
-  font-size: 11px;
-  border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-  &:focus { outline: none; border-color: var(--b3-theme-primary); }
-}
-
-.gp-ide-custom-actions {
+.gp-ide-mgmt-row {
   display: flex;
-  gap: 4px;
-  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+}
+
+.gp-ide-mgmt-name {
+  font-weight: 600;
+  font-size: 12px;
+  min-width: 100px;
+}
+
+.gp-ide-mgmt-path {
+  flex: 1;
+  font-size: 11px;
+  opacity: 0.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-ide-mgmt-empty {
+  font-size: 12px;
+  opacity: 0.4;
+  font-style: italic;
+  text-align: center;
+  padding: 12px 0 6px;
+}
+
+.gp-ide-mgmt-add {
+  display: flex;
+  gap: 6px;
 }
 
 .gp-btn-danger {

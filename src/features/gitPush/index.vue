@@ -110,6 +110,15 @@
           <Icon icon="mdi:archive-outline" height="13" />
           <span v-if="showArchived">含归档</span>
         </button>
+        <button
+          class="gp-ft-btn"
+          :class="{ active: gitOpsPaused }"
+          :title="gitOpsPaused ? '已暂停 Git 状态加载' : '暂停 Git 状态加载'"
+          @click="gitOpsPaused = !gitOpsPaused"
+        >
+          <Icon :icon="gitOpsPaused ? 'mdi:pause-circle' : 'mdi:pause-circle-outline'" height="13" />
+          <span v-if="gitOpsPaused">已暂停</span>
+        </button>
       </div>
     </div>
 
@@ -345,7 +354,7 @@
                   v-for="(custom, idx) in customIdes"
                   :key="'custom-' + idx"
                   class="gp-ide-item gp-ide-item--custom"
-                  @click="handleOpenCustomIde(project.path, custom.path); openIdeMenu.delete(project.id)"
+                  @click="handleOpenCustomIde(project.path, custom.name, custom.path); openIdeMenu.delete(project.id)"
                 >
                   <Icon icon="mdi:application-brackets" height="14" />
                   <span>{{ custom.name }}</span>
@@ -364,19 +373,9 @@
                   </button>
                 </button>
                 <div class="gp-ide-divider" />
-                <template v-if="showCustomIdeForm">
-                  <div class="gp-ide-custom-form">
-                    <input v-model="customIdeName" class="gp-ide-input" placeholder="名称" @keyup.escape="showCustomIdeForm = false" />
-                    <input v-model="customIdePath" class="gp-ide-input" placeholder="可执行文件路径" @keyup.escape="showCustomIdeForm = false" @keyup.enter="addCustomIde" />
-                    <div class="gp-ide-custom-actions">
-                      <button class="vp-btn vp-btn--primary vp-btn--sm" :disabled="!customIdeName.trim() || !customIdePath.trim()" @click="addCustomIde">添加</button>
-                      <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="showCustomIdeForm = false">取消</button>
-                    </div>
-                  </div>
-                </template>
-                <button v-else class="gp-ide-item gp-ide-item--add" @click.stop="showCustomIdeForm = true">
-                  <Icon icon="mdi:plus" height="14" />
-                  <span>自定义...</span>
+                <button class="gp-ide-item gp-ide-item--add" @click.stop="showIdeDialog = true; openIdeMenu.delete(project.id)">
+                  <Icon icon="mdi:cog-outline" height="14" />
+                  <span>管理 IDE...</span>
                 </button>
               </div>
             </div>
@@ -781,6 +780,53 @@
       </div>
     </div>
 
+    <!-- IDE 管理弹窗 -->
+    <div v-if="showIdeDialog" class="gp-mask" @click.self="showIdeDialog = false">
+      <div class="gp-dialog" style="width: 460px;">
+        <div class="gp-dialog-header">
+          <span class="gp-dialog-title">管理自定义 IDE</span>
+          <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="showIdeDialog = false">
+            <Icon icon="mdi:close" />
+          </button>
+        </div>
+        <div class="gp-dialog-body">
+          <div v-if="customIdes.length > 0" class="gp-ide-mgmt-list">
+            <div v-for="(custom, idx) in customIdes" :key="idx" class="gp-ide-mgmt-row">
+              <template v-if="editingIdeIdx === idx">
+                <select v-model="editIdePreset" class="gp-select" style="width:140px">
+                  <option v-for="p in IDE_PRESETS" :key="p.name" :value="p.name">{{ p.name }}</option>
+                </select>
+                <input v-model="editIdePath" class="gp-input" placeholder="可执行文件路径" style="flex:1" @keyup.enter="saveEditIde(idx)" @keyup.escape="editingIdeIdx = -1" />
+                <button class="vp-btn vp-btn--primary vp-btn--sm" @click="saveEditIde(idx)" :disabled="!editIdePath.trim()">保存</button>
+                <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="editingIdeIdx = -1">取消</button>
+              </template>
+              <template v-else>
+                <Icon :icon="getIdePresetIcon(custom.name)" height="14" />
+                <span class="gp-ide-mgmt-name">{{ custom.name }}</span>
+                <span class="gp-ide-mgmt-path" :title="custom.path">{{ custom.path }}</span>
+                <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="startEditIde(idx)">编辑</button>
+                <button class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger" @click="confirmingMgmtDelIdx === idx ? doRemoveCustomIde(idx) : (confirmingMgmtDelIdx = idx)">
+                  {{ confirmingMgmtDelIdx === idx ? '确认?' : '删除' }}
+                </button>
+              </template>
+            </div>
+          </div>
+          <div v-else class="gp-ide-mgmt-empty">暂无自定义 IDE，在下方添加</div>
+          <div class="gp-ide-divider" style="margin:8px 0" />
+          <div class="gp-ide-mgmt-add">
+            <select v-model="addIdePreset" class="gp-select" style="width:140px">
+              <option v-for="p in IDE_PRESETS" :key="p.name" :value="p.name">{{ p.name }}</option>
+            </select>
+            <input v-model="addIdePath" class="gp-input" placeholder="可执行文件路径（如 D:/Tools/devenv.exe）" style="flex:1" @keyup.enter="addCustomIde" />
+            <button class="vp-btn vp-btn--primary vp-btn--sm" @click="addCustomIde" :disabled="!addIdePath.trim()">添加</button>
+          </div>
+        </div>
+        <div class="gp-dialog-footer">
+          <button class="vp-btn vp-btn--ghost" @click="showIdeDialog = false">关闭</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 扫描导入项目弹窗 -->
     <div v-if="showScanDialog" class="gp-mask" @click.self="handleCloseScan">
       <div class="gp-dialog" style="width: 520px;">
@@ -1095,10 +1141,51 @@ const detectedIdes = ref<IdeEntry[]>([])
 interface CustomIde { name: string; path: string }
 const CUSTOM_IDE_KEY = "git-push-custom-ides"
 const customIdes = ref<CustomIde[]>([])
-const showCustomIdeForm = ref(false)
-const customIdeName = ref("")
-const customIdePath = ref("")
 const confirmingDelIdx = ref(-1)
+
+/** IDE 管理弹窗 */
+const showIdeDialog = ref(false)
+const addIdePreset = ref("Visual Studio")
+const addIdePath = ref("")
+const editingIdeIdx = ref(-1)
+const editIdePreset = ref("")
+const editIdePath = ref("")
+const confirmingMgmtDelIdx = ref(-1)
+
+/** 常用 IDE 预设 */
+const IDE_PRESETS = [
+  { name: "Visual Studio", icon: "mdi:microsoft-visual-studio" },
+  { name: "JetBrains Rider", icon: "mdi:language-csharp" },
+  { name: "CodeBuddy", icon: "mdi:robot-outline" },
+  { name: "Trae CN", icon: "mdi:alpha-t-box" },
+  { name: "Qoder", icon: "mdi:code-json" },
+  { name: "JetBrains WebStorm", icon: "mdi:language-javascript" },
+  { name: "JetBrains PyCharm", icon: "mdi:language-python" },
+  { name: "JetBrains GoLand", icon: "mdi:language-go" },
+  { name: "JetBrains IntelliJ IDEA", icon: "mdi:language-java" },
+  { name: "其他", icon: "mdi:application-brackets" },
+]
+
+function getIdePresetIcon(name: string): string {
+  return IDE_PRESETS.find(p => p.name === name)?.icon ?? "mdi:application-brackets"
+}
+
+function startEditIde(idx: number) {
+  const c = customIdes.value[idx]
+  if (!c) return
+  editingIdeIdx.value = idx
+  editIdePreset.value = IDE_PRESETS.some(p => p.name === c.name) ? c.name : "其他"
+  editIdePath.value = c.path
+}
+
+function saveEditIde(idx: number) {
+  const list = [...customIdes.value]
+  list[idx] = { name: editIdePreset.value.trim() || customIdes.value[idx].name, path: editIdePath.value.trim() }
+  customIdes.value = list
+  editingIdeIdx.value = -1
+  confirmingMgmtDelIdx.value = -1
+  saveCustomIdes()
+}
 
 async function loadCustomIdes() {
   try {
@@ -1113,30 +1200,49 @@ async function saveCustomIdes() {
 }
 
 function addCustomIde() {
-  const name = customIdeName.value.trim()
-  const path = customIdePath.value.trim()
-  if (!name || !path) return
-  customIdes.value = [...customIdes.value, { name, path }]
+  const path = addIdePath.value.trim()
+  if (!path) return
+  customIdes.value = [...customIdes.value, { name: addIdePreset.value, path }]
   saveCustomIdes()
-  customIdeName.value = ""
-  customIdePath.value = ""
-  showCustomIdeForm.value = false
+  addIdePath.value = ""
 }
 
 function doRemoveCustomIde(idx: number) {
   customIdes.value = customIdes.value.filter((_, i) => i !== idx)
   confirmingDelIdx.value = -1
+  confirmingMgmtDelIdx.value = -1
   saveCustomIdes()
 }
 
-async function handleOpenCustomIde(projectPath: string, idePath: string) {
+async function handleOpenCustomIde(projectPath: string, ideName: string, idePath: string) {
+  // Rider / Visual Studio：优先用 .sln 文件打开
+  let target = projectPath
+  if (/rider|visual\s*studio/i.test(ideName)) {
+    const sln = findSlnFile(projectPath)
+    if (sln) target = sln
+  }
   const nodeModules = getNodeProcessModules()
   const cp = nodeModules?.child_process
   if (cp) {
-    try { await launchIde(cp, idePath, [projectPath]); return }
+    try { await launchIde(cp, idePath, [target]); return }
     catch { /* fallback */ }
   }
   handleOpenPath(projectPath)
+}
+
+/** 在项目根目录查找 .sln 文件 */
+function findSlnFile(dir: string): string | null {
+  const nodeModules = getNodeModules()
+  if (!nodeModules) return null
+  try {
+    const entries = nodeModules.fs.readdirSync(dir, { withFileTypes: true })
+    for (const e of entries) {
+      if (e.isFile() && e.name.endsWith(".sln")) {
+        return nodeModules.path.join(dir, e.name)
+      }
+    }
+  } catch { /* ignore */ }
+  return null
 }
 
 const props = defineProps<{
@@ -1267,6 +1373,8 @@ const searchQuery = ref("")
 const viewMode = ref<"all" | "needsPush" | "uncommitted" | "starred">("all")
 /** 是否显示归档项目（默认隐藏） */
 const showArchived = ref(false)
+/** 暂停 Git 状态自动加载 */
+const gitOpsPaused = ref(false)
 /** 选中的标签（多选交集过滤） */
 const selectedTags = ref<Set<string>>(new Set())
 
@@ -1464,6 +1572,7 @@ const headHashes = ref<Record<string, string>>({})
 
 /** 静默刷新当前分类下的项目状态（批次处理，每批 3 个匹配 git 信号量上限） */
 async function silentRefreshAll() {
+  if (gitOpsPaused.value) return
   const catId = activeCategory.value
   if (!catId) return
   const projList = projects.value.filter(p => p.categoryId === catId)
@@ -1509,6 +1618,7 @@ onMounted(async () => {
   // commitLog/branches/stash 改为展开工作区面板时按需懒加载（见 @expand）。
   // getHeadHash 仅刷新去重用，首屏无历史值可对比，跳过。
   setTimeout(async () => {
+    if (gitOpsPaused.value) return
     const catId = activeCategory.value
     const projList = catId ? projects.value.filter(p => p.categoryId === catId) : projects.value
     await batchProcess(projList, 3, async (p) => {
@@ -1539,7 +1649,7 @@ document.addEventListener("click", closeIdeMenuOnOutside)
 
 /** 切换分类时懒加载该分类下项目的数据（首屏最小集，详情展开时再补） */
 watch(activeCategory, async (catId) => {
-  if (!catId) return
+  if (!catId || gitOpsPaused.value) return
   const projList = projects.value.filter(p => p.categoryId === catId)
   if (projList.length === 0) return
   // 只加载尚未缓存的
@@ -1557,7 +1667,7 @@ watch(activeCategory, async (catId) => {
  *  commitLog/branches/stash 不在统计视图中展示，无需加载。
  *  使用 loadStatsData 共用 rev-parse，避免 loadPushStatus/loadWorkingTree 各调一次 */
 watch(currentView, async (view) => {
-  if (view !== "stats") return
+  if (view !== "stats" || gitOpsPaused.value) return
   const pending = projects.value.filter(p => !pushStatuses.value[p.id] || !workingTrees.value[p.id])
   if (pending.length === 0) return
   await batchProcess(pending, 3, async (p) => {
@@ -1623,6 +1733,7 @@ async function handleRefresh(id: string) {
 }
 
 async function handleRefreshAll() {
+  if (gitOpsPaused.value) return
   refreshingAll.value = true
   try {
     await silentRefreshAll()

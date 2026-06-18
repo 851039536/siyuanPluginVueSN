@@ -102,8 +102,7 @@
   overflow-x: auto;
   padding: 0 0 4px;
   -webkit-overflow-scrolling: touch;
-
-  &::-webkit-scrollbar { height: 0; }
+  @include hide-h-scrollbar;
 }
 
 .gp-tab {
@@ -290,14 +289,10 @@
   background: var(--b3-theme-surface);
   border-radius: 3px;
   line-height: 1.4;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  @include text-ellipsis;
 
   span {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    @include text-ellipsis;
   }
 }
 
@@ -305,9 +300,7 @@
   font-size: 10px;
   font-family: $vp-mono;
   opacity: 0.5;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  @include text-ellipsis;
   max-width: 280px;
 }
 
@@ -493,9 +486,7 @@
   flex: 1;
   font-size: 11px;
   opacity: 0.5;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  @include text-ellipsis;
 }
 
 .gp-ide-mgmt-empty {
@@ -511,11 +502,7 @@
   gap: 6px;
 }
 
-.gp-btn-danger {
-  &:hover {
-    color: var(--b3-theme-error);
-  }
-}
+// .gp-btn-danger 已移入 styles/_buttons.scss
 
 .gp-remotes {
   display: flex;
@@ -600,11 +587,7 @@
 }
 
 .gp-stash-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  opacity: 0.45;
+  @include gp-label-base;
 }
 
 .gp-stash-help {
@@ -661,9 +644,7 @@
 .gp-stash-msg {
   flex: 1;
   font-family: $vp-mono;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  @include text-ellipsis;
 }
 
 .gp-push-btn {
@@ -748,11 +729,7 @@
 }
 
 .gp-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  opacity: 0.45;
+  @include gp-label-base;
 }
 
 .gp-input {
@@ -935,9 +912,7 @@
   font-family: $vp-mono;
   font-size: 10px;
   opacity: 0.5;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  @include text-ellipsis;
 }
 
 .gp-remote-empty {
@@ -1026,9 +1001,7 @@
   font-size: 9px;
   font-family: $vp-mono;
   opacity: 0.5;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  @include text-ellipsis;
 }
 
 .gp-scan-badge {
@@ -1130,8 +1103,7 @@
   overflow-x: auto;
   padding-bottom: 4px;
   -webkit-overflow-scrolling: touch;
-
-  &::-webkit-scrollbar { height: 0; }
+  @include hide-h-scrollbar;
 }
 
 .gp-tag-chip {
@@ -1182,7 +1154,7 @@
   }
 }
 
-.gp-status-badge {
+.gp-project-status-btn {
   display: inline-flex;
   align-items: center;
   background: none;
@@ -1193,9 +1165,9 @@
 
   &:hover { transform: scale(1.2); }
 
-  &.gp-sb-active { color: var(--b3-theme-success); }
-  &.gp-sb-maintenance { color: var(--b3-theme-primary); }
-  &.gp-sb-paused { color: var(--b3-theme-on-surface); opacity: 0.4; }
+  &.gp-psb-active { color: var(--b3-theme-success); }
+  &.gp-psb-maintenance { color: var(--b3-theme-primary); }
+  &.gp-psb-paused { color: var(--b3-theme-on-surface); opacity: 0.4; }
 }
 
 .gp-archived-tag {
@@ -1362,11 +1334,7 @@
   }
 
   .gp-tag-label {
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    opacity: 0.45;
+    @include gp-label-base;
     width: 36px;
     flex-shrink: 0;
   }
@@ -1406,18 +1374,14 @@
   font-weight: 600;
   color: var(--b3-theme-primary);
   min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  @include text-ellipsis;
 }
 
 .gp-tag-msg {
   flex: 1;
   opacity: 0.45;
   font-size: 10px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  @include text-ellipsis;
 }
 
 .gp-tag-date {

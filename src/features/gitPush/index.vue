@@ -208,8 +208,8 @@
               >{{ project.name }}</span>
               <!-- 状态徽章（点击循环切换） -->
               <button
-                class="gp-status-badge"
-                :class="`gp-sb-${project.status || 'active'}`"
+                class="gp-project-status-btn"
+                :class="`gp-psb-${project.status || 'active'}`"
                 :title="`状态: ${STATUS_META[project.status || 'active'].label}（点击切换）`"
                 @click.stop="cycleStatus(project.id, project.status)"
               >

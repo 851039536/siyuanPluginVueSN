@@ -22,3 +22,24 @@
     color: var(--b3-theme-on-surface);
   }
 }
+
+// 大写标签样式（.gp-label / .gp-stash-label / .gp-tag-label 共享）
+@mixin gp-label-base {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.45;
+}
+
+// 单行文本截断省略号
+@mixin text-ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// 隐藏水平滚动条（keep vertical scroll functional）
+@mixin hide-h-scrollbar {
+  &::-webkit-scrollbar { height: 0; }
+}

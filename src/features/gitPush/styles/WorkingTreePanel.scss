@@ -156,9 +156,7 @@
   min-width: 0;
   font-family: $vp-mono;
   font-size: 10px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  @include text-ellipsis;
   cursor: pointer;
 
   &:hover {

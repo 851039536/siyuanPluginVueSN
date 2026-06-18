@@ -53,14 +53,21 @@
         >
           <Icon icon="mdi:sync" :class="{ 'gp-spin': refreshingAll }" />
         </button>
-        <button class="vp-btn vp-btn--ghost gp-add-btn" @click="showAddDialog = true">
-          <Icon icon="mdi:plus" />
-          <span>{{ i18n.addProject || '添加' }}</span>
-        </button>
-        <button class="vp-btn vp-btn--ghost gp-add-btn" @click="handleOpenScan">
-          <Icon icon="mdi:file-find-outline" />
-          <span>{{ i18n.importProject || '导入' }}</span>
-        </button>
+        <div class="gp-add-wrap">
+          <button class="vp-btn vp-btn--ghost gp-add-dropdown-btn" @click.stop="showAddMenu = !showAddMenu">
+            <Icon icon="mdi:plus" />
+          </button>
+          <div v-if="showAddMenu" class="gp-add-popover" @click.stop>
+            <button class="gp-add-item" @click="showAddMenu = false; showAddDialog = true">
+              <Icon icon="mdi:plus-circle-outline" height="15" />
+              <span>{{ i18n.addProject || '添加单个项目' }}</span>
+            </button>
+            <button class="gp-add-item" @click="showAddMenu = false; handleOpenScan()">
+              <Icon icon="mdi:file-find-outline" height="15" />
+              <span>{{ i18n.importProject || '批量导入' }}</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -862,6 +869,7 @@ const {
 const showAddDialog = ref(false)
 const showCatDialog = ref(false)
 const showSettings = ref(false)
+const showAddMenu = ref(false)
 /** git 操作活跃数轮询 */
 const activeGitOps = ref(0)
 let opsPoller: ReturnType<typeof setInterval> | null = null
@@ -1066,11 +1074,14 @@ onUnmounted(() => {
   document.removeEventListener("click", closeIdeMenuOnOutside)
 })
 
-/** 点击外部关闭 IDE 菜单 */
+/** 点击外部关闭 IDE 菜单 / 添加菜单 */
 function closeIdeMenuOnOutside(e: MouseEvent) {
   const target = e.target as HTMLElement | null
   if (target && !target.closest(".gp-ide-wrap")) {
     openIdeMenu.value = new Set()
+  }
+  if (target && !target.closest(".gp-add-wrap")) {
+    showAddMenu.value = false
   }
 }
 

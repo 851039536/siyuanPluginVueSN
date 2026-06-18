@@ -39,7 +39,7 @@
 @mixin dialog-base {
   background: var(--b3-theme-background);
   border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--b3-border-color);
   overflow: hidden;
   pointer-events: auto;
 }
@@ -116,7 +116,7 @@
   background: var(--b3-theme-background);
   border-radius: 12px;
   @include flex-column;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  border: 2px solid var(--b3-border-color);
   min-height: 0;
 }
 
@@ -252,7 +252,6 @@
 
   &:hover {
     border-color: var(--b3-theme-primary-light);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 
   &.selected {
@@ -287,9 +286,6 @@
     width: auto;
     height: auto;
     object-fit: contain;
-  }
-
-  &:hover img {
   }
 
   .preview-hint {

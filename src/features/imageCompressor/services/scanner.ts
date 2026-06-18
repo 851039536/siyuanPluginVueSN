@@ -102,6 +102,7 @@ export async function getImageDetails(
 
     const url = URL.createObjectURL(blob)
     imageInfo.url = url
+    imageInfo._blobUrl = url
 
     const dimensions = await getImageDimensions(url, false)
     imageInfo.width = dimensions.width
@@ -185,8 +186,10 @@ export async function batchGetImageDetails(
     // 如果设置了最小大小筛选，且图片大小小于阈值，则跳过
     if (minBytes > 0 && detailed.size > 0 && detailed.size < minBytes) {
       // 清理 URL
-      if (detailed.url && detailed.url.startsWith("blob:")) {
-        URL.revokeObjectURL(detailed.url)
+      if (detailed._blobUrl) {
+        URL.revokeObjectURL(detailed._blobUrl)
+        detailed._blobUrl = undefined
+        detailed.url = undefined
       }
       continue
     }
@@ -195,4 +198,14 @@ export async function batchGetImageDetails(
   }
 
   return detailedImages
+}
+
+/** 批量释放 ImageInfo 数组中所有 blob URL */
+export function revokeImageUrls(images: ImageInfo[]): void {
+  for (const img of images) {
+    if (img._blobUrl) {
+      URL.revokeObjectURL(img._blobUrl)
+      img._blobUrl = undefined
+    }
+  }
 }

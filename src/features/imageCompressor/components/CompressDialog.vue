@@ -27,7 +27,7 @@
             :step="0.1"
             :show-value="true"
             :format-value="formatQuality"
-            :hint="i18n.qualityHint || '建议: 80% 可获得良好的压缩率和质量平衡'"
+            :hint="i18n.qualityHint"
             @update:model-value="(v) => { if (v !== null) options.quality = v }"
           />
         </div>
@@ -41,7 +41,7 @@
             :step="0.1"
             :show-value="true"
             :format-value="formatMaxSize"
-            :hint="i18n.maxSizeHint || '超过此大小的图片将被压缩'"
+            :hint="i18n.maxSizeHint"
             @update:model-value="(v) => { if (v !== null) options.maxSizeMB = v }"
           />
         </div>
@@ -55,7 +55,7 @@
             :step="100"
             :show-value="true"
             :format-value="formatMaxDimension"
-            :hint="i18n.maxDimensionHint || '超过此尺寸的图片将被等比缩放'"
+            :hint="i18n.maxDimensionHint"
             @update:model-value="(v) => { if (v !== null) options.maxWidthOrHeight = v }"
           />
         </div>
@@ -63,10 +63,10 @@
         <div class="setting-item">
           <SiSwitch
             v-model="options.useWebWorker"
-            :label="i18n.webWorkerLabel || '使用 Web Worker (推荐)'"
+            :label="i18n.webWorkerLabel"
           />
           <div class="hint-text">
-            {{ i18n.webWorkerHint || "在后台线程处理，不阻塞界面" }}
+            {{ i18n.webWorkerHint }}
           </div>
         </div>
 
@@ -75,11 +75,11 @@
           class="statistics-preview"
         >
           <div class="stat-row">
-            <span>{{ i18n.selectedImagesLabel || "已选择图片:" }}</span>
-            <span class="stat-value">{{ selectedCount }} 张</span>
+            <span>{{ i18n.selectedImagesLabel }}</span>
+            <span class="stat-value">{{ selectedCount }}</span>
           </div>
           <div class="stat-row">
-            <span>{{ i18n.estimatedTimeLabel || "预计压缩时间:" }}</span>
+            <span>{{ i18n.estimatedTimeLabel }}</span>
             <span class="stat-value">{{ estimatedTime }}</span>
           </div>
         </div>
@@ -132,13 +132,13 @@ const options = ref<CompressOptions>({
 })
 
 const estimatedTime = computed(() => {
-  const s = props.i18n.second || "秒"
-  const m = props.i18n.minute || "分钟"
+  const s = props.i18n.second
+  const m = props.i18n.minute
   if (props.selectedCount === 0) return `0${s}`
   const seconds = props.selectedCount * 1.5
-  if (seconds < 60) return `约 ${Math.ceil(seconds)} ${s}`
+  if (seconds < 60) return `~${Math.ceil(seconds)}${s}`
   const minutes = Math.ceil(seconds / 60)
-  return `约 ${minutes} ${m}`
+  return `~${minutes}${m}`
 })
 
 const formatQuality = (value: number): string => {
@@ -163,73 +163,5 @@ const onCancel = () => {
 </script>
 
 <style scoped lang="scss">
-@use '../styles/index.scss' as *;
-
-.compress-dialog-overlay {
-  @include flex-center;
-  @include overlay-base;
-  background: rgba(0, 0, 0, 0.6);
-  z-index: 10000;
-}
-
-.compress-dialog {
-  width: 90%;
-  max-width: 500px;
-  @include dialog-base;
-}
-
-.dialog-header {
-  @include header-base;
-
-  h3 {
-    font-size: 18px;
-  }
-
-  .close-btn {
-    @include button-base;
-    padding: 4px;
-
-    .icon {
-      width: 20px;
-      height: 20px;
-    }
-  }
-}
-
-.dialog-content {
-  padding: 20px;
-  max-height: 60vh;
-  overflow-y: auto;
-}
-
-.setting-item {
-  margin-bottom: 24px;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-}
-
-.hint-text {
-  margin-top: 6px;
-  font-size: 12px;
-  color: var(--b3-theme-on-surface-light);
-  opacity: 0.7;
-}
-
-.statistics-preview {
-  margin-top: 20px;
-  padding: 16px;
-  background: var(--b3-theme-surface);
-  border-radius: 6px;
-  border-left: 3px solid var(--b3-theme-primary);
-
-  .stat-row {
-    @include stat-row-base;
-  }
-}
-
-.dialog-footer {
-  @include footer-base;
-}
+@use "../styles/CompressDialog.scss" as *;
 </style>

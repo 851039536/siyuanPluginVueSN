@@ -25,7 +25,6 @@ export type {
   CompressOptions,
   CompressProgress,
   CompressResult,
-  ImageComparison,
   ImageCompressorI18n,
   ImageInfo,
   ScanProgress,

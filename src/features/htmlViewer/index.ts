@@ -12,6 +12,7 @@ import {
   showMessage,
 } from "siyuan"
 import { emitCustomEvent } from "@/utils/eventBus"
+import { getIconHTML } from "@/utils/iconHelper"
 
 export class HtmlViewer {
   private plugin: Plugin
@@ -54,7 +55,7 @@ export class HtmlViewer {
     const menu = event.detail.menu
 
     menu.addItem({
-      iconHTML: "🌐",
+      iconHTML: getIconHTML("mdi:web", 14),
       label: "HTML展示",
       click: () => {
         const selectedText = window.getSelection()?.toString().trim()

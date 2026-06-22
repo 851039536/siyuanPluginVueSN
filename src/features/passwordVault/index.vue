@@ -466,7 +466,8 @@
               >
                 <div class="confirm-card">
                   <p class="confirm-warning">
-                    ⚠️ 确定要删除类别「<strong>{{ getCategoryById(pendingDeleteCategoryId)?.name }}</strong>」吗？
+                    <IconWrapper name="warning" :size="16" />
+                    确定要删除类别「<strong>{{ getCategoryById(pendingDeleteCategoryId)?.name }}</strong>」吗？
                   </p>
                   <p
                     v-if="getCategoryEntryCount(pendingDeleteCategoryId) > 0"

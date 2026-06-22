@@ -9,8 +9,8 @@
         v-if="trendStats"
         class="trend-stats-inline"
       >
-        <span class="stat-item">📅 {{ i18n.avgDailyCreated }} <strong>{{ trendStats.avgDailyCreated }}</strong></span>
-        <span class="stat-item">✏️ {{ i18n.avgDailyModified }} <strong>{{ trendStats.avgDailyModified }}</strong></span>
+        <span class="stat-item"><IconWrapper name="list" :size="12" /> {{ i18n.avgDailyCreated }} <strong>{{ trendStats.avgDailyCreated }}</strong></span>
+        <span class="stat-item"><IconWrapper name="edit" :size="12" /> {{ i18n.avgDailyModified }} <strong>{{ trendStats.avgDailyModified }}</strong></span>
       </div>
     </div>
 
@@ -25,7 +25,7 @@
         class="comparison-card"
       >
         <div class="comparison-header">
-          <span class="comparison-icon">{{ card.icon }}</span>
+          <IconWrapper class="comparison-icon" :name="card.icon" :size="14" />
           <span class="comparison-title">{{ card.title }}</span>
         </div>
         <div class="comparison-body">
@@ -69,7 +69,7 @@
             :class="{ active: activeMetric === tab.key }"
             @click="activeMetric = tab.key"
           >
-            {{ tab.icon }} {{ tab.label }}
+            <IconWrapper :name="tab.icon" :size="12" /> {{ tab.label }}
           </button>
         </div>
       </div>
@@ -158,7 +158,7 @@
             {{ historicalData[hoveredIndex]?.dateLabel || historicalData[hoveredIndex]?.date }}
           </div>
           <div class="tooltip-value">
-            <span class="tooltip-metric-icon">{{ activeMetricObj.icon }}</span>
+            <IconWrapper class="tooltip-metric-icon" :name="activeMetricObj.icon" :size="12" />
             <strong>{{ formatNumber(chartPoints[hoveredIndex].value) }}</strong>
             <span class="tooltip-unit">{{ activeMetricObj.unit }}</span>
           </div>
@@ -179,23 +179,23 @@
                 {{ i18n.date }}
               </th>
               <th class="col-notes">
-                <span class="th-icon">📓</span>
+                <IconWrapper :name="'file'" :size="12" />
                 {{ i18n.notes }}
               </th>
               <th class="col-words">
-                <span class="th-icon">✍️</span>
+                <IconWrapper :name="'edit'" :size="12" />
                 {{ i18n.words }}
               </th>
               <th class="col-blocks">
-                <span class="th-icon">🧩</span>
+                <IconWrapper :name="'format'" :size="12" />
                 {{ i18n.blocks || '块' }}
               </th>
               <th class="col-created">
-                <span class="th-icon">📅</span>
+                <IconWrapper :name="'list'" :size="12" />
                 {{ i18n.created }}
               </th>
               <th class="col-modified">
-                <span class="th-icon">✏️</span>
+                <IconWrapper :name="'edit'" :size="12" />
                 {{ i18n.modified }}
               </th>
               <th class="col-change">
@@ -271,6 +271,7 @@ import {
   computed,
   ref,
 } from "vue"
+import IconWrapper from "@/components/IconWrapper.vue"
 import {
   formatDate,
   formatNumber,
@@ -321,31 +322,31 @@ const hoveredIndex = ref(-1)
 const metricTabs = computed(() => [
   {
     key: "totalWords" as const,
-    icon: "✍️",
+    icon: "edit" as const,
     label: props.i18n.words,
     unit: props.i18n.wordsUnit,
   },
   {
     key: "totalNotes" as const,
-    icon: "📓",
+    icon: "file" as const,
     label: props.i18n.notes,
     unit: props.i18n.notesUnit,
   },
   {
     key: "totalBlocks" as const,
-    icon: "🧩",
+    icon: "format" as const,
     label: props.i18n.blocks || "块",
     unit: "个",
   },
   {
     key: "todayCreated" as const,
-    icon: "📅",
+    icon: "list" as const,
     label: props.i18n.created,
     unit: props.i18n.notesUnit,
   },
   {
     key: "todayModified" as const,
-    icon: "✏️",
+    icon: "edit" as const,
     label: props.i18n.modified,
     unit: props.i18n.notesUnit,
   },
@@ -611,21 +612,21 @@ const comparisonCards = computed(() => {
   const stats = comparisonStats.value
   return [
     {
-      icon: "📅",
+      icon: "list" as const,
       title: props.i18n.dayOverDay,
       current: stats.today,
       prev: stats.yesterday,
       change: stats.dayChange,
     },
     {
-      icon: "📆",
+      icon: "list" as const,
       title: props.i18n.weekOverWeek,
       current: stats.thisWeek,
       prev: stats.lastWeek,
       change: stats.weekChange,
     },
     {
-      icon: "🗓️",
+      icon: "list" as const,
       title: props.i18n.monthOverMonth,
       current: stats.thisMonth,
       prev: stats.lastMonth,

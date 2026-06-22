@@ -23,7 +23,7 @@
     <!-- ====== 1. Hero Rank Banner ====== -->
     <div class="hero-banner">
       <div class="hero-icon-wrap">
-        <span class="hero-icon">{{ currentLevel.icon }}</span>
+        <IconWrapper class="hero-icon" :name="currentLevel.icon as IconKey" />
       </div>
       <div class="hero-body">
         <div class="hero-level">Lv.{{ currentLevel.level }}</div>
@@ -69,7 +69,7 @@
         <span class="next-goal-percent">{{ nextMilestone.progress.toFixed(0) }}%</span>
       </div>
       <div class="next-goal-main">
-        <span class="next-goal-icon">{{ nextMilestone.icon }}</span>
+        <IconWrapper class="next-goal-icon" :name="nextMilestone.icon as IconKey" />
         <span class="next-goal-name">{{ nextMilestone.label }}</span>
       </div>
       <div class="next-goal-bar">
@@ -90,7 +90,7 @@
           class="category-header"
           @click="toggleCategory(category.id)"
         >
-          <span class="category-icon">{{ category.icon }}</span>
+          <IconWrapper class="category-icon" :name="category.icon as IconKey" />
           <span class="category-name">{{ category.name }}</span>
           <span class="category-count">{{ category.achievedCount }}/{{ category.totalCount }}</span>
           <span class="category-toggle" :class="{ expanded: category.expanded }">
@@ -143,7 +143,7 @@
           :class="{ active: activeAchCategory === cat.id }"
           @click="activeAchCategory = cat.id"
         >
-          <span class="ach-cat-icon">{{ cat.icon }}</span>
+          <IconWrapper class="ach-cat-icon" :name="cat.icon as IconKey" />
           <span class="ach-cat-name">{{ cat.name }}</span>
           <span class="ach-cat-count">{{ getCategoryCount(cat.id) }}</span>
         </button>
@@ -158,7 +158,7 @@
           :class="{ active: activeAchTier === tier.id, [`tier-active-${tier.id}`]: activeAchTier === tier.id }"
           @click="activeAchTier = tier.id"
         >
-          <span class="ach-cat-icon">{{ tier.icon }}</span>
+          <IconWrapper class="ach-cat-icon" :name="tier.icon as IconKey" />
           <span class="ach-cat-name">{{ tier.name }}</span>
           <span class="ach-cat-count">{{ getTierCount(tier.id) }}</span>
         </button>
@@ -177,7 +177,7 @@
             title="删除此成就"
             @click="deleteCustomAchievement(ach.id)"
           >×</button>
-          <span class="ach-icon">{{ ach.icon }}</span>
+          <IconWrapper class="ach-icon" :name="ach.icon as IconKey" />
           <span class="ach-title">{{ ach.title }}</span>
           <span class="ach-desc">{{ ach.description }}</span>
         </div>
@@ -189,7 +189,7 @@
         class="locked-toggle"
         @click="showLocked = !showLocked"
       >
-        <span>🔒 未获得 ({{ filteredLocked.length }})</span>
+        <span><IconWrapper name="pageLock" :size="12" /> 未获得 ({{ filteredLocked.length }})</span>
         <svg
           width="10" height="10" viewBox="0 0 10 10"
           :class="{ rotated: showLocked }"
@@ -208,7 +208,7 @@
             title="删除此成就"
             @click="deleteCustomAchievement(ach.id)"
           >×</button>
-          <span class="ach-icon">🔒</span>
+          <IconWrapper class="ach-icon" name="pageLock" :size="18" />
           <span class="ach-title">{{ ach.title }}</span>
           <span class="ach-desc">{{ ach.description }}</span>
         </div>
@@ -224,6 +224,8 @@ import {
   ref,
 } from "vue"
 import type { Plugin } from "siyuan"
+import type { IconKey } from "@/config/icons"
+import IconWrapper from "@/components/IconWrapper.vue"
 import { PluginStorage } from "@/utils/pluginStorage"
 import MilestoneChip from "./MilestoneChip.vue"
 import MilestoneRuleEditor from "./MilestoneRuleEditor.vue"
@@ -376,25 +378,25 @@ const tierLabels: Record<Tier, string> = {
 const categories: CategoryDef[] = [
   {
     id: "writing",
-    icon: "✍️",
+    icon: "edit",
     name: props.i18n.catWriting || "写作达人",
     types: ["notes", "words", "notebooks"],
   },
   {
     id: "knowledge",
-    icon: "🧠",
+    icon: "lightbulb",
     name: props.i18n.catKnowledge || "知识管理",
     types: ["tags", "backlinks"],
   },
   {
     id: "rich",
-    icon: "📦",
+    icon: "folder",
     name: props.i18n.catRich || "内容丰富",
     types: ["blocks", "assets", "images", "code"],
   },
   {
     id: "persistence",
-    icon: "🔥",
+    icon: "star",
     name: props.i18n.catPersistence || "坚持不懈",
     types: ["streak", "activeDays"],
   },
@@ -421,7 +423,7 @@ const TYPE_META = Object.fromEntries(
     t.key,
     { icon: t.icon, labelFn: MILESTONE_LABEL_FNS[t.key] ?? ((v: number) => `${v}`) },
   ]),
-) as Record<string, { icon: string; labelFn: (v: number) => string }>
+  ) as Record<string, { icon: IconKey; labelFn: (v: number) => string }>
 
 function tierOf(idx: number, total: number): Tier {
   const r = idx / total
@@ -475,26 +477,26 @@ function pointsForLevel(level: number): number {
 const TIER_SIZE = 20
 
 const BASE_TITLES = [
-  { icon: "✏️", title: "笔墨新秀" },
-  { icon: "📝", title: "码字练手" },
-  { icon: "📒", title: "日记录者" },
-  { icon: "🖊️", title: "摘抄达人" },
-  { icon: "📖", title: "读书笔记" },
-  { icon: "📚", title: "知识收集" },
-  { icon: "🗂️", title: "整理能手" },
-  { icon: "🧩", title: "归档达人" },
-  { icon: "🔗", title: "双链编织" },
-  { icon: "🏷️", title: "标签管理" },
-  { icon: "🧠", title: "思维导图" },
-  { icon: "📐", title: "结构设计" },
-  { icon: "🔍", title: "深度检索" },
-  { icon: "💡", title: "灵感捕手" },
-  { icon: "🎯", title: "精准表达" },
-  { icon: "✨", title: "妙笔生花" },
-  { icon: "📜", title: "长篇大论" },
-  { icon: "🔥", title: "笔耕不辍" },
-  { icon: "💎", title: "字字珠玑" },
-  { icon: "🏆", title: "万字长城" },
+  { icon: "edit", title: "笔墨新秀" },
+  { icon: "edit", title: "码字练手" },
+  { icon: "file", title: "日记录者" },
+  { icon: "edit", title: "摘抄达人" },
+  { icon: "file", title: "读书笔记" },
+  { icon: "list", title: "知识收集" },
+  { icon: "folder", title: "整理能手" },
+  { icon: "format", title: "归档达人" },
+  { icon: "forward", title: "双链编织" },
+  { icon: "list", title: "标签管理" },
+  { icon: "lightbulb", title: "思维导图" },
+  { icon: "format", title: "结构设计" },
+  { icon: "search", title: "深度检索" },
+  { icon: "lightbulb", title: "灵感捕手" },
+  { icon: "star", title: "精准表达" },
+  { icon: "star", title: "妙笔生花" },
+  { icon: "file", title: "长篇大论" },
+  { icon: "star", title: "笔耕不辍" },
+  { icon: "star", title: "字字珠玑" },
+  { icon: "star", title: "万字长城" },
 ]
 
 const TIER_PREFIXES = [
@@ -660,78 +662,78 @@ interface ThresholdGroup { prefix: string; type: string; items: ThresholdItem[] 
 
 const THRESHOLD_ACHIEVEMENTS: ThresholdGroup[] = [
   { prefix: "ach", type: "notes", items: [
-    { v: 1, icon: "🌟", title: "破冰之旅", desc: "创建第一篇笔记", tier: "common" },
-    { v: 30, icon: "🌿", title: "小有积累", desc: "累计30篇笔记", tier: "common" },
-    { v: 100, icon: "🌳", title: "百篇大关", desc: "累计100篇笔记", tier: "rare" },
-    { v: 300, icon: "🌲", title: "三百篇成集", desc: "累计300篇笔记", tier: "rare" },
-    { v: 500, icon: "⛰️", title: "五百篇山丘", desc: "累计500篇笔记", tier: "epic" },
-    { v: 1000, icon: "🏛️", title: "千篇一律", desc: "累计1000篇笔记", tier: "epic" },
-    { v: 3000, icon: "🏰", title: "三千篇帝国", desc: "累计3000篇笔记", tier: "legendary" },
+    { v: 1, icon: "star", title: "破冰之旅", desc: "创建第一篇笔记", tier: "common" },
+    { v: 30, icon: "star", title: "小有积累", desc: "累计30篇笔记", tier: "common" },
+    { v: 100, icon: "star", title: "百篇大关", desc: "累计100篇笔记", tier: "rare" },
+    { v: 300, icon: "star", title: "三百篇成集", desc: "累计300篇笔记", tier: "rare" },
+    { v: 500, icon: "star", title: "五百篇山丘", desc: "累计500篇笔记", tier: "epic" },
+    { v: 1000, icon: "star", title: "千篇一律", desc: "累计1000篇笔记", tier: "epic" },
+    { v: 3000, icon: "star", title: "三千篇帝国", desc: "累计3000篇笔记", tier: "legendary" },
   ]},
   { prefix: "ach", type: "blocks", items: [
-    { v: 100, icon: "🧱", title: "积累起步", desc: "累计100个内容块", tier: "common" },
-    { v: 500, icon: "🧱", title: "五百块基石", desc: "累计500个内容块", tier: "common" },
-    { v: 2000, icon: "🏗️", title: "内容大厦", desc: "累计2000个内容块", tier: "rare" },
-    { v: 5000, icon: "🏭", title: "内容工厂", desc: "累计5000个内容块", tier: "rare" },
-    { v: 10000, icon: "🌆", title: "万块之城", desc: "累计10000个内容块", tier: "epic" },
-    { v: 30000, icon: "🏙️", title: "三万块都市", desc: "累计30000个内容块", tier: "legendary" },
+    { v: 100, icon: "format", title: "积累起步", desc: "累计100个内容块", tier: "common" },
+    { v: 500, icon: "format", title: "五百块基石", desc: "累计500个内容块", tier: "common" },
+    { v: 2000, icon: "format", title: "内容大厦", desc: "累计2000个内容块", tier: "rare" },
+    { v: 5000, icon: "format", title: "内容工厂", desc: "累计5000个内容块", tier: "rare" },
+    { v: 10000, icon: "format", title: "万块之城", desc: "累计10000个内容块", tier: "epic" },
+    { v: 30000, icon: "format", title: "三万块都市", desc: "累计30000个内容块", tier: "legendary" },
   ]},
   { prefix: "ach", type: "words", items: [
-    { v: 10000, icon: "✏️", title: "万字起步", desc: "累计写作1万字", tier: "common" },
-    { v: 50000, icon: "📝", title: "五万字小成", desc: "累计写作5万字", tier: "common" },
-    { v: 100000, icon: "📋", title: "十万字成书", desc: "累计写作10万字", tier: "rare" },
-    { v: 300000, icon: "📚", title: "三十万字著述", desc: "累计写作30万字", tier: "rare" },
-    { v: 1000000, icon: "🎓", title: "百万字巨著", desc: "累计写作100万字", tier: "epic" },
-    { v: 3000000, icon: "🏆", title: "三百万字殿堂", desc: "累计写作300万字", tier: "epic" },
-    { v: 10000000, icon: "👑", title: "千万字传说", desc: "累计写作1000万字", tier: "legendary" },
+    { v: 10000, icon: "edit", title: "万字起步", desc: "累计写作1万字", tier: "common" },
+    { v: 50000, icon: "edit", title: "五万字小成", desc: "累计写作5万字", tier: "common" },
+    { v: 100000, icon: "list", title: "十万字成书", desc: "累计写作10万字", tier: "rare" },
+    { v: 300000, icon: "list", title: "三十万字著述", desc: "累计写作30万字", tier: "rare" },
+    { v: 1000000, icon: "star", title: "百万字巨著", desc: "累计写作100万字", tier: "epic" },
+    { v: 3000000, icon: "star", title: "三百万字殿堂", desc: "累计写作300万字", tier: "epic" },
+    { v: 10000000, icon: "star", title: "千万字传说", desc: "累计写作1000万字", tier: "legendary" },
   ]},
   { prefix: "ach", type: "notebooks", items: [
-    { v: 1, icon: "📓", title: "知识启航", desc: "创建第一个笔记本", tier: "common" },
-    { v: 5, icon: "📔", title: "知识花园", desc: "拥有5个笔记本", tier: "common" },
-    { v: 10, icon: "📚", title: "知识殿堂", desc: "拥有10个笔记本", tier: "rare" },
-    { v: 20, icon: "🏛️", title: "知识帝国", desc: "拥有20个笔记本", tier: "epic" },
+    { v: 1, icon: "file", title: "知识启航", desc: "创建第一个笔记本", tier: "common" },
+    { v: 5, icon: "file", title: "知识花园", desc: "拥有5个笔记本", tier: "common" },
+    { v: 10, icon: "list", title: "知识殿堂", desc: "拥有10个笔记本", tier: "rare" },
+    { v: 20, icon: "star", title: "知识帝国", desc: "拥有20个笔记本", tier: "epic" },
   ]},
   { prefix: "ach", type: "streak", items: [
-    { v: 3, icon: "🔥", title: "三天打鱼", desc: "连续写作3天", tier: "common" },
-    { v: 7, icon: "⚡", title: "一周坚持", desc: "连续写作7天", tier: "common" },
-    { v: 14, icon: "💫", title: "两周不辍", desc: "连续写作14天", tier: "rare" },
-    { v: 30, icon: "🌟", title: "月度坚持", desc: "连续写作30天", tier: "rare" },
-    { v: 60, icon: "🚀", title: "双月毅力", desc: "连续写作60天", tier: "epic" },
-    { v: 100, icon: "💎", title: "百日如一", desc: "连续写作100天", tier: "epic" },
-    { v: 200, icon: "🌈", title: "两百日征程", desc: "连续写作200天", tier: "legendary" },
-    { v: 365, icon: "👑", title: "年度传奇", desc: "连续写作365天", tier: "legendary" },
+    { v: 3, icon: "star", title: "三天打鱼", desc: "连续写作3天", tier: "common" },
+    { v: 7, icon: "star", title: "一周坚持", desc: "连续写作7天", tier: "common" },
+    { v: 14, icon: "star", title: "两周不辍", desc: "连续写作14天", tier: "rare" },
+    { v: 30, icon: "star", title: "月度坚持", desc: "连续写作30天", tier: "rare" },
+    { v: 60, icon: "star", title: "双月毅力", desc: "连续写作60天", tier: "epic" },
+    { v: 100, icon: "star", title: "百日如一", desc: "连续写作100天", tier: "epic" },
+    { v: 200, icon: "star", title: "两百日征程", desc: "连续写作200天", tier: "legendary" },
+    { v: 365, icon: "star", title: "年度传奇", desc: "连续写作365天", tier: "legendary" },
   ]},
   { prefix: "ach", type: "activeDays", items: [
-    { v: 30, icon: "📅", title: "月度活跃", desc: "累计活跃30天", tier: "common" },
-    { v: 100, icon: "📆", title: "百日活跃", desc: "累计活跃100天", tier: "rare" },
-    { v: 365, icon: "🗓️", title: "年度活跃", desc: "累计活跃365天", tier: "epic" },
+    { v: 30, icon: "list", title: "月度活跃", desc: "累计活跃30天", tier: "common" },
+    { v: 100, icon: "list", title: "百日活跃", desc: "累计活跃100天", tier: "rare" },
+    { v: 365, icon: "list", title: "年度活跃", desc: "累计活跃365天", tier: "epic" },
   ]},
   { prefix: "ach", type: "tags", items: [
-    { v: 1, icon: "🏷️", title: "标签初体验", desc: "使用第一个标签", tier: "common" },
-    { v: 10, icon: "🏷️", title: "标签入门", desc: "使用10个标签", tier: "common" },
-    { v: 50, icon: "🔖", title: "标签达人", desc: "使用50个标签", tier: "rare" },
+    { v: 1, icon: "list", title: "标签初体验", desc: "使用第一个标签", tier: "common" },
+    { v: 10, icon: "list", title: "标签入门", desc: "使用10个标签", tier: "common" },
+    { v: 50, icon: "star", title: "标签达人", desc: "使用50个标签", tier: "rare" },
   ]},
   { prefix: "ach", type: "backlinks", items: [
-    { v: 1, icon: "🔗", title: "链接世界", desc: "建立第一条双链", tier: "common" },
-    { v: 100, icon: "🔗", title: "知识织网", desc: "建立100条双链", tier: "common" },
-    { v: 500, icon: "⛓️", title: "知识网络", desc: "建立500条双链", tier: "rare" },
-    { v: 1000, icon: "🌐", title: "知识图谱", desc: "建立1000条双链", tier: "epic" },
+    { v: 1, icon: "forward", title: "链接世界", desc: "建立第一条双链", tier: "common" },
+    { v: 100, icon: "forward", title: "知识织网", desc: "建立100条双链", tier: "common" },
+    { v: 500, icon: "forward", title: "知识网络", desc: "建立500条双链", tier: "rare" },
+    { v: 1000, icon: "forward", title: "知识图谱", desc: "建立1000条双链", tier: "epic" },
   ]},
   { prefix: "ach", type: "assets", items: [
-    { v: 1, icon: "📁", title: "资源收集者", desc: "添加第一个附件", tier: "common" },
-    { v: 30, icon: "📂", title: "资源小仓", desc: "积累30个附件", tier: "common" },
-    { v: 100, icon: "💼", title: "资源宝库", desc: "积累100个附件", tier: "rare" },
+    { v: 1, icon: "folder", title: "资源收集者", desc: "添加第一个附件", tier: "common" },
+    { v: 30, icon: "folder", title: "资源小仓", desc: "积累30个附件", tier: "common" },
+    { v: 100, icon: "folder", title: "资源宝库", desc: "积累100个附件", tier: "rare" },
   ]},
   { prefix: "ach", type: "images", items: [
-    { v: 50, icon: "🖼️", title: "图片收藏家", desc: "积累50张图片", tier: "common" },
-    { v: 200, icon: "📷", title: "影像达人", desc: "积累200张图片", tier: "rare" },
-    { v: 1000, icon: "🎨", title: "万图之王", desc: "积累1000张图片", tier: "epic" },
+    { v: 50, icon: "image", title: "图片收藏家", desc: "积累50张图片", tier: "common" },
+    { v: 200, icon: "image", title: "影像达人", desc: "积累200张图片", tier: "rare" },
+    { v: 1000, icon: "image", title: "万图之王", desc: "积累1000张图片", tier: "epic" },
   ]},
   { prefix: "ach", type: "code", items: [
-    { v: 1, icon: "💻", title: "代码新秀", desc: "创建第一个代码块", tier: "common" },
-    { v: 10, icon: "⌨️", title: "代码初试", desc: "创建10个代码块", tier: "common" },
-    { v: 50, icon: "💻", title: "编程爱好者", desc: "创建50个代码块", tier: "rare" },
-    { v: 200, icon: "🖥️", title: "代码工匠", desc: "创建200个代码块", tier: "epic" },
+    { v: 1, icon: "code", title: "代码新秀", desc: "创建第一个代码块", tier: "common" },
+    { v: 10, icon: "code", title: "代码初试", desc: "创建10个代码块", tier: "common" },
+    { v: 50, icon: "code", title: "编程爱好者", desc: "创建50个代码块", tier: "rare" },
+    { v: 200, icon: "code", title: "代码工匠", desc: "创建200个代码块", tier: "epic" },
   ]},
 ]
 
@@ -755,10 +757,10 @@ function buildThresholdAchievements(): AchievementDef[] {
 
 // ===== 特殊（meta）成就 =====
 const META_ACHIEVEMENTS: Omit<AchievementDef, "check">[] = [
-  { id: "ach-all-common", icon: "⭐", title: "全面初成", description: "解锁全部普通里程碑", tier: "epic" },
-  { id: "ach-half-all", icon: "🌟", title: "半程里程碑", description: "达成一半里程碑", tier: "epic" },
-  { id: "ach-all-rare", icon: "💎", title: "稀有全解锁", description: "解锁全部稀有里程碑", tier: "legendary" },
-  { id: "ach-level-10", icon: "🏆", title: "登峰造极", description: "达到 Lv.10", tier: "legendary" },
+  { id: "ach-all-common", icon: "star", title: "全面初成", description: "解锁全部普通里程碑", tier: "epic" },
+  { id: "ach-half-all", icon: "star", title: "半程里程碑", description: "达成一半里程碑", tier: "epic" },
+  { id: "ach-all-rare", icon: "star", title: "稀有全解锁", description: "解锁全部稀有里程碑", tier: "legendary" },
+  { id: "ach-level-10", icon: "star", title: "登峰造极", description: "达到 Lv.10", tier: "legendary" },
 ]
 
 /** 一次性 partition：避免 unlocked/locked 双重遍历 */
@@ -801,20 +803,20 @@ const activeAchCategory = ref('all')
 const activeAchTier = ref('all')
 
 const achCategories = [
-  { id: 'all', icon: '🏅', name: '全部' },
-  { id: 'writing', icon: '✍️', name: '写作达人', types: ['notes', 'words', 'notebooks'] },
-  { id: 'knowledge', icon: '🧠', name: '知识管理', types: ['tags', 'backlinks'] },
-  { id: 'rich', icon: '📦', name: '内容丰富', types: ['blocks', 'assets', 'images', 'code'] },
-  { id: 'persistence', icon: '🔥', name: '坚持不懈', types: ['streak', 'activeDays'] },
-  { id: 'meta', icon: '⭐', name: '特殊', types: ['meta', 'custom'] },
+  { id: 'all', icon: 'star', name: '全部' },
+  { id: 'writing', icon: 'edit', name: '写作达人', types: ['notes', 'words', 'notebooks'] },
+  { id: 'knowledge', icon: 'lightbulb', name: '知识管理', types: ['tags', 'backlinks'] },
+  { id: 'rich', icon: 'folder', name: '内容丰富', types: ['blocks', 'assets', 'images', 'code'] },
+  { id: 'persistence', icon: 'star', name: '坚持不懈', types: ['streak', 'activeDays'] },
+  { id: 'meta', icon: 'star', name: '特殊', types: ['meta', 'custom'] },
 ]
 
 const achTiers = [
-  { id: 'all', icon: '🎯', name: '全部' },
-  { id: 'common', icon: '⭐', name: tierLabels.common },
-  { id: 'rare', icon: '💎', name: tierLabels.rare },
-  { id: 'epic', icon: '🔮', name: tierLabels.epic },
-  { id: 'legendary', icon: '👑', name: tierLabels.legendary },
+  { id: 'all', icon: 'star', name: '全部' },
+  { id: 'common', icon: 'star', name: tierLabels.common },
+  { id: 'rare', icon: 'star', name: tierLabels.rare },
+  { id: 'epic', icon: 'star', name: tierLabels.epic },
+  { id: 'legendary', icon: 'star', name: tierLabels.legendary },
 ]
 
 function getAchType(ach: AchievementDef): string {

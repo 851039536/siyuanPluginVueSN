@@ -72,7 +72,7 @@
             class="rule-row"
           >
             <div class="rule-row-header">
-              <span class="rule-row-icon">{{ row.icon }}</span>
+              <IconWrapper class="rule-row-icon" :name="row.icon as IconKey" :size="14" />
               <span class="rule-row-label">{{ row.label }}</span>
               <button class="btn-reset-row" title="恢复此行默认值" @click="onResetRow(row.key)">↺</button>
             </div>
@@ -101,10 +101,10 @@
               :key="ach.id"
               class="ach-list-item"
             >
-              <span class="ach-list-icon">{{ ach.icon }}</span>
+              <IconWrapper class="ach-list-icon" :name="ach.icon as IconKey" :size="16" />
               <span class="ach-list-title">{{ ach.title }}</span>
               <span class="ach-list-tier" :class="`tier-${ach.tier}`">{{ TIER_LABELS[ach.tier] }}</span>
-              <span class="ach-list-type">{{ TYPE_LABEL_MAP[ach.type]?.icon }} {{ TYPE_LABEL_MAP[ach.type]?.label }}</span>
+              <span class="ach-list-type"><IconWrapper :name="(TYPE_LABEL_MAP[ach.type]?.icon as IconKey)" :size="12" /> {{ TYPE_LABEL_MAP[ach.type]?.label }}</span>
               <span class="ach-list-threshold">≥ {{ ach.threshold.toLocaleString() }}</span>
               <button class="btn-del-ach-item" title="删除此成就" @click="onDeleteAchievement(ach.id)">×</button>
             </div>
@@ -119,9 +119,9 @@
             <div class="ach-form-row">
               <label class="ach-form-label">统计类型</label>
               <select v-model="newAchievement.type" class="ach-form-select">
-                <option v-for="t in MILESTONE_TYPES" :key="t.key" :value="t.key">
-                  {{ t.icon }} {{ t.label }}
-                </option>
+              <option v-for="t in MILESTONE_TYPES" :key="t.key" :value="t.key">
+                <IconWrapper :name="t.icon" :size="12" /> {{ t.label }}
+              </option>
               </select>
               <span class="ach-form-hint">{{ STAT_TYPE_DESCRIPTIONS[newAchievement.type] }}</span>
             </div>
@@ -140,8 +140,7 @@
               <input
                 v-model="newAchievement.icon"
                 class="ach-form-input ach-form-icon"
-                placeholder="🏆"
-                maxlength="2"
+                placeholder="star"
               />
             </div>
             <div class="ach-form-row">
@@ -244,6 +243,8 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue"
+import type { IconKey } from "@/config/icons"
+import IconWrapper from "@/components/IconWrapper.vue"
 import type { CustomAchievement, LevelConfig, MilestoneTypeKey } from "../types/milestoneRules"
 import { DEFAULT_LEVEL_CONFIG, MILESTONE_TYPES, STAT_TYPE_DESCRIPTIONS } from "../types/milestoneRules"
 import { generateDefaultRules } from "../utils/milestones"
@@ -357,7 +358,7 @@ function onSave() {
 const showAddAchievement = ref(false)
 const newAchievement = ref<CustomAchievement>({
   id: "",
-  icon: "🏆",
+  icon: "star",
   title: "",
   description: "",
   tier: "common",
@@ -378,7 +379,7 @@ function onAddAchievement() {
   })
   newAchievement.value = {
     id: "",
-    icon: "🏆",
+    icon: "star",
     title: "",
     description: "",
     tier: "common",

@@ -81,7 +81,7 @@
       >
         <div class="report-card-header">
           <h3 class="report-title">
-            📊 {{ report.periodLabel }} 统计报告
+            {{ report.periodLabel }} 统计报告
           </h3>
           <button
             class="report-close-btn"
@@ -93,32 +93,32 @@
 
         <div class="report-stats-grid">
           <div class="report-stat">
-            <span class="stat-icon">✍️</span>
+            <span class="stat-icon"><IconWrapper name="edit" :size="16" /></span>
             <span class="stat-value">{{ formatNumber(report.totalWords) }}</span>
             <span class="stat-label">总字数</span>
           </div>
           <div class="report-stat">
-            <span class="stat-icon">📄</span>
+            <span class="stat-icon"><IconWrapper name="file" :size="16" /></span>
             <span class="stat-value">{{ formatNumber(report.totalNotesCreated) }}</span>
             <span class="stat-label">新增笔记</span>
           </div>
           <div class="report-stat">
-            <span class="stat-icon">📅</span>
+            <span class="stat-icon"><IconWrapper name="list" :size="16" /></span>
             <span class="stat-value">{{ report.avgDailyWords.toLocaleString() }}</span>
             <span class="stat-label">日均字数</span>
           </div>
           <div class="report-stat">
-            <span class="stat-icon">🔥</span>
+            <span class="stat-icon"><IconWrapper name="star" :size="16" /></span>
             <span class="stat-value">{{ report.activeDays }}</span>
             <span class="stat-label">活跃天数</span>
           </div>
           <div class="report-stat">
-            <span class="stat-icon">💪</span>
+            <span class="stat-icon"><IconWrapper name="star" :size="16" /></span>
             <span class="stat-value">{{ report.longestStreak }}</span>
             <span class="stat-label">最长连续</span>
           </div>
           <div class="report-stat">
-            <span class="stat-icon">🏆</span>
+            <span class="stat-icon"><IconWrapper name="star" :size="16" /></span>
             <span class="stat-value">{{ formatNumber(report.maxWordsDay.words) }}</span>
             <span class="stat-label">最高单日</span>
             <template v-if="report.maxWordsDay.words">
@@ -133,7 +133,7 @@
           v-if="report.mostProductiveNotebook.name"
           class="report-highlight"
         >
-          📓 最高产笔记本：<strong>{{ report.mostProductiveNotebook.name }}</strong>
+          <IconWrapper name="file" :size="14" /> 最高产笔记本：<strong>{{ report.mostProductiveNotebook.name }}</strong>
           （{{ formatNumber(report.mostProductiveNotebook.words) }} 字）
         </div>
 
@@ -141,7 +141,7 @@
           v-if="report.maxWordsDay.date"
           class="report-highlight"
         >
-          🚀 最高产日：<strong>{{ report.maxWordsDay.date }}</strong>
+          最高产日：<strong>{{ report.maxWordsDay.date }}</strong>
           （{{ formatNumber(report.maxWordsDay.words) }} 字）
         </div>
 
@@ -184,6 +184,7 @@ import {
   computed,
   ref,
 } from "vue"
+import IconWrapper from "@/components/IconWrapper.vue"
 import { formatNumber } from "../utils"
 import ComparisonView from "./ComparisonView.vue"
 

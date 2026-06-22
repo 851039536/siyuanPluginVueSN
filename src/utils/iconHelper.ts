@@ -3,6 +3,28 @@
  * 用于在非 Vue 环境中使用 Iconify 图标
  */
 
+import mdiIcons from "@iconify-json/mdi/icons.json"
+
+/**
+ * 同步获取 Iconify 图标的 SVG HTML 字符串（用于思源 menu.addItem 等需要 iconHTML 的 API）
+ * 依赖 setupIconifyOffline() 已预加载 mdi 图标数据
+ */
+export function getIconHTML(
+  iconName: string,
+  size: number = 14,
+  color?: string,
+): string {
+  const [, name] = iconName.split(":")
+  const iconData = (mdiIcons as any).icons?.[name]
+  if (!iconData) return ""
+
+  const width = iconData.width || 24
+  const height = iconData.height || 24
+  const style = `display:inline-block;vertical-align:middle${color ? `;color:${color}` : ""}`
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${size}" height="${size}" style="${style}"><path fill="currentColor" d="${iconData.body}"/></svg>`
+}
+
 /**
  * 替换思源笔记顶部栏的图标为 Iconify 图标
  *

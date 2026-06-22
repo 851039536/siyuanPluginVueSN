@@ -9,7 +9,7 @@
       @click.stop
     >
       <div class="dialog-header">
-        <h3>📥 视频下载</h3>
+        <h3><IconWrapper name="download" :size="16" /> 视频下载</h3>
         <Button
           icon="x"
           variant="ghost"
@@ -52,7 +52,17 @@
             class="form-hint"
           >
             <span :style="{ color: ytdlpTestResult === 'success' ? '#788c5d' : '#d97757' }">
-              {{ ytdlpTestResult === 'success' ? '✅ 路径有效' : '❌ 路径无效' }}
+              <IconWrapper
+                v-if="ytdlpTestResult === 'success'"
+                name="success"
+                :size="14"
+              />
+              <IconWrapper
+                v-else
+                name="error"
+                :size="14"
+              />
+              {{ ytdlpTestResult === 'success' ? '路径有效' : '路径无效' }}
             </span>
           </div>
         </div>
@@ -144,7 +154,17 @@
                 class="info-value"
                 :style="{ color: downloadResult.success ? '#788c5d' : '#d97757' }"
               >
-                {{ downloadResult.success ? '✅ 下载成功' : '❌ 下载失败' }}
+                <IconWrapper
+                  v-if="downloadResult.success"
+                  name="success"
+                  :size="14"
+                />
+                <IconWrapper
+                  v-else
+                  name="error"
+                  :size="14"
+                />
+                {{ downloadResult.success ? '下载成功' : '下载失败' }}
               </span>
             </div>
             <div
@@ -193,6 +213,7 @@ import {
   watch,
 } from "vue"
 import Button from "@/components/Button.vue"
+import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
 import {

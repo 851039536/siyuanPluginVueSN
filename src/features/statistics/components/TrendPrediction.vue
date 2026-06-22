@@ -18,12 +18,12 @@
         </div>
         <div class="pred-projections">
           <div class="projection-item">
-            <span class="proj-icon">📅</span>
+            <IconWrapper name="file" :size="14" class="proj-icon" />
             <span class="proj-label">下周预计</span>
             <span class="proj-value">{{ formatNumber(prediction.weeklyProjection) }} 字</span>
           </div>
           <div class="projection-item">
-            <span class="proj-icon">📆</span>
+            <IconWrapper name="file" :size="14" class="proj-icon" />
             <span class="proj-label">下月预计</span>
             <span class="proj-value">{{ formatNumber(prediction.monthlyProjection) }} 字</span>
           </div>
@@ -179,6 +179,7 @@ import {
   ref,
 } from "vue"
 import { formatNumber } from "../utils"
+import IconWrapper from "@/components/IconWrapper.vue"
 
 interface Props {
   onGetTrendPrediction?: () => Promise<TrendPrediction>

@@ -187,7 +187,7 @@ export class TableOfContentsManager {
   /** 1. 插入索引（当前文档的子文档列表） CTRL+ALT+I */
   private async insertIndex() {
     await this.resolveAndInsert(async (docId, blockId, subDocs) => {
-      let content = "## 📑 子文档索引\n\n"
+      let content = "## 子文档索引\n\n"
       for (let i = 0; i < subDocs.length; i++) {
         const num = String(i + 1).padStart(2, "0")
         content += `${num}. [${subDocs[i].name}](siyuan://blocks/${subDocs[i].id})\n`
@@ -199,7 +199,7 @@ export class TableOfContentsManager {
   /** 2. 插入子文档引用列表 CTRL+ALT+R */
   private async insertSubDocsRef() {
     await this.resolveAndInsert(async (docId, blockId, subDocs) => {
-      let content = "## 🔗 子文档引用\n\n"
+      let content = "## 子文档引用\n\n"
       for (let i = 0; i < subDocs.length; i++) {
         const num = String(i + 1).padStart(2, "0")
         content += `${num}. ((${subDocs[i].id} "${subDocs[i].name}"))\n`
@@ -227,9 +227,9 @@ export class TableOfContentsManager {
         headingMap.get(h.root_id)!.push(h)
       }
 
-      let content = "## 📑 子文档大纲\n\n"
+      let content = "## 子文档大纲\n\n"
       for (const subDoc of subDocs) {
-        content += `### 📄 ((${subDoc.id} "${subDoc.name}"))\n\n`
+        content += `### ((${subDoc.id} "${subDoc.name}"))\n\n`
 
         const headings = headingMap.get(subDoc.id)
         if (headings?.length) {

@@ -14,9 +14,6 @@
         </button>
       </div>
       <div class="skill-learning-panel__actions">
-        <button class="skill-learning-panel__btn" @click="showImport = true" :title="t.importCards">
-          📥
-        </button>
         <button class="skill-learning-panel__btn" @click="openAddDialog" :title="t.addCard">
           +
         </button>
@@ -67,14 +64,6 @@
       @update="handleUpdate"
       @close="closeDialog"
     />
-
-    <!-- 批量导入弹窗 -->
-    <ImportDialog
-      v-if="showImport"
-      :i18n="fullI18n"
-      @import="handleImport"
-      @close="showImport = false"
-    />
   </div>
 </template>
 
@@ -90,7 +79,6 @@ import SkillListView from "./components/SkillListView.vue"
 import FlashcardView from "./components/FlashcardView.vue"
 import ReviewMode from "./components/ReviewMode.vue"
 import SkillDialog from "./components/SkillDialog.vue"
-import ImportDialog from "./components/ImportDialog.vue"
 
 const props = defineProps<{
   i18n: SkillI18n | undefined
@@ -105,7 +93,6 @@ const { cards, loadCards, createCard, updateCard, deleteCard, incrementPracticeC
 const viewMode = ref<ViewMode>("list")
 const reviewQueue = useReviewQueue(cards)
 const showDialog = ref(false)
-const showImport = ref(false)
 const editingCard = ref<SkillCard | null>(null)
 
 const practicedCount = computed(() => cards.value.filter((c) => c.practiceCount > 0).length)

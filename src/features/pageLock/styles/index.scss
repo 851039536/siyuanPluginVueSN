@@ -1,3 +1,5 @@
+@use "@/variables" as *;
+
 .page-lock-dialog-mask {
   position: fixed;
   top: 0;
@@ -5,7 +7,6 @@
   right: 0;
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -16,8 +17,7 @@
 .page-lock-dialog {
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
-  border-radius: 8px;
-  box-shadow: var(--b3-shadow);
+  border-radius: $radius-md;
   width: 420px;
   max-width: 90vw;
   overflow: hidden;
@@ -26,8 +26,8 @@
 .page-lock-dialog__header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px 20px;
+  gap: $spacing-3;
+  padding: $spacing-4 $spacing-5;
   background: var(--b3-theme-surface);
   border-bottom: 1px solid var(--b3-border-color);
 
@@ -35,10 +35,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: $spacing-8;
+    height: $spacing-8;
     background: var(--b3-theme-primary);
-    border-radius: 6px;
+    border-radius: $radius-base;
     flex-shrink: 0;
 
     .icon {
@@ -50,8 +50,8 @@
 
   h3 {
     margin: 0;
-    font-size: 16px;
-    font-weight: 500;
+    font-size: $font-size-base;
+    font-weight: $font-weight-medium;
     color: var(--b3-theme-on-background);
     flex: 1;
   }
@@ -60,23 +60,23 @@
 .page-lock-dialog__close {
   .si-button {
     padding: 0;
-    width: 32px;
-    height: 32px;
+    width: $spacing-8;
+    height: $spacing-8;
   }
 }
 
 .page-lock-dialog__content {
-  padding: 20px;
+  padding: $spacing-5;
 }
 
 .page-lock-dialog__hint {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  padding: 12px 14px;
-  margin-bottom: 16px;
+  gap: $spacing-2;
+  padding: $spacing-3;
+  margin-bottom: $spacing-4;
   background: var(--b3-theme-surface-lighter);
-  border-radius: 6px;
+  border-radius: $radius-base;
   border-left: 3px solid var(--b3-theme-primary);
   font-size: 13px;
   color: var(--b3-theme-on-surface);
@@ -94,7 +94,7 @@
 .page-lock-dialog__form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: $spacing-4;
 }
 
 .page-lock-dialog__field {
@@ -106,8 +106,8 @@
 .page-lock-dialog__footer {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  padding: 16px 20px;
+  gap: $spacing-2;
+  padding: $spacing-4 $spacing-5;
   background: var(--b3-theme-surface);
   border-top: 1px solid var(--b3-border-color);
 }
@@ -115,11 +115,11 @@
 @media (max-width: 480px) {
   .page-lock-dialog {
     width: 95vw;
-    border-radius: 6px;
+    border-radius: $radius-sm;
   }
 
   .page-lock-dialog__header {
-    padding: 12px 16px;
+    padding: $spacing-3 $spacing-4;
 
     .header-icon {
       width: 28px;
@@ -137,11 +137,11 @@
   }
 
   .page-lock-dialog__content {
-    padding: 16px;
+    padding: $spacing-4;
   }
 
   .page-lock-dialog__hint {
-    padding: 10px;
+    padding: $spacing-2;
     font-size: 12px;
   }
 
@@ -150,7 +150,7 @@
   }
 
   .page-lock-dialog__footer {
-    padding: 12px 16px;
+    padding: $spacing-3 $spacing-4;
   }
 }
 
@@ -180,12 +180,11 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 24px;
-  padding: 32px;
+  gap: $spacing-6;
+  padding: $spacing-8;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 8px;
-  box-shadow: var(--b3-shadow);
+  border-radius: $radius-md;
   z-index: 10;
 }
 
@@ -197,8 +196,8 @@
 }
 
 .page-lock-mask__icon {
-  width: 48px;
-  height: 48px;
+  width: $spacing-12;
+  height: $spacing-12;
   color: var(--b3-theme-primary);
 }
 
@@ -210,20 +209,20 @@
 
 .page-lock-mask__title {
   margin: 0;
-  font-size: 18px;
-  font-weight: 500;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-medium;
   color: var(--b3-theme-on-background);
 }
 
 .page-lock-mask__text {
   margin: 0;
-  font-size: 14px;
+  font-size: $font-size-sm;
   color: var(--b3-theme-on-surface);
   opacity: 0.8;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: $spacing-2;
 }
 
 .hint-text {
@@ -232,17 +231,17 @@
   opacity: 0.7;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: $spacing-2;
 }
 
 .enter-key {
   display: inline-block;
-  padding: 2px 6px;
+  padding: $spacing-1 $spacing-2;
   background: var(--b3-theme-surface-lighter);
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
   color: var(--b3-theme-primary);
 }
 
@@ -254,18 +253,18 @@
 
 .page-lock-mask__input {
   width: 100%;
-  padding: 10px 12px;
+  padding: $spacing-2 $spacing-3;
   border: 1px solid var(--b3-border-color);
-  border-radius: 6px;
+  border-radius: $radius-base;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-surface);
-  font-size: 14px;
+  font-size: $font-size-sm;
   outline: none;
   box-sizing: border-box;
 
   &:focus {
     border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 3px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1);
+    border-width: 2px;
   }
 
   &::placeholder {
@@ -282,14 +281,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 10px 24px;
+  gap: $spacing-2;
+  padding: $spacing-2 $spacing-6;
   background: var(--b3-theme-primary);
   color: var(--b3-theme-on-primary);
   border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
+  border-radius: $radius-base;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
   cursor: pointer;
 
   &:hover {
@@ -305,13 +304,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: $spacing-8;
+  height: $spacing-8;
   padding: 0;
   margin: 0 2px;
   border: none;
   background: transparent;
-  border-radius: 4px;
+  border-radius: $radius-sm;
   cursor: pointer;
   color: var(--b3-theme-on-background);
   opacity: 0.68;
@@ -344,18 +343,18 @@
 
 @media (max-width: 480px) {
   .page-lock-mask__content {
-    gap: 20px;
-    padding: 24px 20px;
-    margin: 20px;
+    gap: $spacing-5;
+    padding: $spacing-6 $spacing-5;
+    margin: $spacing-5;
   }
 
   .page-lock-mask__icon {
-    width: 40px;
-    height: 40px;
+    width: $spacing-10;
+    height: $spacing-10;
   }
 
   .page-lock-mask__title {
-    font-size: 16px;
+    font-size: $font-size-base;
   }
 
   .page-lock-mask__text,
@@ -379,7 +378,7 @@
   }
 
   .page-lock-mask__btn {
-    padding: 9px 20px;
+    padding: 9px $spacing-5;
     font-size: 13px;
   }
 }

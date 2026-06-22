@@ -167,6 +167,11 @@ export default class PluginSample extends Plugin {
     // 清除缓存的加密密钥（内存安全）
     clearCachedKey()
 
+    // 清理页面锁定资源（interval + 事件监听器）
+    if ((this as any).__pageLock) {
+      (this as any).__pageLock.destroy()
+    }
+
     // 清理单词阅读资源
     if ((this as any).__flashcardReading) {
       (this as any).__flashcardReading.destroy()
@@ -244,7 +249,7 @@ export default class PluginSample extends Plugin {
     registerSuperPanel(this)
     registerDataBackup(this)
 
-    if (s.enablePageLock) registerPageLock(this)
+    if (s.enablePageLock) (this as any).__pageLock = registerPageLock(this)
     if (s.enableTableOfContents) registerTableOfContents(this)
     if (s.enableImageCompressor) registerImageCompressor(this)
     if (s.enableDocNavigation) registerDocNavigation(this)

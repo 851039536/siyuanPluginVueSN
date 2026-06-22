@@ -1,8 +1,8 @@
 {
   "addTopBarIcon": "PluginSampleViteVue",
-  "oldPasswordPlaceholder": "Please enter old password",
-  "newPasswordPlaceholder": "Please enter new password",
-  "confirmPasswordPlaceholder": "Please confirm password",
+  "oldPasswordPlaceholder": "Old password",
+  "newPasswordPlaceholder": "New password",
+  "confirmPasswordPlaceholder": "Confirm password",
   "oldPasswordError": "Old password is incorrect",
   "confirm": "Confirm",
   "cancel": "Cancel",

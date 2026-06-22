@@ -1,5 +1,3 @@
-export const SUPER_PASSWORD = "kaiouyang"
-
 export function getProtyleByDocId(docId: string): any {
   const protyleElement = document
     .querySelector(`[data-node-id="${docId}"]`)

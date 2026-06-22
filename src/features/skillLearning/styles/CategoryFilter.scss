@@ -1,0 +1,27 @@
+@use "@/variables.scss" as *;
+
+.category-filter {
+  padding: $spacing-2 0;
+
+  &__row {
+    display: flex;
+    gap: 6px;
+  }
+
+  &__select {
+    flex: 1;
+    padding: 6px $spacing-2;
+    border: 1px solid var(--b3-border-color);
+    border-radius: $vp-radius;
+    background: var(--b3-theme-background, #fff);
+    color: var(--b3-theme-on-background, #333);
+    font-size: $font-size-xs;
+    outline: none;
+    cursor: pointer;
+    appearance: auto;
+
+    &:focus {
+      border-color: var(--b3-theme-primary);
+    }
+  }
+}

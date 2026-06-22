@@ -68,29 +68,5 @@ function langLabel(lang: string): string {
 </script>
 
 <style lang="scss" scoped>
-.category-filter {
-  padding: 8px 0;
-
-  &__row {
-    display: flex;
-    gap: 6px;
-  }
-
-  &__select {
-    flex: 1;
-    padding: 6px 8px;
-    border: 1px solid var(--b3-theme-surface-lighter, #e2e8f0);
-    border-radius: 6px;
-    background: var(--b3-theme-background, #fff);
-    color: var(--b3-theme-on-background, #333);
-    font-size: 12px;
-    outline: none;
-    cursor: pointer;
-    appearance: auto;
-
-    &:focus {
-      border-color: var(--b3-theme-primary, #6366f1);
-    }
-  }
-}
+@use "../styles/CategoryFilter.scss";
 </style>

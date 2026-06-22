@@ -47,6 +47,7 @@
     <SkillDialog
       v-if="showDialog"
       :i18n="fullI18n"
+      :plugin="plugin"
       :editCard="editingCard"
       @save="handleCreate"
       @update="handleUpdate"

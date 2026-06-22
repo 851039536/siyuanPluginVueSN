@@ -129,7 +129,7 @@
             :size="20"
           />
           <span>{{ t.correct }}</span>
-          <span v-if="streak >= 2" class="typing-streak">🔥 x{{ streak }}</span>
+          <IconWrapper v-if="streak >= 2" name="warning" :size="14" class="typing-streak" /> x{{ streak }}
         </template>
         <template v-else-if="resultState === 'incorrect'">
           <span>{{ coverMode ? currentCard?.title : typedWord }}</span>
@@ -179,7 +179,7 @@
       <span>{{ sessionCorrect }} / {{ sessionTotal }}</span>
       <span class="typing-session-stats__sep">·</span>
       <span>{{ sessionTotal > 0 ? Math.round(sessionCorrect / sessionTotal * 100) : 0 }}%</span>
-      <span v-if="streak >= 2" class="typing-streak typing-streak--inline">🔥 x{{ streak }}</span>
+      <IconWrapper v-if="streak >= 2" name="warning" :size="12" class="typing-streak typing-streak--inline" /> x{{ streak }}
       <template v-if="timerEnabled">
         <span class="typing-session-stats__sep">·</span>
         <span class="typing-timer">⏱ {{ formatTime(elapsedSeconds) }}</span>

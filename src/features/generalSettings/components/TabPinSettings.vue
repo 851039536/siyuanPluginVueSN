@@ -4,7 +4,7 @@
       <!-- 启用钉住页签优化 -->
       <div class="setting-row">
         <label class="setting-label">
-          <span class="label-icon">📌</span>
+          <IconWrapper name="starOutline" :size="13" class="label-icon" />
           {{ i18n.enableTabPinOptimization || '钉住页签优化' }}
         </label>
         <div class="toggle-container">
@@ -21,7 +21,7 @@
         <!-- 显示模式选项 -->
         <div class="setting-row">
           <label class="setting-label">
-            <span class="label-icon">👁️</span>
+            <IconWrapper name="eye" :size="13" class="label-icon" />
             {{ i18n.tabPinDisplayMode || '显示模式' }}
           </label>
           <div class="display-mode-options">
@@ -47,7 +47,7 @@
         <!-- 页签背景颜色 -->
         <div class="setting-row">
           <label class="setting-label">
-            <span class="label-icon">🖼️</span>
+            <IconWrapper name="image" :size="13" class="label-icon" />
             {{ i18n.tabPinBackground || '页签背景颜色' }}
           </label>
           <div class="color-input-group">
@@ -75,7 +75,7 @@
         <!-- 说明提示 -->
         <div class="setting-row">
           <div class="level-display-hint">
-            <span class="hint-icon">ℹ️</span>
+              <IconWrapper name="info" :size="14" class="hint-icon" />
             <span class="hint-text">{{ i18n.tabPinHint || '钉住的页签将同时显示图标和标题，方便快速识别' }}</span>
           </div>
         </div>
@@ -91,6 +91,7 @@ import {
   watch,
 } from "vue"
 import { GeneralSettingsStorage } from "@/features/generalSettings/types/storage"
+import IconWrapper from "@/components/IconWrapper.vue"
 import { generateTabPinCSS } from "@/features/generalSettings/utils/styles"
 
 interface Props {

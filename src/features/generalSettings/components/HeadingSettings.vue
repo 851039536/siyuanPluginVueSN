@@ -5,7 +5,7 @@
       <div class="setting-row">
         <div class="setting-item">
           <label class="setting-label">
-            <span class="label-icon">🎨</span>
+            <IconWrapper name="format" :size="13" class="label-icon" />
             {{ i18n.headingStyle || '标题风格' }}
           </label>
           <select
@@ -51,7 +51,7 @@
       <div class="setting-row">
         <div class="setting-item">
           <label class="setting-label">
-            <span class="label-icon">🔢</span>
+            <IconWrapper name="listOrdered" :size="13" class="label-icon" />
             {{ i18n.headingLevelDisplay || '标题层级显示' }}
           </label>
           <select
@@ -78,13 +78,13 @@
               {{ i18n.levelDisplayDots || '圆点标记 (•)' }}
             </option>
             <option value="emoji">
-              {{ i18n.levelDisplayEmoji || '表情符号 (😀-😎)' }}
+              {{ i18n.levelDisplayEmoji || '表情符号' }}
             </option>
             <option value="star">
-              {{ i18n.levelDisplayStar || '星级标记 (⭐)' }}
+              {{ i18n.levelDisplayStar || '星级标记' }}
             </option>
             <option value="arrow">
-              {{ i18n.levelDisplayArrow || '箭头标记 (→)' }}
+              {{ i18n.levelDisplayArrow || '箭头标记' }}
             </option>
             <option value="tag">
               {{ i18n.levelDisplayTag || '标签样式 (H1-H6)' }}
@@ -100,7 +100,7 @@
             v-if="levelDisplayStyle !== 'none'"
             class="level-display-hint"
           >
-            <span class="hint-icon">ℹ️</span>
+              <IconWrapper name="info" :size="14" class="hint-icon" />
             <span class="hint-text">{{ i18n.levelDisplayHint || '注意:第三方主题可能会影响显示效果' }}</span>
           </div>
         </div>
@@ -110,7 +110,7 @@
       <div class="setting-row">
         <div class="setting-item">
           <label class="setting-label">
-            <span class="label-icon">↔️</span>
+            <IconWrapper name="chevronRight" :size="13" class="label-icon" />
             {{ i18n.titleCenterAlign || '标题居中显示' }}
           </label>
           <div class="toggle-container">
@@ -132,7 +132,7 @@
       >
         <div class="setting-item">
           <label class="setting-label">
-            <span class="label-icon">🎨</span>
+            <IconWrapper name="format" :size="13" class="label-icon" />
             {{ i18n.titleColor || '文档标题颜色' }}
           </label>
           <div class="title-color-input-group">
@@ -163,7 +163,7 @@
       <div class="setting-row">
         <div class="setting-item">
           <label class="setting-label">
-            <span class="label-icon">📏</span>
+            <IconWrapper name="formatSize" :size="13" class="label-icon" />
             {{ i18n.titleFontSize || '文档标题字体大小' }}
           </label>
           <div class="input-group">
@@ -192,7 +192,7 @@
       >
         <div class="setting-item">
           <label class="setting-label">
-            <span class="label-icon">✏️</span>
+            <IconWrapper name="edit" :size="13" class="label-icon" />
             {{ i18n.customLevelMarkers || '自定义标记' }}
           </label>
           <div class="custom-level-inputs">
@@ -219,7 +219,7 @@
       <div class="setting-row">
         <div class="setting-item">
           <label class="setting-label">
-            <span class="label-icon">📏</span>
+            <IconWrapper name="formatSize" :size="13" class="label-icon" />
             {{ i18n.headingFontSize || '标题字体大小' }}
           </label>
 
@@ -358,7 +358,7 @@
       <div class="setting-row">
         <div class="setting-item">
           <label class="setting-label">
-            <span class="label-icon">🎨</span>
+            <IconWrapper name="format" :size="13" class="label-icon" />
             {{ i18n.headingColors || '标题颜色' }}
           </label>
           <div class="heading-colors">
@@ -399,6 +399,7 @@ import {
   ref,
   watch,
 } from "vue"
+import IconWrapper from "@/components/IconWrapper.vue"
 import { GeneralSettingsStorage } from "@/features/generalSettings/types/storage"
 
 interface HeadingColors {

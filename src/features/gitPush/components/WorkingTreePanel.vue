@@ -66,7 +66,15 @@
 
           <!-- 状态图标 -->
           <span class="wt-file-status" :class="`wt-s-${file.status}`" :title="statusTitle(file)">
-            {{ statusIcon(file) }}
+            <template v-if="file.status === 'renamed'">
+              <IconWrapper name="forward" :size="12" />
+            </template>
+            <template v-else-if="file.status === 'unmerged'">
+              <IconWrapper name="warning" :size="12" />
+            </template>
+            <template v-else>
+              {{ statusIcon(file) }}
+            </template>
           </span>
 
           <!-- 文件名（点击查看差异） -->
@@ -200,6 +208,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue"
 import { Icon } from "@iconify/vue"
+import IconWrapper from "@/components/IconWrapper.vue"
 import type { FileChange, WorkingTreeInfo, CommitLogEntry, CommitTemplate } from "../types"
 import { COMMIT_TYPE_VALUES } from "../types/storage"
 import BranchCommitList from "./BranchCommitList.vue"
@@ -279,10 +288,10 @@ const STATUS_MAP: Record<string, { icon: string; title: string }> = {
   modified:  { icon: "~", title: "已修改" },
   added:     { icon: "+", title: "新增" },
   deleted:   { icon: "−", title: "已删除" },
-  renamed:   { icon: "→", title: "重命名" },
+  renamed:   { icon: "forward", title: "重命名" },
   untracked: { icon: "?", title: "未跟踪" },
   copied:    { icon: "⇋", title: "已复制" },
-  unmerged:  { icon: "⚠", title: "冲突" },
+  unmerged:  { icon: "warning", title: "冲突" },
 }
 
 function statusIcon(file: FileChange): string {
@@ -291,7 +300,7 @@ function statusIcon(file: FileChange): string {
 
 function statusTitle(file: FileChange): string {
   const title = STATUS_MAP[file.status]?.title || file.status
-  return file.oldPath ? `${title}: ${file.oldPath} → ${file.path}` : title
+  return file.oldPath ? `${title}: ${file.oldPath} -> ${file.path}` : title
 }
 
 function toggleStage(file: FileChange) {

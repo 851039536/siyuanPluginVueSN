@@ -73,7 +73,7 @@
                 class="source-badge"
                 :class="{ local: isInFlashcard }"
               >
-                {{ isInFlashcard ? '📚 来自单词本' : '🤖 AI生成' }}
+                {{ isInFlashcard ? '来自单词本' : 'AI生成' }}
               </span>
             </div>
             <div class="result-actions">
@@ -406,7 +406,7 @@ async function generatePronunciation() {
         generatedResult.value = localResult.content
         resultSource.value = "local"
         matchedCard.value = localResult
-        showMessage("📚 从单词本加载", 2000, "info")
+        showMessage("从单词本加载", 2000, "info")
         isGenerating.value = false
         return
       }
@@ -425,14 +425,14 @@ async function generatePronunciation() {
     if (result) {
       generatedResult.value = result
       resultSource.value = "api"
-      showMessage("✓ 谐音记忆已生成", 2000, "info")
+      showMessage("谐音记忆已生成", 2000, "info")
     } else {
       showMessage("生成失败，请重试", 3000, "error")
     }
   } catch (error) {
     console.error("Pronunciation generation error:", error)
     const errorMsg = (error as Error).message || "未知错误"
-    showMessage(`🚫 生成失败: ${errorMsg}`, 5000, "error")
+    showMessage(`生成失败: ${errorMsg}`, 5000, "error")
   } finally {
     isGenerating.value = false
   }
@@ -528,7 +528,7 @@ async function addToFlashcard() {
 
     resultSource.value = "local"
     showAddToCardDialog.value = false
-    showMessage("✓ 已添加到单词本", 2000, "info")
+    showMessage("已添加到单词本", 2000, "info")
 
     emitCustomEvent("flashcardDataChanged")
   } catch (error: any) {
@@ -554,7 +554,7 @@ async function copyResult() {
 
   try {
     await navigator.clipboard.writeText(generatedResult.value)
-    showMessage("📋 已复制到剪贴板", 2000, "info")
+    showMessage("已复制到剪贴板", 2000, "info")
   } catch (error) {
     console.error("复制失败:", error)
     showMessage("复制失败", 3000, "error")

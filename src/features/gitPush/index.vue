@@ -1242,7 +1242,7 @@ async function handleCopyUrl(url: string) {
     const el = document.activeElement as HTMLElement | null
     if (el) {
       const orig = el.title
-      el.title = "已复制链接 ✓"
+      el.title = "已复制链接"
       setTimeout(() => { el.title = orig }, 1500)
     }
   }
@@ -1549,10 +1549,10 @@ async function handleGenerateMsg(id: string) {
     const result = await generateCommitMsg(id)
     generatingMsgs.value = { ...generatingMsgs.value, [id]: { generating: false, text: result.message } }
     if (result.source === "heuristic") {
-      commitOutputs.value[id] = "⚠️ AI 未返回有效信息，已使用启发式生成。"
+      commitOutputs.value[id] = "AI 未返回有效信息，已使用启发式生成。"
     }
   } catch (e: any) {
-    commitOutputs.value[id] = `❌ 生成失败: ${e?.message || e}`
+    commitOutputs.value[id] = `生成失败: ${e?.message || e}`
     generatingMsgs.value = { ...generatingMsgs.value, [id]: { generating: false, text: "" } }
   }
 }
@@ -1640,7 +1640,7 @@ function statusLabel(projectId: string, remoteKey: string): string {
   if (rs.noUpstream) return `+${rs.ahead}`
   if (rs.ahead > 0) return `↑${rs.ahead}`
   if (rs.behind > 0) return `↓${rs.behind}`
-  return "✓"
+  return ""
 }
 
 /** 获取状态 badge 的 CSS 类 */

@@ -49,7 +49,7 @@
           {{ i18n.checkingGit || '正在检查 git 仓库...' }}
         </div>
         <div v-if="result !== null && !checking" class="gp-check-result" :class="{ success: result }">
-          {{ result ? (i18n.gitRepoDetected || '✅ 已检测到 git 仓库') : (i18n.notGitRepo || '❌ 未检测到 git 仓库，将仅记录路径') }}
+          {{ result ? (i18n.gitRepoDetected || '已检测到 git 仓库') : (i18n.notGitRepo || '未检测到 git 仓库，将仅记录路径') }}
         </div>
       </div>
       <div class="gp-dialog-footer">

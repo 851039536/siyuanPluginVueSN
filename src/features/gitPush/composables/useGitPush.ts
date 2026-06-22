@@ -363,7 +363,7 @@ export function useGitPush(manager: GitPushManager) {
   ) {
     const lines: string[] = []
     for (const e of entries) {
-      lines.push(`[${e.label}] ${e.ok ? `✅ ${opName}成功` : `❌ ${opName}失败`}`)
+      lines.push(`[${e.label}] ${e.ok ? `${opName}成功` : `${opName}失败`}`)
       if (e.stdout) lines.push(e.stdout)
       if (e.stderr) lines.push(`错误: ${e.stderr}`)
     }

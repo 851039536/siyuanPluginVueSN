@@ -22,31 +22,33 @@
 
     <!-- 视图内容 -->
     <div class="skill-learning-panel__content">
-      <SkillListView
-        v-if="viewMode === 'list'"
-        :cards="cards"
-        :i18n="fullI18n"
-        @select="handleSelectCard"
-      />
-      <FlashcardView
-        v-else-if="viewMode === 'flashcard'"
-        :cards="cards"
-        :i18n="fullI18n"
-      />
-      <ReviewMode
-        v-else-if="viewMode === 'review'"
-        :cards="cards"
-        :currentCard="reviewQueue.currentCard.value"
-        :currentIndex="reviewQueue.currentIndex.value"
-        :isFlipped="reviewQueue.isFlipped.value"
-        :roundComplete="reviewQueue.roundComplete.value"
-        :totalCount="reviewQueue.totalCount.value"
-        :reviewed="reviewQueue.reviewed.value"
-        :i18n="fullI18n"
-        @flip="reviewQueue.flip()"
-        @rate="handleRate"
-        @restart="reviewQueue.restart()"
-      />
+      <KeepAlive>
+        <SkillListView
+          v-if="viewMode === 'list'"
+          :cards="cards"
+          :i18n="fullI18n"
+          @select="handleSelectCard"
+        />
+        <FlashcardView
+          v-else-if="viewMode === 'flashcard'"
+          :cards="cards"
+          :i18n="fullI18n"
+        />
+        <ReviewMode
+          v-else-if="viewMode === 'review'"
+          :cards="cards"
+          :currentCard="reviewQueue.currentCard.value"
+          :currentIndex="reviewQueue.currentIndex.value"
+          :isFlipped="reviewQueue.isFlipped.value"
+          :roundComplete="reviewQueue.roundComplete.value"
+          :totalCount="reviewQueue.totalCount.value"
+          :reviewed="reviewQueue.reviewed.value"
+          :i18n="fullI18n"
+          @flip="reviewQueue.flip()"
+          @rate="handleRate"
+          @restart="reviewQueue.restart()"
+        />
+      </KeepAlive>
     </div>
 
     <!-- 底部统计 -->

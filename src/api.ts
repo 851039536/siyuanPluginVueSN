@@ -532,10 +532,10 @@ export async function getBlockMarkdown(
       return content
     }
 
-    console.warn("⚠️ getBlockKramdown 返回空内容")
+    console.warn("getBlockKramdown 返回空内容")
     return null
   } catch (error) {
-    console.error("❌ 获取块 Markdown 内容失败:", error)
+    console.error("获取块 Markdown 内容失败:", error)
     return null
   }
 }

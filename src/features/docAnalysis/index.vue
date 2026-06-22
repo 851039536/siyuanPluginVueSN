@@ -278,7 +278,7 @@
       v-if="showPublishTip"
       class="publish-tip"
     >
-      <h4>📋 书签 · 发布标准</h4>
+      <h4><Icon icon="mdi:format-list-bulleted" height="14" /> 书签 · 发布标准</h4>
       <ul>
         <li>
           <span class="tip-badge pending">待发布</span>

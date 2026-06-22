@@ -7,13 +7,13 @@
 
     <!-- 错误状态 -->
     <div v-else-if="state.status === 'error'" class="vp-empty">
-      <span class="vp-empty__emoji">❌</span>
+      <span class="vp-empty__emoji"><IconWrapper name="error" :size="32" /></span>
       <p class="vp-empty__msg">{{ state.errorMessage }}</p>
     </div>
 
     <!-- 空状态（未搜索） -->
     <div v-else-if="state.status === 'idle'" class="vp-empty">
-      <span class="vp-empty__emoji">📁</span>
+      <span class="vp-empty__emoji"><IconWrapper name="folder" :size="32" /></span>
       <p class="vp-empty__msg">{{ emptyHintText }}</p>
       <p class="vp-empty__hint">
         支持通配符：<code>*</code> 匹配任意字符 &nbsp; <code>?</code> 匹配单个字符
@@ -22,7 +22,7 @@
 
     <!-- 无结果 -->
     <div v-else-if="state.status === 'empty'" class="vp-empty">
-      <span class="vp-empty__emoji">🔍</span>
+      <span class="vp-empty__emoji"><IconWrapper name="search" :size="32" /></span>
       <p class="vp-empty__msg">未找到匹配的文件</p>
     </div>
 
@@ -53,6 +53,7 @@ import type {
   SearchState,
 } from "../types"
 import { computed } from "vue"
+import IconWrapper from "@/components/IconWrapper.vue"
 import Loader from "@/components/Loader.vue"
 import ResultItem from "./ResultItem.vue"
 

@@ -6,7 +6,7 @@
   >
     <!-- 类型图标 -->
     <div class="vp-result-item__icon" :class="iconClass">
-      {{ iconEmoji }}
+      <IconWrapper :name="iconKey" :size="14" />
     </div>
 
     <!-- 文件信息 -->
@@ -57,7 +57,9 @@
 
 <script setup lang="ts">
 import type { EverythingSearchResult } from "../types"
+import type { IconKey } from "@/config/icons"
 import { computed } from "vue"
+import IconWrapper from "@/components/IconWrapper.vue"
 import {
   formatFileSize,
   getFileIconType,
@@ -86,17 +88,27 @@ const iconClass = computed(
   () => `vp-result-item__icon--${getFileIconType(props.item.name, props.item.type === "folder")}`,
 )
 
-const iconEmoji = computed(() => {
-  if (props.item.type === "folder") return "📁"
+const iconKey = computed<IconKey>(() => {
+  if (props.item.type === "folder") return "folder"
   const iconType = getFileIconType(props.item.name, false)
-  const emojiMap: Record<string, string> = {
-    pdf: "📕", word: "📘", excel: "📗", ppt: "📙",
-    text: "📄", markdown: "📝",
-    image: "🖼️", video: "🎬", audio: "🎵",
-    archive: "📦", code: "💻", executable: "⚙️",
-    siyuan: "📔", file: "📄",
+  const iconKeyMap: Record<string, IconKey> = {
+    folder: "folder",
+    file: "file",
+    image: "image",
+    video: "play",
+    audio: "play",
+    archive: "folder",
+    code: "code",
+    executable: "settings",
+    siyuan: "file",
+    text: "file",
+    markdown: "edit",
+    pdf: "file",
+    word: "file",
+    excel: "file",
+    ppt: "file",
   }
-  return emojiMap[iconType] || "📄"
+  return iconKeyMap[iconType] || "file"
 })
 
 const openButtonTitle = computed(() =>

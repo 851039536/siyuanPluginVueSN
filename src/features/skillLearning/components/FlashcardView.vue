@@ -171,36 +171,50 @@ function shuffle<T>(arr: T[]): T[] {
 
 function buildQuiz(cards: SkillCard[]): QuizItem[] {
   if (cards.length === 0) return []
-  const allAnswers = cards.map((c) => ({ id: c.id, text: c.answer }))
 
-  return cards.map((card) => {
+  // 1. 随机打乱卡片顺序
+  const shuffled = shuffle([...cards])
+
+  // 2. 预建按语言分组的答案池（避免 O(n²) 嵌套查找）
+  const answersByLang = new Map<string, { id: string; text: string }[]>()
+  for (const c of shuffled) {
+    if (c.answer && c.answer.trim()) {
+      if (!answersByLang.has(c.language)) answersByLang.set(c.language, [])
+      answersByLang.get(c.language)!.push({ id: c.id, text: c.answer })
+    }
+  }
+
+  // 所有答案的平铺池（跨语言回退）
+  const allPool = [...answersByLang.values()].flat()
+
+  return shuffled.map((card) => {
     const correctOpt: CardOption = { text: card.answer, correct: true }
     let distractors: CardOption[] = []
 
+    // 优先使用手动指定的干扰项
     if (card.distractors && card.distractors.length > 0) {
       distractors = card.distractors
-        .filter((d) => d.trim())
+        .filter(Boolean)
         .slice(0, 3)
-        .map((d) => ({ text: d, correct: false }))
+        .map((d) => ({ text: d.trim(), correct: false }))
     } else {
-      const sameLang = allAnswers.filter((a) => {
-        const c = cards.find((x) => x.id === a.id)
-        return a.id !== card.id && a.text && c?.language === card.language
-      })
-      const otherLang = allAnswers.filter((a) => {
-        const c = cards.find((x) => x.id === a.id)
-        return a.id !== card.id && a.text && c?.language !== card.language
-      })
-      let pool = [...shuffle(sameLang), ...shuffle(otherLang)]
+      // 从同语言池中抽取 + 跨语言池补充
+      const sameLang = (answersByLang.get(card.language) || [])
+        .filter((a) => a.id !== card.id)
+      const rest = allPool.filter((a) => a.id !== card.id && !sameLang.some((s) => s.id === a.id))
+
+      const pool = [...shuffle(sameLang), ...shuffle(rest)]
       const seen = new Set<string>()
-      pool = pool.filter((a) => {
-        if (seen.has(a.text) || a.text === card.answer) return false
-        seen.add(a.text)
-        return true
+      pool.forEach((a) => {
+        if (distractors.length >= 3) return
+        if (!seen.has(a.text) && a.text !== card.answer) {
+          seen.add(a.text)
+          distractors.push({ text: a.text, correct: false })
+        }
       })
-      distractors = pool.slice(0, 3).map((a) => ({ text: a.text, correct: false }))
     }
 
+    // 不够 3 个时用占位补足
     while (distractors.length < 3) {
       distractors.push({ text: `——`, correct: false })
     }
@@ -229,7 +243,7 @@ watch(() => props.cards, () => {
   quizItems.value = buildQuiz(props.cards)
   currentIndex.value = 0
   phase.value = "question"
-}, { deep: true })
+})
 
 // --- 操作 ---
 function selectAnswer(oi: number) {

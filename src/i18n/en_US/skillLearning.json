@@ -66,5 +66,6 @@
   "viewResult": "View Result",
   "quizScore": "Accuracy",
   "showDetails": "Details",
-  "hideDetails": "Hide Details"
+  "hideDetails": "Hide Details",
+  "aiGenerate": "AI Generate"
 }

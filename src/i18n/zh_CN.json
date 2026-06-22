@@ -1388,6 +1388,7 @@
   "quizScore": "正确率",
   "showDetails": "查看详情",
   "hideDetails": "收起详情",
+  "aiGenerate": "AI 生成",
   "skills": {
     "label": "Prompts",
     "title": "提示词库",

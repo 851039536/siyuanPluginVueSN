@@ -1388,6 +1388,7 @@
   "quizScore": "Accuracy",
   "showDetails": "Details",
   "hideDetails": "Hide Details",
+  "aiGenerate": "AI Generate",
   "skills": {
     "label": "Prompts",
     "title": "Prompts Library",

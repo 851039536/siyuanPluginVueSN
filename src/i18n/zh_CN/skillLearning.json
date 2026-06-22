@@ -66,5 +66,6 @@
   "viewResult": "查看结果",
   "quizScore": "正确率",
   "showDetails": "查看详情",
-  "hideDetails": "收起详情"
+  "hideDetails": "收起详情",
+  "aiGenerate": "AI 生成"
 }
